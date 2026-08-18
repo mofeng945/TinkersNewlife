@@ -1,0 +1,12 @@
+{
+  "type": "tconstruct:melting",
+  "ingredient": {
+    "item": "tinkersnewlife:durandal_shard"
+  },
+  "result": {
+    "fluid": "tinkersnewlife:molten_durandal",
+    "amount": 144
+  },
+  "temperature":1300,
+  "time": 120
+}

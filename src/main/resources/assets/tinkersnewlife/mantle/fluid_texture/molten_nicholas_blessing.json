@@ -1,0 +1,8 @@
+{
+  "still": "tinkersnewlife:block/molten_nicholas_blessing_still",
+  "flowing": "tinkersnewlife:block/molten_nicholas_blessing_flow",
+  "color": "FFFFFFFF",
+  "fogColor": "FF2E0505",
+  "fogStart": 0.3,
+  "fogEnd": 4.0
+}

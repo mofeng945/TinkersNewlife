@@ -1,0 +1,16 @@
+{
+  "type": "tconstruct:modifier",
+  "result": "tinkersnewlife:dragon_staff",
+  "tools": {
+    "tag": "tinkersnewlife:tools"
+  },
+  "inputs": [
+    { "item": "iceandfire:siren_tear"},
+    { "item": "iceandfire:siren_tear"},
+    { "item": "iceandfire:siren_tear"},
+    { "item": "iceandfire:siren_tear"},
+    { "item": "iceandfire:siren_tear"}
+  ],
+  "level": { "min":2,"max": 5 },
+  "check_trait_level": true
+}

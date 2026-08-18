@@ -1,0 +1,89 @@
+{
+  "replace": false,
+  "parts": [
+    {
+      "path": "tinkersnewlife:item/tool/parts/dragon_core",
+      "stat_type": "tconstruct:head"
+    },
+    {
+      "path": "tinkersnewlife:item/tool/dragon_staff/head",
+      "stat_type": "tconstruct:head"
+    },
+    {
+      "path": "tinkersnewlife:item/tool/dragon_staff/handle",
+      "stat_type": "tconstruct:handle"
+    },
+    {
+      "path": "tinkersnewlife:item/tool/dragon_staff/handle2",
+      "stat_type": "tconstruct:handle"
+    },
+    {
+      "path": "tinkersnewlife:item/tool/silent_glove/silent_glove_core",
+      "stat_type": "tconstruct:head"
+    },
+    {
+      "path": "tinkersnewlife:item/tool/silent_glove/silent_glove_binding",
+      "stat_type": "tconstruct:handle"
+    },
+    {
+      "path": "tinkersnewlife:item/tool/war_scythe/head1",
+      "stat_type": "tconstruct:head"
+    },
+    {
+      "path": "tinkersnewlife:item/tool/war_scythe/head2",
+      "stat_type": "tconstruct:head"
+    },
+    {
+      "path": "tinkersnewlife:item/tool/war_scythe/binding",
+      "stat_type": "tconstruct:binding"
+    },
+    {
+      "path": "tinkersnewlife:item/tool/war_scythe/handle1",
+      "stat_type": "tconstruct:handle"
+    },
+    {
+      "path": "tinkersnewlife:item/tool/war_scythe/handle2",
+      "stat_type": "tconstruct:handle"
+    },
+    {
+      "path": "tinkersnewlife:item/tool/modular_staff/head",
+      "stat_type": "tconstruct:head"
+    },
+    {
+      "path": "tinkersnewlife:item/tool/modular_staff/binding",
+      "stat_type": "tconstruct:binding"
+    },
+    {
+      "path": "tinkersnewlife:item/tool/modular_staff/handle1",
+      "stat_type": "tconstruct:handle"
+    },
+    {
+      "path": "tinkersnewlife:item/tool/modular_staff/handle2",
+      "stat_type": "tconstruct:handle"
+    },
+    {
+      "path": "tinkersnewlife:item/tool/parts/spell_core",
+      "stat_type": "tconstruct:head"
+    },
+    {
+      "path": "tinkersnewlife:item/tool/flying_sword/blade1",
+      "stat_type": "tconstruct:head"
+    },
+    {
+      "path": "tinkersnewlife:item/tool/flying_sword/blade2",
+      "stat_type": "tconstruct:head"
+    },
+    {
+      "path": "tinkersnewlife:item/tool/flying_sword/tough_handle1",
+      "stat_type": "tconstruct:handle"
+    },
+    {
+      "path": "tinkersnewlife:item/tool/flying_sword/tough_handle2",
+      "stat_type": "tconstruct:handle"
+    },
+    {
+      "path": "tinkersnewlife:item/tool/flying_sword/tool_handle",
+      "stat_type": "tconstruct:handle"
+    }
+  ]
+}

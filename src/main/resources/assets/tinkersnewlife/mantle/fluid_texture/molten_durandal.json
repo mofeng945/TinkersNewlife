@@ -1,0 +1,8 @@
+{
+  "still": "tinkersnewlife:block/molten_durandal_still",
+  "flowing": "tinkersnewlife:block/molten_durandal_flowing",
+  "color": "FFC0C0C0",
+  "fogColor": "FFD4D4D4",
+  "fogStart": 0.5,
+  "fogEnd": 6.0
+}

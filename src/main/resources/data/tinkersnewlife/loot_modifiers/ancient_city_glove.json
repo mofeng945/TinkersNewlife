@@ -1,0 +1,16 @@
+{
+  "type": "tinkersnewlife:random_glove",
+  "conditions": [
+    {
+      "condition": "minecraft:survives_explosion"
+    },
+    {
+      "condition": "forge:loot_table_id",
+      "loot_table_id": "minecraft:chests/ancient_city"
+    }
+  ],
+  "min_tier": 3,
+  "min_count": 1,
+  "max_count": 1,
+  "chance": 0.3
+}

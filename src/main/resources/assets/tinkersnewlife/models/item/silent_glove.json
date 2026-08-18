@@ -1,0 +1,12 @@
+{
+  "loader": "tconstruct:tool",
+  "parent": "tconstruct:item/base/default",
+  "textures": {
+    "silent_glove_core": "tinkersnewlife:item/tool/silent_glove/silent_glove_core",
+    "silent_glove_binding": "tinkersnewlife:item/tool/silent_glove/silent_glove_binding"
+  },
+  "parts": [
+    { "name": "silent_glove_core", "index": 0 },
+    { "name": "silent_glove_binding", "index": 1 }
+  ]
+}

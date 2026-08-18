@@ -1,0 +1,9 @@
+{
+  "type": "tconstruct:material_fluid",
+  "fluid": {
+    "name": "tinkersnewlife:molten_dragonsteel_lightning_still",
+    "amount": 144
+  },
+  "temperature": 1200,
+  "output": "tinkersnewlife:dragonsteel_lightning"
+}

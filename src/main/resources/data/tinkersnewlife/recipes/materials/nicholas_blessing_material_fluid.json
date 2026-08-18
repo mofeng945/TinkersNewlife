@@ -1,0 +1,10 @@
+{
+  "type": "tconstruct:material_fluid",
+  "input": "tconstruct:pig_iron",
+  "fluid": {
+    "name": "tinkersnewlife:molten_nicholas_blessing_still",
+    "amount": 80
+  },
+  "temperature": 1000,
+  "output": "tinkersnewlife:nicholas_blessing"
+}

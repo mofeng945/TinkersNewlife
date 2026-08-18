@@ -1,0 +1,46 @@
+{
+  "translation_key": "item_group.tinkersnewlife.modular_staff",
+  "sortIndex": 5,
+  "icon": {
+    "item": "tinkersnewlife:modular_staff",
+    "nbt": "{Damage:0,tic_broken:0b,tic_display:1b,tic_materials:[\"tconstruct:ui_render#head\",\"tconstruct:ui_render#head\",\"tconstruct:ui_render#extra\",\"tconstruct:ui_render#handle\",\"tconstruct:ui_render#handle\"]}"
+  },
+  "input_slots": [
+    {
+      "translation_key": "slot.tinkersnewlife.modular_staff.head",
+      "icon": "tinkersnewlife:spell_core",
+      "filter": {
+        "item": "tinkersnewlife:spell_core"
+      },
+      "x": 60,
+      "y": 20
+    },
+    {
+      "translation_key": "slot.tinkersnewlife.modular_staff.binding",
+      "icon": "tconstruct:tough_binding",
+      "filter": {
+        "item": "tconstruct:tough_binding"
+      },
+      "x": 42,
+      "y": 38
+    },
+    {
+      "translation_key": "slot.tinkersnewlife.modular_staff.handle_1",
+      "icon": "tconstruct:tough_handle",
+      "filter": {
+        "item": "tconstruct:tough_handle"
+      },
+      "x": 24,
+      "y": 52
+    },
+    {
+      "translation_key": "slot.tinkersnewlife.modular_staff.handle_2",
+      "icon": "tconstruct:tool_handle",
+      "filter": {
+        "item": "tconstruct:tool_handle"
+      },
+      "x": 6,
+      "y": 70
+    }
+  ]
+}

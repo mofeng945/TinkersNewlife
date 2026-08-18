@@ -1,0 +1,34 @@
+{
+  "type": "tconstruct:modifier",
+  "allow_crystal": true,
+  "inputs": [
+    {
+      "item": "minecraft:gold_ingot"
+    },
+    {
+      "item": "minecraft:piston"
+    },
+    {
+      "item": "minecraft:piston"
+    },
+    {
+      "item": "minecraft:chest"
+    },
+    {
+      "item": "minecraft:chest"
+    }
+  ],
+  "level": {
+    "min":2,
+    "max": 3
+  },
+  "result": "tinkersnewlife:quantum_bag",
+  "tools": [
+    {
+      "tag": "tconstruct:modifiable/melee"
+    },
+    {
+      "tag": "tconstruct:modifiable/ranged"
+    }
+  ]
+}

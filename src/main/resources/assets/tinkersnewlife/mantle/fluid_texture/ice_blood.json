@@ -1,0 +1,8 @@
+{
+  "still": "tinkersnewlife:block/dragon_blood_still",
+  "flowing": "tinkersnewlife:block/dragon_blood_flowing",
+  "color": "FF00BFFF",
+  "fogColor": "FF00BFFF",
+  "fogStart": 0.5,
+  "fogEnd": 5.0
+}

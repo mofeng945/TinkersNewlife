@@ -1,0 +1,16 @@
+{
+  "default": [
+    {
+      "level": 1,
+      "name": "tinkersnewlife:child_of_the_stars"
+    }
+  ],
+  "perStat": {
+    "tconstruct:armor": [
+      {
+        "level": 1,
+        "name": "tinkersnewlife:star_child_armor"
+      }
+    ]
+  }
+}

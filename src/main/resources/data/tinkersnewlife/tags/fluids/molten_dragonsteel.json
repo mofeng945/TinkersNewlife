@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "tinkersnewlife:molten_dragonsteel_fire_still",
+    "tinkersnewlife:molten_dragonsteel_fire_flowing",
+    "tinkersnewlife:molten_dragonsteel_ice_still",
+    "tinkersnewlife:molten_dragonsteel_ice_flowing",
+    "tinkersnewlife:molten_dragonsteel_lightning_still",
+    "tinkersnewlife:molten_dragonsteel_lightning_flowing"
+  ]
+}

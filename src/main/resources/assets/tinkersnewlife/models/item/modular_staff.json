@@ -1,0 +1,16 @@
+{
+  "loader": "tconstruct:tool",
+  "parent": "tconstruct:item/base/staff",
+  "textures": {
+    "head": "tinkersnewlife:item/tool/modular_staff/head",
+    "binding": "tinkersnewlife:item/tool/modular_staff/binding",
+    "handle1": "tinkersnewlife:item/tool/modular_staff/handle1",
+    "handle2": "tinkersnewlife:item/tool/modular_staff/handle2"
+  },
+  "parts": [
+    { "name": "head", "index": 0 },
+    { "name": "binding", "index": 1 },
+    { "name": "handle1", "index": 2 },
+    { "name": "handle2", "index": 3 }
+  ]
+}

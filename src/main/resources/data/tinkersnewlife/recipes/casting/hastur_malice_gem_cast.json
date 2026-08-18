@@ -1,0 +1,13 @@
+{
+  "type": "tconstruct:casting_table",
+  "cast": {
+    "tag": "tconstruct:casts/multi_use/gem"
+  },
+  "cast_consumed": false,
+  "fluid": {
+    "name": "tinkersnewlife:hastur_malice_still",
+    "amount": 5
+  },
+  "result": "tinkersnewlife:yellow_king_remnant",
+  "cooling_time": 40
+}

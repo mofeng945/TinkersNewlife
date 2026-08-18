@@ -1,0 +1,70 @@
+{
+  "color": "FF4A0080",
+  "fallbacks": [
+    "metal",
+    "rock"
+  ],
+  "generator": {
+    "supported_stats": [
+      "tconstruct:head",
+      "tconstruct:handle",
+      "tconstruct:binding",
+      "tconstruct:repair_kit",
+      "tconstruct:limb",
+      "tconstruct:grip",
+      "tconstruct:armor_plating",
+      "tconstruct:plating_helmet",
+      "tconstruct:plating_chestplate",
+      "tconstruct:plating_leggings",
+      "tconstruct:plating_boots",
+      "tconstruct:plating_shield",
+      "tconstruct:maille",
+      "tconstruct:armor_maille"
+    ],
+    "transformer": {
+      "type": "tconstruct:grey_to_sprite",
+      "palette": [
+        {
+          "color": "FF0A0018",
+          "grey": 0
+        },
+        {
+          "color": "FF1A0033",
+          "grey": 50,
+          "path": "tinkersnewlife:generator/dreadsteel_border"
+        },
+        {
+          "color": "FF2E0044",
+          "grey": 85,
+          "path": "tinkersnewlife:generator/dreadsteel_border"
+        },
+        {
+          "color": "FF440066",
+          "grey": 120,
+          "path": "tinkersnewlife:generator/dreadsteel_body"
+        },
+        {
+          "color": "FF5A0080",
+          "grey": 155,
+          "path": "tinkersnewlife:generator/dreadsteel_body"
+        },
+        {
+          "color": "FF7A22AA",
+          "grey": 190,
+          "path": "tinkersnewlife:generator/dreadsteel_body"
+        },
+        {
+          "color": "FFAA44CC",
+          "grey": 220,
+          "path": "tinkersnewlife:generator/dreadsteel_highlight"
+        },
+        {
+          "color": "FFCC88EE",
+          "grey": 255,
+          "path": "tinkersnewlife:generator/dreadsteel_highlight"
+        }
+      ]
+    }
+  },
+  "luminosity": 6
+}

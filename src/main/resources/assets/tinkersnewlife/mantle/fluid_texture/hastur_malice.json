@@ -1,0 +1,8 @@
+{
+  "still": "tinkersnewlife:block/hastur_malice",
+  "flowing": "tinkersnewlife:block/hastur_malice",
+  "color": "FFFFFFFF",
+  "fogColor": "FF2E0505",
+  "fogStart": 0.3,
+  "fogEnd": 4.0
+}

@@ -1,0 +1,16 @@
+{
+  "default": [
+    {
+      "level": 1,
+      "name": "tinkersnewlife:dragonsteel_lightning"
+    }
+  ],
+  "perStat": {
+    "tconstruct:armor": [
+      {
+        "level": 1,
+        "name": "tinkersnewlife:dragonsteel_lightning_armor"
+      }
+    ]
+  }
+}

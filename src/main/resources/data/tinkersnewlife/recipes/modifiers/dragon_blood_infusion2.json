@@ -1,0 +1,28 @@
+{
+  "type": "tconstruct:modifier",
+  "allow_crystal": true,
+  "inputs": [
+    {
+      "item": "iceandfire:fire_dragon_blood"
+    },
+    {
+      "item": "iceandfire:ice_dragon_blood"
+    },
+    {
+      "item": "iceandfire:lightning_dragon_blood"
+    }
+  ],
+  "level": {
+    "min":2,
+    "max": 3
+  },
+  "result": "tinkersnewlife:dragon_blood_infusion",
+  "tools": [
+    {
+      "tag": "tconstruct:modifiable/melee"
+    },
+    {
+      "tag": "tconstruct:modifiable/ranged"
+    }
+  ]
+}

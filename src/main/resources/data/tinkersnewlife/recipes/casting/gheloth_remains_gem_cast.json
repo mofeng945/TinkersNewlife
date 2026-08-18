@@ -1,0 +1,13 @@
+{
+  "type": "tconstruct:casting_table",
+  "cast": {
+    "tag": "tconstruct:casts/multi_use/gem"
+  },
+  "cast_consumed": false,
+  "fluid": {
+    "name": "tinkersnewlife:gheloth_blood_still",
+    "amount": 15
+  },
+  "result": "tinkersnewlife:gheloth_remains",
+  "cooling_time": 40
+}

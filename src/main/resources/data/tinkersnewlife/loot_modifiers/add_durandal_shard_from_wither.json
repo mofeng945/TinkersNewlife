@@ -1,0 +1,17 @@
+{
+  "type": "tinkersnewlife:add_items",
+  "conditions": [
+    {
+      "condition": "minecraft:killed_by_player"
+    },
+    {
+      "condition": "minecraft:entity_properties",
+      "entity": "this",
+      "predicate": {
+        "type": "minecraft:wither"
+      }
+    }
+  ],
+  "item": "tinkersnewlife:durandal_shard",
+  "chance": 0.25
+}

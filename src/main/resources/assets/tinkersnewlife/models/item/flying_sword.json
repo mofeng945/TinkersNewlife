@@ -1,0 +1,18 @@
+{
+  "loader": "tconstruct:tool",
+  "parent": "tconstruct:item/base/large_tool",
+  "textures": {
+    "blade1": "tinkersnewlife:item/tool/flying_sword/blade1",
+    "blade2": "tinkersnewlife:item/tool/flying_sword/blade2",
+    "tough_handle1": "tinkersnewlife:item/tool/flying_sword/tough_handle1",
+    "tough_handle2": "tinkersnewlife:item/tool/flying_sword/tough_handle2",
+    "tool_handle": "tinkersnewlife:item/tool/flying_sword/tool_handle"
+  },
+  "parts": [
+    { "name": "blade1", "index": 0 },
+    { "name": "blade2", "index": 1 },
+    { "name": "tough_handle1", "index": 2 },
+    { "name": "tough_handle2", "index": 3 },
+    { "name": "tool_handle", "index": 4 }
+  ]
+}

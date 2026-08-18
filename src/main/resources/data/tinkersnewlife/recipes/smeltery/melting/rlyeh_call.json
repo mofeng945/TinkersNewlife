@@ -1,0 +1,12 @@
+{
+  "type": "tconstruct:melting",
+  "ingredient": {
+    "item": "tinkersnewlife:rlyeh_call"
+  },
+  "result": {
+    "fluid": "tinkersnewlife:ashen_ink_still",
+    "amount": 1000
+  },
+  "temperature": 1000,
+  "time": 20
+}

@@ -1,0 +1,12 @@
+{
+  "type": "tconstruct:melting",
+  "ingredient": {
+    "item": "tinkersnewlife:yellow_king_remnant"
+  },
+  "result": {
+    "fluid": "tinkersnewlife:hastur_malice_still",
+    "amount": 10
+  },
+  "temperature": 1000,
+  "time": 20
+}

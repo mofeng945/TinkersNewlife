@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    "#tinkersnewlife:casts/single_use/dragon_core",
+    "#tinkersnewlife:casts/single_use/spell_core"
+  ]
+}

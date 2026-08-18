@@ -1,0 +1,7 @@
+{
+  "loader": "tconstruct:material",
+  "parent": "forge:item/default",
+  "textures": {
+    "texture": "tinkersnewlife:item/tool/parts/spell_core"
+  }
+}

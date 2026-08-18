@@ -1,0 +1,19 @@
+{
+  "type": "tconstruct:modifier",
+  "result": "tinkersnewlife:dragon_blood_tank",
+  "tools": [
+    {
+      "tag": "tconstruct:modifiable/melee"
+    },
+    {
+      "tag": "tconstruct:modifiable/ranged"
+    }
+  ],
+  "inputs": [
+    { "item": "iceandfire:dragonbone" ,"amount":16}
+  ],
+  "slots": {
+    "abilities": 1
+  },
+  "level": { "max": 1 }
+}

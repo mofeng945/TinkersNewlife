@@ -1,0 +1,12 @@
+{
+  "type": "tconstruct:melting",
+  "ingredient": {
+    "item": "tinkersnewlife:nicholas_blessing"
+  },
+  "result": {
+    "fluid": "tinkersnewlife:molten_nicholas_blessing_still",
+    "amount": 5
+  },
+  "temperature": 1000,
+  "time": 20
+}

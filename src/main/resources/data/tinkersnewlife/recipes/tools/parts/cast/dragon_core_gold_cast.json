@@ -1,0 +1,8 @@
+{
+  "type": "tconstruct:table_casting_material",
+  "cast": {
+    "tag": "tinkersnewlife:casts/multi_use/dragon_core"
+  },
+  "item_cost": 10,
+  "result": "tinkersnewlife:dragon_core"
+}

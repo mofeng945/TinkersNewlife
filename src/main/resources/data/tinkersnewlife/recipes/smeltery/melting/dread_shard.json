@@ -1,0 +1,12 @@
+{
+  "type": "tconstruct:melting",
+  "ingredient": {
+    "item": "iceandfire:dread_shard"
+  },
+  "result": {
+    "fluid": "tinkersnewlife:molten_dread_still",
+    "amount": 100
+  },
+  "temperature": 600,
+  "time": 60
+}

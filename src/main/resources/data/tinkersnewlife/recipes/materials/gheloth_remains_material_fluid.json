@@ -1,0 +1,10 @@
+{
+  "type": "tconstruct:material_fluid",
+  "input": "tconstruct:iron",
+  "fluid": {
+    "name": "tinkersnewlife:gheloth_blood_still",
+    "amount": 100
+  },
+  "temperature": 1000,
+  "output": "tinkersnewlife:gheloth_remains"
+}

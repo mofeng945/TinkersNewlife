@@ -1,0 +1,12 @@
+{
+  "type": "tconstruct:melting",
+  "ingredient": {
+    "item": "iceandfire:dragonsteel_lightning_ingot"
+  },
+  "result": {
+    "fluid": "tinkersnewlife:molten_dragonsteel_lightning_still",
+    "amount": 144
+  },
+  "temperature": 1200,
+  "time": 60
+}

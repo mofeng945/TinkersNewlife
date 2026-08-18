@@ -1,0 +1,12 @@
+{
+  "type": "tconstruct:melting",
+  "ingredient": {
+    "item": "tinkersnewlife:gheloth_remains"
+  },
+  "result": {
+    "fluid": "tinkersnewlife:gheloth_blood_still",
+    "amount": 15
+  },
+  "temperature": 1000,
+  "time": 20
+}

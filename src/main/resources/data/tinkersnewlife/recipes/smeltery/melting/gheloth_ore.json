@@ -1,0 +1,12 @@
+{
+  "type": "tconstruct:melting",
+  "ingredient": {
+    "item": "tinkersnewlife:gheloth_ore"
+  },
+  "result": {
+    "fluid": "tinkersnewlife:gheloth_blood_still",
+    "amount": 25
+  },
+  "temperature": 900,
+  "time": 40
+}

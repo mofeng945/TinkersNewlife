@@ -1,0 +1,8 @@
+{
+  "still": "tinkersnewlife:block/molten_dread_still",
+  "flowing": "tinkersnewlife:block/molten_dread_flowing",
+  "color": "FF4A0055",
+  "fogColor": "FF4A0055",
+  "fogStart": 0.5,
+  "fogEnd": 6.0
+}

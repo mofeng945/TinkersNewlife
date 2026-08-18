@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:smithing_transform",
+  "template": {
+    "item": "tinkersnewlife:echo_of_the_void"
+  },
+  "base": {
+    "item": "tinkersnewlife:astral_anchor"
+  },
+  "addition": {
+    "item": "tinkersnewlife:nexus_of_spacetime"
+  },
+  "result": {
+    "item": "tinkersnewlife:yog_sothoth_gate_key",
+    "count": 1
+  }
+}

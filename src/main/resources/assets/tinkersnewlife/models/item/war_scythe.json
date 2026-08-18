@@ -1,0 +1,53 @@
+{
+	"format_version": "1.21.11",
+	"credit": "Made with Blockbench",
+	"parent": "tconstruct:item/base/default",
+	"textures": {
+		"head1": "tinkersnewlife:item/tool/war_scythe/head1",
+		"head2": "tinkersnewlife:item/tool/war_scythe/head2",
+		"binding": "tinkersnewlife:item/tool/war_scythe/binding",
+		"handle1": "tinkersnewlife:item/tool/war_scythe/handle1",
+		"handle2": "tinkersnewlife:item/tool/war_scythe/handle2"
+	},
+	"display": {
+		"thirdperson_righthand": {
+			"rotation": [-167.91, -72.06, -164.12],
+			"translation": [0, 6, 3.25],
+			"scale": [1, 1.66016, 1]
+		},
+		"thirdperson_lefthand": {
+			"rotation": [-161.06, 87.34, 165.1],
+			"translation": [0, 7.5, 4.5],
+			"scale": [0.96875, 1.63281, 1.06641]
+		},
+		"firstperson_righthand": {
+			"rotation": [0, -90, 0]
+		},
+		"firstperson_lefthand": {
+			"rotation": [0, 90, 0]
+		}
+	},
+	"loader": "tconstruct:tool",
+	"parts": [
+		{
+			"name": "head1",
+			"index": 0
+		},
+		{
+			"name": "head2",
+			"index": 1
+		},
+		{
+			"name": "binding",
+			"index": 2
+		},
+		{
+			"name": "handle1",
+			"index": 3
+		},
+		{
+			"name": "handle2",
+			"index": 4
+		}
+	]
+}

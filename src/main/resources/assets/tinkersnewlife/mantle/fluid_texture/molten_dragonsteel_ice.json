@@ -1,0 +1,8 @@
+{
+  "still": "tinkersnewlife:block/molten_dragonsteel_still",
+  "flowing": "tinkersnewlife:block/molten_dragonsteel_flowing",
+  "color": "FF00BFFF",
+  "fogColor": "FF00BFFF",
+  "fogStart": 0.5,
+  "fogEnd": 6.0
+}

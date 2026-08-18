@@ -1,0 +1,62 @@
+{
+  "color": "FF00BFFF",
+  "fallbacks": [
+    "metal",
+    "rock"
+  ],
+  "generator": {
+    "supported_stats": [
+      "tconstruct:head",
+      "tconstruct:handle",
+      "tconstruct:binding",
+      "tconstruct:repair_kit",
+      "tconstruct:limb",
+      "tconstruct:grip",
+      "tconstruct:armor_plating",
+      "tconstruct:plating_helmet",
+      "tconstruct:plating_chestplate",
+      "tconstruct:plating_leggings",
+      "tconstruct:plating_boots",
+      "tconstruct:plating_shield",
+      "tconstruct:maille",
+      "tconstruct:armor_maille"
+    ],
+    "transformer": {
+      "type": "tconstruct:grey_to_sprite",
+      "palette": [
+        {
+          "color": "FF001020",
+          "grey": 0
+        },
+        {
+          "color": "FF002040",
+          "grey": 63,
+          "path": "tinkersnewlife:generator/dragonsteel_border"
+        },
+        {
+          "grey": 102,
+          "path": "tinkersnewlife:generator/dragonsteel_border"
+        },
+        {
+          "color": "FF004488",
+          "grey": 140,
+          "path": "tinkersnewlife:generator/dragonsteel_body"
+        },
+        {
+          "grey": 178,
+          "path": "tinkersnewlife:generator/dragonsteel_body"
+        },
+        {
+          "color": "FF00BBFF",
+          "grey": 216,
+          "path": "tinkersnewlife:generator/dragonsteel_highlight"
+        },
+        {
+          "grey": 255,
+          "path": "tinkersnewlife:generator/dragonsteel_highlight"
+        }
+      ]
+    }
+  },
+  "luminosity": 9
+}

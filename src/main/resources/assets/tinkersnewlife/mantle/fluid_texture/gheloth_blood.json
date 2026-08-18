@@ -1,0 +1,8 @@
+{
+  "still": "tinkersnewlife:block/gheloth_blood_still",
+  "flowing": "tinkersnewlife:block/gheloth_blood_flow",
+  "color": "FFFFFFFF",
+  "fogColor": "FF2E0505",
+  "fogStart": 0.3,
+  "fogEnd": 4.0
+}

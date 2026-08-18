@@ -1,0 +1,16 @@
+{
+  "type": "tinkersnewlife:add_items",
+  "conditions": [
+    {
+      "condition": "minecraft:survives_explosion"
+    },
+    {
+      "condition": "forge:loot_table_id",
+      "loot_table_id": "minecraft:chests/ruined_portal"
+    }
+  ],
+  "items": ["tinkersnewlife:echo_of_the_void"],
+  "min_count": 1,
+  "max_count": 2,
+  "chance": 0.3
+}

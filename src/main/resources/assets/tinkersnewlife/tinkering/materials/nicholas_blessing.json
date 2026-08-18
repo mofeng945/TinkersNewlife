@@ -1,0 +1,62 @@
+{
+  "color": "FFFF69B4",
+  "fallbacks": [
+    "metal",
+    "rock"
+  ],
+  "generator": {
+    "supported_stats": [
+      "tconstruct:head",
+      "tconstruct:handle",
+      "tconstruct:binding",
+      "tconstruct:repair_kit",
+      "tconstruct:limb",
+      "tconstruct:grip",
+      "tconstruct:armor_plating",
+      "tconstruct:plating_helmet",
+      "tconstruct:plating_chestplate",
+      "tconstruct:plating_leggings",
+      "tconstruct:plating_boots",
+      "tconstruct:plating_shield",
+      "tconstruct:maille",
+      "tconstruct:armor_maille"
+    ],
+    "transformer": {
+      "type": "tconstruct:grey_to_sprite",
+      "palette": [
+        {
+          "color": "FF4A1520",
+          "grey": 0
+        },
+        {
+          "color": "FF8A3A50",
+          "grey": 63,
+          "path": "tinkersnewlife:generator/nicholas_blessing_border"
+        },
+        {
+          "grey": 102,
+          "path": "tinkersnewlife:generator/nicholas_blessing_border"
+        },
+        {
+          "color": "FFC06080",
+          "grey": 140,
+          "path": "tinkersnewlife:generator/nicholas_blessing_body"
+        },
+        {
+          "grey": 178,
+          "path": "tinkersnewlife:generator/nicholas_blessing_body"
+        },
+        {
+          "color": "FFFF8AA8",
+          "grey": 216,
+          "path": "tinkersnewlife:generator/nicholas_blessing_highlight"
+        },
+        {
+          "grey": 255,
+          "path": "tinkersnewlife:generator/nicholas_blessing_highlight"
+        }
+      ]
+    }
+  },
+  "luminosity": 9
+}

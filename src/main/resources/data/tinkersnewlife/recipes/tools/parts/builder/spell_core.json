@@ -1,0 +1,16 @@
+{
+  "type": "tconstruct:part_builder",
+  "cost": 6,
+  "pattern": "tinkersnewlife:spell_core",
+  "pattern_item": [
+    {
+      "item": "minecraft:amethyst_shard"
+    },
+    {
+      "item": "tinkersnewlife:spell_core_cast"
+    }
+  ],
+  "result": {
+    "item": "tinkersnewlife:spell_core"
+  }
+}

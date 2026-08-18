@@ -1,0 +1,34 @@
+{
+  "type": "tconstruct:modifier",
+  "allow_crystal": true,
+  "inputs": [
+    {
+      "tag": "iceandfire:dragon_hearts"
+    },
+    {
+      "tag": "iceandfire:dragon_skulls"
+    },
+    {
+      "tag": "iceandfire:dragon_bloods"
+    },
+    {
+      "item": "iceandfire:dragonbone"
+    },
+    {
+      "item": "minecraft:dragon_breath"
+    }
+  ],
+  "level": {
+    "min":2,
+    "max": 3
+  },
+  "result": "tinkersnewlife:fus_ro_dah",
+  "tools": [
+    {
+      "tag": "tconstruct:modifiable/melee"
+    },
+    {
+      "tag": "tconstruct:modifiable/ranged"
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "translation_key": "item_group.tinkersnewlife.war_scythe",
+  "sortIndex": 5,
+  "icon": {
+    "item": "tinkersnewlife:war_scythe",
+    "nbt": "{Damage:0,tic_broken:0b,tic_display:1b,tic_materials:[\"tconstruct:ui_render#head\",\"tconstruct:ui_render#head\",\"tconstruct:ui_render#extra\",\"tconstruct:ui_render#handle\",\"tconstruct:ui_render#handle\"]}"
+  },
+  "input_slots": [
+    {
+      "translation_key": "slot.tinkersnewlife.war_scythe.blade_1",
+      "icon": "tconstruct:broad_blade",
+      "filter": {
+        "item": "tconstruct:broad_blade"
+      },
+      "x": 35,
+      "y": 20
+    },
+    {
+      "translation_key": "slot.tinkersnewlife.war_scythe.blade_2",
+      "icon": "tconstruct:small_blade",
+      "filter": {
+        "item": "tconstruct:small_blade"
+      },
+      "x": 55,
+      "y": 28
+    },
+    {
+      "translation_key": "slot.tinkersnewlife.war_scythe.binding",
+      "icon": "tconstruct:tough_binding",
+      "filter": {
+        "item": "tconstruct:tough_binding"
+      },
+      "x": 50,
+      "y": 45
+    },
+    {
+      "translation_key": "slot.tinkersnewlife.war_scythe.handle_1",
+      "icon": "tconstruct:tough_handle",
+      "filter": {
+        "item": "tconstruct:tough_handle"
+      },
+      "x": 30,
+      "y": 46
+    },
+    {
+      "translation_key": "slot.tinkersnewlife.war_scythe.handle_2",
+      "icon": "tconstruct:tough_handle",
+      "filter": {
+        "item": "tconstruct:tough_handle"
+      },
+      "x": 12,
+      "y": 61
+    }
+  ]
+}
