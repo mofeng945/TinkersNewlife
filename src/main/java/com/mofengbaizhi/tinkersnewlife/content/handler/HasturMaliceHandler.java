@@ -19,6 +19,7 @@ import net.minecraftforge.server.ServerLifecycleHooks;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
+import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
@@ -33,13 +34,13 @@ public class HasturMaliceHandler {
 
     // ==================== 风场参数 ====================
     private static final int COOLDOWN_TICKS = 20 * 20; 
-    private static final int BASE_RANGE = 5;                         // 基础范围（格）
-    private static final int RANGE_PER_LEVEL = 1;                    // 每级 +1 格
-    private static final float BASE_DAMAGE = 5.0f;                   // 基础伤害
-    private static final float DAMAGE_PER_LEVEL = 5.0f;              // 每级 +1 伤害
-    private static final int BASE_DURATION_TICKS = 10 * 20;           // 基础持续 4 秒
-    private static final int DURATION_PER_LEVEL_TICKS = 5 * 20;      // 每级 +1 秒
-    private static final int DAMAGE_INTERVAL_TICKS = 10;             // 每 0.5 秒伤害/拉拽一次
+    private static final int BASE_RANGE = 5;
+    private static final int RANGE_PER_LEVEL = 1;
+    private static final float BASE_DAMAGE = 5.0f;
+    private static final float DAMAGE_PER_LEVEL = 5.0f;
+    private static final int BASE_DURATION_TICKS = 10 * 20;
+    private static final int DURATION_PER_LEVEL_TICKS = 5 * 20;
+    private static final int DAMAGE_INTERVAL_TICKS = 10;
 
     // ==================== 状态存储 ====================
     private static final Map<UUID, Long> PLAYER_COOLDOWNS = new ConcurrentHashMap<>();
@@ -69,6 +70,27 @@ public class HasturMaliceHandler {
         }
     }
 
+    // ==================== 辅助方法：获取弹射物对应的武器 ====================
+    private static ItemStack getProjectileWeapon(Projectile projectile, Player shooter) {
+        // 1. 尝试从弹射物本身获取物品（标枪、三叉戟等）
+        try {
+            Method method = projectile.getClass().getMethod("getPickupItem");
+            return (ItemStack) method.invoke(projectile);
+        } catch (Exception ignored) {}
+        try {
+            Method method = projectile.getClass().getMethod("getItem");
+            return (ItemStack) method.invoke(projectile);
+        } catch (Exception ignored) {}
+
+        // 2. 若弹射物无物品，则从玩家主手获取（弓/弩）
+        ItemStack mainHand = shooter.getMainHandItem();
+        if (!mainHand.isEmpty()) return mainHand;
+        // 3. 若主手为空，尝试副手
+        ItemStack offHand = shooter.getOffhandItem();
+        if (!offHand.isEmpty()) return offHand;
+        return ItemStack.EMPTY;
+    }
+
     @SubscribeEvent
     public static void onLivingHurt(LivingHurtEvent event) {
         Player player = null;
@@ -85,7 +107,15 @@ public class HasturMaliceHandler {
         LivingEntity target = event.getEntity();
         if (target == null) return;
 
-        ItemStack stack = player.getMainHandItem();
+        // ★ 获取正确的武器（兼容弹射物本身和发射武器）
+        ItemStack stack = ItemStack.EMPTY;
+        if (directEntity instanceof Projectile) {
+            stack = getProjectileWeapon((Projectile) directEntity, player);
+        } else {
+            stack = player.getMainHandItem();
+        }
+
+        if (stack.isEmpty()) return;
         ToolStack tool = ToolStack.from(stack);
         if (tool == null) return;
 
@@ -163,21 +193,17 @@ public class HasturMaliceHandler {
         for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, aabb)) {
             if (entity.getUUID().equals(field.playerId)) continue;
 
-            // 计算从实体指向中心的向量
             Vec3 toCenter = center.subtract(entity.position());
             double distance = toCenter.length();
             if (distance < 0.1) continue;
 
-            // 吸引力强度：越靠近中心越强
             double strength = Math.max(0, 1.0 - distance / range) * 1.5;
-            // 方向指向中心，略微向上防止卡地板
             Vec3 pull = toCenter.normalize().scale(strength * 1.0);
             pull = pull.add(0, 0.05, 0);
 
             entity.setDeltaMovement(entity.getDeltaMovement().add(pull));
             entity.hurtMarked = true;
 
-            // 造成魔法伤害
             entity.hurt(player.damageSources().magic(), field.damage);
 
             level.sendParticles(ParticleTypes.DAMAGE_INDICATOR,

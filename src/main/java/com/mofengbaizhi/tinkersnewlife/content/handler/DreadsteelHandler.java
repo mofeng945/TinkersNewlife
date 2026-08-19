@@ -7,6 +7,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
@@ -17,6 +18,8 @@ import slimeknights.tconstruct.library.modifiers.ModifierId;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 import slimeknights.tconstruct.library.tools.stat.ToolStats;
 
+import java.lang.reflect.Method;
+
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class DreadsteelHandler {
 
@@ -26,6 +29,31 @@ public class DreadsteelHandler {
     private static final int WEAKNESS_DURATION = 5;
     private static final int BLINDNESS_DURATION = 4;
     private static final int WITHER_DURATION = 3;
+
+    // ==================== 辅助方法：获取弹射物对应的武器 ====================
+    private static ItemStack getProjectileWeapon(Projectile projectile, Player shooter) {
+        // 1. 尝试从弹射物本身获取物品（三叉戟、匠魂标枪等）
+        try {
+            Method method = projectile.getClass().getMethod("getPickupItem");
+            return (ItemStack) method.invoke(projectile);
+        } catch (Exception ignored) {}
+        try {
+            Method method = projectile.getClass().getMethod("getItem");
+            return (ItemStack) method.invoke(projectile);
+        } catch (Exception ignored) {}
+
+        // 2. 若弹射物无物品，则从玩家主手获取（弓/弩）
+        ItemStack mainHand = shooter.getMainHandItem();
+        if (!mainHand.isEmpty()) {
+            return mainHand;
+        }
+        // 3. 若主手为空，尝试副手
+        ItemStack offHand = shooter.getOffhandItem();
+        if (!offHand.isEmpty()) {
+            return offHand;
+        }
+        return ItemStack.EMPTY;
+    }
 
     // ==================== 近战 ====================
     @SubscribeEvent
@@ -53,7 +81,8 @@ public class DreadsteelHandler {
         if (!(event.getProjectile().getOwner() instanceof Player player)) return;
         if (player.level().isClientSide) return;
 
-        ItemStack stack = player.getMainHandItem();
+        // ★ 获取弹射物对应的武器（标枪本体 或 弓/弩）
+        ItemStack stack = getProjectileWeapon(event.getProjectile(), player);
         if (stack.isEmpty()) return;
 
         ToolStack tool = ToolStack.from(stack);

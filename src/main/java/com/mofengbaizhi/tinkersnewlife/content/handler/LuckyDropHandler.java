@@ -3,9 +3,11 @@ package com.mofengbaizhi.tinkersnewlife.content.handler;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -14,6 +16,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +41,27 @@ public class LuckyDropHandler {
         RARE_DROP_MAP.put(new ResourceLocation("iceandfire", "siren"), new ResourceLocation("iceandfire", "siren_tear"));
     }
 
+    // ==================== 辅助方法：从伤害源获取对应武器 ====================
+    private static ItemStack getWeaponForDamageSource(DamageSource source, Player player) {
+        Entity directEntity = source.getDirectEntity();
+        // 如果是弹射物，尝试从弹射物本身获取物品
+        if (directEntity instanceof Projectile projectile) {
+            try {
+                Method method = projectile.getClass().getMethod("getPickupItem");
+                return (ItemStack) method.invoke(projectile);
+            } catch (Exception ignored) {}
+            try {
+                Method method = projectile.getClass().getMethod("getItem");
+                return (ItemStack) method.invoke(projectile);
+            } catch (Exception ignored) {}
+        }
+        // 若无法获取，回退到玩家主手
+        if (!player.getMainHandItem().isEmpty()) {
+            return player.getMainHandItem();
+        }
+        return player.getOffhandItem();
+    }
+
     @SubscribeEvent
     public static void onLivingDrops(LivingDropsEvent event) {
         LivingEntity entity = event.getEntity();
@@ -53,10 +77,11 @@ public class LuckyDropHandler {
 
         if (player == null) return;
 
-        ItemStack mainHand = player.getMainHandItem();
-        if (mainHand.isEmpty()) return;
+        // ★ 使用辅助方法获取武器，兼容近战、弓箭、投掷武器
+        ItemStack weaponStack = getWeaponForDamageSource(source, player);
+        if (weaponStack.isEmpty()) return;
 
-        ToolStack tool = ToolStack.from(mainHand);
+        ToolStack tool = ToolStack.from(weaponStack);
         if (tool == null) return;
 
         int level = tool.getModifierLevel(LUCKY_DROP);

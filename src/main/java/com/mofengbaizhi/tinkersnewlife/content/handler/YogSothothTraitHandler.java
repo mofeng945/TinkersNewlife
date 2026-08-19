@@ -22,10 +22,14 @@ public class YogSothothTraitHandler {
         Player player = event.getEntity();
         if (player.level().isClientSide) return;
 
-        ItemStack mainHand = player.getMainHandItem();
-        if (mainHand.isEmpty()) return;
+        // ★ 检查主手，若为空则检查副手
+        ItemStack weapon = player.getMainHandItem();
+        if (weapon.isEmpty()) {
+            weapon = player.getOffhandItem();
+        }
+        if (weapon.isEmpty()) return;
 
-        ToolStack tool = ToolStack.from(mainHand);
+        ToolStack tool = ToolStack.from(weapon);
         if (tool == null) return;
 
         int level = tool.getModifierLevel(YOG_SOTHOTH_GIFT);
@@ -33,6 +37,7 @@ public class YogSothothTraitHandler {
 
         int original = event.getAmount();
         if (original > 0) {
+            // 经验 ×6（原设定）
             event.setAmount(original * 6);
         }
     }

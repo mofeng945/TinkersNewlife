@@ -25,6 +25,7 @@ import net.minecraftforge.fml.common.Mod;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
+import java.lang.reflect.Method;
 import java.util.List;
 
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -40,6 +41,31 @@ public class DragonsteelHandler {
     private static final int LIGHTNING_DISARM_BASE = 60;
     private static final int ICE_LIFETIME = 100;
 
+    // ==================== 辅助方法：获取弹射物对应的武器 ====================
+    private static ItemStack getProjectileWeapon(Projectile projectile, Player shooter) {
+        // 1. 尝试从弹射物本身获取物品（三叉戟、匠魂标枪等）
+        try {
+            Method method = projectile.getClass().getMethod("getPickupItem");
+            return (ItemStack) method.invoke(projectile);
+        } catch (Exception ignored) {}
+        try {
+            Method method = projectile.getClass().getMethod("getItem");
+            return (ItemStack) method.invoke(projectile);
+        } catch (Exception ignored) {}
+
+        // 2. 若弹射物无物品，则从玩家主手获取（弓/弩）
+        ItemStack mainHand = shooter.getMainHandItem();
+        if (!mainHand.isEmpty()) {
+            return mainHand;
+        }
+        // 3. 若主手为空，尝试副手
+        ItemStack offHand = shooter.getOffhandItem();
+        if (!offHand.isEmpty()) {
+            return offHand;
+        }
+        return ItemStack.EMPTY;
+    }
+
     // ==================== 近战 ====================
     @SubscribeEvent
     public static void onLivingAttack(LivingAttackEvent event) {
@@ -54,14 +80,12 @@ public class DragonsteelHandler {
         if (tool == null) return;
         if (tool.getStats().getContainedStats().isEmpty()) return;
 
-        // ✅ 正确逻辑：先读取基础等级，再判断龙骨是否增强
         int baseFireLevel = tool.getModifierLevel(DRAGONSTEEL_FIRE);
         int baseIceLevel = tool.getModifierLevel(DRAGONSTEEL_ICE);
         int baseLightningLevel = tool.getModifierLevel(DRAGONSTEEL_LIGHTNING);
 
         boolean hasDragonbone = DragonboneTrait.isConductionActive(tool);
 
-        // 只有工具上本身有龙钢，龙骨才给予 +1 增强（不会无中生有）
         int fireLevel = (hasDragonbone && baseFireLevel > 0) ? baseFireLevel + 1 : baseFireLevel;
         int iceLevel = (hasDragonbone && baseIceLevel > 0) ? baseIceLevel + 1 : baseIceLevel;
         int lightningLevel = (hasDragonbone && baseLightningLevel > 0) ? baseLightningLevel + 1 : baseLightningLevel;
@@ -79,21 +103,20 @@ public class DragonsteelHandler {
         if (!(event.getProjectile().getOwner() instanceof Player player)) return;
         if (player.level().isClientSide) return;
 
-        ItemStack stack = player.getMainHandItem();
+        // ★ 获取弹射物对应的武器（标枪本体 或 弓/弩）
+        ItemStack stack = getProjectileWeapon(event.getProjectile(), player);
         if (stack.isEmpty()) return;
 
         ToolStack tool = ToolStack.from(stack);
         if (tool == null) return;
         if (tool.getStats().getContainedStats().isEmpty()) return;
 
-        // ✅ 正确逻辑：先读取基础等级，再判断龙骨是否增强
         int baseFireLevel = tool.getModifierLevel(DRAGONSTEEL_FIRE);
         int baseIceLevel = tool.getModifierLevel(DRAGONSTEEL_ICE);
         int baseLightningLevel = tool.getModifierLevel(DRAGONSTEEL_LIGHTNING);
 
         boolean hasDragonbone = DragonboneTrait.isConductionActive(tool);
 
-        // 只有工具上本身有龙钢，龙骨才给予 +1 增强（不会无中生有）
         int fireLevel = (hasDragonbone && baseFireLevel > 0) ? baseFireLevel + 1 : baseFireLevel;
         int iceLevel = (hasDragonbone && baseIceLevel > 0) ? baseIceLevel + 1 : baseIceLevel;
         int lightningLevel = (hasDragonbone && baseLightningLevel > 0) ? baseLightningLevel + 1 : baseLightningLevel;
@@ -103,7 +126,7 @@ public class DragonsteelHandler {
         if (lightningLevel > 0) applyLightningEffect(player.level(), target, lightningLevel);
     }
 
-    // ==================== 效果实现 ====================
+    // ==================== 效果实现（不变） ====================
 
     private static void applyFireEffect(Level level, LivingEntity target, int levelNum) {
         int fireTicks = FIRE_DURATION_BASE * levelNum;

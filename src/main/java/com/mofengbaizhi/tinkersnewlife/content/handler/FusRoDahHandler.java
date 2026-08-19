@@ -9,6 +9,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
@@ -20,6 +21,7 @@ import net.minecraftforge.fml.common.Mod;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
+import java.lang.reflect.Method;
 import java.util.List;
 
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -39,6 +41,24 @@ public class FusRoDahHandler {
     private static final int EXPLOSION_PARTICLE_COUNT = 50;
     private static final float SOUND_VOLUME = 2.0f;
     private static final float SOUND_PITCH = 0.8f;
+
+    // ==================== 辅助方法：获取弹射物对应的武器 ====================
+    private static ItemStack getProjectileWeapon(Projectile projectile, Player shooter) {
+        try {
+            Method method = projectile.getClass().getMethod("getPickupItem");
+            return (ItemStack) method.invoke(projectile);
+        } catch (Exception ignored) {}
+        try {
+            Method method = projectile.getClass().getMethod("getItem");
+            return (ItemStack) method.invoke(projectile);
+        } catch (Exception ignored) {}
+
+        ItemStack mainHand = shooter.getMainHandItem();
+        if (!mainHand.isEmpty()) return mainHand;
+        ItemStack offHand = shooter.getOffhandItem();
+        if (!offHand.isEmpty()) return offHand;
+        return ItemStack.EMPTY;
+    }
 
     // ==================== 近战 ====================
     @SubscribeEvent
@@ -66,7 +86,8 @@ public class FusRoDahHandler {
         if (!(event.getProjectile().getOwner() instanceof Player player)) return;
         if (player.level().isClientSide) return;
 
-        ItemStack stack = player.getMainHandItem();
+        // ★ 获取弹射物对应的武器
+        ItemStack stack = getProjectileWeapon(event.getProjectile(), player);
         if (stack.isEmpty()) return;
 
         ToolStack tool = ToolStack.from(stack);
