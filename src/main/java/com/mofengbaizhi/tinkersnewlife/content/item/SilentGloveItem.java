@@ -1,7 +1,7 @@
 package com.mofengbaizhi.tinkersnewlife.content.item;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
-import com.mofengbaizhi.tinkersnewlife.content.handler.SilentGloveInteractionHandler;
+import com.mofengbaizhi.tinkersnewlife.content.handler.GloveWeaponStorage;
 import com.mofengbaizhi.tinkersnewlife.content.storage.SilentGloveContainer;
 import com.mofengbaizhi.tinkersnewlife.content.storage.SilentGloveHandler;
 import net.minecraft.nbt.CompoundTag;
@@ -160,7 +160,7 @@ public class SilentGloveItem extends ModifiableItem implements ICurioItem {
             return InteractionResultHolder.success(stack);
         }
         if (player instanceof ServerPlayer serverPlayer) {
-            SilentGloveInteractionHandler.clearPendingRecoveries(serverPlayer);
+            GloveWeaponStorage.clearPendingRecoveries(serverPlayer);
 
             UUID vaultUUID = getOrCreateVaultUUID(stack);
             SilentGloveHandler handler = getHandler(stack);

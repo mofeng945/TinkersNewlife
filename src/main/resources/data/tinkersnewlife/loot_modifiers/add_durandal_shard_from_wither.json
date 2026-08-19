@@ -12,6 +12,8 @@
       }
     }
   ],
-  "item": "tinkersnewlife:durandal_shard",
+  "items": ["tinkersnewlife:durandal_shard"],
+  "min_count": 1,
+  "max_count": 2,
   "chance": 0.25
 }

@@ -23,19 +23,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, value = Dist.CLIENT)
 public class SilentGloveSoundHandler {
 
-    // 白名单：佩戴噤默手套时仍然允许播放的声音
+    // 白名单：完全匹配的声音路径
     private static final Set<String> ALLOWED_SOUNDS = new HashSet<>();
 
+    // 白名单：允许的模组前缀（TACZ）
+    private static final Set<String> ALLOWED_PREFIXES = new HashSet<>();
+
     static {
-        // ===== 挥砍/攻击音效 =====
+        // ===== 挥砍/攻击音效（含暴击） =====
         ALLOWED_SOUNDS.add("minecraft:entity.player.attack.weak");
         ALLOWED_SOUNDS.add("minecraft:entity.player.attack.strong");
         ALLOWED_SOUNDS.add("minecraft:entity.player.attack.sweep");
-        ALLOWED_SOUNDS.add("minecraft:entity.player.attack.crit");
+        ALLOWED_SOUNDS.add("minecraft:entity.player.attack.crit");   // 暴击
         ALLOWED_SOUNDS.add("minecraft:entity.player.attack.knockback");
         ALLOWED_SOUNDS.add("minecraft:entity.player.attack.nodamage");
 
-        // ===== 拉弓/弩/射击音效 =====
+        // ===== 拉弓/弩/射击 =====
         ALLOWED_SOUNDS.add("minecraft:item.crossbow.shoot");
         ALLOWED_SOUNDS.add("minecraft:item.crossbow.loading_start");
         ALLOWED_SOUNDS.add("minecraft:item.crossbow.loading_middle");
@@ -43,21 +46,21 @@ public class SilentGloveSoundHandler {
         ALLOWED_SOUNDS.add("minecraft:entity.arrow.shoot");
         ALLOWED_SOUNDS.add("minecraft:entity.skeleton.shoot");
 
-        // ===== 投掷音效 =====
+        // ===== 投掷 =====
         ALLOWED_SOUNDS.add("minecraft:entity.snowball.throw");
         ALLOWED_SOUNDS.add("minecraft:entity.egg.throw");
         ALLOWED_SOUNDS.add("minecraft:entity.ender_pearl.throw");
         ALLOWED_SOUNDS.add("minecraft:entity.potion.throw");
         ALLOWED_SOUNDS.add("minecraft:entity.tnt.primed");
 
-        // ===== 玩家受伤/死亡（保留以便感知危险） =====
+        // ===== 玩家受伤/死亡 =====
         ALLOWED_SOUNDS.add("minecraft:entity.player.hurt");
         ALLOWED_SOUNDS.add("minecraft:entity.player.hurt_drown");
         ALLOWED_SOUNDS.add("minecraft:entity.player.hurt_on_fire");
         ALLOWED_SOUNDS.add("minecraft:entity.player.hurt_freeze");
         ALLOWED_SOUNDS.add("minecraft:entity.player.death");
 
-        // ===== 脚步声（新增） =====
+        // ===== 脚步声 =====
         ALLOWED_SOUNDS.add("minecraft:entity.player.step");
         ALLOWED_SOUNDS.add("minecraft:block.grass.step");
         ALLOWED_SOUNDS.add("minecraft:block.stone.step");
@@ -73,6 +76,9 @@ public class SilentGloveSoundHandler {
         ALLOWED_SOUNDS.add("minecraft:block.honey_block.step");
         ALLOWED_SOUNDS.add("minecraft:block.slime_block.step");
         ALLOWED_SOUNDS.add("minecraft:block.sculk.step");
+
+        // ===== TACZ 枪械模组（全部允许） =====
+        ALLOWED_PREFIXES.add("tacz:");
     }
 
     @SubscribeEvent
@@ -87,9 +93,33 @@ public class SilentGloveSoundHandler {
 
         String soundPath = event.getSound().getLocation().toString();
 
-        if (!ALLOWED_SOUNDS.contains(soundPath)) {
-            event.setSound(null);
+        // 1. 精确匹配白名单
+        if (ALLOWED_SOUNDS.contains(soundPath)) {
+            return;
         }
+
+        // 2. 检查 TACZ 前缀（全部允许）
+        for (String prefix : ALLOWED_PREFIXES) {
+            if (soundPath.startsWith(prefix)) {
+                return;
+            }
+        }
+
+        // 3. 铁魔法特殊处理：只允许玩家施法声音，拦截生物声音
+        if (soundPath.startsWith("irons_spellbooks:")) {
+            // 如果路径包含 entity、mob、boss、creature 等生物关键字，则拦截
+            if (soundPath.contains("entity") || soundPath.contains("mob") ||
+                soundPath.contains("boss") || soundPath.contains("creature") ||
+                soundPath.contains("animal") || soundPath.contains("monster")) {
+                event.setSound(null);
+                return;
+            }
+            // 否则（即不包含生物关键字）允许（认为它是玩家施法声音）
+            return;
+        }
+
+        // 4. 其他所有声音 -> 静默
+        event.setSound(null);
     }
 
     private static boolean isWearingSilentGlove(Player player) {
@@ -110,7 +140,6 @@ public class SilentGloveSoundHandler {
         AtomicBoolean found = new AtomicBoolean(false);
 
         curiosOptional.ifPresent(inventory -> {
-            // 检查 hands 槽位
             inventory.getStacksHandler("hands").ifPresent(handler -> {
                 IItemHandlerModifiable stacks = handler.getStacks();
                 for (int i = 0; i < stacks.getSlots(); i++) {
