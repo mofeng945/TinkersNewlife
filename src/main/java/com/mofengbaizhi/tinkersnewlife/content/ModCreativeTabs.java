@@ -67,6 +67,7 @@ public class ModCreativeTabs {
                                 output.accept(ModFluids.LIGHTNING_BLOOD.bucket.get());
                                 output.accept(ModFluids.MOLTEN_DREAD.bucket.get());
                                 output.accept(ModFluids.MOLTEN_DREADSTEEL.bucket.get());
+                                output.accept(ModFluids.MOLTEN_DURANDAL.bucket.get());
 
                                 // ----- 铸模 -----
                                 output.accept(ModItems.DRAGON_CORE_CAST.get());
