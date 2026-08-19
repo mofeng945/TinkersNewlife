@@ -84,7 +84,7 @@ public class FlyingSwordItem extends ModifiableItem implements ICurioItem {
                 boolean isChaseMode = mode == 1;
 
                 float mainDamage = tool.getStats().get(ToolStats.ATTACK_DAMAGE);
-                float projectileDamage = 5.0f + mainDamage * 0.75f;
+                float projectileDamage =mainDamage * 0.6f;
 
                 ItemStack randomSword = createRandomFlyingSword();
 

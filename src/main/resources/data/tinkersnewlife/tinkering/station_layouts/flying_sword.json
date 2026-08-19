@@ -1,0 +1,55 @@
+{
+  "translation_key": "item_group.tinkersnewlife.flying_sword",
+  "sortIndex": 5,
+  "icon": {
+    "item": "tinkersnewlife:flying_sword",
+    "nbt": "{Damage:0,tic_broken:0b,tic_display:1b,tic_materials:[\"tconstruct:ui_render#head\",\"tconstruct:ui_render#head\",\"tconstruct:ui_render#extra\",\"tconstruct:ui_render#handle\",\"tconstruct:ui_render#handle\"]}"
+  },
+  "input_slots": [
+    {
+      "translation_key": "slot.tinkersnewlife.flying_sword.head",
+      "icon": "tconstruct:broad_blade",
+      "filter": {
+        "item": "tconstruct:broad_blade"
+      },
+      "x": 60,
+      "y": 20
+    },
+    {
+      "translation_key": "slot.tinkersnewlife.flying_sword.head2",
+      "icon": "tconstruct:broad_blade",
+      "filter": {
+        "item": "tconstruct:broad_blade"
+      },
+      "x": 42,
+      "y": 38
+    },
+    {
+      "translation_key": "slot.tinkersnewlife.flying_sword.handle1",
+      "icon": "tconstruct:tough_handle",
+      "filter": {
+        "item": "tconstruct:tough_handle"
+      },
+      "x": 12,
+      "y": 43
+    },
+    {
+      "translation_key": "slot.tinkersnewlife.flying_sword.handle2",
+      "icon": "tconstruct:tough_handle",
+      "filter": {
+        "item": "tconstruct:tough_handle"
+      },
+      "x": 36,
+      "y": 61
+    },
+    {
+      "translation_key": "slot.tinkersnewlife.flying_sword.handle3",
+      "icon": "tconstruct:tool_handle",
+      "filter": {
+        "item": "tconstruct:tool_handle"
+      },
+      "x": 6,
+      "y": 70
+    }
+  ]
+}
