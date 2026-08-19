@@ -1,0 +1,10 @@
+{
+  "type": "tconstruct:melting_fuel",
+  "duration": 120,
+  "fluid": {
+    "amount": 50,
+    "fluid": "tinkersnewlife:fire_blood_still"
+  },
+  "rate": 20,
+  "temperature": 1650
+}
