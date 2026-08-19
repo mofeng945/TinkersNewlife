@@ -1,0 +1,13 @@
+{
+  "type": "mantle:fill_item",
+  "input": {
+    "item": "minecraft:glass_bottle"
+  },
+  "fluid": {
+    "fluid": "tinkersnewlife:lightning_blood_still",
+    "amount": 250
+  },
+  "result": {
+    "item": "iceandfire:lightning_dragon_blood"
+  }
+}
