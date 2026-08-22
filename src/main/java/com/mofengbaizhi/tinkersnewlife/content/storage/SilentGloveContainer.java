@@ -17,7 +17,6 @@ public class SilentGloveContainer extends AbstractContainerMenu {
     private final IItemHandler inventory;
     private final UUID vaultUUID;
 
-    // 服务端构造
     public SilentGloveContainer(int containerId, Inventory playerInventory, ItemStack gloveStack) {
         super(ModMenus.SILENT_GLOVE_CONTAINER.get(), containerId);
         this.vaultUUID = SilentGloveItem.getOrCreateVaultUUID(gloveStack);
@@ -25,7 +24,6 @@ public class SilentGloveContainer extends AbstractContainerMenu {
         initSlots(playerInventory);
     }
 
-    // 客户端构造
     public SilentGloveContainer(int containerId, Inventory playerInventory, UUID vaultUUID, IItemHandler inventory) {
         super(ModMenus.SILENT_GLOVE_CONTAINER.get(), containerId);
         this.vaultUUID = vaultUUID;
@@ -33,11 +31,10 @@ public class SilentGloveContainer extends AbstractContainerMenu {
         initSlots(playerInventory);
     }
 
-    // ✅ 统一的槽位注册方法
     private void initSlots(Inventory playerInventory) {
         final IItemHandler inv = this.inventory;
 
-        // ===== 空间奇点库格子（12格，2行 × 6列） =====
+        // 空间奇点库格子（12格，2行 × 6列）
         for (int row = 0; row < 2; row++) {
             for (int col = 0; col < 6; col++) {
                 int index = row * 6 + col;
@@ -52,7 +49,7 @@ public class SilentGloveContainer extends AbstractContainerMenu {
             }
         }
 
-        // ===== 玩家物品栏（27格） =====
+        // 玩家物品栏（27格）
         int playerInvY = 62;
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
@@ -63,15 +60,13 @@ public class SilentGloveContainer extends AbstractContainerMenu {
             }
         }
 
-        // ===== 玩家快捷栏（9格） =====
+        // 玩家快捷栏（9格）
         for (int col = 0; col < 9; col++) {
             int x = 8 + col * 18;
             int y = playerInvY + 58;
             this.addSlot(new Slot(playerInventory, col, x, y));
         }
     }
-
-    // ========== 剩余方法（quickMoveStack, stillValid, removed 等）保持不变 ==========
 
     @Override
     public ItemStack quickMoveStack(Player player, int slotIndex) {
@@ -99,11 +94,8 @@ public class SilentGloveContainer extends AbstractContainerMenu {
             slot.setChanged();
         }
 
-        if (inventory instanceof SilentGloveHandler handler) {
-            handler.save();
-            this.broadcastChanges();
-        }
-
+        // ⭐ 由 handler 自身标记脏，外部无需调用 save()
+        this.broadcastChanges();
         return copy;
     }
 
@@ -115,9 +107,7 @@ public class SilentGloveContainer extends AbstractContainerMenu {
     @Override
     public void removed(Player player) {
         super.removed(player);
-        if (inventory instanceof SilentGloveHandler handler) {
-            handler.save();
-        }
+        // ⭐ 由 handler 自身标记脏，外部无需调用 save()
         this.broadcastChanges();
     }
 

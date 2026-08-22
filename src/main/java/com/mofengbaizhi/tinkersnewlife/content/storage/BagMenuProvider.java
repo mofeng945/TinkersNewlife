@@ -18,7 +18,6 @@ public class BagMenuProvider implements MenuProvider {
     public BagMenuProvider(UUID uuid, int level) {
         this.uuid = uuid;
         this.level = level;
-        // ✅ 使用翻译键，等级作为参数插入
         this.displayName = Component.translatable("container.tinkersnewlife.bag", level);
     }
 

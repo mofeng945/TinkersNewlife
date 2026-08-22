@@ -23,7 +23,10 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;  // ✅ 添加这行导入
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class StorageManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(StorageManager.class);
@@ -40,18 +43,20 @@ public class StorageManager {
     // ============================================================
 
     // ============================================================
-    //  📦 自定义 ItemStackHandler，支持超大堆叠
+    //  📦 自定义 ItemStackHandler，支持超大堆叠 + 延迟保存
     // ============================================================
     public static class BigStackHandler extends ItemStackHandler {
         private final int maxStackSize;
+        private final UUID uuid; // 关联的背包UUID
 
-        public BigStackHandler(int slots) {
-            this(slots, MAX_STACK_SIZE);
+        public BigStackHandler(int slots, UUID uuid) {
+            this(slots, MAX_STACK_SIZE, uuid);
         }
 
-        public BigStackHandler(int slots, int maxStackSize) {
+        public BigStackHandler(int slots, int maxStackSize, UUID uuid) {
             super(slots);
             this.maxStackSize = maxStackSize;
+            this.uuid = uuid;
         }
 
         public int getMaxStackSize() {
@@ -140,6 +145,19 @@ public class StorageManager {
             nbt.put("Items", itemList);
             return nbt;
         }
+
+        @Override
+        protected void onContentsChanged(int slot) {
+            super.onContentsChanged(slot);
+            // ⭐ 只标记脏，不立即写入磁盘（关键优化）
+            if (uuid != null) {
+                StorageManager.getInstance().markDirty(uuid);
+            }
+        }
+
+        public UUID getUuid() {
+            return uuid;
+        }
     }
 
     // ============================================================
@@ -147,10 +165,11 @@ public class StorageManager {
     // ============================================================
 
     private final ConcurrentHashMap<UUID, BigStackHandler> cache = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<UUID, Boolean> dirtyFlags = new ConcurrentHashMap<>();
+    private final Set<UUID> dirtySet = ConcurrentHashMap.newKeySet();
 
     private Path storageDir;
     private boolean isServerSide = false;
+    private ScheduledExecutorService scheduler;
 
     private StorageManager() {
         MinecraftForge.EVENT_BUS.register(this);
@@ -175,6 +194,10 @@ public class StorageManager {
         } catch (IOException e) {
             LOGGER.error("[TinkersNewlife] 无法创建背包存储目录!", e);
         }
+
+        // ⭐ 启动定时保存任务，每30秒执行一次
+        scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduler.scheduleAtFixedRate(this::saveAllDirty, 30, 30, TimeUnit.SECONDS);
     }
 
     public static int getCapacityForLevel(int level) {
@@ -189,7 +212,7 @@ public class StorageManager {
         }
 
         LOGGER.info("[TinkersNewlife] 调整背包容量: {} -> {}", oldHandler.getSlots(), newCapacity);
-        BigStackHandler newHandler = new BigStackHandler(newCapacity);
+        BigStackHandler newHandler = new BigStackHandler(newCapacity, oldHandler.getUuid());
 
         int copySlots = Math.min(oldHandler.getSlots(), newCapacity);
         for (int i = 0; i < copySlots; i++) {
@@ -205,7 +228,7 @@ public class StorageManager {
     public BigStackHandler getOrCreate(UUID uuid, int level) {
         if (!isServerSide) {
             LOGGER.warn("[TinkersNewlife] 客户端不应直接调用 StorageManager.getOrCreate()");
-            return new BigStackHandler(getCapacityForLevel(level));
+            return new BigStackHandler(getCapacityForLevel(level), uuid);
         }
 
         int requiredCapacity = getCapacityForLevel(level);
@@ -230,7 +253,7 @@ public class StorageManager {
             return handler;
         }
 
-        handler = new BigStackHandler(requiredCapacity);
+        handler = new BigStackHandler(requiredCapacity, uuid);
         cache.put(uuid, handler);
         LOGGER.info("[TinkersNewlife] 创建新背包: {} ({} 格)", uuid, requiredCapacity);
         return handler;
@@ -238,7 +261,7 @@ public class StorageManager {
 
     public void markDirty(UUID uuid) {
         if (!isServerSide) return;
-        dirtyFlags.put(uuid, true);
+        dirtySet.add(uuid);
     }
 
     @Nullable
@@ -250,17 +273,18 @@ public class StorageManager {
         int currentCapacity = getCapacityForLevel(currentLevel);
 
         try (DataInputStream dis = new DataInputStream(new FileInputStream(file.toFile()))) {
-            CompoundTag tag = NbtIo.read(dis);
+            // ⭐ 使用压缩读取
+            CompoundTag tag = NbtIo.readCompressed(dis);
             if (tag == null) return null;
 
             int savedSlots = tag.getInt("Size");
-            BigStackHandler handler = new BigStackHandler(Math.max(savedSlots, currentCapacity));
+            BigStackHandler handler = new BigStackHandler(Math.max(savedSlots, currentCapacity), uuid);
 
             handler.deserializeNBT(tag);
 
             if (savedSlots > currentCapacity) {
                 LOGGER.warn("[TinkersNewlife] 背包 {} 容量从 {} 缩减到 {}，将截断多余物品", uuid, savedSlots, currentCapacity);
-                BigStackHandler truncated = new BigStackHandler(currentCapacity);
+                BigStackHandler truncated = new BigStackHandler(currentCapacity, uuid);
                 for (int i = 0; i < Math.min(savedSlots, currentCapacity); i++) {
                     ItemStack stack = handler.getStackInSlot(i);
                     if (!stack.isEmpty()) {
@@ -282,7 +306,8 @@ public class StorageManager {
         Path file = storageDir.resolve(uuid.toString() + ".nbt");
         try (DataOutputStream dos = new DataOutputStream(new FileOutputStream(file.toFile()))) {
             CompoundTag tag = handler.serializeNBT();
-            NbtIo.write(tag, dos);
+            // ⭐ 使用压缩写入
+            NbtIo.writeCompressed(tag, dos);
         } catch (Exception e) {
             LOGGER.error("[TinkersNewlife] 保存背包文件失败: {}", uuid, e);
         }
@@ -290,31 +315,41 @@ public class StorageManager {
 
     public void saveAllDirty() {
         if (!isServerSide) return;
-        for (UUID uuid : dirtyFlags.keySet()) {
-            if (Boolean.TRUE.equals(dirtyFlags.get(uuid))) {
-                BigStackHandler handler = cache.get(uuid);
-                if (handler != null) {
-                    saveToFile(uuid, handler);
-                }
-                dirtyFlags.remove(uuid);
+        if (dirtySet.isEmpty()) return;
+        LOGGER.info("[TinkersNewlife] 正在保存 {} 个脏背包...", dirtySet.size());
+        for (UUID uuid : dirtySet) {
+            BigStackHandler handler = cache.get(uuid);
+            if (handler != null) {
+                saveToFile(uuid, handler);
             }
         }
+        dirtySet.clear();
     }
 
     public void saveAll() {
         if (!isServerSide) return;
         LOGGER.info("[TinkersNewlife] 保存所有背包数据...");
+        // ⭐ 只保存脏的，不遍历所有缓存
         saveAllDirty();
-        for (var entry : cache.entrySet()) {
-            saveToFile(entry.getKey(), entry.getValue());
-        }
-        cache.clear();
-        dirtyFlags.clear();
     }
 
     @SubscribeEvent
     public void onServerStopped(ServerStoppedEvent event) {
-        saveAll();
+        // ⭐ 最后保存一次
+        saveAllDirty();
+        // 同时保存手套存储
+        SilentGloveHandler.saveAll();
+        if (scheduler != null) {
+            scheduler.shutdown();
+            try {
+                if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                    scheduler.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                scheduler.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+        }
         isServerSide = false;
     }
 
@@ -326,9 +361,6 @@ public class StorageManager {
     //  🧹 背包整理功能
     // ============================================================
 
-    /**
-     * 整理指定 UUID 的背包：合并同类物品，空出前面的格子
-     */
     public void sortInventory(UUID uuid) {
         if (!isServerSide) return;
 
@@ -337,7 +369,6 @@ public class StorageManager {
 
         int slotCount = handler.getSlots();
 
-        // 1. 收集所有非空物品
         List<ItemStack> items = new ArrayList<>();
         for (int i = 0; i < slotCount; i++) {
             ItemStack stack = handler.getStackInSlot(i);
@@ -346,12 +377,10 @@ public class StorageManager {
             }
         }
 
-        // 2. 清空背包
         for (int i = 0; i < slotCount; i++) {
             handler.setStackInSlot(i, ItemStack.EMPTY);
         }
 
-        // 3. 按物品分组（相同 ID + 相同 NBT）
         Map<String, List<ItemStack>> grouped = new LinkedHashMap<>();
 
         for (ItemStack stack : items) {
@@ -361,7 +390,6 @@ public class StorageManager {
             grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(stack);
         }
 
-        // 4. 合并每个组的物品
         List<ItemStack> mergedItems = new ArrayList<>();
         for (List<ItemStack> group : grouped.values()) {
             int totalCount = 0;
@@ -380,7 +408,6 @@ public class StorageManager {
             }
         }
 
-        // 5. 放回背包
         int slotIndex = 0;
         for (ItemStack stack : mergedItems) {
             if (slotIndex >= slotCount) break;

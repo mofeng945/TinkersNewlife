@@ -23,12 +23,11 @@ public class SilentGloveHandler extends ItemStackHandler {
     private static final Path STORAGE_DIR = Path.of("tinkersnewlife/glove_vaults");
 
     private static final ConcurrentHashMap<UUID, SilentGloveHandler> SERVER_CACHE = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<UUID, Boolean> DIRTY_FLAGS = new ConcurrentHashMap<>();
 
     private final UUID uuid;
-    private final boolean isClient; // true 表示客户端实例，不持久化
-    private boolean dirty = false;
+    private final boolean isClient;
 
-    // 服务端构造：使用缓存
     private SilentGloveHandler(UUID uuid) {
         super(SIZE);
         this.uuid = uuid;
@@ -36,7 +35,6 @@ public class SilentGloveHandler extends ItemStackHandler {
         load();
     }
 
-    // 客户端构造：从 NBT 加载数据，不持久化
     public SilentGloveHandler(UUID uuid, CompoundTag data) {
         super(SIZE);
         this.uuid = uuid;
@@ -46,29 +44,44 @@ public class SilentGloveHandler extends ItemStackHandler {
         }
     }
 
-    // 服务端获取或创建
     public static SilentGloveHandler getOrCreate(UUID uuid) {
         return SERVER_CACHE.computeIfAbsent(uuid, SilentGloveHandler::new);
     }
 
-    // 客户端获取（只读，不使用缓存）
     public static SilentGloveHandler createClient(UUID uuid, CompoundTag data) {
         return new SilentGloveHandler(uuid, data);
     }
 
-    // ========== 过滤规则 ==========
+    // ⭐ 保存所有脏数据
+    public static void saveAllDirty() {
+        for (UUID uuid : DIRTY_FLAGS.keySet()) {
+            if (Boolean.TRUE.equals(DIRTY_FLAGS.get(uuid))) {
+                SilentGloveHandler handler = SERVER_CACHE.get(uuid);
+                if (handler != null) {
+                    handler.save();
+                }
+                DIRTY_FLAGS.remove(uuid);
+            }
+        }
+    }
+
+    // ⭐ 在服务器停止时调用，确保所有保存
+    public static void saveAll() {
+        saveAllDirty();
+        for (var entry : SERVER_CACHE.entrySet()) {
+            entry.getValue().save();
+        }
+        SERVER_CACHE.clear();
+        DIRTY_FLAGS.clear();
+    }
 
     @Override
     public boolean isItemValid(int slot, @Nonnull ItemStack stack) {
-        // ❌ 禁止手套自身
         if (stack.getItem() instanceof SilentGloveItem) {
             return false;
         }
-        // ✅ 只允许匠魂可改装物品
         return stack.is(TinkerTags.Items.MODIFIABLE);
     }
-
-    // ========== 重写插入和提取 ==========
 
     @Nonnull
     @Override
@@ -93,8 +106,6 @@ public class SilentGloveHandler extends ItemStackHandler {
         return result;
     }
 
-    // ========== 持久化（仅服务端） ==========
-
     private Path getFilePath() {
         return STORAGE_DIR.resolve(uuid.toString() + ".nbt");
     }
@@ -104,7 +115,8 @@ public class SilentGloveHandler extends ItemStackHandler {
         Path file = getFilePath();
         if (!Files.exists(file)) return;
         try (DataInputStream dis = new DataInputStream(new FileInputStream(file.toFile()))) {
-            CompoundTag tag = NbtIo.read(dis);
+            // ⭐ 压缩读取
+            CompoundTag tag = NbtIo.readCompressed(dis);
             if (tag != null) {
                 this.deserializeNBT(tag);
             }
@@ -118,24 +130,22 @@ public class SilentGloveHandler extends ItemStackHandler {
         try {
             Files.createDirectories(getFilePath().getParent());
             try (DataOutputStream dos = new DataOutputStream(new FileOutputStream(getFilePath().toFile()))) {
-                NbtIo.write(this.serializeNBT(), dos);
+                // ⭐ 压缩写入
+                NbtIo.writeCompressed(this.serializeNBT(), dos);
             }
         } catch (IOException e) {
             LOGGER.error("[TinkersNewlife] 保存手套存储失败: {}", uuid, e);
         }
-        dirty = false;
     }
 
     @Override
     protected void onContentsChanged(int slot) {
         super.onContentsChanged(slot);
         if (!isClient) {
-            dirty = true;
-            save();
+            // ⭐ 只标记脏，不立即保存
+            DIRTY_FLAGS.put(uuid, true);
         }
     }
-
-    // ========== 辅助方法 ==========
 
     public int getUsedSlots() {
         int count = 0;
@@ -147,9 +157,5 @@ public class SilentGloveHandler extends ItemStackHandler {
 
     public UUID getUUID() {
         return uuid;
-    }
-
-    public boolean isDirty() {
-        return dirty;
     }
 }

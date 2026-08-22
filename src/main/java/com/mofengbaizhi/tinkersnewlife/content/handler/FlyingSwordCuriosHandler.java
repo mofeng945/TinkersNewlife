@@ -37,23 +37,23 @@ public class FlyingSwordCuriosHandler {
         if (!(stack.getItem() instanceof FlyingSwordItem)) return;
         if (!"feet".equals(event.getSlotContext().identifier())) return;
 
-        // ★ 损坏时静默阻止装备
-        if (isFlyingSwordBroken(stack)) {
-            event.setCanceled(true);
-            return;
-        }
+        // 移除所有 event.setCanceled(true) 调用，不再阻止任何装备行为
+        // 飞剑损坏时也可装备，由 Tick 事件控制飞行启用与否
 
         Player player = (Player) event.getEntity();
         if (!player.level().isClientSide) {
+            // 防止重复装备同一把飞剑（但不取消事件，只是静默返回）
             UUID emittingId = FlyingSwordItem.EMITTING_PLAYER.get();
             if (emittingId != null && emittingId.equals(player.getUUID())) {
-                event.setCanceled(true);
                 return;
             }
 
+            // 记录飞剑主动开启飞行的标记
             player.getPersistentData().putBoolean(FLYING_SWORD_ACTIVE, true);
+            // 保存玩家原本的 mayfly 状态，以便恢复
             player.getPersistentData().putBoolean("flying_sword_prev_mayfly", player.getAbilities().mayfly);
 
+            // 启用飞行能力（即使损坏也会启用，但 Tick 事件会立即处理）
             player.getAbilities().mayfly = true;
             player.getAbilities().flying = true;
             player.onUpdateAbilities();
@@ -79,7 +79,7 @@ public class FlyingSwordCuriosHandler {
         if (event.phase != TickEvent.Phase.END) return;
         Player player = event.player;
         if (player.level().isClientSide) return;
-        if (player.isCreative()) return;
+        if (player.isCreative()) return; // 创造性玩家不干预
 
         var curios = CuriosApi.getCuriosInventory(player).resolve();
         if (curios.isEmpty()) return;
@@ -88,7 +88,7 @@ public class FlyingSwordCuriosHandler {
         boolean hasFlyingSword = slotResult.isPresent();
         boolean active = player.getPersistentData().getBoolean(FLYING_SWORD_ACTIVE);
 
-        // 如果标记为 active，但实际没有飞剑或飞剑损坏 → 静默清除飞行状态
+        // 如果标记为 active，但实际没有飞剑或飞剑损坏 → 清除飞行状态
         if (active) {
             if (!hasFlyingSword) {
                 clearFlyingState(player);
@@ -101,7 +101,7 @@ public class FlyingSwordCuriosHandler {
             }
         }
 
-        // 有飞剑且未损坏，且玩家正在飞行 → 确保实体存在
+        // 有飞剑且未损坏，且玩家正在飞行 → 确保脚部实体存在
         if (hasFlyingSword && slotResult.isPresent()) {
             ItemStack stack = slotResult.get().stack();
             if (!isFlyingSwordBroken(stack) && player.getAbilities().flying) {
@@ -109,6 +109,7 @@ public class FlyingSwordCuriosHandler {
                     spawnFootEntity(player, stack);
                 }
             } else {
+                // 飞剑损坏或玩家没有飞行，移除实体
                 if (hasFootEntity(player)) {
                     removeFootEntity(player);
                 }
@@ -131,7 +132,7 @@ public class FlyingSwordCuriosHandler {
             if (slotResult.isEmpty()) continue;
 
             ItemStack stack = slotResult.get().stack();
-            // ★ 损坏后不再消耗耐久
+            // 损坏后不再消耗耐久，并清除飞行状态
             if (isFlyingSwordBroken(stack)) {
                 clearFlyingState(player);
                 continue;
@@ -147,24 +148,30 @@ public class FlyingSwordCuriosHandler {
         if (!(event.getEntity() instanceof Player player)) return;
         if (player.level().isClientSide) return;
 
-        // ★ 只在飞行状态下取消摔伤
+        // 只在飞行状态下取消摔伤
         if (player.getAbilities().flying) {
             event.setCanceled(true);
-            return;
         }
-
-        // ★ 关闭飞行后，正常计算摔伤（由原版处理，我们不干预）
-        // 让原版逻辑自行处理，这里不做任何操作
+        // 关闭飞行后，正常计算摔伤，由原版处理
     }
 
     // ===== 辅助方法 =====
 
+    /**
+     * 清除飞剑带来的飞行状态，并恢复玩家原有的 mayfly 权限
+     */
     private static void clearFlyingState(Player player) {
-        player.getPersistentData().remove(FLYING_SWORD_ACTIVE);
-        boolean prevMayfly = player.getPersistentData().getBoolean("flying_sword_prev_mayfly");
-        player.getAbilities().mayfly = prevMayfly;
-        player.getAbilities().flying = false;
-        player.onUpdateAbilities();
+        // 只有飞剑主动开启了飞行，才恢复 mayfly 和清除标记
+        if (player.getPersistentData().getBoolean(FLYING_SWORD_ACTIVE)) {
+            boolean prevMayfly = player.getPersistentData().getBoolean("flying_sword_prev_mayfly");
+            player.getAbilities().mayfly = prevMayfly;
+            player.getAbilities().flying = false;
+            player.onUpdateAbilities();
+
+            player.getPersistentData().remove(FLYING_SWORD_ACTIVE);
+            player.getPersistentData().remove("flying_sword_prev_mayfly");
+        }
+        // 无论是否主动开启，都移除实体
         removeFootEntity(player);
     }
 

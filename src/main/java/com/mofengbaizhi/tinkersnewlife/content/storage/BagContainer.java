@@ -40,7 +40,8 @@ public class BagContainer extends AbstractContainerMenu {
         this.bagUUID = uuid;
         this.bagLevel = level;
         this.bagSlotCount = StorageManager.getCapacityForLevel(level);
-        StorageManager.BigStackHandler handler = new StorageManager.BigStackHandler(bagSlotCount);
+        // ⭐ 传入uuid
+        StorageManager.BigStackHandler handler = new StorageManager.BigStackHandler(bagSlotCount, uuid);
         handler.deserializeNBT(data);
         this.bagInventory = handler;
         initSlots(playerInventory);
@@ -169,8 +170,7 @@ public class BagContainer extends AbstractContainerMenu {
     }
 
     // ============================================================
-    //  ✅ 最稳定安全的 Shift 点击：只移动一组（原版最大堆叠）
-    //  使用 moveItemStackTo 处理分散，但总数量限制为一组
+    //  ✅ 最稳定安全的 Shift 点击
     // ============================================================
 
     @Override
@@ -182,59 +182,51 @@ public class BagContainer extends AbstractContainerMenu {
         ItemStack copy = stack.copy();
 
         int bagSlotCount = this.bagSlotCount;
-        int groupSize = stack.getMaxStackSize(); // 物品原版最大堆叠（64/16等）
+        int groupSize = stack.getMaxStackSize();
         int toMove = Math.min(stack.getCount(), groupSize);
 
         if (toMove <= 0) return ItemStack.EMPTY;
 
-        // 从原槽位取出一组
         ItemStack extracted = slot.remove(toMove);
         if (extracted.isEmpty()) return ItemStack.EMPTY;
 
-        // 确定目标区域
         int targetStart, targetEnd;
         boolean reverse;
 
         if (slotIndex < bagSlotCount) {
-            // 从背包 → 玩家物品栏
             targetStart = bagSlotCount;
             targetEnd = this.slots.size();
             reverse = true;
         } else {
-            // 从玩家物品栏 → 背包
             targetStart = 0;
             targetEnd = bagSlotCount;
             reverse = false;
         }
 
-        // 尝试移动 extracted 到目标区域
         boolean moved = this.moveItemStackTo(extracted, targetStart, targetEnd, reverse);
 
         if (!moved) {
-            // 完全无法移动，放回原槽位
             slot.set(extracted);
             return ItemStack.EMPTY;
         }
 
-        // 如果还有剩余（部分放入），放回原槽位
         if (!extracted.isEmpty()) {
             ItemStack current = slot.getItem();
             if (current.isEmpty()) {
                 slot.set(extracted);
             } else {
-                // 合并回原槽位（同类物品）
                 current.grow(extracted.getCount());
                 slot.set(current);
             }
         }
 
-        // 更新原槽位
         if (slot.getItem().isEmpty()) {
             slot.set(ItemStack.EMPTY);
         } else {
             slot.setChanged();
         }
 
+        // ⭐ 只标记脏，不立即保存
         StorageManager.getInstance().markDirty(bagUUID);
         this.broadcastChanges();
         return copy;
@@ -255,8 +247,9 @@ public class BagContainer extends AbstractContainerMenu {
     @Override
     public void removed(Player player) {
         super.removed(player);
+        // ⭐ 只标记脏，不立即保存
         StorageManager.getInstance().markDirty(bagUUID);
-        StorageManager.getInstance().saveAllDirty();
+        // 由定时任务统一保存
     }
 
     public UUID getBagUUID() {
