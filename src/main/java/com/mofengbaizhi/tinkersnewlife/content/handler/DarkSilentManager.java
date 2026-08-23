@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.content.handler;
 import com.mofengbaizhi.tinkersnewlife.content.item.DurandalSwordItem;
 import com.mofengbaizhi.tinkersnewlife.content.item.SilentGloveItem;
 import com.mofengbaizhi.tinkersnewlife.content.storage.SilentGloveHandler;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket;
@@ -76,7 +77,8 @@ public class DarkSilentManager {
     public static float getWeaponDamage(Player player, ItemStack weapon) {
         if (weapon.isEmpty()) return 1.0f;
         if (weapon.getItem() instanceof ModifiableItem) {
-            ToolStack tool = ToolStack.from(weapon);
+            // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
+            ToolStack tool = ToolHelper.getToolStack(weapon);
             if (tool != null && !tool.isBroken()) {
                 return tool.getStats().get(ToolStats.ATTACK_DAMAGE);
             }

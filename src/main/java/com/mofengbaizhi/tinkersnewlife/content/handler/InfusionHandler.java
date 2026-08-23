@@ -3,11 +3,12 @@ package com.mofengbaizhi.tinkersnewlife.content.handler;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModEffects;
 import com.mofengbaizhi.tinkersnewlife.content.modifier.DragonBloodTankTrait;
+import com.mofengbaizhi.tinkersnewlife.util.ProjectileWeaponHelper;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
@@ -21,8 +22,6 @@ import net.minecraftforge.fml.common.Mod;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
-import java.lang.reflect.Method;
-
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class InfusionHandler {
 
@@ -32,30 +31,11 @@ public class InfusionHandler {
     private static final int BLOOD_COST = 50;
     private static final int FIRE_DURATION_BASE = 5;
     private static final int DURATION_PER_LEVEL_FIRE = 2;
-    private static final int FROST_DURATION_BASE = 100;   // 霜冻基础持续 tick
+    private static final int FROST_DURATION_BASE = 100;
     private static final int DURATION_PER_LEVEL_FROST = 50;
     private static final int DISARM_DURATION_BASE = 60;
     private static final int DURATION_PER_LEVEL_DISARM = 20;
 
-    // ==================== 辅助方法：获取弹射物对应的武器 ====================
-    private static ItemStack getProjectileWeapon(Projectile projectile, Player shooter) {
-        try {
-            Method method = projectile.getClass().getMethod("getPickupItem");
-            return (ItemStack) method.invoke(projectile);
-        } catch (Exception ignored) {}
-        try {
-            Method method = projectile.getClass().getMethod("getItem");
-            return (ItemStack) method.invoke(projectile);
-        } catch (Exception ignored) {}
-
-        ItemStack mainHand = shooter.getMainHandItem();
-        if (!mainHand.isEmpty()) return mainHand;
-        ItemStack offHand = shooter.getOffhandItem();
-        if (!offHand.isEmpty()) return offHand;
-        return ItemStack.EMPTY;
-    }
-
-    // ==================== 近战 ====================
     @SubscribeEvent
     public static void onLivingAttack(LivingAttackEvent event) {
         if (!(event.getSource().getEntity() instanceof Player player)) return;
@@ -65,7 +45,8 @@ public class InfusionHandler {
         ItemStack stack = player.getMainHandItem();
         if (stack.isEmpty()) return;
 
-        ToolStack tool = ToolStack.from(stack);
+        // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
+        ToolStack tool = ToolHelper.getToolStack(stack);
         if (tool == null) return;
         if (tool.getStats().getContainedStats().isEmpty()) return;
 
@@ -73,7 +54,6 @@ public class InfusionHandler {
         if (level > 0) applyInfusionEffect(tool, target, level);
     }
 
-    // ==================== 弹射物 ====================
     @SubscribeEvent
     public static void onProjectileImpact(ProjectileImpactEvent event) {
         if (!(event.getRayTraceResult() instanceof EntityHitResult entityHit)) return;
@@ -81,11 +61,11 @@ public class InfusionHandler {
         if (!(event.getProjectile().getOwner() instanceof Player player)) return;
         if (player.level().isClientSide) return;
 
-        // ★ 获取弹射物对应的武器
-        ItemStack stack = getProjectileWeapon(event.getProjectile(), player);
+        ItemStack stack = ProjectileWeaponHelper.getProjectileWeapon(event.getProjectile(), player);
         if (stack.isEmpty()) return;
 
-        ToolStack tool = ToolStack.from(stack);
+        // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
+        ToolStack tool = ToolHelper.getToolStack(stack);
         if (tool == null) return;
         if (tool.getStats().getContainedStats().isEmpty()) return;
 
@@ -113,7 +93,6 @@ public class InfusionHandler {
 
         if (consumedType == null) return;
 
-        // ========== 粒子特效 ==========
         if (target.level() instanceof ServerLevel server) {
             Vec3 pos = target.position().add(0, target.getBbHeight() / 2, 0);
             switch (consumedType) {
@@ -133,14 +112,12 @@ public class InfusionHandler {
             }
         }
 
-        // ========== 应用效果 ==========
         switch (consumedType) {
             case FIRE -> {
                 int duration = FIRE_DURATION_BASE + (level - 1) * DURATION_PER_LEVEL_FIRE;
                 target.setSecondsOnFire(duration);
             }
             case ICE -> {
-                // ★ 修改：使用霜冻效果（自创状态效果），替代缓慢+凋零
                 int duration = FROST_DURATION_BASE + (level - 1) * DURATION_PER_LEVEL_FROST;
                 if (ModEffects.FROST.get() != null) {
                     target.addEffect(new MobEffectInstance(ModEffects.FROST.get(), duration, 0, false, true));

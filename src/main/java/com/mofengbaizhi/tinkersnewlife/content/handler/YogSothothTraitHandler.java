@@ -1,6 +1,7 @@
 package com.mofengbaizhi.tinkersnewlife.content.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -29,7 +30,8 @@ public class YogSothothTraitHandler {
         }
         if (weapon.isEmpty()) return;
 
-        ToolStack tool = ToolStack.from(weapon);
+        // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
+        ToolStack tool = ToolHelper.getToolStack(weapon);
         if (tool == null) return;
 
         int level = tool.getModifierLevel(YOG_SOTHOTH_GIFT);

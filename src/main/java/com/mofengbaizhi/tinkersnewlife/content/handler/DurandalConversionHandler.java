@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.content.handler;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModItems;
 import com.mofengbaizhi.tinkersnewlife.content.item.DurandalSwordItem;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
@@ -66,7 +67,8 @@ public class DurandalConversionHandler {
         UUID playerId = player.getUUID();
         if (convertedCache.contains(playerId)) return stack;
 
-        ToolStack tool = ToolStack.from(stack);
+        // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
+        ToolStack tool = ToolHelper.getToolStack(stack);
         if (tool == null || tool.isBroken()) return stack;
 
         // ✅ 使用 getId() 获取工具定义 ID

@@ -1,6 +1,8 @@
 package com.mofengbaizhi.tinkersnewlife.content.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import com.mofengbaizhi.tinkersnewlife.util.ProjectileWeaponHelper;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -21,7 +23,6 @@ import net.minecraftforge.fml.common.Mod;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
-import java.lang.reflect.Method;
 import java.util.List;
 
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -42,25 +43,6 @@ public class FusRoDahHandler {
     private static final float SOUND_VOLUME = 2.0f;
     private static final float SOUND_PITCH = 0.8f;
 
-    // ==================== 辅助方法：获取弹射物对应的武器 ====================
-    private static ItemStack getProjectileWeapon(Projectile projectile, Player shooter) {
-        try {
-            Method method = projectile.getClass().getMethod("getPickupItem");
-            return (ItemStack) method.invoke(projectile);
-        } catch (Exception ignored) {}
-        try {
-            Method method = projectile.getClass().getMethod("getItem");
-            return (ItemStack) method.invoke(projectile);
-        } catch (Exception ignored) {}
-
-        ItemStack mainHand = shooter.getMainHandItem();
-        if (!mainHand.isEmpty()) return mainHand;
-        ItemStack offHand = shooter.getOffhandItem();
-        if (!offHand.isEmpty()) return offHand;
-        return ItemStack.EMPTY;
-    }
-
-    // ==================== 近战 ====================
     @SubscribeEvent
     public static void onLivingAttack(LivingAttackEvent event) {
         if (!(event.getSource().getEntity() instanceof Player player)) return;
@@ -70,7 +52,8 @@ public class FusRoDahHandler {
         ItemStack stack = player.getMainHandItem();
         if (stack.isEmpty()) return;
 
-        ToolStack tool = ToolStack.from(stack);
+        // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
+        ToolStack tool = ToolHelper.getToolStack(stack);
         if (tool == null) return;
         if (tool.getStats().getContainedStats().isEmpty()) return;
 
@@ -78,7 +61,6 @@ public class FusRoDahHandler {
         if (level > 0) applyFusRoDah(player, target, level);
     }
 
-    // ==================== 弹射物 ====================
     @SubscribeEvent
     public static void onProjectileImpact(ProjectileImpactEvent event) {
         if (!(event.getRayTraceResult() instanceof EntityHitResult entityHit)) return;
@@ -86,11 +68,11 @@ public class FusRoDahHandler {
         if (!(event.getProjectile().getOwner() instanceof Player player)) return;
         if (player.level().isClientSide) return;
 
-        // ★ 获取弹射物对应的武器
-        ItemStack stack = getProjectileWeapon(event.getProjectile(), player);
+        ItemStack stack = ProjectileWeaponHelper.getProjectileWeapon(event.getProjectile(), player);
         if (stack.isEmpty()) return;
 
-        ToolStack tool = ToolStack.from(stack);
+        // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
+        ToolStack tool = ToolHelper.getToolStack(stack);
         if (tool == null) return;
         if (tool.getStats().getContainedStats().isEmpty()) return;
 

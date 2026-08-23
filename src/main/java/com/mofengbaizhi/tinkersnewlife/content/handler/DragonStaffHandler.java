@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.content.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.modifier.DragonStaffTrait;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -110,7 +111,8 @@ public class DragonStaffHandler {
     private static ToolStack getTool(Player player) {
         ItemStack stack = player.getMainHandItem();
         if (!(stack.getItem() instanceof IModifiable)) return null;
-        ToolStack tool = ToolStack.from(stack);
+        // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
+        ToolStack tool = ToolHelper.getToolStack(stack);
         if (tool == null) return null;
         if (tool.getModifierLevel(DRAGON_STAFF_ID) <= 0) return null;
         ensureOwner(tool, player);
@@ -458,7 +460,8 @@ public class DragonStaffHandler {
 
         for (ItemStack stack : player.getInventory().items) {
             if (!(stack.getItem() instanceof IModifiable)) continue;
-            ToolStack tool = ToolStack.from(stack);
+            // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
+            ToolStack tool = ToolHelper.getToolStack(stack);
             if (tool == null || tool.getModifierLevel(DRAGON_STAFF_ID) <= 0) continue;
             ListTag slots = getSlots(tool);
             boolean changed = false;
@@ -494,7 +497,8 @@ public class DragonStaffHandler {
     private static void clearDragonFromSlots(Player player, UUID dragonUuid) {
         for (ItemStack stack : player.getInventory().items) {
             if (!(stack.getItem() instanceof IModifiable)) continue;
-            ToolStack tool = ToolStack.from(stack);
+            // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
+            ToolStack tool = ToolHelper.getToolStack(stack);
             if (tool == null || tool.getModifierLevel(DRAGON_STAFF_ID) <= 0) continue;
             ListTag slots = getSlots(tool);
             boolean changed = false;

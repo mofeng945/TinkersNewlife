@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.content.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.modifier.StarChildArmorTrait;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -32,7 +33,8 @@ public class StarChildArmorHandler {
 
         for (ItemStack armor : player.getArmorSlots()) {
             if (armor.isEmpty()) continue;
-            ToolStack tool = ToolStack.from(armor);
+            // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
+            ToolStack tool = ToolHelper.getToolStack(armor);
             if (tool == null) continue;
             int level = tool.getModifierLevel(StarChildArmorTrait.ID);
             if (level <= 0) continue;
@@ -72,7 +74,8 @@ public class StarChildArmorHandler {
         int totalLevel = 0;
         for (ItemStack armor : player.getArmorSlots()) {
             if (armor.isEmpty()) continue;
-            ToolStack tool = ToolStack.from(armor);
+            // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
+            ToolStack tool = ToolHelper.getToolStack(armor);
             if (tool == null) continue;
             int level = tool.getModifierLevel(StarChildArmorTrait.ID);
             if (level > 0) {

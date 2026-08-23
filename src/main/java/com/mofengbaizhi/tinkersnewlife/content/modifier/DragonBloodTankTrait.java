@@ -1,6 +1,7 @@
 package com.mofengbaizhi.tinkersnewlife.content.modifier;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -93,7 +94,8 @@ public class DragonBloodTankTrait extends Modifier implements TooltipModifierHoo
 
     @Nullable
     public static DragonBloodTankData getTankData(ItemStack stack, int capacity) {
-        ToolStack tool = ToolStack.from(stack);
+        // ✅ 使用 ToolHelper 安全获取
+        ToolStack tool = ToolHelper.getToolStack(stack);
         if (tool == null) return null;
         return getTankData(tool, capacity);
     }
@@ -104,13 +106,15 @@ public class DragonBloodTankTrait extends Modifier implements TooltipModifierHoo
     }
 
     public static void setTankData(ItemStack stack, DragonBloodTankData data) {
-        ToolStack tool = ToolStack.from(stack);
+        // ✅ 使用 ToolHelper 安全获取
+        ToolStack tool = ToolHelper.getToolStack(stack);
         if (tool == null) return;
         setTankData(tool, data);
     }
 
     public static int getCapacity(ItemStack stack) {
-        ToolStack tool = ToolStack.from(stack);
+        // ✅ 使用 ToolHelper 安全获取
+        ToolStack tool = ToolHelper.getToolStack(stack);
         if (tool == null) return 0;
         int level = tool.getModifierLevel(MODIFIER_ID);
         return level * CAPACITY_PER_LEVEL;

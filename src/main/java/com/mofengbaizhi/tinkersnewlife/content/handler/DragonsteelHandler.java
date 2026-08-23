@@ -4,6 +4,8 @@ import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModBlocks;
 import com.mofengbaizhi.tinkersnewlife.content.ModEffects;
 import com.mofengbaizhi.tinkersnewlife.content.modifier.DragonboneTrait;
+import com.mofengbaizhi.tinkersnewlife.util.ProjectileWeaponHelper;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -25,7 +27,6 @@ import net.minecraftforge.fml.common.Mod;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
-import java.lang.reflect.Method;
 import java.util.List;
 
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -41,32 +42,6 @@ public class DragonsteelHandler {
     private static final int LIGHTNING_DISARM_BASE = 60;
     private static final int ICE_LIFETIME = 100;
 
-    // ==================== 辅助方法：获取弹射物对应的武器 ====================
-    private static ItemStack getProjectileWeapon(Projectile projectile, Player shooter) {
-        // 1. 尝试从弹射物本身获取物品（三叉戟、匠魂标枪等）
-        try {
-            Method method = projectile.getClass().getMethod("getPickupItem");
-            return (ItemStack) method.invoke(projectile);
-        } catch (Exception ignored) {}
-        try {
-            Method method = projectile.getClass().getMethod("getItem");
-            return (ItemStack) method.invoke(projectile);
-        } catch (Exception ignored) {}
-
-        // 2. 若弹射物无物品，则从玩家主手获取（弓/弩）
-        ItemStack mainHand = shooter.getMainHandItem();
-        if (!mainHand.isEmpty()) {
-            return mainHand;
-        }
-        // 3. 若主手为空，尝试副手
-        ItemStack offHand = shooter.getOffhandItem();
-        if (!offHand.isEmpty()) {
-            return offHand;
-        }
-        return ItemStack.EMPTY;
-    }
-
-    // ==================== 近战 ====================
     @SubscribeEvent
     public static void onLivingAttack(LivingAttackEvent event) {
         if (!(event.getSource().getEntity() instanceof Player player)) return;
@@ -76,7 +51,8 @@ public class DragonsteelHandler {
         ItemStack stack = player.getMainHandItem();
         if (stack.isEmpty()) return;
 
-        ToolStack tool = ToolStack.from(stack);
+        // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
+        ToolStack tool = ToolHelper.getToolStack(stack);
         if (tool == null) return;
         if (tool.getStats().getContainedStats().isEmpty()) return;
 
@@ -95,7 +71,6 @@ public class DragonsteelHandler {
         if (lightningLevel > 0) applyLightningEffect(player.level(), target, lightningLevel);
     }
 
-    // ==================== 弹射物 ====================
     @SubscribeEvent
     public static void onProjectileImpact(ProjectileImpactEvent event) {
         if (!(event.getRayTraceResult() instanceof EntityHitResult entityHit)) return;
@@ -103,11 +78,11 @@ public class DragonsteelHandler {
         if (!(event.getProjectile().getOwner() instanceof Player player)) return;
         if (player.level().isClientSide) return;
 
-        // ★ 获取弹射物对应的武器（标枪本体 或 弓/弩）
-        ItemStack stack = getProjectileWeapon(event.getProjectile(), player);
+        ItemStack stack = ProjectileWeaponHelper.getProjectileWeapon(event.getProjectile(), player);
         if (stack.isEmpty()) return;
 
-        ToolStack tool = ToolStack.from(stack);
+        // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
+        ToolStack tool = ToolHelper.getToolStack(stack);
         if (tool == null) return;
         if (tool.getStats().getContainedStats().isEmpty()) return;
 
@@ -126,7 +101,7 @@ public class DragonsteelHandler {
         if (lightningLevel > 0) applyLightningEffect(player.level(), target, lightningLevel);
     }
 
-    // ==================== 效果实现（不变） ====================
+    // ===== 效果实现（不变） =====
 
     private static void applyFireEffect(Level level, LivingEntity target, int levelNum) {
         int fireTicks = FIRE_DURATION_BASE * levelNum;

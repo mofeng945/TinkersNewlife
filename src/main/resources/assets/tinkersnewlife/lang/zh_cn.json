@@ -304,6 +304,7 @@
   "tooltip.tinkersnewlife.flying_sword.mode.normal": "模式：普通",
   "tooltip.tinkersnewlife.flying_sword.mode.chase": "模式：追击",
   "tooltip.tinkersnewlife.flying_sword.switch_hint": "按 R 键切换模式",
+  "message.tinkersnewlife.durandal.converted":"杜兰达尔被唤醒了！",
 
   "effect.tinkersnewlife.disarm": "§e缴械",
   "effect.tinkersnewlife.frost": "§b霜冻",

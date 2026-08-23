@@ -3,13 +3,16 @@ package com.mofengbaizhi.tinkersnewlife.content.modifier;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.Modifiers;
 import com.mofengbaizhi.tinkersnewlife.content.item.ModularStaffItem;
+import com.mofengbaizhi.tinkersnewlife.util.ProjectileWeaponHelper;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -31,7 +34,6 @@ public class ModularStaffModifier extends Modifier implements MeleeDamageModifie
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ModularStaffModifier.class);
 
-    // 近战附加伤害：固定 1.5（不再受等级影响）
     private static final float MELEE_BONUS = 1.5f;
 
     @Override
@@ -46,7 +48,6 @@ public class ModularStaffModifier extends Modifier implements MeleeDamageModifie
     @Override
     public float getMeleeDamage(IToolStackView tool, ModifierEntry modifier,
                                 ToolAttackContext context, float baseDamage, float damage) {
-        // 直接附加固定值 1.5
         return damage + MELEE_BONUS;
     }
 
@@ -58,13 +59,9 @@ public class ModularStaffModifier extends Modifier implements MeleeDamageModifie
         DamageSource source = event.getSource();
         float originalDamage = event.getAmount();
 
-        // 1. 判断是否为玩家造成的伤害
         if (!(source.getEntity() instanceof Player player)) return;
-
-        // 2. 判断是否为法术伤害
         if (!isSpellDamage(source)) return;
 
-        // 3. 检查主手或副手是否持有模块化魔杖
         ItemStack mainHand = player.getMainHandItem();
         ItemStack offHand = player.getOffhandItem();
         ItemStack staffStack = ItemStack.EMPTY;
@@ -77,39 +74,28 @@ public class ModularStaffModifier extends Modifier implements MeleeDamageModifie
             return;
         }
 
-        // 4. 获取魔杖上的特性等级（通常为1）
-        ToolStack tool = ToolStack.from(staffStack);
+        // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
+        ToolStack tool = ToolHelper.getToolStack(staffStack);
         if (tool == null) return;
 
         int level = tool.getModifierLevel(Modifiers.MODULAR_STAFF_MODIFIER.getId());
         if (level <= 0) return;
 
-        // ============================================================
-        //  5. 获取法杖近战伤害和玩家基础近战伤害
-        // ============================================================
-
-        // 法杖近战伤害（来自匠魂工具统计）
+        // 法杖近战伤害
         float staffDamage = tool.getStats().get(ToolStats.ATTACK_DAMAGE);
 
-        // 玩家主手近战伤害（即玩家的攻击力属性）
+        // 玩家基础近战伤害
         AttributeInstance attackAttr = player.getAttribute(Attributes.ATTACK_DAMAGE);
         float basePlayerDamage = attackAttr != null ? (float) attackAttr.getValue() : 1.0f;
 
-        // ============================================================
-        //  6. 计算加成
-        // ============================================================
-
-        // 附加伤害 = 法杖伤害 * 50% + 玩家基础伤害 * 20%
+        // 计算加成
         float bonusDamage = staffDamage * 0.5f + basePlayerDamage * 0.2f;
-
-        // 法术强度增幅（百分比）= (法杖伤害 + 玩家基础伤害) / 10 * 0.01
         float powerMultiplier = (staffDamage + basePlayerDamage) / 10.0f * 0.01f;
 
-        // 最终伤害 = 原伤害 * (1 + 增幅) + 附加伤害
         float newDamage = originalDamage * (1.0f + powerMultiplier) + bonusDamage;
         event.setAmount(newDamage);
 
-        // 7. 粒子特效
+        // 粒子特效
         if (player.level() instanceof ServerLevel server) {
             LivingEntity target = event.getEntity();
             server.sendParticles(ParticleTypes.ENCHANT,

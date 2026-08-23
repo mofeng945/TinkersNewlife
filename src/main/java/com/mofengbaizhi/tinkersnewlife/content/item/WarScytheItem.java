@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.content.item;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -126,7 +127,9 @@ public class WarScytheItem extends ModifiableItem {
             return;
         }
 
-        ToolStack tool = ToolStack.from(stack);
+        // ✅ 使用 ToolHelper 安全获取
+        ToolStack tool = ToolHelper.getToolStack(stack);
+        if (tool == null) return;
         float baseDamage = tool.getStats().get(ToolStats.ATTACK_DAMAGE);
 
         isPerformingUltimate = true;

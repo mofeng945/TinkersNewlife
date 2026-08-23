@@ -1,6 +1,8 @@
 package com.mofengbaizhi.tinkersnewlife.content.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import com.mofengbaizhi.tinkersnewlife.util.ProjectileWeaponHelper;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -16,7 +18,6 @@ import net.minecraftforge.registries.ForgeRegistries;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -41,27 +42,6 @@ public class LuckyDropHandler {
         RARE_DROP_MAP.put(new ResourceLocation("iceandfire", "siren"), new ResourceLocation("iceandfire", "siren_tear"));
     }
 
-    // ==================== 辅助方法：从伤害源获取对应武器 ====================
-    private static ItemStack getWeaponForDamageSource(DamageSource source, Player player) {
-        Entity directEntity = source.getDirectEntity();
-        // 如果是弹射物，尝试从弹射物本身获取物品
-        if (directEntity instanceof Projectile projectile) {
-            try {
-                Method method = projectile.getClass().getMethod("getPickupItem");
-                return (ItemStack) method.invoke(projectile);
-            } catch (Exception ignored) {}
-            try {
-                Method method = projectile.getClass().getMethod("getItem");
-                return (ItemStack) method.invoke(projectile);
-            } catch (Exception ignored) {}
-        }
-        // 若无法获取，回退到玩家主手
-        if (!player.getMainHandItem().isEmpty()) {
-            return player.getMainHandItem();
-        }
-        return player.getOffhandItem();
-    }
-
     @SubscribeEvent
     public static void onLivingDrops(LivingDropsEvent event) {
         LivingEntity entity = event.getEntity();
@@ -77,11 +57,22 @@ public class LuckyDropHandler {
 
         if (player == null) return;
 
-        // ★ 使用辅助方法获取武器，兼容近战、弓箭、投掷武器
-        ItemStack weaponStack = getWeaponForDamageSource(source, player);
+        // ✅ 统一使用 ProjectileWeaponHelper 获取武器
+        ItemStack weaponStack = ItemStack.EMPTY;
+        Entity directEntity = source.getDirectEntity();
+        if (directEntity instanceof Projectile projectile) {
+            weaponStack = ProjectileWeaponHelper.getProjectileWeapon(projectile, player);
+        }
+        if (weaponStack.isEmpty()) {
+            weaponStack = player.getMainHandItem();
+        }
+        if (weaponStack.isEmpty()) {
+            weaponStack = player.getOffhandItem();
+        }
         if (weaponStack.isEmpty()) return;
 
-        ToolStack tool = ToolStack.from(weaponStack);
+        // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
+        ToolStack tool = ToolHelper.getToolStack(weaponStack);
         if (tool == null) return;
 
         int level = tool.getModifierLevel(LUCKY_DROP);

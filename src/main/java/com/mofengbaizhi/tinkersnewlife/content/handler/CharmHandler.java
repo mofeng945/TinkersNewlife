@@ -2,6 +2,8 @@ package com.mofengbaizhi.tinkersnewlife.content.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModEffects;
+import com.mofengbaizhi.tinkersnewlife.util.ProjectileWeaponHelper;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -21,7 +23,6 @@ import net.minecraftforge.fml.common.Mod;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
-import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,7 +32,7 @@ public class CharmHandler {
 
     private static final ModifierId CHARM_ID = new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "charm"));
     private static final ResourceLocation KEY_LAST_CHARM_TIME = new ResourceLocation(TinkersNewlife.MOD_ID, "last_charm_time");
-    
+
     private static final int CHARM_DURATION_BASE = 10 * 20;
     private static final int CHARM_DURATION_PER_LEVEL = 5 * 20;
     private static final int COOLDOWN = 30 * 20;
@@ -48,34 +49,6 @@ public class CharmHandler {
         }
     }
 
-    // ==================== 辅助方法：获取弹射物对应的武器 ====================
-    private static ItemStack getProjectileWeapon(Projectile projectile, Player shooter) {
-        // 1. 尝试从弹射物本身获取物品（标枪、三叉戟、匠魂标枪等）
-        try {
-            // 三叉戟、匠魂标枪等可能有 getPickupItem() 方法
-            Method method = projectile.getClass().getMethod("getPickupItem");
-            return (ItemStack) method.invoke(projectile);
-        } catch (Exception ignored) {}
-        try {
-            // 匠魂标枪可能通过 getItem() 获取
-            Method method = projectile.getClass().getMethod("getItem");
-            return (ItemStack) method.invoke(projectile);
-        } catch (Exception ignored) {}
-
-        // 2. 若弹射物无物品，则从玩家主手获取（弓/弩）
-        ItemStack mainHand = shooter.getMainHandItem();
-        if (!mainHand.isEmpty()) {
-            return mainHand;
-        }
-        // 3. 若主手为空，尝试副手
-        ItemStack offHand = shooter.getOffhandItem();
-        if (!offHand.isEmpty()) {
-            return offHand;
-        }
-        return ItemStack.EMPTY;
-    }
-
-    // ==================== 近战触发 ====================
     @SubscribeEvent
     public static void onLivingHurt(LivingHurtEvent event) {
         if (!(event.getSource().getEntity() instanceof Player)) return;
@@ -86,7 +59,8 @@ public class CharmHandler {
 
         ItemStack stack = player.getMainHandItem();
         if (stack.isEmpty()) return;
-        ToolStack tool = ToolStack.from(stack);
+        // ✅ 使用 ToolHelper 安全获取，不会产生警告
+        ToolStack tool = ToolHelper.getToolStack(stack);
         if (tool == null) return;
 
         int level = tool.getModifierLevel(CHARM_ID);
@@ -95,21 +69,19 @@ public class CharmHandler {
         applyCharm(player, target, level, tool);
     }
 
-    // ==================== 弹射物触发（已修正） ====================
     @SubscribeEvent
     public static void onProjectileImpact(ProjectileImpactEvent event) {
         if (!(event.getRayTraceResult() instanceof EntityHitResult)) return;
-        EntityHitResult entityHit = (EntityHitResult) event.getRayTraceResult();
-        if (!(entityHit.getEntity() instanceof LivingEntity)) return;
+        if (!(((EntityHitResult) event.getRayTraceResult()).getEntity() instanceof LivingEntity)) return;
         if (!(event.getProjectile().getOwner() instanceof Player)) return;
-        LivingEntity target = (LivingEntity) entityHit.getEntity();
+        LivingEntity target = (LivingEntity) ((EntityHitResult) event.getRayTraceResult()).getEntity();
         Player player = (Player) event.getProjectile().getOwner();
         if (target.level().isClientSide) return;
 
-        // ★ 获取弹射物对应的武器（标枪本体 或 弓/弩）
-        ItemStack stack = getProjectileWeapon(event.getProjectile(), player);
+        ItemStack stack = ProjectileWeaponHelper.getProjectileWeapon(event.getProjectile(), player);
         if (stack.isEmpty()) return;
-        ToolStack tool = ToolStack.from(stack);
+        // ✅ 使用 ToolHelper 安全获取
+        ToolStack tool = ToolHelper.getToolStack(stack);
         if (tool == null) return;
 
         int level = tool.getModifierLevel(CHARM_ID);
@@ -118,7 +90,6 @@ public class CharmHandler {
         applyCharm(player, target, level, tool);
     }
 
-    // ==================== 通用逻辑 ====================
     private static void applyCharm(Player player, LivingEntity target, int level, ToolStack tool) {
         UUID targetUUID = target.getUUID();
         CharmData existing = CHARMED_ENTITIES.get(targetUUID);
@@ -136,7 +107,6 @@ public class CharmHandler {
         target.addEffect(new MobEffectInstance(ModEffects.CHARM.get(), duration, 0, false, true, true));
     }
 
-    // ==================== 拦截攻击 ====================
     @SubscribeEvent
     public static void onLivingAttack(LivingAttackEvent event) {
         if (!(event.getEntity() instanceof LivingEntity)) return;
@@ -152,7 +122,6 @@ public class CharmHandler {
         }
     }
 
-    // ==================== 清理与粒子 ====================
     @SubscribeEvent
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         UUID uuid = event.getEntity().getUUID();

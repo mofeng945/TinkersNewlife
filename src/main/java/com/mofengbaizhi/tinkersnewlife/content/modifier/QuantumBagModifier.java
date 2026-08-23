@@ -4,6 +4,7 @@ import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.Modifiers;
 import com.mofengbaizhi.tinkersnewlife.content.storage.BagMenuProvider;
 import com.mofengbaizhi.tinkersnewlife.content.storage.StorageManager;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.NbtUtils;
@@ -44,7 +45,8 @@ public class QuantumBagModifier extends Modifier {
 
     public static UUID getOrCreateBagUUID(ItemStack tool) {
         if (tool.isEmpty()) return null;
-        ToolStack toolStack = ToolStack.from(tool);
+        // ✅ 使用 ToolHelper 安全获取
+        ToolStack toolStack = ToolHelper.getToolStack(tool);
         if (toolStack == null) return null;
 
         IModDataView persistentData = toolStack.getPersistentData();
@@ -62,7 +64,8 @@ public class QuantumBagModifier extends Modifier {
 
     public static UUID getBagUUID(ItemStack tool) {
         if (tool.isEmpty()) return null;
-        ToolStack toolStack = ToolStack.from(tool);
+        // ✅ 使用 ToolHelper 安全获取
+        ToolStack toolStack = ToolHelper.getToolStack(tool);
         if (toolStack == null) return null;
 
         IModDataView persistentData = toolStack.getPersistentData();
@@ -74,7 +77,8 @@ public class QuantumBagModifier extends Modifier {
 
     public static int getBagLevel(ItemStack tool) {
         if (tool.isEmpty()) return 0;
-        ToolStack toolStack = ToolStack.from(tool);
+        // ✅ 使用 ToolHelper 安全获取
+        ToolStack toolStack = ToolHelper.getToolStack(tool);
         if (toolStack == null) return 0;
         return toolStack.getModifierLevel(Modifiers.QUANTUM_BAG.getId());
     }

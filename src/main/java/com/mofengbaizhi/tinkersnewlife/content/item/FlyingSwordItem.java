@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.content.item;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.entity.FlyingSwordEntity;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -57,7 +58,8 @@ public class FlyingSwordItem extends ModifiableItem implements ICurioItem {
                 // ✅ 设置发射标志
                 EMITTING_PLAYER.set(player.getUUID());
 
-                ToolStack tool = ToolStack.from(stack);
+                // ✅ 使用 ToolHelper 安全获取
+                ToolStack tool = ToolHelper.getToolStack(stack);
                 if (tool == null || tool.isBroken()) {
                     return InteractionResultHolder.fail(stack);
                 }
@@ -72,8 +74,9 @@ public class FlyingSwordItem extends ModifiableItem implements ICurioItem {
                 if (!hasUnbreakable) {
                     int oldDamage = tool.getDamage();
                     stack.hurt(20, player.getRandom(), (ServerPlayer) player);
-                    ToolStack refreshed = ToolStack.from(stack);
-                    if (refreshed.isBroken()) {
+                    // ✅ 使用 ToolHelper 安全获取
+                    ToolStack refreshed = ToolHelper.getToolStack(stack);
+                    if (refreshed == null || refreshed.isBroken()) {
                         return InteractionResultHolder.fail(stack);
                     }
                     actualCost = Math.max(0, refreshed.getDamage() - oldDamage);
@@ -84,7 +87,7 @@ public class FlyingSwordItem extends ModifiableItem implements ICurioItem {
                 boolean isChaseMode = mode == 1;
 
                 float mainDamage = tool.getStats().get(ToolStats.ATTACK_DAMAGE);
-                float projectileDamage =mainDamage * 0.6f;
+                float projectileDamage = mainDamage * 0.6f;
 
                 ItemStack randomSword = createRandomFlyingSword();
 
@@ -101,7 +104,8 @@ public class FlyingSwordItem extends ModifiableItem implements ICurioItem {
                         int repair = Math.max(0, cost - hitCount);
                         if (repair > 0) {
                             ItemStack currentStack = player.getItemInHand(hand);
-                            ToolStack currentTool = ToolStack.from(currentStack);
+                            // ✅ 使用 ToolHelper 安全获取
+                            ToolStack currentTool = ToolHelper.getToolStack(currentStack);
                             if (currentTool != null && currentTool.getModifierLevel(FLYING_SWORD_MODIFIER) > 0) {
                                 int newDamage = Math.max(0, currentTool.getDamage() - repair);
                                 currentTool.setDamage(newDamage);
@@ -113,8 +117,6 @@ public class FlyingSwordItem extends ModifiableItem implements ICurioItem {
 
                 sword.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, 0.75f, 1.0F);
                 level.addFreshEntity(sword);
-
-                // ✅ 不再需要手动清理，由 onCurioEquip 拦截自动装备
 
                 return InteractionResultHolder.success(stack);
             } finally {
@@ -142,7 +144,9 @@ public class FlyingSwordItem extends ModifiableItem implements ICurioItem {
         }
         MaterialNBT materials = MaterialNBT.of(variants);
         ItemStack stack = new ItemStack(this);
-        ToolStack tool = ToolStack.from(stack);
+        // ✅ 使用 ToolHelper 安全获取
+        ToolStack tool = ToolHelper.getToolStack(stack);
+        if (tool == null) return stack;
         tool.setMaterials(materials);
         tool.rebuildStats();
         tool.updateStack(stack);
@@ -150,7 +154,8 @@ public class FlyingSwordItem extends ModifiableItem implements ICurioItem {
     }
 
     public static int getMode(ItemStack stack) {
-        ToolStack tool = ToolStack.from(stack);
+        // ✅ 使用 ToolHelper 安全获取
+        ToolStack tool = ToolHelper.getToolStack(stack);
         if (tool == null) return 0;
         return tool.getPersistentData().getInt(MODE_KEY);
     }

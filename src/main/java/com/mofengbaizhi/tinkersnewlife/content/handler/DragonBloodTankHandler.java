@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.content.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.modifier.DragonBloodTankTrait;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -78,7 +79,8 @@ public class DragonBloodTankHandler {
 
         // ✅ 先检查是否是匠魂工具（避免警告）
         if (!(stack.getItem() instanceof IModifiable)) return;
-        ToolStack tool = ToolStack.from(stack);
+        // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
+        ToolStack tool = ToolHelper.getToolStack(stack);
         if (tool == null) return;
         if (tool.getModifierLevel(DragonBloodTankTrait.MODIFIER_ID) <= 0) return;
 
@@ -140,7 +142,8 @@ public class DragonBloodTankHandler {
 
         // ✅ 先检查是否是匠魂工具
         if (!(stack.getItem() instanceof IModifiable)) return;
-        ToolStack tool = ToolStack.from(stack);
+        // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
+        ToolStack tool = ToolHelper.getToolStack(stack);
         if (tool == null) return;
         if (tool.getModifierLevel(DragonBloodTankTrait.MODIFIER_ID) <= 0) return;
 

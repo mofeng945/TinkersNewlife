@@ -37,7 +37,9 @@ public class SilentGloveInteractionHandler {
         ItemStack mainHand = player.getMainHandItem();
 
         if (mainHand.isEmpty()) {
+            // 尝试从手套中取出武器
             if (equipRandomTool(player)) {
+                // 成功取出武器，取消原版攻击事件，执行自定义攻击
                 event.setCanceled(true);
 
                 ItemStack weapon = player.getMainHandItem();
@@ -49,7 +51,6 @@ public class SilentGloveInteractionHandler {
                 float damage = DarkSilentManager.getWeaponDamage(player, weapon);
                 event.getTarget().hurt(player.damageSources().playerAttack(player), damage);
                 player.swing(InteractionHand.MAIN_HAND);
-                // ★ 播放攻击音效
                 player.playSound(SoundEvents.PLAYER_ATTACK_STRONG, 1.0f, 1.0f);
 
                 if (weapon.isDamageableItem()) {
@@ -59,12 +60,12 @@ public class SilentGloveInteractionHandler {
                 if (weapon.getItem() instanceof DurandalSwordItem) {
                     DarkSilentManager.countHit(player, weapon);
                 }
-            } else {
-                event.setCanceled(true);
             }
+            // ✅ 如果无法取出武器，不取消事件，允许原版空手攻击
             return;
         }
 
+        // 如果手中持有武器且是杜兰达尔剑，记录攻击计数
         if (mainHand.getItem() instanceof DurandalSwordItem) {
             DarkSilentManager.countHit(player, mainHand);
         }

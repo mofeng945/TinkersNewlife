@@ -1,6 +1,8 @@
 package com.mofengbaizhi.tinkersnewlife.content.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import com.mofengbaizhi.tinkersnewlife.util.ProjectileWeaponHelper;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -19,7 +21,6 @@ import net.minecraftforge.server.ServerLifecycleHooks;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
-import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
@@ -70,27 +71,6 @@ public class HasturMaliceHandler {
         }
     }
 
-    // ==================== 辅助方法：获取弹射物对应的武器 ====================
-    private static ItemStack getProjectileWeapon(Projectile projectile, Player shooter) {
-        // 1. 尝试从弹射物本身获取物品（标枪、三叉戟等）
-        try {
-            Method method = projectile.getClass().getMethod("getPickupItem");
-            return (ItemStack) method.invoke(projectile);
-        } catch (Exception ignored) {}
-        try {
-            Method method = projectile.getClass().getMethod("getItem");
-            return (ItemStack) method.invoke(projectile);
-        } catch (Exception ignored) {}
-
-        // 2. 若弹射物无物品，则从玩家主手获取（弓/弩）
-        ItemStack mainHand = shooter.getMainHandItem();
-        if (!mainHand.isEmpty()) return mainHand;
-        // 3. 若主手为空，尝试副手
-        ItemStack offHand = shooter.getOffhandItem();
-        if (!offHand.isEmpty()) return offHand;
-        return ItemStack.EMPTY;
-    }
-
     @SubscribeEvent
     public static void onLivingHurt(LivingHurtEvent event) {
         Player player = null;
@@ -107,16 +87,17 @@ public class HasturMaliceHandler {
         LivingEntity target = event.getEntity();
         if (target == null) return;
 
-        // ★ 获取正确的武器（兼容弹射物本身和发射武器）
+        // ✅ 统一使用 ProjectileWeaponHelper 获取武器
         ItemStack stack = ItemStack.EMPTY;
-        if (directEntity instanceof Projectile) {
-            stack = getProjectileWeapon((Projectile) directEntity, player);
+        if (directEntity instanceof Projectile projectile) {
+            stack = ProjectileWeaponHelper.getProjectileWeapon(projectile, player);
         } else {
             stack = player.getMainHandItem();
         }
 
         if (stack.isEmpty()) return;
-        ToolStack tool = ToolStack.from(stack);
+        // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
+        ToolStack tool = ToolHelper.getToolStack(stack);
         if (tool == null) return;
 
         int level = tool.getModifierLevel(HASTUR_MALICE);

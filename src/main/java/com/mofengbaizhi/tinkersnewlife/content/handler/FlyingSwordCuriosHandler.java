@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.content.handler;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.entity.FlyingSwordFootEntity;
 import com.mofengbaizhi.tinkersnewlife.content.item.FlyingSwordItem;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -27,7 +28,8 @@ public class FlyingSwordCuriosHandler {
 
     private static boolean isFlyingSwordBroken(ItemStack stack) {
         if (stack.isEmpty()) return true;
-        ToolStack tool = ToolStack.from(stack);
+        // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
+        ToolStack tool = ToolHelper.getToolStack(stack);
         return tool == null || tool.isBroken();
     }
 
