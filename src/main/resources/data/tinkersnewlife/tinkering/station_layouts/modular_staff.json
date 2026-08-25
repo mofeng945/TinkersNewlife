@@ -25,19 +25,19 @@
       "y": 38
     },
     {
-      "translation_key": "slot.tinkersnewlife.modular_staff.handle_1",
-      "icon": "tconstruct:tough_handle",
+      "translation_key": "slot.tinkersnewlife.modular_staff.handle_2",
+      "icon": "tconstruct:tool_handle",
       "filter": {
-        "item": "tconstruct:tough_handle"
+        "item": "tconstruct:tool_handle"
       },
       "x": 24,
       "y": 52
     },
     {
-      "translation_key": "slot.tinkersnewlife.modular_staff.handle_2",
-      "icon": "tconstruct:tool_handle",
+      "translation_key": "slot.tinkersnewlife.modular_staff.handle_1",
+      "icon": "tconstruct:tough_handle",
       "filter": {
-        "item": "tconstruct:tool_handle"
+        "item": "tconstruct:tough_handle"
       },
       "x": 6,
       "y": 70

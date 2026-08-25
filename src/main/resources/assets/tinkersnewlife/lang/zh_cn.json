@@ -286,6 +286,10 @@
   "modifier.tinkersnewlife.flying_sword": "§b飞剑",
   "modifier.tinkersnewlife.flying_sword.flavor": "§7御剑飞行，千里之外取敌首级",
   "modifier.tinkersnewlife.flying_sword.description": "§7右键发射飞剑，命中后返回。可切换§c追击模式§7自动攻击敌人",
+  "modifier.tinkersnewlife.black_flash": "黑闪",
+    "modifier.tinkersnewlife.black_flash.desc": "每次攻击有 0.01%% 概率打出黑闪，造成 2.5 次方伤害，触发后 60s 内概率 +10%%，速度/攻击/跳跃提升 20%%",
+    "modifier.tinkersnewlife.black_flash.flash": "§d§l黑闪！",
+    "modifier.tinkersnewlife.black_flash.buff_active": "§d黑闪之力 §7- 概率加成: +%d%%, 剩余 %ds",
 
   "container.tinkersnewlife.bag": "量子背包 (Lv.%s)",
   "container.tinkersnewlife.bag.sort": "整理",

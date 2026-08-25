@@ -92,4 +92,7 @@ public class Modifiers {
 
     public static final StaticModifier<FlyingSwordTrait> FLYING_SWORD =
         MODIFIERS.register("flying_sword", FlyingSwordTrait::new);
+
+    public static final StaticModifier<BlackFlashTrait> BLACK_FLASH =
+        MODIFIERS.register("black_flash", BlackFlashTrait::new);
 }
