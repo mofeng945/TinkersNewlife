@@ -320,7 +320,6 @@
   "item.tinkersnewlife.yo_yo_spool": "悠悠球线轴",
   "item_group.tinkersnewlife.yo_yo": "悠悠球",
   "item_group.tinkersnewlife.yo_yo.description": "以两个悠悠球轮、一个线轴与弓弦组合成的武器。右键向前方发射旋转的悠悠球，触碰到生物或飞抵最远距离后停滞3秒，期间每帧对触碰实体造成10%总伤害，随后飞回。",
-  "message.tinkersnewlife.yo_yo.returning": "悠悠球还未归来，无法再次发射！",
   "slot.tinkersnewlife.yo_yo.wheel1": "悠悠球轮",
   "slot.tinkersnewlife.yo_yo.wheel2": "悠悠球轮",
   "slot.tinkersnewlife.yo_yo.spool": "悠悠球线轴",

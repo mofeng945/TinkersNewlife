@@ -47,6 +47,9 @@ public class YoYoEntity extends Entity {
     /** 弓弦部件材质 VariantId（渲染器据此取材质颜色） */
     private static final EntityDataAccessor<String> BOWSTRING_VARIANT =
             SynchedEntityData.defineId(YoYoEntity.class, EntityDataSerializers.STRING);
+    /** 发射时的完整悠悠球工具栈（飞回后归还玩家，保留材质/强化/耐久） */
+    private static final EntityDataAccessor<net.minecraft.world.item.ItemStack> RETURN_STACK =
+            SynchedEntityData.defineId(YoYoEntity.class, EntityDataSerializers.ITEM_STACK);
 
     // ==================== 常量 ====================
     /** 最大飞行距离（格） */
@@ -68,19 +71,22 @@ public class YoYoEntity extends Entity {
     private Vec3 launchDir;
     private int stallTicks = 0;
     private int hitCooldown = 0;
+    /** 防止归还逻辑重复执行 */
+    private boolean returnedStack = false;
 
     public YoYoEntity(EntityType<? extends Entity> type, Level level) {
         super(type, level);
         this.noPhysics = true;
     }
 
-    public YoYoEntity(Level level, Player owner, float damage, String bowstringVariant) {
+    public YoYoEntity(Level level, Player owner, float damage, net.minecraft.world.item.ItemStack returnStack, String bowstringVariant) {
         super(ModEntities.YO_YO.get(), level);
         this.noPhysics = true;
         this.setDamage(damage);
         this.setOwnerUUID(owner.getUUID());
         this.setPhase(PHASE_FLYING);
         this.setBowstringVariant(bowstringVariant);
+        this.setReturnStack(returnStack == null ? net.minecraft.world.item.ItemStack.EMPTY : returnStack);
         this.setPos(owner.getX(), owner.getEyeY() - 0.2, owner.getZ());
         this.launchOrigin = this.position();
         // 展示物品：悠悠球轮
@@ -95,6 +101,7 @@ public class YoYoEntity extends Entity {
         this.getEntityData().define(PHASE, PHASE_FLYING);
         this.getEntityData().define(DISPLAY_ITEM, net.minecraft.world.item.ItemStack.EMPTY);
         this.getEntityData().define(BOWSTRING_VARIANT, "");
+        this.getEntityData().define(RETURN_STACK, net.minecraft.world.item.ItemStack.EMPTY);
     }
 
     // ==================== Getter/Setter ====================
@@ -114,6 +121,9 @@ public class YoYoEntity extends Entity {
     /** 设置弓弦部件材质 VariantId（渲染器据此取材质颜色） */
     public void setBowstringVariant(String variantId) { this.getEntityData().set(BOWSTRING_VARIANT, variantId == null ? "" : variantId); }
     public String getBowstringVariant() { return this.getEntityData().get(BOWSTRING_VARIANT); }
+    /** 设置飞回后归还的工具栈 */
+    public void setReturnStack(net.minecraft.world.item.ItemStack stack) { this.getEntityData().set(RETURN_STACK, stack); }
+    public net.minecraft.world.item.ItemStack getReturnStack() { return this.getEntityData().get(RETURN_STACK); }
 
     /**
      * 设置发射方向与速度（由发射者调用）。
@@ -251,6 +261,39 @@ public class YoYoEntity extends Entity {
         return null;
     }
 
+    /**
+     * 悠悠球飞回/销毁时，将携带的工具归还给发射者：
+     * 玩家主手为空 → 放回主手；主手不为空 → 放入背包；
+     * 背包已满或发射者不在线/已死亡 → 掉落在实体位置。
+     */
+    private void returnStackToOwner() {
+        net.minecraft.world.item.ItemStack stack = this.getReturnStack();
+        if (stack.isEmpty()) return;
+
+        LivingEntity owner = getOwnerEntity();
+        if (owner instanceof Player player && player.isAlive()) {
+            if (player.getMainHandItem().isEmpty()) {
+                player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, stack);
+                return;
+            }
+            if (player.getInventory().add(stack)) {
+                return;
+            }
+        }
+        // 主手被占用且背包满，或发射者不可用：掉落在实体位置
+        this.spawnAtLocation(stack);
+    }
+
+    @Override
+    public void onRemovedFromWorld() {
+        // 服务端销毁时归还工具（任何移除路径：飞回、玩家死亡/掉线、区块卸载等）
+        if (!this.level().isClientSide && !this.returnedStack) {
+            this.returnedStack = true;
+            returnStackToOwner();
+        }
+        super.onRemovedFromWorld();
+    }
+
     @Override
     public boolean isPickable() {
         return false;
@@ -267,6 +310,9 @@ public class YoYoEntity extends Entity {
         if (tag.hasUUID("YoYoOwner")) this.setOwnerUUID(tag.getUUID("YoYoOwner"));
         this.setPhase(tag.getInt("YoYoPhase"));
         this.setBowstringVariant(tag.getString("YoYoBowstringVariant"));
+        if (tag.contains("YoYoReturnStack")) {
+            this.setReturnStack(net.minecraft.world.item.ItemStack.of(tag.getCompound("YoYoReturnStack")));
+        }
         this.stallTicks = tag.getInt("YoYoStallTicks");
         if (tag.contains("YoYoLaunchX")) {
             this.launchOrigin = new Vec3(tag.getDouble("YoYoLaunchX"), tag.getDouble("YoYoLaunchY"), tag.getDouble("YoYoLaunchZ"));
@@ -280,6 +326,10 @@ public class YoYoEntity extends Entity {
         if (owner != null) tag.putUUID("YoYoOwner", owner);
         tag.putInt("YoYoPhase", this.getPhase());
         tag.putString("YoYoBowstringVariant", this.getBowstringVariant());
+        net.minecraft.world.item.ItemStack returnStack = this.getReturnStack();
+        if (!returnStack.isEmpty()) {
+            tag.put("YoYoReturnStack", returnStack.save(new CompoundTag()));
+        }
         tag.putInt("YoYoStallTicks", this.stallTicks);
         if (this.launchOrigin != null) {
             tag.putDouble("YoYoLaunchX", this.launchOrigin.x);
