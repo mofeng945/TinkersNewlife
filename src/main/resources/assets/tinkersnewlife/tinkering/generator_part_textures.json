@@ -92,6 +92,22 @@
     {
       "path": "tinkersnewlife:item/tool/parts/yo_yo_spool",
       "stat_type": "tconstruct:handle"
+    },
+    {
+      "path": "tinkersnewlife:item/tool/yo_yo/wheel1",
+      "stat_type": "tconstruct:head"
+    },
+    {
+      "path": "tinkersnewlife:item/tool/yo_yo/wheel2",
+      "stat_type": "tconstruct:head"
+    },
+    {
+      "path": "tinkersnewlife:item/tool/yo_yo/spool",
+      "stat_type": "tconstruct:handle"
+    },
+    {
+      "path": "tinkersnewlife:item/tool/yo_yo/bowstring",
+      "stat_type": "tconstruct:bowstring"
     }
   ]
 }

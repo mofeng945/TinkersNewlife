@@ -1,6 +1,16 @@
 {
-  "parent": "item/generated",
+  "loader": "tconstruct:tool",
+  "parent": "tconstruct:item/base/default",
   "textures": {
-    "layer0": "tinkersnewlife:item/yo_yo"
-  }
+    "wheel1": "tinkersnewlife:item/tool/yo_yo/wheel1",
+    "wheel2": "tinkersnewlife:item/tool/yo_yo/wheel2",
+    "spool": "tinkersnewlife:item/tool/yo_yo/spool",
+    "bowstring": "tinkersnewlife:item/tool/yo_yo/bowstring"
+  },
+  "parts": [
+    { "name": "wheel1", "index": 0 },
+    { "name": "wheel2", "index": 1 },
+    { "name": "spool", "index": 2 },
+    { "name": "bowstring", "index": 3 }
+  ]
 }

@@ -1,6 +1,7 @@
 {
-  "parent": "item/generated",
+  "loader": "tconstruct:material",
+  "parent": "forge:item/default",
   "textures": {
-    "layer0": "tinkersnewlife:item/tool/parts/yo_yo_wheel"
+    "texture": "tinkersnewlife:item/tool/parts/yo_yo_wheel"
   }
 }
