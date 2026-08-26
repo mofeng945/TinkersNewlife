@@ -84,6 +84,14 @@
     {
       "path": "tinkersnewlife:item/tool/flying_sword/tool_handle",
       "stat_type": "tconstruct:handle"
+    },
+    {
+      "path": "tinkersnewlife:item/tool/parts/yo_yo_wheel",
+      "stat_type": "tconstruct:head"
+    },
+    {
+      "path": "tinkersnewlife:item/tool/parts/yo_yo_spool",
+      "stat_type": "tconstruct:handle"
     }
   ]
 }
