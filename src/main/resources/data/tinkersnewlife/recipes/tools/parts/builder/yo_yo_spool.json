@@ -1,0 +1,13 @@
+{
+  "type": "tconstruct:part_builder",
+  "cost": 6,
+  "pattern": "tinkersnewlife:yo_yo_spool",
+  "pattern_item": [
+    {
+      "item": "tinkersnewlife:yo_yo_spool_cast"
+    }
+  ],
+  "result": {
+    "item": "tinkersnewlife:yo_yo_spool"
+  }
+}

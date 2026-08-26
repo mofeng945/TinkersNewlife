@@ -133,6 +133,30 @@ public class ModItems {
                 )
         );
 
+    /** 悠悠球轮铸模（金铸模） */
+    public static final RegistryObject<Item> YO_YO_WHEEL_CAST =
+            ITEMS.register("yo_yo_wheel_cast", () -> new Item(new Item.Properties().stacksTo(1)));
+
+    /** 悠悠球轮铸模（沙铸模） */
+    public static final RegistryObject<Item> YO_YO_WHEEL_SAND_CAST =
+            ITEMS.register("yo_yo_wheel_sand_cast", () -> new Item(new Item.Properties().stacksTo(1)));
+
+    /** 悠悠球轮铸模（红沙铸模） */
+    public static final RegistryObject<Item> YO_YO_WHEEL_RED_SAND_CAST =
+            ITEMS.register("yo_yo_wheel_red_sand_cast", () -> new Item(new Item.Properties().stacksTo(1)));
+
+    /** 悠悠球线轴铸模（金铸模） */
+    public static final RegistryObject<Item> YO_YO_SPOOL_CAST =
+            ITEMS.register("yo_yo_spool_cast", () -> new Item(new Item.Properties().stacksTo(1)));
+
+    /** 悠悠球线轴铸模（沙铸模） */
+    public static final RegistryObject<Item> YO_YO_SPOOL_SAND_CAST =
+            ITEMS.register("yo_yo_spool_sand_cast", () -> new Item(new Item.Properties().stacksTo(1)));
+
+    /** 悠悠球线轴铸模（红沙铸模） */
+    public static final RegistryObject<Item> YO_YO_SPOOL_RED_SAND_CAST =
+            ITEMS.register("yo_yo_spool_red_sand_cast", () -> new Item(new Item.Properties().stacksTo(1)));
+
     public static final RegistryObject<ToolPartItem> SPELL_CORE =
         ITEMS.register("spell_core",
                 () -> new ToolPartItem(

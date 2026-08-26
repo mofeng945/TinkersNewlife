@@ -1,0 +1,8 @@
+{
+  "type": "tconstruct:item_part_builder",
+  "pattern": "tinkersnewlife:yo_yo_wheel",
+  "pattern_item": {
+    "tag": "tconstruct:casts/sand"
+  },
+  "result": "tinkersnewlife:yo_yo_wheel_sand_cast"
+}

@@ -1,0 +1,11 @@
+{
+  "type": "tconstruct:item_part_builder",
+  "pattern": "tinkersnewlife:yo_yo_spool",
+  "pattern_item": {
+    "tag": "forge:sand/red"
+  },
+  "result": {
+    "count": 4,
+    "item": "tinkersnewlife:yo_yo_spool_red_sand_cast"
+  }
+}

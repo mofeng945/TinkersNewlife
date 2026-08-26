@@ -1,0 +1,8 @@
+{
+  "type": "tconstruct:table_casting_material",
+  "cast": {
+    "tag": "tinkersnewlife:casts/multi_use/yo_yo_wheel"
+  },
+  "item_cost": 6,
+  "result": "tinkersnewlife:yo_yo_wheel"
+}

@@ -78,6 +78,12 @@ public class ModCreativeTabs {
                                 output.accept(ModItems.SPELL_CORE_CAST.get());
                                 output.accept(ModItems.SPELL_CORE_SAND_CAST.get());
                                 output.accept(ModItems.SPELL_CORE_RED_SAND_CAST.get());
+                                output.accept(ModItems.YO_YO_WHEEL_CAST.get());
+                                output.accept(ModItems.YO_YO_WHEEL_SAND_CAST.get());
+                                output.accept(ModItems.YO_YO_WHEEL_RED_SAND_CAST.get());
+                                output.accept(ModItems.YO_YO_SPOOL_CAST.get());
+                                output.accept(ModItems.YO_YO_SPOOL_SAND_CAST.get());
+                                output.accept(ModItems.YO_YO_SPOOL_RED_SAND_CAST.get());
                                 addAllPartVariants(output, ModItems.DRAGON_CORE.get());
                                 addAllPartVariants(output, ModItems.SPELL_CORE.get());
                                 addAllPartVariants(output, ModItems.YO_YO_WHEEL.get());

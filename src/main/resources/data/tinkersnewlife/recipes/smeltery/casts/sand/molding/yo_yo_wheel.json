@@ -1,0 +1,11 @@
+{
+  "type": "tconstruct:molding_table",
+  "material": {
+    "tag": "tconstruct:casts/sand"
+  },
+  "pattern": {
+    "type": "tconstruct:material",
+    "item": "tinkersnewlife:yo_yo_wheel"
+  },
+  "result": "tinkersnewlife:yo_yo_wheel_sand_cast"
+}
