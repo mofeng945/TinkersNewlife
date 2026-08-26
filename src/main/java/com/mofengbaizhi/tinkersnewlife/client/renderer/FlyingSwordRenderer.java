@@ -5,11 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemDisplayContext;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -36,14 +32,10 @@ public class FlyingSwordRenderer extends EntityRenderer<FlyingSwordEntity> {
         Vector3f targetDir = null;
 
         if (entity.isChaseMode()) {
-            // 追击模式：指向目标（实时更新）
-            LivingEntity target = getTarget(entity);
-            if (target != null && target.isAlive()) {
-                Vec3 toTarget = target.position().add(0, target.getBbHeight() * 0.5, 0)
-                        .subtract(entity.position());
-                if (toTarget.lengthSqr() > 0.0001) {
-                    targetDir = new Vector3f((float) toTarget.x, (float) toTarget.y, (float) toTarget.z).normalize();
-                }
+            // 追击模式：优先用同步的运动方向（服务端每 tick 更新并同步），避免每帧实体扫描
+            Vec3 motion = entity.getDeltaMovement();
+            if (motion.lengthSqr() > 0.0001) {
+                targetDir = new Vector3f((float) motion.x, (float) motion.y, (float) motion.z).normalize();
             }
         } else {
             // ✅ 普通模式：使用发射时存储的固定方向
@@ -73,21 +65,6 @@ public class FlyingSwordRenderer extends EntityRenderer<FlyingSwordEntity> {
                 poseStack, buffer, entity.level(), 0);
 
         poseStack.popPose();
-    }
-
-    private LivingEntity getTarget(FlyingSwordEntity entity) {
-        String uuidStr = entity.getTargetUUID();
-        if (uuidStr == null || uuidStr.isEmpty()) return null;
-        try {
-            UUID uuid = UUID.fromString(uuidStr);
-            AABB searchBox = entity.getBoundingBox().inflate(64);
-            for (LivingEntity living : entity.level().getEntitiesOfClass(LivingEntity.class, searchBox)) {
-                if (living.getUUID().equals(uuid) && living.isAlive()) {
-                    return living;
-                }
-            }
-        } catch (IllegalArgumentException ignored) {}
-        return null;
     }
 
     @Override

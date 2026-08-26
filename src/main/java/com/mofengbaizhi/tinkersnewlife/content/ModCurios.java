@@ -22,7 +22,7 @@ public class ModCurios {
         // ✅ 将 ring 槽初始大小设为 1，使修改器能正常叠加
         InterModComms.sendTo(CuriosApi.MODID, SlotTypeMessage.REGISTER_TYPE,
                 () -> new SlotTypeMessage.Builder("ring")
-                        .size(0)   // 原为 0，现改为 1
+                        .size(1)
                         .build()
         );
 

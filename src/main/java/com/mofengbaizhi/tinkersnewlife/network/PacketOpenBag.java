@@ -29,7 +29,10 @@ public class PacketOpenBag {
             ServerPlayer player = ctx.get().getSender();
             if (player == null) return;
 
-            ItemStack stack = packet.hand == 0 ? player.getMainHandItem() : player.getOffhandItem();
+            // ⭐ 校验 hand 参数（0=主手，1=副手），防止恶意客户端传其他值
+            ItemStack stack = packet.hand == 0 ? player.getMainHandItem()
+                    : packet.hand == 1 ? player.getOffhandItem()
+                    : ItemStack.EMPTY;
             QuantumBagModifier.tryOpenBag(player, stack);
         });
         ctx.get().setPacketHandled(true);

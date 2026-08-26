@@ -18,6 +18,7 @@ import net.minecraftforge.registries.RegistryObject;
 import slimeknights.tconstruct.library.materials.MaterialRegistry;
 import slimeknights.tconstruct.library.materials.definition.IMaterial;
 import slimeknights.tconstruct.library.materials.definition.MaterialId;
+import slimeknights.tconstruct.library.materials.definition.MaterialVariant;
 import slimeknights.tconstruct.library.tools.definition.ToolDefinition;
 import slimeknights.tconstruct.library.tools.nbt.MaterialNBT;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
@@ -130,19 +131,12 @@ public class ModCreativeTabs {
             ToolStack tool = ToolStack.from(stack);
             if (tool == null) continue;
 
-            // 根据传入的部件数量构建材质列表
-            MaterialNBT materialNBT;
-            if (partCount == 2) {
-                materialNBT = MaterialNBT.of(material, material);
-            } else if (partCount == 3) {
-                materialNBT = MaterialNBT.of(material, material, material);
-            } else if (partCount == 4) {
-                materialNBT = MaterialNBT.of(material, material, material,material);
-            }else if (partCount == 5) {
-                materialNBT = MaterialNBT.of(material, material, material,material,material);
-            }else {
-                materialNBT = MaterialNBT.of(material, material);
+            // 根据传入的部件数量构建材质列表（⭐ 消除 2/3/4/5 魔法数字分支）
+            MaterialVariant[] variants = new MaterialVariant[partCount];
+            for (int i = 0; i < variants.length; i++) {
+                variants[i] = MaterialVariant.of(material);
             }
+            MaterialNBT materialNBT = MaterialNBT.of(variants);
 
             tool.setMaterials(materialNBT);
             tool.rebuildStats();

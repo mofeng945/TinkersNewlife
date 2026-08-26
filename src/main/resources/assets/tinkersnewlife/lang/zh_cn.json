@@ -29,6 +29,7 @@
   "item.tinkersnewlife.lightning_blood_bucket": "雷龙血桶",
   "item.tinkersnewlife.molten_dread_bucket": "熔融悚怖桶",
   "item.tinkersnewlife.molten_dreadsteel_bucket": "熔融悚怖钢桶",
+  "item.tinkersnewlife.molten_durandal_bucket": "熔融杜兰达尔桶",
   "item.tinkersnewlife.dragon_staff": "驯龙杖",
   "item.tinkersnewlife.dragon_core": "龙魂核心",
   "item.tinkersnewlife.dragon_core_cast": "龙魂核心铸模",
@@ -46,15 +47,16 @@
   "item.tinkersnewlife.spell_core": "法术核心",
   "item.tinkersnewlife.flying_sword": "飞剑",
   "item.tinkersnewlife.durandal_shard": "杜兰达尔破碎剑刃",
-  "item.tinkersnewlife.durandal_sword": "",
+  "item.tinkersnewlife.durandal_sword": "杜兰达尔之剑",
   "item.tinkersnewlife.durandal_sword.desc": "§7由全杜兰达尔之物进化而来，永恒不朽",
-  "item.tinkersnewlife.durandal": "",
+  "item.tinkersnewlife.durandal": "杜兰达尔剑刃",
 
   "curios.identifier.feet": "脚饰",
 
   "action.tinkersnewlife.dark_silent.furioso":"Furioso",
 
   "message.tinkersnewlife.dark_silent.no_space":"没有空余空间掏出武器。",
+  "message.tinkersnewlife.glove.full_hand":"双手已满，无法从空间奇点库取出武器！",
 
   "item_group.tinkersnewlife.dragon_staff": "驯龙杖",
   "item_group.tinkersnewlife.dragon_staff.description": "用龙魂核心和两个手柄结合成的驯龙杖，虽然和它的初始版本名字一样，但是应该叫它伏龙杖才对。",
@@ -91,6 +93,7 @@
   "pattern.tinkersnewlife.spell_core":"法术核心",
 
   "block.tinkersnewlife.gheloth_ore": "格赫罗斯矿石",
+  "block.tinkersnewlife.frost_ice": "霜冻冰",
   "block.tinkersnewlife.gheloth_blood_block": "格赫罗斯之血",
   "block.tinkersnewlife.fire_blood_block": "火龙血",
   "block.tinkersnewlife.ice_blood_block": "冰龙血",
@@ -100,6 +103,7 @@
   "block.tinkersnewlife.molten_dragonsteel_lightning_block": "熔融龙霆钢",
   "block.tinkersnewlife.molten_dread_block": "熔融悚怖",
   "block.tinkersnewlife.molten_dreadsteel_block": "熔融悚怖钢",
+  "block.tinkersnewlife.molten_durandal_block": "熔融杜兰达尔",
   "block.tinkersnewlife.molten_nicholas_blessing_block": "生命冲动",
   "block.tinkersnewlife.hastur_malice_block": "哈斯塔恶念",
   "block.tinkersnewlife.ashen_ink_block": "灰白之墨",
@@ -287,9 +291,10 @@
   "modifier.tinkersnewlife.flying_sword.flavor": "§7御剑飞行，千里之外取敌首级",
   "modifier.tinkersnewlife.flying_sword.description": "§7右键发射飞剑，命中后返回。可切换§c追击模式§7自动攻击敌人",
   "modifier.tinkersnewlife.black_flash": "黑闪",
-    "modifier.tinkersnewlife.black_flash.desc": "每次攻击有 0.01%% 概率打出黑闪，造成 2.5 次方伤害，触发后 60s 内概率 +10%%，速度/攻击/跳跃提升 20%%",
-    "modifier.tinkersnewlife.black_flash.flash": "§d§l黑闪！",
-    "modifier.tinkersnewlife.black_flash.buff_active": "§d黑闪之力 §7- 概率加成: +%d%%, 剩余 %ds",
+  "modifier.tinkersnewlife.black_flash.flavor": "§7时间，在这一刻凝滞……",
+  "modifier.tinkersnewlife.black_flash.description": "§7每次攻击有 §e0.01%%§7 概率打出黑闪，造成 §62.5 次方§7 伤害；触发后 §d60s§7 内概率 §a+10%%§7，速度/攻击/跳跃提升 §a20%%§7",
+  "modifier.tinkersnewlife.black_flash.flash": "§d§l黑闪！",
+  "modifier.tinkersnewlife.black_flash.buff_active": "§d黑闪之力 §7- 概率加成: +%d%%, 剩余 %ds",
 
   "container.tinkersnewlife.bag": "量子背包 (Lv.%s)",
   "container.tinkersnewlife.bag.sort": "整理",

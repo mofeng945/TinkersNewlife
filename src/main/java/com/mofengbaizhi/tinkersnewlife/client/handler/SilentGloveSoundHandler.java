@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.client.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.item.SilentGloveItem;
+import com.mofengbaizhi.tinkersnewlife.util.GloveHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -135,12 +136,16 @@ public class SilentGloveSoundHandler {
             return true;
         }
 
-        // Curios 槽位检查
+        // ⭐ Curios 槽位检查（hands + ring）：统一由 GloveHelper 处理 hands 槽
+        if (GloveHelper.isWearingGlove(player)) {
+            return true;
+        }
+
+        // ring 槽兜底检查
         LazyOptional<ICuriosItemHandler> curiosOptional = CuriosApi.getCuriosInventory(player);
         AtomicBoolean found = new AtomicBoolean(false);
-
         curiosOptional.ifPresent(inventory -> {
-            inventory.getStacksHandler("hands").ifPresent(handler -> {
+            inventory.getStacksHandler("ring").ifPresent(handler -> {
                 IItemHandlerModifiable stacks = handler.getStacks();
                 for (int i = 0; i < stacks.getSlots(); i++) {
                     ItemStack stack = stacks.getStackInSlot(i);
@@ -149,20 +154,7 @@ public class SilentGloveSoundHandler {
                     }
                 }
             });
-
-            if (!found.get()) {
-                inventory.getStacksHandler("ring").ifPresent(handler -> {
-                    IItemHandlerModifiable stacks = handler.getStacks();
-                    for (int i = 0; i < stacks.getSlots(); i++) {
-                        ItemStack stack = stacks.getStackInSlot(i);
-                        if (stack.getItem() instanceof SilentGloveItem) {
-                            found.set(true);
-                        }
-                    }
-                });
-            }
         });
-
         return found.get();
     }
 }

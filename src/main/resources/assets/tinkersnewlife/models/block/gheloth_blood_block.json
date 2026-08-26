@@ -1,0 +1,6 @@
+{
+  "parent": "block/cube_all",
+  "textures": {
+    "all": "tinkersnewlife:block/gheloth_blood_still"
+  }
+}

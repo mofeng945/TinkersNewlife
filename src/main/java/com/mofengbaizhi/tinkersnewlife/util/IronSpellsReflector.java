@@ -92,8 +92,11 @@ public class IronSpellsReflector {
             MAGIC_DATA_GET_PLAYER_MAGIC_DATA_METHOD = MAGIC_DATA_CLASS.getMethod("getPlayerMagicData", LivingEntity.class);
             MAGIC_DATA_GET_MANA_METHOD = MAGIC_DATA_CLASS.getMethod("getMana");
 
-        } catch (Exception e) {
+        } catch (Throwable t) {
+            // ⭐ catch(Throwable) 覆盖 ExceptionInInitializerError/LinkageError：
+            // 反射初始化类失败时若只 catch(Exception) 会让 Error 直接崩服
             ironSpellsPresent = false;
+            LOGGER.warn("[TinkersNewlife] 铁魔法（Iron's Spells）反射初始化失败，模块化魔杖法术功能不可用: {}", t.toString());
         }
     }
 
@@ -147,7 +150,8 @@ public class IronSpellsReflector {
                     true,
                     castingSlot
             );
-        } catch (Exception e) {
+        } catch (Throwable t) {
+            LOGGER.warn("[TinkersNewlife] 铁魔法施法反射调用失败: {}", t.toString());
             return false;
         }
     }
