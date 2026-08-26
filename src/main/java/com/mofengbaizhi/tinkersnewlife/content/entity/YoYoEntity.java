@@ -21,6 +21,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkHooks;
+import slimeknights.tconstruct.library.tools.helper.ToolDamageUtil;
+import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
 import java.util.List;
 import java.util.UUID;
@@ -210,6 +212,37 @@ public class YoYoEntity extends Entity {
         damageNearby(owner, true);
     }
 
+    /**
+     * 每次造成伤害消耗 1 点耐久，走匠魂正常耐久逻辑：
+     * <ol>
+     *   <li>原版「耐久」附魔：每点消耗按 1/(等级+1) 概率实际消耗</li>
+     *   <li>匠魂「坚固」等 modifier 的 {@code onDamageTool} 钩子可减免/免疫</li>
+     *   <li>「不毁」标记直接免疫（isUnbreakable）</li>
+     *   <li>破坏判定：工具被摧毁时悠悠球立即飞回，归还破损工具</li>
+     * </ol>
+     * 耐久消耗直接作用于球实体携带的归还工具栈（共享 NBT），归还时耐久正确。
+     */
+    private void consumeDurability(LivingEntity owner) {
+        net.minecraft.world.item.ItemStack returnStack = this.getReturnStack();
+        if (returnStack.isEmpty()) return;
+        ToolStack tool = ToolStack.from(returnStack);
+        if (tool == null || tool.isBroken()) return;
+
+        // 原版「耐久」附魔：每点消耗按 1/(等级+1) 概率实际消耗
+        int unbreaking = net.minecraft.world.item.enchantment.EnchantmentHelper.getItemEnchantmentLevel(
+                net.minecraft.world.item.enchantment.Enchantments.UNBREAKING, returnStack);
+        if (unbreaking > 0 && owner.getRandom().nextInt(unbreaking + 1) > 0) {
+            return;
+        }
+
+        // 匠魂正常耐久消耗：坚固/不毁/onDamageTool 钩子/破坏判定（creative 自动不消耗）
+        boolean destroyed = ToolDamageUtil.damage(tool, 1, owner, returnStack);
+        if (destroyed) {
+            // 工具被摧毁：球体立即飞回销毁，归还破损工具
+            this.discard();
+        }
+    }
+
     /** 进入停滞状态 */
     private void enterStalled() {
         if (getPhase() != PHASE_FLYING) return;
@@ -258,6 +291,8 @@ public class YoYoEntity extends Entity {
                     if (frameDamageValue > 0.01f) {
                         living.hurt(source, frameDamageValue);
                         living.invulnerableTime = 0; // 确保帧伤持续生效（绕过无敌帧）
+                        // 造成伤害 → 消耗耐久（走正常耐久逻辑：受耐久附魔/坚固/不毁影响）
+                        consumeDurability(owner);
                     }
                     hitCooldown = HIT_INTERVAL;
                 }

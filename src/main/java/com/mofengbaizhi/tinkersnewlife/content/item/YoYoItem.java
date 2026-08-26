@@ -4,7 +4,6 @@ import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.entity.YoYoEntity;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
@@ -57,12 +56,8 @@ public class YoYoItem extends ModifiableItem {
         // 计算玩家当前总伤害（工具攻击伤害，用于帧伤 = 10% 总伤害）
         float damage = tool.getStats().get(ToolStats.ATTACK_DAMAGE);
 
-        // 消耗少量耐久（在拷贝归还栈之前扣减，保证飞回归还时耐久正确）
-        if (!player.isCreative() && level instanceof ServerLevel) {
-            stack.hurtAndBreak(1, player, (p) -> p.broadcastBreakEvent(hand));
-        }
-
         // 完整工具栈随实体携带，飞回后归还玩家（保留材质/强化/耐久）
+        // 耐久不在发射时消耗，改为每次造成伤害时消耗（走正常耐久逻辑）
         ItemStack returnStack = stack.copy();
 
         YoYoEntity yoYo = new YoYoEntity(level, player, damage, returnStack, getBowstringVariantId(tool));
