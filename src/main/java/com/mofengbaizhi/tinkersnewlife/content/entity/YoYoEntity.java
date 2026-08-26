@@ -18,9 +18,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkHooks;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -70,7 +68,6 @@ public class YoYoEntity extends Entity {
     private Vec3 launchDir;
     private int stallTicks = 0;
     private int hitCooldown = 0;
-    private final Set<UUID> hitEntities = new HashSet<>();
 
     public YoYoEntity(EntityType<? extends Entity> type, Level level) {
         super(type, level);
@@ -211,9 +208,9 @@ public class YoYoEntity extends Entity {
      * 对触碰到的实体造成帧伤。
      * <p>
      * 帧伤：每 HIT_INTERVAL tick 一次，每次伤害 = 玩家总伤害 × 10%；
-     * 同一实体在一段停滞/飞回周期内不重复计入（hitEntities 缓存，离开后再进入才重新计入）。
+     * 命中判定基于实体包围盒（inflate 0.4）。
      *
-     * @return 是否命中了新实体（用于飞行阶段判定触碰）
+     * @return 是否命中了实体（用于飞行阶段判定触碰）
      */
     private boolean damageNearby(LivingEntity owner, boolean frameDamage) {
         boolean hitAny = false;
