@@ -2,6 +2,8 @@
   "replace": false,
   "values": [
     "tinkersnewlife:dragon_core",
-    "tinkersnewlife:spell_core"
+    "tinkersnewlife:spell_core",
+    "tinkersnewlife:yo_yo_wheel",
+    "tinkersnewlife:yo_yo_spool"
   ]
 }

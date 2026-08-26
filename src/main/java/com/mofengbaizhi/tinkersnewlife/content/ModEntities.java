@@ -4,6 +4,7 @@ import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.entity.DreadsteelSlashEntity;
 import com.mofengbaizhi.tinkersnewlife.content.entity.FlyingSwordEntity;
 import com.mofengbaizhi.tinkersnewlife.content.entity.FlyingSwordFootEntity;
+import com.mofengbaizhi.tinkersnewlife.content.entity.YoYoEntity;
 
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -41,5 +42,15 @@ public class ModEntities {
                         .clientTrackingRange(64)
                         .updateInterval(1)
                         .build(TinkersNewlife.MOD_ID + ":flying_sword_foot")
+        );
+
+    /** 悠悠球实体 */
+    public static final RegistryObject<EntityType<YoYoEntity>> YO_YO =
+        ENTITIES.register("yo_yo",
+                () -> EntityType.Builder.<YoYoEntity>of(YoYoEntity::new, MobCategory.MISC)
+                        .sized(0.5f, 0.5f)
+                        .clientTrackingRange(64)
+                        .updateInterval(1)
+                        .build(TinkersNewlife.MOD_ID + ":yo_yo")
         );
 }

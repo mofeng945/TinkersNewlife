@@ -117,6 +117,22 @@ public class ModItems {
                 )
         );
 
+    /** 悠悠球轮（头部统计，悠悠球的主体部件） */
+    public static final RegistryObject<ToolPartItem> YO_YO_WHEEL =
+        ITEMS.register("yo_yo_wheel",
+                () -> new ToolPartItem(new Item.Properties(),
+                        new MaterialStatsId(new ResourceLocation("tconstruct", "head"))
+                )
+        );
+
+    /** 悠悠球线轴（手柄统计，连接弓弦与轮子） */
+    public static final RegistryObject<ToolPartItem> YO_YO_SPOOL =
+        ITEMS.register("yo_yo_spool",
+                () -> new ToolPartItem(new Item.Properties(),
+                        new MaterialStatsId(new ResourceLocation("tconstruct", "handle"))
+                )
+        );
+
     public static final RegistryObject<ToolPartItem> SPELL_CORE =
         ITEMS.register("spell_core",
                 () -> new ToolPartItem(
@@ -175,4 +191,9 @@ public class ModItems {
                         .fireResistant()
                         .rarity(Rarity.EPIC)
                 ));
+
+    /** 悠悠球 */
+    public static final RegistryObject<YoYoItem> YO_YO =
+        ITEMS.register("yo_yo",
+                () -> new YoYoItem(new Item.Properties().stacksTo(1)));
 }

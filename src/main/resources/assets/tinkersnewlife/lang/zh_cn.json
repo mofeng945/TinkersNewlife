@@ -315,6 +315,18 @@
   "tooltip.tinkersnewlife.flying_sword.switch_hint": "按 R 键切换模式",
   "message.tinkersnewlife.durandal.converted":"杜兰达尔被唤醒了！",
 
+  "item.tinkersnewlife.yo_yo": "悠悠球",
+  "item.tinkersnewlife.yo_yo_wheel": "悠悠球轮",
+  "item.tinkersnewlife.yo_yo_spool": "悠悠球线轴",
+  "item_group.tinkersnewlife.yo_yo": "悠悠球",
+  "item_group.tinkersnewlife.yo_yo.description": "以两个悠悠球轮、一个线轴与弓弦组合成的武器。右键向前方发射旋转的悠悠球，触碰到生物或飞抵最远距离后停滞3秒，期间每帧对触碰实体造成10%总伤害，随后飞回。",
+  "slot.tinkersnewlife.yo_yo.wheel1": "悠悠球轮",
+  "slot.tinkersnewlife.yo_yo.wheel2": "悠悠球轮",
+  "slot.tinkersnewlife.yo_yo.spool": "悠悠球线轴",
+  "slot.tinkersnewlife.yo_yo.bowstring": "弓弦",
+  "pattern.tinkersnewlife.yo_yo_wheel": "悠悠球轮",
+  "pattern.tinkersnewlife.yo_yo_spool": "悠悠球线轴",
+
   "effect.tinkersnewlife.disarm": "§e缴械",
   "effect.tinkersnewlife.frost": "§b霜冻",
   "effect.tinkersnewlife.damage_limit": "§6限伤",

@@ -6,6 +6,7 @@ import com.mofengbaizhi.tinkersnewlife.content.item.FlyingSwordItem;
 import com.mofengbaizhi.tinkersnewlife.content.item.ModularStaffItem;
 import com.mofengbaizhi.tinkersnewlife.content.item.SilentGloveItem;
 import com.mofengbaizhi.tinkersnewlife.content.item.WarScytheItem;
+import com.mofengbaizhi.tinkersnewlife.content.item.YoYoItem;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -79,6 +80,8 @@ public class ModCreativeTabs {
                                 output.accept(ModItems.SPELL_CORE_RED_SAND_CAST.get());
                                 addAllPartVariants(output, ModItems.DRAGON_CORE.get());
                                 addAllPartVariants(output, ModItems.SPELL_CORE.get());
+                                addAllPartVariants(output, ModItems.YO_YO_WHEEL.get());
+                                addAllPartVariants(output, ModItems.YO_YO_SPOOL.get());
 
                                 addAllToolVariants(output, DRAGON_STAFF_DEFINITION, ModItems.DRAGON_STAFF.get(), 3);
 
@@ -89,6 +92,8 @@ public class ModCreativeTabs {
                                 addAllToolVariants(output, ModularStaffItem.MODULAR_STAFF_DEFINITION, ModItems.MODULAR_STAFF.get(), 4);
 
                                 addAllToolVariants(output, FlyingSwordItem.FLYING_SWORD_DEFINITION, ModItems.FLYING_SWORD.get(), 5);
+
+                                addAllToolVariants(output, YoYoItem.YO_YO_DEFINITION, ModItems.YO_YO.get(), 4);
 
                                 output.accept(ModItems.DURANDAL_SWORD.get());
                             })
