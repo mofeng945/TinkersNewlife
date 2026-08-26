@@ -1,5 +1,6 @@
 package com.mofengbaizhi.tinkersnewlife.content.storage;
 
+import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.item.SilentGloveItem;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
@@ -20,10 +21,27 @@ public class SilentGloveHandler extends ItemStackHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SilentGloveHandler.class);
     private static final int SIZE = 12;
-    private static final Path STORAGE_DIR = Path.of("tinkersnewlife/glove_vaults");
+    // 存储目录由 initServer() 设为世界存档下的 data/tinkersnewlife/glove_vaults，
+    // 避免使用相对路径导致跨世界/多人串档，且随世界备份。
+    private static Path STORAGE_DIR = null;
 
     private static final ConcurrentHashMap<UUID, SilentGloveHandler> SERVER_CACHE = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<UUID, Boolean> DIRTY_FLAGS = new ConcurrentHashMap<>();
+
+    /**
+     * 服务端启动时初始化存储目录（必须传入世界存档根路径）。
+     */
+    public static void initServer(Path worldSaveDir) {
+        STORAGE_DIR = worldSaveDir.resolve("data")
+                .resolve(TinkersNewlife.MOD_ID)
+                .resolve("glove_vaults");
+        try {
+            Files.createDirectories(STORAGE_DIR);
+            LOGGER.info("[TinkersNewlife] 空间奇点库存储目录: {}", STORAGE_DIR.toAbsolutePath());
+        } catch (IOException e) {
+            LOGGER.error("[TinkersNewlife] 无法创建空间奇点库存储目录!", e);
+        }
+    }
 
     private final UUID uuid;
     private final boolean isClient;
@@ -107,13 +125,14 @@ public class SilentGloveHandler extends ItemStackHandler {
     }
 
     private Path getFilePath() {
+        if (STORAGE_DIR == null) return null;
         return STORAGE_DIR.resolve(uuid.toString() + ".nbt");
     }
 
     private void load() {
         if (isClient) return;
         Path file = getFilePath();
-        if (!Files.exists(file)) return;
+        if (file == null || !Files.exists(file)) return;
         try (DataInputStream dis = new DataInputStream(new FileInputStream(file.toFile()))) {
             // ⭐ 压缩读取
             CompoundTag tag = NbtIo.readCompressed(dis);
@@ -127,9 +146,11 @@ public class SilentGloveHandler extends ItemStackHandler {
 
     public void save() {
         if (isClient) return;
+        Path file = getFilePath();
+        if (file == null) return;
         try {
-            Files.createDirectories(getFilePath().getParent());
-            try (DataOutputStream dos = new DataOutputStream(new FileOutputStream(getFilePath().toFile()))) {
+            Files.createDirectories(file.getParent());
+            try (DataOutputStream dos = new DataOutputStream(new FileOutputStream(file.toFile()))) {
                 // ⭐ 压缩写入
                 NbtIo.writeCompressed(this.serializeNBT(), dos);
             }

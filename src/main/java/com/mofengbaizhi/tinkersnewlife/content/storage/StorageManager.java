@@ -24,13 +24,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class StorageManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(StorageManager.class);
-    private static StorageManager INSTANCE;
 
     // ============================================================
     //  🔧 可调常量
@@ -164,22 +160,31 @@ public class StorageManager {
     //  单例管理
     // ============================================================
 
+    /** ⭐ volatile：保证多线程下可见性（getInstance 可能被不同线程首次调用） */
+    private static volatile StorageManager INSTANCE;
+
     private final ConcurrentHashMap<UUID, BigStackHandler> cache = new ConcurrentHashMap<>();
     private final Set<UUID> dirtySet = ConcurrentHashMap.newKeySet();
 
     private Path storageDir;
     private boolean isServerSide = false;
-    private ScheduledExecutorService scheduler;
 
     private StorageManager() {
         MinecraftForge.EVENT_BUS.register(this);
     }
 
     public static StorageManager getInstance() {
-        if (INSTANCE == null) {
-            INSTANCE = new StorageManager();
+        StorageManager instance = INSTANCE;
+        if (instance == null) {
+            synchronized (StorageManager.class) {
+                instance = INSTANCE;
+                if (instance == null) {
+                    instance = new StorageManager();
+                    INSTANCE = instance;
+                }
+            }
         }
-        return INSTANCE;
+        return instance;
     }
 
     public void initServer(Path worldSaveDir) {
@@ -194,10 +199,6 @@ public class StorageManager {
         } catch (IOException e) {
             LOGGER.error("[TinkersNewlife] 无法创建背包存储目录!", e);
         }
-
-        // ⭐ 启动定时保存任务，每30秒执行一次
-        scheduler = Executors.newSingleThreadScheduledExecutor();
-        scheduler.scheduleAtFixedRate(this::saveAllDirty, 30, 30, TimeUnit.SECONDS);
     }
 
     public static int getCapacityForLevel(int level) {
@@ -339,17 +340,9 @@ public class StorageManager {
         saveAllDirty();
         // 同时保存手套存储
         SilentGloveHandler.saveAll();
-        if (scheduler != null) {
-            scheduler.shutdown();
-            try {
-                if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
-                    scheduler.shutdownNow();
-                }
-            } catch (InterruptedException e) {
-                scheduler.shutdownNow();
-                Thread.currentThread().interrupt();
-            }
-        }
+        // 清空缓存，防止跨世界串档（同一 UUID 在不同世界的数据混用）
+        cache.clear();
+        dirtySet.clear();
         isServerSide = false;
     }
 

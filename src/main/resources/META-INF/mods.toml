@@ -20,7 +20,7 @@ license="All rights reserved"
 # The modid of the mod
 modId="tinkersnewlife" #mandatory
 # The version number of the mod
-version="0.0.1" #mandatory
+version="${mod_version}" #mandatory
 # A display name for the mod
 displayName="Tinker's Newlife" #mandatory
 # A URL to query for updates for this mod. See the JSON update specification https://docs.minecraftforge.net/en/latest/misc/updatechecker/
@@ -48,7 +48,7 @@ authors="mofengbaizhi" #optional
 #accessTransformers = []
 
 # The description text for the mod (multi line!) (#mandatory)
-description='''一个匠魂附属，适用于Newlifestyle整合包'''
+description='''一个匠魂附属，适用于Newlifestyle整合包''' #mandatory
 # A dependency - use the . to indicate dependency for a specific modid. Dependencies are optional.
 [[dependencies.tinkersnewlife]]
     modId="forge"
@@ -57,7 +57,7 @@ description='''一个匠魂附属，适用于Newlifestyle整合包'''
     ordering="NONE"
     side="BOTH"
 
-[[dependencies.TinkersNewlife]]
+[[dependencies.tinkersnewlife]]
     modId="curios"
     mandatory=true
     versionRange="[5.1.0,6.0.0)"
@@ -76,6 +76,16 @@ description='''一个匠魂附属，适用于Newlifestyle整合包'''
     mandatory=true
     versionRange="[3.11.2.166,)"
     ordering="NONE"
+    side="BOTH"
+
+# ⭐ 冰火传说：驯龙杖、龙血、龙钢等核心内容均依赖它。
+# 声明为可选依赖：安装时获得完整功能；未安装时模组仍可加载（配方会跳过缺失物品），
+# 且不再因缺少声明导致相关功能边界不清。
+[[dependencies.tinkersnewlife]]
+    modId="iceandfire"
+    mandatory=false
+    versionRange="[2.0.0,)"
+    ordering="AFTER"
     side="BOTH"
 
 # Features are specific properties of the game environment, that you may want to declare you require. This example declares
