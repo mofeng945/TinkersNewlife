@@ -4,6 +4,9 @@
   "pattern": "tinkersnewlife:yo_yo_spool",
   "pattern_item": [
     {
+      "tag": "tconstruct:patterns/default"
+    },
+    {
       "item": "tinkersnewlife:yo_yo_spool_cast"
     }
   ],
