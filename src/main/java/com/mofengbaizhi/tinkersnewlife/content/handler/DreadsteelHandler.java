@@ -2,7 +2,6 @@ package com.mofengbaizhi.tinkersnewlife.content.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.entity.DreadsteelSlashEntity;
-import com.mofengbaizhi.tinkersnewlife.util.ProjectileWeaponHelper;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -10,7 +9,6 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
@@ -36,13 +34,9 @@ public class DreadsteelHandler {
         LivingEntity target = event.getEntity();
         if (player.level().isClientSide) return;
 
-        ItemStack stack = player.getMainHandItem();
-        if (stack.isEmpty()) return;
-
-        // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
-        ToolStack tool = ToolHelper.getToolStack(stack);
+        // ⭐ 统一取工具（近战/弹射双路径 + 校验）
+        ToolStack tool = ToolHelper.getCombatTool(event.getSource(), player);
         if (tool == null) return;
-        if (tool.getStats().getContainedStats().isEmpty()) return;
 
         int level = tool.getModifierLevel(DREADSTEEL);
         if (level > 0) applyDreadsteelEffect(tool, player, target, level);
@@ -55,13 +49,9 @@ public class DreadsteelHandler {
         if (!(event.getProjectile().getOwner() instanceof Player player)) return;
         if (player.level().isClientSide) return;
 
-        ItemStack stack = ProjectileWeaponHelper.getProjectileWeapon(event.getProjectile(), player);
-        if (stack.isEmpty()) return;
-
-        // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
-        ToolStack tool = ToolHelper.getToolStack(stack);
+        // ⭐ 统一取工具（弹射路径 + 校验）
+        ToolStack tool = ToolHelper.getCombatTool(event.getProjectile(), player);
         if (tool == null) return;
-        if (tool.getStats().getContainedStats().isEmpty()) return;
 
         int level = tool.getModifierLevel(DREADSTEEL);
         if (level > 0) applyDreadsteelEffect(tool, player, target, level);

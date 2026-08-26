@@ -2,7 +2,6 @@ package com.mofengbaizhi.tinkersnewlife.content.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModEffects;
-import com.mofengbaizhi.tinkersnewlife.util.ProjectileWeaponHelper;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -11,7 +10,6 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
@@ -51,16 +49,13 @@ public class CharmHandler {
 
     @SubscribeEvent
     public static void onLivingHurt(LivingHurtEvent event) {
-        if (!(event.getSource().getEntity() instanceof Player)) return;
-        if (!(event.getEntity() instanceof LivingEntity)) return;
-        Player player = (Player) event.getSource().getEntity();
-        LivingEntity target = (LivingEntity) event.getEntity();
+        if (!(event.getSource().getEntity() instanceof Player player)) return;
+        // LivingHurtEvent.getEntity() 返回类型即 LivingEntity，无需 instanceof
+        LivingEntity target = event.getEntity();
         if (target.level().isClientSide) return;
 
-        ItemStack stack = player.getMainHandItem();
-        if (stack.isEmpty()) return;
-        // ✅ 使用 ToolHelper 安全获取，不会产生警告
-        ToolStack tool = ToolHelper.getToolStack(stack);
+        // ⭐ 统一取工具（近战/弹射双路径 + 校验）
+        ToolStack tool = ToolHelper.getCombatTool(event.getSource(), player);
         if (tool == null) return;
 
         int level = tool.getModifierLevel(CHARM_ID);
@@ -71,17 +66,13 @@ public class CharmHandler {
 
     @SubscribeEvent
     public static void onProjectileImpact(ProjectileImpactEvent event) {
-        if (!(event.getRayTraceResult() instanceof EntityHitResult)) return;
-        if (!(((EntityHitResult) event.getRayTraceResult()).getEntity() instanceof LivingEntity)) return;
-        if (!(event.getProjectile().getOwner() instanceof Player)) return;
-        LivingEntity target = (LivingEntity) ((EntityHitResult) event.getRayTraceResult()).getEntity();
-        Player player = (Player) event.getProjectile().getOwner();
+        if (!(event.getRayTraceResult() instanceof EntityHitResult entityHit)) return;
+        if (!(entityHit.getEntity() instanceof LivingEntity target)) return;
+        if (!(event.getProjectile().getOwner() instanceof Player player)) return;
         if (target.level().isClientSide) return;
 
-        ItemStack stack = ProjectileWeaponHelper.getProjectileWeapon(event.getProjectile(), player);
-        if (stack.isEmpty()) return;
-        // ✅ 使用 ToolHelper 安全获取
-        ToolStack tool = ToolHelper.getToolStack(stack);
+        // ⭐ 统一取工具（弹射路径 + 校验）
+        ToolStack tool = ToolHelper.getCombatTool(event.getProjectile(), player);
         if (tool == null) return;
 
         int level = tool.getModifierLevel(CHARM_ID);
@@ -159,9 +150,10 @@ public class CharmHandler {
 
     private static LivingEntity findEntityByUUID(TickEvent.ServerTickEvent event, UUID uuid) {
         if (event.getServer() == null) return null;
-        for (var level : event.getServer().getAllLevels()) {
-            var e = level.getEntity(uuid);
-            if (e instanceof LivingEntity) return (LivingEntity) e;
+        // getAllLevels() 返回 Iterable<ServerLevel>，可直接用 ServerLevel.getEntity(uuid)（O(1)）
+        for (net.minecraft.server.level.ServerLevel serverLevel : event.getServer().getAllLevels()) {
+            var e = serverLevel.getEntity(uuid);
+            if (e instanceof LivingEntity living) return living;
         }
         return null;
     }

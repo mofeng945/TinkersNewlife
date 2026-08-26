@@ -28,6 +28,10 @@ public class DragonStaffTrait extends Modifier implements TooltipModifierHook {
     private static final int BASE_SLOTS = 3;
     private static final int SLOTS_PER_LEVEL = 1;
 
+    // ⭐ 攻击加成系数（Trait 与 Handler 共用，避免双份硬编码漂移）
+    /** 每存储一条龙提供的攻击伤害加成 */
+    public static final float ATTACK_BONUS_PER_DRAGON = 20.0f;
+
     @Override
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         super.registerHooks(hookBuilder);
@@ -79,7 +83,7 @@ public class DragonStaffTrait extends Modifier implements TooltipModifierHook {
 
         // 显示攻击加成（如果存储了龙）
         if (storedCount > 0) {
-            float bonus = storedCount * 20.0f; // 与 DragonStaffHandler 中的系数保持一致
+            float bonus = storedCount * ATTACK_BONUS_PER_DRAGON;
             tooltip.add(Component.translatable("modifier.tinkersnewlife.dragon_staff.attack_bonus",
                     String.format("%.1f", bonus)));
         }

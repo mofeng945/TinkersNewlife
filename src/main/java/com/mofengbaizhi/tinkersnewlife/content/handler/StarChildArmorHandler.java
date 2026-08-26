@@ -97,8 +97,9 @@ public class StarChildArmorHandler {
         healthAttr.removeModifier(HEALTH_MODIFIER_UUID);
 
         if (totalLevel > 0) {
-            float maxBonus = totalLevel * 50.0f;
-            float bonus = Math.min(totalKills * 0.5f, maxBonus);
+            // ⭐ 引用 Trait 的公开常量，避免双份硬编码漂移
+            float maxBonus = totalLevel * StarChildArmorTrait.MAX_HP_PER_LEVEL;
+            float bonus = Math.min(totalKills * StarChildArmorTrait.HP_PER_KILL, maxBonus);
             if (bonus > 0) {
                 AttributeModifier modifier = new AttributeModifier(
                         HEALTH_MODIFIER_UUID,

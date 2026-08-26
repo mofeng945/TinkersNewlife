@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.content.entity;
 import com.mofengbaizhi.tinkersnewlife.content.ModEntities;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -143,9 +144,12 @@ public class FlyingSwordEntity extends Projectile {
         if (uuidStr == null || uuidStr.isEmpty()) return null;
         try {
             UUID uuid = UUID.fromString(uuidStr);
-            for (Entity e : this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(64))) {
-                if (e.getUUID().equals(uuid) && e.isAlive()) {
-                    return (LivingEntity) e;
+            // ⭐ 服务端用 ServerLevel.getEntity(UUID) 直接查找（O(1)），避免每 tick 64 格全实体扫描。
+            // 该方法仅在服务端存在，调用方 tick() 已通过 isClientSide 早退保证在服务端执行。
+            if (this.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+                Entity entity = serverLevel.getEntity(uuid);
+                if (entity instanceof LivingEntity living && living.isAlive()) {
+                    return living;
                 }
             }
         } catch (IllegalArgumentException ignored) {}
@@ -369,5 +373,61 @@ public class FlyingSwordEntity extends Projectile {
     @Override
     public Packet<ClientGamePacketListener> getAddEntityPacket() {
         return NetworkHooks.getEntitySpawningPacket(this);
+    }
+
+    // ==================== 持久化（飞剑在区块卸载/服务器重启后恢复） ====================
+
+    @Override
+    protected void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        this.setDamage(tag.getFloat("FlyingDamage"));
+        if (tag.contains("FlyingItem")) {
+            this.setItemStack(ItemStack.of(tag.getCompound("FlyingItem")));
+        }
+        this.setHitCount(tag.getInt("FlyingHitCount"));
+        this.setChaseMode(tag.getBoolean("FlyingChaseMode"));
+        if (tag.contains("FlyingTargetUUID")) {
+            this.setTargetUUID(tag.getString("FlyingTargetUUID"));
+        }
+        if (tag.contains("FlyingLaunchDir")) {
+            var dirTag = tag.getList("FlyingLaunchDir", net.minecraft.nbt.Tag.TAG_DOUBLE);
+            if (dirTag.size() == 3) {
+                this.launchDirection = new Vec3(dirTag.getDouble(0), dirTag.getDouble(1), dirTag.getDouble(2));
+            }
+        }
+        if (tag.contains("FlyingStartPos")) {
+            var posTag = tag.getList("FlyingStartPos", net.minecraft.nbt.Tag.TAG_DOUBLE);
+            if (posTag.size() == 3) {
+                this.startPos = new Vec3(posTag.getDouble(0), posTag.getDouble(1), posTag.getDouble(2));
+            }
+        }
+    }
+
+    @Override
+    protected void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putFloat("FlyingDamage", this.getDamage());
+        if (!this.getItemStack().isEmpty()) {
+            tag.put("FlyingItem", this.getItemStack().save(new CompoundTag()));
+        }
+        tag.putInt("FlyingHitCount", this.getHitCount());
+        tag.putBoolean("FlyingChaseMode", this.isChaseMode());
+        if (!this.getTargetUUID().isEmpty()) {
+            tag.putString("FlyingTargetUUID", this.getTargetUUID());
+        }
+        if (this.launchDirection != null) {
+            var dirTag = new net.minecraft.nbt.ListTag();
+            dirTag.add(net.minecraft.nbt.DoubleTag.valueOf(this.launchDirection.x));
+            dirTag.add(net.minecraft.nbt.DoubleTag.valueOf(this.launchDirection.y));
+            dirTag.add(net.minecraft.nbt.DoubleTag.valueOf(this.launchDirection.z));
+            tag.put("FlyingLaunchDir", dirTag);
+        }
+        if (this.startPos != null) {
+            var posTag = new net.minecraft.nbt.ListTag();
+            posTag.add(net.minecraft.nbt.DoubleTag.valueOf(this.startPos.x));
+            posTag.add(net.minecraft.nbt.DoubleTag.valueOf(this.startPos.y));
+            posTag.add(net.minecraft.nbt.DoubleTag.valueOf(this.startPos.z));
+            tag.put("FlyingStartPos", posTag);
+        }
     }
 }

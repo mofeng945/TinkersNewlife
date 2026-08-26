@@ -14,10 +14,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.network.NetworkHooks;
 import slimeknights.tconstruct.library.modifiers.Modifier;
@@ -29,15 +29,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class QuantumBagModifier extends Modifier {
 
     private static final ResourceLocation KEY_BAG_UUID =
             new ResourceLocation(TinkersNewlife.MOD_ID, "bag_uuid_persistent");
-
-    public QuantumBagModifier() {
-        MinecraftForge.EVENT_BUS.register(this);
-    }
 
     // ============================================================
     //  📦 UUID 管理
@@ -126,63 +124,83 @@ public class QuantumBagModifier extends Modifier {
     //  🧹 自动拾取：优先进入背包，放入后自动整理
     // ============================================================
 
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public void onItemPickup(EntityItemPickupEvent event) {
-        Player player = event.getEntity();
-        if (player.level().isClientSide) return;
+    /**
+     * 静态事件订阅者：Modifier 是注册表单例，若在构造器里注册 Forge 事件总线，
+     * 实例被重建（数据包/注册表重载）时会重复注册导致拾取重复入库。
+     * 改为静态订阅类，全局只注册一次。
+     */
+    @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+    public static class PickupHandler {
 
-        ItemEntity itemEntity = event.getItem();
-        if (itemEntity == null) return;
+        /** 每个背包 UUID 的待整理计数器，用于节流排序（避免每次拾取都全量排序） */
+        private static final java.util.Map<UUID, AtomicInteger> SORT_COUNTERS = new ConcurrentHashMap<>();
+        /** 每累计多少次拾取触发一次排序 */
+        private static final int SORT_INTERVAL = 5;
 
-        ItemStack pickedUpStack = itemEntity.getItem();
-        if (pickedUpStack.isEmpty()) return;
+        @SubscribeEvent(priority = EventPriority.HIGHEST)
+        public static void onItemPickup(EntityItemPickupEvent event) {
+            Player player = event.getEntity();
+            if (player.level().isClientSide) return;
 
-        ItemStack mainHand = player.getMainHandItem();
-        ItemStack offHand = player.getOffhandItem();
+            ItemEntity itemEntity = event.getItem();
+            if (itemEntity == null) return;
 
-        UUID bagUUID = null;
-        int bagLevel = 0;
+            ItemStack pickedUpStack = itemEntity.getItem();
+            if (pickedUpStack.isEmpty()) return;
 
-        if (getBagLevel(mainHand) > 0) {
-            bagUUID = getOrCreateBagUUID(mainHand);
-            bagLevel = getBagLevel(mainHand);
-        } else if (getBagLevel(offHand) > 0) {
-            bagUUID = getOrCreateBagUUID(offHand);
-            bagLevel = getBagLevel(offHand);
-        }
+            ItemStack mainHand = player.getMainHandItem();
+            ItemStack offHand = player.getOffhandItem();
 
-        if (bagUUID == null || bagLevel <= 0) return;
+            UUID bagUUID = null;
+            int bagLevel = 0;
 
-        StorageManager.BigStackHandler bagInventory = StorageManager.getInstance().getOrCreate(bagUUID, bagLevel);
+            if (getBagLevel(mainHand) > 0) {
+                bagUUID = getOrCreateBagUUID(mainHand);
+                bagLevel = getBagLevel(mainHand);
+            } else if (getBagLevel(offHand) > 0) {
+                bagUUID = getOrCreateBagUUID(offHand);
+                bagLevel = getBagLevel(offHand);
+            }
 
-        int remainingCount = pickedUpStack.getCount();
+            if (bagUUID == null || bagLevel <= 0) return;
 
-        for (int slot = 0; slot < bagInventory.getSlots(); slot++) {
-            if (remainingCount <= 0) break;
+            StorageManager.BigStackHandler bagInventory = StorageManager.getInstance().getOrCreate(bagUUID, bagLevel);
 
-            ItemStack toInsert = pickedUpStack.copy();
-            toInsert.setCount(remainingCount);
+            int remainingCount = pickedUpStack.getCount();
 
-            ItemStack remaining = bagInventory.insertItem(slot, toInsert, false);
+            for (int slot = 0; slot < bagInventory.getSlots(); slot++) {
+                if (remainingCount <= 0) break;
 
-            if (remaining.isEmpty()) {
-                remainingCount = 0;
-            } else {
-                int inserted = remainingCount - remaining.getCount();
-                remainingCount = remaining.getCount();
-                if (inserted == 0) continue;
+                ItemStack toInsert = pickedUpStack.copy();
+                toInsert.setCount(remainingCount);
+
+                ItemStack remaining = bagInventory.insertItem(slot, toInsert, false);
+
+                if (remaining.isEmpty()) {
+                    remainingCount = 0;
+                } else {
+                    int inserted = remainingCount - remaining.getCount();
+                    remainingCount = remaining.getCount();
+                    if (inserted == 0) continue;
+                }
+            }
+
+            if (remainingCount > 0) {
+                itemEntity.getItem().setCount(remainingCount);
+                return;
+            }
+
+            event.setCanceled(true);
+            itemEntity.discard();
+
+            StorageManager.getInstance().markDirty(bagUUID);
+
+            // ⭐ 节流：每 SORT_INTERVAL 次拾取才排序一次（背包刚被填满大量物品时尤其受益）
+            AtomicInteger counter = SORT_COUNTERS.computeIfAbsent(bagUUID, k -> new AtomicInteger());
+            if (counter.incrementAndGet() >= SORT_INTERVAL) {
+                counter.set(0);
+                StorageManager.getInstance().sortInventory(bagUUID);
             }
         }
-
-        if (remainingCount > 0) {
-            itemEntity.getItem().setCount(remainingCount);
-            return;
-        }
-
-        event.setCanceled(true);
-        itemEntity.discard();
-
-        StorageManager.getInstance().markDirty(bagUUID);
-        StorageManager.getInstance().sortInventory(bagUUID);
     }
 }

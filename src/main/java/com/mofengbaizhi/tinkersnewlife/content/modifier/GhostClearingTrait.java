@@ -29,7 +29,6 @@ public class GhostClearingTrait extends Modifier {
 
     @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID)
     public static class ArmorHandler {
-        private static int tickCounter = 0;
 
         @SubscribeEvent
         public static void onLivingTick(LivingEvent.LivingTickEvent event) {
@@ -38,9 +37,8 @@ public class GhostClearingTrait extends Modifier {
             if (!(entity instanceof Player player)) return;
             if (!ArmorModifierHelper.hasModifierOnArmor(player, "ghost_clearing")) return;
 
-            tickCounter++;
-            if (tickCounter < SCAN_INTERVAL) return;
-            tickCounter = 0;
+            // ⭐ 按玩家自身 tick 节流（原静态全局计数器在多玩家时语义错误）
+            if (player.tickCount % SCAN_INTERVAL != 0) return;
 
             clearGhostsAround(player);
         }
@@ -55,19 +53,18 @@ public class GhostClearingTrait extends Modifier {
                     player.getZ() + DETECTION_RADIUS
             );
 
-            List<Entity> entities = player.level().getEntities(player, range);
+            // ⭐ 用谓词过滤版 getEntities，避免返回范围内全部实体（玩家/掉落物/经验球）再逐条过滤
+            List<Entity> entities = player.level().getEntities(player, range, GhostClearingTrait::isGhost);
             for (Entity entity : entities) {
-                if (isGhost(entity)) {
-                    entity.remove(Entity.RemovalReason.DISCARDED);
-                }
+                entity.remove(Entity.RemovalReason.DISCARDED);
             }
         }
+    }
 
-        private static boolean isGhost(Entity entity) {
-            var registryName = ForgeRegistries.ENTITY_TYPES.getKey(entity.getType());
-            if (registryName == null) return false;
-            return "iceandfire".equals(registryName.getNamespace())
-                    && "ghost".equals(registryName.getPath());
-        }
+    private static boolean isGhost(Entity entity) {
+        var registryName = ForgeRegistries.ENTITY_TYPES.getKey(entity.getType());
+        if (registryName == null) return false;
+        return "iceandfire".equals(registryName.getNamespace())
+                && "ghost".equals(registryName.getPath());
     }
 }

@@ -56,11 +56,11 @@ public class ModularStaffModifier extends Modifier implements MeleeDamageModifie
     // ============================================================
     @SubscribeEvent
     public static void onLivingHurt(LivingHurtEvent event) {
+        if (!(event.getSource().getEntity() instanceof Player player)) return;
+        if (player.level().isClientSide) return; // ⭐ 客户端 setAmount 无效，且防止双端重复计算
         DamageSource source = event.getSource();
-        float originalDamage = event.getAmount();
-
-        if (!(source.getEntity() instanceof Player player)) return;
         if (!isSpellDamage(source)) return;
+        float originalDamage = event.getAmount();
 
         ItemStack mainHand = player.getMainHandItem();
         ItemStack offHand = player.getOffhandItem();

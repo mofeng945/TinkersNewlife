@@ -61,10 +61,8 @@ public class GorgonImmunityHandler {
         if (!GORGON_DAMAGE_TYPE.equals(source.getMsgId())) return;
         if (!ArmorModifierHelper.hasModifierOnArmor(target, MODIFIER_ID)) return;
 
-        // 不取消事件，让反伤逻辑可以执行
-        // 仅移除已生成的石像
+        // 不取消事件，让反伤逻辑可以执行；仅移除已生成的石像
         removeNearbyStoneStatues(target);
-        event.setCanceled(false);
     }
 
     private static void removeNearbyStoneStatues(LivingEntity entity) {

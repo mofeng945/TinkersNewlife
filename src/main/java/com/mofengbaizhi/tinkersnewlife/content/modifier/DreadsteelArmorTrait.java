@@ -60,7 +60,6 @@ public class DreadsteelArmorTrait extends Modifier implements TooltipModifierHoo
     private static final int MIN_SUCCESS = 30;
     private static final int MAX_SUCCESS = 90;
     private static final int XP_COST = 5;
-    private static final int PASSIVE_EFFECT_DURATION = 220;
 
     private static final ResourceLocation KEY_DATA = new ResourceLocation(TinkersNewlife.MOD_ID, "dreadsteel_armor_data");
     private static final String KEY_COOLDOWN_END = "cooldown_end";
@@ -138,7 +137,7 @@ public class DreadsteelArmorTrait extends Modifier implements TooltipModifierHoo
         data.putBoolean(KEY_ACTIVE, true);
         data.putLong(KEY_ACTIVE_START, gameTime);
         data.putInt(KEY_JUDGEMENTS_LEFT, judgementCount);
-        data.putString(KEY_DISQUALIFIED, "");
+        data.put(KEY_DISQUALIFIED, new net.minecraft.nbt.ListTag());
     }
 
     private static int getJudgementsLeft(IToolStackView tool) {
@@ -152,25 +151,25 @@ public class DreadsteelArmorTrait extends Modifier implements TooltipModifierHoo
         }
     }
 
+    /** 失格名单上限：防止技能范围内大量实体导致 NBT 无限增长 */
+    private static final int MAX_DISQUALIFIED = 64;
+
     private static Set<UUID> getDisqualified(IToolStackView tool) {
-        String str = getData(tool).getString(KEY_DISQUALIFIED);
-        if (str.isEmpty()) return new HashSet<>();
+        var tag = getData(tool).getList(KEY_DISQUALIFIED, net.minecraft.nbt.Tag.TAG_STRING);
         Set<UUID> set = new HashSet<>();
-        for (String s : str.split(",")) {
-            try { set.add(UUID.fromString(s)); } catch (IllegalArgumentException ignored) {}
+        for (int i = 0; i < tag.size(); i++) {
+            try { set.add(UUID.fromString(tag.getString(i))); } catch (IllegalArgumentException ignored) {}
         }
         return set;
     }
 
     private static void addDisqualified(IToolStackView tool, UUID uuid) {
-        Set<UUID> set = getDisqualified(tool);
-        set.add(uuid);
-        StringBuilder sb = new StringBuilder();
-        for (UUID id : set) {
-            if (sb.length() > 0) sb.append(",");
-            sb.append(id.toString());
-        }
-        getData(tool).putString(KEY_DISQUALIFIED, sb.toString());
+        var data = getData(tool);
+        var tag = data.getList(KEY_DISQUALIFIED, net.minecraft.nbt.Tag.TAG_STRING);
+        // ⭐ 上限保护：超限后不再记录（避免 NBT 无限增长），也不全量重建字符串
+        if (tag.size() >= MAX_DISQUALIFIED) return;
+        tag.add(net.minecraft.nbt.StringTag.valueOf(uuid.toString()));
+        data.put(KEY_DISQUALIFIED, tag);
     }
 
     // ======================== 钩子 ========================
@@ -210,11 +209,11 @@ public class DreadsteelArmorTrait extends Modifier implements TooltipModifierHoo
             int level = getTotalLevel(player);
             if (level <= 0) return;
 
-            // 被动效果
-            player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, PASSIVE_EFFECT_DURATION, 0, false, false, true));
-            player.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, PASSIVE_EFFECT_DURATION, 0, false, false, true));
+            // 被动效果（⭐ 每 1 秒检查，时长 12 秒，剩余 <11 秒时刷新，避免图标闪烁）
+            ArmorModifierHelper.addPassiveEffect(player, MobEffects.NIGHT_VISION, 0);
+            ArmorModifierHelper.addPassiveEffect(player, MobEffects.FIRE_RESISTANCE, 0);
             if (ModEffects.DAMAGE_LIMIT.get() != null) {
-                player.addEffect(new MobEffectInstance(ModEffects.DAMAGE_LIMIT.get(), PASSIVE_EFFECT_DURATION, 0, false, false, true));
+                ArmorModifierHelper.addPassiveEffect(player, ModEffects.DAMAGE_LIMIT.get(), 0);
             }
 
             if (player.getTicksFrozen() > 0) {
@@ -258,16 +257,25 @@ public class DreadsteelArmorTrait extends Modifier implements TooltipModifierHoo
 
             int judgementCount = getJudgementCount(level);
 
+            // ⭐ 只激活第一件就绪的盔甲，且只扣一次 XP（避免穿多件时重复扣费/重复激活）
+            IToolStackView activatedTool = null;
             for (var stack : player.getArmorSlots()) {
                 if (stack.isEmpty()) continue;
                 // ✅ 使用 ToolHelper 安全获取
                 ToolStack tool = ToolHelper.getToolStack(stack);
                 if (tool == null) continue;
                 if (tool.getModifierLevel(DREADSTEEL_ARMOR_ID) <= 0) continue;
+                if (getCooldownEnd(tool) <= currentTime) {
+                    activatedTool = tool;
+                    break;
+                }
+            }
+
+            if (activatedTool != null) {
                 player.giveExperienceLevels(-XP_COST);
                 long cooldownEnd = currentTime + (long) getCooldownSeconds(level) * 20;
-                setCooldownEnd(tool, cooldownEnd);
-                startSkill(tool, currentTime, judgementCount);
+                setCooldownEnd(activatedTool, cooldownEnd);
+                startSkill(activatedTool, currentTime, judgementCount);
             }
 
             player.displayClientMessage(
@@ -316,7 +324,10 @@ public class DreadsteelArmorTrait extends Modifier implements TooltipModifierHoo
             }
 
             double range = getRange(level);
-            spawnDreadParticles(player, range);
+            // ⭐ 节流：每 3 tick 播一次粒子，避免每 tick 发送粒子网络包
+            if (elapsed % 3 == 0) {
+                spawnDreadParticles(player, range);
+            }
 
             if (elapsed > totalDuration) {
                 setActive(activeTool, false);
@@ -344,45 +355,24 @@ public class DreadsteelArmorTrait extends Modifier implements TooltipModifierHoo
             if (!(player.level() instanceof ServerLevel serverLevel)) return;
             RandomSource random = serverLevel.random;
 
-            // ✅ 使用 ParticleTypes.SOUL_FIRE_FLAME 等
-            for (int i = 0; i < 12; i++) {
-                double angle = random.nextDouble() * 2 * Math.PI;
-                double radius = range * random.nextDouble() * 0.8;
-                double x = player.getX() + radius * Math.cos(angle);
-                double z = player.getZ() + radius * Math.sin(angle);
-                double y = player.getY() + random.nextDouble() * 2 - 1;
-                serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
-                        x, y, z, 1, 0, 0.02, 0, 0);
-            }
-            for (int i = 0; i < 20; i++) {
-                double x = player.getX() + (random.nextDouble() - 0.5) * range * 1.5;
-                double z = player.getZ() + (random.nextDouble() - 0.5) * range * 1.5;
-                double y = player.getY() + random.nextDouble() * 3 - 1;
-                serverLevel.sendParticles(ParticleTypes.SOUL,
-                        x, y, z, 1,
-                        (random.nextDouble() - 0.5) * 0.05,
-                        random.nextDouble() * 0.03,
-                        (random.nextDouble() - 0.5) * 0.05, 0);
-            }
-            for (int i = 0; i < 20; i++) {
-                double angle = i * Math.PI / 10;
-                double radius = 2.0;
-                double x = player.getX() + radius * Math.cos(angle + random.nextDouble() * 0.2);
-                double z = player.getZ() + radius * Math.sin(angle + random.nextDouble() * 0.2);
-                double y = player.getY() + 0.1;
-                serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
-                        x, y, z, 1, 0, 0.01, 0, 0);
-            }
-            for (int i = 0; i < 10; i++) {
-                double x = player.getX() + (random.nextDouble() - 0.5) * range;
-                double z = player.getZ() + (random.nextDouble() - 0.5) * range;
-                double y = player.getY() + random.nextDouble() * 4;
-                serverLevel.sendParticles(ParticleTypes.WHITE_ASH,
-                        x, y, z, 1,
-                        (random.nextDouble() - 0.5) * 0.02,
-                        -0.01,
-                        (random.nextDouble() - 0.5) * 0.02, 0);
-            }
+            double px = player.getX();
+            double py = player.getY();
+            double pz = player.getZ();
+
+            // ⭐ 合并 count 减少网络包：一次 sendParticles 的 count 即为随机散布数量，
+            // dx/dy/dz 作为散布范围。4 次调用替代原来的 62 次。
+            serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
+                    px, py, pz, 12,
+                    range * 0.8, 1.0, range * 0.8, 0.02);
+            serverLevel.sendParticles(ParticleTypes.SOUL,
+                    px, py, pz, 20,
+                    range * 0.75, 1.5, range * 0.75, 0.03);
+            serverLevel.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
+                    px, py + 0.1, pz, 20,
+                    2.0, 0.2, 2.0, 0.01);
+            serverLevel.sendParticles(ParticleTypes.WHITE_ASH,
+                    px, py, pz, 10,
+                    range * 0.5, 2.0, range * 0.5, -0.01);
         }
 
         private static void performJudgement(Player player, IToolStackView tool, double range, int level) {

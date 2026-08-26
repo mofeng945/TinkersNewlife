@@ -22,6 +22,12 @@ public class StarChildArmorTrait extends Modifier implements TooltipModifierHook
     public static final ModifierId ID = new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "star_child_armor"));
     private static final ResourceLocation TAG_KILLS = new ResourceLocation(TinkersNewlife.MOD_ID, "star_child_kills");
 
+    // ⭐ 生命加成系数（Trait 与 Handler 共用，避免双份硬编码漂移）
+    /** 每级盔甲的最大生命加成上限 */
+    public static final float MAX_HP_PER_LEVEL = 50.0f;
+    /** 每击杀提供的生命加成 */
+    public static final float HP_PER_KILL = 0.5f;
+
     @Override
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         super.registerHooks(hookBuilder);
@@ -41,8 +47,8 @@ public class StarChildArmorTrait extends Modifier implements TooltipModifierHook
         int kills = tool.getPersistentData().getInt(TAG_KILLS);
 
         if (level > 0) {
-            float maxBonus = level * 50.0f;
-            float bonus = Math.min(kills * 0.5f, maxBonus);
+            float maxBonus = level * MAX_HP_PER_LEVEL;
+            float bonus = Math.min(kills * HP_PER_KILL, maxBonus);
             if (bonus > 0) {
                 tooltip.add(Component.translatable(
                         "modifier.tinkersnewlife.star_child_armor.total_bonus",

@@ -20,7 +20,6 @@ import net.minecraftforge.fml.common.Mod;
 public class DragonsteelLightningArmorHandler {
 
     private static final String MODIFIER_ID = "dragonsteel_lightning_armor";
-    private static final int NIGHT_VISION_DURATION = 220;
 
     @SubscribeEvent
     public static void onLivingTick(LivingEvent.LivingTickEvent event) {
@@ -31,21 +30,11 @@ public class DragonsteelLightningArmorHandler {
         int totalLevel = ArmorModifierHelper.getTotalModifierLevelOnArmor(entity, MODIFIER_ID);
         if (totalLevel <= 0) return;
 
+        // ⭐ 统一被动效果规格：每 1 秒检查、时长 12 秒、剩余 <11 秒时刷新，避免效果图标闪烁
         // 抗性提升（等级 × 等级）
-        entity.addEffect(new MobEffectInstance(
-                MobEffects.DAMAGE_RESISTANCE,
-                NIGHT_VISION_DURATION,
-                totalLevel - 1,
-                false, false, true
-        ));
-
+        ArmorModifierHelper.addPassiveEffect(entity, MobEffects.DAMAGE_RESISTANCE, totalLevel - 1);
         // 夜视
-        entity.addEffect(new MobEffectInstance(
-                MobEffects.NIGHT_VISION,
-                NIGHT_VISION_DURATION,
-                0,
-                false, false, true
-        ));
+        ArmorModifierHelper.addPassiveEffect(entity, MobEffects.NIGHT_VISION, 0);
     }
 
     @SubscribeEvent
@@ -91,19 +80,6 @@ public class DragonsteelLightningArmorHandler {
                     0,
                     false, true
             ));
-        }
-    }
-
-    private static void removeFireAround(ServerLevel level, BlockPos center) {
-        for (int dx = -2; dx <= 2; dx++) {
-            for (int dz = -2; dz <= 2; dz++) {
-                for (int dy = -1; dy <= 1; dy++) {
-                    BlockPos pos = center.offset(dx, dy, dz);
-                    if (level.getBlockState(pos).getBlock() == Blocks.FIRE) {
-                        level.removeBlock(pos, false);
-                    }
-                }
-            }
         }
     }
 }

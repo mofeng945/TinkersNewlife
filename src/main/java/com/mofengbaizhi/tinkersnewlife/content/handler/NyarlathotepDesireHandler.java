@@ -91,6 +91,13 @@ public class NyarlathotepDesireHandler {
 
         // ✅ 使用世界时间，与存储时保持一致
         long currentTick = event.getServer().overworld().getGameTime();
+
+        // ⭐ 清理过期的攻击记录，防止内存无限增长
+        if (currentTick % 200 == 0) {
+            ATTACK_RECORDS.entrySet().removeIf(e ->
+                    currentTick - e.getValue().attackTick > EXPIRE_TIME_TICKS);
+        }
+
         Iterator<Map.Entry<UUID, EventData>> iterator = PENDING_EVENTS.entrySet().iterator();
 
         while (iterator.hasNext()) {

@@ -1,7 +1,6 @@
 package com.mofengbaizhi.tinkersnewlife.content.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
-import com.mofengbaizhi.tinkersnewlife.util.ProjectileWeaponHelper;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -12,7 +11,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -49,13 +47,9 @@ public class FusRoDahHandler {
         LivingEntity target = event.getEntity();
         if (player.level().isClientSide) return;
 
-        ItemStack stack = player.getMainHandItem();
-        if (stack.isEmpty()) return;
-
-        // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
-        ToolStack tool = ToolHelper.getToolStack(stack);
+        // ⭐ 统一取工具（近战/弹射双路径 + 校验）
+        ToolStack tool = ToolHelper.getCombatTool(event.getSource(), player);
         if (tool == null) return;
-        if (tool.getStats().getContainedStats().isEmpty()) return;
 
         int level = tool.getModifierLevel(FUS_RO_DAH);
         if (level > 0) applyFusRoDah(player, target, level);
@@ -68,13 +62,9 @@ public class FusRoDahHandler {
         if (!(event.getProjectile().getOwner() instanceof Player player)) return;
         if (player.level().isClientSide) return;
 
-        ItemStack stack = ProjectileWeaponHelper.getProjectileWeapon(event.getProjectile(), player);
-        if (stack.isEmpty()) return;
-
-        // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
-        ToolStack tool = ToolHelper.getToolStack(stack);
+        // ⭐ 统一取工具（弹射路径 + 校验）
+        ToolStack tool = ToolHelper.getCombatTool(event.getProjectile(), player);
         if (tool == null) return;
-        if (tool.getStats().getContainedStats().isEmpty()) return;
 
         int level = tool.getModifierLevel(FUS_RO_DAH);
         if (level > 0) applyFusRoDah(player, target, level);

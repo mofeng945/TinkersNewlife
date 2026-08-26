@@ -3,10 +3,12 @@ package com.mofengbaizhi.tinkersnewlife.content.handler;
 import com.mofengbaizhi.tinkersnewlife.content.item.DurandalSwordItem;
 import com.mofengbaizhi.tinkersnewlife.content.item.SilentGloveItem;
 import com.mofengbaizhi.tinkersnewlife.content.storage.SilentGloveHandler;
+import com.mofengbaizhi.tinkersnewlife.util.GloveHelper;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
@@ -129,24 +131,8 @@ public class DarkSilentManager {
 
         DARK_SILENT_ACTIVE.add(uuid);
         try {
-            var curios = CuriosApi.getCuriosHelper().getCuriosHandler(player).resolve();
-            if (curios.isEmpty()) {
-                DARK_SILENT_ACTIVE.remove(uuid);
-                return;
-            }
-            var gloveHandler = curios.get().getStacksHandler("hands").orElse(null);
-            if (gloveHandler == null) {
-                DARK_SILENT_ACTIVE.remove(uuid);
-                return;
-            }
-            ItemStack gloveStack = ItemStack.EMPTY;
-            for (int i = 0; i < gloveHandler.getSlots(); i++) {
-                ItemStack stack = gloveHandler.getStacks().getStackInSlot(i);
-                if (stack.getItem() instanceof SilentGloveItem) {
-                    gloveStack = stack;
-                    break;
-                }
-            }
+            // ⭐ 统一查找佩戴的手套（GloveHelper）
+            ItemStack gloveStack = GloveHelper.findWornGlove(player);
             if (gloveStack.isEmpty()) {
                 DARK_SILENT_ACTIVE.remove(uuid);
                 return;
@@ -191,7 +177,14 @@ public class DarkSilentManager {
             final int[] attackIndex = {0};
 
             executor.scheduleAtFixedRate(() -> {
-                ServerLifecycleHooks.getCurrentServer().execute(() -> {
+                // ⭐ 服务器可能已关闭（getCurrentServer() 返回 null），此时直接结束，避免 NPE 且状态残留
+                MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+                if (server == null) {
+                    executor.shutdown();
+                    DARK_SILENT_ACTIVE.remove(uuid);
+                    return;
+                }
+                server.execute(() -> {
                     try {
                         if (player.isRemoved() || !player.isAlive()) {
                             executor.shutdown();
@@ -330,14 +323,7 @@ public class DarkSilentManager {
     }
 
     private static boolean isWearingGlove(Player player) {
-        var curios = CuriosApi.getCuriosHelper().getCuriosHandler(player).resolve();
-        if (curios.isEmpty()) return false;
-        var gloveHandler = curios.get().getStacksHandler("hands").orElse(null);
-        if (gloveHandler == null) return false;
-        for (int i = 0; i < gloveHandler.getSlots(); i++) {
-            ItemStack stack = gloveHandler.getStacks().getStackInSlot(i);
-            if (stack.getItem() instanceof SilentGloveItem) return true;
-        }
-        return false;
+        // ⭐ 统一判断（GloveHelper）
+        return GloveHelper.isWearingGlove(player);
     }
 }

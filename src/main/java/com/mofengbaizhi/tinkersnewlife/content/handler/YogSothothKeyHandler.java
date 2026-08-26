@@ -10,6 +10,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -110,6 +111,12 @@ public class YogSothothKeyHandler {
             }
             return false;
         });
+    }
+
+    // ⭐ 玩家登出时清理进行中的经验灌输任务，防止任务残留到下次 tick（busy 状态卡死）
+    @SubscribeEvent
+    public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        ACTIVE_TASKS.remove(event.getEntity().getUUID());
     }
 
     private static int getExpToLevel(int level) {

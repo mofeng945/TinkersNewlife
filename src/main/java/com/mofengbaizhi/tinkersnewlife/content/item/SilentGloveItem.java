@@ -60,13 +60,27 @@ public class SilentGloveItem extends ModifiableItem implements ICurioItem {
         tag.putInt(TAG_EXTRA_RINGS, Math.max(0, amount));
     }
 
+    /**
+     * 只读获取额外戒指槽数量。
+     * ⭐ 不在 getter 内生成随机值：原实现首次调用（客户端 tooltip）会生成并写 NBT，
+     * 而服务端生成的值不同，导致双端不一致。生成逻辑移到服务端
+     * {@link #getOrCreateExtraRings(ItemStack)}（装备事件时调用）。
+     */
     public static int getExtraRings(ItemStack stack) {
         CompoundTag tag = stack.getTag();
         if (tag == null) return 0;
+        return tag.getInt(TAG_EXTRA_RINGS);
+    }
+
+    /**
+     * 获取额外戒指槽数量；若未生成则生成随机值（1~6）并写入 NBT。
+     * ⭐ 仅在服务端调用（装备/卸下事件），确保值由服务端权威生成并随物品同步。
+     */
+    public static int getOrCreateExtraRings(ItemStack stack) {
+        CompoundTag tag = stack.getOrCreateTag();
         if (!tag.contains(TAG_EXTRA_RINGS)) {
             int randomValue = RANDOM.nextInt(6) + 1;
-            setExtraRings(stack, randomValue);
-            return randomValue;
+            tag.putInt(TAG_EXTRA_RINGS, randomValue);
         }
         return tag.getInt(TAG_EXTRA_RINGS);
     }
@@ -108,7 +122,8 @@ public class SilentGloveItem extends ModifiableItem implements ICurioItem {
                 for (int i = 0; i < stacks.getSlots(); i++) {
                     ItemStack stack = stacks.getStackInSlot(i);
                     if (stack.getItem() instanceof SilentGloveItem) {
-                        total += getExtraRings(stack);
+                        // ⭐ 服务端生成（若未生成），保证双端一致
+                        total += getOrCreateExtraRings(stack);
                     }
                 }
             }

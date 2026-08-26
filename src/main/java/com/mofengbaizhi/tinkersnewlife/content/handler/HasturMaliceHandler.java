@@ -41,7 +41,9 @@ public class HasturMaliceHandler {
     private static final float DAMAGE_PER_LEVEL = 5.0f;
     private static final int BASE_DURATION_TICKS = 10 * 20;
     private static final int DURATION_PER_LEVEL_TICKS = 5 * 20;
-    private static final int DAMAGE_INTERVAL_TICKS = 10;
+    // ⭐ 伤害间隔改为 20 tick（1 秒）：原 10 tick 与实体无敌帧（10 tick）重合，
+    // 导致风场伤害被 i-frame 完全吸收，实际无伤害。
+    private static final int DAMAGE_INTERVAL_TICKS = 20;
 
     // ==================== 状态存储 ====================
     private static final Map<UUID, Long> PLAYER_COOLDOWNS = new ConcurrentHashMap<>();
@@ -186,6 +188,8 @@ public class HasturMaliceHandler {
             entity.hurtMarked = true;
 
             entity.hurt(player.damageSources().magic(), field.damage);
+            // ⭐ 清除无敌帧，确保间隔伤害能稳定命中（与 DAMAGE_INTERVAL_TICKS=20 配合）
+            entity.invulnerableTime = 0;
 
             level.sendParticles(ParticleTypes.DAMAGE_INDICATOR,
                     entity.getX(), entity.getY() + 0.5, entity.getZ(),

@@ -199,7 +199,7 @@ public class DreadsteelSlashEntity extends Projectile {
     protected void onHitEntity(EntityHitResult result) {
         Entity target = result.getEntity();
         if (target == null) return;
-        LivingEntity owner = this.getOwner();
+        Entity owner = this.getOwner();
         if (owner != null && target == owner) return;
         UUID targetUUID = target.getUUID();
         if (hitEntities.contains(targetUUID)) return;
@@ -243,17 +243,8 @@ public class DreadsteelSlashEntity extends Projectile {
         this.discard();
     }
 
-    @Override
-    public LivingEntity getOwner() {
-        UUID uuid = this.getOwnerUUID();
-        if (uuid != null) {
-            for (Entity entity : this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(64))) {
-                if (entity.getUUID().equals(uuid)) return (LivingEntity) entity;
-            }
-        }
-        return null;
-    }
-
+    // ⭐ 不再重写 getOwner()：基类 Projectile.getOwner() 通过 ownerUUID 直接 level.getEntity()（O(1)）。
+    // 原重写每 tick 做 64 格全实体扫描，且主人离远后斩击可误伤自己。
     @Override
     public void setOwner(@Nullable Entity entity) {
         super.setOwner(entity);

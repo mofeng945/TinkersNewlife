@@ -31,6 +31,7 @@ import slimeknights.tconstruct.library.tools.stat.ToolStats;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -52,10 +53,11 @@ public class WarScytheItem extends ModifiableItem {
 
     private static final float[] ULTIMATE_MULTIPLIERS = {0.8f, 0.8f, 1.2f, 0.9f, 2.0f};
 
-    private static boolean isPerformingUltimate = false;
+    // ⭐ 按玩家隔离大招状态：原静态 boolean 会让多玩家大招互相干扰
+    private static final Set<UUID> PERFORMING_ULTIMATE = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
-    public static boolean isPerformingUltimate() {
-        return isPerformingUltimate;
+    public static boolean isPerformingUltimate(UUID playerId) {
+        return playerId != null && PERFORMING_ULTIMATE.contains(playerId);
     }
 
     public static int getFever(ItemStack stack) {
@@ -132,8 +134,16 @@ public class WarScytheItem extends ModifiableItem {
         if (tool == null) return;
         float baseDamage = tool.getStats().get(ToolStats.ATTACK_DAMAGE);
 
-        isPerformingUltimate = true;
-        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+        UUID playerId = player.getUUID();
+        if (!PERFORMING_ULTIMATE.add(playerId)) {
+            return; // 该玩家大招已在执行
+        }
+        // ⭐ daemon 线程池，避免大招结束后残留非守护线程阻塞 JVM 退出
+        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "WarScytheUltimate");
+            t.setDaemon(true);
+            return t;
+        });
 
         for (int i = 0; i < 5; i++) {
             final int index = i;
@@ -157,8 +167,7 @@ public class WarScytheItem extends ModifiableItem {
                     }
                     if (index == 4) {
                         executor.shutdown();
-                        isPerformingUltimate = false;
-                        // 移除提示
+                        PERFORMING_ULTIMATE.remove(playerId);
                     }
                 });
             }, delay, TimeUnit.MILLISECONDS);
@@ -167,7 +176,7 @@ public class WarScytheItem extends ModifiableItem {
         executor.schedule(() -> {
             if (!executor.isShutdown()) {
                 executor.shutdown();
-                isPerformingUltimate = false;
+                PERFORMING_ULTIMATE.remove(playerId);
             }
         }, 1200, TimeUnit.MILLISECONDS);
     }

@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.content.handler;
 import com.mofengbaizhi.tinkersnewlife.content.ModEffects;
 import com.mofengbaizhi.tinkersnewlife.content.item.SilentGloveItem;
 import com.mofengbaizhi.tinkersnewlife.content.storage.SilentGloveHandler;
+import com.mofengbaizhi.tinkersnewlife.util.GloveHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -88,17 +89,8 @@ public class GloveWeaponStorage {
         var curios = CuriosApi.getCuriosHelper().getCuriosHandler(player).resolve();
         if (curios.isEmpty()) return ItemStack.EMPTY;
 
-        var gloveHandler = curios.get().getStacksHandler("hands").orElse(null);
-        if (gloveHandler == null) return ItemStack.EMPTY;
-
-        ItemStack gloveStack = ItemStack.EMPTY;
-        for (int i = 0; i < gloveHandler.getSlots(); i++) {
-            ItemStack stack = gloveHandler.getStacks().getStackInSlot(i);
-            if (stack.getItem() instanceof SilentGloveItem) {
-                gloveStack = stack;
-                break;
-            }
-        }
+        // ⭐ 统一查找佩戴的手套（GloveHelper）
+        ItemStack gloveStack = GloveHelper.findWornGlove(player);
         if (gloveStack.isEmpty()) return ItemStack.EMPTY;
 
         SilentGloveHandler vault = SilentGloveItem.getHandler(gloveStack);
@@ -128,17 +120,8 @@ public class GloveWeaponStorage {
 
         if (stack.hasTag()) stack.getTag().remove("from_silent_glove");
 
-        var curios = CuriosApi.getCuriosHelper().getCuriosHandler(player).resolve();
-        if (curios.isEmpty()) return false;
-
-        var gloveHandler = curios.get().getStacksHandler("hands").orElse(null);
-        if (gloveHandler == null) return false;
-
-        ItemStack gloveStack = ItemStack.EMPTY;
-        for (int i = 0; i < gloveHandler.getSlots(); i++) {
-            ItemStack gs = gloveHandler.getStacks().getStackInSlot(i);
-            if (gs.getItem() instanceof SilentGloveItem) { gloveStack = gs; break; }
-        }
+        // ⭐ 统一查找佩戴的手套（GloveHelper）
+        ItemStack gloveStack = GloveHelper.findWornGlove(player);
         if (gloveStack.isEmpty()) return false;
 
         SilentGloveHandler vault = SilentGloveItem.getHandler(gloveStack);
@@ -177,17 +160,8 @@ public class GloveWeaponStorage {
         if (stack.isEmpty()) return true;
         if (DarkSilentManager.isActive(player.getUUID())) return false;
 
-        var curios = CuriosApi.getCuriosHelper().getCuriosHandler(player).resolve();
-        if (curios.isEmpty()) return false;
-
-        var gloveHandler = curios.get().getStacksHandler("hands").orElse(null);
-        if (gloveHandler == null) return false;
-
-        ItemStack gloveStack = ItemStack.EMPTY;
-        for (int i = 0; i < gloveHandler.getSlots(); i++) {
-            ItemStack gs = gloveHandler.getStacks().getStackInSlot(i);
-            if (gs.getItem() instanceof SilentGloveItem) { gloveStack = gs; break; }
-        }
+        // ⭐ 统一查找佩戴的手套（GloveHelper）
+        ItemStack gloveStack = GloveHelper.findWornGlove(player);
         if (gloveStack.isEmpty()) return false;
 
         SilentGloveHandler vault = SilentGloveItem.getHandler(gloveStack);

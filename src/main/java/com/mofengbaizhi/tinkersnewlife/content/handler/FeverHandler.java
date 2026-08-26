@@ -23,11 +23,12 @@ public class FeverHandler {
 
     @SubscribeEvent
     public static void onLivingHurt(LivingHurtEvent event) {
-        if (WarScytheItem.isPerformingUltimate()) {
+        if (!(event.getSource().getEntity() instanceof Player player)) return;
+        // 大招期间不积攒 Fever（按玩家隔离）
+        if (WarScytheItem.isPerformingUltimate(player.getUUID())) {
             return;
         }
 
-        if (!(event.getSource().getEntity() instanceof Player player)) return;
         if (!(event.getEntity() instanceof LivingEntity)) return;
 
         ItemStack stack = player.getMainHandItem();

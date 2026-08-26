@@ -620,7 +620,8 @@ public class DragonStaffHandler {
             }
         }
 
-        float bonus = storedCount * 20.0f;
+        // ⭐ 引用 Trait 的公开常量，避免双份硬编码漂移
+        float bonus = storedCount * DragonStaffTrait.ATTACK_BONUS_PER_DRAGON;
         if (bonus > 0) {
             event.setAmount(event.getAmount() + bonus);
             if (player.level() instanceof ServerLevel server) {
@@ -666,9 +667,10 @@ public class DragonStaffHandler {
         if (entity instanceof TamableAnimal tamable) {
             return tamable.isTame() && tamable.getOwnerUUID() != null;
         }
-        CompoundTag nbt = new CompoundTag();
-        entity.save(nbt);
-        return nbt.contains("Owner") || nbt.contains("ownerUUID");
+        // ⭐ 非 TamableAnimal 的龙（如冰火传说 multipart 外的其他实体）：
+        // 通过持久数据判断主人，避免整个实体 NBT 序列化（昂贵）。
+        var persistentData = entity.getPersistentData();
+        return persistentData.contains("Owner") || persistentData.contains("ownerUUID");
     }
 
     private static boolean setOwner(Entity entity, Player player) {

@@ -35,7 +35,7 @@ public class DragonBloodTankHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DragonBloodTankHandler.class);
     private static final ResourceLocation DRAGON_MULTIPART = new ResourceLocation("iceandfire", "dragon_multipart");
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     @SubscribeEvent
     public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
@@ -246,7 +246,8 @@ public class DragonBloodTankHandler {
                     int toFill = Math.min(tankFluid.getAmount(), remaining);
                     if (toFill <= 0) continue;
 
-                    FluidStack drained = tankHandler.drain(toFill, IFluidHandler.FluidAction.EXECUTE);
+                    // ⭐ 明确指定要抽取的流体，避免在多流体容器中抽到错误的流体
+                    FluidStack drained = tankHandler.drain(new FluidStack(tankFluid.getFluid(), toFill), IFluidHandler.FluidAction.EXECUTE);
                     if (drained.isEmpty()) continue;
 
                     toolData.fill(type, drained.getAmount());

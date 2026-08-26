@@ -2,7 +2,6 @@ package com.mofengbaizhi.tinkersnewlife.content.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.modifier.util.ArmorModifierHelper;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -15,7 +14,6 @@ import net.minecraftforge.fml.common.Mod;
 public class DragonsteelFireArmorHandler {
 
     private static final String MODIFIER_ID = "dragonsteel_fire_armor";
-    private static final int FIRE_RESISTANCE_DURATION = 40;
 
     @SubscribeEvent
     public static void onLivingTick(LivingEvent.LivingTickEvent event) {
@@ -24,9 +22,8 @@ public class DragonsteelFireArmorHandler {
         if (!(entity instanceof Player)) return;
 
         if (ArmorModifierHelper.hasModifierOnArmor(entity, MODIFIER_ID)) {
-            entity.addEffect(new MobEffectInstance(
-                    MobEffects.FIRE_RESISTANCE,
-                    FIRE_RESISTANCE_DURATION, 0, false, false, true));
+            // ⭐ 统一被动效果规格：每 1 秒检查、时长 12 秒、剩余 <11 秒时刷新，避免效果图标闪烁
+            ArmorModifierHelper.addPassiveEffect(entity, MobEffects.FIRE_RESISTANCE, 0);
         }
     }
 

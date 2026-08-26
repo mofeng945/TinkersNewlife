@@ -4,7 +4,6 @@ import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModBlocks;
 import com.mofengbaizhi.tinkersnewlife.content.ModEffects;
 import com.mofengbaizhi.tinkersnewlife.content.modifier.DragonboneTrait;
-import com.mofengbaizhi.tinkersnewlife.util.ProjectileWeaponHelper;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -15,7 +14,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
@@ -48,27 +46,11 @@ public class DragonsteelHandler {
         LivingEntity target = event.getEntity();
         if (player.level().isClientSide) return;
 
-        ItemStack stack = player.getMainHandItem();
-        if (stack.isEmpty()) return;
-
-        // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
-        ToolStack tool = ToolHelper.getToolStack(stack);
+        // ⭐ 统一取工具（近战/弹射双路径 + 校验）
+        ToolStack tool = ToolHelper.getCombatTool(event.getSource(), player);
         if (tool == null) return;
-        if (tool.getStats().getContainedStats().isEmpty()) return;
 
-        int baseFireLevel = tool.getModifierLevel(DRAGONSTEEL_FIRE);
-        int baseIceLevel = tool.getModifierLevel(DRAGONSTEEL_ICE);
-        int baseLightningLevel = tool.getModifierLevel(DRAGONSTEEL_LIGHTNING);
-
-        boolean hasDragonbone = DragonboneTrait.isConductionActive(tool);
-
-        int fireLevel = (hasDragonbone && baseFireLevel > 0) ? baseFireLevel + 1 : baseFireLevel;
-        int iceLevel = (hasDragonbone && baseIceLevel > 0) ? baseIceLevel + 1 : baseIceLevel;
-        int lightningLevel = (hasDragonbone && baseLightningLevel > 0) ? baseLightningLevel + 1 : baseLightningLevel;
-
-        if (fireLevel > 0) applyFireEffect(player.level(), target, fireLevel);
-        if (iceLevel > 0) applyIceEffect(player.level(), target, iceLevel);
-        if (lightningLevel > 0) applyLightningEffect(player.level(), target, lightningLevel);
+        applyDragonsteelEffects(player.level(), target, tool);
     }
 
     @SubscribeEvent
@@ -78,14 +60,15 @@ public class DragonsteelHandler {
         if (!(event.getProjectile().getOwner() instanceof Player player)) return;
         if (player.level().isClientSide) return;
 
-        ItemStack stack = ProjectileWeaponHelper.getProjectileWeapon(event.getProjectile(), player);
-        if (stack.isEmpty()) return;
-
-        // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
-        ToolStack tool = ToolHelper.getToolStack(stack);
+        // ⭐ 统一取工具（弹射路径 + 校验）
+        ToolStack tool = ToolHelper.getCombatTool(event.getProjectile(), player);
         if (tool == null) return;
-        if (tool.getStats().getContainedStats().isEmpty()) return;
 
+        applyDragonsteelEffects(player.level(), target, tool);
+    }
+
+    /** 根据工具上的龙钢三系特性等级施加效果（近战/弹射共用） */
+    private static void applyDragonsteelEffects(Level level, LivingEntity target, ToolStack tool) {
         int baseFireLevel = tool.getModifierLevel(DRAGONSTEEL_FIRE);
         int baseIceLevel = tool.getModifierLevel(DRAGONSTEEL_ICE);
         int baseLightningLevel = tool.getModifierLevel(DRAGONSTEEL_LIGHTNING);
@@ -96,9 +79,9 @@ public class DragonsteelHandler {
         int iceLevel = (hasDragonbone && baseIceLevel > 0) ? baseIceLevel + 1 : baseIceLevel;
         int lightningLevel = (hasDragonbone && baseLightningLevel > 0) ? baseLightningLevel + 1 : baseLightningLevel;
 
-        if (fireLevel > 0) applyFireEffect(player.level(), target, fireLevel);
-        if (iceLevel > 0) applyIceEffect(player.level(), target, iceLevel);
-        if (lightningLevel > 0) applyLightningEffect(player.level(), target, lightningLevel);
+        if (fireLevel > 0) applyFireEffect(level, target, fireLevel);
+        if (iceLevel > 0) applyIceEffect(level, target, iceLevel);
+        if (lightningLevel > 0) applyLightningEffect(level, target, lightningLevel);
     }
 
     // ===== 效果实现（不变） =====
