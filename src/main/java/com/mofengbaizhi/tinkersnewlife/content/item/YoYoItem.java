@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.content.item;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.entity.YoYoEntity;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
@@ -10,12 +11,16 @@ import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import slimeknights.tconstruct.library.materials.definition.MaterialVariant;
 import slimeknights.tconstruct.library.tools.definition.ToolDefinition;
 import slimeknights.tconstruct.library.tools.item.ModifiableItem;
 import slimeknights.tconstruct.library.tools.nbt.MaterialNBT;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 import slimeknights.tconstruct.library.tools.stat.ToolStats;
+
+import java.util.List;
+import java.util.UUID;
 
 /**
  * 悠悠球（Yo-Yo）
@@ -54,6 +59,13 @@ public class YoYoItem extends ModifiableItem {
             return InteractionResultHolder.fail(stack);
         }
 
+        // 🚫 悠悠球未归来前不能发射新的
+        if (hasActiveYoYo(level, player)) {
+            player.displayClientMessage(
+                    Component.translatable("message.tinkersnewlife.yo_yo.returning"), true);
+            return InteractionResultHolder.fail(stack);
+        }
+
         // 计算玩家当前总伤害（工具攻击伤害，用于帧伤 = 10% 总伤害）
         float damage = tool.getStats().get(ToolStats.ATTACK_DAMAGE);
 
@@ -69,6 +81,24 @@ public class YoYoItem extends ModifiableItem {
         }
 
         return InteractionResultHolder.success(stack);
+    }
+
+    /**
+     * 检查场上是否已有属于该玩家的活跃悠悠球（未归来）。
+     * <p>
+     * 搜索玩家周围一定半径内的 YoYoEntity，只要有一个未被移除且归属该玩家，
+     * 就禁止再次发射。玩家死亡/传送导致实体清除后自动解除限制。
+     */
+    private static boolean hasActiveYoYo(Level level, Player player) {
+        UUID uuid = player.getUUID();
+        AABB box = player.getBoundingBox().inflate(256);
+        List<YoYoEntity> yoYos = level.getEntitiesOfClass(YoYoEntity.class, box);
+        for (YoYoEntity yoYo : yoYos) {
+            if (!yoYo.isRemoved() && uuid.equals(yoYo.getOwnerUUID())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
