@@ -75,7 +75,11 @@ public class HasturMaliceHandler {
     public static void onLivingHurt(LivingHurtEvent event) {
         Player player = null;
         Entity directEntity = event.getSource().getDirectEntity();
-        if (directEntity instanceof Player) {
+        Entity causingEntity = event.getSource().getEntity();
+        if (causingEntity instanceof Player) {
+            // 近战/悠悠球（间接伤害的造成实体=玩家）
+            player = (Player) causingEntity;
+        } else if (directEntity instanceof Player) {
             player = (Player) directEntity;
         } else if (directEntity instanceof Projectile) {
             Entity owner = ((Projectile) directEntity).getOwner();

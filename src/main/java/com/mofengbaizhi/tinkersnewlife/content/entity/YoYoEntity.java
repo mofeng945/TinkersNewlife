@@ -2,6 +2,8 @@ package com.mofengbaizhi.tinkersnewlife.content.entity;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModEntities;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -9,6 +11,8 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageType;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -215,6 +219,20 @@ public class YoYoEntity extends Entity {
     }
 
     /**
+     * 构造悠悠球伤害源：直接实体=悠悠球，造成实体=发射者玩家。
+     * <p>
+     * 这样特性 Handler 能通过 {@code source.getDirectEntity() instanceof YoYoEntity}
+     * 识别悠悠球攻击，并从球实体携带的完整工具栈读取工具触发特性；
+     * {@code source.getEntity()} 仍返回玩家，原有基于玩家的判定不受影响。
+     */
+    private DamageSource createYoYoDamageSource(LivingEntity owner) {
+        Holder<DamageType> damageType = owner.level().registryAccess()
+                .registryOrThrow(Registries.DAMAGE_TYPE)
+                .getHolderOrThrow(DamageTypes.PLAYER_ATTACK);
+        return new DamageSource(damageType, this, owner);
+    }
+
+    /**
      * 对触碰到的实体造成帧伤。
      * <p>
      * 帧伤：每 HIT_INTERVAL tick 一次，每次伤害 = 玩家总伤害 × 10%；
@@ -230,15 +248,15 @@ public class YoYoEntity extends Entity {
                         && living.isAlive()
                         && living != owner
                         && !(living instanceof Player && ((Player) living).getUUID().equals(getOwnerUUID())));
+        DamageSource source = createYoYoDamageSource(owner);
         for (Entity entity : entities) {
             if (entity instanceof LivingEntity living) {
-                UUID id = living.getUUID();
                 // 每 HIT_INTERVAL tick 结算一次帧伤
                 if (frameDamage && hitCooldown <= 0) {
                     // 计算帧伤：玩家总伤害 × 10%
                     float frameDamageValue = getDamage() * DAMAGE_RATIO;
                     if (frameDamageValue > 0.01f) {
-                        living.hurt(this.damageSources().playerAttack((Player) owner), frameDamageValue);
+                        living.hurt(source, frameDamageValue);
                         living.invulnerableTime = 0; // 确保帧伤持续生效（绕过无敌帧）
                     }
                     hitCooldown = HIT_INTERVAL;
