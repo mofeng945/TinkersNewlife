@@ -1,6 +1,7 @@
 package com.mofengbaizhi.tinkersnewlife.content.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import com.mofengbaizhi.tinkersnewlife.content.entity.YoYoEntity;
 import com.mofengbaizhi.tinkersnewlife.util.ProjectileWeaponHelper;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.resources.ResourceLocation;
@@ -57,10 +58,12 @@ public class LuckyDropHandler {
 
         if (player == null) return;
 
-        // ✅ 统一使用 ProjectileWeaponHelper 获取武器
+        // ✅ 统一获取攻击武器：悠悠球从球实体读取完整工具，否则弹射物/主手/副手
         ItemStack weaponStack = ItemStack.EMPTY;
         Entity directEntity = source.getDirectEntity();
-        if (directEntity instanceof Projectile projectile) {
+        if (directEntity instanceof YoYoEntity yoYo) {
+            weaponStack = yoYo.getReturnStack();
+        } else if (directEntity instanceof Projectile projectile) {
             weaponStack = ProjectileWeaponHelper.getProjectileWeapon(projectile, player);
         }
         if (weaponStack.isEmpty()) {

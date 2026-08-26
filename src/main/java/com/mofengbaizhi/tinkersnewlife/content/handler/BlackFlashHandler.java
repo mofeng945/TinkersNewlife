@@ -12,7 +12,6 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
@@ -73,10 +72,8 @@ public class BlackFlashHandler {
 
         if (player.level().isClientSide) return;
 
-        ItemStack weapon = player.getMainHandItem();
-        if (weapon.isEmpty()) return;
-
-        ToolStack tool = ToolHelper.getToolStack(weapon);
+        // ✅ 统一获取攻击工具（近战/弹射物/悠悠球从球实体读取）
+        ToolStack tool = ToolHelper.getCombatTool(event.getSource(), player);
         if (tool == null) return;
         int level = tool.getModifierLevel(BLACK_FLASH_ID);
         if (level <= 0) return;

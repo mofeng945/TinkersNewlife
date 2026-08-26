@@ -1,5 +1,6 @@
 package com.mofengbaizhi.tinkersnewlife.util;
 
+import com.mofengbaizhi.tinkersnewlife.content.entity.YoYoEntity;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
@@ -47,6 +48,10 @@ public final class ToolHelper {
     public static ToolStack getCombatTool(DamageSource source, Player player) {
         if (source.getDirectEntity() instanceof Projectile projectile) {
             return getCombatTool(projectile, player);
+        }
+        // 悠悠球：发射后玩家手中已无该工具，从球实体携带的完整工具栈读取（特性才能正常触发）
+        if (source.getDirectEntity() instanceof YoYoEntity yoYo) {
+            return getValidTool(yoYo.getReturnStack());
         }
         return getValidTool(player.getMainHandItem());
     }
