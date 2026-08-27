@@ -71,8 +71,8 @@ public class YoYoRenderer extends EntityRenderer<YoYoEntity> {
 
         poseStack.pushPose();
 
-        // 定向：让模型 Z 轴（轮面法线）对准运动方向——
-        // 飞行/停滞用发射方向，飞回用指向发射者的方向（像真实悠悠球滚出/滚回）
+        // 定向：轮面法线（模型本地 Z）对准"垂直于运动方向的水平横向"（滚动轴），
+        // 这样轮子像轮胎一样侧着滚向目标——飞行/停滞用发射方向，飞回用指向发射者的方向
         Vec3 facing;
         if (entity.getPhase() == YoYoEntity.PHASE_RETURNING && owner != null) {
             Vec3 toOwner = owner.getEyePosition().subtract(0, 0.2, 0).subtract(entity.getPosition(partialTicks));
@@ -81,13 +81,21 @@ public class YoYoRenderer extends EntityRenderer<YoYoEntity> {
             facing = entity.getLaunchDir();
             if (facing.lengthSqr() < 0.0001) facing = new Vec3(0, 0, 1);
         }
+        // 滚动轴 = 运动方向 × 上方向（水平横向，垂直于运动方向）
+        Vec3 rollAxis = facing.cross(new Vec3(0, 1, 0));
+        if (rollAxis.lengthSqr() < 0.0001) {
+            // 运动方向垂直朝上/下时叉积退化，取任意水平方向
+            rollAxis = new Vec3(1, 0, 0);
+        } else {
+            rollAxis = rollAxis.normalize();
+        }
         Quaternionf orient;
-        if (facing.z < -0.999f) {
+        if (rollAxis.z < -0.999f) {
             // 180° 反向特例，避免 rotationTo 退化
             orient = new Quaternionf().rotationY((float) Math.PI);
         } else {
             orient = new Quaternionf().rotationTo(0, 0, 1,
-                    (float) facing.x, (float) facing.y, (float) facing.z).normalize();
+                    (float) rollAxis.x, (float) rollAxis.y, (float) rollAxis.z).normalize();
         }
         poseStack.mulPose(orient);
 
