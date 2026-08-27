@@ -16,11 +16,14 @@ public class SilentGloveContainer extends AbstractContainerMenu {
 
     private final IItemHandler inventory;
     private final UUID vaultUUID;
+    /** 服务端持有手套物品栈（用于更新回收列表）；客户端为 null */
+    private final ItemStack gloveStack;
 
     public SilentGloveContainer(int containerId, Inventory playerInventory, ItemStack gloveStack) {
         super(ModMenus.SILENT_GLOVE_CONTAINER.get(), containerId);
         this.vaultUUID = SilentGloveItem.getOrCreateVaultUUID(gloveStack);
         this.inventory = SilentGloveItem.getHandler(gloveStack);
+        this.gloveStack = gloveStack;
         initSlots(playerInventory);
     }
 
@@ -28,6 +31,7 @@ public class SilentGloveContainer extends AbstractContainerMenu {
         super(ModMenus.SILENT_GLOVE_CONTAINER.get(), containerId);
         this.vaultUUID = vaultUUID;
         this.inventory = inventory;
+        this.gloveStack = null;
         initSlots(playerInventory);
     }
 
@@ -44,6 +48,25 @@ public class SilentGloveContainer extends AbstractContainerMenu {
                     @Override
                     public boolean mayPlace(ItemStack stack) {
                         return inv.isItemValid(index, stack);
+                    }
+
+                    @Override
+                    public void set(ItemStack stack) {
+                        ItemStack prev = getItem();
+                        super.set(stack);
+                        // 玩家手动放入新物品 → 加入回收列表（自动回收不经过 GUI，不会误加）
+                        if (gloveStack != null && !stack.isEmpty() && !ItemStack.isSameItem(prev, stack)) {
+                            SilentGloveItem.addToRecycleList(gloveStack, stack);
+                        }
+                    }
+
+                    @Override
+                    public void onTake(Player player, ItemStack stack) {
+                        // 玩家手动取出物品 → 从回收列表移除
+                        if (gloveStack != null) {
+                            SilentGloveItem.removeFromRecycleList(gloveStack, stack);
+                        }
+                        super.onTake(player, stack);
                     }
                 });
             }
@@ -79,12 +102,18 @@ public class SilentGloveContainer extends AbstractContainerMenu {
         int vaultSlotCount = 12;
 
         if (slotIndex < vaultSlotCount) {
-            if (!this.moveItemStackTo(stack, vaultSlotCount, this.slots.size(), true)) {
-                return ItemStack.EMPTY;
+            // 从库移出（到玩家背包）→ 手动取出，移除回收列表
+            boolean moved = this.moveItemStackTo(stack, vaultSlotCount, this.slots.size(), true);
+            if (!moved) return ItemStack.EMPTY;
+            if (gloveStack != null) {
+                SilentGloveItem.removeFromRecycleList(gloveStack, copy);
             }
         } else {
-            if (!this.moveItemStackTo(stack, 0, vaultSlotCount, false)) {
-                return ItemStack.EMPTY;
+            // 从玩家背包移入库 → 手动放入，加入回收列表
+            boolean moved = this.moveItemStackTo(stack, 0, vaultSlotCount, false);
+            if (!moved) return ItemStack.EMPTY;
+            if (gloveStack != null) {
+                SilentGloveItem.addToRecycleList(gloveStack, copy);
             }
         }
 

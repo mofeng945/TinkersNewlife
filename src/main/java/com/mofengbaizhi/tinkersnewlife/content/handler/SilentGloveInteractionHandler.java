@@ -120,6 +120,10 @@ public class SilentGloveInteractionHandler {
         ItemStack picked = event.getItem().getItem().copy();
         if (picked.isEmpty()) return;
 
+        // ⭐ 只回收"回收列表"中的物品（玩家手动放入过手套的类型，无视耐久）；
+        // 不再对所有可收纳物品无差别回收
+        if (!GloveWeaponStorage.isRecyclable(player, picked)) return;
+
         if (GloveWeaponStorage.tryStoreInVault(player, picked)) {
             event.setCanceled(true);
             event.getItem().discard();

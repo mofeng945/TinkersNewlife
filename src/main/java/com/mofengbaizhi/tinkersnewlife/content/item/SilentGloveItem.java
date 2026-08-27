@@ -5,7 +5,10 @@ import com.mofengbaizhi.tinkersnewlife.content.handler.GloveWeaponStorage;
 import com.mofengbaizhi.tinkersnewlife.content.storage.SilentGloveContainer;
 import com.mofengbaizhi.tinkersnewlife.content.storage.SilentGloveHandler;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtIo;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -19,6 +22,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.network.NetworkHooks;
+import net.minecraftforge.registries.ForgeRegistries;
 import slimeknights.tconstruct.library.tools.definition.ToolDefinition;
 import slimeknights.tconstruct.library.tools.item.ModifiableItem;
 import top.theillusivec4.curios.api.CuriosApi;
@@ -30,8 +34,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 
 public class SilentGloveItem extends ModifiableItem implements ICurioItem {
@@ -97,6 +105,70 @@ public class SilentGloveItem extends ModifiableItem implements ICurioItem {
 
     public static SilentGloveHandler getHandler(ItemStack stack) {
         return SilentGloveHandler.getOrCreate(getOrCreateVaultUUID(stack));
+    }
+
+    // ========== 回收列表（玩家手动放入的物品类型） ==========
+
+    private static final String TAG_RECYCLE_LIST = "recycle_list";
+
+    /**
+     * 获取回收列表：玩家通过手套 GUI 手动放入过的物品类型（按物品 ID 记录）。
+     * 自动回收的物品不会加入列表；列表持久保存在手套 NBT 中，直到玩家
+     * 下次打开手套放入/取出物品才会更改。
+     */
+    public static Set<String> getRecycleList(ItemStack gloveStack) {
+        Set<String> set = new HashSet<>();
+        CompoundTag tag = gloveStack.getTag();
+        if (tag != null && tag.contains(TAG_RECYCLE_LIST, Tag.TAG_LIST)) {
+            ListTag list = tag.getList(TAG_RECYCLE_LIST, Tag.TAG_STRING);
+            for (int i = 0; i < list.size(); i++) {
+                set.add(list.getString(i));
+            }
+        }
+        return set;
+    }
+
+    private static void saveRecycleList(ItemStack gloveStack, Set<String> set) {
+        ListTag list = new ListTag();
+        List<String> sorted = new ArrayList<>(set);
+        Collections.sort(sorted);
+        for (String s : sorted) {
+            list.add(StringTag.valueOf(s));
+        }
+        gloveStack.getOrCreateTag().put(TAG_RECYCLE_LIST, list);
+    }
+
+    /** 手动放入物品时，将该物品类型加入回收列表 */
+    public static void addToRecycleList(ItemStack gloveStack, ItemStack item) {
+        if (gloveStack.isEmpty() || item.isEmpty()) return;
+        String id = getItemId(item);
+        if (id.isEmpty()) return;
+        Set<String> set = getRecycleList(gloveStack);
+        if (set.add(id)) {
+            saveRecycleList(gloveStack, set);
+        }
+    }
+
+    /** 手动取出物品时，将该物品类型从回收列表移除 */
+    public static void removeFromRecycleList(ItemStack gloveStack, ItemStack item) {
+        if (gloveStack.isEmpty() || item.isEmpty()) return;
+        String id = getItemId(item);
+        if (id.isEmpty()) return;
+        Set<String> set = getRecycleList(gloveStack);
+        if (set.remove(id)) {
+            saveRecycleList(gloveStack, set);
+        }
+    }
+
+    /** 判断物品是否在回收列表中（按物品类型匹配，无视耐久/附魔差异） */
+    public static boolean isInRecycleList(ItemStack gloveStack, ItemStack item) {
+        if (gloveStack.isEmpty() || item.isEmpty()) return false;
+        return getRecycleList(gloveStack).contains(getItemId(item));
+    }
+
+    private static String getItemId(ItemStack stack) {
+        ResourceLocation key = ForgeRegistries.ITEMS.getKey(stack.getItem());
+        return key == null ? "" : key.toString();
     }
 
     // ========== 序列化辅助 ==========

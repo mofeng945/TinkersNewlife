@@ -156,6 +156,18 @@ public class GloveWeaponStorage {
         return false;
     }
 
+    /**
+     * 检查捡起的物品是否属于手套的回收列表（玩家手动放入过的物品类型）。
+     * <p>
+     * 只有列表中的物品才会在拾取时自动回收；匹配按物品类型（ID）判定，
+     * 无视耐久/附魔差异。列表仅在玩家打开手套 GUI 手动放入/取出时更新。
+     */
+    public static boolean isRecyclable(Player player, ItemStack stack) {
+        ItemStack gloveStack = GloveHelper.findWornGlove(player);
+        if (gloveStack.isEmpty()) return false;
+        return SilentGloveItem.isInRecycleList(gloveStack, stack);
+    }
+
     public static boolean tryStoreInVault(Player player, ItemStack stack) {
         if (stack.isEmpty()) return true;
         if (DarkSilentManager.isActive(player.getUUID())) return false;
