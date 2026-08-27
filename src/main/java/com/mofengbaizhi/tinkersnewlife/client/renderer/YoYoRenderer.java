@@ -16,7 +16,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import slimeknights.tconstruct.library.client.materials.MaterialTooltipCache;
@@ -84,12 +83,11 @@ public class YoYoRenderer extends EntityRenderer<YoYoEntity> {
 
         VertexConsumer consumer = buffer.getBuffer(RENDER_TYPE);
         Matrix4f mat = poseStack.last().pose();
-        Matrix3f normalMat = poseStack.last().normal();
 
         // 三个部件：左轮 / 线轴 / 右轮（圆柱轴向为 Z，轮面朝玩家）
-        addCylinder(consumer, mat, normalMat, 0f, 0f, -0.32f, 0.46f, 0.14f, 14, wheel1Sprite, colors[0], packedLight);
-        addCylinder(consumer, mat, normalMat, 0f, 0f, 0.32f, 0.46f, 0.14f, 14, wheel2Sprite, colors[1], packedLight);
-        addCylinder(consumer, mat, normalMat, 0f, 0f, 0f, 0.16f, 0.5f, 12, spoolSprite, colors[2], packedLight);
+        addCylinder(consumer, mat, 0f, 0f, -0.32f, 0.46f, 0.14f, 14, wheel1Sprite, colors[0], packedLight);
+        addCylinder(consumer, mat, 0f, 0f, 0.32f, 0.46f, 0.14f, 14, wheel2Sprite, colors[1], packedLight);
+        addCylinder(consumer, mat, 0f, 0f, 0f, 0.16f, 0.5f, 12, spoolSprite, colors[2], packedLight);
 
         poseStack.popPose();
     }
@@ -180,7 +178,6 @@ public class YoYoRenderer extends EntityRenderer<YoYoEntity> {
      *
      * @param consumer  顶点消费者
      * @param mat       模型矩阵
-     * @param normalMat 法线矩阵
      * @param cx/cy/cz  圆柱中心坐标
      * @param radius    半径
      * @param height    厚度（沿 Z）
@@ -189,7 +186,7 @@ public class YoYoRenderer extends EntityRenderer<YoYoEntity> {
      * @param argb      材质颜色（ARGB）
      * @param light     光照
      */
-    private static void addCylinder(VertexConsumer consumer, Matrix4f mat, Matrix3f normalMat,
+    private static void addCylinder(VertexConsumer consumer, Matrix4f mat,
                                     float cx, float cy, float cz,
                                     float radius, float height, int segments,
                                     TextureAtlasSprite sprite, int argb, int light) {
@@ -211,47 +208,42 @@ public class YoYoRenderer extends EntityRenderer<YoYoEntity> {
             float z1 = (float) (cy + Math.sin(a1) * radius);
 
             // 顶面（法线 +Z）
-            float midX = (float) (cx + Math.cos((a0 + a1) / 2) * radius);
-            float midZ = (float) (cy + Math.sin((a0 + a1) / 2) * radius);
             float cu = u0 + (u1 - u0) * 0.5f;
             float cv = v0 + (v1 - v0) * 0.5f;
-            addVertex(consumer, mat, normalMat, cx, cy, zTop, r, g, b, cu, cv, 0, 0, 1, light);
-            addVertex(consumer, mat, normalMat, x0, z0, zTop, r, g, b, u0, v0, 0, 0, 1, light);
-            addVertex(consumer, mat, normalMat, x1, z1, zTop, r, g, b, u1, v0, 0, 0, 1, light);
+            addVertex(consumer, mat, cx, cy, zTop, r, g, b, cu, cv, light);
+            addVertex(consumer, mat, x0, z0, zTop, r, g, b, u0, v0, light);
+            addVertex(consumer, mat, x1, z1, zTop, r, g, b, u1, v0, light);
 
             // 底面（法线 -Z）
-            addVertex(consumer, mat, normalMat, cx, cy, zBottom, r, g, b, cu, cv, 0, 0, -1, light);
-            addVertex(consumer, mat, normalMat, x1, z1, zBottom, r, g, b, u1, v0, 0, 0, -1, light);
-            addVertex(consumer, mat, normalMat, x0, z0, zBottom, r, g, b, u0, v0, 0, 0, -1, light);
+            addVertex(consumer, mat, cx, cy, zBottom, r, g, b, cu, cv, light);
+            addVertex(consumer, mat, x1, z1, zBottom, r, g, b, u1, v0, light);
+            addVertex(consumer, mat, x0, z0, zBottom, r, g, b, u0, v0, light);
 
-            // 侧面（法线径向）
-            float nx0 = (float) Math.cos(a0), nz0 = (float) Math.sin(a0);
-            float nx1 = (float) Math.cos(a1), nz1 = (float) Math.sin(a1);
+            // 侧面（法线径向，无法线数据，用明暗渐变模拟立体感）
+            float nx0 = (float) Math.cos(a0);
+            float nx1 = (float) Math.cos(a1);
             float va = v0 + (v1 - v0) * 0.15f;
             float vb = v0 + (v1 - v0) * 0.85f;
-            // 侧面明暗：不同角度亮度略有差异，增强立体感
             float shade0 = 0.75f + 0.25f * (nx0 + 1) / 2;
             float shade1 = 0.75f + 0.25f * (nx1 + 1) / 2;
             float s0r = r * shade0, s0g = g * shade0, s0b = b * shade0;
             float s1r = r * shade1, s1g = g * shade1, s1b = b * shade1;
-            addVertex(consumer, mat, normalMat, x0, z0, zBottom, s0r, s0g, s0b, u0, vb, nx0, 0, nz0, light);
-            addVertex(consumer, mat, normalMat, x1, z1, zBottom, s1r, s1g, s1b, u1, vb, nx1, 0, nz1, light);
-            addVertex(consumer, mat, normalMat, x1, z1, zTop, s1r, s1g, s1b, u1, va, nx1, 0, nz1, light);
-            addVertex(consumer, mat, normalMat, x0, z0, zTop, s0r, s0g, s0b, u0, va, nx0, 0, nz0, light);
+            addVertex(consumer, mat, x0, z0, zBottom, s0r, s0g, s0b, u0, vb, light);
+            addVertex(consumer, mat, x1, z1, zBottom, s1r, s1g, s1b, u1, vb, light);
+            addVertex(consumer, mat, x1, z1, zTop, s1r, s1g, s1b, u1, va, light);
+            addVertex(consumer, mat, x0, z0, zTop, s0r, s0g, s0b, u0, va, light);
         }
     }
 
-    /** 写一个顶点 */
-    private static void addVertex(VertexConsumer consumer, Matrix4f mat, Matrix3f normalMat,
+    /** 写一个顶点（entityCutout 格式：POSITION_COLOR_TEX_LIGHTMAP） */
+    private static void addVertex(VertexConsumer consumer, Matrix4f mat,
                                   float x, float y, float z,
                                   float r, float g, float b,
-                                  float u, float v,
-                                  float nx, float ny, float nz, int light) {
+                                  float u, float v, int light) {
         consumer.vertex(mat, x, y, z)
                 .color(r, g, b, 1.0f)
                 .uv(u, v)
                 .uv2(light)
-                .normal(normalMat, nx, ny, nz)
                 .endVertex();
     }
 
