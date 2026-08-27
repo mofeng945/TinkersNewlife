@@ -31,6 +31,9 @@ public class ClientEventHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientEventHandler.class);
 
+    /** 量子背包打开防抖：按住按键时 consumeClick 每 tick 都返回 true，避免持续发包导致服务端重复打开 GUI */
+    private static long lastBagOpenMillis = 0;
+
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
@@ -78,7 +81,12 @@ public class ClientEventHandler {
                     hand = 1;
                 }
                 if (hand >= 0) {
-                    TinkersNewlife.CHANNEL.sendToServer(new PacketOpenBag(hand));
+                    // ⭐ 客户端防抖：300ms 内不重复发包，防止按住按键持续触发服务端 openScreen（局域网模式更明显）
+                    long now = System.currentTimeMillis();
+                    if (now - lastBagOpenMillis >= 300) {
+                        lastBagOpenMillis = now;
+                        TinkersNewlife.CHANNEL.sendToServer(new PacketOpenBag(hand));
+                    }
                 }
             }
 

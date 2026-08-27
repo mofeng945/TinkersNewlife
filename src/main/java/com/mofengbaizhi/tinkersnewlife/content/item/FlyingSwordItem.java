@@ -73,13 +73,12 @@ public class FlyingSwordItem extends ModifiableItem implements ICurioItem {
 
                 if (!hasUnbreakable) {
                     int oldDamage = tool.getDamage();
-                    stack.hurt(20, player.getRandom(), (ServerPlayer) player);
-                    // ✅ 使用 ToolHelper 安全获取
-                    ToolStack refreshed = ToolHelper.getToolStack(stack);
-                    if (refreshed == null || refreshed.isBroken()) {
+                    // ✅ 走匠魂正常耐久逻辑：受粘液覆层（slime covering）等 onDamageTool 钩子减免
+                    boolean destroyed = slimeknights.tconstruct.library.tools.helper.ToolDamageUtil.damage(tool, 20, player, stack);
+                    if (destroyed || tool.isBroken()) {
                         return InteractionResultHolder.fail(stack);
                     }
-                    actualCost = Math.max(0, refreshed.getDamage() - oldDamage);
+                    actualCost = Math.max(0, tool.getDamage() - oldDamage);
                 }
 
                 ToolDataNBT persistentData = tool.getPersistentData();

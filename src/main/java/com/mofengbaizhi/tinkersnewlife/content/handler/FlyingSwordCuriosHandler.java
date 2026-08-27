@@ -165,7 +165,11 @@ public class FlyingSwordCuriosHandler {
                 continue;
             }
 
-            stack.hurt(1, player.getRandom(), player);
+            // ✅ 走匠魂正常耐久逻辑：受粘液覆层（slime covering）等 onDamageTool 钩子减免
+            ToolStack tool = ToolHelper.getToolStack(stack);
+            if (tool != null) {
+                slimeknights.tconstruct.library.tools.helper.ToolDamageUtil.damage(tool, 1, player, stack);
+            }
         }
     }
 
