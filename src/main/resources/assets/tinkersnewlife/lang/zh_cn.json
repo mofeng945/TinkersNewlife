@@ -338,6 +338,10 @@
   "effect.tinkersnewlife.damage_limit": "§6限伤",
   "effect.tinkersnewlife.unnameable": "§5不可名状",
   "effect.tinkersnewlife.charm": "§d魅惑",
+  "entity.tinkersnewlife.flying_sword": "飞剑",
+  "entity.tinkersnewlife.flying_sword_foot": "飞剑足印",
+  "entity.tinkersnewlife.yo_yo": "悠悠球",
+  "entity.tinkersnewlife.dreadsteel_slash": "惧钢剑气",
 
   "dragonstaff.name.prefix": "范德尔,艾斯,雷霆,达克尼斯,霍利,布利斯,思达尔,阿碧斯,弗莱明,弗洛伊斯",
   "dragonstaff.name.root": "奥杜因,帕图纳克斯,杜耐维尔,阿卡托什,凡里奥,萨菲罗斯,拉格纳,艾泽拉斯,诺兹多姆,伊瑟拉",
