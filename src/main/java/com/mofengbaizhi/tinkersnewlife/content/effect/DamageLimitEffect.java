@@ -2,6 +2,8 @@ package com.mofengbaizhi.tinkersnewlife.content.effect;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModEffects;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -40,6 +42,12 @@ public class DamageLimitEffect extends MobEffect {
         public static void onLivingDamage(LivingDamageEvent event) {
             LivingEntity entity = event.getEntity();
             if (entity.level().isClientSide()) return;
+
+            // ⭐ 命令击杀(/kill)、虚空等"无法避免"的伤害不受限伤影响
+            DamageSource source = event.getSource();
+            if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+                return;
+            }
 
             // 检查是否有伤害限幅效果
             MobEffectInstance effect = entity.getEffect(ModEffects.DAMAGE_LIMIT.get());
