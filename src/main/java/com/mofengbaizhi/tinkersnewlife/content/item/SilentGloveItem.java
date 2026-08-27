@@ -7,7 +7,6 @@ import com.mofengbaizhi.tinkersnewlife.content.storage.SilentGloveHandler;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -22,7 +21,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.registries.ForgeRegistries;
 import slimeknights.tconstruct.library.tools.definition.ToolDefinition;
 import slimeknights.tconstruct.library.tools.item.ModifiableItem;
 import top.theillusivec4.curios.api.CuriosApi;
@@ -35,11 +33,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 import java.util.UUID;
 
 public class SilentGloveItem extends ModifiableItem implements ICurioItem {
@@ -107,68 +102,92 @@ public class SilentGloveItem extends ModifiableItem implements ICurioItem {
         return SilentGloveHandler.getOrCreate(getOrCreateVaultUUID(stack));
     }
 
-    // ========== 回收列表（玩家手动放入的物品类型） ==========
+    // ========== 回收列表（玩家手动放入的固定物品，忽略耐久） ==========
 
     private static final String TAG_RECYCLE_LIST = "recycle_list";
 
     /**
-     * 获取回收列表：玩家通过手套 GUI 手动放入过的物品类型（按物品 ID 记录）。
-     * 自动回收的物品不会加入列表；列表持久保存在手套 NBT 中，直到玩家
-     * 下次打开手套放入/取出物品才会更改。
+     * 获取回收列表：玩家通过手套 GUI 手动放入过的【固定物品】NBT 快照列表。
+     * <p>
+     * 匹配规则：物品相同且 NBT 完全一致，仅忽略耐久字段（Damage）。
+     * 即玩家放入哪一件具体物品（材质/强化/修饰完全相同），之后只回收
+     * 与之匹配的那一件，而非整个物品类型。自动回收不会加入列表；
+     * 列表持久保存在手套 NBT，直到玩家下次打开手套放入/取出才更改。
      */
-    public static Set<String> getRecycleList(ItemStack gloveStack) {
-        Set<String> set = new HashSet<>();
+    public static List<CompoundTag> getRecycleList(ItemStack gloveStack) {
+        List<CompoundTag> list = new ArrayList<>();
         CompoundTag tag = gloveStack.getTag();
         if (tag != null && tag.contains(TAG_RECYCLE_LIST, Tag.TAG_LIST)) {
-            ListTag list = tag.getList(TAG_RECYCLE_LIST, Tag.TAG_STRING);
-            for (int i = 0; i < list.size(); i++) {
-                set.add(list.getString(i));
+            ListTag raw = tag.getList(TAG_RECYCLE_LIST, Tag.TAG_COMPOUND);
+            for (int i = 0; i < raw.size(); i++) {
+                list.add(raw.getCompound(i));
             }
         }
-        return set;
+        return list;
     }
 
-    private static void saveRecycleList(ItemStack gloveStack, Set<String> set) {
-        ListTag list = new ListTag();
-        List<String> sorted = new ArrayList<>(set);
-        Collections.sort(sorted);
-        for (String s : sorted) {
-            list.add(StringTag.valueOf(s));
+    private static void saveRecycleList(ItemStack gloveStack, List<CompoundTag> list) {
+        ListTag raw = new ListTag();
+        for (CompoundTag c : list) {
+            raw.add(c);
         }
-        gloveStack.getOrCreateTag().put(TAG_RECYCLE_LIST, list);
+        gloveStack.getOrCreateTag().put(TAG_RECYCLE_LIST, raw);
     }
 
-    /** 手动放入物品时，将该物品类型加入回收列表 */
+    /** 手动放入物品时，将该固定物品加入回收列表（去重） */
     public static void addToRecycleList(ItemStack gloveStack, ItemStack item) {
         if (gloveStack.isEmpty() || item.isEmpty()) return;
-        String id = getItemId(item);
-        if (id.isEmpty()) return;
-        Set<String> set = getRecycleList(gloveStack);
-        if (set.add(id)) {
-            saveRecycleList(gloveStack, set);
+        CompoundTag identity = saveIdentity(item);
+        if (identity.isEmpty()) return;
+        List<CompoundTag> list = getRecycleList(gloveStack);
+        boolean exists = false;
+        for (CompoundTag c : list) {
+            if (identityEquals(c, identity)) { exists = true; break; }
+        }
+        if (!exists) {
+            list.add(identity);
+            saveRecycleList(gloveStack, list);
         }
     }
 
-    /** 手动取出物品时，将该物品类型从回收列表移除 */
+    /** 手动取出物品时，将该固定物品从回收列表移除 */
     public static void removeFromRecycleList(ItemStack gloveStack, ItemStack item) {
         if (gloveStack.isEmpty() || item.isEmpty()) return;
-        String id = getItemId(item);
-        if (id.isEmpty()) return;
-        Set<String> set = getRecycleList(gloveStack);
-        if (set.remove(id)) {
-            saveRecycleList(gloveStack, set);
+        CompoundTag identity = saveIdentity(item);
+        if (identity.isEmpty()) return;
+        List<CompoundTag> list = getRecycleList(gloveStack);
+        boolean removed = list.removeIf(c -> identityEquals(c, identity));
+        if (removed) {
+            saveRecycleList(gloveStack, list);
         }
     }
 
-    /** 判断物品是否在回收列表中（按物品类型匹配，无视耐久/附魔差异） */
+    /** 判断该固定物品是否在回收列表中（忽略耐久） */
     public static boolean isInRecycleList(ItemStack gloveStack, ItemStack item) {
         if (gloveStack.isEmpty() || item.isEmpty()) return false;
-        return getRecycleList(gloveStack).contains(getItemId(item));
+        CompoundTag identity = saveIdentity(item);
+        if (identity.isEmpty()) return false;
+        for (CompoundTag c : getRecycleList(gloveStack)) {
+            if (identityEquals(c, identity)) return true;
+        }
+        return false;
     }
 
-    private static String getItemId(ItemStack stack) {
-        ResourceLocation key = ForgeRegistries.ITEMS.getKey(stack.getItem());
-        return key == null ? "" : key.toString();
+    /** 物品身份 NBT：完整 NBT 快照，仅移除耐久字段 Damage */
+    private static CompoundTag saveIdentity(ItemStack stack) {
+        CompoundTag tag = stack.save(new CompoundTag());
+        if (tag.contains("tag", Tag.TAG_COMPOUND)) {
+            tag.getCompound("tag").remove("Damage");
+        }
+        return tag;
+    }
+
+    /** 两个身份 NBT 是否表示同一件固定物品（忽略数量与耐久） */
+    private static boolean identityEquals(CompoundTag a, CompoundTag b) {
+        ItemStack sa = ItemStack.of(a);
+        ItemStack sb = ItemStack.of(b);
+        if (sa.isEmpty() || sb.isEmpty()) return false;
+        return ItemStack.isSameItemSameTags(sa, sb);
     }
 
     // ========== 序列化辅助 ==========
