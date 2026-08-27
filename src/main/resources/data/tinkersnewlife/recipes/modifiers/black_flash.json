@@ -4,6 +4,14 @@
   "inputs": [
     {
       "item": "minecraft:nether_star"
+    },
+    {
+      "item": "minecraft:end_crystal",
+      "count": 2
+    },
+    {
+      "item": "minecraft:quartz",
+      "count": 2
     }
   ],
   "level": {
