@@ -31,8 +31,8 @@ public class ClientEventHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientEventHandler.class);
 
-    /** 量子背包打开防抖：按住按键时 consumeClick 每 tick 都返回 true，避免持续发包导致服务端重复打开 GUI */
-    private static long lastBagOpenMillis = 0;
+    /** 量子背包按键边沿检测：记录上次按下状态，仅在"松开→按下"时触发一次，按住期间不重复发包 */
+    private static boolean lastBagKeyDown = false;
 
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
@@ -71,7 +71,9 @@ public class ClientEventHandler {
                 TinkersNewlife.CHANNEL.sendToServer(new PacketDragonStaffUse());
             }
 
-            if (KeyBindings.OPEN_BAG.get().consumeClick()) {
+            // ⭐ 量子背包：边沿检测（按住只触发一次，松开再按再次触发），彻底避免按住时重复 openScreen 导致闪烁
+            boolean bagKeyDown = KeyBindings.OPEN_BAG.get().isDown();
+            if (bagKeyDown && !lastBagKeyDown) {
                 ItemStack mainHand = player.getMainHandItem();
                 ItemStack offHand = player.getOffhandItem();
                 int hand = -1;
@@ -81,14 +83,10 @@ public class ClientEventHandler {
                     hand = 1;
                 }
                 if (hand >= 0) {
-                    // ⭐ 客户端防抖：300ms 内不重复发包，防止按住按键持续触发服务端 openScreen（局域网模式更明显）
-                    long now = System.currentTimeMillis();
-                    if (now - lastBagOpenMillis >= 300) {
-                        lastBagOpenMillis = now;
-                        TinkersNewlife.CHANNEL.sendToServer(new PacketOpenBag(hand));
-                    }
+                    TinkersNewlife.CHANNEL.sendToServer(new PacketOpenBag(hand));
                 }
             }
+            lastBagKeyDown = bagKeyDown;
 
             if (KeyBindings.SWITCH_FLYING_SWORD_MODE.get().consumeClick()) {
                 ItemStack mainHand = player.getMainHandItem();

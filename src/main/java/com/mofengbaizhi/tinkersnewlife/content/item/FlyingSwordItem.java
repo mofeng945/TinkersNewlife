@@ -72,13 +72,13 @@ public class FlyingSwordItem extends ModifiableItem implements ICurioItem {
                 int actualCost = 0;
 
                 if (!hasUnbreakable) {
-                    int oldDamage = tool.getDamage();
-                    // ✅ 走匠魂正常耐久逻辑：受粘液覆层（slime covering）等 onDamageTool 钩子减免
+                    // ✅ 走匠魂正常耐久逻辑：受粘液覆层（Overslime）等 onDamageTool 钩子减免（覆层优先吸收）
                     boolean destroyed = slimeknights.tconstruct.library.tools.helper.ToolDamageUtil.damage(tool, 20, player, stack);
                     if (destroyed || tool.isBroken()) {
                         return InteractionResultHolder.fail(stack);
                     }
-                    actualCost = Math.max(0, tool.getDamage() - oldDamage);
+                    // 命中返还基于名义消耗 20：无论覆层是否吸收，命中敌人都会返还工具耐久
+                    actualCost = 20;
                 }
 
                 ToolDataNBT persistentData = tool.getPersistentData();
