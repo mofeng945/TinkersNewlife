@@ -127,6 +127,8 @@ public class SilentGloveInteractionHandler {
         if (GloveWeaponStorage.tryStoreInVault(player, picked)) {
             event.setCanceled(true);
             event.getItem().discard();
+            // 拾取直接回收成功，清除对应的待回收记录，避免定时扫描残留空转
+            GloveWeaponStorage.removePendingRecovery(player, picked);
         }
     }
 

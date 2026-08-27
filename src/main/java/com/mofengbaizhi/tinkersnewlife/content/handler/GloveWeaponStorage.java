@@ -197,6 +197,8 @@ public class GloveWeaponStorage {
         if (totalSpace < stack.getCount()) return false;
 
         ItemStack remaining = stack.copy();
+        // ⭐ 移除掏出时的临时标记，保证库中物品 NBT 干净（不干扰后续匹配）
+        if (remaining.hasTag()) remaining.getTag().remove("from_silent_glove");
         for (int i = 0; i < vault.getSlots(); i++) {
             if (remaining.isEmpty()) break;
             remaining = vault.insertItem(i, remaining, false);
@@ -271,6 +273,18 @@ public class GloveWeaponStorage {
         PENDING_RECOVERIES.remove(player.getUUID());
     }
 
+    /**
+     * 移除与指定物品匹配的待回收记录（拾取直接回收后调用，避免残留空扫）。
+     */
+    public static void removePendingRecovery(Player player, ItemStack stack) {
+        UUID playerId = player.getUUID();
+        List<PendingRecovery> list = PENDING_RECOVERIES.get(playerId);
+        if (list == null || list.isEmpty()) return;
+        synchronized (list) {
+            list.removeIf(rec -> isSameFixedItem(rec.stack, stack));
+        }
+    }
+
     public static void tickScan(Player player) {
         if (player == null) return;
         UUID playerId = player.getUUID();
@@ -341,16 +355,24 @@ public class GloveWeaponStorage {
     }
 
     /**
-     * 固定物品精确匹配：物品相同且 NBT 完全一致，仅忽略耐久（Damage）。
-     * ⭐ 防止待回收补偿逻辑在背包里误收"同类但不同配置"的其他物品。
+     * 固定物品精确匹配：物品相同且 NBT 完全一致，忽略耐久（Damage）与
+     * 掏出时的临时标记（from_silent_glove）。
+     * ⭐ 防止待回收补偿逻辑在背包里误收"同类但不同配置"的其他物品，
+     * 也确保丢到地上的掏出物品捡起后能与库中原物匹配。
      */
     private static boolean isSameFixedItem(ItemStack a, ItemStack b) {
         if (a.isEmpty() || b.isEmpty()) return false;
         if (!ItemStack.isSameItem(a, b)) return false;
         ItemStack ca = a.copy();
         ItemStack cb = b.copy();
-        if (ca.getTag() != null) ca.getTag().remove("Damage");
-        if (cb.getTag() != null) cb.getTag().remove("Damage");
+        if (ca.getTag() != null) {
+            ca.getTag().remove("Damage");
+            ca.getTag().remove("from_silent_glove");
+        }
+        if (cb.getTag() != null) {
+            cb.getTag().remove("Damage");
+            cb.getTag().remove("from_silent_glove");
+        }
         return ItemStack.isSameItemSameTags(ca, cb);
     }
 }
