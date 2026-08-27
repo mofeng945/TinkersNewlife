@@ -112,7 +112,7 @@ public class DurandalConversionHandler {
                 false
         );
 
-        TinkersNewlife.LOGGER.info("【杜兰达尔】玩家 {} 的工具 ({}) 已转换为杜兰达尔剑",
+        TinkersNewlife.LOGGER.debug("【杜兰达尔】玩家 {} 的工具 ({}) 已转换为杜兰达尔剑",
                 player.getName().getString(), toolDefId);
 
         return newSword;

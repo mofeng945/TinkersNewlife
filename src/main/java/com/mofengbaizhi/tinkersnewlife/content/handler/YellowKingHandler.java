@@ -142,7 +142,7 @@ public class YellowKingHandler {
                 true
         );
 
-        LOGGER.info("[YellowKing] Player {} triggered the event at Y={}",
+        LOGGER.debug("[YellowKing] Player {} triggered the event at Y={}",
                 player.getName().getString(), player.getY());
     }
 
@@ -196,7 +196,7 @@ public class YellowKingHandler {
                     Component.translatable("event.tinkersnewlife.yellow_king.failed"),
                     true
             );
-            LOGGER.info("[YellowKing] Player {} failed the event (dead)",
+            LOGGER.debug("[YellowKing] Player {} failed the event (dead)",
                     player.getName().getString());
             return;
         }
@@ -205,11 +205,11 @@ public class YellowKingHandler {
 
         if (reward) {
             applyReward(player);
-            LOGGER.info("[YellowKing] Player {} received reward",
+            LOGGER.debug("[YellowKing] Player {} received reward",
                     player.getName().getString());
         } else {
             applyPunishment(player);
-            LOGGER.info("[YellowKing] Player {} received punishment",
+            LOGGER.debug("[YellowKing] Player {} received punishment",
                     player.getName().getString());
         }
     }
@@ -285,7 +285,7 @@ public class YellowKingHandler {
         EventData data = ACTIVE_EVENTS.remove(uuid);
         if (data != null) {
             removeUnnameable(data.player);
-            LOGGER.info("[YellowKing] Player {} logged out during event, cleaned up",
+            LOGGER.debug("[YellowKing] Player {} logged out during event, cleaned up",
                     event.getEntity().getName().getString());
         }
     }

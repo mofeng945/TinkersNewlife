@@ -90,7 +90,7 @@ public class NicholasBlessingHandler {
         UUID uuid = player.getUUID();
         ACTIVE_EVENTS.remove(uuid);
         removeUnnameable(player);
-        LOGGER.info("[NicholasBlessing] Player {} died during event", player.getName().getString());
+        LOGGER.debug("[NicholasBlessing] Player {} died during event", player.getName().getString());
     }
 
     @SubscribeEvent
@@ -99,7 +99,7 @@ public class NicholasBlessingHandler {
         EventData data = ACTIVE_EVENTS.remove(uuid);
         if (data != null) {
             removeUnnameable(data.player);
-            LOGGER.info("[NicholasBlessing] Player {} logged out during event, cleaned up",
+            LOGGER.debug("[NicholasBlessing] Player {} logged out during event, cleaned up",
                     event.getEntity().getName().getString());
         }
     }
@@ -144,7 +144,7 @@ public class NicholasBlessingHandler {
 
         player.displayClientMessage(
                 Component.translatable("event.tinkersnewlife.nicholas_blessing.start"), true);
-        LOGGER.info("[NicholasBlessing] Player {} triggered event", player.getName().getString());
+        LOGGER.debug("[NicholasBlessing] Player {} triggered event", player.getName().getString());
     }
 
     private static void ensureUnnameableEffect(Player player) {
@@ -172,10 +172,10 @@ public class NicholasBlessingHandler {
 
         if (reward) {
             applyReward(player);
-            LOGGER.info("[NicholasBlessing] Player {} received reward", player.getName().getString());
+            LOGGER.debug("[NicholasBlessing] Player {} received reward", player.getName().getString());
         } else {
             applyPunishment(player);
-            LOGGER.info("[NicholasBlessing] Player {} received punishment", player.getName().getString());
+            LOGGER.debug("[NicholasBlessing] Player {} received punishment", player.getName().getString());
         }
     }
 

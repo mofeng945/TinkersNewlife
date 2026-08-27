@@ -421,7 +421,7 @@ public class DreadsteelArmorTrait extends Modifier implements TooltipModifierHoo
             }
 
             if (successCount > 0 && LOGGER.isInfoEnabled()) {
-                LOGGER.info("§d[悚域展开] 本次判定命中了 {} 个目标", successCount);
+                LOGGER.debug("§d[悚域展开] 本次判定命中了 {} 个目标", successCount);
             }
         }
     }

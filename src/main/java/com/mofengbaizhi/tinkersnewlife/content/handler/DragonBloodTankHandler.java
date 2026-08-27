@@ -125,7 +125,7 @@ public class DragonBloodTankHandler {
             }
 
             if (DEBUG) {
-                LOGGER.info("🐉 从 {} 采集了 {} mB 的 {}",
+                LOGGER.debug("🐉 从 {} 采集了 {} mB 的 {}",
                         dragonType.displayName, filled, dragonType.bloodType.name);
             }
         }

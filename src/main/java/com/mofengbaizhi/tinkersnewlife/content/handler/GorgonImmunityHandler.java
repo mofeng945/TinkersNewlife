@@ -43,7 +43,7 @@ public class GorgonImmunityHandler {
         removeNearbyStoneStatues(target);
 
         if (DEBUG) {
-            LOGGER.info("🛡️ {} 免疫了蛇发女妖的石化凝视（伤害已取消）！",
+            LOGGER.debug("🛡️ {} 免疫了蛇发女妖的石化凝视（伤害已取消）！",
                     target.getName().getString());
         }
     }
@@ -78,7 +78,7 @@ public class GorgonImmunityHandler {
         for (Entity statue : statues) {
             statue.remove(Entity.RemovalReason.DISCARDED);
             if (DEBUG) {
-                LOGGER.info("🗿 已移除石像 at {}", statue.blockPosition());
+                LOGGER.debug("🗿 已移除石像 at {}", statue.blockPosition());
             }
         }
     }

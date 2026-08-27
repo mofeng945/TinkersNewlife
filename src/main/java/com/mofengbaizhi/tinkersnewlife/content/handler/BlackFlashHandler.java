@@ -107,7 +107,7 @@ public class BlackFlashHandler {
 
             applyBuff(player, data, originalDamage);
 
-            TinkersNewlife.LOGGER.info("[黑闪] 玩家 {} 打出黑闪！伤害: {:.1f} -> {:.1f}，当前概率加成: {}%",
+            TinkersNewlife.LOGGER.debug("[黑闪] 玩家 {} 打出黑闪！伤害: {:.1f} -> {:.1f}，当前概率加成: {}%",
                     player.getName().getString(),
                     originalDamage, flashDamage,
                     data.probabilityBoost * 100);
@@ -211,7 +211,7 @@ public class BlackFlashHandler {
                     removeBuff(player, data);
                     data.probabilityBoost = 0;
                     data.baseDamageValue = 0;
-                    TinkersNewlife.LOGGER.info("[黑闪] 玩家 {} 的黑闪增益已过期", player.getName().getString());
+                    TinkersNewlife.LOGGER.debug("[黑闪] 玩家 {} 的黑闪增益已过期", player.getName().getString());
                 }
             }
         }

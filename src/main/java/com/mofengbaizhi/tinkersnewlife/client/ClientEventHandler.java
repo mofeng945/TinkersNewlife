@@ -37,7 +37,7 @@ public class ClientEventHandler {
             MenuScreens.register(ModMenus.BAG_CONTAINER.get(), BagScreen::new);
             // ✅ 注册噤默手套 GUI
             MenuScreens.register(ModMenus.SILENT_GLOVE_CONTAINER.get(), SilentGloveScreen::new);
-            LOGGER.info("[TinkersNewlife] 所有 GUI 屏幕已注册");
+            LOGGER.debug("[TinkersNewlife] 所有 GUI 屏幕已注册");
         });
     }
 

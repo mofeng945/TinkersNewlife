@@ -56,7 +56,7 @@ public class DarkSilentManager {
         int count = DurandalSwordItem.getHitCount(stack);
         if (count >= 9 && isWearingGlove(player)) {
             DurandalSwordItem.setHitCount(stack, 0);
-            LOGGER.info("[漆黑噤默] 玩家 {} 触发大招", player.getName().getString());
+            LOGGER.debug("[漆黑噤默] 玩家 {} 触发大招", player.getName().getString());
             triggerDarkSilent(player);
         }
     }
@@ -166,7 +166,7 @@ public class DarkSilentManager {
                 sp.connection.send(new ClientboundSetActionBarTextPacket(actionBar));
             }
 
-            LOGGER.info("[漆黑噤默] 玩家 {} 开始执行，共 {} 把武器", player.getName().getString(), weaponEntries.size());
+            LOGGER.debug("[漆黑噤默] 玩家 {} 开始执行，共 {} 把武器", player.getName().getString(), weaponEntries.size());
 
             ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(r -> {
                 Thread t = new Thread(r, "DarkSilentAttack");
@@ -194,7 +194,7 @@ public class DarkSilentManager {
                         if (attackIndex[0] >= totalAttacks) {
                             executor.shutdown();
                             DARK_SILENT_ACTIVE.remove(uuid);
-                            LOGGER.info("[漆黑噤默] 玩家 {} 大招完成", player.getName().getString());
+                            LOGGER.debug("[漆黑噤默] 玩家 {} 大招完成", player.getName().getString());
                             return;
                         }
 
