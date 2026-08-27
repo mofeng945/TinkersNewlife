@@ -3,7 +3,7 @@
   "allow_crystal": true,
   "inputs": [
     {
-      "item": "tinkersnewlife:durandal_shard"
+      "item": "minecraft:netherite_ingot"
     },
     {
       "item": "minecraft:piston"
@@ -19,8 +19,8 @@
     }
   ],
   "level": {
-    "min":4,
-    "max":5
+    "min": 5,
+    "max": 5
   },
   "result": "tinkersnewlife:quantum_bag",
   "tools": [
