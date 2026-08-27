@@ -5,9 +5,7 @@ import com.mofengbaizhi.tinkersnewlife.content.handler.GloveWeaponStorage;
 import com.mofengbaizhi.tinkersnewlife.content.storage.SilentGloveContainer;
 import com.mofengbaizhi.tinkersnewlife.content.storage.SilentGloveHandler;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -100,94 +98,6 @@ public class SilentGloveItem extends ModifiableItem implements ICurioItem {
 
     public static SilentGloveHandler getHandler(ItemStack stack) {
         return SilentGloveHandler.getOrCreate(getOrCreateVaultUUID(stack));
-    }
-
-    // ========== 回收列表（玩家手动放入的固定物品，忽略耐久） ==========
-
-    private static final String TAG_RECYCLE_LIST = "recycle_list";
-
-    /**
-     * 获取回收列表：玩家通过手套 GUI 手动放入过的【固定物品】NBT 快照列表。
-     * <p>
-     * 匹配规则：物品相同且 NBT 完全一致，仅忽略耐久字段（Damage）。
-     * 即玩家放入哪一件具体物品（材质/强化/修饰完全相同），之后只回收
-     * 与之匹配的那一件，而非整个物品类型。自动回收不会加入列表；
-     * 列表持久保存在手套 NBT，直到玩家下次打开手套放入/取出才更改。
-     */
-    public static List<CompoundTag> getRecycleList(ItemStack gloveStack) {
-        List<CompoundTag> list = new ArrayList<>();
-        CompoundTag tag = gloveStack.getTag();
-        if (tag != null && tag.contains(TAG_RECYCLE_LIST, Tag.TAG_LIST)) {
-            ListTag raw = tag.getList(TAG_RECYCLE_LIST, Tag.TAG_COMPOUND);
-            for (int i = 0; i < raw.size(); i++) {
-                list.add(raw.getCompound(i));
-            }
-        }
-        return list;
-    }
-
-    private static void saveRecycleList(ItemStack gloveStack, List<CompoundTag> list) {
-        ListTag raw = new ListTag();
-        for (CompoundTag c : list) {
-            raw.add(c);
-        }
-        gloveStack.getOrCreateTag().put(TAG_RECYCLE_LIST, raw);
-    }
-
-    /** 手动放入物品时，将该固定物品加入回收列表（去重） */
-    public static void addToRecycleList(ItemStack gloveStack, ItemStack item) {
-        if (gloveStack.isEmpty() || item.isEmpty()) return;
-        CompoundTag identity = saveIdentity(item);
-        if (identity.isEmpty()) return;
-        List<CompoundTag> list = getRecycleList(gloveStack);
-        boolean exists = false;
-        for (CompoundTag c : list) {
-            if (identityEquals(c, identity)) { exists = true; break; }
-        }
-        if (!exists) {
-            list.add(identity);
-            saveRecycleList(gloveStack, list);
-        }
-    }
-
-    /** 手动取出物品时，将该固定物品从回收列表移除 */
-    public static void removeFromRecycleList(ItemStack gloveStack, ItemStack item) {
-        if (gloveStack.isEmpty() || item.isEmpty()) return;
-        CompoundTag identity = saveIdentity(item);
-        if (identity.isEmpty()) return;
-        List<CompoundTag> list = getRecycleList(gloveStack);
-        boolean removed = list.removeIf(c -> identityEquals(c, identity));
-        if (removed) {
-            saveRecycleList(gloveStack, list);
-        }
-    }
-
-    /** 判断该固定物品是否在回收列表中（忽略耐久） */
-    public static boolean isInRecycleList(ItemStack gloveStack, ItemStack item) {
-        if (gloveStack.isEmpty() || item.isEmpty()) return false;
-        CompoundTag identity = saveIdentity(item);
-        if (identity.isEmpty()) return false;
-        for (CompoundTag c : getRecycleList(gloveStack)) {
-            if (identityEquals(c, identity)) return true;
-        }
-        return false;
-    }
-
-    /** 物品身份 NBT：完整 NBT 快照，仅移除耐久字段 Damage */
-    private static CompoundTag saveIdentity(ItemStack stack) {
-        CompoundTag tag = stack.save(new CompoundTag());
-        if (tag.contains("tag", Tag.TAG_COMPOUND)) {
-            tag.getCompound("tag").remove("Damage");
-        }
-        return tag;
-    }
-
-    /** 两个身份 NBT 是否表示同一件固定物品（忽略数量与耐久） */
-    private static boolean identityEquals(CompoundTag a, CompoundTag b) {
-        ItemStack sa = ItemStack.of(a);
-        ItemStack sb = ItemStack.of(b);
-        if (sa.isEmpty() || sb.isEmpty()) return false;
-        return ItemStack.isSameItemSameTags(sa, sb);
     }
 
     // ========== 序列化辅助 ==========
