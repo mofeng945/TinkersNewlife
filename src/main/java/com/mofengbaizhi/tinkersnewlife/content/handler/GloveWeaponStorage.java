@@ -6,8 +6,6 @@ import com.mofengbaizhi.tinkersnewlife.content.storage.SilentGloveHandler;
 import com.mofengbaizhi.tinkersnewlife.util.GloveHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -318,14 +316,14 @@ public class GloveWeaponStorage {
 
     private static ItemStack findItemInInventory(Player player, ItemStack target) {
         ItemStack main = player.getMainHandItem();
-        if (isMatchingItem(main, target) || ItemStack.isSameItem(main, target)) {
+        if (isSameFixedItem(main, target)) {
             ItemStack found = main.copy();
             player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
             return found;
         }
         for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
             ItemStack invStack = player.getInventory().getItem(i);
-            if (isMatchingItem(invStack, target) || ItemStack.isSameItem(invStack, target)) {
+            if (isSameFixedItem(invStack, target)) {
                 ItemStack found = invStack.copy();
                 player.getInventory().removeItem(i, invStack.getCount());
                 return found;
@@ -334,30 +332,17 @@ public class GloveWeaponStorage {
         return ItemStack.EMPTY;
     }
 
-    private static boolean isMatchingItem(ItemStack a, ItemStack b) {
+    /**
+     * 固定物品精确匹配：物品相同且 NBT 完全一致，仅忽略耐久（Damage）。
+     * ⭐ 防止待回收补偿逻辑在背包里误收"同类但不同配置"的其他物品。
+     */
+    private static boolean isSameFixedItem(ItemStack a, ItemStack b) {
         if (a.isEmpty() || b.isEmpty()) return false;
         if (!ItemStack.isSameItem(a, b)) return false;
-
-        CompoundTag tagA = a.getTag();
-        CompoundTag tagB = b.getTag();
-        if (tagA == null && tagB == null) return true;
-        if (tagA == null || tagB == null) return false;
-
-        if (tagA.contains("display", Tag.TAG_COMPOUND) || tagB.contains("display", Tag.TAG_COMPOUND)) {
-            CompoundTag displayA = tagA.getCompound("display");
-            CompoundTag displayB = tagB.getCompound("display");
-            if (displayA.contains("Name", Tag.TAG_STRING) && displayB.contains("Name", Tag.TAG_STRING)) {
-                if (!displayA.getString("Name").equals(displayB.getString("Name"))) return false;
-            } else if (displayA.contains("Name", Tag.TAG_STRING) || displayB.contains("Name", Tag.TAG_STRING)) {
-                return false;
-            }
-        }
-
-        if (tagA.contains("Enchantments", Tag.TAG_LIST) || tagB.contains("Enchantments", Tag.TAG_LIST)) {
-            ListTag enchA = tagA.getList("Enchantments", Tag.TAG_COMPOUND);
-            ListTag enchB = tagB.getList("Enchantments", Tag.TAG_COMPOUND);
-            if (!enchA.equals(enchB)) return false;
-        }
-        return true;
+        ItemStack ca = a.copy();
+        ItemStack cb = b.copy();
+        if (ca.getTag() != null) ca.getTag().remove("Damage");
+        if (cb.getTag() != null) cb.getTag().remove("Damage");
+        return ItemStack.isSameItemSameTags(ca, cb);
     }
 }
