@@ -10,6 +10,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingFallEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
@@ -74,6 +75,30 @@ public class FlyingSwordCuriosHandler {
         if (!player.level().isClientSide) {
             clearFlyingState(player);
         }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        Player player = event.getEntity();
+        if (player.level().isClientSide) return;
+
+        // 死亡复活后先清空遗留的飞行状态（避免 curios 重放 equip 造成状态错乱）
+        clearFlyingState(player);
+
+        // 若脚部仍装备着未损坏的飞剑，重新启用飞行能力（不强制飞行，由玩家自行起飞）
+        var curios = CuriosApi.getCuriosInventory(player).resolve();
+        if (curios.isEmpty()) return;
+        var slotResult = curios.get().findFirstCurio(stack -> stack.getItem() instanceof FlyingSwordItem);
+        if (slotResult.isEmpty()) return;
+        ItemStack stack = slotResult.get().stack();
+        if (isFlyingSwordBroken(stack)) return;
+
+        player.getPersistentData().putBoolean(FLYING_SWORD_ACTIVE, true);
+        player.getPersistentData().putBoolean("flying_sword_prev_mayfly", player.getAbilities().mayfly);
+        player.getAbilities().mayfly = true;
+        // 复活后不强制 flying，避免自动消耗耐久与不可控飞行；玩家双击空格起飞
+        player.getAbilities().flying = false;
+        player.onUpdateAbilities();
     }
 
     @SubscribeEvent

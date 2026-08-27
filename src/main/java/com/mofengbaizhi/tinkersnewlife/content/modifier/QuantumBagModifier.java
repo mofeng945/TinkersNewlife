@@ -37,6 +37,10 @@ public class QuantumBagModifier extends Modifier {
     private static final ResourceLocation KEY_BAG_UUID =
             new ResourceLocation(TinkersNewlife.MOD_ID, "bag_uuid_persistent");
 
+    /** 打开冷却（tick）：按住按键时客户端会持续发包，服务端需节流避免重复 openScreen 导致界面闪烁 */
+    private static final int OPEN_COOLDOWN_TICKS = 10;
+    private static final java.util.Map<UUID, Long> OPEN_COOLDOWNS = new ConcurrentHashMap<>();
+
     // ============================================================
     //  📦 UUID 管理
     // ============================================================
@@ -88,6 +92,14 @@ public class QuantumBagModifier extends Modifier {
     public static boolean tryOpenBag(Player player, ItemStack tool) {
         if (player == null || tool.isEmpty()) return false;
         if (player.level().isClientSide) return false;
+
+        // ⭐ 打开冷却：防止按住按键时客户端每 tick 发包导致 openScreen 重复触发（界面闪烁）
+        long now = player.level().getGameTime();
+        Long lastOpen = OPEN_COOLDOWNS.get(player.getUUID());
+        if (lastOpen != null && now - lastOpen < OPEN_COOLDOWN_TICKS) {
+            return false;
+        }
+        OPEN_COOLDOWNS.put(player.getUUID(), now);
 
         int level = getBagLevel(tool);
         if (level <= 0) return false;
