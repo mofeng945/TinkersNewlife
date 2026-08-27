@@ -46,8 +46,12 @@ public class YoYoRenderer extends EntityRenderer<YoYoEntity> {
     @Override
     public void render(YoYoEntity entity, float entityYaw, float partialTicks,
                        PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        // 发射者玩家（连线与返回方向需要）
+        UUID ownerUuid = entity.getOwnerUUID();
+        Player owner = ownerUuid == null ? null : entity.level().getPlayerByUUID(ownerUuid);
+
         // 绘制玩家手到球体的连线（弓弦材质颜色）
-        renderLine(entity, partialTicks, poseStack, buffer);
+        renderLine(entity, owner, partialTicks, poseStack, buffer);
 
         // 读取工具栈，获取三个部件的材质
         ItemStack toolStack = entity.getReturnStack();
@@ -67,17 +71,37 @@ public class YoYoRenderer extends EntityRenderer<YoYoEntity> {
 
         poseStack.pushPose();
 
-        // 旋转：停滞缓慢自转，飞行/飞回快速滚动（绕 Z 轴，轮面朝向玩家）
-        float rotation;
-        if (entity.getPhase() == YoYoEntity.PHASE_STALLED) {
-            rotation = (entity.tickCount + partialTicks) * 0.5f;
+        // 定向：让模型 Z 轴（轮面法线）对准运动方向——
+        // 飞行/停滞用发射方向，飞回用指向发射者的方向（像真实悠悠球滚出/滚回）
+        Vec3 facing;
+        if (entity.getPhase() == YoYoEntity.PHASE_RETURNING && owner != null) {
+            Vec3 toOwner = owner.getEyePosition().subtract(0, 0.2, 0).subtract(entity.getPosition(partialTicks));
+            facing = toOwner.lengthSqr() < 0.0001 ? new Vec3(0, 0, 1) : toOwner.normalize();
         } else {
-            rotation = (entity.tickCount + partialTicks) * 1.5f;
+            facing = entity.getLaunchDir();
+            if (facing.lengthSqr() < 0.0001) facing = new Vec3(0, 0, 1);
         }
-        poseStack.mulPose(new Quaternionf().rotationZ(rotation));
+        Quaternionf orient;
+        if (facing.z < -0.999f) {
+            // 180° 反向特例，避免 rotationTo 退化
+            orient = new Quaternionf().rotationY((float) Math.PI);
+        } else {
+            orient = new Quaternionf().rotationTo(0, 0, 1,
+                    (float) facing.x, (float) facing.y, (float) facing.z).normalize();
+        }
+        poseStack.mulPose(orient);
 
-        // 整体缩放
-        poseStack.scale(0.9f, 0.9f, 0.9f);
+        // 滚动：绕模型自身 Z 轴（即运动方向轴）旋转——飞行/飞回快速滚动，停滞慢转
+        float roll;
+        if (entity.getPhase() == YoYoEntity.PHASE_STALLED) {
+            roll = (entity.tickCount + partialTicks) * 0.5f;
+        } else {
+            roll = (entity.tickCount + partialTicks) * 1.5f;
+        }
+        poseStack.mulPose(new Quaternionf().rotationZ(roll));
+
+        // 体积缩小 1/3（原 0.9 → 0.6）
+        poseStack.scale(0.6f, 0.6f, 0.6f);
 
         // 左轮（正对玩家，Z 负侧）
         poseStack.pushPose();
@@ -88,7 +112,6 @@ public class YoYoRenderer extends EntityRenderer<YoYoEntity> {
 
         // 线轴（居中，绕 X 转 90° 侧面朝玩家，形成"轴"的立体感）
         poseStack.pushPose();
-        poseStack.translate(0, 0, 0);
         poseStack.mulPose(new Quaternionf().rotationX((float) Math.PI / 2));
         itemRenderer.renderStatic(spool, ItemDisplayContext.NONE, packedLight,
                 OverlayTexture.NO_OVERLAY, poseStack, buffer, entity.level(), 0);
@@ -128,16 +151,12 @@ public class YoYoRenderer extends EntityRenderer<YoYoEntity> {
     /**
      * 绘制玩家手到悠悠球实体的连线（弓弦材质颜色，与工具模型 bowstring 槽位一致）。
      */
-    private void renderLine(YoYoEntity entity, float partialTicks,
+    private void renderLine(YoYoEntity entity, Player owner, float partialTicks,
                             PoseStack poseStack, MultiBufferSource buffer) {
-        UUID ownerUuid = entity.getOwnerUUID();
-        if (ownerUuid == null) return;
-
-        Player player = entity.level().getPlayerByUUID(ownerUuid);
-        if (player == null) return;
+        if (owner == null) return;
 
         Vec3 entityPos = entity.getPosition(partialTicks);
-        Vec3 playerPos = player.getPosition(partialTicks).add(0, player.getEyeHeight() - 0.2, 0);
+        Vec3 playerPos = owner.getPosition(partialTicks).add(0, owner.getEyeHeight() - 0.2, 0);
 
         float dx = (float) (playerPos.x - entityPos.x);
         float dy = (float) (playerPos.y - entityPos.y);

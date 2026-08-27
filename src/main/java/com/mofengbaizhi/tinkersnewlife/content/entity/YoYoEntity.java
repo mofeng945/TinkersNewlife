@@ -56,6 +56,13 @@ public class YoYoEntity extends Entity {
     /** 发射时的完整悠悠球工具栈（飞回后归还玩家，保留材质/强化/耐久） */
     private static final EntityDataAccessor<net.minecraft.world.item.ItemStack> RETURN_STACK =
             SynchedEntityData.defineId(YoYoEntity.class, EntityDataSerializers.ITEM_STACK);
+    /** 发射方向（渲染器据此让轮面朝向飞行方向） */
+    private static final EntityDataAccessor<Float> LAUNCH_DIR_X =
+            SynchedEntityData.defineId(YoYoEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> LAUNCH_DIR_Y =
+            SynchedEntityData.defineId(YoYoEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> LAUNCH_DIR_Z =
+            SynchedEntityData.defineId(YoYoEntity.class, EntityDataSerializers.FLOAT);
 
     // ==================== 常量 ====================
     /** 最大飞行距离（格） */
@@ -108,6 +115,9 @@ public class YoYoEntity extends Entity {
         this.getEntityData().define(DISPLAY_ITEM, net.minecraft.world.item.ItemStack.EMPTY);
         this.getEntityData().define(BOWSTRING_VARIANT, "");
         this.getEntityData().define(RETURN_STACK, net.minecraft.world.item.ItemStack.EMPTY);
+        this.getEntityData().define(LAUNCH_DIR_X, 0f);
+        this.getEntityData().define(LAUNCH_DIR_Y, 0f);
+        this.getEntityData().define(LAUNCH_DIR_Z, 1f);
     }
 
     // ==================== Getter/Setter ====================
@@ -130,6 +140,19 @@ public class YoYoEntity extends Entity {
     /** 设置飞回后归还的工具栈 */
     public void setReturnStack(net.minecraft.world.item.ItemStack stack) { this.getEntityData().set(RETURN_STACK, stack); }
     public net.minecraft.world.item.ItemStack getReturnStack() { return this.getEntityData().get(RETURN_STACK); }
+    /** 设置发射方向（归一化） */
+    public void setLaunchDir(Vec3 dir) {
+        Vec3 norm = dir.normalize();
+        this.getEntityData().set(LAUNCH_DIR_X, (float) norm.x);
+        this.getEntityData().set(LAUNCH_DIR_Y, (float) norm.y);
+        this.getEntityData().set(LAUNCH_DIR_Z, (float) norm.z);
+    }
+    /** 获取发射方向（未设置时默认 +Z） */
+    public Vec3 getLaunchDir() {
+        return new Vec3(this.getEntityData().get(LAUNCH_DIR_X),
+                this.getEntityData().get(LAUNCH_DIR_Y),
+                this.getEntityData().get(LAUNCH_DIR_Z));
+    }
 
     /**
      * 设置发射方向与速度（由发射者调用）。
@@ -137,6 +160,7 @@ public class YoYoEntity extends Entity {
     public void launch(double x, double y, double z) {
         Vec3 dir = new Vec3(x, y, z).normalize();
         this.launchDir = dir;
+        this.setLaunchDir(dir);
         this.setDeltaMovement(dir.scale(1.2));
     }
 
