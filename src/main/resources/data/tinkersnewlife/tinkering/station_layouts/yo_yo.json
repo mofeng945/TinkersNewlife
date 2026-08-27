@@ -12,7 +12,7 @@
       "filter": {
         "item": "tinkersnewlife:yo_yo_wheel"
       },
-      "x": 42,
+      "x": 60,
       "y": 20
     },
     {
@@ -21,8 +21,8 @@
       "filter": {
         "item": "tinkersnewlife:yo_yo_wheel"
       },
-      "x": 78,
-      "y": 20
+      "x": 42,
+      "y": 38
     },
     {
       "translation_key": "slot.tinkersnewlife.yo_yo.spool",
@@ -30,8 +30,8 @@
       "filter": {
         "item": "tinkersnewlife:yo_yo_spool"
       },
-      "x": 60,
-      "y": 42
+      "x": 24,
+      "y": 52
     },
     {
       "translation_key": "slot.tinkersnewlife.yo_yo.bowstring",
@@ -39,8 +39,8 @@
       "filter": {
         "item": "tconstruct:bowstring"
       },
-      "x": 30,
-      "y": 60
+      "x": 6,
+      "y": 70
     }
   ]
 }
