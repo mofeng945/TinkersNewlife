@@ -28,9 +28,7 @@ public class CurseCoreItem extends ModifiableItem implements ICurioItem {
 
     @Override
     public boolean canEquip(SlotContext context, ItemStack stack) {
-        boolean ok = "curse_core".equals(context.identifier());
-        TinkersNewlife.LOGGER.info("[咒力核心] canEquip: slot={} result={}", context.identifier(), ok);
-        return ok;
+        return "curse_core".equals(context.identifier());
     }
 
     @Override
