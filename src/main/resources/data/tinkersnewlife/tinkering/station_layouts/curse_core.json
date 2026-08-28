@@ -5,6 +5,12 @@
     "item": "tinkersnewlife:curse_core",
     "nbt": "{Damage:0,tic_broken:0b,tic_display:1b,tic_materials:[\"tconstruct:ui_render#head\"]}"
   },
+  "tool_slot": {
+    "translation_key": "slot.tinkersnewlife.curse_core.tool",
+    "icon": "tinkersnewlife:curse_core",
+    "x": 30,
+    "y": 52
+  },
   "input_slots": [
     {
       "translation_key": "slot.tinkersnewlife.curse_core.part",

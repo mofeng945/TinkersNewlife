@@ -366,6 +366,7 @@
   "item.tinkersnewlife.curse_core_part_sand_cast": "咒力核心部件沙铸模",
   "item.tinkersnewlife.curse_core_part_red_sand_cast": "咒力核心部件红沙铸模",
   "slot.tinkersnewlife.curse_core.part": "咒力核心部件",
+  "slot.tinkersnewlife.curse_core.tool": "咒力核心",
   "modifier.tinkersnewlife.curse_output": "咒力输出",
   "modifier.tinkersnewlife.curse_output.description": "决定咒力领域半径（等级×5 格）、咒力上限与咒力恢复量",
   "modifier.tinkersnewlife.curse_total": "咒力总量",
