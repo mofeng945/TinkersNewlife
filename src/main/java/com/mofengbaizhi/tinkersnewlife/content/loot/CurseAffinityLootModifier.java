@@ -13,7 +13,9 @@ import net.minecraftforge.common.loot.IGlobalLootModifier;
 import net.minecraftforge.common.loot.LootModifier;
 import org.jetbrains.annotations.NotNull;
 import top.theillusivec4.curios.api.CuriosApi;
+import top.theillusivec4.curios.api.type.ISlotType;
 
+import java.util.Map;
 import java.util.function.Supplier;
 
 import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
@@ -45,7 +47,7 @@ public class CurseAffinityLootModifier extends LootModifier {
     @Override
     protected @NotNull ObjectArrayList<ItemStack> doApply(ObjectArrayList<ItemStack> generatedLoot, LootContext context) {
         for (ItemStack stack : generatedLoot) {
-            if (stack.isEmpty() || !isCurioItem(stack)) continue;
+            if (stack.isEmpty() || !isCurioItem(stack, context)) continue;
             if (context.getRandom().nextFloat() >= chance) continue;
             int affinity = context.getRandom().nextInt(51); // 0~50
             if (affinity > 0) {
@@ -55,9 +57,17 @@ public class CurseAffinityLootModifier extends LootModifier {
         return generatedLoot;
     }
 
-    /** 判定是否为饰品：有 curios 物品能力，或带有 curios 命名空间的物品标签 */
-    private static boolean isCurioItem(ItemStack stack) {
+    /**
+     * 判定是否为饰品：只要能佩戴进 curios 饰品栏（curios 槽位）就算饰品。
+     * 覆盖三类途径：
+     * 1. 物品具有 curios 物品能力（ICurioItem 或通过 CuriosApi.registerCurio 注册）
+     * 2. 能放入任意已注册的 curios 槽位（标签/槽位校验器判定，如 curios:ring 标签、自定义校验器）
+     * 3. 兜底：带有任意 curios 命名空间物品标签
+     */
+    private static boolean isCurioItem(ItemStack stack, LootContext context) {
         if (CuriosApi.getCurio(stack).isPresent()) return true;
+        Map<String, ISlotType> slots = CuriosApi.getItemStackSlots(stack, context.getLevel());
+        if (!slots.isEmpty()) return true;
         for (TagKey<Item> tag : stack.getTags().toList()) {
             if (tag.location().getNamespace().equals("curios")) return true;
         }
