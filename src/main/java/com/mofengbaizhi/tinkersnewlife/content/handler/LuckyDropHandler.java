@@ -122,14 +122,19 @@ public class LuckyDropHandler {
                 ResourceLocation lootTableId = entity.getLootTable();
                 LootTable lootTable = serverLevel.getServer().getLootData().getLootTable(lootTableId);
                 if (lootTable != null) {
+                    // ✅ 走正常掉落逻辑：与实体正常死亡掉落一致的 LootParams 上下文。
+                    // 抢夺等级由 LootContext.getLootingModifier() 实时计算
+                    // （ForgeHooks.getLootingLevel 基于 THIS_ENTITY/KILLER_ENTITY/DAMAGE_SOURCE），
+                    // 自动包含原版 Looting 附魔、匠魂幸运与其他模组的掉落提升；
+                    // 玩家幸运值随 LAST_DAMAGE_PLAYER 一并传入。
                     LootParams.Builder paramsBuilder = new LootParams.Builder(serverLevel);
                     paramsBuilder.withParameter(LootContextParams.ORIGIN, entity.position());
                     paramsBuilder.withOptionalParameter(LootContextParams.THIS_ENTITY, entity);
                     paramsBuilder.withParameter(LootContextParams.DAMAGE_SOURCE, source);
                     paramsBuilder.withOptionalParameter(LootContextParams.KILLER_ENTITY, source.getEntity());
                     paramsBuilder.withOptionalParameter(LootContextParams.DIRECT_KILLER_ENTITY, source.getDirectEntity());
-                    paramsBuilder.withOptionalParameter(LootContextParams.LAST_DAMAGE_PLAYER, player);
                     if (player != null) {
+                        paramsBuilder.withParameter(LootContextParams.LAST_DAMAGE_PLAYER, player);
                         paramsBuilder.withLuck(player.getLuck());
                     }
                     LootParams params = paramsBuilder.create(LootContextParamSets.ENTITY);
