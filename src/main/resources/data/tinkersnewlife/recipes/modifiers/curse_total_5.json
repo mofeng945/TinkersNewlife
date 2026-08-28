@@ -7,7 +7,7 @@
       "item": "minecraft:dragon_head"
     },
     {
-      "tag": "iceandfire:dragon_scales",
+      "item": "tconstruct:dragon_scale",
       "count": 2
     },
     {
