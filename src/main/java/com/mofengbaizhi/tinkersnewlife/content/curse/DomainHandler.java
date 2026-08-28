@@ -51,6 +51,12 @@ public class DomainHandler {
     private static final double BIG_CHANCE = 0.99; // 70%~99% 为大奖，剩余 1% 为特等奖
     /** 特等奖：咒力无限持续 60 秒 */
     private static final int GRAND_INFINITE_TICKS = 60 * 20;
+    /** 保底：连续 10 次未中特等奖后，下一次摇奖必出特等奖 */
+    private static final int GRAND_PITY_STREAK = 10;
+    /** 小奖恢复咒力 */
+    private static final double SMALL_PRIZE_CURSE = 200;
+    /** 大奖恢复咒力 */
+    private static final double BIG_PRIZE_CURSE = 400;
 
     private static final Map<UUID, Domain> DOMAINS = new ConcurrentHashMap<>();
 
@@ -60,12 +66,14 @@ public class DomainHandler {
         final Vec3 center;
         final int radius;
         long nextGambleTick;
+        int noGrandStreak; // 连续未中特等奖次数（保底计数）
 
         Domain(UUID owner, Vec3 center, int radius, long nextGambleTick) {
             this.owner = owner;
             this.center = center;
             this.radius = radius;
             this.nextGambleTick = nextGambleTick;
+            this.noGrandStreak = 0;
         }
     }
 
@@ -252,23 +260,37 @@ public class DomainHandler {
     // ============================================================
 
     private static void gamble(Player player, Domain domain) {
+        // 保底计数：连续未中特等奖
+        domain.noGrandStreak++;
+        if (domain.noGrandStreak >= GRAND_PITY_STREAK) {
+            // 连续 10 次未中特等奖，本次必出特等奖
+            domain.noGrandStreak = 0;
+            grandPrize(player);
+            return;
+        }
+
         double roll = player.getRandom().nextDouble();
         if (roll < SMALL_CHANCE) {
-            // 小奖：恢复 40 咒力
-            CursePowerHelper.addCurse(player, 40);
+            // 小奖：恢复 200 咒力
+            CursePowerHelper.addCurse(player, SMALL_PRIZE_CURSE);
             sendMessage(player, "message.tinkersnewlife.gamble.small");
         } else if (roll < BIG_CHANCE) {
-            // 大奖：恢复 80 咒力 + 10 秒伤害吸收 IV
-            CursePowerHelper.addCurse(player, 80);
+            // 大奖：恢复 400 咒力 + 10 秒伤害吸收 IV
+            CursePowerHelper.addCurse(player, BIG_PRIZE_CURSE);
             player.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 10 * 20, 3));
             sendMessage(player, "message.tinkersnewlife.gamble.big");
         } else {
-            // 特等奖：60 秒咒力无限（重复触发刷新到上限）+ 获得与咒力输出等级相同的生命恢复
-            CursePowerHelper.setInfiniteUntil(player, player.level().getGameTime() + GRAND_INFINITE_TICKS);
-            int output = CursePowerHelper.getCurseOutputLevel(player);
-            player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, GRAND_INFINITE_TICKS, Math.max(0, output - 1)));
-            sendMessage(player, "message.tinkersnewlife.gamble.grand");
+            domain.noGrandStreak = 0;
+            grandPrize(player);
         }
+    }
+
+    /** 特等奖：60 秒咒力无限（重复触发刷新到上限）+ 获得与咒力输出等级相同的生命恢复 */
+    private static void grandPrize(Player player) {
+        CursePowerHelper.setInfiniteUntil(player, player.level().getGameTime() + GRAND_INFINITE_TICKS);
+        int output = CursePowerHelper.getCurseOutputLevel(player);
+        player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, GRAND_INFINITE_TICKS, Math.max(0, output - 1)));
+        sendMessage(player, "message.tinkersnewlife.gamble.grand");
     }
 
     // ============================================================
