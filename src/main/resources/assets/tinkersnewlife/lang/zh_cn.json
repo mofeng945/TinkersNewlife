@@ -105,7 +105,7 @@
   "slot.tinkersnewlife.curse_core.binding": "绑定结",
   "curios.identifier.curse_core": "咒力核心",
   "stat.tconstruct.slot.display.domain": "领域",
-  "stat.tconstruct.slot.prefix.domain": "领域槽",
+  "stat.tconstruct.slot.prefix.domain": "领域槽: ",
   "item.tinkersnewlife.dragon_staff.desc3": "§7释放模式：右键方块释放已收服的龙",
   "item.tinkersnewlife.dragon_staff.desc2": "§7回收模式：右键龙将其收入槽位",
   "item.tinkersnewlife.dragon_core": "龙魂核心",
