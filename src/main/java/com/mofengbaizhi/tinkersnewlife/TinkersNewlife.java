@@ -68,7 +68,6 @@ public class TinkersNewlife {
         slimeknights.tconstruct.library.tools.SlotType.init();
         slimeknights.tconstruct.library.tools.SlotType.getOrCreate("domain");
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
-
         // 注册各类内容
         ModItems.ITEMS.register(modEventBus);
         ModBlocks.BLOCKS.register(modEventBus);

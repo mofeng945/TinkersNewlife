@@ -4,14 +4,14 @@
 #   $env:MODRINTH_PROJECT = "项目 slug 或 ID(Modrinth 项目页 URL 里的名字)"
 #   powershell -ExecutionPolicy Bypass -File upload-modrinth.ps1
 #
-# 可覆盖参数: -Token xxx -Project xxx -Version 0.1.9.2 -Jar 路径 -Type beta
+# 可覆盖参数: -Token xxx -Project xxx -Version 0.1.9.3 -Jar 路径 -Type beta
 
 param(
     [string]$Token = $env:MODRINTH_TOKEN,
     [string]$Project = $env:MODRINTH_PROJECT,
-    [string]$Jar = "build\libs\tinkersnewlife-0.1.9.2.jar",
-    [string]$Version = "0.1.9.2",
-    [string]$Name = "Tinker's Newlife 0.1.9.2",
+    [string]$Jar = "build\libs\tinkersnewlife-0.1.9.3.jar",
+    [string]$Version = "0.1.9.3",
+    [string]$Name = "Tinker's Newlife 0.1.9.3",
     [string]$Type = "beta"
 )
 
@@ -32,12 +32,19 @@ if (-not (Test-Path $Jar)) {
 }
 
 $Changelog = @"
-## 0.1.9.2 (beta)
+## 0.1.9.3 (beta)
+
+### 新增
+- 新增特性「西中之虎」:大幅提升触发黑色闪光(黑闪)的几率
+- 幸运掉落重做:击杀生物时额外进行一次战利品表抽取(原稀有掉落保留)
+- 新增模块化饰品「咒力核心」与全新「领域槽」:咒力核心可穿戴于专属饰品槽,自带 1 领域槽 + 2 防御槽 + 3 升级槽,可在工匠站组装强化
 
 ### 修复
 - 修复飞剑死亡复活后状态错乱:不再自动生成脚下飞剑、不再自动消耗耐久,飞行能力可正常重新启用
 - 修复量子背包按键打开时界面闪烁(按住按键不再重复打开,局域网模式同样稳定)
 - 修复飞剑耐久消耗绕过匠魂正常逻辑:发射与飞行消耗改走 ToolDamageUtil(粘液覆层等耐久保护正常生效),命中返还基于名义消耗 20
+- 修复咒力核心无法装备到咒力核心饰品槽(补充 curios 槽位标签注册)
+- 修复领域槽数量提示格式(领域槽: 1)
 "@
 
 $Dependencies = '[{"project_id":"tconstruct","dependency_type":"required"},{"project_id":"mantle","dependency_type":"required"},{"project_id":"curios","dependency_type":"optional"}]'
