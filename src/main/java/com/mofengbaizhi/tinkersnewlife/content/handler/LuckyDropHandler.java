@@ -5,6 +5,7 @@ import com.mofengbaizhi.tinkersnewlife.content.entity.YoYoEntity;
 import com.mofengbaizhi.tinkersnewlife.util.ProjectileWeaponHelper;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -12,6 +13,10 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -110,18 +115,39 @@ public class LuckyDropHandler {
                 event.getDrops().add(newDrop);
             }
         } else {
-            List<ItemEntity> toCopy = new ArrayList<>(event.getDrops());
-            for (ItemEntity original : toCopy) {
-                ItemStack copy = original.getItem().copy();
-                ItemEntity newDrop = new ItemEntity(
-                        entity.level(),
-                        entity.getX() + (entity.level().random.nextDouble() - 0.5) * 0.5,
-                        entity.getY() + 0.5,
-                        entity.getZ() + (entity.level().random.nextDouble() - 0.5) * 0.5,
-                        copy
-                );
-                newDrop.setPickUpDelay(10);
-                event.getDrops().add(newDrop);
+            // 🎲 普通生物：判定成功后，额外在战利品表中 roll 选一次。
+            // 不再复制已有掉落（原逻辑：生物没掉落时即使判定成功也什么都不掉），
+            // 重新抽取可能抽到物品，也可能为空。
+            if (entity.level() instanceof ServerLevel serverLevel) {
+                ResourceLocation lootTableId = entity.getLootTable();
+                LootTable lootTable = serverLevel.getServer().getLootData().getLootTable(lootTableId);
+                if (lootTable != null) {
+                    LootParams.Builder paramsBuilder = new LootParams.Builder(serverLevel);
+                    paramsBuilder.withParameter(LootContextParams.ORIGIN, entity.position());
+                    paramsBuilder.withOptionalParameter(LootContextParams.THIS_ENTITY, entity);
+                    paramsBuilder.withParameter(LootContextParams.DAMAGE_SOURCE, source);
+                    paramsBuilder.withOptionalParameter(LootContextParams.KILLER_ENTITY, source.getEntity());
+                    paramsBuilder.withOptionalParameter(LootContextParams.DIRECT_KILLER_ENTITY, source.getDirectEntity());
+                    paramsBuilder.withOptionalParameter(LootContextParams.LAST_DAMAGE_PLAYER, player);
+                    if (player != null) {
+                        paramsBuilder.withLuck(player.getLuck());
+                    }
+                    LootParams params = paramsBuilder.create(LootContextParamSets.ENTITY);
+                    List<ItemStack> extraRolls = new ArrayList<>();
+                    lootTable.getRandomItems(params, 0L, extraRolls::add);
+                    for (ItemStack stack : extraRolls) {
+                        if (stack.isEmpty()) continue;
+                        ItemEntity newDrop = new ItemEntity(
+                                entity.level(),
+                                entity.getX() + (entity.level().random.nextDouble() - 0.5) * 0.5,
+                                entity.getY() + 0.5,
+                                entity.getZ() + (entity.level().random.nextDouble() - 0.5) * 0.5,
+                                stack.copy()
+                        );
+                        newDrop.setPickUpDelay(10);
+                        event.getDrops().add(newDrop);
+                    }
+                }
             }
         }
     }
