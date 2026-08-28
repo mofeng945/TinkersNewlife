@@ -6,7 +6,6 @@ import com.mofengbaizhi.tinkersnewlife.content.storage.SilentGloveHandler;
 import com.mofengbaizhi.tinkersnewlife.content.storage.StorageManager;
 import com.mofengbaizhi.tinkersnewlife.network.PacketDragonStaffUse;
 import com.mofengbaizhi.tinkersnewlife.network.PacketOpenBag;
-import com.mofengbaizhi.tinkersnewlife.network.PacketRefreshCuriosMenu;
 import com.mofengbaizhi.tinkersnewlife.network.PacketSortBag;
 import com.mofengbaizhi.tinkersnewlife.network.PacketSwitchFlyingSwordMode;
 import com.mofengbaizhi.tinkersnewlife.network.PacketSyncCurse;
@@ -119,7 +118,6 @@ public class TinkersNewlife {
         registerPacket(PacketToggleDomain.class, PacketToggleDomain::toBytes, PacketToggleDomain::new, PacketToggleDomain::handle);
         // 服务端→客户端
         registerClientPacket(PacketSyncCurse.class, PacketSyncCurse::toBytes, PacketSyncCurse::new, PacketSyncCurse::handle);
-        registerClientPacket(PacketRefreshCuriosMenu.class, PacketRefreshCuriosMenu::toBytes, PacketRefreshCuriosMenu::new, PacketRefreshCuriosMenu::handle);
 
         MinecraftForge.EVENT_BUS.register(this);
         LOGGER.info("TinkersNewlife 模组初始化完成");

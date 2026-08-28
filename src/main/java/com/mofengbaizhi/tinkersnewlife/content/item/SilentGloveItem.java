@@ -4,7 +4,6 @@ import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.handler.GloveWeaponStorage;
 import com.mofengbaizhi.tinkersnewlife.content.storage.SilentGloveContainer;
 import com.mofengbaizhi.tinkersnewlife.content.storage.SilentGloveHandler;
-import com.mofengbaizhi.tinkersnewlife.network.PacketRefreshCuriosMenu;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
@@ -25,14 +24,12 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PacketDistributor;
 import slimeknights.tconstruct.library.tools.definition.ToolDefinition;
 import slimeknights.tconstruct.library.tools.item.ModifiableItem;
 import slimeknights.tconstruct.library.tools.nbt.ToolDataNBT;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.SlotContext;
-import top.theillusivec4.curios.api.type.ICuriosMenu;
 import top.theillusivec4.curios.api.type.capability.ICurioItem;
 
 import javax.annotation.Nullable;
@@ -207,18 +204,9 @@ public class SilentGloveItem extends ModifiableItem implements ICurioItem {
                     PENDING_RECALC.remove(playerId);
                     continue;
                 }
-                // 玩家正打开 curios 饰品菜单：先关闭旧菜单再应用槽位变化，
-                // 避免 curios 槽位大小变化时内容同步包与客户端菜单槽数不一致导致越界；
-                // 应用后通知客户端自动重开 curios 菜单，界面立即以新槽位布局刷新
-                boolean curiosOpen = player.containerMenu instanceof ICuriosMenu;
-                if (curiosOpen) {
-                    player.closeContainer();
-                }
+                // 应用戒指槽变化（curios 自身会在槽位变化时同步客户端并触发
+                // SlotModifiersUpdatedEvent，客户端据此原地重建打开的 curios 菜单）
                 recalculateRingSlots(player);
-                if (curiosOpen) {
-                    TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-                            new PacketRefreshCuriosMenu());
-                }
                 PENDING_RECALC.remove(playerId);
             }
         }

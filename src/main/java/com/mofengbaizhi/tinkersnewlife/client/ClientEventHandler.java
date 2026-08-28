@@ -37,14 +37,6 @@ public class ClientEventHandler {
     /** 量子背包按键边沿检测：记录上次按下状态，仅在"松开→按下"时触发一次，按住期间不重复发包 */
     private static boolean lastBagKeyDown = false;
 
-    /** curios 菜单重开倒计时：收到槽位布局变化通知后延迟数 tick，等 curios 同步先落地再重开 */
-    private static int curiosReopenTicks = 0;
-
-    /** 请求延迟重开 curios 菜单（服务端槽位布局变化后调用） */
-    public static void requestCuriosReopen() {
-        curiosReopenTicks = 3;
-    }
-
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
@@ -74,18 +66,6 @@ public class ClientEventHandler {
     public static class ForgeEvents {
 
         private static final Logger LOGGER = LoggerFactory.getLogger(ForgeEvents.class);
-
-        @SubscribeEvent
-        public static void onClientTick(TickEvent.ClientTickEvent event) {
-            if (event.phase != TickEvent.Phase.END) return;
-            if (curiosReopenTicks <= 0) return;
-            curiosReopenTicks--;
-            if (curiosReopenTicks == 0 && Minecraft.getInstance().player != null) {
-                // ⭐ 延迟到 curios 同步落地后再重开菜单，避免槽位数据不一致
-                top.theillusivec4.curios.common.network.NetworkHandler.INSTANCE
-                        .sendToServer(new top.theillusivec4.curios.common.network.client.CPacketOpenCurios(net.minecraft.world.item.ItemStack.EMPTY));
-            }
-        }
 
         @SubscribeEvent
         public static void onKeyInput(InputEvent.Key event) {
