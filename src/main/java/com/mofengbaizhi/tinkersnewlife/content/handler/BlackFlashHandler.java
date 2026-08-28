@@ -44,6 +44,12 @@ public class BlackFlashHandler {
 
     private static final Map<UUID, PlayerData> PLAYER_DATA = new ConcurrentHashMap<>();
 
+    /** 玩家是否处于黑闪增幅状态（供咒力系统等查询，黑闪后 60 秒内） */
+    public static boolean isBuffActive(UUID playerId) {
+        PlayerData data = PLAYER_DATA.get(playerId);
+        return data != null && data.isBuffActive();
+    }
+
     private static class PlayerData {
         double probabilityBoost;
         int remainingTicks;

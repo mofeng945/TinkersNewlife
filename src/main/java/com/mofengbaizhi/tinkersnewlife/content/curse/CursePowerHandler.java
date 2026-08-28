@@ -1,6 +1,7 @@
 package com.mofengbaizhi.tinkersnewlife.content.curse;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import com.mofengbaizhi.tinkersnewlife.content.handler.BlackFlashHandler;
 import com.mofengbaizhi.tinkersnewlife.network.PacketSyncCurse;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -34,7 +35,12 @@ public class CursePowerHandler {
             if (wearing && now % 100 == 0) {
                 int output = CursePowerHelper.getCurseOutputLevel(player);
                 int affinity = CursePowerHelper.getCurseAffinity(player);
-                CursePowerHelper.addCurse(player, (output + affinity / 10.0) * 5.0);
+                double regen = (output + affinity / 10.0) * 5.0;
+                // ⭐ 黑闪增幅状态内，咒力回复速度提升为 5 倍
+                if (BlackFlashHandler.isBuffActive(player.getUUID())) {
+                    regen *= 5.0;
+                }
+                CursePowerHelper.addCurse(player, regen);
             }
 
             // 每秒同步一次 HUD 数据
