@@ -32,6 +32,11 @@ public class BlackFlashHandler {
             new ResourceLocation(TinkersNewlife.MOD_ID, "black_flash")
     );
 
+    /** 西中之虎：加持在黑闪武器上时，黑闪基础概率额外增加（玩家当前攻击力 ÷ 10000） */
+    private static final ModifierId WEST_TIGER_ID = new ModifierId(
+            new ResourceLocation(TinkersNewlife.MOD_ID, "west_tiger")
+    );
+
     private static final double BASE_CHANCE = 0.1;
     private static final double PROBABILITY_BOOST = 0.1;
     private static final int BUFF_DURATION_TICKS = 60 * 20;
@@ -80,6 +85,12 @@ public class BlackFlashHandler {
 
         PlayerData data = PLAYER_DATA.computeIfAbsent(player.getUUID(), k -> new PlayerData());
         double totalChance = BASE_CHANCE + data.probabilityBoost;
+
+        // 🐯 西中之虎：黑闪基础概率额外增加（玩家当前攻击力 ÷ 10000）
+        if (tool.getModifierLevel(WEST_TIGER_ID) > 0) {
+            double attack = player.getAttributeValue(Attributes.ATTACK_DAMAGE);
+            totalChance += attack / 10000.0;
+        }
 
         if (player.getRandom().nextDouble() < totalChance) {
             float originalDamage = event.getAmount();

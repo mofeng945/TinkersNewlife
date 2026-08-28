@@ -95,4 +95,7 @@ public class Modifiers {
 
     public static final StaticModifier<BlackFlashTrait> BLACK_FLASH =
         MODIFIERS.register("black_flash", BlackFlashTrait::new);
+
+    public static final StaticModifier<WestTigerTrait> WEST_TIGER =
+        MODIFIERS.register("west_tiger", WestTigerTrait::new);
 }
