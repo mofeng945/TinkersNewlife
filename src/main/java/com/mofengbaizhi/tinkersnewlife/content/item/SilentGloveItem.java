@@ -20,6 +20,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.NetworkHooks;
 import slimeknights.tconstruct.library.tools.definition.ToolDefinition;
 import slimeknights.tconstruct.library.tools.item.ModifiableItem;
@@ -149,6 +152,14 @@ public class SilentGloveItem extends ModifiableItem implements ICurioItem {
 
     // ========== 重新计算所有手套的总增量并应用 ==========
 
+    /**
+     * 待重算的玩家（UUID → true）。
+     * ⭐ 延迟到下一服务端 tick 再应用：curios 不允许在 GUI/槽位操作进行中直接改槽位大小，
+     * 否则打开 curios 物品栏时槽位数同步不一致会触发客户端 IndexOutOfBounds。
+     */
+    private static final java.util.concurrent.ConcurrentHashMap<UUID, Boolean> PENDING_RECALC =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
     private static void recalculateRingSlots(LivingEntity living) {
         CuriosApi.getCuriosInventory(living).ifPresent(inventory -> {
             int total = 0;
@@ -178,6 +189,25 @@ public class SilentGloveItem extends ModifiableItem implements ICurioItem {
         });
     }
 
+    /** 服务端 tick 统一处理延迟重算 */
+    @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+    public static class RingSlotHandler {
+        @SubscribeEvent
+        public static void onServerTick(TickEvent.ServerTickEvent event) {
+            if (event.phase != TickEvent.Phase.END) return;
+            if (PENDING_RECALC.isEmpty()) return;
+            var server = event.getServer();
+            if (server == null) return;
+            for (UUID playerId : PENDING_RECALC.keySet()) {
+                ServerPlayer player = server.getPlayerList().getPlayer(playerId);
+                if (player != null && player.isAlive()) {
+                    recalculateRingSlots(player);
+                }
+            }
+            PENDING_RECALC.clear();
+        }
+    }
+
     // ========== ICurioItem 核心 ==========
 
     @Override
@@ -193,13 +223,14 @@ public class SilentGloveItem extends ModifiableItem implements ICurioItem {
     @Override
     public void onEquip(SlotContext context, ItemStack prevStack, ItemStack stack) {
         if (context.entity().level().isClientSide()) return;
-        recalculateRingSlots(context.entity());
+        // ⭐ 延迟到下一 tick 应用，避免在 curios GUI 操作中改槽位大小
+        PENDING_RECALC.put(context.entity().getUUID(), true);
     }
 
     @Override
     public void onUnequip(SlotContext context, ItemStack newStack, ItemStack stack) {
         if (context.entity().level().isClientSide()) return;
-        recalculateRingSlots(context.entity());
+        PENDING_RECALC.put(context.entity().getUUID(), true);
     }
 
     // ========== 右键打开 GUI ==========
