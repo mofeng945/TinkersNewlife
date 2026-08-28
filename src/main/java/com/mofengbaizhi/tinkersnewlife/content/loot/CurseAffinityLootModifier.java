@@ -51,7 +51,7 @@ public class CurseAffinityLootModifier extends LootModifier {
             if (context.getRandom().nextFloat() >= chance) continue;
             int affinity = context.getRandom().nextInt(51); // 0~50
             if (affinity > 0) {
-                stack.getOrCreateTag().putInt(CursePowerHelper.KEY_AFFINITY, affinity);
+                CursePowerHelper.setCurseAffinity(stack, affinity);
             }
         }
         return generatedLoot;

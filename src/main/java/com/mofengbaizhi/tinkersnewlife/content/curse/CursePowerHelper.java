@@ -1,8 +1,10 @@
 package com.mofengbaizhi.tinkersnewlife.content.curse;
 
+import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.Modifiers;
 import com.mofengbaizhi.tinkersnewlife.content.item.CurseCoreItem;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
@@ -32,6 +34,9 @@ public final class CursePowerHelper {
     public static final String KEY_INFINITE_UNTIL = "tinkersnewlife.curse_infinite_until";
     /** 物品 NBT：咒力亲和值（int，0~50，战利品生成的饰品可能携带） */
     public static final String KEY_AFFINITY = "tinkersnewlife.curse_affinity";
+    /** 匠魂工具持久数据键（ModDataNBT 用 ResourceLocation） */
+    private static final ResourceLocation KEY_AFFINITY_TOOL =
+            new ResourceLocation(TinkersNewlife.MOD_ID, "curse_affinity");
 
     // ============================================================
     //  佩戴的咒力核心
@@ -84,11 +89,34 @@ public final class CursePowerHelper {
             IDynamicStackHandler stacks = handler.getStacks();
             for (int i = 0; i < stacks.getSlots(); i++) {
                 ItemStack stack = stacks.getStackInSlot(i);
-                if (stack.isEmpty() || stack.getTag() == null) continue;
-                sum += stack.getTag().getInt(KEY_AFFINITY);
+                if (stack.isEmpty()) continue;
+                sum += getCurseAffinity(stack);
             }
         }
         return sum;
+    }
+
+    /** 读取单件物品的咒力亲和（匠魂工具读持久数据，普通物品读原始标签） */
+    public static int getCurseAffinity(ItemStack stack) {
+        if (stack.isEmpty()) return 0;
+        ToolStack tool = ToolHelper.getToolStack(stack);
+        if (tool != null) {
+            return tool.getPersistentData().getInt(KEY_AFFINITY_TOOL);
+        }
+        if (stack.getTag() == null) return 0;
+        return stack.getTag().getInt(KEY_AFFINITY);
+    }
+
+    /** 设置单件物品的咒力亲和（匠魂工具写持久数据，避免被 updateStack 整标签替换抹掉） */
+    public static void setCurseAffinity(ItemStack stack, int value) {
+        if (stack.isEmpty()) return;
+        ToolStack tool = ToolHelper.getToolStack(stack);
+        if (tool != null) {
+            tool.getPersistentData().putInt(KEY_AFFINITY_TOOL, Math.max(0, value));
+            tool.updateStack(stack);
+            return;
+        }
+        stack.getOrCreateTag().putInt(KEY_AFFINITY, Math.max(0, value));
     }
 
     // ============================================================
