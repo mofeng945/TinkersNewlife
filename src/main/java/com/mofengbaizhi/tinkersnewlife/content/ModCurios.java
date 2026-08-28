@@ -31,5 +31,12 @@ public class ModCurios {
                         .size(1)
                         .build()
         );
+
+        // 咒力核心饰品槽位
+        InterModComms.sendTo(CuriosApi.MODID, SlotTypeMessage.REGISTER_TYPE,
+                () -> new SlotTypeMessage.Builder("curse_core")
+                        .size(1)
+                        .build()
+        );
     }
 }

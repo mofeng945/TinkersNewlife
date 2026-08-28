@@ -220,4 +220,9 @@ public class ModItems {
     public static final RegistryObject<YoYoItem> YO_YO =
         ITEMS.register("yo_yo",
                 () -> new YoYoItem(new Item.Properties().stacksTo(1)));
+
+    /** 咒力核心（模块化饰品，穿戴于咒力核心槽位） */
+    public static final RegistryObject<CurseCoreItem> CURSE_CORE =
+        ITEMS.register("curse_core",
+                () -> new CurseCoreItem(new Item.Properties().stacksTo(1)));
 }

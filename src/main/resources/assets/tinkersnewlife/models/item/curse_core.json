@@ -1,0 +1,12 @@
+{
+  "loader": "tconstruct:tool",
+  "parent": "tconstruct:item/base/default",
+  "textures": {
+    "handle": "tconstruct:item/tool/parts/tool_handle",
+    "binding": "tconstruct:item/tool/parts/tool_binding"
+  },
+  "parts": [
+    { "name": "handle", "index": 0 },
+    { "name": "binding", "index": 1 }
+  ]
+}

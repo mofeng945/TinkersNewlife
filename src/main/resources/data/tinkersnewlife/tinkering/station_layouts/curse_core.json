@@ -1,0 +1,28 @@
+{
+  "translation_key": "item_group.tinkersnewlife.curse_core",
+  "sortIndex": 7,
+  "icon": {
+    "item": "tinkersnewlife:curse_core",
+    "nbt": "{Damage:0,tic_broken:0b,tic_display:1b,tic_materials:[\"tconstruct:ui_render#handle\",\"tconstruct:ui_render#extra\"]}"
+  },
+  "input_slots": [
+    {
+      "translation_key": "slot.tinkersnewlife.curse_core.handle",
+      "icon": "tconstruct:tool_handle",
+      "filter": {
+        "item": "tconstruct:tool_handle"
+      },
+      "x": 30,
+      "y": 20
+    },
+    {
+      "translation_key": "slot.tinkersnewlife.curse_core.binding",
+      "icon": "tconstruct:tool_binding",
+      "filter": {
+        "item": "tconstruct:tool_binding"
+      },
+      "x": 30,
+      "y": 52
+    }
+  ]
+}

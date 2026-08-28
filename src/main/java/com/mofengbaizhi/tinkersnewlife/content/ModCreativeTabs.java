@@ -1,6 +1,7 @@
 package com.mofengbaizhi.tinkersnewlife.content;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import com.mofengbaizhi.tinkersnewlife.content.item.CurseCoreItem;
 import com.mofengbaizhi.tinkersnewlife.content.item.DragonStaffItem;
 import com.mofengbaizhi.tinkersnewlife.content.item.FlyingSwordItem;
 import com.mofengbaizhi.tinkersnewlife.content.item.ModularStaffItem;
@@ -100,6 +101,8 @@ public class ModCreativeTabs {
                                 addAllToolVariants(output, FlyingSwordItem.FLYING_SWORD_DEFINITION, ModItems.FLYING_SWORD.get(), 5);
 
                                 addAllToolVariants(output, YoYoItem.YO_YO_DEFINITION, ModItems.YO_YO.get(), 4);
+
+                                addAllToolVariants(output, CurseCoreItem.CURSE_CORE_DEFINITION, ModItems.CURSE_CORE.get(), 2);
 
                                 output.accept(ModItems.DURANDAL_SWORD.get());
                             })
