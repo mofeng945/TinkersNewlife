@@ -200,11 +200,19 @@ public class SilentGloveItem extends ModifiableItem implements ICurioItem {
             if (server == null) return;
             for (UUID playerId : PENDING_RECALC.keySet()) {
                 ServerPlayer player = server.getPlayerList().getPlayer(playerId);
-                if (player != null && player.isAlive()) {
-                    recalculateRingSlots(player);
+                if (player == null || !player.isAlive()) {
+                    PENDING_RECALC.remove(playerId);
+                    continue;
                 }
+                // ⭐ 玩家打开任意菜单（物品栏/curios GUI 等）时先挂起重算，
+                // 等关闭界面后下一 tick 再应用——curios 在菜单打开时改槽位大小
+                // 会导致客户端菜单槽数落后于服务端，触发 IndexOutOfBounds
+                if (player.containerMenu != player.inventoryMenu) {
+                    continue;
+                }
+                recalculateRingSlots(player);
+                PENDING_RECALC.remove(playerId);
             }
-            PENDING_RECALC.clear();
         }
     }
 
