@@ -1,0 +1,29 @@
+{
+  "type": "tconstruct:modifier",
+  "allow_crystal": true,
+  "check_trait_level": true,
+  "inputs": [
+    {
+      "item": "tconstruct:necrotic_bone"
+    },
+    {
+      "item": "minecraft:rotten_flesh"
+    },
+    {
+      "item": "minecraft:bone"
+    },
+    {
+      "item": "minecraft:gold_ingot"
+    }
+  ],
+  "level": {
+    "min": 1,
+    "max": 2
+  },
+  "result": "tinkersnewlife:curse_total",
+  "tools": [
+    {
+      "item": "tinkersnewlife:curse_core"
+    }
+  ]
+}

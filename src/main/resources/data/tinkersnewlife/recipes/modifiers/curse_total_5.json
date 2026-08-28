@@ -1,0 +1,28 @@
+{
+  "type": "tinkersnewlife:curse_total_upgrade",
+  "allow_crystal": true,
+  "check_trait_level": true,
+  "inputs": [
+    {
+      "item": "minecraft:dragon_head"
+    },
+    {
+      "tag": "iceandfire:dragon_scales",
+      "count": 2
+    },
+    {
+      "item": "minecraft:dragon_breath",
+      "count": 2
+    }
+  ],
+  "level": {
+    "min": 4,
+    "max": 5
+  },
+  "result": "tinkersnewlife:curse_total",
+  "tools": [
+    {
+      "item": "tinkersnewlife:curse_core"
+    }
+  ]
+}

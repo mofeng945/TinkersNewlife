@@ -1,0 +1,26 @@
+{
+  "type": "tconstruct:modifier",
+  "allow_crystal": true,
+  "check_trait_level": true,
+  "inputs": [
+    {
+      "item": "minecraft:nether_star"
+    },
+    {
+      "item": "minecraft:diamond"
+    },
+    {
+      "item": "minecraft:sculk_catalyst"
+    }
+  ],
+  "level": {
+    "min": 3,
+    "max": 4
+  },
+  "result": "tinkersnewlife:curse_total",
+  "tools": [
+    {
+      "item": "tinkersnewlife:curse_core"
+    }
+  ]
+}
