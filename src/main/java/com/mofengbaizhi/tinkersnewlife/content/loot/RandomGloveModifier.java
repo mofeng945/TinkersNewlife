@@ -15,6 +15,7 @@ import slimeknights.tconstruct.library.materials.definition.IMaterial;
 import slimeknights.tconstruct.library.tools.nbt.MaterialNBT;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 import com.mofengbaizhi.tinkersnewlife.content.ModItems;
+import com.mofengbaizhi.tinkersnewlife.content.item.SilentGloveItem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -90,6 +91,11 @@ public class RandomGloveModifier extends LootModifier {
         tool.setMaterials(materialNBT);
         tool.rebuildStats();
         ItemStack result = tool.createStack();
+
+        // ⭐ 生成时即确定额外戒指槽数量（1~6，服务端固定写入持久数据，之后不再变化）
+        if (result.getItem() instanceof SilentGloveItem) {
+            SilentGloveItem.getOrCreateExtraRings(result);
+        }
 
         for (int i = 0; i < count; i++) {
             generatedLoot.add(result.copy());

@@ -161,6 +161,10 @@ public class ModCreativeTabs {
 
             ItemStack result = tool.createStack();
             if (!result.isEmpty()) {
+                // ⭐ 噤默手套：生成时即确定额外戒指槽数量（1~6，服务端固定写入持久数据，之后不再变化）
+                if (result.getItem() instanceof SilentGloveItem) {
+                    SilentGloveItem.getOrCreateExtraRings(result);
+                }
                 output.accept(result);
             }
         }

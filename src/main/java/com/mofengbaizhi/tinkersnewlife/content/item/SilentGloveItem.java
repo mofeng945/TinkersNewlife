@@ -4,8 +4,10 @@ import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.handler.GloveWeaponStorage;
 import com.mofengbaizhi.tinkersnewlife.content.storage.SilentGloveContainer;
 import com.mofengbaizhi.tinkersnewlife.content.storage.SilentGloveHandler;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -21,6 +23,8 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.network.NetworkHooks;
 import slimeknights.tconstruct.library.tools.definition.ToolDefinition;
 import slimeknights.tconstruct.library.tools.item.ModifiableItem;
+import slimeknights.tconstruct.library.tools.nbt.ToolDataNBT;
+import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.SlotContext;
 import top.theillusivec4.curios.api.type.capability.ICurioItem;
@@ -40,8 +44,14 @@ public class SilentGloveItem extends ModifiableItem implements ICurioItem {
     public static final ToolDefinition SILENT_GLOVE_DEFINITION =
             ToolDefinition.create(new ResourceLocation(TinkersNewlife.MOD_ID, "silent_glove"));
 
-    private static final String TAG_VAULT_UUID = "vault_uuid";
-    private static final String TAG_EXTRA_RINGS = "extra_rings";
+    /** 旧原始标签键（兼容迁移用；updateStack 会整标签替换，旧值仅读一次迁入持久数据） */
+    private static final String TAG_VAULT_UUID_LEGACY = "vault_uuid";
+
+    /** ⭐ 持久数据键：存在 ToolStack 持久数据（ToolDataNBT）中，不会被 updateStack 的整标签替换抹掉 */
+    private static final ResourceLocation TAG_VAULT_UUID =
+            new ResourceLocation(TinkersNewlife.MOD_ID, "vault_uuid");
+    private static final ResourceLocation TAG_EXTRA_RINGS =
+            new ResourceLocation(TinkersNewlife.MOD_ID, "extra_rings");
 
     private static final Random RANDOM = new Random();
 
@@ -54,50 +64,75 @@ public class SilentGloveItem extends ModifiableItem implements ICurioItem {
         super(properties, SILENT_GLOVE_DEFINITION);
     }
 
-    // ========== NBT 读写 ==========
+    // ========== NBT 读写（存 ToolStack 持久数据） ==========
 
     public static void setExtraRings(ItemStack stack, int amount) {
-        CompoundTag tag = stack.getOrCreateTag();
-        tag.putInt(TAG_EXTRA_RINGS, Math.max(0, amount));
+        ToolStack tool = ToolHelper.getToolStack(stack);
+        if (tool == null) return;
+        tool.getPersistentData().putInt(TAG_EXTRA_RINGS, Math.max(0, amount));
+        tool.updateStack(stack);
     }
 
     /**
-     * 只读获取额外戒指槽数量。
-     * ⭐ 不在 getter 内生成随机值：原实现首次调用（客户端 tooltip）会生成并写 NBT，
-     * 而服务端生成的值不同，导致双端不一致。生成逻辑移到服务端
-     * {@link #getOrCreateExtraRings(ItemStack)}（装备事件时调用）。
+     * 只读获取额外戒指槽数量（读取 ToolStack 持久数据，双端一致）。
+     * ⭐ 不在此生成随机值：生成逻辑仅在服务端调用
+     * {@link #getOrCreateExtraRings(ItemStack)}（生成/装备事件）。
      */
     public static int getExtraRings(ItemStack stack) {
-        CompoundTag tag = stack.getTag();
-        if (tag == null) return 0;
-        return tag.getInt(TAG_EXTRA_RINGS);
+        ToolStack tool = ToolHelper.getToolStack(stack);
+        if (tool == null) return 0;
+        return tool.getPersistentData().getInt(TAG_EXTRA_RINGS);
     }
 
     /**
-     * 获取额外戒指槽数量；若未生成则生成随机值（1~6）并写入 NBT。
-     * ⭐ 仅在服务端调用（装备/卸下事件），确保值由服务端权威生成并随物品同步。
+     * 获取额外戒指槽数量；若未生成则生成随机值（1~6）并写入 ToolStack 持久数据。
+     * ⭐ 仅在服务端调用（生成/装备事件），确保值由服务端权威生成并随物品同步；
+     * 持久数据属于工具自身 NBT，任何 updateStack 都不会抹掉它，因此值一经生成永久固定。
      */
     public static int getOrCreateExtraRings(ItemStack stack) {
-        CompoundTag tag = stack.getOrCreateTag();
-        if (!tag.contains(TAG_EXTRA_RINGS)) {
-            int randomValue = RANDOM.nextInt(6) + 1;
-            tag.putInt(TAG_EXTRA_RINGS, randomValue);
+        ToolStack tool = ToolHelper.getToolStack(stack);
+        if (tool == null) return 0;
+        ToolDataNBT persistent = tool.getPersistentData();
+        if (!persistent.contains(TAG_EXTRA_RINGS)) {
+            persistent.putInt(TAG_EXTRA_RINGS, RANDOM.nextInt(6) + 1);
+            // ⭐ 写回物品标签，确保持久化并随物品同步
+            tool.updateStack(stack);
         }
-        return tag.getInt(TAG_EXTRA_RINGS);
+        return persistent.getInt(TAG_EXTRA_RINGS);
+    }
+
+    /** 只读获取空间奇点库 UUID（无则返回 null，供工具提示等只读场景使用） */
+    @Nullable
+    public static UUID getVaultUUID(ItemStack stack) {
+        ToolStack tool = ToolHelper.getToolStack(stack);
+        if (tool == null) return null;
+        ToolDataNBT persistent = tool.getPersistentData();
+        if (!persistent.contains(TAG_VAULT_UUID)) return null;
+        return NbtUtils.loadUUID(persistent.get(TAG_VAULT_UUID));
     }
 
     public static UUID getOrCreateVaultUUID(ItemStack stack) {
-        var tag = stack.getOrCreateTag();
-        if (tag.hasUUID(TAG_VAULT_UUID)) {
-            return tag.getUUID(TAG_VAULT_UUID);
+        ToolStack tool = ToolHelper.getToolStack(stack);
+        if (tool == null) return null;
+        ToolDataNBT persistent = tool.getPersistentData();
+        if (persistent.contains(TAG_VAULT_UUID)) {
+            return NbtUtils.loadUUID(persistent.get(TAG_VAULT_UUID));
         }
-        UUID uuid = UUID.randomUUID();
-        tag.putUUID(TAG_VAULT_UUID, uuid);
+
+        // 兼容旧存档：旧值写在物品原始标签里（updateStack 会抹掉，读一次迁移到持久数据）
+        UUID legacy = null;
+        if (stack.getTag() != null && stack.getTag().hasUUID(TAG_VAULT_UUID_LEGACY)) {
+            legacy = stack.getTag().getUUID(TAG_VAULT_UUID_LEGACY);
+        }
+        UUID uuid = legacy != null ? legacy : UUID.randomUUID();
+        persistent.put(TAG_VAULT_UUID, NbtUtils.createUUID(uuid));
+        tool.updateStack(stack);
         return uuid;
     }
 
     public static SilentGloveHandler getHandler(ItemStack stack) {
-        return SilentGloveHandler.getOrCreate(getOrCreateVaultUUID(stack));
+        UUID uuid = getOrCreateVaultUUID(stack);
+        return uuid == null ? null : SilentGloveHandler.getOrCreate(uuid);
     }
 
     // ========== 序列化辅助 ==========
@@ -205,8 +240,9 @@ public class SilentGloveItem extends ModifiableItem implements ICurioItem {
         SilentGloveHandler handler = getHandler(stack);
         int extraRings = getExtraRings(stack);
 
-        tooltip.add(Component.translatable("tooltip.tinkersnewlife.silent_glove.desc",
-                handler.getUsedSlots(), handler.getSlots()));
+        int used = handler != null ? handler.getUsedSlots() : 0;
+        int total = handler != null ? handler.getSlots() : 0;
+        tooltip.add(Component.translatable("tooltip.tinkersnewlife.silent_glove.desc", used, total));
         tooltip.add(Component.translatable("tooltip.tinkersnewlife.silent_glove.curios", extraRings));
         tooltip.add(Component.translatable("tooltip.tinkersnewlife.silent_glove.use"));
     }
