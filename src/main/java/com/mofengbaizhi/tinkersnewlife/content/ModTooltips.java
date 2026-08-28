@@ -31,6 +31,16 @@ public class ModTooltips {
     @SubscribeEvent
     public static void onItemTooltip(ItemTooltipEvent event) {
         ItemStack stack = event.getItemStack();
+
+        // ⭐ 咒力亲和（战利品生成的饰品可能携带）
+        if (stack.getTag() != null && stack.getTag().contains("tinkersnewlife.curse_affinity")) {
+            int affinity = stack.getTag().getInt("tinkersnewlife.curse_affinity");
+            if (affinity > 0) {
+                event.getToolTip().add(Component.translatable("tooltip.tinkersnewlife.curse_affinity", affinity)
+                        .withStyle(ChatFormatting.LIGHT_PURPLE));
+            }
+        }
+
         ResourceLocation regName = ForgeRegistries.ITEMS.getKey(stack.getItem());
         if (regName == null) {
             return;

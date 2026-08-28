@@ -85,10 +85,14 @@ public class ModCreativeTabs {
                                 output.accept(ModItems.YO_YO_SPOOL_CAST.get());
                                 output.accept(ModItems.YO_YO_SPOOL_SAND_CAST.get());
                                 output.accept(ModItems.YO_YO_SPOOL_RED_SAND_CAST.get());
+                                output.accept(ModItems.CURSE_CORE_PART_CAST.get());
+                                output.accept(ModItems.CURSE_CORE_PART_SAND_CAST.get());
+                                output.accept(ModItems.CURSE_CORE_PART_RED_SAND_CAST.get());
                                 addAllPartVariants(output, ModItems.DRAGON_CORE.get());
                                 addAllPartVariants(output, ModItems.SPELL_CORE.get());
                                 addAllPartVariants(output, ModItems.YO_YO_WHEEL.get());
                                 addAllPartVariants(output, ModItems.YO_YO_SPOOL.get());
+                                addAllPartVariants(output, ModItems.CURSE_CORE_PART.get());
 
                                 addAllToolVariants(output, DRAGON_STAFF_DEFINITION, ModItems.DRAGON_STAFF.get(), 3);
 
@@ -102,7 +106,7 @@ public class ModCreativeTabs {
 
                                 addAllToolVariants(output, YoYoItem.YO_YO_DEFINITION, ModItems.YO_YO.get(), 4);
 
-                                addAllToolVariants(output, CurseCoreItem.CURSE_CORE_DEFINITION, ModItems.CURSE_CORE.get(), 2);
+                                addAllToolVariants(output, CurseCoreItem.CURSE_CORE_DEFINITION, ModItems.CURSE_CORE.get(), 1);
 
                                 output.accept(ModItems.DURANDAL_SWORD.get());
                             })

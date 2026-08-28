@@ -1,0 +1,6 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "tinkersnewlife:item/tool/cast/curse_core_part_red_sand_cast"
+  }
+}

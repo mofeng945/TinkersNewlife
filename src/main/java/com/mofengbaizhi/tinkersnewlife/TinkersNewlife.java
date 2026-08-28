@@ -8,6 +8,8 @@ import com.mofengbaizhi.tinkersnewlife.network.PacketDragonStaffUse;
 import com.mofengbaizhi.tinkersnewlife.network.PacketOpenBag;
 import com.mofengbaizhi.tinkersnewlife.network.PacketSortBag;
 import com.mofengbaizhi.tinkersnewlife.network.PacketSwitchFlyingSwordMode;
+import com.mofengbaizhi.tinkersnewlife.network.PacketSyncCurse;
+import com.mofengbaizhi.tinkersnewlife.network.PacketToggleDomain;
 import com.mofengbaizhi.tinkersnewlife.network.PacketUseSkill;
 import com.mofengbaizhi.tinkersnewlife.util.IronSpellsReflector;
 
@@ -62,6 +64,15 @@ public class TinkersNewlife {
                 Optional.of(NetworkDirection.PLAY_TO_SERVER));
     }
 
+    /** 注册服务端→客户端（S2C）网络包 */
+    private static <T> void registerClientPacket(Class<T> clazz,
+                                                 BiConsumer<T, FriendlyByteBuf> encoder,
+                                                 Function<FriendlyByteBuf, T> decoder,
+                                                 BiConsumer<T, Supplier<NetworkEvent.Context>> handler) {
+        CHANNEL.registerMessage(packetId++, clazz, encoder, decoder, handler,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+    }
+
     public TinkersNewlife() {
         LOGGER.info("初始化 TinkersNewlife 模组...");
         // 注册自定义槽位类型：领域槽（domain），供咒力核心等装备使用
@@ -102,6 +113,9 @@ public class TinkersNewlife {
         registerPacket(PacketOpenBag.class, PacketOpenBag::toBytes, PacketOpenBag::new, PacketOpenBag::handle);
         registerPacket(PacketSortBag.class, PacketSortBag::toBytes, PacketSortBag::new, PacketSortBag::handle);
         registerPacket(PacketSwitchFlyingSwordMode.class, PacketSwitchFlyingSwordMode::toBytes, PacketSwitchFlyingSwordMode::new, PacketSwitchFlyingSwordMode::handle);
+        registerPacket(PacketToggleDomain.class, PacketToggleDomain::toBytes, PacketToggleDomain::new, PacketToggleDomain::handle);
+        // 服务端→客户端
+        registerClientPacket(PacketSyncCurse.class, PacketSyncCurse::toBytes, PacketSyncCurse::new, PacketSyncCurse::handle);
 
         MinecraftForge.EVENT_BUS.register(this);
         LOGGER.info("TinkersNewlife 模组初始化完成");

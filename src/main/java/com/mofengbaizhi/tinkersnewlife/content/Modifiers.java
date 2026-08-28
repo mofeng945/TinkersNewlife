@@ -98,4 +98,16 @@ public class Modifiers {
 
     public static final StaticModifier<WestTigerTrait> WEST_TIGER =
         MODIFIERS.register("west_tiger", WestTigerTrait::new);
+
+    /** 咒力输出（咒力核心自带） */
+    public static final StaticModifier<CurseOutputTrait> CURSE_OUTPUT =
+        MODIFIERS.register("curse_output", CurseOutputTrait::new);
+
+    /** 咒力总量（咒力核心自带） */
+    public static final StaticModifier<CurseTotalTrait> CURSE_TOTAL =
+        MODIFIERS.register("curse_total", CurseTotalTrait::new);
+
+    /** 坐杀搏徒（领域特性，占用领域槽） */
+    public static final StaticModifier<ZuoShaBoTuModifier> ZUOSHA_BOTU =
+        MODIFIERS.register("zuosha_botu", ZuoShaBoTuModifier::new);
 }

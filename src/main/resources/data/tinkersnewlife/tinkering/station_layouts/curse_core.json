@@ -3,26 +3,17 @@
   "sortIndex": 7,
   "icon": {
     "item": "tinkersnewlife:curse_core",
-    "nbt": "{Damage:0,tic_broken:0b,tic_display:1b,tic_materials:[\"tconstruct:ui_render#handle\",\"tconstruct:ui_render#extra\"]}"
+    "nbt": "{Damage:0,tic_broken:0b,tic_display:1b,tic_materials:[\"tconstruct:ui_render#head\"]}"
   },
   "input_slots": [
     {
-      "translation_key": "slot.tinkersnewlife.curse_core.handle",
-      "icon": "tconstruct:tool_handle",
+      "translation_key": "slot.tinkersnewlife.curse_core.part",
+      "icon": "tinkersnewlife:curse_core_part",
       "filter": {
-        "item": "tconstruct:tool_handle"
+        "item": "tinkersnewlife:curse_core_part"
       },
       "x": 30,
       "y": 20
-    },
-    {
-      "translation_key": "slot.tinkersnewlife.curse_core.binding",
-      "icon": "tconstruct:tool_binding",
-      "filter": {
-        "item": "tconstruct:tool_binding"
-      },
-      "x": 30,
-      "y": 52
     }
   ]
 }

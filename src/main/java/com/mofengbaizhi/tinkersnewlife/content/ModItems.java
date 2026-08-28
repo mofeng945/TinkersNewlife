@@ -225,4 +225,28 @@ public class ModItems {
     public static final RegistryObject<CurseCoreItem> CURSE_CORE =
         ITEMS.register("curse_core",
                 () -> new CurseCoreItem(new Item.Properties().stacksTo(1)));
+
+    // ============================================================
+    //  咒力核心部件
+    // ============================================================
+
+    /** 咒力核心部件（头部统计，咒力核心的唯一组成部件） */
+    public static final RegistryObject<ToolPartItem> CURSE_CORE_PART =
+            ITEMS.register("curse_core_part",
+                    () -> new ToolPartItem(new Item.Properties(),
+                            new MaterialStatsId(new ResourceLocation("tconstruct", "head"))
+                    )
+            );
+
+    /** 咒力核心部件铸模（金铸模） */
+    public static final RegistryObject<Item> CURSE_CORE_PART_CAST =
+            ITEMS.register("curse_core_part_cast", () -> new Item(new Item.Properties().stacksTo(1)));
+
+    /** 咒力核心部件铸模（沙铸模） */
+    public static final RegistryObject<Item> CURSE_CORE_PART_SAND_CAST =
+            ITEMS.register("curse_core_part_sand_cast", () -> new Item(new Item.Properties().stacksTo(1)));
+
+    /** 咒力核心部件铸模（红沙铸模） */
+    public static final RegistryObject<Item> CURSE_CORE_PART_RED_SAND_CAST =
+            ITEMS.register("curse_core_part_red_sand_cast", () -> new Item(new Item.Properties().stacksTo(1)));
 }

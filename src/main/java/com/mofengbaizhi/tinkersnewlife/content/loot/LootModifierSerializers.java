@@ -17,4 +17,7 @@ public class LootModifierSerializers {
 
     public static final RegistryObject<Codec<? extends IGlobalLootModifier>> RANDOM_GLOVE =
             LOOT_MODIFIERS.register("random_glove", () -> RandomGloveModifier.CODEC.get());
+
+    public static final RegistryObject<Codec<? extends IGlobalLootModifier>> CURSE_AFFINITY =
+            LOOT_MODIFIERS.register("curse_affinity", () -> CurseAffinityLootModifier.CODEC.get());
 }

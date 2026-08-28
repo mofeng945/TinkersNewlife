@@ -39,11 +39,19 @@ public class KeyBindings {
             KEY_CATEGORY
     ));
 
+    // ✅ 坐杀搏徒：展开/关闭领域
+    public static final Lazy<KeyMapping> TOGGLE_DOMAIN = Lazy.of(() -> new KeyMapping(
+            "key.tinkersnewlife.toggle_domain",
+            GLFW.GLFW_KEY_V,
+            KEY_CATEGORY
+    ));
+
     @SubscribeEvent
     public static void register(RegisterKeyMappingsEvent event) {
         event.register(USE_SKILL.get());
         event.register(DRAGON_STAFF_USE.get());
         event.register(OPEN_BAG.get());
         event.register(SWITCH_FLYING_SWORD_MODE.get()); // 确保注册
+        event.register(TOGGLE_DOMAIN.get()); // 确保注册
     }
 }

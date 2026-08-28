@@ -1,0 +1,10 @@
+{
+  "type": "tinkersnewlife:curse_affinity",
+  "conditions": [
+    {
+      "condition": "minecraft:random_chance",
+      "chance": 1.0
+    }
+  ],
+  "chance": 0.4
+}

@@ -1,0 +1,16 @@
+{
+  "type": "tconstruct:part_builder",
+  "cost": 6,
+  "pattern": "tinkersnewlife:curse_core_part",
+  "pattern_item": [
+    {
+      "tag": "tconstruct:patterns/default"
+    },
+    {
+      "item": "tinkersnewlife:curse_core_part_cast"
+    }
+  ],
+  "result": {
+    "item": "tinkersnewlife:curse_core_part"
+  }
+}

@@ -12,6 +12,7 @@ import com.mofengbaizhi.tinkersnewlife.content.modifier.QuantumBagModifier;
 import com.mofengbaizhi.tinkersnewlife.network.PacketDragonStaffUse;
 import com.mofengbaizhi.tinkersnewlife.network.PacketOpenBag;
 import com.mofengbaizhi.tinkersnewlife.network.PacketSwitchFlyingSwordMode;
+import com.mofengbaizhi.tinkersnewlife.network.PacketToggleDomain;
 import com.mofengbaizhi.tinkersnewlife.network.PacketUseSkill;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.MenuScreens;
@@ -20,6 +21,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.InputEvent;
+import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -42,6 +44,12 @@ public class ClientEventHandler {
             MenuScreens.register(ModMenus.SILENT_GLOVE_CONTAINER.get(), SilentGloveScreen::new);
             LOGGER.debug("[TinkersNewlife] 所有 GUI 屏幕已注册");
         });
+    }
+
+    /** 注册咒力 HUD 覆盖层 */
+    @SubscribeEvent
+    public static void registerOverlays(RegisterGuiOverlaysEvent event) {
+        event.registerAboveAll("curse_hud", ClientCurseData::render);
     }
 
     @SubscribeEvent
@@ -98,6 +106,11 @@ public class ClientEventHandler {
                         TinkersNewlife.CHANNEL.sendToServer(new PacketSwitchFlyingSwordMode(1));
                     }
                 }
+            }
+
+            // ✅ 坐杀搏徒：展开/关闭领域
+            if (KeyBindings.TOGGLE_DOMAIN.get().consumeClick()) {
+                TinkersNewlife.CHANNEL.sendToServer(new PacketToggleDomain());
             }
         }
     }
