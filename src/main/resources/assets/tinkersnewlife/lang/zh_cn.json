@@ -370,7 +370,7 @@
   "modifier.tinkersnewlife.curse_output": "咒力输出",
   "modifier.tinkersnewlife.curse_output.description": "决定咒力领域半径（等级×5 格）、咒力上限与咒力恢复量",
   "modifier.tinkersnewlife.curse_total": "咒力总量",
-  "modifier.tinkersnewlife.curse_total.description": "咒力上限 = 咒力总量等级 × (咒力输出等级 + 咒力亲和/10) × 100",
+  "modifier.tinkersnewlife.curse_total.description": "咒力上限 = 咒力总量等级 × (咒力输出等级 + 咒力亲和/10) × 500",
   "modifier.tinkersnewlife.zuosha_botu": "坐杀搏徒",
   "modifier.tinkersnewlife.zuosha_botu.description": "§f按键展开领域困锁敌人：每秒消耗 半径×20 咒力，领域内每 3 秒摇奖（70% 小奖 / 29% 大奖 / 1% 特等奖），咒力耗尽自动关闭",
   "key.tinkersnewlife.toggle_domain": "坐杀搏徒：展开/关闭领域",

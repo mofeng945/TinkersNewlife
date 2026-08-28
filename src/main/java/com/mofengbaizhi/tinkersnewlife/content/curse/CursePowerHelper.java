@@ -95,12 +95,12 @@ public final class CursePowerHelper {
     //  咒力数值
     // ============================================================
 
-    /** 咒力上限 = 咒力总量等级 × (咒力输出等级 + 咒力亲和/10) × 100 */
+    /** 咒力上限 = 咒力总量等级 × (咒力输出等级 + 咒力亲和/10) × 500 */
     public static double getMaxCurse(Player player) {
         int total = getCurseTotalLevel(player);
         int output = getCurseOutputLevel(player);
         int affinity = getCurseAffinity(player);
-        return total * (output + affinity / 10.0) * 100.0;
+        return total * (output + affinity / 10.0) * 500.0;
     }
 
     /** 当前咒力 */

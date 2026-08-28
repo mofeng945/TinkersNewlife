@@ -47,7 +47,7 @@ public class ModTooltips {
                 if (tool != null) {
                     int output = tool.getModifierLevel(Modifiers.CURSE_OUTPUT.getId());
                     int total = tool.getModifierLevel(Modifiers.CURSE_TOTAL.getId());
-                    double max = total * (output + affinity / 10.0) * 100.0;
+                    double max = total * (output + affinity / 10.0) * 500.0;
                     int curse = (int) Math.floor(ClientCurseData.getCurse());
                     event.getToolTip().add(Component.translatable("tooltip.tinkersnewlife.curse_affinity", affinity)
                             .withStyle(ChatFormatting.LIGHT_PURPLE));
