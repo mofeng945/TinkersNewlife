@@ -26,6 +26,26 @@ public class ClientCurseData {
         infinite = infiniteIn;
     }
 
+    /** 当前咒力（服务端同步，未佩戴时为 0） */
+    public static double getCurse() {
+        return curse;
+    }
+
+    /** 当前咒力上限（服务端同步，未佩戴时为 0） */
+    public static double getMax() {
+        return max;
+    }
+
+    /** 领域是否展开中 */
+    public static boolean isDomainActive() {
+        return domainActive;
+    }
+
+    /** 是否咒力无限 */
+    public static boolean isInfinite() {
+        return infinite;
+    }
+
     /** Forge GUI Overlay 渲染入口（registerAboveAll） */
     public static void render(Gui gui, GuiGraphics graphics, float partialTick, int screenWidth, int screenHeight) {
         if (max <= 0) return;

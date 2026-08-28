@@ -101,8 +101,8 @@ public class DomainHandler {
             sendMessage(player, "message.tinkersnewlife.domain.no_trait");
             return;
         }
-        double costPerSecond = radius * 20.0;
-        if (!CursePowerHelper.isCurseInfinite(player) && CursePowerHelper.getCurse(player) < costPerSecond) {
+        // 只要咒力 > 0 即可展开，消耗与自动关闭由每 tick 逻辑处理（咒力耗尽领域自动关闭）
+        if (!CursePowerHelper.isCurseInfinite(player) && CursePowerHelper.getCurse(player) <= 0) {
             sendMessage(player, "message.tinkersnewlife.domain.no_curse");
             return;
         }

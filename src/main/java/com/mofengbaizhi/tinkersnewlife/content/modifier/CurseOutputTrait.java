@@ -1,38 +1,13 @@
 package com.mofengbaizhi.tinkersnewlife.content.modifier;
 
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import slimeknights.mantle.client.TooltipKey;
 import slimeknights.tconstruct.library.modifiers.Modifier;
-import slimeknights.tconstruct.library.modifiers.ModifierEntry;
-import slimeknights.tconstruct.library.modifiers.ModifierHooks;
-import slimeknights.tconstruct.library.modifiers.hook.display.TooltipModifierHook;
-import slimeknights.tconstruct.library.module.ModuleHookMap;
-import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
-
-import javax.annotation.Nullable;
-import java.util.List;
 
 /**
  * 咒力输出特性（咒力核心自带）
  * <p>
  * 决定咒力领域半径（等级×5）、咒力上限公式与恢复量的关键等级。
- * 数值计算由 {@code CursePowerHelper} 统一处理，本类仅作注册与工具提示。
+ * 数值计算由 {@code CursePowerHelper} 统一处理，本类仅作注册标记。
+ * 详细机制说明见帕秋莉手册/JEI（暂未编写）。
  */
-public class CurseOutputTrait extends Modifier implements TooltipModifierHook {
-
-    @Override
-    protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
-        super.registerHooks(hookBuilder);
-        hookBuilder.addHook(this, ModifierHooks.TOOLTIP);
-    }
-
-    @Override
-    public void addTooltip(IToolStackView tool, ModifierEntry modifier,
-                           @Nullable Player player, List<Component> tooltip,
-                           TooltipKey tooltipKey, TooltipFlag tooltipFlag) {
-        tooltip.add(Component.translatable("modifier.tinkersnewlife.curse_output.description"));
-    }
+public class CurseOutputTrait extends Modifier {
 }

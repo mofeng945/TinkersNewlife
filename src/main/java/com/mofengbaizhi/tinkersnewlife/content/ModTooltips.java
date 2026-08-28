@@ -1,18 +1,24 @@
 package com.mofengbaizhi.tinkersnewlife.content;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import com.mofengbaizhi.tinkersnewlife.client.ClientCurseData;
+import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
+import com.mofengbaizhi.tinkersnewlife.content.item.CurseCoreItem;
 import com.mofengbaizhi.tinkersnewlife.content.item.FlyingSwordItem;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
+import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
 /**
  * 物品额外描述提示（仅客户端）。
@@ -31,6 +37,26 @@ public class ModTooltips {
     @SubscribeEvent
     public static void onItemTooltip(ItemTooltipEvent event) {
         ItemStack stack = event.getItemStack();
+
+        // ⭐ 咒力核心：只额外提示当前总咒力亲和与咒力值（其余机制见帕秋莉手册/JEI）
+        if (stack.getItem() instanceof CurseCoreItem) {
+            Player player = event.getEntity();
+            if (player != null) {
+                int affinity = CursePowerHelper.getCurseAffinity(player);
+                ToolStack tool = ToolHelper.getToolStack(stack);
+                if (tool != null) {
+                    int output = tool.getModifierLevel(Modifiers.CURSE_OUTPUT.getId());
+                    int total = tool.getModifierLevel(Modifiers.CURSE_TOTAL.getId());
+                    double max = total * (output + affinity / 10.0) * 100.0;
+                    int curse = (int) Math.floor(ClientCurseData.getCurse());
+                    event.getToolTip().add(Component.translatable("tooltip.tinkersnewlife.curse_affinity", affinity)
+                            .withStyle(ChatFormatting.LIGHT_PURPLE));
+                    event.getToolTip().add(Component.translatable("tooltip.tinkersnewlife.curse_amount", curse, (int) max)
+                            .withStyle(ChatFormatting.GOLD));
+                }
+            }
+            return;
+        }
 
         // ⭐ 咒力亲和（战利品生成的饰品可能携带）
         if (stack.getTag() != null && stack.getTag().contains("tinkersnewlife.curse_affinity")) {
