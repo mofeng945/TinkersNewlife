@@ -78,7 +78,9 @@ public class ZuoShaBoTuDomain extends BaseDomain {
             return null;
         }
         ZuoShaBoTuDomain domain = new ZuoShaBoTuDomain(player.getUUID(), player.position(), radius);
-        domain.nextGambleTick = player.level().getGameTime() + GAMBLE_INTERVAL_TICKS;
+        // ⭐ 必须与 DomainRegistry 每 tick 传入的 server.getTickCount() 同源，
+        // 不能用 level.getGameTime()（老存档里该值远大于 tickCount，会导致摇奖永不触发）
+        domain.nextGambleTick = player.serverLevel().getServer().getTickCount() + GAMBLE_INTERVAL_TICKS;
         return domain;
     }
 
