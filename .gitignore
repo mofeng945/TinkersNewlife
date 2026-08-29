@@ -29,3 +29,6 @@ forge*changelog.txt
 .tmpstn/
 runclient-*.log
 build-*.log
+
+# local mod jars for dev testing
+libs/
