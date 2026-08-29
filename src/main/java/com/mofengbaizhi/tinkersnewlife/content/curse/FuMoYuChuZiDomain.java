@@ -32,7 +32,7 @@ import java.util.UUID;
  *   仍可被护甲、盾牌、抗性提升、创造/旁观无敌等防御手段衰减甚至免疫
  * - 每次斩击尝试在实体脚下放置红石粉外观的"血液"（已有红石/血液则不放置，
  *   该方块无战利品表，挖掉不掉落任何东西）
- * - 每道斩击伤害 = (1 + (咒力输出等级 + 咒力亲和/10)/10) × 玩家当前攻击伤害 × 5%
+ * - 每道斩击伤害 = (1 + (咒力输出等级 + 咒力亲和/10)/10) × (玩家当前攻击伤害 + 咒力输出等级×5) × 5%
  */
 public class FuMoYuChuZiDomain extends BaseDomain {
 
@@ -120,11 +120,11 @@ public class FuMoYuChuZiDomain extends BaseDomain {
     //  斩击伤害
     // ============================================================
 
-    /** 每道斩击伤害 = (1+(咒力输出等级+咒力亲和/10)/10) × 玩家当前攻击伤害 × 5% */
+    /** 每道斩击伤害 = (1+(咒力输出等级+咒力亲和/10)/10) × (玩家当前攻击伤害 + 咒力输出等级×5) × 5% */
     private double computeDamage(ServerPlayer player) {
         int output = CursePowerHelper.getCurseOutputLevel(player);
         int affinity = CursePowerHelper.getCurseAffinity(player);
-        double playerDmg = player.getAttributeValue(Attributes.ATTACK_DAMAGE);
+        double playerDmg = player.getAttributeValue(Attributes.ATTACK_DAMAGE) + output * 5.0;
         return (1.0 + (output + affinity / 10.0) / 10.0) * playerDmg * 0.05;
     }
 

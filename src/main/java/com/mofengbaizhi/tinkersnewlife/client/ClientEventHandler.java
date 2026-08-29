@@ -22,6 +22,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.InputEvent;
+import net.minecraftforge.client.event.RegisterColorHandlersEvent;
 import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -52,6 +53,19 @@ public class ClientEventHandler {
     @SubscribeEvent
     public static void registerOverlays(RegisterGuiOverlaysEvent event) {
         event.registerAboveAll("curse_hud", ClientCurseData::render);
+    }
+
+    /**
+     * 血液方块染色：模型复用原版红石线（tintindex 0，基底纹理为深色），
+     * 颜色完全由方块染色提供器决定——必须注册与原版红石线一致的染色，否则显示为纯黑色。
+     */
+    @SubscribeEvent
+    public static void onRegisterBlockColors(RegisterColorHandlersEvent.Block event) {
+        event.getBlockColors().register(
+                (state, level, pos, tintIndex) ->
+                        net.minecraft.world.level.block.RedStoneWireBlock.getColorForPower(
+                                state.getValue(net.minecraft.world.level.block.RedStoneWireBlock.POWER)),
+                com.mofengbaizhi.tinkersnewlife.content.ModBlocks.BLOOD_REDSTONE.get());
     }
 
     @SubscribeEvent
