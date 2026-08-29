@@ -137,9 +137,9 @@ repositories {
     }
     // If you have mod jar dependencies in ./libs, you can declare them as a repository like so.
     // See https://docs.gradle.org/current/userguide/declaring_repositories.html#sub:flat_dir_resolver
-    flatDir {
-        dir 'libs'
-    }
+    // flatDir {
+    //     dir 'libs'
+    // }
 }
 
 dependencies {
@@ -164,10 +164,6 @@ dependencies {
     implementation fg.deobf("maven.modrinth:rxIIYO6c:kJ9LD194")
     implementation fg.deobf("maven.modrinth:u6dRKJwZ:4r3Kp7U7")
     implementation fg.deobf("maven.modrinth:vvuO3ImH:IPQlZkz1")
-
-    // 诡厄巫法（Goety）：仅运行时依赖，用于灵魂能量兜底（SoulEnergyBridge 反射调用，编译期无依赖）
-    // 发布 jar 为 SRG 映射，必须 fg.deobf 转为开发环境的官方映射（否则其 mixin 的 @Shadow 字段找不到）
-    runtimeOnly fg.deobf("goety:goety:2.5.54.5")
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html

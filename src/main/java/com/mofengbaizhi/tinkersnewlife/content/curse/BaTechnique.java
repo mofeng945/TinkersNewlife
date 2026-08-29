@@ -47,15 +47,21 @@ public final class BaTechnique extends BaseTechnique {
             target.invulnerableTime = 0;
             target.hurt(player.damageSources().mobAttack(player), (float) perSlash);
         }
-        // 斩击粒子：3 道横向（不同高度横扫弧）+ 3 道纵向（不同旋转角横扫弧）
+        // 斩击粒子：3 道横向（不同高度横扫弧）+ 3 道纵向（绕目标 120° 分布的竖直暴击列）
+        // ⭐ 原版 SweepAttackParticle 无旋转参数（dy/dz 被忽略，固定相机朝向弧），
+        // 纵向斩击改用竖直粒子列表现，避免与横向弧同形重叠
         ServerLevel level = player.serverLevel();
         Vec3 pos = target.position();
         for (int i = 0; i < 3; i++) {
-            level.sendParticles(ParticleTypes.SWEEP_ATTACK, pos.x, pos.y + 0.3 + i * 0.3, pos.z, 1, 0.9, 0, 0, 0);
+            level.sendParticles(ParticleTypes.SWEEP_ATTACK, pos.x, pos.y + 0.35 + i * 0.35, pos.z, 1, 0.8, 0, 0, 0);
         }
         for (int i = 0; i < 3; i++) {
-            level.sendParticles(ParticleTypes.SWEEP_ATTACK, pos.x, pos.y + 0.6, pos.z, 1, 0.9, 60 + i * 60, 0, 0);
+            double angle = 2 * Math.PI * i / 3;
+            double ox = Math.cos(angle) * 0.25;
+            double oz = Math.sin(angle) * 0.25;
+            for (int k = 0; k < 5; k++) {
+                level.sendParticles(ParticleTypes.CRIT, pos.x + ox, pos.y + k * 0.3, pos.z + oz, 1, 0, 0, 0, 0);
+            }
         }
-        level.sendParticles(ParticleTypes.CRIT, pos.x, pos.y + 0.5, pos.z, 6, 0.4, 0.4, 0.4, 0);
     }
 }
