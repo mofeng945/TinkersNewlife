@@ -3,7 +3,6 @@ package com.mofengbaizhi.tinkersnewlife.content.curse;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -83,10 +82,9 @@ public abstract class BaseDomain {
     }
 
     /**
-     * 双向封锁领域内生物：
+     * 双向封锁：不区分创造/玩家/主人，任何生物（含领域主人）一律
      * - 领域内生物试图离开 → 拉回球面内侧（出不去）
      * - 领域外生物试图进入 → 挡在球面外侧并反向推回（进不来）
-     * 创造/旁观玩家豁免。
      */
     protected final void clampEntities(Level level) {
         double r = radius;
@@ -95,8 +93,6 @@ public abstract class BaseDomain {
                 center.x + r + 1.5, center.y + r + 1.5, center.z + r + 1.5);
         java.util.Set<UUID> seen = new java.util.HashSet<>();
         for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, box)) {
-            if (entity.getUUID().equals(owner)) continue;
-            if (entity instanceof Player p && (p.isCreative() || p.isSpectator())) continue;
             seen.add(entity.getUUID());
 
             Vec3 delta = entity.position().subtract(center);
