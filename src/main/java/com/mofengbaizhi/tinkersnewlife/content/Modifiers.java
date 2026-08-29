@@ -110,4 +110,8 @@ public class Modifiers {
     /** 坐杀搏徒（领域特性，占用领域槽） */
     public static final StaticModifier<ZuoShaBoTuModifier> ZUOSHA_BOTU =
         MODIFIERS.register("zuosha_botu", ZuoShaBoTuModifier::new);
+
+    /** 无量空处（领域特性，占用领域槽） */
+    public static final StaticModifier<WuLiangKongChuTrait> WULIANG_KONGCHU =
+        MODIFIERS.register("wuliang_kongchu", WuLiangKongChuTrait::new);
 }

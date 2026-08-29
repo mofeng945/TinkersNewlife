@@ -6,6 +6,7 @@ import com.mofengbaizhi.tinkersnewlife.content.effect.FrostEffect;
 import com.mofengbaizhi.tinkersnewlife.content.effect.DamageLimitEffect;
 import com.mofengbaizhi.tinkersnewlife.content.effect.UnnameableEffect;
 import com.mofengbaizhi.tinkersnewlife.content.effect.CharmEffect;
+import com.mofengbaizhi.tinkersnewlife.content.effect.StunEffect;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraftforge.registries.DeferredRegister;
@@ -30,4 +31,8 @@ public class ModEffects {
 
     public static final RegistryObject<CharmEffect> CHARM =
             EFFECTS.register("charm", () -> new CharmEffect(MobEffectCategory.HARMFUL, 0xFF69B4));
+
+    /** 静止（无量空处）：完全定身 */
+    public static final RegistryObject<StunEffect> STUN =
+            EFFECTS.register("stun", () -> new StunEffect(MobEffectCategory.HARMFUL, 0x000000));
 }
