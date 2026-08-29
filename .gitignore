@@ -23,3 +23,9 @@ run
 
 # Files from Forge MDK
 forge*changelog.txt
+
+# logs and scratch
+*.log
+.tmpstn/
+runclient-*.log
+build-*.log
