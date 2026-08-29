@@ -200,8 +200,17 @@ public abstract class BaseDomain {
         CursePowerHelper.spendCurse(player, curse); // 咒力清零
         int soulsNeeded = (int) Math.ceil(deficit * 3.0);
         int souls = com.mofengbaizhi.tinkersnewlife.util.SoulEnergyBridge.getSouls(player);
-        if (souls < soulsNeeded) return false; // 灵魂能量也不足 → 领域关闭
-        if (!com.mofengbaizhi.tinkersnewlife.util.SoulEnergyBridge.decreaseSouls(player, soulsNeeded)) return false;
+        if (souls < soulsNeeded) {
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
+                    "[TinkersNewlife] 灵魂兜底失败: 咒力={}, tick消耗={}, 差额={}, 所需灵魂={}, 实际灵魂={}",
+                    curse, cost, deficit, soulsNeeded, souls);
+            return false; // 灵魂能量也不足 → 领域关闭
+        }
+        if (!com.mofengbaizhi.tinkersnewlife.util.SoulEnergyBridge.decreaseSouls(player, soulsNeeded)) {
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                    "[TinkersNewlife] 灵魂扣减失败: 所需={}, 当时持有={}", soulsNeeded, souls);
+            return false;
+        }
         if (!soulFallbackNotified) {
             soulFallbackNotified = true;
             player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
