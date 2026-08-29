@@ -3,7 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.content.curse;
 import com.mofengbaizhi.tinkersnewlife.content.ModItems;
 import com.mofengbaizhi.tinkersnewlife.content.Modifiers;
 import com.mofengbaizhi.tinkersnewlife.content.entity.FlameArrowEntity;
-import com.mofengbaizhi.tinkersnewlife.content.item.FlameBowItem;
+import com.mofengbaizhi.tinkersnewlife.content.item.FlameArrowItem;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -14,9 +14,9 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 术式「灶·开」：按住蓄力（手持火焰弓拉弓动画），松开发射
+ * 术式「灶·开」：按住蓄力（主手手持火焰箭，动态火焰纹理），松开发射
  * <p>
- * - 按下按键：主手临时装备火焰弓并开始拉弓动画（蓄力表现）
+ * - 按下按键：主手临时装备火焰箭（手持蓄力，无拉弓动画）
  * - 松开按键：恢复原主手物品、扣除咒力，向当前朝向发射火焰箭
  *   （笔直轨迹、速度较慢），命中引发火焰爆炸（不破坏方块）：
  *   中心伤害 = (1 + 咒力亲和/100) × (当前攻击伤害 + 咒力输出×10) × 200%，随距离衰减；
@@ -30,7 +30,7 @@ public final class ZaoKaiTechnique extends BaseTechnique {
     /** 火焰箭飞行速度（较慢，笔直） */
     private static final float ARROW_SPEED = 1.2F;
 
-    /** 蓄力中：玩家 UUID → 原主手物品（蓄力期间临时换成火焰弓） */
+    /** 蓄力中：玩家 UUID → 原主手物品（蓄力期间临时换成火焰箭） */
     private static final Map<UUID, ItemStack> CHARGING = new ConcurrentHashMap<>();
 
     private ZaoKaiTechnique() {
@@ -43,13 +43,12 @@ public final class ZaoKaiTechnique extends BaseTechnique {
         return super.getCost(player) * 10;
     }
 
-    /** 按下：主手临时装备火焰弓并开始拉弓（蓄力动画） */
+    /** 按下：主手临时装备火焰箭（手持蓄力） */
     @Override
     public void onKeyPress(ServerPlayer player) {
         if (CHARGING.containsKey(player.getUUID())) return; // 已在蓄力
         CHARGING.put(player.getUUID(), player.getMainHandItem());
-        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ModItems.FLAME_BOW.get()));
-        player.startUsingItem(InteractionHand.MAIN_HAND);
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ModItems.FLAME_ARROW_ITEM.get()));
     }
 
     /** 松开：恢复原主手物品、扣除咒力，向当前朝向发射火焰箭（不足则取消） */
@@ -57,9 +56,8 @@ public final class ZaoKaiTechnique extends BaseTechnique {
     public void onKeyRelease(ServerPlayer player) {
         ItemStack original = CHARGING.remove(player.getUUID());
         if (original == null) return;
-        player.stopUsingItem();
-        // 仅当主手仍是火焰弓时才恢复（防止蓄力中玩家自行换走物品）
-        if (player.getMainHandItem().getItem() instanceof FlameBowItem) {
+        // 仅当主手仍是火焰箭时才恢复（防止蓄力中玩家自行换走物品）
+        if (player.getMainHandItem().getItem() instanceof FlameArrowItem) {
             player.setItemInHand(InteractionHand.MAIN_HAND, original);
         }
         // 松开发射时扣除（解 ×10），不足则取消
@@ -73,12 +71,11 @@ public final class ZaoKaiTechnique extends BaseTechnique {
         player.level().addFreshEntity(arrow);
     }
 
-    /** 取消蓄力（登出/死亡时）：停止拉弓并恢复原主手物品 */
+    /** 取消蓄力（登出/死亡时）：恢复原主手物品 */
     public static void cancelCharge(ServerPlayer player) {
         ItemStack original = CHARGING.remove(player.getUUID());
         if (original == null) return;
-        player.stopUsingItem();
-        if (player.getMainHandItem().getItem() instanceof FlameBowItem) {
+        if (player.getMainHandItem().getItem() instanceof FlameArrowItem) {
             player.setItemInHand(InteractionHand.MAIN_HAND, original);
         }
     }
