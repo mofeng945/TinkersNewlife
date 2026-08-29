@@ -1,6 +1,7 @@
 package com.mofengbaizhi.tinkersnewlife.content;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import com.mofengbaizhi.tinkersnewlife.content.entity.DomainVisualEntity;
 import com.mofengbaizhi.tinkersnewlife.content.entity.DreadsteelSlashEntity;
 import com.mofengbaizhi.tinkersnewlife.content.entity.FlyingSwordEntity;
 import com.mofengbaizhi.tinkersnewlife.content.entity.FlyingSwordFootEntity;
@@ -52,5 +53,15 @@ public class ModEntities {
                         .clientTrackingRange(64)
                         .updateInterval(1)
                         .build(TinkersNewlife.MOD_ID + ":yo_yo")
+        );
+
+    /** 领域视觉实体（黑色空心圆球线框，纯绘制形状） */
+    public static final RegistryObject<EntityType<DomainVisualEntity>> DOMAIN_VISUAL =
+        ENTITIES.register("domain_visual",
+                () -> EntityType.Builder.<DomainVisualEntity>of(DomainVisualEntity::new, MobCategory.MISC)
+                        .sized(0.1f, 0.1f)   // 几乎无碰撞盒，纯视觉
+                        .clientTrackingRange(64)
+                        .updateInterval(1)
+                        .build(TinkersNewlife.MOD_ID + ":domain_visual")
         );
 }

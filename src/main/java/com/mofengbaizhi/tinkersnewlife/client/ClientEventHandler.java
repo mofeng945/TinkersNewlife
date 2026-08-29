@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.client;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.client.renderer.DreadsteelSlashRenderer;
+import com.mofengbaizhi.tinkersnewlife.client.renderer.DomainVisualRenderer;
 import com.mofengbaizhi.tinkersnewlife.client.renderer.FlyingSwordFootRenderer;
 import com.mofengbaizhi.tinkersnewlife.client.renderer.FlyingSwordRenderer;
 import com.mofengbaizhi.tinkersnewlife.client.renderer.YoYoRenderer;
@@ -59,6 +60,7 @@ public class ClientEventHandler {
         event.registerEntityRenderer(ModEntities.FLYING_SWORD.get(), FlyingSwordRenderer::new);
         event.registerEntityRenderer(ModEntities.FLYING_SWORD_FOOT.get(), FlyingSwordFootRenderer::new);
         event.registerEntityRenderer(ModEntities.YO_YO.get(), YoYoRenderer::new);
+        event.registerEntityRenderer(ModEntities.DOMAIN_VISUAL.get(), DomainVisualRenderer::new);
     }
 
     // ========== Forge 事件（按键等） ==========

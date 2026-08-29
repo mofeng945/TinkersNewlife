@@ -47,7 +47,7 @@ public class CursePowerHandler {
             if (now % 20 == 0) {
                 double curse = wearing ? CursePowerHelper.getCurse(player) : 0;
                 double max = wearing ? CursePowerHelper.getMaxCurse(player) : 0;
-                boolean domainActive = DomainHandler.isActive(player.getUUID());
+                boolean domainActive = DomainRegistry.isActive(player.getUUID());
                 boolean infinite = wearing && CursePowerHelper.isCurseInfinite(player);
                 TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
                         new PacketSyncCurse(curse, max, domainActive, infinite));

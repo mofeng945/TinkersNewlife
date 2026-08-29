@@ -1,6 +1,7 @@
 package com.mofengbaizhi.tinkersnewlife.network;
 
-import com.mofengbaizhi.tinkersnewlife.content.curse.DomainHandler;
+import com.mofengbaizhi.tinkersnewlife.content.curse.DomainRegistry;
+import com.mofengbaizhi.tinkersnewlife.content.curse.ZuoShaBoTuDomain;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
@@ -22,7 +23,8 @@ public class PacketToggleDomain {
         ctx.get().enqueueWork(() -> {
             ServerPlayer player = ctx.get().getSender();
             if (player == null) return;
-            DomainHandler.toggleDomain(player);
+            // 通过通用领域注册表切换坐杀搏徒领域
+            DomainRegistry.toggle(player, ZuoShaBoTuDomain::tryCreate);
         });
         ctx.get().setPacketHandled(true);
     }
