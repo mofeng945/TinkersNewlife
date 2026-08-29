@@ -190,24 +190,34 @@ public abstract class BaseDomain {
         entity.fallDistance = 0;
     }
 
-    /** 在球面候选点附近寻找不卡进方块的安全落点（上下最多偏移 6 格） */
+    /** 在球面候选点附近寻找安全落点（优先落在地面实心方块上，避免被悬在半空与重力打架） */
     private Vec3 findSafeSpot(Level level, Vec3 dir, double edge) {
         double tx = center.x + dir.x * edge;
         double ty = center.y + dir.y * edge;
         double tz = center.z + dir.z * edge;
         BlockPos pos = BlockPos.containing(tx, ty, tz);
-        if (isSafe(level, pos)) return new Vec3(tx, ty, tz);
+        // 候选点本身可站（空气 + 脚下实心）→ 直接用
+        if (isSafe(level, pos) && isGroundBelow(level, pos)) return new Vec3(tx, ty, tz);
+        // 向上找 6 格内的可站点
         for (int dy = 1; dy <= 6; dy++) {
-            if (isSafe(level, pos.above(dy))) return new Vec3(tx, ty + dy, tz);
+            BlockPos up = pos.above(dy);
+            if (isSafe(level, up) && isGroundBelow(level, up)) return new Vec3(tx, ty + dy, tz);
         }
-        for (int dy = 1; dy <= 6; dy++) {
-            if (isSafe(level, pos.below(dy))) return new Vec3(tx, ty - dy, tz);
+        // 向下找 24 格内落在地面（防止钳制把生物悬空导致"飘天上"）
+        for (int dy = 1; dy <= 24; dy++) {
+            BlockPos down = pos.below(dy);
+            if (isSafe(level, down) && isGroundBelow(level, down)) return new Vec3(tx, ty - dy, tz);
         }
+        // 兜底：原候选点
         return new Vec3(tx, ty, tz);
     }
 
     private static boolean isSafe(Level level, BlockPos pos) {
         return level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()
                 && level.getBlockState(pos.above()).getCollisionShape(level, pos.above()).isEmpty();
+    }
+
+    private static boolean isGroundBelow(Level level, BlockPos pos) {
+        return !level.getBlockState(pos.below()).getCollisionShape(level, pos.below()).isEmpty();
     }
 }
