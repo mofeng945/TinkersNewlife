@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.client.renderer;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
@@ -10,66 +11,103 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.renderer.GameRenderer;
 
 /**
- * 纯黑色空心球壳（半透明黑面片）绘制
+ * 纯黑色球壳绘制（含出现动画）
  * <p>
- * - 三角面片组成球壳（非线框、非方块），半透明黑 → 球壳可见且内部可透视（空心）
- * - 深度测试开启：被方块遮挡的部分不显示
- * - 球壳不写深度（depthMask off）：近/远两面都可见，保持"空心"观感
- * 单位球静态 VertexBuffer 只构建一次，渲染时按领域半径缩放。
+ * - 动画：球壳从球顶一点开始，随 {@code progress}（0~1）向下蔓延绘制球冠，
+ *   2 秒（40 tick）内完成整球；动画期间逐帧立即绘制，完成后用静态 VertexBuffer
+ * - 纯黑不透明（alpha 255），深度测试开启（被方块遮挡的部分不显示）
  */
 public final class DomainSphereRenderer {
 
-    private static VertexBuffer shellBuffer;
+    private static final int RINGS = 16;
+    private static final int SEGMENTS = 24;
+
+    private static VertexBuffer fullShellBuffer;
 
     private DomainSphereRenderer() {}
 
-    /** 绘制纯黑色球壳（当前 PoseStack 原点为球心，单位半径由外部缩放） */
-    public static void render(PoseStack poseStack) {
-        ensureBuffer();
+    /** 绘制纯黑色球壳；progress 为出现动画进度（0~1，1 表示完整球壳） */
+    public static void render(PoseStack poseStack, float progress) {
+        setupState();
+        if (progress >= 1.0f) {
+            ensureFullBuffer();
+            fullShellBuffer.bind();
+            fullShellBuffer.drawWithShader(poseStack.last().pose(), RenderSystem.getProjectionMatrix(),
+                    GameRenderer.getPositionColorShader());
+            VertexBuffer.unbind();
+        } else {
+            // 动画：逐帧绘制从球顶蔓延到 phiMax 的球冠
+            double phiMax = Math.max(0.0001, progress * Math.PI);
+            BufferBuilder builder = Tesselator.getInstance().getBuilder();
+            builder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
+            buildCap(builder, phiMax);
+            // 立即绘制：把 PoseStack 模型矩阵压入 RenderSystem 模型视图栈
+            RenderSystem.getModelViewStack().pushPose();
+            RenderSystem.getModelViewStack().mulPoseMatrix(poseStack.last().pose());
+            RenderSystem.applyModelViewMatrix();
+            BufferUploader.drawWithShader(builder.end());
+            RenderSystem.getModelViewStack().popPose();
+            RenderSystem.applyModelViewMatrix();
+        }
+        restoreState();
+    }
+
+    private static void setupState() {
         RenderSystem.enableDepthTest();
-        RenderSystem.depthMask(true);   // 纯黑不透明，正常写深度（被方块遮挡的部分不显示）
+        RenderSystem.depthMask(true);
         RenderSystem.disableCull();
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
-        shellBuffer.bind();
-        shellBuffer.drawWithShader(poseStack.last().pose(), RenderSystem.getProjectionMatrix(),
-                GameRenderer.getPositionColorShader());
-        VertexBuffer.unbind();
+    }
+
+    private static void restoreState() {
         RenderSystem.enableCull();
     }
 
-    private static void ensureBuffer() {
-        if (shellBuffer != null) return;
-        BufferBuilder builder = Tesselator.getInstance().getBuilder();
-        builder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
-        int rings = 16;      // 纬度分段
-        int segments = 24;   // 经度分段
-        int alpha = 255;     // 纯黑不透明
-        for (int i = 0; i < rings; i++) {
-            double phi1 = Math.PI * i / rings;
-            double phi2 = Math.PI * (i + 1) / rings;
-            for (int j = 0; j < segments; j++) {
-                double a1 = 2 * Math.PI * j / segments;
-                double a2 = 2 * Math.PI * (j + 1) / segments;
-                // 两个三角形组成一个四边形面片
-                addVertex(builder, phi1, a1, alpha);
-                addVertex(builder, phi2, a1, alpha);
-                addVertex(builder, phi1, a2, alpha);
-                addVertex(builder, phi1, a2, alpha);
-                addVertex(builder, phi2, a1, alpha);
-                addVertex(builder, phi2, a2, alpha);
-            }
+    /** 球冠网格：从球顶（phi=0）到 phiMax，含边界部分环 */
+    private static void buildCap(BufferBuilder builder, double phiMax) {
+        int maxRing = (int) Math.floor(phiMax / Math.PI * RINGS);
+        for (int i = 0; i < maxRing; i++) {
+            double phi1 = Math.PI * i / RINGS;
+            double phi2 = Math.PI * (i + 1) / RINGS;
+            addQuad(builder, phi1, phi2);
         }
-        var rendered = builder.end();
-        shellBuffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
-        shellBuffer.bind();
-        shellBuffer.upload(rendered);
-        VertexBuffer.unbind();
+        if (maxRing < RINGS) {
+            double phi1 = Math.PI * maxRing / RINGS;
+            addQuad(builder, phi1, phiMax);
+        }
     }
 
-    private static void addVertex(BufferBuilder builder, double phi, double a, int alpha) {
+    /** 两个三角形组成一个纬度带四边形面片 */
+    private static void addQuad(BufferBuilder builder, double phi1, double phi2) {
+        for (int j = 0; j < SEGMENTS; j++) {
+            double a1 = 2 * Math.PI * j / SEGMENTS;
+            double a2 = 2 * Math.PI * (j + 1) / SEGMENTS;
+            addVertex(builder, phi1, a1);
+            addVertex(builder, phi2, a1);
+            addVertex(builder, phi1, a2);
+            addVertex(builder, phi1, a2);
+            addVertex(builder, phi2, a1);
+            addVertex(builder, phi2, a2);
+        }
+    }
+
+    private static void addVertex(BufferBuilder builder, double phi, double a) {
         float x = (float) (Math.sin(phi) * Math.cos(a));
         float y = (float) Math.cos(phi);
         float z = (float) (Math.sin(phi) * Math.sin(a));
-        builder.vertex(x, y, z).color(0, 0, 0, alpha).endVertex();
+        builder.vertex(x, y, z).color(0, 0, 0, 255).endVertex();
+    }
+
+    /** 完整球壳静态缓冲（动画完成后复用） */
+    private static void ensureFullBuffer() {
+        if (fullShellBuffer != null) return;
+        BufferBuilder builder = Tesselator.getInstance().getBuilder();
+        builder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
+        buildCap(builder, Math.PI);
+        var rendered = builder.end();
+        fullShellBuffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
+        fullShellBuffer.bind();
+        fullShellBuffer.upload(rendered);
+        VertexBuffer.unbind();
     }
 }

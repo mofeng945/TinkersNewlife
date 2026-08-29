@@ -156,8 +156,9 @@ public final class CursePowerHelper {
     //  咒力无限
     // ============================================================
 
-    /** 是否处于咒力无限状态（60 秒窗口内） */
+    /** 是否处于咒力无限状态（60 秒窗口内；创造模式恒为无限，便于测试） */
     public static boolean isCurseInfinite(Player player) {
+        if (player.isCreative()) return true;
         return player.getPersistentData().getLong(KEY_INFINITE_UNTIL) > player.level().getGameTime();
     }
 
