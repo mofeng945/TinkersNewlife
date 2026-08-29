@@ -1,6 +1,8 @@
 package com.mofengbaizhi.tinkersnewlife;
 
 import com.mofengbaizhi.tinkersnewlife.content.*;
+import com.mofengbaizhi.tinkersnewlife.content.curse.DomainRegistry;
+import com.mofengbaizhi.tinkersnewlife.content.curse.ZuoShaBoTuDomain;
 import com.mofengbaizhi.tinkersnewlife.content.loot.LootModifierSerializers;
 import com.mofengbaizhi.tinkersnewlife.content.storage.SilentGloveHandler;
 import com.mofengbaizhi.tinkersnewlife.content.storage.StorageManager;
@@ -108,6 +110,9 @@ public class TinkersNewlife {
         // 强制加载 ModCurios 类，确保其事件订阅生效（特别是槽位注册）
         ModCurios.class.getName();
         LOGGER.info("ModCurios 已强制加载");
+
+        // 注册领域特性：坐杀搏徒（后续新增领域在此登记，通用领域展开键按修饰符匹配）
+        DomainRegistry.registerDomain(Modifiers.ZUOSHA_BOTU.getId(), ZuoShaBoTuDomain::tryCreate);
 
         // 注册网络包
         registerPacket(PacketUseSkill.class, PacketUseSkill::toBytes, PacketUseSkill::new, PacketUseSkill::handle);

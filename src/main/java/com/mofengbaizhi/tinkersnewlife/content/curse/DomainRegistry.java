@@ -3,17 +3,22 @@ package com.mofengbaizhi.tinkersnewlife.content.curse;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModEntities;
 import com.mofengbaizhi.tinkersnewlife.content.entity.DomainVisualEntity;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import slimeknights.tconstruct.library.modifiers.ModifierEntry;
+import slimeknights.tconstruct.library.modifiers.ModifierId;
+import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 import top.theillusivec4.curios.api.event.CurioUnequipEvent;
 
 import java.util.Iterator;
@@ -35,8 +40,15 @@ public final class DomainRegistry {
     private static final Map<UUID, BaseDomain> DOMAINS = new ConcurrentHashMap<>();
     /** 主人 → 视觉实体 ID（便于关闭时移除） */
     private static final Map<UUID, Integer> VISUAL_ENTITY_IDS = new ConcurrentHashMap<>();
+    /** 领域特性注册表：领域修饰符 → 领域工厂（咒力核心只能装一个领域槽，按修饰符匹配展开） */
+    private static final Map<ModifierId, Function<ServerPlayer, BaseDomain>> DOMAIN_FACTORIES = new ConcurrentHashMap<>();
 
     private DomainRegistry() {}
+
+    /** 注册领域特性：修饰符 ID → 领域工厂（后续新增领域在此登记） */
+    public static void registerDomain(ModifierId modifierId, Function<ServerPlayer, BaseDomain> factory) {
+        DOMAIN_FACTORIES.put(modifierId, factory);
+    }
 
     public static boolean isActive(UUID playerId) {
         return DOMAINS.containsKey(playerId);
@@ -48,26 +60,41 @@ public final class DomainRegistry {
     }
 
     // ============================================================
-    //  开关
+    //  通用领域展开键
     // ============================================================
 
     /**
-     * 切换领域：已展开则关闭；未展开则用工厂创建并展开。
-     * 工厂返回 null 表示条件不满足（内部已发送提示），不会展开。
+     * 通用领域展开/关闭：已展开则关闭；
+     * 未展开则扫描佩戴咒力核心上的领域特性，展开对应的领域（咒力核心仅 1 个领域槽）。
      */
-    public static void toggle(ServerPlayer player, Function<ServerPlayer, BaseDomain> factory) {
+    public static void toggleDomain(ServerPlayer player) {
         UUID id = player.getUUID();
         if (DOMAINS.containsKey(id)) {
             close(player, "message.tinkersnewlife.domain.closed");
             return;
         }
-        BaseDomain domain = factory.apply(player);
-        if (domain == null) return;
 
-        DOMAINS.put(id, domain);
-        domain.onOpen(player);
-        spawnVisual(player.serverLevel(), domain);
-        domain.buildBarrier(player.serverLevel());
+        // 扫描佩戴咒力核心上的领域特性
+        ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
+        if (core.isEmpty()) {
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.domain.no_core"), true);
+            return;
+        }
+        ToolStack tool = ToolHelper.getToolStack(core);
+        if (tool == null) return;
+        for (ModifierEntry entry : tool.getModifierList()) {
+            Function<ServerPlayer, BaseDomain> factory = DOMAIN_FACTORIES.get(entry.getId());
+            if (factory == null) continue;
+            BaseDomain domain = factory.apply(player);
+            if (domain == null) return; // 工厂内已提示条件不满足（如咒力不足）
+            DOMAINS.put(id, domain);
+            domain.onOpen(player);
+            spawnVisual(player.serverLevel(), domain);
+            domain.buildBarrier(player.serverLevel());
+            return;
+        }
+        // 核心上没有已注册的领域特性
+        player.displayClientMessage(Component.translatable("message.tinkersnewlife.domain.no_trait"), true);
     }
 
     /** 关闭领域（按键/咒力耗尽/领域被破坏等）：移除视觉与阻挡墙 */
