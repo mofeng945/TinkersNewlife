@@ -72,4 +72,8 @@ public class DomainVisualEntity extends Entity {
     public boolean isPickable() { return false; }
     @Override
     public void tick() {}
+
+    /** 不写入存档：领域是临时状态，避免服务器重启后残留孤儿黑球 */
+    @Override
+    public boolean save(CompoundTag tag) { return false; }
 }
