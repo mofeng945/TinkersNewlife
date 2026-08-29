@@ -10,79 +10,70 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.renderer.GameRenderer;
 
 /**
- * 纯黑色空心圆球（线框）绘制
+ * 纯黑色空心球壳（半透明黑面片）绘制
  * <p>
- * 单位球线框网格（经纬线），静态 VertexBuffer 只构建一次，
- * 渲染时按领域半径缩放即可。纯绘制形状，不使用方块。
+ * - 三角面片组成球壳（非线框、非方块），半透明黑 → 球壳可见且内部可透视（空心）
+ * - 深度测试开启：被方块遮挡的部分不显示
+ * - 球壳不写深度（depthMask off）：近/远两面都可见，保持"空心"观感
+ * 单位球静态 VertexBuffer 只构建一次，渲染时按领域半径缩放。
  */
 public final class DomainSphereRenderer {
 
-    private static VertexBuffer sphereLines;
+    private static VertexBuffer shellBuffer;
 
     private DomainSphereRenderer() {}
 
-    /** 绘制黑色空心圆球（当前 PoseStack 原点为球心，单位半径由外部缩放） */
+    /** 绘制黑色空心球壳（当前 PoseStack 原点为球心，单位半径由外部缩放） */
     public static void render(PoseStack poseStack) {
         ensureBuffer();
+        RenderSystem.enableDepthTest();
+        RenderSystem.depthMask(false); // 球壳不写深度：内部可见（空心）
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableCull();
-        RenderSystem.setShader(GameRenderer::getRendertypeLinesShader);
-        RenderSystem.lineWidth(1.5f);
-        sphereLines.bind();
-        sphereLines.drawWithShader(poseStack.last().pose(), RenderSystem.getProjectionMatrix(),
-                GameRenderer.getRendertypeLinesShader());
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        shellBuffer.bind();
+        shellBuffer.drawWithShader(poseStack.last().pose(), RenderSystem.getProjectionMatrix(),
+                GameRenderer.getPositionColorShader());
         VertexBuffer.unbind();
+        RenderSystem.depthMask(true);
         RenderSystem.enableCull();
         RenderSystem.disableBlend();
     }
 
     private static void ensureBuffer() {
-        if (sphereLines != null) return;
+        if (shellBuffer != null) return;
         BufferBuilder builder = Tesselator.getInstance().getBuilder();
-        builder.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION_COLOR_NORMAL);
-        int rings = 14;     // 纬度圈数
-        int segments = 28;  // 每圈分段
-        // 纬度圈（跳过两极）
-        for (int i = 1; i < rings; i++) {
-            double phi = Math.PI * i / rings;
-            double y = Math.cos(phi);
-            double r = Math.sin(phi);
+        builder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
+        int rings = 16;      // 纬度分段
+        int segments = 24;   // 经度分段
+        int alpha = 100;     // 半透明黑（球壳可见且可透视）
+        for (int i = 0; i < rings; i++) {
+            double phi1 = Math.PI * i / rings;
+            double phi2 = Math.PI * (i + 1) / rings;
             for (int j = 0; j < segments; j++) {
                 double a1 = 2 * Math.PI * j / segments;
                 double a2 = 2 * Math.PI * (j + 1) / segments;
-                addLine(builder,
-                        r * Math.cos(a1), y, r * Math.sin(a1),
-                        r * Math.cos(a2), y, r * Math.sin(a2));
-            }
-        }
-        // 经线圈
-        for (int j = 0; j < segments; j++) {
-            double a = 2 * Math.PI * j / segments;
-            double ca = Math.cos(a);
-            double sa = Math.sin(a);
-            for (int i = 0; i < rings; i++) {
-                double p1 = Math.PI * i / rings;
-                double p2 = Math.PI * (i + 1) / rings;
-                addLine(builder,
-                        Math.sin(p1) * ca, Math.cos(p1), Math.sin(p1) * sa,
-                        Math.sin(p2) * ca, Math.cos(p2), Math.sin(p2) * sa);
+                // 两个三角形组成一个四边形面片
+                addVertex(builder, phi1, a1, alpha);
+                addVertex(builder, phi2, a1, alpha);
+                addVertex(builder, phi1, a2, alpha);
+                addVertex(builder, phi1, a2, alpha);
+                addVertex(builder, phi2, a1, alpha);
+                addVertex(builder, phi2, a2, alpha);
             }
         }
         var rendered = builder.end();
-        sphereLines = new VertexBuffer(VertexBuffer.Usage.STATIC);
-        sphereLines.bind();
-        sphereLines.upload(rendered);
+        shellBuffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
+        shellBuffer.bind();
+        shellBuffer.upload(rendered);
         VertexBuffer.unbind();
     }
 
-    /** 纯黑色线段，法线取球面径向 */
-    private static void addLine(BufferBuilder builder,
-                                double x1, double y1, double z1,
-                                double x2, double y2, double z2) {
-        builder.vertex(x1, y1, z1).color(0, 0, 0, 255)
-                .normal((float) x1, (float) y1, (float) z1).endVertex();
-        builder.vertex(x2, y2, z2).color(0, 0, 0, 255)
-                .normal((float) x2, (float) y2, (float) z2).endVertex();
+    private static void addVertex(BufferBuilder builder, double phi, double a, int alpha) {
+        float x = (float) (Math.sin(phi) * Math.cos(a));
+        float y = (float) Math.cos(phi);
+        float z = (float) (Math.sin(phi) * Math.sin(a));
+        builder.vertex(x, y, z).color(0, 0, 0, alpha).endVertex();
     }
 }
