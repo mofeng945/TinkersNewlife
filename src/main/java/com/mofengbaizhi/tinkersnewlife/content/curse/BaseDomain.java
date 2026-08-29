@@ -1,9 +1,11 @@
 package com.mofengbaizhi.tinkersnewlife.content.curse;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -37,12 +39,54 @@ public abstract class BaseDomain {
 
     /** 实体进出状态：实体 UUID → 上一检测 tick 是否在领域内（用于判定"试图进入/试图离开"） */
     private final Map<UUID, Boolean> entityInside = new ConcurrentHashMap<>();
+    /** 阻挡墙方块位置（关闭领域时移除） */
+    private final java.util.List<net.minecraft.core.BlockPos> barrierPositions = new java.util.ArrayList<>();
 
     protected BaseDomain(UUID owner, Vec3 center, int radius, double curseCostPerSecond) {
         this.owner = owner;
         this.center = center;
         this.radius = radius;
         this.curseCostPerSecond = curseCostPerSecond;
+    }
+
+    // ============================================================
+    //  阻挡墙：生成隐形物理墙（任何生物进不来也出不去）
+    // ============================================================
+
+    /** 生成隐形阻挡墙：在球壳表面放置领域阻挡方块（1 格厚球壳） */
+    protected final void buildBarrier(ServerLevel level) {
+        barrierPositions.clear();
+        int r = radius;
+        int cx = (int) Math.floor(center.x);
+        int cy = (int) Math.floor(center.y);
+        int cz = (int) Math.floor(center.z);
+        for (int y = -r; y <= r; y++) {
+            double rH = Math.sqrt(Math.max(0, r * r - y * y));
+            int rhi = (int) Math.ceil(rH);
+            for (int x = -rhi; x <= rhi; x++) {
+                for (int z = -rhi; z <= rhi; z++) {
+                    double d = Math.sqrt(x * x + y * y + z * z);
+                    if (d < r - 0.5 || d > r + 0.5) continue;
+                    net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(cx + x, cy + y, cz + z);
+                    if (!level.getBlockState(pos).isAir()) continue;
+                    // 避免在生物站立的方块上放置（防窒息），留出的缺口由每 tick 位置钳制兜底
+                    if (!level.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class,
+                            new AABB(pos)).isEmpty()) continue;
+                    level.setBlock(pos, com.mofengbaizhi.tinkersnewlife.content.ModBlocks.DOMAIN_BARRIER.get().defaultBlockState(), 2);
+                    barrierPositions.add(pos);
+                }
+            }
+        }
+    }
+
+    /** 移除阻挡墙 */
+    protected final void removeBarrier(ServerLevel level) {
+        for (net.minecraft.core.BlockPos pos : barrierPositions) {
+            if (level.getBlockState(pos).is(com.mofengbaizhi.tinkersnewlife.content.ModBlocks.DOMAIN_BARRIER.get())) {
+                level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 2);
+            }
+        }
+        barrierPositions.clear();
     }
 
     public UUID getOwner() { return owner; }
@@ -103,11 +147,15 @@ public abstract class BaseDomain {
 
             Vec3 dir = dist < 1e-4 ? new Vec3(0, 0, 0) : delta.normalize();
             if (inside && !prevInside) {
-                // 外界生物试图进入：挡在球面外侧（r+0.4）并反向推回
+                // 外界生物试图进入：挡在球面外侧（r+0.4）并反向推回，记录为"外界"
                 edgeTo(level, entity, dir, r + 0.4, true);
+                entityInside.put(entity.getUUID(), false);
             } else if (!inside && prevInside) {
-                // 内部生物试图离开：拉回球面内侧（r-0.35）
+                // 内部生物试图离开：拉回球面内侧（r-0.35），记录为"内部"
                 edgeTo(level, entity, dir, r - 0.35, false);
+                entityInside.put(entity.getUUID(), true);
+            } else {
+                entityInside.put(entity.getUUID(), inside);
             }
         }
         // 清理已离开追踪范围的实体记录

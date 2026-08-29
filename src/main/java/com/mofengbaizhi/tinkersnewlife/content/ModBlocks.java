@@ -1,6 +1,7 @@
 package com.mofengbaizhi.tinkersnewlife.content;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import com.mofengbaizhi.tinkersnewlife.content.block.DomainBarrierBlock;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -46,4 +47,8 @@ public class ModBlocks {
                 }
             }
     );
+
+    /** 领域阻挡方块（隐形物理墙，仅由领域系统生成/移除，无物品形态） */
+    public static final RegistryObject<Block> DOMAIN_BARRIER = BLOCKS.register("domain_barrier",
+            () -> new DomainBarrierBlock());
 }

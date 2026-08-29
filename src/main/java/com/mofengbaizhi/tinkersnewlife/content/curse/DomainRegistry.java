@@ -67,17 +67,27 @@ public final class DomainRegistry {
         DOMAINS.put(id, domain);
         domain.onOpen(player);
         spawnVisual(player.serverLevel(), domain);
+        domain.buildBarrier(player.serverLevel());
     }
 
-    /** 关闭领域（按键/咒力耗尽/领域被破坏等） */
+    /** 关闭领域（按键/咒力耗尽/领域被破坏等）：移除视觉与阻挡墙 */
     public static void close(ServerPlayer player, String messageKey) {
         BaseDomain domain = DOMAINS.remove(player.getUUID());
         if (domain == null) return;
-        removeVisual(player.serverLevel(), player.getUUID());
+        ServerLevel level = player.serverLevel();
+        removeVisual(level, player.getUUID());
+        domain.removeBarrier(level);
         domain.onClose(player, messageKey);
         if (player.isAlive()) {
             player.displayClientMessage(Component.translatable(messageKey), true);
         }
+    }
+
+    /** 无条件移除领域（死亡/登出/脱下核心/服务器停止）：不发送消息 */
+    private static void forceRemove(ServerPlayer player, BaseDomain domain) {
+        ServerLevel level = player != null ? player.serverLevel() : null;
+        removeVisual(level, domain.getOwner());
+        domain.removeBarrier(level);
     }
 
     // ============================================================
@@ -98,14 +108,14 @@ public final class DomainRegistry {
             if (player == null || !player.isAlive()
                     || !player.level().hasChunkAt(BlockPos.containing(domain.getCenter()))) {
                 it.remove();
-                removeVisual(player != null ? player.serverLevel() : null, domain.getOwner());
+                forceRemove(player, domain);
                 continue;
             }
 
             // 领域被破坏（咒力核心被取下 / 特性丢失等）
             if (!domain.isValid(player)) {
                 it.remove();
-                removeVisual(player.serverLevel(), domain.getOwner());
+                forceRemove(player, domain);
                 domain.onClose(player, "message.tinkersnewlife.domain.broken");
                 player.displayClientMessage(Component.translatable("message.tinkersnewlife.domain.broken"), true);
                 continue;
@@ -114,7 +124,7 @@ public final class DomainRegistry {
             // 咒力消耗（耗尽自动关闭）
             if (!domain.spendCurse(player)) {
                 it.remove();
-                removeVisual(player.serverLevel(), domain.getOwner());
+                forceRemove(player, domain);
                 domain.onClose(player, "message.tinkersnewlife.domain.exhausted");
                 player.displayClientMessage(Component.translatable("message.tinkersnewlife.domain.exhausted"), true);
                 continue;
@@ -161,7 +171,7 @@ public final class DomainRegistry {
         if (event.getEntity() instanceof Player player && !player.level().isClientSide) {
             BaseDomain domain = DOMAINS.remove(player.getUUID());
             if (domain != null) {
-                removeVisual((ServerLevel) player.level(), player.getUUID());
+                forceRemove((ServerPlayer) player, domain);
             }
         }
     }
@@ -171,7 +181,7 @@ public final class DomainRegistry {
         Player player = event.getEntity();
         BaseDomain domain = DOMAINS.remove(player.getUUID());
         if (domain != null) {
-            removeVisual((ServerLevel) player.level(), player.getUUID());
+            forceRemove(player instanceof ServerPlayer sp ? sp : null, domain);
         }
     }
 
@@ -180,8 +190,19 @@ public final class DomainRegistry {
         if (event.getEntity() instanceof Player player && !player.level().isClientSide) {
             BaseDomain domain = DOMAINS.remove(player.getUUID());
             if (domain != null) {
-                removeVisual((ServerLevel) player.level(), player.getUUID());
+                forceRemove((ServerPlayer) player, domain);
             }
         }
+    }
+
+    /** 服务器停止：清理所有领域阻挡墙（防止写入存档残留隐形方块） */
+    @SubscribeEvent
+    public static void onServerStopping(net.minecraftforge.event.server.ServerStoppingEvent event) {
+        for (BaseDomain domain : DOMAINS.values()) {
+            ServerPlayer player = event.getServer().getPlayerList().getPlayer(domain.getOwner());
+            forceRemove(player, domain);
+        }
+        DOMAINS.clear();
+        VISUAL_ENTITY_IDS.clear();
     }
 }
