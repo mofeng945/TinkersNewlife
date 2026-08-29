@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 术式「灶·开」：按住蓄力，松开发射
  * <p>
  * - 按下按键：火焰箭出现在玩家身前视野内（视线前方 2 格）悬浮蓄力，
- *   蓄力期间每 tick 跟随玩家——移动跟着走、转视角跟着转
+ *   蓄力期间位置跟随玩家移动与视角，但箭向锁定为按下瞬间的朝向（不随视角旋转）
  * - 松开按键：消耗咒力并向当前朝向发射（笔直轨迹、速度较慢）
  * - 命中目标或扎在方块上引发火焰爆炸（不破坏方块）：
  *   中心伤害 = (1 + 咒力亲和/100) × (当前攻击伤害 + 咒力输出×10) × 200%，随距离衰减；
@@ -50,7 +50,7 @@ public final class ZaoKaiTechnique extends BaseTechnique {
         return super.getCost(player) * 10;
     }
 
-    /** 按下：在身前视野内生成蓄力箭（无需指向目标） */
+    /** 按下：在身前视野内生成蓄力箭（无需指向目标），箭向锁定为按下时的朝向 */
     @Override
     public void onKeyPress(ServerPlayer player) {
         if (CHARGING.containsKey(player.getUUID())) return; // 已在蓄力
@@ -58,6 +58,9 @@ public final class ZaoKaiTechnique extends BaseTechnique {
         Vec3 eye = player.getEyePosition();
         Vec3 look = player.getLookAngle();
         arrow.setPos(eye.x + look.x * CHARGE_OFFSET, eye.y + look.y * CHARGE_OFFSET, eye.z + look.z * CHARGE_OFFSET);
+        // ⭐ 箭向锁定：只按按下瞬间的朝向设定一次，蓄力期间不随视角旋转
+        arrow.setYRot(player.getYRot());
+        arrow.setXRot(player.getXRot());
         player.level().addFreshEntity(arrow);
         CHARGING.put(player.getUUID(), arrow);
     }
@@ -104,12 +107,11 @@ public final class ZaoKaiTechnique extends BaseTechnique {
                 CHARGING.remove(uuid);
                 continue;
             }
-            // 跟随：重置到视线前方 2 格并同步朝向（保持零速度，避免误触发命中）
+            // 跟随位置：重置到视线前方 2 格（移动/视角位置跟随）；
+            // ⭐ 箭向保持锁定（按下时朝向），不随视角旋转
             Vec3 eye = player.getEyePosition();
             Vec3 look = player.getLookAngle();
             arrow.setPos(eye.x + look.x * CHARGE_OFFSET, eye.y + look.y * CHARGE_OFFSET, eye.z + look.z * CHARGE_OFFSET);
-            arrow.setYRot(player.getYRot());
-            arrow.setXRot(player.getXRot());
             arrow.setDeltaMovement(0, 0, 0);
         }
     }
