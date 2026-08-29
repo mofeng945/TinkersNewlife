@@ -62,6 +62,28 @@ public class ModularStaffModifier extends Modifier implements MeleeDamageModifie
         if (!isSpellDamage(source)) return;
         float originalDamage = event.getAmount();
 
+        float newDamage = getSpellAmplification(player, originalDamage);
+        if (newDamage <= originalDamage) return; // 未持有有效魔杖，不处理
+        event.setAmount(newDamage);
+
+        // 粒子特效
+        if (player.level() instanceof ServerLevel server) {
+            LivingEntity target = event.getEntity();
+            server.sendParticles(ParticleTypes.ENCHANT,
+                    target.getX(),
+                    target.getY() + target.getBbHeight() / 2,
+                    target.getZ(),
+                    8, 0.3, 0.3, 0.3, 0.1);
+        }
+    }
+
+    /**
+     * 模块化魔杖增幅（法术/咒术共用）：
+     * 玩家主手或副手持有有效模块化魔杖（带「模块化魔杖」特性）时，
+     * 伤害 = 原伤害 × (1 + (魔杖攻击力+玩家基础伤害)/10×0.01) + (魔杖攻击力×0.5 + 玩家基础伤害×0.2)。
+     * 未持有有效魔杖时返回原伤害。
+     */
+    public static float getSpellAmplification(Player player, float originalDamage) {
         ItemStack mainHand = player.getMainHandItem();
         ItemStack offHand = player.getOffhandItem();
         ItemStack staffStack = ItemStack.EMPTY;
@@ -71,15 +93,15 @@ public class ModularStaffModifier extends Modifier implements MeleeDamageModifie
         } else if (offHand.getItem() instanceof ModularStaffItem) {
             staffStack = offHand;
         } else {
-            return;
+            return originalDamage;
         }
 
         // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
         ToolStack tool = ToolHelper.getToolStack(staffStack);
-        if (tool == null) return;
+        if (tool == null) return originalDamage;
 
         int level = tool.getModifierLevel(Modifiers.MODULAR_STAFF_MODIFIER.getId());
-        if (level <= 0) return;
+        if (level <= 0) return originalDamage;
 
         // 法杖近战伤害
         float staffDamage = tool.getStats().get(ToolStats.ATTACK_DAMAGE);
@@ -92,18 +114,7 @@ public class ModularStaffModifier extends Modifier implements MeleeDamageModifie
         float bonusDamage = staffDamage * 0.5f + basePlayerDamage * 0.2f;
         float powerMultiplier = (staffDamage + basePlayerDamage) / 10.0f * 0.01f;
 
-        float newDamage = originalDamage * (1.0f + powerMultiplier) + bonusDamage;
-        event.setAmount(newDamage);
-
-        // 粒子特效
-        if (player.level() instanceof ServerLevel server) {
-            LivingEntity target = event.getEntity();
-            server.sendParticles(ParticleTypes.ENCHANT,
-                    target.getX(),
-                    target.getY() + target.getBbHeight() / 2,
-                    target.getZ(),
-                    8, 0.3, 0.3, 0.3, 0.1);
-        }
+        return originalDamage * (1.0f + powerMultiplier) + bonusDamage;
     }
 
     // ============================================================

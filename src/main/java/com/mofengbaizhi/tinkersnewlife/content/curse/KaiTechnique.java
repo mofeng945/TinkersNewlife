@@ -24,7 +24,8 @@ public final class KaiTechnique extends BaseTechnique {
 
     @Override
     protected void onCast(ServerPlayer player, LivingEntity target) {
-        double damage = computeBaseDamage(player) * DAMAGE_FACTOR;
+        // 模块化魔杖增幅咒术
+        double damage = amplifyTechniqueDamage(player, computeBaseDamage(player) * DAMAGE_FACTOR);
         // 类似伏魔御厨子小斩击：无视无敌帧，正常伤害结算（护甲/盾牌等仍可衰减）
         target.invulnerableTime = 0;
         target.hurt(player.damageSources().mobAttack(player), (float) damage);

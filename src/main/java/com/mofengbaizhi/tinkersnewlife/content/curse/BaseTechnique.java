@@ -123,6 +123,15 @@ public abstract class BaseTechnique {
         return (1.0 + (output + affinity / 10.0) / 10.0) * playerDmg;
     }
 
+    /**
+     * 咒术增幅：玩家主手/副手持有效模块化魔杖时，按魔杖法术强度公式放大伤害
+     * （与法术增幅同一公式，见 {@code ModularStaffModifier.getSpellAmplification}）。
+     */
+    protected double amplifyTechniqueDamage(ServerPlayer player, double damage) {
+        return com.mofengbaizhi.tinkersnewlife.content.modifier.ModularStaffModifier
+                .getSpellAmplification(player, (float) damage);
+    }
+
     /** 横扫粒子：施法者→目标的斩击轨迹 + 命中处双重横扫弧 */
     protected void spawnSlashParticles(ServerLevel level, Vec3 from, Vec3 to) {
         Vec3 delta = to.subtract(from);

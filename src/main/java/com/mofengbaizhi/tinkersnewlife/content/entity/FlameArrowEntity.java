@@ -91,6 +91,9 @@ public class FlameArrowEntity extends AbstractArrow {
                 if (dist > radius) continue;
                 double dmg = centerDamage * (1.0 - dist / radius); // 中心满额，边缘衰减
                 if (dmg <= 0) continue;
+                // 模块化魔杖增幅咒术（对每个受击实体应用）
+                dmg = com.mofengbaizhi.tinkersnewlife.content.modifier.ModularStaffModifier
+                        .getSpellAmplification(shooter, (float) dmg);
                 e.hurt(server.damageSources().explosion(shooter, shooter), (float) dmg);
                 e.setSecondsOnFire(3);
             }

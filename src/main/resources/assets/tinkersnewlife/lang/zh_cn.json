@@ -221,7 +221,7 @@
   "modifier.tinkersnewlife.silent_glove": "噤默",
   "modifier.tinkersnewlife.chaos_butterfly": "§d乱蝶",
   "modifier.tinkersnewlife.silent_glove.description": "§7空手时自动从空间奇点库中取出武器",
-  "modifier.tinkersnewlife.modular_staff.description": "§7近战附加 §a+1.5 §7伤害；法术附加额外伤害并提升法术强度",
+  "modifier.tinkersnewlife.modular_staff.description": "§7近战附加 §a+1.5 §7伤害；法术与咒术（解/捌/灶·开）附加额外伤害并提升威力",
   "modifier.tinkersnewlife.black_flash.description": "§7每次攻击有 §e0.01%%§7 概率打出黑闪，造成 §62.5 次方§7 伤害；触发后 §d60s§7 内概率 §a+10%%§7，速度/攻击/跳跃提升 §a20%%§7",
   "modifier.tinkersnewlife.black_flash.flavor": "§7时间，在这一刻凝滞……",
   "modifier.tinkersnewlife.black_flash.buff_active": "§d黑闪之力 §7- 概率加成: +%d%%, 剩余 %ds",

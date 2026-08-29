@@ -40,8 +40,9 @@ public final class BaTechnique extends BaseTechnique {
 
     @Override
     protected void onCast(ServerPlayer player, LivingEntity target) {
-        // 每道斩击伤害 = 解的二分之一（共享伤害基底 × 70% ÷ 2）
-        double perSlash = computeBaseDamage(player) * (KaiTechnique.DAMAGE_FACTOR / 2.0);
+        // 每道斩击伤害 = 解的二分之一（共享伤害基底 × 70% ÷ 2），模块化魔杖增幅咒术
+        double perSlash = amplifyTechniqueDamage(player,
+                computeBaseDamage(player) * (KaiTechnique.DAMAGE_FACTOR / 2.0));
         // 3 横向 + 3 纵向，无视无敌帧：每次命中前清零受伤间隔
         for (int i = 0; i < SLASH_COUNT; i++) {
             target.invulnerableTime = 0;
