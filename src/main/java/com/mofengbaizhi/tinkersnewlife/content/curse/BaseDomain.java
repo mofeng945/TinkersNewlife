@@ -8,7 +8,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 领域通用基类
@@ -33,6 +35,9 @@ public abstract class BaseDomain {
     protected final int radius;
     /** 每秒咒力消耗量（可配置） */
     protected final double curseCostPerSecond;
+
+    /** 实体进出状态：实体 UUID → 上一检测 tick 是否在领域内（用于判定"试图进入/试图离开"） */
+    private final Map<UUID, Boolean> entityInside = new ConcurrentHashMap<>();
 
     protected BaseDomain(UUID owner, Vec3 center, int radius, double curseCostPerSecond) {
         this.owner = owner;
@@ -78,45 +83,67 @@ public abstract class BaseDomain {
     }
 
     /**
-     * 困锁领域内生物：被笼罩的生物无法离开领域范围
-     * （球面边界拉回 + 防卡墙 + 消除外冲速度），创造/旁观玩家豁免。
+     * 双向封锁领域内生物：
+     * - 领域内生物试图离开 → 拉回球面内侧（出不去）
+     * - 领域外生物试图进入 → 挡在球面外侧并反向推回（进不来）
+     * 创造/旁观玩家豁免。
      */
     protected final void clampEntities(Level level) {
         double r = radius;
         AABB box = new AABB(
                 center.x - r - 1.5, center.y - r - 1.5, center.z - r - 1.5,
                 center.x + r + 1.5, center.y + r + 1.5, center.z + r + 1.5);
+        java.util.Set<UUID> seen = new java.util.HashSet<>();
         for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, box)) {
             if (entity.getUUID().equals(owner)) continue;
             if (entity instanceof Player p && (p.isCreative() || p.isSpectator())) continue;
+            seen.add(entity.getUUID());
 
             Vec3 delta = entity.position().subtract(center);
             double dist = delta.length();
-            if (dist <= r) continue;
+            boolean inside = dist <= r;
+            Boolean prevInside = entityInside.put(entity.getUUID(), inside);
+            if (prevInside == null) continue; // 首次出现：按当前位置定性（在内部即被困，外部即保持在外）
 
             Vec3 dir = dist < 1e-4 ? new Vec3(0, 0, 0) : delta.normalize();
-            double edge = r - 0.35;
-            Vec3 target = findSafeSpot(level, dir, edge);
-
-            // 竖直偏移后重新水平缩放，让落点始终在球面边界上
-            double dy = target.y - center.y;
-            double hRemain = Math.sqrt(Math.max(0, r * r - dy * dy));
-            double h = Math.hypot(dir.x, dir.z);
-            if (h > 1e-4 && hRemain < h) {
-                double scale = hRemain / h;
-                target = new Vec3(center.x + dir.x * scale, target.y, center.z + dir.z * scale);
+            if (inside && !prevInside) {
+                // 外界生物试图进入：挡在球面外侧（r+0.4）并反向推回
+                edgeTo(level, entity, dir, r + 0.4, true);
+            } else if (!inside && prevInside) {
+                // 内部生物试图离开：拉回球面内侧（r-0.35）
+                edgeTo(level, entity, dir, r - 0.35, false);
             }
-
-            entity.teleportTo(target.x, target.y, target.z);
-
-            // 消除朝外速度，防止立刻被推/冲出
-            Vec3 motion = entity.getDeltaMovement();
-            double outward = motion.dot(dir);
-            if (outward > 0) {
-                entity.setDeltaMovement(motion.subtract(dir.scale(outward)));
-            }
-            entity.fallDistance = 0;
         }
+        // 清理已离开追踪范围的实体记录
+        entityInside.keySet().removeIf(id -> !seen.contains(id));
+    }
+
+    /** 把实体传送到距球心 edge 处（防卡墙 + 水平缩放保持距离），并按需处理朝内/朝外速度 */
+    private void edgeTo(Level level, LivingEntity entity, Vec3 dir, double edge, boolean pushOut) {
+        Vec3 target = findSafeSpot(level, dir, edge);
+        double dy = target.y - center.y;
+        double hRemain = Math.sqrt(Math.max(0, edge * edge - dy * dy));
+        double h = Math.hypot(dir.x, dir.z);
+        if (h > 1e-4 && hRemain < h) {
+            double scale = hRemain / h;
+            target = new Vec3(center.x + dir.x * scale, target.y, center.z + dir.z * scale);
+        }
+        entity.teleportTo(target.x, target.y, target.z);
+
+        Vec3 motion = entity.getDeltaMovement();
+        double along = motion.dot(dir);
+        if (pushOut) {
+            // 外界生物：朝内速度分量反射为朝外（推回外界）
+            if (along < 0) {
+                entity.setDeltaMovement(motion.subtract(dir.scale(2.0 * along)));
+            }
+        } else {
+            // 内部生物：消除朝外速度（防止立刻被推/冲出）
+            if (along > 0) {
+                entity.setDeltaMovement(motion.subtract(dir.scale(along)));
+            }
+        }
+        entity.fallDistance = 0;
     }
 
     /** 在球面候选点附近寻找不卡进方块的安全落点（上下最多偏移 6 格） */
