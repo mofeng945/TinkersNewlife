@@ -39,6 +39,7 @@ public class TinkersNewlifeJeiPlugin implements IModPlugin {
         registerInfo(registration, ModItems.ECHO_OF_THE_VOID.get(), "jei.tinkersnewlife.acquire.echo_of_the_void");
         registerInfo(registration, ModItems.ASTRAL_ANCHOR.get(), "jei.tinkersnewlife.acquire.astral_anchor");
         registerInfo(registration, ModItems.NEXUS_OF_SPACETIME.get(), "jei.tinkersnewlife.acquire.nexus_of_spacetime");
+        registerInfo(registration, ModItems.DURANDAL_SHARD.get(), "jei.tinkersnewlife.acquire.durandal_shard");
     }
 
     private void registerInfo(IRecipeRegistration registration, Item item, String key) {
