@@ -115,6 +115,9 @@ public final class DomainRegistry {
         ServerLevel level = player != null ? player.serverLevel() : null;
         removeVisual(level, domain.getOwner());
         domain.removeBarrier(level);
+        // ⭐ 必须调用 onClose：无量空处等需要为被定身实体设置延续时长，
+        // 否则保持 10 万 tick 的静止效果 → 永久定身
+        domain.onClose(player, null);
     }
 
     // ============================================================

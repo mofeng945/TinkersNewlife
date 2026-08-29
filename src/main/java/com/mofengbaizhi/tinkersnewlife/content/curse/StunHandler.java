@@ -49,10 +49,11 @@ public class StunHandler {
         MinecraftServer server = event.getServer();
         if (server == null) return;
 
-        // 玩家：冻结移动/跳跃/冲刺，关闭任何打开的界面
+        // 玩家：定身 = 无法自主移动（输入清零），但仍受物理引擎/击退/碰撞挤压影响
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             if (!isStunned(player)) continue;
-            player.setDeltaMovement(Vec3.ZERO);
+            player.xxa = 0;
+            player.zza = 0;
             player.setJumping(false);
             player.setSprinting(false);
             // 无法停留在任何界面（背包/箱子/curios 等，重开也会被立即关闭）
@@ -61,7 +62,7 @@ public class StunHandler {
             }
         }
 
-        // 生物：静止期间强制 noAi，结束后恢复
+        // 生物：静止期间强制 noAi（不自主移动/攻击），物理/击退/碰撞仍生效；结束后恢复
         for (UUID id : STUNNED_MOB_NOAI.keySet()) {
             Entity entity = findEntity(server, id);
             if (!(entity instanceof Mob mob)) {
@@ -73,7 +74,6 @@ public class StunHandler {
                 mob.getNavigation().stop();
             } else {
                 mob.setNoAi(STUNNED_MOB_NOAI.get(id));
-                mob.setDeltaMovement(Vec3.ZERO);
                 STUNNED_MOB_NOAI.remove(id);
             }
         }

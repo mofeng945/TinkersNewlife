@@ -11,6 +11,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -24,8 +25,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * 无量空处领域
  * <p>
  * - 咒力消耗为坐杀搏徒的 4 倍（每秒 半径×80）
- * - 领域内除开启者以外的所有生物/玩家陷入静止：无法攻击/移动/使用物品/切换物品栏/打开背包
- * - 领域关闭后，静止状态按公式继续：
+ * - 领域内除开启者以外的所有生物/玩家陷入静止：无法自主移动/攻击/使用物品/切换物品栏/打开背包，
+ *   但仍受物理引擎（重力/击退）与碰撞挤压影响
+ * - 抵抗机制：生物按血量抵抗 (血量/100+1)×5 tick，玩家按咒力亲和抵抗 (咒力亲和/100+1)×5 tick，
+ *   抵抗期内不会被定身，之后才进入静止
+ * - 领域关闭后，静止按公式继续：
  *   (领域内状态时间/10 + 咒力输出等级) × (1 + 咒力亲和/100) × 10 tick 后结束
  */
 public class WuLiangKongChuDomain extends BaseDomain {
@@ -37,6 +41,8 @@ public class WuLiangKongChuDomain extends BaseDomain {
 
     /** 每个实体在领域内停留的 tick 数（用于关闭后的延续时长计算） */
     private final Map<UUID, Long> insideTicks = new ConcurrentHashMap<>();
+    /** 抵抗截止时刻：实体 UUID → 服务器 tick，此前不会被定身 */
+    private final Map<UUID, Long> resistUntil = new ConcurrentHashMap<>();
 
     private WuLiangKongChuDomain(UUID owner, Vec3 center, int radius) {
         super(owner, center, radius, radius * 80.0); // 4× 坐杀搏徒（半径×20）
@@ -93,8 +99,12 @@ public class WuLiangKongChuDomain extends BaseDomain {
             if (entity.getUUID().equals(owner)) continue;
             if (entity.position().distanceToSqr(center) > r * r) continue;
 
-            // 记录领域内停留时间
+            // 记录领域内停留时间（含抵抗期）
             insideTicks.merge(entity.getUUID(), (long) STUN_REFRESH_TICKS, Long::sum);
+
+            // 抵抗期：生物按血量、玩家按咒力亲和抵抗，期满后才进入静止
+            long resist = resistUntil.computeIfAbsent(entity.getUUID(), id -> now + computeResist(entity));
+            if (now < resist) continue;
 
             // 施加/刷新静止效果（持续期间几乎不结束）
             entity.addEffect(new MobEffectInstance(ModEffects.STUN.get(), STUN_DURATION_TICKS, 0, false, false));
@@ -116,18 +126,30 @@ public class WuLiangKongChuDomain extends BaseDomain {
 
     @Override
     public void onClose(ServerPlayer player, String messageKey) {
-        // 领域关闭：静止状态按公式继续延续
-        int output = CursePowerHelper.getCurseOutputLevel(player);
-        int affinity = CursePowerHelper.getCurseAffinity(player);
-        ServerLevel level = player.serverLevel();
+        // 领域关闭：已被定身的实体按公式继续延续静止
+        int output = player != null ? CursePowerHelper.getCurseOutputLevel(player) : 1;
+        int affinity = player != null ? CursePowerHelper.getCurseAffinity(player) : 0;
+        ServerLevel level = player != null ? player.serverLevel() : null;
         for (Map.Entry<UUID, Long> entry : insideTicks.entrySet()) {
-            Entity entity = level.getEntity(entry.getKey());
+            Entity entity = level != null ? level.getEntity(entry.getKey()) : null;
             if (!(entity instanceof LivingEntity living)) continue;
+            if (!living.hasEffect(ModEffects.STUN.get())) continue; // 抵抗期内未被定身的实体不延续
             long duration = (long) ((entry.getValue() / 10.0 + output) * (1 + affinity / 100.0) * 10);
             duration = Math.min(duration, STUN_DURATION_TICKS);
+            // ⭐ 先移除再施加：原版 addEffect 在新效果更短时不替换，直接施加会导致永久定身
+            living.removeEffect(ModEffects.STUN.get());
             living.addEffect(new MobEffectInstance(ModEffects.STUN.get(), (int) Math.max(1, duration), 0, false, false));
         }
         insideTicks.clear();
+        resistUntil.clear();
+    }
+
+    /** 抵抗时长（tick）：生物按血量 (血量/100+1)×5，玩家按咒力亲和 (亲和/100+1)×5 */
+    private long computeResist(LivingEntity entity) {
+        if (entity instanceof Player p) {
+            return Math.max(1, (long) ((CursePowerHelper.getCurseAffinity(p) / 100.0 + 1) * 5));
+        }
+        return Math.max(1, (long) ((entity.getMaxHealth() / 100.0 + 1) * 5));
     }
 
     private static void sendMessage(ServerPlayer player, String key) {
