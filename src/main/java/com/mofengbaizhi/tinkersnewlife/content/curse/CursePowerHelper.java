@@ -32,6 +32,12 @@ public final class CursePowerHelper {
     public static final String KEY_CURSE = "tinkersnewlife.curse_power";
     /** 玩家持久数据：咒力无限截止时刻（long，服务器 tick） */
     public static final String KEY_INFINITE_UNTIL = "tinkersnewlife.curse_infinite_until";
+    /** 玩家持久数据：特等奖增益截止时刻（long，33 秒 HP 锁定等） */
+    public static final String KEY_GRAND_UNTIL = "tinkersnewlife.grand_until";
+    /** 玩家持久数据：临时咒力亲和加成（int，特等奖 +100） */
+    public static final String KEY_AFFINITY_BUFF = "tinkersnewlife.curse_affinity_buff";
+    /** 玩家持久数据：临时咒力亲和加成截止时刻（long） */
+    public static final String KEY_AFFINITY_BUFF_UNTIL = "tinkersnewlife.curse_affinity_buff_until";
     /** 物品 NBT：咒力亲和值（int，0~50，战利品生成的饰品可能携带） */
     public static final String KEY_AFFINITY = "tinkersnewlife.curse_affinity";
     /** 匠魂工具持久数据键（ModDataNBT 用 ResourceLocation） */
@@ -78,22 +84,37 @@ public final class CursePowerHelper {
     // ============================================================
 
     /**
-     * 玩家当前咒力亲和 = 所有已装备饰品携带的咒力亲和之和（初始 0）。
+     * 玩家当前咒力亲和 = 所有已装备饰品携带的咒力亲和之和（初始 0）+ 临时加成（特等奖 +100）。
      * 战利品生成的饰品可能随机携带 0~50 点亲和（见 CurseAffinityLootModifier）。
      */
     public static int getCurseAffinity(Player player) {
         var curios = CuriosApi.getCuriosInventory(player).resolve();
-        if (curios.isEmpty()) return 0;
         int sum = 0;
-        for (ICurioStacksHandler handler : curios.get().getCurios().values()) {
-            IDynamicStackHandler stacks = handler.getStacks();
-            for (int i = 0; i < stacks.getSlots(); i++) {
-                ItemStack stack = stacks.getStackInSlot(i);
-                if (stack.isEmpty()) continue;
-                sum += getCurseAffinity(stack);
+        if (curios.isPresent()) {
+            for (ICurioStacksHandler handler : curios.get().getCurios().values()) {
+                IDynamicStackHandler stacks = handler.getStacks();
+                for (int i = 0; i < stacks.getSlots(); i++) {
+                    ItemStack stack = stacks.getStackInSlot(i);
+                    if (stack.isEmpty()) continue;
+                    sum += getCurseAffinity(stack);
+                }
             }
         }
-        return sum;
+        return sum + getTemporaryAffinity(player);
+    }
+
+    /** 设置临时咒力亲和加成（到期后自动失效） */
+    public static void setCurseAffinityBuff(Player player, int amount, long until) {
+        player.getPersistentData().putInt(KEY_AFFINITY_BUFF, amount);
+        player.getPersistentData().putLong(KEY_AFFINITY_BUFF_UNTIL, until);
+    }
+
+    /** 当前生效的临时咒力亲和加成（过期返回 0） */
+    public static int getTemporaryAffinity(Player player) {
+        if (player.getPersistentData().getLong(KEY_AFFINITY_BUFF_UNTIL) <= player.level().getGameTime()) {
+            return 0;
+        }
+        return player.getPersistentData().getInt(KEY_AFFINITY_BUFF);
     }
 
     /** 读取单件物品的咒力亲和（匠魂工具读持久数据，普通物品读原始标签） */
@@ -165,5 +186,19 @@ public final class CursePowerHelper {
     /** 设置咒力无限截止时刻（重复触发会刷新到最新 60 秒窗口） */
     public static void setInfiniteUntil(Player player, long until) {
         player.getPersistentData().putLong(KEY_INFINITE_UNTIL, until);
+    }
+
+    // ============================================================
+    //  特等奖增益（33 秒）
+    // ============================================================
+
+    /** 设置特等奖增益截止时刻（HP 锁定上限等） */
+    public static void setGrandUntil(Player player, long until) {
+        player.getPersistentData().putLong(KEY_GRAND_UNTIL, until);
+    }
+
+    /** 特等奖增益是否生效中 */
+    public static boolean isGrandActive(Player player) {
+        return player.getPersistentData().getLong(KEY_GRAND_UNTIL) > player.level().getGameTime();
     }
 }

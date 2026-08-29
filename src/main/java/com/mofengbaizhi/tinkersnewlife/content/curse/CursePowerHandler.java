@@ -43,6 +43,11 @@ public class CursePowerHandler {
                 CursePowerHelper.addCurse(player, regenPerTick);
             }
 
+            // ⭐ 特等奖增益（33 秒）：HP 锁定在上限
+            if (CursePowerHelper.isGrandActive(player)) {
+                player.setHealth(player.getMaxHealth());
+            }
+
             // 每秒同步一次 HUD 数据
             if (now % 20 == 0) {
                 double curse = wearing ? CursePowerHelper.getCurse(player) : 0;
