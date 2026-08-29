@@ -14,6 +14,7 @@ import com.mofengbaizhi.tinkersnewlife.network.PacketDragonStaffUse;
 import com.mofengbaizhi.tinkersnewlife.network.PacketOpenBag;
 import com.mofengbaizhi.tinkersnewlife.network.PacketSwitchFlyingSwordMode;
 import com.mofengbaizhi.tinkersnewlife.network.PacketToggleDomain;
+import com.mofengbaizhi.tinkersnewlife.network.PacketUseTechnique;
 import com.mofengbaizhi.tinkersnewlife.network.PacketUseSkill;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.MenuScreens;
@@ -119,6 +120,11 @@ public class ClientEventHandler {
             // ✅ 坐杀搏徒：展开/关闭领域
             if (KeyBindings.TOGGLE_DOMAIN.get().consumeClick()) {
                 TinkersNewlife.CHANNEL.sendToServer(new PacketToggleDomain());
+            }
+
+            // ✅ 术式释放（解等）：对看向的实体释放术式
+            if (KeyBindings.USE_TECHNIQUE.get().consumeClick()) {
+                TinkersNewlife.CHANNEL.sendToServer(new PacketUseTechnique());
             }
         }
     }

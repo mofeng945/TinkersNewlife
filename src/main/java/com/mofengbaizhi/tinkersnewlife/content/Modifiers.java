@@ -118,4 +118,8 @@ public class Modifiers {
     /** 伏魔御厨子（领域特性，占用领域槽） */
     public static final StaticModifier<FuMoYuChuZiTrait> FUMO_YUCHUZI =
         MODIFIERS.register("fumo_yuchuzi", FuMoYuChuZiTrait::new);
+
+    /** 解（术式特性，占用术式槽） */
+    public static final StaticModifier<KaiTrait> KAI =
+        MODIFIERS.register("kai", KaiTrait::new);
 }

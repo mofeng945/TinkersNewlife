@@ -46,6 +46,13 @@ public class KeyBindings {
             KEY_CATEGORY
     ));
 
+    // ✅ 术式释放（解等术式：对看向的实体释放）
+    public static final Lazy<KeyMapping> USE_TECHNIQUE = Lazy.of(() -> new KeyMapping(
+            "key.tinkersnewlife.use_technique",
+            GLFW.GLFW_KEY_C,
+            KEY_CATEGORY
+    ));
+
     @SubscribeEvent
     public static void register(RegisterKeyMappingsEvent event) {
         event.register(USE_SKILL.get());
@@ -53,5 +60,6 @@ public class KeyBindings {
         event.register(OPEN_BAG.get());
         event.register(SWITCH_FLYING_SWORD_MODE.get()); // 确保注册
         event.register(TOGGLE_DOMAIN.get()); // 确保注册
+        event.register(USE_TECHNIQUE.get()); // 确保注册
     }
 }
