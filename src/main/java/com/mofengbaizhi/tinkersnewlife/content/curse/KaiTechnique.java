@@ -15,13 +15,16 @@ public final class KaiTechnique extends BaseTechnique {
 
     public static final KaiTechnique INSTANCE = new KaiTechnique();
 
+    /** 「解」的伤害系数：共享伤害基底 × 70%（「捌」的每道斩击 = 该系数的一半） */
+    public static final double DAMAGE_FACTOR = 0.70;
+
     private KaiTechnique() {
         super(Modifiers.KAI.getId());
     }
 
     @Override
     protected void onCast(ServerPlayer player, LivingEntity target) {
-        double damage = computeBaseDamage(player) * 0.70;
+        double damage = computeBaseDamage(player) * DAMAGE_FACTOR;
         // 类似伏魔御厨子小斩击：无视无敌帧，正常伤害结算（护甲/盾牌等仍可衰减）
         target.invulnerableTime = 0;
         target.hurt(player.damageSources().mobAttack(player), (float) damage);

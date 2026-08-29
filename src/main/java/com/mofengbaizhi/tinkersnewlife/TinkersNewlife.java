@@ -1,6 +1,7 @@
 package com.mofengbaizhi.tinkersnewlife;
 
 import com.mofengbaizhi.tinkersnewlife.content.*;
+import com.mofengbaizhi.tinkersnewlife.content.curse.BaTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.DomainRegistry;
 import com.mofengbaizhi.tinkersnewlife.content.curse.FuMoYuChuZiDomain;
 import com.mofengbaizhi.tinkersnewlife.content.curse.KaiTechnique;
@@ -122,8 +123,9 @@ public class TinkersNewlife {
         DomainRegistry.registerDomain(Modifiers.WULIANG_KONGCHU.getId(), WuLiangKongChuDomain::tryCreate);
         DomainRegistry.registerDomain(Modifiers.FUMO_YUCHUZI.getId(), FuMoYuChuZiDomain::tryCreate);
 
-        // 注册术式：解（后续术式继承 BaseTechnique 后在此登记）
+        // 注册术式：解、捌（后续术式继承 BaseTechnique 后在此登记）
         TechniqueHandler.register(KaiTechnique.INSTANCE);
+        TechniqueHandler.register(BaTechnique.INSTANCE);
 
         // 注册网络包
         registerPacket(PacketUseSkill.class, PacketUseSkill::toBytes, PacketUseSkill::new, PacketUseSkill::handle);

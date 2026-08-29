@@ -122,4 +122,8 @@ public class Modifiers {
     /** 解（术式特性，占用术式槽） */
     public static final StaticModifier<KaiTrait> KAI =
         MODIFIERS.register("kai", KaiTrait::new);
+
+    /** 捌（术式特性，占用术式槽） */
+    public static final StaticModifier<BaTrait> BA =
+        MODIFIERS.register("ba", BaTrait::new);
 }

@@ -57,12 +57,22 @@ public abstract class BaseTechnique {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_target"), true);
             return false;
         }
+        // 距离判定（子类可收紧，如「捌」需 3 格内接触目标）
+        if (!isTargetInRange(player, target)) {
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.too_far"), true);
+            return false;
+        }
         onCast(player, target);
         return true;
     }
 
     /** 具体术式效果（子类实现） */
     protected abstract void onCast(ServerPlayer player, LivingEntity target);
+
+    /** 目标距离判定钩子：默认无限制（解等远程术式）；「捌」覆写为 3 格内 */
+    protected boolean isTargetInRange(ServerPlayer player, LivingEntity target) {
+        return true;
+    }
 
     /**
      * 本术式每次释放的咒力消耗：(1 - 咒力亲和/100) × (10 + 咒力输出×5) 点，最低 1 点。
