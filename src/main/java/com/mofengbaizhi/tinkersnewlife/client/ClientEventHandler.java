@@ -44,6 +44,11 @@ public class ClientEventHandler {
             MenuScreens.register(ModMenus.BAG_CONTAINER.get(), BagScreen::new);
             // ✅ 注册噤默手套 GUI
             MenuScreens.register(ModMenus.SILENT_GLOVE_CONTAINER.get(), SilentGloveScreen::new);
+            // ⭐ 血液方块：透明纹理必须走 cutout 渲染层（默认 solid 层不做 alpha 测试，
+            // 透明像素的 RGB 会被原样画出 → 看起来是纯黑背景）
+            net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(
+                    com.mofengbaizhi.tinkersnewlife.content.ModBlocks.BLOOD_REDSTONE.get(),
+                    net.minecraft.client.renderer.RenderType.cutout());
             LOGGER.debug("[TinkersNewlife] 所有 GUI 屏幕已注册");
         });
     }
