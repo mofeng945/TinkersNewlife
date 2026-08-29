@@ -85,15 +85,24 @@ public class ModTooltips {
 
         // 尝试 item 前缀
         String descKey = "item." + TinkersNewlife.MOD_ID + "." + path + ".desc";
+        boolean descAdded = false;
         if (hasKey(descKey)) {
             event.getToolTip().add(Component.translatable(descKey).withStyle(ChatFormatting.GRAY));
-            return;
+            descAdded = true;
         }
 
         // 尝试 block 前缀（方块物品）
-        descKey = "block." + TinkersNewlife.MOD_ID + "." + path + ".desc";
-        if (hasKey(descKey)) {
-            event.getToolTip().add(Component.translatable(descKey).withStyle(ChatFormatting.GRAY));
+        if (!descAdded) {
+            descKey = "block." + TinkersNewlife.MOD_ID + "." + path + ".desc";
+            if (hasKey(descKey)) {
+                event.getToolTip().add(Component.translatable(descKey).withStyle(ChatFormatting.GRAY));
+            }
+        }
+
+        // ⭐ 获取配方提示（不依赖 JEI 的获取方式指引）：item.{modid}.{path}.acquire
+        String acquireKey = "item." + TinkersNewlife.MOD_ID + "." + path + ".acquire";
+        if (hasKey(acquireKey)) {
+            event.getToolTip().add(Component.translatable(acquireKey).withStyle(ChatFormatting.DARK_PURPLE));
         }
     }
 }
