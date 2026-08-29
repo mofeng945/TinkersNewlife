@@ -1,9 +1,7 @@
 package com.mofengbaizhi.tinkersnewlife.content.curse;
 
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -137,8 +135,7 @@ public class ZuoShaBoTuDomain extends BaseDomain {
     private void smallPrize(ServerPlayer player) {
         CursePowerHelper.addCurse(player, SMALL_PRIZE_CURSE);
         player.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 10 * 20, 3));
-        broadcastTitle(player, "title.tinkersnewlife.gamble.small");
-        sendMessage(player, "message.tinkersnewlife.gamble.small");
+        broadcastActionBar(player, "message.tinkersnewlife.gamble.small");
     }
 
     /** 大奖：+900 咒力 + 30 秒与咒力输出等级相同的生命恢复 */
@@ -146,8 +143,7 @@ public class ZuoShaBoTuDomain extends BaseDomain {
         CursePowerHelper.addCurse(player, BIG_PRIZE_CURSE);
         int output = CursePowerHelper.getCurseOutputLevel(player);
         player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 30 * 20, Math.max(0, output - 1)));
-        broadcastTitle(player, "title.tinkersnewlife.gamble.big");
-        sendMessage(player, "message.tinkersnewlife.gamble.big");
+        broadcastActionBar(player, "message.tinkersnewlife.gamble.big");
     }
 
     /** 特等奖：33 秒内咒力无限、HP 锁定上限、咒力亲和 +100 */
@@ -156,22 +152,21 @@ public class ZuoShaBoTuDomain extends BaseDomain {
         CursePowerHelper.setInfiniteUntil(player, until);
         CursePowerHelper.setGrandUntil(player, until);
         CursePowerHelper.setCurseAffinityBuff(player, GRAND_AFFINITY_BUFF, until);
-        broadcastTitle(player, "title.tinkersnewlife.gamble.grand");
-        sendMessage(player, "message.tinkersnewlife.gamble.grand");
+        broadcastActionBar(player, "message.tinkersnewlife.gamble.grand");
     }
 
     // ============================================================
-    //  标题广播：领域范围内所有玩家屏幕播放奖品标题
+    //  提示广播：领域范围内所有玩家物品栏上方小提示（不挡视野）
     // ============================================================
 
-    private void broadcastTitle(ServerPlayer owner, String titleKey) {
+    private void broadcastActionBar(ServerPlayer owner, String messageKey) {
         ServerLevel level = owner.serverLevel();
-        Component title = Component.translatable(titleKey);
+        Component message = Component.translatable(messageKey);
         for (ServerPlayer p : level.getEntitiesOfClass(ServerPlayer.class,
                 new AABB(center.x - radius, center.y - radius, center.z - radius,
                         center.x + radius, center.y + radius, center.z + radius))) {
             if (p.position().distanceToSqr(center) > radius * radius) continue;
-            p.connection.send(new ClientboundSetTitleTextPacket(title));
+            p.displayClientMessage(message, true);
         }
     }
 
