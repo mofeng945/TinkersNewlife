@@ -157,6 +157,25 @@ public class WuLiangKongChuDomain extends BaseDomain {
         return Math.max(1, (long) ((entity.getMaxHealth() / 100.0 + 1) * 5));
     }
 
+    /**
+     * 领域对抗开始：效果暂停 —— 解除领域内所有实体的静止（含被拉入/闯入者），
+     * 重置停留计时与抵抗计时；对抗结束后由 onTick 重新施加静止。
+     */
+    @Override
+    public void onClashStart(ServerPlayer player, BaseDomain opponent) {
+        ServerLevel level = player.serverLevel();
+        double r = radius;
+        for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class,
+                new AABB(center.x - r - 1.5, center.y - r - 1.5, center.z - r - 1.5,
+                        center.x + r + 1.5, center.y + r + 1.5, center.z + r + 1.5))) {
+            if (entity.getUUID().equals(owner)) continue;
+            if (entity.position().distanceToSqr(center) > r * r) continue;
+            entity.removeEffect(ModEffects.STUN.get());
+        }
+        insideTicks.clear();
+        resistUntil.clear();
+    }
+
     private static void sendMessage(ServerPlayer player, String key) {
         player.displayClientMessage(Component.translatable(key), true);
     }

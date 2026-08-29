@@ -42,6 +42,11 @@ public abstract class BaseDomain {
     /** 阻挡墙方块位置（关闭领域时移除） */
     private final java.util.List<net.minecraft.core.BlockPos> barrierPositions = new java.util.ArrayList<>();
 
+    /** 领域对抗中的对手（对方咒力核心主人 UUID）；null = 未在对抗 */
+    protected UUID clashOpponent = null;
+    /** 对抗期间自身咒力消耗倍率（由对方输出/亲和决定），默认 1（无对抗） */
+    protected double clashCostMultiplier = 1.0;
+
     protected BaseDomain(UUID owner, Vec3 center, int radius, double curseCostPerSecond) {
         this.owner = owner;
         this.center = center;
@@ -68,7 +73,13 @@ public abstract class BaseDomain {
                     double d = Math.sqrt(x * x + y * y + z * z);
                     if (d < r - 0.5 || d > r + 0.5) continue;
                     net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(cx + x, cy + y, cz + z);
-                    if (!level.getBlockState(pos).isAir()) continue;
+                    var state = level.getBlockState(pos);
+                    // ⭐ 已存在的本领域墙块（如对抗结束后重建）也要补记，否则关闭时无法移除
+                    if (state.is(com.mofengbaizhi.tinkersnewlife.content.ModBlocks.DOMAIN_BARRIER.get())) {
+                        barrierPositions.add(pos);
+                        continue;
+                    }
+                    if (!state.isAir()) continue;
                     // 避免在生物站立的方块上放置（防窒息），留出的缺口由每 tick 位置钳制兜底
                     if (!level.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class,
                             new AABB(pos)).isEmpty()) continue;
@@ -87,6 +98,59 @@ public abstract class BaseDomain {
             }
         }
         barrierPositions.clear();
+    }
+
+    /**
+     * 领域对抗：移除本领域阻挡墙中落入对方领域球体内的部分（打通两个领域空间）。
+     * 返回移除的方块数量。
+     */
+    protected final int removeBarrierOverlap(ServerLevel level, Vec3 otherCenter, double otherRadius) {
+        int removed = 0;
+        java.util.Iterator<net.minecraft.core.BlockPos> it = barrierPositions.iterator();
+        while (it.hasNext()) {
+            net.minecraft.core.BlockPos pos = it.next();
+            if (Vec3.atCenterOf(pos).distanceToSqr(otherCenter) <= otherRadius * otherRadius) {
+                if (level.getBlockState(pos).is(com.mofengbaizhi.tinkersnewlife.content.ModBlocks.DOMAIN_BARRIER.get())) {
+                    level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 2);
+                }
+                it.remove();
+                removed++;
+            }
+        }
+        return removed;
+    }
+
+    // ============================================================
+    //  领域对抗（两个领域球体相交时触发，见 DomainRegistry）
+    // ============================================================
+
+    public boolean isClashing() { return clashOpponent != null; }
+
+    public UUID getClashOpponent() { return clashOpponent; }
+
+    public double getClashCostMultiplier() { return clashCostMultiplier; }
+
+    /** 进入对抗：记录对手并设置本领域消耗倍率（倍率由对方输出/亲和决定） */
+    public void setClash(UUID opponentOwner, double costMultiplier) {
+        this.clashOpponent = opponentOwner;
+        this.clashCostMultiplier = costMultiplier;
+    }
+
+    /** 对抗结束：清除对抗状态（领域效果恢复） */
+    public void clearClash() {
+        this.clashOpponent = null;
+        this.clashCostMultiplier = 1.0;
+    }
+
+    /** 对抗开始钩子（子类可暂停自身效果，如无量空处解除静止） */
+    public void onClashStart(ServerPlayer player, BaseDomain opponent) {}
+
+    /** 对抗结束钩子（本领域胜出，领域效果恢复） */
+    public void onClashEnd(ServerPlayer player, BaseDomain opponent) {}
+
+    /** 对抗结束时把败者拉入本领域：球心附近的可站安全点 */
+    public Vec3 getClashPullTarget(ServerLevel level) {
+        return findSafeSpot(level, new Vec3(0, 0, 0), radius * 0.6);
     }
 
     public UUID getOwner() { return owner; }
@@ -117,10 +181,11 @@ public abstract class BaseDomain {
     //  通用外壳
     // ============================================================
 
-    /** 每 tick 消耗咒力，返回 false 表示咒力耗尽（应关闭领域）；咒力无限状态下不消耗 */
+    /** 每 tick 消耗咒力，返回 false 表示咒力耗尽（应关闭领域）；咒力无限状态下不消耗。
+     *  领域对抗期间消耗按 clashCostMultiplier 倍率放大（对方输出/亲和越高，消耗越猛） */
     protected final boolean spendCurse(ServerPlayer player) {
         if (!CursePowerHelper.isCurseInfinite(player)) {
-            CursePowerHelper.spendCurse(player, curseCostPerSecond / 20.0);
+            CursePowerHelper.spendCurse(player, curseCostPerSecond * clashCostMultiplier / 20.0);
             if (CursePowerHelper.getCurse(player) <= 0) {
                 return false;
             }

@@ -8,6 +8,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.UUID;
 
@@ -16,10 +17,25 @@ import java.util.UUID;
  * <p>
  * 无移动、无碰撞、无 AI，仅作为领域球心与半径的载体，
  * 由 {@code DomainVisualRenderer} 绘制黑色空心圆球形状（非方块）。
+ * 领域对抗时同步对方领域球体，渲染器隐藏落入对方球体内的黑色边缘部分。
  */
 public class DomainVisualEntity extends Entity {
 
     private static final EntityDataAccessor<Float> RADIUS =
+            SynchedEntityData.defineId(DomainVisualEntity.class, EntityDataSerializers.FLOAT);
+
+    /** 对抗激活标记 */
+    private static final EntityDataAccessor<Boolean> CLASH_ACTIVE =
+            SynchedEntityData.defineId(DomainVisualEntity.class, EntityDataSerializers.BOOLEAN);
+    /** 对抗中对方领域球心（1.20.1 无 VEC3 序列化器，用三个浮点） */
+    private static final EntityDataAccessor<Float> CLASH_CX =
+            SynchedEntityData.defineId(DomainVisualEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> CLASH_CY =
+            SynchedEntityData.defineId(DomainVisualEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> CLASH_CZ =
+            SynchedEntityData.defineId(DomainVisualEntity.class, EntityDataSerializers.FLOAT);
+    /** 对抗中对方领域半径 */
+    private static final EntityDataAccessor<Float> CLASH_RADIUS =
             SynchedEntityData.defineId(DomainVisualEntity.class, EntityDataSerializers.FLOAT);
 
     private UUID ownerId = null;
@@ -44,9 +60,42 @@ public class DomainVisualEntity extends Entity {
         return ownerId;
     }
 
+    // ============================================================
+    //  领域对抗视觉：隐藏落入对方球体内的黑色边缘
+    // ============================================================
+
+    public void setClashRegion(Vec3 center, double radius) {
+        entityData.set(CLASH_ACTIVE, true);
+        entityData.set(CLASH_CX, (float) center.x);
+        entityData.set(CLASH_CY, (float) center.y);
+        entityData.set(CLASH_CZ, (float) center.z);
+        entityData.set(CLASH_RADIUS, (float) radius);
+    }
+
+    public void clearClashRegion() {
+        entityData.set(CLASH_ACTIVE, false);
+    }
+
+    public boolean isClashActive() {
+        return entityData.get(CLASH_ACTIVE);
+    }
+
+    public Vec3 getClashCenter() {
+        return new Vec3(entityData.get(CLASH_CX), entityData.get(CLASH_CY), entityData.get(CLASH_CZ));
+    }
+
+    public float getClashRadius() {
+        return entityData.get(CLASH_RADIUS);
+    }
+
     @Override
     protected void defineSynchedData() {
         entityData.define(RADIUS, 5.0f);
+        entityData.define(CLASH_ACTIVE, false);
+        entityData.define(CLASH_CX, 0.0f);
+        entityData.define(CLASH_CY, 0.0f);
+        entityData.define(CLASH_CZ, 0.0f);
+        entityData.define(CLASH_RADIUS, 0.0f);
     }
 
     @Override

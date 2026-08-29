@@ -33,7 +33,7 @@ public class DomainVisualRenderer extends EntityRenderer<DomainVisualEntity> {
         poseStack.pushPose();
         // 实体位置即领域球心，按半径缩放单位球
         poseStack.scale(radius, radius, radius);
-        DomainSphereRenderer.render(poseStack, progress);
+        DomainSphereRenderer.render(poseStack, progress, entity);
         poseStack.popPose();
     }
 
