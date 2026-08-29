@@ -7,6 +7,7 @@ import com.mofengbaizhi.tinkersnewlife.content.curse.FuMoYuChuZiDomain;
 import com.mofengbaizhi.tinkersnewlife.content.curse.KaiTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.TechniqueHandler;
 import com.mofengbaizhi.tinkersnewlife.content.curse.WuLiangKongChuDomain;
+import com.mofengbaizhi.tinkersnewlife.content.curse.ZaoKaiTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.ZuoShaBoTuDomain;
 import com.mofengbaizhi.tinkersnewlife.content.loot.LootModifierSerializers;
 import com.mofengbaizhi.tinkersnewlife.content.storage.SilentGloveHandler;
@@ -123,9 +124,10 @@ public class TinkersNewlife {
         DomainRegistry.registerDomain(Modifiers.WULIANG_KONGCHU.getId(), WuLiangKongChuDomain::tryCreate);
         DomainRegistry.registerDomain(Modifiers.FUMO_YUCHUZI.getId(), FuMoYuChuZiDomain::tryCreate);
 
-        // 注册术式：解、捌（后续术式继承 BaseTechnique 后在此登记）
+        // 注册术式：解、捌、灶·开（后续术式继承 BaseTechnique 后在此登记）
         TechniqueHandler.register(KaiTechnique.INSTANCE);
         TechniqueHandler.register(BaTechnique.INSTANCE);
+        TechniqueHandler.register(ZaoKaiTechnique.INSTANCE);
 
         // 注册网络包
         registerPacket(PacketUseSkill.class, PacketUseSkill::toBytes, PacketUseSkill::new, PacketUseSkill::handle);

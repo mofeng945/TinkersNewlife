@@ -67,6 +67,9 @@ public class ClientEventHandler {
         event.registerEntityRenderer(ModEntities.FLYING_SWORD_FOOT.get(), FlyingSwordFootRenderer::new);
         event.registerEntityRenderer(ModEntities.YO_YO.get(), YoYoRenderer::new);
         event.registerEntityRenderer(ModEntities.DOMAIN_VISUAL.get(), DomainVisualRenderer::new);
+        // 灶·开 火焰箭：复用原版箭矢渲染（无着火贴图，火焰感由尾迹粒子表现）
+        event.registerEntityRenderer(ModEntities.FLAME_ARROW.get(),
+                com.mofengbaizhi.tinkersnewlife.client.renderer.FlameArrowRenderer::new);
     }
 
     // ========== Forge 事件（按键等） ==========

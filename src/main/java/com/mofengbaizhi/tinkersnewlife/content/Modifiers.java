@@ -126,4 +126,8 @@ public class Modifiers {
     /** 捌（术式特性，占用术式槽） */
     public static final StaticModifier<BaTrait> BA =
         MODIFIERS.register("ba", BaTrait::new);
+
+    /** 灶·开（术式特性，占用术式槽） */
+    public static final StaticModifier<ZaoKaiTrait> ZAO_KAI =
+        MODIFIERS.register("zao_kai", ZaoKaiTrait::new);
 }

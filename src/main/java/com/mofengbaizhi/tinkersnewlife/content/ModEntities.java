@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.content;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.entity.DomainVisualEntity;
 import com.mofengbaizhi.tinkersnewlife.content.entity.DreadsteelSlashEntity;
+import com.mofengbaizhi.tinkersnewlife.content.entity.FlameArrowEntity;
 import com.mofengbaizhi.tinkersnewlife.content.entity.FlyingSwordEntity;
 import com.mofengbaizhi.tinkersnewlife.content.entity.FlyingSwordFootEntity;
 import com.mofengbaizhi.tinkersnewlife.content.entity.YoYoEntity;
@@ -63,5 +64,15 @@ public class ModEntities {
                         .clientTrackingRange(64)
                         .updateInterval(1)
                         .build(TinkersNewlife.MOD_ID + ":domain_visual")
+        );
+
+    /** 灶·开 火焰箭（笔直慢速，命中爆炸） */
+    public static final RegistryObject<EntityType<FlameArrowEntity>> FLAME_ARROW =
+        ENTITIES.register("flame_arrow",
+                () -> EntityType.Builder.<FlameArrowEntity>of(FlameArrowEntity::new, MobCategory.MISC)
+                        .sized(0.5f, 0.5f)
+                        .clientTrackingRange(64)
+                        .updateInterval(1)
+                        .build(TinkersNewlife.MOD_ID + ":flame_arrow")
         );
 }
