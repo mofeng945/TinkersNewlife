@@ -79,9 +79,10 @@ public class TinkersNewlife {
 
     public TinkersNewlife() {
         LOGGER.info("初始化 TinkersNewlife 模组...");
-        // 注册自定义槽位类型：领域槽（domain），供咒力核心等装备使用
+        // 注册自定义槽位类型：领域槽（domain）与术式槽（technique），供咒力核心等装备使用
         slimeknights.tconstruct.library.tools.SlotType.init();
         slimeknights.tconstruct.library.tools.SlotType.getOrCreate("domain");
+        slimeknights.tconstruct.library.tools.SlotType.getOrCreate("technique");
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
         // 注册各类内容
         ModItems.ITEMS.register(modEventBus);
