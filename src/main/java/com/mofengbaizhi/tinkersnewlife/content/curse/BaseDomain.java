@@ -46,6 +46,8 @@ public abstract class BaseDomain {
     protected UUID clashOpponent = null;
     /** 对抗期间自身咒力消耗倍率（由对方输出/亲和决定），默认 1（无对抗） */
     protected double clashCostMultiplier = 1.0;
+    /** 是否已提示过"咒力耗尽改耗灵魂能量"（每个领域实例只提示一次） */
+    private boolean soulFallbackNotified = false;
 
     protected BaseDomain(UUID owner, Vec3 center, int radius, double curseCostPerSecond) {
         this.owner = owner;
@@ -182,13 +184,28 @@ public abstract class BaseDomain {
     // ============================================================
 
     /** 每 tick 消耗咒力，返回 false 表示咒力耗尽（应关闭领域）；咒力无限状态下不消耗。
-     *  领域对抗期间消耗按 clashCostMultiplier 倍率放大（对方输出/亲和越高，消耗越猛） */
+     *  领域对抗期间消耗按 clashCostMultiplier 倍率放大（对方输出/亲和越高，消耗越猛）。
+     *  ⭐ 咒力耗尽时自动改为消耗诡厄巫法（Goety）灵魂能量兜底：咒力:灵魂能量 = 1:3，
+     *  即 3 点灵魂能量相当于 1 点咒力；灵魂能量也不足时才判定领域关闭。 */
     protected final boolean spendCurse(ServerPlayer player) {
-        if (!CursePowerHelper.isCurseInfinite(player)) {
-            CursePowerHelper.spendCurse(player, curseCostPerSecond * clashCostMultiplier / 20.0);
-            if (CursePowerHelper.getCurse(player) <= 0) {
-                return false;
-            }
+        if (CursePowerHelper.isCurseInfinite(player)) return true;
+        double cost = curseCostPerSecond * clashCostMultiplier / 20.0;
+        double curse = CursePowerHelper.getCurse(player);
+        if (curse >= cost) {
+            CursePowerHelper.spendCurse(player, cost);
+            return true;
+        }
+        // 咒力不足本 tick 消耗：先用光剩余咒力，差额由灵魂能量按 1:3 补足
+        double deficit = cost - curse;
+        CursePowerHelper.spendCurse(player, curse); // 咒力清零
+        int soulsNeeded = (int) Math.ceil(deficit * 3.0);
+        int souls = com.mofengbaizhi.tinkersnewlife.util.SoulEnergyBridge.getSouls(player);
+        if (souls < soulsNeeded) return false; // 灵魂能量也不足 → 领域关闭
+        if (!com.mofengbaizhi.tinkersnewlife.util.SoulEnergyBridge.decreaseSouls(player, soulsNeeded)) return false;
+        if (!soulFallbackNotified) {
+            soulFallbackNotified = true;
+            player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                    "message.tinkersnewlife.soul_fallback"), true);
         }
         return true;
     }
