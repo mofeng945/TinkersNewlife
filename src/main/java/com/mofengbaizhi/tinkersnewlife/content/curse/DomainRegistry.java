@@ -72,6 +72,15 @@ public final class DomainRegistry {
         UUID id = player.getUUID();
         if (DOMAINS.containsKey(id)) {
             close(player, "message.tinkersnewlife.domain.closed");
+            // 生存模式：手动关闭领域 → 术式熔断
+            applyBurnoutIfSurvival(player);
+            return;
+        }
+
+        // 术式熔断期间无法再次展开领域（创造模式豁免，便于测试）
+        if (!player.isCreative() && CursePowerHelper.isBurnout(player)) {
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.burnout.active",
+                    CursePowerHelper.getBurnoutRemainingSeconds(player)), true);
             return;
         }
 
@@ -123,6 +132,17 @@ public final class DomainRegistry {
         domain.onClose(player, null);
     }
 
+    /**
+     * 术式熔断（生存模式专属）：手动关闭领域或领域被破坏后进入熔断状态，
+     * 期间无法再次展开领域。创造/旁观模式豁免（便于测试），咒力耗尽不算熔断。
+     */
+    private static void applyBurnoutIfSurvival(ServerPlayer player) {
+        if (player.isCreative() || player.isSpectator()) return;
+        CursePowerHelper.applyBurnout(player);
+        player.displayClientMessage(Component.translatable("message.tinkersnewlife.burnout.entered",
+                CursePowerHelper.getBurnoutRemainingSeconds(player)), true);
+    }
+
     // ============================================================
     //  每 tick 驱动
     // ============================================================
@@ -145,12 +165,13 @@ public final class DomainRegistry {
                 continue;
             }
 
-            // 领域被破坏（咒力核心被取下 / 特性丢失等）
+            // 领域被破坏（咒力核心被取下 / 特性丢失等）→ 生存模式术式熔断
             if (!domain.isValid(player)) {
                 it.remove();
                 forceRemove(player, domain);
                 domain.onClose(player, "message.tinkersnewlife.domain.broken");
                 player.displayClientMessage(Component.translatable("message.tinkersnewlife.domain.broken"), true);
+                applyBurnoutIfSurvival(player);
                 continue;
             }
 

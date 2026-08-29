@@ -38,6 +38,8 @@ public final class CursePowerHelper {
     public static final String KEY_AFFINITY_BUFF = "tinkersnewlife.curse_affinity_buff";
     /** 玩家持久数据：临时咒力亲和加成截止时刻（long） */
     public static final String KEY_AFFINITY_BUFF_UNTIL = "tinkersnewlife.curse_affinity_buff_until";
+    /** 玩家持久数据：术式熔断截止时刻（long，期间无法展开领域/使用术式） */
+    public static final String KEY_BURNOUT_UNTIL = "tinkersnewlife.burnout_until";
     /** 物品 NBT：咒力亲和值（int，0~50，战利品生成的饰品可能携带） */
     public static final String KEY_AFFINITY = "tinkersnewlife.curse_affinity";
     /** 匠魂工具持久数据键（ModDataNBT 用 ResourceLocation） */
@@ -200,5 +202,32 @@ public final class CursePowerHelper {
     /** 特等奖增益是否生效中 */
     public static boolean isGrandActive(Player player) {
         return player.getPersistentData().getLong(KEY_GRAND_UNTIL) > player.level().getGameTime();
+    }
+
+    // ============================================================
+    //  术式熔断
+    // ============================================================
+
+    /**
+     * 设置术式熔断截止时刻（生存模式关闭/领域被破坏后触发）。
+     * 时长 = 60 - (咒力输出等级×5 + 咒力亲和) 秒，最低 10 秒。
+     */
+    public static void applyBurnout(Player player) {
+        int output = getCurseOutputLevel(player);
+        int affinity = getCurseAffinity(player);
+        int seconds = Math.max(10, 60 - (output * 5 + affinity));
+        player.getPersistentData().putLong(KEY_BURNOUT_UNTIL, player.level().getGameTime() + seconds * 20L);
+    }
+
+    /** 是否处于术式熔断 */
+    public static boolean isBurnout(Player player) {
+        return player.getPersistentData().getLong(KEY_BURNOUT_UNTIL) > player.level().getGameTime();
+    }
+
+    /** 术式熔断剩余秒数（未熔断返回 0） */
+    public static int getBurnoutRemainingSeconds(Player player) {
+        long remaining = player.getPersistentData().getLong(KEY_BURNOUT_UNTIL) - player.level().getGameTime();
+        if (remaining <= 0) return 0;
+        return (int) ((remaining + 19) / 20);
     }
 }
