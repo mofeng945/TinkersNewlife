@@ -114,4 +114,8 @@ public class Modifiers {
     /** 无量空处（领域特性，占用领域槽） */
     public static final StaticModifier<WuLiangKongChuTrait> WULIANG_KONGCHU =
         MODIFIERS.register("wuliang_kongchu", WuLiangKongChuTrait::new);
+
+    /** 伏魔御厨子（领域特性，占用领域槽） */
+    public static final StaticModifier<FuMoYuChuZiTrait> FUMO_YUCHUZI =
+        MODIFIERS.register("fumo_yuchuzi", FuMoYuChuZiTrait::new);
 }
