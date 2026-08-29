@@ -78,6 +78,27 @@ public class ClientEventHandler {
 
         private static final Logger LOGGER = LoggerFactory.getLogger(ForgeEvents.class);
 
+        /** 术式按键上一次状态（边沿检测：按下发 press、松开发 release，支撑蓄力术式） */
+        private static boolean lastTechniqueDown = false;
+
+        @SubscribeEvent
+        public static void onClientTick(TickEvent.ClientTickEvent event) {
+            if (event.phase != TickEvent.Phase.END) return;
+            LocalPlayer player = Minecraft.getInstance().player;
+            if (player == null) {
+                lastTechniqueDown = false;
+                return;
+            }
+            // ⭐ 术式按键：按下=开始（即时释放或蓄力），松开=蓄力发射
+            boolean down = KeyBindings.USE_TECHNIQUE.get().isDown();
+            if (down && !lastTechniqueDown) {
+                TinkersNewlife.CHANNEL.sendToServer(new PacketUseTechnique(true));
+            } else if (!down && lastTechniqueDown) {
+                TinkersNewlife.CHANNEL.sendToServer(new PacketUseTechnique(false));
+            }
+            lastTechniqueDown = down;
+        }
+
         @SubscribeEvent
         public static void onKeyInput(InputEvent.Key event) {
             LocalPlayer player = Minecraft.getInstance().player;
@@ -124,11 +145,7 @@ public class ClientEventHandler {
             if (KeyBindings.TOGGLE_DOMAIN.get().consumeClick()) {
                 TinkersNewlife.CHANNEL.sendToServer(new PacketToggleDomain());
             }
-
-            // ✅ 术式释放（解等）：对看向的实体释放术式
-            if (KeyBindings.USE_TECHNIQUE.get().consumeClick()) {
-                TinkersNewlife.CHANNEL.sendToServer(new PacketUseTechnique());
-            }
+            // ✅ 术式按键已移至 onClientTick（按下/松开边沿检测，支撑蓄力术式）
         }
     }
 }

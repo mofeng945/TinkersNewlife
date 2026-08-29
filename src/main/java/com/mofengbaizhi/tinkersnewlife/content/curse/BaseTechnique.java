@@ -38,6 +38,19 @@ public abstract class BaseTechnique {
         return modifierId;
     }
 
+    /**
+     * 按键按下：默认直接释放（解/捌等即时术式）；
+     * 蓄力型术式（如灶·开）覆写为"生成蓄力箭"。
+     */
+    public void onKeyPress(ServerPlayer player) {
+        tryUse(player);
+    }
+
+    /**
+     * 按键松开：默认无动作；蓄力型术式覆写为"向当前朝向发射"。
+     */
+    public void onKeyRelease(ServerPlayer player) {}
+
     /** 模板方法：释放本术式（子类无需覆写，只需实现 onCast） */
     public boolean tryUse(ServerPlayer player) {
         // 术式熔断：期间无法使用术式
@@ -66,8 +79,8 @@ public abstract class BaseTechnique {
         return true;
     }
 
-    /** 具体术式效果（子类实现） */
-    protected abstract void onCast(ServerPlayer player, LivingEntity target);
+    /** 具体术式效果（子类实现；蓄力型术式如灶·开不需要，覆写按键钩子即可） */
+    protected void onCast(ServerPlayer player, LivingEntity target) {}
 
     /** 目标距离判定钩子：默认无限制（解等远程术式）；「捌」覆写为 3 格内 */
     protected boolean isTargetInRange(ServerPlayer player, LivingEntity target) {

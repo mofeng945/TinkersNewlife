@@ -2,6 +2,8 @@ package com.mofengbaizhi.tinkersnewlife.content.entity;
 
 import com.mofengbaizhi.tinkersnewlife.content.ModEntities;
 import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -13,6 +15,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -91,8 +94,37 @@ public class FlameArrowEntity extends AbstractArrow {
                 e.hurt(server.damageSources().explosion(shooter, shooter), (float) dmg);
                 e.setSecondsOnFire(3);
             }
+
+            // 点燃 (1 + 咒力输出) 半径的区域（地面放火）
+            igniteArea(server, c, 1 + output);
         }
         discard();
+    }
+
+    /** 点燃区域：在爆炸点水平半径 radius 内的地面上放置火焰（仅实心方块上方，限量） */
+    private void igniteArea(ServerLevel server, Vec3 c, int radius) {
+        int placed = 0;
+        int cx = (int) Math.floor(c.x);
+        int cy = (int) Math.floor(c.y);
+        int cz = (int) Math.floor(c.z);
+        for (int dx = -radius; dx <= radius && placed < 64; dx++) {
+            for (int dz = -radius; dz <= radius && placed < 64; dz++) {
+                if (dx * dx + dz * dz > radius * radius) continue;
+                BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos(cx + dx, cy, cz + dz);
+                // 从爆炸高度向下找 8 格内的地面
+                for (int dy = 0; dy >= -8; dy--) {
+                    BlockPos below = m.offset(0, dy - 1, 0);
+                    if (server.getBlockState(below).isFaceSturdy(server, below, Direction.UP)) {
+                        BlockPos firePos = m.offset(0, dy, 0);
+                        if (server.getBlockState(firePos).isAir()) {
+                            server.setBlock(firePos, Blocks.FIRE.defaultBlockState(), 3);
+                            placed++;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     @Override
