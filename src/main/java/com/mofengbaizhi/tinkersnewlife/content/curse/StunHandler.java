@@ -72,6 +72,14 @@ public class StunHandler {
             if (mob.hasEffect(ModEffects.STUN.get())) {
                 mob.setNoAi(true);
                 mob.getNavigation().stop();
+                // ⭐ 保证被定身也能正常下落（不会被固定在空中）：
+                // 未落地且未在下落时施加向下加速度，其余情况交给物理引擎
+                if (!mob.onGround() && !mob.isInWater() && !mob.isNoGravity()) {
+                    Vec3 v = mob.getDeltaMovement();
+                    if (v.y >= 0) {
+                        mob.setDeltaMovement(v.add(0, -0.08, 0));
+                    }
+                }
             } else {
                 mob.setNoAi(STUNNED_MOB_NOAI.get(id));
                 STUNNED_MOB_NOAI.remove(id);

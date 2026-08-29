@@ -98,6 +98,9 @@ public abstract class BaseDomain {
     //  生命周期钩子（子类覆写）
     // ============================================================
 
+    /** 领域名称翻译键（展开时以标题形式展示给领域内所有玩家） */
+    public abstract String getDomainNameKey();
+
     /** 领域是否可维持（如咒力核心被取下/特性丢失则返回 false，领域被破坏） */
     public abstract boolean isValid(ServerPlayer player);
 

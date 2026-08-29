@@ -77,6 +77,11 @@ public class WuLiangKongChuDomain extends BaseDomain {
     // ============================================================
 
     @Override
+    public String getDomainNameKey() {
+        return "modifier.tinkersnewlife.wuliang_kongchu";
+    }
+
+    @Override
     public boolean isValid(ServerPlayer player) {
         ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
         ToolStack tool = ToolHelper.getToolStack(core);

@@ -87,6 +87,11 @@ public class ZuoShaBoTuDomain extends BaseDomain {
     // ============================================================
 
     @Override
+    public String getDomainNameKey() {
+        return "modifier.tinkersnewlife.zuosha_botu";
+    }
+
+    @Override
     public boolean isValid(ServerPlayer player) {
         ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
         ToolStack tool = ToolHelper.getToolStack(core);

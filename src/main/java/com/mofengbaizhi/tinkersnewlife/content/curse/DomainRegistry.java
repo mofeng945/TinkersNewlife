@@ -11,6 +11,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -91,6 +92,8 @@ public final class DomainRegistry {
             domain.onOpen(player);
             spawnVisual(player.serverLevel(), domain);
             domain.buildBarrier(player.serverLevel());
+            // 展开时：给领域内所有玩家显示领域名大标题
+            broadcastDomainTitle(player.serverLevel(), domain);
             return;
         }
         // 核心上没有已注册的领域特性
@@ -189,6 +192,20 @@ public final class DomainRegistry {
         if (level == null) return;
         if (level.getEntity(entityId) instanceof DomainVisualEntity visual) {
             visual.discard();
+        }
+    }
+
+    /** 展开时：给领域范围内所有玩家显示领域名大标题 */
+    private static void broadcastDomainTitle(ServerLevel level, BaseDomain domain) {
+        double r = domain.getRadius();
+        net.minecraft.network.chat.Component title = net.minecraft.network.chat.Component.translatable(domain.getDomainNameKey());
+        net.minecraft.network.chat.Component subtitle = net.minecraft.network.chat.Component.translatable("title.tinkersnewlife.domain.open");
+        for (ServerPlayer p : level.getEntitiesOfClass(ServerPlayer.class,
+                new AABB(domain.getCenter().x - r, domain.getCenter().y - r, domain.getCenter().z - r,
+                        domain.getCenter().x + r, domain.getCenter().y + r, domain.getCenter().z + r))) {
+            if (p.position().distanceToSqr(domain.getCenter()) > r * r) continue;
+            p.connection.send(new net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket(title));
+            p.connection.send(new net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket(subtitle));
         }
     }
 
