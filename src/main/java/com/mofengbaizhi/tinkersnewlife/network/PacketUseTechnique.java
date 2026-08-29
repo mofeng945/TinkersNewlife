@@ -22,7 +22,7 @@ public class PacketUseTechnique {
         ctx.get().enqueueWork(() -> {
             ServerPlayer player = ctx.get().getSender();
             if (player == null) return;
-            TechniqueHandler.tryUseKai(player);
+            TechniqueHandler.tryUse(player);
         });
         ctx.get().setPacketHandled(true);
     }

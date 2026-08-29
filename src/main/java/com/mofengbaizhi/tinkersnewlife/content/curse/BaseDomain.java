@@ -190,33 +190,20 @@ public abstract class BaseDomain {
     protected final boolean spendCurse(ServerPlayer player) {
         if (CursePowerHelper.isCurseInfinite(player)) return true;
         double cost = curseCostPerSecond * clashCostMultiplier / 20.0;
-        double curse = CursePowerHelper.getCurse(player);
-        if (curse >= cost) {
-            CursePowerHelper.spendCurse(player, cost);
+        int result = CursePowerHelper.payCurseWithSoulFallback(player, cost);
+        if (result >= 0) {
+            // 首次进入灵魂兜底时提示一次（每个领域实例）
+            if (result == 1 && !soulFallbackNotified) {
+                soulFallbackNotified = true;
+                player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                        "message.tinkersnewlife.soul_fallback"), true);
+            }
             return true;
         }
-        // 咒力不足本 tick 消耗：先用光剩余咒力，差额由灵魂能量按 1:3 补足
-        double deficit = cost - curse;
-        CursePowerHelper.spendCurse(player, curse); // 咒力清零
-        int soulsNeeded = (int) Math.ceil(deficit * 3.0);
-        int souls = com.mofengbaizhi.tinkersnewlife.util.SoulEnergyBridge.getSouls(player);
-        if (souls < soulsNeeded) {
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
-                    "[TinkersNewlife] 灵魂兜底失败: 咒力={}, tick消耗={}, 差额={}, 所需灵魂={}, 实际灵魂={}",
-                    curse, cost, deficit, soulsNeeded, souls);
-            return false; // 灵魂能量也不足 → 领域关闭
-        }
-        if (!com.mofengbaizhi.tinkersnewlife.util.SoulEnergyBridge.decreaseSouls(player, soulsNeeded)) {
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
-                    "[TinkersNewlife] 灵魂扣减失败: 所需={}, 当时持有={}", soulsNeeded, souls);
-            return false;
-        }
-        if (!soulFallbackNotified) {
-            soulFallbackNotified = true;
-            player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
-                    "message.tinkersnewlife.soul_fallback"), true);
-        }
-        return true;
+        com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
+                "[TinkersNewlife] 咒力与灵魂能量均不足，领域关闭 (tick消耗={}, 当前咒力={})",
+                cost, CursePowerHelper.getCurse(player));
+        return false;
     }
 
     /**

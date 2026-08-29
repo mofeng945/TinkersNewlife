@@ -175,6 +175,25 @@ public final class CursePowerHelper {
         setCurse(player, getCurse(player) - amount);
     }
 
+    /**
+     * 支付咒力（领域消耗与术式消耗共用）：
+     * 足够则直接扣除；不足则先用光剩余咒力，差额按 1:3 由诡厄巫法灵魂能量兜底。
+     * 返回 0 = 咒力支付，1 = 灵魂能量兜底支付，-1 = 咒力与灵魂均不足。
+     */
+    public static int payCurseWithSoulFallback(Player player, double cost) {
+        double curse = getCurse(player);
+        if (curse >= cost) {
+            spendCurse(player, cost);
+            return 0;
+        }
+        double deficit = cost - curse;
+        spendCurse(player, curse); // 咒力清零
+        int soulsNeeded = (int) Math.ceil(deficit * 3.0);
+        int souls = com.mofengbaizhi.tinkersnewlife.util.SoulEnergyBridge.getSouls(player);
+        if (souls < soulsNeeded) return -1;
+        return com.mofengbaizhi.tinkersnewlife.util.SoulEnergyBridge.decreaseSouls(player, soulsNeeded) ? 1 : -1;
+    }
+
     // ============================================================
     //  咒力无限
     // ============================================================
