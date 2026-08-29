@@ -23,22 +23,18 @@ public final class DomainSphereRenderer {
 
     private DomainSphereRenderer() {}
 
-    /** 绘制黑色空心球壳（当前 PoseStack 原点为球心，单位半径由外部缩放） */
+    /** 绘制纯黑色球壳（当前 PoseStack 原点为球心，单位半径由外部缩放） */
     public static void render(PoseStack poseStack) {
         ensureBuffer();
         RenderSystem.enableDepthTest();
-        RenderSystem.depthMask(false); // 球壳不写深度：内部可见（空心）
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
+        RenderSystem.depthMask(true);   // 纯黑不透明，正常写深度（被方块遮挡的部分不显示）
         RenderSystem.disableCull();
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         shellBuffer.bind();
         shellBuffer.drawWithShader(poseStack.last().pose(), RenderSystem.getProjectionMatrix(),
                 GameRenderer.getPositionColorShader());
         VertexBuffer.unbind();
-        RenderSystem.depthMask(true);
         RenderSystem.enableCull();
-        RenderSystem.disableBlend();
     }
 
     private static void ensureBuffer() {
@@ -47,7 +43,7 @@ public final class DomainSphereRenderer {
         builder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
         int rings = 16;      // 纬度分段
         int segments = 24;   // 经度分段
-        int alpha = 100;     // 半透明黑（球壳可见且可透视）
+        int alpha = 255;     // 纯黑不透明
         for (int i = 0; i < rings; i++) {
             double phi1 = Math.PI * i / rings;
             double phi2 = Math.PI * (i + 1) / rings;

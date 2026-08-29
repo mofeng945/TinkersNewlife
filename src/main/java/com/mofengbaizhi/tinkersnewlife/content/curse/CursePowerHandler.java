@@ -31,16 +31,16 @@ public class CursePowerHandler {
             ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
             boolean wearing = !core.isEmpty();
 
-            // 每 5 秒恢复一次（仅佩戴咒力核心时）
-            if (wearing && now % 100 == 0) {
+            // 咒力恢复：原 5 秒恢复量 (输出+亲和/10)×5 分散到每 tick（总量不变，回复更平滑）
+            if (wearing) {
                 int output = CursePowerHelper.getCurseOutputLevel(player);
                 int affinity = CursePowerHelper.getCurseAffinity(player);
-                double regen = (output + affinity / 10.0) * 5.0;
+                double regenPerTick = (output + affinity / 10.0) * 5.0 / 100.0;
                 // ⭐ 黑闪增幅状态内，咒力回复速度提升为 5 倍
                 if (BlackFlashHandler.isBuffActive(player.getUUID())) {
-                    regen *= 5.0;
+                    regenPerTick *= 5.0;
                 }
-                CursePowerHelper.addCurse(player, regen);
+                CursePowerHelper.addCurse(player, regenPerTick);
             }
 
             // 每秒同步一次 HUD 数据
