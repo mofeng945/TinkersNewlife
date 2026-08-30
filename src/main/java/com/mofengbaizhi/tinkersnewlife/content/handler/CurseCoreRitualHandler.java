@@ -311,21 +311,25 @@ public class CurseCoreRitualHandler {
         tool.addModifier(Modifiers.CURSE_TOTAL.getId(), total - 1);
         tool.addModifier(Modifiers.CURSE_OUTPUT.getId(), output - 1);
 
-        // 随机术式（解/捌/灶·开）与随机领域（坐杀搏徒/无量空处/伏魔御厨子），各占一个术式槽/领域槽
+        // 随机术式（解/捌/灶·开）与随机领域（坐杀搏徒/无量空处/伏魔御厨子）
+        // ⭐ addModifier 只加修饰符不扣槽位（配方系统才扣），这里手动各消耗一个术式槽/领域槽
+        SlotType techniqueSlot = SlotType.getOrCreate("technique");
+        SlotType domainSlot = SlotType.getOrCreate("domain");
         BaseTechnique[] techniques = {
                 KaiTechnique.INSTANCE, BaTechnique.INSTANCE, ZaoKaiTechnique.INSTANCE
         };
         tool.addModifier(techniques[random.nextInt(techniques.length)].getModifierId(), 1);
+        tool.getPersistentData().addSlots(techniqueSlot, -1);
         ModifierId[] domains = {
                 Modifiers.ZUOSHA_BOTU.getId(), Modifiers.WULIANG_KONGCHU.getId(), Modifiers.FUMO_YUCHUZI.getId()
         };
         tool.addModifier(domains[random.nextInt(domains.length)], 1);
+        tool.getPersistentData().addSlots(domainSlot, -1);
 
-        // ⭐ 30% 概率额外术式槽（基础 1 个，最多 3 个）
+        // ⭐ 30% 概率额外术式槽（总术式槽最多 3 个，含已消耗的 1 个）
         if (random.nextFloat() < 0.3) {
-            SlotType techniqueSlot = SlotType.getOrCreate("technique");
-            int baseSlots = tool.getPersistentData().getSlots(techniqueSlot);
-            int extra = Math.min(1 + random.nextInt(2), 3 - baseSlots);
+            int free = tool.getPersistentData().getSlots(techniqueSlot); // 已扣 1，可能为 0
+            int extra = Math.min(1 + random.nextInt(2), 2 - free); // 上限：free+extra ≤ 2（总 3）
             if (extra > 0) {
                 tool.getPersistentData().addSlots(techniqueSlot, extra);
             }
