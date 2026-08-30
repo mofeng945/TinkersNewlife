@@ -406,6 +406,7 @@
   "message.tinkersnewlife.domain.no_trait": "§c咒力核心需要拥有领域特性（占用领域槽）",
   "message.tinkersnewlife.domain.no_curse": "§c咒力不足，无法展开领域",
   "message.tinkersnewlife.technique.no_trait": "§c咒力核心需要拥有术式特性（占用术式槽）",
+  "message.tinkersnewlife.ritual.no_xp": "§c仪式需要 %s 级经验",
   "message.tinkersnewlife.technique.no_target": "§c未命中目标实体",
   "message.tinkersnewlife.technique.no_curse": "§c咒力不足，无法释放术式",
   "message.tinkersnewlife.technique.too_far": "§c距离目标过远（需 3 格内接触）",
