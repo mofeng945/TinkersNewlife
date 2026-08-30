@@ -10,6 +10,7 @@ import com.mofengbaizhi.tinkersnewlife.content.curse.BloodManipulationHyakurenTe
 import com.mofengbaizhi.tinkersnewlife.content.curse.BloodManipulationSupernovaTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.BloodManipulationTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.KaiTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.TenShadowsTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.ZaoKaiTechnique;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -325,7 +326,7 @@ public class CurseCoreRitualHandler {
         BaseTechnique[] techniques = {
                 KaiTechnique.INSTANCE, BaTechnique.INSTANCE, ZaoKaiTechnique.INSTANCE,
                 BloodManipulationTechnique.INSTANCE, BloodManipulationHyakurenTechnique.INSTANCE,
-                BloodManipulationSupernovaTechnique.INSTANCE
+                BloodManipulationSupernovaTechnique.INSTANCE, TenShadowsTechnique.INSTANCE
         };
         tool.addModifier(techniques[random.nextInt(techniques.length)].getModifierId(), 1);
         tool.getPersistentData().addSlots(techniqueSlot, -1);

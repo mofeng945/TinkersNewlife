@@ -1,0 +1,13 @@
+{
+  "type": "tconstruct:modifier_salvage",
+  "tools": {
+    "item": "tinkersnewlife:curse_core"
+  },
+  "modifier": "tinkersnewlife:ten_shadows",
+  "level": {
+    "max": 1
+  },
+  "slots": {
+    "technique": 1
+  }
+}

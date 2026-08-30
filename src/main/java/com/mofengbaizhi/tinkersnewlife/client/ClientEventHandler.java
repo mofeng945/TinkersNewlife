@@ -74,6 +74,9 @@ public class ClientEventHandler {
         // 赤血操术·超新星 血球：微小血红圆球
         event.registerEntityRenderer(ModEntities.BLOOD_NOVA.get(),
                 com.mofengbaizhi.tinkersnewlife.client.renderer.BloodNovaRenderer::new);
+        // 十影术式 式神（单类多型，按类型染色/缩放）
+        event.registerEntityRenderer(ModEntities.SHIKIGAMI.get(),
+                com.mofengbaizhi.tinkersnewlife.client.renderer.ShikigamiRenderer::new);
     }
 
     // ========== Forge 事件（按键等） ==========

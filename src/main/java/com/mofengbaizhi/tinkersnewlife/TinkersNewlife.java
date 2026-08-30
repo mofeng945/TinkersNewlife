@@ -9,6 +9,7 @@ import com.mofengbaizhi.tinkersnewlife.content.curse.DomainRegistry;
 import com.mofengbaizhi.tinkersnewlife.content.curse.FuMoYuChuZiDomain;
 import com.mofengbaizhi.tinkersnewlife.content.curse.KaiTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.TechniqueHandler;
+import com.mofengbaizhi.tinkersnewlife.content.curse.TenShadowsTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.WuLiangKongChuDomain;
 import com.mofengbaizhi.tinkersnewlife.content.curse.ZaoKaiTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.ZuoShaBoTuDomain;
@@ -17,7 +18,9 @@ import com.mofengbaizhi.tinkersnewlife.content.storage.SilentGloveHandler;
 import com.mofengbaizhi.tinkersnewlife.content.storage.StorageManager;
 import com.mofengbaizhi.tinkersnewlife.network.PacketDragonStaffUse;
 import com.mofengbaizhi.tinkersnewlife.network.PacketOpenBag;
+import com.mofengbaizhi.tinkersnewlife.network.PacketOpenShikigamiScreen;
 import com.mofengbaizhi.tinkersnewlife.network.PacketSortBag;
+import com.mofengbaizhi.tinkersnewlife.network.PacketSummonShikigami;
 import com.mofengbaizhi.tinkersnewlife.network.PacketSwitchFlyingSwordMode;
 import com.mofengbaizhi.tinkersnewlife.network.PacketSwitchTechnique;
 import com.mofengbaizhi.tinkersnewlife.network.PacketSyncCurse;
@@ -135,6 +138,7 @@ public class TinkersNewlife {
         TechniqueHandler.register(BloodManipulationTechnique.INSTANCE);
         TechniqueHandler.register(BloodManipulationHyakurenTechnique.INSTANCE);
         TechniqueHandler.register(BloodManipulationSupernovaTechnique.INSTANCE);
+        TechniqueHandler.register(TenShadowsTechnique.INSTANCE);
 
         // 注册网络包
         registerPacket(PacketUseSkill.class, PacketUseSkill::toBytes, PacketUseSkill::new, PacketUseSkill::handle);
@@ -145,8 +149,13 @@ public class TinkersNewlife {
         registerPacket(PacketToggleDomain.class, PacketToggleDomain::toBytes, PacketToggleDomain::new, PacketToggleDomain::handle);
         registerPacket(PacketUseTechnique.class, PacketUseTechnique::toBytes, PacketUseTechnique::new, PacketUseTechnique::handle);
         registerPacket(PacketSwitchTechnique.class, PacketSwitchTechnique::toBytes, PacketSwitchTechnique::new, PacketSwitchTechnique::handle);
+        registerPacket(PacketSummonShikigami.class, PacketSummonShikigami::toBytes, PacketSummonShikigami::new, PacketSummonShikigami::handle);
         // 服务端→客户端
         registerClientPacket(PacketSyncCurse.class, PacketSyncCurse::toBytes, PacketSyncCurse::new, PacketSyncCurse::handle);
+        registerClientPacket(PacketOpenShikigamiScreen.class, PacketOpenShikigamiScreen::toBytes, PacketOpenShikigamiScreen::new, PacketOpenShikigamiScreen::handle);
+
+        // 实体属性（式神等生物实体）
+        modEventBus.addListener(TinkersNewlife::onRegisterEntityAttributes);
 
         MinecraftForge.EVENT_BUS.register(this);
         LOGGER.info("TinkersNewlife 模组初始化完成");
@@ -154,6 +163,12 @@ public class TinkersNewlife {
 
     public static ResourceLocation prefix(String path) {
         return new ResourceLocation(MOD_ID, path);
+    }
+
+    /** 注册生物实体属性（式神等） */
+    @SubscribeEvent
+    public static void onRegisterEntityAttributes(net.minecraftforge.event.entity.EntityAttributeCreationEvent event) {
+        event.put(ModEntities.SHIKIGAMI.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiEntity.createAttributes().build());
     }
 
     // ========== Forge 事件处理 ==========

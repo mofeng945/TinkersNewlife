@@ -68,8 +68,9 @@ public class CursePowerHandler {
         boolean domainActive = DomainRegistry.isActive(player.getUUID());
         boolean infinite = wearing && CursePowerHelper.isCurseInfinite(player);
         ModifierId technique = wearing ? TechniqueHandler.getSelectedTechniqueId(player) : null;
+        int tamedMask = wearing ? com.mofengbaizhi.tinkersnewlife.content.curse.shikigami.ShikigamiHandler.getTamedMask(player) : 0;
         TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
                 new PacketSyncCurse(curse, max, domainActive, infinite,
-                        technique == null ? "" : technique.toString()));
+                        technique == null ? "" : technique.toString(), tamedMask));
     }
 }

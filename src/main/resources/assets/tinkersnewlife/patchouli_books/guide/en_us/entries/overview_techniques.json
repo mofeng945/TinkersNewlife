@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "术式是咒术师的攻伐手段，占用核心的$(bold)术式槽$()。$(li)仪式随机赋予一个术式；30% 概率额外获得术式槽（最多 3 个）$(li)术式可通过 $(l:techniques/usage)绑定按键$() 释放；核心有多个术式时用切换键循环选择$(br2)共有六种术式：$(li)$(l:techniques/kai)解$()：单体斩击$(li)$(l:techniques/ba)捌$()：六连斩$(li)$(l:techniques/zao_kai)灶·开$()：蓄力火焰箭$(li)$(l:techniques/blood_manipulation)赤血操术·穿血$()：血激光束穿透$(li)$(l:techniques/blood_manipulation_hyakuren)赤血操术·百敛$()：五道血柱$(li)$(l:techniques/blood_manipulation_supernova)赤血操术·超新星$()：血球延迟爆炸"
+      "text": "术式是咒术师的攻伐手段，占用核心的$(bold)术式槽$()。$(li)仪式随机赋予一个术式；30% 概率额外获得术式槽（最多 3 个）$(li)术式可通过 $(l:techniques/usage)绑定按键$() 释放；核心有多个术式时用切换键循环选择$(br2)共有七种术式：$(li)$(l:techniques/kai)解$()：单体斩击$(li)$(l:techniques/ba)捌$()：六连斩$(li)$(l:techniques/zao_kai)灶·开$()：蓄力火焰箭$(li)$(l:techniques/blood_manipulation)赤血操术·穿血$()：血激光束穿透$(li)$(l:techniques/blood_manipulation_hyakuren)赤血操术·百敛$()：五道血柱$(li)$(l:techniques/blood_manipulation_supernova)赤血操术·超新星$()：血球延迟爆炸$(li)$(l:techniques/ten_shadows)十影术式$()：召唤十种式神"
     }
   ]
 }

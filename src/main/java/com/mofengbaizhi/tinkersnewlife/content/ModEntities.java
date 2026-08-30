@@ -7,6 +7,7 @@ import com.mofengbaizhi.tinkersnewlife.content.entity.DreadsteelSlashEntity;
 import com.mofengbaizhi.tinkersnewlife.content.entity.FlameArrowEntity;
 import com.mofengbaizhi.tinkersnewlife.content.entity.FlyingSwordEntity;
 import com.mofengbaizhi.tinkersnewlife.content.entity.FlyingSwordFootEntity;
+import com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiEntity;
 import com.mofengbaizhi.tinkersnewlife.content.entity.YoYoEntity;
 
 import net.minecraft.world.entity.EntityType;
@@ -85,5 +86,15 @@ public class ModEntities {
                         .clientTrackingRange(64)
                         .updateInterval(1)
                         .build(TinkersNewlife.MOD_ID + ":blood_nova")
+        );
+
+    /** 十种影法术 式神（单类多型，行为/外观由类型决定） */
+    public static final RegistryObject<EntityType<ShikigamiEntity>> SHIKIGAMI =
+        ENTITIES.register("shikigami",
+                () -> EntityType.Builder.<ShikigamiEntity>of(ShikigamiEntity::new, MobCategory.CREATURE)
+                        .sized(0.9f, 1.2f)
+                        .clientTrackingRange(64)
+                        .updateInterval(1)
+                        .build(TinkersNewlife.MOD_ID + ":shikigami")
         );
 }

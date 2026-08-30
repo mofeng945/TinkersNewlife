@@ -142,4 +142,8 @@ public class Modifiers {
     /** 赤血操术·超新星（术式特性，占用术式槽） */
     public static final StaticModifier<BloodManipulationSupernovaTrait> BLOOD_MANIPULATION_SUPERNOVA =
         MODIFIERS.register("blood_manipulation_supernova", BloodManipulationSupernovaTrait::new);
+
+    /** 十影术式（术式特性，占用术式槽） */
+    public static final StaticModifier<TenShadowsTrait> TEN_SHADOWS =
+        MODIFIERS.register("ten_shadows", TenShadowsTrait::new);
 }

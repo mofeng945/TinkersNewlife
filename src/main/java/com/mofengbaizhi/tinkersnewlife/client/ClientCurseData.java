@@ -20,13 +20,17 @@ public class ClientCurseData {
     private static boolean infinite;
     /** 当前选中的术式 id（如 tinkersnewlife:kai），无术式时为 "" */
     private static String techniqueId = "";
+    /** 已调伏式神位掩码（位 = ShikigamiType.ordinal()） */
+    private static int tamedMask = 0;
 
-    public static void update(double curseIn, double maxIn, boolean domainActiveIn, boolean infiniteIn, String techniqueIdIn) {
+    public static void update(double curseIn, double maxIn, boolean domainActiveIn, boolean infiniteIn,
+                              String techniqueIdIn, int tamedMaskIn) {
         curse = curseIn;
         max = maxIn;
         domainActive = domainActiveIn;
         infinite = infiniteIn;
         techniqueId = techniqueIdIn == null ? "" : techniqueIdIn;
+        tamedMask = tamedMaskIn;
     }
 
     /** 当前咒力（服务端同步，未佩戴时为 0） */
@@ -47,6 +51,12 @@ public class ClientCurseData {
     /** 是否咒力无限 */
     public static boolean isInfinite() {
         return infinite;
+    }
+
+    /** 该式神是否已调伏（客户端镜像，玉犬永远可用） */
+    public static boolean isShikigamiTamed(com.mofengbaizhi.tinkersnewlife.content.curse.shikigami.ShikigamiType type) {
+        if (type == com.mofengbaizhi.tinkersnewlife.content.curse.shikigami.ShikigamiType.DOG) return true;
+        return (tamedMask & (1 << type.ordinal())) != 0;
     }
 
     /** Forge GUI Overlay 渲染入口（registerAboveAll） */
