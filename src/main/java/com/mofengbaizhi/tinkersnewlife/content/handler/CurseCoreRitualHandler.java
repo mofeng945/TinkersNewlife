@@ -84,9 +84,12 @@ public class CurseCoreRitualHandler {
 
     /** 材料方块 → 对应材料流体（焦黑熔石/熔融铁/熔融金/熔融钻石） */
     private static final Map<Block, Fluid> MATERIAL_FLUIDS = new HashMap<>();
-    /** 材料流体 → 信标光束颜色（服务端无 FluidType 颜色接口，固定映射） */
+    /** 常见材料流体 → 信标光束颜色（服务端无 FluidType 颜色接口，固定映射） */
     private static final Map<Fluid, Integer> MATERIAL_FLUID_COLORS = new HashMap<>();
-    private static Block gaugeBlock = null;
+    /** 未知流体的默认光束颜色 */
+    private static final int DEFAULT_BEAM_COLOR = 0xffffff;
+    private static Block gaugeSeared = null;
+    private static Block gaugeScorched = null;
 
     static {
         MATERIAL_FLUIDS.put(Blocks.STONE, fluid("tconstruct:seared_stone"));
@@ -97,6 +100,9 @@ public class CurseCoreRitualHandler {
         MATERIAL_FLUID_COLORS.put(fluid("tconstruct:molten_iron"), 0xe8e8e8);
         MATERIAL_FLUID_COLORS.put(fluid("tconstruct:molten_gold"), 0xffd75f);
         MATERIAL_FLUID_COLORS.put(fluid("tconstruct:molten_diamond"), 0x6ee7ff);
+        MATERIAL_FLUID_COLORS.put(fluid("tconstruct:molten_rose_gold"), 0xffb39b);
+        MATERIAL_FLUID_COLORS.put(fluid("tconstruct:molten_copper"), 0xff8c5a);
+        MATERIAL_FLUID_COLORS.put(fluid("tconstruct:molten_netherite"), 0x4a3a33);
     }
 
     private CurseCoreRitualHandler() {}
@@ -137,12 +143,14 @@ public class CurseCoreRitualHandler {
 
     /** 结构 + 流体校验；不满足返回 null（静默） */
     private static RitualStart validate(Level level, BlockPos orePos) {
-        // 1. 量器在矿石正下方
+        // 1. 量器在矿石正下方（焦黑 seared_ingot_gauge / 焦褐 scorched_ingot_gauge 均可）
         BlockPos gaugePos = orePos.below();
-        if (gaugeBlock == null) {
-            gaugeBlock = ForgeRegistries.BLOCKS.getValue(ResourceLocation.tryParse("tconstruct:seared_ingot_gauge"));
+        if (gaugeSeared == null) {
+            gaugeSeared = ForgeRegistries.BLOCKS.getValue(ResourceLocation.tryParse("tconstruct:seared_ingot_gauge"));
+            gaugeScorched = ForgeRegistries.BLOCKS.getValue(ResourceLocation.tryParse("tconstruct:scorched_ingot_gauge"));
         }
-        if (gaugeBlock == null || !level.getBlockState(gaugePos).is(gaugeBlock)) return null;
+        BlockState gaugeState = level.getBlockState(gaugePos);
+        if (gaugeSeared == null || (!gaugeState.is(gaugeSeared) && !gaugeState.is(gaugeScorched))) return null;
 
         // 2. 四周隔一格：石头/铁块/金块/钻石块（恰好各一个，任意方位）+ 上方灵魂灯笼
         Direction[] dirs = {Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST};
@@ -160,20 +168,22 @@ public class CurseCoreRitualHandler {
         }
         if (found.size() != 4) return null;
 
-        // 3. 量器内 ≥6 锭的对应材料流体（静默）
+        // 3. 量器内任意材料流体 ≥6 锭（对应材料流体，静默）
         if (level.getBlockEntity(gaugePos) == null) return null;
         IFluidHandler handler = level.getBlockEntity(gaugePos)
                 .getCapability(ForgeCapabilities.FLUID_HANDLER).orElse(null);
         if (handler == null) return null;
-        for (Fluid fluid : MATERIAL_FLUIDS.values()) {
-            if (fluid == null) continue;
-            FluidStack sim = handler.drain(new FluidStack(fluid, REQUIRED_MB), IFluidHandler.FluidAction.SIMULATE);
-            if (sim.getAmount() >= REQUIRED_MB) {
-                int color = MATERIAL_FLUID_COLORS.getOrDefault(fluid, 0xffffff);
-                return new RitualStart(gaugePos, fluid, color, lanterns, materialStates);
+        Fluid fluid = null;
+        for (int tank = 0; tank < handler.getTanks(); tank++) {
+            FluidStack contents = handler.getFluidInTank(tank);
+            if (contents.getAmount() >= REQUIRED_MB) {
+                fluid = contents.getFluid();
+                break;
             }
         }
-        return null;
+        if (fluid == null) return null;
+        int color = MATERIAL_FLUID_COLORS.getOrDefault(fluid, DEFAULT_BEAM_COLOR);
+        return new RitualStart(gaugePos, fluid, color, lanterns, materialStates);
     }
 
     // ============================================================
