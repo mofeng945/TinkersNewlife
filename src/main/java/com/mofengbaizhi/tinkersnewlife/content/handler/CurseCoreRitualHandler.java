@@ -37,7 +37,12 @@ import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
+import slimeknights.tconstruct.library.materials.definition.IMaterial;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
+import slimeknights.tconstruct.library.recipe.TinkerRecipeTypes;
+import slimeknights.tconstruct.library.recipe.casting.material.MaterialFluidRecipe;
+import slimeknights.tconstruct.library.tools.SlotType;
+import slimeknights.tconstruct.library.tools.nbt.MaterialNBT;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
 import java.util.ArrayList;
@@ -61,7 +66,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * 空手右键格赫罗斯矿石发动：仪式持续 5 秒（量器按流体颜色发射信标光束，
  * 四面灯笼顶端向矿石发射其下方方块破碎粒子连线，密度较高）。
  * 完成时消耗 6 锭材料流体 + 玩家 50 级经验，在格赫罗斯矿石上生成咒力核心：
- * 咒力总量/输出等级各随机 1-5，随机附一个术式与一个领域。
+ * - 咒力核心材质 = 消耗的材料流体对应材料（经匠魂 material_fluid 配方数据关联，
+ *   流体无对应材料时静默失败）
+ * - 咒力总量/输出等级各随机 1-5，随机附一个术式与一个领域（各占一个术式槽/领域槽）
+ * - 30% 概率额外带有术式槽（基础 1 个，最多 3 个）
  * 流体不足 6 锭或结构不完整时静默不发动。
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -120,29 +128,29 @@ public class CurseCoreRitualHandler {
         if (event.getHand() != InteractionHand.MAIN_HAND) return;
         Player player = event.getEntity();
         if (player == null || player.level().isClientSide) return;
-        if (!player.getMainHandItem().isEmpty()) return; // 必须空手
-        Level level = player.level();
+        if (!(player instanceof ServerPlayer sp)) return;
+        if (!sp.getMainHandItem().isEmpty()) return; // 必须空手
+        Level level = sp.level();
         BlockPos orePos = event.getPos();
         if (!level.getBlockState(orePos).is(ModBlocks.GHELOTH_ORE.get())) return;
         if (RITUALS.containsKey(orePos)) return;
 
-        // 结构 + 流体校验（不满足 → 静默）
-        RitualStart start = validate(level, orePos);
+        // 结构 + 流体 + 材料校验（不满足 → 静默）
+        RitualStart start = validate(sp, orePos);
         if (start == null) return;
         event.setCanceled(true);
 
-        if (player instanceof ServerPlayer sp) {
-            if (sp.experienceLevel < XP_LEVELS) {
-                sp.displayClientMessage(Component.translatable("message.tinkersnewlife.ritual.no_xp", XP_LEVELS), true);
-                return;
-            }
-            RITUALS.put(orePos, new RitualData(sp.getUUID(), level.dimension(), orePos,
-                    start.gaugePos, start.fluid, start.color, start.lanterns, start.materialStates));
+        if (sp.experienceLevel < XP_LEVELS) {
+            sp.displayClientMessage(Component.translatable("message.tinkersnewlife.ritual.no_xp", XP_LEVELS), true);
+            return;
         }
+        RITUALS.put(orePos, new RitualData(sp.getUUID(), level.dimension(), orePos,
+                start.gaugePos, start.fluid, start.color, start.material, start.lanterns, start.materialStates));
     }
 
-    /** 结构 + 流体校验；不满足返回 null（静默） */
-    private static RitualStart validate(Level level, BlockPos orePos) {
+    /** 结构 + 流体 + 材料校验；不满足返回 null（静默） */
+    private static RitualStart validate(ServerPlayer player, BlockPos orePos) {
+        Level level = player.level();
         // 1. 量器在矿石正下方（焦黑 seared_ingot_gauge / 焦褐 scorched_ingot_gauge 均可）
         BlockPos gaugePos = orePos.below();
         if (gaugeSeared == null) {
@@ -182,8 +190,29 @@ public class CurseCoreRitualHandler {
             }
         }
         if (fluid == null) return null;
+        // 4. 读取匠魂 material_fluid 数据结构：流体 → 材料（无对应材料的咒力核心 → 静默）
+        IMaterial material = materialFromFluid(player.server, fluid);
+        if (material == null || material == IMaterial.UNKNOWN) return null;
         int color = MATERIAL_FLUID_COLORS.getOrDefault(fluid, DEFAULT_BEAM_COLOR);
-        return new RitualStart(gaugePos, fluid, color, lanterns, materialStates);
+        return new RitualStart(gaugePos, fluid, color, material, lanterns, materialStates);
+    }
+
+    /** 从匠魂 material_fluid 配方数据读取流体对应的材料（输出材料） */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static IMaterial materialFromFluid(MinecraftServer server, Fluid fluid) {
+        try {
+            net.minecraft.world.item.crafting.RecipeType rawType = TinkerRecipeTypes.DATA.get();
+            for (net.minecraft.world.item.crafting.Recipe<?> recipe :
+                    (java.util.Collection<net.minecraft.world.item.crafting.Recipe<?>>)
+                            (java.util.Collection<?>) server.getRecipeManager().getAllRecipesFor(rawType)) {
+                if (recipe instanceof MaterialFluidRecipe mfr && mfr.matches(fluid)) {
+                    return mfr.getOutput().get();
+                }
+            }
+        } catch (Throwable t) {
+            TinkersNewlife.LOGGER.warn("[TinkersNewlife] 读取材料流体关联失败: {}", t.toString());
+        }
+        return null;
     }
 
     // ============================================================
@@ -258,17 +287,23 @@ public class CurseCoreRitualHandler {
         if (player != null) {
             player.giveExperienceLevels(-XP_LEVELS);
         }
-        // 生成咒力核心（随机总量/输出 1-5 + 随机术式 + 随机领域），掉在矿石上方
-        ItemStack core = generateCurseCore(level.random);
+        // 生成咒力核心（对应材料 + 随机总量/输出 1-5 + 随机术式/领域，30% 额外术式槽），掉在矿石上方
+        ItemStack core = generateCurseCore(level.random, data.material);
         Vec3 drop = new Vec3(orePos.getX() + 0.5, orePos.getY() + 1.5, orePos.getZ() + 0.5);
         level.addFreshEntity(new ItemEntity(level, drop.x, drop.y, drop.z, core));
     }
 
-    /** 生成随机咒力核心：咒力总量/输出 1-5、随机术式、随机领域 */
-    private static ItemStack generateCurseCore(RandomSource random) {
+    /** 生成咒力核心：消耗什么材料就给什么材料；总量/输出 1-5；随机术式与领域；30% 概率额外术式槽（最多 3 个） */
+    private static ItemStack generateCurseCore(RandomSource random, IMaterial material) {
         ItemStack base = new ItemStack(ModItems.CURSE_CORE.get());
         ToolStack tool = ToolStack.from(base);
         if (tool == null) return base;
+
+        // 部件材质 = 仪式消耗的材料（消耗什么材料就给什么材料的咒力核心）
+        if (material != null && material != IMaterial.UNKNOWN) {
+            tool.setMaterials(MaterialNBT.of(material));
+            tool.rebuildStats();
+        }
 
         int total = 1 + random.nextInt(5);   // 咒力总量 1-5
         int output = 1 + random.nextInt(5);  // 咒力输出 1-5
@@ -276,17 +311,25 @@ public class CurseCoreRitualHandler {
         tool.addModifier(Modifiers.CURSE_TOTAL.getId(), total - 1);
         tool.addModifier(Modifiers.CURSE_OUTPUT.getId(), output - 1);
 
-        // 随机术式（解/捌/灶·开）
+        // 随机术式（解/捌/灶·开）与随机领域（坐杀搏徒/无量空处/伏魔御厨子），各占一个术式槽/领域槽
         BaseTechnique[] techniques = {
                 KaiTechnique.INSTANCE, BaTechnique.INSTANCE, ZaoKaiTechnique.INSTANCE
         };
         tool.addModifier(techniques[random.nextInt(techniques.length)].getModifierId(), 1);
-
-        // 随机领域（坐杀搏徒/无量空处/伏魔御厨子）
         ModifierId[] domains = {
                 Modifiers.ZUOSHA_BOTU.getId(), Modifiers.WULIANG_KONGCHU.getId(), Modifiers.FUMO_YUCHUZI.getId()
         };
         tool.addModifier(domains[random.nextInt(domains.length)], 1);
+
+        // ⭐ 30% 概率额外术式槽（基础 1 个，最多 3 个）
+        if (random.nextFloat() < 0.3) {
+            SlotType techniqueSlot = SlotType.getOrCreate("technique");
+            int baseSlots = tool.getPersistentData().getSlots(techniqueSlot);
+            int extra = Math.min(1 + random.nextInt(2), 3 - baseSlots);
+            if (extra > 0) {
+                tool.getPersistentData().addSlots(techniqueSlot, extra);
+            }
+        }
 
         return tool.createStack();
     }
@@ -299,14 +342,16 @@ public class CurseCoreRitualHandler {
         final BlockPos gaugePos;
         final Fluid fluid;
         final int color;
+        final IMaterial material;
         final List<BlockPos> lanterns;
         final List<BlockState> materialStates;
 
-        RitualStart(BlockPos gaugePos, Fluid fluid, int color,
+        RitualStart(BlockPos gaugePos, Fluid fluid, int color, IMaterial material,
                     List<BlockPos> lanterns, List<BlockState> materialStates) {
             this.gaugePos = gaugePos;
             this.fluid = fluid;
             this.color = color;
+            this.material = material;
             this.lanterns = lanterns;
             this.materialStates = materialStates;
         }
@@ -318,18 +363,20 @@ public class CurseCoreRitualHandler {
         final BlockPos gaugePos;
         final Fluid fluid;
         final int color;
+        final IMaterial material;
         final List<BlockPos> lanterns;
         final List<BlockState> materialStates;
         int ticksLeft;
 
         RitualData(UUID playerId, ResourceKey<Level> dimension, BlockPos orePos,
-                   BlockPos gaugePos, Fluid fluid, int color,
+                   BlockPos gaugePos, Fluid fluid, int color, IMaterial material,
                    List<BlockPos> lanterns, List<BlockState> materialStates) {
             this.playerId = playerId;
             this.dimension = dimension;
             this.gaugePos = gaugePos;
             this.fluid = fluid;
             this.color = color;
+            this.material = material;
             this.lanterns = lanterns;
             this.materialStates = materialStates;
             this.ticksLeft = RITUAL_TICKS;
