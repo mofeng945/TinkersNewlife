@@ -134,4 +134,8 @@ public class Modifiers {
     /** 赤血操术（术式特性，占用术式槽） */
     public static final StaticModifier<BloodManipulationTrait> BLOOD_MANIPULATION =
         MODIFIERS.register("blood_manipulation", BloodManipulationTrait::new);
+
+    /** 赤血操术·百敛（术式特性，占用术式槽） */
+    public static final StaticModifier<BloodManipulationHyakurenTrait> BLOOD_MANIPULATION_HYAKUREN =
+        MODIFIERS.register("blood_manipulation_hyakuren", BloodManipulationHyakurenTrait::new);
 }

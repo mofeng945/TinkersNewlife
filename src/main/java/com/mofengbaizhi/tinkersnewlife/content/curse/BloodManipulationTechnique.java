@@ -114,8 +114,13 @@ public final class BloodManipulationTechnique extends BaseTechnique {
         }
     }
 
+    /** 穿血单体伤害（供「赤血操术·百敛」复用）：(1 + 咒力亲和/100) × (咒力输出 + 消耗血量×5)，消耗血量 = 最大生命 × 5% */
+    public static double singleTargetDamage(ServerPlayer player) {
+        return computeDamage(player, player.getMaxHealth() * BLOOD_COST_RATIO);
+    }
+
     /** 伤害 = (1 + 咒力亲和/100) × (咒力输出等级 + 消耗血量×5) */
-    private double computeDamage(ServerPlayer player, double bloodCost) {
+    private static double computeDamage(ServerPlayer player, double bloodCost) {
         int output = CursePowerHelper.getCurseOutputLevel(player);
         int affinity = CursePowerHelper.getCurseAffinity(player);
         return (1.0 + affinity / 100.0) * (output + bloodCost * 5.0);

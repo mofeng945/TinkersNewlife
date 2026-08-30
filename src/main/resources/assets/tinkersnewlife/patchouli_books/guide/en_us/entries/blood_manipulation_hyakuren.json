@@ -1,0 +1,16 @@
+{
+  "name": "赤血操术·百敛",
+  "category": "tinkersnewlife:techniques",
+  "icon": "tinkersnewlife:curse_core",
+  "sortnum": 7,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)赤血操术·百敛$()：血之百道，尽归一身。$(br2)指向目标（视线索敌），从身体周围释放 5 道血柱，轨迹最终指向目标，对目标造成 $(bold)5 次伤害$()，每次为「$(l:techniques/blood_manipulation)赤血操术·穿血$()」单体伤害的二分之一。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(li)每次伤害无视无敌帧（可被护甲 / 盾牌衰减）$(li)材料战斗特性每道伤害照常触发$(li)穿血单体伤害 = (1 + 咒力亲和/100) × (咒力输出 + 最大生命×5%×5)$(li)咒力消耗：5/3 × (1 - 咒力亲和/100) × (10 + 咒力输出×5) 点"
+    }
+  ]
+}
