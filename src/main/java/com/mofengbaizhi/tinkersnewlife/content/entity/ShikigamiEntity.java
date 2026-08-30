@@ -186,6 +186,10 @@ public class ShikigamiEntity extends Mob {
         if (!getPassengers().isEmpty()) {
             getNavigation().stop();
             wasRidden = true;
+            if (getShikigamiType() == ShikigamiType.NUE && tickCount % 20 == 0) {
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
+                        "[Shikigami] NUE 骑乘中 tick={} passengers={} y={}", tickCount, getPassengers().size(), getY());
+            }
             return;
         }
         // 调试：记录骑手掉落瞬间
@@ -645,17 +649,20 @@ public class ShikigamiEntity extends Mob {
 
     @Override
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
-        if (!level().isClientSide && getShikigamiType() == ShikigamiType.NUE
+        // 客户端与服务端都执行（客户端本地骑乘预测，避免只靠服务端同步导致渲染异常）
+        if (getShikigamiType() == ShikigamiType.NUE
                 && tamed && player.getUUID().equals(ownerId) && player.getMainHandItem().isEmpty()) {
             if (player.isPassenger()) {
                 player.stopRiding();
             } else {
                 boolean ok = player.startRiding(this);
-                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
-                        "[Shikigami] {} 上马 NUE: ok={}, passengers={}, removed={}, y={}",
-                        player.getName().getString(), ok, getPassengers().size(), isRemoved(), getY());
+                if (!level().isClientSide) {
+                    com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
+                            "[Shikigami] {} 上马 NUE: ok={}, passengers={}, removed={}, y={}",
+                            player.getName().getString(), ok, getPassengers().size(), isRemoved(), getY());
+                }
             }
-            return InteractionResult.SUCCESS;
+            return InteractionResult.sidedSuccess(level().isClientSide);
         }
         return super.mobInteract(player, hand);
     }
