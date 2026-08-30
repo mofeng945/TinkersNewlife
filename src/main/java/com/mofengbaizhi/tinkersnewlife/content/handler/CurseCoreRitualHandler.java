@@ -339,7 +339,14 @@ public class CurseCoreRitualHandler {
             }
         }
 
-        return tool.createStack();
+        // ⭐ 调试：记录产出核心的材质与全部修饰符（含材料特性），便于验证特性是否生效
+        ItemStack result = tool.createStack();
+        TinkersNewlife.LOGGER.info("[TinkersNewlife] 仪式产出咒力核心（材质 {}）修饰符: {}",
+                material != null ? material.getIdentifier() : "unknown",
+                tool.getModifierList().stream()
+                        .map(e -> e.getId() + "x" + e.getLevel())
+                        .toList());
+        return result;
     }
 
     // ============================================================
