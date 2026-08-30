@@ -130,4 +130,8 @@ public class Modifiers {
     /** 灶·开（术式特性，占用术式槽） */
     public static final StaticModifier<ZaoKaiTrait> ZAO_KAI =
         MODIFIERS.register("zao_kai", ZaoKaiTrait::new);
+
+    /** 赤血操术（术式特性，占用术式槽） */
+    public static final StaticModifier<BloodManipulationTrait> BLOOD_MANIPULATION =
+        MODIFIERS.register("blood_manipulation", BloodManipulationTrait::new);
 }

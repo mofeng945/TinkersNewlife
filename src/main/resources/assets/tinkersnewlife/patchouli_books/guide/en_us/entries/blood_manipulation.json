@@ -1,0 +1,16 @@
+{
+  "name": "赤血操术",
+  "category": "tinkersnewlife:techniques",
+  "icon": "tinkersnewlife:curse_core",
+  "sortnum": 5,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)赤血操术$()：以血为刃，贯穿万敌。$(br2)每次发动消耗 $(bold)5% 最大生命值$()（创造模式不消耗，伤害仍按理论消耗计算；当前血量不足以支付 5% 时无法发动）。$(br2)向当前朝向释放一道血激光束，穿透面前 20 格（方块不阻挡）。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(li)伤害 = (1 + 咒力亲和/100) × (咒力输出 + 消耗血量×5)$(li)每个被穿透的目标只受到一次伤害（无视无敌帧，可被护甲衰减）$(li)材料战斗特性照常触发$(li)光束粒子显示约 0.5 秒$(br2)咒力消耗为「解」的一半。"
+    }
+  ]
+}

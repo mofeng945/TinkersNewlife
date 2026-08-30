@@ -6,6 +6,7 @@ import com.mofengbaizhi.tinkersnewlife.content.ModItems;
 import com.mofengbaizhi.tinkersnewlife.content.Modifiers;
 import com.mofengbaizhi.tinkersnewlife.content.curse.BaTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.BaseTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.BloodManipulationTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.KaiTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.ZaoKaiTechnique;
 import net.minecraft.core.BlockPos;
@@ -320,7 +321,8 @@ public class CurseCoreRitualHandler {
         SlotType techniqueSlot = SlotType.getOrCreate("technique");
         SlotType domainSlot = SlotType.getOrCreate("domain");
         BaseTechnique[] techniques = {
-                KaiTechnique.INSTANCE, BaTechnique.INSTANCE, ZaoKaiTechnique.INSTANCE
+                KaiTechnique.INSTANCE, BaTechnique.INSTANCE, ZaoKaiTechnique.INSTANCE,
+                BloodManipulationTechnique.INSTANCE
         };
         tool.addModifier(techniques[random.nextInt(techniques.length)].getModifierId(), 1);
         tool.getPersistentData().addSlots(techniqueSlot, -1);
