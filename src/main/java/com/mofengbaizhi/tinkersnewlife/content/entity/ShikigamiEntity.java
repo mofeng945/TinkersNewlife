@@ -166,6 +166,10 @@ public class ShikigamiEntity extends Mob {
     @Override
     public void tick() {
         super.tick();
+        // 鵺：无重力必须双端生效（noGravity 不是同步字段，客户端需每 tick 补）
+        if (getShikigamiType() == ShikigamiType.NUE) {
+            setNoGravity(true);
+        }
         if (level().isClientSide) {
             tickClientParticles();
             return;
@@ -178,7 +182,7 @@ public class ShikigamiEntity extends Mob {
         }
         // 骑乘模式：玩家驾驶（不执行 AI）
         if (!getPassengers().isEmpty()) {
-            tickRidden(owner);
+            getNavigation().stop();
             return;
         }
         // 脱兔被动：四散逃跑 + 啄怪诱敌
@@ -655,31 +659,31 @@ public class ShikigamiEntity extends Mob {
         return 0.9 + getShikigamiScale() * 0.4;
     }
 
-    /** 骑乘飞行：W 朝视线方向飞（抬头升/低头降）、S 后退、A/D 侧移、潜行快速下降，模型朝向玩家视线 */
-    private void tickRidden(ServerPlayer owner) {
-        Entity rider = getFirstPassenger();
-        if (!(rider instanceof Player player)) return;
-        float yaw = player.getYRot();
-        setYRot(yaw);
-        yBodyRot = yaw;
-        yHeadRot = yaw;
-        setNoGravity(true);
-
-        Vec3 look = player.getLookAngle();
-        double speed = 0.55 + getAttributeValue(Attributes.MOVEMENT_SPEED) * 1.4;
-        Vec3 motion = Vec3.ZERO;
-        if (player.zza != 0) {
-            motion = motion.add(look.scale(player.zza * speed));
+    /** 骑乘飞行（服务端与客户端一致的移动钩子）：W 朝视线飞、S 后退、A/D 侧移、潜行下降 */
+    @Override
+    protected void tickRidden(Player player, Vec3 movement) {
+        super.tickRidden(player, movement);
+        if (getShikigamiType() == ShikigamiType.NUE) {
+            setNoGravity(true);
+            setYRot(player.getYRot());
+            yBodyRot = player.getYRot();
+            yHeadRot = player.getYRot();
+            Vec3 look = player.getLookAngle();
+            double speed = 0.55 + getAttributeValue(Attributes.MOVEMENT_SPEED) * 1.4;
+            Vec3 motion = Vec3.ZERO;
+            if (player.zza != 0) {
+                motion = motion.add(look.scale(player.zza * speed));
+            }
+            if (player.xxa != 0) {
+                Vec3 side = new Vec3(-look.z, 0, look.x).normalize();
+                motion = motion.add(side.scale(player.xxa * speed * 0.6));
+            }
+            if (player.isShiftKeyDown()) {
+                motion = motion.add(0, -0.4, 0);
+            }
+            setDeltaMovement(motion);
+            move(MoverType.SELF, motion);
         }
-        if (player.xxa != 0) {
-            Vec3 side = new Vec3(-look.z, 0, look.x).normalize();
-            motion = motion.add(side.scale(player.xxa * speed * 0.6));
-        }
-        if (player.isShiftKeyDown()) {
-            motion = motion.add(0, -0.4, 0);
-        }
-        setDeltaMovement(motion);
-        move(MoverType.SELF, motion);
     }
 
     // ============================================================
