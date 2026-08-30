@@ -23,7 +23,8 @@
           "D": "minecraft:diamond_block",
           "I": "minecraft:iron_block",
           "G": "minecraft:gold_block",
-          "S": "minecraft:stone"
+          "S": "minecraft:stone",
+          ".": "minecraft:air"
         },
         "symmetrical": true
       },
