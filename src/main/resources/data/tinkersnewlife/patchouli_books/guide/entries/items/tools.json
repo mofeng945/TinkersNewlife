@@ -1,0 +1,12 @@
+{
+  "name": "本模组工具",
+  "category": "tinkersnewlife:items",
+  "icon": "tinkersnewlife:war_scythe",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "本模组加入的匠魂工具与武器：$(li)$(bold)战镰$()：命中积攒狂热（Fever），潜行 + 命中消耗狂热冲刺$(li)$(bold)飞剑$()：右键发射，命中返回，可切换追击模式$(li)$(bold)噤默手套$()：空手时自动从空间奇点库取出武器$(li)$(bold)悠悠球$()$(li)$(bold)驯龙杖$()：驯服 / 回收 / 释放冰火传说之龙$(li)$(bold)模块化魔杖$()：增幅咒术伤害$(li)$(bold)龙魂核心 / 法术核心$()：部件"
+    }
+  ]
+}

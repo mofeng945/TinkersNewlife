@@ -1,0 +1,12 @@
+{
+  "name": "灵魂能量兜底",
+  "category": "tinkersnewlife:curse",
+  "icon": "tinkersnewlife:curse_core",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "当咒力不足时，差额按 $(bold)1 咒力 = 3 灵魂能量$() 的比例由灵魂能量兜底支付（需要安装诡厄巫法；未安装时咒力不足将直接失败）。$(br2)首次触发时会收到提示：$(italic)咒力耗尽，开始消耗灵魂能量！$()$(br2)术式与领域消耗均支持该兜底。"
+    }
+  ]
+}

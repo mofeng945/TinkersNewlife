@@ -1,0 +1,12 @@
+{
+  "name": "术式释放",
+  "category": "tinkersnewlife:techniques",
+  "icon": "minecraft:key",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "释放术式需要：$(li)佩戴咒力核心且拥有对应术式特性$(li)咒力足够（不足时灵魂能量兜底）$(li)不在术式熔断中$(br2)$(bold)解 / 捌$()：按下术式释放按键对目标释放。$(br2)$(bold)灶·开$()：按住按键蓄力（主手出现火焰箭），松开时发射。$(br2)创造模式下不消耗咒力。"
+    }
+  ]
+}

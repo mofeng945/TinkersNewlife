@@ -1,0 +1,12 @@
+{
+  "name": "伏魔御厨子",
+  "category": "tinkersnewlife:domains",
+  "icon": "tinkersnewlife:curse_core",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)伏魔御厨子$()：御厨既开，万物皆为食材。$(br2)每秒消耗 半径×40 咒力（坐杀搏徒的 2 倍）。每 2 tick 对领域内除开启者外的所有生物与玩家释放斩击：$(li)无视无敌帧，可被护甲 / 盾牌衰减$(li)每道伤害 = (1 + (咒力输出等级 + 咒力亲和/10)/10) × (当前攻击伤害 + 咒力输出等级×5) × 5%$(li)材料战斗特性每刀触发$(li)脚下留下红石粉血液（挖掉无掉落）"
+    }
+  ]
+}

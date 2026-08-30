@@ -1,0 +1,10 @@
+{
+  "name": "匠魂新生手册",
+  "landing_text": "欢迎来到 $(bold)匠魂新生$()！$(br2)一本关于$(l:basics/core)咒力核心$()、$(l:techniques/overview)术式$()与$(l:domains/overview)领域$()的修行指南。$(br2)$(l:basics/ritual)从获取咒力核心开始$()，或浏览右侧目录。",
+  "version": 1,
+  "book_texture": "patchouli:textures/gui/book_brown.png",
+  "model": "patchouli:book_brown",
+  "show_progress": false,
+  "dont_generate_book": true,
+  "allow_advancements": false
+}

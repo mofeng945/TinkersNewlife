@@ -1,0 +1,17 @@
+{
+  "name": "咒力核心",
+  "category": "tinkersnewlife:basics",
+  "icon": "tinkersnewlife:curse_core",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)咒力核心$() 是咒力系统的根基。它是一枚匠魂工具，佩戴在 $(bold)curios 咒力核心槽$() 中，提供：$(li)咒力上限与恢复$(li)术式（$(l:techniques/kai)解$()/$(l:techniques/ba)捌$()/$(l:techniques/zao_kai)灶·开$()）$(li)领域（$(l:domains/zuosha_botu)坐杀搏徒$()/$(l:domains/wuliang_kongchu)无量空处$()/$(l:domains/fumo_yuchuzi)伏魔御厨子$()）$(li)材料战斗特性（随核心材料生效）"
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:curse_core",
+      "text": "核心只能通过 $(l:basics/ritual)咒力核心仪式$() 获得，无法在工具台上手工组装。$(br2)仪式产出的核心会随机获得 $(bold)咒力总量$() 与 $(bold)咒力输出$() 等级（1~5），随机附带一个术式与一个领域特性，并有 30% 概率额外获得术式槽（最多 3 个）。"
+    }
+  ]
+}

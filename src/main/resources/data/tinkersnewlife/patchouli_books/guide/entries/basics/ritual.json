@@ -1,0 +1,37 @@
+{
+  "name": "咒力核心仪式",
+  "category": "tinkersnewlife:basics",
+  "icon": "tinkersnewlife:gheloth_ore",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "在 $(bold)格赫罗斯矿石$() 上展开仪式，献上流体与经验，即可凝结出一枚新的咒力核心。$(br2)要求：$(li)任意流体至少 6 锭（864 mB），注入中心的焦黑材料量器$(li)玩家等级 ≥ 50（仪式完成后消耗 50 级）$(li)矿石周围按图示摆放四种方块与灵魂灯笼"
+    },
+    {
+      "type": "patchouli:multiblock",
+      "name": "仪式结构",
+      "multiblock": {
+        "pattern": [
+          [".....", ".....", "L.O.L", ".....", "....."],
+          ["..D..", ".....", "I.0.G", ".....", "..S.."]
+        ],
+        "mapping": {
+          "0": "tconstruct:seared_ingot_gauge",
+          "O": "tinkersnewlife:gheloth_ore",
+          "L": "minecraft:soul_lantern",
+          "D": "minecraft:diamond_block",
+          "I": "minecraft:iron_block",
+          "G": "minecraft:gold_block",
+          "S": "minecraft:stone"
+        },
+        "symmetrical": true
+      },
+      "text": "底层中心为焦黑材料量器（也接受焦黑石材料量器），矿石悬于其上；距离量器 2 格的水平四方向各放一块$(bold)石 / 铁 / 金 / 钻石$() 方块，每块上方再放一盏灵魂灯笼。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "步骤：$(li)1. 搭建结构，向量器注入至少 864 mB 的任意流体$(li)2. 空手右键格赫罗斯矿石开始仪式$(li)3. 等待约 5 秒的粒子引导$(li)4. 仪式完成：消耗注入的流体与 50 级经验，在矿石处产出核心$(br2)核心的材料取决于注入的流体（如熔融玫瑰金 → 玫瑰金）。结构或流体不符时仪式会静默失败，不会消耗任何东西。"
+    }
+  ]
+}

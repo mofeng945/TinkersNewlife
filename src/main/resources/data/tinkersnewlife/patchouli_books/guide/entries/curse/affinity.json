@@ -1,0 +1,12 @@
+{
+  "name": "咒力亲和",
+  "category": "tinkersnewlife:curse",
+  "icon": "tinkersnewlife:curse_core",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)咒力亲和$() 是玩家属性（初始 0）：$(li)装备的饰品可能随机携带 0~50 点亲和$(li)$(l:domains/zuosha_botu)坐杀搏徒$() 特等奖提供 +100 临时亲和（33 秒）$(br2)亲和的作用：$(li)提高咒力上限与恢复$(li)降低术式消耗：× (1 - 亲和/100)$(li)提高术式与领域伤害系数$(li)缩短术式熔断时长"
+    }
+  ]
+}

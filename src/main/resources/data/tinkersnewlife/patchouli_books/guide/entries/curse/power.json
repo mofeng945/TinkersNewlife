@@ -1,0 +1,12 @@
+{
+  "name": "咒力数值",
+  "category": "tinkersnewlife:curse",
+  "icon": "tinkersnewlife:curse_core",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)咒力上限$() = 咒力总量等级 × (咒力输出等级 + 咒力亲和/10) × 500$(br2)例如：总量 3、输出 2、亲和 10 → 3 × (2+1) × 500 = 4500。$(br2)$(bold)恢复$()：佩戴核心时每 5 秒恢复 (咒力输出等级 + 咒力亲和/10) × 5 点。$(br2)创造模式视为咒力无限，施法不消耗。"
+    }
+  ]
+}

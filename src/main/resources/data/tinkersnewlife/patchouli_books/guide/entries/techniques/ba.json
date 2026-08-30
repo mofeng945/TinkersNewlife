@@ -1,0 +1,12 @@
+{
+  "name": "捌",
+  "category": "tinkersnewlife:techniques",
+  "icon": "tinkersnewlife:curse_core",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)捌$()：对 3 格内接触目标同时发动 3 道横向斩击与 3 道纵向斩击（共 6 刀）。$(br2)每道斩击伤害 = 「解」伤害的一半，无视无敌帧，每刀都触发材料战斗特性。$(br2)消耗：「解」的 2 倍咒力。"
+    }
+  ]
+}

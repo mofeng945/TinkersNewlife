@@ -1,0 +1,12 @@
+{
+  "name": "无量空处",
+  "category": "tinkersnewlife:domains",
+  "icon": "tinkersnewlife:curse_core",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)无量空处$()：无限虚空，尽归静止。$(br2)每秒消耗 半径×80 咒力（坐杀搏徒的 4 倍）。领域内除开启者外的生物与玩家陷入静止：无法攻击 / 移动 / 使用物品 / 切换物品栏 / 打开背包，但仍受物理影响。$(br2)关闭后按 (领域内时间/10 + 咒力输出等级) × (1 + 咒力亲和/100) × 10 tick 延续。$(br2)生物按血量、玩家按咒力亲和抵抗进入定身。"
+    }
+  ]
+}
