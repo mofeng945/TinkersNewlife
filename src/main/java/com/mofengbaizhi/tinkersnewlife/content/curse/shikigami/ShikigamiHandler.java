@@ -11,6 +11,8 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.List;
+
 /**
  * 十种影法术 调伏与召唤处理器（服务端）
  * <p>
@@ -55,7 +57,8 @@ public final class ShikigamiHandler {
 
     /**
      * 选择界面选择式神后调用（服务端）：
-     * 检查咒力 → 扣除 → 生成式神（未调伏 → 敌意模式，锁定视线目标）。
+     * 场上已有同类型存活式神 → 召回并返还一半咒力；
+     * 否则检查咒力 → 扣除 → 生成式神（未调伏 → 敌意模式，锁定视线目标）。
      */
     public static boolean summon(ServerPlayer player, ShikigamiType type) {
         // 熔断期间无法召唤
@@ -63,6 +66,23 @@ public final class ShikigamiHandler {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.burnout.active",
                     CursePowerHelper.getBurnoutRemainingSeconds(player)), true);
             return false;
+        }
+        // 召回：场上已有同类型存活式神 → 收回并返还一半咒力
+        List<ShikigamiEntity> alive = player.serverLevel().getEntitiesOfClass(ShikigamiEntity.class,
+                player.getBoundingBox().inflate(512.0),
+                s -> s.isAlive() && s.getOwner() == player && s.getShikigamiType() == type);
+        if (!alive.isEmpty()) {
+            int cost = type.summonCost(player);
+            int refund = Math.max(1, (int) Math.ceil(cost / 2.0));
+            if (!CursePowerHelper.isCurseInfinite(player)) {
+                CursePowerHelper.addCurse(player, refund);
+            }
+            for (ShikigamiEntity s : alive) {
+                s.discard();
+            }
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.ten_shadows.recall",
+                    Component.translatable(type.getLangKey()), refund), true);
+            return true;
         }
         // 咒力只在此刻扣除
         if (!CursePowerHelper.isCurseInfinite(player)) {

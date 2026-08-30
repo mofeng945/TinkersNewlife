@@ -426,6 +426,7 @@
   "screen.tinkersnewlife.ten_shadows.cost": "咒力 ×%s",
   "message.tinkersnewlife.ten_shadows.summon": "§b已召唤式神：%s",
   "message.tinkersnewlife.ten_shadows.summon_untamed": "§c已召唤未调伏式神：%s！它正在攻击你与目标，击败它即可调伏",
+  "message.tinkersnewlife.ten_shadows.recall": "§7已召回式神：%s（返还 %s 点咒力）",
   "message.tinkersnewlife.ten_shadows.tamed": "§6调伏成功！式神 %s 已为你而战",
   "effect.tinkersnewlife.stun": "静止",
   "title.tinkersnewlife.domain.open": "领域展开",

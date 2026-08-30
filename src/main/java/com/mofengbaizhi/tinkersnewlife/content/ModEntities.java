@@ -92,7 +92,7 @@ public class ModEntities {
     public static final RegistryObject<EntityType<ShikigamiEntity>> SHIKIGAMI =
         ENTITIES.register("shikigami",
                 () -> EntityType.Builder.<ShikigamiEntity>of(ShikigamiEntity::new, MobCategory.CREATURE)
-                        .sized(0.9f, 1.2f)
+                        .sized(0.6f, 0.8f)   // 小碰撞箱：避免卡门/巷子，且与小型式神体型匹配
                         .clientTrackingRange(64)
                         .updateInterval(1)
                         .build(TinkersNewlife.MOD_ID + ":shikigami")

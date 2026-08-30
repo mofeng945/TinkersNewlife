@@ -76,11 +76,26 @@ public class ShikigamiRenderer extends EntityRenderer<ShikigamiEntity> {
         };
         float scale = entity.getShikigamiScale();
         if (type == ShikigamiType.TIGER) scale *= 1.6F;
+        boolean vanillaModel = type != ShikigamiType.SERPENT
+                && type != ShikigamiType.ELEPHANT && type != ShikigamiType.MAHORAGA;
 
         poseStack.pushPose();
-        poseStack.translate(0, 1.5, 0);
-        poseStack.scale(scale, scale, scale);
+        // 待机动画：呼吸起伏 + 轻微摇摆（静态模型也有生气）
+        float bob = (float) Math.sin(entity.tickCount * 0.25F) * 0.06F;
+        poseStack.translate(0.0, bob, 0.0);
+        if (vanillaModel) {
+            // 原版模型空间约定（与 LivingEntityRenderer 一致）：-1,-1 翻转 + 下移 1.501
+            poseStack.scale(-scale, -scale, scale);
+            poseStack.translate(0.0F, -1.501F, 0.0F);
+        } else {
+            // 自定义盒模型：y 向上、脚底在 y=0，直接置于实体位置
+            poseStack.scale(scale, scale, scale);
+        }
         poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - entity.getYRot()));
+        // 鵺：悬浮高度 + 轻盈浮动
+        if (type == ShikigamiType.NUE) {
+            poseStack.translate(0.0, 0.35F + (float) Math.sin(entity.tickCount * 0.1F) * 0.08F, 0.0);
+        }
 
         float[] tint = tint(type, entity.getVariant());
         VertexConsumer vc = buffer.getBuffer(RenderType.entityTranslucent(TEXTURE));

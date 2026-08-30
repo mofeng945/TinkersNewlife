@@ -17,16 +17,16 @@ import net.minecraft.server.level.ServerPlayer;
  */
 public enum ShikigamiType {
 
-    DOG        ("dog",          "玉犬",       0.9,  30,  6, 0.30, 1.0F),
-    NUE        ("nue",          "鵺",         0.8,  25,  8, 0.35, 2.5F),
-    SERPENT    ("serpent",      "大蛇",       1.4,  55,  9, 0.25, 3.0F),
-    TOAD       ("toad",         "蛤蟆",       1.3,  60,  7, 0.20, 2.0F),
-    ELEPHANT   ("elephant",     "满象",       2.2,  90, 12, 0.20, 6.0F),
-    RABBIT     ("rabbit_escape","脱兔",       0.5,  10,  1, 0.40, 1.5F),
-    DEER       ("deer",         "圆鹿",       1.1,  40,  4, 0.30, 2.0F),
-    OX         ("ox",           "贯牛",       1.6,  70, 10, 0.35, 3.0F),
-    TIGER      ("tiger",        "虎葬",       1.8,  80, 16, 0.28, 4.0F),
-    MAHORAGA   ("mahoraga",     "魔虚罗",     2.0, 150, 20, 0.30, 10.0F);
+    DOG        ("dog",          "玉犬",       0.9,  30,  6, 0.45, 1.0F),
+    NUE        ("nue",          "鵺",         0.8,  25,  8, 0.60, 2.5F),
+    SERPENT    ("serpent",      "大蛇",       1.4,  55,  9, 0.38, 3.0F),
+    TOAD       ("toad",         "蛤蟆",       1.3,  60,  7, 0.32, 2.0F),
+    ELEPHANT   ("elephant",     "满象",       2.2,  90, 12, 0.30, 6.0F),
+    RABBIT     ("rabbit_escape","脱兔",       0.5,  10,  1, 0.55, 1.5F),
+    DEER       ("deer",         "圆鹿",       1.1,  40,  4, 0.45, 2.0F),
+    OX         ("ox",           "贯牛",       1.6,  70, 10, 0.55, 3.0F),
+    TIGER      ("tiger",        "虎葬",       1.8,  80, 16, 0.42, 4.0F),
+    MAHORAGA   ("mahoraga",     "魔虚罗",     2.0, 150, 20, 0.45, 10.0F);
 
     /** 注册 id（实体/修饰符路径用） */
     public final String id;
@@ -76,11 +76,11 @@ public enum ShikigamiType {
         return 1.0 + affinity / 100.0 * 0.4 + output * 0.04;
     }
 
-    /** 速度缩放 = 1 + 亲和/100×0.3 + 输出×0.03 */
+    /** 速度缩放 = 1 + 亲和/100×0.5 + 输出×0.05 */
     public static double speedScale(ServerPlayer player) {
         int affinity = CursePowerHelper.getCurseAffinity(player);
         int output = CursePowerHelper.getCurseOutputLevel(player);
-        return 1.0 + affinity / 100.0 * 0.3 + output * 0.03;
+        return 1.0 + affinity / 100.0 * 0.5 + output * 0.05;
     }
 
     /** 本类型缩放后的最大生命 */
