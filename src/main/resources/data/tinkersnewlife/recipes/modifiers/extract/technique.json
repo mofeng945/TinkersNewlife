@@ -1,0 +1,22 @@
+{
+  "type": "tconstruct:extract_modifier",
+  "inputs": [
+    {
+      "item": "tconstruct:sky_slime_crystal"
+    },
+    {
+      "item": "minecraft:wet_sponge"
+    }
+  ],
+  "leftovers": [
+    "minecraft:sponge"
+  ],
+  "modifier_predicate": {
+    "type": "tconstruct:slot_type",
+    "slot": "technique"
+  },
+  "name": "techniques",
+  "tools": {
+    "item": "tinkersnewlife:curse_core"
+  }
+}

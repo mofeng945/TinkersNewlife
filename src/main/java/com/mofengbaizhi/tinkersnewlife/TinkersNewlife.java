@@ -109,6 +109,8 @@ public class TinkersNewlife {
 
         ModMenus.MENUS.register(modEventBus);
 
+        ModRecipeSerializers.RECIPE_SERIALIZERS.register(modEventBus);
+
         LootModifierSerializers.LOOT_MODIFIERS.register(modEventBus);
 
         IronSpellsReflector.init();
