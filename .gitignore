@@ -32,3 +32,19 @@ build-*.log
 
 # local mod jars for dev testing
 libs/
+
+# debug scratch dumps (javap/log analysis)
+*.log.txt
+build-*.txt
+compile*.txt
+entity*.txt
+le*.txt
+ler.txt
+melt*.txt
+mob.txt
+sgl*.txt
+sp.txt
+mc.txt
+mpgm.txt
+ent.txt
+changelog.txt
