@@ -78,6 +78,8 @@ public class ShikigamiEntity extends Mob {
     private int adaptation;
     // 脱离战斗判定（未调伏）
     private int awayTicks;
+    // 调试：骑乘状态跟踪
+    private boolean wasRidden;
 
     public ShikigamiEntity(EntityType<? extends Mob> type, Level level) {
         super(type, level);
@@ -183,7 +185,14 @@ public class ShikigamiEntity extends Mob {
         // 骑乘模式：玩家驾驶（不执行 AI）
         if (!getPassengers().isEmpty()) {
             getNavigation().stop();
+            wasRidden = true;
             return;
+        }
+        // 调试：记录骑手掉落瞬间
+        if (wasRidden) {
+            wasRidden = false;
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
+                    "[Shikigami] {} 骑手消失/掉落 (tick={}, removed={})", getShikigamiType().name(), tickCount, isRemoved());
         }
         // 脱兔被动：四散逃跑 + 啄怪诱敌
         if (getShikigamiType() == ShikigamiType.RABBIT && tamed) {
@@ -641,11 +650,24 @@ public class ShikigamiEntity extends Mob {
             if (player.isPassenger()) {
                 player.stopRiding();
             } else {
-                player.startRiding(this);
+                boolean ok = player.startRiding(this);
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
+                        "[Shikigami] {} 上马 NUE: ok={}, passengers={}, removed={}, y={}",
+                        player.getName().getString(), ok, getPassengers().size(), isRemoved(), getY());
             }
             return InteractionResult.SUCCESS;
         }
         return super.mobInteract(player, hand);
+    }
+
+    /** 调试：记录坐骑被移除的时机（排查骑乘掉马） */
+    @Override
+    public void onRemovedFromWorld() {
+        if (getShikigamiType() == ShikigamiType.NUE) {
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
+                    "[Shikigami] NUE 离开世界 (passengers={}, tick={})", getPassengers().size(), tickCount);
+        }
+        super.onRemovedFromWorld();
     }
 
     @Override
@@ -659,7 +681,7 @@ public class ShikigamiEntity extends Mob {
         return 0.9 + getShikigamiScale() * 0.4;
     }
 
-    /** 骑乘飞行（服务端与客户端一致的移动钩子）：W 朝视线飞、S 后退、A/D 侧移、潜行下降 */
+    /** 骑乘飞行（服务端与客户端一致的移动钩子）：W 朝视线飞、S 后退、A/D 侧移、空格上升 */
     @Override
     protected void tickRidden(Player player, Vec3 movement) {
         super.tickRidden(player, movement);
@@ -678,8 +700,9 @@ public class ShikigamiEntity extends Mob {
                 Vec3 side = new Vec3(-look.z, 0, look.x).normalize();
                 motion = motion.add(side.scale(player.xxa * speed * 0.6));
             }
-            if (player.isShiftKeyDown()) {
-                motion = motion.add(0, -0.4, 0);
+            // 空格上升（坐骑 jumping 由原版骑乘逻辑从骑手输入同步）
+            if (jumping) {
+                motion = motion.add(0, 0.6, 0);
             }
             setDeltaMovement(motion);
             move(MoverType.SELF, motion);
