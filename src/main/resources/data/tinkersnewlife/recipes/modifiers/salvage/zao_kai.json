@@ -1,0 +1,13 @@
+{
+    "level":  {
+                  "max":  1
+              },
+    "tools":  {
+                  "item":  "tinkersnewlife:curse_core"
+              },
+    "modifier":  "tinkersnewlife:zao_kai",
+    "type":  "tconstruct:modifier_salvage",
+    "slots":  {
+                  "technique":  1
+              }
+}

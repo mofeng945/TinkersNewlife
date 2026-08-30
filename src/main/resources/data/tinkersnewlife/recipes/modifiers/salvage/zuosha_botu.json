@@ -1,0 +1,13 @@
+{
+    "level":  {
+                  "max":  1
+              },
+    "tools":  {
+                  "item":  "tinkersnewlife:curse_core"
+              },
+    "modifier":  "tinkersnewlife:zuosha_botu",
+    "type":  "tconstruct:modifier_salvage",
+    "slots":  {
+                  "domain":  1
+              }
+}
