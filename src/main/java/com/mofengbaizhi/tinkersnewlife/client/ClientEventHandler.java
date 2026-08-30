@@ -71,6 +71,9 @@ public class ClientEventHandler {
         // 灶·开 火焰箭：复用原版箭矢渲染（无着火贴图，火焰感由尾迹粒子表现）
         event.registerEntityRenderer(ModEntities.FLAME_ARROW.get(),
                 com.mofengbaizhi.tinkersnewlife.client.renderer.FlameArrowRenderer::new);
+        // 赤血操术·超新星 血球：微小血红圆球
+        event.registerEntityRenderer(ModEntities.BLOOD_NOVA.get(),
+                com.mofengbaizhi.tinkersnewlife.client.renderer.BloodNovaRenderer::new);
     }
 
     // ========== Forge 事件（按键等） ==========

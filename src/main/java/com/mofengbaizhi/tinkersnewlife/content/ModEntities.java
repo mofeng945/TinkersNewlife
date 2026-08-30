@@ -1,6 +1,7 @@
 package com.mofengbaizhi.tinkersnewlife.content;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import com.mofengbaizhi.tinkersnewlife.content.entity.BloodNovaEntity;
 import com.mofengbaizhi.tinkersnewlife.content.entity.DomainVisualEntity;
 import com.mofengbaizhi.tinkersnewlife.content.entity.DreadsteelSlashEntity;
 import com.mofengbaizhi.tinkersnewlife.content.entity.FlameArrowEntity;
@@ -74,5 +75,15 @@ public class ModEntities {
                         .clientTrackingRange(64)
                         .updateInterval(1)
                         .build(TinkersNewlife.MOD_ID + ":flame_arrow")
+        );
+
+    /** 赤血操术·超新星 血球（微小血球，0.8s 后爆炸，纯视觉/伤害载体） */
+    public static final RegistryObject<EntityType<BloodNovaEntity>> BLOOD_NOVA =
+        ENTITIES.register("blood_nova",
+                () -> EntityType.Builder.<BloodNovaEntity>of(BloodNovaEntity::new, MobCategory.MISC)
+                        .sized(0.2f, 0.2f)   // 直径约 0.2 格
+                        .clientTrackingRange(64)
+                        .updateInterval(1)
+                        .build(TinkersNewlife.MOD_ID + ":blood_nova")
         );
 }

@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife;
 import com.mofengbaizhi.tinkersnewlife.content.*;
 import com.mofengbaizhi.tinkersnewlife.content.curse.BaTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.BloodManipulationHyakurenTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.BloodManipulationSupernovaTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.BloodManipulationTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.DomainRegistry;
 import com.mofengbaizhi.tinkersnewlife.content.curse.FuMoYuChuZiDomain;
@@ -133,6 +134,7 @@ public class TinkersNewlife {
         TechniqueHandler.register(ZaoKaiTechnique.INSTANCE);
         TechniqueHandler.register(BloodManipulationTechnique.INSTANCE);
         TechniqueHandler.register(BloodManipulationHyakurenTechnique.INSTANCE);
+        TechniqueHandler.register(BloodManipulationSupernovaTechnique.INSTANCE);
 
         // 注册网络包
         registerPacket(PacketUseSkill.class, PacketUseSkill::toBytes, PacketUseSkill::new, PacketUseSkill::handle);

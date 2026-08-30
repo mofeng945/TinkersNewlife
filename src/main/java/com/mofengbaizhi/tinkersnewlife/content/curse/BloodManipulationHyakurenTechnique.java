@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.content.curse;
 import com.mofengbaizhi.tinkersnewlife.content.Modifiers;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
@@ -16,6 +17,7 @@ import org.joml.Vector3f;
  * <ul>
  *   <li>对目标造成 5 次伤害，每次 = 「赤血操术·穿血」单体伤害 ÷ 2（无视无敌帧，可被护甲衰减）</li>
  *   <li>每道伤害都触发材料战斗特性</li>
+ *   <li>每次发动消耗 7% 最大生命值（创造模式不消耗）</li>
  *   <li>咒力消耗 = 「解」 × 5/3</li>
  * </ul>
  */
@@ -29,6 +31,8 @@ public final class BloodManipulationHyakurenTechnique extends BaseTechnique {
     public static final double DAMAGE_DIVISOR = 2.0;
     /** 咒力消耗 = 解 × 5/3 */
     public static final double COST_MULTIPLIER = 5.0 / 3.0;
+    /** 每次发动消耗最大生命值的比例（7%） */
+    public static final double BLOOD_COST_RATIO = 0.07;
 
     /** 血柱起点环绕半径（格） */
     private static final double PILLAR_RADIUS = 0.9;
@@ -43,6 +47,39 @@ public final class BloodManipulationHyakurenTechnique extends BaseTechnique {
     @Override
     protected int getCost(ServerPlayer player) {
         return Math.max(1, (int) Math.ceil(super.getCost(player) * COST_MULTIPLIER));
+    }
+
+    /**
+     * 百敛流程：熔断 → 咒力 → 索敌 → 血量（7%） → 五道血柱连击。
+     * 未命中目标时不消耗血量（咒力已扣）。
+     */
+    @Override
+    public boolean tryUse(ServerPlayer player) {
+        if (CursePowerHelper.isBurnout(player)) {
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.burnout.active",
+                    CursePowerHelper.getBurnoutRemainingSeconds(player)), true);
+            return false;
+        }
+        if (!payCost(player)) {
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_curse"), true);
+            return false;
+        }
+        LivingEntity target = findTarget(player);
+        if (target == null) {
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_target"), true);
+            return false;
+        }
+        // 血量检查：当前血量必须严格大于 7% 消耗，避免术式致死
+        double bloodCost = player.getMaxHealth() * BLOOD_COST_RATIO;
+        if (!player.isCreative() && player.getHealth() <= (float) bloodCost) {
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_blood"), true);
+            return false;
+        }
+        if (!player.isCreative()) {
+            player.setHealth(player.getHealth() - (float) bloodCost);
+        }
+        onCast(player, target);
+        return true;
     }
 
     @Override

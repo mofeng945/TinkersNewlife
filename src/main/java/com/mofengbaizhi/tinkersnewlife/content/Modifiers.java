@@ -138,4 +138,8 @@ public class Modifiers {
     /** 赤血操术·百敛（术式特性，占用术式槽） */
     public static final StaticModifier<BloodManipulationHyakurenTrait> BLOOD_MANIPULATION_HYAKUREN =
         MODIFIERS.register("blood_manipulation_hyakuren", BloodManipulationHyakurenTrait::new);
+
+    /** 赤血操术·超新星（术式特性，占用术式槽） */
+    public static final StaticModifier<BloodManipulationSupernovaTrait> BLOOD_MANIPULATION_SUPERNOVA =
+        MODIFIERS.register("blood_manipulation_supernova", BloodManipulationSupernovaTrait::new);
 }

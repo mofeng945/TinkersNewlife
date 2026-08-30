@@ -7,6 +7,7 @@ import com.mofengbaizhi.tinkersnewlife.content.Modifiers;
 import com.mofengbaizhi.tinkersnewlife.content.curse.BaTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.BaseTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.BloodManipulationHyakurenTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.BloodManipulationSupernovaTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.BloodManipulationTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.KaiTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.ZaoKaiTechnique;
@@ -323,7 +324,8 @@ public class CurseCoreRitualHandler {
         SlotType domainSlot = SlotType.getOrCreate("domain");
         BaseTechnique[] techniques = {
                 KaiTechnique.INSTANCE, BaTechnique.INSTANCE, ZaoKaiTechnique.INSTANCE,
-                BloodManipulationTechnique.INSTANCE, BloodManipulationHyakurenTechnique.INSTANCE
+                BloodManipulationTechnique.INSTANCE, BloodManipulationHyakurenTechnique.INSTANCE,
+                BloodManipulationSupernovaTechnique.INSTANCE
         };
         tool.addModifier(techniques[random.nextInt(techniques.length)].getModifierId(), 1);
         tool.getPersistentData().addSlots(techniqueSlot, -1);
