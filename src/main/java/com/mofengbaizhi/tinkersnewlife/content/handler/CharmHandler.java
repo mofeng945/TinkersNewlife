@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.content.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModEffects;
+import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -10,6 +11,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
@@ -54,8 +56,8 @@ public class CharmHandler {
         LivingEntity target = event.getEntity();
         if (target.level().isClientSide) return;
 
-        // ⭐ 统一取工具（近战/弹射双路径 + 校验）
-        ToolStack tool = ToolHelper.getCombatTool(event.getSource(), player);
+        // ⭐ 统一取工具（近战/弹射双路径 + 校验），主手无匠魂武器时兜底取佩戴的咒力核心
+        ToolStack tool = resolveCharmTool(player, ToolHelper.getCombatTool(event.getSource(), player));
         if (tool == null) return;
 
         int level = tool.getModifierLevel(CHARM_ID);
@@ -71,14 +73,29 @@ public class CharmHandler {
         if (!(event.getProjectile().getOwner() instanceof Player player)) return;
         if (target.level().isClientSide) return;
 
-        // ⭐ 统一取工具（弹射路径 + 校验）
-        ToolStack tool = ToolHelper.getCombatTool(event.getProjectile(), player);
+        // ⭐ 统一取工具（弹射路径 + 校验），主手无匠魂武器时兜底取佩戴的咒力核心
+        ToolStack tool = resolveCharmTool(player, ToolHelper.getCombatTool(event.getProjectile(), player));
         if (tool == null) return;
 
         int level = tool.getModifierLevel(CHARM_ID);
         if (level <= 0) return;
 
         applyCharm(player, target, level, tool);
+    }
+
+    /**
+     * 解析带有魅惑特性的匠魂工具：
+     * 优先使用攻击者手中的匠魂战斗工具（近战/弹射），
+     * 若主手没有匠魂武器（术式/领域攻击时主手通常为空或非匠魂物品），
+     * 兜底取佩戴的咒力核心——材料特性（生命冲动→魅惑）位于核心上。
+     */
+    private static ToolStack resolveCharmTool(Player player, ToolStack primary) {
+        if (primary != null && primary.getModifierLevel(CHARM_ID) > 0) return primary;
+        ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
+        if (core.isEmpty()) return primary;
+        ToolStack coreTool = ToolHelper.getToolStack(core);
+        if (coreTool != null && coreTool.getModifierLevel(CHARM_ID) > 0) return coreTool;
+        return primary;
     }
 
     private static void applyCharm(Player player, LivingEntity target, int level, ToolStack tool) {
