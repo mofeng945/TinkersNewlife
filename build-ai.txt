@@ -1,0 +1,62 @@
+﻿To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.8/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :
+Java: 21.0.10, JVM: 21.0.10+8-LTS-217 (Oracle Corporation), Arch: amd64
+
+> Task :compileJava
+.\gradlew.bat : G:\TinkersNewlife\src\main\java\com\mofengbaizhi\tinkersnewlife\client\ClientEventHandler.java:51: ����
+: [removal] ItemBlockRenderTypes �е� setRenderLayer(Block,RenderType) �ѹ�ʱ, �ұ��Ϊ��ɾ��
+所在位置 行:1 字符: 129
++ ... ew($false); .\gradlew.bat build --offline --console=plain 2>&1 | Out- ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (G:\TinkersNewli...ѹ�ʱ, �ұ��Ϊ��ɾ��:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+            net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(
+                                                              ^
+G:\TinkersNewlife\src\main\java\com\mofengbaizhi\tinkersnewlife\client\renderer\ShikigamiRenderer.java:36: ����: [remov
+al] ResourceLocation �е� ResourceLocation(String,String) �ѹ�ʱ, �ұ��Ϊ��ɾ��
+            new ResourceLocation("tinkersnewlife", "textures/entity/shikigami/white.png");
+            ^
+G:\TinkersNewlife\src\main\java\com\mofengbaizhi\tinkersnewlife\content\entity\ShikigamiEntity.java:679: ����: jumping 
+�� LivingEntity ���� protected ���ʿ���
+        if (player.jumping) {
+                  ^
+G:\TinkersNewlife\src\main\java\com\mofengbaizhi\tinkersnewlife\TinkersNewlife.java:62: ����: [removal] ResourceLocatio
+n �е� ResourceLocation(String,String) �ѹ�ʱ, �ұ��Ϊ��ɾ��
+            new ResourceLocation(MOD_ID, "main"),
+            ^
+G:\TinkersNewlife\src\main\java\com\mofengbaizhi\tinkersnewlife\TinkersNewlife.java:98: ����: [removal] FMLJavaModLoadi
+ngContext �е� get() �ѹ�ʱ, �ұ��Ϊ��ɾ��
+        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+                                                        ^
+G:\TinkersNewlife\src\main\java\com\mofengbaizhi\tinkersnewlife\TinkersNewlife.java:165: ����: [removal] ResourceLocati
+on �е� ResourceLocation(String,String) �ѹ�ʱ, �ұ��Ϊ��ɾ��
+        return new ResourceLocation(MOD_ID, path);
+               ^
+ע: G:\TinkersNewlife\src\main\java\com\mofengbaizhi\tinkersnewlife\content\entity\YoYoEntity.javaʹ�û򸲸����ѹ�ʱ�� API��
+ע: �й���ϸ��Ϣ, ��ʹ�� -Xlint:deprecation ���±��롣
+1 ������
+5 ������
+
+> Task :compileJava FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileJava'.
+> Compilation failed; see the compiler error output for details.
+
+* Try:
+> Run with --info option to get more log output.
+> Run with --scan to get full insights.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.8/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 8s
+1 actionable task: 1 executed

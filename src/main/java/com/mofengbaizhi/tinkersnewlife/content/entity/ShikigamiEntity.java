@@ -186,18 +186,10 @@ public class ShikigamiEntity extends Mob {
         if (!getPassengers().isEmpty()) {
             getNavigation().stop();
             wasRidden = true;
-            if (getShikigamiType() == ShikigamiType.NUE && tickCount % 20 == 0) {
-                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
-                        "[Shikigami] NUE 骑乘中 tick={} passengers={} y={}", tickCount, getPassengers().size(), getY());
-            }
             return;
         }
-        // 调试：记录骑手掉落瞬间
-        if (wasRidden) {
-            wasRidden = false;
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
-                    "[Shikigami] {} 骑手消失/掉落 (tick={}, removed={})", getShikigamiType().name(), tickCount, isRemoved());
-        }
+        // 骑手已下马：恢复 AI
+        wasRidden = false;
         // 脱兔被动：四散逃跑 + 啄怪诱敌
         if (getShikigamiType() == ShikigamiType.RABBIT && tamed) {
             if (--despawnTimer <= 0) {
@@ -647,55 +639,20 @@ public class ShikigamiEntity extends Mob {
     //  骑乘（鵺飞行）
     // ============================================================
 
-    /** 调试：记录乘客被移除的精确时刻（排查骑乘掉马） */
-    @Override
-    protected void removePassenger(Entity passenger) {
-        if (getShikigamiType() == ShikigamiType.NUE && !level().isClientSide) {
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
-                    "[Shikigami] NUE removePassenger: {} (tick={}, removed={})",
-                    passenger.getName().getString(), tickCount, isRemoved());
-        }
-        super.removePassenger(passenger);
-    }
-
-    /** 调试：记录乘客被添加的精确时刻 */
-    @Override
-    protected void addPassenger(Entity passenger) {
-        if (getShikigamiType() == ShikigamiType.NUE && !level().isClientSide) {
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
-                    "[Shikigami] NUE addPassenger: {} (tick={})", passenger.getName().getString(), tickCount);
-        }
-        super.addPassenger(passenger);
-    }
-
     @Override
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         // 客户端与服务端都执行（客户端本地骑乘预测，避免只靠服务端同步导致渲染异常）
         if (getShikigamiType() == ShikigamiType.NUE
                 && tamed && player.getUUID().equals(ownerId) && player.getMainHandItem().isEmpty()) {
+            // 已在骑乘：忽略重复的交互包（右键按住/连点时客户端会连发多个 INTERACT 包，
+            // 若在这里 stopRiding 会导致刚上马就掉马）。下马走 shift 或召回键。
             if (player.isPassenger()) {
-                player.stopRiding();
-            } else {
-                boolean ok = player.startRiding(this);
-                if (!level().isClientSide) {
-                    com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
-                            "[Shikigami] {} 上马 NUE: ok={}, passengers={}, removed={}, y={}",
-                            player.getName().getString(), ok, getPassengers().size(), isRemoved(), getY());
-                }
+                return InteractionResult.sidedSuccess(level().isClientSide);
             }
+            player.startRiding(this);
             return InteractionResult.sidedSuccess(level().isClientSide);
         }
         return super.mobInteract(player, hand);
-    }
-
-    /** 调试：记录坐骑被移除的时机（排查骑乘掉马） */
-    @Override
-    public void onRemovedFromWorld() {
-        if (getShikigamiType() == ShikigamiType.NUE) {
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
-                    "[Shikigami] NUE 离开世界 (passengers={}, tick={})", getPassengers().size(), tickCount);
-        }
-        super.onRemovedFromWorld();
     }
 
     @Override
@@ -734,7 +691,23 @@ public class ShikigamiEntity extends Mob {
             }
             setDeltaMovement(motion);
             move(MoverType.SELF, motion);
+            // 骑乘中不允许累积摔落距离（避免落地摔死）
+            fallDistance = 0;
         }
+    }
+
+    /**
+     * 骑乘飞行：跳过原版 travel。
+     * <p>aiStep 的 travel 段会调 travelRidden → tickRidden（上面的移动逻辑），随后
+     * 服务端还会执行 travel(vec3) 应用重力+摩擦，把悬停速度覆盖成下落。
+     * 骑乘时移动已由 tickRidden 全权处理，这里直接 no-op；非骑乘时走原版。
+     */
+    @Override
+    public void travel(Vec3 movement) {
+        if (getShikigamiType() == ShikigamiType.NUE && !getPassengers().isEmpty()) {
+            return;
+        }
+        super.travel(movement);
     }
 
     // ============================================================

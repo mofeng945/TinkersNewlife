@@ -1,0 +1,138 @@
+﻿Compiled from "MobRenderer.java"
+public abstract class net.minecraft.client.renderer.entity.MobRenderer<T extends net.minecraft.world.entity.Mob, M extends net.minecraft.client.model.EntityModel<T>> extends net.minecraft.client.renderer.entity.LivingEntityRenderer<T, M> {
+  public static final int LEASH_RENDER_STEPS;
+
+  public net.minecraft.client.renderer.entity.MobRenderer(net.minecraft.client.renderer.entity.EntityRendererProvider$Context, M, float);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: aload_2
+       3: fload_3
+       4: invokespecial #1                  // Method net/minecraft/client/renderer/entity/LivingEntityRenderer."<init>":(Lnet/minecraft/client/renderer/entity/EntityRendererProvider$Context;Lnet/minecraft/client/model/EntityModel;F)V
+       7: return
+
+  protected boolean shouldShowName(T);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokespecial #7                  // Method net/minecraft/client/renderer/entity/LivingEntityRenderer.shouldShowName:(Lnet/minecraft/world/entity/LivingEntity;)Z
+       5: ifeq          37
+       8: aload_1
+       9: invokevirtual #11                 // Method net/minecraft/world/entity/Mob.shouldShowName:()Z
+      12: ifne          33
+      15: aload_1
+      16: invokevirtual #16                 // Method net/minecraft/world/entity/Mob.hasCustomName:()Z
+      19: ifeq          37
+      22: aload_1
+      23: aload_0
+      24: getfield      #19                 // Field entityRenderDispatcher:Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;
+      27: getfield      #25                 // Field net/minecraft/client/renderer/entity/EntityRenderDispatcher.crosshairPickEntity:Lnet/minecraft/world/entity/Entity;
+      30: if_acmpne     37
+      33: iconst_1
+      34: goto          38
+      37: iconst_0
+      38: ireturn
+
+  public boolean shouldRender(T, net.minecraft.client.renderer.culling.Frustum, double, double, double);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: aload_2
+       3: dload_3
+       4: dload         5
+       6: dload         7
+       8: invokespecial #31                 // Method net/minecraft/client/renderer/entity/LivingEntityRenderer.shouldRender:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/client/renderer/culling/Frustum;DDD)Z
+      11: ifeq          16
+      14: iconst_1
+      15: ireturn
+      16: aload_1
+      17: invokevirtual #35                 // Method net/minecraft/world/entity/Mob.getLeashHolder:()Lnet/minecraft/world/entity/Entity;
+      20: astore        9
+      22: aload         9
+      24: ifnull        39
+      27: aload_2
+      28: aload         9
+      30: invokevirtual #39                 // Method net/minecraft/world/entity/Entity.getBoundingBoxForCulling:()Lnet/minecraft/world/phys/AABB;
+      33: invokevirtual #45                 // Method net/minecraft/client/renderer/culling/Frustum.isVisible:(Lnet/minecraft/world/phys/AABB;)Z
+      36: goto          40
+      39: iconst_0
+      40: ireturn
+
+  public void render(T, float, float, com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.MultiBufferSource, int);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: fload_2
+       3: fload_3
+       4: aload         4
+       6: aload         5
+       8: iload         6
+      10: invokespecial #51                 // Method net/minecraft/client/renderer/entity/LivingEntityRenderer.render:(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V
+      13: aload_1
+      14: invokevirtual #35                 // Method net/minecraft/world/entity/Mob.getLeashHolder:()Lnet/minecraft/world/entity/Entity;
+      17: astore        7
+      19: aload         7
+      21: ifnull        36
+      24: aload_0
+      25: aload_1
+      26: fload_3
+      27: aload         4
+      29: aload         5
+      31: aload         7
+      33: invokevirtual #55                 // Method renderLeash:(Lnet/minecraft/world/entity/Mob;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/world/entity/Entity;)V
+      36: return
+
+  protected boolean shouldShowName(net.minecraft.world.entity.LivingEntity);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: checkcast     #12                 // class net/minecraft/world/entity/Mob
+       5: invokevirtual #234                // Method shouldShowName:(Lnet/minecraft/world/entity/Mob;)Z
+       8: ireturn
+
+  public void render(net.minecraft.world.entity.LivingEntity, float, float, com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.MultiBufferSource, int);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: checkcast     #12                 // class net/minecraft/world/entity/Mob
+       5: fload_2
+       6: fload_3
+       7: aload         4
+       9: aload         5
+      11: iload         6
+      13: invokevirtual #237                // Method render:(Lnet/minecraft/world/entity/Mob;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V
+      16: return
+
+  protected boolean shouldShowName(net.minecraft.world.entity.Entity);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: checkcast     #12                 // class net/minecraft/world/entity/Mob
+       5: invokevirtual #234                // Method shouldShowName:(Lnet/minecraft/world/entity/Mob;)Z
+       8: ireturn
+
+  public void render(net.minecraft.world.entity.Entity, float, float, com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.MultiBufferSource, int);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: checkcast     #12                 // class net/minecraft/world/entity/Mob
+       5: fload_2
+       6: fload_3
+       7: aload         4
+       9: aload         5
+      11: iload         6
+      13: invokevirtual #237                // Method render:(Lnet/minecraft/world/entity/Mob;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V
+      16: return
+
+  public boolean shouldRender(net.minecraft.world.entity.Entity, net.minecraft.client.renderer.culling.Frustum, double, double, double);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: checkcast     #12                 // class net/minecraft/world/entity/Mob
+       5: aload_2
+       6: dload_3
+       7: dload         5
+       9: dload         7
+      11: invokevirtual #240                // Method shouldRender:(Lnet/minecraft/world/entity/Mob;Lnet/minecraft/client/renderer/culling/Frustum;DDD)Z
+      14: ireturn
+}
