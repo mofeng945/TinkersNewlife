@@ -10,6 +10,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.PacketDistributor;
+import slimeknights.tconstruct.library.modifiers.ModifierId;
 
 /**
  * 咒力恢复与数值同步（服务端）
@@ -50,13 +51,25 @@ public class CursePowerHandler {
 
             // 每秒同步一次 HUD 数据
             if (now % 20 == 0) {
-                double curse = wearing ? CursePowerHelper.getCurse(player) : 0;
-                double max = wearing ? CursePowerHelper.getMaxCurse(player) : 0;
-                boolean domainActive = DomainRegistry.isActive(player.getUUID());
-                boolean infinite = wearing && CursePowerHelper.isCurseInfinite(player);
-                TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-                        new PacketSyncCurse(curse, max, domainActive, infinite));
+                syncToClient(player);
             }
         }
+    }
+
+    /**
+     * 向客户端同步咒力 HUD 数据（咒力/上限/领域状态/无限状态/当前选中的术式）。
+     * 由每秒心跳与术式切换时调用。
+     */
+    public static void syncToClient(ServerPlayer player) {
+        ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
+        boolean wearing = !core.isEmpty();
+        double curse = wearing ? CursePowerHelper.getCurse(player) : 0;
+        double max = wearing ? CursePowerHelper.getMaxCurse(player) : 0;
+        boolean domainActive = DomainRegistry.isActive(player.getUUID());
+        boolean infinite = wearing && CursePowerHelper.isCurseInfinite(player);
+        ModifierId technique = wearing ? TechniqueHandler.getSelectedTechniqueId(player) : null;
+        TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                new PacketSyncCurse(curse, max, domainActive, infinite,
+                        technique == null ? "" : technique.toString()));
     }
 }

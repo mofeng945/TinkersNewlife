@@ -13,6 +13,7 @@ import com.mofengbaizhi.tinkersnewlife.content.modifier.QuantumBagModifier;
 import com.mofengbaizhi.tinkersnewlife.network.PacketDragonStaffUse;
 import com.mofengbaizhi.tinkersnewlife.network.PacketOpenBag;
 import com.mofengbaizhi.tinkersnewlife.network.PacketSwitchFlyingSwordMode;
+import com.mofengbaizhi.tinkersnewlife.network.PacketSwitchTechnique;
 import com.mofengbaizhi.tinkersnewlife.network.PacketToggleDomain;
 import com.mofengbaizhi.tinkersnewlife.network.PacketUseTechnique;
 import com.mofengbaizhi.tinkersnewlife.network.PacketUseSkill;
@@ -144,6 +145,10 @@ public class ClientEventHandler {
             // ✅ 坐杀搏徒：展开/关闭领域
             if (KeyBindings.TOGGLE_DOMAIN.get().consumeClick()) {
                 TinkersNewlife.CHANNEL.sendToServer(new PacketToggleDomain());
+            }
+            // ✅ 切换当前术式（核心上有多个术式时循环选择）
+            if (KeyBindings.SWITCH_TECHNIQUE.get().consumeClick()) {
+                TinkersNewlife.CHANNEL.sendToServer(new PacketSwitchTechnique());
             }
             // ✅ 术式按键已移至 onClientTick（按下/松开边沿检测，支撑蓄力术式）
         }

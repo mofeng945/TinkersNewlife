@@ -18,6 +18,7 @@ import com.mofengbaizhi.tinkersnewlife.network.PacketDragonStaffUse;
 import com.mofengbaizhi.tinkersnewlife.network.PacketOpenBag;
 import com.mofengbaizhi.tinkersnewlife.network.PacketSortBag;
 import com.mofengbaizhi.tinkersnewlife.network.PacketSwitchFlyingSwordMode;
+import com.mofengbaizhi.tinkersnewlife.network.PacketSwitchTechnique;
 import com.mofengbaizhi.tinkersnewlife.network.PacketSyncCurse;
 import com.mofengbaizhi.tinkersnewlife.network.PacketToggleDomain;
 import com.mofengbaizhi.tinkersnewlife.network.PacketUseSkill;
@@ -141,6 +142,7 @@ public class TinkersNewlife {
         registerPacket(PacketSwitchFlyingSwordMode.class, PacketSwitchFlyingSwordMode::toBytes, PacketSwitchFlyingSwordMode::new, PacketSwitchFlyingSwordMode::handle);
         registerPacket(PacketToggleDomain.class, PacketToggleDomain::toBytes, PacketToggleDomain::new, PacketToggleDomain::handle);
         registerPacket(PacketUseTechnique.class, PacketUseTechnique::toBytes, PacketUseTechnique::new, PacketUseTechnique::handle);
+        registerPacket(PacketSwitchTechnique.class, PacketSwitchTechnique::toBytes, PacketSwitchTechnique::new, PacketSwitchTechnique::handle);
         // 服务端→客户端
         registerClientPacket(PacketSyncCurse.class, PacketSyncCurse::toBytes, PacketSyncCurse::new, PacketSyncCurse::handle);
 

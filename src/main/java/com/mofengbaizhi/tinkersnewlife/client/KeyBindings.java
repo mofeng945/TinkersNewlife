@@ -53,6 +53,13 @@ public class KeyBindings {
             KEY_CATEGORY
     ));
 
+    // ✅ 切换当前术式（核心上有多个术式时循环选择；X 键）
+    public static final Lazy<KeyMapping> SWITCH_TECHNIQUE = Lazy.of(() -> new KeyMapping(
+            "key.tinkersnewlife.switch_technique",
+            GLFW.GLFW_KEY_X,
+            KEY_CATEGORY
+    ));
+
     @SubscribeEvent
     public static void register(RegisterKeyMappingsEvent event) {
         event.register(USE_SKILL.get());
@@ -61,5 +68,6 @@ public class KeyBindings {
         event.register(SWITCH_FLYING_SWORD_MODE.get()); // 确保注册
         event.register(TOGGLE_DOMAIN.get()); // 确保注册
         event.register(USE_TECHNIQUE.get()); // 确保注册
+        event.register(SWITCH_TECHNIQUE.get()); // 确保注册
     }
 }

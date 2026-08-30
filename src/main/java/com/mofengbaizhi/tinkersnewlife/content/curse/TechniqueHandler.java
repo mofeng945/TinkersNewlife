@@ -13,20 +13,28 @@ import slimeknights.tconstruct.library.modifiers.ModifierEntry;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 术式注册表（服务端）
  * <p>
  * 管理所有已实现术式：术式修饰符 → 术式实例（后续新术式继承 {@link BaseTechnique} 后在此登记）。
- * 释放按键触发时扫描佩戴咒力核心上的修饰符，按下分发 {@code onKeyPress}（即时术式直接释放、
- * 蓄力术式开始蓄力），松开分发 {@code onKeyRelease}（蓄力术式向当前朝向发射）。
+ * <p>
+ * 多术式支持：每个玩家记住当前选中的术式（{@link #SELECTED}），切换按键按核心修饰符顺序循环，
+ * 释放按键只释放当前选中的术式；当前术式随 {@code PacketSyncCurse} 同步到客户端 HUD 显示。
+ * 未选中或选中的术式已不在核心上时，自动回退到第一个术式。
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class TechniqueHandler {
 
     private static final Map<ModifierId, BaseTechnique> TECHNIQUES = new ConcurrentHashMap<>();
+    /** 每个玩家当前选中的术式 id（按核心修饰符列表顺序循环） */
+    private static final Map<UUID, ModifierId> SELECTED = new ConcurrentHashMap<>();
 
     private TechniqueHandler() {}
 
@@ -35,51 +43,107 @@ public final class TechniqueHandler {
         TECHNIQUES.put(technique.getModifierId(), technique);
     }
 
-    /** 按键按下：熔断检查 → 找到术式 → 按下行为（即时释放 / 开始蓄力） */
+    /** 按键按下：熔断检查 → 当前选中的术式 → 按下行为（即时释放 / 开始蓄力） */
     public static void onKeyPress(ServerPlayer player) {
         if (CursePowerHelper.isBurnout(player)) {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.burnout.active",
                     CursePowerHelper.getBurnoutRemainingSeconds(player)), true);
             return;
         }
-        BaseTechnique technique = findEquipped(player);
+        BaseTechnique technique = findSelected(player);
         if (technique != null) {
             technique.onKeyPress(player);
         }
     }
 
-    /** 按键松开：找到术式 → 松开行为（蓄力术式发射） */
+    /** 按键松开：当前选中的术式 → 松开行为（蓄力术式发射） */
     public static void onKeyRelease(ServerPlayer player) {
-        BaseTechnique technique = findEquipped(player);
+        BaseTechnique technique = findSelected(player);
         if (technique != null) {
             technique.onKeyRelease(player);
         }
     }
 
-    /** 扫描佩戴咒力核心，返回第一个已注册术式（无核心/无术式时提示并返回 null） */
-    private static BaseTechnique findEquipped(ServerPlayer player) {
-        ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
-        if (core.isEmpty()) {
+    /**
+     * 切换按键：把当前选中的术式循环到核心上的下一个术式（列表末尾回到第一个）。
+     * 切换后提示并立即同步 HUD。
+     */
+    public static void onSwitch(ServerPlayer player) {
+        List<ModifierId> techniques = getTechniquesOnCore(player);
+        if (techniques == null) {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.domain.no_core"), true);
-            return null;
+            return;
         }
-        ToolStack tool = ToolHelper.getToolStack(core);
-        if (tool == null) return null;
-        for (ModifierEntry entry : tool.getModifierList()) {
-            BaseTechnique technique = TECHNIQUES.get(entry.getId());
-            if (technique != null) {
-                return technique;
-            }
+        if (techniques.isEmpty()) {
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_trait"), true);
+            return;
         }
-        player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_trait"), true);
-        return null;
+        UUID uuid = player.getUUID();
+        ModifierId current = SELECTED.get(uuid);
+        int index = current != null ? techniques.indexOf(current) : -1;
+        ModifierId next = techniques.get((index + 1) % techniques.size());
+        SELECTED.put(uuid, next);
+        player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.switched",
+                getDisplayName(next)), true);
+        CursePowerHandler.syncToClient(player);
     }
 
-    /** 玩家登出：取消进行中的蓄力 */
+    /** 静默获取当前应选术式 id（无核心/无术式返回 null）；未选中或选中失效时自动补选第一个 */
+    @Nullable
+    public static ModifierId getSelectedTechniqueId(ServerPlayer player) {
+        List<ModifierId> techniques = getTechniquesOnCore(player);
+        if (techniques == null || techniques.isEmpty()) return null;
+        UUID uuid = player.getUUID();
+        ModifierId selected = SELECTED.get(uuid);
+        if (selected == null || !techniques.contains(selected)) {
+            selected = techniques.get(0);
+            SELECTED.put(uuid, selected);
+        }
+        return selected;
+    }
+
+    /** 取佩戴核心上已注册的术式 id 列表（按修饰符列表顺序）；无核心返回 null */
+    @Nullable
+    private static List<ModifierId> getTechniquesOnCore(ServerPlayer player) {
+        ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
+        if (core.isEmpty()) return null;
+        ToolStack tool = ToolHelper.getToolStack(core);
+        if (tool == null) return null;
+        List<ModifierId> list = new ArrayList<>();
+        for (ModifierEntry entry : tool.getModifierList()) {
+            if (TECHNIQUES.containsKey(entry.getId())) {
+                list.add(entry.getId());
+            }
+        }
+        return list;
+    }
+
+    /** 当前选中的术式实例；无核心/无术式时提示并返回 null */
+    private static BaseTechnique findSelected(ServerPlayer player) {
+        ModifierId selected = getSelectedTechniqueId(player);
+        if (selected == null) {
+            ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
+            if (core.isEmpty()) {
+                player.displayClientMessage(Component.translatable("message.tinkersnewlife.domain.no_core"), true);
+            } else {
+                player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_trait"), true);
+            }
+            return null;
+        }
+        return TECHNIQUES.get(selected);
+    }
+
+    /** 术式显示名（modifier.<命名空间>.<路径> 本地化键） */
+    private static Component getDisplayName(ModifierId id) {
+        return Component.translatable(slimeknights.tconstruct.library.utils.Util.makeTranslationKey("modifier", id));
+    }
+
+    /** 玩家登出：取消进行中的蓄力并清空选中记录 */
     @SubscribeEvent
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer sp) {
             ZaoKaiTechnique.cancelCharge(sp);
+            SELECTED.remove(sp.getUUID());
         }
     }
 

@@ -9,7 +9,7 @@ import net.minecraft.network.chat.Component;
 /**
  * 客户端咒力状态缓存 + HUD 渲染（左上角）
  * <p>
- * 数据由服务端 PacketSyncCurse 每秒推送；佩戴咒力核心时显示咒力数值，
+ * 数据由服务端 PacketSyncCurse 每秒推送；佩戴咒力核心时显示咒力数值与当前选中的术式，
  * 领域展开时显示领域状态与咒力无限标记。
  */
 public class ClientCurseData {
@@ -18,12 +18,15 @@ public class ClientCurseData {
     private static double max;
     private static boolean domainActive;
     private static boolean infinite;
+    /** 当前选中的术式 id（如 tinkersnewlife:kai），无术式时为 "" */
+    private static String techniqueId = "";
 
-    public static void update(double curseIn, double maxIn, boolean domainActiveIn, boolean infiniteIn) {
+    public static void update(double curseIn, double maxIn, boolean domainActiveIn, boolean infiniteIn, String techniqueIdIn) {
         curse = curseIn;
         max = maxIn;
         domainActive = domainActiveIn;
         infinite = infiniteIn;
+        techniqueId = techniqueIdIn == null ? "" : techniqueIdIn;
     }
 
     /** 当前咒力（服务端同步，未佩戴时为 0） */
@@ -61,16 +64,23 @@ public class ClientCurseData {
                 (int) Math.floor(curse), (int) Math.ceil(max));
         graphics.drawString(font, curseLine, x, y, infinite ? 0xFFD700 : 0xFFFFFF);
 
+        // 当前选中的术式（随切换键循环）
+        if (!techniqueId.isEmpty()) {
+            Component techniqueName = Component.translatable("modifier." + techniqueId.replace(':', '.'));
+            graphics.drawString(font, Component.translatable("hud.tinkersnewlife.technique", techniqueName),
+                    x, y + 10, 0x55FFFF);
+        }
+
         // 领域状态
         if (domainActive) {
             graphics.drawString(font, Component.translatable("hud.tinkersnewlife.domain_active"),
-                    x, y + 10, 0xFFFF55);
+                    x, y + 20, 0xFFFF55);
         }
 
         // 咒力无限
         if (infinite) {
             graphics.drawString(font, Component.translatable("hud.tinkersnewlife.infinite"),
-                    x, y + 20, 0xFFFFAA);
+                    x, y + 30, 0xFFFFAA);
         }
     }
 }
