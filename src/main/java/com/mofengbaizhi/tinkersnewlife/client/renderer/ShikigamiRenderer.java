@@ -80,18 +80,17 @@ public class ShikigamiRenderer extends EntityRenderer<ShikigamiEntity> {
                 && type != ShikigamiType.ELEPHANT && type != ShikigamiType.MAHORAGA;
 
         poseStack.pushPose();
-        // 待机动画：呼吸起伏 + 轻微摇摆（静态模型也有生气）
-        float bob = (float) Math.sin(entity.tickCount * 0.25F) * 0.06F;
-        poseStack.translate(0.0, bob, 0.0);
         if (vanillaModel) {
-            // 原版模型空间约定（与 LivingEntityRenderer 一致）：-1,-1 翻转 + 下移 1.501
+            // 原版模型空间约定（与 LivingEntityRenderer 一致）：-1,-1 翻转 + 下移 1.501；
+            // 原版模型头部在 -Z，用 180 - yaw 转向（朝向正确）
             poseStack.scale(-scale, -scale, scale);
             poseStack.translate(0.0F, -1.501F, 0.0F);
+            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - entity.getYRot()));
         } else {
-            // 自定义盒模型：y 向上、脚底在 y=0，直接置于实体位置
+            // 自定义盒模型：y 向上、头部在 +Z、脚底在 y=0，直接置于实体位置，用 -yaw 转向
             poseStack.scale(scale, scale, scale);
+            poseStack.mulPose(Axis.YP.rotationDegrees(-entity.getYRot()));
         }
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - entity.getYRot()));
         // 鵺：悬浮高度 + 轻盈浮动
         if (type == ShikigamiType.NUE) {
             poseStack.translate(0.0, 0.35F + (float) Math.sin(entity.tickCount * 0.1F) * 0.08F, 0.0);
