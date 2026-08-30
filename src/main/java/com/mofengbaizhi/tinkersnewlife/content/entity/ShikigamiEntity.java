@@ -647,6 +647,27 @@ public class ShikigamiEntity extends Mob {
     //  骑乘（鵺飞行）
     // ============================================================
 
+    /** 调试：记录乘客被移除的精确时刻（排查骑乘掉马） */
+    @Override
+    protected void removePassenger(Entity passenger) {
+        if (getShikigamiType() == ShikigamiType.NUE && !level().isClientSide) {
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
+                    "[Shikigami] NUE removePassenger: {} (tick={}, removed={})",
+                    passenger.getName().getString(), tickCount, isRemoved());
+        }
+        super.removePassenger(passenger);
+    }
+
+    /** 调试：记录乘客被添加的精确时刻 */
+    @Override
+    protected void addPassenger(Entity passenger) {
+        if (getShikigamiType() == ShikigamiType.NUE && !level().isClientSide) {
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
+                    "[Shikigami] NUE addPassenger: {} (tick={})", passenger.getName().getString(), tickCount);
+        }
+        super.addPassenger(passenger);
+    }
+
     @Override
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         // 客户端与服务端都执行（客户端本地骑乘预测，避免只靠服务端同步导致渲染异常）
