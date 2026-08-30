@@ -1,0 +1,9 @@
+{
+  "type": "tconstruct:material_melting",
+  "input": "tinkersnewlife:nicholas_blessing",
+  "temperature": 1000,
+  "result": {
+    "fluid": "tinkersnewlife:molten_nicholas_blessing_still",
+    "amount": 144
+  }
+}

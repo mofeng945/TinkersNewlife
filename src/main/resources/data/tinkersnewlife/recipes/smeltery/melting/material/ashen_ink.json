@@ -1,0 +1,9 @@
+{
+  "type": "tconstruct:material_melting",
+  "input": "tinkersnewlife:ashen_ink",
+  "temperature": 1000,
+  "result": {
+    "fluid": "tinkersnewlife:ashen_ink_still",
+    "amount": 144
+  }
+}

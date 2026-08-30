@@ -12,6 +12,10 @@
       "type": "patchouli:spotlight",
       "item": "tinkersnewlife:curse_core",
       "text": "核心只能通过 $(l:basics/ritual)咒力核心仪式$() 获得，无法在工具台上手工组装。$(br2)仪式产出的核心会随机获得 $(bold)咒力总量$() 与 $(bold)咒力输出$() 等级（1~5），随机附带一个术式与一个领域特性，并有 30% 概率额外获得术式槽（最多 3 个）。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)熔炼回收$()：咒力核心是匠魂工具，可以直接丢进$(bold)冶炼炉或熔铸炉$()熔化，还原为$(bold)其材料对应的流体$()（如玫瑰金核心 → 熔融玫瑰金）。$(br2)不想要的核心可以烧掉回收材料，或留给 $(l:techniques/transfer)术式 / 领域转移$() 用。"
     }
   ]
 }

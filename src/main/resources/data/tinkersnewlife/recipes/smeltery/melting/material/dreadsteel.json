@@ -1,0 +1,9 @@
+{
+  "type": "tconstruct:material_melting",
+  "input": "tinkersnewlife:dreadsteel",
+  "temperature": 1600,
+  "result": {
+    "fluid": "tinkersnewlife:molten_dreadsteel_still",
+    "amount": 144
+  }
+}
