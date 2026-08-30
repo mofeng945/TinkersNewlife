@@ -14,7 +14,7 @@ import org.joml.Vector3f;
 import java.util.List;
 
 /**
- * 术式「赤血操术」：以血为刃，贯穿万敌。
+ * 术式「赤血操术·穿血」：以血为刃，贯穿万敌。
  * <p>
  * 每次发动消耗 5% 最大生命值（创造模式不消耗，伤害仍按理论消耗计算），
  * 向玩家当前朝向释放一道血激光束，穿透面前 20 格（方块不阻挡）：
@@ -22,7 +22,7 @@ import java.util.List;
  *   <li>伤害 = (1 + 咒力亲和/100) × (咒力输出等级 + 消耗血量×5)</li>
  *   <li>每个被穿透的目标只受到一次伤害（可被护甲衰减，无视无敌帧）</li>
  *   <li>光束粒子显示约 0.5 秒</li>
- *   <li>咒力消耗为「解」的一半</li>
+ *   <li>咒力消耗 = (1 - 咒力亲和/100) × (10 + 咒力输出×5) ÷ 2</li>
  * </ul>
  */
 public final class BloodManipulationTechnique extends BaseTechnique {
