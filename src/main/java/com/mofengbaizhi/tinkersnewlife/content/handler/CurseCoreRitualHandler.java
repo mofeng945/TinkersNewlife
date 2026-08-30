@@ -307,9 +307,13 @@ public class CurseCoreRitualHandler {
 
         int total = 1 + random.nextInt(5);   // 咒力总量 1-5
         int output = 1 + random.nextInt(5);  // 咒力输出 1-5
-        // ⭐ 特性已自带 1 级，只需再补 (等级-1) 级
-        tool.addModifier(Modifiers.CURSE_TOTAL.getId(), total - 1);
-        tool.addModifier(Modifiers.CURSE_OUTPUT.getId(), output - 1);
+        // ⭐ 特性已自带 1 级，只需再补 (等级-1) 级；addModifier 不接受 0 级，>1 时才补
+        if (total > 1) {
+            tool.addModifier(Modifiers.CURSE_TOTAL.getId(), total - 1);
+        }
+        if (output > 1) {
+            tool.addModifier(Modifiers.CURSE_OUTPUT.getId(), output - 1);
+        }
 
         // 随机术式（解/捌/灶·开）与随机领域（坐杀搏徒/无量空处/伏魔御厨子）
         // ⭐ addModifier 只加修饰符不扣槽位（配方系统才扣），这里手动各消耗一个术式槽/领域槽
