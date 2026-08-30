@@ -45,8 +45,12 @@ public final class BaTechnique extends BaseTechnique {
                 computeBaseDamage(player) * (KaiTechnique.DAMAGE_FACTOR / 2.0));
         // 3 横向 + 3 纵向，无视无敌帧：每次命中前清零受伤间隔
         for (int i = 0; i < SLASH_COUNT; i++) {
+            // 每道斩击都触发咒力核心材料特性
+            double dmg = com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper
+                    .applyCurseCoreTraits(player, target, perSlash);
             target.invulnerableTime = 0;
-            target.hurt(player.damageSources().mobAttack(player), (float) perSlash);
+            target.hurt(player.damageSources().mobAttack(player), (float) dmg);
+            com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper.afterCurseCoreHit(player, target, dmg);
         }
         // 斩击粒子：3 道横向（不同高度横扫弧）+ 3 道纵向（绕目标 120° 分布的竖直暴击列）
         // ⭐ 原版 SweepAttackParticle 无旋转参数（dy/dz 被忽略，固定相机朝向弧），

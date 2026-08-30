@@ -96,7 +96,6 @@ public class FuMoYuChuZiDomain extends BaseDomain {
         if (now % SLASH_INTERVAL_TICKS != 0) return;
         ServerLevel level = player.serverLevel();
         double r = radius;
-        double dmg = computeDamage(player);
         DamageSource source = player.damageSources().mobAttack(player);
         for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class,
                 new AABB(center.x - r - 1.5, center.y - r - 1.5, center.z - r - 1.5,
@@ -104,10 +103,15 @@ public class FuMoYuChuZiDomain extends BaseDomain {
             if (entity.getUUID().equals(owner)) continue;
             if (entity.position().distanceToSqr(center) > r * r) continue;
 
+            // ⭐ 领域攻击同样触发咒力核心材料特性
+            double dmg = computeDamage(player);
+            dmg = com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper
+                    .applyCurseCoreTraits(player, entity, dmg);
             // ⭐ 无视无敌帧：清零受伤间隔，确保每次斩击全额结算；
             // 伤害仍走正常结算（护甲/盾牌/抗性等照常衰减，非真实伤害）
             entity.invulnerableTime = 0;
             entity.hurt(source, (float) dmg);
+            com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper.afterCurseCoreHit(player, entity, dmg);
 
             // 横扫粒子特效
             spawnSlashParticles(level, center, entity.position());

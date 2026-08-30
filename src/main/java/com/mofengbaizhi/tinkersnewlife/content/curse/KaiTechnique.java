@@ -24,11 +24,13 @@ public final class KaiTechnique extends BaseTechnique {
 
     @Override
     protected void onCast(ServerPlayer player, LivingEntity target) {
-        // 模块化魔杖增幅咒术
+        // 模块化魔杖增幅咒术 + 咒力核心材料特性
         double damage = amplifyTechniqueDamage(player, computeBaseDamage(player) * DAMAGE_FACTOR);
+        damage = com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper.applyCurseCoreTraits(player, target, damage);
         // 类似伏魔御厨子小斩击：无视无敌帧，正常伤害结算（护甲/盾牌等仍可衰减）
         target.invulnerableTime = 0;
         target.hurt(player.damageSources().mobAttack(player), (float) damage);
+        com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper.afterCurseCoreHit(player, target, damage);
         spawnSlashParticles(player.serverLevel(), player.getEyePosition(), target.position());
     }
 }
