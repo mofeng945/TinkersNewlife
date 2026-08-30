@@ -118,6 +118,10 @@ public class ShikigamiEntity extends Mob {
         getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(type.scaledDamage(player));
         getAttribute(Attributes.FOLLOW_RANGE).setBaseValue(32.0);
         setPersistenceRequired();
+        // 鵺：飞行式神，无重力
+        if (type == ShikigamiType.NUE) {
+            setNoGravity(true);
+        }
         this.setCustomName(Component.translatable(type.getLangKey()));
         this.setCustomNameVisible(false);
     }
@@ -173,9 +177,9 @@ public class ShikigamiEntity extends Mob {
             wanderPassively(owner);
             return;
         }
-        if (--attackCooldown > 0) --attackCooldown;
-        if (--rangedCooldown > 0) --rangedCooldown;
-        if (--healCooldown > 0) --healCooldown;
+        if (attackCooldown > 0) attackCooldown--;
+        if (rangedCooldown > 0) rangedCooldown--;
+        if (healCooldown > 0) healCooldown--;
 
         LivingEntity target = tamed ? pickEnemyTarget(owner) : pickHostileTarget(owner);
         if (!tamed && !checkUntamedLifecycle(owner)) {
@@ -196,7 +200,7 @@ public class ShikigamiEntity extends Mob {
     //  目标选择
     // ============================================================
 
-    /** 已调伏：主人正在攻击/被攻击的目标，否则最近敌对生物 */
+    /** 已调伏：主人正在攻击/被攻击的目标，否则最近敌对生物（含未调伏的敌意式神） */
     private LivingEntity pickEnemyTarget(ServerPlayer owner) {
         LivingEntity mob = owner.getLastHurtMob();
         if (isValidTarget(mob)) return mob;
@@ -204,7 +208,8 @@ public class ShikigamiEntity extends Mob {
         if (isValidTarget(mob)) return mob;
         List<LivingEntity> enemies = level().getEntitiesOfClass(LivingEntity.class,
                 AABB.ofSize(owner.position(), 32, 32, 32),
-                e -> e != owner && e != this && e.isAlive() && e instanceof Enemy);
+                e -> e != owner && e != this && e.isAlive()
+                        && (e instanceof Enemy || (e instanceof ShikigamiEntity s && !s.tamed)));
         double best = Double.MAX_VALUE;
         LivingEntity result = null;
         for (LivingEntity e : enemies) {
@@ -225,12 +230,13 @@ public class ShikigamiEntity extends Mob {
     }
 
     private boolean isValidTarget(LivingEntity e) {
-        return e != null && e.isAlive() && e != this && !(e instanceof ShikigamiEntity);
+        // 排除自己与同主人的友军式神
+        return e != null && e.isAlive() && e != this
+                && !(e instanceof ShikigamiEntity s && s.ownerId != null && s.ownerId.equals(ownerId) && s.tamed);
     }
 
-    /** 未调伏生命周期：主人/目标死亡或脱离战斗（距主人超 24 格持续 5 秒）→ 消失；返回 false 表示已消失 */
+    /** 未调伏生命周期：主人死亡 → 消失；锁定目标存在且已死亡 → 消失；从未锁定目标时只攻击主人（击败它仍可调伏） */
     private boolean checkUntamedLifecycle(ServerPlayer owner) {
-        LivingEntity locked = lockedId != null && level() instanceof ServerLevel sl && sl.getEntity(lockedId) instanceof LivingEntity le ? le : null;
         if (distanceToSqr(owner) > 24.0 * 24.0) {
             if (++awayTicks > 100) {
                 discard();
@@ -239,9 +245,12 @@ public class ShikigamiEntity extends Mob {
         } else {
             awayTicks = 0;
         }
-        if (locked == null || !locked.isAlive()) {
-            discard();
-            return false;
+        if (lockedId != null) {
+            LivingEntity locked = level() instanceof ServerLevel sl && sl.getEntity(lockedId) instanceof LivingEntity le ? le : null;
+            if (locked == null || !locked.isAlive()) {
+                discard();
+                return false;
+            }
         }
         return true;
     }
@@ -318,6 +327,8 @@ public class ShikigamiEntity extends Mob {
         for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class,
                 AABB.ofSize(target.position(), 5, 5, 5))) {
             if (e == this || e == getOwner()) continue;
+            // 不误伤同主人的其他式神
+            if (e instanceof ShikigamiEntity s && s.ownerId != null && s.ownerId.equals(ownerId)) continue;
             if (!e.isAlive()) continue;
             e.hurt(damageSources().mobAttack(this), (float) (dmg * 0.8));
         }
