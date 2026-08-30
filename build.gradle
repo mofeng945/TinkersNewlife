@@ -166,6 +166,9 @@ dependencies {
     // 编译期使用 JEI 官方发布的 API 产物（libs/ 下，离线可用）
     runtimeOnly fg.deobf("maven.modrinth:u6dRKJwZ:4r3Kp7U7")
     compileOnly files('libs/jei-1.20.1-common-api-15.48.0.179.jar', 'libs/jei-1.20.1-forge-api-15.48.0.179.jar')
+    // ⭐ 帕秋莉（测试环境专用）：手册为纯数据，编译期零依赖；
+    // 仅运行时加载以便在开发环境测试手册（mods.toml 中为可选依赖，未安装不影响模组）
+    runtimeOnly files('libs/Patchouli-1.20.1-85-FORGE.jar')
     implementation fg.deobf("maven.modrinth:vvuO3ImH:IPQlZkz1")
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html

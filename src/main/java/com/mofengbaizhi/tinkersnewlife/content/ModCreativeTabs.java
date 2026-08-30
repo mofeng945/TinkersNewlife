@@ -15,7 +15,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import slimeknights.tconstruct.library.materials.MaterialRegistry;
 import slimeknights.tconstruct.library.materials.definition.IMaterial;
@@ -42,6 +44,18 @@ public class ModCreativeTabs {
                             .title(Component.translatable("itemGroup.tinkersnewlife"))
                             .icon(() -> new ItemStack(ModItems.GHELOTH_REMAINS.get()))
                             .displayItems((parameters, output) -> {
+                                // ⭐ 已安装帕秋莉时，创造物品栏首位显示本模组手册
+                                // （纯注册表操作 + NBT 指定书 id，不引用任何帕秋莉类，未安装则跳过）
+                                if (ModList.get().isLoaded("patchouli")) {
+                                    Item guideBook = ForgeRegistries.ITEMS.getValue(
+                                            new ResourceLocation("patchouli", "guide_book"));
+                                    if (guideBook != null) {
+                                        ItemStack guide = new ItemStack(guideBook);
+                                        guide.getOrCreateTag().putString("patchouli:book", TinkersNewlife.MOD_ID + ":guide");
+                                        output.accept(guide);
+                                    }
+                                }
+
                                 // ----- 基础材料 -----
                                 output.accept(ModItems.GHELOTH_REMAINS.get());
                                 output.accept(ModItems.NICHOLAS_BLESSING.get());
