@@ -1,9 +1,0 @@
-{
-  "type": "tconstruct:material_melting",
-  "input": "tinkersnewlife:gheloth_remains",
-  "temperature": 1000,
-  "result": {
-    "fluid": "tinkersnewlife:gheloth_blood_still",
-    "amount": 144
-  }
-}

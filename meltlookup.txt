@@ -1,0 +1,143 @@
+﻿Compiled from "MeltingRecipeLookup.java"
+public class slimeknights.tconstruct.library.recipe.melting.MeltingRecipeLookup {
+  private static boolean meltingFrozen;
+
+  private static final java.util.List<slimeknights.tconstruct.library.recipe.melting.MeltingRecipeLookup$MeltingFluid> FLUIDS;
+
+  private static final java.util.Map<net.minecraft.world.item.Item, slimeknights.tconstruct.library.recipe.melting.MeltingRecipeLookup$MeltingFluid> LOOKUP;
+
+  private static final slimeknights.tconstruct.common.recipe.RecipeCacheInvalidator$DuelSidedListener CACHE;
+
+  private static final java.util.function.Function<net.minecraft.world.item.Item, slimeknights.tconstruct.library.recipe.melting.MeltingRecipeLookup$MeltingFluid> LOOKUP_FUNCTION;
+
+  private slimeknights.tconstruct.library.recipe.melting.MeltingRecipeLookup();
+    Code:
+       0: aload_0
+       1: invokespecial #40                 // Method java/lang/Object."<init>":()V
+       4: return
+
+  public static void addMeltingFluid(net.minecraft.world.item.crafting.Ingredient, slimeknights.mantle.recipe.helper.FluidOutput, int);
+    Code:
+       0: getstatic     #46                 // Field meltingFrozen:Z
+       3: ifeq          7
+       6: return
+       7: getstatic     #48                 // Field CACHE:Lslimeknights/tconstruct/common/recipe/RecipeCacheInvalidator$DuelSidedListener;
+      10: invokevirtual #51                 // Method slimeknights/tconstruct/common/recipe/RecipeCacheInvalidator$DuelSidedListener.checkClear:()V
+      13: getstatic     #53                 // Field FLUIDS:Ljava/util/List;
+      16: new           #7                  // class slimeknights/tconstruct/library/recipe/melting/MeltingRecipeLookup$MeltingFluid
+      19: dup
+      20: aload_0
+      21: aload_1
+      22: iload_2
+      23: invokespecial #55                 // Method slimeknights/tconstruct/library/recipe/melting/MeltingRecipeLookup$MeltingFluid."<init>":(Lnet/minecraft/world/item/crafting/Ingredient;Lslimeknights/mantle/recipe/helper/FluidOutput;I)V
+      26: invokeinterface #61,  2           // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+      31: pop
+      32: return
+
+  public static slimeknights.tconstruct.library.recipe.melting.MeltingRecipeLookup$MeltingFluid findFluid(net.minecraft.world.level.ItemLike);
+    Code:
+       0: getstatic     #71                 // Field LOOKUP:Ljava/util/Map;
+       3: aload_0
+       4: invokeinterface #77,  1           // InterfaceMethod net/minecraft/world/level/ItemLike.asItem:()Lnet/minecraft/world/item/Item;
+       9: getstatic     #79                 // Field LOOKUP_FUNCTION:Ljava/util/function/Function;
+      12: invokeinterface #85,  3           // InterfaceMethod java/util/Map.computeIfAbsent:(Ljava/lang/Object;Ljava/util/function/Function;)Ljava/lang/Object;
+      17: checkcast     #7                  // class slimeknights/tconstruct/library/recipe/melting/MeltingRecipeLookup$MeltingFluid
+      20: areturn
+
+  public static net.minecraftforge.fluids.FluidStack findResult(net.minecraft.world.level.ItemLike, int);
+    Code:
+       0: aload_0
+       1: invokestatic  #91                 // Method findFluid:(Lnet/minecraft/world/level/ItemLike;)Lslimeknights/tconstruct/library/recipe/melting/MeltingRecipeLookup$MeltingFluid;
+       4: astore_2
+       5: aload_2
+       6: getfield      #93                 // Field slimeknights/tconstruct/library/recipe/melting/MeltingRecipeLookup$MeltingFluid.temperature:I
+       9: iload_1
+      10: if_icmple     17
+      13: getstatic     #99                 // Field net/minecraftforge/fluids/FluidStack.EMPTY:Lnet/minecraftforge/fluids/FluidStack;
+      16: areturn
+      17: aload_2
+      18: getfield      #101                // Field slimeknights/tconstruct/library/recipe/melting/MeltingRecipeLookup$MeltingFluid.result:Lslimeknights/mantle/recipe/helper/FluidOutput;
+      21: invokevirtual #107                // Method slimeknights/mantle/recipe/helper/FluidOutput.get:()Lnet/minecraftforge/fluids/FluidStack;
+      24: areturn
+
+  public static boolean canMelt(net.minecraft.world.level.ItemLike);
+    Code:
+       0: aload_0
+       1: invokestatic  #91                 // Method findFluid:(Lnet/minecraft/world/level/ItemLike;)Lslimeknights/tconstruct/library/recipe/melting/MeltingRecipeLookup$MeltingFluid;
+       4: invokevirtual #116                // Method slimeknights/tconstruct/library/recipe/melting/MeltingRecipeLookup$MeltingFluid.isEmpty:()Z
+       7: ifne          14
+      10: iconst_1
+      11: goto          15
+      14: iconst_0
+      15: ireturn
+
+  public static void freeze();
+    Code:
+       0: iconst_1
+       1: putstatic     #46                 // Field meltingFrozen:Z
+       4: return
+
+  public static void unfreeze();
+    Code:
+       0: iconst_0
+       1: putstatic     #46                 // Field meltingFrozen:Z
+       4: return
+
+  private static slimeknights.tconstruct.library.recipe.melting.MeltingRecipeLookup$MeltingFluid lambda$static$1(net.minecraft.world.item.Item);
+    Code:
+       0: aload_0
+       1: getstatic     #127                // Field net/minecraft/world/item/Items.AIR:Lnet/minecraft/world/item/Item;
+       4: if_acmpeq     60
+       7: new           #129                // class net/minecraft/world/item/ItemStack
+      10: dup
+      11: aload_0
+      12: invokespecial #132                // Method net/minecraft/world/item/ItemStack."<init>":(Lnet/minecraft/world/level/ItemLike;)V
+      15: astore_1
+      16: getstatic     #53                 // Field FLUIDS:Ljava/util/List;
+      19: invokeinterface #136,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+      24: astore_2
+      25: aload_2
+      26: invokeinterface #141,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      31: ifeq          60
+      34: aload_2
+      35: invokeinterface #145,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      40: checkcast     #7                  // class slimeknights/tconstruct/library/recipe/melting/MeltingRecipeLookup$MeltingFluid
+      43: astore_3
+      44: aload_3
+      45: getfield      #147                // Field slimeknights/tconstruct/library/recipe/melting/MeltingRecipeLookup$MeltingFluid.ingredient:Lnet/minecraft/world/item/crafting/Ingredient;
+      48: aload_1
+      49: invokevirtual #153                // Method net/minecraft/world/item/crafting/Ingredient.test:(Lnet/minecraft/world/item/ItemStack;)Z
+      52: ifeq          57
+      55: aload_3
+      56: areturn
+      57: goto          25
+      60: getstatic     #155                // Field slimeknights/tconstruct/library/recipe/melting/MeltingRecipeLookup$MeltingFluid.EMPTY:Lslimeknights/tconstruct/library/recipe/melting/MeltingRecipeLookup$MeltingFluid;
+      63: areturn
+
+  private static void lambda$static$0();
+    Code:
+       0: getstatic     #53                 // Field FLUIDS:Ljava/util/List;
+       3: invokeinterface #161,  1          // InterfaceMethod java/util/List.clear:()V
+       8: getstatic     #71                 // Field LOOKUP:Ljava/util/Map;
+      11: invokeinterface #162,  1          // InterfaceMethod java/util/Map.clear:()V
+      16: return
+
+  static {};
+    Code:
+       0: iconst_0
+       1: putstatic     #46                 // Field meltingFrozen:Z
+       4: new           #165                // class java/util/ArrayList
+       7: dup
+       8: invokespecial #166                // Method java/util/ArrayList."<init>":()V
+      11: putstatic     #53                 // Field FLUIDS:Ljava/util/List;
+      14: new           #168                // class java/util/HashMap
+      17: dup
+      18: invokespecial #169                // Method java/util/HashMap."<init>":()V
+      21: putstatic     #71                 // Field LOOKUP:Ljava/util/Map;
+      24: invokedynamic #184,  0            // InvokeDynamic #0:run:()Ljava/lang/Runnable;
+      29: invokestatic  #188                // Method slimeknights/tconstruct/common/recipe/RecipeCacheInvalidator.addDuelSidedListener:(Ljava/lang/Runnable;)Lslimeknights/tconstruct/common/recipe/RecipeCacheInvalidator$DuelSidedListener;
+      32: putstatic     #48                 // Field CACHE:Lslimeknights/tconstruct/common/recipe/RecipeCacheInvalidator$DuelSidedListener;
+      35: invokedynamic #198,  0            // InvokeDynamic #1:apply:()Ljava/util/function/Function;
+      40: putstatic     #79                 // Field LOOKUP_FUNCTION:Ljava/util/function/Function;
+      43: return
+}

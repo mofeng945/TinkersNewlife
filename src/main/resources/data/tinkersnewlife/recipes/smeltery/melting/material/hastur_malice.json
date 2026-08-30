@@ -1,9 +1,0 @@
-{
-  "type": "tconstruct:material_melting",
-  "input": "tinkersnewlife:hastur_malice",
-  "temperature": 1000,
-  "result": {
-    "fluid": "tinkersnewlife:hastur_malice_still",
-    "amount": 144
-  }
-}
