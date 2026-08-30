@@ -30,8 +30,9 @@ public class YogSothothTraitHandler {
         }
         if (weapon.isEmpty()) return;
 
-        // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
-        ToolStack tool = ToolHelper.getToolStack(weapon);
+        // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告；
+        // 主手/副手工具不含犹格·索托斯特性时，兜底取佩戴的咒力核心
+        ToolStack tool = ToolHelper.getToolWithModifier(player, ToolHelper.getToolStack(weapon), YOG_SOTHOTH_GIFT);
         if (tool == null) return;
 
         int level = tool.getModifierLevel(YOG_SOTHOTH_GIFT);

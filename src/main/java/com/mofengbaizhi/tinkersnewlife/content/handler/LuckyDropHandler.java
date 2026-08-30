@@ -79,8 +79,9 @@ public class LuckyDropHandler {
         }
         if (weaponStack.isEmpty()) return;
 
-        // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
-        ToolStack tool = ToolHelper.getToolStack(weaponStack);
+        // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告；
+        // 主手/副手武器不含幸运特性时，兜底取佩戴的咒力核心
+        ToolStack tool = ToolHelper.getToolWithModifier(player, ToolHelper.getToolStack(weaponStack), LUCKY_DROP);
         if (tool == null) return;
 
         int level = tool.getModifierLevel(LUCKY_DROP);

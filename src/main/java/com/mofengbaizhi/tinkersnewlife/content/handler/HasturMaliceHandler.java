@@ -91,8 +91,8 @@ public class HasturMaliceHandler {
         LivingEntity target = event.getEntity();
         if (target == null) return;
 
-        // ✅ 统一获取攻击工具（近战/弹射物/悠悠球从球实体读取）
-        ToolStack tool = ToolHelper.getCombatTool(event.getSource(), player);
+        // ✅ 统一获取攻击工具（近战/弹射物/悠悠球从球实体读取），主手无武器时兜底取佩戴的咒力核心
+        ToolStack tool = ToolHelper.getCombatToolWith(event.getSource(), player, HASTUR_MALICE);
         if (tool == null) return;
 
         int level = tool.getModifierLevel(HASTUR_MALICE);

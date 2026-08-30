@@ -27,8 +27,8 @@ public class CosmicHandler {
         LivingEntity target = event.getEntity();
         if (target.level().isClientSide) return;
 
-        // ⭐ 统一取工具（近战/弹射双路径 + 校验）
-        ToolStack tool = ToolHelper.getCombatTool(event.getSource(), player);
+        // ⭐ 统一取工具（近战/弹射双路径 + 校验），主手无武器时兜底取佩戴的咒力核心
+        ToolStack tool = ToolHelper.getCombatToolWith(event.getSource(), player, COSMIC_ORDER_VOICE);
         if (tool == null) return;
 
         int level = tool.getModifierLevel(COSMIC_ORDER_VOICE);
