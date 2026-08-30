@@ -161,6 +161,31 @@ public class TinkersNewlife {
             SilentGloveHandler.initServer(worldSaveDir);
         }
 
+        /** 服务器启动后打印熔炼配方清单，验证万能材料熔化配方是否成功注册 */
+        @SubscribeEvent
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        public static void onServerStarted(net.minecraftforge.event.server.ServerStartedEvent event) {
+            try {
+                net.minecraft.world.item.crafting.RecipeManager rm = event.getServer().getRecipeManager();
+                int total = 0;
+                int auto = 0;
+                StringBuilder ids = new StringBuilder();
+                for (net.minecraft.world.item.crafting.Recipe<?> r :
+                        (java.util.Collection<net.minecraft.world.item.crafting.Recipe<?>>)
+                                (java.util.Collection<?>) rm.getAllRecipesFor(
+                                        slimeknights.tconstruct.library.recipe.TinkerRecipeTypes.MELTING.get())) {
+                    total++;
+                    if (r instanceof com.mofengbaizhi.tinkersnewlife.content.recipe.AutoMaterialMeltingRecipe) {
+                        auto++;
+                        ids.append(r.getId()).append(", ");
+                    }
+                }
+                LOGGER.info("[TinkersNewlife] 熔炼配方总数={}, 万能材料熔化配方数={} [{}]", total, auto, ids);
+            } catch (Throwable t) {
+                LOGGER.warn("[TinkersNewlife] 打印熔炼配方失败: {}", t.toString());
+            }
+        }
+
         @SubscribeEvent
         public static void onServerTick(TickEvent.ServerTickEvent event) {
             if (event.phase == TickEvent.Phase.END) {
