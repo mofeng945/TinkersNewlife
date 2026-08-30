@@ -40,6 +40,8 @@ public class TinkersNewlifeJeiPlugin implements IModPlugin {
         registerInfo(registration, ModItems.ASTRAL_ANCHOR.get(), "jei.tinkersnewlife.acquire.astral_anchor");
         registerInfo(registration, ModItems.NEXUS_OF_SPACETIME.get(), "jei.tinkersnewlife.acquire.nexus_of_spacetime");
         registerInfo(registration, ModItems.DURANDAL_SHARD.get(), "jei.tinkersnewlife.acquire.durandal_shard");
+        // ⭐ 咒力核心：可熔炼回收为对应材料流体（万能材料熔化配方自动匹配）
+        registerInfo(registration, ModItems.CURSE_CORE.get(), "jei.tinkersnewlife.acquire.curse_core_melt");
     }
 
     private void registerInfo(IRecipeRegistration registration, Item item, String key) {
