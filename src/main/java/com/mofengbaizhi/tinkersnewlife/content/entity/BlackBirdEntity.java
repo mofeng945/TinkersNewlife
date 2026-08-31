@@ -105,10 +105,12 @@ public class BlackBirdEntity extends Bat {
         lifeTicks++;
         setNoGravity(true);
         getNavigation().stop();
-        // 朝向：始终贴合玩家视线（视角在玩家身上，yRot 由移动包同步）
+        // 朝向：完全贴合玩家视线（yRot + xRot，相机在黑鸟上所以上下视角也要同步）
         setYRot(owner.getYRot());
         yBodyRot = owner.getYRot();
         yHeadRot = owner.getYRot();
+        setXRot(owner.getXRot());
+        xRotO = owner.getXRot();
 
         if (diving) {
             // 俯冲：2 倍速直线朝视线方向
@@ -120,15 +122,18 @@ public class BlackBirdEntity extends Bat {
             }
             return;
         }
-        // 普通操控：W 朝视线（含抬头/低头 Y 分量）、A/D 侧移、空格上升
+        // 普通操控：W 水平朝视线方向飞（不含俯仰）、A/D 侧移、空格上升
         Vec3 look = owner.getLookAngle();
+        Vec3 flatLook = new Vec3(look.x, 0, look.z);
+        if (flatLook.lengthSqr() < 1e-6) flatLook = new Vec3(0, 0, 1);
+        flatLook = flatLook.normalize();
         double speed = 0.7;
         Vec3 motion = Vec3.ZERO;
         if (inputZza != 0) {
-            motion = motion.add(look.scale(inputZza * speed));
+            motion = motion.add(flatLook.scale(inputZza * speed));
         }
         if (inputXxa != 0) {
-            Vec3 side = new Vec3(-look.z, 0, look.x).normalize();
+            Vec3 side = new Vec3(-flatLook.z, 0, flatLook.x).normalize();
             motion = motion.add(side.scale(inputXxa * speed * 0.6));
         }
         if (inputJump) {
@@ -228,6 +233,17 @@ public class BlackBirdEntity extends Bat {
     @Override
     protected void registerGoals() {
         // 完全清空原版蝙蝠 AI（黑鸟由玩家输入驱动）
+    }
+
+    /**
+     * 跳过原版蝙蝠 aiStep（服务端）：Bat 的 FlyMoveControl/栖息逻辑会让黑鸟自行移动，
+     * 与玩家操控冲突。客户端保留原版 aiStep 以维持翅膀动画。
+     */
+    @Override
+    public void aiStep() {
+        if (level().isClientSide) {
+            super.aiStep();
+        }
     }
 
     /** 黑鸟不移除/不自然消失 */
