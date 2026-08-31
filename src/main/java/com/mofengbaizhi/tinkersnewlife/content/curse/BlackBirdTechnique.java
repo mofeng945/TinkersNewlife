@@ -76,9 +76,8 @@ public final class BlackBirdTechnique extends BaseTechnique {
         bird.setHealth((float) (6.0 * hpMult));
         bird.setOwner(player);
         level.addFreshEntity(bird);
-        // 玩家身体留在原地：隐形 + 无敌 + 暂停移动
+        // 玩家身体留在原地：隐形 + 暂停移动（非无敌，可被攻击，死亡则视角回归）
         player.setInvisible(true);
-        player.setInvulnerable(true);
         player.setNoGravity(true);
         // 视角转移到黑鸟
         TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),

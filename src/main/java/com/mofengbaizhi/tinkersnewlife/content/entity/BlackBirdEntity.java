@@ -104,9 +104,10 @@ public class BlackBirdEntity extends Bat {
             finish(false);
             return;
         }
-        // 玩家本体钉在原地（隐形/无敌/不移动/不转头）
+        // 玩家本体钉在原地（隐形/不移动/不转头；非无敌，可被攻击，死亡则视角回归）
         if (ownerRestPos != null) {
             owner.setNoGravity(true);
+            owner.setInvisible(true);
             owner.setDeltaMovement(Vec3.ZERO);
             owner.teleportTo(ownerRestPos.x, ownerRestPos.y, ownerRestPos.z);
             owner.setYRot(ownerRestYRot);
