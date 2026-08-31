@@ -42,6 +42,8 @@ public class BlackBirdEntity extends Bat {
 
     private UUID ownerId;
     private Vec3 ownerRestPos;
+    private float ownerRestYRot;
+    private float ownerRestXRot;
     private boolean diving;
     private Vec3 diveDir;
     private int diveTicks;
@@ -51,6 +53,8 @@ public class BlackBirdEntity extends Bat {
     private float inputXxa;
     private boolean inputJump;
     private boolean inputShift;
+    private float inputYRot;
+    private float inputXRot;
 
     public BlackBirdEntity(EntityType<? extends Bat> type, Level level) {
         super(type, level);
@@ -72,6 +76,8 @@ public class BlackBirdEntity extends Bat {
         this.ownerId = player.getUUID();
         this.entityData.set(OWNER, Optional.of(player.getUUID()));
         this.ownerRestPos = player.position();
+        this.ownerRestYRot = player.getYRot();
+        this.ownerRestXRot = player.getXRot();
     }
 
     public ServerPlayer getOwner() {
@@ -79,12 +85,14 @@ public class BlackBirdEntity extends Bat {
         return level() instanceof ServerLevel sl && sl.getEntity(ownerId) instanceof ServerPlayer sp ? sp : null;
     }
 
-    /** 客户端输入更新（服务端收到输入包后调用） */
-    public void setInput(float zza, float xxa, boolean jumping, boolean shift) {
+    /** 客户端输入更新（服务端收到输入包后调用），含玩家视角（黑鸟朝向用，玩家本体不转头） */
+    public void setInput(float zza, float xxa, boolean jumping, boolean shift, float yRot, float xRot) {
         this.inputZza = zza;
         this.inputXxa = xxa;
         this.inputJump = jumping;
         this.inputShift = shift;
+        this.inputYRot = yRot;
+        this.inputXRot = xRot;
     }
 
     @Override
@@ -96,21 +104,27 @@ public class BlackBirdEntity extends Bat {
             finish(false);
             return;
         }
-        // 玩家本体钉在原地（隐形/无敌/不移动）
+        // 玩家本体钉在原地（隐形/无敌/不移动/不转头）
         if (ownerRestPos != null) {
             owner.setNoGravity(true);
             owner.setDeltaMovement(Vec3.ZERO);
             owner.teleportTo(ownerRestPos.x, ownerRestPos.y, ownerRestPos.z);
+            owner.setYRot(ownerRestYRot);
+            owner.setXRot(ownerRestXRot);
+            owner.yBodyRot = ownerRestYRot;
+            owner.yHeadRot = ownerRestYRot;
         }
         lifeTicks++;
         setNoGravity(true);
         getNavigation().stop();
-        // 朝向：完全贴合玩家视线（yRot + xRot，相机在黑鸟上所以上下视角也要同步）
-        setYRot(owner.getYRot());
-        yBodyRot = owner.getYRot();
-        yHeadRot = owner.getYRot();
-        setXRot(owner.getXRot());
-        xRotO = owner.getXRot();
+        // 朝向：使用输入包携带的玩家视角（yRot+xRot），玩家本体 yRot/xRot 不变（不转头）
+        float viewYaw = inputYRot;
+        float viewPitch = inputXRot;
+        setYRot(viewYaw);
+        yBodyRot = viewYaw;
+        yHeadRot = viewYaw;
+        setXRot(viewPitch);
+        xRotO = viewPitch;
 
         if (diving) {
             // 俯冲：2 倍速直线朝视线方向
@@ -123,7 +137,7 @@ public class BlackBirdEntity extends Bat {
             return;
         }
         // 普通操控：W 水平朝视线方向飞（不含俯仰）、A/D 侧移、空格上升
-        Vec3 look = owner.getLookAngle();
+        Vec3 look = viewVector(viewPitch, viewYaw);
         Vec3 flatLook = new Vec3(look.x, 0, look.z);
         if (flatLook.lengthSqr() < 1e-6) flatLook = new Vec3(0, 0, 1);
         flatLook = flatLook.normalize();
@@ -145,9 +159,20 @@ public class BlackBirdEntity extends Bat {
         // Shift：进入俯冲（记录当前视线方向）
         if (inputShift) {
             diving = true;
-            diveDir = owner.getLookAngle().normalize();
+            diveDir = viewVector(viewPitch, viewYaw).normalize();
             diveTicks = 0;
         }
+    }
+
+    /** 视线向量（由俯仰/偏航角计算，标准实体公式） */
+    private static Vec3 viewVector(float pitch, float yaw) {
+        float f = pitch * ((float) Math.PI / 180F);
+        float g = -yaw * ((float) Math.PI / 180F);
+        float h = net.minecraft.util.Mth.cos(g);
+        float i = net.minecraft.util.Mth.sin(g);
+        float j = net.minecraft.util.Mth.cos(f);
+        float k = net.minecraft.util.Mth.sin(f);
+        return new Vec3(i * j, -k, h * j);
     }
 
     /** 俯冲碰撞检测：碰撞箱与方块/实体重叠 */
@@ -249,6 +274,12 @@ public class BlackBirdEntity extends Bat {
     /** 黑鸟不移除/不自然消失 */
     @Override
     public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        return false;
+    }
+
+    /** 黑鸟永不倒挂歇息（否则模型渲染成倒吊姿态） */
+    @Override
+    public boolean isResting() {
         return false;
     }
 

@@ -117,11 +117,12 @@ public class ClientEventHandler {
                 lastTechniqueDown = false;
                 return;
             }
-            // ⭐ 黑鸟操控：相机绑定黑鸟时，每 tick 发送玩家输入驱动其飞行
+            // ⭐ 黑鸟操控：相机绑定黑鸟时，每 tick 发送玩家输入驱动其飞行（含视角）
             if (Minecraft.getInstance().cameraEntity instanceof com.mofengbaizhi.tinkersnewlife.content.entity.BlackBirdEntity) {
                 net.minecraft.client.player.Input input = player.input;
                 TinkersNewlife.CHANNEL.sendToServer(new com.mofengbaizhi.tinkersnewlife.network.PacketBlackBirdInput(
-                        input.forwardImpulse, input.leftImpulse, input.jumping, input.shiftKeyDown));
+                        input.forwardImpulse, input.leftImpulse, input.jumping, input.shiftKeyDown,
+                        player.getYRot(), player.getXRot()));
             }
             // ⭐ 术式按键：按下=开始（即时释放或蓄力），松开=蓄力发射
             boolean down = KeyBindings.USE_TECHNIQUE.get().isDown();
