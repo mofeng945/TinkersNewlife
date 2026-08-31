@@ -1,6 +1,5 @@
 {
   "action.tinkersnewlife.dark_silent.furioso": "Furioso",
-
   "block.tinkersnewlife.molten_dreadsteel_block": "熔融悚怖钢",
   "block.tinkersnewlife.molten_dread_block": "熔融悚怖",
   "block.tinkersnewlife.molten_dragonsteel_lightning_block": "熔融龙霆钢",
@@ -16,29 +15,23 @@
   "block.tinkersnewlife.molten_dragonsteel_fire_block": "熔融龙炎钢",
   "block.tinkersnewlife.lightning_blood_block": "雷龙血",
   "block.tinkersnewlife.ice_blood_block": "冰龙血",
-
   "container.tinkersnewlife.silent_glove": "空间奇点库",
   "container.tinkersnewlife.bag.sort": "整理",
   "container.tinkersnewlife.bag": "量子背包 (Lv.%s)",
-
   "curios.identifier.feet": "脚饰",
-
   "dragonstaff.name.suffix": "之翼,之怒,之眼,之魂,之息,之爪,之鳞,之冠,之牙,之心",
   "dragonstaff.name.appearance": "鳞甲,圣瞳,金角,银翼,铁颚,霜鬃,火鬃,雷鬃,影鬃,圣鬃",
   "dragonstaff.name.prefix": "范德尔,艾斯,雷霆,达克尼斯,霍利,布利斯,思达尔,阿碧斯,弗莱明,弗洛伊斯",
   "dragonstaff.name.root": "奥杜因,帕图纳克斯,杜耐维尔,阿卡托什,凡里奥,萨菲罗斯,拉格纳,艾泽拉斯,诺兹多姆,伊瑟拉",
-
   "effect.tinkersnewlife.unnameable": "§5不可名状",
   "effect.tinkersnewlife.charm": "§d魅惑",
   "effect.tinkersnewlife.damage_limit": "§6限伤",
   "effect.tinkersnewlife.disarm": "§e缴械",
   "effect.tinkersnewlife.frost": "§b霜冻",
-
   "entity.tinkersnewlife.yo_yo": "悠悠球",
   "entity.tinkersnewlife.dreadsteel_slash": "怖钢剑气",
   "entity.tinkersnewlife.flying_sword": "飞剑",
   "entity.tinkersnewlife.flying_sword_foot": "飞剑",
-
   "event.tinkersnewlife.yog_sothoth.max_level": "§c你已经超越300级，时空之匙对你已无意义。",
   "event.tinkersnewlife.yog_sothoth.start": "§5§l时空与混沌的奥秘正在涌入你的脑海……",
   "event.tinkersnewlife.rlyeh_call.deep_whisper": "§d呢喃声笼罩于你……",
@@ -56,7 +49,6 @@
   "event.tinkersnewlife.rlyeh_call.success": "§d§l拉莱耶的呼唤 §r§d在你耳边低语...",
   "event.tinkersnewlife.yellow_king.failed": "§c你未能承受住黄衣之王的注视...",
   "event.tinkersnewlife.yellow_king.reward": "§a§l你获得了黄衣之王余风！",
-
   "fluid_type.tinkersnewlife.molten_nicholas_blessing": "生命冲动",
   "fluid_type.tinkersnewlife.molten_dreadsteel": "熔融悚怖钢",
   "fluid_type.tinkersnewlife.molten_dread": "熔融悚怖",
@@ -70,7 +62,6 @@
   "fluid_type.tinkersnewlife.ice_blood": "冰龙血",
   "fluid_type.tinkersnewlife.fire_blood": "火龙血",
   "fluid_type.tinkersnewlife.molten_dragonsteel_lightning": "熔融龙霆钢",
-
   "item.tinkersnewlife.war_scythe": "战镰",
   "item.tinkersnewlife.silent_glove_binding": "噤默手套·皮面",
   "item.tinkersnewlife.silent_glove_core": "噤默手套·核心",
@@ -140,7 +131,6 @@
   "item.tinkersnewlife.molten_dragonsteel_ice_bucket": "熔融龙霜钢桶",
   "item.tinkersnewlife.molten_dragonsteel_fire_bucket": "熔融龙炎钢桶",
   "item.tinkersnewlife.hastur_malice_bucket": "哈斯塔恶念",
-
   "item_group.tinkersnewlife.flying_sword": "飞剑",
   "item_group.tinkersnewlife.modular_staff.description": "经过模块化改造的魔杖，有了更可观的威力增幅。",
   "item_group.tinkersnewlife.flying_sword.description": "以匠魂锻造的御剑飞行的利器。右键发射可追踪敌人的飞剑，装备于脚部饰栏时获得飞行能力。按绑定按键切换普通/追击模式。",
@@ -151,9 +141,7 @@
   "item_group.tinkersnewlife.war_scythe": "战镰",
   "item_group.tinkersnewlife.modular_staff": "模块化魔杖",
   "item_group.tinkersnewlife.war_scythe.description": "经过战斗化改造的镰刀，拥有比它的初始版本更高的攻击力和比其他武器更大的攻击范围，相应的，也能让你掌握一些特别的攻击技巧。",
-
   "itemGroup.tinkersnewlife": "匠魂新生",
-
   "key.tinkersnewlife.open_bag": "打开量子背包",
   "key.tinkersnewlife.switch_flying_sword_mode": "切换飞剑模式",
   "key.tinkersnewlife.dragon_staff_use": "驯龙技能",
@@ -161,7 +149,6 @@
   "key.tinkersnewlife.use_skill": "使用悚域展开",
   "key.tinkersnewlife.use_technique": "释放术式",
   "key.tinkersnewlife.switch_technique": "切换当前术式",
-
   "material.tinkersnewlife.dragonsteel_lightning": "龙霆钢",
   "material.tinkersnewlife.dragonsteel_ice": "龙霜钢",
   "material.tinkersnewlife.dragonbone": "龙骨",
@@ -172,13 +159,11 @@
   "material.tinkersnewlife.hastur_malice": "哈斯塔恶念",
   "material.tinkersnewlife.dragonsteel_fire": "龙炎钢",
   "material.tinkersnewlife.ashen_ink": "灰白之墨",
-
   "message.tinkersnewlife.flying_sword.mode.chase": "飞剑：追击模式",
   "message.tinkersnewlife.durandal.converted": "杜兰达尔被唤醒了！",
   "message.tinkersnewlife.flying_sword.mode.normal": "飞剑：普通模式",
   "message.tinkersnewlife.dark_silent.no_space": "没有空余空间掏出武器。",
   "message.tinkersnewlife.glove.full_hand": "双手已满，无法从空间奇点库取出武器！",
-
   "modifier.tinkersnewlife.dragon_staff.not_owner": "这不是你的驯龙杖！",
   "modifier.tinkersnewlife.dragon_staff.release_fail_spawn": "释放失败：无法生成龙到世界",
   "modifier.tinkersnewlife.dragon_staff.attack_bonus": "§a攻击加成: +%s 点",
@@ -323,12 +308,10 @@
   "modifier.tinkersnewlife.dragon_blood_tank.collected": "采集了 %d mB 的 %s 龙血",
   "modifier.tinkersnewlife.dragon_blood_infusion.description": "§7消耗龙血对敌人附加效果：火龙血→点燃，冰龙血→霜冻，雷龙血→缴械",
   "modifier.tinkersnewlife.dragon_blood_infusion.flavor": "§7龙血之力，附于刃上",
-
   "pattern.tinkersnewlife.yo_yo_wheel": "悠悠球轮",
   "pattern.tinkersnewlife.yo_yo_spool": "悠悠球线轴",
   "pattern.tinkersnewlife.dragon_core": "龙魂核心",
   "pattern.tinkersnewlife.spell_core": "法术核心",
-
   "slot.tinkersnewlife.flying_sword.head": "宽刃",
   "slot.tinkersnewlife.flying_sword.head2": "宽刃",
   "slot.tinkersnewlife.flying_sword.handle1": "坚韧手柄",
@@ -354,7 +337,6 @@
   "slot.tinkersnewlife.war_scythe.binding": "坚韧套环",
   "slot.tinkersnewlife.modular_staff.head": "法术核心",
   "slot.tinkersnewlife.modular_staff.binding": "坚韧套环",
-
   "tooltip.tinkersnewlife.war_scythe.ultimate_damage": "§c造成 §e5 次 §c× §6%.0f%% §c基础伤害",
   "tooltip.tinkersnewlife.war_scythe.dash_cost": "§e消耗 20 Fever §7瞬移",
   "tooltip.tinkersnewlife.flying_sword.mode.normal": "模式：普通",
@@ -410,13 +392,13 @@
   "modifier.tinkersnewlife.ten_shadows.description": "§f按下术式释放按键呼出式神选择界面：召唤式神时扣除咒力（维持不消耗），式神的大小/速度/基础数值受咒力亲和与咒力输出缩放。初始仅玉犬可用；其余九种需先调伏：首次召唤未调伏式神会同时攻击你与锁定目标，击败它即调伏成功。占用术式槽。",
   "modifier.tinkersnewlife.ten_shadows.dog": "玉犬",
   "modifier.tinkersnewlife.ten_shadows.nue": "鵺",
-  "modifier.tinkersnewlife.ten_shadows.serpent": "大蛇",
+  "modifier.tinkersnewlife.ten_shadows.serpent": "蚀蠹",
   "modifier.tinkersnewlife.ten_shadows.toad": "蛤蟆",
-  "modifier.tinkersnewlife.ten_shadows.elephant": "满象",
+  "modifier.tinkersnewlife.ten_shadows.elephant": "川豚",
   "modifier.tinkersnewlife.ten_shadows.rabbit_escape": "脱兔",
-  "modifier.tinkersnewlife.ten_shadows.deer": "圆鹿",
+  "modifier.tinkersnewlife.ten_shadows.deer": "愈羊",
   "modifier.tinkersnewlife.ten_shadows.ox": "贯牛",
-  "modifier.tinkersnewlife.ten_shadows.tiger": "虎葬",
+  "modifier.tinkersnewlife.ten_shadows.tiger": "怒角",
   "modifier.tinkersnewlife.ten_shadows.mahoraga": "魔虚罗",
   "screen.tinkersnewlife.ten_shadows": "式神选择",
   "screen.tinkersnewlife.ten_shadows.title": "§6十影术式 · 式神选择",
@@ -472,5 +454,6 @@
   "hud.tinkersnewlife.curse": "咒力: %s / %s",
   "hud.tinkersnewlife.technique": "§b术式: %s",
   "hud.tinkersnewlife.domain_active": "§e领域展开中",
-  "hud.tinkersnewlife.infinite": "§d咒力无限"
+  "hud.tinkersnewlife.infinite": "§d咒力无限",
+  "pattern.tinkersnewlife.curse_core": "咒力核心"
 }

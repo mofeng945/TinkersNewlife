@@ -19,13 +19,13 @@ public enum ShikigamiType {
 
     DOG        ("dog",          "玉犬",       0.9,  30,  6, 0.45, 1.0F),
     NUE        ("nue",          "鵺",         0.8,  25,  8, 0.60, 2.5F),
-    SERPENT    ("serpent",      "大蛇",       1.4,  55,  9, 0.38, 3.0F),
+    SERPENT    ("serpent",      "蚀蠹",       1.4,  55,  9, 0.38, 3.0F),
     TOAD       ("toad",         "蛤蟆",       1.3,  60,  7, 0.32, 2.0F),
-    ELEPHANT   ("elephant",     "满象",       2.2,  90, 12, 0.30, 6.0F),
+    ELEPHANT   ("elephant",     "川豚",       2.2,  90, 12, 0.30, 6.0F),
     RABBIT     ("rabbit_escape","脱兔",       0.5,  10,  1, 0.55, 1.5F),
-    DEER       ("deer",         "圆鹿",       1.1,  40,  4, 0.45, 2.0F),
+    DEER       ("deer",         "愈羊",       1.1,  40,  4, 0.45, 2.0F),
     OX         ("ox",           "贯牛",       1.6,  70, 10, 0.55, 3.0F),
-    TIGER      ("tiger",        "虎葬",       1.8,  80, 16, 0.42, 4.0F),
+    TIGER      ("tiger",        "怒角",       1.8,  80, 16, 0.42, 4.0F),
     MAHORAGA   ("mahoraga",     "魔虚罗",     2.0, 150, 20, 0.45, 10.0F);
 
     /** 注册 id（实体/修饰符路径用） */
