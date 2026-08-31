@@ -1,0 +1,13 @@
+{
+  "name": "模块化魔杖",
+  "category": "tinkersnewlife:items",
+  "icon": "tinkersnewlife:modular_staff",
+  "sortnum": 7,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:modular_staff",
+      "text": "$(bold)模块化魔杖$()$(br2)获取：通过$(bold)匠魂工匠站$()打造——法术核心 + 手柄 + 坚韧套环组合。$(br2)特点：经过模块化改造的魔杖，有了更可观的威力增幅：$(li)近战攻击附加 $(bold)+1.5$() 伤害$(li)法术与咒术（$(l:techniques/kai)解$() / $(l:techniques/ba)捌$() / $(l:techniques/zao_kai)灶·开$()）附加额外伤害并提升威力"
+    }
+  ]
+}

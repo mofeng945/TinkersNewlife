@@ -1,0 +1,13 @@
+{
+  "name": "杜兰达尔破碎剑刃",
+  "category": "tinkersnewlife:items",
+  "icon": "tinkersnewlife:durandal_shard",
+  "sortnum": 18,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:durandal_shard",
+      "text": "$(bold)杜兰达尔破碎剑刃$()$(br2)获取：玩家击杀$(bold)凋灵$()时 $(bold)25%$() 概率掉落 1-2 个。$(br2)用途：熔炼 → $(bold)熔融杜兰达尔$()，用于制作$(l:materials/material_durandal)杜兰达尔材料$()，进而打造$(l:items/tool_durandal_sword)杜兰达尔之剑$()。"
+    }
+  ]
+}

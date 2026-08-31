@@ -466,5 +466,7 @@
   "modifier.tinkersnewlife.projection.flavor": "§7一瞬之间，我已在你身后。",
   "modifier.tinkersnewlife.projection.description": "§f发动后在视线方向同水平面生成玩家虚影（距离 = 1s 最大直线移动距离的 2/3~1 倍）。1s 内触碰虚影 → 10s 增益：伤害/跳跃/速度 ×2。消耗咒力上限的 1/12。占用术式槽。",
   "message.tinkersnewlife.projection.summon": "§b虚影已生成，距离 %s 格（1 秒内触碰获得增益）",
-  "message.tinkersnewlife.projection.buff": "§d投射完成！10 秒内伤害/跳跃/速度 ×2"
+  "message.tinkersnewlife.projection.buff": "§d投射完成！10 秒内伤害/跳跃/速度 ×2",
+  "message.tinkersnewlife.projection.stun": "§c投射失败！未能触碰到虚影，罚站 3 秒",
+  "item.tinkersnewlife.guide_book": "新生神秘学编年史"
 }

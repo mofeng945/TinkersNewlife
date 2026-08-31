@@ -253,4 +253,8 @@ public class ModItems {
     /** 火焰箭（手持蓄力）：灶·开蓄力时临时装备的视觉物品（动态纹理），不可获取/使用 */
     public static final RegistryObject<Item> FLAME_ARROW_ITEM =
             ITEMS.register("flame_arrow_item", FlameArrowItem::new);
+
+    /** 新生神秘学编年史（帕秋莉手册书物品）：材质完全由本模组控制（guide_book.json 模型 + item 纹理） */
+    public static final RegistryObject<Item> GUIDE_BOOK =
+            ITEMS.register("guide_book", () -> new vazkii.patchouli.common.item.ItemModBook());
 }

@@ -1,0 +1,13 @@
+{
+  "name": "星界之锚",
+  "category": "tinkersnewlife:items",
+  "icon": "tinkersnewlife:astral_anchor",
+  "sortnum": 16,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:astral_anchor",
+      "text": "$(bold)星界之锚$()$(br2)获取：$(bold)末地城宝藏$()箱子，$(bold)30%$() 概率 1-2 个。$(br2)用途：作为$(bold)基底$()参与$(l:items/relic_yog_sothoth_gate_key)犹格索托斯的门之匙$()的锻造台合成。"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "格赫罗斯残骸",
+  "category": "tinkersnewlife:materials",
+  "icon": "tinkersnewlife:gheloth_remains",
+  "sortnum": 8,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:gheloth_remains",
+      "text": "$(bold)获取方式$()：$(li)挖掘$(bold)下界顶层$()（Y110-127）的$(bold)格赫罗斯矿石$()（非精准采集），1-3 个，时运加成$(li)在铸造台用$(bold)铁$()材料与$(bold)格赫罗斯之血液$() $(bold)100 mB$() 制作残骸材料——血液来自熔炼残骸（15 mB/个）或矿石$(br2)等级：$(bold)T4$()。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)自带特性$()：$(li)$(l:materials/trait_cosmic_order_voice)天体秩序之音$()：命中目标时施加迟缓与失明，持续时间随等级提升增强$(br2)格赫罗斯残骸本身也是$(l:items/relic_gheloth_remains)旧日遗物$()之一，是仪式与材料的双重源头。"
+    }
+  ]
+}

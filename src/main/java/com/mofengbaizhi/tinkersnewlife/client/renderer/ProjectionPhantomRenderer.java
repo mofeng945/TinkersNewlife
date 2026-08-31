@@ -3,13 +3,10 @@ package com.mofengbaizhi.tinkersnewlife.client.renderer;
 import com.mofengbaizhi.tinkersnewlife.content.entity.ProjectionPhantomEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.model.EntityModel;
-import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.model.geom.PartPose;
-import net.minecraft.client.model.geom.builders.CubeListBuilder;
-import net.minecraft.client.model.geom.builders.LayerDefinition;
-import net.minecraft.client.model.geom.builders.MeshDefinition;
-import net.minecraft.client.model.geom.builders.PartDefinition;
+import com.mojang.math.Axis;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.PlayerModel;
+import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -18,62 +15,45 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * 投射咒法 玩家虚影渲染：蓝色半透明人形（box 拼装）。
+ * 投射咒法 玩家虚影渲染：套用原版玩家模型，皮肤用本地玩家，半透明蓝色调。
  */
 public class ProjectionPhantomRenderer extends EntityRenderer<ProjectionPhantomEntity> {
 
-    private static final ResourceLocation TEXTURE =
-            new ResourceLocation("tinkersnewlife", "textures/entity/projection_phantom.png");
-    private final PhantomModel model = new PhantomModel();
+    private final PlayerModel<net.minecraft.world.entity.LivingEntity> model;
 
     public ProjectionPhantomRenderer(EntityRendererProvider.Context context) {
         super(context);
+        this.model = new PlayerModel<>(context.bakeLayer(ModelLayers.PLAYER), false);
     }
 
     @Override
     public void render(ProjectionPhantomEntity entity, float entityYaw, float partialTick,
                        PoseStack poseStack, MultiBufferSource buffer, int light) {
+        // 原版玩家模型空间：scale(-1,-1,1) + 下移 1.501 + 180-yaw
         poseStack.pushPose();
+        poseStack.scale(-1.0F, -1.0F, 1.0F);
         poseStack.translate(0.0F, -1.501F, 0.0F);
-        VertexConsumer vc = buffer.getBuffer(RenderType.entityTranslucent(TEXTURE));
-        model.renderToBuffer(poseStack, vc, light, OverlayTexture.NO_OVERLAY, 0.4F, 0.7F, 1.0F, 0.55F);
+        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - entity.getYRot()));
+        // 站立姿态：手臂自然下垂
+        model.leftArm.xRot = -1.9F;
+        model.rightArm.xRot = -1.9F;
+        model.leftArm.zRot = 0.1F;
+        model.rightArm.zRot = -0.1F;
+        float age = entity.tickCount + partialTick;
+        model.setupAnim(entity, 0, 0, age, 0, 0);
+        VertexConsumer vc = buffer.getBuffer(RenderType.entityTranslucent(getTextureLocation(entity)));
+        model.renderToBuffer(poseStack, vc, light, OverlayTexture.NO_OVERLAY, 0.45F, 0.7F, 1.0F, 0.5F);
         poseStack.popPose();
         super.render(entity, entityYaw, partialTick, poseStack, buffer, light);
     }
 
     @Override
     public ResourceLocation getTextureLocation(ProjectionPhantomEntity entity) {
-        return TEXTURE;
-    }
-
-    /** 蓝色虚影人形模型 */
-    private static final class PhantomModel extends EntityModel<ProjectionPhantomEntity> {
-        private final ModelPart root;
-
-        PhantomModel() {
-            MeshDefinition mesh = new MeshDefinition();
-            PartDefinition r = mesh.getRoot();
-            // 头
-            r.addOrReplaceChild("head", CubeListBuilder.create().addBox(-0.25F, -0.5F, -0.25F, 0.5F, 0.5F, 0.5F), PartPose.offset(0, -1.6F, 0));
-            // 躯干
-            r.addOrReplaceChild("body", CubeListBuilder.create().addBox(-0.3F, -0.5F, -0.2F, 0.6F, 0.8F, 0.4F), PartPose.offset(0, -0.8F, 0));
-            // 腿
-            r.addOrReplaceChild("leg_l", CubeListBuilder.create().addBox(-0.28F, 0, -0.15F, 0.28F, 0.8F, 0.3F), PartPose.offset(0, 0, 0));
-            r.addOrReplaceChild("leg_r", CubeListBuilder.create().addBox(0, 0, -0.15F, 0.28F, 0.8F, 0.3F), PartPose.offset(0, 0, 0));
-            // 手臂
-            r.addOrReplaceChild("arm_l", CubeListBuilder.create().addBox(-0.28F, -0.1F, -0.12F, 0.24F, 0.7F, 0.24F), PartPose.offset(-0.3F, -1.35F, 0));
-            r.addOrReplaceChild("arm_r", CubeListBuilder.create().addBox(0.04F, -0.1F, -0.12F, 0.24F, 0.7F, 0.24F), PartPose.offset(0.3F, -1.35F, 0));
-            root = LayerDefinition.create(mesh, 16, 16).bakeRoot();
+        // 虚影皮肤：优先虚影主人（本地玩家通常是施术者），否则默认 Steve
+        if (Minecraft.getInstance().player != null) {
+            return Minecraft.getInstance().getSkinManager()
+                    .getInsecureSkinLocation(Minecraft.getInstance().player.getGameProfile());
         }
-
-        @Override
-        public void setupAnim(ProjectionPhantomEntity entity, float limbSwing, float limbSwingAmount,
-                              float ageInTicks, float netHeadYaw, float headPitch) {}
-
-        @Override
-        public void renderToBuffer(PoseStack pose, VertexConsumer vc, int light, int overlay,
-                                   float r, float g, float b, float a) {
-            root.render(pose, vc, light, overlay, r, g, b, a);
-        }
+        return net.minecraft.client.renderer.texture.TextureAtlas.LOCATION_BLOCKS;
     }
 }

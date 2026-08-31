@@ -1,0 +1,17 @@
+{
+  "name": "悠悠球",
+  "category": "tinkersnewlife:items",
+  "icon": "tinkersnewlife:yo_yo",
+  "sortnum": 4,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:yo_yo",
+      "text": "$(bold)悠悠球$()$(br2)获取：通过$(bold)匠魂工匠站$()打造——两个悠悠球轮 + 线轴 + 弓弦组合。$(br2)特点：$(li)$(bold)右键$()向前方发射旋转的悠悠球$(li)触碰到生物或飞抵最远距离后$(bold)停滞 3 秒$()$(li)停滞期间每帧对触碰实体造成 $(bold)10% 总伤害$()$(li)随后自动飞回"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)使用技巧$()：悠悠球停滞的 3 秒内可反复穿越目标造成多次伤害，是持续输出的强大武器；搭配材料战斗特性（如龙炎、罡风）每个触碰帧都可触发。"
+    }
+  ]
+}

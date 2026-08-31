@@ -1,0 +1,12 @@
+{
+  "name": "龙血储罐",
+  "category": "tinkersnewlife:materials",
+  "icon": "minecraft:bone",
+  "sortnum": 21,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)龙血储罐$()（龙骨的默认特性）$(br2)效果：每级 +5000 mB 容量（最大 25000 mB），可储存$(bold)三种龙血$()（火龙血 / 冰龙血 / 雷龙血）。$(br2)使用：手持工具$(bold)右键龙类$()采集其血液存入储罐；血液可与$(bold)龙血注魔$()特性配合，为武器附加点燃 / 霜冻 / 缴械效果。"
+    }
+  ]
+}

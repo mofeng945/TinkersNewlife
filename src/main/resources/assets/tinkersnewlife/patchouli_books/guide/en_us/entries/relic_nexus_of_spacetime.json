@@ -1,0 +1,13 @@
+{
+  "name": "时空枢纽核心",
+  "category": "tinkersnewlife:items",
+  "icon": "tinkersnewlife:nexus_of_spacetime",
+  "sortnum": 17,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:nexus_of_spacetime",
+      "text": "$(bold)时空枢纽核心$()$(br2)获取：$(bold)远古城市$()箱子，$(bold)50%$() 概率 1 个。$(br2)用途：作为$(bold)附加$()参与$(l:items/relic_yog_sothoth_gate_key)犹格索托斯的门之匙$()的锻造台合成。"
+    }
+  ]
+}

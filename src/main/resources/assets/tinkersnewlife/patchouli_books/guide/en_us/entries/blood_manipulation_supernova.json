@@ -1,16 +1,17 @@
 {
-  "name": "赤血操术·超新星",
-  "category": "tinkersnewlife:techniques",
-  "icon": "tinkersnewlife:curse_core",
-  "sortnum": 8,
-  "pages": [
-    {
-      "type": "patchouli:text",
-      "text": "$(bold)赤血操术·超新星$()：血之极致，聚为星爆。$(br2)指向目标（视线索敌），在目标位置生成一颗$(bold)微小血球$()（直径约 0.2 格），$(bold)0.8 秒$()延迟后$(bold)爆炸$()，$(bold)不破坏方块$()。"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "$(li)爆炸中心伤害 = (1 + 咒力亲和/100) × 咒力输出 × 消耗血量 × 10，随距离线性衰减$(li)每次发动消耗 $(bold)10% 最大生命值$()（创造模式不消耗，伤害仍按理论消耗计算）$(li)无视无敌帧，材料战斗特性每个受击目标照常触发$(li)咒力消耗：5/2 × (1 - 咒力亲和/100) × (10 + 咒力输出×5) 点"
-    }
-  ]
+    "name":  "赤血操术·超新星",
+    "category":  "tinkersnewlife:techniques",
+    "icon":  "tinkersnewlife:curse_core",
+    "sortnum":  7,
+  "advancement": "tinkersnewlife:techniques/blood_manipulation_supernova",
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)赤血操术·超新星$()：血之极致，聚为星爆。$(br2)指向目标（视线索敌），在目标位置生成一颗$(bold)微小血球$()（直径约 0.2 格），$(bold)0.8 秒$()延迟后$(bold)爆炸$()，$(bold)不破坏方块$()。"
+                  },
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(li)爆炸中心伤害 = (1 + 咒力亲和/100) × 咒力输出 × 消耗血量 × 10，随距离线性衰减$(li)每次发动消耗 $(bold)10% 最大生命值$()（创造模式不消耗，伤害仍按理论消耗计算）$(li)无视无敌帧，材料战斗特性每个受击目标照常触发$(li)咒力消耗：5/2 × (1 - 咒力亲和/100) × (10 + 咒力输出×5) 点"
+                  }
+              ]
 }

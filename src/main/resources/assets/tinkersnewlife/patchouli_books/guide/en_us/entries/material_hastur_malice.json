@@ -1,0 +1,17 @@
+{
+  "name": "哈斯塔恶意",
+  "category": "tinkersnewlife:materials",
+  "icon": "tinkersnewlife:hastur_malice_bucket",
+  "sortnum": 9,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:hastur_malice_bucket",
+      "text": "$(bold)获取方式$()：$(li)先获得$(bold)哈斯塔恶意液$()——在冶炼炉中熔炼$(l:items/relic_yellow_king_remnant)黄衣之王余风$()（1 个 = 10 mB）$(li)在铸造台用$(bold)紫颂材料$()（tconstruct:chorus）与哈斯塔恶意液 $(bold)80 mB$() 制作哈斯塔恶意材料$(br2)等级：$(bold)T2$()。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)自带特性$()：$(li)$(l:materials/trait_hastur_malice)罡风$()：攻击时制造风场吸引附近生物，并对风场内的生物持续造成伤害$(br2)哈斯塔恶意偏向控制与拉扯，适合把敌人聚拢后接范围输出。"
+    }
+  ]
+}

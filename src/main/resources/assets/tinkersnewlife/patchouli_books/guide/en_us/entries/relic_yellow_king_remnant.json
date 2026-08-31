@@ -1,0 +1,13 @@
+{
+  "name": "黄衣之王余风",
+  "category": "tinkersnewlife:items",
+  "icon": "tinkersnewlife:yellow_king_remnant",
+  "sortnum": 11,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:yellow_king_remnant",
+      "text": "$(bold)黄衣之王余风$()$(br2)获取：从 $(bold)Y > 400$() 自由落体坠至 $(bold)Y < -50$()，撑过 $(bold)20 秒$()事件（每 3 秒受 3 点魔法伤害），$(bold)50%$() 概率获得 $(bold)16$() 个——否则$(bold)凋零 60 秒$()。$(br2)用途：熔炼 → $(bold)10 mB$() 哈斯塔恶意液，是$(l:materials/material_hastur_malice)哈斯塔恶意$()材料的源头。"
+    }
+  ]
+}

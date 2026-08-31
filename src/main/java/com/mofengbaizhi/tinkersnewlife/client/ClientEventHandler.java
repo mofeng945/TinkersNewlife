@@ -120,6 +120,18 @@ public class ClientEventHandler {
                 lastTechniqueDown = false;
                 return;
             }
+            // ⭐ 投射咒法罚站：禁用鼠标键盘（清零移动/跳跃输入 + 锁定视角）
+            if (com.mofengbaizhi.tinkersnewlife.client.ClientProjectionData.isStunned()) {
+                net.minecraft.client.player.Input input = player.input;
+                input.leftImpulse = 0;
+                input.forwardImpulse = 0;
+                input.jumping = false;
+                input.shiftKeyDown = false;
+                player.xxa = 0;
+                player.zza = 0;
+                player.setYRot(com.mofengbaizhi.tinkersnewlife.client.ClientProjectionData.getStunYaw());
+                player.setXRot(com.mofengbaizhi.tinkersnewlife.client.ClientProjectionData.getStunPitch());
+            }
             // ⭐ 黑鸟操控：相机绑定黑鸟时，每 tick 发送玩家输入驱动其飞行（含视角）
             if (Minecraft.getInstance().cameraEntity instanceof com.mofengbaizhi.tinkersnewlife.content.entity.BlackBirdEntity) {
                 net.minecraft.client.player.Input input = player.input;
@@ -135,6 +147,14 @@ public class ClientEventHandler {
                 TinkersNewlife.CHANNEL.sendToServer(new PacketUseTechnique(false));
             }
             lastTechniqueDown = down;
+        }
+
+        /** 投射咒法罚站：取消攻击/交互输入 */
+        @SubscribeEvent
+        public static void onInteractionInput(net.minecraftforge.client.event.InputEvent.InteractionKeyMappingTriggered event) {
+            if (com.mofengbaizhi.tinkersnewlife.client.ClientProjectionData.isStunned()) {
+                event.setCanceled(true);
+            }
         }
 
         @SubscribeEvent

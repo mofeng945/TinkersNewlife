@@ -1,0 +1,12 @@
+{
+  "name": "魅惑",
+  "category": "tinkersnewlife:materials",
+  "icon": "tinkersnewlife:nicholas_blessing",
+  "sortnum": 19,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)魅惑$()（生命冲动的默认特性）$(br2)效果：攻击生物后使其陷入$(bold)魅惑$()状态，期间$(bold)无法攻击你$()。冷却 30 秒。$(br2)魅惑是强力自保特性，被围攻时能让最近的目标停止攻击。"
+    }
+  ]
+}

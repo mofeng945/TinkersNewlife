@@ -1,12 +1,13 @@
 {
-  "name": "坐杀搏徒",
-  "category": "tinkersnewlife:domains",
-  "icon": "tinkersnewlife:curse_core",
-  "sortnum": 1,
-  "pages": [
-    {
-      "type": "patchouli:text",
-      "text": "$(bold)坐杀搏徒$()：以小博大，赌上咒力与命运。$(br2)每秒消耗 半径×20 咒力。领域内每 3 秒摇奖：$(li)$(green)小奖（70%）$()：+250 咒力，10 秒伤害吸收 IV$(li)$(dark_green)大奖（29%）$()：+900 咒力，30 秒生命恢复$(li)$(gold)特等奖（1%）$()：33 秒内咒力无限、HP 锁定上限、咒力亲和 +100$(br2)连续 10 次未中后，第 11 次必出特等奖。"
-    }
-  ]
+    "name":  "坐杀搏徒",
+    "category":  "tinkersnewlife:domains",
+    "icon":  "tinkersnewlife:curse_core",
+    "sortnum":  1,
+  "advancement": "tinkersnewlife:domains/zuosha_botu",
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)坐杀搏徒$()：以小博大，赌上咒力与命运。$(br2)每秒消耗 半径×20 咒力。领域内每 3 秒摇奖：$(li)$(green)小奖（70%）$()：+250 咒力，10 秒伤害吸收 IV$(li)$(dark_green)大奖（29%）$()：+900 咒力，30 秒生命恢复$(li)$(gold)特等奖（1%）$()：33 秒内咒力无限、HP 锁定上限、咒力亲和 +100$(br2)连续 10 次未中后，第 11 次必出特等奖。"
+                  }
+              ]
 }

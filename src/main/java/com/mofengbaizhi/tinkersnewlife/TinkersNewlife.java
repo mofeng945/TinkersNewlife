@@ -163,6 +163,10 @@ public class TinkersNewlife {
         registerClientPacket(PacketSyncCurse.class, PacketSyncCurse::toBytes, PacketSyncCurse::new, PacketSyncCurse::handle);
         registerClientPacket(PacketOpenShikigamiScreen.class, PacketOpenShikigamiScreen::toBytes, PacketOpenShikigamiScreen::new, PacketOpenShikigamiScreen::handle);
         registerClientPacket(PacketBlackBirdCamera.class, PacketBlackBirdCamera::toBytes, PacketBlackBirdCamera::new, PacketBlackBirdCamera::handle);
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.PacketProjectionStun.class,
+                com.mofengbaizhi.tinkersnewlife.network.PacketProjectionStun::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.PacketProjectionStun::new,
+                com.mofengbaizhi.tinkersnewlife.network.PacketProjectionStun::handle);
 
         // 实体属性（式神等生物实体）
         modEventBus.addListener(TinkersNewlife::onRegisterEntityAttributes);
@@ -189,6 +193,7 @@ public class TinkersNewlife {
         event.put(ModEntities.SHIKIGAMI_SHEEP.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiSheep.createAttributes().build());
         event.put(ModEntities.SHIKIGAMI_IRON_GOLEM.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiIronGolem.createAttributes().build());
         event.put(ModEntities.BLACK_BIRD.get(), com.mofengbaizhi.tinkersnewlife.content.entity.BlackBirdEntity.createAttributes().build());
+        event.put(ModEntities.PROJECTION_PHANTOM.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ProjectionPhantomEntity.createAttributes().build());
     }
 
     // ========== Forge 事件处理 ==========
@@ -235,41 +240,97 @@ public class TinkersNewlife {
                     // 手套库脏数据同样由主线程定时落盘（崩溃保护）
                     SilentGloveHandler.saveAllDirty();
                 }
-                // 投射咒法：速度增益 modifier 维护（每 tick 检查，开销小）
+                // 投射咒法：速度增益 modifier 维护 + 罚站锁定（每 tick 检查）
                 for (net.minecraft.server.level.ServerPlayer p :
                         event.getServer().getPlayerList().getPlayers()) {
-                    boolean buff = com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.hasBuff(p);
+                    // 帕秋莉手册解锁：每 20 tick 扫描核心特性，获得术式/领域即解锁对应章节
+                    if (event.getServer().getTickCount() % 20 == 0) {
+                        com.mofengbaizhi.tinkersnewlife.content.handler.TechniqueAdvancementHandler.scanAndUnlock(p);
+                    }
+                    var proj = com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.INSTANCE;
+                    // 罚站：钉住位置/视角/速度（服务端权威），到期解除
+                    var projData = p.getPersistentData();
+                    if (com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.isStunned(p)) {
+                        p.setNoGravity(true);
+                        p.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+                        p.teleportTo(projData.getDouble("tinkersnewlife.projection_stun_x"),
+                                projData.getDouble("tinkersnewlife.projection_stun_y"),
+                                projData.getDouble("tinkersnewlife.projection_stun_z"));
+                        float yaw = projData.getFloat("tinkersnewlife.projection_stun_yaw");
+                        float pitch = projData.getFloat("tinkersnewlife.projection_stun_pitch");
+                        p.setYRot(yaw);
+                        p.setXRot(pitch);
+                        p.yBodyRot = yaw;
+                        p.yHeadRot = yaw;
+                        p.xRotO = pitch;
+                    } else {
+                        p.setNoGravity(false);
+                        // 罚站到期：通知客户端解除输入锁定
+                        if (projData.contains("tinkersnewlife.projection_stun_until")) {
+                            com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.endStun(p);
+                        }
+                    }
+                    // 速度增益：modifier = 2^层数 - 1（×1 即 +100%），但速度倍率封顶 32 倍，防止过快
                     var attr = p.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
                     if (attr == null) continue;
+                    double speedMult = Math.min(32.0,
+                            com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.getBuffMultiplier(p));
                     var mod = new net.minecraft.world.entity.ai.attributes.AttributeModifier(
                             java.util.UUID.fromString("7a9f2c4e-8b3d-4e5f-9a1c-2d3e4f5a6b7c"),
                             "projection_speed",
-                            1.0, net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.MULTIPLY_TOTAL);
-                    if (buff && !attr.hasModifier(mod)) {
+                            speedMult - 1.0,
+                            net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.MULTIPLY_TOTAL);
+                    if (com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.hasBuff(p)
+                            && !attr.hasModifier(mod)) {
                         attr.addTransientModifier(mod);
-                    } else if (!buff && attr.hasModifier(mod)) {
+                    } else if (!com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.hasBuff(p)
+                            && attr.hasModifier(mod)) {
                         attr.removeModifier(mod);
                     }
                 }
             }
         }
 
-        /** 投射咒法：伤害 ×2（攻击者处于增益） */
+        /** 投射咒法：伤害 ×2^层数（攻击者处于增益） */
         @SubscribeEvent
         public static void onLivingHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
             var src = event.getSource();
             if (src != null && src.getEntity() instanceof net.minecraft.server.level.ServerPlayer attacker
                     && com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.hasBuff(attacker)) {
-                event.setAmount(event.getAmount() * 2.0F);
+                event.setAmount(event.getAmount()
+                        * (float) com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.getBuffMultiplier(attacker));
             }
         }
 
-        /** 投射咒法：跳跃高度 ×2 */
+        /** 投射咒法：跳跃高度 ×2^层数（封顶 8 倍） */
         @SubscribeEvent
         public static void onLivingJump(net.minecraftforge.event.entity.living.LivingEvent.LivingJumpEvent event) {
             if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer p
                     && com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.hasBuff(p)) {
-                p.setDeltaMovement(p.getDeltaMovement().x, p.getDeltaMovement().y * 2.0, p.getDeltaMovement().z);
+                double jumpMult = Math.min(8.0,
+                        com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.getBuffMultiplier(p));
+                p.setDeltaMovement(p.getDeltaMovement().x,
+                        p.getDeltaMovement().y * jumpMult,
+                        p.getDeltaMovement().z);
+            }
+        }
+
+        /** 投射咒法：罚站期间无法攻击 */
+        @SubscribeEvent
+        public static void onLivingAttack(net.minecraftforge.event.entity.living.LivingAttackEvent event) {
+            var src = event.getSource();
+            if (src != null && src.getEntity() instanceof net.minecraft.server.level.ServerPlayer attacker
+                    && com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.isStunned(attacker)) {
+                event.setCanceled(true);
+            }
+        }
+
+        /** 投射咒法：罚站期间无法交互（右键方块/物品/实体） */
+        @SubscribeEvent
+        public static void onPlayerInteract(net.minecraftforge.event.entity.player.PlayerInteractEvent event) {
+            if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer p
+                    && com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.isStunned(p)) {
+                event.setCanceled(true);
             }
         }
     }

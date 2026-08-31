@@ -1,0 +1,16 @@
+{
+  "name": "战斗特性总览",
+  "category": "tinkersnewlife:materials",
+  "icon": "tinkersnewlife:curse_core",
+  "sortnum": 11,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "以下默认特性由材料自带，在术式与领域攻击中照常触发（近战、弹射同样生效）。点击查看每个特性的详细效果：$(li)$(l:materials/trait_child_of_the_stars)群星之子$()（灰白之墨）：最终伤害 ×2^级$(li)$(l:materials/trait_cosmic_order_voice)天体秩序之音$()（格赫罗斯残骸）：命中施加迟缓 / 失明$(li)$(l:materials/trait_dragonsteel_fire)龙炎$()（龙炎钢）：命中爆炸点燃$(li)$(l:materials/trait_dragonsteel_ice)龙霜$()（龙霜钢）：命中冰霜冻结$(li)$(l:materials/trait_dragonsteel_lightning)龙霆$()（龙霆钢）：命中落雷缴械$(li)$(l:materials/trait_dreadsteel)悚怖$()（慑怖钢）：穿透剑气 + 虚弱 / 失明 / 凋零"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(li)$(l:materials/trait_hastur_malice)罡风$()（哈斯塔恶意）：命中制造风场拉扯伤害$(li)$(l:materials/trait_charm)魅惑$()（生命冲动）：命中使目标魅惑无法攻击$(li)$(l:materials/trait_dragonbone)承载$()（龙骨）：龙钢特性等级效果 +1$(li)$(l:materials/trait_dragon_blood_tank)龙血储罐$()（龙骨）：储存三种龙血$(li)$(l:materials/trait_unbreakable)不毁$()（杜兰达尔）：工具永不损坏$(br2)护甲专属特性（星穹庇护、龙钢护甲三系、慑怖铠甲）见各护甲词条，不会出现在咒力核心上。"
+    }
+  ]
+}

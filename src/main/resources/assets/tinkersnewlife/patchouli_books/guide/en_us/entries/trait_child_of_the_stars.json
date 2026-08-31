@@ -1,0 +1,12 @@
+{
+  "name": "群星之子",
+  "category": "tinkersnewlife:materials",
+  "icon": "tinkersnewlife:ashen_ink_bucket",
+  "sortnum": 12,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)群星之子$()（灰白之墨的默认特性）$(br2)效果：将你造成的$(bold)最终伤害$()提升至原来的$(bold)两倍$()，每级再翻倍（×2^级）。$(br2)最终伤害 = 经过护甲、附魔、药水等全部结算后的伤害，因此该加成极为强力。$(br2)触发方式：被动常驻，无需操作。"
+    }
+  ]
+}

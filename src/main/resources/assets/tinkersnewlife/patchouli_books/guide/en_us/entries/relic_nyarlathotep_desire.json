@@ -1,0 +1,13 @@
+{
+  "name": "奈亚的欲念",
+  "category": "tinkersnewlife:items",
+  "icon": "tinkersnewlife:nyarlathotep_desire",
+  "sortnum": 10,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:nyarlathotep_desire",
+      "text": "$(bold)奈亚的欲念$()$(br2)获取：攻击村民后 $(bold)5 秒内$()使其死于$(bold)非玩家之手$()（摔落 / 溺亡 / 其他生物），$(bold)10 秒后$() $(bold)50%$() 概率获得——否则受到$(bold)凋零 II 60 秒$()惩罚。$(br2)扭曲的欲望从村民的非命之死中诞生。"
+    }
+  ]
+}

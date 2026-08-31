@@ -1,0 +1,12 @@
+{
+  "name": "龙霜",
+  "category": "tinkersnewlife:materials",
+  "icon": "tinkersnewlife:molten_dragonsteel_ice_bucket",
+  "sortnum": 15,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)龙霜$()（龙霜钢的默认特性）$(br2)效果：$(bold)命中时$()施加冰霜效果，$(bold)大幅减速$()、持续冻伤，并在周围生成冰霜。$(br2)龙霜是强控制特性，配合冰属性体系可长期冻住目标。"
+    }
+  ]
+}

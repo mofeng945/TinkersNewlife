@@ -1,0 +1,13 @@
+{
+    "name":  "投射咒法",
+    "category":  "tinkersnewlife:techniques",
+    "icon":  "tinkersnewlife:curse_core",
+    "sortnum":  10,
+    "advancement":  "tinkersnewlife:techniques/projection",
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)投射咒法$()：一瞬之间，我已在你身后。$(br2)发动时按当前移动速度计算 $(bold)1 秒内最大直线移动距离$()，在视线方向$(bold)同水平面$()生成玩家$(bold)虚影$()（半透明蓝色人形），距离 = 最大距离的 2/3 ~ 1 倍。$(br2)$(bold)1 秒内触碰虚影$() → 虚影消失，获得 10 秒增益：$(li)伤害 ×2（上限 2^10 倍）$(li)速度 ×2（上限 32 倍）$(li)跳跃高度 ×2（上限 8 倍）$(br2)每次触碰层数 +1 可叠加；$(bold)超时未触碰$() → 原地罚站 3 秒（视角锁定、鼠标键盘全部禁用）。$(br2)消耗：咒力上限的 1/12。"
+                  }
+              ]
+}

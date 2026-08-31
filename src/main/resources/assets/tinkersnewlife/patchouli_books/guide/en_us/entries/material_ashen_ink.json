@@ -1,0 +1,17 @@
+{
+  "name": "灰白之墨",
+  "category": "tinkersnewlife:materials",
+  "icon": "tinkersnewlife:ashen_ink_bucket",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:ashen_ink_bucket",
+      "text": "$(bold)获取方式$()：$(li)先获得$(bold)灰白之墨液$()——在冶炼炉中熔炼$(l:items/relic_rlyeh_call)拉莱耶的呼唤$()（1 个 = 1000 mB）$(li)在铸造台用$(bold)熔融玫瑰金$()材料与灰白之墨液 $(bold)80 mB$() 制作出灰白之墨材料$(br2)等级：$(bold)T3$()。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)自带特性$()：$(li)$(l:materials/trait_child_of_the_stars)群星之子$()（默认）：将你造成的最终伤害提升至原来的$(bold)两倍$()，每级再翻倍（×2^级）$(br2)灰白之墨是稀有的伤害增幅材料，适合追求爆发输出的核心。"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "龙霆",
+  "category": "tinkersnewlife:materials",
+  "icon": "tinkersnewlife:molten_dragonsteel_lightning_bucket",
+  "sortnum": 16,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)龙霆$()（龙霆钢的默认特性）$(br2)效果：$(bold)命中时$()召唤天雷，造成伤害并$(bold)缴械$()目标 3 秒。$(br2)天雷伤害可观，缴械让目标在 3 秒内无法使用武器攻击，兼具爆发与控制。"
+    }
+  ]
+}

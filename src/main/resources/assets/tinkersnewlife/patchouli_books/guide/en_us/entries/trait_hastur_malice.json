@@ -1,0 +1,12 @@
+{
+  "name": "罡风",
+  "category": "tinkersnewlife:materials",
+  "icon": "tinkersnewlife:hastur_malice_bucket",
+  "sortnum": 18,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)罡风$()（哈斯塔恶意的默认特性）$(br2)效果：攻击时$(bold)制造风场$()吸引附近生物，并对风场内的生物$(bold)持续造成伤害$()。$(br2)风场把敌人拉向目标点并持续磨血，适合聚怪后接范围输出或领域斩击。"
+    }
+  ]
+}

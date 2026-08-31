@@ -1,12 +1,13 @@
 {
-  "name": "解",
-  "category": "tinkersnewlife:techniques",
-  "icon": "tinkersnewlife:curse_core",
-  "sortnum": 2,
-  "pages": [
-    {
-      "type": "patchouli:text",
-      "text": "$(bold)解$()：对看向的实体释放一次斩击，带横扫粒子特效。$(br2)伤害 = (1 + (咒力输出等级 + 咒力亲和/10)/10) × (当前攻击伤害 + 咒力输出等级×5) × 70%$(br2)无视无敌帧（可被护甲 / 盾牌衰减），材料战斗特性（如魅惑、龙炎、罡风）照常触发。$(br2)消耗：(1 - 咒力亲和/100) × (10 + 咒力输出×5) 点咒力。"
-    }
-  ]
+    "name":  "解",
+    "category":  "tinkersnewlife:techniques",
+    "icon":  "tinkersnewlife:curse_core",
+    "sortnum":  2,
+  "advancement": "tinkersnewlife:techniques/kai",
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)解$()：对看向的实体释放一次斩击，带横扫粒子特效。$(br2)伤害 = (1 + (咒力输出等级 + 咒力亲和/10)/10) × (当前攻击伤害 + 咒力输出等级×5) × 70%$(br2)无视无敌帧（可被护甲 / 盾牌衰减），材料战斗特性（如魅惑、龙炎、罡风）照常触发。$(br2)消耗：(1 - 咒力亲和/100) × (10 + 咒力输出×5) 点咒力。"
+                  }
+              ]
 }

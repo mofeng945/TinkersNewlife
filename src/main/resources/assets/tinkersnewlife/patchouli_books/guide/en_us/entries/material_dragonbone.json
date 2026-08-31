@@ -1,0 +1,17 @@
+{
+  "name": "龙骨",
+  "category": "tinkersnewlife:materials",
+  "icon": "minecraft:bone",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "minecraft:bone",
+      "text": "$(bold)获取方式$()：$(li)$(bold)可锻造$()（craftable）基础材料——可直接在部件制作台用骨骼类原料制作，无需先合成材料物品$(li)也可从$(bold)冰火传说$()的龙类生物身上获得（击杀掉落的龙骨等）$(br2)等级：$(bold)T1$()。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)自带特性$()（两条）：$(li)$(l:materials/trait_dragonbone)承载$()：龙钢特性的等级效果加强一级$(li)$(l:materials/trait_dragon_blood_tank)龙血储罐$()：储存三种龙血，配合龙血注魔使用$(br2)龙骨是最易入手的基础材料，两个特性都围绕龙系玩法。"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "生命冲动",
+  "category": "tinkersnewlife:materials",
+  "icon": "tinkersnewlife:nicholas_blessing",
+  "sortnum": 10,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:nicholas_blessing",
+      "text": "$(bold)获取方式$()：$(li)先获得$(bold)熔融生命冲动液$()——在冶炼炉中熔炼$(l:items/relic_nicholas_blessing)尼古拉斯之赐$()（1 个 = 5 mB）$(li)在铸造台用$(bold)猪铁$()材料（tconstruct:pig_iron）与熔融生命冲动液 $(bold)80 mB$() 制作生命冲动材料$(br2)等级：$(bold)T3$()。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)自带特性$()：$(li)$(l:materials/trait_charm)魅惑$()：攻击生物后使其陷入魅惑状态，期间无法攻击你，冷却 30 秒$(br2)生命冲动来自繁育母神尼古拉斯之赐，走生存与控制的温和路线。"
+    }
+  ]
+}

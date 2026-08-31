@@ -1,0 +1,13 @@
+{
+    "name":  "黑鸟操术",
+    "category":  "tinkersnewlife:techniques",
+    "icon":  "tinkersnewlife:curse_core",
+    "sortnum":  9,
+    "advancement":  "tinkersnewlife:techniques/black_bird",
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)黑鸟操术$()：以身为眼，以鸟为身。$(br2)发动后在原地生成一只$(bold)黑鸟$()（蝙蝠），$(bold)玩家视角转移到黑鸟身上$()直接操控：$(li)$(bold)W$() 朝视线方向飞行$(li)$(bold)A / D$() 侧移$(li)$(bold)空格$() 上升$(li)$(bold)Shift$() 俯冲自爆（不破坏方块，中心伤害 = (1 + 亲和/100) × (输出×3 + 黑鸟血量) × 10，半径 3 格）$(br2)黑鸟期间玩家本体$(bold)停留在原地且可被攻击$()；再次按下术式释放键可回收黑鸟，返还一半咒力；黑鸟死亡则视角回归本体。"
+                  }
+              ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "犹格索托斯的门之匙",
+  "category": "tinkersnewlife:items",
+  "icon": "tinkersnewlife:yog_sothoth_gate_key",
+  "sortnum": 13,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:yog_sothoth_gate_key",
+      "text": "$(bold)犹格索托斯的门之匙$()$(br2)获取：在$(bold)锻造台$()合成——$(l:items/relic_echo_of_the_void)虚空回响$()（模板）+ $(l:items/relic_astral_anchor)星界之锚$()（基底）+ $(l:items/relic_nexus_of_spacetime)时空枢纽核心$()（附加）。$(br2)知识的殿堂啊，时空的奥秘在低语……集齐三件探索遗物即可铸就门匙。"
+    }
+  ]
+}

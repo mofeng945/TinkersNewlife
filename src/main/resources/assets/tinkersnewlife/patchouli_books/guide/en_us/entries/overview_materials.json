@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "咒力核心的材料由仪式注入的流体决定（流体 → 材料的熔融配方）。核心部件按$(bold)头部$()统计结算，只应用材料的$(bold)默认特性$()（default），护甲专属特性（perStat: armor）不会出现在核心上。$(br2)可用材料：灰白之墨、龙骨、龙炎钢、龙霜钢、龙霆钢、悚怖钢、杜兰达尔、格赫罗斯残骸、哈斯塔恶念、生命冲动。"
+      "text": "咒力核心的材料由仪式注入的流体决定（流体 → 材料的熔融配方）。核心部件按$(bold)头部$()统计结算，只应用材料的$(bold)默认特性$()（default），护甲专属特性（perStat: armor）不会出现在核心上。$(br2)共十种核心可用材料，点击查看各自的$(bold)获取方式$()与$(bold)自带特性$()：$(li)$(l:materials/material_ashen_ink)灰白之墨$()（T3）$(li)$(l:materials/material_dragonbone)龙骨$()（T1）$(li)$(l:materials/material_dragonsteel_fire)龙炎钢$()（T3）$(li)$(l:materials/material_dragonsteel_ice)龙霜钢$()（T3）$(li)$(l:materials/material_dragonsteel_lightning)龙霆钢$()（T3）$(li)$(l:materials/material_dreadsteel)慑怖钢$()（T4）$(li)$(l:materials/material_durandal)杜兰达尔$()（特殊）$(li)$(l:materials/material_gheloth_remains)格赫罗斯残骸$()（T4）$(li)$(l:materials/material_hastur_malice)哈斯塔恶意$()（T2）$(li)$(l:materials/material_nicholas_blessing)生命冲动$()（T3）$(br2)各材料特性的效果详见$(l:materials/trait_overview)战斗特性$()章节。"
     }
   ]
 }

@@ -1,0 +1,17 @@
+{
+  "name": "飞剑",
+  "category": "tinkersnewlife:items",
+  "icon": "tinkersnewlife:flying_sword",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:flying_sword",
+      "text": "$(bold)飞剑$()$(br2)获取：通过$(bold)匠魂工匠站$()打造——宽刃 + 坚韧手柄等部件组合。$(br2)特点：以匠魂锻造的御剑飞行的利器。$(li)$(bold)右键发射$()飞剑，命中敌人后自动返回$(li)装备于$(bold)脚部饰栏$()（curios）时获得$(bold)飞行能力$()$(li)按绑定按键（默认 R）切换$(bold)普通 / 追击$()模式"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)追击模式$()：发射的飞剑自动锁定并攻击附近敌人，是远程清怪的主力模式。$(br2)飞剑是唯一同时具备远程攻击与飞行机动性的武器，探索高空遗迹（如黄衣事件）时非常实用。"
+    }
+  ]
+}
