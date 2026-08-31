@@ -394,7 +394,10 @@ public final class ShikigamiBehavior {
             Vec3 before = self.position();
             Vec3 dir = target.position().add(0, target.getBbHeight() * 0.5, 0).subtract(self.position()).normalize();
             double chargeSpeed = Math.min(1.6, 0.55 + st.speed * 1.6);
+            // 直接驱动位移（冲撞时 travel 被覆写为 no-op，避免重力/摩擦/原版移动控制干扰）
             self.setDeltaMovement(dir.scale(chargeSpeed));
+            self.move(MoverType.SELF, self.getDeltaMovement());
+            self.getNavigation().stop();
             double moved = self.position().distanceTo(before);
             st.chargeDist += moved;
             if (self.distanceToSqr(target) <= 3.2 * 3.2) {

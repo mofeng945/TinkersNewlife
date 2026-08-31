@@ -57,6 +57,15 @@ public class ShikigamiCow extends net.minecraft.world.entity.animal.Cow implemen
         }
     }
 
+    /** 贯牛冲撞：移动由 ShikigamiBehavior 直接驱动，跳过原版 travel 的重力/摩擦 */
+    @Override
+    public void travel(net.minecraft.world.phys.Vec3 movement) {
+        if (!level().isClientSide && getState().charging) {
+            return;
+        }
+        super.travel(movement);
+    }
+
     @Override
     public boolean hurt(DamageSource source, float amount) {
         return super.hurt(source, ShikigamiBehavior.adaptDamage(this, this, amount));

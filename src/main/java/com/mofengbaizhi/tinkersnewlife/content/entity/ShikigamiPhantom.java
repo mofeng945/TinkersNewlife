@@ -21,7 +21,7 @@ import javax.annotation.Nullable;
 import java.util.UUID;
 
 /** 鵺：继承原版幻翼（飞行/骑乘），渲染/动画/纹理全复用原版 */
-public class ShikigamiPhantom extends Phantom implements ShikigamiMob {
+public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minecraft.world.entity.PlayerRideableJumping {
 
     private final ShikigamiState state = new ShikigamiState();
 
@@ -141,6 +141,7 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob {
                 Vec3 side = new Vec3(-look.z, 0, look.x).normalize();
                 motion = motion.add(side.scale(player.xxa * speed * 0.6));
             }
+            // 空格上升（PlayerRideableJumping.handleStartJump 会设置 this.jumping）
             if (jumping) {
                 motion = motion.add(0, 0.6, 0);
             }
@@ -148,6 +149,44 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob {
             move(MoverType.SELF, motion);
             fallDistance = 0;
         }
+    }
+
+    /** 骑乘输入：从玩家读取（原版马式），确保 W/A/S/D 生效 */
+    @Override
+    protected Vec3 getRiddenInput(Player player, Vec3 movement) {
+        if (state.type != ShikigamiType.NUE) return super.getRiddenInput(player, movement);
+        float forward = player.zza;
+        float strafe = player.xxa * 0.5F;
+        return new Vec3(strafe, 0, forward);
+    }
+
+    // ============================================================
+    //  玩家骑乘跳跃（空格上升）：PlayerRideableJumping
+    // ============================================================
+
+    @Override
+    public void onPlayerJump(int jumpPower) {
+        jumping = true;
+    }
+
+    @Override
+    public boolean canJump() {
+        return state.type == ShikigamiType.NUE && !getPassengers().isEmpty();
+    }
+
+    @Override
+    public void handleStartJump(int jumpPower) {
+        jumping = true;
+    }
+
+    @Override
+    public void handleStopJump() {
+        jumping = false;
+    }
+
+    @Override
+    public int getJumpCooldown() {
+        return 0;
     }
 
     @Override
