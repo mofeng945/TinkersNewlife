@@ -214,6 +214,7 @@ public final class ShikigamiBehavior {
             st.diveTicks--;
             Vec3 dir = target.position().add(0, target.getBbHeight() * 0.5, 0).subtract(self.position()).normalize();
             self.setDeltaMovement(dir.scale(0.9));
+            faceDirection(self, dir);
             if (self.distanceToSqr(target) < 2.0) {
                 st.diveTicks = 0;
                 meleeHit(self, info, target, level);
@@ -226,12 +227,18 @@ public final class ShikigamiBehavior {
         Vec3 circle = target.position().add(Math.cos(angle) * radius, 3.0, Math.sin(angle) * radius);
         Vec3 toCircle = circle.subtract(self.position());
         double d = toCircle.length();
+        Vec3 moveDir;
         if (d > 1.2) {
-            self.setDeltaMovement(toCircle.normalize().scale(0.55));
+            moveDir = toCircle.normalize();
+            self.setDeltaMovement(moveDir.scale(0.55));
         } else {
+            moveDir = Vec3.ZERO;
             self.setDeltaMovement(Vec3.ZERO);
         }
-        faceTarget(self, target);
+        // 面向运动方向（盘旋切向/俯冲方向），避免一直面向圆心导致"固定朝向"
+        if (moveDir.lengthSqr() > 0.001) {
+            faceDirection(self, moveDir);
+        }
         if (st.rangedCooldown <= 0) {
             st.rangedCooldown = 60;
             strikeLightning(self, info, target, level);
@@ -240,6 +247,14 @@ public final class ShikigamiBehavior {
             st.attackCooldown = 90;
             st.diveTicks = 25;
         }
+    }
+
+    /** 面向指定方向（水平投影） */
+    private static void faceDirection(Mob self, Vec3 dir) {
+        float yaw = (float) -Math.toDegrees(Math.atan2(dir.x, dir.z));
+        self.setYRot(yaw);
+        self.yBodyRot = yaw;
+        self.yHeadRot = yaw;
     }
 
     private static void faceTarget(Mob self, LivingEntity target) {

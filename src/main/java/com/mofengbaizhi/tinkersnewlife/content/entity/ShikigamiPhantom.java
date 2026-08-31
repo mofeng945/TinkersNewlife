@@ -77,6 +77,22 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
         }
     }
 
+    /** 骑乘时每 tick 强制朝向玩家视线（双端），避免被原版 AI/移动控制覆盖 */
+    @Override
+    public void tick() {
+        super.tick();
+        if (state.type == ShikigamiType.NUE && !getPassengers().isEmpty()) {
+            Entity rider = getFirstPassenger();
+            if (rider instanceof Player player) {
+                setYRot(player.getYRot());
+                yBodyRot = player.getYRot();
+                yBodyRotO = player.getYRot();
+                yHeadRot = player.getYRot();
+                yHeadRotO = player.getYRot();
+            }
+        }
+    }
+
     @Override
     public boolean hurt(DamageSource source, float amount) {
         return super.hurt(source, ShikigamiBehavior.adaptDamage(this, this, amount));
@@ -147,8 +163,8 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
 
     @Override
     public double getPassengersRidingOffset() {
-        // 幻翼本体很小（碰撞箱 0.9×0.5），骑乘偏移取低值，避免乘客悬浮过高
-        return 0.35 + getShikigamiScale() * 0.2;
+        // 骑乘偏移设为 0（乘客贴合坐骑，避免悬浮）
+        return 0.0;
     }
 
     @Override
