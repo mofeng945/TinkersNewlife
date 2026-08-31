@@ -7,7 +7,16 @@ import com.mofengbaizhi.tinkersnewlife.content.entity.DreadsteelSlashEntity;
 import com.mofengbaizhi.tinkersnewlife.content.entity.FlameArrowEntity;
 import com.mofengbaizhi.tinkersnewlife.content.entity.FlyingSwordEntity;
 import com.mofengbaizhi.tinkersnewlife.content.entity.FlyingSwordFootEntity;
-import com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiEntity;
+import com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiCow;
+import com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiFrog;
+import com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiGoat;
+import com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiIronGolem;
+import com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiPhantom;
+import com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiPig;
+import com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiRabbit;
+import com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiSheep;
+import com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiSilverfish;
+import com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiWolf;
 import com.mofengbaizhi.tinkersnewlife.content.entity.YoYoEntity;
 
 import net.minecraft.world.entity.EntityType;
@@ -88,13 +97,67 @@ public class ModEntities {
                         .build(TinkersNewlife.MOD_ID + ":blood_nova")
         );
 
-    /** 十种影法术 式神（单类多型，行为/外观由类型决定） */
-    public static final RegistryObject<EntityType<ShikigamiEntity>> SHIKIGAMI =
-        ENTITIES.register("shikigami",
-                () -> EntityType.Builder.<ShikigamiEntity>of(ShikigamiEntity::new, MobCategory.CREATURE)
-                        .sized(0.6f, 0.8f)   // 小碰撞箱：避免卡门/巷子，且与小型式神体型匹配
-                        .clientTrackingRange(64)
-                        .updateInterval(1)
-                        .build(TinkersNewlife.MOD_ID + ":shikigami")
-        );
+    // ============================================================
+    //  十种影法术 式神（每个继承原版生物，渲染/动画/纹理/碰撞箱全复用原版）
+    // ============================================================
+
+    public static final RegistryObject<EntityType<ShikigamiWolf>> SHIKIGAMI_WOLF =
+        ENTITIES.register("shikigami_wolf",
+                () -> EntityType.Builder.<ShikigamiWolf>of(ShikigamiWolf::new, MobCategory.CREATURE)
+                        .sized(0.6f, 0.85f).clientTrackingRange(64).updateInterval(2)
+                        .build(TinkersNewlife.MOD_ID + ":shikigami_wolf"));
+
+    public static final RegistryObject<EntityType<ShikigamiPhantom>> SHIKIGAMI_PHANTOM =
+        ENTITIES.register("shikigami_phantom",
+                () -> EntityType.Builder.<ShikigamiPhantom>of(ShikigamiPhantom::new, MobCategory.CREATURE)
+                        .sized(0.9f, 0.5f).clientTrackingRange(64).updateInterval(2)
+                        .build(TinkersNewlife.MOD_ID + ":shikigami_phantom"));
+
+    public static final RegistryObject<EntityType<ShikigamiSilverfish>> SHIKIGAMI_SILVERFISH =
+        ENTITIES.register("shikigami_silverfish",
+                () -> EntityType.Builder.<ShikigamiSilverfish>of(ShikigamiSilverfish::new, MobCategory.CREATURE)
+                        .sized(0.4f, 0.3f).clientTrackingRange(64).updateInterval(2)
+                        .build(TinkersNewlife.MOD_ID + ":shikigami_silverfish"));
+
+    public static final RegistryObject<EntityType<ShikigamiFrog>> SHIKIGAMI_FROG =
+        ENTITIES.register("shikigami_frog",
+                () -> EntityType.Builder.<ShikigamiFrog>of(ShikigamiFrog::new, MobCategory.CREATURE)
+                        .sized(0.5f, 0.5f).clientTrackingRange(64).updateInterval(2)
+                        .build(TinkersNewlife.MOD_ID + ":shikigami_frog"));
+
+    public static final RegistryObject<EntityType<ShikigamiPig>> SHIKIGAMI_PIG =
+        ENTITIES.register("shikigami_pig",
+                () -> EntityType.Builder.<ShikigamiPig>of(ShikigamiPig::new, MobCategory.CREATURE)
+                        .sized(0.9f, 0.9f).clientTrackingRange(64).updateInterval(2)
+                        .build(TinkersNewlife.MOD_ID + ":shikigami_pig"));
+
+    public static final RegistryObject<EntityType<ShikigamiRabbit>> SHIKIGAMI_RABBIT =
+        ENTITIES.register("shikigami_rabbit",
+                () -> EntityType.Builder.<ShikigamiRabbit>of(ShikigamiRabbit::new, MobCategory.CREATURE)
+                        .sized(0.4f, 0.5f).clientTrackingRange(64).updateInterval(2)
+                        .build(TinkersNewlife.MOD_ID + ":shikigami_rabbit"));
+
+    public static final RegistryObject<EntityType<ShikigamiGoat>> SHIKIGAMI_GOAT =
+        ENTITIES.register("shikigami_goat",
+                () -> EntityType.Builder.<ShikigamiGoat>of(ShikigamiGoat::new, MobCategory.CREATURE)
+                        .sized(0.9f, 1.3f).clientTrackingRange(64).updateInterval(2)
+                        .build(TinkersNewlife.MOD_ID + ":shikigami_goat"));
+
+    public static final RegistryObject<EntityType<ShikigamiCow>> SHIKIGAMI_COW =
+        ENTITIES.register("shikigami_cow",
+                () -> EntityType.Builder.<ShikigamiCow>of(ShikigamiCow::new, MobCategory.CREATURE)
+                        .sized(0.9f, 1.4f).clientTrackingRange(64).updateInterval(2)
+                        .build(TinkersNewlife.MOD_ID + ":shikigami_cow"));
+
+    public static final RegistryObject<EntityType<ShikigamiSheep>> SHIKIGAMI_SHEEP =
+        ENTITIES.register("shikigami_sheep",
+                () -> EntityType.Builder.<ShikigamiSheep>of(ShikigamiSheep::new, MobCategory.CREATURE)
+                        .sized(0.9f, 1.3f).clientTrackingRange(64).updateInterval(2)
+                        .build(TinkersNewlife.MOD_ID + ":shikigami_sheep"));
+
+    public static final RegistryObject<EntityType<ShikigamiIronGolem>> SHIKIGAMI_IRON_GOLEM =
+        ENTITIES.register("shikigami_iron_golem",
+                () -> EntityType.Builder.<ShikigamiIronGolem>of(ShikigamiIronGolem::new, MobCategory.CREATURE)
+                        .sized(1.4f, 2.7f).clientTrackingRange(64).updateInterval(2)
+                        .build(TinkersNewlife.MOD_ID + ":shikigami_iron_golem"));
 }

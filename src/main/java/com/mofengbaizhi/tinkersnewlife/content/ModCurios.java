@@ -32,11 +32,11 @@ public class ModCurios {
                         .build()
         );
 
-        // 咒力核心饰品槽位（带图标，保证在 curios GUI 中显示）
+        // 咒力核心饰品槽位（图标复用匠魂 pattern 图标，与玩家画的咒力核心纹理一致）
         InterModComms.sendTo(CuriosApi.MODID, SlotTypeMessage.REGISTER_TYPE,
                 () -> new SlotTypeMessage.Builder("curse_core")
                         .size(1)
-                        .icon(new net.minecraft.resources.ResourceLocation(TinkersNewlife.MOD_ID, "item/gheloth_remains"))
+                        .icon(new net.minecraft.resources.ResourceLocation(TinkersNewlife.MOD_ID, "gui/tinker_pattern/curse_core"))
                         .build()
         );
     }

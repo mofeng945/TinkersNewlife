@@ -74,9 +74,27 @@ public class ClientEventHandler {
         // 赤血操术·超新星 血球：微小血红圆球
         event.registerEntityRenderer(ModEntities.BLOOD_NOVA.get(),
                 com.mofengbaizhi.tinkersnewlife.client.renderer.BloodNovaRenderer::new);
-        // 十影术式 式神（单类多型，按类型染色/缩放）
-        event.registerEntityRenderer(ModEntities.SHIKIGAMI.get(),
-                com.mofengbaizhi.tinkersnewlife.client.renderer.ShikigamiRenderer::new);
+        // 十影术式 式神：全部复用原版渲染器（模型/动画/纹理/碰撞箱原版）
+        event.registerEntityRenderer(ModEntities.SHIKIGAMI_WOLF.get(),
+                com.mofengbaizhi.tinkersnewlife.client.renderer.ShikigamiWolfRenderer::new);
+        event.registerEntityRenderer(ModEntities.SHIKIGAMI_PHANTOM.get(),
+                net.minecraft.client.renderer.entity.PhantomRenderer::new);
+        event.registerEntityRenderer(ModEntities.SHIKIGAMI_SILVERFISH.get(),
+                net.minecraft.client.renderer.entity.SilverfishRenderer::new);
+        event.registerEntityRenderer(ModEntities.SHIKIGAMI_FROG.get(),
+                net.minecraft.client.renderer.entity.FrogRenderer::new);
+        event.registerEntityRenderer(ModEntities.SHIKIGAMI_PIG.get(),
+                net.minecraft.client.renderer.entity.PigRenderer::new);
+        event.registerEntityRenderer(ModEntities.SHIKIGAMI_RABBIT.get(),
+                net.minecraft.client.renderer.entity.RabbitRenderer::new);
+        event.registerEntityRenderer(ModEntities.SHIKIGAMI_GOAT.get(),
+                net.minecraft.client.renderer.entity.GoatRenderer::new);
+        event.registerEntityRenderer(ModEntities.SHIKIGAMI_COW.get(),
+                net.minecraft.client.renderer.entity.CowRenderer::new);
+        event.registerEntityRenderer(ModEntities.SHIKIGAMI_SHEEP.get(),
+                net.minecraft.client.renderer.entity.SheepRenderer::new);
+        event.registerEntityRenderer(ModEntities.SHIKIGAMI_IRON_GOLEM.get(),
+                com.mofengbaizhi.tinkersnewlife.client.renderer.ShikigamiIronGolemRenderer::new);
     }
 
     // ========== Forge 事件（按键等） ==========

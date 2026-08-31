@@ -168,7 +168,16 @@ public class TinkersNewlife {
     /** 注册生物实体属性（式神等） */
     @SubscribeEvent
     public static void onRegisterEntityAttributes(net.minecraftforge.event.entity.EntityAttributeCreationEvent event) {
-        event.put(ModEntities.SHIKIGAMI.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiEntity.createAttributes().build());
+        event.put(ModEntities.SHIKIGAMI_WOLF.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiWolf.createAttributes().build());
+        event.put(ModEntities.SHIKIGAMI_PHANTOM.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiPhantom.createAttributes().build());
+        event.put(ModEntities.SHIKIGAMI_SILVERFISH.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiSilverfish.createAttributes().build());
+        event.put(ModEntities.SHIKIGAMI_FROG.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiFrog.createAttributes().build());
+        event.put(ModEntities.SHIKIGAMI_PIG.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiPig.createAttributes().build());
+        event.put(ModEntities.SHIKIGAMI_RABBIT.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiRabbit.createAttributes().build());
+        event.put(ModEntities.SHIKIGAMI_GOAT.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiGoat.createAttributes().build());
+        event.put(ModEntities.SHIKIGAMI_COW.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiCow.createAttributes().build());
+        event.put(ModEntities.SHIKIGAMI_SHEEP.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiSheep.createAttributes().build());
+        event.put(ModEntities.SHIKIGAMI_IRON_GOLEM.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiIronGolem.createAttributes().build());
     }
 
     // ========== Forge 事件处理 ==========

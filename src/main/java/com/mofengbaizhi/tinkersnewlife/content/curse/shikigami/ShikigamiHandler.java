@@ -2,7 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.content.curse.shikigami;
 
 import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
 import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHandler;
-import com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiEntity;
+import com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiMob;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
@@ -68,17 +68,25 @@ public final class ShikigamiHandler {
             return false;
         }
         // 召回：场上已有同类型存活式神 → 收回并返还一半咒力
-        List<ShikigamiEntity> alive = player.serverLevel().getEntitiesOfClass(ShikigamiEntity.class,
+        List<ShikigamiMob> alive = new java.util.ArrayList<>();
+        for (net.minecraft.world.entity.Entity e : player.serverLevel().getEntitiesOfClass(
+                net.minecraft.world.entity.Entity.class,
                 player.getBoundingBox().inflate(512.0),
-                s -> s.isAlive() && s.getOwner() == player && s.getShikigamiType() == type);
+                entity -> entity instanceof ShikigamiMob)) {
+            if (e instanceof ShikigamiMob sm && sm.getState().ownerId != null
+                    && sm.getState().ownerId.equals(player.getUUID())
+                    && sm.getShikigamiType() == type) {
+                alive.add(sm);
+            }
+        }
         if (!alive.isEmpty()) {
             int cost = type.summonCost(player);
             int refund = Math.max(1, (int) Math.ceil(cost / 2.0));
             if (!CursePowerHelper.isCurseInfinite(player)) {
                 CursePowerHelper.addCurse(player, refund);
             }
-            for (ShikigamiEntity s : alive) {
-                s.discard();
+            for (ShikigamiMob s : alive) {
+                ((net.minecraft.world.entity.Entity) s).discard();
             }
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.ten_shadows.recall",
                     Component.translatable(type.getLangKey()), refund), true);
@@ -95,11 +103,65 @@ public final class ShikigamiHandler {
         boolean tamed = isTamed(player, type);
         // 锁定目标：玩家视线上的实体（用于未调伏式神的敌意目标）
         LivingEntity locked = tamed ? null : findLookTarget(player);
-        ShikigamiEntity.spawnPair(player, type, tamed, locked);
+        spawnShikigami(player, type, tamed, locked);
         player.displayClientMessage(Component.translatable(
                 tamed ? "message.tinkersnewlife.ten_shadows.summon" : "message.tinkersnewlife.ten_shadows.summon_untamed",
                 Component.translatable(type.getLangKey())), true);
         return true;
+    }
+
+    /** 生成式神（玉犬生成黑白一对，其余一只；脱兔额外生成 7 只兔群） */
+    private static void spawnShikigami(ServerPlayer player, ShikigamiType type, boolean tamed, LivingEntity locked) {
+        var level = player.serverLevel();
+        int count = type == ShikigamiType.DOG ? 2 : 1;
+        for (int i = 0; i < count; i++) {
+            spawnOne(player, type, tamed, locked, i, level);
+        }
+        if (type == ShikigamiType.RABBIT) {
+            for (int i = 0; i < 7; i++) {
+                spawnOne(player, type, tamed, locked, 0, level);
+            }
+        }
+    }
+
+    private static void spawnOne(ServerPlayer player, ShikigamiType type, boolean tamed, LivingEntity locked,
+                                 int variant, net.minecraft.server.level.ServerLevel level) {
+        var e = createEntity(type, level);
+        if (e == null) return;
+        double ox = level.random.nextDouble() - 0.5;
+        double oz = level.random.nextDouble() - 0.5;
+        e.moveTo(player.getX() + ox, player.getY() + 0.2, player.getZ() + oz,
+                player.getYRot() + 180.0F, 0.0F);
+        var mob = (com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiMob) e;
+        mob.initStats(player, type, tamed, locked, variant);
+        level.addFreshEntity(e);
+    }
+
+    /** 按类型创建对应原版生物子类 */
+    private static net.minecraft.world.entity.Entity createEntity(ShikigamiType type,
+                                                                  net.minecraft.server.level.ServerLevel level) {
+        return switch (type) {
+            case DOG -> new com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiWolf(
+                    com.mofengbaizhi.tinkersnewlife.content.ModEntities.SHIKIGAMI_WOLF.get(), level);
+            case NUE -> new com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiPhantom(
+                    com.mofengbaizhi.tinkersnewlife.content.ModEntities.SHIKIGAMI_PHANTOM.get(), level);
+            case SERPENT -> new com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiSilverfish(
+                    com.mofengbaizhi.tinkersnewlife.content.ModEntities.SHIKIGAMI_SILVERFISH.get(), level);
+            case TOAD -> new com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiFrog(
+                    com.mofengbaizhi.tinkersnewlife.content.ModEntities.SHIKIGAMI_FROG.get(), level);
+            case ELEPHANT -> new com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiPig(
+                    com.mofengbaizhi.tinkersnewlife.content.ModEntities.SHIKIGAMI_PIG.get(), level);
+            case RABBIT -> new com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiRabbit(
+                    com.mofengbaizhi.tinkersnewlife.content.ModEntities.SHIKIGAMI_RABBIT.get(), level);
+            case DEER -> new com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiGoat(
+                    com.mofengbaizhi.tinkersnewlife.content.ModEntities.SHIKIGAMI_GOAT.get(), level);
+            case OX -> new com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiCow(
+                    com.mofengbaizhi.tinkersnewlife.content.ModEntities.SHIKIGAMI_COW.get(), level);
+            case TIGER -> new com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiSheep(
+                    com.mofengbaizhi.tinkersnewlife.content.ModEntities.SHIKIGAMI_SHEEP.get(), level);
+            case MAHORAGA -> new com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiIronGolem(
+                    com.mofengbaizhi.tinkersnewlife.content.ModEntities.SHIKIGAMI_IRON_GOLEM.get(), level);
+        };
     }
 
     /** 未调伏式神被击败 → 调伏成功 */
