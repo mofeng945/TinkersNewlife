@@ -23,10 +23,20 @@ import java.util.UUID;
 /** 鵺：继承原版幻翼（飞行/骑乘），渲染/动画/纹理全复用原版 */
 public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minecraft.world.entity.PlayerRideableJumping {
 
+    /** 骑乘跳跃状态（entityData 同步：客户端 onPlayerJump 设值，服务端 tickRidden 读取） */
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> RIDING_JUMP =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(ShikigamiPhantom.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+
     private final ShikigamiState state = new ShikigamiState();
 
     public ShikigamiPhantom(EntityType<? extends Phantom> type, Level level) {
         super(type, level);
+    }
+
+    @Override
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(RIDING_JUMP, false);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -90,6 +100,12 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
         return false;
     }
 
+    /** 式神不因和平模式被清除（原版幻翼是敌对生物会被清除） */
+    @Override
+    protected boolean shouldDespawnInPeaceful() {
+        return false;
+    }
+
     @Override
     protected void registerGoals() {
         // 完全清空原版幻翼 AI（不调用 super）
@@ -118,9 +134,21 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
         return e instanceof LivingEntity le ? le : null;
     }
 
+    /**
+     * 骑乘时必须返回 true，否则 travelRidden 走 else 分支把 deltaMovement 清零，
+     * 且服务端（isLocalPlayer=false）不会执行任何移动，导致完全无法操控。
+     * 返回 true 后双端都走 travel(vec3)，而我们的 travel 覆写在骑乘时 no-op，
+     * 移动完全由 tickRidden 的 move() 驱动。
+     */
+    @Override
+    public boolean isControlledByLocalInstance() {
+        return true;
+    }
+
     @Override
     public double getPassengersRidingOffset() {
-        return 0.9 + getShikigamiScale() * 0.4;
+        // 幻翼本体很小（碰撞箱 0.9×0.5），骑乘偏移取低值，避免乘客悬浮过高
+        return 0.35 + getShikigamiScale() * 0.2;
     }
 
     @Override
@@ -141,8 +169,8 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
                 Vec3 side = new Vec3(-look.z, 0, look.x).normalize();
                 motion = motion.add(side.scale(player.xxa * speed * 0.6));
             }
-            // 空格上升（PlayerRideableJumping.handleStartJump 会设置 this.jumping）
-            if (jumping) {
+            // 空格上升（entityData 同步：客户端 onPlayerJump / 服务端 handleStartJump 写值）
+            if (entityData.get(RIDING_JUMP) || jumping) {
                 motion = motion.add(0, 0.6, 0);
             }
             setDeltaMovement(motion);
@@ -166,7 +194,9 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
 
     @Override
     public void onPlayerJump(int jumpPower) {
+        // 客户端本地调用：写 entityData，随数据同步到服务端
         jumping = true;
+        entityData.set(RIDING_JUMP, true);
     }
 
     @Override
@@ -177,11 +207,13 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
     @Override
     public void handleStartJump(int jumpPower) {
         jumping = true;
+        entityData.set(RIDING_JUMP, true);
     }
 
     @Override
     public void handleStopJump() {
         jumping = false;
+        entityData.set(RIDING_JUMP, false);
     }
 
     @Override
