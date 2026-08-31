@@ -95,6 +95,9 @@ public class ClientEventHandler {
                 net.minecraft.client.renderer.entity.SheepRenderer::new);
         event.registerEntityRenderer(ModEntities.SHIKIGAMI_IRON_GOLEM.get(),
                 com.mofengbaizhi.tinkersnewlife.client.renderer.ShikigamiIronGolemRenderer::new);
+        // 黑鸟操术 黑鸟：复用原版蝙蝠渲染
+        event.registerEntityRenderer(ModEntities.BLACK_BIRD.get(),
+                net.minecraft.client.renderer.entity.BatRenderer::new);
     }
 
     // ========== Forge 事件（按键等） ==========
@@ -113,6 +116,12 @@ public class ClientEventHandler {
             if (player == null) {
                 lastTechniqueDown = false;
                 return;
+            }
+            // ⭐ 黑鸟操控：相机绑定黑鸟时，每 tick 发送玩家输入驱动其飞行
+            if (Minecraft.getInstance().cameraEntity instanceof com.mofengbaizhi.tinkersnewlife.content.entity.BlackBirdEntity) {
+                net.minecraft.client.player.Input input = player.input;
+                TinkersNewlife.CHANNEL.sendToServer(new com.mofengbaizhi.tinkersnewlife.network.PacketBlackBirdInput(
+                        input.forwardImpulse, input.leftImpulse, input.jumping, input.shiftKeyDown));
             }
             // ⭐ 术式按键：按下=开始（即时释放或蓄力），松开=蓄力发射
             boolean down = KeyBindings.USE_TECHNIQUE.get().isDown();

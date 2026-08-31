@@ -160,4 +160,12 @@ public class ModEntities {
                 () -> EntityType.Builder.<ShikigamiIronGolem>of(ShikigamiIronGolem::new, MobCategory.CREATURE)
                         .sized(1.4f, 2.7f).clientTrackingRange(64).updateInterval(2)
                         .build(TinkersNewlife.MOD_ID + ":shikigami_iron_golem"));
+
+    /** 黑鸟操术 黑鸟（蝙蝠，玩家视角转移载体） */
+    public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.BlackBirdEntity>> BLACK_BIRD =
+        ENTITIES.register("black_bird",
+                () -> EntityType.Builder.<com.mofengbaizhi.tinkersnewlife.content.entity.BlackBirdEntity>of(
+                                com.mofengbaizhi.tinkersnewlife.content.entity.BlackBirdEntity::new, MobCategory.MISC)
+                        .sized(0.5f, 0.9f).clientTrackingRange(64).updateInterval(1)
+                        .build(TinkersNewlife.MOD_ID + ":black_bird"));
 }

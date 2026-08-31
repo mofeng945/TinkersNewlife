@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife;
 
 import com.mofengbaizhi.tinkersnewlife.content.*;
 import com.mofengbaizhi.tinkersnewlife.content.curse.BaTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.BlackBirdTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.BloodManipulationHyakurenTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.BloodManipulationSupernovaTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.BloodManipulationTechnique;
@@ -16,6 +17,7 @@ import com.mofengbaizhi.tinkersnewlife.content.curse.ZuoShaBoTuDomain;
 import com.mofengbaizhi.tinkersnewlife.content.loot.LootModifierSerializers;
 import com.mofengbaizhi.tinkersnewlife.content.storage.SilentGloveHandler;
 import com.mofengbaizhi.tinkersnewlife.content.storage.StorageManager;
+import com.mofengbaizhi.tinkersnewlife.network.PacketBlackBirdCamera;
 import com.mofengbaizhi.tinkersnewlife.network.PacketDragonStaffUse;
 import com.mofengbaizhi.tinkersnewlife.network.PacketOpenBag;
 import com.mofengbaizhi.tinkersnewlife.network.PacketOpenShikigamiScreen;
@@ -139,6 +141,7 @@ public class TinkersNewlife {
         TechniqueHandler.register(BloodManipulationHyakurenTechnique.INSTANCE);
         TechniqueHandler.register(BloodManipulationSupernovaTechnique.INSTANCE);
         TechniqueHandler.register(TenShadowsTechnique.INSTANCE);
+        TechniqueHandler.register(BlackBirdTechnique.INSTANCE);
 
         // 注册网络包
         registerPacket(PacketUseSkill.class, PacketUseSkill::toBytes, PacketUseSkill::new, PacketUseSkill::handle);
@@ -150,9 +153,14 @@ public class TinkersNewlife {
         registerPacket(PacketUseTechnique.class, PacketUseTechnique::toBytes, PacketUseTechnique::new, PacketUseTechnique::handle);
         registerPacket(PacketSwitchTechnique.class, PacketSwitchTechnique::toBytes, PacketSwitchTechnique::new, PacketSwitchTechnique::handle);
         registerPacket(PacketSummonShikigami.class, PacketSummonShikigami::toBytes, PacketSummonShikigami::new, PacketSummonShikigami::handle);
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.PacketBlackBirdInput.class,
+                com.mofengbaizhi.tinkersnewlife.network.PacketBlackBirdInput::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.PacketBlackBirdInput::new,
+                com.mofengbaizhi.tinkersnewlife.network.PacketBlackBirdInput::handle);
         // 服务端→客户端
         registerClientPacket(PacketSyncCurse.class, PacketSyncCurse::toBytes, PacketSyncCurse::new, PacketSyncCurse::handle);
         registerClientPacket(PacketOpenShikigamiScreen.class, PacketOpenShikigamiScreen::toBytes, PacketOpenShikigamiScreen::new, PacketOpenShikigamiScreen::handle);
+        registerClientPacket(PacketBlackBirdCamera.class, PacketBlackBirdCamera::toBytes, PacketBlackBirdCamera::new, PacketBlackBirdCamera::handle);
 
         // 实体属性（式神等生物实体）
         modEventBus.addListener(TinkersNewlife::onRegisterEntityAttributes);
@@ -178,6 +186,7 @@ public class TinkersNewlife {
         event.put(ModEntities.SHIKIGAMI_COW.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiCow.createAttributes().build());
         event.put(ModEntities.SHIKIGAMI_SHEEP.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiSheep.createAttributes().build());
         event.put(ModEntities.SHIKIGAMI_IRON_GOLEM.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiIronGolem.createAttributes().build());
+        event.put(ModEntities.BLACK_BIRD.get(), com.mofengbaizhi.tinkersnewlife.content.entity.BlackBirdEntity.createAttributes().build());
     }
 
     // ========== Forge 事件处理 ==========

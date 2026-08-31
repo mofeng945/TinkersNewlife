@@ -146,4 +146,8 @@ public class Modifiers {
     /** 十影术式（术式特性，占用术式槽） */
     public static final StaticModifier<TenShadowsTrait> TEN_SHADOWS =
         MODIFIERS.register("ten_shadows", TenShadowsTrait::new);
+
+    /** 黑鸟操术（术式特性，占用术式槽） */
+    public static final StaticModifier<BlackBirdTrait> BLACK_BIRD =
+        MODIFIERS.register("black_bird", BlackBirdTrait::new);
 }
