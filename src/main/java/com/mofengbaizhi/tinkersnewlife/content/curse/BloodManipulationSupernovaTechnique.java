@@ -28,7 +28,7 @@ public final class BloodManipulationSupernovaTechnique extends BaseTechnique {
     /** 咒力消耗 = 解 × 5/2 */
     public static final double COST_MULTIPLIER = 5.0 / 2.0;
     /** 爆炸半径（格） */
-    public static final double EXPLOSION_RADIUS = 3.0;
+    public static final double EXPLOSION_RADIUS = 5.0;
 
     private BloodManipulationSupernovaTechnique() {
         super(Modifiers.BLOOD_MANIPULATION_SUPERNOVA.getId());

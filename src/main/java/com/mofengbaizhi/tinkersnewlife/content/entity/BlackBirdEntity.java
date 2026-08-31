@@ -147,7 +147,8 @@ public class BlackBirdEntity extends Bat {
             motion = motion.add(flatLook.scale(inputZza * speed));
         }
         if (inputXxa != 0) {
-            Vec3 side = new Vec3(-flatLook.z, 0, flatLook.x).normalize();
+            // 左侧向量：视线顺时针旋转 90°（A=左移）
+            Vec3 side = new Vec3(flatLook.z, 0, -flatLook.x).normalize();
             motion = motion.add(side.scale(inputXxa * speed * 0.6));
         }
         if (inputJump) {
@@ -208,13 +209,14 @@ public class BlackBirdEntity extends Bat {
         int output = CursePowerHelper.getCurseOutputLevel(owner);
         double hp = getHealth();
         double center = (1.0 + affinity / 100.0) * (output * 3 + hp) * 10.0;
+        double radius = 3.0;
         List<LivingEntity> victims = level.getEntitiesOfClass(LivingEntity.class,
-                AABB.ofSize(position(), 4, 4, 4),
+                AABB.ofSize(position(), radius * 2, radius * 2, radius * 2),
                 e -> e != owner && e.isAlive());
         for (LivingEntity e : victims) {
             double d = e.distanceToSqr(this);
-            if (d <= 4.0) {
-                double falloff = 1.0 - Math.sqrt(d) / 2.0;
+            if (d <= radius * radius) {
+                double falloff = 1.0 - Math.sqrt(d) / radius;
                 e.hurt(damageSources().explosion(this, owner), (float) (center * falloff));
             }
         }

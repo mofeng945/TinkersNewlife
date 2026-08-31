@@ -185,7 +185,8 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
                 motion = motion.add(look.scale(player.zza * speed));
             }
             if (player.xxa != 0) {
-                Vec3 side = new Vec3(-look.z, 0, look.x).normalize();
+                // 左侧向量：视线顺时针旋转 90°（A=左移）
+                Vec3 side = new Vec3(look.z, 0, -look.x).normalize();
                 motion = motion.add(side.scale(player.xxa * speed * 0.6));
             }
             // 空格上升（entityData 同步：客户端 onPlayerJump / 服务端 handleStartJump 写值）
