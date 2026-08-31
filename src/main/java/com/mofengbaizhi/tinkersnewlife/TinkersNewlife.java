@@ -9,6 +9,7 @@ import com.mofengbaizhi.tinkersnewlife.content.curse.BloodManipulationTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.DomainRegistry;
 import com.mofengbaizhi.tinkersnewlife.content.curse.FuMoYuChuZiDomain;
 import com.mofengbaizhi.tinkersnewlife.content.curse.KaiTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.TechniqueHandler;
 import com.mofengbaizhi.tinkersnewlife.content.curse.TenShadowsTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.WuLiangKongChuDomain;
@@ -142,6 +143,7 @@ public class TinkersNewlife {
         TechniqueHandler.register(BloodManipulationSupernovaTechnique.INSTANCE);
         TechniqueHandler.register(TenShadowsTechnique.INSTANCE);
         TechniqueHandler.register(BlackBirdTechnique.INSTANCE);
+        TechniqueHandler.register(ProjectionTechnique.INSTANCE);
 
         // 注册网络包
         registerPacket(PacketUseSkill.class, PacketUseSkill::toBytes, PacketUseSkill::new, PacketUseSkill::handle);
@@ -233,6 +235,41 @@ public class TinkersNewlife {
                     // 手套库脏数据同样由主线程定时落盘（崩溃保护）
                     SilentGloveHandler.saveAllDirty();
                 }
+                // 投射咒法：速度增益 modifier 维护（每 tick 检查，开销小）
+                for (net.minecraft.server.level.ServerPlayer p :
+                        event.getServer().getPlayerList().getPlayers()) {
+                    boolean buff = com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.hasBuff(p);
+                    var attr = p.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
+                    if (attr == null) continue;
+                    var mod = new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+                            java.util.UUID.fromString("7a9f2c4e-8b3d-4e5f-9a1c-2d3e4f5a6b7c"),
+                            "projection_speed",
+                            1.0, net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.MULTIPLY_TOTAL);
+                    if (buff && !attr.hasModifier(mod)) {
+                        attr.addTransientModifier(mod);
+                    } else if (!buff && attr.hasModifier(mod)) {
+                        attr.removeModifier(mod);
+                    }
+                }
+            }
+        }
+
+        /** 投射咒法：伤害 ×2（攻击者处于增益） */
+        @SubscribeEvent
+        public static void onLivingHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
+            var src = event.getSource();
+            if (src != null && src.getEntity() instanceof net.minecraft.server.level.ServerPlayer attacker
+                    && com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.hasBuff(attacker)) {
+                event.setAmount(event.getAmount() * 2.0F);
+            }
+        }
+
+        /** 投射咒法：跳跃高度 ×2 */
+        @SubscribeEvent
+        public static void onLivingJump(net.minecraftforge.event.entity.living.LivingEvent.LivingJumpEvent event) {
+            if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer p
+                    && com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.hasBuff(p)) {
+                p.setDeltaMovement(p.getDeltaMovement().x, p.getDeltaMovement().y * 2.0, p.getDeltaMovement().z);
             }
         }
     }

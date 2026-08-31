@@ -168,4 +168,12 @@ public class ModEntities {
                                 com.mofengbaizhi.tinkersnewlife.content.entity.BlackBirdEntity::new, MobCategory.MISC)
                         .sized(0.5f, 0.9f).clientTrackingRange(64).updateInterval(1)
                         .build(TinkersNewlife.MOD_ID + ":black_bird"));
+
+    /** 投射咒法 玩家虚影（触碰触发增益） */
+    public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.ProjectionPhantomEntity>> PROJECTION_PHANTOM =
+        ENTITIES.register("projection_phantom",
+                () -> EntityType.Builder.<com.mofengbaizhi.tinkersnewlife.content.entity.ProjectionPhantomEntity>of(
+                                com.mofengbaizhi.tinkersnewlife.content.entity.ProjectionPhantomEntity::new, MobCategory.MISC)
+                        .sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1)
+                        .build(TinkersNewlife.MOD_ID + ":projection_phantom"));
 }

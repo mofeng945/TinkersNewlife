@@ -150,4 +150,8 @@ public class Modifiers {
     /** 黑鸟操术（术式特性，占用术式槽） */
     public static final StaticModifier<BlackBirdTrait> BLACK_BIRD =
         MODIFIERS.register("black_bird", BlackBirdTrait::new);
+
+    /** 投射咒法（术式特性，占用术式槽） */
+    public static final StaticModifier<ProjectionTrait> PROJECTION =
+        MODIFIERS.register("projection", ProjectionTrait::new);
 }

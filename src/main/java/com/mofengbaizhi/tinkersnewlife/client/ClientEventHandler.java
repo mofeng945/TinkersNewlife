@@ -98,6 +98,9 @@ public class ClientEventHandler {
         // 黑鸟操术 黑鸟：复用原版蝙蝠渲染
         event.registerEntityRenderer(ModEntities.BLACK_BIRD.get(),
                 net.minecraft.client.renderer.entity.BatRenderer::new);
+        // 投射咒法 玩家虚影：蓝色半透明人形
+        event.registerEntityRenderer(ModEntities.PROJECTION_PHANTOM.get(),
+                com.mofengbaizhi.tinkersnewlife.client.renderer.ProjectionPhantomRenderer::new);
     }
 
     // ========== Forge 事件（按键等） ==========

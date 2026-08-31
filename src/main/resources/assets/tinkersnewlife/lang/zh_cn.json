@@ -461,5 +461,10 @@
   "modifier.tinkersnewlife.black_bird.description": "§f发动后在原地生成一只黑鸟（蝙蝠），玩家视角转移到黑鸟身上操控：W朝视线飞、A/D侧移、空格上升；按Shift俯冲自爆（不破坏方块，中心伤害=(1+亲和/100)×(输出×3+蝙蝠血量)×10，半径2格）。再次按释放键回收返还一半咒力；黑鸟死亡视角回归。占用术式槽。",
   "message.tinkersnewlife.black_bird.summon": "§b黑鸟已生成，视角已转移（W前进/空格上升/Shift俯冲自爆）",
   "message.tinkersnewlife.black_bird.recall": "§7已回收黑鸟，返还一半咒力",
-  "message.tinkersnewlife.black_bird.returned": "§7黑鸟消散，视角回归"
+  "message.tinkersnewlife.black_bird.returned": "§7黑鸟消散，视角回归",
+  "modifier.tinkersnewlife.projection": "投射咒法",
+  "modifier.tinkersnewlife.projection.flavor": "§7一瞬之间，我已在你身后。",
+  "modifier.tinkersnewlife.projection.description": "§f发动后在视线方向同水平面生成玩家虚影（距离 = 1s 最大直线移动距离的 2/3~1 倍）。1s 内触碰虚影 → 10s 增益：伤害/跳跃/速度 ×2。消耗咒力上限的 1/12。占用术式槽。",
+  "message.tinkersnewlife.projection.summon": "§b虚影已生成，距离 %s 格（1 秒内触碰获得增益）",
+  "message.tinkersnewlife.projection.buff": "§d投射完成！10 秒内伤害/跳跃/速度 ×2"
 }
