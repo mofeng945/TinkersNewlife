@@ -9,9 +9,9 @@ import net.minecraft.server.level.ServerPlayer;
  * 每种式神的基础属性（生命/伤害/速度/体型）与咒力消耗倍率。
  * 实际数值还会受施术者的「咒力亲和」与「咒力输出」缩放：
  * <ul>
- *   <li>属性缩放 = 1 + 亲和/100×0.5 + 输出×0.08（生命与伤害）</li>
- *   <li>体型缩放 = 1 + 亲和/100×0.4 + 输出×0.04</li>
- *   <li>速度缩放 = 1 + 亲和/100×0.3 + 输出×0.03</li>
+ *   <li>属性缩放 = (1 + 亲和/100) × 输出（生命与伤害）</li>
+ *   <li>体型缩放 = (1 + 亲和/100) × 输出</li>
+ *   <li>速度缩放 = (1 + 亲和/100) × 输出</li>
  * </ul>
  * 咒力消耗 = 「解」的消耗 × 消耗倍率（只在召唤时扣除，维持不耗咒力）。
  */
@@ -62,25 +62,34 @@ public enum ShikigamiType {
     //  缩放与数值
     // ============================================================
 
-    /** 属性（生命/伤害）缩放 = 1 + 亲和/100×0.5 + 输出×0.08 */
+    /** 属性（生命/伤害）缩放 = (1 + 亲和/100) × 输出 */
     public static double statScale(ServerPlayer player) {
-        int affinity = CursePowerHelper.getCurseAffinity(player);
-        int output = CursePowerHelper.getCurseOutputLevel(player);
-        return 1.0 + affinity / 100.0 * 0.5 + output * 0.08;
+        return statScale(CursePowerHelper.getCurseAffinity(player), CursePowerHelper.getCurseOutputLevel(player));
     }
 
-    /** 体型缩放 = 1 + 亲和/100×0.4 + 输出×0.04 */
+    /** 体型缩放 = (1 + 亲和/100) × 输出 */
     public static double sizeScale(ServerPlayer player) {
-        int affinity = CursePowerHelper.getCurseAffinity(player);
-        int output = CursePowerHelper.getCurseOutputLevel(player);
-        return 1.0 + affinity / 100.0 * 0.4 + output * 0.04;
+        return sizeScale(CursePowerHelper.getCurseAffinity(player), CursePowerHelper.getCurseOutputLevel(player));
     }
 
-    /** 速度缩放 = 1 + 亲和/100×0.5 + 输出×0.05 */
+    /** 速度缩放 = (1 + 亲和/100) × 输出 */
     public static double speedScale(ServerPlayer player) {
-        int affinity = CursePowerHelper.getCurseAffinity(player);
-        int output = CursePowerHelper.getCurseOutputLevel(player);
-        return 1.0 + affinity / 100.0 * 0.5 + output * 0.05;
+        return speedScale(CursePowerHelper.getCurseAffinity(player), CursePowerHelper.getCurseOutputLevel(player));
+    }
+
+    /** 属性（生命/伤害）缩放 = (1 + 亲和/100) × 输出（客户端可用，无需玩家实体） */
+    public static double statScale(int affinity, int output) {
+        return (1.0 + affinity / 100.0) * Math.max(1, output);
+    }
+
+    /** 体型缩放 = (1 + 亲和/100) × 输出 */
+    public static double sizeScale(int affinity, int output) {
+        return (1.0 + affinity / 100.0) * Math.max(1, output);
+    }
+
+    /** 速度缩放 = (1 + 亲和/100) × 输出 */
+    public static double speedScale(int affinity, int output) {
+        return (1.0 + affinity / 100.0) * Math.max(1, output);
     }
 
     /** 本类型缩放后的最大生命 */
@@ -107,6 +116,11 @@ public enum ShikigamiType {
     public int summonCost(ServerPlayer player) {
         int output = CursePowerHelper.getCurseOutputLevel(player);
         int affinity = CursePowerHelper.getCurseAffinity(player);
+        return summonCost(affinity, output);
+    }
+
+    /** 咒力消耗（客户端可用）：消耗 = ceil((1 - 亲和/100) × (10 + 输出×5) × 倍率)，最低 1 */
+    public int summonCost(int affinity, int output) {
         double base = (1.0 - affinity / 100.0) * (10 + output * 5);
         return Math.max(1, (int) Math.ceil(base * costMultiplier));
     }

@@ -26,6 +26,9 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
     /** 骑乘跳跃状态（entityData 同步：客户端 onPlayerJump 设值，服务端 tickRidden 读取） */
     private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> RIDING_JUMP =
             net.minecraft.network.syncher.SynchedEntityData.defineId(ShikigamiPhantom.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+    /** 式神类型（entityData 跨端同步，客户端骑乘逻辑依赖它识别 NUE） */
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Byte> TYPE_ID =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(ShikigamiPhantom.class, net.minecraft.network.syncher.EntityDataSerializers.BYTE);
 
     private final ShikigamiState state = new ShikigamiState();
 
@@ -37,6 +40,7 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(RIDING_JUMP, false);
+        this.entityData.define(TYPE_ID, (byte) 0);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -47,7 +51,10 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
                 .add(Attributes.FOLLOW_RANGE, 32.0);
     }
 
-    @Override public ShikigamiType getShikigamiType() { return state.type; }
+    @Override public ShikigamiType getShikigamiType() {
+        int ord = entityData.get(TYPE_ID) & 0xFF;
+        return ord >= 0 && ord < ShikigamiType.values().length ? ShikigamiType.values()[ord] : ShikigamiType.NUE;
+    }
     @Override public ShikigamiState getState() { return state; }
     @Override public int getShikigamiVariant() { return state.variant; }
     @Override public float getShikigamiScale() { return (float) state.scale; }
@@ -66,6 +73,7 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
 
     @Override
     public void initStats(ServerPlayer player, ShikigamiType type, boolean tamed, @Nullable LivingEntity locked, int variant) {
+        entityData.set(TYPE_ID, (byte) type.ordinal());
         ShikigamiBehavior.initStats(this, this, player, type, tamed, locked, variant);
     }
 
@@ -81,7 +89,7 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
     @Override
     public void tick() {
         super.tick();
-        if (state.type == ShikigamiType.NUE && !getPassengers().isEmpty()) {
+        if (getShikigamiType() == ShikigamiType.NUE && !getPassengers().isEmpty()) {
             Entity rider = getFirstPassenger();
             if (rider instanceof Player player) {
                 setYRot(player.getYRot());
@@ -89,6 +97,12 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
                 yBodyRotO = player.getYRot();
                 yHeadRot = player.getYRot();
                 yHeadRotO = player.getYRot();
+                if (tickCount % 40 == 0) {
+                    com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
+                            "[NUE] tick sync yRot={} body={} playerYRot={} rider={} client={}",
+                            getYRot(), yBodyRot, player.getYRot(),
+                            rider.getName().getString(), level().isClientSide);
+                }
             }
         }
     }
@@ -133,7 +147,7 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
 
     @Override
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
-        if (state.type == ShikigamiType.NUE
+        if (getShikigamiType() == ShikigamiType.NUE
                 && state.tamed && player.getUUID().equals(state.ownerId) && player.getMainHandItem().isEmpty()) {
             if (player.isPassenger()) {
                 return InteractionResult.sidedSuccess(level().isClientSide);
@@ -150,17 +164,6 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
         return e instanceof LivingEntity le ? le : null;
     }
 
-    /**
-     * 骑乘时必须返回 true，否则 travelRidden 走 else 分支把 deltaMovement 清零，
-     * 且服务端（isLocalPlayer=false）不会执行任何移动，导致完全无法操控。
-     * 返回 true 后双端都走 travel(vec3)，而我们的 travel 覆写在骑乘时 no-op，
-     * 移动完全由 tickRidden 的 move() 驱动。
-     */
-    @Override
-    public boolean isControlledByLocalInstance() {
-        return true;
-    }
-
     @Override
     public double getPassengersRidingOffset() {
         // 骑乘偏移设为 0（乘客贴合坐骑，避免悬浮）
@@ -170,7 +173,7 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
     @Override
     protected void tickRidden(Player player, Vec3 movement) {
         super.tickRidden(player, movement);
-        if (state.type == ShikigamiType.NUE) {
+        if (getShikigamiType() == ShikigamiType.NUE) {
             setNoGravity(true);
             setYRot(player.getYRot());
             yBodyRot = player.getYRot();
@@ -186,11 +189,17 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
                 motion = motion.add(side.scale(player.xxa * speed * 0.6));
             }
             // 空格上升（entityData 同步：客户端 onPlayerJump / 服务端 handleStartJump 写值）
-            if (entityData.get(RIDING_JUMP) || jumping) {
+            boolean jumpFlag = entityData.get(RIDING_JUMP) || jumping;
+            if (jumpFlag) {
                 motion = motion.add(0, 0.6, 0);
             }
             setDeltaMovement(motion);
             move(MoverType.SELF, motion);
+            if (!level().isClientSide && tickCount % 40 == 0) {
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
+                        "[NUE] ridden look={} zza={} xxa={} jump={} motion={} y={}",
+                        look, player.zza, player.xxa, jumpFlag, motion, getY());
+            }
             fallDistance = 0;
         }
     }
@@ -198,7 +207,7 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
     /** 骑乘输入：从玩家读取（原版马式），确保 W/A/S/D 生效 */
     @Override
     protected Vec3 getRiddenInput(Player player, Vec3 movement) {
-        if (state.type != ShikigamiType.NUE) return super.getRiddenInput(player, movement);
+        if (getShikigamiType() != ShikigamiType.NUE) return super.getRiddenInput(player, movement);
         float forward = player.zza;
         float strafe = player.xxa * 0.5F;
         return new Vec3(strafe, 0, forward);
@@ -217,7 +226,7 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
 
     @Override
     public boolean canJump() {
-        return state.type == ShikigamiType.NUE && !getPassengers().isEmpty();
+        return getShikigamiType() == ShikigamiType.NUE && !getPassengers().isEmpty();
     }
 
     @Override
@@ -239,7 +248,7 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
 
     @Override
     public void travel(Vec3 movement) {
-        if (state.type == ShikigamiType.NUE && !getPassengers().isEmpty()) {
+        if (getShikigamiType() == ShikigamiType.NUE && !getPassengers().isEmpty()) {
             return;
         }
         super.travel(movement);

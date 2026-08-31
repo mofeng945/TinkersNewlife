@@ -405,7 +405,6 @@
   "screen.tinkersnewlife.ten_shadows.hint": "点击召唤（咒力只在召唤时扣除）；未调伏式神会攻击你和目标，击败即调伏",
   "screen.tinkersnewlife.ten_shadows.tamed": "§a已调伏",
   "screen.tinkersnewlife.ten_shadows.untamed": "§6未调伏 · 需调伏",
-  "screen.tinkersnewlife.ten_shadows.cost": "咒力 ×%s",
   "message.tinkersnewlife.ten_shadows.summon": "§b已召唤式神：%s",
   "message.tinkersnewlife.ten_shadows.summon_untamed": "§c已召唤未调伏式神：%s！它正在攻击你与目标，击败它即可调伏",
   "message.tinkersnewlife.ten_shadows.recall": "§7已召回式神：%s（返还 %s 点咒力）",
@@ -455,5 +454,6 @@
   "hud.tinkersnewlife.technique": "§b术式: %s",
   "hud.tinkersnewlife.domain_active": "§e领域展开中",
   "hud.tinkersnewlife.infinite": "§d咒力无限",
-  "pattern.tinkersnewlife.curse_core": "咒力核心"
+  "pattern.tinkersnewlife.curse_core": "咒力核心",
+  "screen.tinkersnewlife.ten_shadows.cost_value": "消耗 %s 咒力"
 }

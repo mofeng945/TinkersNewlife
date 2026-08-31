@@ -51,11 +51,16 @@ public class ShikigamiScreen extends Screen {
         renderBackground(graphics);
         graphics.drawString(font, Component.translatable("screen.tinkersnewlife.ten_shadows.title"), 8, 8, 0xFFFFFF);
         graphics.drawString(font, Component.translatable("screen.tinkersnewlife.ten_shadows.hint"), 8, 20, 0xAAAAAA);
+        int affinity = ClientCurseData.getAffinity();
+        int output = ClientCurseData.getOutput();
+        double curse = ClientCurseData.getCurse();
         ShikigamiType[] types = ShikigamiType.values();
         for (Slot s : slots) {
             ShikigamiType type = types[s.typeIndex];
             boolean tamed = ClientCurseData.isShikigamiTamed(type);
             boolean hover = mouseX >= s.x && mouseX <= s.x + s.w && mouseY >= s.y && mouseY <= s.y + s.h;
+            int cost = type.summonCost(affinity, output);
+            boolean affordable = ClientCurseData.isInfinite() || curse >= cost;
             int bg = tamed ? (hover ? 0xFF4A6A4A : 0xFF334A33)
                            : (hover ? 0xFF6A4A3A : 0xFF4A3328);
             graphics.fill(s.x, s.y, s.x + s.w, s.y + s.h, bg);
@@ -64,9 +69,9 @@ public class ShikigamiScreen extends Screen {
                             tamed ? "screen.tinkersnewlife.ten_shadows.tamed"
                                   : "screen.tinkersnewlife.ten_shadows.untamed"),
                     s.x + 5, s.y + 15, tamed ? 0x55FF55 : 0xFFAA55);
-            graphics.drawString(font, Component.translatable("screen.tinkersnewlife.ten_shadows.cost",
-                            String.format("%.1f", type.costMultiplier)),
-                    s.x + 5, s.y + 26, 0x88CCFF);
+            // 具体消耗：咒力不足标红
+            graphics.drawString(font, Component.translatable("screen.tinkersnewlife.ten_shadows.cost_value", cost),
+                    s.x + 5, s.y + 26, affordable ? 0x88CCFF : 0xFF5555);
         }
         super.render(graphics, mouseX, mouseY, partialTick);
     }

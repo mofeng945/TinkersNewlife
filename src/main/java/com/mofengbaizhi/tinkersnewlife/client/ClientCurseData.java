@@ -22,15 +22,21 @@ public class ClientCurseData {
     private static String techniqueId = "";
     /** 已调伏式神位掩码（位 = ShikigamiType.ordinal()） */
     private static int tamedMask = 0;
+    /** 咒力亲和（召唤消耗计算用） */
+    private static int affinity = 0;
+    /** 咒力输出等级（召唤消耗计算用） */
+    private static int output = 1;
 
     public static void update(double curseIn, double maxIn, boolean domainActiveIn, boolean infiniteIn,
-                              String techniqueIdIn, int tamedMaskIn) {
+                              String techniqueIdIn, int tamedMaskIn, int affinityIn, int outputIn) {
         curse = curseIn;
         max = maxIn;
         domainActive = domainActiveIn;
         infinite = infiniteIn;
         techniqueId = techniqueIdIn == null ? "" : techniqueIdIn;
         tamedMask = tamedMaskIn;
+        affinity = affinityIn;
+        output = Math.max(1, outputIn);
     }
 
     /** 当前咒力（服务端同步，未佩戴时为 0） */
@@ -57,6 +63,16 @@ public class ClientCurseData {
     public static boolean isShikigamiTamed(com.mofengbaizhi.tinkersnewlife.content.curse.shikigami.ShikigamiType type) {
         if (type == com.mofengbaizhi.tinkersnewlife.content.curse.shikigami.ShikigamiType.DOG) return true;
         return (tamedMask & (1 << type.ordinal())) != 0;
+    }
+
+    /** 咒力亲和（服务端同步） */
+    public static int getAffinity() {
+        return affinity;
+    }
+
+    /** 咒力输出等级（服务端同步） */
+    public static int getOutput() {
+        return output;
     }
 
     /** Forge GUI Overlay 渲染入口（registerAboveAll） */
