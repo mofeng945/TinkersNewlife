@@ -162,4 +162,8 @@ public class Modifiers {
     /** 无下限·苍（术式特性，占用术式槽；含术式反转·赫与虚式·茈） */
     public static final StaticModifier<WuliangCangTrait> WULIANG_CANG =
         MODIFIERS.register("wuliang_cang", WuliangCangTrait::new);
+
+    /** 雅各布天梯（术式特性，占用术式槽） */
+    public static final StaticModifier<JacobsLadderTrait> JACOBS_LADDER =
+        MODIFIERS.register("jacobs_ladder", JacobsLadderTrait::new);
 }

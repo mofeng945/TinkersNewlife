@@ -104,6 +104,9 @@ public class ClientEventHandler {
         // 无下限 苍/赫/茈 球体：按类型着色发光圆球
         event.registerEntityRenderer(ModEntities.CURSED_ORB.get(),
                 com.mofengbaizhi.tinkersnewlife.client.renderer.CursedOrbRenderer::new);
+        // 雅各布天梯 法阵：纯粒子视觉，占位渲染器
+        event.registerEntityRenderer(ModEntities.JACOB_LADDER.get(),
+                com.mofengbaizhi.tinkersnewlife.client.renderer.JacobLadderRenderer::new);
     }
 
     // ========== Forge 事件（按键等） ==========

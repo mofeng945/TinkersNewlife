@@ -490,5 +490,13 @@
   "message.tinkersnewlife.cang.fire": "§b苍！",
   "message.tinkersnewlife.he.charge": "§c无下限·赫：蓄力中……",
   "message.tinkersnewlife.he.fire": "§c赫！",
-  "message.tinkersnewlife.zi.fire": "§d虚式·茈！"
+  "message.tinkersnewlife.zi.fire": "§d虚式·茈！",
+  "key.tinkersnewlife.jacobs_ladder": "雅各布天梯",
+  "modifier.tinkersnewlife.jacobs_ladder": "雅各布天梯",
+  "modifier.tinkersnewlife.jacobs_ladder.flavor": "§7通往天国的阶梯，亦为审判之柱。",
+  "modifier.tinkersnewlife.jacobs_ladder.description": "§f对看向的目标，在其头顶上方 10 格召唤带有七芒星与十字架的大型魔法阵，2 秒蓄力后降下巨大光柱：被照射目标 60 秒内禁用术式与领域（持续咒术瞬间终止），并持续受到帧伤（2 tick 一次，无视无敌帧），亡灵生物伤害 ×8。法阵半径 = (1+(亲和/10+输出)/10)×输出×5；帧伤 = (1+(亲和/10+输出)/10)×(输出×8+玩家伤害)×0.1。咒力消耗为「解」的 8 倍。占用术式槽。",
+  "message.tinkersnewlife.jacobs_ladder.summon": "§e雅各布天梯：法阵已展开，蓄力中……",
+  "message.tinkersnewlife.sealed.entered": "§c你被天梯封印！%s 秒内无法使用术式与领域",
+  "message.tinkersnewlife.sealed.active": "§c被封印中，剩余 %s 秒",
+  "message.tinkersnewlife.domain.sealed_closed": "§c领域被天梯封印强制终止！"
 }

@@ -51,6 +51,16 @@ public final class DomainRegistry {
         DOMAIN_FACTORIES.put(modifierId, factory);
     }
 
+    /** 全部已注册领域修饰符 id（供剥离/槽位配方等遍历；新增领域自动包含） */
+    public static java.util.Set<ModifierId> getAllDomainIds() {
+        return DOMAIN_FACTORIES.keySet();
+    }
+
+    /** 该修饰符是否为本模组已注册的领域 */
+    public static boolean isDomain(ModifierId id) {
+        return DOMAIN_FACTORIES.containsKey(id);
+    }
+
     public static boolean isActive(UUID playerId) {
         return DOMAINS.containsKey(playerId);
     }
@@ -81,6 +91,13 @@ public final class DomainRegistry {
         if (!player.isCreative() && CursePowerHelper.isBurnout(player)) {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.burnout.active",
                     CursePowerHelper.getBurnoutRemainingSeconds(player)), true);
+            return;
+        }
+
+        // 封印期间无法展开领域（雅各布天梯）
+        if (CursePowerHelper.isSealed(player)) {
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.sealed.active",
+                    CursePowerHelper.getSealedRemainingSeconds(player)), true);
             return;
         }
 
@@ -120,6 +137,13 @@ public final class DomainRegistry {
         domain.onClose(player, messageKey);
         if (player.isAlive()) {
             player.displayClientMessage(Component.translatable(messageKey), true);
+        }
+    }
+
+    /** 封印瞬间终止领域（雅各布天梯命中）：关闭且不触发熔断 */
+    public static void closeBySeal(ServerPlayer player) {
+        if (DOMAINS.containsKey(player.getUUID())) {
+            close(player, "message.tinkersnewlife.domain.sealed_closed");
         }
     }
 
@@ -173,6 +197,15 @@ public final class DomainRegistry {
                 domain.onClose(player, "message.tinkersnewlife.domain.broken");
                 player.displayClientMessage(Component.translatable("message.tinkersnewlife.domain.broken"), true);
                 applyBurnoutIfSurvival(player);
+                continue;
+            }
+
+            // 领域主人被封印（雅各布天梯）→ 领域瞬间终止
+            if (CursePowerHelper.isSealed(player)) {
+                DOMAINS.remove(domain.getOwner());
+                forceRemove(player, domain);
+                domain.onClose(player, "message.tinkersnewlife.domain.sealed_closed");
+                player.displayClientMessage(Component.translatable("message.tinkersnewlife.domain.sealed_closed"), true);
                 continue;
             }
 

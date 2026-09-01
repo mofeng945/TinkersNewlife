@@ -42,6 +42,15 @@ public final class BlackBirdTechnique extends BaseTechnique {
         return null;
     }
 
+    /** 封印瞬间终止黑鸟操控（雅各布天梯命中）：黑鸟消失、视角回归 */
+    public static void sealRecall(ServerPlayer player) {
+        BlackBirdEntity bird = findActiveBird(player);
+        if (bird != null) {
+            bird.finish(false);
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.black_bird.returned"), true);
+        }
+    }
+
     @Override
     public void onKeyPress(ServerPlayer player) {
         if (CursePowerHelper.isBurnout(player)) {

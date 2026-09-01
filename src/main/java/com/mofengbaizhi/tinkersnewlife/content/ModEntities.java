@@ -184,4 +184,12 @@ public class ModEntities {
                                 com.mofengbaizhi.tinkersnewlife.content.entity.CursedOrbEntity::new, MobCategory.MISC)
                         .sized(0.4f, 0.4f).clientTrackingRange(64).updateInterval(1)
                         .build(TinkersNewlife.MOD_ID + ":cursed_orb"));
+
+    /** 雅各布天梯 法阵（视觉 + 光柱帧伤载体） */
+    public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.JacobLadderEntity>> JACOB_LADDER =
+        ENTITIES.register("jacob_ladder",
+                () -> EntityType.Builder.<com.mofengbaizhi.tinkersnewlife.content.entity.JacobLadderEntity>of(
+                                com.mofengbaizhi.tinkersnewlife.content.entity.JacobLadderEntity::new, MobCategory.MISC)
+                        .sized(0.1f, 0.1f).clientTrackingRange(64).updateInterval(1)
+                        .build(TinkersNewlife.MOD_ID + ":jacob_ladder"));
 }

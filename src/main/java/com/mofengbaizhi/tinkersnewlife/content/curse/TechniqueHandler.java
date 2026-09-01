@@ -43,11 +43,26 @@ public final class TechniqueHandler {
         TECHNIQUES.put(technique.getModifierId(), technique);
     }
 
-    /** 按键按下：熔断检查 → 当前选中的术式 → 按下行为（即时释放 / 开始蓄力） */
+    /** 全部已注册术式修饰符 id（供剥离/槽位配方等遍历；新增术式自动包含） */
+    public static java.util.Set<ModifierId> getAllTechniqueIds() {
+        return TECHNIQUES.keySet();
+    }
+
+    /** 该修饰符是否为本模组已注册的术式 */
+    public static boolean isTechnique(ModifierId id) {
+        return TECHNIQUES.containsKey(id);
+    }
+
+    /** 按键按下：熔断检查 → 封印检查 → 当前选中的术式 → 按下行为（即时释放 / 开始蓄力） */
     public static void onKeyPress(ServerPlayer player) {
         if (CursePowerHelper.isBurnout(player)) {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.burnout.active",
                     CursePowerHelper.getBurnoutRemainingSeconds(player)), true);
+            return;
+        }
+        if (CursePowerHelper.isSealed(player)) {
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.sealed.active",
+                    CursePowerHelper.getSealedRemainingSeconds(player)), true);
             return;
         }
         BaseTechnique technique = findSelected(player);
@@ -64,8 +79,13 @@ public final class TechniqueHandler {
         }
     }
 
-    /** 术式反转按键按下（F）：当前选中的术式 → 反转行为（如无下限·苍 → 赫） */
+    /** 术式反转按键按下（F）：封印检查 → 当前选中的术式 → 反转行为（如无下限·苍 → 赫） */
     public static void onReverseKeyPress(ServerPlayer player) {
+        if (CursePowerHelper.isSealed(player)) {
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.sealed.active",
+                    CursePowerHelper.getSealedRemainingSeconds(player)), true);
+            return;
+        }
         BaseTechnique technique = findSelected(player);
         if (technique != null) {
             technique.onReverseKeyPress(player);

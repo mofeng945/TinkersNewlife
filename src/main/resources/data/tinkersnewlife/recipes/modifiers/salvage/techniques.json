@@ -1,0 +1,10 @@
+{
+  "type": "tinkersnewlife:modifier_salvage",
+  "kind": "technique",
+  "slots": {
+    "technique": 1
+  },
+  "tools": {
+    "item": "tinkersnewlife:curse_core"
+  }
+}

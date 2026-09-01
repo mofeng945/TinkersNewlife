@@ -1,0 +1,10 @@
+{
+  "type": "tinkersnewlife:modifier_salvage",
+  "kind": "domain",
+  "slots": {
+    "domain": 1
+  },
+  "tools": {
+    "item": "tinkersnewlife:curse_core"
+  }
+}

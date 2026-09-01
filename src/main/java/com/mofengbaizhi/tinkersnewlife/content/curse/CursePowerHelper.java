@@ -286,4 +286,28 @@ public final class CursePowerHelper {
         if (remaining <= 0) return 0;
         return (int) ((remaining + 19) / 20);
     }
+
+    // ============================================================
+    //  术式/领域封印（雅各布天梯）
+    // ============================================================
+
+    /** 玩家持久数据：封印截止 gameTime（期间禁用术式与领域） */
+    public static final String KEY_SEALED_UNTIL = "tinkersnewlife.sealed_until";
+
+    /** 设置封印截止时刻（60 秒） */
+    public static void applySeal(Player player, int seconds) {
+        player.getPersistentData().putLong(KEY_SEALED_UNTIL, player.level().getGameTime() + seconds * 20L);
+    }
+
+    /** 是否处于封印（禁用术式与领域） */
+    public static boolean isSealed(Player player) {
+        return player.getPersistentData().getLong(KEY_SEALED_UNTIL) > player.level().getGameTime();
+    }
+
+    /** 封印剩余秒数（未封印返回 0） */
+    public static int getSealedRemainingSeconds(Player player) {
+        long remaining = player.getPersistentData().getLong(KEY_SEALED_UNTIL) - player.level().getGameTime();
+        if (remaining <= 0) return 0;
+        return (int) ((remaining + 19) / 20);
+    }
 }
