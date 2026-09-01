@@ -60,6 +60,13 @@ public class KeyBindings {
             KEY_CATEGORY
     ));
 
+    // ✅ 术式反转（无下限·苍 → 赫 等）：F 键
+    public static final Lazy<KeyMapping> REVERSE_TECHNIQUE = Lazy.of(() -> new KeyMapping(
+            "key.tinkersnewlife.reverse_technique",
+            GLFW.GLFW_KEY_F,
+            KEY_CATEGORY
+    ));
+
     @SubscribeEvent
     public static void register(RegisterKeyMappingsEvent event) {
         event.register(USE_SKILL.get());
@@ -69,5 +76,6 @@ public class KeyBindings {
         event.register(TOGGLE_DOMAIN.get()); // 确保注册
         event.register(USE_TECHNIQUE.get()); // 确保注册
         event.register(SWITCH_TECHNIQUE.get()); // 确保注册
+        event.register(REVERSE_TECHNIQUE.get()); // 确保注册
     }
 }

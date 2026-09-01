@@ -51,6 +51,17 @@ public abstract class BaseTechnique {
      */
     public void onKeyRelease(ServerPlayer player) {}
 
+    /**
+     * 术式反转按键（F）按下：默认无动作。
+     * 拥有术式反转的术式（如无下限·苍 → 赫）覆写此方法。
+     */
+    public void onReverseKeyPress(ServerPlayer player) {}
+
+    /**
+     * 术式反转按键（F）松开：默认无动作。
+     */
+    public void onReverseKeyRelease(ServerPlayer player) {}
+
     /** 模板方法：释放本术式（子类无需覆写，只需实现 onCast） */
     public boolean tryUse(ServerPlayer player) {
         // 术式熔断：期间无法使用术式

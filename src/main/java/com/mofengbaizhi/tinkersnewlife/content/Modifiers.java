@@ -158,4 +158,8 @@ public class Modifiers {
     /** 无下限·无限（术式特性，占用术式槽） */
     public static final StaticModifier<WuliangWuxianTrait> WULIANG_WUXIAN =
         MODIFIERS.register("wuliang_wuxian", WuliangWuxianTrait::new);
+
+    /** 无下限·苍（术式特性，占用术式槽；含术式反转·赫与虚式·茈） */
+    public static final StaticModifier<WuliangCangTrait> WULIANG_CANG =
+        MODIFIERS.register("wuliang_cang", WuliangCangTrait::new);
 }

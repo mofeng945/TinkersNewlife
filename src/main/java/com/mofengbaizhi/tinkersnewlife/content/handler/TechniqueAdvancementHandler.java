@@ -40,6 +40,7 @@ public final class TechniqueAdvancementHandler {
         put(Modifiers.BLACK_BIRD.getId(), "techniques/black_bird");
         put(Modifiers.PROJECTION.getId(), "techniques/projection");
         put(Modifiers.WULIANG_WUXIAN.getId(), "techniques/wuliang_wuxian");
+        put(Modifiers.WULIANG_CANG.getId(), "techniques/wuliang_cang");
         // 领域
         put(Modifiers.ZUOSHA_BOTU.getId(), "domains/zuosha_botu");
         put(Modifiers.WULIANG_KONGCHU.getId(), "domains/wuliang_kongchu");

@@ -176,4 +176,12 @@ public class ModEntities {
                                 com.mofengbaizhi.tinkersnewlife.content.entity.ProjectionPhantomEntity::new, MobCategory.MISC)
                         .sized(0.6f, 1.8f).clientTrackingRange(64).updateInterval(1)
                         .build(TinkersNewlife.MOD_ID + ":projection_phantom"));
+
+    /** 无下限·苍/赫/茈 咒力球体（类型由实体数据区分：0=苍 1=赫 2=茈） */
+    public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.CursedOrbEntity>> CURSED_ORB =
+        ENTITIES.register("cursed_orb",
+                () -> EntityType.Builder.<com.mofengbaizhi.tinkersnewlife.content.entity.CursedOrbEntity>of(
+                                com.mofengbaizhi.tinkersnewlife.content.entity.CursedOrbEntity::new, MobCategory.MISC)
+                        .sized(0.4f, 0.4f).clientTrackingRange(64).updateInterval(1)
+                        .build(TinkersNewlife.MOD_ID + ":cursed_orb"));
 }

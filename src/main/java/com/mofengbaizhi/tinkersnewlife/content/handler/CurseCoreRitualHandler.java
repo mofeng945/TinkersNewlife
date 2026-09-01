@@ -14,6 +14,7 @@ import com.mofengbaizhi.tinkersnewlife.content.curse.KaiTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.TenShadowsTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.WuliangWuxianTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.WuliangCangTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.ZaoKaiTechnique;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -330,7 +331,8 @@ public class CurseCoreRitualHandler {
                 KaiTechnique.INSTANCE, BaTechnique.INSTANCE, ZaoKaiTechnique.INSTANCE,
                 BloodManipulationTechnique.INSTANCE, BloodManipulationHyakurenTechnique.INSTANCE,
                 BloodManipulationSupernovaTechnique.INSTANCE, TenShadowsTechnique.INSTANCE,
-                BlackBirdTechnique.INSTANCE, ProjectionTechnique.INSTANCE, WuliangWuxianTechnique.INSTANCE
+                BlackBirdTechnique.INSTANCE, ProjectionTechnique.INSTANCE, WuliangWuxianTechnique.INSTANCE,
+                WuliangCangTechnique.INSTANCE
         };
         tool.addModifier(techniques[random.nextInt(techniques.length)].getModifierId(), 1);
         tool.getPersistentData().addSlots(techniqueSlot, -1);

@@ -10,6 +10,7 @@ import com.mofengbaizhi.tinkersnewlife.content.curse.DomainRegistry;
 import com.mofengbaizhi.tinkersnewlife.content.curse.FuMoYuChuZiDomain;
 import com.mofengbaizhi.tinkersnewlife.content.curse.KaiTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.WuliangWuxianTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.WuliangCangTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.TechniqueHandler;
 import com.mofengbaizhi.tinkersnewlife.content.curse.TenShadowsTechnique;
@@ -147,6 +148,7 @@ public class TinkersNewlife {
         TechniqueHandler.register(BlackBirdTechnique.INSTANCE);
         TechniqueHandler.register(ProjectionTechnique.INSTANCE);
         TechniqueHandler.register(WuliangWuxianTechnique.INSTANCE);
+        TechniqueHandler.register(WuliangCangTechnique.INSTANCE);
 
         // 注册网络包
         registerPacket(PacketUseSkill.class, PacketUseSkill::toBytes, PacketUseSkill::new, PacketUseSkill::handle);
@@ -156,6 +158,10 @@ public class TinkersNewlife {
         registerPacket(PacketSwitchFlyingSwordMode.class, PacketSwitchFlyingSwordMode::toBytes, PacketSwitchFlyingSwordMode::new, PacketSwitchFlyingSwordMode::handle);
         registerPacket(PacketToggleDomain.class, PacketToggleDomain::toBytes, PacketToggleDomain::new, PacketToggleDomain::handle);
         registerPacket(PacketUseTechnique.class, PacketUseTechnique::toBytes, PacketUseTechnique::new, PacketUseTechnique::handle);
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.PacketUseReverseTechnique.class,
+                com.mofengbaizhi.tinkersnewlife.network.PacketUseReverseTechnique::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.PacketUseReverseTechnique::new,
+                com.mofengbaizhi.tinkersnewlife.network.PacketUseReverseTechnique::handle);
         registerPacket(PacketSwitchTechnique.class, PacketSwitchTechnique::toBytes, PacketSwitchTechnique::new, PacketSwitchTechnique::handle);
         registerPacket(PacketSummonShikigami.class, PacketSummonShikigami::toBytes, PacketSummonShikigami::new, PacketSummonShikigami::handle);
         registerPacket(com.mofengbaizhi.tinkersnewlife.network.PacketBlackBirdInput.class,
@@ -246,6 +252,9 @@ public class TinkersNewlife {
                 // 投射咒法：速度增益 modifier 维护 + 罚站锁定（每 tick 检查）
                 for (net.minecraft.server.level.ServerPlayer p :
                         event.getServer().getPlayerList().getPlayers()) {
+                    // 无下限·苍/赫 蓄力粒子
+                    com.mofengbaizhi.tinkersnewlife.content.curse.WuliangCangTechnique
+                            .tickChargeParticles((net.minecraft.server.level.ServerLevel) p.level(), p);
                     // 帕秋莉手册解锁：每 20 tick 扫描核心特性，获得术式/领域即解锁对应章节
                     if (event.getServer().getTickCount() % 20 == 0) {
                         com.mofengbaizhi.tinkersnewlife.content.handler.TechniqueAdvancementHandler.scanAndUnlock(p);

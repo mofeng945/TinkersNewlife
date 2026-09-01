@@ -481,5 +481,14 @@
   "item.tinkersnewlife.boundary_fragment": "结界碎片",
   "item.tinkersnewlife.boundary_fragment.desc": "§7领域被破坏时从结界方块上剥离的碎片。消耗咒力时会优先消耗它（1 碎片 = 25 点咒力）。",
   "message.tinkersnewlife.cursed_tool.domain_destroyed": "§d咒具撕裂了领域结界！",
-  "message.tinkersnewlife.cursed_tool.shikigami_cleared": "§d式神被咒具驱散！"
+  "message.tinkersnewlife.cursed_tool.shikigami_cleared": "§d式神被咒具驱散！",
+  "key.tinkersnewlife.reverse_technique": "释放术式反转",
+  "modifier.tinkersnewlife.wuliang_cang": "无下限·苍",
+  "modifier.tinkersnewlife.wuliang_cang.flavor": "§7苍，是吸引的极致。",
+  "modifier.tinkersnewlife.wuliang_cang.description": "§f按术式键（C）开始苍蓄力，再次按下朝前方发射天蓝色苍球：将 10 格内实体拉向球心（不含施术者），实体接触球心则爆炸。按术式反转键（F）发射苍的术式反转「赫」：亮红球将实体推开，被推实体撞方块按速度受伤，接触球心爆炸为苍的 2 倍。苍蓄力期间按 F → 结合为「虚式·茈」直接发射：破坏所有撞到的方块（基岩除外，不掉落），击中实体造成苍 10 倍爆炸伤害。三球最大飞行距离 40 格，苍/赫撞方块消失。占用术式槽。",
+  "message.tinkersnewlife.cang.charge": "§b无下限·苍：蓄力中……",
+  "message.tinkersnewlife.cang.fire": "§b苍！",
+  "message.tinkersnewlife.he.charge": "§c无下限·赫：蓄力中……",
+  "message.tinkersnewlife.he.fire": "§c赫！",
+  "message.tinkersnewlife.zi.fire": "§d虚式·茈！"
 }

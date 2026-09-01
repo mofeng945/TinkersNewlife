@@ -101,6 +101,9 @@ public class ClientEventHandler {
         // 投射咒法 玩家虚影：蓝色半透明人形
         event.registerEntityRenderer(ModEntities.PROJECTION_PHANTOM.get(),
                 com.mofengbaizhi.tinkersnewlife.client.renderer.ProjectionPhantomRenderer::new);
+        // 无下限 苍/赫/茈 球体：按类型着色发光圆球
+        event.registerEntityRenderer(ModEntities.CURSED_ORB.get(),
+                com.mofengbaizhi.tinkersnewlife.client.renderer.CursedOrbRenderer::new);
     }
 
     // ========== Forge 事件（按键等） ==========
@@ -111,6 +114,8 @@ public class ClientEventHandler {
 
         /** 术式按键上一次状态（边沿检测：按下发 press、松开发 release，支撑蓄力术式） */
         private static boolean lastTechniqueDown = false;
+        /** 术式反转按键上一次状态（F 键边沿检测） */
+        private static boolean lastReverseDown = false;
 
         @SubscribeEvent
         public static void onClientTick(TickEvent.ClientTickEvent event) {
@@ -147,6 +152,15 @@ public class ClientEventHandler {
                 TinkersNewlife.CHANNEL.sendToServer(new PacketUseTechnique(false));
             }
             lastTechniqueDown = down;
+
+            // ⭐ 术式反转按键（F）：按下=开始蓄力反转术式，松开=发射
+            boolean reverseDown = KeyBindings.REVERSE_TECHNIQUE.get().isDown();
+            if (reverseDown && !lastReverseDown) {
+                TinkersNewlife.CHANNEL.sendToServer(new com.mofengbaizhi.tinkersnewlife.network.PacketUseReverseTechnique(true));
+            } else if (!reverseDown && lastReverseDown) {
+                TinkersNewlife.CHANNEL.sendToServer(new com.mofengbaizhi.tinkersnewlife.network.PacketUseReverseTechnique(false));
+            }
+            lastReverseDown = reverseDown;
         }
 
         /** 投射咒法罚站：取消攻击/交互输入 */

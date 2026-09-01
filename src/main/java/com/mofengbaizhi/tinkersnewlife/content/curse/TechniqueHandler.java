@@ -64,6 +64,22 @@ public final class TechniqueHandler {
         }
     }
 
+    /** 术式反转按键按下（F）：当前选中的术式 → 反转行为（如无下限·苍 → 赫） */
+    public static void onReverseKeyPress(ServerPlayer player) {
+        BaseTechnique technique = findSelected(player);
+        if (technique != null) {
+            technique.onReverseKeyPress(player);
+        }
+    }
+
+    /** 术式反转按键松开（F） */
+    public static void onReverseKeyRelease(ServerPlayer player) {
+        BaseTechnique technique = findSelected(player);
+        if (technique != null) {
+            technique.onReverseKeyRelease(player);
+        }
+    }
+
     /**
      * 切换按键：把当前选中的术式循环到核心上的下一个术式（列表末尾回到第一个）。
      * 切换后提示并立即同步 HUD。
@@ -143,6 +159,7 @@ public final class TechniqueHandler {
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer sp) {
             ZaoKaiTechnique.cancelCharge(sp);
+            WuliangCangTechnique.cancelCharge(sp);
             SELECTED.remove(sp.getUUID());
         }
     }
@@ -152,6 +169,7 @@ public final class TechniqueHandler {
     public static void onPlayerDeath(LivingDeathEvent event) {
         if (event.getEntity() instanceof ServerPlayer sp) {
             ZaoKaiTechnique.cancelCharge(sp);
+            WuliangCangTechnique.cancelCharge(sp);
         }
     }
 }
