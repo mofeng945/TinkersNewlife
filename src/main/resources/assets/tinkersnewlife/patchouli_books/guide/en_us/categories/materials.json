@@ -1,6 +1,6 @@
 {
-  "name": "材料与特性",
-  "description": "可用于咒力核心的稀有材料与其战斗特性",
+  "name": "材料",
+  "description": "可用于咒力核心的稀有材料：获取方式与自带特性",
   "icon": "tinkersnewlife:gheloth_remains",
   "sortnum": 4
 }

@@ -1,0 +1,12 @@
+{
+  "name": "Fus-Ro-Dah",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:textures/gui/modifiers/fus_ro_dah.png",
+  "sortnum": 18,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Fus-Ro-Dah$()：FUS... RO... DAH!$(br2)效果：命中时将目标击飞，等级越高推力越强。"
+    }
+  ]
+}

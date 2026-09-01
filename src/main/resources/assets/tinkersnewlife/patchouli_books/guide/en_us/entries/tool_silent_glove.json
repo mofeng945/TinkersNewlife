@@ -1,17 +1,17 @@
 {
-  "name": "噤默手套",
-  "category": "tinkersnewlife:items",
-  "icon": "tinkersnewlife:silent_glove",
-  "sortnum": 5,
-  "pages": [
-    {
-      "type": "patchouli:spotlight",
-      "item": "tinkersnewlife:silent_glove",
-      "text": "$(bold)噤默手套$()$(br2)获取：通过$(bold)匠魂工匠站$()打造——噤默手套核心 + 噤默手套表面部件组合。$(br2)特点：$(li)$(bold)空手时$()自动从$(bold)空间奇点库$()中取出武器$(li)装备于手上后扩充$(bold)戒指槽位$()（curios）$(li)主手右键打开空间奇点库界面"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "$(bold)空间奇点库$()：随身的武器库，可存入多件武器；噤默手套让你空手时自动切换武器，避免频繁打开背包。$(br2)空间奇点库容量与扩充槽位随等级提升。"
-    }
-  ]
+    "name":  "噤默手套",
+    "category":  "tinkersnewlife:tools",
+    "icon":  "tinkersnewlife:silent_glove",
+    "sortnum":  4,
+    "pages":  [
+                  {
+                      "type":  "patchouli:spotlight",
+                      "item":  "tinkersnewlife:silent_glove",
+                      "text":  "$(bold)噤默手套$()$(br2)获取：通过$(bold)匠魂工匠站$()打造——噤默手套核心 + 噤默手套表面部件组合。$(br2)特点：$(li)$(bold)空手时$()自动从$(bold)空间奇点库$()中取出武器$(li)装备于手上后扩充$(bold)戒指槽位$()（curios）$(li)主手右键打开空间奇点库界面"
+                  },
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)空间奇点库$()：随身的武器库，可存入多件武器；噤默手套让你空手时自动切换武器，避免频繁打开背包。$(br2)空间奇点库容量与扩充槽位随等级提升。"
+                  }
+              ]
 }

@@ -11,7 +11,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)自带特性$()：$(li)$(l:materials/trait_dragonsteel_ice)龙霜$()：命中时施加冰霜效果，大幅减速、持续冻伤，并在周围生成冰霜$(br2)龙钢三系之一，偏向控制与持续伤害。"
+      "text": "$(bold)自带特性$()：$(li)$(l:traits/trait_dragonsteel_ice)龙霜$()：命中时施加冰霜效果，大幅减速、持续冻伤，并在周围生成冰霜$(br2)龙钢三系之一，偏向控制与持续伤害。"
     }
   ]
 }

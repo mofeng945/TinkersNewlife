@@ -1,7 +1,7 @@
 {
     "name":  "灶·开",
     "category":  "tinkersnewlife:techniques",
-    "icon":  "tinkersnewlife:flame_arrow_item",
+    "icon": "tinkersnewlife:textures/gui/modifiers/zao_kai.png",
     "sortnum":  4,
   "advancement": "tinkersnewlife:techniques/zao_kai",
     "pages":  [

@@ -11,7 +11,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)自带特性$()：$(li)$(l:materials/trait_dragonsteel_lightning)龙霆$()：命中时召唤天雷，造成伤害并缴械目标 3 秒$(br2)龙钢三系之一，兼具伤害与强控。"
+      "text": "$(bold)自带特性$()：$(li)$(l:traits/trait_dragonsteel_lightning)龙霆$()：命中时召唤天雷，造成伤害并缴械目标 3 秒$(br2)龙钢三系之一，兼具伤害与强控。"
     }
   ]
 }

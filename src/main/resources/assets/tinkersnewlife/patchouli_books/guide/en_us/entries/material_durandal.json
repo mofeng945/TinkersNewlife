@@ -7,11 +7,11 @@
     {
       "type": "patchouli:spotlight",
       "item": "tinkersnewlife:molten_durandal_bucket",
-      "text": "$(bold)获取方式$()：$(li)获得$(bold)熔融杜兰达尔$()——在冶炼炉中熔炼$(l:items/relic_durandal_shard)杜兰达尔破碎剑刃$()（击杀凋灵掉落）$(li)在铸造台用熔融杜兰达尔 $(bold)144 mB$()（1 锭）制作杜兰达尔材料$(br2)等级：$(bold)特殊（T99）$()，传说级材料。"
+      "text": "$(bold)获取方式$()：$(li)获得$(bold)熔融杜兰达尔$()——在冶炼炉中熔炼$(l:relics/relic_durandal_shard)杜兰达尔破碎剑刃$()（击杀凋灵掉落）$(li)在铸造台用熔融杜兰达尔 $(bold)144 mB$()（1 锭）制作杜兰达尔材料$(br2)等级：$(bold)特殊（T99）$()，传说级材料。"
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)自带特性$()：$(li)$(l:materials/trait_unbreakable)不毁$()（tconstruct:unbreakable）：工具永不被损坏$(br2)杜兰达尔还可直接打造为$(l:items/tool_durandal_sword)杜兰达尔之剑$()——传奇武器，永不损坏。"
+      "text": "$(bold)自带特性$()：$(li)$(l:traits/trait_unbreakable)不毁$()（tconstruct:unbreakable）：工具永不被损坏$(br2)杜兰达尔还可直接打造为$(l:tools/tool_durandal_sword)杜兰达尔之剑$()——传奇武器，永不损坏。"
     }
   ]
 }

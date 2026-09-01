@@ -1,13 +1,13 @@
 {
-  "name": "杜兰达尔之剑",
-  "category": "tinkersnewlife:items",
-  "icon": "tinkersnewlife:durandal_sword",
-  "sortnum": 8,
-  "pages": [
-    {
-      "type": "patchouli:spotlight",
-      "item": "tinkersnewlife:durandal_sword",
-      "text": "$(bold)杜兰达尔之剑$()$(br2)获取：由全杜兰达尔之物进化而来（$(bold)杜兰达尔材料$()锻造 / 合成），永恒不朽。$(br2)特点：$(li)使用$(bold)杜兰达尔$()材料制成，自带$(l:materials/trait_unbreakable)不毁$()特性——$(bold)永不损坏$()$(li)传说级武器，基础面板极高"
-    }
-  ]
+    "name":  "杜兰达尔之剑",
+    "category":  "tinkersnewlife:tools",
+    "icon":  "tinkersnewlife:durandal_sword",
+    "sortnum":  7,
+    "pages":  [
+                  {
+                      "type":  "patchouli:spotlight",
+                      "item":  "tinkersnewlife:durandal_sword",
+                      "text":  "$(bold)杜兰达尔之剑$()$(br2)获取：由全杜兰达尔之物进化而来（$(bold)杜兰达尔材料$()锻造 / 合成），永恒不朽。$(br2)特点：$(li)使用$(bold)杜兰达尔$()材料制成，自带$(l:traits/trait_unbreakable)不毁$()特性——$(bold)永不损坏$()$(li)传说级武器，基础面板极高"
+                  }
+              ]
 }

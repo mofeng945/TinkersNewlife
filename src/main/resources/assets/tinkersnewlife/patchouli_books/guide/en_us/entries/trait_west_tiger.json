@@ -1,0 +1,12 @@
+{
+  "name": "西中之虎",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:curse_core",
+  "sortnum": 15,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)西中之虎$()：西境之虎，威震四方！$(br2)效果：加持在$(l:traits/trait_black_flash)黑闪$()武器上时，黑闪基础触发概率额外增加 当前攻击力÷10000。"
+    }
+  ]
+}

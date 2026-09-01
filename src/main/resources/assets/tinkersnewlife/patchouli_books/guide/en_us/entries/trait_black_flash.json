@@ -1,0 +1,12 @@
+{
+  "name": "黑闪",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:curse_core",
+  "sortnum": 14,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)黑闪$()：时间，在这一刻凝滞……$(br2)效果：每次攻击有 $(bold)0.01%$() 概率打出黑闪，造成 $(bold)2.5 次方$() 伤害；触发后 60 秒内概率 +10%，速度/攻击/跳跃提升 20%。$(br2)搭配：$(l:traits/trait_west_tiger)西中之虎$() 可进一步提升黑闪触发率。"
+    }
+  ]
+}

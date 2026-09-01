@@ -1,13 +1,13 @@
 {
-  "name": "虚空回响",
-  "category": "tinkersnewlife:items",
-  "icon": "tinkersnewlife:echo_of_the_void",
-  "sortnum": 15,
-  "pages": [
-    {
-      "type": "patchouli:spotlight",
-      "item": "tinkersnewlife:echo_of_the_void",
-      "text": "$(bold)虚空回响$()$(br2)获取：$(bold)下界废弃传送门$()箱子，$(bold)30%$() 概率 1-2 个。$(br2)用途：作为$(bold)模板$()参与$(l:items/relic_yog_sothoth_gate_key)犹格索托斯的门之匙$()的锻造台合成。"
-    }
-  ]
+    "name":  "虚空回响",
+    "category":  "tinkersnewlife:relics",
+    "icon":  "tinkersnewlife:echo_of_the_void",
+    "sortnum":  7,
+    "pages":  [
+                  {
+                      "type":  "patchouli:spotlight",
+                      "item":  "tinkersnewlife:echo_of_the_void",
+                      "text":  "$(bold)虚空回响$()$(br2)获取：$(bold)下界废弃传送门$()箱子，$(bold)30%$() 概率 1-2 个。$(br2)用途：作为$(bold)模板$()参与$(l:relics/relic_yog_sothoth_gate_key)犹格索托斯的门之匙$()的锻造台合成。"
+                  }
+              ]
 }

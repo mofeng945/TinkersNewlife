@@ -1,12 +1,12 @@
 {
-  "name": "承载",
-  "category": "tinkersnewlife:materials",
-  "icon": "minecraft:bone",
-  "sortnum": 20,
-  "pages": [
-    {
-      "type": "patchouli:text",
-      "text": "$(bold)承载$()（龙骨的默认特性）$(br2)效果：$(bold)龙钢特性的等级效果加强一级$()。$(br2)即龙炎 / 龙霜 / 龙霆等龙钢系特性的效果按提升一级计算，让龙钢材料发挥更强威力。"
-    }
-  ]
+    "name":  "承载",
+    "category":  "tinkersnewlife:traits",
+    "icon":  "minecraft:bone",
+    "sortnum":  9,
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)承载$()（龙骨的默认特性）$(br2)效果：$(bold)龙钢特性的等级效果加强一级$()。$(br2)即龙炎 / 龙霜 / 龙霆等龙钢系特性的效果按提升一级计算，让龙钢材料发挥更强威力。"
+                  }
+              ]
 }

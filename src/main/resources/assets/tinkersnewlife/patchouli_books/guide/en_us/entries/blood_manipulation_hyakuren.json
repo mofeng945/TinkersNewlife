@@ -1,13 +1,13 @@
 {
-    "name":  "赤血操术·百敛",
+    "name":  "赤血操术·万刺",
     "category":  "tinkersnewlife:techniques",
-    "icon":  "tinkersnewlife:curse_core",
+    "icon": "tinkersnewlife:textures/gui/modifiers/blood_manipulation_hyakuren.png",
     "sortnum":  6,
   "advancement": "tinkersnewlife:techniques/blood_manipulation_hyakuren",
     "pages":  [
                   {
                       "type":  "patchouli:text",
-                      "text":  "$(bold)赤血操术·百敛$()：血之百道，尽归一身。$(br2)指向目标（视线索敌），从身体周围释放 5 道血柱，轨迹最终指向目标，对目标造成 $(bold)5 次伤害$()，每次为「$(l:techniques/blood_manipulation)赤血操术·穿血$()」单体伤害的二分之一。"
+                      "text":  "$(bold)赤血操术·万刺$()：血之万刺，尽归一身。$(br2)指向目标（视线索敌），从身体周围释放 5 道血柱，轨迹最终指向目标，对目标造成 $(bold)5 次伤害$()，每次为「$(l:techniques/blood_manipulation)赤血操术·穿血$()」单体伤害的二分之一。"
                   },
                   {
                       "type":  "patchouli:text",

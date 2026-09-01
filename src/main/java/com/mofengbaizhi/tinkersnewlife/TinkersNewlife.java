@@ -9,6 +9,7 @@ import com.mofengbaizhi.tinkersnewlife.content.curse.BloodManipulationTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.DomainRegistry;
 import com.mofengbaizhi.tinkersnewlife.content.curse.FuMoYuChuZiDomain;
 import com.mofengbaizhi.tinkersnewlife.content.curse.KaiTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.WuliangWuxianTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.TechniqueHandler;
 import com.mofengbaizhi.tinkersnewlife.content.curse.TenShadowsTechnique;
@@ -25,6 +26,7 @@ import com.mofengbaizhi.tinkersnewlife.network.PacketOpenShikigamiScreen;
 import com.mofengbaizhi.tinkersnewlife.network.PacketSortBag;
 import com.mofengbaizhi.tinkersnewlife.network.PacketSummonShikigami;
 import com.mofengbaizhi.tinkersnewlife.network.PacketSwitchFlyingSwordMode;
+import net.minecraft.world.item.ItemStack;
 import com.mofengbaizhi.tinkersnewlife.network.PacketSwitchTechnique;
 import com.mofengbaizhi.tinkersnewlife.network.PacketSyncCurse;
 import com.mofengbaizhi.tinkersnewlife.network.PacketToggleDomain;
@@ -144,6 +146,7 @@ public class TinkersNewlife {
         TechniqueHandler.register(TenShadowsTechnique.INSTANCE);
         TechniqueHandler.register(BlackBirdTechnique.INSTANCE);
         TechniqueHandler.register(ProjectionTechnique.INSTANCE);
+        TechniqueHandler.register(WuliangWuxianTechnique.INSTANCE);
 
         // 注册网络包
         registerPacket(PacketUseSkill.class, PacketUseSkill::toBytes, PacketUseSkill::new, PacketUseSkill::handle);
@@ -291,7 +294,7 @@ public class TinkersNewlife {
             }
         }
 
-        /** 投射咒法：伤害 ×2^层数（攻击者处于增益） */
+        /** 投射咒法：伤害 ×2^层数（攻击者处于增益）；无下限·无限：低伤抵挡/溢出扣咒力 */
         @SubscribeEvent
         public static void onLivingHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
             var src = event.getSource();
@@ -299,6 +302,24 @@ public class TinkersNewlife {
                     && com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.hasBuff(attacker)) {
                 event.setAmount(event.getAmount()
                         * (float) com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.getBuffMultiplier(attacker));
+            }
+            // 无下限·无限：受伤者为开启无限的玩家时，按无限规则结算
+            // ⭐ 天逆鉾等可穿透无下限的咒具（ignoresInfinity=true）无视该防御，直接造成伤害
+            if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer victim
+                    && com.mofengbaizhi.tinkersnewlife.content.curse.WuliangWuxianTechnique.isActive(victim)) {
+                boolean bypass = false;
+                if (src != null && src.getDirectEntity() instanceof net.minecraft.world.entity.player.Player p
+                        && com.mofengbaizhi.tinkersnewlife.content.item.CursedToolItem.isHolding(p)) {
+                    ItemStack held = p.getMainHandItem();
+                    if (held.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.CursedToolItem ct
+                            && ct.ignoresInfinity()) {
+                        bypass = true;
+                    }
+                }
+                if (!bypass) {
+                    event.setAmount(com.mofengbaizhi.tinkersnewlife.content.curse.WuliangWuxianTechnique
+                            .onPlayerDamaged(victim, event.getAmount()));
+                }
             }
         }
 

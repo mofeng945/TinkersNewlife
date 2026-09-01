@@ -1,0 +1,12 @@
+{
+  "name": "星穹庇护",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:curse_core",
+  "sortnum": 23,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)星穹庇护$()（护甲专属特性，灰白之墨护甲部件）：星穹之下，众生共鸣。$(br2)效果：穿戴时击杀生物增加最大生命，每个盔甲部件独立存储击杀数，满额后转移至下一部件。"
+    }
+  ]
+}

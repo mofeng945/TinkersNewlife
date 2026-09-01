@@ -1,13 +1,13 @@
 {
-  "name": "尼古拉斯之赐",
-  "category": "tinkersnewlife:items",
-  "icon": "tinkersnewlife:nicholas_blessing",
-  "sortnum": 12,
-  "pages": [
-    {
-      "type": "patchouli:spotlight",
-      "item": "tinkersnewlife:nicholas_blessing",
-      "text": "$(bold)尼古拉斯之赐$()$(br2)获取：$(bold)喂食动物使其繁殖$()，$(bold)25%$() 概率触发 60 秒事件，完成事件后 $(bold)50%$() 概率获得 $(bold)32$() 个 + 再生 10 分钟——否则$(bold)凋零 60 秒$()。$(br2)用途：熔炼 → $(bold)5 mB$() 熔融生命冲动液，是$(l:materials/material_nicholas_blessing)生命冲动$()材料的源头。"
-    }
-  ]
+    "name":  "尼古拉斯之赐",
+    "category":  "tinkersnewlife:relics",
+    "icon":  "tinkersnewlife:nicholas_blessing",
+    "sortnum":  4,
+    "pages":  [
+                  {
+                      "type":  "patchouli:spotlight",
+                      "item":  "tinkersnewlife:nicholas_blessing",
+                      "text":  "$(bold)尼古拉斯之赐$()$(br2)获取：$(bold)喂食动物使其繁殖$()，$(bold)25%$() 概率触发 60 秒事件，完成事件后 $(bold)50%$() 概率获得 $(bold)32$() 个 + 再生 10 分钟——否则$(bold)凋零 60 秒$()。$(br2)用途：熔炼 → $(bold)5 mB$() 熔融生命冲动液，是$(l:materials/material_nicholas_blessing)生命冲动$()材料的源头。"
+                  }
+              ]
 }

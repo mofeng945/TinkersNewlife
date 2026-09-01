@@ -1,7 +1,7 @@
 {
     "name":  "无量空处",
     "category":  "tinkersnewlife:domains",
-    "icon":  "tinkersnewlife:curse_core",
+    "icon": "tinkersnewlife:textures/gui/modifiers/wuliang_kongchu.png",
     "sortnum":  2,
   "advancement": "tinkersnewlife:domains/wuliang_kongchu",
     "pages":  [

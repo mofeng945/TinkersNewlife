@@ -1,0 +1,12 @@
+{
+  "name": "奈亚的欲念",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:textures/gui/modifiers/nyarlathotep_desire.png",
+  "sortnum": 12,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)奈亚的欲念$()：欲望是通往深渊的阶梯。$(br2)效果：每级增加 1 个$(bold)能力槽$()，最多 5 级。$(br2)获取：攻击村民后 5 秒内使其死于非玩家之手（摔落/溺亡/其他生物），10 秒后 50% 概率获得——否则受到凋零 II 60 秒。"
+    }
+  ]
+}

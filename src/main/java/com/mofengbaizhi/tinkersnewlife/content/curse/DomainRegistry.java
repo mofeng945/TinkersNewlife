@@ -97,6 +97,7 @@ public final class DomainRegistry {
             if (factory == null) continue;
             BaseDomain domain = factory.apply(player);
             if (domain == null) return; // 工厂内已提示条件不满足（如咒力不足）
+            domain.markCreated(player.serverLevel().getGameTime());
             DOMAINS.put(id, domain);
             domain.onOpen(player);
             spawnVisual(player.serverLevel(), domain);
@@ -333,6 +334,75 @@ public final class DomainRegistry {
             if (p.position().distanceToSqr(domain.getCenter()) > r * r) continue;
             p.connection.send(new net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket(title));
             p.connection.send(new net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket(subtitle));
+        }
+    }
+
+    // ============================================================
+    //  咒具破坏领域（天逆鉾等）
+    // ============================================================
+
+    /** 该屏障方块位置所属的领域（无则 null） */
+    public static BaseDomain findDomainByBarrier(ServerLevel level, BlockPos barrierPos) {
+        for (BaseDomain domain : DOMAINS.values()) {
+            if (domain.containsBarrier(barrierPos)) return domain;
+        }
+        return null;
+    }
+
+    /**
+     * 咒具右键领域结界方块：破坏该领域；若该领域正处于领域对抗中，则双方领域同时崩坏。
+     * 领域崩坏掉落结界碎片（1/100，散落为掉落物，谁都能捡）；
+     * 仅有的防刷限制：领域展开不足 2 秒被破坏 → 不掉碎片（防"展开瞬间"低成本刷取）。
+     * 领域崩坏仍会使主人进入术式熔断（创造模式豁免）。
+     */
+    public static void breakDomainByBarrier(ServerPlayer breaker, ServerLevel level, BlockPos barrierPos) {
+        BaseDomain domain = findDomainByBarrier(level, barrierPos);
+        if (domain == null) return;
+        if (domain.isClashing()) {
+            // 对抗中：双方领域同时崩坏
+            BaseDomain opponent = DOMAINS.get(domain.getClashOpponent());
+            breakDomain(breaker, level, domain);
+            if (opponent != null) {
+                breakDomain(breaker, level, opponent);
+            }
+            return;
+        }
+        breakDomain(breaker, level, domain);
+    }
+
+    /** 破坏单个领域：掉落碎片（防刷限制）→ 移除视觉/墙 → 关闭 → 熔断 */
+    private static void breakDomain(ServerPlayer breaker, ServerLevel level, BaseDomain domain) {
+        UUID ownerId = domain.getOwner();
+        ServerPlayer owner = level.getServer().getPlayerList().getPlayer(ownerId);
+        DOMAINS.remove(ownerId);
+        // 1) 掉落结界碎片（须在 removeBarrier 之前）
+        dropBoundaryFragments(level, domain);
+        // 2) 移除视觉与阻挡墙
+        removeVisual(level, ownerId);
+        domain.removeBarrier(level);
+        // 3) 领域效果收尾
+        domain.onClose(owner, "message.tinkersnewlife.domain.broken");
+        if (owner != null && owner.isAlive()) {
+            owner.displayClientMessage(Component.translatable("message.tinkersnewlife.domain.broken"), true);
+        }
+        if (breaker != null && breaker.isAlive() && breaker != owner) {
+            breaker.displayClientMessage(Component.translatable("message.tinkersnewlife.cursed_tool.domain_destroyed"), true);
+        }
+        // 4) 熔断（生存模式；创造/旁观豁免）
+        applyBurnoutIfSurvival(owner);
+    }
+
+    /** 领域崩坏时：每个结界方块 1/100 概率掉落一个结界碎片（散落为掉落物）；展开不足 2 秒不掉 */
+    private static void dropBoundaryFragments(ServerLevel level, BaseDomain domain) {
+        if (domain.getAgeTicks(level.getGameTime()) < 40) return; // 展开不足 2 秒
+        var fragment = com.mofengbaizhi.tinkersnewlife.content.ModItems.BOUNDARY_FRAGMENT.get();
+        for (BlockPos pos : domain.getBarrierPositions()) {
+            if (level.random.nextInt(100) != 0) continue;
+            net.minecraft.world.entity.item.ItemEntity item = new net.minecraft.world.entity.item.ItemEntity(level,
+                    pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
+                    new net.minecraft.world.item.ItemStack(fragment));
+            item.setDeltaMovement(0, 0.1, 0);
+            level.addFreshEntity(item);
         }
     }
 

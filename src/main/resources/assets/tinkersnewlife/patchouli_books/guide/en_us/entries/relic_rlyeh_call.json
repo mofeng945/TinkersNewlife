@@ -1,13 +1,13 @@
 {
-  "name": "拉莱耶的呼唤",
-  "category": "tinkersnewlife:items",
-  "icon": "tinkersnewlife:rlyeh_call",
-  "sortnum": 9,
-  "pages": [
-    {
-      "type": "patchouli:spotlight",
-      "item": "tinkersnewlife:rlyeh_call",
-      "text": "$(bold)拉莱耶的呼唤$()$(br2)获取：在$(bold)夜晚 · 满月 · 水深 30+$() 的水域钓鱼，钓上鱼时有 $(bold)50%$() 概率获得（附不可名状 5 秒）。$(br2)用途：在冶炼炉中熔炼 → $(bold)1000 mB$() 灰白之墨液，是$(l:materials/material_ashen_ink)灰白之墨$()材料的源头。"
-    }
-  ]
+    "name":  "拉莱耶的呼唤",
+    "category":  "tinkersnewlife:relics",
+    "icon":  "tinkersnewlife:rlyeh_call",
+    "sortnum":  1,
+    "pages":  [
+                  {
+                      "type":  "patchouli:spotlight",
+                      "item":  "tinkersnewlife:rlyeh_call",
+                      "text":  "$(bold)拉莱耶的呼唤$()$(br2)获取：在$(bold)夜晚 · 满月 · 水深 30+$() 的水域钓鱼，钓上鱼时有 $(bold)50%$() 概率获得（附不可名状 5 秒）。$(br2)用途：在冶炼炉中熔炼 → $(bold)1000 mB$() 灰白之墨液，是$(l:materials/material_ashen_ink)灰白之墨$()材料的源头。"
+                  }
+              ]
 }

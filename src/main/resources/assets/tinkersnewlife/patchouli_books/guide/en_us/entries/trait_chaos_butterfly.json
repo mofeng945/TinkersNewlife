@@ -1,0 +1,12 @@
+{
+  "name": "乱蝶",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:curse_core",
+  "sortnum": 21,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)乱蝶$()：蝶舞纷飞，乱影重重……$(br2)效果（$(l:tools/tool_war_scythe)战镰$()专属）：每次攻击积攒 Fever，攻速随 Fever 提升；按住方向键攻击消耗 20 Fever 瞬移；Fever 满时按住 W+Shift+右键 释放终极斩击。"
+    }
+  ]
+}

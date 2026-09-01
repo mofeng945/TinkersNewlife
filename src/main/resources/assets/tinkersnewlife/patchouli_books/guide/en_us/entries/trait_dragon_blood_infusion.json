@@ -1,0 +1,12 @@
+{
+  "name": "龙血注魔",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:textures/gui/modifiers/dragon_blood_infusion.png",
+  "sortnum": 20,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)龙血注魔$()：龙血之力，附于刃上。$(br2)效果：消耗龙血对敌人附加效果：$(li)火龙血 → 点燃$(li)冰龙血 → 霜冻$(li)雷龙血 → 缴械$(br2)搭配：配合$(l:traits/trait_dragon_blood_tank)龙血储罐$() 使用。"
+    }
+  ]
+}

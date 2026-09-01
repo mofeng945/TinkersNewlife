@@ -25,6 +25,32 @@ public final class ShikigamiHandler {
 
     private ShikigamiHandler() {}
 
+    /** 场上该玩家的所有存活式神实体 */
+    public static List<net.minecraft.world.entity.Entity> findActiveFor(ServerPlayer player) {
+        List<net.minecraft.world.entity.Entity> result = new java.util.ArrayList<>();
+        for (net.minecraft.world.entity.Entity e : player.serverLevel().getEntitiesOfClass(
+                net.minecraft.world.entity.Entity.class,
+                player.getBoundingBox().inflate(512.0),
+                entity -> entity instanceof ShikigamiMob)) {
+            if (e instanceof ShikigamiMob sm && sm.getState().ownerId != null
+                    && sm.getState().ownerId.equals(player.getUUID()) && e.isAlive()) {
+                result.add(e);
+            }
+        }
+        return result;
+    }
+
+    /** 收回全部式神，返回应返还的咒力（按总召唤消耗的一半估算） */
+    public static int recallAll(ServerPlayer player, List<net.minecraft.world.entity.Entity> entities) {
+        int totalCost = 0;
+        for (net.minecraft.world.entity.Entity e : entities) {
+            if (e instanceof ShikigamiMob sm) {
+                totalCost += sm.getShikigamiType().summonCost(player);
+            }
+        }
+        return Math.max(1, (int) Math.ceil(totalCost / 2.0));
+    }
+
     /** 玩家持久数据：已调伏式神位掩码（位 = ShikigamiType.ordinal()） */
     public static final String KEY_TAMED_MASK = "tinkersnewlife.tamed_shikigami";
 

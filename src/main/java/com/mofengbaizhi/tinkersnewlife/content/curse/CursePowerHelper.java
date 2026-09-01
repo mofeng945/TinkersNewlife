@@ -175,12 +175,48 @@ public final class CursePowerHelper {
         setCurse(player, getCurse(player) - amount);
     }
 
+    /** 背包中结界碎片数量（1 碎片 = 25 咒力） */
+    public static int countBoundaryFragments(Player player) {
+        int count = 0;
+        for (ItemStack stack : player.getInventory().items) {
+            if (stack.is(com.mofengbaizhi.tinkersnewlife.content.ModItems.BOUNDARY_FRAGMENT.get())) {
+                count += stack.getCount();
+            }
+        }
+        return count;
+    }
+
+    /** 消耗指定数量结界碎片（优先从背包逐格扣除） */
+    public static void consumeBoundaryFragments(Player player, int amount) {
+        var fragment = com.mofengbaizhi.tinkersnewlife.content.ModItems.BOUNDARY_FRAGMENT.get();
+        for (ItemStack stack : player.getInventory().items) {
+            if (amount <= 0) break;
+            if (!stack.is(fragment)) continue;
+            int take = Math.min(stack.getCount(), amount);
+            stack.shrink(take);
+            amount -= take;
+        }
+    }
+
     /**
      * 支付咒力（领域消耗与术式消耗共用）：
-     * 足够则直接扣除；不足则先用光剩余咒力，差额按 1:3 由诡厄巫法灵魂能量兜底。
-     * 返回 0 = 咒力支付，1 = 灵魂能量兜底支付，-1 = 咒力与灵魂均不足。
+     * 优先消耗背包中的结界碎片（1 碎片 = 25 咒力）→ 咒力 → 差额按 1:3 由诡厄巫法灵魂能量兜底。
+     * 返回 0 = 咒力/碎片支付，1 = 灵魂能量兜底支付，-1 = 全部不足。
      */
     public static int payCurseWithSoulFallback(Player player, double cost) {
+        // 1) 优先消耗结界碎片
+        int fragments = countBoundaryFragments(player);
+        if (fragments > 0) {
+            double fragValue = fragments * 25.0;
+            if (fragValue >= cost) {
+                int use = (int) Math.ceil(cost / 25.0);
+                consumeBoundaryFragments(player, Math.min(use, fragments));
+                return 0;
+            }
+            consumeBoundaryFragments(player, fragments);
+            cost -= fragValue;
+        }
+        // 2) 咒力
         double curse = getCurse(player);
         if (curse >= cost) {
             spendCurse(player, cost);
@@ -188,6 +224,7 @@ public final class CursePowerHelper {
         }
         double deficit = cost - curse;
         spendCurse(player, curse); // 咒力清零
+        // 3) 灵魂能量兜底
         int soulsNeeded = (int) Math.ceil(deficit * 3.0);
         int souls = com.mofengbaizhi.tinkersnewlife.util.SoulEnergyBridge.getSouls(player);
         if (souls < soulsNeeded) return -1;

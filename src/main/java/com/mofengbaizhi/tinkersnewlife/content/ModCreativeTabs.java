@@ -123,6 +123,10 @@ public class ModCreativeTabs {
                                 addAllToolVariants(output, CurseCoreItem.CURSE_CORE_DEFINITION, ModItems.CURSE_CORE.get(), 1);
 
                                 output.accept(ModItems.DURANDAL_SWORD.get());
+
+                                // ----- 咒具 -----
+                                output.accept(ModItems.TIAN_NI_HUO.get());
+                                output.accept(ModItems.BOUNDARY_FRAGMENT.get());
                             })
                             .build()
             );

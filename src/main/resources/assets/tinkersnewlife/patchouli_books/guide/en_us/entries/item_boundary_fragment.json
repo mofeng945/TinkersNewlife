@@ -1,0 +1,13 @@
+{
+    "name":  "结界碎片",
+    "category":  "tinkersnewlife:cursed_tools",
+    "icon":  "tinkersnewlife:boundary_fragment",
+    "sortnum":  1,
+    "pages":  [
+                  {
+                      "type":  "patchouli:spotlight",
+                      "item":  "tinkersnewlife:boundary_fragment",
+                      "text":  "$(bold)结界碎片$()$(br2)领域被$(bold)破坏$()时，从结界方块上剥离的碎片（每个结界方块 $(bold)1/100$() 概率掉落，堆叠上限 60）。$(br2)用途：$(li)消耗咒力（术式/领域）时会$(bold)优先消耗背包中的结界碎片$()，$(bold)1 碎片 = 25 点咒力$()$(li)碎片不够的部分再按正常顺序扣咒力 / 灵魂能量"
+                  }
+              ]
+}

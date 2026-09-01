@@ -1,12 +1,12 @@
 {
-  "name": "不毁",
-  "category": "tinkersnewlife:materials",
-  "icon": "minecraft:netherite_ingot",
-  "sortnum": 22,
-  "pages": [
-    {
-      "type": "patchouli:text",
-      "text": "$(bold)不毁$()（tconstruct:unbreakable，杜兰达尔的默认特性）$(br2)效果：工具$(bold)永不被损坏$()，耐久不会消耗。$(br2)传说级防御特性，配合杜兰达尔的 T99 等级，让武器和核心永久无损。"
-    }
-  ]
+    "name":  "不毁",
+    "category":  "tinkersnewlife:traits",
+    "icon":  "minecraft:netherite_ingot",
+    "sortnum":  11,
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)不毁$()（tconstruct:unbreakable，杜兰达尔的默认特性）$(br2)效果：工具$(bold)永不被损坏$()，耐久不会消耗。$(br2)传说级防御特性，配合杜兰达尔的 T99 等级，让武器和核心永久无损。"
+                  }
+              ]
 }

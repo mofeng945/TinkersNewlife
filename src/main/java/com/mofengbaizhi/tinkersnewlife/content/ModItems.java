@@ -257,4 +257,14 @@ public class ModItems {
     /** 新生神秘学编年史（帕秋莉手册书物品）：材质完全由本模组控制（guide_book.json 模型 + item 纹理） */
     public static final RegistryObject<Item> GUIDE_BOOK =
             ITEMS.register("guide_book", () -> new vazkii.patchouli.common.item.ItemModBook());
+
+    /** 结界碎片：领域被破坏时 1/100 概率掉落；消耗咒力时优先消耗（1 碎片 = 25 咒力） */
+    public static final RegistryObject<Item> BOUNDARY_FRAGMENT =
+            ITEMS.register("boundary_fragment", () -> new Item(new Item.Properties().stacksTo(60)));
+
+    /** 天逆鉾（咒具）：基础伤害 24，亡灵特攻 +6，无限耐久；右键领域结界方块破坏领域，无视无下限 */
+    public static final RegistryObject<Item> TIAN_NI_HUO =
+            ITEMS.register("tian_ni_huo", () -> new TianNiHuoItem(new Item.Properties()
+                    .stacksTo(1)
+                    .fireResistant()));
 }

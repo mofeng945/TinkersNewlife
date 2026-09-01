@@ -1,7 +1,7 @@
 {
     "name":  "十影术式",
     "category":  "tinkersnewlife:techniques",
-    "icon":  "tinkersnewlife:curse_core",
+    "icon": "tinkersnewlife:textures/gui/modifiers/ten_shadows.png",
     "sortnum":  8,
   "advancement": "tinkersnewlife:techniques/ten_shadows",
     "pages":  [

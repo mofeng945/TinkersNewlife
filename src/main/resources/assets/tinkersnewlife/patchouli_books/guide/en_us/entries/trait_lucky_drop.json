@@ -1,0 +1,12 @@
+{
+  "name": "贪欲",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:textures/gui/modifiers/lucky_drop.png",
+  "sortnum": 16,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)贪欲$()：运气也是实力的一部分！$(br2)效果：击杀生物时 50% 概率额外掉落一次战利品，冰火传说稀有掉落物概率提升至 50%。"
+    }
+  ]
+}

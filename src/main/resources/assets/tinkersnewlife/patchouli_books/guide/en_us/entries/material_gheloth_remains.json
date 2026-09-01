@@ -11,7 +11,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)自带特性$()：$(li)$(l:materials/trait_cosmic_order_voice)天体秩序之音$()：命中目标时施加迟缓与失明，持续时间随等级提升增强$(br2)格赫罗斯残骸本身也是$(l:items/relic_gheloth_remains)旧日遗物$()之一，是仪式与材料的双重源头。"
+      "text": "$(bold)自带特性$()：$(li)$(l:traits/trait_cosmic_order_voice)天体秩序之音$()：命中目标时施加迟缓与失明，持续时间随等级提升增强$(br2)格赫罗斯残骸本身也是$(l:relics/relic_gheloth_remains)旧日遗物$()之一，是仪式与材料的双重源头。"
     }
   ]
 }

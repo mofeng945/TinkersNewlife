@@ -1,16 +1,16 @@
 {
   "name": "战斗特性总览",
-  "category": "tinkersnewlife:materials",
+  "category": "tinkersnewlife:traits",
   "icon": "tinkersnewlife:curse_core",
-  "sortnum": 11,
+  "sortnum": 0,
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "以下默认特性由材料自带，在术式与领域攻击中照常触发（近战、弹射同样生效）。点击查看每个特性的详细效果：$(li)$(l:materials/trait_child_of_the_stars)群星之子$()（灰白之墨）：最终伤害 ×2^级$(li)$(l:materials/trait_cosmic_order_voice)天体秩序之音$()（格赫罗斯残骸）：命中施加迟缓 / 失明$(li)$(l:materials/trait_dragonsteel_fire)龙炎$()（龙炎钢）：命中爆炸点燃$(li)$(l:materials/trait_dragonsteel_ice)龙霜$()（龙霜钢）：命中冰霜冻结$(li)$(l:materials/trait_dragonsteel_lightning)龙霆$()（龙霆钢）：命中落雷缴械$(li)$(l:materials/trait_dreadsteel)悚怖$()（慑怖钢）：穿透剑气 + 虚弱 / 失明 / 凋零"
+      "text": "战斗特性分为两类：$(bold)材料默认特性$()（由核心材料自带，在术式与领域攻击中照常触发）与$(bold)通用强化特性$()（通过水晶/仪式附加）。$(br2)$(bold)材料默认特性$()：$(li)$(l:traits/trait_child_of_the_stars)群星之子$()（灰白之墨）：最终伤害 ×2^级$(li)$(l:traits/trait_cosmic_order_voice)天体秩序之音$()（格赫罗斯残骸）：命中迟缓 / 失明$(li)$(l:traits/trait_dragonsteel_fire)龙炎$()（龙炎钢）：命中爆炸点燃$(li)$(l:traits/trait_dragonsteel_ice)龙霜$()（龙霜钢）：命中冰霜冻结$(li)$(l:traits/trait_dragonsteel_lightning)龙霆$()（龙霆钢）：命中落雷缴械$(li)$(l:traits/trait_dreadsteel)悚怖$()（慑怖钢）：穿透剑气 + 虚弱 / 失明 / 凋零$(li)$(l:traits/trait_hastur_malice)罡风$()（哈斯塔恶意）：命中风场拉扯伤害$(li)$(l:traits/trait_charm)魅惑$()（生命冲动）：命中魅惑无法攻击$(li)$(l:traits/trait_dragonbone)承载$()（龙骨）：龙钢特性等级 +1$(li)$(l:traits/trait_dragon_blood_tank)龙血储罐$()（龙骨）：储存三种龙血$(li)$(l:traits/trait_unbreakable)不毁$()（杜兰达尔）：工具永不损坏"
     },
     {
       "type": "patchouli:text",
-      "text": "$(li)$(l:materials/trait_hastur_malice)罡风$()（哈斯塔恶意）：命中制造风场拉扯伤害$(li)$(l:materials/trait_charm)魅惑$()（生命冲动）：命中使目标魅惑无法攻击$(li)$(l:materials/trait_dragonbone)承载$()（龙骨）：龙钢特性等级效果 +1$(li)$(l:materials/trait_dragon_blood_tank)龙血储罐$()（龙骨）：储存三种龙血$(li)$(l:materials/trait_unbreakable)不毁$()（杜兰达尔）：工具永不损坏$(br2)护甲专属特性（星穹庇护、龙钢护甲三系、慑怖铠甲）见各护甲词条，不会出现在咒力核心上。"
+      "text": "$(bold)通用强化特性$()：$(li)$(l:traits/trait_nyarlathotep_desire)奈亚的欲念$()：每级 +1 能力槽$(li)$(l:traits/trait_yog_sothoth_gift)时空馈赠$()：经验 +500%$(li)$(l:traits/trait_black_flash)黑闪$()：概率爆发巨额伤害$(li)$(l:traits/trait_west_tiger)西中之虎$()：提升黑闪触发率$(li)$(l:traits/trait_lucky_drop)贪欲$()：额外掉落战利品$(li)$(l:traits/trait_gorgon_immunity)心眼$()：免疫石化凝视$(li)$(l:traits/trait_fus_ro_dah)Fus-Ro-Dah$()：命中击飞$(li)$(l:traits/trait_ghost_clearing)无神论者$()：清除鬼魂$(li)$(l:traits/trait_dragon_blood_infusion)龙血注魔$()：龙血附加异常状态$(li)$(l:traits/trait_chaos_butterfly)乱蝶$()：战镰 Fever 机制$(li)$(l:traits/trait_quantum_bag)量子背包$()：随身维度口袋$(br2)$(bold)护甲专属特性$()（不适用于核心）：$(li)$(l:traits/trait_star_child_armor)星穹庇护$()$(li)$(l:traits/trait_dragonsteel_fire_armor)火龙鳞片$() / $(l:traits/trait_dragonsteel_ice_armor)冰龙鳞片$() / $(l:traits/trait_dragonsteel_lightning_armor)雷龙鳞片$()$(li)$(l:traits/trait_dreadsteel_armor)悚怖武装$()"
     }
   ]
 }

@@ -1,12 +1,12 @@
 {
-  "name": "悚怖",
-  "category": "tinkersnewlife:materials",
-  "icon": "tinkersnewlife:molten_dreadsteel_bucket",
-  "sortnum": 17,
-  "pages": [
-    {
-      "type": "patchouli:text",
-      "text": "$(bold)悚怖$()（慑怖钢的默认特性）$(br2)效果：每次挥剑释放一道$(bold)宽剑气$()，$(bold)无视护甲$()穿透敌人，命中施加$(bold)虚弱、失明和凋零$()。$(br2)剑气穿透与无视护甲使悚怖对高护甲目标极为致命，配合凋零持续扣血。"
-    }
-  ]
+    "name":  "悚怖",
+    "category":  "tinkersnewlife:traits",
+    "icon":  "tinkersnewlife:molten_dreadsteel_bucket",
+    "sortnum":  6,
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)悚怖$()（慑怖钢的默认特性）$(br2)效果：每次挥剑释放一道$(bold)宽剑气$()，$(bold)无视护甲$()穿透敌人，命中施加$(bold)虚弱、失明和凋零$()。$(br2)剑气穿透与无视护甲使悚怖对高护甲目标极为致命，配合凋零持续扣血。"
+                  }
+              ]
 }

@@ -1,7 +1,7 @@
 {
     "name":  "伏魔御厨子",
     "category":  "tinkersnewlife:domains",
-    "icon":  "tinkersnewlife:curse_core",
+    "icon": "tinkersnewlife:textures/gui/modifiers/fumo_yuchuzi.png",
     "sortnum":  3,
   "advancement": "tinkersnewlife:domains/fumo_yuchuzi",
     "pages":  [

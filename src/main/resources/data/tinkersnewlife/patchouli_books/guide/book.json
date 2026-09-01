@@ -6,7 +6,7 @@
   "index_icon": "tinkersnewlife:curse_core",
   "book_texture": "tinkersnewlife:textures/gui/book_guide.png",
   "model": "tinkersnewlife:guide_book",
-  "show_progress": false,
+  "show_progress": true,
   "dont_generate_book": true,
   "custom_book_item": "tinkersnewlife:guide_book",
   "allow_advancements": true

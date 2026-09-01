@@ -154,4 +154,8 @@ public class Modifiers {
     /** 投射咒法（术式特性，占用术式槽） */
     public static final StaticModifier<ProjectionTrait> PROJECTION =
         MODIFIERS.register("projection", ProjectionTrait::new);
+
+    /** 无下限·无限（术式特性，占用术式槽） */
+    public static final StaticModifier<WuliangWuxianTrait> WULIANG_WUXIAN =
+        MODIFIERS.register("wuliang_wuxian", WuliangWuxianTrait::new);
 }

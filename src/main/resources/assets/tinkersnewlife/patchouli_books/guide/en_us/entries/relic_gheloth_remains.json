@@ -1,13 +1,13 @@
 {
-  "name": "格赫罗斯残骸",
-  "category": "tinkersnewlife:items",
-  "icon": "tinkersnewlife:gheloth_remains",
-  "sortnum": 14,
-  "pages": [
-    {
-      "type": "patchouli:spotlight",
-      "item": "tinkersnewlife:gheloth_remains",
-      "text": "$(bold)格赫罗斯残骸$()$(br2)获取：挖掘$(bold)下界顶层$()（Y110-127）的$(bold)格赫罗斯矿石$()（非精准采集），1-3 个，时运加成。$(br2)用途：$(li)熔炼 → $(bold)15 mB$() 格赫罗斯之血液$(li)铁 + 血液 → $(l:materials/material_gheloth_remains)格赫罗斯残骸材料$()$(li)也是$(l:basics/ritual)咒力核心仪式$()的结构材料"
-    }
-  ]
+    "name":  "格赫罗斯残骸",
+    "category":  "tinkersnewlife:relics",
+    "icon":  "tinkersnewlife:gheloth_remains",
+    "sortnum":  6,
+    "pages":  [
+                  {
+                      "type":  "patchouli:spotlight",
+                      "item":  "tinkersnewlife:gheloth_remains",
+                      "text":  "$(bold)格赫罗斯残骸$()$(br2)获取：挖掘$(bold)下界顶层$()（Y110-127）的$(bold)格赫罗斯矿石$()（非精准采集），1-3 个，时运加成。$(br2)用途：$(li)熔炼 → $(bold)15 mB$() 格赫罗斯之血液$(li)铁 + 血液 → $(l:materials/material_gheloth_remains)格赫罗斯残骸材料$()$(li)也是$(l:basics/ritual)咒力核心仪式$()的结构材料"
+                  }
+              ]
 }

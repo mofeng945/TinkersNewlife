@@ -1,0 +1,12 @@
+{
+  "name": "心眼",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:textures/gui/modifiers/gorgon_immunity.png",
+  "sortnum": 17,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)心眼$()：目不视物，心随意动。$(br2)效果：穿戴后免疫蛇发女妖的石化凝视。"
+    }
+  ]
+}

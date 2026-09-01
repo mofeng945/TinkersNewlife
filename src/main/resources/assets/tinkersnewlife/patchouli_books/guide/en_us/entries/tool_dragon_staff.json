@@ -1,17 +1,17 @@
 {
-  "name": "驯龙杖",
-  "category": "tinkersnewlife:items",
-  "icon": "tinkersnewlife:dragon_staff",
-  "sortnum": 6,
-  "pages": [
-    {
-      "type": "patchouli:spotlight",
-      "item": "tinkersnewlife:dragon_staff",
-      "text": "$(bold)驯龙杖$()$(br2)获取：通过$(bold)匠魂工匠站$()打造——龙魂核心 + 两个手柄组合（龙魂核心由熔融龙魂核心浇铸而成）。$(br2)特点：驯服 / 回收 / 释放$(bold)冰火传说$()之龙，虽然和它的初始版本名字一样，但应该叫它$(bold)伏龙杖$()才对。"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "$(bold)操作$()：$(li)$(bold)按绑定按键$()执行驯服技能（消耗 200 级经验），对周围野龙开始驯服$(li)$(bold)潜行 + 右键$()切换$(bold)回收 / 释放$()模式$(li)回收模式下右键龙将其收入杖中（槽位随等级提升）$(li)释放模式下右键在面前放出已收服的龙$(br2)驯服成功后龙会记录到杖中，可随身携带并在战斗时放出助战。"
-    }
-  ]
+    "name":  "驯龙杖",
+    "category":  "tinkersnewlife:tools",
+    "icon":  "tinkersnewlife:dragon_staff",
+    "sortnum":  5,
+    "pages":  [
+                  {
+                      "type":  "patchouli:spotlight",
+                      "item":  "tinkersnewlife:dragon_staff",
+                      "text":  "$(bold)驯龙杖$()$(br2)获取：通过$(bold)匠魂工匠站$()打造——龙魂核心 + 两个手柄组合（龙魂核心由熔融龙魂核心浇铸而成）。$(br2)特点：驯服 / 回收 / 释放$(bold)冰火传说$()之龙，虽然和它的初始版本名字一样，但应该叫它$(bold)伏龙杖$()才对。"
+                  },
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)操作$()：$(li)$(bold)按绑定按键$()执行驯服技能（消耗 200 级经验），对周围野龙开始驯服$(li)$(bold)潜行 + 右键$()切换$(bold)回收 / 释放$()模式$(li)回收模式下右键龙将其收入杖中（槽位随等级提升）$(li)释放模式下右键在面前放出已收服的龙$(br2)驯服成功后龙会记录到杖中，可随身携带并在战斗时放出助战。"
+                  }
+              ]
 }

@@ -1,0 +1,12 @@
+{
+  "name": "雷龙鳞片",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:curse_core",
+  "sortnum": 26,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)雷龙鳞片$()（护甲专属特性，龙霆钢护甲部件）：天雷护体，邪祟辟易！$(br2)效果：穿戴时获得夜视和抗性提升，被攻击时天雷反击并缴械攻击者。"
+    }
+  ]
+}

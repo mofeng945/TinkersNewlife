@@ -1,7 +1,7 @@
 {
     "name":  "解",
     "category":  "tinkersnewlife:techniques",
-    "icon":  "tinkersnewlife:curse_core",
+    "icon": "tinkersnewlife:textures/gui/modifiers/kai.png",
     "sortnum":  2,
   "advancement": "tinkersnewlife:techniques/kai",
     "pages":  [

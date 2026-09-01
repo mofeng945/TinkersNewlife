@@ -1,0 +1,12 @@
+{
+  "name": "火龙鳞片",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:curse_core",
+  "sortnum": 24,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)火龙鳞片$()（护甲专属特性，龙炎钢护甲部件）：火焰啊，淬炼我！$(br2)效果：穿戴时获得防火效果，受到攻击时点燃攻击者。"
+    }
+  ]
+}

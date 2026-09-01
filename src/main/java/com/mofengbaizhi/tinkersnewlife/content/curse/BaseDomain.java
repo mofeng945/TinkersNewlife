@@ -48,12 +48,24 @@ public abstract class BaseDomain {
     protected double clashCostMultiplier = 1.0;
     /** 是否已提示过"咒力耗尽改耗灵魂能量"（每个领域实例只提示一次） */
     private boolean soulFallbackNotified = false;
+    /** 领域展开时的 gameTime（用于防刷：展开不足 5 秒被破坏不掉碎片） */
+    private long createdAtGameTime = -1;
 
     protected BaseDomain(UUID owner, Vec3 center, int radius, double curseCostPerSecond) {
         this.owner = owner;
         this.center = center;
         this.radius = radius;
         this.curseCostPerSecond = curseCostPerSecond;
+    }
+
+    /** 领域展开时由 DomainRegistry 记录展开时刻（gameTime） */
+    public void markCreated(long gameTime) {
+        this.createdAtGameTime = gameTime;
+    }
+
+    /** 领域已存在时长（tick）；未记录展开时刻返回 0 */
+    public long getAgeTicks(long nowGameTime) {
+        return createdAtGameTime < 0 ? 0 : nowGameTime - createdAtGameTime;
     }
 
     // ============================================================
@@ -100,6 +112,16 @@ public abstract class BaseDomain {
             }
         }
         barrierPositions.clear();
+    }
+
+    /** 当前阻挡墙位置列表（供天逆鉾等咒具破坏领域时统计碎片掉落） */
+    public java.util.List<net.minecraft.core.BlockPos> getBarrierPositions() {
+        return new java.util.ArrayList<>(barrierPositions);
+    }
+
+    /** 该位置是否属于本领域的阻挡墙 */
+    public boolean containsBarrier(net.minecraft.core.BlockPos pos) {
+        return barrierPositions.contains(pos);
     }
 
     /**

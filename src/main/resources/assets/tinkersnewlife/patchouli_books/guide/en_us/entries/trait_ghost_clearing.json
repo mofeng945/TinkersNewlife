@@ -1,0 +1,12 @@
+{
+  "name": "无神论者",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:textures/gui/modifiers/ghost_clearing.png",
+  "sortnum": 19,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)无神论者$()：这世界上哪里有鬼？$(br2)效果：清除 16 格范围内所有鬼魂。"
+    }
+  ]
+}

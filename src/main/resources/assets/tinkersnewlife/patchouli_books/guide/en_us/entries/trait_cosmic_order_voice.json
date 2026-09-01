@@ -1,12 +1,12 @@
 {
-  "name": "天体秩序之音",
-  "category": "tinkersnewlife:materials",
-  "icon": "tinkersnewlife:gheloth_remains",
-  "sortnum": 13,
-  "pages": [
-    {
-      "type": "patchouli:text",
-      "text": "$(bold)天体秩序之音$()（格赫罗斯残骸的默认特性）$(br2)效果：$(bold)命中目标时$()施加$(bold)迟缓$()与$(bold)失明$()效果，持续时间随特性等级提升增强。$(br2)迟缓大幅降低目标移动与攻击速度，失明遮蔽其视野，是强力的压制型控制。"
-    }
-  ]
+    "name":  "天体秩序之音",
+    "category":  "tinkersnewlife:traits",
+    "icon":  "tinkersnewlife:gheloth_remains",
+    "sortnum":  2,
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)天体秩序之音$()（格赫罗斯残骸的默认特性）$(br2)效果：$(bold)命中目标时$()施加$(bold)迟缓$()与$(bold)失明$()效果，持续时间随特性等级提升增强。$(br2)迟缓大幅降低目标移动与攻击速度，失明遮蔽其视野，是强力的压制型控制。"
+                  }
+              ]
 }

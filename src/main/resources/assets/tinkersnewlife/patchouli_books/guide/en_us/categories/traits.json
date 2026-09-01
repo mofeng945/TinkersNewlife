@@ -1,0 +1,6 @@
+{
+  "name": "战斗特性",
+  "description": "材料默认特性与通用强化特性：在术式与领域攻击中照常触发",
+  "icon": "tinkersnewlife:textures/gui/modifiers/nyarlathotep_desire.png",
+  "sortnum": 5
+}

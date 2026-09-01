@@ -1,7 +1,7 @@
 {
     "name":  "赤血操术·超新星",
     "category":  "tinkersnewlife:techniques",
-    "icon":  "tinkersnewlife:curse_core",
+    "icon": "tinkersnewlife:textures/gui/modifiers/blood_manipulation_supernova.png",
     "sortnum":  7,
   "advancement": "tinkersnewlife:techniques/blood_manipulation_supernova",
     "pages":  [

@@ -22,12 +22,25 @@ public final class TenShadowsTechnique extends BaseTechnique {
         super(Modifiers.TEN_SHADOWS.getId());
     }
 
-    /** 按下释放键：熔断检查 → 打开式神选择界面（不在此扣咒力） */
+    /** 按下释放键：若场上已有该玩家的式神则收回全部（返还一半咒力），否则打开式神选择界面 */
     @Override
     public void onKeyPress(ServerPlayer player) {
         if (CursePowerHelper.isBurnout(player)) {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.burnout.active",
                     CursePowerHelper.getBurnoutRemainingSeconds(player)), true);
+            return;
+        }
+        // 场上已有该玩家的存活式神 → 收回全部
+        var alive = com.mofengbaizhi.tinkersnewlife.content.curse.shikigami.ShikigamiHandler.findActiveFor(player);
+        if (!alive.isEmpty()) {
+            int refund = com.mofengbaizhi.tinkersnewlife.content.curse.shikigami.ShikigamiHandler.recallAll(player, alive);
+            if (!CursePowerHelper.isCurseInfinite(player)) {
+                CursePowerHelper.addCurse(player, refund);
+            }
+            for (net.minecraft.world.entity.Entity e : alive) {
+                e.discard();
+            }
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.ten_shadows.recall_all", refund), true);
             return;
         }
         TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new PacketOpenShikigamiScreen());

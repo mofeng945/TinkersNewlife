@@ -1,12 +1,12 @@
 {
-  "name": "龙炎",
-  "category": "tinkersnewlife:materials",
-  "icon": "tinkersnewlife:molten_dragonsteel_fire_bucket",
-  "sortnum": 14,
-  "pages": [
-    {
-      "type": "patchouli:text",
-      "text": "$(bold)龙炎$()（龙炎钢的默认特性）$(br2)效果：$(bold)命中时$()引发小范围爆炸，$(bold)点燃$()目标及周围敌人，灼烧时间随等级提升。$(br2)龙炎适合清杂与持续灼烧，配合火属性体系使用效果更佳。"
-    }
-  ]
+    "name":  "龙炎",
+    "category":  "tinkersnewlife:traits",
+    "icon":  "tinkersnewlife:molten_dragonsteel_fire_bucket",
+    "sortnum":  3,
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)龙炎$()（龙炎钢的默认特性）$(br2)效果：$(bold)命中时$()引发小范围爆炸，$(bold)点燃$()目标及周围敌人，灼烧时间随等级提升。$(br2)龙炎适合清杂与持续灼烧，配合火属性体系使用效果更佳。"
+                  }
+              ]
 }

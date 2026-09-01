@@ -1,12 +1,12 @@
 {
-  "name": "旧日遗物",
-  "category": "tinkersnewlife:items",
-  "icon": "tinkersnewlife:rlyeh_call",
-  "sortnum": 1,
-  "pages": [
-    {
-      "type": "patchouli:text",
-      "text": "散落在世界各处的旧日遗物，共十件。每件都有$(bold)独特的获取条件$()（多为事件 / 探索 / 概率），并可熔炼成对应材料。点击查看每件的获取方式与用途：$(li)$(l:items/relic_rlyeh_call)拉莱耶的呼唤$() → 灰白之墨$(li)$(l:items/relic_nyarlathotep_desire)奈亚的欲念$()$(li)$(l:items/relic_yellow_king_remnant)黄衣之王余风$() → 哈斯塔恶意$(li)$(l:items/relic_nicholas_blessing)尼古拉斯之赐$() → 生命冲动$(li)$(l:items/relic_yog_sothoth_gate_key)犹格索托斯的门之匙$()$(li)$(l:items/relic_gheloth_remains)格赫罗斯残骸$() → 格赫罗斯之血液$(li)$(l:items/relic_echo_of_the_void)虚空回响$()$(li)$(l:items/relic_astral_anchor)星界之锚$()$(li)$(l:items/relic_nexus_of_spacetime)时空枢纽核心$()$(li)$(l:items/relic_durandal_shard)杜兰达尔破碎剑刃$() → 熔融杜兰达尔"
-    }
-  ]
+    "name":  "旧日遗物",
+    "category":  "tinkersnewlife:relics",
+    "icon":  "tinkersnewlife:rlyeh_call",
+    "sortnum":  0,
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "散落在世界各处的旧日遗物，共十件。每件都有$(bold)独特的获取条件$()（多为事件 / 探索 / 概率），并可熔炼成对应材料。点击查看每件的获取方式与用途：$(li)$(l:relics/relic_rlyeh_call)拉莱耶的呼唤$() → 灰白之墨$(li)$(l:relics/relic_nyarlathotep_desire)奈亚的欲念$()$(li)$(l:relics/relic_yellow_king_remnant)黄衣之王余风$() → 哈斯塔恶意$(li)$(l:relics/relic_nicholas_blessing)尼古拉斯之赐$() → 生命冲动$(li)$(l:relics/relic_yog_sothoth_gate_key)犹格索托斯的门之匙$()$(li)$(l:relics/relic_gheloth_remains)格赫罗斯残骸$() → 格赫罗斯之血液$(li)$(l:relics/relic_echo_of_the_void)虚空回响$()$(li)$(l:relics/relic_astral_anchor)星界之锚$()$(li)$(l:relics/relic_nexus_of_spacetime)时空枢纽核心$()$(li)$(l:relics/relic_durandal_shard)杜兰达尔破碎剑刃$() → 熔融杜兰达尔"
+                  }
+              ]
 }
