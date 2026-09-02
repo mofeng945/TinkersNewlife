@@ -40,13 +40,18 @@ public final class ShikigamiHandler {
         return result;
     }
 
-    /** 收回全部式神，返回应返还的咒力（按总召唤消耗的一半估算） */
+    /** 收回全部式神，返回应返还的咒力（按召唤消耗的一半估算；同类型多只只算一次成本，
+     *  如脱兔召唤 8 只只扣 1 次咒力，回收也只按 1 次返还） */
     public static int recallAll(ServerPlayer player, List<net.minecraft.world.entity.Entity> entities) {
-        int totalCost = 0;
+        java.util.Set<ShikigamiType> types = new java.util.HashSet<>();
         for (net.minecraft.world.entity.Entity e : entities) {
             if (e instanceof ShikigamiMob sm) {
-                totalCost += sm.getShikigamiType().summonCost(player);
+                types.add(sm.getShikigamiType());
             }
+        }
+        int totalCost = 0;
+        for (ShikigamiType type : types) {
+            totalCost += type.summonCost(player);
         }
         return Math.max(1, (int) Math.ceil(totalCost / 2.0));
     }
@@ -130,9 +135,6 @@ public final class ShikigamiHandler {
         // 锁定目标：玩家视线上的实体（用于未调伏式神的敌意目标）
         LivingEntity locked = tamed ? null : findLookTarget(player);
         spawnShikigami(player, type, tamed, locked);
-        player.displayClientMessage(Component.translatable(
-                tamed ? "message.tinkersnewlife.ten_shadows.summon" : "message.tinkersnewlife.ten_shadows.summon_untamed",
-                Component.translatable(type.getLangKey())), true);
         return true;
     }
 

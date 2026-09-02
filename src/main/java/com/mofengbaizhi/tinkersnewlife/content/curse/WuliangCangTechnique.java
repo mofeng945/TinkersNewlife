@@ -57,7 +57,6 @@ public final class WuliangCangTechnique extends BaseTechnique {
         if (state == 0) {
             // 开始苍蓄力
             CHARGING.put(player.getUUID(), 1);
-            player.displayClientMessage(Component.translatable("message.tinkersnewlife.cang.charge"), true);
         } else if (state == 1) {
             // 再次按下 → 发射苍球
             CHARGING.remove(player.getUUID());
@@ -83,7 +82,6 @@ public final class WuliangCangTechnique extends BaseTechnique {
         } else if (state == 0) {
             // 开始赫蓄力
             CHARGING.put(player.getUUID(), 2);
-            player.displayClientMessage(Component.translatable("message.tinkersnewlife.he.charge"), true);
         } else {
             // 赫蓄力中再次按 F → 发射赫球
             CHARGING.remove(player.getUUID());
@@ -123,10 +121,6 @@ public final class WuliangCangTechnique extends BaseTechnique {
 
         CursedOrbEntity orb = new CursedOrbEntity(player.serverLevel(), pos, player.getUUID(), type, (float) base, look);
         player.serverLevel().addFreshEntity(orb);
-        player.displayClientMessage(Component.translatable(
-                type == CursedOrbEntity.TYPE_CANG ? "message.tinkersnewlife.cang.fire"
-                        : type == CursedOrbEntity.TYPE_HE ? "message.tinkersnewlife.he.fire"
-                        : "message.tinkersnewlife.zi.fire"), true);
     }
 
     /** 蓄力粒子（服务端每 tick 调用）：苍=蓝、赫=红 环绕施术者 */

@@ -498,5 +498,11 @@
   "message.tinkersnewlife.jacobs_ladder.summon": "§e雅各布天梯：法阵已展开，蓄力中……",
   "message.tinkersnewlife.sealed.entered": "§c你被天梯封印！%s 秒内无法使用术式与领域",
   "message.tinkersnewlife.sealed.active": "§c被封印中，剩余 %s 秒",
-  "message.tinkersnewlife.domain.sealed_closed": "§c领域被天梯封印强制终止！"
+  "message.tinkersnewlife.domain.sealed_closed": "§c领域被天梯封印强制终止！",
+  "modifier.tinkersnewlife.reverse_cursed": "反转术式",
+  "modifier.tinkersnewlife.reverse_cursed.flavor": "§7负负得正，即是祝福。",
+  "modifier.tinkersnewlife.reverse_cursed.description": "§f按术式键（C）：对自身释放反转术式——消耗咒力输出×10 点咒力，恢复 (1+(亲和/10+输出)/10)×输出×2 点生命。按术式反转键（F）：反转术式外放——对施术目标恢复生命；若目标是亡灵生物，则受到应恢复生命数值的 2 倍伤害。占用术式槽。",
+  "message.tinkersnewlife.reverse_cursed.self": "§a反转术式：恢复 %s 点生命",
+  "message.tinkersnewlife.reverse_cursed.external": "§a反转术式外放：%s 恢复 %s 点生命",
+  "message.tinkersnewlife.reverse_cursed.undead": "§c反转术式外放：亡灵受到 %s 点伤害"
 }

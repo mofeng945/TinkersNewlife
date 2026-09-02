@@ -166,4 +166,8 @@ public class Modifiers {
     /** 雅各布天梯（术式特性，占用术式槽） */
     public static final StaticModifier<JacobsLadderTrait> JACOBS_LADDER =
         MODIFIERS.register("jacobs_ladder", JacobsLadderTrait::new);
+
+    /** 反转术式（术式特性，占用术式槽；含术式反转·外放） */
+    public static final StaticModifier<ReverseCursedTrait> REVERSE_CURSED =
+        MODIFIERS.register("reverse_cursed", ReverseCursedTrait::new);
 }

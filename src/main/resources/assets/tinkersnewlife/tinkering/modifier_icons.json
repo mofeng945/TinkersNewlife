@@ -22,5 +22,6 @@
   "tinkersnewlife:fumo_yuchuzi": "tinkersnewlife:gui/modifiers/fumo_yuchuzi",
   "tinkersnewlife:wuliang_wuxian": "tinkersnewlife:gui/modifiers/wuliang_wuxian",
   "tinkersnewlife:wuliang_cang": "tinkersnewlife:gui/modifiers/wuliang_cang",
-  "tinkersnewlife:jacobs_ladder": "tinkersnewlife:gui/modifiers/jacobs_ladder"
+  "tinkersnewlife:jacobs_ladder": "tinkersnewlife:gui/modifiers/jacobs_ladder",
+  "tinkersnewlife:reverse_cursed": "tinkersnewlife:gui/modifiers/reverse_cursed"
 }

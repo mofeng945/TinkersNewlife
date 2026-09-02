@@ -79,8 +79,6 @@ public final class ProjectionTechnique extends BaseTechnique {
         phantom.moveTo(pos.x, player.getY(), pos.z, 0, 0);
         phantom.setOwner(player);
         level.addFreshEntity(phantom);
-        player.displayClientMessage(Component.translatable("message.tinkersnewlife.projection.summon",
-                String.format("%.1f", dist)), true);
     }
 
     /** 触碰虚影 → 层数 +1，刷新 10s 增益，解除罚站 */
@@ -95,7 +93,6 @@ public final class ProjectionTechnique extends BaseTechnique {
         if (wasStunned) {
             sendStun(player, false);
         }
-        player.displayClientMessage(Component.translatable("message.tinkersnewlife.projection.buff", level), true);
     }
 
     /** 虚影超时未触碰 → 罚站 3 秒（锁定位置/视角，无法移动/转视角/攻击/交互） */
@@ -110,7 +107,6 @@ public final class ProjectionTechnique extends BaseTechnique {
         data.remove(KEY_BUFF_LEVEL);
         data.remove(KEY_BUFF_UNTIL);
         sendStun(player, true);
-        player.displayClientMessage(Component.translatable("message.tinkersnewlife.projection.stun"), true);
     }
 
     /** 罚站结束（到期）时服务端调用，通知客户端解除 */

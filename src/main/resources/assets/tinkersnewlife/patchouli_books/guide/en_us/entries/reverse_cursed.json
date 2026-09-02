@@ -1,0 +1,13 @@
+{
+  "name": "反转术式",
+  "category": "tinkersnewlife:techniques",
+  "icon": "tinkersnewlife:textures/gui/modifiers/reverse_cursed.png",
+  "sortnum": 14,
+  "advancement": "tinkersnewlife:techniques/reverse_cursed",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)反转术式$()：负负得正，即是祝福。$(br2)$(bold)对自身$()（术式键 C）：$(li)消耗 $(bold)咒力输出 × 10$() 点咒力$(li)恢复 $(bold)(1 + (亲和/10 + 输出)/10) × 输出 × 2$() 点生命$(br2)$(bold)术式反转 · 外放$()（术式反转键 F）：$(li)对 $(bold)3 格内$()的施术目标（视线索敌）恢复生命，附带$(bold)白色光芒粒子特效$()$(li)$(bold)亡灵生物$()则受到$(bold)应恢复生命数值的 2 倍$()伤害$(br2)占用术式槽。"
+    }
+  ]
+}

@@ -12,6 +12,7 @@ import com.mofengbaizhi.tinkersnewlife.content.curse.KaiTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.WuliangWuxianTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.WuliangCangTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.JacobsLadderTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.ReverseCursedTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.TechniqueHandler;
 import com.mofengbaizhi.tinkersnewlife.content.curse.TenShadowsTechnique;
@@ -151,6 +152,7 @@ public class TinkersNewlife {
         TechniqueHandler.register(WuliangWuxianTechnique.INSTANCE);
         TechniqueHandler.register(WuliangCangTechnique.INSTANCE);
         TechniqueHandler.register(JacobsLadderTechnique.INSTANCE);
+        TechniqueHandler.register(ReverseCursedTechnique.INSTANCE);
 
         // 注册网络包
         registerPacket(PacketUseSkill.class, PacketUseSkill::toBytes, PacketUseSkill::new, PacketUseSkill::handle);

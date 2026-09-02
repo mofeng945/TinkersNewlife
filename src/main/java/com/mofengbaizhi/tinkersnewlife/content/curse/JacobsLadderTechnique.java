@@ -71,6 +71,5 @@ public final class JacobsLadderTechnique extends BaseTechnique {
         JacobLadderEntity ladder = new JacobLadderEntity(player.serverLevel(), pos,
                 player.getUUID(), radius, (float) Math.max(0.5, frame));
         player.serverLevel().addFreshEntity(ladder);
-        player.displayClientMessage(Component.translatable("message.tinkersnewlife.jacobs_ladder.summon"), true);
     }
 }
