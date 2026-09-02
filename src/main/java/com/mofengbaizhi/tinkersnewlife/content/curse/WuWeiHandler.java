@@ -23,6 +23,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
@@ -343,6 +344,16 @@ public final class WuWeiHandler {
     }
 
     /**
+     * 变形咒力消耗：|(1 - 咒力亲和/100) × (变成生物最大生命 - 被变形者当前生命)|。
+     * 亲和越高消耗越低；形态越强（相对当前生命）消耗越高；向下变形同样按差值绝对值计费。
+     */
+    private static int morphCost(ServerPlayer caster, float formMaxHealth, double victimCurrentHealth) {
+        int affinity = CursePowerHelper.getCurseAffinity(caster);
+        double raw = (1.0 - affinity / 100.0) * (formMaxHealth - victimCurrentHealth);
+        return (int) Math.ceil(Math.abs(raw));
+    }
+
+    /**
      * 让玩家直接变形：记录原属性 → 套用生物属性（生命上限/护甲/移速/攻击力）→ 广播伪装。
      * 玩家本体即身体：正常移动/受击/交互；攻击由 AttackEntityEvent 拦截按生物攻击力。
      */
@@ -414,10 +425,14 @@ public final class WuWeiHandler {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.wu_wei.need_select"), true);
             return;
         }
-        int output = CursePowerHelper.getCurseOutputLevel(player);
-        int affinity = CursePowerHelper.getCurseAffinity(player);
-        int cost = (int) Math.ceil((1.0 + (output + affinity / 10.0) / 10.0) * 60.0);
-        if (!CursePowerHelper.isCurseInfinite(player)
+        EntityType<?> type = EntityType.byString(formId).orElse(null);
+        if (type == null) {
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.wu_wei.invalid"), true);
+            return;
+        }
+        // 变形咒力消耗：|(1-亲和/100) × (变成生物最大生命 - 当前自身生命)|
+        int cost = morphCost(player, readFormStats(player.serverLevel(), type)[0], player.getHealth());
+        if (cost > 0 && !CursePowerHelper.isCurseInfinite(player)
                 && CursePowerHelper.payCurseWithSoulFallback(player, cost) < 0) {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_curse"), true);
             return;
@@ -429,64 +444,96 @@ public final class WuWeiHandler {
     }
 
     // ============================================================
-    //  反转：视线目标（生物/玩家）变形成所选生物
+    //  转变外放（F 开关）：开启后下一次攻击把目标变形成所选生物
     // ============================================================
 
-    public static void onReverseKey(ServerPlayer player) {
-        if (isTransformed(player)) {
-            endTransformPublic(player);
-            return;
+    /** 玩家持久数据：转变外放是否开启 */
+    public static final String KEY_REVERSAL = "tinkersnewlife.wuwei_reversal";
+
+    /** 是否开启转变外放 */
+    public static boolean isReversalActive(ServerPlayer player) {
+        return player.getPersistentData().getBoolean(KEY_REVERSAL);
+    }
+
+    /** 切换转变外放开关，返回切换后状态 */
+    public static boolean toggleReversal(ServerPlayer player) {
+        boolean now = !isReversalActive(player);
+        player.getPersistentData().putBoolean(KEY_REVERSAL, now);
+        return now;
+    }
+
+    /** 关闭转变外放 */
+    public static void setReversal(ServerPlayer player, boolean on) {
+        player.getPersistentData().putBoolean(KEY_REVERSAL, on);
+    }
+
+    /**
+     * 攻击命中目标 → 尝试把目标变形成所选生物（反转 · 外放）。
+     * 返回 true = 本次挥击被消耗（变形成功或明确失败），false = 挥空（外放保持）。
+     */
+    private static boolean tryAttackReversal(ServerPlayer player, Entity target) {
+        if (!isReversalActive(player)) return false;
+        // 术式熔断中：不触发外放，本次按普通攻击处理（外放保持）
+        if (CursePowerHelper.isBurnout(player)) return false;
+        if (!(target instanceof LivingEntity) || target == player) {
+            // 打空/打自己：外放保持，等待下一次攻击
+            return false;
         }
-        if (CursePowerHelper.isBurnout(player)) {
-            player.displayClientMessage(Component.translatable("message.tinkersnewlife.burnout.active",
-                    CursePowerHelper.getBurnoutRemainingSeconds(player)), true);
-            return;
+        if (player.distanceToSqr(target) > 16.0 * 16.0) {
+            // 超出术式作用距离：外放保持
+            return false;
         }
         String formId = getSelected(player);
         if (formId.isEmpty()) {
-            player.displayClientMessage(Component.translatable("message.tinkersnewlife.wu_wei.need_select"), true);
-            return;
+            setReversal(player, false);
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.wu_wei.need_select_p"), true);
+            return true;
         }
         EntityType<?> type = EntityType.byString(formId).orElse(null);
         if (type == null) {
+            setReversal(player, false);
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.wu_wei.invalid"), true);
-            return;
+            return true;
         }
-        LivingEntity target = findLookTarget(player);
-        if (target == null) {
-            player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_target"), true);
-            return;
+        LivingEntity victim = (LivingEntity) target;
+        // 只对生物/玩家生效；盔甲架等不可变形 → 外放保持，当作普通挥空
+        if (!(victim instanceof ServerPlayer) && !(victim instanceof Mob)) {
+            return false;
         }
-        if (player.distanceToSqr(target) > 16.0 * 16.0) {
-            player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.too_far"), true);
-            return;
+        // 不反转自己的已驯服宠物/已是守护式神的生物（外放保持）
+        if (victim.getPersistentData().contains(KEY_GUARD_OWNER)) {
+            return false;
+        }
+        if (victim instanceof TamableAnimal tame
+                && player.getUUID().equals(tame.getOwnerUUID())) {
+            return false;
         }
         int output = CursePowerHelper.getCurseOutputLevel(player);
         int affinity = CursePowerHelper.getCurseAffinity(player);
-        // ⭐ 反转生物血量门槛：目标生命上限 > 玩家血上限 × (1 + 输出/10 + 亲和/100) × 输出等级 → 失败
-        if (target instanceof Mob targetCheck) {
+        // 血量门槛：目标生命上限 > 玩家血上限 × (1+输出/10+亲和/100) × 输出等级 → 失败（本次挥击落空，外放保持可再试）
+        if (victim instanceof Mob targetCheck) {
             double limit = player.getMaxHealth() * (1.0 + output / 10.0 + affinity / 100.0) * output;
             if (targetCheck.getMaxHealth() > limit) {
                 player.displayClientMessage(Component.translatable(
                         "message.tinkersnewlife.wu_wei.too_strong", (int) Math.floor(limit)), true);
-                return;
+                return true;
             }
         }
-        int cost = (int) Math.ceil((1.0 + (output + affinity / 10.0) / 10.0) * 80.0);
-        if (!CursePowerHelper.isCurseInfinite(player)
+        // 变形咒力消耗：|(1-亲和/100) × (变成生物最大生命 - 被变形目标当前生命)|
+        int cost = morphCost(player, readFormStats(player.serverLevel(), type)[0], victim.getHealth());
+        if (cost > 0 && !CursePowerHelper.isCurseInfinite(player)
                 && CursePowerHelper.payCurseWithSoulFallback(player, cost) < 0) {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_curse"), true);
-            return;
+            return true;
         }
-
         ServerLevel level = player.serverLevel();
-        if (target instanceof ServerPlayer targetPlayer) {
+        if (victim instanceof ServerPlayer targetPlayer) {
             // 玩家目标：对方本体直接变形（限时 60s、由对方自己操控、禁工具）
             if (enterForm(targetPlayer, formId, true, REVERSE_TICKS)) {
                 targetPlayer.displayClientMessage(Component.translatable("message.tinkersnewlife.wu_wei.self",
                         formDisplayName(formId)), true);
             }
-        } else if (target instanceof Mob targetMob) {
+        } else if (victim instanceof Mob targetMob) {
             // 生物目标：永久变形（不可恢复）→ 移除原生物，生成所选生物，
             // AI 替换为"玉犬式守护 AI"（跟随/护主/近战）；死亡即真死
             ReverseMobData rd = new ReverseMobData();
@@ -517,12 +564,16 @@ public final class WuWeiHandler {
                 REVERSE_MOBS.put(fm.getUUID(), rd);
             }
         }
-        level.sendParticles(ParticleTypes.SNEEZE, target.getX(), target.getY() + target.getBbHeight() / 2, target.getZ(),
+        level.sendParticles(ParticleTypes.SNEEZE,
+                victim.getX(), victim.getY() + victim.getBbHeight() / 2, victim.getZ(),
                 20, 0.5, 0.8, 0.5, 0.02);
-        level.playSound(null, target.getX(), target.getY(), target.getZ(),
+        level.playSound(null, victim.getX(), victim.getY(), victim.getZ(),
                 SoundEvents.ILLUSIONER_CAST_SPELL, SoundSource.PLAYERS, 1.2F, 1.2F);
         player.displayClientMessage(Component.translatable("message.tinkersnewlife.wu_wei.reverse",
                 formDisplayName(formId)), true);
+        // 变形成功：关闭外放（一次性）
+        setReversal(player, false);
+        return true;
     }
 
     // ============================================================
@@ -533,6 +584,11 @@ public final class WuWeiHandler {
     @SubscribeEvent
     public static void onAttack(AttackEntityEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        // ⭐ 转变外放：开启时下一次攻击尝试把目标变形成所选生物（成功则消耗本次挥击）
+        if (isReversalActive(player) && tryAttackReversal(player, event.getTarget())) {
+            event.setCanceled(true);
+            return;
+        }
         TransformData d = TRANSFORMS.get(player.getUUID());
         if (d == null) return;
         Entity target = event.getTarget();
@@ -589,10 +645,6 @@ public final class WuWeiHandler {
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
         MinecraftServer server = event.getServer();
-        // 低频扫描：恢复服务器重启后仍存活的反转守护生物（每 10 秒一次，遍历成本可控）
-        if (++guardRescanCounter % 200 == 0) {
-            rescanGuards(server);
-        }
         if (!REVERSE_MOBS.isEmpty()) {
             Iterator<Map.Entry<UUID, ReverseMobData>> it = REVERSE_MOBS.entrySet().iterator();
             while (it.hasNext()) {
@@ -660,30 +712,29 @@ public final class WuWeiHandler {
     }
 
     /**
-     * 服务器重启恢复：反转生物带持久 owner 标记且存活 → 重新挂入守护表。
-     * 低频扫描（每 40 tick 一次，遍历各维度带标记的生物），成本可控。
+     * 反转守护生物重挂：带 owner 持久标记的生物每次进入世界（服务器重启读档 / 区块重新加载）
+     * 时自动重新注册进守护表并清掉重建的原生 AI——永久变形跨重启保留。
+     * （比按超大 AABB 遍历实体安全：坐标范围受世界区块限制，不会溢出实体分区块键）
      */
-    private static int guardRescanCounter = 0;
-
-    private static void rescanGuards(MinecraftServer server) {
-        for (ServerLevel level : server.getAllLevels()) {
-            for (Mob mob : level.getEntitiesOfClass(Mob.class, net.minecraft.world.phys.AABB
-                    .ofSize(level.getSharedSpawnPos().getCenter(), 1.0E9, 1.0E9, 1.0E9))) {
-                if (!mob.getPersistentData().contains(KEY_GUARD_OWNER)) continue;
-                if (REVERSE_MOBS.containsKey(mob.getUUID())) continue;
-                // 重新挂入守护（清掉可能的原生 AI，保持守护形态）
-                mob.goalSelector.removeAllGoals(g -> true);
-                mob.targetSelector.removeAllGoals(g -> true);
-                UUID ownerId = mob.getPersistentData().getUUID(KEY_GUARD_OWNER);
-                ReverseMobData rd = new ReverseMobData();
-                rd.ownerId = ownerId;
-                rd.formId = mob.getId();
-                rd.restPos = mob.position();
-                rd.restYRot = mob.getYRot();
-                rd.restXRot = mob.getXRot();
-                REVERSE_MOBS.put(mob.getUUID(), rd);
-            }
+    @SubscribeEvent
+    public static void onEntityJoinLevel(EntityJoinLevelEvent event) {
+        if (event.getLevel().isClientSide) return;
+        if (!(event.getEntity() instanceof Mob mob)) return;
+        if (!mob.getPersistentData().contains(KEY_GUARD_OWNER)) return;
+        // 重载后原生 AI 会随构造器重建：再次清空，保持"玉犬式守护"（不自走/不主动攻击/不逃散）
+        mob.goalSelector.removeAllGoals(g -> true);
+        mob.targetSelector.removeAllGoals(g -> true);
+        UUID ownerId = mob.getPersistentData().getUUID(KEY_GUARD_OWNER);
+        ReverseMobData rd = REVERSE_MOBS.get(mob.getUUID());
+        if (rd == null) {
+            rd = new ReverseMobData();
+            REVERSE_MOBS.put(mob.getUUID(), rd);
         }
+        rd.ownerId = ownerId;
+        rd.formId = mob.getId();
+        rd.restPos = mob.position();
+        rd.restYRot = mob.getYRot();
+        rd.restXRot = mob.getXRot();
     }
 
     /** 玉犬式守护 AI：跟随主人、追击主人目标/伤害主人的实体、近战攻击（等价式神玉犬行为） */

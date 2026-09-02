@@ -231,6 +231,10 @@ public class ClientEventHandler {
             if (KeyBindings.SWITCH_TECHNIQUE.get().consumeClick()) {
                 TinkersNewlife.CHANNEL.sendToServer(new PacketSwitchTechnique());
             }
+            // ✅ 无为转变：P 键打开形态选择界面
+            if (KeyBindings.OPEN_WU_WEI.get().consumeClick()) {
+                TinkersNewlife.CHANNEL.sendToServer(new com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiOpenGui());
+            }
             // ✅ 术式按键已移至 onClientTick（按下/松开边沿检测，支撑蓄力术式）
         }
     }

@@ -67,6 +67,13 @@ public class KeyBindings {
             KEY_CATEGORY
     ));
 
+    // ✅ 无为转变：形态选择界面（P 键）
+    public static final Lazy<KeyMapping> OPEN_WU_WEI = Lazy.of(() -> new KeyMapping(
+            "key.tinkersnewlife.open_wu_wei",
+            GLFW.GLFW_KEY_P,
+            KEY_CATEGORY
+    ));
+
     @SubscribeEvent
     public static void register(RegisterKeyMappingsEvent event) {
         event.register(USE_SKILL.get());
@@ -77,5 +84,6 @@ public class KeyBindings {
         event.register(USE_TECHNIQUE.get()); // 确保注册
         event.register(SWITCH_TECHNIQUE.get()); // 确保注册
         event.register(REVERSE_TECHNIQUE.get()); // 确保注册
+        event.register(OPEN_WU_WEI.get()); // 确保注册
     }
 }

@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * 无为转变 形态选择界面：
  * 列出玩家击杀记录中的生物（EntityType id）。点击一项 → 记录为当前形态并关闭 UI，
- * 随后按术式键 C 对自己施放顺转 / 按 F 对目标施放反转。
+ * 随后按术式键 C 对自己施放顺转 / 按 F 开启「转变外放」用下一次攻击变形目标。
  */
 public class WuWeiScreen extends Screen {
 

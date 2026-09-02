@@ -177,6 +177,10 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiSelect::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiSelect::new,
                 com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiSelect::handle);
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiOpenGui.class,
+                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiOpenGui::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiOpenGui::new,
+                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiOpenGui::handle);
         // 服务端→客户端
         registerClientPacket(PacketSyncCurse.class, PacketSyncCurse::toBytes, PacketSyncCurse::new, PacketSyncCurse::handle);
         registerClientPacket(PacketOpenShikigamiScreen.class, PacketOpenShikigamiScreen::toBytes, PacketOpenShikigamiScreen::new, PacketOpenShikigamiScreen::handle);
