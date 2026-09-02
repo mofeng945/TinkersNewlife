@@ -117,6 +117,8 @@ public final class WuWeiHandler {
             killer = sp2;
         }
         if (killer == null) return;
+        // 仅咒力核心上装有「无为转变」修饰符的玩家才记录形态（未学会术式不写入）
+        if (!hasTechnique(killer)) return;
         String id = EntityType.getKey(killed.getType()).toString();
         List<String> records = getRecords(killer);
         if (!records.contains(id) && records.size() < 200) {
