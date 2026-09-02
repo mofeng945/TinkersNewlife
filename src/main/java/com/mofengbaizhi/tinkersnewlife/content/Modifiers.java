@@ -170,4 +170,8 @@ public class Modifiers {
     /** 反转术式（术式特性，占用术式槽；含术式反转·外放） */
     public static final StaticModifier<ReverseCursedTrait> REVERSE_CURSED =
         MODIFIERS.register("reverse_cursed", ReverseCursedTrait::new);
+
+    /** 无为转变（术式特性，占用术式槽；顺转变自己/反转目标，需先击杀记录形态） */
+    public static final StaticModifier<WuWeiTrait> WU_WEI =
+        MODIFIERS.register("wu_wei", WuWeiTrait::new);
 }

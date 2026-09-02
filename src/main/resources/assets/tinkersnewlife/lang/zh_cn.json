@@ -505,6 +505,18 @@
   "message.tinkersnewlife.reverse_cursed.self": "§a反转术式：恢复 %s 点生命",
   "message.tinkersnewlife.reverse_cursed.external": "§a反转术式外放：%s 恢复 %s 点生命",
   "message.tinkersnewlife.reverse_cursed.undead": "§c反转术式外放：亡灵受到 %s 点伤害",
+  "modifier.tinkersnewlife.wu_wei": "无为转变",
+  "modifier.tinkersnewlife.wu_wei.flavor": "§7重塑灵魂的形状，生命再无定式。",
+  "modifier.tinkersnewlife.wu_wei.description": "§f按术式键（C）打开形态选择界面（击杀生物即记录该形态）；已选择后再次按 C = 顺转（自己变形成所选生物，继承其全部基础属性但不继承能力/AI，视角转移操控，再按 C 恢复人形）。按术式反转键（F）= 将视线目标（生物或玩家）变形成所选生物，60 秒后自动恢复。占用术式槽。",
+  "message.tinkersnewlife.wu_wei.self": "§b无为转变·顺转：已化身为 %s",
+  "message.tinkersnewlife.wu_wei.reverse": "§d无为转变·反转：%s 已变形（60 秒后恢复）",
+  "message.tinkersnewlife.wu_wei.revert": "§7无为转变：恢复人形",
+  "message.tinkersnewlife.wu_wei.need_select": "§e请先按术式键（C）选择要变形的生物形态",
+  "message.tinkersnewlife.wu_wei.invalid": "§c该形态无法变形",
+  "message.tinkersnewlife.wu_wei.selected": "§e形态已记录：再次按术式键（C）对自己变形，按术式反转键（F）对目标变形";
+  "screen.tinkersnewlife.wu_wei.title": "无为转变 · 形态选择",
+  "screen.tinkersnewlife.wu_wei.hint": "点击已记录的生物（击杀后记录），随后按 C 对自己变形 / 按 F 对目标变形",
+  "screen.tinkersnewlife.wu_wei.empty": "尚未记录任何生物形态——先去击杀一些生物吧";
   "item.tinkersnewlife.gourd_jail": "狱门疆",
   "item.tinkersnewlife.gourd_jail.desc": "§7右键放置：5×5 范围内停留超 5 秒的生物将被拖入狱门疆维度禁锢（对玩家也生效）。已封印后可拾取携带，仅放置者可拾取。",
   "item.tinkersnewlife.gourd_jail_sealed": "狱门疆（已封印）",

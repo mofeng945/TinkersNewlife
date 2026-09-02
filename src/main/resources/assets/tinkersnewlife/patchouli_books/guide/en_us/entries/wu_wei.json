@@ -1,0 +1,13 @@
+{
+  "name": "无为转变",
+  "category": "tinkersnewlife:techniques",
+  "icon": "tinkersnewlife:textures/gui/modifiers/wu_wei.png",
+  "sortnum": 15,
+  "advancement": "tinkersnewlife:techniques/wu_wei",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)无为转变$()：重塑灵魂的形状。$(br2)每当你$(bold)击杀$()一种生物，该生物便会$(bold)被记录$()到形态库中。$(br2)$(bold)术式键 C$()：$(li)打开$(bold)形态选择界面$()（选择已记录生物）$(li)已选择后再次按下 → $(bold)顺转$()：自己变形成该生物$(li)变形中再次按下 → $(bold)恢复人形$()$(br2)$(bold)术式反转键 F$()：将$(bold)视线目标$()（生物或玩家）变形成所选生物，$(bold)60 秒$()后自动恢复。$(br2)$(bold)变形特性$()：$(li)继承该生物的$(bold)全部基础属性$()（生命/移速/体型等）$(li)$(bold)不继承$()该生物的能力与 AI$(li)变形中视角转移至化身，可操控移动与跳跃$(li)占用术式槽。"
+    }
+  ]
+}

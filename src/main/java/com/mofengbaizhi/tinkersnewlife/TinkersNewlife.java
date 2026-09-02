@@ -153,6 +153,7 @@ public class TinkersNewlife {
         TechniqueHandler.register(WuliangCangTechnique.INSTANCE);
         TechniqueHandler.register(JacobsLadderTechnique.INSTANCE);
         TechniqueHandler.register(ReverseCursedTechnique.INSTANCE);
+        TechniqueHandler.register(com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiTechnique.INSTANCE);
 
         // 注册网络包
         registerPacket(PacketUseSkill.class, PacketUseSkill::toBytes, PacketUseSkill::new, PacketUseSkill::handle);
@@ -172,10 +173,26 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.PacketBlackBirdInput::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.PacketBlackBirdInput::new,
                 com.mofengbaizhi.tinkersnewlife.network.PacketBlackBirdInput::handle);
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiSelect.class,
+                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiSelect::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiSelect::new,
+                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiSelect::handle);
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiInput.class,
+                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiInput::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiInput::new,
+                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiInput::handle);
         // 服务端→客户端
         registerClientPacket(PacketSyncCurse.class, PacketSyncCurse::toBytes, PacketSyncCurse::new, PacketSyncCurse::handle);
         registerClientPacket(PacketOpenShikigamiScreen.class, PacketOpenShikigamiScreen::toBytes, PacketOpenShikigamiScreen::new, PacketOpenShikigamiScreen::handle);
         registerClientPacket(PacketBlackBirdCamera.class, PacketBlackBirdCamera::toBytes, PacketBlackBirdCamera::new, PacketBlackBirdCamera::handle);
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.PacketOpenWuWeiScreen.class,
+                com.mofengbaizhi.tinkersnewlife.network.PacketOpenWuWeiScreen::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.PacketOpenWuWeiScreen::new,
+                com.mofengbaizhi.tinkersnewlife.network.PacketOpenWuWeiScreen::handle);
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiControl.class,
+                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiControl::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiControl::new,
+                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiControl::handle);
         registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.PacketProjectionStun.class,
                 com.mofengbaizhi.tinkersnewlife.network.PacketProjectionStun::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.PacketProjectionStun::new,
