@@ -177,10 +177,6 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiSelect::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiSelect::new,
                 com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiSelect::handle);
-        registerPacket(com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiInput.class,
-                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiInput::toBytes,
-                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiInput::new,
-                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiInput::handle);
         // 服务端→客户端
         registerClientPacket(PacketSyncCurse.class, PacketSyncCurse::toBytes, PacketSyncCurse::new, PacketSyncCurse::handle);
         registerClientPacket(PacketOpenShikigamiScreen.class, PacketOpenShikigamiScreen::toBytes, PacketOpenShikigamiScreen::new, PacketOpenShikigamiScreen::handle);
@@ -189,10 +185,10 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.PacketOpenWuWeiScreen::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.PacketOpenWuWeiScreen::new,
                 com.mofengbaizhi.tinkersnewlife.network.PacketOpenWuWeiScreen::handle);
-        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiControl.class,
-                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiControl::toBytes,
-                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiControl::new,
-                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiControl::handle);
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiDisguise.class,
+                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiDisguise::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiDisguise::new,
+                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiDisguise::handle);
         registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.PacketProjectionStun.class,
                 com.mofengbaizhi.tinkersnewlife.network.PacketProjectionStun::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.PacketProjectionStun::new,

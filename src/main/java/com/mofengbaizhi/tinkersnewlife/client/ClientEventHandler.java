@@ -154,15 +154,6 @@ public class ClientEventHandler {
                         input.forwardImpulse, input.leftImpulse, input.jumping, input.shiftKeyDown,
                         player.getYRot(), player.getXRot()));
             }
-            // ⭐ 无为转变：相机绑定变形实体时，每 tick 发送玩家输入驱动其移动（含视角）
-            if (Minecraft.getInstance().cameraEntity != null
-                    && Minecraft.getInstance().cameraEntity.getId() == com.mofengbaizhi.tinkersnewlife.client.ClientWuWeiData.getControlledEntity()) {
-                net.minecraft.client.player.Input input = player.input;
-                TinkersNewlife.CHANNEL.sendToServer(new com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiInput(
-                        com.mofengbaizhi.tinkersnewlife.client.ClientWuWeiData.getControlledEntity(),
-                        input.forwardImpulse, input.leftImpulse, input.jumping,
-                        player.getYRot(), player.getXRot()));
-            }
             // ⭐ 术式按键：按下=开始（即时释放或蓄力），松开=蓄力发射
             boolean down = KeyBindings.USE_TECHNIQUE.get().isDown();
             if (down && !lastTechniqueDown) {

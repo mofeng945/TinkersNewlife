@@ -2,7 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.content.curse;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.Modifiers;
-import com.mofengbaizhi.tinkersnewlife.network.PacketBlackBirdCamera;
+import com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiDisguise;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -18,8 +18,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -43,16 +43,16 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * 无为转变 服务端核心 v2（本体直接变形）：
+ * 无为转变 服务端核心 v3（本体直接变形，不创建替身实体）：
  * <ul>
  *   <li>击杀记录：玩家击杀的生物 EntityType 记录到其持久数据（供 UI 选择形态）</li>
  *   <li>选中形态：UI 中选中的当前形态（持久数据）</li>
- *   <li>顺转（变自己）/反转（变玩家）：玩家本体隐形+无敌+跟随化身（不再原地杵着），
- *       化身实体即身体：移动/跳跃/受击均由化身承载，继承该生物全部基础属性（生命/护甲/移速/攻击力）；
- *       攻击被拦截 → 化身以继承的攻击力造成伤害；反转玩家的变形限时 60s，期间无法使用工具（右键禁用）
- *       只能空手造成基础攻击伤害</li>
- *   <li>反转（变生物）：目标被替换成所选生物并限时 60s；被变生物认施术者为主人（可驯服生物真正认主），
- *       主人受击时反击攻击者（护主）</li>
+ *   <li>顺转（变自己）/反转（变玩家）：玩家本体直接变形成所选生物——修改玩家自身属性
+ *       （生命上限/护甲/移速/攻击力）继承该生物数值，攻击被拦截按生物攻击力造成伤害；
+ *       客户端经 RenderPlayerEvent 把该玩家渲染成目标生物外观（无替身实体）</li>
+ *   <li>反转（变生物）：目标生物被替换成所选生物并限时 60s；认施术者为主人（可驯服生物真正认主），
+ *       主人受击时护主反击</li>
+ *   <li>反转玩家（forced）变形期间无法使用工具（右键禁用），只能空手造成基础伤害</li>
  * </ul>
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -75,27 +75,27 @@ public final class WuWeiHandler {
 
     /** 变形中的玩家数据 */
     private static final class TransformData {
-        UUID playerId;            // 被变形玩家（本体跟随者 = 控制者）
-        int formId;               // 化身实体 id
-        Vec3 formPos;             // 上次化身位置（本体跟随用）
+        UUID playerId;            // 被变形玩家
+        String formId;            // 形态 EntityType 注册名
         int remaining = -1;       // 反转限时（-1 = 顺转无限）
         boolean forcedByOther;    // 是否被他人反转（限时 + 禁工具）
-        // 输入缓存
-        float inputZza, inputXxa;
-        boolean inputJump;
-        float inputYRot, inputXRot;
-        // 原玩家数值（结束变形后恢复本体用，本体本身不改属性，此处存原隐形/无敌状态即可）
-        boolean wasInvisible;
+        // 继承数值（来自所选生物的默认属性）
+        float maxHealth, armor, toughness, speed, attack;
+        // 原玩家属性值（恢复用）
+        double origMaxHealth, origArmor, origToughness, origSpeed, origAttack;
+        float origHealth;
+        // 已广播伪装的标志（用于重置）
+        boolean disguiseSent = false;
     }
 
     /** 反转生物数据 */
     private static final class ReverseMobData {
-        UUID ownerId;             // 施术者（主人）
-        int formId;               // 当前化身实体 id
+        UUID ownerId;
+        int formId;
         Vec3 restPos;
         float restYRot, restXRot;
         int remaining = REVERSE_TICKS;
-        CompoundTag revertNbt;    // 原生物 NBT
+        CompoundTag revertNbt;
     }
 
     // ============================================================
@@ -171,17 +171,15 @@ public final class WuWeiHandler {
         return TRANSFORMS.containsKey(player.getUUID());
     }
 
-    /** 该变形是否为"被他人反转"（限时 + 禁工具） */
     public static boolean isForcedTransform(ServerPlayer player) {
         TransformData d = TRANSFORMS.get(player.getUUID());
         return d != null && d.forcedByOther;
     }
 
-    /** 当前化身实体（可失效） */
-    public static Entity getFormEntity(ServerPlayer player) {
+    /** 变形玩家当前形态（空 = 未变形） */
+    public static String getFormOf(ServerPlayer player) {
         TransformData d = TRANSFORMS.get(player.getUUID());
-        if (d == null) return null;
-        return findEntity(player.serverLevel().getServer(), d.formId);
+        return d != null ? d.formId : "";
     }
 
     public static void endTransformPublic(ServerPlayer player) {
@@ -192,43 +190,39 @@ public final class WuWeiHandler {
         endTransform(player, true);
     }
 
-    /** 结束玩家变形：移除化身、恢复本体（回到化身当前位置） */
+    /** 结束变形：恢复玩家原属性与生命，撤销伪装 */
     private static void endTransform(ServerPlayer player, boolean keepSelected) {
         TransformData d = TRANSFORMS.remove(player.getUUID());
         if (d == null) return;
-        ServerLevel level = player.serverLevel();
-        Entity form = findEntity(level.getServer(), d.formId);
-        Vec3 back = form != null ? form.position() : (d.formPos != null ? d.formPos : player.position());
-        if (form != null) form.discard();
-        // 本体恢复：出现在化身位置、恢复可视与可交互
-        player.setInvisible(false);
-        player.setInvulnerable(false);
-        player.setNoGravity(false);
-        player.noPhysics = false;
-        player.setDeltaMovement(Vec3.ZERO);
-        player.teleportTo(back.x, back.y, back.z);
+        restoreAttributes(player, d);
         if (!keepSelected) setSelected(player, "");
-        sendCameraReset(player);
+        broadcastDisguise(player, "");
         player.displayClientMessage(Component.translatable("message.tinkersnewlife.wu_wei.revert"), true);
     }
 
-    private static void sendCameraReset(ServerPlayer player) {
-        TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-                new PacketBlackBirdCamera(0, false));
-        TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-                new com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiControl(0));
+    private static void restoreAttributes(ServerPlayer player, TransformData d) {
+        setAttr(player, Attributes.MAX_HEALTH, d.origMaxHealth);
+        player.setHealth((float) Math.min(d.origHealth, d.origMaxHealth));
+        setAttr(player, Attributes.ARMOR, d.origArmor);
+        setAttr(player, Attributes.ARMOR_TOUGHNESS, d.origToughness);
+        setAttr(player, Attributes.MOVEMENT_SPEED, d.origSpeed);
+        setAttr(player, Attributes.ATTACK_DAMAGE, d.origAttack);
     }
 
-    /** 输入（客户端相机绑定化身期间发送） */
-    public static void setInput(ServerPlayer player, int entityId, float zza, float xxa, boolean jump,
-                                float yRot, float xRot) {
-        TransformData d = TRANSFORMS.get(player.getUUID());
-        if (d == null || d.formId != entityId) return;
-        d.inputZza = zza;
-        d.inputXxa = xxa;
-        d.inputJump = jump;
-        d.inputYRot = yRot;
-        d.inputXRot = xRot;
+    private static void setAttr(LivingEntity e, net.minecraft.world.entity.ai.attributes.Attribute attr, double v) {
+        AttributeInstance inst = e.getAttribute(attr);
+        if (inst != null) inst.setBaseValue(v);
+    }
+
+    private static double getAttr(LivingEntity e, net.minecraft.world.entity.ai.attributes.Attribute attr) {
+        AttributeInstance inst = e.getAttribute(attr);
+        return inst != null ? inst.getBaseValue() : 0;
+    }
+
+    /** 向所有在线玩家广播某玩家的伪装状态（formId 空 = 解除） */
+    private static void broadcastDisguise(ServerPlayer disguised, String formId) {
+        TinkersNewlife.CHANNEL.send(PacketDistributor.ALL.noArg(),
+                new PacketWuWeiDisguise(disguised.getUUID(), formId));
     }
 
     /** 玩家死亡/登出清理 */
@@ -247,56 +241,76 @@ public final class WuWeiHandler {
     }
 
     // ============================================================
-    //  变形核心（顺转自己 / 反转玩家 共用）
+    //  变形核心（本体直接变形：改玩家属性 + 客户端伪装渲染）
     // ============================================================
 
+    /** 读取所选生物的默认五维（创建临时实例读属性后立即丢弃，不进入世界） */
+    private static float[] readFormStats(ServerLevel level, EntityType<?> type) {
+        float[] stats = new float[5]; // maxHealth, armor, toughness, speed, attack
+        Entity sample = null;
+        try {
+            sample = type.create(level);
+        } catch (Exception ignored) {
+        }
+        if (sample instanceof LivingEntity living) {
+            stats[0] = (float) getAttr(living, Attributes.MAX_HEALTH);
+            stats[1] = (float) getAttr(living, Attributes.ARMOR);
+            stats[2] = (float) getAttr(living, Attributes.ARMOR_TOUGHNESS);
+            stats[3] = (float) getAttr(living, Attributes.MOVEMENT_SPEED);
+            stats[4] = (float) getAttr(living, Attributes.ATTACK_DAMAGE);
+        }
+        if (stats[0] <= 0) stats[0] = 20;
+        if (stats[3] <= 0) stats[3] = 0.25F;
+        if (stats[4] <= 0) stats[4] = 1;
+        return stats;
+    }
+
     /**
-     * 让玩家进入变形：本体隐形无敌，生成所选生物化身，视角转移到化身。
-     * 本体每 tick 跟随化身位置（不留在原地）。
+     * 让玩家直接变形：记录原属性 → 套用生物属性（生命上限/护甲/移速/攻击力）→ 广播伪装。
+     * 玩家本体即身体：正常移动/受击/交互；攻击由 AttackEntityEvent 拦截按生物攻击力。
      */
     private static boolean enterForm(ServerPlayer player, String formId, boolean forced, int remaining) {
         EntityType<?> type = EntityType.byString(formId).orElse(null);
         if (type == null) return false;
         ServerLevel level = player.serverLevel();
-        Entity form = type.create(level);
-        if (!(form instanceof Mob mob)) {
-            player.displayClientMessage(Component.translatable("message.tinkersnewlife.wu_wei.invalid"), true);
-            return false;
-        }
+        float[] stats = readFormStats(level, type);
+
         // 先解除已有变形
         if (TRANSFORMS.containsKey(player.getUUID())) endTransform(player, true);
 
         TransformData d = new TransformData();
         d.playerId = player.getUUID();
+        d.formId = formId;
         d.remaining = remaining;
         d.forcedByOther = forced;
-        d.wasInvisible = player.isInvisible();
+        d.maxHealth = stats[0];
+        d.armor = stats[1];
+        d.toughness = stats[2];
+        d.speed = stats[3];
+        d.attack = stats[4];
+        // 保存玩家原值（含当前生命，恢复时按比例）
+        d.origMaxHealth = getAttr(player, Attributes.MAX_HEALTH);
+        d.origHealth = player.getHealth();
+        d.origArmor = getAttr(player, Attributes.ARMOR);
+        d.origToughness = getAttr(player, Attributes.ARMOR_TOUGHNESS);
+        d.origSpeed = getAttr(player, Attributes.MOVEMENT_SPEED);
+        d.origAttack = getAttr(player, Attributes.ATTACK_DAMAGE);
 
-        // 化身即身体：清 AI（不继承能力），保留该生物全部默认属性（生命/护甲/移速/攻击）
-        mob.setNoAi(true);
-        mob.goalSelector.removeAllGoals(g -> true);
-        mob.targetSelector.removeAllGoals(g -> true);
-        mob.setPersistenceRequired();
-        // 本体的隐形/无敌/无物理，避免双身
-        player.setInvisible(true);
-        player.setInvulnerable(true);
-        player.setNoGravity(true);
-        player.noPhysics = true;
-        player.setDeltaMovement(Vec3.ZERO);
-        Vec3 spawn = player.position();
-        mob.moveTo(spawn.x, spawn.y, spawn.z, player.getYRot(), player.getXRot());
-        level.addFreshEntity(mob);
-        d.formId = mob.getId();
-        d.formPos = spawn;
+        // 套用生物属性
+        double ratio = d.origMaxHealth > 0 ? player.getHealth() / d.origMaxHealth : 1.0;
+        setAttr(player, Attributes.MAX_HEALTH, stats[0]);
+        player.setHealth((float) (stats[0] * ratio));
+        setAttr(player, Attributes.ARMOR, stats[1]);
+        setAttr(player, Attributes.ARMOR_TOUGHNESS, stats[2]);
+        setAttr(player, Attributes.MOVEMENT_SPEED, stats[3]);
+        setAttr(player, Attributes.ATTACK_DAMAGE, stats[4]);
         TRANSFORMS.put(player.getUUID(), d);
 
-        TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-                new PacketBlackBirdCamera(mob.getId(), true));
-        TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-                new com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiControl(mob.getId()));
-        level.sendParticles(ParticleTypes.SNEEZE, spawn.x, spawn.y + 1, spawn.z,
+        // 广播伪装（其他客户端把该玩家渲染成生物）
+        broadcastDisguise(player, formId);
+        level.sendParticles(ParticleTypes.SNEEZE, player.getX(), player.getY() + 1, player.getZ(),
                 16, 0.6, 1.0, 0.6, 0.02);
-        level.playSound(null, spawn.x, spawn.y, spawn.z,
+        level.playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.ILLUSIONER_MIRROR_MOVE, SoundSource.PLAYERS, 1.0F, 1.0F);
         return true;
     }
@@ -379,7 +393,7 @@ public final class WuWeiHandler {
 
         ServerLevel level = player.serverLevel();
         if (target instanceof ServerPlayer targetPlayer) {
-            // 玩家目标：对方也进入变形（限时 60s、由对方自己操控、禁工具）
+            // 玩家目标：对方本体直接变形（限时 60s、由对方自己操控、禁工具）
             if (enterForm(targetPlayer, formId, true, REVERSE_TICKS)) {
                 targetPlayer.displayClientMessage(Component.translatable("message.tinkersnewlife.wu_wei.self",
                         formDisplayName(formId)), true);
@@ -408,7 +422,6 @@ public final class WuWeiHandler {
                 level.addFreshEntity(fm);
                 rd.formId = fm.getId();
                 REVERSE_MOBS.put(fm.getUUID(), rd);
-                fm.setTarget(null);
             }
         }
         level.sendParticles(ParticleTypes.SNEEZE, target.getX(), target.getY() + target.getBbHeight() / 2, target.getZ(),
@@ -423,43 +436,31 @@ public final class WuWeiHandler {
     //  攻击 / 工具拦截（变形玩家）
     // ============================================================
 
-    /**
-     * 变形玩家攻击 → 取消原玩家攻击，改为化身以"继承的生物攻击力"造成伤害。
-     * 反转玩家（forced）只能空手造成基础伤害（本就以生物攻击力计算）。
-     */
+    /** 变形玩家攻击：取消默认攻击，改为按生物攻击力造成伤害（玩家本体仍是攻击者） */
     @SubscribeEvent
     public static void onAttack(AttackEntityEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         TransformData d = TRANSFORMS.get(player.getUUID());
         if (d == null) return;
         Entity target = event.getTarget();
-        Entity form = findEntity(player.serverLevel().getServer(), d.formId);
-        if (target == null || target == player || target == form || !(target instanceof LivingEntity living)) {
+        if (!(target instanceof LivingEntity living) || target == player) {
             event.setCanceled(true);
             return;
         }
         event.setCanceled(true);
-        // 化身攻击力（继承生物属性；无攻击力属性则 1）
-        float dmg = 1.0F;
-        if (form instanceof Mob mob) {
-            var attr = mob.getAttribute(Attributes.ATTACK_DAMAGE);
-            dmg = attr != null ? (float) attr.getValue() : 1.0F;
-            if (dmg <= 0.01F) dmg = 1.0F;
-        }
-        // 施术者伤害强化（核心特性）应用于化身攻击
+        float dmg = d.attack;
         dmg = (float) com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper
                 .applyCurseCoreTraits(player, living, dmg);
         living.invulnerableTime = 0;
         DamageSource src = player.damageSources().playerAttack(player);
         living.hurt(src, dmg);
         com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper.afterCurseCoreHit(player, living, dmg);
-        // 命中粒子
-        ServerLevel level = player.serverLevel();
-        level.sendParticles(ParticleTypes.CRIT, living.getX(), living.getY() + living.getBbHeight() / 2, living.getZ(),
+        player.serverLevel().sendParticles(ParticleTypes.CRIT,
+                living.getX(), living.getY() + living.getBbHeight() / 2, living.getZ(),
                 6, 0.2, 0.2, 0.2, 0.1);
     }
 
-    /** 反转玩家（forced）变形期间禁用一切右键（工具/食物/方块） */
+    /** 反转玩家（forced）变形期间禁用右键（工具/食物/方块） */
     @SubscribeEvent
     public static void onRightClick(PlayerInteractEvent.RightClickItem event) {
         if (!(event.getEntity() instanceof ServerPlayer sp)) return;
@@ -481,24 +482,20 @@ public final class WuWeiHandler {
         for (ReverseMobData rd : REVERSE_MOBS.values()) {
             if (!rd.ownerId.equals(owner.getUUID())) continue;
             Entity form = findEntity(server, rd.formId);
-            if (form instanceof Mob mob && mob.isAlive()) {
-                // 距离较近才反击
-                if (mob.distanceToSqr(aggro) < 32.0 * 32.0) {
-                    mob.setTarget(aggro);
-                }
+            if (form instanceof Mob mob && mob.isAlive() && mob.distanceToSqr(aggro) < 32.0 * 32.0) {
+                mob.setTarget(aggro);
             }
         }
     }
 
     // ============================================================
-    //  服务端 tick：驱动化身 + 本体跟随 + 反转倒计时 + 护主清理
+    //  服务端 tick：反转倒计时 / 变形属性维持
     // ============================================================
 
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
         MinecraftServer server = event.getServer();
-        // 反转生物倒计时 / 化身存活检查
         if (!REVERSE_MOBS.isEmpty()) {
             Iterator<Map.Entry<UUID, ReverseMobData>> it = REVERSE_MOBS.entrySet().iterator();
             while (it.hasNext()) {
@@ -506,7 +503,6 @@ public final class WuWeiHandler {
                 if (tickReverseMob(server, e.getValue())) it.remove();
             }
         }
-        // 玩家变形驱动
         if (!TRANSFORMS.isEmpty()) {
             Iterator<Map.Entry<UUID, TransformData>> it = TRANSFORMS.entrySet().iterator();
             while (it.hasNext()) {
@@ -524,17 +520,10 @@ public final class WuWeiHandler {
         return null;
     }
 
-    /** 驱动玩家化身；返回 true = 应结束变形 */
+    /** 玩家变形：反转限时倒计时；玩家死亡则清理 */
     private static boolean tickPlayerForm(MinecraftServer server, TransformData d) {
-        Entity form = findEntity(server, d.formId);
         ServerPlayer player = server.getPlayerList().getPlayer(d.playerId);
         if (player == null || !player.isAlive()) return true;
-        if (form == null || !form.isAlive()) {
-            // 化身死亡 → 变形被打断，恢复本体
-            endTransform(player, true);
-            return true;
-        }
-        // 反转限时
         if (d.remaining > 0) {
             d.remaining--;
             if (d.remaining <= 0) {
@@ -542,13 +531,12 @@ public final class WuWeiHandler {
                 return true;
             }
         }
-        // 本体跟随化身（不留在原地）
-        d.formPos = form.position();
-        player.setInvisible(true);
-        player.setInvulnerable(true);
-        player.noPhysics = true;
-        player.teleportTo(form.getX(), form.getY(), form.getZ());
-        driveForm(form, d);
+        // 属性持续维持（防装备/药水覆盖），本体正常
+        setAttr(player, Attributes.MAX_HEALTH, d.maxHealth);
+        setAttr(player, Attributes.ARMOR, d.armor);
+        setAttr(player, Attributes.ARMOR_TOUGHNESS, d.toughness);
+        setAttr(player, Attributes.MOVEMENT_SPEED, d.speed);
+        setAttr(player, Attributes.ATTACK_DAMAGE, d.attack);
         return false;
     }
 
@@ -561,7 +549,6 @@ public final class WuWeiHandler {
             restoreMob(server, rd);
             return true;
         }
-        // 无主人或主人死亡 → 提前还原
         ServerPlayer owner = server.getPlayerList().getPlayer(rd.ownerId);
         if (owner == null || !owner.isAlive()) {
             if (form != null) form.discard();
@@ -588,45 +575,6 @@ public final class WuWeiHandler {
             revived.moveTo(at.x, at.y, at.z, rd.restYRot, rd.restXRot);
             level.addFreshEntity(revived);
         }
-    }
-
-    /** 驱动化身移动（继承其基础移速；跳跃 0.42） */
-    private static void driveForm(Entity form, TransformData d) {
-        if (!(form instanceof Mob mob)) return;
-        mob.setYRot(d.inputYRot);
-        mob.yBodyRot = d.inputYRot;
-        mob.yHeadRot = d.inputYRot;
-        mob.setXRot(d.inputXRot);
-        Vec3 look = mob.getViewVector(1.0F);
-        Vec3 flat = new Vec3(look.x, 0, look.z);
-        if (flat.lengthSqr() < 1e-6) flat = new Vec3(0, 0, 1);
-        flat = flat.normalize();
-        Vec3 side = new Vec3(flat.z, 0, -flat.x).normalize();
-        // 继承生物基础移速
-        double speed = 0.25;
-        var spAttr = mob.getAttribute(Attributes.MOVEMENT_SPEED);
-        if (spAttr != null) speed = spAttr.getValue();
-        if (speed < 0.05) speed = 0.25;
-        Vec3 motion = Vec3.ZERO;
-        if (d.inputZza != 0) motion = motion.add(flat.scale(d.inputZza * speed * 3.0));
-        if (d.inputXxa != 0) motion = motion.add(side.scale(d.inputXxa * speed * 3.0 * 0.7));
-        double vy = mob.getDeltaMovement().y;
-        if (d.inputJump) {
-            if (mob.onGround()) {
-                vy = 0.42;
-            } else {
-                vy += 0.2;
-                if (vy > 0.8) vy = 0.8;
-            }
-        } else if (!mob.onGround()) {
-            vy -= 0.08;
-            if (vy < -1.5) vy = -1.5;
-        } else {
-            vy = 0;
-        }
-        mob.setDeltaMovement(motion.x, vy, motion.z);
-        mob.move(MoverType.SELF, mob.getDeltaMovement());
-        mob.fallDistance = 0;
     }
 
     // ============================================================
