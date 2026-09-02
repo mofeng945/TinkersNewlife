@@ -384,11 +384,10 @@ public class MomoMerchant extends PathfinderMob {
         offers.clear();
         RandomSource random = this.getRandom();
 
-        // 1-2：咒具池任选两个
+        // 1-2：咒具池任选两个（天逆鉾 / 狱门疆[未封印]；结界碎片不算咒具）
         List<Item> cursedTools = new ArrayList<>();
         cursedTools.add(ModItems.TIAN_NI_HUO.get());
         cursedTools.add(ModItems.GOURD_JAIL.get());
-        cursedTools.add(ModItems.BOUNDARY_FRAGMENT.get());
         Collections.shuffle(cursedTools, new java.util.Random(random.nextInt()));
         offers.add(new Offer(new ItemStack(cursedTools.get(0)), 10 + random.nextInt(11)));   // 10-20
         offers.add(new Offer(new ItemStack(cursedTools.get(1)), 10 + random.nextInt(11)));
@@ -787,14 +786,15 @@ public class MomoMerchant extends PathfinderMob {
         }
         if (--wanderTimer > 0) return false;
         if (homePos == null) homePos = this.blockPosition();
-        for (int tries = 0; tries < 4; tries++) {
+        for (int tries = 0; tries < 8; tries++) {
             double angle = this.random.nextDouble() * Math.PI * 2.0;
             double radius = this.random.nextDouble() * WANDER_RADIUS;
             BlockPos col = new BlockPos(
                     homePos.getX() + (int) Math.round(Math.cos(angle) * radius),
-                    homePos.getY(),
+                    this.blockPosition().getY(), // 以当前所在高度为基准
                     homePos.getZ() + (int) Math.round(Math.sin(angle) * radius));
-            BlockPos goal = groundCell(col);
+            // 目标点被方块覆盖无法抵达 → y+1 继续向上，直到找到可抵达点
+            BlockPos goal = ascendToReachable(col);
             if (goal == null) continue;
             List<BlockPos> p = aStarPath(this.blockPosition(), goal);
             if (p != null && !p.isEmpty()) {
@@ -805,6 +805,18 @@ public class MomoMerchant extends PathfinderMob {
         }
         wanderTimer = 60; // 找不到路，稍后再试
         return false;
+    }
+
+    /** 从该列 base 高度开始：若被方块覆盖（不可站立）则 y+1 向上，直到找到可抵达格 */
+    private BlockPos ascendToReachable(BlockPos base) {
+        int maxY = Math.min(base.getY() + 12, this.level().getMaxBuildHeight() - 3);
+        for (int y = Math.max(base.getY(), this.level().getMinBuildHeight() + 2); y <= maxY; y++) {
+            BlockPos cell = new BlockPos(base.getX(), y, base.getZ());
+            if (isWalkableCell(cell)) {
+                return cell;
+            }
+        }
+        return null;
     }
 
     // ============================================================
