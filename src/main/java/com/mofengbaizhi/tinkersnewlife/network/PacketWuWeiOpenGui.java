@@ -1,6 +1,8 @@
 package com.mofengbaizhi.tinkersnewlife.network;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import com.mofengbaizhi.tinkersnewlife.content.Modifiers;
+import com.mofengbaizhi.tinkersnewlife.content.curse.TechniqueHandler;
 import com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiHandler;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -11,7 +13,8 @@ import java.util.function.Supplier;
 
 /**
  * 客户端→服务端：P 键请求打开 无为转变 形态选择界面。
- * 服务端校验已拥有术式后，下发击杀记录列表并打开 UI（S2C: PacketOpenWuWeiScreen）。
+ * ⭐ 仅在当前选中的术式是「无为转变」时才下发击杀记录列表并打开 UI（S2C: PacketOpenWuWeiScreen）；
+ * 否则静默返回（不提示任何消息）。
  */
 public class PacketWuWeiOpenGui {
 
@@ -25,9 +28,8 @@ public class PacketWuWeiOpenGui {
         ctx.get().enqueueWork(() -> {
             ServerPlayer player = ctx.get().getSender();
             if (player == null) return;
-            if (!WuWeiHandler.hasTechnique(player)) {
-                player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
-                        "message.tinkersnewlife.domain.no_core"), true);
+            // 未切换到无为转变术式 → 静默返回
+            if (!Modifiers.WU_WEI.getId().equals(TechniqueHandler.getSelectedTechniqueId(player))) {
                 return;
             }
             TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
