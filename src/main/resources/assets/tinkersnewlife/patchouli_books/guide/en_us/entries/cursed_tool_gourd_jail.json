@@ -1,0 +1,18 @@
+{
+  "name": "狱门疆",
+  "category": "tinkersnewlife:cursed_tools",
+  "icon": "tinkersnewlife:gourd_jail",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:gourd_jail",
+      "text": "$(bold)狱门疆$()$(br2)传说级咒具。$(bold)右键地面放置$()为一个小立方体实体（空闲形态）。若有生物进入它周围 $(bold)5×5$() 范围并$(bold)持续停留超过 5 秒$()，将被$(bold)拖入狱门疆维度$()禁锢——$(bold)对玩家同样生效$()。$(br2)狱门疆维度空无一物，且$(bold)禁用任何主动传送$()。每个狱门疆绑定一个坐标，以坐标为中心生成$(bold)半径 20 格的空心基岩球体$()，将被拖入的生物传送至坐标禁锢其中；坐标之间至少相距 50 格。"
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:gourd_jail_sealed",
+      "text": "拖入一个生物后，狱门疆转换为$(bold)已封印形态$()（新纹理），不再封印其他生物。$(br2)两种形态均可$(bold)右键拾取回手中$()或$(bold)右键放置$()在地上——$(bold)仅放置者$()可拾取；封印/空闲形态在物品栏与手中纹理不同。$(br2)$(bold)释放$()：$(bold)天逆鉾右键已封印的狱门疆$()或$(bold)雅各布天梯照射$()已封印的狱门疆，可破坏狱门疆并释放其中被封印的实体；释放后球笼被清除、坐标解放。"
+    }
+  ]
+}

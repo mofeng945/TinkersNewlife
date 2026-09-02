@@ -6,7 +6,7 @@
     "pages":  [
                   {
                       "type":  "patchouli:text",
-                      "text":  "本模组加入的匠魂工具与武器，均可通过$(bold)匠魂工匠站 / 部件制作台$()打造（由对应部件 + 手柄组合而成）。点击查看每个工具的获取与玩法：$(li)$(l:tools/tool_war_scythe)战镰$()：高攻击大范围，积攒狂热（Fever）冲刺与终极斩击$(li)$(l:tools/tool_flying_sword)飞剑$()：右键发射追踪飞剑，可切换追击模式，装备脚部饰栏获得飞行$(li)$(l:tools/tool_yo_yo)悠悠球$()：发射旋转球体持续输出后飞回$(li)$(l:tools/tool_silent_glove)噤默手套$()：空手自动取武器，扩充戒指槽位$(li)$(l:tools/tool_dragon_staff)驯龙杖$()：驯服 / 回收 / 释放冰火传说之龙$(li)$(l:tools/tool_modular_staff)模块化魔杖$()：近战 + 增幅咒术伤害$(li)$(l:tools/tool_durandal_sword)杜兰达尔之剑$()：传说级永不损坏之剑$(br2)$(bold)咒具$()（原版武器逻辑，独立分类）：$(l:cursed_tools/tool_tian_ni_huo)天逆鉾$() 等见「$(l:cursed_tools)咒具$()」分类。$(br2)部件：$(bold)龙魂核心 / 法术核心$() 见 $(l:basics/core)咒力核心$() 章节。"
+                      "text":  "本模组加入的匠魂工具与武器，均可通过$(bold)匠魂工匠站 / 部件制作台$()打造（由对应部件 + 手柄组合而成）。点击查看每个工具的获取与玩法：$(li)$(l:tools/tool_war_scythe)战镰$()：高攻击大范围，积攒狂热（Fever）冲刺与终极斩击$(li)$(l:tools/tool_flying_sword)飞剑$()：右键发射追踪飞剑，可切换追击模式，装备脚部饰栏获得飞行$(li)$(l:tools/tool_yo_yo)悠悠球$()：发射旋转球体持续输出后飞回$(li)$(l:tools/tool_silent_glove)噤默手套$()：空手自动取武器，扩充戒指槽位$(li)$(l:tools/tool_dragon_staff)驯龙杖$()：驯服 / 回收 / 释放冰火传说之龙$(li)$(l:tools/tool_modular_staff)模块化魔杖$()：近战 + 增幅咒术伤害$(li)$(l:tools/tool_durandal_sword)杜兰达尔之剑$()：传说级永不损坏之剑$(br2)$(bold)咒具$()（原版武器逻辑，独立分类）：$(l:cursed_tools/tool_tian_ni_huo)天逆鉾$()、$(l:cursed_tools/cursed_tool_gourd_jail)狱门疆$() 等见「$(l:cursed_tools)咒具$()」分类。$(br2)部件：$(bold)龙魂核心 / 法术核心$() 见 $(l:basics/core)咒力核心$() 章节。"
                   }
               ]
 }

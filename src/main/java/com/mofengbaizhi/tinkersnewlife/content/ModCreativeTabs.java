@@ -126,6 +126,7 @@ public class ModCreativeTabs {
 
                                 // ----- 咒具 -----
                                 output.accept(ModItems.TIAN_NI_HUO.get());
+                                output.accept(ModItems.GOURD_JAIL.get());
                                 output.accept(ModItems.BOUNDARY_FRAGMENT.get());
                             })
                             .build()

@@ -51,6 +51,10 @@ public class ClientEventHandler {
             net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(
                     com.mofengbaizhi.tinkersnewlife.content.ModBlocks.BLOOD_REDSTONE.get(),
                     net.minecraft.client.renderer.RenderType.cutout());
+            // ⭐ 狱门疆视觉方块（实体渲染载体）：占位贴图含透明，走 cutout
+            net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(
+                    com.mofengbaizhi.tinkersnewlife.content.ModBlocks.GOURD_JAIL_VISUAL.get(),
+                    net.minecraft.client.renderer.RenderType.cutout());
             LOGGER.debug("[TinkersNewlife] 所有 GUI 屏幕已注册");
         });
     }
@@ -107,6 +111,9 @@ public class ClientEventHandler {
         // 雅各布天梯 法阵：纯粒子视觉，占位渲染器
         event.registerEntityRenderer(ModEntities.JACOB_LADDER.get(),
                 com.mofengbaizhi.tinkersnewlife.client.renderer.JacobLadderRenderer::new);
+        // 狱门疆：小立方体
+        event.registerEntityRenderer(ModEntities.GOURD_JAIL.get(),
+                com.mofengbaizhi.tinkersnewlife.client.renderer.GourdJailRenderer::new);
     }
 
     // ========== Forge 事件（按键等） ==========

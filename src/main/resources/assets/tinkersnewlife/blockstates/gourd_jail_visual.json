@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "sealed=false": { "model": "tinkersnewlife:block/gourd_jail_idle" },
+    "sealed=true": { "model": "tinkersnewlife:block/gourd_jail_sealed" }
+  }
+}

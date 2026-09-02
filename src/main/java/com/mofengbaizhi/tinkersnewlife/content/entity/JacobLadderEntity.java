@@ -145,6 +145,18 @@ public class JacobLadderEntity extends Entity {
                 applySealTo(sp);
             }
         }
+        // ⭐ 雅各布天梯照射已封印的狱门疆 → 破坏并释放其中被封印的实体
+        for (com.mofengbaizhi.tinkersnewlife.content.gourd.GourdJailEntity jail :
+                server.getEntitiesOfClass(com.mofengbaizhi.tinkersnewlife.content.gourd.GourdJailEntity.class,
+                        new AABB(getX() - r, getY() - 100, getZ() - r, getX() + r, getY() + 1, getZ() + r))) {
+            if (jail.isSealed()) {
+                double dx = jail.getX() - getX();
+                double dz = jail.getZ() - getZ();
+                if (dx * dx + dz * dz <= r * r) {
+                    jail.releasePrisonerAndDestroy();
+                }
+            }
+        }
     }
 
     /** 对目标施加封印：60 秒禁用术式/领域 + 瞬间终止持续咒术 */

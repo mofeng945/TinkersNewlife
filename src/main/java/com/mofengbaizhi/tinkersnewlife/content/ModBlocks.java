@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.content;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.block.BloodRedstoneBlock;
 import com.mofengbaizhi.tinkersnewlife.content.block.DomainBarrierBlock;
+import com.mofengbaizhi.tinkersnewlife.content.block.GourdJailVisualBlock;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -56,4 +57,8 @@ public class ModBlocks {
     /** 血液（红石粉外观）：伏魔御厨子斩击留下的血泊，无战利品表 → 挖掉无掉落，无物品形态 */
     public static final RegistryObject<Block> BLOOD_REDSTONE = BLOCKS.register("blood_redstone",
             () -> new BloodRedstoneBlock());
+
+    /** 狱门疆视觉方块：仅作为狱门疆实体的模型渲染载体（方块模型+贴图），无物品形态、不会真实生成 */
+    public static final RegistryObject<Block> GOURD_JAIL_VISUAL = BLOCKS.register("gourd_jail_visual",
+            () -> new GourdJailVisualBlock());
 }

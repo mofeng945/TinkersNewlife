@@ -267,4 +267,14 @@ public class ModItems {
             ITEMS.register("tian_ni_huo", () -> new TianNiHuoItem(new Item.Properties()
                     .stacksTo(1)
                     .fireResistant()));
+
+    /** 狱门疆（空闲形态）：放置后 5×5 范围停留超 5s 的生物被拖入狱门疆维度 */
+    public static final RegistryObject<Item> GOURD_JAIL =
+            ITEMS.register("gourd_jail", () -> new com.mofengbaizhi.tinkersnewlife.content.gourd.GourdJailItem(
+                    new Item.Properties().stacksTo(1), false));
+
+    /** 狱门疆（已封印形态）：携带被封印实体与球笼坐标 */
+    public static final RegistryObject<Item> GOURD_JAIL_SEALED =
+            ITEMS.register("gourd_jail_sealed", () -> new com.mofengbaizhi.tinkersnewlife.content.gourd.GourdJailItem(
+                    new Item.Properties().stacksTo(1), true));
 }
