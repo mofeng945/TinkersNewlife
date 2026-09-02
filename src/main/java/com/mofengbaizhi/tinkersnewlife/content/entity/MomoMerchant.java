@@ -696,20 +696,23 @@ public class MomoMerchant extends PathfinderMob {
         }
     }
 
-    /** 空闲主逻辑：货币吸引优先，其次无玩家时游走；有玩家站定待客 */
+    /** 空闲主逻辑：货币吸引优先；否则默认持续游走（近身玩家时才站定待客） */
     private void tickIdle() {
         tickAmbientVoice();
 
         boolean moving = tickCurrencyLure();
-
-        Player nearest = this.level().getNearestPlayer(this, 16.0);
-        if (nearest == null) {
-            if (!moving) {
+        if (!moving) {
+            Player nearest = this.level().getNearestPlayer(this, 16.0);
+            if (nearest != null && this.distanceTo(nearest) <= 2.5) {
+                // 近身（可交互距离）：站定看玩家，方便交易
+                this.getLookControl().setLookAt(nearest, 10.0F, 10.0F);
+            } else {
+                // 周围有玩家也默认游走；附近无玩家时才触发亡灵狩猎
                 tickWanderPath();
+                if (nearest == null) {
+                    tickUndeadHunt();
+                }
             }
-            tickUndeadHunt();
-        } else if (!moving) {
-            this.getLookControl().setLookAt(nearest, 10.0F, 10.0F);
         }
         // 复位逃跑标记
         if (this.getHealth() >= this.getMaxHealth() * 0.15f) {
@@ -786,13 +789,17 @@ public class MomoMerchant extends PathfinderMob {
         }
         if (--wanderTimer > 0) return false;
         if (homePos == null) homePos = this.blockPosition();
+        // 锚点：附近有玩家 → 在玩家周围小范围踱步；无玩家 → 生成点 20 格内游走
+        Player near = this.level().getNearestPlayer(this, 16.0);
+        BlockPos center = near != null ? near.blockPosition() : homePos;
+        double radius = near != null ? 6.0 : WANDER_RADIUS;
         for (int tries = 0; tries < 8; tries++) {
             double angle = this.random.nextDouble() * Math.PI * 2.0;
-            double radius = this.random.nextDouble() * WANDER_RADIUS;
+            double r = this.random.nextDouble() * radius;
             BlockPos col = new BlockPos(
-                    homePos.getX() + (int) Math.round(Math.cos(angle) * radius),
+                    center.getX() + (int) Math.round(Math.cos(angle) * r),
                     this.blockPosition().getY(), // 以当前所在高度为基准
-                    homePos.getZ() + (int) Math.round(Math.sin(angle) * radius));
+                    center.getZ() + (int) Math.round(Math.sin(angle) * r));
             // 目标点被方块覆盖无法抵达 → y+1 继续向上，直到找到可抵达点
             BlockPos goal = ascendToReachable(col);
             if (goal == null) continue;
