@@ -215,6 +215,8 @@ public class MomoMerchant extends PathfinderMob {
     // ===== A* 空闲寻路状态（游荡 / 货币吸引） =====
     private List<BlockPos> path = new ArrayList<>();
     private BlockPos pathGoalCell = null;
+    /** 当前路径属于货币吸引（true）还是游走（false）；清路径时按归属区分 */
+    private boolean pathIsLure = false;
     private ItemEntity lureTarget = null;
     private Vec3 lastMovePos = null;
     private int noProgressTicks = 0;
@@ -724,8 +726,12 @@ public class MomoMerchant extends PathfinderMob {
 
     /** 20 格内格赫罗斯残骸/矿石 → A* 走过去（不拾取）；返回是否还在移动 */
     private boolean tickCurrencyLure() {
-        if (++currencyProbeTimer < 10 && lureTarget != null && !path.isEmpty()) {
-            return followPath(IDLE_MOVE_SPEED);
+        if (++currencyProbeTimer < 10) {
+            // 探测冷却中：正在追货币 → 继续沿路径走；否则不动（不动游走路径）
+            if (lureTarget != null && !path.isEmpty() && pathIsLure) {
+                return followPath(IDLE_MOVE_SPEED);
+            }
+            return false;
         }
         currencyProbeTimer = 0;
         ItemEntity target = null;
@@ -741,7 +747,11 @@ public class MomoMerchant extends PathfinderMob {
             }
         }
         if (target == null) {
-            clearPath();
+            // 没有货币：只清货币路径，绝不清正在走的游走路径
+            if (pathIsLure) {
+                clearPath();
+            }
+            lureTarget = null;
             return false;
         }
         // 已到跟前：停下看货币主人
@@ -774,6 +784,7 @@ public class MomoMerchant extends PathfinderMob {
             }
             path = p;
             pathGoalCell = goal;
+            pathIsLure = true;
         }
         return followPath(IDLE_MOVE_SPEED);
     }
@@ -807,6 +818,7 @@ public class MomoMerchant extends PathfinderMob {
             if (p != null && !p.isEmpty()) {
                 path = p;
                 pathGoalCell = goal;
+                pathIsLure = false;
                 return true;
             }
         }
@@ -834,6 +846,7 @@ public class MomoMerchant extends PathfinderMob {
         path.clear();
         pathGoalCell = null;
         lureTarget = null;
+        pathIsLure = false;
         lastMovePos = null;
         noProgressTicks = 0;
     }
