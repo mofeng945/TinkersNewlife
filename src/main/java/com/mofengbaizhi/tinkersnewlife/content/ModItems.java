@@ -277,4 +277,9 @@ public class ModItems {
     public static final RegistryObject<Item> GOURD_JAIL_SEALED =
             ITEMS.register("gourd_jail_sealed", () -> new com.mofengbaizhi.tinkersnewlife.content.gourd.GourdJailItem(
                     new Item.Properties().stacksTo(1), true));
+
+    /** 墨默（武器商人）刷怪蛋 */
+    public static final RegistryObject<Item> MOMO_SPAWN_EGG =
+            ITEMS.register("momo_spawn_egg", () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+                    ModEntities.MOMO_MERCHANT, 0x2F2A4A, 0xC9A6D9, new Item.Properties()));
 }

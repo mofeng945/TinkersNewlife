@@ -71,6 +71,9 @@ public class ModCreativeTabs {
                                 // ----- 矿石 -----
                                 output.accept(ModItems.GHELOTH_ORE.get());
 
+                                // ----- 墨默刷怪蛋（位于所有旧日材料之后、匠魂部件之前） -----
+                                output.accept(ModItems.MOMO_SPAWN_EGG.get());
+
                                 // ----- 所有流体桶 -----
                                 output.accept(ModFluids.GHELOTH_BLOOD.bucket.get());
                                 output.accept(ModFluids.MOLTEN_NICHOLAS_BLESSING.bucket.get());

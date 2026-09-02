@@ -114,6 +114,9 @@ public class ClientEventHandler {
         // 狱门疆：小立方体
         event.registerEntityRenderer(ModEntities.GOURD_JAIL.get(),
                 com.mofengbaizhi.tinkersnewlife.client.renderer.GourdJailRenderer::new);
+        // 墨默（武器商人）：套用玩家模型 + 玩家贴图动画
+        event.registerEntityRenderer(ModEntities.MOMO_MERCHANT.get(),
+                com.mofengbaizhi.tinkersnewlife.client.renderer.MomoMerchantRenderer::new);
     }
 
     // ========== Forge 事件（按键等） ==========

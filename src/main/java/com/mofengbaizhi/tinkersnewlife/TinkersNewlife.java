@@ -181,6 +181,10 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiOpenGui::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiOpenGui::new,
                 com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiOpenGui::handle);
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.PacketMomoBuy.class,
+                com.mofengbaizhi.tinkersnewlife.network.PacketMomoBuy::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.PacketMomoBuy::new,
+                com.mofengbaizhi.tinkersnewlife.network.PacketMomoBuy::handle);
         // 服务端→客户端
         registerClientPacket(PacketSyncCurse.class, PacketSyncCurse::toBytes, PacketSyncCurse::new, PacketSyncCurse::handle);
         registerClientPacket(PacketOpenShikigamiScreen.class, PacketOpenShikigamiScreen::toBytes, PacketOpenShikigamiScreen::new, PacketOpenShikigamiScreen::handle);
@@ -193,6 +197,10 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiDisguise::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiDisguise::new,
                 com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiDisguise::handle);
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.PacketMomoOpen.class,
+                com.mofengbaizhi.tinkersnewlife.network.PacketMomoOpen::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.PacketMomoOpen::new,
+                com.mofengbaizhi.tinkersnewlife.network.PacketMomoOpen::handle);
         registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.PacketProjectionStun.class,
                 com.mofengbaizhi.tinkersnewlife.network.PacketProjectionStun::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.PacketProjectionStun::new,
@@ -224,6 +232,7 @@ public class TinkersNewlife {
         event.put(ModEntities.SHIKIGAMI_IRON_GOLEM.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiIronGolem.createAttributes().build());
         event.put(ModEntities.BLACK_BIRD.get(), com.mofengbaizhi.tinkersnewlife.content.entity.BlackBirdEntity.createAttributes().build());
         event.put(ModEntities.PROJECTION_PHANTOM.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ProjectionPhantomEntity.createAttributes().build());
+        event.put(ModEntities.MOMO_MERCHANT.get(), com.mofengbaizhi.tinkersnewlife.content.entity.MomoMerchant.createAttributes().build());
     }
 
     // ========== Forge 事件处理 ==========

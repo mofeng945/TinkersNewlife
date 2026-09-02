@@ -200,4 +200,12 @@ public class ModEntities {
                                 com.mofengbaizhi.tinkersnewlife.content.gourd.GourdJailEntity::new, MobCategory.MISC)
                         .sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1)
                         .build(TinkersNewlife.MOD_ID + ":gourd_jail"));
+
+    /** 中立商人「墨默」（玩家模型渲染，教堂/村钟前满月刷新，售卖咒具/咒术水晶/旧日遗物） */
+    public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.MomoMerchant>> MOMO_MERCHANT =
+        ENTITIES.register("momo_merchant",
+                () -> EntityType.Builder.<com.mofengbaizhi.tinkersnewlife.content.entity.MomoMerchant>of(
+                                com.mofengbaizhi.tinkersnewlife.content.entity.MomoMerchant::new, MobCategory.CREATURE)
+                        .sized(0.6f, 1.8f).clientTrackingRange(16).updateInterval(3)
+                        .build(TinkersNewlife.MOD_ID + ":momo_merchant"));
 }

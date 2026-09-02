@@ -530,5 +530,17 @@
   "message.tinkersnewlife.gourd.sealed": "§d被拖入狱门疆！",
   "message.tinkersnewlife.gourd.released": "§d狱门疆被破坏，囚犯已释放！",
   "message.tinkersnewlife.gourd.unsealed": "§d你被释放了！",
-  "message.tinkersnewlife.gourd.no_travel": "§c狱门疆维度中无法传送！"
+  "message.tinkersnewlife.gourd.no_travel": "§c狱门疆维度中无法传送！",
+  "entity.tinkersnewlife.momo_merchant": "武器商人·墨默",
+  "item.tinkersnewlife.momo_spawn_egg": "墨默刷怪蛋",
+  "screen.tinkersnewlife.momo.title": "武器商人 · 墨默",
+  "screen.tinkersnewlife.momo.hint": "满月之夜现身于教堂（村钟）前 · 点击行购买",
+  "screen.tinkersnewlife.momo.empty": "墨默暂时没有可售商品…",
+  "screen.tinkersnewlife.momo.cat_cursed_tool": "§9[咒具]",
+  "screen.tinkersnewlife.momo.cat_crystal": "§d[咒术水晶]",
+  "screen.tinkersnewlife.momo.cat_relic": "§b[旧日遗物]",
+  "message.tinkersnewlife.momo.bought": "§a与墨默交易成功",
+  "message.tinkersnewlife.momo.insufficient": "§c货币不足：需要更多格赫罗斯残骸/矿石",
+  "message.tinkersnewlife.momo.too_far": "§c墨默离你太远了",
+  "message.tinkersnewlife.momo.gone": "§c墨默已经离开了"
 }
