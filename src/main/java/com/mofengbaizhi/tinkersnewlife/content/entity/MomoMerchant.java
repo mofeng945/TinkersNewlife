@@ -106,6 +106,82 @@ public class MomoMerchant extends PathfinderMob {
     private static final double HUNT_CHANCE = 0.1;
     private static final double HUNT_RADIUS = 10.0;
 
+    // ===== 语音防重叠（自动解析 assets 内 ogg 时长，按类别最大时长做间隔） =====
+    private static final class VoiceTimings {
+        final float ambient, hurt, death, trade;
+        VoiceTimings(float ambient, float hurt, float death, float trade) {
+            this.ambient = ambient;
+            this.hurt = hurt;
+            this.death = death;
+            this.trade = trade;
+        }
+    }
+
+    private static final VoiceTimings VOICE_TIMINGS = loadVoiceTimings();
+
+    private static VoiceTimings loadVoiceTimings() {
+        float amb = maxOgg("entity/momo/momo_ambient1.ogg",
+                "entity/momo/momo_ambient2.ogg", "entity/momo/momo_ambient3.ogg");
+        float hurt = maxOgg("entity/momo/momo_hurt1.ogg", "entity/momo/momo_hurt2.ogg");
+        float death = maxOgg("entity/momo/momo_death.ogg");
+        float trade = maxOgg("entity/momo/momo_trade.ogg");
+        return new VoiceTimings(amb, hurt, death, trade);
+    }
+
+    private static float maxOgg(String... paths) {
+        float max = 0;
+        for (String p : paths) {
+            float s = oggSeconds(p);
+            if (s > max) max = s;
+        }
+        return max;
+    }
+
+    /** 解析 OGG 时长（granule / 采样率），失败返回 0 */
+    private static float oggSeconds(String resPath) {
+        try (java.io.InputStream in = MomoMerchant.class.getResourceAsStream(
+                "/assets/tinkersnewlife/sounds/" + resPath)) {
+            if (in == null) return 0;
+            byte[] data = in.readAllBytes();
+            long maxGranule = 0;
+            int rate = 44100;
+            int i = 0;
+            while (i + 27 <= data.length) {
+                if (data[i] == 'O' && data[i + 1] == 'g' && data[i + 2] == 'g' && data[i + 3] == 'S') {
+                    long gran = 0;
+                    for (int k = 0; k < 8; k++) gran |= ((long) (data[i + 6 + k] & 0xFF)) << (8 * k);
+                    if (gran > 0) maxGranule = gran;
+                    int seg = data[i + 26] & 0xFF;
+                    int payload = i + 27 + seg;
+                    if (payload + 16 <= data.length && data[payload] == 1 && data[payload + 1] == 0x76) {
+                        int r = 0;
+                        for (int k = 0; k < 4; k++) r |= (data[payload + 12 + k] & 0xFF) << (8 * k);
+                        if (r > 0) rate = r;
+                    }
+                    int total = 0;
+                    for (int s = 0; s < seg; s++) total += data[i + 27 + s] & 0xFF;
+                    i = payload + total;
+                } else {
+                    i++;
+                }
+            }
+            return maxGranule > 0 && rate > 0 ? maxGranule / (float) rate : 0;
+        } catch (Exception ignored) {
+            return 0;
+        }
+    }
+
+    /** 上一次任意墨默语音预计结束的 tick（用于防重叠：间隔 ≥ 该类别最长语音时长） */
+    private int lastVoiceEndTick = Integer.MIN_VALUE / 2;
+
+    private boolean voiceReady() {
+        return this.tickCount >= lastVoiceEndTick;
+    }
+
+    private void voicePlayed(float seconds) {
+        this.lastVoiceEndTick = this.tickCount + (int) (seconds * 20f) + 10;
+    }
+
     private int state = S_IDLE;
     private int stateTimer = 0;
     private int comboCooldown = 0;
@@ -400,7 +476,11 @@ public class MomoMerchant extends PathfinderMob {
         if (this.getTarget() == player) return InteractionResult.PASS; // 正在反击该玩家
         ensureOffers();
         com.mofengbaizhi.tinkersnewlife.network.PacketMomoOpen.sendTo((ServerPlayer) player, this);
-        this.playSound(ModSounds.MOMO_TRADE.get(), 1.0F, 1.0F);
+        // 交易语音不与其他语音重叠（间隔 ≥ 语音时长）
+        if (voiceReady()) {
+            voicePlayed(VOICE_TIMINGS.trade);
+            this.playSound(ModSounds.MOMO_TRADE.get(), 1.0F, 1.0F);
+        }
         return InteractionResult.sidedSuccess(true);
     }
 
@@ -586,11 +666,12 @@ public class MomoMerchant extends PathfinderMob {
         }
     }
 
-    /** 商人声音（无战斗/无目标时偶尔低语） */
+    /** 商人声音（无战斗/无目标时偶尔低语；不与任意语音重叠） */
     private void tickAmbientVoice() {
         if (--ambientVoiceTimer > 0) return;
         ambientVoiceTimer = 200 + this.random.nextInt(400);
-        if (this.getTarget() == null && !this.isInWater() && !this.isDeadOrDying()) {
+        if (voiceReady() && this.getTarget() == null && !this.isInWater() && !this.isDeadOrDying()) {
+            voicePlayed(VOICE_TIMINGS.ambient);
             this.playSound(ModSounds.MOMO_AMBIENT.get(), 0.9F, 1.0F);
         }
     }
@@ -643,11 +724,13 @@ public class MomoMerchant extends PathfinderMob {
             if (p != null) {
                 this.getLookControl().setLookAt(p, 10.0F, 10.0F);
             }
-            if (this.random.nextInt(100) == 0) {
+            if (this.random.nextInt(100) == 0 && voiceReady()) {
+                voicePlayed(VOICE_TIMINGS.ambient);
                 this.playSound(ModSounds.MOMO_AMBIENT.get(), 0.8F, 1.0F);
             }
         } else {
-            this.getNavigation().moveTo(target, 1.05);
+            // 主动走过来的速度 = 攻击快速移动速度(1.35) 的 2/3
+            this.getNavigation().moveTo(target, 0.9);
         }
     }
 
@@ -666,7 +749,7 @@ public class MomoMerchant extends PathfinderMob {
         }
     }
 
-    /** 无玩家时在生成点 20 格内游走 */
+    /** 无玩家时在生成点 20 格内游走（速度 = 攻击快速移动速度 1.35 的 2/3） */
     private void tickWander() {
         if (--wanderTimer > 0) return;
         wanderTimer = 80 + this.random.nextInt(80);
@@ -675,7 +758,7 @@ public class MomoMerchant extends PathfinderMob {
         double radius = this.random.nextDouble() * WANDER_RADIUS;
         double x = homePos.getX() + 0.5 + Math.cos(angle) * radius;
         double z = homePos.getZ() + 0.5 + Math.sin(angle) * radius;
-        this.getNavigation().moveTo(x, homePos.getY(), z, 0.85);
+        this.getNavigation().moveTo(x, homePos.getY(), z, 0.9);
     }
 
     private void tickEngage() {
@@ -940,6 +1023,15 @@ public class MomoMerchant extends PathfinderMob {
     @Override
     protected SoundEvent getAmbientSound() {
         return null; // 低语由 tickAmbientVoice 控制
+    }
+
+    /** 受击语音：避免与其他语音重叠（连打时只播一次） */
+    @Override
+    protected void playHurtSound(DamageSource source) {
+        if (voiceReady()) {
+            voicePlayed(VOICE_TIMINGS.hurt);
+            super.playHurtSound(source);
+        }
     }
 
     @Override
