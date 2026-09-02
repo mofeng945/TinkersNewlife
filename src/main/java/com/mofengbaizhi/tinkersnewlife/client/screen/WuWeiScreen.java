@@ -52,8 +52,9 @@ public class WuWeiScreen extends Screen {
         scrollOffset = clampScroll(scrollOffset);
     }
 
+    /** 行在屏幕上的 y（相对滚动偏移，内容随 scrollOffset 增大而上移） */
     private int rowY(int row) {
-        return LIST_TOP + row * ROW_H;
+        return LIST_TOP + (row - scrollOffset) * ROW_H;
     }
 
     private int clampScroll(int v) {
