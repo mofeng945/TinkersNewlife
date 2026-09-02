@@ -40,13 +40,17 @@ public final class JacobsLadderTechnique extends BaseTechnique {
                     CursePowerHelper.getBurnoutRemainingSeconds(player)), true);
             return;
         }
-        // 视线索敌
+        // 视线索敌：优先生物/玩家；否则尝试锁定视线上的已封印狱门疆
         LivingEntity target = findTarget(player);
+        com.mofengbaizhi.tinkersnewlife.content.gourd.GourdJailEntity jailTarget = null;
         if (target == null) {
-            player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_target"), true);
-            return;
+            jailTarget = findSealedJail(player);
+            if (jailTarget == null) {
+                player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_target"), true);
+                return;
+            }
         }
-        if (!isTargetInRange(player, target)) {
+        if (target != null && !isTargetInRange(player, target)) {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.too_far"), true);
             return;
         }
@@ -66,10 +70,41 @@ public final class JacobsLadderTechnique extends BaseTechnique {
         double frame = (1.0 + (affinity / 10.0 + output) / 10.0) * (output * 8.0 + playerDmg) * 0.1;
         frame = amplifyTechniqueDamage(player, frame);
 
-        // 法阵中心 = 目标头顶上方 10 格
-        Vec3 pos = new Vec3(target.getX(), target.getY() + 10.0, target.getZ());
-        JacobLadderEntity ladder = new JacobLadderEntity(player.serverLevel(), pos,
-                player.getUUID(), radius, (float) Math.max(0.5, frame));
+        // 法阵中心 = 目标/狱门疆 头顶上方 10 格
+        double cx, cy, cz;
+        if (target != null) {
+            cx = target.getX(); cy = target.getY() + 10.0; cz = target.getZ();
+        } else {
+            cx = jailTarget.getX(); cy = jailTarget.getY() + 10.0; cz = jailTarget.getZ();
+        }
+        JacobLadderEntity ladder = new JacobLadderEntity(player.serverLevel(),
+                new Vec3(cx, cy, cz), player.getUUID(), radius, (float) Math.max(0.5, frame));
         player.serverLevel().addFreshEntity(ladder);
+    }
+
+    /** 视线锁定已封印狱门疆：放宽判定——视线方向 3 格内最近的已封印狱门疆即可锁定 */
+    private com.mofengbaizhi.tinkersnewlife.content.gourd.GourdJailEntity findSealedJail(ServerPlayer player) {
+        Vec3 eye = player.getEyePosition(1.0F);
+        Vec3 look = player.getLookAngle();
+        com.mofengbaizhi.tinkersnewlife.content.gourd.GourdJailEntity nearest = null;
+        double nearestScore = Double.MAX_VALUE;
+        for (com.mofengbaizhi.tinkersnewlife.content.gourd.GourdJailEntity jail :
+                player.serverLevel().getEntitiesOfClass(
+                        com.mofengbaizhi.tinkersnewlife.content.gourd.GourdJailEntity.class,
+                        player.getBoundingBox().inflate(REACH),
+                        e -> e.isSealed())) {
+            Vec3 toJail = jail.position().add(0, 0.5, 0).subtract(eye);
+            double dist = toJail.length();
+            if (dist > REACH) continue;
+            // 与视线夹角越小、距离越近越优先
+            double angle = Math.acos(Math.max(-1.0, Math.min(1.0,
+                    look.dot(toJail.normalize()))));
+            double score = angle * 2.0 + dist * 0.1;
+            if (score < nearestScore) {
+                nearestScore = score;
+                nearest = jail;
+            }
+        }
+        return nearest;
     }
 }

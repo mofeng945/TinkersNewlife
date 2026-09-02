@@ -52,6 +52,8 @@ public class JacobLadderEntity extends Entity {
     private float frameDamage = 1.0F;
     /** 已对目标施加封印的标志（避免重复终止持续术式） */
     private boolean sealedApplied = false;
+    /** 光柱期间锁定的已封印狱门疆（照射结束后碎裂释放囚犯） */
+    private UUID lockedJailId = null;
 
     public JacobLadderEntity(EntityType<?> type, Level level) {
         super(type, level);
@@ -96,6 +98,8 @@ public class JacobLadderEntity extends Entity {
             return;
         }
         if (tickCount >= CHARGE_TICKS + BEAM_TICKS) {
+            // 照射结束：先碎裂被锁定的狱门疆（释放囚犯），再消失
+            breakLockedJailAtBeamEnd(server);
             discard();
             return;
         }
@@ -108,6 +112,17 @@ public class JacobLadderEntity extends Entity {
         spawnBeamParticlesServer(server);
         if (tickCount == CHARGE_TICKS) {
             server.playSound(null, getX(), getY(), getZ(), SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 2.0F, 1.0F);
+        }
+    }
+
+    /** 光柱结束（即将消失前）：碎裂被锁定的已封印狱门疆并释放囚犯 */
+    private void breakLockedJailAtBeamEnd(ServerLevel server) {
+        if (lockedJailId == null) return;
+        Entity jail = server.getEntity(lockedJailId);
+        lockedJailId = null;
+        if (jail instanceof com.mofengbaizhi.tinkersnewlife.content.gourd.GourdJailEntity gourd
+                && gourd.isSealed()) {
+            gourd.releasePrisonerAndDestroy();
         }
     }
 
@@ -145,16 +160,41 @@ public class JacobLadderEntity extends Entity {
                 applySealTo(sp);
             }
         }
-        // ⭐ 雅各布天梯照射已封印的狱门疆 → 破坏并释放其中被封印的实体
-        for (com.mofengbaizhi.tinkersnewlife.content.gourd.GourdJailEntity jail :
-                server.getEntitiesOfClass(com.mofengbaizhi.tinkersnewlife.content.gourd.GourdJailEntity.class,
-                        new AABB(getX() - r, getY() - 100, getZ() - r, getX() + r, getY() + 1, getZ() + r))) {
-            if (jail.isSealed()) {
+        // ⭐ 雅各布天梯照射已封印的狱门疆 → 锁定（照射结束才碎裂释放，见 breakLockedJailAtBeamEnd）
+        // 已锁定目标失效（被拾取/消失/非封印态）则清除，允许重新锁定
+        if (lockedJailId != null) {
+            Entity locked = server.getEntity(lockedJailId);
+            if (!(locked instanceof com.mofengbaizhi.tinkersnewlife.content.gourd.GourdJailEntity gj)
+                    || !gj.isSealed()) {
+                lockedJailId = null;
+            }
+        }
+        if (lockedJailId == null) {
+            com.mofengbaizhi.tinkersnewlife.content.gourd.GourdJailEntity nearest = null;
+            double nearestDist = r * r;
+            for (com.mofengbaizhi.tinkersnewlife.content.gourd.GourdJailEntity jail :
+                    server.getEntitiesOfClass(com.mofengbaizhi.tinkersnewlife.content.gourd.GourdJailEntity.class,
+                            new AABB(getX() - r, getY() - 100, getZ() - r, getX() + r, getY() + 1, getZ() + r))) {
+                if (!jail.isSealed()) continue;
                 double dx = jail.getX() - getX();
                 double dz = jail.getZ() - getZ();
-                if (dx * dx + dz * dz <= r * r) {
-                    jail.releasePrisonerAndDestroy();
+                double d = dx * dx + dz * dz;
+                if (d <= nearestDist) {
+                    nearestDist = d;
+                    nearest = jail;
                 }
+            }
+            if (nearest != null) lockedJailId = nearest.getUUID();
+        }
+        // 锁定视觉：金色粒子自光柱中心垂落到被锁定狱门疆（每 2 tick 一次）
+        if (lockedJailId != null && server.getEntity(lockedJailId)
+                instanceof com.mofengbaizhi.tinkersnewlife.content.gourd.GourdJailEntity lockedJail) {
+            Vector3f gold = new Vector3f(1.0F, 0.85F, 0.3F);
+            for (double y = getY(); y > lockedJail.getY() + 0.1; y -= 1.2) {
+                double ox = (server.random.nextDouble() - 0.5) * 0.3;
+                double oz = (server.random.nextDouble() - 0.5) * 0.3;
+                server.sendParticles(new DustParticleOptions(gold, 1.4F),
+                        lockedJail.getX() + ox, y, lockedJail.getZ() + oz, 2, 0.1, 0.1, 0.1, 0.01);
             }
         }
     }
