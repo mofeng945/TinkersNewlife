@@ -25,5 +25,11 @@
     "sounds": [
       "tinkersnewlife:entity/momo/momo_trade"
     ]
+  },
+  "entity.momo.trade_success": {
+    "subtitle": "subtitles.tinkersnewlife.entity.momo.trade_success",
+    "sounds": [
+      "tinkersnewlife:entity/momo/momo_ambient2"
+    ]
   }
 }

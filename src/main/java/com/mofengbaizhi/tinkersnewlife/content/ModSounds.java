@@ -21,6 +21,8 @@ public class ModSounds {
     public static final RegistryObject<SoundEvent> MOMO_HURT = reg("entity.momo.hurt");
     public static final RegistryObject<SoundEvent> MOMO_DEATH = reg("entity.momo.death");
     public static final RegistryObject<SoundEvent> MOMO_TRADE = reg("entity.momo.trade");
+    /** 交易成功：固定播放空闲语音 2（momo_ambient2.ogg），替换自带的村民高兴语音 */
+    public static final RegistryObject<SoundEvent> MOMO_TRADE_SUCCESS = reg("entity.momo.trade_success");
 
     private static RegistryObject<SoundEvent> reg(String name) {
         return SOUNDS.register(name,

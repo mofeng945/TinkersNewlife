@@ -105,6 +105,10 @@ public class MomoMerchant extends PathfinderMob {
     private static final int HUNT_INTERVAL = 500;
     private static final double HUNT_CHANCE = 0.1;
     private static final double HUNT_RADIUS = 10.0;
+    /** 空闲移动速度 = 攻击快速接近(1.35) 的 2/3（游荡 / 被货币吸引共用） */
+    private static final float IDLE_MOVE_SPEED = 0.9F;
+    /** A* 探索上限（防单次卡顿） */
+    private static final int ASTAR_MAX_EXPAND = 700;
 
     // ===== 语音防重叠（自动解析 assets 内 ogg 时长，按类别最大时长做间隔） =====
     private static final class VoiceTimings {
@@ -207,6 +211,15 @@ public class MomoMerchant extends PathfinderMob {
     private int ambientVoiceTimer = 0;
     private int wardenProbeTimer = 0;
     private int currencyProbeTimer = 0;
+
+    // ===== A* 空闲寻路状态（游荡 / 货币吸引） =====
+    private List<BlockPos> path = new ArrayList<>();
+    private BlockPos pathGoalCell = null;
+    private ItemEntity lureTarget = null;
+    private Vec3 lastMovePos = null;
+    private int noProgressTicks = 0;
+    /** 交易成功语音（空闲2）防重叠 */
+    private int tradeSuccessVoiceEnd = Integer.MIN_VALUE / 2;
 
     /** 近期攻击过她的实体（反击/大招只打这些人，不伤及无辜） */
     private final Set<UUID> aggroSet = new HashSet<>();
@@ -484,6 +497,14 @@ public class MomoMerchant extends PathfinderMob {
         return InteractionResult.sidedSuccess(true);
     }
 
+    /** 交易成功：播放固定"空闲2"语音（替代村民高兴声），只防与自身连续播放重叠 */
+    public void playTradeSuccessSound() {
+        if (level().isClientSide) return;
+        if (this.tickCount < tradeSuccessVoiceEnd) return;
+        tradeSuccessVoiceEnd = this.tickCount + (int) (VOICE_TIMINGS.ambient * 20f) + 10;
+        this.playSound(ModSounds.MOMO_TRADE_SUCCESS.get(), 1.0F, 1.0F);
+    }
+
     // ============================================================
     //  战斗辅助（伤害/范围）
     // ============================================================
@@ -676,22 +697,21 @@ public class MomoMerchant extends PathfinderMob {
         }
     }
 
+    /** 空闲主逻辑：货币吸引优先，其次无玩家时游走；有玩家站定待客 */
     private void tickIdle() {
-        this.getNavigation().stop();
         tickAmbientVoice();
 
-        // 附近有玩家：站定看玩家（商人待客）
+        boolean moving = tickCurrencyLure();
+
         Player nearest = this.level().getNearestPlayer(this, 16.0);
-        if (nearest != null) {
+        if (nearest == null) {
+            if (!moving) {
+                tickWanderPath();
+            }
+            tickUndeadHunt();
+        } else if (!moving) {
             this.getLookControl().setLookAt(nearest, 10.0F, 10.0F);
-            // 20 格内的货币吸引：主动走向格赫罗斯残骸/矿石（及其主人）
-            tickCurrencyLure();
-            return;
         }
-        // 无玩家：在生成点附近游走（≤20 格）+ 偶尔狩猎亡灵
-        tickCurrencyLure();
-        tickUndeadHunt();
-        tickWander();
         // 复位逃跑标记
         if (this.getHealth() >= this.getMaxHealth() * 0.15f) {
             fleeTriggered = false;
@@ -700,9 +720,11 @@ public class MomoMerchant extends PathfinderMob {
         }
     }
 
-    /** 20 格内格赫罗斯残骸/矿石 → 走过去（不拾取） */
-    private void tickCurrencyLure() {
-        if (++currencyProbeTimer < 10) return;
+    /** 20 格内格赫罗斯残骸/矿石 → A* 走过去（不拾取）；返回是否还在移动 */
+    private boolean tickCurrencyLure() {
+        if (++currencyProbeTimer < 10 && lureTarget != null && !path.isEmpty()) {
+            return followPath(IDLE_MOVE_SPEED);
+        }
         currencyProbeTimer = 0;
         ItemEntity target = null;
         double best = WANDER_RADIUS * WANDER_RADIUS;
@@ -716,10 +738,13 @@ public class MomoMerchant extends PathfinderMob {
                 target = ie;
             }
         }
-        if (target == null) return;
-        double dist = this.distanceTo(target);
-        if (dist <= 1.6) {
-            this.getNavigation().stop();
+        if (target == null) {
+            clearPath();
+            return false;
+        }
+        // 已到跟前：停下看货币主人
+        if (this.distanceTo(target) <= 1.6) {
+            clearPath();
             Player p = this.level().getNearestPlayer(this, 8.0);
             if (p != null) {
                 this.getLookControl().setLookAt(p, 10.0F, 10.0F);
@@ -728,10 +753,211 @@ public class MomoMerchant extends PathfinderMob {
                 voicePlayed(VOICE_TIMINGS.ambient);
                 this.playSound(ModSounds.MOMO_AMBIENT.get(), 0.8F, 1.0F);
             }
-        } else {
-            // 主动走过来的速度 = 攻击快速移动速度(1.35) 的 2/3
-            this.getNavigation().moveTo(target, 0.9);
+            return false;
         }
+        if (lureTarget != target) {
+            lureTarget = target;
+            clearPath();
+        }
+        BlockPos goal = groundCell(target.blockPosition());
+        if (goal == null) {
+            clearPath();
+            return false;
+        }
+        if (path.isEmpty() || !goal.equals(pathGoalCell)) {
+            List<BlockPos> p = aStarPath(this.blockPosition(), goal);
+            if (p == null) {
+                clearPath();
+                return false;
+            }
+            path = p;
+            pathGoalCell = goal;
+        }
+        return followPath(IDLE_MOVE_SPEED);
+    }
+
+    /** 无玩家时在生成点 20 格内游走（A* 寻路）；返回是否在移动 */
+    private boolean tickWanderPath() {
+        if (!path.isEmpty()) {
+            boolean moving = followPath(IDLE_MOVE_SPEED);
+            if (!moving) {
+                wanderTimer = 100 + this.random.nextInt(140); // 走完一段歇一会
+            }
+            return moving;
+        }
+        if (--wanderTimer > 0) return false;
+        if (homePos == null) homePos = this.blockPosition();
+        for (int tries = 0; tries < 4; tries++) {
+            double angle = this.random.nextDouble() * Math.PI * 2.0;
+            double radius = this.random.nextDouble() * WANDER_RADIUS;
+            BlockPos col = new BlockPos(
+                    homePos.getX() + (int) Math.round(Math.cos(angle) * radius),
+                    homePos.getY(),
+                    homePos.getZ() + (int) Math.round(Math.sin(angle) * radius));
+            BlockPos goal = groundCell(col);
+            if (goal == null) continue;
+            List<BlockPos> p = aStarPath(this.blockPosition(), goal);
+            if (p != null && !p.isEmpty()) {
+                path = p;
+                pathGoalCell = goal;
+                return true;
+            }
+        }
+        wanderTimer = 60; // 找不到路，稍后再试
+        return false;
+    }
+
+    // ============================================================
+    //  A* 地面寻路（游荡 / 货币吸引专用；战斗仍用原版导航快速接近）
+    // ============================================================
+
+    private void clearPath() {
+        path.clear();
+        pathGoalCell = null;
+        lureTarget = null;
+        lastMovePos = null;
+        noProgressTicks = 0;
+    }
+
+    /** 该格可作为站立格：脚下是完整方块、身体两格内无碰撞、非流体 */
+    private boolean isWalkableCell(int x, int y, int z) {
+        if (y < this.level().getMinBuildHeight() + 1 || y > this.level().getMaxBuildHeight() - 3) return false;
+        BlockPos below = new BlockPos(x, y - 1, z);
+        if (!this.level().getBlockState(below).isCollisionShapeFullBlock(this.level(), below)) return false;
+        BlockPos here = new BlockPos(x, y, z);
+        if (!this.level().getFluidState(here).isEmpty() || !this.level().getFluidState(here.above()).isEmpty()) {
+            return false;
+        }
+        AABB body = new AABB(x + 0.01, y, z + 0.01, x + 0.99, y + 1.9, z + 0.99);
+        return this.level().noCollision(body);
+    }
+
+    private boolean isWalkableCell(BlockPos p) {
+        return isWalkableCell(p.getX(), p.getY(), p.getZ());
+    }
+
+    /** 在 p 所在列上下找到可站立格（先下探再上探），找不到返回 null */
+    private BlockPos groundCell(BlockPos p) {
+        int y = Math.max(this.level().getMinBuildHeight() + 2, p.getY());
+        for (int dy = 0; dy <= 6 && y - dy >= this.level().getMinBuildHeight() + 2; dy++) {
+            if (isWalkableCell(p.getX(), y - dy, p.getZ())) {
+                return new BlockPos(p.getX(), y - dy, p.getZ());
+            }
+        }
+        for (int dy = 1; dy <= 4 && y + dy <= this.level().getMaxBuildHeight() - 3; dy++) {
+            if (isWalkableCell(p.getX(), y + dy, p.getZ())) {
+                return new BlockPos(p.getX(), y + dy, p.getZ());
+            }
+        }
+        return null;
+    }
+
+    /** 沿当前 A* 路径前进（MoveControl 平滑转向）；返回是否仍在移动 */
+    private boolean followPath(float speed) {
+        if (path.isEmpty()) return false;
+        if (lastMovePos != null) {
+            double moved = lastMovePos.distanceToSqr(this.position());
+            if (moved < 0.02 * 0.02) {
+                if (++noProgressTicks > 60) {
+                    clearPath();
+                    return false;
+                }
+            } else {
+                noProgressTicks = 0;
+            }
+        }
+        lastMovePos = this.position();
+        while (!path.isEmpty()) {
+            BlockPos wp = path.get(0);
+            double dx = wp.getX() + 0.5 - this.getX();
+            double dz = wp.getZ() + 0.5 - this.getZ();
+            if (dx * dx + dz * dz < 0.35 * 0.35) {
+                path.remove(0);
+                continue;
+            }
+            // 下一节点高一格：接近时起跳
+            if (wp.getY() > this.getY() + 0.1 && this.onGround()) {
+                this.getJumpControl().jump();
+            }
+            this.getMoveControl().setWantedPosition(wp.getX() + 0.5, this.getY(), wp.getZ() + 0.5, speed);
+            return true;
+        }
+        return false;
+    }
+
+    private static final class ANode {
+        final long key;
+        final BlockPos pos;
+        final double g;
+        final double f;
+        final long came;
+        ANode(long key, BlockPos pos, double g, double f, long came) {
+            this.key = key;
+            this.pos = pos;
+            this.g = g;
+            this.f = f;
+            this.came = came;
+        }
+    }
+
+    private static double hCost(BlockPos a, BlockPos b) {
+        int dx = Math.abs(a.getX() - b.getX());
+        int dz = Math.abs(a.getZ() - b.getZ());
+        int dy = Math.abs(a.getY() - b.getY());
+        return Math.max(dx, dz) + (1.41421356 - 1.0) * Math.min(dx, dz) + dy;
+    }
+
+    /** A*：从 start（站立格）到 goal（站立格），返回路径节点（不含起点）；失败返回 null */
+    private List<BlockPos> aStarPath(BlockPos start, BlockPos goal) {
+        if (!isWalkableCell(goal)) return null;
+        java.util.HashMap<Long, ANode> open = new java.util.HashMap<>();
+        java.util.HashSet<Long> closed = new java.util.HashSet<>();
+        java.util.PriorityQueue<ANode> queue = new java.util.PriorityQueue<>(
+                (a, b) -> a.f == b.f ? Double.compare(a.g, b.g) : Double.compare(a.f, b.f));
+        long startKey = start.asLong();
+        ANode s = new ANode(startKey, start, 0, hCost(start, goal), 0);
+        open.put(startKey, s);
+        queue.add(s);
+        int expanded = 0;
+        while (!queue.isEmpty()) {
+            ANode cur = queue.poll();
+            if (closed.contains(cur.key)) continue;
+            if (cur.pos.equals(goal)) {
+                // 回溯路径
+                List<BlockPos> result = new ArrayList<>();
+                ANode node = cur;
+                while (node.came != 0) {
+                    result.add(node.pos);
+                    ANode prev = open.get(node.came);
+                    if (prev == null) break;
+                    node = prev;
+                }
+                Collections.reverse(result);
+                return result;
+            }
+            closed.add(cur.key);
+            if (++expanded > ASTAR_MAX_EXPAND) return null;
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    if (dx == 0 && dz == 0) continue;
+                    double step = (dx != 0 && dz != 0) ? 1.41421356 : 1.0;
+                    // 同高度 → 上跳一级 → 下走一级
+                    for (int dy : new int[]{0, 1, -1}) {
+                        BlockPos nb = new BlockPos(cur.pos.getX() + dx, cur.pos.getY() + dy, cur.pos.getZ() + dz);
+                        if (!isWalkableCell(nb)) continue;
+                        long key = nb.asLong();
+                        if (closed.contains(key)) continue;
+                        double g = cur.g + step;
+                        ANode old = open.get(key);
+                        if (old != null && old.g <= g) continue;
+                        ANode next = new ANode(key, nb, g, g + hCost(nb, goal), cur.key);
+                        open.put(key, next);
+                        queue.add(next);
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     /** 每 500tick 10% 概率：索敌 10 格内一只亡灵并击杀（进入交战状态由状态机处理） */
@@ -745,20 +971,9 @@ public class MomoMerchant extends PathfinderMob {
         if (undead.isEmpty()) return;
         Mob prey = undead.get(this.random.nextInt(undead.size()));
         if (this.getTarget() == null) {
+            clearPath();
             this.setTarget(prey);
         }
-    }
-
-    /** 无玩家时在生成点 20 格内游走（速度 = 攻击快速移动速度 1.35 的 2/3） */
-    private void tickWander() {
-        if (--wanderTimer > 0) return;
-        wanderTimer = 80 + this.random.nextInt(80);
-        if (homePos == null) homePos = this.blockPosition();
-        double angle = this.random.nextDouble() * Math.PI * 2.0;
-        double radius = this.random.nextDouble() * WANDER_RADIUS;
-        double x = homePos.getX() + 0.5 + Math.cos(angle) * radius;
-        double z = homePos.getZ() + 0.5 + Math.sin(angle) * radius;
-        this.getNavigation().moveTo(x, homePos.getY(), z, 0.9);
     }
 
     private void tickEngage() {

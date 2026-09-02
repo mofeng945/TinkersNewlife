@@ -44,7 +44,8 @@ public class PacketMomoBuy {
             MomoMerchant.BuyResult result = momo.buyFrom(player, packet.slot);
             switch (result) {
                 case OK -> {
-                    momo.playSound(net.minecraft.sounds.SoundEvents.VILLAGER_YES, 1.0F, 1.0F);
+                    // 交易成功：播放墨默"空闲2"语音（替换村民高兴声）
+                    momo.playTradeSuccessSound();
                     if (momo.level() instanceof net.minecraft.server.level.ServerLevel sl) {
                         sl.sendParticles(net.minecraft.core.particles.ParticleTypes.HAPPY_VILLAGER,
                                 momo.getX(), momo.getY() + 1.6, momo.getZ(), 8, 0.3, 0.3, 0.3, 0.02);
