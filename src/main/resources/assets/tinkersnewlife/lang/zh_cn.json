@@ -513,6 +513,7 @@
   "message.tinkersnewlife.wu_wei.revert": "§7无为转变：恢复人形",
   "message.tinkersnewlife.wu_wei.need_select": "§e请先按术式键（C）选择要变形的生物形态",
   "message.tinkersnewlife.wu_wei.invalid": "§c该形态无法变形",
+  "message.tinkersnewlife.wu_wei.no_tool": "§c变形期间无法使用工具，只能空手攻击";
   "message.tinkersnewlife.wu_wei.selected": "§e形态已记录：再次按术式键（C）对自己变形，按术式反转键（F）对目标变形";
   "screen.tinkersnewlife.wu_wei.title": "无为转变 · 形态选择",
   "screen.tinkersnewlife.wu_wei.hint": "点击已记录的生物（击杀后记录），随后按 C 对自己变形 / 按 F 对目标变形",
