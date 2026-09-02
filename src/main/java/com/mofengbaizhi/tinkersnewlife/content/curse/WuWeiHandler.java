@@ -67,6 +67,8 @@ public final class WuWeiHandler {
     public static final String KEY_SELECTED = "tinkersnewlife.wuwei_selected";
     /** 守护生物持久数据：主人 UUID（服务器重启后扫描恢复用） */
     public static final String KEY_GUARD_OWNER = "tinkersnewlife.wuwei_guard_owner";
+    /** 玩家持久数据：持续变形状态（无为转变 = 持续性术式，登出保留、重进自动恢复） */
+    public static final String KEY_MORPH = "tinkersnewlife.wuwei_morph";
 
     /** 变形玩家：玩家 UUID → 变形数据 */
     private static final Map<UUID, TransformData> TRANSFORMS = new HashMap<>();
@@ -192,10 +194,85 @@ public final class WuWeiHandler {
     private static void endTransform(ServerPlayer player, boolean keepSelected) {
         TransformData d = TRANSFORMS.remove(player.getUUID());
         if (d == null) return;
+        clearMorphNbt(player);
         restoreAttributes(player, d);
         if (!keepSelected) setSelected(player, "");
         broadcastDisguise(player, "");
         player.displayClientMessage(Component.translatable("message.tinkersnewlife.wu_wei.revert"), true);
+    }
+
+    // ============================================================
+    //  持续术式持久化（登出保留、重进自动恢复，同无下限·无限）
+    // ============================================================
+
+    private static final String TAG_FORM = "Form";
+    private static final String TAG_FORCED = "Forced";
+    private static final String TAG_REMAIN = "Remain";
+    private static final String TAG_ORIG_MH = "OrigMH";
+    private static final String TAG_ORIG_HP = "OrigHP";
+    private static final String TAG_ORIG_AR = "OrigAR";
+    private static final String TAG_ORIG_TO = "OrigTO";
+    private static final String TAG_ORIG_SP = "OrigSP";
+    private static final String TAG_ORIG_AT = "OrigAT";
+
+    /** 把当前变形数据写入玩家持久数据（登出后重进自动恢复） */
+    private static void saveMorphNbt(ServerPlayer player, TransformData d) {
+        var tag = new net.minecraft.nbt.CompoundTag();
+        tag.putString(TAG_FORM, d.formId);
+        tag.putBoolean(TAG_FORCED, d.forcedByOther);
+        tag.putInt(TAG_REMAIN, d.remaining);
+        tag.putDouble(TAG_ORIG_MH, d.origMaxHealth);
+        tag.putFloat(TAG_ORIG_HP, d.origHealth);
+        tag.putDouble(TAG_ORIG_AR, d.origArmor);
+        tag.putDouble(TAG_ORIG_TO, d.origToughness);
+        tag.putDouble(TAG_ORIG_SP, d.origSpeed);
+        tag.putDouble(TAG_ORIG_AT, d.origAttack);
+        player.getPersistentData().put(KEY_MORPH, tag);
+    }
+
+    private static void clearMorphNbt(ServerPlayer player) {
+        player.getPersistentData().remove(KEY_MORPH);
+    }
+
+    /** 玩家登录：若存档有变形状态（持续术式），自动恢复变形 */
+    @SubscribeEvent
+    public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        var persistent = player.getPersistentData();
+        if (!persistent.contains(KEY_MORPH)) return;
+        var tag = persistent.getCompound(KEY_MORPH);
+        String formId = tag.getString(TAG_FORM);
+        if (formId.isEmpty()) {
+            clearMorphNbt(player);
+            return;
+        }
+        // 恢复内存态（属性无需重设：属性已随玩家存档为生物数值）
+        TransformData d = new TransformData();
+        d.playerId = player.getUUID();
+        d.formId = formId;
+        d.forcedByOther = tag.getBoolean(TAG_FORCED);
+        d.remaining = tag.getInt(TAG_REMAIN);
+        d.origMaxHealth = tag.getDouble(TAG_ORIG_MH);
+        d.origHealth = tag.getFloat(TAG_ORIG_HP);
+        d.origArmor = tag.getDouble(TAG_ORIG_AR);
+        d.origToughness = tag.getDouble(TAG_ORIG_TO);
+        d.origSpeed = tag.getDouble(TAG_ORIG_SP);
+        d.origAttack = tag.getDouble(TAG_ORIG_AT);
+        // 重新读取当前生物形态数值（玩家属性现已是生物值）
+        float[] stats = readFormStats(player.serverLevel(), EntityType.byString(formId).orElse(null));
+        if (stats == null) {
+            clearMorphNbt(player);
+            return;
+        }
+        d.maxHealth = stats[0];
+        d.armor = stats[1];
+        d.toughness = stats[2];
+        d.speed = stats[3];
+        d.attack = stats[4];
+        TRANSFORMS.put(player.getUUID(), d);
+        broadcastDisguise(player, formId);
+        player.displayClientMessage(Component.translatable("message.tinkersnewlife.wu_wei.self",
+                formDisplayName(formId)), true);
     }
 
     private static void restoreAttributes(ServerPlayer player, TransformData d) {
@@ -223,7 +300,7 @@ public final class WuWeiHandler {
                 new PacketWuWeiDisguise(disguised.getUUID(), formId));
     }
 
-    /** 玩家死亡/登出清理 */
+    /** 玩家死亡：解除变形并清空选中（死亡视为脱离术式） */
     @SubscribeEvent
     public static void onPlayerDeath(LivingDeathEvent event) {
         if (event.getEntity() instanceof ServerPlayer sp) {
@@ -231,10 +308,12 @@ public final class WuWeiHandler {
         }
     }
 
+    /** 玩家登出：持续术式 → 保留变形状态（不还原属性、不清 NBT），重进自动恢复 */
     @SubscribeEvent
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer sp) {
-            endTransform(sp, true);
+            // 只停内存 tick；变形数据已在 enterForm 时写入持久 NBT
+            TRANSFORMS.remove(sp.getUUID());
         }
     }
 
@@ -303,6 +382,8 @@ public final class WuWeiHandler {
         setAttr(player, Attributes.MOVEMENT_SPEED, stats[3]);
         setAttr(player, Attributes.ATTACK_DAMAGE, stats[4]);
         TRANSFORMS.put(player.getUUID(), d);
+        // 持续术式：变形状态写入玩家持久数据（登出保留、重进自动恢复）
+        saveMorphNbt(player, d);
 
         // 广播伪装（其他客户端把该玩家渲染成生物）
         broadcastDisguise(player, formId);
