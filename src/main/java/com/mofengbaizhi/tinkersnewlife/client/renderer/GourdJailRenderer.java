@@ -20,9 +20,13 @@ import net.minecraft.world.level.block.state.BlockState;
  *   <li>空闲形态：sealed=false → 暗紫贴图</li>
  *   <li>已封印：sealed=true → 金褐贴图</li>
  *   <li>封印动画中：模型随时间收缩（配合目标处收束粒子），结束定格已封印形态</li>
+ *   <li>实体边长 0.25（模型 1×1×1 缩放至四分之一，底立在脚下、水平居中）</li>
  * </ul>
  */
 public class GourdJailRenderer extends EntityRenderer<GourdJailEntity> {
+
+    /** 实体边长（模型缩放目标） */
+    private static final float EDGE = 0.25F;
 
     public GourdJailRenderer(EntityRendererProvider.Context context) {
         super(context);
@@ -34,27 +38,23 @@ public class GourdJailRenderer extends EntityRenderer<GourdJailEntity> {
         BlockState state = ModBlocks.GOURD_JAIL_VISUAL.get().defaultBlockState()
                 .setValue(GourdJailVisualBlock.SEALED, entity.isSealed());
 
-        // 封印动画进度：模型收缩（客户端 anim 由 entityData 同步）
-        float scale = 1.0F;
+        // 封印动画进度：额外收缩（客户端 anim 由 entityData 同步）
+        float animScale = 1.0F;
         int anim = entity.getAnim();
         if (!entity.isSealed() && anim > 0 && anim < GourdJailEntity.SEAL_TICKS) {
             float prog = Math.min(1.0F, anim / (float) GourdJailEntity.SEAL_TICKS);
             // 前 2/3 保持完整，后 1/3 快速收缩至消失
             if (prog > 2.0F / 3.0F) {
-                scale = Math.max(0.05F, 1.0F - (prog - 2.0F / 3.0F) * 3.0F);
+                animScale = Math.max(0.05F, 1.0F - (prog - 2.0F / 3.0F) * 3.0F);
             }
         }
+        float s = EDGE * animScale;
 
         BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
         poseStack.pushPose();
-        // 实体位置为脚底中心：方块模型 (0..1)³ → 平移使底在脚下、水平居中
-        poseStack.translate(-0.5D, 0.0D, -0.5D);
-        if (scale < 1.0F) {
-            // 绕方块中心收缩
-            poseStack.translate(0.5D, 0.5D, 0.5D);
-            poseStack.scale(scale, scale, scale);
-            poseStack.translate(-0.5D, -0.5D, -0.5D);
-        }
+        // 实体位置为脚底中心：把 1×1×1 模型缩放至 s×s×s 并水平居中（底 y=0..s）
+        poseStack.translate(-s / 2.0D, 0.0D, -s / 2.0D);
+        poseStack.scale(s, s, s);
         dispatcher.renderSingleBlock(state, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
         poseStack.popPose();
     }

@@ -248,14 +248,15 @@ public class GourdJailEntity extends Entity {
         sealTargetPos = null;
     }
 
-    /** 释放：玩家 → 清除球笼 + 传送回狱门疆位置；生物 → 狱门疆位置重新生成 */
+    /** 释放：玩家 → 清除球笼 + 传送回狱门疆位置；生物 → 狱门疆位置重新生成；随后狱门疆碎裂消失 */
     public void releasePrisonerAndDestroy() {
         if (level().isClientSide || state != 2) {
+            breakGlassFx();
             discard();
             return;
         }
         ServerLevel server = (ServerLevel) level();
-        Vec3 at = position().add(0, 0.5, 0);
+        Vec3 at = position().add(0, 0.125, 0);
         if (isPlayerPrisoner() && prisonerId != null) {
             GourdJailHandler.releasePlayerFromDimension(server.getServer(), cagePos, prisonerId, server, at);
         } else if (prisonerNbt != null) {
@@ -275,8 +276,20 @@ public class GourdJailEntity extends Entity {
                 }
             }
         }
-        server.playSound(null, getX(), getY(), getZ(), SoundEvents.WOODEN_DOOR_OPEN, SoundSource.PLAYERS, 1.0F, 1.0F);
+        breakGlassFx();
         discard();
+    }
+
+    /** 狱门疆碎裂：玻璃破碎音效 + 玻璃方块破坏粒子 */
+    private void breakGlassFx() {
+        if (level().isClientSide) return;
+        ServerLevel server = (ServerLevel) level();
+        server.sendParticles(new net.minecraft.core.particles.BlockParticleOption(
+                        net.minecraft.core.particles.ParticleTypes.BLOCK,
+                        net.minecraft.world.level.block.Blocks.GLASS.defaultBlockState()),
+                getX(), getY() + 0.125, getZ(), 24, 0.35, 0.35, 0.35, 0.15);
+        server.playSound(null, getX(), getY(), getZ(), SoundEvents.GLASS_BREAK,
+                SoundSource.BLOCKS, 1.0F, 0.9F + random.nextFloat() * 0.3F);
     }
 
     // 小实体：无碰撞推动、不可被攻击，但可被选中交互

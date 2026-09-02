@@ -193,11 +193,11 @@ public class ModEntities {
                         .sized(0.1f, 0.1f).clientTrackingRange(64).updateInterval(1)
                         .build(TinkersNewlife.MOD_ID + ":jacob_ladder"));
 
-    /** 狱门疆（放置在地面的立方体咒具实体，边长 1.0） */
+    /** 狱门疆（放置在地面的立方体咒具实体，边长 0.25） */
     public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.gourd.GourdJailEntity>> GOURD_JAIL =
         ENTITIES.register("gourd_jail",
                 () -> EntityType.Builder.<com.mofengbaizhi.tinkersnewlife.content.gourd.GourdJailEntity>of(
                                 com.mofengbaizhi.tinkersnewlife.content.gourd.GourdJailEntity::new, MobCategory.MISC)
-                        .sized(1.0f, 1.0f).clientTrackingRange(64).updateInterval(1)
+                        .sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1)
                         .build(TinkersNewlife.MOD_ID + ":gourd_jail"));
 }
