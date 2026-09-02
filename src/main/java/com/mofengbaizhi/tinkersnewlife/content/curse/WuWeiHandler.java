@@ -5,9 +5,7 @@ import com.mofengbaizhi.tinkersnewlife.content.Modifiers;
 import com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiDisguise;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -60,17 +58,19 @@ public final class WuWeiHandler {
 
     private WuWeiHandler() {}
 
-    /** 变形限时（反转用）：60 秒 */
+    /** 变形限时（反转玩家用）：60 秒（反转生物为永久变形，不受此限制） */
     private static final int REVERSE_TICKS = 60 * 20;
 
     /** 玩家持久数据：已记录（击杀过）的形态 id 列表 */
     public static final String KEY_RECORDS = "tinkersnewlife.wuwei_records";
     /** 玩家持久数据：当前选中形态（EntityType 注册名，空 = 未选） */
     public static final String KEY_SELECTED = "tinkersnewlife.wuwei_selected";
+    /** 守护生物持久数据：主人 UUID（服务器重启后扫描恢复用） */
+    public static final String KEY_GUARD_OWNER = "tinkersnewlife.wuwei_guard_owner";
 
     /** 变形玩家：玩家 UUID → 变形数据 */
     private static final Map<UUID, TransformData> TRANSFORMS = new HashMap<>();
-    /** 反转生物：化身生物 uuid → 数据（含主人、待还原 NBT） */
+    /** 反转生物（永久守护）：化身生物 uuid → 数据（含主人） */
     private static final Map<UUID, ReverseMobData> REVERSE_MOBS = new HashMap<>();
 
     /** 变形中的玩家数据 */
@@ -84,18 +84,16 @@ public final class WuWeiHandler {
         // 原玩家属性值（恢复用）
         double origMaxHealth, origArmor, origToughness, origSpeed, origAttack;
         float origHealth;
-        // 已广播伪装的标志（用于重置）
-        boolean disguiseSent = false;
     }
 
-    /** 反转生物数据 */
+    /** 反转生物（永久守护）数据 */
     private static final class ReverseMobData {
         UUID ownerId;
         int formId;
         Vec3 restPos;
         float restYRot, restXRot;
-        int remaining = REVERSE_TICKS;
-        CompoundTag revertNbt;
+        /** 玉犬式攻击冷却（tick） */
+        int attackCooldown = 0;
     }
 
     // ============================================================
@@ -384,6 +382,15 @@ public final class WuWeiHandler {
         }
         int output = CursePowerHelper.getCurseOutputLevel(player);
         int affinity = CursePowerHelper.getCurseAffinity(player);
+        // ⭐ 反转生物血量门槛：目标生命上限 > 玩家血上限 × (1 + 输出/10 + 亲和/100) × 输出等级 → 失败
+        if (target instanceof Mob targetCheck) {
+            double limit = player.getMaxHealth() * (1.0 + output / 10.0 + affinity / 100.0) * output;
+            if (targetCheck.getMaxHealth() > limit) {
+                player.displayClientMessage(Component.translatable(
+                        "message.tinkersnewlife.wu_wei.too_strong", (int) Math.floor(limit)), true);
+                return;
+            }
+        }
         int cost = (int) Math.ceil((1.0 + (output + affinity / 10.0) / 10.0) * 80.0);
         if (!CursePowerHelper.isCurseInfinite(player)
                 && CursePowerHelper.payCurseWithSoulFallback(player, cost) < 0) {
@@ -399,26 +406,31 @@ public final class WuWeiHandler {
                         formDisplayName(formId)), true);
             }
         } else if (target instanceof Mob targetMob) {
-            // 生物目标：保存 NBT → 移除 → 生成所选生物，认主人 + 护主，限时还原
-            CompoundTag saved = new CompoundTag();
-            targetMob.save(saved);
-            saved.putString("id", EntityType.getKey(targetMob.getType()).toString());
+            // 生物目标：永久变形（不可恢复）→ 移除原生物，生成所选生物，
+            // AI 替换为"玉犬式守护 AI"（跟随/护主/近战）；死亡即真死
             ReverseMobData rd = new ReverseMobData();
             rd.ownerId = player.getUUID();
             rd.restPos = targetMob.position();
             rd.restYRot = targetMob.getYRot();
             rd.restXRot = targetMob.getXRot();
-            rd.revertNbt = saved;
             targetMob.discard();
             Entity form = type.create(level);
             if (form instanceof Mob fm) {
                 fm.moveTo(rd.restPos.x, rd.restPos.y, rd.restPos.z, rd.restYRot, rd.restXRot);
                 fm.setPersistenceRequired();
                 fm.setHealth(fm.getMaxHealth());
-                // 认主：可驯服生物真正认主（狼/猫/鹦鹉等护主反击天然生效）
+                // 认主：可驯服生物真正认主（狼/猫/鹦鹉等），其余记录主人 UUID
                 if (fm instanceof TamableAnimal tame) {
                     tame.tame(player);
                 }
+                // ⭐ AI 替换为玉犬式守护：清空目标生物原生 AI（不自走/不主动攻击/不逃散）
+                fm.goalSelector.removeAllGoals(g -> true);
+                fm.targetSelector.removeAllGoals(g -> true);
+                fm.setCustomName(Component.translatable("entity." + formId.replace(':', '.')).copy()
+                        .append(Component.literal("(守护)")));
+                fm.setCustomNameVisible(false);
+                // owner 持久标记：服务器重启后经扫描恢复守护 AI（永久变形）
+                fm.getPersistentData().putUUID(KEY_GUARD_OWNER, player.getUUID());
                 level.addFreshEntity(fm);
                 rd.formId = fm.getId();
                 REVERSE_MOBS.put(fm.getUUID(), rd);
@@ -496,6 +508,10 @@ public final class WuWeiHandler {
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
         MinecraftServer server = event.getServer();
+        // 低频扫描：恢复服务器重启后仍存活的反转守护生物（每 10 秒一次，遍历成本可控）
+        if (++guardRescanCounter % 200 == 0) {
+            rescanGuards(server);
+        }
         if (!REVERSE_MOBS.isEmpty()) {
             Iterator<Map.Entry<UUID, ReverseMobData>> it = REVERSE_MOBS.entrySet().iterator();
             while (it.hasNext()) {
@@ -540,41 +556,136 @@ public final class WuWeiHandler {
         return false;
     }
 
-    /** 反转生物倒计时与还原 */
+    /** 反转生物（永久守护）：死亡真死；主人离线则原地待命；主人在线则玉犬式守护。
+     *  返回 true = 从表中移除（仅当实体已消失/死亡）。 */
     private static boolean tickReverseMob(MinecraftServer server, ReverseMobData rd) {
         Entity form = findEntity(server, rd.formId);
-        rd.remaining--;
-        if (form == null || !form.isAlive() || rd.remaining <= 0) {
-            if (form != null) form.discard();
-            restoreMob(server, rd);
+        if (form == null || !form.isAlive()) {
+            // 变形期间死亡 / 已卸载：真死（或区块卸载后实体仍在，由扫描重挂）
+            if (form != null && !form.isAlive()) {
+                form.discard();
+            }
             return true;
         }
         ServerPlayer owner = server.getPlayerList().getPlayer(rd.ownerId);
         if (owner == null || !owner.isAlive()) {
-            if (form != null) form.discard();
-            restoreMob(server, rd);
-            return true;
+            // 主人离线/死亡：原地待命，不消失也不还原（永久变形）
+            ((Mob) form).getNavigation().stop();
+            return false;
         }
+        // 玉犬式守护 AI（每 tick 驱动）
+        driveGuardDog(server, (Mob) form, owner, rd);
         return false;
     }
 
-    private static void restoreMob(MinecraftServer server, ReverseMobData rd) {
-        if (rd.revertNbt == null || !rd.revertNbt.contains("id")) return;
-        CompoundTag tag = rd.revertNbt.copy();
-        tag.remove("UUID");
-        tag.remove("UUIDMost");
-        tag.remove("UUIDLeast");
-        ServerLevel level = server.getLevel(rd.revertNbt.contains("Dimension")
-                ? net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION,
-                new ResourceLocation(rd.revertNbt.getString("Dimension")))
-                : net.minecraft.world.level.Level.OVERWORLD);
-        if (level == null) return;
-        Entity revived = EntityType.loadEntityRecursive(tag, level, e -> e);
-        if (revived != null) {
-            Vec3 at = rd.restPos != null ? rd.restPos : Vec3.ZERO;
-            revived.moveTo(at.x, at.y, at.z, rd.restYRot, rd.restXRot);
-            level.addFreshEntity(revived);
+    /**
+     * 服务器重启恢复：反转生物带持久 owner 标记且存活 → 重新挂入守护表。
+     * 低频扫描（每 40 tick 一次，遍历各维度带标记的生物），成本可控。
+     */
+    private static int guardRescanCounter = 0;
+
+    private static void rescanGuards(MinecraftServer server) {
+        for (ServerLevel level : server.getAllLevels()) {
+            for (Mob mob : level.getEntitiesOfClass(Mob.class, net.minecraft.world.phys.AABB
+                    .ofSize(level.getSharedSpawnPos().getCenter(), 1.0E9, 1.0E9, 1.0E9))) {
+                if (!mob.getPersistentData().contains(KEY_GUARD_OWNER)) continue;
+                if (REVERSE_MOBS.containsKey(mob.getUUID())) continue;
+                // 重新挂入守护（清掉可能的原生 AI，保持守护形态）
+                mob.goalSelector.removeAllGoals(g -> true);
+                mob.targetSelector.removeAllGoals(g -> true);
+                UUID ownerId = mob.getPersistentData().getUUID(KEY_GUARD_OWNER);
+                ReverseMobData rd = new ReverseMobData();
+                rd.ownerId = ownerId;
+                rd.formId = mob.getId();
+                rd.restPos = mob.position();
+                rd.restYRot = mob.getYRot();
+                rd.restXRot = mob.getXRot();
+                REVERSE_MOBS.put(mob.getUUID(), rd);
+            }
         }
+    }
+
+    /** 玉犬式守护 AI：跟随主人、追击主人目标/伤害主人的实体、近战攻击（等价式神玉犬行为） */
+    private static void driveGuardDog(MinecraftServer server, Mob self, ServerPlayer owner, ReverseMobData rd) {
+        if (self.distanceToSqr(owner) > 256.0 * 256.0) {
+            // 过远直接传回主人身边（防丢失）
+            self.moveTo(owner.getX(), owner.getY(), owner.getZ(), owner.getYRot(), 0);
+            return;
+        }
+        if (rd.attackCooldown > 0) rd.attackCooldown--;
+        // 目标：主人最后攻击的实体 > 主人受击来源 > 主人附近对主人有敌意的生物
+        LivingEntity target = null;
+        LivingEntity lastHurt = owner.getLastHurtMob();
+        if (lastHurt != null && lastHurt.isAlive() && lastHurt != self && !isFriendlyToOwner(lastHurt, owner)) {
+            target = lastHurt;
+        }
+        if (target == null) {
+            LivingEntity lastBy = owner.getLastHurtByMob();
+            if (lastBy != null && lastBy.isAlive() && lastBy != self && !isFriendlyToOwner(lastBy, owner)) {
+                target = lastBy;
+            }
+        }
+        if (target == null) {
+            // 附近敌对生物（距离主人 24 格内最近的一个）
+            double best = 24.0 * 24.0;
+            for (LivingEntity e : self.level().getEntitiesOfClass(
+                    net.minecraft.world.entity.LivingEntity.class,
+                    net.minecraft.world.phys.AABB.ofSize(owner.position(), 48, 48, 48),
+                    e -> e.isAlive() && e != owner && e != self
+                            && e instanceof net.minecraft.world.entity.monster.Enemy
+                            && !isFriendlyToOwner(e, owner))) {
+                double d = e.distanceToSqr(owner);
+                if (d < best) {
+                    best = d;
+                    target = e;
+                }
+            }
+        }
+        if (target == null) {
+            // 无目标：跟随主人（保持 3~6 格）
+            double d = self.distanceToSqr(owner);
+            if (d > 6.0 * 6.0) {
+                self.getNavigation().moveTo(owner, 1.2);
+            } else if (d < 2.0 * 2.0) {
+                self.getNavigation().stop();
+            }
+            return;
+        }
+        // 追击目标
+        double reachSq = 2.0 * 2.0;
+        if (self.distanceToSqr(target) > reachSq) {
+            self.getNavigation().moveTo(target, 1.4);
+        } else {
+            self.getNavigation().stop();
+            self.lookAt(target, 30.0F, 30.0F);
+        }
+        // 近战攻击（玉犬扑咬：冷却 20 tick）
+        if (rd.attackCooldown <= 0 && self.distanceToSqr(target) <= reachSq) {
+            rd.attackCooldown = 20;
+            double dmg = 3.0;
+            var attr = self.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+            if (attr != null) dmg = Math.max(2.0, attr.getValue());
+            target.invulnerableTime = 0;
+            target.hurt(self.damageSources().mobAttack(self), (float) dmg);
+            // 令目标反击指向自己（原版 AI 行为）
+            if (target instanceof Mob tm && tm.getTarget() == null) {
+                tm.setTarget(self);
+            }
+            // 扑咬粒子/音效
+            ((ServerLevel) self.level()).sendParticles(ParticleTypes.DAMAGE_INDICATOR,
+                    target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(),
+                    4, 0.2, 0.2, 0.2, 0);
+        }
+    }
+
+    /** 是否与主人友好的实体（其它式神/主人自身不攻击） */
+    private static boolean isFriendlyToOwner(LivingEntity e, ServerPlayer owner) {
+        if (e == owner) return true;
+        if (e instanceof TamableAnimal tame) {
+            UUID o = tame.getOwnerUUID();
+            return o != null && o.equals(owner.getUUID());
+        }
+        return false;
     }
 
     // ============================================================
