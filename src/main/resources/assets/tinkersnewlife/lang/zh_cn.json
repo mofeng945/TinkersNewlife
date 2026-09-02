@@ -542,5 +542,9 @@
   "message.tinkersnewlife.momo.bought": "§a与墨默交易成功",
   "message.tinkersnewlife.momo.insufficient": "§c货币不足：需要更多格赫罗斯残骸/矿石",
   "message.tinkersnewlife.momo.too_far": "§c墨默离你太远了",
-  "message.tinkersnewlife.momo.gone": "§c墨默已经离开了"
+  "message.tinkersnewlife.momo.gone": "§c墨默已经离开了",
+  "subtitles.tinkersnewlife.entity.momo.ambient": "墨默：低语",
+  "subtitles.tinkersnewlife.entity.momo.hurt": "墨默：受伤",
+  "subtitles.tinkersnewlife.entity.momo.death": "墨默：倒下",
+  "subtitles.tinkersnewlife.entity.momo.trade": "墨默：招呼客人"
 }

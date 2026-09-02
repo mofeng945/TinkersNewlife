@@ -37,6 +37,12 @@ public class GorgonImmunityHandler {
 
         if (target.level().isClientSide) return;
         if (!GORGON_DAMAGE_TYPE.equals(source.getMsgId())) return;
+        // 墨默（武器商人）天生免疫蛇发女妖石化凝视
+        if (target instanceof com.mofengbaizhi.tinkersnewlife.content.entity.MomoMerchant) {
+            event.setCanceled(true);
+            removeNearbyStoneStatues(target);
+            return;
+        }
         if (!ArmorModifierHelper.hasModifierOnArmor(target, MODIFIER_ID)) return;
 
         event.setCanceled(true);
@@ -59,6 +65,10 @@ public class GorgonImmunityHandler {
 
         if (target.level().isClientSide) return;
         if (!GORGON_DAMAGE_TYPE.equals(source.getMsgId())) return;
+        if (target instanceof com.mofengbaizhi.tinkersnewlife.content.entity.MomoMerchant) {
+            removeNearbyStoneStatues(target);
+            return;
+        }
         if (!ArmorModifierHelper.hasModifierOnArmor(target, MODIFIER_ID)) return;
 
         // 不取消事件，让反伤逻辑可以执行；仅移除已生成的石像

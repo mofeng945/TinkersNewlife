@@ -506,6 +506,10 @@ public final class WuWeiHandler {
         if (victim.getPersistentData().contains(KEY_GUARD_OWNER)) {
             return false;
         }
+        // 墨默（武器商人）不受无为转变影响（外放保持）
+        if (victim instanceof com.mofengbaizhi.tinkersnewlife.content.entity.MomoMerchant) {
+            return false;
+        }
         if (victim instanceof TamableAnimal tame
                 && player.getUUID().equals(tame.getOwnerUUID())) {
             return false;

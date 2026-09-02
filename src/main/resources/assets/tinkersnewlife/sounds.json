@@ -1,0 +1,29 @@
+{
+  "entity.momo.ambient": {
+    "subtitle": "subtitles.tinkersnewlife.entity.momo.ambient",
+    "sounds": [
+      "tinkersnewlife:entity/momo/momo_ambient1",
+      "tinkersnewlife:entity/momo/momo_ambient2",
+      "tinkersnewlife:entity/momo/momo_ambient3"
+    ]
+  },
+  "entity.momo.hurt": {
+    "subtitle": "subtitles.tinkersnewlife.entity.momo.hurt",
+    "sounds": [
+      "tinkersnewlife:entity/momo/momo_hurt1",
+      "tinkersnewlife:entity/momo/momo_hurt2"
+    ]
+  },
+  "entity.momo.death": {
+    "subtitle": "subtitles.tinkersnewlife.entity.momo.death",
+    "sounds": [
+      "tinkersnewlife:entity/momo/momo_death"
+    ]
+  },
+  "entity.momo.trade": {
+    "subtitle": "subtitles.tinkersnewlife.entity.momo.trade",
+    "sounds": [
+      "tinkersnewlife:entity/momo/momo_trade"
+    ]
+  }
+}

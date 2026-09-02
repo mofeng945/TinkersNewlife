@@ -114,6 +114,7 @@ public class TinkersNewlife {
         ModFluids.FLUID_BUCKETS.register(modEventBus);
 
         ModEffects.EFFECTS.register(modEventBus);
+        com.mofengbaizhi.tinkersnewlife.content.ModSounds.SOUNDS.register(modEventBus);
 
         Modifiers.MODIFIERS.register(modEventBus);
 

@@ -104,6 +104,8 @@ public class MomoMerchantHandler {
                             }
                             momo.finalizeSpawn(level, level.getCurrentDifficultyAt(ground),
                                     MobSpawnType.EVENT, null, null);
+                            // 自然（满月）刷新：白天到来时消失；刷怪蛋召唤的不受影响
+                            momo.setNaturalSpawn(true);
                             level.addFreshEntity(momo);
                             level.sendParticles(ParticleTypes.SNEEZE, x + 0.5, y + 1.5, z + 0.5,
                                     12, 0.3, 0.3, 0.3, 0.02);

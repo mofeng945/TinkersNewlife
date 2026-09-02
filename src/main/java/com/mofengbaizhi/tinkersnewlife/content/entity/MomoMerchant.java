@@ -1,8 +1,10 @@
 package com.mofengbaizhi.tinkersnewlife.content.entity;
 
 import com.mofengbaizhi.tinkersnewlife.content.ModItems;
+import com.mofengbaizhi.tinkersnewlife.content.ModSounds;
 import com.mofengbaizhi.tinkersnewlife.content.curse.TechniqueHandler;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -25,12 +27,15 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.monster.warden.Warden;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -56,15 +61,20 @@ import java.util.UUID;
 /**
  * 中立实体「武器商人·墨默」：
  * <ul>
- *   <li>中立商人：平时站立在教堂（占位：村钟/集会点）前；满月夜晚由 {@code MomoSpawnHandler} 刷新</li>
- *   <li>受击反击：手持格赫罗斯战镰（材质用格赫罗斯残骸打造的匠魂战镰，渲染进主手）</li>
- *   <li>攻击 AI（自定义状态机，tick 驱动）：快速接近 → 面前 2 格扇形横斩(80%) → 0.5s 后竖劈(180%) → 拉远；
- *       受击后 1s 内尝试格挡（免疫伤害），格挡成功 → 近身连斩 3 刀(60%/80%/100%)；半血 → 高高跃起跳劈(300%，破盾) + 乱蝶大招；
- *       生命 ≤5% → 逃跑（再生 V 恢复后回到中立）</li>
- *   <li>属性：HP 100 / 攻击 50 / 护甲 14 / 再生 V</li>
+ *   <li>中立商人：满月夜晚由 {@code MomoMerchantHandler} 在教堂（占位：村钟）前刷新；
+ *       自然刷新版在白天到来时消失，刷怪蛋召唤的常驻</li>
+ *   <li>受击反击：手持格赫罗斯战镰；任何攻击者（玩家/怪物/监守者）都能攻击她，她也会反击；
+ *       监守者可正常索敌攻击她</li>
+ *   <li>攻击 AI（自定义状态机）：快速接近 → 面前 2 格扇形横斩(80%) → 0.5s 后竖劈(180%) → 拉远；
+ *       受击后 1s 内格挡（免疫伤害），格挡成功 → 近身连斩 3 刀(60/80/100%)；
+ *       半血 → 高高跃起跳劈(300%，破盾) + 乱蝶大招；生命 ≤5% → 逃跑</li>
+ *   <li>属性：HP 200 / 攻击 50 / 护甲 14 / 再生 VIII（常驻）</li>
+ *   <li>无玩家时在生成点 20 格内游走；每 500tick 10% 概率主动索敌并击杀 10 格内一只亡灵；
+ *       地上有格赫罗斯残骸/矿石（20 格内）会被吸引走过来</li>
+ *   <li>不受无为转变影响（变形目标排除）、免疫蛇发女妖石化（由 GorgonImmunityHandler 处理）</li>
  *   <li>秒杀掉落：被一击伤害 ≥ 最大生命击杀时掉落 拉莱耶的呼唤 ×1 + 15 经验</li>
- *   <li>售卖：6 个槽位（咒具×2 / 咒术水晶×2 / 旧日遗物×2），货币为格赫罗斯残骸与格赫罗斯矿石</li>
- *   <li>客户端用玩家模型(HumanoidModel)渲染，贴图 assets/tinkersnewlife/textures/entity/momo_common.png</li>
+ *   <li>售卖：6 槽位（咒具×2 / 咒术水晶×2 / 旧日遗物×2），货币为格赫罗斯残骸/矿石</li>
+ *   <li>客户端套用玩家模型 + momo_common 贴图；语音走本模组自注册音效（占位文件可覆盖）</li>
  * </ul>
  */
 public class MomoMerchant extends PathfinderMob {
@@ -79,15 +89,22 @@ public class MomoMerchant extends PathfinderMob {
     private static final int S_ULT = 6;          // 乱蝶大招
     private static final int S_FLEE = 7;         // ≤5% 血逃跑
 
-    private static final double REACH = 3.0;        // 攻击触发距离
-    private static final int SWEEP_WAIT_TICKS = 10; // 0.5s
+    private static final double REACH = 3.0;
+    private static final int SWEEP_WAIT_TICKS = 10;
     private static final int BACKOFF_TICKS = 26;
     private static final int COMBO_COOLDOWN = 30;
-    private static final int BLOCK_WINDOW = 20;     // 受击后 1s 格挡窗口
+    private static final int BLOCK_WINDOW = 20;      // 受击后 1s 格挡窗口
     private static final int LEAP_UP_TICKS = 10;
     private static final int ULT_INTERVAL = 12;
     private static final float[] ULT_MULTIPLIERS = {0.8f, 0.8f, 1.2f, 0.9f, 2.0f};
     private static final float[] COUNTER_MULTIPLIERS = {0.6f, 0.8f, 1.0f};
+
+    /** 自然刷新最大游走半径 */
+    private static final double WANDER_RADIUS = 20.0;
+    /** 亡灵狩猎间隔 / 概率 / 半径 */
+    private static final int HUNT_INTERVAL = 500;
+    private static final double HUNT_CHANCE = 0.1;
+    private static final double HUNT_RADIUS = 10.0;
 
     private int state = S_IDLE;
     private int stateTimer = 0;
@@ -96,12 +113,24 @@ public class MomoMerchant extends PathfinderMob {
     private int counterTimer = 0;
     private int ultIndex = 0;
     private int ultTimer = 0;
-    private int blockWindowUntil = -1;   // tickCount 时间点
-    private boolean leapUsed = false;    // 本次交战是否已用过跳劈
+    private int blockWindowUntil = -1;
+    private boolean leapUsed = false;
     private boolean fleeTriggered = false;
     private int fleeTimer = 0;
     private int regenTick = 0;
     private int aggroPruneTick = 0;
+
+    // ===== 商人行为 =====
+    /** 是否为自然刷新（满月）产生的：白天到来时消失；刷怪蛋为 false 常驻 */
+    private boolean naturalSpawn = false;
+    private boolean dayDespawnDone = false;
+    /** 生成点（游走锚点） */
+    private BlockPos homePos = null;
+    private int wanderTimer = 0;
+    private int huntTimer = 0;
+    private int ambientVoiceTimer = 0;
+    private int wardenProbeTimer = 0;
+    private int currencyProbeTimer = 0;
 
     /** 近期攻击过她的实体（反击/大招只打这些人，不伤及无辜） */
     private final Set<UUID> aggroSet = new HashSet<>();
@@ -120,7 +149,7 @@ public class MomoMerchant extends PathfinderMob {
 
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 100.0)
+                .add(Attributes.MAX_HEALTH, 200.0)
                 .add(Attributes.MOVEMENT_SPEED, 0.36)
                 .add(Attributes.ATTACK_DAMAGE, 50.0)
                 .add(Attributes.ARMOR, 14.0)
@@ -134,8 +163,16 @@ public class MomoMerchant extends PathfinderMob {
 
     @Override
     protected void registerGoals() {
-        // 只反击：被攻击后把攻击者设为目标（由受伤处记录 lastHurtByMob）
+        // 受击反击：把攻击者设为目标（玩家/怪物/监守者均可）
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+    }
+
+    public void setNaturalSpawn(boolean natural) {
+        this.naturalSpawn = natural;
+    }
+
+    public boolean isNaturalSpawn() {
+        return naturalSpawn;
     }
 
     @Nullable
@@ -144,6 +181,7 @@ public class MomoMerchant extends PathfinderMob {
                                         MobSpawnType reason, @Nullable SpawnGroupData spawnData, @Nullable CompoundTag tag) {
         SpawnGroupData data = super.finalizeSpawn(level, difficulty, reason, spawnData, tag);
         this.setPersistenceRequired();
+        if (homePos == null) homePos = this.blockPosition();
         equipScythe();
         ensureOffers();
         return data;
@@ -154,6 +192,10 @@ public class MomoMerchant extends PathfinderMob {
         super.addAdditionalSaveData(tag);
         tag.putInt("MomoState", state);
         tag.putBoolean("MomoLeapUsed", leapUsed);
+        tag.putBoolean("MomoNatural", naturalSpawn);
+        if (homePos != null) {
+            tag.putIntArray("MomoHome", new int[]{homePos.getX(), homePos.getY(), homePos.getZ()});
+        }
         ListTag offerList = new ListTag();
         for (Offer offer : offers) {
             CompoundTag entry = new CompoundTag();
@@ -172,6 +214,11 @@ public class MomoMerchant extends PathfinderMob {
         super.readAdditionalSaveData(tag);
         state = tag.getInt("MomoState");
         leapUsed = tag.getBoolean("MomoLeapUsed");
+        naturalSpawn = tag.getBoolean("MomoNatural");
+        if (tag.contains("MomoHome")) {
+            int[] h = tag.getIntArray("MomoHome");
+            if (h.length == 3) homePos = new BlockPos(h[0], h[1], h[2]);
+        }
         offers.clear();
         if (tag.contains("MomoOffers", Tag.TAG_LIST)) {
             ListTag list = tag.getList("MomoOffers", Tag.TAG_COMPOUND);
@@ -204,7 +251,6 @@ public class MomoMerchant extends PathfinderMob {
             ItemStack stack = new ItemStack(ModItems.WAR_SCYTHE.get());
             ToolStack tool = ToolHelper.getToolStack(stack);
             if (tool != null) {
-                // 取格赫罗斯残骸材质（全部部件），如缺失则退回第一个本模组材质
                 slimeknights.tconstruct.library.materials.definition.IMaterial material = null;
                 MaterialId want = new MaterialId(new ResourceLocation("tinkersnewlife", "gheloth_remains"));
                 for (slimeknights.tconstruct.library.materials.definition.IMaterial m
@@ -354,7 +400,7 @@ public class MomoMerchant extends PathfinderMob {
         if (this.getTarget() == player) return InteractionResult.PASS; // 正在反击该玩家
         ensureOffers();
         com.mofengbaizhi.tinkersnewlife.network.PacketMomoOpen.sendTo((ServerPlayer) player, this);
-        this.playSound(SoundEvents.VILLAGER_TRADE, 1.0F, 1.0F);
+        this.playSound(ModSounds.MOMO_TRADE.get(), 1.0F, 1.0F);
         return InteractionResult.sidedSuccess(true);
     }
 
@@ -375,7 +421,7 @@ public class MomoMerchant extends PathfinderMob {
         return aggroSet.contains(e.getUUID());
     }
 
-    /** 面前 2 格扇形内的敌人 */
+    /** 面前扇形内的敌人 */
     private List<LivingEntity> sectorTargets(double radius, float halfAngleDeg) {
         AABB box = this.getBoundingBox().inflate(radius, 2.0, radius);
         List<LivingEntity> list = new ArrayList<>();
@@ -442,11 +488,29 @@ public class MomoMerchant extends PathfinderMob {
     }
 
     private void tickServer() {
-        // 再生 V（无限续）
-        if (++regenTick % 20 == 0) {
-            this.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 80, 4, false, false));
+        if (homePos == null) homePos = this.blockPosition();
+
+        // 自然刷新的墨默：白天到来时消失（刷怪蛋召唤的常驻）
+        if (naturalSpawn) {
+            long dayTime = level().getDayTime() % 24000;
+            if (dayTime < 13000) {
+                if (!dayDespawnDone && level() instanceof ServerLevel sl) {
+                    dayDespawnDone = true;
+                    sl.sendParticles(ParticleTypes.POOF, this.getX(), this.getY() + 1.2, this.getZ(),
+                            16, 0.4, 0.5, 0.4, 0.02);
+                    sl.playSound(null, this.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.HOSTILE, 0.9F, 1.4F);
+                }
+                this.discard();
+                return;
+            }
         }
-        // 仇恨清理（60s 无新伤害则遗忘）
+
+        // 再生 VIII（常驻，覆盖旧版再生 V）
+        if (++regenTick % 20 == 0) {
+            this.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 120, 7, false, false));
+        }
+
+        // 仇恨清理
         if (++aggroPruneTick >= 100) {
             aggroPruneTick = 0;
             if (!aggroSet.isEmpty()) {
@@ -456,9 +520,19 @@ public class MomoMerchant extends PathfinderMob {
                 });
             }
         }
-        // 到期仇恨者清出 aggro（保守：仅当无人再攻击时由目标消失逻辑处理，这里只清理死亡实体）
 
-        // 低血量：逃跑（>5% 且未在逃跑时才触发）
+        // 监守者可索敌墨默：附近 16 格内有监守者 → 让它盯上她（她也会反击）
+        if (++wardenProbeTimer >= 40) {
+            wardenProbeTimer = 0;
+            for (Warden warden : this.level().getEntitiesOfClass(Warden.class,
+                    this.getBoundingBox().inflate(16.0), e -> e.isAlive())) {
+                if (warden.getTarget() != this) {
+                    warden.setTarget(this);
+                }
+            }
+        }
+
+        // 低血量逃跑
         if (!fleeTriggered && this.getHealth() <= this.getMaxHealth() * 0.05f && state != S_LEAP_UP && state != S_ULT) {
             fleeTriggered = true;
             fleeTimer = 60;
@@ -469,6 +543,14 @@ public class MomoMerchant extends PathfinderMob {
         if (fleeTriggered) {
             tickFlee();
             return;
+        }
+
+        // 有目标但没有进入交战 → 自动开战（玩家/怪物/监守者攻击后都会走到这里）
+        if (state == S_IDLE) {
+            LivingEntity t = this.getTarget();
+            if (t != null && t.isAlive()) {
+                state = S_ENGAGE;
+            }
         }
 
         // 目标消失 → 回到中立
@@ -485,7 +567,7 @@ public class MomoMerchant extends PathfinderMob {
             }
         }
 
-        // 格挡窗口倒计时结束
+        // 格挡窗口倒计时
         if (blockWindowUntil > 0 && this.tickCount > blockWindowUntil) {
             blockWindowUntil = -1;
         }
@@ -504,19 +586,96 @@ public class MomoMerchant extends PathfinderMob {
         }
     }
 
+    /** 商人声音（无战斗/无目标时偶尔低语） */
+    private void tickAmbientVoice() {
+        if (--ambientVoiceTimer > 0) return;
+        ambientVoiceTimer = 200 + this.random.nextInt(400);
+        if (this.getTarget() == null && !this.isInWater() && !this.isDeadOrDying()) {
+            this.playSound(ModSounds.MOMO_AMBIENT.get(), 0.9F, 1.0F);
+        }
+    }
+
     private void tickIdle() {
         this.getNavigation().stop();
-        // 看最近的玩家（商人招呼感）
-        Player nearest = this.level().getNearestPlayer(this, 8.0);
+        tickAmbientVoice();
+
+        // 附近有玩家：站定看玩家（商人待客）
+        Player nearest = this.level().getNearestPlayer(this, 16.0);
         if (nearest != null) {
             this.getLookControl().setLookAt(nearest, 10.0F, 10.0F);
+            // 20 格内的货币吸引：主动走向格赫罗斯残骸/矿石（及其主人）
+            tickCurrencyLure();
+            return;
         }
-        // 满血状态低于 5% 的逃跑结束标记复位
+        // 无玩家：在生成点附近游走（≤20 格）+ 偶尔狩猎亡灵
+        tickCurrencyLure();
+        tickUndeadHunt();
+        tickWander();
+        // 复位逃跑标记
         if (this.getHealth() >= this.getMaxHealth() * 0.15f) {
             fleeTriggered = false;
             leapUsed = false;
             aggroSet.clear();
         }
+    }
+
+    /** 20 格内格赫罗斯残骸/矿石 → 走过去（不拾取） */
+    private void tickCurrencyLure() {
+        if (++currencyProbeTimer < 10) return;
+        currencyProbeTimer = 0;
+        ItemEntity target = null;
+        double best = WANDER_RADIUS * WANDER_RADIUS;
+        for (ItemEntity ie : this.level().getEntitiesOfClass(ItemEntity.class,
+                this.getBoundingBox().inflate(WANDER_RADIUS), e -> e.isAlive() && !e.getItem().isEmpty())) {
+            ItemStack stack = ie.getItem();
+            if (!stack.is(ModItems.GHELOTH_REMAINS.get()) && !stack.is(ModItems.GHELOTH_ORE.get())) continue;
+            double d = this.distanceToSqr(ie);
+            if (d < best) {
+                best = d;
+                target = ie;
+            }
+        }
+        if (target == null) return;
+        double dist = this.distanceTo(target);
+        if (dist <= 1.6) {
+            this.getNavigation().stop();
+            Player p = this.level().getNearestPlayer(this, 8.0);
+            if (p != null) {
+                this.getLookControl().setLookAt(p, 10.0F, 10.0F);
+            }
+            if (this.random.nextInt(100) == 0) {
+                this.playSound(ModSounds.MOMO_AMBIENT.get(), 0.8F, 1.0F);
+            }
+        } else {
+            this.getNavigation().moveTo(target, 1.05);
+        }
+    }
+
+    /** 每 500tick 10% 概率：索敌 10 格内一只亡灵并击杀（进入交战状态由状态机处理） */
+    private void tickUndeadHunt() {
+        if (++huntTimer < HUNT_INTERVAL) return;
+        huntTimer = 0;
+        if (this.random.nextFloat() >= HUNT_CHANCE) return;
+        List<Mob> undead = this.level().getEntitiesOfClass(Mob.class,
+                this.getBoundingBox().inflate(HUNT_RADIUS),
+                e -> e.isAlive() && e != this && e.getMobType() == MobType.UNDEAD);
+        if (undead.isEmpty()) return;
+        Mob prey = undead.get(this.random.nextInt(undead.size()));
+        if (this.getTarget() == null) {
+            this.setTarget(prey);
+        }
+    }
+
+    /** 无玩家时在生成点 20 格内游走 */
+    private void tickWander() {
+        if (--wanderTimer > 0) return;
+        wanderTimer = 80 + this.random.nextInt(80);
+        if (homePos == null) homePos = this.blockPosition();
+        double angle = this.random.nextDouble() * Math.PI * 2.0;
+        double radius = this.random.nextDouble() * WANDER_RADIUS;
+        double x = homePos.getX() + 0.5 + Math.cos(angle) * radius;
+        double z = homePos.getZ() + 0.5 + Math.sin(angle) * radius;
+        this.getNavigation().moveTo(x, homePos.getY(), z, 0.85);
     }
 
     private void tickEngage() {
@@ -529,7 +688,7 @@ public class MomoMerchant extends PathfinderMob {
         double dist = this.distanceToSqr(target);
         if (dist <= REACH * REACH) {
             if (comboCooldown <= 0) {
-                // 开始连段：横斩（80%）→ 0.5s 后竖劈（180%）
+                // 横斩（80%）→ 0.5s 后竖劈（180%）
                 this.getNavigation().stop();
                 List<LivingEntity> hits = sectorTargets(2.4, 70);
                 hurtAll(hits, 0.8f, false);
@@ -538,7 +697,6 @@ public class MomoMerchant extends PathfinderMob {
                 stateTimer = SWEEP_WAIT_TICKS;
                 return;
             }
-            // 冷却中：略后退等待
             this.getNavigation().stop();
             return;
         }
@@ -569,7 +727,6 @@ public class MomoMerchant extends PathfinderMob {
             List<LivingEntity> hits = sectorTargets(2.6, 70);
             hurtAll(hits, 1.8f, false);
             playSwingFx(1.8f);
-            // 尝试拉远
             state = S_BACKOFF;
             stateTimer = BACKOFF_TICKS;
         }
@@ -587,7 +744,6 @@ public class MomoMerchant extends PathfinderMob {
             state = S_ENGAGE;
             return;
         }
-        // 远离目标
         Vec3 away = this.position().subtract(target.position()).normalize();
         Vec3 goal = this.position().add(away.scale(6.0));
         this.getNavigation().moveTo(goal.x, this.getY(), goal.z, 1.2);
@@ -597,7 +753,6 @@ public class MomoMerchant extends PathfinderMob {
     private void tickCounter() {
         LivingEntity attacker = getLastBlockedBy();
         if (attacker == null || !attacker.isAlive() || this.distanceToSqr(attacker) > 5.0 * 5.0) {
-            // 攻击者不在 5 格内：回到快速接近 AI
             state = S_ENGAGE;
             counterIndex = 0;
             if (this.getTarget() == null) this.setTarget(attacker);
@@ -631,7 +786,6 @@ public class MomoMerchant extends PathfinderMob {
             state = S_IDLE;
             return;
         }
-        // 高高跃起（纵向起跳）
         if (stateTimer == LEAP_UP_TICKS) {
             this.setDeltaMovement(this.getDeltaMovement().add(0, 1.4, 0));
             this.playSound(SoundEvents.PLAYER_ATTACK_STRONG, 1.0F, 0.6F);
@@ -644,7 +798,6 @@ public class MomoMerchant extends PathfinderMob {
             Vec3 pos = target.position();
             this.moveTo(pos.x, pos.y, pos.z, this.getYRot(), this.getXRot());
             this.fallDistance = 0;
-            // 落点 3 格内敌人吃 300%
             AABB aabb = this.getBoundingBox().inflate(3.0, 1.5, 3.0);
             List<LivingEntity> hits = this.level().getEntitiesOfClass(LivingEntity.class, aabb,
                     e -> e.isAlive() && isAggroTarget(e));
@@ -655,7 +808,7 @@ public class MomoMerchant extends PathfinderMob {
                 sl.sendParticles(ParticleTypes.CRIT, this.getX(), this.getY() + 1.0, this.getZ(), 24, 1.6, 0.6, 1.6, 0.1);
                 sl.playSound(null, this.blockPosition(), SoundEvents.GENERIC_EXPLODE, SoundSource.HOSTILE, 1.0F, 0.8F);
             }
-            // 发动战镰的乱蝶大招
+            // 乱蝶大招
             ultIndex = 0;
             ultTimer = 10;
             state = S_ULT;
@@ -663,7 +816,6 @@ public class MomoMerchant extends PathfinderMob {
     }
 
     private void tickUlt() {
-        // 大招期间站桩
         this.getNavigation().stop();
         if (--ultTimer > 0) return;
         if (ultIndex >= ULT_MULTIPLIERS.length) {
@@ -671,7 +823,6 @@ public class MomoMerchant extends PathfinderMob {
             state = this.getTarget() != null && this.getTarget().isAlive() ? S_ENGAGE : S_IDLE;
             return;
         }
-        // 4 格内敌人依次吃 0.8/0.8/1.2/0.9/2.0 倍攻击
         AABB aabb = this.getBoundingBox().inflate(4.0, 2.0, 4.0);
         List<LivingEntity> hits = this.level().getEntitiesOfClass(LivingEntity.class, aabb,
                 e -> e.isAlive() && isAggroTarget(e));
@@ -689,7 +840,6 @@ public class MomoMerchant extends PathfinderMob {
             state = S_IDLE;
             return;
         }
-        // 朝最近的敌人反方向跑
         LivingEntity runner = this.getLastHurtByMob();
         if (runner == null || !runner.isAlive()) {
             Player p = this.level().getNearestPlayer(this, 24.0);
@@ -729,9 +879,8 @@ public class MomoMerchant extends PathfinderMob {
             if (attacker instanceof LivingEntity living && attacker != this) {
                 aggroSet.add(attacker.getUUID());
                 lastBlockedBy = living;
-                blockWindowUntil = -1; // 本次格挡已生效
+                blockWindowUntil = -1;
                 if (this.getTarget() == null) this.setTarget(living);
-                // 进入连斩（若攻击者在 5 格内则触发，否则回到接近）
                 counterIndex = 0;
                 counterTimer = 0;
                 state = S_COUNTER;
@@ -762,7 +911,7 @@ public class MomoMerchant extends PathfinderMob {
         return hurt;
     }
 
-    /** 是否被"秒杀"（最后一击伤害 ≥ 最大生命）——由伤害处理类读取 */
+    /** 是否被"秒杀"（最后一击伤害 ≥ 最大生命） */
     private float lastDamageTaken = 0;
 
     public void recordDamageTaken(float amount) {
@@ -774,13 +923,12 @@ public class MomoMerchant extends PathfinderMob {
     }
 
     // ============================================================
-    //  死亡 / 掉落
+    //  死亡 / 掉落 / 语音
     // ============================================================
 
     @Override
     protected void dropCustomDeathLoot(DamageSource source, int lootingLevel, boolean recentlyHitIn) {
         super.dropCustomDeathLoot(source, lootingLevel, recentlyHitIn);
-        // 秒杀：拉莱耶的呼唤 ×1 + 15 经验
         if (isOneShotKill() && level() instanceof ServerLevel sl) {
             this.spawnAtLocation(new ItemStack(ModItems.RLYEH_CALL.get()), 0.5F);
             net.minecraft.world.entity.ExperienceOrb orb = new net.minecraft.world.entity.ExperienceOrb(sl,
@@ -790,13 +938,18 @@ public class MomoMerchant extends PathfinderMob {
     }
 
     @Override
+    protected SoundEvent getAmbientSound() {
+        return null; // 低语由 tickAmbientVoice 控制
+    }
+
+    @Override
     protected SoundEvent getHurtSound(DamageSource source) {
-        return SoundEvents.PLAYER_HURT;
+        return ModSounds.MOMO_HURT.get();
     }
 
     @Override
     protected SoundEvent getDeathSound() {
-        return SoundEvents.PLAYER_DEATH;
+        return ModSounds.MOMO_DEATH.get();
     }
 
     @Override
@@ -812,11 +965,5 @@ public class MomoMerchant extends PathfinderMob {
     @Override
     public boolean isPushable() {
         return true;
-    }
-
-    /** 墨默不可被其他生物当作目标攻击（中立商人） */
-    @Override
-    public boolean canBeSeenAsEnemy() {
-        return false;
     }
 }
