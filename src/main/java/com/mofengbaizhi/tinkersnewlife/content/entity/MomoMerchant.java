@@ -2611,7 +2611,7 @@ public class MomoMerchant extends PathfinderMob {
             double dz = aim.getZ() - this.getZ();
             double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
             if (dist > 1.8) {
-                double sp = 0.22; // 游泳速度（块/tick）
+                double sp = 0.15; // 游泳速度（块/tick）：与玩家游泳速度相当，不再快于玩家
                 Vec3 want = new Vec3(dx / dist * sp, dy / dist * sp, dz / dist * sp);
                 Vec3 cur = this.getDeltaMovement();
                 Vec3 next = cur.add(want.subtract(cur).scale(0.1));
