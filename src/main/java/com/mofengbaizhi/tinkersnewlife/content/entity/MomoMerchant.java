@@ -148,6 +148,12 @@ public class MomoMerchant extends PathfinderMob {
     private static final int STUCK_WINDOW_TICKS = 120;
     private static final double STUCK_MAX_MOVE = 1.0;
     private static final int STUCK_ESCAPE_COOLDOWN = 300;
+    /** 对空跳斩：目标悬空(高于墨默>2.2格且3D距离>3.2)且水平20格内 → 蓄力3s后跳至头顶5段连斩 */
+    private static final int AIR_CHARGE_TICKS = 60;          // 蓄力 3s
+    private static final double AIR_RADIUS = 20.0;
+    private static final double AIR_GAP = 2.2;
+    private static final int AIR_COMBO_COOLDOWN = 400;
+    private static final float[] AIR_HIT_MULTIPLIERS = {0.8f, 0.8f, 1.0f, 1.2f, 1.6f};
 
     // ===== 语音防重叠（自动解析 assets 内 ogg 时长，按类别最大时长做间隔） =====
     private static final class VoiceTimings {
@@ -322,6 +328,13 @@ public class MomoMerchant extends PathfinderMob {
     private double stuckMoved = 0;
     private long lastDamageAtTick = -1000;
     private long stuckEscapeCooldown = 0;
+
+    // ===== 对空跳斩（蓄力 → 头顶 5 段连斩） =====
+    private boolean airComboActive = false;
+    private int airChargeTicks = 0;
+    private int airHitIndex = 0;
+    private int airHitTimer = 0;
+    private long airComboCooldown = 0;
 
     /** 近期攻击过她的实体（反击/大招只打这些人，不伤及无辜） */
     private final Set<UUID> aggroSet = new HashSet<>();
@@ -1675,7 +1688,7 @@ public class MomoMerchant extends PathfinderMob {
         }
     }
 
-    /** 返回 true = 本 tick 被应急动作占用（吟唱中 / 大斩杀执行中） */
+    /** 返回 true = 本 tick 被应急动作占用（吟唱 / 大斩杀 / 对空跳斩） */
     private boolean tickResponseCore() {
         if (chantTicks > 0) {
             tickChant();
@@ -1695,7 +1708,137 @@ public class MomoMerchant extends PathfinderMob {
             tryStartMassExecute();
             if (execBusy) return true;
         }
+        // 对空跳斩：目标悬空够不到 → 蓄力 3s 后跳到其头顶 5 段连斩
+        if (airComboActive) {
+            tickAirCombo();
+            return true;
+        }
+        if (chantTicks <= 0 && !execBusy && !finisherActive && !singing && !fleeTriggered
+                && this.tickCount > airComboCooldown) {
+            LivingEntity t = this.getTarget();
+            if (t != null && t.isAlive() && t != this
+                    && !t.onGround()
+                    && t.getY() - this.getY() > AIR_GAP
+                    && this.distanceTo(t) > 3.2
+                    && this.distanceToSqr(t) <= AIR_RADIUS * AIR_RADIUS) {
+                startAirCombo(t);
+                return true;
+            }
+        }
         return false;
+    }
+
+    /** 蓄力 3s：站定蓄力，随后跳至目标头顶 */
+    private void startAirCombo(LivingEntity target) {
+        airComboActive = true;
+        airChargeTicks = AIR_CHARGE_TICKS;
+        airHitIndex = 0;
+        airHitTimer = 0;
+        state = S_IDLE;
+        this.getNavigation().stop();
+        if (this.level() instanceof ServerLevel sl) {
+            sl.playSound(null, this.blockPosition(), SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.HOSTILE, 0.8F, 0.6F);
+        }
+    }
+
+    private void tickAirCombo() {
+        LivingEntity t = this.getTarget();
+        if (t == null || !t.isAlive() || t.level() != this.level()) {
+            cancelAirCombo();
+            return;
+        }
+        this.getLookControl().setLookAt(t, 30.0F, 30.0F);
+        if (airChargeTicks > 0) {
+            // 蓄力：站定 + 蓄力粒子
+            this.getNavigation().stop();
+            airChargeTicks--;
+            if (this.level() instanceof ServerLevel sl && airChargeTicks % 6 == 0) {
+                sl.sendParticles(ParticleTypes.CRIT,
+                        this.getX(), this.getY() + 1.4, this.getZ(),
+                        4, 0.3, 0.3, 0.3, 0.02);
+            }
+            if (airChargeTicks <= 0) {
+                leapAboveTarget(t);
+            }
+            return;
+        }
+        // 头顶 5 段连斩
+        if (airHitIndex >= AIR_HIT_MULTIPLIERS.length) {
+            // 收尾：落地并结束连段
+            landOnGround();
+            cancelAirCombo();
+            return;
+        }
+        if (--airHitTimer > 0) return;
+        applyHurt(t, combatBase() * AIR_HIT_MULTIPLIERS[airHitIndex]);
+        this.swing(InteractionHand.MAIN_HAND);
+        if (this.level() instanceof ServerLevel sl) {
+            sl.sendParticles(new net.minecraft.core.particles.DustParticleOptions(
+                            new org.joml.Vector3f(1.0F, 0.05F, 0.05F), 1.0F),
+                    t.getX(), t.getY() + 1.2, t.getZ(), 8, 0.4, 0.5, 0.4, 0.01);
+            sl.playSound(null, t.blockPosition(), SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.HOSTILE, 1.0F, 1.0F);
+        }
+        airHitIndex++;
+        airHitTimer = 4;
+    }
+
+    /** 跳到目标头顶（找可站立/无碰撞的头顶位置） */
+    private void leapAboveTarget(LivingEntity t) {
+        if (!(this.level() instanceof ServerLevel sl)) {
+            cancelAirCombo();
+            return;
+        }
+        double[] offsets = {3.6, 2.8, 4.4, 2.2};
+        boolean placed = false;
+        for (double off : offsets) {
+            double y = Math.min(t.getY() + off, this.level().getMaxBuildHeight() - 2.0);
+            this.moveTo(t.getX(), y, t.getZ(), this.getYRot(), this.getXRot());
+            if (sl.noCollision(this)) {
+                placed = true;
+                break;
+            }
+        }
+        if (!placed) {
+            // 头顶无位置：放弃该连段（普通追击）
+            cancelAirCombo();
+            return;
+        }
+        this.fallDistance = 0;
+        this.setNoGravity(true);
+        airHitIndex = 0;
+        airHitTimer = 6;
+        sl.sendParticles(ParticleTypes.SNEEZE, this.getX(), this.getY() + 1.0, this.getZ(),
+                14, 0.4, 0.5, 0.4, 0.02);
+        sl.playSound(null, this.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.HOSTILE, 0.8F, 1.4F);
+    }
+
+    private void cancelAirCombo() {
+        airComboActive = false;
+        airChargeTicks = 0;
+        airHitIndex = 0;
+        airHitTimer = 0;
+        if (!this.onGround()) {
+            landOnGround();
+        }
+        this.setNoGravity(false);
+        this.fallDistance = 0;
+        airComboCooldown = this.tickCount + AIR_COMBO_COOLDOWN;
+    }
+
+    /** 直接落到本列最近的地面上（防高空坠落） */
+    private void landOnGround() {
+        if (this.onGround()) return;
+        if (!(this.level() instanceof ServerLevel sl)) return;
+        int x = (int) Math.floor(this.getX());
+        int z = (int) Math.floor(this.getZ());
+        for (int y = (int) Math.floor(this.getY()); y >= sl.getMinBuildHeight() + 2; y--) {
+            BlockPos below = new BlockPos(x, y - 1, z);
+            if (sl.getBlockState(below).isCollisionShapeFullBlock(sl, below)) {
+                this.moveTo(x + 0.5, y, z + 0.5, this.getYRot(), this.getXRot());
+                this.fallDistance = 0;
+                return;
+            }
+        }
     }
 
     /** 传送至安全位置并开始 1s 吟唱 */
