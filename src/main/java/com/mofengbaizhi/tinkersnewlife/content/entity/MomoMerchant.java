@@ -1261,7 +1261,7 @@ public class MomoMerchant extends PathfinderMob {
             return;
         }
         // 快速接近
-        this.getNavigation().moveTo(target, 1.35);
+        this.getNavigation().moveTo(target, chaseSpeedWithBlock(1.35));
 
         // 半血触发：高高跃起 → 跳劈（300%，破盾）→ 乱蝶大招
         if (!leapUsed && this.getHealth() <= this.getMaxHealth() * 0.5f && dist < 18.0 * 18.0) {
@@ -1315,7 +1315,7 @@ public class MomoMerchant extends PathfinderMob {
         }
         this.getLookControl().setLookAt(attacker, 30.0F, 30.0F);
         if (this.distanceToSqr(attacker) > 2.4 * 2.4) {
-            this.getNavigation().moveTo(attacker, 1.4);
+            this.getNavigation().moveTo(attacker, chaseSpeedWithBlock(1.4));
             return;
         }
         this.getNavigation().stop();
@@ -1977,6 +1977,11 @@ public class MomoMerchant extends PathfinderMob {
         return hired ? HIRED_BASE_ATTACK : attackBase();
     }
 
+    /** 格挡期间追击速度：减速至 60%（格挡时也能前进，只是变慢） */
+    private double chaseSpeedWithBlock(double base) {
+        return isBlockingStance() ? base * 0.6 : base;
+    }
+
     /** 受击标记（MomoMerchantHandler 回调） */
     public void markDamaged() {
         this.lastDamageAtTick = this.tickCount;
@@ -2236,7 +2241,7 @@ public class MomoMerchant extends PathfinderMob {
                         hiredComboTimer = 10; // 0.5s 后第二刀
                     }
                 } else {
-                    this.getNavigation().moveTo(target, 1.4);
+                    this.getNavigation().moveTo(target, chaseSpeedWithBlock(1.4));
                 }
             }
             case 1 -> {
@@ -2299,7 +2304,7 @@ public class MomoMerchant extends PathfinderMob {
         }
         this.getLookControl().setLookAt(atk, 30.0F, 30.0F);
         if (this.distanceToSqr(atk) > 2.4 * 2.4) {
-            this.getNavigation().moveTo(atk, 1.4);
+            this.getNavigation().moveTo(atk, chaseSpeedWithBlock(1.4));
             return;
         }
         this.getNavigation().stop();
@@ -2459,7 +2464,7 @@ public class MomoMerchant extends PathfinderMob {
         if (level().isClientSide || this.isDeadOrDying()) return false;
         // 歌唱被攻击打断
         stopSinging();
-        // 格挡窗口内：免疫伤害（格挡成功 → 之后连斩）
+        // 格挡窗口内：免疫伤害（格挡成功 → 攻击者在 5 格内才连斩反击；远处格挡不打断追击，减速推进）
         if (isBlockingStance()) {
             Entity attacker = source.getEntity();
             if (attacker instanceof LivingEntity living && attacker != this) {
@@ -2467,14 +2472,26 @@ public class MomoMerchant extends PathfinderMob {
                 lastBlockedBy = living;
                 blockWindowUntil = -1;
                 if (this.getTarget() == null) this.setTarget(living);
-                counterIndex = 0;
-                counterTimer = 0;
-                state = S_COUNTER;
-                this.getNavigation().stop();
-                if (this.level() instanceof ServerLevel sl) {
-                    sl.playSound(null, this.blockPosition(), SoundEvents.SHIELD_BLOCK, SoundSource.HOSTILE, 1.0F, 1.2F);
-                    sl.sendParticles(ParticleTypes.CRIT, this.getX(), this.getY() + 1.3, this.getZ(),
-                            10, 0.4, 0.3, 0.4, 0.02);
+                if (this.distanceToSqr(living) <= 5.0 * 5.0) {
+                    // 近身格挡成功：连斩反击
+                    counterIndex = 0;
+                    counterTimer = 0;
+                    state = S_COUNTER;
+                    this.getNavigation().stop();
+                    if (this.level() instanceof ServerLevel sl) {
+                        sl.playSound(null, this.blockPosition(), SoundEvents.SHIELD_BLOCK, SoundSource.HOSTILE, 1.0F, 1.2F);
+                        sl.sendParticles(ParticleTypes.CRIT, this.getX(), this.getY() + 1.3, this.getZ(),
+                                10, 0.4, 0.3, 0.4, 0.02);
+                    }
+                } else {
+                    // 远处攻击被格挡：保持追击目标（以较慢速度推进），避免原地愣住
+                    if (this.state == S_COUNTER) {
+                        counterIndex = 0;
+                        state = S_ENGAGE;
+                    }
+                    if (this.level() instanceof ServerLevel sl) {
+                        sl.playSound(null, this.blockPosition(), SoundEvents.SHIELD_BLOCK, SoundSource.HOSTILE, 0.8F, 1.3F);
+                    }
                 }
             }
             return false;
