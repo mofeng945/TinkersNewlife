@@ -346,6 +346,24 @@ public final class GoetyBridge {
     public static void pierceFullDamage(LivingEntity target, float dmg) {
         if (target == null || target.level().isClientSide || target.isRemoved()) return;
         suppressApostleRegen(target); // 先禁疗：否则其再生会吃掉我们的伤害
+        // 诊断 + 清障：若目标带我们自己的"伤害限幅"效果(0.5s/30 上限、超限 setCanceled)会吞掉多段伤害
+        try {
+            var dl = com.mofengbaizhi.tinkersnewlife.content.ModEffects.DAMAGE_LIMIT.get();
+            if (dl != null && target.hasEffect(dl)) {
+                LOGGER.info("[真伤诊断] 目标带伤害限幅效果，移除");
+                target.removeEffect(dl);
+            }
+            StringBuilder fx = new StringBuilder();
+            for (var ins : target.getActiveEffects()) {
+                fx.append(ins.getEffect().getDescriptionId().replace("effect.minecraft.", "")
+                        .replace("effect.goety.", "").replace("effect.tinkersnewlife.", "")).append(' ');
+            }
+            if (!fx.isEmpty() && LOGGER.isDebugEnabled()) {
+                // 静默：效果列表太长，仅限 Debug 级
+            }
+            LOGGER.info("[真伤诊断] 目标效果: {}", fx);
+        } catch (Throwable ignored) {
+        }
         net.minecraft.world.damagesource.DamageSource src = truePierceSource(target.level());
         if (src == null) src = target.damageSources().genericKill();
         float startHp = target.getHealth();
