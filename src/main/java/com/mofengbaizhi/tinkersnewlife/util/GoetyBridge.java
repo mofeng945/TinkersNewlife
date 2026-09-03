@@ -38,6 +38,9 @@ import java.util.function.Predicate;
  *       每次 actuallyHurt 置 30，期间 hurt() 被 canHurt 直接取消（1.5s 免疫窗）。</li>
  *   <li>goety ApostleDamageCap(=20) 仅在不带 bypasses_invulnerability 的伤害下生效，
  *       genericKill 属于该 tag，天然绕过——只剩启示录的 20 clamp 需多段拆分。</li>
+ *   <li>Apostle.hurt() 还有两道隐藏减伤：下界 apostleNetherDamageReduction(默认50%)；
+ *       附近 32 格有非创造/旁观玩家 且 伤害直接实体非玩家 时再减半
+ *       （genericKill 无直接实体 → 墨默/天逆鉾都会中招，需按同一条件补偿）。</li>
  * </ul>
  */
 public final class GoetyBridge {
@@ -170,11 +173,14 @@ public final class GoetyBridge {
     private static Class<?> apostleClass;          // com.Polarice3.Goety.common.entities.boss.Apostle
     private static Field obsidianInvulField;       // public int obsidianInvul（黑曜石柱免伤）
     private static Field moddedInvulField;         // public int moddedInvul（受击后无敌帧）
+    private static Class<?> mobsConfigClass;       // com.Polarice3.Goety.config.MobsConfig
+    private static Field netherReductionField;     // ConfigValue<Integer> ApostleNetherDamageReduction（下界减伤 %）
     private static Class<?> apollyonHelperIface;   // z1gned.goetyrevelation.util.ApollyonAbilityHelper（mixin 注入使徒）
     private static Method setHitCooldownMethod;    // allTitlesApostle_1_20_1$setHitCooldown(int)
     private static Method isApollyonMethod;        // allTitlesApostle_1_20_1$isApollyon()
 
     private static void resolveReflection() {
+        resolve(); // 确保 goetyPresent 先判定，否则可能提前退出导致永不解析
         if (refResolved) return;
         refResolved = true;
         try {
@@ -185,6 +191,12 @@ public final class GoetyBridge {
                 moddedInvulField = fieldOf(apostleClass, "moddedInvul");
             } catch (Throwable ignored) {
                 // 主 Goety 缺失或字段改名：以下全部降级为 no-op
+            }
+            try {
+                mobsConfigClass = Class.forName("com.Polarice3.Goety.config.MobsConfig");
+                netherReductionField = fieldOf(mobsConfigClass, "ApostleNetherDamageReduction");
+            } catch (Throwable ignored) {
+                // 配置字段读不到：下界减伤按默认 50 兜底
             }
             try {
                 apollyonHelperIface = Class.forName("z1gned.goetyrevelation.util.ApollyonAbilityHelper");
@@ -279,5 +291,60 @@ public final class GoetyBridge {
         } catch (Throwable ignored) {
             return false;
         }
+    }
+
+    // =====================================================================
+    //  使徒隐藏减伤的补偿（让墨默/天逆鉾的穿透打出"名义伤害"）
+    // =====================================================================
+
+    /** 读取主诡厄下界减伤配置（0-100），读不到回退默认 50（与游戏默认一致） */
+    public static int readApostleNetherReduction() {
+        resolveReflection();
+        if (netherReductionField == null) return 50;
+        try {
+            Object configValue = netherReductionField.get(null);
+            if (configValue instanceof net.minecraftforge.common.ForgeConfigSpec.ConfigValue<?> cv) {
+                Object v = cv.get();
+                if (v instanceof Integer i) {
+                    return Math.max(0, Math.min(100, i));
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return 50;
+    }
+
+    /** 附近 32 格内是否有非创造/非旁观玩家（主诡厄 Apostle.hurt 会因此把非玩家直接实体的伤害减半） */
+    private static boolean nearbyNonCreativePlayer(LivingEntity target) {
+        if (target.level() == null || target.level().isClientSide) return false;
+        net.minecraft.world.phys.AABB box = target.getBoundingBox().inflate(32.0);
+        for (net.minecraft.world.entity.player.Player p : target.level().players()) {
+            if (!p.isAlive() || p.isSpectator() || p.isCreative()) continue;
+            if (box.intersects(p.getBoundingBox())) return true;
+        }
+        return false;
+    }
+
+    /**
+     * 使徒两道"减伤"的补偿倍数（仅对受限 Boss 的多段穿透有意义）：
+     * ① 下界减伤 apostleNetherDamageReduction（默认 50%）：Apostle.hurt() 对下界所有伤害折半；
+     * ② 附近 32 格有非创造/旁观玩家 且 伤害直接实体非玩家 → 再减半
+     *    （genericKill 无直接实体，墨默/天逆鉾都会命中这条）。
+     * 返回 &gt;1 表示我方多送该倍数的伤害、落血仍是名义值；无需补偿时返回 1。
+     * 下界减伤配置为 100（设计上免伤）时返回 1、不做补偿（也补不动）。
+     */
+    public static float apostleDamageCompensation(LivingEntity target) {
+        if (!isGoetyApostle(target)) return 1.0F;
+        float factor = 1.0F;
+        if (target.level() != null
+                && target.level().dimension() == net.minecraft.world.level.Level.NETHER) {
+            int r = readApostleNetherReduction();
+            if (r >= 100) return 1.0F;
+            if (r > 0) factor /= (1.0F - r / 100.0F);
+        }
+        if (nearbyNonCreativePlayer(target)) {
+            factor *= 2.0F;
+        }
+        return factor;
     }
 }

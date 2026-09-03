@@ -23,7 +23,8 @@ import net.minecraftforge.fml.common.Mod;
  * 手持天逆鉾攻击【凋灵】（无视出生无敌）或【诡厄巫法受限 Boss（亚波伦/使徒类）】时，
  * 取消原版攻击流程，直接结算伤害——无视无敌帧/伤害上限；
  * 对受限 Boss 额外穿透【黑曜石柱保护】（obsidianInvul 全程免伤，与墨默"必须破柱"不同，
- * 天逆鉾无需破柱即可造成伤害）、【使徒受击无敌帧】与【启示录下界 Apollyon 受击冷却】。
+ * 天逆鉾无需破柱即可造成伤害）、【使徒受击无敌帧】与【启示录下界 Apollyon 受击冷却】，
+ * 并补偿抵消【下界减伤(50%)】与【附近玩家时非玩家伤害减半】，落血即名义伤害。
  * 全程走正常 hurt 管线（受击事件/阶段照常触发），致死时死亡流程/掉落正常。
  * 诡厄巫法未安装时受限 Boss 判定为空，此钩子只对凋灵生效，不影响其他目标。
  */
@@ -64,13 +65,16 @@ public final class TianNiHuoPierceHandler {
      * 因 genericKill 带 bypasses_invulnerability 天然绕过）：
      * 把伤害拆成 ≤19 的多段连续 hurt（每段走完整伤害管线、受击事件照常，总和突破单次上限）。
      * 每段前穿透三样免伤：黑曜石柱保护 obsidianInvul（打完还原，柱仍存活）、
-     * 使徒受击无敌帧 moddedInvul、启示录下界 Apollyon 受击冷却 hitCooldown。
+     * 使徒受击无敌帧 moddedInvul、启示录下界 Apollyon 受击冷却 hitCooldown；
+     * 目标为使徒时按 apostleDamageCompensation 放大送出量，抵消下界减伤(50%)与
+     * 附近玩家时非玩家伤害减半——落血仍是名义伤害。
      */
     private static final float PIERCE_CHUNK = 19.0F;
 
     private static void pierceDamage(ServerPlayer player, LivingEntity target, float dmg) {
         bypassWitherInvuln(target);
         int obsidianInvulBackup = GoetyBridge.readObsidianInvul(target);
+        float comp = GoetyBridge.apostleDamageCompensation(target);
         float remaining = dmg;
         int guard = 0;
         while (remaining > 0 && target.isAlive() && !target.isRemoved() && guard++ < 64) {
@@ -79,7 +83,7 @@ public final class TianNiHuoPierceHandler {
             GoetyBridge.clearApollyonHitCooldown(target);
             float part = Math.min(remaining, PIERCE_CHUNK);
             target.invulnerableTime = 0;
-            target.hurt(target.damageSources().genericKill(), part);
+            target.hurt(target.damageSources().genericKill(), part * comp);
             remaining -= part;
         }
         // 还原柱保护计时（黑曜石柱存活时下个 tick 本就会重新置 10，此处仅避免同 tick 误伤窗口）

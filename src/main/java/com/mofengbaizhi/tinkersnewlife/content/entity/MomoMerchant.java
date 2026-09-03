@@ -2312,11 +2312,14 @@ public class MomoMerchant extends PathfinderMob {
      * 每段都在上限之下、走完整伤害管线（事件/Boss 阶段照常触发），累计总和突破单次上限。
      * 每段前顺带清零：使徒受击无敌帧 moddedInvul（其他带直接实体的攻击会留下 15tick 挡伤）
      * 与启示录下界 Apollyon 的受击冷却（每次 actuallyHurt 置 30、期间 hurt() 被直接取消）。
+     * 目标为使徒时按 apostleDamageCompensation 放大送出量，抵消下界减伤(50%)与
+     * 附近玩家时非玩家伤害减半——落血仍是名义伤害。
      */
     private static final float PIERCE_CHUNK = 19.0F;
 
     private void pierceDamageDirect(LivingEntity target, float dmg) {
         if (target.level().isClientSide || target.isRemoved()) return;
+        float comp = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.apostleDamageCompensation(target);
         float remaining = dmg;
         int guard = 0;
         while (remaining > 0 && target.isAlive() && !target.isRemoved() && guard++ < 64) {
@@ -2324,7 +2327,7 @@ public class MomoMerchant extends PathfinderMob {
             com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.clearApollyonHitCooldown(target);
             float part = Math.min(remaining, PIERCE_CHUNK);
             target.invulnerableTime = 0;
-            target.hurt(target.damageSources().genericKill(), part);
+            target.hurt(target.damageSources().genericKill(), part * comp);
             remaining -= part;
         }
     }
