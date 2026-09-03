@@ -370,8 +370,20 @@ public final class GoetyBridge {
                     target.setHealth(hp);
                 }
             } else if (shortfall < -0.5F && target.getHealth() > 0.0F) {
-                // 多打了（如神秘乘数/clamp 让单段超量）→ 回退一部分，保持总伤 = dmg
                 target.setHealth(Math.min(target.getMaxHealth(), target.getHealth() - shortfall));
+            }
+        }
+        // 处决兜底：Boss 已被打到低血量阶段（≤18% 血）且本次伤害被完全免疫吞掉（已打≈0）
+        // → 不灭重生/万众归一/末日终结等称号的"受击全额回血"免伤阶段，直接执行死亡流程
+        if (isGoetyApostle(target) && target.isAlive() && !target.isRemoved()
+                && target.getHealth() <= target.getMaxHealth() * 0.18F) {
+            float dealt = startHp - target.getHealth();
+            if (dealt < 5.0F) {
+                LOGGER.info("[真伤诊断] 低血免伤阶段，执行处决 血={}", target.getHealth());
+                target.setHealth(0.0F);
+                if (!target.isRemoved()) {
+                    target.die(src);
+                }
             }
         }
         if (startHp - target.getHealth() > 1.0F || dmg > 10.0F) {
