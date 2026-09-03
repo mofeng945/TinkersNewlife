@@ -308,6 +308,9 @@ public class MomoMerchant extends PathfinderMob {
     private int execTimer = 0;
     private long execCooldownUntil = 0;
 
+    /** 灼烧清锁节拍（狱焰等灼烧类减速/定身效果会被周期性清除，避免墨默被烧到停住） */
+    private int fireCleanseTick = 0;
+
     /** 近期攻击过她的实体（反击/大招只打这些人，不伤及无辜） */
     private final Set<UUID> aggroSet = new HashSet<>();
 
@@ -764,6 +767,11 @@ public class MomoMerchant extends PathfinderMob {
         // 再生 VIII（常驻，覆盖旧版再生 V）
         if (++regenTick % 20 == 0) {
             this.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 120, 7, false, false));
+        }
+
+        // 灼烧清锁：狱焰等灼烧类移动限制效果会让她停住——周期性清除（着火时连通用减速也清）
+        if (++fireCleanseTick % 10 == 0) {
+            cleanseMovementLockEffects();
         }
 
         // 仇恨清理
@@ -1784,6 +1792,52 @@ public class MomoMerchant extends PathfinderMob {
     /** 当前基础攻击：雇佣 20，未雇佣 50 */
     private float combatBase() {
         return hired ? HIRED_BASE_ATTACK : attackBase();
+    }
+
+    /**
+     * 清除"灼烧锁移动"类负面效果：
+     * 效果注册名含 inferno/burn/bind/root/freeze/stun/paralysis/slow 等（狱焰类）→ 任何时刻清；
+     * 其他负面效果若带移动速度负修正（减速类）→ 仅在墨默着火时清。
+     */
+    private void cleanseMovementLockEffects() {
+        if (this.level().isClientSide || this.isDeadOrDying()) return;
+        boolean burning = this.isOnFire();
+        java.util.List<net.minecraft.world.effect.MobEffect> toRemove = new ArrayList<>();
+        for (net.minecraft.world.effect.MobEffectInstance inst : this.getActiveEffects()) {
+            net.minecraft.world.effect.MobEffect eff = inst.getEffect();
+            if (eff.isBeneficial()) continue;
+            boolean lock = false;
+            net.minecraft.resources.ResourceLocation key =
+                    net.minecraftforge.registries.ForgeRegistries.MOB_EFFECTS.getKey(eff);
+            if (key != null) {
+                String path = key.getPath().toLowerCase();
+                lock = path.contains("inferno") || path.contains("burn") || path.contains("flame")
+                        || path.contains("bind") || path.contains("root") || path.contains("freeze")
+                        || path.contains("stun") || path.contains("paralysis") || path.contains("slow");
+            }
+            if (!lock && burning) {
+                // 着火时额外清除带移动速度负修正的效果（通用减速）
+                Object mods = eff.getAttributeModifiers().get(
+                        net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
+                if (mods instanceof net.minecraft.world.entity.ai.attributes.AttributeModifier single) {
+                    if (single.getAmount() < 0) lock = true;
+                } else if (mods instanceof Iterable<?> iter) {
+                    for (Object o : iter) {
+                        if (o instanceof net.minecraft.world.entity.ai.attributes.AttributeModifier am
+                                && am.getAmount() < 0) {
+                            lock = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (lock) {
+                toRemove.add(eff);
+            }
+        }
+        for (net.minecraft.world.effect.MobEffect eff : toRemove) {
+            this.removeEffect(eff);
+        }
     }
 
     // ============================================================
