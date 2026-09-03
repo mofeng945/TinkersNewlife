@@ -128,7 +128,7 @@ public class MomoMerchant extends PathfinderMob {
     /** 雇佣到期返回雇主后，留给雇主续雇的宽限（拒绝续雇则到点自然消失；仅自然刷新的墨默） */
     private static final int RETURN_GRACE_TICKS = 400;
     /** 雇佣模式基础攻击 20（未雇佣为 50）；斩杀阈值 <10 血 */
-    private static final float HIRED_BASE_ATTACK = 20.0F;
+    private static final float HIRED_BASE_ATTACK = 35.0F;
     private static final float EXECUTE_HP = 10.0F;
     /** 雇主距离超过 50 格 → 直接传送到雇主身边 */
     private static final double EMPLOYER_TELEPORT_DIST = 50.0;
