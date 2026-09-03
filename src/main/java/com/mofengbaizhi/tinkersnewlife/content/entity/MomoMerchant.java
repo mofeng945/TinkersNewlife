@@ -804,6 +804,9 @@ public class MomoMerchant extends PathfinderMob {
             tickStuckEscape();
         }
 
+        // 蜘蛛式爬墙
+        tickWallClimb();
+
         // 仇恨清理
         if (++aggroPruneTick >= 100) {
             aggroPruneTick = 0;
@@ -2553,5 +2556,33 @@ public class MomoMerchant extends PathfinderMob {
     @Override
     public boolean isPushable() {
         return true;
+    }
+
+    /** 蜘蛛式爬墙：水平贴墙即可攀爬（原版蜘蛛同款判定） */
+    @Override
+    public boolean onClimbable() {
+        return this.horizontalCollision;
+    }
+
+    /** 贴墙时减少下滑；目标/雇主在更高处且紧贴墙 → 向上攀爬 */
+    private void tickWallClimb() {
+        if (this.level().isClientSide || this.isInWater() || !this.horizontalCollision) return;
+        // 贴墙：限制下滑速度
+        if (this.getDeltaMovement().y < -0.12) {
+            this.setDeltaMovement(this.getDeltaMovement().multiply(1.0, 0.0, 1.0).add(0.0, -0.12, 0.0));
+        }
+        LivingEntity up = this.getTarget();
+        if (up == null && hired) {
+            up = getEmployer();
+        }
+        if (up == null || !up.isAlive() || up.getY() <= this.getY() + 0.8) return;
+        double hd = Math.hypot(up.getX() - this.getX(), up.getZ() - this.getZ());
+        if (hd <= 5.0) {
+            // 头顶有空间才上爬（防挤进方块）
+            if (this.level().noCollision(this.getBoundingBox().move(0.0, 1.0, 0.0))) {
+                this.setDeltaMovement(this.getDeltaMovement().add(0.0, 0.28, 0.0));
+                this.fallDistance = 0;
+            }
+        }
     }
 }
