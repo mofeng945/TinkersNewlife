@@ -2186,26 +2186,26 @@ public class MomoMerchant extends PathfinderMob {
     }
 
     /**
-     * 诡厄巫法（可选）：以雇主为中心选目标——若存在受限 Boss（24 格）：被柱保护 → 打邪教徒/柱；
-     * 无 Boss 时主动打附近的黑曜石柱/邪教徒。环境无 Goety 返回 null。
+     * 诡厄巫法（可选）：以雇主为中心选目标——保护链 邪教徒 > 黑曜石柱 > 受限 Boss；
+     * 附近存在受限 Boss(32格)时：查其黑曜石柱(16格内视为保护柱)→柱旁邪教徒优先；
+     * 无 Boss 时也主动打 20 格内的邪教徒/黑曜石柱。环境无 Goety 返回 null。
      */
     @Nullable
     private LivingEntity pickGoetyChainTarget(LivingEntity boss) {
         if (!com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isAvailable()) return null;
-        LivingEntity limited = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.nearestLimitedBoss(boss, 24.0);
+        LivingEntity limited = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.nearestLimitedBoss(boss, 32.0);
         if (limited != null) {
-            net.minecraft.world.entity.Entity pillar =
-                    com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.pillarProtecting(limited);
+            LivingEntity pillar = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.nearestPillar(limited, 16.0);
             if (pillar != null) {
                 LivingEntity cult = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.cultistNearPillar(pillar);
-                if (cult != null) return cult;                       // ① 邪教徒
-                if (pillar instanceof LivingEntity p) return p;      // ② 黑曜石柱
+                if (cult != null) return cult;                       // ① 邪教徒（保护柱者）
+                return pillar;                                       // ② 黑曜石柱（破保护）
             }
-            return limited;                                          // ③ 目标（无保护则直接打）
+            return limited;                                          // ③ 目标（无柱保护则直接打）
         }
-        LivingEntity cult = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.nearestCultist(boss, 12.0);
+        LivingEntity cult = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.nearestCultist(boss, 20.0);
         if (cult != null) return cult;
-        return com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.nearestPillar(boss, 12.0);
+        return com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.nearestPillar(boss, 20.0);
     }
 
     /** 雇佣战斗：两刀（80%/180%×20 必中）→ 拉远；受击格挡 → 反击连斩；目标 <10 血 → 瞬移身后斩杀 */
@@ -2281,14 +2281,24 @@ public class MomoMerchant extends PathfinderMob {
     /**
      * 墨默的伤害统一入口：
      * 凋灵出生无敌 → 无视；
-     * 诡厄巫法/启示录对亚波伦、使徒的限伤（如 apollyon_hurt_limit=20，事件级 clamp）→ 直接扣血绕过，
-     * 致死时留 1 血走正常 hurt 保证死亡流程/掉落/击败逻辑；环境无 Goety 等同普通攻击。
+     * 诡厄巫法受限 Boss（亚波伦/使徒）被黑曜石柱保护时 → 墨默必须先破柱，直接伤害无效；
+     * 柱被破坏后 → 对其限伤（apollyon_hurt_limit 等事件级 clamp）用直接扣血绕过（突破限伤）。
      */
     private void applyHurt(LivingEntity target, float dmg) {
         witherInvulnBypass(target);
         target.invulnerableTime = 0;
         if (com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isDamageLimitedBoss(target)) {
-            pierceDamageDirect(target, dmg);
+            // 黑曜石柱保护中：墨默打不出伤害，必须先摧毁柱子（粒子反馈）
+            LivingEntity pillar = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.nearestPillar(target, 16.0);
+            if (pillar != null) {
+                if (this.level() instanceof ServerLevel sl) {
+                    sl.playSound(null, target.blockPosition(), SoundEvents.SHIELD_BLOCK, SoundSource.HOSTILE, 0.8F, 1.2F);
+                    sl.sendParticles(ParticleTypes.CRIT, target.getX(), target.getY() + target.getBbHeight() / 2,
+                            target.getZ(), 6, 0.2, 0.2, 0.2, 0.01);
+                }
+                return; // 柱未破：本次伤害被挡
+            }
+            pierceDamageDirect(target, dmg); // 柱已破：直接扣血突破限伤
         } else {
             target.hurt(this.damageSources().mobAttack(this), dmg);
         }
