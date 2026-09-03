@@ -21,61 +21,20 @@ import net.minecraftforge.fml.common.Mod;
 /**
  * 天逆鉾穿透攻击：
  * 手持天逆鉾攻击【凋灵】（无视出生无敌）或【诡厄巫法受限 Boss（亚波伦/使徒类）】时，
- * 取消原版攻击流程，直接结算伤害——无视无敌帧/伤害上限；
- * 对受限 Boss 额外穿透【黑曜石柱保护】：与墨默"必须手动破柱"不同，天逆鉾命中受保护
- * Boss 时会把保护柱【直接碎掉】（走诡厄正常死亡流程 → 使徒 1 分钟召柱冷却），Boss
- * 本次同时吃满伤害；另穿透【使徒受击无敌帧】与【启示录下界 Apollyon 受击冷却】，
- * 并补偿抵消【下界减伤(50%)】与【附近玩家时非玩家伤害减半】，落血即名义伤害。
- * 全程走正常 hurt 管线（受击事件/阶段照常触发），致死时死亡流程/掉落正常。
+ * 取消原版攻击流程，直接结算伤害：
+ * <ul>
+ *   <li>受限 Boss：黑曜石柱保护被【直接碎掉】（命中即碎 64 格内其归属柱，走诡厄死亡流程
+ *       → 使徒 1 分钟召柱冷却）；随后走全额结算（首段 hurt 事件 + 差额直补 + 低血处决兜底），
+ *       单次 20 上限/各类免伤窗不再能减少总伤害，主世界亚波伦/使徒可全额击穿限伤；</li>
+ *   <li>凋灵等非诡厄目标：多段 ≤19 直伤。</li>
+ * </ul>
+ * 全程以正常 hurt 管线为主（受击事件/阶段照常），致死死亡流程/掉落正常。
  * 诡厄巫法未安装时受限 Boss 判定为空，此钩子只对凋灵生效，不影响其他目标。
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class TianNiHuoPierceHandler {
 
-    private static final org.apache.logging.log4j.Logger LOGGER =
-            org.apache.logging.log4j.LogManager.getLogger("TinkersNewlife");
-
     private TianNiHuoPierceHandler() {}
-
-    /** 诊断：三层伤害事件在哪一层被挡（仅对受限 Boss，最低优先级观察取消状态） */
-    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
-    public static void diagAttack(net.minecraftforge.event.entity.living.LivingAttackEvent event) {
-        if (GoetyBridge.isDamageLimitedBoss(event.getEntity())) {
-            LOGGER.info("[DIAG] LivingAttack 目标Boss amount={} 已被取消={}", event.getAmount(), event.isCanceled());
-        }
-    }
-
-    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
-    public static void diagHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
-        if (GoetyBridge.isDamageLimitedBoss(event.getEntity())) {
-            var src = event.getSource();
-            String st = "?";
-            try {
-                st = src.is(net.minecraft.tags.DamageTypeTags.IS_FIRE) ? "fire" : src.typeHolder().unwrapKey()
-                        .map(k -> k.location().toString()).orElse("unkeyed");
-            } catch (Throwable ignored) {
-            }
-            String direct = src.getDirectEntity() != null ? src.getDirectEntity().getType().toString() : "null";
-            String owner = src.getEntity() != null ? src.getEntity().getType().toString() : "null";
-            LOGGER.info("[DIAG] LivingHurt 目标Boss amount={} 类型={} direct={} owner={} 取消={}",
-                    event.getAmount(), st, direct, owner, event.isCanceled());
-        }
-    }
-
-    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
-    public static void diagDamage(net.minecraftforge.event.entity.living.LivingDamageEvent event) {
-        if (GoetyBridge.isDamageLimitedBoss(event.getEntity())) {
-            var src = event.getSource();
-            String st = "?";
-            try {
-                st = src.is(net.minecraft.tags.DamageTypeTags.IS_FIRE) ? "fire" : src.typeHolder().unwrapKey()
-                        .map(k -> k.location().toString()).orElse("unkeyed");
-            } catch (Throwable ignored) {
-            }
-            LOGGER.info("[DIAG] LivingDamage 目标Boss amount={} 类型={} 取消={}",
-                    event.getAmount(), st, event.isCanceled());
-        }
-    }
 
     /** 凋灵无敌字段（反射清零，映射兼容） */
     private static java.lang.reflect.Field WITHER_INVULN_FIELD = null;
@@ -90,8 +49,6 @@ public final class TianNiHuoPierceHandler {
 
         boolean limitedBoss = GoetyBridge.isDamageLimitedBoss(target);
         boolean wither = target instanceof WitherBoss;
-        LOGGER.info("[天逆鉾] 攻击目标 {} 手持={} limitedBoss={} wither={}",
-                GoetyBridge.debugDescribe(target), held.getItem(), limitedBoss, wither);
         if (!limitedBoss && !wither) return;
 
         // 取消原版攻击，改由天逆鉾直接结算（无视无敌帧/凋灵出生无敌/诡厄巫法限伤与柱保护）
@@ -107,15 +64,10 @@ public final class TianNiHuoPierceHandler {
     }
 
     /**
-     * 突破"每次伤害上限"（亚波伦 apollyon_hurt_limit=20 等；主 Goety apostleDamageCap=20
-     * 因 genericKill 带 bypasses_invulnerability 天然绕过）：
-     * 把伤害拆成 ≤19 的多段连续 hurt（每段走完整伤害管线、受击事件照常，总和突破单次上限）。
-     * Boss 处于黑曜石柱保护时：保护柱被天逆鉾【直接碎掉】（正常受伤死亡，触发诡厄
-     * 碎裂特效与使徒 1 分钟召柱冷却），Boss 本次照常吃满穿透伤害且不再还原保护计时；
-     * 未碎柱时（未被保护/残余保护无柱可碎）才还原 obsidianInvul。
-     * 每段前穿透：使徒受击无敌帧 moddedInvul、启示录下界 Apollyon 受击冷却 hitCooldown；
-     * 目标为使徒时按 apostleDamageCompensation 放大送出量，抵消下界减伤(50%)与
-     * 附近玩家时非玩家伤害减半——落血仍是名义伤害。
+     * 受限 Boss 走 {@link GoetyBridge#pierceFullDamage}（hurt 首段保事件 + 差额直补 + 低血处决，
+     * 单次上限/免伤窗不影响总伤害，主世界可全额击穿限伤；下界 30tick 免疫窗为启示录硬设计，
+     * 该阶段伤害按窗口节奏结算但 Boss 最终可被击杀）。
+     * 其他目标（凋灵等）：多段 ≤19 直伤。
      */
     private static final float PIERCE_CHUNK = 19.0F;
 

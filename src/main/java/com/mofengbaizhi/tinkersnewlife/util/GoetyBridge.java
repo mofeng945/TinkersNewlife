@@ -346,22 +346,12 @@ public final class GoetyBridge {
     public static void pierceFullDamage(LivingEntity target, float dmg) {
         if (target == null || target.level().isClientSide || target.isRemoved()) return;
         suppressApostleRegen(target); // 先禁疗：否则其再生会吃掉我们的伤害
-        // 诊断 + 清障：若目标带我们自己的"伤害限幅"效果(0.5s/30 上限、超限 setCanceled)会吞掉多段伤害
+        // 清障：若目标带我们自己的"伤害限幅"效果(0.5s/30 上限、超限 setCanceled)会吞掉多段伤害
         try {
             var dl = com.mofengbaizhi.tinkersnewlife.content.ModEffects.DAMAGE_LIMIT.get();
             if (dl != null && target.hasEffect(dl)) {
-                LOGGER.info("[真伤诊断] 目标带伤害限幅效果，移除");
                 target.removeEffect(dl);
             }
-            StringBuilder fx = new StringBuilder();
-            for (var ins : target.getActiveEffects()) {
-                fx.append(ins.getEffect().getDescriptionId().replace("effect.minecraft.", "")
-                        .replace("effect.goety.", "").replace("effect.tinkersnewlife.", "")).append(' ');
-            }
-            if (!fx.isEmpty() && LOGGER.isDebugEnabled()) {
-                // 静默：效果列表太长，仅限 Debug 级
-            }
-            LOGGER.info("[真伤诊断] 目标效果: {}", fx);
         } catch (Throwable ignored) {
         }
         net.minecraft.world.damagesource.DamageSource src = truePierceSource(target.level());
@@ -397,66 +387,11 @@ public final class GoetyBridge {
                 && target.getHealth() <= target.getMaxHealth() * 0.18F) {
             float dealt = startHp - target.getHealth();
             if (dealt < 5.0F) {
-                LOGGER.info("[真伤诊断] 低血免伤阶段，执行处决 血={}", target.getHealth());
                 target.setHealth(0.0F);
                 if (!target.isRemoved()) {
                     target.die(src);
                 }
             }
-        }
-        if (startHp - target.getHealth() > 1.0F || dmg > 10.0F) {
-            LOGGER.info("[真伤结算] dmg={} 血量 {}→{} 已打={}",
-                    dmg, startHp, target.getHealth(), startHp - target.getHealth());
-        }
-    }
-
-    // =====================================================================
-    //  下界亚波伦专用：直接调 LivingEntity.actuallyHurt 绕 hurt() 阶段闸门
-    //  （启示录 canHurt 的 hitCooldown 免疫窗经反射清除在运行时不可靠；
-    //    actuallyHurt 每段仍走 ForgeHooks.onLivingDamage(LivingDamageEvent) 与启示录单次 20 clamp）
-    // =====================================================================
-
-    private static java.lang.reflect.Method ACTUALLY_HURT_METHOD = null;
-
-    private static java.lang.reflect.Method findActuallyHurt() {
-        if (ACTUALLY_HURT_METHOD != null) return ACTUALLY_HURT_METHOD;
-        try {
-            for (String name : new String[]{"m_6475_", "actuallyHurt"}) {
-                try {
-                    ACTUALLY_HURT_METHOD = net.minecraft.world.entity.LivingEntity.class
-                            .getDeclaredMethod(name,
-                                    net.minecraft.world.damagesource.DamageSource.class, float.class);
-                    ACTUALLY_HURT_METHOD.setAccessible(true);
-                    LOGGER.info("[GoetyBridge] 找到 actuallyHurt 方法名={}", name);
-                    break;
-                } catch (NoSuchMethodException ignored) {
-                }
-            }
-            if (ACTUALLY_HURT_METHOD == null) {
-                LOGGER.warn("[GoetyBridge] 未找到 actuallyHurt 方法（m_6475_/actuallyHurt 均无）");
-            }
-        } catch (Throwable t) {
-            LOGGER.warn("[GoetyBridge] findActuallyHurt 异常", t);
-        }
-        return ACTUALLY_HURT_METHOD;
-    }
-
-    /** 实际打出一段伤害（优先 actuallyHurt，找不到方法时退回普通 hurt）。返回是否成功施加 */
-    public static boolean actuallyHurtChunk(LivingEntity target, net.minecraft.world.damagesource.DamageSource src,
-                                            float amount) {
-        java.lang.reflect.Method m = findActuallyHurt();
-        if (m == null) {
-            target.invulnerableTime = 0;
-            LOGGER.info("[GoetyBridge] actuallyHurt 回退 hurt() part={}", amount);
-            return target.hurt(src, amount);
-        }
-        try {
-            m.invoke(target, src, amount);
-            return true;
-        } catch (Throwable t) {
-            target.invulnerableTime = 0;
-            LOGGER.warn("[GoetyBridge] actuallyHurt invoke 异常，回退 hurt()", t);
-            return target.hurt(src, amount);
         }
     }
 
