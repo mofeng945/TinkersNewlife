@@ -22,8 +22,9 @@ import net.minecraftforge.fml.common.Mod;
  * 天逆鉾穿透攻击：
  * 手持天逆鉾攻击【凋灵】（无视出生无敌）或【诡厄巫法受限 Boss（亚波伦/使徒类）】时，
  * 取消原版攻击流程，直接结算伤害——无视无敌帧/伤害上限；
- * 对受限 Boss 额外穿透【黑曜石柱保护】（obsidianInvul 全程免伤，与墨默"必须破柱"不同，
- * 天逆鉾无需破柱即可造成伤害）、【使徒受击无敌帧】与【启示录下界 Apollyon 受击冷却】，
+ * 对受限 Boss 额外穿透【黑曜石柱保护】：与墨默"必须手动破柱"不同，天逆鉾命中受保护
+ * Boss 时会把保护柱【直接碎掉】（走诡厄正常死亡流程 → 使徒 1 分钟召柱冷却），Boss
+ * 本次同时吃满伤害；另穿透【使徒受击无敌帧】与【启示录下界 Apollyon 受击冷却】，
  * 并补偿抵消【下界减伤(50%)】与【附近玩家时非玩家伤害减半】，落血即名义伤害。
  * 全程走正常 hurt 管线（受击事件/阶段照常触发），致死时死亡流程/掉落正常。
  * 诡厄巫法未安装时受限 Boss 判定为空，此钩子只对凋灵生效，不影响其他目标。
@@ -64,8 +65,10 @@ public final class TianNiHuoPierceHandler {
      * 突破"每次伤害上限"（亚波伦 apollyon_hurt_limit=20 等；主 Goety apostleDamageCap=20
      * 因 genericKill 带 bypasses_invulnerability 天然绕过）：
      * 把伤害拆成 ≤19 的多段连续 hurt（每段走完整伤害管线、受击事件照常，总和突破单次上限）。
-     * 每段前穿透三样免伤：黑曜石柱保护 obsidianInvul（打完还原，柱仍存活）、
-     * 使徒受击无敌帧 moddedInvul、启示录下界 Apollyon 受击冷却 hitCooldown；
+     * Boss 处于黑曜石柱保护时：保护柱被天逆鉾【直接碎掉】（正常受伤死亡，触发诡厄
+     * 碎裂特效与使徒 1 分钟召柱冷却），Boss 本次照常吃满穿透伤害且不再还原保护计时；
+     * 未碎柱时（未被保护/残余保护无柱可碎）才还原 obsidianInvul。
+     * 每段前穿透：使徒受击无敌帧 moddedInvul、启示录下界 Apollyon 受击冷却 hitCooldown；
      * 目标为使徒时按 apostleDamageCompensation 放大送出量，抵消下界减伤(50%)与
      * 附近玩家时非玩家伤害减半——落血仍是名义伤害。
      */
@@ -74,6 +77,11 @@ public final class TianNiHuoPierceHandler {
     private static void pierceDamage(ServerPlayer player, LivingEntity target, float dmg) {
         bypassWitherInvuln(target);
         int obsidianInvulBackup = GoetyBridge.readObsidianInvul(target);
+        boolean pillarShattered = false;
+        if (obsidianInvulBackup > 0) {
+            // 天逆鉾穿透黑曜石柱保护：保护柱直接碎掉（柱死 → 使徒 1 分钟内召不出新柱）
+            pillarShattered = GoetyBridge.shatterProtectingPillars(target);
+        }
         float comp = GoetyBridge.apostleDamageCompensation(target);
         float remaining = dmg;
         int guard = 0;
@@ -86,8 +94,9 @@ public final class TianNiHuoPierceHandler {
             target.hurt(target.damageSources().genericKill(), part * comp);
             remaining -= part;
         }
-        // 还原柱保护计时（黑曜石柱存活时下个 tick 本就会重新置 10，此处仅避免同 tick 误伤窗口）
-        if (target.isAlive() && !target.isRemoved()) {
+        // 柱已碎 → 保持保护计时清零（使徒要等召柱冷却，Boss 对全员敞开）；
+        // 未碎柱（没被保护 / 残余保护但无柱可碎）→ 还原保护计时，避免同 tick 误伤窗口
+        if (!pillarShattered && target.isAlive() && !target.isRemoved()) {
             GoetyBridge.setObsidianInvul(target, obsidianInvulBackup);
         }
         // 命中反馈（粒子 + 受击音）

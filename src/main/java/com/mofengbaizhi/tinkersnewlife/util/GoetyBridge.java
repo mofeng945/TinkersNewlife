@@ -175,6 +175,8 @@ public final class GoetyBridge {
     private static Field moddedInvulField;         // public int moddedInvul（受击后无敌帧）
     private static Class<?> mobsConfigClass;       // com.Polarice3.Goety.config.MobsConfig
     private static Field netherReductionField;     // ConfigValue<Integer> ApostleNetherDamageReduction（下界减伤 %）
+    private static Class<?> ownedIface;            // com.Polarice3.Goety.common.entities.neutral.Owned（仆从归属）
+    private static Method getTrueOwnerMethod;      // Owned.getTrueOwner()
     private static Class<?> apollyonHelperIface;   // z1gned.goetyrevelation.util.ApollyonAbilityHelper（mixin 注入使徒）
     private static Method setHitCooldownMethod;    // allTitlesApostle_1_20_1$setHitCooldown(int)
     private static Method isApollyonMethod;        // allTitlesApostle_1_20_1$isApollyon()
@@ -197,6 +199,12 @@ public final class GoetyBridge {
                 netherReductionField = fieldOf(mobsConfigClass, "ApostleNetherDamageReduction");
             } catch (Throwable ignored) {
                 // 配置字段读不到：下界减伤按默认 50 兜底
+            }
+            try {
+                ownedIface = Class.forName("com.Polarice3.Goety.common.entities.neutral.Owned");
+                getTrueOwnerMethod = methodOf(ownedIface, "getTrueOwner");
+            } catch (Throwable ignored) {
+                // 归属接口读不到：碎柱时退化为按距离判定
             }
             try {
                 apollyonHelperIface = Class.forName("z1gned.goetyrevelation.util.ApollyonAbilityHelper");
@@ -346,5 +354,49 @@ public final class GoetyBridge {
             factor *= 2.0F;
         }
         return factor;
+    }
+
+    // =====================================================================
+    //  天逆鉾"碎柱"：穿透黑曜石柱保护时把柱直接打碎
+    // =====================================================================
+
+    /** 柱子是否归属于指定 Boss（读不到 Owned 接口时按距离放行） */
+    private static boolean pillarOwnedBy(LivingEntity pillar, LivingEntity boss) {
+        resolveReflection();
+        if (ownedIface == null || getTrueOwnerMethod == null) return true;
+        try {
+            if (!ownedIface.isInstance(pillar)) return false;
+            Object owner = getTrueOwnerMethod.invoke(pillar);
+            return owner == boss;
+        } catch (Throwable ignored) {
+            return true;
+        }
+    }
+
+    /**
+     * 把 boss 周围 16 格内、归属于它的存活黑曜石柱全部"击碎"：
+     * 用 ≤19 的多段 genericKill 正常打到死——柱子死亡走诡厄自身流程
+     * （silentDie：黑曜碎裂粒子/音效 + 使徒 monolithCoolDown=1 分钟，短时间召不出新柱）。
+     * 返回是否至少碎掉了一根（调用方据此决定是否还原 boss 的 obsidianInvul）。
+     */
+    public static boolean shatterProtectingPillars(LivingEntity boss) {
+        if (!isAvailable() || boss == null || boss.level() == null || boss.level().isClientSide) {
+            return false;
+        }
+        boolean any = false;
+        int outer = 0;
+        while (outer++ < 8) {
+            Entity p = nearest(boss.level(), boss.getX(), boss.getY(), boss.getZ(), 16.0,
+                    e -> e instanceof LivingEntity le && isPillar(le) && le.isAlive()
+                            && pillarOwnedBy(le, boss));
+            if (!(p instanceof LivingEntity pillar)) break;
+            any = true;
+            int guard = 0;
+            while (pillar.isAlive() && !pillar.isRemoved() && guard++ < 64) {
+                pillar.invulnerableTime = 0;
+                pillar.hurt(pillar.damageSources().genericKill(), 19.0F);
+            }
+        }
+        return any;
     }
 }
