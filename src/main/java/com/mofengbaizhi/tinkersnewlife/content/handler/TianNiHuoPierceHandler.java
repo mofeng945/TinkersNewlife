@@ -20,8 +20,11 @@ import net.minecraftforge.fml.common.Mod;
 
 /**
  * 天逆鉾穿透攻击：
- * 手持天逆鉾攻击【凋灵】（无视出生无敌）或【诡厄巫法受限 Boss（亚波伦/使徒类）】（无视其伤害限制）时，
- * 取消原版攻击流程，直接结算伤害——不受无敌帧/伤害上限影响；致死时通过正常 hurt 触发死亡流程（事件/掉落/击败逻辑正常）。
+ * 手持天逆鉾攻击【凋灵】（无视出生无敌）或【诡厄巫法受限 Boss（亚波伦/使徒类）】时，
+ * 取消原版攻击流程，直接结算伤害——无视无敌帧/伤害上限；
+ * 对受限 Boss 额外穿透【黑曜石柱保护】（obsidianInvul 全程免伤，与墨默"必须破柱"不同，
+ * 天逆鉾无需破柱即可造成伤害）、【使徒受击无敌帧】与【启示录下界 Apollyon 受击冷却】。
+ * 全程走正常 hurt 管线（受击事件/阶段照常触发），致死时死亡流程/掉落正常。
  * 诡厄巫法未安装时受限 Boss 判定为空，此钩子只对凋灵生效，不影响其他目标。
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -44,7 +47,7 @@ public final class TianNiHuoPierceHandler {
         boolean wither = target instanceof WitherBoss;
         if (!limitedBoss && !wither) return;
 
-        // 取消原版攻击，改由天逆鉾直接结算（无视无敌帧/凋灵出生无敌/诡厄巫法限伤）
+        // 取消原版攻击，改由天逆鉾直接结算（无视无敌帧/凋灵出生无敌/诡厄巫法限伤与柱保护）
         event.setCanceled(true);
         player.swing(InteractionHand.MAIN_HAND);
 
@@ -56,19 +59,32 @@ public final class TianNiHuoPierceHandler {
         pierceDamage(player, target, dmg);
     }
 
-    /** 突破"每次伤害上限"（亚波伦 apollyon_hurt_limit=20 等）：
-     *  多段 ≤15 的连续 hurt（每段走完整伤害管线，受击事件/阶段照常；总和突破单次上限） */
-    private static final float PIERCE_CHUNK = 15.0F;
+    /**
+     * 突破"每次伤害上限"（亚波伦 apollyon_hurt_limit=20 等；主 Goety apostleDamageCap=20
+     * 因 genericKill 带 bypasses_invulnerability 天然绕过）：
+     * 把伤害拆成 ≤19 的多段连续 hurt（每段走完整伤害管线、受击事件照常，总和突破单次上限）。
+     * 每段前穿透三样免伤：黑曜石柱保护 obsidianInvul（打完还原，柱仍存活）、
+     * 使徒受击无敌帧 moddedInvul、启示录下界 Apollyon 受击冷却 hitCooldown。
+     */
+    private static final float PIERCE_CHUNK = 19.0F;
 
     private static void pierceDamage(ServerPlayer player, LivingEntity target, float dmg) {
         bypassWitherInvuln(target);
+        int obsidianInvulBackup = GoetyBridge.readObsidianInvul(target);
         float remaining = dmg;
         int guard = 0;
         while (remaining > 0 && target.isAlive() && !target.isRemoved() && guard++ < 64) {
+            GoetyBridge.clearModdedInvul(target);
+            GoetyBridge.setObsidianInvul(target, 0); // 天逆鉾无视黑曜石柱保护
+            GoetyBridge.clearApollyonHitCooldown(target);
             float part = Math.min(remaining, PIERCE_CHUNK);
             target.invulnerableTime = 0;
             target.hurt(target.damageSources().genericKill(), part);
             remaining -= part;
+        }
+        // 还原柱保护计时（黑曜石柱存活时下个 tick 本就会重新置 10，此处仅避免同 tick 误伤窗口）
+        if (target.isAlive() && !target.isRemoved()) {
+            GoetyBridge.setObsidianInvul(target, obsidianInvulBackup);
         }
         // 命中反馈（粒子 + 受击音）
         if (target.level() instanceof ServerLevel sl) {

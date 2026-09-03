@@ -2281,16 +2281,17 @@ public class MomoMerchant extends PathfinderMob {
     /**
      * 墨默的伤害统一入口：
      * 凋灵出生无敌 → 无视；
-     * 诡厄巫法受限 Boss（亚波伦/使徒）被黑曜石柱保护时 → 墨默必须先破柱，直接伤害无效；
-     * 柱被破坏后 → 对其限伤（apollyon_hurt_limit 等事件级 clamp）用直接扣血绕过（突破限伤）。
+     * 诡厄巫法受限 Boss（亚波伦/使徒）处于黑曜石柱保护（obsidianInvul>0，全程免伤）时 →
+     * 墨默打不出伤害，必须先破柱（索敌链已切到柱/邪教徒），此处只做格挡反馈；
+     * 柱破后 → 对其限伤（启示录 apollyon_hurt_limit=20 等事件级 clamp）用多段拆分突破。
      */
     private void applyHurt(LivingEntity target, float dmg) {
         witherInvulnBypass(target);
         target.invulnerableTime = 0;
         if (com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isDamageLimitedBoss(target)) {
-            // 黑曜石柱保护中：墨默打不出伤害，必须先摧毁柱子（粒子反馈）
-            LivingEntity pillar = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.nearestPillar(target, 16.0);
-            if (pillar != null) {
+            // 柱保护以 Boss 实体的 obsidianInvul 计时为准（存活黑曜石柱每 tick 置 10），
+            // 比按距离找柱更接近真实免伤判定（柱瞬移贴身后必然 >0）
+            if (com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.readObsidianInvul(target) > 0) {
                 if (this.level() instanceof ServerLevel sl) {
                     sl.playSound(null, target.blockPosition(), SoundEvents.SHIELD_BLOCK, SoundSource.HOSTILE, 0.8F, 1.2F);
                     sl.sendParticles(ParticleTypes.CRIT, target.getX(), target.getY() + target.getBbHeight() / 2,
@@ -2298,24 +2299,29 @@ public class MomoMerchant extends PathfinderMob {
                 }
                 return; // 柱未破：本次伤害被挡
             }
-            pierceDamageDirect(target, dmg); // 柱已破：直接扣血突破限伤
+            pierceDamageDirect(target, dmg); // 柱已破：多段拆分突破限伤
         } else {
             target.hurt(this.damageSources().mobAttack(this), dmg);
         }
     }
 
     /**
-     * 突破"每次伤害上限"（亚波伦 apollyon_hurt_limit=20 等）：
-     * 不走直改血（会废掉受击事件/阶段逻辑），而是把伤害拆成 ≤15 的多段连续 hurt——
+     * 突破"每次伤害上限"（启示录 apollyon_hurt_limit=20；主 Goety apostleDamageCap=20
+     * 因 genericKill 带 bypasses_invulnerability 天然绕过）：
+     * 不走直改血（会废掉受击事件/阶段逻辑），而是把伤害拆成 ≤19 的多段连续 hurt——
      * 每段都在上限之下、走完整伤害管线（事件/Boss 阶段照常触发），累计总和突破单次上限。
+     * 每段前顺带清零：使徒受击无敌帧 moddedInvul（其他带直接实体的攻击会留下 15tick 挡伤）
+     * 与启示录下界 Apollyon 的受击冷却（每次 actuallyHurt 置 30、期间 hurt() 被直接取消）。
      */
-    private static final float PIERCE_CHUNK = 15.0F;
+    private static final float PIERCE_CHUNK = 19.0F;
 
     private void pierceDamageDirect(LivingEntity target, float dmg) {
         if (target.level().isClientSide || target.isRemoved()) return;
         float remaining = dmg;
         int guard = 0;
         while (remaining > 0 && target.isAlive() && !target.isRemoved() && guard++ < 64) {
+            com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.clearModdedInvul(target);
+            com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.clearApollyonHitCooldown(target);
             float part = Math.min(remaining, PIERCE_CHUNK);
             target.invulnerableTime = 0;
             target.hurt(target.damageSources().genericKill(), part);
