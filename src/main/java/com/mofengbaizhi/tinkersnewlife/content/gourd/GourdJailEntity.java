@@ -6,6 +6,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -14,6 +15,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
+import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -234,7 +237,12 @@ public class GourdJailEntity extends Entity {
             // saveWithoutId 不写 "id"，loadEntityRecursive 需要它才能识别类型
             prisonerNbt.putString("id", net.minecraft.world.entity.EntityType.getKey(living.getType()).toString());
             prisonerId = living.getUUID();
-            living.remove(Entity.RemovalReason.DISCARDED);
+            if (isBossLike(living)) {
+                // ⭐ Boss 封印 = 击败：结算对应 Boss 状态机（末地龙战等），避免"卡消失"后被判定战斗未结束而重刷一条
+                sealAsDefeat((ServerLevel) server, living);
+            } else {
+                living.remove(Entity.RemovalReason.DISCARDED);
+            }
             // 无需球笼坐标（生物无维度）
         } else if (target != null) {
             // 其他实体：清除（无恢复）
@@ -246,6 +254,60 @@ public class GourdJailEntity extends Entity {
         setSealed(true);
         sealTargetId = null;
         sealTargetPos = null;
+    }
+
+    /** Boss 判定：末影龙/凋灵，以及高血量（≥300）怪物兜底（覆盖多数模组 Boss） */
+    private static boolean isBossLike(LivingEntity e) {
+        if (e instanceof EnderDragon || e instanceof WitherBoss) return true;
+        return e instanceof Mob && e.getMaxHealth() >= 300.0;
+    }
+
+    /**
+     * 封印即击败：Boss 被封印时结算其状态机，避免"实体被移除但战斗未结束"导致原处重刷。
+     * 末影龙 → 直接通知末地龙战已击杀（开传送门/出龙蛋，不再补刷）；
+     * 其余 Boss → 走完整死亡结算（触发事件/掉落/各自的击败逻辑）。
+     */
+    private static void sealAsDefeat(ServerLevel jailLevel, LivingEntity living) {
+        if (living instanceof EnderDragon dragon) {
+            // 通知末地龙战已击杀（方法名跨映射/版本可能不同，反射按候选名调用，失败静默）
+            try {
+                MinecraftServer ms = jailLevel.getServer();
+                ServerLevel end = ms.getLevel(Level.END);
+                if (end != null) {
+                    Object fight = invokeAny(end, null, "dragonFight", "getDragonFight");
+                    if (fight != null) {
+                        invokeAny(fight, dragon, "setDragonKilled", "onDragonKilled", "setDragonDead");
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
+            living.remove(Entity.RemovalReason.DISCARDED);
+            return;
+        }
+        // 其余 Boss：正常死亡结算
+        living.hurt(living.damageSources().genericKill(), Float.MAX_VALUE);
+        if (living.isAlive()) {
+            living.remove(Entity.RemovalReason.DISCARDED);
+        }
+    }
+
+    /** 反射调用：按候选方法名在 target 上找方法并调用（无参或带单参数），失败返回 null */
+    private static Object invokeAny(Object target, Object arg, String... names) throws ReflectiveOperationException {
+        Class<?> clazz = target.getClass();
+        while (clazz != null) {
+            for (String name : names) {
+                try {
+                    java.lang.reflect.Method m = arg == null
+                            ? clazz.getDeclaredMethod(name)
+                            : clazz.getDeclaredMethod(name, arg.getClass());
+                    m.setAccessible(true);
+                    return m.invoke(target, arg == null ? new Object[0] : new Object[]{arg});
+                } catch (NoSuchMethodException ignored) {
+                }
+            }
+            clazz = clazz.getSuperclass();
+        }
+        return null;
     }
 
     /** 释放：玩家 → 清除球笼 + 传送回狱门疆位置；生物 → 狱门疆位置重新生成；随后狱门疆碎裂消失 */
