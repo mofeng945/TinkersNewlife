@@ -36,7 +36,7 @@ public final class TianNiHuoPierceHandler {
     @SubscribeEvent
     public static void onPlayerAttack(AttackEntityEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
-        if (event.getLevel().isClientSide) return;
+        if (player.level().isClientSide) return;
         if (!(event.getTarget() instanceof LivingEntity target)) return;
         ItemStack held = player.getMainHandItem();
         if (!(held.getItem() instanceof TianNiHuoItem)) return;
