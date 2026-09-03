@@ -807,6 +807,9 @@ public class MomoMerchant extends PathfinderMob {
         // 蜘蛛式爬墙
         tickWallClimb();
 
+        // 水下：溺尸式憋气 + 游泳
+        tickWaterSwim();
+
         // 仇恨清理
         if (++aggroPruneTick >= 100) {
             aggroPruneTick = 0;
@@ -895,9 +898,8 @@ public class MomoMerchant extends PathfinderMob {
         }
     }
 
-    /** 商人声音（无战斗/无目标时偶尔低语；不与任意语音重叠；雇佣状态下保持安静不闲谈） */
+    /** 商人声音（无战斗/无目标时偶尔低语；不与任意语音重叠；雇佣状态下同样会说话） */
     private void tickAmbientVoice() {
-        if (hired) return; // 雇佣期安静跟随，不发出闲逛低语
         if (--ambientVoiceTimer > 0) return;
         ambientVoiceTimer = 200 + this.random.nextInt(400);
         if (voiceReady() && this.getTarget() == null && !this.isInWater() && !this.isDeadOrDying()) {
@@ -984,7 +986,7 @@ public class MomoMerchant extends PathfinderMob {
             if (p != null) {
                 this.getLookControl().setLookAt(p, 10.0F, 10.0F);
             }
-            if (!hired && this.random.nextInt(100) == 0 && voiceReady()) {
+            if (this.random.nextInt(100) == 0 && voiceReady()) {
                 voicePlayed(VOICE_TIMINGS.ambient);
                 this.playSound(ModSounds.MOMO_AMBIENT.get(), 0.8F, 1.0F);
             }
@@ -1605,9 +1607,7 @@ public class MomoMerchant extends PathfinderMob {
             }
             if (eatTicks <= 0) {
                 stopEating();
-                if (!hired) { // 雇佣状态静音进食（仅动画）
-                    this.playSound(SoundEvents.GENERIC_EAT, 0.5F, 0.8F + this.random.nextFloat() * 0.3F);
-                }
+                this.playSound(SoundEvents.GENERIC_EAT, 0.5F, 0.8F + this.random.nextFloat() * 0.3F);
             }
             return;
         }
@@ -1623,9 +1623,7 @@ public class MomoMerchant extends PathfinderMob {
         eatTicks = EAT_DURATION_TICKS;
         setEatingFlag(true);
         this.swing(InteractionHand.MAIN_HAND);
-        if (!hired) { // 雇佣状态静音进食（仅动画）
-            this.playSound(SoundEvents.GENERIC_EAT, 0.6F, 0.8F + this.random.nextFloat() * 0.4F);
-        }
+        this.playSound(SoundEvents.GENERIC_EAT, 0.6F, 0.8F + this.random.nextFloat() * 0.4F);
         if (this.level() instanceof ServerLevel sl) {
             sl.sendParticles(new net.minecraft.core.particles.ItemParticleOption(
                             net.minecraft.core.particles.ParticleTypes.ITEM, new ItemStack(food)),
@@ -2172,7 +2170,8 @@ public class MomoMerchant extends PathfinderMob {
             songTicks = SONG_DURATION_TICKS;
             return;
         }
-        // 空闲：进食 + 以雇主为中心游走
+        // 空闲：低语 + 进食 + 以雇主为中心游走
+        tickAmbientVoice();
         tickEatIfIdle();
         if (this.distanceToSqr(boss) > 14.0 * 14.0) {
             this.getNavigation().moveTo(boss, 1.15);
@@ -2587,6 +2586,46 @@ public class MomoMerchant extends PathfinderMob {
             if (this.level().noCollision(this.getBoundingBox().move(0.0, 1.0, 0.0))) {
                 this.setDeltaMovement(this.getDeltaMovement().add(0.0, 0.28, 0.0));
                 this.fallDistance = 0;
+            }
+        }
+    }
+
+    /** 水下：溺尸式憋气呼吸（不会窒息）+ 游泳（朝目标游；无目标时浮向水面） */
+    private void tickWaterSwim() {
+        if (this.level().isClientSide || !this.isInWater()) return;
+        // 憋气：周期性补满空气，永不窒息
+        if (this.tickCount % 20 == 0 && this.getAirSupply() < this.getMaxAirSupply()) {
+            this.setAirSupply(this.getMaxAirSupply());
+        }
+        // 微浮力：避免一直沉底
+        if (this.getDeltaMovement().y < -0.12 && this.tickCount % 2 == 0) {
+            this.setDeltaMovement(this.getDeltaMovement().add(0.0, 0.05, 0.0));
+        }
+        LivingEntity aim = this.getTarget();
+        if (aim == null && hired) {
+            aim = getEmployer();
+        }
+        if (aim != null && aim.isAlive() && aim.level() == this.level()) {
+            double dx = aim.getX() - this.getX();
+            double dy = aim.getY() - this.getY();
+            double dz = aim.getZ() - this.getZ();
+            double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            if (dist > 1.8) {
+                double sp = 0.22; // 游泳速度（块/tick）
+                Vec3 want = new Vec3(dx / dist * sp, dy / dist * sp, dz / dist * sp);
+                Vec3 cur = this.getDeltaMovement();
+                Vec3 next = cur.add(want.subtract(cur).scale(0.1));
+                if (next.y < -0.25) {
+                    next = new Vec3(next.x, -0.25, next.z);
+                }
+                this.setDeltaMovement(next);
+                this.fallDistance = 0;
+            }
+        } else {
+            // 无目标：浮向水面附近，避免呆在水底
+            double surface = this.level().getSeaLevel();
+            if (this.getY() < surface - 1.0 && this.getDeltaMovement().y < 0.1) {
+                this.setDeltaMovement(this.getDeltaMovement().add(0.0, 0.04, 0.0));
             }
         }
     }
