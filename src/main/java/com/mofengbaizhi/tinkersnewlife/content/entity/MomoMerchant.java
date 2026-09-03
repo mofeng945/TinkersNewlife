@@ -246,7 +246,7 @@ public class MomoMerchant extends PathfinderMob {
     private boolean fleeTriggered = false;
     private int fleeTimer = 0;
     private int regenTick = 0;
-    private int aggroPruneTick = 0;
+    private int curseCleanseTick = 0;    private int aggroPruneTick = 0;
 
     // ===== 商人行为 =====
     /** 是否为自然刷新（满月）产生的：白天到来时消失；刷怪蛋为 false 常驻 */
@@ -795,6 +795,15 @@ public class MomoMerchant extends PathfinderMob {
         // 再生 VIII（常驻，覆盖旧版再生 V）
         if (++regenTick % 20 == 0) {
             this.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 120, 7, false, false));
+        }
+
+        // 诡厄诅咒(goety:cursed)清除：下界亚波伦会给目标挂诅咒，诡厄会取消带诅咒实体的所有回血
+        // （墨默的再生 VIII 会被禁）——每 5 tick 清一次，让再生始终生效
+        if (++curseCleanseTick % 5 == 0) {
+            net.minecraft.world.effect.MobEffect cursed = goetyCursedEffect();
+            if (cursed != null && this.hasEffect(cursed)) {
+                this.removeEffect(cursed);
+            }
         }
 
         // 灼烧清锁：狱焰等灼烧类移动限制效果会让她停住——周期性清除（着火时连通用减速也清）
@@ -2544,6 +2553,22 @@ public class MomoMerchant extends PathfinderMob {
             return null;
         }
         return lastBlockedBy;
+    }
+
+    /** 诡厄诅咒效果（按注册表 id 惰性查找，未装诡厄返回 null） */
+    private static net.minecraft.world.effect.MobEffect GOETY_CURSED_CACHE = null;
+    private static boolean goetyCursedResolved = false;
+
+    private static net.minecraft.world.effect.MobEffect goetyCursedEffect() {
+        if (!goetyCursedResolved) {
+            goetyCursedResolved = true;
+            try {
+                GOETY_CURSED_CACHE = net.minecraftforge.registries.ForgeRegistries.MOB_EFFECTS
+                        .getValue(new net.minecraft.resources.ResourceLocation("goety", "cursed"));
+            } catch (Throwable ignored) {
+            }
+        }
+        return GOETY_CURSED_CACHE;
     }
 
     /** 是否处于格挡窗口 */
