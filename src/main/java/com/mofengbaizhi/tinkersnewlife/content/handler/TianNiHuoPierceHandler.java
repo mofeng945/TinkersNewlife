@@ -37,6 +37,28 @@ public final class TianNiHuoPierceHandler {
 
     private TianNiHuoPierceHandler() {}
 
+    /** 诊断：三层伤害事件在哪一层被挡（仅对受限 Boss，最低优先级观察取消状态） */
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
+    public static void diagAttack(net.minecraftforge.event.entity.living.LivingAttackEvent event) {
+        if (GoetyBridge.isDamageLimitedBoss(event.getEntity())) {
+            LOGGER.info("[DIAG] LivingAttack 目标Boss amount={} 已被取消={}", event.getAmount(), event.isCanceled());
+        }
+    }
+
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
+    public static void diagHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
+        if (GoetyBridge.isDamageLimitedBoss(event.getEntity())) {
+            LOGGER.info("[DIAG] LivingHurt 目标Boss amount={} 已被取消={}", event.getAmount(), event.isCanceled());
+        }
+    }
+
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
+    public static void diagDamage(net.minecraftforge.event.entity.living.LivingDamageEvent event) {
+        if (GoetyBridge.isDamageLimitedBoss(event.getEntity())) {
+            LOGGER.info("[DIAG] LivingDamage 目标Boss amount={} 已被取消={}", event.getAmount(), event.isCanceled());
+        }
+    }
+
     /** 凋灵无敌字段（反射清零，映射兼容） */
     private static java.lang.reflect.Field WITHER_INVULN_FIELD = null;
 
@@ -87,19 +109,39 @@ public final class TianNiHuoPierceHandler {
             // 天逆鉾穿透黑曜石柱保护：保护柱直接碎掉（柱死 → 使徒 1 分钟内召不出新柱）
             pillarShattered = GoetyBridge.shatterProtectingPillars(target);
         }
-        float comp = GoetyBridge.apostleDamageCompensation(target);
-        LOGGER.info("[天逆鉾] 穿透开始 dmg={} obsidianInvul={} 碎柱={} comp={}",
-                dmg, obsidianInvulBackup, pillarShattered, comp);
+        // 下界亚波伦：启示录 canHurt 的 hitCooldown 免疫窗（30tick）反射清除运行时不可靠，
+        // 走直接 actuallyHurt 多段——完全绕开 hurt() 阶段闸门；每段仍触发 LivingDamageEvent + 单次 20 clamp。
+        boolean apollyonNether = GoetyBridge.isGoetyApostle(target)
+                && target.level() != null && target.level().dimension() == net.minecraft.world.level.Level.NETHER;
+        float comp = apollyonNether ? 1.0F : GoetyBridge.apostleDamageCompensation(target);
+        LOGGER.info("[天逆鉾] 穿透开始 dmg={} obsidianInvul={} 碎柱={} comp={} 血量={}/{} 下界直伤={}",
+                dmg, obsidianInvulBackup, pillarShattered, comp,
+                target.getHealth(), target.getMaxHealth(), apollyonNether);
+        net.minecraft.world.damagesource.DamageSource src = target.damageSources().genericKill();
         float remaining = dmg;
         int guard = 0;
+        boolean killNeedsDie = false;
         while (remaining > 0 && target.isAlive() && !target.isRemoved() && guard++ < 64) {
-            GoetyBridge.clearModdedInvul(target);
-            GoetyBridge.setObsidianInvul(target, 0); // 天逆鉾无视黑曜石柱保护
-            GoetyBridge.clearApollyonHitCooldown(target);
             float part = Math.min(remaining, PIERCE_CHUNK);
-            target.invulnerableTime = 0;
-            target.hurt(target.damageSources().genericKill(), part * comp);
+            float hpBefore = target.getHealth();
+            if (apollyonNether) {
+                GoetyBridge.actuallyHurtChunk(target, src, part);
+            } else {
+                GoetyBridge.clearModdedInvul(target);
+                GoetyBridge.setObsidianInvul(target, 0); // 天逆鉾无视黑曜石柱保护
+                GoetyBridge.clearApollyonHitCooldown(target);
+                target.invulnerableTime = 0;
+                target.hurt(src, part * comp);
+            }
+            if (hpBefore > 0.0F && target.getHealth() <= 0.0F && !target.isRemoved()) {
+                killNeedsDie = true;
+            }
             remaining -= part;
+        }
+        // 直伤路径下 actualHurt 不会触发 die()，由我们手动补一次死亡流程（掉落/Boss条/击败逻辑正常）
+        if (killNeedsDie && target.getHealth() <= 0.0F && !target.isRemoved()
+                && target.level() != null && !target.level().isClientSide) {
+            target.die(src);
         }
         // 柱已碎 → 保持保护计时清零（使徒要等召柱冷却，Boss 对全员敞开）；
         // 未碎柱（没被保护 / 残余保护但无柱可碎）→ 还原保护计时，避免同 tick 误伤窗口

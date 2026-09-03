@@ -245,6 +245,60 @@ public final class GoetyBridge {
         }
     }
 
+    /** 读使徒 moddedInvul 当前值（诊断用） */
+    public static int readModdedInvul(LivingEntity e) {
+        resolveReflection();
+        if (!isGoetyApostle(e)) return -1;
+        try {
+            return moddedInvulField.getInt(e);
+        } catch (Throwable ignored) {
+            return -1;
+        }
+    }
+
+    // =====================================================================
+    //  下界亚波伦专用：直接调 LivingEntity.actuallyHurt 绕 hurt() 阶段闸门
+    //  （启示录 canHurt 的 hitCooldown 免疫窗经反射清除在运行时不可靠；
+    //    actuallyHurt 每段仍走 ForgeHooks.onLivingDamage(LivingDamageEvent) 与启示录单次 20 clamp）
+    // =====================================================================
+
+    private static java.lang.reflect.Method ACTUALLY_HURT_METHOD = null;
+
+    private static java.lang.reflect.Method findActuallyHurt() {
+        if (ACTUALLY_HURT_METHOD != null) return ACTUALLY_HURT_METHOD;
+        try {
+            for (String name : new String[]{"m_6475_", "actuallyHurt"}) {
+                try {
+                    ACTUALLY_HURT_METHOD = net.minecraft.world.entity.LivingEntity.class
+                            .getDeclaredMethod(name,
+                                    net.minecraft.world.damagesource.DamageSource.class, float.class);
+                    ACTUALLY_HURT_METHOD.setAccessible(true);
+                    break;
+                } catch (NoSuchMethodException ignored) {
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return ACTUALLY_HURT_METHOD;
+    }
+
+    /** 实际打出一段伤害（优先 actuallyHurt，找不到方法时退回普通 hurt）。返回是否成功施加 */
+    public static boolean actuallyHurtChunk(LivingEntity target, net.minecraft.world.damagesource.DamageSource src,
+                                            float amount) {
+        java.lang.reflect.Method m = findActuallyHurt();
+        if (m == null) {
+            target.invulnerableTime = 0;
+            return target.hurt(src, amount);
+        }
+        try {
+            m.invoke(target, src, amount);
+            return true;
+        } catch (Throwable t) {
+            target.invulnerableTime = 0;
+            return target.hurt(src, amount);
+        }
+    }
+
     private static Field fieldOf(Class<?> clazz, String name) {
         try {
             Field f = clazz.getDeclaredField(name);
@@ -311,9 +365,36 @@ public final class GoetyBridge {
         if (e == null || apollyonHelperIface == null) return;
         try {
             if (apollyonHelperIface.isInstance(e) && setHitCooldownMethod != null) {
-                setHitCooldownMethod.invoke(e, 0);
+                if (clearLogCount < 10) {
+                    int before = readApollyonHitCooldown(e);
+                    setHitCooldownMethod.invoke(e, 0);
+                    int after = readApollyonHitCooldown(e);
+                    LOGGER.info("[GoetyBridge] 冷却清零 {}→{} (isInstance={} method={})", before, after,
+                            apollyonHelperIface.isInstance(e), setHitCooldownMethod != null);
+                    clearLogCount++;
+                } else {
+                    setHitCooldownMethod.invoke(e, 0);
+                }
             }
+        } catch (Throwable t) {
+            LOGGER.warn("[GoetyBridge] 冷却清零异常", t);
+        }
+    }
+
+    private static int clearLogCount = 0;
+
+    /** 读启示录 Apollyon 受击冷却当前值（诊断用） */
+    public static int readApollyonHitCooldown(LivingEntity e) {
+        resolveReflection();
+        if (e == null || apollyonHelperIface == null) return -1;
+        try {
+            if (!apollyonHelperIface.isInstance(e)) return -1;
+            Method m = methodOf(apollyonHelperIface, "allTitlesApostle_1_20_1$getHitCooldown");
+            if (m == null) return -1;
+            Object v = m.invoke(e);
+            return v instanceof Integer i ? i : -1;
         } catch (Throwable ignored) {
+            return -1;
         }
     }
 
