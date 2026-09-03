@@ -30,14 +30,25 @@ public class MomoTradeScreen extends Screen {
     private static final int OFFER_X_OFF = HIRE_W + 14;
 
     private final int momoId;
-    private final boolean hired;
-    private final String employer;
+    private boolean hired;
+    private String employer;
     private final List<Row> rows = new ArrayList<>();
     private int startX;
     private int hireX;
     private int hireY;
     private int offerX;
     private int offerW;
+
+    /** 是否为当前屏幕对应的墨默 */
+    public boolean matches(int id) {
+        return this.momoId == id;
+    }
+
+    /** 服务端推送雇佣状态变化时实时刷新（防止重复上交） */
+    public void updateHireState(boolean hired, String employer) {
+        this.hired = hired;
+        this.employer = employer == null ? "" : employer;
+    }
 
     private static final class View {
         final String category;

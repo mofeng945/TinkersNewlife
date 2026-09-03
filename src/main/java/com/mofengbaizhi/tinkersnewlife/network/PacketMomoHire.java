@@ -9,7 +9,8 @@ import net.minecraftforge.network.NetworkEvent;
 import java.util.function.Supplier;
 
 /**
- * 客户端→服务端：点击交易界面左侧"雇佣"栏位，支付 1 个拉莱耶的呼唤雇佣墨默一天。
+ * 客户端→服务端：点击交易界面左侧"雇佣"栏位，支付 1 个拉莱耶的呼唤雇佣墨默一个游戏日。
+ * 雇佣成功后服务端回推 {@link PacketMomoHireState} 实时刷新 UI（防止重复上交）。
  */
 public class PacketMomoHire {
 
@@ -40,11 +41,11 @@ public class PacketMomoHire {
                 case HIRED -> {
                     momo.playTradeSuccessSound();
                     player.displayClientMessage(Component.translatable("message.tinkersnewlife.momo.hired"), true);
+                    // 实时刷新雇佣状态，防止重复上交
+                    PacketMomoHireState.sendTo(player, momo);
                 }
-                case RENEWED -> {
-                    momo.playTradeSuccessSound();
-                    player.displayClientMessage(Component.translatable("message.tinkersnewlife.momo.renewed"), true);
-                }
+                case ALREADY_HIRED -> player.displayClientMessage(Component.translatable(
+                        "message.tinkersnewlife.momo.already_hired"), true);
                 case HIRED_BY_OTHER -> player.displayClientMessage(Component.translatable(
                         "message.tinkersnewlife.momo.hired_by_other"), true);
                 case NO_ITEM -> player.displayClientMessage(Component.translatable(

@@ -206,6 +206,10 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.PacketMomoOpen::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.PacketMomoOpen::new,
                 com.mofengbaizhi.tinkersnewlife.network.PacketMomoOpen::handle);
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.PacketMomoHireState.class,
+                com.mofengbaizhi.tinkersnewlife.network.PacketMomoHireState::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.PacketMomoHireState::new,
+                com.mofengbaizhi.tinkersnewlife.network.PacketMomoHireState::handle);
         registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.PacketProjectionStun.class,
                 com.mofengbaizhi.tinkersnewlife.network.PacketProjectionStun::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.PacketProjectionStun::new,

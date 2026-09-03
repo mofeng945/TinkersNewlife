@@ -111,8 +111,8 @@ public class MomoMerchant extends PathfinderMob {
     private static final int ASTAR_MAX_EXPAND = 700;
 
     // ===== 雇佣 / 歌唱 / 进食 =====
-    /** 雇佣到期：hireDay 日起算，currentDay >= hireDay + 此值 时"新一天结束回来找你" */
-    private static final int HIRE_EXPIRE_AFTER_DAYS = 2;
+    /** 雇佣时长：一个游戏日（24000 tick），到期"回来找你" */
+    private static final long HIRE_DURATION_TICKS = 24000;
     /** 歌唱退后时长 / 歌唱持续 10s / 冷却 120s */
     private static final int SONG_BACKOFF_TICKS = 20;
     private static final int SONG_DURATION_TICKS = 200;
@@ -244,7 +244,7 @@ public class MomoMerchant extends PathfinderMob {
     // ===== 雇佣 / 歌唱 / 进食 状态 =====
     private boolean hired = false;        // 是否处于雇佣期
     private UUID employerId = null;
-    private long hireDay = -1;            // 雇佣当天的 dayCount
+    private long hireUntilTick = -1;      // 雇佣到期时刻（gameTime），= 雇佣时 + 24000
     private long offerDay = -1;           // 商品批次对应的 dayCount（每天刷新一批）
     /** 雇佣到期返回雇主后的续雇宽限倒计时（自然刷新版：拒绝续雇则到点随天亮消失） */
     private int returnGraceTicks = 0;
@@ -343,7 +343,7 @@ public class MomoMerchant extends PathfinderMob {
         if (employerId != null) {
             tag.putUUID("MomoEmployer", employerId);
         }
-        tag.putLong("MomoHireDay", hireDay);
+        tag.putLong("MomoHireUntil", hireUntilTick);
         tag.putLong("MomoOfferDay", offerDay);
         if (homePos != null) {
             tag.putIntArray("MomoHome", new int[]{homePos.getX(), homePos.getY(), homePos.getZ()});
@@ -371,7 +371,7 @@ public class MomoMerchant extends PathfinderMob {
         if (tag.contains("MomoEmployer")) {
             employerId = tag.getUUID("MomoEmployer");
         }
-        hireDay = tag.getLong("MomoHireDay");
+        hireUntilTick = tag.getLong("MomoHireUntil");
         offerDay = tag.getLong("MomoOfferDay");
         if (tag.contains("MomoHome")) {
             int[] h = tag.getIntArray("MomoHome");
@@ -504,30 +504,33 @@ public class MomoMerchant extends PathfinderMob {
 
     public enum BuyResult { OK, NO_OFFER, INSUFFICIENT, TOO_FAR, DEAD }
 
-    public enum HireResult { HIRED, RENEWED, HIRED_BY_OTHER, NO_ITEM, TOO_FAR, DEAD }
+    public enum HireResult { HIRED, ALREADY_HIRED, HIRED_BY_OTHER, NO_ITEM, TOO_FAR, DEAD }
 
-    /** 玩家点击雇佣：支付 1 个拉莱耶的呼唤，雇佣一天；重复支付可续期 */
+    /** 玩家点击雇佣：支付 1 个拉莱耶的呼唤，雇佣一天。雇佣期间再次点击不扣费、直接拒绝，防止重复上交 */
     public HireResult hireFrom(ServerPlayer buyer) {
         if (level().isClientSide) return HireResult.DEAD;
         if (!this.isAlive() || this.isRemoved()) return HireResult.DEAD;
         if (buyer.distanceToSqr(this) > 8.0 * 8.0) return HireResult.TOO_FAR;
-        if (hired && employerId != null && !employerId.equals(buyer.getUUID())) {
-            return HireResult.HIRED_BY_OTHER;
+        // 已处于雇佣期（无论是否本人）：拒绝再次支付
+        if (hired) {
+            if (employerId != null && !employerId.equals(buyer.getUUID())) {
+                return HireResult.HIRED_BY_OTHER;
+            }
+            return HireResult.ALREADY_HIRED;
         }
         if (countItem(buyer, ModItems.RLYEH_CALL.get()) < 1) return HireResult.NO_ITEM;
         consumeItem(buyer, ModItems.RLYEH_CALL.get(), 1);
-        boolean renew = hired && employerId != null && employerId.equals(buyer.getUUID());
         employerId = buyer.getUUID();
-        hireDay = currentDay();
+        hireUntilTick = this.level().getGameTime() + HIRE_DURATION_TICKS; // 雇佣一个游戏日
         hired = true;
-        returnGraceTicks = 0; // 续雇成功，取消"天亮消失"宽限
+        returnGraceTicks = 0; // 雇佣成功，取消"天亮消失"宽限
         this.setTarget(null);
         clearPath();
         if (this.level() instanceof ServerLevel sl) {
             sl.sendParticles(ParticleTypes.HEART, this.getX(), this.getY() + 1.6, this.getZ(),
                     6, 0.3, 0.3, 0.3, 0.02);
         }
-        return renew ? HireResult.RENEWED : HireResult.HIRED;
+        return HireResult.HIRED;
     }
 
     /** 玩家点击交易：校验并执行购买（货币从玩家背包/副手扣除） */
@@ -1355,9 +1358,8 @@ public class MomoMerchant extends PathfinderMob {
         if (boss == null || !boss.isAlive()) {
             return false; // 雇主离线/死亡：挂起等待
         }
-        // 到期返回（新一天结束回来找你）
-        long now = currentDay();
-        if (now >= hireDay + HIRE_EXPIRE_AFTER_DAYS) {
+        // 到期返回（雇佣一个游戏日后回来找你）
+        if (this.level().getGameTime() >= hireUntilTick) {
             hired = false;
             employerId = null;
             singing = false;
