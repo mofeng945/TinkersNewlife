@@ -9,7 +9,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
@@ -57,18 +56,19 @@ public final class TianNiHuoPierceHandler {
         pierceDamage(player, target, dmg);
     }
 
-    /** 无视无敌与限伤直接造成伤害 */
+    /** 突破"每次伤害上限"（亚波伦 apollyon_hurt_limit=20 等）：
+     *  多段 ≤15 的连续 hurt（每段走完整伤害管线，受击事件/阶段照常；总和突破单次上限） */
+    private static final float PIERCE_CHUNK = 15.0F;
+
     private static void pierceDamage(ServerPlayer player, LivingEntity target, float dmg) {
         bypassWitherInvuln(target);
-        float hp = target.getHealth();
-        float next = Math.max(0.0F, hp - dmg);
-        if (next <= 0.0F && target.isAlive()) {
-            // 致死：留 1 血后走正常 hurt，触发死亡流程（事件/掉落/该 Boss 的击败逻辑）
-            target.setHealth(1.0F);
-            DamageSource src = player.damageSources().playerAttack(player);
-            target.hurt(src, 1.0E9F);
-        } else {
-            target.setHealth(next);
+        float remaining = dmg;
+        int guard = 0;
+        while (remaining > 0 && target.isAlive() && !target.isRemoved() && guard++ < 64) {
+            float part = Math.min(remaining, PIERCE_CHUNK);
+            target.invulnerableTime = 0;
+            target.hurt(player.damageSources().playerAttack(player).bypassArmor(), part);
+            remaining -= part;
         }
         // 命中反馈（粒子 + 受击音）
         if (target.level() instanceof ServerLevel sl) {

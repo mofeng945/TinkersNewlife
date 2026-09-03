@@ -2304,16 +2304,22 @@ public class MomoMerchant extends PathfinderMob {
         }
     }
 
-    /** 直接扣血（无视事件级限伤/无敌），致死时留 1 血走正常 hurt 触发死亡流程 */
+    /**
+     * 突破"每次伤害上限"（亚波伦 apollyon_hurt_limit=20 等）：
+     * 不走直改血（会废掉受击事件/阶段逻辑），而是把伤害拆成 ≤15 的多段连续 hurt——
+     * 每段都在上限之下、走完整伤害管线（事件/Boss 阶段照常触发），累计总和突破单次上限。
+     */
+    private static final float PIERCE_CHUNK = 15.0F;
+
     private void pierceDamageDirect(LivingEntity target, float dmg) {
         if (target.level().isClientSide || target.isRemoved()) return;
-        float hp = target.getHealth();
-        float next = Math.max(0.0F, hp - dmg);
-        if (next <= 0.0F && target.isAlive()) {
-            target.setHealth(1.0F);
-            target.hurt(this.damageSources().mobAttack(this), 1.0E9F);
-        } else {
-            target.setHealth(next);
+        float remaining = dmg;
+        int guard = 0;
+        while (remaining > 0 && target.isAlive() && !target.isRemoved() && guard++ < 64) {
+            float part = Math.min(remaining, PIERCE_CHUNK);
+            target.invulnerableTime = 0;
+            target.hurt(this.damageSources().mobAttack(this).bypassArmor(), part);
+            remaining -= part;
         }
     }
 
