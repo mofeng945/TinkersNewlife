@@ -186,6 +186,10 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.PacketMomoBuy::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.PacketMomoBuy::new,
                 com.mofengbaizhi.tinkersnewlife.network.PacketMomoBuy::handle);
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.PacketMomoHire.class,
+                com.mofengbaizhi.tinkersnewlife.network.PacketMomoHire::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.PacketMomoHire::new,
+                com.mofengbaizhi.tinkersnewlife.network.PacketMomoHire::handle);
         // 服务端→客户端
         registerClientPacket(PacketSyncCurse.class, PacketSyncCurse::toBytes, PacketSyncCurse::new, PacketSyncCurse::handle);
         registerClientPacket(PacketOpenShikigamiScreen.class, PacketOpenShikigamiScreen::toBytes, PacketOpenShikigamiScreen::new, PacketOpenShikigamiScreen::handle);

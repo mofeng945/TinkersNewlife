@@ -18,16 +18,20 @@ import java.util.function.Supplier;
 
 /**
  * 服务端→客户端：打开 墨默 交易界面。
- * 携带实体 id 与 6 个售卖槽位（商品 + 价格，货币按槽位固定：0-3 残骸 / 4-5 矿石）。
+ * 携带实体 id、6 个售卖槽位（商品 + 价格）以及雇佣状态。
  */
 public class PacketMomoOpen {
 
     private final int momoId;
     private final List<MomoMerchant.Offer> offers;
+    private final boolean hired;
+    private final String employer;
 
-    public PacketMomoOpen(int momoId, List<MomoMerchant.Offer> offers) {
+    public PacketMomoOpen(int momoId, List<MomoMerchant.Offer> offers, boolean hired, String employer) {
         this.momoId = momoId;
         this.offers = offers == null ? new ArrayList<>() : offers;
+        this.hired = hired;
+        this.employer = employer == null ? "" : employer;
     }
 
     public PacketMomoOpen(FriendlyByteBuf buf) {
@@ -39,6 +43,8 @@ public class PacketMomoOpen {
             int price = buf.readVarInt();
             this.offers.add(new MomoMerchant.Offer(stack, price));
         }
+        this.hired = buf.readBoolean();
+        this.employer = buf.readUtf();
     }
 
     public void toBytes(FriendlyByteBuf buf) {
@@ -48,16 +54,19 @@ public class PacketMomoOpen {
             buf.writeItem(offer.result());
             buf.writeVarInt(offer.price());
         }
+        buf.writeBoolean(hired);
+        buf.writeUtf(employer);
     }
 
     public static void sendTo(ServerPlayer player, MomoMerchant momo) {
         TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-                new PacketMomoOpen(momo.getId(), momo.getOffers()));
+                new PacketMomoOpen(momo.getId(), momo.getOffers(), momo.isHired(), momo.employerDisplayName()));
     }
 
     public static void handle(PacketMomoOpen packet, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                () -> () -> Minecraft.getInstance().setScreen(new MomoTradeScreen(packet.momoId, packet.offers))));
+                () -> () -> Minecraft.getInstance().setScreen(
+                        new MomoTradeScreen(packet.momoId, packet.offers, packet.hired, packet.employer))));
         ctx.get().setPacketHandled(true);
     }
 }

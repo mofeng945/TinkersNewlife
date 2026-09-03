@@ -11,10 +11,12 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.ai.village.poi.PoiTypes;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -38,6 +40,16 @@ public class MomoMerchantHandler {
     public static void onLivingDamage(LivingDamageEvent event) {
         if (event.getEntity() instanceof MomoMerchant momo) {
             momo.recordDamageTaken(event.getAmount());
+        }
+    }
+
+    /** 墨默不可被命名（命名牌右键无效） */
+    @SubscribeEvent
+    public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
+        if (event.getLevel().isClientSide) return;
+        if (event.getTarget() instanceof MomoMerchant
+                && event.getItemStack().is(Items.NAME_TAG)) {
+            event.setCanceled(true);
         }
     }
 
