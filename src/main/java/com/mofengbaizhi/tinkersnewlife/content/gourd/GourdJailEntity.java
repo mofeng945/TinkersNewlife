@@ -284,7 +284,8 @@ public class GourdJailEntity extends Entity {
             living.remove(Entity.RemovalReason.DISCARDED);
             return;
         }
-        // 其余 Boss：正常死亡结算
+        // 其余 Boss：正常死亡结算（触发击败/重刷逻辑），但本次不掉战利品/经验——解除封印后打死再正常掉落
+        living.getPersistentData().putBoolean(GourdJailHandler.KEY_SUPPRESS_LOOT, true);
         living.hurt(living.damageSources().genericKill(), Float.MAX_VALUE);
         if (living.isAlive()) {
             living.remove(Entity.RemovalReason.DISCARDED);

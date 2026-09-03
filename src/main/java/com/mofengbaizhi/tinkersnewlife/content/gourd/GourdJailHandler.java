@@ -18,6 +18,8 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityTravelToDimensionEvent;
+import net.minecraftforge.event.entity.living.LivingDropsEvent;
+import net.minecraftforge.event.entity.living.LivingExperienceDropEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -34,6 +36,9 @@ public final class GourdJailHandler {
             ResourceKey.create(Registries.DIMENSION, new ResourceLocation(TinkersNewlife.MOD_ID, "gourd"));
     /** 基岩球笼半径（格） */
     public static final int CAGE_RADIUS = 20;
+
+    /** Boss 封印=击败时压制的掉落标记：本次死亡不掉战利品/经验，解除封印后打死再正常掉落 */
+    public static final String KEY_SUPPRESS_LOOT = "tinkersnewlife.gourd_suppress_loot";
 
     /** 获取狱门疆维度服务端实例（不存在则返回 null） */
     public static ServerLevel getGourdLevel(MinecraftServer server) {
@@ -216,5 +221,23 @@ public final class GourdJailHandler {
         jail.releasePrisonerAndDestroy();
         player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
                 "message.tinkersnewlife.gourd.released"), true);
+    }
+
+    // ============================================================
+    //  Boss 封印=击败：本次死亡不掉战利品/经验（解除封印后打死再正常掉落）
+    // ============================================================
+
+    @SubscribeEvent
+    public static void onBossDrops(LivingDropsEvent event) {
+        if (event.getEntity().getPersistentData().getBoolean(KEY_SUPPRESS_LOOT)) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onBossXp(LivingExperienceDropEvent event) {
+        if (event.getEntity().getPersistentData().getBoolean(KEY_SUPPRESS_LOOT)) {
+            event.setCanceled(true);
+        }
     }
 }
