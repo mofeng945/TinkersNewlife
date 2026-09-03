@@ -310,6 +310,45 @@ public final class GoetyBridge {
         }
     }
 
+    /**
+     * 对受限 Boss 的"全额穿透"结算（墨默/天逆鉾共用）：
+     * ① 多段 ≤19 的 hurt()（带 true_pierce 类型）——第一段触发完整受击事件/阶段逻辑；
+     * ② 若被各类免伤窗（启示录 canHurt 30tick/原版伤害冷却等，实测无法可靠清除）吞掉部分，
+     *    按"应打-已打"的差额直接 setHealth 补齐——总量精确全额，不受任何窗口/单次上限影响；
+     * ③ 差额致死时补 die() 死亡流程（掉落/击败逻辑正常）。
+     */
+    public static void pierceFullDamage(LivingEntity target, float dmg) {
+        if (target == null || target.level().isClientSide || target.isRemoved()) return;
+        net.minecraft.world.damagesource.DamageSource src = truePierceSource(target.level());
+        if (src == null) src = target.damageSources().genericKill();
+        float startHp = target.getHealth();
+        float remaining = dmg;
+        int guard = 0;
+        while (remaining > 0 && target.isAlive() && !target.isRemoved() && guard++ < 64) {
+            float part = Math.min(remaining, 19.0F);
+            target.invulnerableTime = 0;
+            target.hurt(src, part);
+            remaining -= part;
+        }
+        // 差额补齐（免伤窗吞掉的部分直接按血量差补上）
+        if (target.isAlive() && !target.isRemoved() && target.getHealth() > 0.0F) {
+            float dealt = startHp - target.getHealth();
+            float shortfall = dmg - Math.max(dealt, 0.0F);
+            if (shortfall > 0.5F) {
+                float hp = target.getHealth() - shortfall;
+                if (hp <= 0.0F) {
+                    target.setHealth(0.0F);
+                    target.die(src);
+                } else {
+                    target.setHealth(hp);
+                }
+            } else if (shortfall < -0.5F && target.getHealth() > 0.0F) {
+                // 多打了（如神秘乘数/clamp 让单段超量）→ 回退一部分，保持总伤 = dmg
+                target.setHealth(Math.min(target.getMaxHealth(), target.getHealth() - shortfall));
+            }
+        }
+    }
+
     // =====================================================================
     //  下界亚波伦专用：直接调 LivingEntity.actuallyHurt 绕 hurt() 阶段闸门
     //  （启示录 canHurt 的 hitCooldown 免疫窗经反射清除在运行时不可靠；

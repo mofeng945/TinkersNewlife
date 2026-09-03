@@ -2380,22 +2380,8 @@ public class MomoMerchant extends PathfinderMob {
             LOGGER.info("[墨默] 多段穿透 dmg={} {}", dmg,
                     com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.debugDescribe(target));
         }
-        // 真伤伤害类型（带 bypasses_cooldown 等 tag，绕原版伤害冷却闸门）；回退 genericKill
-        net.minecraft.world.damagesource.DamageSource src =
-                com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.truePierceSource(target.level());
-        if (src == null) src = target.damageSources().genericKill();
-        float comp = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.apostleDamageCompensation(target);
-        float remaining = dmg;
-        int guard = 0;
-        while (remaining > 0 && target.isAlive() && !target.isRemoved() && guard++ < 64) {
-            com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.clearModdedInvul(target);
-            com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.clearApollyonHitCooldown(target);
-            com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.clearApollyonCooldownDirect(target);
-            float part = Math.min(remaining, PIERCE_CHUNK);
-            target.invulnerableTime = 0;
-            target.hurt(src, part * comp);
-            remaining -= part;
-        }
+        // 全额穿透：hurt 事件 + 差额直补（总量精确全额、不受免疫窗/单次上限影响）
+        com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.pierceFullDamage(target, dmg);
     }
 
     /** 受击格挡成功后的反击（雇佣版：60/80/100% × 20，必中） */

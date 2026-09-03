@@ -127,31 +127,22 @@ public final class TianNiHuoPierceHandler {
             // 天逆鉾穿透黑曜石柱保护：保护柱直接碎掉（柱死 → 使徒 1 分钟内召不出新柱）
             pillarShattered = GoetyBridge.shatterProtectingPillars(target);
         }
-        // 真伤伤害类型：带 bypasses_cooldown/armor/invulnerability 等 tag，
-        // 绕原版伤害冷却闸门；找不到时回退 genericKill
-        net.minecraft.world.damagesource.DamageSource src = GoetyBridge.truePierceSource(target.level());
-        if (src == null) src = target.damageSources().genericKill();
-        float comp = GoetyBridge.apostleDamageCompensation(target);
-        LOGGER.info("[天逆鉾] 穿透开始 dmg={} obsidianInvul={} 碎柱={} comp={} 血量={}/{}",
-                dmg, obsidianInvulBackup, pillarShattered, comp,
-                target.getHealth(), target.getMaxHealth());
-        float remaining = dmg;
-        int guard = 0;
-        int landed = 0;
-        int blocked = 0;
-        while (remaining > 0 && target.isAlive() && !target.isRemoved() && guard++ < 64) {
-            GoetyBridge.clearModdedInvul(target);
-            GoetyBridge.setObsidianInvul(target, 0); // 天逆鉾无视黑曜石柱保护
-            GoetyBridge.clearApollyonHitCooldown(target);
-            GoetyBridge.clearApollyonCooldownDirect(target);
-            float part = Math.min(remaining, PIERCE_CHUNK);
-            target.invulnerableTime = 0;
-            boolean ok = target.hurt(src, part * comp);
-            if (ok) landed++; else blocked++;
-            remaining -= part;
+        if (GoetyBridge.isGoetyApostle(target)) {
+            // 诡厄受限 Boss：全额穿透（hurt 事件 + 差额直补，总量精确全额、不受免疫窗/单次上限影响）
+            GoetyBridge.pierceFullDamage(target, dmg);
+        } else {
+            // 其他（如凋灵）：多段 hurt 直伤
+            net.minecraft.world.damagesource.DamageSource src = GoetyBridge.truePierceSource(target.level());
+            if (src == null) src = target.damageSources().genericKill();
+            float remaining = dmg;
+            int guard = 0;
+            while (remaining > 0 && target.isAlive() && !target.isRemoved() && guard++ < 64) {
+                float part = Math.min(remaining, PIERCE_CHUNK);
+                target.invulnerableTime = 0;
+                target.hurt(src, part);
+                remaining -= part;
+            }
         }
-        LOGGER.info("[天逆鉾] 穿透结束 命中段={} 被挡段={} 血量={}/{}", landed, blocked,
-                target.getHealth(), target.getMaxHealth());
         // 柱已碎 → 保持保护计时清零（使徒要等召柱冷却，Boss 对全员敞开）；
         // 未碎柱（没被保护 / 残余保护但无柱可碎）→ 还原保护计时，避免同 tick 误伤窗口
         if (!pillarShattered && target.isAlive() && !target.isRemoved()) {
