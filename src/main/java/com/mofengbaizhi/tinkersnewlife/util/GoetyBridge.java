@@ -257,6 +257,60 @@ public final class GoetyBridge {
     }
 
     // =====================================================================
+    //  天逆鉾"真伤"伤害类型：带 bypasses_cooldown 等全部豁免 tag（数据包 data/minecraft/tags/damage_type/），
+    //  绕过原版 1.20.1 伤害冷却闸门（LivingEntity.hurt 内 f_19802_>10 且伤害≤上次伤害则 return false）
+    // =====================================================================
+
+    private static net.minecraft.core.Holder<net.minecraft.world.damagesource.DamageType> TRUE_PIERCE_HOLDER = null;
+
+    /** 获取 tinkersnewlife:true_pierce 伤害类型的 Holder；数据包缺失时返回 null（调用方回退 genericKill） */
+    @Nullable
+    public static net.minecraft.world.damagesource.DamageSource truePierceSource(Level level) {
+        try {
+            if (!(level instanceof net.minecraft.server.level.ServerLevel sl)) return null;
+            if (TRUE_PIERCE_HOLDER == null || !TRUE_PIERCE_HOLDER.isBound()) {
+                var reg = sl.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.DAMAGE_TYPE);
+                TRUE_PIERCE_HOLDER = reg.getHolderOrThrow(net.minecraft.resources.ResourceKey.create(
+                        net.minecraft.core.registries.Registries.DAMAGE_TYPE,
+                        new net.minecraft.resources.ResourceLocation("tinkersnewlife", "true_pierce")));
+            }
+            if (TRUE_PIERCE_HOLDER != null && TRUE_PIERCE_HOLDER.isBound()) {
+                return new net.minecraft.world.damagesource.DamageSource(TRUE_PIERCE_HOLDER, null, null);
+            }
+        } catch (Throwable t) {
+            LOGGER.warn("[GoetyBridge] truePierceSource 获取失败，回退 genericKill", t);
+        }
+        return null;
+    }
+
+    /** 直接写启示录注入使徒的 SynchedEntityData HIT_COOLDOWN（绕过接口层，直击 canHurt 读取的存储） */
+    private static java.lang.reflect.Field HIT_COOLDOWN_ACCESSOR_FIELD = null;
+
+    public static void clearApollyonCooldownDirect(LivingEntity e) {
+        if (!isGoetyApostle(e)) return;
+        try {
+            if (HIT_COOLDOWN_ACCESSOR_FIELD == null) {
+                for (String name : new String[]{"allTitlesApostle_1_20_1$HIT_COOLDOWN", "HIT_COOLDOWN"}) {
+                    try {
+                        HIT_COOLDOWN_ACCESSOR_FIELD = apostleClass.getDeclaredField(name);
+                        HIT_COOLDOWN_ACCESSOR_FIELD.setAccessible(true);
+                        break;
+                    } catch (NoSuchFieldException ignored) {
+                    }
+                }
+            }
+            if (HIT_COOLDOWN_ACCESSOR_FIELD != null) {
+                Object acc = HIT_COOLDOWN_ACCESSOR_FIELD.get(null);
+                if (acc instanceof net.minecraft.network.syncher.EntityDataAccessor<?> eda) {
+                    // noinspection unchecked
+                    e.getEntityData().set((net.minecraft.network.syncher.EntityDataAccessor<Integer>) eda, 0);
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    // =====================================================================
     //  下界亚波伦专用：直接调 LivingEntity.actuallyHurt 绕 hurt() 阶段闸门
     //  （启示录 canHurt 的 hitCooldown 免疫窗经反射清除在运行时不可靠；
     //    actuallyHurt 每段仍走 ForgeHooks.onLivingDamage(LivingDamageEvent) 与启示录单次 20 clamp）
@@ -273,11 +327,16 @@ public final class GoetyBridge {
                             .getDeclaredMethod(name,
                                     net.minecraft.world.damagesource.DamageSource.class, float.class);
                     ACTUALLY_HURT_METHOD.setAccessible(true);
+                    LOGGER.info("[GoetyBridge] 找到 actuallyHurt 方法名={}", name);
                     break;
                 } catch (NoSuchMethodException ignored) {
                 }
             }
-        } catch (Throwable ignored) {
+            if (ACTUALLY_HURT_METHOD == null) {
+                LOGGER.warn("[GoetyBridge] 未找到 actuallyHurt 方法（m_6475_/actuallyHurt 均无）");
+            }
+        } catch (Throwable t) {
+            LOGGER.warn("[GoetyBridge] findActuallyHurt 异常", t);
         }
         return ACTUALLY_HURT_METHOD;
     }
@@ -288,6 +347,7 @@ public final class GoetyBridge {
         java.lang.reflect.Method m = findActuallyHurt();
         if (m == null) {
             target.invulnerableTime = 0;
+            LOGGER.info("[GoetyBridge] actuallyHurt 回退 hurt() part={}", amount);
             return target.hurt(src, amount);
         }
         try {
@@ -295,6 +355,7 @@ public final class GoetyBridge {
             return true;
         } catch (Throwable t) {
             target.invulnerableTime = 0;
+            LOGGER.warn("[GoetyBridge] actuallyHurt invoke 异常，回退 hurt()", t);
             return target.hurt(src, amount);
         }
     }

@@ -2376,39 +2376,25 @@ public class MomoMerchant extends PathfinderMob {
 
     private void pierceDamageDirect(LivingEntity target, float dmg) {
         if (target.level().isClientSide || target.isRemoved()) return;
-        // 下界亚波伦：启示录 canHurt 冷却免疫窗走直接 actuallyHurt（绕 hurt() 闸门），
-        // 每段仍触发 LivingDamageEvent + 单次 20 clamp；无下界减伤 → comp=1
-        boolean apollyonNether = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isGoetyApostle(target)
-                && target.level().dimension() == net.minecraft.world.level.Level.NETHER;
         if (this.tickCount % 100 == 0) {
-            LOGGER.info("[墨默] 多段穿透 dmg={} {} 直伤={}", dmg,
-                    com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.debugDescribe(target), apollyonNether);
+            LOGGER.info("[墨默] 多段穿透 dmg={} {}", dmg,
+                    com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.debugDescribe(target));
         }
-        float comp = apollyonNether ? 1.0F
-                : com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.apostleDamageCompensation(target);
-        net.minecraft.world.damagesource.DamageSource src = target.damageSources().genericKill();
+        // 真伤伤害类型（带 bypasses_cooldown 等 tag，绕原版伤害冷却闸门）；回退 genericKill
+        net.minecraft.world.damagesource.DamageSource src =
+                com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.truePierceSource(target.level());
+        if (src == null) src = target.damageSources().genericKill();
+        float comp = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.apostleDamageCompensation(target);
         float remaining = dmg;
         int guard = 0;
-        boolean killNeedsDie = false;
         while (remaining > 0 && target.isAlive() && !target.isRemoved() && guard++ < 64) {
+            com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.clearModdedInvul(target);
+            com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.clearApollyonHitCooldown(target);
+            com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.clearApollyonCooldownDirect(target);
             float part = Math.min(remaining, PIERCE_CHUNK);
-            float hpBefore = target.getHealth();
-            if (apollyonNether) {
-                com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.actuallyHurtChunk(target, src, part);
-            } else {
-                com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.clearModdedInvul(target);
-                com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.clearApollyonHitCooldown(target);
-                target.invulnerableTime = 0;
-                target.hurt(src, part * comp);
-            }
-            if (hpBefore > 0.0F && target.getHealth() <= 0.0F && !target.isRemoved()) {
-                killNeedsDie = true;
-            }
+            target.invulnerableTime = 0;
+            target.hurt(src, part * comp);
             remaining -= part;
-        }
-        if (killNeedsDie && target.getHealth() <= 0.0F && !target.isRemoved()
-                && target.level() != null && !target.level().isClientSide) {
-            target.die(src);
         }
     }
 
