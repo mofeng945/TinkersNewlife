@@ -133,6 +133,18 @@ public class MomoMerchant extends PathfinderMob {
     /** 雇主距离超过 50 格 → 直接传送到雇主身边 */
     private static final double EMPLOYER_TELEPORT_DIST = 50.0;
 
+    // ===== 通用应急：伤害吟唱 / 低血大斩杀 =====
+    /** 5s(100tick) 窗口内累计受伤 > 半血 → 传送安全位并吟唱 1s，记住伤害类型，60s 内对应类型抗性 +60% */
+    private static final int DMG_WINDOW_TICKS = 100;
+    private static final double CHANT_DAMAGE_THRESHOLD = 0.5;
+    private static final int CHANT_TICKS = 20;           // 吟唱 1s
+    private static final int RESIST_TICKS = 1200;        // 抗性 60s
+    private static final float RESIST_MULTIPLIER = 0.4F; // 受伤降为 40%（抗性提升 60%）
+    /** 血量 <20% → 对 50 格内每个目标斩杀（雇主除外） */
+    private static final double MASS_EXECUTE_RADIUS = 50.0;
+    private static final double MASS_EXECUTE_HP = 0.2;
+    private static final int MASS_EXECUTE_COOLDOWN = 600;
+
     // ===== 语音防重叠（自动解析 assets 内 ogg 时长，按类别最大时长做间隔） =====
     private static final class VoiceTimings {
         final float ambient, hurt, death, trade;
@@ -271,6 +283,30 @@ public class MomoMerchant extends PathfinderMob {
     private LivingEntity finisherTarget = null;
     private int finisherIndex = 0;
     private int finisherTimer = 0;
+
+    // ===== 通用应急状态 =====
+    private static final class DamageHit {
+        final int tick;
+        final float amount;
+        final String type;
+        DamageHit(int tick, float amount, String type) {
+            this.tick = tick;
+            this.amount = amount;
+            this.type = type;
+        }
+    }
+
+    private final List<DamageHit> dmgWindow = new ArrayList<>();
+    private boolean chantRequested = false;
+    private int chantTicks = 0;
+    private java.util.Set<String> chantTypes = null;   // 吟唱完成时记住的伤害类型
+    private long resistUntilTick = 0;
+    private final java.util.Set<String> resistTypes = new HashSet<>();
+    private boolean execBusy = false;
+    private final List<java.util.UUID> execQueue = new ArrayList<>();
+    private int execStage = 0;   // 0 瞬移 | 1..3 连斩
+    private int execTimer = 0;
+    private long execCooldownUntil = 0;
 
     /** 近期攻击过她的实体（反击/大招只打这些人，不伤及无辜） */
     private final Set<UUID> aggroSet = new HashSet<>();
@@ -659,7 +695,7 @@ public class MomoMerchant extends PathfinderMob {
                     breakShield(p);
                 }
                 e.invulnerableTime = 0;
-                e.hurt(this.damageSources().mobAttack(this), dmg);
+                applyHurt(e, dmg);
                 if (this.level() instanceof ServerLevel sl) {
                     sl.sendParticles(ParticleTypes.SWEEP_ATTACK,
                             e.getX(), e.getY() + e.getBbHeight() * 0.6, e.getZ(), 2, 0.15, 0.1, 0.15, 0);
@@ -762,6 +798,11 @@ public class MomoMerchant extends PathfinderMob {
         }
         if (fleeTriggered) {
             tickFlee();
+            return;
+        }
+
+        // 通用应急：伤害吟唱 / 低血大斩杀（雇佣与未雇佣通用）
+        if (tickResponseCore()) {
             return;
         }
 
@@ -1236,8 +1277,7 @@ public class MomoMerchant extends PathfinderMob {
         this.getNavigation().stop();
         if (--counterTimer <= 0) {
             float mult = COUNTER_MULTIPLIERS[Math.min(counterIndex, COUNTER_MULTIPLIERS.length - 1)];
-            attacker.invulnerableTime = 0;
-            attacker.hurt(this.damageSources().mobAttack(this), attackBase() * mult);
+            applyHurt(attacker, attackBase() * mult);
             playSwingFx(mult);
             counterIndex++;
             if (counterIndex >= 3) {
@@ -1417,10 +1457,10 @@ public class MomoMerchant extends PathfinderMob {
                 this.setTarget(fightTarget);
             }
         } else if (this.getTarget() == null) {
-            // 主动索敌雇主周围的亡灵生物
-            Mob undead = nearestUndeadNear(boss, 12.0);
-            if (undead != null) {
-                this.setTarget(undead);
+            // 主动索敌雇主周围的亡灵/灾厄村民
+            Mob prey = nearestHostileNear(boss, 12.0);
+            if (prey != null) {
+                this.setTarget(prey);
             }
         }
         // 雇主血量低于 60% → 远离战场，随后站定歌唱（再生 III）
@@ -1438,13 +1478,18 @@ public class MomoMerchant extends PathfinderMob {
         return false;
     }
 
-    /** 雇主周围最近的一只亡灵（主动索敌清怪） */
+    /** 雇主周围最近的一只亡灵或灾厄村民（主动索敌清怪） */
     @Nullable
-    private Mob nearestUndeadNear(LivingEntity center, double radius) {
+    private Mob nearestHostileNear(LivingEntity center, double radius) {
         Mob best = null;
         double bestDist = radius * radius;
         for (Mob m : this.level().getEntitiesOfClass(Mob.class, center.getBoundingBox().inflate(radius),
-                e -> e.isAlive() && e != this && e.getMobType() == MobType.UNDEAD)) {
+                e -> e.isAlive() && e != this)) {
+            net.minecraft.world.entity.MobType mt = m.getMobType();
+            if (mt != net.minecraft.world.entity.MobType.UNDEAD
+                    && mt != net.minecraft.world.entity.MobType.ILLAGER) {
+                continue;
+            }
             double d = center.distanceToSqr(m);
             if (d < bestDist) {
                 bestDist = d;
@@ -1562,6 +1607,186 @@ public class MomoMerchant extends PathfinderMob {
     }
 
     // ============================================================
+    //  通用应急：伤害吟唱抗性 / 低血大斩杀（雇佣与未雇佣通用）
+    // ============================================================
+
+    public boolean isResistantTo(String type) {
+        return this.tickCount < resistUntilTick && resistTypes.contains(type);
+    }
+
+    /** 伤害事件回调（服务端）：入 5s 窗口，累计过半血 → 请求吟唱 */
+    public void recordHit(String type, float amount) {
+        if (this.level().isClientSide) return;
+        if (this.isDeadOrDying() || fleeTriggered || singing || chantTicks > 0) return;
+        dmgWindow.add(new DamageHit(this.tickCount, amount, type));
+        dmgWindow.removeIf(h -> this.tickCount - h.tick > DMG_WINDOW_TICKS);
+        if (isResistantTo(type)) return;
+        float sum = 0;
+        java.util.Set<String> types = new HashSet<>();
+        for (DamageHit h : dmgWindow) {
+            sum += h.amount;
+            types.add(h.type);
+        }
+        if (sum > this.getMaxHealth() * CHANT_DAMAGE_THRESHOLD) {
+            chantTypes = types;
+            chantRequested = true;
+        }
+    }
+
+    /** 返回 true = 本 tick 被应急动作占用（吟唱中 / 大斩杀执行中） */
+    private boolean tickResponseCore() {
+        if (chantTicks > 0) {
+            tickChant();
+            return true;
+        }
+        if (chantRequested) {
+            startChant();
+            return true;
+        }
+        if (execBusy) {
+            tickMassExecute();
+            return true;
+        }
+        if (!execBusy && !singing && !fleeTriggered
+                && this.getHealth() < this.getMaxHealth() * MASS_EXECUTE_HP
+                && this.tickCount > execCooldownUntil) {
+            tryStartMassExecute();
+            if (execBusy) return true;
+        }
+        return false;
+    }
+
+    /** 传送至安全位置并开始 1s 吟唱 */
+    private void startChant() {
+        chantRequested = false;
+        teleportToSafety();
+        chantTicks = CHANT_TICKS;
+        state = S_IDLE;
+        this.getNavigation().stop();
+        if (this.level() instanceof ServerLevel sl) {
+            sl.playSound(null, this.blockPosition(), SoundEvents.ILLUSIONER_CAST_SPELL, SoundSource.HOSTILE, 1.0F, 1.0F);
+        }
+    }
+
+    /** 吟唱通道：站定 1s，结束记住伤害类型并获得 60% 抗性 60s */
+    private void tickChant() {
+        this.getNavigation().stop();
+        chantTicks--;
+        if (this.level() instanceof ServerLevel sl && chantTicks % 5 == 0) {
+            sl.sendParticles(ParticleTypes.ENCHANT, this.getX(), this.getY() + 1.5, this.getZ(),
+                    10, 0.4, 0.3, 0.4, 0.2);
+        }
+        if (chantTicks <= 0) {
+            resistTypes.clear();
+            if (chantTypes != null) {
+                resistTypes.addAll(chantTypes);
+            }
+            resistUntilTick = this.tickCount + RESIST_TICKS;
+            chantTypes = null;
+            dmgWindow.clear();
+        }
+    }
+
+    /** 随机传送至附近无碰撞的安全落点 */
+    private void teleportToSafety() {
+        if (!(this.level() instanceof ServerLevel sl)) return;
+        for (int i = 0; i < 8; i++) {
+            double a = this.random.nextDouble() * Math.PI * 2.0;
+            double r = 6.0 + this.random.nextDouble() * 10.0;
+            double x = this.getX() + Math.cos(a) * r;
+            double z = this.getZ() + Math.sin(a) * r;
+            this.moveTo(x, this.getY(), z, this.getYRot(), this.getXRot());
+            if (sl.noCollision(this)) {
+                this.fallDistance = 0;
+                break;
+            }
+        }
+        sl.sendParticles(ParticleTypes.SNEEZE, this.getX(), this.getY() + 1.2, this.getZ(),
+                14, 0.4, 0.5, 0.4, 0.02);
+        sl.playSound(null, this.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.HOSTILE, 1.0F, 1.0F);
+    }
+
+    /** 该实体是否为墨默的可斩杀目标（50 格大斩杀用） */
+    private boolean isMomoCombatTarget(LivingEntity e) {
+        if (e == this || !e.isAlive() || e.isSpectator()) return false;
+        if (e == getEmployer()) return false;
+        if (e instanceof Player p && !aggroSet.contains(p.getUUID())) return false;
+        if (e == this.getTarget()) return true;
+        if (aggroSet.contains(e.getUUID())) return true;
+        if (e instanceof Mob m) {
+            net.minecraft.world.entity.MobType mt = m.getMobType();
+            return mt == net.minecraft.world.entity.MobType.UNDEAD
+                    || mt == net.minecraft.world.entity.MobType.ILLAGER;
+        }
+        return false;
+    }
+
+    private void tryStartMassExecute() {
+        execQueue.clear();
+        List<LivingEntity> all = this.level().getEntitiesOfClass(LivingEntity.class,
+                this.getBoundingBox().inflate(MASS_EXECUTE_RADIUS), this::isMomoCombatTarget);
+        all.sort(java.util.Comparator.comparingDouble(this::distanceToSqr));
+        for (int i = 0; i < all.size() && execQueue.size() < 8; i++) {
+            execQueue.add(all.get(i).getUUID());
+        }
+        if (execQueue.isEmpty()) return;
+        execBusy = true;
+        execStage = 0;
+        execTimer = 0;
+    }
+
+    /** 大斩杀：逐个瞬移到目标身后连斩（红色粒子） */
+    private void tickMassExecute() {
+        if (execQueue.isEmpty()) {
+            execBusy = false;
+            execCooldownUntil = this.tickCount + MASS_EXECUTE_COOLDOWN;
+            return;
+        }
+        UUID id = execQueue.get(0);
+        Entity e = ((ServerLevel) this.level()).getEntity(id);
+        if (!(e instanceof LivingEntity t) || !t.isAlive() || t.level() != this.level()) {
+            execQueue.remove(0);
+            execStage = 0;
+            return;
+        }
+        if (execStage == 0) {
+            this.getNavigation().stop();
+            Vec3 dir = t.position().subtract(t.getLookAngle().scale(2.0));
+            this.moveTo(dir.x, t.getY(), dir.z, this.getYRot(), this.getXRot());
+            this.fallDistance = 0;
+            this.getLookControl().setLookAt(t, 360.0F, 360.0F);
+            execStage = 1;
+            execTimer = 2;
+            if (this.level() instanceof ServerLevel sl) {
+                sl.playSound(null, this.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.HOSTILE, 0.8F, 1.6F);
+            }
+            return;
+        }
+        if (--execTimer > 0) return;
+        float[] mults = {1.0f, 1.2f, 1.5f};
+        float dmg = combatBase() * mults[execStage - 1];
+        applyHurt(t, dmg);
+        this.swing(InteractionHand.MAIN_HAND);
+        if (this.level() instanceof ServerLevel sl) {
+            sl.sendParticles(new net.minecraft.core.particles.DustParticleOptions(
+                            new org.joml.Vector3f(1.0F, 0.05F, 0.05F), 1.0F),
+                    t.getX(), t.getY() + 1.2, t.getZ(), 10, 0.4, 0.5, 0.4, 0.01);
+        }
+        execStage++;
+        if (execStage > 3) {
+            execQueue.remove(0);
+            execStage = 0;
+        } else {
+            execTimer = 2;
+        }
+    }
+
+    /** 当前基础攻击：雇佣 20，未雇佣 50 */
+    private float combatBase() {
+        return hired ? HIRED_BASE_ATTACK : attackBase();
+    }
+
+    // ============================================================
     //  雇佣模式独立 AI
     // ============================================================
 
@@ -1611,14 +1836,31 @@ public class MomoMerchant extends PathfinderMob {
                 target = attacker;
             }
         }
+        // 诡厄巫法保护链（环境有 Goety 时）：目标是受限 Boss 且被黑曜石柱保护 → 先打邪教徒，其次黑曜石柱，最后 Boss
+        if (target != null && target.isAlive()
+                && com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isDamageLimitedBoss(target)) {
+            LivingEntity chain = pickGoetyChainTarget(boss);
+            if (chain != null && chain != target) {
+                this.setTarget(chain);
+                target = chain;
+            }
+        }
         if (target != null && target.isAlive()) {
             tickHiredCombat(boss, target);
             return;
         }
-        // 主动索敌雇主周围亡灵
-        Mob undead = nearestUndeadNear(boss, 12.0);
-        if (undead != null) {
-            this.setTarget(undead);
+        // 诡厄巫法：主动攻击黑曜石柱/邪教徒/受限 Boss（破保护链优先）
+        if (com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isAvailable()) {
+            LivingEntity goetyTarget = pickGoetyChainTarget(boss);
+            if (goetyTarget != null) {
+                this.setTarget(goetyTarget);
+                return;
+            }
+        }
+        // 主动索敌雇主周围的亡灵/灾厄村民
+        Mob prey = nearestHostileNear(boss, 12.0);
+        if (prey != null) {
+            this.setTarget(prey);
             return;
         }
         // 歌唱触发：雇主低血且有威胁
@@ -1641,6 +1883,29 @@ public class MomoMerchant extends PathfinderMob {
         } else {
             tickWanderPath(); // 游走锚点 = 雇主（半径 6 格）
         }
+    }
+
+    /**
+     * 诡厄巫法（可选）：以雇主为中心选目标——若存在受限 Boss（24 格）：被柱保护 → 打邪教徒/柱；
+     * 无 Boss 时主动打附近的黑曜石柱/邪教徒。环境无 Goety 返回 null。
+     */
+    @Nullable
+    private LivingEntity pickGoetyChainTarget(LivingEntity boss) {
+        if (!com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isAvailable()) return null;
+        LivingEntity limited = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.nearestLimitedBoss(boss, 24.0);
+        if (limited != null) {
+            net.minecraft.world.entity.Entity pillar =
+                    com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.pillarProtecting(limited);
+            if (pillar != null) {
+                LivingEntity cult = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.cultistNearPillar(pillar);
+                if (cult != null) return cult;                       // ① 邪教徒
+                if (pillar instanceof LivingEntity p) return p;      // ② 黑曜石柱
+            }
+            return limited;                                          // ③ 目标（无保护则直接打）
+        }
+        LivingEntity cult = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.nearestCultist(boss, 12.0);
+        if (cult != null) return cult;
+        return com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.nearestPillar(boss, 12.0);
     }
 
     /** 雇佣战斗：两刀（80%/180%×20 必中）→ 拉远；受击格挡 → 反击连斩；目标 <10 血 → 瞬移身后斩杀 */
@@ -1704,14 +1969,26 @@ public class MomoMerchant extends PathfinderMob {
     /** 雇佣必中一击（无视距离/面向，直接结算） */
     private void hiredHit(LivingEntity target, float multiplier) {
         this.swing(InteractionHand.MAIN_HAND);
-        witherInvulnBypass(target);
-        target.invulnerableTime = 0;
-        target.hurt(this.damageSources().mobAttack(this), HIRED_BASE_ATTACK * multiplier);
+        applyHurt(target, HIRED_BASE_ATTACK * multiplier);
         if (this.level() instanceof ServerLevel sl) {
             sl.sendParticles(ParticleTypes.SWEEP_ATTACK,
                     target.getX(), target.getY() + target.getBbHeight() * 0.6, target.getZ(),
                     3, 0.2, 0.1, 0.2, 0);
             sl.playSound(null, this.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.HOSTILE, 1.0F, 1.0F);
+        }
+    }
+
+    /**
+     * 墨默的伤害统一入口：
+     * 凋灵出生无敌 → 无视；诡厄巫法对亚波伦/使徒的伤害限制 → 用击杀类伤害源突破（环境无诡厄巫法则等同普通攻击）。
+     */
+    private void applyHurt(LivingEntity target, float dmg) {
+        witherInvulnBypass(target);
+        target.invulnerableTime = 0;
+        if (com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isDamageLimitedBoss(target)) {
+            target.hurt(target.damageSources().genericKill(), dmg);
+        } else {
+            target.hurt(this.damageSources().mobAttack(this), dmg);
         }
     }
 
@@ -1776,9 +2053,7 @@ public class MomoMerchant extends PathfinderMob {
         this.getLookControl().setLookAt(t, 360.0F, 360.0F);
         if (--finisherTimer > 0) return;
         float[] mults = {0.9f, 1.1f, 1.4f};
-        witherInvulnBypass(t);
-        t.invulnerableTime = 0;
-        t.hurt(this.damageSources().mobAttack(this), HIRED_BASE_ATTACK * mults[Math.min(finisherIndex, 2)]);
+        applyHurt(t, HIRED_BASE_ATTACK * mults[Math.min(finisherIndex, 2)]);
         this.swing(InteractionHand.MAIN_HAND);
         if (this.level() instanceof ServerLevel sl) {
             // 红色粒子（斩杀特效）

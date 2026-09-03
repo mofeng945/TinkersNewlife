@@ -40,6 +40,12 @@ public class MomoMerchantHandler {
     public static void onLivingDamage(LivingDamageEvent event) {
         if (event.getEntity() instanceof MomoMerchant momo) {
             momo.recordDamageTaken(event.getAmount());
+            String type = event.getSource().getMsgId();
+            // 吟唱抗性：对应类型 60s 内伤害降为 40%
+            if (momo.isResistantTo(type)) {
+                event.setAmount(event.getAmount() * 0.4f);
+            }
+            momo.recordHit(type, event.getAmount());
         }
     }
 
