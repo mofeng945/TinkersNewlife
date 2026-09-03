@@ -2280,15 +2280,30 @@ public class MomoMerchant extends PathfinderMob {
 
     /**
      * 墨默的伤害统一入口：
-     * 凋灵出生无敌 → 无视；诡厄巫法对亚波伦/使徒的伤害限制 → 用击杀类伤害源突破（环境无诡厄巫法则等同普通攻击）。
+     * 凋灵出生无敌 → 无视；
+     * 诡厄巫法/启示录对亚波伦、使徒的限伤（如 apollyon_hurt_limit=20，事件级 clamp）→ 直接扣血绕过，
+     * 致死时留 1 血走正常 hurt 保证死亡流程/掉落/击败逻辑；环境无 Goety 等同普通攻击。
      */
     private void applyHurt(LivingEntity target, float dmg) {
         witherInvulnBypass(target);
         target.invulnerableTime = 0;
         if (com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isDamageLimitedBoss(target)) {
-            target.hurt(target.damageSources().genericKill(), dmg);
+            pierceDamageDirect(target, dmg);
         } else {
             target.hurt(this.damageSources().mobAttack(this), dmg);
+        }
+    }
+
+    /** 直接扣血（无视事件级限伤/无敌），致死时留 1 血走正常 hurt 触发死亡流程 */
+    private void pierceDamageDirect(LivingEntity target, float dmg) {
+        if (target.level().isClientSide || target.isRemoved()) return;
+        float hp = target.getHealth();
+        float next = Math.max(0.0F, hp - dmg);
+        if (next <= 0.0F && target.isAlive()) {
+            target.setHealth(1.0F);
+            target.hurt(this.damageSources().mobAttack(this), 1.0E9F);
+        } else {
+            target.setHealth(next);
         }
     }
 
