@@ -1622,6 +1622,23 @@ public class MomoMerchant extends PathfinderMob {
         return this.tickCount < resistUntilTick && resistTypes.contains(type);
     }
 
+    /** 灼烧定身类负面效果对墨默无效（狱焰/BURN_HEX 等：施加即拒绝，杜绝被烧到无法移动） */
+    @Override
+    public boolean canBeAffected(net.minecraft.world.effect.MobEffectInstance instance) {
+        if (!super.canBeAffected(instance)) return false;
+        net.minecraft.resources.ResourceLocation key =
+                net.minecraftforge.registries.ForgeRegistries.MOB_EFFECTS.getKey(instance.getEffect());
+        if (key != null) {
+            String path = key.getPath().toLowerCase();
+            if (path.contains("inferno") || path.contains("burn") || path.contains("bind")
+                    || path.contains("root") || path.contains("freeze") || path.contains("stun")
+                    || path.contains("paralysis")) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /** 伤害事件回调（服务端）：入 5s 窗口，累计过半血 → 请求吟唱 */
     public void recordHit(String type, float amount) {
         if (this.level().isClientSide) return;
