@@ -45,6 +45,9 @@ import java.util.function.Predicate;
  */
 public final class GoetyBridge {
 
+    private static final org.apache.logging.log4j.Logger LOGGER =
+            org.apache.logging.log4j.LogManager.getLogger("TinkersNewlife");
+
     private GoetyBridge() {}
 
     private static boolean resolved = false;
@@ -59,7 +62,10 @@ public final class GoetyBridge {
         try {
             goetyPresent = ModList.get().getMods().stream()
                     .anyMatch(m -> m.getModId().toLowerCase().contains("goety"));
-            if (!goetyPresent) return;
+            if (!goetyPresent) {
+                LOGGER.info("[GoetyBridge] 未检测到 goety 系模组（mods=" + ModList.get().getMods().size() + "），Goety 相关逻辑全部停用");
+                return;
+            }
             for (EntityType<?> type : ForgeRegistries.ENTITY_TYPES) {
                 String path = ForgeRegistries.ENTITY_TYPES.getKey(type).getPath().toLowerCase();
                 // summon_apostle 只是仪式用的召唤器实体，不是受限 Boss，排除
@@ -71,9 +77,21 @@ public final class GoetyBridge {
                     CULTIST_TYPES.add(type);
                 }
             }
-        } catch (Throwable ignored) {
+            LOGGER.info("[GoetyBridge] 检测到 goety；受限Boss=" + typeIds(BOSS_TYPES)
+                    + " 黑曜石柱=" + typeIds(PILLAR_TYPES)
+                    + " 邪教徒=" + typeIds(CULTIST_TYPES));
+        } catch (Throwable t) {
             goetyPresent = false;
+            LOGGER.warn("[GoetyBridge] resolve 异常", t);
         }
+    }
+
+    private static String typeIds(Set<EntityType<?>> set) {
+        StringBuilder sb = new StringBuilder("[");
+        for (EntityType<?> t : set) {
+            sb.append(ForgeRegistries.ENTITY_TYPES.getKey(t)).append(' ');
+        }
+        return sb.append(']').toString();
     }
 
     /** Goety 家族是否存在于环境且识别到相关实体 */
@@ -215,6 +233,14 @@ public final class GoetyBridge {
             } catch (Throwable ignored) {
                 // 启示录缺失：下界受击冷却相关 no-op
             }
+            LOGGER.info("[GoetyBridge] 反射通道: apostleClass=" + (apostleClass != null)
+                    + " obsidianInvulField=" + (obsidianInvulField != null)
+                    + " moddedInvulField=" + (moddedInvulField != null)
+                    + " netherReductionField=" + (netherReductionField != null)
+                    + " ownedIface=" + (ownedIface != null)
+                    + " apollyonHelperIface=" + (apollyonHelperIface != null)
+                    + " hitCooldown=" + (setHitCooldownMethod != null)
+                    + " isShooting=" + (isShootingMethod != null));
         } catch (Throwable ignored) {
         }
     }
@@ -317,6 +343,20 @@ public final class GoetyBridge {
         } catch (Throwable ignored) {
             return false;
         }
+    }
+
+    /** 诊断：描述目标在 Goety 眼中的身份（类型/受限Boss/使徒类/柱保护/启示录状态/箭雨） */
+    public static String debugDescribe(LivingEntity e) {
+        resolveReflection();
+        if (e == null) return "null";
+        String type = ForgeRegistries.ENTITY_TYPES.getKey(e.getType()) != null
+                ? ForgeRegistries.ENTITY_TYPES.getKey(e.getType()).toString() : e.getType().toString();
+        return "type=" + type
+                + " limited=" + isDamageLimitedBoss(e)
+                + " goetyApostle=" + isGoetyApostle(e)
+                + " obsidianInvul=" + readObsidianInvul(e)
+                + " apollyon=" + isApollyonState(e)
+                + " barraging=" + isApollyonBarraging(e);
     }
 
     // =====================================================================

@@ -32,6 +32,9 @@ import net.minecraftforge.fml.common.Mod;
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class TianNiHuoPierceHandler {
 
+    private static final org.apache.logging.log4j.Logger LOGGER =
+            org.apache.logging.log4j.LogManager.getLogger("TinkersNewlife");
+
     private TianNiHuoPierceHandler() {}
 
     /** 凋灵无敌字段（反射清零，映射兼容） */
@@ -47,6 +50,8 @@ public final class TianNiHuoPierceHandler {
 
         boolean limitedBoss = GoetyBridge.isDamageLimitedBoss(target);
         boolean wither = target instanceof WitherBoss;
+        LOGGER.info("[天逆鉾] 攻击目标 {} 手持={} limitedBoss={} wither={}",
+                GoetyBridge.debugDescribe(target), held.getItem(), limitedBoss, wither);
         if (!limitedBoss && !wither) return;
 
         // 取消原版攻击，改由天逆鉾直接结算（无视无敌帧/凋灵出生无敌/诡厄巫法限伤与柱保护）
@@ -83,6 +88,8 @@ public final class TianNiHuoPierceHandler {
             pillarShattered = GoetyBridge.shatterProtectingPillars(target);
         }
         float comp = GoetyBridge.apostleDamageCompensation(target);
+        LOGGER.info("[天逆鉾] 穿透开始 dmg={} obsidianInvul={} 碎柱={} comp={}",
+                dmg, obsidianInvulBackup, pillarShattered, comp);
         float remaining = dmg;
         int guard = 0;
         while (remaining > 0 && target.isAlive() && !target.isRemoved() && guard++ < 64) {

@@ -79,6 +79,9 @@ import java.util.UUID;
  */
 public class MomoMerchant extends PathfinderMob {
 
+    private static final org.apache.logging.log4j.Logger LOGGER =
+            org.apache.logging.log4j.LogManager.getLogger("TinkersNewlife");
+
     // ===== 状态 =====
     private static final int S_IDLE = 0;
     private static final int S_ENGAGE = 1;
@@ -2143,6 +2146,9 @@ public class MomoMerchant extends PathfinderMob {
                 && com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isDamageLimitedBoss(target)) {
             LivingEntity chain = pickGoetyChainTarget(boss);
             if (chain != null && chain != target) {
+                if (this.tickCount % 200 == 0) {
+                    LOGGER.info("[墨默] 保护链切目标 → {}", describeTargetRole(chain));
+                }
                 this.setTarget(chain);
                 target = chain;
             }
@@ -2186,6 +2192,15 @@ public class MomoMerchant extends PathfinderMob {
         } else {
             tickWanderPath(); // 游走锚点 = 雇主（半径 6 格）
         }
+    }
+
+    /** 诊断：目标在 Goety 保护链里的角色 */
+    private String describeTargetRole(LivingEntity e) {
+        if (e == null) return "null";
+        if (com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isPillar(e)) return "黑曜石柱 " + e.getType();
+        if (com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isCultist(e)) return "邪教徒 " + e.getType();
+        if (com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isDamageLimitedBoss(e)) return "受限Boss " + e.getType();
+        return "其他 " + e.getType();
     }
 
     /**
@@ -2294,7 +2309,10 @@ public class MomoMerchant extends PathfinderMob {
         if (com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isDamageLimitedBoss(target)) {
             // 柱保护以 Boss 实体的 obsidianInvul 计时为准（存活黑曜石柱每 tick 置 10），
             // 比按距离找柱更接近真实免伤判定（柱瞬移贴身后必然 >0）
-            if (com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.readObsidianInvul(target) > 0) {
+            int shield = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.readObsidianInvul(target);
+            if (shield > 0) {
+                LOGGER.info("[墨默] 目标被柱保护挡住 dmg={} {}", dmg,
+                        com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.debugDescribe(target));
                 if (this.level() instanceof ServerLevel sl) {
                     sl.playSound(null, target.blockPosition(), SoundEvents.SHIELD_BLOCK, SoundSource.HOSTILE, 0.8F, 1.2F);
                     sl.sendParticles(ParticleTypes.CRIT, target.getX(), target.getY() + target.getBbHeight() / 2,
@@ -2322,6 +2340,10 @@ public class MomoMerchant extends PathfinderMob {
 
     private void pierceDamageDirect(LivingEntity target, float dmg) {
         if (target.level().isClientSide || target.isRemoved()) return;
+        if (this.tickCount % 100 == 0) {
+            LOGGER.info("[墨默] 多段穿透 dmg={} {}", dmg,
+                    com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.debugDescribe(target));
+        }
         float comp = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.apostleDamageCompensation(target);
         float remaining = dmg;
         int guard = 0;
@@ -2520,6 +2542,9 @@ public class MomoMerchant extends PathfinderMob {
         }
         if (boss == null) return;
         if (com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isApollyonBarraging(boss)) {
+            if (this.tickCount % 100 == 0) {
+                LOGGER.info("[墨默] 箭雨格挡持续中（Boss 仍在射击）");
+            }
             blockWindowUntil = this.tickCount + BLOCK_WINDOW;
         }
     }
