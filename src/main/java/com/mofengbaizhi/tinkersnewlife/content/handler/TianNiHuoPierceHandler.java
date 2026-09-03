@@ -67,7 +67,7 @@ public final class TianNiHuoPierceHandler {
         while (remaining > 0 && target.isAlive() && !target.isRemoved() && guard++ < 64) {
             float part = Math.min(remaining, PIERCE_CHUNK);
             target.invulnerableTime = 0;
-            target.hurt(player.damageSources().playerAttack(player).bypassArmor(), part);
+            target.hurt(target.damageSources().genericKill(), part);
             remaining -= part;
         }
         // 命中反馈（粒子 + 受击音）
