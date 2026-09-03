@@ -45,6 +45,7 @@ public class MomoMerchantHandler {
             if (momo.isResistantTo(type)) {
                 event.setAmount(event.getAmount() * 0.4f);
             }
+            momo.markDamaged();
             momo.recordHit(type, event.getAmount());
         }
     }

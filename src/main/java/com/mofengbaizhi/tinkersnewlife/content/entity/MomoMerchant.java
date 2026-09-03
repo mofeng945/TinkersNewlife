@@ -144,6 +144,10 @@ public class MomoMerchant extends PathfinderMob {
     private static final double MASS_EXECUTE_RADIUS = 50.0;
     private static final double MASS_EXECUTE_HP = 0.2;
     private static final int MASS_EXECUTE_COOLDOWN = 600;
+    /** 卡死检测：持续受击 ≥6s 且累计移动 ≤1 格 → 传送至目标身后 */
+    private static final int STUCK_WINDOW_TICKS = 120;
+    private static final double STUCK_MAX_MOVE = 1.0;
+    private static final int STUCK_ESCAPE_COOLDOWN = 300;
 
     // ===== 语音防重叠（自动解析 assets 内 ogg 时长，按类别最大时长做间隔） =====
     private static final class VoiceTimings {
@@ -310,6 +314,14 @@ public class MomoMerchant extends PathfinderMob {
 
     /** 灼烧清锁节拍（狱焰等灼烧类减速/定身效果会被周期性清除，避免墨默被烧到停住） */
     private int fireCleanseTick = 0;
+
+    // ===== 卡死逃生（持续受击但几乎没移动 → 传送目标身后） =====
+    private Vec3 prevTickPos = null;
+    private Vec3 stuckCheckPos = null;
+    private int stuckCheckTicks = 0;
+    private double stuckMoved = 0;
+    private long lastDamageAtTick = -1000;
+    private long stuckEscapeCooldown = 0;
 
     /** 近期攻击过她的实体（反击/大招只打这些人，不伤及无辜） */
     private final Set<UUID> aggroSet = new HashSet<>();
@@ -772,6 +784,11 @@ public class MomoMerchant extends PathfinderMob {
         // 灼烧清锁：狱焰等灼烧类移动限制效果会让她停住——周期性清除（着火时连通用减速也清）
         if (++fireCleanseTick % 10 == 0) {
             cleanseMovementLockEffects();
+        }
+
+        // 卡死逃生：持续受击但几乎没移动 → 传送至目标身后（不在吟唱/斩杀/歌唱/逃跑中时）
+        if (chantTicks <= 0 && !execBusy && !finisherActive && !singing && !fleeTriggered) {
+            tickStuckEscape();
         }
 
         // 仇恨清理
@@ -1809,6 +1826,63 @@ public class MomoMerchant extends PathfinderMob {
     /** 当前基础攻击：雇佣 20，未雇佣 50 */
     private float combatBase() {
         return hired ? HIRED_BASE_ATTACK : attackBase();
+    }
+
+    /** 受击标记（MomoMerchantHandler 回调） */
+    public void markDamaged() {
+        this.lastDamageAtTick = this.tickCount;
+    }
+
+    /** 卡死逃生：最近 2s 内有受击 + 目标存在，且 6s 窗口累计移动 ≤1 格 → 传送至目标身后 */
+    private void tickStuckEscape() {
+        LivingEntity target = this.getTarget();
+        boolean underAttack = this.tickCount - lastDamageAtTick <= 120;
+        boolean recentAttackValid = target != null && target.isAlive() && target != this;
+        if (!recentAttackValid || !underAttack || this.tickCount < stuckEscapeCooldown) {
+            stuckCheckPos = null;
+            stuckCheckTicks = 0;
+            stuckMoved = 0;
+            prevTickPos = this.position();
+            return;
+        }
+        // 累计本 tick 位移（忽略传送类大位移）
+        if (prevTickPos != null && stuckCheckPos != null) {
+            double d = Math.hypot(this.getX() - prevTickPos.x, this.getZ() - prevTickPos.z);
+            if (d >= 0.001 && d < 1.5) {
+                stuckMoved += d;
+            }
+        }
+        if (stuckCheckPos == null) {
+            stuckCheckPos = this.position();
+            stuckMoved = 0;
+            stuckCheckTicks = 0;
+        } else {
+            stuckCheckTicks++;
+        }
+        if (stuckCheckTicks >= STUCK_WINDOW_TICKS && stuckMoved <= STUCK_MAX_MOVE) {
+            teleportBehindTarget(target);
+            stuckCheckPos = null;
+            stuckCheckTicks = 0;
+            stuckMoved = 0;
+            stuckEscapeCooldown = this.tickCount + STUCK_ESCAPE_COOLDOWN;
+        }
+        prevTickPos = this.position();
+    }
+
+    /** 传送到目标身后（碰撞则退回随机安全落点） */
+    private void teleportBehindTarget(LivingEntity target) {
+        if (!(this.level() instanceof ServerLevel sl)) return;
+        Vec3 dir = target.position().subtract(target.getLookAngle().scale(2.2));
+        Vec3 behind = new Vec3(dir.x, target.getY(), dir.z);
+        this.moveTo(behind.x, behind.y, behind.z, this.getYRot(), this.getXRot());
+        this.fallDistance = 0;
+        if (!sl.noCollision(this)) {
+            teleportNearEntity(target); // 身后被占：随机传送附近
+            return;
+        }
+        sl.sendParticles(ParticleTypes.SNEEZE, this.getX(), this.getY() + 1.2, this.getZ(),
+                14, 0.4, 0.5, 0.4, 0.02);
+        sl.playSound(null, this.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.HOSTILE, 1.0F, 1.2F);
     }
 
     /**
