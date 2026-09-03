@@ -437,14 +437,26 @@ public final class GoetyBridge {
      * （silentDie：黑曜碎裂粒子/音效 + 使徒 monolithCoolDown=1 分钟，短时间召不出新柱）。
      * 返回是否至少碎掉了一根（调用方据此决定是否还原 boss 的 obsidianInvul）。
      */
+    /**
+     * 把 boss 周围 searchRadius 格内、归属于它的存活黑曜石柱全部"击碎"：
+     * 用 ≤19 的多段 genericKill 正常打到死——柱子死亡走诡厄自身流程
+     * （silentDie：黑曜碎裂粒子/音效 + 使徒 monolithCoolDown=1 分钟，短时间召不出新柱）。
+     * 注意：柱由使徒在 12~24 格外召唤、且可能因场地狭窄长期不瞬移贴身，
+     * 所以搜索半径要够大（实测柱常在 16 格外仍持续给 Boss 免伤）。
+     * 返回是否至少碎掉了一根（调用方据此决定是否还原 boss 的 obsidianInvul）。
+     */
     public static boolean shatterProtectingPillars(LivingEntity boss) {
+        return shatterProtectingPillars(boss, 64.0);
+    }
+
+    public static boolean shatterProtectingPillars(LivingEntity boss, double searchRadius) {
         if (!isAvailable() || boss == null || boss.level() == null || boss.level().isClientSide) {
             return false;
         }
         boolean any = false;
         int outer = 0;
         while (outer++ < 8) {
-            Entity p = nearest(boss.level(), boss.getX(), boss.getY(), boss.getZ(), 16.0,
+            Entity p = nearest(boss.level(), boss.getX(), boss.getY(), boss.getZ(), searchRadius,
                     e -> e instanceof LivingEntity le && isPillar(le) && le.isAlive()
                             && pillarOwnedBy(le, boss));
             if (!(p instanceof LivingEntity pillar)) break;

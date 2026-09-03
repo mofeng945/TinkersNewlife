@@ -2149,7 +2149,7 @@ public class MomoMerchant extends PathfinderMob {
                 if (this.tickCount % 200 == 0) {
                     LOGGER.info("[墨默] 保护链切目标 → {}", describeTargetRole(chain));
                 }
-                this.setTarget(chain);
+                engageChainTarget(chain); // 柱太远（>12格）直接瞬移到柱边
                 target = chain;
             }
         }
@@ -2161,7 +2161,7 @@ public class MomoMerchant extends PathfinderMob {
         if (com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isAvailable()) {
             LivingEntity goetyTarget = pickGoetyChainTarget(boss);
             if (goetyTarget != null) {
-                this.setTarget(goetyTarget);
+                engageChainTarget(goetyTarget);
                 return;
             }
         }
@@ -2205,15 +2205,16 @@ public class MomoMerchant extends PathfinderMob {
 
     /**
      * 诡厄巫法（可选）：以雇主为中心选目标——保护链 邪教徒 > 黑曜石柱 > 受限 Boss；
-     * 附近存在受限 Boss(32格)时：查其黑曜石柱(16格内视为保护柱)→柱旁邪教徒优先；
-     * 无 Boss 时也主动打 20 格内的邪教徒/黑曜石柱。环境无 Goety 返回 null。
+     * 附近存在受限 Boss(32格)时：查其黑曜石柱(64格内视为保护柱，柱常被召在12~24格外
+     * 且可能因场地不贴身)→柱旁邪教徒优先；无 Boss 时也主动打 40 格内的邪教徒/黑曜石柱。
+     * 环境无 Goety 返回 null。
      */
     @Nullable
     private LivingEntity pickGoetyChainTarget(LivingEntity boss) {
         if (!com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isAvailable()) return null;
         LivingEntity limited = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.nearestLimitedBoss(boss, 32.0);
         if (limited != null) {
-            LivingEntity pillar = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.nearestPillar(limited, 16.0);
+            LivingEntity pillar = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.nearestPillar(limited, 64.0);
             if (pillar != null) {
                 LivingEntity cult = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.cultistNearPillar(pillar);
                 if (cult != null) return cult;                       // ① 邪教徒（保护柱者）
@@ -2221,9 +2222,37 @@ public class MomoMerchant extends PathfinderMob {
             }
             return limited;                                          // ③ 目标（无柱保护则直接打）
         }
-        LivingEntity cult = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.nearestCultist(boss, 20.0);
+        LivingEntity cult = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.nearestCultist(boss, 40.0);
         if (cult != null) return cult;
-        return com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.nearestPillar(boss, 20.0);
+        return com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.nearestPillar(boss, 40.0);
+    }
+
+    /** 切到保护链目标：目标为黑曜石柱且离得远（>12格）时直接瞬移到柱边，避免走不过去/绕路 */
+    private void engageChainTarget(LivingEntity chain) {
+        if (chain == null) return;
+        if (com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isPillar(chain)
+                && this.distanceToSqr(chain) > 12.0 * 12.0) {
+            blinkBeside(chain);
+        }
+        this.setTarget(chain);
+        this.getNavigation().stop();
+    }
+
+    /** 瞬移到目标身旁（破远处黑曜石柱用） */
+    private void blinkBeside(LivingEntity target) {
+        if (target == null || target.level().isClientSide) return;
+        Vec3 away = this.position().subtract(target.position());
+        double h = Math.sqrt(away.x * away.x + away.z * away.z);
+        double reach = 1.4 + target.getBbWidth() * 0.5;
+        double dx = h > 0.001 ? away.x / h * reach : reach;
+        double dz = h > 0.001 ? away.z / h * reach : 0;
+        this.moveTo(target.getX() + dx, target.getY(), target.getZ() + dz,
+                this.getYRot(), this.getXRot());
+        if (this.level() instanceof ServerLevel sl) {
+            sl.playSound(null, this.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.HOSTILE, 0.8F, 1.6F);
+            sl.sendParticles(ParticleTypes.POOF, this.getX(), this.getY() + 1.0, this.getZ(),
+                    10, 0.3, 0.4, 0.3, 0.01);
+        }
     }
 
     /** 雇佣战斗：两刀（80%/180%×20 必中）→ 拉远；受击格挡 → 反击连斩；目标 <10 血 → 瞬移身后斩杀 */
@@ -2306,13 +2335,20 @@ public class MomoMerchant extends PathfinderMob {
     private void applyHurt(LivingEntity target, float dmg) {
         witherInvulnBypass(target);
         target.invulnerableTime = 0;
+        if (com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isPillar(target)) {
+            // 黑曜石柱：墨默直接多段穿透击碎（绕护甲/empowered 免伤，柱通常 50 血 → 一两刀碎）
+            pierceDamageDirect(target, dmg);
+            return;
+        }
         if (com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isDamageLimitedBoss(target)) {
             // 柱保护以 Boss 实体的 obsidianInvul 计时为准（存活黑曜石柱每 tick 置 10），
             // 比按距离找柱更接近真实免伤判定（柱瞬移贴身后必然 >0）
             int shield = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.readObsidianInvul(target);
             if (shield > 0) {
-                LOGGER.info("[墨默] 目标被柱保护挡住 dmg={} {}", dmg,
-                        com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.debugDescribe(target));
+                if (this.tickCount % 100 == 0) {
+                    LOGGER.info("[墨默] 目标被柱保护挡住 dmg={} {}", dmg,
+                            com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.debugDescribe(target));
+                }
                 if (this.level() instanceof ServerLevel sl) {
                     sl.playSound(null, target.blockPosition(), SoundEvents.SHIELD_BLOCK, SoundSource.HOSTILE, 0.8F, 1.2F);
                     sl.sendParticles(ParticleTypes.CRIT, target.getX(), target.getY() + target.getBbHeight() / 2,
