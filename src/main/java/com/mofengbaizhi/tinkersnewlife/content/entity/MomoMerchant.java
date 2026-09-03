@@ -895,8 +895,9 @@ public class MomoMerchant extends PathfinderMob {
         }
     }
 
-    /** 商人声音（无战斗/无目标时偶尔低语；不与任意语音重叠） */
+    /** 商人声音（无战斗/无目标时偶尔低语；不与任意语音重叠；雇佣状态下保持安静不闲谈） */
     private void tickAmbientVoice() {
+        if (hired) return; // 雇佣期安静跟随，不发出闲逛低语
         if (--ambientVoiceTimer > 0) return;
         ambientVoiceTimer = 200 + this.random.nextInt(400);
         if (voiceReady() && this.getTarget() == null && !this.isInWater() && !this.isDeadOrDying()) {
@@ -983,7 +984,7 @@ public class MomoMerchant extends PathfinderMob {
             if (p != null) {
                 this.getLookControl().setLookAt(p, 10.0F, 10.0F);
             }
-            if (this.random.nextInt(100) == 0 && voiceReady()) {
+            if (!hired && this.random.nextInt(100) == 0 && voiceReady()) {
                 voicePlayed(VOICE_TIMINGS.ambient);
                 this.playSound(ModSounds.MOMO_AMBIENT.get(), 0.8F, 1.0F);
             }
@@ -1604,7 +1605,9 @@ public class MomoMerchant extends PathfinderMob {
             }
             if (eatTicks <= 0) {
                 stopEating();
-                this.playSound(SoundEvents.GENERIC_EAT, 0.5F, 0.8F + this.random.nextFloat() * 0.3F);
+                if (!hired) { // 雇佣状态静音进食（仅动画）
+                    this.playSound(SoundEvents.GENERIC_EAT, 0.5F, 0.8F + this.random.nextFloat() * 0.3F);
+                }
             }
             return;
         }
@@ -1620,7 +1623,9 @@ public class MomoMerchant extends PathfinderMob {
         eatTicks = EAT_DURATION_TICKS;
         setEatingFlag(true);
         this.swing(InteractionHand.MAIN_HAND);
-        this.playSound(SoundEvents.GENERIC_EAT, 0.6F, 0.8F + this.random.nextFloat() * 0.4F);
+        if (!hired) { // 雇佣状态静音进食（仅动画）
+            this.playSound(SoundEvents.GENERIC_EAT, 0.6F, 0.8F + this.random.nextFloat() * 0.4F);
+        }
         if (this.level() instanceof ServerLevel sl) {
             sl.sendParticles(new net.minecraft.core.particles.ItemParticleOption(
                             net.minecraft.core.particles.ParticleTypes.ITEM, new ItemStack(food)),
