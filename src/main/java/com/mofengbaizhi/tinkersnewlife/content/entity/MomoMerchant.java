@@ -2592,7 +2592,16 @@ public class MomoMerchant extends PathfinderMob {
 
     /** 水下：溺尸式憋气呼吸（不会窒息）+ 游泳（朝目标游；无目标时浮向水面） */
     private void tickWaterSwim() {
-        if (this.level().isClientSide || !this.isInWater()) return;
+        if (this.level().isClientSide) return;
+        if (!this.isInWater()) {
+            // 出水：关闭游泳姿态
+            if (this.isSwimming()) {
+                this.setSwimming(false);
+            }
+            return;
+        }
+        // 游泳姿态（玩家模型会播放游泳动画：前伸划水+双腿打水）；贴地/能站时不摆姿势
+        this.setSwimming(!this.onGround());
         // 憋气：周期性补满空气，永不窒息
         if (this.tickCount % 20 == 0 && this.getAirSupply() < this.getMaxAirSupply()) {
             this.setAirSupply(this.getMaxAirSupply());
@@ -2611,7 +2620,7 @@ public class MomoMerchant extends PathfinderMob {
             double dz = aim.getZ() - this.getZ();
             double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
             if (dist > 1.8) {
-                double sp = 0.15; // 游泳速度（块/tick）：与玩家游泳速度相当，不再快于玩家
+                double sp = 0.8; // 游泳速度（块/tick）：远快于玩家（0.15），如利箭般的水中追击
                 Vec3 want = new Vec3(dx / dist * sp, dy / dist * sp, dz / dist * sp);
                 Vec3 cur = this.getDeltaMovement();
                 Vec3 next = cur.add(want.subtract(cur).scale(0.1));
