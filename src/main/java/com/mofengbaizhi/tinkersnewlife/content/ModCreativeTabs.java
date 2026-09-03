@@ -102,9 +102,6 @@ public class ModCreativeTabs {
                                 output.accept(ModItems.YO_YO_SPOOL_CAST.get());
                                 output.accept(ModItems.YO_YO_SPOOL_SAND_CAST.get());
                                 output.accept(ModItems.YO_YO_SPOOL_RED_SAND_CAST.get());
-                                output.accept(ModItems.CURSE_CORE_PART_CAST.get());
-                                output.accept(ModItems.CURSE_CORE_PART_SAND_CAST.get());
-                                output.accept(ModItems.CURSE_CORE_PART_RED_SAND_CAST.get());
                                 addAllPartVariants(output, ModItems.DRAGON_CORE.get());
                                 addAllPartVariants(output, ModItems.SPELL_CORE.get());
                                 addAllPartVariants(output, ModItems.YO_YO_WHEEL.get());
