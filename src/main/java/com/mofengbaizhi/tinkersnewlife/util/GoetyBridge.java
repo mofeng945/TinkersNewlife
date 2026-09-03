@@ -257,6 +257,32 @@ public final class GoetyBridge {
     }
 
     // =====================================================================
+    //  使徒禁疗（antiRegen）：使徒在部分称号阶段高速再生（heal 每次 2.5% 最大生命），
+    //  正常打法是"亡灵杀手"附魔触发 antiRegen；我们的穿透不走普通攻击，需手动挂上
+    // =====================================================================
+
+    private static java.lang.reflect.Field antiRegenField = null;
+    private static java.lang.reflect.Field antiRegenTotalField = null;
+
+    /** 使徒禁疗 10 秒（antiRegen>0 → isSmited() → 其 heal() 被整体禁用，含负数 heal 与回血效果） */
+    public static void suppressApostleRegen(LivingEntity e) {
+        if (!isGoetyApostle(e)) return;
+        try {
+            if (antiRegenField == null) {
+                antiRegenField = fieldOf(apostleClass, "antiRegen");
+                antiRegenTotalField = fieldOf(apostleClass, "antiRegenTotal");
+            }
+            if (antiRegenField != null) {
+                if (antiRegenField.getInt(e) < 200) {
+                    antiRegenField.setInt(e, 200);
+                    if (antiRegenTotalField != null) antiRegenTotalField.setInt(e, 200);
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    // =====================================================================
     //  天逆鉾"真伤"伤害类型：带 bypasses_cooldown 等全部豁免 tag（数据包 data/minecraft/tags/damage_type/），
     //  绕过原版 1.20.1 伤害冷却闸门（LivingEntity.hurt 内 f_19802_>10 且伤害≤上次伤害则 return false）
     // =====================================================================
@@ -319,6 +345,7 @@ public final class GoetyBridge {
      */
     public static void pierceFullDamage(LivingEntity target, float dmg) {
         if (target == null || target.level().isClientSide || target.isRemoved()) return;
+        suppressApostleRegen(target); // 先禁疗：否则其再生会吃掉我们的伤害
         net.minecraft.world.damagesource.DamageSource src = truePierceSource(target.level());
         if (src == null) src = target.damageSources().genericKill();
         float startHp = target.getHealth();
@@ -346,6 +373,10 @@ public final class GoetyBridge {
                 // 多打了（如神秘乘数/clamp 让单段超量）→ 回退一部分，保持总伤 = dmg
                 target.setHealth(Math.min(target.getMaxHealth(), target.getHealth() - shortfall));
             }
+        }
+        if (startHp - target.getHealth() > 1.0F || dmg > 10.0F) {
+            LOGGER.info("[真伤结算] dmg={} 血量 {}→{} 已打={}",
+                    dmg, startHp, target.getHealth(), startHp - target.getHealth());
         }
     }
 
