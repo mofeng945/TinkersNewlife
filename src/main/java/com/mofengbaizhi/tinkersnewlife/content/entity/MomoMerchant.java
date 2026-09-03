@@ -121,9 +121,12 @@ public class MomoMerchant extends PathfinderMob {
     private static final double EMPLOYER_LOW_HP_RATIO = 0.6;
     /** 再生 III = amplifier 2 */
     private static final int SONG_REGEN_AMPLIFIER = 2;
-    /** 非索敌时每 100 tick 30% 概率进食动画 */
-    private static final int EAT_INTERVAL = 100;
+    /** 单次进食持续 2s = 40 tick；每 100 tick 判定一次 30% 概率开始进食 */
+    private static final int EAT_DURATION_TICKS = 40;
+    private static final int EAT_CHECK_INTERVAL = 100;
     private static final double EAT_CHANCE = 0.3;
+    /** 雇佣到期返回雇主后，留给雇主续雇的宽限（拒绝续雇则到点自然消失；仅自然刷新的墨默） */
+    private static final int RETURN_GRACE_TICKS = 400;
 
     // ===== 语音防重叠（自动解析 assets 内 ogg 时长，按类别最大时长做间隔） =====
     private static final class VoiceTimings {
@@ -240,15 +243,19 @@ public class MomoMerchant extends PathfinderMob {
 
     // ===== 雇佣 / 歌唱 / 进食 状态 =====
     private boolean hired = false;        // 是否处于雇佣期
-    private boolean wasHired = false;     // 曾雇佣过：之后不再按自然刷新白天消失
     private UUID employerId = null;
     private long hireDay = -1;            // 雇佣当天的 dayCount
     private long offerDay = -1;           // 商品批次对应的 dayCount（每天刷新一批）
+    /** 雇佣到期返回雇主后的续雇宽限倒计时（自然刷新版：拒绝续雇则到点随天亮消失） */
+    private int returnGraceTicks = 0;
     private boolean singing = false;
     private int songBackoffTicks = 0;
     private int songTicks = 0;
     private int songCooldown = 0;
-    private int eatTimer = 0;
+    /** 进食：剩余 tick（2s=40）与当前食物 */
+    private int eatTicks = 0;
+    private int eatCheckCooldown = 0;
+    private Item eatFood = null;
     private java.util.List<Item> cachedFoods = null;
 
     /** 近期攻击过她的实体（反击/大招只打这些人，不伤及无辜） */
@@ -264,6 +271,26 @@ public class MomoMerchant extends PathfinderMob {
     public MomoMerchant(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
         this.xpReward = 0;
+    }
+
+    // ===== 进食动画同步标记（客户端据此收起主手战镰） =====
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_EATING =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(MomoMerchant.class,
+                    net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+
+    @Override
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(DATA_EATING, false);
+    }
+
+    /** 进食中（客户端据此收起主手战镰） */
+    public boolean isEating() {
+        return this.entityData.get(DATA_EATING);
+    }
+
+    private void setEatingFlag(boolean eating) {
+        this.entityData.set(DATA_EATING, eating);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -313,7 +340,6 @@ public class MomoMerchant extends PathfinderMob {
         tag.putBoolean("MomoLeapUsed", leapUsed);
         tag.putBoolean("MomoNatural", naturalSpawn);
         tag.putBoolean("MomoHired", hired);
-        tag.putBoolean("MomoWasHired", wasHired);
         if (employerId != null) {
             tag.putUUID("MomoEmployer", employerId);
         }
@@ -342,7 +368,6 @@ public class MomoMerchant extends PathfinderMob {
         leapUsed = tag.getBoolean("MomoLeapUsed");
         naturalSpawn = tag.getBoolean("MomoNatural");
         hired = tag.getBoolean("MomoHired");
-        wasHired = tag.getBoolean("MomoWasHired");
         if (tag.contains("MomoEmployer")) {
             employerId = tag.getUUID("MomoEmployer");
         }
@@ -495,7 +520,7 @@ public class MomoMerchant extends PathfinderMob {
         employerId = buyer.getUUID();
         hireDay = currentDay();
         hired = true;
-        wasHired = true;
+        returnGraceTicks = 0; // 续雇成功，取消"天亮消失"宽限
         this.setTarget(null);
         clearPath();
         if (this.level() instanceof ServerLevel sl) {
@@ -662,8 +687,9 @@ public class MomoMerchant extends PathfinderMob {
     private void tickServer() {
         if (homePos == null) homePos = this.blockPosition();
 
-        // 自然刷新的墨默：白天到来时消失（刷怪蛋召唤的常驻；被雇佣过的也不再消失，便于续雇）
-        if (naturalSpawn && !hired && !wasHired) {
+        // 自然刷新的墨默：白天到来时消失（雇佣中/到期返回后的续雇宽限内不消失；
+        // 刷怪蛋召唤的常驻；拒绝续雇则宽限结束随天亮消失）
+        if (naturalSpawn && !hired && returnGraceTicks <= 0) {
             long dayTime = level().getDayTime() % 24000;
             if (dayTime < 13000) {
                 if (!dayDespawnDone && level() instanceof ServerLevel sl) {
@@ -675,6 +701,11 @@ public class MomoMerchant extends PathfinderMob {
                 this.discard();
                 return;
             }
+        }
+
+        // 续雇宽限倒计时（自然刷新版到期未续雇 → 到点天亮消失）
+        if (returnGraceTicks > 0 && !hired) {
+            returnGraceTicks--;
         }
 
         // 再生 VIII（常驻，覆盖旧版再生 V）
@@ -726,6 +757,7 @@ public class MomoMerchant extends PathfinderMob {
         if (state == S_IDLE) {
             LivingEntity t = this.getTarget();
             if (t != null && t.isAlive()) {
+                stopEating(); // 开战打断进食
                 state = S_ENGAGE;
             }
         }
@@ -1331,6 +1363,8 @@ public class MomoMerchant extends PathfinderMob {
             singing = false;
             songTicks = 0;
             songBackoffTicks = 0;
+            // 自然刷新的墨默：给雇主短暂续雇宽限，拒绝续雇则随天亮消失
+            returnGraceTicks = naturalSpawn ? RETURN_GRACE_TICKS : 0;
             if (boss.level() == this.level()) {
                 this.moveTo(boss.getX(), boss.getY(), boss.getZ(), this.getYRot(), this.getXRot());
                 boss.displayClientMessage(net.minecraft.network.chat.Component.translatable(
@@ -1349,25 +1383,58 @@ public class MomoMerchant extends PathfinderMob {
             return true;
         }
         if (songCooldown > 0) songCooldown--;
-        // 一同战斗：帮雇主打威胁
-        LivingEntity threat = threatOfEmployer(boss);
-        if (threat != null) {
-            if (this.getTarget() == null) {
-                this.setTarget(threat);
+        // 索敌优先级：攻击雇主者 > 雇主正在攻击的生物 > 雇主周围亡灵（主动清亡灵）
+        boolean bossThreatened = false;
+        LivingEntity attacker = boss.getLastHurtByMob();
+        LivingEntity fightTarget = boss.getLastHurtMob();
+        if (attacker != null && attacker.isAlive() && attacker != this
+                && boss.distanceToSqr(attacker) <= 24.0 * 24.0) {
+            bossThreatened = true;
+            if (this.getTarget() != attacker) {
+                this.setTarget(attacker);
             }
-            // 雇主血量低于 60% → 远离战场，随后站定歌唱
-            if (boss.getHealth() <= boss.getMaxHealth() * EMPLOYER_LOW_HP_RATIO && songCooldown <= 0
-                    && this.getHealth() > this.getMaxHealth() * 0.2f) {
-                this.setTarget(null);
-                clearPath();
-                state = S_IDLE;
-                singing = true;
-                songBackoffTicks = SONG_BACKOFF_TICKS;
-                songTicks = SONG_DURATION_TICKS;
-                return true;
+        } else if (fightTarget != null && fightTarget.isAlive() && fightTarget != this
+                && !(fightTarget instanceof Player) && boss.distanceToSqr(fightTarget) <= 24.0 * 24.0) {
+            bossThreatened = true;
+            if (this.getTarget() == null) {
+                this.setTarget(fightTarget);
+            }
+        } else if (this.getTarget() == null) {
+            // 主动索敌雇主周围的亡灵生物
+            Mob undead = nearestUndeadNear(boss, 12.0);
+            if (undead != null) {
+                this.setTarget(undead);
             }
         }
+        // 雇主血量低于 60% → 远离战场，随后站定歌唱（再生 III）
+        if (bossThreatened && boss.getHealth() <= boss.getMaxHealth() * EMPLOYER_LOW_HP_RATIO
+                && songCooldown <= 0 && this.getHealth() > this.getMaxHealth() * 0.2f) {
+            this.setTarget(null);
+            clearPath();
+            stopEating();
+            state = S_IDLE;
+            singing = true;
+            songBackoffTicks = SONG_BACKOFF_TICKS;
+            songTicks = SONG_DURATION_TICKS;
+            return true;
+        }
         return false;
+    }
+
+    /** 雇主周围最近的一只亡灵（主动索敌清怪） */
+    @Nullable
+    private Mob nearestUndeadNear(LivingEntity center, double radius) {
+        Mob best = null;
+        double bestDist = radius * radius;
+        for (Mob m : this.level().getEntitiesOfClass(Mob.class, center.getBoundingBox().inflate(radius),
+                e -> e.isAlive() && e != this && e.getMobType() == MobType.UNDEAD)) {
+            double d = center.distanceToSqr(m);
+            if (d < bestDist) {
+                bestDist = d;
+                best = m;
+            }
+        }
+        return best;
     }
 
     /** 歌唱体：先退后 1s，再站定歌唱 10s（雇主获得再生 III），被攻击或超时结束 */
@@ -1408,7 +1475,7 @@ public class MomoMerchant extends PathfinderMob {
         }
     }
 
-    /** 被攻击打断歌唱 */
+    /** 被攻击打断歌唱（进食也会被打断） */
     private void stopSinging() {
         if (singing || songBackoffTicks > 0) {
             singing = false;
@@ -1416,24 +1483,52 @@ public class MomoMerchant extends PathfinderMob {
             songBackoffTicks = 0;
             songCooldown = SONG_COOLDOWN_TICKS;
         }
+        stopEating();
     }
 
-    /** 非索敌时偶尔掏出食物进食（纯动画，无增益） */
+    /** 非索敌时进食：判定开始 → 持续 2s（40tick）进食动画（纯动画，无增益；进食时收起战镰） */
     private void tickEatIfIdle() {
-        if (this.getTarget() != null || singing || this.isInWater() || this.isDeadOrDying()) return;
-        if (++eatTimer < EAT_INTERVAL) return;
-        eatTimer = 0;
+        if (this.getTarget() != null || singing || this.isInWater() || this.isDeadOrDying()) {
+            if (eatTicks > 0) stopEating();
+            return;
+        }
+        if (eatTicks > 0) {
+            eatTicks--;
+            if (eatFood != null && eatTicks % 10 == 0 && this.level() instanceof ServerLevel sl) {
+                sl.sendParticles(new net.minecraft.core.particles.ItemParticleOption(
+                                net.minecraft.core.particles.ParticleTypes.ITEM, new ItemStack(eatFood)),
+                        this.getX(), this.getY() + 1.7, this.getZ(), 3, 0.2, 0.1, 0.2, 0.01);
+            }
+            if (eatTicks <= 0) {
+                stopEating();
+                this.playSound(SoundEvents.GENERIC_EAT, 0.5F, 0.8F + this.random.nextFloat() * 0.3F);
+            }
+            return;
+        }
+        if (eatCheckCooldown > 0) {
+            eatCheckCooldown--;
+            return;
+        }
+        eatCheckCooldown = EAT_CHECK_INTERVAL;
         if (this.random.nextDouble() >= EAT_CHANCE) return;
         Item food = randomFood();
         if (food == null) return;
+        eatFood = food;
+        eatTicks = EAT_DURATION_TICKS;
+        setEatingFlag(true);
         this.swing(InteractionHand.MAIN_HAND);
         this.playSound(SoundEvents.GENERIC_EAT, 0.6F, 0.8F + this.random.nextFloat() * 0.4F);
         if (this.level() instanceof ServerLevel sl) {
-            ItemStack fs = new ItemStack(food);
             sl.sendParticles(new net.minecraft.core.particles.ItemParticleOption(
-                            net.minecraft.core.particles.ParticleTypes.ITEM, fs),
+                            net.minecraft.core.particles.ParticleTypes.ITEM, new ItemStack(food)),
                     this.getX(), this.getY() + 1.7, this.getZ(), 5, 0.2, 0.1, 0.2, 0.01);
         }
+    }
+
+    private void stopEating() {
+        eatTicks = 0;
+        eatFood = null;
+        setEatingFlag(false);
     }
 
     private Item randomFood() {
