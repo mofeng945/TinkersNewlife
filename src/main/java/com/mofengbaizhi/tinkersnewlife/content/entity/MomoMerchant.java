@@ -127,6 +127,11 @@ public class MomoMerchant extends PathfinderMob {
     private static final double EAT_CHANCE = 0.3;
     /** 雇佣到期返回雇主后，留给雇主续雇的宽限（拒绝续雇则到点自然消失；仅自然刷新的墨默） */
     private static final int RETURN_GRACE_TICKS = 400;
+    /** 雇佣模式基础攻击 20（未雇佣为 50）；斩杀阈值 <10 血 */
+    private static final float HIRED_BASE_ATTACK = 20.0F;
+    private static final float EXECUTE_HP = 10.0F;
+    /** 雇主距离超过 50 格 → 直接传送到雇主身边 */
+    private static final double EMPLOYER_TELEPORT_DIST = 50.0;
 
     // ===== 语音防重叠（自动解析 assets 内 ogg 时长，按类别最大时长做间隔） =====
     private static final class VoiceTimings {
@@ -257,6 +262,15 @@ public class MomoMerchant extends PathfinderMob {
     private int eatCheckCooldown = 0;
     private Item eatFood = null;
     private java.util.List<Item> cachedFoods = null;
+
+    // ===== 雇佣战斗（独立 AI）状态 =====
+    private int hiredComboPhase = 0;   // 0 接近/起手 | 1 等 0.5s 第二刀 | 2 拉远
+    private int hiredComboTimer = 0;
+    private int hiredAttackCooldown = 0;
+    private boolean finisherActive = false;
+    private LivingEntity finisherTarget = null;
+    private int finisherIndex = 0;
+    private int finisherTimer = 0;
 
     /** 近期攻击过她的实体（反击/大招只打这些人，不伤及无辜） */
     private final Set<UUID> aggroSet = new HashSet<>();
@@ -751,8 +765,9 @@ public class MomoMerchant extends PathfinderMob {
             return;
         }
 
-        // 雇佣模式：一同战斗/低血歌唱/到期返回（歌唱时本 tick 独占）
-        if (hired && tickHireAndSong()) {
+        // 雇佣模式：独立 AI（跟随雇主/清亡灵/两刀必中/斩杀/歌唱/进食）
+        if (hired) {
+            tickHiredAI();
             return;
         }
 
@@ -1544,6 +1559,311 @@ public class MomoMerchant extends PathfinderMob {
         }
         if (cachedFoods.isEmpty()) return null;
         return cachedFoods.get(this.random.nextInt(cachedFoods.size()));
+    }
+
+    // ============================================================
+    //  雇佣模式独立 AI
+    // ============================================================
+
+    /** 雇佣状态主循环（与未雇佣 AI 完全分开）：始终跟随雇主、清亡灵、战斗两刀必中+斩杀、保留歌唱/进食 */
+    private void tickHiredAI() {
+        // 低血逃跑
+        if (!fleeTriggered && this.getHealth() <= this.getMaxHealth() * 0.05f) {
+            fleeTriggered = true;
+            fleeTimer = 60;
+            this.setTarget(null);
+            state = S_IDLE;
+        }
+        if (fleeTriggered) {
+            tickFlee();
+            return;
+        }
+        ServerPlayer boss = getEmployer();
+        if (boss == null || !boss.isAlive()) return; // 雇主离线/死亡：原地挂起
+        // 到期返回（雇佣一个游戏日后回来找你）
+        if (this.level().getGameTime() >= hireUntilTick) {
+            returnToEmployer(boss);
+            return;
+        }
+        if (boss.level() != this.level()) return; // 异维度暂不处理
+        // 歌唱（保留）
+        if (singing || songBackoffTicks > 0) {
+            tickSongBody(boss);
+            return;
+        }
+        if (songCooldown > 0) songCooldown--;
+        // 始终跟随雇主：>50 格直接传送
+        if (this.distanceToSqr(boss) > EMPLOYER_TELEPORT_DIST * EMPLOYER_TELEPORT_DIST) {
+            teleportNearEntity(boss);
+        }
+        // 斩杀进行中
+        if (finisherActive) {
+            tickFinisher();
+            return;
+        }
+        LivingEntity target = this.getTarget();
+        // 雇主被攻击 → 优先索敌攻击者
+        LivingEntity attacker = boss.getLastHurtByMob();
+        if (attacker != null && attacker.isAlive() && attacker != this
+                && boss.distanceToSqr(attacker) <= 24.0 * 24.0) {
+            if (target != attacker) {
+                this.setTarget(attacker);
+                target = attacker;
+            }
+        }
+        if (target != null && target.isAlive()) {
+            tickHiredCombat(boss, target);
+            return;
+        }
+        // 主动索敌雇主周围亡灵
+        Mob undead = nearestUndeadNear(boss, 12.0);
+        if (undead != null) {
+            this.setTarget(undead);
+            return;
+        }
+        // 歌唱触发：雇主低血且有威胁
+        LivingEntity threat = threatOfEmployer(boss);
+        if (threat != null && boss.getHealth() <= boss.getMaxHealth() * EMPLOYER_LOW_HP_RATIO
+                && songCooldown <= 0 && this.getHealth() > this.getMaxHealth() * 0.2f) {
+            this.setTarget(null);
+            clearPath();
+            stopEating();
+            state = S_IDLE;
+            singing = true;
+            songBackoffTicks = SONG_BACKOFF_TICKS;
+            songTicks = SONG_DURATION_TICKS;
+            return;
+        }
+        // 空闲：进食 + 以雇主为中心游走
+        tickEatIfIdle();
+        if (this.distanceToSqr(boss) > 14.0 * 14.0) {
+            this.getNavigation().moveTo(boss, 1.15);
+        } else {
+            tickWanderPath(); // 游走锚点 = 雇主（半径 6 格）
+        }
+    }
+
+    /** 雇佣战斗：两刀（80%/180%×20 必中）→ 拉远；受击格挡 → 反击连斩；目标 <10 血 → 瞬移身后斩杀 */
+    private void tickHiredCombat(ServerPlayer boss, LivingEntity target) {
+        // 格挡窗口到期
+        if (blockWindowUntil > 0 && this.tickCount > blockWindowUntil) {
+            blockWindowUntil = -1;
+        }
+        // 受击格挡成功 → 连斩反击
+        if (state == S_COUNTER) {
+            tickHiredCounter();
+            return;
+        }
+        this.getLookControl().setLookAt(target, 30.0F, 30.0F);
+        // 斩杀：目标生命 < 10
+        if (target.getHealth() < EXECUTE_HP) {
+            startFinisher(target);
+            return;
+        }
+        if (this.distanceToSqr(target) > EMPLOYER_TELEPORT_DIST * EMPLOYER_TELEPORT_DIST) {
+            this.setTarget(null);
+            return;
+        }
+        if (hiredAttackCooldown > 0) hiredAttackCooldown--;
+        switch (hiredComboPhase) {
+            case 0 -> {
+                if (this.distanceToSqr(target) <= 2.6 * 2.6) {
+                    this.getNavigation().stop();
+                    if (hiredAttackCooldown <= 0) {
+                        // 砍一刀（80% × 20，必中）
+                        hiredHit(target, 0.8f);
+                        hiredComboPhase = 1;
+                        hiredComboTimer = 10; // 0.5s 后第二刀
+                    }
+                } else {
+                    this.getNavigation().moveTo(target, 1.4);
+                }
+            }
+            case 1 -> {
+                // 等 0.5s 后竖劈（180% × 20，必中）
+                if (--hiredComboTimer <= 0) {
+                    hiredHit(target, 1.8f);
+                    hiredComboPhase = 2;
+                    hiredComboTimer = 24; // 砍完拉远
+                }
+            }
+            default -> {
+                // 拉远
+                if (--hiredComboTimer <= 0 || this.distanceToSqr(target) > 8.0 * 8.0) {
+                    hiredComboPhase = 0;
+                    hiredAttackCooldown = 25;
+                } else {
+                    Vec3 away = this.position().subtract(target.position()).normalize();
+                    Vec3 goal = this.position().add(away.scale(6.0));
+                    this.getNavigation().moveTo(goal.x, this.getY(), goal.z, 1.2);
+                }
+            }
+        }
+    }
+
+    /** 雇佣必中一击（无视距离/面向，直接结算） */
+    private void hiredHit(LivingEntity target, float multiplier) {
+        this.swing(InteractionHand.MAIN_HAND);
+        witherInvulnBypass(target);
+        target.invulnerableTime = 0;
+        target.hurt(this.damageSources().mobAttack(this), HIRED_BASE_ATTACK * multiplier);
+        if (this.level() instanceof ServerLevel sl) {
+            sl.sendParticles(ParticleTypes.SWEEP_ATTACK,
+                    target.getX(), target.getY() + target.getBbHeight() * 0.6, target.getZ(),
+                    3, 0.2, 0.1, 0.2, 0);
+            sl.playSound(null, this.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.HOSTILE, 1.0F, 1.0F);
+        }
+    }
+
+    /** 受击格挡成功后的反击（雇佣版：60/80/100% × 20，必中） */
+    private void tickHiredCounter() {
+        LivingEntity atk = getLastBlockedBy();
+        if (atk == null || !atk.isAlive() || this.distanceToSqr(atk) > 5.0 * 5.0) {
+            counterIndex = 0;
+            hiredComboPhase = 0;
+            state = S_IDLE;
+            if (this.getTarget() == null) this.setTarget(atk);
+            return;
+        }
+        this.getLookControl().setLookAt(atk, 30.0F, 30.0F);
+        if (this.distanceToSqr(atk) > 2.4 * 2.4) {
+            this.getNavigation().moveTo(atk, 1.4);
+            return;
+        }
+        this.getNavigation().stop();
+        if (--counterTimer <= 0) {
+            float mult = COUNTER_MULTIPLIERS[Math.min(counterIndex, COUNTER_MULTIPLIERS.length - 1)];
+            hiredHit(atk, mult);
+            counterIndex++;
+            if (counterIndex >= 3) {
+                counterIndex = 0;
+                hiredComboPhase = 0;
+                hiredAttackCooldown = 30;
+                state = S_IDLE;
+            } else {
+                counterTimer = 5;
+            }
+        }
+    }
+
+    /** 斩杀：瞬移到敌人身后，红色粒子连斩收尾 */
+    private void startFinisher(LivingEntity target) {
+        this.getNavigation().stop();
+        Vec3 dir = target.position().subtract(target.getLookAngle().scale(2.0));
+        Vec3 behind = new Vec3(dir.x, target.getY(), dir.z);
+        this.moveTo(behind.x, behind.y, behind.z, this.getYRot(), this.getXRot());
+        this.getLookControl().setLookAt(target, 360.0F, 360.0F);
+        finisherTarget = target;
+        finisherActive = true;
+        finisherIndex = 0;
+        finisherTimer = 3;
+        if (this.level() instanceof ServerLevel sl) {
+            sl.playSound(null, this.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.HOSTILE, 0.8F, 1.6F);
+            sl.sendParticles(ParticleTypes.POOF, this.getX(), this.getY() + 1.0, this.getZ(), 10, 0.3, 0.4, 0.3, 0.01);
+        }
+    }
+
+    private void tickFinisher() {
+        LivingEntity t = finisherTarget;
+        if (t == null || !t.isAlive() || t.level() != this.level()) {
+            finisherActive = false;
+            finisherTarget = null;
+            this.setTarget(null);
+            state = S_IDLE;
+            hiredComboPhase = 0;
+            return;
+        }
+        this.getLookControl().setLookAt(t, 360.0F, 360.0F);
+        if (--finisherTimer > 0) return;
+        float[] mults = {0.9f, 1.1f, 1.4f};
+        witherInvulnBypass(t);
+        t.invulnerableTime = 0;
+        t.hurt(this.damageSources().mobAttack(this), HIRED_BASE_ATTACK * mults[Math.min(finisherIndex, 2)]);
+        this.swing(InteractionHand.MAIN_HAND);
+        if (this.level() instanceof ServerLevel sl) {
+            // 红色粒子（斩杀特效）
+            sl.sendParticles(new net.minecraft.core.particles.DustParticleOptions(
+                            new org.joml.Vector3f(1.0F, 0.05F, 0.05F), 1.0F),
+                    t.getX(), t.getY() + 1.2, t.getZ(), 12, 0.4, 0.5, 0.4, 0.01);
+            sl.playSound(null, t.blockPosition(), SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.HOSTILE, 1.0F, 1.0F);
+        }
+        finisherIndex++;
+        if (finisherIndex >= 3) {
+            finisherActive = false;
+            finisherTarget = null;
+            this.setTarget(null);
+            state = S_IDLE;
+            hiredComboPhase = 0;
+            hiredAttackCooldown = 15;
+        } else {
+            finisherTimer = 3;
+        }
+    }
+
+    /** 无视凋灵出生无敌（清零其无敌计时字段，反射兜底） */
+    private static java.lang.reflect.Field WITHER_INVULN_FIELD = null;
+
+    private void witherInvulnBypass(LivingEntity target) {
+        if (!(target instanceof net.minecraft.world.entity.boss.wither.WitherBoss w)) return;
+        w.invulnerableTime = 0;
+        try {
+            if (WITHER_INVULN_FIELD == null) {
+                try {
+                    WITHER_INVULN_FIELD = net.minecraft.world.entity.boss.wither.WitherBoss.class
+                            .getDeclaredField("invulnerableTime");
+                } catch (NoSuchFieldException e) {
+                    WITHER_INVULN_FIELD = net.minecraft.world.entity.boss.wither.WitherBoss.class
+                            .getDeclaredField("invulnTime");
+                }
+                if (WITHER_INVULN_FIELD != null) {
+                    WITHER_INVULN_FIELD.setAccessible(true);
+                }
+            }
+            if (WITHER_INVULN_FIELD != null) {
+                WITHER_INVULN_FIELD.setInt(w, 0);
+            }
+        } catch (Throwable ignored) {
+            // 找不到字段则忽略（退化：普通攻击仍可命中非无敌窗口）
+        }
+        // 出生无敌期间一并解除实体无敌标记（若其基于 isInvulnerable 实现）
+        try {
+            w.setInvulnerable(false);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** 传送至目标附近的落点（寻找可站立位置，带回响粒子） */
+    private void teleportNearEntity(LivingEntity e) {
+        if (!(this.level() instanceof ServerLevel sl)) return;
+        for (int i = 0; i < 6; i++) {
+            double a = this.random.nextDouble() * Math.PI * 2.0;
+            double x = e.getX() + Math.cos(a) * 1.8;
+            double z = e.getZ() + Math.sin(a) * 1.8;
+            this.moveTo(x, e.getY(), z, this.getYRot(), this.getXRot());
+            if (sl.noCollision(this)) {
+                break;
+            }
+        }
+        this.moveTo(e.getX(), e.getY(), e.getZ(), this.getYRot(), this.getXRot());
+        this.fallDistance = 0;
+        sl.sendParticles(ParticleTypes.SNEEZE, this.getX(), this.getY() + 1.5, this.getZ(),
+                12, 0.3, 0.4, 0.3, 0.02);
+        sl.playSound(null, this.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.HOSTILE, 1.0F, 1.0F);
+    }
+
+    /** 雇佣到期：回来找雇主并解除雇佣（自然刷新版给续雇宽限） */
+    private void returnToEmployer(ServerPlayer boss) {
+        hired = false;
+        employerId = null;
+        singing = false;
+        songTicks = 0;
+        songBackoffTicks = 0;
+        returnGraceTicks = naturalSpawn ? RETURN_GRACE_TICKS : 0;
+        if (boss.level() == this.level()) {
+            teleportNearEntity(boss);
+            boss.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                    "message.tinkersnewlife.momo.returned"), true);
+        }
     }
 
     // ============================================================
