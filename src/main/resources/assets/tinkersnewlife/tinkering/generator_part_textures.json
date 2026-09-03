@@ -90,6 +90,10 @@
       "stat_type": "tconstruct:head"
     },
     {
+      "path": "tinkersnewlife:item/tool/parts/curse_core_part",
+      "stat_type": "tconstruct:head"
+    },
+    {
       "path": "tinkersnewlife:item/tool/parts/yo_yo_spool",
       "stat_type": "tconstruct:handle"
     },
