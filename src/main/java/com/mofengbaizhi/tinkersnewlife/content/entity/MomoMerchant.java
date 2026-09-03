@@ -832,6 +832,9 @@ public class MomoMerchant extends PathfinderMob {
             }
         }
 
+        // 下界亚波伦"死亡箭雨"格挡：Apollyon 快速连射期间自动举盾（箭矢被格挡 → 整段箭雨全免）
+        tickBarrageGuard();
+
         // 低血量逃跑
         if (!fleeTriggered && this.getHealth() <= this.getMaxHealth() * 0.05f && state != S_LEAP_UP && state != S_ULT) {
             fleeTriggered = true;
@@ -2499,21 +2502,66 @@ public class MomoMerchant extends PathfinderMob {
         return blockWindowUntil > 0 && this.tickCount <= blockWindowUntil && state != S_FLEE;
     }
 
+    /**
+     * 下界亚波伦"死亡箭雨"格挡：
+     * 当前目标（或 32 格内低频扫描到的受限 Boss）正处于启示录 Apollyon 的箭雨施放
+     * （isShooting，约 100 tick、每 tick 一箭）时，持续刷新格挡窗口——
+     * 整段箭雨期间举盾免疫：箭矢 hurt 被格挡 → 其后续 5% 最大生命的虚空扣血也不会触发。
+     */
+    private void tickBarrageGuard() {
+        if (this.isDeadOrDying() || this.isRemoved() || level().isClientSide) return;
+        LivingEntity boss = null;
+        LivingEntity t = this.getTarget();
+        if (t != null && t.isAlive()
+                && com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isDamageLimitedBoss(t)) {
+            boss = t;
+        } else if (this.tickCount % 10 == 0) {
+            boss = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.nearestLimitedBoss(this, 32.0);
+        }
+        if (boss == null) return;
+        if (com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isApollyonBarraging(boss)) {
+            blockWindowUntil = this.tickCount + BLOCK_WINDOW;
+        }
+    }
+
+    /**
+     * 格挡期间连"虚空/真伤"也一并格挡：下界亚波伦箭矢命中会额外
+     * heal(-5%最大生命)（无视护甲/无敌帧/格挡的直接扣血）——举盾时免疫。
+     */
+    @Override
+    public void heal(float amount) {
+        if (amount < 0.0F && isBlockingStance()) {
+            return;
+        }
+        super.heal(amount);
+    }
+
     @Override
     public boolean hurt(DamageSource source, float amount) {
         if (level().isClientSide || this.isDeadOrDying()) return false;
         // 歌唱被攻击打断
         stopSinging();
-        // 格挡窗口内：免疫伤害（格挡成功 → 攻击者在 5 格内才连斩反击；远处格挡不打断追击，减速推进）
+        // 格挡窗口内：免疫伤害。近身（≤5格）格挡成功 → 连斩反击并收起格挡；
+        // 远程/投射物格挡 → 刷新格挡窗口（持续射击的箭雨保持举盾），减速推进不打断追击
         if (isBlockingStance()) {
-            Entity attacker = source.getEntity();
-            if (attacker instanceof LivingEntity living && attacker != this) {
-                aggroSet.add(attacker.getUUID());
+            // 攻击者判定：直接近战实体 / 投射物的发射者 / 兜底取伤害源实体
+            LivingEntity living = null;
+            Entity direct = source.getDirectEntity();
+            if (direct instanceof LivingEntity le && le != this) {
+                living = le;
+            } else if (direct instanceof net.minecraft.world.entity.projectile.Projectile pr
+                    && pr.getOwner() instanceof LivingEntity owner && owner != this) {
+                living = owner;
+            } else if (source.getEntity() instanceof LivingEntity le2 && le2 != this) {
+                living = le2;
+            }
+            if (living != null) {
+                aggroSet.add(living.getUUID());
                 lastBlockedBy = living;
-                blockWindowUntil = -1;
                 if (this.getTarget() == null) this.setTarget(living);
                 if (this.distanceToSqr(living) <= 5.0 * 5.0) {
                     // 近身格挡成功：连斩反击
+                    blockWindowUntil = -1;
                     counterIndex = 0;
                     counterTimer = 0;
                     state = S_COUNTER;
@@ -2524,7 +2572,8 @@ public class MomoMerchant extends PathfinderMob {
                                 10, 0.4, 0.3, 0.4, 0.02);
                     }
                 } else {
-                    // 远处攻击被格挡：保持追击目标（以较慢速度推进），避免原地愣住
+                    // 远程攻击被格挡：保持举盾（刷新窗口）+ 继续追击（以较慢速度推进），避免原地愣住
+                    blockWindowUntil = this.tickCount + BLOCK_WINDOW;
                     if (this.state == S_COUNTER) {
                         counterIndex = 0;
                         state = S_ENGAGE;
@@ -2533,6 +2582,9 @@ public class MomoMerchant extends PathfinderMob {
                         sl.playSound(null, this.blockPosition(), SoundEvents.SHIELD_BLOCK, SoundSource.HOSTILE, 0.8F, 1.3F);
                     }
                 }
+            } else {
+                // 未知来源（环境伤害等）：仍视为格挡，刷新窗口
+                blockWindowUntil = this.tickCount + BLOCK_WINDOW;
             }
             return false;
         }

@@ -180,6 +180,7 @@ public final class GoetyBridge {
     private static Class<?> apollyonHelperIface;   // z1gned.goetyrevelation.util.ApollyonAbilityHelper（mixin 注入使徒）
     private static Method setHitCooldownMethod;    // allTitlesApostle_1_20_1$setHitCooldown(int)
     private static Method isApollyonMethod;        // allTitlesApostle_1_20_1$isApollyon()
+    private static Method isShootingMethod;        // allTitlesApostle_1_20_1$isShooting()（下界箭雨施放中）
 
     private static void resolveReflection() {
         resolve(); // 确保 goetyPresent 先判定，否则可能提前退出导致永不解析
@@ -210,6 +211,7 @@ public final class GoetyBridge {
                 apollyonHelperIface = Class.forName("z1gned.goetyrevelation.util.ApollyonAbilityHelper");
                 setHitCooldownMethod = methodOf(apollyonHelperIface, "allTitlesApostle_1_20_1$setHitCooldown", int.class);
                 isApollyonMethod = methodOf(apollyonHelperIface, "allTitlesApostle_1_20_1$isApollyon");
+                isShootingMethod = methodOf(apollyonHelperIface, "allTitlesApostle_1_20_1$isShooting");
             } catch (Throwable ignored) {
                 // 启示录缺失：下界受击冷却相关 no-op
             }
@@ -296,6 +298,22 @@ public final class GoetyBridge {
         try {
             if (!apollyonHelperIface.isInstance(e)) return false;
             return Boolean.TRUE.equals(isApollyonMethod.invoke(e));
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    /**
+     * 目标是否正处于启示录 Apollyon 的"死亡箭雨"施放中（isShooting）：
+     * 仅下界 + Apollyon 状态触发，施放期约 100 tick，期间每 tick 射一支 DeathArrow，
+     * 每支命中再扣目标 5% 最大生命的虚空伤害（heal(-)，无视护甲/无敌帧/格挡）。
+     */
+    public static boolean isApollyonBarraging(LivingEntity e) {
+        resolveReflection();
+        if (e == null || apollyonHelperIface == null || isShootingMethod == null) return false;
+        try {
+            if (!apollyonHelperIface.isInstance(e)) return false;
+            return Boolean.TRUE.equals(isShootingMethod.invoke(e));
         } catch (Throwable ignored) {
             return false;
         }
