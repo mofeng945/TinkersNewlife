@@ -72,6 +72,8 @@ public final class TianNiHuoPierceHandler {
     private static final float PIERCE_CHUNK = 19.0F;
 
     private static void pierceDamage(ServerPlayer player, LivingEntity target, float dmg) {
+        // 穿透伤害无"攻击者"（entity-less 伤害源），事件抓不到 → 主动通知雇佣墨默协助集火
+        MomoMerchantHandler.notifyHiredMomo(player, target);
         bypassWitherInvuln(target);
         int obsidianInvulBackup = GoetyBridge.readObsidianInvul(target);
         boolean pillarShattered = false;

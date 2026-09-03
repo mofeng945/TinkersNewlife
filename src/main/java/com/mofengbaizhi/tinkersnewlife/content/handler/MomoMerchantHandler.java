@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.item.Items;
@@ -16,6 +17,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
+import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -47,6 +49,32 @@ public class MomoMerchantHandler {
             }
             momo.markDamaged();
             momo.recordHit(type, event.getAmount());
+        }
+    }
+
+    /** 雇主攻击命中目标 → 通知其雇佣的墨默协助集火（近战/弓箭等带攻击者的伤害） */
+    @SubscribeEvent
+    public static void onEmployerAttack(LivingHurtEvent event) {
+        if (event.getEntity().level().isClientSide) return;
+        if (event.getEntity().isRemoved()) return;
+        var src = event.getSource();
+        if (src == null) return;
+        net.minecraft.world.entity.Entity attacker = src.getEntity(); // 弓箭=射击者；近战=攻击者
+        if (attacker instanceof ServerPlayer p) {
+            notifyHiredMomo(p, event.getEntity());
+        }
+    }
+
+    /** 通知玩家雇佣的墨默协助攻击该目标（供本类事件与天逆鉾穿透等无攻击者的伤害主动调用） */
+    public static void notifyHiredMomo(ServerPlayer p, LivingEntity victim) {
+        if (victim == null || victim.isRemoved() || victim.level().isClientSide) return;
+        if (victim instanceof MomoMerchant || victim instanceof ServerPlayer) return;
+        if (!(p.level() instanceof ServerLevel sl)) return;
+        AABB box = new AABB(p.getX() - 128, p.getY() - 128, p.getZ() - 128,
+                p.getX() + 128, p.getY() + 128, p.getZ() + 128);
+        for (MomoMerchant momo : sl.getEntitiesOfClass(MomoMerchant.class, box,
+                m -> m.isHired() && m.getEmployer() == p)) {
+            momo.notifyEmployerAttack(victim);
         }
     }
 

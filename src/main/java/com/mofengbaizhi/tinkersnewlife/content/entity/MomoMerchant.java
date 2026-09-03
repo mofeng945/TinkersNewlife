@@ -289,6 +289,8 @@ public class MomoMerchant extends PathfinderMob {
     private int hiredComboPhase = 0;   // 0 接近/起手 | 1 等 0.5s 第二刀 | 2 拉远
     private int hiredComboTimer = 0;
     private int hiredAttackCooldown = 0;
+    private LivingEntity assistTarget = null;   // 雇主最近攻击的目标（协助集火）
+    private long assistTargetExpireAt = -1;     // 协助有效期（游戏时间，持续攻击刷新）
     private boolean finisherActive = false;
     private LivingEntity finisherTarget = null;
     private int finisherIndex = 0;
@@ -1426,6 +1428,28 @@ public class MomoMerchant extends PathfinderMob {
         return hired;
     }
 
+    /** 雇主攻击目标通知（服务器侧，攻击事件/穿透结算时调用）：协助集火 4 秒，持续攻击会刷新 */
+    public void notifyEmployerAttack(LivingEntity victim) {
+        if (victim == null || victim.isRemoved() || !victim.isAlive()) return;
+        if (victim == this || victim == getEmployer() || victim instanceof MomoMerchant) return;
+        this.assistTarget = victim;
+        this.assistTargetExpireAt = this.level().getGameTime() + 80;
+    }
+
+    /** 协助目标是否仍有效（存活/在 64 格内/在有效期内） */
+    @Nullable
+    private LivingEntity validAssistTarget() {
+        if (assistTarget == null) return null;
+        if (this.level().getGameTime() > assistTargetExpireAt
+                || !assistTarget.isAlive() || assistTarget.isRemoved()
+                || assistTarget == this || assistTarget == getEmployer()) {
+            assistTarget = null;
+            return null;
+        }
+        if (this.distanceToSqr(assistTarget) > 64.0 * 64.0) return null; // 太远不追
+        return assistTarget;
+    }
+
     /** 雇主显示名（GUI 用） */
     public String employerDisplayName() {
         ServerPlayer boss = getEmployer();
@@ -2145,6 +2169,20 @@ public class MomoMerchant extends PathfinderMob {
             if (target != attacker) {
                 this.setTarget(attacker);
                 target = attacker;
+            }
+        }
+        // 雇主正在攻击的目标 → 协助集火：
+        // 保护雇主（当前目标是攻击雇主者）与 Boss 战（受限 Boss 走破保护链）仍优先；
+        // 空闲或只是自己找的杂鱼目标时，切换到雇主正在攻击的目标
+        LivingEntity assist = validAssistTarget();
+        if (assist != null && assist != target) {
+            boolean defending = target != null && target.isAlive() && target == boss.getLastHurtByMob()
+                    && boss.distanceToSqr(target) <= 24.0 * 24.0;
+            boolean bossFight = target != null && target.isAlive()
+                    && com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isDamageLimitedBoss(target);
+            if (target == null || !target.isAlive() || (!defending && !bossFight)) {
+                this.setTarget(assist);
+                target = assist;
             }
         }
         // 诡厄巫法保护链（环境有 Goety 时）：目标是受限 Boss 且被黑曜石柱保护 → 先打邪教徒，其次黑曜石柱，最后 Boss
