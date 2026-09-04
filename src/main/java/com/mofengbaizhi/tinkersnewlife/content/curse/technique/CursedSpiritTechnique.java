@@ -483,7 +483,7 @@ public final class CursedSpiritTechnique extends BaseTechnique {
                             || !minion.isAlive()) {
                         continue;
                     }
-                    // 主人在线：指派目标 = 主人攻击的目标 / 攻击主人的目标
+                    // 主人在线：指派目标 = 主人攻击的目标 / 攻击主人的目标（保护主人）
                     LivingEntity want = null;
                     LivingEntity attack = player.getLastHurtMob();
                     if (attack != null && attack.isAlive() && !PuppetUtil.isAllyOf(attack, player)) {
@@ -497,12 +497,24 @@ public final class CursedSpiritTechnique extends BaseTechnique {
                     }
                     if (want != null) {
                         minion.setTarget(want);
+                        continue;
+                    }
+                    // 无指令：清掉指向主人/同队的目标（无视施术者）
+                    LivingEntity cur = minion.getTarget();
+                    if (cur == null || PuppetUtil.isAllyOf(cur, player)) {
+                        minion.setTarget(null);
+                    }
+                    // 跟随主人：过远传送、稍远走过去、贴身待命
+                    double distSq = minion.distanceToSqr(player);
+                    if (distSq > 64.0 * 64.0) {
+                        double dx = (player.getRandom().nextDouble() - 0.5) * 2.0;
+                        double dz = (player.getRandom().nextDouble() - 0.5) * 2.0;
+                        minion.teleportTo(player.getX() + dx, player.getY(), player.getZ() + dz);
+                        minion.getNavigation().stop();
+                    } else if (distSq > 6.0 * 6.0) {
+                        minion.getNavigation().moveTo(player, 1.05);
                     } else {
-                        // 无指令：清掉指向主人/同队的目标（无视施术者）
-                        LivingEntity cur = minion.getTarget();
-                        if (cur == null || PuppetUtil.isAllyOf(cur, player)) {
-                            minion.setTarget(null);
-                        }
+                        minion.getNavigation().stop();
                     }
                 }
             }
