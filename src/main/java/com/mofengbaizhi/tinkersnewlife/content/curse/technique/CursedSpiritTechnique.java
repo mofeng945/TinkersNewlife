@@ -364,9 +364,10 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         return false;
     }
 
-    /** 释放体战死 → 记录从 GUI 消失 */
+    /** 释放体战死 → 记录从 GUI 消失（玩家本人死亡绝不算释放体战死） */
     public static void onMinionDeath(Entity dead) {
         if (dead.level().isClientSide) return;
+        if (dead instanceof net.minecraft.world.entity.player.Player) return; // 玩家不是释放体
         if (!(dead.level() instanceof ServerLevel sl)) return;
         for (ServerPlayer p : sl.getServer().getPlayerList().getPlayers()) {
             List<SpiritEntry> list = entries(p);
@@ -376,6 +377,21 @@ public final class CursedSpiritTechnique extends BaseTechnique {
                 p.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.lost", dead.getName().getString()), true);
                 return;
             }
+        }
+    }
+
+    /** 登录/重生后矫正：场上实体 id 会失效，把所有 released 标记复位（记录保留） */
+    public static void normalize(ServerPlayer player) {
+        List<SpiritEntry> list = entries(player);
+        boolean changed = false;
+        for (SpiritEntry e : list) {
+            if (e.releasedId >= 0) {
+                e.releasedId = -1;
+                changed = true;
+            }
+        }
+        if (changed) {
+            saveAll(player, list);
         }
     }
 
@@ -451,6 +467,14 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         @SubscribeEvent
         public static void onMinionDeathEvent(LivingDeathEvent event) {
             onMinionDeath(event.getEntity());
+        }
+
+        /** 登录时矫正 released 残留（防跨会话/重生后实体 id 撞车误删记录） */
+        @SubscribeEvent
+        public static void onPlayerLoggedIn(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) {
+            if (event.getEntity() instanceof ServerPlayer sp) {
+                normalize(sp);
+            }
         }
 
         /** 兜底：已释放体对主人/同队造成伤害时直接取消（防个别目标选择遗漏） */
