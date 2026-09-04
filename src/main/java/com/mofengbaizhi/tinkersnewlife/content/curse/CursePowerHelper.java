@@ -66,14 +66,22 @@ public final class CursePowerHelper {
         return tool == null ? 0 : tool.getModifierLevel(id);
     }
 
-    /** 咒力输出等级（佩戴的咒力核心） */
+    /** 咒力输出等级（佩戴的咒力核心；天与咒缚·咒力者佩戴时自动 +1 级） */
     public static int getCurseOutputLevel(Player player) {
-        return getModifierLevel(findEquippedCurseCore(player), Modifiers.CURSE_OUTPUT.getId());
+        int level = getModifierLevel(findEquippedCurseCore(player), Modifiers.CURSE_OUTPUT.getId());
+        if (level > 0) {
+            level += com.mofengbaizhi.tinkersnewlife.content.handler.CurseBindingHandler.getCoreLevelBonus(player);
+        }
+        return level;
     }
 
-    /** 咒力总量等级（佩戴的咒力核心） */
+    /** 咒力总量等级（佩戴的咒力核心；天与咒缚·咒力者佩戴时自动 +1 级） */
     public static int getCurseTotalLevel(Player player) {
-        return getModifierLevel(findEquippedCurseCore(player), Modifiers.CURSE_TOTAL.getId());
+        int level = getModifierLevel(findEquippedCurseCore(player), Modifiers.CURSE_TOTAL.getId());
+        if (level > 0) {
+            level += com.mofengbaizhi.tinkersnewlife.content.handler.CurseBindingHandler.getCoreLevelBonus(player);
+        }
+        return level;
     }
 
     /** 坐杀搏徒等级（佩戴的咒力核心） */
@@ -86,7 +94,8 @@ public final class CursePowerHelper {
     // ============================================================
 
     /**
-     * 玩家当前咒力亲和 = 所有已装备饰品携带的咒力亲和之和（初始 0）+ 临时加成（特等奖 +100）。
+     * 玩家当前咒力亲和 = 所有已装备饰品携带的咒力亲和之和（初始 0）+ 临时加成（特等奖 +100）
+     * + 天与咒缚·咒力的自带亲和（200）。
      * 战利品生成的饰品可能随机携带 0~50 点亲和（见 CurseAffinityLootModifier）。
      */
     public static int getCurseAffinity(Player player) {
@@ -102,7 +111,8 @@ public final class CursePowerHelper {
                 }
             }
         }
-        return sum + getTemporaryAffinity(player);
+        return sum + getTemporaryAffinity(player)
+                + com.mofengbaizhi.tinkersnewlife.content.handler.CurseBindingHandler.getAffinityBonus(player);
     }
 
     /** 设置临时咒力亲和加成（到期后自动失效） */

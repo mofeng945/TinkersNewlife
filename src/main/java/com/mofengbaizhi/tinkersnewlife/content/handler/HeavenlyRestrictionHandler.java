@@ -74,6 +74,10 @@ public final class HeavenlyRestrictionHandler {
 
     /** 仪式一完成：赋予天与咒缚（失去咒力 + 肉体强化） */
     public static void applyRestriction(ServerPlayer player) {
+        // 两种束缚互斥：转为暴君束缚时先解除咒力束缚
+        if (CurseBindingHandler.isBound(player)) {
+            CurseBindingHandler.removeBinding(player);
+        }
         player.getPersistentData().putBoolean(KEY_RESTRICTED, true);
         // 失去咒力：咒力清零、无限窗口作废
         CursePowerHelper.setCurse(player, 0.0);
