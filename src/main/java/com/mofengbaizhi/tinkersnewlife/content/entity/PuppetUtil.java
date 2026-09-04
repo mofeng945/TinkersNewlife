@@ -32,7 +32,7 @@ public final class PuppetUtil {
         return new Vec3(i * j, -k, h * j);
     }
 
-    /** 同队豁免：目标 == 主人、被主人雇佣的墨默、主人召唤的式神 → true（傀儡伤害全部豁免） */
+    /** 同队豁免：目标 == 主人、被主人雇佣的墨默、主人召唤的式神、主人的傀儡/自爆幻翼 → true（傀儡伤害全部豁免） */
     public static boolean isAllyOf(LivingEntity target, ServerPlayer owner) {
         if (target == null || owner == null) return false;
         if (target == owner) return true;
@@ -44,6 +44,10 @@ public final class PuppetUtil {
         if (target instanceof ShikigamiMob shikigami) {
             UUID oid = shikigami.getOwnerId();
             if (oid != null && oid.equals(ownerId)) return true;
+        }
+        if (target instanceof FlamePhantom flame) {
+            ServerPlayer boss = flame.getOwner();
+            if (boss != null && boss.getUUID().equals(ownerId)) return true;
         }
         return false;
     }

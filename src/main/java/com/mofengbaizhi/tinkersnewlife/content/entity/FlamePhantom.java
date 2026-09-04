@@ -172,9 +172,26 @@ public class FlamePhantom extends Phantom {
         discard();
     }
 
-    /** 不参与原版幻翼 AI（由玩家术式驱动） */
+    /** 不参与原版幻翼 AI（由玩家术式驱动）；服务端跳过原版 aiStep（含亡灵白天自燃逻辑） */
     @Override
     protected void registerGoals() {
+    }
+
+    @Override
+    public void aiStep() {
+        if (level().isClientSide) {
+            super.aiStep(); // 客户端保留原版动画计算
+        }
+        // 服务端：焰羽由 tick() 完全驱动，不走原版（否则白天会像亡灵一样自燃）
+    }
+
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        // 焰羽免疫火焰/岩浆伤害（白天不会自燃；只有撞击自爆才结算）
+        if (source.is(net.minecraft.tags.DamageTypeTags.IS_FIRE)) {
+            return false;
+        }
+        return super.hurt(source, amount);
     }
 
     @Override
@@ -185,11 +202,5 @@ public class FlamePhantom extends Phantom {
     @Override
     public boolean canBeLeashed(net.minecraft.world.entity.player.Player player) {
         return false;
-    }
-
-    @Override
-    public boolean hurt(DamageSource source, float amount) {
-        // 1 点生命的小飞行器：正常受伤即可
-        return super.hurt(source, amount);
     }
 }
