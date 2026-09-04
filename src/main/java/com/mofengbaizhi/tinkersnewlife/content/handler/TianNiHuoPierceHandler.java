@@ -39,6 +39,9 @@ public final class TianNiHuoPierceHandler {
     /** 凋灵无敌字段（反射清零，映射兼容） */
     private static java.lang.reflect.Field WITHER_INVULN_FIELD = null;
 
+    /** 诡厄桥接异常是否已记录（只记一次，防刷屏） */
+    private static boolean bridgeErrorLogged = false;
+
     @SubscribeEvent
     public static void onPlayerAttack(AttackEntityEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
@@ -47,20 +50,32 @@ public final class TianNiHuoPierceHandler {
         ItemStack held = player.getMainHandItem();
         if (!(held.getItem() instanceof TianNiHuoItem)) return;
 
-        boolean limitedBoss = GoetyBridge.isDamageLimitedBoss(target);
-        boolean wither = target instanceof WitherBoss;
-        if (!limitedBoss && !wither) return;
+        try {
+            boolean limitedBoss = GoetyBridge.isDamageLimitedBoss(target);
+            boolean wither = target instanceof WitherBoss;
+            if (!limitedBoss && !wither) return;
 
-        // 取消原版攻击，改由天逆鉾直接结算（无视无敌帧/凋灵出生无敌/诡厄巫法限伤与柱保护）
-        event.setCanceled(true);
-        player.swing(InteractionHand.MAIN_HAND);
+            // 取消原版攻击，改由天逆鉾直接结算（无视无敌帧/凋灵出生无敌/诡厄巫法限伤与柱保护）
+            event.setCanceled(true);
+            player.swing(InteractionHand.MAIN_HAND);
 
-        // 基础伤害 = 玩家攻击力属性（含天逆鉾 24 点与力量等）；亡灵额外 +6（凋灵为亡灵）
-        float dmg = (float) player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
-        if (target.getMobType() == MobType.UNDEAD) {
-            dmg += 6.0F;
+            // 基础伤害 = 玩家攻击力属性（含天逆鉾 24 点与力量等）；亡灵额外 +6（凋灵为亡灵）
+            float dmg = (float) player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+            if (target.getMobType() == MobType.UNDEAD) {
+                dmg += 6.0F;
+            }
+            pierceDamage(player, target, dmg);
+        } catch (Throwable t) {
+            // ⭐ 诡厄桥接/结算异常（类缺失、反射失败等）：取消原版攻击，回退为原版攻击流程，
+            //    绝不因天逆鉾逻辑导致"攻击即崩溃"
+            if (event.isCanceled()) {
+                event.setCanceled(false);
+            }
+            if (!bridgeErrorLogged) {
+                bridgeErrorLogged = true;
+                TinkersNewlife.LOGGER.error("[天逆鉾] 穿透逻辑异常，已回退原版攻击：", t);
+            }
         }
-        pierceDamage(player, target, dmg);
     }
 
     /**
