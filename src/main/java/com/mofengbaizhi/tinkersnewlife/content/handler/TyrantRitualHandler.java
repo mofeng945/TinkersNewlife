@@ -582,6 +582,24 @@ public class TyrantRitualHandler {
     }
 
     // ============================================================
+    //  抽血 / 收尾期间免疫外来伤害
+    //  （仪式房间亮度 <8 会刷怪；1% 生命下任何一击都会致死并打断仪式。
+    //   抽血用 setHealth 直扣，不走伤害事件，不受此免疫影响）
+    // ============================================================
+
+    @SubscribeEvent
+    public static void onLivingHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer victim)) return;
+        for (RitualData data : RITUALS.values()) {
+            if (data.casterId.equals(victim.getUUID())
+                    && (data.phase == Phase.DRAIN || data.phase == Phase.FINAL)) {
+                event.setCanceled(true);
+                return;
+            }
+        }
+    }
+
+    // ============================================================
     //  特效辅助
     // ============================================================
 
