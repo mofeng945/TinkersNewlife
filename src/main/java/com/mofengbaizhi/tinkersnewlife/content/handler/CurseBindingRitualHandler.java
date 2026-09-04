@@ -92,7 +92,7 @@ public class CurseBindingRitualHandler {
     /** 每脉冲抽取：11% 最大生命 */
     private static final float DRAIN_FRACTION = 0.11F;
     /** 标题文字（每段 2 秒） */
-    private static final String[] FINAL_TITLES = {"天与咒缚", "肉体", "你失去了咒力"};
+    private static final String[] FINAL_TITLES = {"天与咒缚", "咒力", "你掌握了咒力"};
     private static final int FINAL_CLEANUP_TICK = 120;
 
     /** 白色方块破坏粒子用方块（白光主题） */
