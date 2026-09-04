@@ -195,10 +195,11 @@ public final class PlantManipulationTechnique extends BaseTechnique {
         }
     }
 
-    /** 分类：非植物 -1；草方块 1；草 / 花 3；树叶 8（返回可吸收的咒力数） */
+    /** 分类：非植物 -1；草方块 1；草 / 花 / 树苗 3；树叶 8（返回可吸收的咒力数） */
     private static int classifyPlant(BlockState state) {
         if (state.getBlock() == Blocks.GRASS_BLOCK) return 1;
         if (state.is(BlockTags.LEAVES)) return 8;
+        if (state.is(BlockTags.SAPLINGS)) return 3;
         if (state.is(BlockTags.SMALL_FLOWERS) || state.is(BlockTags.TALL_FLOWERS)) return 3;
         var block = state.getBlock();
         if (block == Blocks.GRASS || block == Blocks.FERN
@@ -253,6 +254,17 @@ public final class PlantManipulationTechnique extends BaseTechnique {
             }
         }
 
+        /** 树根持续期间禁止采摘/催熟（右击会被拦截，浆果丛不结果、不掉甜浆果） */
+        @SubscribeEvent
+        public static void onRightClickBlock(net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickBlock event) {
+            if (FIELDS.isEmpty()) return;
+            if (event.getLevel().isClientSide) return;
+            if (!event.getLevel().getBlockState(event.getPos()).is(Blocks.SWEET_BERRY_BUSH)) return;
+            if (isFieldBlock(event.getPos())) {
+                event.setCanceled(true);
+            }
+        }
+
         private static boolean isFieldBlock(BlockPos pos) {
             for (RootField field : FIELDS.values()) {
                 if (field.blocks.containsKey(pos)) return true;
@@ -261,7 +273,7 @@ public final class PlantManipulationTechnique extends BaseTechnique {
         }
     }
 
-    /** 一个树根场：记录已放置的浆果丛与原始方块，到期还原 */
+    /** 一个树根场：记录已放置的浆果丛与原始方块，到期还原；2 秒内从幼苗长到满阶段 */
     private static final class RootField {
         private final ServerLevel level;
         private final UUID ownerId;
@@ -269,6 +281,8 @@ public final class PlantManipulationTechnique extends BaseTechnique {
         private final Map<BlockPos, BlockState> blocks = new HashMap<>();
         private int ticksLeft = FIELD_DURATION;
         private int hitTimer = 10;
+        private int growthTicks = 0;
+        private int growthAge = 0;
 
         RootField(ServerLevel level, UUID ownerId, BlockPos center) {
             this.level = level;
@@ -300,6 +314,19 @@ public final class PlantManipulationTechnique extends BaseTechnique {
         /** 每 tick；返回 true 表示场结束应移除 */
         boolean tick() {
             ticksLeft--;
+            // 生长动画：幼苗(AGE 0) 每 10 tick 长一阶段，2 秒到满阶段(AGE 3)，不结果
+            growthTicks++;
+            int stage = Math.min(3, growthTicks / 10);
+            if (stage != growthAge) {
+                growthAge = stage;
+                BlockState grown = Blocks.SWEET_BERRY_BUSH.defaultBlockState()
+                        .setValue(net.minecraft.world.level.block.SweetBerryBushBlock.AGE, stage);
+                for (BlockPos pos : blocks.keySet()) {
+                    if (level.getBlockState(pos).is(Blocks.SWEET_BERRY_BUSH)) {
+                        level.setBlock(pos, grown, 2);
+                    }
+                }
+            }
             if (--hitTimer <= 0) {
                 hitTimer = HIT_INTERVAL;
                 hit();
