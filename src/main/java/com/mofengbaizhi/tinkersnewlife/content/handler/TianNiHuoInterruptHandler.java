@@ -85,6 +85,16 @@ public final class TianNiHuoInterruptHandler {
             killSummon(player, target);
             return;
         }
+        // 咒灵操术仆从：右键直接收回（保留记录，不击杀）
+        if (com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique.ownerOfReleased(target) != null) {
+            event.setCanceled(true);
+            player.swing(InteractionHand.MAIN_HAND);
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique.recallByEntity(target);
+            if (target.level() instanceof ServerLevel sl) {
+                spawnInterruptParticles(sl, target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ());
+            }
+            return;
+        }
         if (target instanceof ServerPlayer victim) {
             event.setCanceled(true);
             player.swing(InteractionHand.MAIN_HAND);

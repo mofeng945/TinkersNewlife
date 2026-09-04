@@ -633,6 +633,8 @@
   "message.tinkersnewlife.spirit.invalid": "§c该个体数据无法释放",
   "message.tinkersnewlife.spirit.no_stored": "§7尚未记录任何亡灵个体（将濒死亡灵血量打到 2.5% 以下再对准它施放即可捕获）",
   "message.tinkersnewlife.spirit.lost": "§c%s 战死，其记录已从咒灵之口消散",
+  "message.tinkersnewlife.spirit.lost_foreign": "§c%s 被他人转变，其记录已从咒灵之口消散",
+  "message.tinkersnewlife.spirit.modified": "§d咒灵已随你的转变改写为新形态（%s）",
   "message.tinkersnewlife.spirit.vortex_charge": "§d漩涡蓄力中：再次按下反转键向视线射出",
   "message.tinkersnewlife.spirit.vortex_shot": "§d黑色漩涡已射出"
 }

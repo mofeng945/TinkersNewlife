@@ -364,6 +364,65 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         return false;
     }
 
+    /** 该实体是哪位玩家的场上释放体；不是任何人的释放体返回 null（服务端用） */
+    public static ServerPlayer ownerOfReleased(Entity target) {
+        if (target == null || target.level().isClientSide) return null;
+        if (!(target.level() instanceof ServerLevel sl)) return null;
+        for (ServerPlayer p : sl.getServer().getPlayerList().getPlayers()) {
+            if (isReleasedMinionOf(target, p)) return p;
+        }
+        return null;
+    }
+
+    /** 天逆鉾右键仆从：直接收回（保留记录），返回是否命中 */
+    public static boolean recallByEntity(Entity target) {
+        ServerPlayer owner = ownerOfReleased(target);
+        if (owner == null) return false;
+        List<SpiritEntry> list = entries(owner);
+        for (SpiritEntry e : list) {
+            if (e.releasedId >= 0 && target.getId() == e.releasedId) {
+                if (owner.serverLevel().getEntity(e.releasedId) instanceof Mob mob && mob.isAlive()) {
+                    mob.discard();
+                }
+                e.releasedId = -1;
+                saveAll(owner, list);
+                owner.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.recall", e.name), true);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 无为转变·他人把释放体变形：清除该个体记录（视为失去） */
+    public static void removeOnForeignTransform(Entity target) {
+        ServerPlayer owner = ownerOfReleased(target);
+        if (owner == null) return;
+        String name = target.getName().getString();
+        List<SpiritEntry> list = entries(owner);
+        list.removeIf(e -> e.releasedId >= 0 && target.getId() == e.releasedId);
+        saveAll(owner, list);
+        owner.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.lost_foreign", name), true);
+    }
+
+    /** 无为转变·主人自己把释放体变形：收回并把记录改写为新形态（NBT/类型/属性快照） */
+    public static void modifyOnOwnerTransform(ServerPlayer owner, Entity oldReleased, Mob newForm) {
+        List<SpiritEntry> list = entries(owner);
+        for (SpiritEntry e : list) {
+            if (e.releasedId >= 0 && oldReleased.getId() == e.releasedId) {
+                CompoundTag nbt = newForm.saveWithoutId(new CompoundTag());
+                e.nbt = nbt;
+                e.type = EntityType.getKey(newForm.getType()).toString();
+                e.name = newForm.getName().getString();
+                e.maxHp = newForm.getMaxHealth();
+                e.atk = (float) newForm.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+                e.releasedId = -1;
+                saveAll(owner, list);
+                owner.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.modified", e.name), true);
+                return;
+            }
+        }
+    }
+
     /** 反射读取 Goety 仆从（IServant/IOwned 实现）的主人实体 */
     private static LivingEntity goetyOwnerOf(LivingEntity entity) {
         try {

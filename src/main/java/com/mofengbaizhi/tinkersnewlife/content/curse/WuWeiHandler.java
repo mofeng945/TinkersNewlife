@@ -548,6 +548,15 @@ public final class WuWeiHandler {
             rd.restPos = targetMob.position();
             rd.restYRot = targetMob.getYRot();
             rd.restXRot = targetMob.getXRot();
+            // Spirit technique link: foreign player transforming an owner's released spirit clears its record;
+            // owner transforming their own spirit will rewrite the record to the new form below.
+            ServerPlayer spiritOwner = com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
+                    .ownerOfReleased(targetMob);
+            boolean selfSpirit = spiritOwner != null && spiritOwner.getUUID().equals(player.getUUID());
+            if (spiritOwner != null && !selfSpirit) {
+                com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
+                        .removeOnForeignTransform(targetMob);
+            }
             targetMob.discard();
             Entity form = type.create(level);
             if (form instanceof Mob fm) {
@@ -567,6 +576,10 @@ public final class WuWeiHandler {
                 // owner 持久标记：服务器重启后经扫描恢复守护 AI（永久变形）
                 fm.getPersistentData().putUUID(KEY_GUARD_OWNER, player.getUUID());
                 level.addFreshEntity(fm);
+                if (selfSpirit) {
+                    com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
+                            .modifyOnOwnerTransform(player, targetMob, fm);
+                }
                 rd.formId = fm.getId();
                 REVERSE_MOBS.put(fm.getUUID(), rd);
             }
