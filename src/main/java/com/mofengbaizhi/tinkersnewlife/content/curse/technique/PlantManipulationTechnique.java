@@ -70,8 +70,8 @@ public final class PlantManipulationTechnique extends BaseTechnique {
     /** 蓄力中：玩家 UUID → 模式；及蓄力起始时刻 */
     private static final Map<UUID, Mode> CHARGING = new ConcurrentHashMap<>();
     private static final Map<UUID, Long> CHARGE_START = new ConcurrentHashMap<>();
-    /** 生效中的树根场 */
-    private static final Map<UUID, RootField> FIELDS = new ConcurrentHashMap<>();
+    /** 生效中的树根场（可同时存在多个，各自到期独立消散/还原） */
+    private static final java.util.List<RootField> FIELDS = new java.util.concurrent.CopyOnWriteArrayList<>();
 
     private PlantManipulationTechnique() {
         super(Modifiers.PLANT_MANIPULATION.getId());
@@ -128,7 +128,7 @@ public final class PlantManipulationTechnique extends BaseTechnique {
                 field.tryPlace(level, pos);
             }
         }
-        FIELDS.put(player.getUUID(), field);
+        FIELDS.add(field);
         level.sendParticles(ParticleTypes.HAPPY_VILLAGER,
                 center.getX() + 0.5, center.getY() + 0.5, center.getZ() + 0.5, 24, 2.2, 1.0, 2.2, 0);
         player.displayClientMessage(Component.translatable("message.tinkersnewlife.plant.roots"), true);
@@ -216,28 +216,41 @@ public final class PlantManipulationTechnique extends BaseTechnique {
         CHARGE_START.remove(player.getUUID());
     }
 
-    /** 登出 / 死亡 / 切换术式：取消蓄力并立即还原在场树根 */
+    /** 登出 / 死亡 / 切换术式 / 中断：取消蓄力并立即还原该玩家全部在场树根 */
     public static void cleanup(ServerPlayer player) {
         cancelCharge(player);
-        RootField field = FIELDS.remove(player.getUUID());
-        if (field != null) {
-            field.restore();
+        UUID uuid = player.getUUID();
+        Iterator<RootField> it = FIELDS.iterator();
+        while (it.hasNext()) {
+            RootField field = it.next();
+            if (uuid.equals(field.ownerId)) {
+                field.restore();
+                it.remove();
+            }
         }
     }
 
     /** 天逆鉾中断该玩家草木术式（蓄力 + 树根场全部取消并还原）；返回是否确有进行中 */
     public static boolean interruptAll(ServerPlayer player) {
-        boolean had = CHARGING.containsKey(player.getUUID()) || FIELDS.containsKey(player.getUUID());
+        UUID uuid = player.getUUID();
+        boolean had = CHARGING.containsKey(uuid);
+        if (!had) {
+            for (RootField field : FIELDS) {
+                if (uuid.equals(field.ownerId)) {
+                    had = true;
+                    break;
+                }
+            }
+        }
         cleanup(player);
         return had;
     }
 
     /** 天逆鉾右键甜浆果丛：移除包含该位置的树根场并还原；返回是否命中 */
     public static boolean removeFieldAt(ServerLevel level, BlockPos pos) {
-        Iterator<Map.Entry<UUID, RootField>> it = FIELDS.entrySet().iterator();
+        Iterator<RootField> it = FIELDS.iterator();
         while (it.hasNext()) {
-            Map.Entry<UUID, RootField> en = it.next();
-            RootField field = en.getValue();
+            RootField field = it.next();
             if (field.level == level && field.blocks.containsKey(pos)) {
                 field.restore();
                 it.remove();
@@ -257,10 +270,9 @@ public final class PlantManipulationTechnique extends BaseTechnique {
         public static void onServerTick(TickEvent.ServerTickEvent event) {
             if (event.phase != TickEvent.Phase.END) return;
             if (FIELDS.isEmpty()) return;
-            Iterator<Map.Entry<UUID, RootField>> it = FIELDS.entrySet().iterator();
+            Iterator<RootField> it = FIELDS.iterator();
             while (it.hasNext()) {
-                RootField field = it.next().getValue();
-                if (field.tick()) {
+                if (it.next().tick()) {
                     it.remove();
                 }
             }
@@ -293,7 +305,7 @@ public final class PlantManipulationTechnique extends BaseTechnique {
         }
 
         private static boolean isFieldBlock(BlockPos pos) {
-            for (RootField field : FIELDS.values()) {
+            for (RootField field : FIELDS) {
                 if (field.blocks.containsKey(pos)) return true;
             }
             return false;
