@@ -60,103 +60,62 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * 中立实体「武器商人·墨默」：
+ * 涓珛瀹炰綋銆屾鍣ㄥ晢浜郝峰ⅷ榛樸€嶏細
  * <ul>
- *   <li>中立商人：满月夜晚由 {@code MomoMerchantHandler} 在教堂（占位：村钟）前刷新；
- *       自然刷新版在白天到来时消失，刷怪蛋召唤的常驻</li>
- *   <li>受击反击：手持格赫罗斯战镰；任何攻击者（玩家/怪物/监守者）都能攻击她，她也会反击；
- *       监守者可正常索敌攻击她</li>
- *   <li>攻击 AI（自定义状态机）：快速接近 → 面前 2 格扇形横斩(80%) → 0.5s 后竖劈(180%) → 拉远；
- *       受击后 1s 内格挡（免疫伤害），格挡成功 → 近身连斩 3 刀(60/80/100%)；
- *       半血 → 高高跃起跳劈(300%，破盾) + 乱蝶大招；生命 ≤5% → 逃跑</li>
- *   <li>属性：HP 200 / 攻击 50 / 护甲 14 / 再生 VIII（常驻）</li>
- *   <li>无玩家时在生成点 20 格内游走；每 500tick 10% 概率主动索敌并击杀 10 格内一只亡灵；
- *       地上有格赫罗斯残骸/矿石（20 格内）会被吸引走过来</li>
- *   <li>不受无为转变影响（变形目标排除）、免疫蛇发女妖石化（由 GorgonImmunityHandler 处理）</li>
- *   <li>秒杀掉落：被一击伤害 ≥ 最大生命击杀时掉落 拉莱耶的呼唤 ×1 + 15 经验</li>
- *   <li>售卖：6 槽位（咒具×2 / 咒术水晶×2 / 旧日遗物×2），货币为格赫罗斯残骸/矿石</li>
- *   <li>客户端套用玩家模型 + momo_common 贴图；语音走本模组自注册音效（占位文件可覆盖）</li>
+ *   <li>涓珛鍟嗕汉锛氭弧鏈堝鏅氱敱 {@code MomoMerchantHandler} 鍦ㄦ暀鍫傦紙鍗犱綅锛氭潙閽燂級鍓嶅埛鏂帮紱
+ *       鑷劧鍒锋柊鐗堝湪鐧藉ぉ鍒版潵鏃舵秷澶憋紝鍒锋€泲鍙敜鐨勫父椹?/li>
+ *   <li>鍙楀嚮鍙嶅嚮锛氭墜鎸佹牸璧綏鏂垬闀帮紱浠讳綍鏀诲嚮鑰咃紙鐜╁/鎬墿/鐩戝畧鑰咃級閮借兘鏀诲嚮濂癸紝濂逛篃浼氬弽鍑伙紱
+ *       鐩戝畧鑰呭彲姝ｅ父绱㈡晫鏀诲嚮濂?/li>
+ *   <li>鏀诲嚮 AI锛堣嚜瀹氫箟鐘舵€佹満锛夛細蹇€熸帴杩?鈫?闈㈠墠 2 鏍兼墖褰㈡í鏂?80%) 鈫?0.5s 鍚庣珫鍔?180%) 鈫?鎷夎繙锛?
+ *       鍙楀嚮鍚?1s 鍐呮牸鎸★紙鍏嶇柅浼ゅ锛夛紝鏍兼尅鎴愬姛 鈫?杩戣韩杩炴柀 3 鍒€(60/80/100%)锛?
+ *       鍗婅 鈫?楂橀珮璺冭捣璺冲妶(300%锛岀牬鐩? + 涔辫澏澶ф嫑锛涚敓鍛?鈮?% 鈫?閫冭窇</li>
+ *   <li>灞炴€э細HP 200 / 鏀诲嚮 50 / 鎶ょ敳 14 / 鍐嶇敓 VIII锛堝父椹伙級</li>
+ *   <li>鏃犵帺瀹舵椂鍦ㄧ敓鎴愮偣 20 鏍煎唴娓歌蛋锛涙瘡 500tick 10% 姒傜巼涓诲姩绱㈡晫骞跺嚮鏉€ 10 鏍煎唴涓€鍙骸鐏碉紱
+ *       鍦颁笂鏈夋牸璧綏鏂畫楠?鐭跨煶锛?0 鏍煎唴锛変細琚惛寮曡蛋杩囨潵</li>
+ *   <li>涓嶅彈鏃犱负杞彉褰卞搷锛堝彉褰㈢洰鏍囨帓闄わ級銆佸厤鐤泧鍙戝コ濡栫煶鍖栵紙鐢?GorgonImmunityHandler 澶勭悊锛?/li>
+ *   <li>绉掓潃鎺夎惤锛氳涓€鍑讳激瀹?鈮?鏈€澶х敓鍛藉嚮鏉€鏃舵帀钀?鎷夎幈鑰剁殑鍛煎敜 脳1 + 15 缁忛獙</li>
+ *   <li>鍞崠锛? 妲戒綅锛堝拻鍏访? / 鍜掓湳姘存櫠脳2 / 鏃ф棩閬楃墿脳2锛夛紝璐у竵涓烘牸璧綏鏂畫楠?鐭跨煶</li>
+ *   <li>瀹㈡埛绔鐢ㄧ帺瀹舵ā鍨?+ momo_common 璐村浘锛涜闊宠蛋鏈ā缁勮嚜娉ㄥ唽闊虫晥锛堝崰浣嶆枃浠跺彲瑕嗙洊锛?/li>
  * </ul>
  */
-public class MomoMerchant extends PathfinderMob {
+public class MomoMerchant extends PathfinderMob implements MomoConst {
 
-    // ===== 状态 =====
-    private static final int S_IDLE = 0;
-    private static final int S_ENGAGE = 1;
-    private static final int S_SWEEP_WAIT = 2;   // 横斩后等 0.5s 再竖劈
-    private static final int S_BACKOFF = 3;      // 打完一套拉远
-    private static final int S_COUNTER = 4;      // 格挡成功后连斩 3 刀
-    private static final int S_LEAP_UP = 5;      // 高高跃起
-    private static final int S_ULT = 6;          // 乱蝶大招
-    private static final int S_FLEE = 7;         // ≤5% 血逃跑
+    // ===== 鐘舵€?=====
+    private static final int S_SWEEP_WAIT = 2;   // 妯柀鍚庣瓑 0.5s 鍐嶇珫鍔?
+    private static final int S_BACKOFF = 3;      // 鎵撳畬涓€濂楁媺杩?
+    private static final int S_COUNTER = 4;      // 鏍兼尅鎴愬姛鍚庤繛鏂?3 鍒€
+    private static final int S_LEAP_UP = 5;      // 楂橀珮璺冭捣
+    private static final int S_ULT = 6;          // 涔辫澏澶ф嫑
+    private static final int S_FLEE = 7;         // 鈮?% 琛€閫冭窇
 
-    private static final double REACH = 3.0;
-    private static final int SWEEP_WAIT_TICKS = 10;
-    private static final int BACKOFF_TICKS = 26;
-    private static final int COMBO_COOLDOWN = 30;
-    private static final int BLOCK_WINDOW = 20;      // 受击后 1s 格挡窗口
-    private static final int LEAP_UP_TICKS = 10;
-    private static final int ULT_INTERVAL = 12;
-    private static final float[] ULT_MULTIPLIERS = {0.8f, 0.8f, 1.2f, 0.9f, 2.0f};
-    private static final float[] COUNTER_MULTIPLIERS = {0.6f, 0.8f, 1.0f};
+    private static final int BLOCK_WINDOW = 20;      // 鍙楀嚮鍚?1s 鏍兼尅绐楀彛
 
-    /** 自然刷新最大游走半径 */
-    private static final double WANDER_RADIUS = 20.0;
-    /** 亡灵狩猎间隔 / 概率 / 半径 */
-    private static final int HUNT_INTERVAL = 500;
-    private static final double HUNT_CHANCE = 0.1;
-    private static final double HUNT_RADIUS = 10.0;
-    /** 空闲移动速度 = 攻击快速接近(1.35) 的 2/3（游荡 / 被货币吸引共用） */
-    private static final float IDLE_MOVE_SPEED = 0.9F;
-    /** A* 探索上限（防单次卡顿） */
-    private static final int ASTAR_MAX_EXPAND = 700;
+    /** 鑷劧鍒锋柊鏈€澶ф父璧板崐寰?*/
+    /** 浜＄伒鐙╃寧闂撮殧 / 姒傜巼 / 鍗婂緞 */
+    /** 绌洪棽绉诲姩閫熷害 = 鏀诲嚮蹇€熸帴杩?1.35) 鐨?2/3锛堟父鑽?/ 琚揣甯佸惛寮曞叡鐢級 */
+    /** A* 鎺㈢储涓婇檺锛堥槻鍗曟鍗￠】锛?*/
 
-    // ===== 雇佣 / 歌唱 / 进食 =====
-    /** 雇佣时长：一个游戏日（24000 tick），到期"回来找你" */
-    private static final long HIRE_DURATION_TICKS = 24000;
-    /** 歌唱退后时长 / 歌唱持续 10s / 冷却 120s */
-    private static final int SONG_BACKOFF_TICKS = 20;
-    private static final int SONG_DURATION_TICKS = 200;
-    private static final int SONG_COOLDOWN_TICKS = 2400;
-    /** 雇主血量低于 60% 触发歌唱 */
-    private static final double EMPLOYER_LOW_HP_RATIO = 0.6;
-    /** 再生 III = amplifier 2 */
-    private static final int SONG_REGEN_AMPLIFIER = 2;
-    /** 单次进食持续 2s = 40 tick；每 100 tick 判定一次 30% 概率开始进食 */
-    private static final int EAT_DURATION_TICKS = 40;
-    private static final int EAT_CHECK_INTERVAL = 100;
-    private static final double EAT_CHANCE = 0.3;
-    /** 雇佣到期返回雇主后，留给雇主续雇的宽限（拒绝续雇则到点自然消失；仅自然刷新的墨默） */
-    private static final int RETURN_GRACE_TICKS = 400;
-    /** 雇佣模式基础攻击 20（未雇佣为 50）；斩杀阈值 <10 血 */
-    private static final float HIRED_BASE_ATTACK = 35.0F;
-    private static final float EXECUTE_HP = 10.0F;
-    /** 雇主距离超过 50 格 → 直接传送到雇主身边 */
-    private static final double EMPLOYER_TELEPORT_DIST = 50.0;
+    // ===== 闆囦剑 / 姝屽敱 / 杩涢 =====
+    /** 闆囦剑鏃堕暱锛氫竴涓父鎴忔棩锛?4000 tick锛夛紝鍒版湡"鍥炴潵鎵句綘" */
+    /** 姝屽敱閫€鍚庢椂闀?/ 姝屽敱鎸佺画 10s / 鍐峰嵈 120s */
+    /** 闆囦富琛€閲忎綆浜?60% 瑙﹀彂姝屽敱 */
+    /** 鍐嶇敓 III = amplifier 2 */
+    /** 鍗曟杩涢鎸佺画 2s = 40 tick锛涙瘡 100 tick 鍒ゅ畾涓€娆?30% 姒傜巼寮€濮嬭繘椋?*/
+    /** 闆囦剑鍒版湡杩斿洖闆囦富鍚庯紝鐣欑粰闆囦富缁泧鐨勫闄愶紙鎷掔粷缁泧鍒欏埌鐐硅嚜鐒舵秷澶憋紱浠呰嚜鐒跺埛鏂扮殑澧ㄩ粯锛?*/
+    /** 闆囦剑妯″紡鍩虹鏀诲嚮 20锛堟湭闆囦剑涓?50锛夛紱鏂╂潃闃堝€?<10 琛€ */
+    /** 闆囦富璺濈瓒呰繃 50 鏍?鈫?鐩存帴浼犻€佸埌闆囦富韬竟 */
 
-    // ===== 通用应急：伤害吟唱 / 低血大斩杀 =====
-    /** 5s(100tick) 窗口内累计受伤 > 半血 → 传送安全位并吟唱 1s，记住伤害类型，60s 内对应类型抗性 +60% */
-    private static final int DMG_WINDOW_TICKS = 100;
-    private static final double CHANT_DAMAGE_THRESHOLD = 0.5;
-    private static final int CHANT_TICKS = 20;           // 吟唱 1s
-    private static final int RESIST_TICKS = 1200;        // 抗性 60s
-    private static final float RESIST_MULTIPLIER = 0.4F; // 受伤降为 40%（抗性提升 60%）
-    /** 血量 <20% → 对 50 格内每个目标斩杀（雇主除外） */
-    private static final double MASS_EXECUTE_RADIUS = 50.0;
-    private static final double MASS_EXECUTE_HP = 0.2;
-    private static final int MASS_EXECUTE_COOLDOWN = 600;
-    /** 卡死检测：持续受击 ≥6s 且累计移动 ≤1 格 → 传送至目标身后 */
-    private static final int STUCK_WINDOW_TICKS = 120;
-    private static final double STUCK_MAX_MOVE = 1.0;
-    private static final int STUCK_ESCAPE_COOLDOWN = 300;
-    /** 对空跳斩：目标悬空(高于墨默>2.2格且3D距离>3.2)且水平20格内 → 蓄力3s后跳至头顶5段连斩 */
-    private static final int AIR_CHARGE_TICKS = 60;          // 蓄力 3s
-    private static final double AIR_RADIUS = 20.0;
-    private static final double AIR_GAP = 2.2;
-    private static final int AIR_COMBO_COOLDOWN = 400;
-    private static final float[] AIR_HIT_MULTIPLIERS = {0.8f, 0.8f, 1.0f, 1.2f, 1.6f};
+    // ===== 閫氱敤搴旀€ワ細浼ゅ鍚熷敱 / 浣庤澶ф柀鏉€ =====
+    /** 5s(100tick) 绐楀彛鍐呯疮璁″彈浼?> 鍗婅 鈫?浼犻€佸畨鍏ㄤ綅骞跺悷鍞?1s锛岃浣忎激瀹崇被鍨嬶紝60s 鍐呭搴旂被鍨嬫姉鎬?+60% */
+    private static final int CHANT_TICKS = 20;           // 鍚熷敱 1s
+    private static final int RESIST_TICKS = 1200;        // 鎶楁€?60s
+    private static final float RESIST_MULTIPLIER = 0.4F; // 鍙椾激闄嶄负 40%锛堟姉鎬ф彁鍗?60%锛?
+    /** 琛€閲?<20% 鈫?瀵?50 鏍煎唴姣忎釜鐩爣鏂╂潃锛堥泧涓婚櫎澶栵級 */
+    /** 鍗℃妫€娴嬶細鎸佺画鍙楀嚮 鈮?s 涓旂疮璁＄Щ鍔?鈮? 鏍?鈫?浼犻€佽嚦鐩爣韬悗 */
+    /** 瀵圭┖璺虫柀锛氱洰鏍囨偓绌?楂樹簬澧ㄩ粯>2.2鏍间笖3D璺濈>3.2)涓旀按骞?0鏍煎唴 鈫?钃勫姏3s鍚庤烦鑷冲ご椤?娈佃繛鏂?*/
+    private static final int AIR_CHARGE_TICKS = 60;          // 钃勫姏 3s
 
-    // ===== 语音防重叠（自动解析 assets 内 ogg 时长，按类别最大时长做间隔） =====
+    // ===== 璇煶闃查噸鍙狅紙鑷姩瑙ｆ瀽 assets 鍐?ogg 鏃堕暱锛屾寜绫诲埆鏈€澶ф椂闀垮仛闂撮殧锛?=====
     private static final class VoiceTimings {
         final float ambient, hurt, death, trade;
         VoiceTimings(float ambient, float hurt, float death, float trade) {
@@ -187,7 +146,7 @@ public class MomoMerchant extends PathfinderMob {
         return max;
     }
 
-    /** 解析 OGG 时长（granule / 采样率），失败返回 0 */
+    /** 瑙ｆ瀽 OGG 鏃堕暱锛坓ranule / 閲囨牱鐜囷級锛屽け璐ヨ繑鍥?0 */
     private static float oggSeconds(String resPath) {
         try (java.io.InputStream in = MomoMerchant.class.getResourceAsStream(
                 "/assets/tinkersnewlife/sounds/" + resPath)) {
@@ -221,7 +180,7 @@ public class MomoMerchant extends PathfinderMob {
         }
     }
 
-    /** 上一次任意墨默语音预计结束的 tick（用于防重叠：间隔 ≥ 该类别最长语音时长） */
+    /** 涓婁竴娆′换鎰忓ⅷ榛樿闊抽璁＄粨鏉熺殑 tick锛堢敤浜庨槻閲嶅彔锛氶棿闅?鈮?璇ョ被鍒渶闀胯闊虫椂闀匡級 */
     private int lastVoiceEndTick = Integer.MIN_VALUE / 2;
 
     private boolean voiceReady() {
@@ -246,11 +205,11 @@ public class MomoMerchant extends PathfinderMob {
     private int regenTick = 0;
     private int curseCleanseTick = 0;    private int aggroPruneTick = 0;
 
-    // ===== 商人行为 =====
-    /** 是否为自然刷新（满月）产生的：白天到来时消失；刷怪蛋为 false 常驻 */
+    // ===== 鍟嗕汉琛屼负 =====
+    /** 鏄惁涓鸿嚜鐒跺埛鏂帮紙婊℃湀锛変骇鐢熺殑锛氱櫧澶╁埌鏉ユ椂娑堝け锛涘埛鎬泲涓?false 甯搁┗ */
     private boolean naturalSpawn = false;
     private boolean dayDespawnDone = false;
-    /** 生成点（游走锚点） */
+    /** 鐢熸垚鐐癸紙娓歌蛋閿氱偣锛?*/
     private BlockPos homePos = null;
     private int wanderTimer = 0;
     private int huntTimer = 0;
@@ -258,46 +217,46 @@ public class MomoMerchant extends PathfinderMob {
     private int wardenProbeTimer = 0;
     private int currencyProbeTimer = 0;
 
-    // ===== A* 空闲寻路状态（游荡 / 货币吸引） =====
+    // ===== A* 绌洪棽瀵昏矾鐘舵€侊紙娓歌崱 / 璐у竵鍚稿紩锛?=====
     private List<BlockPos> path = new ArrayList<>();
     private BlockPos pathGoalCell = null;
-    /** 当前路径属于货币吸引（true）还是游走（false）；清路径时按归属区分 */
+    /** 褰撳墠璺緞灞炰簬璐у竵鍚稿紩锛坱rue锛夎繕鏄父璧帮紙false锛夛紱娓呰矾寰勬椂鎸夊綊灞炲尯鍒?*/
     private boolean pathIsLure = false;
     private ItemEntity lureTarget = null;
     private Vec3 lastMovePos = null;
     private int noProgressTicks = 0;
-    /** 交易成功语音（空闲2）防重叠 */
+    /** 浜ゆ槗鎴愬姛璇煶锛堢┖闂?锛夐槻閲嶅彔 */
     private int tradeSuccessVoiceEnd = Integer.MIN_VALUE / 2;
 
-    // ===== 雇佣 / 歌唱 / 进食 状态 =====
-    private boolean hired = false;        // 是否处于雇佣期
+    // ===== 闆囦剑 / 姝屽敱 / 杩涢 鐘舵€?=====
+    private boolean hired = false;        // 鏄惁澶勪簬闆囦剑鏈?
     private UUID employerId = null;
-    private long hireUntilTick = -1;      // 雇佣到期时刻（gameTime），= 雇佣时 + 24000
-    private long offerDay = -1;           // 商品批次对应的 dayCount（每天刷新一批）
-    /** 雇佣到期返回雇主后的续雇宽限倒计时（自然刷新版：拒绝续雇则到点随天亮消失） */
+    private long hireUntilTick = -1;      // 闆囦剑鍒版湡鏃跺埢锛坓ameTime锛夛紝= 闆囦剑鏃?+ 24000
+    private long offerDay = -1;           // 鍟嗗搧鎵规瀵瑰簲鐨?dayCount锛堟瘡澶╁埛鏂颁竴鎵癸級
+    /** 闆囦剑鍒版湡杩斿洖闆囦富鍚庣殑缁泧瀹介檺鍊掕鏃讹紙鑷劧鍒锋柊鐗堬細鎷掔粷缁泧鍒欏埌鐐归殢澶╀寒娑堝け锛?*/
     private int returnGraceTicks = 0;
     private boolean singing = false;
     private int songBackoffTicks = 0;
     private int songTicks = 0;
     private int songCooldown = 0;
-    /** 进食：剩余 tick（2s=40）与当前食物 */
+    /** 杩涢锛氬墿浣?tick锛?s=40锛変笌褰撳墠椋熺墿 */
     private int eatTicks = 0;
     private int eatCheckCooldown = 0;
     private Item eatFood = null;
     private java.util.List<Item> cachedFoods = null;
 
-    // ===== 雇佣战斗（独立 AI）状态 =====
-    private int hiredComboPhase = 0;   // 0 接近/起手 | 1 等 0.5s 第二刀 | 2 拉远
+    // ===== 闆囦剑鎴樻枟锛堢嫭绔?AI锛夌姸鎬?=====
+    private int hiredComboPhase = 0;   // 0 鎺ヨ繎/璧锋墜 | 1 绛?0.5s 绗簩鍒€ | 2 鎷夎繙
     private int hiredComboTimer = 0;
     private int hiredAttackCooldown = 0;
-    private LivingEntity assistTarget = null;   // 雇主最近攻击的目标（协助集火）
-    private long assistTargetExpireAt = -1;     // 协助有效期（游戏时间，持续攻击刷新）
+    private LivingEntity assistTarget = null;   // 闆囦富鏈€杩戞敾鍑荤殑鐩爣锛堝崗鍔╅泦鐏級
+    private long assistTargetExpireAt = -1;     // 鍗忓姪鏈夋晥鏈燂紙娓告垙鏃堕棿锛屾寔缁敾鍑诲埛鏂帮級
     private boolean finisherActive = false;
     private LivingEntity finisherTarget = null;
     private int finisherIndex = 0;
     private int finisherTimer = 0;
 
-    // ===== 通用应急状态 =====
+    // ===== 閫氱敤搴旀€ョ姸鎬?=====
     private static final class DamageHit {
         final int tick;
         final float amount;
@@ -312,19 +271,19 @@ public class MomoMerchant extends PathfinderMob {
     private final List<DamageHit> dmgWindow = new ArrayList<>();
     private boolean chantRequested = false;
     private int chantTicks = 0;
-    private java.util.Set<String> chantTypes = null;   // 吟唱完成时记住的伤害类型
+    private java.util.Set<String> chantTypes = null;   // 鍚熷敱瀹屾垚鏃惰浣忕殑浼ゅ绫诲瀷
     private long resistUntilTick = 0;
     private final java.util.Set<String> resistTypes = new HashSet<>();
     private boolean execBusy = false;
     private final List<java.util.UUID> execQueue = new ArrayList<>();
-    private int execStage = 0;   // 0 瞬移 | 1..3 连斩
+    private int execStage = 0;   // 0 鐬Щ | 1..3 杩炴柀
     private int execTimer = 0;
     private long execCooldownUntil = 0;
 
-    /** 灼烧清锁节拍（狱焰等灼烧类减速/定身效果会被周期性清除，避免墨默被烧到停住） */
+    /** 鐏肩儳娓呴攣鑺傛媿锛堢嫳鐒扮瓑鐏肩儳绫诲噺閫?瀹氳韩鏁堟灉浼氳鍛ㄦ湡鎬ф竻闄わ紝閬垮厤澧ㄩ粯琚儳鍒板仠浣忥級 */
     private int fireCleanseTick = 0;
 
-    // ===== 卡死逃生（持续受击但几乎没移动 → 传送目标身后） =====
+    // ===== 鍗℃閫冪敓锛堟寔缁彈鍑讳絾鍑犱箮娌＄Щ鍔?鈫?浼犻€佺洰鏍囪韩鍚庯級 =====
     private Vec3 prevTickPos = null;
     private Vec3 stuckCheckPos = null;
     private int stuckCheckTicks = 0;
@@ -332,19 +291,19 @@ public class MomoMerchant extends PathfinderMob {
     private long lastDamageAtTick = -1000;
     private long stuckEscapeCooldown = 0;
 
-    // ===== 对空跳斩（蓄力 → 头顶 5 段连斩） =====
+    // ===== 瀵圭┖璺虫柀锛堣搫鍔?鈫?澶撮《 5 娈佃繛鏂╋級 =====
     private boolean airComboActive = false;
     private int airChargeTicks = 0;
     private int airHitIndex = 0;
     private int airHitTimer = 0;
     private long airComboCooldown = 0;
 
-    /** 近期攻击过她的实体（反击/大招只打这些人，不伤及无辜） */
+    /** 杩戞湡鏀诲嚮杩囧ス鐨勫疄浣擄紙鍙嶅嚮/澶ф嫑鍙墦杩欎簺浜猴紝涓嶄激鍙婃棤杈滐級 */
     private final Set<UUID> aggroSet = new HashSet<>();
 
     private ItemStack scytheStack = ItemStack.EMPTY;
 
-    /** 售卖槽位（6 个，跨存档持久化在实体 NBT） */
+    /** 鍞崠妲戒綅锛? 涓紝璺ㄥ瓨妗ｆ寔涔呭寲鍦ㄥ疄浣?NBT锛?*/
     public record Offer(ItemStack result, int price) {}
 
     private final List<Offer> offers = new ArrayList<>();
@@ -354,7 +313,7 @@ public class MomoMerchant extends PathfinderMob {
         this.xpReward = 0;
     }
 
-    // ===== 进食动画同步标记（客户端据此收起主手战镰） =====
+    // ===== 杩涢鍔ㄧ敾鍚屾鏍囪锛堝鎴风鎹鏀惰捣涓绘墜鎴橀暟锛?=====
     private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_EATING =
             net.minecraft.network.syncher.SynchedEntityData.defineId(MomoMerchant.class,
                     net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
@@ -365,7 +324,7 @@ public class MomoMerchant extends PathfinderMob {
         this.entityData.define(DATA_EATING, false);
     }
 
-    /** 进食中（客户端据此收起主手战镰） */
+    /** 杩涢涓紙瀹㈡埛绔嵁姝ゆ敹璧蜂富鎵嬫垬闀帮級 */
     public boolean isEating() {
         return this.entityData.get(DATA_EATING);
     }
@@ -385,12 +344,12 @@ public class MomoMerchant extends PathfinderMob {
     }
 
     // ============================================================
-    //  生命周期 / 持久化
+    //  鐢熷懡鍛ㄦ湡 / 鎸佷箙鍖?
     // ============================================================
 
     @Override
     protected void registerGoals() {
-        // 受击反击：把攻击者设为目标（玩家/怪物/监守者均可）
+        // 鍙楀嚮鍙嶅嚮锛氭妸鏀诲嚮鑰呰涓虹洰鏍囷紙鐜╁/鎬墿/鐩戝畧鑰呭潎鍙級
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
     }
 
@@ -479,7 +438,7 @@ public class MomoMerchant extends PathfinderMob {
         }
     }
 
-    /** 主手拿格赫罗斯战镰（渲染可见）；材质用格赫罗斯残骸 */
+    /** 涓绘墜鎷挎牸璧綏鏂垬闀帮紙娓叉煋鍙锛夛紱鏉愯川鐢ㄦ牸璧綏鏂畫楠?*/
     private void equipScythe() {
         if (level().isClientSide) return;
         if (!scytheStack.isEmpty()) {
@@ -519,15 +478,15 @@ public class MomoMerchant extends PathfinderMob {
                 this.setItemSlot(EquipmentSlot.MAINHAND, scytheStack);
             }
         } catch (Exception ignored) {
-            // 材质未加载等极端情况：空手也可（攻击力来自属性，不影响战斗）
+            // 鏉愯川鏈姞杞界瓑鏋佺鎯呭喌锛氱┖鎵嬩篃鍙紙鏀诲嚮鍔涙潵鑷睘鎬э紝涓嶅奖鍝嶆垬鏂楋級
         }
     }
 
     // ============================================================
-    //  售卖槽位
+    //  鍞崠妲戒綅
     // ============================================================
 
-    /** 保证 6 个售卖槽位已生成；每天（dayCount 变化）自动刷新一批新商品（无交易上限） */
+    /** 淇濊瘉 6 涓敭鍗栨Ы浣嶅凡鐢熸垚锛涙瘡澶╋紙dayCount 鍙樺寲锛夎嚜鍔ㄥ埛鏂颁竴鎵规柊鍟嗗搧锛堟棤浜ゆ槗涓婇檺锛?*/
     public void ensureOffers() {
         if (level().isClientSide) return;
         long day = currentDay();
@@ -536,7 +495,7 @@ public class MomoMerchant extends PathfinderMob {
         offerDay = day;
         RandomSource random = this.getRandom();
 
-        // 1-2：咒具池任选两个（天逆鉾 / 狱门疆[未封印]；结界碎片不算咒具）
+        // 1-2锛氬拻鍏锋睜浠婚€変袱涓紙澶╅€嗛壘 / 鐙遍棬鐤哰鏈皝鍗癩锛涚粨鐣岀鐗囦笉绠楀拻鍏凤級
         List<Item> cursedTools = new ArrayList<>();
         cursedTools.add(ModItems.TIAN_NI_HUO.get());
         cursedTools.add(ModItems.GOURD_JAIL.get());
@@ -544,7 +503,7 @@ public class MomoMerchant extends PathfinderMob {
         offers.add(new Offer(new ItemStack(cursedTools.get(0)), 10 + random.nextInt(11)));   // 10-20
         offers.add(new Offer(new ItemStack(cursedTools.get(1)), 10 + random.nextInt(11)));
 
-        // 3-4：咒术水晶（roll 两个咒术）
+        // 3-4锛氬拻鏈按鏅讹紙roll 涓や釜鍜掓湳锛?
         List<slimeknights.tconstruct.library.modifiers.ModifierId> techniques =
                 new ArrayList<>(TechniqueHandler.getAllTechniqueIds());
         Collections.shuffle(techniques, new java.util.Random(random.nextInt()));
@@ -558,7 +517,7 @@ public class MomoMerchant extends PathfinderMob {
             offers.add(new Offer(new ItemStack(ModItems.GHELOTH_REMAINS.get()), 40));
         }
 
-        // 5-6：旧日遗物任选两个（一次卖一组）
+        // 5-6锛氭棫鏃ラ仐鐗╀换閫変袱涓紙涓€娆″崠涓€缁勶級
         List<Item> relics = new ArrayList<>();
         relics.add(ModItems.NICHOLAS_BLESSING.get());
         relics.add(ModItems.YELLOW_KING_REMNANT.get());
@@ -578,7 +537,7 @@ public class MomoMerchant extends PathfinderMob {
         return offers;
     }
 
-    /** 槽位对应货币：0-3 格赫罗斯残骸，4-5 格赫罗斯矿石 */
+    /** 妲戒綅瀵瑰簲璐у竵锛?-3 鏍艰但缃楁柉娈嬮锛?-5 鏍艰但缃楁柉鐭跨煶 */
     public static Item currencyForSlot(int slot) {
         return slot >= 4 ? ModItems.GHELOTH_ORE.get() : ModItems.GHELOTH_REMAINS.get();
     }
@@ -587,12 +546,12 @@ public class MomoMerchant extends PathfinderMob {
 
     public enum HireResult { HIRED, ALREADY_HIRED, HIRED_BY_OTHER, NO_ITEM, TOO_FAR, DEAD }
 
-    /** 玩家点击雇佣：支付 1 个拉莱耶的呼唤，雇佣一天。雇佣期间再次点击不扣费、直接拒绝，防止重复上交 */
+    /** 鐜╁鐐瑰嚮闆囦剑锛氭敮浠?1 涓媺鑾辫€剁殑鍛煎敜锛岄泧浣ｄ竴澶┿€傞泧浣ｆ湡闂村啀娆＄偣鍑讳笉鎵ｈ垂銆佺洿鎺ユ嫆缁濓紝闃叉閲嶅涓婁氦 */
     public HireResult hireFrom(ServerPlayer buyer) {
         if (level().isClientSide) return HireResult.DEAD;
         if (!this.isAlive() || this.isRemoved()) return HireResult.DEAD;
         if (buyer.distanceToSqr(this) > 8.0 * 8.0) return HireResult.TOO_FAR;
-        // 已处于雇佣期（无论是否本人）：拒绝再次支付
+        // 宸插浜庨泧浣ｆ湡锛堟棤璁烘槸鍚︽湰浜猴級锛氭嫆缁濆啀娆℃敮浠?
         if (hired) {
             if (employerId != null && !employerId.equals(buyer.getUUID())) {
                 return HireResult.HIRED_BY_OTHER;
@@ -602,9 +561,9 @@ public class MomoMerchant extends PathfinderMob {
         if (countItem(buyer, ModItems.RLYEH_CALL.get()) < 1) return HireResult.NO_ITEM;
         consumeItem(buyer, ModItems.RLYEH_CALL.get(), 1);
         employerId = buyer.getUUID();
-        hireUntilTick = this.level().getGameTime() + HIRE_DURATION_TICKS; // 雇佣一个游戏日
+        hireUntilTick = this.level().getGameTime() + HIRE_DURATION_TICKS; // 闆囦剑涓€涓父鎴忔棩
         hired = true;
-        returnGraceTicks = 0; // 雇佣成功，取消"天亮消失"宽限
+        returnGraceTicks = 0; // 闆囦剑鎴愬姛锛屽彇娑?澶╀寒娑堝け"瀹介檺
         this.setTarget(null);
         clearPath();
         if (this.level() instanceof ServerLevel sl) {
@@ -614,7 +573,7 @@ public class MomoMerchant extends PathfinderMob {
         return HireResult.HIRED;
     }
 
-    /** 玩家点击交易：校验并执行购买（货币从玩家背包/副手扣除） */
+    /** 鐜╁鐐瑰嚮浜ゆ槗锛氭牎楠屽苟鎵ц璐拱锛堣揣甯佷粠鐜╁鑳屽寘/鍓墜鎵ｉ櫎锛?*/
     public BuyResult buyFrom(Player buyer, int slot) {
         if (level().isClientSide) return BuyResult.DEAD;
         if (!this.isAlive() || this.isRemoved()) return BuyResult.DEAD;
@@ -660,16 +619,16 @@ public class MomoMerchant extends PathfinderMob {
     }
 
     // ============================================================
-    //  交互：右键打开交易
+    //  浜や簰锛氬彸閿墦寮€浜ゆ槗
     // ============================================================
 
     @Override
     public InteractionResult mobInteract(Player player, InteractionHand hand) {
         if (level().isClientSide) return InteractionResult.sidedSuccess(true);
-        if (this.getTarget() == player) return InteractionResult.PASS; // 正在反击该玩家
+        if (this.getTarget() == player) return InteractionResult.PASS; // 姝ｅ湪鍙嶅嚮璇ョ帺瀹?
         ensureOffers();
         com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoOpen.sendTo((ServerPlayer) player, this);
-        // 交易语音不与其他语音重叠（间隔 ≥ 语音时长）
+        // 浜ゆ槗璇煶涓嶄笌鍏朵粬璇煶閲嶅彔锛堥棿闅?鈮?璇煶鏃堕暱锛?
         if (voiceReady()) {
             voicePlayed(VOICE_TIMINGS.trade);
             this.playSound(ModSounds.MOMO_TRADE.get(), 1.0F, 1.0F);
@@ -677,7 +636,7 @@ public class MomoMerchant extends PathfinderMob {
         return InteractionResult.sidedSuccess(true);
     }
 
-    /** 交易成功：播放固定"空闲2"语音（替代村民高兴声），只防与自身连续播放重叠 */
+    /** 浜ゆ槗鎴愬姛锛氭挱鏀惧浐瀹?绌洪棽2"璇煶锛堟浛浠ｆ潙姘戦珮鍏村０锛夛紝鍙槻涓庤嚜韬繛缁挱鏀鹃噸鍙?*/
     public void playTradeSuccessSound() {
         if (level().isClientSide) return;
         if (this.tickCount < tradeSuccessVoiceEnd) return;
@@ -686,7 +645,7 @@ public class MomoMerchant extends PathfinderMob {
     }
 
     // ============================================================
-    //  战斗辅助（伤害/范围）
+    //  鎴樻枟杈呭姪锛堜激瀹?鑼冨洿锛?
     // ============================================================
 
     private float attackBase() {
@@ -694,7 +653,7 @@ public class MomoMerchant extends PathfinderMob {
         return attr == null ? 50.0F : (float) attr.getValue();
     }
 
-    /** 该实体是否为墨默的"敌对目标"（只攻击伤害过她的实体与其当前目标） */
+    /** 璇ュ疄浣撴槸鍚︿负澧ㄩ粯鐨?鏁屽鐩爣"锛堝彧鏀诲嚮浼ゅ杩囧ス鐨勫疄浣撲笌鍏跺綋鍓嶇洰鏍囷級 */
     private boolean isAggroTarget(LivingEntity e) {
         if (e == this || e.isSpectator()) return false;
         if (e == this.getTarget()) return true;
@@ -702,7 +661,7 @@ public class MomoMerchant extends PathfinderMob {
         return aggroSet.contains(e.getUUID());
     }
 
-    /** 面前扇形内的敌人 */
+    /** 闈㈠墠鎵囧舰鍐呯殑鏁屼汉 */
     private List<LivingEntity> sectorTargets(double radius, float halfAngleDeg) {
         AABB box = this.getBoundingBox().inflate(radius, 2.0, radius);
         List<LivingEntity> list = new ArrayList<>();
@@ -735,7 +694,7 @@ public class MomoMerchant extends PathfinderMob {
         }
     }
 
-    /** 破盾：打断玩家格挡并让盾牌进入冷却 */
+    /** 鐮寸浘锛氭墦鏂帺瀹舵牸鎸″苟璁╃浘鐗岃繘鍏ュ喎鍗?*/
     private void breakShield(Player p) {
         if (p.isBlocking()) {
             Item used = p.getUseItem().getItem();
@@ -758,7 +717,7 @@ public class MomoMerchant extends PathfinderMob {
     }
 
     // ============================================================
-    //  服务端 AI（状态机，tick 驱动）
+    //  鏈嶅姟绔?AI锛堢姸鎬佹満锛宼ick 椹卞姩锛?
     // ============================================================
 
     @Override
@@ -771,8 +730,8 @@ public class MomoMerchant extends PathfinderMob {
     private void tickServer() {
         if (homePos == null) homePos = this.blockPosition();
 
-        // 自然刷新的墨默：白天到来时消失（雇佣中/到期返回后的续雇宽限内不消失；
-        // 刷怪蛋召唤的常驻；拒绝续雇则宽限结束随天亮消失）
+        // 鑷劧鍒锋柊鐨勫ⅷ榛橈細鐧藉ぉ鍒版潵鏃舵秷澶憋紙闆囦剑涓?鍒版湡杩斿洖鍚庣殑缁泧瀹介檺鍐呬笉娑堝け锛?
+        // 鍒锋€泲鍙敜鐨勫父椹伙紱鎷掔粷缁泧鍒欏闄愮粨鏉熼殢澶╀寒娑堝け锛?
         if (naturalSpawn && !hired && returnGraceTicks <= 0) {
             long dayTime = level().getDayTime() % 24000;
             if (dayTime < 13000) {
@@ -787,18 +746,18 @@ public class MomoMerchant extends PathfinderMob {
             }
         }
 
-        // 续雇宽限倒计时（自然刷新版到期未续雇 → 到点天亮消失）
+        // 缁泧瀹介檺鍊掕鏃讹紙鑷劧鍒锋柊鐗堝埌鏈熸湭缁泧 鈫?鍒扮偣澶╀寒娑堝け锛?
         if (returnGraceTicks > 0 && !hired) {
             returnGraceTicks--;
         }
 
-        // 再生 VIII（常驻，覆盖旧版再生 V）
+        // 鍐嶇敓 VIII锛堝父椹伙紝瑕嗙洊鏃х増鍐嶇敓 V锛?
         if (++regenTick % 20 == 0) {
             this.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 120, 7, false, false));
         }
 
-        // 诡厄诅咒(goety:cursed)清除：下界亚波伦会给目标挂诅咒，诡厄会取消带诅咒实体的所有回血
-        // （墨默的再生 VIII 会被禁）——每 5 tick 清一次，让再生始终生效
+        // 璇″巹璇呭拻(goety:cursed)娓呴櫎锛氫笅鐣屼簹娉鸡浼氱粰鐩爣鎸傝瘏鍜掞紝璇″巹浼氬彇娑堝甫璇呭拻瀹炰綋鐨勬墍鏈夊洖琛€
+        // 锛堝ⅷ榛樼殑鍐嶇敓 VIII 浼氳绂侊級鈥斺€旀瘡 5 tick 娓呬竴娆★紝璁╁啀鐢熷缁堢敓鏁?
         if (++curseCleanseTick % 5 == 0) {
             net.minecraft.world.effect.MobEffect cursed = goetyCursedEffect();
             if (cursed != null && this.hasEffect(cursed)) {
@@ -806,23 +765,23 @@ public class MomoMerchant extends PathfinderMob {
             }
         }
 
-        // 灼烧清锁：狱焰等灼烧类移动限制效果会让她停住——周期性清除（着火时连通用减速也清）
+        // 鐏肩儳娓呴攣锛氱嫳鐒扮瓑鐏肩儳绫荤Щ鍔ㄩ檺鍒舵晥鏋滀細璁╁ス鍋滀綇鈥斺€斿懆鏈熸€ф竻闄わ紙鐫€鐏椂杩為€氱敤鍑忛€熶篃娓咃級
         if (++fireCleanseTick % 10 == 0) {
             cleanseMovementLockEffects();
         }
 
-        // 卡死逃生：持续受击但几乎没移动 → 传送至目标身后（不在吟唱/斩杀/歌唱/逃跑中时）
+        // 鍗℃閫冪敓锛氭寔缁彈鍑讳絾鍑犱箮娌＄Щ鍔?鈫?浼犻€佽嚦鐩爣韬悗锛堜笉鍦ㄥ悷鍞?鏂╂潃/姝屽敱/閫冭窇涓椂锛?
         if (chantTicks <= 0 && !execBusy && !finisherActive && !singing && !fleeTriggered) {
             tickStuckEscape();
         }
 
-        // 蜘蛛式爬墙
+        // 铚樿洓寮忕埇澧?
         tickWallClimb();
 
-        // 水下：溺尸式憋气 + 游泳
+        // 姘翠笅锛氭汉灏稿紡鎲嬫皵 + 娓告吵
         tickWaterSwim();
 
-        // 仇恨清理
+        // 浠囨仺娓呯悊
         if (++aggroPruneTick >= 100) {
             aggroPruneTick = 0;
             if (!aggroSet.isEmpty()) {
@@ -833,7 +792,7 @@ public class MomoMerchant extends PathfinderMob {
             }
         }
 
-        // 监守者可索敌墨默：附近 16 格内有监守者 → 让它盯上她（她也会反击）
+        // 鐩戝畧鑰呭彲绱㈡晫澧ㄩ粯锛氶檮杩?16 鏍煎唴鏈夌洃瀹堣€?鈫?璁╁畠鐩笂濂癸紙濂逛篃浼氬弽鍑伙級
         if (++wardenProbeTimer >= 40) {
             wardenProbeTimer = 0;
             for (Warden warden : this.level().getEntitiesOfClass(Warden.class,
@@ -844,10 +803,10 @@ public class MomoMerchant extends PathfinderMob {
             }
         }
 
-        // 下界亚波伦"死亡箭雨"格挡：Apollyon 快速连射期间自动举盾（箭矢被格挡 → 整段箭雨全免）
+        // 涓嬬晫浜氭尝浼?姝讳骸绠洦"鏍兼尅锛欰pollyon 蹇€熻繛灏勬湡闂磋嚜鍔ㄤ妇鐩撅紙绠煝琚牸鎸?鈫?鏁存绠洦鍏ㄥ厤锛?
         tickBarrageGuard();
 
-        // 低血量逃跑
+        // 浣庤閲忛€冭窇
         if (!fleeTriggered && this.getHealth() <= this.getMaxHealth() * 0.05f && state != S_LEAP_UP && state != S_ULT) {
             fleeTriggered = true;
             fleeTimer = 60;
@@ -860,27 +819,27 @@ public class MomoMerchant extends PathfinderMob {
             return;
         }
 
-        // 通用应急：伤害吟唱 / 低血大斩杀（雇佣与未雇佣通用）
+        // 閫氱敤搴旀€ワ細浼ゅ鍚熷敱 / 浣庤澶ф柀鏉€锛堥泧浣ｄ笌鏈泧浣ｉ€氱敤锛?
         if (tickResponseCore()) {
             return;
         }
 
-        // 雇佣模式：独立 AI（跟随雇主/清亡灵/两刀必中/斩杀/歌唱/进食）
+        // 闆囦剑妯″紡锛氱嫭绔?AI锛堣窡闅忛泧涓?娓呬骸鐏?涓ゅ垁蹇呬腑/鏂╂潃/姝屽敱/杩涢锛?
         if (hired) {
             tickHiredAI();
             return;
         }
 
-        // 有目标但没有进入交战 → 自动开战（玩家/怪物/监守者攻击后都会走到这里）
+        // 鏈夌洰鏍囦絾娌℃湁杩涘叆浜ゆ垬 鈫?鑷姩寮€鎴橈紙鐜╁/鎬墿/鐩戝畧鑰呮敾鍑诲悗閮戒細璧板埌杩欓噷锛?
         if (state == S_IDLE) {
             LivingEntity t = this.getTarget();
             if (t != null && t.isAlive()) {
-                stopEating(); // 开战打断进食
+                stopEating(); // 寮€鎴樻墦鏂繘椋?
                 state = S_ENGAGE;
             }
         }
 
-        // 目标消失 → 回到中立
+        // 鐩爣娑堝け 鈫?鍥炲埌涓珛
         if (state != S_FLEE && state != S_ULT) {
             LivingEntity target = this.getTarget();
             if (target == null || !target.isAlive()) {
@@ -894,7 +853,7 @@ public class MomoMerchant extends PathfinderMob {
             }
         }
 
-        // 格挡窗口倒计时
+        // 鏍兼尅绐楀彛鍊掕鏃?
         if (blockWindowUntil > 0 && this.tickCount > blockWindowUntil) {
             blockWindowUntil = -1;
         }
@@ -913,7 +872,7 @@ public class MomoMerchant extends PathfinderMob {
         }
     }
 
-    /** 商人声音（无战斗/无目标时偶尔低语；不与任意语音重叠；雇佣状态下同样会说话） */
+    /** 鍟嗕汉澹伴煶锛堟棤鎴樻枟/鏃犵洰鏍囨椂鍋跺皵浣庤锛涗笉涓庝换鎰忚闊抽噸鍙狅紱闆囦剑鐘舵€佷笅鍚屾牱浼氳璇濓級 */
     private void tickAmbientVoice() {
         if (--ambientVoiceTimer > 0) return;
         ambientVoiceTimer = 200 + this.random.nextInt(400);
@@ -923,14 +882,14 @@ public class MomoMerchant extends PathfinderMob {
         }
     }
 
-    /** 空闲主逻辑：货币吸引优先；否则默认持续游走（近身玩家时才站定待客） */
+    /** 绌洪棽涓婚€昏緫锛氳揣甯佸惛寮曚紭鍏堬紱鍚﹀垯榛樿鎸佺画娓歌蛋锛堣繎韬帺瀹舵椂鎵嶇珯瀹氬緟瀹級 */
     private void tickIdle() {
         tickAmbientVoice();
         tickEatIfIdle();
 
         boolean moving = tickCurrencyLure();
         if (!moving) {
-            // 雇佣中：雇主拉太远 → 跟上雇主（保镖）
+            // 闆囦剑涓細闆囦富鎷夊お杩?鈫?璺熶笂闆囦富锛堜繚闀栵級
             if (hired) {
                 ServerPlayer boss = getEmployer();
                 if (boss != null && boss.isAlive() && boss.level() == this.level()) {
@@ -946,17 +905,17 @@ public class MomoMerchant extends PathfinderMob {
             }
             Player nearest = this.level().getNearestPlayer(this, 16.0);
             if (nearest != null && this.distanceTo(nearest) <= 2.5) {
-                // 近身（可交互距离）：站定看玩家，方便交易
+                // 杩戣韩锛堝彲浜や簰璺濈锛夛細绔欏畾鐪嬬帺瀹讹紝鏂逛究浜ゆ槗
                 this.getLookControl().setLookAt(nearest, 10.0F, 10.0F);
             } else {
-                // 周围有玩家也默认游走；附近无玩家时才触发亡灵狩猎
+                // 鍛ㄥ洿鏈夌帺瀹朵篃榛樿娓歌蛋锛涢檮杩戞棤鐜╁鏃舵墠瑙﹀彂浜＄伒鐙╃寧
                 tickWanderPath();
                 if (nearest == null) {
                     tickUndeadHunt();
                 }
             }
         }
-        // 复位逃跑标记
+        // 澶嶄綅閫冭窇鏍囪
         if (this.getHealth() >= this.getMaxHealth() * 0.15f) {
             fleeTriggered = false;
             leapUsed = false;
@@ -964,10 +923,10 @@ public class MomoMerchant extends PathfinderMob {
         }
     }
 
-    /** 20 格内格赫罗斯残骸/矿石 → A* 走过去（不拾取）；返回是否还在移动 */
+    /** 20 鏍煎唴鏍艰但缃楁柉娈嬮/鐭跨煶 鈫?A* 璧拌繃鍘伙紙涓嶆嬀鍙栵級锛涜繑鍥炴槸鍚﹁繕鍦ㄧЩ鍔?*/
     private boolean tickCurrencyLure() {
         if (++currencyProbeTimer < 10) {
-            // 探测冷却中：正在追货币 → 继续沿路径走；否则不动（不动游走路径）
+            // 鎺㈡祴鍐峰嵈涓細姝ｅ湪杩借揣甯?鈫?缁х画娌胯矾寰勮蛋锛涘惁鍒欎笉鍔紙涓嶅姩娓歌蛋璺緞锛?
             if (lureTarget != null && !path.isEmpty() && pathIsLure) {
                 return followPath(IDLE_MOVE_SPEED);
             }
@@ -987,14 +946,14 @@ public class MomoMerchant extends PathfinderMob {
             }
         }
         if (target == null) {
-            // 没有货币：只清货币路径，绝不清正在走的游走路径
+            // 娌℃湁璐у竵锛氬彧娓呰揣甯佽矾寰勶紝缁濅笉娓呮鍦ㄨ蛋鐨勬父璧拌矾寰?
             if (pathIsLure) {
                 clearPath();
             }
             lureTarget = null;
             return false;
         }
-        // 已到跟前：停下看货币主人
+        // 宸插埌璺熷墠锛氬仠涓嬬湅璐у竵涓讳汉
         if (this.distanceTo(target) <= 1.6) {
             clearPath();
             Player p = this.level().getNearestPlayer(this, 8.0);
@@ -1029,18 +988,18 @@ public class MomoMerchant extends PathfinderMob {
         return followPath(IDLE_MOVE_SPEED);
     }
 
-    /** 无玩家时在生成点 20 格内游走（A* 寻路）；返回是否在移动 */
+    /** 鏃犵帺瀹舵椂鍦ㄧ敓鎴愮偣 20 鏍煎唴娓歌蛋锛圓* 瀵昏矾锛夛紱杩斿洖鏄惁鍦ㄧЩ鍔?*/
     private boolean tickWanderPath() {
         if (!path.isEmpty()) {
             boolean moving = followPath(IDLE_MOVE_SPEED);
             if (!moving) {
-                wanderTimer = 100 + this.random.nextInt(140); // 走完一段歇一会
+                wanderTimer = 100 + this.random.nextInt(140); // 璧板畬涓€娈垫瓏涓€浼?
             }
             return moving;
         }
         if (--wanderTimer > 0) return false;
         if (homePos == null) homePos = this.blockPosition();
-        // 锚点：附近有玩家 → 在玩家周围小范围踱步；无玩家 → 生成点 20 格内游走
+        // 閿氱偣锛氶檮杩戞湁鐜╁ 鈫?鍦ㄧ帺瀹跺懆鍥村皬鑼冨洿韪辨锛涙棤鐜╁ 鈫?鐢熸垚鐐?20 鏍煎唴娓歌蛋
         Player near = this.level().getNearestPlayer(this, 16.0);
         BlockPos center = near != null ? near.blockPosition() : homePos;
         double radius = near != null ? 6.0 : WANDER_RADIUS;
@@ -1049,9 +1008,9 @@ public class MomoMerchant extends PathfinderMob {
             double r = this.random.nextDouble() * radius;
             BlockPos col = new BlockPos(
                     center.getX() + (int) Math.round(Math.cos(angle) * r),
-                    this.blockPosition().getY(), // 以当前所在高度为基准
+                    this.blockPosition().getY(), // 浠ュ綋鍓嶆墍鍦ㄩ珮搴︿负鍩哄噯
                     center.getZ() + (int) Math.round(Math.sin(angle) * r));
-            // 目标点被方块覆盖无法抵达 → y+1 继续向上，直到找到可抵达点
+            // 鐩爣鐐硅鏂瑰潡瑕嗙洊鏃犳硶鎶佃揪 鈫?y+1 缁х画鍚戜笂锛岀洿鍒版壘鍒板彲鎶佃揪鐐?
             BlockPos goal = ascendToReachable(col);
             if (goal == null) continue;
             List<BlockPos> p = aStarPath(this.blockPosition(), goal);
@@ -1062,11 +1021,11 @@ public class MomoMerchant extends PathfinderMob {
                 return true;
             }
         }
-        wanderTimer = 60; // 找不到路，稍后再试
+        wanderTimer = 60; // 鎵句笉鍒拌矾锛岀◢鍚庡啀璇?
         return false;
     }
 
-    /** 从该列 base 高度开始：若被方块覆盖（不可站立）则 y+1 向上，直到找到可抵达格 */
+    /** 浠庤鍒?base 楂樺害寮€濮嬶細鑻ヨ鏂瑰潡瑕嗙洊锛堜笉鍙珯绔嬶級鍒?y+1 鍚戜笂锛岀洿鍒版壘鍒板彲鎶佃揪鏍?*/
     private BlockPos ascendToReachable(BlockPos base) {
         int maxY = Math.min(base.getY() + 12, this.level().getMaxBuildHeight() - 3);
         for (int y = Math.max(base.getY(), this.level().getMinBuildHeight() + 2); y <= maxY; y++) {
@@ -1079,7 +1038,7 @@ public class MomoMerchant extends PathfinderMob {
     }
 
     // ============================================================
-    //  A* 地面寻路（游荡 / 货币吸引专用；战斗仍用原版导航快速接近）
+    //  A* 鍦伴潰瀵昏矾锛堟父鑽?/ 璐у竵鍚稿紩涓撶敤锛涙垬鏂椾粛鐢ㄥ師鐗堝鑸揩閫熸帴杩戯級
     // ============================================================
 
     private void clearPath() {
@@ -1091,7 +1050,7 @@ public class MomoMerchant extends PathfinderMob {
         noProgressTicks = 0;
     }
 
-    /** 该格可作为站立格：脚下是完整方块、身体两格内无碰撞、非流体 */
+    /** 璇ユ牸鍙綔涓虹珯绔嬫牸锛氳剼涓嬫槸瀹屾暣鏂瑰潡銆佽韩浣撲袱鏍煎唴鏃犵鎾炪€侀潪娴佷綋 */
     private boolean isWalkableCell(int x, int y, int z) {
         if (y < this.level().getMinBuildHeight() + 1 || y > this.level().getMaxBuildHeight() - 3) return false;
         BlockPos below = new BlockPos(x, y - 1, z);
@@ -1108,7 +1067,7 @@ public class MomoMerchant extends PathfinderMob {
         return isWalkableCell(p.getX(), p.getY(), p.getZ());
     }
 
-    /** 在 p 所在列上下找到可站立格（先下探再上探），找不到返回 null */
+    /** 鍦?p 鎵€鍦ㄥ垪涓婁笅鎵惧埌鍙珯绔嬫牸锛堝厛涓嬫帰鍐嶄笂鎺級锛屾壘涓嶅埌杩斿洖 null */
     private BlockPos groundCell(BlockPos p) {
         int y = Math.max(this.level().getMinBuildHeight() + 2, p.getY());
         for (int dy = 0; dy <= 6 && y - dy >= this.level().getMinBuildHeight() + 2; dy++) {
@@ -1124,7 +1083,7 @@ public class MomoMerchant extends PathfinderMob {
         return null;
     }
 
-    /** 沿当前 A* 路径前进（MoveControl 平滑转向）；返回是否仍在移动 */
+    /** 娌垮綋鍓?A* 璺緞鍓嶈繘锛圡oveControl 骞虫粦杞悜锛夛紱杩斿洖鏄惁浠嶅湪绉诲姩 */
     private boolean followPath(float speed) {
         if (path.isEmpty()) return false;
         if (lastMovePos != null) {
@@ -1147,7 +1106,7 @@ public class MomoMerchant extends PathfinderMob {
                 path.remove(0);
                 continue;
             }
-            // 下一节点高一格：接近时起跳
+            // 涓嬩竴鑺傜偣楂樹竴鏍硷細鎺ヨ繎鏃惰捣璺?
             if (wp.getY() > this.getY() + 0.1 && this.onGround()) {
                 this.getJumpControl().jump();
             }
@@ -1179,7 +1138,7 @@ public class MomoMerchant extends PathfinderMob {
         return Math.max(dx, dz) + (1.41421356 - 1.0) * Math.min(dx, dz) + dy;
     }
 
-    /** A*：从 start（站立格）到 goal（站立格），返回路径节点（不含起点）；失败返回 null */
+    /** A*锛氫粠 start锛堢珯绔嬫牸锛夊埌 goal锛堢珯绔嬫牸锛夛紝杩斿洖璺緞鑺傜偣锛堜笉鍚捣鐐癸級锛涘け璐ヨ繑鍥?null */
     private List<BlockPos> aStarPath(BlockPos start, BlockPos goal) {
         if (!isWalkableCell(goal)) return null;
         java.util.HashMap<Long, ANode> open = new java.util.HashMap<>();
@@ -1195,7 +1154,7 @@ public class MomoMerchant extends PathfinderMob {
             ANode cur = queue.poll();
             if (closed.contains(cur.key)) continue;
             if (cur.pos.equals(goal)) {
-                // 回溯路径
+                // 鍥炴函璺緞
                 List<BlockPos> result = new ArrayList<>();
                 ANode node = cur;
                 while (node.came != 0) {
@@ -1213,7 +1172,7 @@ public class MomoMerchant extends PathfinderMob {
                 for (int dz = -1; dz <= 1; dz++) {
                     if (dx == 0 && dz == 0) continue;
                     double step = (dx != 0 && dz != 0) ? 1.41421356 : 1.0;
-                    // 同高度 → 上跳一级 → 下走一级
+                    // 鍚岄珮搴?鈫?涓婅烦涓€绾?鈫?涓嬭蛋涓€绾?
                     for (int dy : new int[]{0, 1, -1}) {
                         BlockPos nb = new BlockPos(cur.pos.getX() + dx, cur.pos.getY() + dy, cur.pos.getZ() + dz);
                         if (!isWalkableCell(nb)) continue;
@@ -1232,7 +1191,7 @@ public class MomoMerchant extends PathfinderMob {
         return null;
     }
 
-    /** 每 500tick 10% 概率：索敌 10 格内一只亡灵并击杀（进入交战状态由状态机处理） */
+    /** 姣?500tick 10% 姒傜巼锛氱储鏁?10 鏍煎唴涓€鍙骸鐏靛苟鍑绘潃锛堣繘鍏ヤ氦鎴樼姸鎬佺敱鐘舵€佹満澶勭悊锛?*/
     private void tickUndeadHunt() {
         if (++huntTimer < HUNT_INTERVAL) return;
         huntTimer = 0;
@@ -1258,7 +1217,7 @@ public class MomoMerchant extends PathfinderMob {
         double dist = this.distanceToSqr(target);
         if (dist <= REACH * REACH) {
             if (comboCooldown <= 0) {
-                // 横斩（80%）→ 0.5s 后竖劈（180%）
+                // 妯柀锛?0%锛夆啋 0.5s 鍚庣珫鍔堬紙180%锛?
                 this.getNavigation().stop();
                 List<LivingEntity> hits = sectorTargets(2.4, 70);
                 hurtAll(hits, 0.8f, false);
@@ -1275,10 +1234,10 @@ public class MomoMerchant extends PathfinderMob {
             state = S_IDLE;
             return;
         }
-        // 快速接近
+        // 蹇€熸帴杩?
         this.getNavigation().moveTo(target, chaseSpeedWithBlock(1.35));
 
-        // 半血触发：高高跃起 → 跳劈（300%，破盾）→ 乱蝶大招
+        // 鍗婅瑙﹀彂锛氶珮楂樿穬璧?鈫?璺冲妶锛?00%锛岀牬鐩撅級鈫?涔辫澏澶ф嫑
         if (!leapUsed && this.getHealth() <= this.getMaxHealth() * 0.5f && dist < 18.0 * 18.0) {
             leapUsed = true;
             state = S_LEAP_UP;
@@ -1293,7 +1252,7 @@ public class MomoMerchant extends PathfinderMob {
             this.getLookControl().setLookAt(target, 30.0F, 30.0F);
         }
         if (--stateTimer <= 0) {
-            // 竖劈（180%）
+            // 绔栧妶锛?80%锛?
             List<LivingEntity> hits = sectorTargets(2.6, 70);
             hurtAll(hits, 1.8f, false);
             playSwingFx(1.8f);
@@ -1319,7 +1278,7 @@ public class MomoMerchant extends PathfinderMob {
         this.getNavigation().moveTo(goal.x, this.getY(), goal.z, 1.2);
     }
 
-    /** 格挡成功后的连斩（60/80/100%） */
+    /** 鏍兼尅鎴愬姛鍚庣殑杩炴柀锛?0/80/100%锛?*/
     private void tickCounter() {
         LivingEntity attacker = getLastBlockedBy();
         if (attacker == null || !attacker.isAlive() || this.distanceToSqr(attacker) > 5.0 * 5.0) {
@@ -1361,7 +1320,7 @@ public class MomoMerchant extends PathfinderMob {
         }
         this.getLookControl().setLookAt(target, 30.0F, 30.0F);
         if (--stateTimer <= 0) {
-            // 直接跳向目标位置落地 → 跳劈（300%，破盾）
+            // 鐩存帴璺冲悜鐩爣浣嶇疆钀藉湴 鈫?璺冲妶锛?00%锛岀牬鐩撅級
             this.setDeltaMovement(Vec3.ZERO);
             this.fallDistance = 0;
             Vec3 pos = target.position();
@@ -1377,7 +1336,7 @@ public class MomoMerchant extends PathfinderMob {
                 sl.sendParticles(ParticleTypes.CRIT, this.getX(), this.getY() + 1.0, this.getZ(), 24, 1.6, 0.6, 1.6, 0.1);
                 sl.playSound(null, this.blockPosition(), SoundEvents.GENERIC_EXPLODE, SoundSource.HOSTILE, 1.0F, 0.8F);
             }
-            // 乱蝶大招
+            // 涔辫澏澶ф嫑
             ultIndex = 0;
             ultTimer = 10;
             state = S_ULT;
@@ -1422,14 +1381,14 @@ public class MomoMerchant extends PathfinderMob {
     }
 
     // ============================================================
-    //  雇佣 / 歌唱 / 进食
+    //  闆囦剑 / 姝屽敱 / 杩涢
     // ============================================================
 
     public boolean isHired() {
         return hired;
     }
 
-    /** 雇主攻击目标通知（服务器侧，攻击事件/穿透结算时调用）：协助集火 4 秒，持续攻击会刷新 */
+    /** 闆囦富鏀诲嚮鐩爣閫氱煡锛堟湇鍔″櫒渚э紝鏀诲嚮浜嬩欢/绌块€忕粨绠楁椂璋冪敤锛夛細鍗忓姪闆嗙伀 4 绉掞紝鎸佺画鏀诲嚮浼氬埛鏂?*/
     public void notifyEmployerAttack(LivingEntity victim) {
         if (victim == null || victim.isRemoved() || !victim.isAlive()) return;
         if (victim == this || victim == getEmployer() || victim instanceof MomoMerchant) return;
@@ -1437,7 +1396,7 @@ public class MomoMerchant extends PathfinderMob {
         this.assistTargetExpireAt = this.level().getGameTime() + 80;
     }
 
-    /** 协助目标是否仍有效（存活/在 64 格内/在有效期内） */
+    /** 鍗忓姪鐩爣鏄惁浠嶆湁鏁堬紙瀛樻椿/鍦?64 鏍煎唴/鍦ㄦ湁鏁堟湡鍐咃級 */
     @Nullable
     private LivingEntity validAssistTarget() {
         if (assistTarget == null) return null;
@@ -1447,11 +1406,11 @@ public class MomoMerchant extends PathfinderMob {
             assistTarget = null;
             return null;
         }
-        if (this.distanceToSqr(assistTarget) > 64.0 * 64.0) return null; // 太远不追
+        if (this.distanceToSqr(assistTarget) > 64.0 * 64.0) return null; // 澶繙涓嶈拷
         return assistTarget;
     }
 
-    /** 雇主显示名（GUI 用） */
+    /** 闆囦富鏄剧ず鍚嶏紙GUI 鐢級 */
     public String employerDisplayName() {
         ServerPlayer boss = getEmployer();
         if (boss != null) return boss.getName().getString();
@@ -1469,7 +1428,7 @@ public class MomoMerchant extends PathfinderMob {
         return sl.getServer().getPlayerList().getPlayer(employerId);
     }
 
-    /** 雇主当前威胁：攻击雇主的实体，或雇主正在攻击的非玩家生物（24 格内） */
+    /** 闆囦富褰撳墠濞佽儊锛氭敾鍑婚泧涓荤殑瀹炰綋锛屾垨闆囦富姝ｅ湪鏀诲嚮鐨勯潪鐜╁鐢熺墿锛?4 鏍煎唴锛?*/
     @Nullable
     private LivingEntity threatOfEmployer(ServerPlayer boss) {
         LivingEntity threat = boss.getLastHurtByMob();
@@ -1485,23 +1444,23 @@ public class MomoMerchant extends PathfinderMob {
     }
 
     /**
-     * 雇佣期 tick：到期（新一天结束）回到雇主身边并解除雇佣；
-     * 与雇主一同战斗：帮打威胁，雇主血量 <60% 且歌唱冷却好 → 远离战场站定歌唱。
-     * 返回 true = 正在退后/歌唱（本 tick 独占）。
+     * 闆囦剑鏈?tick锛氬埌鏈燂紙鏂颁竴澶╃粨鏉燂級鍥炲埌闆囦富韬竟骞惰В闄ら泧浣ｏ紱
+     * 涓庨泧涓讳竴鍚屾垬鏂楋細甯墦濞佽儊锛岄泧涓昏閲?<60% 涓旀瓕鍞卞喎鍗村ソ 鈫?杩滅鎴樺満绔欏畾姝屽敱銆?
+     * 杩斿洖 true = 姝ｅ湪閫€鍚?姝屽敱锛堟湰 tick 鐙崰锛夈€?
      */
     private boolean tickHireAndSong() {
         ServerPlayer boss = getEmployer();
         if (boss == null || !boss.isAlive()) {
-            return false; // 雇主离线/死亡：挂起等待
+            return false; // 闆囦富绂荤嚎/姝讳骸锛氭寕璧风瓑寰?
         }
-        // 到期返回（雇佣一个游戏日后回来找你）
+        // 鍒版湡杩斿洖锛堥泧浣ｄ竴涓父鎴忔棩鍚庡洖鏉ユ壘浣狅級
         if (this.level().getGameTime() >= hireUntilTick) {
             hired = false;
             employerId = null;
             singing = false;
             songTicks = 0;
             songBackoffTicks = 0;
-            // 自然刷新的墨默：给雇主短暂续雇宽限，拒绝续雇则随天亮消失
+            // 鑷劧鍒锋柊鐨勫ⅷ榛橈細缁欓泧涓荤煭鏆傜画闆囧闄愶紝鎷掔粷缁泧鍒欓殢澶╀寒娑堝け
             returnGraceTicks = naturalSpawn ? RETURN_GRACE_TICKS : 0;
             if (boss.level() == this.level()) {
                 this.moveTo(boss.getX(), boss.getY(), boss.getZ(), this.getYRot(), this.getXRot());
@@ -1514,14 +1473,14 @@ public class MomoMerchant extends PathfinderMob {
             }
             return false;
         }
-        if (boss.level() != this.level()) return false; // 异维度暂不处理
-        // 歌唱流程
+        if (boss.level() != this.level()) return false; // 寮傜淮搴︽殏涓嶅鐞?
+        // 姝屽敱娴佺▼
         if (singing || songBackoffTicks > 0) {
             tickSongBody(boss);
             return true;
         }
         if (songCooldown > 0) songCooldown--;
-        // 索敌优先级：攻击雇主者 > 雇主正在攻击的生物 > 雇主周围亡灵（主动清亡灵）
+        // 绱㈡晫浼樺厛绾э細鏀诲嚮闆囦富鑰?> 闆囦富姝ｅ湪鏀诲嚮鐨勭敓鐗?> 闆囦富鍛ㄥ洿浜＄伒锛堜富鍔ㄦ竻浜＄伒锛?
         boolean bossThreatened = false;
         LivingEntity attacker = boss.getLastHurtByMob();
         LivingEntity fightTarget = boss.getLastHurtMob();
@@ -1538,13 +1497,13 @@ public class MomoMerchant extends PathfinderMob {
                 this.setTarget(fightTarget);
             }
         } else if (this.getTarget() == null) {
-            // 主动索敌雇主周围的亡灵/灾厄村民
+            // 涓诲姩绱㈡晫闆囦富鍛ㄥ洿鐨勪骸鐏?鐏惧巹鏉戞皯
             Mob prey = nearestHostileNear(boss, 12.0);
             if (prey != null) {
                 this.setTarget(prey);
             }
         }
-        // 雇主血量低于 60% → 远离战场，随后站定歌唱（再生 III）
+        // 闆囦富琛€閲忎綆浜?60% 鈫?杩滅鎴樺満锛岄殢鍚庣珯瀹氭瓕鍞憋紙鍐嶇敓 III锛?
         if (bossThreatened && boss.getHealth() <= boss.getMaxHealth() * EMPLOYER_LOW_HP_RATIO
                 && songCooldown <= 0 && this.getHealth() > this.getMaxHealth() * 0.2f) {
             this.setTarget(null);
@@ -1559,7 +1518,7 @@ public class MomoMerchant extends PathfinderMob {
         return false;
     }
 
-    /** 雇主周围最近的一只亡灵或灾厄村民（主动索敌清怪） */
+    /** 闆囦富鍛ㄥ洿鏈€杩戠殑涓€鍙骸鐏垫垨鐏惧巹鏉戞皯锛堜富鍔ㄧ储鏁屾竻鎬級 */
     @Nullable
     private Mob nearestHostileNear(LivingEntity center, double radius) {
         Mob best = null;
@@ -1580,7 +1539,7 @@ public class MomoMerchant extends PathfinderMob {
         return best;
     }
 
-    /** 歌唱体：先退后 1s，再站定歌唱 10s（雇主获得再生 III），被攻击或超时结束 */
+    /** 姝屽敱浣擄細鍏堥€€鍚?1s锛屽啀绔欏畾姝屽敱 10s锛堥泧涓昏幏寰楀啀鐢?III锛夛紝琚敾鍑绘垨瓒呮椂缁撴潫 */
     private void tickSongBody(ServerPlayer boss) {
         if (songBackoffTicks > 0) {
             songBackoffTicks--;
@@ -1595,7 +1554,7 @@ public class MomoMerchant extends PathfinderMob {
             }
             return;
         }
-        // 站定歌唱
+        // 绔欏畾姝屽敱
         this.getNavigation().stop();
         this.getLookControl().setLookAt(boss, 20.0F, 20.0F);
         if (songTicks > 0) {
@@ -1618,7 +1577,7 @@ public class MomoMerchant extends PathfinderMob {
         }
     }
 
-    /** 被攻击打断歌唱（进食也会被打断） */
+    /** 琚敾鍑绘墦鏂瓕鍞憋紙杩涢涔熶細琚墦鏂級 */
     private void stopSinging() {
         if (singing || songBackoffTicks > 0) {
             singing = false;
@@ -1629,7 +1588,7 @@ public class MomoMerchant extends PathfinderMob {
         stopEating();
     }
 
-    /** 非索敌时进食：判定开始 → 持续 2s（40tick）进食动画（纯动画，无增益；进食时收起战镰） */
+    /** 闈炵储鏁屾椂杩涢锛氬垽瀹氬紑濮?鈫?鎸佺画 2s锛?0tick锛夎繘椋熷姩鐢伙紙绾姩鐢伙紝鏃犲鐩婏紱杩涢鏃舵敹璧锋垬闀帮級 */
     private void tickEatIfIdle() {
         if (this.getTarget() != null || singing || this.isInWater() || this.isDeadOrDying()) {
             if (eatTicks > 0) stopEating();
@@ -1688,14 +1647,14 @@ public class MomoMerchant extends PathfinderMob {
     }
 
     // ============================================================
-    //  通用应急：伤害吟唱抗性 / 低血大斩杀（雇佣与未雇佣通用）
+    //  閫氱敤搴旀€ワ細浼ゅ鍚熷敱鎶楁€?/ 浣庤澶ф柀鏉€锛堥泧浣ｄ笌鏈泧浣ｉ€氱敤锛?
     // ============================================================
 
     public boolean isResistantTo(String type) {
         return this.tickCount < resistUntilTick && resistTypes.contains(type);
     }
 
-    /** 灼烧定身类负面效果对墨默无效（狱焰/BURN_HEX 等：施加即拒绝，杜绝被烧到无法移动） */
+    /** 鐏肩儳瀹氳韩绫昏礋闈㈡晥鏋滃澧ㄩ粯鏃犳晥锛堢嫳鐒?BURN_HEX 绛夛細鏂藉姞鍗虫嫆缁濓紝鏉滅粷琚儳鍒版棤娉曠Щ鍔級 */
     @Override
     public boolean canBeAffected(net.minecraft.world.effect.MobEffectInstance instance) {
         if (!super.canBeAffected(instance)) return false;
@@ -1712,7 +1671,7 @@ public class MomoMerchant extends PathfinderMob {
         return true;
     }
 
-    /** 伤害事件回调（服务端）：入 5s 窗口，累计过半血 → 请求吟唱 */
+    /** 浼ゅ浜嬩欢鍥炶皟锛堟湇鍔＄锛夛細鍏?5s 绐楀彛锛岀疮璁¤繃鍗婅 鈫?璇锋眰鍚熷敱 */
     public void recordHit(String type, float amount) {
         if (this.level().isClientSide) return;
         if (this.isDeadOrDying() || fleeTriggered || singing || chantTicks > 0) return;
@@ -1731,7 +1690,7 @@ public class MomoMerchant extends PathfinderMob {
         }
     }
 
-    /** 返回 true = 本 tick 被应急动作占用（吟唱 / 大斩杀 / 对空跳斩） */
+    /** 杩斿洖 true = 鏈?tick 琚簲鎬ュ姩浣滃崰鐢紙鍚熷敱 / 澶ф柀鏉€ / 瀵圭┖璺虫柀锛?*/
     private boolean tickResponseCore() {
         if (chantTicks > 0) {
             tickChant();
@@ -1751,7 +1710,7 @@ public class MomoMerchant extends PathfinderMob {
             tryStartMassExecute();
             if (execBusy) return true;
         }
-        // 对空跳斩：目标悬空够不到 → 蓄力 3s 后跳到其头顶 5 段连斩
+        // 瀵圭┖璺虫柀锛氱洰鏍囨偓绌哄涓嶅埌 鈫?钃勫姏 3s 鍚庤烦鍒板叾澶撮《 5 娈佃繛鏂?
         if (airComboActive) {
             tickAirCombo();
             return true;
@@ -1771,7 +1730,7 @@ public class MomoMerchant extends PathfinderMob {
         return false;
     }
 
-    /** 蓄力 3s：站定蓄力，随后跳至目标头顶 */
+    /** 钃勫姏 3s锛氱珯瀹氳搫鍔涳紝闅忓悗璺宠嚦鐩爣澶撮《 */
     private void startAirCombo(LivingEntity target) {
         airComboActive = true;
         airChargeTicks = AIR_CHARGE_TICKS;
@@ -1792,7 +1751,7 @@ public class MomoMerchant extends PathfinderMob {
         }
         this.getLookControl().setLookAt(t, 30.0F, 30.0F);
         if (airChargeTicks > 0) {
-            // 蓄力：站定 + 蓄力粒子
+            // 钃勫姏锛氱珯瀹?+ 钃勫姏绮掑瓙
             this.getNavigation().stop();
             airChargeTicks--;
             if (this.level() instanceof ServerLevel sl && airChargeTicks % 6 == 0) {
@@ -1805,9 +1764,9 @@ public class MomoMerchant extends PathfinderMob {
             }
             return;
         }
-        // 头顶 5 段连斩
+        // 澶撮《 5 娈佃繛鏂?
         if (airHitIndex >= AIR_HIT_MULTIPLIERS.length) {
-            // 收尾：落地并结束连段
+            // 鏀跺熬锛氳惤鍦板苟缁撴潫杩炴
             landOnGround();
             cancelAirCombo();
             return;
@@ -1825,7 +1784,7 @@ public class MomoMerchant extends PathfinderMob {
         airHitTimer = 4;
     }
 
-    /** 跳到目标头顶（找可站立/无碰撞的头顶位置） */
+    /** 璺冲埌鐩爣澶撮《锛堟壘鍙珯绔?鏃犵鎾炵殑澶撮《浣嶇疆锛?*/
     private void leapAboveTarget(LivingEntity t) {
         if (!(this.level() instanceof ServerLevel sl)) {
             cancelAirCombo();
@@ -1842,7 +1801,7 @@ public class MomoMerchant extends PathfinderMob {
             }
         }
         if (!placed) {
-            // 头顶无位置：放弃该连段（普通追击）
+            // 澶撮《鏃犱綅缃細鏀惧純璇ヨ繛娈碉紙鏅€氳拷鍑伙級
             cancelAirCombo();
             return;
         }
@@ -1868,7 +1827,7 @@ public class MomoMerchant extends PathfinderMob {
         airComboCooldown = this.tickCount + AIR_COMBO_COOLDOWN;
     }
 
-    /** 直接落到本列最近的地面上（防高空坠落） */
+    /** 鐩存帴钀藉埌鏈垪鏈€杩戠殑鍦伴潰涓婏紙闃查珮绌哄潬钀斤級 */
     private void landOnGround() {
         if (this.onGround()) return;
         if (!(this.level() instanceof ServerLevel sl)) return;
@@ -1884,7 +1843,7 @@ public class MomoMerchant extends PathfinderMob {
         }
     }
 
-    /** 传送至安全位置并开始 1s 吟唱 */
+    /** 浼犻€佽嚦瀹夊叏浣嶇疆骞跺紑濮?1s 鍚熷敱 */
     private void startChant() {
         chantRequested = false;
         teleportToSafety();
@@ -1896,7 +1855,7 @@ public class MomoMerchant extends PathfinderMob {
         }
     }
 
-    /** 吟唱通道：站定 1s，结束记住伤害类型并获得 60% 抗性 60s */
+    /** 鍚熷敱閫氶亾锛氱珯瀹?1s锛岀粨鏉熻浣忎激瀹崇被鍨嬪苟鑾峰緱 60% 鎶楁€?60s */
     private void tickChant() {
         this.getNavigation().stop();
         chantTicks--;
@@ -1915,7 +1874,7 @@ public class MomoMerchant extends PathfinderMob {
         }
     }
 
-    /** 随机传送至附近无碰撞的安全落点 */
+    /** 闅忔満浼犻€佽嚦闄勮繎鏃犵鎾炵殑瀹夊叏钀界偣 */
     private void teleportToSafety() {
         if (!(this.level() instanceof ServerLevel sl)) return;
         for (int i = 0; i < 8; i++) {
@@ -1934,7 +1893,7 @@ public class MomoMerchant extends PathfinderMob {
         sl.playSound(null, this.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.HOSTILE, 1.0F, 1.0F);
     }
 
-    /** 该实体是否为墨默的可斩杀目标（50 格大斩杀用） */
+    /** 璇ュ疄浣撴槸鍚︿负澧ㄩ粯鐨勫彲鏂╂潃鐩爣锛?0 鏍煎ぇ鏂╂潃鐢級 */
     private boolean isMomoCombatTarget(LivingEntity e) {
         if (e == this || !e.isAlive() || e.isSpectator()) return false;
         if (e == getEmployer()) return false;
@@ -1963,7 +1922,7 @@ public class MomoMerchant extends PathfinderMob {
         execTimer = 0;
     }
 
-    /** 大斩杀：逐个瞬移到目标身后连斩（红色粒子） */
+    /** 澶ф柀鏉€锛氶€愪釜鐬Щ鍒扮洰鏍囪韩鍚庤繛鏂╋紙绾㈣壊绮掑瓙锛?*/
     private void tickMassExecute() {
         if (execQueue.isEmpty()) {
             execBusy = false;
@@ -2009,22 +1968,22 @@ public class MomoMerchant extends PathfinderMob {
         }
     }
 
-    /** 当前基础攻击：雇佣 20，未雇佣 50 */
+    /** 褰撳墠鍩虹鏀诲嚮锛氶泧浣?20锛屾湭闆囦剑 50 */
     private float combatBase() {
         return hired ? HIRED_BASE_ATTACK : attackBase();
     }
 
-    /** 格挡期间追击速度：减速至 60%（格挡时也能前进，只是变慢） */
+    /** 鏍兼尅鏈熼棿杩藉嚮閫熷害锛氬噺閫熻嚦 60%锛堟牸鎸℃椂涔熻兘鍓嶈繘锛屽彧鏄彉鎱級 */
     private double chaseSpeedWithBlock(double base) {
         return isBlockingStance() ? base * 0.6 : base;
     }
 
-    /** 受击标记（MomoMerchantHandler 回调） */
+    /** 鍙楀嚮鏍囪锛圡omoMerchantHandler 鍥炶皟锛?*/
     public void markDamaged() {
         this.lastDamageAtTick = this.tickCount;
     }
 
-    /** 卡死逃生：最近 2s 内有受击 + 目标存在，且 6s 窗口累计移动 ≤1 格 → 传送至目标身后 */
+    /** 鍗℃閫冪敓锛氭渶杩?2s 鍐呮湁鍙楀嚮 + 鐩爣瀛樺湪锛屼笖 6s 绐楀彛绱绉诲姩 鈮? 鏍?鈫?浼犻€佽嚦鐩爣韬悗 */
     private void tickStuckEscape() {
         LivingEntity target = this.getTarget();
         boolean underAttack = this.tickCount - lastDamageAtTick <= 120;
@@ -2036,7 +1995,7 @@ public class MomoMerchant extends PathfinderMob {
             prevTickPos = this.position();
             return;
         }
-        // 累计本 tick 位移（忽略传送类大位移）
+        // 绱鏈?tick 浣嶇Щ锛堝拷鐣ヤ紶閫佺被澶т綅绉伙級
         if (prevTickPos != null && stuckCheckPos != null) {
             double d = Math.hypot(this.getX() - prevTickPos.x, this.getZ() - prevTickPos.z);
             if (d >= 0.001 && d < 1.5) {
@@ -2060,7 +2019,7 @@ public class MomoMerchant extends PathfinderMob {
         prevTickPos = this.position();
     }
 
-    /** 传送到目标身后（碰撞则退回随机安全落点） */
+    /** 浼犻€佸埌鐩爣韬悗锛堢鎾炲垯閫€鍥為殢鏈哄畨鍏ㄨ惤鐐癸級 */
     private void teleportBehindTarget(LivingEntity target) {
         if (!(this.level() instanceof ServerLevel sl)) return;
         Vec3 dir = target.position().subtract(target.getLookAngle().scale(2.2));
@@ -2068,7 +2027,7 @@ public class MomoMerchant extends PathfinderMob {
         this.moveTo(behind.x, behind.y, behind.z, this.getYRot(), this.getXRot());
         this.fallDistance = 0;
         if (!sl.noCollision(this)) {
-            teleportNearEntity(target); // 身后被占：随机传送附近
+            teleportNearEntity(target); // 韬悗琚崰锛氶殢鏈轰紶閫侀檮杩?
             return;
         }
         sl.sendParticles(ParticleTypes.SNEEZE, this.getX(), this.getY() + 1.2, this.getZ(),
@@ -2077,9 +2036,9 @@ public class MomoMerchant extends PathfinderMob {
     }
 
     /**
-     * 清除"灼烧锁移动"类负面效果：
-     * 效果注册名含 inferno/burn/bind/root/freeze/stun/paralysis/slow 等（狱焰类）→ 任何时刻清；
-     * 其他负面效果若带移动速度负修正（减速类）→ 仅在墨默着火时清。
+     * 娓呴櫎"鐏肩儳閿佺Щ鍔?绫昏礋闈㈡晥鏋滐細
+     * 鏁堟灉娉ㄥ唽鍚嶅惈 inferno/burn/bind/root/freeze/stun/paralysis/slow 绛夛紙鐙辩劙绫伙級鈫?浠讳綍鏃跺埢娓咃紱
+     * 鍏朵粬璐熼潰鏁堟灉鑻ュ甫绉诲姩閫熷害璐熶慨姝ｏ紙鍑忛€熺被锛夆啋 浠呭湪澧ㄩ粯鐫€鐏椂娓呫€?
      */
     private void cleanseMovementLockEffects() {
         if (this.level().isClientSide || this.isDeadOrDying()) return;
@@ -2098,7 +2057,7 @@ public class MomoMerchant extends PathfinderMob {
                         || path.contains("stun") || path.contains("paralysis") || path.contains("slow");
             }
             if (!lock && burning) {
-                // 着火时额外清除带移动速度负修正的效果（通用减速）
+                // 鐫€鐏椂棰濆娓呴櫎甯︾Щ鍔ㄩ€熷害璐熶慨姝ｇ殑鏁堟灉锛堥€氱敤鍑忛€燂級
                 Object mods = eff.getAttributeModifiers().get(
                         net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
                 if (mods instanceof net.minecraft.world.entity.ai.attributes.AttributeModifier single) {
@@ -2123,12 +2082,12 @@ public class MomoMerchant extends PathfinderMob {
     }
 
     // ============================================================
-    //  雇佣模式独立 AI
+    //  闆囦剑妯″紡鐙珛 AI
     // ============================================================
 
-    /** 雇佣状态主循环（与未雇佣 AI 完全分开）：始终跟随雇主、清亡灵、战斗两刀必中+斩杀、保留歌唱/进食 */
+    /** 闆囦剑鐘舵€佷富寰幆锛堜笌鏈泧浣?AI 瀹屽叏鍒嗗紑锛夛細濮嬬粓璺熼殢闆囦富銆佹竻浜＄伒銆佹垬鏂椾袱鍒€蹇呬腑+鏂╂潃銆佷繚鐣欐瓕鍞?杩涢 */
     private void tickHiredAI() {
-        // 低血逃跑
+        // 浣庤閫冭窇
         if (!fleeTriggered && this.getHealth() <= this.getMaxHealth() * 0.05f) {
             fleeTriggered = true;
             fleeTimer = 60;
@@ -2140,30 +2099,30 @@ public class MomoMerchant extends PathfinderMob {
             return;
         }
         ServerPlayer boss = getEmployer();
-        if (boss == null || !boss.isAlive()) return; // 雇主离线/死亡：原地挂起
-        // 到期返回（雇佣一个游戏日后回来找你）
+        if (boss == null || !boss.isAlive()) return; // 闆囦富绂荤嚎/姝讳骸锛氬師鍦版寕璧?
+        // 鍒版湡杩斿洖锛堥泧浣ｄ竴涓父鎴忔棩鍚庡洖鏉ユ壘浣狅級
         if (this.level().getGameTime() >= hireUntilTick) {
             returnToEmployer(boss);
             return;
         }
-        if (boss.level() != this.level()) return; // 异维度暂不处理
-        // 歌唱（保留）
+        if (boss.level() != this.level()) return; // 寮傜淮搴︽殏涓嶅鐞?
+        // 姝屽敱锛堜繚鐣欙級
         if (singing || songBackoffTicks > 0) {
             tickSongBody(boss);
             return;
         }
         if (songCooldown > 0) songCooldown--;
-        // 始终跟随雇主：>50 格直接传送
+        // 濮嬬粓璺熼殢闆囦富锛?50 鏍肩洿鎺ヤ紶閫?
         if (this.distanceToSqr(boss) > EMPLOYER_TELEPORT_DIST * EMPLOYER_TELEPORT_DIST) {
             teleportNearEntity(boss);
         }
-        // 斩杀进行中
+        // 鏂╂潃杩涜涓?
         if (finisherActive) {
             tickFinisher();
             return;
         }
         LivingEntity target = this.getTarget();
-        // 雇主被攻击 → 优先索敌攻击者
+        // 闆囦富琚敾鍑?鈫?浼樺厛绱㈡晫鏀诲嚮鑰?
         LivingEntity attacker = boss.getLastHurtByMob();
         if (attacker != null && attacker.isAlive() && attacker != this
                 && boss.distanceToSqr(attacker) <= 24.0 * 24.0) {
@@ -2172,9 +2131,9 @@ public class MomoMerchant extends PathfinderMob {
                 target = attacker;
             }
         }
-        // 雇主正在攻击的目标 → 协助集火：
-        // 保护雇主（当前目标是攻击雇主者）与 Boss 战（受限 Boss 走破保护链）仍优先；
-        // 空闲或只是自己找的杂鱼目标时，切换到雇主正在攻击的目标
+        // 闆囦富姝ｅ湪鏀诲嚮鐨勭洰鏍?鈫?鍗忓姪闆嗙伀锛?
+        // 淇濇姢闆囦富锛堝綋鍓嶇洰鏍囨槸鏀诲嚮闆囦富鑰咃級涓?Boss 鎴橈紙鍙楅檺 Boss 璧扮牬淇濇姢閾撅級浠嶄紭鍏堬紱
+        // 绌洪棽鎴栧彧鏄嚜宸辨壘鐨勬潅楸肩洰鏍囨椂锛屽垏鎹㈠埌闆囦富姝ｅ湪鏀诲嚮鐨勭洰鏍?
         LivingEntity assist = validAssistTarget();
         if (assist != null && assist != target) {
             boolean defending = target != null && target.isAlive() && target == boss.getLastHurtByMob()
@@ -2186,12 +2145,12 @@ public class MomoMerchant extends PathfinderMob {
                 target = assist;
             }
         }
-        // 诡厄巫法保护链（环境有 Goety 时）：目标是受限 Boss 且被黑曜石柱保护 → 先打邪教徒，其次黑曜石柱，最后 Boss
+        // 璇″巹宸硶淇濇姢閾撅紙鐜鏈?Goety 鏃讹級锛氱洰鏍囨槸鍙楅檺 Boss 涓旇榛戞洔鐭虫煴淇濇姢 鈫?鍏堟墦閭暀寰掞紝鍏舵榛戞洔鐭虫煴锛屾渶鍚?Boss
         if (target != null && target.isAlive()
                 && com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isDamageLimitedBoss(target)) {
             LivingEntity chain = pickGoetyChainTarget(boss);
             if (chain != null && chain != target) {
-                engageChainTarget(chain); // 柱太远（>12格）直接瞬移到柱边
+                engageChainTarget(chain); // 鏌卞お杩滐紙>12鏍硷級鐩存帴鐬Щ鍒版煴杈?
                 target = chain;
             }
         }
@@ -2199,7 +2158,7 @@ public class MomoMerchant extends PathfinderMob {
             tickHiredCombat(boss, target);
             return;
         }
-        // 诡厄巫法：主动攻击黑曜石柱/邪教徒/受限 Boss（破保护链优先）
+        // 璇″巹宸硶锛氫富鍔ㄦ敾鍑婚粦鏇滅煶鏌?閭暀寰?鍙楅檺 Boss锛堢牬淇濇姢閾句紭鍏堬級
         if (com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isAvailable()) {
             LivingEntity goetyTarget = pickGoetyChainTarget(boss);
             if (goetyTarget != null) {
@@ -2207,13 +2166,13 @@ public class MomoMerchant extends PathfinderMob {
                 return;
             }
         }
-        // 主动索敌雇主周围的亡灵/灾厄村民
+        // 涓诲姩绱㈡晫闆囦富鍛ㄥ洿鐨勪骸鐏?鐏惧巹鏉戞皯
         Mob prey = nearestHostileNear(boss, 12.0);
         if (prey != null) {
             this.setTarget(prey);
             return;
         }
-        // 歌唱触发：雇主低血且有威胁
+        // 姝屽敱瑙﹀彂锛氶泧涓讳綆琛€涓旀湁濞佽儊
         LivingEntity threat = threatOfEmployer(boss);
         if (threat != null && boss.getHealth() <= boss.getMaxHealth() * EMPLOYER_LOW_HP_RATIO
                 && songCooldown <= 0 && this.getHealth() > this.getMaxHealth() * 0.2f) {
@@ -2226,21 +2185,21 @@ public class MomoMerchant extends PathfinderMob {
             songTicks = SONG_DURATION_TICKS;
             return;
         }
-        // 空闲：低语 + 进食 + 以雇主为中心游走
+        // 绌洪棽锛氫綆璇?+ 杩涢 + 浠ラ泧涓讳负涓績娓歌蛋
         tickAmbientVoice();
         tickEatIfIdle();
         if (this.distanceToSqr(boss) > 14.0 * 14.0) {
             this.getNavigation().moveTo(boss, 1.15);
         } else {
-            tickWanderPath(); // 游走锚点 = 雇主（半径 6 格）
+            tickWanderPath(); // 娓歌蛋閿氱偣 = 闆囦富锛堝崐寰?6 鏍硷級
         }
     }
 
     /**
-     * 诡厄巫法（可选）：以雇主为中心选目标——保护链 邪教徒 > 黑曜石柱 > 受限 Boss；
-     * 附近存在受限 Boss(32格)时：查其黑曜石柱(64格内视为保护柱，柱常被召在12~24格外
-     * 且可能因场地不贴身)→柱旁邪教徒优先；无 Boss 时也主动打 40 格内的邪教徒/黑曜石柱。
-     * 环境无 Goety 返回 null。
+     * 璇″巹宸硶锛堝彲閫夛級锛氫互闆囦富涓轰腑蹇冮€夌洰鏍団€斺€斾繚鎶ら摼 閭暀寰?> 榛戞洔鐭虫煴 > 鍙楅檺 Boss锛?
+     * 闄勮繎瀛樺湪鍙楅檺 Boss(32鏍?鏃讹細鏌ュ叾榛戞洔鐭虫煴(64鏍煎唴瑙嗕负淇濇姢鏌憋紝鏌卞父琚彫鍦?2~24鏍煎
+     * 涓斿彲鑳藉洜鍦哄湴涓嶈创韬?鈫掓煴鏃侀偑鏁欏緬浼樺厛锛涙棤 Boss 鏃朵篃涓诲姩鎵?40 鏍煎唴鐨勯偑鏁欏緬/榛戞洔鐭虫煴銆?
+     * 鐜鏃?Goety 杩斿洖 null銆?
      */
     @Nullable
     private LivingEntity pickGoetyChainTarget(LivingEntity boss) {
@@ -2250,17 +2209,17 @@ public class MomoMerchant extends PathfinderMob {
             LivingEntity pillar = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.nearestPillar(limited, 64.0);
             if (pillar != null) {
                 LivingEntity cult = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.cultistNearPillar(pillar);
-                if (cult != null) return cult;                       // ① 邪教徒（保护柱者）
-                return pillar;                                       // ② 黑曜石柱（破保护）
+                if (cult != null) return cult;                       // 鈶?閭暀寰掞紙淇濇姢鏌辫€咃級
+                return pillar;                                       // 鈶?榛戞洔鐭虫煴锛堢牬淇濇姢锛?
             }
-            return limited;                                          // ③ 目标（无柱保护则直接打）
+            return limited;                                          // 鈶?鐩爣锛堟棤鏌变繚鎶ゅ垯鐩存帴鎵擄級
         }
         LivingEntity cult = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.nearestCultist(boss, 40.0);
         if (cult != null) return cult;
         return com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.nearestPillar(boss, 40.0);
     }
 
-    /** 切到保护链目标：目标为黑曜石柱且离得远（>12格）时直接瞬移到柱边，避免走不过去/绕路 */
+    /** 鍒囧埌淇濇姢閾剧洰鏍囷細鐩爣涓洪粦鏇滅煶鏌变笖绂诲緱杩滐紙>12鏍硷級鏃剁洿鎺ョ灛绉诲埌鏌辫竟锛岄伩鍏嶈蛋涓嶈繃鍘?缁曡矾 */
     private void engageChainTarget(LivingEntity chain) {
         if (chain == null) return;
         if (com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isPillar(chain)
@@ -2271,7 +2230,7 @@ public class MomoMerchant extends PathfinderMob {
         this.getNavigation().stop();
     }
 
-    /** 瞬移到目标身旁（破远处黑曜石柱用） */
+    /** 鐬Щ鍒扮洰鏍囪韩鏃侊紙鐮磋繙澶勯粦鏇滅煶鏌辩敤锛?*/
     private void blinkBeside(LivingEntity target) {
         if (target == null || target.level().isClientSide) return;
         Vec3 away = this.position().subtract(target.position());
@@ -2288,19 +2247,19 @@ public class MomoMerchant extends PathfinderMob {
         }
     }
 
-    /** 雇佣战斗：两刀（80%/180%×20 必中）→ 拉远；受击格挡 → 反击连斩；目标 <10 血 → 瞬移身后斩杀 */
+    /** 闆囦剑鎴樻枟锛氫袱鍒€锛?0%/180%脳20 蹇呬腑锛夆啋 鎷夎繙锛涘彈鍑绘牸鎸?鈫?鍙嶅嚮杩炴柀锛涚洰鏍?<10 琛€ 鈫?鐬Щ韬悗鏂╂潃 */
     private void tickHiredCombat(ServerPlayer boss, LivingEntity target) {
-        // 格挡窗口到期
+        // 鏍兼尅绐楀彛鍒版湡
         if (blockWindowUntil > 0 && this.tickCount > blockWindowUntil) {
             blockWindowUntil = -1;
         }
-        // 受击格挡成功 → 连斩反击
+        // 鍙楀嚮鏍兼尅鎴愬姛 鈫?杩炴柀鍙嶅嚮
         if (state == S_COUNTER) {
             tickHiredCounter();
             return;
         }
         this.getLookControl().setLookAt(target, 30.0F, 30.0F);
-        // 斩杀：目标生命 < 10
+        // 鏂╂潃锛氱洰鏍囩敓鍛?< 10
         if (target.getHealth() < EXECUTE_HP) {
             startFinisher(target);
             return;
@@ -2315,25 +2274,25 @@ public class MomoMerchant extends PathfinderMob {
                 if (this.distanceToSqr(target) <= 2.6 * 2.6) {
                     this.getNavigation().stop();
                     if (hiredAttackCooldown <= 0) {
-                        // 砍一刀（80% × 20，必中）
+                        // 鐮嶄竴鍒€锛?0% 脳 20锛屽繀涓級
                         hiredHit(target, 0.8f);
                         hiredComboPhase = 1;
-                        hiredComboTimer = 10; // 0.5s 后第二刀
+                        hiredComboTimer = 10; // 0.5s 鍚庣浜屽垁
                     }
                 } else {
                     this.getNavigation().moveTo(target, chaseSpeedWithBlock(1.4));
                 }
             }
             case 1 -> {
-                // 等 0.5s 后竖劈（180% × 20，必中）
+                // 绛?0.5s 鍚庣珫鍔堬紙180% 脳 20锛屽繀涓級
                 if (--hiredComboTimer <= 0) {
                     hiredHit(target, 1.8f);
                     hiredComboPhase = 2;
-                    hiredComboTimer = 24; // 砍完拉远
+                    hiredComboTimer = 24; // 鐮嶅畬鎷夎繙
                 }
             }
             default -> {
-                // 拉远
+                // 鎷夎繙
                 if (--hiredComboTimer <= 0 || this.distanceToSqr(target) > 8.0 * 8.0) {
                     hiredComboPhase = 0;
                     hiredAttackCooldown = 25;
@@ -2346,7 +2305,7 @@ public class MomoMerchant extends PathfinderMob {
         }
     }
 
-    /** 雇佣必中一击（无视距离/面向，直接结算） */
+    /** 闆囦剑蹇呬腑涓€鍑伙紙鏃犺璺濈/闈㈠悜锛岀洿鎺ョ粨绠楋級 */
     private void hiredHit(LivingEntity target, float multiplier) {
         this.swing(InteractionHand.MAIN_HAND);
         applyHurt(target, HIRED_BASE_ATTACK * multiplier);
@@ -2359,23 +2318,23 @@ public class MomoMerchant extends PathfinderMob {
     }
 
     /**
-     * 墨默的伤害统一入口：
-     * 凋灵出生无敌 → 无视；
-     * 诡厄巫法受限 Boss（亚波伦/使徒）处于黑曜石柱保护（obsidianInvul>0，全程免伤）时 →
-     * 墨默打不出伤害，必须先破柱（索敌链已切到柱/邪教徒），此处只做格挡反馈；
-     * 柱破后 → 对其限伤（启示录 apollyon_hurt_limit=20 等事件级 clamp）用多段拆分突破。
+     * 澧ㄩ粯鐨勪激瀹崇粺涓€鍏ュ彛锛?
+     * 鍑嬬伒鍑虹敓鏃犳晫 鈫?鏃犺锛?
+     * 璇″巹宸硶鍙楅檺 Boss锛堜簹娉鸡/浣垮緬锛夊浜庨粦鏇滅煶鏌变繚鎶わ紙obsidianInvul>0锛屽叏绋嬪厤浼わ級鏃?鈫?
+     * 澧ㄩ粯鎵撲笉鍑轰激瀹筹紝蹇呴』鍏堢牬鏌憋紙绱㈡晫閾惧凡鍒囧埌鏌?閭暀寰掞級锛屾澶勫彧鍋氭牸鎸″弽棣堬紱
+     * 鏌辩牬鍚?鈫?瀵瑰叾闄愪激锛堝惎绀哄綍 apollyon_hurt_limit=20 绛変簨浠剁骇 clamp锛夌敤澶氭鎷嗗垎绐佺牬銆?
      */
     private void applyHurt(LivingEntity target, float dmg) {
         witherInvulnBypass(target);
         target.invulnerableTime = 0;
         if (com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isPillar(target)) {
-            // 黑曜石柱：墨默直接多段穿透击碎（绕护甲/empowered 免伤，柱通常 50 血 → 一两刀碎）
+            // 榛戞洔鐭虫煴锛氬ⅷ榛樼洿鎺ュ娈电┛閫忓嚮纰庯紙缁曟姢鐢?empowered 鍏嶄激锛屾煴閫氬父 50 琛€ 鈫?涓€涓ゅ垁纰庯級
             pierceDamageDirect(target, dmg);
             return;
         }
         if (com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isDamageLimitedBoss(target)) {
-            // 柱保护以 Boss 实体的 obsidianInvul 计时为准（存活黑曜石柱每 tick 置 10），
-            // 比按距离找柱更接近真实免伤判定（柱瞬移贴身后必然 >0）
+            // 鏌变繚鎶や互 Boss 瀹炰綋鐨?obsidianInvul 璁℃椂涓哄噯锛堝瓨娲婚粦鏇滅煶鏌辨瘡 tick 缃?10锛夛紝
+            // 姣旀寜璺濈鎵炬煴鏇存帴杩戠湡瀹炲厤浼ゅ垽瀹氾紙鏌辩灛绉昏创韬悗蹇呯劧 >0锛?
             int shield = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.readObsidianInvul(target);
             if (shield > 0) {
                 if (this.level() instanceof ServerLevel sl) {
@@ -2383,33 +2342,32 @@ public class MomoMerchant extends PathfinderMob {
                     sl.sendParticles(ParticleTypes.CRIT, target.getX(), target.getY() + target.getBbHeight() / 2,
                             target.getZ(), 6, 0.2, 0.2, 0.2, 0.01);
                 }
-                return; // 柱未破：本次伤害被挡
+                return; // 鏌辨湭鐮达細鏈浼ゅ琚尅
             }
-            pierceDamageDirect(target, dmg); // 柱已破：多段拆分突破限伤
+            pierceDamageDirect(target, dmg); // 鏌卞凡鐮达細澶氭鎷嗗垎绐佺牬闄愪激
         } else {
             target.hurt(this.damageSources().mobAttack(this), dmg);
         }
     }
 
     /**
-     * 突破"每次伤害上限"（启示录 apollyon_hurt_limit=20；主 Goety apostleDamageCap=20
-     * 因 genericKill 带 bypasses_invulnerability 天然绕过）：
-     * 不走直改血（会废掉受击事件/阶段逻辑），而是把伤害拆成 ≤19 的多段连续 hurt——
-     * 每段都在上限之下、走完整伤害管线（事件/Boss 阶段照常触发），累计总和突破单次上限。
-     * 每段前顺带清零：使徒受击无敌帧 moddedInvul（其他带直接实体的攻击会留下 15tick 挡伤）
-     * 与启示录下界 Apollyon 的受击冷却（每次 actuallyHurt 置 30、期间 hurt() 被直接取消）。
-     * 目标为使徒时按 apostleDamageCompensation 放大送出量，抵消下界减伤(50%)与
-     * 附近玩家时非玩家伤害减半——落血仍是名义伤害。
+     * 绐佺牬"姣忔浼ゅ涓婇檺"锛堝惎绀哄綍 apollyon_hurt_limit=20锛涗富 Goety apostleDamageCap=20
+     * 鍥?genericKill 甯?bypasses_invulnerability 澶╃劧缁曡繃锛夛細
+     * 涓嶈蛋鐩存敼琛€锛堜細搴熸帀鍙楀嚮浜嬩欢/闃舵閫昏緫锛夛紝鑰屾槸鎶婁激瀹虫媶鎴?鈮?9 鐨勫娈佃繛缁?hurt鈥斺€?
+     * 姣忔閮藉湪涓婇檺涔嬩笅銆佽蛋瀹屾暣浼ゅ绠＄嚎锛堜簨浠?Boss 闃舵鐓у父瑙﹀彂锛夛紝绱鎬诲拰绐佺牬鍗曟涓婇檺銆?
+     * 姣忔鍓嶉『甯︽竻闆讹細浣垮緬鍙楀嚮鏃犳晫甯?moddedInvul锛堝叾浠栧甫鐩存帴瀹炰綋鐨勬敾鍑讳細鐣欎笅 15tick 鎸′激锛?
+     * 涓庡惎绀哄綍涓嬬晫 Apollyon 鐨勫彈鍑诲喎鍗达紙姣忔 actuallyHurt 缃?30銆佹湡闂?hurt() 琚洿鎺ュ彇娑堬級銆?
+     * 鐩爣涓轰娇寰掓椂鎸?apostleDamageCompensation 鏀惧ぇ閫佸嚭閲忥紝鎶垫秷涓嬬晫鍑忎激(50%)涓?
+     * 闄勮繎鐜╁鏃堕潪鐜╁浼ゅ鍑忓崐鈥斺€旇惤琛€浠嶆槸鍚嶄箟浼ゅ銆?
      */
-    private static final float PIERCE_CHUNK = 19.0F;
 
     private void pierceDamageDirect(LivingEntity target, float dmg) {
         if (target.level().isClientSide || target.isRemoved()) return;
-        // 全额穿透：hurt 事件 + 差额直补（总量精确全额、不受免疫窗/单次上限影响）
+        // 鍏ㄩ绌块€忥細hurt 浜嬩欢 + 宸鐩磋ˉ锛堟€婚噺绮剧‘鍏ㄩ銆佷笉鍙楀厤鐤獥/鍗曟涓婇檺褰卞搷锛?
         com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.pierceFullDamage(target, dmg);
     }
 
-    /** 受击格挡成功后的反击（雇佣版：60/80/100% × 20，必中） */
+    /** 鍙楀嚮鏍兼尅鎴愬姛鍚庣殑鍙嶅嚮锛堥泧浣ｇ増锛?0/80/100% 脳 20锛屽繀涓級 */
     private void tickHiredCounter() {
         LivingEntity atk = getLastBlockedBy();
         if (atk == null || !atk.isAlive() || this.distanceToSqr(atk) > 5.0 * 5.0) {
@@ -2440,7 +2398,7 @@ public class MomoMerchant extends PathfinderMob {
         }
     }
 
-    /** 斩杀：瞬移到敌人身后，红色粒子连斩收尾 */
+    /** 鏂╂潃锛氱灛绉诲埌鏁屼汉韬悗锛岀孩鑹茬矑瀛愯繛鏂╂敹灏?*/
     private void startFinisher(LivingEntity target) {
         this.getNavigation().stop();
         Vec3 dir = target.position().subtract(target.getLookAngle().scale(2.0));
@@ -2473,7 +2431,7 @@ public class MomoMerchant extends PathfinderMob {
         applyHurt(t, HIRED_BASE_ATTACK * mults[Math.min(finisherIndex, 2)]);
         this.swing(InteractionHand.MAIN_HAND);
         if (this.level() instanceof ServerLevel sl) {
-            // 红色粒子（斩杀特效）
+            // 绾㈣壊绮掑瓙锛堟柀鏉€鐗规晥锛?
             sl.sendParticles(new net.minecraft.core.particles.DustParticleOptions(
                             new org.joml.Vector3f(1.0F, 0.05F, 0.05F), 1.0F),
                     t.getX(), t.getY() + 1.2, t.getZ(), 12, 0.4, 0.5, 0.4, 0.01);
@@ -2492,7 +2450,7 @@ public class MomoMerchant extends PathfinderMob {
         }
     }
 
-    /** 无视凋灵出生无敌（清零其无敌计时字段，反射兜底） */
+    /** 鏃犺鍑嬬伒鍑虹敓鏃犳晫锛堟竻闆跺叾鏃犳晫璁℃椂瀛楁锛屽弽灏勫厹搴曪級 */
     private static java.lang.reflect.Field WITHER_INVULN_FIELD = null;
 
     private void witherInvulnBypass(LivingEntity target) {
@@ -2515,16 +2473,16 @@ public class MomoMerchant extends PathfinderMob {
                 WITHER_INVULN_FIELD.setInt(w, 0);
             }
         } catch (Throwable ignored) {
-            // 找不到字段则忽略（退化：普通攻击仍可命中非无敌窗口）
+            // 鎵句笉鍒板瓧娈靛垯蹇界暐锛堥€€鍖栵細鏅€氭敾鍑讳粛鍙懡涓潪鏃犳晫绐楀彛锛?
         }
-        // 出生无敌期间一并解除实体无敌标记（若其基于 isInvulnerable 实现）
+        // 鍑虹敓鏃犳晫鏈熼棿涓€骞惰В闄ゅ疄浣撴棤鏁屾爣璁帮紙鑻ュ叾鍩轰簬 isInvulnerable 瀹炵幇锛?
         try {
             w.setInvulnerable(false);
         } catch (Throwable ignored) {
         }
     }
 
-    /** 传送至目标附近的落点（寻找可站立位置，带回响粒子） */
+    /** 浼犻€佽嚦鐩爣闄勮繎鐨勮惤鐐癸紙瀵绘壘鍙珯绔嬩綅缃紝甯﹀洖鍝嶇矑瀛愶級 */
     private void teleportNearEntity(LivingEntity e) {
         if (!(this.level() instanceof ServerLevel sl)) return;
         for (int i = 0; i < 6; i++) {
@@ -2543,7 +2501,7 @@ public class MomoMerchant extends PathfinderMob {
         sl.playSound(null, this.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.HOSTILE, 1.0F, 1.0F);
     }
 
-    /** 雇佣到期：回来找雇主并解除雇佣（自然刷新版给续雇宽限） */
+    /** 闆囦剑鍒版湡锛氬洖鏉ユ壘闆囦富骞惰В闄ら泧浣ｏ紙鑷劧鍒锋柊鐗堢粰缁泧瀹介檺锛?*/
     private void returnToEmployer(ServerPlayer boss) {
         hired = false;
         employerId = null;
@@ -2559,7 +2517,7 @@ public class MomoMerchant extends PathfinderMob {
     }
 
     // ============================================================
-    //  受击 / 格挡 / 秒杀
+    //  鍙楀嚮 / 鏍兼尅 / 绉掓潃
     // ============================================================
 
     private LivingEntity lastBlockedBy;
@@ -2571,7 +2529,7 @@ public class MomoMerchant extends PathfinderMob {
         return lastBlockedBy;
     }
 
-    /** 诡厄诅咒效果（按注册表 id 惰性查找，未装诡厄返回 null） */
+    /** 璇″巹璇呭拻鏁堟灉锛堟寜娉ㄥ唽琛?id 鎯版€ф煡鎵撅紝鏈璇″巹杩斿洖 null锛?*/
     private static net.minecraft.world.effect.MobEffect GOETY_CURSED_CACHE = null;
     private static boolean goetyCursedResolved = false;
 
@@ -2587,16 +2545,16 @@ public class MomoMerchant extends PathfinderMob {
         return GOETY_CURSED_CACHE;
     }
 
-    /** 是否处于格挡窗口 */
+    /** 鏄惁澶勪簬鏍兼尅绐楀彛 */
     public boolean isBlockingStance() {
         return blockWindowUntil > 0 && this.tickCount <= blockWindowUntil && state != S_FLEE;
     }
 
     /**
-     * 下界亚波伦"死亡箭雨"格挡：
-     * 当前目标（或 32 格内低频扫描到的受限 Boss）正处于启示录 Apollyon 的箭雨施放
-     * （isShooting，约 100 tick、每 tick 一箭）时，持续刷新格挡窗口——
-     * 整段箭雨期间举盾免疫：箭矢 hurt 被格挡 → 其后续 5% 最大生命的虚空扣血也不会触发。
+     * 涓嬬晫浜氭尝浼?姝讳骸绠洦"鏍兼尅锛?
+     * 褰撳墠鐩爣锛堟垨 32 鏍煎唴浣庨鎵弿鍒扮殑鍙楅檺 Boss锛夋澶勪簬鍚ず褰?Apollyon 鐨勭闆ㄦ柦鏀?
+     * 锛坕sShooting锛岀害 100 tick銆佹瘡 tick 涓€绠級鏃讹紝鎸佺画鍒锋柊鏍兼尅绐楀彛鈥斺€?
+     * 鏁存绠洦鏈熼棿涓剧浘鍏嶇柅锛氱鐭?hurt 琚牸鎸?鈫?鍏跺悗缁?5% 鏈€澶х敓鍛界殑铏氱┖鎵ｈ涔熶笉浼氳Е鍙戙€?
      */
     private void tickBarrageGuard() {
         if (this.isDeadOrDying() || this.isRemoved() || level().isClientSide) return;
@@ -2615,8 +2573,8 @@ public class MomoMerchant extends PathfinderMob {
     }
 
     /**
-     * 格挡期间连"虚空/真伤"也一并格挡：下界亚波伦箭矢命中会额外
-     * heal(-5%最大生命)（无视护甲/无敌帧/格挡的直接扣血）——举盾时免疫。
+     * 鏍兼尅鏈熼棿杩?铏氱┖/鐪熶激"涔熶竴骞舵牸鎸★細涓嬬晫浜氭尝浼︾鐭㈠懡涓細棰濆
+     * heal(-5%鏈€澶х敓鍛?锛堟棤瑙嗘姢鐢?鏃犳晫甯?鏍兼尅鐨勭洿鎺ユ墸琛€锛夆€斺€斾妇鐩炬椂鍏嶇柅銆?
      */
     @Override
     public void heal(float amount) {
@@ -2629,12 +2587,12 @@ public class MomoMerchant extends PathfinderMob {
     @Override
     public boolean hurt(DamageSource source, float amount) {
         if (level().isClientSide || this.isDeadOrDying()) return false;
-        // 歌唱被攻击打断
+        // 姝屽敱琚敾鍑绘墦鏂?
         stopSinging();
-        // 格挡窗口内：免疫伤害。近身（≤5格）格挡成功 → 连斩反击并收起格挡；
-        // 远程/投射物格挡 → 刷新格挡窗口（持续射击的箭雨保持举盾），减速推进不打断追击
+        // 鏍兼尅绐楀彛鍐咃細鍏嶇柅浼ゅ銆傝繎韬紙鈮?鏍硷級鏍兼尅鎴愬姛 鈫?杩炴柀鍙嶅嚮骞舵敹璧锋牸鎸★紱
+        // 杩滅▼/鎶曞皠鐗╂牸鎸?鈫?鍒锋柊鏍兼尅绐楀彛锛堟寔缁皠鍑荤殑绠洦淇濇寔涓剧浘锛夛紝鍑忛€熸帹杩涗笉鎵撴柇杩藉嚮
         if (isBlockingStance()) {
-            // 攻击者判定：直接近战实体 / 投射物的发射者 / 兜底取伤害源实体
+            // 鏀诲嚮鑰呭垽瀹氾細鐩存帴杩戞垬瀹炰綋 / 鎶曞皠鐗╃殑鍙戝皠鑰?/ 鍏滃簳鍙栦激瀹虫簮瀹炰綋
             LivingEntity living = null;
             Entity direct = source.getDirectEntity();
             if (direct instanceof LivingEntity le && le != this) {
@@ -2650,7 +2608,7 @@ public class MomoMerchant extends PathfinderMob {
                 lastBlockedBy = living;
                 if (this.getTarget() == null) this.setTarget(living);
                 if (this.distanceToSqr(living) <= 5.0 * 5.0) {
-                    // 近身格挡成功：连斩反击
+                    // 杩戣韩鏍兼尅鎴愬姛锛氳繛鏂╁弽鍑?
                     blockWindowUntil = -1;
                     counterIndex = 0;
                     counterTimer = 0;
@@ -2662,7 +2620,7 @@ public class MomoMerchant extends PathfinderMob {
                                 10, 0.4, 0.3, 0.4, 0.02);
                     }
                 } else {
-                    // 远程攻击被格挡：保持举盾（刷新窗口）+ 继续追击（以较慢速度推进），避免原地愣住
+                    // 杩滅▼鏀诲嚮琚牸鎸★細淇濇寔涓剧浘锛堝埛鏂扮獥鍙ｏ級+ 缁х画杩藉嚮锛堜互杈冩參閫熷害鎺ㄨ繘锛夛紝閬垮厤鍘熷湴鎰ｄ綇
                     blockWindowUntil = this.tickCount + BLOCK_WINDOW;
                     if (this.state == S_COUNTER) {
                         counterIndex = 0;
@@ -2673,12 +2631,12 @@ public class MomoMerchant extends PathfinderMob {
                     }
                 }
             } else {
-                // 未知来源（环境伤害等）：仍视为格挡，刷新窗口
+                // 鏈煡鏉ユ簮锛堢幆澧冧激瀹崇瓑锛夛細浠嶈涓烘牸鎸★紝鍒锋柊绐楀彛
                 blockWindowUntil = this.tickCount + BLOCK_WINDOW;
             }
             return false;
         }
-        // 正常受击：记录仇恨 + 开启 1s 格挡窗口
+        // 姝ｅ父鍙楀嚮锛氳褰曚粐鎭?+ 寮€鍚?1s 鏍兼尅绐楀彛
         Entity attacker = source.getEntity();
         if (attacker instanceof LivingEntity living && attacker != this) {
             aggroSet.add(attacker.getUUID());
@@ -2696,7 +2654,7 @@ public class MomoMerchant extends PathfinderMob {
         return hurt;
     }
 
-    /** 是否被"秒杀"（最后一击伤害 ≥ 最大生命） */
+    /** 鏄惁琚?绉掓潃"锛堟渶鍚庝竴鍑讳激瀹?鈮?鏈€澶х敓鍛斤級 */
     private float lastDamageTaken = 0;
 
     public void recordDamageTaken(float amount) {
@@ -2708,7 +2666,7 @@ public class MomoMerchant extends PathfinderMob {
     }
 
     // ============================================================
-    //  死亡 / 掉落 / 语音
+    //  姝讳骸 / 鎺夎惤 / 璇煶
     // ============================================================
 
     @Override
@@ -2724,10 +2682,10 @@ public class MomoMerchant extends PathfinderMob {
 
     @Override
     protected SoundEvent getAmbientSound() {
-        return null; // 低语由 tickAmbientVoice 控制
+        return null; // 浣庤鐢?tickAmbientVoice 鎺у埗
     }
 
-    /** 受击语音：避免与其他语音重叠（连打时只播一次） */
+    /** 鍙楀嚮璇煶锛氶伩鍏嶄笌鍏朵粬璇煶閲嶅彔锛堣繛鎵撴椂鍙挱涓€娆★級 */
     @Override
     protected void playHurtSound(DamageSource source) {
         if (voiceReady()) {
@@ -2761,16 +2719,16 @@ public class MomoMerchant extends PathfinderMob {
         return true;
     }
 
-    /** 蜘蛛式爬墙：水平贴墙即可攀爬（原版蜘蛛同款判定） */
+    /** 铚樿洓寮忕埇澧欙細姘村钩璐村鍗冲彲鏀€鐖紙鍘熺増铚樿洓鍚屾鍒ゅ畾锛?*/
     @Override
     public boolean onClimbable() {
         return this.horizontalCollision;
     }
 
-    /** 贴墙时减少下滑；目标/雇主在更高处且紧贴墙 → 向上攀爬 */
+    /** 璐村鏃跺噺灏戜笅婊戯紱鐩爣/闆囦富鍦ㄦ洿楂樺涓旂揣璐村 鈫?鍚戜笂鏀€鐖?*/
     private void tickWallClimb() {
         if (this.level().isClientSide || this.isInWater() || !this.horizontalCollision) return;
-        // 贴墙：限制下滑速度
+        // 璐村锛氶檺鍒朵笅婊戦€熷害
         if (this.getDeltaMovement().y < -0.12) {
             this.setDeltaMovement(this.getDeltaMovement().multiply(1.0, 0.0, 1.0).add(0.0, -0.12, 0.0));
         }
@@ -2781,7 +2739,7 @@ public class MomoMerchant extends PathfinderMob {
         if (up == null || !up.isAlive() || up.getY() <= this.getY() + 0.8) return;
         double hd = Math.hypot(up.getX() - this.getX(), up.getZ() - this.getZ());
         if (hd <= 5.0) {
-            // 头顶有空间才上爬（防挤进方块）
+            // 澶撮《鏈夌┖闂存墠涓婄埇锛堥槻鎸よ繘鏂瑰潡锛?
             if (this.level().noCollision(this.getBoundingBox().move(0.0, 1.0, 0.0))) {
                 this.setDeltaMovement(this.getDeltaMovement().add(0.0, 0.28, 0.0));
                 this.fallDistance = 0;
@@ -2789,23 +2747,23 @@ public class MomoMerchant extends PathfinderMob {
         }
     }
 
-    /** 水下：溺尸式憋气呼吸（不会窒息）+ 游泳（朝目标游；无目标时浮向水面） */
+    /** 姘翠笅锛氭汉灏稿紡鎲嬫皵鍛煎惛锛堜笉浼氱獟鎭級+ 娓告吵锛堟湞鐩爣娓革紱鏃犵洰鏍囨椂娴悜姘撮潰锛?*/
     private void tickWaterSwim() {
         if (this.level().isClientSide) return;
         if (!this.isInWater()) {
-            // 出水：关闭游泳姿态
+            // 鍑烘按锛氬叧闂父娉冲Э鎬?
             if (this.isSwimming()) {
                 this.setSwimming(false);
             }
             return;
         }
-        // 游泳姿态（玩家模型会播放游泳动画：前伸划水+双腿打水）；贴地/能站时不摆姿势
+        // 娓告吵濮挎€侊紙鐜╁妯″瀷浼氭挱鏀炬父娉冲姩鐢伙細鍓嶄几鍒掓按+鍙岃吙鎵撴按锛夛紱璐村湴/鑳界珯鏃朵笉鎽嗗Э鍔?
         this.setSwimming(!this.onGround());
-        // 憋气：周期性补满空气，永不窒息
+        // 鎲嬫皵锛氬懆鏈熸€цˉ婊＄┖姘旓紝姘镐笉绐掓伅
         if (this.tickCount % 20 == 0 && this.getAirSupply() < this.getMaxAirSupply()) {
             this.setAirSupply(this.getMaxAirSupply());
         }
-        // 微浮力：避免一直沉底
+        // 寰诞鍔涳細閬垮厤涓€鐩存矇搴?
         if (this.getDeltaMovement().y < -0.12 && this.tickCount % 2 == 0) {
             this.setDeltaMovement(this.getDeltaMovement().add(0.0, 0.05, 0.0));
         }
@@ -2819,7 +2777,7 @@ public class MomoMerchant extends PathfinderMob {
             double dz = aim.getZ() - this.getZ();
             double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
             if (dist > 1.8) {
-                double sp = 0.5; // 游泳速度（块/tick）：快于玩家（0.15）
+                double sp = 0.5; // 娓告吵閫熷害锛堝潡/tick锛夛細蹇簬鐜╁锛?.15锛?
                 Vec3 want = new Vec3(dx / dist * sp, dy / dist * sp, dz / dist * sp);
                 Vec3 cur = this.getDeltaMovement();
                 Vec3 next = cur.add(want.subtract(cur).scale(0.1));
@@ -2830,7 +2788,7 @@ public class MomoMerchant extends PathfinderMob {
                 this.fallDistance = 0;
             }
         } else {
-            // 无目标：浮向水面附近，避免呆在水底
+            // 鏃犵洰鏍囷細娴悜姘撮潰闄勮繎锛岄伩鍏嶅憜鍦ㄦ按搴?
             double surface = this.level().getSeaLevel();
             if (this.getY() < surface - 1.0 && this.getDeltaMovement().y < 0.1) {
                 this.setDeltaMovement(this.getDeltaMovement().add(0.0, 0.04, 0.0));
