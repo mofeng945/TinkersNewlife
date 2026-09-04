@@ -539,9 +539,9 @@
   "screen.tinkersnewlife.wu_wei.empty": "尚未记录任何生物形态——先去击杀一些生物吧",
   "key.tinkersnewlife.open_wu_wei": "无为转变·形态选择（P）",
   "item.tinkersnewlife.gourd_jail": "狱门疆",
-  "item.tinkersnewlife.gourd_jail.desc": "§7右键放置：5×5 范围内停留超 5 秒的生物将被拖入狱门疆维度禁锢（对玩家也生效）。已封印后可拾取携带，仅放置者可拾取。",
+
   "item.tinkersnewlife.gourd_jail_sealed": "狱门疆（已封印）",
-  "item.tinkersnewlife.gourd_jail_sealed.desc": "§7已封印一名生物。天逆鉾右键或雅各布天梯照射可破坏并释放囚犯。",
+
   "message.tinkersnewlife.gourd.sealed": "§d被拖入狱门疆！",
   "message.tinkersnewlife.gourd.released": "§d狱门疆被破坏，囚犯已释放！",
   "message.tinkersnewlife.gourd.unsealed": "§d你被释放了！",

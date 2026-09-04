@@ -63,6 +63,8 @@ public class GourdJailEntity extends Entity {
     private BlockPos cagePos = null;
     /** 普通生物被封印时保存的完整 NBT（释放时重新生成） */
     private CompoundTag prisonerNbt = null;
+    /** 被封印玩家名字（封印时记录，供已封印物品提示显示；生物名由 NBT 推导） */
+    private String prisonerName = null;
 
     /** 空闲形态检测：UUID → 进入范围 gameTime */
     private final Map<UUID, Long> enterTimes = new HashMap<>();
@@ -89,6 +91,7 @@ public class GourdJailEntity extends Entity {
     public UUID getOwnerId() { return ownerId; }
     public UUID getPrisoner() { return prisonerId; }
     public CompoundTag getPrisonerNbt() { return prisonerNbt; }
+    public String getPrisonerName() { return prisonerName; }
     public boolean isPlayerPrisoner() { return prisonerId != null && prisonerNbt == null; }
     public int getState() { return state; }
     public void setState(int s) { this.state = s; }
@@ -103,6 +106,8 @@ public class GourdJailEntity extends Entity {
         this.cagePos = GourdJailHandler.readPos(nbt, GourdJailHandler.KEY_CAGE_POS);
         this.prisonerNbt = nbt.contains(GourdJailHandler.KEY_MOB_NBT)
                 ? nbt.getCompound(GourdJailHandler.KEY_MOB_NBT) : null;
+        this.prisonerName = nbt.contains(GourdJailHandler.KEY_PRISONER_NAME, net.minecraft.nbt.Tag.TAG_STRING)
+                ? nbt.getString(GourdJailHandler.KEY_PRISONER_NAME) : null;
         setState(2);
         setSealed(true);
     }
@@ -230,6 +235,8 @@ public class GourdJailEntity extends Entity {
             if (cage == null) { state = 0; setAnim(0); return; }
             cagePos = cage;
             prisonerId = sealTargetId;
+            // 记录玩家名字：已封印物品 tooltip 只显示名字，客户端无法按 UUID 反查
+            prisonerName = target.getName().getString();
         } else if (target instanceof LivingEntity living) {
             // 记录完整 NBT（含实体类型 id）后清除实体
             prisonerNbt = new CompoundTag();
@@ -370,6 +377,7 @@ public class GourdJailEntity extends Entity {
     private static final String TAG_CAGE = "CagePos";
     private static final String TAG_PRISONER = "PrisonerId";
     private static final String TAG_MOB_NBT = "MobNbt";
+    private static final String TAG_PRISONER_NAME = "PrisonerName";
 
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
@@ -378,6 +386,7 @@ public class GourdJailEntity extends Entity {
         if (cagePos != null) tag.putLong(TAG_CAGE, cagePos.asLong());
         if (prisonerId != null) tag.putUUID(TAG_PRISONER, prisonerId);
         if (prisonerNbt != null) tag.put(TAG_MOB_NBT, prisonerNbt);
+        if (prisonerName != null) tag.putString(TAG_PRISONER_NAME, prisonerName);
     }
 
     @Override
@@ -387,6 +396,8 @@ public class GourdJailEntity extends Entity {
         cagePos = tag.contains(TAG_CAGE) ? BlockPos.of(tag.getLong(TAG_CAGE)) : null;
         prisonerId = tag.hasUUID(TAG_PRISONER) ? tag.getUUID(TAG_PRISONER) : null;
         prisonerNbt = tag.contains(TAG_MOB_NBT) ? tag.getCompound(TAG_MOB_NBT) : null;
+        prisonerName = tag.contains(TAG_PRISONER_NAME, net.minecraft.nbt.Tag.TAG_STRING)
+                ? tag.getString(TAG_PRISONER_NAME) : null;
         setSealed(state == 2);
         setAnim(0);
         // 若加载时处于动画中途（异常卸载），重置为空闲态等待新目标

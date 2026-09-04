@@ -166,6 +166,8 @@ public final class GourdJailHandler {
     public static final String KEY_OWNER = "tinkersnewlife.gourd_owner";
     public static final String KEY_SEALED = "tinkersnewlife.gourd_sealed";
     public static final String KEY_MOB_NBT = "tinkersnewlife.gourd_mob_nbt";
+    /** 已封印物品上保存的被封印玩家名字（生物名可从 MOB_NBT 推导，无需单独存） */
+    public static final String KEY_PRISONER_NAME = "tinkersnewlife.gourd_prisoner_name";
 
     /** 辅助：坐标 <-> NBT */
     public static void writePos(CompoundTag tag, String key, BlockPos pos) {
@@ -206,7 +208,8 @@ public final class GourdJailHandler {
         BlockPos cage = jail.getCagePos();
         UUID prisoner = jail.getPrisoner();
         ItemStack stack = com.mofengbaizhi.tinkersnewlife.content.gourd.GourdJailItem
-                .makeStack(jail.isSealed(), cage, prisoner, jail.getOwnerId(), jail.getPrisonerNbt());
+                .makeStack(jail.isSealed(), cage, prisoner, jail.getOwnerId(), jail.getPrisonerNbt(),
+                        jail.getPrisonerName());
         if (!player.getInventory().add(stack)) {
             // 背包满：掉落
             net.minecraft.world.entity.item.ItemEntity item = new net.minecraft.world.entity.item.ItemEntity(
