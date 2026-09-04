@@ -225,6 +225,28 @@ public final class PlantManipulationTechnique extends BaseTechnique {
         }
     }
 
+    /** 天逆鉾中断该玩家草木术式（蓄力 + 树根场全部取消并还原）；返回是否确有进行中 */
+    public static boolean interruptAll(ServerPlayer player) {
+        boolean had = CHARGING.containsKey(player.getUUID()) || FIELDS.containsKey(player.getUUID());
+        cleanup(player);
+        return had;
+    }
+
+    /** 天逆鉾右键甜浆果丛：移除包含该位置的树根场并还原；返回是否命中 */
+    public static boolean removeFieldAt(ServerLevel level, BlockPos pos) {
+        Iterator<Map.Entry<UUID, RootField>> it = FIELDS.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<UUID, RootField> en = it.next();
+            RootField field = en.getValue();
+            if (field.level == level && field.blocks.containsKey(pos)) {
+                field.restore();
+                it.remove();
+                return true;
+            }
+        }
+        return false;
+    }
+
     // ================= 服务端 tick / 方块破坏拦截 =================
 
     @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -254,11 +276,16 @@ public final class PlantManipulationTechnique extends BaseTechnique {
             }
         }
 
-        /** 树根持续期间禁止采摘/催熟（右击会被拦截，浆果丛不结果、不掉甜浆果） */
+        /** 树根持续期间禁止采摘/催熟（右击会被拦截，浆果丛不结果、不掉甜浆果）；手持天逆鉾例外（由其中断处理器接管） */
         @SubscribeEvent
         public static void onRightClickBlock(net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickBlock event) {
             if (FIELDS.isEmpty()) return;
             if (event.getLevel().isClientSide) return;
+            net.minecraft.world.entity.player.Player p = event.getEntity();
+            if (p != null && p.getMainHandItem().getItem()
+                    instanceof com.mofengbaizhi.tinkersnewlife.content.item.TianNiHuoItem) {
+                return;
+            }
             if (!event.getLevel().getBlockState(event.getPos()).is(Blocks.SWEET_BERRY_BUSH)) return;
             if (isFieldBlock(event.getPos())) {
                 event.setCanceled(true);
