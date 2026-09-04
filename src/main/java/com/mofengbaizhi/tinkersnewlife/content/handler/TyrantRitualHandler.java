@@ -451,18 +451,22 @@ public class TyrantRitualHandler {
             data.pulseTimer = 0;
             float drain = maxHp * DRAIN_FRACTION;
             float newHp = Math.max(target, caster.getHealth() - drain);
-            caster.heal(newHp - caster.getHealth());
+            // ⭐ 直接 setHealth 扣血：heal(负数) 会被 Forge 回血钩子（LivingHealEvent）拦截导致不掉血
+            caster.setHealth(newHp);
             data.ceiling = newHp;
             // 大量黑色方块破坏粒子（玩家周身 + 池心）
             blackBreak(level, caster.position(), 36, 1.8);
             blackBreak(level, centerOf(data.anchor), 18, 2.4);
             if (newHp <= target) {
                 enterFinal(caster, level, data);
+            } else {
+                long pct = Math.round(newHp / maxHp * 100.0F);
+                caster.displayClientMessage(Component.literal(TAG + "池水侵蚀着你的血肉……（生命 " + pct + "%）"), true);
             }
         } else {
             // 抑制自然回血超过上次脉冲后的水平（保证能看到 20 tick 一跳的阶梯式扣血）
             if (caster.getHealth() > data.ceiling) {
-                caster.heal(data.ceiling - caster.getHealth());
+                caster.setHealth(data.ceiling);
             }
         }
     }
