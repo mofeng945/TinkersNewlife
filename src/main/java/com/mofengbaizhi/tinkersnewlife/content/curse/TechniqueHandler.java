@@ -123,6 +123,8 @@ public final class TechniqueHandler {
         ModifierId current = SELECTED.get(uuid);
         int index = current != null ? techniques.indexOf(current) : -1;
         ModifierId next = techniques.get((index + 1) % techniques.size());
+        // 切换术式时取消草木操术的顺转蓄力（防止切回后残留旧蓄力）
+        com.mofengbaizhi.tinkersnewlife.content.curse.technique.PlantManipulationTechnique.cancelCharge(player);
         SELECTED.put(uuid, next);
         player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.switched",
                 getDisplayName(next)), true);
@@ -186,6 +188,7 @@ public final class TechniqueHandler {
             ZaoKaiTechnique.cancelCharge(sp);
             WuliangCangTechnique.cancelCharge(sp);
             com.mofengbaizhi.tinkersnewlife.content.curse.technique.PuppetTechnique.cleanup(sp);
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.PlantManipulationTechnique.cleanup(sp);
             SELECTED.remove(sp.getUUID());
         }
     }
@@ -197,6 +200,7 @@ public final class TechniqueHandler {
             ZaoKaiTechnique.cancelCharge(sp);
             WuliangCangTechnique.cancelCharge(sp);
             com.mofengbaizhi.tinkersnewlife.content.curse.technique.PuppetTechnique.cleanup(sp);
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.PlantManipulationTechnique.cleanup(sp);
         }
     }
 }

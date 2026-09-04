@@ -75,20 +75,31 @@ public final class CursePowerHelper {
         return tool == null ? 0 : tool.getModifierLevel(id);
     }
 
-    /** 咒力输出等级（佩戴的咒力核心；天与咒缚·咒力者佩戴时自动 +1 级） */
+    /** 咒力输出等级（佩戴的咒力核心；天与咒缚·咒力者佩戴时自动 +1 级；咒种寄生时 -1 级且不低于 1） */
     public static int getCurseOutputLevel(Player player) {
         int level = getModifierLevel(findEquippedCurseCore(player), Modifiers.CURSE_OUTPUT.getId());
         if (level > 0) {
             level += com.mofengbaizhi.tinkersnewlife.content.curse.binding.BindingStateHandler.getCoreLevelBonus(player);
         }
+        if (level > 0 && hasSeedParasite(player)) {
+            level = Math.max(1, level - 1);
+        }
         return level;
     }
 
-    /** 咒力总量等级（佩戴的咒力核心；天与咒缚·咒力者佩戴时自动 +1 级） */
+    /** 咒种寄生是否生效（草木操术·咒种）：攻击 -40%（效果自带修正），咒力属性按此扣减 */
+    public static boolean hasSeedParasite(Player player) {
+        return player.hasEffect(com.mofengbaizhi.tinkersnewlife.content.ModEffects.SEED_PARASITE.get());
+    }
+
+    /** 咒力总量等级（佩戴的咒力核心；天与咒缚·咒力者佩戴时自动 +1 级；咒种寄生时 -1 级且不低于 1） */
     public static int getCurseTotalLevel(Player player) {
         int level = getModifierLevel(findEquippedCurseCore(player), Modifiers.CURSE_TOTAL.getId());
         if (level > 0) {
             level += com.mofengbaizhi.tinkersnewlife.content.curse.binding.BindingStateHandler.getCoreLevelBonus(player);
+        }
+        if (level > 0 && hasSeedParasite(player)) {
+            level = Math.max(1, level - 1);
         }
         return level;
     }
@@ -120,8 +131,9 @@ public final class CursePowerHelper {
                 }
             }
         }
-        return sum + getTemporaryAffinity(player)
-                + com.mofengbaizhi.tinkersnewlife.content.curse.binding.BindingStateHandler.getAffinityBonus(player);
+        return Math.max(0, sum + getTemporaryAffinity(player)
+                + com.mofengbaizhi.tinkersnewlife.content.curse.binding.BindingStateHandler.getAffinityBonus(player)
+                - (hasSeedParasite(player) ? 60 : 0));
     }
 
     /** 设置临时咒力亲和加成（到期后自动失效） */

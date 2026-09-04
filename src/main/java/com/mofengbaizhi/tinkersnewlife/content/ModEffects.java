@@ -6,6 +6,7 @@ import com.mofengbaizhi.tinkersnewlife.content.effect.FrostEffect;
 import com.mofengbaizhi.tinkersnewlife.content.effect.DamageLimitEffect;
 import com.mofengbaizhi.tinkersnewlife.content.effect.UnnameableEffect;
 import com.mofengbaizhi.tinkersnewlife.content.effect.CharmEffect;
+import com.mofengbaizhi.tinkersnewlife.content.effect.SeedParasiteEffect;
 import com.mofengbaizhi.tinkersnewlife.content.effect.StunEffect;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
@@ -35,4 +36,8 @@ public class ModEffects {
     /** 静止（无量空处）：完全定身 */
     public static final RegistryObject<StunEffect> STUN =
             EFFECTS.register("stun", () -> new StunEffect(MobEffectCategory.HARMFUL, 0x000000));
+
+    /** 咒种寄生（草木操术·咒种）：攻击 -40%，咒力总量/输出 -1 级、亲和 -60 */
+    public static final RegistryObject<SeedParasiteEffect> SEED_PARASITE =
+            EFFECTS.register("seed_parasite", () -> new SeedParasiteEffect(MobEffectCategory.HARMFUL, 0x3CB371));
 }
