@@ -99,8 +99,6 @@ public class TyrantRitualHandler {
 
     /** 进行中的仪式：池心坐标 → 数据 */
     private static final Map<BlockPos, RitualData> RITUALS = new ConcurrentHashMap<>();
-    /** 失败提示冷却：玩家 UUID → 上次提示的服务器 tick */
-    private static final Map<UUID, Long> HINT_COOLDOWN = new ConcurrentHashMap<>();
 
     private TyrantRitualHandler() {}
 
@@ -137,20 +135,9 @@ public class TyrantRitualHandler {
                 if (anyRitualNear(skull.blockPosition())) continue;
                 ServerLevel serverLevel = (ServerLevel) level;
                 PoolInfo pool = findPool(serverLevel, skull);
-                if (pool == null) {
-                    hint(player, "水池无效：需要 1 格深、至少 " + POOL_MIN_SOURCES + " 个相连水源方块");
-                    continue;
-                }
-                String envReason = environmentOk(player, serverLevel, pool.anchor);
-                if (envReason != null) {
-                    hint(player, envReason);
-                    continue;
-                }
-                StructureCheck structure = checkStructure(serverLevel, pool.anchor);
-                if (!structure.ok) {
-                    hint(player, structure.reason);
-                    continue;
-                }
+                if (pool == null) continue;
+                if (!environmentOk(player, serverLevel, pool.anchor)) continue;
+                if (!checkStructure(serverLevel, pool.anchor)) continue;
                 ServerPlayer caster = resolveCaster(skull, player);
                 if (caster == null) continue;
                 if (HeavenlyRestrictionHandler.isRestricted(caster)) continue; // 天与咒缚者无法再次举行
@@ -174,16 +161,6 @@ public class TyrantRitualHandler {
             if (anchor.distSqr(pos) < 24 * 24) return true;
         }
         return false;
-    }
-
-    /** 提示（带冷却，防刷屏） */
-    private static void hint(ServerPlayer player, String message) {
-        MinecraftServer server = player.server;
-        long tick = server.getTickCount();
-        Long last = HINT_COOLDOWN.get(player.getUUID());
-        if (last != null && tick - last < 100) return;
-        HINT_COOLDOWN.put(player.getUUID(), tick);
-        player.displayClientMessage(Component.literal(TAG + "发动失败：" + message), true);
     }
 
     // ============================================================
@@ -242,30 +219,26 @@ public class TyrantRitualHandler {
     //  环境与结构校验
     // ============================================================
 
-    /** 环境校验；通过返回 null，否则返回失败原因 */
-    private static String environmentOk(ServerPlayer player, ServerLevel level, BlockPos anchor) {
+    /** 环境校验（时间 / 露天 / 亮度 / 池心空间）；满足返回 true */
+    private static boolean environmentOk(ServerPlayer player, ServerLevel level, BlockPos anchor) {
         boolean cheat = player.isCreative();
         long dayTime = level.getDayTime() % 24000;
         boolean night = dayTime >= 13000 && dayTime < 23000;
         boolean newMoon = level.getMoonPhase() == 4;
-        if (!cheat) {
-            if (!night) return "需要夜晚（新月之夜）举行";
-            if (!newMoon) return "需要新月之夜（月相 4）举行";
-        }
+        if (!cheat && (!night || !newMoon)) return false;
         // 池心正上方必须为空气（玩家能跳进去）
-        if (!level.getBlockState(anchor.above()).isAir()) return "池水正上方需要留出空间";
+        if (!level.getBlockState(anchor.above()).isAir()) return false;
         // 非露天：水池所在纵列上方必须有遮盖（heightmap 高于水面）
         int topY = level.getHeight(Heightmap.Types.OCEAN_FLOOR, anchor.getX(), anchor.getZ());
-        if (topY <= anchor.getY() + 1) return "仪式场所必须是非露天的封闭空间（水池上方需有屋顶）";
+        if (topY <= anchor.getY() + 1) return false;
         // 亮度 < 8
         int blockLight = level.getBrightness(LightLayer.BLOCK, anchor);
         int skyLight = level.getBrightness(LightLayer.SKY, anchor);
-        if (Math.max(blockLight, skyLight) >= 8) return "仪式场所亮度必须低于 8（太亮了）";
-        return null;
+        return Math.max(blockLight, skyLight) < 8;
     }
 
-    /** 结构校验：16 格内材料计数 + 火焰/灵魂火 */
-    private static StructureCheck checkStructure(ServerLevel level, BlockPos anchor) {
+    /** 结构校验：16 格内材料计数 + 火焰/灵魂火；满足返回 true */
+    private static boolean checkStructure(ServerLevel level, BlockPos anchor) {
         int netherrack = 0, obsidian = 0, soulSand = 0, netherBricks = 0;
         boolean fireOnNetherrack = false, soulFireOnSoulSand = false;
         for (int dx = -SCAN_RADIUS; dx <= SCAN_RADIUS; dx++) {
@@ -287,23 +260,9 @@ public class TyrantRitualHandler {
                 }
             }
         }
-        StructureCheck check = new StructureCheck();
-        if (netherrack < REQ_NETHERRACK) {
-            check.reason = "16 格内下界岩不足（需要 " + REQ_NETHERRACK + "，当前 " + netherrack + "）";
-        } else if (obsidian < REQ_OBSIDIAN) {
-            check.reason = "16 格内黑曜石不足（需要 " + REQ_OBSIDIAN + "，当前 " + obsidian + "）";
-        } else if (soulSand < REQ_SOUL_SAND) {
-            check.reason = "16 格内灵魂沙不足（需要 " + REQ_SOUL_SAND + "，当前 " + soulSand + "）";
-        } else if (netherBricks < REQ_NETHER_BRICKS) {
-            check.reason = "16 格内下界砖不足（需要 " + REQ_NETHER_BRICKS + "，当前 " + netherBricks + "）";
-        } else if (!fireOnNetherrack) {
-            check.reason = "需要在下界岩上点燃火焰（16 格内至少 1 处）";
-        } else if (!soulFireOnSoulSand) {
-            check.reason = "需要在灵魂沙上点燃灵魂火（16 格内至少 1 处）";
-        } else {
-            check.ok = true;
-        }
-        return check;
+        return netherrack >= REQ_NETHERRACK && obsidian >= REQ_OBSIDIAN
+                && soulSand >= REQ_SOUL_SAND && netherBricks >= REQ_NETHER_BRICKS
+                && fireOnNetherrack && soulFireOnSoulSand;
     }
 
     private static ServerPlayer resolveCaster(ItemEntity skull, ServerPlayer nearby) {
@@ -322,7 +281,6 @@ public class TyrantRitualHandler {
         RitualData data = new RitualData(caster.getUUID(), level.dimension(), anchor, pool.sources);
         data.skullId = skull.getId();
         RITUALS.put(anchor, data);
-        caster.displayClientMessage(Component.literal(TAG + "条件达成，凋零之颅被吸向池心……"), true);
         TinkersNewlife.LOGGER.info("{} 仪式发动（玩家 {} @ {}）", TAG, caster.getName().getString(), anchor);
     }
 
@@ -390,9 +348,6 @@ public class TyrantRitualHandler {
             level.sendParticles(ParticleTypes.EXPLOSION, target.x, target.y, target.z, 1, 0, 0, 0, 0);
             blackBreak(level, target, 40, 1.6);
             blackBreak(level, target, 40, 3.2);
-            if (caster != null) {
-                caster.displayClientMessage(Component.literal(TAG + "头颅轰然散开，池水变得漆黑如墨——跳入黑水中完成仪式。"), false);
-            }
         }
     }
 
@@ -400,17 +355,11 @@ public class TyrantRitualHandler {
     private static void tickBlackWater(MinecraftServer server, ServerLevel level, RitualData data, ServerPlayer caster) {
         data.phaseTicks++;
         blackWaterFx(level, data, 5);
-        if (data.phaseTicks % 100 == 0 && caster != null) {
-            caster.displayClientMessage(Component.literal(TAG + "仪式已就绪：跳入漆黑的水池。"), true);
-        }
         if (caster == null || !caster.level().dimension().equals(data.dimension)) {
             abort(level, data);
             return;
         }
         if (data.phaseTicks > BLACKWATER_TIMEOUT) {
-            if (caster != null) {
-                caster.displayClientMessage(Component.literal(TAG + "仪式失败：无人跳入黑水，咒力消散。"), false);
-            }
             abort(level, data);
             return;
         }
@@ -419,7 +368,6 @@ public class TyrantRitualHandler {
             data.phaseTicks = 0;
             data.pulseTimer = 0;
             data.ceiling = caster.getHealth();
-            caster.displayClientMessage(Component.literal(TAG + "你浸入黑水，咒力与生命力开始被池水抽离——坚持到生命仅剩 1%。"), false);
         }
     }
 
@@ -435,12 +383,8 @@ public class TyrantRitualHandler {
             return;
         }
         if (!inPoolWater(caster, data)) {
-            if (data.phaseTicks++ % 80 == 0) {
-                caster.displayClientMessage(Component.literal(TAG + "回到黑水中，仪式才能继续……"), true);
-            }
             return;
         }
-        data.phaseTicks++;
         float maxHp = caster.getMaxHealth();
         float target = maxHp * 0.01F;
         if (caster.getHealth() <= target) {
@@ -460,9 +404,6 @@ public class TyrantRitualHandler {
             blackBreak(level, centerOf(data.anchor), 18, 2.4);
             if (newHp <= target) {
                 enterFinal(caster, level, data);
-            } else {
-                long pct = Math.round(newHp / maxHp * 100.0F);
-                caster.displayClientMessage(Component.literal(TAG + "池水侵蚀着你的血肉……（生命 " + pct + "%）"), true);
             }
         } else {
             // 抑制自然回血超过上次脉冲后的水平（保证能看到 20 tick 一跳的阶梯式扣血）
@@ -542,8 +483,6 @@ public class TyrantRitualHandler {
         blackBreak(level, centerOf(data.anchor), 80, 4.0);
         HeavenlyRestrictionHandler.applyRestriction(caster);
         caster.setHealth(caster.getMaxHealth() * 0.4F);
-        caster.displayClientMessage(Component.literal(TAG + "仪式完成。你失去了咒力：再也无法佩戴咒力核心，黑闪概率锁定为 0（该状态死亡也不解除）。"), false);
-        caster.displayClientMessage(Component.literal(TAG + "作为交换，肉体被彻底强化：生命上限 ×5、移动速度 ×5、跳跃高度 ×3、攻击力 ×10（生命已恢复至 40%）。"), false);
         TinkersNewlife.LOGGER.info("{} 仪式完成（玩家 {}，生命恢复至 40%）", TAG, caster.getName().getString());
     }
 
@@ -670,11 +609,6 @@ public class TyrantRitualHandler {
             this.anchor = anchor;
             this.sources = sources;
         }
-    }
-
-    private static class StructureCheck {
-        boolean ok;
-        String reason = "16 格内结构材料不足";
     }
 
     private static class RitualData {
