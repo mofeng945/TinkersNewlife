@@ -64,7 +64,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *   <li>结算：发起者获得天与咒缚·咒力（CurseBindingHandler）——基础生命上限/速度/伤害减半，
  *       但自带咒力亲和 200，且佩戴咒力核心时咒力总量与咒力输出各自动 +1 级；
  *       状态固化（死亡不解除）；仪式结束时生命恢复至新上限的 40%。
- *       与「暴君」束缚互相排斥（举行本仪式会把暴君束缚转换掉）</li>
+ *       与「暴君」仪式互斥——持有任一束缚标识（暴君 / 咒力）后两种仪式都无法再次举行，
+ *       唯有指令 /tinkersnewlife unbind 可清除标识并恢复体质与属性</li>
  * </ol>
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -141,7 +142,7 @@ public class CurseBindingRitualHandler {
                 if (!checkStructure(serverLevel, pool.anchor)) continue;
                 ServerPlayer caster = resolveCaster(core, player);
                 if (caster == null) continue;
-                if (CurseBindingHandler.isBound(caster)) continue; // 已是咒力束缚者，无法再次举行
+                if (HeavenlyRestrictionHandler.hasAnyBinding(caster)) continue; // 持有任一束缚标识者无法再次举行两种仪式
                 startRitual(caster, serverLevel, core, pool);
                 break;
             }

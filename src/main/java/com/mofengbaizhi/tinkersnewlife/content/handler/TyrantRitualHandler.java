@@ -65,6 +65,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *       黑闪概率锁 0），换来肉体强化（生命上限 ×5、速度 ×5、跳跃 ×3、攻击 ×10），
  *       状态固化（死亡不解除）；仪式结束时生命恢复至新上限的 40%</li>
  * </ol>
+ * 仪式检测：与「咒力」仪式互斥——持有任一束缚标识（暴君 / 咒力）的玩家都无法再次举行
+ * 两种仪式中的任意一种；唯有指令 /tinkersnewlife unbind 可清除标识并恢复体质与属性。
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class TyrantRitualHandler {
@@ -140,7 +142,7 @@ public class TyrantRitualHandler {
                 if (!checkStructure(serverLevel, pool.anchor)) continue;
                 ServerPlayer caster = resolveCaster(skull, player);
                 if (caster == null) continue;
-                if (HeavenlyRestrictionHandler.isRestricted(caster)) continue; // 天与咒缚者无法再次举行
+                if (HeavenlyRestrictionHandler.hasAnyBinding(caster)) continue; // 持有任一束缚标识者无法再次举行两种仪式
                 startRitual(caster, serverLevel, skull, pool);
                 break;
             }

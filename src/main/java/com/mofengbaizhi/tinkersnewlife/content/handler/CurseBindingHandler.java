@@ -75,9 +75,8 @@ public final class CurseBindingHandler {
 
     // ==================== 赋予 / 解除 ====================
 
-    /** 仪式二完成：赋予天与咒缚·咒力（与暴君互斥：先解除暴君） */
+    /** 仪式二完成：赋予天与咒缚·咒力（仪式层面已互斥；此处防御性移除对方的标识，避免两种状态叠加） */
     public static void applyBinding(ServerPlayer player) {
-        // 两种束缚互斥：转为咒力束缚时先解除暴君束缚
         if (HeavenlyRestrictionHandler.isRestricted(player)) {
             HeavenlyRestrictionHandler.removeRestriction(player);
         }
