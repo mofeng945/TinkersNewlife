@@ -188,6 +188,43 @@ public class DisarmEffect extends MobEffect {
         }
 
         /**
+         * 实体转化（闪电/诡厄巫法把骷髅→响骷、僵尸→焦尸、猪→僵尸猪灵等）时：
+         * 旧实体被新实体替换，若缴械状态留在旧实体上会丢失（弓不归还 / 新实体不没收）。
+         * 这里把【已缴械物品】与【剩余缴械效果】整体迁移到转化后的新实体。
+         */
+        @SubscribeEvent
+        public static void onLivingConversion(net.minecraftforge.event.entity.living.LivingConversionEvent.Post event) {
+            if (event.getEntity().level().isClientSide) return;
+            LivingEntity oldEntity = event.getEntity();
+            LivingEntity newEntity = event.getOutcome();
+            if (newEntity == oldEntity) return;
+
+            boolean migrated = false;
+            // 1) 已缴械物品迁到新实体（到期归还给新实体主手）
+            List<ItemStack> items = new ArrayList<>(getStoredItems(oldEntity));
+            if (!items.isEmpty()) {
+                for (ItemStack stack : items) {
+                    if (!stack.isEmpty()) {
+                        addStoredItem(newEntity, stack);
+                        migrated = true;
+                    }
+                }
+                clearStoredItems(oldEntity);
+            }
+            // 2) 缴械效果延续到新实体（新实体主手同样会被缴械没收，到期统一归还）
+            MobEffectInstance inst = oldEntity.getEffect(ModEffects.DISARM.get());
+            if (inst != null) {
+                newEntity.addEffect(new MobEffectInstance(ModEffects.DISARM.get(),
+                        inst.getDuration(), inst.getAmplifier(), false, true));
+                migrated = true;
+            }
+            if (migrated) {
+                // 移除旧实体上的缴械，避免旧实体死亡时把已迁移物品再掉落一次
+                oldEntity.removeEffect(ModEffects.DISARM.get());
+            }
+        }
+
+        /**
          * 玩家死亡时：若缴械效果尚未解除，直接掉落所有被缴械的物品。
          */
         @SubscribeEvent
