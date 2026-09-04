@@ -338,10 +338,11 @@ public final class GoetyBridge {
 
     /**
      * 对受限 Boss 的"全额穿透"结算（墨默/天逆鉾共用）：
-     * ① 多段 ≤19 的 hurt()（带 true_pierce 类型）——第一段触发完整受击事件/阶段逻辑；
-     * ② 若被各类免伤窗（启示录 canHurt 30tick/原版伤害冷却等，实测无法可靠清除）吞掉部分，
-     *    按"应打-已打"的差额直接 setHealth 补齐——总量精确全额，不受任何窗口/单次上限影响；
-     * ③ 差额致死时补 die() 死亡流程（掉落/击败逻辑正常）。
+     * ① 下界亚波伦（启示录 30t 免疫窗/单次 20 上限）：走破限直伤——不经 hurt()/actuallyHurt()，
+     *    直接 setHealth 扣血、血量打空主动 die()（梦幻终焉湮灭射线同思路，见 isNetherApollyon 分支）；
+     * ② 其余受限 Boss：多段 ≤19 的 hurt()（带 true_pierce 类型）——第一段触发完整受击事件/阶段逻辑；
+     * ③ 若被各类免伤窗（原版伤害冷却等）吞掉部分，按"应打-已打"差额直接 setHealth 补齐；
+     * ④ 差额致死时补 die() 死亡流程（掉落/击败逻辑正常）。
      */
     public static void pierceFullDamage(LivingEntity target, float dmg) {
         if (target == null || target.level().isClientSide || target.isRemoved()) return;
@@ -356,6 +357,24 @@ public final class GoetyBridge {
         }
         net.minecraft.world.damagesource.DamageSource src = truePierceSource(target.level());
         if (src == null) src = target.damageSources().genericKill();
+
+        // ⭐ 下界亚波伦破限直伤（梦幻终焉「湮灭射线」同思路，墨默/天逆鉾共用）：
+        // 启示录的 canHurt 取消 / 单次 20 上限 / 30t 免疫窗全部挂靠在 hurt()/actuallyHurt() 管线，
+        // 这里完全不调用它们——直接 setHealth 扣血，血量打空后主动 die() 让击败状态机正常结算。
+        if (isNetherApollyon(target)) {
+            target.invulnerableTime = 0;
+            float hp = target.getHealth() - dmg;
+            if (hp <= 0.0F) {
+                target.setHealth(0.0F);
+                if (target.isAlive() && !target.isRemoved()) {
+                    target.die(src);
+                }
+            } else {
+                target.setHealth(hp);
+            }
+            return;
+        }
+
         float startHp = target.getHealth();
         float remaining = dmg;
         int guard = 0;
@@ -504,6 +523,13 @@ public final class GoetyBridge {
         } catch (Throwable ignored) {
             return false;
         }
+    }
+
+    /** 是否下界亚波伦（下界维度 + Apollyon 状态）——启示录 30t 免疫窗/限伤只对它生效 */
+    public static boolean isNetherApollyon(LivingEntity e) {
+        if (e == null || e.level() == null || e.level().isClientSide) return false;
+        if (e.level().dimension() != net.minecraft.world.level.Level.NETHER) return false;
+        return isApollyonState(e);
     }
 
     /**
