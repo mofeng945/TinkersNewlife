@@ -261,6 +261,9 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         living.setHealth(Math.max(1.0F, entry.maxHp));
         if (living instanceof Mob mob) {
             mob.setPersistenceRequired();
+            // ⭐ 剥除该个体自带的目标选择目标（如"找最近玩家"），防止它自选主人/同队；
+            //    其攻击目标一律由 SpiritEvents 每 tick 指派。
+            stripTargetGoals(mob);
         }
         // 主人面前 1.5 格生成，自动找安全高度
         Vec3 look = player.getLookAngle();
@@ -376,6 +379,23 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         }
     }
 
+    /** 反射移除该 Mob 的所有目标选择目标（目标统一由操控 tick 指派） */
+    private static void stripTargetGoals(Mob mob) {
+        try {
+            java.lang.reflect.Field field = Mob.class.getDeclaredField("targetSelector");
+            field.setAccessible(true);
+            if (!(field.get(mob) instanceof net.minecraft.world.entity.ai.goal.GoalSelector selector)) {
+                return;
+            }
+            for (net.minecraft.world.entity.ai.goal.WrappedGoal wg :
+                    new ArrayList<>(selector.getAvailableGoals())) {
+                selector.removeGoal(wg.getGoal());
+            }
+        } catch (Throwable ignored) {
+            // 反射失败不影响释放；由 tick 清除 + 伤害取消兜底
+        }
+    }
+
     private static double safeY(ServerLevel level, double x, double y, double z, Entity e) {
         for (int i = 0; i < 4; i++) {
             double cy = y + i;
@@ -431,6 +451,33 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         @SubscribeEvent
         public static void onMinionDeathEvent(LivingDeathEvent event) {
             onMinionDeath(event.getEntity());
+        }
+
+        /** 兜底：已释放体对主人/同队造成伤害时直接取消（防个别目标选择遗漏） */
+        @SubscribeEvent
+        public static void onMinionAttackAlly(net.minecraftforge.event.entity.living.LivingAttackEvent event) {
+            if (event.getEntity().level().isClientSide) return;
+            Entity source = event.getSource().getEntity();
+            if (!(source instanceof Mob minion)) return;
+            LivingEntity target = event.getEntity();
+            ServerPlayer owner = findOwnerOf(minion);
+            if (owner == null) return;
+            if (PuppetUtil.isAllyOf(target, owner)) {
+                event.setCanceled(true);
+            }
+        }
+
+        private static ServerPlayer findOwnerOf(Mob minion) {
+            if (minion.level() instanceof ServerLevel sl) {
+                for (ServerPlayer p : sl.getServer().getPlayerList().getPlayers()) {
+                    for (SpiritEntry e : entries(p)) {
+                        if (e.releasedId >= 0 && minion.getId() == e.releasedId) {
+                            return p;
+                        }
+                    }
+                }
+            }
+            return null;
         }
     }
 }
