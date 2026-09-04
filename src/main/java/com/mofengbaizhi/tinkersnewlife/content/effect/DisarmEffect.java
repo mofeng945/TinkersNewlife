@@ -211,28 +211,35 @@ public class DisarmEffect extends MobEffect {
                 }
                 clearStoredItems(oldEntity);
             }
-            // 2) 缴械效果延续到新实体（新实体主手同样会被缴械没收，到期统一归还）
+            // 2) 缴械效果延续到新实体（新实体主手同样会被缴械没收，到期统一归还）。
+            //    时长保底 60 tick（3 秒），避免转化瞬间原效果已快到期、迁移后"感知不到"。
             MobEffectInstance inst = oldEntity.getEffect(ModEffects.DISARM.get());
             if (inst != null) {
-                newEntity.addEffect(new MobEffectInstance(ModEffects.DISARM.get(),
-                        inst.getDuration(), inst.getAmplifier(), false, true));
                 migrated = true;
             }
             if (migrated) {
+                int keep = 60;
+                if (inst != null) {
+                    keep = Math.max(keep, inst.getDuration());
+                }
+                MobEffectInstance cur = newEntity.getEffect(ModEffects.DISARM.get());
+                if (cur != null) {
+                    keep = Math.max(keep, cur.getDuration());
+                }
+                newEntity.addEffect(new MobEffectInstance(ModEffects.DISARM.get(), keep, 0, false, true));
                 // 移除旧实体上的缴械，避免旧实体死亡时把已迁移物品再掉落一次
                 oldEntity.removeEffect(ModEffects.DISARM.get());
             }
         }
 
         /**
-         * 玩家死亡时：若缴械效果尚未解除，直接掉落所有被缴械的物品。
+         * 实体死亡时：只要身上仍有"已缴械未归还"的物品就掉落（不依赖缴械效果是否还在——
+         * 实体转化等场景可能效果丢失但物品仍在记录里，效果消失时由 handleEffectEnd 归还）。
          */
         @SubscribeEvent
         public static void onLivingDeath(LivingDeathEvent event) {
             LivingEntity entity = event.getEntity();
             if (entity.level().isClientSide) return;
-            // 只有缴械效果还在（未解除）时才掉落；已解除（效果消失）由 handleEffectEnd 归还
-            if (!entity.hasEffect(ModEffects.DISARM.get())) return;
 
             List<ItemStack> items = new ArrayList<>(getStoredItems(entity));
             if (items.isEmpty()) return;
