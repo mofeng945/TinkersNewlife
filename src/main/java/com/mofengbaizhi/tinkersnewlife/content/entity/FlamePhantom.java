@@ -152,6 +152,16 @@ public class FlamePhantom extends Phantom {
                 e.hurt(damageSources().explosion(this, owner), (float) (center * falloff));
             }
         }
+        // ⭐ 咒术直伤保底：防火/抗火免疫对咒力伤害无效——被撞目标额外受一跳咒术伤害
+        //    （共享伤害基底 × 25%，套魔杖增幅与核心材料特性；与顺转岩浆池每跳一致）
+        if (owner != null && target != null && target.isAlive()) {
+            double curse = com.mofengbaizhi.tinkersnewlife.content.curse.technique.FlameManipulationTechnique
+                    .computeHitDamage(owner, target);
+            target.invulnerableTime = 0;
+            target.hurt(owner.damageSources().mobAttack(owner), (float) curse);
+            com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper
+                    .afterCurseCoreHit(owner, target, curse);
+        }
         level.sendParticles(ParticleTypes.EXPLOSION, getX(), getY(), getZ(), 24, 1.2, 1.2, 1.2, 0);
         level.playSound(null, getX(), getY(), getZ(), SoundEvents.GENERIC_EXPLODE, SoundSource.HOSTILE, 1.5F, 0.8F);
         // 目标脚下 3×3 燃起火焰 + 点燃敌人

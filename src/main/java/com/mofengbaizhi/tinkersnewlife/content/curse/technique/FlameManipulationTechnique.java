@@ -139,6 +139,17 @@ public final class FlameManipulationTechnique extends BaseTechnique {
         }
     }
 
+    /**
+     * 单跳咒术伤害（顺转岩浆池每跳 / 幻翼撞击保底共用）：
+     * 共享伤害基底 × 25% + 魔杖增幅 + 核心材料特性。
+     * 咒术伤害与火焰无关——防火/抗火免疫目标同样全额承受。
+     */
+    public static double computeHitDamage(ServerPlayer owner, LivingEntity victim) {
+        double raw = INSTANCE.amplifyTechniqueDamage(owner,
+                INSTANCE.computeBaseDamage(owner) * MELT_HIT_FACTOR);
+        return CurseCoreTraitHelper.applyCurseCoreTraits(owner, victim, raw);
+    }
+
     /** 登出 / 死亡：还原该玩家岩浆池（火焰场短暂自动熄灭，无需清理） */
     public static void cleanup(ServerPlayer player) {
         UUID uuid = player.getUUID();
@@ -228,14 +239,12 @@ public final class FlameManipulationTechnique extends BaseTechnique {
             for (LivingEntity victim : victims) {
                 float dmg = 1.0F;
                 if (owner != null) {
-                    double raw = FlameManipulationTechnique.INSTANCE.amplifyTechniqueDamage(owner,
-                            FlameManipulationTechnique.INSTANCE.computeBaseDamage(owner) * MELT_HIT_FACTOR);
-                    raw = CurseCoreTraitHelper.applyCurseCoreTraits(owner, victim, raw);
-                    dmg = (float) raw;
+                    dmg = (float) computeHitDamage(owner, victim);
                 }
                 victim.invulnerableTime = 0;
                 if (owner != null) {
                     victim.hurt(owner.damageSources().mobAttack(owner), dmg);
+                    CurseCoreTraitHelper.afterCurseCoreHit(owner, victim, dmg);
                 }
                 victim.setSecondsOnFire(2);
                 level.sendParticles(ParticleTypes.LAVA,
