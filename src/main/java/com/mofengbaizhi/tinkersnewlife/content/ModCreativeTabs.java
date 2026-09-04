@@ -106,7 +106,7 @@ public class ModCreativeTabs {
                                 addAllPartVariants(output, ModItems.SPELL_CORE.get());
                                 addAllPartVariants(output, ModItems.YO_YO_WHEEL.get());
                                 addAllPartVariants(output, ModItems.YO_YO_SPOOL.get());
-                                addAllPartVariants(output, ModItems.CURSE_CORE_PART.get());
+                                // ⭐ 咒力核心部件已从创造物品栏移除（易与成品咒力核心混淆，需用核心请取成品变体）
 
                                 addAllToolVariants(output, DRAGON_STAFF_DEFINITION, ModItems.DRAGON_STAFF.get(), 3);
 
