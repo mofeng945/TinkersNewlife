@@ -107,13 +107,13 @@ public class FuMoYuChuZiDomain extends BaseDomain {
 
             // ⭐ 领域攻击同样触发咒力核心材料特性
             double dmg = computeDamage(player);
-            dmg = com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper
+            dmg = com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper
                     .applyCurseCoreTraits(player, entity, dmg);
             // ⭐ 无视无敌帧：清零受伤间隔，确保每次斩击全额结算；
             // 伤害仍走正常结算（护甲/盾牌/抗性等照常衰减，非真实伤害）
             entity.invulnerableTime = 0;
             entity.hurt(source, (float) dmg);
-            com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper.afterCurseCoreHit(player, entity, dmg);
+            com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper.afterCurseCoreHit(player, entity, dmg);
 
             // 横扫粒子特效
             spawnSlashParticles(level, center, entity.position());

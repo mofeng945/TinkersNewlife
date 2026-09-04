@@ -177,13 +177,13 @@ public class CursedOrbEntity extends Entity {
                 float dmg = (float) (speed * (1.0 + getAffinity() / 100.0) * (5.0 + getOutput() * 2.0));
                 if (dmg > 0) {
                     if (casterPlayer != null) {
-                        dmg = (float) com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper
+                        dmg = (float) com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper
                                 .applyCurseCoreTraits(casterPlayer, e, dmg);
                     }
                     e.invulnerableTime = 0;
                     e.hurt(source, dmg);
                     if (casterPlayer != null) {
-                        com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper.afterCurseCoreHit(casterPlayer, e, dmg);
+                        com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper.afterCurseCoreHit(casterPlayer, e, dmg);
                     }
                     server.sendParticles(ParticleTypes.DAMAGE_INDICATOR, e.getX(), e.getY() + e.getBbHeight() / 2, e.getZ(), 3, 0.2, 0.2, 0.2, 0);
                 }
@@ -227,11 +227,11 @@ public class CursedOrbEntity extends Entity {
         for (LivingEntity e : inRange) {
             if (e.distanceToSqr(this) > 9) continue;
             float finalDmg = casterPlayer != null
-                    ? (float) com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper.applyCurseCoreTraits(casterPlayer, e, dmg)
+                    ? (float) com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper.applyCurseCoreTraits(casterPlayer, e, dmg)
                     : dmg;
             e.hurt(source, finalDmg);
             if (casterPlayer != null) {
-                com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper.afterCurseCoreHit(casterPlayer, e, finalDmg);
+                com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper.afterCurseCoreHit(casterPlayer, e, finalDmg);
             }
         }
         server.sendParticles(new DustParticleOptions(new Vector3f(0.7F, 0.3F, 1.0F), 1.4F),
@@ -284,12 +284,12 @@ public class CursedOrbEntity extends Entity {
             double dmg = center * (1.0 - dist / radius);
             if (dmg <= 0) continue;
             if (casterPlayer != null) {
-                dmg = com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper.applyCurseCoreTraits(casterPlayer, target, dmg);
+                dmg = com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper.applyCurseCoreTraits(casterPlayer, target, dmg);
             }
             target.invulnerableTime = 0;
             target.hurt(source, (float) dmg);
             if (casterPlayer != null) {
-                com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper.afterCurseCoreHit(casterPlayer, target, dmg);
+                com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper.afterCurseCoreHit(casterPlayer, target, dmg);
             }
         }
         discard();

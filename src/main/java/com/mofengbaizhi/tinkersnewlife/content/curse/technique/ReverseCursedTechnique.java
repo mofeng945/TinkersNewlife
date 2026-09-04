@@ -79,11 +79,11 @@ public final class ReverseCursedTechnique extends BaseTechnique {
             // 亡灵：受到应恢复生命数值的 2 倍伤害
             float dmg = (float) (heal * 2.0);
             dmg = (float) amplifyTechniqueDamage(player, dmg);
-            dmg = (float) com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper
+            dmg = (float) com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper
                     .applyCurseCoreTraits(player, target, dmg);
             target.invulnerableTime = 0;
             target.hurt(target.damageSources().mobAttack(player), dmg);
-            com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper.afterCurseCoreHit(player, target, dmg);
+            com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper.afterCurseCoreHit(player, target, dmg);
         } else {
             target.heal((float) heal);
         }

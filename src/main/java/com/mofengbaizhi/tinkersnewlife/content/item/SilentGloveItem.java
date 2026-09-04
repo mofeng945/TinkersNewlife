@@ -1,7 +1,7 @@
 package com.mofengbaizhi.tinkersnewlife.content.item;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
-import com.mofengbaizhi.tinkersnewlife.content.handler.GloveWeaponStorage;
+import com.mofengbaizhi.tinkersnewlife.content.storage.GloveWeaponStorage;
 import com.mofengbaizhi.tinkersnewlife.content.storage.SilentGloveContainer;
 import com.mofengbaizhi.tinkersnewlife.content.storage.SilentGloveHandler;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;

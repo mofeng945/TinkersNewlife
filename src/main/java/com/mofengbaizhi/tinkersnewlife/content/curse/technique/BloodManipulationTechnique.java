@@ -106,11 +106,11 @@ public final class BloodManipulationTechnique extends BaseTechnique {
             // 伤害 = (1 + 咒力亲和/100) × (咒力输出 + 消耗血量×5)，魔杖增幅 + 材料特性
             double damage = computeDamage(player, bloodCost);
             damage = amplifyTechniqueDamage(player, damage);
-            damage = com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper
+            damage = com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper
                     .applyCurseCoreTraits(player, target, damage);
             target.invulnerableTime = 0;
             target.hurt(player.damageSources().mobAttack(player), (float) damage);
-            com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper.afterCurseCoreHit(player, target, damage);
+            com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper.afterCurseCoreHit(player, target, damage);
 
             level.sendParticles(ParticleTypes.DAMAGE_INDICATOR, center.x, center.y, center.z, 4, 0.2, 0.2, 0.2, 0);
         }

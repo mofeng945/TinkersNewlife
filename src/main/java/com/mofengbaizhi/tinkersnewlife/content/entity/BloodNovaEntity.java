@@ -111,12 +111,12 @@ public class BloodNovaEntity extends Entity {
             double dmg = centerDamage * (1.0 - dist / radius);
             if (dmg <= 0) continue;
             // 材料战斗特性 + 无视无敌帧
-            dmg = com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper
+            dmg = com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper
                     .applyCurseCoreTraits(casterPlayer, target, dmg);
             target.invulnerableTime = 0;
             target.hurt(source, (float) dmg);
             if (casterPlayer != null) {
-                com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper.afterCurseCoreHit(casterPlayer, target, dmg);
+                com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper.afterCurseCoreHit(casterPlayer, target, dmg);
             }
             server.sendParticles(ParticleTypes.DAMAGE_INDICATOR, center.x, center.y, center.z, 3, 0.2, 0.2, 0.2, 0);
         }

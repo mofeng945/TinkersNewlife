@@ -94,11 +94,11 @@ public class FlameArrowEntity extends AbstractArrow {
                 // 模块化魔杖增幅咒术（对每个受击实体应用）+ 咒力核心材料特性
                 dmg = com.mofengbaizhi.tinkersnewlife.content.modifier.ModularStaffModifier
                         .getSpellAmplification(shooter, (float) dmg);
-                dmg = com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper
+                dmg = com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper
                         .applyCurseCoreTraits(shooter, e, dmg);
                 e.hurt(server.damageSources().explosion(shooter, shooter), (float) dmg);
                 e.setSecondsOnFire(3);
-                com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper.afterCurseCoreHit(shooter, e, dmg);
+                com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper.afterCurseCoreHit(shooter, e, dmg);
             }
 
             // 点燃 (1 + 咒力输出) 半径的区域（地面放火）

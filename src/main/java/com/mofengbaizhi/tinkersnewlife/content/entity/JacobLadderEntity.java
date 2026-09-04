@@ -146,7 +146,7 @@ public class JacobLadderEntity extends Entity {
             float dmg = frameDamage;
             if (target.getMobType() == MobType.UNDEAD) dmg *= 8.0F;
             if (casterPlayer != null) {
-                dmg = (float) com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper
+                dmg = (float) com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper
                         .applyCurseCoreTraits(casterPlayer, target, dmg);
             }
             target.invulnerableTime = 0; // 无视无敌帧
@@ -155,7 +155,7 @@ public class JacobLadderEntity extends Entity {
             target.hurt(source, dmg);
             target.setDeltaMovement(preMotion);
             if (casterPlayer != null) {
-                com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper.afterCurseCoreHit(casterPlayer, target, dmg);
+                com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper.afterCurseCoreHit(casterPlayer, target, dmg);
             }
             // 施加 60 秒封印 + 瞬间终止持续性咒术（仅首次命中目标）
             if (!sealedApplied && target instanceof ServerPlayer sp) {

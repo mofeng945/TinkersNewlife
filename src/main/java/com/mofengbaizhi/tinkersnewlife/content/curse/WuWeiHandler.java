@@ -605,12 +605,12 @@ public final class WuWeiHandler {
         }
         event.setCanceled(true);
         float dmg = d.attack;
-        dmg = (float) com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper
+        dmg = (float) com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper
                 .applyCurseCoreTraits(player, living, dmg);
         living.invulnerableTime = 0;
         DamageSource src = player.damageSources().playerAttack(player);
         living.hurt(src, dmg);
-        com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper.afterCurseCoreHit(player, living, dmg);
+        com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper.afterCurseCoreHit(player, living, dmg);
         player.serverLevel().sendParticles(ParticleTypes.CRIT,
                 living.getX(), living.getY() + living.getBbHeight() / 2, living.getZ(),
                 6, 0.2, 0.2, 0.2, 0.1);

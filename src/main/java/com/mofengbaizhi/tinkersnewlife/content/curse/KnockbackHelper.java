@@ -1,4 +1,4 @@
-package com.mofengbaizhi.tinkersnewlife.util;
+package com.mofengbaizhi.tinkersnewlife.content.curse;
 
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;

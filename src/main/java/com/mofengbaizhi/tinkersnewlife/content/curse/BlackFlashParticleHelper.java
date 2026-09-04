@@ -1,4 +1,4 @@
-package com.mofengbaizhi.tinkersnewlife.util;
+package com.mofengbaizhi.tinkersnewlife.content.curse;
 
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;

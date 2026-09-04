@@ -96,11 +96,11 @@ public final class BloodManipulationHyakurenTechnique extends BaseTechnique {
         // 5 次伤害：无视无敌帧，材料战斗特性每道触发
         for (int i = 0; i < HIT_COUNT; i++) {
             double dmg = amplifyTechniqueDamage(player, perHit);
-            dmg = com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper
+            dmg = com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper
                     .applyCurseCoreTraits(player, target, dmg);
             target.invulnerableTime = 0;
             target.hurt(player.damageSources().mobAttack(player), (float) dmg);
-            com.mofengbaizhi.tinkersnewlife.util.CurseCoreTraitHelper.afterCurseCoreHit(player, target, dmg);
+            com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper.afterCurseCoreHit(player, target, dmg);
         }
 
         // 命中处伤害指示

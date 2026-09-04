@@ -1,4 +1,5 @@
-package com.mofengbaizhi.tinkersnewlife.util;
+package com.mofengbaizhi.tinkersnewlife.content.curse;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 
 import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
 import net.minecraft.server.level.ServerPlayer;

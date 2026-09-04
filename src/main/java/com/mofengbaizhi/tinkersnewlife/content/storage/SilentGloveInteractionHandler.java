@@ -1,4 +1,4 @@
-package com.mofengbaizhi.tinkersnewlife.content.handler;
+package com.mofengbaizhi.tinkersnewlife.content.storage;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.item.DurandalSwordItem;
