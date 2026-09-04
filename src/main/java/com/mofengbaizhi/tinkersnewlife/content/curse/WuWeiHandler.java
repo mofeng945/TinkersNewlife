@@ -3,7 +3,7 @@ import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.Modifiers;
-import com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiDisguise;
+import com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiDisguise;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;

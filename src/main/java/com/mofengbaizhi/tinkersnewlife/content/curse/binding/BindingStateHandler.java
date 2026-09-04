@@ -2,7 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.content.curse.binding;
 import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHandler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
-import com.mofengbaizhi.tinkersnewlife.client.ClientCurseData;
+import com.mofengbaizhi.tinkersnewlife.client.data.ClientCurseData;
 import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;

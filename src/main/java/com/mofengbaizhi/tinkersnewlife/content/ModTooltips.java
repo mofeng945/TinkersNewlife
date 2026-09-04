@@ -2,7 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.content;
 import com.mofengbaizhi.tinkersnewlife.content.curse.binding.BindingStateHandler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
-import com.mofengbaizhi.tinkersnewlife.client.ClientCurseData;
+import com.mofengbaizhi.tinkersnewlife.client.data.ClientCurseData;
 import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
 import com.mofengbaizhi.tinkersnewlife.content.item.CurseCoreItem;
 import com.mofengbaizhi.tinkersnewlife.content.item.FlyingSwordItem;

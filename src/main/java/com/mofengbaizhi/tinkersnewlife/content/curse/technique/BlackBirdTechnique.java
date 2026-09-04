@@ -6,7 +6,7 @@ import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModEntities;
 import com.mofengbaizhi.tinkersnewlife.content.Modifiers;
 import com.mofengbaizhi.tinkersnewlife.content.entity.BlackBirdEntity;
-import com.mofengbaizhi.tinkersnewlife.network.PacketBlackBirdCamera;
+import com.mofengbaizhi.tinkersnewlife.network.curse.PacketBlackBirdCamera;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;

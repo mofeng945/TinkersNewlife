@@ -1,7 +1,7 @@
 package com.mofengbaizhi.tinkersnewlife.client.screen;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
-import com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiSelect;
+import com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiSelect;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;

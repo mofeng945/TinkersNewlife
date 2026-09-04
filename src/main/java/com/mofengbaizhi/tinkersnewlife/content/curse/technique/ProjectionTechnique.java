@@ -1,4 +1,5 @@
 package com.mofengbaizhi.tinkersnewlife.content.curse.technique;
+import com.mofengbaizhi.tinkersnewlife.network.curse.PacketProjectionStun;
 import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.BaseTechnique;
 
@@ -124,7 +125,7 @@ public final class ProjectionTechnique extends BaseTechnique {
     private static void sendStun(ServerPlayer player, boolean stunned) {
         com.mofengbaizhi.tinkersnewlife.TinkersNewlife.CHANNEL.send(
                 net.minecraftforge.network.PacketDistributor.PLAYER.with(() -> player),
-                new com.mofengbaizhi.tinkersnewlife.network.PacketProjectionStun(stunned,
+                new com.mofengbaizhi.tinkersnewlife.network.curse.PacketProjectionStun(stunned,
                         player.getYRot(), player.getXRot()));
     }
 

@@ -2,7 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.content.entity;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
-import com.mofengbaizhi.tinkersnewlife.network.PacketBlackBirdCamera;
+import com.mofengbaizhi.tinkersnewlife.network.curse.PacketBlackBirdCamera;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -30,7 +30,7 @@ import java.util.UUID;
 
 /**
  * 黑鸟操术 · 黑鸟（蝙蝠）：
- * 玩家视角切换到本实体，客户端每 tick 发送 {@link com.mofengbaizhi.tinkersnewlife.network.PacketBlackBirdInput}
+ * 玩家视角切换到本实体，客户端每 tick 发送 {@link com.mofengbaizhi.tinkersnewlife.network.curse.PacketBlackBirdInput}
  * 驱动其飞行（W 朝视线 / A/D 侧移 / 空格上升）；Shift 俯冲（2 倍速直线朝视线），
  * 撞到实体或方块自爆（不破坏方块，中心伤害 = (1+亲和/100)×(输出×3+蝙蝠血量)×10，半径 2 格）。
  * 玩家身体留在原地（隐形/无敌/钉位）。

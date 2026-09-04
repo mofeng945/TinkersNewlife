@@ -1,9 +1,9 @@
 package com.mofengbaizhi.tinkersnewlife.client.screen;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
-import com.mofengbaizhi.tinkersnewlife.client.ClientCurseData;
+import com.mofengbaizhi.tinkersnewlife.client.data.ClientCurseData;
 import com.mofengbaizhi.tinkersnewlife.content.curse.shikigami.ShikigamiType;
-import com.mofengbaizhi.tinkersnewlife.network.PacketSummonShikigami;
+import com.mofengbaizhi.tinkersnewlife.network.curse.PacketSummonShikigami;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;

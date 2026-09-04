@@ -1,4 +1,5 @@
 package com.mofengbaizhi.tinkersnewlife.content.entity;
+import com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoOpen;
 
 import com.mofengbaizhi.tinkersnewlife.content.ModItems;
 import com.mofengbaizhi.tinkersnewlife.content.ModSounds;
@@ -667,7 +668,7 @@ public class MomoMerchant extends PathfinderMob {
         if (level().isClientSide) return InteractionResult.sidedSuccess(true);
         if (this.getTarget() == player) return InteractionResult.PASS; // 正在反击该玩家
         ensureOffers();
-        com.mofengbaizhi.tinkersnewlife.network.PacketMomoOpen.sendTo((ServerPlayer) player, this);
+        com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoOpen.sendTo((ServerPlayer) player, this);
         // 交易语音不与其他语音重叠（间隔 ≥ 语音时长）
         if (voiceReady()) {
             voicePlayed(VOICE_TIMINGS.trade);

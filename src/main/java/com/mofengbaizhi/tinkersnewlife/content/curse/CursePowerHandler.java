@@ -5,7 +5,7 @@ import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
 import com.mofengbaizhi.tinkersnewlife.content.curse.domain.DomainRegistry;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
-import com.mofengbaizhi.tinkersnewlife.network.PacketSyncCurse;
+import com.mofengbaizhi.tinkersnewlife.network.curse.PacketSyncCurse;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;

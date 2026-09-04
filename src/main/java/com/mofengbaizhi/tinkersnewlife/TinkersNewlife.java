@@ -1,4 +1,15 @@
 package com.mofengbaizhi.tinkersnewlife;
+import com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiDisguise;
+import com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoBuy;
+import com.mofengbaizhi.tinkersnewlife.network.curse.PacketBlackBirdInput;
+import com.mofengbaizhi.tinkersnewlife.network.curse.PacketProjectionStun;
+import com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoOpen;
+import com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiOpenGui;
+import com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiSelect;
+import com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoHire;
+import com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenWuWeiScreen;
+import com.mofengbaizhi.tinkersnewlife.network.curse.PacketUseReverseTechnique;
+import com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoHireState;
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuWeiTechnique;
 
 import com.mofengbaizhi.tinkersnewlife.content.*;
@@ -23,19 +34,19 @@ import com.mofengbaizhi.tinkersnewlife.content.curse.domain.ZuoShaBoTuDomain;
 import com.mofengbaizhi.tinkersnewlife.content.loot.LootModifierSerializers;
 import com.mofengbaizhi.tinkersnewlife.content.storage.SilentGloveHandler;
 import com.mofengbaizhi.tinkersnewlife.content.storage.StorageManager;
-import com.mofengbaizhi.tinkersnewlife.network.PacketBlackBirdCamera;
-import com.mofengbaizhi.tinkersnewlife.network.PacketDragonStaffUse;
-import com.mofengbaizhi.tinkersnewlife.network.PacketOpenBag;
-import com.mofengbaizhi.tinkersnewlife.network.PacketOpenShikigamiScreen;
-import com.mofengbaizhi.tinkersnewlife.network.PacketSortBag;
-import com.mofengbaizhi.tinkersnewlife.network.PacketSummonShikigami;
-import com.mofengbaizhi.tinkersnewlife.network.PacketSwitchFlyingSwordMode;
+import com.mofengbaizhi.tinkersnewlife.network.curse.PacketBlackBirdCamera;
+import com.mofengbaizhi.tinkersnewlife.network.tools.PacketDragonStaffUse;
+import com.mofengbaizhi.tinkersnewlife.network.tools.PacketOpenBag;
+import com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenShikigamiScreen;
+import com.mofengbaizhi.tinkersnewlife.network.tools.PacketSortBag;
+import com.mofengbaizhi.tinkersnewlife.network.curse.PacketSummonShikigami;
+import com.mofengbaizhi.tinkersnewlife.network.tools.PacketSwitchFlyingSwordMode;
 import net.minecraft.world.item.ItemStack;
-import com.mofengbaizhi.tinkersnewlife.network.PacketSwitchTechnique;
-import com.mofengbaizhi.tinkersnewlife.network.PacketSyncCurse;
-import com.mofengbaizhi.tinkersnewlife.network.PacketToggleDomain;
-import com.mofengbaizhi.tinkersnewlife.network.PacketUseSkill;
-import com.mofengbaizhi.tinkersnewlife.network.PacketUseTechnique;
+import com.mofengbaizhi.tinkersnewlife.network.curse.PacketSwitchTechnique;
+import com.mofengbaizhi.tinkersnewlife.network.curse.PacketSyncCurse;
+import com.mofengbaizhi.tinkersnewlife.network.curse.PacketToggleDomain;
+import com.mofengbaizhi.tinkersnewlife.network.tools.PacketUseSkill;
+import com.mofengbaizhi.tinkersnewlife.network.curse.PacketUseTechnique;
 import com.mofengbaizhi.tinkersnewlife.util.IronSpellsReflector;
 
 import net.minecraft.resources.ResourceLocation;
@@ -165,56 +176,56 @@ public class TinkersNewlife {
         registerPacket(PacketSwitchFlyingSwordMode.class, PacketSwitchFlyingSwordMode::toBytes, PacketSwitchFlyingSwordMode::new, PacketSwitchFlyingSwordMode::handle);
         registerPacket(PacketToggleDomain.class, PacketToggleDomain::toBytes, PacketToggleDomain::new, PacketToggleDomain::handle);
         registerPacket(PacketUseTechnique.class, PacketUseTechnique::toBytes, PacketUseTechnique::new, PacketUseTechnique::handle);
-        registerPacket(com.mofengbaizhi.tinkersnewlife.network.PacketUseReverseTechnique.class,
-                com.mofengbaizhi.tinkersnewlife.network.PacketUseReverseTechnique::toBytes,
-                com.mofengbaizhi.tinkersnewlife.network.PacketUseReverseTechnique::new,
-                com.mofengbaizhi.tinkersnewlife.network.PacketUseReverseTechnique::handle);
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketUseReverseTechnique.class,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketUseReverseTechnique::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketUseReverseTechnique::new,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketUseReverseTechnique::handle);
         registerPacket(PacketSwitchTechnique.class, PacketSwitchTechnique::toBytes, PacketSwitchTechnique::new, PacketSwitchTechnique::handle);
         registerPacket(PacketSummonShikigami.class, PacketSummonShikigami::toBytes, PacketSummonShikigami::new, PacketSummonShikigami::handle);
-        registerPacket(com.mofengbaizhi.tinkersnewlife.network.PacketBlackBirdInput.class,
-                com.mofengbaizhi.tinkersnewlife.network.PacketBlackBirdInput::toBytes,
-                com.mofengbaizhi.tinkersnewlife.network.PacketBlackBirdInput::new,
-                com.mofengbaizhi.tinkersnewlife.network.PacketBlackBirdInput::handle);
-        registerPacket(com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiSelect.class,
-                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiSelect::toBytes,
-                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiSelect::new,
-                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiSelect::handle);
-        registerPacket(com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiOpenGui.class,
-                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiOpenGui::toBytes,
-                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiOpenGui::new,
-                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiOpenGui::handle);
-        registerPacket(com.mofengbaizhi.tinkersnewlife.network.PacketMomoBuy.class,
-                com.mofengbaizhi.tinkersnewlife.network.PacketMomoBuy::toBytes,
-                com.mofengbaizhi.tinkersnewlife.network.PacketMomoBuy::new,
-                com.mofengbaizhi.tinkersnewlife.network.PacketMomoBuy::handle);
-        registerPacket(com.mofengbaizhi.tinkersnewlife.network.PacketMomoHire.class,
-                com.mofengbaizhi.tinkersnewlife.network.PacketMomoHire::toBytes,
-                com.mofengbaizhi.tinkersnewlife.network.PacketMomoHire::new,
-                com.mofengbaizhi.tinkersnewlife.network.PacketMomoHire::handle);
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketBlackBirdInput.class,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketBlackBirdInput::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketBlackBirdInput::new,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketBlackBirdInput::handle);
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiSelect.class,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiSelect::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiSelect::new,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiSelect::handle);
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiOpenGui.class,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiOpenGui::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiOpenGui::new,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiOpenGui::handle);
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoBuy.class,
+                com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoBuy::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoBuy::new,
+                com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoBuy::handle);
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoHire.class,
+                com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoHire::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoHire::new,
+                com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoHire::handle);
         // 服务端→客户端
         registerClientPacket(PacketSyncCurse.class, PacketSyncCurse::toBytes, PacketSyncCurse::new, PacketSyncCurse::handle);
         registerClientPacket(PacketOpenShikigamiScreen.class, PacketOpenShikigamiScreen::toBytes, PacketOpenShikigamiScreen::new, PacketOpenShikigamiScreen::handle);
         registerClientPacket(PacketBlackBirdCamera.class, PacketBlackBirdCamera::toBytes, PacketBlackBirdCamera::new, PacketBlackBirdCamera::handle);
-        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.PacketOpenWuWeiScreen.class,
-                com.mofengbaizhi.tinkersnewlife.network.PacketOpenWuWeiScreen::toBytes,
-                com.mofengbaizhi.tinkersnewlife.network.PacketOpenWuWeiScreen::new,
-                com.mofengbaizhi.tinkersnewlife.network.PacketOpenWuWeiScreen::handle);
-        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiDisguise.class,
-                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiDisguise::toBytes,
-                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiDisguise::new,
-                com.mofengbaizhi.tinkersnewlife.network.PacketWuWeiDisguise::handle);
-        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.PacketMomoOpen.class,
-                com.mofengbaizhi.tinkersnewlife.network.PacketMomoOpen::toBytes,
-                com.mofengbaizhi.tinkersnewlife.network.PacketMomoOpen::new,
-                com.mofengbaizhi.tinkersnewlife.network.PacketMomoOpen::handle);
-        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.PacketMomoHireState.class,
-                com.mofengbaizhi.tinkersnewlife.network.PacketMomoHireState::toBytes,
-                com.mofengbaizhi.tinkersnewlife.network.PacketMomoHireState::new,
-                com.mofengbaizhi.tinkersnewlife.network.PacketMomoHireState::handle);
-        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.PacketProjectionStun.class,
-                com.mofengbaizhi.tinkersnewlife.network.PacketProjectionStun::toBytes,
-                com.mofengbaizhi.tinkersnewlife.network.PacketProjectionStun::new,
-                com.mofengbaizhi.tinkersnewlife.network.PacketProjectionStun::handle);
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenWuWeiScreen.class,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenWuWeiScreen::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenWuWeiScreen::new,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenWuWeiScreen::handle);
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiDisguise.class,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiDisguise::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiDisguise::new,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiDisguise::handle);
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoOpen.class,
+                com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoOpen::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoOpen::new,
+                com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoOpen::handle);
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoHireState.class,
+                com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoHireState::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoHireState::new,
+                com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoHireState::handle);
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketProjectionStun.class,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketProjectionStun::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketProjectionStun::new,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketProjectionStun::handle);
 
         // 实体属性（式神等生物实体）
         modEventBus.addListener(TinkersNewlife::onRegisterEntityAttributes);

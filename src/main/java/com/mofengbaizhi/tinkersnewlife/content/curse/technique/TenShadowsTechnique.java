@@ -4,7 +4,7 @@ import com.mofengbaizhi.tinkersnewlife.content.curse.technique.BaseTechnique;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.Modifiers;
-import com.mofengbaizhi.tinkersnewlife.network.PacketOpenShikigamiScreen;
+import com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenShikigamiScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.PacketDistributor;
