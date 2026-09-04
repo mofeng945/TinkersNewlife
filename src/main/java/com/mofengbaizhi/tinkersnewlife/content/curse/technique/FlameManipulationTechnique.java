@@ -66,9 +66,23 @@ public final class FlameManipulationTechnique extends BaseTechnique {
 
     // ================= 顺转：脚下 3×3 熔为岩浆 =================
 
+    /** 视线内第一个敌对目标（跳过同队：墨默/式神/傀儡/自己的焰羽，避免锁到自己人） */
+    private LivingEntity findEnemyTarget(ServerPlayer player) {
+        Vec3 eye = player.getEyePosition(1.0F);
+        Vec3 look = player.getLookAngle();
+        Vec3 end = eye.add(look.scale(REACH));
+        AABB box = player.getBoundingBox().expandTowards(look.scale(REACH)).inflate(1.0);
+        net.minecraft.world.phys.EntityHitResult hit = net.minecraft.world.entity.projectile.ProjectileUtil.getEntityHitResult(
+                player, eye, end, box,
+                e -> !e.isSpectator() && e.isPickable() && e instanceof LivingEntity le
+                        && le.isAlive() && !PuppetUtil.isAllyOf(le, player),
+                REACH * REACH);
+        return hit != null && hit.getEntity() instanceof LivingEntity living ? living : null;
+    }
+
     @Override
     public void onKeyPress(ServerPlayer player) {
-        LivingEntity target = findTarget(player);
+        LivingEntity target = findEnemyTarget(player);
         if (target == null) {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_target"), true);
             return;
@@ -96,7 +110,7 @@ public final class FlameManipulationTechnique extends BaseTechnique {
 
     @Override
     public void onReverseKeyPress(ServerPlayer player) {
-        LivingEntity target = findTarget(player);
+        LivingEntity target = findEnemyTarget(player);
         if (target == null) {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_target"), true);
             return;
