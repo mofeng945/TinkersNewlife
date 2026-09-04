@@ -1525,7 +1525,9 @@ public class MomoMerchant extends PathfinderMob implements MomoConst {
         double bestDist = radius * radius;
         ServerPlayer boss = center instanceof ServerPlayer sp ? sp : getEmployer();
         for (Mob m : this.level().getEntitiesOfClass(Mob.class, center.getBoundingBox().inflate(radius),
-                e -> e.isAlive() && e != this && !PuppetUtil.isAllyOf(e, boss))) {
+                e -> e.isAlive() && e != this && !PuppetUtil.isAllyOf(e, boss)
+                        && !(boss != null && com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
+                                .isReleasedMinionOf(e, boss)))) {
             net.minecraft.world.entity.MobType mt = m.getMobType();
             if (mt != net.minecraft.world.entity.MobType.UNDEAD
                     && mt != net.minecraft.world.entity.MobType.ILLAGER) {

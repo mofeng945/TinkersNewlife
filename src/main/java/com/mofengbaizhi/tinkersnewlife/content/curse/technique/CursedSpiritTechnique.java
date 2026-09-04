@@ -477,6 +477,20 @@ public final class CursedSpiritTechnique extends BaseTechnique {
             }
         }
 
+        /** 换目标拦截：任何来源（含 Boss 自定义 AI）都不能把释放体的目标设为主人/同队 */
+        @SubscribeEvent
+        public static void onMinionTargetChange(net.minecraftforge.event.entity.living.LivingChangeTargetEvent event) {
+            if (event.getEntity().level().isClientSide) return;
+            if (!(event.getEntity() instanceof Mob minion)) return;
+            LivingEntity newTarget = event.getNewTarget();
+            if (newTarget == null) return;
+            ServerPlayer owner = findOwnerOf(minion);
+            if (owner == null) return;
+            if (PuppetUtil.isAllyOf(newTarget, owner)) {
+                event.setCanceled(true);
+            }
+        }
+
         /** 兜底：已释放体对主人/同队造成伤害时直接取消（防个别目标选择遗漏） */
         @SubscribeEvent
         public static void onMinionAttackAlly(net.minecraftforge.event.entity.living.LivingAttackEvent event) {
