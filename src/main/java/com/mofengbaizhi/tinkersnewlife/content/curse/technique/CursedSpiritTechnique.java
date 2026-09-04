@@ -364,6 +364,50 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         return false;
     }
 
+    /** 反射读取 Goety 仆从（IServant/IOwned 实现）的主人实体 */
+    private static LivingEntity goetyOwnerOf(LivingEntity entity) {
+        try {
+            for (java.lang.reflect.Method m : entity.getClass().getMethods()) {
+                if (m.getParameterCount() != 0 || m.getReturnType() != LivingEntity.class) continue;
+                String n = m.getName();
+                if (!n.startsWith("get")) continue;
+                String low = n.toLowerCase();
+                if (low.contains("owner") || low.contains("master")) {
+                    Object o = m.invoke(entity);
+                    if (o instanceof LivingEntity le) return le;
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return null;
+    }
+
+    /**
+     * 递归同队：target 本人、或其（Goety 仆从）主人链上的任意一环属于 owner 的释放体/owner 本人，
+     * 都算 owner 的同队——覆盖"使徒释放的召唤物"这类二阶仆从。
+     */
+    public static boolean isSpiritTeam(LivingEntity target, ServerPlayer owner) {
+        if (target == null || owner == null) return false;
+        LivingEntity cur = target;
+        for (int depth = 0; depth < 6; depth++) {
+            if (cur == owner) return true;
+            if (isReleasedMinionOf(cur, owner)) return true;
+            LivingEntity up = goetyOwnerOf(cur);
+            if (up == null || up == cur) return false;
+            cur = up;
+        }
+        return false;
+    }
+
+    /** 找出"拥有该实体（或其主人链）"的释放者玩家；找不到返回 null */
+    private static ServerPlayer findTeamOwner(LivingEntity entity) {
+        if (!(entity.level() instanceof ServerLevel sl)) return null;
+        for (ServerPlayer p : sl.getServer().getPlayerList().getPlayers()) {
+            if (isSpiritTeam(entity, p)) return p;
+        }
+        return null;
+    }
+
     /** 释放体战死 → 记录从 GUI 消失（玩家本人死亡绝不算释放体战死） */
     public static void onMinionDeath(Entity dead) {
         if (dead.level().isClientSide) return;
@@ -477,45 +521,47 @@ public final class CursedSpiritTechnique extends BaseTechnique {
             }
         }
 
-        /** 换目标拦截：任何来源（含 Boss 自定义 AI）都不能把释放体的目标设为主人/同队 */
+        /**
+         * 死亡重生：Forge 不会自动携带 persistentData —— 手动把咒灵记录（KEY_SPIRITS）拷给新实体，
+         * 并复位 released（旧场上实体已随死亡清理）。这是"死亡后记录清空"的根治点。
+         */
+        @SubscribeEvent
+        public static void onPlayerClone(net.minecraftforge.event.entity.player.PlayerEvent.Clone event) {
+            if (!event.isWasDeath()) return;
+            if (!(event.getEntity() instanceof ServerPlayer newPlayer)) return;
+            CompoundTag src = event.getOriginal().getPersistentData();
+            if (src.contains(KEY_SPIRITS)) {
+                newPlayer.getPersistentData().put(KEY_SPIRITS, src.get(KEY_SPIRITS).copy());
+            }
+            normalize(newPlayer);
+        }
+
+        /** 换目标拦截：任何来源（含 Boss 自定义 AI / 其召唤物）都不能把（同队链上的）目标设为主人/同队 */
         @SubscribeEvent
         public static void onMinionTargetChange(net.minecraftforge.event.entity.living.LivingChangeTargetEvent event) {
             if (event.getEntity().level().isClientSide) return;
             if (!(event.getEntity() instanceof Mob minion)) return;
             LivingEntity newTarget = event.getNewTarget();
             if (newTarget == null) return;
-            ServerPlayer owner = findOwnerOf(minion);
+            ServerPlayer owner = findTeamOwner(minion);
             if (owner == null) return;
             if (PuppetUtil.isAllyOf(newTarget, owner)) {
                 event.setCanceled(true);
             }
         }
 
-        /** 兜底：已释放体对主人/同队造成伤害时直接取消（防个别目标选择遗漏） */
+        /** 兜底：释放体/其召唤物对主人/同队造成伤害时直接取消 */
         @SubscribeEvent
         public static void onMinionAttackAlly(net.minecraftforge.event.entity.living.LivingAttackEvent event) {
             if (event.getEntity().level().isClientSide) return;
             Entity source = event.getSource().getEntity();
-            if (!(source instanceof Mob minion)) return;
+            if (!(source instanceof LivingEntity srcLiving)) return;
             LivingEntity target = event.getEntity();
-            ServerPlayer owner = findOwnerOf(minion);
+            ServerPlayer owner = findTeamOwner(srcLiving);
             if (owner == null) return;
             if (PuppetUtil.isAllyOf(target, owner)) {
                 event.setCanceled(true);
             }
-        }
-
-        private static ServerPlayer findOwnerOf(Mob minion) {
-            if (minion.level() instanceof ServerLevel sl) {
-                for (ServerPlayer p : sl.getServer().getPlayerList().getPlayers()) {
-                    for (SpiritEntry e : entries(p)) {
-                        if (e.releasedId >= 0 && minion.getId() == e.releasedId) {
-                            return p;
-                        }
-                    }
-                }
-            }
-            return null;
         }
     }
 }

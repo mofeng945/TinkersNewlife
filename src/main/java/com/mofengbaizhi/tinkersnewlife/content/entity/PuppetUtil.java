@@ -50,7 +50,7 @@ public final class PuppetUtil {
             if (boss != null && boss.getUUID().equals(ownerId)) return true;
         }
         if (com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
-                .isReleasedMinionOf(target, owner)) {
+                .isSpiritTeam(target, owner)) {
             return true;
         }
         return false;
