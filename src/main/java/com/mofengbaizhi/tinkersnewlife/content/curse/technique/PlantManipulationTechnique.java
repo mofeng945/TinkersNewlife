@@ -220,12 +220,11 @@ public final class PlantManipulationTechnique extends BaseTechnique {
     public static void cleanup(ServerPlayer player) {
         cancelCharge(player);
         UUID uuid = player.getUUID();
-        Iterator<RootField> it = FIELDS.iterator();
-        while (it.hasNext()) {
-            RootField field = it.next();
+        for (int i = FIELDS.size() - 1; i >= 0; i--) {
+            RootField field = FIELDS.get(i);
             if (uuid.equals(field.ownerId)) {
                 field.restore();
-                it.remove();
+                FIELDS.remove(i);
             }
         }
     }
@@ -248,12 +247,11 @@ public final class PlantManipulationTechnique extends BaseTechnique {
 
     /** 天逆鉾右键甜浆果丛：移除包含该位置的树根场并还原；返回是否命中 */
     public static boolean removeFieldAt(ServerLevel level, BlockPos pos) {
-        Iterator<RootField> it = FIELDS.iterator();
-        while (it.hasNext()) {
-            RootField field = it.next();
+        for (int i = FIELDS.size() - 1; i >= 0; i--) {
+            RootField field = FIELDS.get(i);
             if (field.level == level && field.blocks.containsKey(pos)) {
                 field.restore();
-                it.remove();
+                FIELDS.remove(i);
                 return true;
             }
         }
@@ -270,10 +268,10 @@ public final class PlantManipulationTechnique extends BaseTechnique {
         public static void onServerTick(TickEvent.ServerTickEvent event) {
             if (event.phase != TickEvent.Phase.END) return;
             if (FIELDS.isEmpty()) return;
-            Iterator<RootField> it = FIELDS.iterator();
-            while (it.hasNext()) {
-                if (it.next().tick()) {
-                    it.remove();
+            // CopyOnWriteArrayList 迭代器不支持 remove → 下标逆序删除
+            for (int i = FIELDS.size() - 1; i >= 0; i--) {
+                if (FIELDS.get(i).tick()) {
+                    FIELDS.remove(i);
                 }
             }
         }

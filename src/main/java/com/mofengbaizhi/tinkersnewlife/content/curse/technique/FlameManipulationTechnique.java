@@ -153,12 +153,11 @@ public final class FlameManipulationTechnique extends BaseTechnique {
     /** 登出 / 死亡：还原该玩家岩浆池（火焰场短暂自动熄灭，无需清理） */
     public static void cleanup(ServerPlayer player) {
         UUID uuid = player.getUUID();
-        Iterator<MeltField> it = MELT_FIELDS.iterator();
-        while (it.hasNext()) {
-            MeltField field = it.next();
+        for (int i = MELT_FIELDS.size() - 1; i >= 0; i--) {
+            MeltField field = MELT_FIELDS.get(i);
             if (uuid.equals(field.ownerId)) {
                 field.restore();
-                it.remove();
+                MELT_FIELDS.remove(i);
             }
         }
     }
@@ -171,16 +170,15 @@ public final class FlameManipulationTechnique extends BaseTechnique {
         @SubscribeEvent
         public static void onServerTick(TickEvent.ServerTickEvent event) {
             if (event.phase != TickEvent.Phase.END) return;
-            Iterator<MeltField> meltIt = MELT_FIELDS.iterator();
-            while (meltIt.hasNext()) {
-                if (meltIt.next().tick()) {
-                    meltIt.remove();
+            // CopyOnWriteArrayList 迭代器不支持 remove → 下标逆序删除
+            for (int i = MELT_FIELDS.size() - 1; i >= 0; i--) {
+                if (MELT_FIELDS.get(i).tick()) {
+                    MELT_FIELDS.remove(i);
                 }
             }
-            Iterator<FireField> fireIt = FIRE_FIELDS.iterator();
-            while (fireIt.hasNext()) {
-                if (fireIt.next().tick()) {
-                    fireIt.remove();
+            for (int i = FIRE_FIELDS.size() - 1; i >= 0; i--) {
+                if (FIRE_FIELDS.get(i).tick()) {
+                    FIRE_FIELDS.remove(i);
                 }
             }
         }
