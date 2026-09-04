@@ -1523,8 +1523,9 @@ public class MomoMerchant extends PathfinderMob implements MomoConst {
     private Mob nearestHostileNear(LivingEntity center, double radius) {
         Mob best = null;
         double bestDist = radius * radius;
+        ServerPlayer boss = center instanceof ServerPlayer sp ? sp : getEmployer();
         for (Mob m : this.level().getEntitiesOfClass(Mob.class, center.getBoundingBox().inflate(radius),
-                e -> e.isAlive() && e != this)) {
+                e -> e.isAlive() && e != this && !PuppetUtil.isAllyOf(e, boss))) {
             net.minecraft.world.entity.MobType mt = m.getMobType();
             if (mt != net.minecraft.world.entity.MobType.UNDEAD
                     && mt != net.minecraft.world.entity.MobType.ILLAGER) {
