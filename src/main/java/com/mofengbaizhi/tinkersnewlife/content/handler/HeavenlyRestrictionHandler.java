@@ -11,6 +11,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import top.theillusivec4.curios.api.CuriosApi;
@@ -26,10 +27,10 @@ import java.util.UUID;
  * 由仪式「天与咒缚·暴君」赋予、仪式二解除：
  * <ul>
  *   <li>失去咒力：无法佩戴咒力核心（curios curse_core 槽位被拒）→ 无咒力来源，黑闪概率锁定 0</li>
- *   <li>换来肉体强化：移动速度 ×5、跳跃高度 ×3、攻击力 ×10（永久属性修饰符）</li>
+ *   <li>换来肉体强化：生命上限 ×5、移动速度 ×5、跳跃高度 ×3、攻击力 ×10（永久属性修饰符）</li>
  * </ul>
- * 状态存玩家持久数据（死亡/重登保留）；属性用永久修饰符，另每 5 秒自检补挂，
- * 并强制摘除仍佩戴的咒力核心、把咒力清零（防残留数据）。
+ * 状态存玩家持久数据 + 永久属性修饰符，<b>死亡/重登均不解除</b>（Clone 时把状态与修饰符转移到新实体）；
+ * 另每 5 秒自检补挂，并强制摘除仍佩戴的咒力核心、把咒力清零（防残留数据）。
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class HeavenlyRestrictionHandler {
@@ -44,6 +45,8 @@ public final class HeavenlyRestrictionHandler {
 
     // ==================== 肉体强化修饰符（固定 UUID 便于解除） ====================
 
+    /** 生命上限 ×5 */
+    private static final UUID HEALTH_UUID = UUID.fromString("d5e6f7a8-1b2c-4d3e-8f9a-0b1c2d3e4f53");
     /** 速度 ×5 */
     private static final UUID SPEED_UUID = UUID.fromString("d5e6f7a8-1b2c-4d3e-8f9a-0b1c2d3e4f50");
     /** 跳跃 ×3 */
@@ -51,6 +54,8 @@ public final class HeavenlyRestrictionHandler {
     /** 攻击 ×10 */
     private static final UUID ATTACK_UUID = UUID.fromString("d5e6f7a8-1b2c-4d3e-8f9a-0b1c2d3e4f52");
 
+    private static final AttributeModifier HEALTH_MOD = new AttributeModifier(
+            HEALTH_UUID, "heavenly_restriction_health", 4.0, AttributeModifier.Operation.MULTIPLY_TOTAL);
     private static final AttributeModifier SPEED_MOD = new AttributeModifier(
             SPEED_UUID, "heavenly_restriction_speed", 4.0, AttributeModifier.Operation.MULTIPLY_TOTAL);
     private static final AttributeModifier JUMP_MOD = new AttributeModifier(
@@ -77,7 +82,7 @@ public final class HeavenlyRestrictionHandler {
         unequipCurseCore(player);
         // 肉体强化
         applyMods(player);
-        TinkersNewlife.LOGGER.info("[天与咒缚] 玩家 {} 获得天与咒缚（失去咒力；速度×5 跳跃×3 攻击×10）",
+        TinkersNewlife.LOGGER.info("[天与咒缚] 玩家 {} 获得天与咒缚（失去咒力；生命上限×5 速度×5 跳跃×3 攻击×10）",
                 player.getName().getString());
     }
 
@@ -91,6 +96,7 @@ public final class HeavenlyRestrictionHandler {
     // ==================== 属性修饰符 ====================
 
     private static void applyMods(ServerPlayer player) {
+        addMod(player, Attributes.MAX_HEALTH, HEALTH_MOD);
         addMod(player, Attributes.MOVEMENT_SPEED, SPEED_MOD);
         addMod(player, Attributes.JUMP_STRENGTH, JUMP_MOD);
         addMod(player, Attributes.ATTACK_DAMAGE, ATTACK_MOD);
@@ -104,6 +110,7 @@ public final class HeavenlyRestrictionHandler {
     }
 
     private static void removeMods(ServerPlayer player) {
+        removeMod(player, Attributes.MAX_HEALTH, HEALTH_UUID);
         removeMod(player, Attributes.MOVEMENT_SPEED, SPEED_UUID);
         removeMod(player, Attributes.JUMP_STRENGTH, JUMP_UUID);
         removeMod(player, Attributes.ATTACK_DAMAGE, ATTACK_UUID);
@@ -167,5 +174,22 @@ public final class HeavenlyRestrictionHandler {
             // 属性修饰符若被意外移除则补挂
             applyMods(player);
         }
+    }
+
+    // ==================== 死亡 / 重生：固化状态 ====================
+
+    /**
+     * 玩家死亡重生（Clone）时，把天与咒缚状态与肉体强化修饰符转移到新实体，
+     * 保证效果固化——死亡也绝不解除（等待仪式二才可解除）。
+     */
+    @SubscribeEvent
+    public static void onPlayerClone(PlayerEvent.Clone event) {
+        if (!event.isWasDeath()) return;
+        if (!isRestricted(event.getOriginal())) return;
+        if (!(event.getEntity() instanceof ServerPlayer newPlayer)) return;
+        newPlayer.getPersistentData().putBoolean(KEY_RESTRICTED, true);
+        applyMods(newPlayer);
+        TinkersNewlife.LOGGER.info("[天与咒缚] 玩家 {} 死亡重生，天与咒缚固化保留",
+                newPlayer.getName().getString());
     }
 }

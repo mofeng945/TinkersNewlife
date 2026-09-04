@@ -62,7 +62,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *   <li>黑暗降临，屏幕中央依次出现标题「天与咒缚」「肉体」「你失去了咒力」（各 2 秒），
  *       玻璃碎裂声 + 凋灵诞生音效；随后解除黑暗、抽干池水、熄灭火焰 → 仪式完成</li>
  *   <li>结算：发起者获得天与咒缚（HeavenlyRestrictionHandler）——失去咒力（无法佩戴咒力核心、
- *       黑闪概率锁 0），换来肉体强化（速度 ×5、跳跃 ×3、攻击 ×10）</li>
+ *       黑闪概率锁 0），换来肉体强化（生命上限 ×5、速度 ×5、跳跃 ×3、攻击 ×10），
+ *       状态固化（死亡不解除）；仪式结束时生命恢复至新上限的 40%</li>
  * </ol>
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -537,12 +538,13 @@ public class TyrantRitualHandler {
                 }
             }
         }
-        // 终幕粒子 + 结算
+        // 终幕粒子 + 结算：赋予天与暴君（含生命上限 ×5），并把生命恢复到上限的 40%
         blackBreak(level, centerOf(data.anchor), 80, 4.0);
         HeavenlyRestrictionHandler.applyRestriction(caster);
-        caster.displayClientMessage(Component.literal(TAG + "仪式完成。你失去了咒力：再也无法佩戴咒力核心，黑闪概率锁定为 0。"), false);
-        caster.displayClientMessage(Component.literal(TAG + "作为交换，肉体被彻底强化：移动速度 ×5、跳跃高度 ×3、攻击力 ×10。"), false);
-        TinkersNewlife.LOGGER.info("{} 仪式完成（玩家 {}）", TAG, caster.getName().getString());
+        caster.setHealth(caster.getMaxHealth() * 0.4F);
+        caster.displayClientMessage(Component.literal(TAG + "仪式完成。你失去了咒力：再也无法佩戴咒力核心，黑闪概率锁定为 0（该状态死亡也不解除）。"), false);
+        caster.displayClientMessage(Component.literal(TAG + "作为交换，肉体被彻底强化：生命上限 ×5、移动速度 ×5、跳跃高度 ×3、攻击力 ×10（生命已恢复至 40%）。"), false);
+        TinkersNewlife.LOGGER.info("{} 仪式完成（玩家 {}，生命恢复至 40%）", TAG, caster.getName().getString());
     }
 
     /** 中止：移除进行中的仪式（不结算、不动方块；SKULL 阶段恢复头颅自由落体，黑水视觉随条目移除而消失） */
