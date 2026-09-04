@@ -229,8 +229,9 @@ public final class CursedSpiritTechnique extends BaseTechnique {
 
     private static void toggleRelease(ServerPlayer player, SpiritEntry entry) {
         if (entry.releasedId >= 0) {
-            // 收回（保留记录）
+            // 收回（保留记录），其召唤物一并清除
             if (player.serverLevel().getEntity(entry.releasedId) instanceof Mob mob && mob.isAlive()) {
+                dismissServantsOf(mob);
                 mob.discard();
             }
             entry.releasedId = -1;
@@ -341,13 +342,14 @@ public final class CursedSpiritTechnique extends BaseTechnique {
                 new PacketOpenSpiritScreen(mode, list));
     }
 
-    /** 登出/死亡清理：撤销场上释放体（保留记录），清除蓄力 */
+    /** 登出/死亡清理：撤销场上释放体（保留记录，召唤物一并清除），清除蓄力 */
     public static void cleanup(ServerPlayer player) {
         VORTEX_CHARGE.remove(player.getUUID());
         List<SpiritEntry> list = entries(player);
         for (SpiritEntry e : list) {
             if (e.releasedId >= 0
                     && player.serverLevel().getEntity(e.releasedId) instanceof Mob mob && mob.isAlive()) {
+                dismissServantsOf(mob);
                 mob.discard();
             }
             e.releasedId = -1;
@@ -374,7 +376,7 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         return null;
     }
 
-    /** 天逆鉾右键仆从：直接收回（保留记录），返回是否命中 */
+    /** 天逆鉾右键仆从：直接收回（保留记录，召唤物一并清除），返回是否命中 */
     public static boolean recallByEntity(Entity target) {
         ServerPlayer owner = ownerOfReleased(target);
         if (owner == null) return false;
@@ -382,6 +384,7 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         for (SpiritEntry e : list) {
             if (e.releasedId >= 0 && target.getId() == e.releasedId) {
                 if (owner.serverLevel().getEntity(e.releasedId) instanceof Mob mob && mob.isAlive()) {
+                    dismissServantsOf(mob);
                     mob.discard();
                 }
                 e.releasedId = -1;
@@ -441,6 +444,30 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         return null;
     }
 
+    /** 主人链是否追溯到 root（兼容实体实例/id 两种比较） */
+    private static boolean chainReaches(LivingEntity entity, Entity root) {
+        LivingEntity cur = entity;
+        int rootId = root.getId();
+        for (int depth = 0; depth < 6; depth++) {
+            if (cur == null) return false;
+            if (cur == root || cur.getId() == rootId) return true;
+            cur = goetyOwnerOf(cur);
+        }
+        return false;
+    }
+
+    /** 收回/移除某仆从时，连同它召唤的小弟（Goety 主人链下级）一并清除 */
+    public static void dismissServantsOf(Entity root) {
+        if (root == null || root.level().isClientSide) return;
+        if (!(root.level() instanceof ServerLevel sl)) return;
+        for (Mob m : sl.getEntitiesOfClass(Mob.class, root.getBoundingBox().inflate(256.0),
+                mm -> mm.isAlive() && mm != root)) {
+            if (chainReaches(m, root)) {
+                m.discard();
+            }
+        }
+    }
+
     /**
      * 递归同队：target 本人、或其（Goety 仆从）主人链上的任意一环属于 owner 的释放体/owner 本人，
      * 都算 owner 的同队——覆盖"使徒释放的召唤物"这类二阶仆从。
@@ -467,11 +494,12 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         return null;
     }
 
-    /** 释放体战死 → 记录从 GUI 消失（玩家本人死亡绝不算释放体战死） */
+    /** 释放体战死 → 记录从 GUI 消失，其召唤物一并清除（玩家本人死亡绝不算释放体战死） */
     public static void onMinionDeath(Entity dead) {
         if (dead.level().isClientSide) return;
         if (dead instanceof net.minecraft.world.entity.player.Player) return; // 玩家不是释放体
         if (!(dead.level() instanceof ServerLevel sl)) return;
+        dismissServantsOf(dead);
         for (ServerPlayer p : sl.getServer().getPlayerList().getPlayers()) {
             List<SpiritEntry> list = entries(p);
             boolean removed = list.removeIf(e -> e.releasedId >= 0 && dead.getId() == e.releasedId);

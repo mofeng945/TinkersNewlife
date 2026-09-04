@@ -553,9 +553,13 @@ public final class WuWeiHandler {
             ServerPlayer spiritOwner = com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
                     .ownerOfReleased(targetMob);
             boolean selfSpirit = spiritOwner != null && spiritOwner.getUUID().equals(player.getUUID());
-            if (spiritOwner != null && !selfSpirit) {
-                com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
-                        .removeOnForeignTransform(targetMob);
+            if (spiritOwner != null) {
+                // its summoned minions vanish together
+                com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique.dismissServantsOf(targetMob);
+                if (!selfSpirit) {
+                    com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
+                            .removeOnForeignTransform(targetMob);
+                }
             }
             targetMob.discard();
             Entity form = type.create(level);
