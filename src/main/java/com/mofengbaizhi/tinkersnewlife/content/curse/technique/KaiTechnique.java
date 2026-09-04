@@ -1,4 +1,5 @@
-package com.mofengbaizhi.tinkersnewlife.content.curse;
+package com.mofengbaizhi.tinkersnewlife.content.curse.technique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.BaseTechnique;
 
 import com.mofengbaizhi.tinkersnewlife.content.Modifiers;
 import net.minecraft.server.level.ServerPlayer;

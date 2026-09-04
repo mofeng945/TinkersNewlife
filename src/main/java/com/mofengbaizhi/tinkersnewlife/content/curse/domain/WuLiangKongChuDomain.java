@@ -1,4 +1,7 @@
-package com.mofengbaizhi.tinkersnewlife.content.curse;
+package com.mofengbaizhi.tinkersnewlife.content.curse.domain;
+import com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler;
+import com.mofengbaizhi.tinkersnewlife.content.curse.domain.BaseDomain;
+import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
 
 import com.mofengbaizhi.tinkersnewlife.content.ModEffects;
 import com.mofengbaizhi.tinkersnewlife.content.Modifiers;

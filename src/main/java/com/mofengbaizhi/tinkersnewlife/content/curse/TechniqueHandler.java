@@ -1,4 +1,9 @@
 package com.mofengbaizhi.tinkersnewlife.content.curse;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.ZaoKaiTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHandler;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangCangTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.BaseTechnique;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;

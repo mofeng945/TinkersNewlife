@@ -1,4 +1,6 @@
-package com.mofengbaizhi.tinkersnewlife.content.curse;
+package com.mofengbaizhi.tinkersnewlife.content.curse.domain;
+import com.mofengbaizhi.tinkersnewlife.content.curse.domain.BaseDomain;
+import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModEntities;

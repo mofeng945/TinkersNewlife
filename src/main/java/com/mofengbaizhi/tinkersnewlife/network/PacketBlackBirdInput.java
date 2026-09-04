@@ -1,6 +1,6 @@
 package com.mofengbaizhi.tinkersnewlife.network;
 
-import com.mofengbaizhi.tinkersnewlife.content.curse.BlackBirdTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.BlackBirdTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.entity.BlackBirdEntity;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;

@@ -1,4 +1,5 @@
 package com.mofengbaizhi.tinkersnewlife.content.item;
+import com.mofengbaizhi.tinkersnewlife.content.curse.domain.DomainRegistry;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -69,7 +70,7 @@ public class TianNiHuoItem extends CursedToolItem {
         Block barrier = com.mofengbaizhi.tinkersnewlife.content.ModBlocks.DOMAIN_BARRIER.get();
         if (!state.is(barrier)) return InteractionResult.PASS;
         if (context.getPlayer() instanceof ServerPlayer breaker) {
-            com.mofengbaizhi.tinkersnewlife.content.curse.DomainRegistry
+            com.mofengbaizhi.tinkersnewlife.content.curse.domain.DomainRegistry
                     .breakDomainByBarrier(breaker, (ServerLevel) level, context.getClickedPos());
             return InteractionResult.SUCCESS;
         }

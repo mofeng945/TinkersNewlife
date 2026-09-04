@@ -1,7 +1,10 @@
 package com.mofengbaizhi.tinkersnewlife.content.curse;
+import com.mofengbaizhi.tinkersnewlife.content.curse.TechniqueHandler;
+import com.mofengbaizhi.tinkersnewlife.content.curse.binding.BindingStateHandler;
+import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
+import com.mofengbaizhi.tinkersnewlife.content.curse.domain.DomainRegistry;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
-import com.mofengbaizhi.tinkersnewlife.content.handler.BlackFlashHandler;
 import com.mofengbaizhi.tinkersnewlife.network.PacketSyncCurse;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -71,8 +74,8 @@ public class CursePowerHandler {
         int tamedMask = wearing ? com.mofengbaizhi.tinkersnewlife.content.curse.shikigami.ShikigamiHandler.getTamedMask(player) : 0;
         int affinity = wearing ? CursePowerHelper.getCurseAffinity(player) : 0;
         int output = wearing ? CursePowerHelper.getCurseOutputLevel(player) : 1;
-        boolean restricted = com.mofengbaizhi.tinkersnewlife.content.handler.HeavenlyRestrictionHandler.isRestricted(player);
-        boolean bound = com.mofengbaizhi.tinkersnewlife.content.handler.CurseBindingHandler.isBound(player);
+        boolean restricted = com.mofengbaizhi.tinkersnewlife.content.curse.binding.BindingStateHandler.isRestricted(player);
+        boolean bound = com.mofengbaizhi.tinkersnewlife.content.curse.binding.BindingStateHandler.isBound(player);
         TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
                 new PacketSyncCurse(curse, max, domainActive, infinite,
                         technique == null ? "" : technique.toString(), tamedMask, affinity, output,

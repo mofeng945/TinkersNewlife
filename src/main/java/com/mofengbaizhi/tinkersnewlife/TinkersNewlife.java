@@ -1,24 +1,25 @@
 package com.mofengbaizhi.tinkersnewlife;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuWeiTechnique;
 
 import com.mofengbaizhi.tinkersnewlife.content.*;
-import com.mofengbaizhi.tinkersnewlife.content.curse.BaTechnique;
-import com.mofengbaizhi.tinkersnewlife.content.curse.BlackBirdTechnique;
-import com.mofengbaizhi.tinkersnewlife.content.curse.BloodManipulationHyakurenTechnique;
-import com.mofengbaizhi.tinkersnewlife.content.curse.BloodManipulationSupernovaTechnique;
-import com.mofengbaizhi.tinkersnewlife.content.curse.BloodManipulationTechnique;
-import com.mofengbaizhi.tinkersnewlife.content.curse.DomainRegistry;
-import com.mofengbaizhi.tinkersnewlife.content.curse.FuMoYuChuZiDomain;
-import com.mofengbaizhi.tinkersnewlife.content.curse.KaiTechnique;
-import com.mofengbaizhi.tinkersnewlife.content.curse.WuliangWuxianTechnique;
-import com.mofengbaizhi.tinkersnewlife.content.curse.WuliangCangTechnique;
-import com.mofengbaizhi.tinkersnewlife.content.curse.JacobsLadderTechnique;
-import com.mofengbaizhi.tinkersnewlife.content.curse.ReverseCursedTechnique;
-import com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.BaTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.BlackBirdTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.BloodManipulationHyakurenTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.BloodManipulationSupernovaTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.BloodManipulationTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.domain.DomainRegistry;
+import com.mofengbaizhi.tinkersnewlife.content.curse.domain.FuMoYuChuZiDomain;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.KaiTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangWuxianTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangCangTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.JacobsLadderTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.ReverseCursedTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.ProjectionTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.TechniqueHandler;
-import com.mofengbaizhi.tinkersnewlife.content.curse.TenShadowsTechnique;
-import com.mofengbaizhi.tinkersnewlife.content.curse.WuLiangKongChuDomain;
-import com.mofengbaizhi.tinkersnewlife.content.curse.ZaoKaiTechnique;
-import com.mofengbaizhi.tinkersnewlife.content.curse.ZuoShaBoTuDomain;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.TenShadowsTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.domain.WuLiangKongChuDomain;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.ZaoKaiTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.domain.ZuoShaBoTuDomain;
 import com.mofengbaizhi.tinkersnewlife.content.loot.LootModifierSerializers;
 import com.mofengbaizhi.tinkersnewlife.content.storage.SilentGloveHandler;
 import com.mofengbaizhi.tinkersnewlife.content.storage.StorageManager;
@@ -154,7 +155,7 @@ public class TinkersNewlife {
         TechniqueHandler.register(WuliangCangTechnique.INSTANCE);
         TechniqueHandler.register(JacobsLadderTechnique.INSTANCE);
         TechniqueHandler.register(ReverseCursedTechnique.INSTANCE);
-        TechniqueHandler.register(com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiTechnique.INSTANCE);
+        TechniqueHandler.register(com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuWeiTechnique.INSTANCE);
 
         // 注册网络包
         registerPacket(PacketUseSkill.class, PacketUseSkill::toBytes, PacketUseSkill::new, PacketUseSkill::handle);
@@ -292,16 +293,16 @@ public class TinkersNewlife {
                 for (net.minecraft.server.level.ServerPlayer p :
                         event.getServer().getPlayerList().getPlayers()) {
                     // 无下限·苍/赫 蓄力粒子
-                    com.mofengbaizhi.tinkersnewlife.content.curse.WuliangCangTechnique
+                    com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangCangTechnique
                             .tickChargeParticles((net.minecraft.server.level.ServerLevel) p.level(), p);
                     // 帕秋莉手册解锁：每 20 tick 扫描核心特性，获得术式/领域即解锁对应章节
                     if (event.getServer().getTickCount() % 20 == 0) {
-                        com.mofengbaizhi.tinkersnewlife.content.handler.TechniqueAdvancementHandler.scanAndUnlock(p);
+                        com.mofengbaizhi.tinkersnewlife.content.curse.TechniqueAdvancementHandler.scanAndUnlock(p);
                     }
-                    var proj = com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.INSTANCE;
+                    var proj = com.mofengbaizhi.tinkersnewlife.content.curse.technique.ProjectionTechnique.INSTANCE;
                     // 罚站：钉住位置/视角/速度（服务端权威），到期解除
                     var projData = p.getPersistentData();
-                    if (com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.isStunned(p)) {
+                    if (com.mofengbaizhi.tinkersnewlife.content.curse.technique.ProjectionTechnique.isStunned(p)) {
                         p.setNoGravity(true);
                         p.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
                         p.teleportTo(projData.getDouble("tinkersnewlife.projection_stun_x"),
@@ -318,23 +319,23 @@ public class TinkersNewlife {
                         p.setNoGravity(false);
                         // 罚站到期：通知客户端解除输入锁定
                         if (projData.contains("tinkersnewlife.projection_stun_until")) {
-                            com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.endStun(p);
+                            com.mofengbaizhi.tinkersnewlife.content.curse.technique.ProjectionTechnique.endStun(p);
                         }
                     }
                     // 速度增益：modifier = 2^层数 - 1（×1 即 +100%），但速度倍率封顶 32 倍，防止过快
                     var attr = p.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
                     if (attr == null) continue;
                     double speedMult = Math.min(32.0,
-                            com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.getBuffMultiplier(p));
+                            com.mofengbaizhi.tinkersnewlife.content.curse.technique.ProjectionTechnique.getBuffMultiplier(p));
                     var mod = new net.minecraft.world.entity.ai.attributes.AttributeModifier(
                             java.util.UUID.fromString("7a9f2c4e-8b3d-4e5f-9a1c-2d3e4f5a6b7c"),
                             "projection_speed",
                             speedMult - 1.0,
                             net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.MULTIPLY_TOTAL);
-                    if (com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.hasBuff(p)
+                    if (com.mofengbaizhi.tinkersnewlife.content.curse.technique.ProjectionTechnique.hasBuff(p)
                             && !attr.hasModifier(mod)) {
                         attr.addTransientModifier(mod);
-                    } else if (!com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.hasBuff(p)
+                    } else if (!com.mofengbaizhi.tinkersnewlife.content.curse.technique.ProjectionTechnique.hasBuff(p)
                             && attr.hasModifier(mod)) {
                         attr.removeModifier(mod);
                     }
@@ -347,14 +348,14 @@ public class TinkersNewlife {
         public static void onLivingHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
             var src = event.getSource();
             if (src != null && src.getEntity() instanceof net.minecraft.server.level.ServerPlayer attacker
-                    && com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.hasBuff(attacker)) {
+                    && com.mofengbaizhi.tinkersnewlife.content.curse.technique.ProjectionTechnique.hasBuff(attacker)) {
                 event.setAmount(event.getAmount()
-                        * (float) com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.getBuffMultiplier(attacker));
+                        * (float) com.mofengbaizhi.tinkersnewlife.content.curse.technique.ProjectionTechnique.getBuffMultiplier(attacker));
             }
             // 无下限·无限：受伤者为开启无限的玩家时，按无限规则结算
             // ⭐ 天逆鉾等可穿透无下限的咒具（ignoresInfinity=true）无视该防御，直接造成伤害
             if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer victim
-                    && com.mofengbaizhi.tinkersnewlife.content.curse.WuliangWuxianTechnique.isActive(victim)) {
+                    && com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangWuxianTechnique.isActive(victim)) {
                 boolean bypass = false;
                 if (src != null && src.getDirectEntity() instanceof net.minecraft.world.entity.player.Player p
                         && com.mofengbaizhi.tinkersnewlife.content.item.CursedToolItem.isHolding(p)) {
@@ -365,7 +366,7 @@ public class TinkersNewlife {
                     }
                 }
                 if (!bypass) {
-                    event.setAmount(com.mofengbaizhi.tinkersnewlife.content.curse.WuliangWuxianTechnique
+                    event.setAmount(com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangWuxianTechnique
                             .onPlayerDamaged(victim, event.getAmount()));
                 }
             }
@@ -375,9 +376,9 @@ public class TinkersNewlife {
         @SubscribeEvent
         public static void onLivingJump(net.minecraftforge.event.entity.living.LivingEvent.LivingJumpEvent event) {
             if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer p
-                    && com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.hasBuff(p)) {
+                    && com.mofengbaizhi.tinkersnewlife.content.curse.technique.ProjectionTechnique.hasBuff(p)) {
                 double jumpMult = Math.min(8.0,
-                        com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.getBuffMultiplier(p));
+                        com.mofengbaizhi.tinkersnewlife.content.curse.technique.ProjectionTechnique.getBuffMultiplier(p));
                 p.setDeltaMovement(p.getDeltaMovement().x,
                         p.getDeltaMovement().y * jumpMult,
                         p.getDeltaMovement().z);
@@ -389,7 +390,7 @@ public class TinkersNewlife {
         public static void onLivingAttack(net.minecraftforge.event.entity.living.LivingAttackEvent event) {
             var src = event.getSource();
             if (src != null && src.getEntity() instanceof net.minecraft.server.level.ServerPlayer attacker
-                    && com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.isStunned(attacker)) {
+                    && com.mofengbaizhi.tinkersnewlife.content.curse.technique.ProjectionTechnique.isStunned(attacker)) {
                 event.setCanceled(true);
             }
         }
@@ -398,7 +399,7 @@ public class TinkersNewlife {
         @SubscribeEvent
         public static void onPlayerInteract(net.minecraftforge.event.entity.player.PlayerInteractEvent event) {
             if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer p
-                    && com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique.isStunned(p)) {
+                    && com.mofengbaizhi.tinkersnewlife.content.curse.technique.ProjectionTechnique.isStunned(p)) {
                 event.setCanceled(true);
             }
         }

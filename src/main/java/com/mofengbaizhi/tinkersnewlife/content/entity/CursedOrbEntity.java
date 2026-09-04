@@ -1,4 +1,5 @@
 package com.mofengbaizhi.tinkersnewlife.content.entity;
+import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
 
 import com.mofengbaizhi.tinkersnewlife.content.ModEntities;
 import net.minecraft.core.BlockPos;

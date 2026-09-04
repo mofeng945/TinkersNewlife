@@ -1,4 +1,5 @@
 package com.mofengbaizhi.tinkersnewlife.content.curse;
+import com.mofengbaizhi.tinkersnewlife.content.curse.binding.BindingStateHandler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.Modifiers;
@@ -78,7 +79,7 @@ public final class CursePowerHelper {
     public static int getCurseOutputLevel(Player player) {
         int level = getModifierLevel(findEquippedCurseCore(player), Modifiers.CURSE_OUTPUT.getId());
         if (level > 0) {
-            level += com.mofengbaizhi.tinkersnewlife.content.handler.CurseBindingHandler.getCoreLevelBonus(player);
+            level += com.mofengbaizhi.tinkersnewlife.content.curse.binding.BindingStateHandler.getCoreLevelBonus(player);
         }
         return level;
     }
@@ -87,7 +88,7 @@ public final class CursePowerHelper {
     public static int getCurseTotalLevel(Player player) {
         int level = getModifierLevel(findEquippedCurseCore(player), Modifiers.CURSE_TOTAL.getId());
         if (level > 0) {
-            level += com.mofengbaizhi.tinkersnewlife.content.handler.CurseBindingHandler.getCoreLevelBonus(player);
+            level += com.mofengbaizhi.tinkersnewlife.content.curse.binding.BindingStateHandler.getCoreLevelBonus(player);
         }
         return level;
     }
@@ -120,7 +121,7 @@ public final class CursePowerHelper {
             }
         }
         return sum + getTemporaryAffinity(player)
-                + com.mofengbaizhi.tinkersnewlife.content.handler.CurseBindingHandler.getAffinityBonus(player);
+                + com.mofengbaizhi.tinkersnewlife.content.curse.binding.BindingStateHandler.getAffinityBonus(player);
     }
 
     /** 设置临时咒力亲和加成（到期后自动失效） */

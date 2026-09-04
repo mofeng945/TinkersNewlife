@@ -1,7 +1,7 @@
 package com.mofengbaizhi.tinkersnewlife.content.recipe;
 
 import com.mofengbaizhi.tinkersnewlife.content.ModRecipeSerializers;
-import com.mofengbaizhi.tinkersnewlife.content.curse.DomainRegistry;
+import com.mofengbaizhi.tinkersnewlife.content.curse.domain.DomainRegistry;
 import com.mofengbaizhi.tinkersnewlife.content.curse.TechniqueHandler;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.Container;

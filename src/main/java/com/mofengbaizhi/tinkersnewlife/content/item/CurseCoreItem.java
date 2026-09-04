@@ -1,4 +1,5 @@
 package com.mofengbaizhi.tinkersnewlife.content.item;
+import com.mofengbaizhi.tinkersnewlife.content.curse.binding.BindingStateHandler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import net.minecraft.resources.ResourceLocation;
@@ -31,7 +32,7 @@ public class CurseCoreItem extends ModifiableItem implements ICurioItem {
         if (!"curse_core".equals(context.identifier())) return false;
         // ⭐ 天与咒缚：失去咒力，无法佩戴咒力核心（服务端持久数据校验）
         if (context.entity() instanceof net.minecraft.world.entity.player.Player player
-                && com.mofengbaizhi.tinkersnewlife.content.handler.HeavenlyRestrictionHandler.isRestricted(player)) {
+                && com.mofengbaizhi.tinkersnewlife.content.curse.binding.BindingStateHandler.isRestricted(player)) {
             return false;
         }
         return true;

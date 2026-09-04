@@ -1,4 +1,5 @@
-package com.mofengbaizhi.tinkersnewlife.content.curse;
+package com.mofengbaizhi.tinkersnewlife.content.curse.technique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
 
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;

@@ -1,4 +1,7 @@
-package com.mofengbaizhi.tinkersnewlife.content.curse;
+package com.mofengbaizhi.tinkersnewlife.content.curse.technique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.BloodManipulationTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.BaseTechnique;
 
 import com.mofengbaizhi.tinkersnewlife.content.Modifiers;
 import net.minecraft.core.particles.DustParticleOptions;

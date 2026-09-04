@@ -1,6 +1,6 @@
 package com.mofengbaizhi.tinkersnewlife.network;
 
-import com.mofengbaizhi.tinkersnewlife.content.curse.DomainRegistry;
+import com.mofengbaizhi.tinkersnewlife.content.curse.domain.DomainRegistry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;

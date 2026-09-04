@@ -1,4 +1,5 @@
-package com.mofengbaizhi.tinkersnewlife.content.curse;
+package com.mofengbaizhi.tinkersnewlife.content.curse.domain;
+import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;

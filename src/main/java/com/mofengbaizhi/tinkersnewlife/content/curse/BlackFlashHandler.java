@@ -1,7 +1,8 @@
-package com.mofengbaizhi.tinkersnewlife.content.handler;
+package com.mofengbaizhi.tinkersnewlife.content.curse;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.Modifiers;
+import com.mofengbaizhi.tinkersnewlife.content.curse.binding.BindingStateHandler;
 import com.mofengbaizhi.tinkersnewlife.util.BlackFlashParticleHelper;
 import com.mofengbaizhi.tinkersnewlife.util.KnockbackHelper;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
@@ -83,8 +84,8 @@ public class BlackFlashHandler {
 
         if (player.level().isClientSide) return;
 
-        // ⭐ 天与咒缚：黑闪概率锁定为 0（无法再打出黑闪）
-        if (HeavenlyRestrictionHandler.isRestricted(player)) return;
+        // ⭐ 天与咒缚·暴君：黑闪概率锁定为 0（无法再打出黑闪）
+        if (BindingStateHandler.isRestricted(player)) return;
 
         // ✅ 统一获取攻击工具（近战/弹射物/悠悠球从球实体读取），主手无武器时兜底取佩戴的咒力核心
         ToolStack tool = ToolHelper.getCombatToolWith(event.getSource(), player, BLACK_FLASH_ID);

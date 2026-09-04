@@ -1,4 +1,5 @@
 package com.mofengbaizhi.tinkersnewlife.content;
+import com.mofengbaizhi.tinkersnewlife.content.curse.binding.BindingStateHandler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.client.ClientCurseData;
@@ -48,7 +49,7 @@ public class ModTooltips {
                     int output = tool.getModifierLevel(Modifiers.CURSE_OUTPUT.getId());
                     int total = tool.getModifierLevel(Modifiers.CURSE_TOTAL.getId());
                     // ⭐ 天与咒缚·咒力：佩戴该核心时总量/输出各 +1（束缚标识已同步到客户端，tooltip 一并计入）
-                    if (com.mofengbaizhi.tinkersnewlife.content.handler.CurseBindingHandler.isBound(player)
+                    if (com.mofengbaizhi.tinkersnewlife.content.curse.binding.BindingStateHandler.isBound(player)
                             && CursePowerHelper.isEquippedCurseCore(player, stack)) {
                         if (output > 0) output++;
                         if (total > 0) total++;

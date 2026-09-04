@@ -1,4 +1,4 @@
-package com.mofengbaizhi.tinkersnewlife.content.handler;
+package com.mofengbaizhi.tinkersnewlife.content.curse;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.Modifiers;

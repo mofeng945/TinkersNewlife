@@ -1,6 +1,6 @@
 package com.mofengbaizhi.tinkersnewlife.content.entity;
 
-import com.mofengbaizhi.tinkersnewlife.content.curse.ProjectionTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.ProjectionTechnique;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;

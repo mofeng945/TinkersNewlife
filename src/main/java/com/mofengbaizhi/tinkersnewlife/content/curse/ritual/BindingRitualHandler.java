@@ -1,7 +1,8 @@
-package com.mofengbaizhi.tinkersnewlife.content.handler;
+package com.mofengbaizhi.tinkersnewlife.content.curse.ritual;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModItems;
+import com.mofengbaizhi.tinkersnewlife.content.curse.binding.BindingStateHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.BlockParticleOption;
@@ -18,6 +19,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.Block;
@@ -44,69 +46,122 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 仪式二「天与咒缚·咒力」（服务端）——与「天与咒缚·暴君」相反方向的束缚
+ * 天与咒缚·束缚仪式统一处理器（服务端）——「暴君」与「咒力」两个相反方向的仪式共用一套状态机
  * <p>
- * 发动条件（必须全部满足；与暴君相反）：
- * <ul>
- *   <li>时间：满月（月相 0）+ 夜晚（dayTime 13000~23000）；创造模式可跳过时间条件（便于测试）</li>
- *   <li>场所：露天（水池正上方无遮盖）+ 亮度 &gt; 8</li>
- *   <li>水池：1 格深、≥9 个相连水源；池心正上方为空气</li>
- *   <li>16 格范围内：≥7 下界岩、≥9 哭泣黑曜石、≥7 灵魂沙、≥9 石英块，
- *       且至少 1 个「下界岩上的火焰」与 1 个「灵魂沙上的灵魂火」</li>
- * </ul>
- * 流程（与暴君相同）：
- * <ol>
- *   <li>向水池投入一枚任意咒力核心 → 核心自动漂向池心、旋转 3 秒后散开，水池泛起白光（白光粒子）</li>
- *   <li>发起者跳入池水：每 20 tick 池水「治疗 −11% 最大生命」（直接扣血，不吃护甲/无敌帧），
- *       伴随大量白色方块破坏粒子；期间抑制自然回血，直到生命仅剩 1%</li>
- *   <li>黑暗降临，屏幕中央依次出现标题（各 2 秒），玻璃碎裂声 + 凋零死亡音效；
- *       随后解除黑暗、抽干池水、熄灭火焰 → 仪式完成</li>
- *   <li>结算：发起者获得天与咒缚·咒力（CurseBindingHandler）——基础生命上限/速度/伤害减半，
- *       但自带咒力亲和 200，且佩戴咒力核心时咒力总量与咒力输出各自动 +1 级；
- *       状态固化（死亡不解除）；仪式结束时生命恢复至新上限的 40%。
- *       与「暴君」仪式互斥——持有任一束缚标识（暴君 / 咒力）后两种仪式都无法再次举行，
- *       唯有指令 /tinkersnewlife unbind 可清除标识并恢复体质与属性</li>
- * </ol>
+ * 两仪式差异全部由 {@link Variant} 参数化（祭品 / 月相 / 露天与亮度 / 结构方块 / 特效配色 /
+ * 收尾音效 / 三段标题 / 结算束缚），其余（水池探测、扫描、头颅漂移旋转爆散、抽血至 1%、
+ * 黑暗演出、清理）只实现一份。
+ * <p>
+ * <b>暴君</b>：新月 + 夜晚 + 非露天 + 亮度 &lt;8；下界岩 7 / 黑曜石 9 / 灵魂沙 7 / 下界砖 9；
+ * 投凋零骷髅头颅 → 池水变黑 → 抽血 → 结算暴君束缚（失去咒力，肉体 ×5/×5/×3/×10，生命回 40%）。
+ * <b>咒力</b>：满月 + 夜晚 + 露天 + 亮度 &gt;8；下界岩 7 / 哭泣黑曜石 9 / 灵魂沙 7 / 石英块 9；
+ * 投任意咒力核心（被消耗）→ 池泛白光 → 抽血 → 结算咒力束缚（生命/速度/伤害 ×0.5，亲和 +200，
+ * 佩戴核心总量/输出 +1，生命回 40%）。
+ * <p>
+ * 仪式检测：持有任一束缚标识（暴君 / 咒力）的玩家都无法再次举行两种仪式中的任意一种；
+ * 唯有指令 {@code /tinkersnewlife unbind} 可清除标识并恢复体质与属性。两仪式全程无聊天提示，
+ * 只保留屏幕中央三段标题（每段 2 秒）与音效。
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
-public class CurseBindingRitualHandler {
+public class BindingRitualHandler {
 
-    private static final String TAG = "[天与咒缚·咒力] ";
+    /** 仪式变体 */
+    private enum Variant { TYRANT, CURSE }
 
-    // ==================== 结构参数 ====================
+    // ==================== 结构参数（两仪式共用） ====================
     /** 16 格扫描半径（结构方块与火焰） */
     private static final int SCAN_RADIUS = 16;
     /** 水池最少水源数 */
     private static final int POOL_MIN_SOURCES = 9;
     private static final int REQ_NETHERRACK = 7;
-    private static final int REQ_CRYING_OBSIDIAN = 9;
     private static final int REQ_SOUL_SAND = 7;
-    private static final int REQ_QUARTZ = 9;
+    private static final int REQ_SPECIAL_3 = 9;   // 黑曜石 / 哭泣黑曜石
+    private static final int REQ_SPECIAL_4 = 9;   // 下界砖 / 石英块
 
-    // ==================== 流程参数 ====================
-    /** 核心漂移+旋转时长：3 秒 */
-    private static final int SKULL_TICKS = 60;
-    /** 白光等待超时：3 分钟 */
+    // ==================== 流程参数（两仪式共用） ====================
+    /** 祭品漂移+旋转时长：3 秒 */
+    private static final int OFFERING_TICKS = 60;
+    /** 等待超时：3 分钟 */
     private static final int WAIT_TIMEOUT = 3 * 60 * 20;
     /** 抽血间隔：20 tick */
     private static final int DRAIN_INTERVAL = 20;
     /** 每脉冲抽取：11% 最大生命 */
     private static final float DRAIN_FRACTION = 0.11F;
-    /** 标题文字（每段 2 秒） */
-    private static final String[] FINAL_TITLES = {"天与咒缚", "咒力", "你掌握了咒力"};
     private static final int FINAL_CLEANUP_TICK = 120;
 
-    /** 白色方块破坏粒子用方块（白光主题） */
-    private static final BlockState WHITE_BLOCK_STATE = Blocks.WHITE_CONCRETE.defaultBlockState();
+    // ==================== 变体差异 ====================
 
-    /** 进行中的仪式：池心坐标 → 数据 */
+    private static String tag(Variant v) {
+        return v == Variant.TYRANT ? "[天与咒缚·暴君] " : "[天与咒缚·咒力] ";
+    }
+
+    /** 要求月相：暴君新月 4 / 咒力满月 0 */
+    private static int requiredMoon(Variant v) {
+        return v == Variant.TYRANT ? 4 : 0;
+    }
+
+    /** 暴君需要非露天（遮盖），咒力需要露天（无遮盖） */
+    private static boolean coveredRequired(Variant v) {
+        return v == Variant.TYRANT;
+    }
+
+    /** 暴君亮度 &lt;8，咒力亮度 &gt;8 */
+    private static boolean lightOk(Variant v, int maxLight) {
+        return v == Variant.TYRANT ? maxLight < 8 : maxLight > 8;
+    }
+
+    /** 第三种结构方块（黑曜石 / 哭泣黑曜石） */
+    private static Block thirdBlock(Variant v) {
+        return v == Variant.TYRANT ? Blocks.OBSIDIAN : Blocks.CRYING_OBSIDIAN;
+    }
+
+    /** 第四种结构方块（下界砖 / 石英块） */
+    private static Block fourthBlock(Variant v) {
+        return v == Variant.TYRANT ? Blocks.NETHER_BRICKS : Blocks.QUARTZ_BLOCK;
+    }
+
+    /** 投物是否为对应仪式的祭品 */
+    private static boolean isOffering(ItemEntity item, Variant v) {
+        if (item.getItem().isEmpty()) return false;
+        if (v == Variant.TYRANT) {
+            return item.getItem().is(Items.WITHER_SKELETON_SKULL);
+        }
+        return item.getItem().is(ModItems.CURSE_CORE.get());
+    }
+
+    /** 祭品类型 → 变体（仅识别两种已知祭品） */
+    private static Variant variantOf(ItemEntity item) {
+        if (item.getItem().is(Items.WITHER_SKELETON_SKULL)) return Variant.TYRANT;
+        if (item.getItem().is(ModItems.CURSE_CORE.get())) return Variant.CURSE;
+        return null;
+    }
+
+    /** 三段标题 */
+    private static String[] titles(Variant v) {
+        return v == Variant.TYRANT
+                ? new String[]{"天与咒缚", "肉体", "你失去了咒力"}
+                : new String[]{"天与咒缚", "咒力", "你掌握了咒力"};
+    }
+
+    /** 方块破坏粒子用方块（黑曜主题 / 白光主题） */
+    private static BlockState fxBlock(Variant v) {
+        return v == Variant.TYRANT
+                ? Blocks.BLACKSTONE.defaultBlockState()
+                : Blocks.WHITE_CONCRETE.defaultBlockState();
+    }
+
+    /** 是否为白光主题（咒力） */
+    private static boolean whiteTheme(Variant v) {
+        return v == Variant.CURSE;
+    }
+
+    // ============================================================
+    //  主循环
+    // ============================================================
+
     private static final Map<BlockPos, RitualData> RITUALS = new ConcurrentHashMap<>();
 
-    private CurseBindingRitualHandler() {}
-
-    // ============================================================
-    //  主循环：每 tick 推进仪式 + 每 10 tick 扫描投下的咒力核心
-    // ============================================================
+    private BindingRitualHandler() {}
 
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
@@ -122,7 +177,7 @@ public class CurseBindingRitualHandler {
     }
 
     // ============================================================
-    //  扫描：玩家附近水中投下的咒力核心
+    //  扫描：玩家附近水中投下的祭品（凋零骷髅头颅 / 任意咒力核心）
     // ============================================================
 
     private static void scanForOfferings(MinecraftServer server) {
@@ -131,30 +186,29 @@ public class CurseBindingRitualHandler {
             if (!level.dimensionType().hasSkyLight()) continue;
             AABB box = new AABB(player.getX() - 24, player.getY() - 16, player.getZ() - 24,
                     player.getX() + 24, player.getY() + 16, player.getZ() + 24);
-            List<ItemEntity> cores = level.getEntitiesOfClass(ItemEntity.class, box,
-                    it -> it.isAlive() && isCurseCore(it) && isOverWater(it));
-            for (ItemEntity core : cores) {
-                if (anyRitualNear(core.blockPosition())) continue;
+            List<ItemEntity> offerings = level.getEntitiesOfClass(ItemEntity.class, box,
+                    it -> it.isAlive() && (it.getItem().is(Items.WITHER_SKELETON_SKULL)
+                            || it.getItem().is(ModItems.CURSE_CORE.get())) && isOverWater(it));
+            for (ItemEntity offering : offerings) {
+                if (anyRitualNear(offering.blockPosition())) continue;
+                Variant variant = variantOf(offering);
+                if (variant == null) continue;
+                if (!isOffering(offering, variant)) continue;
                 ServerLevel serverLevel = (ServerLevel) level;
-                PoolInfo pool = findPool(serverLevel, core);
+                PoolInfo pool = findPool(serverLevel, offering);
                 if (pool == null) continue;
-                if (!environmentOk(player, serverLevel, pool.anchor)) continue;
-                if (!checkStructure(serverLevel, pool.anchor)) continue;
-                ServerPlayer caster = resolveCaster(core, player);
+                if (!environmentOk(player, serverLevel, pool.anchor, variant)) continue;
+                if (!checkStructure(serverLevel, pool.anchor, variant)) continue;
+                ServerPlayer caster = resolveCaster(offering, player);
                 if (caster == null) continue;
-                if (HeavenlyRestrictionHandler.hasAnyBinding(caster)) continue; // 持有任一束缚标识者无法再次举行两种仪式
-                startRitual(caster, serverLevel, core, pool);
+                if (BindingStateHandler.hasAnyBinding(caster)) continue; // 持有任一束缚标识者无法再次举行两种仪式
+                startRitual(caster, serverLevel, offering, pool, variant);
                 break;
             }
         }
     }
 
-    /** 是否为咒力核心（任意材质） */
-    private static boolean isCurseCore(ItemEntity item) {
-        return !item.getItem().isEmpty() && item.getItem().is(ModItems.CURSE_CORE.get());
-    }
-
-    /** 投物是否悬在（或贴着）水面 */
+    /** 祭品是否悬在（或贴着）水面 */
     private static boolean isOverWater(ItemEntity item) {
         Level level = item.level();
         BlockPos pos = item.blockPosition();
@@ -162,7 +216,7 @@ public class CurseBindingRitualHandler {
         return level.getFluidState(pos.below()).is(Fluids.WATER);
     }
 
-    /** 投物所在处是否有进行中的仪式 */
+    /** 祭品所在处是否有进行中的仪式 */
     private static boolean anyRitualNear(BlockPos pos) {
         for (BlockPos anchor : RITUALS.keySet()) {
             if (anchor.distSqr(pos) < 24 * 24) return true;
@@ -178,9 +232,9 @@ public class CurseBindingRitualHandler {
         return level.getFluidState(pos).is(Fluids.WATER) && level.getFluidState(pos).isSource();
     }
 
-    /** 从投物所在水源向四周收集同一高度的水源簇；返回池心与所有水源位置 */
-    private static PoolInfo findPool(ServerLevel level, ItemEntity skull) {
-        BlockPos bp = skull.blockPosition();
+    /** 从祭品所在水源向四周收集同一高度的水源簇；返回池心与所有水源位置 */
+    private static PoolInfo findPool(ServerLevel level, ItemEntity offering) {
+        BlockPos bp = offering.blockPosition();
         BlockPos seed = isWaterSource(level, bp) ? bp
                 : (isWaterSource(level, bp.below()) ? bp.below() : null);
         if (seed == null) return null;
@@ -223,31 +277,34 @@ public class CurseBindingRitualHandler {
     }
 
     // ============================================================
-    //  环境与结构校验
+    //  环境与结构校验（按变体）
     // ============================================================
 
-    /** 环境校验（时间 / 露天 / 亮度 / 池心空间）；满足返回 true */
-    private static boolean environmentOk(ServerPlayer player, ServerLevel level, BlockPos anchor) {
+    /** 环境校验（时间 / 露天或遮盖 / 亮度 / 池心空间）；满足返回 true */
+    private static boolean environmentOk(ServerPlayer player, ServerLevel level, BlockPos anchor, Variant variant) {
         boolean cheat = player.isCreative();
         long dayTime = level.getDayTime() % 24000;
         boolean night = dayTime >= 13000 && dayTime < 23000;
-        boolean fullMoon = level.getMoonPhase() == 0;
-        if (!cheat && (!night || !fullMoon)) return false;
+        boolean moonOk = level.getMoonPhase() == requiredMoon(variant);
+        if (!cheat && (!night || !moonOk)) return false;
         // 池心正上方必须为空气（玩家能跳进去）
         if (!level.getBlockState(anchor.above()).isAir()) return false;
-        // 露天：水池所在纵列上方不得被遮盖（heightmap 不高于水面）
+        // 露天与否：暴君要求遮盖（heightmap 高于水面），咒力要求露天（heightmap 不高于水面）
         int topY = level.getHeight(Heightmap.Types.OCEAN_FLOOR, anchor.getX(), anchor.getZ());
-        if (topY > anchor.getY() + 1) return false;
-        // 亮度 > 8（明亮场所：满月之夜 + 火焰/灯光照明）
+        boolean covered = topY > anchor.getY() + 1;
+        if (covered != coveredRequired(variant)) return false;
+        // 亮度：暴君 < 8 / 咒力 > 8
         int blockLight = level.getBrightness(LightLayer.BLOCK, anchor);
         int skyLight = level.getBrightness(LightLayer.SKY, anchor);
-        return Math.max(blockLight, skyLight) > 8;
+        return lightOk(variant, Math.max(blockLight, skyLight));
     }
 
     /** 结构校验：16 格内材料计数 + 火焰/灵魂火；满足返回 true */
-    private static boolean checkStructure(ServerLevel level, BlockPos anchor) {
-        int netherrack = 0, cryingObsidian = 0, soulSand = 0, quartz = 0;
+    private static boolean checkStructure(ServerLevel level, BlockPos anchor, Variant variant) {
+        int netherrack = 0, special3 = 0, soulSand = 0, special4 = 0;
         boolean fireOnNetherrack = false, soulFireOnSoulSand = false;
+        Block third = thirdBlock(variant);
+        Block fourth = fourthBlock(variant);
         for (int dx = -SCAN_RADIUS; dx <= SCAN_RADIUS; dx++) {
             for (int dy = -SCAN_RADIUS; dy <= SCAN_RADIUS; dy++) {
                 for (int dz = -SCAN_RADIUS; dz <= SCAN_RADIUS; dz++) {
@@ -256,39 +313,40 @@ public class CurseBindingRitualHandler {
                     if (block == Blocks.NETHERRACK) {
                         netherrack++;
                         if (!fireOnNetherrack && level.getBlockState(pos.above()).is(Blocks.FIRE)) fireOnNetherrack = true;
-                    } else if (block == Blocks.CRYING_OBSIDIAN) {
-                        cryingObsidian++;
+                    } else if (block == third) {
+                        special3++;
                     } else if (block == Blocks.SOUL_SAND) {
                         soulSand++;
                         if (!soulFireOnSoulSand && level.getBlockState(pos.above()).is(Blocks.SOUL_FIRE)) soulFireOnSoulSand = true;
-                    } else if (block == Blocks.QUARTZ_BLOCK) {
-                        quartz++;
+                    } else if (block == fourth) {
+                        special4++;
                     }
                 }
             }
         }
-        return netherrack >= REQ_NETHERRACK && cryingObsidian >= REQ_CRYING_OBSIDIAN
-                && soulSand >= REQ_SOUL_SAND && quartz >= REQ_QUARTZ
+        return netherrack >= REQ_NETHERRACK && special3 >= REQ_SPECIAL_3
+                && soulSand >= REQ_SOUL_SAND && special4 >= REQ_SPECIAL_4
                 && fireOnNetherrack && soulFireOnSoulSand;
     }
 
-    private static ServerPlayer resolveCaster(ItemEntity skull, ServerPlayer nearby) {
-        net.minecraft.world.entity.Entity owner = skull.getOwner();
+    private static ServerPlayer resolveCaster(ItemEntity offering, ServerPlayer nearby) {
+        net.minecraft.world.entity.Entity owner = offering.getOwner();
         if (owner instanceof ServerPlayer player) return player;
         return nearby;
     }
 
     // ============================================================
-    //  仪式启动（SKULL 阶段）
+    //  仪式启动（OFFERING 阶段）
     // ============================================================
 
-    private static void startRitual(ServerPlayer caster, ServerLevel level, ItemEntity skull, PoolInfo pool) {
+    private static void startRitual(ServerPlayer caster, ServerLevel level, ItemEntity offering,
+                                    PoolInfo pool, Variant variant) {
         BlockPos anchor = pool.anchor;
         if (RITUALS.containsKey(anchor)) return;
-        RitualData data = new RitualData(caster.getUUID(), level.dimension(), anchor, pool.sources);
-        data.skullId = skull.getId();
+        RitualData data = new RitualData(caster.getUUID(), level.dimension(), anchor, pool.sources, variant);
+        data.offeringId = offering.getId();
         RITUALS.put(anchor, data);
-        TinkersNewlife.LOGGER.info("{} 仪式发动（玩家 {} @ {}）", TAG, caster.getName().getString(), anchor);
+        TinkersNewlife.LOGGER.info("{} 仪式发动（玩家 {} @ {}）", tag(variant), caster.getName().getString(), anchor);
     }
 
     // ============================================================
@@ -305,64 +363,71 @@ public class CurseBindingRitualHandler {
             }
             ServerPlayer caster = server.getPlayerList().getPlayer(data.casterId);
             switch (data.phase) {
-                case SKULL -> tickSkull(server, level, data, caster);
-                case WAITWATER -> tickWaitWater(server, level, data, caster);
+                case OFFERING -> tickOffering(server, level, data, caster);
+                case WAIT -> tickWait(server, level, data, caster);
                 case DRAIN -> tickDrain(server, level, data, caster);
                 case FINAL -> tickFinal(server, level, data, caster);
             }
         }
     }
 
-    /** SKULL：咒力核心漂向池心、旋转 3 秒后散开 → 水池泛起白光 */
-    private static void tickSkull(MinecraftServer server, ServerLevel level, RitualData data, ServerPlayer caster) {
+    /** OFFERING：祭品漂向池心、旋转 3 秒后散开 → 池水变黑 / 泛白光 */
+    private static void tickOffering(MinecraftServer server, ServerLevel level, RitualData data, ServerPlayer caster) {
         if (caster == null) {
             abort(level, data);
             return;
         }
-        if (!(level.getEntity(data.skullId) instanceof ItemEntity skull) || !skull.isAlive()) {
+        if (!(level.getEntity(data.offeringId) instanceof ItemEntity offering) || !offering.isAlive()) {
             abort(level, data);
             return;
         }
         data.phaseTicks++;
         // 漂向池心（池心水面下一点）
         Vec3 target = new Vec3(data.anchor.getX() + 0.5, data.anchor.getY() + 0.55, data.anchor.getZ() + 0.5);
-        Vec3 cur = skull.position();
+        Vec3 cur = offering.position();
         Vec3 delta = target.subtract(cur);
         if (delta.length() > 0.25) {
             Vec3 move = delta.normalize().scale(0.25);
-            skull.setPos(cur.x + move.x, cur.y + move.y, cur.z + move.z);
+            offering.setPos(cur.x + move.x, cur.y + move.y, cur.z + move.z);
         } else {
-            skull.setPos(target.x, target.y, target.z);
+            offering.setPos(target.x, target.y, target.z);
         }
-        skull.setNoGravity(true);
-        skull.setDeltaMovement(Vec3.ZERO);
-        skull.setYRot(skull.getYRot() + 30.0F);
-        skull.setPickUpDelay(32767);
+        offering.setNoGravity(true);
+        offering.setDeltaMovement(Vec3.ZERO);
+        offering.setYRot(offering.getYRot() + 30.0F);
+        offering.setPickUpDelay(32767);
 
-        // 旋转黑烟粒子
-        level.sendParticles(ParticleTypes.SMOKE, target.x, target.y, target.z, 2,
-                level.random.nextDouble() - 0.5, level.random.nextDouble() - 0.3, level.random.nextDouble() - 0.5, 0.0);
+        // 旋转粒子：暴君黑烟 / 咒力白光
+        if (whiteTheme(data.variant)) {
+            level.sendParticles(ParticleTypes.END_ROD, target.x, target.y, target.z, 1,
+                    level.random.nextDouble() - 0.5, level.random.nextDouble() - 0.3, level.random.nextDouble() - 0.5, 0.0);
+        } else {
+            level.sendParticles(ParticleTypes.SMOKE, target.x, target.y, target.z, 2,
+                    level.random.nextDouble() - 0.5, level.random.nextDouble() - 0.3, level.random.nextDouble() - 0.5, 0.0);
+        }
         if (level.random.nextInt(6) == 0) {
-            level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, WHITE_BLOCK_STATE),
+            level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, data.fxBlock),
                     target.x, target.y, target.z, 1, 0.1, 0.1, 0.1, 0.0);
         }
 
-        if (data.phaseTicks >= SKULL_TICKS) {
-            // 核心散开，水池泛起白光
-            skull.discard();
-            data.phase = Phase.WAITWATER;
+        if (data.phaseTicks >= OFFERING_TICKS) {
+            // 祭品散开，池水变黑 / 泛白光
+            offering.discard();
+            data.phase = Phase.WAIT;
             data.phaseTicks = 0;
             level.sendParticles(ParticleTypes.EXPLOSION, target.x, target.y, target.z, 1, 0, 0, 0, 0);
-            level.sendParticles(ParticleTypes.END_ROD, target.x, target.y, target.z, 40, 0.6, 0.6, 0.6, 0.08);
-            whiteBreak(level, target, 40, 1.6);
-            whiteBreak(level, target, 40, 3.2);
+            if (whiteTheme(data.variant)) {
+                level.sendParticles(ParticleTypes.END_ROD, target.x, target.y, target.z, 40, 0.6, 0.6, 0.6, 0.08);
+            }
+            fxBreak(level, target, 40, 1.6, data.fxBlock);
+            fxBreak(level, target, 40, 3.2, data.fxBlock);
         }
     }
 
-    /** WAITWATER：等待发起者跳入泛白光的池水 */
-    private static void tickWaitWater(MinecraftServer server, ServerLevel level, RitualData data, ServerPlayer caster) {
+    /** WAIT：等待发起者跳入池水 */
+    private static void tickWait(MinecraftServer server, ServerLevel level, RitualData data, ServerPlayer caster) {
         data.phaseTicks++;
-        whiteWaterFx(level, data, 5);
+        waitFx(level, data, 5);
         if (caster == null || !caster.level().dimension().equals(data.dimension)) {
             abort(level, data);
             return;
@@ -385,7 +450,7 @@ public class CurseBindingRitualHandler {
             abort(level, data);
             return;
         }
-        whiteWaterFx(level, data, 4);
+        waitFx(level, data, 4);
         if (!caster.isAlive()) {
             abort(level, data);
             return;
@@ -407,9 +472,9 @@ public class CurseBindingRitualHandler {
             // ⭐ 直接 setHealth 扣血：heal(负数) 会被 Forge 回血钩子（LivingHealEvent）拦截导致不掉血
             caster.setHealth(newHp);
             data.ceiling = newHp;
-            // 大量黑色方块破坏粒子（玩家周身 + 池心）
-            whiteBreak(level, caster.position(), 36, 1.8);
-            whiteBreak(level, centerOf(data.anchor), 18, 2.4);
+            // 大量方块破坏粒子（玩家周身 + 池心）
+            fxBreak(level, caster.position(), 36, 1.8, data.fxBlock);
+            fxBreak(level, centerOf(data.anchor), 18, 2.4, data.fxBlock);
             if (newHp <= target) {
                 enterFinal(caster, level, data);
             }
@@ -434,20 +499,22 @@ public class CurseBindingRitualHandler {
         // 生命锁定在 1%
         caster.setHealth(0.01F * caster.getMaxHealth());
         int t = data.phaseTicks++;
+        String[] titles = titles(data.variant);
         if (t == 0) {
             caster.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 10 * 20, 0, false, false, false));
-            sendTitle(caster, FINAL_TITLES[0]);
-            whiteBreak(level, caster.position(), 50, 2.5);
+            sendTitle(caster, titles[0]);
+            fxBreak(level, caster.position(), 50, 2.5, data.fxBlock);
         } else if (t == 40) {
-            sendTitle(caster, FINAL_TITLES[1]);
+            sendTitle(caster, titles[1]);
         } else if (t == 80) {
-            sendTitle(caster, FINAL_TITLES[2]);
-            // 玻璃碎裂声 + 凋零死亡音效
+            sendTitle(caster, titles[2]);
+            // 玻璃碎裂声 + 收尾音效（暴君=凋灵诞生 / 咒力=凋零死亡）
             level.playSound(null, caster.getX(), caster.getY(), caster.getZ(),
                     SoundEvents.GLASS_BREAK, SoundSource.BLOCKS, 1.0F, 1.0F);
             level.playSound(null, caster.getX(), caster.getY(), caster.getZ(),
-                    SoundEvents.WITHER_DEATH, SoundSource.HOSTILE, 1.0F, 1.0F);
-            whiteBreak(level, caster.position(), 60, 3.0);
+                    data.variant == Variant.TYRANT ? SoundEvents.WITHER_SPAWN : SoundEvents.WITHER_DEATH,
+                    SoundSource.HOSTILE, 1.0F, 1.0F);
+            fxBreak(level, caster.position(), 60, 3.0, data.fxBlock);
         } else if (t >= FINAL_CLEANUP_TICK) {
             completeRitual(server, level, data, caster);
         }
@@ -464,7 +531,7 @@ public class CurseBindingRitualHandler {
     //  结算与清理
     // ============================================================
 
-    /** 仪式完成：解除黑暗、抽干池水、熄灭火焰、赋予天与咒缚·咒力 */
+    /** 仪式完成：解除黑暗、抽干池水、熄灭火焰、赋予对应束缚，生命恢复到新上限的 40% */
     private static void completeRitual(MinecraftServer server, ServerLevel level, RitualData data, ServerPlayer caster) {
         RITUALS.remove(data.anchor);
         // 解除黑暗
@@ -487,24 +554,28 @@ public class CurseBindingRitualHandler {
                 }
             }
         }
-        // 终幕粒子 + 结算：赋予天与咒缚·咒力（生命上限/速度/伤害减半 + 咒力亲和 200 + 核心等级 +1），
-        // 并把生命恢复到（减半后）上限的 40%
-        whiteBreak(level, centerOf(data.anchor), 80, 4.0);
-        CurseBindingHandler.applyBinding(caster);
+        // 终幕粒子 + 结算：暴君 / 咒力束缚，并把生命恢复到（结算后）上限的 40%
+        fxBreak(level, centerOf(data.anchor), 80, 4.0, data.fxBlock);
+        if (data.variant == Variant.TYRANT) {
+            BindingStateHandler.applyRestriction(caster);
+        } else {
+            BindingStateHandler.applyBinding(caster);
+        }
         caster.setHealth(caster.getMaxHealth() * 0.4F);
-        TinkersNewlife.LOGGER.info("{} 仪式完成（玩家 {}，生命恢复至 40%）", TAG, caster.getName().getString());
+        TinkersNewlife.LOGGER.info("{} 仪式完成（玩家 {}，生命恢复至 40%）",
+                tag(data.variant), caster.getName().getString());
     }
 
-    /** 中止：移除进行中的仪式（不结算、不动方块；SKULL 阶段恢复投物自由落体，白光视觉随条目移除而消失） */
+    /** 中止：移除进行中的仪式（不结算、不动方块；OFFERING 阶段恢复祭品自由落体，池水特效随条目移除而消失） */
     private static void abort(ServerLevel level, RitualData data) {
         RitualData removed = RITUALS.remove(data.anchor);
         if (removed != null) {
-            if (removed.phase == Phase.SKULL
-                    && level.getEntity(removed.skullId) instanceof ItemEntity item && item.isAlive()) {
+            if (removed.phase == Phase.OFFERING
+                    && level.getEntity(removed.offeringId) instanceof ItemEntity item && item.isAlive()) {
                 item.setNoGravity(false);
                 item.setPickUpDelay(0);
             }
-            TinkersNewlife.LOGGER.info("{} 仪式中止 @ {}", TAG, data.anchor);
+            TinkersNewlife.LOGGER.info("{} 仪式中止 @ {}", tag(data.variant), data.anchor);
         }
     }
 
@@ -533,7 +604,7 @@ public class CurseBindingRitualHandler {
 
     // ============================================================
     //  抽血 / 收尾期间免疫外来伤害
-    //  （仪式房间亮度 <8 会刷怪；1% 生命下任何一击都会致死并打断仪式。
+    //  （仪式场所亮度受限会刷怪；1% 生命下任何一击都会致死并打断仪式。
     //   抽血用 setHealth 直扣，不走伤害事件，不受此免疫影响）
     // ============================================================
 
@@ -557,10 +628,10 @@ public class CurseBindingRitualHandler {
         return new Vec3(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
     }
 
-    /** 白色方块破坏粒子（密集，白光主题） */
-    private static void whiteBreak(ServerLevel level, Vec3 at, int count, double spread) {
+    /** 方块破坏粒子（密集；传入主题方块） */
+    private static void fxBreak(ServerLevel level, Vec3 at, int count, double spread, BlockState fxBlock) {
         for (int i = 0; i < count; i++) {
-            level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, WHITE_BLOCK_STATE),
+            level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, fxBlock),
                     at.x + (level.random.nextDouble() - 0.5) * spread,
                     at.y + (level.random.nextDouble() - 0.5) * spread + 0.4,
                     at.z + (level.random.nextDouble() - 0.5) * spread,
@@ -568,17 +639,26 @@ public class CurseBindingRitualHandler {
         }
     }
 
-    /** 白光效果：水面白色光点上浮 + 零星白色碎粒（水池冒白光） */
-    private static void whiteWaterFx(ServerLevel level, RitualData data, int count) {
+    /** 池水等待特效：暴君黑水（黑烟+黑碎粒）/ 咒力白光（白色光点上浮+白碎粒） */
+    private static void waitFx(ServerLevel level, RitualData data, int count) {
         int n = data.sources.size();
         if (n == 0) return;
+        boolean white = whiteTheme(data.variant);
         for (int i = 0; i < count; i++) {
             BlockPos w = data.sources.get(level.random.nextInt(n));
             double x = w.getX() + 0.2 + level.random.nextDouble() * 0.6;
             double z = w.getZ() + 0.2 + level.random.nextDouble() * 0.6;
-            level.sendParticles(ParticleTypes.END_ROD, x, w.getY() + 0.9, z, 1, 0.0, 0.12, 0.0, 0.0);
-            if (level.random.nextInt(3) == 0) {
-                level.sendParticles(ParticleTypes.WHITE_ASH, x, w.getY() + 1.0, z, 1, 0.0, 0.06, 0.0, 0.0);
+            if (white) {
+                level.sendParticles(ParticleTypes.END_ROD, x, w.getY() + 0.9, z, 1, 0.0, 0.12, 0.0, 0.0);
+                if (level.random.nextInt(3) == 0) {
+                    level.sendParticles(ParticleTypes.WHITE_ASH, x, w.getY() + 1.0, z, 1, 0.0, 0.06, 0.0, 0.0);
+                }
+            } else {
+                level.sendParticles(ParticleTypes.LARGE_SMOKE, x, w.getY() + 0.95, z, 1, 0.0, 0.05, 0.0, 0.0);
+                if (level.random.nextInt(4) == 0) {
+                    level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, data.fxBlock),
+                            x, w.getY() + 0.9, z, 1, 0.0, 0.12, 0.0, 0.0);
+                }
             }
         }
     }
@@ -607,7 +687,7 @@ public class CurseBindingRitualHandler {
     //  数据
     // ============================================================
 
-    private enum Phase { SKULL, WAITWATER, DRAIN, FINAL }
+    private enum Phase { OFFERING, WAIT, DRAIN, FINAL }
 
     private static class PoolInfo {
         final BlockPos anchor;
@@ -624,16 +704,21 @@ public class CurseBindingRitualHandler {
         final ResourceKey<Level> dimension;
         final BlockPos anchor;
         final List<BlockPos> sources;
-        int skullId;
-        Phase phase = Phase.SKULL;        int phaseTicks;
+        final Variant variant;
+        final BlockState fxBlock;
+        int offeringId;
+        Phase phase = Phase.OFFERING;
+        int phaseTicks;
         int pulseTimer;
         float ceiling;
 
-        RitualData(UUID casterId, ResourceKey<Level> dimension, BlockPos anchor, List<BlockPos> sources) {
+        RitualData(UUID casterId, ResourceKey<Level> dimension, BlockPos anchor, List<BlockPos> sources, Variant variant) {
             this.casterId = casterId;
             this.dimension = dimension;
             this.anchor = anchor;
             this.sources = sources;
+            this.variant = variant;
+            this.fxBlock = fxBlock(variant);
         }
     }
 }

@@ -1,4 +1,7 @@
-package com.mofengbaizhi.tinkersnewlife.content.curse;
+package com.mofengbaizhi.tinkersnewlife.content.curse.technique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
+import com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiHandler;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.BaseTechnique;
 
 import com.mofengbaizhi.tinkersnewlife.content.Modifiers;
 import net.minecraft.network.chat.Component;

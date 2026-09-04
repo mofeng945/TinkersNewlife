@@ -1,4 +1,7 @@
 package com.mofengbaizhi.tinkersnewlife.content.entity;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.BlackBirdTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.domain.DomainRegistry;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangWuxianTechnique;
 
 import com.mofengbaizhi.tinkersnewlife.content.ModEntities;
 import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
@@ -205,11 +208,11 @@ public class JacobLadderEntity extends Entity {
         target.displayClientMessage(net.minecraft.network.chat.Component.translatable(
                 "message.tinkersnewlife.sealed.entered", CursePowerHelper.getSealedRemainingSeconds(target)), true);
         // 无下限·无限：瞬间终止
-        com.mofengbaizhi.tinkersnewlife.content.curse.WuliangWuxianTechnique.deactivate(target);
+        com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangWuxianTechnique.deactivate(target);
         // 已展开领域：瞬间终止
-        com.mofengbaizhi.tinkersnewlife.content.curse.DomainRegistry.closeBySeal(target);
+        com.mofengbaizhi.tinkersnewlife.content.curse.domain.DomainRegistry.closeBySeal(target);
         // 黑鸟操术：回收
-        com.mofengbaizhi.tinkersnewlife.content.curse.BlackBirdTechnique.sealRecall(target);
+        com.mofengbaizhi.tinkersnewlife.content.curse.technique.BlackBirdTechnique.sealRecall(target);
     }
 
     // ============================================================
