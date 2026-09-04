@@ -22,6 +22,7 @@ import com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuWeiTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.PuppetTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.PlantManipulationTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.FlameManipulationTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.BlockParticleOption;
@@ -340,7 +341,7 @@ public class CurseCoreRitualHandler {
                 BlackBirdTechnique.INSTANCE, ProjectionTechnique.INSTANCE, WuliangWuxianTechnique.INSTANCE,
                 WuliangCangTechnique.INSTANCE, JacobsLadderTechnique.INSTANCE, ReverseCursedTechnique.INSTANCE,
                 WuWeiTechnique.INSTANCE, PuppetTechnique.INSTANCE, PlantManipulationTechnique.INSTANCE,
-                FlameManipulationTechnique.INSTANCE
+                FlameManipulationTechnique.INSTANCE, CursedSpiritTechnique.INSTANCE
         };
         tool.addModifier(techniques[random.nextInt(techniques.length)].getModifierId(), 1);
         tool.getPersistentData().addSlots(techniqueSlot, -1);

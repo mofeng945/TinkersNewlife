@@ -164,6 +164,7 @@ public class TinkersNewlife {
         TechniqueHandler.register(com.mofengbaizhi.tinkersnewlife.content.curse.technique.PuppetTechnique.INSTANCE);
         TechniqueHandler.register(com.mofengbaizhi.tinkersnewlife.content.curse.technique.PlantManipulationTechnique.INSTANCE);
         TechniqueHandler.register(com.mofengbaizhi.tinkersnewlife.content.curse.technique.FlameManipulationTechnique.INSTANCE);
+        TechniqueHandler.register(com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique.INSTANCE);
         TechniqueHandler.register(ProjectionTechnique.INSTANCE);
         TechniqueHandler.register(WuliangWuxianTechnique.INSTANCE);
         TechniqueHandler.register(WuliangCangTechnique.INSTANCE);
@@ -201,6 +202,10 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketPlantSelect::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketPlantSelect::new,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketPlantSelect::handle);
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketSpiritSelect.class,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketSpiritSelect::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketSpiritSelect::new,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketSpiritSelect::handle);
         registerPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiSelect.class,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiSelect::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiSelect::new,
@@ -233,6 +238,10 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenPlantScreen::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenPlantScreen::new,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenPlantScreen::handle);
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenSpiritScreen.class,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenSpiritScreen::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenSpiritScreen::new,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenSpiritScreen::handle);
         registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiDisguise.class,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiDisguise::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiDisguise::new,

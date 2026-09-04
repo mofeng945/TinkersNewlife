@@ -199,6 +199,14 @@ public class ModEntities {
                         .sized(0.2f, 0.15f).clientTrackingRange(64).updateInterval(1)
                         .build(TinkersNewlife.MOD_ID + ":flame_phantom"));
 
+    /** 咒灵操术 黑色漩涡弹（反转·虚式直射） */
+    public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.SpiritVortexEntity>> SPIRIT_VORTEX =
+        ENTITIES.register("spirit_vortex",
+                () -> EntityType.Builder.<com.mofengbaizhi.tinkersnewlife.content.entity.SpiritVortexEntity>of(
+                                com.mofengbaizhi.tinkersnewlife.content.entity.SpiritVortexEntity::new, MobCategory.MISC)
+                        .sized(0.4f, 0.4f).clientTrackingRange(64).updateInterval(1)
+                        .build(TinkersNewlife.MOD_ID + ":spirit_vortex"));
+
     /** 投射咒法 玩家虚影（触碰触发增益） */
     public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.ProjectionPhantomEntity>> PROJECTION_PHANTOM =
         ENTITIES.register("projection_phantom",

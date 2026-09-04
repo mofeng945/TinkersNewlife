@@ -41,6 +41,7 @@ public final class TechniqueAdvancementHandler {
         put(Modifiers.PUPPET.getId(), "techniques/puppet");
         put(Modifiers.PLANT_MANIPULATION.getId(), "techniques/plant_manipulation");
         put(Modifiers.FLAME_MANIPULATION.getId(), "techniques/flame_manipulation");
+        put(Modifiers.CURSED_SPIRIT.getId(), "techniques/cursed_spirit");
         put(Modifiers.PROJECTION.getId(), "techniques/projection");
         put(Modifiers.WULIANG_WUXIAN.getId(), "techniques/wuliang_wuxian");
         put(Modifiers.WULIANG_CANG.getId(), "techniques/wuliang_cang");

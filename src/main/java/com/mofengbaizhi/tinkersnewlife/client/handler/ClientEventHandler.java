@@ -121,6 +121,9 @@ public class ClientEventHandler {
         // 炎熔操术 自爆幻翼（焰羽）：1/8 缩放渲染
         event.registerEntityRenderer(ModEntities.FLAME_PHANTOM.get(),
                 com.mofengbaizhi.tinkersnewlife.client.renderer.FlamePhantomRenderer::new);
+        // 咒灵操术 黑色漩涡弹：无模型渲染（粒子表现）
+        event.registerEntityRenderer(ModEntities.SPIRIT_VORTEX.get(),
+                com.mofengbaizhi.tinkersnewlife.client.renderer.SpiritVortexRenderer::new);
         // 投射咒法 玩家虚影：蓝色半透明人形
         event.registerEntityRenderer(ModEntities.PROJECTION_PHANTOM.get(),
                 com.mofengbaizhi.tinkersnewlife.client.renderer.ProjectionPhantomRenderer::new);

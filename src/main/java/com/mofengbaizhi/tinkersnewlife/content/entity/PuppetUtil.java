@@ -49,6 +49,10 @@ public final class PuppetUtil {
             ServerPlayer boss = flame.getOwner();
             if (boss != null && boss.getUUID().equals(ownerId)) return true;
         }
+        if (com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
+                .isReleasedMinionOf(target, owner)) {
+            return true;
+        }
         return false;
     }
 }
