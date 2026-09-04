@@ -131,7 +131,6 @@ public final class PlantManipulationTechnique extends BaseTechnique {
         FIELDS.add(field);
         level.sendParticles(ParticleTypes.HAPPY_VILLAGER,
                 center.getX() + 0.5, center.getY() + 0.5, center.getZ() + 0.5, 24, 2.2, 1.0, 2.2, 0);
-        player.displayClientMessage(Component.translatable("message.tinkersnewlife.plant.roots"), true);
     }
 
     /** 咒种：目标获得咒种寄生 */
@@ -141,7 +140,6 @@ public final class PlantManipulationTechnique extends BaseTechnique {
         target.addEffect(new MobEffectInstance(ModEffects.SEED_PARASITE.get(), duration, 0, false, true));
         player.serverLevel().sendParticles(ParticleTypes.HAPPY_VILLAGER,
                 target.getX(), target.getY() + target.getBbHeight() / 2, target.getZ(), 16, 0.4, 0.5, 0.4, 0);
-        player.displayClientMessage(Component.translatable("message.tinkersnewlife.plant.seed"), true);
     }
 
     /** 选择界面选定：进入蓄力 */

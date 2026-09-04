@@ -90,7 +90,6 @@ public final class FlameManipulationTechnique extends BaseTechnique {
                 target.getX(), target.getY() + 0.3, target.getZ(), 24, 1.5, 0.3, 1.5, 0);
         level.playSound(null, target.getX(), target.getY(), target.getZ(),
                 SoundEvents.FIRE_AMBIENT, SoundSource.BLOCKS, 0.8F, 0.7F);
-        player.displayClientMessage(Component.translatable("message.tinkersnewlife.flame.melt"), true);
     }
 
     // ================= 反转：召唤 5 只自爆幻翼 =================
@@ -122,7 +121,6 @@ public final class FlameManipulationTechnique extends BaseTechnique {
             level.addFreshEntity(phantom);
         }
         level.sendParticles(ParticleTypes.FLAME, pos.x, pos.y + 1.5, pos.z, 30, 1.6, 1.0, 1.6, 0.02);
-        player.displayClientMessage(Component.translatable("message.tinkersnewlife.flame.phantoms"), true);
     }
 
     /** 幻翼爆炸后：敌人脚下 3×3 燃起火焰（3 秒后熄灭还原） */
