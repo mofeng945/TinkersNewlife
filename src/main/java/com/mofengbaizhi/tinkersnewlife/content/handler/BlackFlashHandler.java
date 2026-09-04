@@ -83,6 +83,9 @@ public class BlackFlashHandler {
 
         if (player.level().isClientSide) return;
 
+        // ⭐ 天与咒缚：黑闪概率锁定为 0（无法再打出黑闪）
+        if (HeavenlyRestrictionHandler.isRestricted(player)) return;
+
         // ✅ 统一获取攻击工具（近战/弹射物/悠悠球从球实体读取），主手无武器时兜底取佩戴的咒力核心
         ToolStack tool = ToolHelper.getCombatToolWith(event.getSource(), player, BLACK_FLASH_ID);
         if (tool == null) return;

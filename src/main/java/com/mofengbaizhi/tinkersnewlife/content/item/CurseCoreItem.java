@@ -28,7 +28,13 @@ public class CurseCoreItem extends ModifiableItem implements ICurioItem {
 
     @Override
     public boolean canEquip(SlotContext context, ItemStack stack) {
-        return "curse_core".equals(context.identifier());
+        if (!"curse_core".equals(context.identifier())) return false;
+        // ⭐ 天与咒缚：失去咒力，无法佩戴咒力核心（服务端持久数据校验）
+        if (context.entity() instanceof net.minecraft.world.entity.player.Player player
+                && com.mofengbaizhi.tinkersnewlife.content.handler.HeavenlyRestrictionHandler.isRestricted(player)) {
+            return false;
+        }
+        return true;
     }
 
     @Override
