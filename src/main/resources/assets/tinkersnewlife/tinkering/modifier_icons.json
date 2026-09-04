@@ -24,5 +24,6 @@
   "tinkersnewlife:wuliang_cang": "tinkersnewlife:gui/modifiers/wuliang_cang",
   "tinkersnewlife:jacobs_ladder": "tinkersnewlife:gui/modifiers/jacobs_ladder",
   "tinkersnewlife:wu_wei": "tinkersnewlife:gui/modifiers/wu_wei",
-  "tinkersnewlife:reverse_cursed": "tinkersnewlife:gui/modifiers/reverse_cursed"
+  "tinkersnewlife:reverse_cursed": "tinkersnewlife:gui/modifiers/reverse_cursed",
+  "tinkersnewlife:puppet": "tinkersnewlife:gui/modifiers/puppet"
 }
