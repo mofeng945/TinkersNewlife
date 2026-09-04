@@ -233,13 +233,15 @@ public class DisarmEffect extends MobEffect {
         }
 
         /**
-         * 实体死亡时：只要身上仍有"已缴械未归还"的物品就掉落（不依赖缴械效果是否还在——
-         * 实体转化等场景可能效果丢失但物品仍在记录里，效果消失时由 handleEffectEnd 归还）。
+         * 实体死亡时：仅当死亡时身上仍带有缴械效果，才掉落被缴械的物品；
+         * 效果已解除（正常归还）则不重复掉落。
          */
         @SubscribeEvent
         public static void onLivingDeath(LivingDeathEvent event) {
             LivingEntity entity = event.getEntity();
             if (entity.level().isClientSide) return;
+            // 只有缴械效果还在（未解除）时才掉落；已解除（效果消失）由 handleEffectEnd 归还
+            if (!entity.hasEffect(ModEffects.DISARM.get())) return;
 
             List<ItemStack> items = new ArrayList<>(getStoredItems(entity));
             if (items.isEmpty()) return;
