@@ -189,6 +189,7 @@ public final class TechniqueHandler {
             WuliangCangTechnique.cancelCharge(sp);
             com.mofengbaizhi.tinkersnewlife.content.curse.technique.PuppetTechnique.cleanup(sp);
             com.mofengbaizhi.tinkersnewlife.content.curse.technique.PlantManipulationTechnique.cleanup(sp);
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.FlameManipulationTechnique.cleanup(sp);
             SELECTED.remove(sp.getUUID());
         }
     }
@@ -201,6 +202,7 @@ public final class TechniqueHandler {
             WuliangCangTechnique.cancelCharge(sp);
             com.mofengbaizhi.tinkersnewlife.content.curse.technique.PuppetTechnique.cleanup(sp);
             com.mofengbaizhi.tinkersnewlife.content.curse.technique.PlantManipulationTechnique.cleanup(sp);
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.FlameManipulationTechnique.cleanup(sp);
         }
     }
 }

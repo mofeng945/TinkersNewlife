@@ -159,6 +159,10 @@ public class Modifiers {
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.PlantManipulationTrait> PLANT_MANIPULATION =
         MODIFIERS.register("plant_manipulation", com.mofengbaizhi.tinkersnewlife.content.modifier.PlantManipulationTrait::new);
 
+    /** 炎熔操术（术式特性，占用术式槽） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.FlameManipulationTrait> FLAME_MANIPULATION =
+        MODIFIERS.register("flame_manipulation", com.mofengbaizhi.tinkersnewlife.content.modifier.FlameManipulationTrait::new);
+
     /** 投射咒法（术式特性，占用术式槽） */
     public static final StaticModifier<ProjectionTrait> PROJECTION =
         MODIFIERS.register("projection", ProjectionTrait::new);

@@ -163,6 +163,7 @@ public class TinkersNewlife {
         TechniqueHandler.register(BlackBirdTechnique.INSTANCE);
         TechniqueHandler.register(com.mofengbaizhi.tinkersnewlife.content.curse.technique.PuppetTechnique.INSTANCE);
         TechniqueHandler.register(com.mofengbaizhi.tinkersnewlife.content.curse.technique.PlantManipulationTechnique.INSTANCE);
+        TechniqueHandler.register(com.mofengbaizhi.tinkersnewlife.content.curse.technique.FlameManipulationTechnique.INSTANCE);
         TechniqueHandler.register(ProjectionTechnique.INSTANCE);
         TechniqueHandler.register(WuliangWuxianTechnique.INSTANCE);
         TechniqueHandler.register(WuliangCangTechnique.INSTANCE);
@@ -276,6 +277,7 @@ public class TinkersNewlife {
         event.put(ModEntities.BLACK_BIRD.get(), com.mofengbaizhi.tinkersnewlife.content.entity.BlackBirdEntity.createAttributes().build());
         event.put(ModEntities.PUPPET_IRON_GOLEM.get(), com.mofengbaizhi.tinkersnewlife.content.entity.PuppetIronGolem.createAttributes().build());
         event.put(ModEntities.PUPPET_SNOW_GOLEM.get(), com.mofengbaizhi.tinkersnewlife.content.entity.PuppetSnowGolem.createAttributes().build());
+        event.put(ModEntities.FLAME_PHANTOM.get(), com.mofengbaizhi.tinkersnewlife.content.entity.FlamePhantom.createAttributes().build());
         event.put(ModEntities.PROJECTION_PHANTOM.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ProjectionPhantomEntity.createAttributes().build());
         event.put(ModEntities.MOMO_MERCHANT.get(), com.mofengbaizhi.tinkersnewlife.content.entity.MomoMerchant.createAttributes().build());
     }

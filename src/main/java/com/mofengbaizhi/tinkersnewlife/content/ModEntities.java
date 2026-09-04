@@ -191,6 +191,14 @@ public class ModEntities {
                         .sized(0.25f, 0.25f).clientTrackingRange(4).updateInterval(10)
                         .build(TinkersNewlife.MOD_ID + ":puppet_snowball"));
 
+    /** 炎熔操术 自爆幻翼（焰羽）：1/8 体型、1 点生命，撞敌自爆 */
+    public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.FlamePhantom>> FLAME_PHANTOM =
+        ENTITIES.register("flame_phantom",
+                () -> EntityType.Builder.<com.mofengbaizhi.tinkersnewlife.content.entity.FlamePhantom>of(
+                                com.mofengbaizhi.tinkersnewlife.content.entity.FlamePhantom::new, MobCategory.CREATURE)
+                        .sized(0.2f, 0.15f).clientTrackingRange(64).updateInterval(1)
+                        .build(TinkersNewlife.MOD_ID + ":flame_phantom"));
+
     /** 投射咒法 玩家虚影（触碰触发增益） */
     public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.ProjectionPhantomEntity>> PROJECTION_PHANTOM =
         ENTITIES.register("projection_phantom",

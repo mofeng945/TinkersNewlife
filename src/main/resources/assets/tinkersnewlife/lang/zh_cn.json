@@ -613,5 +613,11 @@
   "message.tinkersnewlife.plant.roots": "§b树根缠绕：甜浆果丛已生长（持续3秒）",
   "message.tinkersnewlife.plant.seed": "§d咒种已植入目标",
   "message.tinkersnewlife.plant.absorb": "§a草木操术·反转：吸收了 %s 点植物能量",
-  "message.tinkersnewlife.plant.absorb_none": "§7周围没有可吸收的植物"
+  "message.tinkersnewlife.plant.absorb_none": "§7周围没有可吸收的植物",
+  "modifier.tinkersnewlife.flame_manipulation": "炎熔操术",
+  "modifier.tinkersnewlife.flame_manipulation.flavor": "§7炽热奔流，焚尽万物。",
+  "modifier.tinkersnewlife.flame_manipulation.description": "§f顺转：将视线内目标脚下3×3方块（基岩除外）融化为炽热岩浆（临时岩浆池，3秒还原），身处其中持续受到咒术伤害并被点燃。反转（F键）：消耗 ceil(M×100) 召唤5只1/8体型、1点生命的自爆幻翼，1秒前摇后依次撞向敌人，每次爆炸等同黑鸟自爆（半径3），并点燃敌人、在其脚下3×3燃起火焰。占用术式槽。",
+  "entity.tinkersnewlife.flame_phantom": "焰羽",
+  "message.tinkersnewlife.flame.melt": "§c脚下地面融化了！炽热岩浆（持续3秒）",
+  "message.tinkersnewlife.flame.phantoms": "§c焰羽已展开：5只自爆幻翼扑向目标"
 }

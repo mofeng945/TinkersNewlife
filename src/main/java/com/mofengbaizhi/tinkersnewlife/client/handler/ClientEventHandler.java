@@ -118,6 +118,9 @@ public class ClientEventHandler {
                 net.minecraft.client.renderer.entity.SnowGolemRenderer::new);
         event.registerEntityRenderer(ModEntities.PUPPET_SNOWBALL.get(),
                 net.minecraft.client.renderer.entity.ThrownItemRenderer::new);
+        // 炎熔操术 自爆幻翼（焰羽）：1/8 缩放渲染
+        event.registerEntityRenderer(ModEntities.FLAME_PHANTOM.get(),
+                com.mofengbaizhi.tinkersnewlife.client.renderer.FlamePhantomRenderer::new);
         // 投射咒法 玩家虚影：蓝色半透明人形
         event.registerEntityRenderer(ModEntities.PROJECTION_PHANTOM.get(),
                 com.mofengbaizhi.tinkersnewlife.client.renderer.ProjectionPhantomRenderer::new);
