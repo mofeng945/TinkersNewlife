@@ -589,5 +589,6 @@
   "message.tinkersnewlife.puppet.summon_snow": "§b雪傀儡已召唤，视角已转移（右键投雪球/Shift自爆结霜）",
   "message.tinkersnewlife.puppet.recall": "§7已回收傀儡，返还30%咒力",
   "message.tinkersnewlife.puppet.cd": "§c傀儡自爆后冷却中，剩余 %s 秒",
-  "message.tinkersnewlife.puppet.active": "§c已有傀儡在场，再次按键可召回"
+  "message.tinkersnewlife.puppet.active": "§c已有傀儡在场，再次按键可召回",
+  "hud.tinkersnewlife.puppet.hint": "§7再按术式键召回（返还30%咒力）· Shift 自爆 · 傀儡死亡视角回归"
 }
