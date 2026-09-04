@@ -151,6 +151,10 @@ public class Modifiers {
     public static final StaticModifier<BlackBirdTrait> BLACK_BIRD =
         MODIFIERS.register("black_bird", BlackBirdTrait::new);
 
+    /** 傀儡操术（术式特性，占用术式槽） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.PuppetTrait> PUPPET =
+        MODIFIERS.register("puppet", com.mofengbaizhi.tinkersnewlife.content.modifier.PuppetTrait::new);
+
     /** 投射咒法（术式特性，占用术式槽） */
     public static final StaticModifier<ProjectionTrait> PROJECTION =
         MODIFIERS.register("projection", ProjectionTrait::new);

@@ -185,16 +185,18 @@ public final class TechniqueHandler {
         if (event.getEntity() instanceof ServerPlayer sp) {
             ZaoKaiTechnique.cancelCharge(sp);
             WuliangCangTechnique.cancelCharge(sp);
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.PuppetTechnique.cleanup(sp);
             SELECTED.remove(sp.getUUID());
         }
     }
 
-    /** 玩家死亡：取消进行中的蓄力 */
+    /** 玩家死亡：取消进行中的蓄力，正在操控的傀儡立即消散、视角回归 */
     @SubscribeEvent
     public static void onPlayerDeath(LivingDeathEvent event) {
         if (event.getEntity() instanceof ServerPlayer sp) {
             ZaoKaiTechnique.cancelCharge(sp);
             WuliangCangTechnique.cancelCharge(sp);
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.PuppetTechnique.cleanup(sp);
         }
     }
 }

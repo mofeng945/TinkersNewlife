@@ -110,6 +110,13 @@ public class ClientEventHandler {
         // 黑鸟操术 黑鸟：复用原版蝙蝠渲染
         event.registerEntityRenderer(ModEntities.BLACK_BIRD.get(),
                 net.minecraft.client.renderer.entity.BatRenderer::new);
+        // 傀儡操术 铁傀儡/雪傀儡/雪球：复用原版渲染
+        event.registerEntityRenderer(ModEntities.PUPPET_IRON_GOLEM.get(),
+                net.minecraft.client.renderer.entity.IronGolemRenderer::new);
+        event.registerEntityRenderer(ModEntities.PUPPET_SNOW_GOLEM.get(),
+                net.minecraft.client.renderer.entity.SnowGolemRenderer::new);
+        event.registerEntityRenderer(ModEntities.PUPPET_SNOWBALL.get(),
+                net.minecraft.client.renderer.entity.ThrownItemRenderer::new);
         // 投射咒法 玩家虚影：蓝色半透明人形
         event.registerEntityRenderer(ModEntities.PROJECTION_PHANTOM.get(),
                 com.mofengbaizhi.tinkersnewlife.client.renderer.ProjectionPhantomRenderer::new);
@@ -165,6 +172,17 @@ public class ClientEventHandler {
                         input.forwardImpulse, input.leftImpulse, input.jumping, input.shiftKeyDown,
                         player.getYRot(), player.getXRot()));
             }
+            // ⭐ 傀儡操控：相机绑定铁/雪傀儡时，每 tick 发送输入（含攻击/使用键）
+            if (Minecraft.getInstance().cameraEntity instanceof com.mofengbaizhi.tinkersnewlife.content.entity.PuppetIronGolem
+                    || Minecraft.getInstance().cameraEntity instanceof com.mofengbaizhi.tinkersnewlife.content.entity.PuppetSnowGolem) {
+                net.minecraft.client.player.Input input = player.input;
+                net.minecraft.client.Minecraft mc = Minecraft.getInstance();
+                boolean left = mc.options.keyAttack.isDown();
+                boolean right = mc.options.keyUse.isDown();
+                TinkersNewlife.CHANNEL.sendToServer(new com.mofengbaizhi.tinkersnewlife.network.curse.PacketPuppetInput(
+                        input.forwardImpulse, input.leftImpulse, input.jumping, input.shiftKeyDown,
+                        left, right, player.getYRot(), player.getXRot()));
+            }
             // ⭐ 术式按键：按下=开始（即时释放或蓄力），松开=蓄力发射
             boolean down = KeyBindings.USE_TECHNIQUE.get().isDown();
             if (down && !lastTechniqueDown) {
@@ -184,10 +202,16 @@ public class ClientEventHandler {
             lastReverseDown = reverseDown;
         }
 
-        /** 投射咒法罚站：取消攻击/交互输入 */
+        /** 投射咒法罚站 / 傀儡操控：取消玩家自身攻击/交互输入（傀儡动作由输入包驱动） */
         @SubscribeEvent
         public static void onInteractionInput(net.minecraftforge.client.event.InputEvent.InteractionKeyMappingTriggered event) {
             if (com.mofengbaizhi.tinkersnewlife.client.data.ClientProjectionData.isStunned()) {
+                event.setCanceled(true);
+                return;
+            }
+            net.minecraft.world.entity.Entity cam = Minecraft.getInstance().cameraEntity;
+            if (cam instanceof com.mofengbaizhi.tinkersnewlife.content.entity.PuppetIronGolem
+                    || cam instanceof com.mofengbaizhi.tinkersnewlife.content.entity.PuppetSnowGolem) {
                 event.setCanceled(true);
             }
         }

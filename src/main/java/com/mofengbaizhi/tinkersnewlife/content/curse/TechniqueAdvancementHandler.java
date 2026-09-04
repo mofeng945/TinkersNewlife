@@ -38,6 +38,7 @@ public final class TechniqueAdvancementHandler {
         put(Modifiers.BLOOD_MANIPULATION_SUPERNOVA.getId(), "techniques/blood_manipulation_supernova");
         put(Modifiers.TEN_SHADOWS.getId(), "techniques/ten_shadows");
         put(Modifiers.BLACK_BIRD.getId(), "techniques/black_bird");
+        put(Modifiers.PUPPET.getId(), "techniques/puppet");
         put(Modifiers.PROJECTION.getId(), "techniques/projection");
         put(Modifiers.WULIANG_WUXIAN.getId(), "techniques/wuliang_wuxian");
         put(Modifiers.WULIANG_CANG.getId(), "techniques/wuliang_cang");

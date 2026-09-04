@@ -161,6 +161,7 @@ public class TinkersNewlife {
         TechniqueHandler.register(BloodManipulationSupernovaTechnique.INSTANCE);
         TechniqueHandler.register(TenShadowsTechnique.INSTANCE);
         TechniqueHandler.register(BlackBirdTechnique.INSTANCE);
+        TechniqueHandler.register(com.mofengbaizhi.tinkersnewlife.content.curse.technique.PuppetTechnique.INSTANCE);
         TechniqueHandler.register(ProjectionTechnique.INSTANCE);
         TechniqueHandler.register(WuliangWuxianTechnique.INSTANCE);
         TechniqueHandler.register(WuliangCangTechnique.INSTANCE);
@@ -186,6 +187,14 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketBlackBirdInput::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketBlackBirdInput::new,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketBlackBirdInput::handle);
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketPuppetInput.class,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketPuppetInput::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketPuppetInput::new,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketPuppetInput::handle);
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketPuppetSelect.class,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketPuppetSelect::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketPuppetSelect::new,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketPuppetSelect::handle);
         registerPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiSelect.class,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiSelect::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiSelect::new,
@@ -210,6 +219,10 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenWuWeiScreen::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenWuWeiScreen::new,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenWuWeiScreen::handle);
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenPuppetScreen.class,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenPuppetScreen::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenPuppetScreen::new,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenPuppetScreen::handle);
         registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiDisguise.class,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiDisguise::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiDisguise::new,
@@ -252,6 +265,8 @@ public class TinkersNewlife {
         event.put(ModEntities.SHIKIGAMI_SHEEP.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiSheep.createAttributes().build());
         event.put(ModEntities.SHIKIGAMI_IRON_GOLEM.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiIronGolem.createAttributes().build());
         event.put(ModEntities.BLACK_BIRD.get(), com.mofengbaizhi.tinkersnewlife.content.entity.BlackBirdEntity.createAttributes().build());
+        event.put(ModEntities.PUPPET_IRON_GOLEM.get(), com.mofengbaizhi.tinkersnewlife.content.entity.PuppetIronGolem.createAttributes().build());
+        event.put(ModEntities.PUPPET_SNOW_GOLEM.get(), com.mofengbaizhi.tinkersnewlife.content.entity.PuppetSnowGolem.createAttributes().build());
         event.put(ModEntities.PROJECTION_PHANTOM.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ProjectionPhantomEntity.createAttributes().build());
         event.put(ModEntities.MOMO_MERCHANT.get(), com.mofengbaizhi.tinkersnewlife.content.entity.MomoMerchant.createAttributes().build());
     }

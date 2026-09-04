@@ -169,6 +169,28 @@ public class ModEntities {
                         .sized(0.5f, 0.9f).clientTrackingRange(64).updateInterval(1)
                         .build(TinkersNewlife.MOD_ID + ":black_bird"));
 
+    /** 傀儡操术 铁傀儡 / 雪傀儡（玩家视角转移操控）/ 雪傀儡雪球弹道 */
+    public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.PuppetIronGolem>> PUPPET_IRON_GOLEM =
+        ENTITIES.register("puppet_iron_golem",
+                () -> EntityType.Builder.<com.mofengbaizhi.tinkersnewlife.content.entity.PuppetIronGolem>of(
+                                com.mofengbaizhi.tinkersnewlife.content.entity.PuppetIronGolem::new, MobCategory.CREATURE)
+                        .sized(1.4f, 2.7f).clientTrackingRange(64).updateInterval(2)
+                        .build(TinkersNewlife.MOD_ID + ":puppet_iron_golem"));
+
+    public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.PuppetSnowGolem>> PUPPET_SNOW_GOLEM =
+        ENTITIES.register("puppet_snow_golem",
+                () -> EntityType.Builder.<com.mofengbaizhi.tinkersnewlife.content.entity.PuppetSnowGolem>of(
+                                com.mofengbaizhi.tinkersnewlife.content.entity.PuppetSnowGolem::new, MobCategory.CREATURE)
+                        .sized(0.7f, 1.9f).clientTrackingRange(64).updateInterval(2)
+                        .build(TinkersNewlife.MOD_ID + ":puppet_snow_golem"));
+
+    public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.PuppetSnowball>> PUPPET_SNOWBALL =
+        ENTITIES.register("puppet_snowball",
+                () -> EntityType.Builder.<com.mofengbaizhi.tinkersnewlife.content.entity.PuppetSnowball>of(
+                                com.mofengbaizhi.tinkersnewlife.content.entity.PuppetSnowball::new, MobCategory.MISC)
+                        .sized(0.25f, 0.25f).clientTrackingRange(4).updateInterval(10)
+                        .build(TinkersNewlife.MOD_ID + ":puppet_snowball"));
+
     /** 投射咒法 玩家虚影（触碰触发增益） */
     public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.ProjectionPhantomEntity>> PROJECTION_PHANTOM =
         ENTITIES.register("projection_phantom",
