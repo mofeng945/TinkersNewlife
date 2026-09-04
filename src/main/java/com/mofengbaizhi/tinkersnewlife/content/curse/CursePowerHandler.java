@@ -71,8 +71,11 @@ public class CursePowerHandler {
         int tamedMask = wearing ? com.mofengbaizhi.tinkersnewlife.content.curse.shikigami.ShikigamiHandler.getTamedMask(player) : 0;
         int affinity = wearing ? CursePowerHelper.getCurseAffinity(player) : 0;
         int output = wearing ? CursePowerHelper.getCurseOutputLevel(player) : 1;
+        boolean restricted = com.mofengbaizhi.tinkersnewlife.content.handler.HeavenlyRestrictionHandler.isRestricted(player);
+        boolean bound = com.mofengbaizhi.tinkersnewlife.content.handler.CurseBindingHandler.isBound(player);
         TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
                 new PacketSyncCurse(curse, max, domainActive, infinite,
-                        technique == null ? "" : technique.toString(), tamedMask, affinity, output));
+                        technique == null ? "" : technique.toString(), tamedMask, affinity, output,
+                        restricted, bound));
     }
 }

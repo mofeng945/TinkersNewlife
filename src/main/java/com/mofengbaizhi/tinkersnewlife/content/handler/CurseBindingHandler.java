@@ -58,9 +58,23 @@ public final class CurseBindingHandler {
 
     // ==================== 状态查询 ====================
 
-    /** 是否处于天与咒缚·咒力 */
+    /** 是否处于天与咒缚·咒力（服务端读持久数据；客户端读服务端同步值，仅本地玩家有效） */
     public static boolean isBound(Player player) {
-        return player != null && player.getPersistentData().getBoolean(KEY_CURSE_BINDING);
+        if (player == null) return false;
+        if (player.level().isClientSide) {
+            return isLocalClientPlayer(player)
+                    && com.mofengbaizhi.tinkersnewlife.client.ClientCurseData.isBound();
+        }
+        return player.getPersistentData().getBoolean(KEY_CURSE_BINDING);
+    }
+
+    /** 客户端上是否为本地玩家（服务端恒 false） */
+    private static boolean isLocalClientPlayer(Player player) {
+        try {
+            return net.minecraft.client.Minecraft.getInstance().player == player;
+        } catch (Throwable t) {
+            return false;
+        }
     }
 
     /** 咒力亲和加成（自带 200；未绑定返回 0） */
@@ -82,6 +96,7 @@ public final class CurseBindingHandler {
         }
         player.getPersistentData().putBoolean(KEY_CURSE_BINDING, true);
         applyMods(player);
+        com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHandler.syncToClient(player);
         TinkersNewlife.LOGGER.info("[天与咒缚·咒力] 玩家 {} 获得咒力束缚（生命/速度/伤害×0.5；咒力亲和+200；核心总量/输出+1）",
                 player.getName().getString());
     }
@@ -90,6 +105,7 @@ public final class CurseBindingHandler {
     public static void removeBinding(ServerPlayer player) {
         player.getPersistentData().putBoolean(KEY_CURSE_BINDING, false);
         removeMods(player);
+        com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHandler.syncToClient(player);
         TinkersNewlife.LOGGER.info("[天与咒缚·咒力] 玩家 {} 的咒力束缚已解除", player.getName().getString());
     }
 

@@ -72,9 +72,18 @@ public final class HeavenlyRestrictionHandler {
 
     // ==================== 状态查询 ====================
 
-    /** 是否处于天与咒缚（服务端持久数据；客户端数据为空恒为 false，佩戴校验以服务端为准） */
+    /** 是否处于天与咒缚·暴君（服务端读持久数据；客户端读服务端同步值，仅本地玩家有效） */
     public static boolean isRestricted(Player player) {
-        return player != null && player.getPersistentData().getBoolean(KEY_RESTRICTED);
+        if (player == null) return false;
+        if (player.level().isClientSide) {
+            try {
+                return net.minecraft.client.Minecraft.getInstance().player == player
+                        && com.mofengbaizhi.tinkersnewlife.client.ClientCurseData.isRestricted();
+            } catch (Throwable t) {
+                return false;
+            }
+        }
+        return player.getPersistentData().getBoolean(KEY_RESTRICTED);
     }
 
     // ==================== 赋予 / 解除 ====================
@@ -92,6 +101,7 @@ public final class HeavenlyRestrictionHandler {
         unequipCurseCore(player);
         // 肉体强化
         applyMods(player);
+        com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHandler.syncToClient(player);
         TinkersNewlife.LOGGER.info("[天与咒缚] 玩家 {} 获得天与咒缚（失去咒力；生命上限×5 速度×5 跳跃×3 攻击×10）",
                 player.getName().getString());
     }
@@ -100,6 +110,7 @@ public final class HeavenlyRestrictionHandler {
     public static void removeRestriction(ServerPlayer player) {
         player.getPersistentData().putBoolean(KEY_RESTRICTED, false);
         removeMods(player);
+        com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHandler.syncToClient(player);
         TinkersNewlife.LOGGER.info("[天与咒缚] 玩家 {} 的天与咒缚已解除", player.getName().getString());
     }
 

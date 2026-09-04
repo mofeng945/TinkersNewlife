@@ -47,6 +47,12 @@ public class ModTooltips {
                 if (tool != null) {
                     int output = tool.getModifierLevel(Modifiers.CURSE_OUTPUT.getId());
                     int total = tool.getModifierLevel(Modifiers.CURSE_TOTAL.getId());
+                    // ⭐ 天与咒缚·咒力：佩戴该核心时总量/输出各 +1（束缚标识已同步到客户端，tooltip 一并计入）
+                    if (com.mofengbaizhi.tinkersnewlife.content.handler.CurseBindingHandler.isBound(player)
+                            && CursePowerHelper.isEquippedCurseCore(player, stack)) {
+                        if (output > 0) output++;
+                        if (total > 0) total++;
+                    }
                     double max = total * (output + affinity / 10.0) * 500.0;
                     int curse = (int) Math.floor(ClientCurseData.getCurse());
                     event.getToolTip().add(Component.translatable("tooltip.tinkersnewlife.curse_affinity", affinity)

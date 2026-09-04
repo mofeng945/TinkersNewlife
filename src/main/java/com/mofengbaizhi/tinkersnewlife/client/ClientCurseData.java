@@ -26,9 +26,14 @@ public class ClientCurseData {
     private static int affinity = 0;
     /** 咒力输出等级（召唤消耗计算用） */
     private static int output = 1;
+    /** 天与咒缚·暴君标识（服务端同步） */
+    private static boolean restricted = false;
+    /** 天与咒缚·咒力标识（服务端同步） */
+    private static boolean bound = false;
 
     public static void update(double curseIn, double maxIn, boolean domainActiveIn, boolean infiniteIn,
-                              String techniqueIdIn, int tamedMaskIn, int affinityIn, int outputIn) {
+                              String techniqueIdIn, int tamedMaskIn, int affinityIn, int outputIn,
+                              boolean restrictedIn, boolean boundIn) {
         curse = curseIn;
         max = maxIn;
         domainActive = domainActiveIn;
@@ -37,6 +42,18 @@ public class ClientCurseData {
         tamedMask = tamedMaskIn;
         affinity = affinityIn;
         output = Math.max(1, outputIn);
+        restricted = restrictedIn;
+        bound = boundIn;
+    }
+
+    /** 天与咒缚·暴君是否生效（服务端同步） */
+    public static boolean isRestricted() {
+        return restricted;
+    }
+
+    /** 天与咒缚·咒力是否生效（服务端同步） */
+    public static boolean isBound() {
+        return bound;
     }
 
     /** 当前咒力（服务端同步，未佩戴时为 0） */

@@ -50,13 +50,21 @@ public final class CursePowerHelper {
     //  佩戴的咒力核心
     // ============================================================
 
-    /** 查找玩家佩戴的咒力核心（curios 咒力核心槽），未佩戴返回空栈 */
+    /** 查找玩家佩戴的咒力核心（curios 咒力核心槽），未佩戴返回空栈（服务端与客户端本地镜像均适用） */
     public static ItemStack findEquippedCurseCore(Player player) {
-        if (player == null || player.level().isClientSide) return ItemStack.EMPTY;
+        if (player == null) return ItemStack.EMPTY;
         var curios = CuriosApi.getCuriosInventory(player).resolve();
         if (curios.isEmpty()) return ItemStack.EMPTY;
         var slot = curios.get().findFirstCurio(stack -> stack.getItem() instanceof CurseCoreItem);
         return slot.map(s -> s.stack()).orElse(ItemStack.EMPTY);
+    }
+
+    /** 该咒力核心是否正被玩家佩戴（客户端镜像同样适用：身份或内容一致即可） */
+    public static boolean isEquippedCurseCore(Player player, ItemStack stack) {
+        if (player == null || stack == null || stack.isEmpty()) return false;
+        ItemStack worn = findEquippedCurseCore(player);
+        if (worn.isEmpty()) return false;
+        return worn == stack || ItemStack.isSameItemSameTags(worn, stack);
     }
 
     /** 读取咒力核心工具上指定修改器的等级 */
