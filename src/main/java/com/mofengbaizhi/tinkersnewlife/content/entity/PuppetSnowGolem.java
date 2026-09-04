@@ -127,11 +127,27 @@ public class PuppetSnowGolem extends SnowGolem implements PuppetGolemMob {
 
     // ================= 服务端每 tick 控制 =================
 
+    /** 客户端行走动画同步：记录上一 tick 位置 */
+    private double animPrevX;
+    private double animPrevZ;
+
     @Override
     public void tick() {
         super.tick();
-        if (level().isClientSide) return;
+        if (level().isClientSide) {
+            syncClientAnim();
+            return;
+        }
         serverControl();
+    }
+
+    /** 移动由服务端驱动，客户端不会调用 travel()，这里用每 tick 位移差驱动摆腿（含行走动画同步） */
+    private void syncClientAnim() {
+        double dx = getX() - animPrevX;
+        double dz = getZ() - animPrevZ;
+        animPrevX = getX();
+        animPrevZ = getZ();
+        this.updateWalkAnimation((float) Math.sqrt(dx * dx + dz * dz));
     }
 
     private void serverControl() {
