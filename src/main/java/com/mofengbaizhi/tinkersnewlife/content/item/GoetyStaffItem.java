@@ -109,6 +109,9 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
             // 完整原生施法（含 startUsingItem 长吟唱），双端一致
             DarkWand wand = goetyWand();
             if (wand != null) {
+                // ⭐ 连招切聚晶后立即施法时，"Cast Time" tag 可能还是上一个聚晶的值
+                // （inventoryTick 每 tick 才按当前聚晶刷新）→ 先按当前聚晶同步，避免新咏唱继承旧时长
+                syncCastTags(stack, player, wand);
                 InteractionResultHolder<ItemStack> result = wand.use(level, player, hand);
                 // 【连发】瞬时法术已放完（消耗动作且未进入引导）→ 请求切下一个聚晶
                 if (!level.isClientSide && player instanceof ServerPlayer sp
@@ -122,6 +125,21 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
             }
         }
         return super.use(level, player, hand);
+    }
+
+    /** 施法前按当前装备聚晶刷新诡厄的节奏 tag（Cast Time / Duration / Soul Cost / Cooldown），
+     *  与 DarkWand.inventoryTick 的每 tick 刷新保持一致，杜绝切换聚晶后的过期时长 */
+    private static void syncCastTags(ItemStack stack, Player player, DarkWand wand) {
+        try {
+            ItemStack focus = SoulUsingItemHandler.get(stack).getSlot();
+            if (focus.isEmpty()) return;
+            if (!(focus.getItem() instanceof com.Polarice3.Goety.api.items.magic.IFocus f)) return;
+            com.Polarice3.Goety.api.magic.ISpell spell = f.getSpell();
+            if (spell == null) return;
+            stack.getOrCreateTag().putInt("Cast Time", spell.castDuration(player, stack));
+            wand.setSpellConditions(spell, stack, player); // 写 Duration/Soul Cost/Cooldown
+        } catch (Throwable ignored) {
+        }
     }
 
     @Override
