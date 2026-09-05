@@ -50,6 +50,7 @@ public final class TechniqueAdvancementHandler {
         put(Modifiers.JACOBS_LADDER.getId(), "techniques/jacobs_ladder");
         put(Modifiers.REVERSE_CURSED.getId(), "techniques/reverse_cursed");
         put(Modifiers.WU_WEI.getId(), "techniques/wu_wei");
+        put(Modifiers.CURSED_ENERGY_RELEASE.getId(), "techniques/cursed_energy_release");
         // 领域
         put(Modifiers.ZUOSHA_BOTU.getId(), "domains/zuosha_botu");
         put(Modifiers.WULIANG_KONGCHU.getId(), "domains/wuliang_kongchu");

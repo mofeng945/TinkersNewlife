@@ -231,6 +231,14 @@ public class ModEntities {
                         .sized(0.4f, 0.4f).clientTrackingRange(64).updateInterval(1)
                         .build(TinkersNewlife.MOD_ID + ":cursed_orb"));
 
+    /** 咒力外放 顺转能量弹（纯粹咒力光弹，命中单体高伤） */
+    public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.CurseBoltEntity>> CURSE_BOLT =
+        ENTITIES.register("curse_bolt",
+                () -> EntityType.Builder.<com.mofengbaizhi.tinkersnewlife.content.entity.CurseBoltEntity>of(
+                                com.mofengbaizhi.tinkersnewlife.content.entity.CurseBoltEntity::new, MobCategory.MISC)
+                        .sized(0.3f, 0.3f).clientTrackingRange(64).updateInterval(1)
+                        .build(TinkersNewlife.MOD_ID + ":curse_bolt"));
+
     /** 雅各布天梯 法阵（视觉 + 光柱帧伤载体） */
     public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.JacobLadderEntity>> JACOB_LADDER =
         ENTITIES.register("jacob_ladder",

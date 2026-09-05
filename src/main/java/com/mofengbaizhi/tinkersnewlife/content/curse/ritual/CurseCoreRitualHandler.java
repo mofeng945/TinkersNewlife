@@ -344,7 +344,8 @@ public class CurseCoreRitualHandler {
                 WuliangCangTechnique.INSTANCE, JacobsLadderTechnique.INSTANCE, ReverseCursedTechnique.INSTANCE,
                 WuWeiTechnique.INSTANCE, PuppetTechnique.INSTANCE, PlantManipulationTechnique.INSTANCE,
                 FlameManipulationTechnique.INSTANCE, CursedSpiritTechnique.INSTANCE,
-                LightningManipulationTechnique.INSTANCE, SkyManipulationTechnique.INSTANCE
+                LightningManipulationTechnique.INSTANCE, SkyManipulationTechnique.INSTANCE,
+                com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedEnergyReleaseTechnique.INSTANCE
         };
         tool.addModifier(techniques[random.nextInt(techniques.length)].getModifierId(), 1);
         tool.getPersistentData().addSlots(techniqueSlot, -1);

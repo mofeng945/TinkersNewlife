@@ -525,6 +525,9 @@
   "message.tinkersnewlife.reverse_cursed.external": "§a反转术式外放：%s 恢复 %s 点生命",
   "message.tinkersnewlife.reverse_cursed.undead": "§c反转术式外放：亡灵受到 %s 点伤害",
   "modifier.tinkersnewlife.wu_wei": "无为转变",
+  "modifier.tinkersnewlife.cursed_energy_release": "咒力外放",
+  "modifier.tinkersnewlife.cursed_energy_release.flavor": "把咒力当子弹打出去",
+  "modifier.tinkersnewlife.cursed_energy_release.description": "顺转：朝视线发射纯粹咒力能量弹，命中造成高额伤害。反转：冰沙冲击波（Granite Blast）——咒力以激光炮形式持续外放，每 2 tick 无视无敌帧伤害，持续 3 秒，可转动视角调整方向，结束后顺转与反转一同冷却 6 秒。不受术式熔断影响。",
   "modifier.tinkersnewlife.wu_wei.flavor": "§7重塑灵魂的形状，生命再无定式。",
   "modifier.tinkersnewlife.wu_wei.description": "§f按 P 键打开形态选择界面（击杀生物即记录该形态）；按术式键（C）= 顺转（自己变形成所选生物，继承其全部基础属性但不继承能力/AI，视角转移操控，再按 C 恢复人形）。按术式反转键（F）= 开启/关闭「转变外放」：开启后下一次攻击会把目标（生物或玩家）直接变形成所选生物——生物目标永久变形并化作守护式神（死亡即真死），玩家目标变形 60 秒后自动恢复且无法使用工具。占用术式槽。",
   "message.tinkersnewlife.wu_wei.self": "§b无为转变·顺转：已化身为 %s",
@@ -661,5 +664,7 @@
   "message.tinkersnewlife.staff.pouch_full": "§c聚晶包已满",
   "message.tinkersnewlife.staff.focus_stored": "§5已放入聚晶包：%s",
   "message.tinkersnewlife.staff.no_goety_wand": "§c未找到可用的诡厄魔杖以释放法术",
-  "message.tinkersnewlife.staff.cast_failed": "§c聚晶施法失败（可能灵魂不足/冷却中）"
+  "message.tinkersnewlife.staff.cast_failed": "§c聚晶施法失败（可能灵魂不足/冷却中）",
+  "message.tinkersnewlife.curse_release.cooldown": "§c咒力外放冷却中（剩 %s 秒）",
+  "message.tinkersnewlife.curse_release.short_cd": "§7能量弹蓄能中（剩 %s 秒）"
 }

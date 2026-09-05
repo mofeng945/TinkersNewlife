@@ -173,6 +173,7 @@ public class TinkersNewlife {
         TechniqueHandler.register(JacobsLadderTechnique.INSTANCE);
         TechniqueHandler.register(ReverseCursedTechnique.INSTANCE);
         TechniqueHandler.register(com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuWeiTechnique.INSTANCE);
+        TechniqueHandler.register(com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedEnergyReleaseTechnique.INSTANCE);
 
         // 注册网络包
         registerPacket(PacketUseSkill.class, PacketUseSkill::toBytes, PacketUseSkill::new, PacketUseSkill::handle);
@@ -355,6 +356,9 @@ public class TinkersNewlife {
                     // 无下限·苍/赫 蓄力粒子
                     com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangCangTechnique
                             .tickChargeParticles((net.minecraft.server.level.ServerLevel) p.level(), p);
+                    // 咒力外放 反转激光（每 tick 驱动：伤害间隔/粒子/到期冷却）
+                    com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedEnergyReleaseTechnique
+                            .tickBlast((net.minecraft.server.level.ServerLevel) p.level(), p);
                     // 帕秋莉手册解锁：每 20 tick 扫描核心特性，获得术式/领域即解锁对应章节
                     if (event.getServer().getTickCount() % 20 == 0) {
                         com.mofengbaizhi.tinkersnewlife.content.curse.TechniqueAdvancementHandler.scanAndUnlock(p);

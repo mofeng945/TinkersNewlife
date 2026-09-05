@@ -198,4 +198,9 @@ public class Modifiers {
     /** 无为转变（术式特性，占用术式槽；顺转变自己/反转目标，需先击杀记录形态） */
     public static final StaticModifier<WuWeiTrait> WU_WEI =
         MODIFIERS.register("wu_wei", WuWeiTrait::new);
+
+    /** 咒力外放（术式特性，占用术式槽；顺转能量弹/反转冰沙冲击波激光，不受熔断影响） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.CursedEnergyReleaseTrait> CURSED_ENERGY_RELEASE =
+        MODIFIERS.register("cursed_energy_release",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.CursedEnergyReleaseTrait::new);
 }

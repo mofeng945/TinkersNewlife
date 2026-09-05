@@ -1,0 +1,13 @@
+{
+    "name":  "咒力外放",
+    "category":  "tinkersnewlife:techniques",
+    "icon": "tinkersnewlife:textures/gui/modifiers/cursed_energy_release.png",
+    "sortnum":  30,
+  "advancement": "tinkersnewlife:techniques/cursed_energy_release",
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)咒力外放$()：把咒力以纯粹能量形式打出去。$(br2)$(bold)顺转（术式键）$()：朝视线发射一枚咒力光弹，命中第一个敌人造成高额伤害，可被护甲衰减、材料特性触发。消耗中等咒力，带短冷却。$(br2)$(bold)反转（反转键 F）$()：冰沙冲击波（Granite Blast）——咒力以激光炮形式持续外放：$(li)每 2 tick 对沿视线命中的敌人造成伤害$(li)无视无敌帧$(li)持续 3 秒，期间可转动视角调整激光方向$(li)结束时顺转与反转一同进入 6 秒冷却$(br2)$(bold)本术式不受术式熔断影响$()，熔断期间仍可外放。"
+                  }
+              ]
+}
