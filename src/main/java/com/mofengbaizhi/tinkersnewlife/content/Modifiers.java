@@ -167,6 +167,10 @@ public class Modifiers {
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.CursedSpiritTrait> CURSED_SPIRIT =
         MODIFIERS.register("cursed_spirit", com.mofengbaizhi.tinkersnewlife.content.modifier.CursedSpiritTrait::new);
 
+    /** 雷电操术（术式特性，占用术式槽） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.LightningManipulationTrait> LIGHTNING_MANIPULATION =
+        MODIFIERS.register("lightning_manipulation", com.mofengbaizhi.tinkersnewlife.content.modifier.LightningManipulationTrait::new);
+
     /** 投射咒法（术式特性，占用术式槽） */
     public static final StaticModifier<ProjectionTrait> PROJECTION =
         MODIFIERS.register("projection", ProjectionTrait::new);

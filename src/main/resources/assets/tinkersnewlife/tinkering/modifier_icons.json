@@ -28,5 +28,6 @@
   "tinkersnewlife:puppet": "tinkersnewlife:gui/modifiers/puppet",
   "tinkersnewlife:plant_manipulation": "tinkersnewlife:gui/modifiers/plant_manipulation",
   "tinkersnewlife:flame_manipulation": "tinkersnewlife:gui/modifiers/flame_manipulation",
-  "tinkersnewlife:cursed_spirit": "tinkersnewlife:gui/modifiers/cursed_spirit"
+  "tinkersnewlife:cursed_spirit": "tinkersnewlife:gui/modifiers/cursed_spirit",
+  "tinkersnewlife:lightning_manipulation": "tinkersnewlife:gui/modifiers/lightning_manipulation"
 }

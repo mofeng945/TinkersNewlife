@@ -1,0 +1,17 @@
+{
+    "name": "雷电操术",
+    "category": "tinkersnewlife:techniques",
+    "icon": "tinkersnewlife:textures/gui/modifiers/lightning_manipulation.png",
+    "sortnum": 20,
+    "advancement": "tinkersnewlife:techniques/lightning_manipulation",
+    "pages": [
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)雷电操术$()：雷霆万钧，唯我号令。$(br2)$(bold)顺转$()：对视线内目标劈落一道$(bold)闪电$()——仅是视觉特效（不会造成原版闪电伤害、不触发猪→僵尸猪灵等转化）；实际伤害按$(bold)咒术伤害$()结算：共享伤害基底 × 80%，套用魔杖增幅与咒力核心材料特性，无视无敌帧。释放消耗沿用通用公式 (1 - 亲和/100) × (10 + 输出×5)。"
+        },
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)反转 · 术式解放「幻兽琥珀」$()：按下反转键（F）开启，再次按下关闭。$(li)开启期间自身$(bold)每次近战/远程伤害$()（含箭等投射物）额外附带$(bold)咒术闪电$()：+round((1 + 亲和/100) × (5 + 输出×5))，命中处迸发电火花$(li)每 tick 持续消耗：咒力 ceil(max(1, (1-亲和/100)×(2+输出)))、生命 (0.15 + 输出×0.05)$(li)咒力或生命（不低于 1 点）耗尽时$(bold)自动解除$()；登出/死亡自动关闭$(br2)高输出低亲和时解放威力大但烧血烧咒极快——适合短爆发，记得关。"
+        }
+    ]
+}
