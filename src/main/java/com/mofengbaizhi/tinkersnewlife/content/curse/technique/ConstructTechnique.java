@@ -333,34 +333,45 @@ public final class ConstructTechnique extends BaseTechnique {
      * </pre>
      */
     public static int computeCost(int affinity, int output, Item item) {
-        ItemStack probe = new ItemStack(item);
-        Rarity rarity = item.getRarity(probe);
-        double base = switch (rarity) {
-            case EPIC -> 12;
-            case RARE -> 6;
-            case UNCOMMON -> 3;
-            case COMMON -> 1;
-        };
-        double score = base;
-        if (!(item instanceof BlockItem)) {
-            score += 1; // 非方块的基础材料分
+        try {
+            ItemStack probe = new ItemStack(item);
+            Rarity rarity = item.getRarity(probe);
+            // ⚠ 不用 switch-on-enum：javac 会为枚举 switch 生成合成 SwitchMap 类，
+            // 经 reobf/热重载后可能触发 IncompatibleClassChangeError → 用 if-else
+            double base;
+            if (rarity == Rarity.EPIC) {
+                base = 12;
+            } else if (rarity == Rarity.RARE) {
+                base = 6;
+            } else if (rarity == Rarity.UNCOMMON) {
+                base = 3;
+            } else {
+                base = 1;
+            }
+            double score = base;
+            if (!(item instanceof BlockItem)) {
+                score += 1; // 非方块的基础材料分
+            }
+            // 威力：攻击
+            var attrs = item.getDefaultAttributeModifiers(EquipmentSlot.MAINHAND);
+            double attack = attrs.get(Attributes.ATTACK_DAMAGE).stream()
+                    .mapToDouble(m -> m.getAmount()).sum();
+            score += attack * 4.0;
+            // 威力：护甲
+            if (item instanceof ArmorItem armor) {
+                score += (armor.getDefense() + armor.getToughness()) * 3.0;
+            }
+            // 威力：耐久（工具/武器/护甲）
+            int maxDamage = item.getMaxDamage(probe);
+            if (maxDamage > 0) {
+                score += Math.min(20.0, maxDamage / 300.0);
+            }
+            double cost = Math.max(3.0, Math.ceil(score * (1.0 - affinity / 100.0) * (1.0 + output * 0.2)));
+            return (int) Math.min(Integer.MAX_VALUE, cost);
+        } catch (Throwable t) {
+            // GUI 逐行预览时个别异常物品不阻塞整个界面
+            return 3;
         }
-        // 威力：攻击
-        var attrs = item.getDefaultAttributeModifiers(EquipmentSlot.MAINHAND);
-        double attack = attrs.get(Attributes.ATTACK_DAMAGE).stream()
-                .mapToDouble(m -> m.getAmount()).sum();
-        score += attack * 4.0;
-        // 威力：护甲
-        if (item instanceof ArmorItem armor) {
-            score += (armor.getDefense() + armor.getToughness()) * 3.0;
-        }
-        // 威力：耐久（工具/武器/护甲）
-        int maxDamage = item.getMaxDamage(probe);
-        if (maxDamage > 0) {
-            score += Math.min(20.0, maxDamage / 300.0);
-        }
-        double cost = Math.max(3.0, Math.ceil(score * (1.0 - affinity / 100.0) * (1.0 + output * 0.2)));
-        return (int) Math.min(Integer.MAX_VALUE, cost);
     }
 
     // ============================================================
