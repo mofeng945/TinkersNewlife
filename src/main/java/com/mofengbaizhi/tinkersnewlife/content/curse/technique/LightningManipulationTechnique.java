@@ -36,8 +36,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * 反转（反转键 F）：术式解放「幻兽琥珀」——开关式：
  * 开启期间自身每次近战/远程伤害额外附带咒术闪电
  * （加成 = round((1+亲和/100) × (5 + 输出×5))），并伴随小型闪电粒子；
- * 每 tick 持续消耗 咒力 ceil(max(1,(1-亲和/100)×(2+输出))) 与 生命 (0.15+输出×0.05)，
- * 咒力/生命耗尽自动解除。
+ * 每 tick 持续消耗 咒力 ceil(max(1,(1-亲和/100)×(2+输出)))（有则扣）与 生命 (0.15+输出×0.05)，
+ * 不因低生命/咒力不足自动解除——持续到玩家死亡（死亡清理移除）或手动关闭。
  */
 public final class LightningManipulationTechnique extends BaseTechnique {
 
@@ -85,7 +85,7 @@ public final class LightningManipulationTechnique extends BaseTechnique {
         CurseCoreTraitHelper.afterCurseCoreHit(player, target, raw);
         // 纯视觉闪电（标记后不产生原版闪电伤害/转化）
         spawnVisualBolt(level, target);
-        player.displayClientMessage(Component.translatable("message.tinkersnewlife.lightning.strike"), true);
+        // 不弹"术式发动"提示
     }
 
     private static void spawnVisualBolt(ServerLevel level, LivingEntity target) {
@@ -121,7 +121,7 @@ public final class LightningManipulationTechnique extends BaseTechnique {
             return;
         }
         RELEASED.add(player.getUUID());
-        player.displayClientMessage(Component.translatable("message.tinkersnewlife.lightning.released"), true);
+        // 不弹"术式发动"提示
     }
 
     /** 登出/死亡清理 */
@@ -166,7 +166,8 @@ public final class LightningManipulationTechnique extends BaseTechnique {
             }
         }
 
-        /** 解放持续消耗：每 tick 扣咒力 + 生命，耗尽自动解除 */
+        /** 解放持续消耗：每 tick 扣咒力（有则扣）+ 生命（可持续扣到死亡）。
+         *  不再因"低生命/咒力不足"自动解除——持续到玩家死亡（死亡清理移除）或手动关闭。 */
         @SubscribeEvent
         public static void onServerTick(TickEvent.ServerTickEvent event) {
             if (event.phase != TickEvent.Phase.END) return;
@@ -184,17 +185,22 @@ public final class LightningManipulationTechnique extends BaseTechnique {
                 double curseCost = Math.max(1.0, (1.0 - affinity / 100.0) * (2.0 + output));
                 double hpCost = 0.15 + output * 0.05;
                 if (!CursePowerHelper.isCurseInfinite(p)) {
-                    if (CursePowerHelper.getCurse(p) < curseCost) {
-                        deactivate(p);
-                        continue;
+                    double curse = CursePowerHelper.getCurse(p);
+                    if (curse >= curseCost) {
+                        CursePowerHelper.spendCurse(p, curseCost);
                     }
-                    CursePowerHelper.spendCurse(p, curseCost);
+                    // 咒力不足：本次跳过咒力消耗，生命消耗继续（不自动解除）
                 }
-                if (p.getHealth() - hpCost <= 1.0F) {
-                    deactivate(p);
+                float hp = p.getHealth() - (float) hpCost;
+                if (hp <= 0.0F) {
+                    // 扣到死亡：结算死亡（死亡清理会移除解放）
+                    p.setHealth(0.0F);
+                    if (p.isAlive() && !p.isRemoved()) {
+                        p.die(p.damageSources().magic());
+                    }
                     continue;
                 }
-                p.setHealth(p.getHealth() - (float) hpCost);
+                p.setHealth(hp);
                 // 雷光随行特效
                 if (p.tickCount % 8 == 0 && p.serverLevel() != null) {
                     p.serverLevel().sendParticles(ParticleTypes.ELECTRIC_SPARK,
