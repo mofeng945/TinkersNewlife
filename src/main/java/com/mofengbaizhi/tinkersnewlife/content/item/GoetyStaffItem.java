@@ -34,7 +34,8 @@ import javax.annotation.Nullable;
  * <p>实现 {@link IWand} 并复刻诡厄真法杖的两块核心：
  * <ul>
  *   <li><b>施法管线</b>：use/onUseTick/releaseUsing/finishUsingItem/getUseDuration/getUseAnimation
- *       （以及 useOn/interactLivingEntity）全部委托给内部 {@link DarkWand} 实例——诡厄原生施法
+ *       （以及 useOn/interactLivingEntity）全部委托给诡厄<b>已注册</b>的真法杖实例
+ *       （{@link DarkWand} 或其子类，见 {@link #goetyWand()}）——诡厄原生施法
  *       （灵魂消耗、长吟唱蓄力、冷却、粒子/音效）逐字节一致，客户端与服务端都走同一条原生路径，
  *       不再需要"换手拿真法杖"的桥接。</li>
  *   <li><b>聚晶存储</b>：{@link #initCapabilities} 在匠魂工具能力之外挂上诡厄的
@@ -43,10 +44,10 @@ import javax.annotation.Nullable;
  *       当前聚晶 HUD / 冷却图标（CurrentFocusGui）无需任何自定义代码即可原生显示。</li>
  * </ul>
  *
- * <p>⚠ <b>严禁在物品注册期创建任何 Item 实例</b>：Item 构造器会把自身登记为 ITEMS 注册表的
- * intrusive holder（须由后续注册认领），未注册的 Item 实例会在注册表冻结时报
- * "Some intrusive holders were not registered" 崩溃。因此 {@link DarkWand} 委托必须懒加载，
- * {@link #getSpellType()} 也只返回枚举常量。
+ * <p>⚠ <b>严禁在本模组内 new 任何 Item/Block 实例</b>：Item 构造器会把自身登记为 ITEMS 注册表的
+ * intrusive holder，注册期创建未注册实例会在冻结时报 "intrusive holders were not registered"，
+ * 注册后（运行期）创建任何 Item 都会直接抛 "Registry is already frozen"。
+ * 因此 {@link #getSpellType()} 只返回枚举常量，DarkWand 委托也复用诡厄自己注册的实例。
  *
  * <p>注意：本类直接引用诡厄类，只能在诡厄存在时被加载/实例化（注册分支已按 ModList 判定；
  * 其它宿主类调用本类静态方法前必须先过 {@code ModList.isLoaded("goety")} 或
@@ -54,13 +55,25 @@ import javax.annotation.Nullable;
  */
 public class GoetyStaffItem extends ModularStaffItem implements IWand {
 
-    /** 诡厄施法委托实例：懒加载，首次实际施法（注册表冻结后的运行时）才创建 */
+    /**
+     * 诡厄施法委托：直接取诡厄<b>已注册</b>的真法杖实例（DarkWand 或其子类）做纯逻辑搬运。
+     * <p>⚠ 绝不能 {@code new DarkWand()}：Item 构造器会向 ITEMS 注册表登记 intrusive holder，
+     * 注册期创建=冻结崩溃 "intrusive holders were not registered"，注册后创建=运行期
+     * "Registry is already frozen"。诡厄注册的真法杖实例方法只读入参/物品栈，无实例状态依赖，
+     * 复用它即可（且已应用 RevelationFix 等 mixin，与真法杖行为完全一致）。
+     */
     @Nullable
     private DarkWand goetyWand;
 
+    @Nullable
     private DarkWand goetyWand() {
         if (goetyWand == null) {
-            goetyWand = new DarkWand();
+            for (net.minecraft.world.item.Item it : net.minecraft.core.registries.BuiltInRegistries.ITEM) {
+                if (it instanceof DarkWand dw) {
+                    goetyWand = dw;
+                    break;
+                }
+            }
         }
         return goetyWand;
     }
@@ -90,25 +103,31 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
         if (inGoetyMode(stack)) {
             // 委托 DarkWand.use：它读取手持物品栈 = 本魔杖，并从魔杖自带槽取聚晶，
             // 完整原生施法（含 startUsingItem 长吟唱），双端一致
-            return goetyWand().use(level, player, hand);
+            DarkWand wand = goetyWand();
+            if (wand != null) {
+                return wand.use(level, player, hand);
+            }
         }
         return super.use(level, player, hand);
     }
 
     @Override
     public int getUseDuration(ItemStack stack) {
-        return inGoetyMode(stack) ? goetyWand().getUseDuration(stack) : super.getUseDuration(stack);
+        DarkWand wand = inGoetyMode(stack) ? goetyWand() : null;
+        return wand != null ? wand.getUseDuration(stack) : super.getUseDuration(stack);
     }
 
     @Override
     public UseAnim getUseAnimation(ItemStack stack) {
-        return inGoetyMode(stack) ? goetyWand().getUseAnimation(stack) : super.getUseAnimation(stack);
+        DarkWand wand = inGoetyMode(stack) ? goetyWand() : null;
+        return wand != null ? wand.getUseAnimation(stack) : super.getUseAnimation(stack);
     }
 
     @Override
     public void onUseTick(Level level, LivingEntity entity, ItemStack stack, int timeLeft) {
-        if (inGoetyMode(stack)) {
-            goetyWand().onUseTick(level, entity, stack, timeLeft);
+        DarkWand wand = inGoetyMode(stack) ? goetyWand() : null;
+        if (wand != null) {
+            wand.onUseTick(level, entity, stack, timeLeft);
         } else {
             super.onUseTick(level, entity, stack, timeLeft);
         }
@@ -116,8 +135,9 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
 
     @Override
     public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
-        if (inGoetyMode(stack)) {
-            goetyWand().releaseUsing(stack, level, entity, timeLeft);
+        DarkWand wand = inGoetyMode(stack) ? goetyWand() : null;
+        if (wand != null) {
+            wand.releaseUsing(stack, level, entity, timeLeft);
         } else {
             super.releaseUsing(stack, level, entity, timeLeft);
         }
@@ -126,9 +146,10 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
     @Override
     public InteractionResult useOn(net.minecraft.world.item.context.UseOnContext context) {
         ItemStack stack = context.getItemInHand();
-        if (inGoetyMode(stack)) {
+        DarkWand wand = inGoetyMode(stack) ? goetyWand() : null;
+        if (wand != null) {
             // 诡厄 useOn：RecallFocus/触媒/方块型法术等右键方块逻辑与真法杖一致
-            return goetyWand().useOn(context);
+            return wand.useOn(context);
         }
         return super.useOn(context);
     }
@@ -136,17 +157,19 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
     @Override
     public InteractionResult interactLivingEntity(ItemStack stack, Player player,
                                                   LivingEntity target, InteractionHand hand) {
-        if (inGoetyMode(stack)) {
+        DarkWand wand = inGoetyMode(stack) ? goetyWand() : null;
+        if (wand != null) {
             // 诡厄 interactLivingEntity：CommandFocus 仆从管理/触媒法术等右键实体逻辑与真法杖一致
-            return goetyWand().interactLivingEntity(stack, player, target, hand);
+            return wand.interactLivingEntity(stack, player, target, hand);
         }
         return super.interactLivingEntity(stack, player, target, hand);
     }
 
     @Override
     public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entity) {
-        if (inGoetyMode(stack)) {
-            return goetyWand().finishUsingItem(stack, level, entity);
+        DarkWand wand = inGoetyMode(stack) ? goetyWand() : null;
+        if (wand != null) {
+            return wand.finishUsingItem(stack, level, entity);
         }
         return super.finishUsingItem(stack, level, entity);
     }
