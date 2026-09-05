@@ -58,9 +58,11 @@ public final class TechniqueHandler {
         return TECHNIQUES.containsKey(id);
     }
 
-    /** 按键按下：熔断检查 → 封印检查 → 当前选中的术式 → 按下行为（即时释放 / 开始蓄力） */
+    /** 按键按下：熔断检查（反转术式豁免）→ 封印检查 → 当前选中的术式 → 按下行为（即时释放 / 开始蓄力） */
     public static void onKeyPress(ServerPlayer player) {
-        if (CursePowerHelper.isBurnout(player)) {
+        // 先取选中术式：熔断期间「反转术式」等豁免术式仍可使用（isBurnoutExempt）
+        BaseTechnique technique = findSelected(player);
+        if (technique != null && !technique.isBurnoutExempt() && CursePowerHelper.isBurnout(player)) {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.burnout.active",
                     CursePowerHelper.getBurnoutRemainingSeconds(player)), true);
             return;
@@ -70,7 +72,6 @@ public final class TechniqueHandler {
                     CursePowerHelper.getSealedRemainingSeconds(player)), true);
             return;
         }
-        BaseTechnique technique = findSelected(player);
         if (technique != null) {
             technique.onKeyPress(player);
         }

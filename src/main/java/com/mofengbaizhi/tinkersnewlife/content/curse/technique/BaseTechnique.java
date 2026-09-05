@@ -63,10 +63,18 @@ public abstract class BaseTechnique {
      */
     public void onReverseKeyRelease(ServerPlayer player) {}
 
+    /**
+     * 是否豁免术式熔断：熔断期间仍可使用的术式（如「反转术式」治疗自身，
+     * 对应原作靠反转术式疗愈大脑解除熔断的设定）。默认 false。
+     */
+    public boolean isBurnoutExempt() {
+        return false;
+    }
+
     /** 模板方法：释放本术式（子类无需覆写，只需实现 onCast） */
     public boolean tryUse(ServerPlayer player) {
-        // 术式熔断：期间无法使用术式
-        if (CursePowerHelper.isBurnout(player)) {
+        // 术式熔断：期间无法使用术式（「反转术式」等豁免术式除外）
+        if (!isBurnoutExempt() && CursePowerHelper.isBurnout(player)) {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.burnout.active",
                     CursePowerHelper.getBurnoutRemainingSeconds(player)), true);
             return false;

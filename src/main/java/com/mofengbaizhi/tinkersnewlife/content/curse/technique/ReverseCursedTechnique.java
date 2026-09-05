@@ -24,6 +24,12 @@ public final class ReverseCursedTechnique extends BaseTechnique {
         super(Modifiers.REVERSE_CURSED.getId());
     }
 
+    /** 熔断豁免：术式熔断期间仍可使用反转术式（原作设定：靠反转术式疗愈/续战） */
+    @Override
+    public boolean isBurnoutExempt() {
+        return true;
+    }
+
     /** 咒力消耗 = 咒力输出 × 10 点 */
     @Override
     protected int getCost(ServerPlayer player) {
@@ -37,14 +43,9 @@ public final class ReverseCursedTechnique extends BaseTechnique {
         return (1.0 + (affinity / 10.0 + output) / 10.0) * output * 2.0;
     }
 
-    /** 按下术式键（C）：对自身释放反转术式 */
+    /** 按下术式键（C）：对自身释放反转术式（熔断期间豁免，见 isBurnoutExempt） */
     @Override
     public void onKeyPress(ServerPlayer player) {
-        if (CursePowerHelper.isBurnout(player)) {
-            player.displayClientMessage(Component.translatable("message.tinkersnewlife.burnout.active",
-                    CursePowerHelper.getBurnoutRemainingSeconds(player)), true);
-            return;
-        }
         if (!payCost(player)) {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_curse"), true);
             return;
@@ -53,14 +54,9 @@ public final class ReverseCursedTechnique extends BaseTechnique {
         player.heal((float) heal);
     }
 
-    /** 按下术式反转键（F）：反转术式外放——治疗目标；亡灵则受 2 倍恢复量伤害 */
+    /** 按下术式反转键（F）：反转术式外放——治疗目标；亡灵则受 2 倍恢复量伤害（熔断期间豁免） */
     @Override
     public void onReverseKeyPress(ServerPlayer player) {
-        if (CursePowerHelper.isBurnout(player)) {
-            player.displayClientMessage(Component.translatable("message.tinkersnewlife.burnout.active",
-                    CursePowerHelper.getBurnoutRemainingSeconds(player)), true);
-            return;
-        }
         LivingEntity target = findTarget(player);
         if (target == null) {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_target"), true);
