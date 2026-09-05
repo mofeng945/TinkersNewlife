@@ -105,7 +105,11 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
             // 完整原生施法（含 startUsingItem 长吟唱），双端一致
             DarkWand wand = goetyWand();
             if (wand != null) {
-                return wand.use(level, player, hand);
+                InteractionResultHolder<ItemStack> result = wand.use(level, player, hand);
+                // 【诊断】定位"蓄力放不出"用，确认后移除
+                TinkersNewlife.LOGGER.info("[魔杖·真法杖] use side={} 聚晶={} 法术={} 结果={}",
+                        level.isClientSide ? "客户端" : "服务端", focusName(stack), spellName(stack), result.getResult());
+                return result;
             }
         }
         return super.use(level, player, hand);
@@ -146,6 +150,13 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
         DarkWand wand = inGoetyMode(stack) ? goetyWand() : null;
         if (wand != null) {
             wand.onUseTick(level, entity, stack, timeLeft);
+            // 【诊断】只打关键点：开始蓄力 + 每 20 tick 一次心跳，确认后移除
+            int dur = stack.getUseDuration();
+            int elapsed = dur - timeLeft;
+            if (elapsed <= 1 || timeLeft % 20 == 0) {
+                TinkersNewlife.LOGGER.info("[魔杖·真法杖] 蓄力中 side={} 剩余={}/{} 法术={}",
+                        level.isClientSide ? "客户端" : "服务端", timeLeft, dur, spellName(stack));
+            }
         } else {
             super.onUseTick(level, entity, stack, timeLeft);
         }
@@ -155,6 +166,9 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
     public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
         DarkWand wand = inGoetyMode(stack) ? goetyWand() : null;
         if (wand != null) {
+            // 【诊断】松手释放路径，确认后移除
+            TinkersNewlife.LOGGER.info("[魔杖·真法杖] 松手释放 side={} 剩余={}/{} 法术={}",
+                    level.isClientSide ? "客户端" : "服务端", timeLeft, stack.getUseDuration(), spellName(stack));
             wand.releaseUsing(stack, level, entity, timeLeft);
         } else {
             super.releaseUsing(stack, level, entity, timeLeft);
@@ -187,6 +201,9 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
     public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entity) {
         DarkWand wand = inGoetyMode(stack) ? goetyWand() : null;
         if (wand != null) {
+            // 【诊断】满蓄释放路径（咏唱走完自动触发），确认后移除
+            TinkersNewlife.LOGGER.info("[魔杖·真法杖] 满蓄释放 side={} 法术={}",
+                    level.isClientSide ? "客户端" : "服务端", spellName(stack));
             return wand.finishUsingItem(stack, level, entity);
         }
         return super.finishUsingItem(stack, level, entity);
@@ -246,6 +263,9 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
     public static boolean mirrorEquippedFocus(ServerPlayer player, ItemStack staff) {
         if (player == null || staff == null || staff.isEmpty()) return false;
         if (!(staff.getItem() instanceof GoetyStaffItem)) return false;
+        // ⚠ 蓄力/吟唱进行中绝不替换手持栈：LivingEntity.updatingUsingItem 每 tick 校验
+        // getItemInHand == useItem，换栈对象会 stopUsingItem() 打断施法；等施法结束的下个窗口再校正
+        if (player.isUsingItem()) return false;
         ItemStack focus = ModularStaffGoety.equippedFocusOf(player, staff);
         try {
             SoulUsingItemHandler handler = SoulUsingItemHandler.get(staff);
@@ -257,6 +277,8 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
             }
             // 直接落盘到魔杖 tag：即使尚未广播/客户端未同步，存档也不丢聚晶
             staff.getOrCreateTag().put("cap", handler.serializeNBT());
+            // 【诊断】镜像发生写替换时记录（确认后移除）
+            TinkersNewlife.LOGGER.info("[魔杖·真法杖] 聚晶镜像写入 聚晶={} 使用中={}", focusName(staff), player.isUsingItem());
             // 槽内换入副本，确保服务端广播检测到栈变化（原栈 tag 已被原地修改，但广播比较依赖对象/内容差异，
             // 稳妥起见替换为新对象再放回原槽）
             replaceInInventory(player, staff);
@@ -280,6 +302,34 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
                 player.setItemInHand(hand, staff.copy());
             }
         } catch (Throwable ignored) {
+        }
+    }
+
+    // ================= 诊断辅助（定位"蓄力放不出"用，确认后移除） =================
+
+    /** 魔杖自带槽里的聚晶名 */
+    private static String focusName(ItemStack staff) {
+        try {
+            ItemStack f = SoulUsingItemHandler.get(staff).getSlot();
+            return f.isEmpty() ? "无聚晶" : f.getHoverName().getString();
+        } catch (Throwable t) {
+            return "读取失败";
+        }
+    }
+
+    /** 魔杖自带槽聚晶的法术类名 */
+    private static String spellName(ItemStack staff) {
+        try {
+            ItemStack f = SoulUsingItemHandler.get(staff).getSlot();
+            if (f.isEmpty()) return "无聚晶";
+            if (f.getItem() instanceof com.Polarice3.Goety.api.items.magic.IFocus focus) {
+                com.Polarice3.Goety.api.magic.ISpell spell = focus.getSpell();
+                return spell == null ? (f.getHoverName().getString() + "（无法术）")
+                        : spell.getClass().getSimpleName();
+            }
+            return f.getHoverName().getString() + "（非IFocus）";
+        } catch (Throwable t) {
+            return "读取失败";
         }
     }
 }
