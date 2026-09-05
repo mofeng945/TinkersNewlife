@@ -155,6 +155,9 @@ public class ClientEventHandler {
         private static int staffComboTicks = 0;
         private static boolean staffComboOn = false;
         private static boolean lastRealUseDown = false;
+        /** 连招中"正在引导"的边沿/起始 tick（持续段计时用真实 tick 数，不用易残留的 useItemRemaining 算 elapsed） */
+        private static boolean comboWasUsing = false;
+        private static int comboUsingStartTick = 0;
 
         @SubscribeEvent
         public static void onClientTick(TickEvent.ClientTickEvent event) {
@@ -234,13 +237,22 @@ public class ClientEventHandler {
                 } else {
                     // 模拟按住右键：原版自动连点瞬发、咏唱/蓄力自然引导至满蓄释放
                     mc.options.keyUse.setDown(true);
-                    // 持续/蓄力超长段：引导 3s 后主动释放结束该段（服务端自动切下一聚晶后由连点续上）
+                    // 持续/蓄力超长段：按"真实引导 tick 数"计时，满 3s 主动释放结束该段
+                    // ⚠ 不能用 时长-剩余 算 elapsed：客户端镜像引导时 useItemRemaining 可能短暂残留
+                    //   上一发的值（日志实证箭雨被误判 elapsed≈71840 第一 tick 就释放）→ 用边沿计时
                     if (player.isUsingItem()) {
                         int duration = player.getUseItem().getUseDuration();
-                        int elapsed = duration - player.getUseItemRemainingTicks();
-                        if (duration >= SUSTAIN_DURATION_THRESHOLD && elapsed >= SUSTAIN_RELEASE_ELAPSED) {
-                            mc.gameMode.releaseUsingItem(player);
+                        if (!comboWasUsing) {
+                            comboWasUsing = true;
+                            comboUsingStartTick = player.tickCount;
                         }
+                        if (duration >= SUSTAIN_DURATION_THRESHOLD
+                                && player.tickCount - comboUsingStartTick >= SUSTAIN_RELEASE_ELAPSED) {
+                            mc.gameMode.releaseUsingItem(player);
+                            comboWasUsing = false;
+                        }
+                    } else {
+                        comboWasUsing = false;
                     }
                 }
                 // 真实右键"松开后再按下"→ 解除连招
