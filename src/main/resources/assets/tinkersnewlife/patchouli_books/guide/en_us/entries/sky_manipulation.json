@@ -1,0 +1,17 @@
+{
+    "name": "天空操术",
+    "category": "tinkersnewlife:techniques",
+    "icon": "tinkersnewlife:textures/gui/modifiers/sky_manipulation.png",
+    "sortnum": 21,
+    "advancement": "tinkersnewlife:techniques/sky_manipulation",
+    "pages": [
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)天空操术$()：御空而行，拨云见日。$(br2)$(bold)顺转$()：视线内有敌对目标时，将其沿视线方向$(bold)击飞推开$()（纯位移，不造成伤害）；没有目标时，给自己一个沿视线方向的推力（冲刺/跃空，上抛部分不产生摔落伤害）。$(br2)推力随$(bold)咒力亲和/输出$()提高：强度 = (1+亲和/100)×(1.6+输出×0.15)，消耗 = (1+亲和/100)×(6+输出×3)。"
+        },
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)反转 · 宇守罗弹$()：按下反转键（F）对视线锁定目标发射一枚$(bold)宇守罗弹$()——轻度追踪目标；命中时如$(bold)击碎薄冰$()般爆散雪晶碎屑，将"空间"连同对手一起$(bold)击飞$()（巨量击退 + 上抛）并造成$(bold)咒术伤害$()（共享伤害基底×110%，套魔杖增幅，命中时套核心材料特性）。$(br2)击飞与消耗随亲和/输出提高：消耗 = (1+亲和/100)×(12+输出×5)。$(br2)未锁定目标时无法发射（提示无目标）。"
+        }
+    ]
+}

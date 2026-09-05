@@ -124,6 +124,9 @@ public class ClientEventHandler {
         // 咒灵操术 黑色漩涡弹：无模型渲染（粒子表现）
         event.registerEntityRenderer(ModEntities.SPIRIT_VORTEX.get(),
                 com.mofengbaizhi.tinkersnewlife.client.renderer.SpiritVortexRenderer::new);
+        // 天空操术 宇守罗弹：无模型渲染（雪晶尾迹 + 命中碎冰粒子）
+        event.registerEntityRenderer(ModEntities.SKY_USORA_BOLT.get(),
+                com.mofengbaizhi.tinkersnewlife.client.renderer.SkyUsoraBoltRenderer::new);
         // 投射咒法 玩家虚影：蓝色半透明人形
         event.registerEntityRenderer(ModEntities.PROJECTION_PHANTOM.get(),
                 com.mofengbaizhi.tinkersnewlife.client.renderer.ProjectionPhantomRenderer::new);

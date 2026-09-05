@@ -207,6 +207,14 @@ public class ModEntities {
                         .sized(0.4f, 0.4f).clientTrackingRange(64).updateInterval(1)
                         .build(TinkersNewlife.MOD_ID + ":spirit_vortex"));
 
+    /** 天空操术 宇守罗弹（反转·追踪弹，命中碎冰击飞） */
+    public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.SkyUsoraBoltEntity>> SKY_USORA_BOLT =
+        ENTITIES.register("sky_usora_bolt",
+                () -> EntityType.Builder.<com.mofengbaizhi.tinkersnewlife.content.entity.SkyUsoraBoltEntity>of(
+                                com.mofengbaizhi.tinkersnewlife.content.entity.SkyUsoraBoltEntity::new, MobCategory.MISC)
+                        .sized(0.5f, 0.5f).clientTrackingRange(64).updateInterval(1)
+                        .build(TinkersNewlife.MOD_ID + ":sky_usora_bolt"));
+
     /** 投射咒法 玩家虚影（触碰触发增益） */
     public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.ProjectionPhantomEntity>> PROJECTION_PHANTOM =
         ENTITIES.register("projection_phantom",
