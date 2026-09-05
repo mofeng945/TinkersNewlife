@@ -80,6 +80,11 @@ public final class ConstructTechnique extends BaseTechnique {
         return player.getPersistentData().getBoolean(KEY_AMMO_MODE);
     }
 
+    /** 登出/死亡：关闭顺转模式（避免重进后仍在耗咒力补给） */
+    public static void cleanup(ServerPlayer player) {
+        player.getPersistentData().putBoolean(KEY_AMMO_MODE, false);
+    }
+
     // ============================================================
     //  反转（F）：打开拟造物品栏
     // ============================================================
@@ -149,7 +154,14 @@ public final class ConstructTechnique extends BaseTechnique {
             return;
         }
         ItemStack add = new ItemStack(ammoItem, need);
-        player.getInventory().add(add);
+        boolean added = player.getInventory().add(add);
+        if (!added && !add.isEmpty()) {
+            // 背包满：剩余部分掉落脚下
+            net.minecraft.world.entity.item.ItemEntity drop = new net.minecraft.world.entity.item.ItemEntity(
+                    player.serverLevel(), player.getX(), player.getY() + 0.5, player.getZ(), add);
+            drop.setPickUpDelay(0);
+            player.serverLevel().addFreshEntity(drop);
+        }
         if (player.level().isClientSide) return;
         player.serverLevel().sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD,
                 player.getX(), player.getY() + 1.2, player.getZ(), need / 2 + 1, 0.3, 0.3, 0.3, 0);
@@ -358,7 +370,6 @@ public final class ConstructTechnique extends BaseTechnique {
     /** 扫描玩家全部物品栏（含盔甲/副手），移除到期的拟造物 */
     private static void sweepTemps(ServerPlayer player, long now) {
         boolean removed = false;
-        Set<Integer> clearedSlots = new HashSet<>();
         net.minecraft.world.entity.player.Inventory inv = player.getInventory();
         for (int i = 0; i < inv.getContainerSize(); i++) {
             ItemStack stack = inv.getItem(i);
@@ -366,7 +377,6 @@ public final class ConstructTechnique extends BaseTechnique {
             long until = stack.getTag().getLong(KEY_TEMP_UNTIL);
             if (until > 0 && until <= now) {
                 inv.setItem(i, ItemStack.EMPTY);
-                clearedSlots.add(i);
                 removed = true;
             }
         }

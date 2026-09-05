@@ -34,8 +34,9 @@ public class ConstructSelectScreen extends AbstractRowListScreen<String> {
     private static final int LIST_TOP = 58;
     private static final int BOTTOM_PAD = 18;
 
-    /** 全部候选（有合成配方的物品 id，注册名排序） */
+    /** 全部候选（有合成配方的物品 id，注册名排序）；配方管理器变化时自动重建 */
     private static List<String> allCandidates;
+    private static Object cachedRecipeManager;
 
     private EditBox searchBox;
     private String filter = "";
@@ -45,12 +46,15 @@ public class ConstructSelectScreen extends AbstractRowListScreen<String> {
                 new ArrayList<>(collectCandidates()), W, ROW_H, ROW_H, LIST_TOP, BOTTOM_PAD);
     }
 
-    /** 枚举所有有合成配方的物品（客户端配方管理器与服务器一致），静态缓存 */
+    /** 枚举所有有合成配方的物品（客户端配方管理器与服务器一致）；配方更新时自动重建缓存 */
     private static List<String> collectCandidates() {
-        if (allCandidates != null) {
+        var level = Minecraft.getInstance().level;
+        Object rm = level == null ? null : level.getRecipeManager();
+        if (allCandidates != null && cachedRecipeManager == rm) {
             return allCandidates;
         }
-        var level = Minecraft.getInstance().level;
+        allCandidates = new ArrayList<>();
+        cachedRecipeManager = rm;
         Set<String> ids = new HashSet<>();
         if (level != null) {
             var access = level.registryAccess();
@@ -68,7 +72,7 @@ public class ConstructSelectScreen extends AbstractRowListScreen<String> {
                 // 个别特殊配方异常不阻塞整个界面
             }
         }
-        allCandidates = new ArrayList<>(ids);
+        allCandidates.addAll(ids);
         allCandidates.sort(String::compareTo);
         return allCandidates;
     }
@@ -83,7 +87,8 @@ public class ConstructSelectScreen extends AbstractRowListScreen<String> {
             filter = s == null ? "" : s.trim().toLowerCase(Locale.ROOT);
             rebuildRows();
         });
-        addRenderableWidget(searchBox);
+        // 仅注册为事件监听（不自动渲染），渲染由本类 render 显式完成，避免双重绘制
+        addWidget(searchBox);
     }
 
     /** 依据搜索词重建可见行（rows 为基类持有的可变列表） */
@@ -156,8 +161,10 @@ public class ConstructSelectScreen extends AbstractRowListScreen<String> {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (searchBox != null) {
+        // 点击落在搜索框内：交给搜索框（进入输入态），不再下传列表
+        if (searchBox != null && searchBox.isMouseOver(mouseX, mouseY)) {
             searchBox.mouseClicked(mouseX, mouseY, button);
+            return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }
