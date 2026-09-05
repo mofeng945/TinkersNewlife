@@ -336,17 +336,29 @@ public final class ModularStaffGoety {
                 }
             } catch (Throwable ignored) {
             }
-            // 诡厄施法读取"手持物品"：临时把真魔杖放入主手再触发 use（蓄力/灵魂/冷却全走本体），
-            // 松手或蓄力结束后由 tick 恢复原主手（原魔杖）。
+            // 诡厄施法读取"手持物品"且需要原版"正在使用"状态才能蓄力/引导：
+            // 把真魔杖换入主手，走 ServerPlayerGameMode.useItem 完整右键管线（会 startUsingItem，
+            // 长吟唱可持续引导），松手/结束后由 tick 恢复原魔杖。
             ItemStack original = player.getMainHandItem();
             player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, wandStack);
             CASTING_ORIGINAL.put(player.getUUID(), original);
-            var result = wandItem.use(player.level(), player, net.minecraft.world.InteractionHand.MAIN_HAND);
-            if (result.getResult().shouldSwing() || result.getResult().consumesAction()) {
-                // 进入蓄力/即时施放：保持真魔杖在手，等释放/结束再换回
-            } else {
-                // 未开始施法（如冷却/灵魂不足）：立即换回
+            try {
+                net.minecraft.world.InteractionResult r =
+                        player.gameMode.useItem(player, player.level(), wandStack,
+                                net.minecraft.world.InteractionHand.MAIN_HAND);
+                if (!r.consumesAction() && !r.shouldSwing()) {
+                    // 未开始施法（冷却/灵魂不足等）：立即换回
+                    restoreHand(player);
+                }
+            } catch (Throwable t2) {
+                // 个别版本 gameMode.useItem 签名差异兜底：直接调 item.use
                 restoreHand(player);
+                player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, wandStack);
+                CASTING_ORIGINAL.put(player.getUUID(), original);
+                var result = wandItem.use(player.level(), player, net.minecraft.world.InteractionHand.MAIN_HAND);
+                if (!result.getResult().consumesAction() && !result.getResult().shouldSwing()) {
+                    restoreHand(player);
+                }
             }
         } catch (Throwable t) {
             restoreHand(player);
