@@ -43,10 +43,16 @@ public final class ModularStaffGoety {
 
     private static final net.minecraft.resources.ResourceLocation KEY_MODE =
             new net.minecraft.resources.ResourceLocation(TinkersNewlife.MOD_ID, "staff_mode");
-    private static final net.minecraft.resources.ResourceLocation KEY_FOCI =
-            new net.minecraft.resources.ResourceLocation(TinkersNewlife.MOD_ID, "staff_foci");
     private static final net.minecraft.resources.ResourceLocation KEY_IDX =
             new net.minecraft.resources.ResourceLocation(TinkersNewlife.MOD_ID, "staff_focus_idx");
+    /** 每槽独立键（与已验证的 ToolDataNBT 单值存储一致，避免列表复合写入丢失） */
+    private static final net.minecraft.resources.ResourceLocation[] KEY_SLOTS = new net.minecraft.resources.ResourceLocation[POUCH_SLOTS];
+
+    static {
+        for (int i = 0; i < POUCH_SLOTS; i++) {
+            KEY_SLOTS[i] = new net.minecraft.resources.ResourceLocation(TinkersNewlife.MOD_ID, "staff_focus_" + i);
+        }
+    }
 
     private ModularStaffGoety() {}
 
@@ -72,17 +78,12 @@ public final class ModularStaffGoety {
     public static List<ItemStack> getFoci(ItemStack stack) {
         List<ItemStack> list = new ArrayList<>();
         ToolStack t = tool(stack);
-        if (t != null && t.getPersistentData().contains(KEY_FOCI)) {
-            CompoundTag box = t.getPersistentData().getCompound(KEY_FOCI);
-            if (box.contains("items", Tag.TAG_LIST)) {
-                ListTag tag = box.getList("items", Tag.TAG_COMPOUND);
-                for (int i = 0; i < tag.size() && i < POUCH_SLOTS; i++) {
-                    list.add(ItemStack.of(tag.getCompound(i)));
-                }
+        for (int i = 0; i < POUCH_SLOTS; i++) {
+            ItemStack slot = ItemStack.EMPTY;
+            if (t != null && t.getPersistentData().contains(KEY_SLOTS[i])) {
+                slot = ItemStack.of(t.getPersistentData().getCompound(KEY_SLOTS[i]));
             }
-        }
-        while (list.size() < POUCH_SLOTS) {
-            list.add(ItemStack.EMPTY);
+            list.add(slot);
         }
         return list;
     }
@@ -90,13 +91,11 @@ public final class ModularStaffGoety {
     private static void saveFoci(ItemStack stack, List<ItemStack> foci) {
         ToolStack t = tool(stack);
         if (t == null) return;
-        ListTag tag = new ListTag();
-        for (ItemStack s : foci) {
-            tag.add(s.save(new CompoundTag()));
+        for (int i = 0; i < POUCH_SLOTS && i < foci.size(); i++) {
+            ItemStack s = foci.get(i);
+            // 空槽也写空 compound（占位），读取时 contains 判定即可
+            t.getPersistentData().put(KEY_SLOTS[i], s.isEmpty() ? new CompoundTag() : s.save(new CompoundTag()));
         }
-        CompoundTag box = new CompoundTag();
-        box.put("items", tag);
-        t.getPersistentData().put(KEY_FOCI, box);
         t.updateStack(stack);
     }
 
