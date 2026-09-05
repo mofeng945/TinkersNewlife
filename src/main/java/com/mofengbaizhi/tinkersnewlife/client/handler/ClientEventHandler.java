@@ -293,5 +293,51 @@ public class ClientEventHandler {
             }
             // ✅ 术式按键已移至 onClientTick（按下/松开边沿检测，支撑蓄力术式）
         }
+
+        /** 帧渲染前校正：巫法模式手持魔杖时，强制关闭铁魔法的法术切换轮盘（R 键冲突）。
+         *  铁魔法在 ClientTickEvent 里对 R 无条件 SpellWheelOverlay.open()，无法在源头拦截，
+         *  改为渲染前兜底 close——轮盘一帧都显示不出来，也不抢鼠标。 */
+        @SubscribeEvent
+        public static void onRenderTick(TickEvent.RenderTickEvent event) {
+            if (event.phase != TickEvent.Phase.START) return;
+            LocalPlayer player = Minecraft.getInstance().player;
+            if (player == null) return;
+            if (!holdingGoetyStaff(player)) return;
+            closeIronSpellWheel();
+        }
+
+        private static boolean holdingGoetyStaff(LocalPlayer player) {
+            ItemStack main = player.getMainHandItem();
+            ItemStack off = player.getOffhandItem();
+            boolean has = main.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.ModularStaffItem
+                    || off.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.ModularStaffItem;
+            if (!has) return false;
+            ItemStack staff = main.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.ModularStaffItem
+                    ? main : off;
+            return com.mofengbaizhi.tinkersnewlife.content.goety.ModularStaffGoety.getMode(staff)
+                    == com.mofengbaizhi.tinkersnewlife.content.goety.ModularStaffGoety.MODE_GOETY;
+        }
+
+        /** 反射关闭铁魔法法术轮盘（不引入编译依赖；找不到类/字段则静默） */
+        private static java.lang.Class<?> ironWheelClass;
+        private static java.lang.reflect.Field ironWheelInstance;
+        private static java.lang.reflect.Field ironWheelActive;
+        private static java.lang.reflect.Method ironWheelClose;
+
+        private static void closeIronSpellWheel() {
+            try {
+                if (ironWheelClass == null) {
+                    ironWheelClass = Class.forName("io.redspace.ironsspellbooks.gui.overlays.SpellWheelOverlay");
+                    ironWheelInstance = ironWheelClass.getField("instance");
+                    ironWheelActive = ironWheelClass.getField("active");
+                    ironWheelClose = ironWheelClass.getMethod("close");
+                }
+                Object inst = ironWheelInstance.get(null);
+                if (inst == null) return;
+                if (!ironWheelActive.getBoolean(inst)) return;
+                ironWheelClose.invoke(inst);
+            } catch (Throwable ignored) {
+            }
+        }
     }
 }
