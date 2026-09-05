@@ -70,8 +70,8 @@ public class ShikigamiPig extends net.minecraft.world.entity.animal.Pig implemen
 
     @Override
     public net.minecraft.world.entity.EntityDimensions getDimensions(Pose pose) {
-        float s = (float) state.scale;
-        return net.minecraft.world.entity.EntityDimensions.fixed(0.9F * s, 0.9F * s);
+        // 保持原版猪尺寸（双端一致）
+        return net.minecraft.world.entity.EntityDimensions.fixed(0.9F, 0.9F);
     }
 
     @Override

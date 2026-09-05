@@ -36,14 +36,11 @@ public class ShikigamiIronGolemRenderer extends IronGolemRenderer {
     @Override
     public void render(IronGolem entity, float entityYaw, float partialTick,
                        PoseStack poseStack, MultiBufferSource buffer, int light) {
-        float s = entity instanceof ShikigamiIronGolem golem ? golem.getShikigamiScale() : 1.0F;
-        // 整体按体型缩放（主体模型 + 附件一起），使视觉尺寸与碰撞箱一致：
-        // 不缩放主体只放大附件时，模型小、AABB 大 → 其他生物瞄准主体上方（音波炮/箭矢全打头顶天空）
-        poseStack.pushPose();
-        poseStack.scale(s, s, s);
+        // 主体保持原版铁傀儡大小（与碰撞箱一致；双端不再做体型放大，
+        // 否则客户端模型/服务端 AABB 错位导致怪物攻击全打头顶上空）
         super.render(entity, entityYaw, partialTick, poseStack, buffer, light);
-        if (entity instanceof ShikigamiIronGolem golem && golem.getShikigamiScale() > 0) {
-            // 头顶法轮：持续绕 Y 轴旋转（坐标基于未缩放模型，整体已 scale）
+        if (entity instanceof ShikigamiIronGolem) {
+            // 头顶法轮：持续绕 Y 轴旋转（固定贴于原版铁傀儡头顶）
             float age = entity.tickCount + partialTick;
             poseStack.pushPose();
             poseStack.translate(0.0F, 2.9F, 0.0F);
@@ -59,7 +56,6 @@ public class ShikigamiIronGolemRenderer extends IronGolemRenderer {
             sword.render(poseStack, svc, light, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
             poseStack.popPose();
         }
-        poseStack.popPose();
     }
 
     /** 头顶法轮：圆盘 + 十字辐条（半径 0.5 格） */

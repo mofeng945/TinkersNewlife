@@ -70,8 +70,8 @@ public class ShikigamiSilverfish extends net.minecraft.world.entity.monster.Silv
 
     @Override
     public net.minecraft.world.entity.EntityDimensions getDimensions(Pose pose) {
-        float s = (float) state.scale;
-        return net.minecraft.world.entity.EntityDimensions.fixed(0.4F * s, 0.3F * s);
+        // 保持原版蠹虫尺寸（双端一致）
+        return net.minecraft.world.entity.EntityDimensions.fixed(0.4F, 0.3F);
     }
 
     @Override

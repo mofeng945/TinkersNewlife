@@ -70,8 +70,8 @@ public class ShikigamiRabbit extends net.minecraft.world.entity.animal.Rabbit im
 
     @Override
     public net.minecraft.world.entity.EntityDimensions getDimensions(Pose pose) {
-        float s = (float) state.scale;
-        return net.minecraft.world.entity.EntityDimensions.fixed(0.4F * s, 0.5F * s);
+        // 保持原版兔子尺寸（双端一致）
+        return net.minecraft.world.entity.EntityDimensions.fixed(0.4F, 0.5F);
     }
 
     @Override

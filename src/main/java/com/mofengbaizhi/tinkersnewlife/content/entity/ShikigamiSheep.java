@@ -77,8 +77,8 @@ public class ShikigamiSheep extends net.minecraft.world.entity.animal.Sheep impl
 
     @Override
     public net.minecraft.world.entity.EntityDimensions getDimensions(Pose pose) {
-        float s = (float) state.scale;
-        return net.minecraft.world.entity.EntityDimensions.fixed(0.9F * s, 1.3F * s);
+        // 保持原版羊尺寸（双端一致）
+        return net.minecraft.world.entity.EntityDimensions.fixed(0.9F, 1.3F);
     }
 
     /** 怒角：橙色羊毛（原版 SheepRenderer 的羊毛层按 getColor 染色） */

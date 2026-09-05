@@ -71,8 +71,8 @@ public class ShikigamiWolf extends Wolf implements ShikigamiMob {
 
     @Override
     public net.minecraft.world.entity.EntityDimensions getDimensions(Pose pose) {
-        float s = (float) state.scale;
-        return net.minecraft.world.entity.EntityDimensions.fixed(0.6F * s, 0.85F * s);
+        // 保持原版狼尺寸（双端一致：渲染模型与碰撞箱均为原版大小）
+        return net.minecraft.world.entity.EntityDimensions.fixed(0.6F, 0.85F);
     }
 
     @Override

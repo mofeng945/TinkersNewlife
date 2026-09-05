@@ -120,8 +120,8 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
 
     @Override
     public net.minecraft.world.entity.EntityDimensions getDimensions(Pose pose) {
-        float s = (float) state.scale;
-        return net.minecraft.world.entity.EntityDimensions.fixed(0.9F * s, 0.5F * s);
+        // 保持原版幻翼尺寸（双端一致；NUE 骑乘时乘客贴背不悬浮）
+        return net.minecraft.world.entity.EntityDimensions.fixed(0.9F, 0.5F);
     }
 
     /** 鵺是式神不是亡灵：白天不燃烧 */

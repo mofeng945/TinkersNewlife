@@ -70,8 +70,8 @@ public class ShikigamiFrog extends net.minecraft.world.entity.animal.frog.Frog i
 
     @Override
     public net.minecraft.world.entity.EntityDimensions getDimensions(Pose pose) {
-        float s = (float) state.scale;
-        return net.minecraft.world.entity.EntityDimensions.fixed(0.5F * s, 0.5F * s);
+        // 保持原版青蛙尺寸（双端一致）
+        return net.minecraft.world.entity.EntityDimensions.fixed(0.5F, 0.5F);
     }
 
     @Override

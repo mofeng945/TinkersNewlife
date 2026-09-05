@@ -70,8 +70,8 @@ public class ShikigamiGoat extends net.minecraft.world.entity.animal.goat.Goat i
 
     @Override
     public net.minecraft.world.entity.EntityDimensions getDimensions(Pose pose) {
-        float s = (float) state.scale;
-        return net.minecraft.world.entity.EntityDimensions.fixed(0.9F * s, 1.3F * s);
+        // 保持原版山羊尺寸（双端一致）
+        return net.minecraft.world.entity.EntityDimensions.fixed(0.9F, 1.3F);
     }
 
     @Override
