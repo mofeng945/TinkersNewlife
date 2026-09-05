@@ -76,6 +76,10 @@ public final class ConstructTechnique extends BaseTechnique {
     /** 已放置在地上的拟造方块（到期自动消失）；服务端主线程访问 */
     private static final List<PlacedTempBlock> PLACED_TEMPS = new ArrayList<>();
 
+    /** 掉落地上的拟造物实体（到期自动消散）；服务端 tick 线程访问 */
+    private static final Set<net.minecraft.world.entity.item.ItemEntity> TRACKED_TEMP_ITEMS =
+            java.util.Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
+
     private ConstructTechnique() {
         super(Modifiers.CONSTRUCT.getId());
     }
@@ -708,7 +712,7 @@ public final class ConstructTechnique extends BaseTechnique {
     //  临时物到期清理
     // ============================================================
 
-    /** 扫描玩家全部物品栏（含盔甲/副手），移除到期的拟造物 */
+    /** 扫描玩家背包与当前打开的容器菜单中的拟造物，移除到期的（防放容器躲避清理） */
     private static void sweepTemps(ServerPlayer player, long now) {
         boolean removed = false;
         net.minecraft.world.entity.player.Inventory inv = player.getInventory();
@@ -719,6 +723,19 @@ public final class ConstructTechnique extends BaseTechnique {
             if (until > 0 && until <= now) {
                 inv.setItem(i, ItemStack.EMPTY);
                 removed = true;
+            }
+        }
+        // 玩家正打开的容器（箱子等）中如果有过期的拟造物，一并清除
+        if (player.containerMenu != null) {
+            for (net.minecraft.world.inventory.Slot slot : player.containerMenu.slots) {
+                if (slot.container == inv) continue; // 跳过玩家背包槽（上面已清）
+                ItemStack stack = slot.getItem();
+                if (stack.isEmpty() || !stack.hasTag()) continue;
+                long until = stack.getTag().getLong(KEY_TEMP_UNTIL);
+                if (until > 0 && until <= now) {
+                    slot.set(ItemStack.EMPTY);
+                    removed = true;
+                }
             }
         }
         if (removed) {
@@ -746,12 +763,14 @@ public final class ConstructTechnique extends BaseTechnique {
             long until = stack.getTag().getLong(KEY_TEMP_UNTIL);
             if (until <= 0) return;
             long now = event.getLevel().getGameTime();
-            long left = until - now;
-            if (left <= 0) {
+            if (until <= now) {
+                // 已经过期：不让它进入世界
                 event.setCanceled(true);
-            } else {
-                item.lifespan = (int) Math.min(left + 20, ITEM_ENTITY_LIFESPAN_CAP);
+                return;
             }
+            // 加入跟踪集：服务端每 tick 精确按 gameTime 到期移除（不依赖实体 tick/lifespan）
+            item.lifespan = (int) Math.min(until - now + 20, ITEM_ENTITY_LIFESPAN_CAP);
+            TRACKED_TEMP_ITEMS.add(item);
         }
 
         /** 拟造中受击 → 打断拟造（咒力已扣，不返还） */
@@ -780,10 +799,35 @@ public final class ConstructTechnique extends BaseTechnique {
             PLACED_TEMPS.add(new PlacedTempBlock(level, event.getPos(), event.getPlacedBlock(), until));
         }
 
-        /** 服务端每 tick：拟造方块到期移除 */
+        /** 服务端每 tick：到期拟造物实体消散 + 拟造方块移除 */
         @net.minecraftforge.eventbus.api.SubscribeEvent
         public static void onServerTick(net.minecraftforge.event.TickEvent.ServerTickEvent event) {
             if (event.phase != net.minecraftforge.event.TickEvent.Phase.END) return;
+            // 掉落地上的拟造物实体：按各自世界的 gameTime 到期消散
+            if (!TRACKED_TEMP_ITEMS.isEmpty()) {
+                Iterator<net.minecraft.world.entity.item.ItemEntity> eit = TRACKED_TEMP_ITEMS.iterator();
+                while (eit.hasNext()) {
+                    net.minecraft.world.entity.item.ItemEntity item = eit.next();
+                    if (item == null || item.isRemoved() || !item.isAlive()) {
+                        eit.remove();
+                        continue;
+                    }
+                    var itemLevel = item.level();
+                    if (itemLevel.isClientSide || !(itemLevel instanceof ServerLevel slevel)) {
+                        eit.remove();
+                        continue;
+                    }
+                    ItemStack stack = item.getItem();
+                    long until = stack.hasTag() ? stack.getTag().getLong(KEY_TEMP_UNTIL) : 0;
+                    if (until <= 0 || until <= slevel.getGameTime()) {
+                        // 到期（或标记丢失）→ 让物品实体消散
+                        slevel.sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE,
+                                item.getX(), item.getY() + 0.3, item.getZ(), 6, 0.2, 0.2, 0.2, 0.02);
+                        item.discard();
+                        eit.remove();
+                    }
+                }
+            }
             if (PLACED_TEMPS.isEmpty()) return;
             Iterator<PlacedTempBlock> it = PLACED_TEMPS.iterator();
             while (it.hasNext()) {
