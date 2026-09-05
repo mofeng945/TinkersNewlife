@@ -5,7 +5,9 @@ import com.Polarice3.Goety.api.magic.SpellType;
 import com.Polarice3.Goety.common.items.handler.SoulUsingItemHandler;
 import com.Polarice3.Goety.common.items.magic.DarkWand;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import com.mofengbaizhi.tinkersnewlife.content.Modifiers;
 import com.mofengbaizhi.tinkersnewlife.content.goety.ModularStaffGoety;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
@@ -23,6 +25,8 @@ import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
 import slimeknights.tconstruct.library.tools.capability.ToolCapabilityProvider;
+import slimeknights.tconstruct.library.tools.nbt.ToolStack;
+import slimeknights.tconstruct.library.tools.stat.ToolStats;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -210,6 +214,100 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
     }
 
     // ================= 能力：匠魂工具能力 + 诡厄聚晶槽 =================
+
+    // ════════════════ 魔杖施法增益（吃魔杖特性/攻击力） ════════════════
+    // 诡厄法术强度走玩家 Spell 属性（WandUtil.getStats → ModAttributes.getPotency/Range/…，
+    // 反编译实证：SoulBolt 等伤害 = stats.getPotency() + 聚晶附魔加成）。
+    // 巫法模式下把法杖匠魂攻击力换算成 Spell 属性附魔加到持有者身上 → 全部诡厄法术吃到法杖强度。
+    // ⭐ 换算系数 v1 试平衡：改这里即可整体调
+    private static final float POTENCY_PER_DMG = 0.25f;    // 每点法杖攻击 → 威力
+    private static final float RANGE_PER_DMG = 0.125f;     // → 范围
+    private static final float DURATION_PER_DMG = 0.083f;  // → 持续时间
+    private static final float RADIUS_PER_DMG = 0.025f;    // → 半径
+    private static final float BURNING_PER_DMG = 0.167f;   // → 灼烧
+    private static final float VELOCITY_PER_DMG = 0.0125f; // → 弹速
+
+    private static final java.util.UUID UID_POTENCY =
+            java.util.UUID.nameUUIDFromBytes("tnl.staff.goety.potency".getBytes());
+    private static final java.util.UUID UID_RANGE =
+            java.util.UUID.nameUUIDFromBytes("tnl.staff.goety.range".getBytes());
+    private static final java.util.UUID UID_DURATION =
+            java.util.UUID.nameUUIDFromBytes("tnl.staff.goety.duration".getBytes());
+    private static final java.util.UUID UID_RADIUS =
+            java.util.UUID.nameUUIDFromBytes("tnl.staff.goety.radius".getBytes());
+    private static final java.util.UUID UID_BURNING =
+            java.util.UUID.nameUUIDFromBytes("tnl.staff.goety.burning".getBytes());
+    private static final java.util.UUID UID_VELOCITY =
+            java.util.UUID.nameUUIDFromBytes("tnl.staff.goety.velocity".getBytes());
+
+    /** 巫法模式下，为手持魔杖补发诡厄 Spell 属性修饰符（威力/范围/持续/半径/灼烧/弹速） */
+    @Override
+    public com.google.common.collect.Multimap<net.minecraft.world.entity.ai.attributes.Attribute,
+            net.minecraft.world.entity.ai.attributes.AttributeModifier> getAttributeModifiers(
+            net.minecraft.world.entity.EquipmentSlot slot, ItemStack stack) {
+        com.google.common.collect.Multimap<net.minecraft.world.entity.ai.attributes.Attribute,
+                net.minecraft.world.entity.ai.attributes.AttributeModifier> map =
+                super.getAttributeModifiers(slot, stack);
+        if (slot.getType() != net.minecraft.world.entity.EquipmentSlot.Type.HAND) return map;
+        if (!inGoetyMode(stack)) return map;
+        ToolStack tool = ToolHelper.getToolStack(stack);
+        if (tool == null || tool.getModifierLevel(Modifiers.MODULAR_STAFF_MODIFIER.getId()) <= 0) return map;
+
+        float dmg = tool.getStats().get(ToolStats.ATTACK_DAMAGE);
+        int potency = clamp(Math.round(dmg * POTENCY_PER_DMG), 1, 15);
+        int range = clamp(Math.round(dmg * RANGE_PER_DMG), 0, 8);
+        int duration = clamp(Math.round(dmg * DURATION_PER_DMG), 0, 6);
+        double radius = clamp((double) (dmg * RADIUS_PER_DMG), 0.0, 2.0);
+        int burning = clamp(Math.round(dmg * BURNING_PER_DMG), 0, 8);
+        float velocity = (float) clamp((double) (dmg * VELOCITY_PER_DMG), 0.0, 0.8);
+
+        try {
+            com.google.common.collect.Multimap<net.minecraft.world.entity.ai.attributes.Attribute,
+                    net.minecraft.world.entity.ai.attributes.AttributeModifier> out =
+                    com.google.common.collect.ArrayListMultimap.create(map);
+            // 通用威力 + 九大流派威力：getPotency 优先读匹配流派的专用属性，全部补上才不落空
+            addAttr(out, com.Polarice3.Goety.init.ModAttributes.SPELL_POTENCY.get(), potency, UID_POTENCY);
+            for (net.minecraftforge.registries.RegistryObject<net.minecraft.world.entity.ai.attributes.Attribute> ro :
+                    new net.minecraftforge.registries.RegistryObject[]{
+                            com.Polarice3.Goety.init.ModAttributes.ABYSS_POTENCY,
+                            com.Polarice3.Goety.init.ModAttributes.FROST_POTENCY,
+                            com.Polarice3.Goety.init.ModAttributes.GEOMANCY_POTENCY,
+                            com.Polarice3.Goety.init.ModAttributes.NECROMANCY_POTENCY,
+                            com.Polarice3.Goety.init.ModAttributes.NETHER_POTENCY,
+                            com.Polarice3.Goety.init.ModAttributes.STORM_POTENCY,
+                            com.Polarice3.Goety.init.ModAttributes.VOID_POTENCY,
+                            com.Polarice3.Goety.init.ModAttributes.WILD_POTENCY,
+                            com.Polarice3.Goety.init.ModAttributes.WIND_POTENCY}) {
+                if (ro.isPresent()) addAttr(out, ro.get(), potency, UID_POTENCY);
+            }
+            addAttr(out, com.Polarice3.Goety.init.ModAttributes.SPELL_RANGE.get(), range, UID_RANGE);
+            addAttr(out, com.Polarice3.Goety.init.ModAttributes.SPELL_DURATION.get(), duration, UID_DURATION);
+            addAttr(out, com.Polarice3.Goety.init.ModAttributes.SPELL_RADIUS.get(), radius, UID_RADIUS);
+            addAttr(out, com.Polarice3.Goety.init.ModAttributes.SPELL_BURNING.get(), burning, UID_BURNING);
+            addAttr(out, com.Polarice3.Goety.init.ModAttributes.SPELL_VELOCITY.get(), velocity, UID_VELOCITY);
+            return out;
+        } catch (Throwable t) {
+            // 个别属性缺失时降级：返回原匠魂属性，不让手持属性崩掉
+            return map;
+        }
+    }
+
+    private static void addAttr(com.google.common.collect.Multimap<net.minecraft.world.entity.ai.attributes.Attribute,
+            net.minecraft.world.entity.ai.attributes.AttributeModifier> out,
+            net.minecraft.world.entity.ai.attributes.Attribute attr, double value,
+            java.util.UUID uid) {
+        out.put(attr, new net.minecraft.world.entity.ai.attributes.AttributeModifier(uid,
+                "tnl_staff_goety_" + attr.getDescriptionId(), value,
+                net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADDITION));
+    }
+
+    private static int clamp(int v, int min, int max) {
+        return Math.max(min, Math.min(max, v));
+    }
+
+    private static double clamp(double v, double min, double max) {
+        return Math.max(min, Math.min(max, v));
+    }
 
     /**
      * 匠魂 {@code ModifiableItem} 覆写了 initCapabilities（返回 ToolCapabilityProvider），
