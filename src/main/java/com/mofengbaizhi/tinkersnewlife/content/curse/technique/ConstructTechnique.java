@@ -874,6 +874,8 @@ public final class ConstructTechnique extends BaseTechnique {
                 BlockState current = level.getBlockState(p.pos);
                 if (current.getBlock() == p.state.getBlock()) {
                     level.levelEvent(2001, p.pos, net.minecraft.world.level.block.Block.getId(current));
+                    // ⭐ 若方块是容器（箱子/潜影盒等），先把内部物品弹出，避免被直接移除吞掉
+                    ejectContainerContents(level, p.pos);
                     level.setBlock(p.pos, Blocks.AIR.defaultBlockState(), 3);
                     level.sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE,
                             p.pos.getX() + 0.5, p.pos.getY() + 0.5, p.pos.getZ() + 0.5, 10,
@@ -881,6 +883,44 @@ public final class ConstructTechnique extends BaseTechnique {
                 }
                 it.remove();
             }
+        }
+
+        /**
+         * 方块到期消失前，把其容器内容弹出到世界中（掉落物/拟造物掉地同样会到期消散）。
+         * 兼容原版 {@link net.minecraft.world.Container} 与 Forge ITEM_HANDLER capability。
+         */
+        private static void ejectContainerContents(ServerLevel level, BlockPos pos) {
+            net.minecraft.world.level.block.entity.BlockEntity be = level.getBlockEntity(pos);
+            if (be == null) return;
+            // 原版容器（箱子/潜影盒/漏斗等）
+            if (be instanceof net.minecraft.world.Container container) {
+                for (int i = 0; i < container.getContainerSize(); i++) {
+                    ItemStack s = container.getItem(i);
+                    if (s.isEmpty()) continue;
+                    container.setItem(i, ItemStack.EMPTY);
+                    spawnItemAt(level, pos, s);
+                }
+                return;
+            }
+            // Forge ITEM_HANDLER capability（模组机器/背包类方块）
+            var cap = be.getCapability(net.minecraftforge.common.capabilities.ForgeCapabilities.ITEM_HANDLER, null);
+            if (cap.isPresent()) {
+                cap.ifPresent(handler -> {
+                    for (int i = 0; i < handler.getSlots(); i++) {
+                        ItemStack s = handler.extractItem(i, handler.getSlotLimit(i), false);
+                        if (!s.isEmpty()) {
+                            spawnItemAt(level, pos, s);
+                        }
+                    }
+                });
+            }
+        }
+
+        private static void spawnItemAt(ServerLevel level, BlockPos pos, ItemStack stack) {
+            net.minecraft.world.entity.item.ItemEntity drop = new net.minecraft.world.entity.item.ItemEntity(
+                    level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, stack);
+            drop.setPickUpDelay(10);
+            level.addFreshEntity(drop);
         }
     }
 
