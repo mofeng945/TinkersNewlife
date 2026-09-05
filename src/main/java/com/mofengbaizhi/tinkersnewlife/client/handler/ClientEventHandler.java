@@ -151,7 +151,7 @@ public class ClientEventHandler {
         private static boolean lastTechniqueDown = false;
         /** 术式反转按键上一次状态（F 键边沿检测） */
         private static boolean lastReverseDown = false;
-        /** 魔杖巫法自动连招：长按右键 5s(100tick) 开启；连招中无需按住，再按真实右键解除 */
+        /** 魔杖巫法自动连招：长按右键 1s(20tick) 开启；连招中无需按住，再按真实右键解除 */
         private static int staffComboTicks = 0;
         private static boolean staffComboOn = false;
         private static boolean lastRealUseDown = false;
@@ -212,21 +212,20 @@ public class ClientEventHandler {
             }
             lastReverseDown = reverseDown;
 
-            // ⭐ 魔杖巫法：长按右键 5s 开启自动连招（开关式，连招中无需按住，模拟按住驱动原版连点/引导）
+            // ⭐ 魔杖巫法：长按右键 1s 开启自动连招（开关式，连招中无需按住，模拟按住驱动原版连点/引导）
             tickStaffAutoCast(player);
         }
 
-        /** 连招开启长按阈值：5s = 100 tick；持续型引导 3s = 60 tick 后客户端主动释放切下一个 */
-        private static final int COMBO_ENABLE_TICKS = 100;
+        /** 连招开启长按阈值：1s = 20 tick；持续型引导 3s = 60 tick 后客户端主动释放切下一个 */
+        private static final int COMBO_ENABLE_TICKS = 20;
         private static final int SUSTAIN_RELEASE_ELAPSED = 60;
         private static final int SUSTAIN_DURATION_THRESHOLD = 600;
 
         private static void tickStaffAutoCast(LocalPlayer player) {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
             boolean goetyHeld = holdingGoetyStaff(player);
-            // 真实右键（硬件键）状态：不受我们 setDown 伪装影响
-            boolean realDown = com.mojang.blaze3d.platform.InputConstants.isKeyDown(
-                    mc.getWindow().getWindow(), mc.options.keyUse.getKey().getValue());
+            // 真实右键（硬件键）状态：不受我们 setDown 伪装影响；鼠标键必须走 glfwGetMouseButton
+            boolean realDown = realKeyDown(mc, mc.options.keyUse);
 
             if (staffComboOn) {
                 // —— 连招中 ——
@@ -250,7 +249,7 @@ public class ClientEventHandler {
                 }
                 lastRealUseDown = realDown;
             } else {
-                // —— 未连招：长按真实右键满 5s 开启 ——
+                // —— 未连招：长按真实右键满 1s 开启 ——
                 if (goetyHeld && realDown && mc.screen == null && !player.isDeadOrDying()) {
                     staffComboTicks++;
                     if (staffComboTicks >= COMBO_ENABLE_TICKS) {
@@ -264,6 +263,23 @@ public class ClientEventHandler {
                     staffComboTicks = 0;
                 }
                 lastRealUseDown = realDown;
+            }
+        }
+
+        /** 读取按键的真实硬件状态（键盘走 glfwGetKey、鼠标走 glfwGetMouseButton） */
+        private static boolean realKeyDown(net.minecraft.client.Minecraft mc,
+                                           net.minecraft.client.KeyMapping mapping) {
+            try {
+                com.mojang.blaze3d.platform.InputConstants.Key key = mapping.getKey();
+                long win = mc.getWindow().getWindow();
+                if (key.getType() == com.mojang.blaze3d.platform.InputConstants.Type.MOUSE) {
+                    return org.lwjgl.glfw.GLFW.glfwGetMouseButton(win, key.getValue())
+                            == org.lwjgl.glfw.GLFW.GLFW_PRESS;
+                }
+                return org.lwjgl.glfw.GLFW.glfwGetKey(win, key.getValue())
+                        == org.lwjgl.glfw.GLFW.GLFW_PRESS;
+            } catch (Throwable t) {
+                return mapping.isDown();
             }
         }
 
