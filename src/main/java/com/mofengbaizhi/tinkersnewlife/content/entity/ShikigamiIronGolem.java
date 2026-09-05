@@ -19,8 +19,20 @@ public class ShikigamiIronGolem extends IronGolem implements ShikigamiMob {
 
     private final ShikigamiState state = new ShikigamiState();
 
+    /** 体型缩放（entityData 同步到客户端：渲染放大与碰撞箱一致，避免服务端 AABB 大、
+     *  客户端模型小导致怪瞄准头顶天空/寻路错乱） */
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Float> SCALE =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(ShikigamiIronGolem.class,
+                    net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
+
     public ShikigamiIronGolem(EntityType<? extends IronGolem> type, Level level) {
         super(type, level);
+    }
+
+    @Override
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(SCALE, 1.0F);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -31,7 +43,7 @@ public class ShikigamiIronGolem extends IronGolem implements ShikigamiMob {
     @Override public ShikigamiType getShikigamiType() { return state.type; }
     @Override public ShikigamiState getState() { return state; }
     @Override public int getShikigamiVariant() { return state.variant; }
-    @Override public float getShikigamiScale() { return (float) state.scale; }
+    @Override public float getShikigamiScale() { return this.entityData.get(SCALE); }
     @Override public boolean isTamed() { return state.tamed; }
     @Override public LivingEntity getLockedTarget() {
         return state.lockedId != null && level() instanceof net.minecraft.server.level.ServerLevel sl
@@ -48,6 +60,8 @@ public class ShikigamiIronGolem extends IronGolem implements ShikigamiMob {
     @Override
     public void initStats(ServerPlayer player, ShikigamiType type, boolean tamed, @Nullable LivingEntity locked, int variant) {
         ShikigamiBehavior.initStats(this, this, player, type, tamed, locked, variant);
+        // 体型同步到客户端（渲染缩放用）
+        this.entityData.set(SCALE, (float) state.scale);
     }
 
     @Override
@@ -83,7 +97,8 @@ public class ShikigamiIronGolem extends IronGolem implements ShikigamiMob {
 
     @Override
     public net.minecraft.world.entity.EntityDimensions getDimensions(Pose pose) {
-        float s = (float) state.scale;
+        // 用同步后的 scale（客户端与服务端一致，渲染/碰撞/AABB 全部对齐）
+        float s = getShikigamiScale();
         return net.minecraft.world.entity.EntityDimensions.fixed(1.4F * s * 0.85F, 2.7F * s * 0.85F);
     }
 

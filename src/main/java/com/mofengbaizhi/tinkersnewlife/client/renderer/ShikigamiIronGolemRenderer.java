@@ -36,27 +36,30 @@ public class ShikigamiIronGolemRenderer extends IronGolemRenderer {
     @Override
     public void render(IronGolem entity, float entityYaw, float partialTick,
                        PoseStack poseStack, MultiBufferSource buffer, int light) {
+        float s = entity instanceof ShikigamiIronGolem golem ? golem.getShikigamiScale() : 1.0F;
+        // 整体按体型缩放（主体模型 + 附件一起），使视觉尺寸与碰撞箱一致：
+        // 不缩放主体只放大附件时，模型小、AABB 大 → 其他生物瞄准主体上方（音波炮/箭矢全打头顶天空）
+        poseStack.pushPose();
+        poseStack.scale(s, s, s);
         super.render(entity, entityYaw, partialTick, poseStack, buffer, light);
         if (entity instanceof ShikigamiIronGolem golem && golem.getShikigamiScale() > 0) {
-            // 头顶法轮：持续绕 Y 轴旋转
+            // 头顶法轮：持续绕 Y 轴旋转（坐标基于未缩放模型，整体已 scale）
             float age = entity.tickCount + partialTick;
-            float s = golem.getShikigamiScale() * 0.85F;
             poseStack.pushPose();
-            poseStack.translate(0.0F, 2.9F * s, 0.0F);
+            poseStack.translate(0.0F, 2.9F, 0.0F);
             poseStack.mulPose(Axis.YP.rotationDegrees(age * 6.0F));
-            poseStack.scale(s, s, s);
             var vc = buffer.getBuffer(RenderType.entityCutout(getTextureLocation(entity)));
             wheel.render(poseStack, vc, light, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
             poseStack.popPose();
             // 右手铁剑（退魔之剑）
             poseStack.pushPose();
-            poseStack.translate(-1.1F * s, 1.55F * s, 0.0F);
+            poseStack.translate(-1.1F, 1.55F, 0.0F);
             poseStack.mulPose(Axis.XP.rotationDegrees(75.0F));
-            poseStack.scale(s, s, s);
             var svc = buffer.getBuffer(RenderType.entityCutout(getTextureLocation(entity)));
             sword.render(poseStack, svc, light, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
             poseStack.popPose();
         }
+        poseStack.popPose();
     }
 
     /** 头顶法轮：圆盘 + 十字辐条（半径 0.5 格） */
