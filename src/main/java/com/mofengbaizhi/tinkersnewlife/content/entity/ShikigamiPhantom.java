@@ -23,11 +23,11 @@ import java.util.UUID;
 /** 鵺：继承原版幻翼（飞行/骑乘），渲染/动画/纹理全复用原版 */
 public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minecraft.world.entity.PlayerRideableJumping {
 
-    /** 骑乘输入（PacketNueInput 每 tick 更新：空格=上升、潜行=下降） */
+    /** 骑乘输入（PacketNueInput 每 tick 更新：空格=上升、潜行=下马） */
     private boolean rideJump;
     private boolean rideShift;
 
-    /** 服务端收到客户端骑乘输入后写入（空格/潜行状态每 tick 刷新，避免原版跳跃命令粘滞） */
+    /** 服务端收到客户端骑乘输入后写入（每 tick 刷新，避免原版跳跃命令粘滞） */
     public void setRideInput(boolean jump, boolean shift) {
         this.rideJump = jump;
         this.rideShift = shift;
@@ -180,7 +180,12 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
         setYRot(player.getYRot());
         yBodyRot = player.getYRot();
         yHeadRot = player.getYRot();
-        // 水平视线（不含俯仰）：W/S 前进后退始终水平，空格上升、潜行下降
+        // 潜行=下马（原版语义）：直接终止骑乘，不再做下降
+        if (rideShift) {
+            player.stopRiding();
+            return;
+        }
+        // 水平视线（不含俯仰）：W/S 前进后退始终水平，空格上升
         Vec3 look = player.getLookAngle();
         Vec3 flat = new Vec3(look.x, 0, look.z);
         if (flat.lengthSqr() < 1e-8) flat = new Vec3(0, 0, 1);
@@ -195,12 +200,9 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
             Vec3 side = new Vec3(flat.z, 0, -flat.x).normalize();
             motion = motion.add(side.scale(player.xxa * speed * 0.6));
         }
-        // 空格上升 / 潜行下降（PacketNueInput 每 tick 刷新，不粘滞）
+        // 空格上升（PacketNueInput 每 tick 刷新，不粘滞）
         if (rideJump) {
             motion = motion.add(0, 0.6, 0);
-        }
-        if (rideShift) {
-            motion = motion.add(0, -0.5, 0);
         }
         setDeltaMovement(motion);
         move(MoverType.SELF, motion);
@@ -217,7 +219,7 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
     }
 
     // ============================================================
-    //  玩家骑乘上升（空格=上升 / 潜行=下降）：不使用原版 PlayerRideableJumping 命令链
+    //  玩家骑乘（空格=上升 / 潜行=下马）：不使用原版 PlayerRideableJumping 命令链
     //  （客户端对非马坐骑只发 START 不发 STOP，会导致跳跃标志粘滞、一直向上飞），
     //  输入改由 PacketNueInput 每 tick 显式上报，见 setRideInput/tickRidden。
     // ============================================================
