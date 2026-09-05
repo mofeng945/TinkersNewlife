@@ -201,10 +201,13 @@ public class ClientEventHandler {
                         left, right, player.getYRot(), player.getXRot()));
             }
             // ⭐ 鵺骑乘：每 tick 上报空格/潜行（原版 PlayerRideableJumping 命令链对非马坐骑只发 START
-            //    不发 STOP，会导致跳跃标志粘滞、骑乘一直向上飞，故改走显式输入包）
+            //    不发 STOP，会导致跳跃标志粘滞、骑乘一直向上飞，故改走显式输入包）。
+            //    同时写入客户端本地实体：原版骑乘移动是客户端预测（客户端 tickRidden 本地推进，
+            //    位置经 ServerboundMoveVehiclePacket 上报、服务端采纳），客户端实体需要同样的输入字段。
             if (player.getVehicle() instanceof com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiPhantom nue
                     && nue.getShikigamiType() == com.mofengbaizhi.tinkersnewlife.content.curse.shikigami.ShikigamiType.NUE) {
                 net.minecraft.client.player.Input input = player.input;
+                nue.setRideInput(input.jumping, input.shiftKeyDown);
                 TinkersNewlife.CHANNEL.sendToServer(new com.mofengbaizhi.tinkersnewlife.network.curse.PacketNueInput(
                         input.jumping, input.shiftKeyDown));
             }

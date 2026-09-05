@@ -42,8 +42,9 @@ public final class PuppetUtil {
             if (boss != null && boss.getUUID().equals(ownerId)) return true;
         }
         if (target instanceof ShikigamiMob shikigami) {
+            // 只有已调伏的式神才算队友；未调伏（调伏战中）是敌人，必须能被主人攻击
             UUID oid = shikigami.getOwnerId();
-            if (oid != null && oid.equals(ownerId)) return true;
+            if (oid != null && oid.equals(ownerId) && shikigami.isTamed()) return true;
         }
         if (target instanceof FlamePhantom flame) {
             ServerPlayer boss = flame.getOwner();

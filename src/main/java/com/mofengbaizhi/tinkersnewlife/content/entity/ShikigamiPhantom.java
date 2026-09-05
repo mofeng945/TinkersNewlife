@@ -174,15 +174,19 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
     protected void tickRidden(Player player, Vec3 movement) {
         super.tickRidden(player, movement);
         if (getShikigamiType() != ShikigamiType.NUE) return;
-        // 服务端权威驱动；客户端位置由实体同步回传，避免双端各自推导致漂移
-        if (level().isClientSide) return;
+        // 原版骑乘移动由"客户端预测"驱动：客户端实体本地执行移动，位置经
+        // ServerboundMoveVehiclePacket 上报，服务端采纳客户端位置（handleMoveVehicle）。
+        // 因此移动逻辑必须双端执行（客户端预测 + 服务端权威一致推进），
+        // 若客户端跳过则客户端实体不动 → 上报原地 → 服务端也不动（无法移动）。
         setNoGravity(true);
         setYRot(player.getYRot());
         yBodyRot = player.getYRot();
         yHeadRot = player.getYRot();
-        // 潜行=下马（原版语义）：直接终止骑乘，不再做下降
+        // 潜行=下马（原版语义）：仅服务端终止骑乘；客户端等待下马同步，不移动
         if (rideShift) {
-            player.stopRiding();
+            if (!level().isClientSide) {
+                player.stopRiding();
+            }
             return;
         }
         // 水平视线（不含俯仰）：W/S 前进后退始终水平，空格上升
@@ -192,15 +196,20 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
         flat = flat.normalize();
         double speed = 0.55 + getAttributeValue(Attributes.MOVEMENT_SPEED) * 1.4;
         Vec3 motion = Vec3.ZERO;
-        if (player.zza != 0) {
-            motion = motion.add(flat.scale(player.zza * speed));
+        // 客户端：LocalPlayer 每 tick 由 input 更新 zza/xxa（并随 ServerboundPlayerInputPacket 上报），
+        // 服务端：ServerPlayer.zza/xxa 由 setPlayerInput 每 tick 同步，两端数值一致
+        float forward = player.zza;
+        float strafe = player.xxa;
+        if (forward != 0) {
+            motion = motion.add(flat.scale(forward * speed));
         }
-        if (player.xxa != 0) {
+        if (strafe != 0) {
             // 左侧向量：水平视线顺时针旋转 90°（A=左移）
             Vec3 side = new Vec3(flat.z, 0, -flat.x).normalize();
-            motion = motion.add(side.scale(player.xxa * speed * 0.6));
+            motion = motion.add(side.scale(strafe * speed * 0.6));
         }
-        // 空格上升（PacketNueInput 每 tick 刷新，不粘滞）
+        // 空格上升（客户端 ClientEventHandler 每 tick 写入本地实体 rideJump，
+        // 服务端由 PacketNueInput 写入，每 tick 刷新不粘滞）
         if (rideJump) {
             motion = motion.add(0, 0.6, 0);
         }
@@ -209,7 +218,7 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
         fallDistance = 0;
     }
 
-    /** 骑乘输入：从玩家读取（原版马式），确保 W/A/S/D 生效 */
+    /** 骑乘输入向量：从玩家读取（原版马式），确保 W/A/S/D 生效 */
     @Override
     protected Vec3 getRiddenInput(Player player, Vec3 movement) {
         if (getShikigamiType() != ShikigamiType.NUE) return super.getRiddenInput(player, movement);
