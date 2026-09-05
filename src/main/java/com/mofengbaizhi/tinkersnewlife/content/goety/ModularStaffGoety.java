@@ -272,6 +272,24 @@ public final class ModularStaffGoety {
 
     // ================= 事件 =================
 
+    /** 蓄力引导期间逐 tick 检测：结束即换回原魔杖 */
+    @SubscribeEvent
+    public static void onPlayerTick(net.minecraftforge.event.TickEvent.PlayerTickEvent event) {
+        if (event.phase != net.minecraftforge.event.TickEvent.Phase.END) return;
+        if (!(event.player instanceof ServerPlayer sp)) return;
+        if (sp.level().isClientSide) return;
+        tickCasting(sp);
+    }
+
+    /** 登出：换回原魔杖，清理引导状态 */
+    @SubscribeEvent
+    public static void onLogout(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof ServerPlayer sp) {
+            restoreHand(sp);
+            CASTING_ORIGINAL.remove(sp.getUUID());
+        }
+    }
+
     @SubscribeEvent
     public static void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
         if (event.getLevel().isClientSide) return;
@@ -292,6 +310,9 @@ public final class ModularStaffGoety {
         }
     }
 
+    private static final java.util.Map<java.util.UUID, ItemStack> CASTING_ORIGINAL =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
     private static void tryCast(ServerPlayer player, ItemStack staff, ItemStack focus) {
         try {
             Class<?> iwand = Class.forName("com.Polarice3.Goety.api.items.magic.IWand");
@@ -307,6 +328,7 @@ public final class ModularStaffGoety {
                 return;
             }
             ItemStack wandStack = new ItemStack(wandItem);
+            // 注入聚晶到真魔杖内嵌槽
             try {
                 Object handler = iwand.getMethod("getItemHandler", ItemStack.class).invoke(null, wandStack);
                 if (handler instanceof net.minecraftforge.items.IItemHandler itemHandler) {
@@ -314,10 +336,36 @@ public final class ModularStaffGoety {
                 }
             } catch (Throwable ignored) {
             }
-            wandItem.use(player.level(), player, net.minecraft.world.InteractionHand.MAIN_HAND);
+            // 诡厄施法读取"手持物品"：临时把真魔杖放入主手再触发 use（蓄力/灵魂/冷却全走本体），
+            // 松手或蓄力结束后由 tick 恢复原主手（原魔杖）。
+            ItemStack original = player.getMainHandItem();
+            player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, wandStack);
+            CASTING_ORIGINAL.put(player.getUUID(), original);
+            var result = wandItem.use(player.level(), player, net.minecraft.world.InteractionHand.MAIN_HAND);
+            if (result.getResult().shouldSwing() || result.getResult().consumesAction()) {
+                // 进入蓄力/即时施放：保持真魔杖在手，等释放/结束再换回
+            } else {
+                // 未开始施法（如冷却/灵魂不足）：立即换回
+                restoreHand(player);
+            }
         } catch (Throwable t) {
+            restoreHand(player);
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.staff.cast_failed"), true);
             TinkersNewlife.LOGGER.warn("[魔杖·巫法] 施法桥接失败：", t);
+        }
+    }
+
+    /** 蓄力结束/玩家不再使用物品时，把原魔杖换回主手 */
+    public static void tickCasting(ServerPlayer player) {
+        if (!CASTING_ORIGINAL.containsKey(player.getUUID())) return;
+        if (player.isUsingItem()) return; // 仍在蓄力/引导
+        restoreHand(player);
+    }
+
+    private static void restoreHand(ServerPlayer player) {
+        ItemStack original = CASTING_ORIGINAL.remove(player.getUUID());
+        if (original != null && !original.isEmpty()) {
+            player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, original);
         }
     }
 
