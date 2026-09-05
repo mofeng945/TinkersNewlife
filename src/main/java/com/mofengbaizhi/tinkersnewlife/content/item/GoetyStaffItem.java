@@ -34,13 +34,19 @@ import javax.annotation.Nullable;
  * <p>实现 {@link IWand} 并复刻诡厄真法杖的两块核心：
  * <ul>
  *   <li><b>施法管线</b>：use/onUseTick/releaseUsing/finishUsingItem/getUseDuration/getUseAnimation
- *       全部委托给内部 {@link DarkWand} 实例——诡厄原生施法（灵魂消耗、长吟唱蓄力、冷却、粒子/音效）
- *       逐字节一致，客户端与服务端都走同一条原生路径，不再需要"换手拿真法杖"的桥接。</li>
+ *       （以及 useOn/interactLivingEntity）全部委托给内部 {@link DarkWand} 实例——诡厄原生施法
+ *       （灵魂消耗、长吟唱蓄力、冷却、粒子/音效）逐字节一致，客户端与服务端都走同一条原生路径，
+ *       不再需要"换手拿真法杖"的桥接。</li>
  *   <li><b>聚晶存储</b>：{@link #initCapabilities} 在匠魂工具能力之外挂上诡厄的
  *       {@link SoulUsingItemHandler}（真法杖同款 1 格聚晶槽，{@code IWand.getFocus} 硬性要求该类型），
  *       装备中的聚晶由服务端 {@link #mirrorEquippedFocus} 写入并随物品栈同步，诡厄的
  *       当前聚晶 HUD / 冷却图标（CurrentFocusGui）无需任何自定义代码即可原生显示。</li>
  * </ul>
+ *
+ * <p>⚠ <b>严禁在物品注册期创建任何 Item 实例</b>：Item 构造器会把自身登记为 ITEMS 注册表的
+ * intrusive holder（须由后续注册认领），未注册的 Item 实例会在注册表冻结时报
+ * "Some intrusive holders were not registered" 崩溃。因此 {@link DarkWand} 委托必须懒加载，
+ * {@link #getSpellType()} 也只返回枚举常量。
  *
  * <p>注意：本类直接引用诡厄类，只能在诡厄存在时被加载/实例化（注册分支已按 ModList 判定；
  * 其它宿主类调用本类静态方法前必须先过 {@code ModList.isLoaded("goety")} 或
@@ -48,8 +54,16 @@ import javax.annotation.Nullable;
  */
 public class GoetyStaffItem extends ModularStaffItem implements IWand {
 
-    /** 诡厄施法委托实例（纯逻辑搬运，无物品注册副作用） */
-    private final DarkWand goetyWand = new DarkWand();
+    /** 诡厄施法委托实例：懒加载，首次实际施法（注册表冻结后的运行时）才创建 */
+    @Nullable
+    private DarkWand goetyWand;
+
+    private DarkWand goetyWand() {
+        if (goetyWand == null) {
+            goetyWand = new DarkWand();
+        }
+        return goetyWand;
+    }
 
     public GoetyStaffItem(Properties properties) {
         super(properties);
@@ -59,8 +73,9 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
 
     @Override
     public SpellType getSpellType() {
-        // 与 DarkWand() 无参构造一致（NONE），施法本身不按流派门禁（见 DarkWand.use 反编译）
-        return goetyWand.getSpellType();
+        // 与 DarkWand() 无参构造一致（NONE）。绝不在此创建实例：
+        // 注册期 Goety 可能在任何时刻查询 IWand 的 getSpellType，new Item 会泄漏 intrusive holder
+        return SpellType.NONE;
     }
 
     // ================= 原版/匠魂使用管线（巫法模式 → 诡厄原生；铁魔法模式 → 匠魂/铁魔法） =================
@@ -75,25 +90,25 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
         if (inGoetyMode(stack)) {
             // 委托 DarkWand.use：它读取手持物品栈 = 本魔杖，并从魔杖自带槽取聚晶，
             // 完整原生施法（含 startUsingItem 长吟唱），双端一致
-            return goetyWand.use(level, player, hand);
+            return goetyWand().use(level, player, hand);
         }
         return super.use(level, player, hand);
     }
 
     @Override
     public int getUseDuration(ItemStack stack) {
-        return inGoetyMode(stack) ? goetyWand.getUseDuration(stack) : super.getUseDuration(stack);
+        return inGoetyMode(stack) ? goetyWand().getUseDuration(stack) : super.getUseDuration(stack);
     }
 
     @Override
     public UseAnim getUseAnimation(ItemStack stack) {
-        return inGoetyMode(stack) ? goetyWand.getUseAnimation(stack) : super.getUseAnimation(stack);
+        return inGoetyMode(stack) ? goetyWand().getUseAnimation(stack) : super.getUseAnimation(stack);
     }
 
     @Override
     public void onUseTick(Level level, LivingEntity entity, ItemStack stack, int timeLeft) {
         if (inGoetyMode(stack)) {
-            goetyWand.onUseTick(level, entity, stack, timeLeft);
+            goetyWand().onUseTick(level, entity, stack, timeLeft);
         } else {
             super.onUseTick(level, entity, stack, timeLeft);
         }
@@ -102,7 +117,7 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
     @Override
     public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
         if (inGoetyMode(stack)) {
-            goetyWand.releaseUsing(stack, level, entity, timeLeft);
+            goetyWand().releaseUsing(stack, level, entity, timeLeft);
         } else {
             super.releaseUsing(stack, level, entity, timeLeft);
         }
@@ -113,7 +128,7 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
         ItemStack stack = context.getItemInHand();
         if (inGoetyMode(stack)) {
             // 诡厄 useOn：RecallFocus/触媒/方块型法术等右键方块逻辑与真法杖一致
-            return goetyWand.useOn(context);
+            return goetyWand().useOn(context);
         }
         return super.useOn(context);
     }
@@ -123,7 +138,7 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
                                                   LivingEntity target, InteractionHand hand) {
         if (inGoetyMode(stack)) {
             // 诡厄 interactLivingEntity：CommandFocus 仆从管理/触媒法术等右键实体逻辑与真法杖一致
-            return goetyWand.interactLivingEntity(stack, player, target, hand);
+            return goetyWand().interactLivingEntity(stack, player, target, hand);
         }
         return super.interactLivingEntity(stack, player, target, hand);
     }
@@ -131,7 +146,7 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
     @Override
     public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entity) {
         if (inGoetyMode(stack)) {
-            return goetyWand.finishUsingItem(stack, level, entity);
+            return goetyWand().finishUsingItem(stack, level, entity);
         }
         return super.finishUsingItem(stack, level, entity);
     }
