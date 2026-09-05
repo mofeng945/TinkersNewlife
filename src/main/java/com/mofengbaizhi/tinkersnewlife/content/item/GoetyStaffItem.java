@@ -124,6 +124,24 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
     }
 
     @Override
+    public void inventoryTick(ItemStack stack, Level level, net.minecraft.world.entity.Entity entity,
+                              int slot, boolean isSelected) {
+        if (inGoetyMode(stack)) {
+            DarkWand wand = goetyWand();
+            if (wand != null) {
+                // 匠魂修饰符的逐 tick 维护先跑，再跑诡厄真法杖的逐 tick 维护：
+                // DarkWand.inventoryTick 会把当前聚晶的 "Cast Time"/"Soul Use"/"Shots" 等写进魔杖栈 tag，
+                // 并驱动聚晶自身 inventoryTick。⚠ 缺了它 getUseDuration 读不到 "Cast Time" → 0，
+                // 蓄力/吟唱/持续类法术放不出来（瞬时法术不依赖这些 tag 所以正常）
+                super.inventoryTick(stack, level, entity, slot, isSelected);
+                wand.inventoryTick(stack, level, entity, slot, isSelected);
+                return;
+            }
+        }
+        super.inventoryTick(stack, level, entity, slot, isSelected);
+    }
+
+    @Override
     public void onUseTick(Level level, LivingEntity entity, ItemStack stack, int timeLeft) {
         DarkWand wand = inGoetyMode(stack) ? goetyWand() : null;
         if (wand != null) {
