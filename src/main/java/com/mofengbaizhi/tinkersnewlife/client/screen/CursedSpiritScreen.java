@@ -186,8 +186,8 @@ public class CursedSpiritScreen extends Screen {
         float xr = entity.getXRot();
         float hro = entity.yHeadRotO;
         float hr = entity.yHeadRot;
-        entity.yBodyRot = 180.0F + yawF * 20.0F;
-        entity.setYRot(180.0F + yawF * 40.0F);
+        entity.yBodyRot = 180.0F - yawF * 20.0F;
+        entity.setYRot(180.0F - yawF * 40.0F);
         entity.setXRot(-pitchF * 20.0F);
         entity.yHeadRot = entity.getYRot();
         entity.yHeadRotO = entity.getYRot();
