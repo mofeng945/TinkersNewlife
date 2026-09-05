@@ -125,12 +125,16 @@ public class SkyUsoraBoltEntity extends Entity {
         if (caster != null) {
             CurseCoreTraitHelper.afterCurseCoreHit(caster, victim, finalDamage);
         }
-        // 巨量击退：沿"施术者→目标"水平方向 + 上抛，连同空间一起飞出去
-        Vec3 away = position().subtract(victim.position());
+        // 巨量击退：沿"施术者→目标"方向（弹的飞行方向同向）飞出，目标应远离施术者
+        Vec3 away;
+        if (caster != null) {
+            away = victim.position().subtract(caster.position());
+        } else {
+            away = dir;
+        }
         away = new Vec3(away.x, 0, away.z);
         if (away.lengthSqr() < 1e-4) {
-            away = dir;
-            away = new Vec3(away.x, 0, away.z);
+            away = new Vec3(dir.x, 0, dir.z);
         }
         Vec3 vel = victim.getDeltaMovement()
                 .add(away.normalize().scale(knock))
