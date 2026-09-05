@@ -51,10 +51,6 @@ public final class ConstructTechnique extends BaseTechnique {
     /** 临时物到期检查间隔（tick） */
     private static final int TEMP_CHECK_INTERVAL = 10;
 
-    /** TACZ 枪械接口反射缓存 */
-    private static Class<?> taczIGunClass;
-    private static Method taczGetAmmoId;
-
     private ConstructTechnique() {
         super(Modifiers.CONSTRUCT.getId());
     }
@@ -86,11 +82,17 @@ public final class ConstructTechnique extends BaseTechnique {
     }
 
     // ============================================================
-    //  反转（F）：打开拟造物品栏
+    //  反转（F）：打开拟造物品栏（熔断期间禁止）
     // ============================================================
 
     @Override
     public void onReverseKeyPress(ServerPlayer player) {
+        // ⭐ 术式熔断期间不允许打开拟造物品 GUI
+        if (CursePowerHelper.isBurnout(player)) {
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.burnout.active",
+                    CursePowerHelper.getBurnoutRemainingSeconds(player)), true);
+            return;
+        }
         TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
                 new PacketOpenConstructScreen());
     }
@@ -125,6 +127,11 @@ public final class ConstructTechnique extends BaseTechnique {
     private void tickAmmo(ServerPlayer player) {
         ItemStack weapon = findAmmoWeapon(player);
         if (weapon.isEmpty()) return;
+        // TACZ 枪械：弹药为带 AmmoId 的 AmmoItem，走专用补给
+        if (isTaczGun(weapon.getItem())) {
+            tickTaczAmmo(player, weapon);
+            return;
+        }
         Item ammoItem = resolveAmmoItem(player, weapon);
         if (ammoItem == null) return;
         // 统计背包中现有同类弹药（主背包 36 格 + 副手）
@@ -140,23 +147,36 @@ public final class ConstructTechnique extends BaseTechnique {
         }
         if (have >= AMMO_TARGET) return;
         int need = AMMO_TARGET - have;
-        // 单价：箭矢/子弹按 (1-亲和/100)×(1+输出×0.5)，最低 1
-        int affinity = CursePowerHelper.getCurseAffinity(player);
-        int output = CursePowerHelper.getCurseOutputLevel(player);
-        int unitCost = Math.max(1, (int) Math.ceil((1.0 - affinity / 100.0) * (1 + output * 0.5)));
+        // 单价：箭矢按 (1-亲和/100)×(1+输出×0.5)，最低 1
+        int unitCost = ammoUnitCost(player);
         long totalCost = (long) need * unitCost;
         if (totalCost > Integer.MAX_VALUE) return;
         // 支付（创造/无限免费；不足自动关闭模式避免每 tick 刷屏）
         if (!CursePowerHelper.isCurseInfinite(player)
                 && CursePowerHelper.payCurseWithSoulFallback(player, totalCost) < 0) {
-            player.getPersistentData().putBoolean(KEY_AMMO_MODE, false);
-            player.displayClientMessage(Component.translatable("message.tinkersnewlife.construct.ammo_no_curse"), true);
+            turnOffNoCurse(player);
             return;
         }
         ItemStack add = new ItemStack(ammoItem, need);
+        giveToPlayer(player, add, need);
+    }
+
+    /** 单发/单支弹药单价（TACZ 子弹略贵） */
+    private static int ammoUnitCost(ServerPlayer player) {
+        int affinity = CursePowerHelper.getCurseAffinity(player);
+        int output = CursePowerHelper.getCurseOutputLevel(player);
+        return Math.max(1, (int) Math.ceil((1.0 - affinity / 100.0) * (1 + output * 0.5)));
+    }
+
+    private static void turnOffNoCurse(ServerPlayer player) {
+        player.getPersistentData().putBoolean(KEY_AMMO_MODE, false);
+        player.displayClientMessage(Component.translatable("message.tinkersnewlife.construct.ammo_no_curse"), true);
+    }
+
+    /** 加入背包；背包满则剩余部分掉落脚下 */
+    private static void giveToPlayer(ServerPlayer player, ItemStack add, int particleCount) {
         boolean added = player.getInventory().add(add);
         if (!added && !add.isEmpty()) {
-            // 背包满：剩余部分掉落脚下
             net.minecraft.world.entity.item.ItemEntity drop = new net.minecraft.world.entity.item.ItemEntity(
                     player.serverLevel(), player.getX(), player.getY() + 0.5, player.getZ(), add);
             drop.setPickUpDelay(0);
@@ -164,7 +184,49 @@ public final class ConstructTechnique extends BaseTechnique {
         }
         if (player.level().isClientSide) return;
         player.serverLevel().sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD,
-                player.getX(), player.getY() + 1.2, player.getZ(), need / 2 + 1, 0.3, 0.3, 0.3, 0);
+                player.getX(), player.getY() + 1.2, player.getZ(),
+                Math.max(1, particleCount / 2), 0.3, 0.3, 0.3, 0);
+    }
+
+    /**
+     * TACZ 枪械弹药补给：解析该枪需求的弹药类型（gunId → GunData.ammoId），
+     * 背包中匹配弹药（AmmoItem + NBT AmmoId）不足弹匣容量时，凝结对应弹药。
+     */
+    private void tickTaczAmmo(ServerPlayer player, ItemStack gun) {
+        // 解析枪需求
+        ResourceLocation gunId = taczGetGunId(gun);
+        if (gunId == null) return;
+        Object gunData = taczGetGunData(gunId);
+        if (gunData == null) return;
+        ResourceLocation ammoId = taczGunDataAmmoId(gunData);
+        if (ammoId == null) return;
+        int magSize = taczGunDataMagSize(gunData);
+        if (magSize <= 0) magSize = 30;
+        // 统计背包中匹配弹药数量（同 item + 同 AmmoId）
+        int have = 0;
+        for (ItemStack stack : player.getInventory().items) {
+            if (isTaczMatchingAmmo(stack, ammoId)) {
+                have += stack.getCount();
+            }
+        }
+        ItemStack off = player.getOffhandItem();
+        if (isTaczMatchingAmmo(off, ammoId)) {
+            have += off.getCount();
+        }
+        // 弹匣容量作为补给目标；已满则不动作
+        int target = Math.max(1, magSize);
+        if (have >= target) return;
+        int need = target - have;
+        long totalCost = (long) need * ammoUnitCost(player);
+        if (totalCost > Integer.MAX_VALUE) return;
+        if (!CursePowerHelper.isCurseInfinite(player)
+                && CursePowerHelper.payCurseWithSoulFallback(player, totalCost) < 0) {
+            turnOffNoCurse(player);
+            return;
+        }
+        ItemStack ammo = taczBuildAmmo(ammoId, need);
+        if (ammo.isEmpty()) return;
+        giveToPlayer(player, ammo, need);
     }
 
     /** 找到手持/副手中"会从背包请求弹药"的武器；没有则返回空栈 */
@@ -185,16 +247,11 @@ public final class ConstructTechnique extends BaseTechnique {
     }
 
     /**
-     * 解析该武器请求的弹药物品类型。
-     * 原版弓只认普通箭；弩/匠魂弓弩优先保持玩家背包已有的箭头类型；
-     * TACZ 枪械反射取对应弹药。
+     * 解析弓弩武器请求的箭矢类型（TACZ 枪械走 {@link #tickTaczAmmo} 专用补给）。
+     * 原版弓只认普通箭；弩/匠魂弓弩优先保持玩家背包已有的箭头类型。
      */
     private static Item resolveAmmoItem(ServerPlayer player, ItemStack weapon) {
         Item item = weapon.getItem();
-        // TACZ 枪械：反射取弹药 id
-        if (isTaczGun(item)) {
-            return taczAmmoItem(player, weapon);
-        }
         // 原版弓：仅普通箭
         if (item instanceof net.minecraft.world.item.BowItem) {
             return Items.ARROW;
@@ -220,7 +277,23 @@ public final class ConstructTechnique extends BaseTechnique {
 
     // ============================================================
     //  TACZ 反射（无编译依赖，缺失/失败静默跳过）
+    //  TACZ 1.1.x：枪械(IGun)从背包请求弹药——弹药物品为统一的 AmmoItem，
+    //  其 NBT "AmmoId" 与枪的 gunId→GunData.ammoId 匹配才可装填。
     // ============================================================
+
+    private static Class<?> taczIGunClass;
+    private static Method taczGetGunId;
+    private static Class<?> taczTimelessApiClass;
+    private static Method taczGetCommonGunIndex;
+    private static Method taczIndexGetGunData;
+    private static Method taczGunDataGetAmmoId;
+    private static Method taczGunDataGetAmmoAmount;
+    private static Class<?> taczAmmoBuilderClass;
+    private static Method taczAmmoBuilderCreate;
+    private static Method taczAmmoBuilderSetId;
+    private static Method taczAmmoBuilderSetCount;
+    private static Method taczAmmoBuilderBuild;
+    private static Method taczAmmoGetAmmoId; // IAmmo.getAmmoId(ItemStack) 读 AmmoItem 的弹药 id
 
     private static boolean isTaczGun(Item item) {
         try {
@@ -233,23 +306,107 @@ public final class ConstructTechnique extends BaseTechnique {
         }
     }
 
-    /** 反射调用 IGun#getAmmoId(ItemStack) 获取枪械弹药物品；失败返回 null */
-    private static Item taczAmmoItem(ServerPlayer player, ItemStack gun) {
+    /** IGun.getGunId(ItemStack) → gunId RL */
+    private static ResourceLocation taczGetGunId(ItemStack gun) {
         try {
-            if (taczIGunClass == null) {
-                taczIGunClass = Class.forName("com.tacz.guns.api.item.IGun");
+            if (taczIGunClass == null) taczIGunClass = Class.forName("com.tacz.guns.api.item.IGun");
+            if (taczGetGunId == null) taczGetGunId = taczIGunClass.getMethod("getGunId", ItemStack.class);
+            Object rl = taczGetGunId.invoke(gun);
+            return rl instanceof ResourceLocation loc ? loc : null;
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    /** TimelessAPI.getCommonGunIndex(gunId) → CommonGunIndex（Optional.get） */
+    private static Object taczGetGunIndex(ResourceLocation gunId) {
+        try {
+            if (taczTimelessApiClass == null) taczTimelessApiClass = Class.forName("com.tacz.guns.api.TimelessAPI");
+            if (taczGetCommonGunIndex == null) {
+                taczGetCommonGunIndex = taczTimelessApiClass.getMethod("getCommonGunIndex", ResourceLocation.class);
             }
-            if (taczGetAmmoId == null) {
-                taczGetAmmoId = taczIGunClass.getMethod("getAmmoId", ItemStack.class);
-            }
-            Object rl = taczGetAmmoId.invoke(gun);
-            if (rl instanceof ResourceLocation loc) {
-                Item ammo = ForgeRegistries.ITEMS.getValue(loc);
-                return ammo != null && ammo != Items.AIR ? ammo : null;
+            Object optional = taczGetCommonGunIndex.invoke(null, gunId);
+            if (optional instanceof java.util.Optional<?> opt && opt.isPresent()) {
+                return opt.get();
             }
         } catch (Throwable ignored) {
         }
         return null;
+    }
+
+    /** CommonGunIndex.getGunData() → GunData */
+    private static Object taczGetGunData(ResourceLocation gunId) {
+        try {
+            Object index = taczGetGunIndex(gunId);
+            if (index == null) return null;
+            if (taczIndexGetGunData == null) {
+                taczIndexGetGunData = index.getClass().getMethod("getGunData");
+            }
+            return taczIndexGetGunData.invoke(index);
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    /** GunData.getAmmoId() → 该枪需求的弹药类型 RL */
+    private static ResourceLocation taczGunDataAmmoId(Object gunData) {
+        try {
+            if (taczGunDataGetAmmoId == null) {
+                taczGunDataGetAmmoId = gunData.getClass().getMethod("getAmmoId");
+            }
+            Object rl = taczGunDataGetAmmoId.invoke(gunData);
+            return rl instanceof ResourceLocation loc ? loc : null;
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    /** GunData.getAmmoAmount() → 弹匣容量 */
+    private static int taczGunDataMagSize(Object gunData) {
+        try {
+            if (taczGunDataGetAmmoAmount == null) {
+                taczGunDataGetAmmoAmount = gunData.getClass().getMethod("getAmmoAmount");
+            }
+            Object v = taczGunDataGetAmmoAmount.invoke(gunData);
+            return v instanceof Number n ? n.intValue() : 0;
+        } catch (Throwable t) {
+            return 0;
+        }
+    }
+
+    /** 判断某物品是否为该弹药类型的 TACZ 弹药（AmmoItem，NBT AmmoId 匹配） */
+    private static boolean isTaczMatchingAmmo(ItemStack stack, ResourceLocation ammoId) {
+        if (stack.isEmpty()) return false;
+        try {
+            if (taczIGunClass == null) taczIGunClass = Class.forName("com.tacz.guns.api.item.IGun");
+            Class<?> iAmmo = Class.forName("com.tacz.guns.api.item.IAmmo");
+            if (!iAmmo.isInstance(stack.getItem())) return false;
+            if (taczAmmoGetAmmoId == null) taczAmmoGetAmmoId = iAmmo.getMethod("getAmmoId", ItemStack.class);
+            Object rl = taczAmmoGetAmmoId.invoke(stack);
+            return ammoId.equals(rl);
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /** AmmoItemBuilder.create().setId(ammoId).setCount(n).build() → 凝结的弹药物品 */
+    private static ItemStack taczBuildAmmo(ResourceLocation ammoId, int count) {
+        try {
+            if (taczAmmoBuilderClass == null) {
+                taczAmmoBuilderClass = Class.forName("com.tacz.guns.api.item.builder.AmmoItemBuilder");
+            }
+            if (taczAmmoBuilderCreate == null) taczAmmoBuilderCreate = taczAmmoBuilderClass.getMethod("create");
+            if (taczAmmoBuilderSetId == null) taczAmmoBuilderSetId = taczAmmoBuilderClass.getMethod("setId", ResourceLocation.class);
+            if (taczAmmoBuilderSetCount == null) taczAmmoBuilderSetCount = taczAmmoBuilderClass.getMethod("setCount", int.class);
+            if (taczAmmoBuilderBuild == null) taczAmmoBuilderBuild = taczAmmoBuilderClass.getMethod("build");
+            Object builder = taczAmmoBuilderCreate.invoke(null);
+            taczAmmoBuilderSetId.invoke(builder, ammoId);
+            taczAmmoBuilderSetCount.invoke(builder, Math.max(1, count));
+            Object built = taczAmmoBuilderBuild.invoke(builder);
+            return built instanceof ItemStack stack ? stack : ItemStack.EMPTY;
+        } catch (Throwable t) {
+            return ItemStack.EMPTY;
+        }
     }
 
     // ============================================================
