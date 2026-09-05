@@ -642,5 +642,18 @@
   "modifier.tinkersnewlife.lightning_manipulation.description": "§f顺转：对视线内目标劈落一道闪电（纯视觉，不吃原版闪电伤害/转化），伤害按咒术伤害结算（伤害基底×80%）。反转（F键）：术式解放「幻兽琥珀」——开启期间自身每次近战/远程伤害附带咒术闪电（+round((1+亲和/100)×(5+输出×5))），但每 tick 持续消耗咒力 ceil(max(1,(1-亲和/100)×(2+输出))) 与生命 (0.15+输出×0.05)，耗尽自动解除；再按一次关闭。占用术式槽。",
   "message.tinkersnewlife.lightning.strike": "§e落雷：咒术伤害已结算",
   "message.tinkersnewlife.lightning.released": "§e雷电操术解放「幻兽琥珀」：攻击附带咒术闪电（持续消耗咒力与生命）",
-  "message.tinkersnewlife.lightning.deactivated": "§7幻兽琥珀已解除"
+  "message.tinkersnewlife.lightning.deactivated": "§7幻兽琥珀已解除",
+  "key.tinkersnewlife.staff_pouch": "魔杖聚晶包 (J)",
+  "key.tinkersnewlife.staff_cycle": "循环装备聚晶 (R)",
+  "screen.tinkersnewlife.staff.goety_title": "魔杖聚晶包 · 巫法模式",
+  "screen.tinkersnewlife.staff.goety_hint": "点击背包聚晶放入包内空位 · 点击包内已占位格取回 · 高亮=已装备(按R循环)",
+  "screen.tinkersnewlife.staff.inv_foci": "背包中的聚晶",
+  "message.tinkersnewlife.staff.mode_iron": "§7魔杖已切回铁魔法模式（Shift+右键可再切巫法模式）",
+  "message.tinkersnewlife.staff.mode_goety": "§5魔杖已解放为巫法模式：J 打开聚晶包 / R 循环聚晶 / 右键释放法术（Shift+右键切回）",
+  "message.tinkersnewlife.staff.goety_missing": "§c需要安装诡厄巫法才能启用巫法模式",
+  "message.tinkersnewlife.staff.no_focus": "§7聚晶包为空：按 J 放入聚晶",
+  "message.tinkersnewlife.staff.focus_equipped": "§5已装备聚晶：%s",
+  "message.tinkersnewlife.staff.pouch_full": "§c聚晶包已满",
+  "message.tinkersnewlife.staff.no_goety_wand": "§c未找到可用的诡厄魔杖以释放法术",
+  "message.tinkersnewlife.staff.cast_failed": "§c聚晶施法失败（可能灵魂不足/冷却中）"
 }

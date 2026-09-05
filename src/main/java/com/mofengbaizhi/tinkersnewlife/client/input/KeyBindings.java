@@ -74,6 +74,20 @@ public class KeyBindings {
             KEY_CATEGORY
     ));
 
+    // ✅ 模块化魔杖·巫法：J 开聚晶包
+    public static final Lazy<KeyMapping> STAFF_POUCH = Lazy.of(() -> new KeyMapping(
+            "key.tinkersnewlife.staff_pouch",
+            GLFW.GLFW_KEY_J,
+            KEY_CATEGORY
+    ));
+
+    // ✅ 模块化魔杖·巫法：R 循环装备聚晶（与 USE_SKILL 同键，二者场景不重叠；可在设置改键）
+    public static final Lazy<KeyMapping> STAFF_CYCLE = Lazy.of(() -> new KeyMapping(
+            "key.tinkersnewlife.staff_cycle",
+            GLFW.GLFW_KEY_R,
+            KEY_CATEGORY
+    ));
+
     @SubscribeEvent
     public static void register(RegisterKeyMappingsEvent event) {
         event.register(USE_SKILL.get());
@@ -85,5 +99,7 @@ public class KeyBindings {
         event.register(SWITCH_TECHNIQUE.get()); // 确保注册
         event.register(REVERSE_TECHNIQUE.get()); // 确保注册
         event.register(OPEN_WU_WEI.get()); // 确保注册
+        event.register(STAFF_POUCH.get());
+        event.register(STAFF_CYCLE.get());
     }
 }

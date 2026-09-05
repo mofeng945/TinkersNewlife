@@ -277,6 +277,20 @@ public class ClientEventHandler {
             if (KeyBindings.OPEN_WU_WEI.get().consumeClick()) {
                 TinkersNewlife.CHANNEL.sendToServer(new com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiOpenGui());
             }
+            // ✅ 模块化魔杖·巫法模式：J 开聚晶包 / R 循环聚晶（仅主手为魔杖且处于巫法模式）
+            ItemStack staffHand = player.getMainHandItem();
+            boolean goetyStaff = staffHand.getItem()
+                    instanceof com.mofengbaizhi.tinkersnewlife.content.item.ModularStaffItem
+                    && com.mofengbaizhi.tinkersnewlife.content.goety.ModularStaffGoety.getMode(staffHand)
+                    == com.mofengbaizhi.tinkersnewlife.content.goety.ModularStaffGoety.MODE_GOETY;
+            if (goetyStaff && KeyBindings.STAFF_POUCH.get().consumeClick()) {
+                TinkersNewlife.CHANNEL.sendToServer(
+                        new com.mofengbaizhi.tinkersnewlife.network.curse.PacketStaffGoetyAction(0, 0));
+            }
+            if (goetyStaff && KeyBindings.STAFF_CYCLE.get().consumeClick()) {
+                TinkersNewlife.CHANNEL.sendToServer(
+                        new com.mofengbaizhi.tinkersnewlife.network.curse.PacketStaffGoetyAction(1, 0));
+            }
             // ✅ 术式按键已移至 onClientTick（按下/松开边沿检测，支撑蓄力术式）
         }
     }

@@ -207,6 +207,10 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketSpiritSelect::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketSpiritSelect::new,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketSpiritSelect::handle);
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketStaffGoetyAction.class,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketStaffGoetyAction::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketStaffGoetyAction::new,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketStaffGoetyAction::handle);
         registerPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiSelect.class,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiSelect::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiSelect::new,
@@ -243,6 +247,10 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenSpiritScreen::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenSpiritScreen::new,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenSpiritScreen::handle);
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketStaffGoetySync.class,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketStaffGoetySync::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketStaffGoetySync::new,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketStaffGoetySync::handle);
         registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiDisguise.class,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiDisguise::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiDisguise::new,
