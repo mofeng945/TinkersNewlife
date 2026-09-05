@@ -31,5 +31,6 @@
   "tinkersnewlife:cursed_spirit": "tinkersnewlife:gui/modifiers/cursed_spirit",
   "tinkersnewlife:lightning_manipulation": "tinkersnewlife:gui/modifiers/lightning_manipulation",
     "tinkersnewlife:sky_manipulation": "tinkersnewlife:gui/modifiers/sky_manipulation",
-    "tinkersnewlife:cursed_energy_release": "tinkersnewlife:gui/modifiers/cursed_energy_release"
+    "tinkersnewlife:cursed_energy_release": "tinkersnewlife:gui/modifiers/cursed_energy_release",
+    "tinkersnewlife:construct": "tinkersnewlife:gui/modifiers/construct"
 }

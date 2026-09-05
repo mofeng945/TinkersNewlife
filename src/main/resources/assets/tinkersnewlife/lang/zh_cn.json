@@ -526,6 +526,9 @@
   "message.tinkersnewlife.reverse_cursed.undead": "§c反转术式外放：亡灵受到 %s 点伤害",
   "modifier.tinkersnewlife.wu_wei": "无为转变",
   "modifier.tinkersnewlife.cursed_energy_release": "咒力外放",
+  "modifier.tinkersnewlife.construct": "构筑术式",
+  "modifier.tinkersnewlife.construct.flavor": "凭空构筑，化虚为实。",
+  "modifier.tinkersnewlife.construct.description": "§f顺转（术式键 C）：开关「无限弹药模式」——手持会从背包请求弹药的武器（原版弓/弩、匠魂弓弩、TACZ 枪械等）时，弹药耗尽即消耗咒力凝结出对应箭矢/子弹。反转（反转键 F）：打开拟造物品栏，从所有有合成配方的物品中挑选一件，按其珍贵程度与威力换算咒力并拟造临时物品（60 秒后消散）。消耗随咒力亲和降低、输出提高。占用术式槽。",
   "modifier.tinkersnewlife.cursed_energy_release.flavor": "把咒力当子弹打出去",
   "modifier.tinkersnewlife.cursed_energy_release.description": "顺转：朝视线发射纯粹咒力能量弹，命中造成高额伤害。反转：冰沙冲击波（Granite Blast）——咒力以激光炮形式持续外放，每 2 tick 无视无敌帧伤害，持续 3 秒，可转动视角调整方向，结束后顺转与反转一同冷却 6 秒。不受术式熔断影响。",
   "modifier.tinkersnewlife.wu_wei.flavor": "§7重塑灵魂的形状，生命再无定式。",
@@ -666,5 +669,17 @@
   "message.tinkersnewlife.staff.no_goety_wand": "§c未找到可用的诡厄魔杖以释放法术",
   "message.tinkersnewlife.staff.cast_failed": "§c聚晶施法失败（可能灵魂不足/冷却中）",
   "message.tinkersnewlife.curse_release.cooldown": "§c咒力外放冷却中（剩 %s 秒）",
-  "message.tinkersnewlife.curse_release.short_cd": "§7能量弹蓄能中（剩 %s 秒）"
+  "message.tinkersnewlife.curse_release.short_cd": "§7能量弹蓄能中（剩 %s 秒）",
+  "screen.tinkersnewlife.construct.title": "§d构筑术式 · 拟造物品栏",
+  "screen.tinkersnewlife.construct.hint": "§7点击拟造临时物品（60 秒后消散）；搜索可按名称过滤",
+  "screen.tinkersnewlife.construct.search": "搜索物品…",
+  "screen.tinkersnewlife.construct.cost": "≈%s 咒力",
+  "screen.tinkersnewlife.construct.cost_free": "§6咒力无限",
+  "item.tinkersnewlife.construct.prefix": "§d拟造·",
+  "message.tinkersnewlife.construct.ammo_on": "§d构筑·无限弹药模式开启：弹药耗尽将自动凝结",
+  "message.tinkersnewlife.construct.ammo_off": "§7构筑·无限弹药模式关闭",
+  "message.tinkersnewlife.construct.ammo_no_curse": "§c咒力不足，无限弹药模式已关闭",
+  "message.tinkersnewlife.construct.forged": "§d拟造成功：%s（消耗 %s 咒力，%s 秒后消散）",
+  "message.tinkersnewlife.construct.expired": "§7拟造物品已到时限消散",
+  "message.tinkersnewlife.construct.no_recipe": "§c该物品没有合成配方，无法拟造"
 }

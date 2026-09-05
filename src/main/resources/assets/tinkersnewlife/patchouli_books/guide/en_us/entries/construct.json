@@ -1,0 +1,13 @@
+{
+    "name":  "构筑术式",
+    "category":  "tinkersnewlife:techniques",
+    "icon": "tinkersnewlife:textures/gui/modifiers/construct.png",
+    "sortnum":  31,
+  "advancement": "tinkersnewlife:techniques/construct",
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)构筑术式$()：以咒力凭空构筑、化虚为实。$(br2)$(bold)顺转（术式键 C）$()：开关「无限弹药模式」——手持会从背包请求弹药的武器（原版弓/弩、匠魂弓弩、TACZ 枪械等）时，弹药耗尽即消耗咒力凝结出对应的箭矢 / 子弹，无需再囤积弹药。$(br2)$(bold)反转（反转键 F）$()：打开拟造物品栏——从所有有合成配方的物品中挑选一件，按其珍贵程度与威力换算咒力消耗，拟造一个临时物品：$(li)仅存在 60 秒，到期自动消散$(li)消耗随咒力亲和降低、输出提高"
+                  }
+              ]
+}

@@ -174,6 +174,7 @@ public class TinkersNewlife {
         TechniqueHandler.register(ReverseCursedTechnique.INSTANCE);
         TechniqueHandler.register(com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuWeiTechnique.INSTANCE);
         TechniqueHandler.register(com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedEnergyReleaseTechnique.INSTANCE);
+        TechniqueHandler.register(com.mofengbaizhi.tinkersnewlife.content.curse.technique.ConstructTechnique.INSTANCE);
 
         // 注册网络包
         registerPacket(PacketUseSkill.class, PacketUseSkill::toBytes, PacketUseSkill::new, PacketUseSkill::handle);
@@ -233,6 +234,10 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoHire::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoHire::new,
                 com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoHire::handle);
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketConstructSelect.class,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketConstructSelect::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketConstructSelect::new,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketConstructSelect::handle);
         // 服务端→客户端
         registerClientPacket(PacketSyncCurse.class, PacketSyncCurse::toBytes, PacketSyncCurse::new, PacketSyncCurse::handle);
         registerClientPacket(PacketOpenShikigamiScreen.class, PacketOpenShikigamiScreen::toBytes, PacketOpenShikigamiScreen::new, PacketOpenShikigamiScreen::handle);
@@ -273,6 +278,10 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketProjectionStun::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketProjectionStun::new,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketProjectionStun::handle);
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenConstructScreen.class,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenConstructScreen::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenConstructScreen::new,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenConstructScreen::handle);
 
         // 实体属性（式神等生物实体）
         modEventBus.addListener(TinkersNewlife::onRegisterEntityAttributes);
@@ -359,6 +368,8 @@ public class TinkersNewlife {
                     // 咒力外放 反转激光（每 tick 驱动：伤害间隔/粒子/到期冷却）
                     com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedEnergyReleaseTechnique
                             .tickBlast((net.minecraft.server.level.ServerLevel) p.level(), p);
+                    // 构筑术式（每 tick 驱动：顺转弹药凝结 / 反转临时物到期清理）
+                    com.mofengbaizhi.tinkersnewlife.content.curse.technique.ConstructTechnique.tickServer(p);
                     // 帕秋莉手册解锁：每 20 tick 扫描核心特性，获得术式/领域即解锁对应章节
                     if (event.getServer().getTickCount() % 20 == 0) {
                         com.mofengbaizhi.tinkersnewlife.content.curse.TechniqueAdvancementHandler.scanAndUnlock(p);

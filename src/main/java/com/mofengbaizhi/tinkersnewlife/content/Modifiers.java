@@ -203,4 +203,9 @@ public class Modifiers {
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.CursedEnergyReleaseTrait> CURSED_ENERGY_RELEASE =
         MODIFIERS.register("cursed_energy_release",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.CursedEnergyReleaseTrait::new);
+
+    /** 构筑术式（术式特性，占用术式槽；顺转无限弹药/反转拟造临时物品） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.ConstructTrait> CONSTRUCT =
+        MODIFIERS.register("construct",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.ConstructTrait::new);
 }
