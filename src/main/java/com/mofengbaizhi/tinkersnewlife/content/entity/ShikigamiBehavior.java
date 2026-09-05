@@ -35,6 +35,12 @@ import java.util.List;
  */
 public final class ShikigamiBehavior {
 
+    /** 索敌/追击范围：只攻击主人附近的目标，防止越追越远跑丢（半径 32 格） */
+    private static final double LEASH_RANGE = 32.0;
+    private static final double LEASH_SQ = LEASH_RANGE * LEASH_RANGE;
+    /** 跟随主人超过此距离直接传送回身边（而非消失） */
+    private static final double TELEPORT_BACK_SQ = 64.0 * 64.0;
+
     private ShikigamiBehavior() {}
 
     /** 每 tick 驱动（服务端） */
@@ -76,6 +82,15 @@ public final class ShikigamiBehavior {
             }
             return;
         }
+        // 已调伏：目标一旦脱离主人附近（被打飞/引走）就放弃追击，回主人身边，
+        // 防止一路追出去最后跑丢/消失
+        if (st.tamed && target.distanceToSqr(owner) > LEASH_SQ) {
+            followOwner(self, info, owner);
+            if (info.getShikigamiType() == ShikigamiType.DEER) {
+                healOwner(self, info, owner);
+            }
+            return;
+        }
         behave(self, info, owner, target, level);
     }
 
@@ -85,11 +100,11 @@ public final class ShikigamiBehavior {
 
     private static LivingEntity pickEnemyTarget(Mob self, ShikigamiMob info, ServerPlayer owner) {
         LivingEntity mob = owner.getLastHurtMob();
-        if (isValidTarget(self, info, mob)) return mob;
+        if (isValidTarget(self, info, mob) && mob.distanceToSqr(owner) <= LEASH_SQ) return mob;
         mob = owner.getLastHurtByMob();
-        if (isValidTarget(self, info, mob)) return mob;
+        if (isValidTarget(self, info, mob) && mob.distanceToSqr(owner) <= LEASH_SQ) return mob;
         List<LivingEntity> enemies = self.level().getEntitiesOfClass(LivingEntity.class,
-                AABB.ofSize(owner.position(), 32, 32, 32),
+                AABB.ofSize(owner.position(), LEASH_RANGE * 2, LEASH_RANGE * 2, LEASH_RANGE * 2),
                 e -> e != owner && e != self && e.isAlive() && isEnemyOf(self, info, e));
         double best = Double.MAX_VALUE;
         LivingEntity result = null;
@@ -124,6 +139,8 @@ public final class ShikigamiBehavior {
         LivingEntity locked = st.lockedId != null
                 && self.level() instanceof ServerLevel sl && sl.getEntity(st.lockedId) instanceof LivingEntity le ? le : null;
         if (locked == null || !locked.isAlive()) return owner;
+        // 锁定目标脱离主人附近则不追（防止追着目标越跑越远，最后离主人太远而消散），留在主人身边
+        if (locked.distanceToSqr(owner) > LEASH_SQ) return owner;
         return self.distanceToSqr(owner) < self.distanceToSqr(locked) ? owner : locked;
     }
 
@@ -491,8 +508,12 @@ public final class ShikigamiBehavior {
 
     private static void followOwner(Mob self, ShikigamiMob info, ServerPlayer owner) {
         double dist = self.distanceToSqr(owner);
-        if (dist > 64 * 64) {
-            self.discard();
+        if (dist > TELEPORT_BACK_SQ) {
+            // 过远（如主人跑太远/被地形卡住）：传送回主人身边，而不是消失
+            double dx = (self.getRandom().nextDouble() - 0.5) * 2.0;
+            double dz = (self.getRandom().nextDouble() - 0.5) * 2.0;
+            self.teleportTo(owner.getX() + dx, owner.getY(), owner.getZ() + dz);
+            self.getNavigation().stop();
             return;
         }
         if (dist > 4 * 4) {

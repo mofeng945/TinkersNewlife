@@ -90,7 +90,7 @@ public enum ShikigamiType {
         return sizeScale(CursePowerHelper.getCurseAffinity(player), CursePowerHelper.getCurseOutputLevel(player));
     }
 
-    /** 速度缩放 = (1 + 亲和/100) × 输出 */
+    /** 速度缩放 = (1 + 亲和/100) × 输出（上限 4 倍） */
     public static double speedScale(ServerPlayer player) {
         return speedScale(CursePowerHelper.getCurseAffinity(player), CursePowerHelper.getCurseOutputLevel(player));
     }
@@ -105,9 +105,13 @@ public enum ShikigamiType {
         return (1.0 + affinity / 100.0) * Math.max(1, output);
     }
 
-    /** 速度缩放 = (1 + 亲和/100) × 输出 */
+    /** 速度缩放上限（增幅不超过 4 倍，避免式神跑太快跑丢） */
+    public static final double MAX_SPEED_SCALE = 4.0;
+
+    /** 速度缩放 = (1 + 亲和/100) × 输出，上限 4 倍（客户端可用，无需玩家实体） */
     public static double speedScale(int affinity, int output) {
-        return (1.0 + affinity / 100.0) * Math.max(1, output);
+        return Math.min(MAX_SPEED_SCALE,
+                (1.0 + affinity / 100.0) * Math.max(1, output));
     }
 
     /** 本类型缩放后的最大生命 */
