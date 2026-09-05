@@ -1,7 +1,9 @@
 package com.mofengbaizhi.tinkersnewlife.content.curse.shikigami;
 
+import com.mofengbaizhi.tinkersnewlife.content.ModEntities;
 import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EntityType;
 
 /**
  * 十种影法术 式神类型
@@ -56,6 +58,22 @@ public enum ShikigamiType {
 
     public String getLangKey() {
         return "modifier.tinkersnewlife.ten_shadows." + id;
+    }
+
+    /** 本式神对应的实体注册类型（用于选择界面 3D 预览/客户端展示） */
+    public EntityType<?> entityType() {
+        return switch (this) {
+            case DOG -> ModEntities.SHIKIGAMI_WOLF.get();
+            case NUE -> ModEntities.SHIKIGAMI_PHANTOM.get();
+            case SERPENT -> ModEntities.SHIKIGAMI_SILVERFISH.get();
+            case TOAD -> ModEntities.SHIKIGAMI_FROG.get();
+            case ELEPHANT -> ModEntities.SHIKIGAMI_PIG.get();
+            case RABBIT -> ModEntities.SHIKIGAMI_RABBIT.get();
+            case DEER -> ModEntities.SHIKIGAMI_GOAT.get();
+            case OX -> ModEntities.SHIKIGAMI_COW.get();
+            case TIGER -> ModEntities.SHIKIGAMI_SHEEP.get();
+            case MAHORAGA -> ModEntities.SHIKIGAMI_IRON_GOLEM.get();
+        };
     }
 
     // ============================================================

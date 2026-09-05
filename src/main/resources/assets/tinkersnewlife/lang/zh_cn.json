@@ -541,6 +541,8 @@
   "screen.tinkersnewlife.wu_wei.title": "无为转变 · 形态选择",
   "screen.tinkersnewlife.wu_wei.hint": "点击已记录的生物（击杀后记录）：按 C 对自己变形，按 F 开启转变外放（下一次攻击把目标变成所选生物）",
   "screen.tinkersnewlife.wu_wei.empty": "尚未记录任何生物形态——先去击杀一些生物吧",
+  "screen.tinkersnewlife.wu_wei.current": "§a当前形态 · 点击可更换",
+  "screen.tinkersnewlife.wu_wei.click": "§7点击选用",
   "key.tinkersnewlife.open_wu_wei": "无为转变·形态选择（P）",
   "item.tinkersnewlife.gourd_jail": "狱门疆",
 

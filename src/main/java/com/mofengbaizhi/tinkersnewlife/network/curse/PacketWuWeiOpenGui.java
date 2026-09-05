@@ -34,7 +34,7 @@ public class PacketWuWeiOpenGui {
                 return;
             }
             TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-                    new PacketOpenWuWeiScreen(WuWeiHandler.getRecordedForms(player)));
+                    new PacketOpenWuWeiScreen(WuWeiHandler.getRecordedForms(player), WuWeiHandler.getSelected(player)));
         });
         ctx.get().setPacketHandled(true);
     }
