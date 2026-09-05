@@ -189,18 +189,21 @@ public final class LightningManipulationTechnique extends BaseTechnique {
                     if (curse >= curseCost) {
                         CursePowerHelper.spendCurse(p, curseCost);
                     }
-                    // 咒力不足：本次跳过咒力消耗，生命消耗继续（不自动解除）
+                    // 咒力不足：本次跳过咒力消耗（不自动解除）
                 }
-                float hp = p.getHealth() - (float) hpCost;
-                if (hp <= 0.0F) {
-                    // 扣到死亡：结算死亡（死亡清理会移除解放）
-                    p.setHealth(0.0F);
-                    if (p.isAlive() && !p.isRemoved()) {
-                        p.die(p.damageSources().magic());
+                // 创造模式不会死亡，"直到死亡"契约不成立 → 不扣生命，琥珀持续维持（仅耗咒力）
+                if (!p.isCreative() && hpCost > 0) {
+                    float hp = p.getHealth() - (float) hpCost;
+                    if (hp <= 0.0F) {
+                        // 扣到死亡：结算死亡（死亡清理会移除解放）
+                        p.setHealth(0.0F);
+                        if (p.isAlive() && !p.isRemoved()) {
+                            p.die(p.damageSources().magic());
+                        }
+                        continue;
                     }
-                    continue;
+                    p.setHealth(hp);
                 }
-                p.setHealth(hp);
                 // 雷光随行特效
                 if (p.tickCount % 8 == 0 && p.serverLevel() != null) {
                     p.serverLevel().sendParticles(ParticleTypes.ELECTRIC_SPARK,
