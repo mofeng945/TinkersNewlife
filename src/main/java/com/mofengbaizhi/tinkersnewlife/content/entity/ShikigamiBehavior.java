@@ -48,8 +48,20 @@ public final class ShikigamiBehavior {
         ShikigamiState st = info.getState();
         ServerLevel level = (ServerLevel) self.level();
         ServerPlayer owner = info.getOwner();
-        if (owner == null || !owner.isAlive()) {
-            self.discard();
+        if (owner == null) {
+            // 主人不在线（未登录/跨服）：原地待命不消散；累计超时后清理。
+            // 复活/上线后 getOwner() 恢复 → 自动重链继续（已调伏跟随/未调伏接着调伏战）。
+            self.getNavigation().stop();
+            if (++st.ownerGoneTicks > ShikigamiState.OWNER_GONE_MAX) {
+                self.discard();
+            }
+            return;
+        }
+        st.ownerGoneTicks = 0;
+        if (!owner.isAlive()) {
+            // 主人死亡：式神原地待命，不消散——否则复活后未调伏式神要重新打调伏战、
+            // 已调伏式神也要重新召唤。等主人复活后自动恢复行动。
+            self.getNavigation().stop();
             return;
         }
         // 骑乘模式：玩家驾驶（不执行 AI）
@@ -78,7 +90,7 @@ public final class ShikigamiBehavior {
         if (target == null) {
             followOwner(self, info, owner);
             if (info.getShikigamiType() == ShikigamiType.DEER) {
-                healOwner(self, info, owner);
+                healAllies(self, info, owner);
             }
             return;
         }
@@ -87,7 +99,7 @@ public final class ShikigamiBehavior {
         if (st.tamed && target.distanceToSqr(owner) > LEASH_SQ) {
             followOwner(self, info, owner);
             if (info.getShikigamiType() == ShikigamiType.DEER) {
-                healOwner(self, info, owner);
+                healAllies(self, info, owner);
             }
             return;
         }
@@ -203,17 +215,55 @@ public final class ShikigamiBehavior {
             case DEER -> behaveDeer(self, info, owner, target, level);
             case OX -> behaveOx(self, info, owner, target, level);
             case RABBIT -> behaveMelee(self, info, owner, target, level, 0.8);
-            default -> behaveMelee(self, info, owner, target, level,
-                    info.getShikigamiType() == ShikigamiType.TIGER ? 2.6 : 2.2);
+            case TIGER -> behaveMelee(self, info, owner, target, level, 2.6);
+            case MAHORAGA -> behaveMahoraga(self, info, owner, target, level);
         }
     }
 
     private static void behaveMelee(Mob self, ShikigamiMob info, ServerPlayer owner, LivingEntity target, ServerLevel level, double reach) {
         self.getNavigation().moveTo(target, info.getState().speed);
-        double reachSq = (reach * info.getShikigamiScale()) * (reach * info.getShikigamiScale());
-        if (info.getState().attackCooldown <= 0 && self.distanceToSqr(target) <= reachSq + target.getBbWidth() * target.getBbWidth()) {
+        // 近战判定用固定臂长 + 目标半宽（不再乘体型放大：体型放大后判定距离暴涨，
+        // 会出现十几格外"隔空命中"的远程观感——魔虚罗/怒角体型大尤其明显）
+        double hitRange = reach + target.getBbWidth() * 0.5;
+        if (info.getState().attackCooldown <= 0 && self.distanceToSqr(target) <= hitRange * hitRange) {
             info.getState().attackCooldown = 25;
             meleeHit(self, info, target, level);
+        }
+    }
+
+    /** 魔虚罗：纯近战。目标无法抵达（浮空/隔墙/导航失败）时直接跳跃贴脸追击 */
+    private static void behaveMahoraga(Mob self, ShikigamiMob info, ServerPlayer owner, LivingEntity target, ServerLevel level) {
+        ShikigamiState st = info.getState();
+        if (st.leapTicks > 0) {
+            st.leapTicks--;
+            Vec3 dir = target.position().add(0, target.getBbHeight() * 0.5, 0).subtract(self.position()).normalize();
+            double vx = dir.x * 1.1;
+            double vy = dir.y * 0.6 + 0.35; // 带一点上抛，越过障碍/贴近高台目标
+            double vz = dir.z * 1.1;
+            self.setDeltaMovement(vx, Math.min(1.0, vy), vz);
+            self.getNavigation().stop();
+            if (self.distanceToSqr(target) < 3.0 * 3.0 || st.leapTicks <= 0) {
+                st.leapTicks = 0;
+            }
+            return;
+        }
+        // 近战判定：臂长较大（铁傀儡体型），不随 scale 放大
+        double hitRange = 3.2 + target.getBbWidth() * 0.5;
+        double distSq = self.distanceToSqr(target);
+        if (st.attackCooldown <= 0 && distSq <= hitRange * hitRange) {
+            st.attackCooldown = 20;
+            meleeHit(self, info, target, level);
+            return;
+        }
+        // 能走到就直接冲近战
+        self.getNavigation().moveTo(target, st.speed);
+        // 无法抵达（导航没路 / 目标在头顶高处 / 离得太远且长期没接近）→ 跳脸
+        boolean navStuck = self.getNavigation().isDone() && distSq > hitRange * hitRange;
+        double heightGap = target.getY() - self.getY();
+        boolean tooHigh = heightGap > 1.2 && distSq > 2.5 * 2.5;
+        if ((navStuck || tooHigh) && self.onGround() && st.attackCooldown < 60) {
+            st.leapTicks = 30;
+            st.attackCooldown = 40;
         }
     }
 
@@ -306,7 +356,12 @@ public final class ShikigamiBehavior {
         double dist = self.distanceTo(target);
         if (st.boundTargetId != null && st.boundTargetId.equals(target.getUUID()) && st.boundTicks > 0) {
             st.boundTicks--;
-            self.setPos(target.getX(), target.getY() + target.getBbHeight() * 0.3, target.getZ());
+            // 缠在目标身体中下部（不再是固定 30% 高度——巨型目标（如魔虚罗）30% 处接近头顶，
+            // 小蠹虫贴上去看起来像"飘在头顶高空"）。大目标贴其脚边/下腹，小目标贴 30% 处。
+            double attachY = target.getY() + Math.min(1.2 + self.getBbHeight() * 0.5,
+                    target.getBbHeight() * 0.3);
+            self.setPos(target.getX(), attachY, target.getZ());
+            self.setDeltaMovement(Vec3.ZERO);
             faceTarget(self, target);
             if (st.attackCooldown <= 0) {
                 st.attackCooldown = 15;
@@ -420,25 +475,45 @@ public final class ShikigamiBehavior {
         } else {
             self.getNavigation().stop();
         }
-        healOwner(self, info, owner);
+        healAllies(self, info, owner);
         if (self.distanceToSqr(target) <= 4 * 4 && info.getState().attackCooldown <= 0) {
             info.getState().attackCooldown = 30;
             meleeHit(self, info, target, level);
         }
     }
 
-    private static void healOwner(Mob self, ShikigamiMob info, ServerPlayer owner) {
+    /** 愈羊治疗：主人不满血先奶主人；主人满血则奶同主人受伤的式神（含自己） */
+    private static void healAllies(Mob self, ShikigamiMob info, ServerPlayer owner) {
         ShikigamiState st = info.getState();
         if (st.healCooldown > 0) return;
-        st.healCooldown = 40;
         double amount = 4.0 * ShikigamiType.statScale(owner) + st.damage * 0.3;
+
         if (owner.getHealth() < owner.getMaxHealth()) {
+            st.healCooldown = 40;
             owner.heal((float) Math.max(1, amount));
             ((ServerLevel) self.level()).sendParticles(ParticleTypes.HEART, owner.getX(), owner.getY() + 1.2, owner.getZ(), 4, 0.4, 0.3, 0.4, 0);
+            return;
         }
-        if (self.getHealth() < self.getMaxHealth()) {
-            self.heal(1.0F);
+        // 主人满血：优先奶血量最低的同主人已调伏式神（含自己）
+        LivingEntity best = null;
+        double bestMissing = -1;
+        for (LivingEntity e : self.level().getEntitiesOfClass(LivingEntity.class,
+                AABB.ofSize(self.position(), 24, 24, 24),
+                e -> e instanceof ShikigamiMob sm && sm.getState().ownerId != null
+                        && sm.getState().ownerId.equals(owner.getUUID())
+                        && sm.getState().tamed && e.isAlive()
+                        && e.getHealth() < e.getMaxHealth())) {
+            double missing = e.getMaxHealth() - e.getHealth();
+            if (missing > bestMissing) {
+                bestMissing = missing;
+                best = e;
+            }
         }
+        if (best == null) return; // 无人需要治疗，不消耗冷却（等有人受伤再奶）
+        st.healCooldown = 40;
+        best.heal((float) Math.max(1, amount));
+        ((ServerLevel) self.level()).sendParticles(ParticleTypes.HEART,
+                best.getX(), best.getY() + best.getBbHeight() + 0.3, best.getZ(), 4, 0.4, 0.3, 0.4, 0);
     }
 
     private static void behaveOx(Mob self, ShikigamiMob info, ServerPlayer owner, LivingEntity target, ServerLevel level) {
@@ -446,15 +521,32 @@ public final class ShikigamiBehavior {
         if (st.charging) {
             st.chargeTimer++;
             Vec3 before = self.position();
-            Vec3 dir = target.position().add(0, target.getBbHeight() * 0.5, 0).subtract(self.position()).normalize();
+            // 冲撞方向取水平（目标较高/在空中时不斜向上飞，避免贯牛飘在空中）。
+            Vec3 to = target.position().add(0, target.getBbHeight() * 0.3, 0).subtract(self.position());
+            Vec3 dir = new Vec3(to.x, 0, to.z);
+            if (dir.lengthSqr() < 1e-8) {
+                stopCharge(st);
+                return;
+            }
+            dir = dir.normalize();
             double chargeSpeed = Math.min(1.6, 0.55 + st.speed * 1.6);
-            // 直接驱动位移（冲撞时 travel 被覆写为 no-op，避免重力/摩擦/原版移动控制干扰）
-            self.setDeltaMovement(dir.scale(chargeSpeed));
+            // 直接驱动位移（冲撞时 travel 被覆写为 no-op，避免重力/摩擦/原版移动控制干扰）。
+            // 但保留竖直速度：若冲下坡/被顶起离地，重力会让它落回地面，不会悬空飘着滑行。
+            double vy = self.getDeltaMovement().y;
+            if (!self.onGround() && vy > -0.5) {
+                vy -= 0.08;
+            } else if (self.onGround()) {
+                vy = 0;
+            }
+            self.setDeltaMovement(dir.x * chargeSpeed, vy, dir.z * chargeSpeed);
             self.move(MoverType.SELF, self.getDeltaMovement());
             self.getNavigation().stop();
             double moved = self.position().distanceTo(before);
             st.chargeDist += moved;
-            if (self.distanceToSqr(target) <= 3.2 * 3.2) {
+            // 目标水平距离够近即算命中（含高度差较大的空中目标时用水平距离判定）
+            double hitDx = target.getX() - self.getX();
+            double hitDz = target.getZ() - self.getZ();
+            if (st.attackCooldown <= 0 && hitDx * hitDx + hitDz * hitDz <= 3.2 * 3.2) {
                 double dmg = st.damage * (1.0 + Math.max(0, st.chargeDist) * 0.25);
                 target.hurt(self.damageSources().mobAttack(self), (float) dmg);
                 target.push(dir.x * 1.2, 0.4, dir.z * 1.2);

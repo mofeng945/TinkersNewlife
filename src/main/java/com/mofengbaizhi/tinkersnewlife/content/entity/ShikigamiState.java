@@ -37,7 +37,12 @@ public class ShikigamiState {
     public double chargeDist;
     public int chargeTimer;
     public int adaptation;       // 魔虚罗适应
+    public int leapTicks;        // 魔虚罗跳脸（目标无法抵达时跃击接近）
     public int awayTicks;        // 未调伏脱离判定
+    /** 主人不在线累计 tick（超过上限消散；死亡/暂离期间式神原地待命，复活后自动恢复，
+     *  保证"玩家死后不需要重新调伏"——未调伏式神调伏战进度不因主人死亡重置） */
+    public int ownerGoneTicks;
+    public static final int OWNER_GONE_MAX = 20 * 60 * 10; // 10 分钟无主后清理
 
     // 缩放后数值（召唤时由 initStats 计算）
     public double damage;
