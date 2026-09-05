@@ -227,8 +227,8 @@ public final class ConstructTechnique extends BaseTechnique {
         }
         // 拟造中：移动速度减半
         applySlow(player, true);
-        // 每 5 tick 推送一次进度（进度条按剩余 tick 渲染）
-        if (now % 5 == 0) {
+        // 每 tick 推送剩余 tick（进度条毫秒插值本地推进，低频推送会跳变）
+        if (now % 2 == 0) {
             syncForge(player, now);
         }
         // 每 20 tick 播一点构筑粒子
@@ -238,14 +238,15 @@ public final class ConstructTechnique extends BaseTechnique {
         }
     }
 
-    /** 推送拟造进度到客户端（end=0 表示清除进度条） */
+    /** 推送拟造进度到客户端（remaining<=0 且 total<=0 表示清除进度条） */
     private static void syncForge(ServerPlayer player, long now) {
         var data = player.getPersistentData();
         long end = data.getLong(KEY_FORGE_END);
         String itemId = data.getString(KEY_FORGE_ITEM);
-        long start = end - data.getLong(KEY_FORGE_TOTAL);
+        long total = data.getLong(KEY_FORGE_TOTAL);
+        long remaining = Math.max(0, end - now);
         TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-                new com.mofengbaizhi.tinkersnewlife.network.curse.PacketSyncForge(start, end, itemId));
+                new com.mofengbaizhi.tinkersnewlife.network.curse.PacketSyncForge(remaining, total, itemId));
     }
 
     /** 拟造完成：按记录发放临时物，清除状态并恢复速度 */

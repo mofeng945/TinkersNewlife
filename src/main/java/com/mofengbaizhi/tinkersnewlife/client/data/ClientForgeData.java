@@ -1,6 +1,5 @@
 package com.mofengbaizhi.tinkersnewlife.client.data;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.Gui;
@@ -11,70 +10,82 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.registries.ForgeRegistries;
 
 /**
- * 构筑术式拟造进度缓存 + HUD 进度条渲染（屏幕中下方）。
+ * 构筑术式拟造进度缓存 + HUD 进度条渲染（屏幕中央偏上）。
  * <p>
- * 数据由服务端 {@code PacketSyncForge} 推送（拟造期间每 5 tick 一次），
- * 客户端以本地 gameTime 计算剩余时间；到期（end 已过）自动不再绘制。
+ * 服务端推送 剩余tick + 总tick；客户端以 {@link System#currentTimeMillis()} 毫秒插值
+ * 本地平滑推进（1 tick = 50ms），不依赖客户端 gameTime 同步。
  */
 public class ClientForgeData {
 
-    /** 拟造开始 gameTime */
-    private static long start;
-    /** 拟造结束 gameTime */
-    private static long end;
-    /** 目标物品注册名（空 = 未拟造） */
+    /** 总耗时 tick（0 = 未在拟造） */
+    private static long total = 0;
+    /** 最近一次同步时的剩余 tick */
+    private static long remaining = 0;
+    /** 最近一次同步的毫秒时间戳 */
+    private static long lastSyncMs = 0;
+    /** 目标物品注册名 */
     private static String itemId = "";
 
-    public static void update(long startIn, long endIn, String itemIdIn) {
-        start = startIn;
-        end = endIn;
+    /** 收到进度同步（remaining<=0 且 total<=0 → 清除） */
+    public static void update(long remainingIn, long totalIn, String itemIdIn) {
+        if (totalIn <= 0) {
+            total = 0;
+            remaining = 0;
+            itemId = "";
+            return;
+        }
+        total = totalIn;
+        remaining = Math.max(0, remainingIn);
         itemId = itemIdIn == null ? "" : itemIdIn;
+        lastSyncMs = System.currentTimeMillis();
+    }
+
+    /** 当前剩余 tick（毫秒插值本地推进；已结束返回 <=0） */
+    public static long remainingTicks() {
+        if (total <= 0) return 0;
+        long elapsedMs = System.currentTimeMillis() - lastSyncMs;
+        long left = remaining - elapsedMs / 50L;
+        return Math.max(0, left);
     }
 
     public static boolean isForging() {
-        long now = Minecraft.getInstance().level != null ? Minecraft.getInstance().level.getGameTime() : 0;
-        return end > 0 && now < end;
-    }
-
-    public static String getItemId() {
-        return itemId;
+        return total > 0 && remainingTicks() > 0;
     }
 
     /** Forge GUI Overlay 渲染入口（registerAboveAll） */
     public static void render(Gui gui, GuiGraphics graphics, float partialTick, int screenWidth, int screenHeight) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) return;
-        long now = mc.level.getGameTime();
-        if (end <= 0 || now >= end) return;
-        long total = Math.max(1, end - start);
-        long left = end - now;
-        double progress = 1.0 - (double) left / (double) total;
-        progress = Math.max(0.0, Math.min(1.0, progress));
+        if (mc.player == null) return;
+        if (total <= 0) return;
+        long left = remainingTicks();
+        if (left <= 0) return; // 已结束（清除包或自然结束）
 
         Font font = mc.font;
-
-        int barW = 150;
-        int barH = 6;
+        int barW = 170;
+        int barH = 7;
         int cx = screenWidth / 2;
         int barX = cx - barW / 2;
-        int barY = screenHeight - 46; // 快捷栏上方一点
+        // 屏幕中央偏上（快捷栏与经验条之间明显位置）
+        int barY = screenHeight / 2 - 40;
 
         // 标题：构筑拟造中 · 目标名
         String name = itemName();
         Component title = Component.translatable("hud.tinkersnewlife.forge", name);
-        graphics.drawString(font, title, cx - font.width(title) / 2, barY - 12, 0xFFD4924B);
+        graphics.drawString(font, title, cx - font.width(title) / 2, barY - 13, 0xFFD4924B);
 
-        // 背景槽
-        graphics.fill(barX - 1, barY - 1, barX + barW + 1, barY + barH + 1, 0xAA000000);
-        graphics.fill(barX, barY, barX + barW, barY + barH, 0x66333333);
+        // 背景槽 + 边框
+        graphics.fill(barX - 1, barY - 1, barX + barW + 1, barY + barH + 1, 0xFF000000);
+        graphics.fill(barX, barY, barX + barW, barY + barH, 0x66000000);
         // 进度填充（浅金）
+        double progress = 1.0 - (double) left / (double) Math.max(1, total);
+        progress = Math.max(0.0, Math.min(1.0, progress));
         int fill = (int) Math.round(barW * progress);
         if (fill > 0) {
             graphics.fill(barX, barY, barX + fill, barY + barH, 0xFFE8B84B);
         }
-        // 剩余秒
-        Component remain = Component.literal("§7" + (left / 20 + 1) + "s");
-        graphics.drawString(font, remain, cx + barW / 2 + 6, barY, 0xFFFFFF);
+        // 剩余秒数（右侧）
+        Component remain = Component.literal("§f" + Math.max(1, (left + 19) / 20) + "s");
+        graphics.drawString(font, remain, cx + barW / 2 + 7, barY - 1, 0xFFFFFF);
     }
 
     private static String itemName() {
