@@ -143,14 +143,16 @@ public final class ModularStaffGoety {
         }
     }
 
-    // ================= 长按自动连发（转圈） =================
+    // ================= 自动连招（开关式：客户端长按 5s 开启，再按右键解除） =================
+    // 施法节奏由客户端"模拟按住右键"(KeyMapping.setDown) 驱动：瞬发走原版自动连点、
+    // 咏唱/蓄力自然引导至满、超长持续段(≥30s)由客户端引导 3s 后主动释放；服务端只管施法结束自动切下一聚晶。
 
-    /** 连发模式中的玩家（客户端长按右键 ≥ 6 tick 进入，松开退出） */
+    /** 连招模式中的玩家 */
     private static final Set<UUID> AUTOCAST = ConcurrentHashMap.newKeySet();
     /** 施法结束待切换下一聚晶（等使用状态结束后的下一 tick 落地） */
     private static final Set<UUID> PENDING_ADVANCE = ConcurrentHashMap.newKeySet();
 
-    /** 客户端长按进入/退出连发模式；进入时先请求切到下一个聚晶（手动首发已放完） */
+    /** 客户端开启/解除连招；开启时先请求切到下一个聚晶（5s 长按期间的手动首发已放完） */
     public static void setAutoCast(ServerPlayer player, boolean on) {
         UUID id = player.getUUID();
         if (on) {
@@ -170,25 +172,6 @@ public final class ModularStaffGoety {
     public static void requestAdvance(ServerPlayer player) {
         if (AUTOCAST.contains(player.getUUID())) {
             PENDING_ADVANCE.add(player.getUUID());
-        }
-    }
-
-    /** 连发脉冲：走服务端完整右键管线再施一发（真法杖原生；冷却/灵魂不足自然失败） */
-    public static void autoCastPulse(ServerPlayer player) {
-        if (!AUTOCAST.contains(player.getUUID())) return;
-        if (PENDING_ADVANCE.contains(player.getUUID())) return; // 切换未落地前不重复上一发
-        ItemStack staff = heldStaff(player);
-        if (staff == null) return;
-        if (getMode(staff) != MODE_GOETY) return;
-        if (player.isUsingItem()) return; // 引导中由 tick 自动衔接，不发脉冲
-        net.minecraft.world.InteractionHand hand =
-                player.getMainHandItem() == staff ? net.minecraft.world.InteractionHand.MAIN_HAND
-                        : (player.getOffhandItem() == staff ? net.minecraft.world.InteractionHand.OFF_HAND : null);
-        if (hand == null) return;
-        try {
-            player.gameMode.useItem(player, player.level(), player.getItemInHand(hand), hand);
-        } catch (Throwable t) {
-            TinkersNewlife.LOGGER.warn("[魔杖·巫法] 连发脉冲失败：", t);
         }
     }
 
@@ -395,7 +378,7 @@ public final class ModularStaffGoety {
         tickCasting(sp);
         // Spell 属性增益：手持真法杖(巫法模式) → 按法杖强度刷新；否则清残留（值未变时内部跳过）
         refreshSpellAttrsTick(sp);
-        // 连发切换落地：施法结束的下一 tick（使用状态已结束）切到下一个聚晶
+        // 连招切换落地：施法结束的下一 tick（使用状态已结束）切到下一个聚晶
         if (PENDING_ADVANCE.remove(sp.getUUID())) {
             if (AUTOCAST.contains(sp.getUUID()) && !sp.isUsingItem()) {
                 advanceFocusSilent(sp);
@@ -419,23 +402,23 @@ public final class ModularStaffGoety {
         }
     }
 
-    /** 登出：换回原魔杖，清理引导/连发状态 */
+    /** 登出：换回原魔杖，清理引导/连招状态 */
     @SubscribeEvent
     public static void onLogout(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer sp) {
             restoreHand(sp);
             CASTING_ORIGINAL.remove(sp.getUUID());
-            AUTOCAST.remove(sp.getUUID());
-            PENDING_ADVANCE.remove(sp.getUUID());
+            setAutoCast(sp, false);
         }
     }
 
-    /** 死亡重生：瞬态 Spell 属性随旧实体销毁，清缓存让新实体按需重挂 */
+    /** 死亡重生：瞬态 Spell 属性随旧实体销毁，清缓存让新实体按需重挂；连招一并清 */
     @SubscribeEvent
     public static void onPlayerClone(net.minecraftforge.event.entity.player.PlayerEvent.Clone event) {
         if (event.getEntity() instanceof ServerPlayer sp) {
             if (isGoetyLoaded()) {
                 com.mofengbaizhi.tinkersnewlife.content.item.GoetyStaffItem.clearSpellAttrs(sp);
+                setAutoCast(sp, false);
             }
         }
     }

@@ -10,7 +10,7 @@ import java.util.function.Supplier;
 /**
  * 客户端→服务端：模块化魔杖·巫法 操作。
  * action: 0=打开聚晶包 1=循环装备聚晶 2=放入聚晶(arg=背包聚晶序号) 3=取出聚晶(arg=包内槽位)
- *         4=包内交换(arg=a*10+b) 5=连发脉冲 6=连发开 7=连发关
+ *         4=包内交换(arg=a*10+b) 6=自动连招开 7=自动连招关
  */
 public class PacketStaffGoetyAction {
 
@@ -42,7 +42,6 @@ public class PacketStaffGoetyAction {
                 case 2 -> ModularStaffGoety.putFocus(player, packet.arg);
                 case 3 -> ModularStaffGoety.takeFocus(player, packet.arg);
                 case 4 -> ModularStaffGoety.swapFocus(player, packet.arg / 10, packet.arg % 10);
-                case 5 -> ModularStaffGoety.autoCastPulse(player);
                 case 6 -> ModularStaffGoety.setAutoCast(player, true);
                 case 7 -> ModularStaffGoety.setAutoCast(player, false);
                 default -> {

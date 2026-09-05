@@ -151,9 +151,10 @@ public class ClientEventHandler {
         private static boolean lastTechniqueDown = false;
         /** 术式反转按键上一次状态（F 键边沿检测） */
         private static boolean lastReverseDown = false;
-        /** 魔杖巫法长按自动连发状态 */
-        private static int staffAutoTicks = 0;
-        private static boolean staffAutoWas = false;
+        /** 魔杖巫法自动连招：长按右键 5s(100tick) 开启；连招中无需按住，再按真实右键解除 */
+        private static int staffComboTicks = 0;
+        private static boolean staffComboOn = false;
+        private static boolean lastRealUseDown = false;
 
         @SubscribeEvent
         public static void onClientTick(TickEvent.ClientTickEvent event) {
@@ -211,50 +212,87 @@ public class ClientEventHandler {
             }
             lastReverseDown = reverseDown;
 
-            // ⭐ 魔杖巫法：长按右键自动连发转圈（每放完一发服务端自动切下一个聚晶）
+            // ⭐ 魔杖巫法：长按右键 5s 开启自动连招（开关式，连招中无需按住，模拟按住驱动原版连点/引导）
             tickStaffAutoCast(player);
         }
 
-        /** 长按右键连发：按住 ≥ RAMP tick 进入连发模式（发 autoOn），之后每 PULSE tick 发一次脉冲；
-         *  吟唱引导中(usingItem)不发脉冲，引导结束由服务端 tick 自动衔接下一发；松开/收杖/开界面即退出。 */
-        private static final int AUTO_RAMP = 6;
-        private static final int AUTO_PULSE = 3;
+        /** 连招开启长按阈值：5s = 100 tick；持续型引导 3s = 60 tick 后客户端主动释放切下一个 */
+        private static final int COMBO_ENABLE_TICKS = 100;
+        private static final int SUSTAIN_RELEASE_ELAPSED = 60;
+        private static final int SUSTAIN_DURATION_THRESHOLD = 600;
 
         private static void tickStaffAutoCast(LocalPlayer player) {
-            boolean goetyHeld = false;
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            boolean goetyHeld = holdingGoetyStaff(player);
+            // 真实右键（硬件键）状态：不受我们 setDown 伪装影响
+            boolean realDown = com.mojang.blaze3d.platform.InputConstants.isKeyDown(
+                    mc.getWindow().getWindow(), mc.options.keyUse.getKey().getValue());
+
+            if (staffComboOn) {
+                // —— 连招中 ——
+                if (!goetyHeld || mc.screen != null || player.isDeadOrDying()) {
+                    turnComboOff(); // 收杖/开界面/死亡 → 解除
+                } else {
+                    // 模拟按住右键：原版自动连点瞬发、咏唱/蓄力自然引导至满蓄释放
+                    mc.options.keyUse.setDown(true);
+                    // 持续/蓄力超长段：引导 3s 后主动释放结束该段（服务端自动切下一聚晶后由连点续上）
+                    if (player.isUsingItem()) {
+                        int duration = player.getUseItem().getUseDuration();
+                        int elapsed = duration - player.getUseItemRemainingTicks();
+                        if (duration >= SUSTAIN_DURATION_THRESHOLD && elapsed >= SUSTAIN_RELEASE_ELAPSED) {
+                            mc.gameMode.releaseUsingItem(player);
+                        }
+                    }
+                }
+                // 真实右键"松开后再按下"→ 解除连招
+                if (realDown && !lastRealUseDown) {
+                    turnComboOff();
+                }
+                lastRealUseDown = realDown;
+            } else {
+                // —— 未连招：长按真实右键满 5s 开启 ——
+                if (goetyHeld && realDown && mc.screen == null && !player.isDeadOrDying()) {
+                    staffComboTicks++;
+                    if (staffComboTicks >= COMBO_ENABLE_TICKS) {
+                        staffComboTicks = 0;
+                        staffComboOn = true;
+                        mc.options.keyUse.setDown(true); // 立即进入"按住"态（松开真键也继续）
+                        TinkersNewlife.CHANNEL.sendToServer(
+                                new com.mofengbaizhi.tinkersnewlife.network.curse.PacketStaffGoetyAction(6, 0));
+                    }
+                } else if (!realDown) {
+                    staffComboTicks = 0;
+                }
+                lastRealUseDown = realDown;
+            }
+        }
+
+        private static void turnComboOff() {
+            if (!staffComboOn) {
+                staffComboTicks = 0;
+                return;
+            }
+            staffComboOn = false;
+            staffComboTicks = 0;
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            mc.options.keyUse.setDown(false);
+            TinkersNewlife.CHANNEL.sendToServer(
+                    new com.mofengbaizhi.tinkersnewlife.network.curse.PacketStaffGoetyAction(7, 0));
+        }
+
+        /** 是否正手持巫法模式魔杖（主/副手） */
+        private static boolean holdingGoetyStaff(LocalPlayer player) {
             ItemStack main = player.getMainHandItem();
             ItemStack off = player.getOffhandItem();
             if (main.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.ModularStaffItem) {
-                goetyHeld = com.mofengbaizhi.tinkersnewlife.content.goety.ModularStaffGoety.getMode(main)
-                        == com.mofengbaizhi.tinkersnewlife.content.goety.ModularStaffGoety.MODE_GOETY;
-            } else if (off.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.ModularStaffItem) {
-                goetyHeld = com.mofengbaizhi.tinkersnewlife.content.goety.ModularStaffGoety.getMode(off)
+                return com.mofengbaizhi.tinkersnewlife.content.goety.ModularStaffGoety.getMode(main)
                         == com.mofengbaizhi.tinkersnewlife.content.goety.ModularStaffGoety.MODE_GOETY;
             }
-            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-            boolean holding = goetyHeld && mc.options.keyUse.isDown()
-                    && mc.screen == null && !player.isDeadOrDying();
-            if (holding) {
-                staffAutoTicks++;
-                if (staffAutoTicks == AUTO_RAMP) {
-                    // 长按满阈值 → 进入连发（服务端同时先切到下一聚晶，首轮脉冲即从下一发开始）
-                    TinkersNewlife.CHANNEL.sendToServer(
-                            new com.mofengbaizhi.tinkersnewlife.network.curse.PacketStaffGoetyAction(6, 0));
-                    staffAutoWas = true;
-                } else if (staffAutoTicks > AUTO_RAMP
-                        && !player.isUsingItem()
-                        && (staffAutoTicks - AUTO_RAMP) % AUTO_PULSE == 0) {
-                    TinkersNewlife.CHANNEL.sendToServer(
-                            new com.mofengbaizhi.tinkersnewlife.network.curse.PacketStaffGoetyAction(5, 0));
-                }
-            } else if (staffAutoWas) {
-                TinkersNewlife.CHANNEL.sendToServer(
-                        new com.mofengbaizhi.tinkersnewlife.network.curse.PacketStaffGoetyAction(7, 0));
-                staffAutoWas = false;
-                staffAutoTicks = 0;
-            } else {
-                staffAutoTicks = 0;
+            if (off.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.ModularStaffItem) {
+                return com.mofengbaizhi.tinkersnewlife.content.goety.ModularStaffGoety.getMode(off)
+                        == com.mofengbaizhi.tinkersnewlife.content.goety.ModularStaffGoety.MODE_GOETY;
             }
+            return false;
         }
 
         /** 投射咒法罚站 / 傀儡操控：取消玩家自身攻击/交互输入（傀儡动作由输入包驱动） */
@@ -357,18 +395,6 @@ public class ClientEventHandler {
             if (player == null) return;
             if (!holdingGoetyStaff(player)) return;
             closeIronSpellWheel();
-        }
-
-        private static boolean holdingGoetyStaff(LocalPlayer player) {
-            ItemStack main = player.getMainHandItem();
-            ItemStack off = player.getOffhandItem();
-            boolean has = main.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.ModularStaffItem
-                    || off.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.ModularStaffItem;
-            if (!has) return false;
-            ItemStack staff = main.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.ModularStaffItem
-                    ? main : off;
-            return com.mofengbaizhi.tinkersnewlife.content.goety.ModularStaffGoety.getMode(staff)
-                    == com.mofengbaizhi.tinkersnewlife.content.goety.ModularStaffGoety.MODE_GOETY;
         }
 
         /** 反射关闭铁魔法法术轮盘（不引入编译依赖；找不到类/字段则静默） */
