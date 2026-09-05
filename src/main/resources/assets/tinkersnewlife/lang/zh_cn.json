@@ -654,6 +654,7 @@
   "message.tinkersnewlife.staff.no_focus": "§7聚晶包为空：按 J 放入聚晶",
   "message.tinkersnewlife.staff.focus_equipped": "§5已装备聚晶：%s",
   "message.tinkersnewlife.staff.pouch_full": "§c聚晶包已满",
+  "message.tinkersnewlife.staff.focus_stored": "§5已放入聚晶包：%s",
   "message.tinkersnewlife.staff.no_goety_wand": "§c未找到可用的诡厄魔杖以释放法术",
   "message.tinkersnewlife.staff.cast_failed": "§c聚晶施法失败（可能灵魂不足/冷却中）"
 }

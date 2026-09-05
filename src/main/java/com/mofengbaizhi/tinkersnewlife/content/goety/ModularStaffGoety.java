@@ -39,8 +39,8 @@ public final class ModularStaffGoety {
 
     private static final ResourceLocation KEY_MODE = key("staff_mode");
     private static final ResourceLocation KEY_IDX = key("staff_focus_idx");
-    private static final ResourceLocation KEY_UID = key("staff_uid");
-    private static final String PLAYER_KEY_PREFIX = "tnl_staff_pouch_";
+    /** 聚晶包存玩家持久数据固定键（先排除"uid 键漂移"这类变量） */
+    private static final String PLAYER_KEY = "tnl_staff_pouch";
     private static final String TAG_ITEMS = "items";
 
     private ModularStaffGoety() {}
@@ -54,17 +54,6 @@ public final class ModularStaffGoety {
     }
 
     // ================= 魔杖身份 / 模式 =================
-
-    /** 每把魔杖一个稳定 uid（ModDataNBT int，与亲和存储同机制） */
-    private static int uidOf(ItemStack stack) {
-        ToolStack t = tool(stack);
-        if (t == null) return 0;
-        if (!t.getPersistentData().contains(KEY_UID)) {
-            t.getPersistentData().putInt(KEY_UID, ThreadLocalRandom.current().nextInt(1, Integer.MAX_VALUE));
-            t.updateStack(stack);
-        }
-        return t.getPersistentData().getInt(KEY_UID);
-    }
 
     public static int getMode(ItemStack stack) {
         ToolStack t = tool(stack);
@@ -92,15 +81,11 @@ public final class ModularStaffGoety {
 
     // ================= 聚晶包（玩家持久数据） =================
 
-    private static String playerKey(ItemStack staff) {
-        return PLAYER_KEY_PREFIX + uidOf(staff);
-    }
-
     private static List<ItemStack> getFoci(ServerPlayer player, ItemStack staff) {
         List<ItemStack> list = new ArrayList<>();
         CompoundTag root = player.getPersistentData();
-        if (root.contains(playerKey(staff), Tag.TAG_COMPOUND)) {
-            CompoundTag box = root.getCompound(playerKey(staff));
+        if (root.contains(PLAYER_KEY, Tag.TAG_COMPOUND)) {
+            CompoundTag box = root.getCompound(PLAYER_KEY);
             if (box.contains(TAG_ITEMS, Tag.TAG_LIST)) {
                 ListTag tag = box.getList(TAG_ITEMS, Tag.TAG_COMPOUND);
                 for (int i = 0; i < tag.size() && i < POUCH_SLOTS; i++) {
@@ -122,7 +107,7 @@ public final class ModularStaffGoety {
         }
         CompoundTag box = new CompoundTag();
         box.put(TAG_ITEMS, tag);
-        root.put(playerKey(staff), box);
+        root.put(PLAYER_KEY, box);
     }
 
     private static ItemStack getEquippedFocus(ServerPlayer player, ItemStack staff) {
@@ -218,6 +203,8 @@ public final class ModularStaffGoety {
         if (!consumeFromInventory(player, focus)) return;
         foci.set(slot, focus.copy());
         saveFoci(player, staff, foci);
+        player.displayClientMessage(Component.translatable("message.tinkersnewlife.staff.focus_stored",
+                focus.getHoverName()), true);
         syncTo(player, staff, false);
     }
 
