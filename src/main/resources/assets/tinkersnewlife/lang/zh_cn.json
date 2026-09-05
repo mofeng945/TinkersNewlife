@@ -470,6 +470,7 @@
   "hud.tinkersnewlife.technique": "§b术式: %s",
   "hud.tinkersnewlife.domain_active": "§e领域展开中",
   "hud.tinkersnewlife.infinite": "§d咒力无限",
+  "hud.tinkersnewlife.forge": "§6构筑拟造中：%s",
   "pattern.tinkersnewlife.curse_core": "咒力核心",
   "screen.tinkersnewlife.ten_shadows.cost_value": "消耗 %s 咒力",
   "modifier.tinkersnewlife.black_bird": "黑鸟操术",

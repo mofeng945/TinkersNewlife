@@ -67,11 +67,13 @@ public class ClientEventHandler {
         });
     }
 
-    /** 注册咒力 HUD 覆盖层 + 傀儡血条 HUD */
+    /** 注册咒力 HUD 覆盖层 + 傀儡血条 HUD + 构筑拟造进度条 */
     @SubscribeEvent
     public static void registerOverlays(RegisterGuiOverlaysEvent event) {
         event.registerAboveAll("curse_hud", ClientCurseData::render);
         event.registerAboveAll("puppet_hud", com.mofengbaizhi.tinkersnewlife.client.hud.PuppetHudRenderer::render);
+        event.registerAboveAll("forge_hud",
+                com.mofengbaizhi.tinkersnewlife.client.data.ClientForgeData::render);
     }
 
     @SubscribeEvent

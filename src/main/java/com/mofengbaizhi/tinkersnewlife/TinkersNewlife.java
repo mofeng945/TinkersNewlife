@@ -282,6 +282,10 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenConstructScreen::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenConstructScreen::new,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenConstructScreen::handle);
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketSyncForge.class,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketSyncForge::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketSyncForge::new,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketSyncForge::handle);
 
         // 实体属性（式神等生物实体）
         modEventBus.addListener(TinkersNewlife::onRegisterEntityAttributes);

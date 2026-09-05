@@ -70,6 +70,8 @@ public final class ConstructTechnique extends BaseTechnique {
     private static final String KEY_FORGE_ITEM = "tinkersnewlife.construct_forge_item";
     /** 反转拟造中：完成时刻 gameTime（持久数据键） */
     private static final String KEY_FORGE_END = "tinkersnewlife.construct_forge_end";
+    /** 反转拟造中：总耗时 tick（进度条用） */
+    private static final String KEY_FORGE_TOTAL = "tinkersnewlife.construct_forge_total";
     /** 拟造减速属性修饰符 UUID（固定） */
     private static final UUID FORGE_SLOW_UUID = UUID.fromString("7f3a9c1e-2b4d-4f6a-8c9e-0a1b2c3d4e5f");
 
@@ -112,7 +114,14 @@ public final class ConstructTechnique extends BaseTechnique {
         if (data.contains(KEY_FORGE_END)) {
             data.remove(KEY_FORGE_END);
             data.remove(KEY_FORGE_ITEM);
+            data.remove(KEY_FORGE_TOTAL);
             applySlow(player, false);
+            // 登出后客户端进度条由下次登录自然清除；此处仍尝试推送（若尚未断开）
+            try {
+                TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                        new com.mofengbaizhi.tinkersnewlife.network.curse.PacketSyncForge(0, 0, ""));
+            } catch (Throwable ignored) {
+            }
         }
     }
 
@@ -213,7 +222,7 @@ public final class ConstructTechnique extends BaseTechnique {
     }
 
     /**
-     * 每 tick 驱动：拟造中 → 施加半速；到期 → 发放临时物并解除状态。
+     * 每 tick 驱动：拟造中 → 施加半速并同步进度；到期 → 发放临时物并解除状态。
      */
     private void tickForge(ServerPlayer player, long now) {
         var data = player.getPersistentData();
@@ -225,11 +234,25 @@ public final class ConstructTechnique extends BaseTechnique {
         }
         // 拟造中：移动速度减半
         applySlow(player, true);
+        // 每 5 tick 推送一次进度（进度条按剩余 tick 渲染）
+        if (now % 5 == 0) {
+            syncForge(player, now);
+        }
         // 每 20 tick 播一点构筑粒子
         if (now % 20 == 0) {
             player.serverLevel().sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD,
                     player.getX(), player.getY() + 0.5, player.getZ(), 2, 0.3, 0.4, 0.3, 0);
         }
+    }
+
+    /** 推送拟造进度到客户端（end=0 表示清除进度条） */
+    private static void syncForge(ServerPlayer player, long now) {
+        var data = player.getPersistentData();
+        long end = data.getLong(KEY_FORGE_END);
+        String itemId = data.getString(KEY_FORGE_ITEM);
+        long start = end - data.getLong(KEY_FORGE_TOTAL);
+        TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                new com.mofengbaizhi.tinkersnewlife.network.curse.PacketSyncForge(start, end, itemId));
     }
 
     /** 拟造完成：按记录发放临时物，清除状态并恢复速度 */
@@ -238,7 +261,11 @@ public final class ConstructTechnique extends BaseTechnique {
         String itemId = data.getString(KEY_FORGE_ITEM);
         data.remove(KEY_FORGE_END);
         data.remove(KEY_FORGE_ITEM);
+        data.remove(KEY_FORGE_TOTAL);
         applySlow(player, false);
+        // 清除客户端进度条
+        TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                new com.mofengbaizhi.tinkersnewlife.network.curse.PacketSyncForge(0, 0, ""));
         ResourceLocation id = ResourceLocation.tryParse(itemId);
         Item item = id == null ? null : ForgeRegistries.ITEMS.getValue(id);
         if (item == null || item == Items.AIR) return;
@@ -265,7 +292,11 @@ public final class ConstructTechnique extends BaseTechnique {
         if (!data.contains(KEY_FORGE_END)) return;
         data.remove(KEY_FORGE_END);
         data.remove(KEY_FORGE_ITEM);
+        data.remove(KEY_FORGE_TOTAL);
         applySlow(player, false);
+        // 清除客户端进度条
+        TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                new com.mofengbaizhi.tinkersnewlife.network.curse.PacketSyncForge(0, 0, ""));
         player.serverLevel().sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE,
                 player.getX(), player.getY() + 1.0, player.getZ(), 12, 0.4, 0.5, 0.4, 0);
         player.displayClientMessage(Component.translatable(
@@ -618,6 +649,9 @@ public final class ConstructTechnique extends BaseTechnique {
         var data = player.getPersistentData();
         data.putString(KEY_FORGE_ITEM, itemId);
         data.putLong(KEY_FORGE_END, player.serverLevel().getGameTime() + cost);
+        data.putLong(KEY_FORGE_TOTAL, cost);
+        // 立即推送进度条（start=now, end=now+cost）
+        syncForge(player, player.serverLevel().getGameTime());
         player.serverLevel().playSound(null, player.getX(), player.getY(), player.getZ(),
                 net.minecraft.sounds.SoundEvents.ENCHANTMENT_TABLE_USE,
                 net.minecraft.sounds.SoundSource.PLAYERS, 0.6F, 1.4F);
