@@ -216,7 +216,7 @@ public final class ConstructTechnique extends BaseTechnique {
         // 弹匣容量作为补给目标；已满则不动作
         int target = Math.max(1, magSize);
         if (have >= target) return;
-        int need = target - have;
+        int need = Math.min(target - have, 64); // 单次凝结不超过弹药堆叠上限，余量下个 tick 再补
         long totalCost = (long) need * ammoUnitCost(player);
         if (totalCost > Integer.MAX_VALUE) return;
         if (!CursePowerHelper.isCurseInfinite(player)
@@ -306,12 +306,12 @@ public final class ConstructTechnique extends BaseTechnique {
         }
     }
 
-    /** IGun.getGunId(ItemStack) → gunId RL */
+    /** IGun.getGunId(ItemStack) → gunId RL（this=枪 Item，参数=枪栈） */
     private static ResourceLocation taczGetGunId(ItemStack gun) {
         try {
             if (taczIGunClass == null) taczIGunClass = Class.forName("com.tacz.guns.api.item.IGun");
             if (taczGetGunId == null) taczGetGunId = taczIGunClass.getMethod("getGunId", ItemStack.class);
-            Object rl = taczGetGunId.invoke(gun);
+            Object rl = taczGetGunId.invoke(gun.getItem(), gun);
             return rl instanceof ResourceLocation loc ? loc : null;
         } catch (Throwable t) {
             return null;
@@ -374,15 +374,14 @@ public final class ConstructTechnique extends BaseTechnique {
         }
     }
 
-    /** 判断某物品是否为该弹药类型的 TACZ 弹药（AmmoItem，NBT AmmoId 匹配） */
+    /** 判断某物品是否为该弹药类型的 TACZ 弹药（AmmoItem，NBT AmmoId 匹配；this=弹药 Item，参数=栈） */
     private static boolean isTaczMatchingAmmo(ItemStack stack, ResourceLocation ammoId) {
         if (stack.isEmpty()) return false;
         try {
-            if (taczIGunClass == null) taczIGunClass = Class.forName("com.tacz.guns.api.item.IGun");
             Class<?> iAmmo = Class.forName("com.tacz.guns.api.item.IAmmo");
             if (!iAmmo.isInstance(stack.getItem())) return false;
             if (taczAmmoGetAmmoId == null) taczAmmoGetAmmoId = iAmmo.getMethod("getAmmoId", ItemStack.class);
-            Object rl = taczAmmoGetAmmoId.invoke(stack);
+            Object rl = taczAmmoGetAmmoId.invoke(stack.getItem(), stack);
             return ammoId.equals(rl);
         } catch (Throwable t) {
             return false;
@@ -421,6 +420,10 @@ public final class ConstructTechnique extends BaseTechnique {
     public static int forge(ServerPlayer player, String itemId) {
         if (!Modifiers.CONSTRUCT.getId().equals(com.mofengbaizhi.tinkersnewlife.content.curse.TechniqueHandler.getSelectedTechniqueId(player))) {
             return 1;
+        }
+        // ⭐ 熔断期间禁止拟造（与反转键一致）
+        if (CursePowerHelper.isBurnout(player)) {
+            return 5;
         }
         ResourceLocation id = ResourceLocation.tryParse(itemId);
         if (id == null) return 1;

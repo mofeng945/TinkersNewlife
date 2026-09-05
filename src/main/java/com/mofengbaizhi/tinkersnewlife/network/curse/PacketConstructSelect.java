@@ -38,6 +38,10 @@ public class PacketConstructSelect {
             } else if (result == 3) {
                 player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
                         "message.tinkersnewlife.technique.no_curse"), true);
+            } else if (result == 5) {
+                player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                        "message.tinkersnewlife.burnout.active",
+                        com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper.getBurnoutRemainingSeconds(player)), true);
             }
         });
         ctx.get().setPacketHandled(true);
