@@ -196,6 +196,10 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketPuppetInput::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketPuppetInput::new,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketPuppetInput::handle);
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketNueInput.class,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketNueInput::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketNueInput::new,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketNueInput::handle);
         registerPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketPuppetSelect.class,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketPuppetSelect::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketPuppetSelect::new,

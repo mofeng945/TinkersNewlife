@@ -124,9 +124,16 @@ public enum ShikigamiType {
         return Math.max(1, baseDamage * statScale(player));
     }
 
-    /** 本类型缩放后的移速 */
+    /** 本类型缩放后的移速。
+     * <p>实际移动 ∝ st.speed²（MoveControl: setSpeed = 导航速度参数 × MOVEMENT_SPEED 属性，
+     * 式神把 st.speed 同时用作两者），因此把 st.speed 限制在 √(2×玩家疾跑速度当量) 以内，
+     * 使式神实际速度不超过玩家疾跑速度的 2 倍，避免跑太快跑丢/玩家追不上。 */
     public double scaledSpeed(ServerPlayer player) {
-        return Math.max(0.05, baseSpeed * speedScale(player));
+        double raw = baseSpeed * speedScale(player);
+        double playerSpeed = player.getAttributeValue(
+                net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
+        double cap = Math.sqrt(2.0 * playerSpeed * 1.3);
+        return Math.max(0.05, Math.min(raw, cap));
     }
 
     /** 本类型缩放后的渲染体型 */

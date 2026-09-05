@@ -200,6 +200,14 @@ public class ClientEventHandler {
                         input.forwardImpulse, input.leftImpulse, input.jumping, input.shiftKeyDown,
                         left, right, player.getYRot(), player.getXRot()));
             }
+            // ⭐ 鵺骑乘：每 tick 上报空格/潜行（原版 PlayerRideableJumping 命令链对非马坐骑只发 START
+            //    不发 STOP，会导致跳跃标志粘滞、骑乘一直向上飞，故改走显式输入包）
+            if (player.getVehicle() instanceof com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiPhantom nue
+                    && nue.getShikigamiType() == com.mofengbaizhi.tinkersnewlife.content.curse.shikigami.ShikigamiType.NUE) {
+                net.minecraft.client.player.Input input = player.input;
+                TinkersNewlife.CHANNEL.sendToServer(new com.mofengbaizhi.tinkersnewlife.network.curse.PacketNueInput(
+                        input.jumping, input.shiftKeyDown));
+            }
             // ⭐ 术式按键：按下=开始（即时释放或蓄力），松开=蓄力发射
             boolean down = KeyBindings.USE_TECHNIQUE.get().isDown();
             if (down && !lastTechniqueDown) {

@@ -23,9 +23,16 @@ import java.util.UUID;
 /** 鵺：继承原版幻翼（飞行/骑乘），渲染/动画/纹理全复用原版 */
 public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minecraft.world.entity.PlayerRideableJumping {
 
-    /** 骑乘跳跃状态（entityData 同步：客户端 onPlayerJump 设值，服务端 tickRidden 读取） */
-    private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> RIDING_JUMP =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(ShikigamiPhantom.class, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+    /** 骑乘输入（PacketNueInput 每 tick 更新：空格=上升、潜行=下降） */
+    private boolean rideJump;
+    private boolean rideShift;
+
+    /** 服务端收到客户端骑乘输入后写入（空格/潜行状态每 tick 刷新，避免原版跳跃命令粘滞） */
+    public void setRideInput(boolean jump, boolean shift) {
+        this.rideJump = jump;
+        this.rideShift = shift;
+    }
+
     /** 式神类型（entityData 跨端同步，客户端骑乘逻辑依赖它识别 NUE） */
     private static final net.minecraft.network.syncher.EntityDataAccessor<Byte> TYPE_ID =
             net.minecraft.network.syncher.SynchedEntityData.defineId(ShikigamiPhantom.class, net.minecraft.network.syncher.EntityDataSerializers.BYTE);
@@ -39,7 +46,6 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
-        this.entityData.define(RIDING_JUMP, false);
         this.entityData.define(TYPE_ID, (byte) 0);
     }
 
@@ -97,12 +103,6 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
                 yBodyRotO = player.getYRot();
                 yHeadRot = player.getYRot();
                 yHeadRotO = player.getYRot();
-                if (tickCount % 40 == 0) {
-                    com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
-                            "[NUE] tick sync yRot={} body={} playerYRot={} rider={} client={}",
-                            getYRot(), yBodyRot, player.getYRot(),
-                            rider.getName().getString(), level().isClientSide);
-                }
             }
         }
     }
@@ -173,36 +173,38 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
     @Override
     protected void tickRidden(Player player, Vec3 movement) {
         super.tickRidden(player, movement);
-        if (getShikigamiType() == ShikigamiType.NUE) {
-            setNoGravity(true);
-            setYRot(player.getYRot());
-            yBodyRot = player.getYRot();
-            yHeadRot = player.getYRot();
-            Vec3 look = player.getLookAngle();
-            double speed = 0.55 + getAttributeValue(Attributes.MOVEMENT_SPEED) * 1.4;
-            Vec3 motion = Vec3.ZERO;
-            if (player.zza != 0) {
-                motion = motion.add(look.scale(player.zza * speed));
-            }
-            if (player.xxa != 0) {
-                // 左侧向量：视线顺时针旋转 90°（A=左移）
-                Vec3 side = new Vec3(look.z, 0, -look.x).normalize();
-                motion = motion.add(side.scale(player.xxa * speed * 0.6));
-            }
-            // 空格上升（entityData 同步：客户端 onPlayerJump / 服务端 handleStartJump 写值）
-            boolean jumpFlag = entityData.get(RIDING_JUMP) || jumping;
-            if (jumpFlag) {
-                motion = motion.add(0, 0.6, 0);
-            }
-            setDeltaMovement(motion);
-            move(MoverType.SELF, motion);
-            if (!level().isClientSide && tickCount % 40 == 0) {
-                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
-                        "[NUE] ridden look={} zza={} xxa={} jump={} motion={} y={}",
-                        look, player.zza, player.xxa, jumpFlag, motion, getY());
-            }
-            fallDistance = 0;
+        if (getShikigamiType() != ShikigamiType.NUE) return;
+        // 服务端权威驱动；客户端位置由实体同步回传，避免双端各自推导致漂移
+        if (level().isClientSide) return;
+        setNoGravity(true);
+        setYRot(player.getYRot());
+        yBodyRot = player.getYRot();
+        yHeadRot = player.getYRot();
+        // 水平视线（不含俯仰）：W/S 前进后退始终水平，空格上升、潜行下降
+        Vec3 look = player.getLookAngle();
+        Vec3 flat = new Vec3(look.x, 0, look.z);
+        if (flat.lengthSqr() < 1e-8) flat = new Vec3(0, 0, 1);
+        flat = flat.normalize();
+        double speed = 0.55 + getAttributeValue(Attributes.MOVEMENT_SPEED) * 1.4;
+        Vec3 motion = Vec3.ZERO;
+        if (player.zza != 0) {
+            motion = motion.add(flat.scale(player.zza * speed));
         }
+        if (player.xxa != 0) {
+            // 左侧向量：水平视线顺时针旋转 90°（A=左移）
+            Vec3 side = new Vec3(flat.z, 0, -flat.x).normalize();
+            motion = motion.add(side.scale(player.xxa * speed * 0.6));
+        }
+        // 空格上升 / 潜行下降（PacketNueInput 每 tick 刷新，不粘滞）
+        if (rideJump) {
+            motion = motion.add(0, 0.6, 0);
+        }
+        if (rideShift) {
+            motion = motion.add(0, -0.5, 0);
+        }
+        setDeltaMovement(motion);
+        move(MoverType.SELF, motion);
+        fallDistance = 0;
     }
 
     /** 骑乘输入：从玩家读取（原版马式），确保 W/A/S/D 生效 */
@@ -215,31 +217,28 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
     }
 
     // ============================================================
-    //  玩家骑乘跳跃（空格上升）：PlayerRideableJumping
+    //  玩家骑乘上升（空格=上升 / 潜行=下降）：不使用原版 PlayerRideableJumping 命令链
+    //  （客户端对非马坐骑只发 START 不发 STOP，会导致跳跃标志粘滞、一直向上飞），
+    //  输入改由 PacketNueInput 每 tick 显式上报，见 setRideInput/tickRidden。
     // ============================================================
 
     @Override
     public void onPlayerJump(int jumpPower) {
-        // 客户端本地调用：写 entityData，随数据同步到服务端
-        jumping = true;
-        entityData.set(RIDING_JUMP, true);
+        // 不再使用：输入走 PacketNueInput
     }
 
     @Override
     public boolean canJump() {
-        return getShikigamiType() == ShikigamiType.NUE && !getPassengers().isEmpty();
+        // 关闭原版骑乘跳跃命令链（否则客户端会发 START_RIDING_JUMP 而永不发 STOP）
+        return false;
     }
 
     @Override
     public void handleStartJump(int jumpPower) {
-        jumping = true;
-        entityData.set(RIDING_JUMP, true);
     }
 
     @Override
     public void handleStopJump() {
-        jumping = false;
-        entityData.set(RIDING_JUMP, false);
     }
 
     @Override
