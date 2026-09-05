@@ -47,8 +47,7 @@ public class ConstructSelectScreen extends AbstractRowListScreen<String> {
     }
 
     /** 枚举所有有合成配方的物品（客户端配方管理器与服务器一致）；配方更新时自动重建缓存 */
-    private static List<String> collectCandidates() {
-        var level = Minecraft.getInstance().level;
+    private static List<String> collectCandidates() {        var level = Minecraft.getInstance().level;
         Object rm = level == null ? null : level.getRecipeManager();
         if (allCandidates != null && cachedRecipeManager == rm) {
             return allCandidates;
@@ -87,8 +86,9 @@ public class ConstructSelectScreen extends AbstractRowListScreen<String> {
             filter = s == null ? "" : s.trim().toLowerCase(Locale.ROOT);
             rebuildRows();
         });
-        // 仅注册为事件监听（不自动渲染），渲染由本类 render 显式完成，避免双重绘制
-        addWidget(searchBox);
+        // ⭐ 用 addRenderableWidget 注册：EditBox 进入 Screen 的 children，
+        // 点击后由 Screen 的焦点管理（setFocused）接管，字符/按键事件才会派发给它
+        addRenderableWidget(searchBox);
     }
 
     /** 依据搜索词重建可见行（rows 为基类持有的可变列表） */
@@ -110,15 +110,6 @@ public class ConstructSelectScreen extends AbstractRowListScreen<String> {
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        super.render(graphics, mouseX, mouseY, partialTick);
-        // 搜索框绘制在列表上方（基类渲染完成后补画，避免被行遮挡）
-        if (searchBox != null) {
-            searchBox.render(graphics, mouseX, mouseY, partialTick);
-        }
-    }
-
-    @Override
     protected void drawHeader(GuiGraphics graphics, int mouseX, int mouseY) {
         drawCentered(graphics, Component.translatable("screen.tinkersnewlife.construct.title"), 12, 0xFFFFFF);
         drawCentered(graphics, Component.translatable("screen.tinkersnewlife.construct.hint"), 52, 0x9A9A9A);
@@ -135,17 +126,18 @@ public class ConstructSelectScreen extends AbstractRowListScreen<String> {
         }
         String name = displayName(row);
         graphics.drawString(font, name, x + 26, y + 8, 0xFFFFFF);
-        // 右侧：预估咒力
+        // 右侧：预估咒力 + 拟造耗时（1 咒力 = 1 tick）
         String costText;
         int color;
         if (ClientCurseData.isInfinite()) {
             costText = Component.translatable("screen.tinkersnewlife.construct.cost_free").getString();
             color = 0xFFD4924B;
         } else {
-            int cost = itemOf(row).isEmpty() ? 0
-                    : ConstructTechnique.computeCost(ClientCurseData.getAffinity(),
-                    ClientCurseData.getOutput(), itemOf(row).getItem());
-            costText = Component.translatable("screen.tinkersnewlife.construct.cost", cost).getString();
+            Item item = stack.getItem();
+            int cost = stack.isEmpty() ? 0 : ConstructTechnique.computeCost(
+                    ClientCurseData.getAffinity(), ClientCurseData.getOutput(), item);
+            costText = Component.translatable("screen.tinkersnewlife.construct.cost_time",
+                    cost, (cost + 19) / 20).getString();
             color = ClientCurseData.getCurse() >= cost ? 0xFFD4924B : 0xFFE05555;
         }
         graphics.drawString(font, costText, x + w - 4 - font.width(costText), y + 8, color);
@@ -155,35 +147,6 @@ public class ConstructSelectScreen extends AbstractRowListScreen<String> {
     protected void onRowClick(int index, String row) {
         TinkersNewlife.CHANNEL.sendToServer(new PacketConstructSelect(row));
         onClose();
-    }
-
-    // ============ 搜索框输入 ============
-
-    @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        // 点击落在搜索框内：交给搜索框（进入输入态），不再下传列表
-        if (searchBox != null && searchBox.isMouseOver(mouseX, mouseY)) {
-            searchBox.mouseClicked(mouseX, mouseY, button);
-            return true;
-        }
-        return super.mouseClicked(mouseX, mouseY, button);
-    }
-
-    @Override
-    public boolean charTyped(char codePoint, int modifiers) {
-        if (searchBox != null && searchBox.isFocused()) {
-            searchBox.charTyped(codePoint, modifiers);
-            return true;
-        }
-        return super.charTyped(codePoint, modifiers);
-    }
-
-    @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (searchBox != null && searchBox.isFocused() && searchBox.keyPressed(keyCode, scanCode, modifiers)) {
-            return true;
-        }
-        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     // ============ 工具 ============

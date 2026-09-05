@@ -42,6 +42,9 @@ public class PacketConstructSelect {
                 player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
                         "message.tinkersnewlife.burnout.active",
                         com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper.getBurnoutRemainingSeconds(player)), true);
+            } else if (result == 6) {
+                player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                        "message.tinkersnewlife.construct.forging"), true);
             }
         });
         ctx.get().setPacketHandled(true);

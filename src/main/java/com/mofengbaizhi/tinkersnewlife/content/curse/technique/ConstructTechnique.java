@@ -4,12 +4,19 @@ import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.Modifiers;
 import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
 import com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenConstructScreen;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.inventory.CraftingMenu;
+import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -17,12 +24,18 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ProjectileWeaponItem;
 import net.minecraft.world.item.Rarity;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * 术式「构筑术式」：
@@ -32,7 +45,9 @@ import java.util.Set;
  * 每当背包中对应弹药不足就消耗咒力凝结出箭矢 / 子弹，让玩家无需囤积弹药。
  * <p>
  * 反转（反转键 F）：打开「拟造物品栏」——从所有有合成配方的物品中挑选一件，
- * 服务端按其珍贵程度与威力换算咒力消耗，拟造一个 60 秒后自动消散的临时物品。
+ * 服务端按其珍贵程度与威力换算咒力消耗并立即扣除，然后开始「拟造」：
+ * 1 咒力 = 1 tick 的构筑时间（期间移动速度减半）；完成即获得一个 60 秒后
+ * 自动消散的临时物品；构筑期间再次按 F 无效、受到攻击会被打断（咒力不返还）。
  */
 public final class ConstructTechnique extends BaseTechnique {
 
@@ -50,6 +65,16 @@ public final class ConstructTechnique extends BaseTechnique {
     public static final int TEMP_TICKS = 1200;
     /** 临时物到期检查间隔（tick） */
     private static final int TEMP_CHECK_INTERVAL = 10;
+
+    /** 反转拟造中：目标物品注册名（持久数据键） */
+    private static final String KEY_FORGE_ITEM = "tinkersnewlife.construct_forge_item";
+    /** 反转拟造中：完成时刻 gameTime（持久数据键） */
+    private static final String KEY_FORGE_END = "tinkersnewlife.construct_forge_end";
+    /** 拟造减速属性修饰符 UUID（固定） */
+    private static final UUID FORGE_SLOW_UUID = UUID.fromString("7f3a9c1e-2b4d-4f6a-8c9e-0a1b2c3d4e5f");
+
+    /** 已放置在地上的拟造方块（到期自动消失）；服务端主线程访问 */
+    private static final List<PlacedTempBlock> PLACED_TEMPS = new ArrayList<>();
 
     private ConstructTechnique() {
         super(Modifiers.CONSTRUCT.getId());
@@ -76,9 +101,15 @@ public final class ConstructTechnique extends BaseTechnique {
         return player.getPersistentData().getBoolean(KEY_AMMO_MODE);
     }
 
-    /** 登出/死亡：关闭顺转模式（避免重进后仍在耗咒力补给） */
+    /** 登出/死亡：关闭顺转模式并清除拟造状态（咒力已扣不返还，未完成物品作废） */
     public static void cleanup(ServerPlayer player) {
         player.getPersistentData().putBoolean(KEY_AMMO_MODE, false);
+        var data = player.getPersistentData();
+        if (data.contains(KEY_FORGE_END)) {
+            data.remove(KEY_FORGE_END);
+            data.remove(KEY_FORGE_ITEM);
+            applySlow(player, false);
+        }
     }
 
     // ============================================================
@@ -93,6 +124,11 @@ public final class ConstructTechnique extends BaseTechnique {
                     CursePowerHelper.getBurnoutRemainingSeconds(player)), true);
             return;
         }
+        // ⭐ 拟造进行中不允许再次使用反转
+        if (isForging(player)) {
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.construct.forging"), true);
+            return;
+        }
         TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
                 new PacketOpenConstructScreen());
     }
@@ -102,7 +138,7 @@ public final class ConstructTechnique extends BaseTechnique {
     // ============================================================
 
     /**
-     * 每 tick：顺转模式弹药补给（间隔检查）+ 临时拟造物到期清理（间隔检查）。
+     * 每 tick：顺转模式弹药补给（间隔检查）+ 反转拟造进度驱动 + 拟造物禁止合成 + 临时物到期清理。
      */
     public static void tickServer(ServerPlayer player) {
         long now = player.serverLevel().getGameTime();
@@ -111,9 +147,139 @@ public final class ConstructTechnique extends BaseTechnique {
                 && now % AMMO_CHECK_INTERVAL == 0) {
             INSTANCE.tickAmmo(player);
         }
+        // 反转：拟造进度驱动（每 tick，逐玩家判断很轻量）
+        if (player.isAlive() && !player.isRemoved()) {
+            INSTANCE.tickForge(player, now);
+        }
+        // ⭐ 拟造物不能参与合成：把合成台输入格里的临时物踢回背包（触发结果重算为空）
+        if (player.isAlive() && !player.isRemoved() && now % 2 == 0) {
+            ejectTempFromCrafting(player);
+        }
         // 反转：临时物到期清理
         if (player.isAlive() && !player.isRemoved() && now % TEMP_CHECK_INTERVAL == 0) {
             sweepTemps(player, now);
+        }
+    }
+
+    /**
+     * 拟造物禁止合成：若玩家打开的是合成台（3×3）或随身合成（2×2），
+     * 扫描输入格中的拟造物并移回背包（输入变化会触发结果重算，产物不会生成）。
+     */
+    private static void ejectTempFromCrafting(ServerPlayer player) {
+        if (!(player.containerMenu instanceof CraftingMenu)
+                && !(player.containerMenu instanceof InventoryMenu)) {
+            return;
+        }
+        for (int i = 0; i < player.containerMenu.slots.size(); i++) {
+            Slot slot = player.containerMenu.slots.get(i);
+            if (!isCraftInputSlot(slot)) continue;
+            ItemStack stack = slot.getItem();
+            if (stack.isEmpty() || !isTemp(stack)) continue;
+            // 踢回背包（背包满则掉落），并清空该输入格
+            ItemStack leftover = stack.copy();
+            if (!player.getInventory().add(leftover) && !leftover.isEmpty()) {
+                net.minecraft.world.entity.item.ItemEntity drop = new net.minecraft.world.entity.item.ItemEntity(
+                        player.serverLevel(), player.getX(), player.getY() + 0.5, player.getZ(), leftover);
+                drop.setPickUpDelay(0);
+                player.serverLevel().addFreshEntity(drop);
+            }
+            slot.set(ItemStack.EMPTY);
+            player.displayClientMessage(Component.translatable(
+                    "message.tinkersnewlife.construct.no_craft"), true);
+        }
+    }
+
+    /** 是否为合成输入格（原版合成台/随身合成的 craftSlots 容器） */
+    private static boolean isCraftInputSlot(Slot slot) {
+        return slot.container instanceof net.minecraft.world.inventory.CraftingContainer;
+    }
+
+    /** 是否带拟造物标记 */
+    private static boolean isTemp(ItemStack stack) {
+        return stack.hasTag() && stack.getTag().contains(KEY_TEMP_UNTIL);
+    }
+
+    // ============================================================
+    //  反转拟造（耗时机制）
+    // ============================================================
+
+    /** 是否正在拟造 */
+    public static boolean isForging(ServerPlayer player) {
+        return player.getPersistentData().contains(KEY_FORGE_END);
+    }
+
+    /**
+     * 每 tick 驱动：拟造中 → 施加半速；到期 → 发放临时物并解除状态。
+     */
+    private void tickForge(ServerPlayer player, long now) {
+        var data = player.getPersistentData();
+        if (!data.contains(KEY_FORGE_END)) return;
+        long end = data.getLong(KEY_FORGE_END);
+        if (end <= now) {
+            finishForge(player);
+            return;
+        }
+        // 拟造中：移动速度减半
+        applySlow(player, true);
+        // 每 20 tick 播一点构筑粒子
+        if (now % 20 == 0) {
+            player.serverLevel().sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD,
+                    player.getX(), player.getY() + 0.5, player.getZ(), 2, 0.3, 0.4, 0.3, 0);
+        }
+    }
+
+    /** 拟造完成：按记录发放临时物，清除状态并恢复速度 */
+    private static void finishForge(ServerPlayer player) {
+        var data = player.getPersistentData();
+        String itemId = data.getString(KEY_FORGE_ITEM);
+        data.remove(KEY_FORGE_END);
+        data.remove(KEY_FORGE_ITEM);
+        applySlow(player, false);
+        ResourceLocation id = ResourceLocation.tryParse(itemId);
+        Item item = id == null ? null : ForgeRegistries.ITEMS.getValue(id);
+        if (item == null || item == Items.AIR) return;
+        ItemStack stack = new ItemStack(item);
+        stack.getOrCreateTag().putLong(KEY_TEMP_UNTIL, player.serverLevel().getGameTime() + TEMP_TICKS);
+        Component original = stack.getHoverName();
+        stack.setHoverName(Component.translatable("item.tinkersnewlife.construct.prefix").append(original));
+        boolean added = player.getInventory().add(stack);
+        if (!added) {
+            net.minecraft.world.entity.item.ItemEntity drop = new net.minecraft.world.entity.item.ItemEntity(
+                    player.serverLevel(), player.getX(), player.getY() + 0.5, player.getZ(), stack);
+            drop.setPickUpDelay(0);
+            player.serverLevel().addFreshEntity(drop);
+        }
+        player.serverLevel().sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD,
+                player.getX(), player.getY() + 1.0, player.getZ(), 24, 0.5, 0.6, 0.5, 0.05);
+        player.displayClientMessage(Component.translatable(
+                "message.tinkersnewlife.construct.forged", stack.getHoverName(), TEMP_TICKS / 20), false);
+    }
+
+    /** 拟造被打断（受击）：清除状态与减速，咒力不返还 */
+    public static void interruptForge(ServerPlayer player) {
+        var data = player.getPersistentData();
+        if (!data.contains(KEY_FORGE_END)) return;
+        data.remove(KEY_FORGE_END);
+        data.remove(KEY_FORGE_ITEM);
+        applySlow(player, false);
+        player.serverLevel().sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE,
+                player.getX(), player.getY() + 1.0, player.getZ(), 12, 0.4, 0.5, 0.4, 0);
+        player.displayClientMessage(Component.translatable(
+                "message.tinkersnewlife.construct.interrupted"), true);
+    }
+
+    /** 拟造期间移动速度减半（enable=true 施加，false 移除） */
+    private static void applySlow(ServerPlayer player, boolean enable) {
+        AttributeInstance attr = player.getAttribute(Attributes.MOVEMENT_SPEED);
+        if (attr == null) return;
+        AttributeModifier mod = new AttributeModifier(FORGE_SLOW_UUID,
+                "construct_forge_slow", -0.5, AttributeModifier.Operation.MULTIPLY_TOTAL);
+        if (enable) {
+            if (!attr.hasModifier(mod)) {
+                attr.addTransientModifier(mod);
+            }
+        } else if (attr.hasModifier(mod)) {
+            attr.removeModifier(mod);
         }
     }
 
@@ -413,9 +579,11 @@ public final class ConstructTechnique extends BaseTechnique {
     // ============================================================
 
     /**
-     * 校验并拟造临时物品。
+     * 校验并开始拟造临时物品：咒力立即扣除（不返还），按 1 咒力 = 1 tick
+     * 进入拟造状态，期间移动减半、受击打断；完成后发放 60 秒临时物。
      *
-     * @return 0 成功；1 无此术式/物品无效；2 无合成配方；3 咒力不足；4 背包已满
+     * @return 0 开始拟造；1 无此术式/物品无效；2 无合成配方；3 咒力不足；
+     *         5 熔断；6 已有拟造进行中
      */
     public static int forge(ServerPlayer player, String itemId) {
         if (!Modifiers.CONSTRUCT.getId().equals(com.mofengbaizhi.tinkersnewlife.content.curse.TechniqueHandler.getSelectedTechniqueId(player))) {
@@ -424,6 +592,10 @@ public final class ConstructTechnique extends BaseTechnique {
         // ⭐ 熔断期间禁止拟造（与反转键一致）
         if (CursePowerHelper.isBurnout(player)) {
             return 5;
+        }
+        // ⭐ 已有拟造进行中 → 拒绝再次开始
+        if (isForging(player)) {
+            return 6;
         }
         ResourceLocation id = ResourceLocation.tryParse(itemId);
         if (id == null) return 1;
@@ -438,23 +610,21 @@ public final class ConstructTechnique extends BaseTechnique {
                 && CursePowerHelper.payCurseWithSoulFallback(player, cost) < 0) {
             return 3;
         }
-        ItemStack stack = new ItemStack(item);
-        stack.getOrCreateTag().putLong(KEY_TEMP_UNTIL, player.serverLevel().getGameTime() + TEMP_TICKS);
-        // 加上浅紫色"构筑"前缀，便于辨识临时物
-        Component original = stack.getHoverName();
-        stack.setHoverName(Component.translatable("item.tinkersnewlife.construct.prefix").append(original));
-        boolean added = player.getInventory().add(stack);
-        if (!added) {
-            // 背包满：丢在脚下（临时物掉地同样受 lifespan 限制，60 秒内自动消散）
-            net.minecraft.world.entity.item.ItemEntity drop = new net.minecraft.world.entity.item.ItemEntity(
-                    player.serverLevel(), player.getX(), player.getY() + 0.5, player.getZ(), stack);
-            drop.setPickUpDelay(0);
-            player.serverLevel().addFreshEntity(drop);
-        }
+        // 拟造耗时 = 咒力数（1 咒力 = 1 tick），即时扣除咒力
+        var data = player.getPersistentData();
+        data.putString(KEY_FORGE_ITEM, itemId);
+        data.putLong(KEY_FORGE_END, player.serverLevel().getGameTime() + cost);
+        player.serverLevel().playSound(null, player.getX(), player.getY(), player.getZ(),
+                net.minecraft.sounds.SoundEvents.ENCHANTMENT_TABLE_USE,
+                net.minecraft.sounds.SoundSource.PLAYERS, 0.6F, 1.4F);
         player.displayClientMessage(Component.translatable(
-                "message.tinkersnewlife.construct.forged", stack.getHoverName(), cost,
-                TEMP_TICKS / 20), false);
+                "message.tinkersnewlife.construct.forge_start", stackName(item), cost,
+                (cost + 19) / 20), false);
         return 0;
+    }
+
+    private static Component stackName(Item item) {
+        return new ItemStack(item).getHoverName();
     }
 
     /** 物品是否至少是一个合成配方的产物（含 shaping/shapeless/special 的输出） */
@@ -582,6 +752,72 @@ public final class ConstructTechnique extends BaseTechnique {
             } else {
                 item.lifespan = (int) Math.min(left + 20, ITEM_ENTITY_LIFESPAN_CAP);
             }
+        }
+
+        /** 拟造中受击 → 打断拟造（咒力已扣，不返还） */
+        @net.minecraftforge.eventbus.api.SubscribeEvent
+        public static void onLivingHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
+            if (event.getEntity().level().isClientSide) return;
+            if (event.getEntity() instanceof ServerPlayer sp) {
+                interruptForge(sp);
+            }
+        }
+
+        /** 玩家放置拟造方块 → 记录到期时间，到期自动移除 */
+        @net.minecraftforge.eventbus.api.SubscribeEvent
+        public static void onBlockPlaced(net.minecraftforge.event.level.BlockEvent.EntityPlaceEvent event) {
+            if (event.getLevel().isClientSide()) return;
+            if (!(event.getEntity() instanceof ServerPlayer sp)) return;
+            if (!(event.getLevel() instanceof ServerLevel level)) return;
+            ItemStack held = sp.getMainHandItem();
+            long until = held.hasTag() ? held.getTag().getLong(KEY_TEMP_UNTIL) : 0;
+            if (until <= 0) {
+                held = sp.getOffhandItem();
+                until = held.hasTag() ? held.getTag().getLong(KEY_TEMP_UNTIL) : 0;
+            }
+            if (until <= 0) return;
+            // 记录该位置与该方块形态，到期后仅当仍是该方块时移除（避免误删被替换的方块）
+            PLACED_TEMPS.add(new PlacedTempBlock(level, event.getPos(), event.getPlacedBlock(), until));
+        }
+
+        /** 服务端每 tick：拟造方块到期移除 */
+        @net.minecraftforge.eventbus.api.SubscribeEvent
+        public static void onServerTick(net.minecraftforge.event.TickEvent.ServerTickEvent event) {
+            if (event.phase != net.minecraftforge.event.TickEvent.Phase.END) return;
+            if (PLACED_TEMPS.isEmpty()) return;
+            Iterator<PlacedTempBlock> it = PLACED_TEMPS.iterator();
+            while (it.hasNext()) {
+                PlacedTempBlock p = it.next();
+                ServerLevel level = p.level;
+                if (level == null || !level.isLoaded(p.pos)) continue;
+                long now = level.getGameTime();
+                if (now < p.expireUntil) continue;
+                // 到期：仅当该位置仍旧是当初放置的方块时移除
+                BlockState current = level.getBlockState(p.pos);
+                if (current.getBlock() == p.state.getBlock()) {
+                    level.levelEvent(2001, p.pos, net.minecraft.world.level.block.Block.getId(current));
+                    level.setBlock(p.pos, Blocks.AIR.defaultBlockState(), 3);
+                    level.sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE,
+                            p.pos.getX() + 0.5, p.pos.getY() + 0.5, p.pos.getZ() + 0.5, 10,
+                            0.3, 0.3, 0.3, 0.02);
+                }
+                it.remove();
+            }
+        }
+    }
+
+    /** 一个已放置的拟造方块记录 */
+    private static final class PlacedTempBlock {
+        final ServerLevel level;
+        final BlockPos pos;
+        final BlockState state;
+        final long expireUntil;
+
+        PlacedTempBlock(ServerLevel level, BlockPos pos, BlockState state, long expireUntil) {
+            this.level = level;
+            this.pos = pos.immutable();
+            this.state = state;
+            this.expireUntil = expireUntil;
         }
     }
 }
