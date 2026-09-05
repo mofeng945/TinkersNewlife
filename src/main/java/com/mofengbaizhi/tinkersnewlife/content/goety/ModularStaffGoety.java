@@ -9,9 +9,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -24,42 +23,47 @@ import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * 模块化魔杖 · 模式（铁魔法 ⇄ 巫法）与聚晶体系。
- * <p>
- * 常态为「铁魔法模式」；Shift+右键 切到「巫法模式」（诡厄巫法存在时生效）：
- * <li>聚晶包：魔杖内建（6 格，存于工具持久数据），J 键打开（放入/取出/查看）；</li>
- * <li>R 键循环装备包内聚晶（同诡厄魔杖手感）；</li>
- * <li>巫法模式下右键 = 释放当前装备聚晶法术（走诡厄灵魂体系，反射桥接其 IWand 施法）。</li>
+ * 模式标记存魔杖 ModDataNBT（与亲和同机制）；聚晶包内容存【玩家持久数据】（与咒灵记录同机制，
+ * 被验证稳定不丢），按魔杖唯一 uid 区分多把魔杖。
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class ModularStaffGoety {
 
-    public static final int MODE_IRON = 0;      // 铁魔法（常态）
-    public static final int MODE_GOETY = 1;     // 巫法
-
+    public static final int MODE_IRON = 0;
+    public static final int MODE_GOETY = 1;
     public static final int POUCH_SLOTS = 6;
 
-    private static final net.minecraft.resources.ResourceLocation KEY_MODE =
-            new net.minecraft.resources.ResourceLocation(TinkersNewlife.MOD_ID, "staff_mode");
-    private static final net.minecraft.resources.ResourceLocation KEY_IDX =
-            new net.minecraft.resources.ResourceLocation(TinkersNewlife.MOD_ID, "staff_focus_idx");
-    /** 每槽独立键（与已验证的 ToolDataNBT 单值存储一致，避免列表复合写入丢失） */
-    private static final net.minecraft.resources.ResourceLocation[] KEY_SLOTS = new net.minecraft.resources.ResourceLocation[POUCH_SLOTS];
-
-    static {
-        for (int i = 0; i < POUCH_SLOTS; i++) {
-            KEY_SLOTS[i] = new net.minecraft.resources.ResourceLocation(TinkersNewlife.MOD_ID, "staff_focus_" + i);
-        }
-    }
+    private static final ResourceLocation KEY_MODE = key("staff_mode");
+    private static final ResourceLocation KEY_IDX = key("staff_focus_idx");
+    private static final ResourceLocation KEY_UID = key("staff_uid");
+    private static final String PLAYER_KEY_PREFIX = "tnl_staff_pouch_";
+    private static final String TAG_ITEMS = "items";
 
     private ModularStaffGoety() {}
 
-    // ================= 读写（ToolStack 持久数据） =================
+    private static ResourceLocation key(String path) {
+        return new ResourceLocation(TinkersNewlife.MOD_ID, path);
+    }
 
     private static ToolStack tool(ItemStack stack) {
         return ToolHelper.getToolStack(stack);
+    }
+
+    // ================= 魔杖身份 / 模式 =================
+
+    /** 每把魔杖一个稳定 uid（ModDataNBT int，与亲和存储同机制） */
+    private static int uidOf(ItemStack stack) {
+        ToolStack t = tool(stack);
+        if (t == null) return 0;
+        if (!t.getPersistentData().contains(KEY_UID)) {
+            t.getPersistentData().putInt(KEY_UID, ThreadLocalRandom.current().nextInt(1, Integer.MAX_VALUE));
+            t.updateStack(stack);
+        }
+        return t.getPersistentData().getInt(KEY_UID);
     }
 
     public static int getMode(ItemStack stack) {
@@ -67,39 +71,14 @@ public final class ModularStaffGoety {
         return t == null ? MODE_IRON : t.getPersistentData().getInt(KEY_MODE);
     }
 
-    public static void setMode(ItemStack stack, int mode) {
+    private static void setMode(ItemStack stack, int mode) {
         ToolStack t = tool(stack);
         if (t == null) return;
         t.getPersistentData().putInt(KEY_MODE, mode);
         t.updateStack(stack);
     }
 
-    /** 读取聚晶包（固定 POUCH_SLOTS 长度，空位为 EMPTY） */
-    public static List<ItemStack> getFoci(ItemStack stack) {
-        List<ItemStack> list = new ArrayList<>();
-        ToolStack t = tool(stack);
-        for (int i = 0; i < POUCH_SLOTS; i++) {
-            ItemStack slot = ItemStack.EMPTY;
-            if (t != null && t.getPersistentData().contains(KEY_SLOTS[i])) {
-                slot = ItemStack.of(t.getPersistentData().getCompound(KEY_SLOTS[i]));
-            }
-            list.add(slot);
-        }
-        return list;
-    }
-
-    private static void saveFoci(ItemStack stack, List<ItemStack> foci) {
-        ToolStack t = tool(stack);
-        if (t == null) return;
-        for (int i = 0; i < POUCH_SLOTS && i < foci.size(); i++) {
-            ItemStack s = foci.get(i);
-            // 空槽也写空 compound（占位），读取时 contains 判定即可
-            t.getPersistentData().put(KEY_SLOTS[i], s.isEmpty() ? new CompoundTag() : s.save(new CompoundTag()));
-        }
-        t.updateStack(stack);
-    }
-
-    public static int getFocusIndex(ItemStack stack) {
+    private static int getFocusIndex(ItemStack stack) {
         ToolStack t = tool(stack);
         return t == null ? -1 : t.getPersistentData().getInt(KEY_IDX);
     }
@@ -111,22 +90,47 @@ public final class ModularStaffGoety {
         t.updateStack(stack);
     }
 
-    /** 打开聚晶包（服务端构建并推送界面数据） */
-    public static void openPouch(ServerPlayer player) {
-        ItemStack staff = heldStaff(player);
-        if (staff == null) return;
-        syncTo(player, staff, true);
+    // ================= 聚晶包（玩家持久数据） =================
+
+    private static String playerKey(ItemStack staff) {
+        return PLAYER_KEY_PREFIX + uidOf(staff);
     }
 
-    /** 当前装备的聚晶（可能为空） */
-    public static ItemStack getEquippedFocus(ItemStack stack) {
-        List<ItemStack> foci = getFoci(stack);
-        int idx = getFocusIndex(stack);
-        if (idx < 0 || idx >= foci.size()) return ItemStack.EMPTY;
-        return foci.get(idx);
+    private static List<ItemStack> getFoci(ServerPlayer player, ItemStack staff) {
+        List<ItemStack> list = new ArrayList<>();
+        CompoundTag root = player.getPersistentData();
+        if (root.contains(playerKey(staff), Tag.TAG_COMPOUND)) {
+            CompoundTag box = root.getCompound(playerKey(staff));
+            if (box.contains(TAG_ITEMS, Tag.TAG_LIST)) {
+                ListTag tag = box.getList(TAG_ITEMS, Tag.TAG_COMPOUND);
+                for (int i = 0; i < tag.size() && i < POUCH_SLOTS; i++) {
+                    list.add(ItemStack.of(tag.getCompound(i)));
+                }
+            }
+        }
+        while (list.size() < POUCH_SLOTS) {
+            list.add(ItemStack.EMPTY);
+        }
+        return list;
     }
 
-    /** 手持魔杖（主手/副手） */
+    private static void saveFoci(ServerPlayer player, ItemStack staff, List<ItemStack> foci) {
+        CompoundTag root = player.getPersistentData();
+        ListTag tag = new ListTag();
+        for (ItemStack s : foci) {
+            tag.add(s.save(new CompoundTag()));
+        }
+        CompoundTag box = new CompoundTag();
+        box.put(TAG_ITEMS, tag);
+        root.put(playerKey(staff), box);
+    }
+
+    private static ItemStack getEquippedFocus(ServerPlayer player, ItemStack staff) {
+        List<ItemStack> foci = getFoci(player, staff);
+        int idx = getFocusIndex(staff);
+        return idx >= 0 && idx < foci.size() ? foci.get(idx) : ItemStack.EMPTY;
+    }
+
     @Nullable
     private static ItemStack heldStaff(Player player) {
         ItemStack main = player.getMainHandItem();
@@ -162,10 +166,16 @@ public final class ModularStaffGoety {
         syncTo(player, staff, false);
     }
 
+    public static void openPouch(ServerPlayer player) {
+        ItemStack staff = heldStaff(player);
+        if (staff == null) return;
+        syncTo(player, staff, true);
+    }
+
     public static void cycleFocus(ServerPlayer player) {
         ItemStack staff = heldStaff(player);
         if (staff == null) return;
-        List<ItemStack> foci = getFoci(staff);
+        List<ItemStack> foci = getFoci(player, staff);
         int count = 0;
         for (ItemStack s : foci) if (!s.isEmpty()) count++;
         if (count == 0) {
@@ -182,20 +192,18 @@ public final class ModularStaffGoety {
             }
         }
         setFocusIndex(staff, next);
-        ItemStack focus = foci.get(next);
         player.displayClientMessage(Component.translatable("message.tinkersnewlife.staff.focus_equipped",
-                focus.getHoverName()), true);
+                foci.get(next).getHoverName()), true);
         syncTo(player, staff, false);
     }
 
-    /** 把玩家背包内第 invIndex 个聚晶放入魔杖聚晶包第一个空位 */
     public static void putFocus(ServerPlayer player, int invIndex) {
         ItemStack staff = heldStaff(player);
         if (staff == null) return;
         List<ItemStack> invFoci = inventoryFoci(player);
         if (invIndex < 0 || invIndex >= invFoci.size()) return;
         ItemStack focus = invFoci.get(invIndex);
-        List<ItemStack> foci = getFoci(staff);
+        List<ItemStack> foci = getFoci(player, staff);
         int slot = -1;
         for (int i = 0; i < foci.size(); i++) {
             if (foci.get(i).isEmpty()) {
@@ -207,27 +215,24 @@ public final class ModularStaffGoety {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.staff.pouch_full"), true);
             return;
         }
-        // 从背包扣除该物品（同 stack 计数）
         if (!consumeFromInventory(player, focus)) return;
         foci.set(slot, focus.copy());
-        saveFoci(staff, foci);
+        saveFoci(player, staff, foci);
         syncTo(player, staff, false);
     }
 
-    /** 取出魔杖聚晶包第 slot 个聚晶回背包 */
     public static void takeFocus(ServerPlayer player, int slot) {
         ItemStack staff = heldStaff(player);
         if (staff == null) return;
-        List<ItemStack> foci = getFoci(staff);
+        List<ItemStack> foci = getFoci(player, staff);
         if (slot < 0 || slot >= foci.size() || foci.get(slot).isEmpty()) return;
         ItemStack focus = foci.get(slot);
         if (!player.getInventory().add(focus)) {
             player.spawnAtLocation(focus, 0.5f);
         }
         foci.set(slot, ItemStack.EMPTY);
-        int idx = getFocusIndex(staff);
-        if (idx == slot) setFocusIndex(staff, -1);
-        saveFoci(staff, foci);
+        if (getFocusIndex(staff) == slot) setFocusIndex(staff, -1);
+        saveFoci(player, staff, foci);
         syncTo(player, staff, false);
     }
 
@@ -243,7 +248,6 @@ public final class ModularStaffGoety {
         return false;
     }
 
-    /** 背包中所有聚晶（实现 Goety IFocus 的物品，反射判定） */
     public static List<ItemStack> inventoryFoci(Player player) {
         List<ItemStack> list = new ArrayList<>();
         for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
@@ -258,8 +262,6 @@ public final class ModularStaffGoety {
     private static boolean isFocusItem(ItemStack s) {
         try {
             Class<?> iface = Class.forName("com.Polarice3.Goety.api.items.magic.IFocus");
-            if (iface.isAssignableFrom(s.getItem().getClass())) return true;
-            // 部分实现藏在父类，逐级查
             Class<?> c = s.getItem().getClass();
             while (c != null && c != Object.class) {
                 for (Class<?> i : c.getInterfaces()) {
@@ -272,12 +274,10 @@ public final class ModularStaffGoety {
         return false;
     }
 
-    // ================= 同步 =================
-
     public static void syncTo(ServerPlayer player, ItemStack staff, boolean openScreen) {
         int mode = getMode(staff);
         int idx = getFocusIndex(staff);
-        List<ItemStack> foci = getFoci(staff);
+        List<ItemStack> foci = getFoci(player, staff);
         List<ItemStack> invFoci = inventoryFoci(player);
         TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
                 new PacketStaffGoetySync(openScreen, mode, idx, foci, invFoci));
@@ -285,7 +285,6 @@ public final class ModularStaffGoety {
 
     // ================= 事件 =================
 
-    /** Shift+右键 = 切换铁魔法/巫法；巫法模式下普通右键 = 释放装备聚晶 */
     @SubscribeEvent
     public static void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
         if (event.getLevel().isClientSide) return;
@@ -298,7 +297,7 @@ public final class ModularStaffGoety {
             return;
         }
         if (getMode(staff) == MODE_GOETY) {
-            ItemStack focus = getEquippedFocus(staff);
+            ItemStack focus = getEquippedFocus(player, staff);
             if (!focus.isEmpty()) {
                 event.setCanceled(true);
                 tryCast(player, staff, focus);
@@ -306,11 +305,9 @@ public final class ModularStaffGoety {
         }
     }
 
-    /** 反射桥接：借 Goety IWand 物品执行施法（灵魂/冷却由 Goety 本体处理） */
     private static void tryCast(ServerPlayer player, ItemStack staff, ItemStack focus) {
         try {
             Class<?> iwand = Class.forName("com.Polarice3.Goety.api.items.magic.IWand");
-            // 1) 找到任一实现 IWand 的诡厄魔杖物品
             Item wandItem = null;
             for (Item it : BuiltInRegistries.ITEM) {
                 if (implementsInterface(it.getClass(), iwand)) {
@@ -323,7 +320,6 @@ public final class ModularStaffGoety {
                 return;
             }
             ItemStack wandStack = new ItemStack(wandItem);
-            // 2) 把装备聚晶塞入其内嵌槽（IWand.getItemHandler）
             try {
                 Object handler = iwand.getMethod("getItemHandler", ItemStack.class).invoke(null, wandStack);
                 if (handler instanceof net.minecraftforge.items.IItemHandler itemHandler) {
@@ -331,8 +327,7 @@ public final class ModularStaffGoety {
                 }
             } catch (Throwable ignored) {
             }
-            // 3) 调用魔杖 use 施法
-            wandItem.use(player.level(), player, InteractionHand.MAIN_HAND);
+            wandItem.use(player.level(), player, net.minecraft.world.InteractionHand.MAIN_HAND);
         } catch (Throwable t) {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.staff.cast_failed"), true);
             TinkersNewlife.LOGGER.warn("[魔杖·巫法] 施法桥接失败：", t);
