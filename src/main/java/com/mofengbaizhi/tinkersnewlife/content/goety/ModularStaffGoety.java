@@ -240,7 +240,7 @@ public final class ModularStaffGoety {
         for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
             ItemStack s = player.getInventory().getItem(i);
             if (!s.isEmpty() && isFocusItem(s)) {
-                list.add(s);
+                list.add(s.copy()); // ⭐ 副本：后续 consume 会把原栈清空，必须先用拷贝
             }
         }
         return list;
