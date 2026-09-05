@@ -99,17 +99,30 @@ public final class ShikigamiBehavior {
     // ============================================================
 
     private static LivingEntity pickEnemyTarget(Mob self, ShikigamiMob info, ServerPlayer owner) {
+        // 0️⃣ 自己被打 → 还手（最高优先）：挨打目标就是敌人，避免"站着挨打"
+        //    （如魔虚罗被 Boss 攻击时若主人没在打该目标，原逻辑会漏掉它）
+        LivingEntity attacker = self.getLastHurtByMob();
+        if (isEnemyOf(self, info, attacker)
+                && attacker.distanceToSqr(self) <= LEASH_SQ) return attacker;
+        // 主人最近攻击的目标（近战/箭矢命中才会更新；术式直伤不更新，靠下方扫描兜底）
         LivingEntity mob = owner.getLastHurtMob();
         if (isValidTarget(self, info, mob) && mob.distanceToSqr(owner) <= LEASH_SQ) return mob;
         mob = owner.getLastHurtByMob();
         if (isValidTarget(self, info, mob) && mob.distanceToSqr(owner) <= LEASH_SQ) return mob;
+        // 主人周边敌人；若式神离主人较远（体型大/被击退/卡地形），扫描同时覆盖式神自身周边
         List<LivingEntity> enemies = self.level().getEntitiesOfClass(LivingEntity.class,
                 AABB.ofSize(owner.position(), LEASH_RANGE * 2, LEASH_RANGE * 2, LEASH_RANGE * 2),
                 e -> e != owner && e != self && e.isAlive() && isEnemyOf(self, info, e));
+        if (self.distanceToSqr(owner) > 16.0 * 16.0) {
+            enemies.addAll(self.level().getEntitiesOfClass(LivingEntity.class,
+                    AABB.ofSize(self.position(), LEASH_RANGE * 2, LEASH_RANGE * 2, LEASH_RANGE * 2),
+                    e -> e != owner && e != self && e.isAlive() && isEnemyOf(self, info, e)));
+        }
         double best = Double.MAX_VALUE;
         LivingEntity result = null;
         for (LivingEntity e : enemies) {
-            double d = e.distanceToSqr(owner);
+            // 以式神自身距离为准（去打它，而不是让式神满图跑向"主人身边的敌人"）
+            double d = e.distanceToSqr(self);
             if (d < best) {
                 best = d;
                 result = e;
@@ -130,6 +143,12 @@ public final class ShikigamiBehavior {
             if (os.tamed) return false;
             // 未调伏式神：敌意（与主人同源的未调伏式神也视为敌，用于调伏）
             return true;
+        }
+        // 主人咒灵操术的亡灵/仆从（同队）不算敌人：式神不打友军
+        ServerPlayer owner = info.getOwner();
+        if (owner != null && com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
+                .isSpiritTeam(e, owner)) {
+            return false;
         }
         return e instanceof Enemy;
     }
@@ -349,14 +368,17 @@ public final class ShikigamiBehavior {
         }
     }
 
-    /** AoE 目标过滤：排除自身、主人、同主人已调伏式神（避免式神互打） */
+    /** AoE 目标过滤：排除自身、主人、主人咒灵操术同队、同主人已调伏式神（避免打到自己人） */
     private static boolean isFriendly(Mob self, ShikigamiMob info, LivingEntity e) {
         if (e == self || e == info.getOwner()) return true;
         if (e instanceof ShikigamiMob other) {
             ShikigamiState os = other.getState();
             if (os.tamed && os.ownerId != null && os.ownerId.equals(info.getState().ownerId)) return true;
         }
-        return false;
+        // 主人咒灵操术的亡灵/仆从同队：AoE 不误伤
+        ServerPlayer owner = info.getOwner();
+        return owner != null && com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
+                .isSpiritTeam(e, owner);
     }
 
     private static void stomp(Mob self, ShikigamiMob info, ServerLevel level) {

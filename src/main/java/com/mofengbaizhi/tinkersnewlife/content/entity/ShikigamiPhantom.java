@@ -189,7 +189,8 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
             }
             return;
         }
-        // 水平视线（不含俯仰）：W/S 前进后退始终水平，空格上升
+        // 前进 = 完整视线方向（含俯仰）：抬头上仰飞行、低头俯冲，空格额外上升。
+        // 侧移 = 水平方向（A/D 不改变高度）。
         Vec3 look = player.getLookAngle();
         Vec3 flat = new Vec3(look.x, 0, look.z);
         if (flat.lengthSqr() < 1e-8) flat = new Vec3(0, 0, 1);
@@ -201,7 +202,8 @@ public class ShikigamiPhantom extends Phantom implements ShikigamiMob, net.minec
         float forward = player.zza;
         float strafe = player.xxa;
         if (forward != 0) {
-            motion = motion.add(flat.scale(forward * speed));
+            // 朝完整视线方向（含俯仰角）前进/后退
+            motion = motion.add(look.scale(forward * speed));
         }
         if (strafe != 0) {
             // 左侧向量：水平视线顺时针旋转 90°（A=左移）

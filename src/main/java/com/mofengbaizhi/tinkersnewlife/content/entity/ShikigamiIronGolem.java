@@ -54,6 +54,17 @@ public class ShikigamiIronGolem extends IronGolem implements ShikigamiMob {
     public void aiStep() {
         super.aiStep();
         if (!level().isClientSide) {
+            // 魔虚罗常驻限伤：每 0.5 秒累计受伤不超过 30（无限时长，定期兜底刷新防意外被清）
+            if (tickCount % 20 == 0) {
+                var dl = com.mofengbaizhi.tinkersnewlife.content.ModEffects.DAMAGE_LIMIT.get();
+                if (dl != null) {
+                    var cur = getEffect(dl);
+                    if (cur == null || !cur.isInfiniteDuration()) {
+                        addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                                dl, -1, 0, false, false, true));
+                    }
+                }
+            }
             ShikigamiBehavior.regenMahoraga(this, this);
             ShikigamiBehavior.tick(this, this);
         }
