@@ -14,8 +14,6 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.inventory.CraftingMenu;
-import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.BlockItem;
@@ -164,9 +162,9 @@ public final class ConstructTechnique extends BaseTechnique {
         if (player.isAlive() && !player.isRemoved()) {
             INSTANCE.tickForge(player, now);
         }
-        // ⭐ 拟造物不能参与合成：把合成台输入格里的临时物踢回背包（触发结果重算为空）
+        // ⭐ 拟造物不能参与任何配方/不能放入其他容器：把非玩家槽里的临时物踢回背包
         if (player.isAlive() && !player.isRemoved() && now % 2 == 0) {
-            ejectTempFromCrafting(player);
+            ejectTempFromContainers(player);
         }
         // 反转：临时物到期清理
         if (player.isAlive() && !player.isRemoved() && now % TEMP_CHECK_INTERVAL == 0) {
@@ -175,22 +173,22 @@ public final class ConstructTechnique extends BaseTechnique {
     }
 
     /**
-     * 拟造物禁止合成：若玩家打开的是合成台（3×3）或随身合成（2×2），
-     * 扫描输入格中的拟造物并移回背包（输入变化会触发结果重算，产物不会生成）。
+     * 拟造物禁止进入任何"非玩家自身物品栏"的容器槽（合成台/熔炉/锻造台/切石机/酿造台/模组机器/箱子等）。
+     * 把其中发现的拟造物移回背包：输入槽清空会触发菜单结果重算，配方产物不会生成，
+     * 从而拟造物无法参与任何配方。
      */
-    private static void ejectTempFromCrafting(ServerPlayer player) {
-        if (!(player.containerMenu instanceof CraftingMenu)
-                && !(player.containerMenu instanceof InventoryMenu)) {
-            return;
-        }
+    private static void ejectTempFromContainers(ServerPlayer player) {
+        if (player.containerMenu == null) return;
+        net.minecraft.world.entity.player.Inventory inv = player.getInventory();
         for (int i = 0; i < player.containerMenu.slots.size(); i++) {
             Slot slot = player.containerMenu.slots.get(i);
-            if (!isCraftInputSlot(slot)) continue;
+            // 跳过玩家自身物品栏/盔甲/副手槽（这些不属于"其他容器"）
+            if (slot.container == inv) continue;
             ItemStack stack = slot.getItem();
             if (stack.isEmpty() || !isTemp(stack)) continue;
-            // 踢回背包（背包满则掉落），并清空该输入格
+            // 踢回背包（背包满则掉落），并清空该槽
             ItemStack leftover = stack.copy();
-            if (!player.getInventory().add(leftover) && !leftover.isEmpty()) {
+            if (!inv.add(leftover) && !leftover.isEmpty()) {
                 net.minecraft.world.entity.item.ItemEntity drop = new net.minecraft.world.entity.item.ItemEntity(
                         player.serverLevel(), player.getX(), player.getY() + 0.5, player.getZ(), leftover);
                 drop.setPickUpDelay(0);
@@ -200,11 +198,6 @@ public final class ConstructTechnique extends BaseTechnique {
             player.displayClientMessage(Component.translatable(
                     "message.tinkersnewlife.construct.no_craft"), true);
         }
-    }
-
-    /** 是否为合成输入格（原版合成台/随身合成的 craftSlots 容器） */
-    private static boolean isCraftInputSlot(Slot slot) {
-        return slot.container instanceof net.minecraft.world.inventory.CraftingContainer;
     }
 
     /** 是否带拟造物标记 */

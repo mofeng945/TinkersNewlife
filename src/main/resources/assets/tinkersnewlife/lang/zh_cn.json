@@ -686,5 +686,5 @@
   "message.tinkersnewlife.construct.interrupted": "§c拟造被打断，咒力已消耗不返还",
   "message.tinkersnewlife.construct.expired": "§7拟造物品已到时限消散",
   "message.tinkersnewlife.construct.no_recipe": "§c该物品没有合成配方，无法拟造",
-  "message.tinkersnewlife.construct.no_craft": "§c拟造物不能参与合成"
+  "message.tinkersnewlife.construct.no_craft": "§c拟造物无法放入容器或参与配方"
 }
