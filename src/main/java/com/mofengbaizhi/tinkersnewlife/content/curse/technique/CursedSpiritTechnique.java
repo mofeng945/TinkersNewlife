@@ -77,6 +77,10 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         public float maxHp;
         public float atk;
         public int releasedId = -1; // 当前场上释放体 entity id，-1 = 未释放
+        /** 无为转变·守护形态：释放/重链时按守护随从 AI 处理 */
+        public boolean guard = false;
+        /** 守护实体 UUID（跨登出/区块卸载后按此重链回释放位） */
+        public String guardUuid = "";
 
         SpiritEntry() {}
 
@@ -89,6 +93,8 @@ public final class CursedSpiritTechnique extends BaseTechnique {
             t.putFloat("maxHp", maxHp);
             t.putFloat("atk", atk);
             t.putInt("released", releasedId);
+            t.putBoolean("guard", guard);
+            t.putString("guardUuid", guardUuid == null ? "" : guardUuid);
             return t;
         }
 
@@ -101,6 +107,8 @@ public final class CursedSpiritTechnique extends BaseTechnique {
             e.maxHp = t.getFloat("maxHp");
             e.atk = t.getFloat("atk");
             e.releasedId = t.getInt("released");
+            e.guard = t.getBoolean("guard");
+            e.guardUuid = t.getString("guardUuid");
             return e;
         }
     }
@@ -235,6 +243,7 @@ public final class CursedSpiritTechnique extends BaseTechnique {
                 mob.discard();
             }
             entry.releasedId = -1;
+            entry.guardUuid = "";
             updateEntry(player, entry);
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.recall", entry.name), true);
             return;
@@ -262,9 +271,6 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         living.setHealth(Math.max(1.0F, entry.maxHp));
         if (living instanceof Mob mob) {
             mob.setPersistenceRequired();
-            // ⭐ 剥除该个体自带的目标选择目标（如"找最近玩家"），防止它自选主人/同队；
-            //    其攻击目标一律由 SpiritEvents 每 tick 指派。
-            stripTargetGoals(mob);
         }
         // 主人面前 1.5 格生成，自动找安全高度
         Vec3 look = player.getLookAngle();
@@ -275,7 +281,20 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         double py = safeY(level, px, player.getY(), pz, living);
         living.moveTo(px, py, pz, player.getYRot(), 0);
         level.addFreshEntity(living);
+        if (living instanceof Mob mob) {
+            if (entry.guard) {
+                // 守护形态：释放后按"玉犬式守护随从 AI"行动（无为转变·守护；入世后再挂，需有效实体 id）
+                com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiHandler.attachGuardAi(mob, player);
+            } else {
+                // ⭐ 剥除该个体自带的目标选择目标（如"找最近玩家"），防止它自选主人/同队；
+                //    其攻击目标一律由 SpiritEvents 每 tick 指派。
+                stripTargetGoals(mob);
+            }
+        }
         entry.releasedId = living.getId();
+        if (entry.guard) {
+            entry.guardUuid = living.getStringUUID();
+        }
         updateEntry(player, entry);
         player.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.released", entry.name), true);
     }
@@ -345,13 +364,20 @@ public final class CursedSpiritTechnique extends BaseTechnique {
                 new PacketOpenSpiritScreen(mode, list));
     }
 
-    /** 登出/死亡清理：撤销场上释放体（保留记录，召唤物一并清除），清除蓄力 */
+    /** 登出/死亡清理：撤销场上普通释放体（保留记录，召唤物一并清除），清除蓄力；
+     *  守护形态（无为转变·守护）随从保留在场（由无为守护系统持久），仅解除释放位链接。 */
     public static void cleanup(ServerPlayer player) {
         VORTEX_CHARGE.remove(player.getUUID());
         List<SpiritEntry> list = entries(player);
         for (SpiritEntry e : list) {
             if (e.releasedId >= 0
                     && player.serverLevel().getEntity(e.releasedId) instanceof Mob mob && mob.isAlive()) {
+                if (mob.getPersistentData().contains(
+                        com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiHandler.KEY_GUARD_OWNER)) {
+                    // 守护随从：保留（登出后仍站岗），记录保持 guardUuid 待重链
+                    e.releasedId = -1;
+                    continue;
+                }
                 dismissServantsOf(mob);
                 mob.discard();
             }
@@ -391,6 +417,7 @@ public final class CursedSpiritTechnique extends BaseTechnique {
                     mob.discard();
                 }
                 e.releasedId = -1;
+                e.guardUuid = "";
                 saveAll(owner, list);
                 owner.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.recall", e.name), true);
                 return true;
@@ -427,6 +454,67 @@ public final class CursedSpiritTechnique extends BaseTechnique {
                 return;
             }
         }
+    }
+
+    /**
+     * 无为转变·主人自己把场上释放体变形成守护随从：记录改写为新形态，并<b>保持"场上释放体"身份</b>
+     * （releasedId 指向新实体；guard 标记 + 实体 UUID 供跨登出重链）。新形态由无为守护系统按随从 AI 驱动。
+     */
+    public static void relinkReleasedAsGuard(ServerPlayer owner, Entity oldReleased, Mob newForm) {
+        List<SpiritEntry> list = entries(owner);
+        for (SpiritEntry e : list) {
+            if (e.releasedId >= 0 && oldReleased.getId() == e.releasedId) {
+                CompoundTag nbt = newForm.saveWithoutId(new CompoundTag());
+                e.nbt = nbt;
+                e.type = EntityType.getKey(newForm.getType()).toString();
+                e.name = newForm.getName().getString();
+                e.maxHp = newForm.getMaxHealth();
+                e.atk = (float) newForm.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+                e.guard = true;
+                e.guardUuid = newForm.getStringUUID();
+                e.releasedId = newForm.getId();
+                saveAll(owner, list);
+                owner.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.modified", e.name), true);
+                return;
+            }
+        }
+    }
+
+    /** 守护实体入世/重挂后重链：某记录的 guardUuid 与该实体一致 → 恢复 releasedId（跨登出/区块卸载保链接） */
+    public static void relinkGuardByUuid(Mob guard) {
+        if (guard.level().isClientSide) return;
+        if (!(guard.level() instanceof ServerLevel sl)) return;
+        for (ServerPlayer p : sl.getServer().getPlayerList().getPlayers()) {
+            List<SpiritEntry> list = entries(p);
+            boolean changed = false;
+            for (SpiritEntry e : list) {
+                if (e.guard && e.releasedId < 0
+                        && e.guardUuid != null && e.guardUuid.equals(guard.getStringUUID())) {
+                    e.releasedId = guard.getId();
+                    changed = true;
+                }
+            }
+            if (changed) {
+                saveAll(p, list);
+                return;
+            }
+        }
+    }
+
+    /** 找某记录守护实体是否仍在场（跨世界按 UUID 查） */
+    private static Mob findGuardEntity(ServerPlayer owner, SpiritEntry e) {
+        if (e.guardUuid == null || e.guardUuid.isEmpty()) return null;
+        UUID uuid;
+        try {
+            uuid = UUID.fromString(e.guardUuid);
+        } catch (Throwable t) {
+            return null;
+        }
+        for (net.minecraft.server.level.ServerLevel lvl : owner.serverLevel().getServer().getAllLevels()) {
+            Entity ent = lvl.getEntity(uuid);
+            if (ent instanceof Mob m && m.isAlive()) return m;
+        }
+        return null;
     }
 
     /** 反射读取 Goety 仆从（IServant/IOwned 实现）的主人实体 */
@@ -514,7 +602,8 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         }
     }
 
-    /** 登录/重生后矫正：场上实体 id 会失效，把所有 released 标记复位（记录保留） */
+    /** 登录/重生后矫正：场上实体 id 会失效，把所有 released 标记复位（记录保留）；
+     *  守护形态记录按 guardUuid 找回场上守护实体重链释放位。 */
     public static void normalize(ServerPlayer player) {
         List<SpiritEntry> list = entries(player);
         boolean changed = false;
@@ -522,6 +611,16 @@ public final class CursedSpiritTechnique extends BaseTechnique {
             if (e.releasedId >= 0) {
                 e.releasedId = -1;
                 changed = true;
+            }
+        }
+        // 守护形态：找场上守护实体（可能已加载）恢复链接
+        for (SpiritEntry e : list) {
+            if (e.guard && e.releasedId < 0) {
+                Mob g = findGuardEntity(player, e);
+                if (g != null) {
+                    e.releasedId = g.getId();
+                    changed = true;
+                }
             }
         }
         if (changed) {
@@ -571,6 +670,11 @@ public final class CursedSpiritTechnique extends BaseTechnique {
                     if (e.releasedId < 0) continue;
                     if (!(player.serverLevel().getEntity(e.releasedId) instanceof Mob minion)
                             || !minion.isAlive()) {
+                        continue;
+                    }
+                    // 守护形态（无为转变·守护）：由无为守护系统每 tick 驱动（跟随/护主/近战），此处不再操控
+                    if (minion.getPersistentData().contains(
+                            com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiHandler.KEY_GUARD_OWNER)) {
                         continue;
                     }
                     // 主人在线：指派目标 = 主人攻击的目标 / 攻击主人的目标（保护主人）

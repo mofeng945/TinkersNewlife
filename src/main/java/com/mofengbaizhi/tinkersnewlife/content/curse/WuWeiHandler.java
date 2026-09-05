@@ -567,25 +567,14 @@ public final class WuWeiHandler {
                 fm.moveTo(rd.restPos.x, rd.restPos.y, rd.restPos.z, rd.restYRot, rd.restXRot);
                 fm.setPersistenceRequired();
                 fm.setHealth(fm.getMaxHealth());
-                // 认主：可驯服生物真正认主（狼/猫/鹦鹉等），其余记录主人 UUID
-                if (fm instanceof TamableAnimal tame) {
-                    tame.tame(player);
-                }
-                // ⭐ AI 替换为玉犬式守护：清空目标生物原生 AI（不自走/不主动攻击/不逃散）
-                fm.goalSelector.removeAllGoals(g -> true);
-                fm.targetSelector.removeAllGoals(g -> true);
-                fm.setCustomName(Component.translatable("entity." + formId.replace(':', '.')).copy()
-                        .append(Component.literal("(守护)")));
-                fm.setCustomNameVisible(false);
-                // owner 持久标记：服务器重启后经扫描恢复守护 AI（永久变形）
-                fm.getPersistentData().putUUID(KEY_GUARD_OWNER, player.getUUID());
                 level.addFreshEntity(fm);
+                // 玉犬式守护随从 AI（入世后挂，登记守护表）
+                attachGuardAi(fm, player, rd);
                 if (selfSpirit) {
+                    // 主人自己转自己的释放体：改写记录为新形态，并保持"场上释放体"身份（守护随从）
                     com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
-                            .modifyOnOwnerTransform(player, targetMob, fm);
+                            .relinkReleasedAsGuard(player, targetMob, fm);
                 }
-                rd.formId = fm.getId();
-                REVERSE_MOBS.put(fm.getUUID(), rd);
             }
         }
         level.sendParticles(ParticleTypes.SNEEZE,
@@ -736,6 +725,33 @@ public final class WuWeiHandler {
     }
 
     /**
+     * 挂"玉犬式守护随从 AI"（须在实体已入世后调用——REVERSE_MOBS 需要有效实体 id）：
+     * 清空原生 AI、可驯服认主、守护名、持久 owner 标记、登记守护表。
+     * 咒灵操术·守护形态释放体复用此逻辑。
+     */
+    public static void attachGuardAi(Mob mob, ServerPlayer owner) {
+        attachGuardAi(mob, owner, new ReverseMobData());
+    }
+
+    public static void attachGuardAi(Mob mob, ServerPlayer owner, ReverseMobData rd) {
+        mob.goalSelector.removeAllGoals(g -> true);
+        mob.targetSelector.removeAllGoals(g -> true);
+        if (mob instanceof TamableAnimal tame) {
+            tame.tame(owner);
+        }
+        mob.setCustomName(Component.translatable(mob.getType().getDescriptionId()).copy()
+                .append(Component.literal("(守护)")));
+        mob.setCustomNameVisible(false);
+        mob.getPersistentData().putUUID(KEY_GUARD_OWNER, owner.getUUID());
+        rd.ownerId = owner.getUUID();
+        rd.formId = mob.getId();
+        rd.restPos = mob.position();
+        rd.restYRot = mob.getYRot();
+        rd.restXRot = mob.getXRot();
+        REVERSE_MOBS.put(mob.getUUID(), rd);
+    }
+
+    /**
      * 反转守护生物重挂：带 owner 持久标记的生物每次进入世界（服务器重启读档 / 区块重新加载）
      * 时自动重新注册进守护表并清掉重建的原生 AI——永久变形跨重启保留。
      * （比按超大 AABB 遍历实体安全：坐标范围受世界区块限制，不会溢出实体分区块键）
@@ -759,6 +775,8 @@ public final class WuWeiHandler {
         rd.restPos = mob.position();
         rd.restYRot = mob.getYRot();
         rd.restXRot = mob.getXRot();
+        // 守护形态同时是咒灵释放体时：按 guardUuid 恢复释放位链接（跨登出/区块重载）
+        com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique.relinkGuardByUuid(mob);
     }
 
     /** 玉犬式守护 AI：跟随主人、追击主人目标/伤害主人的实体、近战攻击（等价式神玉犬行为） */
@@ -772,24 +790,32 @@ public final class WuWeiHandler {
         // 目标：主人最后攻击的实体 > 主人受击来源 > 主人附近对主人有敌意的生物
         LivingEntity target = null;
         LivingEntity lastHurt = owner.getLastHurtMob();
-        if (lastHurt != null && lastHurt.isAlive() && lastHurt != self && !isFriendlyToOwner(lastHurt, owner)) {
+        if (lastHurt != null && lastHurt.isAlive() && lastHurt != self
+                && !isFriendlyToOwner(lastHurt, owner)
+                && !com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
+                .isSpiritTeam(lastHurt, owner)) {
             target = lastHurt;
         }
         if (target == null) {
             LivingEntity lastBy = owner.getLastHurtByMob();
-            if (lastBy != null && lastBy.isAlive() && lastBy != self && !isFriendlyToOwner(lastBy, owner)) {
+            if (lastBy != null && lastBy.isAlive() && lastBy != self
+                    && !isFriendlyToOwner(lastBy, owner)
+                    && !com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
+                    .isSpiritTeam(lastBy, owner)) {
                 target = lastBy;
             }
         }
         if (target == null) {
-            // 附近敌对生物（距离主人 24 格内最近的一个）
+            // 附近敌对生物（距离主人 24 格内最近的一个；主人自己的咒灵/守护不算敌人）
             double best = 24.0 * 24.0;
             for (LivingEntity e : self.level().getEntitiesOfClass(
                     net.minecraft.world.entity.LivingEntity.class,
                     net.minecraft.world.phys.AABB.ofSize(owner.position(), 48, 48, 48),
                     e -> e.isAlive() && e != owner && e != self
                             && e instanceof net.minecraft.world.entity.monster.Enemy
-                            && !isFriendlyToOwner(e, owner))) {
+                            && !isFriendlyToOwner(e, owner)
+                            && !com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
+                            .isSpiritTeam(e, owner))) {
                 double d = e.distanceToSqr(owner);
                 if (d < best) {
                     best = d;
