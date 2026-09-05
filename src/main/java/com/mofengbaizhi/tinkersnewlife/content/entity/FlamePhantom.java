@@ -141,6 +141,10 @@ public class FlamePhantom extends Phantom {
         int affinity = owner != null ? CursePowerHelper.getCurseAffinity(owner) : 0;
         // 黑鸟自爆公式（幻翼生命 1）：(1+亲和/100)×(输出×3+1)×10，半径 3 线性衰减
         double center = (1.0 + affinity / 100.0) * (output * 3 + 1) * 10.0;
+        if (owner != null) {
+            center = com.mofengbaizhi.tinkersnewlife.content.modifier.ModularStaffModifier
+                    .getSpellAmplification(owner, (float) center);
+        }
         double radius = 3.0;
         List<LivingEntity> victims = level.getEntitiesOfClass(LivingEntity.class,
                 AABB.ofSize(position(), radius * 2, radius * 2, radius * 2),

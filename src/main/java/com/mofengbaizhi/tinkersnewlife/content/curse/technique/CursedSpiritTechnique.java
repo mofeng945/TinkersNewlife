@@ -313,6 +313,9 @@ public final class CursedSpiritTechnique extends BaseTechnique {
             return;
         }
         ServerLevel level = player.serverLevel();
+        // 模块化魔杖增幅（无杖时原样）
+        damage = com.mofengbaizhi.tinkersnewlife.content.modifier.ModularStaffModifier
+                .getSpellAmplification(player, damage);
         SpiritVortexEntity vortex = new SpiritVortexEntity(ModEntities.SPIRIT_VORTEX.get(), level);
         Vec3 eye = player.getEyePosition(1.0F);
         Vec3 look = player.getLookAngle();

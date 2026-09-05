@@ -252,6 +252,8 @@ public class PuppetIronGolem extends IronGolem implements PuppetGolemMob {
         if (best != null) {
             int[] stat = stats(owner);
             float dmg = Math.round((4.0F + 4.0F * stat[0]) * (1.0F + stat[1] / 100.0F));
+            dmg = com.mofengbaizhi.tinkersnewlife.content.modifier.ModularStaffModifier
+                    .getSpellAmplification(owner, dmg);
             best.hurt(damageSources().mobAttack(this), dmg);
             swing(InteractionHand.MAIN_HAND);
             level().playSound(null, getX(), getY(), getZ(), SoundEvents.IRON_GOLEM_ATTACK,
@@ -298,6 +300,10 @@ public class PuppetIronGolem extends IronGolem implements PuppetGolemMob {
         ServerLevel level = (ServerLevel) this.level();
         int[] stat = owner != null ? stats(owner) : new int[]{0, 0};
         double center = (30.0 + 10.0 * stat[0]) * (1.0 + stat[1] / 100.0);
+        if (owner != null) {
+            center = com.mofengbaizhi.tinkersnewlife.content.modifier.ModularStaffModifier
+                    .getSpellAmplification(owner, (float) center);
+        }
         double radius = 5.0;
         List<LivingEntity> victims = level.getEntitiesOfClass(LivingEntity.class,
                 AABB.ofSize(position(), radius * 2, radius * 2, radius * 2),

@@ -156,6 +156,8 @@ public final class LightningManipulationTechnique extends BaseTechnique {
             int output = CursePowerHelper.getCurseOutputLevel(attacker);
             int affinity = CursePowerHelper.getCurseAffinity(attacker);
             float bonus = Math.round((1.0F + affinity / 100.0F) * (5.0F + output * 5.0F));
+            bonus = com.mofengbaizhi.tinkersnewlife.content.modifier.ModularStaffModifier
+                    .getSpellAmplification(attacker, bonus);
             event.setAmount(event.getAmount() + bonus);
             if (attacker.serverLevel() != null) {
                 attacker.serverLevel().sendParticles(ParticleTypes.ELECTRIC_SPARK,

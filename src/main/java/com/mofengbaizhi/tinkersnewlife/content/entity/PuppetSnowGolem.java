@@ -218,6 +218,8 @@ public class PuppetSnowGolem extends SnowGolem implements PuppetGolemMob {
         int output = CursePowerHelper.getCurseOutputLevel(owner);
         int affinity = CursePowerHelper.getCurseAffinity(owner);
         float dmg = Math.round((2.0F + 2.0F * output) * (1.0F + affinity / 100.0F));
+        dmg = com.mofengbaizhi.tinkersnewlife.content.modifier.ModularStaffModifier
+                .getSpellAmplification(owner, dmg);
         int frostTicks = 40 + output * 20;
         PuppetSnowball ball = new PuppetSnowball(ModEntities.PUPPET_SNOWBALL.get(), level());
         Vec3 eye = position().add(0, 1.3, 0);
@@ -240,6 +242,10 @@ public class PuppetSnowGolem extends SnowGolem implements PuppetGolemMob {
         int output = owner != null ? CursePowerHelper.getCurseOutputLevel(owner) : 0;
         int affinity = owner != null ? CursePowerHelper.getCurseAffinity(owner) : 0;
         double center = (12.0 + 6.0 * output) * (1.0 + affinity / 100.0);
+        if (owner != null) {
+            center = com.mofengbaizhi.tinkersnewlife.content.modifier.ModularStaffModifier
+                    .getSpellAmplification(owner, (float) center);
+        }
         double radius = 3.0;
         int frostAmp = Math.min(2, output / 2);
         int frostTicks = 60 + output * 30;
