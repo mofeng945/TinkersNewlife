@@ -646,7 +646,7 @@
   "key.tinkersnewlife.staff_pouch": "魔杖聚晶包 (J)",
   "key.tinkersnewlife.staff_cycle": "循环装备聚晶 (R)",
   "screen.tinkersnewlife.staff.goety_title": "魔杖聚晶包 · 巫法模式",
-  "screen.tinkersnewlife.staff.goety_hint": "点击背包聚晶放入包内空位 · 点击包内已占位格取回 · 高亮=已装备(按R循环)",
+  "screen.tinkersnewlife.staff.goety_hint": "左键点包内聚晶选中·再点另一格交换排序 | 右键取回 | 点下方背包聚晶放入 | 高亮=已装备 | J/ESC关闭",
   "screen.tinkersnewlife.staff.inv_foci": "背包中的聚晶",
   "message.tinkersnewlife.staff.mode_iron": "§7魔杖已切回铁魔法模式（Shift+右键可再切巫法模式）",
   "message.tinkersnewlife.staff.mode_goety": "§5魔杖已解放为巫法模式：J 打开聚晶包 / R 循环聚晶 / 右键释放法术（Shift+右键切回）",

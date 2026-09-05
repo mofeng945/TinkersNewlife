@@ -57,7 +57,9 @@ public class PacketStaffGoetySync {
     public static void handle(PacketStaffGoetySync packet, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
                 () -> () -> {
-                    if (packet.open) {
+                    net.minecraft.client.gui.screens.Screen current = Minecraft.getInstance().screen;
+                    // open=true（按 J）→ 打开；否则若聚晶包界面正开着 → 用新数据原地刷新（保持常驻）
+                    if (packet.open || current instanceof StaffGoetyScreen) {
                         Minecraft.getInstance().setScreen(new StaffGoetyScreen(packet.mode, packet.idx,
                                 packet.foci, packet.invFoci));
                     }

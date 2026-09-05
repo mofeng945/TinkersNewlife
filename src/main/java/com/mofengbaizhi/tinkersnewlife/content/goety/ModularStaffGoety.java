@@ -23,6 +23,9 @@ import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -138,6 +141,96 @@ public final class ModularStaffGoety {
         } catch (Throwable t) {
             return false;
         }
+    }
+
+    // ================= 长按自动连发（转圈） =================
+
+    /** 连发模式中的玩家（客户端长按右键 ≥ 6 tick 进入，松开退出） */
+    private static final Set<UUID> AUTOCAST = ConcurrentHashMap.newKeySet();
+    /** 施法结束待切换下一聚晶（等使用状态结束后的下一 tick 落地） */
+    private static final Set<UUID> PENDING_ADVANCE = ConcurrentHashMap.newKeySet();
+
+    /** 客户端长按进入/退出连发模式；进入时先请求切到下一个聚晶（手动首发已放完） */
+    public static void setAutoCast(ServerPlayer player, boolean on) {
+        UUID id = player.getUUID();
+        if (on) {
+            AUTOCAST.add(id);
+            PENDING_ADVANCE.add(id);
+        } else {
+            AUTOCAST.remove(id);
+            PENDING_ADVANCE.remove(id);
+        }
+    }
+
+    public static boolean isAutoCasting(ServerPlayer player) {
+        return AUTOCAST.contains(player.getUUID());
+    }
+
+    /** 施法结束（消耗动作且未进入引导/引导结束/满蓄释放）请求切换下一个聚晶 */
+    public static void requestAdvance(ServerPlayer player) {
+        if (AUTOCAST.contains(player.getUUID())) {
+            PENDING_ADVANCE.add(player.getUUID());
+        }
+    }
+
+    /** 连发脉冲：走服务端完整右键管线再施一发（真法杖原生；冷却/灵魂不足自然失败） */
+    public static void autoCastPulse(ServerPlayer player) {
+        if (!AUTOCAST.contains(player.getUUID())) return;
+        if (PENDING_ADVANCE.contains(player.getUUID())) return; // 切换未落地前不重复上一发
+        ItemStack staff = heldStaff(player);
+        if (staff == null) return;
+        if (getMode(staff) != MODE_GOETY) return;
+        if (player.isUsingItem()) return; // 引导中由 tick 自动衔接，不发脉冲
+        net.minecraft.world.InteractionHand hand =
+                player.getMainHandItem() == staff ? net.minecraft.world.InteractionHand.MAIN_HAND
+                        : (player.getOffhandItem() == staff ? net.minecraft.world.InteractionHand.OFF_HAND : null);
+        if (hand == null) return;
+        try {
+            player.gameMode.useItem(player, player.level(), player.getItemInHand(hand), hand);
+        } catch (Throwable t) {
+            TinkersNewlife.LOGGER.warn("[魔杖·巫法] 连发脉冲失败：", t);
+        }
+    }
+
+    /** 切换到下一个非空聚晶（静默，不弹提示） */
+    private static void advanceFocusSilent(ServerPlayer player) {
+        ItemStack staff = heldStaff(player);
+        if (staff == null) return;
+        List<ItemStack> foci = getFoci(player, staff);
+        int idx = getFocusIndex(staff);
+        int next = idx;
+        for (int step = 1; step <= POUCH_SLOTS; step++) {
+            int cand = (idx + step) % POUCH_SLOTS;
+            if (!foci.get(cand).isEmpty()) {
+                next = cand;
+                break;
+            }
+        }
+        if (next == idx || foci.get(next).isEmpty()) return;
+        setFocusIndex(staff, next);
+        mirrorFocus(player);
+        syncTo(player, staff, false);
+    }
+
+    /** 聚晶包内交换两格（a≠b；装备位跟着聚晶物品走） */
+    public static void swapFocus(ServerPlayer player, int a, int b) {
+        if (a == b) return;
+        ItemStack staff = heldStaff(player);
+        if (staff == null) return;
+        List<ItemStack> foci = getFoci(player, staff);
+        if (a < 0 || a >= foci.size() || b < 0 || b >= foci.size()) return;
+        ItemStack tmp = foci.get(a);
+        foci.set(a, foci.get(b));
+        foci.set(b, tmp);
+        int idx = getFocusIndex(staff);
+        if (idx == a) {
+            setFocusIndex(staff, b);
+        } else if (idx == b) {
+            setFocusIndex(staff, a);
+        }
+        saveFoci(player, staff, foci);
+        mirrorFocus(player);
+        syncTo(player, staff, false);
     }
 
     /**
@@ -302,6 +395,12 @@ public final class ModularStaffGoety {
         tickCasting(sp);
         // Spell 属性增益：手持真法杖(巫法模式) → 按法杖强度刷新；否则清残留（值未变时内部跳过）
         refreshSpellAttrsTick(sp);
+        // 连发切换落地：施法结束的下一 tick（使用状态已结束）切到下一个聚晶
+        if (PENDING_ADVANCE.remove(sp.getUUID())) {
+            if (AUTOCAST.contains(sp.getUUID()) && !sp.isUsingItem()) {
+                advanceFocusSilent(sp);
+            }
+        }
         // 周期校正：真法杖本体槽与聚晶包装备位保持一致（覆盖升级前旧栈/箱中取出/数据异常等场景）
         if ((sp.tickCount & 9) == 0) {
             mirrorFocus(sp);
@@ -320,12 +419,14 @@ public final class ModularStaffGoety {
         }
     }
 
-    /** 登出：换回原魔杖，清理引导状态 */
+    /** 登出：换回原魔杖，清理引导/连发状态 */
     @SubscribeEvent
     public static void onLogout(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer sp) {
             restoreHand(sp);
             CASTING_ORIGINAL.remove(sp.getUUID());
+            AUTOCAST.remove(sp.getUUID());
+            PENDING_ADVANCE.remove(sp.getUUID());
         }
     }
 

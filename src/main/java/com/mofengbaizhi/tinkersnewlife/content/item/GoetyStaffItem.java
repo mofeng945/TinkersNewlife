@@ -110,6 +110,11 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
             DarkWand wand = goetyWand();
             if (wand != null) {
                 InteractionResultHolder<ItemStack> result = wand.use(level, player, hand);
+                // 【连发】瞬时法术已放完（消耗动作且未进入引导）→ 请求切下一个聚晶
+                if (!level.isClientSide && player instanceof ServerPlayer sp
+                        && result.getResult().consumesAction() && !sp.isUsingItem()) {
+                    ModularStaffGoety.requestAdvance(sp);
+                }
                 // 【诊断】定位"蓄力放不出"用，确认后移除
                 TinkersNewlife.LOGGER.info("[魔杖·真法杖] use side={} 聚晶={} 法术={} 结果={}",
                         level.isClientSide ? "客户端" : "服务端", focusName(stack), spellName(stack), result.getResult());
@@ -174,6 +179,10 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
             TinkersNewlife.LOGGER.info("[魔杖·真法杖] 松手释放 side={} 剩余={}/{} 法术={}",
                     level.isClientSide ? "客户端" : "服务端", timeLeft, stack.getUseDuration(), spellName(stack));
             wand.releaseUsing(stack, level, entity, timeLeft);
+            // 【连发】引导结束（松手释放）→ 请求切下一个聚晶
+            if (!level.isClientSide && entity instanceof ServerPlayer sp) {
+                ModularStaffGoety.requestAdvance(sp);
+            }
         } else {
             super.releaseUsing(stack, level, entity, timeLeft);
         }
@@ -208,7 +217,12 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
             // 【诊断】满蓄释放路径（咏唱走完自动触发），确认后移除
             TinkersNewlife.LOGGER.info("[魔杖·真法杖] 满蓄释放 side={} 法术={}",
                     level.isClientSide ? "客户端" : "服务端", spellName(stack));
-            return wand.finishUsingItem(stack, level, entity);
+            ItemStack result = wand.finishUsingItem(stack, level, entity);
+            // 【连发】咏唱走完（满蓄释放）→ 请求切下一个聚晶
+            if (!level.isClientSide && entity instanceof ServerPlayer sp) {
+                ModularStaffGoety.requestAdvance(sp);
+            }
+            return result;
         }
         return super.finishUsingItem(stack, level, entity);
     }

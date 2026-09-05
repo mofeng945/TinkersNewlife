@@ -151,6 +151,9 @@ public class ClientEventHandler {
         private static boolean lastTechniqueDown = false;
         /** 术式反转按键上一次状态（F 键边沿检测） */
         private static boolean lastReverseDown = false;
+        /** 魔杖巫法长按自动连发状态 */
+        private static int staffAutoTicks = 0;
+        private static boolean staffAutoWas = false;
 
         @SubscribeEvent
         public static void onClientTick(TickEvent.ClientTickEvent event) {
@@ -207,6 +210,51 @@ public class ClientEventHandler {
                 TinkersNewlife.CHANNEL.sendToServer(new com.mofengbaizhi.tinkersnewlife.network.curse.PacketUseReverseTechnique(false));
             }
             lastReverseDown = reverseDown;
+
+            // ⭐ 魔杖巫法：长按右键自动连发转圈（每放完一发服务端自动切下一个聚晶）
+            tickStaffAutoCast(player);
+        }
+
+        /** 长按右键连发：按住 ≥ RAMP tick 进入连发模式（发 autoOn），之后每 PULSE tick 发一次脉冲；
+         *  吟唱引导中(usingItem)不发脉冲，引导结束由服务端 tick 自动衔接下一发；松开/收杖/开界面即退出。 */
+        private static final int AUTO_RAMP = 6;
+        private static final int AUTO_PULSE = 3;
+
+        private static void tickStaffAutoCast(LocalPlayer player) {
+            boolean goetyHeld = false;
+            ItemStack main = player.getMainHandItem();
+            ItemStack off = player.getOffhandItem();
+            if (main.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.ModularStaffItem) {
+                goetyHeld = com.mofengbaizhi.tinkersnewlife.content.goety.ModularStaffGoety.getMode(main)
+                        == com.mofengbaizhi.tinkersnewlife.content.goety.ModularStaffGoety.MODE_GOETY;
+            } else if (off.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.ModularStaffItem) {
+                goetyHeld = com.mofengbaizhi.tinkersnewlife.content.goety.ModularStaffGoety.getMode(off)
+                        == com.mofengbaizhi.tinkersnewlife.content.goety.ModularStaffGoety.MODE_GOETY;
+            }
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            boolean holding = goetyHeld && mc.options.keyUse.isDown()
+                    && mc.screen == null && !player.isDeadOrDying();
+            if (holding) {
+                staffAutoTicks++;
+                if (staffAutoTicks == AUTO_RAMP) {
+                    // 长按满阈值 → 进入连发（服务端同时先切到下一聚晶，首轮脉冲即从下一发开始）
+                    TinkersNewlife.CHANNEL.sendToServer(
+                            new com.mofengbaizhi.tinkersnewlife.network.curse.PacketStaffGoetyAction(6, 0));
+                    staffAutoWas = true;
+                } else if (staffAutoTicks > AUTO_RAMP
+                        && !player.isUsingItem()
+                        && (staffAutoTicks - AUTO_RAMP) % AUTO_PULSE == 0) {
+                    TinkersNewlife.CHANNEL.sendToServer(
+                            new com.mofengbaizhi.tinkersnewlife.network.curse.PacketStaffGoetyAction(5, 0));
+                }
+            } else if (staffAutoWas) {
+                TinkersNewlife.CHANNEL.sendToServer(
+                        new com.mofengbaizhi.tinkersnewlife.network.curse.PacketStaffGoetyAction(7, 0));
+                staffAutoWas = false;
+                staffAutoTicks = 0;
+            } else {
+                staffAutoTicks = 0;
+            }
         }
 
         /** 投射咒法罚站 / 傀儡操控：取消玩家自身攻击/交互输入（傀儡动作由输入包驱动） */
@@ -284,8 +332,13 @@ public class ClientEventHandler {
                     && com.mofengbaizhi.tinkersnewlife.content.goety.ModularStaffGoety.getMode(staffHand)
                     == com.mofengbaizhi.tinkersnewlife.content.goety.ModularStaffGoety.MODE_GOETY;
             if (goetyStaff && KeyBindings.STAFF_POUCH.get().consumeClick()) {
-                TinkersNewlife.CHANNEL.sendToServer(
-                        new com.mofengbaizhi.tinkersnewlife.network.curse.PacketStaffGoetyAction(0, 0));
+                // 聚晶包界面开着时再按 J = 关闭；否则打开（界面常驻，J/ESC 才关）
+                if (Minecraft.getInstance().screen instanceof com.mofengbaizhi.tinkersnewlife.client.screen.StaffGoetyScreen) {
+                    Minecraft.getInstance().setScreen(null);
+                } else {
+                    TinkersNewlife.CHANNEL.sendToServer(
+                            new com.mofengbaizhi.tinkersnewlife.network.curse.PacketStaffGoetyAction(0, 0));
+                }
             }
             if (goetyStaff && KeyBindings.STAFF_CYCLE.get().consumeClick()) {
                 TinkersNewlife.CHANNEL.sendToServer(

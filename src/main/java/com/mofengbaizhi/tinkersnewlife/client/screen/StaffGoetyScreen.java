@@ -10,9 +10,13 @@ import net.minecraft.world.item.ItemStack;
 import java.util.List;
 
 /**
- * 模块化魔杖 · 巫法聚晶包界面：
- * 上排 6 格魔杖聚晶包；下方列出背包内聚晶。点击背包聚晶 → 放入包内第一个空位；
- * 点击包内已占位格 → 取回背包；高亮当前装备聚晶。按 R 可循环装备（界面外）。
+ * 模块化魔杖 · 巫法聚晶包界面（常驻，J/ESC 才关）：
+ * <ul>
+ *   <li>左键点包内聚晶：无选中 → 选中（金框）；再点另一格 → 交换排序；点空格 → 移入；点自身 → 取消选中。</li>
+ *   <li>右键点包内聚晶 → 取回背包；左键点下方背包聚晶 → 放入包内第一个空位。</li>
+ *   <li>放入/取出/交换后界面保持打开，服务端同步回来会自动刷新内容。</li>
+ *   <li>装备位高亮橙框；再次按 J 或按 ESC 关闭。</li>
+ * </ul>
  */
 public class StaffGoetyScreen extends Screen {
 
@@ -23,6 +27,9 @@ public class StaffGoetyScreen extends Screen {
     private final int idx;
     private final List<ItemStack> foci;
     private final List<ItemStack> invFoci;
+
+    /** 当前选中（待交换）的包内槽位，-1 = 无 */
+    private int selectedSlot = -1;
 
     private int pouchX;
     private int pouchY;
@@ -50,19 +57,32 @@ public class StaffGoetyScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0) {
-            // 点击包内槽位：有聚晶 → 取回
-            for (int i = 0; i < foci.size(); i++) {
-                int x = pouchX + i * (SLOT + PAD);
-                if (inBox(mouseX, mouseY, x, pouchY, SLOT, SLOT)) {
-                    if (!foci.get(i).isEmpty()) {
-                        TinkersNewlife.CHANNEL.sendToServer(new PacketStaffGoetyAction(3, i));
-                        Minecraft_Close();
-                    }
-                    return true;
+        // ===== 包内槽位 =====
+        int pouchSlot = slotAtPouch(mouseX, mouseY);
+        if (pouchSlot >= 0) {
+            boolean has = pouchSlot < foci.size() && !foci.get(pouchSlot).isEmpty();
+            if (button == 1) {
+                // 右键：取回背包（界面保持打开）
+                if (has) {
+                    send(3, pouchSlot);
                 }
+                return true;
             }
-            // 点击背包聚晶 → 放入
+            if (button == 0) {
+                if (selectedSlot < 0) {
+                    if (has) selectedSlot = pouchSlot; // 选中待交换
+                } else if (selectedSlot == pouchSlot) {
+                    selectedSlot = -1;                  // 取消选中
+                } else {
+                    send(4, selectedSlot * 10 + pouchSlot); // 交换/移入空格
+                    selectedSlot = -1;
+                }
+                return true;
+            }
+            return true;
+        }
+        // ===== 下方背包聚晶：左键放入第一个空位（界面保持打开） =====
+        if (button == 0) {
             int cols = 9;
             for (int i = 0; i < invFoci.size(); i++) {
                 int row = i / cols;
@@ -70,8 +90,7 @@ public class StaffGoetyScreen extends Screen {
                 int x = pouchX + col * (SLOT + PAD);
                 int y = invY + row * (SLOT + PAD);
                 if (inBox(mouseX, mouseY, x, y, SLOT, SLOT)) {
-                    TinkersNewlife.CHANNEL.sendToServer(new PacketStaffGoetyAction(2, i));
-                    Minecraft_Close();
+                    send(2, i);
                     return true;
                 }
             }
@@ -79,8 +98,17 @@ public class StaffGoetyScreen extends Screen {
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
-    private void Minecraft_Close() {
-        net.minecraft.client.Minecraft.getInstance().setScreen(null);
+    /** 命中包内第几格，未命中返回 -1 */
+    private int slotAtPouch(double mx, double my) {
+        for (int i = 0; i < 6; i++) {
+            int x = pouchX + i * (SLOT + PAD);
+            if (inBox(mx, my, x, pouchY, SLOT, SLOT)) return i;
+        }
+        return -1;
+    }
+
+    private void send(int action, int arg) {
+        TinkersNewlife.CHANNEL.sendToServer(new PacketStaffGoetyAction(action, arg));
     }
 
     @Override
@@ -93,7 +121,9 @@ public class StaffGoetyScreen extends Screen {
         // 包内 6 格
         for (int i = 0; i < foci.size(); i++) {
             int x = pouchX + i * (SLOT + PAD);
-            drawSlot(graphics, x, pouchY, foci.get(i), i == idx);
+            boolean equipped = i == idx;
+            boolean selected = i == selectedSlot;
+            drawSlot(graphics, x, pouchY, foci.get(i), equipped, selected);
         }
         // 背包聚晶
         Component invTitle = Component.translatable("screen.tinkersnewlife.staff.inv_foci");
@@ -110,13 +140,20 @@ public class StaffGoetyScreen extends Screen {
         super.render(graphics, mouseX, mouseY, partialTick);
     }
 
-    private void drawSlot(GuiGraphics graphics, int x, int y, ItemStack stack, boolean equipped) {
+    private void drawSlot(GuiGraphics graphics, int x, int y, ItemStack stack, boolean equipped, boolean selected) {
         graphics.fill(x, y, x + SLOT, y + SLOT, equipped ? 0x99FFAA22 : 0x66000000);
         if (equipped) {
             graphics.fill(x, y, x + SLOT, y + 1, 0xFFFFCC33);
             graphics.fill(x, y, x + 1, y + SLOT, 0xFFFFCC33);
             graphics.fill(x + SLOT - 1, y, x + SLOT, y + SLOT, 0xFFFFCC33);
             graphics.fill(x, y + SLOT - 1, x + SLOT, y + SLOT, 0xFFFFCC33);
+        }
+        if (selected) {
+            // 选中待交换：内缩一圈亮金/白框
+            graphics.fill(x + 2, y + 2, x + SLOT - 2, y + 3, 0xFFE0E0E0);
+            graphics.fill(x + 2, y + 2, x + 3, y + SLOT - 2, 0xFFE0E0E0);
+            graphics.fill(x + SLOT - 3, y + 2, x + SLOT - 2, y + SLOT - 2, 0xFFE0E0E0);
+            graphics.fill(x + 2, y + SLOT - 3, x + SLOT - 2, y + SLOT - 2, 0xFFE0E0E0);
         }
         if (!stack.isEmpty()) {
             graphics.renderItem(stack, x + 1, y + 1);
