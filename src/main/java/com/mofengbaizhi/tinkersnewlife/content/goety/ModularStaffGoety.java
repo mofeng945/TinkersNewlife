@@ -300,9 +300,23 @@ public final class ModularStaffGoety {
         if (!(event.player instanceof ServerPlayer sp)) return;
         if (sp.level().isClientSide) return;
         tickCasting(sp);
+        // Spell 属性增益：手持真法杖(巫法模式) → 按法杖强度刷新；否则清残留（值未变时内部跳过）
+        refreshSpellAttrsTick(sp);
         // 周期校正：真法杖本体槽与聚晶包装备位保持一致（覆盖升级前旧栈/箱中取出/数据异常等场景）
         if ((sp.tickCount & 9) == 0) {
             mirrorFocus(sp);
+        }
+    }
+
+    /** 手持真法杖（巫法模式）→ 按法杖强度给持有者上诡厄 Spell 属性；否则清空残留 */
+    private static void refreshSpellAttrsTick(ServerPlayer sp) {
+        if (!isGoetyLoaded()) return;
+        ItemStack staff = heldStaff(sp);
+        if (staff != null && !staff.isEmpty()
+                && staff.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.GoetyStaffItem) {
+            com.mofengbaizhi.tinkersnewlife.content.item.GoetyStaffItem.refreshSpellAttrs(sp, staff);
+        } else {
+            com.mofengbaizhi.tinkersnewlife.content.item.GoetyStaffItem.clearSpellAttrs(sp);
         }
     }
 
@@ -312,6 +326,16 @@ public final class ModularStaffGoety {
         if (event.getEntity() instanceof ServerPlayer sp) {
             restoreHand(sp);
             CASTING_ORIGINAL.remove(sp.getUUID());
+        }
+    }
+
+    /** 死亡重生：瞬态 Spell 属性随旧实体销毁，清缓存让新实体按需重挂 */
+    @SubscribeEvent
+    public static void onPlayerClone(net.minecraftforge.event.entity.player.PlayerEvent.Clone event) {
+        if (event.getEntity() instanceof ServerPlayer sp) {
+            if (isGoetyLoaded()) {
+                com.mofengbaizhi.tinkersnewlife.content.item.GoetyStaffItem.clearSpellAttrs(sp);
+            }
         }
     }
 
