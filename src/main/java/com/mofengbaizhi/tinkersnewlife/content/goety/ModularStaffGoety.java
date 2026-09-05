@@ -116,6 +116,11 @@ public final class ModularStaffGoety {
         return idx >= 0 && idx < foci.size() ? foci.get(idx) : ItemStack.EMPTY;
     }
 
+    /** 公开读"装备中聚晶"（GoetyStaffItem 镜像写入用） */
+    public static ItemStack equippedFocusOf(ServerPlayer player, ItemStack staff) {
+        return getEquippedFocus(player, staff);
+    }
+
     @Nullable
     private static ItemStack heldStaff(Player player) {
         ItemStack main = player.getMainHandItem();
@@ -125,13 +130,25 @@ public final class ModularStaffGoety {
         return null;
     }
 
-    private static boolean isGoetyLoaded() {
+    /** 诡厄巫法是否加载（运行时守卫：任何 GoetyStaffItem 的直接引用前必须先过此检查） */
+    public static boolean isGoetyLoaded() {
         try {
             Class.forName("com.Polarice3.Goety.api.items.magic.IWand");
             return true;
         } catch (Throwable t) {
             return false;
         }
+    }
+
+    /**
+     * 聚晶状态变化/周期校正后调用：把"装备中聚晶"镜像写入魔杖本体（真法杖自带槽）。
+     * 诡厄未加载时直接跳过（此时魔杖为普通形态，无自带槽概念）。
+     */
+    public static void mirrorFocus(ServerPlayer player) {
+        if (!isGoetyLoaded()) return;
+        ItemStack staff = heldStaff(player);
+        if (staff == null) return;
+        com.mofengbaizhi.tinkersnewlife.content.item.GoetyStaffItem.mirrorEquippedFocus(player, staff);
     }
 
     // ================= 动作 =================
@@ -148,6 +165,7 @@ public final class ModularStaffGoety {
         player.displayClientMessage(Component.translatable(next == MODE_GOETY
                 ? "message.tinkersnewlife.staff.mode_goety"
                 : "message.tinkersnewlife.staff.mode_iron"), true);
+        mirrorFocus(player); // 真法杖：进巫法模式写聚晶 / 回铁魔法模式清空（HUD 不误显示）
         syncTo(player, staff, false);
     }
 
@@ -179,6 +197,7 @@ public final class ModularStaffGoety {
         setFocusIndex(staff, next);
         player.displayClientMessage(Component.translatable("message.tinkersnewlife.staff.focus_equipped",
                 foci.get(next).getHoverName()), true);
+        mirrorFocus(player); // 真法杖：把新装备的聚晶写入魔杖本体槽
         syncTo(player, staff, false);
     }
 
@@ -205,6 +224,7 @@ public final class ModularStaffGoety {
         saveFoci(player, staff, foci);
         player.displayClientMessage(Component.translatable("message.tinkersnewlife.staff.focus_stored",
                 focus.getHoverName()), true);
+        mirrorFocus(player); // 幂等：装备位未变时为 no-op
         syncTo(player, staff, false);
     }
 
@@ -220,6 +240,7 @@ public final class ModularStaffGoety {
         foci.set(slot, ItemStack.EMPTY);
         if (getFocusIndex(staff) == slot) setFocusIndex(staff, -1);
         saveFoci(player, staff, foci);
+        mirrorFocus(player); // 若取出的是装备位 → 魔杖本体槽同步清空
         syncTo(player, staff, false);
     }
 
@@ -272,13 +293,17 @@ public final class ModularStaffGoety {
 
     // ================= 事件 =================
 
-    /** 蓄力引导期间逐 tick 检测：结束即换回原魔杖 */
+    /** 蓄力引导期间逐 tick 检测：结束即换回原魔杖（仅旧版换手桥接路径使用，真法杖不走这里） */
     @SubscribeEvent
     public static void onPlayerTick(net.minecraftforge.event.TickEvent.PlayerTickEvent event) {
         if (event.phase != net.minecraftforge.event.TickEvent.Phase.END) return;
         if (!(event.player instanceof ServerPlayer sp)) return;
         if (sp.level().isClientSide) return;
         tickCasting(sp);
+        // 周期校正：真法杖本体槽与聚晶包装备位保持一致（覆盖升级前旧栈/箱中取出/数据异常等场景）
+        if ((sp.tickCount & 9) == 0) {
+            mirrorFocus(sp);
+        }
     }
 
     /** 登出：换回原魔杖，清理引导状态 */
@@ -302,6 +327,13 @@ public final class ModularStaffGoety {
             return;
         }
         if (getMode(staff) == MODE_GOETY) {
+            // 真法杖形态（GoetyStaffItem implements IWand）：不取消，交给原版 use() →
+            // GoetyStaffItem.use → 诡厄原生施法（长吟唱蓄力/冷却/灵魂全走原生管线，双端一致）
+            if (isGoetyLoaded()
+                    && staff.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.GoetyStaffItem) {
+                return;
+            }
+            // 旧版/异常环境兜底：换手拿真法杖施法（仅普通形态魔杖且处于巫法模式时可能走到）
             ItemStack focus = getEquippedFocus(player, staff);
             if (!focus.isEmpty()) {
                 event.setCanceled(true);
@@ -318,6 +350,8 @@ public final class ModularStaffGoety {
             Class<?> iwand = Class.forName("com.Polarice3.Goety.api.items.magic.IWand");
             Item wandItem = null;
             for (Item it : BuiltInRegistries.ITEM) {
+                // 跳过魔杖自己（真法杖形态也是 IWand，但走 tryCast 说明它不可用/非真法杖）
+                if (it == staff.getItem()) continue;
                 if (implementsInterface(it.getClass(), iwand)) {
                     wandItem = it;
                     break;

@@ -169,6 +169,10 @@ dependencies {
     // ⭐ 帕秋莉：需要编译期引用 ItemModBook（自定义书物品），故 compileOnly + runtimeOnly
     compileOnly fg.deobf("blank:Patchouli-1.20.1:85-FORGE")
     runtimeOnly fg.deobf("blank:Patchouli-1.20.1:85-FORGE")
+    // ⭐ 诡厄巫法（Goety）：仅编译期引用其 API（IWand/DarkWand/SoulUsingItemHandler…）——
+    // libs/ 下为同映射（official 1.20.1）反混淆 jar，运行时由玩家自装诡厄本体，不构成硬依赖。
+    // 未装诡厄的环境里 GoetyStaffItem 类不会被加载（注册分支按 ModList 判定），全部代码走反射兜底。
+    compileOnly files('libs/goety-2.5.54.5_mapped_official_1.20.1.jar')
     implementation fg.deobf("maven.modrinth:vvuO3ImH:IPQlZkz1")
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html

@@ -198,11 +198,15 @@ public class ModItems {
                         0.006f  // 每点 Fever 增加 0.006 攻击速度（100 Fever 时 +0.6）
                 ));
 
-    /** 模块化魔杖 */
+    /** 模块化魔杖（折中方案：安装了诡厄巫法时注册为"真法杖"形态 GoetyStaffItem——实现 IWand、
+     *  原生施法+冷却 HUD；未安装时注册普通 ModularStaffItem。物品 id/数据/模型完全一致，无硬依赖） */
         public static final RegistryObject<ModularStaffItem> MODULAR_STAFF =
-                ITEMS.register("modular_staff",
-                        () -> new ModularStaffItem(new Item.Properties().stacksTo(1))
-                );
+                ITEMS.register("modular_staff", () -> {
+                    if (net.minecraftforge.fml.ModList.get().isLoaded("goety")) {
+                        return new GoetyStaffItem(new Item.Properties().stacksTo(1));
+                    }
+                    return new ModularStaffItem(new Item.Properties().stacksTo(1));
+                });
 
         public static final RegistryObject<FlyingSwordItem> FLYING_SWORD =
         ITEMS.register("flying_sword",
