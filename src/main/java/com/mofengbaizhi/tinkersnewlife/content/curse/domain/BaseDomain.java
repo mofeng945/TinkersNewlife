@@ -113,10 +113,17 @@ public abstract class BaseDomain {
         for (int y = -r; y <= r; y++) {
             double rH = Math.sqrt(Math.max(0, r * r - y * y));
             int rhi = (int) Math.ceil(rH);
+            // ⭐ 顶部/底部层（水平半径 ≤1.5）填实心圆盘作"封盖"——否则球壳只在顶点留一个点、
+            // 周围留一圈孔洞，顶端不封闭（可被看到/射入）
+            boolean capLayer = rH <= 1.5;
             for (int x = -rhi; x <= rhi; x++) {
                 for (int z = -rhi; z <= rhi; z++) {
-                    double d = Math.sqrt(x * x + y * y + z * z);
-                    if (d < r - 0.5 || d > r + 0.5) continue;
+                    if (capLayer) {
+                        if (Math.sqrt(x * x + z * z) > rH + 0.5) continue;
+                    } else {
+                        double d = Math.sqrt(x * x + y * y + z * z);
+                        if (d < r - 0.5 || d > r + 0.5) continue;
+                    }
                     net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(cx + x, cy + y, cz + z);
                     var state = level.getBlockState(pos);
                     // ⭐ 已存在的本领域墙块（如对抗结束后重建）也要补记，否则关闭时无法移除
