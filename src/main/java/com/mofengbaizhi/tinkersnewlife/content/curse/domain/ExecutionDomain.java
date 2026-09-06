@@ -357,10 +357,10 @@ public class ExecutionDomain extends BaseDomain {
             }
             if (!main) return;
             UUID swordTarget = ExecutionSwordItem.getTarget(held);
-            if (swordTarget != null && swordTarget.equals(victim.getUUID())) {
-                // 命中被告 → 直接处死
-                victim.invulnerableTime = 0;
-                event.setAmount(1.0E7F);
+            if (swordTarget != null && swordTarget.equals(victim.getUUID())
+                    || killedMeBefore(p, victim)) {
+                // 命中被告 / 或曾被该生物杀死（复仇处决，如亚波伦等不可被杀 Boss）→ 直接处死
+                execute(p, victim, event);
             } else {
                 // 命中其它生物 → 200% 伤害
                 event.setAmount(event.getAmount() * 2.0F);
@@ -368,6 +368,27 @@ public class ExecutionDomain extends BaseDomain {
             // 一击即毁（1 耐久）
             held.shrink(1);
             p.broadcastBreakEvent(net.minecraft.world.InteractionHand.MAIN_HAND);
+        }
+
+        /** 原版统计中该玩家是否曾被该类型杀死（击杀记录 Killed By） */
+        private static boolean killedMeBefore(ServerPlayer p, LivingEntity victim) {
+            return p.getStats().getValue(net.minecraft.stats.Stats.ENTITY_KILLED_BY.get(victim.getType())) > 0;
+        }
+
+        /** 处决：无视无敌帧直接击杀（Boss 也能秒） */
+        private static void execute(ServerPlayer p, LivingEntity victim,
+                                    LivingDamageEvent event) {
+            victim.invulnerableTime = 0;
+            // 先尝试直接击杀（绕过大部分 Boss 的伤害上限/免疫）
+            if (victim.isAlive() && !victim.isRemoved()) {
+                victim.kill();
+            }
+            // 兜底：仍存活（自定义死亡逻辑/复活）→ 巨额咒术伤害
+            if (victim.isAlive()) {
+                event.setAmount(1.0E7F);
+            } else {
+                event.setCanceled(true);
+            }
         }
 
         /** 每 tick：没收执行（咒具回包 / 咒力归零） */
