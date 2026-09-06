@@ -41,6 +41,12 @@ public class FlyingSwordItem extends ModifiableItem implements ICurioItem {
     public static final ResourceLocation MODE_KEY =
             new ResourceLocation(TinkersNewlife.MOD_ID, "flying_sword_mode");
 
+    /** 发射冷却键（工具持久数据，每把飞剑独立）：记录上次发射的世界 tick */
+    private static final ResourceLocation KEY_LAST_FIRE =
+            new ResourceLocation(TinkersNewlife.MOD_ID, "flying_sword_last_fire");
+    /** 右键发射冷却（tick）：1 秒 */
+    private static final int FIRE_COOLDOWN_TICKS = 20;
+
     private static final Random RANDOM = new Random();
 
     // ✅ 发射标志：标记当前正在右键发射飞剑的玩家
@@ -67,6 +73,21 @@ public class FlyingSwordItem extends ModifiableItem implements ICurioItem {
                 if (tool.getModifierLevel(FLYING_SWORD_MODIFIER) <= 0) {
                     return InteractionResultHolder.pass(stack);
                 }
+
+                // ⭐ 发射冷却：单次发射后需冷却 1s（20 tick）才能发射下一把（每把飞剑独立记录）
+                ToolDataNBT fireData = tool.getPersistentData();
+                int lastFire = fireData.getInt(KEY_LAST_FIRE);
+                int nowTick = (int) level.getGameTime();
+                if (nowTick - lastFire < FIRE_COOLDOWN_TICKS) {
+                    float remainSec = (FIRE_COOLDOWN_TICKS - (nowTick - lastFire)) / 20.0F;
+                    if (player instanceof ServerPlayer sp) {
+                        sp.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                                "message.tinkersnewlife.flying_sword.cd",
+                                String.format("%.1f", remainSec)), true);
+                    }
+                    return InteractionResultHolder.fail(stack);
+                }
+                fireData.putInt(KEY_LAST_FIRE, nowTick);
 
                 boolean hasUnbreakable = tool.getModifierLevel(UNBREAKABLE_MODIFIER) > 0;
                 int actualCost = 0;

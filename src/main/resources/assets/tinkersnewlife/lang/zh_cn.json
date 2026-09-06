@@ -736,6 +736,7 @@
   "message.tinkersnewlife.fuzhu_cisi.penalty_curse": "§c%s 有罪——没收咒力 60 秒",
   "item.tinkersnewlife.execution_sword": "处刑人之剑",
   "item.tinkersnewlife.execution_sword.desc": "§c1 耐久·120 秒消散。命中被告直接处死；命中其它生物造成 200% 伤害",
+  "message.tinkersnewlife.flying_sword.cd": "§c飞剑冷却中：剩 %s 秒",
   "hud.tinkersnewlife.chant": "§d咏唱咒言：%s",
   "item.tinkersnewlife.ancient_cursed_scroll": "古代咒术残卷",
   "item.tinkersnewlife.cursed_scroll.words": "§7内载咒言：%s",
