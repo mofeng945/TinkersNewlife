@@ -856,5 +856,9 @@
   "modifier.tinkersnewlife.zi_bi_yuan_dun_guo": "自闭圆顿裹",
   "modifier.tinkersnewlife.zi_bi_yuan_dun_guo.flavor": "触之即变，命为手塑。",
   "modifier.tinkersnewlife.zi_bi_yuan_dun_guo.description": "§f领域展开：对领域内除施术者外的每个目标施加一次无为转变——生物当场替换成所选形态的守护式神（认主、永久）；玩家本体被强制变形（60 秒限时、禁工具）。形态 = 施术者已学会无为转变并在形态界面设定的对象；未设定时默认随机变成僵尸或骷髅。本领域可被通用抵抗与新阴流三技巧抵挡（与胎藏遍野一致，仅伏诛赐死不可挡）。每秒消耗 半径×60 咒力。占用领域槽。",
-  "message.tinkersnewlife.zi_bi_yuan_dun_guo.open": "§5自闭圆顿裹——全员变形！半径 %s 格"
+  "message.tinkersnewlife.zi_bi_yuan_dun_guo.open": "§5自闭圆顿裹——全员变形！半径 %s 格",
+  "modifier.tinkersnewlife.dang_yun_ping_xian": "荡蕴平线",
+  "modifier.tinkersnewlife.dang_yun_ping_xian.flavor": "一叶扁舟，万顷沧波。",
+  "modifier.tinkersnewlife.dang_yun_ping_xian.description": "§f领域展开：领域内部灌满海水，施术者不会窒息（同队式神/咒灵/守护同样获得水呼吸；新阴流三技巧可抵挡本领域溺水环境，仅伏诛赐死不可挡），其它生物在水中按正常呼吸规则。领域内持续维持一批以施术者为主人的溺尸（6+半径/2，上限 24）：溺尸主动索敌领域内所有非施术者阵营目标并近战攻击，死亡自动补充，约 1/5 手持三叉戟。领域关闭时一切回归原样：水消失、溺尸消散。每秒消耗 半径×45 咒力。占用领域槽。",
+  "message.tinkersnewlife.dang_yun_ping_xian.open": "§b荡蕴平线——沧波万顷！半径 %s 格，溺尸 %s 只"
 }

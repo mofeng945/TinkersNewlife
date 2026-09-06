@@ -268,4 +268,9 @@ public class Modifiers {
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.ZiBiYuanDunGuoTrait> ZI_BI_YUAN_DUN_GUO =
         MODIFIERS.register("zi_bi_yuan_dun_guo",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.ZiBiYuanDunGuoTrait::new);
+
+    /** 荡蕴平线（领域特性，占用领域槽；域内注水 + 溺尸军团，结束复原） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.DangYunPingXianTrait> DANG_YUN_PING_XIAN =
+        MODIFIERS.register("dang_yun_ping_xian",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.DangYunPingXianTrait::new);
 }

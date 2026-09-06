@@ -1,0 +1,17 @@
+{
+    "name":  "荡蕴平线",
+    "category":  "tinkersnewlife:domains",
+    "icon": "tinkersnewlife:textures/gui/modifiers/dang_yun_ping_xian.png",
+    "sortnum":  10,
+    "advancement": "tinkersnewlife:domains/dang_yun_ping_xian",
+    "pages":  [
+        {
+            "type":  "patchouli:text",
+            "text":  "$(bold)荡蕴平线$()：一叶扁舟，万顷沧波。$(br2)$(bold)展开$()：通用领域展开键，以自身为中心张开领域（困锁同其它领域，每秒消耗 半径×45 咒力）。展开瞬间领域内部$(blue)灌满海水$()；施术者$(bold)不会窒息$()（持续水呼吸），施术者的式神/咒灵/守护等同队目标同样获得水呼吸。领域内其它生物按正常呼吸规则——在水中会窒息。"
+        },
+        {
+            "type":  "patchouli:text",
+            "text":  "$(bold)溺尸军团$()：领域内持续维持一批以施术者为主人的溺尸（数量 = 6 + 半径/2，上限 24）。溺尸会$(red)主动索敌领域内所有非施术者阵营目标$()：游近并以近战攻击，溺尸死亡后自动补充；约 1/5 概率手持三叉戟（近战伤害更高）。$(br2)$(bold)结束$()：领域关闭（手动/咒力耗尽/被破坏/死亡登出）时一切回归原样——灌的水复原为空气、溺尸全部消散。"
+        }
+    ]
+}

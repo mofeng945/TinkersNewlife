@@ -69,5 +69,9 @@
   "modifier.tinkersnewlife.zi_bi_yuan_dun_guo": "Zi Bi Yuan Dun Guo",
   "modifier.tinkersnewlife.zi_bi_yuan_dun_guo.flavor": "Touch and transform; life reshaped by hand.",
   "modifier.tinkersnewlife.zi_bi_yuan_dun_guo.description": "§fDomain expansion: each target inside (except the caster) is transfigured once - mobs are replaced by guardian shikigami of the chosen form (tamed, permanent); players are forcibly morphed for 60s (tools disabled). The form is the caster's Wu Wei selection if set (requires the Wu Wei technique); otherwise random zombie or skeleton. This domain CAN be resisted by the generic grace period and by the New Shadow techniques (like Taizang Bianye - only Execution by Verdict is unstoppable). Costs radius x60 curse power per second. Uses a domain slot.",
-  "message.tinkersnewlife.zi_bi_yuan_dun_guo.open": "§5Zi Bi Yuan Dun Guo - everyone transforms! Radius %s"
+  "message.tinkersnewlife.zi_bi_yuan_dun_guo.open": "§5Zi Bi Yuan Dun Guo - everyone transforms! Radius %s",
+  "modifier.tinkersnewlife.dang_yun_ping_xian": "Dang Yun Ping Xian",
+  "modifier.tinkersnewlife.dang_yun_ping_xian.flavor": "A single boat upon ten thousand waves.",
+  "modifier.tinkersnewlife.dang_yun_ping_xian.description": "§fDomain expansion: the interior floods with seawater - the caster cannot drown (same-team shikigami/spirits/guards get water breathing too; New Shadow techniques can resist this drowning hazard, like Taizang Bianye - only Execution by Verdict is unstoppable), while other creatures follow normal air rules. The domain keeps a swarm of drowned minions owned by the caster (6 + radius/2, up to 24): they actively hunt every non-allied target inside and attack in melee, refill automatically when killed, ~1/5 carry tridents. Closing the domain restores everything - water vanishes, drowned are dismissed. Costs radius x45 curse power per second. Uses a domain slot.",
+  "message.tinkersnewlife.dang_yun_ping_xian.open": "§bDang Yun Ping Xian - ten thousand waves! Radius %s, drowned %s"
 }
