@@ -2,7 +2,7 @@
   "type": "tconstruct:extract_modifier",
   "inputs": [
     {
-      "item": "tconstruct:sky_slime_crystal"
+      "item": "tconstruct:ender_slime_crystal"
     },
     {
       "item": "minecraft:wet_sponge"

@@ -168,19 +168,19 @@ public class ExecutionDomain extends BaseDomain {
         if (!(target instanceof LivingEntity living) || !living.isAlive()) return;
 
         boolean guilty = true;
-        if (living instanceof Villager || isUndead(living)) {
-            // 亡灵：直接有罪
-            guilty = true;
-        } else if (isArthropod(living)) {
-            // 节肢动物：白昼无罪 / 夜晚有罪
-            guilty = !level.isDay();
-        } else if (living instanceof ServerPlayer p) {
-            // 玩家：击杀村民+动物 > 1000 有罪
+        if (living instanceof ServerPlayer p) {
+            // 玩家：击杀村民+动物 > 1000 有罪（须最先判定——玩家 getMobType 亦为 UNDEAD）
             guilty = killScore(p) > 1000;
             if (guilty) {
                 applyPlayerPenalty(owner, p);
             }
             return; // 玩家不用处刑剑
+        } else if (isUndead(living)) {
+            // 亡灵：直接有罪
+            guilty = true;
+        } else if (isArthropod(living)) {
+            // 节肢动物：白昼无罪 / 夜晚有罪
+            guilty = !level.isDay();
         } else {
             // 其它生物：无罪
             guilty = false;
@@ -282,7 +282,7 @@ public class ExecutionDomain extends BaseDomain {
     // ==================== 类别判定 ====================
 
     private static boolean isUndead(LivingEntity e) {
-        return e.getMobType() == net.minecraft.world.entity.MobType.UNDEAD;
+        return !(e instanceof Player) && e.getMobType() == net.minecraft.world.entity.MobType.UNDEAD;
     }
 
     private static boolean isArthropod(LivingEntity e) {
