@@ -156,6 +156,16 @@ public class WeakPointEntity extends LivingEntity {
         return false;
     }
 
+    /** 绝不推挤他人（弱点小球紧贴目标，若参与推挤会把目标推着走） */
+    @Override
+    public void push(net.minecraft.world.entity.Entity entity) {
+    }
+
+    /** 不参与实体间的推进检测 */
+    @Override
+    protected void pushEntities() {
+    }
+
     // LivingEntity 抽象方法补全（无实际用途）
 
     @Override
