@@ -248,4 +248,9 @@ public class Modifiers {
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.TaizangBianyeTrait> TAIZANG_BIANYE =
         MODIFIERS.register("taizang_bianye",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.TaizangBianyeTrait::new);
+
+    /** 真赝相爱（领域特性，占用领域槽；领域内可切换使用本存档已解锁全部术式） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.ZhenyanXiangaiTrait> ZHENYAN_XIANGAI =
+        MODIFIERS.register("zhenyan_xiangai",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.ZhenyanXiangaiTrait::new);
 }

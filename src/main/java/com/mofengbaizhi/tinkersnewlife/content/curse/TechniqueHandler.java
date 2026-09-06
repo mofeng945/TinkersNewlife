@@ -118,11 +118,11 @@ public final class TechniqueHandler {
     }
 
     /**
-     * 切换按键：把当前选中的术式循环到核心上的下一个术式（列表末尾回到第一个）。
-     * 切换后提示并立即同步 HUD。
+     * 切换按键：把当前选中的术式循环到有效术式列表的下一个（真赝相爱领域内=本存档已解锁术式，
+     * 平时=核心上的术式；列表末尾回到第一个）。切换后提示并立即同步 HUD。
      */
     public static void onSwitch(ServerPlayer player) {
-        List<ModifierId> techniques = getTechniquesOnCore(player);
+        List<ModifierId> techniques = effectiveTechniques(player);
         if (techniques == null) {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.domain.no_core"), true);
             return;
@@ -143,10 +143,10 @@ public final class TechniqueHandler {
         CursePowerHandler.syncToClient(player);
     }
 
-    /** 静默获取当前应选术式 id（无核心/无术式返回 null）；未选中或选中失效时自动补选第一个 */
+    /** 静默获取当前应选术式 id（无有效列表返回 null）；未选中或选中失效时自动补选第一个 */
     @Nullable
     public static ModifierId getSelectedTechniqueId(ServerPlayer player) {
-        List<ModifierId> techniques = getTechniquesOnCore(player);
+        List<ModifierId> techniques = effectiveTechniques(player);
         if (techniques == null || techniques.isEmpty()) return null;
         UUID uuid = player.getUUID();
         ModifierId selected = SELECTED.get(uuid);
@@ -155,6 +155,73 @@ public final class TechniqueHandler {
             SELECTED.put(uuid, selected);
         }
         return selected;
+    }
+
+    /**
+     * 有效术式列表：真赝相爱领域开启期间 = 本存档已帕秋莉解锁的全部术式；
+     * 平时 = 佩戴核心上的术式（无核心返回 null）。
+     */
+    @Nullable
+    private static List<ModifierId> effectiveTechniques(ServerPlayer player) {
+        if (BORROW_ORIGINAL.containsKey(player.getUUID())) {
+            return unlockedTechniques(player);
+        }
+        return getTechniquesOnCore(player);
+    }
+
+    // ==================== 真赝相爱：借术式模式 ====================
+
+    /** 借术式模式：玩家 → 进入领域前的原选中术式（存此键 = 处于借术式模式） */
+    private static final Map<UUID, ModifierId> BORROW_ORIGINAL = new ConcurrentHashMap<>();
+
+    /** 该玩家当前是否处于"真赝相爱借术式"模式 */
+    public static boolean isBorrowing(ServerPlayer player) {
+        return BORROW_ORIGINAL.containsKey(player.getUUID());
+    }
+
+    /** 进入真赝领域：记录原选中并进入借术式模式（保持当前术式不变） */
+    public static void enableBorrow(ServerPlayer player) {
+        UUID uuid = player.getUUID();
+        if (BORROW_ORIGINAL.containsKey(uuid)) return;
+        ModifierId original = SELECTED.get(uuid);
+        BORROW_ORIGINAL.put(uuid, original);
+        // 若从未选中，补选当前有效列表（解锁集）第一个
+        List<ModifierId> list = unlockedTechniques(player);
+        if (SELECTED.get(uuid) == null && !list.isEmpty()) {
+            SELECTED.put(uuid, list.get(0));
+        }
+    }
+
+    /** 离开真赝领域（关闭/死亡/登出）：恢复原选中术式并退出借术式模式 */
+    public static void disableBorrow(ServerPlayer player) {
+        UUID uuid = player.getUUID();
+        ModifierId original = BORROW_ORIGINAL.remove(uuid);
+        if (original == null) {
+            SELECTED.remove(uuid);
+        } else {
+            SELECTED.put(uuid, original);
+        }
+        CursePowerHandler.syncToClient(player);
+    }
+
+    /**
+     * 该玩家本存档内"帕秋莉已解锁"的术式列表：
+     * 以 techniques/&lt;path&gt; advancement 是否完成为准（佩戴装有该术式核心即自动解锁）。
+     */
+    public static List<ModifierId> unlockedTechniques(ServerPlayer player) {
+        List<ModifierId> out = new ArrayList<>();
+        net.minecraft.server.ServerAdvancementManager manager =
+                player.server.getAdvancements();
+        net.minecraft.server.PlayerAdvancements pa = player.getAdvancements();
+        for (ModifierId id : getAllTechniqueIds()) {
+            net.minecraft.resources.ResourceLocation adv = new net.minecraft.resources.ResourceLocation(
+                    TinkersNewlife.MOD_ID, "techniques/" + id.getPath());
+            net.minecraft.advancements.Advancement holder = manager.getAdvancement(adv);
+            if (holder != null && pa.getOrStartProgress(holder).isDone()) {
+                out.add(id);
+            }
+        }
+        return out;
     }
 
     /** 取佩戴核心上已注册的术式 id 列表（按修饰符列表顺序）；无核心返回 null */
@@ -209,6 +276,7 @@ public final class TechniqueHandler {
             com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpeechTechnique.cleanup(sp);
             com.mofengbaizhi.tinkersnewlife.content.curse.technique.AntiGravityTechnique.cleanup(sp);
             com.mofengbaizhi.tinkersnewlife.content.curse.technique.TenDivideTechnique.cleanup(sp);
+            BORROW_ORIGINAL.remove(sp.getUUID());
             SELECTED.remove(sp.getUUID());
         }
     }

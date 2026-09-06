@@ -353,7 +353,8 @@ public class CurseCoreRitualHandler {
         tool.getPersistentData().addSlots(techniqueSlot, -1);
         ModifierId[] domains = {
                 Modifiers.ZUOSHA_BOTU.getId(), Modifiers.WULIANG_KONGCHU.getId(),
-                Modifiers.FUMO_YUCHUZI.getId(), Modifiers.FUZHU_CISI.getId()
+                Modifiers.FUMO_YUCHUZI.getId(), Modifiers.FUZHU_CISI.getId(),
+                Modifiers.TAIZANG_BIANYE.getId(), Modifiers.ZHENYAN_XIANGAI.getId()
         };
         tool.addModifier(domains[random.nextInt(domains.length)], 1);
         tool.getPersistentData().addSlots(domainSlot, -1);
