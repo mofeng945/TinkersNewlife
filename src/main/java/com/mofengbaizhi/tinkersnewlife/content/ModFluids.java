@@ -167,8 +167,8 @@ public class ModFluids {
         2000, 10000, 1500, 0xFFFFD700,  // 金黄色
         lavaProps(MapColor.COLOR_ORANGE));
 
-    /** 熔融诅咒金属（诡厄巫法 诅咒金属锭 熔炼；tier2 材料「诅咒金属」原料流体） */
+    /** 熔融诅咒金属（诡厄巫法 诅咒金属锭 熔炼；tier2 材料「诅咒金属」原料流体，配色沿用诡厄诅咒金属青色） */
     public static final FluidEntry MOLTEN_CURSED_METAL = new FluidEntry("molten_cursed_metal",
-        2000, 8000, 900, 0xFF5B3A29,  // 暗褐铜色（诅咒金属）
-        lavaProps(MapColor.COLOR_BROWN));
+        2000, 8000, 900, 0xFF435C6A,  // 诡厄诅咒金属青
+        lavaProps(MapColor.COLOR_LIGHT_BLUE));
 }
