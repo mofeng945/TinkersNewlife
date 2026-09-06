@@ -30,6 +30,9 @@ public final class CursedSpeechRegistry {
     public static final String FX_THUNDER = "thunder";
     public static final String FX_ATTACK = "attack";
     public static final String FX_KNOCK = "knock";
+    public static final String FX_POISON = "poison";
+    public static final String FX_EXPLODE = "explode";
+    public static final String FX_LEECH = "leech";
 
     /** 对象附带效果 id */
     public static final String OBJ_WUZU = "wuzu";
@@ -39,6 +42,8 @@ public final class CursedSpeechRegistry {
     public static final String OBJ_NYA = "nya";
     public static final String OBJ_SHUB = "shub";
     public static final String OBJ_YOG = "yog";
+    public static final String OBJ_RYOMEN = "ryomen";
+    public static final String OBJ_HASTUR = "hastur";
 
     /** 一段咒言词条 */
     public record Word(String id, Part part, int rarity, String langKey) {}
@@ -73,6 +78,8 @@ public final class CursedSpeechRegistry {
         reg("idiot", Part.TARGET, 0); // 智力残缺大哥哥
         reg("cthulhu", Part.TARGET, 2); // 克图露
         reg("elysia",  Part.TARGET, 2); // 爱莉希雅
+        reg("ryomen",  Part.TARGET, 3); // 两面宿傩（借业火焚身）
+        reg("hastur",  Part.TARGET, 4); // 黄衣之王（低语侵扰）
         reg("nya",     Part.TARGET, 5); // 奈亚拉托提普（仅不可名状敬称）
         reg("shub",    Part.TARGET, 5); // 莎布尼古拉斯（仅不可名状敬称）
         reg("yog",     Part.TARGET, 5); // 犹格索托斯（仅不可名状敬称）
@@ -91,14 +98,18 @@ public final class CursedSpeechRegistry {
         reg("blind",    Part.CORE, 2); // 附加失明
         reg("burn",     Part.CORE, 2); // 点燃他
         reg("sick",     Part.CORE, 2); // 反胃他
+        reg("poison",   Part.CORE, 2); // 令他腐烂
         reg("freeze",   Part.CORE, 3); // 冻结他
+        reg("knock",    Part.CORE, 3); // 甩飞他
+        reg("explode",  Part.CORE, 3); // 爆破他
         reg("thunder",  Part.CORE, 4); // 降下雷霆
         reg("attack",   Part.CORE, 4); // 攻击他
-        reg("knock",    Part.CORE, 3); // 甩飞他
-        // 结谢语（反噬削减排序：这是本小姐的赏赐<我赞美您<无比的感谢您<我永远信仰您<奉献一切与您）
+        reg("leech",    Part.CORE, 4); // 榨取他
+        // 结谢语（反噬削减排序：这是本小姐的赏赐<我赞美您<无比的感谢您<承蒙您怜悯<我永远信仰您<奉献一切与您）
         reg("reward",  Part.THANKS, 0); // 这是本小姐的赏赐
         reg("praise",  Part.THANKS, 1); // 我赞美您（初始）
         reg("thanks",  Part.THANKS, 2); // 无比的感谢您
+        reg("mercy",   Part.THANKS, 3); // 承蒙您怜悯
         reg("faith",   Part.THANKS, 4); // 我永远信仰您
         reg("devote",  Part.THANKS, 5); // 奉献一切与您
     }

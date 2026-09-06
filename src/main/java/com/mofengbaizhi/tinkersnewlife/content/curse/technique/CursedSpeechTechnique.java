@@ -294,6 +294,30 @@ public final class CursedSpeechTechnique extends BaseTechnique {
                 target.addEffect(new MobEffectInstance(MobEffects.HUNGER, baseDur, 2, false, true));
                 target.addEffect(new MobEffectInstance(MobEffects.CONFUSION, Math.min(200, baseDur), 0, false, true));
             }
+            case CursedSpeechRegistry.FX_POISON -> {
+                // 令他腐烂：持续中毒
+                target.addEffect(new MobEffectInstance(MobEffects.POISON, baseDur, 1, false, true));
+                level.sendParticles(ParticleTypes.ITEM_SLIME,
+                        target.getX(), target.getY() + 1.0, target.getZ(), 10, 0.4, 0.4, 0.4, 0.02);
+            }
+            case CursedSpeechRegistry.FX_EXPLODE -> {
+                // 爆破他：小型咒力爆裂（不破坏方块、不引火），中心咒术伤害随距离衰减
+                target.invulnerableTime = 0;
+                float dmg = (float) amplifyTechniqueDamage(player, 9.0 * honorMul);
+                target.hurt(level.damageSources().magic(), dmg);
+                level.explode(player, target.getX(), target.getY() + 0.5, target.getZ(),
+                        1.2F + 0.3F * (float) honorMul, false,
+                        net.minecraft.world.level.Level.ExplosionInteraction.NONE);
+            }
+            case CursedSpeechRegistry.FX_LEECH -> {
+                // 榨取他：咒术伤害并吸取半数伤害回复自身
+                target.invulnerableTime = 0;
+                float dmg = (float) amplifyTechniqueDamage(player, 7.0 * honorMul);
+                target.hurt(level.damageSources().magic(), dmg);
+                player.heal(dmg * 0.5F);
+                level.sendParticles(ParticleTypes.SOUL, target.getX(), target.getY() + 1.0, target.getZ(),
+                        12, 0.4, 0.5, 0.4, 0.02);
+            }
             case CursedSpeechRegistry.FX_FREEZE -> {
                 target.addEffect(new MobEffectInstance(ModEffects.FROST.get(), baseDur, 0, false, true));
                 target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, baseDur, 2, false, true));
@@ -356,6 +380,18 @@ public final class CursedSpeechTechnique extends BaseTechnique {
                 player.heal(4.0F + 3.0F * (float) honorMul);
                 player.serverLevel().sendParticles(ParticleTypes.HEART,
                         player.getX(), player.getY() + 1.0, player.getZ(), 6, 0.5, 0.5, 0.5, 0);
+            }
+            case CursedSpeechRegistry.OBJ_RYOMEN -> {
+                // 两面宿傩：借其业火，目标被点燃并陷入虚弱
+                target.setSecondsOnFire(Math.max(4, dur / 20 + 2));
+                target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, dur, 1, false, true));
+            }
+            case CursedSpeechRegistry.OBJ_HASTUR -> {
+                // 黄衣之王：低语侵扰，目标失明并迟缓
+                target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, dur, 0, false, true));
+                target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, dur, 1, false, true));
+                player.serverLevel().sendParticles(ParticleTypes.SCULK_SOUL,
+                        target.getX(), target.getY() + 1.0, target.getZ(), 14, 0.5, 0.4, 0.5, 0.01);
             }
             case CursedSpeechRegistry.OBJ_NYA -> {
                 // 奈亚拉托提普：给予自身不可名状 + 使目标定住
