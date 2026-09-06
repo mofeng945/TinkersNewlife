@@ -118,6 +118,14 @@ public class ExecutionDomain extends BaseDomain {
         long elapsed = now - startedAt;
         ServerLevel level = player.serverLevel();
 
+        // 诊断（每 20 tick）：确认 onTick 在跑、计时在走、目标是否仍在
+        if (now % 20 == 0) {
+            Entity diag = level.getEntity(targetId);
+            TinkersNewlife.LOGGER.info("[伏诛赐死] tick elapsed={}t 目标存活={} 墙格数={}",
+                    elapsed, diag instanceof LivingEntity le && le.isAlive(),
+                    getBarrierPositions().size());
+        }
+
         // 1) 领域内除展开者外所有实体定身（技巧无效：不查 SkillHandler、不给通用抵抗）
         if (now % 5 == 0) {
             double r = radius;
