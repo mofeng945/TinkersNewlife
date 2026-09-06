@@ -35,8 +35,10 @@ public final class GuiEntityViewer {
                               double mouseX, double mouseY) {
         float yawF = (float) Math.atan((mouseX - x) / 40.0);
         float pitchF = (float) Math.atan((mouseY - feetY) / 40.0);
+        // ⭐ 鼠标移到实体上方（mouseY < feetY，pitchF 为负）→ 实体应仰头（xRot 负值）；
+        // 与原版 xRot 符号对齐，两处俯仰方向统一取反修正
         Quaternionf rot = new Quaternionf().rotateZ((float) Math.PI);
-        Quaternionf rotPitch = new Quaternionf().rotateX(pitchF * 20.0F * ((float) Math.PI / 180F));
+        Quaternionf rotPitch = new Quaternionf().rotateX(-pitchF * 20.0F * ((float) Math.PI / 180F));
         rot.mul(rotPitch);
 
         float body = entity.yBodyRot;
@@ -46,7 +48,7 @@ public final class GuiEntityViewer {
         float hr = entity.yHeadRot;
         entity.yBodyRot = 180.0F - yawF * 20.0F;
         entity.setYRot(180.0F - yawF * 40.0F);
-        entity.setXRot(-pitchF * 20.0F);
+        entity.setXRot(pitchF * 20.0F);
         entity.yHeadRot = entity.getYRot();
         entity.yHeadRotO = entity.getYRot();
 
