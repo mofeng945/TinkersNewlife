@@ -225,6 +225,14 @@ public class ModItems {
         ITEMS.register("yo_yo",
                 () -> new YoYoItem(new Item.Properties().stacksTo(1)));
 
+    /** 处刑人之剑（伏诛赐死领域发放的行刑武器：1 耐久 / 120 秒限时 / 命中目标即处决） */
+    public static final RegistryObject<ExecutionSwordItem> EXECUTION_SWORD =
+        ITEMS.register("execution_sword",
+                () -> new ExecutionSwordItem(new Item.Properties()
+                        .stacksTo(1)
+                        .durability(1)
+                        .rarity(net.minecraft.world.item.Rarity.UNCOMMON)));
+
     /** 咒力核心（模块化饰品，穿戴于咒力核心槽位） */
     public static final RegistryObject<CurseCoreItem> CURSE_CORE =
         ITEMS.register("curse_core",

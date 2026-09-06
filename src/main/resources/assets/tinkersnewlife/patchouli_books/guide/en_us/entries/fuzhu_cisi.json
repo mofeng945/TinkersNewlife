@@ -1,0 +1,17 @@
+{
+    "name":  "伏诛赐死",
+    "category":  "tinkersnewlife:domains",
+    "icon": "tinkersnewlife:textures/gui/modifiers/fuzhu_cisi.png",
+    "sortnum":  4,
+    "advancement": "tinkersnewlife:domains/fuzhu_cisi",
+    "pages":  [
+        {
+            "type":  "patchouli:text",
+            "text":  "$(bold)伏诛赐死$()：法庭开庭，有罪即诛。$(br2)$(bold)展开$()：对视线目标使用领域展开键——领域以该目标（被告）为中心张开；领域内除展开者外所有实体定身不能移动，$(red)新阴流技巧（弥虚葛笼/简易领域）无效$()。$(br2)$(bold)被告审判$()：$(li)亡灵：3 秒后直接判有罪——攻击力归零 60 秒$(li)节肢动物：3 秒后视天色——白昼无罪，夜晚有罪$(li)玩家：6 秒审判，逐条公屏 title（玩家名/杀人数/判断/判决）"
+        },
+        {
+            "type":  "patchouli:text",
+            "text":  "$(bold)定罪标准（玩家）$()：击杀村民数 + 击杀动物数 超过 1000 即有罪。$(br2)$(bold)处刑$()：有罪的亡灵/节肢动物在领域结束后，向展开者发放$(bold)处刑人之剑$()（1 耐久、120 秒消散、背包已有不再发放）：命中被告直接处死，命中其它生物造成 200% 伤害。$(br2)$(bold)玩家惩罚$()：有罪玩家在领域结束后被没收 60 秒——依序没收咒具（手持咒具强制收回背包）→ 术式（封印）→ 咒力（恒为 0）；同一玩家再次被审判，惩罚逐级递进。"
+        }
+    ]
+}

@@ -238,4 +238,9 @@ public class Modifiers {
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.JianyiLingyuTrait> JIANYI_LINGYU =
         MODIFIERS.register("jianyi_lingyu",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.JianyiLingyuTrait::new);
+
+    /** 伏诛赐死（领域特性，占用领域槽；指定被告审判并处刑） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.FuzhuCisiTrait> FUZHU_CISI =
+        MODIFIERS.register("fuzhu_cisi",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.FuzhuCisiTrait::new);
 }
