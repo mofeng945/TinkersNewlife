@@ -13,14 +13,11 @@ import com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoHireState;
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuWeiTechnique;
 
 import com.mofengbaizhi.tinkersnewlife.content.*;
-import com.mofengbaizhi.tinkersnewlife.content.curse.technique.BaTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.BlackBirdTechnique;
-import com.mofengbaizhi.tinkersnewlife.content.curse.technique.BloodManipulationHyakurenTechnique;
-import com.mofengbaizhi.tinkersnewlife.content.curse.technique.BloodManipulationSupernovaTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.BloodManipulationTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.YuchuziTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.domain.DomainRegistry;
 import com.mofengbaizhi.tinkersnewlife.content.curse.domain.FuMoYuChuZiDomain;
-import com.mofengbaizhi.tinkersnewlife.content.curse.technique.KaiTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangWuxianTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangCangTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.JacobsLadderTechnique;
@@ -29,7 +26,6 @@ import com.mofengbaizhi.tinkersnewlife.content.curse.technique.ProjectionTechniq
 import com.mofengbaizhi.tinkersnewlife.content.curse.TechniqueHandler;
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.TenShadowsTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.domain.WuLiangKongChuDomain;
-import com.mofengbaizhi.tinkersnewlife.content.curse.technique.ZaoKaiTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.domain.ZuoShaBoTuDomain;
 import com.mofengbaizhi.tinkersnewlife.content.loot.LootModifierSerializers;
 import com.mofengbaizhi.tinkersnewlife.content.storage.SilentGloveHandler;
@@ -171,13 +167,9 @@ public class TinkersNewlife {
         DomainRegistry.registerDomain(Modifiers.SAN_CHONG_JI_KU.getId(),
                 com.mofengbaizhi.tinkersnewlife.content.curse.domain.SanChongJiKuDomain::tryCreate);
 
-        // 注册术式：解、捌、灶·开（后续术式继承 BaseTechnique 后在此登记）
-        TechniqueHandler.register(KaiTechnique.INSTANCE);
-        TechniqueHandler.register(BaTechnique.INSTANCE);
-        TechniqueHandler.register(ZaoKaiTechnique.INSTANCE);
+        // 注册术式：御厨子（解/捌/灶·开整合）、赤血操术（穿血/百敛/超新星整合）等
+        TechniqueHandler.register(YuchuziTechnique.INSTANCE);
         TechniqueHandler.register(BloodManipulationTechnique.INSTANCE);
-        TechniqueHandler.register(BloodManipulationHyakurenTechnique.INSTANCE);
-        TechniqueHandler.register(BloodManipulationSupernovaTechnique.INSTANCE);
         TechniqueHandler.register(TenShadowsTechnique.INSTANCE);
         TechniqueHandler.register(BlackBirdTechnique.INSTANCE);
         TechniqueHandler.register(com.mofengbaizhi.tinkersnewlife.content.curse.technique.PuppetTechnique.INSTANCE);

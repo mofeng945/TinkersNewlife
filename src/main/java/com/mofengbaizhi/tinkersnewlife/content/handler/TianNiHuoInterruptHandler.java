@@ -10,7 +10,7 @@ import com.mofengbaizhi.tinkersnewlife.content.curse.technique.ProjectionTechniq
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.PuppetTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangCangTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangWuxianTechnique;
-import com.mofengbaizhi.tinkersnewlife.content.curse.technique.ZaoKaiTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.YuchuziTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.entity.BlackBirdEntity;
 import com.mofengbaizhi.tinkersnewlife.content.entity.PuppetGolemMob;
 import com.mofengbaizhi.tinkersnewlife.content.entity.PuppetIronGolem;
@@ -156,7 +156,7 @@ public final class TianNiHuoInterruptHandler {
             any = true;
         }
         // 灶·开 / 无量·苍 蓄力（无条件取消，恢复原主手）
-        ZaoKaiTechnique.cancelCharge(victim);
+        YuchuziTechnique.cancelCharge(victim);
         WuliangCangTechnique.cancelCharge(victim);
         // 无下限·无限（切换型持续术式）关闭
         if (WuliangWuxianTechnique.isActive(victim)) {

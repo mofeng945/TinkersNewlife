@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(bold)咒力核心$() 是咒力系统的根基。它是一枚匠魂工具，佩戴在 $(bold)curios 咒力核心槽$() 中，提供：$(li)咒力上限与恢复$(li)术式（$(l:techniques/kai)解$()/$(l:techniques/ba)捌$()/$(l:techniques/zao_kai)灶·开$()）$(li)领域（$(l:domains/zuosha_botu)坐杀搏徒$()/$(l:domains/wuliang_kongchu)无量空处$()/$(l:domains/fumo_yuchuzi)伏魔御厨子$()）$(li)材料战斗特性（随核心材料生效）"
+      "text": "$(bold)咒力核心$() 是咒力系统的根基。它是一枚匠魂工具，佩戴在 $(bold)curios 咒力核心槽$() 中，提供：$(li)咒力上限与恢复$(li)术式（$(l:techniques/yuchuzi)御厨子$()/$(l:techniques/blood_manipulation)赤血操术$()等）$(li)领域（$(l:domains/zuosha_botu)坐杀搏徒$()/$(l:domains/wuliang_kongchu)无量空处$()/$(l:domains/fumo_yuchuzi)伏魔御厨子$()）$(li)材料战斗特性（随核心材料生效）"
     },
     {
       "type": "patchouli:spotlight",

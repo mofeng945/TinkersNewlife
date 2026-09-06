@@ -1,5 +1,5 @@
 package com.mofengbaizhi.tinkersnewlife.content.curse;
-import com.mofengbaizhi.tinkersnewlife.content.curse.technique.ZaoKaiTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.YuchuziTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHandler;
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangCangTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
@@ -318,7 +318,7 @@ public final class TechniqueHandler {
     @SubscribeEvent
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer sp) {
-            ZaoKaiTechnique.cancelCharge(sp);
+            YuchuziTechnique.cancelCharge(sp);
             WuliangCangTechnique.cancelCharge(sp);
             com.mofengbaizhi.tinkersnewlife.content.curse.technique.PuppetTechnique.cleanup(sp);
             com.mofengbaizhi.tinkersnewlife.content.curse.technique.PlantManipulationTechnique.cleanup(sp);
@@ -339,7 +339,7 @@ public final class TechniqueHandler {
     @SubscribeEvent
     public static void onPlayerDeath(LivingDeathEvent event) {
         if (event.getEntity() instanceof ServerPlayer sp) {
-            ZaoKaiTechnique.cancelCharge(sp);
+            YuchuziTechnique.cancelCharge(sp);
             WuliangCangTechnique.cancelCharge(sp);
             com.mofengbaizhi.tinkersnewlife.content.curse.technique.PuppetTechnique.cleanup(sp);
             com.mofengbaizhi.tinkersnewlife.content.curse.technique.PlantManipulationTechnique.cleanup(sp);

@@ -119,29 +119,15 @@ public class Modifiers {
     public static final StaticModifier<FuMoYuChuZiTrait> FUMO_YUCHUZI =
         MODIFIERS.register("fumo_yuchuzi", FuMoYuChuZiTrait::new);
 
-    /** 解（术式特性，占用术式槽） */
-    public static final StaticModifier<KaiTrait> KAI =
-        MODIFIERS.register("kai", KaiTrait::new);
+    /** 御厨子（术式特性，占用术式槽；整合解/捌/灶·开三招） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.YuchuziTrait> YUCHUZI =
+        MODIFIERS.register("yuchuzi",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.YuchuziTrait::new);
 
-    /** 捌（术式特性，占用术式槽） */
-    public static final StaticModifier<BaTrait> BA =
-        MODIFIERS.register("ba", BaTrait::new);
-
-    /** 灶·开（术式特性，占用术式槽） */
-    public static final StaticModifier<ZaoKaiTrait> ZAO_KAI =
-        MODIFIERS.register("zao_kai", ZaoKaiTrait::new);
-
-    /** 赤血操术（术式特性，占用术式槽） */
-    public static final StaticModifier<BloodManipulationTrait> BLOOD_MANIPULATION =
-        MODIFIERS.register("blood_manipulation", BloodManipulationTrait::new);
-
-    /** 赤血操术·百敛（术式特性，占用术式槽） */
-    public static final StaticModifier<BloodManipulationHyakurenTrait> BLOOD_MANIPULATION_HYAKUREN =
-        MODIFIERS.register("blood_manipulation_hyakuren", BloodManipulationHyakurenTrait::new);
-
-    /** 赤血操术·超新星（术式特性，占用术式槽） */
-    public static final StaticModifier<BloodManipulationSupernovaTrait> BLOOD_MANIPULATION_SUPERNOVA =
-        MODIFIERS.register("blood_manipulation_supernova", BloodManipulationSupernovaTrait::new);
+    /** 赤血操术（术式特性，占用术式槽；整合穿血/百敛/超新星三招） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.BloodManipulationTrait> BLOOD_MANIPULATION =
+        MODIFIERS.register("blood_manipulation",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.BloodManipulationTrait::new);
 
     /** 十影术式（术式特性，占用术式槽） */
     public static final StaticModifier<TenShadowsTrait> TEN_SHADOWS =

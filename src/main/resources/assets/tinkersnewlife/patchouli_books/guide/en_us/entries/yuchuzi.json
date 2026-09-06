@@ -1,0 +1,21 @@
+{
+    "name":  "御厨子",
+    "category":  "tinkersnewlife:techniques",
+    "icon": "tinkersnewlife:textures/gui/modifiers/yuchuzi.png",
+    "sortnum":  2,
+    "advancement": "tinkersnewlife:techniques/yuchuzi",
+    "pages":  [
+        {
+            "type":  "patchouli:text",
+            "text":  "$(bold)御厨子$()：宿傩之斩，解捌灶开。$(br2)整合$(bold)解 / 捌 / 灶·开$() 三招于一个术式（只占 1 个术式槽）。$(br2)$(bold)操作$()：按 $(bold)C$() 释放当前招式；按 $(bold)F$()（反转键）在 解 → 捌 → 灶·开 间轮换当前招式。"
+        },
+        {
+            "type":  "patchouli:text",
+            "text":  "$(bold)解$()：对视线目标单发斩击——伤害 = 共享基底 × 70%（无视无敌帧，可被护甲衰减），带横扫粒子。$(br2)$(bold)捌$()：对 3 格内接触目标发动 3 横向 + 3 纵向共 6 道斩击，每道 = 解的二分之一。$(br2)$(bold)灶·开$()：按住 C 主手出现手持火焰箭蓄力，松开向当前朝向发射（笔直慢速），命中引发火焰爆炸（不破坏方块）：中心伤害 = (1+亲和/100) × (当前攻击伤害+输出×10) × 200% 随距离衰减，点燃 (1+输出) 半径区域。"
+        },
+        {
+            "type":  "patchouli:text",
+            "text":  "$(bold)咒力消耗$()：解 = 基础 ×1；捌 = 基础 ×2；灶·开 = 基础 ×10（基础 = (1-亲和/100)×(10+输出×5)）。$(br2)$(bold)提示$()：切换招式（F）会先自动取消灶·开的蓄力；灶·开蓄力中登出/死亡/被天逆鉾打断会自动恢复原主手物品。"
+        }
+    ]
+}

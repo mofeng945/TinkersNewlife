@@ -30,12 +30,8 @@ public final class TechniqueAdvancementHandler {
 
     static {
         // 术式
-        put(Modifiers.KAI.getId(), "techniques/kai");
-        put(Modifiers.BA.getId(), "techniques/ba");
-        put(Modifiers.ZAO_KAI.getId(), "techniques/zao_kai");
+        put(Modifiers.YUCHUZI.getId(), "techniques/yuchuzi");
         put(Modifiers.BLOOD_MANIPULATION.getId(), "techniques/blood_manipulation");
-        put(Modifiers.BLOOD_MANIPULATION_HYAKUREN.getId(), "techniques/blood_manipulation_hyakuren");
-        put(Modifiers.BLOOD_MANIPULATION_SUPERNOVA.getId(), "techniques/blood_manipulation_supernova");
         put(Modifiers.TEN_SHADOWS.getId(), "techniques/ten_shadows");
         put(Modifiers.BLACK_BIRD.getId(), "techniques/black_bird");
         put(Modifiers.PUPPET.getId(), "techniques/puppet");

@@ -81,5 +81,19 @@
   "modifier.tinkersnewlife.san_chong_ji_ku": "San Chong Ji Ku",
   "modifier.tinkersnewlife.san_chong_ji_ku.flavor": "Three calamities converge; nothing can be avoided.",
   "modifier.tinkersnewlife.san_chong_ji_ku.description": "§fDomain expansion (guaranteed-hit domain): every projectile the caster fires is steered each tick toward the nearest hostile target inside the domain - even a stray shot curves to hit. Empty left-clicks (swinging at air, at any distance) while holding a Construct technique temp item or a ranged weapon also land a guaranteed strike on the nearest hostile target inside (scaled by the player's attack damage). Targets: every living creature inside except the caster's own team. Costs radius x45 curse power per second. Uses a domain slot.",
-  "message.tinkersnewlife.san_chong_ji_ku.open": "§6San Chong Ji Ku - nothing can be avoided! Radius %s"
+  "message.tinkersnewlife.san_chong_ji_ku.open": "§6San Chong Ji Ku - nothing can be avoided! Radius %s",
+  "modifier.tinkersnewlife.yuchuzi": "Yu Chu Zi",
+  "modifier.tinkersnewlife.yuchuzi.flavor": "The stove-fire burns; the blade strikes like fate.",
+  "modifier.tinkersnewlife.yuchuzi.description": "§fTechnique Yu Chu Zi - combines Kai / Ba / Zao Kai into one technique (uses a technique slot). Press C to release the current move; press F (reverse key) to cycle Kai -> Ba -> Zao Kai: Kai = a single slash at a looked-at target (70% of the shared base, ignores i-frames, armor still applies); Ba = six slashes at a target within 3 blocks (each half of Kai's damage); Zao Kai = hold C to charge a flame arrow in your main hand, release to fire it (explodes on impact, 200% center damage falling with distance). Curse cost: Kai x1 / Ba x2 / Zao Kai x10 of the base.",
+  "message.tinkersnewlife.yuchuzi.mode_kai": "Kai",
+  "message.tinkersnewlife.yuchuzi.mode_ba": "Ba",
+  "message.tinkersnewlife.yuchuzi.mode_zao_kai": "Zao Kai",
+  "message.tinkersnewlife.yuchuzi.switch": "§dYu Chu Zi - %s",
+  "modifier.tinkersnewlife.blood_manipulation": "Blood Manipulation",
+  "modifier.tinkersnewlife.blood_manipulation.flavor": "Blood as a blade, piercing ten thousand foes.",
+  "modifier.tinkersnewlife.blood_manipulation.description": "§fTechnique Blood Manipulation - combines Chuan Xue / Bai Lian / Supernova into one technique (uses a technique slot). Press C to release the current move; press F (reverse key) to cycle Chuan Xue -> Bai Lian -> Supernova: Chuan Xue = spend 5% max HP, fire a blood beam piercing 20 blocks, one hit per target of (1+affinity/100)x(output+blood x5); Bai Lian = spend 7% HP, lock a target by sight, five blood pillars dealing 5 hits (each = Chuan Xue single-target /2); Supernova = spend 10% HP, lock a target by sight, spawn a blood orb that explodes after 0.8s (center damage x blood x10, falling with distance). Ignores i-frames; armor still applies. Uses a technique slot.",
+  "message.tinkersnewlife.blood.mode_chuanxue": "Chuan Xue",
+  "message.tinkersnewlife.blood.mode_bailian": "Bai Lian",
+  "message.tinkersnewlife.blood.mode_supernova": "Supernova",
+  "message.tinkersnewlife.blood.switch": "§cBlood Manipulation - %s"
 }

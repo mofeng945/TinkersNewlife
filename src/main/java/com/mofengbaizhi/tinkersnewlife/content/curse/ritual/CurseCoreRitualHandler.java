@@ -4,20 +4,16 @@ import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModBlocks;
 import com.mofengbaizhi.tinkersnewlife.content.ModItems;
 import com.mofengbaizhi.tinkersnewlife.content.Modifiers;
-import com.mofengbaizhi.tinkersnewlife.content.curse.technique.BaTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.BaseTechnique;
-import com.mofengbaizhi.tinkersnewlife.content.curse.technique.BloodManipulationHyakurenTechnique;
-import com.mofengbaizhi.tinkersnewlife.content.curse.technique.BloodManipulationSupernovaTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.BloodManipulationTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.BlackBirdTechnique;
-import com.mofengbaizhi.tinkersnewlife.content.curse.technique.KaiTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.ProjectionTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.TenShadowsTechnique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.YuchuziTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangWuxianTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangCangTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.JacobsLadderTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.ReverseCursedTechnique;
-import com.mofengbaizhi.tinkersnewlife.content.curse.technique.ZaoKaiTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuWeiTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.PuppetTechnique;
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.PlantManipulationTechnique;
@@ -332,14 +328,13 @@ public class CurseCoreRitualHandler {
             tool.addModifier(Modifiers.CURSE_OUTPUT.getId(), output - 1);
         }
 
-        // 随机术式（解/捌/灶·开）与随机领域（坐杀搏徒/无量空处/伏魔御厨子）
+        // 随机术式（御厨子/赤血操术等）与随机领域
         // ⭐ addModifier 只加修饰符不扣槽位（配方系统才扣），这里手动各消耗一个术式槽/领域槽
         SlotType techniqueSlot = SlotType.getOrCreate("technique");
         SlotType domainSlot = SlotType.getOrCreate("domain");
         BaseTechnique[] techniques = {
-                KaiTechnique.INSTANCE, BaTechnique.INSTANCE, ZaoKaiTechnique.INSTANCE,
-                BloodManipulationTechnique.INSTANCE, BloodManipulationHyakurenTechnique.INSTANCE,
-                BloodManipulationSupernovaTechnique.INSTANCE, TenShadowsTechnique.INSTANCE,
+                YuchuziTechnique.INSTANCE,
+                BloodManipulationTechnique.INSTANCE, TenShadowsTechnique.INSTANCE,
                 BlackBirdTechnique.INSTANCE, ProjectionTechnique.INSTANCE, WuliangWuxianTechnique.INSTANCE,
                 WuliangCangTechnique.INSTANCE, JacobsLadderTechnique.INSTANCE, ReverseCursedTechnique.INSTANCE,
                 WuWeiTechnique.INSTANCE, PuppetTechnique.INSTANCE, PlantManipulationTechnique.INSTANCE,
