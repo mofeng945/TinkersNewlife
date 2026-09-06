@@ -26,7 +26,8 @@ import java.util.UUID;
 /**
  * 领域·嵌合影翳庭
  * <ul>
- *   <li>强控：领域内除施术者外所有目标每 tick 定身（无法移动/反击），<b>技巧无效</b></li>
+ *   <li>强控：领域内除施术者外所有目标每 tick 定身（无法移动/反击）；
+ *       <b>新阴流三技巧可抵挡本领域定身</b>（与胎藏遍野一致，仅伏诛赐死不可挡）</li>
  *   <li>召唤：展开瞬间召唤"全体十影式神 ×2"（全已调伏，数值随施术者亲和/输出调幅），
  *       围绕施术者索敌并攻击领域内目标</li>
  *   <li>关闭：领域关闭（手动/耗尽/破坏）时所有领域式神立即消失</li>
@@ -72,7 +73,7 @@ public class QianheYingyiDomain extends BaseDomain {
 
     @Override
     public void onTick(ServerPlayer player, long now) {
-        // 每 5 tick 定身领域内除施术者外所有目标（技巧无效、不给通用抵抗）
+        // 每 5 tick 定身领域内除施术者外所有目标（不给通用抵抗；新阴流技巧可抵挡）
         if (now % 5 != 0) return;
         ServerLevel level = player.serverLevel();
         double r = radius;
@@ -81,6 +82,11 @@ public class QianheYingyiDomain extends BaseDomain {
                         center.x + r + 1.5, center.y + r + 1.5, center.z + r + 1.5))) {
             if (e.getUUID().equals(owner)) continue;
             if (e.position().distanceToSqr(center) > r * r) continue;
+            // ⭐ 新阴流技巧抵御：被包裹玩家带技巧且咒力足够 → 本领域定身对其无效
+            if (e instanceof ServerPlayer sp
+                    && com.mofengbaizhi.tinkersnewlife.content.curse.skill.SkillHandler.isProtected(sp, this)) {
+                continue;
+            }
             e.addEffect(new MobEffectInstance(ModEffects.STUN.get(), 60, 0, false, false));
             if (e instanceof Mob mob) {
                 net.minecraft.world.entity.ai.navigation.PathNavigation nav = mob.getNavigation();

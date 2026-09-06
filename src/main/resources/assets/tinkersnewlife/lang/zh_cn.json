@@ -742,9 +742,9 @@
   "modifier.tinkersnewlife.zhenyan_xiangai.flavor": "真亦假时假亦真，万术为我所用。",
   "modifier.tinkersnewlife.qianhe_yingyi": "嵌合影翳庭",
   "modifier.tinkersnewlife.qianhe_yingyi.flavor": "影翳之中，万兽齐出。",
-  "modifier.tinkersnewlife.qianhe_yingyi.description": "§f领域展开：强行定身领域内除施术者外的所有目标（无法移动，新阴流技巧无效）；随即召唤全体十影式神×2（全部已调伏，数值按施术者咒力亲和/输出调幅）索敌并攻击领域内所有目标。关闭领域时领域式神全部消失。每秒消耗 半径×60 咒力。占用领域槽。",
+  "modifier.tinkersnewlife.qianhe_yingyi.description": "§f领域展开：强行定身领域内除施术者外的所有目标（无法移动；新阴流三技巧可抵挡本领域定身——与胎藏遍野一致，仅伏诛赐死不可挡）；随即召唤全体十影式神×2（全部已调伏，数值按施术者咒力亲和/输出调幅）索敌并攻击领域内所有目标。关闭领域时领域式神全部消失。每秒消耗 半径×60 咒力。占用领域槽。",
   "message.tinkersnewlife.qianhe.open": "§d嵌合影翳庭——影翳万兽齐出！已召唤 %s 只式神",  "modifier.tinkersnewlife.zhenyan_xiangai.description": "§f领域展开：施术者进入借术式模式——可切换使用本存档内所有自己在帕秋莉手册中解锁过的术式（切换键在解锁术式中轮换，任一解锁术式皆可即时释放）。仅在领域内生效：领域关闭/离开后自动恢复进入领域前的术式。每秒消耗 半径×25 咒力。占用领域槽。",
-  "message.tinkersnewlife.zhenyan.open": "§d真赝相爱——万术互通！本存档已解锁 %s 个术式，切换键轮换使用",  "modifier.tinkersnewlife.taizang_bianye.description": "§f领域展开：对领域内除施术者外的所有目标持续施加压力——压力 = 反重力机构反转压力 × 2（随咒力亲和/输出成长）。目标按体型与血量上限计算压力阈值：未超阈值受迟缓（越接近等级越高），超出则脚下非基岩方块被压碎、目标定身并持续受咒术伤害。本领域压力可被新阴流三技巧（弥虚葛笼/落花之情/简易领域）抵挡。每秒消耗 半径×30 咒力。占用领域槽。",
+  "message.tinkersnewlife.zhenyan.open": "§d真赝相爱——万术互通！本存档已解锁 %s 个术式，切换键轮换使用",  "modifier.tinkersnewlife.taizang_bianye.description": "§f领域展开：对领域内除施术者外的所有目标持续施加压力——压力 = 反重力机构反转压力 × 2（随咒力亲和/输出成长）。目标按体型与血量上限计算压力阈值：未超阈值受迟缓（越接近等级越高），超出则脚下非基岩方块被压碎、目标定身并持续受咒术伤害。本领域压力可被新阴流三技巧（弥虚葛笼/落花之情/简易领域）抵挡。每秒消耗 半径×30 咒力。占用领域槽。",
   "hud.tinkersnewlife.chant": "§d咏唱咒言：%s",
   "item.tinkersnewlife.ancient_cursed_scroll": "古代咒术残卷",
   "item.tinkersnewlife.cursed_scroll.words": "§7内载咒言：%s",
@@ -848,5 +848,9 @@
   "word.tinkersnewlife.thanks": "无比的感谢您",
   "word.tinkersnewlife.mercy": "承蒙您怜悯",
   "word.tinkersnewlife.faith": "我永远信仰您",
-  "word.tinkersnewlife.devote": "奉献一切与您"
+  "word.tinkersnewlife.devote": "奉献一切与您",
+  "modifier.tinkersnewlife.tie_guan_gai_wei_shan": "铁棺盖围山",
+  "modifier.tinkersnewlife.tie_guan_gai_wei_shan.flavor": "铁棺倾覆，山岳尽焚。",
+  "modifier.tinkersnewlife.tie_guan_gai_wei_shan.description": "§f领域展开：领域内除施术者外的所有目标持续被点燃，且每 5 tick 承受一次无视无敌帧的咒力灼烧（单次 0.6 + 咒力输出×0.35 + 咒力亲和×0.01，护甲/抗性仍可衰减）。本领域点燃与灼烧可被新阴流三技巧抵挡（与胎藏遍野一致，仅伏诛赐死不可挡）。每秒消耗 半径×50 咒力。占用领域槽。",
+  "message.tinkersnewlife.tie_guan_gai_wei_shan.open": "§c铁棺盖围山——焚山！半径 %s 格"
 }

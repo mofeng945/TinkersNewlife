@@ -53,7 +53,7 @@
   "message.tinkersnewlife.zhenyan.open": "§dZhen Yan Xiang Ai - arts interlinked! %s techniques unlocked in this save - cycle with the switch key",
   "modifier.tinkersnewlife.qianhe_yingyi": "Qian He Ying Yi Ting",
   "modifier.tinkersnewlife.qianhe_yingyi.flavor": "Within the shadow court, ten thousand beasts arise.",
-  "modifier.tinkersnewlife.qianhe_yingyi.description": "§fDomain expansion: forcibly stuns every target inside (except the caster - cannot move; New Shadow techniques are ineffective). Then summons ALL ten shadows shikigami x2 (all tamed, scaled by the caster's curse affinity/output) to hunt every target inside the domain. Closing the domain dismisses every summoned shikigami. Costs radius x60 curse power per second. Uses a domain slot.",
+  "modifier.tinkersnewlife.qianhe_yingyi.description": "§fDomain expansion: forcibly stuns every target inside (except the caster - cannot move; New Shadow techniques CAN resist this domain's stun, like Taizang Bianye - only Execution by Verdict is unstoppable). Then summons ALL ten shadows shikigami x2 (all tamed, scaled by the caster's curse affinity/output) to hunt every target inside the domain. Closing the domain dismisses every summoned shikigami. Costs radius x60 curse power per second. Uses a domain slot.",
   "message.tinkersnewlife.qianhe.open": "§dQian He Ying Yi Ting - ten thousand beasts arise! %s shikigami summoned",
   "recipe.tconstruct.extract_modifier.skills": "Extract Skill",
   "stat.tconstruct.slot.display.skill": "Skill",
@@ -61,5 +61,9 @@
   "stat.tconstruct.slot.display.technique": "Technique",
   "stat.tconstruct.slot.prefix.technique": "Technique slot: ",
   "stat.tconstruct.slot.display.domain": "Domain",
-  "stat.tconstruct.slot.prefix.domain": "Domain slot: "
+  "stat.tconstruct.slot.prefix.domain": "Domain slot: ",
+  "modifier.tinkersnewlife.tie_guan_gai_wei_shan": "Tie Guan Gai Wei Shan",
+  "modifier.tinkersnewlife.tie_guan_gai_wei_shan.flavor": "The iron coffin topples; the mountain burns.",
+  "modifier.tinkersnewlife.tie_guan_gai_wei_shan.description": "§fDomain expansion: every creature inside (except the caster) is kept on fire, and takes a curse-scorch hit every 5 ticks that ignores invulnerability frames (0.6 + output x0.35 + affinity x0.01 per hit; armor/resistance still applies). This domain CAN be resisted by the New Shadow techniques (like Taizang Bianye - only Execution by Verdict is unstoppable). Costs radius x50 curse power per second. Uses a domain slot.",
+  "message.tinkersnewlife.tie_guan_gai_wei_shan.open": "§cTie Guan Gai Wei Shan - the mountain burns! Radius %s"
 }

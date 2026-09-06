@@ -258,4 +258,9 @@ public class Modifiers {
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.QianheYingyiTrait> QIANHE_YINGYI =
         MODIFIERS.register("qianhe_yingyi",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.QianheYingyiTrait::new);
+
+    /** 铁棺盖围山（领域特性，占用领域槽；点燃全场 + 每 5t 无视无敌帧咒力灼烧） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.TieGuanGaiWeiShanTrait> TIE_GUAN_GAI_WEI_SHAN =
+        MODIFIERS.register("tie_guan_gai_wei_shan",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.TieGuanGaiWeiShanTrait::new);
 }
