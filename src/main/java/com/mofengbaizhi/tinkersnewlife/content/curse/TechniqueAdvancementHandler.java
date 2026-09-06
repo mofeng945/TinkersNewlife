@@ -66,6 +66,7 @@ public final class TechniqueAdvancementHandler {
         put(Modifiers.FUZHU_CISI.getId(), "domains/fuzhu_cisi");
         put(Modifiers.TAIZANG_BIANYE.getId(), "domains/taizang_bianye");
         put(Modifiers.ZHENYAN_XIANGAI.getId(), "domains/zhenyan_xiangai");
+        put(Modifiers.QIANHE_YINGYI.getId(), "domains/qianhe_yingyi");
     }
 
     private TechniqueAdvancementHandler() {}

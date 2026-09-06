@@ -253,4 +253,9 @@ public class Modifiers {
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.ZhenyanXiangaiTrait> ZHENYAN_XIANGAI =
         MODIFIERS.register("zhenyan_xiangai",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.ZhenyanXiangaiTrait::new);
+
+    /** 嵌合影翳庭（领域特性，占用领域槽；强控全场 + 全体十影式神×2 群殴） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.QianheYingyiTrait> QIANHE_YINGYI =
+        MODIFIERS.register("qianhe_yingyi",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.QianheYingyiTrait::new);
 }

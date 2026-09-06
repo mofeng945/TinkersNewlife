@@ -1,0 +1,17 @@
+{
+    "name":  "嵌合影翳庭",
+    "category":  "tinkersnewlife:domains",
+    "icon": "tinkersnewlife:textures/gui/modifiers/qianhe_yingyi.png",
+    "sortnum":  7,
+    "advancement": "tinkersnewlife:domains/qianhe_yingyi",
+    "pages":  [
+        {
+            "type":  "patchouli:text",
+            "text":  "$(bold)嵌合影翳庭$()：影翳之中，万兽齐出。$(br2)$(bold)展开$()：通用领域展开键，以自身为中心张开领域（困锁同其它领域，每秒消耗 半径×60 咒力）。领域内除施术者外$(red)所有目标被强行定身$()——无法移动/反击，$(red)新阴流技巧无效$()。"
+        },
+        {
+            "type":  "patchouli:text",
+            "text":  "$(bold)影翳万兽$()：展开瞬间召唤$(bold)全体十影式神 ×2$()——十种式神（玉犬×4、脱兔×16、其余各×2，共 40 余只）全部已调伏、数值按施术者咒力亲和/输出调幅，在领域中索敌并围攻被定身的目标。$(br2)$(bold)关闭$()：领域关闭（手动/咒力耗尽/被破坏）时所有领域式神立即消失；施术者死亡时式神同样随既有式神清理逻辑消散。"
+        }
+    ]
+}

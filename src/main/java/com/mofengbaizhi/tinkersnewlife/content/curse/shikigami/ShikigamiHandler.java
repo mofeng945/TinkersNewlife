@@ -158,6 +158,32 @@ public final class ShikigamiHandler {
         }
     }
 
+    /**
+     * 嵌合影翳庭领域用：召唤"全体十影式神 ×2"（全部已调伏、数值按施术者亲和/输出调幅），
+     * 散布于施术者身边索敌。返回所有生成的式神实体 id（供领域关闭时清除）。
+     */
+    public static java.util.List<Integer> summonDomainSet(ServerPlayer owner) {
+        java.util.List<Integer> out = new java.util.ArrayList<>();
+        var level = owner.serverLevel();
+        for (ShikigamiType type : ShikigamiType.values()) {
+            // 每种式神 2 倍数量（玉犬默认一对 → 4 只；脱兔默认 8 只 → 16 只；其余 ×2）
+            int count = (type == ShikigamiType.DOG ? 2 : type == ShikigamiType.RABBIT ? 8 : 1) * 2;
+            for (int i = 0; i < count; i++) {
+                net.minecraft.world.entity.Entity e = createEntity(type, level);
+                if (e == null) continue;
+                double ox = level.random.nextDouble() - 0.5;
+                double oz = level.random.nextDouble() - 0.5;
+                e.moveTo(owner.getX() + ox, owner.getY() + 0.5, owner.getZ() + oz,
+                        owner.getYRot() + 180.0F, 0.0F);
+                var mob = (com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiMob) e;
+                mob.initStats(owner, type, true, null, i % 2); // 已调伏，跟随/索敌由行为驱动
+                level.addFreshEntity(e);
+                out.add(e.getId());
+            }
+        }
+        return out;
+    }
+
     private static void spawnOne(ServerPlayer player, ShikigamiType type, boolean tamed, LivingEntity locked,
                                  int variant, net.minecraft.server.level.ServerLevel level) {
         var e = createEntity(type, level);
