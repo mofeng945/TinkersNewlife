@@ -6,6 +6,7 @@ import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
 import com.mofengbaizhi.tinkersnewlife.content.curse.technique.BaseTechnique;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import com.mofengbaizhi.tinkersnewlife.content.Modifiers;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -192,7 +193,8 @@ public final class TechniqueHandler {
         }
     }
 
-    /** 离开真赝领域（关闭/死亡/登出）：恢复原选中术式并退出借术式模式 */
+    /** 离开真赝领域（关闭/死亡/登出）：恢复原选中术式并退出借术式模式；
+     *  同时关闭借用（核心上没有对应术式）期间开启的持续性术式状态 */
     public static void disableBorrow(ServerPlayer player) {
         UUID uuid = player.getUUID();
         ModifierId original = BORROW_ORIGINAL.remove(uuid);
@@ -201,7 +203,59 @@ public final class TechniqueHandler {
         } else {
             SELECTED.put(uuid, original);
         }
+        // ⭐ 借用状态结束：借来的持续术式效果一并关闭（自己核心自有的不受影响）
+        closeBorrowedSustained(player);
         CursePowerHandler.syncToClient(player);
+    }
+
+    /** 玩家核心上是否装有该术式 modifier */
+    private static boolean hasOnCore(ServerPlayer player, ModifierId id) {
+        List<ModifierId> onCore = getTechniquesOnCore(player);
+        return onCore != null && onCore.contains(id);
+    }
+
+    /**
+     * 关闭"借来的"（核心上没有对应术式）持续/开关型术式状态：
+     * 真赝领域借术式模式下玩家可以开启这些状态，领域关闭后它们本应随之结束，
+     * 否则会残留（如无限屏障常开、压力场常开、无限弹药模式常开、黑鸟操控不回、雷电解放常驻等）。
+     */
+    private static void closeBorrowedSustained(ServerPlayer player) {
+        // 无下限·无限（开关型）
+        if (!hasOnCore(player, Modifiers.WULIANG_WUXIAN.getId())
+                && com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangWuxianTechnique.isActive(player)) {
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangWuxianTechnique.deactivate(player);
+        }
+        // 反重力机构·压力场（开关型）
+        if (!hasOnCore(player, Modifiers.ANTI_GRAVITY.getId())
+                && com.mofengbaizhi.tinkersnewlife.content.curse.technique.AntiGravityTechnique.isFieldActive(player)) {
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.AntiGravityTechnique.cleanup(player);
+        }
+        // 构筑术式：无限弹药模式 / 拟造中
+        if (!hasOnCore(player, Modifiers.CONSTRUCT.getId())
+                && (com.mofengbaizhi.tinkersnewlife.content.curse.technique.ConstructTechnique.isAmmoModeOn(player)
+                || com.mofengbaizhi.tinkersnewlife.content.curse.technique.ConstructTechnique.isForging(player))) {
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.ConstructTechnique.cleanup(player);
+        }
+        // 黑鸟操术：操控中的黑鸟结束、视角回归
+        if (!hasOnCore(player, Modifiers.BLACK_BIRD.getId())
+                && com.mofengbaizhi.tinkersnewlife.content.curse.technique.BlackBirdTechnique.findActiveBird(player) != null) {
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.BlackBirdTechnique.sealRecall(player);
+        }
+        // 雷电操术·幻兽琥珀解放（开关型）
+        if (!hasOnCore(player, Modifiers.LIGHTNING_MANIPULATION.getId())
+                && com.mofengbaizhi.tinkersnewlife.content.curse.technique.LightningManipulationTechnique.isReleased(player)) {
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.LightningManipulationTechnique.deactivate(player);
+        }
+        // 咒力外放·冰沙冲击激光（进行中）
+        if (!hasOnCore(player, Modifiers.CURSED_ENERGY_RELEASE.getId())
+                && com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedEnergyReleaseTechnique.isBlasting(player)) {
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedEnergyReleaseTechnique.cancelBlast(player);
+        }
+        // 无为转变·转变外放开关（借来可开外放，领域结束应关闭）
+        if (!hasOnCore(player, Modifiers.WU_WEI.getId())
+                && com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiHandler.isReversalActive(player)) {
+            com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiHandler.setReversal(player, false);
+        }
     }
 
     /**
