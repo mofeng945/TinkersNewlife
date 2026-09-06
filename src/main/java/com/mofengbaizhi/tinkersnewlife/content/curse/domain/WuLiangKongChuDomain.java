@@ -30,8 +30,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * - 咒力消耗为坐杀搏徒的 4 倍（每秒 半径×80）
  * - 领域内除开启者以外的所有生物/玩家陷入静止：无法自主移动/攻击/使用物品/切换物品栏/打开背包，
  *   但仍受物理引擎（重力/击退）与碰撞挤压影响
- * - 抵抗机制：生物按血量抵抗 (血量/100+1)×5 tick，玩家按咒力亲和抵抗 (咒力亲和/100+1)×5 tick，
- *   抵抗期内不会被定身，之后才进入静止
+ * - 抵抗机制：通用领域抵抗（见 {@link BaseDomain}）——生物按血量、玩家按咒力亲和
+ *   抵抗 (X/100+1)×10 tick，抵抗期内不会被定身，之后才进入静止
  * - 领域关闭后，静止按公式继续：
  *   (领域内状态时间/10 + 咒力输出等级) × (1 + 咒力亲和/100) × 10 tick 后结束
  */
@@ -44,8 +44,6 @@ public class WuLiangKongChuDomain extends BaseDomain {
 
     /** 每个实体在领域内停留的 tick 数（用于关闭后的延续时长计算） */
     private final Map<UUID, Long> insideTicks = new ConcurrentHashMap<>();
-    /** 抵抗截止时刻：实体 UUID → 服务器 tick，此前不会被定身 */
-    private final Map<UUID, Long> resistUntil = new ConcurrentHashMap<>();
 
     private WuLiangKongChuDomain(UUID owner, Vec3 center, int radius) {
         super(owner, center, radius, radius * 80.0); // 4× 坐杀搏徒（半径×20）
@@ -110,9 +108,8 @@ public class WuLiangKongChuDomain extends BaseDomain {
             // 记录领域内停留时间（含抵抗期）
             insideTicks.merge(entity.getUUID(), (long) STUN_REFRESH_TICKS, Long::sum);
 
-            // 抵抗期：生物按血量、玩家按咒力亲和抵抗，期满后才进入静止
-            long resist = resistUntil.computeIfAbsent(entity.getUUID(), id -> now + computeResist(entity));
-            if (now < resist) continue;
+            // ⭐ 通用领域抵抗（提取自无量空处）：生物按血量、玩家按咒力亲和抵抗，期满后才进入静止
+            if (registerResistAndCheck(entity, now)) continue;
 
             // 施加/刷新静止效果（持续期间几乎不结束）
             entity.addEffect(new MobEffectInstance(ModEffects.STUN.get(), STUN_DURATION_TICKS, 0, false, false));
@@ -149,15 +146,7 @@ public class WuLiangKongChuDomain extends BaseDomain {
             living.addEffect(new MobEffectInstance(ModEffects.STUN.get(), (int) Math.max(1, duration), 0, false, false));
         }
         insideTicks.clear();
-        resistUntil.clear();
-    }
-
-    /** 抵抗时长（tick）：生物按血量 (血量/100+1)×5，玩家按咒力亲和 (亲和/100+1)×5 */
-    private long computeResist(LivingEntity entity) {
-        if (entity instanceof Player p) {
-            return Math.max(1, (long) ((CursePowerHelper.getCurseAffinity(p) / 100.0 + 1) * 5));
-        }
-        return Math.max(1, (long) ((entity.getMaxHealth() / 100.0 + 1) * 5));
+        clearResist();
     }
 
     /**
@@ -176,7 +165,7 @@ public class WuLiangKongChuDomain extends BaseDomain {
             entity.removeEffect(ModEffects.STUN.get());
         }
         insideTicks.clear();
-        resistUntil.clear();
+        clearResist();
     }
 
     private static void sendMessage(ServerPlayer player, String key) {

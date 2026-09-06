@@ -52,11 +52,41 @@ public abstract class BaseDomain {
     /** 领域展开时的 gameTime（用于防刷：展开不足 5 秒被破坏不掉碎片） */
     private long createdAtGameTime = -1;
 
+    /** 领域通用抵抗：实体 → 抵抗截止时刻（服务器 tick）。抵抗期内本领域负面效果不生效 */
+    private final Map<UUID, Long> resistUntil = new ConcurrentHashMap<>();
+
     protected BaseDomain(UUID owner, Vec3 center, int radius, double curseCostPerSecond) {
         this.owner = owner;
         this.center = center;
         this.radius = radius;
         this.curseCostPerSecond = curseCostPerSecond;
+    }
+
+    // ============================================================
+    //  通用领域抵抗（提取自无量空处）
+    // ============================================================
+
+    /**
+     * 实体首次出现在领域内时登记抵抗期（只登记一次，重复调用不重置）；
+     * 返回 true 表示该实体当前仍处于"抵抗期"——领域负面效果（定身/斩击等）应跳过本 tick。
+     * 所有领域统一接入：目标进入领域后先"抵抗一会"，期间不会被立刻定身/打击。
+     */
+    protected final boolean registerResistAndCheck(LivingEntity entity, long now) {
+        resistUntil.computeIfAbsent(entity.getUUID(), id -> now + computeResistTicks(entity));
+        return now < resistUntil.get(entity.getUUID());
+    }
+
+    /** 抵抗时长（tick）：玩家按咒力亲和 (亲和/100+1)×10，生物按血量上限 (血量/100+1)×10 */
+    private long computeResistTicks(LivingEntity entity) {
+        if (entity instanceof net.minecraft.world.entity.player.Player p) {
+            return Math.max(1L, (long) ((CursePowerHelper.getCurseAffinity(p) / 100.0 + 1.0) * 10.0));
+        }
+        return Math.max(1L, (long) ((entity.getMaxHealth() / 100.0 + 1.0) * 10.0));
+    }
+
+    /** 领域关闭/对抗重置时清空抵抗登记（领域实例随之销毁，防御性清理） */
+    protected final void clearResist() {
+        resistUntil.clear();
     }
 
     /** 领域展开时由 DomainRegistry 记录展开时刻（gameTime） */

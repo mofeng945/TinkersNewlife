@@ -105,6 +105,9 @@ public class FuMoYuChuZiDomain extends BaseDomain {
             if (entity.getUUID().equals(owner)) continue;
             if (entity.position().distanceToSqr(center) > r * r) continue;
 
+            // ⭐ 通用领域抵抗：目标进入领域后先"抵抗一会"，期间免疫斩击
+            if (registerResistAndCheck(entity, now)) continue;
+
             // ⭐ 领域攻击同样触发咒力核心材料特性
             double dmg = computeDamage(player);
             dmg = com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper
