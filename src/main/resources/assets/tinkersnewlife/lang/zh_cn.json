@@ -860,7 +860,7 @@
   "modifier.tinkersnewlife.dang_yun_ping_xian": "荡蕴平线",
   "modifier.tinkersnewlife.dang_yun_ping_xian.flavor": "一叶扁舟，万顷沧波。",
   "modifier.tinkersnewlife.dang_yun_ping_xian.description": "§f领域展开：领域内部灌满海水，施术者不会窒息（同队式神/咒灵/守护同样获得水呼吸；新阴流三技巧可抵挡本领域溺水环境，仅伏诛赐死不可挡），其它生物在水中按正常呼吸规则。领域内持续维持一批以施术者为主人的溺尸（6+半径/2，上限 24）：溺尸主动索敌领域内所有非施术者阵营目标并近战攻击，死亡自动补充，约 1/5 手持三叉戟。领域关闭时一切回归原样：水消失、溺尸消散。每秒消耗 半径×45 咒力。占用领域槽。",
-  "message.tinkersnewlife.dang_yun_ping_xian.open": "§b荡蕴平线——沧波万顷！半径 %s 格，溺尸 %s 只",
+  "message.tinkersnewlife.dang_yun_ping_xian.open": "§b荡蕴平线——沧波万顷！半径 %s 格",
   "modifier.tinkersnewlife.shi_bao_yue_gong_dian": "时胞月宫殿",
   "modifier.tinkersnewlife.shi_bao_yue_gong_dian.flavor": "月华凝时胞，一宫万念停。",
   "modifier.tinkersnewlife.shi_bao_yue_gong_dian.description": "§f领域展开：月华凝结为时胞——领域内除施术者外的所有目标被命中投射咒法未成功式罚站定身（无法移动/攻击/使用物品/转视角，每 5 tick 刷新至领域结束）。天与咒缚·暴君体质的玩家免疫本领域定身（无咒之躯不受月华束缚）。本领域可被通用抵抗与新阴流三技巧抵挡（与胎藏遍野一致，仅伏诛赐死不可挡）。领域关闭时定身立即解除。每秒消耗 半径×55 咒力。占用领域槽。",

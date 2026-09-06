@@ -60,6 +60,8 @@ public class DangYunPingXianDomain extends BaseDomain {
     private final List<Integer> drownedIds = new ArrayList<>();
     /** 服务端世界引用（关闭时可能拿不到 player） */
     private ServerLevel levelRef;
+    /** 是否已完成首 tick 注水/召溺尸（须等阻挡墙建好，见 onOpen javadoc） */
+    private boolean initialized = false;
 
     private DangYunPingXianDomain(UUID owner, Vec3 center, int radius) {
         super(owner, center, radius, radius * 45.0);
@@ -89,19 +91,27 @@ public class DangYunPingXianDomain extends BaseDomain {
     @Override
     public void onOpen(ServerPlayer player) {
         this.levelRef = player.serverLevel();
-        fillWater(levelRef, true);
-        spawnDrownedBatch(levelRef, player, targetCount());
+        // ⭐ 注水/召溺尸不能在这里做：DomainRegistry 在 onOpen 之后才 buildBarrier，
+        // 此时墙未建，水会流到领域外一大片且不被记录 → 关闭清不干净。
+        // 延迟到首个 onTick（那时阻挡墙已建好，水被墙封在领域内）。
         player.displayClientMessage(Component.translatable(
-                "message.tinkersnewlife.dang_yun_ping_xian.open", radius,
-                drownedIds.size()), true);
-        TinkersNewlife.LOGGER.info("[荡蕴平线] {} 展开：半径 {} 注水 {} 块 溺尸 {} 只",
-                player.getName().getString(), radius, waterBlocks.size(), drownedIds.size());
+                "message.tinkersnewlife.dang_yun_ping_xian.open", radius), true);
+        TinkersNewlife.LOGGER.info("[荡蕴平线] {} 展开：半径 {}（注水将在首 tick 完成）",
+                player.getName().getString(), radius);
     }
 
     @Override
     public void onTick(ServerPlayer player, long now) {
         if (levelRef == null) levelRef = player.serverLevel();
         ServerLevel level = levelRef;
+        // ⭐ 首 tick：阻挡墙已建好，此时注水 + 召首批溺尸
+        if (!initialized) {
+            initialized = true;
+            fillWater(level, true);
+            spawnDrownedBatch(level, player, targetCount());
+            TinkersNewlife.LOGGER.info("[荡蕴平线] 首 tick 注水 {} 块 溺尸 {} 只",
+                    waterBlocks.size(), drownedIds.size());
+        }
         // 每 2 秒补注水
         if (now % 40 == 0) {
             fillWater(level, false);
@@ -143,16 +153,40 @@ public class DangYunPingXianDomain extends BaseDomain {
                 if (e != null) e.discard();
             }
             drownedIds.clear();
-            // 注的水复原为空气
-            for (BlockPos pos : waterBlocks) {
-                if (levelRef.getBlockState(pos).is(Blocks.WATER)) {
-                    levelRef.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
-                }
-            }
+            // ⭐ 注的水复原为空气：从每个记录的水源出发，把与之连通的水全部删掉
+            //（含扩散出的流动水），避免"关领域后残留水塘"。
+            clearWater(levelRef);
             waterBlocks.clear();
         }
         // 施术者水呼吸随效果自然过期即可
         clearResist();
+    }
+
+    /** 从记录水源出发 BFS，清除所有连通的水方块（仅限领域附近的连通水域） */
+    private void clearWater(ServerLevel level) {
+        java.util.ArrayDeque<net.minecraft.core.BlockPos> queue = new java.util.ArrayDeque<>();
+        java.util.Set<net.minecraft.core.BlockPos> visited = new java.util.HashSet<>();
+        for (BlockPos pos : waterBlocks) {
+            if (level.getBlockState(pos).is(Blocks.WATER)) {
+                queue.add(pos);
+                visited.add(pos);
+            }
+        }
+        double limitSq = (radius + 8.0) * (radius + 8.0);
+        while (!queue.isEmpty()) {
+            BlockPos pos = queue.poll();
+            level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
+            // 六向扩散：连通的水（含流动水/低处积水）一并清掉
+            for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
+                BlockPos next = pos.relative(dir);
+                if (visited.contains(next)) continue;
+                if (next.distSqr(BlockPos.containing(center)) > limitSq) continue;
+                if (level.getBlockState(next).is(Blocks.WATER)) {
+                    visited.add(next);
+                    queue.add(next);
+                }
+            }
+        }
     }
 
     // ============================================================
