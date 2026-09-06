@@ -1,0 +1,27 @@
+{
+  "type": "tconstruct:modifier",
+  "allow_crystal": true,
+  "inputs": [
+    {
+      "item": "tinkersnewlife:dreadsteel_ingot"
+    },
+    {
+      "item": "goety:animation_core",
+      "amount": 2
+    }
+  ],
+  "level": 3,
+  "result": "tinkersnewlife:soul_repair",
+  "slots": {
+    "upgrades": 1
+  },
+  "tools": {
+    "tag": "tconstruct:modifiable/durability"
+  },
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "goety"
+    }
+  ]
+}

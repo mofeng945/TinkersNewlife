@@ -274,4 +274,9 @@ public class Modifiers {
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.SanChongJiKuTrait> SAN_CHONG_JI_KU =
         MODIFIERS.register("san_chong_ji_ku",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.SanChongJiKuTrait::new);
+
+    /** 强化·灵魂修复（占用升级槽；每 20t 耗灵魂修耐久，5%×级 概率额外修 1 点；上限 3 级） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.SoulRepairModifier> SOUL_REPAIR =
+        MODIFIERS.register("soul_repair",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.SoulRepairModifier::new);
 }

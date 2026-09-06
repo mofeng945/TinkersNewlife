@@ -102,5 +102,8 @@
   "item.tinkersnewlife.molten_cursed_metal_bucket": "Molten Cursed Metal Bucket",
   "modifier.tinkersnewlife.corruption": "§5Corruption",
   "modifier.tinkersnewlife.corruption.flavor": "§7Souls as fuel, flesh as bait.",
-  "modifier.tinkersnewlife.corruption.description": "§7When dealing damage, spend 0.5% of your max soul energy (up to 100 per hit) to amplify the attack: every 5 souls add +0.2 attack damage and +0.05 blocks of knockback (knockback capped at 3 blocks). No effect when souls are insufficient."
+  "modifier.tinkersnewlife.corruption.description": "§7When dealing damage, spend 0.5% of your max soul energy (up to 100 per hit) to amplify the attack: every 5 souls add +0.2 attack damage and +0.05 blocks of knockback (knockback capped at 3 blocks). No effect when souls are insufficient.",
+  "modifier.tinkersnewlife.soul_repair": "§bSoul Mending",
+  "modifier.tinkersnewlife.soul_repair.flavor": "§7Souls as thread, mending the wounds.",
+  "modifier.tinkersnewlife.soul_repair.description": "§7Every 20 ticks spend max(1, 6-level) soul energy to restore 1 durability; each restoration has a 5%×level chance to restore 1 additional durability. Max level 3. No effect when souls are insufficient."
 }
