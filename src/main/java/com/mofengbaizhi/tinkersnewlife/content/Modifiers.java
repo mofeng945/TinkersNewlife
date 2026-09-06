@@ -278,4 +278,9 @@ public class Modifiers {
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.ShiBaoYueGongDianTrait> SHI_BAO_YUE_GONG_DIAN =
         MODIFIERS.register("shi_bao_yue_gong_dian",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.ShiBaoYueGongDianTrait::new);
+
+    /** 三重疾苦（领域特性，占用领域槽；必中领域：弹射物导引 + 拟造/远程空挥必中） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.SanChongJiKuTrait> SAN_CHONG_JI_KU =
+        MODIFIERS.register("san_chong_ji_ku",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.SanChongJiKuTrait::new);
 }

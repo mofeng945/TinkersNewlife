@@ -77,5 +77,9 @@
   "modifier.tinkersnewlife.shi_bao_yue_gong_dian": "Shi Bao Yue Gong Dian",
   "modifier.tinkersnewlife.shi_bao_yue_gong_dian.flavor": "Moonlight freezes into time-cells; within one palace, every thought halts.",
   "modifier.tinkersnewlife.shi_bao_yue_gong_dian.description": "§fDomain expansion: moonlight freezes into time-cells - every target inside (except the caster) is hit by the same standstill stun as a failed Projection Technique (cannot move/attack/use items/turn the view; refreshed every 5 ticks until the domain ends). Players with the Heavenly Restriction - Tyrant body (curse-less pure physical power) are IMMUNE to this domain's stun - the moon's light cannot bind a body without curse. This domain CAN be resisted by the generic grace period and the New Shadow techniques (like Taizang Bianye - only Execution by Verdict is unstoppable). Closing the domain instantly releases everyone inside. Costs radius x55 curse power per second. Uses a domain slot.",
-  "message.tinkersnewlife.shi_bao_yue_gong_dian.open": "§dShi Bao Yue Gong Dian - all thoughts halt! Radius %s"
+  "message.tinkersnewlife.shi_bao_yue_gong_dian.open": "§dShi Bao Yue Gong Dian - all thoughts halt! Radius %s",
+  "modifier.tinkersnewlife.san_chong_ji_ku": "San Chong Ji Ku",
+  "modifier.tinkersnewlife.san_chong_ji_ku.flavor": "Three calamities converge; nothing can be avoided.",
+  "modifier.tinkersnewlife.san_chong_ji_ku.description": "§fDomain expansion (guaranteed-hit domain): every projectile the caster fires is steered each tick toward the nearest hostile target inside the domain - even a stray shot curves to hit. Empty left-clicks (swinging at air, at any distance) while holding a Construct technique temp item or a ranged weapon also land a guaranteed strike on the nearest hostile target inside (scaled by the player's attack damage). Targets: every living creature inside except the caster's own team. Costs radius x45 curse power per second. Uses a domain slot.",
+  "message.tinkersnewlife.san_chong_ji_ku.open": "§6San Chong Ji Ku - nothing can be avoided! Radius %s"
 }

@@ -205,6 +205,16 @@ public final class ConstructTechnique extends BaseTechnique {
         return stack.hasTag() && stack.getTag().contains(KEY_TEMP_UNTIL);
     }
 
+    /** 是否构筑术式拟造物（临时物标记；供领域·三重疾苦判定"手中拟造物"） */
+    public static boolean isConstructTemp(ItemStack stack) {
+        return isTemp(stack);
+    }
+
+    /** 是否远程武器（弹药请求型：原版弓/弩、匠魂弓弩、TACZ/樱花枪；供领域·三重疾苦判定） */
+    public static boolean isRangedWeapon(ItemStack stack) {
+        return isAmmoRequesting(stack);
+    }
+
     // ============================================================
     //  反转拟造（耗时机制）
     // ============================================================
