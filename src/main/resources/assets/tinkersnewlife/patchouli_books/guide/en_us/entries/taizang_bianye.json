@@ -1,0 +1,17 @@
+{
+    "name":  "胎藏遍野",
+    "category":  "tinkersnewlife:domains",
+    "icon": "tinkersnewlife:textures/gui/modifiers/taizang_bianye.png",
+    "sortnum":  5,
+    "advancement": "tinkersnewlife:domains/taizang_bianye",
+    "pages":  [
+        {
+            "type":  "patchouli:text",
+            "text":  "$(bold)胎藏遍野$()：万类归一，尽承重压。$(br2)$(bold)展开$()：通用领域展开键，以自身为中心张开领域；领域内除施术者外所有目标持续承受$(bold)压力$()——压力 = 反重力机构（反转压力场）压力的 2 倍（随咒力亲和/输出成长）。$(br2)压力判定：目标按体型与血量上限计算压力阈值——$(li)未超阈值：迟缓，越接近阈值等级越高（I~V）$(li)超出阈值：脚下非基岩方块被压碎、目标定身，并持续受到咒术伤害（超出越多单次越高）"
+        },
+        {
+            "type":  "patchouli:text",
+            "text":  "$(bold)与伏诛赐死相反$()：本领域的压力$(green)可以被新阴流三技巧抵挡$()——目标佩戴技巧且咒力足够时，弥虚葛笼/落花之情/简易领域会为其免疫本领域压力（技巧仍按各自规则限制行动并持续耗咒）。$(br2)$(bold)维持$()：每秒消耗 半径×30 咒力，耗尽自动关闭。$(br2)血厚体型大的目标更能抗压（阈值高）；小体型/低血量目标会先被压碎定身。"
+        }
+    ]
+}

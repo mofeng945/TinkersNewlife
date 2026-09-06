@@ -243,4 +243,9 @@ public class Modifiers {
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.FuzhuCisiTrait> FUZHU_CISI =
         MODIFIERS.register("fuzhu_cisi",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.FuzhuCisiTrait::new);
+
+    /** 胎藏遍野（领域特性，占用领域槽；全体重压 2×反重力，可被技巧抵挡） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.TaizangBianyeTrait> TAIZANG_BIANYE =
+        MODIFIERS.register("taizang_bianye",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.TaizangBianyeTrait::new);
 }
