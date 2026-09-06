@@ -48,9 +48,9 @@ public class ExecutionDomain extends BaseDomain {
     /** 玩家审判时长（tick）：6s */
     private static final int JUDGE_PLAYER_TICKS = 120;
     /** 攻击力归零 / 没收时长（tick）：60s */
-    public static final int PENALTY_TICKS = 60 * 20;
+    public static final long PENALTY_TICKS = 60 * 20L;
     /** 处刑人之剑限时（tick）：120s */
-    public static final int SWORD_LIFETIME_TICKS = 120 * 20;
+    public static final long SWORD_LIFETIME_TICKS = 120 * 20L;
 
     /** 被告 UUID */
     private final UUID targetId;
@@ -59,7 +59,7 @@ public class ExecutionDomain extends BaseDomain {
     private ExecutionDomain(ServerPlayer owner, Vec3 center, int radius, LivingEntity target) {
         super(owner.getUUID(), center, radius, radius * 20.0);
         this.targetId = target.getUUID();
-        this.startedAt = owner.serverLevel().getGameTime();
+        this.startedAt = owner.serverLevel().getServer().getTickCount();
     }
 
     /** 工厂：视线目标作为被告（无目标则提示），领域以目标位置为中心 */
@@ -178,7 +178,7 @@ public class ExecutionDomain extends BaseDomain {
         ServerLevel level = owner.serverLevel();
         Entity target = level.getEntity(targetId);
         TinkersNewlife.LOGGER.info("[伏诛赐死] 裁决 tick={} 被告实体={}",
-                level.getGameTime(), target == null ? "null(已消失)" : target.getType().getDescriptionId());
+                level.getServer().getTickCount(), target == null ? "null(已消失)" : target.getType().getDescriptionId());
         if (!(target instanceof LivingEntity living) || !living.isAlive()) return;
 
         boolean guilty = true;
@@ -207,7 +207,7 @@ public class ExecutionDomain extends BaseDomain {
             return;
         }
         // 有罪（亡灵/节肢夜晚）：攻击力归零 60s + 发处刑人之剑
-        ATK_ZERO_UNTIL.put(living.getUUID(), level.getGameTime() + PENALTY_TICKS);
+        ATK_ZERO_UNTIL.put(living.getUUID(), level.getServer().getTickCount() + PENALTY_TICKS);
         owner.displayClientMessage(Component.translatable(
                 "message.tinkersnewlife.fuzhu_cisi.guilty_end",
                 living.getDisplayName()), true);
@@ -227,14 +227,14 @@ public class ExecutionDomain extends BaseDomain {
     private static void applyPlayerPenalty(ServerPlayer owner, ServerPlayer defendant) {
         var data = defendant.getPersistentData();
         int tier = data.getInt(KEY_NEXT_TIER);
-        long until = defendant.serverLevel().getGameTime() + PENALTY_TICKS;
+        long until = defendant.serverLevel().getServer().getTickCount() + PENALTY_TICKS;
         data.putInt(KEY_ACTIVE_TIER, tier);
         data.putLong(KEY_UNTIL, until);
         data.putInt(KEY_NEXT_TIER, (tier + 1) % 3);
         String key = switch (tier) {
             case 0 -> "message.tinkersnewlife.fuzhu_cisi.penalty_tool";
             case 1 -> {
-                CursePowerHelper.applySeal(defendant, PENALTY_TICKS / 20);
+                CursePowerHelper.applySeal(defendant, (int) (PENALTY_TICKS / 20));
                 yield "message.tinkersnewlife.fuzhu_cisi.penalty_technique";
             }
             default -> "message.tinkersnewlife.fuzhu_cisi.penalty_curse";
@@ -246,7 +246,7 @@ public class ExecutionDomain extends BaseDomain {
     /** 该玩家当前是否处于"咒具没收"中（主手/副手咒具 → 每 tick 强制回背包） */
     private static boolean toolPenaltyActive(ServerPlayer p) {
         var data = p.getPersistentData();
-        return data.getInt(KEY_ACTIVE_TIER) == 0 && data.getLong(KEY_UNTIL) > p.serverLevel().getGameTime();
+        return data.getInt(KEY_ACTIVE_TIER) == 0 && data.getLong(KEY_UNTIL) > p.serverLevel().getServer().getTickCount();
     }
 
     // ==================== 处刑人之剑 ====================
@@ -263,7 +263,7 @@ public class ExecutionDomain extends BaseDomain {
         }
         ItemStack sword = new ItemStack(ModItems.EXECUTION_SWORD.get());
         ExecutionSwordItem.setTarget(sword, target.getUUID());
-        sword.getOrCreateTag().putLong("execution_spawn", owner.serverLevel().getGameTime());
+        sword.getOrCreateTag().putLong("execution_spawn", owner.serverLevel().getServer().getTickCount());
         if (owner.getMainHandItem().isEmpty()) {
             owner.getInventory().setItem(owner.getInventory().selected, sword);
         } else if (!owner.getInventory().add(sword)) {
@@ -340,7 +340,7 @@ public class ExecutionDomain extends BaseDomain {
             if (event.getSource().getEntity() instanceof LivingEntity attacker
                     && ATK_ZERO_UNTIL.containsKey(attacker.getUUID())) {
                 Long until = ATK_ZERO_UNTIL.get(attacker.getUUID());
-                if (until > attacker.level().getGameTime()) {
+                if (until > ((net.minecraft.server.level.ServerLevel) attacker.level()).getServer().getTickCount()) {
                     event.setAmount(0.0F);
                     return;
                 }
