@@ -57,6 +57,11 @@ public class Modifiers {
     public static final StaticModifier<DreadsteelArmorTrait> DREADSTEEL_ARMOR =
             MODIFIERS.register("dreadsteel_armor", DreadsteelArmorTrait::new);
 
+    /** 堕落（诅咒金属材料自带词条：消耗灵魂增幅伤害/击退） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.CorruptionTrait> CORRUPTION =
+            MODIFIERS.register("corruption",
+                    com.mofengbaizhi.tinkersnewlife.content.modifier.CorruptionTrait::new);
+
     public static final StaticModifier<LuckyDropTrait> LUCKY_DROP =
             MODIFIERS.register("lucky_drop", LuckyDropTrait::new);
 

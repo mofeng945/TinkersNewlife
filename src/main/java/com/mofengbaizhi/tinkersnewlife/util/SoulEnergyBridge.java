@@ -30,6 +30,7 @@ public final class SoulEnergyBridge {
     private static Method findTotemMethod;
     private static Method totemCurrentSoulsMethod;
     private static Method totemSetSoulsMethod;
+    private static Method totemMaximumSoulsMethod;
     private static boolean resolved = false;
 
     private SoulEnergyBridge() {}
@@ -48,6 +49,11 @@ public final class SoulEnergyBridge {
             Class<?> iTotem = Class.forName(ITOTEM);
             totemCurrentSoulsMethod = iTotem.getMethod("currentSouls", ItemStack.class);
             totemSetSoulsMethod = iTotem.getMethod("setSoulsamount", ItemStack.class, int.class);
+            try {
+                totemMaximumSoulsMethod = iTotem.getMethod("maximumSouls", ItemStack.class);
+            } catch (Throwable ignored) {
+                totemMaximumSoulsMethod = null;
+            }
             TinkersNewlife.LOGGER.info("[TinkersNewlife] 诡厄巫法灵魂能量桥接成功 (SEHelper 能力 + 灵魂图腾 ITotem)");
         } catch (Throwable t) {
             getSESoulsMethod = setSESoulsMethod = findTotemMethod =
@@ -72,6 +78,20 @@ public final class SoulEnergyBridge {
             }
         } catch (Throwable ignored) {}
         return total;
+    }
+
+    /** 灵魂能量上限：仅统计灵魂图腾（ITotem.maximumSouls）；无图腾/未安装返回 0 */
+    public static int getMaxSouls(Player player) {
+        resolve();
+        if (totemMaximumSoulsMethod == null) return 0;
+        try {
+            ItemStack totem = findTotem(player);
+            if (!totem.isEmpty()) {
+                return (Integer) totemMaximumSoulsMethod.invoke(null, totem);
+            }
+        } catch (Throwable ignored) {
+        }
+        return 0;
     }
 
     /** 消耗灵魂能量：优先扣能力，不足部分由图腾兜底；amount<=0 视为成功；总量不足/未安装返回 false */

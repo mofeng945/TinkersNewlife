@@ -1,0 +1,8 @@
+{
+  "still": "tinkersnewlife:block/molten_cursed_metal_still",
+  "flowing": "tinkersnewlife:block/molten_cursed_metal_flowing",
+  "color": "FF5B3A29",
+  "fogColor": "FF5B3A29",
+  "fogStart": 0.5,
+  "fogEnd": 6.0
+}

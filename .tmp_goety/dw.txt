@@ -1,0 +1,2888 @@
+﻿Compiled from "DarkWand.java"
+public class com.Polarice3.Goety.common.items.magic.DarkWand extends net.minecraft.world.item.Item implements com.Polarice3.Goety.api.items.magic.IWand {
+  public com.Polarice3.Goety.api.magic.SpellType spellType;
+
+  public java.util.List<com.Polarice3.Goety.api.magic.SpellType> list;
+
+  public com.Polarice3.Goety.common.items.magic.DarkWand(net.minecraft.world.item.Item$Properties, com.Polarice3.Goety.api.magic.SpellType...);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokespecial #38                 // Method net/minecraft/world/item/Item."<init>":(Lnet/minecraft/world/item/Item$Properties;)V
+       5: aload_0
+       6: new           #40                 // class java/util/ArrayList
+       9: dup
+      10: invokespecial #43                 // Method java/util/ArrayList."<init>":()V
+      13: putfield      #45                 // Field list:Ljava/util/List;
+      16: aload_2
+      17: invokestatic  #51                 // Method java/util/Arrays.stream:([Ljava/lang/Object;)Ljava/util/stream/Stream;
+      20: invokeinterface #57,  1           // InterfaceMethod java/util/stream/Stream.findFirst:()Ljava/util/Optional;
+      25: astore_3
+      26: aload_3
+      27: aload_0
+      28: invokedynamic #76,  0             // InvokeDynamic #0:accept:(Lcom/Polarice3/Goety/common/items/magic/DarkWand;)Ljava/util/function/Consumer;
+      33: invokevirtual #82                 // Method java/util/Optional.ifPresent:(Ljava/util/function/Consumer;)V
+      36: aload_0
+      37: aload_2
+      38: invokestatic  #88                 // InterfaceMethod java/util/List.of:([Ljava/lang/Object;)Ljava/util/List;
+      41: putfield      #45                 // Field list:Ljava/util/List;
+      44: return
+
+  public com.Polarice3.Goety.common.items.magic.DarkWand(net.minecraft.world.item.Item$Properties, com.Polarice3.Goety.api.magic.SpellType);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokespecial #38                 // Method net/minecraft/world/item/Item."<init>":(Lnet/minecraft/world/item/Item$Properties;)V
+       5: aload_0
+       6: new           #40                 // class java/util/ArrayList
+       9: dup
+      10: invokespecial #43                 // Method java/util/ArrayList."<init>":()V
+      13: putfield      #45                 // Field list:Ljava/util/List;
+      16: aload_0
+      17: aload_2
+      18: putfield      #100                // Field spellType:Lcom/Polarice3/Goety/api/magic/SpellType;
+      21: aload_0
+      22: getfield      #45                 // Field list:Ljava/util/List;
+      25: aload_2
+      26: invokeinterface #104,  2          // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+      31: pop
+      32: return
+
+  public com.Polarice3.Goety.common.items.magic.DarkWand(com.Polarice3.Goety.api.magic.SpellType);
+    Code:
+       0: aload_0
+       1: invokestatic  #108                // Method wandProperties:()Lnet/minecraft/world/item/Item$Properties;
+       4: aload_1
+       5: invokespecial #110                // Method "<init>":(Lnet/minecraft/world/item/Item$Properties;Lcom/Polarice3/Goety/api/magic/SpellType;)V
+       8: return
+
+  public com.Polarice3.Goety.common.items.magic.DarkWand();
+    Code:
+       0: aload_0
+       1: getstatic     #115                // Field com/Polarice3/Goety/api/magic/SpellType.NONE:Lcom/Polarice3/Goety/api/magic/SpellType;
+       4: invokespecial #117                // Method "<init>":(Lcom/Polarice3/Goety/api/magic/SpellType;)V
+       7: return
+
+  public com.Polarice3.Goety.api.magic.SpellType getSpellType();
+    Code:
+       0: aload_0
+       1: getfield      #100                // Field spellType:Lcom/Polarice3/Goety/api/magic/SpellType;
+       4: areturn
+
+  public java.util.List<com.Polarice3.Goety.api.magic.SpellType> getSpellTypes();
+    Code:
+       0: aload_0
+       1: getfield      #45                 // Field list:Ljava/util/List;
+       4: areturn
+
+  public static net.minecraft.world.item.Item$Properties wandProperties();
+    Code:
+       0: new           #11                 // class net/minecraft/world/item/Item$Properties
+       3: dup
+       4: invokespecial #123                // Method net/minecraft/world/item/Item$Properties."<init>":()V
+       7: getstatic     #129                // Field net/minecraft/world/item/Rarity.RARE:Lnet/minecraft/world/item/Rarity;
+      10: invokevirtual #133                // Method net/minecraft/world/item/Item$Properties.m_41497_:(Lnet/minecraft/world/item/Rarity;)Lnet/minecraft/world/item/Item$Properties;
+      13: invokevirtual #136                // Method net/minecraft/world/item/Item$Properties.setNoRepair:()Lnet/minecraft/world/item/Item$Properties;
+      16: iconst_1
+      17: invokevirtual #140                // Method net/minecraft/world/item/Item$Properties.m_41487_:(I)Lnet/minecraft/world/item/Item$Properties;
+      20: areturn
+
+  public float getWandVisualHeight(net.minecraft.world.level.Level, net.minecraft.world.entity.LivingEntity, net.minecraft.world.item.ItemStack);
+    Code:
+       0: ldc           #143                // float 0.4f
+       2: freturn
+
+  public void m_6883_(net.minecraft.world.item.ItemStack, net.minecraft.world.level.Level, net.minecraft.world.entity.Entity, int, boolean);
+    Code:
+       0: aload_3
+       1: instanceof    #153                // class net/minecraft/world/entity/LivingEntity
+       4: ifeq          209
+       7: aload_3
+       8: checkcast     #153                // class net/minecraft/world/entity/LivingEntity
+      11: astore        6
+      13: aload_1
+      14: invokevirtual #159                // Method net/minecraft/world/item/ItemStack.m_41784_:()Lnet/minecraft/nbt/CompoundTag;
+      17: astore        7
+      19: aload_1
+      20: invokevirtual #163                // Method net/minecraft/world/item/ItemStack.m_41782_:()Z
+      23: ifeq          36
+      26: aload         7
+      28: ldc           #165                // String Soul Use
+      30: invokevirtual #171                // Method net/minecraft/nbt/CompoundTag.m_128441_:(Ljava/lang/String;)Z
+      33: ifne          94
+      36: aload         7
+      38: ldc           #165                // String Soul Use
+      40: aload_0
+      41: aload         6
+      43: aload_1
+      44: invokevirtual #175                // Method SoulUse:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)I
+      47: invokevirtual #179                // Method net/minecraft/nbt/CompoundTag.m_128405_:(Ljava/lang/String;I)V
+      50: aload         7
+      52: ldc           #181                // String Soul Cost
+      54: iconst_0
+      55: invokevirtual #179                // Method net/minecraft/nbt/CompoundTag.m_128405_:(Ljava/lang/String;I)V
+      58: aload         7
+      60: ldc           #183                // String Cast Time
+      62: aload_0
+      63: aload_1
+      64: invokevirtual #187                // Method CastDuration:(Lnet/minecraft/world/item/ItemStack;)I
+      67: invokevirtual #179                // Method net/minecraft/nbt/CompoundTag.m_128405_:(Ljava/lang/String;I)V
+      70: aload         7
+      72: ldc           #189                // String Cool
+      74: iconst_0
+      75: invokevirtual #179                // Method net/minecraft/nbt/CompoundTag.m_128405_:(Ljava/lang/String;I)V
+      78: aload         7
+      80: ldc           #191                // String Shots
+      82: iconst_0
+      83: invokevirtual #179                // Method net/minecraft/nbt/CompoundTag.m_128405_:(Ljava/lang/String;I)V
+      86: aload         7
+      88: ldc           #193                // String Seconds
+      90: iconst_0
+      91: invokevirtual #179                // Method net/minecraft/nbt/CompoundTag.m_128405_:(Ljava/lang/String;I)V
+      94: aload_0
+      95: aload         6
+      97: aload_1
+      98: invokevirtual #175                // Method SoulUse:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)I
+     101: istore        8
+     103: aload         7
+     105: ldc           #165                // String Soul Use
+     107: invokevirtual #197                // Method net/minecraft/nbt/CompoundTag.m_128451_:(Ljava/lang/String;)I
+     110: iload         8
+     112: if_icmpeq     124
+     115: aload         7
+     117: ldc           #165                // String Soul Use
+     119: iload         8
+     121: invokevirtual #179                // Method net/minecraft/nbt/CompoundTag.m_128405_:(Ljava/lang/String;I)V
+     124: aload_0
+     125: aload_1
+     126: invokevirtual #187                // Method CastDuration:(Lnet/minecraft/world/item/ItemStack;)I
+     129: istore        9
+     131: aload         7
+     133: ldc           #183                // String Cast Time
+     135: invokevirtual #197                // Method net/minecraft/nbt/CompoundTag.m_128451_:(Ljava/lang/String;)I
+     138: iload         9
+     140: if_icmpeq     152
+     143: aload         7
+     145: ldc           #183                // String Cast Time
+     147: iload         9
+     149: invokevirtual #179                // Method net/minecraft/nbt/CompoundTag.m_128405_:(Ljava/lang/String;I)V
+     152: aload_0
+     153: aload_1
+     154: invokevirtual #201                // Method getSpell:(Lnet/minecraft/world/item/ItemStack;)Lcom/Polarice3/Goety/api/magic/ISpell;
+     157: ifnull        175
+     160: aload_0
+     161: aload_0
+     162: aload_1
+     163: invokevirtual #201                // Method getSpell:(Lnet/minecraft/world/item/ItemStack;)Lcom/Polarice3/Goety/api/magic/ISpell;
+     166: aload_1
+     167: aload         6
+     169: invokevirtual #205                // Method setSpellConditions:(Lcom/Polarice3/Goety/api/magic/ISpell;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/LivingEntity;)V
+     172: goto          183
+     175: aload_0
+     176: aconst_null
+     177: aload_1
+     178: aload         6
+     180: invokevirtual #205                // Method setSpellConditions:(Lcom/Polarice3/Goety/api/magic/ISpell;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/LivingEntity;)V
+     183: aload_1
+     184: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     187: invokevirtual #213                // Method net/minecraft/world/item/ItemStack.m_41720_:()Lnet/minecraft/world/item/Item;
+     190: instanceof    #215                // class com/Polarice3/Goety/api/items/magic/IFocus
+     193: ifeq          209
+     196: aload_1
+     197: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     200: aload_2
+     201: aload_3
+     202: iload         4
+     204: iload         5
+     206: invokevirtual #219                // Method net/minecraft/world/item/ItemStack.m_41666_:(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/Entity;IZ)V
+     209: aload_0
+     210: aload_1
+     211: aload_2
+     212: aload_3
+     213: iload         4
+     215: iload         5
+     217: invokespecial #225                // Method net/minecraft/world/item/Item.m_6883_:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/Entity;IZ)V
+     220: return
+
+  public void m_7836_(net.minecraft.world.item.ItemStack, net.minecraft.world.level.Level, net.minecraft.world.entity.player.Player);
+    Code:
+       0: aload_1
+       1: invokevirtual #159                // Method net/minecraft/world/item/ItemStack.m_41784_:()Lnet/minecraft/nbt/CompoundTag;
+       4: astore        4
+       6: aload         4
+       8: ldc           #165                // String Soul Use
+      10: aload_0
+      11: aload_3
+      12: aload_1
+      13: invokevirtual #175                // Method SoulUse:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)I
+      16: invokevirtual #179                // Method net/minecraft/nbt/CompoundTag.m_128405_:(Ljava/lang/String;I)V
+      19: aload         4
+      21: ldc           #181                // String Soul Cost
+      23: iconst_0
+      24: invokevirtual #179                // Method net/minecraft/nbt/CompoundTag.m_128405_:(Ljava/lang/String;I)V
+      27: aload         4
+      29: ldc           #183                // String Cast Time
+      31: aload_0
+      32: aload_1
+      33: invokevirtual #187                // Method CastDuration:(Lnet/minecraft/world/item/ItemStack;)I
+      36: invokevirtual #179                // Method net/minecraft/nbt/CompoundTag.m_128405_:(Ljava/lang/String;I)V
+      39: aload         4
+      41: ldc           #189                // String Cool
+      43: iconst_0
+      44: invokevirtual #179                // Method net/minecraft/nbt/CompoundTag.m_128405_:(Ljava/lang/String;I)V
+      47: aload         4
+      49: ldc           #193                // String Seconds
+      51: iconst_0
+      52: invokevirtual #179                // Method net/minecraft/nbt/CompoundTag.m_128405_:(Ljava/lang/String;I)V
+      55: aload         4
+      57: ldc           #191                // String Shots
+      59: iconst_0
+      60: invokevirtual #179                // Method net/minecraft/nbt/CompoundTag.m_128405_:(Ljava/lang/String;I)V
+      63: aload_0
+      64: aconst_null
+      65: aload_1
+      66: aload_3
+      67: invokevirtual #205                // Method setSpellConditions:(Lcom/Polarice3/Goety/api/magic/ISpell;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/LivingEntity;)V
+      70: return
+
+  public int SoulUse(net.minecraft.world.entity.LivingEntity, net.minecraft.world.item.ItemStack);
+    Code:
+       0: aload_2
+       1: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+       4: invokevirtual #246                // Method net/minecraft/world/item/ItemStack.m_41793_:()Z
+       7: ifeq          40
+      10: getstatic     #252                // Field com/Polarice3/Goety/config/SpellConfig.EnchantMultiCost:Lnet/minecraftforge/common/ForgeConfigSpec$ConfigValue;
+      13: invokevirtual #256                // Method net/minecraftforge/common/ForgeConfigSpec$ConfigValue.get:()Ljava/lang/Object;
+      16: checkcast     #258                // class java/lang/Boolean
+      19: invokevirtual #261                // Method java/lang/Boolean.booleanValue:()Z
+      22: ifeq          40
+      25: aload_0
+      26: aload_2
+      27: invokevirtual #264                // Method SoulCost:(Lnet/minecraft/world/item/ItemStack;)I
+      30: iconst_2
+      31: imul
+      32: i2f
+      33: aload_1
+      34: invokestatic  #270                // Method com/Polarice3/Goety/utils/SEHelper.soulDiscount:(Lnet/minecraft/world/entity/LivingEntity;)F
+      37: fmul
+      38: f2i
+      39: ireturn
+      40: aload_0
+      41: aload_2
+      42: invokevirtual #264                // Method SoulCost:(Lnet/minecraft/world/item/ItemStack;)I
+      45: i2f
+      46: aload_1
+      47: invokestatic  #270                // Method com/Polarice3/Goety/utils/SEHelper.soulDiscount:(Lnet/minecraft/world/entity/LivingEntity;)F
+      50: fmul
+      51: f2i
+      52: ireturn
+
+  public boolean onLeftClickEntity(net.minecraft.world.item.ItemStack, net.minecraft.world.entity.player.Player, net.minecraft.world.entity.Entity);
+    Code:
+       0: iconst_0
+       1: istore        4
+       3: aload_3
+       4: instanceof    #153                // class net/minecraft/world/entity/LivingEntity
+       7: ifeq          691
+      10: aload_3
+      11: checkcast     #153                // class net/minecraft/world/entity/LivingEntity
+      14: astore        5
+      16: aload         5
+      18: instanceof    #275                // class com/Polarice3/Goety/api/entities/IOwned
+      21: ifeq          691
+      24: aload         5
+      26: checkcast     #275                // class com/Polarice3/Goety/api/entities/IOwned
+      29: astore        6
+      31: aload         6
+      33: invokeinterface #279,  1          // InterfaceMethod com/Polarice3/Goety/api/entities/IOwned.getTrueOwner:()Lnet/minecraft/world/entity/LivingEntity;
+      38: aload_2
+      39: if_acmpeq     77
+      42: aload         6
+      44: invokeinterface #279,  1          // InterfaceMethod com/Polarice3/Goety/api/entities/IOwned.getTrueOwner:()Lnet/minecraft/world/entity/LivingEntity;
+      49: astore        8
+      51: aload         8
+      53: instanceof    #275                // class com/Polarice3/Goety/api/entities/IOwned
+      56: ifeq          691
+      59: aload         8
+      61: checkcast     #275                // class com/Polarice3/Goety/api/entities/IOwned
+      64: astore        7
+      66: aload         7
+      68: invokeinterface #279,  1          // InterfaceMethod com/Polarice3/Goety/api/entities/IOwned.getTrueOwner:()Lnet/minecraft/world/entity/LivingEntity;
+      73: aload_2
+      74: if_acmpne     691
+      77: aload_2
+      78: getfield      #284                // Field net/minecraft/world/entity/player/Player.f_19853_:Lnet/minecraft/world/level/Level;
+      81: getfield      #287                // Field net/minecraft/world/level/Level.f_46443_:Z
+      84: ifne          689
+      87: aload_1
+      88: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+      91: invokevirtual #213                // Method net/minecraft/world/item/ItemStack.m_41720_:()Lnet/minecraft/world/item/Item;
+      94: instanceof    #289                // class com/Polarice3/Goety/common/items/magic/CallFocus
+      97: ifeq          189
+     100: aload_1
+     101: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     104: invokestatic  #293                // Method com/Polarice3/Goety/common/items/magic/CallFocus.hasSummon:(Lnet/minecraft/world/item/ItemStack;)Z
+     107: ifne          189
+     110: new           #167                // class net/minecraft/nbt/CompoundTag
+     113: dup
+     114: invokespecial #294                // Method net/minecraft/nbt/CompoundTag."<init>":()V
+     117: astore        10
+     119: aload_1
+     120: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     123: invokevirtual #163                // Method net/minecraft/world/item/ItemStack.m_41782_:()Z
+     126: ifeq          138
+     129: aload_1
+     130: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     133: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+     136: astore        10
+     138: aload         10
+     140: aload         5
+     142: invokestatic  #301                // Method com/Polarice3/Goety/common/items/magic/CallFocus.setSummon:(Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/world/entity/LivingEntity;)V
+     145: aload_1
+     146: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     149: aload         10
+     151: invokevirtual #305                // Method net/minecraft/world/item/ItemStack.m_41751_:(Lnet/minecraft/nbt/CompoundTag;)V
+     154: aload_2
+     155: getstatic     #311                // Field net/minecraft/sounds/SoundEvents.f_11686_:Lnet/minecraft/sounds/SoundEvent;
+     158: fconst_1
+     159: ldc_w         #312                // float 0.45f
+     162: invokevirtual #316                // Method net/minecraft/world/entity/player/Player.m_5496_:(Lnet/minecraft/sounds/SoundEvent;FF)V
+     165: aload_2
+     166: new           #318                // class com/Polarice3/Goety/common/network/server/SPlayPlayerSoundPacket
+     169: dup
+     170: getstatic     #311                // Field net/minecraft/sounds/SoundEvents.f_11686_:Lnet/minecraft/sounds/SoundEvent;
+     173: fconst_1
+     174: ldc_w         #312                // float 0.45f
+     177: invokespecial #320                // Method com/Polarice3/Goety/common/network/server/SPlayPlayerSoundPacket."<init>":(Lnet/minecraft/sounds/SoundEvent;FF)V
+     180: invokestatic  #326                // Method com/Polarice3/Goety/common/network/ModNetwork.sendTo:(Lnet/minecraft/world/entity/player/Player;Ljava/lang/Object;)V
+     183: iconst_1
+     184: istore        4
+     186: goto          544
+     189: aload_1
+     190: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     193: invokevirtual #213                // Method net/minecraft/world/item/ItemStack.m_41720_:()Lnet/minecraft/world/item/Item;
+     196: instanceof    #328                // class com/Polarice3/Goety/common/items/magic/TroopFocus
+     199: ifeq          294
+     202: aload_1
+     203: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     206: invokestatic  #331                // Method com/Polarice3/Goety/common/items/magic/TroopFocus.hasSummonType:(Lnet/minecraft/world/item/ItemStack;)Z
+     209: ifne          294
+     212: new           #167                // class net/minecraft/nbt/CompoundTag
+     215: dup
+     216: invokespecial #294                // Method net/minecraft/nbt/CompoundTag."<init>":()V
+     219: astore        10
+     221: aload_1
+     222: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     225: invokevirtual #163                // Method net/minecraft/world/item/ItemStack.m_41782_:()Z
+     228: ifeq          240
+     231: aload_1
+     232: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     235: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+     238: astore        10
+     240: aload         10
+     242: aload         5
+     244: invokevirtual #335                // Method net/minecraft/world/entity/LivingEntity.m_6095_:()Lnet/minecraft/world/entity/EntityType;
+     247: invokestatic  #339                // Method com/Polarice3/Goety/common/items/magic/TroopFocus.setSummonType:(Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/world/entity/EntityType;)V
+     250: aload_1
+     251: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     254: aload         10
+     256: invokevirtual #305                // Method net/minecraft/world/item/ItemStack.m_41751_:(Lnet/minecraft/nbt/CompoundTag;)V
+     259: aload_2
+     260: getstatic     #311                // Field net/minecraft/sounds/SoundEvents.f_11686_:Lnet/minecraft/sounds/SoundEvent;
+     263: fconst_1
+     264: ldc_w         #312                // float 0.45f
+     267: invokevirtual #316                // Method net/minecraft/world/entity/player/Player.m_5496_:(Lnet/minecraft/sounds/SoundEvent;FF)V
+     270: aload_2
+     271: new           #318                // class com/Polarice3/Goety/common/network/server/SPlayPlayerSoundPacket
+     274: dup
+     275: getstatic     #311                // Field net/minecraft/sounds/SoundEvents.f_11686_:Lnet/minecraft/sounds/SoundEvent;
+     278: fconst_1
+     279: ldc_w         #312                // float 0.45f
+     282: invokespecial #320                // Method com/Polarice3/Goety/common/network/server/SPlayPlayerSoundPacket."<init>":(Lnet/minecraft/sounds/SoundEvent;FF)V
+     285: invokestatic  #326                // Method com/Polarice3/Goety/common/network/ModNetwork.sendTo:(Lnet/minecraft/world/entity/player/Player;Ljava/lang/Object;)V
+     288: iconst_1
+     289: istore        4
+     291: goto          544
+     294: aload_1
+     295: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     298: invokevirtual #213                // Method net/minecraft/world/item/ItemStack.m_41720_:()Lnet/minecraft/world/item/Item;
+     301: instanceof    #341                // class com/Polarice3/Goety/common/items/magic/CommandFocus
+     304: ifeq          421
+     307: aload         6
+     309: instanceof    #343                // class com/Polarice3/Goety/api/entities/ally/IServant
+     312: ifeq          421
+     315: aload         6
+     317: checkcast     #343                // class com/Polarice3/Goety/api/entities/ally/IServant
+     320: astore        8
+     322: aload         8
+     324: invokeinterface #346,  1          // InterfaceMethod com/Polarice3/Goety/api/entities/ally/IServant.canBeCommanded:()Z
+     329: ifeq          421
+     332: aload_1
+     333: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     336: invokestatic  #349                // Method com/Polarice3/Goety/common/items/magic/CommandFocus.hasServant:(Lnet/minecraft/world/item/ItemStack;)Z
+     339: ifne          421
+     342: new           #167                // class net/minecraft/nbt/CompoundTag
+     345: dup
+     346: invokespecial #294                // Method net/minecraft/nbt/CompoundTag."<init>":()V
+     349: astore        10
+     351: aload_1
+     352: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     355: invokevirtual #163                // Method net/minecraft/world/item/ItemStack.m_41782_:()Z
+     358: ifeq          370
+     361: aload_1
+     362: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     365: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+     368: astore        10
+     370: aload         10
+     372: aload         5
+     374: invokestatic  #352                // Method com/Polarice3/Goety/common/items/magic/CommandFocus.setServant:(Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/world/entity/LivingEntity;)V
+     377: aload_1
+     378: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     381: aload         10
+     383: invokevirtual #305                // Method net/minecraft/world/item/ItemStack.m_41751_:(Lnet/minecraft/nbt/CompoundTag;)V
+     386: aload_2
+     387: getstatic     #311                // Field net/minecraft/sounds/SoundEvents.f_11686_:Lnet/minecraft/sounds/SoundEvent;
+     390: fconst_1
+     391: ldc_w         #312                // float 0.45f
+     394: invokevirtual #316                // Method net/minecraft/world/entity/player/Player.m_5496_:(Lnet/minecraft/sounds/SoundEvent;FF)V
+     397: aload_2
+     398: new           #318                // class com/Polarice3/Goety/common/network/server/SPlayPlayerSoundPacket
+     401: dup
+     402: getstatic     #311                // Field net/minecraft/sounds/SoundEvents.f_11686_:Lnet/minecraft/sounds/SoundEvent;
+     405: fconst_1
+     406: ldc_w         #312                // float 0.45f
+     409: invokespecial #320                // Method com/Polarice3/Goety/common/network/server/SPlayPlayerSoundPacket."<init>":(Lnet/minecraft/sounds/SoundEvent;FF)V
+     412: invokestatic  #326                // Method com/Polarice3/Goety/common/network/ModNetwork.sendTo:(Lnet/minecraft/world/entity/player/Player;Ljava/lang/Object;)V
+     415: iconst_1
+     416: istore        4
+     418: goto          544
+     421: aload_1
+     422: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     425: invokevirtual #213                // Method net/minecraft/world/item/ItemStack.m_41720_:()Lnet/minecraft/world/item/Item;
+     428: instanceof    #354                // class com/Polarice3/Goety/common/items/magic/OrderFocus
+     431: ifeq          544
+     434: aload         6
+     436: instanceof    #343                // class com/Polarice3/Goety/api/entities/ally/IServant
+     439: ifeq          544
+     442: aload         6
+     444: checkcast     #343                // class com/Polarice3/Goety/api/entities/ally/IServant
+     447: astore        9
+     449: aload         9
+     451: invokeinterface #346,  1          // InterfaceMethod com/Polarice3/Goety/api/entities/ally/IServant.canBeCommanded:()Z
+     456: ifeq          544
+     459: aload_1
+     460: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     463: invokestatic  #358                // Method com/Polarice3/Goety/common/items/magic/OrderFocus.getServants:(Lnet/minecraft/world/item/ItemStack;)Ljava/util/List;
+     466: astore        10
+     468: aload         10
+     470: invokeinterface #361,  1          // InterfaceMethod java/util/List.isEmpty:()Z
+     475: ifne          490
+     478: aload         10
+     480: invokeinterface #365,  1          // InterfaceMethod java/util/List.size:()I
+     485: bipush        8
+     487: if_icmpge     544
+     490: aload         10
+     492: aload         5
+     494: invokeinterface #368,  2          // InterfaceMethod java/util/List.contains:(Ljava/lang/Object;)Z
+     499: ifne          544
+     502: aload_1
+     503: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     506: aload_2
+     507: aload         5
+     509: invokestatic  #372                // Method com/Polarice3/Goety/common/items/magic/OrderFocus.setServants:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/entity/LivingEntity;)V
+     512: aload_2
+     513: getstatic     #311                // Field net/minecraft/sounds/SoundEvents.f_11686_:Lnet/minecraft/sounds/SoundEvent;
+     516: fconst_1
+     517: ldc_w         #312                // float 0.45f
+     520: invokevirtual #316                // Method net/minecraft/world/entity/player/Player.m_5496_:(Lnet/minecraft/sounds/SoundEvent;FF)V
+     523: aload_2
+     524: new           #318                // class com/Polarice3/Goety/common/network/server/SPlayPlayerSoundPacket
+     527: dup
+     528: getstatic     #311                // Field net/minecraft/sounds/SoundEvents.f_11686_:Lnet/minecraft/sounds/SoundEvent;
+     531: fconst_1
+     532: ldc_w         #312                // float 0.45f
+     535: invokespecial #320                // Method com/Polarice3/Goety/common/network/server/SPlayPlayerSoundPacket."<init>":(Lnet/minecraft/sounds/SoundEvent;FF)V
+     538: invokestatic  #326                // Method com/Polarice3/Goety/common/network/ModNetwork.sendTo:(Lnet/minecraft/world/entity/player/Player;Ljava/lang/Object;)V
+     541: iconst_1
+     542: istore        4
+     544: iload         4
+     546: ifne          689
+     549: aload         6
+     551: instanceof    #343                // class com/Polarice3/Goety/api/entities/ally/IServant
+     554: ifeq          640
+     557: aload         6
+     559: checkcast     #343                // class com/Polarice3/Goety/api/entities/ally/IServant
+     562: astore        8
+     564: aload_2
+     565: invokevirtual #375                // Method net/minecraft/world/entity/player/Player.m_6144_:()Z
+     568: ifne          578
+     571: aload_2
+     572: invokevirtual #378                // Method net/minecraft/world/entity/player/Player.m_6047_:()Z
+     575: ifeq          604
+     578: getstatic     #381                // Field com/Polarice3/Goety/config/SpellConfig.OwnerHitKill:Lnet/minecraftforge/common/ForgeConfigSpec$ConfigValue;
+     581: invokevirtual #256                // Method net/minecraftforge/common/ForgeConfigSpec$ConfigValue.get:()Ljava/lang/Object;
+     584: checkcast     #383                // class java/lang/Integer
+     587: invokevirtual #386                // Method java/lang/Integer.intValue:()I
+     590: ifne          689
+     593: aload         8
+     595: aload_2
+     596: invokeinterface #390,  2          // InterfaceMethod com/Polarice3/Goety/api/entities/ally/IServant.tryKill:(Lnet/minecraft/world/entity/player/Player;)V
+     601: goto          689
+     604: getstatic     #393                // Field com/Polarice3/Goety/config/SpellConfig.OwnerHitCommand:Lnet/minecraftforge/common/ForgeConfigSpec$ConfigValue;
+     607: invokevirtual #256                // Method net/minecraftforge/common/ForgeConfigSpec$ConfigValue.get:()Ljava/lang/Object;
+     610: checkcast     #258                // class java/lang/Boolean
+     613: invokevirtual #261                // Method java/lang/Boolean.booleanValue:()Z
+     616: ifeq          689
+     619: aload         8
+     621: invokeinterface #396,  1          // InterfaceMethod com/Polarice3/Goety/api/entities/ally/IServant.canUpdateMove:()Z
+     626: ifeq          689
+     629: aload         8
+     631: aload_2
+     632: invokeinterface #399,  2          // InterfaceMethod com/Polarice3/Goety/api/entities/ally/IServant.updateMoveMode:(Lnet/minecraft/world/entity/player/Player;)V
+     637: goto          689
+     640: aload         6
+     642: instanceof    #401                // class com/Polarice3/Goety/common/entities/neutral/AbstractVine
+     645: ifeq          689
+     648: aload         6
+     650: checkcast     #401                // class com/Polarice3/Goety/common/entities/neutral/AbstractVine
+     653: astore        9
+     655: aload_2
+     656: invokevirtual #375                // Method net/minecraft/world/entity/player/Player.m_6144_:()Z
+     659: ifne          669
+     662: aload_2
+     663: invokevirtual #378                // Method net/minecraft/world/entity/player/Player.m_6047_:()Z
+     666: ifeq          689
+     669: getstatic     #381                // Field com/Polarice3/Goety/config/SpellConfig.OwnerHitKill:Lnet/minecraftforge/common/ForgeConfigSpec$ConfigValue;
+     672: invokevirtual #256                // Method net/minecraftforge/common/ForgeConfigSpec$ConfigValue.get:()Ljava/lang/Object;
+     675: checkcast     #383                // class java/lang/Integer
+     678: invokevirtual #386                // Method java/lang/Integer.intValue:()I
+     681: ifne          689
+     684: aload         9
+     686: invokevirtual #404                // Method com/Polarice3/Goety/common/entities/neutral/AbstractVine.m_6074_:()V
+     689: iconst_1
+     690: ireturn
+     691: iconst_0
+     692: ireturn
+
+  public net.minecraft.world.InteractionResult m_6880_(net.minecraft.world.item.ItemStack, net.minecraft.world.entity.player.Player, net.minecraft.world.entity.LivingEntity, net.minecraft.world.InteractionHand);
+    Code:
+       0: aload_1
+       1: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+       4: invokevirtual #213                // Method net/minecraft/world/item/ItemStack.m_41720_:()Lnet/minecraft/world/item/Item;
+       7: instanceof    #341                // class com/Polarice3/Goety/common/items/magic/CommandFocus
+      10: ifeq          132
+      13: aload_1
+      14: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+      17: invokestatic  #424                // Method com/Polarice3/Goety/common/items/magic/CommandFocus.getServant:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/entity/LivingEntity;
+      20: astore        6
+      22: aload         6
+      24: instanceof    #343                // class com/Polarice3/Goety/api/entities/ally/IServant
+      27: ifeq          129
+      30: aload         6
+      32: checkcast     #343                // class com/Polarice3/Goety/api/entities/ally/IServant
+      35: astore        5
+      37: aload         5
+      39: aload_3
+      40: if_acmpeq     129
+      43: aload         5
+      45: invokeinterface #425,  1          // InterfaceMethod com/Polarice3/Goety/api/entities/ally/IServant.getTrueOwner:()Lnet/minecraft/world/entity/LivingEntity;
+      50: aload_2
+      51: if_acmpne     129
+      54: aload_3
+      55: aload_2
+      56: invokevirtual #429                // Method net/minecraft/world/entity/LivingEntity.m_20270_:(Lnet/minecraft/world/entity/Entity;)F
+      59: ldc_w         #430                // float 64.0f
+      62: fcmpg
+      63: ifgt          129
+      66: aload         5
+      68: aload_3
+      69: invokeinterface #434,  2          // InterfaceMethod com/Polarice3/Goety/api/entities/ally/IServant.setCommandPosEntity:(Lnet/minecraft/world/entity/LivingEntity;)V
+      74: aload_2
+      75: getstatic     #440                // Field com/Polarice3/Goety/init/ModSounds.COMMAND:Lnet/minecraftforge/registries/RegistryObject;
+      78: invokevirtual #443                // Method net/minecraftforge/registries/RegistryObject.get:()Ljava/lang/Object;
+      81: checkcast     #445                // class net/minecraft/sounds/SoundEvent
+      84: fconst_1
+      85: ldc_w         #312                // float 0.45f
+      88: invokevirtual #316                // Method net/minecraft/world/entity/player/Player.m_5496_:(Lnet/minecraft/sounds/SoundEvent;FF)V
+      91: aload_2
+      92: getfield      #284                // Field net/minecraft/world/entity/player/Player.f_19853_:Lnet/minecraft/world/level/Level;
+      95: getfield      #287                // Field net/minecraft/world/level/Level.f_46443_:Z
+      98: ifne          125
+     101: aload_2
+     102: new           #318                // class com/Polarice3/Goety/common/network/server/SPlayPlayerSoundPacket
+     105: dup
+     106: getstatic     #440                // Field com/Polarice3/Goety/init/ModSounds.COMMAND:Lnet/minecraftforge/registries/RegistryObject;
+     109: invokevirtual #443                // Method net/minecraftforge/registries/RegistryObject.get:()Ljava/lang/Object;
+     112: checkcast     #445                // class net/minecraft/sounds/SoundEvent
+     115: fconst_1
+     116: ldc_w         #312                // float 0.45f
+     119: invokespecial #320                // Method com/Polarice3/Goety/common/network/server/SPlayPlayerSoundPacket."<init>":(Lnet/minecraft/sounds/SoundEvent;FF)V
+     122: invokestatic  #326                // Method com/Polarice3/Goety/common/network/ModNetwork.sendTo:(Lnet/minecraft/world/entity/player/Player;Ljava/lang/Object;)V
+     125: getstatic     #451                // Field net/minecraft/world/InteractionResult.SUCCESS:Lnet/minecraft/world/InteractionResult;
+     128: areturn
+     129: goto          317
+     132: aload_1
+     133: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     136: invokevirtual #213                // Method net/minecraft/world/item/ItemStack.m_41720_:()Lnet/minecraft/world/item/Item;
+     139: instanceof    #354                // class com/Polarice3/Goety/common/items/magic/OrderFocus
+     142: ifeq          317
+     145: aload_1
+     146: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     149: invokestatic  #358                // Method com/Polarice3/Goety/common/items/magic/OrderFocus.getServants:(Lnet/minecraft/world/item/ItemStack;)Ljava/util/List;
+     152: invokeinterface #361,  1          // InterfaceMethod java/util/List.isEmpty:()Z
+     157: ifne          317
+     160: iconst_0
+     161: istore        5
+     163: aload_1
+     164: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     167: invokestatic  #358                // Method com/Polarice3/Goety/common/items/magic/OrderFocus.getServants:(Lnet/minecraft/world/item/ItemStack;)Ljava/util/List;
+     170: invokeinterface #455,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+     175: astore        6
+     177: aload         6
+     179: invokeinterface #460,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+     184: ifeq          257
+     187: aload         6
+     189: invokeinterface #463,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+     194: checkcast     #153                // class net/minecraft/world/entity/LivingEntity
+     197: astore        7
+     199: aload         7
+     201: instanceof    #343                // class com/Polarice3/Goety/api/entities/ally/IServant
+     204: ifeq          254
+     207: aload         7
+     209: checkcast     #343                // class com/Polarice3/Goety/api/entities/ally/IServant
+     212: astore        8
+     214: aload         8
+     216: aload_3
+     217: if_acmpeq     254
+     220: aload         8
+     222: invokeinterface #425,  1          // InterfaceMethod com/Polarice3/Goety/api/entities/ally/IServant.getTrueOwner:()Lnet/minecraft/world/entity/LivingEntity;
+     227: aload_2
+     228: if_acmpne     254
+     231: aload_3
+     232: aload_2
+     233: invokevirtual #429                // Method net/minecraft/world/entity/LivingEntity.m_20270_:(Lnet/minecraft/world/entity/Entity;)F
+     236: ldc_w         #430                // float 64.0f
+     239: fcmpg
+     240: ifgt          254
+     243: aload         8
+     245: aload_3
+     246: invokeinterface #466,  2          // InterfaceMethod com/Polarice3/Goety/api/entities/ally/IServant.setCommandPosEntityOrder:(Lnet/minecraft/world/entity/LivingEntity;)V
+     251: iinc          5, 1
+     254: goto          177
+     257: iload         5
+     259: ifle          317
+     262: aload_2
+     263: getstatic     #440                // Field com/Polarice3/Goety/init/ModSounds.COMMAND:Lnet/minecraftforge/registries/RegistryObject;
+     266: invokevirtual #443                // Method net/minecraftforge/registries/RegistryObject.get:()Ljava/lang/Object;
+     269: checkcast     #445                // class net/minecraft/sounds/SoundEvent
+     272: fconst_1
+     273: ldc_w         #312                // float 0.45f
+     276: invokevirtual #316                // Method net/minecraft/world/entity/player/Player.m_5496_:(Lnet/minecraft/sounds/SoundEvent;FF)V
+     279: aload_2
+     280: getfield      #284                // Field net/minecraft/world/entity/player/Player.f_19853_:Lnet/minecraft/world/level/Level;
+     283: getfield      #287                // Field net/minecraft/world/level/Level.f_46443_:Z
+     286: ifne          313
+     289: aload_2
+     290: new           #318                // class com/Polarice3/Goety/common/network/server/SPlayPlayerSoundPacket
+     293: dup
+     294: getstatic     #440                // Field com/Polarice3/Goety/init/ModSounds.COMMAND:Lnet/minecraftforge/registries/RegistryObject;
+     297: invokevirtual #443                // Method net/minecraftforge/registries/RegistryObject.get:()Ljava/lang/Object;
+     300: checkcast     #445                // class net/minecraft/sounds/SoundEvent
+     303: fconst_1
+     304: ldc_w         #312                // float 0.45f
+     307: invokespecial #320                // Method com/Polarice3/Goety/common/network/server/SPlayPlayerSoundPacket."<init>":(Lnet/minecraft/sounds/SoundEvent;FF)V
+     310: invokestatic  #326                // Method com/Polarice3/Goety/common/network/ModNetwork.sendTo:(Lnet/minecraft/world/entity/player/Player;Ljava/lang/Object;)V
+     313: getstatic     #451                // Field net/minecraft/world/InteractionResult.SUCCESS:Lnet/minecraft/world/InteractionResult;
+     316: areturn
+     317: aload_3
+     318: instanceof    #275                // class com/Polarice3/Goety/api/entities/IOwned
+     321: ifeq          524
+     324: aload_3
+     325: checkcast     #275                // class com/Polarice3/Goety/api/entities/IOwned
+     328: astore        5
+     330: aload         5
+     332: invokeinterface #279,  1          // InterfaceMethod com/Polarice3/Goety/api/entities/IOwned.getTrueOwner:()Lnet/minecraft/world/entity/LivingEntity;
+     337: aload_2
+     338: if_acmpeq     376
+     341: aload         5
+     343: invokeinterface #279,  1          // InterfaceMethod com/Polarice3/Goety/api/entities/IOwned.getTrueOwner:()Lnet/minecraft/world/entity/LivingEntity;
+     348: astore        7
+     350: aload         7
+     352: instanceof    #275                // class com/Polarice3/Goety/api/entities/IOwned
+     355: ifeq          524
+     358: aload         7
+     360: checkcast     #275                // class com/Polarice3/Goety/api/entities/IOwned
+     363: astore        6
+     365: aload         6
+     367: invokeinterface #279,  1          // InterfaceMethod com/Polarice3/Goety/api/entities/IOwned.getTrueOwner:()Lnet/minecraft/world/entity/LivingEntity;
+     372: aload_2
+     373: if_acmpne     524
+     376: aload         5
+     378: instanceof    #343                // class com/Polarice3/Goety/api/entities/ally/IServant
+     381: ifeq          470
+     384: aload         5
+     386: checkcast     #343                // class com/Polarice3/Goety/api/entities/ally/IServant
+     389: astore        7
+     391: aload_2
+     392: invokevirtual #375                // Method net/minecraft/world/entity/player/Player.m_6144_:()Z
+     395: ifne          405
+     398: aload_2
+     399: invokevirtual #378                // Method net/minecraft/world/entity/player/Player.m_6047_:()Z
+     402: ifeq          433
+     405: getstatic     #381                // Field com/Polarice3/Goety/config/SpellConfig.OwnerHitKill:Lnet/minecraftforge/common/ForgeConfigSpec$ConfigValue;
+     408: invokevirtual #256                // Method net/minecraftforge/common/ForgeConfigSpec$ConfigValue.get:()Ljava/lang/Object;
+     411: checkcast     #383                // class java/lang/Integer
+     414: invokevirtual #386                // Method java/lang/Integer.intValue:()I
+     417: iconst_1
+     418: if_icmpne     524
+     421: aload         7
+     423: aload_2
+     424: invokeinterface #390,  2          // InterfaceMethod com/Polarice3/Goety/api/entities/ally/IServant.tryKill:(Lnet/minecraft/world/entity/player/Player;)V
+     429: getstatic     #451                // Field net/minecraft/world/InteractionResult.SUCCESS:Lnet/minecraft/world/InteractionResult;
+     432: areturn
+     433: getstatic     #393                // Field com/Polarice3/Goety/config/SpellConfig.OwnerHitCommand:Lnet/minecraftforge/common/ForgeConfigSpec$ConfigValue;
+     436: invokevirtual #256                // Method net/minecraftforge/common/ForgeConfigSpec$ConfigValue.get:()Ljava/lang/Object;
+     439: checkcast     #258                // class java/lang/Boolean
+     442: invokevirtual #261                // Method java/lang/Boolean.booleanValue:()Z
+     445: ifne          524
+     448: aload         7
+     450: invokeinterface #396,  1          // InterfaceMethod com/Polarice3/Goety/api/entities/ally/IServant.canUpdateMove:()Z
+     455: ifeq          524
+     458: aload         7
+     460: aload_2
+     461: invokeinterface #399,  2          // InterfaceMethod com/Polarice3/Goety/api/entities/ally/IServant.updateMoveMode:(Lnet/minecraft/world/entity/player/Player;)V
+     466: getstatic     #451                // Field net/minecraft/world/InteractionResult.SUCCESS:Lnet/minecraft/world/InteractionResult;
+     469: areturn
+     470: aload         5
+     472: instanceof    #401                // class com/Polarice3/Goety/common/entities/neutral/AbstractVine
+     475: ifeq          524
+     478: aload         5
+     480: checkcast     #401                // class com/Polarice3/Goety/common/entities/neutral/AbstractVine
+     483: astore        8
+     485: aload_2
+     486: invokevirtual #375                // Method net/minecraft/world/entity/player/Player.m_6144_:()Z
+     489: ifne          499
+     492: aload_2
+     493: invokevirtual #378                // Method net/minecraft/world/entity/player/Player.m_6047_:()Z
+     496: ifeq          524
+     499: getstatic     #381                // Field com/Polarice3/Goety/config/SpellConfig.OwnerHitKill:Lnet/minecraftforge/common/ForgeConfigSpec$ConfigValue;
+     502: invokevirtual #256                // Method net/minecraftforge/common/ForgeConfigSpec$ConfigValue.get:()Ljava/lang/Object;
+     505: checkcast     #383                // class java/lang/Integer
+     508: invokevirtual #386                // Method java/lang/Integer.intValue:()I
+     511: iconst_1
+     512: if_icmpne     524
+     515: aload         8
+     517: invokevirtual #404                // Method com/Polarice3/Goety/common/entities/neutral/AbstractVine.m_6074_:()V
+     520: getstatic     #451                // Field net/minecraft/world/InteractionResult.SUCCESS:Lnet/minecraft/world/InteractionResult;
+     523: areturn
+     524: aload_0
+     525: aload_1
+     526: invokevirtual #201                // Method getSpell:(Lnet/minecraft/world/item/ItemStack;)Lcom/Polarice3/Goety/api/magic/ISpell;
+     529: astore        6
+     531: aload         6
+     533: instanceof    #470                // class com/Polarice3/Goety/api/magic/ITouchSpell
+     536: ifeq          603
+     539: aload         6
+     541: checkcast     #470                // class com/Polarice3/Goety/api/magic/ITouchSpell
+     544: astore        5
+     546: aload_0
+     547: aload_1
+     548: aload_2
+     549: getfield      #284                // Field net/minecraft/world/entity/player/Player.f_19853_:Lnet/minecraft/world/level/Level;
+     552: aload_2
+     553: aload_3
+     554: invokevirtual #474                // Method canCastTouch:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/LivingEntity;)Z
+     557: ifeq          603
+     560: aload_2
+     561: getfield      #284                // Field net/minecraft/world/entity/player/Player.f_19853_:Lnet/minecraft/world/level/Level;
+     564: astore        7
+     566: aload         7
+     568: instanceof    #476                // class net/minecraft/server/level/ServerLevel
+     571: ifeq          599
+     574: aload         7
+     576: checkcast     #476                // class net/minecraft/server/level/ServerLevel
+     579: astore        6
+     581: aload         5
+     583: aload         6
+     585: aload_2
+     586: aload_3
+     587: aload_1
+     588: aload_2
+     589: aload         5
+     591: invokestatic  #482                // Method com/Polarice3/Goety/utils/WandUtil.getStats:(Lnet/minecraft/world/entity/LivingEntity;Lcom/Polarice3/Goety/api/magic/ISpell;)Lcom/Polarice3/Goety/common/magic/SpellStat;
+     594: invokeinterface #486,  6          // InterfaceMethod com/Polarice3/Goety/api/magic/ITouchSpell.touchResult:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lcom/Polarice3/Goety/common/magic/SpellStat;)V
+     599: getstatic     #451                // Field net/minecraft/world/InteractionResult.SUCCESS:Lnet/minecraft/world/InteractionResult;
+     602: areturn
+     603: aload_0
+     604: aload_1
+     605: aload_2
+     606: aload_3
+     607: aload         4
+     609: invokespecial #488                // Method net/minecraft/world/item/Item.m_6880_:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/InteractionResult;
+     612: areturn
+
+  public net.minecraft.world.InteractionResult m_6225_(net.minecraft.world.item.context.UseOnContext);
+    Code:
+       0: aload_1
+       1: invokevirtual #504                // Method net/minecraft/world/item/context/UseOnContext.m_43725_:()Lnet/minecraft/world/level/Level;
+       4: astore_2
+       5: aload_1
+       6: invokevirtual #508                // Method net/minecraft/world/item/context/UseOnContext.m_8083_:()Lnet/minecraft/core/BlockPos;
+       9: astore_3
+      10: aload_1
+      11: invokevirtual #512                // Method net/minecraft/world/item/context/UseOnContext.m_43723_:()Lnet/minecraft/world/entity/player/Player;
+      14: astore        4
+      16: aload_1
+      17: invokevirtual #516                // Method net/minecraft/world/item/context/UseOnContext.m_43724_:()Lnet/minecraft/world/InteractionHand;
+      20: astore        5
+      22: aload_1
+      23: invokevirtual #520                // Method net/minecraft/world/item/context/UseOnContext.m_43722_:()Lnet/minecraft/world/item/ItemStack;
+      26: astore        6
+      28: aload_2
+      29: aload_3
+      30: invokevirtual #524                // Method net/minecraft/world/level/Level.m_8055_:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+      33: astore        7
+      35: aload         4
+      37: ifnull        1286
+      40: aload         6
+      42: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+      45: invokevirtual #213                // Method net/minecraft/world/item/ItemStack.m_41720_:()Lnet/minecraft/world/item/Item;
+      48: astore        11
+      50: aload         11
+      52: instanceof    #526                // class com/Polarice3/Goety/common/items/magic/RecallFocus
+      55: ifeq          286
+      58: aload         11
+      60: checkcast     #526                // class com/Polarice3/Goety/common/items/magic/RecallFocus
+      63: astore        8
+      65: aload         6
+      67: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+      70: invokevirtual #159                // Method net/minecraft/world/item/ItemStack.m_41784_:()Lnet/minecraft/nbt/CompoundTag;
+      73: astore        11
+      75: aload         6
+      77: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+      80: invokestatic  #529                // Method com/Polarice3/Goety/common/items/magic/RecallFocus.hasRecall:(Lnet/minecraft/world/item/ItemStack;)Z
+      83: ifne          283
+      86: aload_2
+      87: aload_3
+      88: invokevirtual #533                // Method net/minecraft/world/level/Level.m_7702_:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/entity/BlockEntity;
+      91: astore        12
+      93: aload         12
+      95: instanceof    #535                // class com/Polarice3/Goety/common/blocks/entities/ArcaBlockEntity
+      98: ifeq          204
+     101: aload         12
+     103: checkcast     #535                // class com/Polarice3/Goety/common/blocks/entities/ArcaBlockEntity
+     106: astore        13
+     108: aload_1
+     109: invokevirtual #512                // Method net/minecraft/world/item/context/UseOnContext.m_43723_:()Lnet/minecraft/world/entity/player/Player;
+     112: aload         13
+     114: invokevirtual #538                // Method com/Polarice3/Goety/common/blocks/entities/ArcaBlockEntity.getPlayer:()Lnet/minecraft/world/entity/player/Player;
+     117: if_acmpne     204
+     120: aload         13
+     122: invokevirtual #541                // Method com/Polarice3/Goety/common/blocks/entities/ArcaBlockEntity.m_58904_:()Lnet/minecraft/world/level/Level;
+     125: ifnull        204
+     128: aload         8
+     130: aload         13
+     132: invokevirtual #541                // Method com/Polarice3/Goety/common/blocks/entities/ArcaBlockEntity.m_58904_:()Lnet/minecraft/world/level/Level;
+     135: invokevirtual #545                // Method net/minecraft/world/level/Level.m_46472_:()Lnet/minecraft/resources/ResourceKey;
+     138: aload         13
+     140: invokevirtual #548                // Method com/Polarice3/Goety/common/blocks/entities/ArcaBlockEntity.m_58899_:()Lnet/minecraft/core/BlockPos;
+     143: aload         11
+     145: invokevirtual #552                // Method com/Polarice3/Goety/common/items/magic/RecallFocus.addRecallTags:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/core/BlockPos;Lnet/minecraft/nbt/CompoundTag;)V
+     148: aload         6
+     150: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     153: aload         11
+     155: invokevirtual #305                // Method net/minecraft/world/item/ItemStack.m_41751_:(Lnet/minecraft/nbt/CompoundTag;)V
+     158: aload         4
+     160: getstatic     #311                // Field net/minecraft/sounds/SoundEvents.f_11686_:Lnet/minecraft/sounds/SoundEvent;
+     163: fconst_1
+     164: ldc_w         #312                // float 0.45f
+     167: invokevirtual #316                // Method net/minecraft/world/entity/player/Player.m_5496_:(Lnet/minecraft/sounds/SoundEvent;FF)V
+     170: aload_2
+     171: getfield      #287                // Field net/minecraft/world/level/Level.f_46443_:Z
+     174: ifne          196
+     177: aload         4
+     179: new           #318                // class com/Polarice3/Goety/common/network/server/SPlayPlayerSoundPacket
+     182: dup
+     183: getstatic     #311                // Field net/minecraft/sounds/SoundEvents.f_11686_:Lnet/minecraft/sounds/SoundEvent;
+     186: fconst_1
+     187: ldc_w         #312                // float 0.45f
+     190: invokespecial #320                // Method com/Polarice3/Goety/common/network/server/SPlayPlayerSoundPacket."<init>":(Lnet/minecraft/sounds/SoundEvent;FF)V
+     193: invokestatic  #326                // Method com/Polarice3/Goety/common/network/ModNetwork.sendTo:(Lnet/minecraft/world/entity/player/Player;Ljava/lang/Object;)V
+     196: aload_2
+     197: getfield      #287                // Field net/minecraft/world/level/Level.f_46443_:Z
+     200: invokestatic  #562                // Method net/minecraft/world/InteractionResult.m_19078_:(Z)Lnet/minecraft/world/InteractionResult;
+     203: areturn
+     204: aload         7
+     206: getstatic     #566                // Field com/Polarice3/Goety/init/ModTags$Blocks.RECALL_BLOCKS:Lnet/minecraft/tags/TagKey;
+     209: invokevirtual #570                // Method net/minecraft/world/level/block/state/BlockState.m_204336_:(Lnet/minecraft/tags/TagKey;)Z
+     212: ifeq          283
+     215: aload         8
+     217: aload_2
+     218: invokevirtual #545                // Method net/minecraft/world/level/Level.m_46472_:()Lnet/minecraft/resources/ResourceKey;
+     221: aload_3
+     222: aload         11
+     224: invokevirtual #552                // Method com/Polarice3/Goety/common/items/magic/RecallFocus.addRecallTags:(Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/core/BlockPos;Lnet/minecraft/nbt/CompoundTag;)V
+     227: aload         6
+     229: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     232: aload         11
+     234: invokevirtual #305                // Method net/minecraft/world/item/ItemStack.m_41751_:(Lnet/minecraft/nbt/CompoundTag;)V
+     237: aload         4
+     239: getstatic     #311                // Field net/minecraft/sounds/SoundEvents.f_11686_:Lnet/minecraft/sounds/SoundEvent;
+     242: fconst_1
+     243: ldc_w         #312                // float 0.45f
+     246: invokevirtual #316                // Method net/minecraft/world/entity/player/Player.m_5496_:(Lnet/minecraft/sounds/SoundEvent;FF)V
+     249: aload_2
+     250: getfield      #287                // Field net/minecraft/world/level/Level.f_46443_:Z
+     253: ifne          275
+     256: aload         4
+     258: new           #318                // class com/Polarice3/Goety/common/network/server/SPlayPlayerSoundPacket
+     261: dup
+     262: getstatic     #311                // Field net/minecraft/sounds/SoundEvents.f_11686_:Lnet/minecraft/sounds/SoundEvent;
+     265: fconst_1
+     266: ldc_w         #312                // float 0.45f
+     269: invokespecial #320                // Method com/Polarice3/Goety/common/network/server/SPlayPlayerSoundPacket."<init>":(Lnet/minecraft/sounds/SoundEvent;FF)V
+     272: invokestatic  #326                // Method com/Polarice3/Goety/common/network/ModNetwork.sendTo:(Lnet/minecraft/world/entity/player/Player;Ljava/lang/Object;)V
+     275: aload_2
+     276: getfield      #287                // Field net/minecraft/world/level/Level.f_46443_:Z
+     279: invokestatic  #562                // Method net/minecraft/world/InteractionResult.m_19078_:(Z)Lnet/minecraft/world/InteractionResult;
+     282: areturn
+     283: goto          1286
+     286: aload         6
+     288: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     291: invokevirtual #213                // Method net/minecraft/world/item/ItemStack.m_41720_:()Lnet/minecraft/world/item/Item;
+     294: instanceof    #341                // class com/Polarice3/Goety/common/items/magic/CommandFocus
+     297: ifeq          503
+     300: aload         6
+     302: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     305: invokestatic  #349                // Method com/Polarice3/Goety/common/items/magic/CommandFocus.hasServant:(Lnet/minecraft/world/item/ItemStack;)Z
+     308: ifeq          500
+     311: aload         6
+     313: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     316: invokestatic  #424                // Method com/Polarice3/Goety/common/items/magic/CommandFocus.getServant:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/entity/LivingEntity;
+     319: astore        12
+     321: aload         12
+     323: instanceof    #343                // class com/Polarice3/Goety/api/entities/ally/IServant
+     326: ifeq          500
+     329: aload         12
+     331: checkcast     #343                // class com/Polarice3/Goety/api/entities/ally/IServant
+     334: astore        11
+     336: aload         6
+     338: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     341: invokestatic  #424                // Method com/Polarice3/Goety/common/items/magic/CommandFocus.getServant:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/entity/LivingEntity;
+     344: astore        12
+     346: aload         12
+     348: ifnull        500
+     351: aload         11
+     353: invokeinterface #425,  1          // InterfaceMethod com/Polarice3/Goety/api/entities/ally/IServant.getTrueOwner:()Lnet/minecraft/world/entity/LivingEntity;
+     358: aload         4
+     360: if_acmpne     500
+     363: aload         12
+     365: aload         4
+     367: invokevirtual #429                // Method net/minecraft/world/entity/LivingEntity.m_20270_:(Lnet/minecraft/world/entity/Entity;)F
+     370: ldc_w         #430                // float 64.0f
+     373: fcmpg
+     374: ifgt          500
+     377: aload_3
+     378: invokevirtual #573                // Method net/minecraft/core/BlockPos.m_7494_:()Lnet/minecraft/core/BlockPos;
+     381: astore        13
+     383: iconst_0
+     384: istore        14
+     386: aload         11
+     388: aload_2
+     389: aload_3
+     390: invokeinterface #577,  3          // InterfaceMethod com/Polarice3/Goety/api/entities/ally/IServant.canCommandToBlock:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Z
+     395: ifeq          412
+     398: aload         11
+     400: aload_3
+     401: invokeinterface #581,  2          // InterfaceMethod com/Polarice3/Goety/api/entities/ally/IServant.setCommandPos:(Lnet/minecraft/core/BlockPos;)V
+     406: iconst_1
+     407: istore        14
+     409: goto          437
+     412: aload         11
+     414: aload_2
+     415: aload         13
+     417: invokeinterface #577,  3          // InterfaceMethod com/Polarice3/Goety/api/entities/ally/IServant.canCommandToBlock:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Z
+     422: ifeq          437
+     425: aload         11
+     427: aload         13
+     429: invokeinterface #581,  2          // InterfaceMethod com/Polarice3/Goety/api/entities/ally/IServant.setCommandPos:(Lnet/minecraft/core/BlockPos;)V
+     434: iconst_1
+     435: istore        14
+     437: iload         14
+     439: ifeq          500
+     442: aload         4
+     444: getstatic     #440                // Field com/Polarice3/Goety/init/ModSounds.COMMAND:Lnet/minecraftforge/registries/RegistryObject;
+     447: invokevirtual #443                // Method net/minecraftforge/registries/RegistryObject.get:()Ljava/lang/Object;
+     450: checkcast     #445                // class net/minecraft/sounds/SoundEvent
+     453: fconst_1
+     454: ldc_w         #312                // float 0.45f
+     457: invokevirtual #316                // Method net/minecraft/world/entity/player/Player.m_5496_:(Lnet/minecraft/sounds/SoundEvent;FF)V
+     460: aload_2
+     461: getfield      #287                // Field net/minecraft/world/level/Level.f_46443_:Z
+     464: ifne          492
+     467: aload         4
+     469: new           #318                // class com/Polarice3/Goety/common/network/server/SPlayPlayerSoundPacket
+     472: dup
+     473: getstatic     #440                // Field com/Polarice3/Goety/init/ModSounds.COMMAND:Lnet/minecraftforge/registries/RegistryObject;
+     476: invokevirtual #443                // Method net/minecraftforge/registries/RegistryObject.get:()Ljava/lang/Object;
+     479: checkcast     #445                // class net/minecraft/sounds/SoundEvent
+     482: fconst_1
+     483: ldc_w         #312                // float 0.45f
+     486: invokespecial #320                // Method com/Polarice3/Goety/common/network/server/SPlayPlayerSoundPacket."<init>":(Lnet/minecraft/sounds/SoundEvent;FF)V
+     489: invokestatic  #326                // Method com/Polarice3/Goety/common/network/ModNetwork.sendTo:(Lnet/minecraft/world/entity/player/Player;Ljava/lang/Object;)V
+     492: aload_2
+     493: getfield      #287                // Field net/minecraft/world/level/Level.f_46443_:Z
+     496: invokestatic  #562                // Method net/minecraft/world/InteractionResult.m_19078_:(Z)Lnet/minecraft/world/InteractionResult;
+     499: areturn
+     500: goto          1286
+     503: aload         6
+     505: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     508: invokevirtual #213                // Method net/minecraft/world/item/ItemStack.m_41720_:()Lnet/minecraft/world/item/Item;
+     511: instanceof    #354                // class com/Polarice3/Goety/common/items/magic/OrderFocus
+     514: ifeq          750
+     517: aload         6
+     519: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     522: invokestatic  #358                // Method com/Polarice3/Goety/common/items/magic/OrderFocus.getServants:(Lnet/minecraft/world/item/ItemStack;)Ljava/util/List;
+     525: invokeinterface #361,  1          // InterfaceMethod java/util/List.isEmpty:()Z
+     530: ifne          1286
+     533: iconst_0
+     534: istore        11
+     536: aload         6
+     538: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     541: invokestatic  #358                // Method com/Polarice3/Goety/common/items/magic/OrderFocus.getServants:(Lnet/minecraft/world/item/ItemStack;)Ljava/util/List;
+     544: invokeinterface #455,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+     549: astore        12
+     551: aload         12
+     553: invokeinterface #460,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+     558: ifeq          684
+     561: aload         12
+     563: invokeinterface #463,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+     568: checkcast     #153                // class net/minecraft/world/entity/LivingEntity
+     571: astore        13
+     573: aload         13
+     575: instanceof    #343                // class com/Polarice3/Goety/api/entities/ally/IServant
+     578: ifeq          681
+     581: aload         13
+     583: checkcast     #343                // class com/Polarice3/Goety/api/entities/ally/IServant
+     586: astore        14
+     588: aload         14
+     590: invokeinterface #346,  1          // InterfaceMethod com/Polarice3/Goety/api/entities/ally/IServant.canBeCommanded:()Z
+     595: ifeq          681
+     598: aload         14
+     600: invokeinterface #425,  1          // InterfaceMethod com/Polarice3/Goety/api/entities/ally/IServant.getTrueOwner:()Lnet/minecraft/world/entity/LivingEntity;
+     605: aload         4
+     607: if_acmpne     681
+     610: aload         13
+     612: aload         4
+     614: invokevirtual #429                // Method net/minecraft/world/entity/LivingEntity.m_20270_:(Lnet/minecraft/world/entity/Entity;)F
+     617: ldc_w         #430                // float 64.0f
+     620: fcmpg
+     621: ifgt          681
+     624: aload_3
+     625: invokevirtual #573                // Method net/minecraft/core/BlockPos.m_7494_:()Lnet/minecraft/core/BlockPos;
+     628: astore        15
+     630: aload         14
+     632: aload_2
+     633: aload_3
+     634: invokeinterface #577,  3          // InterfaceMethod com/Polarice3/Goety/api/entities/ally/IServant.canCommandToBlock:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Z
+     639: ifeq          656
+     642: aload         14
+     644: aload_3
+     645: invokeinterface #581,  2          // InterfaceMethod com/Polarice3/Goety/api/entities/ally/IServant.setCommandPos:(Lnet/minecraft/core/BlockPos;)V
+     650: iinc          11, 1
+     653: goto          681
+     656: aload         14
+     658: aload_2
+     659: aload         15
+     661: invokeinterface #577,  3          // InterfaceMethod com/Polarice3/Goety/api/entities/ally/IServant.canCommandToBlock:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Z
+     666: ifeq          681
+     669: aload         14
+     671: aload         15
+     673: invokeinterface #581,  2          // InterfaceMethod com/Polarice3/Goety/api/entities/ally/IServant.setCommandPos:(Lnet/minecraft/core/BlockPos;)V
+     678: iinc          11, 1
+     681: goto          551
+     684: iload         11
+     686: ifle          747
+     689: aload         4
+     691: getstatic     #440                // Field com/Polarice3/Goety/init/ModSounds.COMMAND:Lnet/minecraftforge/registries/RegistryObject;
+     694: invokevirtual #443                // Method net/minecraftforge/registries/RegistryObject.get:()Ljava/lang/Object;
+     697: checkcast     #445                // class net/minecraft/sounds/SoundEvent
+     700: fconst_1
+     701: ldc_w         #312                // float 0.45f
+     704: invokevirtual #316                // Method net/minecraft/world/entity/player/Player.m_5496_:(Lnet/minecraft/sounds/SoundEvent;FF)V
+     707: aload_2
+     708: getfield      #287                // Field net/minecraft/world/level/Level.f_46443_:Z
+     711: ifne          739
+     714: aload         4
+     716: new           #318                // class com/Polarice3/Goety/common/network/server/SPlayPlayerSoundPacket
+     719: dup
+     720: getstatic     #440                // Field com/Polarice3/Goety/init/ModSounds.COMMAND:Lnet/minecraftforge/registries/RegistryObject;
+     723: invokevirtual #443                // Method net/minecraftforge/registries/RegistryObject.get:()Ljava/lang/Object;
+     726: checkcast     #445                // class net/minecraft/sounds/SoundEvent
+     729: fconst_1
+     730: ldc_w         #312                // float 0.45f
+     733: invokespecial #320                // Method com/Polarice3/Goety/common/network/server/SPlayPlayerSoundPacket."<init>":(Lnet/minecraft/sounds/SoundEvent;FF)V
+     736: invokestatic  #326                // Method com/Polarice3/Goety/common/network/ModNetwork.sendTo:(Lnet/minecraft/world/entity/player/Player;Ljava/lang/Object;)V
+     739: aload_2
+     740: getfield      #287                // Field net/minecraft/world/level/Level.f_46443_:Z
+     743: invokestatic  #562                // Method net/minecraft/world/InteractionResult.m_19078_:(Z)Lnet/minecraft/world/InteractionResult;
+     746: areturn
+     747: goto          1286
+     750: aload_0
+     751: aload         6
+     753: invokevirtual #201                // Method getSpell:(Lnet/minecraft/world/item/ItemStack;)Lcom/Polarice3/Goety/api/magic/ISpell;
+     756: astore        11
+     758: aload         11
+     760: instanceof    #583                // class com/Polarice3/Goety/api/magic/IBlockSpell
+     763: ifeq          902
+     766: aload         11
+     768: checkcast     #583                // class com/Polarice3/Goety/api/magic/IBlockSpell
+     771: astore        9
+     773: aload         4
+     775: getfield      #284                // Field net/minecraft/world/entity/player/Player.f_19853_:Lnet/minecraft/world/level/Level;
+     778: aload_3
+     779: aload         7
+     781: aload         9
+     783: aload_1
+     784: invokevirtual #587                // Method net/minecraft/world/item/context/UseOnContext.m_43719_:()Lnet/minecraft/core/Direction;
+     787: aload         4
+     789: invokestatic  #593                // Method com/Polarice3/Goety/common/events/spell/GoetyEventFactory.onBlockBasedSpell:(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lcom/Polarice3/Goety/api/magic/ISpell;Lnet/minecraft/core/Direction;Lnet/minecraft/world/entity/LivingEntity;)Lcom/Polarice3/Goety/api/magic/ISpell;
+     792: astore        11
+     794: aload         11
+     796: instanceof    #583                // class com/Polarice3/Goety/api/magic/IBlockSpell
+     799: ifeq          899
+     802: aload         11
+     804: checkcast     #583                // class com/Polarice3/Goety/api/magic/IBlockSpell
+     807: astore        12
+     809: aload         4
+     811: getfield      #284                // Field net/minecraft/world/entity/player/Player.f_19853_:Lnet/minecraft/world/level/Level;
+     814: astore        14
+     816: aload         14
+     818: instanceof    #476                // class net/minecraft/server/level/ServerLevel
+     821: ifeq          899
+     824: aload         14
+     826: checkcast     #476                // class net/minecraft/server/level/ServerLevel
+     829: astore        13
+     831: aload         12
+     833: aload         13
+     835: aload         4
+     837: aload_3
+     838: aload_1
+     839: invokevirtual #587                // Method net/minecraft/world/item/context/UseOnContext.m_43719_:()Lnet/minecraft/core/Direction;
+     842: aload         4
+     844: aload         12
+     846: invokestatic  #482                // Method com/Polarice3/Goety/utils/WandUtil.getStats:(Lnet/minecraft/world/entity/LivingEntity;Lcom/Polarice3/Goety/api/magic/ISpell;)Lcom/Polarice3/Goety/common/magic/SpellStat;
+     849: invokeinterface #597,  6          // InterfaceMethod com/Polarice3/Goety/api/magic/IBlockSpell.rightBlock:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lcom/Polarice3/Goety/common/magic/SpellStat;)Z
+     854: ifeq          899
+     857: aload_0
+     858: aload         6
+     860: aload_2
+     861: aload         4
+     863: aconst_null
+     864: invokevirtual #474                // Method canCastTouch:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/LivingEntity;)Z
+     867: ifeq          895
+     870: aload         12
+     872: aload         13
+     874: aload         4
+     876: aload         6
+     878: aload_3
+     879: aload_1
+     880: invokevirtual #587                // Method net/minecraft/world/item/context/UseOnContext.m_43719_:()Lnet/minecraft/core/Direction;
+     883: aload         4
+     885: aload         12
+     887: invokestatic  #482                // Method com/Polarice3/Goety/utils/WandUtil.getStats:(Lnet/minecraft/world/entity/LivingEntity;Lcom/Polarice3/Goety/api/magic/ISpell;)Lcom/Polarice3/Goety/common/magic/SpellStat;
+     890: invokeinterface #601,  7          // InterfaceMethod com/Polarice3/Goety/api/magic/IBlockSpell.blockResult:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lcom/Polarice3/Goety/common/magic/SpellStat;)V
+     895: getstatic     #451                // Field net/minecraft/world/InteractionResult.SUCCESS:Lnet/minecraft/world/InteractionResult;
+     898: areturn
+     899: goto          1286
+     902: aload         7
+     904: getstatic     #608                // Field net/minecraft/tags/BlockTags.f_13028_:Lnet/minecraft/tags/TagKey;
+     907: invokevirtual #570                // Method net/minecraft/world/level/block/state/BlockState.m_204336_:(Lnet/minecraft/tags/TagKey;)Z
+     910: ifeq          1060
+     913: aload_2
+     914: aload_3
+     915: invokevirtual #533                // Method net/minecraft/world/level/Level.m_7702_:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/entity/BlockEntity;
+     918: astore        11
+     920: aload         11
+     922: instanceof    #610                // class net/minecraft/world/level/block/entity/BannerBlockEntity
+     925: ifeq          1060
+     928: aload         11
+     930: checkcast     #610                // class net/minecraft/world/level/block/entity/BannerBlockEntity
+     933: astore        10
+     935: aload_2
+     936: getfield      #287                // Field net/minecraft/world/level/Level.f_46443_:Z
+     939: ifne          1286
+     942: aload         10
+     944: invokevirtual #613                // Method net/minecraft/world/level/block/entity/BannerBlockEntity.m_155043_:()Lnet/minecraft/world/item/ItemStack;
+     947: invokestatic  #619                // Method net/minecraft/world/item/BlockItem.m_186336_:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/nbt/CompoundTag;
+     950: astore        11
+     952: aload         11
+     954: ifnull        1057
+     957: aload         11
+     959: ldc_w         #621                // String Patterns
+     962: invokevirtual #171                // Method net/minecraft/nbt/CompoundTag.m_128441_:(Ljava/lang/String;)Z
+     965: ifeq          1057
+     968: aload         4
+     970: aload         10
+     972: invokevirtual #625                // Method net/minecraft/world/level/block/entity/BannerBlockEntity.m_155044_:()Lnet/minecraft/world/item/DyeColor;
+     975: invokestatic  #629                // Method com/Polarice3/Goety/utils/SEHelper.setBannerBaseColor:(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/DyeColor;)V
+     978: aload         4
+     980: aload         11
+     982: ldc_w         #621                // String Patterns
+     985: bipush        10
+     987: invokevirtual #633                // Method net/minecraft/nbt/CompoundTag.m_128437_:(Ljava/lang/String;I)Lnet/minecraft/nbt/ListTag;
+     990: invokestatic  #637                // Method com/Polarice3/Goety/utils/SEHelper.setBannerPattern:(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/nbt/ListTag;)V
+     993: aload         4
+     995: ldc_w         #639                // String info.goety.banner.add
+     998: iconst_1
+     999: anewarray     #641                // class java/lang/Object
+    1002: dup
+    1003: iconst_0
+    1004: aload         4
+    1006: invokevirtual #645                // Method net/minecraft/world/entity/player/Player.m_5446_:()Lnet/minecraft/network/chat/Component;
+    1009: aastore
+    1010: invokestatic  #651                // InterfaceMethod net/minecraft/network/chat/Component.m_237110_:(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+    1013: iconst_1
+    1014: invokevirtual #655                // Method net/minecraft/world/entity/player/Player.m_5661_:(Lnet/minecraft/network/chat/Component;Z)V
+    1017: aload_2
+    1018: aconst_null
+    1019: aload_3
+    1020: invokevirtual #658                // Method net/minecraft/core/BlockPos.m_123341_:()I
+    1023: i2d
+    1024: aload_3
+    1025: invokevirtual #661                // Method net/minecraft/core/BlockPos.m_123342_:()I
+    1028: i2d
+    1029: aload_3
+    1030: invokevirtual #664                // Method net/minecraft/core/BlockPos.m_123343_:()I
+    1033: i2d
+    1034: getstatic     #667                // Field com/Polarice3/Goety/init/ModSounds.CAST_SPELL:Lnet/minecraftforge/registries/RegistryObject;
+    1037: invokevirtual #443                // Method net/minecraftforge/registries/RegistryObject.get:()Ljava/lang/Object;
+    1040: checkcast     #445                // class net/minecraft/sounds/SoundEvent
+    1043: getstatic     #673                // Field net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+    1046: fconst_1
+    1047: ldc_w         #674                // float 0.5f
+    1050: invokevirtual #678                // Method net/minecraft/world/level/Level.m_6263_:(Lnet/minecraft/world/entity/player/Player;DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+    1053: getstatic     #451                // Field net/minecraft/world/InteractionResult.SUCCESS:Lnet/minecraft/world/InteractionResult;
+    1056: areturn
+    1057: goto          1286
+    1060: aload         7
+    1062: invokevirtual #682                // Method net/minecraft/world/level/block/state/BlockState.m_60734_:()Lnet/minecraft/world/level/block/Block;
+    1065: instanceof    #684                // class com/Polarice3/Goety/common/blocks/BrewCauldronBlock
+    1068: ifeq          1159
+    1071: aload_2
+    1072: getfield      #287                // Field net/minecraft/world/level/Level.f_46443_:Z
+    1075: ifne          1286
+    1078: aload_2
+    1079: aload_3
+    1080: invokevirtual #533                // Method net/minecraft/world/level/Level.m_7702_:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/entity/BlockEntity;
+    1083: astore        12
+    1085: aload         12
+    1087: instanceof    #686                // class com/Polarice3/Goety/common/blocks/entities/BrewCauldronBlockEntity
+    1090: ifeq          1156
+    1093: aload         12
+    1095: checkcast     #686                // class com/Polarice3/Goety/common/blocks/entities/BrewCauldronBlockEntity
+    1098: astore        11
+    1100: aload         4
+    1102: invokestatic  #692                // Method com/Polarice3/Goety/utils/MobUtil.isShifting:(Lnet/minecraft/world/entity/Entity;)Z
+    1105: ifeq          1156
+    1108: aload         6
+    1110: invokevirtual #213                // Method net/minecraft/world/item/ItemStack.m_41720_:()Lnet/minecraft/world/item/Item;
+    1113: instanceof    #6                  // class com/Polarice3/Goety/api/items/magic/IWand
+    1116: ifeq          1156
+    1119: aload         11
+    1121: invokevirtual #695                // Method com/Polarice3/Goety/common/blocks/entities/BrewCauldronBlockEntity.fullReset:()V
+    1124: aload_2
+    1125: aconst_null
+    1126: aload_3
+    1127: getstatic     #698                // Field net/minecraft/sounds/SoundEvents.f_11778_:Lnet/minecraft/sounds/SoundEvent;
+    1130: getstatic     #673                // Field net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+    1133: fconst_1
+    1134: fconst_1
+    1135: invokevirtual #702                // Method net/minecraft/world/level/Level.m_5594_:(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+    1138: aload_2
+    1139: aconst_null
+    1140: aload_3
+    1141: getstatic     #705                // Field net/minecraft/sounds/SoundEvents.f_11937_:Lnet/minecraft/sounds/SoundEvent;
+    1144: getstatic     #673                // Field net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+    1147: fconst_1
+    1148: fconst_1
+    1149: invokevirtual #702                // Method net/minecraft/world/level/Level.m_5594_:(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+    1152: getstatic     #451                // Field net/minecraft/world/InteractionResult.SUCCESS:Lnet/minecraft/world/InteractionResult;
+    1155: areturn
+    1156: goto          1286
+    1159: aload         7
+    1161: invokevirtual #682                // Method net/minecraft/world/level/block/state/BlockState.m_60734_:()Lnet/minecraft/world/level/block/Block;
+    1164: instanceof    #707                // class com/Polarice3/Goety/common/blocks/HauntedJugBlock
+    1167: ifeq          1237
+    1170: aload_2
+    1171: getfield      #287                // Field net/minecraft/world/level/Level.f_46443_:Z
+    1174: ifne          1286
+    1177: aload_2
+    1178: aconst_null
+    1179: aload_3
+    1180: getstatic     #710                // Field net/minecraft/sounds/SoundEvents.f_11770_:Lnet/minecraft/sounds/SoundEvent;
+    1183: getstatic     #673                // Field net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+    1186: fconst_1
+    1187: fconst_1
+    1188: invokevirtual #702                // Method net/minecraft/world/level/Level.m_5594_:(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+    1191: aload_2
+    1192: aload_3
+    1193: aload         7
+    1195: getstatic     #714                // Field com/Polarice3/Goety/common/blocks/HauntedJugBlock.ENABLED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+    1198: aload         7
+    1200: getstatic     #714                // Field com/Polarice3/Goety/common/blocks/HauntedJugBlock.ENABLED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+    1203: invokevirtual #718                // Method net/minecraft/world/level/block/state/BlockState.m_61143_:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+    1206: checkcast     #258                // class java/lang/Boolean
+    1209: invokevirtual #261                // Method java/lang/Boolean.booleanValue:()Z
+    1212: ifne          1219
+    1215: iconst_1
+    1216: goto          1220
+    1219: iconst_0
+    1220: invokestatic  #724                // Method java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+    1223: invokevirtual #728                // Method net/minecraft/world/level/block/state/BlockState.m_61124_:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+    1226: checkcast     #556                // class net/minecraft/world/level/block/state/BlockState
+    1229: invokevirtual #732                // Method net/minecraft/world/level/Level.m_46597_:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Z
+    1232: pop
+    1233: getstatic     #451                // Field net/minecraft/world/InteractionResult.SUCCESS:Lnet/minecraft/world/InteractionResult;
+    1236: areturn
+    1237: aload         7
+    1239: invokevirtual #735                // Method net/minecraft/world/level/block/state/BlockState.m_60795_:()Z
+    1242: ifne          1286
+    1245: aload_2
+    1246: getfield      #287                // Field net/minecraft/world/level/Level.f_46443_:Z
+    1249: ifne          1286
+    1252: aload         7
+    1254: aload_2
+    1255: aload         4
+    1257: aload         5
+    1259: new           #737                // class net/minecraft/world/phys/BlockHitResult
+    1262: dup
+    1263: aload_1
+    1264: invokevirtual #741                // Method net/minecraft/world/item/context/UseOnContext.m_43720_:()Lnet/minecraft/world/phys/Vec3;
+    1267: aload_1
+    1268: invokevirtual #587                // Method net/minecraft/world/item/context/UseOnContext.m_43719_:()Lnet/minecraft/core/Direction;
+    1271: aload_1
+    1272: invokevirtual #508                // Method net/minecraft/world/item/context/UseOnContext.m_8083_:()Lnet/minecraft/core/BlockPos;
+    1275: aload_1
+    1276: invokevirtual #744                // Method net/minecraft/world/item/context/UseOnContext.m_43721_:()Z
+    1279: invokespecial #747                // Method net/minecraft/world/phys/BlockHitResult."<init>":(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Z)V
+    1282: invokevirtual #751                // Method net/minecraft/world/level/block/state/BlockState.m_60664_:(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/phys/BlockHitResult;)Lnet/minecraft/world/InteractionResult;
+    1285: areturn
+    1286: aload_0
+    1287: aload_1
+    1288: invokespecial #753                // Method net/minecraft/world/item/Item.m_6225_:(Lnet/minecraft/world/item/context/UseOnContext;)Lnet/minecraft/world/InteractionResult;
+    1291: areturn
+
+  public void m_5929_(net.minecraft.world.level.Level, net.minecraft.world.entity.LivingEntity, net.minecraft.world.item.ItemStack, int);
+    Code:
+       0: aload_2
+       1: aload_3
+       2: aload_0
+       3: aload_3
+       4: invokevirtual #201                // Method getSpell:(Lnet/minecraft/world/item/ItemStack;)Lcom/Polarice3/Goety/api/magic/ISpell;
+       7: invokestatic  #782                // Method com/Polarice3/Goety/common/events/spell/GoetyEventFactory.onStartSpell:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lcom/Polarice3/Goety/api/magic/ISpell;)Lcom/Polarice3/Goety/api/magic/ISpell;
+      10: astore        5
+      12: aload_1
+      13: instanceof    #476                // class net/minecraft/server/level/ServerLevel
+      16: ifeq          35
+      19: aload_0
+      20: aload_2
+      21: aload_3
+      22: aload         5
+      24: invokevirtual #786                // Method cannotCast:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lcom/Polarice3/Goety/api/magic/ISpell;)Z
+      27: ifeq          35
+      30: aload_2
+      31: invokevirtual #789                // Method net/minecraft/world/entity/LivingEntity.m_5810_:()V
+      34: return
+      35: aload_3
+      36: invokevirtual #792                // Method net/minecraft/world/item/ItemStack.m_41779_:()I
+      39: iload         4
+      41: isub
+      42: istore        6
+      44: aload_2
+      45: invokevirtual #795                // Method net/minecraft/world/entity/LivingEntity.m_21211_:()Lnet/minecraft/world/item/ItemStack;
+      48: aload_3
+      49: if_acmpne     437
+      52: aload         5
+      54: ifnull        437
+      57: aload_0
+      58: aload         5
+      60: aload_2
+      61: aload_3
+      62: invokevirtual #799                // Method isNotInstant:(Lcom/Polarice3/Goety/api/magic/ISpell;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)Z
+      65: ifeq          437
+      68: aload_0
+      69: aload_3
+      70: aload_2
+      71: invokevirtual #803                // Method CastingSound:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/LivingEntity;)Lnet/minecraft/sounds/SoundEvent;
+      74: astore        7
+      76: iload         6
+      78: iconst_1
+      79: if_icmpne     149
+      82: aload         7
+      84: ifnull        149
+      87: aload_1
+      88: instanceof    #476                // class net/minecraft/server/level/ServerLevel
+      91: ifeq          117
+      94: aload_1
+      95: checkcast     #476                // class net/minecraft/server/level/ServerLevel
+      98: astore        8
+     100: aload         5
+     102: aload         8
+     104: aload_2
+     105: aload_3
+     106: aload_2
+     107: aload         5
+     109: invokestatic  #482                // Method com/Polarice3/Goety/utils/WandUtil.getStats:(Lnet/minecraft/world/entity/LivingEntity;Lcom/Polarice3/Goety/api/magic/ISpell;)Lcom/Polarice3/Goety/common/magic/SpellStat;
+     112: invokeinterface #807,  5          // InterfaceMethod com/Polarice3/Goety/api/magic/ISpell.startSpell:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lcom/Polarice3/Goety/common/magic/SpellStat;)V
+     117: aload_1
+     118: aconst_null
+     119: aload_2
+     120: invokevirtual #811                // Method net/minecraft/world/entity/LivingEntity.m_20185_:()D
+     123: aload_2
+     124: invokevirtual #814                // Method net/minecraft/world/entity/LivingEntity.m_20186_:()D
+     127: aload_2
+     128: invokevirtual #817                // Method net/minecraft/world/entity/LivingEntity.m_20189_:()D
+     131: aload         7
+     133: getstatic     #820                // Field net/minecraft/sounds/SoundSource.PLAYERS:Lnet/minecraft/sounds/SoundSource;
+     136: aload_0
+     137: aload_3
+     138: invokevirtual #824                // Method castingVolume:(Lnet/minecraft/world/item/ItemStack;)F
+     141: aload_0
+     142: aload_3
+     143: invokevirtual #827                // Method castingPitch:(Lnet/minecraft/world/item/ItemStack;)F
+     146: invokevirtual #678                // Method net/minecraft/world/level/Level.m_6263_:(Lnet/minecraft/world/entity/player/Player;DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+     149: aload_1
+     150: instanceof    #476                // class net/minecraft/server/level/ServerLevel
+     153: ifeq          204
+     156: aload_1
+     157: checkcast     #476                // class net/minecraft/server/level/ServerLevel
+     160: astore        8
+     162: aload_2
+     163: aload_3
+     164: aload         5
+     166: iload         6
+     168: invokestatic  #831                // Method com/Polarice3/Goety/common/events/spell/GoetyEventFactory.onCastingSpell:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lcom/Polarice3/Goety/api/magic/ISpell;I)Lcom/Polarice3/Goety/api/magic/ISpell;
+     171: astore        5
+     173: aload         5
+     175: ifnull        200
+     178: aload         5
+     180: aload         8
+     182: aload_2
+     183: aload_3
+     184: iload         6
+     186: aload_2
+     187: aload         5
+     189: invokestatic  #482                // Method com/Polarice3/Goety/utils/WandUtil.getStats:(Lnet/minecraft/world/entity/LivingEntity;Lcom/Polarice3/Goety/api/magic/ISpell;)Lcom/Polarice3/Goety/common/magic/SpellStat;
+     192: invokeinterface #835,  6          // InterfaceMethod com/Polarice3/Goety/api/magic/ISpell.useSpell:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;ILcom/Polarice3/Goety/common/magic/SpellStat;)V
+     197: goto          204
+     200: aload_2
+     201: invokevirtual #789                // Method net/minecraft/world/entity/LivingEntity.m_5810_:()V
+     204: aload         5
+     206: ifnull        433
+     209: aload         5
+     211: instanceof    #837                // class com/Polarice3/Goety/api/magic/IChargingSpell
+     214: ifeq          248
+     217: aload         5
+     219: checkcast     #837                // class com/Polarice3/Goety/api/magic/IChargingSpell
+     222: astore        8
+     224: aload         8
+     226: aload_2
+     227: aload_3
+     228: invokeinterface #840,  3          // InterfaceMethod com/Polarice3/Goety/api/magic/IChargingSpell.castUp:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)I
+     233: ifle          248
+     236: aload_0
+     237: aload_1
+     238: aload_2
+     239: aload_3
+     240: aload         5
+     242: invokevirtual #844                // Method useParticles:(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lcom/Polarice3/Goety/api/magic/ISpell;)V
+     245: goto          265
+     248: aload         5
+     250: instanceof    #837                // class com/Polarice3/Goety/api/magic/IChargingSpell
+     253: ifne          265
+     256: aload_0
+     257: aload_1
+     258: aload_2
+     259: aload_3
+     260: aload         5
+     262: invokevirtual #844                // Method useParticles:(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lcom/Polarice3/Goety/api/magic/ISpell;)V
+     265: aload         5
+     267: instanceof    #837                // class com/Polarice3/Goety/api/magic/IChargingSpell
+     270: ifeq          430
+     273: aload         5
+     275: checkcast     #837                // class com/Polarice3/Goety/api/magic/IChargingSpell
+     278: astore        8
+     280: aload_3
+     281: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+     284: ifnull        386
+     287: iload         6
+     289: aload         8
+     291: aload_2
+     292: aload_3
+     293: invokeinterface #840,  3          // InterfaceMethod com/Polarice3/Goety/api/magic/IChargingSpell.castUp:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)I
+     298: if_icmpge     313
+     301: aload         8
+     303: aload_2
+     304: aload_3
+     305: invokeinterface #840,  3          // InterfaceMethod com/Polarice3/Goety/api/magic/IChargingSpell.castUp:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)I
+     310: ifgt          386
+     313: aload_3
+     314: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+     317: ldc           #189                // String Cool
+     319: aload_3
+     320: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+     323: ldc           #189                // String Cool
+     325: invokevirtual #197                // Method net/minecraft/nbt/CompoundTag.m_128451_:(Ljava/lang/String;)I
+     328: iconst_1
+     329: iadd
+     330: invokevirtual #179                // Method net/minecraft/nbt/CompoundTag.m_128405_:(Ljava/lang/String;I)V
+     333: aload_3
+     334: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+     337: ldc           #189                // String Cool
+     339: invokevirtual #197                // Method net/minecraft/nbt/CompoundTag.m_128451_:(Ljava/lang/String;)I
+     342: aload_0
+     343: aload_3
+     344: invokevirtual #847                // Method Cooldown:(Lnet/minecraft/world/item/ItemStack;)I
+     347: if_icmplt     386
+     350: aload_3
+     351: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+     354: ldc           #189                // String Cool
+     356: iconst_0
+     357: invokevirtual #179                // Method net/minecraft/nbt/CompoundTag.m_128405_:(Ljava/lang/String;I)V
+     360: aload         8
+     362: aload_2
+     363: aload_3
+     364: invokeinterface #850,  3          // InterfaceMethod com/Polarice3/Goety/api/magic/IChargingSpell.shotsNumber:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)I
+     369: ifle          377
+     372: aload_0
+     373: aload_3
+     374: invokevirtual #854                // Method increaseShots:(Lnet/minecraft/world/item/ItemStack;)V
+     377: aload_0
+     378: aload_3
+     379: aload_1
+     380: aload_2
+     381: aload         8
+     383: invokevirtual #858                // Method MagicResults:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/LivingEntity;Lcom/Polarice3/Goety/api/magic/ISpell;)V
+     386: aload_2
+     387: instanceof    #281                // class net/minecraft/world/entity/player/Player
+     390: ifeq          430
+     393: aload_2
+     394: checkcast     #281                // class net/minecraft/world/entity/player/Player
+     397: astore        9
+     399: aload         9
+     401: aload         5
+     403: aload         9
+     405: aload_3
+     406: invokeinterface #861,  3          // InterfaceMethod com/Polarice3/Goety/api/magic/ISpell.soulCost:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)I
+     411: invokestatic  #865                // Method com/Polarice3/Goety/utils/SEHelper.getSoulsAmount:(Lnet/minecraft/world/entity/player/Player;I)Z
+     414: ifne          430
+     417: aload         9
+     419: invokevirtual #868                // Method net/minecraft/world/entity/player/Player.m_7500_:()Z
+     422: ifne          430
+     425: aload         9
+     427: invokevirtual #869                // Method net/minecraft/world/entity/player/Player.m_5810_:()V
+     430: goto          437
+     433: aload_2
+     434: invokevirtual #789                // Method net/minecraft/world/entity/LivingEntity.m_5810_:()V
+     437: return
+
+  public void m_5551_(net.minecraft.world.item.ItemStack, net.minecraft.world.level.Level, net.minecraft.world.entity.LivingEntity, int);
+    Code:
+       0: aload_2
+       1: instanceof    #476                // class net/minecraft/server/level/ServerLevel
+       4: ifeq          275
+       7: aload_2
+       8: checkcast     #476                // class net/minecraft/server/level/ServerLevel
+      11: astore        5
+      13: aload_1
+      14: invokevirtual #792                // Method net/minecraft/world/item/ItemStack.m_41779_:()I
+      17: iload         4
+      19: isub
+      20: istore        6
+      22: aload_3
+      23: aload_1
+      24: aload_0
+      25: aload_1
+      26: invokevirtual #201                // Method getSpell:(Lnet/minecraft/world/item/ItemStack;)Lcom/Polarice3/Goety/api/magic/ISpell;
+      29: iload         6
+      31: iload         4
+      33: invokestatic  #882                // Method com/Polarice3/Goety/common/events/spell/GoetyEventFactory.onStopSpell:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lcom/Polarice3/Goety/api/magic/ISpell;II)Lcom/Polarice3/Goety/api/magic/ISpell;
+      36: astore        7
+      38: aload         7
+      40: ifnull        275
+      43: aload         7
+      45: aload         5
+      47: aload_3
+      48: aload_1
+      49: aload_1
+      50: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+      53: iload         6
+      55: aload_3
+      56: aload         7
+      58: invokestatic  #482                // Method com/Polarice3/Goety/utils/WandUtil.getStats:(Lnet/minecraft/world/entity/LivingEntity;Lcom/Polarice3/Goety/api/magic/ISpell;)Lcom/Polarice3/Goety/common/magic/SpellStat;
+      61: invokeinterface #886,  7          // InterfaceMethod com/Polarice3/Goety/api/magic/ISpell.stopSpell:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;ILcom/Polarice3/Goety/common/magic/SpellStat;)V
+      66: aload_3
+      67: instanceof    #281                // class net/minecraft/world/entity/player/Player
+      70: ifeq          275
+      73: aload_3
+      74: checkcast     #281                // class net/minecraft/world/entity/player/Player
+      77: astore        8
+      79: aload         7
+      81: instanceof    #837                // class com/Polarice3/Goety/api/magic/IChargingSpell
+      84: ifeq          275
+      87: aload         7
+      89: checkcast     #837                // class com/Polarice3/Goety/api/magic/IChargingSpell
+      92: astore        9
+      94: aload         9
+      96: aload         8
+      98: aload_1
+      99: invokeinterface #850,  3          // InterfaceMethod com/Polarice3/Goety/api/magic/IChargingSpell.shotsNumber:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)I
+     104: ifle          205
+     107: aload_0
+     108: aload_1
+     109: invokevirtual #889                // Method ShotsFired:(Lnet/minecraft/world/item/ItemStack;)I
+     112: ifle          275
+     115: aload_0
+     116: aload_1
+     117: invokevirtual #889                // Method ShotsFired:(Lnet/minecraft/world/item/ItemStack;)I
+     120: i2f
+     121: aload         9
+     123: aload         8
+     125: aload_1
+     126: invokeinterface #850,  3          // InterfaceMethod com/Polarice3/Goety/api/magic/IChargingSpell.shotsNumber:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)I
+     131: i2f
+     132: fdiv
+     133: fstore        10
+     135: aload_0
+     136: aload_1
+     137: iconst_0
+     138: invokevirtual #893                // Method setShots:(Lnet/minecraft/world/item/ItemStack;I)V
+     141: aload         7
+     143: aload         8
+     145: aload_1
+     146: aload_1
+     147: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     150: aload         9
+     152: aload         8
+     154: invokeinterface #897,  2          // InterfaceMethod com/Polarice3/Goety/api/magic/IChargingSpell.spellCooldown:(Lnet/minecraft/world/entity/LivingEntity;)I
+     159: i2f
+     160: fload         10
+     162: fmul
+     163: invokestatic  #903                // Method net/minecraft/util/Mth.m_14143_:(F)I
+     166: invokeinterface #907,  5          // InterfaceMethod com/Polarice3/Goety/api/magic/ISpell.hasCustomCooldown:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;I)Z
+     171: ifne          202
+     174: aload         8
+     176: aload_1
+     177: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     180: invokevirtual #213                // Method net/minecraft/world/item/ItemStack.m_41720_:()Lnet/minecraft/world/item/Item;
+     183: aload         9
+     185: aload         8
+     187: invokeinterface #897,  2          // InterfaceMethod com/Polarice3/Goety/api/magic/IChargingSpell.spellCooldown:(Lnet/minecraft/world/entity/LivingEntity;)I
+     192: i2f
+     193: fload         10
+     195: fmul
+     196: invokestatic  #903                // Method net/minecraft/util/Mth.m_14143_:(F)I
+     199: invokestatic  #911                // Method com/Polarice3/Goety/utils/SEHelper.addCooldown:(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/Item;I)V
+     202: goto          275
+     205: aload         7
+     207: aload         8
+     209: aload_1
+     210: aload_1
+     211: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     214: aload         9
+     216: aload         8
+     218: invokeinterface #897,  2          // InterfaceMethod com/Polarice3/Goety/api/magic/IChargingSpell.spellCooldown:(Lnet/minecraft/world/entity/LivingEntity;)I
+     223: i2f
+     224: invokestatic  #903                // Method net/minecraft/util/Mth.m_14143_:(F)I
+     227: invokeinterface #907,  5          // InterfaceMethod com/Polarice3/Goety/api/magic/ISpell.hasCustomCooldown:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;I)Z
+     232: ifne          275
+     235: iload         6
+     237: aload         9
+     239: aload         8
+     241: aload_1
+     242: invokeinterface #840,  3          // InterfaceMethod com/Polarice3/Goety/api/magic/IChargingSpell.castUp:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)I
+     247: if_icmple     275
+     250: aload         8
+     252: aload_1
+     253: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     256: invokevirtual #213                // Method net/minecraft/world/item/ItemStack.m_41720_:()Lnet/minecraft/world/item/Item;
+     259: aload         9
+     261: aload         8
+     263: invokeinterface #897,  2          // InterfaceMethod com/Polarice3/Goety/api/magic/IChargingSpell.spellCooldown:(Lnet/minecraft/world/entity/LivingEntity;)I
+     268: i2f
+     269: invokestatic  #903                // Method net/minecraft/util/Mth.m_14143_:(F)I
+     272: invokestatic  #911                // Method com/Polarice3/Goety/utils/SEHelper.addCooldown:(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/Item;I)V
+     275: return
+
+  public int m_8105_(net.minecraft.world.item.ItemStack);
+    Code:
+       0: aload_1
+       1: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+       4: ifnull        17
+       7: aload_1
+       8: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+      11: ldc           #183                // String Cast Time
+      13: invokevirtual #197                // Method net/minecraft/nbt/CompoundTag.m_128451_:(Ljava/lang/String;)I
+      16: ireturn
+      17: aload_0
+      18: aload_1
+      19: invokevirtual #187                // Method CastDuration:(Lnet/minecraft/world/item/ItemStack;)I
+      22: ireturn
+
+  public net.minecraft.world.item.UseAnim m_6164_(net.minecraft.world.item.ItemStack);
+    Code:
+       0: getstatic     #924                // Field net/minecraft/world/item/UseAnim.CUSTOM:Lnet/minecraft/world/item/UseAnim;
+       3: areturn
+
+  public net.minecraft.world.item.ItemStack m_5922_(net.minecraft.world.item.ItemStack, net.minecraft.world.level.Level, net.minecraft.world.entity.LivingEntity);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: aload_2
+       3: aload_3
+       4: invokespecial #928                // Method net/minecraft/world/item/Item.m_5922_:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/LivingEntity;)Lnet/minecraft/world/item/ItemStack;
+       7: pop
+       8: aload_3
+       9: aload_0
+      10: aload_1
+      11: invokevirtual #201                // Method getSpell:(Lnet/minecraft/world/item/ItemStack;)Lcom/Polarice3/Goety/api/magic/ISpell;
+      14: invokestatic  #932                // Method com/Polarice3/Goety/common/events/spell/GoetyEventFactory.onCastSpell:(Lnet/minecraft/world/entity/LivingEntity;Lcom/Polarice3/Goety/api/magic/ISpell;)Lcom/Polarice3/Goety/api/magic/ISpell;
+      17: astore        4
+      19: aload         4
+      21: ifnull        70
+      24: aload         4
+      26: instanceof    #837                // class com/Polarice3/Goety/api/magic/IChargingSpell
+      29: ifeq          52
+      32: aload_0
+      33: aload         4
+      35: aload_3
+      36: aload_1
+      37: invokevirtual #799                // Method isNotInstant:(Lcom/Polarice3/Goety/api/magic/ISpell;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)Z
+      40: ifne          52
+      43: aload_0
+      44: aload         4
+      46: invokevirtual #936                // Method notTouch:(Lcom/Polarice3/Goety/api/magic/ISpell;)Z
+      49: ifeq          70
+      52: aload_0
+      53: aload_3
+      54: aload_1
+      55: invokevirtual #939                // Method cannotCast:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)Z
+      58: ifne          70
+      61: aload_0
+      62: aload_1
+      63: aload_2
+      64: aload_3
+      65: aload         4
+      67: invokevirtual #858                // Method MagicResults:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/LivingEntity;Lcom/Polarice3/Goety/api/magic/ISpell;)V
+      70: aload_1
+      71: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+      74: ifnull        121
+      77: aload_1
+      78: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+      81: ldc           #189                // String Cool
+      83: invokevirtual #197                // Method net/minecraft/nbt/CompoundTag.m_128451_:(Ljava/lang/String;)I
+      86: ifle          99
+      89: aload_1
+      90: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+      93: ldc           #189                // String Cool
+      95: iconst_0
+      96: invokevirtual #179                // Method net/minecraft/nbt/CompoundTag.m_128405_:(Ljava/lang/String;I)V
+      99: aload_1
+     100: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+     103: ldc           #191                // String Shots
+     105: invokevirtual #197                // Method net/minecraft/nbt/CompoundTag.m_128451_:(Ljava/lang/String;)I
+     108: ifle          121
+     111: aload_1
+     112: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+     115: ldc           #191                // String Shots
+     117: iconst_0
+     118: invokevirtual #179                // Method net/minecraft/nbt/CompoundTag.m_128405_:(Ljava/lang/String;I)V
+     121: aload_1
+     122: areturn
+
+  public net.minecraft.world.InteractionResultHolder<net.minecraft.world.item.ItemStack> m_7203_(net.minecraft.world.level.Level, net.minecraft.world.entity.player.Player, net.minecraft.world.InteractionHand);
+    Code:
+       0: aload_2
+       1: aload_3
+       2: invokevirtual #946                // Method net/minecraft/world/entity/player/Player.m_21120_:(Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/item/ItemStack;
+       5: astore        4
+       7: aload         4
+       9: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+      12: astore        5
+      14: aload         5
+      16: invokevirtual #213                // Method net/minecraft/world/item/ItemStack.m_41720_:()Lnet/minecraft/world/item/Item;
+      19: instanceof    #341                // class com/Polarice3/Goety/common/items/magic/CommandFocus
+      22: ifeq          109
+      25: aload_2
+      26: invokevirtual #378                // Method net/minecraft/world/entity/player/Player.m_6047_:()Z
+      29: ifeq          109
+      32: aload         5
+      34: invokestatic  #349                // Method com/Polarice3/Goety/common/items/magic/CommandFocus.hasServant:(Lnet/minecraft/world/item/ItemStack;)Z
+      37: ifeq          99
+      40: aload         5
+      42: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+      45: ifnull        99
+      48: aload         5
+      50: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+      53: ldc_w         #948                // String Servant
+      56: invokevirtual #952                // Method net/minecraft/nbt/CompoundTag.m_128473_:(Ljava/lang/String;)V
+      59: aload_2
+      60: getstatic     #311                // Field net/minecraft/sounds/SoundEvents.f_11686_:Lnet/minecraft/sounds/SoundEvent;
+      63: fconst_1
+      64: ldc_w         #312                // float 0.45f
+      67: invokevirtual #316                // Method net/minecraft/world/entity/player/Player.m_5496_:(Lnet/minecraft/sounds/SoundEvent;FF)V
+      70: aload_1
+      71: getfield      #287                // Field net/minecraft/world/level/Level.f_46443_:Z
+      74: ifne          99
+      77: aload_2
+      78: new           #954                // class com/Polarice3/Goety/common/network/server/SPlayEntitySoundPacket
+      81: dup
+      82: aload_2
+      83: invokevirtual #958                // Method net/minecraft/world/entity/player/Player.m_20148_:()Ljava/util/UUID;
+      86: getstatic     #311                // Field net/minecraft/sounds/SoundEvents.f_11686_:Lnet/minecraft/sounds/SoundEvent;
+      89: fconst_1
+      90: ldc_w         #312                // float 0.45f
+      93: invokespecial #961                // Method com/Polarice3/Goety/common/network/server/SPlayEntitySoundPacket."<init>":(Ljava/util/UUID;Lnet/minecraft/sounds/SoundEvent;FF)V
+      96: invokestatic  #326                // Method com/Polarice3/Goety/common/network/ModNetwork.sendTo:(Lnet/minecraft/world/entity/player/Player;Ljava/lang/Object;)V
+      99: aload         4
+     101: aload_1
+     102: invokevirtual #964                // Method net/minecraft/world/level/Level.m_5776_:()Z
+     105: invokestatic  #970                // Method net/minecraft/world/InteractionResultHolder.m_19092_:(Ljava/lang/Object;Z)Lnet/minecraft/world/InteractionResultHolder;
+     108: areturn
+     109: aload         5
+     111: invokevirtual #213                // Method net/minecraft/world/item/ItemStack.m_41720_:()Lnet/minecraft/world/item/Item;
+     114: instanceof    #354                // class com/Polarice3/Goety/common/items/magic/OrderFocus
+     117: ifeq          207
+     120: aload_2
+     121: invokevirtual #378                // Method net/minecraft/world/entity/player/Player.m_6047_:()Z
+     124: ifeq          207
+     127: aload         5
+     129: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+     132: ifnull        197
+     135: aload         5
+     137: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+     140: getstatic     #974                // Field com/Polarice3/Goety/common/items/magic/OrderFocus.SERVANT_LIST:Ljava/lang/String;
+     143: invokevirtual #952                // Method net/minecraft/nbt/CompoundTag.m_128473_:(Ljava/lang/String;)V
+     146: aload         5
+     148: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+     151: getstatic     #977                // Field com/Polarice3/Goety/common/items/magic/OrderFocus.SERVANT_CLIENT_LIST:Ljava/lang/String;
+     154: invokevirtual #952                // Method net/minecraft/nbt/CompoundTag.m_128473_:(Ljava/lang/String;)V
+     157: aload_2
+     158: getstatic     #311                // Field net/minecraft/sounds/SoundEvents.f_11686_:Lnet/minecraft/sounds/SoundEvent;
+     161: fconst_1
+     162: ldc_w         #312                // float 0.45f
+     165: invokevirtual #316                // Method net/minecraft/world/entity/player/Player.m_5496_:(Lnet/minecraft/sounds/SoundEvent;FF)V
+     168: aload_1
+     169: getfield      #287                // Field net/minecraft/world/level/Level.f_46443_:Z
+     172: ifne          197
+     175: aload_2
+     176: new           #954                // class com/Polarice3/Goety/common/network/server/SPlayEntitySoundPacket
+     179: dup
+     180: aload_2
+     181: invokevirtual #958                // Method net/minecraft/world/entity/player/Player.m_20148_:()Ljava/util/UUID;
+     184: getstatic     #311                // Field net/minecraft/sounds/SoundEvents.f_11686_:Lnet/minecraft/sounds/SoundEvent;
+     187: fconst_1
+     188: ldc_w         #312                // float 0.45f
+     191: invokespecial #961                // Method com/Polarice3/Goety/common/network/server/SPlayEntitySoundPacket."<init>":(Ljava/util/UUID;Lnet/minecraft/sounds/SoundEvent;FF)V
+     194: invokestatic  #326                // Method com/Polarice3/Goety/common/network/ModNetwork.sendTo:(Lnet/minecraft/world/entity/player/Player;Ljava/lang/Object;)V
+     197: aload         4
+     199: aload_1
+     200: invokevirtual #964                // Method net/minecraft/world/level/Level.m_5776_:()Z
+     203: invokestatic  #970                // Method net/minecraft/world/InteractionResultHolder.m_19092_:(Ljava/lang/Object;Z)Lnet/minecraft/world/InteractionResultHolder;
+     206: areturn
+     207: aload         5
+     209: invokevirtual #213                // Method net/minecraft/world/item/ItemStack.m_41720_:()Lnet/minecraft/world/item/Item;
+     212: instanceof    #289                // class com/Polarice3/Goety/common/items/magic/CallFocus
+     215: ifeq          302
+     218: aload_2
+     219: invokevirtual #378                // Method net/minecraft/world/entity/player/Player.m_6047_:()Z
+     222: ifeq          302
+     225: aload         5
+     227: invokestatic  #293                // Method com/Polarice3/Goety/common/items/magic/CallFocus.hasSummon:(Lnet/minecraft/world/item/ItemStack;)Z
+     230: ifeq          292
+     233: aload         5
+     235: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+     238: ifnull        292
+     241: aload         5
+     243: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+     246: ldc_w         #979                // String Summoned
+     249: invokevirtual #952                // Method net/minecraft/nbt/CompoundTag.m_128473_:(Ljava/lang/String;)V
+     252: aload_2
+     253: getstatic     #311                // Field net/minecraft/sounds/SoundEvents.f_11686_:Lnet/minecraft/sounds/SoundEvent;
+     256: fconst_1
+     257: ldc_w         #312                // float 0.45f
+     260: invokevirtual #316                // Method net/minecraft/world/entity/player/Player.m_5496_:(Lnet/minecraft/sounds/SoundEvent;FF)V
+     263: aload_1
+     264: getfield      #287                // Field net/minecraft/world/level/Level.f_46443_:Z
+     267: ifne          292
+     270: aload_2
+     271: new           #954                // class com/Polarice3/Goety/common/network/server/SPlayEntitySoundPacket
+     274: dup
+     275: aload_2
+     276: invokevirtual #958                // Method net/minecraft/world/entity/player/Player.m_20148_:()Ljava/util/UUID;
+     279: getstatic     #311                // Field net/minecraft/sounds/SoundEvents.f_11686_:Lnet/minecraft/sounds/SoundEvent;
+     282: fconst_1
+     283: ldc_w         #312                // float 0.45f
+     286: invokespecial #961                // Method com/Polarice3/Goety/common/network/server/SPlayEntitySoundPacket."<init>":(Ljava/util/UUID;Lnet/minecraft/sounds/SoundEvent;FF)V
+     289: invokestatic  #326                // Method com/Polarice3/Goety/common/network/ModNetwork.sendTo:(Lnet/minecraft/world/entity/player/Player;Ljava/lang/Object;)V
+     292: aload         4
+     294: aload_1
+     295: invokevirtual #964                // Method net/minecraft/world/level/Level.m_5776_:()Z
+     298: invokestatic  #970                // Method net/minecraft/world/InteractionResultHolder.m_19092_:(Ljava/lang/Object;Z)Lnet/minecraft/world/InteractionResultHolder;
+     301: areturn
+     302: aload_0
+     303: aload         4
+     305: invokevirtual #201                // Method getSpell:(Lnet/minecraft/world/item/ItemStack;)Lcom/Polarice3/Goety/api/magic/ISpell;
+     308: ifnull        429
+     311: aload_0
+     312: aload_2
+     313: aload         4
+     315: invokevirtual #939                // Method cannotCast:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)Z
+     318: ifeq          327
+     321: aload         4
+     323: invokestatic  #983                // Method net/minecraft/world/InteractionResultHolder.m_19098_:(Ljava/lang/Object;)Lnet/minecraft/world/InteractionResultHolder;
+     326: areturn
+     327: aload_0
+     328: aload_0
+     329: aload         4
+     331: invokevirtual #201                // Method getSpell:(Lnet/minecraft/world/item/ItemStack;)Lcom/Polarice3/Goety/api/magic/ISpell;
+     334: aload_2
+     335: aload         4
+     337: invokevirtual #799                // Method isNotInstant:(Lcom/Polarice3/Goety/api/magic/ISpell;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)Z
+     340: ifeq          389
+     343: aload_2
+     344: aload_0
+     345: aload         4
+     347: invokevirtual #201                // Method getSpell:(Lnet/minecraft/world/item/ItemStack;)Lcom/Polarice3/Goety/api/magic/ISpell;
+     350: aload_2
+     351: aload         4
+     353: invokeinterface #861,  3          // InterfaceMethod com/Polarice3/Goety/api/magic/ISpell.soulCost:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)I
+     358: invokestatic  #865                // Method com/Polarice3/Goety/utils/SEHelper.getSoulsAmount:(Lnet/minecraft/world/entity/player/Player;I)Z
+     361: ifne          374
+     364: aload_2
+     365: invokevirtual #987                // Method net/minecraft/world/entity/player/Player.m_150110_:()Lnet/minecraft/world/entity/player/Abilities;
+     368: getfield      #992                // Field net/minecraft/world/entity/player/Abilities.f_35937_:Z
+     371: ifeq          429
+     374: aload_1
+     375: getfield      #287                // Field net/minecraft/world/level/Level.f_46443_:Z
+     378: ifne          429
+     381: aload_2
+     382: aload_3
+     383: invokevirtual #996                // Method net/minecraft/world/entity/player/Player.m_6672_:(Lnet/minecraft/world/InteractionHand;)V
+     386: goto          429
+     389: aload_0
+     390: aload_0
+     391: aload         4
+     393: invokevirtual #201                // Method getSpell:(Lnet/minecraft/world/item/ItemStack;)Lcom/Polarice3/Goety/api/magic/ISpell;
+     396: invokevirtual #936                // Method notTouch:(Lcom/Polarice3/Goety/api/magic/ISpell;)Z
+     399: ifeq          429
+     402: aload_2
+     403: aload_3
+     404: invokevirtual #999                // Method net/minecraft/world/entity/player/Player.m_6674_:(Lnet/minecraft/world/InteractionHand;)V
+     407: aload_2
+     408: aload_0
+     409: aload         4
+     411: invokevirtual #201                // Method getSpell:(Lnet/minecraft/world/item/ItemStack;)Lcom/Polarice3/Goety/api/magic/ISpell;
+     414: invokestatic  #932                // Method com/Polarice3/Goety/common/events/spell/GoetyEventFactory.onCastSpell:(Lnet/minecraft/world/entity/LivingEntity;Lcom/Polarice3/Goety/api/magic/ISpell;)Lcom/Polarice3/Goety/api/magic/ISpell;
+     417: astore        6
+     419: aload_0
+     420: aload         4
+     422: aload_1
+     423: aload_2
+     424: aload         6
+     426: invokevirtual #858                // Method MagicResults:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/LivingEntity;Lcom/Polarice3/Goety/api/magic/ISpell;)V
+     429: aload         4
+     431: invokestatic  #1002               // Method net/minecraft/world/InteractionResultHolder.m_19096_:(Ljava/lang/Object;)Lnet/minecraft/world/InteractionResultHolder;
+     434: areturn
+
+  public void setSpellConditions(com.Polarice3.Goety.api.magic.ISpell, net.minecraft.world.item.ItemStack, net.minecraft.world.entity.LivingEntity);
+    Code:
+       0: aload_2
+       1: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+       4: ifnonnull     8
+       7: return
+       8: aload_2
+       9: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+      12: astore        4
+      14: aload_1
+      15: ifnull        156
+      18: aload_1
+      19: aload_3
+      20: aload_2
+      21: invokeinterface #861,  3          // InterfaceMethod com/Polarice3/Goety/api/magic/ISpell.soulCost:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)I
+      26: istore        5
+      28: aload         4
+      30: ldc           #181                // String Soul Cost
+      32: invokevirtual #197                // Method net/minecraft/nbt/CompoundTag.m_128451_:(Ljava/lang/String;)I
+      35: iload         5
+      37: if_icmpeq     49
+      40: aload         4
+      42: ldc           #181                // String Soul Cost
+      44: iload         5
+      46: invokevirtual #179                // Method net/minecraft/nbt/CompoundTag.m_128405_:(Ljava/lang/String;I)V
+      49: aload_1
+      50: aload_3
+      51: aload_2
+      52: invokeinterface #1010,  3         // InterfaceMethod com/Polarice3/Goety/api/magic/ISpell.castDuration:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)I
+      57: istore        6
+      59: aload         4
+      61: ldc_w         #1012               // String Duration
+      64: invokevirtual #197                // Method net/minecraft/nbt/CompoundTag.m_128451_:(Ljava/lang/String;)I
+      67: iload         6
+      69: if_icmpeq     82
+      72: aload         4
+      74: ldc_w         #1012               // String Duration
+      77: iload         6
+      79: invokevirtual #179                // Method net/minecraft/nbt/CompoundTag.m_128405_:(Ljava/lang/String;I)V
+      82: iconst_0
+      83: istore        7
+      85: aload_1
+      86: instanceof    #837                // class com/Polarice3/Goety/api/magic/IChargingSpell
+      89: ifeq          130
+      92: aload_1
+      93: checkcast     #837                // class com/Polarice3/Goety/api/magic/IChargingSpell
+      96: astore        8
+      98: aload         8
+     100: aload_3
+     101: aload_2
+     102: aload         4
+     104: ldc           #191                // String Shots
+     106: invokevirtual #171                // Method net/minecraft/nbt/CompoundTag.m_128441_:(Ljava/lang/String;)Z
+     109: ifeq          122
+     112: aload         4
+     114: ldc           #191                // String Shots
+     116: invokevirtual #197                // Method net/minecraft/nbt/CompoundTag.m_128451_:(Ljava/lang/String;)I
+     119: goto          123
+     122: iconst_0
+     123: invokeinterface #1015,  4         // InterfaceMethod com/Polarice3/Goety/api/magic/IChargingSpell.Cooldown:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;I)I
+     128: istore        7
+     130: aload         4
+     132: ldc_w         #1016               // String Cooldown
+     135: invokevirtual #197                // Method net/minecraft/nbt/CompoundTag.m_128451_:(Ljava/lang/String;)I
+     138: iload         7
+     140: if_icmpeq     153
+     143: aload         4
+     145: ldc_w         #1016               // String Cooldown
+     148: iload         7
+     150: invokevirtual #179                // Method net/minecraft/nbt/CompoundTag.m_128405_:(Ljava/lang/String;I)V
+     153: goto          214
+     156: aload         4
+     158: ldc           #181                // String Soul Cost
+     160: invokevirtual #197                // Method net/minecraft/nbt/CompoundTag.m_128451_:(Ljava/lang/String;)I
+     163: ifeq          174
+     166: aload         4
+     168: ldc           #181                // String Soul Cost
+     170: iconst_0
+     171: invokevirtual #179                // Method net/minecraft/nbt/CompoundTag.m_128405_:(Ljava/lang/String;I)V
+     174: aload         4
+     176: ldc_w         #1012               // String Duration
+     179: invokevirtual #197                // Method net/minecraft/nbt/CompoundTag.m_128451_:(Ljava/lang/String;)I
+     182: ifeq          194
+     185: aload         4
+     187: ldc_w         #1012               // String Duration
+     190: iconst_0
+     191: invokevirtual #179                // Method net/minecraft/nbt/CompoundTag.m_128405_:(Ljava/lang/String;I)V
+     194: aload         4
+     196: ldc_w         #1016               // String Cooldown
+     199: invokevirtual #197                // Method net/minecraft/nbt/CompoundTag.m_128451_:(Ljava/lang/String;)I
+     202: ifeq          214
+     205: aload         4
+     207: ldc_w         #1016               // String Cooldown
+     210: iconst_0
+     211: invokevirtual #179                // Method net/minecraft/nbt/CompoundTag.m_128405_:(Ljava/lang/String;I)V
+     214: return
+
+  public int SoulCost(net.minecraft.world.item.ItemStack);
+    Code:
+       0: aload_1
+       1: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+       4: ifnonnull     9
+       7: iconst_0
+       8: ireturn
+       9: aload_1
+      10: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+      13: ldc           #181                // String Soul Cost
+      15: invokevirtual #197                // Method net/minecraft/nbt/CompoundTag.m_128451_:(Ljava/lang/String;)I
+      18: ireturn
+
+  public int CastDuration(net.minecraft.world.item.ItemStack);
+    Code:
+       0: aload_1
+       1: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+       4: ifnull        18
+       7: aload_1
+       8: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+      11: ldc_w         #1012               // String Duration
+      14: invokevirtual #197                // Method net/minecraft/nbt/CompoundTag.m_128451_:(Ljava/lang/String;)I
+      17: ireturn
+      18: iconst_0
+      19: ireturn
+
+  public int Cooldown(net.minecraft.world.item.ItemStack);
+    Code:
+       0: aload_1
+       1: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+       4: ifnull        18
+       7: aload_1
+       8: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+      11: ldc_w         #1016               // String Cooldown
+      14: invokevirtual #197                // Method net/minecraft/nbt/CompoundTag.m_128451_:(Ljava/lang/String;)I
+      17: ireturn
+      18: iconst_0
+      19: ireturn
+
+  public int ShotsFired(net.minecraft.world.item.ItemStack);
+    Code:
+       0: aload_1
+       1: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+       4: ifnull        17
+       7: aload_1
+       8: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+      11: ldc           #191                // String Shots
+      13: invokevirtual #197                // Method net/minecraft/nbt/CompoundTag.m_128451_:(Ljava/lang/String;)I
+      16: ireturn
+      17: iconst_0
+      18: ireturn
+
+  public void increaseShots(net.minecraft.world.item.ItemStack);
+    Code:
+       0: aload_1
+       1: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+       4: ifnull        23
+       7: aload_1
+       8: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+      11: ldc           #191                // String Shots
+      13: aload_0
+      14: aload_1
+      15: invokevirtual #889                // Method ShotsFired:(Lnet/minecraft/world/item/ItemStack;)I
+      18: iconst_1
+      19: iadd
+      20: invokevirtual #179                // Method net/minecraft/nbt/CompoundTag.m_128405_:(Ljava/lang/String;I)V
+      23: return
+
+  public void setShots(net.minecraft.world.item.ItemStack, int);
+    Code:
+       0: aload_1
+       1: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+       4: ifnull        17
+       7: aload_1
+       8: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+      11: ldc           #191                // String Shots
+      13: iload_2
+      14: invokevirtual #179                // Method net/minecraft/nbt/CompoundTag.m_128405_:(Ljava/lang/String;I)V
+      17: return
+
+  public net.minecraft.sounds.SoundEvent CastingSound(net.minecraft.world.item.ItemStack, net.minecraft.world.entity.LivingEntity);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokevirtual #201                // Method getSpell:(Lnet/minecraft/world/item/ItemStack;)Lcom/Polarice3/Goety/api/magic/ISpell;
+       5: ifnull        20
+       8: aload_0
+       9: aload_1
+      10: invokevirtual #201                // Method getSpell:(Lnet/minecraft/world/item/ItemStack;)Lcom/Polarice3/Goety/api/magic/ISpell;
+      13: aload_2
+      14: invokeinterface #1026,  2         // InterfaceMethod com/Polarice3/Goety/api/magic/ISpell.CastingSound:(Lnet/minecraft/world/entity/LivingEntity;)Lnet/minecraft/sounds/SoundEvent;
+      19: areturn
+      20: aconst_null
+      21: areturn
+
+  public float castingVolume(net.minecraft.world.item.ItemStack);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokevirtual #201                // Method getSpell:(Lnet/minecraft/world/item/ItemStack;)Lcom/Polarice3/Goety/api/magic/ISpell;
+       5: ifnull        19
+       8: aload_0
+       9: aload_1
+      10: invokevirtual #201                // Method getSpell:(Lnet/minecraft/world/item/ItemStack;)Lcom/Polarice3/Goety/api/magic/ISpell;
+      13: invokeinterface #1030,  1         // InterfaceMethod com/Polarice3/Goety/api/magic/ISpell.castingVolume:()F
+      18: freturn
+      19: ldc_w         #674                // float 0.5f
+      22: freturn
+
+  public float castingPitch(net.minecraft.world.item.ItemStack);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokevirtual #201                // Method getSpell:(Lnet/minecraft/world/item/ItemStack;)Lcom/Polarice3/Goety/api/magic/ISpell;
+       5: ifnull        19
+       8: aload_0
+       9: aload_1
+      10: invokevirtual #201                // Method getSpell:(Lnet/minecraft/world/item/ItemStack;)Lcom/Polarice3/Goety/api/magic/ISpell;
+      13: invokeinterface #1032,  1         // InterfaceMethod com/Polarice3/Goety/api/magic/ISpell.castingPitch:()F
+      18: freturn
+      19: fconst_1
+      20: freturn
+
+  public boolean canCastTouch(net.minecraft.world.item.ItemStack, net.minecraft.world.level.Level, net.minecraft.world.entity.LivingEntity, net.minecraft.world.entity.LivingEntity);
+    Code:
+       0: aload_3
+       1: checkcast     #281                // class net/minecraft/world/entity/player/Player
+       4: astore        5
+       6: aload_2
+       7: instanceof    #476                // class net/minecraft/server/level/ServerLevel
+      10: ifeq          238
+      13: aload_2
+      14: checkcast     #476                // class net/minecraft/server/level/ServerLevel
+      17: astore        6
+      19: aload_3
+      20: aload_1
+      21: aload_0
+      22: aload_1
+      23: invokevirtual #201                // Method getSpell:(Lnet/minecraft/world/item/ItemStack;)Lcom/Polarice3/Goety/api/magic/ISpell;
+      26: invokestatic  #1035               // Method com/Polarice3/Goety/common/events/spell/GoetyEventFactory.onTouchBasedSpell:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lcom/Polarice3/Goety/api/magic/ISpell;)Lcom/Polarice3/Goety/api/magic/ISpell;
+      29: astore        7
+      31: aload         7
+      33: ifnull        238
+      36: aload_0
+      37: aload_3
+      38: aload_1
+      39: aload         7
+      41: invokevirtual #786                // Method cannotCast:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lcom/Polarice3/Goety/api/magic/ISpell;)Z
+      44: ifne          238
+      47: aload         7
+      49: instanceof    #470                // class com/Polarice3/Goety/api/magic/ITouchSpell
+      52: ifeq          86
+      55: aload         7
+      57: checkcast     #470                // class com/Polarice3/Goety/api/magic/ITouchSpell
+      60: astore        8
+      62: aload         8
+      64: aload         6
+      66: aload_3
+      67: aload         4
+      69: aload_1
+      70: aload_3
+      71: aload         8
+      73: invokestatic  #482                // Method com/Polarice3/Goety/utils/WandUtil.getStats:(Lnet/minecraft/world/entity/LivingEntity;Lcom/Polarice3/Goety/api/magic/ISpell;)Lcom/Polarice3/Goety/common/magic/SpellStat;
+      76: invokeinterface #1039,  6         // InterfaceMethod com/Polarice3/Goety/api/magic/ITouchSpell.targetConditions:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lcom/Polarice3/Goety/common/magic/SpellStat;)Z
+      81: ifne          86
+      84: iconst_0
+      85: ireturn
+      86: aload         5
+      88: invokevirtual #868                // Method net/minecraft/world/entity/player/Player.m_7500_:()Z
+      91: ifeq          153
+      94: aload         7
+      96: aload_3
+      97: aload_1
+      98: aload_1
+      99: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     102: aload         7
+     104: aload         5
+     106: invokeinterface #1040,  2         // InterfaceMethod com/Polarice3/Goety/api/magic/ISpell.spellCooldown:(Lnet/minecraft/world/entity/LivingEntity;)I
+     111: invokeinterface #907,  5          // InterfaceMethod com/Polarice3/Goety/api/magic/ISpell.hasCustomCooldown:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;I)Z
+     116: ifne          140
+     119: aload         5
+     121: aload_1
+     122: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     125: invokevirtual #213                // Method net/minecraft/world/item/ItemStack.m_41720_:()Lnet/minecraft/world/item/Item;
+     128: aload         7
+     130: aload         5
+     132: invokeinterface #1040,  2         // InterfaceMethod com/Polarice3/Goety/api/magic/ISpell.spellCooldown:(Lnet/minecraft/world/entity/LivingEntity;)I
+     137: invokestatic  #911                // Method com/Polarice3/Goety/utils/SEHelper.addCooldown:(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/Item;I)V
+     140: aload_1
+     141: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+     144: ifnull        151
+     147: iconst_1
+     148: goto          152
+     151: iconst_0
+     152: ireturn
+     153: aload         5
+     155: aload_0
+     156: aload_3
+     157: aload_1
+     158: invokevirtual #175                // Method SoulUse:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)I
+     161: invokestatic  #865                // Method com/Polarice3/Goety/utils/SEHelper.getSoulsAmount:(Lnet/minecraft/world/entity/player/Player;I)Z
+     164: ifeq          238
+     167: aload_1
+     168: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+     171: ifnull        238
+     174: aload         5
+     176: aload_0
+     177: aload_3
+     178: aload_1
+     179: invokevirtual #175                // Method SoulUse:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)I
+     182: invokestatic  #1044               // Method com/Polarice3/Goety/utils/SEHelper.decreaseSouls:(Lnet/minecraft/world/entity/player/Player;I)V
+     185: aload         7
+     187: aload_3
+     188: aload_1
+     189: aload_1
+     190: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     193: aload         7
+     195: aload         5
+     197: invokeinterface #1040,  2         // InterfaceMethod com/Polarice3/Goety/api/magic/ISpell.spellCooldown:(Lnet/minecraft/world/entity/LivingEntity;)I
+     202: invokeinterface #907,  5          // InterfaceMethod com/Polarice3/Goety/api/magic/ISpell.hasCustomCooldown:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;I)Z
+     207: ifne          231
+     210: aload         5
+     212: aload_1
+     213: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     216: invokevirtual #213                // Method net/minecraft/world/item/ItemStack.m_41720_:()Lnet/minecraft/world/item/Item;
+     219: aload         7
+     221: aload         5
+     223: invokeinterface #1040,  2         // InterfaceMethod com/Polarice3/Goety/api/magic/ISpell.spellCooldown:(Lnet/minecraft/world/entity/LivingEntity;)I
+     228: invokestatic  #911                // Method com/Polarice3/Goety/utils/SEHelper.addCooldown:(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/Item;I)V
+     231: aload         5
+     233: invokestatic  #1047               // Method com/Polarice3/Goety/utils/SEHelper.sendSEUpdatePacket:(Lnet/minecraft/world/entity/player/Player;)V
+     236: iconst_1
+     237: ireturn
+     238: iconst_0
+     239: ireturn
+
+  public void MagicResults(net.minecraft.world.item.ItemStack, net.minecraft.world.level.Level, net.minecraft.world.entity.LivingEntity);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: aload_2
+       3: aload_3
+       4: aload_0
+       5: aload_1
+       6: invokevirtual #201                // Method getSpell:(Lnet/minecraft/world/item/ItemStack;)Lcom/Polarice3/Goety/api/magic/ISpell;
+       9: invokevirtual #858                // Method MagicResults:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/LivingEntity;Lcom/Polarice3/Goety/api/magic/ISpell;)V
+      12: return
+
+  public void MagicResults(net.minecraft.world.item.ItemStack, net.minecraft.world.level.Level, net.minecraft.world.entity.LivingEntity, com.Polarice3.Goety.api.magic.ISpell);
+    Code:
+       0: aload         4
+       2: ifnull        675
+       5: aload_3
+       6: instanceof    #281                // class net/minecraft/world/entity/player/Player
+       9: ifeq          675
+      12: aload_3
+      13: checkcast     #281                // class net/minecraft/world/entity/player/Player
+      16: astore        5
+      18: aload_2
+      19: getfield      #287                // Field net/minecraft/world/level/Level.f_46443_:Z
+      22: ifne          571
+      25: aload_2
+      26: checkcast     #476                // class net/minecraft/server/level/ServerLevel
+      29: astore        6
+      31: aload         5
+      33: invokevirtual #868                // Method net/minecraft/world/entity/player/Player.m_7500_:()Z
+      36: ifeq          181
+      39: aload_1
+      40: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+      43: ifnull        571
+      46: aload         4
+      48: aload         6
+      50: aload_3
+      51: aload_1
+      52: aload_3
+      53: aload         4
+      55: invokestatic  #482                // Method com/Polarice3/Goety/utils/WandUtil.getStats:(Lnet/minecraft/world/entity/LivingEntity;Lcom/Polarice3/Goety/api/magic/ISpell;)Lcom/Polarice3/Goety/common/magic/SpellStat;
+      58: invokeinterface #1054,  5         // InterfaceMethod com/Polarice3/Goety/api/magic/ISpell.SpellResult:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lcom/Polarice3/Goety/common/magic/SpellStat;)V
+      63: iconst_0
+      64: istore        7
+      66: aload         4
+      68: instanceof    #837                // class com/Polarice3/Goety/api/magic/IChargingSpell
+      71: ifeq          118
+      74: aload         4
+      76: checkcast     #837                // class com/Polarice3/Goety/api/magic/IChargingSpell
+      79: astore        8
+      81: aload         8
+      83: aload         5
+      85: aload_1
+      86: invokeinterface #850,  3          // InterfaceMethod com/Polarice3/Goety/api/magic/IChargingSpell.shotsNumber:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)I
+      91: ifle          121
+      94: aload_0
+      95: aload_1
+      96: invokevirtual #889                // Method ShotsFired:(Lnet/minecraft/world/item/ItemStack;)I
+      99: aload         8
+     101: aload         5
+     103: aload_1
+     104: invokeinterface #850,  3          // InterfaceMethod com/Polarice3/Goety/api/magic/IChargingSpell.shotsNumber:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)I
+     109: if_icmplt     121
+     112: iconst_1
+     113: istore        7
+     115: goto          121
+     118: iconst_1
+     119: istore        7
+     121: iload         7
+     123: ifeq          178
+     126: aload_0
+     127: aload_1
+     128: iconst_0
+     129: invokevirtual #893                // Method setShots:(Lnet/minecraft/world/item/ItemStack;I)V
+     132: aload         4
+     134: aload_3
+     135: aload_1
+     136: aload_1
+     137: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     140: aload         4
+     142: aload         5
+     144: invokeinterface #1040,  2         // InterfaceMethod com/Polarice3/Goety/api/magic/ISpell.spellCooldown:(Lnet/minecraft/world/entity/LivingEntity;)I
+     149: invokeinterface #907,  5          // InterfaceMethod com/Polarice3/Goety/api/magic/ISpell.hasCustomCooldown:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;I)Z
+     154: ifne          178
+     157: aload         5
+     159: aload_1
+     160: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     163: invokevirtual #213                // Method net/minecraft/world/item/ItemStack.m_41720_:()Lnet/minecraft/world/item/Item;
+     166: aload         4
+     168: aload         5
+     170: invokeinterface #1040,  2         // InterfaceMethod com/Polarice3/Goety/api/magic/ISpell.spellCooldown:(Lnet/minecraft/world/entity/LivingEntity;)I
+     175: invokestatic  #911                // Method com/Polarice3/Goety/utils/SEHelper.addCooldown:(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/Item;I)V
+     178: goto          571
+     181: aload         5
+     183: aload_0
+     184: aload_3
+     185: aload_1
+     186: invokevirtual #175                // Method SoulUse:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)I
+     189: invokestatic  #865                // Method com/Polarice3/Goety/utils/SEHelper.getSoulsAmount:(Lnet/minecraft/world/entity/player/Player;I)Z
+     192: ifeq          546
+     195: iconst_1
+     196: istore        7
+     198: aload         4
+     200: instanceof    #837                // class com/Polarice3/Goety/api/magic/IChargingSpell
+     203: ifeq          280
+     206: aload         4
+     208: checkcast     #837                // class com/Polarice3/Goety/api/magic/IChargingSpell
+     211: astore        8
+     213: aload         8
+     215: invokeinterface #1057,  1         // InterfaceMethod com/Polarice3/Goety/api/magic/IChargingSpell.everCharge:()Z
+     220: ifeq          280
+     223: aload_1
+     224: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+     227: ifnull        280
+     230: aload_1
+     231: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+     234: ldc           #193                // String Seconds
+     236: aload_1
+     237: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+     240: ldc           #193                // String Seconds
+     242: invokevirtual #197                // Method net/minecraft/nbt/CompoundTag.m_128451_:(Ljava/lang/String;)I
+     245: iconst_1
+     246: iadd
+     247: invokevirtual #179                // Method net/minecraft/nbt/CompoundTag.m_128405_:(Ljava/lang/String;I)V
+     250: aload_1
+     251: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+     254: ldc           #193                // String Seconds
+     256: invokevirtual #197                // Method net/minecraft/nbt/CompoundTag.m_128451_:(Ljava/lang/String;)I
+     259: bipush        20
+     261: if_icmpeq     270
+     264: iconst_0
+     265: istore        7
+     267: goto          280
+     270: aload_1
+     271: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+     274: ldc           #193                // String Seconds
+     276: iconst_0
+     277: invokevirtual #179                // Method net/minecraft/nbt/CompoundTag.m_128405_:(Ljava/lang/String;I)V
+     280: iload         7
+     282: ifeq          404
+     285: aload         5
+     287: aload_0
+     288: aload_3
+     289: aload_1
+     290: invokevirtual #175                // Method SoulUse:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)I
+     293: invokestatic  #1044               // Method com/Polarice3/Goety/utils/SEHelper.decreaseSouls:(Lnet/minecraft/world/entity/player/Player;I)V
+     296: aload         5
+     298: invokestatic  #1047               // Method com/Polarice3/Goety/utils/SEHelper.sendSEUpdatePacket:(Lnet/minecraft/world/entity/player/Player;)V
+     301: getstatic     #1062               // Field com/Polarice3/Goety/config/MobsConfig.VillagerHateSpells:Lnet/minecraftforge/common/ForgeConfigSpec$ConfigValue;
+     304: invokevirtual #256                // Method net/minecraftforge/common/ForgeConfigSpec$ConfigValue.get:()Ljava/lang/Object;
+     307: checkcast     #383                // class java/lang/Integer
+     310: invokevirtual #386                // Method java/lang/Integer.intValue:()I
+     313: ifle          404
+     316: aload_3
+     317: getfield      #1063               // Field net/minecraft/world/entity/LivingEntity.f_19853_:Lnet/minecraft/world/level/Level;
+     320: ldc_w         #1065               // class net/minecraft/world/entity/npc/Villager
+     323: aload_3
+     324: invokevirtual #1069               // Method net/minecraft/world/entity/LivingEntity.m_20191_:()Lnet/minecraft/world/phys/AABB;
+     327: ldc2_w        #1070               // double 16.0d
+     330: invokevirtual #1077               // Method net/minecraft/world/phys/AABB.m_82400_:(D)Lnet/minecraft/world/phys/AABB;
+     333: invokevirtual #1081               // Method net/minecraft/world/level/Level.m_45976_:(Ljava/lang/Class;Lnet/minecraft/world/phys/AABB;)Ljava/util/List;
+     336: invokeinterface #455,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+     341: astore        8
+     343: aload         8
+     345: invokeinterface #460,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+     350: ifeq          404
+     353: aload         8
+     355: invokeinterface #463,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+     360: checkcast     #1065               // class net/minecraft/world/entity/npc/Villager
+     363: astore        9
+     365: aload         9
+     367: aload_3
+     368: invokevirtual #1084               // Method net/minecraft/world/entity/npc/Villager.m_142582_:(Lnet/minecraft/world/entity/Entity;)Z
+     371: ifeq          401
+     374: aload         9
+     376: invokevirtual #1088               // Method net/minecraft/world/entity/npc/Villager.m_35517_:()Lnet/minecraft/world/entity/ai/gossip/GossipContainer;
+     379: aload_3
+     380: invokevirtual #1089               // Method net/minecraft/world/entity/LivingEntity.m_20148_:()Ljava/util/UUID;
+     383: getstatic     #1095               // Field net/minecraft/world/entity/ai/gossip/GossipType.MINOR_NEGATIVE:Lnet/minecraft/world/entity/ai/gossip/GossipType;
+     386: getstatic     #1062               // Field com/Polarice3/Goety/config/MobsConfig.VillagerHateSpells:Lnet/minecraftforge/common/ForgeConfigSpec$ConfigValue;
+     389: invokevirtual #256                // Method net/minecraftforge/common/ForgeConfigSpec$ConfigValue.get:()Ljava/lang/Object;
+     392: checkcast     #383                // class java/lang/Integer
+     395: invokevirtual #386                // Method java/lang/Integer.intValue:()I
+     398: invokevirtual #1101               // Method net/minecraft/world/entity/ai/gossip/GossipContainer.m_26191_:(Ljava/util/UUID;Lnet/minecraft/world/entity/ai/gossip/GossipType;I)V
+     401: goto          343
+     404: aload_1
+     405: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+     408: ifnull        543
+     411: aload         4
+     413: aload         6
+     415: aload_3
+     416: aload_1
+     417: aload_3
+     418: aload         4
+     420: invokestatic  #482                // Method com/Polarice3/Goety/utils/WandUtil.getStats:(Lnet/minecraft/world/entity/LivingEntity;Lcom/Polarice3/Goety/api/magic/ISpell;)Lcom/Polarice3/Goety/common/magic/SpellStat;
+     423: invokeinterface #1054,  5         // InterfaceMethod com/Polarice3/Goety/api/magic/ISpell.SpellResult:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lcom/Polarice3/Goety/common/magic/SpellStat;)V
+     428: iconst_0
+     429: istore        8
+     431: aload         4
+     433: instanceof    #837                // class com/Polarice3/Goety/api/magic/IChargingSpell
+     436: ifeq          483
+     439: aload         4
+     441: checkcast     #837                // class com/Polarice3/Goety/api/magic/IChargingSpell
+     444: astore        9
+     446: aload         9
+     448: aload         5
+     450: aload_1
+     451: invokeinterface #850,  3          // InterfaceMethod com/Polarice3/Goety/api/magic/IChargingSpell.shotsNumber:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)I
+     456: ifle          486
+     459: aload_0
+     460: aload_1
+     461: invokevirtual #889                // Method ShotsFired:(Lnet/minecraft/world/item/ItemStack;)I
+     464: aload         9
+     466: aload         5
+     468: aload_1
+     469: invokeinterface #850,  3          // InterfaceMethod com/Polarice3/Goety/api/magic/IChargingSpell.shotsNumber:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)I
+     474: if_icmplt     486
+     477: iconst_1
+     478: istore        8
+     480: goto          486
+     483: iconst_1
+     484: istore        8
+     486: iload         8
+     488: ifeq          543
+     491: aload_0
+     492: aload_1
+     493: iconst_0
+     494: invokevirtual #893                // Method setShots:(Lnet/minecraft/world/item/ItemStack;I)V
+     497: aload         4
+     499: aload_3
+     500: aload_1
+     501: aload_1
+     502: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     505: aload         4
+     507: aload         5
+     509: invokeinterface #1040,  2         // InterfaceMethod com/Polarice3/Goety/api/magic/ISpell.spellCooldown:(Lnet/minecraft/world/entity/LivingEntity;)I
+     514: invokeinterface #907,  5          // InterfaceMethod com/Polarice3/Goety/api/magic/ISpell.hasCustomCooldown:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;I)Z
+     519: ifne          543
+     522: aload         5
+     524: aload_1
+     525: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     528: invokevirtual #213                // Method net/minecraft/world/item/ItemStack.m_41720_:()Lnet/minecraft/world/item/Item;
+     531: aload         4
+     533: aload         5
+     535: invokeinterface #1040,  2         // InterfaceMethod com/Polarice3/Goety/api/magic/ISpell.spellCooldown:(Lnet/minecraft/world/entity/LivingEntity;)I
+     540: invokestatic  #911                // Method com/Polarice3/Goety/utils/SEHelper.addCooldown:(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/Item;I)V
+     543: goto          571
+     546: aload_2
+     547: aconst_null
+     548: aload_3
+     549: invokevirtual #811                // Method net/minecraft/world/entity/LivingEntity.m_20185_:()D
+     552: aload_3
+     553: invokevirtual #814                // Method net/minecraft/world/entity/LivingEntity.m_20186_:()D
+     556: aload_3
+     557: invokevirtual #817                // Method net/minecraft/world/entity/LivingEntity.m_20189_:()D
+     560: getstatic     #705                // Field net/minecraft/sounds/SoundEvents.f_11937_:Lnet/minecraft/sounds/SoundEvent;
+     563: getstatic     #1104               // Field net/minecraft/sounds/SoundSource.NEUTRAL:Lnet/minecraft/sounds/SoundSource;
+     566: fconst_1
+     567: fconst_1
+     568: invokevirtual #678                // Method net/minecraft/world/level/Level.m_6263_:(Lnet/minecraft/world/entity/player/Player;DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+     571: aload_2
+     572: getfield      #287                // Field net/minecraft/world/level/Level.f_46443_:Z
+     575: ifeq          706
+     578: aload         5
+     580: invokevirtual #868                // Method net/minecraft/world/entity/player/Player.m_7500_:()Z
+     583: ifeq          619
+     586: aload         4
+     588: instanceof    #1106               // class com/Polarice3/Goety/api/magic/IBreathingSpell
+     591: ifeq          616
+     594: aload         4
+     596: checkcast     #1106               // class com/Polarice3/Goety/api/magic/IBreathingSpell
+     599: astore        6
+     601: aload         6
+     603: aload_3
+     604: aload_1
+     605: aload_3
+     606: aload         4
+     608: invokestatic  #482                // Method com/Polarice3/Goety/utils/WandUtil.getStats:(Lnet/minecraft/world/entity/LivingEntity;Lcom/Polarice3/Goety/api/magic/ISpell;)Lcom/Polarice3/Goety/common/magic/SpellStat;
+     611: invokeinterface #1110,  4         // InterfaceMethod com/Polarice3/Goety/api/magic/IBreathingSpell.showWandBreath:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lcom/Polarice3/Goety/common/magic/SpellStat;)V
+     616: goto          706
+     619: aload         5
+     621: aload_0
+     622: aload_3
+     623: aload_1
+     624: invokevirtual #175                // Method SoulUse:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)I
+     627: invokestatic  #865                // Method com/Polarice3/Goety/utils/SEHelper.getSoulsAmount:(Lnet/minecraft/world/entity/player/Player;I)Z
+     630: ifeq          666
+     633: aload         4
+     635: instanceof    #1106               // class com/Polarice3/Goety/api/magic/IBreathingSpell
+     638: ifeq          663
+     641: aload         4
+     643: checkcast     #1106               // class com/Polarice3/Goety/api/magic/IBreathingSpell
+     646: astore        6
+     648: aload         6
+     650: aload_3
+     651: aload_1
+     652: aload_3
+     653: aload         4
+     655: invokestatic  #482                // Method com/Polarice3/Goety/utils/WandUtil.getStats:(Lnet/minecraft/world/entity/LivingEntity;Lcom/Polarice3/Goety/api/magic/ISpell;)Lcom/Polarice3/Goety/common/magic/SpellStat;
+     658: invokeinterface #1110,  4         // InterfaceMethod com/Polarice3/Goety/api/magic/IBreathingSpell.showWandBreath:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lcom/Polarice3/Goety/common/magic/SpellStat;)V
+     663: goto          706
+     666: aload_0
+     667: aload_2
+     668: aload_3
+     669: invokevirtual #1114               // Method failParticles:(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/LivingEntity;)V
+     672: goto          706
+     675: aload_0
+     676: aload_2
+     677: aload_3
+     678: invokevirtual #1114               // Method failParticles:(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/LivingEntity;)V
+     681: aload_2
+     682: aconst_null
+     683: aload_3
+     684: invokevirtual #811                // Method net/minecraft/world/entity/LivingEntity.m_20185_:()D
+     687: aload_3
+     688: invokevirtual #814                // Method net/minecraft/world/entity/LivingEntity.m_20186_:()D
+     691: aload_3
+     692: invokevirtual #817                // Method net/minecraft/world/entity/LivingEntity.m_20189_:()D
+     695: getstatic     #705                // Field net/minecraft/sounds/SoundEvents.f_11937_:Lnet/minecraft/sounds/SoundEvent;
+     698: getstatic     #1104               // Field net/minecraft/sounds/SoundSource.NEUTRAL:Lnet/minecraft/sounds/SoundSource;
+     701: fconst_1
+     702: fconst_1
+     703: invokevirtual #678                // Method net/minecraft/world/level/Level.m_6263_:(Lnet/minecraft/world/entity/player/Player;DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+     706: return
+
+  public void m_7373_(net.minecraft.world.item.ItemStack, net.minecraft.world.level.Level, java.util.List<net.minecraft.network.chat.Component>, net.minecraft.world.item.TooltipFlag);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: aload_2
+       3: aload_3
+       4: aload         4
+       6: invokespecial #1126               // Method net/minecraft/world/item/Item.m_7373_:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/level/Level;Ljava/util/List;Lnet/minecraft/world/item/TooltipFlag;)V
+       9: getstatic     #1132               // Field com/Polarice3/Goety/Goety.PROXY:Lcom/Polarice3/Goety/init/ModProxy;
+      12: invokeinterface #1135,  1         // InterfaceMethod com/Polarice3/Goety/init/ModProxy.getPlayer:()Lnet/minecraft/world/entity/player/Player;
+      17: astore        5
+      19: aload_1
+      20: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+      23: ifnull        195
+      26: aload_1
+      27: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+      30: ldc           #165                // String Soul Use
+      32: invokevirtual #197                // Method net/minecraft/nbt/CompoundTag.m_128451_:(Ljava/lang/String;)I
+      35: istore        6
+      37: aload_3
+      38: ldc_w         #1137               // String info.goety.wand.cost
+      41: iconst_1
+      42: anewarray     #641                // class java/lang/Object
+      45: dup
+      46: iconst_0
+      47: iload         6
+      49: invokestatic  #1140               // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+      52: aastore
+      53: invokestatic  #651                // InterfaceMethod net/minecraft/network/chat/Component.m_237110_:(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+      56: invokeinterface #104,  2          // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+      61: pop
+      62: aload_0
+      63: aload_1
+      64: invokevirtual #201                // Method getSpell:(Lnet/minecraft/world/item/ItemStack;)Lcom/Polarice3/Goety/api/magic/ISpell;
+      67: ifnull        192
+      70: aload_0
+      71: aload_0
+      72: aload_1
+      73: invokevirtual #201                // Method getSpell:(Lnet/minecraft/world/item/ItemStack;)Lcom/Polarice3/Goety/api/magic/ISpell;
+      76: aload         5
+      78: aload_1
+      79: invokevirtual #799                // Method isNotInstant:(Lcom/Polarice3/Goety/api/magic/ISpell;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)Z
+      82: ifeq          137
+      85: aload_0
+      86: aload_1
+      87: invokevirtual #201                // Method getSpell:(Lnet/minecraft/world/item/ItemStack;)Lcom/Polarice3/Goety/api/magic/ISpell;
+      90: instanceof    #837                // class com/Polarice3/Goety/api/magic/IChargingSpell
+      93: ifne          137
+      96: aload_1
+      97: invokevirtual #297                // Method net/minecraft/world/item/ItemStack.m_41783_:()Lnet/minecraft/nbt/CompoundTag;
+     100: ldc           #183                // String Cast Time
+     102: invokevirtual #197                // Method net/minecraft/nbt/CompoundTag.m_128451_:(Ljava/lang/String;)I
+     105: istore        7
+     107: aload_3
+     108: ldc_w         #1142               // String info.goety.wand.castTime
+     111: iconst_1
+     112: anewarray     #641                // class java/lang/Object
+     115: dup
+     116: iconst_0
+     117: iload         7
+     119: i2f
+     120: ldc_w         #1143               // float 20.0f
+     123: fdiv
+     124: invokestatic  #1148               // Method java/lang/Float.valueOf:(F)Ljava/lang/Float;
+     127: aastore
+     128: invokestatic  #651                // InterfaceMethod net/minecraft/network/chat/Component.m_237110_:(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+     131: invokeinterface #104,  2          // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+     136: pop
+     137: aload_0
+     138: aload_1
+     139: invokevirtual #201                // Method getSpell:(Lnet/minecraft/world/item/ItemStack;)Lcom/Polarice3/Goety/api/magic/ISpell;
+     142: aload         5
+     144: invokeinterface #1040,  2         // InterfaceMethod com/Polarice3/Goety/api/magic/ISpell.spellCooldown:(Lnet/minecraft/world/entity/LivingEntity;)I
+     149: ifle          192
+     152: aload_3
+     153: ldc_w         #1150               // String info.goety.wand.coolDown
+     156: iconst_1
+     157: anewarray     #641                // class java/lang/Object
+     160: dup
+     161: iconst_0
+     162: aload_0
+     163: aload_1
+     164: invokevirtual #201                // Method getSpell:(Lnet/minecraft/world/item/ItemStack;)Lcom/Polarice3/Goety/api/magic/ISpell;
+     167: aload         5
+     169: invokeinterface #1040,  2         // InterfaceMethod com/Polarice3/Goety/api/magic/ISpell.spellCooldown:(Lnet/minecraft/world/entity/LivingEntity;)I
+     174: i2f
+     175: ldc_w         #1143               // float 20.0f
+     178: fdiv
+     179: invokestatic  #1148               // Method java/lang/Float.valueOf:(F)Ljava/lang/Float;
+     182: aastore
+     183: invokestatic  #651                // InterfaceMethod net/minecraft/network/chat/Component.m_237110_:(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+     186: invokeinterface #104,  2          // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+     191: pop
+     192: goto          223
+     195: aload_3
+     196: ldc_w         #1137               // String info.goety.wand.cost
+     199: iconst_1
+     200: anewarray     #641                // class java/lang/Object
+     203: dup
+     204: iconst_0
+     205: aload_0
+     206: aload_1
+     207: invokevirtual #264                // Method SoulCost:(Lnet/minecraft/world/item/ItemStack;)I
+     210: invokestatic  #1140               // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     213: aastore
+     214: invokestatic  #651                // InterfaceMethod net/minecraft/network/chat/Component.m_237110_:(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+     217: invokeinterface #104,  2          // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+     222: pop
+     223: aload_1
+     224: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     227: invokevirtual #1153               // Method net/minecraft/world/item/ItemStack.m_41619_:()Z
+     230: ifne          303
+     233: aload_3
+     234: ldc_w         #1155               // String info.goety.wand.focus
+     237: iconst_1
+     238: anewarray     #641                // class java/lang/Object
+     241: dup
+     242: iconst_0
+     243: aload_1
+     244: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     247: invokevirtual #213                // Method net/minecraft/world/item/ItemStack.m_41720_:()Lnet/minecraft/world/item/Item;
+     250: invokevirtual #1158               // Method net/minecraft/world/item/Item.m_41466_:()Lnet/minecraft/network/chat/Component;
+     253: aastore
+     254: invokestatic  #651                // InterfaceMethod net/minecraft/network/chat/Component.m_237110_:(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+     257: invokeinterface #104,  2          // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+     262: pop
+     263: aload_1
+     264: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     267: invokevirtual #213                // Method net/minecraft/world/item/ItemStack.m_41720_:()Lnet/minecraft/world/item/Item;
+     270: instanceof    #526                // class com/Polarice3/Goety/common/items/magic/RecallFocus
+     273: ifeq          288
+     276: aload_1
+     277: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+     280: astore        6
+     282: aload         6
+     284: aload_3
+     285: invokestatic  #1162               // Method com/Polarice3/Goety/common/items/magic/RecallFocus.addRecallText:(Lnet/minecraft/world/item/ItemStack;Ljava/util/List;)V
+     288: aload_3
+     289: aload_0
+     290: aload_1
+     291: aload_3
+     292: invokedynamic #1171,  0           // InvokeDynamic #1:run:(Lcom/Polarice3/Goety/common/items/magic/DarkWand;Lnet/minecraft/world/item/ItemStack;Ljava/util/List;)Ljava/lang/Runnable;
+     297: invokestatic  #1177               // Method com/Polarice3/Goety/utils/ItemHelper.addOnShift:(Ljava/util/List;Ljava/lang/Runnable;)V
+     300: goto          367
+     303: aload_3
+     304: ldc_w         #1155               // String info.goety.wand.focus
+     307: iconst_1
+     308: anewarray     #641                // class java/lang/Object
+     311: dup
+     312: iconst_0
+     313: ldc_w         #1179               // String info.goety.wand.empty
+     316: invokestatic  #1183               // InterfaceMethod net/minecraft/network/chat/Component.m_237115_:(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+     319: aastore
+     320: invokestatic  #651                // InterfaceMethod net/minecraft/network/chat/Component.m_237110_:(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+     323: invokeinterface #104,  2          // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+     328: pop
+     329: invokestatic  #1189               // Method com/Polarice3/Goety/init/ModKeybindings.wandSlot:()Lnet/minecraft/client/KeyMapping;
+     332: ifnull        367
+     335: aload_3
+     336: ldc_w         #1191               // String info.goety.wand.open
+     339: iconst_1
+     340: anewarray     #641                // class java/lang/Object
+     343: dup
+     344: iconst_0
+     345: invokestatic  #1189               // Method com/Polarice3/Goety/init/ModKeybindings.wandSlot:()Lnet/minecraft/client/KeyMapping;
+     348: invokevirtual #1196               // Method net/minecraft/client/KeyMapping.m_90863_:()Lnet/minecraft/network/chat/Component;
+     351: aastore
+     352: invokestatic  #651                // InterfaceMethod net/minecraft/network/chat/Component.m_237110_:(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+     355: getstatic     #1202               // Field net/minecraft/ChatFormatting.BLUE:Lnet/minecraft/ChatFormatting;
+     358: invokevirtual #1208               // Method net/minecraft/network/chat/MutableComponent.m_130940_:(Lnet/minecraft/ChatFormatting;)Lnet/minecraft/network/chat/MutableComponent;
+     361: invokeinterface #104,  2          // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+     366: pop
+     367: invokestatic  #1211               // Method com/Polarice3/Goety/init/ModKeybindings.wandCircle:()Lnet/minecraft/client/KeyMapping;
+     370: ifnull        405
+     373: aload_3
+     374: ldc_w         #1213               // String info.goety.wand.switch
+     377: iconst_1
+     378: anewarray     #641                // class java/lang/Object
+     381: dup
+     382: iconst_0
+     383: invokestatic  #1211               // Method com/Polarice3/Goety/init/ModKeybindings.wandCircle:()Lnet/minecraft/client/KeyMapping;
+     386: invokevirtual #1196               // Method net/minecraft/client/KeyMapping.m_90863_:()Lnet/minecraft/network/chat/Component;
+     389: aastore
+     390: invokestatic  #651                // InterfaceMethod net/minecraft/network/chat/Component.m_237110_:(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+     393: getstatic     #1202               // Field net/minecraft/ChatFormatting.BLUE:Lnet/minecraft/ChatFormatting;
+     396: invokevirtual #1208               // Method net/minecraft/network/chat/MutableComponent.m_130940_:(Lnet/minecraft/ChatFormatting;)Lnet/minecraft/network/chat/MutableComponent;
+     399: invokeinterface #104,  2          // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+     404: pop
+     405: return
+
+  public void addInformationAfterShift(net.minecraft.world.item.Item, java.util.List<net.minecraft.network.chat.Component>);
+    Code:
+       0: aload_2
+       1: aload_1
+       2: invokevirtual #1224               // Method net/minecraft/world/item/Item.m_5524_:()Ljava/lang/String;
+       5: invokedynamic #1236,  0           // InvokeDynamic #2:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+      10: invokestatic  #1183               // InterfaceMethod net/minecraft/network/chat/Component.m_237115_:(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+      13: getstatic     #1239               // Field net/minecraft/ChatFormatting.GRAY:Lnet/minecraft/ChatFormatting;
+      16: invokevirtual #1208               // Method net/minecraft/network/chat/MutableComponent.m_130940_:(Lnet/minecraft/ChatFormatting;)Lnet/minecraft/network/chat/MutableComponent;
+      19: invokeinterface #104,  2          // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+      24: pop
+      25: return
+
+  public void initializeClient(java.util.function.Consumer<net.minecraftforge.client.extensions.common.IClientItemExtensions>);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokespecial #1245               // Method net/minecraft/world/item/Item.initializeClient:(Ljava/util/function/Consumer;)V
+       5: aload_1
+       6: new           #9                  // class com/Polarice3/Goety/common/items/magic/DarkWand$DarkWandClient
+       9: dup
+      10: invokespecial #1246               // Method com/Polarice3/Goety/common/items/magic/DarkWand$DarkWandClient."<init>":()V
+      13: invokeinterface #1250,  2         // InterfaceMethod java/util/function/Consumer.accept:(Ljava/lang/Object;)V
+      18: return
+
+  private void lambda$appendHoverText$1(net.minecraft.world.item.ItemStack, java.util.List);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokestatic  #209                // InterfaceMethod com/Polarice3/Goety/api/items/magic/IWand.getFocus:(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/item/ItemStack;
+       5: invokevirtual #213                // Method net/minecraft/world/item/ItemStack.m_41720_:()Lnet/minecraft/world/item/Item;
+       8: aload_2
+       9: invokevirtual #1255               // Method addInformationAfterShift:(Lnet/minecraft/world/item/Item;Ljava/util/List;)V
+      12: return
+
+  private void lambda$new$0(com.Polarice3.Goety.api.magic.SpellType);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #100                // Field spellType:Lcom/Polarice3/Goety/api/magic/SpellType;
+       5: return
+}

@@ -95,5 +95,12 @@
   "message.tinkersnewlife.blood.mode_chuanxue": "Chuan Xue",
   "message.tinkersnewlife.blood.mode_bailian": "Bai Lian",
   "message.tinkersnewlife.blood.mode_supernova": "Supernova",
-  "message.tinkersnewlife.blood.switch": "§cBlood Manipulation - %s"
+  "message.tinkersnewlife.blood.switch": "§cBlood Manipulation - %s",
+  "material.tinkersnewlife.cursed_metal": "Cursed Metal",
+  "fluid_type.tinkersnewlife.molten_cursed_metal": "Molten Cursed Metal",
+  "block.tinkersnewlife.molten_cursed_metal_block": "Molten Cursed Metal",
+  "item.tinkersnewlife.molten_cursed_metal_bucket": "Molten Cursed Metal Bucket",
+  "modifier.tinkersnewlife.corruption": "§5Corruption",
+  "modifier.tinkersnewlife.corruption.flavor": "§7Souls as fuel, flesh as bait.",
+  "modifier.tinkersnewlife.corruption.description": "§7When dealing damage, spend 0.5% of your max soul energy (up to 100 per hit) to amplify the attack: every 5 souls add +0.2 attack damage and +0.05 blocks of knockback (knockback capped at 3 blocks). No effect when souls are insufficient."
 }

@@ -1,0 +1,12 @@
+{
+  "type": "tconstruct:melting",
+  "ingredient": {
+    "item": "goety:cursed_ingot"
+  },
+  "result": {
+    "fluid": "tinkersnewlife:molten_cursed_metal_still",
+    "amount": 144
+  },
+  "temperature": 900,
+  "time": 55
+}
