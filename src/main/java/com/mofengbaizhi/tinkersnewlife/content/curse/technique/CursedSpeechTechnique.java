@@ -240,6 +240,12 @@ public final class CursedSpeechTechnique extends BaseTechnique {
         INSTANCE.release(player, target, chant);
         // 结算反噬
         INSTANCE.applyBacklash(player, target, chant);
+        // 以玩家口吻向公屏广播完整咒文（模仿玩家发言：名字 + 「完整咒文」）
+        String spoken = "「" + label + "」";
+        Component spokenMsg = Component.translatable("chat.type.text",
+                player.getDisplayName(),
+                Component.literal(spoken).withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE));
+        level.getServer().getPlayerList().broadcastSystemMessage(spokenMsg, false);
     }
 
     /** 视线目标：范围内第一个活体（排除自身与友方傀儡等由目标选择决定） */
