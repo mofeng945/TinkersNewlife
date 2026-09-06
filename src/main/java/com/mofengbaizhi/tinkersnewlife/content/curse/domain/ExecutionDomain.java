@@ -107,6 +107,10 @@ public class ExecutionDomain extends BaseDomain {
         player.displayClientMessage(Component.translatable(
                 "message.tinkersnewlife.fuzhu_cisi.open",
                 t != null ? t.getDisplayName() : Component.literal("?")), true);
+        TinkersNewlife.LOGGER.info("[伏诛赐死] 开庭 owner={} 被告={}({}) 半径={}",
+                player.getName().getString(),
+                t != null ? t.getType().getDescriptionId() : "?",
+                t != null ? t.getUUID() : targetId, radius);
     }
 
     @Override
@@ -165,6 +169,8 @@ public class ExecutionDomain extends BaseDomain {
     private void doVerdict(ServerPlayer owner) {
         ServerLevel level = owner.serverLevel();
         Entity target = level.getEntity(targetId);
+        TinkersNewlife.LOGGER.info("[伏诛赐死] 裁决 tick={} 被告实体={}",
+                level.getGameTime(), target == null ? "null(已消失)" : target.getType().getDescriptionId());
         if (!(target instanceof LivingEntity living) || !living.isAlive()) return;
 
         boolean guilty = true;
