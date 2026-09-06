@@ -26,7 +26,7 @@ import net.minecraft.world.entity.player.Player;
  * 都视为精准命中第七划 → 对本体目标结算一次暴击（伤害 × 暴击倍率），弱点随即消散
  * （一击即碎）。打不中弱点球就永远没有暴击——真正的"精准"。
  * <p>
- * 暴击倍率 = 1.4 + 咒力输出×0.1 + 咒力亲和×0.008（满配约 3.2 倍）。
+ * 暴击倍率 = 1.3 + 咒力输出×0.08 + 咒力亲和×0.004（满配约 2.5 倍）。
  */
 public final class TenDivideTechnique extends BaseTechnique {
 
@@ -41,11 +41,11 @@ public final class TenDivideTechnique extends BaseTechnique {
         return WeakPointEntity.find(owner, target) != null;
     }
 
-    /** 暴击倍率 = 1.4 + 输出×0.1 + 亲和×0.008 */
+    /** 暴击倍率 = 1.3 + 输出×0.08 + 亲和×0.004（满配约 2.5 倍） */
     public static double critMultiplier(ServerPlayer player) {
         int output = CursePowerHelper.getCurseOutputLevel(player);
         int affinity = CursePowerHelper.getCurseAffinity(player);
-        return 1.4 + output * 0.1 + affinity * 0.008;
+        return 1.3 + output * 0.08 + affinity * 0.004;
     }
 
     /**
