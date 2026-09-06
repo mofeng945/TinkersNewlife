@@ -58,9 +58,9 @@ public final class CursedSpeechTechnique extends BaseTechnique {
     public static final CursedSpeechTechnique INSTANCE = new CursedSpeechTechnique();
 
     /** 吟唱读条基础时长（tick） */
-    private static final int BASE_CHANT_TICKS = 30;
+    private static final int BASE_CHANT_TICKS = 15;
     /** 每级稀有度附加读条 tick */
-    private static final int CHANT_PER_RARITY = 8;
+    private static final int CHANT_PER_RARITY = 4;
     /** 索敌距离 */
     private static final double REACH = 16.0;
 
