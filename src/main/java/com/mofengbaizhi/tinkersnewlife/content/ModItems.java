@@ -274,4 +274,9 @@ public class ModItems {
     public static final RegistryObject<Item> MOMO_SPAWN_EGG =
             ITEMS.register("momo_spawn_egg", () -> new net.minecraftforge.common.ForgeSpawnEggItem(
                     ModEntities.MOMO_MERCHANT, 0x2F2A4A, 0xC9A6D9, new Item.Properties()));
+
+    /** 古代咒术残卷：战利品箱随机开出，右击学习咒言词条（不消耗） */
+    public static final RegistryObject<Item> ANCIENT_CURSED_SCROLL =
+            ITEMS.register("ancient_cursed_scroll",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.AncientCursedScrollItem());
 }

@@ -1,0 +1,10 @@
+{
+  "type": "tinkersnewlife:ancient_scroll",
+  "conditions": [
+    {
+      "condition": "minecraft:random_chance",
+      "chance": 0.1
+    }
+  ],
+  "chance": 1.0
+}

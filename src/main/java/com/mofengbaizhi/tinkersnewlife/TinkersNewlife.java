@@ -175,6 +175,7 @@ public class TinkersNewlife {
         TechniqueHandler.register(com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuWeiTechnique.INSTANCE);
         TechniqueHandler.register(com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedEnergyReleaseTechnique.INSTANCE);
         TechniqueHandler.register(com.mofengbaizhi.tinkersnewlife.content.curse.technique.ConstructTechnique.INSTANCE);
+        TechniqueHandler.register(com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpeechTechnique.INSTANCE);
 
         // 注册网络包
         registerPacket(PacketUseSkill.class, PacketUseSkill::toBytes, PacketUseSkill::new, PacketUseSkill::handle);
@@ -238,6 +239,10 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketConstructSelect::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketConstructSelect::new,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketConstructSelect::handle);
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketCursedSpeechSelect.class,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketCursedSpeechSelect::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketCursedSpeechSelect::new,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketCursedSpeechSelect::handle);
         // 服务端→客户端
         registerClientPacket(PacketSyncCurse.class, PacketSyncCurse::toBytes, PacketSyncCurse::new, PacketSyncCurse::handle);
         registerClientPacket(PacketOpenShikigamiScreen.class, PacketOpenShikigamiScreen::toBytes, PacketOpenShikigamiScreen::new, PacketOpenShikigamiScreen::handle);
@@ -286,6 +291,14 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketSyncForge::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketSyncForge::new,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketSyncForge::handle);
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenCursedSpeechScreen.class,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenCursedSpeechScreen::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenCursedSpeechScreen::new,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenCursedSpeechScreen::handle);
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketSyncCursedChant.class,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketSyncCursedChant::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketSyncCursedChant::new,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketSyncCursedChant::handle);
 
         // 实体属性（式神等生物实体）
         modEventBus.addListener(TinkersNewlife::onRegisterEntityAttributes);
@@ -374,6 +387,9 @@ public class TinkersNewlife {
                             .tickBlast((net.minecraft.server.level.ServerLevel) p.level(), p);
                     // 构筑术式（每 tick 驱动：顺转弹药凝结 / 反转临时物到期清理）
                     com.mofengbaizhi.tinkersnewlife.content.curse.technique.ConstructTechnique.tickServer(p);
+                    // 咒言术（每 tick 驱动：咏唱读条/莎布增殖/犹格经验）
+                    com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpeechTechnique
+                            .tickServer((net.minecraft.server.level.ServerLevel) p.level(), p);
                     // 帕秋莉手册解锁：每 20 tick 扫描核心特性，获得术式/领域即解锁对应章节
                     if (event.getServer().getTickCount() % 20 == 0) {
                         com.mofengbaizhi.tinkersnewlife.content.curse.TechniqueAdvancementHandler.scanAndUnlock(p);

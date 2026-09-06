@@ -32,5 +32,6 @@
   "tinkersnewlife:lightning_manipulation": "tinkersnewlife:gui/modifiers/lightning_manipulation",
     "tinkersnewlife:sky_manipulation": "tinkersnewlife:gui/modifiers/sky_manipulation",
     "tinkersnewlife:cursed_energy_release": "tinkersnewlife:gui/modifiers/cursed_energy_release",
-    "tinkersnewlife:construct": "tinkersnewlife:gui/modifiers/construct"
+    "tinkersnewlife:construct": "tinkersnewlife:gui/modifiers/construct",
+    "tinkersnewlife:cursed_speech": "tinkersnewlife:gui/modifiers/cursed_speech"
 }

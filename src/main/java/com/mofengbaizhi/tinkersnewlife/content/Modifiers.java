@@ -208,4 +208,9 @@ public class Modifiers {
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.ConstructTrait> CONSTRUCT =
         MODIFIERS.register("construct",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.ConstructTrait::new);
+
+    /** 咒言术（术式特性，占用术式槽；顺转咏唱咒言/反转编辑咒言） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.CursedSpeechTrait> CURSED_SPEECH =
+        MODIFIERS.register("cursed_speech",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.CursedSpeechTrait::new);
 }
