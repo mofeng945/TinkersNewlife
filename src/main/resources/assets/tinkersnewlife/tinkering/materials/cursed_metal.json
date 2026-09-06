@@ -1,0 +1,57 @@
+{
+  "color": "FF436A84",
+  "fallbacks": [
+    "metal",
+    "rock"
+  ],
+  "generator": {
+    "supported_stats": [
+      "tconstruct:head",
+      "tconstruct:handle",
+      "tconstruct:binding",
+      "tconstruct:repair_kit",
+      "tconstruct:limb",
+      "tconstruct:grip"
+    ],
+    "transformer": {
+      "type": "tconstruct:grey_to_sprite",
+      "palette": [
+        {
+          "color": "FF0B1923",
+          "grey": 0
+        },
+        {
+          "color": "FF12222E",
+          "grey": 63,
+          "path": "tinkersnewlife:generator/cursed_metal_border"
+        },
+        {
+          "color": "FF1A3140",
+          "grey": 102,
+          "path": "tinkersnewlife:generator/cursed_metal_border"
+        },
+        {
+          "color": "FF295469",
+          "grey": 140,
+          "path": "tinkersnewlife:generator/cursed_metal_body"
+        },
+        {
+          "color": "FF365970",
+          "grey": 178,
+          "path": "tinkersnewlife:generator/cursed_metal_body"
+        },
+        {
+          "color": "FF436A84",
+          "grey": 216,
+          "path": "tinkersnewlife:generator/cursed_metal_highlight"
+        },
+        {
+          "color": "FF78A0B9",
+          "grey": 255,
+          "path": "tinkersnewlife:generator/cursed_metal_highlight"
+        }
+      ]
+    }
+  },
+  "luminosity": 6
+}
