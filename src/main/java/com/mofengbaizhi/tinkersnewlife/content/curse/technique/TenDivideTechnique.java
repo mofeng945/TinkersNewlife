@@ -27,13 +27,15 @@ import java.util.concurrent.ConcurrentHashMap;
  * <ul>
  *   <li>目标尚无弱点 → 将其"十等分"，在 7:3 分界（第七划，目标身高的 70% 处）
  *       刻下一个弱点（金色粒子标记，持续 20 秒）</li>
- *   <li>目标已有你的弱点 → 立即对该弱点发动一次<b>精准斩击</b>：
+ *   <li>目标已有你的弱点 → 立即对该弱点发动一次<b>精准斩击</b>（主动引爆，必中弱点）：
  *       伤害 = 共享咒术基底 × 暴击倍率，并移除弱点</li>
  * </ul>
- * 带弱点期间，该玩家对目标造成的<b>任意伤害</b>都会被视为击中弱点而触发一次
- * "暴击"（伤害 × 暴击倍率，倍率随咒力亲和与咒力输出提升），随后弱点消失。
+ * 带弱点期间，该玩家对目标造成的<b>每次伤害</b>都会尝试命中弱点（命中率随数值成长，
+ * 非必暴）：命中则这次伤害变成"暴击"（伤害 × 暴击倍率）并消耗弱点；
+ * 打偏则弱点保留，可继续尝试直到 20 秒到期。
  * <p>
- * 暴击倍率 = 1.4 + 咒力输出×0.1 + 咒力亲和×0.008（满配约 3.2 倍）。
+ * 暴击倍率 = 1.4 + 咒力输出×0.1 + 咒力亲和×0.008（满配约 3.2 倍）；
+ * 弱点命中率 = 30% + 输出×2% + 亲和×0.2%（上限 85%）。
  */
 public final class TenDivideTechnique extends BaseTechnique {
 
@@ -67,6 +69,17 @@ public final class TenDivideTechnique extends BaseTechnique {
         int output = CursePowerHelper.getCurseOutputLevel(player);
         int affinity = CursePowerHelper.getCurseAffinity(player);
         return 1.4 + output * 0.1 + affinity * 0.008;
+    }
+
+    /**
+     * 弱点命中率 = 30% + 输出×2% + 亲和×0.2%（最高 85%）。
+     * 标记后每次对该目标的伤害都会尝试命中弱点：命中才暴击并消耗弱点，
+     * 打偏则弱点保留（可继续尝试，直到 20 秒到期）。
+     */
+    public static double weakPointHitRate(ServerPlayer player) {
+        int output = CursePowerHelper.getCurseOutputLevel(player);
+        int affinity = CursePowerHelper.getCurseAffinity(player);
+        return Math.min(0.85, 0.30 + output * 0.02 + affinity * 0.002);
     }
 
     /** 登出/死亡清理：移除该玩家所有弱点标记 */
@@ -120,7 +133,7 @@ public final class TenDivideTechnique extends BaseTechnique {
     @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
     public static class TenDivideEvents {
 
-        /** 带弱点目标受到该玩家造成的伤害 → 暴击一次并移除弱点 */
+        /** 带弱点目标受到该玩家造成的伤害 → 尝试命中弱点（概率暴击并消耗弱点，打偏则保留） */
         @SubscribeEvent
         public static void onDamage(LivingDamageEvent event) {
             if (event.getEntity().level().isClientSide) return;
@@ -135,6 +148,11 @@ public final class TenDivideTechnique extends BaseTechnique {
             if (until <= attacker.serverLevel().getGameTime()) {
                 marks.remove(victim.getUUID());
                 return;
+            }
+            // 命中弱点判定（非必暴）
+            double rate = weakPointHitRate(attacker);
+            if (attacker.getRandom().nextDouble() >= rate) {
+                return; // 打偏：弱点保留，可继续尝试
             }
             marks.remove(victim.getUUID());
             double mul = critMultiplier(attacker);
