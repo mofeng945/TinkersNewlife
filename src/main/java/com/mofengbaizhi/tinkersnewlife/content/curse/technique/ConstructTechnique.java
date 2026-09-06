@@ -327,6 +327,11 @@ public final class ConstructTechnique extends BaseTechnique {
             tickTaczAmmo(player, weapon);
             return;
         }
+        // sakuratinker（樱之匠魂）枪械：补给「工匠子弹」到背包
+        if (isSakuraGun(weapon.getItem())) {
+            tickSakuraAmmo(player);
+            return;
+        }
         Item ammoItem = resolveAmmoItem(player, weapon);
         if (ammoItem == null) return;
         // 统计背包中现有同类弹药（主背包 36 格 + 副手）
@@ -354,6 +359,78 @@ public final class ConstructTechnique extends BaseTechnique {
         }
         ItemStack add = new ItemStack(ammoItem, need);
         giveToPlayer(player, add, need);
+    }
+
+    /**
+     * sakuratinker（樱之匠魂）枪械补给：识别 {@code RevolverItem / LaserGun / ModifiableGunItem}，
+     * 向背包凝结「工匠子弹」（sakuratinker:tinker_bullet，匠魂多部件子弹）。
+     * 纯类名匹配（不引用该模组类），模组未安装时自动不生效。
+     */
+    private static final String SAKURA_AMMO_ID = "sakuratinker:tinker_bullet";
+
+    private static boolean isSakuraGun(Item item) {
+        String n = item.getClass().getName();
+        if (!n.startsWith("com.ssakura49.sakuratinker_tools")) return false;
+        return n.contains("Revolver") || n.contains("LaserGun") || n.contains("ModifiableGun");
+    }
+
+    private void tickSakuraAmmo(ServerPlayer player) {
+        Item ammo = net.minecraftforge.registries.ForgeRegistries.ITEMS
+                .getValue(new ResourceLocation(SAKURA_AMMO_ID));
+        if (ammo == null) return;
+        int have = 0;
+        for (ItemStack stack : player.getInventory().items) {
+            if (!stack.isEmpty() && stack.is(ammo)) have += stack.getCount();
+        }
+        ItemStack off = player.getOffhandItem();
+        if (!off.isEmpty() && off.is(ammo)) have += off.getCount();
+        if (have >= AMMO_TARGET) return;
+        int need = Math.min(AMMO_TARGET - have, 8); // 单次少量凝结，避免一次建造过多工具
+        int unitCost = ammoUnitCost(player);
+        long totalCost = (long) need * unitCost * 2L; // 多部件子弹造价更高
+        if (totalCost > Integer.MAX_VALUE) return;
+        if (!CursePowerHelper.isCurseInfinite(player)
+                && CursePowerHelper.payCurseWithSoulFallback(player, totalCost) < 0) {
+            turnOffNoCurse(player);
+            return;
+        }
+        for (int i = 0; i < need; i++) {
+            ItemStack bullet = buildTinkerBullet(ammo);
+            if (bullet.isEmpty()) return;
+            giveToPlayer(player, bullet, 1);
+        }
+    }
+
+    /** 构建一枚有效「工匠子弹」：随机 tier1 材料 ×2（small_blade ×2 部件）并重建数据 */
+    private static ItemStack buildTinkerBullet(Item ammo) {
+        ItemStack stack = new ItemStack(ammo);
+        try {
+            slimeknights.tconstruct.library.tools.nbt.ToolStack tool =
+                    slimeknights.tconstruct.library.tools.nbt.ToolStack.from(stack);
+            if (tool != null) {
+                java.util.List<slimeknights.tconstruct.library.materials.definition.IMaterial> mats =
+                        new java.util.ArrayList<>();
+                for (slimeknights.tconstruct.library.materials.definition.IMaterial m :
+                        slimeknights.tconstruct.library.materials.MaterialRegistry.getInstance().getAllMaterials()) {
+                    if (m.isHidden() || m == slimeknights.tconstruct.library.materials.definition.IMaterial.UNKNOWN) {
+                        continue;
+                    }
+                    if (m.getTier() <= 1) {
+                        mats.add(m);
+                        if (mats.size() >= 2) break;
+                    }
+                }
+                if (mats.size() >= 2) {
+                    tool.setMaterials(slimeknights.tconstruct.library.tools.nbt.MaterialNBT.of(
+                            mats.get(0), mats.get(1)));
+                    tool.rebuildStats();
+                    tool.updateStack(stack);
+                }
+            }
+        } catch (Throwable ignored) {
+            // 构建失败回退裸子弹（由游戏/玩家自行判定）
+        }
+        return stack;
     }
 
     /** 单发/单支弹药单价（TACZ 子弹略贵） */
@@ -438,7 +515,8 @@ public final class ConstructTechnique extends BaseTechnique {
         if (stack.isEmpty()) return false;
         Item item = stack.getItem();
         if (item instanceof ProjectileWeaponItem) return true;
-        return isTaczGun(item);
+        if (isTaczGun(item)) return true;
+        return isSakuraGun(item);
     }
 
     /**
