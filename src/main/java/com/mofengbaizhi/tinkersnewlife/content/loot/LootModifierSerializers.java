@@ -20,7 +20,4 @@ public class LootModifierSerializers {
 
     public static final RegistryObject<Codec<? extends IGlobalLootModifier>> CURSE_AFFINITY =
             LOOT_MODIFIERS.register("curse_affinity", () -> CurseAffinityLootModifier.CODEC.get());
-
-    public static final RegistryObject<Codec<? extends IGlobalLootModifier>> ANCIENT_SCROLL =
-            LOOT_MODIFIERS.register("ancient_scroll", () -> AncientScrollModifier.CODEC.get());
 }
