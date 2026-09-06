@@ -166,6 +166,8 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.content.curse.domain.ZiBiYuanDunGuoDomain::tryCreate);
         DomainRegistry.registerDomain(Modifiers.DANG_YUN_PING_XIAN.getId(),
                 com.mofengbaizhi.tinkersnewlife.content.curse.domain.DangYunPingXianDomain::tryCreate);
+        DomainRegistry.registerDomain(Modifiers.SHI_BAO_YUE_GONG_DIAN.getId(),
+                com.mofengbaizhi.tinkersnewlife.content.curse.domain.ShiBaoYueGongDianDomain::tryCreate);
 
         // 注册术式：解、捌、灶·开（后续术式继承 BaseTechnique 后在此登记）
         TechniqueHandler.register(KaiTechnique.INSTANCE);

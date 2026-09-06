@@ -1,0 +1,17 @@
+{
+    "name":  "时胞月宫殿",
+    "category":  "tinkersnewlife:domains",
+    "icon": "tinkersnewlife:textures/gui/modifiers/shi_bao_yue_gong_dian.png",
+    "sortnum":  11,
+    "advancement": "tinkersnewlife:domains/shi_bao_yue_gong_dian",
+    "pages":  [
+        {
+            "type":  "patchouli:text",
+            "text":  "$(bold)时胞月宫殿$()：月华凝结为时胞，一宫之内，万念俱停。$(br2)$(bold)展开$()：通用领域展开键，以自身为中心张开领域（困锁同其它领域，每秒消耗 半径×55 咒力）。领域内除施术者外$(red)所有目标被命中「投射咒法未成功」式罚站定身$()——无法移动/攻击/使用物品/转视角（每 5 tick 刷新，持续至领域结束）。"
+        },
+        {
+            "type":  "patchouli:text",
+            "text":  "$(bold)豁免$()：$(bold)天与咒缚·暴君$()体质的玩家（失去咒力的纯肉体强化者）$(red)免疫本领域定身$()——无咒之躯不受月华束缚。$(br2)$(bold)抵挡$()：通用抵抗生效（目标首次进入先抵抗一会）；新阴流三技巧可抵挡本领域定身（与胎藏遍野一致——仅伏诛赐死不可挡）。领域关闭时领域内定身立即解除。"
+        }
+    ]
+}

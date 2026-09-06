@@ -273,4 +273,9 @@ public class Modifiers {
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.DangYunPingXianTrait> DANG_YUN_PING_XIAN =
         MODIFIERS.register("dang_yun_ping_xian",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.DangYunPingXianTrait::new);
+
+    /** 时胞月宫殿（领域特性，占用领域槽；全员罚站定身，天与暴君豁免） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.ShiBaoYueGongDianTrait> SHI_BAO_YUE_GONG_DIAN =
+        MODIFIERS.register("shi_bao_yue_gong_dian",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.ShiBaoYueGongDianTrait::new);
 }
