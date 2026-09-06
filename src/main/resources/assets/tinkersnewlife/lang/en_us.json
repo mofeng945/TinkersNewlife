@@ -35,6 +35,7 @@
   "word.tinkersnewlife.leech.desc": "Core: Drain him - damage the target and heal half of it back",
   "word.tinkersnewlife.mercy": "I Beg of Your Mercy",
   "word.tinkersnewlife.mercy.desc": "Thanks: moderate backlash reduction",
+  "recipe.tconstruct.extract_modifier.skills": "Extract Skill",
   "stat.tconstruct.slot.display.skill": "Skill",
   "stat.tconstruct.slot.prefix.skill": "Skill slot: ",
   "stat.tconstruct.slot.display.technique": "Technique",

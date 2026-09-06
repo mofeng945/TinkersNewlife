@@ -446,6 +446,7 @@
   "message.tinkersnewlife.technique.no_blood": "§c血量不足，无法发动赤血操术·穿血",
   "recipe.tconstruct.extract_modifier.techniques": "剥离术式",
   "recipe.tconstruct.extract_modifier.domains": "剥离领域",
+  "recipe.tconstruct.extract_modifier.skills": "剥离技巧",
   "message.tinkersnewlife.burnout.entered": "§c术式熔断！%s 秒内无法展开领域或使用术式",
   "message.tinkersnewlife.burnout.active": "§c术式熔断中，剩余 %s 秒",
   "message.tinkersnewlife.soul_fallback": "§d咒力耗尽，开始消耗灵魂能量！（1 咒力 = 3 灵魂能量）",
