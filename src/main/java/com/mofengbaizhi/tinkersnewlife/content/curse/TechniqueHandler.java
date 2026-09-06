@@ -216,4 +216,34 @@ public final class TechniqueHandler {
             com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpeechTechnique.cleanup(sp);
         }
     }
+
+    /**
+     * 玩家"永久进度"持久数据键：死亡重生/跨维度克隆时 Forge 不会自动携带 persistentData，
+     * 必须手动拷给新实体，否则复活后调伏的式神、学会的咒言等全部回退默认。
+     */
+    private static final java.util.Set<String> PROGRESS_KEYS = java.util.Set.of(
+            "tinkersnewlife.tamed_shikigami",   // 十影术式：已调伏式神位掩码
+            "tnl_cursed_learned",               // 咒言术：已学词条
+            "tnl_cursed_chant",                 // 咒言术：当前六段组合
+            "tinkersnewlife.wuwei_records",     // 无为转变：击杀记录形态列表
+            "tinkersnewlife.wuwei_selected");   // 无为转变：选中形态
+
+    /** 死亡重生（Clone）：把"永久进度"键从旧实体拷给新实体（幂等，传送克隆也安全） */
+    @SubscribeEvent
+    public static void onPlayerClone(PlayerEvent.Clone event) {
+        if (!(event.getEntity() instanceof ServerPlayer newPlayer)) return;
+        net.minecraft.nbt.CompoundTag src = event.getOriginal().getPersistentData();
+        net.minecraft.nbt.CompoundTag dst = newPlayer.getPersistentData();
+        boolean copied = false;
+        for (String key : PROGRESS_KEYS) {
+            if (src.contains(key)) {
+                dst.put(key, src.get(key).copy());
+                copied = true;
+            }
+        }
+        if (copied) {
+            TinkersNewlife.LOGGER.info("[术式] 玩家 {} 重生，已保留式神调伏/咒言/记录进度",
+                    newPlayer.getName().getString());
+        }
+    }
 }
