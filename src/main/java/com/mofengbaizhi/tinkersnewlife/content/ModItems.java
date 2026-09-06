@@ -199,14 +199,12 @@ public class ModItems {
                 ));
 
     /** 模块化魔杖（折中方案：安装了诡厄巫法时注册为"真法杖"形态 GoetyStaffItem——实现 IWand、
-     *  原生施法+冷却 HUD；未安装时注册普通 ModularStaffItem。物品 id/数据/模型完全一致，无硬依赖） */
+     *  原生施法+冷却 HUD；未安装时注册普通 ModularStaffItem。物品 id/数据/模型完全一致，无硬依赖）。
+     *  ⭐ 必须经 GoetyStaffBridge 反射创建：`new GoetyStaffItem` 的字节码引用会让 JVM 在类加载
+     *  验证阶段解析 implements IWand，无诡厄巫法时构造即 NoClassDefFoundError。 */
         public static final RegistryObject<ModularStaffItem> MODULAR_STAFF =
-                ITEMS.register("modular_staff", () -> {
-                    if (net.minecraftforge.fml.ModList.get().isLoaded("goety")) {
-                        return new GoetyStaffItem(new Item.Properties().stacksTo(1));
-                    }
-                    return new ModularStaffItem(new Item.Properties().stacksTo(1));
-                });
+                ITEMS.register("modular_staff", () ->
+                        com.mofengbaizhi.tinkersnewlife.util.GoetyStaffBridge.createStaff(new Item.Properties().stacksTo(1)));
 
         public static final RegistryObject<FlyingSwordItem> FLYING_SWORD =
         ITEMS.register("flying_sword",

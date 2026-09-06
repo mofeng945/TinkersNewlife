@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.content.goety;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.item.ModularStaffItem;
 import com.mofengbaizhi.tinkersnewlife.network.curse.PacketStaffGoetySync;
+import com.mofengbaizhi.tinkersnewlife.util.GoetyStaffBridge;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -224,7 +225,7 @@ public final class ModularStaffGoety {
         if (!isGoetyLoaded()) return;
         ItemStack staff = heldStaff(player);
         if (staff == null) return;
-        com.mofengbaizhi.tinkersnewlife.content.item.GoetyStaffItem.mirrorEquippedFocus(player, staff);
+        GoetyStaffBridge.mirrorEquippedFocus(player, staff);
     }
 
     // ================= 动作 =================
@@ -394,11 +395,10 @@ public final class ModularStaffGoety {
     private static void refreshSpellAttrsTick(ServerPlayer sp) {
         if (!isGoetyLoaded()) return;
         ItemStack staff = heldStaff(sp);
-        if (staff != null && !staff.isEmpty()
-                && staff.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.GoetyStaffItem) {
-            com.mofengbaizhi.tinkersnewlife.content.item.GoetyStaffItem.refreshSpellAttrs(sp, staff);
+        if (staff != null && !staff.isEmpty() && GoetyStaffBridge.isGoetyStaffItem(staff)) {
+            GoetyStaffBridge.refreshSpellAttrs(sp, staff);
         } else {
-            com.mofengbaizhi.tinkersnewlife.content.item.GoetyStaffItem.clearSpellAttrs(sp);
+            GoetyStaffBridge.clearSpellAttrs(sp);
         }
     }
 
@@ -417,7 +417,7 @@ public final class ModularStaffGoety {
     public static void onPlayerClone(net.minecraftforge.event.entity.player.PlayerEvent.Clone event) {
         if (event.getEntity() instanceof ServerPlayer sp) {
             if (isGoetyLoaded()) {
-                com.mofengbaizhi.tinkersnewlife.content.item.GoetyStaffItem.clearSpellAttrs(sp);
+                GoetyStaffBridge.clearSpellAttrs(sp);
                 setAutoCast(sp, false);
             }
         }
@@ -437,8 +437,7 @@ public final class ModularStaffGoety {
         if (getMode(staff) == MODE_GOETY) {
             // 真法杖形态（GoetyStaffItem implements IWand）：不取消，交给原版 use() →
             // GoetyStaffItem.use → 诡厄原生施法（长吟唱蓄力/冷却/灵魂全走原生管线，双端一致）
-            if (isGoetyLoaded()
-                    && staff.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.GoetyStaffItem) {
+            if (isGoetyLoaded() && GoetyStaffBridge.isGoetyStaffItem(staff)) {
                 return;
             }
             // 旧版/异常环境兜底：换手拿真法杖施法（仅普通形态魔杖且处于巫法模式时可能走到）
