@@ -4,7 +4,6 @@ import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.entity.FlyingSwordEntity;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
@@ -79,12 +78,6 @@ public class FlyingSwordItem extends ModifiableItem implements ICurioItem {
                 int lastFire = fireData.getInt(KEY_LAST_FIRE);
                 int nowTick = (int) level.getGameTime();
                 if (nowTick - lastFire < FIRE_COOLDOWN_TICKS) {
-                    float remainSec = (FIRE_COOLDOWN_TICKS - (nowTick - lastFire)) / 20.0F;
-                    if (player instanceof ServerPlayer sp) {
-                        sp.displayClientMessage(net.minecraft.network.chat.Component.translatable(
-                                "message.tinkersnewlife.flying_sword.cd",
-                                String.format("%.1f", remainSec)), true);
-                    }
                     return InteractionResultHolder.fail(stack);
                 }
                 fireData.putInt(KEY_LAST_FIRE, nowTick);
