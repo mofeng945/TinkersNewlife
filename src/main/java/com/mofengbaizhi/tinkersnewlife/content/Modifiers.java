@@ -213,4 +213,9 @@ public class Modifiers {
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.CursedSpeechTrait> CURSED_SPEECH =
         MODIFIERS.register("cursed_speech",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.CursedSpeechTrait::new);
+
+    /** 反重力机构（术式特性，占用术式槽；顺转漂浮 AOE/反转压力场） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.AntiGravityTrait> ANTI_GRAVITY =
+        MODIFIERS.register("anti_gravity",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.AntiGravityTrait::new);
 }

@@ -53,6 +53,7 @@ public final class TechniqueAdvancementHandler {
         put(Modifiers.CURSED_ENERGY_RELEASE.getId(), "techniques/cursed_energy_release");
         put(Modifiers.CONSTRUCT.getId(), "techniques/construct");
         put(Modifiers.CURSED_SPEECH.getId(), "techniques/cursed_speech");
+        put(Modifiers.ANTI_GRAVITY.getId(), "techniques/anti_gravity");
         // 领域
         put(Modifiers.ZUOSHA_BOTU.getId(), "domains/zuosha_botu");
         put(Modifiers.WULIANG_KONGCHU.getId(), "domains/wuliang_kongchu");
