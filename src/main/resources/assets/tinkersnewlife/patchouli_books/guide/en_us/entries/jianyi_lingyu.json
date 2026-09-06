@@ -1,0 +1,17 @@
+{
+    "name":  "新阴流·简易领域",
+    "category":  "tinkersnewlife:skills",
+    "icon": "tinkersnewlife:textures/gui/modifiers/jianyi_lingyu.png",
+    "sortnum":  3,
+    "advancement": "tinkersnewlife:skills/jianyi_lingyu",
+    "pages":  [
+        {
+            "type":  "patchouli:text",
+            "text":  "$(bold)新阴流·简易领域$()：小天地自成，借力消力。$(br2)$(bold)触发$()：被他人领域包裹时被动开启（咒力核心需装有本技巧）。$(br2)$(bold)效果$()：以咒力撑起一小片结界，抵御领域效果——无量空处定身、伏魔御厨子斩击等一律无效；施术者可以移动、可以使用物品。"
+        },
+        {
+            "type":  "patchouli:text",
+            "text":  "$(bold)代价$()：结界占用全部咒力操控——$(red)期间不能使用任何术式$()。$(br2)$(bold)维持$()：持续消耗咒力 24/秒，耗尽则结界破碎、领域效果照常生效；离开领域范围自动解除。$(br2)$(bold)用途$()：兼顾行动与防御的平衡型技巧——防住无量定身又能自由走位，只是别想放术式。"
+        }
+    ]
+}

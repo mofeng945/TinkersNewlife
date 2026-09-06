@@ -55,6 +55,10 @@ public final class TechniqueAdvancementHandler {
         put(Modifiers.CURSED_SPEECH.getId(), "techniques/cursed_speech");
         put(Modifiers.ANTI_GRAVITY.getId(), "techniques/anti_gravity");
         put(Modifiers.TEN_DIVIDE.getId(), "techniques/ten_divide");
+        // 技巧
+        put(Modifiers.MIXU_GELONG.getId(), "skills/mixu_gelong");
+        put(Modifiers.LUOHUA.getId(), "skills/luohua");
+        put(Modifiers.JIANYI_LINGYU.getId(), "skills/jianyi_lingyu");
         // 领域
         put(Modifiers.ZUOSHA_BOTU.getId(), "domains/zuosha_botu");
         put(Modifiers.WULIANG_KONGCHU.getId(), "domains/wuliang_kongchu");
