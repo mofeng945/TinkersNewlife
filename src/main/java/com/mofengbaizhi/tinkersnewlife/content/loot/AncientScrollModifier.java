@@ -38,6 +38,11 @@ public class AncientScrollModifier extends LootModifier {
 
     @Override
     protected @NotNull ObjectArrayList<ItemStack> doApply(ObjectArrayList<ItemStack> generatedLoot, LootContext context) {
+        // 只对"无实体来源"的 loot 生效：箱子/容器生成时没有 THIS_ENTITY 参数，
+        // 怪物击杀掉落带 THIS_ENTITY → 跳过（避免打怪也掉残卷）
+        if (context.getParamOrNull(net.minecraft.world.level.storage.loot.parameters.LootContextParams.THIS_ENTITY) != null) {
+            return generatedLoot;
+        }
         if (context.getRandom().nextFloat() < chance) {
             generatedLoot.add(AncientCursedScrollItem.roll());
         }

@@ -128,6 +128,9 @@ public class ModCreativeTabs {
                                 output.accept(ModItems.TIAN_NI_HUO.get());
                                 output.accept(ModItems.GOURD_JAIL.get());
                                 output.accept(ModItems.BOUNDARY_FRAGMENT.get());
+
+                                // ----- 咒言术残卷（学习咒言词条）-----
+                                output.accept(ModItems.ANCIENT_CURSED_SCROLL.get());
                             })
                             .build()
             );

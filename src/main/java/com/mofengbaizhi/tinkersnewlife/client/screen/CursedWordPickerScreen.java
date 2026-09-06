@@ -56,6 +56,29 @@ public class CursedWordPickerScreen extends AbstractRowListScreen<String> {
         if (word.id().equals(CursedSpeechClientData.part(chantIndex))) {
             graphics.fill(x, y, x + 2, y + h, 0xFF7CFF7C);
         }
+        // hover：显示该词条效果说明（核心义/对象有专属说明，其余显示段位通用说明）
+        if (hover) {
+            List<Component> lines = new java.util.ArrayList<>();
+            lines.add(Component.translatable(word.langKey()).withStyle(s -> s.withColor(0xFFFFFF)));
+            lines.add(Component.translatable("screen.tinkersnewlife.cursed_speech.rarity", word.rarity() + 1)
+                    .withStyle(s -> s.withColor(rarityColor(word.rarity()))));
+            lines.add(Component.translatable(effectDescKey(word)));
+            graphics.renderTooltip(font, lines,
+                    java.util.Optional.<net.minecraft.world.inventory.tooltip.TooltipComponent>empty(),
+                    (int) mouseX, (int) mouseY);
+        }
+    }
+
+    /** 词条效果说明 lang key：优先词条专属，缺失回退段位通用 */
+    private static String effectDescKey(CursedSpeechRegistry.Word word) {
+        String specific = "word.tinkersnewlife." + word.id() + ".desc";
+        String partCommon = "word.tinkersnewlife.part_" + word.part().name().toLowerCase() + ".desc";
+        // 资源翻译键不能动态探测存在性，采用统一策略：核心义/对象用专属键，其余用段位通用键
+        if (word.part() == CursedSpeechRegistry.Part.CORE
+                || word.part() == CursedSpeechRegistry.Part.TARGET) {
+            return specific;
+        }
+        return partCommon;
     }
 
     private static int rarityColor(int rarity) {
