@@ -88,30 +88,43 @@ public class SanChongJiKuDomain extends BaseDomain {
     }
 
     // ============================================================
-    //  弹射物导引
+    //  弹射物导引（登记制：高速弹一帧可飞出扫描盒，必须按 id 追踪）
     // ============================================================
 
-    /** 修正领域内（含余量）所有 owner 为施术者的弹射物，使其朝向领域内最近敌对目标 */
+    /** 待导引的弹射物实体 id（施术者射出的；含 TACZ 等高速子弹） */
+    private final java.util.Set<Integer> trackedProjectiles = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    /** 登记一颗子弹（EntityJoinLevel 事件里调用） */
+    private void trackProjectile(int entityId) {
+        trackedProjectiles.add(entityId);
+    }
+
+    /** 每 tick：按 id 追踪导引施术者射出的弹射物朝领域内最近敌对目标 */
     private void steerProjectiles(ServerLevel level, ServerPlayer owner) {
-        double r = radius;
-        // 扫描范围比领域稍大：弹射物飞离前仍有修正机会
-        double scan = r + 8.0;
-        for (Entity e : level.getEntitiesOfClass(Entity.class,
-                new AABB(center.x - scan, center.y - scan, center.z - scan,
-                        center.x + scan, center.y + scan, center.z + scan),
-                e -> e instanceof net.minecraft.world.entity.projectile.Projectile p
-                        && p.getOwner() == owner && !e.isRemoved())) {
-            if (!(e instanceof net.minecraft.world.entity.projectile.Projectile proj)) continue;
+        java.util.Iterator<Integer> it = trackedProjectiles.iterator();
+        while (it.hasNext()) {
+            int id = it.next();
+            Entity e = level.getEntity(id);
+            if (!(e instanceof net.minecraft.world.entity.projectile.Projectile proj) || e.isRemoved()) {
+                it.remove();
+                continue;
+            }
+            // owner 失配（异常复用/他人实体）→ 停止追踪
+            if (proj.getOwner() != owner) {
+                it.remove();
+                continue;
+            }
             Vec3 vel = proj.getDeltaMovement();
             double speed = vel.length();
-            if (speed < 1e-3) continue; // 已停（插地等）
-            // 弹射物距离中心过远（已彻底飞离领域）不再拉回
-            if (e.position().distanceToSqr(center) > scan * scan) continue;
+            if (speed < 1e-3) {
+                it.remove(); // 已停（插地/力竭）
+                continue;
+            }
             LivingEntity target = nearestEnemy(level, owner, e.position());
-            if (target == null) continue;
-            // 目标已非活体则跳过
-            Vec3 to = target.getEyePosition(1.0F).subtract(e.position()).normalize().scale(speed);
-            proj.setDeltaMovement(to);
+            if (target == null) continue; // 暂无目标：保持登记，出现目标即导引
+            Vec3 to = target.getEyePosition(1.0F).subtract(e.position());
+            if (to.lengthSqr() < 1e-4) continue;
+            proj.setDeltaMovement(to.normalize().scale(speed));
             // 轻微尾迹
             if (level.random.nextInt(4) == 0) {
                 level.sendParticles(ParticleTypes.CRIT,
@@ -121,11 +134,22 @@ public class SanChongJiKuDomain extends BaseDomain {
     }
 
     // ============================================================
-    //  空挥必中（事件订阅：左键挥击）
+    //  空挥必中（事件订阅：左键挥击 / 子弹登记）
     // ============================================================
 
     @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
     public static class StrikeEvents {
+
+        /** 施术者射出弹射物（含 TACZ 子弹等高速弹）→ 登记进其领域做导引追踪 */
+        @SubscribeEvent
+        public static void onProjectileJoin(net.minecraftforge.event.entity.EntityJoinLevelEvent event) {
+            if (event.getLevel().isClientSide) return;
+            if (!(event.getEntity() instanceof net.minecraft.world.entity.projectile.Projectile proj)) return;
+            if (!(proj.getOwner() instanceof ServerPlayer sp)) return;
+            if (!sp.isAlive()) return;
+            if (!(DomainRegistry.get(sp.getUUID()) instanceof SanChongJiKuDomain domain)) return;
+            domain.trackProjectile(event.getEntity().getId());
+        }
 
         /** 玩家左键空挥（打在空气上）：手持拟造物或远程武器 → 必中领域内最近敌对目标 */
         @SubscribeEvent
