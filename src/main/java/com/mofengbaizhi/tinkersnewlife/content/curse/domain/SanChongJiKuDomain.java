@@ -94,9 +94,11 @@ public class SanChongJiKuDomain extends BaseDomain {
     /** 待导引的弹射物实体 id（施术者射出的；含 TACZ 等高速子弹） */
     private final java.util.Set<Integer> trackedProjectiles = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
-    /** 登记一颗子弹（EntityJoinLevel 事件里调用） */
-    private void trackProjectile(int entityId) {
-        trackedProjectiles.add(entityId);
+    /** 登记一颗子弹并立即导引一次（EntityJoinLevel 事件里调用，须赶在子弹首帧移动前） */
+    private void trackProjectile(ServerLevel level, ServerPlayer owner,
+                                 net.minecraft.world.entity.projectile.Projectile proj) {
+        trackedProjectiles.add(proj.getId());
+        steerOnce(level, owner, proj, proj.getId(), false);
     }
 
     /** 每 tick：按 id 追踪导引施术者射出的弹射物朝领域内最近敌对目标 */
@@ -104,33 +106,39 @@ public class SanChongJiKuDomain extends BaseDomain {
         java.util.Iterator<Integer> it = trackedProjectiles.iterator();
         while (it.hasNext()) {
             int id = it.next();
-            Entity e = level.getEntity(id);
-            if (!(e instanceof net.minecraft.world.entity.projectile.Projectile proj) || e.isRemoved()) {
+            if (steerOnce(level, owner, null, id, true)) {
                 it.remove();
-                continue;
-            }
-            // owner 失配（异常复用/他人实体）→ 停止追踪
-            if (proj.getOwner() != owner) {
-                it.remove();
-                continue;
-            }
-            Vec3 vel = proj.getDeltaMovement();
-            double speed = vel.length();
-            if (speed < 1e-3) {
-                it.remove(); // 已停（插地/力竭）
-                continue;
-            }
-            LivingEntity target = nearestEnemy(level, owner, e.position());
-            if (target == null) continue; // 暂无目标：保持登记，出现目标即导引
-            Vec3 to = target.getEyePosition(1.0F).subtract(e.position());
-            if (to.lengthSqr() < 1e-4) continue;
-            proj.setDeltaMovement(to.normalize().scale(speed));
-            // 轻微尾迹
-            if (level.random.nextInt(4) == 0) {
-                level.sendParticles(ParticleTypes.CRIT,
-                        e.getX(), e.getY() + 0.3, e.getZ(), 1, 0.05, 0.05, 0.05, 0);
             }
         }
+    }
+
+    /**
+     * 导引单颗弹射物。返回 true = 应停止追踪（实体消失/停住/owner 失配）。
+     * 保持速率、方向指向领域内最近敌对目标；目标不存在时保持追踪（不返回 true）。
+     */
+    private boolean steerOnce(ServerLevel level, ServerPlayer owner,
+                              net.minecraft.world.entity.projectile.Projectile direct,
+                              int id, boolean removeIfStopped) {
+        Entity e = direct != null ? direct : level.getEntity(id);
+        if (!(e instanceof net.minecraft.world.entity.projectile.Projectile proj) || e.isRemoved()) {
+            return true;
+        }
+        // owner 失配（异常复用/他人实体）→ 停止追踪
+        if (proj.getOwner() != owner) return true;
+        Vec3 vel = proj.getDeltaMovement();
+        double speed = vel.length();
+        if (speed < 1e-3) return true; // 已停（插地/力竭）
+        LivingEntity target = nearestEnemy(level, owner, e.position());
+        if (target == null) return false; // 暂无目标：保持登记，出现目标即导引
+        Vec3 to = target.getEyePosition(1.0F).subtract(e.position());
+        if (to.lengthSqr() < 1e-4) return false;
+        proj.setDeltaMovement(to.normalize().scale(speed));
+        // 轻微尾迹
+        if (level.random.nextInt(4) == 0) {
+            level.sendParticles(ParticleTypes.CRIT,
+                    e.getX(), e.getY() + 0.3, e.getZ(), 1, 0.05, 0.05, 0.05, 0);
+        }
+        return false;
     }
 
     // ============================================================
@@ -140,7 +148,9 @@ public class SanChongJiKuDomain extends BaseDomain {
     @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
     public static class StrikeEvents {
 
-        /** 施术者射出弹射物（含 TACZ 子弹等高速弹）→ 登记进其领域做导引追踪 */
+        /** 施术者射出弹射物（含 TACZ 子弹等高速弹）→ 登记进其领域做导引追踪。
+         *  ⭐ 必须在入世事件里立即导引一次：TACZ 高速弹一帧可飞出十余格撞上领域墙消失，
+         *  等不到每 tick 末端的导引（手枪慢弹才来得及）。 */
         @SubscribeEvent
         public static void onProjectileJoin(net.minecraftforge.event.entity.EntityJoinLevelEvent event) {
             if (event.getLevel().isClientSide) return;
@@ -148,7 +158,8 @@ public class SanChongJiKuDomain extends BaseDomain {
             if (!(proj.getOwner() instanceof ServerPlayer sp)) return;
             if (!sp.isAlive()) return;
             if (!(DomainRegistry.get(sp.getUUID()) instanceof SanChongJiKuDomain domain)) return;
-            domain.trackProjectile(event.getEntity().getId());
+            if (!(event.getLevel() instanceof ServerLevel level)) return;
+            domain.trackProjectile(level, sp, proj);
         }
 
         /** 玩家左键空挥（打在空气上）：手持拟造物或远程武器 → 必中领域内最近敌对目标 */
