@@ -111,6 +111,12 @@ public class WuLiangKongChuDomain extends BaseDomain {
             // ⭐ 通用领域抵抗（提取自无量空处）：生物按血量、玩家按咒力亲和抵抗，期满后才进入静止
             if (registerResistAndCheck(entity, now)) continue;
 
+            // ⭐ 新阴流技巧抵御：被包裹玩家带技巧且咒力足够 → 无量定身对其无效
+            if (entity instanceof ServerPlayer sp
+                    && com.mofengbaizhi.tinkersnewlife.content.curse.skill.SkillHandler.isProtected(sp, this)) {
+                continue;
+            }
+
             // 施加/刷新静止效果（持续期间几乎不结束）
             entity.addEffect(new MobEffectInstance(ModEffects.STUN.get(), STUN_DURATION_TICKS, 0, false, false));
             if (entity instanceof Mob mob) {

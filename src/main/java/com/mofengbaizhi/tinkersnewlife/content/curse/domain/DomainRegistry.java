@@ -72,6 +72,23 @@ public final class DomainRegistry {
         return DOMAINS.get(playerId);
     }
 
+    /**
+     * 该玩家当前是否被"他人领域"包裹（处于非本人领域的领域球内，须同维度）；
+     * 有则返回该领域，无则 null。新阴流三技巧（弥虚葛笼/落花之情/简易领域）
+     * 以此作为被动开启的触发条件。
+     */
+    public static BaseDomain findEnemyDomain(net.minecraft.server.level.ServerPlayer player) {
+        UUID pid = player.getUUID();
+        net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dim = player.level().dimension();
+        for (BaseDomain d : DOMAINS.values()) {
+            if (d.getOwner().equals(pid)) continue;
+            if (d.getDimension() == null || !d.getDimension().equals(dim)) continue;
+            double r = d.getRadius();
+            if (player.position().distanceToSqr(d.getCenter()) <= r * r) return d;
+        }
+        return null;
+    }
+
     // ============================================================
     //  通用领域展开键
     // ============================================================
@@ -117,6 +134,7 @@ public final class DomainRegistry {
             BaseDomain domain = factory.apply(player);
             if (domain == null) return; // 工厂内已提示条件不满足（如咒力不足）
             domain.markCreated(player.serverLevel().getGameTime());
+            domain.setDimension(player.serverLevel().dimension());
             DOMAINS.put(id, domain);
             domain.onOpen(player);
             spawnVisual(player.serverLevel(), domain);

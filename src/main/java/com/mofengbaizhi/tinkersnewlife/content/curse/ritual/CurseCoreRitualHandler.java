@@ -357,6 +357,14 @@ public class CurseCoreRitualHandler {
         tool.addModifier(domains[random.nextInt(domains.length)], 1);
         tool.getPersistentData().addSlots(domainSlot, -1);
 
+        // ⭐ 随机技巧（弥虚葛笼/落花之情/新阴流·简易领域）：每个核心固定带一个技巧，消耗技巧槽
+        SlotType skillSlot = SlotType.getOrCreate("skill");
+        ModifierId[] skills = {
+                Modifiers.MIXU_GELONG.getId(), Modifiers.LUOHUA.getId(), Modifiers.JIANYI_LINGYU.getId()
+        };
+        tool.addModifier(skills[random.nextInt(skills.length)], 1);
+        tool.getPersistentData().addSlots(skillSlot, -1);
+
         // ⭐ 30% 概率额外术式槽（总术式槽最多 3 个，含已消耗的 1 个）
         if (random.nextFloat() < 0.3) {
             int free = tool.getPersistentData().getSlots(techniqueSlot); // 已扣 1，可能为 0

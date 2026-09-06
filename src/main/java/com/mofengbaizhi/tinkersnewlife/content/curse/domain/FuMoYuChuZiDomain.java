@@ -108,6 +108,12 @@ public class FuMoYuChuZiDomain extends BaseDomain {
             // ⭐ 通用领域抵抗：目标进入领域后先"抵抗一会"，期间免疫斩击
             if (registerResistAndCheck(entity, now)) continue;
 
+            // ⭐ 新阴流技巧抵御：被包裹玩家带技巧且咒力足够 → 领域斩击对其无效
+            if (entity instanceof ServerPlayer sp
+                    && com.mofengbaizhi.tinkersnewlife.content.curse.skill.SkillHandler.isProtected(sp, this)) {
+                continue;
+            }
+
             // ⭐ 领域攻击同样触发咒力核心材料特性
             double dmg = computeDamage(player);
             dmg = com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper

@@ -29,6 +29,7 @@
       "slots": {
         "domain": 1,
         "technique": 1,
+        "skill": 1,
         "defense": 2,
         "upgrades": 3
       }

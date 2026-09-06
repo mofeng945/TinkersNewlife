@@ -87,6 +87,8 @@ public class CrystalModifierRecipe extends ModifierRecipe {
         // 添加配方 result 注册；占位 result 无效，必须逐个注册真实 modifier）
         java.util.Set<ModifierId> ids = "domain".equals(kind)
                 ? DomainRegistry.getAllDomainIds()
+                : "skill".equals(kind)
+                ? com.mofengbaizhi.tinkersnewlife.content.curse.skill.SkillHandler.getAllSkillIds()
                 : TechniqueHandler.getAllTechniqueIds();
         for (ModifierId modifier : ids) {
             ModifierRecipeLookup.addRecipeModifier(slots != null ? slots.type() : null,
@@ -96,7 +98,9 @@ public class CrystalModifierRecipe extends ModifierRecipe {
 
     /** 水晶修饰符是否属于本配方类别（查注册表） */
     private boolean isKind(ModifierId modifier) {
-        return "domain".equals(kind) ? DomainRegistry.isDomain(modifier) : TechniqueHandler.isTechnique(modifier);
+        return "domain".equals(kind) ? DomainRegistry.isDomain(modifier)
+                : "skill".equals(kind) ? com.mofengbaizhi.tinkersnewlife.content.curse.skill.SkillHandler.isSkill(modifier)
+                : TechniqueHandler.isTechnique(modifier);
     }
 
     /** 仅水晶匹配：工具符合要求 + 输入槽内有携带本类别修饰符的水晶 */

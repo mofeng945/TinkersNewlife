@@ -70,6 +70,8 @@ public class TagModifierSalvage implements ICustomOutputRecipe<Container> {
         // 加载时：为对应类别注册表中所有修饰符注册标准 salvage（返还槽位）
         java.util.Set<ModifierId> modifiers = "domain".equals(kind)
                 ? DomainRegistry.getAllDomainIds()
+                : "skill".equals(kind)
+                ? com.mofengbaizhi.tinkersnewlife.content.curse.skill.SkillHandler.getAllSkillIds()
                 : TechniqueHandler.getAllTechniqueIds();
         for (ModifierId modifier : modifiers) {
             ModifierRecipeLookup.addSalvage(new ModifierSalvage(

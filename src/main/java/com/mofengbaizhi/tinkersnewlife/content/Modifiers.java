@@ -223,4 +223,19 @@ public class Modifiers {
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.TenDivideTrait> TEN_DIVIDE =
         MODIFIERS.register("ten_divide",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.TenDivideTrait::new);
+
+    /** 技巧·弥虚葛笼（技巧特性，占用技巧槽；被他人领域包裹时被动全防） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.MixuGelongTrait> MIXU_GELONG =
+        MODIFIERS.register("mixu_gelong",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.MixuGelongTrait::new);
+
+    /** 技巧·落花之情（技巧特性，占用技巧槽；能抗多数领域但防不住无量空处） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.LuohuaTrait> LUOHUA =
+        MODIFIERS.register("luohua",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.LuohuaTrait::new);
+
+    /** 技巧·新阴流·简易领域（技巧特性，占用技巧槽；抵御领域效果但期间禁用术式） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.JianyiLingyuTrait> JIANYI_LINGYU =
+        MODIFIERS.register("jianyi_lingyu",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.JianyiLingyuTrait::new);
 }

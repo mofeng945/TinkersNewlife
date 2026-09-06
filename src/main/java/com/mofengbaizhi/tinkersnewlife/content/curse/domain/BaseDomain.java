@@ -52,6 +52,17 @@ public abstract class BaseDomain {
     /** 领域展开时的 gameTime（用于防刷：展开不足 5 秒被破坏不掉碎片） */
     private long createdAtGameTime = -1;
 
+    /** 领域所在维度（展开时由 DomainRegistry 注入；用于判定"玩家被他人领域包裹"） */
+    private net.minecraft.resources.ResourceKey<Level> dimension = null;
+
+    public void setDimension(net.minecraft.resources.ResourceKey<Level> dimension) {
+        this.dimension = dimension;
+    }
+
+    public net.minecraft.resources.ResourceKey<Level> getDimension() {
+        return dimension;
+    }
+
     /** 领域通用抵抗：实体 → 抵抗截止时刻（服务器 tick）。抵抗期内本领域负面效果不生效 */
     private final Map<UUID, Long> resistUntil = new ConcurrentHashMap<>();
 
