@@ -34,5 +34,11 @@
   "word.tinkersnewlife.leech": "Drain Him",
   "word.tinkersnewlife.leech.desc": "Core: Drain him - damage the target and heal half of it back",
   "word.tinkersnewlife.mercy": "I Beg of Your Mercy",
-  "word.tinkersnewlife.mercy.desc": "Thanks: moderate backlash reduction"
+  "word.tinkersnewlife.mercy.desc": "Thanks: moderate backlash reduction",
+  "stat.tconstruct.slot.display.skill": "Skill",
+  "stat.tconstruct.slot.prefix.skill": "Skill slot: ",
+  "stat.tconstruct.slot.display.technique": "Technique",
+  "stat.tconstruct.slot.prefix.technique": "Technique slot: ",
+  "stat.tconstruct.slot.display.domain": "Domain",
+  "stat.tconstruct.slot.prefix.domain": "Domain slot: "
 }
