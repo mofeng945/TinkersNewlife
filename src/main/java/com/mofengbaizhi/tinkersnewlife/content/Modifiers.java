@@ -218,4 +218,9 @@ public class Modifiers {
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.AntiGravityTrait> ANTI_GRAVITY =
         MODIFIERS.register("anti_gravity",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.AntiGravityTrait::new);
+
+    /** 十划咒法（术式特性，占用术式槽；7:3 弱点标记，命中暴击） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.TenDivideTrait> TEN_DIVIDE =
+        MODIFIERS.register("ten_divide",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.TenDivideTrait::new);
 }

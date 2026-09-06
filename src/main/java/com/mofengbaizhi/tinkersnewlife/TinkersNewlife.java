@@ -177,6 +177,7 @@ public class TinkersNewlife {
         TechniqueHandler.register(com.mofengbaizhi.tinkersnewlife.content.curse.technique.ConstructTechnique.INSTANCE);
         TechniqueHandler.register(com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpeechTechnique.INSTANCE);
         TechniqueHandler.register(com.mofengbaizhi.tinkersnewlife.content.curse.technique.AntiGravityTechnique.INSTANCE);
+        TechniqueHandler.register(com.mofengbaizhi.tinkersnewlife.content.curse.technique.TenDivideTechnique.INSTANCE);
 
         // 注册网络包
         registerPacket(PacketUseSkill.class, PacketUseSkill::toBytes, PacketUseSkill::new, PacketUseSkill::handle);

@@ -197,6 +197,7 @@ public final class TechniqueHandler {
             com.mofengbaizhi.tinkersnewlife.content.curse.technique.ConstructTechnique.cleanup(sp);
             com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpeechTechnique.cleanup(sp);
             com.mofengbaizhi.tinkersnewlife.content.curse.technique.AntiGravityTechnique.cleanup(sp);
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.TenDivideTechnique.cleanup(sp);
             SELECTED.remove(sp.getUUID());
         }
     }
@@ -216,6 +217,7 @@ public final class TechniqueHandler {
             com.mofengbaizhi.tinkersnewlife.content.curse.technique.ConstructTechnique.cleanup(sp);
             com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpeechTechnique.cleanup(sp);
             com.mofengbaizhi.tinkersnewlife.content.curse.technique.AntiGravityTechnique.cleanup(sp);
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.TenDivideTechnique.cleanup(sp);
         }
     }
 
