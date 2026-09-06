@@ -1,5 +1,6 @@
 package com.mofengbaizhi.tinkersnewlife.content.curse.shikigami;
 
+import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
 import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHandler;
 import com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiMob;
@@ -10,6 +11,9 @@ import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
 import java.util.List;
 
@@ -20,7 +24,9 @@ import java.util.List;
  * - 首次召唤未调伏式神：式神同时攻击锁定的目标与主人；主人/目标死亡或脱离战斗则消失；
  *   式神被击败 → 调伏成功，此后可正常召唤
  * - 咒力只在召唤时扣除（无维持消耗）；数值/体型/速度受亲和与输出缩放
+ * - 玩家死亡：场上所有未回收的式神直接清除（调伏进度是玩家持久数据，不随式神实体消失）
  */
+@Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class ShikigamiHandler {
 
     private ShikigamiHandler() {}
@@ -210,5 +216,18 @@ public final class ShikigamiHandler {
         EntityHitResult hit = ProjectileUtil.getEntityHitResult(player, eye, end, box,
                 e -> !e.isSpectator() && e.isPickable() && (e instanceof LivingEntity), 16.0 * 16.0);
         return hit != null && hit.getEntity() instanceof LivingEntity living ? living : null;
+    }
+
+    /** 玩家死亡：场上所有未回收的式神直接清除（不返还咒力；调伏进度在玩家持久数据，不受影响） */
+    @SubscribeEvent
+    public static void onOwnerDeath(LivingDeathEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer sp)) return;
+        List<net.minecraft.world.entity.Entity> active = findActiveFor(sp);
+        if (active.isEmpty()) return;
+        for (net.minecraft.world.entity.Entity e : active) {
+            e.discard();
+        }
+        TinkersNewlife.LOGGER.info("[式神] 玩家 {} 死亡，场上 {} 只未回收式神已直接清除",
+                sp.getName().getString(), active.size());
     }
 }
