@@ -852,5 +852,9 @@
   "modifier.tinkersnewlife.tie_guan_gai_wei_shan": "铁棺盖围山",
   "modifier.tinkersnewlife.tie_guan_gai_wei_shan.flavor": "铁棺倾覆，山岳尽焚。",
   "modifier.tinkersnewlife.tie_guan_gai_wei_shan.description": "§f领域展开：领域内除施术者外的所有目标持续被点燃，且每 5 tick 承受一次无视无敌帧的咒力灼烧（单次 0.6 + 咒力输出×0.35 + 咒力亲和×0.01，护甲/抗性仍可衰减）。本领域点燃与灼烧可被新阴流三技巧抵挡（与胎藏遍野一致，仅伏诛赐死不可挡）。每秒消耗 半径×50 咒力。占用领域槽。",
-  "message.tinkersnewlife.tie_guan_gai_wei_shan.open": "§c铁棺盖围山——焚山！半径 %s 格"
+  "message.tinkersnewlife.tie_guan_gai_wei_shan.open": "§c铁棺盖围山——焚山！半径 %s 格",
+  "modifier.tinkersnewlife.zi_bi_yuan_dun_guo": "自闭圆顿裹",
+  "modifier.tinkersnewlife.zi_bi_yuan_dun_guo.flavor": "触之即变，命为手塑。",
+  "modifier.tinkersnewlife.zi_bi_yuan_dun_guo.description": "§f领域展开：对领域内除施术者外的每个目标施加一次无为转变——生物当场替换成所选形态的守护式神（认主、永久）；玩家本体被强制变形（60 秒限时、禁工具）。形态 = 施术者已学会无为转变并在形态界面设定的对象；未设定时默认随机变成僵尸或骷髅。本领域可被通用抵抗与新阴流三技巧抵挡（与胎藏遍野一致，仅伏诛赐死不可挡）。每秒消耗 半径×60 咒力。占用领域槽。",
+  "message.tinkersnewlife.zi_bi_yuan_dun_guo.open": "§5自闭圆顿裹——全员变形！半径 %s 格"
 }

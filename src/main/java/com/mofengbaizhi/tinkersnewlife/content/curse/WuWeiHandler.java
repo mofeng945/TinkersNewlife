@@ -453,6 +453,73 @@ public final class WuWeiHandler {
     /** 玩家持久数据：转变外放是否开启 */
     public static final String KEY_REVERSAL = "tinkersnewlife.wuwei_reversal";
 
+    /**
+     * 领域·自闭圆顿裹：把玩家目标强制变形成所选生物（60 秒限时、禁工具，
+     * 与"转变外放"反转玩家一致；领域内免费，不消耗施术者咒力）。
+     * 已在变形中（无论顺转/被迫）的玩家不变（维持现状，倒计时结束自动还原）。
+     */
+    public static boolean forceTransformByDomain(ServerPlayer target, String formId) {
+        EntityType<?> type = EntityType.byString(formId).orElse(null);
+        if (type == null) return false;
+        if (TRANSFORMS.containsKey(target.getUUID())) return false;
+        if (enterForm(target, formId, true, REVERSE_TICKS)) {
+            target.displayClientMessage(Component.translatable("message.tinkersnewlife.wu_wei.self",
+                    formDisplayName(formId)), true);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 领域·自闭圆顿裹：把领域内生物目标替换成所选形态的守护式神（认主、永久变形）。
+     * 规则与"转变外放"反转生物一致：已是守护/墨默/自己驯养的宠物不转化；
+     * <b>领域内必中——不做血量强度门槛</b>（门槛属反转外放的单体限制；
+     * 领域消耗极高且目标可被抵抗/技巧豁免）；
+     * 领域内转化免费（不消耗咒力，咒力消耗走领域维持）。
+     * 返回 true = 本次已转化。
+     */
+    public static boolean transformMobByDomain(ServerPlayer caster, Mob target, String formId) {
+        if (target.getPersistentData().contains(KEY_GUARD_OWNER)) return false;
+        if (target instanceof com.mofengbaizhi.tinkersnewlife.content.entity.MomoMerchant) return false;
+        if (target instanceof TamableAnimal tame
+                && caster.getUUID().equals(tame.getOwnerUUID())) return false;
+        EntityType<?> type = EntityType.byString(formId).orElse(null);
+        if (type == null) return false;
+
+        ServerLevel level = caster.serverLevel();
+        ReverseMobData rd = new ReverseMobData();
+        rd.ownerId = caster.getUUID();
+        rd.restPos = target.position();
+        rd.restYRot = target.getYRot();
+        rd.restXRot = target.getXRot();
+        // 咒灵/守护同款处理：释放体的随从一起消失；他人释放体清记录；自己释放体改写记录为新形态
+        ServerPlayer spiritOwner = com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
+                .ownerOfReleased(target);
+        boolean selfSpirit = spiritOwner != null && spiritOwner.getUUID().equals(caster.getUUID());
+        if (spiritOwner != null) {
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique.dismissServantsOf(target);
+            if (!selfSpirit) {
+                com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
+                        .removeOnForeignTransform(target);
+            }
+        }
+        target.discard();
+        Entity form = type.create(level);
+        if (form instanceof Mob fm) {
+            fm.moveTo(rd.restPos.x, rd.restPos.y, rd.restPos.z, rd.restYRot, rd.restXRot);
+            fm.setPersistenceRequired();
+            fm.setHealth(fm.getMaxHealth());
+            level.addFreshEntity(fm);
+            attachGuardAi(fm, caster, rd);
+            if (selfSpirit) {
+                com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
+                        .relinkReleasedAsGuard(caster, target, fm);
+            }
+            return true;
+        }
+        return false;
+    }
+
     /** 是否开启转变外放 */
     public static boolean isReversalActive(ServerPlayer player) {
         return player.getPersistentData().getBoolean(KEY_REVERSAL);

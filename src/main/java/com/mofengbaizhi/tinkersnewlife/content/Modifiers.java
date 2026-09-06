@@ -263,4 +263,9 @@ public class Modifiers {
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.TieGuanGaiWeiShanTrait> TIE_GUAN_GAI_WEI_SHAN =
         MODIFIERS.register("tie_guan_gai_wei_shan",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.TieGuanGaiWeiShanTrait::new);
+
+    /** 自闭圆顿裹（领域特性，占用领域槽；域内全体施加一次无为转变，默认僵尸/骷髅） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.ZiBiYuanDunGuoTrait> ZI_BI_YUAN_DUN_GUO =
+        MODIFIERS.register("zi_bi_yuan_dun_guo",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.ZiBiYuanDunGuoTrait::new);
 }

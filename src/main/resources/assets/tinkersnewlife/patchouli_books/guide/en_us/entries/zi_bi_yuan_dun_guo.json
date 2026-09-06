@@ -1,0 +1,17 @@
+{
+    "name":  "自闭圆顿裹",
+    "category":  "tinkersnewlife:domains",
+    "icon": "tinkersnewlife:textures/gui/modifiers/zi_bi_yuan_dun_guo.png",
+    "sortnum":  9,
+    "advancement": "tinkersnewlife:domains/zi_bi_yuan_dun_guo",
+    "pages":  [
+        {
+            "type":  "patchouli:text",
+            "text":  "$(bold)自闭圆顿裹$()：触之即变，命为手塑。$(br2)$(bold)展开$()：通用领域展开键，以自身为中心张开领域（困锁同其它领域，每秒消耗 半径×60 咒力）。领域内除施术者外$(red)每个目标被施加一次无为转变$()：生物 → 当场替换成所选形态的$(bold)守护式神$()（认主、永久）；玩家 → 本体被强制变形（60 秒限时、期间禁用工具）。"
+        },
+        {
+            "type":  "patchouli:text",
+            "text":  "$(bold)形态$()：若施术者已学会无为转变并在形态界面（P 键）设定了转变对象，领域内所有目标变成$(bold)该形态$()；未设定时默认$(bold)随机变成僵尸或骷髅$()。$(br2)$(bold)抵挡$()：与胎藏遍野一致——$(bold)通用抵抗生效$()（目标首次进入先抵抗一会），$(bold)新阴流三技巧生效$()（咒力足够时免疫转变）；施术者自己的式神/咒灵/守护不会被转变。只有伏诛赐死无法抵挡。"
+        }
+    ]
+}
