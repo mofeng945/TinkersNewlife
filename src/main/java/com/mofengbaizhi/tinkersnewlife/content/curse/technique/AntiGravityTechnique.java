@@ -39,7 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>
  * 反转（反转键 F，开关式）：展开压力场（持续每秒扣费，咒力耗尽自动关闭）：
  * <ul>
- *   <li>压力 p = 5 + 输出×1.8 + 亲和×0.05</li>
+ *   <li>压力 p = 8 + 输出×2.4 + 亲和×0.07</li>
  *   <li>目标压力阈值 thr = 6 + (体宽×体高)×8 + 血量上限×0.12（体型越大、血越厚越抗压）</li>
  *   <li>p &lt; thr：仅受迟缓，离阈值越近迟缓等级越高（I~V）</li>
  *   <li>p ≥ thr：脚下非基岩方块被压碎（每 4 tick 一次，无掉落），目标被定身，
@@ -155,11 +155,11 @@ public final class AntiGravityTechnique extends BaseTechnique {
         return Math.max(1.0, (1.0 - affinity / 100.0) * (2.0 + output * 1.2));
     }
 
-    /** 当前压力 */
+    /** 当前压力（随输出与亲和放大，普通怪物在中高输出下即可被压碎） */
     public static double pressure(ServerPlayer player) {
         int output = CursePowerHelper.getCurseOutputLevel(player);
         int affinity = CursePowerHelper.getCurseAffinity(player);
-        return 5.0 + output * 1.8 + affinity * 0.05;
+        return 8.0 + output * 2.4 + affinity * 0.07;
     }
 
     /** 目标压力阈值：体型越大、血量上限越高越抗压 */
