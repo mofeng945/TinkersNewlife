@@ -14,13 +14,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.SimpleMenuProvider;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.NetworkHooks;
@@ -62,6 +60,11 @@ public class SilentGloveItem extends ModifiableItem implements ICurioItem {
             new ResourceLocation(TinkersNewlife.MOD_ID, "ring_bonus")
                     .toString().getBytes(StandardCharsets.UTF_8)
     );
+
+    /** 按槽位索引派生的固定 uuid（双手分别生效，互不覆盖；卸下时按各自 uuid 精确移除） */
+    private static UUID ringModifierUuid(int index) {
+        return UUID.nameUUIDFromBytes((RING_MODIFIER_UUID + "#" + index).getBytes(StandardCharsets.UTF_8));
+    }
 
     public SilentGloveItem(Properties properties) {
         super(properties, SILENT_GLOVE_DEFINITION);
@@ -150,64 +153,47 @@ public class SilentGloveItem extends ModifiableItem implements ICurioItem {
         }
     }
 
-    // ========== 重新计算所有手套的总增量并应用 ==========
+    // ========== 动态戒指槽（官方 ICurioItem 属性槽机制） ==========
 
     /**
-     * 待重算的玩家（UUID → true）。
-     * ⭐ 延迟到下一服务端 tick 再应用：curios 不允许在 GUI/槽位操作进行中直接改槽位大小，
-     * 否则打开 curios 物品栏时槽位数同步不一致会触发客户端 IndexOutOfBounds。
+     * 官方推荐做法（Enigmatic Legacy 等成熟模组同款）：
+     * 覆写 {@code ICurioItem#getAttributeModifiers(SlotContext, UUID, ItemStack)}，
+     * 在返回的属性表中放入 Curios 的槽位修饰符（SlotAttribute 条目）。
+     * Curios 会在<b>佩戴时自动加槽、卸下时自动移除、登录/复活时自动恢复</b>，
+     * 全程由 Curios 自身的统一流程驱动——不再手工 add/remove transient，
+     * 避免与 Curios 内部同步时序冲突造成槽位错位/物品"复制"显示。
      */
-    private static final java.util.concurrent.ConcurrentHashMap<UUID, Boolean> PENDING_RECALC =
-            new java.util.concurrent.ConcurrentHashMap<>();
-
-    private static void recalculateRingSlots(LivingEntity living) {
-        CuriosApi.getCuriosInventory(living).ifPresent(inventory -> {
-            int total = 0;
-            var handsHandler = inventory.getStacksHandler("hands");
-            if (handsHandler.isPresent()) {
-                var stacks = handsHandler.get().getStacks();
-                for (int i = 0; i < stacks.getSlots(); i++) {
-                    ItemStack stack = stacks.getStackInSlot(i);
-                    if (stack.getItem() instanceof SilentGloveItem) {
-                        // ⭐ 服务端生成（若未生成），保证双端一致
-                        total += getOrCreateExtraRings(stack);
-                    }
-                }
-            }
-
-            if (total > 0) {
-                inventory.addTransientSlotModifier(
-                        "ring",
-                        RING_MODIFIER_UUID,
-                        "ring_bonus",
-                        total,
-                        AttributeModifier.Operation.ADDITION
-                );
-            } else {
-                inventory.removeSlotModifier("ring", RING_MODIFIER_UUID);
-            }
-        });
+    @Override
+    public com.google.common.collect.Multimap<net.minecraft.world.entity.ai.attributes.Attribute,
+            AttributeModifier> getAttributeModifiers(SlotContext slotContext, UUID uuid, ItemStack stack) {
+        com.google.common.collect.Multimap<net.minecraft.world.entity.ai.attributes.Attribute,
+                AttributeModifier> attrs = com.google.common.collect.LinkedHashMultimap.create();
+        int extra = getExtraRings(stack);
+        if (extra <= 0 && slotContext.entity() != null && !slotContext.entity().level().isClientSide) {
+            // 服务端装备结算时惰性生成一次随机值（此后固定），保证加成存在
+            extra = getOrCreateExtraRings(stack);
+        }
+        if (extra > 0) {
+            // 双手（hands 槽 index 0/1）各用独立 uuid，两只手套的加成可同时叠加
+            CuriosApi.getCuriosHelper().addSlotModifier(attrs, "ring",
+                    ringModifierUuid(Math.max(0, slotContext.index())),
+                    extra, AttributeModifier.Operation.ADDITION);
+        }
+        return attrs;
     }
 
-    /** 服务端 tick 统一处理延迟重算 */
+    /**
+     * 旧版本残留清理：老版本用单一 RING_MODIFIER_UUID 手工 add/remove transient，
+     * 可能残留未清除的槽位加成。新机制改用手派生 uuid，登录时清一次旧 key 即可收敛
+     * （随后 Curios 槽变化检测会按新机制自动重新应用正确加成）。
+     */
     @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
-    public static class RingSlotHandler {
-        @SubscribeEvent
-        public static void onServerTick(TickEvent.ServerTickEvent event) {
-            if (event.phase != TickEvent.Phase.END) return;
-            if (PENDING_RECALC.isEmpty()) return;
-            var server = event.getServer();
-            if (server == null) return;
-            for (UUID playerId : PENDING_RECALC.keySet()) {
-                ServerPlayer player = server.getPlayerList().getPlayer(playerId);
-                if (player == null || !player.isAlive()) {
-                    PENDING_RECALC.remove(playerId);
-                    continue;
-                }
-                // 应用戒指槽变化（curios 自身会在槽位变化时同步客户端并触发
-                // SlotModifiersUpdatedEvent，客户端据此原地重建打开的 curios 菜单）
-                recalculateRingSlots(player);
-                PENDING_RECALC.remove(playerId);
+    public static class LegacyCleanup {
+        @net.minecraftforge.eventbus.api.SubscribeEvent
+        public static void onPlayerLoggedIn(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) {
+            if (event.getEntity() instanceof ServerPlayer sp) {
+                CuriosApi.getCuriosInventory(sp).ifPresent(inv ->
+                        inv.removeSlotModifier("ring", RING_MODIFIER_UUID));
             }
         }
     }
@@ -222,19 +208,6 @@ public class SilentGloveItem extends ModifiableItem implements ICurioItem {
     @Override
     public boolean canEquipFromUse(SlotContext context, ItemStack stack) {
         return false;
-    }
-
-    @Override
-    public void onEquip(SlotContext context, ItemStack prevStack, ItemStack stack) {
-        if (context.entity().level().isClientSide()) return;
-        // ⭐ 延迟到下一 tick 应用，避免在 curios GUI 操作中改槽位大小
-        PENDING_RECALC.put(context.entity().getUUID(), true);
-    }
-
-    @Override
-    public void onUnequip(SlotContext context, ItemStack newStack, ItemStack stack) {
-        if (context.entity().level().isClientSide()) return;
-        PENDING_RECALC.put(context.entity().getUUID(), true);
     }
 
     // ========== 右键打开 GUI ==========
