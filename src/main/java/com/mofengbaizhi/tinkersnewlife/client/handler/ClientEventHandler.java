@@ -149,6 +149,9 @@ public class ClientEventHandler {
         // 墨默（武器商人）：套用玩家模型 + 玩家贴图动画
         event.registerEntityRenderer(ModEntities.MOMO_MERCHANT.get(),
                 com.mofengbaizhi.tinkersnewlife.client.renderer.MomoMerchantRenderer::new);
+        // 十划咒法·弱点实体：手绘金色光点
+        event.registerEntityRenderer(ModEntities.WEAK_POINT.get(),
+                com.mofengbaizhi.tinkersnewlife.client.renderer.WeakPointRenderer::new);
     }
 
     // ========== Forge 事件（按键等） ==========

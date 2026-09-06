@@ -262,4 +262,13 @@ public class ModEntities {
                                 com.mofengbaizhi.tinkersnewlife.content.entity.MomoMerchant::new, MobCategory.CREATURE)
                         .sized(0.6f, 1.8f).clientTrackingRange(16).updateInterval(3)
                         .build(TinkersNewlife.MOD_ID + ":momo_merchant"));
+
+    /** 十划咒法·弱点实体（金色小球，跟随目标，可被施术者击打触发暴击） */
+    public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.WeakPointEntity>> WEAK_POINT =
+        ENTITIES.register("weak_point",
+                () -> EntityType.Builder.<com.mofengbaizhi.tinkersnewlife.content.entity.WeakPointEntity>of(
+                                com.mofengbaizhi.tinkersnewlife.content.entity.WeakPointEntity::new, MobCategory.MISC)
+                        .sized(0.4f, 0.4f).clientTrackingRange(64).updateInterval(1)
+                        .noSummon()
+                        .build(TinkersNewlife.MOD_ID + ":weak_point"));
 }
