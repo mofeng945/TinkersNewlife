@@ -305,16 +305,17 @@ public class DangYunPingXianDomain extends BaseDomain {
     private static boolean isFriendlyTo(ServerPlayer owner, LivingEntity e) {
         if (e == owner) return true;
         if (e instanceof Player) return false;
-        if (e.getPersistentData().getUUID(KEY_DROWNED_OWNER) != null
-                && owner.getUUID().equals(e.getPersistentData().getUUID(KEY_DROWNED_OWNER))) {
+        // ⭐ getUUID 在 key 缺失时抛 NPE——必须先 contains 再取值
+        var tag = e.getPersistentData();
+        if (tag.contains(KEY_DROWNED_OWNER)
+                && owner.getUUID().equals(tag.getUUID(KEY_DROWNED_OWNER))) {
             return true;
         }
         if (e instanceof TamableAnimal tame && owner.getUUID().equals(tame.getOwnerUUID())) return true;
         if (e instanceof com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiMob sm
                 && owner.getUUID().equals(sm.getOwnerId())) return true;
-        if (e.getPersistentData().getUUID(
-                com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiHandler.KEY_GUARD_OWNER) != null
-                && owner.getUUID().equals(e.getPersistentData().getUUID(
+        if (tag.contains(com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiHandler.KEY_GUARD_OWNER)
+                && owner.getUUID().equals(tag.getUUID(
                 com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiHandler.KEY_GUARD_OWNER))) {
             return true;
         }
