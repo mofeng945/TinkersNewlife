@@ -1,0 +1,17 @@
+{
+    "name":  "游云",
+    "category":  "tinkersnewlife:cursed_tools",
+    "icon":  "tinkersnewlife:you_yun",
+    "sortnum":  1,
+    "pages":  [
+                  {
+                      "type":  "patchouli:spotlight",
+                      "item":  "tinkersnewlife:you_yun",
+                      "text":  "$(bold)游云$()$(br2)特级咒具（原版武器逻辑，非匠魂工具，继承咒具基类），可在$(bold)墨默（武器商人）$()处购买：每日货架的咒具位会随机刷新天逆鉾 / 游云 / 狱门疆，$(bold)10 ~ 20 个格赫罗斯残骸$()。$(li)基础伤害 $(bold)10$() 点，攻击速度 $(bold)2$()$(li)$(bold)无限耐久$()，永不损坏$(li)可附上$(bold)剑类附魔$()（锋利等）"
+                  },
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)破甲·破盾格挡$()：每一击都会$(bold)突破盾牌格挡$()（类似原版斧头，命中的瞬间使目标盾牌失效）。$(br2)$(bold)固定增伤 120%$()：每次攻击按玩家当前近战伤害 $(bold)额外增幅 120%$()。$(li)$(bold)亡灵特攻 +10%$()：对僵尸/骷髅等亡灵生物额外造成 10% 伤害$(li)$(bold)额外击退$()：命中额外将目标击退 $(bold)本次伤害/100$() 格$(br2)$(bold)物理伤害，无法穿透无下限$()：游云打的是物理伤害，且$(bold)不能$()像天逆鉾那样绕过「无下限·无限」的防御（会被其减免）。"
+                  }
+              ]
+}

@@ -884,5 +884,7 @@
   "modifier.tinkersnewlife.san_chong_ji_ku": "三重疾苦",
   "modifier.tinkersnewlife.san_chong_ji_ku.flavor": "三灾并至，无物可避。",
   "modifier.tinkersnewlife.san_chong_ji_ku.description": "§f领域展开（必中领域）：施术者射出的弹射物每 tick 被导引向领域内最近的敌对目标——射偏也会拐弯命中；手持构筑术式拟造物或远程武器左键空挥（打在空气上、隔着距离）也会对领域内最近敌对目标结算一次必中攻击（按玩家当前攻击力）。目标 = 领域内除施术者阵营外的所有活物。每秒消耗 半径×45 咒力。占用领域槽。",
-  "message.tinkersnewlife.san_chong_ji_ku.open": "§6三重疾苦——无物可避！半径 %s 格"
+  "message.tinkersnewlife.san_chong_ji_ku.open": "§6三重疾苦——无物可避！半径 %s 格",
+  "item.tinkersnewlife.you_yun": "§6游云",
+  "item.tinkersnewlife.you_yun.desc": "§7基础伤害 10，攻速 2；每一击破盾格挡（像斧头），固定增伤 120%，对亡灵额外 +10%；额外击退（本次伤害/100 格）；无法穿透无下限。"
 }

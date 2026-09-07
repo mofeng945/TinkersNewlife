@@ -266,6 +266,12 @@ public class ModItems {
                     .stacksTo(1)
                     .fireResistant()));
 
+    /** 游云（咒具）：基础伤害 10，攻速 2，每击破甲+固定增伤120%，亡灵+10%，额外击退；不突破无下限 */
+    public static final RegistryObject<Item> YOU_YUN =
+            ITEMS.register("you_yun", () -> new YouYunItem(new Item.Properties()
+                    .stacksTo(1)
+                    .fireResistant()));
+
     /** 狱门疆（空闲形态）：放置后 5×5 范围停留超 5s 的生物被拖入狱门疆维度 */
     public static final RegistryObject<Item> GOURD_JAIL =
             ITEMS.register("gourd_jail", () -> new com.mofengbaizhi.tinkersnewlife.content.gourd.GourdJailItem(

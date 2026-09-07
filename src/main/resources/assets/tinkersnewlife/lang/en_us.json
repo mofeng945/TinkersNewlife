@@ -115,5 +115,7 @@
   "modifier.tinkersnewlife.dark_metal_breaker.description": "§7Dealing damage inflicts Weakness I for 2×level seconds; slaying a creature with magic resistance (Resistance effect) has a 45% chance to drop 1 extra Emerald.",
   "modifier.tinkersnewlife.dark_metal_magic_resist": "§9Magic Resist",
   "modifier.tinkersnewlife.dark_metal_magic_resist.flavor": "§7Gloom-forged plate, deaf to sorcery.",
-  "modifier.tinkersnewlife.dark_metal_magic_resist.description": "§7When taking magic damage, convert 5%×level + 1.5 points of magic damage into physical damage."
+  "modifier.tinkersnewlife.dark_metal_magic_resist.description": "§7When taking magic damage, convert 5%×level + 1.5 points of magic damage into physical damage.",
+  "item.tinkersnewlife.you_yun": "§6Playful Cloud",
+  "item.tinkersnewlife.you_yun.desc": "§7Base dmg 10, attack speed 2; every hit breaks shield blocking (like an axe), +120% fixed damage, +10% vs undead; extra knockback (dmg/100 blocks); cannot pierce Infinity."
 }
