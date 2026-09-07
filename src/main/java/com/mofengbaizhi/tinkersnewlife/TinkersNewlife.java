@@ -106,10 +106,11 @@ public class TinkersNewlife {
     }
 
     public TinkersNewlife() {
-        // ⭐ 通用配置（古神事件开关 / 咒力核心开关 / 术式与领域公式缩放系数）
+        // ⭐ 通用配置（古神事件开关 / 咒力核心开关 / 术式与领域公式缩放系数）——config/mofengbaizhi/ 子路径
         net.minecraftforge.fml.ModLoadingContext.get().registerConfig(
                 net.minecraftforge.fml.config.ModConfig.Type.COMMON,
-                com.mofengbaizhi.tinkersnewlife.config.ModConfig.SPEC);
+                com.mofengbaizhi.tinkersnewlife.config.ModConfig.SPEC,
+                "mofengbaizhi/tinkersnewlife-common.toml");
         LOGGER.info("初始化 TinkersNewlife 模组...");
         // 注册自定义槽位类型：领域槽（domain）与术式槽（technique），供咒力核心等装备使用
         slimeknights.tconstruct.library.tools.SlotType.init();
