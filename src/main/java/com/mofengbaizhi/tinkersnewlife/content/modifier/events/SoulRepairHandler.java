@@ -36,7 +36,7 @@ public class SoulRepairHandler {
         if (sp.level().isClientSide) return;
         if (sp.level().getGameTime() % 20 != 0) return;   // 每 20 tick 一次
 
-        for (ItemStack stack : List.of(sp.getMainHandItem(), sp.getOffhandItem())) {
+        for (ItemStack stack : repairCandidates(sp)) {
             if (stack.isEmpty()) continue;
             ToolStack tool = ToolHelper.getToolStack(stack);
             if (tool == null || tool.isBroken()) continue;
@@ -53,5 +53,14 @@ public class SoulRepairHandler {
             tool.setDamage(newDmg);
             tool.updateStack(stack);
         }
+    }
+
+    /** 待修复装备候选：主手/副手 + 4 个盔甲槽（护甲也可自动修复） */
+    private static java.util.List<ItemStack> repairCandidates(ServerPlayer sp) {
+        java.util.List<ItemStack> list = new java.util.ArrayList<>(6);
+        list.add(sp.getMainHandItem());
+        list.add(sp.getOffhandItem());
+        sp.getArmorSlots().forEach(list::add);
+        return list;
     }
 }
