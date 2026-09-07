@@ -61,8 +61,4 @@ public class ModBlocks {
     /** 狱门疆视觉方块：仅作为狱门疆实体的模型渲染载体（方块模型+贴图），无物品形态、不会真实生成 */
     public static final RegistryObject<Block> GOURD_JAIL_VISUAL = BLOCKS.register("gourd_jail_visual",
             () -> new GourdJailVisualBlock());
-
-    /** 融锻炉（独立熔炼方块）：放入匠魂工具 → 读取所有部件材料，多流体产物注入内部容器 */
-    public static final RegistryObject<Block> MOLTEN_FORGE = BLOCKS.register("melt_forge",
-            () -> new com.mofengbaizhi.tinkersnewlife.content.block.MoltenForgeBlock());
 }

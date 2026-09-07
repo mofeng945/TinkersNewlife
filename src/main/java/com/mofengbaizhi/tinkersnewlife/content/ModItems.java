@@ -291,9 +291,4 @@ public class ModItems {
     public static final RegistryObject<Item> ANCIENT_CURSED_SCROLL =
             ITEMS.register("ancient_cursed_scroll",
                     () -> new com.mofengbaizhi.tinkersnewlife.content.item.AncientCursedScrollItem());
-
-    /** 融锻炉方块物品 */
-    public static final RegistryObject<Item> MOLTEN_FORGE =
-            ITEMS.register("melt_forge",
-                    () -> new net.minecraft.world.item.BlockItem(ModBlocks.MOLTEN_FORGE.get(), new Item.Properties()));
 }

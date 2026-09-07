@@ -82,6 +82,36 @@ public class GenericToolMeltingRecipe implements IMeltingRecipe {
         return sel == null ? 300 : sel.recipe().getTemperature();
     }
 
+    /**
+     * 副产物（多流体）：把工具中「除温度最高（主输出）外」的其余有流体材料注入输出 handler。
+     * 由<b>焦褐熔铸炉（Foundry，ByproductMeltingModuleInventory）</b>熔化后调用——它先填主流体
+     * 再调本方法注入各副产物流体，实现"单工具 → 多种流体"。（焦黑冶炼炉的熔化模块不调本方法，
+     * 只出主流体；把工具丢进焦褐熔铸炉即可全材料回收。）
+     */
+    @Override
+    public void handleByproducts(IMeltingContainer container, net.minecraftforge.fluids.capability.IFluidHandler handler) {
+        ToolStack tool = getTool(container.getStack());
+        if (tool == null) return;
+        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+        if (server == null) return;
+        Map<MaterialId, MaterialFluidRecipe> recipes = findFluidRecipes(server.getRecipeManager());
+        if (recipes.isEmpty()) return;
+        // 主输出（温度最高）的材料不再作为副产物重复输出
+        MaterialId main = mainMaterialId(container, recipes);
+        for (MaterialVariant variant : tool.getMaterials().getList()) {
+            if (variant.getId().equals(main)) continue;
+            MaterialFluidRecipe mfr = recipes.get(variant.getId());
+            if (mfr == null) continue;
+            List<FluidStack> fluids = mfr.getFluids();
+            if (fluids.isEmpty()) continue;
+            FluidStack fluid = fluids.get(0);
+            int perUnit = mfr.getFluidAmount(fluid.getFluid());
+            if (perUnit <= 0) perUnit = 144;
+            handler.fill(new FluidStack(fluid.getFluid(), perUnit),
+                    net.minecraftforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+        }
+    }
+
     @Override
     public int getTime(IMeltingContainer container) {
         return IMeltingRecipe.calcTimeForAmount(getTemperature(container),
@@ -124,6 +154,22 @@ public class GenericToolMeltingRecipe implements IMeltingRecipe {
             }
         }
         return best == null ? null : new Selected(best, bestRecipe, counts.get(best));
+    }
+
+    /** 温度最高的有流体材料（与主输出 getOutput 一致） */
+    private static MaterialId mainMaterialId(IMeltingContainer container, Map<MaterialId, MaterialFluidRecipe> recipes) {
+        ToolStack tool = getTool(container.getStack());
+        if (tool == null) return null;
+        MaterialId best = null;
+        int bestTemp = -1;
+        for (MaterialVariant variant : tool.getMaterials().getList()) {
+            MaterialFluidRecipe mfr = recipes.get(variant.getId());
+            if (mfr != null && mfr.getTemperature() > bestTemp) {
+                bestTemp = mfr.getTemperature();
+                best = variant.getId();
+            }
+        }
+        return best;
     }
 
     /** 仅接受匠魂工具（IModifiable，含咒力核心） */

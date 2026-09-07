@@ -889,9 +889,5 @@
   "item.tinkersnewlife.you_yun.desc": "§7基础伤害 10，攻速 2；每一击破盾格挡（像斧头），固定增伤 120%，对亡灵额外 +10%；额外击退（本次伤害/100 格）；无法穿透无下限。",
   "modifier.tinkersnewlife.soul_eater": "§5噬魂",
   "modifier.tinkersnewlife.soul_eater.flavor": "§7以魂为食，愈吮愈丰。",
-  "modifier.tinkersnewlife.soul_eater.description": "§7每级 +25% 灵魂能量获取；持有 1 级后额外 +1 灵魂能量获取。最高 3 级（1 级占 1 升级槽，2/3 级无槽位）。",
-  "block.tinkersnewlife.melt_forge": "§6融锻炉",
-  "message.tinkersnewlife.melt_forge.molten": "§b融锻炉：已熔炼工具，材料流体已注入炉内。",
-  "message.tinkersnewlife.melt_forge.no_fluid": "§7该工具没有可熔炼成流体的材料。",
-  "message.tinkersnewlife.melt_forge.empty": "§7炉内为空。"
+  "modifier.tinkersnewlife.soul_eater.description": "§7每级 +25% 灵魂能量获取；持有 1 级后额外 +1 灵魂能量获取。最高 3 级（1 级占 1 升级槽，2/3 级无槽位）。"
 }

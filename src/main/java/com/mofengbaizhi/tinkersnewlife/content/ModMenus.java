@@ -4,9 +4,6 @@ import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.storage.BagContainer;
 import com.mofengbaizhi.tinkersnewlife.content.storage.SilentGloveContainer;
 import com.mofengbaizhi.tinkersnewlife.content.storage.SilentGloveHandler;
-import com.mofengbaizhi.tinkersnewlife.content.menu.MoltenForgeMenu;
-import com.mofengbaizhi.tinkersnewlife.content.block.MoltenForgeBlockEntity;
-import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.world.inventory.MenuType;
@@ -57,17 +54,6 @@ public class ModMenus {
                         // 客户端创建临时 Handler，不缓存、不持久化
                         SilentGloveHandler handler = SilentGloveHandler.createClient(vaultUUID, tag);
                         return new SilentGloveContainer(windowId, inv, vaultUUID, handler);
-                    })
-            );
-
-    // ===== 融锻炉（对照匠魂熔炉 GUI） =====
-    public static final RegistryObject<MenuType<MoltenForgeMenu>> MOLTEN_FORGE_MENU =
-            MENUS.register("melt_forge_menu",
-                    () -> IForgeMenuType.create((windowId, inv, data) -> {
-                        BlockPos pos = data.readBlockPos();
-                        MoltenForgeBlockEntity te = inv.player.level().getBlockEntity(pos)
-                                instanceof MoltenForgeBlockEntity m ? m : null;
-                        return new MoltenForgeMenu(windowId, inv, te);
                     })
             );
 
