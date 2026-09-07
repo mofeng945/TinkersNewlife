@@ -138,6 +138,7 @@ public class CurseCoreRitualHandler {
 
     @SubscribeEvent
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+        if (!com.mofengbaizhi.tinkersnewlife.config.ModConfig.CURSE_CORE_ENABLED.get()) return;   // 配置：关闭咒力核心制作（仪式）
         if (event.getHand() != InteractionHand.MAIN_HAND) return;
         Player player = event.getEntity();
         if (player == null || player.level().isClientSide) return;

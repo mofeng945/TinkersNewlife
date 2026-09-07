@@ -40,6 +40,7 @@ public class YogSothothKeyHandler {
 
     @SubscribeEvent
     public static void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
+        if (!com.mofengbaizhi.tinkersnewlife.config.ModConfig.YOG_SOTHOTH_KEY.get()) return;   // 配置开关
         ItemStack stack = event.getItemStack();
         if (stack.getItem() != ModItems.YOG_SOTHOTH_GATE_KEY.get()) return;
 

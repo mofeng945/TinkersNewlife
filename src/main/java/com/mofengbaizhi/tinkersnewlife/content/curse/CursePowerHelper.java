@@ -53,6 +53,7 @@ public final class CursePowerHelper {
 
     /** 查找玩家佩戴的咒力核心（curios 咒力核心槽），未佩戴返回空栈（服务端与客户端本地镜像均适用） */
     public static ItemStack findEquippedCurseCore(Player player) {
+        if (!com.mofengbaizhi.tinkersnewlife.config.ModConfig.CURSE_CORE_ENABLED.get()) return ItemStack.EMPTY;   // 配置：关闭咒力核心使用
         if (player == null) return ItemStack.EMPTY;
         var curios = CuriosApi.getCuriosInventory(player).resolve();
         if (curios.isEmpty()) return ItemStack.EMPTY;

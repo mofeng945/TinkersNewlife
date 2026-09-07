@@ -28,6 +28,7 @@ public class RlyehCallHandler {
 
     @SubscribeEvent
     public static void onItemFished(ItemFishedEvent event) {
+        if (!com.mofengbaizhi.tinkersnewlife.config.ModConfig.RLYEH_CALL.get()) return;   // 配置开关
         Player player = event.getEntity();
         Level level = player.level();
         if (level.isClientSide) return;

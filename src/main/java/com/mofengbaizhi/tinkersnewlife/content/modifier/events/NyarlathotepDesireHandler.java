@@ -50,6 +50,7 @@ public class NyarlathotepDesireHandler {
 
     @SubscribeEvent
     public static void onLivingHurt(LivingHurtEvent event) {
+        if (!com.mofengbaizhi.tinkersnewlife.config.ModConfig.NYARLATHOTEP_DESIRE.get()) return;   // 配置开关
         if (!(event.getEntity() instanceof Villager)) return;
         if (!(event.getSource().getEntity() instanceof Player player)) return;
         ATTACK_RECORDS.put(event.getEntity().getUUID(),

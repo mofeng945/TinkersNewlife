@@ -73,6 +73,7 @@ public class YellowKingHandler {
     // ==================== 检测下落触发 ====================
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
+        if (!com.mofengbaizhi.tinkersnewlife.config.ModConfig.YELLOW_KING.get()) return;   // 配置开关
         if (event.phase != TickEvent.Phase.END) return;
         Player player = event.player;
         Level level = player.level();
