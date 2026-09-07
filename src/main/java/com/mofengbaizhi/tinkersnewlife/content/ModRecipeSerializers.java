@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.content;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.AutoMaterialMeltingRecipe;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.CrystalModifierRecipe;
+import com.mofengbaizhi.tinkersnewlife.content.recipe.GenericToolMeltingRecipe;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.TagModifierSalvage;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraftforge.registries.DeferredRegister;
@@ -27,6 +28,11 @@ public class ModRecipeSerializers {
     public static final RegistryObject<RecipeSerializer<AutoMaterialMeltingRecipe>> AUTO_MATERIAL_MELTING =
             RECIPE_SERIALIZERS.register("auto_material_melting",
                     () -> LoadableRecipeSerializer.of(AutoMaterialMeltingRecipe.LOADER));
+
+    /** 通用匠魂工具熔化配方（读取工具所有部件材料，按最高融化温度熔化，见 GenericToolMeltingRecipe） */
+    public static final RegistryObject<RecipeSerializer<GenericToolMeltingRecipe>> TOOL_MELTING =
+            RECIPE_SERIALIZERS.register("tool_melting",
+                    () -> LoadableRecipeSerializer.of(GenericToolMeltingRecipe.LOADER));
 
     /** 修饰符槽位返还（术式/领域通用，按 modifier tag 一步到位，见 TagModifierSalvage） */
     public static final RegistryObject<RecipeSerializer<TagModifierSalvage>> TAG_MODIFIER_SALVAGE =
