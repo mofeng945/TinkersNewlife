@@ -11,5 +11,20 @@
     "tag": "forge:molten_gold"
   },
   "result": "tinkersnewlife:spell_core_cast",
-  "switch_slots": true
+  "switch_slots": true,
+  "conditions": [
+    {
+      "type": "forge:or",
+      "values": [
+        {
+          "type": "forge:mod_loaded",
+          "modid": "irons_spellbooks"
+        },
+        {
+          "type": "forge:mod_loaded",
+          "modid": "goety"
+        }
+      ]
+    }
+  ]
 }

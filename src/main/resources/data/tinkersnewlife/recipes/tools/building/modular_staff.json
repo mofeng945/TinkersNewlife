@@ -1,5 +1,20 @@
 {
   "type": "tconstruct:tool_building",
   "result": "tinkersnewlife:modular_staff",
-  "result_count": 1
+  "result_count": 1,
+  "conditions": [
+    {
+      "type": "forge:or",
+      "values": [
+        {
+          "type": "forge:mod_loaded",
+          "modid": "irons_spellbooks"
+        },
+        {
+          "type": "forge:mod_loaded",
+          "modid": "goety"
+        }
+      ]
+    }
+  ]
 }

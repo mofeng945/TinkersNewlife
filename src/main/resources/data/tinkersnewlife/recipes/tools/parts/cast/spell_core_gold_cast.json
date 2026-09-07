@@ -4,5 +4,20 @@
     "tag": "tinkersnewlife:casts/multi_use/spell_core"
   },
   "item_cost": 6,
-  "result": "tinkersnewlife:spell_core"
+  "result": "tinkersnewlife:spell_core",
+  "conditions": [
+    {
+      "type": "forge:or",
+      "values": [
+        {
+          "type": "forge:mod_loaded",
+          "modid": "irons_spellbooks"
+        },
+        {
+          "type": "forge:mod_loaded",
+          "modid": "goety"
+        }
+      ]
+    }
+  ]
 }

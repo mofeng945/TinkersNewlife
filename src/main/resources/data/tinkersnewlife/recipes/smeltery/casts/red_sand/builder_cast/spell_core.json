@@ -4,5 +4,20 @@
   "pattern_item": {
     "tag": "tconstruct:casts/red_sand"
   },
-  "result": "tinkersnewlife:spell_core_red_sand_cast"
+  "result": "tinkersnewlife:spell_core_red_sand_cast",
+  "conditions": [
+    {
+      "type": "forge:or",
+      "values": [
+        {
+          "type": "forge:mod_loaded",
+          "modid": "irons_spellbooks"
+        },
+        {
+          "type": "forge:mod_loaded",
+          "modid": "goety"
+        }
+      ]
+    }
+  ]
 }
