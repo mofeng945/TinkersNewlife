@@ -1,0 +1,12 @@
+{
+  "name": "术式熔断",
+  "category": "tinkersnewlife:curse",
+  "icon": "tinkersnewlife:curse_core",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "生存模式下关闭领域、或领域被破坏，会触发 $(bold)术式熔断$()：$(li)持续 60 - (咒力输出等级×5 + 咒力亲和) 秒，最低 10 秒$(li)期间无法展开领域、无法使用术式$(br2)熔断剩余时间会显示在行动栏。$(br2)创造模式下不会触发熔断。"
+    }
+  ]
+}

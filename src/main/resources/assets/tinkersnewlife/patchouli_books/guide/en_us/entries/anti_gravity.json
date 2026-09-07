@@ -1,17 +1,17 @@
 {
-    "name":  "反重力机构",
-    "category":  "tinkersnewlife:techniques",
+    "name": "Anti-Gravity",
+    "category": "tinkersnewlife:techniques",
     "icon": "tinkersnewlife:textures/gui/modifiers/anti_gravity.png",
-    "sortnum":  33,
+    "sortnum": 33,
     "advancement": "tinkersnewlife:techniques/anti_gravity",
-    "pages":  [
+    "pages": [
         {
-            "type":  "patchouli:text",
-            "text":  "$(bold)反重力机构$()：重力颠倒，万象皆坠。$(br2)$(bold)影响范围$()：以自身为球心，半径 = 4 + 咒力输出×0.6 + 咒力亲和×0.03 格，随咒力亲和与输出扩大。$(br2)$(bold)顺转（术式键 C）$()：对范围内除施术者（及自身召唤物）外的所有生物施加漂浮效果；每有一个目标消耗一份咒力（单位 = (1-亲和/100)×(6+输出×2)，目标越多消耗越多，咒力不足整发不发）。"
+            "type": "patchouli:text",
+            "text": "$(bold)Anti-Gravity$(): gravity inverted; all things fall.$(br2)$(bold)Affected Area$(): a sphere centered on yourself with a radius of 4 + Cursed Energy Output × 0.6 + Cursed Energy Affinity × 0.03 blocks, growing with your Affinity and Output.$(br2)$(bold)Forward (Technique Key C)$(): every creature within the area except the caster (and the caster's own summons) receives Levitation; each target costs one unit of cursed energy (unit = (1 - Affinity/100) × (6 + Output × 2) — the more targets, the heavier the drain, and if your cursed energy is insufficient the whole cast does not fire)."
         },
         {
-            "type":  "patchouli:text",
-            "text":  "$(bold)反转（反转键 F）$()：展开压力场（开关式，每秒消耗咒力，耗尽自动关闭）——场内目标承受压力：压力 = 8 + 输出×2.4 + 亲和×0.07。$(br2)目标压力阈值按体型与血量上限计算：阈值 = 6 + 体宽×体高×8 + 血量上限×0.12。体型越大、血越厚越抗压。$(li)未超阈值：仅受迟缓，越接近阈值等级越高（I~V）$(li)超出阈值：脚下非基岩方块被压碎（无掉落）、目标被定身，并在场内持续受到咒术伤害（单次 = 1.5 + 超出量×0.35，每 0.6 秒结算）$(br2)压力场对施术者本人及自身召唤物无效。"
+            "type": "patchouli:text",
+            "text": "$(bold)Reversal (Reversal Key F)$(): deploys a pressure field (a toggle — it drains cursed energy every second and shuts itself off when depleted): targets inside the field endure pressure: pressure = 8 + Output × 2.4 + Affinity × 0.07.$(br2)A target's pressure threshold is computed from its body size and max health: threshold = 6 + body width × height × 8 + max health × 0.12. The larger and hardier the target, the more pressure it can take.$(li)Below the threshold: it only suffers Slowness, at a higher level (I–V) the closer it is to the threshold$(li)Above the threshold: the blocks beneath its feet (bedrock excluded) are crushed (with no drops), the target is pinned in place, and it keeps taking cursed damage while inside the field (per hit = 1.5 + excess × 0.35, applied every 0.6 seconds)$(br2)The pressure field has no effect on the caster or their own summons."
         }
     ]
 }

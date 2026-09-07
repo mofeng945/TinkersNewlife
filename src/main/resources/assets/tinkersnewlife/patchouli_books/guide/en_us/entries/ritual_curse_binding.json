@@ -1,24 +1,24 @@
 {
-  "name": "天与咒缚·咒力（仪式）",
+  "name": "Heavenly Restriction: Cursed Energy (Ritual)",
   "category": "tinkersnewlife:basics",
   "icon": "minecraft:crying_obsidian",
   "sortnum": 3,
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(bold)天与咒缚·咒力$() —— 与「暴君」相反的束缚：献上$(bold)肉身$()，换来蓬勃的咒力。$(br2)发动条件（须全部满足）：$(li)满月之夜（月相 0，夜晚 13000~23000）$(li)露天：水池正上方不得有遮盖$(li)仪式点亮度 > 8（明亮场所）$(li)水池：1 格深、至少 9 个相连水源方块，池心正上方留出空间$(br2)创造模式下可跳过时间条件，便于测试。"
+      "text": "$(bold)Heavenly Restriction: Cursed Energy$() — the binding opposite to the \"Tyrant\": sacrifice your $(bold)flesh$() in exchange for surging Cursed Energy.$(br2)Conditions to trigger (all must be met):$(li)Full moon night (moon phase 0, night 13000~23000)$(li)Open sky: nothing may cover the pool directly above$(li)Light level at the ritual spot > 8 (a bright place)$(li)Pool: 1 block deep, at least 9 connected water source blocks, with open space right above the pool's center$(br2)In Creative mode the time condition can be skipped for easier testing."
     },
     {
       "type": "patchouli:text",
-      "text": "水池 16 格内需备齐祭坛材料：$(li)下界岩 ×7 以上$(li)哭泣黑曜石 ×9 以上（与暴君的黑曜石不同）$(li)灵魂沙 ×7 以上$(li)石英块 ×9 以上（与暴君的下界砖不同）$(li)在下界岩上点燃$(bold)火焰$()、在灵魂沙上点燃$(bold)灵魂火$()（各至少 1 处）$(br2)仪式点需要亮度 > 8：满月之夜露天光效有限，把火焰/灯光布置在池边即可满足。"
+      "text": "Within 16 blocks of the pool, prepare the altar materials:$(li)Netherrack ×7 or more$(li)Crying Obsidian ×9 or more (unlike the Tyrant's obsidian)$(li)Soul Sand ×7 or more$(li)Quartz Blocks ×9 or more (unlike the Tyrant's nether bricks)$(li)Light $(bold)fire$() on the netherrack and $(bold)soul fire$() on the soul sand (at least 1 of each)$(br2)The ritual spot needs light level > 8: on a full moon night the open-air lighting is limited, so arranging the fires/lights along the pool's edge is enough to satisfy it."
     },
     {
       "type": "patchouli:text",
-      "text": "步骤：$(li)1. 备齐材料并点燃火焰$(li)2. 向池水中投下一枚$(bold)任意咒力核心$()（会被仪式消耗）：核心被吸入池心旋转 3 秒后散开，水池泛起白光$(li)3. 跳入池水：每 20 tick 池水“治疗 −11% 最大生命”（直接扣血，不吃护甲与无敌帧），伴随大量白色方块破坏粒子，直到生命仅剩 1%$(li)4. 黑暗降临，屏幕中央依次浮现「天与咒缚」「咒力」「你掌握了咒力」，玻璃碎裂声与凋零死亡音响起；随后池水抽干、火焰熄灭，生命恢复至新上限的 40%"
+      "text": "Steps:$(li)1. Gather the materials and light the fires$(li)2. Throw a $(bold)Cursed Energy Core$() of any kind into the pool water (it is consumed by the ritual): the core is drawn into the pool's center, spins for 3 seconds, then scatters as the pool glows white$(li)3. Jump into the pool: every 20 ticks the pool \"heals −11% of max health\" (direct damage that ignores armor and invulnerability frames), with heavy white block-break particles, until your health is down to just 1%$(li)4. Darkness falls and the center of the screen shows \"Heavenly Restriction\", \"Cursed Energy\", \"You have mastered Cursed Energy\" in turn; glass shattering and a wither death sound play; then the pool drains, the fires go out, and your health recovers to 40% of the new maximum"
     },
     {
       "type": "patchouli:text",
-      "text": "完成后你获得$(bold)天与咒缚·咒力$()：$(li)肉体削弱：生命上限 / 移动速度 / 攻击伤害各 ×0.5（永久属性）$(li)咒力亲和：自带 $(bold)+200$()$(li)佩戴咒力核心时：咒力总量与咒力输出各自动 $(bold)+1$() 级$(br2)该状态$(bold)固化$()：死亡与重登都不会解除。$(bold)仪式检测$()：与「暴君」仪式互斥——完成两种束缚仪式中的任意一种后即挂上标识，持有标识期间两种仪式都无法再次举行；可用指令 $(bold)/tinkersnewlife unbind$() 清除标识并恢复体质与属性。投池的咒力核心会被消耗，需另行获取新的核心来佩戴享受加成。"
+      "text": "Upon completion you gain $(bold)Heavenly Restriction: Cursed Energy$():$(li)Weakened body: max health / movement speed / attack damage each ×0.5 (permanent attributes)$(li)Cursed Energy affinity: innate $(bold)+200$()$(li)While wearing a Cursed Energy Core: total Cursed Energy and Cursed Energy output each automatically gain $(bold)+1$() level$(br2)This state is $(bold)locked in$(): neither death nor relogging removes it.$(bold)Ritual detection$(): mutually exclusive with the \"Tyrant\" ritual — completing either binding ritual puts a mark on you, and while marked neither ritual can be held again; use the command $(bold)/tinkersnewlife unbind$() to clear the mark and restore your physique and attributes. The Cursed Energy Core thrown into the pool is consumed, so you will need to obtain a new core to wear and enjoy the bonuses."
     }
   ]
 }

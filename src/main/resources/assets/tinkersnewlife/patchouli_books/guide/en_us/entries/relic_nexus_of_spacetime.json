@@ -1,5 +1,5 @@
 {
-    "name":  "时空枢纽核心",
+    "name":  "Nexus of Spacetime",
     "category":  "tinkersnewlife:relics",
     "icon":  "tinkersnewlife:nexus_of_spacetime",
     "sortnum":  9,
@@ -7,7 +7,7 @@
                   {
                       "type":  "patchouli:spotlight",
                       "item":  "tinkersnewlife:nexus_of_spacetime",
-                      "text":  "$(bold)时空枢纽核心$()$(br2)获取：$(bold)远古城市$()箱子，$(bold)50%$() 概率 1 个。$(br2)用途：作为$(bold)附加$()参与$(l:relics/relic_yog_sothoth_gate_key)犹格索托斯的门之匙$()的锻造台合成。"
+                      "text":  "$(bold)Nexus of Spacetime$()$(br2)Obtaining: $(bold)Ancient City$() chests, with a $(bold)50%$() chance of 1.$(br2)Usage: serves as the $(bold)addition$() in the smithing table recipe for the $(l:relics/relic_yog_sothoth_gate_key)Yog-Sothoth Gate Key$()."
                   }
               ]
 }

@@ -1,5 +1,5 @@
 {
-    "name": "草木操术",
+    "name": "Plant Manipulation",
     "category": "tinkersnewlife:techniques",
     "icon": "tinkersnewlife:textures/gui/modifiers/plant_manipulation.png",
     "sortnum": 17,
@@ -7,15 +7,15 @@
     "pages": [
         {
             "type": "patchouli:text",
-            "text": "$(bold)草木操术$()：操草木为术。$(br2)$(bold)顺转$()：按下术式释放键打开选择界面，在$(bold)树根$()与$(bold)咒种$()中选定一种，随即进入蓄力；$(bold)瞄准敌人再按一次释放键$()施放（消耗沿用公式 (1 - 亲和/100) × (10 + 输出×5)）。蓄力 15 秒内未释放会自动消散；未命中则蓄力保留可重新瞄准。$(br2)$(bold)反转$()：按术式反转键（F）直接吸收自身 5×5×5 范围内植物的生命能量转化为咒力，无消耗。"
+            "text": "$(bold)Plant Manipulation$(): to command flora is the art. $(br2)$(bold)Forward activation$(): press the technique release key to open the selection screen, pick one of $(bold)Roots$() and $(bold)Cursed Seed$(), then begin charging; $(bold)aim at an enemy and press the release key once more$() to cast (cost follows the formula (1 - Affinity/100) × (10 + Output×5)). If it is not released within 15 seconds of charging it dissipates on its own; if it misses, the charge is kept and you may re-aim. $(br2)$(bold)Reversal$(): press the technique reversal key (F) to directly absorb the life energy of plants within a 5×5×5 area around you and convert it into Cursed Energy, at no cost."
         },
         {
             "type": "patchouli:text",
-            "text": "$(bold)树根$()：在目标脚下及周围 2 格长出$(bold)甜浆果丛$()：出生时为幼苗，$(bold)2 秒内生长到满阶段$()（不结果、不掉落甜浆果），持续 3 秒：$(li)场内敌人每 0.75 秒受到一次咒术伤害（共享伤害基底 × 20%/跳，套用魔杖增幅与咒力核心材料特性）并叠加减速$(li)浆果丛打碎不掉落任何物品，且期间$(bold)不可破坏 / 不可采摘$()（无法快速逃走）$(li)3 秒后自动还原原有方块$(br2)$(bold)咒种$()：使目标获得$(bold)咒种寄生$()（160 + 输出×16 tick）：$(li)攻击力降低 40%$(li)咒力总量、咒力输出各降一级（不低于 1）$(li)咒力亲和减少 60（不低于 0）"
+            "text": "$(bold)Roots$(): $(bold)Sweet Berry Bushes$() grow under the target's feet and in the 2 blocks around it: they are born as young shoots and $(bold)reach full stage within 2 seconds$() (no fruit, no sweet berries dropped), lasting 3 seconds: $(li)enemies inside take cursed technique damage every 0.75 seconds (shared damage base × 20% per tick, applying wand boosts and Cursed Core material traits) and stack slowness$(li)breaking the bushes drops nothing, and while active they are $(bold)unbreakable / unpickable$() (no quick escape)$(li)after 3 seconds the original blocks are restored automatically$(br2)$(bold)Cursed Seed$(): give the target $(bold)Cursed Seed Parasitism$() (160 + Output×16 ticks): $(li)attack damage reduced by 40%$(li)Cursed Energy capacity and Cursed Energy Output each drop one stage (never below 1)$(li)Cursed Energy Affinity reduced by 60 (never below 0)"
         },
         {
             "type": "patchouli:text",
-            "text": "$(bold)反转·草木汲取$()：吸收周围植物并转化为咒力：$(li)草方块 → 砂土：+1 咒力$(li)草（矮草/蕨/高草/大型蕨）破坏：+3 咒力，不掉落$(li)树苗破坏：+3 咒力，不掉落$(li)各种花朵破坏：+3 咒力，不掉落$(li)各种树叶破坏：+8 咒力，不掉落$(br2)方块判定按标签匹配（树苗 / 花朵 / 树叶标签），吸收范围以自身为中心 5×5×5。适合在森林/草丛环境中快速回蓝；空旷处无植物则不会获得咒力。"
+            "text": "$(bold)Reversal · Flora Drain$(): absorb nearby plants and convert them into Cursed Energy: $(li)Grass Block → Coarse Dirt: +1 Cursed Energy$(li)breaking grass (short grass / fern / tall grass / large fern): +3 Cursed Energy, no drops$(li)breaking saplings: +3 Cursed Energy, no drops$(li)breaking any flowers: +3 Cursed Energy, no drops$(li)breaking any leaves: +8 Cursed Energy, no drops$(br2)Blocks are matched by tag (sapling / flower / leaf tags) within a 5×5×5 area centered on yourself. Great for refilling Cursed Energy quickly in forests and grasslands; in open ground with no plants you gain nothing."
         }
     ]
 }

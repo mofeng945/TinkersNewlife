@@ -1,6 +1,6 @@
 {
-  "name": "材料",
-  "description": "可用于咒力核心的稀有材料：获取方式与自带特性",
+  "name": "Materials",
+  "description": "Rare materials usable on the Cursed Energy Core: how to obtain them and the traits they carry.",
   "icon": "tinkersnewlife:gheloth_remains",
   "sortnum": 4
 }

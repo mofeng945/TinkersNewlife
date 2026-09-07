@@ -1,13 +1,13 @@
 {
-    "name":  "冰龙鳞片",
-    "category":  "tinkersnewlife:traits",
-    "icon":  "tinkersnewlife:curse_core",
-    "sortnum":  25,
-    "pages":  [
-                  {
-                      "type":  "patchouli:text",
-                      "text":  "$(bold)冰龙鳞片$()（护甲专属特性，龙霜钢护甲部件）：天气这么热，你看起来像一根冰棍？$(br2)效果：穿戴时免疫细雪和冰冻伤害，受到攻击时冻结攻击者。"
-                  }
-              ],
-    "flag":  "mod:iceandfire"
+    "name": "Dragonsteel Ice (Armor)",
+    "category": "tinkersnewlife:traits",
+    "icon": "tinkersnewlife:curse_core",
+    "sortnum": 25,
+    "pages": [
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)Dragonsteel Ice$() (Armor-exclusive trait, Dragonsteel Ice armor parts): It's so hot out — you look like a popsicle?$(br2)Effect: while worn, immune to Powder Snow and freezing damage; when attacked, freezes the attacker."
+        }
+    ],
+    "flag": "mod:iceandfire"
 }

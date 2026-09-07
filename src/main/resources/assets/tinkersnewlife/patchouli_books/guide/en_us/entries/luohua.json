@@ -1,17 +1,17 @@
 {
-    "name":  "落花之情",
-    "category":  "tinkersnewlife:skills",
+    "name": "Falling Blossom",
+    "category": "tinkersnewlife:skills",
     "icon": "tinkersnewlife:textures/gui/modifiers/luohua.png",
-    "sortnum":  2,
+    "sortnum": 2,
     "advancement": "tinkersnewlife:skills/luohua",
-    "pages":  [
+    "pages": [
         {
-            "type":  "patchouli:text",
-            "text":  "$(bold)落花之情$()：落花随风，身法如舞。$(br2)$(bold)触发$()：被他人领域包裹时被动开启（咒力核心需装有本技巧）。$(br2)$(bold)效果$()：施术者仍可自由行动——能用术式、能用物品，但移动较为缓慢；以此抵御领域效果（伏魔御厨子斩击等无效）。"
+            "type": "patchouli:text",
+            "text": "$(bold)Falling Blossom$(): petals fall with the wind; the body moves like a dance. $(br2)$(bold)Trigger$(): passively activates while wrapped inside another's Domain (the Cursed Core must have this skill installed). $(br2)$(bold)Effect$(): the caster can still act freely — techniques and items both work, though movement is rather slow; this is how Domain effects are held off (the slashes of Malevolent Shrine and the like are nullified)."
         },
         {
-            "type":  "patchouli:text",
-            "text":  "$(bold)局限$()：$(red)无法防御无量空处的定身$()——无量之下仍会被定身。$(br2)$(bold)维持$()：持续消耗咒力 24/秒，耗尽则技巧失效；离开领域范围自动解除。$(br2)$(bold)用途$()：需要边打边撤/继续输出时的机动型抵御。"
+            "type": "patchouli:text",
+            "text": "$(bold)Limitation$(): $(red)it cannot defend against Unlimited Void's paralysis$() — beneath the Void you will still be frozen in place. $(br2)$(bold)Upkeep$(): drains Cursed Energy continuously at 24 per second; when it runs dry the skill fails; leaving the Domain's range dispels it automatically. $(br2)$(bold)Use$(): a mobile defense for when you must keep fighting / pulling back while still dealing damage."
         }
     ]
 }

@@ -1,0 +1,12 @@
+{
+  "name": "悚怖武装",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:curse_core",
+  "sortnum": 27,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)悚怖武装$()（护甲专属特性，慑怖钢护甲部件）：恐惧降临，万灵臣服。$(br2)效果：穿戴获得夜视、防火、免疫冰霜、限伤（每 0.5 秒 ≤ 30 点）。$(br2)技能：按下绑定按键消耗 5 级经验发动$(bold)悚域展开$()——5 秒内对 16 格内亮度 < 8 的生物造成多次伤害判定，冷却 120 秒。"
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 {
-  "name": "无为转变",
+  "name": "Idle Transfiguration",
   "category": "tinkersnewlife:techniques",
   "icon": "tinkersnewlife:textures/gui/modifiers/wu_wei.png",
   "sortnum": 15,
@@ -7,7 +7,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(bold)无为转变$()：重塑灵魂的形状。$(br2)每当你$(bold)击杀$()一种生物，该生物便会$(bold)被记录$()到形态库中。$(br2)$(bold)P 键$()：打开$(bold)形态选择界面$()（选择已记录的生物形态）。$(br2)$(bold)术式键 C$()：$(li)已选择形态 → $(bold)顺转$()：自己变形成该生物（继承其全部基础属性但不继承能力/AI）$(li)变形中再次按下 → $(bold)恢复人形$()$(br2)$(bold)术式反转键 F$()：开启/关闭$(bold)「转变外放」$()。$(br2)$(bold)转变外放$()：开启后的$(bold)下一次攻击$()（不再需要视线锁定）将把命中的目标变形成所选生物：$(li)$(bold)生物目标$() → $(bold)永久变形$()并化作你的守护式神（跟随/护主/近战攻击，$(bold)死亡即真死$()，不会还原）$(li)$(bold)玩家目标$() → 变形 $(bold)60 秒$()后自动恢复，期间无法使用工具$(li)目标生命值过高或咒力不足时变形失败$(br2)$(bold)变形特性$()：$(li)继承该生物的$(bold)全部基础属性$()（生命/移速/攻击等）$(li)$(bold)不继承$()该生物的能力与 AI$(li)变形状态登出保留，再次登录自动恢复$(li)占用术式槽。"
+      "text": "$(bold)Idle Transfiguration$(): reshape the very shape of the soul. $(br2)Whenever you $(bold)kill$() a creature, that creature is $(bold)recorded$() into your form library. $(br2)$(bold)P key$(): open the $(bold)form selection screen$() (choose a recorded creature's form). $(br2)$(bold)Technique key C$(): $(li)with a form selected → $(bold)forward activation$(): you transfigure yourself into that creature (inheriting all of its base stats but not its abilities/AI)$(li)press again while transformed → $(bold)return to human form$()$(br2)$(bold)Technique reversal key F$(): toggle $(bold)Transfiguration Emission$() on / off. $(br2)$(bold)Transfiguration Emission$(): while on, your $(bold)next attack$() (no longer requiring line-of-sight locking) will transfigure whatever it hits into the selected creature: $(li)$(bold)creature target$() → $(bold)permanently transfigured$() and turned into your guardian shikigami (follows / protects / melee-attacks; $(bold)death is true death$() — it will not revert)$(li)$(bold)player target$() → reverts automatically after $(bold)60 seconds$(); during that time they cannot use tools$(li)the transfiguration fails if the target's health is too high or your Cursed Energy is insufficient$(br2)$(bold)Transfiguration traits$(): $(li)inherits the creature's $(bold)full base stats$() (health / speed / attack, etc.)$(li)does $(bold)not inherit$() its abilities or AI$(li)the transformed state is kept across logout and reverts automatically when you next log in$(li)occupies a technique slot."
     }
   ]
 }

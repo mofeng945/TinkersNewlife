@@ -1,12 +1,12 @@
 {
-    "name":  "群星之子",
-    "category":  "tinkersnewlife:traits",
-    "icon":  "tinkersnewlife:ashen_ink_bucket",
-    "sortnum":  1,
-    "pages":  [
-                  {
-                      "type":  "patchouli:text",
-                      "text":  "$(bold)群星之子$()（灰白之墨的默认特性）$(br2)效果：将你造成的$(bold)最终伤害$()提升至原来的$(bold)两倍$()，每级再翻倍（×2^级）。$(br2)最终伤害 = 经过护甲、附魔、药水等全部结算后的伤害，因此该加成极为强力。$(br2)触发方式：被动常驻，无需操作。"
-                  }
-              ]
+    "name": "Child of the Stars",
+    "category": "tinkersnewlife:traits",
+    "icon": "tinkersnewlife:ashen_ink_bucket",
+    "sortnum": 1,
+    "pages": [
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)Child of the Stars$() (default trait of Ashen Ink)$(br2)Effect: increases the $(bold)final damage$() you deal to $(bold)twice$() its original value, doubling again with each level (×2^level).$(br2)Final damage = the damage remaining after armor, enchantments, potions and all other layers of calculation, so this boost is extremely powerful.$(br2)Trigger: a passive that is always active — no action required."
+        }
+    ]
 }

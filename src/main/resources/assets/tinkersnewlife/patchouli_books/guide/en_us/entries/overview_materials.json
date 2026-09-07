@@ -1,12 +1,12 @@
 {
-  "name": "材料总览",
+  "name": "Materials Overview",
   "category": "tinkersnewlife:materials",
   "icon": "tinkersnewlife:gheloth_remains",
   "sortnum": 0,
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "咒力核心的材料由仪式注入的流体决定（流体 → 材料的熔融配方）。核心部件按$(bold)头部$()统计结算，只应用材料的$(bold)默认特性$()（default），护甲专属特性（perStat: armor）不会出现在核心上。$(br2)共十种核心可用材料，点击查看各自的$(bold)获取方式$()与$(bold)自带特性$()：$(li)$(l:materials/material_ashen_ink)灰白之墨$()（T3）$(li)$(l:materials/material_dragonbone)龙骨$()（T1）$(li)$(l:materials/material_dragonsteel_fire)龙炎钢$()（T3）$(li)$(l:materials/material_dragonsteel_ice)龙霜钢$()（T3）$(li)$(l:materials/material_dragonsteel_lightning)龙霆钢$()（T3）$(li)$(l:materials/material_dreadsteel)慑怖钢$()（T4）$(li)$(l:materials/material_durandal)杜兰达尔$()（特殊）$(li)$(l:materials/material_gheloth_remains)格赫罗斯残骸$()（T4）$(li)$(l:materials/material_hastur_malice)哈斯塔恶意$()（T2）$(li)$(l:materials/material_nicholas_blessing)生命冲动$()（T3）$(br2)各材料特性的效果详见$(l:traits/trait_overview)战斗特性$()章节。"
+      "text": "A Cursed Energy Core's material is decided by the fluid injected during the ritual (the melting recipes from fluid → material). Core parts are tallied by their $(bold)head$(), and only the material's $(bold)default traits$() (default) apply — armor-exclusive traits (perStat: armor) never appear on cores.$(br2)There are ten usable core materials in total; click each one to see its $(bold)acquisition$() and $(bold)innate traits$():$(li)$(l:materials/material_ashen_ink)Ashen Ink$() (T3)$(li)$(l:materials/material_dragonbone)Dragonbone$() (T1)$(li)$(l:materials/material_dragonsteel_fire)Dragonsteel Fire$() (T3)$(li)$(l:materials/material_dragonsteel_ice)Dragonsteel Ice$() (T3)$(li)$(l:materials/material_dragonsteel_lightning)Dragonsteel Lightning$() (T3)$(li)$(l:materials/material_dreadsteel)Dreadsteel$() (T4)$(li)$(l:materials/material_durandal)Durandal$() (special)$(li)$(l:materials/material_gheloth_remains)Gheloth Remains$() (T4)$(li)$(l:materials/material_hastur_malice)Hastur's Malice$() (T2)$(li)$(l:materials/material_nicholas_blessing)Life Impulse$() (T3)$(br2)For the effects of each material's traits, see the $(l:traits/trait_overview)Combat Traits$() chapter."
     }
   ]
 }

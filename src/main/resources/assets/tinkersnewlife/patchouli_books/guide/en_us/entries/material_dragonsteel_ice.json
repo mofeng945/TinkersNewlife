@@ -1,18 +1,18 @@
 {
-    "name":  "龙霜钢",
-    "category":  "tinkersnewlife:materials",
-    "icon":  "tinkersnewlife:molten_dragonsteel_ice_bucket",
-    "sortnum":  4,
-    "pages":  [
-                  {
-                      "type":  "patchouli:spotlight",
-                      "item":  "tinkersnewlife:molten_dragonsteel_ice_bucket",
-                      "text":  "$(bold)获取方式$()：$(li)获得$(bold)熔融龙霜钢$()——在冶炼炉中熔炼龙霜钢锭（由$(bold)冰火传说$()的$(bold)冰龙$()材料制成）$(li)在铸造台用熔融龙霜钢 $(bold)90 mB$()（1 锭）制作龙霜钢材料$(br2)等级：$(bold)T3$()。"
-                  },
-                  {
-                      "type":  "patchouli:text",
-                      "text":  "$(bold)自带特性$()：$(li)$(l:traits/trait_dragonsteel_ice)龙霜$()：命中时施加冰霜效果，大幅减速、持续冻伤，并在周围生成冰霜$(br2)龙钢三系之一，偏向控制与持续伤害。"
-                  }
-              ],
-    "flag":  "mod:iceandfire"
+  "name": "Dragonsteel (Ice)",
+  "category": "tinkersnewlife:materials",
+  "icon": "tinkersnewlife:molten_dragonsteel_ice_bucket",
+  "sortnum": 4,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:molten_dragonsteel_ice_bucket",
+      "text": "$(bold)How to obtain$():$(li)Get $(bold)Molten Dragonsteel (Ice)$() by smelting Dragonsteel (Ice) Ingots in the Smeltery (made from Ice and Fire's $(bold)Ice Dragon$() materials)$(li)At the Casting Table, pour $(bold)90 mB$() of Molten Dragonsteel (Ice) (1 ingot) to make Dragonsteel (Ice) material$(br2)Tier: $(bold)T3$()."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Innate traits$():$(li)$(l:traits/trait_dragonsteel_ice)Dragonfrost$(): on hit, applies a frost effect that greatly slows the target and deals continuous freezing damage, while spreading frost around it$(br2)One of the three dragonsteel variants, leaning toward crowd control and sustained damage."
+    }
+  ],
+  "flag": "mod:iceandfire"
 }

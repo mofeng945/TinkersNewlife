@@ -1,0 +1,17 @@
+{
+    "name":  "铁棺盖围山",
+    "category":  "tinkersnewlife:domains",
+    "icon": "tinkersnewlife:textures/gui/modifiers/tie_guan_gai_wei_shan.png",
+    "sortnum":  8,
+    "advancement": "tinkersnewlife:domains/tie_guan_gai_wei_shan",
+    "pages":  [
+        {
+            "type":  "patchouli:text",
+            "text":  "$(bold)铁棺盖围山$()：铁棺倾覆，山岳尽焚。$(br2)$(bold)展开$()：通用领域展开键，以自身为中心张开领域（困锁同其它领域，每秒消耗 半径×50 咒力）。领域内除施术者外$(red)所有目标持续被点燃$()，且$(red)每 5 tick 承受一次无视无敌帧的咒力灼烧$()——伤害随咒力输出/亲和成长（单次 0.6 + 输出×0.35 + 亲和×0.01），护甲/抗性等防御仍可衰减。"
+        },
+        {
+            "type":  "patchouli:text",
+            "text":  "$(bold)技巧抵挡$()：与胎藏遍野一致，本领域的点燃与灼烧$(bold)可被新阴流三技巧抵挡$()（弥虚葛笼/落花之情/简易领域，咒力足够时免疫）——只有伏诛赐死无法抵挡。$(br2)$(bold)提示$()：领域困锁墙内生物无法逃离火海；对免疫火焰的实体（下界生物/火焰免疫药水）不重复点燃，但咒力灼烧依旧全额生效。"
+        }
+    ]
+}

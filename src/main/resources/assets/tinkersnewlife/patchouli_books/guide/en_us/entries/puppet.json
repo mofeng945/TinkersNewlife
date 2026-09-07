@@ -1,5 +1,5 @@
 {
-    "name": "傀儡操术",
+    "name": "Puppet Manipulation",
     "category": "tinkersnewlife:techniques",
     "icon": "tinkersnewlife:textures/gui/modifiers/puppet.png",
     "sortnum": 16,
@@ -7,15 +7,15 @@
     "pages": [
         {
             "type": "patchouli:text",
-            "text": "$(bold)傀儡操术$()：以线为引，以偶为身。$(br2)按下术式释放键会打开选择界面，$(bold)3D 渲染$()铁傀儡 / 雪傀儡供你挑选；选定后召唤到面前，$(bold)玩家视角转移到傀儡身上$()操控。操控期间本体留在原地、可被攻击，屏幕下方显示傀儡血条。$(br2)费用：M = 1 + (输出 + 亲和/10)/10。$(li)铁傀儡：一次性消耗 $(bold)ceil(M×60)$() 咒力$(li)雪傀儡：一次性消耗 $(bold)ceil(M×35)$() 咒力$(li)雪球与击飞 $(bold)不消耗$()咒力；召回返还 $(bold)30%$()"
+            "text": "$(bold)Puppet Manipulation$(): with thread as the guide, with the puppet as the body. $(br2)Pressing the technique release key opens a selection screen showing $(bold)3D-rendered$() Iron Golems / Snow Golems to choose from; once chosen, the puppet is summoned in front of you and $(bold)your view shifts onto the puppet$() to control it. While controlling, your original body stays where it is and can be attacked; the puppet's health bar is shown at the bottom of the screen. $(br2)Cost: M = 1 + (Output + Affinity/10)/10. $(li)Iron Golem: one-time cost of $(bold)ceil(M×60)$() Cursed Energy$(li)Snow Golem: one-time cost of $(bold)ceil(M×35)$() Cursed Energy$(li)snowballs and knockback $(bold)cost nothing$(); recalling refunds $(bold)30%$()"
         },
         {
             "type": "patchouli:text",
-            "text": "$(bold)铁傀儡$()：$(li)$(bold)左键$() 近战攻击，伤害 = round((4 + 输出×4) × (1 + 亲和/100))$(li)$(bold)右键$() 击飞前方敌人（60° 扇形 2.5 格，无直接伤害）$(li)$(bold)Shift$() 自爆：伤害 = (30 + 输出×10) × (1 + 亲和/100)，半径 5 格线性衰减，不破坏方块$(br2)$(bold)雪傀儡$()：$(li)$(bold)左键无效$()$(li)$(bold)右键$() 投雪球（4 tick 一发），伤害 = round((2 + 输出×2) × (1 + 亲和/100))，命中附短霜冻$(li)$(bold)Shift$() 自爆：伤害 = (12 + 输出×6) × (1 + 亲和/100)，半径 3 格，命中附霜冻$(br2)操控方式与黑鸟操术相同：WASD 移动、空格跳跃、Shift 自爆、视角即弹道/朝向。"
+            "text": "$(bold)Iron Golem$(): $(li)$(bold)Left click$() melee attack, damage = round((4 + Output×4) × (1 + Affinity/100))$(li)$(bold)Right click$() knock enemies in front of you away (60° arc, 2.5 blocks, no direct damage)$(li)$(bold)Shift$() self-destruct: damage = (30 + Output×10) × (1 + Affinity/100), radius 5 blocks with linear falloff; does not destroy blocks$(br2)$(bold)Snow Golem$(): $(li)$(bold)Left click does nothing$()$(li)$(bold)Right click$() throws snowballs (one every 4 ticks), damage = round((2 + Output×2) × (1 + Affinity/100)), applying brief frost on hit$(li)$(bold)Shift$() self-destruct: damage = (12 + Output×6) × (1 + Affinity/100), radius 3 blocks; applies frost on hit$(br2)Controls are the same as Crow Manipulation: WASD to move, Space to jump, Shift to self-destruct, and your view determines the body's facing and shots."
         },
         {
             "type": "patchouli:text",
-            "text": "$(bold)细节$()：$(li)再次按术式键召回傀儡（返还 30% 咒力）$(li)傀儡死亡 / 本体死亡 → 视角回归$(li)自爆后需冷却 $(bold)max(200, 1200 - 输出×40)$() tick 才能重新召唤$(li)傀儡伤害对主人、被主人雇佣的墨默、己方式神$(bold)全部豁免$()$(li)傀儡不掉落战利品；离开操控范围会自动拉回主人身边"
+            "text": "$(bold)Details$(): $(li)press the technique key again to recall the puppet (refunds 30% Cursed Energy)$(li)puppet death / your own body's death → the view returns to you$(li)after a self-destruct, wait $(bold)max(200, 1200 - Output×40)$() ticks before summoning again$(li)puppet damage is $(bold)fully exempt$() against its master, Momo creatures hired by the master, and allied shikigami$(li)puppets drop no loot; leaving the control range pulls the puppet back to its master automatically"
         }
     ]
 }

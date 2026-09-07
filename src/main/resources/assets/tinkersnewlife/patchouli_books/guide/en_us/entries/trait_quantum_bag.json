@@ -1,12 +1,12 @@
 {
-  "name": "量子背包",
+  "name": "Quantum Bag",
   "category": "tinkersnewlife:traits",
   "icon": "tinkersnewlife:curse_core",
   "sortnum": 22,
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(bold)量子背包$()：！？背背？！$(br2)效果：在个人维度口袋中存储物品。$(br2)使用：装备后按绑定按键打开背包界面。"
+      "text": "$(bold)Quantum Bag$(): !?You carry it on your back?!$(br2)Effect: stores items in your personal pocket dimension.$(br2)Usage: equip it, then press the bound key to open the bag screen."
     }
   ]
 }

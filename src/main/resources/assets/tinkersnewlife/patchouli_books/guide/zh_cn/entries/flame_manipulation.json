@@ -1,0 +1,17 @@
+{
+    "name": "炎熔操术",
+    "category": "tinkersnewlife:techniques",
+    "icon": "tinkersnewlife:textures/gui/modifiers/flame_manipulation.png",
+    "sortnum": 18,
+    "advancement": "tinkersnewlife:techniques/flame_manipulation",
+    "pages": [
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)炎熔操术$()：炽热奔流，焚尽万物。$(br2)$(bold)顺转$()：对视线内目标，将其脚下 $(bold)3×3$() 范围的方块（基岩除外）$(bold)融化为炽热岩浆$()：$(li)岩浆池持续 3 秒后自动还原为原方块$(li)身处岩浆池内的目标每 0.75 秒受到一次咒术伤害（共享伤害基底 × 25%/跳，套用魔杖增幅与咒力核心材料特性）并被点燃$(li)释放消耗沿用公式 (1 - 亲和/100) × (10 + 输出×5)$(br2)$(bold)反转$()：按术式反转键（F）召唤 $(bold)5 只自爆幻翼·焰羽$()。"
+        },
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)焰羽（反转）$()：$(li)消耗 = $(bold)ceil(M×100)$()（M = 1 + (输出+亲和/10)/10）$(li)体型缩为原版幻翼的 $(bold)1/8$()，生命仅 1 点，扇翅极快$(li)1 秒前摇后$(bold)依次错峰$()飞速撞向锁定敌人$(li)每次撞击引发$(bold)等同黑鸟自爆$()的爆炸：中心伤害 = (1 + 亲和/100) × (输出×3 + 1) × 10，半径 3 格线性衰减$(li)爆炸同时点燃敌人，并在其脚下 3×3 范围燃起火焰（3 秒后熄灭）$(br2)焰羽生命脆弱，若在途中被击落（1 点生命）则不会抵达；适合配合顺转岩浆先困住敌人再引爆。"
+        }
+    ]
+}

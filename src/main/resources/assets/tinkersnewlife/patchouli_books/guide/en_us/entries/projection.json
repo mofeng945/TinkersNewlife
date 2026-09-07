@@ -1,13 +1,13 @@
 {
-    "name":  "投射咒法",
-    "category":  "tinkersnewlife:techniques",
+    "name": "Projection Sorcery",
+    "category": "tinkersnewlife:techniques",
     "icon": "tinkersnewlife:textures/gui/modifiers/projection.png",
-    "sortnum":  10,
-    "advancement":  "tinkersnewlife:techniques/projection",
-    "pages":  [
-                  {
-                      "type":  "patchouli:text",
-                      "text":  "$(bold)投射咒法$()：一瞬之间，我已在你身后。$(br2)发动时按当前移动速度计算 $(bold)1 秒内最大直线移动距离$()，在视线方向$(bold)同水平面$()生成玩家$(bold)虚影$()（半透明蓝色人形），距离 = 最大距离的 2/3 ~ 1 倍。$(br2)$(bold)1 秒内触碰虚影$() → 虚影消失，获得 10 秒增益：$(li)伤害 ×2（上限 2^10 倍）$(li)速度 ×2（上限 32 倍）$(li)跳跃高度 ×2（上限 8 倍）$(br2)每次触碰层数 +1 可叠加；$(bold)超时未触碰$() → 原地罚站 3 秒（视角锁定、鼠标键盘全部禁用）。$(br2)消耗：咒力上限的 1/12。"
-                  }
-              ]
+    "sortnum": 10,
+    "advancement": "tinkersnewlife:techniques/projection",
+    "pages": [
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)Projection Sorcery$(): in the blink of an eye, I am already behind you. $(br2)On activation, compute the $(bold)maximum straight-line distance you can cover in 1 second$() from your current movement speed, then spawn a player $(bold)afterimage$() (a translucent blue figure) $(bold)on the same horizontal plane$() in your line of sight, at a distance between 2/3 and 1 times that maximum. $(br2)$(bold)Touching the afterimage within 1 second$() → the afterimage vanishes and you gain a 10-second buff: $(li)damage ×2 (cap ×2^10)$(li)speed ×2 (cap ×32)$(li)jump height ×2 (cap ×8)$(br2)each touch adds +1 to the stack and stacks combine; $(bold)failing to touch it in time$() → you stand frozen in place for 3 seconds (camera locked, mouse and keyboard fully disabled). $(br2)Cost: 1/12 of your maximum Cursed Energy."
+        }
+    ]
 }

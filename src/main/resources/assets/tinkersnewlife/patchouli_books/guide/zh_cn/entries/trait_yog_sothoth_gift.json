@@ -1,0 +1,12 @@
+{
+  "name": "时空馈赠",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:textures/gui/modifiers/yog_sothoth_gift.png",
+  "sortnum": 13,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)时空馈赠$()：犹格索托斯之门已为你敞开，知识的洪流涌入你的灵魂。$(br2)效果：持有此工具时，获得的$(bold)经验提升 500%$()。"
+    }
+  ]
+}

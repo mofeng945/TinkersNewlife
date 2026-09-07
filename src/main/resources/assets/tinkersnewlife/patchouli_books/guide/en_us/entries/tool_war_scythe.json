@@ -1,5 +1,5 @@
 {
-    "name":  "战镰",
+    "name":  "War Scythe",
     "category":  "tinkersnewlife:tools",
     "icon":  "tinkersnewlife:war_scythe",
     "sortnum":  1,
@@ -7,11 +7,11 @@
                   {
                       "type":  "patchouli:spotlight",
                       "item":  "tinkersnewlife:war_scythe",
-                      "text":  "$(bold)战镰$()$(br2)获取：通过$(bold)匠魂工匠站$()打造——宽剑刃 / 小型剑刃 + 坚韧手柄 + 坚韧套环组合。$(br2)特点：经过战斗化改造的镰刀，比初始版本$(bold)更高攻击力$()和$(bold)更大攻击范围$()，并掌握特别的攻击技巧。"
+                      "text":  "$(bold)War Scythe$()$(br2)Obtaining: craft it at the $(bold)Tinker Station$() — combining Broad Sword Blade / Small Sword Blade + Tough Handle + Tough Ring.$(br2)Features: a scythe rebuilt for combat, boasting $(bold)higher attack damage$() and a $(bold)larger attack range$() than its original version, along with a special attacking skill."
                   },
                   {
                       "type":  "patchouli:text",
-                      "text":  "$(bold)狂热（Fever）系统$()：$(li)每次攻击积攒 Fever，攻击速度随 Fever 提升$(li)按住方向键攻击消耗 $(bold)20 Fever$() 瞬移$(li)Fever 满（100）时，按住 $(bold)W + Shift + 右键$() 释放$(bold)终极斩击$()：造成 5 次 × 60% 基础伤害$(br2)Fever 状态显示在工具提示中。"
+                      "text":  "$(bold)Fever system$():$(li)every attack builds up Fever, and attack speed rises with your Fever$(li)attacking while holding a direction key consumes $(bold)20 Fever$() to blink$(li)when Fever is full (100), hold $(bold)W + Shift + Right Click$() to unleash the $(bold)Ultimate Slash$(): dealing 5 hits × 60% of your base damage$(br2)Your current Fever is shown on the tooltip."
                   }
               ]
 }

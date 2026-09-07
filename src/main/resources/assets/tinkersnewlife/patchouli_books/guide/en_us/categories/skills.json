@@ -1,6 +1,6 @@
 {
-  "name": "技巧",
-  "description": "新阴流三秘术：被他人领域包裹时被动开启，以持续咒力抵御领域效果。",
+  "name": "Skills",
+  "description": "The three secret arts of the New Shadow Style: when caught inside another's Domain, they activate passively and drain a steady stream of Cursed Energy to resist the Domain's effects.",
   "icon": "tinkersnewlife:textures/gui/modifiers/jianyi_lingyu.png",
   "sortnum": 4
 }

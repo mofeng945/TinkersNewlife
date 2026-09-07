@@ -1,0 +1,12 @@
+{
+  "name": "领域对抗",
+  "category": "tinkersnewlife:domains",
+  "icon": "tinkersnewlife:curse_core",
+  "sortnum": 4,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "当两个领域发生重叠时触发$(bold)领域对抗$()：$(li)重叠区域屏障消失，双方领域效果暂停$(li)咒力消耗加剧：× (1 + (对方咒力输出 + 对方咒力亲和/10)/100)$(li)败者被强行拉入胜者的领域，屏障重建$(br2)持续消耗咒力，先耗尽的一方落败。"
+    }
+  ]
+}

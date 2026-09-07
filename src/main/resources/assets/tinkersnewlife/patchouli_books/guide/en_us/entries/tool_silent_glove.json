@@ -1,5 +1,5 @@
 {
-    "name":  "噤默手套",
+    "name":  "Silent Glove",
     "category":  "tinkersnewlife:tools",
     "icon":  "tinkersnewlife:silent_glove",
     "sortnum":  4,
@@ -7,11 +7,11 @@
                   {
                       "type":  "patchouli:spotlight",
                       "item":  "tinkersnewlife:silent_glove",
-                      "text":  "$(bold)噤默手套$()$(br2)获取：通过$(bold)匠魂工匠站$()打造——噤默手套核心 + 噤默手套表面部件组合。$(br2)特点：$(li)$(bold)空手时$()自动从$(bold)空间奇点库$()中取出武器$(li)装备于手上后扩充$(bold)戒指槽位$()（curios）$(li)主手右键打开空间奇点库界面"
+                      "text":  "$(bold)Silent Glove$()$(br2)Obtaining: craft it at the $(bold)Tinker Station$() — combining a Silent Glove Core + Silent Glove Surface parts.$(br2)Features:$(li)when $(bold)bare-handed$(), automatically draws a weapon from the $(bold)Spatial Singularity Vault$()$(li)worn on the hand, it expands your $(bold)ring curio slots$() (Curios)$(li)right-click with it in your main hand to open the Spatial Singularity Vault interface"
                   },
                   {
                       "type":  "patchouli:text",
-                      "text":  "$(bold)空间奇点库$()：随身的武器库，可存入多件武器；噤默手套让你空手时自动切换武器，避免频繁打开背包。$(br2)空间奇点库容量与扩充槽位随等级提升。"
+                      "text":  "$(bold)Spatial Singularity Vault$(): a portable weapon vault that can hold several weapons; the Silent Glove lets you switch to a weapon automatically whenever you are bare-handed, saving you from constantly opening your inventory.$(br2)The Vault's capacity and the extra slots it grants increase with its level."
                   }
               ]
 }

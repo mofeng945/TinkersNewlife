@@ -1,5 +1,5 @@
 {
-    "name":  "拉莱耶的呼唤",
+    "name":  "R'lyeh Call",
     "category":  "tinkersnewlife:relics",
     "icon":  "tinkersnewlife:rlyeh_call",
     "sortnum":  1,
@@ -7,7 +7,7 @@
                   {
                       "type":  "patchouli:spotlight",
                       "item":  "tinkersnewlife:rlyeh_call",
-                      "text":  "$(bold)拉莱耶的呼唤$()$(br2)获取：在$(bold)夜晚 · 满月 · 水深 30+$() 的水域钓鱼，钓上鱼时有 $(bold)50%$() 概率获得（附不可名状 5 秒）。$(br2)用途：在冶炼炉中熔炼 → $(bold)1000 mB$() 灰白之墨液，是$(l:materials/material_ashen_ink)灰白之墨$()材料的源头。"
+                      "text":  "$(bold)R'lyeh Call$()$(br2)Obtaining: go fishing in water at $(bold)night · full moon · depth 30+$(); when you catch a fish, there is a $(bold)50%$() chance to obtain it (inflicted with Unnamable for 5 seconds).$(br2)Usage: smelt it in a smeltery → $(bold)1000 mB$() of Molten Ashen Ink, the source of the $(l:materials/material_ashen_ink)Ashen Ink$() material."
                   }
               ]
 }

@@ -1,12 +1,12 @@
 {
-    "name":  "龙血储罐",
+    "name":  "Dragon Blood Tank",
     "category":  "tinkersnewlife:traits",
     "icon":  "minecraft:bone",
     "sortnum":  10,
     "pages":  [
                   {
                       "type":  "patchouli:text",
-                      "text":  "$(bold)龙血储罐$()（龙骨的默认特性）$(br2)效果：每级 +5000 mB 容量（最大 25000 mB），可储存$(bold)三种龙血$()（火龙血 / 冰龙血 / 雷龙血）。$(br2)使用：手持工具$(bold)右键龙类$()采集其血液存入储罐；血液可与$(bold)龙血注魔$()特性配合，为武器附加点燃 / 霜冻 / 缴械效果。"
+                      "text":  "$(bold)Dragon Blood Tank$() (Default trait of Dragon Bone)$(br2)Effect: +5000 mB capacity per level (max 25000 mB), capable of storing$(bold)all three types of dragon blood$() (Fire / Ice / Lightning Dragon Blood).$(br2)Usage: $(bold)Right-click dragons$() with the tool in hand to collect their blood into the tank; the blood can combine with the $(bold)Dragon Blood Infusion$() trait to apply Ignite / Frost / Disarm effects to weapons."
                   }
               ],
     "flag":  "mod:iceandfire"

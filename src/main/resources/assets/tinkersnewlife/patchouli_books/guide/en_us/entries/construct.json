@@ -1,13 +1,13 @@
 {
-    "name":  "构筑术式",
-    "category":  "tinkersnewlife:techniques",
+    "name": "Construction Technique",
+    "category": "tinkersnewlife:techniques",
     "icon": "tinkersnewlife:textures/gui/modifiers/construct.png",
-    "sortnum":  31,
-  "advancement": "tinkersnewlife:techniques/construct",
-    "pages":  [
-                  {
-                      "type":  "patchouli:text",
-                      "text":  "$(bold)构筑术式$()：以咒力凭空构筑、化虚为实。$(br2)$(bold)顺转（术式键 C）$()：开关「无限弹药模式」——手持会从背包请求弹药的武器（原版弓/弩、匠魂弓弩、TACZ 枪械等）时，弹药耗尽即消耗咒力凝结出对应的箭矢 / 子弹，无需再囤积弹药。$(br2)$(bold)反转（反转键 F）$()：打开拟造物品栏——从所有有合成配方的物品中挑选一件，按其珍贵程度与威力换算咒力并立即扣除，然后开始拟造：$(li)1 咒力 = 1 tick 构筑时间$(li)拟造期间移动速度减半$(li)拟造期间无法再次使用反转$(li)受到攻击会打断拟造，咒力不返还$(li)完成即获得仅存在 60 秒的临时物品"
-                  }
-              ]
+    "sortnum": 31,
+    "advancement": "tinkersnewlife:techniques/construct",
+    "pages": [
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)Construction Technique$(): build something from nothing with cursed energy — turning the imaginary real.$(br2)$(bold)Forward (Technique Key C)$(): toggles \"Infinite Ammunition Mode\" — while holding a weapon that draws ammunition from your inventory (vanilla bows/crossbows, Tinkers' bows and crossbows, TACZ firearms, and so on), when your ammo runs out it spends cursed energy to conjure the matching arrows / bullets on the spot, so you no longer need to stockpile ammunition.$(br2)$(bold)Reversal (Reversal Key F)$(): opens the Conjuration Inventory — pick any item that has a crafting recipe, and its cost, converted from how precious and powerful it is, is deducted as cursed energy immediately; then conjuring begins:$(li)1 cursed energy = 1 tick of construction time$(li)movement speed is halved while conjuring$(li)the reversal cannot be used again while conjuring$(li)being hit interrupts the conjuration, with no cursed energy refunded$(li)when finished, you receive a temporary item that lasts only 60 seconds"
+        }
+    ]
 }

@@ -1,17 +1,17 @@
 {
-    "name":  "十划咒法",
-    "category":  "tinkersnewlife:techniques",
+    "name": "Ratio Technique",
+    "category": "tinkersnewlife:techniques",
     "icon": "tinkersnewlife:textures/gui/modifiers/ten_divide.png",
-    "sortnum":  34,
+    "sortnum": 34,
     "advancement": "tinkersnewlife:techniques/ten_divide",
-    "pages":  [
+    "pages": [
         {
-            "type":  "patchouli:text",
-            "text":  "$(bold)十划咒法$()：十等分敌，一击入魂。$(br2)$(bold)顺转（术式键 C，需视线目标）$()：将目标按比例十等分，在其第七划处生成一颗$(bold)金色弱点小球$()——悬在目标身前 0.3 格、身高 70% 处，随目标移动/转身（持续 20 秒）。"
+            "type": "patchouli:text",
+            "text": "$(bold)Ratio Technique$(): divide the enemy into ten, pierce the soul in one stroke. $(br2)$(bold)Forward activation (technique key C, requires a target in sight)$(): divide the target into ten equal parts and, at its seventh division, spawn a $(bold)golden weak-point orb$() — hovering 0.3 blocks in front of the target at 70% of its height, following along as the target moves or turns (lasts 20 seconds)."
         },
         {
-            "type":  "patchouli:text",
-            "text":  "$(bold)击打弱点$()：只有你能击中这颗小球——近战挥击、箭矢、术式伤害皆可。击中即对目标结算一次暴击：伤害 × 暴击倍率 = 1.3 + 输出×0.08 + 亲和×0.004（满配约 2.5 倍），弱点一击即碎；打不中弱点就没有暴击，这才是真正的「精准」。$(br2)对已带弱点的目标再次按术式键，可立即发动一次$(bold)精准斩击$()（必中弱点）：伤害 = 共享咒术基底 × 暴击倍率。$(br2)小球会跟着目标移动，别急着一刀砍本体——先瞄准那颗金点。"
+            "type": "patchouli:text",
+            "text": "$(bold)Striking the weak point$(): only you can hit this orb — melee swings, arrows, and technique damage all work. A hit resolves one critical strike against the target: damage × crit multiplier = 1.3 + Output×0.08 + Affinity×0.004 (about ×2.5 at a full build); the weak point shatters in a single hit. No weak-point hit, no critical — that is what true precision demands. $(br2)Pressing the technique key again on a target that already bears a weak point instantly triggers one $(bold)precision slash$() (guaranteed weak-point strike): damage = shared cursed technique base × crit multiplier. $(br2)The orb follows the target around — do not rush to cut the body; aim for that golden speck first."
         }
     ]
 }

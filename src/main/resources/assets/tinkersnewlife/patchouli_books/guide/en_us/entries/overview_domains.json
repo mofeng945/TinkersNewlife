@@ -1,12 +1,12 @@
 {
-  "name": "领域总览",
+  "name": "Domains Overview",
   "category": "tinkersnewlife:domains",
   "icon": "tinkersnewlife:curse_core",
   "sortnum": 0,
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "领域占用核心的$(bold)领域槽$()，由仪式随机赋予。$(li)展开条件：佩戴核心、拥有领域特性、咒力 > 0（创造模式不限）$(li)半径 = 咒力输出等级 × 5 格$(li)每秒消耗 半径 × 系数 的咒力，耗尽自动关闭$(li)领域重叠时可进行$(l:domains/clash)领域对抗$()$(br2)三种领域：$(li)$(l:domains/zuosha_botu)坐杀搏徒$()：赌运摇奖$(li)$(l:domains/wuliang_kongchu)无量空处$()：时空静止$(li)$(l:domains/fumo_yuchuzi)伏魔御厨子$()：无差别斩击"
+      "text": "A Domain occupies the core's $(bold)Domain slot$() and is granted at random by a ritual.$(li)Expansion conditions: a core must be worn, a Domain trait must be owned, and Cursed Energy > 0 (no limit in Creative mode)$(li)Radius = Cursed Energy output level × 5 blocks$(li)Consumes radius × coefficient Cursed Energy per second; closes automatically when depleted$(li)Overlapping Domains can engage in a $(l:domains/clash)Domain Clash$()$(br2)The three Domains:$(li)$(l:domains/zuosha_botu)Idle Death Gamble$(): gamble on luck$(li)$(l:domains/wuliang_kongchu)Unlimited Void$(): time and space stand still$(li)$(l:domains/fumo_yuchuzi)Malevolent Shrine$(): indiscriminate slashing"
     }
   ]
 }

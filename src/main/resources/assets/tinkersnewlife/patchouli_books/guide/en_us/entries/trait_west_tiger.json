@@ -1,12 +1,12 @@
 {
-  "name": "西中之虎",
+  "name": "West Tiger",
   "category": "tinkersnewlife:traits",
   "icon": "tinkersnewlife:curse_core",
   "sortnum": 15,
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(bold)西中之虎$()：西境之虎，威震四方！$(br2)效果：加持在$(l:traits/trait_black_flash)黑闪$()武器上时，黑闪基础触发概率额外增加 当前攻击力÷10000。"
+      "text": "$(bold)West Tiger$(): the tiger of the west, awe-inspiring across the land!$(br2)Effect: when added to a $(l:traits/trait_black_flash)Black Flash$() weapon, the base trigger chance of Black Flash is further increased by (current attack damage ÷ 10000)."
     }
   ]
 }

@@ -1,5 +1,5 @@
 {
-    "name":  "奈亚的欲念",
+    "name":  "Nyarlathotep's Desire",
     "category":  "tinkersnewlife:relics",
     "icon":  "tinkersnewlife:nyarlathotep_desire",
     "sortnum":  2,
@@ -7,7 +7,7 @@
                   {
                       "type":  "patchouli:spotlight",
                       "item":  "tinkersnewlife:nyarlathotep_desire",
-                      "text":  "$(bold)奈亚的欲念$()$(br2)获取：攻击村民后 $(bold)5 秒内$()使其死于$(bold)非玩家之手$()（摔落 / 溺亡 / 其他生物），$(bold)10 秒后$() $(bold)50%$() 概率获得——否则受到$(bold)凋零 II 60 秒$()惩罚。$(br2)扭曲的欲望从村民的非命之死中诞生。"
+                      "text":  "$(bold)Nyarlathotep's Desire$()$(br2)Obtaining: within $(bold)5 seconds$() of attacking a villager, make it die by $(bold)something other than a player$() (falling / drowning / other mobs); $(bold)10 seconds later$(), a $(bold)50%$() chance to obtain it — otherwise you are punished with $(bold)Wither II for 60 seconds$().$(br2)Twisted desire is born from the unnatural death of a villager."
                   }
               ]
 }

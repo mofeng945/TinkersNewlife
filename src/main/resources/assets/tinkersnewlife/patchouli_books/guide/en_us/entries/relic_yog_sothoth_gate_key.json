@@ -1,5 +1,5 @@
 {
-    "name":  "犹格索托斯的门之匙",
+    "name":  "Yog-Sothoth Gate Key",
     "category":  "tinkersnewlife:relics",
     "icon":  "tinkersnewlife:yog_sothoth_gate_key",
     "sortnum":  5,
@@ -7,7 +7,7 @@
                   {
                       "type":  "patchouli:spotlight",
                       "item":  "tinkersnewlife:yog_sothoth_gate_key",
-                      "text":  "$(bold)犹格索托斯的门之匙$()$(br2)获取：在$(bold)锻造台$()合成——$(l:relics/relic_echo_of_the_void)虚空回响$()（模板）+ $(l:relics/relic_astral_anchor)星界之锚$()（基底）+ $(l:relics/relic_nexus_of_spacetime)时空枢纽核心$()（附加）。$(br2)知识的殿堂啊，时空的奥秘在低语……集齐三件探索遗物即可铸就门匙。"
+                      "text":  "$(bold)Yog-Sothoth Gate Key$()$(br2)Obtaining: crafted at a $(bold)smithing table$() — $(l:relics/relic_echo_of_the_void)Echo of the Void$() (template) + $(l:relics/relic_astral_anchor)Astral Anchor$() (base) + $(l:relics/relic_nexus_of_spacetime)Nexus of Spacetime$() (addition).$(br2)O hall of knowledge, the secrets of spacetime whisper... Gather the three exploration relics and the Gate Key shall be forged."
                   }
               ]
 }

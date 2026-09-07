@@ -1,16 +1,16 @@
 {
-  "name": "咒力核心仪式",
+  "name": "Cursed Energy Core Ritual",
   "category": "tinkersnewlife:basics",
   "icon": "tinkersnewlife:gheloth_ore",
   "sortnum": 1,
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "在 $(bold)格赫罗斯矿石$() 上展开仪式，献上流体与经验，即可凝结出一枚新的咒力核心。$(br2)要求：$(li)任意流体至少 6 锭（540 mB），注入中心的焦黑材料量器$(li)玩家等级 ≥ 50（仪式完成后消耗 50 级）$(li)矿石周围按图示摆放四种方块与灵魂灯笼"
+      "text": "Perform the ritual on a $(bold)Gheloth Ore$() block, offering up fluid and experience to condense a brand-new Cursed Energy Core.$(br2)Requirements:$(li)At least 6 ingots (540 mB) of any fluid, poured into the Seared Ingot Gauge at the center$(li)Player level ≥ 50 (50 levels are consumed when the ritual completes)$(li)Place the four blocks and the soul lanterns around the ore as shown in the diagram"
     },
     {
       "type": "patchouli:multiblock",
-      "name": "仪式结构",
+      "name": "Ritual Structure",
       "multiblock": {
         "pattern": [
           ["..L..", ".....", "L.O.L", ".....", "..L.."],
@@ -28,11 +28,11 @@
         },
         "symmetrical": true
       },
-      "text": "底层中心为焦黑材料量器（也接受焦黑石材料量器），矿石悬于其上；距离量器 2 格的水平四方向各放一块$(bold)石 / 铁 / 金 / 钻石$() 方块，每块上方再放一盏灵魂灯笼。"
+      "text": "The center of the bottom layer is a Seared Ingot Gauge (a Seared Stone Ingot Gauge is also accepted), with the ore resting on top of it; two blocks from the gauge in each of the four horizontal directions stands one $(bold)Stone / Iron / Gold / Diamond$() block, each topped with a soul lantern."
     },
     {
       "type": "patchouli:text",
-      "text": "步骤：$(li)1. 搭建结构，向量器注入至少 540 mB 的任意流体$(li)2. 空手右键格赫罗斯矿石开始仪式$(li)3. 等待约 5 秒的粒子引导$(li)4. 仪式完成：消耗注入的流体与 50 级经验，在矿石处产出核心$(br2)核心的材料取决于注入的流体（如熔融玫瑰金 → 玫瑰金）。结构或流体不符时仪式会静默失败，不会消耗任何东西。"
+      "text": "Steps:$(li)1. Build the structure and pour at least 540 mB of any fluid into the gauge$(li)2. Right-click the Gheloth Ore with an empty hand to start the ritual$(li)3. Wait about 5 seconds while the particles guide the ritual$(li)4. The ritual completes: it consumes the injected fluid and 50 levels of experience, and produces a core at the ore$(br2)The core's material depends on the injected fluid (e.g. molten rose gold → rose gold). If the structure or fluid is wrong, the ritual fails silently without consuming anything."
     }
   ]
 }

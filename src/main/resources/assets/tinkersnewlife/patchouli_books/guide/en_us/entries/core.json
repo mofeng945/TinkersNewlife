@@ -1,21 +1,21 @@
 {
-  "name": "咒力核心",
+  "name": "Curse Core",
   "category": "tinkersnewlife:basics",
   "icon": "tinkersnewlife:curse_core",
   "sortnum": 0,
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(bold)咒力核心$() 是咒力系统的根基。它是一枚匠魂工具，佩戴在 $(bold)curios 咒力核心槽$() 中，提供：$(li)咒力上限与恢复$(li)术式（$(l:techniques/yuchuzi)御厨子$()/$(l:techniques/blood_manipulation)赤血操术$()等）$(li)领域（$(l:domains/zuosha_botu)坐杀搏徒$()/$(l:domains/wuliang_kongchu)无量空处$()/$(l:domains/fumo_yuchuzi)伏魔御厨子$()）$(li)材料战斗特性（随核心材料生效）"
+      "text": "$(bold)Curse Core$() is the foundation of the Cursed Energy system. It is a Tinkers' Construct tool worn in the $(bold)curios Curse Core slot$(), providing:$(li)Cursed Energy capacity and regeneration$(li)Techniques ($(l:techniques/yuchuzi)Shrine$()/$(l:techniques/blood_manipulation)Blood Manipulation$(), etc.)$(li)Domains ($(l:domains/zuosha_botu)Idle Death Gamble$()/$(l:domains/wuliang_kongchu)Unlimited Void$()/$(l:domains/fumo_yuchuzi)Malevolent Shrine$())$(li)Material combat traits (active depending on the core's material)"
     },
     {
       "type": "patchouli:spotlight",
       "item": "tinkersnewlife:curse_core",
-      "text": "核心只能通过 $(l:basics/ritual)咒力核心仪式$() 获得，无法在工具台上手工组装。$(br2)仪式产出的核心会随机获得 $(bold)咒力总量$() 与 $(bold)咒力输出$() 等级（1~5），随机附带一个术式与一个领域特性，并有 30% 概率额外获得术式槽（最多 3 个）。"
+      "text": "Cores can only be obtained through the $(l:basics/ritual)Curse Core Ritual$() and cannot be hand-assembled on a crafting table.$(br2)A core produced by the ritual randomly rolls a $(bold)Cursed Energy Reserve$() level and a $(bold)Cursed Output$() level (1–5), comes with one random Technique trait and one Domain trait, and has a 30% chance to gain an extra Technique slot (up to 3)."
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)熔炼回收$()：咒力核心是匠魂工具，可以直接丢进$(bold)冶炼炉或熔铸炉$()熔化，还原为$(bold)其材料对应的流体$()（如玫瑰金核心 → 熔融玫瑰金）。$(br2)不想要的核心可以烧掉回收材料，或留给 $(l:techniques/transfer)术式 / 领域转移$() 用。"
+      "text": "$(bold)Smelting recovery$(): since a Curse Core is a Tinkers' Construct tool, it can be thrown directly into the $(bold)Smeltery or Foundry$() to be melted down into $(bold)the fluid of its material$() (e.g. a Rose Gold core → Molten Rose Gold).$(br2)Unwanted cores can be burned to reclaim their materials, or kept for $(l:techniques/transfer)Technique / Domain Transfer$()."
     }
   ]
 }

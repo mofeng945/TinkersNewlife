@@ -1,13 +1,13 @@
 {
-    "name":  "咒力外放",
-    "category":  "tinkersnewlife:techniques",
+    "name": "Cursed Energy Discharge",
+    "category": "tinkersnewlife:techniques",
     "icon": "tinkersnewlife:textures/gui/modifiers/cursed_energy_release.png",
-    "sortnum":  30,
-  "advancement": "tinkersnewlife:techniques/cursed_energy_release",
-    "pages":  [
-                  {
-                      "type":  "patchouli:text",
-                      "text":  "$(bold)咒力外放$()：把咒力以纯粹能量形式打出去。$(br2)$(bold)顺转（术式键）$()：朝视线发射一枚咒力光弹，命中第一个敌人造成高额伤害，可被护甲衰减、材料特性触发。消耗中等咒力，带短冷却。$(br2)$(bold)反转（反转键 F）$()：冰沙冲击波（Granite Blast）——咒力以激光炮形式持续外放：$(li)每 2 tick 对沿视线命中的敌人造成伤害$(li)无视无敌帧$(li)持续 3 秒，期间可转动视角调整激光方向$(li)结束时顺转与反转一同进入 6 秒冷却$(br2)$(bold)本术式不受术式熔断影响$()，熔断期间仍可外放。"
-                  }
-              ]
+    "sortnum": 30,
+    "advancement": "tinkersnewlife:techniques/cursed_energy_release",
+    "pages": [
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)Cursed Energy Discharge$(): hurl your cursed energy out as pure force.$(br2)$(bold)Forward (Technique Key)$(): fire a bolt of cursed energy along your sight that deals heavy damage to the first enemy it hits; armor can reduce it and material traits trigger normally. It costs a moderate amount of cursed energy and has a short cooldown.$(br2)$(bold)Reversal (Reversal Key F)$(): Granite Blast — cursed energy discharged continuously as a laser cannon:$(li)every 2 ticks, it damages enemies hit along your sight$(li)ignores invulnerability frames$(li)lasts 3 seconds; you can keep turning your view to steer the beam$(li)when it ends, both the Forward and the Reversal enter a 6-second cooldown together$(br2)$(bold)This technique is unaffected by technique burnout$() — it can still be discharged while burnout is active."
+        }
+    ]
 }

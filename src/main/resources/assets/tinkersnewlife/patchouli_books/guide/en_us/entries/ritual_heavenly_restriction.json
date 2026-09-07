@@ -1,24 +1,24 @@
 {
-  "name": "天与咒缚·暴君（仪式）",
+  "name": "Heavenly Restriction: Tyrant (Ritual)",
   "category": "tinkersnewlife:basics",
   "icon": "minecraft:wither_skeleton_skull",
   "sortnum": 2,
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(bold)天与咒缚·暴君$() —— 以自损之仪与天地立下束缚（伏黑甚尔式）：$(bold)永久失去咒力$()，换来超越常理的肉体。$(br2)发动条件（须全部满足）：$(li)新月之夜（月相 4，夜晚 13000~23000）$(li)非露天：水池正上方需有屋顶遮盖$(li)仪式点亮度 < 8（暗室）$(li)水池：1 格深、至少 9 个相连水源方块，池心正上方留出空间$(br2)创造模式下可跳过时间条件，便于测试。"
+      "text": "$(bold)Heavenly Restriction: Tyrant$() — a binding sworn with heaven and earth through a self-damaging rite (Fushiguro Toji style): $(bold)permanently lose Cursed Energy$() in exchange for a body beyond all reason.$(br2)Conditions to trigger (all must be met):$(li)New moon night (moon phase 4, night 13000~23000)$(li)No open sky: the pool must be roofed over directly above$(li)Light level at the ritual spot < 8 (a dark room)$(li)Pool: 1 block deep, at least 9 connected water source blocks, with open space right above the pool's center$(br2)In Creative mode the time condition can be skipped for easier testing."
     },
     {
       "type": "patchouli:text",
-      "text": "水池 16 格内需备齐祭坛材料：$(li)下界岩 ×7 以上$(li)黑曜石 ×9 以上$(li)灵魂沙 ×7 以上$(li)下界砖 ×9 以上$(li)在下界岩上点燃$(bold)火焰$()、在灵魂沙上点燃$(bold)灵魂火$()（各至少 1 处）$(br2)$(bold)注意$()：火焰会发光——若离水池过近会顶掉“亮度 < 8”的发动条件，建议火焰放在 8 格以外或用墙隔开。"
+      "text": "Within 16 blocks of the pool, prepare the altar materials:$(li)Netherrack ×7 or more$(li)Obsidian ×9 or more$(li)Soul Sand ×7 or more$(li)Nether Bricks ×9 or more$(li)Light $(bold)fire$() on the netherrack and $(bold)soul fire$() on the soul sand (at least 1 of each)$(br2)$(bold)Note$(): fire emits light — if it is too close to the pool it will break the \"light level < 8\" trigger, so keep the fires 8 blocks away or wall them off."
     },
     {
       "type": "patchouli:text",
-      "text": "步骤：$(li)1. 备齐材料并点燃火焰$(li)2. 向池水中丢入一枚$(bold)凋零骷髅头颅$()：头颅会被吸入池心旋转 3 秒后轰然散开，池水变黑$(li)3. 跳入黑水：每 20 tick 池水“治疗 −11% 最大生命”（直接扣血，不吃护甲与无敌帧），伴随大量黑色方块破碎粒子，直到生命仅剩 1%$(li)4. 黑暗降临，屏幕中央依次浮现「天与咒缚」「肉体」「你失去了咒力」，玻璃碎裂声与凋灵诞生音响起$(li)5. 仪式完成：池水抽干、火焰熄灭，生命恢复至新上限的 40%"
+      "text": "Steps:$(li)1. Gather the materials and light the fires$(li)2. Throw a $(bold)Wither Skeleton Skull$() into the pool water: the skull is drawn into the pool's center, spins for 3 seconds, then bursts apart as the pool turns black$(li)3. Jump into the black water: every 20 ticks the pool \"heals −11% of max health\" (direct damage that ignores armor and invulnerability frames), with heavy black block-break particles, until your health is down to just 1%$(li)4. Darkness falls and the center of the screen shows \"Heavenly Restriction\", \"Body\", \"You have lost Cursed Energy\" in turn; glass shattering and a wither spawn sound play$(li)5. The ritual completes: the pool drains, the fires go out, and your health recovers to 40% of the new maximum"
     },
     {
       "type": "patchouli:text",
-      "text": "仪式完成后：池水被抽干、火焰全部熄灭，你获得$(bold)天与咒缚（天与暴君）$()：$(li)失去咒力：再也无法佩戴咒力核心（curios 槽位被封印）、无法打出黑闪（概率锁定 0）、咒力归零$(li)肉体强化：生命上限 $(bold)×5$()、移动速度 $(bold)×5$()、跳跃高度 $(bold)×3$()、攻击力 $(bold)×10$()（永久属性）$(br2)该状态$(bold)固化$()：死亡与重登都不会解除，期间强行塞入的咒力核心会被自动摘下。$(br2)$(bold)仪式检测$()：与「咒力」仪式互斥——完成两种束缚仪式中的任意一种后即挂上标识，持有标识期间两种仪式都无法再次举行；可用指令 $(bold)/tinkersnewlife unbind$() 清除标识并恢复体质与属性。"
+      "text": "After the ritual: the pool is drained and every fire is extinguished, and you gain $(bold)Heavenly Restriction (the Heavenly Tyrant)$():$(li)Loss of Cursed Energy: you can no longer wear a Cursed Energy Core (the curio slot is sealed), can no longer land Black Flashes (chance locked to 0), and your Cursed Energy drops to zero$(li)Body enhancement: max health $(bold)×5$(), movement speed $(bold)×5$(), jump height $(bold)×3$(), attack damage $(bold)×10$() (permanent attributes)$(br2)This state is $(bold)locked in$(): neither death nor relogging removes it, and any Cursed Energy Core forced in during this state is automatically taken off.$(br2)$(bold)Ritual detection$(): mutually exclusive with the \"Cursed Energy\" ritual — completing either binding ritual puts a mark on you, and while marked neither ritual can be held again; use the command $(bold)/tinkersnewlife unbind$() to clear the mark and restore your physique and attributes."
     }
   ]
 }

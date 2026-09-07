@@ -1,0 +1,17 @@
+{
+  "name": "雅各布天梯",
+  "category": "tinkersnewlife:techniques",
+  "icon": "tinkersnewlife:textures/gui/modifiers/jacobs_ladder.png",
+  "sortnum": 13,
+  "advancement": "tinkersnewlife:techniques/jacobs_ladder",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)雅各布天梯$()：通往天国的阶梯，亦为审判之柱。$(br2)对看向的目标（16 格内），在其$(bold)头顶上方 10 格$()召唤带有$(bold)七芒星与十字架$()的大型魔法阵，$(bold)2 秒蓄力$()后降下巨大的光柱。$(br2)$(bold)法阵半径$() = (1 + (咒力亲和/10 + 咒力输出)/10) × 咒力输出 × 5 格$(br2)$(bold)光柱基础帧伤$() = (1 + (咒力亲和/10 + 咒力输出)/10) × (咒力输出×8 + 玩家伤害) × 0.1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)被光柱照射的目标$()：$(li)60 秒内$(bold)禁用术式与领域$()——$(l:techniques/wuliang_wuxian)无下限·无限$()等$(bold)持续性咒术被瞬间终止$()（领域强制关闭、黑鸟回收）$(li)持续受到$(bold)帧伤$()：每 2 tick 一次，$(bold)无视无敌帧$()$(li)$(bold)亡灵生物$()受到的帧伤为 $(bold)8 倍$()$(br2)咒力消耗为「解」的 $(bold)8 倍$()。占用术式槽。"
+    }
+  ]
+}

@@ -1,17 +1,17 @@
 {
-    "name":  "弥虚葛笼",
-    "category":  "tinkersnewlife:skills",
+    "name": "Mikoshi Kago",
+    "category": "tinkersnewlife:skills",
     "icon": "tinkersnewlife:textures/gui/modifiers/mixu_gelong.png",
-    "sortnum":  1,
+    "sortnum": 1,
     "advancement": "tinkersnewlife:skills/mixu_gelong",
-    "pages":  [
+    "pages": [
         {
-            "type":  "patchouli:text",
-            "text":  "$(bold)弥虚葛笼$()：如入蚕茧，不动如山。$(br2)$(bold)触发$()：被他人领域包裹时被动开启（咒力核心需装有本技巧，占用技巧槽）。$(br2)$(bold)效果$()：施术者完全静止——自我定身，期间不能用术式、不能用物品、无法移动；以此换来对领域效果的绝对抵御：无量空处定身、伏魔御厨子斩击等一律无效。"
+            "type": "patchouli:text",
+            "text": "$(bold)Mikoshi Kago$(): like slipping into a cocoon, unmoved as a mountain. $(br2)$(bold)Trigger$(): passively activates while wrapped inside another's Domain (the Cursed Core must have this skill installed; occupies a skill slot). $(br2)$(bold)Effect$(): the caster comes to a complete standstill — self-paralysis: no techniques, no items, no movement; in exchange you gain absolute resistance to Domain effects: the paralysis of Unlimited Void, the slashes of Malevolent Shrine, and the like are all rendered void."
         },
         {
-            "type":  "patchouli:text",
-            "text":  "$(bold)维持$()：持续消耗咒力 24/秒，咒力耗尽技巧自动失效，领域效果将照常落在身上。$(br2)$(bold)用途$()：被强敌领域罩住时的最后保命牌——牺牲行动换取生存，等队友支援或对方咒力耗尽；离开领域范围即自动解除。"
+            "type": "patchouli:text",
+            "text": "$(bold)Upkeep$(): drains Cursed Energy continuously at 24 per second; when it runs dry the skill fails automatically and Domain effects land on you as usual. $(br2)$(bold)Use$(): the last card to play when a powerful enemy's Domain has you cornered — trade movement for survival while waiting for an ally's support or the foe's Cursed Energy to run dry; leaving the Domain's range dispels it automatically."
         }
     ]
 }

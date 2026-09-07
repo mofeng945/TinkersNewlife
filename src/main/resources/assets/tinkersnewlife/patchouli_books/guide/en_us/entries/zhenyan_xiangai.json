@@ -1,17 +1,17 @@
 {
-    "name":  "真赝相爱",
-    "category":  "tinkersnewlife:domains",
+    "name": "Authentic Mutual Love",
+    "category": "tinkersnewlife:domains",
     "icon": "tinkersnewlife:textures/gui/modifiers/zhenyan_xiangai.png",
-    "sortnum":  6,
+    "sortnum": 6,
     "advancement": "tinkersnewlife:domains/zhenyan_xiangai",
-    "pages":  [
+    "pages": [
         {
-            "type":  "patchouli:text",
-            "text":  "$(bold)真赝相爱$()：真亦假时假亦真，万术为我所用。$(br2)$(bold)展开$()：通用领域展开键，以自身为中心张开领域（困锁同其它领域，每秒消耗 半径×25 咒力）。领域开启瞬间，施术者进入$(bold)借术式$()状态。"
+            "type": "patchouli:text",
+            "text": "$(bold)Authentic Mutual Love$(): when truth wears the mask of falsehood, every art bends to my will.$(br2)$(bold)Expansion$(): press the domain expansion key to unfold the domain around yourself - it seals its occupants in like any other domain, draining radius x25 curse power per second. The instant it expands, the caster enters the $(bold)Borrowed Technique$() state."
         },
         {
-            "type":  "patchouli:text",
-            "text":  "$(bold)借术式$()：领域期间，切换键会在$(bold)本存档内所有你已在帕秋莉手册解锁过的术式$()中轮换——不再局限于当前核心上那一个术式；任意解锁术式（御厨子、赤血操术、十影、咒言、构筑……）都可即时切换并释放。$(br2)$(bold)仅领域内生效$()：领域关闭（手动/咒力耗尽/被破坏）或离开后，自动恢复展开前的选中术式。$(br2)解锁依据：佩戴装有该术式特性的核心即可自动解锁对应手册章节。"
+            "type": "patchouli:text",
+            "text": "$(bold)Borrowed Technique$(): while the domain lasts, the technique switch key cycles through $(bold)every technique you have unlocked in the Patchouli guide in this save$() - no longer bound to the single technique on your current core; any unlocked technique (Yu Chu Zi, Blood Manipulation, Ten Shadows, Cursed Speech, Construct, and so on) can be switched to and unleashed on the spot.$(br2)$(bold)Only while the domain is active$(): when it closes (manually, out of curse power, or destroyed) or you leave it, the technique selected before the expansion is restored automatically.$(br2)$(bold)What counts as unlocked$(): wearing a core that carries a technique's trait automatically unlocks that technique's chapter in the guide."
         }
     ]
 }

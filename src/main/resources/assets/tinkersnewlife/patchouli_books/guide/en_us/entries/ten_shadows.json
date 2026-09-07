@@ -1,17 +1,17 @@
 {
-    "name":  "十影术式",
-    "category":  "tinkersnewlife:techniques",
+    "name": "Ten Shadows",
+    "category": "tinkersnewlife:techniques",
     "icon": "tinkersnewlife:textures/gui/modifiers/ten_shadows.png",
-    "sortnum":  8,
-  "advancement": "tinkersnewlife:techniques/ten_shadows",
-    "pages":  [
-                  {
-                      "type":  "patchouli:text",
-                      "text":  "$(bold)十影术式$()：十种式神，尽入我手。$(br2)按下$(bold)术式释放按键$()呼出$(bold)式神选择界面$()，点击即可召唤。$(li)咒力只在召唤时扣除（维持不消耗），消耗 = 解 × 倍率$(li)再次点击同一式神可将其$(bold)召回$()，返还一半咒力$(li)式神的大小、速度与基础数值受$(bold)咒力亲和与咒力输出$()缩放$(li)初始只有$(bold)玉犬$()可用"
-                  },
-                  {
-                      "type":  "patchouli:text",
-                      "text":  "$(bold)调伏仪式$()：其余九种式神需先调伏。首次召唤未调伏式神时，它会$(bold)同时攻击你与锁定的目标$()；主人或目标死亡（或脱离战斗）则自行消失。$(br2)$(bold)击败它即调伏成功$()，此后可正常召唤为你而战。$(br2)式神一览：玉犬（黑白一对）、鵺（幻翼飞行雷击，可骑乘）、蚀蠹（蠹虫撕咬缠绕）、蛤蟆（青蛙舌缚）、川豚（猪冲撞）、脱兔（兔群扰乱）、愈羊（山羊治疗主人）、贯牛（牛直线冲撞，越远越强）、怒角（橙毛羊重击）、魔虚罗（铁傀儡，适应再生 + 头顶法轮）。$(br2)$(bold)骑乘鵺$()：空手右键鵺上马，$(bold)空格$()上升，$(bold)W/A/S/D$()按视线飞行/侧移，$(bold)Shift$()下马。"
-                  }
-              ]
+    "sortnum": 8,
+    "advancement": "tinkersnewlife:techniques/ten_shadows",
+    "pages": [
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)Ten Shadows$(): ten shikigami, all under my hand. $(br2)Press the $(bold)technique release key$() to open the $(bold)shikigami selection screen$(); click one to summon it. $(li)Cursed Energy is deducted only at summoning (nothing is consumed to maintain), cost = base × rate$(li)clicking the same shikigami again $(bold)recalls$() it, refunding half the Cursed Energy$(li)a shikigami's size, speed, and base stats scale with $(bold)Cursed Energy Affinity and Cursed Energy Output$()$(li)only the $(bold)Divine Dog$() is usable at first"
+        },
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)Subjugation Ritual$(): the other nine shikigami must be subjugated first. Summoning an unsubjugated shikigami for the first time makes it $(bold)attack both you and the target it locks onto$(); it vanishes by itself once its master or the target dies (or leaves combat). $(br2)$(bold)Defeat it to complete the subjugation$(), and afterwards it can be summoned normally to fight for you. $(br2)Shikigami roster: Divine Dog (a black-and-white pair), Nue (phantom-wing flight with lightning; rideable), Eroding Silverfish (bites and entangles), Toad (frog-tongue binding), Boar (charges headlong like a pig), Darting Rabbit (rabbit horde disruption), Healing Goat (a goat that heals its master), Piercing Ox (a cow charging in a straight line — stronger the farther it travels), Furious Ram (an orange-fleeced sheep delivering heavy strikes), Mahoraga (an Iron Golem with adaptive regeneration and a wheel above its head). $(br2)$(bold)Riding the Nue$(): right-click the Nue with an empty hand to mount; $(bold)Space$() to ascend; $(bold)W/A/S/D$() to fly / strafe relative to your view; $(bold)Shift$() to dismount."
+        }
+    ]
 }

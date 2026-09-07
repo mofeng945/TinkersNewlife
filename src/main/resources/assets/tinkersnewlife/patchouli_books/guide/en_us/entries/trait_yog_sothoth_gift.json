@@ -1,12 +1,12 @@
 {
-  "name": "时空馈赠",
+  "name": "Yog-Sothoth's Gift",
   "category": "tinkersnewlife:traits",
   "icon": "tinkersnewlife:textures/gui/modifiers/yog_sothoth_gift.png",
   "sortnum": 13,
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(bold)时空馈赠$()：犹格索托斯之门已为你敞开，知识的洪流涌入你的灵魂。$(br2)效果：持有此工具时，获得的$(bold)经验提升 500%$()。"
+      "text": "$(bold)Yog-Sothoth's Gift$(): the gate of Yog-Sothoth stands wide open to you, and a torrent of knowledge floods into your soul.$(br2)Effect: while holding this tool, $(bold)experience gained is increased by 500%$()."
     }
   ]
 }

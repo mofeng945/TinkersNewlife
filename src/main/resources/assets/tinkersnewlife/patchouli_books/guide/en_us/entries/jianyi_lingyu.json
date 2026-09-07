@@ -1,17 +1,17 @@
 {
-    "name":  "新阴流·简易领域",
-    "category":  "tinkersnewlife:skills",
+    "name": "New Shadow Style: Simple Domain",
+    "category": "tinkersnewlife:skills",
     "icon": "tinkersnewlife:textures/gui/modifiers/jianyi_lingyu.png",
-    "sortnum":  3,
+    "sortnum": 3,
     "advancement": "tinkersnewlife:skills/jianyi_lingyu",
-    "pages":  [
+    "pages": [
         {
-            "type":  "patchouli:text",
-            "text":  "$(bold)新阴流·简易领域$()：小天地自成，借力消力。$(br2)$(bold)触发$()：被他人领域包裹时被动开启（咒力核心需装有本技巧）。$(br2)$(bold)效果$()：以咒力撑起一小片结界，抵御领域效果——无量空处定身、伏魔御厨子斩击等一律无效；施术者可以移动、可以使用物品。"
+            "type": "patchouli:text",
+            "text": "$(bold)New Shadow Style: Simple Domain$(): a small world of its own, borrowing force to dispel force. $(br2)$(bold)Trigger$(): passively activates while wrapped inside another's Domain (the Cursed Core must have this skill installed). $(br2)$(bold)Effect$(): prop up a small barrier with Cursed Energy to ward off Domain effects — the paralysis of Unlimited Void, the slashes of Malevolent Shrine, and the like are all rendered void; the caster can move and can use items."
         },
         {
-            "type":  "patchouli:text",
-            "text":  "$(bold)代价$()：结界占用全部咒力操控——$(red)期间不能使用任何术式$()。$(br2)$(bold)维持$()：持续消耗咒力 24/秒，耗尽则结界破碎、领域效果照常生效；离开领域范围自动解除。$(br2)$(bold)用途$()：兼顾行动与防御的平衡型技巧——防住无量定身又能自由走位，只是别想放术式。"
+            "type": "patchouli:text",
+            "text": "$(bold)Cost$(): the barrier monopolizes all of your Cursed Energy manipulation — $(red)you cannot use any technique while it lasts$(). $(br2)$(bold)Upkeep$(): it drains Cursed Energy continuously at 24 per second; when it runs dry the barrier shatters and Domain effects take hold as usual; leaving the Domain's range dispels it automatically. $(br2)$(bold)Use$(): a balanced skill for both action and defense — it holds off the Void's paralysis while letting you reposition freely, just don't expect to cast techniques."
         }
     ]
 }

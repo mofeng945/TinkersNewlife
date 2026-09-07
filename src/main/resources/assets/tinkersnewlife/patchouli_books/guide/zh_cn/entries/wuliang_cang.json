@@ -1,0 +1,17 @@
+{
+  "name": "无下限·苍",
+  "category": "tinkersnewlife:techniques",
+  "icon": "tinkersnewlife:textures/gui/modifiers/wuliang_cang.png",
+  "sortnum": 12,
+  "advancement": "tinkersnewlife:techniques/wuliang_cang",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)无下限·苍$()：苍，是吸引的极致。$(br2)$(bold)苍$()（术式键 C）：$(li)第一次按下 → 手中$(bold)蓄力$()（蓝色粒子环绕）$(li)再次按下 → 朝前方发射$(bold)天蓝色苍球$()$(li)苍球将 $(bold)10 格$()内实体$(bold)拉向球心$()（不含施术者）$(li)实体$(bold)接触球心$() → 苍球爆炸（范围伤害）$(li)最大飞行 $(bold)40 格$()，撞到方块消失$(br2)爆炸中心伤害 = (1 + 亲和/100) × (10 + 输出×5) 点，随距离衰减。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)术式反转 · 赫$()（术式反转键 F）：$(li)第一次按下 → 蓄力（红色粒子环绕）$(li)再次按下 → 发射$(bold)亮红色赫球$()$(li)赫球与苍相反：将实体$(bold)推开$()$(li)被推开的实体$(bold)撞到方块时按速度受伤$()$(li)实体接触球心 → 爆炸，伤害为$(bold)苍的 2 倍$()$(li)最大飞行 40 格，撞方块消失$(br2)$(bold)虚式·茈$()：$(bold)苍蓄力期间按下 F$() → 两者结合，$(bold)直接向前发射$()紫色茈球：$(li)$(bold)破坏所有撞到的方块$()（基岩除外，$(bold)不掉落$()任何东西）$(li)击中实体造成 $(bold)苍 10 倍$()的爆炸伤害$(br2)发射消耗咒力（茈消耗为苍/赫的 3 倍）。占用术式槽。"
+    }
+  ]
+}

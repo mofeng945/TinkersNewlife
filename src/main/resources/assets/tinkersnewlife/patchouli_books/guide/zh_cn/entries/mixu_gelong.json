@@ -1,0 +1,17 @@
+{
+    "name":  "弥虚葛笼",
+    "category":  "tinkersnewlife:skills",
+    "icon": "tinkersnewlife:textures/gui/modifiers/mixu_gelong.png",
+    "sortnum":  1,
+    "advancement": "tinkersnewlife:skills/mixu_gelong",
+    "pages":  [
+        {
+            "type":  "patchouli:text",
+            "text":  "$(bold)弥虚葛笼$()：如入蚕茧，不动如山。$(br2)$(bold)触发$()：被他人领域包裹时被动开启（咒力核心需装有本技巧，占用技巧槽）。$(br2)$(bold)效果$()：施术者完全静止——自我定身，期间不能用术式、不能用物品、无法移动；以此换来对领域效果的绝对抵御：无量空处定身、伏魔御厨子斩击等一律无效。"
+        },
+        {
+            "type":  "patchouli:text",
+            "text":  "$(bold)维持$()：持续消耗咒力 24/秒，咒力耗尽技巧自动失效，领域效果将照常落在身上。$(br2)$(bold)用途$()：被强敌领域罩住时的最后保命牌——牺牲行动换取生存，等队友支援或对方咒力耗尽；离开领域范围即自动解除。"
+        }
+    ]
+}

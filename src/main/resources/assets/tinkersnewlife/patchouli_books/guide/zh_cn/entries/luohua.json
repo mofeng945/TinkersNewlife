@@ -1,0 +1,17 @@
+{
+    "name":  "落花之情",
+    "category":  "tinkersnewlife:skills",
+    "icon": "tinkersnewlife:textures/gui/modifiers/luohua.png",
+    "sortnum":  2,
+    "advancement": "tinkersnewlife:skills/luohua",
+    "pages":  [
+        {
+            "type":  "patchouli:text",
+            "text":  "$(bold)落花之情$()：落花随风，身法如舞。$(br2)$(bold)触发$()：被他人领域包裹时被动开启（咒力核心需装有本技巧）。$(br2)$(bold)效果$()：施术者仍可自由行动——能用术式、能用物品，但移动较为缓慢；以此抵御领域效果（伏魔御厨子斩击等无效）。"
+        },
+        {
+            "type":  "patchouli:text",
+            "text":  "$(bold)局限$()：$(red)无法防御无量空处的定身$()——无量之下仍会被定身。$(br2)$(bold)维持$()：持续消耗咒力 24/秒，耗尽则技巧失效；离开领域范围自动解除。$(br2)$(bold)用途$()：需要边打边撤/继续输出时的机动型抵御。"
+        }
+    ]
+}

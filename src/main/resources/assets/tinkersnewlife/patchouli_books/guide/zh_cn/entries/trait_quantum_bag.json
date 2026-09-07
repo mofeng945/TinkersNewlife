@@ -1,0 +1,12 @@
+{
+  "name": "量子背包",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:curse_core",
+  "sortnum": 22,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)量子背包$()：！？背背？！$(br2)效果：在个人维度口袋中存储物品。$(br2)使用：装备后按绑定按键打开背包界面。"
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 {
-    "name": "天空操术",
+    "name": "Sky Manipulation",
     "category": "tinkersnewlife:techniques",
     "icon": "tinkersnewlife:textures/gui/modifiers/sky_manipulation.png",
     "sortnum": 21,
@@ -7,11 +7,11 @@
     "pages": [
         {
             "type": "patchouli:text",
-            "text": "$(bold)天空操术$()：御空而行，拨云见日。$(br2)$(bold)顺转$()：视线内有敌对目标时，将其沿视线方向$(bold)击飞推开$()（纯位移，不造成伤害）；没有目标时，给自己一个沿视线方向的推力（冲刺/跃空，上抛部分不产生摔落伤害）。$(br2)推力随$(bold)咒力亲和/输出$()提高：强度 = (1+亲和/100)×(1.6+输出×0.15)，消耗 = (1+亲和/100)×(6+输出×3)。"
+            "text": "$(bold)Sky Manipulation$(): ride the open sky, part the clouds to see the sun. $(br2)$(bold)Forward activation$(): with a hostile target in your line of sight, $(bold)knock it flying along the sight direction$() (pure displacement, dealing no damage); with no target, you instead give yourself a push along the sight direction (dash / leap through the air; the upward-tossed part causes no fall damage). $(br2)Push scales with $(bold)Cursed Energy Affinity / Output$(): strength = (1+Affinity/100)×(1.6+Output×0.15), cost = (1+Affinity/100)×(6+Output×3)."
         },
         {
             "type": "patchouli:text",
-            "text": "$(bold)反转 · 宇守罗弹$()：按下反转键（F）对视线锁定目标发射一枚$(bold)宇守罗弹$()——轻度追踪目标；命中时如$(bold)击碎薄冰$()般爆散雪晶碎屑，将「空间」连同对手一起$(bold)击飞$()（巨量击退 + 上抛）并造成$(bold)咒术伤害$()（共享伤害基底×110%，套魔杖增幅，命中时套核心材料特性）。$(br2)击飞与消耗随亲和/输出提高：消耗 = (1+亲和/100)×(12+输出×5)。$(br2)未锁定目标时无法发射（提示无目标）。"
+            "text": "$(bold)Reversal · Ushura-dan$(): press the reversal key (F) to fire an $(bold)Ushura-dan$() at the target locked by your sight — it tracks its target lightly; on impact it bursts into snow-crystal fragments $(bold)like shattering thin ice$(), knocking space itself along with the opponent $(bold)flying$() (massive knockback + upward toss) and dealing $(bold)cursed technique damage$() (shared damage base ×110%, applying wand boosts; core material traits apply on hit). $(br2)Knockback and cost scale with Affinity/Output: cost = (1+Affinity/100)×(12+Output×5). $(br2)It cannot be fired without a locked target (prompt: no target)."
         }
     ]
 }

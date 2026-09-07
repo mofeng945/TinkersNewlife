@@ -1,17 +1,17 @@
 {
-    "name":  "荡蕴平线",
-    "category":  "tinkersnewlife:domains",
+    "name": "Horizon of Oscillating Veils",
+    "category": "tinkersnewlife:domains",
     "icon": "tinkersnewlife:textures/gui/modifiers/dang_yun_ping_xian.png",
-    "sortnum":  10,
+    "sortnum": 10,
     "advancement": "tinkersnewlife:domains/dang_yun_ping_xian",
-    "pages":  [
+    "pages": [
         {
-            "type":  "patchouli:text",
-            "text":  "$(bold)荡蕴平线$()：一叶扁舟，万顷沧波。$(br2)$(bold)展开$()：通用领域展开键，以自身为中心张开领域（困锁同其它领域，每秒消耗 半径×45 咒力）。展开瞬间领域内部$(blue)灌满海水$()；施术者$(bold)不会窒息$()（持续水呼吸），施术者的式神/咒灵/守护等同队目标同样获得水呼吸。领域内其它生物按正常呼吸规则——在水中会窒息。"
+            "type": "patchouli:text",
+            "text": "$(bold)Horizon of Oscillating Veils$(): a single boat adrift on ten thousand waves.$(br2)$(bold)Expansion$(): press the domain expansion key to unfold the domain around yourself - it seals its occupants in like any other domain, draining radius x45 curse power per second. The instant it expands, the interior $(blue)floods with seawater$(); the caster $(bold)cannot drown$() (permanent Water Breathing), and allied targets - the caster's shikigami, cursed spirits, guardians and the like - gain Water Breathing as well. Every other creature inside follows the normal breathing rules and will drown in the water."
         },
         {
-            "type":  "patchouli:text",
-            "text":  "$(bold)溺尸军团$()：领域内持续维持一批以施术者为主人的溺尸（数量 = 6 + 半径/2，上限 24）。溺尸会$(red)主动索敌领域内所有非施术者阵营目标$()：游近并以近战攻击，溺尸死亡后自动补充；约 1/5 概率手持三叉戟（近战伤害更高）。$(br2)$(bold)结束$()：领域关闭（手动/咒力耗尽/被破坏/死亡登出）时一切回归原样——灌的水复原为空气、溺尸全部消散。"
+            "type": "patchouli:text",
+            "text": "$(bold)Drowned Legion$(): while the domain is active, it maintains a swarm of drowned owned by the caster (6 + radius/2 of them, up to 24). The drowned $(red)actively hunt every target inside that is not on the caster's side$(): they swim up and strike in melee, and are replenished automatically as they die; about 1 in 5 wields a trident (higher melee damage).$(br2)$(bold)Ending$(): when the domain closes (manually, out of curse power, destroyed, or upon death/logout), everything reverts to normal - the water turns back into air and every drowned disperses."
         }
     ]
 }

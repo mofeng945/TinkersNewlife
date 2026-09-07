@@ -1,21 +1,21 @@
 {
-    "name":  "赤血操术",
-    "category":  "tinkersnewlife:techniques",
+    "name": "Blood Manipulation",
+    "category": "tinkersnewlife:techniques",
     "icon": "tinkersnewlife:textures/gui/modifiers/blood_manipulation.png",
-    "sortnum":  5,
+    "sortnum": 5,
     "advancement": "tinkersnewlife:techniques/blood_manipulation",
-    "pages":  [
+    "pages": [
         {
-            "type":  "patchouli:text",
-            "text":  "$(bold)赤血操术$()：以血为刃，贯穿万敌。$(br2)整合$(bold)穿血 / 百敛 / 超新星$() 三招于一个术式（只占 1 个术式槽）。$(br2)$(bold)操作$()：按 $(bold)C$() 释放当前招式；按 $(bold)F$()（反转键）在 穿血 → 百敛 → 超新星 间轮换当前招式。"
+            "type": "patchouli:text",
+            "text": "$(bold)Blood Manipulation$(): blood as a blade, piercing ten thousand foes.$(br2)Folds $(bold)Piercing Blood / Convergence / Supernova$() into a single technique (only taking up 1 technique slot).$(br2)$(bold)Controls$(): press $(bold)C$() to unleash the current move; press $(bold)F$() (the reversal key) to cycle the current move through Piercing Blood → Convergence → Supernova."
         },
         {
-            "type":  "patchouli:text",
-            "text":  "$(bold)穿血$()：消耗 5% 最大生命值，向当前朝向释放血激光束，穿透面前 20 格（方块不阻挡）：每个被穿透目标受一次 (1+亲和/100) × (咒力输出+消耗血量×5) 伤害。$(br2)$(bold)百敛$()：消耗 7% 最大生命值，视线索敌，身体周围 5 道血柱共 5 次伤害，每次 = 穿血单体伤害 ÷ 2。$(br2)$(bold)超新星$()：消耗 10% 最大生命值，视线索敌，目标处生成微小血球，0.8 秒后爆炸（不破坏方块）：中心伤害 = (1+亲和/100) × 咒力输出 × 消耗血量 × 10，随距离线性衰减。"
+            "type": "patchouli:text",
+            "text": "$(bold)Piercing Blood$(): spend 5% of your max health and fire a beam of blood along your facing direction that pierces the 20 blocks ahead of you (blocks do not stop it): every target pierced takes (1 + Affinity/100) × (Cursed Energy Output + spent health × 5) damage once.$(br2)$(bold)Convergence$(): spend 7% of your max health; lock on to a target by line of sight and five pillars of blood surge around your body, dealing 5 hits in total, each equal to Piercing Blood's single-target damage ÷ 2.$(br2)$(bold)Supernova$(): spend 10% of your max health; lock on by line of sight and spawn a tiny blood orb at the target that explodes after 0.8 seconds (no block damage): center damage = (1 + Affinity/100) × Cursed Energy Output × spent health × 10, falling off linearly with distance."
         },
         {
-            "type":  "patchouli:text",
-            "text":  "三招均$(bold)无视无敌帧$()（可被护甲衰减），材料战斗特性照常触发；创造模式不消耗血量（伤害仍按理论消耗计算），当前血量不足以支付时无法发动。$(br2)$(bold)咒力消耗$()：穿血 = 基础 ÷2；百敛 = 基础 ×5/3；超新星 = 基础 ×5/2。$(br2)百敛/超新星需视线命中目标才消耗血量（咒力已扣）；穿血直线释放无需索敌。"
+            "type": "patchouli:text",
+            "text": "All three moves $(bold)ignore invulnerability frames$() (armor can still reduce them) and trigger material combat traits as usual; in Creative mode no health is spent (the damage is still calculated from the theoretical cost), and a move cannot be used when your current health cannot cover its cost.$(br2)$(bold)Cursed energy cost$(): Piercing Blood = base / 2; Convergence = base × 5/3; Supernova = base × 5/2.$(br2)Convergence and Supernova only spend health when your line of sight actually hits a target (the cursed energy is deducted regardless); Piercing Blood fires in a straight line and needs no lock-on."
         }
     ]
 }

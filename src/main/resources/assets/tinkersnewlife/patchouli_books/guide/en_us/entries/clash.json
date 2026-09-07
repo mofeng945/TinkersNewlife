@@ -1,12 +1,12 @@
 {
-  "name": "领域对抗",
+  "name": "Domain Clash",
   "category": "tinkersnewlife:domains",
   "icon": "tinkersnewlife:curse_core",
   "sortnum": 4,
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "当两个领域发生重叠时触发$(bold)领域对抗$()：$(li)重叠区域屏障消失，双方领域效果暂停$(li)咒力消耗加剧：× (1 + (对方咒力输出 + 对方咒力亲和/10)/100)$(li)败者被强行拉入胜者的领域，屏障重建$(br2)持续消耗咒力，先耗尽的一方落败。"
+      "text": "When two Domains overlap, a $(bold)Domain Clash$() begins:$(li)the barrier in the overlapping region disappears and both Domains' effects are suspended$(li)Cursed Energy drain intensifies: × (1 + (the opponent's Cursed Output + their Cursed Affinity/10)/100)$(li)the loser is forcibly pulled into the winner's Domain and the barrier is rebuilt$(br2)Cursed Energy is drained continuously — whoever runs out first loses."
     }
   ]
 }

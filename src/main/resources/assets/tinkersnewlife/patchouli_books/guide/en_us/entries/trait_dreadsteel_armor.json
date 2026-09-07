@@ -1,12 +1,12 @@
 {
-  "name": "悚怖武装",
+  "name": "Dreadsteel (Armor)",
   "category": "tinkersnewlife:traits",
   "icon": "tinkersnewlife:curse_core",
   "sortnum": 27,
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(bold)悚怖武装$()（护甲专属特性，慑怖钢护甲部件）：恐惧降临，万灵臣服。$(br2)效果：穿戴获得夜视、防火、免疫冰霜、限伤（每 0.5 秒 ≤ 30 点）。$(br2)技能：按下绑定按键消耗 5 级经验发动$(bold)悚域展开$()——5 秒内对 16 格内亮度 < 8 的生物造成多次伤害判定，冷却 120 秒。"
+      "text": "$(bold)Dreadsteel$() (Armor-exclusive trait, Dreadsteel armor parts): Fear descends, and all creatures bow down.$(br2)Effect: While worn, grants Night Vision, Fire Resistance, immunity to frost, and a damage cap (≤ 30 damage per 0.5 seconds).$(br2)Ability: Press the bound key, consuming 5 levels of experience, to unleash $(bold)Dread Field$() — deals multiple hits of damage to creatures within 16 blocks in low light (< 8) over 5 seconds, with a 120-second cooldown."
     }
   ]
 }

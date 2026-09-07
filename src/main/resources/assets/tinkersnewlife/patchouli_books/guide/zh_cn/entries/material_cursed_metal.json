@@ -1,0 +1,18 @@
+{
+    "name":  "诅咒金属",
+    "category":  "tinkersnewlife:materials",
+    "icon":  "goety:cursed_ingot",
+    "sortnum":  7,
+    "pages":  [
+                  {
+                      "type":  "patchouli:spotlight",
+                      "item":  "goety:cursed_ingot",
+                      "text":  "$(bold)获取方式$()：$(li)诅咒金属锭来自诡厄巫法（$(l:https://www.curseforge.com/minecraft/mc-mods/goety)Goety$() 的 $(bold)goety:cursed_ingot$()）$(li)把诅咒金属锭丢入冶炼炉熔成 $(bold)熔融诅咒金属$()（90 mB/锭，温度 900）$(li)在铸造台用熔融诅咒金属 $(bold)90 mB$()（1 锭）制作诅咒金属材料部件$(br2)等级：$(bold)T2$()（二级材料，挖掘等级铁）。"
+                  },
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)自带特性$()：$(li)$(bold)磁性$()（匠魂自带）：自动吸附附近的掉落物与经验$(li)$(bold)堕落$()：攻击造成伤害时消耗 0.5% 灵魂能量上限（单次上限 100 点）增幅此次攻击——每 5 点灵魂 +0.2 攻击伤害、+0.05 格击退（击退累计上限 3 格）；灵魂不足不增幅$(br2)面板：顶端耐久 225 / 铁挖掘 / 5.5 速度 / 2.3 攻击；弓臂拉弓 -0.1 / 初速 +0.1；弓把精确 +0.1 / 近战 2.5。"
+                  }
+              ],
+    "flag":  "mod:goety"
+}

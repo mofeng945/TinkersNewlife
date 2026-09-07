@@ -1,5 +1,5 @@
 {
-    "name":  "星界之锚",
+    "name":  "Astral Anchor",
     "category":  "tinkersnewlife:relics",
     "icon":  "tinkersnewlife:astral_anchor",
     "sortnum":  8,
@@ -7,7 +7,7 @@
                   {
                       "type":  "patchouli:spotlight",
                       "item":  "tinkersnewlife:astral_anchor",
-                      "text":  "$(bold)星界之锚$()$(br2)获取：$(bold)末地城宝藏$()箱子，$(bold)30%$() 概率 1-2 个。$(br2)用途：作为$(bold)基底$()参与$(l:relics/relic_yog_sothoth_gate_key)犹格索托斯的门之匙$()的锻造台合成。"
+                      "text":  "$(bold)Astral Anchor$()$(br2)Obtaining: $(bold)End City treasure$() chests, with a $(bold)30%$() chance of 1-2.$(br2)Usage: serves as the $(bold)base$() in the smithing table recipe for the $(l:relics/relic_yog_sothoth_gate_key)Yog-Sothoth Gate Key$()."
                   }
               ]
 }

@@ -1,5 +1,5 @@
 {
-    "name":  "悠悠球",
+    "name":  "Yo-Yo",
     "category":  "tinkersnewlife:tools",
     "icon":  "tinkersnewlife:yo_yo",
     "sortnum":  3,
@@ -7,11 +7,11 @@
                   {
                       "type":  "patchouli:spotlight",
                       "item":  "tinkersnewlife:yo_yo",
-                      "text":  "$(bold)悠悠球$()$(br2)获取：通过$(bold)匠魂工匠站$()打造——两个悠悠球轮 + 线轴 + 弓弦组合。$(br2)特点：$(li)$(bold)右键$()向前方发射旋转的悠悠球$(li)触碰到生物或飞抵最远距离后$(bold)停滞 3 秒$()$(li)停滞期间每帧对触碰实体造成 $(bold)10% 总伤害$()$(li)随后自动飞回"
+                      "text":  "$(bold)Yo-Yo$()$(br2)Obtaining: craft it at the $(bold)Tinker Station$() — combining two Yo-Yo Wheels + a Reel + a Bowstring.$(br2)Features:$(li)$(bold)right-click$() to launch a spinning yo-yo forward$(li)after touching a creature or reaching its maximum flight distance, it $(bold)lingers for 3 seconds$()$(li)while lingering, it deals $(bold)10% of its total damage$() per frame to the entities it touches$(li)it then flies back on its own"
                   },
                   {
                       "type":  "patchouli:text",
-                      "text":  "$(bold)使用技巧$()：悠悠球停滞的 3 秒内可反复穿越目标造成多次伤害，是持续输出的强大武器；搭配材料战斗特性（如龙炎、罡风）每个触碰帧都可触发。"
+                      "text":  "$(bold)Tips$(): during the yo-yo's 3-second linger you can repeatedly pass it through the target to rack up many hits, making it a powerful sustained-damage weapon; paired with material combat traits (such as Dragon Flame and Gale), the trait can trigger on every contact frame."
                   }
               ]
 }
