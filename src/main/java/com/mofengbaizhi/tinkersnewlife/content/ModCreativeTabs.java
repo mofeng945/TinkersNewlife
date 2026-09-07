@@ -147,6 +147,7 @@ public class ModCreativeTabs {
         for (IMaterial material : materials) {
             MaterialId materialId = material.getIdentifier();
             if (!materialId.getNamespace().equals(TinkersNewlife.MOD_ID)) continue;
+            if (!isMaterialDependencyLoaded(materialId)) continue;   // 联动来源 mod 未装 → 创造栏不显示
 
             ItemStack stack = new ItemStack(partItem);
             partItem.setMaterial(stack, materialId);
@@ -154,6 +155,34 @@ public class ModCreativeTabs {
             if (!stack.isEmpty()) {
                 output.accept(stack);
             }
+        }
+    }
+
+    // ============================================================
+    //  联动材料过滤：材料原料来自其它 mod（诡厄/冰火）时，该 mod 未加载则不显示在创造栏
+    // ============================================================
+
+    /** 材料 id（不含命名空间）→ 原料来源 mod；无映射 = 本 mod 原生材料 */
+    private static final java.util.Map<String, String> MATERIAL_SOURCE_MOD = new java.util.HashMap<>();
+    static {
+        MATERIAL_SOURCE_MOD.put("cursed_metal", "goety");        // 诡厄诅咒金属锭
+        MATERIAL_SOURCE_MOD.put("dark_metal", "goety");          // 诡厄黑暗金属锭
+        MATERIAL_SOURCE_MOD.put("dragonsteel_fire", "iceandfire");
+        MATERIAL_SOURCE_MOD.put("dragonsteel_ice", "iceandfire");
+        MATERIAL_SOURCE_MOD.put("dragonsteel_lightning", "iceandfire");
+        MATERIAL_SOURCE_MOD.put("dreadsteel", "iceandfire");     // 悚怖碎片来自冰火
+        MATERIAL_SOURCE_MOD.put("dragonbone", "iceandfire");     // 龙骨
+    }
+
+    /** 材料是否可用：原生材料恒可用；联动材料仅其来源 mod 已加载时可用 */
+    private static boolean isMaterialDependencyLoaded(MaterialId materialId) {
+        String sourceMod = MATERIAL_SOURCE_MOD.get(materialId.getPath());
+        if (sourceMod == null) return true;
+        try {
+            return net.minecraftforge.fml.ModList.get() != null
+                    && net.minecraftforge.fml.ModList.get().isLoaded(sourceMod);
+        } catch (Throwable t) {
+            return false;
         }
     }
 
@@ -169,6 +198,7 @@ public class ModCreativeTabs {
         for (IMaterial material : materials) {
             MaterialId materialId = material.getIdentifier();
             if (!materialId.getNamespace().equals(TinkersNewlife.MOD_ID)) continue;
+            if (!isMaterialDependencyLoaded(materialId)) continue;   // 联动来源 mod 未装 → 创造栏不显示
 
             ItemStack stack = new ItemStack(toolItem);
             ToolStack tool = ToolStack.from(stack);
