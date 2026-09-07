@@ -1,17 +1,18 @@
 {
-  "name": "黑暗金属",
-  "category": "tinkersnewlife:materials",
-  "icon": "goety:dark_ingot",
-  "sortnum": 8,
-  "pages": [
-    {
-      "type": "patchouli:spotlight",
-      "item": "goety:dark_ingot",
-      "text": "$(bold)获取方式$()：$(li)黑暗金属锭来自诡厄巫法（$(l:https://www.curseforge.com/minecraft/mc-mods/goety)Goety$() 的 $(bold)goety:dark_ingot$()）$(li)把黑暗金属锭丢入冶炼炉熔成 $(bold)熔融黑暗金属$()（90 mB/锭，温度 1000）$(li)在铸造台用熔融黑暗金属 $(bold)90 mB$()（1 锭）浇筑黑暗金属材料部件$(br2)等级：$(bold)T2$()（二级材料，挖掘等级铁，面板略高于铁）。"
-    },
-    {
-      "type": "patchouli:text",
-      "text": "$(bold)自带特性$()：$(li)$(bold)可塑$()（匠魂自带）：延展金属，减免工具耐久损耗$(li)$(bold)灵魂修复 I$()：每 20 刻耗 5 点灵魂能量恢复 1 点耐久（装备主手/副手生效），黑暗金属装备主要靠它自愈$(li)$(bold)破法$()（工具部件）：攻击给予目标衰弱 I（2 秒）；击杀带魔法抗性的生物 45% 概率额外掉落 1 绿宝石$(li)$(bold)抗魔$()（护甲部件）：受魔法伤害时把 5%+1.5 点转化为物理伤害$(br2)面板：顶端耐久 300 / 铁挖掘 / 7.0 速度 / 2.5 攻击；护甲胸甲 +6。"
-    }
-  ]
+    "name":  "黑暗金属",
+    "category":  "tinkersnewlife:materials",
+    "icon":  "goety:dark_ingot",
+    "sortnum":  8,
+    "pages":  [
+                  {
+                      "type":  "patchouli:spotlight",
+                      "item":  "goety:dark_ingot",
+                      "text":  "$(bold)获取方式$()：$(li)黑暗金属锭来自诡厄巫法（$(l:https://www.curseforge.com/minecraft/mc-mods/goety)Goety$() 的 $(bold)goety:dark_ingot$()）$(li)把黑暗金属锭丢入冶炼炉熔成 $(bold)熔融黑暗金属$()（90 mB/锭，温度 1000）$(li)在铸造台用熔融黑暗金属 $(bold)90 mB$()（1 锭）浇筑黑暗金属材料部件$(br2)等级：$(bold)T2$()（二级材料，挖掘等级铁，面板略高于铁）。"
+                  },
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)自带特性$()：$(li)$(bold)可塑$()（匠魂自带）：延展金属，减免工具耐久损耗$(li)$(bold)灵魂修复 I$()：每 20 刻耗 5 点灵魂能量恢复 1 点耐久（装备主手/副手生效），黑暗金属装备主要靠它自愈$(li)$(bold)破法$()（工具部件）：攻击给予目标衰弱 I（2 秒）；击杀带魔法抗性的生物 45% 概率额外掉落 1 绿宝石$(li)$(bold)抗魔$()（护甲部件）：受魔法伤害时把 5%+1.5 点转化为物理伤害$(br2)面板：顶端耐久 300 / 铁挖掘 / 7.0 速度 / 2.5 攻击；护甲胸甲 +6。"
+                  }
+              ],
+    "flag":  "mod:goety"
 }
