@@ -24,8 +24,8 @@ public class MoltenForgeMenu extends AbstractContainerMenu {
         super(ModMenus.MOLTEN_FORGE_MENU.get(), containerId);
         this.te = te;
         if (te == null) return;
-        // 工具熔炼槽（匠魂熔炉中部熔炼区位置）
-        addSlot(new SlotItemHandler(te.getToolHandler(), 0, 80, 35) {
+        // 工具熔炼槽（对照匠魂熔炉 melter.png 左侧熔炼槽位 (22,16)）
+        addSlot(new SlotItemHandler(te.getToolHandler(), 0, 22, 16) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return stack.getItem() instanceof IModifiable;

@@ -31,6 +31,7 @@ import slimeknights.tconstruct.library.recipe.casting.material.MaterialFluidReci
 import slimeknights.tconstruct.library.tools.item.IModifiable;
 import slimeknights.tconstruct.library.recipe.fuel.MeltingFuel;
 import slimeknights.tconstruct.library.recipe.fuel.MeltingFuelLookup;
+import slimeknights.tconstruct.library.recipe.melting.IMeltingRecipe;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 import slimeknights.tconstruct.smeltery.block.entity.HeaterBlockEntity;
 import slimeknights.tconstruct.smeltery.block.entity.component.TankBlockEntity;
@@ -59,6 +60,9 @@ public class MoltenForgeBlockEntity extends BlockEntity implements IFluidHandler
     private final List<FluidStack> fluids = new ArrayList<>(TANKS);
     /** 流体能力持有（供机械动力/匠魂等管道转运） */
     private final LazyOptional<IFluidHandler> fluidHandler = LazyOptional.of(() -> this);
+    /** 熔炼进度（tick）与所需总时间（tick） */
+    private int meltTicks = 0;
+    private int meltMax = 0;
 
     public MoltenForgeBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.MOLTEN_FORGE.get(), pos, state);
@@ -70,18 +74,58 @@ public class MoltenForgeBlockEntity extends BlockEntity implements IFluidHandler
         return toolHandler;
     }
 
-    /** 每 tick（服务端）：只有当"相邻有可用热源且温度足够"时才熔炼工具槽内的工具 */
+    /** 每 tick（服务端）：只在"相邻热源且温度足够"时按熔炼时间加热工具；时间到才熔炼产出 */
     public void serverTick() {
         if (level == null || level.isClientSide) return;
         ItemStack tool = toolHandler.getStackInSlot(0);
-        if (tool.isEmpty()) return;
+        if (tool.isEmpty()) {
+            meltTicks = 0;
+            meltMax = 0;
+            return;
+        }
         int needed = neededTemperature(tool);
         int cur = currentTemperature();
-        if (cur <= 0 || cur < needed) return;   // 无相邻热源 或 温度不足 → 不烧炼
-        if (molten(tool)) {
-            toolHandler.setStackInSlot(0, ItemStack.EMPTY);
-            setChanged();
+        if (cur <= 0 || cur < needed) {
+            meltTicks = 0;   // 温度不足/无热源 → 冷却重置
+            meltMax = 0;
+            return;
         }
+        if (meltMax <= 0) {
+            meltMax = Math.max(20, IMeltingRecipe.calcTimeForAmount(cur, totalFluidAmount(tool)));
+        }
+        meltTicks++;
+        if (meltTicks >= meltMax) {
+            if (molten(tool)) {
+                toolHandler.setStackInSlot(0, ItemStack.EMPTY);
+                setChanged();
+            }
+            meltTicks = 0;
+            meltMax = 0;
+        }
+    }
+
+    /** 各部件材料（有流体配方者）的流体总量：部件数 × 每部件单位 */
+    public int totalFluidAmount(ItemStack tool) {
+        ToolStack stack = ToolHelper.getToolStack(tool);
+        if (stack == null) return 0;
+        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+        if (server == null) return 0;
+        Map<MaterialId, MaterialFluidRecipe> recipes = findFluidRecipes(server.getRecipeManager());
+        int total = 0;
+        for (MaterialVariant variant : stack.getMaterials().getList()) {
+            MaterialFluidRecipe mfr = recipes.get(variant.getId());
+            if (mfr == null) continue;
+            List<FluidStack> list = mfr.getFluids();
+            if (list.isEmpty()) continue;
+            int perUnit = mfr.getFluidAmount(list.get(0).getFluid());
+            total += perUnit > 0 ? perUnit : 144;
+        }
+        return total;
+    }
+
+    /** 熔炼进度（供 GUI 进度条），0..1 */
+    public float getMeltProgress() {
+        return meltMax > 0 ? (float) meltTicks / meltMax : 0.0f;
     }
 
     /** 匠魂加热器（seared heater）的工作温度 */
@@ -269,6 +313,8 @@ public class MoltenForgeBlockEntity extends BlockEntity implements IFluidHandler
             list.add(f);
         }
         tag.put("fluids", list);
+        tag.putInt("meltTicks", meltTicks);
+        tag.putInt("meltMax", meltMax);
     }
 
     @Override
@@ -281,6 +327,8 @@ public class MoltenForgeBlockEntity extends BlockEntity implements IFluidHandler
             FluidStack read = FluidStack.loadFluidStackFromNBT(list.getCompound(i));
             if (!read.isEmpty()) fluids.add(read);
         }
+        meltTicks = tag.getInt("meltTicks");
+        meltMax = tag.getInt("meltMax");
     }
 
     @Override

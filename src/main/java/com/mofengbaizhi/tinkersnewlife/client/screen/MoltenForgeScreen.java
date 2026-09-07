@@ -42,28 +42,35 @@ public class MoltenForgeScreen extends AbstractContainerScreen<MoltenForgeMenu> 
         // 匠魂熔炉原生背景
         GuiUtil.drawBackground(graphics, this, BACKGROUND);
 
-        // 工具槽
-        this.renderSlot(graphics, 80, 35);
+        // 工具熔炼槽（melter.png 左侧熔炼槽位 (22,16)）
+        this.renderSlot(graphics, 22, 16);
 
-        // 多流体立管（右侧）：每个流体一个色条
         MoltenForgeBlockEntity te = this.menu.getTile();
-        if (te != null) {
-            List<FluidStack> fluids = te.getFluids();
-            int x = 116;
-            int y = 30;
-            for (int i = 0; i < fluids.size() && i < MoltenForgeBlockEntity.TANKS; i++) {
-                FluidStack fs = fluids.get(i);
-                if (fs.isEmpty()) continue;
-                int color = 0xFF8090A0;   // 流体色块（tooltip 展示名称与量）
-                graphics.fill(x, y, x + 46, y + 14, color);
-                graphics.fill(x + 1, y + 1, x + 45, y + 13, 0x80000000);
-                if (this.isHovering(x, y, 46, 14, mouseX, mouseY)) {
-                    graphics.renderTooltip(this.font, Component.literal(
-                            fs.getFluid().getFluidType().getDescription().getString() + " x" + fs.getAmount()),
-                            mouseX, mouseY);
-                }
-                y += 18;
+        if (te == null) return;
+
+        // 熔炼进度条（温度达标后加热进度）
+        float prog = te.getMeltProgress();
+        if (prog > 0) {
+            graphics.fill(22, 38, 22 + 52, 41, 0xFF404040);
+            graphics.fill(22, 38, 22 + (int) (52 * prog), 41, 0xFFCC5533);
+        }
+
+        // 多流体立管（tank 区 (90,16) 52x52）
+        List<FluidStack> fluids = te.getFluids();
+        int x = 90;
+        int y = 16;
+        for (int i = 0; i < fluids.size() && i < MoltenForgeBlockEntity.TANKS; i++) {
+            FluidStack fs = fluids.get(i);
+            if (fs.isEmpty()) continue;
+            int color = 0xFF8090A0;   // 流体色块（tooltip 展示名称与量）
+            graphics.fill(x, y, x + 50, y + 14, color);
+            graphics.fill(x + 1, y + 1, x + 49, y + 13, 0x80000000);
+            if (this.isHovering(x, y, 50, 14, mouseX, mouseY)) {
+                graphics.renderTooltip(this.font, Component.literal(
+                        fs.getFluid().getFluidType().getDescription().getString() + " x" + fs.getAmount()),
+                        mouseX, mouseY);
             }
+            y += 20;
         }
     }
 
