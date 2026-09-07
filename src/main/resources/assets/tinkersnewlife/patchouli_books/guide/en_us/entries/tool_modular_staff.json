@@ -7,7 +7,7 @@
                   {
                       "type":  "patchouli:spotlight",
                       "item":  "tinkersnewlife:modular_staff",
-                      "text":  "$(bold)Modular Staff$()$(br2)Obtaining: craft it at the $(bold)Tinker Station$() — a Spell Core + Handle + Tough Ring combination.$(br2)Features: a staff rebuilt with modular upgrades that gains a considerable power boost:$(li)melee attacks deal an extra $(bold)+1.5$() damage$(li)spells and cursed techniques ($(l:techniques/yuchuzi)Shrine$() / $(l:techniques/blood_manipulation)Blood Manipulation$(), etc.) deal bonus damage and gain increased power"
+                      "text":  "$(bold)Modular Staff$()$(br2)Obtaining: craft it at the $(bold)Tinker Station$() — a Spell Core + Handle + Tough Ring combination.$(br2)Features: a staff rebuilt with modular upgrades that gains a considerable power boost:$(li)melee attacks deal an extra $(bold)+1.5$() damage$(li)spells and cursed techniques ($(l:techniques/yuchuzi)Yu Chu Zi$() / $(l:techniques/blood_manipulation)Blood Manipulation$(), etc.) deal bonus damage and gain increased power"
                   }
               ]
 }

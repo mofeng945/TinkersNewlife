@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "When Cursed Energy runs low, the shortfall is paid by Soul Energy at a rate of $(bold)1 Cursed Energy = 3 Soul Energy$() (requires the Occult Witchcraft mod; without it, casting fails outright when Cursed Energy is insufficient).$(br2)The first time this triggers, you will receive a message: $(italic)Cursed Energy depleted — draining Soul Energy!$()$(br2)Both Technique and Domain costs support this fallback."
+      "text": "When Cursed Energy runs low, the shortfall is paid by Soul Energy at a rate of $(bold)1 Cursed Energy = 3 Soul Energy$() (requires the Goety mod; without it, casting fails outright when Cursed Energy is insufficient).$(br2)The first time this triggers, you will receive a message: $(italic)Cursed Energy depleted — draining Soul Energy!$()$(br2)Both Technique and Domain costs support this fallback."
     }
   ]
 }

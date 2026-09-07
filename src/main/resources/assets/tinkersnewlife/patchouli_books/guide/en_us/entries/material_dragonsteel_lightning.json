@@ -11,7 +11,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)Innate traits$():$(li)$(l:traits/trait_dragonsteel_lightning)Dragonthunder$(): on hit, summons a thunderbolt that deals damage and disarms the target for 3 seconds$(br2)One of the three dragonsteel variants, offering both damage and strong crowd control."
+      "text": "$(bold)Innate traits$():$(li)$(l:traits/trait_dragonsteel_lightning)Dragonsteel Lightning$(): on hit, summons a thunderbolt that deals damage and disarms the target for 3 seconds$(br2)One of the three dragonsteel variants, offering both damage and strong crowd control."
     }
   ],
   "flag": "mod:iceandfire"

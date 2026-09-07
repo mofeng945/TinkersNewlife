@@ -11,7 +11,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)Innate traits$() (two):$(li)$(l:traits/trait_dragonbone)Carrier$(): boosts the level-based effects of dragonsteel traits by one level$(li)$(l:traits/trait_dragon_blood_tank)Dragon Blood Tank$(): stores the three kinds of dragon blood, for use with dragon blood infusion$(br2)Dragonbone is the easiest base material to come by - both of its traits revolve around dragon-themed gameplay."
+      "text": "$(bold)Innate traits$() (two):$(li)$(l:traits/trait_dragonbone)Dragonbone$(): boosts the level-based effects of dragonsteel traits by one level$(li)$(l:traits/trait_dragon_blood_tank)Dragon Blood Tank$(): stores the three kinds of dragon blood, for use with dragon blood infusion$(br2)Dragonbone is the easiest base material to come by - both of its traits revolve around dragon-themed gameplay."
     }
   ],
   "flag": "mod:iceandfire"

@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(bold)Curse Core$() is the foundation of the Cursed Energy system. It is a Tinkers' Construct tool worn in the $(bold)curios Curse Core slot$(), providing:$(li)Cursed Energy capacity and regeneration$(li)Techniques ($(l:techniques/yuchuzi)Shrine$()/$(l:techniques/blood_manipulation)Blood Manipulation$(), etc.)$(li)Domains ($(l:domains/zuosha_botu)Idle Death Gamble$()/$(l:domains/wuliang_kongchu)Unlimited Void$()/$(l:domains/fumo_yuchuzi)Malevolent Shrine$())$(li)Material combat traits (active depending on the core's material)"
+      "text": "$(bold)Curse Core$() is the foundation of the Cursed Energy system. It is a Tinkers' Construct tool worn in the $(bold)curios Curse Core slot$(), providing:$(li)Cursed Energy capacity and regeneration$(li)Techniques ($(l:techniques/yuchuzi)Yu Chu Zi$()/$(l:techniques/blood_manipulation)Blood Manipulation$(), etc.)$(li)Domains ($(l:domains/zuosha_botu)Self-Embodiment of Perfection$()/$(l:domains/wuliang_kongchu)Unlimited Void$()/$(l:domains/fumo_yuchuzi)Malevolent Shrine$())$(li)Material combat traits (active depending on the core's material)"
     },
     {
       "type": "patchouli:spotlight",

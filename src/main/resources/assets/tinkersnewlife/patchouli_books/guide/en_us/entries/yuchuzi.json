@@ -1,5 +1,5 @@
 {
-    "name": "Yuchuzi",
+    "name": "Yu Chu Zi",
     "category": "tinkersnewlife:techniques",
     "icon": "tinkersnewlife:textures/gui/modifiers/yuchuzi.png",
     "sortnum": 2,
@@ -7,7 +7,7 @@
     "pages": [
         {
             "type": "patchouli:text",
-            "text": "$(bold)Yuchuzi$(): Sukuna's blade — Cleave, Dismantle, Furnace: Open, all in one. $(br2)Folds $(bold)Cleave / Dismantle / Furnace: Open$() into a single technique (occupying only 1 technique slot). $(br2)$(bold)Controls$(): press $(bold)C$() to release the current move; press $(bold)F$() (the reversal key) to cycle the current move among Cleave → Dismantle → Furnace: Open."
+            "text": "$(bold)Yu Chu Zi$(): Sukuna's blade — Cleave, Dismantle, Furnace: Open, all in one. $(br2)Folds $(bold)Cleave / Dismantle / Furnace: Open$() into a single technique (occupying only 1 technique slot). $(br2)$(bold)Controls$(): press $(bold)C$() to release the current move; press $(bold)F$() (the reversal key) to cycle the current move among Cleave → Dismantle → Furnace: Open."
         },
         {
             "type": "patchouli:text",

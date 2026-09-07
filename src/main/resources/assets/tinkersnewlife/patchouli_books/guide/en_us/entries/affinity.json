@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(bold)Cursed Affinity$() is a player attribute (starting at 0):$(li)equipped trinkets may randomly carry 0–50 affinity$(li)$(l:domains/zuosha_botu)Idle Death Gamble$()'s jackpot grants +100 temporary affinity (33 seconds)$(br2)What Affinity does:$(li)raises maximum Cursed Energy and regeneration$(li)reduces Technique cost: × (1 − Affinity/100)$(li)increases Technique and Domain damage coefficients$(li)shortens Technique Burnout duration"
+      "text": "$(bold)Cursed Affinity$() is a player attribute (starting at 0):$(li)equipped trinkets may randomly carry 0–50 affinity$(li)$(l:domains/zuosha_botu)Self-Embodiment of Perfection$()'s jackpot grants +100 temporary affinity (33 seconds)$(br2)What Affinity does:$(li)raises maximum Cursed Energy and regeneration$(li)reduces Technique cost: × (1 − Affinity/100)$(li)increases Technique and Domain damage coefficients$(li)shortens Technique Burnout duration"
     }
   ]
 }

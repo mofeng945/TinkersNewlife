@@ -11,7 +11,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)Innate traits$():$(li)$(l:traits/trait_dragonsteel_fire)Dragonflame$(): on hit, triggers a small explosion that ignites the target and nearby enemies; the burning lasts longer with each level$(br2)The three dragonsteel variants - Dragonflame / Dragonfrost / Dragonthunder - are the classic offensive materials, matched to Fire, Ice and Lightning dragons respectively."
+      "text": "$(bold)Innate traits$():$(li)$(l:traits/trait_dragonsteel_fire)Dragonsteel Fire$(): on hit, triggers a small explosion that ignites the target and nearby enemies; the burning lasts longer with each level$(br2)The three dragonsteel variants - Dragonsteel Fire / Dragonsteel Ice / Dragonsteel Lightning - are the classic offensive materials, matched to Fire, Ice and Lightning dragons respectively."
     }
   ],
   "flag": "mod:iceandfire"

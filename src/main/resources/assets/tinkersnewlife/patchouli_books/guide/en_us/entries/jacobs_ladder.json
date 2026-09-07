@@ -11,7 +11,7 @@
         },
         {
             "type": "patchouli:text",
-            "text": "$(bold)Targets bathed in the pillar of light$():$(li)their techniques and domains are $(bold)disabled for 60 seconds$() — $(l:techniques/wuliang_wuxian)Limitless: Infinity$() and other $(bold)sustained cursed techniques are terminated instantly$() (domains are forcibly closed, an active Black Bird is recalled)$(li)they keep taking $(bold)per-frame damage$(): once every 2 ticks, $(bold)ignoring invulnerability frames$()$(li)$(bold)undead creatures$() take $(bold)8×$() the per-frame damage$(br2)Its cursed energy cost is $(bold)8×$() that of Dismantle. Uses up a technique slot."
+            "text": "$(bold)Targets bathed in the pillar of light$():$(li)their techniques and domains are $(bold)disabled for 60 seconds$() — $(l:techniques/wuliang_wuxian)Infinity$() and other $(bold)sustained cursed techniques are terminated instantly$() (domains are forcibly closed, an active Black Bird is recalled)$(li)they keep taking $(bold)per-frame damage$(): once every 2 ticks, $(bold)ignoring invulnerability frames$()$(li)$(bold)undead creatures$() take $(bold)8×$() the per-frame damage$(br2)Its cursed energy cost is $(bold)8×$() that of Dismantle. Uses up a technique slot."
         }
     ]
 }

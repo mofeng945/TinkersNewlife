@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "A Domain occupies the core's $(bold)Domain slot$() and is granted at random by a ritual.$(li)Expansion conditions: a core must be worn, a Domain trait must be owned, and Cursed Energy > 0 (no limit in Creative mode)$(li)Radius = Cursed Energy output level × 5 blocks$(li)Consumes radius × coefficient Cursed Energy per second; closes automatically when depleted$(li)Overlapping Domains can engage in a $(l:domains/clash)Domain Clash$()$(br2)The three Domains:$(li)$(l:domains/zuosha_botu)Idle Death Gamble$(): gamble on luck$(li)$(l:domains/wuliang_kongchu)Unlimited Void$(): time and space stand still$(li)$(l:domains/fumo_yuchuzi)Malevolent Shrine$(): indiscriminate slashing"
+      "text": "A Domain occupies the core's $(bold)Domain slot$() and is granted at random by a ritual.$(li)Expansion conditions: a core must be worn, a Domain trait must be owned, and Cursed Energy > 0 (no limit in Creative mode)$(li)Radius = Cursed Energy output level × 5 blocks$(li)Consumes radius × coefficient Cursed Energy per second; closes automatically when depleted$(li)Overlapping Domains can engage in a $(l:domains/clash)Domain Clash$()$(br2)The three Domains:$(li)$(l:domains/zuosha_botu)Self-Embodiment of Perfection$(): gamble on luck$(li)$(l:domains/wuliang_kongchu)Unlimited Void$(): time and space stand still$(li)$(l:domains/fumo_yuchuzi)Malevolent Shrine$(): indiscriminate slashing"
     }
   ]
 }

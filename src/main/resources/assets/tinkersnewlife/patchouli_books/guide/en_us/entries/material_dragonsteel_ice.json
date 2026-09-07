@@ -11,7 +11,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)Innate traits$():$(li)$(l:traits/trait_dragonsteel_ice)Dragonfrost$(): on hit, applies a frost effect that greatly slows the target and deals continuous freezing damage, while spreading frost around it$(br2)One of the three dragonsteel variants, leaning toward crowd control and sustained damage."
+      "text": "$(bold)Innate traits$():$(li)$(l:traits/trait_dragonsteel_ice)Dragonsteel Ice$(): on hit, applies a frost effect that greatly slows the target and deals continuous freezing damage, while spreading frost around it$(br2)One of the three dragonsteel variants, leaning toward crowd control and sustained damage."
     }
   ],
   "flag": "mod:iceandfire"
