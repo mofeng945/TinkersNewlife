@@ -1,0 +1,35 @@
+{
+  "type": "tconstruct:modifier",
+  "allow_crystal": true,
+  "inputs": [
+    {
+      "item": "goety:cursed_metal_block"
+    },
+    {
+      "item": "goety:hunger_core"
+    },
+    {
+      "item": "goety:hunger_core"
+    },
+    {
+      "item": "goety:shade_stone"
+    },
+    {
+      "item": "goety:shade_stone"
+    }
+  ],
+  "level": {
+    "min": 2,
+    "max": 3
+  },
+  "result": "tinkersnewlife:soul_eater",
+  "tools": {
+    "tag": "tconstruct:modifiable/durability"
+  },
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "goety"
+    }
+  ]
+}

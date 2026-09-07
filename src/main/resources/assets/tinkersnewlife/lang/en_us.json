@@ -117,5 +117,8 @@
   "modifier.tinkersnewlife.dark_metal_magic_resist.flavor": "§7Gloom-forged plate, deaf to sorcery.",
   "modifier.tinkersnewlife.dark_metal_magic_resist.description": "§7When taking magic damage, convert 5%×level + 1.5 points of magic damage into physical damage.",
   "item.tinkersnewlife.you_yun": "§6Playful Cloud",
-  "item.tinkersnewlife.you_yun.desc": "§7Base dmg 10, attack speed 2; every hit breaks shield blocking (like an axe), +120% fixed damage, +10% vs undead; extra knockback (dmg/100 blocks); cannot pierce Infinity."
+  "item.tinkersnewlife.you_yun.desc": "§7Base dmg 10, attack speed 2; every hit breaks shield blocking (like an axe), +120% fixed damage, +10% vs undead; extra knockback (dmg/100 blocks); cannot pierce Infinity.",
+  "modifier.tinkersnewlife.soul_eater": "§5Soul Eater",
+  "modifier.tinkersnewlife.soul_eater.flavor": "§7Souls as food, the more you sip the richer.",
+  "modifier.tinkersnewlife.soul_eater.description": "§7+25% soul energy gain per level; holding level 1 grants an extra +1 soul gain. Max level 3 (level 1 uses 1 upgrade slot; levels 2/3 are slotless)."
 }

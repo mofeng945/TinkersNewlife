@@ -289,4 +289,9 @@ public class Modifiers {
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.DarkMetalMagicResistModifier> DARK_METAL_MAGIC_RESIST =
         MODIFIERS.register("dark_metal_magic_resist",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.DarkMetalMagicResistModifier::new);
+
+    /** 强化·噬魂（1 级占 1 升级槽，2/3 级无槽；每级 +25% 灵魂获取，一级后额外 +1，最高 3 级） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.SoulEaterModifier> SOUL_EATER =
+        MODIFIERS.register("soul_eater",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.SoulEaterModifier::new);
 }

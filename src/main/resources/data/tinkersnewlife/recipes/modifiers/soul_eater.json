@@ -1,0 +1,31 @@
+{
+  "type": "tconstruct:modifier",
+  "allow_crystal": true,
+  "inputs": [
+    {
+      "item": "goety:cursed_ingot"
+    },
+    {
+      "item": "goety:cursed_ingot"
+    },
+    {
+      "item": "goety:forbidden_piece"
+    }
+  ],
+  "level": {
+    "max": 1
+  },
+  "result": "tinkersnewlife:soul_eater",
+  "slots": {
+    "upgrades": 1
+  },
+  "tools": {
+    "tag": "tconstruct:modifiable/durability"
+  },
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "goety"
+    }
+  ]
+}

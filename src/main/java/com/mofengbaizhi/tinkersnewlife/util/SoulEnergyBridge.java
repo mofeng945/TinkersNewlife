@@ -94,9 +94,33 @@ public final class SoulEnergyBridge {
         return 0;
     }
 
-    /** 消耗灵魂能量：优先扣能力，不足部分由图腾兜底；amount<=0 视为成功；总量不足/未安装返回 false */
-    public static boolean decreaseSouls(Player player, int amount) {
+    /**
+     * 增加灵魂能量：优先加玩家能力（SEActive），否则加灵魂图腾。amount<=0 忽略；未安装/异常安全无副作用。
+     * 用于「噬魂」等灵魂获取增幅强化补发灵魂。
+     */
+    public static void addSouls(Player player, int amount) {
+        if (amount <= 0 || player == null) return;
         resolve();
+        try {
+            if (getSESoulsMethod != null && setSESoulsMethod != null) {
+                int cur = (Integer) getSESoulsMethod.invoke(null, player);
+                setSESoulsMethod.invoke(null, player, cur + amount);
+                return;
+            }
+        } catch (Throwable ignored) {
+        }
+        try {
+            ItemStack totem = findTotem(player);
+            if (!totem.isEmpty() && totemCurrentSoulsMethod != null && totemSetSoulsMethod != null) {
+                int have = (Integer) totemCurrentSoulsMethod.invoke(null, totem);
+                totemSetSoulsMethod.invoke(null, totem, have + amount);
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** 消耗灵魂能量：优先扣能力，不足部分由图腾兜底；amount<=0 视为成功；总量不足/未安装返回 false */
+    public static boolean decreaseSouls(Player player, int amount) {        resolve();
         if (amount <= 0) return true;
         int remaining = amount;
 

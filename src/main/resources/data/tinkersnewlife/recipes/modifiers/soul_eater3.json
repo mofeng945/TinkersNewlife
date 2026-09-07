@@ -1,0 +1,35 @@
+{
+  "type": "tconstruct:modifier",
+  "allow_crystal": true,
+  "inputs": [
+    {
+      "item": "goety:hunger_core"
+    },
+    {
+      "item": "goety:magic_emerald"
+    },
+    {
+      "item": "goety:magic_emerald"
+    },
+    {
+      "item": "goety:cursed_ingot"
+    },
+    {
+      "item": "goety:cursed_ingot"
+    }
+  ],
+  "level": {
+    "min": 3,
+    "max": 4
+  },
+  "result": "tinkersnewlife:soul_eater",
+  "tools": {
+    "tag": "tconstruct:modifiable/durability"
+  },
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "goety"
+    }
+  ]
+}
