@@ -125,6 +125,7 @@ public class ModCreativeTabs {
                                 addAllToolVariants(output, CurseCoreItem.CURSE_CORE_DEFINITION, ModItems.CURSE_CORE.get(), 1);
 
                                 output.accept(ModItems.DURANDAL_SWORD.get());
+                                output.accept(ModItems.MOLTEN_FORGE.get());
 
                                 // ----- 咒具 -----
                                 output.accept(ModItems.TIAN_NI_HUO.get());
