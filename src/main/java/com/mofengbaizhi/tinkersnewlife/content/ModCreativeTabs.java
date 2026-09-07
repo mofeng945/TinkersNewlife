@@ -74,49 +74,66 @@ public class ModCreativeTabs {
                                 // ----- 墨默刷怪蛋（位于所有旧日材料之后、匠魂部件之前） -----
                                 output.accept(ModItems.MOMO_SPAWN_EGG.get());
 
-                                // ----- 所有流体桶 -----
+                                // ----- 所有流体桶（联动来源流体仅对应 mod 加载时显示） -----
                                 output.accept(ModFluids.GHELOTH_BLOOD.bucket.get());
                                 output.accept(ModFluids.MOLTEN_NICHOLAS_BLESSING.bucket.get());
                                 output.accept(ModFluids.HASTUR_MALICE.bucket.get());
                                 output.accept(ModFluids.ASHEN_INK.bucket.get());
-                                output.accept(ModFluids.MOLTEN_DRAGONSTEEL_FIRE.bucket.get());
-                                output.accept(ModFluids.MOLTEN_DRAGONSTEEL_ICE.bucket.get());
-                                output.accept(ModFluids.MOLTEN_DRAGONSTEEL_LIGHTNING.bucket.get());
-                                output.accept(ModFluids.FIRE_BLOOD.bucket.get());
-                                output.accept(ModFluids.ICE_BLOOD.bucket.get());
-                                output.accept(ModFluids.LIGHTNING_BLOOD.bucket.get());
-                                output.accept(ModFluids.MOLTEN_DREAD.bucket.get());
-                                output.accept(ModFluids.MOLTEN_DREADSTEEL.bucket.get());
                                 output.accept(ModFluids.MOLTEN_DURANDAL.bucket.get());
-                                output.accept(ModFluids.MOLTEN_CURSED_METAL.bucket.get());
-                                output.accept(ModFluids.MOLTEN_DARK_METAL.bucket.get());
+                                if (anyLoaded("iceandfire")) {
+                                    output.accept(ModFluids.MOLTEN_DRAGONSTEEL_FIRE.bucket.get());
+                                    output.accept(ModFluids.MOLTEN_DRAGONSTEEL_ICE.bucket.get());
+                                    output.accept(ModFluids.MOLTEN_DRAGONSTEEL_LIGHTNING.bucket.get());
+                                    output.accept(ModFluids.FIRE_BLOOD.bucket.get());
+                                    output.accept(ModFluids.ICE_BLOOD.bucket.get());
+                                    output.accept(ModFluids.LIGHTNING_BLOOD.bucket.get());
+                                    output.accept(ModFluids.MOLTEN_DREAD.bucket.get());
+                                    output.accept(ModFluids.MOLTEN_DREADSTEEL.bucket.get());
+                                }
+                                if (anyLoaded("goety")) {
+                                    output.accept(ModFluids.MOLTEN_CURSED_METAL.bucket.get());
+                                    output.accept(ModFluids.MOLTEN_DARK_METAL.bucket.get());
+                                }
 
-                                // ----- 铸模 -----
-                                output.accept(ModItems.DRAGON_CORE_CAST.get());
-                                output.accept(ModItems.DRAGON_CORE_SAND_CAST.get());
-                                output.accept(ModItems.DRAGON_CORE_RED_SAND_CAST.get());
-                                output.accept(ModItems.SPELL_CORE_CAST.get());
-                                output.accept(ModItems.SPELL_CORE_SAND_CAST.get());
-                                output.accept(ModItems.SPELL_CORE_RED_SAND_CAST.get());
+                                // ----- 铸模（联动工具的铸模仅在对应 mod 加载时显示） -----
+                                if (anyLoaded("iceandfire")) {
+                                    output.accept(ModItems.DRAGON_CORE_CAST.get());
+                                    output.accept(ModItems.DRAGON_CORE_SAND_CAST.get());
+                                    output.accept(ModItems.DRAGON_CORE_RED_SAND_CAST.get());
+                                }
+                                if (anyLoaded("irons_spellbooks", "goety")) {
+                                    output.accept(ModItems.SPELL_CORE_CAST.get());
+                                    output.accept(ModItems.SPELL_CORE_SAND_CAST.get());
+                                    output.accept(ModItems.SPELL_CORE_RED_SAND_CAST.get());
+                                }
                                 output.accept(ModItems.YO_YO_WHEEL_CAST.get());
                                 output.accept(ModItems.YO_YO_WHEEL_SAND_CAST.get());
                                 output.accept(ModItems.YO_YO_WHEEL_RED_SAND_CAST.get());
                                 output.accept(ModItems.YO_YO_SPOOL_CAST.get());
                                 output.accept(ModItems.YO_YO_SPOOL_SAND_CAST.get());
                                 output.accept(ModItems.YO_YO_SPOOL_RED_SAND_CAST.get());
-                                addAllPartVariants(output, ModItems.DRAGON_CORE.get());
-                                addAllPartVariants(output, ModItems.SPELL_CORE.get());
+                                // 部件材质变体（联动工具的部件同样受来源 mod 门控）
+                                if (anyLoaded("iceandfire")) {
+                                    addAllPartVariants(output, ModItems.DRAGON_CORE.get());
+                                }
+                                if (anyLoaded("irons_spellbooks", "goety")) {
+                                    addAllPartVariants(output, ModItems.SPELL_CORE.get());
+                                }
                                 addAllPartVariants(output, ModItems.YO_YO_WHEEL.get());
                                 addAllPartVariants(output, ModItems.YO_YO_SPOOL.get());
                                 // ⭐ 咒力核心部件已从创造物品栏移除（易与成品咒力核心混淆，需用核心请取成品变体）
 
-                                addAllToolVariants(output, DRAGON_STAFF_DEFINITION, ModItems.DRAGON_STAFF.get(), 3);
+                                if (anyLoaded("iceandfire")) {
+                                    addAllToolVariants(output, DRAGON_STAFF_DEFINITION, ModItems.DRAGON_STAFF.get(), 3);
+                                }
 
                                 addAllToolVariants(output, SILENT_GLOVE_DEFINITION, ModItems.SILENT_GLOVE.get(), 2);
 
                                 addAllToolVariants(output, WarScytheItem.WAR_SCYTHE_DEFINITION, ModItems.WAR_SCYTHE.get(), 5);
 
-                                addAllToolVariants(output, ModularStaffItem.MODULAR_STAFF_DEFINITION, ModItems.MODULAR_STAFF.get(), 4);
+                                if (anyLoaded("irons_spellbooks", "goety")) {
+                                    addAllToolVariants(output, ModularStaffItem.MODULAR_STAFF_DEFINITION, ModItems.MODULAR_STAFF.get(), 4);
+                                }
 
                                 addAllToolVariants(output, FlyingSwordItem.FLYING_SWORD_DEFINITION, ModItems.FLYING_SWORD.get(), 5);
 
@@ -155,6 +172,24 @@ public class ModCreativeTabs {
             if (!stack.isEmpty()) {
                 output.accept(stack);
             }
+        }
+    }
+
+    // ============================================================
+    //  联动内容过滤：工具/部件/铸模/流体桶等依赖其它 mod 的条目，对应 mod 未加载则不显示
+    // ============================================================
+
+    /** 任一列出的 mod 已加载（联动工具需任一施法/龙 mod 在场才显示） */
+    private static boolean anyLoaded(String... mods) {
+        try {
+            net.minecraftforge.fml.ModList list = net.minecraftforge.fml.ModList.get();
+            if (list == null) return false;
+            for (String m : mods) {
+                if (list.isLoaded(m)) return true;
+            }
+            return false;
+        } catch (Throwable t) {
+            return false;
         }
     }
 
