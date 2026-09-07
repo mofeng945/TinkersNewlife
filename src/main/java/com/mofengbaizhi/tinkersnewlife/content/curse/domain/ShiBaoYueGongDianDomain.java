@@ -35,6 +35,9 @@ import java.util.UUID;
  * </ul>
  */
 public class ShiBaoYueGongDianDomain extends BaseDomain {
+    /** config: 领域 modifier path（系数键） */
+    @Override
+    protected String configScaleId() { return "shi_bao_yue_gong_dian"; }
 
     /** 定身刷新间隔：5 tick */
     private static final int STUN_REFRESH_TICKS = 5;

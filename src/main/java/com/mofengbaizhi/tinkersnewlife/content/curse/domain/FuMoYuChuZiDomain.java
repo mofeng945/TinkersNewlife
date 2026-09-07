@@ -37,6 +37,9 @@ import java.util.UUID;
  * - 每道斩击伤害 = (1 + (咒力输出等级 + 咒力亲和/10)/10) × (玩家当前攻击伤害 + 咒力输出等级×5) × 5%
  */
 public class FuMoYuChuZiDomain extends BaseDomain {
+    /** config: 领域 modifier path（系数键） */
+    @Override
+    protected String configScaleId() { return "fumo_yuchuzi"; }
 
     private static final ModifierId FUMO_YUCHUZI_ID = new ModifierId(
             new net.minecraft.resources.ResourceLocation(com.mofengbaizhi.tinkersnewlife.TinkersNewlife.MOD_ID, "fumo_yuchuzi"));

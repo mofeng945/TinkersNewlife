@@ -27,6 +27,9 @@ import java.util.UUID;
  *   - 特等奖：33 秒内咒力无限、HP 锁定上限、咒力亲和 +100
  */
 public class ZuoShaBoTuDomain extends BaseDomain {
+    /** config: 领域 modifier path（系数键） */
+    @Override
+    protected String configScaleId() { return "zuosha_botu"; }
 
     private static final ModifierId ZUOSHA_BOTU_ID = new ModifierId(
             new net.minecraft.resources.ResourceLocation(com.mofengbaizhi.tinkersnewlife.TinkersNewlife.MOD_ID, "zuosha_botu"));

@@ -34,6 +34,9 @@ import java.util.UUID;
  * </ul>
  */
 public class QianheYingyiDomain extends BaseDomain {
+    /** config: 领域 modifier path（系数键） */
+    @Override
+    protected String configScaleId() { return "qianhe_yingyi"; }
 
     /** 领域式神实体 id（关闭时清除） */
     private final List<Integer> summonedIds = new ArrayList<>();

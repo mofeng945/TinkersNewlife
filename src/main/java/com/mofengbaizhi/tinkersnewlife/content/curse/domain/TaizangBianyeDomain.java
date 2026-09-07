@@ -37,6 +37,9 @@ import java.util.UUID;
  * 与伏诛赐死相反：本领域压力<b>可被新阴流三技巧抵挡</b>（带技巧且咒力足够的目标免疫压力）。
  */
 public class TaizangBianyeDomain extends BaseDomain {
+    /** config: 领域 modifier path（系数键） */
+    @Override
+    protected String configScaleId() { return "taizang_bianye"; }
 
     private TaizangBianyeDomain(UUID owner, Vec3 center, int radius) {
         super(owner, center, radius, radius * 30.0);

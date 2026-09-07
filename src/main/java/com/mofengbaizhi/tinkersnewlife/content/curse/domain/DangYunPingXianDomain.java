@@ -48,6 +48,9 @@ import java.util.UUID;
  * </ul>
  */
 public class DangYunPingXianDomain extends BaseDomain {
+    /** config: 领域 modifier path（系数键） */
+    @Override
+    protected String configScaleId() { return "dang_yun_ping_xian"; }
 
     /** 溺尸主人标记（本领域溺尸的 PersistentData） */
     private static final String KEY_DROWNED_OWNER = "tnl_dangyun_owner";

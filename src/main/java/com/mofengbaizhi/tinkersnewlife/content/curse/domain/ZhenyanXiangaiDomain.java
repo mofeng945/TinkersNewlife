@@ -25,6 +25,9 @@ import java.util.UUID;
  * 领域本身维持通用困锁墙与咒力消耗。
  */
 public class ZhenyanXiangaiDomain extends BaseDomain {
+    /** config: 领域 modifier path（系数键） */
+    @Override
+    protected String configScaleId() { return "zhenyan_xiangai"; }
 
     private ZhenyanXiangaiDomain(UUID owner, Vec3 center, int radius) {
         super(owner, center, radius, radius * 25.0);

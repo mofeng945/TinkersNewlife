@@ -36,6 +36,9 @@ import java.util.concurrent.ConcurrentHashMap;
  *   (领域内状态时间/10 + 咒力输出等级) × (1 + 咒力亲和/100) × 10 tick 后结束
  */
 public class WuLiangKongChuDomain extends BaseDomain {
+    /** config: 领域 modifier path（系数键） */
+    @Override
+    protected String configScaleId() { return "wuliang_kongchu"; }
 
     /** 静止效果刷新间隔（tick） */
     private static final int STUN_REFRESH_TICKS = 5;

@@ -42,6 +42,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * </ul>
  */
 public class ExecutionDomain extends BaseDomain {
+    /** config: 领域 modifier path（系数键） */
+    @Override
+    protected String configScaleId() { return "fuzhu_cisi"; }
 
     /** 亡灵/节肢审判时长（tick）：3s */
     private static final int JUDGE_MOB_TICKS = 60;

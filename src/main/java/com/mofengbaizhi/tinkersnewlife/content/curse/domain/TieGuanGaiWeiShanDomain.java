@@ -29,6 +29,9 @@ import java.util.UUID;
  * </ul>
  */
 public class TieGuanGaiWeiShanDomain extends BaseDomain {
+    /** config: 领域 modifier path（系数键） */
+    @Override
+    protected String configScaleId() { return "tie_guan_gai_wei_shan"; }
 
     /** 灼烧间隔：5 tick */
     private static final int BURN_INTERVAL_TICKS = 5;

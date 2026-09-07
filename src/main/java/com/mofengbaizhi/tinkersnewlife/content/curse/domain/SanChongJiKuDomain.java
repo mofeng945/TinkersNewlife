@@ -38,6 +38,9 @@ import java.util.UUID;
  * </ul>
  */
 public class SanChongJiKuDomain extends BaseDomain {
+    /** config: 领域 modifier path（系数键） */
+    @Override
+    protected String configScaleId() { return "san_chong_ji_ku"; }
 
     private SanChongJiKuDomain(UUID owner, Vec3 center, int radius) {
         super(owner, center, radius, radius * 45.0);

@@ -69,8 +69,16 @@ public abstract class BaseDomain {
     protected BaseDomain(UUID owner, Vec3 center, int radius, double curseCostPerSecond) {
         this.owner = owner;
         this.center = center;
-        this.radius = radius;
-        this.curseCostPerSecond = curseCostPerSecond;
+        // 配置缩放（每领域 radius/cost 系数，见 config/ModConfig；未覆写 configScaleId = 无缩放）
+        double rScale = com.mofengbaizhi.tinkersnewlife.config.ModConfig.domainRadius(configScaleId());
+        double cScale = com.mofengbaizhi.tinkersnewlife.config.ModConfig.domainCost(configScaleId());
+        this.radius = rScale <= 0 ? radius : Math.max(1, (int) Math.ceil(radius * rScale));
+        this.curseCostPerSecond = cScale <= 0 ? curseCostPerSecond : curseCostPerSecond * cScale;
+    }
+
+    /** 本领域 modifier path（config 系数键）；子类覆写返回自身领域 modifier 的 path（如 "zuosha_botu"）；默认 null=无缩放 */
+    protected String configScaleId() {
+        return null;
     }
 
     // ============================================================

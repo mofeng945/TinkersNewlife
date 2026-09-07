@@ -36,6 +36,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * </ul>
  */
 public class ZiBiYuanDunGuoDomain extends BaseDomain {
+    /** config: 领域 modifier path（系数键） */
+    @Override
+    protected String configScaleId() { return "zi_bi_yuan_dun_guo"; }
 
     /** 转变尝试间隔：5 tick */
     private static final int TRANSFORM_INTERVAL_TICKS = 5;

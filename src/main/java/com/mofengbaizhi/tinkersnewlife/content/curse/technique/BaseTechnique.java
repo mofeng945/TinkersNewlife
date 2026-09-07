@@ -115,6 +115,7 @@ public abstract class BaseTechnique {
         int output = CursePowerHelper.getCurseOutputLevel(player);
         int affinity = CursePowerHelper.getCurseAffinity(player);
         double cost = (1.0 - affinity / 100.0) * (10 + output * 5);
+        cost *= com.mofengbaizhi.tinkersnewlife.config.ModConfig.techniqueCost(scalePath());   // 配置缩放
         return Math.max(1, (int) Math.ceil(cost));
     }
 
@@ -140,7 +141,13 @@ public abstract class BaseTechnique {
         int output = CursePowerHelper.getCurseOutputLevel(player);
         int affinity = CursePowerHelper.getCurseAffinity(player);
         double playerDmg = player.getAttributeValue(Attributes.ATTACK_DAMAGE) + output * 5.0;
-        return (1.0 + (output + affinity / 10.0) / 10.0) * playerDmg;
+        double base = (1.0 + (output + affinity / 10.0) / 10.0) * playerDmg;
+        return base * com.mofengbaizhi.tinkersnewlife.config.ModConfig.techniqueDamage(scalePath());   // 配置缩放
+    }
+
+    /** 本术式 modifier path（config 系数键）；无 modifierId 返回空（helper 兜底 1.0） */
+    private String scalePath() {
+        return modifierId != null ? modifierId.getPath() : "";
     }
 
     /**
