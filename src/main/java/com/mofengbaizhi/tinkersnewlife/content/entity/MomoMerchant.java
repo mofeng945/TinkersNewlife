@@ -209,6 +209,9 @@ public class MomoMerchant extends PathfinderMob implements MomoConst {
     /** 鏄惁涓鸿嚜鐒跺埛鏂帮紙婊℃湀锛変骇鐢熺殑锛氱櫧澶╁埌鏉ユ椂娑堝け锛涘埛鎬泲涓?false 甯搁┗ */
     private boolean naturalSpawn = false;
     private boolean dayDespawnDone = false;
+    /** 逃离消失倒计时：白天到来且未雇佣时，先远离所有玩家寻路多次再消失 */
+    private int fleeDespawnTicks = 0;
+    private static final int FLEE_DESPAWN_TICKS = 200;   // 10 秒逃离窗口
     /** 鐢熸垚鐐癸紙娓歌蛋閿氱偣锛?*/
     private BlockPos homePos = null;
     private int wanderTimer = 0;
@@ -359,6 +362,25 @@ public class MomoMerchant extends PathfinderMob implements MomoConst {
 
     public boolean isNaturalSpawn() {
         return naturalSpawn;
+    }
+
+    /** 逃离消失：每 tick 朝远离所有玩家的方向寻路（导航到远处目标，到达后再定新目标＝多次寻路） */
+    private void tickFleeDespawn() {
+        if (!(level() instanceof ServerLevel sl)) return;
+        Vec3 away = Vec3.ZERO;
+        for (Player p : sl.players()) {
+            Vec3 d = this.position().subtract(p.position());
+            away = away.add(d.x, 0, d.z);
+        }
+        if (away.horizontalDistanceSqr() < 0.01) {
+            away = new Vec3(level().random.nextDouble() - 0.5, 0, level().random.nextDouble() - 0.5);
+        }
+        away = away.normalize();
+        if (this.getNavigation().isDone()) {
+            BlockPos target = this.blockPosition().offset(
+                    (int) Math.round(away.x * 12), 0, (int) Math.round(away.z * 12));
+            this.getNavigation().moveTo(target.getX(), target.getY(), target.getZ(), 1.1);
+        }
     }
 
     @Nullable
@@ -736,13 +758,21 @@ public class MomoMerchant extends PathfinderMob implements MomoConst {
         if (naturalSpawn && !hired && returnGraceTicks <= 0) {
             long dayTime = level().getDayTime() % 24000;
             if (dayTime < 13000) {
-                if (!dayDespawnDone && level() instanceof ServerLevel sl) {
+                if (!dayDespawnDone) {
                     dayDespawnDone = true;
-                    sl.sendParticles(ParticleTypes.POOF, this.getX(), this.getY() + 1.2, this.getZ(),
-                            16, 0.4, 0.5, 0.4, 0.02);
-                    sl.playSound(null, this.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.HOSTILE, 0.9F, 1.4F);
+                    if (level() instanceof ServerLevel sl) {
+                        sl.sendParticles(ParticleTypes.POOF, this.getX(), this.getY() + 1.2, this.getZ(),
+                                16, 0.4, 0.5, 0.4, 0.02);
+                        sl.playSound(null, this.blockPosition(), SoundEvents.ENDERMAN_TELEPORT, SoundSource.HOSTILE, 0.9F, 1.4F);
+                    }
+                    fleeDespawnTicks = FLEE_DESPAWN_TICKS;   // 开启逃离消失
                 }
-                this.discard();
+                if (fleeDespawnTicks > 0) {
+                    tickFleeDespawn();   // 每 tick 朝远离所有玩家方向寻路（多次）
+                    fleeDespawnTicks--;
+                    return;
+                }
+                this.discard();   // 逃离窗口结束：真正消失
                 return;
             }
         }
