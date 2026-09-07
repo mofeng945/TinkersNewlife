@@ -6,7 +6,7 @@
   "cast_consumed": false,
   "fluid": {
     "name": "tinkersnewlife:molten_dragonsteel_ice_still",
-    "amount": 144
+    "amount": 90
   },
   "result": "iceandfire:dragonsteel_ice_ingot",
   "cooling_time": 120

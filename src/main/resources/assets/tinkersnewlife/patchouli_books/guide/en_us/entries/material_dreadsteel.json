@@ -7,7 +7,7 @@
     {
       "type": "patchouli:spotlight",
       "item": "tinkersnewlife:molten_dreadsteel_bucket",
-      "text": "$(bold)获取方式$()：$(li)获得$(bold)熔融慑怖钢$()（温度 1600）——通过合金配方合成，或熔炼慑怖碎片等原料$(li)在铸造台用熔融慑怖钢 $(bold)144 mB$()（1 锭）制作慑怖钢材料$(br2)等级：$(bold)T4$()，本模组最高级材料之一。"
+      "text": "$(bold)获取方式$()：$(li)获得$(bold)熔融慑怖钢$()（温度 1450）——通过合金配方合成，或熔炼慑怖碎片等原料$(li)在铸造台用熔融慑怖钢 $(bold)90 mB$()（1 锭）制作慑怖钢材料$(br2)等级：$(bold)T4$()，本模组最高级材料之一。"
     },
     {
       "type": "patchouli:text",

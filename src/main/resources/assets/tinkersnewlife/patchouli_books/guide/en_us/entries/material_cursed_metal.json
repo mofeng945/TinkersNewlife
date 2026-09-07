@@ -7,7 +7,7 @@
     {
       "type": "patchouli:spotlight",
       "item": "goety:cursed_ingot",
-      "text": "$(bold)获取方式$()：$(li)诅咒金属锭来自诡厄巫法（$(l:https://www.curseforge.com/minecraft/mc-mods/goety)Goety$() 的 $(bold)goety:cursed_ingot$()）$(li)把诅咒金属锭丢入冶炼炉熔成 $(bold)熔融诅咒金属$()（144 mB/锭，温度 900）$(li)在铸造台用熔融诅咒金属 $(bold)144 mB$()（1 锭）制作诅咒金属材料部件$(br2)等级：$(bold)T2$()（二级材料，挖掘等级铁）。"
+      "text": "$(bold)获取方式$()：$(li)诅咒金属锭来自诡厄巫法（$(l:https://www.curseforge.com/minecraft/mc-mods/goety)Goety$() 的 $(bold)goety:cursed_ingot$()）$(li)把诅咒金属锭丢入冶炼炉熔成 $(bold)熔融诅咒金属$()（90 mB/锭，温度 900）$(li)在铸造台用熔融诅咒金属 $(bold)90 mB$()（1 锭）制作诅咒金属材料部件$(br2)等级：$(bold)T2$()（二级材料，挖掘等级铁）。"
     },
     {
       "type": "patchouli:text",

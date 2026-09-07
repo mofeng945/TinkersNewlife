@@ -7,7 +7,7 @@
     {
       "type": "patchouli:spotlight",
       "item": "tinkersnewlife:molten_dragonsteel_fire_bucket",
-      "text": "$(bold)获取方式$()：$(li)获得$(bold)熔融龙炎钢$()——在冶炼炉中熔炼龙炎钢锭（由$(bold)冰火传说$()的$(bold)火龙$()材料制成）$(li)在铸造台用熔融龙炎钢 $(bold)144 mB$()（1 锭）制作龙炎钢材料$(br2)等级：$(bold)T3$()。"
+      "text": "$(bold)获取方式$()：$(li)获得$(bold)熔融龙炎钢$()——在冶炼炉中熔炼龙炎钢锭（由$(bold)冰火传说$()的$(bold)火龙$()材料制成）$(li)在铸造台用熔融龙炎钢 $(bold)90 mB$()（1 锭）制作龙炎钢材料$(br2)等级：$(bold)T3$()。"
     },
     {
       "type": "patchouli:text",

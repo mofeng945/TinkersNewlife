@@ -6,7 +6,7 @@
   "cast_consumed": false,
   "fluid": {
     "name": "tinkersnewlife:molten_dark_metal_still",
-    "amount": 144
+    "amount": 90
   },
   "result": "goety:dark_ingot",
   "cooling_time": 85

@@ -2,7 +2,7 @@
   "type": "tconstruct:material_fluid",
   "fluid": {
     "name": "tinkersnewlife:molten_durandal_still",
-    "amount": 144
+    "amount": 90
   },
   "temperature": 1300,
   "output": "tinkersnewlife:durandal"

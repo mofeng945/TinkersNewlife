@@ -106,7 +106,7 @@ public class GenericToolMeltingRecipe implements IMeltingRecipe {
             if (fluids.isEmpty()) continue;
             FluidStack fluid = fluids.get(0);
             int perUnit = mfr.getFluidAmount(fluid.getFluid());
-            if (perUnit <= 0) perUnit = 144;
+            if (perUnit <= 0) perUnit = 90;
             handler.fill(new FluidStack(fluid.getFluid(), perUnit),
                     net.minecraftforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
         }

@@ -74,7 +74,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * - 最中间：焦黑材料量器；量器正上方：格赫罗斯矿石
  * - 量器四周隔一格（距矿石 2 格）分别放置 石头 / 铁块 / 金块 / 钻石块（任意方位）
  * - 这四个方块上方各放一个灵魂灯笼
- * - 量器内需填充 ≥6 锭（864 mB）的对应材料流体（焦黑熔石/熔融铁/熔融金/熔融钻石）
+ * - 量器内需填充 ≥6 单位（540 mB）的对应材料流体（焦黑熔石/熔融铁/熔融金/熔融钻石）
  * <p>
  * 空手右键格赫罗斯矿石发动：仪式持续 5 秒（量器按流体颜色发射信标光束，
  * 四面灯笼顶端向矿石发射其下方方块破碎粒子连线，密度较高）。
@@ -90,11 +90,11 @@ public class CurseCoreRitualHandler {
 
     /** 仪式时长：5 秒 */
     private static final int RITUAL_TICKS = 5 * 20;
-    /** 所需/消耗材料流体：6 锭 */
+    /** 所需/消耗材料流体：6 单位（匠魂锭单位） */
     private static final int FLUID_UNITS = 6;
-    /** 1 锭 = 144 mB */
-    private static final int MB_PER_UNIT = 144;
-    private static final int REQUIRED_MB = FLUID_UNITS * MB_PER_UNIT; // 864
+    /** 匠魂 1 锭 = 90 mB（FluidValues.INGOT） */
+    private static final int MB_PER_UNIT = 90;
+    private static final int REQUIRED_MB = FLUID_UNITS * MB_PER_UNIT; // 540
     /** 消耗玩家经验等级 */
     private static final int XP_LEVELS = 50;
     /** 材料方块距量器的水平距离（隔一格） */

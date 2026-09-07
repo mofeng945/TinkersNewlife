@@ -2,7 +2,7 @@
   "type": "tconstruct:material_fluid",
   "fluid": {
     "name": "tinkersnewlife:molten_dragonsteel_ice_still",
-    "amount": 144
+    "amount": 90
   },
   "temperature": 1200,
   "output": "tinkersnewlife:dragonsteel_ice"

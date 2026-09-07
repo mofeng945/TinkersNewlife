@@ -7,7 +7,7 @@
     {
       "type": "patchouli:spotlight",
       "item": "goety:dark_ingot",
-      "text": "$(bold)获取方式$()：$(li)黑暗金属锭来自诡厄巫法（$(l:https://www.curseforge.com/minecraft/mc-mods/goety)Goety$() 的 $(bold)goety:dark_ingot$()）$(li)把黑暗金属锭丢入冶炼炉熔成 $(bold)熔融黑暗金属$()（144 mB/锭，温度 1000）$(li)在铸造台用熔融黑暗金属 $(bold)144 mB$()（1 锭）浇筑黑暗金属材料部件$(br2)等级：$(bold)T2$()（二级材料，挖掘等级铁，面板略高于铁）。"
+      "text": "$(bold)获取方式$()：$(li)黑暗金属锭来自诡厄巫法（$(l:https://www.curseforge.com/minecraft/mc-mods/goety)Goety$() 的 $(bold)goety:dark_ingot$()）$(li)把黑暗金属锭丢入冶炼炉熔成 $(bold)熔融黑暗金属$()（90 mB/锭，温度 1000）$(li)在铸造台用熔融黑暗金属 $(bold)90 mB$()（1 锭）浇筑黑暗金属材料部件$(br2)等级：$(bold)T2$()（二级材料，挖掘等级铁，面板略高于铁）。"
     },
     {
       "type": "patchouli:text",
