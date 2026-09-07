@@ -1,0 +1,12 @@
+{
+  "type": "tconstruct:melting",
+  "ingredient": {
+    "item": "goety:dark_ingot"
+  },
+  "result": {
+    "fluid": "tinkersnewlife:molten_dark_metal_still",
+    "amount": 144
+  },
+  "temperature": 1000,
+  "time": 60
+}

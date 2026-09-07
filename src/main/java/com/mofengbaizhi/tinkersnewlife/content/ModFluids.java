@@ -171,4 +171,9 @@ public class ModFluids {
     public static final FluidEntry MOLTEN_CURSED_METAL = new FluidEntry("molten_cursed_metal",
         2000, 8000, 900, 0xFF435C6A,  // 诡厄诅咒金属青
         lavaProps(MapColor.COLOR_LIGHT_BLUE));
+
+    /** 熔融黑暗金属（诡厄巫法 黑暗金属锭 熔炼；tier2 材料「黑暗金属」原料流体，配色取 goety dark_ingot 真实暗蓝灰） */
+    public static final FluidEntry MOLTEN_DARK_METAL = new FluidEntry("molten_dark_metal",
+        2000, 8000, 1000, 0xFF343540,  // goety dark_ingot 暗蓝灰 (52,53,64)
+        lavaProps(MapColor.COLOR_BLACK));
 }

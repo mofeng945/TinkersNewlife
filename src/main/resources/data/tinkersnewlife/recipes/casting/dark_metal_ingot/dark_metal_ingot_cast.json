@@ -1,0 +1,13 @@
+{
+  "type": "tconstruct:casting_table",
+  "cast": {
+    "tag": "tconstruct:casts/multi_use/ingot"
+  },
+  "cast_consumed": false,
+  "fluid": {
+    "name": "tinkersnewlife:molten_dark_metal_still",
+    "amount": 144
+  },
+  "result": "goety:dark_ingot",
+  "cooling_time": 85
+}

@@ -105,5 +105,15 @@
   "modifier.tinkersnewlife.corruption.description": "§7When dealing damage, spend 0.5% of your max soul energy (up to 100 per hit) to amplify the attack: every 5 souls add +0.2 attack damage and +0.05 blocks of knockback (knockback capped at 3 blocks). No effect when souls are insufficient.",
   "modifier.tinkersnewlife.soul_repair": "§bSoul Mending",
   "modifier.tinkersnewlife.soul_repair.flavor": "§7Souls as thread, mending the wounds.",
-  "modifier.tinkersnewlife.soul_repair.description": "§7Every 20 ticks spend max(1, 6-level) soul energy to restore 1 durability; each restoration has a 5%×level chance to restore 1 additional durability. Max level 3. No effect when souls are insufficient."
+  "modifier.tinkersnewlife.soul_repair.description": "§7Every 20 ticks spend max(1, 6-level) soul energy to restore 1 durability; each restoration has a 5%×level chance to restore 1 additional durability. Max level 3. No effect when souls are insufficient.",
+  "material.tinkersnewlife.dark_metal": "Dark Metal",
+  "fluid_type.tinkersnewlife.molten_dark_metal": "Molten Dark Metal",
+  "block.tinkersnewlife.molten_dark_metal_block": "Molten Dark Metal",
+  "item.tinkersnewlife.molten_dark_metal_bucket": "Molten Dark Metal Bucket",
+  "modifier.tinkersnewlife.dark_metal_breaker": "§dSpell Breaker",
+  "modifier.tinkersnewlife.dark_metal_breaker.flavor": "§7Shatter curses, pardon the slain.",
+  "modifier.tinkersnewlife.dark_metal_breaker.description": "§7Dealing damage inflicts Weakness I for 2×level seconds; slaying a creature with magic resistance (Resistance effect) has a 45% chance to drop 1 extra Emerald.",
+  "modifier.tinkersnewlife.dark_metal_magic_resist": "§9Magic Resist",
+  "modifier.tinkersnewlife.dark_metal_magic_resist.flavor": "§7Gloom-forged plate, deaf to sorcery.",
+  "modifier.tinkersnewlife.dark_metal_magic_resist.description": "§7When taking magic damage, convert 5%×level + 1.5 points of magic damage into physical damage."
 }

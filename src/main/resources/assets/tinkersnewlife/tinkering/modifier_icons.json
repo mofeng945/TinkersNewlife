@@ -68,5 +68,7 @@
   "tinkersnewlife:dang_yun_ping_xian": "tinkersnewlife:gui/modifiers/dang_yun_ping_xian",
   "tinkersnewlife:shi_bao_yue_gong_dian": "tinkersnewlife:gui/modifiers/shi_bao_yue_gong_dian",
   "tinkersnewlife:san_chong_ji_ku": "tinkersnewlife:gui/modifiers/san_chong_ji_ku",
-  "tinkersnewlife:soul_repair": "tinkersnewlife:gui/modifiers/soul_repair"
+  "tinkersnewlife:soul_repair": "tinkersnewlife:gui/modifiers/soul_repair",
+  "tinkersnewlife:dark_metal_breaker": "tinkersnewlife:gui/modifiers/dark_metal_breaker",
+  "tinkersnewlife:dark_metal_magic_resist": "tinkersnewlife:gui/modifiers/dark_metal_magic_resist"
 }

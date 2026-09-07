@@ -279,4 +279,14 @@ public class Modifiers {
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.SoulRepairModifier> SOUL_REPAIR =
         MODIFIERS.register("soul_repair",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.SoulRepairModifier::new);
+
+    /** 词条·破法（黑暗金属材料工具部件自带：攻击给衰弱 I，击杀魔法抗性生物 45% 掉绿宝石） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.DarkMetalBreakerModifier> DARK_METAL_BREAKER =
+        MODIFIERS.register("dark_metal_breaker",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.DarkMetalBreakerModifier::new);
+
+    /** 词条·抗魔（黑暗金属材料护甲部件自带：魔法伤害 5%×级+1.5 点转物理减免） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.DarkMetalMagicResistModifier> DARK_METAL_MAGIC_RESIST =
+        MODIFIERS.register("dark_metal_magic_resist",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.DarkMetalMagicResistModifier::new);
 }
