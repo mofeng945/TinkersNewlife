@@ -1,16 +1,22 @@
 {
-  "type": "tconstruct:part_builder",
-  "cost": 10,
-  "pattern": "tinkersnewlife:dragon_core",
-  "pattern_item": [
-    {
-      "tag": "iceandfire:dragon_skulls"
-    },
-    {
-      "item": "tinkersnewlife:dragon_core_cast"
-    }
-  ],
-  "result": {
-    "item": "tinkersnewlife:dragon_core"
-  }
+    "type":  "tconstruct:part_builder",
+    "cost":  10,
+    "pattern":  "tinkersnewlife:dragon_core",
+    "pattern_item":  [
+                         {
+                             "tag":  "iceandfire:dragon_skulls"
+                         },
+                         {
+                             "item":  "tinkersnewlife:dragon_core_cast"
+                         }
+                     ],
+    "result":  {
+                   "item":  "tinkersnewlife:dragon_core"
+               },
+    "conditions":  [
+                       {
+                           "type":  "forge:mod_loaded",
+                           "modid":  "iceandfire"
+                       }
+                   ]
 }

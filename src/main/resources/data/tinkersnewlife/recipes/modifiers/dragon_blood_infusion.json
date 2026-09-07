@@ -1,24 +1,30 @@
 {
-  "type": "tconstruct:modifier",
-  "allow_crystal": true,
-  "inputs": [
-    {
-      "tag": "iceandfire:dragon_bloods"
-    }
-  ],
-  "level": {
-    "max": 1
-  },
-  "result": "tinkersnewlife:dragon_blood_infusion",
-  "slots": {
-    "abilities": 1
-  },
-  "tools": [
-    {
-      "tag": "tconstruct:modifiable/melee"
-    },
-    {
-      "tag": "tconstruct:modifiable/ranged"
-    }
-  ]
+    "type":  "tconstruct:modifier",
+    "allow_crystal":  true,
+    "inputs":  [
+                   {
+                       "tag":  "iceandfire:dragon_bloods"
+                   }
+               ],
+    "level":  {
+                  "max":  1
+              },
+    "result":  "tinkersnewlife:dragon_blood_infusion",
+    "slots":  {
+                  "abilities":  1
+              },
+    "tools":  [
+                  {
+                      "tag":  "tconstruct:modifiable/melee"
+                  },
+                  {
+                      "tag":  "tconstruct:modifiable/ranged"
+                  }
+              ],
+    "conditions":  [
+                       {
+                           "type":  "forge:mod_loaded",
+                           "modid":  "iceandfire"
+                       }
+                   ]
 }

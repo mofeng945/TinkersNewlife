@@ -1,13 +1,19 @@
 {
-  "type": "mantle:empty_item",
-  "input": {
-    "item": "iceandfire:ice_dragon_blood"
-  },
-  "fluid": {
-    "fluid": "tinkersnewlife:ice_blood_still",
-    "amount": 250
-  },
-  "result": {
-    "item": "minecraft:glass_bottle"
-  }
+    "type":  "mantle:empty_item",
+    "input":  {
+                  "item":  "iceandfire:ice_dragon_blood"
+              },
+    "fluid":  {
+                  "fluid":  "tinkersnewlife:ice_blood_still",
+                  "amount":  250
+              },
+    "result":  {
+                   "item":  "minecraft:glass_bottle"
+               },
+    "conditions":  [
+                       {
+                           "type":  "forge:mod_loaded",
+                           "modid":  "iceandfire"
+                       }
+                   ]
 }

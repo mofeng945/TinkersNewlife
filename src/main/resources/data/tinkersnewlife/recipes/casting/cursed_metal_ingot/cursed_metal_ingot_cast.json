@@ -1,13 +1,19 @@
 {
-  "type": "tconstruct:casting_table",
-  "cast": {
-    "tag": "tconstruct:casts/multi_use/ingot"
-  },
-  "cast_consumed": false,
-  "fluid": {
-    "name": "tinkersnewlife:molten_cursed_metal_still",
-    "amount": 90
-  },
-  "result": "goety:cursed_ingot",
-  "cooling_time": 80
+    "type":  "tconstruct:casting_table",
+    "cast":  {
+                 "tag":  "tconstruct:casts/multi_use/ingot"
+             },
+    "cast_consumed":  false,
+    "fluid":  {
+                  "name":  "tinkersnewlife:molten_cursed_metal_still",
+                  "amount":  90
+              },
+    "result":  "goety:cursed_ingot",
+    "cooling_time":  80,
+    "conditions":  [
+                       {
+                           "type":  "forge:mod_loaded",
+                           "modid":  "goety"
+                       }
+                   ]
 }
