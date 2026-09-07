@@ -29,8 +29,11 @@ import slimeknights.tconstruct.library.materials.definition.MaterialVariant;
 import slimeknights.tconstruct.library.recipe.TinkerRecipeTypes;
 import slimeknights.tconstruct.library.recipe.casting.material.MaterialFluidRecipe;
 import slimeknights.tconstruct.library.tools.item.IModifiable;
+import slimeknights.tconstruct.library.recipe.fuel.MeltingFuel;
+import slimeknights.tconstruct.library.recipe.fuel.MeltingFuelLookup;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
-
+import slimeknights.tconstruct.smeltery.block.entity.HeaterBlockEntity;
+import slimeknights.tconstruct.smeltery.block.entity.component.TankBlockEntity;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -67,15 +70,55 @@ public class MoltenForgeBlockEntity extends BlockEntity implements IFluidHandler
         return toolHandler;
     }
 
-    /** 每 tick（服务端）：熔炼工具槽内的工具 */
+    /** 每 tick（服务端）：只有当"相邻有可用热源且温度足够"时才熔炼工具槽内的工具 */
     public void serverTick() {
         if (level == null || level.isClientSide) return;
         ItemStack tool = toolHandler.getStackInSlot(0);
         if (tool.isEmpty()) return;
+        int needed = neededTemperature(tool);
+        int cur = currentTemperature();
+        if (cur <= 0 || cur < needed) return;   // 无相邻热源 或 温度不足 → 不烧炼
         if (molten(tool)) {
             toolHandler.setStackInSlot(0, ItemStack.EMPTY);
             setChanged();
         }
+    }
+
+    /** 匠魂加热器（seared heater）的工作温度 */
+    private static final int HEATER_TEMP = 800;
+
+    /** 相邻热源当前温度：匠魂加热器固定 {@value #HEATER_TEMP}，燃料储罐按其燃料的 MeltingFuel 温度 */
+    public int currentTemperature() {
+        if (level == null) return 0;
+        int best = 0;
+        for (Direction d : Direction.values()) {
+            BlockEntity ne = level.getBlockEntity(worldPosition.relative(d));
+            if (ne instanceof HeaterBlockEntity) {
+                best = Math.max(best, HEATER_TEMP);
+            } else if (ne instanceof TankBlockEntity tank) {
+                FluidStack f = tank.getTank().getFluid();
+                if (!f.isEmpty()) {
+                    MeltingFuel fuel = MeltingFuelLookup.findFuel(f.getFluid());
+                    if (fuel != null) best = Math.max(best, fuel.getTemperature());
+                }
+            }
+        }
+        return best;
+    }
+
+    /** 工具各部件材料中最高融炼温度（仅有 material_fluid 配方的材料贡献温度） */
+    public int neededTemperature(ItemStack tool) {
+        ToolStack stack = ToolHelper.getToolStack(tool);
+        if (stack == null) return 0;
+        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+        if (server == null) return 0;
+        Map<MaterialId, MaterialFluidRecipe> recipes = findFluidRecipes(server.getRecipeManager());
+        int best = 0;
+        for (MaterialVariant variant : stack.getMaterials().getList()) {
+            MaterialFluidRecipe mfr = recipes.get(variant.getId());
+            if (mfr != null) best = Math.max(best, mfr.getTemperature());
+        }
+        return best;
     }
 
     // ==================== 工具 → 多流体 ====================
