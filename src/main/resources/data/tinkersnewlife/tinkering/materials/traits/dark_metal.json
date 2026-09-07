@@ -20,6 +20,10 @@
       {
         "level": 1,
         "name": "tinkersnewlife:dark_metal_magic_resist"
+      },
+      {
+        "level": 1,
+        "name": "tinkersnewlife:soul_repair"
       }
     ]
   }
