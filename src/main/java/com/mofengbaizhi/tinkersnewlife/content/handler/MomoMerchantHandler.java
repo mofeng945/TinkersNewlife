@@ -14,6 +14,8 @@ import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
@@ -22,21 +24,25 @@ import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * 墨默（武器商人）全局逻辑：
  * <ul>
  *   <li>{@link LivingDamageEvent}：记录墨默每击实际受到的伤害（判定"秒杀"：一击 ≥ 最大生命）</li>
- *   <li>满月刷新：满月夜晚，在主世界村庄集会点（钟 / 教堂占位）附近刷新墨默；
- *       同一钟 48 格内已存在墨默则不重复刷</li>
+ *   <li>满月午夜刷新：每次满月的午夜，在主世界随机选一名服务器玩家，
+ *       刷新在其周围 30 格内可落脚处（优先草方块上方 / 亮度 ≥ 8 的位置）；同夜不重复刷</li>
  * </ul>
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class MomoMerchantHandler {
 
     private static final int SPAWN_INTERVAL = 100; // 5s 一次检查
+    private static final int MIDNIGHT_HALF_WINDOW = 200; // 午夜窗口（18000±200 tick）
     private static int tickCounter = 0;
+    /** 本满月午夜已刷新过的那一天（防同夜重复刷） */
+    private static long lastFullMoonSpawnDay = -1;
 
     @SubscribeEvent
     public static void onLivingDamage(LivingDamageEvent event) {
@@ -101,69 +107,88 @@ public class MomoMerchantHandler {
     private static void trySpawnAtFullMoon(ServerLevel level) {
         List<ServerPlayer> players = level.players();
         if (players.isEmpty()) return;
-        // 满月夜晚（占位：教堂结构未建，用村钟=集会点 POI 定位）
+        // 满月午夜：月相 0 且当日时间在午夜附近
         long dayTime = level.getDayTime() % 24000;
-        if (dayTime < 13000 || dayTime > 23000) return;
+        if (Math.abs(dayTime - 18000) > MIDNIGHT_HALF_WINDOW) return;
         if (level.getMoonPhase() != 0) return;
-
-        for (ServerPlayer player : players) {
-            BlockPos center = player.blockPosition();
-            // 收集玩家附近 128 格内所有钟（集会点），按距离近到远尝试
-            List<BlockPos> bells = level.getPoiManager()
-                    .getInRange(t -> t == PoiTypes.MEETING, center, 128,
-                            net.minecraft.world.entity.ai.village.poi.PoiManager.Occupancy.ANY)
-                    .map(rec -> rec.getPos())
-                    .filter(pos -> level.isLoaded(pos))
-                    .sorted(java.util.Comparator.comparingDouble(pos -> pos.distSqr(center)))
-                    .toList();
-            for (BlockPos poiPos : bells) {
-                // 该钟 48 格内已有墨默 → 不重复刷
-                AABB near = new AABB(poiPos).inflate(48.0);
-                if (!level.getEntitiesOfClass(MomoMerchant.class, near).isEmpty()) continue;
-                if (spawnAtBell(level, poiPos)) {
-                    return; // 一次检查最多刷一只
-                }
-            }
+        long worldDay = level.getDayTime() / 24000;
+        if (worldDay == lastFullMoonSpawnDay) return;   // 本满月午夜已刷，不重复
+        // 随机选一名服务器上的玩家
+        ServerPlayer player = players.get(level.random.nextInt(players.size()));
+        if (spawnNearPlayer(level, player)) {
+            lastFullMoonSpawnDay = worldDay;
         }
     }
 
-    /** 在钟周围找空地刷墨默；成功返回 true */
-    private static boolean spawnAtBell(ServerLevel level, BlockPos bellPos) {
-        // 在钟周围 2~5 格找可站立的地面点（教堂前空地）
-        for (int radius = 2; radius <= 5; radius++) {
-            for (int dx = -radius; dx <= radius; dx++) {
-                for (int dz = -radius; dz <= radius; dz++) {
-                    if (Math.max(Math.abs(dx), Math.abs(dz)) != radius) continue; // 只扫圆环
-                    int x = bellPos.getX() + dx;
-                    int z = bellPos.getZ() + dz;
-                    // 从钟高度往下找地面
-                    for (int y = bellPos.getY() + 1; y >= bellPos.getY() - 8; y--) {
-                        BlockPos ground = new BlockPos(x, y, z);
-                        if (level.getBlockState(ground).isSolid() && !level.getBlockState(ground.above()).isSolid()
-                                && level.isEmptyBlock(ground.above(2))) {
-                            MomoMerchant momo = ModEntities.MOMO_MERCHANT.get().create(level);
-                            if (momo == null) return false;
-                            momo.moveTo(x + 0.5, y + 1.0, z + 0.5,
-                                    level.random.nextFloat() * 360.0F, 0.0F);
-                            if (!level.noCollision(momo)) {
-                                momo.discard();
-                                continue;
-                            }
-                            momo.finalizeSpawn(level, level.getCurrentDifficultyAt(ground),
-                                    MobSpawnType.EVENT, null, null);
-                            // 自然（满月）刷新：白天到来时消失；刷怪蛋召唤的不受影响
-                            momo.setNaturalSpawn(true);
-                            level.addFreshEntity(momo);
-                            level.sendParticles(ParticleTypes.SNEEZE, x + 0.5, y + 1.5, z + 0.5,
-                                    12, 0.3, 0.3, 0.3, 0.02);
-                            level.playSound(null, ground, SoundEvents.ILLUSIONER_MIRROR_MOVE,
-                                    SoundSource.HOSTILE, 1.0F, 1.0F);
-                            return true;
+    /**
+     * 在玩家周围 30 格内找落脚点刷墨默。
+     * 优先选择：站在草方块上方，或落脚点亮度 ≥ 8；两者都无则回退任意可落脚点；全无则不刷。
+     */
+    private static boolean spawnNearPlayer(ServerLevel level, ServerPlayer player) {
+        BlockPos center = player.blockPosition();
+        int radius = 30;
+        List<BlockPos> good = new ArrayList<>();
+        List<BlockPos> any = new ArrayList<>();
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dz = -radius; dz <= radius; dz++) {
+                if (dx * dx + dz * dz > radius * radius) continue;   // 圆形 30 格
+                int x = center.getX() + dx;
+                int z = center.getZ() + dz;
+                for (int y = center.getY() + radius; y >= center.getY() - 20; y--) {
+                    BlockPos ground = new BlockPos(x, y, z);
+                    if (!isStandable(level, ground)) {
+                        if (level.getBlockState(ground).isSolid()
+                                && !level.getBlockState(ground.above()).isSolid()) {
+                            // 该列有地面但下方不满足 → 不再下探
                         }
+                        continue;
                     }
+                    any.add(ground);
+                    BlockPos stand = ground.above();
+                    if (isGrassAt(level, ground) || level.getRawBrightness(stand, 0) >= 8) {
+                        good.add(ground);
+                    }
+                    break;   // 该列只取最高可行地面
                 }
             }
         }
-        return false;
+        List<BlockPos> candidates = good.isEmpty() ? any : good;
+        if (candidates.isEmpty()) return false;
+        BlockPos spot = candidates.get(level.random.nextInt(candidates.size()));
+        return placeMomo(level, spot);
+    }
+
+    /** 地面判定：脚下是实心、站位格与头部格均空 */
+    private static boolean isStandable(ServerLevel level, BlockPos ground) {
+        if (!level.getBlockState(ground).isSolid()) return false;
+        if (level.getBlockState(ground.above()).isSolid()) return false;
+        return level.isEmptyBlock(ground.above()) && level.isEmptyBlock(ground.above(2));
+    }
+
+    /** 脚下是否为草方块 */
+    private static boolean isGrassAt(ServerLevel level, BlockPos ground) {
+        return level.getBlockState(ground).is(Blocks.GRASS_BLOCK);
+    }
+
+    /** 落点生成墨默；成功返回 true */
+    private static boolean placeMomo(ServerLevel level, BlockPos ground) {
+        MomoMerchant momo = ModEntities.MOMO_MERCHANT.get().create(level);
+        if (momo == null) return false;
+        momo.moveTo(ground.getX() + 0.5, ground.getY() + 1.0, ground.getZ() + 0.5,
+                level.random.nextFloat() * 360.0F, 0.0F);
+        if (!level.noCollision(momo)) {
+            momo.discard();
+            return false;
+        }
+        momo.finalizeSpawn(level, level.getCurrentDifficultyAt(ground),
+                MobSpawnType.EVENT, null, null);
+        // 自然（满月）刷新：白天到来时消失；刷怪蛋召唤的不受影响
+        momo.setNaturalSpawn(true);
+        level.addFreshEntity(momo);
+        level.sendParticles(ParticleTypes.SNEEZE, ground.getX() + 0.5, ground.getY() + 1.5,
+                ground.getZ() + 0.5, 12, 0.3, 0.3, 0.3, 0.02);
+        level.playSound(null, ground, SoundEvents.ILLUSIONER_MIRROR_MOVE,
+                SoundSource.HOSTILE, 1.0F, 1.0F);
+        return true;
     }
 }
