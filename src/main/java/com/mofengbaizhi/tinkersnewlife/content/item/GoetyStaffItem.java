@@ -228,6 +228,31 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
         return super.interactLivingEntity(stack, player, target, hand);
     }
 
+    /**
+     * 左键实体（攻击）——巫法模式下委托诡厄 DarkWand.onLeftClickEntity：
+     * 诡厄原生逻辑会让"左键自己的仆从"不造成伤害，而是依当前聚晶管理仆从
+     * （CallFocus 绑定召唤物 / CommandFocus 记录命令目标 / OrderFocus 加入指令列表 /
+     * 无管理聚晶时切换仆从跟随状态 {@code IServant.updateMoveMode}，受诡厄
+     * OwnerHitCommand 配置控制）。返回 true 表示本次左键被消费（不产生攻击）。
+     * 铁魔法模式/无 DarkWand 时走 super（匠魂/原版左键攻击）。
+     */
+    @Override
+    public boolean onLeftClickEntity(ItemStack stack, Player player, net.minecraft.world.entity.Entity target) {
+        DarkWand wand = inGoetyMode(stack) ? goetyWand() : null;
+        if (wand != null) {
+            // 先问诡厄：它是否消费了这次左键（自己的仆从→管理；否则 false 继续走攻击）
+            try {
+                boolean consumed = wand.onLeftClickEntity(stack, player, target);
+                if (consumed) {
+                    return true;
+                }
+            } catch (Throwable t) {
+                TinkersNewlife.LOGGER.warn("[魔杖·真法杖] DarkWand.onLeftClickEntity 异常，回退默认左键", t);
+            }
+        }
+        return super.onLeftClickEntity(stack, player, target);
+    }
+
     @Override
     public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entity) {
         DarkWand wand = inGoetyMode(stack) ? goetyWand() : null;
