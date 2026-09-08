@@ -294,4 +294,14 @@ public class Modifiers {
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.SoulEaterModifier> SOUL_EATER =
         MODIFIERS.register("soul_eater",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.SoulEaterModifier::new);
+
+    /** 无槽位强化·苍白镀层（安装不占槽，直接给工具 +1 升级槽；单级，不可洗/不可剥） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.PalePlatingModifier> PALE_PLATING =
+        MODIFIERS.register("pale_plating",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.PalePlatingModifier::new);
+
+    /** 强化·统御者（占用能力槽；半径8格刌民30%概率优先锁定你攻击的非刌民目标；单级可洗可剥） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.CommanderModifier> COMMANDER =
+        MODIFIERS.register("commander",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.CommanderModifier::new);
 }

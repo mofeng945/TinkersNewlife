@@ -120,5 +120,12 @@
   "item.tinkersnewlife.you_yun.desc": "§7Base dmg 10, attack speed 2; every hit breaks shield blocking (like an axe), +120% fixed damage, +10% vs undead; extra knockback (dmg/100 blocks); cannot pierce Infinity.",
   "modifier.tinkersnewlife.soul_eater": "§5Soul Eater",
   "modifier.tinkersnewlife.soul_eater.flavor": "§7Souls as food, the more you sip the richer.",
-  "modifier.tinkersnewlife.soul_eater.description": "§7+25% soul energy gain per level; holding level 1 grants an extra +1 soul gain. Max level 3 (level 1 uses 1 upgrade slot; levels 2/3 are slotless)."
+  "modifier.tinkersnewlife.soul_eater.description": "§7+25% soul energy gain per level; holding level 1 grants an extra +1 soul gain. Max level 3 (level 1 uses 1 upgrade slot; levels 2/3 are slotless).",
+  "modifier.tinkersnewlife.pale_plating": "§fPale Plating",
+  "modifier.tinkersnewlife.pale_plating.flavor": "§7Pale steel, hiding dormant power.",
+  "modifier.tinkersnewlife.pale_plating.description": "§7Slotless upgrade: installing costs no slots and grants the tool §e1§7 extra upgrade slot.",
+  "modifier.tinkersnewlife.pale_plating.slot_bonus": "§aGained §e1 §aupgrade slot",
+  "modifier.tinkersnewlife.commander": "§6Commander",
+  "modifier.tinkersnewlife.commander.flavor": "§7Command the rabble; strike the foe together.",
+  "modifier.tinkersnewlife.commander.description": "§7When you attack a non-illager target, every illager within §e8§7 blocks has a §e30%§7 chance to switch its attack target to the one you are attacking."
 }

@@ -889,5 +889,12 @@
   "item.tinkersnewlife.you_yun.desc": "§7基础伤害 10，攻速 2；每一击破盾格挡（像斧头），固定增伤 120%，对亡灵额外 +10%；额外击退（本次伤害/100 格）；无法穿透无下限。",
   "modifier.tinkersnewlife.soul_eater": "§5噬魂",
   "modifier.tinkersnewlife.soul_eater.flavor": "§7以魂为食，愈吮愈丰。",
-  "modifier.tinkersnewlife.soul_eater.description": "§7每级 +25% 灵魂能量获取；持有 1 级后额外 +1 灵魂能量获取。最高 3 级（1 级占 1 升级槽，2/3 级无槽位）。"
+  "modifier.tinkersnewlife.soul_eater.description": "§7每级 +25% 灵魂能量获取；持有 1 级后额外 +1 灵魂能量获取。最高 3 级（1 级占 1 升级槽，2/3 级无槽位）。",
+  "modifier.tinkersnewlife.pale_plating": "§f苍白镀层",
+  "modifier.tinkersnewlife.pale_plating.flavor": "§7苍白之钢，潜藏的力量。",
+  "modifier.tinkersnewlife.pale_plating.description": "§7无槽位强化：安装不占用任何槽位，直接为工具增加 §e1§7 个升级槽。",
+  "modifier.tinkersnewlife.pale_plating.slot_bonus": "§a已增加 §e1 §a个升级槽",
+  "modifier.tinkersnewlife.commander": "§6统御者",
+  "modifier.tinkersnewlife.commander.flavor": "§7号令群寇，共击强敌。",
+  "modifier.tinkersnewlife.commander.description": "§7攻击非刌民目标时，半径 §e8§7 格内的刌民每个有 §e30%§7 概率优先将攻击目标切换为你正在攻击的目标。"
 }

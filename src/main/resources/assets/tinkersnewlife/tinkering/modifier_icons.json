@@ -71,5 +71,7 @@
   "tinkersnewlife:soul_repair": "tinkersnewlife:gui/modifiers/soul_repair",
   "tinkersnewlife:dark_metal_breaker": "tinkersnewlife:gui/modifiers/dark_metal_breaker",
   "tinkersnewlife:dark_metal_magic_resist": "tinkersnewlife:gui/modifiers/dark_metal_magic_resist",
-  "tinkersnewlife:soul_eater": "tinkersnewlife:gui/modifiers/soul_eater"
+  "tinkersnewlife:soul_eater": "tinkersnewlife:gui/modifiers/soul_eater",
+  "tinkersnewlife:pale_plating": "tinkersnewlife:gui/modifiers/pale_plating",
+  "tinkersnewlife:commander": "tinkersnewlife:gui/modifiers/commander"
 }

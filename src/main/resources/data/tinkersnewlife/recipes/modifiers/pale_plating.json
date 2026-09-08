@@ -1,0 +1,28 @@
+{
+  "type": "tconstruct:modifier",
+  "allow_crystal": false,
+  "inputs": [
+    {
+      "item": "goety:pale_steel_block",
+      "amount": 2
+    },
+    {
+      "item": "goety:soul_emerald"
+    },
+    {
+      "item": "goety:mystic_core",
+      "amount": 2
+    }
+  ],
+  "level": 1,
+  "result": "tinkersnewlife:pale_plating",
+  "tools": {
+    "tag": "tconstruct:modifiable/bonus_slots"
+  },
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "goety"
+    }
+  ]
+}

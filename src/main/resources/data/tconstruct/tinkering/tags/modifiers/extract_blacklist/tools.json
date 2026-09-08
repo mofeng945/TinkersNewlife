@@ -2,6 +2,8 @@
   "replace": false,
   "values": [
     "tinkersnewlife:curse_output",
-    "tinkersnewlife:curse_total"
+    "tinkersnewlife:curse_total",
+    "tinkersnewlife:nyarlathotep_desire",
+    "tinkersnewlife:pale_plating"
   ]
 }

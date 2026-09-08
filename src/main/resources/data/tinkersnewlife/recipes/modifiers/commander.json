@@ -1,0 +1,39 @@
+{
+  "type": "tconstruct:modifier",
+  "allow_crystal": true,
+  "inputs": [
+    {
+      "item": "goety:soul_ruby",
+      "amount": 2
+    },
+    {
+      "item": "goety:awakened_emerald_block"
+    },
+    {
+      "item": "goety:pale_steel_ingot",
+      "amount": 2
+    }
+  ],
+  "level": 1,
+  "result": "tinkersnewlife:commander",
+  "slots": {
+    "abilities": 1
+  },
+  "tools": [
+    {
+      "tag": "tconstruct:modifiable/melee"
+    },
+    {
+      "tag": "tconstruct:modifiable/ranged"
+    },
+    {
+      "tag": "tconstruct:modifiable/harvest"
+    }
+  ],
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "goety"
+    }
+  ]
+}
