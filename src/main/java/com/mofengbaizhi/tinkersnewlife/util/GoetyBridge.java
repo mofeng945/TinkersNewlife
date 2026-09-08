@@ -446,6 +446,39 @@ public final class GoetyBridge {
         return e != null && apostleClass != null && apostleClass.isAssignableFrom(e.getClass());
     }
 
+    // =====================================================================
+    //  仆从归属判定（"让诡厄仆从使用匠魂工具"软依赖通道）
+    // =====================================================================
+
+    /**
+     * 目标是否是诡厄的"仆从"（Owned 子类，含 Summoned 及全部 XxxServant）。
+     * 纯反射：未装 goety / 类不可达时安全返回 false。
+     */
+    public static boolean isGoetyServant(LivingEntity e) {
+        resolveReflection();
+        return e != null && ownedIface != null && ownedIface.isAssignableFrom(e.getClass());
+    }
+
+    /**
+     * 目标的诡厄主人（Owned.getTrueOwner()），不是仆从/读不到返回 null。
+     * 调用方用它判定"玩家右键的是不是自己的仆从"。
+     */
+    @Nullable
+    public static LivingEntity getServantOwner(LivingEntity e) {
+        resolveReflection();
+        if (e == null || ownedIface == null || !ownedIface.isAssignableFrom(e.getClass())
+                || getTrueOwnerMethod == null) {
+            return null;
+        }
+        try {
+            Object owner = getTrueOwnerMethod.invoke(e);
+            return owner instanceof LivingEntity le ? le : null;
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+
     /** 读使徒当前黑曜石柱免伤计时（>0 表示柱保护中，全程免伤）；非使徒/未装 Goety 返回 0 */
     public static int readObsidianInvul(LivingEntity e) {
         if (!isGoetyApostle(e)) return 0;
