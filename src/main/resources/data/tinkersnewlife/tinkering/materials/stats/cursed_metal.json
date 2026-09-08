@@ -23,6 +23,29 @@
       "durability": 0.075,
       "accuracy": 0.1,
       "melee_damage": 2.5
-    }
+    },
+    "tconstruct:repair_kit": {
+      "durability": 270
+    },
+    "tconstruct:plating_helmet": {
+      "durability": 183,
+      "armor": 2.5
+    },
+    "tconstruct:plating_chestplate": {
+      "durability": 265,
+      "armor": 5.5
+    },
+    "tconstruct:plating_leggings": {
+      "durability": 248,
+      "armor": 4.5
+    },
+    "tconstruct:plating_boots": {
+      "durability": 215,
+      "armor": 2.5
+    },
+    "tconstruct:plating_shield": {
+      "durability": 295
+    },
+    "tconstruct:maille": {}
   }
 }

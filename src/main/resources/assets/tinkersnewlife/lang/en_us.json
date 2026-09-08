@@ -127,5 +127,12 @@
   "modifier.tinkersnewlife.pale_plating.slot_bonus": "§aGained §e1 §aupgrade slot",
   "modifier.tinkersnewlife.commander": "§6Commander",
   "modifier.tinkersnewlife.commander.flavor": "§7Command the rabble; strike the foe together.",
-  "modifier.tinkersnewlife.commander.description": "§7When you attack a non-illager target, every illager within §e8§7 blocks has a §e30%§7 chance to switch its attack target to the one you are attacking."
+  "modifier.tinkersnewlife.commander.description": "§7When you attack a non-illager target, every illager within §e8§7 blocks has a §e30%§7 chance to switch its attack target to the one you are attacking.",
+  "modifier.tinkersnewlife.final_brand": "§5Final Brand",
+  "modifier.tinkersnewlife.final_brand.flavor": "§7Sealed with the void, marked for the end.",
+  "modifier.tinkersnewlife.final_brand.description": "§7Slotless upgrade: installing costs no slots and grants the tool §e1§7 extra ability slot, but reduces movement speed by §c10%§7.",
+  "modifier.tinkersnewlife.final_brand.slot_bonus": "§aGained §e1 §aability slot (movement speed -10%)",
+  "modifier.tinkersnewlife.cursed_adrenaline": "§aCursed Adrenaline",
+  "modifier.tinkersnewlife.cursed_adrenaline.flavor": "§7Between life and death, cursed blood surges.",
+  "modifier.tinkersnewlife.cursed_adrenaline.description": "§7When the wearer takes hostile or fall damage, spend §e10§7 soul energy to gain §e5§7 seconds of Swiftness II (equivalent speed bonus, no FOV change); cooldown §e1§7 minute."
 }

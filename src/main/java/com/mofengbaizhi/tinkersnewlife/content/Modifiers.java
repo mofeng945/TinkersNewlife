@@ -304,4 +304,14 @@ public class Modifiers {
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.CommanderModifier> COMMANDER =
         MODIFIERS.register("commander",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.CommanderModifier::new);
+
+    /** 无槽位强化·终末烙印（安装不占槽：+1 能力槽，-10% 移动速度；单级，不可洗/不可剥） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.FinalBrandModifier> FINAL_BRAND =
+        MODIFIERS.register("final_brand",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.FinalBrandModifier::new);
+
+    /** 词条·咒上·腺速（诅咒金属材料护甲部件自带：受敌对/摔落伤害耗10灵魂给5秒迅捷II，冷却1分钟） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.CursedAdrenalineModifier> CURSED_ADRENALINE =
+        MODIFIERS.register("cursed_adrenaline",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.CursedAdrenalineModifier::new);
 }

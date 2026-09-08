@@ -896,5 +896,12 @@
   "modifier.tinkersnewlife.pale_plating.slot_bonus": "§a已增加 §e1 §a个升级槽",
   "modifier.tinkersnewlife.commander": "§6统御者",
   "modifier.tinkersnewlife.commander.flavor": "§7号令群寇，共击强敌。",
-  "modifier.tinkersnewlife.commander.description": "§7攻击非刌民目标时，半径 §e8§7 格内的刌民每个有 §e30%§7 概率优先将攻击目标切换为你正在攻击的目标。"
+  "modifier.tinkersnewlife.commander.description": "§7攻击非刌民目标时，半径 §e8§7 格内的刌民每个有 §e30%§7 概率优先将攻击目标切换为你正在攻击的目标。",
+  "modifier.tinkersnewlife.final_brand": "§5终末烙印",
+  "modifier.tinkersnewlife.final_brand.flavor": "§7虚空之印，铭刻终末。",
+  "modifier.tinkersnewlife.final_brand.description": "§7无槽位强化：安装不占用任何槽位，为工具增加 §e1§7 个能力槽，但移动速度 §c-10%§7。",
+  "modifier.tinkersnewlife.final_brand.slot_bonus": "§a已增加 §e1 §a个能力槽（移动速度 -10%）",
+  "modifier.tinkersnewlife.cursed_adrenaline": "§a咒上·腺速",
+  "modifier.tinkersnewlife.cursed_adrenaline.flavor": "§7生死之间，咒血奔涌。",
+  "modifier.tinkersnewlife.cursed_adrenaline.description": "§7穿戴者受到敌对伤害或摔落伤害时，消耗 §e10§7 点灵魂能量，获得 §e5§7 秒迅捷 II（等效移速加成，无视角变化）；冷却 §e1§7 分钟。"
 }

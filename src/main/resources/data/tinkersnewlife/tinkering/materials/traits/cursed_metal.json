@@ -9,5 +9,16 @@
       "name": "tinkersnewlife:corruption"
     }
   ],
-  "perStat": {}
+  "perStat": {
+    "tconstruct:armor": [
+      {
+        "level": 1,
+        "name": "tconstruct:projectile_protection"
+      },
+      {
+        "level": 1,
+        "name": "tinkersnewlife:cursed_adrenaline"
+      }
+    ]
+  }
 }
