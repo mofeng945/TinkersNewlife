@@ -9,7 +9,6 @@ import net.minecraft.tags.FluidTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
@@ -27,17 +26,18 @@ public class DragonsteelIceArmorHandler {
     public static void onLivingTick(LivingEvent.LivingTickEvent event) {
         LivingEntity entity = event.getEntity();
         if (entity.level().isClientSide) return;
-        if (!(entity instanceof Player player)) return;
         if (!ArmorModifierHelper.hasModifierOnArmor(entity, MODIFIER_ID)) return;
 
+        // 任意穿甲者（玩家/诡厄仆从/怪物）都可获得被动增益
+
         // 清除冻结刻度
-        if (player.getTicksFrozen() > 0) {
-            player.setTicksFrozen(0);
+        if (entity.getTicksFrozen() > 0) {
+            entity.setTicksFrozen(0);
         }
 
         // 水面结冰（脚下）
-        Level level = player.level();
-        BlockPos pos = player.blockPosition().below();
+        Level level = entity.level();
+        BlockPos pos = entity.blockPosition().below();
         if (level.getBlockState(pos).getFluidState().is(FluidTags.WATER)) {
             level.setBlockAndUpdate(pos, Blocks.FROSTED_ICE.defaultBlockState());
         }

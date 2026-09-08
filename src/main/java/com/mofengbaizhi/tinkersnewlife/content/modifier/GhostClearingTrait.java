@@ -4,7 +4,6 @@ import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.modifier.util.ArmorModifierHelper;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -34,27 +33,26 @@ public class GhostClearingTrait extends Modifier {
         public static void onLivingTick(LivingEvent.LivingTickEvent event) {
             LivingEntity entity = event.getEntity();
             if (entity.level().isClientSide) return;
-            if (!(entity instanceof Player player)) return;
-            if (!ArmorModifierHelper.hasModifierOnArmor(player, "ghost_clearing")) return;
+            if (!ArmorModifierHelper.hasModifierOnArmor(entity, "ghost_clearing")) return;
 
-            // ⭐ 按玩家自身 tick 节流（原静态全局计数器在多玩家时语义错误）
-            if (player.tickCount % SCAN_INTERVAL != 0) return;
+            // ⭐ 按穿戴者自身 tick 节流（原静态全局计数器在多玩家时语义错误）
+            if (entity.tickCount % SCAN_INTERVAL != 0) return;
 
-            clearGhostsAround(player);
+            clearGhostsAround(entity);
         }
 
-        private static void clearGhostsAround(Player player) {
+        private static void clearGhostsAround(LivingEntity wearer) {
             AABB range = new AABB(
-                    player.getX() - DETECTION_RADIUS,
-                    player.getY() - DETECTION_RADIUS,
-                    player.getZ() - DETECTION_RADIUS,
-                    player.getX() + DETECTION_RADIUS,
-                    player.getY() + DETECTION_RADIUS,
-                    player.getZ() + DETECTION_RADIUS
+                    wearer.getX() - DETECTION_RADIUS,
+                    wearer.getY() - DETECTION_RADIUS,
+                    wearer.getZ() - DETECTION_RADIUS,
+                    wearer.getX() + DETECTION_RADIUS,
+                    wearer.getY() + DETECTION_RADIUS,
+                    wearer.getZ() + DETECTION_RADIUS
             );
 
             // ⭐ 用谓词过滤版 getEntities，避免返回范围内全部实体（玩家/掉落物/经验球）再逐条过滤
-            List<Entity> entities = player.level().getEntities(player, range, GhostClearingTrait::isGhost);
+            List<Entity> entities = wearer.level().getEntities(wearer, range, GhostClearingTrait::isGhost);
             for (Entity entity : entities) {
                 entity.remove(Entity.RemovalReason.DISCARDED);
             }

@@ -16,6 +16,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.TooltipFlag;
@@ -23,6 +24,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.slf4j.Logger;
@@ -74,8 +76,8 @@ public class DreadsteelArmorTrait extends Modifier implements TooltipModifierHoo
 
     // ======================== 等级计算工具方法 ========================
 
-    private static int getTotalLevel(Player player) {
-        return ArmorModifierHelper.getTotalModifierLevelOnArmor(player, "dreadsteel_armor");
+    private static int getTotalLevel(LivingEntity wearer) {
+        return ArmorModifierHelper.getTotalModifierLevelOnArmor(wearer, "dreadsteel_armor");
     }
 
     private static int getCooldownSeconds(int level) {
@@ -200,6 +202,28 @@ public class DreadsteelArmorTrait extends Modifier implements TooltipModifierHoo
     @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID)
     public static class Handler {
 
+        /**
+         * 被动效果（对任意穿甲者：玩家/仆从等）：夜视、抗火、伤害限制、解除冻结。
+         * ⭐ 每 1 秒检查、时长 12 秒、剩余 <11 秒时刷新（ArmorModifierHelper 内部节流）。
+         */
+        @SubscribeEvent
+        public static void onArmorTick(LivingEvent.LivingTickEvent event) {
+            LivingEntity wearer = event.getEntity();
+            if (wearer.level().isClientSide) return;
+            int level = getTotalLevel(wearer);
+            if (level <= 0) return;
+
+            ArmorModifierHelper.addPassiveEffect(wearer, MobEffects.NIGHT_VISION, 0);
+            ArmorModifierHelper.addPassiveEffect(wearer, MobEffects.FIRE_RESISTANCE, 0);
+            if (ModEffects.DAMAGE_LIMIT.get() != null) {
+                ArmorModifierHelper.addPassiveEffect(wearer, ModEffects.DAMAGE_LIMIT.get(), 0);
+            }
+            if (wearer.getTicksFrozen() > 0) {
+                wearer.setTicksFrozen(0);
+            }
+        }
+
+        /** 主动技能（仅玩家：需按键请求 + 经验） */
         @SubscribeEvent
         public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
             if (event.phase != TickEvent.Phase.START) return;
@@ -208,17 +232,6 @@ public class DreadsteelArmorTrait extends Modifier implements TooltipModifierHoo
 
             int level = getTotalLevel(player);
             if (level <= 0) return;
-
-            // 被动效果（⭐ 每 1 秒检查，时长 12 秒，剩余 <11 秒时刷新，避免图标闪烁）
-            ArmorModifierHelper.addPassiveEffect(player, MobEffects.NIGHT_VISION, 0);
-            ArmorModifierHelper.addPassiveEffect(player, MobEffects.FIRE_RESISTANCE, 0);
-            if (ModEffects.DAMAGE_LIMIT.get() != null) {
-                ArmorModifierHelper.addPassiveEffect(player, ModEffects.DAMAGE_LIMIT.get(), 0);
-            }
-
-            if (player.getTicksFrozen() > 0) {
-                player.setTicksFrozen(0);
-            }
 
             boolean skillRequested = player.getPersistentData().getBoolean("dreadsteel_skill_request");
             player.getPersistentData().remove("dreadsteel_skill_request");

@@ -4,7 +4,6 @@ import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.modifier.util.ArmorModifierHelper;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -19,8 +18,8 @@ public class DragonsteelFireArmorHandler {
     public static void onLivingTick(LivingEvent.LivingTickEvent event) {
         LivingEntity entity = event.getEntity();
         if (entity.level().isClientSide) return;
-        if (!(entity instanceof Player)) return;
 
+        // 任意穿甲者（玩家/诡厄仆从/怪物）都可获得被动增益
         if (ArmorModifierHelper.hasModifierOnArmor(entity, MODIFIER_ID)) {
             // ⭐ 统一被动效果规格：每 1 秒检查、时长 12 秒、剩余 <11 秒时刷新，避免效果图标闪烁
             ArmorModifierHelper.addPassiveEffect(entity, MobEffects.FIRE_RESISTANCE, 0);

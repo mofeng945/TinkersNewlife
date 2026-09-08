@@ -9,9 +9,9 @@
 param(
     [string]$Token = $env:MODRINTH_TOKEN,
     [string]$Project = $env:MODRINTH_PROJECT,
-    [string]$Jar = "build\libs\tinkersnewlife-1.0.1.jar",
-    [string]$Version = "1.0.1",
-    [string]$Name = "Tinker's Newlife 1.0.1",
+    [string]$Jar = "build\libs\tinkersnewlife-1.0.1.7.jar",
+    [string]$Version = "1.0.1.7",
+    [string]$Name = "Tinker's Newlife 1.0.1.7",
     [string]$Type = "release"
 )
 
@@ -31,7 +31,7 @@ if (-not (Test-Path $Jar)) {
     exit 1
 }
 
-$Changelog = Get-Content -Raw -Encoding UTF8 -Path "CHANGELOG-1.0.1-en.md"
+$Changelog = Get-Content -Raw -Encoding UTF8 -Path "CHANGELOG-1.0.1.7-en.md"
 
 $Dependencies = '[{"project_id":"tconstruct","dependency_type":"required"},{"project_id":"mantle","dependency_type":"required"},{"project_id":"curios","dependency_type":"optional"}]'
 $GameVersions = '["1.20.1"]'

@@ -8,7 +8,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
@@ -25,7 +24,6 @@ public class DragonsteelLightningArmorHandler {
     public static void onLivingTick(LivingEvent.LivingTickEvent event) {
         LivingEntity entity = event.getEntity();
         if (entity.level().isClientSide) return;
-        if (!(entity instanceof Player)) return;
 
         int totalLevel = ArmorModifierHelper.getTotalModifierLevelOnArmor(entity, MODIFIER_ID);
         if (totalLevel <= 0) return;
@@ -48,14 +46,19 @@ public class DragonsteelLightningArmorHandler {
 
         Level level = target.level();
         if (level instanceof ServerLevel serverLevel) {
-            // 召唤闪电
+            // ⚠️ 不用 vanilla LightningBolt 实体落雷（落雷 AOE 会波及贴脸的穿戴者自己），
+            // 改为「纯视觉闪电（setVisualOnly）+ 手动只雷击攻击者」——雷只劈攻击者。
             net.minecraft.world.entity.LightningBolt lightning =
                     new net.minecraft.world.entity.LightningBolt(
                             net.minecraft.world.entity.EntityType.LIGHTNING_BOLT,
                             serverLevel
                     );
+            lightning.setVisualOnly(true);
             lightning.setPos(attacker.getX(), attacker.getY(), attacker.getZ());
             serverLevel.addFreshEntity(lightning);
+            if (attacker.isAlive()) {
+                attacker.thunderHit(serverLevel, lightning);
+            }
 
             // 清除闪电周围火焰
             BlockPos center = attacker.blockPosition();

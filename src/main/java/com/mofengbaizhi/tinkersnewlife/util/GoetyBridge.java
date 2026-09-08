@@ -459,6 +459,27 @@ public final class GoetyBridge {
         return e != null && ownedIface != null && ownedIface.isAssignableFrom(e.getClass());
     }
 
+    /** 诡厄仆从是否允许穿盔甲（canWearArmor()，骷髅/僵尸等返回 true） */
+    public static boolean canServantWearArmor(LivingEntity e) {
+        resolveReflection();
+        if (e == null || ownedIface == null || !ownedIface.isAssignableFrom(e.getClass())) return false;
+        try {
+            Class<?> c = e.getClass();
+            while (c != null && c != Object.class) {
+                try {
+                    java.lang.reflect.Method m = c.getDeclaredMethod("canWearArmor");
+                    m.setAccessible(true);
+                    return Boolean.TRUE.equals(m.invoke(e));
+                } catch (NoSuchMethodException ignored) {
+                    c = c.getSuperclass();
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        // 反射不到方法时保守放行（多数 goety 仆从可穿甲）
+        return true;
+    }
+
     /**
      * 目标的诡厄主人（Owned.getTrueOwner()），不是仆从/读不到返回 null。
      * 调用方用它判定"玩家右键的是不是自己的仆从"。
@@ -476,6 +497,49 @@ public final class GoetyBridge {
         } catch (Throwable ignored) {
             return null;
         }
+    }
+
+    /** 骷髅系仆从类的缓存（用于反射找 meleeGoal 字段） */
+    private static java.util.Map<Class<?>, java.lang.reflect.Field> SERVANT_MELEE_FIELD_CACHE =
+            new java.util.WeakHashMap<>();
+
+    /**
+     * 移除诡厄骷髅系仆从的 {@code meleeGoal}（goety {@code AbstractSkeletonServant} 的
+     * {@code public final meleeGoal} 字段）：仆从拿匠魂弓时 goety 的 {@code reassessWeaponGoal}
+     * 不认匠魂弓（只认 {@code instanceof BowItem}）会挂近战 goal，拿弓冲上去敲人。
+     * 反射按类层级找字段（只认基类字段名），找到则从 goalSelector 移除。
+     * 非骷髅系/未装 goety/找不到字段一律安全 no-op。
+     *
+     * @return 是否真的移除了一个 goal
+     */
+    public static boolean removeServantMeleeGoal(LivingEntity e) {
+        if (!(e instanceof net.minecraft.world.entity.Mob mob)) return false;
+        java.lang.reflect.Field f = SERVANT_MELEE_FIELD_CACHE.get(e.getClass());
+        if (f == null) {
+            Class<?> c = e.getClass();
+            while (c != null && c != Object.class) {
+                try {
+                    f = c.getDeclaredField("meleeGoal");
+                    f.setAccessible(true);
+                    SERVANT_MELEE_FIELD_CACHE.put(e.getClass(), f);
+                    break;
+                } catch (NoSuchFieldException ignored) {
+                    c = c.getSuperclass();
+                } catch (Throwable ignored) {
+                    return false;
+                }
+            }
+        }
+        if (f == null) return false;
+        try {
+            Object goal = f.get(e);
+            if (goal instanceof net.minecraft.world.entity.ai.goal.Goal g) {
+                mob.goalSelector.removeGoal(g);
+                return true;
+            }
+        } catch (Throwable ignored) {
+        }
+        return false;
     }
 
 
