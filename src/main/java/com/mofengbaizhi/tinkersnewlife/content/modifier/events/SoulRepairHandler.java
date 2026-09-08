@@ -42,6 +42,7 @@ public class SoulRepairHandler {
             if (tool == null || tool.isBroken()) continue;
             int lv = tool.getModifierLevel(SOUL_REPAIR);
             if (lv <= 0) continue;
+            if (tool.getDamage() <= 0) continue;                     // 耐久已满：不修也不耗灵魂
 
             int cost = Math.max(1, 6 - lv);
             if (SoulEnergyBridge.getSouls(sp) < cost) continue;      // 灵魂不足：不修不耗
