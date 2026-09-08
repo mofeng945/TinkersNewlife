@@ -30,34 +30,35 @@ public class DreadsteelHandler {
 
     @SubscribeEvent
     public static void onLivingAttack(LivingAttackEvent event) {
-        if (!(event.getSource().getEntity() instanceof Player player)) return;
+        if (!(event.getSource().getEntity() instanceof LivingEntity attacker)) return;
+        if (attacker.level().isClientSide) return;
         LivingEntity target = event.getEntity();
-        if (player.level().isClientSide) return;
+        if (target == attacker) return;
 
-        // ⭐ 统一取工具（近战/弹射双路径 + 校验），主手无武器时兜底取佩戴的咒力核心
-        ToolStack tool = ToolHelper.getCombatToolWith(event.getSource(), player, DREADSTEEL);
+        // ⭐ 统一取工具：玩家近战/弹射双路径+咒力核心兜底；怪物只查主手
+        ToolStack tool = ToolHelper.getCombatToolWith(event.getSource(), attacker, DREADSTEEL);
         if (tool == null) return;
 
         int level = tool.getModifierLevel(DREADSTEEL);
-        if (level > 0) applyDreadsteelEffect(tool, player, target, level);
+        if (level > 0) applyDreadsteelEffect(tool, attacker, target, level);
     }
 
     @SubscribeEvent
     public static void onProjectileImpact(ProjectileImpactEvent event) {
         if (!(event.getRayTraceResult() instanceof EntityHitResult entityHit)) return;
         if (!(entityHit.getEntity() instanceof LivingEntity target)) return;
-        if (!(event.getProjectile().getOwner() instanceof Player player)) return;
-        if (player.level().isClientSide) return;
+        if (!(event.getProjectile().getOwner() instanceof LivingEntity attacker)) return;
+        if (attacker.level().isClientSide) return;
 
         // ⭐ 统一取工具（弹射路径 + 校验），主手无武器时兜底取佩戴的咒力核心
-        ToolStack tool = ToolHelper.getCombatToolWith(event.getProjectile(), player, DREADSTEEL);
+        ToolStack tool = ToolHelper.getCombatToolWith(event.getProjectile(), attacker, DREADSTEEL);
         if (tool == null) return;
 
         int level = tool.getModifierLevel(DREADSTEEL);
-        if (level > 0) applyDreadsteelEffect(tool, player, target, level);
+        if (level > 0) applyDreadsteelEffect(tool, attacker, target, level);
     }
 
-    private static void applyDreadsteelEffect(ToolStack tool, Player player, LivingEntity target, int level) {
+    private static void applyDreadsteelEffect(ToolStack tool, LivingEntity attacker, LivingEntity target, int level) {
         float weaponDamage = tool.getStats().get(ToolStats.ATTACK_DAMAGE);
         float damage = weaponDamage * (1 + level * 0.1f);
         int piercing = PIERCING_BASE + level;
@@ -65,10 +66,10 @@ public class DreadsteelHandler {
         float speed = 1.2f;
 
         DreadsteelSlashEntity slash = new DreadsteelSlashEntity(
-                player.level(), player, damage, piercing, width, speed,
+                attacker.level(), attacker, damage, piercing, width, speed,
                 WEAKNESS_DURATION * 20, BLINDNESS_DURATION * 20, WITHER_DURATION * 20);
-        slash.setOwner(player);
-        player.level().addFreshEntity(slash);
+        slash.setOwner(attacker);
+        attacker.level().addFreshEntity(slash);
 
         target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, WEAKNESS_DURATION * 20, 1));
         target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, BLINDNESS_DURATION * 20, 0));

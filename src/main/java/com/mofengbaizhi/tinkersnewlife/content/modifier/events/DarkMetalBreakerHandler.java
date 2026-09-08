@@ -35,15 +35,17 @@ public class DarkMetalBreakerHandler {
             new ResourceLocation(TinkersNewlife.MOD_ID, "dark_metal_breaker"));
     private static final Random RANDOM = new Random();
 
-    /** 攻击造成伤害后：给目标挂衰弱 I（时长 2×等级 秒） */
+    /** 攻击造成伤害后：给目标挂衰弱 I（时长 2×等级 秒）——玩家与怪物通用 */
     @SubscribeEvent
     public static void onHurt(LivingHurtEvent event) {
         if (event.getEntity().level().isClientSide) return;
         Entity sourceEntity = event.getSource().getEntity();
-        if (!(sourceEntity instanceof Player player)) return;
+        if (!(sourceEntity instanceof LivingEntity attacker)) return;
         LivingEntity target = event.getEntity();
+        if (target == attacker) return;
 
-        ToolStack tool = ToolHelper.getCombatToolWith(event.getSource(), player, BREAKER);
+        // ⭐ 统一取工具：玩家近战/弹射双路径+咒力核心兜底；怪物只查主手
+        ToolStack tool = ToolHelper.getCombatToolWith(event.getSource(), attacker, BREAKER);
         if (tool == null) return;
         int lv = tool.getModifierLevel(BREAKER);
         if (lv <= 0) return;

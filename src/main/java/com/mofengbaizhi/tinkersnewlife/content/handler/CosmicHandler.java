@@ -23,12 +23,13 @@ public class CosmicHandler {
 
     @SubscribeEvent
     public static void onLivingAttack(LivingAttackEvent event) {
-        if (!(event.getSource().getEntity() instanceof Player player)) return;
+        if (!(event.getSource().getEntity() instanceof LivingEntity attacker)) return;
+        if (attacker.level().isClientSide) return;
         LivingEntity target = event.getEntity();
-        if (target.level().isClientSide) return;
+        if (target == attacker) return;
 
-        // ⭐ 统一取工具（近战/弹射双路径 + 校验），主手无武器时兜底取佩戴的咒力核心
-        ToolStack tool = ToolHelper.getCombatToolWith(event.getSource(), player, COSMIC_ORDER_VOICE);
+        // ⭐ 统一取工具：玩家近战/弹射双路径+咒力核心兜底；怪物只查主手
+        ToolStack tool = ToolHelper.getCombatToolWith(event.getSource(), attacker, COSMIC_ORDER_VOICE);
         if (tool == null) return;
 
         int level = tool.getModifierLevel(COSMIC_ORDER_VOICE);

@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.util;
 import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
 import com.mofengbaizhi.tinkersnewlife.content.entity.YoYoEntity;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
@@ -93,38 +94,48 @@ public final class ToolHelper {
     // ============================================================
 
     /**
-     * 解析攻击者携带指定修饰符的匠魂工具（近战/弹射伤害路径）。
-     * <p>
-     * 优先使用 {@link #getCombatTool(DamageSource, Player)} 解析出的主手战斗工具；
-     * 若其不含任一指定修饰符，则兜底取佩戴的咒力核心（术式「解/捌/灶·开」与
-     * 领域「伏魔御厨子」攻击不走匠魂近战管线，主手通常没有匠魂武器，
-     * 材料特性（如黑墨→星空之子、杰洛斯残骸→宇宙秩序之声、龙钢三系、悚怖、
-     * 哈斯塔恶意、生命冲动→魅惑等）位于佩戴的核心上）。
+     * 解析攻击者携带指定修饰符的匠魂战斗工具——<b>玩家与怪物通用</b>。
+     * <ul>
+     *   <li>玩家：近战/弹射双路径 + 无武器时咒力核心兜底</li>
+     *   <li>非玩家（怪物/随从等）：仅检查主手物品是否为匠魂工具且含任一修饰符
+     *       （怪物没有弹射武器与咒力核心，只查主手近战）</li>
+     * </ul>
+     * 供各攻击词条 Handler 把 {@code instanceof Player} 判定放宽为 {@code instanceof LivingEntity}
+     * 后调用，使持匠魂武器的怪物也能触发命中效果。
      *
-     * @param source 伤害来源（LivingAttackEvent/LivingHurtEvent 的 getSource()）
-     * @param player 攻击者玩家（须在服务端调用）
-     * @param ids    需要匹配的修饰符（命中其一即可）
+     * @param source   伤害来源（LivingAttackEvent/LivingDamageEvent 的 getSource()；非玩家时仅用主手，可为 null）
+     * @param attacker 攻击者实体（玩家或怪物，须在服务端调用）
+     * @param ids      需要匹配的修饰符（命中其一即可）
      * @return 携带任一指定修饰符的 ToolStack；主手与核心均无时返回主手解析结果（可能为 null）
      */
     @SafeVarargs
     @Nullable
-    public static ToolStack getCombatToolWith(DamageSource source, Player player, ModifierId... ids) {
-        return getToolWithModifier(player, getCombatTool(source, player), ids);
+    public static ToolStack getCombatToolWith(DamageSource source, LivingEntity attacker, ModifierId... ids) {
+        if (attacker == null) return null;
+        if (attacker instanceof Player player) {
+            return getToolWithModifier(player, getCombatTool(source, player), ids);
+        }
+        // 非玩家：只查主手（怪物近战武器）
+        return getValidToolWithModifier(attacker.getMainHandItem(), ids);
     }
 
     /**
-     * 解析攻击者携带指定修饰符的匠魂工具（弹射物路径），逻辑同
-     * {@link #getCombatToolWith(DamageSource, Player, ModifierId...)}。
+     * 解析攻击者携带指定修饰符的匠魂工具（弹射物路径）——<b>玩家与怪物通用</b>。
+     * 玩家走弹射武器解析 + 咒力核心兜底；非玩家（理论上怪物不用匠魂远程）回退查主手。
      *
      * @param projectile 弹射物实体
-     * @param player     攻击者玩家（须在服务端调用）
+     * @param attacker   攻击者实体（玩家或怪物，须在服务端调用）
      * @param ids        需要匹配的修饰符（命中其一即可）
-     * @return 携带任一指定修饰符的 ToolStack；主手与核心均无时返回主手解析结果（可能为 null）
+     * @return 携带任一指定修饰符的 ToolStack；无则 null
      */
     @SafeVarargs
     @Nullable
-    public static ToolStack getCombatToolWith(Projectile projectile, Player player, ModifierId... ids) {
-        return getToolWithModifier(player, getCombatTool(projectile, player), ids);
+    public static ToolStack getCombatToolWith(Projectile projectile, LivingEntity attacker, ModifierId... ids) {
+        if (attacker == null) return null;
+        if (attacker instanceof Player player) {
+            return getToolWithModifier(player, getCombatTool(projectile, player), ids);
+        }
+        return getValidToolWithModifier(attacker.getMainHandItem(), ids);
     }
 
     /**
@@ -153,5 +164,14 @@ public final class ToolHelper {
             if (tool.getModifierLevel(id) > 0) return true;
         }
         return false;
+    }
+
+    /** 物品是有效匠魂工具且含任一指定修饰符才返回，否则 null */
+    @SafeVarargs
+    @Nullable
+    private static ToolStack getValidToolWithModifier(ItemStack stack, ModifierId... ids) {
+        ToolStack tool = getValidTool(stack);
+        if (hasAny(tool, ids)) return tool;
+        return null;
     }
 }
