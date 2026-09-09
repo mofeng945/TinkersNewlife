@@ -1,0 +1,17 @@
+{
+    "name": "Blasphemy",
+    "category": "tinkersnewlife:traits",
+    "icon": "goety:nether_brick_brazier",
+    "sortnum": 41,
+    "pages": [
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)Slotless upgrade: Blasphemy$() — Those who defile the gods are forsaken by them.$(br2)Grants the armor $(l)2$() extra defense slots, but increases damage taken by $(c)10%$() (applied after armor reduction; stacks multiplicatively per piece worn).$(br2)Installing costs no slots; cannot be washed off or extracted."
+        },
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)Recipe$() (goety): Pure Unholy Blood ×1, Essence of Shadow ×2, Nether Brick Brazier ×2 — applied to Tinkers' armor."
+        }
+    ],
+    "flag": "mod:goety"
+}

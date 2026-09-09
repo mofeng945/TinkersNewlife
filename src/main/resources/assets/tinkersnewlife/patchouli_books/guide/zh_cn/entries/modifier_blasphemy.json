@@ -1,0 +1,17 @@
+{
+    "name": "渎神",
+    "category": "tinkersnewlife:traits",
+    "icon": "goety:nether_brick_brazier",
+    "sortnum": 41,
+    "pages": [
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)无槽位强化·渎神$()：以罪为甲，诸神厌弃。$(br2)效果：为护甲增加 $(l)2$() 个防御槽，但受到的伤害 $(c)+10%$()（护甲减免结算后生效，多件穿戴乘法叠加）。$(br2)安装不占用任何槽位；不可清洗、不可剥离。"
+        },
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)配方$()（goety 联动）：至纯之血 ×1、暗影精粹 ×2、下界砖火盆 ×2，目标为匠魂护甲。"
+        }
+    ],
+    "flag": "mod:goety"
+}

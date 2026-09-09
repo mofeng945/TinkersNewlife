@@ -63,7 +63,7 @@ public final class ChestScrollInjector {
                 // 原地追加成功后，原对象即生效；setTable 仅作显式声明
                 event.setTable(table);
             }
-            TinkersNewlife.LOGGER.info("[TinkersNewlife] 已向箱子表 {} 注入古代咒术残卷", id);
+            TinkersNewlife.LOGGER.debug("[TinkersNewlife] 已向箱子表 {} 注入古代咒术残卷", id);
         } catch (Throwable t) {
             TinkersNewlife.LOGGER.warn("[TinkersNewlife] 注入箱子残卷失败 {}: {}", id, t.toString());
         }

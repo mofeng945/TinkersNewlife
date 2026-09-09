@@ -1,0 +1,28 @@
+{
+  "type": "tconstruct:modifier",
+  "allow_crystal": false,
+  "inputs": [
+    {
+      "item": "goety:pure_unholy_blood"
+    },
+    {
+      "item": "goety:shadow_essence",
+      "amount": 2
+    },
+    {
+      "item": "goety:nether_brick_brazier",
+      "amount": 2
+    }
+  ],
+  "level": 1,
+  "result": "tinkersnewlife:blasphemy",
+  "tools": {
+    "tag": "tconstruct:modifiable/armor"
+  },
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "goety"
+    }
+  ]
+}

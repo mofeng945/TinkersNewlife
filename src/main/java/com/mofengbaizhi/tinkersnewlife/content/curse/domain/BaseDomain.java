@@ -279,7 +279,7 @@ public abstract class BaseDomain {
             }
             return true;
         }
-        com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
+        com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.debug(
                 "[TinkersNewlife] 咒力与灵魂能量均不足，领域关闭 (tick消耗={}, 当前咒力={})",
                 cost, CursePowerHelper.getCurse(player));
         return false;

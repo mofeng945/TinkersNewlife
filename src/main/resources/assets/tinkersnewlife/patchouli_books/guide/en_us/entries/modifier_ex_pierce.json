@@ -1,0 +1,16 @@
+{
+    "name": "EX Pierce",
+    "category": "tinkersnewlife:traits",
+    "icon": "tinkersnewlife:yellow_king_remnant",
+    "sortnum": 42,
+    "pages": [
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)Upgrade: EX Pierce$() — The might of five Outer Gods pierces all things.$(br2)Melee/ranged hits are resolved as piercing damage: ignores i-frames and pierces through invulnerabilities and damage caps — Cataclysm boss damage caps / Leviathan out-of-water immunity & phase 2, Wither spawn immunity and half-HP arrow immunity, Mowzie's Ferrous Wroughtnaut invulnerable phase and frontal shield blocks, etc.$(br2)Costs $(l)1$() upgrade slot; melee and ranged tools only."
+        },
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)Recipe$() (one of each Outer God material): Yellow King Remnant, Nicholas' Blessing, Nyarlathotep's Desire, Call of R'lyeh, Gheloth Remains."
+        }
+    ]
+}

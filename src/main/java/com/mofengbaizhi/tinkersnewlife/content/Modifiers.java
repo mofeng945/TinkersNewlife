@@ -310,6 +310,16 @@ public class Modifiers {
         MODIFIERS.register("final_brand",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.FinalBrandModifier::new);
 
+    /** 无槽位强化·渎神（安装不占槽：护甲 +2 防御槽，受到的伤害 +10%；单级，不可洗/不可剥） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.BlasphemyModifier> BLASPHEMY =
+        MODIFIERS.register("blasphemy",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.BlasphemyModifier::new);
+
+    /** 升级槽强化·穿透EX（占1升级槽，近战/远程：命中改写为穿透伤害源，可穿透无敌/限伤/无敌帧） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.ExPierceModifier> EX_PIERCE =
+        MODIFIERS.register("ex_pierce",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.ExPierceModifier::new);
+
     /** 词条·咒上·腺速（诅咒金属材料护甲部件自带：受敌对/摔落伤害耗10灵魂给5秒迅捷II，冷却1分钟） */
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.CursedAdrenalineModifier> CURSED_ADRENALINE =
         MODIFIERS.register("cursed_adrenaline",

@@ -381,7 +381,7 @@ public class TinkersNewlife {
                         ids.append(r.getId()).append(", ");
                     }
                 }
-                LOGGER.info("[TinkersNewlife] 熔炼配方总数={}, 万能材料熔化配方数={} [{}]", total, auto, ids);
+                LOGGER.debug("[TinkersNewlife] 熔炼配方总数={}, 万能材料熔化配方数={} [{}]", total, auto, ids);
             } catch (Throwable t) {
                 LOGGER.warn("[TinkersNewlife] 打印熔炼配方失败: {}", t.toString());
             }
