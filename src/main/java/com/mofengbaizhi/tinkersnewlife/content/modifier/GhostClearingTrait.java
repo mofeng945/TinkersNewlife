@@ -23,6 +23,12 @@ import java.util.List;
  */
 public class GhostClearingTrait extends Modifier {
 
+    /** 效果固定（清除16格内幽灵，半径/间隔常量），不受等级影响 → 显示名不带等级 */
+    @Override
+    public net.minecraft.network.chat.Component getDisplayName(int level) {
+        return this.getDisplayName();
+    }
+
     private static final int DETECTION_RADIUS = 16;
     private static final int SCAN_INTERVAL = 20;
 

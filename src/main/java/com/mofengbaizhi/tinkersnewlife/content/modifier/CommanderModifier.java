@@ -9,4 +9,10 @@ import slimeknights.tconstruct.library.modifiers.Modifier;
  * 本类仅作为可安装的能力槽强化空壳。
  */
 public class CommanderModifier extends Modifier {
+
+    /** 单级（能力槽强化，半径8格刌民概率锁定），不受等级影响 → 显示名不带等级 */
+    @Override
+    public net.minecraft.network.chat.Component getDisplayName(int level) {
+        return this.getDisplayName();
+    }
 }
