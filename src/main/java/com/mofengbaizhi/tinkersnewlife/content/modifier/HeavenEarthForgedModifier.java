@@ -30,6 +30,12 @@ public class HeavenEarthForgedModifier extends Modifier implements TooltipModifi
 
     private static final int DURABILITY_CAP = 20;
 
+    /** 效果固定（单次耐久损伤上限 20），不受等级影响 → 显示名不带等级 */
+    @Override
+    public net.minecraft.network.chat.Component getDisplayName(int level) {
+        return this.getDisplayName();
+    }
+
     @Override
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         super.registerHooks(hookBuilder);

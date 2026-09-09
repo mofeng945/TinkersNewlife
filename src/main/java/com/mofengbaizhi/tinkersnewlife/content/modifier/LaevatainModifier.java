@@ -34,6 +34,12 @@ public class LaevatainModifier extends Modifier implements TooltipModifierHook {
 
     public static final ModifierId ID = new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "laevatain"));
 
+    /** 效果固定（真伤穿透/禁疗/砍上限/折柱），不受等级影响 → 显示名不带等级 */
+    @Override
+    public net.minecraft.network.chat.Component getDisplayName(int level) {
+        return this.getDisplayName();
+    }
+
     @Override
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         super.registerHooks(hookBuilder);

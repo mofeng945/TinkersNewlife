@@ -20,4 +20,10 @@ import slimeknights.tconstruct.library.modifiers.ModifierId;
 public class ExPierceModifier extends Modifier {
 
     public static final ModifierId ID = new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "ex_pierce"));
+
+    /** 单级且效果固定（穿透结算），不受等级影响 → 显示名不带等级 */
+    @Override
+    public net.minecraft.network.chat.Component getDisplayName(int level) {
+        return this.getDisplayName();
+    }
 }

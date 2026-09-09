@@ -26,6 +26,12 @@ public class DivinePowerModifier extends Modifier implements TooltipModifierHook
 
     public static final ModifierId ID = new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "divine_power"));
 
+    /** 效果固定（+180 法力/固定法术），不受等级影响 → 显示名不带等级 */
+    @Override
+    public net.minecraft.network.chat.Component getDisplayName(int level) {
+        return this.getDisplayName();
+    }
+
     @Override
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         super.registerHooks(hookBuilder);

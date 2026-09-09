@@ -27,6 +27,12 @@ public class GungnirModifier extends Modifier implements TooltipModifierHook {
 
     public static final ModifierId ID = new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "gungnir"));
 
+    /** 效果固定（80% 伤害/震撼/狱火），不受等级影响 → 显示名不带等级 */
+    @Override
+    public net.minecraft.network.chat.Component getDisplayName(int level) {
+        return this.getDisplayName();
+    }
+
     @Override
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         super.registerHooks(hookBuilder);
