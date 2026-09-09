@@ -1,0 +1,18 @@
+{
+  "type": "tconstruct:alloy",
+  "inputs": [
+    {
+      "amount": 500,
+      "fluid": "tconstruct:blazing_blood"
+    },
+    {
+      "amount": 500,
+      "fluid": "tinkersnewlife:unholy_blood_still"
+    }
+  ],
+  "result": {
+    "fluid": "tinkersnewlife:everburning_holy_fire_still",
+    "amount": 500
+  },
+  "temperature": 1500
+}

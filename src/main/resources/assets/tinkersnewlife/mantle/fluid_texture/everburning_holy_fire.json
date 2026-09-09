@@ -1,0 +1,8 @@
+{
+  "still": "tconstruct:fluid/molten/blaze/still",
+  "flowing": "tconstruct:fluid/molten/blaze/flowing",
+  "color": "FFFFA0A0",
+  "fogColor": "FF402020",
+  "fogStart": 0.4,
+  "fogEnd": 5.0
+}

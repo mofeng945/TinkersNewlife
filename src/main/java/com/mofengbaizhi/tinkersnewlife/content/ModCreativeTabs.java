@@ -102,6 +102,11 @@ public class ModCreativeTabs {
                                 if (anyLoaded("goety_revelation")) {
                                     output.accept(ModFluids.MOLTEN_BROKEN_RING.bucket.get());
                                 }
+                                // 不洁之血（熔融 goety:unholy_blood）+ 永燃圣火（烈焰血+不洁之血合金）——goety 门控
+                                if (anyLoaded("goety")) {
+                                    output.accept(ModFluids.UNHOLY_BLOOD.bucket.get());
+                                    output.accept(ModFluids.EVERBURNING_HOLY_FIRE.bucket.get());
+                                }
 
                                 // ----- 铸模（联动工具的铸模仅在对应 mod 加载时显示） -----
                                 if (anyLoaded("iceandfire")) {

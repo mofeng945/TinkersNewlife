@@ -1,0 +1,8 @@
+{
+  "still": "tinkersnewlife:block/unholy_blood_still",
+  "flowing": "tinkersnewlife:block/unholy_blood_flowing",
+  "color": "FF5A0A0A",
+  "fogColor": "FF2E0505",
+  "fogStart": 0.4,
+  "fogEnd": 5.0
+}

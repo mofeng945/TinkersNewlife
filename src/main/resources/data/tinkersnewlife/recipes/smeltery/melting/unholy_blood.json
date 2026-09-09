@@ -1,0 +1,18 @@
+{
+  "type": "tconstruct:melting",
+  "ingredient": {
+    "item": "goety:unholy_blood"
+  },
+  "result": {
+    "fluid": "tinkersnewlife:unholy_blood_still",
+    "amount": 100
+  },
+  "temperature": 1200,
+  "time": 40,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "goety"
+    }
+  ]
+}

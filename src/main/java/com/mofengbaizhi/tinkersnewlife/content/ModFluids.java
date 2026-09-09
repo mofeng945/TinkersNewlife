@@ -132,7 +132,7 @@ public class ModFluids {
             lavaProps(MapColor.COLOR_YELLOW));
 
     public static final FluidEntry FIRE_BLOOD = new FluidEntry("fire_blood",
-            1500, 2000, 400, 0xFFFF4500,
+            1500, 2000, 1870, 0xFFFF4500,
             waterProps(MapColor.FIRE));
 
     public static final FluidEntry ICE_BLOOD = new FluidEntry("ice_blood",
@@ -148,7 +148,7 @@ public class ModFluids {
             lavaProps(MapColor.COLOR_PURPLE));
 
     public static final FluidEntry MOLTEN_DREADSTEEL = new FluidEntry("molten_dreadsteel",
-            2000, 8000, 1100, 0xFF2F2F2F,
+            2000, 8000, 1700, 0xFF2F2F2F,
             lavaProps(MapColor.COLOR_BLACK));
             
     public static final FluidEntry MOLTEN_NICHOLAS_BLESSING = new FluidEntry("molten_nicholas_blessing",
@@ -181,4 +181,14 @@ public class ModFluids {
     public static final FluidEntry MOLTEN_BROKEN_RING = new FluidEntry("molten_broken_ring",
         2000, 6000, 1200, 0xFFB87848,  // broken_halo 金橙 (184,120,72)
         lavaProps(MapColor.COLOR_ORANGE));
+
+    /** 不洁之血（熔融 goety:unholy_blood 得到；纯色暗血红，作为永燃圣火的合金成分之一） */
+    public static final FluidEntry UNHOLY_BLOOD = new FluidEntry("unholy_blood",
+        1500, 2500, 1200, 0xFF5A0A0A,  // 纯色暗血红 (90,10,10)
+        waterProps(MapColor.COLOR_RED));
+
+    /** 永燃圣火（烈焰血 + 不洁之血 合金；更高亮度烈焰血混一点红，顶级燃料，温度 2200） */
+    public static final FluidEntry EVERBURNING_HOLY_FIRE = new FluidEntry("everburning_holy_fire",
+        1500, 2000, 2200, 0xFFFF2211,  // 更高亮度烈焰血偏红 (255,34,17)
+        lavaProps(MapColor.FIRE));
 }
