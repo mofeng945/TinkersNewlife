@@ -1,0 +1,1 @@
+﻿{ "type": "tconstruct:melting_fuel", "duration": 200, "fluid": { "amount": 50, "fluid": "tinkersnewlife:everburning_holy_fire_still" }, "rate": 18, "temperature": 2200 }
