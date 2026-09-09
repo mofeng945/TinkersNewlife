@@ -2,6 +2,9 @@ package com.mofengbaizhi.tinkersnewlife.content.modifier.events;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.util.GoetyBridge;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -10,6 +13,7 @@ import net.minecraft.world.entity.ai.goal.GoalSelector;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraft.world.entity.monster.RangedAttackMob;
 import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
@@ -17,6 +21,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import slimeknights.tconstruct.library.modifiers.hook.build.ConditionalStatModifierHook;
 import slimeknights.tconstruct.library.tools.capability.EntityModifierCapability;
+import slimeknights.tconstruct.library.tools.item.ranged.ModifiableCrossbowItem;
 import slimeknights.tconstruct.library.tools.item.ranged.ModifiableLauncherItem;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 import slimeknights.tconstruct.library.tools.stat.ToolStats;
@@ -53,6 +58,11 @@ public class ServantBowAttackHandler {
         return isUsableTinkerBow(mob.getMainHandItem()) || isUsableTinkerBow(mob.getOffhandItem());
     }
 
+    /** 主/副手任一是<b>可用</b>匠魂弩 */
+    private static boolean isCrossbowStack(ItemStack stack) {
+        return !stack.isEmpty() && stack.getItem() instanceof slimeknights.tconstruct.library.tools.item.ranged.ModifiableCrossbowItem;
+    }
+
     private static boolean isUsableTinkerBow(ItemStack stack) {
         if (stack.isEmpty()) return false;
         if (!(stack.getItem() instanceof ModifiableLauncherItem)) return false;
@@ -84,6 +94,16 @@ public class ServantBowAttackHandler {
     /** 阶段 C：仆从射出的箭挂上弓的词条 + 面板伤害 */
     @SubscribeEvent
     public static void onJoinLevel(EntityJoinLevelEvent event) {
+        try {
+            onJoinLevelInner(event);
+        } catch (Throwable t) {
+            // 事件总线日志在本环境有 log4j 冲突：任何监听器异常都会升级成 LinkageError 崩溃，
+            // 这里兜底吞掉并打印，保证箭加入世界不炸
+            TinkersNewlife.LOGGER.error("[仆从弓] 箭加入世界处理异常", t);
+        }
+    }
+
+    private static void onJoinLevelInner(EntityJoinLevelEvent event) {
         if (event.getLevel().isClientSide) return;
         if (!(event.getEntity() instanceof AbstractArrow arrow)) return;
         // 只处理诡厄远程仆从射出的箭（owner=仆从）
@@ -101,11 +121,17 @@ public class ServantBowAttackHandler {
                 (float) (arrow.getBaseDamage() - 2.0D) + raw);
         arrow.setBaseDamage(modified);
 
-        // 挂上弓的 modifiers → 命中时 PROJECTILE_HIT 词条（龙炎等）经 EntityModifierCapability 触发
-        EntityModifierCapability.getCapability(arrow).addModifiers(tool.getModifiers());
+        // ⚠️ 2026-09：不再给箭挂 EntityModifierCapability（tconstruct 词条能力）。
+        // 崩因排查：仆从箭命中 → ProjectileImpactEvent → 某监听器抛异常 → EventBus 记日志触发
+        // log4j MessageSupplier 加载冲突（revelationfix mixin 影响）→ LinkageError 崩溃。
+        // 给箭挂词条会让 tconstruct 命中遍历箭上 modifiers 调 PROJECTILE_HIT hook，对 owner=仆从
+        // 的箭（本环境）不稳定。本 mod 自己的命中词条（龙炎/龙霆/死钢等）走各自 ProjectileImpact
+        // 监听器、看攻击者手上弓的词条，不依赖箭上挂载——去掉挂载仅损失 tconstruct 原版弹射词条
+        // （如穿透），换取稳定。
+        // EntityModifierCapability.getCapability(arrow).addModifiers(tool.getModifiers());
     }
 
-    /** 仆从主手/副手第一把可用匠魂弓 */
+    /** 仆从主手/副手第一把可用匠魂发射器（弓/弩） */
     private static ItemStack findTinkerBow(Mob mob) {
         if (isUsableTinkerBow(mob.getMainHandItem())) return mob.getMainHandItem();
         if (isUsableTinkerBow(mob.getOffhandItem())) return mob.getOffhandItem();
@@ -113,19 +139,33 @@ public class ServantBowAttackHandler {
     }
 
     /**
-     * 仿 goety {@code CreatureBowAttackGoal} 的射击节奏，但以匠魂弓为触发条件：
-     * 目标在射程内且看得见 → 站定（保留轻微走位）按节拍射击；太远则靠近。
-     * 射击走 {@link RangedAttackMob#performRangedAttack}（动态分发到 goety 原生实现，public）。
+     * 仆从远程 AI（自研，绕开 goety 只认 vanilla 弓的限制）：
+     * <ul>
+     *   <li><b>弓</b>：仿原版骷髅 {@code RangedBowAttackGoal} —— 过远靠近、射程内横向走位
+     *       （strafe）边移动边射；拉弓（{@code startUsingItem}，客户端 UseAnim.BOW 有拉弓姿势）
+     *       蓄力满 20 tick 后松手发射。</li>
+     *   <li><b>弩</b>：装填状态机（未装填→装填中→已装填→发射），装填有节奏延迟，
+     *       发射速度更快、散布更小。</li>
+     *   <li><b>发射</b>：自建 vanilla 箭（owner=仆从）+ 目标预测瞄准（箭速高、散布低），
+     *       词条/面板伤害由 {@link #onJoinLevel} 统一挂载。</li>
+     * </ul>
      */
     public static class ServantBowRangedGoal extends Goal {
         private static final double SPEED_MODIFIER = 1.0D;
         private static final float ATTACK_RADIUS = 15.0F;
         private static final float ATTACK_RADIUS_SQR = ATTACK_RADIUS * ATTACK_RADIUS;
-        private static final int ATTACK_INTERVAL = 25;
+        private static final int ATTACK_INTERVAL = 20;
 
         private final Mob mob;
         private int attackTime = ATTACK_INTERVAL;
         private int seeTime;
+        private int strafingTime;
+        private boolean strafingClockwise;
+        private boolean strafingBackwards;
+
+        // 弩装填状态
+        private int chargeTicks;
+        private boolean charging;      // true=装填中（startUsingItem 已调用，等待装填完成）
 
         public ServantBowRangedGoal(Mob mob) {
             this.mob = mob;
@@ -134,6 +174,10 @@ public class ServantBowAttackHandler {
 
         private boolean isHoldingTinkerBow() {
             return hasUsableTinkerBow(mob);
+        }
+
+        private boolean isCrossbow() {
+            return isCrossbowStack(mob.getMainHandItem()) || isCrossbowStack(mob.getOffhandItem());
         }
 
         @Override
@@ -158,7 +202,11 @@ public class ServantBowAttackHandler {
             mob.setAggressive(false);
             this.seeTime = 0;
             this.attackTime = ATTACK_INTERVAL;
-            mob.stopUsingItem();
+            this.charging = false;
+            this.chargeTicks = 0;
+            if (mob.isUsingItem()) {
+                mob.stopUsingItem();
+            }
         }
 
         @Override
@@ -170,7 +218,87 @@ public class ServantBowAttackHandler {
         public void tick() {
             LivingEntity target = mob.getTarget();
             if (target == null) return;
+            if (isCrossbow()) {
+                tickCrossbow(target);
+            } else {
+                tickBow(target);
+            }
+        }
 
+        // =================================================================
+        //  弓：原版骷髅式移动 + 拉弓蓄力 + 自建箭发射
+        // =================================================================
+        private void tickBow(LivingEntity target) {
+            double distSq = mob.distanceToSqr(target.getX(), target.getY(), target.getZ());
+            boolean canSee = mob.getSensing().hasLineOfSight(target);
+            boolean wasSeeing = this.seeTime > 0;
+            if (canSee != wasSeeing) {
+                this.seeTime = 0;
+            }
+            if (canSee) {
+                ++this.seeTime;
+            } else {
+                --this.seeTime;
+            }
+
+            // 移动：过远靠近；射程内且看清 → 站定横移（strafe）保持距离，边移动边射
+            if (distSq > ATTACK_RADIUS_SQR || this.seeTime < 20) {
+                mob.getNavigation().moveTo(target, SPEED_MODIFIER);
+                this.strafingTime = -1;
+            } else {
+                mob.getNavigation().stop();
+                ++this.strafingTime;
+            }
+            if (this.strafingTime >= 20) {
+                if (mob.getRandom().nextFloat() < 0.3D) {
+                    this.strafingClockwise = !this.strafingClockwise;
+                }
+                if (mob.getRandom().nextFloat() < 0.3D) {
+                    this.strafingBackwards = !this.strafingBackwards;
+                }
+                this.strafingTime = 0;
+            }
+            if (this.strafingTime > -1) {
+                if (distSq > ATTACK_RADIUS_SQR * 0.75F) {
+                    this.strafingBackwards = false;
+                } else if (distSq < ATTACK_RADIUS_SQR * 0.25F) {
+                    this.strafingBackwards = true;
+                }
+                float forward = this.strafingBackwards ? -0.5F : 0.5F;
+                float right = this.strafingClockwise ? 0.5F : -0.5F;
+                mob.getMoveControl().strafe(forward, right);
+            }
+
+            // 瞄准目标
+            mob.getLookControl().setLookAt(target, 30.0F, 30.0F);
+
+            // 射击节奏：拉弓蓄力 ≥20 tick → 松手发射
+            if (mob.isUsingItem()) {
+                if (!canSee && this.seeTime < -60) {
+                    mob.stopUsingItem();
+                } else if (canSee) {
+                    int usingTicks = mob.getTicksUsingItem();
+                    if (usingTicks >= 20) {
+                        mob.stopUsingItem();
+                        fireProjectile(target, false);
+                        this.attackTime = ATTACK_INTERVAL + mob.getRandom().nextInt(10);
+                    }
+                }
+                return;
+            }
+            if (--this.attackTime <= 0 && this.seeTime >= -60) {
+                // 开始拉弓（客户端 UseAnim.BOW 呈现拉弓姿势）
+                InteractionHand hand = ProjectileUtil.getWeaponHoldingHand(mob,
+                        item -> item instanceof ModifiableLauncherItem);
+                mob.startUsingItem(hand);
+            }
+        }
+
+        // =================================================================
+        //  弩：装填状态机 + 发射（箭速更高、散布更小）
+        //  与弓一致：过远靠近、射程内横向走位（strafe），装填/发射中保持机动
+        // =================================================================
+        private void tickCrossbow(LivingEntity target) {
             double distSq = mob.distanceToSqr(target.getX(), target.getY(), target.getZ());
             boolean canSee = mob.getSensing().hasLineOfSight(target);
             boolean wasSeeing = this.seeTime > 0;
@@ -185,28 +313,87 @@ public class ServantBowAttackHandler {
 
             boolean inRange = distSq <= ATTACK_RADIUS_SQR;
             if (!inRange) {
-                // 太远：靠近
                 mob.getNavigation().moveTo(target, SPEED_MODIFIER);
-                mob.getLookControl().setLookAt(target, 30.0F, 30.0F);
+                this.strafingTime = -1;
                 return;
             }
 
-            // 射程内：站定瞄准，按节拍射击
+            // 射程内：站定横移走位（同弓），保持机动边装填边射
             mob.getNavigation().stop();
-            mob.getLookControl().setLookAt(target, 30.0F, 30.0F);
-
-            if (!canSee) {
-                return; // 看不见不射
+            ++this.strafingTime;
+            if (this.strafingTime >= 20) {
+                if (mob.getRandom().nextFloat() < 0.3D) {
+                    this.strafingClockwise = !this.strafingClockwise;
+                }
+                if (mob.getRandom().nextFloat() < 0.3D) {
+                    this.strafingBackwards = !this.strafingBackwards;
+                }
+                this.strafingTime = 0;
             }
-            if (this.attackTime > 0) {
-                --this.attackTime;
+            if (this.strafingTime > -1) {
+                if (distSq > ATTACK_RADIUS_SQR * 0.75F) {
+                    this.strafingBackwards = false;
+                } else if (distSq < ATTACK_RADIUS_SQR * 0.25F) {
+                    this.strafingBackwards = true;
+                }
+                float forward = this.strafingBackwards ? -0.5F : 0.5F;
+                float right = this.strafingClockwise ? 0.5F : -0.5F;
+                mob.getMoveControl().strafe(forward, right);
+            }
+            mob.getLookControl().setLookAt(target, 30.0F, 30.0F);
+            if (!canSee) return;
+
+            if (!this.charging) {
+                // 未装填：冷却结束且看清目标 → 开始装填
+                if (--this.attackTime <= 0 && this.seeTime >= 5) {
+                    this.charging = true;
+                    this.chargeTicks = 0;
+                    InteractionHand hand = ProjectileUtil.getWeaponHoldingHand(mob,
+                            item -> item instanceof ModifiableLauncherItem);
+                    mob.startUsingItem(hand);   // 装填姿态（开始 use）
+                }
                 return;
             }
-            // 开火：走 RangedAttackMob 接口 → goety 原生射击（vanilla 箭 + goety 伤害公式）
-            if (mob instanceof RangedAttackMob ranged) {
-                ranged.performRangedAttack(target, 1.0F);
+            // 装填中：走完装填时长（约 25 tick）→ 装填完成
+            ++this.chargeTicks;
+            if (this.chargeTicks < 25) return;
+            this.charging = false;
+            if (mob.isUsingItem()) {
+                mob.stopUsingItem();
             }
-            this.attackTime = ATTACK_INTERVAL + mob.getRandom().nextInt(10);
+            // 发射（弩：箭速高、散布小）
+            fireProjectile(target, true);
+            this.attackTime = ATTACK_INTERVAL + 10 + mob.getRandom().nextInt(10);
+        }
+
+        /**
+         * 自建箭并发射：owner=仆从（后续 onJoinLevel 自动挂词条/面板伤害）。
+         * 目标预测：瞄目标中心 + 简单提前量，箭速高 → 命中率高。
+         */
+        private void fireProjectile(LivingEntity target, boolean crossbow) {
+            net.minecraft.world.entity.projectile.Arrow arrow =
+                    new net.minecraft.world.entity.projectile.Arrow(mob.level(), mob);
+            arrow.setPos(mob.getX(), mob.getEyeY() - 0.1D, mob.getZ());
+            arrow.setOwner(mob);
+
+            double dx = target.getX() - mob.getX();
+            double dy = (target.getY() + target.getEyeHeight() * 0.5D) - mob.getEyeY();
+            double dz = target.getZ() - mob.getZ();
+            double dist = Math.sqrt(dx * dx + dz * dz);
+            // 提前量：按箭飞行时间预测目标位移（半补偿，避免过调）
+            float speed = crossbow ? 3.2F : 2.4F;
+            double flight = dist / speed;
+            double px = dx + target.getDeltaMovement().x * flight * 0.5D;
+            double py = dy + target.getDeltaMovement().y * flight * 0.3D;
+            double pz = dz + target.getDeltaMovement().z * flight * 0.5D;
+            // 散布：弩更准
+            float inaccuracy = crossbow ? 0.4F : 1.1F;
+            arrow.shoot(px, py, pz, speed, inaccuracy);
+            mob.level().addFreshEntity(arrow);
+
+            mob.level().playSound(null, mob.getX(), mob.getY(), mob.getZ(),
+                    crossbow ? SoundEvents.CROSSBOW_SHOOT : SoundEvents.ARROW_SHOOT,
+                    SoundSource.HOSTILE, 1.0F, 0.8F + mob.getRandom().nextFloat() * 0.4F);
         }
     }
 }

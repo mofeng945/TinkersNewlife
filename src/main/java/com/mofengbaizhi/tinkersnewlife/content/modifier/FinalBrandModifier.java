@@ -34,11 +34,11 @@ public class FinalBrandModifier extends Modifier implements TooltipModifierHook 
         super.registerHooks(hookBuilder);
         // +1 能力槽（volatile data）
         hookBuilder.addModule(ModifierSlotModule.slot(SlotType.ABILITY).amount(1, 0));
-        // -10% 移动速度（multiply_base，全装备槽）
+        // -5% 移动速度（multiply_base，全装备槽）
         hookBuilder.addModule(AttributeModule.builder(Attributes.MOVEMENT_SPEED, Operation.MULTIPLY_BASE)
                 .uniqueFrom(new ResourceLocation(TinkersNewlife.MOD_ID, "final_brand"))
                 .slots(EquipmentSlot.values())
-                .amount(0, -0.1f));
+                .amount(0, -0.05f));
         hookBuilder.addHook(this, ModifierHooks.TOOLTIP);
     }
 
