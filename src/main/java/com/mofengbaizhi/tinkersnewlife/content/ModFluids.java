@@ -176,4 +176,9 @@ public class ModFluids {
     public static final FluidEntry MOLTEN_DARK_METAL = new FluidEntry("molten_dark_metal",
         2000, 8000, 1000, 0xFF343540,  // goety dark_ingot 暗蓝灰 (52,53,64)
         lavaProps(MapColor.COLOR_BLACK));
+
+    /** 熔融破碎之环（诡厄启示录 破碎之环 broken_halo 熔炼；浇在黑暗金属上成「神灵金」材料，配色取 broken_halo 暖金橙） */
+    public static final FluidEntry MOLTEN_BROKEN_RING = new FluidEntry("molten_broken_ring",
+        2000, 6000, 1200, 0xFFB87848,  // broken_halo 金橙 (184,120,72)
+        lavaProps(MapColor.COLOR_ORANGE));
 }

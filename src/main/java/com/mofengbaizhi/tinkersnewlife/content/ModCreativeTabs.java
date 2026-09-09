@@ -98,6 +98,10 @@ public class ModCreativeTabs {
                                     output.accept(ModFluids.MOLTEN_CURSED_METAL.bucket.get());
                                     output.accept(ModFluids.MOLTEN_DARK_METAL.bucket.get());
                                 }
+                                // 熔融破碎之环（诡厄启示录 broken_halo 熔炼；神灵金原料流体）——仅在启示录加载时显示
+                                if (anyLoaded("goety_revelation")) {
+                                    output.accept(ModFluids.MOLTEN_BROKEN_RING.bucket.get());
+                                }
 
                                 // ----- 铸模（联动工具的铸模仅在对应 mod 加载时显示） -----
                                 if (anyLoaded("iceandfire")) {
