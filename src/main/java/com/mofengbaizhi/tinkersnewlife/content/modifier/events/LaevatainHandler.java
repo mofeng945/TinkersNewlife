@@ -5,26 +5,20 @@ import com.mofengbaizhi.tinkersnewlife.content.ModEffects;
 import com.mofengbaizhi.tinkersnewlife.content.modifier.LaevatainModifier;
 import com.mofengbaizhi.tinkersnewlife.util.GoetyBridge;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
-import net.minecraft.core.Holder;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingHealEvent;
-import net.minecraftforge.event.entity.player.AttackEntityEvent;
+import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
@@ -35,7 +29,8 @@ import java.util.UUID;
 /**
  * 近战特性·莱万汀结算器（模仿启示录断曜流光）：
  * <ul>
- *   <li>命中改写为 true_pierce（真伤、无视伤害减免/无敌帧/各类无敌）——两段式（带归属 → 被挡则无主重打）；</li>
+ *   <li>统一用 LivingHurtEvent 触发：玩家挥击、怪物/仆从攻击、悠悠球命中、弹射物命中
+ *       ——只要攻击者带莱万汀工具，就对目标套用莱万汀效果（清无敌帧/诅咒/禁疗/砍上限/拆柱/防复活）；</li>
  *   <li>命中附加禁疗（anti_heal，LivingHealEvent 拦截）＋ 原版 Goety CURSED 诅咒；</li>
  *   <li>概率砍血量上限（MAX_HEALTH 属性下调）；</li>
  *   <li>击中诡厄受限 Boss → 直接拆保护柱 + 抑制再生；</li>
@@ -45,10 +40,6 @@ import java.util.UUID;
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class LaevatainHandler {
-
-    private static final ResourceKey<DamageType> PIERCE_TYPE = ResourceKey.create(
-            Registries.DAMAGE_TYPE, new ResourceLocation(TinkersNewlife.MOD_ID, "true_pierce"));
-    private static volatile Holder<DamageType> cachedPierce = null;
 
     /** 砍血量上限参数（限时：到期自动移除，不永久） */
     private static final float MAX_HP_CUT_CHANCE = 0.15f;
@@ -71,18 +62,23 @@ public final class LaevatainHandler {
     private LaevatainHandler() {
     }
 
-    // ==================== 命中改写（真伤 + 无敌/限伤穿透 + 拆柱 + 禁疗 + 砍上限 + 防复活） ====================
+    // ==================== 命中改写 ====================
+    // 统一用 LivingHurtEvent 触发：无论伤害源是玩家挥击、怪物/仆从攻击、悠悠球命中还是弹射
+    // 物命中，只要"攻击者"（悠球→球实体上工具栈；活物→主/副手；弹射物→持有者主/副手）带莱万汀，
+    // 就对目标套用莱万汀效果：清无敌帧、真伤穿透、诅咒+禁疗、概率砍上限、拆柱+抑制再生、防复活。
+    // ⚠️ 不再用 AttackEntityEvent(cancel+重打)——那对悠悠球/怪物/仆从不生效，且无法多来源统一。
 
     @SubscribeEvent
-    public static void onPlayerAttack(AttackEntityEvent event) {
-        Player player = event.getEntity();
-        if (player.level().isClientSide) return;
-        if (!(event.getTarget() instanceof LivingEntity target)) return;
-        if (!hasLaevatain(player.getMainHandItem())) return;
+    public static void onLivingHurt(LivingHurtEvent event) {
+        LivingEntity target = event.getEntity();
+        if (target.level().isClientSide) return;
 
-        event.setCanceled(true);
-        float damage = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE);
-        if (damage <= 0) return;
+        // 从伤害源解析"带莱万汀工具"的攻击者
+        ItemStack weapon = resolveLaevatainWeapon(event.getSource());
+        if (weapon.isEmpty()) return;
+
+        // 真伤：清目标无敌帧，让伤害不被打断/抵扣
+        target.invulnerableTime = 0;
 
         // ⭐ 拆柱 + 抑制再生（诡厄受限 Boss）
         if (target.isAlive() && !target.isRemoved() && GoetyBridge.isDamageLimitedBoss(target)) {
@@ -91,12 +87,6 @@ public final class LaevatainHandler {
         }
         // 防复活/锁血标记
         target.getPersistentData().putBoolean(KEY_NO_REVIVE, true);
-
-        // 两段式穿透（带归属 → 被挡则无主重打），真伤源 = true_pierce
-        boolean dealt = target.hurt(pierceSource(player), damage);
-        if (!dealt && target.isAlive() && !target.isRemoved()) {
-            target.hurt(GoetyBridge.truePierceSource(target.level()), damage);
-        }
 
         if (target.isAlive() && !target.isRemoved()) {
             // 原版命中必附：Goety 诅咒（CURSED）40 tick amp=1
@@ -108,6 +98,48 @@ public final class LaevatainHandler {
                 cutMaxHp(target);
             }
         }
+    }
+
+    /**
+     * 解析带莱万汀的攻击者工具栈（空 = 当前伤害源无莱万汀）。
+     * <ul>
+     *   <li>悠悠球：直接实体 = YoYoEntity → 读球实体携带的完整工具栈（returnStack）；</li>
+     *   <li>活物攻击者：直接实体是 LivingEntity → 查其主/副手；</li>
+     *   <li>弹射物：直接实体是 Projectile（非悠球）→ 查其持有者（owner）主/副手。</li>
+     * </ul>
+     */
+    private static ItemStack resolveLaevatainWeapon(DamageSource source) {
+        if (source == null) return ItemStack.EMPTY;
+        try {
+            net.minecraft.world.entity.Entity direct = source.getDirectEntity();
+            // 悠悠球命中
+            if (direct instanceof com.mofengbaizhi.tinkersnewlife.content.entity.YoYoEntity yoyo) {
+                ItemStack stack = yoyo.getReturnStack();
+                if (hasLaevatain(stack)) return stack;
+            }
+            // 活物攻击者（玩家/怪物/仆从直接近战）
+            if (direct instanceof LivingEntity attacker) {
+                ItemStack w = combatWeapon(attacker);
+                if (!w.isEmpty()) return w;
+            }
+            // 弹射物：持有者手上工具
+            if (direct instanceof net.minecraft.world.entity.projectile.Projectile proj
+                    && proj.getOwner() instanceof LivingEntity owner) {
+                ItemStack w = combatWeapon(owner);
+                if (!w.isEmpty()) return w;
+            }
+        } catch (Throwable ignored) {
+        }
+        return ItemStack.EMPTY;
+    }
+
+    /** 主/副手第一把带莱万汀的工具 */
+    private static ItemStack combatWeapon(LivingEntity attacker) {
+        ItemStack main = attacker.getMainHandItem();
+        if (hasLaevatain(main)) return main;
+        ItemStack off = attacker.getOffhandItem();
+        if (hasLaevatain(off)) return off;
+        return ItemStack.EMPTY;
     }
 
     /** 原版 ValetteinItem 命中附带的 Goety CURSED（诅咒）效果 40t amp1；未装 goety 时 no-op */
@@ -229,15 +261,5 @@ public final class LaevatainHandler {
         if (stack.isEmpty()) return false;
         ToolStack tool = ToolHelper.getToolStack(stack);
         return tool != null && tool.getModifierLevel(LaevatainModifier.ID) > 0;
-    }
-
-    private static DamageSource pierceSource(LivingEntity attacker) {
-        Holder<DamageType> cached = cachedPierce;
-        if (cached == null) {
-            cached = attacker.level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE)
-                    .getHolderOrThrow(PIERCE_TYPE);
-            cachedPierce = cached;
-        }
-        return new DamageSource(cached, attacker, attacker);
     }
 }

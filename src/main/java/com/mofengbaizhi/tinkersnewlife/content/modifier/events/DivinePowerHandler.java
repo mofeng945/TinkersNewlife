@@ -7,7 +7,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
@@ -39,7 +38,6 @@ public final class DivinePowerHandler {
     public static void onLivingTick(LivingEvent.LivingTickEvent event) {
         LivingEntity holder = event.getEntity();
         if (holder.level().isClientSide) return;
-        if (!(holder instanceof Player)) return; // 法力/法术注入仅玩家持有者
         if (!hasDivinePower(holder.getMainHandItem())) return;
 
         // 注入法术容器（仅首次）
