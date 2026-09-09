@@ -2,7 +2,6 @@ package com.mofengbaizhi.tinkersnewlife.content.modifier.events;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModEffects;
-import com.mofengbaizhi.tinkersnewlife.content.effect.AntiHealEffect;
 import com.mofengbaizhi.tinkersnewlife.content.modifier.LaevatainModifier;
 import com.mofengbaizhi.tinkersnewlife.util.GoetyBridge;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
@@ -22,12 +21,10 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingHealEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
@@ -39,10 +36,9 @@ import java.util.UUID;
  * 近战特性·莱万汀结算器（模仿启示录断曜流光）：
  * <ul>
  *   <li>命中改写为 true_pierce（真伤、无视伤害减免/无敌帧/各类无敌）——两段式（带归属 → 被挡则无主重打）；</li>
- *   <li>命中附加禁疗（anti_heal，LivingHealEvent 拦截）；</li>
+ *   <li>命中附加禁疗（anti_heal，LivingHealEvent 拦截）＋ 原版 Goety CURSED 诅咒；</li>
  *   <li>概率砍血量上限（MAX_HEALTH 属性下调）；</li>
  *   <li>击中诡厄受限 Boss → 直接拆保护柱 + 抑制再生；</li>
- *   <li>潜行左键激流冲刺（位移，不瞬移）；</li>
  *   <li>持有时给周围仆从上抗性提升（光环）；</li>
  *   <li>致死不触发复活/锁血（打标记 + suppressApostleRegen，待验证）。</li>
  * </ul>
@@ -67,10 +63,6 @@ public final class LaevatainHandler {
     private static final double AURA_RADIUS = 7.0;
     private static final int AURA_INTERVAL = 20;
 
-    /** 激流冲刺（对齐原版 Valettein onEntitySwing）：shift+左键挥击时冲刺 */
-    private static final double DASH_SPEED = 3.6;
-    private static final int DASH_COOLDOWN_TICKS = 10;
-
     /** 禁疗时长 */
     private static final int ANTI_HEAL_DURATION = 160;
 
@@ -87,9 +79,6 @@ public final class LaevatainHandler {
         if (player.level().isClientSide) return;
         if (!(event.getTarget() instanceof LivingEntity target)) return;
         if (!hasLaevatain(player.getMainHandItem())) return;
-
-        // 潜行左键挥击（命中时）同样触发激流冲刺：对齐原版 onEntitySwing（挥击即冲刺）
-        tryDash(player);
 
         event.setCanceled(true);
         float damage = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE);
@@ -212,46 +201,6 @@ public final class LaevatainHandler {
         LivingEntity goetyOwner = GoetyBridge.getServantOwner(target);
         if (goetyOwner != null && goetyOwner == holder) return true;
         return target instanceof net.minecraft.world.entity.OwnableEntity oe && oe.getOwner() == holder;
-    }
-
-    // ==================== 潜行左键激流冲刺 ====================
-    // 对齐原版 ValetteinItem.onEntitySwing：shift(潜行)+左键挥击时，
-    // 取玩家视线方向归一化后 ×3.6 作为初速度 setDeltaMovement，产生高速冲刺；
-    // 命中与否取决于朝向前方挥出的本体攻击（不额外造直线伤害），冷却 10 tick。
-    @SubscribeEvent
-    public static void onLeftClickEmpty(PlayerInteractEvent.LeftClickEmpty event) {
-        Player player = event.getEntity();
-        if (player.level().isClientSide) return;
-        if (!player.isShiftKeyDown()) return;
-        if (!hasLaevatain(player.getMainHandItem())) return;
-        event.setCanceled(true);
-        tryDash(player);
-    }
-
-    /** 激流冲刺本体：对齐原版 ValetteinItem.onEntitySwing（shift+左键挥击）
-     *  1) 设定视线方向 ×3.6 的速度（setDeltaMovement）
-     *  2) startAutoSpinAttack(15)：触发激流(riptide)自旋动画
-     *  3) 音效 SoundEvents.TRIDENT_RIPTIDE_1（激流音）+ hurtMarked=true 让客户端同步动画/速度
-     *  冷却 10 tick（对齐原版）。 */
-    private static void tryDash(Player player) {
-        long now = player.level().getGameTime();
-        long last = player.getPersistentData().getLong("tinkersnewlife.laevatain_dash_cd");
-        if (now - last < DASH_COOLDOWN_TICKS) return;
-        player.getPersistentData().putLong("tinkersnewlife.laevatain_dash_cd", now + DASH_COOLDOWN_TICKS);
-
-        // 视线方向 ×3.6 作为速度（原版用 yaw/pitch 构造、归一化后 *3.6；getLookAngle 等价）
-        Vec3 dir = player.getLookAngle();
-        player.setDeltaMovement(dir.x * DASH_SPEED, dir.y * DASH_SPEED, dir.z * DASH_SPEED);
-
-        // 激流(riptide)自旋动画
-        player.startAutoSpinAttack(15);
-
-        // 挥击动作 + 音效反馈
-        player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
-        if (player.level() instanceof ServerLevel server) {
-            player.playNotifySound(net.minecraft.sounds.SoundEvents.TRIDENT_RIPTIDE_1,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0f, 1.3f);
-        }
     }
 
     // ==================== 禁疗拦截 ====================

@@ -11,7 +11,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)Innate traits$():$(li)$(bold)Soul Mending$()$(default): spend soul energy to restore durability$(li)$(bold)Laevatain$()$(melee): true-damage pierce + heal-block + max-health cut + sneak left-click torrent dash$(li)$(bold)Divine Power$()$(melee): imbue magic containers with a mana aura$(li)$(bold)Gungnir$()$(ranged): projectiles inflict Stun/Burn Hex on hit$(li)$(bold)Fate Pierce$()$(ranged): lock a target and home in for a guaranteed hit$(li)$(bold)Returning$()$(ranged): arrows return to the wielder$(li)$(bold)Godrealm Overstep$()$(armor): immune to fire/explosion/magic damage$(li)$(bold)Heaven & Earth Forged$()$(armor): cap incoming damage$(li)$(bold)Soul Discount$()$(armor): reduced soul cost when casting$(br2)Divine Gold is a top-tier all-round collab material covering melee, ranged and armor."
+      "text": "$(bold)Innate traits$():$(li)$(bold)Soul Mending$()$(default): spend soul energy to restore durability$(li)$(bold)Laevatain$()$(melee): true-damage pierce + heal-block + max-health cut$(li)$(bold)Divine Power$()$(melee): imbue magic containers with a mana aura$(li)$(bold)Gungnir$()$(ranged): projectiles inflict Stun/Burn Hex on hit$(li)$(bold)Returning$()$(ranged): arrows return to the wielder$(li)$(bold)Godrealm Overstep$()$(armor): immune to fire/explosion/magic damage$(li)$(bold)Heaven & Earth Forged$()$(armor): cap incoming damage$(li)$(bold)Soul Discount$()$(armor): reduced soul cost when casting$(br2)Divine Gold is a top-tier all-round collab material covering melee, ranged and armor."
     }
   ],
   "flag": "mod:goety"

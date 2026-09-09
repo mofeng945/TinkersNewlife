@@ -1,4 +1,4 @@
-﻿{
+{
   "default": [
     { "level": 1, "name": "tinkersnewlife:soul_repair" },
       { "level": 1, "name": "tinkersnewlife:laevatain" },
@@ -8,7 +8,6 @@
     "tconstruct:ranged": [
       { "level": 1, "name": "tinkersnewlife:soul_repair" },
       { "level": 1, "name": "tinkersnewlife:gungnir" },
-      { "level": 1, "name": "tinkersnewlife:fate_pierce" },
       { "level": 1, "name": "tconstruct:returning" }
     ],
     "tconstruct:armor": [

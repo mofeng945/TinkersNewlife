@@ -335,11 +335,6 @@ public class Modifiers {
         MODIFIERS.register("gungnir",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.GungnirModifier::new);
 
-    /** 远程特性·命运因果贯穿之物（神灵金远程武器自带：下蹲自动锁定，攻击锁定目标必中） */
-    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.FatePierceModifier> FATE_PIERCE =
-        MODIFIERS.register("fate_pierce",
-                com.mofengbaizhi.tinkersnewlife.content.modifier.FatePierceModifier::new);
-
     /** 盔甲特性·越过神域（神灵金盔甲自带：免疫爆炸/火焰/魔法） */
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.GodrealmOverstepModifier> GODREALM_OVERSTEP =
         MODIFIERS.register("godrealm_overstep",
