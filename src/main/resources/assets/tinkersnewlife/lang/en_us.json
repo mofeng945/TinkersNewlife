@@ -1,4 +1,4 @@
-{
+﻿{
   "modifier.tinkersnewlife.anti_gravity": "Anti-Gravity Mechanism",
   "modifier.tinkersnewlife.anti_gravity.flavor": "Gravity inverted; all things fall.",
   "modifier.tinkersnewlife.anti_gravity.description": "§fForward (technique key C): all creatures within the radius (scaled by curse output & affinity), except the caster, are levitated; each target costs one unit of curse power. Reversal (F): deploy a pressure field - targets resist by body size & max HP (slowness below threshold, crushed blocks / stun / sustained damage above it). Costs curse power per second. Uses a technique slot.",
@@ -108,6 +108,10 @@
   "modifier.tinkersnewlife.soul_repair.description": "§7Every 20 ticks spend max(1, 6-level) soul energy to restore 1 durability; each restoration has a 5%×level chance to restore 1 additional durability. Max level 3. No effect when souls are insufficient.",
   "material.tinkersnewlife.dark_metal": "Dark Metal",
   "material.tinkersnewlife.divine_gold": "Divine Gold",
+  "material.tinkersnewlife.tall_skull": "Slime Skull",
+  "modifier.tinkersnewlife.butcher": "§dButcher",
+  "modifier.tinkersnewlife.butcher.description": "§cWhile worn, all illagers (including witches) and villagers actively flee and never attack you, and you gain soul energy ×2.",
+  "modifier.tinkersnewlife.butcher.tip": "§cIllagers/villagers flee & no attack, soul ×2",
   "fluid_type.tinkersnewlife.molten_dark_metal": "Molten Dark Metal",
   "block.tinkersnewlife.molten_dark_metal_block": "Molten Dark Metal",
   "item.tinkersnewlife.molten_dark_metal_bucket": "Molten Dark Metal Bucket",

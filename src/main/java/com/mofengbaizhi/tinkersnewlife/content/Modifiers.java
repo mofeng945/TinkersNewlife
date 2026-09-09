@@ -280,6 +280,11 @@ public class Modifiers {
         MODIFIERS.register("soul_repair",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.SoulRepairModifier::new);
 
+    /** 特性·人屠（黏液头颅 tall_skull 自带）：灾厄/村民远离不攻击，灵魂获取×2 */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.ButcherModifier> BUTCHER =
+        MODIFIERS.register("butcher",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.ButcherModifier::new);
+
     /** 词条·破法（黑暗金属材料工具部件自带：攻击给衰弱 I，击杀魔法抗性生物 45% 掉绿宝石） */
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.DarkMetalBreakerModifier> DARK_METAL_BREAKER =
         MODIFIERS.register("dark_metal_breaker",

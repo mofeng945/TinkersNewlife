@@ -31,27 +31,33 @@
         },
         {
           "color": "FF587A2E",
-          "grey": 63
+          "grey": 63,
+          "path": "tinkersnewlife:generator/tall_skull_border"
         },
         {
           "color": "FF6F9638",
-          "grey": 102
+          "grey": 102,
+          "path": "tinkersnewlife:generator/tall_skull_border"
         },
         {
           "color": "FF8FB84A",
-          "grey": 140
+          "grey": 140,
+          "path": "tinkersnewlife:generator/tall_skull_body"
         },
         {
           "color": "FFA6CC5C",
-          "grey": 178
+          "grey": 178,
+          "path": "tinkersnewlife:generator/tall_skull_body"
         },
         {
           "color": "FFBFDE72",
-          "grey": 216
+          "grey": 216,
+          "path": "tinkersnewlife:generator/tall_skull_highlight"
         },
         {
           "color": "FFDCEBA0",
-          "grey": 255
+          "grey": 255,
+          "path": "tinkersnewlife:generator/tall_skull_highlight"
         }
       ]
     }
