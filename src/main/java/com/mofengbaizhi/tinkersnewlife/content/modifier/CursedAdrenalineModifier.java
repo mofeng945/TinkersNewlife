@@ -10,4 +10,10 @@ import com.mofengbaizhi.tinkersnewlife.content.modifier.base.BaseCombatModifier;
  * 实际逻辑由 {@code content/modifier/events/CursedAdrenalineHandler} 处理。
  */
 public class CursedAdrenalineModifier extends BaseCombatModifier {
+
+    /** 腺速：耗10灵魂/5秒迅捷II/1分钟冷却（固定）→ 显示名不带等级 */
+    @Override
+    public net.minecraft.network.chat.Component getDisplayName(int level) {
+        return this.getDisplayName();
+    }
 }

@@ -9,6 +9,10 @@ import slimeknights.tconstruct.library.modifiers.Modifier;
  */
 public class SilentGloveTrait extends Modifier {
 
-    // 不需要任何额外方法，继承 Modifier 即可
+    /** 噤默手套标记类，攻击逻辑独立（不随等级缩放）→ 显示名不带等级 */
+    @Override
+    public net.minecraft.network.chat.Component getDisplayName(int level) {
+        return this.getDisplayName();
+    }
 
 }

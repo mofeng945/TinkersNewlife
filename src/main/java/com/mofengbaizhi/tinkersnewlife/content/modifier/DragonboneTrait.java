@@ -8,6 +8,12 @@ import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
 
 public class DragonboneTrait extends Modifier {
 
+    /** 龙骨：hasDragonbone 仅做 >0 开关（给龙钢 +1 级是固定加成）→ 显示名不带等级 */
+    @Override
+    public net.minecraft.network.chat.Component getDisplayName(int level) {
+        return this.getDisplayName();
+    }
+
     /** 静态缓存 ModifierId，避免每次命中都 new ResourceLocation */
     private static final ModifierId DRAGONBONE_ID = new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "dragonbone"));
 

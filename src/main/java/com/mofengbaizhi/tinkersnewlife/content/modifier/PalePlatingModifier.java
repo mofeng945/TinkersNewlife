@@ -23,6 +23,12 @@ import java.util.List;
  */
 public class PalePlatingModifier extends Modifier implements TooltipModifierHook {
 
+    /** 苍白镀层：单级（+1升级槽固定）→ 显示名不带等级 */
+    @Override
+    public net.minecraft.network.chat.Component getDisplayName(int level) {
+        return this.getDisplayName();
+    }
+
     @Override
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         super.registerHooks(hookBuilder);

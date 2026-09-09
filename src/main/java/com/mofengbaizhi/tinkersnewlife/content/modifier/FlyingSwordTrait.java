@@ -8,5 +8,10 @@ import slimeknights.tconstruct.library.modifiers.Modifier;
  * 所有飞剑功能在 FlyingSwordItem 中通过检查此修饰语是否存在来实现
  */
 public class FlyingSwordTrait extends Modifier {
-    // 空实现，仅作为标记
+
+    /** 飞剑标记类（工具功能固定，不随等级缩放）→ 显示名不带等级 */
+    @Override
+    public net.minecraft.network.chat.Component getDisplayName(int level) {
+        return this.getDisplayName();
+    }
 }

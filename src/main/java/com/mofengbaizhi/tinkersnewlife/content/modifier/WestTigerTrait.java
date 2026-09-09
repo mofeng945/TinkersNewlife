@@ -25,6 +25,12 @@ import java.util.List;
  */
 public class WestTigerTrait extends Modifier implements TooltipModifierHook {
 
+    /** 西中之虎：黑闪基础触发概率额外加成（按攻击力/10000，非等级）→ 显示名不带等级 */
+    @Override
+    public net.minecraft.network.chat.Component getDisplayName(int level) {
+        return this.getDisplayName();
+    }
+
     @Override
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         super.registerHooks(hookBuilder);

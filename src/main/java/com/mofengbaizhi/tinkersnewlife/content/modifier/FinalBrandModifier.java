@@ -29,6 +29,12 @@ import java.util.List;
  */
 public class FinalBrandModifier extends Modifier implements TooltipModifierHook {
 
+    /** 终末烙印：单级（+1能力槽、-5%移速固定）→ 显示名不带等级 */
+    @Override
+    public net.minecraft.network.chat.Component getDisplayName(int level) {
+        return this.getDisplayName();
+    }
+
     @Override
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         super.registerHooks(hookBuilder);
