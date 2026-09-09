@@ -211,7 +211,7 @@ public class ModCreativeTabs {
     static {
         MATERIAL_SOURCE_MOD.put("cursed_metal", "goety");        // 诡厄诅咒金属锭
         MATERIAL_SOURCE_MOD.put("dark_metal", "goety");          // 诡厄黑暗金属锭
-        MATERIAL_SOURCE_MOD.put("divine_gold", "goety");         // 神灵金锭（诡厄启示录联动材料）
+        MATERIAL_SOURCE_MOD.put("divine_gold", "goety_revelation");   // 神灵金（诡厄启示录联动材料：broken_halo/ascension_halo）
         MATERIAL_SOURCE_MOD.put("dragonsteel_fire", "iceandfire");
         MATERIAL_SOURCE_MOD.put("dragonsteel_ice", "iceandfire");
         MATERIAL_SOURCE_MOD.put("dragonsteel_lightning", "iceandfire");
