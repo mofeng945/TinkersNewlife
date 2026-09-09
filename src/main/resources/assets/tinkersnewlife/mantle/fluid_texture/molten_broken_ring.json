@@ -1,6 +1,6 @@
 {
-  "still": "tinkersnewlife:block/molten_broken_ring_still",
-  "flowing": "tinkersnewlife:block/molten_broken_ring_flowing",
+  "still": "tconstruct:fluid/molten/ore/gold/still",
+  "flowing": "tconstruct:fluid/molten/ore/gold/flowing",
   "color": "FFB87848",
   "fogColor": "FFB87848",
   "fogStart": 0.5,

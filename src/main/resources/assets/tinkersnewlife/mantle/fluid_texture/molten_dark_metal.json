@@ -1,6 +1,6 @@
 {
-  "still": "tinkersnewlife:block/molten_dark_metal_still",
-  "flowing": "tinkersnewlife:block/molten_dark_metal_flowing",
+  "still": "tconstruct:fluid/molten/alloy/knightslime/still",
+  "flowing": "tconstruct:fluid/molten/alloy/knightslime/flowing",
   "color": "FF343540",
   "fogColor": "FF343540",
   "fogStart": 0.5,

@@ -1,6 +1,6 @@
 {
-  "still": "tinkersnewlife:block/molten_cursed_metal_still",
-  "flowing": "tinkersnewlife:block/molten_cursed_metal_flowing",
+  "still": "tconstruct:fluid/molten/alloy/soulsteel/still",
+  "flowing": "tconstruct:fluid/molten/alloy/soulsteel/flowing",
   "color": "FF435C6A",
   "fogColor": "FF435C6A",
   "fogStart": 0.5,

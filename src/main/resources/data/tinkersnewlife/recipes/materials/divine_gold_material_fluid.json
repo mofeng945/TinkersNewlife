@@ -3,7 +3,7 @@
   "input": "tinkersnewlife:dark_metal",
   "fluid": {
     "name": "tinkersnewlife:molten_broken_ring_still",
-    "amount": 90
+    "amount": 10
   },
   "temperature": 1200,
   "output": "tinkersnewlife:divine_gold"
