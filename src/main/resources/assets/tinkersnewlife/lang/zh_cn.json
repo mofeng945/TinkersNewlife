@@ -1,4 +1,4 @@
-{
+﻿{
   "action.tinkersnewlife.dark_silent.furioso": "Furioso",
   "block.tinkersnewlife.molten_dreadsteel_block": "熔融悚怖钢",
   "block.tinkersnewlife.molten_dread_block": "熔融悚怖",
@@ -187,8 +187,8 @@
   "material.tinkersnewlife.cursed_metal": "诅咒金属",
   "material.tinkersnewlife.nicholas_blessing": "生命冲动",
   "material.tinkersnewlife.divine_gold": "神灵金",
-  "material.tinkersnewlife.tall_skull": "黏液头颅",
-  "item.tconstruct.slime_helmet.material.tinkersnewlife.tall_skull": "高骷髅黏液头颅",
+  "material.tinkersnewlife.tall_skull": "高头骨",
+  "item.tconstruct.slime_helmet.material.tinkersnewlife.tall_skull": "高头骨黏液头颅",
   "modifier.tinkersnewlife.butcher": "§d人屠",
   "modifier.tinkersnewlife.butcher.description": "§c佩戴时所有灾厄生物(包括女巫)以及村民都会主动远离你且不再攻击你，同时你获取灵魂能量的效率 ×2。",
   "modifier.tinkersnewlife.butcher.tip": "§c灾厄/村民远离不攻击，灵魂获取 ×2",
