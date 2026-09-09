@@ -7,7 +7,7 @@
         {
             "type": "patchouli:spotlight",
             "item": "tinkersnewlife:divine_gold",
-            "text": "$(bold)获取方式$()：$(li)神灵金锭来自 $(l:https://www.curseforge.com/minecraft/mc-mods/goety-revelation)诡厄巫法·启示录$()（Goety Revelation）的联动材料$(li)把 $(bold)破碎之环$()（goety_revelation:broken_halo，来自终末之环断裂/启示录仪式）熔成 $(bold)熔融破碎之环$()（90 mB/个，温度 1200）$(li)在铸造台把 $(bold)熔融破碎之环$() $(bold)90 mB$() 浇在 $(bold)黑暗金属$()材料部件上，即可铸成 $(bold)神灵金$()部件——黑暗金属是基底，破碎之环是熔融增幅$(li)该材料是 $(bold)T4$()（四级材料，挖掘等级下界合金），需先取得对应联动模组才能获得$(br2)注：未安装诡厄/启示录联动时，本材料在创造物品栏隐藏。"
+            "text": "$(bold)获取方式$()：$(li)神灵金是 $(l:https://www.curseforge.com/minecraft/mc-mods/goety-revelation)诡厄巫法·启示录$()（Goety Revelation）的联动材料$(li)把 $(bold)破碎之环$()（goety_revelation:broken_halo，来自终末之环断裂/启示录仪式）熔成 $(bold)神圣的堕落$()（90 mB/个，温度 1200）；$(bold)晋升之环$()（goety_revelation:ascension_halo）熔炼更足——$(bold)120 mB$()$(li)在铸造台把 $(bold)神圣的堕落$() $(bold)90 mB$() 浇在 $(bold)黑暗金属$()材料部件上，即可铸成 $(bold)神灵金$()部件——黑暗金属是基底，神圣的堕落是熔融增幅$(li)该材料是 $(bold)T4$()（四级材料，挖掘等级下界合金），需先取得对应联动模组才能获得$(br2)注：未安装诡厄/启示录联动时，本材料在创造物品栏隐藏。"
         },
         {
             "type": "patchouli:text",

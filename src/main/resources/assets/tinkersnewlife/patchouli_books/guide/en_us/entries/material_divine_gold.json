@@ -7,7 +7,7 @@
     {
       "type": "patchouli:spotlight",
       "item": "tinkersnewlife:divine_gold",
-      "text": "$(bold)How to obtain$():$(li)Divine Gold is a collab material from $(l:https://www.curseforge.com/minecraft/mc-mods/goety-revelation)Goety Revelation$()$(li)Melt a $(bold)Broken Halo$() (goety_revelation:broken_halo, from the broken Halo of the End / Revelation rituals) into $(bold)Molten Broken Halo$() (90 mB each, temperature 1200)$(li)At the Casting Table, pour $(bold)90 mB$() of $(bold)Molten Broken Halo$() onto a $(bold)Dark Metal$() part to cast a Divine Gold part — Dark Metal is the base, Broken Halo the molten boost$(li)It is a $(bold)T4$() material (netherite mining level) and requires the Goety Revelation add-on$(br2)Note: this material is hidden from the Creative inventory when the Goety/Revelation add-on is not installed."
+      "text": "$(bold)How to obtain$():$(li)Divine Gold is a collab material from $(l:https://www.curseforge.com/minecraft/mc-mods/goety-revelation)Goety Revelation$()$(li)Melt a $(bold)Broken Halo$() (goety_revelation:broken_halo, from the broken Halo of the End / Revelation rituals) into $(bold)Holy Fall$() (90 mB each, temperature 1200); the $(bold)Halo of Ascension$() (goety_revelation:ascension_halo) melts richer — $(bold)120 mB$()$(li)At the Casting Table, pour $(bold)90 mB$() of $(bold)Holy Fall$() onto a $(bold)Dark Metal$() part to cast a Divine Gold part — Dark Metal is the base, Holy Fall the molten boost$(li)It is a $(bold)T4$() material (netherite mining level) and requires the Goety Revelation add-on$(br2)Note: this material is hidden from the Creative inventory when the Goety/Revelation add-on is not installed."
     },
     {
       "type": "patchouli:text",

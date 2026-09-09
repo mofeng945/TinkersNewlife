@@ -1,0 +1,18 @@
+{
+  "type": "tconstruct:melting",
+  "ingredient": {
+    "item": "goety_revelation:ascension_halo"
+  },
+  "result": {
+    "fluid": "tinkersnewlife:molten_broken_ring_still",
+    "amount": 120
+  },
+  "temperature": 1200,
+  "time": 60,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "goety_revelation"
+    }
+  ]
+}
