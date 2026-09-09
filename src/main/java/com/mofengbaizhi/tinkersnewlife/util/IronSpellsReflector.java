@@ -155,4 +155,86 @@ public class IronSpellsReflector {
             return false;
         }
     }
+
+    // =====================================================================
+    //  神圣之力（神灵金近战特性联动铁魔法）：给武器注入预设法术容器 + 持有者法力
+    //  原版参考：RevelationFix ValetteinItemMixin.initializeSpellContainer ——
+    //  ISpellContainer.create(...) + addSpell(HEALING_CIRCLE@10 / WALL_OF_FIRE@5 / ANGEL_WINGS@5) + save
+    // =====================================================================
+
+    private static boolean divineInited = false;
+    private static boolean divineInitLogged = false;
+    private static Class<?> ISPELL_CONTAINER_CLASS;
+    private static Class<?> SPELL_REGISTRY_CLASS;
+    private static Class<?> ATTRIBUTE_REGISTRY_CLASS;
+    private static Method ISPELL_CONTAINER_IS_CONTAINER;
+    private static Method ISPELL_CONTAINER_CREATE;
+    private static Method ISPELL_CONTAINER_ADD_SPELL;
+    private static Method ISPELL_CONTAINER_SAVE;
+    private static Field SPELL_REGISTRY_HEALING;
+    private static Field SPELL_REGISTRY_WALL;
+    private static Field SPELL_REGISTRY_ANGEL;
+    private static Field ATTRIBUTE_REGISTRY_MAX_MANA;
+
+    private static void initDivine() {
+        if (divineInited) return;
+        divineInited = true;
+        try {
+            Class.forName("io.redspace.ironsspellbooks.IronsSpellbooks");
+            ISPELL_CONTAINER_CLASS = Class.forName("io.redspace.ironsspellbooks.api.spells.ISpellContainer");
+            SPELL_REGISTRY_CLASS = Class.forName("io.redspace.ironsspellbooks.api.registry.SpellRegistry");
+            ATTRIBUTE_REGISTRY_CLASS = Class.forName("io.redspace.ironsspellbooks.api.registry.AttributeRegistry");
+            ISPELL_CONTAINER_IS_CONTAINER = ISPELL_CONTAINER_CLASS.getMethod("isSpellContainer", ItemStack.class);
+            ISPELL_CONTAINER_CREATE = ISPELL_CONTAINER_CLASS.getMethod("create", int.class, boolean.class, boolean.class);
+            ISPELL_CONTAINER_ADD_SPELL = ISPELL_CONTAINER_CLASS.getMethod("addSpell",
+                    Class.forName("io.redspace.ironsspellbooks.api.spells.AbstractSpell"),
+                    int.class, boolean.class, ItemStack.class);
+            ISPELL_CONTAINER_SAVE = ISPELL_CONTAINER_CLASS.getMethod("save", ItemStack.class);
+            SPELL_REGISTRY_HEALING = SPELL_REGISTRY_CLASS.getField("HEALING_CIRCLE_SPELL");
+            SPELL_REGISTRY_WALL = SPELL_REGISTRY_CLASS.getField("WALL_OF_FIRE_SPELL");
+            SPELL_REGISTRY_ANGEL = SPELL_REGISTRY_CLASS.getField("ANGEL_WINGS_SPELL");
+            ATTRIBUTE_REGISTRY_MAX_MANA = ATTRIBUTE_REGISTRY_CLASS.getField("MAX_MANA");
+        } catch (Throwable t) {
+            if (!divineInitLogged) {
+                divineInitLogged = true;
+                LOGGER.warn("[TinkersNewlife] 铁魔法神圣之力反射初始化失败（铁魔法未装？）: {}", t.toString());
+            }
+        }
+    }
+
+    /** 铁魔法是否存在（负载判断用） */
+    public static boolean hasIronSpells() {
+        return ironSpellsPresent;
+    }
+
+    /** 给物品栈注入预设法术容器（火墙术Lv5 / 天使之翼Lv5 / 治愈之环Lv10）；铁魔法未装则无事发生 */
+    public static void initSpellContainer(ItemStack stack) {
+        if (!ironSpellsPresent || stack == null || stack.isEmpty()) return;
+        initDivine();
+        try {
+            if ((Boolean) ISPELL_CONTAINER_IS_CONTAINER.invoke(null, stack)) return;
+            Object container = ISPELL_CONTAINER_CREATE.invoke(null, 3, true, false);
+            Object healing = ((net.minecraftforge.registries.RegistryObject<?>) SPELL_REGISTRY_HEALING.get(null)).get();
+            Object wall = ((net.minecraftforge.registries.RegistryObject<?>) SPELL_REGISTRY_WALL.get(null)).get();
+            Object angel = ((net.minecraftforge.registries.RegistryObject<?>) SPELL_REGISTRY_ANGEL.get(null)).get();
+            ISPELL_CONTAINER_ADD_SPELL.invoke(container, healing, 10, true, stack);
+            ISPELL_CONTAINER_ADD_SPELL.invoke(container, wall, 5, true, stack);
+            ISPELL_CONTAINER_ADD_SPELL.invoke(container, angel, 5, true, stack);
+            ISPELL_CONTAINER_SAVE.invoke(container, stack);
+        } catch (Throwable t) {
+            LOGGER.warn("[TinkersNewlife] 铁魔法注入法术容器失败: {}", t.toString());
+        }
+    }
+
+    /** 获取铁魔法 MAX_MANA 属性（Attribute）；不存在返回 null */
+    public static net.minecraft.world.entity.ai.attributes.Attribute maxManaAttribute() {
+        if (!ironSpellsPresent) return null;
+        initDivine();
+        try {
+            return (net.minecraft.world.entity.ai.attributes.Attribute)
+                    ((net.minecraftforge.registries.RegistryObject<?>) ATTRIBUTE_REGISTRY_MAX_MANA.get(null)).get();
+        } catch (Throwable t) {
+            return null;
+        }
+    }
 }

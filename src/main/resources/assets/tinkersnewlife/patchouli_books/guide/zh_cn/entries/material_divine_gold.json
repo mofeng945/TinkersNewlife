@@ -1,0 +1,18 @@
+{
+    "name": "神灵金",
+    "category": "tinkersnewlife:materials",
+    "icon": "tinkersnewlife:divine_gold",
+    "sortnum": 11,
+    "pages": [
+        {
+            "type": "patchouli:spotlight",
+            "item": "tinkersnewlife:divine_gold",
+            "text": "$(bold)获取方式$()：$(li)神灵金锭来自 $(l:https://www.curseforge.com/minecraft/mc-mods/goety-revelation)诡厄巫法·启示录$()（Goety Revelation）的联动材料$(li)把神灵金锭熔成 $(bold)熔融神灵金$()，再铸造成神灵金材料部件（或直接以锭作为材料物品）$(li)该材料是 $(bold)T4$()（四级材料，挖掘等级下界合金），需先取得对应联动模组才能获得$(br2)注：未安装诡厄/启示录联动时，本材料在创造物品栏隐藏。"
+        },
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)自带特性$()：$(li)$(bold)灵魂修缮$()$(default)：耗灵魂能量恢复耐久$(li)$(bold)莱万汀$()$(melee)：真伤穿透 + 禁疗 + 斩血脉上限 + 潜行左键激流冲刺$(li)$(bold)神圣之力$()$(melee)：施法道具注入光环、获得额外魔力$(li)$(bold)冈格尼尔$()$(ranged)：投射物命中附加震撼/狱火$(li)$(bold)命运因果贯穿之物$()$(ranged)：锁定目标必中追踪$(li)$(bold)复返$()$(ranged)：箭矢自动返回$(li)$(bold)超越神域$()$(armor)：免疫火焰/爆炸/魔法伤害$(li)$(bold)天地所铸$()$(armor)：所受伤害上限封顶$(li)$(bold)灵魂折扣$()$(armor)：消耗灵魂施法减免$(br2)神灵金是攻防一体的顶级联动材料，覆盖近战、远程与护甲三条路线。"
+        }
+    ],
+    "flag": "mod:goety"
+}

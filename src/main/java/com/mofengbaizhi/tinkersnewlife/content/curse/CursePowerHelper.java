@@ -256,11 +256,30 @@ public final class CursePowerHelper {
         }
         double deficit = cost - curse;
         spendCurse(player, curse); // 咒力清零
-        // 3) 灵魂能量兜底
+        // 3) 灵魂能量兜底（神灵金盔甲"灵魂折扣"：每级 -5% 灵魂消耗）
         int soulsNeeded = (int) Math.ceil(deficit * 3.0);
+        int discount = soulDiscountLevel(player);
+        if (discount > 0) {
+            soulsNeeded = Math.max(1, (int) Math.ceil(soulsNeeded * (1.0 - 0.05 * discount)));
+        }
         int souls = com.mofengbaizhi.tinkersnewlife.util.SoulEnergyBridge.getSouls(player);
         if (souls < soulsNeeded) return -1;
         return com.mofengbaizhi.tinkersnewlife.util.SoulEnergyBridge.decreaseSouls(player, soulsNeeded) ? 1 : -1;
+    }
+
+    /** 读取穿戴护甲上"灵魂折扣"特性总级数（对任意穿戴者生效） */
+    public static int soulDiscountLevel(net.minecraft.world.entity.LivingEntity wearer) {
+        int total = 0;
+        for (net.minecraft.world.item.ItemStack armor : wearer.getArmorSlots()) {
+            if (armor.isEmpty()) continue;
+            slimeknights.tconstruct.library.tools.nbt.ToolStack tool =
+                    com.mofengbaizhi.tinkersnewlife.util.ToolHelper.getToolStack(armor);
+            if (tool != null) {
+                total += tool.getModifierLevel(
+                        com.mofengbaizhi.tinkersnewlife.content.modifier.SoulDiscountModifier.ID);
+            }
+        }
+        return total;
     }
 
     // ============================================================

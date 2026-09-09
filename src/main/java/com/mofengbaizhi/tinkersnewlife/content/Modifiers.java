@@ -320,6 +320,41 @@ public class Modifiers {
         MODIFIERS.register("ex_pierce",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.ExPierceModifier::new);
 
+    /** 近战特性·莱万汀（神灵金材料近战头自带：真伤/禁疗/砍上限/拆柱/突刺/仆从光环/防复活锁血） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.LaevatainModifier> LAEVATAIN =
+        MODIFIERS.register("laevatain",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.LaevatainModifier::new);
+
+    /** 近战特性·神圣之力（神灵金近战头自带，联动铁魔法/启示录：+180法力、注入火墙术Lv5/天使之翼Lv5/治愈之环Lv10、火墙无视无敌帧） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.DivinePowerModifier> DIVINE_POWER =
+        MODIFIERS.register("divine_power",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.DivinePowerModifier::new);
+
+    /** 远程特性·冈格尼尔（神灵金远程武器自带，模仿原版 Gungnir：虚影投掷/80%伤害/震撼/狱火） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.GungnirModifier> GUNGNIR =
+        MODIFIERS.register("gungnir",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.GungnirModifier::new);
+
+    /** 远程特性·命运因果贯穿之物（神灵金远程武器自带：下蹲自动锁定，攻击锁定目标必中） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.FatePierceModifier> FATE_PIERCE =
+        MODIFIERS.register("fate_pierce",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.FatePierceModifier::new);
+
+    /** 盔甲特性·越过神域（神灵金盔甲自带：免疫爆炸/火焰/魔法） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.GodrealmOverstepModifier> GODREALM_OVERSTEP =
+        MODIFIERS.register("godrealm_overstep",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.GodrealmOverstepModifier::new);
+
+    /** 盔甲特性·天地所铸（神灵金盔甲自带：每次耐久损伤≤20） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.HeavenEarthForgedModifier> HEAVEN_EARTH_FORGED =
+        MODIFIERS.register("heaven_earth_forged",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.HeavenEarthForgedModifier::new);
+
+    /** 盔甲特性·灵魂折扣（神灵金盔甲自带：每级 5% 灵魂能量消耗减免） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.SoulDiscountModifier> SOUL_DISCOUNT =
+        MODIFIERS.register("soul_discount",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.SoulDiscountModifier::new);
+
     /** 词条·咒上·腺速（诅咒金属材料护甲部件自带：受敌对/摔落伤害耗10灵魂给5秒迅捷II，冷却1分钟） */
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.CursedAdrenalineModifier> CURSED_ADRENALINE =
         MODIFIERS.register("cursed_adrenaline",

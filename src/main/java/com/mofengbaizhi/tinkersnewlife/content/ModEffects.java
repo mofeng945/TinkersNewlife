@@ -8,6 +8,7 @@ import com.mofengbaizhi.tinkersnewlife.content.effect.UnnameableEffect;
 import com.mofengbaizhi.tinkersnewlife.content.effect.CharmEffect;
 import com.mofengbaizhi.tinkersnewlife.content.effect.SeedParasiteEffect;
 import com.mofengbaizhi.tinkersnewlife.content.effect.StunEffect;
+import com.mofengbaizhi.tinkersnewlife.content.effect.AntiHealEffect;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraftforge.registries.DeferredRegister;
@@ -26,6 +27,10 @@ public class ModEffects {
 
     public static final RegistryObject<DamageLimitEffect> DAMAGE_LIMIT =
             EFFECTS.register("damage_limit", () -> new DamageLimitEffect(MobEffectCategory.BENEFICIAL, 0x66FF66));
+
+    /** 禁疗（莱万汀命中附加）：LivingHealEvent 拦截任何治疗 */
+    public static final RegistryObject<AntiHealEffect> ANTI_HEAL =
+            EFFECTS.register("anti_heal", () -> new AntiHealEffect());
 
     public static final RegistryObject<UnnameableEffect> UNNAMEABLE =
             EFFECTS.register("unnameable", () -> new UnnameableEffect(MobEffectCategory.HARMFUL, 0x4A0E4E));

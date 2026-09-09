@@ -1,0 +1,21 @@
+﻿{
+  "default": [
+    { "level": 1, "name": "tinkersnewlife:soul_repair" },
+      { "level": 1, "name": "tinkersnewlife:laevatain" },
+      { "level": 1, "name": "tinkersnewlife:divine_power" }
+  ],
+  "perStat": {
+    "tconstruct:ranged": [
+      { "level": 1, "name": "tinkersnewlife:soul_repair" },
+      { "level": 1, "name": "tinkersnewlife:gungnir" },
+      { "level": 1, "name": "tinkersnewlife:fate_pierce" },
+      { "level": 1, "name": "tconstruct:returning" }
+    ],
+    "tconstruct:armor": [
+      { "level": 1, "name": "tinkersnewlife:soul_repair" },
+      { "level": 1, "name": "tinkersnewlife:godrealm_overstep" },
+      { "level": 1, "name": "tinkersnewlife:heaven_earth_forged" },
+      { "level": 1, "name": "tinkersnewlife:soul_discount" }
+    ]
+  }
+}

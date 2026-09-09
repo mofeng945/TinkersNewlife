@@ -35,6 +35,10 @@ public class ModItems {
     public static final RegistryObject<Item> NICHOLAS_BLESSING =
             ITEMS.register("nicholas_blessing", () -> new Item(new Item.Properties()));
 
+    /** 神灵金锭（goety_revelation 联动材料「神灵金」的物品形态；材料 ID 与物品 ID 对齐，TCon 自动绑定为材料物品） */
+    public static final RegistryObject<Item> DIVINE_GOLD =
+            ITEMS.register("divine_gold", () -> new Item(new Item.Properties()));
+
     public static final RegistryObject<Item> YELLOW_KING_REMNANT =
             ITEMS.register("yellow_king_remnant", () -> new Item(new Item.Properties()));
 

@@ -1,0 +1,18 @@
+{
+  "name": "Divine Gold",
+  "category": "tinkersnewlife:materials",
+  "icon": "tinkersnewlife:divine_gold",
+  "sortnum": 11,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:divine_gold",
+      "text": "$(bold)How to obtain$():$(li)Divine Gold Ingots are a collab material from $(l:https://www.curseforge.com/minecraft/mc-mods/goety-revelation)Goety Revelation$()$(li)Melt Divine Gold Ingots into $(bold)Molten Divine Gold$(), then cast Divine Gold parts (or use the ingot directly as the material item)$(li)It is a $(bold)T4$() material (netherite mining level) and requires the Goety Revelation add-on to obtain$(br2)Note: this material is hidden from the Creative inventory when the Goety/Revelation add-on is not installed."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Innate traits$():$(li)$(bold)Soul Mending$()$(default): spend soul energy to restore durability$(li)$(bold)Laevatain$()$(melee): true-damage pierce + heal-block + max-health cut + sneak left-click torrent dash$(li)$(bold)Divine Power$()$(melee): imbue magic containers with a mana aura$(li)$(bold)Gungnir$()$(ranged): projectiles inflict Stun/Burn Hex on hit$(li)$(bold)Fate Pierce$()$(ranged): lock a target and home in for a guaranteed hit$(li)$(bold)Returning$()$(ranged): arrows return to the wielder$(li)$(bold)Godrealm Overstep$()$(armor): immune to fire/explosion/magic damage$(li)$(bold)Heaven & Earth Forged$()$(armor): cap incoming damage$(li)$(bold)Soul Discount$()$(armor): reduced soul cost when casting$(br2)Divine Gold is a top-tier all-round collab material covering melee, ranged and armor."
+    }
+  ],
+  "flag": "mod:goety"
+}
