@@ -60,10 +60,6 @@ public class ModCreativeTabs {
                                 output.accept(ModItems.GHELOTH_REMAINS.get());
                                 output.accept(ModItems.NICHOLAS_BLESSING.get());
                                 output.accept(ModItems.YELLOW_KING_REMNANT.get());
-                                // ⭐ 神灵金锭为诡厄启示录联动材料，未装 goety 则不在创造栏显示
-                                if (anyLoaded("goety")) {
-                                    output.accept(ModItems.DIVINE_GOLD.get());
-                                }
                                 output.accept(ModItems.RLYEH_CALL.get());
                                 output.accept(ModItems.ECHO_OF_THE_VOID.get());
                                 output.accept(ModItems.ASTRAL_ANCHOR.get());

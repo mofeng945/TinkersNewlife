@@ -108,7 +108,6 @@
   "modifier.tinkersnewlife.soul_repair.description": "§7Every 20 ticks spend max(1, 6-level) soul energy to restore 1 durability; each restoration has a 5%×level chance to restore 1 additional durability. Max level 3. No effect when souls are insufficient.",
   "material.tinkersnewlife.dark_metal": "Dark Metal",
   "material.tinkersnewlife.divine_gold": "Divine Gold",
-  "item.tinkersnewlife.divine_gold": "Divine Gold Ingot",
   "fluid_type.tinkersnewlife.molten_dark_metal": "Molten Dark Metal",
   "block.tinkersnewlife.molten_dark_metal_block": "Molten Dark Metal",
   "item.tinkersnewlife.molten_dark_metal_bucket": "Molten Dark Metal Bucket",
