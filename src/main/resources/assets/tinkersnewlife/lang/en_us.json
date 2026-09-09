@@ -138,7 +138,7 @@
   "modifier.tinkersnewlife.blasphemy.slot_bonus": "§aGained §e2 §adefense slots (damage taken +10%)",
   "modifier.tinkersnewlife.ex_pierce": "§6EX Pierce",
   "modifier.tinkersnewlife.ex_pierce.flavor": "§7The might of five Outer Gods pierces all things.",
-  "modifier.tinkersnewlife.ex_pierce.description": "§7Upgrade (costs §e1§7 upgrade slot): melee/ranged hits are resolved as piercing damage — ignoring i-frames and piercing through invulnerabilities and damage caps (Cataclysm damage caps/out-of-water immunity/phase 2, Wither spawn immunity and half-HP arrow immunity, etc.).",
+  "modifier.tinkersnewlife.ex_pierce.description": "§7Upgrade (costs §e1§7 upgrade slot): melee/ranged hits are resolved as piercing damage — ignoring i-frames and piercing through invulnerabilities and damage caps (Wither spawn immunity and half-HP arrow immunity; with Cataclysm installed also its damage caps/out-of-water immunity/phase 2, Mowzie's Ferrous Wroughtnaut invulnerability, etc.).",
   "modifier.tinkersnewlife.cursed_adrenaline": "§aCursed Adrenaline",
   "modifier.tinkersnewlife.cursed_adrenaline.flavor": "§7Between life and death, cursed blood surges.",
   "modifier.tinkersnewlife.cursed_adrenaline.description": "§7When the wearer takes hostile or fall damage, spend §e10§7 soul energy to gain §e5§7 seconds of Swiftness II (equivalent speed bonus, no FOV change); cooldown §e1§7 minute."
