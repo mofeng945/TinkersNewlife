@@ -17,21 +17,24 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * 强化·噬魂：服务端每 tick 记录玩家灵魂能量，检测"本 tick 新增的灵魂"（Goety 攻击/击杀等自增），
- * 若玩家装备（主/副手 + 盔甲槽）上装有 {@code soul_eater} 强化，则按等级补发增幅：
+ * 灵魂获取增幅处理器：服务端每 tick 记录玩家灵魂能量，检测"本 tick 新增的灵魂"（Goety 攻击/击杀等自增），
+ * 按玩家装备（主/副手 + 盔甲槽）上的相关修饰符补发增幅。为避免多个独立探测相互叠加，
+ * 「噬魂」与「人屠」共用本处理器<b>同一个基线探测器</b>，本 tick 只探测一次、同一次结算：
  * <ul>
- *   <li>每级 +25% 灵魂获取：补发 {@code 增量 × 0.25 × 等级}</li>
- *   <li>一级后额外 +1 灵魂获取</li>
+ *   <li>人屠（{@code butcher}，佩戴）：灵魂获取效率 ×2 → 补发 {@code 增量 × 1}（即再补一份）</li>
+ *   <li>噬魂（{@code soul_eater}）：每级 +25% 灵魂获取 → 补发 {@code 增量 × 0.25 × 等级}，一级后额外 +1</li>
  * </ul>
- * 通过把「上次观察基线」更新到补发后的值，避免把本强化补发的部分再次计入增量（不递归放大）。
+ * 通过把「上次观察基线」更新到补发后的值，避免把本处理器补发的部分再次计入增量（不递归放大）。
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class SoulEaterHandler {
 
     private static final ModifierId SOUL_EATER = new ModifierId(
-            new ResourceLocation(TinkersNewlife.MOD_ID, "soul_eater"));
+            new ResourceLocation(TinkersNewlife.MOD_ID + ":soul_eater"));
+    private static final ModifierId BUTCHER = new ModifierId(
+            new ResourceLocation(TinkersNewlife.MOD_ID + ":butcher"));
 
-    /** 上次观察到的灵魂能量基线（含本强化补发部分） */
+    /** 上次观察到的灵魂能量基线（含本处理器补发部分） */
     private static final Map<UUID, Integer> LAST_SOULS = new HashMap<>();
 
     @SubscribeEvent
@@ -46,22 +49,29 @@ public class SoulEaterHandler {
         int delta = cur - prev;
         if (delta <= 0) return;                         // 仅有增量（获得灵魂）才增幅
 
-        int lv = soulEaterLevelOnEquipment(sp);
-        if (lv <= 0) return;
+        // 人屠：灵魂获取 ×2（把本 tick 自然增量再补一份）
+        if (modifierLevelOnEquipment(sp, BUTCHER) > 0) {
+            SoulEnergyBridge.addSouls(sp, delta);
+        }
 
-        int bonus = (int) Math.ceil(delta * 0.25 * lv) + 1;   // 每级 +25%，一级后额外 +1
-        SoulEnergyBridge.addSouls(sp, bonus);
+        // 噬魂：每级 +25%，一级后额外 +1（基于自然增量，而非×2后的值）
+        int lv = modifierLevelOnEquipment(sp, SOUL_EATER);
+        if (lv > 0) {
+            int bonus = (int) Math.ceil(delta * 0.25 * lv) + 1;
+            SoulEnergyBridge.addSouls(sp, bonus);
+        }
+
         // 把基线更新到补发后的值，避免本次补发被下次当作增量
         LAST_SOULS.put(sp.getUUID(), SoulEnergyBridge.getSouls(sp));
     }
 
-    /** 玩家装备（主/副手 + 盔甲槽）上 soul_eater 的总等级 */
-    private static int soulEaterLevelOnEquipment(ServerPlayer sp) {
+    /** 玩家装备（主/副手 + 盔甲槽）上指定修饰符的总等级（人屠/噬魂共用） */
+    private static int modifierLevelOnEquipment(ServerPlayer sp, ModifierId id) {
         int total = 0;
         for (ItemStack stack : candidateStacks(sp)) {
             ToolStack tool = ToolHelper.getToolStack(stack);
             if (tool != null) {
-                total += tool.getModifierLevel(SOUL_EATER);
+                total += tool.getModifierLevel(id);
             }
         }
         return total;

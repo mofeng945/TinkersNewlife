@@ -19,6 +19,7 @@ import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 public class ButcherHandler {
 
     private static final double RADIUS = 32.0;
+    private static final double FLEE_DISTANCE = 16.0;
     private static final int INTERVAL = 20;
 
     private ButcherHandler() {
@@ -29,19 +30,30 @@ public class ButcherHandler {
         LivingEntity wearer = event.getEntity();
         if (wearer.level().isClientSide) return;
         if (wearer.tickCount % INTERVAL != 0) return;
-        if (!hasButcher(wearer.getMainHandItem())) return;
+        if (!hasButcherOnEquipment(wearer)) return;
         if (!(wearer.level() instanceof ServerLevel server)) return;
 
         AABB box = wearer.getBoundingBox().inflate(RADIUS);
         for (LivingEntity mob : wearer.level().getEntitiesOfClass(LivingEntity.class, box)) {
             if (mob == wearer || !mob.isAlive()) continue;
             if (!isIllagerOrVillager(mob)) continue;
-            // 远离且不攻击佩戴者：清除其目标并导航离开
+            // 不入屠范围目标：清除对佩戴者的仇恨，并朝远离佩戴者的方向主动逃跑
             if (mob instanceof net.minecraft.world.entity.Mob m) {
                 if (m.getTarget() == wearer) m.setTarget(null);
-                m.getNavigation().moveTo(wearer, -1.0D);
+                avoidWearer(m, wearer);
             }
         }
+    }
+
+    /** 让 mob 朝远离佩戴者的方向逃跑（正速度沿相反向量移动，避免负速度寻路的不可靠性） */
+    private static void avoidWearer(net.minecraft.world.entity.Mob m, LivingEntity wearer) {
+        double dx = m.getX() - wearer.getX();
+        double dz = m.getZ() - wearer.getZ();
+        double len = Math.hypot(dx, dz);
+        if (len < 1.0e-4) return;              // 与佩戴者几乎重合，无明确逃离方向
+        double fx = m.getX() + (dx / len) * FLEE_DISTANCE;
+        double fz = m.getZ() + (dz / len) * FLEE_DISTANCE;
+        m.getNavigation().moveTo(fx, m.getY(), fz, 1.0D);
     }
 
     private static boolean isIllagerOrVillager(LivingEntity e) {
@@ -52,5 +64,15 @@ public class ButcherHandler {
         if (stack.isEmpty()) return false;
         ToolStack tool = ToolHelper.getToolStack(stack);
         return tool != null && tool.getModifierLevel(ButcherModifier.ID) > 0;
+    }
+
+    /** 佩戴者（主/副手 + 盔甲槽）上是否有人屠特性（材料特性位于佩戴的头甲上） */
+    private static boolean hasButcherOnEquipment(LivingEntity wearer) {
+        if (hasButcher(wearer.getMainHandItem())) return true;
+        if (hasButcher(wearer.getOffhandItem())) return true;
+        for (ItemStack stack : wearer.getArmorSlots()) {
+            if (hasButcher(stack)) return true;
+        }
+        return false;
     }
 }
