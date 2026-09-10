@@ -198,13 +198,25 @@ public final class WuWeiHandler {
 
     /** 结束变形：恢复玩家原属性与生命，撤销伪装 */
     private static void endTransform(ServerPlayer player, boolean keepSelected) {
+        endTransform(player, keepSelected, true);
+    }
+
+    /**
+     * 结束变形（完整版）。
+     *
+     * @param restoreHealth 是否同时恢复变形前生命。**玩家在变形形态下死亡时必须传 false**：
+     *                      否则会把已死亡的玩家救活（服务端活着、客户端已弹死亡界面）→ 无法重生。
+     */
+    private static void endTransform(ServerPlayer player, boolean keepSelected, boolean restoreHealth) {
         TransformData d = TRANSFORMS.remove(player.getUUID());
         if (d == null) return;
         clearMorphNbt(player);
-        restoreAttributes(player, d);
+        restoreAttributes(player, d, restoreHealth);
         if (!keepSelected) setSelected(player, "");
         broadcastDisguise(player, "");
-        player.displayClientMessage(Component.translatable("message.tinkersnewlife.wu_wei.revert"), true);
+        if (restoreHealth) {
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.wu_wei.revert"), true);
+        }
     }
 
     // ============================================================
@@ -283,9 +295,23 @@ public final class WuWeiHandler {
                 formDisplayName(formId)), true);
     }
 
-    private static void restoreAttributes(ServerPlayer player, TransformData d) {
+    /**
+     * 还原变形前的属性。
+     *
+     * @param restoreHealth true = 同时恢复变形前的生命（正常解除变形）；
+     *                      false = **不恢复生命**——用于「在变形形态下死亡」的情形。
+     *                      此时玩家生命已是 0，若按保存值恢复生命会把死人救活：客户端已收到 0 生命
+     *                      弹出死亡界面，服务端却认为人还活着 → 无法重生，只能原地等二次击杀。
+     *                      死亡路径只还原属性上限/护甲/速度等，生命保持 0，交给原版死亡与重生流程。
+     */
+    private static void restoreAttributes(ServerPlayer player, TransformData d, boolean restoreHealth) {
         setAttr(player, Attributes.MAX_HEALTH, d.origMaxHealth);
-        player.setHealth((float) Math.min(d.origHealth, d.origMaxHealth));
+        if (restoreHealth) {
+            player.setHealth((float) Math.min(d.origHealth, d.origMaxHealth));
+        } else {
+            // 死亡路径：保持当前（0）生命，仅确保不超过新的上限
+            player.setHealth(Math.min(player.getHealth(), (float) d.origMaxHealth));
+        }
         setAttr(player, Attributes.ARMOR, d.origArmor);
         setAttr(player, Attributes.ARMOR_TOUGHNESS, d.origToughness);
         setAttr(player, Attributes.MOVEMENT_SPEED, d.origSpeed);
@@ -312,7 +338,10 @@ public final class WuWeiHandler {
     @SubscribeEvent
     public static void onPlayerDeath(LivingDeathEvent event) {
         if (event.getEntity() instanceof ServerPlayer sp) {
-            endTransform(sp, false);
+            // ⭐ 死亡：只清理状态并还原属性上限，**不恢复生命**（restoreHealth=false）。
+            // 若这里恢复生命，会把刚死掉的玩家救活：客户端已弹死亡界面、服务端却判定存活，
+            // 结果无法重生，只能原地等着被二次击杀。
+            endTransform(sp, false, false);
         }
     }
 
@@ -767,7 +796,13 @@ public final class WuWeiHandler {
     /** 玩家变形：反转限时倒计时；玩家死亡则清理 */
     private static boolean tickPlayerForm(MinecraftServer server, TransformData d) {
         ServerPlayer player = server.getPlayerList().getPlayer(d.playerId);
-        if (player == null || !player.isAlive()) return true;
+        if (player == null) return true;              // 离线：保留 NBT，重进由 onLogin 恢复
+        if (!player.isAlive()) {
+            // 兜底清理：正常死亡已由 onPlayerDeath 处理；若因其他原因走到这里，
+            // 也只还原属性、**不恢复生命**（否则会把死者救活导致无法重生）。
+            endTransform(player, false, false);
+            return true;
+        }
         if (d.remaining > 0) {
             d.remaining--;
             if (d.remaining <= 0) {
