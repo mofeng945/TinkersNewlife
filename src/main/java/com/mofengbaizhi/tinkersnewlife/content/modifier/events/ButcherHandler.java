@@ -36,6 +36,8 @@ public class ButcherHandler {
         AABB box = wearer.getBoundingBox().inflate(RADIUS);
         for (LivingEntity mob : wearer.level().getEntitiesOfClass(LivingEntity.class, box)) {
             if (mob == wearer || !mob.isAlive()) continue;
+            // 睡觉中的生物（如床上村民）不受影响，避免被从床上赶起来
+            if (mob.isSleeping()) continue;
             if (!isIllagerOrVillager(mob)) continue;
             // 不入屠范围目标：清除对佩戴者的仇恨，并朝远离佩戴者的方向主动逃跑
             if (mob instanceof net.minecraft.world.entity.Mob m) {
