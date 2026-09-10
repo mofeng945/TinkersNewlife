@@ -76,6 +76,8 @@ public final class WuWeiHandler {
     private static final Map<UUID, TransformData> TRANSFORMS = new HashMap<>();
     /** 反转生物（永久守护）：化身生物 uuid → 数据（含主人） */
     private static final Map<UUID, ReverseMobData> REVERSE_MOBS = new HashMap<>();
+    /** 伪装状态周期性重播计时（让后加入/重连的玩家也能看到已存在的变形） */
+    private static int disguiseSyncTimer = 0;
 
     /** 变形中的玩家数据 */
     private static final class TransformData {
@@ -248,6 +250,7 @@ public final class WuWeiHandler {
         String formId = tag.getString(TAG_FORM);
         if (formId.isEmpty()) {
             clearMorphNbt(player);
+            broadcastDisguise(player, "");   // 广播解除：避免其他客户端残留旧伪装
             return;
         }
         // 恢复内存态（属性无需重设：属性已随玩家存档为生物数值）
@@ -266,6 +269,7 @@ public final class WuWeiHandler {
         float[] stats = readFormStats(player.serverLevel(), EntityType.byString(formId).orElse(null));
         if (stats == null) {
             clearMorphNbt(player);
+            broadcastDisguise(player, "");   // 同上：恢复失败也要广播解除
             return;
         }
         d.maxHealth = stats[0];
@@ -737,6 +741,17 @@ public final class WuWeiHandler {
         if (!TRANSFORMS.isEmpty()) {
             for (Map.Entry<UUID, TransformData> e : new ArrayList<>(TRANSFORMS.entrySet())) {
                 if (tickPlayerForm(server, e.getValue())) TRANSFORMS.remove(e.getKey());
+            }
+        }
+        // 周期性重播伪装状态：变形只在发生瞬间广播一次，之后加入/重连的客户端永远不知道，
+        // 因此每 5 秒把当前全部变形状态重播给所有在线玩家（自愈，开销极小）。
+        if (++disguiseSyncTimer >= 100) {
+            disguiseSyncTimer = 0;
+            for (Map.Entry<UUID, TransformData> e : new ArrayList<>(TRANSFORMS.entrySet())) {
+                ServerPlayer sp = server.getPlayerList().getPlayer(e.getKey());
+                if (sp != null && e.getValue().formId != null && !e.getValue().formId.isEmpty()) {
+                    broadcastDisguise(sp, e.getValue().formId);
+                }
             }
         }
     }

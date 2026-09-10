@@ -47,13 +47,12 @@ public final class WuWeiDisguiseRenderer {
 
     static {
         try {
+            // ⭐ 必须用 ObfuscationReflectionHelper：生产环境字段名是 SRG（f_xxxxx_），
+            // 直接 getDeclaredField("speedOld") 必然抛 NoSuchFieldException（曾导致代理走路动画缺失）。
             Class<?> c = WalkAnimationState.class;
-            WAS_SPEED_OLD = c.getDeclaredField("speedOld");
-            WAS_SPEED = c.getDeclaredField("speed");
-            WAS_POSITION = c.getDeclaredField("position");
-            WAS_SPEED_OLD.setAccessible(true);
-            WAS_SPEED.setAccessible(true);
-            WAS_POSITION.setAccessible(true);
+            WAS_SPEED_OLD = net.minecraftforge.fml.util.ObfuscationReflectionHelper.findField(c, "speedOld");
+            WAS_SPEED = net.minecraftforge.fml.util.ObfuscationReflectionHelper.findField(c, "speed");
+            WAS_POSITION = net.minecraftforge.fml.util.ObfuscationReflectionHelper.findField(c, "position");
             fieldsReady = true;
         } catch (Throwable t) {
             TinkersNewlife.LOGGER.warn("[WuWei] 无法访问 WalkAnimationState 字段，走路动画将缺失: {}", t.toString());
