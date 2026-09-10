@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.content.item;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.entity.FlyingSwordEntity;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -45,6 +46,8 @@ public class FlyingSwordItem extends ModifiableItem implements ICurioItem {
             new ResourceLocation(TinkersNewlife.MOD_ID, "flying_sword_last_fire");
     /** 右键发射冷却（tick）：1 秒 */
     private static final int FIRE_COOLDOWN_TICKS = 20;
+    /** 场上同时存在的飞剑投影上限（每把飞剑独立计算） */
+    public static final int MAX_ACTIVE_SWORDS = 5;
 
     private static final Random RANDOM = new Random();
 
@@ -71,6 +74,18 @@ public class FlyingSwordItem extends ModifiableItem implements ICurioItem {
 
                 if (tool.getModifierLevel(FLYING_SWORD_MODIFIER) <= 0) {
                     return InteractionResultHolder.pass(stack);
+                }
+
+                // ⭐ 场上飞剑投影数量上限：单把飞剑最多同时存在 MAX_ACTIVE_SWORDS 把。
+                // 达到上限时直接拒绝发射（不消耗耐久、也不进入冷却）。
+                int activeSwords = level.getEntitiesOfClass(FlyingSwordEntity.class,
+                        player.getBoundingBox().inflate(96.0),
+                        e -> e.isAlive() && e.getOwner() != null && player.getUUID().equals(e.getOwner().getUUID())
+                ).size();
+                if (activeSwords >= MAX_ACTIVE_SWORDS) {
+                    player.displayClientMessage(Component.translatable(
+                            "message.tinkersnewlife.flying_sword.limit", MAX_ACTIVE_SWORDS), true);
+                    return InteractionResultHolder.fail(stack);
                 }
 
                 // ⭐ 发射冷却：单次发射后需冷却 1s（20 tick）才能发射下一把（每把飞剑独立记录）

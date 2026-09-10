@@ -58,6 +58,14 @@ public class FlyingSwordEntity extends Projectile {
     private int chaseTicks = 0;
     private static final int MAX_CHASE_TICKS = 300;
     private static final double MAX_CHASE_DISTANCE = 40.0;
+    /** 命中后尝试换目标的搜索半径（格）：该范围内没有其他敌人则继续攻击原目标 */
+    private static final double RETARGET_RANGE = 16.0;
+    /**
+     * 每 tick 最大转向角（弧度）。越小转弯越圆润。
+     * 原先是直接把速度设成"指向目标"，等于瞬间折向 → 轨迹是硬折角；
+     * 现在限制角速度后，速度方向逐 tick 过渡，飞行轨迹自然成为圆弧。
+     */
+    private static final double MAX_TURN_PER_TICK = Math.toRadians(14.0);
 
     public FlyingSwordEntity(EntityType<? extends Projectile> type, Level level) {
         super(type, level);
@@ -191,7 +199,7 @@ public class FlyingSwordEntity extends Projectile {
                 this.discard();
                 return;
             }
-            Vec3 velocity = toOwner.normalize().scale(1.5);
+            Vec3 velocity = steerTowards(this.getDeltaMovement(), toOwner.normalize().scale(1.5), MAX_TURN_PER_TICK);
             this.setDeltaMovement(velocity);
             this.setPos(this.position().add(velocity));
             return;
@@ -263,7 +271,8 @@ public class FlyingSwordEntity extends Projectile {
         double distance = toTarget.length();
 
         if (distance > 0.5) {
-            Vec3 velocity = toTarget.normalize().scale(1.0);
+            // ⭐ 有限角速度转向：轨迹平滑圆润（原先直接设为目标方向，转向是硬折角）
+            Vec3 velocity = steerTowards(this.getDeltaMovement(), toTarget.normalize().scale(1.0), MAX_TURN_PER_TICK);
             this.setDeltaMovement(velocity);
             this.setPos(this.position().add(velocity));
         }
@@ -310,6 +319,12 @@ public class FlyingSwordEntity extends Projectile {
         this.hitCount++;
         this.setHitCount(this.hitCount);
 
+        // ⭐ 追击模式：每次命中后尝试转移攻击其他目标
+        // （16 格内还有别的敌人就换目标，没有则继续攻击当前目标）
+        if (this.isChaseMode()) {
+            retargetAfterAttack(owner, target);
+        }
+
         if (this.hitCount >= MAX_ATTACKS) {
             this.discard();
             return;
@@ -320,6 +335,42 @@ public class FlyingSwordEntity extends Projectile {
                     target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(),
                     10, 0.3, 0.3, 0.3, 0.1);
         }
+    }
+
+    /**
+     * 命中一次后尝试转移目标：以自身为中心 {@link #RETARGET_RANGE} 格内寻找**除当前目标以外**的敌人，
+     * 找到就切换过去；找不到则什么都不做（继续攻击当前目标）。
+     */
+    private void retargetAfterAttack(LivingEntity owner, LivingEntity current) {
+        AABB box = this.getBoundingBox().inflate(RETARGET_RANGE);
+        List<LivingEntity> others = this.level().getEntitiesOfClass(LivingEntity.class, box,
+                e -> e != owner && e != current && e.isAlive() && e.isAttackable()
+                        && !(e instanceof Player) && !isOwnedBy(e, owner));
+        if (others.isEmpty()) return;   // 16 格内没有其他目标 → 继续攻击原目标
+        others.sort(Comparator.comparingDouble(this::distanceToSqr));
+        LivingEntity next = others.get(0);
+        this.target = next;
+        this.setTargetUUID(next.getUUID().toString());
+    }
+
+    /**
+     * 朝目标方向做「有限角速度」转向：每 tick 最多转 {@code maxTurn} 弧度，
+     * 使飞行轨迹成为平滑圆弧而不是瞬间折向。返回新的速度向量（长度等于 desired 的长度）。
+     */
+    private static Vec3 steerTowards(Vec3 current, Vec3 desired, double maxTurn) {
+        double desiredLen = desired.length();
+        if (desiredLen < 1.0E-6) return desired;
+        if (current == null || current.lengthSqr() < 1.0E-8) return desired;   // 首次/静止：直接朝目标
+        Vec3 a = current.normalize();
+        Vec3 b = desired.scale(1.0 / desiredLen);
+        double dot = Math.max(-1.0, Math.min(1.0, a.dot(b)));
+        double angle = Math.acos(dot);
+        if (angle <= maxTurn || angle < 1.0E-4) return desired;                // 已对准：直接给目标速度
+        // 归一化插值（nlerp）近似 slerp：在 a→b 之间只走 maxTurn/angle 的比例
+        double t = maxTurn / angle;
+        Vec3 blended = a.scale(1.0 - t).add(b.scale(t));
+        if (blended.lengthSqr() < 1.0E-8) return desired;
+        return blended.normalize().scale(desiredLen);
     }
 
     private void spawnTrailParticles() {
