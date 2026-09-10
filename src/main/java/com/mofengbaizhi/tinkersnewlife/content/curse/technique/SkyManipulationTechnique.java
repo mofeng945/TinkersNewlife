@@ -131,13 +131,14 @@ public final class SkyManipulationTechnique extends BaseTechnique {
                     CursePowerHelper.getSealedRemainingSeconds(player)), true);
             return;
         }
-        if (!paySkyCost(player, true)) {
-            player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_curse"), true);
-            return;
-        }
+        // ⭐ 先索敌、再扣咒力：未锁定敌人属于发动失败，不应消耗咒力（原顺序先扣费后索敌，失败不退款）
         LivingEntity target = findEnemyTarget(player);
         if (target == null) {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_target"), true);
+            return;
+        }
+        if (!paySkyCost(player, true)) {
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_curse"), true);
             return;
         }
         ServerLevel level = player.serverLevel();

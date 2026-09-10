@@ -48,8 +48,14 @@ public class CursePowerHandler {
             }
 
             // ⭐ 特等奖增益（33 秒）：HP 锁定在上限
-            if (CursePowerHelper.isGrandActive(player)) {
-                player.setHealth(player.getMaxHealth());
+            // ⚠️ 只对「生命 > 0 的活着玩家」生效。若玩家生命已被打到 0（/kill、致命伤害等），
+            // 这里把血补回去就等于在服务端把已死亡的玩家救活：客户端已收到 0 生命并弹出死亡界面，
+            // 服务端却判定存活 → 死亡/重生流程卡死（与无为转变死亡不同步同一类问题）。
+            if (CursePowerHelper.isGrandActive(player) && player.isAlive() && player.getHealth() > 0.0F) {
+                float max = player.getMaxHealth();
+                if (player.getHealth() < max) {
+                    player.setHealth(max);
+                }
             }
 
             // 每秒同步一次 HUD 数据

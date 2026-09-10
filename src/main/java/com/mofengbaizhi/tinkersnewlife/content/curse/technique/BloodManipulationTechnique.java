@@ -109,14 +109,25 @@ public final class BloodManipulationTechnique extends BaseTechnique {
                     CursePowerHelper.getBurnoutRemainingSeconds(player)), true);
             return false;
         }
-        if (!payCost(player)) {
-            player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_curse"), true);
-            return false;
-        }
         int mode = getMode(player);
         double bloodCost = player.getMaxHealth() * BLOOD_COST_RATIO[mode];
+        // ⭐ 先校验全部发动条件（生命代价 / 索敌），通过后才扣咒力：
+        // 原先「先扣费→再索敌」，未锁定敌人时发动失败却已扣掉咒力（不退款）。
         if (!player.isCreative() && player.getHealth() <= (float) bloodCost) {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_blood"), true);
+            return false;
+        }
+        LivingEntity target = null;
+        if (mode != MODE_CHUANXUE) {
+            // 百敛 / 超新星需要索敌；穿血是直线血束、不索敌
+            target = findTarget(player);
+            if (target == null) {
+                player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_target"), true);
+                return false;
+            }
+        }
+        if (!payCost(player)) {
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_curse"), true);
             return false;
         }
 
@@ -125,12 +136,6 @@ public final class BloodManipulationTechnique extends BaseTechnique {
             if (!player.isCreative()) player.setHealth(player.getHealth() - (float) bloodCost);
             fireBloodBeam(player, bloodCost);
             return true;
-        }
-        // 百敛 / 超新星：索敌
-        LivingEntity target = findTarget(player);
-        if (target == null) {
-            player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_target"), true);
-            return false;
         }
         if (!player.isCreative()) player.setHealth(player.getHealth() - (float) bloodCost);
         if (mode == MODE_BAILIAN) {

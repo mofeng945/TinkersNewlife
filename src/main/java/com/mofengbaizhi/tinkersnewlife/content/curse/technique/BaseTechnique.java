@@ -79,12 +79,9 @@ public abstract class BaseTechnique {
                     CursePowerHelper.getBurnoutRemainingSeconds(player)), true);
             return false;
         }
-        // 消耗咒力（创造模式免费；不足时灵魂能量兜底）
-        if (!payCost(player)) {
-            player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_curse"), true);
-            return false;
-        }
-        // 看向的目标实体
+        // ⭐ 先做全部「发动条件」校验（索敌 / 距离），**通过之后才扣咒力**。
+        // 原先顺序是「先扣费→再索敌」，导致未锁定敌人或距离过远时发动失败却已经扣掉咒力（不退款）。
+        // 目标实体
         LivingEntity target = findTarget(player);
         if (target == null) {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_target"), true);
@@ -93,6 +90,11 @@ public abstract class BaseTechnique {
         // 距离判定（子类可收紧，如「捌」需 3 格内接触目标）
         if (!isTargetInRange(player, target)) {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.too_far"), true);
+            return false;
+        }
+        // 最后才消耗咒力（创造模式免费；不足时灵魂能量兜底）
+        if (!payCost(player)) {
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_curse"), true);
             return false;
         }
         onCast(player, target);
