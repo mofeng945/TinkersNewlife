@@ -725,18 +725,18 @@ public final class WuWeiHandler {
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
         MinecraftServer server = event.getServer();
+        // 注意：必须迭代「快照」并在 map 上直接删除。
+        // tickReverseMob / tickPlayerForm 内部可能改动这两个 map
+        // （tickPlayerForm 倒计时结束会调用 endTransform() -> TRANSFORMS.remove()），
+        // 若用 entrySet().iterator() + it.remove() 会抛 ConcurrentModificationException（曾导致服务端崩溃）。
         if (!REVERSE_MOBS.isEmpty()) {
-            Iterator<Map.Entry<UUID, ReverseMobData>> it = REVERSE_MOBS.entrySet().iterator();
-            while (it.hasNext()) {
-                var e = it.next();
-                if (tickReverseMob(server, e.getValue())) it.remove();
+            for (Map.Entry<UUID, ReverseMobData> e : new ArrayList<>(REVERSE_MOBS.entrySet())) {
+                if (tickReverseMob(server, e.getValue())) REVERSE_MOBS.remove(e.getKey());
             }
         }
         if (!TRANSFORMS.isEmpty()) {
-            Iterator<Map.Entry<UUID, TransformData>> it = TRANSFORMS.entrySet().iterator();
-            while (it.hasNext()) {
-                var e = it.next();
-                if (tickPlayerForm(server, e.getValue())) it.remove();
+            for (Map.Entry<UUID, TransformData> e : new ArrayList<>(TRANSFORMS.entrySet())) {
+                if (tickPlayerForm(server, e.getValue())) TRANSFORMS.remove(e.getKey());
             }
         }
     }
