@@ -101,8 +101,8 @@ public final class WuWeiDisguiseRenderer {
         }
     }
 
-    /** 把真实玩家的动画状态完整拷贝到代理（让代理"动起来"） */
-    private static void syncProxy(Player real, LivingEntity proxy) {
+    /** 把真实玩家的动画状态完整拷贝到代理（让代理"动起来"）；供本类与伪装渲染 Mixin 共用 */
+    public static void syncProxy(Player real, LivingEntity proxy) {
         // 位置与朝向（渲染以 pose 为基准，此处保证字段一致供模型姿态计算）
         proxy.moveTo(real.getX(), real.getY(), real.getZ(), real.getYRot(), real.getXRot());
         proxy.xRotO = real.xRotO;

@@ -1,0 +1,13 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.mofengbaizhi.tinkersnewlife.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "tinkersnewlife.refmap.json",
+  "client": [
+    "EntityRenderDispatcherMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

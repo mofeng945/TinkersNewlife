@@ -27,6 +27,10 @@ public final class ModConfig {
     // ==================== 咒力核心 ====================
     public static final ConfigValue<Boolean> CURSE_CORE_ENABLED;
 
+    // ==================== 无为转变 伪装渲染 ====================
+    /** 无为转变·伪装渲染替换（客户端）：把变形玩家渲染成目标生物。与 YSM 等接管玩家渲染的模组冲突时可关闭 */
+    public static final ConfigValue<Boolean> WUWEI_DISGUISE_RENDER;
+
     // ==================== 术式/领域缩放系数 ====================
     /** 各术式 modifier id → [damage, cost] 缩放 */
     public static final Map<String, ConfigValue<Double>[]> TECHNIQUE_SCALES = new HashMap<>();
@@ -51,6 +55,14 @@ public final class ModConfig {
         // 咒力核心
         b.push("curse_core").comment("Curse Core: allow crafting (ritual) and using (equipping/techniques). Default on.");
         CURSE_CORE_ENABLED = b.define("allow_curse_core_craft_and_use", true);
+        b.pop();
+
+        // 无为转变·伪装渲染替换（客户端）
+        b.push("wuwei_disguise").comment(
+                "Client side: render a transformed (Wu Wei) player as the target creature instead of the player model.",
+                "Set enable_disguise_render=false if another mod that takes over player rendering",
+                "(e.g. YSM / Yes Steve Model) conflicts with the disguise.");
+        WUWEI_DISGUISE_RENDER = b.define("enable_disguise_render", true);
         b.pop();
 
         // 术式系数：每术式 damage / cost 缩放（1.0 = 原生）
