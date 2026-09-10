@@ -1,4 +1,4 @@
-﻿{
+{
   "action.tinkersnewlife.dark_silent.furioso": "Furioso",
   "block.tinkersnewlife.molten_dreadsteel_block": "熔融悚怖钢",
   "block.tinkersnewlife.molten_dread_block": "熔融悚怖",
@@ -118,6 +118,14 @@
   "item.tinkersnewlife.dragon_staff.desc": "§7潜行+右键切换模式",
   "item.tinkersnewlife.yo_yo": "悠悠球",
   "item.tinkersnewlife.curse_core": "咒力核心",
+  "item.tinkersnewlife.durandal_sword.description": "§7传说之剑：永不损坏，攻击力极高，可作为匠魂工具自由强化。",
+  "item.tinkersnewlife.silent_glove.description": "§7戴于手部：空手时自动从空间奇点库中取出武器。",
+  "item.tinkersnewlife.war_scythe.description": "§7每次攻击积攒 §eFever§7，攻速随 Fever 提升；消耗 Fever 可瞬移，Fever 满时释放终极斩击。",
+  "item.tinkersnewlife.flying_sword.description": "§7右键发射飞剑，命中后返回；可切换 §c追击模式§7自动攻击敌人。",
+  "item.tinkersnewlife.modular_staff.description": "§7近战与法术/咒术附加额外伤害；安装诡厄巫法时以真法杖形态施法。",
+  "item.tinkersnewlife.dragon_staff.description": "§7可驯服野龙（消耗大量经验），槽位随等级提升。",
+  "item.tinkersnewlife.yo_yo.description": "§7可回旋投掷、远近兼备的武器，攻速快、便于连击。",
+  "item.tinkersnewlife.curse_core.description": "§7决定咒力上限、恢复量与咒力领域半径；可镶嵌术式 / 领域 / 技能。",
   "item_group.tinkersnewlife.curse_core": "咒力核心",
   "curios.identifier.curse_core": "咒力核心",
   "stat.tconstruct.slot.display.domain": "领域",

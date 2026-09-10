@@ -1,9 +1,7 @@
 {
   "replace": false,
   "values": [
-    "tinkersnewlife:durandal",
     "tinkersnewlife:flying_sword",
-    "tinkersnewlife:silent_glove",
     "tinkersnewlife:yo_yo"
   ]
 }
