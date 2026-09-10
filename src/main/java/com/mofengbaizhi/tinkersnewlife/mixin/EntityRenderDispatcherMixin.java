@@ -36,7 +36,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * <p>安全性：<b>只在游戏中确实存在伪装玩家时才生效</b>，平时完全不介入；整个方法体包在 try/catch 里，
  * 任何异常都直接退回原渲染。另受配置 {@code wuwei_disguise/enable_disguise_render} 控制，可随时关闭。
  */
-@Mixin(EntityRenderDispatcher.class)
+@Mixin(value = EntityRenderDispatcher.class, priority = 1500)
 public abstract class EntityRenderDispatcherMixin {
 
     /** 只记录一次"已生效"日志，便于排查 */
