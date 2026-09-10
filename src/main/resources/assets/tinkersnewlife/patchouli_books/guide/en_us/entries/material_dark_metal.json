@@ -11,7 +11,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)Innate traits$():$(li)$(bold)Malleable$() (native to Tinkers): a ductile metal that reduces tool durability loss$(li)$(bold)Soul Mending I$(): every 20 ticks, spend 5 soul energy to restore 1 durability (works while held in your main hand or off hand) - Dark Metal gear mainly heals itself this way$(li)$(bold)Spell Breaker$() (tool part): attacks inflict Weakness I (2 seconds) on the target; slaying a creature with magic resistance grants a 45% chance to drop 1 extra Emerald$(li)$(bold)Magic Resist$() (armor part): when taking magic damage, convert 5% + 1.5 points of it into physical damage$(br2)Stats: head 300 durability / iron mining / 7.0 speed / 2.5 attack; chestplate armor +6."
+      "text": "$(bold)Innate traits$():$(li)$(bold)Malleable$() (native to Tinkers): a ductile metal that reduces tool durability loss$(li)$(bold)Soul Mending I$(): every 20 ticks, spend 5 soul energy to restore 1 durability (works while held in your main hand or off hand) - Dark Metal gear mainly heals itself this way$(li)$(bold)Spell Breaker$() (tool part): attacks inflict Weakness I (2 seconds) on the target; slaying a creature with magic resistance grants a 45% chance to drop 1 extra Emerald$(li)$(bold)Magic Resist$() (armor part): when taking magic damage, convert 5% + 1.5 points of it into physical damage$(br2)Stats: head 390 durability / iron mining / 9.1 speed / 3.25 attack; chestplate armor +7.8."
     }
   ],
   "flag": "mod:goety"

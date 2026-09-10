@@ -11,7 +11,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)Innate traits$():$(li)$(bold)Magnetic$() (native to Tinkers): automatically attracts nearby drops and experience$(li)$(bold)Corruption$(): when an attack deals damage, spend 0.5% of your max soul energy (up to 100 per hit) to amplify that attack - every 5 soul adds +0.2 attack damage and +0.05 blocks of knockback (knockback stacks up to a 3-block cap); no boost when souls run short$(br2)Stats: head 225 durability / iron mining / 5.5 speed / 2.3 attack; bow limb draw -0.1 / initial speed +0.1; bow grip accuracy +0.1 / melee 2.5."
+      "text": "$(bold)Innate traits$():$(li)$(bold)Magnetic$() (native to Tinkers): automatically attracts nearby drops and experience$(li)$(bold)Corruption$(): when an attack deals damage, spend 0.5% of your max soul energy (up to 100 per hit) to amplify that attack - every 5 soul adds +0.2 attack damage and +0.05 blocks of knockback (knockback stacks up to a 3-block cap); no boost when souls run short$(br2)Stats: head 293 durability / iron mining / 7.15 speed / 2.99 attack; bow limb draw -0.077 / initial speed +0.13; bow grip accuracy +0.13 / melee 3.25."
     }
   ],
   "flag": "mod:goety"
