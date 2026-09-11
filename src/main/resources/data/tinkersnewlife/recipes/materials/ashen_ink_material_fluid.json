@@ -2,7 +2,7 @@
   "type": "tconstruct:material_fluid",
   "input": "tconstruct:rose_gold",
   "fluid": {
-    "name": "tinkersnewlife:ashen_ink_still",
+    "fluid": "tinkersnewlife:ashen_ink_still",
     "amount": 80
   },
   "temperature": 1000,

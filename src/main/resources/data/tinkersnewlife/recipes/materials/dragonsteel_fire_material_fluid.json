@@ -1,7 +1,7 @@
 {
   "type": "tconstruct:material_fluid",
   "fluid": {
-    "name": "tinkersnewlife:molten_dragonsteel_fire_still",
+    "fluid": "tinkersnewlife:molten_dragonsteel_fire_still",
     "amount": 90
   },
   "temperature": 1200,

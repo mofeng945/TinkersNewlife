@@ -2,7 +2,7 @@
   "type": "tconstruct:material_fluid",
   "input": "tinkersnewlife:dark_metal",
   "fluid": {
-    "name": "tinkersnewlife:molten_broken_ring_still",
+    "fluid": "tinkersnewlife:molten_broken_ring_still",
     "amount": 10
   },
   "temperature": 1200,

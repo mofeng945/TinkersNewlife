@@ -1,7 +1,7 @@
 {
   "type": "tconstruct:material_fluid",
   "fluid": {
-    "name": "tinkersnewlife:molten_dark_metal_still",
+    "fluid": "tinkersnewlife:molten_dark_metal_still",
     "amount": 90
   },
   "temperature": 1000,

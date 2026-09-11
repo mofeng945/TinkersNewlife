@@ -1,5 +1,6 @@
 package com.mofengbaizhi.tinkersnewlife.content.recipe;
 
+import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModRecipeSerializers;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -58,7 +59,38 @@ public class GenericToolMeltingRecipe implements IMeltingRecipe {
     @SuppressWarnings("rawtypes")
     public boolean matches(IMeltingContainer container, Level level) {
         Selected sel = resolve(container, level.getRecipeManager());
+        // ⭐ 诊断：每个物品只打一次，直接说明"为什么能/不能熔化"（材料 → 熔体材料 → 选中/温度/产出）
+        diagnoseOnce(container.getStack(), level.getRecipeManager(), sel);
         return sel != null;
+    }
+
+    /** 诊断日志（每个物品一次）：用于排查"工具熔炼没出对应流体" */
+    private static final java.util.Set<net.minecraft.world.item.Item> DIAGNOSED =
+            java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    private static void diagnoseOnce(ItemStack stack, RecipeManager manager, Selected sel) {
+        try {
+            if (stack.isEmpty() || !DIAGNOSED.add(stack.getItem())) return;
+            ToolStack tool = getTool(stack);
+            if (tool == null) return;
+            StringBuilder mats = new StringBuilder();
+            for (MaterialVariant v : tool.getMaterials().getList()) {
+                if (mats.length() > 0) mats.append(", ");
+                mats.append(v.getId());
+            }
+            int fluidRecipeCount = findFluidRecipes(manager).size();
+            if (sel == null) {
+                TinkersNewlife.LOGGER.info("[工具熔炼] {} 无法熔化：部件材料=[{}]，material_fluid 配方数={}（材料无对应熔体时不会产出）",
+                        stack.getItem(), mats, fluidRecipeCount);
+            } else {
+                List<FluidStack> fluids = sel.recipe().getFluids();
+                String out = fluids.isEmpty() ? "无" :
+                        (fluids.get(0).getFluid() + " x" + (sel.recipe().getFluidAmount(fluids.get(0).getFluid()) * sel.partCount()) + "mB");
+                TinkersNewlife.LOGGER.info("[工具熔炼] {} 可熔化：部件材料=[{}]，选中材料={}，温度={}，产出={}",
+                        stack.getItem(), mats, sel.material(), sel.recipe().getTemperature(), out);
+            }
+        } catch (Throwable ignored) {
+        }
     }
 
     @Override

@@ -2,7 +2,7 @@
   "type": "tconstruct:material_fluid",
   "input": "tconstruct:chorus",
   "fluid": {
-    "name": "tinkersnewlife:hastur_malice_still",
+    "fluid": "tinkersnewlife:hastur_malice_still",
     "amount": 80
   },
   "temperature": 1000,
