@@ -162,10 +162,12 @@ public class CurseCoreRitualHandler {
         }
         RitualData data = new RitualData(sp.getUUID(), level.dimension(), orePos,
                 start.gaugePos, start.fluid, start.color, start.material, start.lanterns, start.materialStates);
-        // ⭐ 生成信标光柱实体（量器上方，向上 RITUAL_TICKS/20 + 2 格高，活到仪式结束）
+        // ⭐ 生成信标光柱实体（活到仪式结束）。
+        //    注意坐标系：原版 BeaconRenderer.renderBeaconBeam 内部会自己 translate(0.5, 0, 0.5)
+        //    （它按「方块角」坐标设计），所以这里必须给**整数角坐标**，否则光柱会偏移半格。
         com.mofengbaizhi.tinkersnewlife.content.entity.RitualBeamEntity beam =
                 new com.mofengbaizhi.tinkersnewlife.content.entity.RitualBeamEntity(
-                        level, orePos.getX() + 0.5, orePos.getY(), orePos.getZ() + 0.5,
+                        level, orePos.getX(), orePos.getY(), orePos.getZ(),
                         start.color, BEAM_HEIGHT, RITUAL_TICKS + 10);
         level.addFreshEntity(beam);
         data.beamUuid = beam.getUUID();

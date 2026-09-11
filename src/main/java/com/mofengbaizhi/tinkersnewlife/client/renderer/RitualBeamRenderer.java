@@ -14,6 +14,11 @@ import net.minecraft.resources.ResourceLocation;
  * 因此看起来就是真正的信标光束（带旋转的竖向流光纹理 + 外层辉光），而不是粒子泡泡。
  *
  * <p>颜色来自实体同步数据（= 量器内材料流体的颜色），高度也是同步下来的。
+ *
+ * <p><b>坐标系陷阱</b>：原版 {@code renderBeaconBeam} 内部第一件事就是
+ * {@code poseStack.translate(0.5, 0.0, 0.5)}——它是按「方块角坐标」设计的
+ * （方块实体渲染器的 pose 就在方块角上）。所以承载光柱的实体必须放在**整数角坐标**上，
+ * 否则整根光柱会偏移半格（曾因此"位置不对"）。
  */
 public class RitualBeamRenderer extends EntityRenderer<RitualBeamEntity> {
 
