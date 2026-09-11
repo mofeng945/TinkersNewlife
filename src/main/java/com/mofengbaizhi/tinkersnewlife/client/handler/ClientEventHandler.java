@@ -370,6 +370,12 @@ public class ClientEventHandler {
                 TinkersNewlife.CHANNEL.sendToServer(new PacketUseSkill());
             }
 
+            // ⭐ 咒术 HUD 位置调整：打开拖动界面（拖动进度条改位置，滚轮调宽度，ESC 保存）
+            if (KeyBindings.EDIT_CURSE_HUD.get().consumeClick()) {
+                Minecraft.getInstance().setScreen(
+                        new com.mofengbaizhi.tinkersnewlife.client.screen.CurseHudEditScreen());
+            }
+
             if (KeyBindings.DRAGON_STAFF_USE.get().consumeClick()) {
                 TinkersNewlife.CHANNEL.sendToServer(new PacketDragonStaffUse());
             }

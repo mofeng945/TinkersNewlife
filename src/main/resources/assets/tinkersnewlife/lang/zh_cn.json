@@ -1,4 +1,8 @@
 {
+  "hud.tinkersnewlife.curse_hud.hint": "拖动进度条调整位置 · 滚轮调宽度 · ESC 保存",
+  "hud.tinkersnewlife.curse.infinite_value": "咒力 ∞",
+  "key.tinkersnewlife.edit_curse_hud": "调整咒术 HUD 位置",
+  "screen.tinkersnewlife.curse_hud.title": "咒术 HUD 设置",
   "action.tinkersnewlife.dark_silent.furioso": "Furioso",
   "block.tinkersnewlife.molten_dreadsteel_block": "熔融悚怖钢",
   "block.tinkersnewlife.molten_dread_block": "熔融悚怖",

@@ -1,4 +1,8 @@
 {
+  "hud.tinkersnewlife.curse_hud.hint": "Drag the bar to move · scroll to resize · ESC to save",
+  "hud.tinkersnewlife.curse.infinite_value": "Curse ∞",
+  "key.tinkersnewlife.edit_curse_hud": "Edit Curse HUD position",
+  "screen.tinkersnewlife.curse_hud.title": "Curse HUD Settings",
   "modifier.tinkersnewlife.anti_gravity": "Anti-Gravity Mechanism",
   "modifier.tinkersnewlife.anti_gravity.flavor": "Gravity inverted; all things fall.",
   "modifier.tinkersnewlife.anti_gravity.description": "Forward (technique key C): all creatures within the radius (scaled by curse output & affinity), except the caster, are levitated; each target costs one unit of curse power. Reversal (F): deploy a pressure field - targets resist by body size & max HP (slowness below threshold, crushed blocks / stun / sustained damage above it). Costs curse power per second. Uses a technique slot.",

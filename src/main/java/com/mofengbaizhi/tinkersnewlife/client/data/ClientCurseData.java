@@ -92,38 +92,14 @@ public class ClientCurseData {
         return output;
     }
 
-    /** Forge GUI Overlay 渲染入口（registerAboveAll） */
+    /** 当前选中的术式 id（如 tinkersnewlife:kai），未选中为 "" */
+    public static String getTechniqueId() {
+        return techniqueId;
+    }
+
+    /** Forge GUI Overlay 渲染入口（registerAboveAll）——已改为进度条 HUD */
     public static void render(Gui gui, GuiGraphics graphics, float partialTick, int screenWidth, int screenHeight) {
-        if (max <= 0) return;
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null) return;
-        Font font = mc.font;
-
-        int x = 4;
-        int y = 4;
-
-        // 咒力：X / Y
-        Component curseLine = Component.translatable("hud.tinkersnewlife.curse",
-                (int) Math.floor(curse), (int) Math.ceil(max));
-        graphics.drawString(font, curseLine, x, y, infinite ? 0xFFD700 : 0xFFFFFF);
-
-        // 当前选中的术式（随切换键循环）
-        if (!techniqueId.isEmpty()) {
-            Component techniqueName = Component.translatable("modifier." + techniqueId.replace(':', '.'));
-            graphics.drawString(font, Component.translatable("hud.tinkersnewlife.technique", techniqueName),
-                    x, y + 10, 0x55FFFF);
-        }
-
-        // 领域状态
-        if (domainActive) {
-            graphics.drawString(font, Component.translatable("hud.tinkersnewlife.domain_active"),
-                    x, y + 20, 0xFFFF55);
-        }
-
-        // 咒力无限
-        if (infinite) {
-            graphics.drawString(font, Component.translatable("hud.tinkersnewlife.infinite"),
-                    x, y + 30, 0xFFFFAA);
-        }
+        com.mofengbaizhi.tinkersnewlife.client.hud.CurseHudRenderer.render(
+                gui, graphics, partialTick, screenWidth, screenHeight);
     }
 }

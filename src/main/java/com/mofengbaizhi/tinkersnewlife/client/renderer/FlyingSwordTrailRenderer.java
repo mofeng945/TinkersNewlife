@@ -73,7 +73,7 @@ public final class FlyingSwordTrailRenderer {
     /** 飞剑消失多久后清掉它的拖尾数据（tick） */
     private static final int DROP_AFTER = 60;
     /** 管状拖尾的半径（格）——圆截面，任何角度看都是立体的（不再是扁平条带） */
-    private static final double TUBE_RADIUS = 0.30;
+    private static final double TUBE_RADIUS = 0.15;
     /** 圆截面分段数（越大越圆；8 段已足够，且顶点数可控） */
     private static final int TUBE_SIDES = 8;
 

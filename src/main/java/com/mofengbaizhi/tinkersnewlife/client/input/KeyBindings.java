@@ -88,8 +88,16 @@ public class KeyBindings {
             KEY_CATEGORY
     ));
 
+    // ✅ 咒术 HUD 位置调整（F6）：打开拖动界面，拖动咒力进度条改位置、滚轮调宽度
+    public static final Lazy<KeyMapping> EDIT_CURSE_HUD = Lazy.of(() -> new KeyMapping(
+            "key.tinkersnewlife.edit_curse_hud",
+            GLFW.GLFW_KEY_F6,
+            KEY_CATEGORY
+    ));
+
     @SubscribeEvent
     public static void register(RegisterKeyMappingsEvent event) {
+        event.register(EDIT_CURSE_HUD.get());
         event.register(USE_SKILL.get());
         event.register(DRAGON_STAFF_USE.get());
         event.register(OPEN_BAG.get());

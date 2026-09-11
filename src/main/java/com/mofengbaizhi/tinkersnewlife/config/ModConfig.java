@@ -35,6 +35,10 @@ public final class ModConfig {
     /** 飞剑流光拖尾（客户端）：动态条带 + 自写流光着色器 */
     public static final ConfigValue<Boolean> FLYING_SWORD_TRAIL;
 
+    // ==================== 咒术 HUD（咒力进度条） ====================
+    // 说明：HUD 的位置/宽度由游戏内拖动界面写入独立文件 config/mofengbaizhi/curse_hud.json
+    //       （见 client/hud/CurseHudConfig），不放这里以免与主配置的写回时机打架。
+
     // ==================== 术式/领域缩放系数 ====================
     /** 各术式 modifier id → [damage, cost] 缩放 */
     public static final Map<String, ConfigValue<Double>[]> TECHNIQUE_SCALES = new HashMap<>();
