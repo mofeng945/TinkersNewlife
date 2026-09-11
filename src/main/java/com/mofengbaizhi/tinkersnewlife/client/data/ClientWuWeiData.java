@@ -1,5 +1,6 @@
 package com.mofengbaizhi.tinkersnewlife.client.data;
 
+import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
@@ -31,14 +32,27 @@ public final class ClientWuWeiData {
 
     /** 设置/解除某玩家的伪装（空 formId = 解除） */
     public static void setDisguise(UUID playerId, String formId) {
-        if (formId == null || formId.isEmpty()) {
+        boolean empty = formId == null || formId.isEmpty();
+        String old = DISGUISES.get(playerId);
+        boolean changed = empty ? old != null : !formId.equals(old);
+        if (empty) {
             DISGUISES.remove(playerId);
             PROXIES.remove(playerId);
         } else {
             DISGUISES.put(playerId, formId);
-            // 强制下次重建代理（形态可能已切换）
-            PROXIES.remove(playerId);
+            // 仅在形态真正变化时重建代理（服务端每 5s 会重播一次，避免无谓重建）
+            if (!formId.equals(old)) PROXIES.remove(playerId);
         }
+        if (changed) {
+            TinkersNewlife.LOGGER.info("[WuWei] 客户端伪装同步: {} -> {}",
+                    playerId, empty ? "解除" : formId);
+        }
+    }
+
+    /** 当前伪装形态注册名（空字符串 = 未伪装）——诊断用 */
+    public static String getDisguise(UUID playerId) {
+        String id = DISGUISES.get(playerId);
+        return id == null ? "" : id;
     }
 
     /** 该玩家是否处于伪装 */

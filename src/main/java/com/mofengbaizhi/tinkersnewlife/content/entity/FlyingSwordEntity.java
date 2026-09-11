@@ -60,12 +60,15 @@ public class FlyingSwordEntity extends Projectile {
     private static final double MAX_CHASE_DISTANCE = 40.0;
     /** 命中后尝试换目标的搜索半径（格）：该范围内没有其他敌人则继续攻击原目标 */
     private static final double RETARGET_RANGE = 16.0;
+    /** 返航已持续的 tick 数（主人跑太快追不上时兜底收剑） */
+    private int returnTicks = 0;
+    private static final int MAX_RETURN_TICKS = 400;
+
     /**
-     * 每 tick 最大转向角（弧度）。越小转弯越圆润。
-     * 原先是直接把速度设成"指向目标"，等于瞬间折向 → 轨迹是硬折角；
-     * 现在限制角速度后，速度方向逐 tick 过渡，飞行轨迹自然成为圆弧。
+     * 制导器：弦长制导 / 末端游戏 / 直线冲刺三态统一（见 {@link SwordGuidance}）。
+     * 追击时以目标为制导目标，返航时以主人眼睛位置为制导目标。
      */
-    private static final double MAX_TURN_PER_TICK = Math.toRadians(14.0);
+    private final SwordGuidance guidance = new SwordGuidance(SwordGuidance.Config.sword());
 
     public FlyingSwordEntity(EntityType<? extends Projectile> type, Level level) {
         super(type, level);
@@ -137,6 +140,7 @@ public class FlyingSwordEntity extends Projectile {
         enemies.sort(Comparator.comparingDouble(e -> e.distanceTo(owner)));
         this.target = enemies.get(0);
         this.setTargetUUID(this.target.getUUID().toString());
+        this.guidance.reset();   // 新目标 → 制导状态重置
     }
 
     private boolean isOwnedBy(LivingEntity target, LivingEntity owner) {
@@ -189,17 +193,19 @@ public class FlyingSwordEntity extends Projectile {
 
     private void tickNormalMode(LivingEntity owner) {
         if (this.returning) {
+            returnTicks++;
             Vec3 ownerPos = owner.getEyePosition().subtract(0, 0.2, 0);
-            Vec3 toOwner = ownerPos.subtract(this.position());
-            double distance = toOwner.length();
-            if (distance < 1.0) {
+            double distance = this.position().distanceTo(ownerPos);
+            // 回到主人身边收剑；或追太久仍追不上（主人高速移动）兜底收剑，避免无限期留在场上
+            if (distance < 1.0 || returnTicks > MAX_RETURN_TICKS) {
                 if (this.returnCallback != null && this.hitCount < MAX_ATTACKS) {
                     this.returnCallback.accept(this.hitCount);
                 }
                 this.discard();
                 return;
             }
-            Vec3 velocity = steerTowards(this.getDeltaMovement(), toOwner.normalize().scale(1.5), MAX_TURN_PER_TICK);
+            // 返航同样走制导：先掉头（受横向加速度限制，不会瞬间折返），再加速飞回主人
+            Vec3 velocity = this.guidance.guide(this.position(), this.getDeltaMovement(), ownerPos);
             this.setDeltaMovement(velocity);
             this.setPos(this.position().add(velocity));
             return;
@@ -228,11 +234,9 @@ public class FlyingSwordEntity extends Projectile {
     private void tickChaseMode(LivingEntity owner) {
         chaseTicks++;
 
+        // 追太久 / 离主人太远 → 返航（原先直接 discard：玩家看到的就是「飞很远然后凭空消失」）
         if (chaseTicks > MAX_CHASE_TICKS || this.distanceTo(owner) > MAX_CHASE_DISTANCE) {
-            if (this.returnCallback != null) {
-                this.returnCallback.accept(this.hitCount);
-            }
-            this.discard();
+            startReturn();
             return;
         }
 
@@ -241,60 +245,58 @@ public class FlyingSwordEntity extends Projectile {
             findAndSetTarget();
             target = getTarget();
             if (target == null) {
-                if (this.returnCallback != null) {
-                    this.returnCallback.accept(this.hitCount);
-                }
-                this.discard();
+                startReturn();
                 return;
             }
         }
 
         if (this.hitCount >= MAX_ATTACKS) {
-            if (this.returnCallback != null) {
-                this.returnCallback.accept(this.hitCount);
-            }
-            this.discard();
+            startReturn();
             return;
         }
 
         double distToTarget = this.distanceTo(target);
         if (distToTarget > 64) {
-            if (this.returnCallback != null) {
-                this.returnCallback.accept(this.hitCount);
-            }
-            this.discard();
+            startReturn();
             return;
         }
 
         Vec3 targetPos = target.position().add(0, target.getBbHeight() * 0.5, 0);
-        Vec3 toTarget = targetPos.subtract(this.position());
-        double distance = toTarget.length();
 
-        if (distance > 0.5) {
-            // ⭐ 有限角速度转向：轨迹平滑圆润（原先直接设为目标方向，转向是硬折角）
-            Vec3 velocity = steerTowards(this.getDeltaMovement(), toTarget.normalize().scale(1.0), MAX_TURN_PER_TICK);
-            this.setDeltaMovement(velocity);
-            this.setPos(this.position().add(velocity));
-        }
+        // ⭐ 命中判定：制导内部做「上一 tick 位置 → 当前位置」线段扫掠，高速穿过目标也不会漏判
+        //    （原先 10 tick 才查一次包围盒，速度 1 格/tick 时隔 10 格才查一次 → 穿过去再掉头绕圈）
+        boolean contact = this.guidance.hitTest(this.position(), targetPos, hitRadiusFor(target));
+
+        // ⭐ 制导：弦长制导（画扇落点在目标）/ 末端游戏 / 直线冲刺，见 SwordGuidance
+        Vec3 velocity = this.guidance.guide(this.position(), this.getDeltaMovement(), targetPos);
+        this.setDeltaMovement(velocity);
+        this.setPos(this.position().add(velocity));
 
         ticksSinceLastAttack++;
-        if (ticksSinceLastAttack >= ATTACK_INTERVAL) {
+        if (contact && ticksSinceLastAttack >= ATTACK_INTERVAL) {
             ticksSinceLastAttack = 0;
-            if (this.getBoundingBox().intersects(target.getBoundingBox().inflate(0.5))) {
-                if (!isOwnedBy(target, owner)) {
-                    attackEntity(owner, target);
-                } else {
-                    findAndSetTarget();
-                }
-            }
+            attackEntity(owner, target);
+            // 命中后重置制导状态（与算法用法一致）：换目标/继续追击都从新状态起算
+            this.guidance.reset();
         }
 
-        if (!target.isAlive()) {
-            if (this.returnCallback != null) {
-                this.returnCallback.accept(this.hitCount);
-            }
-            this.discard();
+        if (!target.isAlive() && getTarget() == null) {
+            startReturn();
         }
+    }
+
+    /** 命中判定半径：以目标体型放大（大体积生物不容易漏判） */
+    private double hitRadiusFor(LivingEntity target) {
+        return Math.max(this.guidance.config().hitRadius, target.getBbWidth() * 0.6);
+    }
+
+    /** 转入返航：先掉头飞回主人身边再收剑（不再原地 discard 凭空消失） */
+    private void startReturn() {
+        if (this.returning) return;
+        this.returning = true;
+        this.returnTicks = 0;
+        this.guidance.reset();
+        this.setChaseMode(false);   // 同步给客户端：轨迹立即切回「飞回主人」
     }
 
     private void attackNearbyEntities(LivingEntity owner) {
@@ -351,26 +353,7 @@ public class FlyingSwordEntity extends Projectile {
         LivingEntity next = others.get(0);
         this.target = next;
         this.setTargetUUID(next.getUUID().toString());
-    }
-
-    /**
-     * 朝目标方向做「有限角速度」转向：每 tick 最多转 {@code maxTurn} 弧度，
-     * 使飞行轨迹成为平滑圆弧而不是瞬间折向。返回新的速度向量（长度等于 desired 的长度）。
-     */
-    private static Vec3 steerTowards(Vec3 current, Vec3 desired, double maxTurn) {
-        double desiredLen = desired.length();
-        if (desiredLen < 1.0E-6) return desired;
-        if (current == null || current.lengthSqr() < 1.0E-8) return desired;   // 首次/静止：直接朝目标
-        Vec3 a = current.normalize();
-        Vec3 b = desired.scale(1.0 / desiredLen);
-        double dot = Math.max(-1.0, Math.min(1.0, a.dot(b)));
-        double angle = Math.acos(dot);
-        if (angle <= maxTurn || angle < 1.0E-4) return desired;                // 已对准：直接给目标速度
-        // 归一化插值（nlerp）近似 slerp：在 a→b 之间只走 maxTurn/angle 的比例
-        double t = maxTurn / angle;
-        Vec3 blended = a.scale(1.0 - t).add(b.scale(t));
-        if (blended.lengthSqr() < 1.0E-8) return desired;
-        return blended.normalize().scale(desiredLen);
+        this.guidance.reset();   // 换目标 → 制导状态重置（从新目标的几何关系重新起算）
     }
 
     private void spawnTrailParticles() {
@@ -452,6 +435,16 @@ public class FlyingSwordEntity extends Projectile {
                 this.startPos = new Vec3(posTag.getDouble(0), posTag.getDouble(1), posTag.getDouble(2));
             }
         }
+        // 制导状态：转轴（防止读档后转向轴符号翻转）+ 直线模式滞后标志 + 模式
+        if (tag.contains("FlyingGuideAxis")) {
+            var axisTag = tag.getList("FlyingGuideAxis", net.minecraft.nbt.Tag.TAG_DOUBLE);
+            if (axisTag.size() == 3) {
+                this.guidance.setLastAxis(new Vec3(axisTag.getDouble(0), axisTag.getDouble(1), axisTag.getDouble(2)));
+            }
+        }
+        this.guidance.setInStraightMode(tag.getBoolean("FlyingGuideStraight"));
+        this.guidance.setMode(SwordGuidance.Mode.values()[
+                Math.max(0, Math.min(SwordGuidance.Mode.values().length - 1, tag.getInt("FlyingGuideMode")))]);
     }
 
     @Override
@@ -480,5 +473,16 @@ public class FlyingSwordEntity extends Projectile {
             posTag.add(net.minecraft.nbt.DoubleTag.valueOf(this.startPos.z));
             tag.put("FlyingStartPos", posTag);
         }
+        // 制导状态
+        Vec3 axis = this.guidance.getLastAxis();
+        if (axis != null && axis.lengthSqr() > 1.0E-8) {
+            var axisTag = new net.minecraft.nbt.ListTag();
+            axisTag.add(net.minecraft.nbt.DoubleTag.valueOf(axis.x));
+            axisTag.add(net.minecraft.nbt.DoubleTag.valueOf(axis.y));
+            axisTag.add(net.minecraft.nbt.DoubleTag.valueOf(axis.z));
+            tag.put("FlyingGuideAxis", axisTag);
+        }
+        tag.putBoolean("FlyingGuideStraight", this.guidance.isInStraightMode());
+        tag.putInt("FlyingGuideMode", this.guidance.mode().ordinal());
     }
 }

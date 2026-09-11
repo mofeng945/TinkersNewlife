@@ -330,9 +330,21 @@ public final class WuWeiHandler {
 
     /** 向所有在线玩家广播某玩家的伪装状态（formId 空 = 解除） */
     private static void broadcastDisguise(ServerPlayer disguised, String formId) {
+        String form = formId == null ? "" : formId;
+        // 诊断：仅在伪装状态真正变化时打一条日志（服务端每 5s 会重播一次，避免刷屏）
+        String old = LAST_BROADCAST.get(disguised.getUUID());
+        boolean changed = old == null ? !form.isEmpty() : !old.equals(form);
+        LAST_BROADCAST.put(disguised.getUUID(), form);
+        if (changed) {
+            TinkersNewlife.LOGGER.info("[WuWei] 服务端广播伪装: {} -> {}",
+                    disguised.getName().getString(), form.isEmpty() ? "解除" : form);
+        }
         TinkersNewlife.CHANNEL.send(PacketDistributor.ALL.noArg(),
-                new PacketWuWeiDisguise(disguised.getUUID(), formId));
+                new PacketWuWeiDisguise(disguised.getUUID(), form));
     }
+
+    /** 已广播过的伪装状态（仅用于日志去重） */
+    private static final java.util.Map<java.util.UUID, String> LAST_BROADCAST = new java.util.HashMap<>();
 
     /** 玩家死亡：解除变形并清空选中（死亡视为脱离术式） */
     @SubscribeEvent

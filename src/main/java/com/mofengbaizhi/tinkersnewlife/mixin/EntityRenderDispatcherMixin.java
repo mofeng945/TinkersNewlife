@@ -41,6 +41,8 @@ public abstract class EntityRenderDispatcherMixin {
 
     /** 只记录一次"已生效"日志，便于排查 */
     private static boolean tinkersnewlife$logged = false;
+    /** 诊断用：Hook 是否确实被调用过（只打一次） */
+    private static boolean tinkersnewlife$hookLogged = false;
 
     @Inject(method = "render", at = @At("HEAD"), cancellable = true)
     private void tinkersnewlife$replaceDisguisedPlayer(Entity entity, double x, double y, double z,
@@ -49,12 +51,23 @@ public abstract class EntityRenderDispatcherMixin {
                                                        CallbackInfo ci) {
         try {
             if (!(entity instanceof Player player)) return;
-            if (!ClientWuWeiData.isDisguised(player.getUUID())) return;
+            boolean disguised = ClientWuWeiData.isDisguised(player.getUUID());
+            // ⭐ 诊断：证明本 Hook 确实在跑（同时给出"客户端是否已知该玩家伪装"）
+            if (!tinkersnewlife$hookLogged) {
+                tinkersnewlife$hookLogged = true;
+                TinkersNewlife.LOGGER.info("[WuWei] 渲染 Hook 已生效（EntityRenderDispatcher.render HEAD）：玩家={} 客户端已知伪装={}",
+                        player.getName().getString(), disguised);
+            }
+            if (!disguised) return;
             // 配置开关（默认开）：与 YSM 等模组冲突时可关闭本替换
             if (!com.mofengbaizhi.tinkersnewlife.config.ModConfig.WUWEI_DISGUISE_RENDER.get()) return;
 
             Entity proxy = ClientWuWeiData.getOrCreateProxy(player.getUUID(), player);
-            if (!(proxy instanceof LivingEntity proxyLiving)) return;   // 代理不可用 → 交回原渲染
+            if (!(proxy instanceof LivingEntity proxyLiving)) {   // 代理不可用 → 交回原渲染
+                TinkersNewlife.LOGGER.warn("[WuWei] 伪装代理创建失败（玩家={} 形态={}），已回退原渲染",
+                        player.getName().getString(), ClientWuWeiData.getDisguise(player.getUUID()));
+                return;
+            }
 
             EntityRenderDispatcher dispatcher = (EntityRenderDispatcher) (Object) this;
             EntityRenderer<? super Entity> renderer = dispatcher.getRenderer(proxy);
