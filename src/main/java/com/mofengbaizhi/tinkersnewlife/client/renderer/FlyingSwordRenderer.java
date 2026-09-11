@@ -20,6 +20,16 @@ public class FlyingSwordRenderer extends EntityRenderer<FlyingSwordEntity> {
         super(context);
     }
 
+    /**
+     * 永远渲染（参考 SakuraTinker 的 CelestialBladeEntityRenderer 做法）：
+     * 拖尾最长 30 格，若实体被视锥剔除，整条光管会突然消失；恒真可保证光管完整。
+     */
+    @Override
+    public boolean shouldRender(FlyingSwordEntity entity, net.minecraft.client.renderer.culling.Frustum frustum,
+                               double camX, double camY, double camZ) {
+        return true;
+    }
+
     @Override
     public void render(FlyingSwordEntity entity, float entityYaw, float partialTicks,
                        com.mojang.blaze3d.vertex.PoseStack poseStack,
