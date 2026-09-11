@@ -439,9 +439,14 @@ public final class WuWeiHandler {
         setAttr(player, Attributes.ARMOR, stats[1]);
         setAttr(player, Attributes.ARMOR_TOUGHNESS, stats[2]);
         setAttr(player, Attributes.MOVEMENT_SPEED, stats[3]);
-        // ⭐ 攻击力属性这里<b>故意不写</b>：变形后手持工具必须按工具自身伤害结算
-        //   （属性若被改成生物攻击力，工具伤害会被叠加污染）。生物攻击力 d.attack 只在
-        //   「空手攻击」时由 onAttack 结算，工具攻击走原版流程。
+        // ⭐ 攻击力属性按「谁被转变」区分（需求 B）：
+        //   - 自我转变（forced=false）：**不写** AD。手持工具按工具自身伤害结算（工具正常可用），
+        //     空手时由 onAttack 按生物攻击力 d.attack 结算；
+        //   - 被他人转变（forced=true，反转外放惩罚）：**直接写** AD = 生物攻击力，
+        //     于是工具/空手全部按生物数值算，攻击完全走原版流程。
+        if (forced) {
+            setAttr(player, Attributes.ATTACK_DAMAGE, stats[4]);
+        }
         TRANSFORMS.put(player.getUUID(), d);
         // 持续术式：变形状态写入玩家持久数据（登出保留、重进自动恢复）
         saveMorphNbt(player, d);
@@ -734,6 +739,12 @@ public final class WuWeiHandler {
             return;
         }
 
+        // ⭐ 被他人转变（反转外放惩罚）：AD 属性已被直接写成生物攻击力，
+        //    所以这里**完全不拦截**——工具/空手全部按原版流程 + 生物攻击力结算。
+        if (d.forcedByOther) {
+            return;
+        }
+
         // ⭐ 手持带攻击力加成的物品 → 走原版流程（工具正常可用）
         ItemStack held = player.getMainHandItem();
         boolean weapon = !held.isEmpty()
@@ -851,7 +862,11 @@ public final class WuWeiHandler {
         setAttr(player, Attributes.ARMOR, d.armor);
         setAttr(player, Attributes.ARMOR_TOUGHNESS, d.toughness);
         setAttr(player, Attributes.MOVEMENT_SPEED, d.speed);
-        // 攻击力属性保持原值（见 onAttack 注释）
+        // 攻击力属性：仅「被他人转变」时持续写成生物攻击力（防装备/药水覆盖）；
+        // 自我转变保持玩家原值，空手伤害由 onAttack 结算、工具走原版。
+        if (d.forcedByOther) {
+            setAttr(player, Attributes.ATTACK_DAMAGE, d.attack);
+        }
         return false;
     }
 
