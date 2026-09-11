@@ -84,15 +84,10 @@ public class FlyingSwordFootEntity extends Entity {
             return;
         }
 
-        // 检查是否还装备着飞剑
-        boolean hasFlyingSword = false;
-        var curios = top.theillusivec4.curios.api.CuriosApi.getCuriosInventory(owner).resolve();
-        if (curios.isPresent()) {
-            var slotResult = curios.get().findFirstCurio(stack -> stack.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.FlyingSwordItem);
-            if (slotResult.isPresent()) {
-                hasFlyingSword = true;
-            }
-        }
+        // 检查飞剑是否仍**装备在脚部饰品位**（严格判定：手持 / 其他饰品槽都不算）
+        boolean hasFlyingSword =
+                com.mofengbaizhi.tinkersnewlife.content.handler.FlyingSwordCuriosHandler
+                        .hasFlyingSwordInFeet(owner);
         if (!hasFlyingSword) {
             this.discard();
             return;
