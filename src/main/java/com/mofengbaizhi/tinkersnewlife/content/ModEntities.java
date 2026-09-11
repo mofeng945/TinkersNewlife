@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.content;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.entity.BloodNovaEntity;
 import com.mofengbaizhi.tinkersnewlife.content.entity.DomainVisualEntity;
+import com.mofengbaizhi.tinkersnewlife.content.entity.RitualBeamEntity;
 import com.mofengbaizhi.tinkersnewlife.content.entity.DreadsteelSlashEntity;
 import com.mofengbaizhi.tinkersnewlife.content.entity.FlameArrowEntity;
 import com.mofengbaizhi.tinkersnewlife.content.entity.FlyingSwordEntity;
@@ -77,6 +78,15 @@ public class ModEntities {
                         .build(TinkersNewlife.MOD_ID + ":domain_visual")
         );
 
+    /** 咒力核心仪式·信标光柱（纯视觉，无碰撞；渲染走原版 BeaconRenderer） */
+    public static final RegistryObject<EntityType<RitualBeamEntity>> RITUAL_BEAM =
+        ENTITIES.register("ritual_beam",
+                () -> EntityType.Builder.<RitualBeamEntity>of(RitualBeamEntity::new, MobCategory.MISC)
+                        .sized(0.1f, 0.1f)   // 纯视觉
+                        .clientTrackingRange(64)
+                        .updateInterval(20)
+                        .build(TinkersNewlife.MOD_ID + ":ritual_beam")
+        );
     /** 灶·开 火焰箭（笔直慢速，命中爆炸） */
     public static final RegistryObject<EntityType<FlameArrowEntity>> FLAME_ARROW =
         ENTITIES.register("flame_arrow",

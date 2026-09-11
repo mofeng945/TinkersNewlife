@@ -99,6 +99,8 @@ public class CurseCoreRitualHandler {
     private static final int XP_LEVELS = 50;
     /** 材料方块距量器的水平距离（隔一格） */
     private static final int STRUCTURE_DISTANCE = 2;
+    /** 仪式信标光柱高度（格） */
+    private static final int BEAM_HEIGHT = 48;
 
     /** 进行中的仪式：矿石位置 → 仪式数据 */
     private static final Map<BlockPos, RitualData> RITUALS = new ConcurrentHashMap<>();
@@ -158,8 +160,16 @@ public class CurseCoreRitualHandler {
             sp.displayClientMessage(Component.translatable("message.tinkersnewlife.ritual.no_xp", XP_LEVELS), true);
             return;
         }
-        RITUALS.put(orePos, new RitualData(sp.getUUID(), level.dimension(), orePos,
-                start.gaugePos, start.fluid, start.color, start.material, start.lanterns, start.materialStates));
+        RitualData data = new RitualData(sp.getUUID(), level.dimension(), orePos,
+                start.gaugePos, start.fluid, start.color, start.material, start.lanterns, start.materialStates);
+        // ⭐ 生成信标光柱实体（量器上方，向上 RITUAL_TICKS/20 + 2 格高，活到仪式结束）
+        com.mofengbaizhi.tinkersnewlife.content.entity.RitualBeamEntity beam =
+                new com.mofengbaizhi.tinkersnewlife.content.entity.RitualBeamEntity(
+                        level, orePos.getX() + 0.5, orePos.getY(), orePos.getZ() + 0.5,
+                        start.color, BEAM_HEIGHT, RITUAL_TICKS + 10);
+        level.addFreshEntity(beam);
+        data.beamUuid = beam.getUUID();
+        RITUALS.put(orePos, data);
     }
 
     /** 结构 + 流体 + 材料校验；不满足返回 null（静默） */
@@ -256,22 +266,15 @@ public class CurseCoreRitualHandler {
 
             // ⭐ 完成：消耗流体 + 经验，生成咒力核心
             RITUALS.remove(orePos);
+            discardBeam(level, data);
             complete(server, level, orePos, data);
         }
     }
 
     /** 仪式粒子：量器按流体颜色发射信标光束 + 四灯笼向矿石发射材质破碎粒子连线 */
     private static void spawnParticles(ServerLevel level, BlockPos orePos, RitualData data) {
-        // 信标光束：量器上方垂直彩色光柱
-        int r = (data.color >> 16) & 0xFF;
-        int g = (data.color >> 8) & 0xFF;
-        int b = data.color & 0xFF;
-        double bx = orePos.getX() + 0.5;
-        double bz = orePos.getZ() + 0.5;
-        for (int i = 0; i < 14; i++) {
-            double y = data.gaugePos.getY() + 1 + i * 0.8;
-            level.sendParticles(ParticleTypes.ENTITY_EFFECT, bx, y, bz, 1, r / 255f, g / 255f, b / 255f, 1.0f);
-        }
+        // ⭐ 信标光束改由 RitualBeamEntity + 原版 BeaconRenderer 渲染（真正的信标光柱），
+        //    不再用 ENTITY_EFFECT 粒子堆——那种看起来是一串彩色泡泡而不是光柱。
         // 灯笼 → 矿石连线：材质破碎粒子（密度稍大：每灯笼每 tick 5 粒）
         Vec3 oreCenter = new Vec3(orePos.getX() + 0.5, orePos.getY() + 1.3, orePos.getZ() + 0.5);
         for (int li = 0; li < data.lanterns.size(); li++) {
@@ -418,6 +421,8 @@ public class CurseCoreRitualHandler {
         final List<BlockPos> lanterns;
         final List<BlockState> materialStates;
         int ticksLeft;
+        /** 信标光柱实体 UUID（仪式结束/中断时移除） */
+        UUID beamUuid;
 
         RitualData(UUID playerId, ResourceKey<Level> dimension, BlockPos orePos,
                    BlockPos gaugePos, Fluid fluid, int color, IMaterial material,
@@ -432,5 +437,13 @@ public class CurseCoreRitualHandler {
             this.materialStates = materialStates;
             this.ticksLeft = RITUAL_TICKS;
         }
+    }
+
+    /** 移除仪式信标光柱 */
+    private static void discardBeam(ServerLevel level, RitualData data) {
+        if (data.beamUuid == null) return;
+        net.minecraft.world.entity.Entity beam = level.getEntity(data.beamUuid);
+        if (beam != null) beam.discard();
+        data.beamUuid = null;
     }
 }
