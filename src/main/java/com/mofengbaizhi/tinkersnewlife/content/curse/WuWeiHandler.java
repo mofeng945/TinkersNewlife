@@ -439,7 +439,9 @@ public final class WuWeiHandler {
         setAttr(player, Attributes.ARMOR, stats[1]);
         setAttr(player, Attributes.ARMOR_TOUGHNESS, stats[2]);
         setAttr(player, Attributes.MOVEMENT_SPEED, stats[3]);
-        setAttr(player, Attributes.ATTACK_DAMAGE, stats[4]);
+        // ⭐ 攻击力属性这里<b>故意不写</b>：变形后手持工具必须按工具自身伤害结算
+        //   （属性若被改成生物攻击力，工具伤害会被叠加污染）。生物攻击力 d.attack 只在
+        //   「空手攻击」时由 onAttack 结算，工具攻击走原版流程。
         TRANSFORMS.put(player.getUUID(), d);
         // 持续术式：变形状态写入玩家持久数据（登出保留、重进自动恢复）
         saveMorphNbt(player, d);
@@ -705,7 +707,17 @@ public final class WuWeiHandler {
     //  攻击 / 工具拦截（变形玩家）
     // ============================================================
 
-    /** 变形玩家攻击：取消默认攻击，改为按生物攻击力造成伤害（玩家本体仍是攻击者） */
+    /**
+     * 变形玩家攻击：
+     * <ul>
+     *   <li><b>手持带攻击力的武器/工具</b>（含匠魂工具、剑、斧……）→ <b>完全不拦截</b>，
+     *       交给原版攻击流程：工具自身伤害、附魔、匠魂特性、暴击、冷却全部照常生效；</li>
+     *   <li><b>空手（或手持无攻击力加成的物品）</b>→ 拦截默认攻击，按<b>该生物的攻击力</b>结算。
+     *       原版空手基伤是 1.0，这里把它替换成生物攻击力，力量药水等额外加成仍会被保留。</li>
+     * </ul>
+     * 注意：变形期间<b>不再</b>修改玩家的 ATTACK_DAMAGE 属性（见 {@code enterForm} 注释），
+     * 否则工具伤害会被生物攻击力叠加污染。
+     */
     @SubscribeEvent
     public static void onAttack(AttackEntityEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
@@ -721,8 +733,20 @@ public final class WuWeiHandler {
             event.setCanceled(true);
             return;
         }
+
+        // ⭐ 手持带攻击力加成的物品 → 走原版流程（工具正常可用）
+        ItemStack held = player.getMainHandItem();
+        boolean weapon = !held.isEmpty()
+                && held.getAttributeModifiers(net.minecraft.world.entity.EquipmentSlot.MAINHAND)
+                        .containsKey(Attributes.ATTACK_DAMAGE);
+        if (weapon) {
+            return;   // 不拦截：工具自己的伤害/附魔/特性全部正常
+        }
+
+        // 空手：把原版空手基伤 1.0 换成生物攻击力（力量药水等已计入属性，一并保留）
+        double fistBase = player.getAttributeValue(Attributes.ATTACK_DAMAGE) - 1.0;
         event.setCanceled(true);
-        float dmg = d.attack;
+        float dmg = (float) Math.max(0.0, d.attack + fistBase);
         dmg = (float) com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper
                 .applyCurseCoreTraits(player, living, dmg);
         living.invulnerableTime = 0;
@@ -827,7 +851,7 @@ public final class WuWeiHandler {
         setAttr(player, Attributes.ARMOR, d.armor);
         setAttr(player, Attributes.ARMOR_TOUGHNESS, d.toughness);
         setAttr(player, Attributes.MOVEMENT_SPEED, d.speed);
-        setAttr(player, Attributes.ATTACK_DAMAGE, d.attack);
+        // 攻击力属性保持原值（见 onAttack 注释）
         return false;
     }
 

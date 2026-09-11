@@ -39,16 +39,39 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = EntityRenderDispatcher.class, priority = 1500)
 public abstract class EntityRenderDispatcherMixin {
 
-    /** 只记录一次"已生效"日志，便于排查 */
-    private static boolean tinkersnewlife$logged = false;
+    /** 已打印过"伪装替换成功"日志的玩家（每玩家一条，便于确认 Hook 真的在跑） */
+    private static final java.util.Set<java.util.UUID> tinkersnewlife$logged = java.util.concurrent.ConcurrentHashMap.newKeySet();
     /** 诊断用：Hook 是否确实被调用过（只打一次） */
     private static boolean tinkersnewlife$hookLogged = false;
 
+    // ⭐ 两个 HEAD 注入器功能完全相同（都调用 tinkersnewlife$replace）：
+    //   ① 用 MCP 名 render + refmap 解析成 SRG 名；
+    //   ② 直接用 SRG 名 m_114384_ 且 remap=false，完全绕开 refmap。
+    //   原因：曾因手写 refmap 用「点号类名」，而 Mixin 按「斜杠内部名」查表 → 查不到 →
+    //   退回字面量 "render"（生产环境没有这个名字）→ 注入静默失败（require=0），
+    //   表现就是伪装渲染完全不生效、日志里连 Hook 行都没有。现在两个名字至少一个能命中；
+    //   万一都命中，也只是多画一次同一个代理模型，视觉无差别。
     @Inject(method = "render", at = @At("HEAD"), cancellable = true)
     private void tinkersnewlife$replaceDisguisedPlayer(Entity entity, double x, double y, double z,
                                                        float rotationYaw, float partialTicks,
                                                        PoseStack poseStack, MultiBufferSource buffer, int packedLight,
                                                        CallbackInfo ci) {
+        tinkersnewlife$replace(entity, x, y, z, rotationYaw, partialTicks, poseStack, buffer, packedLight, ci);
+    }
+
+    /** 兜底注入：直连 SRG 方法名，绕开 refmap（见上） */
+    @Inject(method = "m_114384_", at = @At("HEAD"), cancellable = true, remap = false)
+    private void tinkersnewlife$replaceDisguisedPlayerSrg(Entity entity, double x, double y, double z,
+                                                          float rotationYaw, float partialTicks,
+                                                          PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+                                                          CallbackInfo ci) {
+        tinkersnewlife$replace(entity, x, y, z, rotationYaw, partialTicks, poseStack, buffer, packedLight, ci);
+    }
+
+    private void tinkersnewlife$replace(Entity entity, double x, double y, double z,
+                                        float rotationYaw, float partialTicks,
+                                        PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+                                        CallbackInfo ci) {
         try {
             if (!(entity instanceof Player player)) return;
             boolean disguised = ClientWuWeiData.isDisguised(player.getUUID());
@@ -81,9 +104,9 @@ public abstract class EntityRenderDispatcherMixin {
             renderer.render(proxy, rotationYaw, partialTicks, poseStack, buffer, packedLight);
             poseStack.popPose();
 
-            if (!tinkersnewlife$logged) {
-                tinkersnewlife$logged = true;
-                TinkersNewlife.LOGGER.info("[WuWei] 伪装渲染替换已生效（EntityRenderDispatcher Mixin，兼容 YSM）");
+            if (tinkersnewlife$logged.add(player.getUUID())) {
+                TinkersNewlife.LOGGER.info("[WuWei] 伪装渲染替换成功：玩家={} 形态={}",
+                        player.getName().getString(), proxy.getType().getDescription().getString());
             }
             // 取消原渲染：原版玩家模型与 YSM 模型都不再绘制
             ci.cancel();

@@ -46,6 +46,13 @@ public final class ClientWuWeiData {
         if (changed) {
             TinkersNewlife.LOGGER.info("[WuWei] 客户端伪装同步: {} -> {}",
                     playerId, empty ? "解除" : formId);
+            // 本地玩家自己变形时给一条动作栏提示：第一人称看不到自己，必须切第三人称
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            if (!empty && mc.player != null && mc.player.getUUID().equals(playerId)) {
+                mc.player.displayClientMessage(
+                        net.minecraft.network.chat.Component.translatable(
+                                "message.tinkersnewlife.wu_wei.disguise_hint"), true);
+            }
         }
     }
 
