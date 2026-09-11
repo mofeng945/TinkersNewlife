@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * 强化·灵魂修复：服务端每 20 tick 扫描<b>玩家</b>主手/副手/盔甲与<b>其诡厄仆从</b>的
+ * 强化·灵魂修复：服务端每 20 tick 扫描<b>玩家</b>主手/副手/盔甲/<b>饰品栏（Curios）</b>与<b>其诡厄仆从</b>的
  * 匠魂装备；若带 {@code soul_repair} 强化，则消耗 {@code max(1, 6-等级)} 点灵魂能量
  * 恢复 1 点耐久，并有 {@code 5%×等级} 概率额外恢复 1 点耐久。
  * <ul>
@@ -84,6 +84,8 @@ public class SoulRepairHandler {
 
     /** 通用修复：扣 payer 灵魂，修 target 的候选装备 */
     private static void repairEquipment(ServerPlayer payer, List<ItemStack> candidates) {
+        List<ItemStack> curioList = curioStacks(payer);
+        boolean repairedCurio = false;
         for (ItemStack stack : candidates) {
             if (stack.isEmpty()) continue;
             ToolStack tool = ToolHelper.getToolStack(stack);
@@ -100,15 +102,62 @@ public class SoulRepairHandler {
             int newDmg = Math.max(0, tool.getDamage() - repair);
             tool.setDamage(newDmg);
             tool.updateStack(stack);
+            // 身份比较：确认这件是不是饰品栏里的那把（是则稍后回写同步）
+            for (ItemStack curio : curioList) {
+                if (curio == stack) { repairedCurio = true; break; }
+            }
+        }
+        if (repairedCurio) {
+            resyncCurios(payer);
         }
     }
 
-    /** 待修复装备候选：主手/副手 + 4 个盔甲槽（护甲也可自动修复） */
+    /** 待修复装备候选：主手/副手 + 4 个盔甲槽 + <b>饰品栏（Curios）全部槽位</b> */
     private static List<ItemStack> repairCandidates(LivingEntity wearer) {
-        List<ItemStack> list = new ArrayList<>(6);
+        List<ItemStack> list = new ArrayList<>(12);
         list.add(wearer.getMainHandItem());
         list.add(wearer.getOffhandItem());
         wearer.getArmorSlots().forEach(list::add);
+        // ⭐ 饰品栏：灵魂修复在饰品槽里也要生效（脚部飞剑、饰品位上的匠魂工具等）
+        list.addAll(curioStacks(wearer));
         return list;
+    }
+
+    /** 某个实体饰品栏里的所有物品（没有 Curios / 取不到时返回空表） */
+    private static List<ItemStack> curioStacks(LivingEntity wearer) {
+        List<ItemStack> list = new ArrayList<>(4);
+        try {
+            var curios = top.theillusivec4.curios.api.CuriosApi.getCuriosInventory(wearer).resolve();
+            if (curios.isEmpty()) return list;
+            for (var handler : curios.get().getCurios().values()) {
+                if (handler == null) continue;
+                var stacks = handler.getStacks();
+                for (int i = 0; i < stacks.getSlots(); i++) {
+                    ItemStack stack = stacks.getStackInSlot(i);
+                    if (!stack.isEmpty()) list.add(stack);
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return list;
+    }
+
+    /**
+     * 修复完把饰品栏槽位回写一遍：Curios 只有在 {@code setStackInSlot} 时才会标记 dirty 并同步给客户端，
+     * 直接改 ItemStack 的 NBT 客户端看不到耐久条变化。
+     */
+    private static void resyncCurios(LivingEntity wearer) {
+        try {
+            var curios = top.theillusivec4.curios.api.CuriosApi.getCuriosInventory(wearer).resolve();
+            if (curios.isEmpty()) return;
+            for (var handler : curios.get().getCurios().values()) {
+                if (handler == null) continue;
+                var stacks = handler.getStacks();
+                for (int i = 0; i < stacks.getSlots(); i++) {
+                    stacks.setStackInSlot(i, stacks.getStackInSlot(i));
+                }
+            }
+        } catch (Throwable ignored) {
+        }
     }
 }
