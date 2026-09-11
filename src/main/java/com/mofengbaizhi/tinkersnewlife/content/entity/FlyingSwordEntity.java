@@ -176,8 +176,7 @@ public class FlyingSwordEntity extends Projectile {
         super.tick();
 
         if (this.level().isClientSide) {
-            spawnTrailParticles();
-            return;
+            return;   // 客户端只负责渲染（流光拖尾在 FlyingSwordTrailRenderer 里绘制）
         }
 
         if (this.getOwner() == null || !this.getOwner().isAlive()) {
@@ -359,52 +358,14 @@ public class FlyingSwordEntity extends Projectile {
         this.guidance.reset();   // 换目标 → 制导状态重置（从新目标的几何关系重新起算）
     }
 
+    /**
+     * 拖尾粒子 —— <b>已废弃</b>：现在由客户端的「流光拖尾」（{@code FlyingSwordTrailRenderer}，
+     * 动态条带 + 自定义流光着色器）承担，粒子会与光带叠在一起显得脏，故停用。
+     * 颜色逻辑（{@link #getTrailColor()} + 模式增益）已原样搬到流光拖尾里。
+     */
+    @Deprecated
     private void spawnTrailParticles() {
-        Vec3 motion = this.getDeltaMovement();
-        if (motion.lengthSqr() < 0.001) return;
-
-        for (int i = 0; i < 4; i++) {
-            double offset = 0.1 + i * 0.2;
-            Vec3 pos = this.position().subtract(motion.scale(offset));
-            double spread = 0.08;
-            double x = pos.x + (this.random.nextDouble() - 0.5) * spread;
-            double y = pos.y + (this.random.nextDouble() - 0.5) * spread;
-            double z = pos.z + (this.random.nextDouble() - 0.5) * spread;
-
-            Vector3f color;
-            if (isChaseMode()) {
-                color = new Vector3f(
-                        Math.min(1.0f, trailColor.x() + 0.5f),
-                        trailColor.y() * 0.4f,
-                        trailColor.z() * 0.3f
-                );
-            } else {
-                color = new Vector3f(
-                        Math.min(1.0f, trailColor.x() * 1.3f),
-                        Math.min(1.0f, trailColor.y() * 1.3f),
-                        Math.min(1.0f, trailColor.z() * 1.3f)
-                );
-            }
-
-            DustParticleOptions dust = new DustParticleOptions(color, 1.5f);
-            float vx = (float) motion.x * 0.12f;
-            float vy = (float) motion.y * 0.12f;
-            float vz = (float) motion.z * 0.12f;
-            this.level().addParticle(dust, x, y, z, vx, vy, vz);
-        }
-
-        if (this.tickCount % 2 == 0) {
-            Vec3 pos = this.position();
-            Vector3f brightColor = isChaseMode() ?
-                    new Vector3f(1.0f, 0.3f, 0.1f) :
-                    new Vector3f(
-                            Math.min(1.0f, trailColor.x() + 0.5f),
-                            Math.min(1.0f, trailColor.y() + 0.5f),
-                            Math.min(1.0f, trailColor.z() + 0.5f)
-                    );
-            DustParticleOptions dust = new DustParticleOptions(brightColor, 2.0f);
-            this.level().addParticle(dust, pos.x, pos.y, pos.z, 0, 0, 0);
-        }
+        // 保留方法体仅供查阅配色逻辑；不再调用
     }
 
     @Override

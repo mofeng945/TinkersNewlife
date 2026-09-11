@@ -32,10 +32,10 @@ void main() {
 
     // ---- 头部更亮、尾部收束（u=0 头部）----
     float head = 1.0 - u;
-    float intensity = 1.0 + flow * 2.6 * (0.35 + head);
+    float intensity = 1.35 + flow * 3.4 * (0.45 + head);
 
     vec3 rgb = tex.rgb * vertexColor.rgb * intensity;
-    float alpha = tex.a * vertexColor.a * (1.0 - u * 0.5);
+    float alpha = tex.a * vertexColor.a * (1.0 - u * 0.25);
 
     fragColor = vec4(rgb, alpha) * ColorModulator;
 }

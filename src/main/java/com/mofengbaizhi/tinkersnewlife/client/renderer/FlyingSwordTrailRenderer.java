@@ -63,17 +63,17 @@ public final class FlyingSwordTrailRenderer {
             new ResourceLocation(TinkersNewlife.MOD_ID, "textures/entity/flying_sword_trail.png");
 
     /** 单把飞剑最多保留的历史点数 */
-    private static final int MAX_POINTS = 40;
+    private static final int MAX_POINTS = 72;
     /** 相邻点最小间距（格） */
-    private static final double MIN_STEP = 0.07;
+    private static final double MIN_STEP = 0.05;
     /** 拖尾最大总长度（格） */
-    private static final double MAX_LENGTH = 16.0;
+    private static final double MAX_LENGTH = 30.0;
     /** 轨迹点最大存活 tick：悬停时拖尾会自动收掉，不会僵在半空 */
-    private static final int MAX_POINT_AGE = 12;
+    private static final int MAX_POINT_AGE = 18;
     /** 飞剑消失多久后清掉它的拖尾数据（tick） */
-    private static final int DROP_AFTER = 40;
+    private static final int DROP_AFTER = 60;
     /** 条带半宽（格） */
-    private static final double HALF_WIDTH = 0.20;
+    private static final double HALF_WIDTH = 0.34;
 
     private static final Map<Integer, Trail> TRAILS = new HashMap<>();
 
@@ -188,14 +188,22 @@ public final class FlyingSwordTrailRenderer {
 
             Vector3f c = sword.getTrailColor();
             if (c != null) {
-                if (sword.isChaseMode()) {                    // 追击模式偏炽红，与粒子一致
-                    trail.r = Math.min(1.0f, c.x() + 0.5f);
-                    trail.g = c.y() * 0.4f;
-                    trail.b = c.z() * 0.3f;
+                // 与旧粒子完全一致的配色逻辑：
+                //   尾部 = 旧"拖尾尘埃"色，头部 = 旧"每 2 tick 那颗亮尘"色，沿拖尾插值
+                if (sword.isChaseMode()) {
+                    trail.baseR = Math.min(1.0f, c.x() + 0.5f);
+                    trail.baseG = c.y() * 0.4f;
+                    trail.baseB = c.z() * 0.3f;
+                    trail.headR = 1.0f;
+                    trail.headG = 0.3f;
+                    trail.headB = 0.1f;
                 } else {
-                    trail.r = Math.min(1.0f, c.x() * 1.3f);
-                    trail.g = Math.min(1.0f, c.y() * 1.3f);
-                    trail.b = Math.min(1.0f, c.z() * 1.3f);
+                    trail.baseR = Math.min(1.0f, c.x() * 1.3f);
+                    trail.baseG = Math.min(1.0f, c.y() * 1.3f);
+                    trail.baseB = Math.min(1.0f, c.z() * 1.3f);
+                    trail.headR = Math.min(1.0f, c.x() + 0.5f);
+                    trail.headG = Math.min(1.0f, c.y() + 0.5f);
+                    trail.headB = Math.min(1.0f, c.z() + 0.5f);
                 }
             }
 
@@ -293,11 +301,13 @@ public final class FlyingSwordTrailRenderer {
             if (side.lengthSqr() < 1.0E-8) continue;
             side = side.normalize().scale(halfWidth(t));
 
-            int alpha = (int) (255.0f * Math.pow(1.0 - t, 1.5));
+            int alpha = (int) (255.0f * Math.pow(1.0 - t, 0.85));   // 尾部长距离渐隐，更明显
             if (alpha <= 2) continue;
-            int r = (int) (trail.r * 255.0f);
-            int g = (int) (trail.g * 255.0f);
-            int bl = (int) (trail.b * 255.0f);
+            // 头部用旧"亮尘"色、尾部用旧"拖尾尘埃"色，中间插值
+            float k = 1.0f - t;
+            int r = (int) (Math.min(1.0f, trail.baseR + (trail.headR - trail.baseR) * k) * 255.0f);
+            int g = (int) (Math.min(1.0f, trail.baseG + (trail.headG - trail.baseG) * k) * 255.0f);
+            int bl = (int) (Math.min(1.0f, trail.baseB + (trail.headB - trail.baseB) * k) * 255.0f);
 
             // 世界坐标 → 实体本地坐标
             float x = (float) (p.x - origin.x + side.x);
@@ -314,9 +324,9 @@ public final class FlyingSwordTrailRenderer {
         return emitted;
     }
 
-    /** 沿拖尾收窄：剑身处最宽，向尾部收细 */
+    /** 沿拖尾收窄：剑身处最宽，向尾部缓慢收细（更宽更显眼） */
     private static double halfWidth(float t) {
-        return HALF_WIDTH * (1.0 - 0.72 * t);
+        return HALF_WIDTH * (1.0 - 0.55 * t);
     }
 
     private record Point(Vec3 pos, long tick) {}
@@ -324,6 +334,8 @@ public final class FlyingSwordTrailRenderer {
     private static final class Trail {
         final ArrayDeque<Point> points = new ArrayDeque<>();
         long lastSeenTick;
-        float r = 1.0f, g = 1.0f, b = 1.0f;
+        // 配色（与旧粒子逻辑一致）：base = 拖尾尘埃色，head = 亮尘色
+        float baseR = 1.0f, baseG = 1.0f, baseB = 1.0f;
+        float headR = 1.0f, headG = 1.0f, headB = 1.0f;
     }
 }
