@@ -31,6 +31,10 @@ public final class ModConfig {
     /** 无为转变·伪装渲染替换（客户端）：把变形玩家渲染成目标生物。与 YSM 等接管玩家渲染的模组冲突时可关闭 */
     public static final ConfigValue<Boolean> WUWEI_DISGUISE_RENDER;
 
+    // ==================== 飞剑流光拖尾 ====================
+    /** 飞剑流光拖尾（客户端）：动态条带 + 自写流光着色器 */
+    public static final ConfigValue<Boolean> FLYING_SWORD_TRAIL;
+
     // ==================== 术式/领域缩放系数 ====================
     /** 各术式 modifier id → [damage, cost] 缩放 */
     public static final Map<String, ConfigValue<Double>[]> TECHNIQUE_SCALES = new HashMap<>();
@@ -63,6 +67,13 @@ public final class ModConfig {
                 "Set enable_disguise_render=false if another mod that takes over player rendering",
                 "(e.g. YSM / Yes Steve Model) conflicts with the disguise.");
         WUWEI_DISGUISE_RENDER = b.define("enable_disguise_render", true);
+        b.pop();
+
+        // 飞剑流光拖尾（客户端）
+        b.push("flying_sword").comment(
+                "Client side: dynamic ribbon trail with a custom flowing-light shader for flying swords.",
+                "Set enable_trail=false to disable the ribbon (the old dust particles stay).");
+        FLYING_SWORD_TRAIL = b.define("enable_trail", true);
         b.pop();
 
         // 术式系数：每术式 damage / cost 缩放（1.0 = 原生）

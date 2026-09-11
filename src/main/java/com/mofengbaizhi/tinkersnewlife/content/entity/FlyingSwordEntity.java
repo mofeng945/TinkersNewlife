@@ -121,6 +121,9 @@ public class FlyingSwordEntity extends Projectile {
     public void setLaunchDirection(Vec3 dir) { this.launchDirection = dir; }
     public Vec3 getLaunchDirection() { return this.launchDirection; }
 
+    /** 拖尾配色（客户端流光拖尾用，与粒子同色系） */
+    public Vector3f getTrailColor() { return this.trailColor; }
+
     public void findAndSetTarget() {
         if (this.level().isClientSide) return;
         LivingEntity owner = (LivingEntity) this.getOwner();

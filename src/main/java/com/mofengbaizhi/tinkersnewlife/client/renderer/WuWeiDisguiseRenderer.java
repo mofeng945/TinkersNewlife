@@ -69,6 +69,19 @@ public final class WuWeiDisguiseRenderer {
         ClientWuWeiData.clearProxy(p.getUUID());
     }
 
+    /**
+     * 伪装期间隐藏第一人称的手（含 YSM 的自模型/手臂）：
+     * 本地玩家已经变成生物了，第一人称不该再看到人类的手。
+     */
+    @SubscribeEvent
+    public static void onRenderHand(net.minecraftforge.client.event.RenderHandEvent event) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return;
+        if (ClientWuWeiData.isDisguised(mc.player.getUUID())) {
+            event.setCanceled(true);
+        }
+    }
+
     /** 渲染玩家前：若处于伪装，取消默认渲染并改绘目标生物代理 */
     @SubscribeEvent
     public static void onRenderPlayerPre(RenderPlayerEvent.Pre event) {
