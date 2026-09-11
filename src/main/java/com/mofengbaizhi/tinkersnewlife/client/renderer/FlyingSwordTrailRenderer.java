@@ -11,7 +11,6 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
@@ -20,11 +19,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.joml.Matrix4f;
@@ -42,24 +39,24 @@ import java.util.Map;
  *
  * <h3>原理</h3>
  * <ol>
- *   <li><b>记录轨迹点</b>：每渲染帧读取飞剑的部分插值位置（{@code getPosition(partialTick)}），
- *       压入该飞剑的环形队列；三重裁剪保证性能与观感：最小步长（慢速不抖动）、
- *       最大点数、最大总长度、最大存活 tick（悬停时拖尾会自动收掉）。</li>
- *   <li><b>生成条带网格</b>：把历史点向两侧扩展成有宽度的顶点对，按 TRIANGLE_STRIP 提交。
- *       侧向 = {@code 方向 × (相机 - 点)}，即「面向相机的条带」——任何角度看都有厚度，
- *       不会像固定上方向的条带那样侧视消失。宽度沿拖尾收窄、透明度头实尾虚。</li>
- *   <li><b>流光着色器</b>：顶点 U 坐标沿拖尾 0→1，片元用多层正弦
- *       {@code sin(u·f − t·s)} 叠加出流动光带（见 {@code flying_sword_trail.fsh}），
- *       时间由每帧写入的 {@code TrailTime} uniform 驱动。</li>
- *   <li><b>死亡淡出</b>：飞剑消失后拖尾不立刻消失，而是在 {@link #FADE_TICKS} tick 内淡出，
- *       避免"啪一下没了"。</li>
+ *   <li><b>记录轨迹点</b>：每渲染帧取飞剑的部分插值位置（{@code getPosition(partialTick)}）压入环形队列；
+ *       三重裁剪：最小步长（慢速不抖动）、最大点数、最大总长度、点最大存活 tick（悬停时拖尾自动收掉）。</li>
+ *   <li><b>条带网格</b>：历史点向两侧扩展成顶点对，TRIANGLE_STRIP 提交；侧向量取
+ *       {@code 方向 × (相机 − 点)}，即<b>面向相机的条带</b>——任何视角都有厚度，不会侧视消失。</li>
+ *   <li><b>流光着色器</b>：U 沿拖尾 0→1，片元用多层正弦 {@code sin(u·f − t·s)} 叠加出流动光带
+ *       （见 {@code flying_sword_trail.fsh}），时间由每帧写入的 {@code TrailTime} uniform 驱动。</li>
  * </ol>
  *
+ * <h3>为什么画在实体渲染器里（而不是 RenderLevelStageEvent）</h3>
+ * 实体渲染时 poseStack 的坐标契约是确定的：调度器已经 {@code translate(x,y,z)}（相机相对+插值位置），
+ * 因此「世界坐标 − 实体插值位置 = 本地坐标」这一套与剑身模型本身完全一致，不会有
+ * RenderLevelStageEvent 那种「事件里的 poseStack 是否已含相机平移」的歧义。条带与剑身同批次提交，
+ * 由原版在实体渲染结束时统一 endBatch。
+ *
  * <h3>安全性</h3>
- * 全程 try/catch；自定义着色器加载失败时自动回退到原版 {@code position_color_tex} 着色器
- * （拖尾仍然可见，只是没有流光），再失败则整段跳过，绝不影响正常游戏。
+ * 全程 try/catch；着色器或渲染类型任何一步失败都只记一条 warn 并整段跳过（保留原版粒子），
+ * 绝不影响正常游戏；资源重载时重建着色器。开关：配置 {@code flying_sword/enable_trail}。
  */
-@Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class FlyingSwordTrailRenderer {
 
     private static final ResourceLocation TRAIL_TEXTURE =
@@ -67,25 +64,23 @@ public final class FlyingSwordTrailRenderer {
 
     /** 单把飞剑最多保留的历史点数 */
     private static final int MAX_POINTS = 40;
-    /** 相邻点最小间距（格）：太小会抖动、太多顶点 */
+    /** 相邻点最小间距（格） */
     private static final double MIN_STEP = 0.07;
     /** 拖尾最大总长度（格） */
     private static final double MAX_LENGTH = 16.0;
-    /** 轨迹点最大存活 tick（超时丢弃：悬停时拖尾自动收掉） */
+    /** 轨迹点最大存活 tick：悬停时拖尾会自动收掉，不会僵在半空 */
     private static final int MAX_POINT_AGE = 12;
-    /** 飞剑消失后拖尾淡出时长（tick） */
-    private static final int FADE_TICKS = 8;
+    /** 飞剑消失多久后清掉它的拖尾数据（tick） */
+    private static final int DROP_AFTER = 40;
     /** 条带半宽（格） */
     private static final double HALF_WIDTH = 0.20;
-    /** 超出该距离的飞剑不记录（格） */
-    private static final double MAX_DIST_FROM_CAMERA = 128.0;
 
-    /** 实体 id → 拖尾 */
     private static final Map<Integer, Trail> TRAILS = new HashMap<>();
 
     private static ShaderInstance trailShader;
     private static boolean shaderFailed = false;
     private static RenderType trailRenderType;
+    private static boolean loggedOnce = false;
 
     private FlyingSwordTrailRenderer() {}
 
@@ -93,7 +88,6 @@ public final class FlyingSwordTrailRenderer {
     //  着色器 / 渲染类型
     // ============================================================
 
-    /** 惰性创建流光着色器；失败则置 shaderFailed 并回退原版着色器 */
     private static ShaderInstance shader() {
         if (shaderFailed) return null;
         if (trailShader == null) {
@@ -106,13 +100,13 @@ public final class FlyingSwordTrailRenderer {
                         DefaultVertexFormat.POSITION_COLOR_TEX);
             } catch (Throwable t) {
                 shaderFailed = true;
-                TinkersNewlife.LOGGER.warn("[飞剑] 流光着色器加载失败，回退原版拖尾着色（无流光）: {}", t.toString());
+                TinkersNewlife.LOGGER.warn("[飞剑] 流光着色器加载失败，拖尾已跳过（仅保留粒子）: {}", t.toString());
             }
         }
         return trailShader;
     }
 
-    /** 自建状态：SRC_ALPHA / ONE 的加色辉光（原版 RenderStateShard 里那些常量是 protected，外部包拿不到） */
+    /** 自建渲染状态：原版 RenderStateShard 里那几个常量是 protected，外部包拿不到 */
     private static final RenderStateShard.TransparencyStateShard TRAIL_TRANSPARENCY =
             new RenderStateShard.TransparencyStateShard("tinkersnewlife_trail_transparency", () -> {
                 RenderSystem.enableBlend();
@@ -148,13 +142,13 @@ public final class FlyingSwordTrailRenderer {
                                 .setDepthTestState(TRAIL_DEPTH_TEST)
                                 .createCompositeState(false));
             } catch (Throwable t) {
-                TinkersNewlife.LOGGER.warn("[飞剑] 拖尾渲染类型创建失败，本次跳过: {}", t.toString());
+                TinkersNewlife.LOGGER.warn("[飞剑] 拖尾渲染类型创建失败，拖尾已跳过: {}", t.toString());
             }
         }
         return trailRenderType;
     }
 
-    /** 资源重载后重建着色器（着色器源码可能在资源包里被改） */
+    /** 资源重载后重建着色器 */
     @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
     public static final class ReloadHandler {
         @SubscribeEvent
@@ -167,7 +161,7 @@ public final class FlyingSwordTrailRenderer {
 
                 @Override
                 protected void apply(Void unused, ResourceManager rm, ProfilerFiller profiler) {
-                    trailShader = null;        // 下一帧用新的资源管理器重建
+                    trailShader = null;
                     shaderFailed = false;
                 }
             });
@@ -175,73 +169,26 @@ public final class FlyingSwordTrailRenderer {
     }
 
     // ============================================================
-    //  每帧：记录 + 绘制
+    //  由 FlyingSwordRenderer 每帧调用
     // ============================================================
 
-    @SubscribeEvent
-    public static void onRenderLevelStage(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) return;
+    /**
+     * 记录轨迹点并绘制条带。必须在实体渲染器<b>最开始</b>调用（poseStack 还没被剑身模型变换污染）。
+     */
+    public static void renderTrail(FlyingSwordEntity sword, PoseStack poseStack, MultiBufferSource buffer,
+                                   float partialTick) {
+        if (!ModConfig.FLYING_SWORD_TRAIL.get()) return;
         try {
-            Minecraft mc = Minecraft.getInstance();
-            if (mc.level == null || mc.player == null) return;
-            if (!ModConfig.FLYING_SWORD_TRAIL.get()) return;
+            long tick = sword.level().getGameTime();
+            Vec3 origin = sword.getPosition(partialTick);     // 本帧实体插值位置 = 本地坐标原点
 
-            long tick = mc.level.getGameTime();
-            float partial = event.getPartialTick();
-            Vec3 cam = event.getCamera().getPosition();
-
-            recordSwords(mc, tick, partial, cam);
-
-            // 着色器没准备好就不画（避免 RenderSystem.setShader(null) 崩渲染线程）
-            ShaderInstance shader = shader();
-            if (shader == null) return;
-            RenderType type = renderType();
-            if (type == null) return;
-            // 向 fsh 写入连续时间（uniform 值会随着色器 apply() 一起上传）
-            try {
-                var uniform = shader.getUniform("TrailTime");
-                if (uniform != null) {
-                    uniform.set((float) (Util.getMillis() / 1000.0));
-                }
-            } catch (Throwable ignored) { }
-
-            MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
-            VertexConsumer consumer = buffers.getBuffer(type);
-            Matrix4f matrix = event.getPoseStack().last().pose();
-
-            Iterator<Map.Entry<Integer, Trail>> it = TRAILS.entrySet().iterator();
-            while (it.hasNext()) {
-                Trail trail = it.next().getValue();
-                int age = (int) (tick - trail.lastSeenTick);
-                if (age > FADE_TICKS || trail.points.size() < 2) {
-                    if (age > FADE_TICKS) it.remove();
-                    continue;
-                }
-                float fade = 1.0f - Math.max(0, age) / (float) FADE_TICKS;   // 消失后淡出
-                buildRibbon(consumer, matrix, trail, cam, tick, fade);
-            }
-            buffers.endBatch(type);
-        } catch (Throwable t) {
-            // 渲染异常绝不影响游戏：清掉缓存，下一帧重来
-            TRAILS.clear();
-            TinkersNewlife.LOGGER.warn("[飞剑] 拖尾渲染异常，已跳过本帧: {}", t.toString());
-        }
-    }
-
-    /** 记录本帧所有飞剑的位置 */
-    private static void recordSwords(Minecraft mc, long tick, float partial, Vec3 cam) {
-        double maxSqr = MAX_DIST_FROM_CAMERA * MAX_DIST_FROM_CAMERA;
-        for (Entity entity : mc.level.entitiesForRendering()) {
-            if (!(entity instanceof FlyingSwordEntity sword)) continue;
-            if (sword.distanceToSqr(cam) > maxSqr) continue;
-
+            // ---- 1) 记录轨迹点 ----
             Trail trail = TRAILS.computeIfAbsent(sword.getId(), id -> new Trail());
             trail.lastSeenTick = tick;
 
-            // 拖尾配色：与粒子一致（追击模式偏炽红，普通模式偏亮）
             Vector3f c = sword.getTrailColor();
             if (c != null) {
-                if (sword.isChaseMode()) {
+                if (sword.isChaseMode()) {                    // 追击模式偏炽红，与粒子一致
                     trail.r = Math.min(1.0f, c.x() + 0.5f);
                     trail.g = c.y() * 0.4f;
                     trail.b = c.z() * 0.3f;
@@ -252,12 +199,39 @@ public final class FlyingSwordTrailRenderer {
                 }
             }
 
-            Vec3 pos = sword.getPosition(partial);
-            Point newest = trail.points.peekFirst();
-            if (newest == null || newest.pos.distanceTo(pos) >= MIN_STEP) {
-                trail.points.addFirst(new Point(pos, tick));
+            Vec3 newest = trail.points.peekFirst() == null ? null : trail.points.peekFirst().pos;
+            if (newest == null || newest.distanceTo(origin) >= MIN_STEP) {
+                trail.points.addFirst(new Point(origin, tick));
             }
             prune(trail, tick);
+            dropStale(tick);
+
+            if (trail.points.size() < 2) return;
+
+            // ---- 2) 绘制条带 ----
+            ShaderInstance shader = shader();
+            if (shader == null) return;
+            RenderType type = renderType();
+            if (type == null) return;
+
+            try {
+                var uniform = shader.getUniform("TrailTime");
+                if (uniform != null) uniform.set((float) (Util.getMillis() / 1000.0));
+            } catch (Throwable ignored) { }
+
+            Matrix4f matrix = new Matrix4f(poseStack.last().pose());   // 复制：后面剑身模型会继续改这个矩阵
+            Vec3 cam = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
+
+            VertexConsumer consumer = buffer.getBuffer(type);
+            int vertices = buildRibbon(consumer, matrix, trail, cam, origin);
+
+            if (!loggedOnce && vertices > 0) {
+                loggedOnce = true;
+                TinkersNewlife.LOGGER.info("[飞剑] 流光拖尾已生效（动态条带 + 自定义流光着色器），本帧 {} 顶点", vertices);
+            }
+        } catch (Throwable t) {
+            TRAILS.clear();
+            TinkersNewlife.LOGGER.warn("[飞剑] 拖尾渲染异常，已跳过: {}", t.toString());
         }
     }
 
@@ -266,35 +240,44 @@ public final class FlyingSwordTrailRenderer {
         while (trail.points.size() > MAX_POINTS) {
             trail.points.removeLast();
         }
-        // 总长度
+        List<Point> snapshot = new ArrayList<>(trail.points);
         double total = 0;
         Point prev = null;
-        Iterator<Point> it = trail.points.iterator();
-        int index = 0;
-        List<Point> snapshot = new ArrayList<>(trail.points);
         for (int i = 0; i < snapshot.size(); i++) {
             Point p = snapshot.get(i);
             if (prev != null) total += prev.pos.distanceTo(p.pos);
             if (total > MAX_LENGTH || tick - p.tick > MAX_POINT_AGE) {
-                // 丢弃该点及之后（更旧）的所有点
                 while (trail.points.size() > i) trail.points.removeLast();
-                break;
+                return;
             }
             prev = p;
-            index++;
         }
     }
 
-    /** 把历史点扩展成面向相机的三角形条带 */
-    private static void buildRibbon(VertexConsumer consumer, Matrix4f matrix, Trail trail,
-                                    Vec3 cam, long tick, float fade) {
-        List<Point> pts = new ArrayList<>(trail.points);   // 0 = 头（剑位置），末尾 = 尾
+    /** 清掉早已消失的飞剑的拖尾数据 */
+    private static void dropStale(long tick) {
+        if (TRAILS.size() <= 1) return;
+        Iterator<Map.Entry<Integer, Trail>> it = TRAILS.entrySet().iterator();
+        while (it.hasNext()) {
+            if (tick - it.next().getValue().lastSeenTick > DROP_AFTER) it.remove();
+        }
+    }
+
+    /**
+     * 把历史点扩展成面向相机的三角形条带。
+     *
+     * @param origin 实体本帧插值位置（世界坐标），用于把世界坐标换算成实体本地坐标
+     * @return 提交的顶点数
+     */
+    private static int buildRibbon(VertexConsumer consumer, Matrix4f matrix, Trail trail, Vec3 cam, Vec3 origin) {
+        List<Point> pts = new ArrayList<>(trail.points);   // 0 = 头（剑位置）→ 末尾 = 尾
         int n = pts.size();
+        int emitted = 0;
         for (int i = 0; i < n; i++) {
             Vec3 p = pts.get(i).pos;
             float t = (float) i / (n - 1);                 // 0 头 → 1 尾
 
-            // 方向：中心差分更稳（首尾退化为单侧差分）
+            // 方向：中心差分（首尾退化为单侧差分）
             Vec3 a = pts.get(Math.max(0, i - 1)).pos;
             Vec3 b = pts.get(Math.min(n - 1, i + 1)).pos;
             Vec3 dir = a.subtract(b);
@@ -304,36 +287,40 @@ public final class FlyingSwordTrailRenderer {
             if (dir.lengthSqr() < 1.0E-8) continue;
             dir = dir.normalize();
 
-            // 面向相机的侧向量：任何角度都有厚度
+            // 面向相机的侧向量：任何角度看都有厚度
             Vec3 side = dir.cross(cam.subtract(p));
             if (side.lengthSqr() < 1.0E-8) side = dir.cross(new Vec3(0, 1, 0));
             if (side.lengthSqr() < 1.0E-8) continue;
             side = side.normalize().scale(halfWidth(t));
 
-            // 尾部渐细渐隐（片元里还会再乘一次 u 衰减）
-            float pointFade = (float) Math.pow(1.0 - t, 1.5);
-            int alpha = (int) (255.0f * fade * pointFade);
+            int alpha = (int) (255.0f * Math.pow(1.0 - t, 1.5));
             if (alpha <= 2) continue;
             int r = (int) (trail.r * 255.0f);
             int g = (int) (trail.g * 255.0f);
             int bl = (int) (trail.b * 255.0f);
 
-            consumer.vertex(matrix, (float) (p.x + side.x), (float) (p.y + side.y), (float) (p.z + side.z))
-                    .color(r, g, bl, alpha).uv(t, 0.0f).endVertex();
-            consumer.vertex(matrix, (float) (p.x - side.x), (float) (p.y - side.y), (float) (p.z - side.z))
-                    .color(r, g, bl, alpha).uv(t, 1.0f).endVertex();
+            // 世界坐标 → 实体本地坐标
+            float x = (float) (p.x - origin.x + side.x);
+            float y = (float) (p.y - origin.y + side.y);
+            float z = (float) (p.z - origin.z + side.z);
+            consumer.vertex(matrix, x, y, z).color(r, g, bl, alpha).uv(t, 0.0f).endVertex();
+
+            x = (float) (p.x - origin.x - side.x);
+            y = (float) (p.y - origin.y - side.y);
+            z = (float) (p.z - origin.z - side.z);
+            consumer.vertex(matrix, x, y, z).color(r, g, bl, alpha).uv(t, 1.0f).endVertex();
+            emitted += 2;
         }
+        return emitted;
     }
 
-    /** 沿拖尾收窄的宽度：剑身处最宽，向尾部线性收细 */
+    /** 沿拖尾收窄：剑身处最宽，向尾部收细 */
     private static double halfWidth(float t) {
         return HALF_WIDTH * (1.0 - 0.72 * t);
     }
 
-    /** 轨迹点：位置 + 记录时的游戏 tick（用于存活时间裁剪） */
     private record Point(Vec3 pos, long tick) {}
 
-    /** 单把飞剑的拖尾状态（飞剑消失后仍保留，用于淡出） */
     private static final class Trail {
         final ArrayDeque<Point> points = new ArrayDeque<>();
         long lastSeenTick;

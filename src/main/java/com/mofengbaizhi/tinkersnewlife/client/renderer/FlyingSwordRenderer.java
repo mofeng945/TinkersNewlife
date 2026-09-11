@@ -24,6 +24,9 @@ public class FlyingSwordRenderer extends EntityRenderer<FlyingSwordEntity> {
     public void render(FlyingSwordEntity entity, float entityYaw, float partialTicks,
                        com.mojang.blaze3d.vertex.PoseStack poseStack,
                        net.minecraft.client.renderer.MultiBufferSource buffer, int packedLight) {
+        // 流光拖尾：必须在最开始调用（此时 poseStack 还是「实体本地坐标系」）
+        FlyingSwordTrailRenderer.renderTrail(entity, poseStack, buffer, partialTicks);
+
         var stack = entity.getItemStack();
         if (stack.isEmpty()) return;
 
