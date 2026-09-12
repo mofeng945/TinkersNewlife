@@ -1,5 +1,5 @@
 {
-  "craftable": true,
-  "hidden": false,
-  "tier": 2
+  "craftable": false,
+  "hidden": true,
+  "tier": 1
 }
