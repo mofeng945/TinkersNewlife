@@ -95,6 +95,34 @@ public final class ConstructTechnique extends BaseTechnique {
         return !(slotContainer instanceof net.minecraft.world.entity.player.Inventory);
     }
 
+    /**
+     * 该目标物品是否该用蓝本。
+     * <p>
+     * 例外：<b>匠魂工具</b>（{@code IModifiable}，含本模组自己的匠魂工具类物品）——它们的"能用"
+     * 完全建立在"物品实现了 IModifiable + 注册了 ToolDefinition"上，蓝本做不到（转发不了 instanceof），
+     * 所以按配置退回"真副本 + 离手即散/容器清除/槽位拒绝"的旧行为，保证拟造工具照常可用。
+     */
+    private static boolean useBlueprintFor(ItemStack target) {
+        if (target == null || target.isEmpty()) return true;
+        try {
+            if (target.getItem() instanceof slimeknights.tconstruct.library.tools.item.IModifiable) {
+                return !com.mofengbaizhi.tinkersnewlife.config.ModConfig.CONSTRUCT_BLUEPRINT_TCON_TOOLS_LEGACY.get();
+            }
+        } catch (Throwable ignored) {
+            // TCon 缺失等异常：照常按蓝本处理
+        }
+        return true;
+    }
+
+    /** 配置：拟造物是否使用「拟造蓝本」代理物品（默认开） */
+    private static boolean blueprintEnabled() {
+        try {
+            return com.mofengbaizhi.tinkersnewlife.config.ModConfig.CONSTRUCT_BLUEPRINT_ENABLED.get();
+        } catch (Throwable t) {
+            return true;
+        }
+    }
+
     /** 配置：容器里的拟造物是否立即清除（不等到期） */
     private static boolean containerInstantPurge() {
         try {
@@ -356,10 +384,20 @@ public final class ConstructTechnique extends BaseTechnique {
         Item item = id == null ? null : ForgeRegistries.ITEMS.getValue(id);
         if (item == null || item == Items.AIR) return;
         // ⭐ 优先用"配方真实产物"作模板：法术卷轴这类产物本身带 NBT，裸 new ItemStack 会变成空壳
-        ItemStack stack = sampleResult(player, item);
-        stack.getOrCreateTag().putLong(KEY_TEMP_UNTIL, player.serverLevel().getGameTime() + TEMP_TICKS);
-        Component original = stack.getHoverName();
-        stack.setHoverName(Component.translatable("item.tinkersnewlife.construct.prefix").append(original));
+        ItemStack template = sampleResult(player, item);
+        long until = player.serverLevel().getGameTime() + TEMP_TICKS;
+        ItemStack stack;
+        if (blueprintEnabled() && useBlueprintFor(template)) {
+            // ⭐ 拟造蓝本：所有拟造物共用同一个物品 id（目标物品与它自己的 NBT 记在栈里），
+            //    因此任何配方/机器/仪式都<b>认不出它</b>——不用再追着每个模组堵自动化。
+            //    物品行为由 ConstructedBlueprintItem 全 API 转发给目标物品实例。
+            stack = com.mofengbaizhi.tinkersnewlife.content.item.ConstructedBlueprintItem.create(template, until);
+        } else {
+            stack = template;
+            stack.getOrCreateTag().putLong(KEY_TEMP_UNTIL, until);
+            Component original = stack.getHoverName();
+            stack.setHoverName(Component.translatable("item.tinkersnewlife.construct.prefix").append(original));
+        }
         boolean added = player.getInventory().add(stack);
         if (!added) {
             net.minecraft.world.entity.item.ItemEntity drop = new net.minecraft.world.entity.item.ItemEntity(
@@ -2029,7 +2067,11 @@ public final class ConstructTechnique extends BaseTechnique {
             // ⭐ 拟造物"用物品生成实体"（假人 / 盔甲架 / 刷怪蛋……）不会走 EntityPlaceEvent，
             //    这里先给玩家附近的实体拍 id 快照，2 tick 后对比出"新增实体"再登记到期时间。
             watchEntitySpawn(level, sp, until);
-            Item item = held.getItem();
+            // ⭐ 蓝本模式下 held 是代理物品：部件身份要用「目标物品」才认得出（否则到期摘不干净）
+            Item item = blueprintEnabled()
+                    ? com.mofengbaizhi.tinkersnewlife.content.item.ConstructedBlueprintItem.targetItem(held)
+                    : held.getItem();
+            if (item == null) item = held.getItem();
             net.minecraft.core.BlockPos pos = event.getPos();
             long now = level.getGameTime();
             PartHost host = findPartHost(level, pos);

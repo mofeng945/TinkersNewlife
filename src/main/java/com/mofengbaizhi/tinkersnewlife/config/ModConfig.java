@@ -47,6 +47,18 @@ public final class ModConfig {
     public static final ConfigValue<List<? extends String>> CONSTRUCT_BLACKLIST;
     // ---- 拟造物防自动化（拟造物只能存在于主人身上）----
     /** 拟造物掉到地上立即消散（静默：只给烟雾/音效，不给文字提示） */
+    /**
+     * 拟造物是否使用「拟造蓝本」代理物品（推荐开）。
+     * 开启后所有拟造物都是同一个物品 id（目标物品记在 NBT 里），因此<b>任何配方/机器都认不出它</b>；
+     * 关闭则退回"目标物品的真副本 + 离手即散/容器清除"的旧行为。
+     */
+    public static final ConfigValue<Boolean> CONSTRUCT_BLUEPRINT_ENABLED;
+    /**
+     * 匠魂工具（IModifiable）是否保持"真副本"而不走蓝本（默认 true）：
+     * 蓝本转发不了 {@code instanceof IModifiable}，匠魂工具会彻底不能用；
+     * 这些物品由"离手即散 / 容器立即清除 / 槽位拒绝"三层防线兜底。
+     */
+    public static final ConfigValue<Boolean> CONSTRUCT_BLUEPRINT_TCON_TOOLS_LEGACY;
     public static final ConfigValue<Boolean> CONSTRUCT_VANISH_ON_DROP;
     /** 容器/机器里的拟造物立即清除（不等到期）——防止被熔炼等自动化配方加工成真材料 */
     public static final ConfigValue<Boolean> CONSTRUCT_CONTAINER_INSTANT_PURGE;
@@ -241,6 +253,8 @@ public final class ModConfig {
         CONSTRUCT_BLACKLIST = b.defineList("blacklist", new java.util.ArrayList<String>(),
                 o -> o instanceof String);
         // ---- 拟造物防自动化 ----
+        CONSTRUCT_BLUEPRINT_ENABLED = b.define("blueprint_enabled", true);
+        CONSTRUCT_BLUEPRINT_TCON_TOOLS_LEGACY = b.define("blueprint_tcon_tools_legacy", true);
         CONSTRUCT_VANISH_ON_DROP = b.define("vanish_on_drop", true);
         CONSTRUCT_CONTAINER_INSTANT_PURGE = b.define("container_instant_purge", true);
         CONSTRUCT_DENY_CONTAINER_SLOTS = b.define("deny_container_slots", true);

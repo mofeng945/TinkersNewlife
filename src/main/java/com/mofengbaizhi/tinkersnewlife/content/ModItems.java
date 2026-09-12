@@ -29,6 +29,19 @@ public class ModItems {
     //  基础材料
     // ============================================================
 
+    // ---- 构筑术式：拟造蓝本（代理物品）----
+    /**
+     * 所有拟造物都用这一个物品 id：目标物品 + 它自己的 NBT 记在栈里，
+     * Item API 全部转发给目标物品实例（见 {@link ConstructedBlueprintItem}）。
+     * 这样任何配方/机器都认不出它 —— 一劳永逸地堵死"拟造物被加工成真材料"。
+     */
+    public static final RegistryObject<Item> CONSTRUCT_BLUEPRINT =
+            ITEMS.register("construct_blueprint", () -> new ConstructedBlueprintItem(new Item.Properties(), false));
+
+    /** 拟造蓝本·可食用变体（原版 {@code isEdible()} 是无参方法、转发不到，只能用另一个物品 id 区分） */
+    public static final RegistryObject<Item> CONSTRUCT_BLUEPRINT_FOOD =
+            ITEMS.register("construct_blueprint_food", () -> new ConstructedBlueprintItem(new Item.Properties(), true));
+
     public static final RegistryObject<Item> GHELOTH_REMAINS =
             ITEMS.register("gheloth_remains", () -> new Item(new Item.Properties()));
 
