@@ -283,6 +283,10 @@ public final class ConstructTechnique extends BaseTechnique {
         if (player.isAlive() && !player.isRemoved() && now % TEMP_CHECK_INTERVAL == 0) {
             sweepTemps(player, now);
         }
+        // ⭐ 拟造"实体"到期清理（假人/盔甲架/刷怪蛋召唤物…）：
+        //    放到这条"每玩家每 tick 必跑"的路径上，而不是只挂在 ServerTickEvent 上——
+        //    这样即使那条事件处理器因为别的原因没跑/提前抛异常，拟造实体也不会永久留在世界里。
+        ConstructEvents.tickTempMobs(player.serverLevel());
     }
 
     /**
@@ -1997,6 +2001,97 @@ public final class ConstructTechnique extends BaseTechnique {
                 before.add(e.getId());
             }
             PENDING_MOB_SPAWNS.add(new PendingEntitySpawn(level, player, until, level.getGameTime() + 2, before));
+            // ⭐ 同时记一笔"刚用拟造物右键"：新实体加入世界时（EntityJoinLevelEvent）直接认领，
+            //    不再依赖"2 tick 后玩家 6 格内的快照对比"——延迟生成 / 生成点稍远 / 玩家走开都能覆盖。
+            long now = level.getGameTime();
+            RECENT_USES.removeIf(u -> u.level != level || now - u.at > CLAIM_TICKS);
+            RECENT_USES.add(new RecentUse(level, until, now, player.position()));
+        }
+
+        /**
+         * ⭐ 拟造"实体"登记与跟踪：
+         * <ol>
+         *   <li><b>新实体认领</b>：刚用拟造物右键后（{@link #CLAIM_TICKS} tick 内、同一维度、
+         *       使用点 {@link #CLAIM_RADIUS} 格内）加入世界的实体 → 登记到期时间；</li>
+         *   <li><b>重新纳入跟踪</b>：实体自带拟造到期标记（区块重载/读档回来的）→ 重新登记，
+         *       否则跨区块加载后就再也不会到期。</li>
+         * </ol>
+         */
+        @net.minecraftforge.eventbus.api.SubscribeEvent
+        public static void onEntityJoin(net.minecraftforge.event.entity.EntityJoinLevelEvent event) {
+            if (event.getLevel().isClientSide()) return;
+            if (!(event.getLevel() instanceof ServerLevel level)) return;
+            net.minecraft.world.entity.Entity e = event.getEntity();
+            if (e instanceof ServerPlayer) return;
+            if (e instanceof net.minecraft.world.entity.item.ItemEntity) return;
+
+            long existing = e.getPersistentData().getLong(KEY_TEMP_UNTIL);
+            if (existing > 0) {
+                if (!TRACKED_TEMP_MOBS.contains(e)) TRACKED_TEMP_MOBS.add(e);
+                return;
+            }
+            long now = level.getGameTime();
+            for (RecentUse u : RECENT_USES) {
+                if (u.level != level) continue;
+                if (now - u.at > CLAIM_TICKS) continue;
+                if (e.position().distanceToSqr(u.pos) > CLAIM_RADIUS * CLAIM_RADIUS) continue;
+                markTempMob(level, e, u.until);
+                TinkersNewlife.LOGGER.info("[构筑] 拟造实体登记：{}（{} tick 后消散）",
+                        e.getType().getDescription().getString(), u.until - now);
+                return;
+            }
+        }
+
+        /**
+         * 拟造实体到期清理（由 ServerTickEvent 与 {@code ConstructTechnique#tickServer} 双双驱动，
+         * 保证任何一条链路失效时拟造实体仍会消散）。
+         *
+         * @param onlyLevel 只处理该维度（每玩家 tick 的调用传自己的维度）；传 null 表示处理所有维度
+         */
+        static void tickTempMobs(ServerLevel onlyLevel) {
+            if (TRACKED_TEMP_MOBS.isEmpty()) return;
+            Iterator<net.minecraft.world.entity.Entity> mobIt = TRACKED_TEMP_MOBS.iterator();
+            while (mobIt.hasNext()) {
+                net.minecraft.world.entity.Entity e = mobIt.next();
+                if (e == null || e.isRemoved()) {
+                    mobIt.remove();
+                    continue;
+                }
+                if (!(e.level() instanceof ServerLevel slevel)) {
+                    mobIt.remove();
+                    continue;
+                }
+                if (onlyLevel != null && slevel != onlyLevel) continue;
+                long until = e.getPersistentData().getLong(KEY_TEMP_UNTIL);
+                if (until <= 0 || until > slevel.getGameTime()) continue;
+                slevel.sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE,
+                        e.getX(), e.getY() + e.getBbHeight() * 0.5, e.getZ(), 10, 0.3, 0.3, 0.3, 0.02);
+                TinkersNewlife.LOGGER.info("[构筑] 拟造实体到期消散：{}",
+                        e.getType().getDescription().getString());
+                e.discard();
+                mobIt.remove();
+            }
+        }
+
+        /** 拟造实体的"认领"参数：右键后多久内 / 多远内的新实体算作拟造召唤物 */
+        private static final long CLAIM_TICKS = 10L;
+        private static final double CLAIM_RADIUS = 24.0;
+        /** 最近的"用拟造物右键"记录（见 {@link #watchEntitySpawn} / {@link #onEntityJoin}） */
+        private static final List<RecentUse> RECENT_USES = new ArrayList<>();
+
+        /** 一次"刚用拟造物右键"的记录（认领新实体用） */
+        private static final class RecentUse {
+            final ServerLevel level;
+            final long until;
+            final long at;
+            final net.minecraft.world.phys.Vec3 pos;
+
+            RecentUse(ServerLevel level, long until, long at, net.minecraft.world.phys.Vec3 pos) {
+                this.level = level;
+                this.until = until;
+                this.at = at;
+                this.pos = pos;
+            }
         }
 
         /**
@@ -2144,24 +2239,7 @@ public final class ConstructTechnique extends BaseTechnique {
                 }
             }
             if (!TRACKED_TEMP_MOBS.isEmpty()) {
-                Iterator<net.minecraft.world.entity.Entity> mobIt = TRACKED_TEMP_MOBS.iterator();
-                while (mobIt.hasNext()) {
-                    net.minecraft.world.entity.Entity e = mobIt.next();
-                    if (e == null || e.isRemoved()) {
-                        mobIt.remove();
-                        continue;
-                    }
-                    if (!(e.level() instanceof ServerLevel slevel)) {
-                        mobIt.remove();
-                        continue;
-                    }
-                    long until = e.getPersistentData().getLong(KEY_TEMP_UNTIL);
-                    if (until <= 0 || until > slevel.getGameTime()) continue;
-                    slevel.sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE,
-                            e.getX(), e.getY() + e.getBbHeight() * 0.5, e.getZ(), 10, 0.3, 0.3, 0.3, 0.02);
-                    e.discard();
-                    mobIt.remove();
-                }
+                tickTempMobs((ServerLevel) null);
             }
             if (PLACED_TEMPS.isEmpty() && PLACED_TEMP_PARTS.isEmpty() && SWEEP_QUEUE.isEmpty()) {
                 tickContainerSweep(event.getServer());

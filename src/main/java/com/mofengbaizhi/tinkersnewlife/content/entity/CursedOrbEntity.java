@@ -109,7 +109,11 @@ public class CursedOrbEntity extends Entity {
         if (getOrbType() != TYPE_ZI) {
             // 苍/赫：撞到方块消失
             BlockPos front = BlockPos.containing(next.add(dir.scale(0.4)));
-            if (!level().getBlockState(front).isAir()) {
+            // ⭐ 只有"真的挡路"的方块才让球消失：以前用 {@code isAir()} 判定，
+            //    于是草丛/花/雪层/藤蔓/水/火把这些<b>没有碰撞箱或可穿过</b>的东西也会让球当场消失
+            //    ——野外几乎必现（贴地/草地上打出去就没了），表现出来就是"苍没有吸引力"。
+            //    改用碰撞箱判定：只有实心障碍才算挡住。
+            if (!level().getBlockState(front).getCollisionShape(level(), front).isEmpty()) {
                 discard();
                 return;
             }
@@ -135,11 +139,14 @@ public class CursedOrbEntity extends Entity {
                 e -> e.isAlive() && e != caster && !e.isSpectator());
         Vec3 c = position();
         for (LivingEntity e : entities) {
-            double d = e.distanceToSqr(this);
-            if (d > FORCE_RADIUS * FORCE_RADIUS) continue;
-            // 拉向球心：速度朝向球心，强度随距离增大
-            Vec3 pull = c.subtract(e.position()).normalize().scale(0.35);
+            double d = Math.sqrt(e.distanceToSqr(this));
+            if (d > FORCE_RADIUS || d < 1e-4) continue;
+            // 拉向球心：速度朝向球心，强度随距离增大（近处轻、远处狠，符合"越远越被拽"的手感）
+            double strength = Math.min(0.55, 0.22 + 0.03 * d);
+            Vec3 pull = c.subtract(e.position()).normalize().scale(strength);
             e.setDeltaMovement(e.getDeltaMovement().add(pull).scale(0.9));
+            // ⭐ 玩家目标：服务端改的速度会被客户端自己上报的移动覆盖 → 标记 hurtMarked 强制同步一次
+            e.hurtMarked = true;
         }
         // 实体接触球心 → 爆炸
         for (LivingEntity e : entities) {
