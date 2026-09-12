@@ -1,0 +1,20 @@
+{
+  "default": [
+    {
+      "level": 1,
+      "name": "tinkersnewlife:butcher"
+    },
+    {
+      "level": 1,
+      "name": "tinkersnewlife:soul_eater"
+    },
+    {
+      "level": 1,
+      "name": "tinkersnewlife:soul_repair"
+    },
+    {
+      "level": 1,
+      "name": "tconstruct:bounce"
+    }
+  ]
+}
