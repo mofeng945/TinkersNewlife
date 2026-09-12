@@ -12,19 +12,22 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import slimeknights.mantle.client.TooltipKey;
-import slimeknights.tconstruct.library.modifiers.Modifier;
 import slimeknights.tconstruct.library.modifiers.ModifierEntry;
+import slimeknights.tconstruct.library.modifiers.ModifierHooks;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
 import slimeknights.tconstruct.library.modifiers.hook.interaction.KeybindInteractModifierHook;
+import slimeknights.tconstruct.library.modifiers.impl.SingleLevelModifier;
+import slimeknights.tconstruct.library.module.ModuleHookMap;
 import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
 /**
  * 防御槽强化「闭耳塞听」：<b>只能装在头盔上</b>（材料标签 {@code tconstruct:modifiable/armor/helmets}）。
  * <p>
- * 单级、<b>不占升级槽</b>，而是消耗 <b>1 个防御槽</b>。
+ * <b>无等级强化</b>（{@link SingleLevelModifier}：名字不带等级数字），<b>不占升级槽</b>，而是消耗
+ * <b>1 个防御槽</b>。
  * <p>
- * 按<b>匠魂的头盔交互键</b>（TCon「头盔交互」键位，默认绑定见匠魂设置）开关耳塞：
+ * 按<b>匠魂的头盔交互键</b>（TCon「头盔交互」，默认 Z）开关耳塞：
  * <ul>
  *   <li><b>开启时听不见任何声音</b>——客户端直接屏蔽全部声音（{@code EarplugSoundHandler}）；</li>
  *   <li><b>开启时无视咒言术</b>——不会被咒言选为目标、也吃不到咒言的范围效果
@@ -32,8 +35,12 @@ import slimeknights.tconstruct.library.tools.nbt.ToolStack;
  * </ul>
  * 开关状态记在<b>头盔自己的持久数据</b>里（跟随头盔，换头盔各记各的），
  * 并在切换时主动把该盔甲槽同步给客户端——客户端要靠它决定"要不要屏蔽声音"。
+ * <p>
+ * ⚠️ 注意：匠魂 3.11 的 {@code Modifier#getHook} 是 <b>final</b> 的、只查 {@code hooks} 表，
+ * 所以"实现了钩子接口"还不够，必须在 {@link #registerHooks} 里显式登记
+ * {@link ModifierHooks#ARMOR_INTERACT}——否则头盔交互键按下去<b>不会</b>调到本类（实测踩过）。
  */
-public class EarplugModifier extends Modifier implements KeybindInteractModifierHook {
+public class EarplugModifier extends SingleLevelModifier implements KeybindInteractModifierHook {
 
     /** 强化 id */
     public static final ModifierId ID =
@@ -46,6 +53,13 @@ public class EarplugModifier extends Modifier implements KeybindInteractModifier
     /** 玩家物品栏菜单里头盔槽的索引（0..8 快捷栏 / 9..35 背包 / 36 靴 / 37 腿 / 38 胸 / 39 头） */
     private static final int HELMET_MENU_SLOT = 39;
 
+    /** 登记钩子：头盔交互键（见类注释——不登记就收不到按键） */
+    @Override
+    protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
+        super.registerHooks(hookBuilder);
+        hookBuilder.addHook(this, ModifierHooks.ARMOR_INTERACT);
+    }
+
     // ============================================================
     //  头盔交互键：开 / 关
     // ============================================================
@@ -54,18 +68,24 @@ public class EarplugModifier extends Modifier implements KeybindInteractModifier
     public boolean startInteract(IToolStackView tool, ModifierEntry modifier, Player player,
                                  EquipmentSlot slot, TooltipKey keyModifier) {
         if (slot != EquipmentSlot.HEAD) return false;
-        final boolean now = !isOn(tool);
-        if (tool instanceof ToolStack stack) {
-            stack.getPersistentData().putBoolean(KEY_ON, now);
-            stack.updateStack(player.getItemBySlot(EquipmentSlot.HEAD));
-        }
+        ItemStack helmet = player.getItemBySlot(EquipmentSlot.HEAD);
+        if (helmet.isEmpty()) return false;
+        // ⭐ 用 ToolHelper 重新取"可写的 ToolStack"（钩子给的是只读视图 IToolStackView，
+        //    直接强转不一定成立；拿不到工具数据就直接吃掉这次按键、不改状态）
+        ToolStack stack = ToolHelper.getToolStack(helmet);
+        if (stack == null || stack.getModifierLevel(ID) <= 0) return false;
+        final boolean now = !stack.getPersistentData().getBoolean(KEY_ON);
+        stack.getPersistentData().putBoolean(KEY_ON, now);
+        stack.updateStack(helmet);
+
         if (player instanceof ServerPlayer sp) {
             // 主动同步头盔槽：客户端要靠这件物品的持久数据决定是否屏蔽声音
             sp.connection.send(new ClientboundContainerSetSlotPacket(
                     sp.inventoryMenu.containerId, sp.inventoryMenu.incrementStateId(),
-                    HELMET_MENU_SLOT, sp.getItemBySlot(EquipmentSlot.HEAD)));
+                    HELMET_MENU_SLOT, helmet));
             sp.displayClientMessage(Component.translatable(
                     now ? "message.tinkersnewlife.earplugs.on" : "message.tinkersnewlife.earplugs.off"), true);
+            TinkersNewlife.LOGGER.debug("[闭耳塞听] {} 耳塞 -> {}", sp.getName().getString(), now ? "开" : "关");
         }
         return true;
     }

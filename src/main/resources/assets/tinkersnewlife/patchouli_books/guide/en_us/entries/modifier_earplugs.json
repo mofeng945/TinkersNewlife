@@ -6,7 +6,7 @@
     "pages": [
         {
             "type": "patchouli:text",
-            "text": "$(bold)Defense-slot modifier - Stuffed Ears$(): plug your ears and let them curse the heavens.(br2)Restriction: $(l)helmets only$() (Tinkers' helmet parts), single level, costs $(bold)1 defense slot$().(br2)Usage: press the $(bold)Tinkers' helmet interaction key$() (TCon's \"Helmet Interaction\" binding, default Z) to toggle the earplugs. The state is stored on that helmet, so each helmet remembers its own."
+            "text": "$(bold)Defense-slot modifier - Stuffed Ears$(): plug your ears and let them curse the heavens.(br2)Restriction: $(l)helmets only$() (Tinkers' helmet parts), no levels, costs $(bold)1 defense slot$().(br2)Usage: press the $(bold)Tinkers' helmet interaction key$() (TCon's \"Helmet Interaction\" binding, default Z) to toggle the earplugs. The state is stored on that helmet, so each helmet remembers its own."
         },
         {
             "type": "patchouli:text",
