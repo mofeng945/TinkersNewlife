@@ -94,6 +94,8 @@ public class QianheYingyiDomain extends BaseDomain {
             if (e instanceof Mob mob) {
                 net.minecraft.world.entity.ai.navigation.PathNavigation nav = mob.getNavigation();
                 if (nav != null) nav.stop();
+                // ⭐ 登记 noAi（否则生物只是"被停了导航"，AI 照常攻击/移动，静止对生物形同虚设）
+                com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.onStunApplied(mob);
             }
         }
         // 影翳粒子

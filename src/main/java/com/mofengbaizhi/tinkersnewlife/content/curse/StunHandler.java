@@ -34,6 +34,9 @@ public class StunHandler {
     /** 被静止过的生物：UUID → 静止前的 noAi 值（用于恢复） */
     private static final Map<UUID, Boolean> STUNNED_MOB_NOAI = new ConcurrentHashMap<>();
 
+    /** 静止锚点：静止期间"自己走开"会被拉回；物理位移（击退/载具/水/岩浆）会重新锚定 */
+    private static final Map<UUID, Vec3> STUN_ANCHOR = new ConcurrentHashMap<>();
+
     public static boolean isStunned(LivingEntity entity) {
         return entity != null && entity.hasEffect(ModEffects.STUN.get());
     }
@@ -49,18 +52,6 @@ public class StunHandler {
         MinecraftServer server = event.getServer();
         if (server == null) return;
 
-        // 玩家：定身 = 无法自主移动（输入清零），但仍受物理引擎/击退/碰撞挤压影响
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            if (!isStunned(player)) continue;
-            player.xxa = 0;
-            player.zza = 0;
-            player.setJumping(false);
-            player.setSprinting(false);
-            // 无法停留在任何界面（背包/箱子/curios 等，重开也会被立即关闭）
-            if (player.containerMenu != player.inventoryMenu) {
-                player.closeContainer();
-            }
-        }
 
         // 生物：静止期间强制 noAi（不自主移动/攻击），物理/击退/碰撞仍生效；结束后恢复
         for (UUID id : STUNNED_MOB_NOAI.keySet()) {
@@ -84,6 +75,47 @@ public class StunHandler {
                 mob.setNoAi(STUNNED_MOB_NOAI.get(id));
                 STUNNED_MOB_NOAI.remove(id);
             }
+        }
+    }
+
+    /**
+     * 玩家定身（关键：必须放在 {@link TickEvent.PlayerTickEvent} 的 <b>START</b> 相位）。
+     * <p>
+     * 1.20.1 的玩家移动是<b>客户端权威</b>的：服务端写 {@code xxa/zza} 并不会让客户端停下，
+     * 而且原来放在 {@code ServerTickEvent.END} 处理，移动早就算完了——这就是"静止了还能走"的原因。
+     * 真正的定身在客户端（{@code ClientEventHandler} 检测到静止效果即清空移动/跳跃输入、锁快捷栏、关容器界面），
+     * 服务端这里负责：
+     * <ol>
+     *   <li>关上容器界面（客户端那侧也会关，双保险）；</li>
+     *   <li>兜底：对"没装本模组 / 作弊"的客户端，用锚点把自走的玩家拉回来
+     *       （被击退/推挤、坐载具、泡水泡岩浆时重新锚定——静止仍受物理影响）。</li>
+     * </ol>
+     */
+    @SubscribeEvent
+    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
+        if (event.phase != TickEvent.Phase.START) return;
+        if (!(event.player instanceof ServerPlayer player)) return;
+        if (!isStunned(player)) {
+            STUN_ANCHOR.remove(player.getUUID());
+            return;
+        }
+        player.xxa = 0;
+        player.zza = 0;
+        player.setJumping(false);
+        player.setSprinting(false);
+        // 无法停留在任何界面（背包/箱子/curios 等，重开也会被立即关闭）
+        if (player.containerMenu != player.inventoryMenu) {
+            player.closeContainer();
+        }
+        // 兜底拉回
+        Vec3 anchor = STUN_ANCHOR.get(player.getUUID());
+        boolean physics = player.getDeltaMovement().horizontalDistanceSqr() > 0.003
+                || player.getVehicle() != null || player.isInWater() || player.isInLava();
+        if (anchor == null || physics) {
+            STUN_ANCHOR.put(player.getUUID(), player.position());
+        } else if (player.position().distanceToSqr(anchor) > 1.0) {
+            player.teleportTo(anchor.x, player.getY(), anchor.z);
+            player.hurtMarked = true;
         }
     }
 

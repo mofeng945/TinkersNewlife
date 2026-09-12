@@ -174,6 +174,8 @@ public class ClientEventHandler {
         /** 连招中"正在引导"的边沿/起始 tick（持续段计时用真实 tick 数，不用易残留的 useItemRemaining 算 elapsed） */
         private static boolean comboWasUsing = false;
         private static int comboUsingStartTick = 0;
+        /** 静止效果期间被锁住的快捷栏槽位（-1 = 未锁） */
+        private static int stunLockedSlot = -1;
 
         @SubscribeEvent
         public static void onClientTick(TickEvent.ClientTickEvent event) {
@@ -183,17 +185,30 @@ public class ClientEventHandler {
                 lastTechniqueDown = false;
                 return;
             }
-            // ⭐ 投射咒法罚站：禁用鼠标键盘（清零移动/跳跃输入 + 锁定视角）
+            // ⭐ 投射咒法罚站：锁定视角（"清移动输入"改到 onMovementInputUpdate 里做——这里做没用，见该方法注释）
             if (com.mofengbaizhi.tinkersnewlife.client.data.ClientProjectionData.isStunned()) {
-                net.minecraft.client.player.Input input = player.input;
-                input.leftImpulse = 0;
-                input.forwardImpulse = 0;
-                input.jumping = false;
-                input.shiftKeyDown = false;
-                player.xxa = 0;
-                player.zza = 0;
                 player.setYRot(com.mofengbaizhi.tinkersnewlife.client.data.ClientProjectionData.getStunYaw());
                 player.setXRot(com.mofengbaizhi.tinkersnewlife.client.data.ClientProjectionData.getStunPitch());
+            }
+            // ⭐ 静止效果（无量空处 / 胎藏遍野 / 十宝月宫殿 / 伏诛赐死 / 诅咒之言…）：同样定身。
+            //    为什么必须在客户端做：1.20.1 玩家移动是**客户端权威**的——服务端清 xxa/zza 既晚了一拍
+            //    （ServerTickEvent.END 时移动早算完了），也管不到客户端自己发的位置。
+            //    之前只有服务端那段"清输入"，所以在游戏里表现为"静止了还能随便走"。
+            if (player.hasEffect(com.mofengbaizhi.tinkersnewlife.content.ModEffects.STUN.get())) {
+                // 定身（清移动输入）在 onMovementInputUpdate 里做，这里只管"快捷栏/界面"
+                // 无法切换物品栏（滚轮/数字键都会改 selected，这里直接锁回原槽位）
+                if (stunLockedSlot < 0) {
+                    stunLockedSlot = player.getInventory().selected;
+                } else {
+                    player.getInventory().selected = stunLockedSlot;
+                }
+                // 无法停留在任何容器界面（背包/箱子/curios…）；其它界面（死亡/暂停等）不动
+                Minecraft mcStun = Minecraft.getInstance();
+                if (mcStun.screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?>) {
+                    mcStun.setScreen(null);
+                }
+            } else if (stunLockedSlot >= 0) {
+                stunLockedSlot = -1;
             }
             // ⭐ 黑鸟操控：相机绑定黑鸟时，每 tick 发送玩家输入驱动其飞行（含视角）
             if (Minecraft.getInstance().cameraEntity instanceof com.mofengbaizhi.tinkersnewlife.content.entity.BlackBirdEntity) {
@@ -350,10 +365,47 @@ public class ClientEventHandler {
             return false;
         }
 
-        /** 投射咒法罚站 / 傀儡操控：取消玩家自身攻击/交互输入（傀儡动作由输入包驱动） */
+        /**
+         * ⭐⭐ <b>定身（投射咒法罚站 / 静止效果）真正的注入点</b>。
+         * <p>
+         * 时序（1.20.1 {@code LocalPlayer#aiStep}）：
+         * <pre>
+         *   input.tick(...)                             ← 从键盘读输入（leftImpulse/forwardImpulse/jumping…）
+         *   ForgeHooksClient.onMovementInputUpdate(...) ← 本事件
+         *   跳跃/冲刺/使用物品等逻辑 → travel()          ← 用 xxa/zza 结算位移
+         * </pre>
+         * 所以只有在这里把输入清零才真正定得住人。之前（含投射咒法罚站）都是放在
+         * {@code ClientTickEvent.END} 里清输入，而那已经在玩家移动之后了，下一 tick 键盘又会重新读一遍
+         * ——"清了等于没清"，表现就是<b>静止效果完全定不住玩家</b>。
+         */
+        @SubscribeEvent
+        public static void onMovementInputUpdate(net.minecraftforge.client.event.MovementInputUpdateEvent event) {
+            if (!(event.getEntity() instanceof LocalPlayer player)) return;   // MovementInputUpdateEvent extends PlayerEvent
+            boolean frozen = com.mofengbaizhi.tinkersnewlife.client.data.ClientProjectionData.isStunned()
+                    || player.hasEffect(com.mofengbaizhi.tinkersnewlife.content.ModEffects.STUN.get());
+            if (!frozen) return;
+            net.minecraft.client.player.Input input = event.getInput();
+            input.leftImpulse = 0;
+            input.forwardImpulse = 0;
+            input.jumping = false;
+            input.shiftKeyDown = false;
+            player.xxa = 0;
+            player.zza = 0;
+            player.setJumping(false);
+            player.setSprinting(false);
+        }
+
+        /** 投射咒法罚站 / 静止效果 / 傀儡操控：取消玩家自身攻击/交互输入（傀儡动作由输入包驱动） */
         @SubscribeEvent
         public static void onInteractionInput(net.minecraftforge.client.event.InputEvent.InteractionKeyMappingTriggered event) {
             if (com.mofengbaizhi.tinkersnewlife.client.data.ClientProjectionData.isStunned()) {
+                event.setCanceled(true);
+                return;
+            }
+            // ⭐ 静止效果：攻击/使用/丢弃都不该有反应（服务端另有同名拦截，这里连挥手动画都不给）
+            if (Minecraft.getInstance().player != null
+                    && Minecraft.getInstance().player.hasEffect(
+                            com.mofengbaizhi.tinkersnewlife.content.ModEffects.STUN.get())) {
                 event.setCanceled(true);
                 return;
             }
