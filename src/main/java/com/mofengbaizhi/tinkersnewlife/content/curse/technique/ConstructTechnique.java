@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.content.curse.technique;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.Modifiers;
 import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.ConstructFluidValues.FluidAmount;
 import com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenConstructScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -28,6 +29,7 @@ import net.minecraft.world.item.Rarity;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -803,6 +805,76 @@ public final class ConstructTechnique extends BaseTechnique {
         return cacheFor(manager, access).outputs();
     }
 
+    /**
+     * 一条配方的"成本描述"：产物 + 物品原料（每个原料保留候选列表，按候选平均）+ 流体投入。
+     * 预抽一次，之后每轮迭代只做求和，避免反复反射/解包。
+     */
+    private record RecipeCost(Item resultItem, java.util.List<Item[]> ingredients,
+                              java.util.List<FluidAmount> fluidsIn) {}
+
+    /** 不动点迭代轮数（每轮把"上游价值"往上游再传一层；4 轮足够覆盖大多数合成链） */
+    private static final int VALUE_ITERATIONS = 4;
+
+    /** 抽出一条配方的成本描述（取不到产物/原料就返回 null） */
+    private static RecipeCost describeRecipe(net.minecraft.world.item.crafting.Recipe<?> recipe,
+                                             net.minecraft.core.RegistryAccess access) {
+        try {
+            ItemStack out = recipe.getResultItem(access);
+            if (out.isEmpty() || out.getItem() == Items.AIR) return null;
+            java.util.List<Item[]> ingredients = new java.util.ArrayList<>();
+            for (var ingredient : recipe.getIngredients()) {
+                if (ingredient == null || ingredient.isEmpty()) continue;
+                ItemStack[] cands = ingredient.getItems();
+                if (cands == null || cands.length == 0) continue;
+                int limit = Math.min(cands.length, VALUE_MAX_CANDIDATES);
+                Item[] items = new Item[limit];
+                for (int i = 0; i < limit; i++) items[i] = cands[i].getItem();
+                ingredients.add(items);
+            }
+            var fluids = ConstructFluidValues.enabled()
+                    ? ConstructFluidValues.inputsOf(recipe)
+                    : java.util.List.<FluidAmount>of();
+            return new RecipeCost(out.getItem(), ingredients, fluids);
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    /** 一条配方的投入总价值 = Σ(物品原料，候选取平均) + Σ(流体投入 mB × 每 mB 价值) */
+    private static double costOf(RecipeCost cost, Map<Item, Double> itemValues, Map<Fluid, Double> fluidValues) {
+        double total = 0;
+        for (Item[] cands : cost.ingredients()) {
+            double sum = 0;
+            for (Item it : cands) {
+                Double v = itemValues.get(it);
+                sum += v != null ? v : intrinsicScore(it);
+            }
+            total += sum / cands.length;
+        }
+        if (!cost.fluidsIn().isEmpty()) {
+            for (var fa : cost.fluidsIn()) {
+                double perMb = fluidValues.getOrDefault(fa.fluid(), 0.0);
+                total += fa.mb() / 1000.0 * perMb;
+            }
+        }
+        return total;
+    }
+
+    /** 流体的"地板价"（每 mB）：桶代理 与 流标签表 取最大，再被单 mB 上限夹住 */
+    private static double fluidFloor(Fluid fluid, Map<Item, Double> itemValues) {
+        try {
+            double bucket = ConstructFluidValues.bucketProxy(fluid,
+                    item -> {
+                        Double v = itemValues.get(item);
+                        return v != null ? v : intrinsicScore(item);
+                    });
+            double tag = ConstructFluidValues.tagProxy(fluid);
+            return Math.min(ConstructFluidValues.perMbCap(), Math.max(bucket, tag));
+        } catch (Throwable t) {
+            return 0.0;
+        }
+    }
+
     /** 取（必要时重建）某个配方管理器的缓存 */
     private static ConstructCache cacheFor(net.minecraft.world.item.crafting.RecipeManager manager,
                                            net.minecraft.core.RegistryAccess access) {
@@ -824,14 +896,60 @@ public final class ConstructTechnique extends BaseTechnique {
             }
         }
 
-        // 2) 原料价值项：该物品**各配方原料价值合计的平均值**（多配方取平均）
-        Map<Item, Double> values = new java.util.HashMap<>();
-        Map<Item, Double> terms = new java.util.HashMap<>();
-        for (Map.Entry<Item, java.util.List<net.minecraft.world.item.crafting.Recipe<?>>> e : byItem.entrySet()) {
-            double sum = 0;
-            for (net.minecraft.world.item.crafting.Recipe<?> r : e.getValue()) {
-                sum += ingredientValue(r, byItem, values, new java.util.HashSet<>(), 0);
+        // 2) 原料价值项 = 该物品**各配方原料价值合计的平均值**（多配方取平均），
+        //    原料价值包含<b>物品原料</b>与<b>流体投入</b>（P3/P4：桶代理 + 标签 + 软依赖反射适配器）。
+        //
+        //    实现方式从"递归"改成**不动点迭代**（Gauss-Seidel 风格）：
+        //      * 递归需要深度上限 + 环检测，而且折损会让多级链（高级墨水那种）价值归零；
+        //      * 迭代则天然处理环（木板↔原木）与物品↔流体的互相引用，单调上升、每轮都被上限夹住。
+        Map<Fluid, java.util.List<RecipeCost>> fluidProducers = new java.util.HashMap<>();
+        Map<Item, java.util.List<RecipeCost>> itemProducers = new java.util.HashMap<>();
+        for (net.minecraft.world.item.crafting.Recipe<?> r : all) {
+            RecipeCost cost = describeRecipe(r, access);
+            if (cost == null) continue;
+            for (FluidAmount fa : cost.fluidsIn()) {
+                fluidProducers.computeIfAbsent(fa.fluid(), k -> new java.util.ArrayList<>()).add(cost);
             }
+            ItemStack out = samples.get(cost.resultItem());
+            if (out != null) {
+                itemProducers.computeIfAbsent(cost.resultItem(), k -> new java.util.ArrayList<>()).add(cost);
+            }
+        }
+
+        Map<Fluid, Double> fluidValues = new java.util.HashMap<>();
+        Map<Item, Double> itemValues = new java.util.HashMap<>();
+        // 初值：物品取自身分；流体取"桶代理 / 标签表"地板价
+        for (Map.Entry<Item, java.util.List<RecipeCost>> e : itemProducers.entrySet()) {
+            itemValues.put(e.getKey(), intrinsicScore(e.getKey()));
+        }
+        if (ConstructFluidValues.enabled()) {
+            for (Fluid f : fluidProducers.keySet()) {
+                fluidValues.put(f, fluidFloor(f, itemValues));
+            }
+        }
+        for (int pass = 0; pass < VALUE_ITERATIONS; pass++) {
+            // 流体：先把桶/标签地板价夹住，再用产出它的配方的投入成本抬升
+            for (Map.Entry<Fluid, java.util.List<RecipeCost>> e : fluidProducers.entrySet()) {
+                double sum = 0;
+                for (RecipeCost c : e.getValue()) sum += costOf(c, itemValues, fluidValues);
+                double avg = sum / e.getValue().size();
+                double floor = fluidFloor(e.getKey(), itemValues);
+                double v = Math.max(floor, Math.min(INGREDIENT_VALUE_CAP, avg));
+                fluidValues.put(e.getKey(), Math.max(fluidValues.getOrDefault(e.getKey(), 0.0), v));
+            }
+            // 物品：自身分与"配方投入成本"取大（同样被上限夹住）
+            for (Map.Entry<Item, java.util.List<RecipeCost>> e : itemProducers.entrySet()) {
+                double sum = 0;
+                for (RecipeCost c : e.getValue()) sum += costOf(c, itemValues, fluidValues);
+                double avg = sum / e.getValue().size();
+                double v = Math.max(intrinsicScore(e.getKey()), Math.min(INGREDIENT_VALUE_CAP, avg));
+                itemValues.put(e.getKey(), Math.max(itemValues.getOrDefault(e.getKey(), 0.0), v));
+            }
+        }
+        Map<Item, Double> terms = new java.util.HashMap<>();
+        for (Map.Entry<Item, java.util.List<RecipeCost>> e : itemProducers.entrySet()) {
+            double sum = 0;
+            for (RecipeCost c : e.getValue()) sum += costOf(c, itemValues, fluidValues);
             terms.put(e.getKey(), sum / e.getValue().size());
         }
 

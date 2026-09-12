@@ -80,6 +80,13 @@ public final class ModConfig {
     public static final ConfigValue<List<? extends String>> CONSTRUCT_ENTITY_VALUE_OVERRIDES;
     /** 结构难度覆盖（"minecraft:chests/ancient_city=50"） */
     public static final ConfigValue<List<? extends String>> CONSTRUCT_STRUCTURE_VALUE_OVERRIDES;
+    // ---- 流体价值（桶代理 + 流标签 + 软依赖适配器）----
+    /** 是否启用流体价值层（关闭则配方里的流体投入不计价） */
+    public static final ConfigValue<Boolean> CONSTRUCT_FLUID_VALUE_ENABLED;
+    /** 流体标签表（"#forge:inks=15" 表示一桶 15 分） */
+    public static final ConfigValue<List<? extends String>> CONSTRUCT_FLUID_TAG_VALUES;
+    /** 单桶流体的价值上限（每 mB = 该值/1000） */
+    public static final ConfigValue<Double> CONSTRUCT_FLUID_VALUE_CAP;
 
     // ==================== 术式/领域缩放系数 ====================
     /** 各术式 modifier id → [damage, cost] 缩放 */
@@ -161,6 +168,16 @@ public final class ModConfig {
                 "loot_source_blacklist = farmable junk (rotten flesh, bone, string...) excluded from auto-apply",
                 "entity_value_overrides / structure_value_overrides = difficulty base overrides",
                 "",
+                "--- fluid value layer (bucket proxy + fluid tags + soft-dependency adapters) ---",
+                "Fluids carry a lot of value in some mod chains (e.g. Iron's Spells inks are brewed as fluids).",
+                "fluid_value_enabled = count fluid inputs of a recipe. Value per mB comes from, in order:",
+                "                      bucket item value / 1000, fluid_tag_values, then the recipe that produces it",
+                "                      (reflectively read: MaterialFluidRecipe, Create getFluidIngredients/Results,",
+                "                       and a generic FluidStack/FluidIngredient field+method scan).",
+                "fluid_tag_values = [#forge:inks=15]  -> a bucket of that fluid is worth 15 points",
+                "fluid_value_cap  = worth cap of one bucket (mB value = this / 1000)",
+                "The item/fluid values are solved by a 4-pass fixed-point iteration (handles cycles like planks<->logs).",
+                "",
                 "blacklist = extra entries that must NOT appear in the construct menu. Supported formats:",
                 "  goety                 -> whole mod          (bare modid)",
                 "  iceandfire:*          -> whole mod          (modid:*)",
@@ -202,6 +219,10 @@ public final class ModConfig {
                 new java.util.ArrayList<String>(), o -> o instanceof String);
         CONSTRUCT_STRUCTURE_VALUE_OVERRIDES = b.defineList("structure_value_overrides",
                 new java.util.ArrayList<String>(), o -> o instanceof String);
+        CONSTRUCT_FLUID_VALUE_ENABLED = b.define("fluid_value_enabled", true);
+        CONSTRUCT_FLUID_TAG_VALUES = b.defineList("fluid_tag_values", new java.util.ArrayList<String>(),
+                o -> o instanceof String);
+        CONSTRUCT_FLUID_VALUE_CAP = b.defineInRange("fluid_value_cap", 500.0D, 0.0D, 100000.0D);
         CONSTRUCT_BLACKLIST = b.defineList("blacklist", new java.util.ArrayList<String>(),
                 o -> o instanceof String);
         b.pop();
