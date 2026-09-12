@@ -33,6 +33,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -760,40 +761,115 @@ public final class ConstructTechnique extends BaseTechnique {
 
     /**
      * 物品是否有"可产出它的配方"——<b>覆盖所有配方类型</b>（工作台/熔炉/高炉/烟熏/营火/切石机/锻造台，
-     * 以及模组自定义的配方类型），不再是只看 {@code RecipeType.CRAFTING}。
-     * 之前只查工作台配方，导致"熔炼出的锭、切石出的石砖"之类物品被判成"无配方"而无法拟造。
+     * 以及模组自定义的配方类型），并应用配置黑名单。
      */
     public static boolean hasCraftingRecipe(ServerPlayer player, Item item) {
-        return constructibleOutputs(player.serverLevel()).contains(item);
+        return constructibleMap(player.serverLevel().getRecipeManager(),
+                player.serverLevel().registryAccess()).containsKey(item);
     }
 
-    /** 有配方可产出的物品集合缓存（配方数量变化时重建，即 /reload 后自动失效） */
-    private static net.minecraft.world.item.crafting.RecipeManager cachedRecipeManager;
-    private static int cachedRecipeCount = -1;
-    private static java.util.Set<Item> cachedOutputs = java.util.Set.of();
+    // ============================================================
+    //  可拟造物品表（物品 → 产出它的配方类型集合）+ 黑名单
+    // ============================================================
 
-    private static java.util.Set<Item> constructibleOutputs(net.minecraft.server.level.ServerLevel level) {
-        net.minecraft.world.item.crafting.RecipeManager manager = level.getRecipeManager();
+    /** 每个配方管理器一份缓存（集成服务器里客户端/服务端是两个管理器，用 IdentityHashMap 各自缓存） */
+    private record ConstructCache(int recipeCount,
+                                  Map<Item, java.util.Set<net.minecraft.world.item.crafting.RecipeType<?>>> outputs) {}
+
+    private static final Map<net.minecraft.world.item.crafting.RecipeManager, ConstructCache> CONSTRUCT_CACHE =
+            new java.util.IdentityHashMap<>();
+
+    /**
+     * 构建"可拟造物品 → 产出它的配方类型集合"。服务端判定与客户端列表<b>共用同一份逻辑</b>，
+     * 因此黑名单在两边一致。缓存按（配方管理器 + 配方数量）失效，`/reload` 后自动重建。
+     */
+    public static Map<Item, java.util.Set<net.minecraft.world.item.crafting.RecipeType<?>>> constructibleMap(
+            net.minecraft.world.item.crafting.RecipeManager manager,
+            net.minecraft.core.RegistryAccess access) {
         java.util.Collection<net.minecraft.world.item.crafting.Recipe<?>> all = manager.getRecipes();
-        int count = all.size();
-        if (manager == cachedRecipeManager && count == cachedRecipeCount) return cachedOutputs;
+        ConstructCache cached = CONSTRUCT_CACHE.get(manager);
+        if (cached != null && cached.recipeCount() == all.size()) return cached.outputs();
 
-        java.util.Set<Item> set = new java.util.HashSet<>();
-        var access = level.registryAccess();
+        Map<Item, java.util.Set<net.minecraft.world.item.crafting.RecipeType<?>>> map = new java.util.HashMap<>();
         for (net.minecraft.world.item.crafting.Recipe<?> recipe : all) {
             try {
                 ItemStack out = recipe.getResultItem(access);
-                if (!out.isEmpty() && out.getItem() != Items.AIR) {
-                    set.add(out.getItem());
-                }
+                if (out.isEmpty() || out.getItem() == Items.AIR) continue;
+                map.computeIfAbsent(out.getItem(), k -> new java.util.HashSet<>()).add(recipe.getType());
             } catch (Throwable ignored) {
-                // 少数特殊配方（CustomRecipe 等）取产物需要容器上下文 → 跳过
+                // CustomRecipe 等取产物需要容器上下文 → 跳过
             }
         }
-        cachedRecipeManager = manager;
-        cachedRecipeCount = count;
-        cachedOutputs = set;
-        return set;
+        // 黑名单过滤（mod / 单物品 / 标签 / 配方类型）
+        map.keySet().removeIf(item -> isBlacklisted(item, map.get(item)));
+
+        if (CONSTRUCT_CACHE.size() > 2) CONSTRUCT_CACHE.clear();
+        CONSTRUCT_CACHE.put(manager, new ConstructCache(all.size(), map));
+        return map;
+    }
+
+    /**
+     * 拟造黑名单判定。配置项格式：
+     * <pre>
+     *   goety                      整个模组
+     *   iceandfire:*               整个模组（等价写法）
+     *   minecraft:bedrock          单个物品
+     *   #forge:ingots              物品标签
+     *   recipe:minecraft:smelting  凡能被该配方类型产出的物品（也可写 type:...）
+     *   // 开头                 注释，忽略
+     * </pre>
+     */
+    public static boolean isBlacklisted(Item item,
+                                        java.util.Set<net.minecraft.world.item.crafting.RecipeType<?>> types) {
+        java.util.List<? extends String> list;
+        try {
+            list = com.mofengbaizhi.tinkersnewlife.config.ModConfig.CONSTRUCT_BLACKLIST.get();
+        } catch (Throwable t) {
+            return false;
+        }
+        if (list == null || list.isEmpty()) return false;
+
+        ResourceLocation id = ForgeRegistries.ITEMS.getKey(item);
+        String itemId = id == null ? "" : id.toString();
+        String modId = id == null ? "" : id.getNamespace();
+
+        for (String raw : list) {
+            if (raw == null) continue;
+            String e = raw.trim();
+            if (e.isEmpty() || e.startsWith("//")) continue;
+
+            // 标签：#modid:tag
+            if (e.startsWith("#")) {
+                ResourceLocation tagId = ResourceLocation.tryParse(e.substring(1));
+                if (tagId != null) {
+                    var tag = net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, tagId);
+                    if (item.builtInRegistryHolder().is(tag)) return true;
+                }
+                continue;
+            }
+            // 配方类型：recipe:modid:type / type:modid:type
+            if (e.startsWith("recipe:") || e.startsWith("type:")) {
+                String typeId = e.substring(e.indexOf(':') + 1);
+                ResourceLocation want = ResourceLocation.tryParse(typeId);
+                if (want == null || types == null) continue;
+                for (net.minecraft.world.item.crafting.RecipeType<?> type : types) {
+                    if (want.equals(ForgeRegistries.RECIPE_TYPES.getKey(type))) return true;
+                }
+                continue;
+            }
+            // 整个模组：只写 modid，或 modid:*
+            if (!e.contains(":")) {
+                if (e.equalsIgnoreCase(modId)) return true;
+                continue;
+            }
+            if (e.endsWith(":*")) {
+                if (e.substring(0, e.length() - 2).equalsIgnoreCase(modId)) return true;
+                continue;
+            }
+            // 单个物品：modid:item
+            if (e.equalsIgnoreCase(itemId)) return true;
+        }
+        return false;
     }
 
     // ============================================================
@@ -859,11 +935,22 @@ public final class ConstructTechnique extends BaseTechnique {
             //    原式 (1 - 亲和/100) 会变成 ≤0 → 所有物品都被压到下限 3 咒力，
             //    表现就是"不管拟造什么都只花 3 咒力"。
             double affinityMul = Math.max(0.25, 1.0 - Math.max(0, affinity) / 100.0);
-            double cost = Math.max(3.0, Math.ceil(score * affinityMul * (1.0 + output * 0.2)));
-            return (int) Math.min(Integer.MAX_VALUE, cost);
+            double raw = Math.max(3.0, Math.ceil(score * affinityMul * (1.0 + output * 0.2)));
+            // ⭐ 配置倍率（默认 10 倍）
+            double cost = raw * costMultiplier();
+            return (int) Math.min(Integer.MAX_VALUE, Math.max(1.0, Math.round(cost)));
         } catch (Throwable t) {
             // GUI 逐行预览时个别异常物品不阻塞整个界面
-            return 3;
+            return (int) Math.max(1.0, Math.round(3.0 * costMultiplier()));
+        }
+    }
+
+    /** 配置里的拟造费用倍率（读不到时按默认 10 倍） */
+    private static double costMultiplier() {
+        try {
+            return Math.max(0.0, com.mofengbaizhi.tinkersnewlife.config.ModConfig.CONSTRUCT_COST_MULTIPLIER.get());
+        } catch (Throwable t) {
+            return 10.0;
         }
     }
 

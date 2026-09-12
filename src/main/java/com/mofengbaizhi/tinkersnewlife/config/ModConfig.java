@@ -4,6 +4,7 @@ import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -39,6 +40,12 @@ public final class ModConfig {
     // 说明：HUD 的位置/宽度由游戏内拖动界面写入独立文件 config/mofengbaizhi/curse_hud.json
     //       （见 client/hud/CurseHudConfig），不放这里以免与主配置的写回时机打架。
 
+    // ==================== 构筑术式（拟造） ====================
+    /** 拟造费用倍率（默认 10.0 = 原价的 10 倍） */
+    public static final ConfigValue<Double> CONSTRUCT_COST_MULTIPLIER;
+    /** 拟造黑名单：禁止出现在构筑列表里的物品（支持 mod / 物品 / 标签 / 配方类型） */
+    public static final ConfigValue<List<? extends String>> CONSTRUCT_BLACKLIST;
+
     // ==================== 术式/领域缩放系数 ====================
     /** 各术式 modifier id → [damage, cost] 缩放 */
     public static final Map<String, ConfigValue<Double>[]> TECHNIQUE_SCALES = new HashMap<>();
@@ -71,6 +78,25 @@ public final class ModConfig {
                 "Set enable_disguise_render=false if another mod that takes over player rendering",
                 "(e.g. YSM / Yes Steve Model) conflicts with the disguise.");
         WUWEI_DISGUISE_RENDER = b.define("enable_disguise_render", true);
+        b.pop();
+
+        // 构筑术式（拟造）：费用倍率 + 黑名单
+        b.push("construct").comment(
+                "Construct technique (Wu Wei 'construct' / fabricate items from recipes).",
+                "",
+                "cost_multiplier = final curse cost multiplier. 1.0 = original formula, 10.0 = 10x cost (default).",
+                "",
+                "blacklist = entries that must NOT appear in the construct menu. Supported formats:",
+                "  goety                 -> whole mod          (bare modid)",
+                "  iceandfire:*          -> whole mod          (modid:*)",
+                "  minecraft:bedrock     -> single item        (modid:item)",
+                "  #forge:ingots         -> item tag           (#modid:tag)",
+                "  recipe:minecraft:smelting -> every item that can be produced by that recipe type",
+                "                               (also accepts: type:minecraft:smelting)",
+                "Lines starting with // are ignored. Matching is case-insensitive for ids.");
+        CONSTRUCT_COST_MULTIPLIER = b.defineInRange("cost_multiplier", 10.0D, 0.0D, 10000.0D);
+        CONSTRUCT_BLACKLIST = b.defineList("blacklist", new java.util.ArrayList<String>(),
+                o -> o instanceof String);
         b.pop();
 
         // 飞剑流光拖尾（客户端）

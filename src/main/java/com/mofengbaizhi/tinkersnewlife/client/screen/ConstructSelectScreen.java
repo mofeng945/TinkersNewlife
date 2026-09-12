@@ -61,19 +61,12 @@ public class ConstructSelectScreen extends AbstractRowListScreen<String> {
         Set<String> ids = new HashSet<>();
         if (level != null) {
             var access = level.registryAccess();
-            // ⭐ 不再只查工作台配方：熔炉/高炉/烟熏/营火/切石机/锻造台以及模组配方类型都算，
-            //    否则"熔炼出来的锭、切石出来的砖"这类物品在列表里根本不出现。
-            for (var recipe : level.getRecipeManager().getRecipes()) {
-                try {
-                    ItemStack out = recipe.getResultItem(access);
-                    if (out == null || out.isEmpty()) continue;
-                    Item item = out.getItem();
-                    ResourceLocation key = ForgeRegistries.ITEMS.getKey(item);
-                    if (key != null) {
-                        ids.add(key.toString());
-                    }
-                } catch (Throwable t) {
-                    // 个别特殊配方（CustomRecipe 等）取产物需要容器上下文，跳过即可
+            // ⭐ 与服务端判定共用同一套逻辑（全部配方类型 + 配置黑名单），避免"列表里有但拟造被拒"
+            for (Item item : com.mofengbaizhi.tinkersnewlife.content.curse.technique.ConstructTechnique
+                    .constructibleMap(level.getRecipeManager(), access).keySet()) {
+                ResourceLocation key = ForgeRegistries.ITEMS.getKey(item);
+                if (key != null) {
+                    ids.add(key.toString());
                 }
             }
         }
