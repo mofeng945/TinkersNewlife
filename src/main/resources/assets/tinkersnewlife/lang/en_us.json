@@ -21,6 +21,7 @@
   "item.tinkersnewlife.construct_blueprint_food": "Constructed Blueprint (Food)",
 "message.tinkersnewlife.construct.ritual_denied": "§7Constructed items cannot be offered to Goety rituals",
   "message.tinkersnewlife.construct.ritual_cleansed": "§7Constructed offerings on the altar/pedestals have dissipated",
+  "message.tinkersnewlife.construct.block_reclaimed": "§7Constructed block reclaimed: you may place it once more before it expires (the timer does not reset)",
   "screen.tinkersnewlife.construct.empty": "No matching items",
   "screen.tinkersnewlife.construct.cost_free_line": "Construct cost: infinite curse (free)",
   "screen.tinkersnewlife.construct.cost_line": "Construct cost: %s",

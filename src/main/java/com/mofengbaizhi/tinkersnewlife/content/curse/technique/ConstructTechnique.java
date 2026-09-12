@@ -322,6 +322,28 @@ public final class ConstructTechnique extends BaseTechnique {
         return stack.hasTag() && stack.getTag().contains(KEY_TEMP_UNTIL);
     }
 
+    /**
+     * 用模板造一个"拟造临时物"栈（蓝本模式走代理物，否则真物品 + 到期标记）。
+     * <p>
+     * 抽出成方法是因为"挖掉拟造方块要把本体还给玩家"（见 {@code ConstructEvents#onBlockBreak}），
+     * 那条路径同样要生成"原样但保留到期时间"的拟造物。
+     */
+    static ItemStack makeTempStack(ItemStack template, long until) {
+        ItemStack stack;
+        if (blueprintEnabled() && useBlueprintFor(template)) {
+            // ⭐ 拟造蓝本：所有拟造物共用同一个物品 id（目标物品与它自己的 NBT 记在栈里），
+            //    因此任何配方/机器/仪式都<b>认不出它</b>——不用再追着每个模组堵自动化。
+            //    物品行为由 ConstructedBlueprintItem 全 API 转发给目标物品实例。
+            stack = com.mofengbaizhi.tinkersnewlife.content.item.ConstructedBlueprintItem.create(template, until);
+        } else {
+            stack = template.copy();
+            stack.getOrCreateTag().putLong(KEY_TEMP_UNTIL, until);
+            Component original = stack.getHoverName();
+            stack.setHoverName(Component.translatable("item.tinkersnewlife.construct.prefix").append(original));
+        }
+        return stack;
+    }
+
     /** 是否构筑术式拟造物（临时物标记；供领域·三重疾苦判定"手中拟造物"） */
     public static boolean isConstructTemp(ItemStack stack) {
         return isTemp(stack);
@@ -393,18 +415,7 @@ public final class ConstructTechnique extends BaseTechnique {
         // ⭐ 优先用"配方真实产物"作模板：法术卷轴这类产物本身带 NBT，裸 new ItemStack 会变成空壳
         ItemStack template = sampleResult(player, item);
         long until = player.serverLevel().getGameTime() + TEMP_TICKS;
-        ItemStack stack;
-        if (blueprintEnabled() && useBlueprintFor(template)) {
-            // ⭐ 拟造蓝本：所有拟造物共用同一个物品 id（目标物品与它自己的 NBT 记在栈里），
-            //    因此任何配方/机器/仪式都<b>认不出它</b>——不用再追着每个模组堵自动化。
-            //    物品行为由 ConstructedBlueprintItem 全 API 转发给目标物品实例。
-            stack = com.mofengbaizhi.tinkersnewlife.content.item.ConstructedBlueprintItem.create(template, until);
-        } else {
-            stack = template;
-            stack.getOrCreateTag().putLong(KEY_TEMP_UNTIL, until);
-            Component original = stack.getHoverName();
-            stack.setHoverName(Component.translatable("item.tinkersnewlife.construct.prefix").append(original));
-        }
+        ItemStack stack = makeTempStack(template, until);
         boolean added = player.getInventory().add(stack);
         if (!added) {
             net.minecraft.world.entity.item.ItemEntity drop = new net.minecraft.world.entity.item.ItemEntity(
@@ -2311,14 +2322,8 @@ public final class ConstructTechnique extends BaseTechnique {
                 BlockState current = level.getBlockState(p.pos);
                 if (current.getBlock() == p.state.getBlock()) {
                     if (p.previousState == null || p.previousState.isAir()) {
-                        // ① 当初是"凭空放下一个新方块" → 整块收回
-                        level.levelEvent(2001, p.pos, net.minecraft.world.level.block.Block.getId(current));
-                        // ⭐ 若方块是容器（箱子/潜影盒等），先把内部物品弹出，避免被直接移除吞掉
-                        ejectContainerContents(level, p.pos);
-                        level.setBlock(p.pos, Blocks.AIR.defaultBlockState(), 3);
-                        level.sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE,
-                                p.pos.getX() + 0.5, p.pos.getY() + 0.5, p.pos.getZ() + 0.5, 10,
-                                0.3, 0.3, 0.3, 0.02);
+                        // ① 当初是"凭空放下一个新方块" → 整块收回（无掉落：拟造方块永远不会掉出真物品）
+                        dissolveTempBlock(level, p);
                     } else if (current == p.state) {
                         // ② 当初只是"改了宿主方块的状态"（末影之眼塞框架 / 翻地 / 点火 / 去皮）→
                         //    只把旧状态撤回，宿主方块原地保留（末影之眼到期 = 框架恢复成"没镶眼"）
@@ -2330,6 +2335,99 @@ public final class ConstructTechnique extends BaseTechnique {
                 }
                 it.remove();
             }
+        }
+
+        /**
+         * ⭐ 拟造方块被"挖掉"时拦下原版破坏。
+         *
+         * <p>不拦会怎样（这是个真实漏洞，用户问到的正是这条）：拟造方块放下后只是<b>记录</b>了这个位置，
+         * 方块本身不带任何标记 → 玩家在到期前把它挖掉，原版按掉落表掉出的是<b>真物品</b>；
+         * 记录因为"该位置已经不是那个方块"而失效，于是这个真物品可以随便换个地方放下 → <b>永久方块</b>，
+         * 拟造物就这么"洗白"了。
+         *
+         * <p>处理：方块<b>直接消散</b>（无任何掉落、带烟尘），并把拟造物本体还给破坏者——
+         * 想搬家就再放下（<b>到期时间不变</b>，不能靠搬来续期），不搬就在背包里到期消散。
+         * 注意只处理"凭空放下"的记录：{@code previousState} 非空气的是"改宿主状态"
+         * （末影之眼塞框架等），宿主方块该正常掉落，不能被拦。
+         */
+        @net.minecraftforge.eventbus.api.SubscribeEvent
+        public static void onBlockBreak(net.minecraftforge.event.level.BlockEvent.BreakEvent event) {
+            if (event.getLevel().isClientSide()) return;
+            if (!(event.getLevel() instanceof ServerLevel level)) return;
+            if (PLACED_TEMPS.isEmpty()) return;
+            PlacedTempBlock rec = findPlacedTemp(level, event.getPos());
+            if (rec == null) return;
+            if (rec.previousState != null && !rec.previousState.isAir()) return;
+            BlockState cur = level.getBlockState(event.getPos());
+            if (cur.getBlock() != rec.state.getBlock()) return;
+
+            event.setCanceled(true);
+            dissolveTempBlock(level, rec);
+            PLACED_TEMPS.remove(rec);
+
+            if (event.getPlayer() instanceof ServerPlayer sp) {
+                Item item = cur.getBlock().asItem();
+                if (item != net.minecraft.world.item.Items.AIR) {
+                    ItemStack back = makeTempStack(new ItemStack(item), rec.expireUntil);
+                    if (!sp.getInventory().add(back)) {
+                        net.minecraft.world.entity.item.ItemEntity drop =
+                                new net.minecraft.world.entity.item.ItemEntity(level,
+                                        rec.pos.getX() + 0.5, rec.pos.getY() + 0.5, rec.pos.getZ() + 0.5, back);
+                        drop.setPickUpDelay(0);
+                        level.addFreshEntity(drop);
+                    }
+                    sp.displayClientMessage(Component.translatable(
+                            "message.tinkersnewlife.construct.block_reclaimed"), true);
+                }
+            }
+        }
+
+        /**
+         * ⭐ 爆炸（TNT/苦力怕……）波及拟造方块时，把它从爆炸列表里摘掉并直接消散：
+         * 否则爆炸同样会按掉落表炸出真物品，等于换个方式"洗白"。
+         */
+        @net.minecraftforge.eventbus.api.SubscribeEvent
+        public static void onExplosionDetonate(net.minecraftforge.event.level.ExplosionEvent.Detonate event) {
+            if (event.getLevel().isClientSide()) return;
+            if (PLACED_TEMPS.isEmpty()) return;
+            if (!(event.getLevel() instanceof ServerLevel level)) return;
+            java.util.List<BlockPos> toBlow = event.getExplosion().getToBlow();
+            if (toBlow.isEmpty()) return;
+            java.util.Iterator<BlockPos> it = toBlow.iterator();
+            while (it.hasNext()) {
+                BlockPos pos = it.next();
+                PlacedTempBlock rec = findPlacedTemp(level, pos);
+                if (rec == null) continue;
+                if (rec.previousState != null && !rec.previousState.isAir()) continue;
+                if (level.getBlockState(pos).getBlock() != rec.state.getBlock()) continue;
+                it.remove();
+                dissolveTempBlock(level, rec);
+                PLACED_TEMPS.remove(rec);
+            }
+        }
+
+        /** 找到该位置上的拟造方块记录（同一位置同一维度） */
+        private static PlacedTempBlock findPlacedTemp(ServerLevel level, BlockPos pos) {
+            for (PlacedTempBlock rec : PLACED_TEMPS) {
+                if (rec.level == level && rec.pos.equals(pos)) return rec;
+            }
+            return null;
+        }
+
+        /**
+         * 让一颗拟造方块"直接消散"：无掉落 + 烟尘特效（容器先把内容弹出）。
+         * <b>不</b>负责从 {@link #PLACED_TEMPS} 里移除记录——调用方在各自的迭代方式下自行移除，
+         * 避免迭代中直接改列表触发 ConcurrentModificationException。
+         */
+        private static void dissolveTempBlock(ServerLevel level, PlacedTempBlock rec) {
+            BlockState cur = level.getBlockState(rec.pos);
+            if (cur.getBlock() != rec.state.getBlock()) return;
+            level.levelEvent(2001, rec.pos, net.minecraft.world.level.block.Block.getId(cur));
+            ejectContainerContents(level, rec.pos);
+            level.setBlock(rec.pos, Blocks.AIR.defaultBlockState(), 3);
+            level.sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE,
+                    rec.pos.getX() + 0.5, rec.pos.getY() + 0.5, rec.pos.getZ() + 0.5, 10,
+                    0.3, 0.3, 0.3, 0.02);
         }
 
         /**

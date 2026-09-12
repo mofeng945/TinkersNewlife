@@ -761,6 +761,7 @@
   "message.tinkersnewlife.construct.expired": "§7拟造物品已到时限消散",
   "message.tinkersnewlife.construct.no_recipe": "§c该物品没有合成配方，无法拟造",
   "message.tinkersnewlife.construct.no_craft": "§c拟造物无法放入容器或参与配方",
+  "message.tinkersnewlife.construct.block_reclaimed": "§7拟造方块已收回：到期前可再放下一次（时间不会重置）",
   "modifier.tinkersnewlife.cursed_speech": "咒言术",
   "modifier.tinkersnewlife.cursed_speech.flavor": "言语即力量，出口成真。",
   "modifier.tinkersnewlife.cursed_speech.description": "顺转（术式键 C）：咏唱当前咒言——六段式「咏叹词，敬称+对象，祈求语+核心义，结谢语！」，咏唱需读条、受击打断不返还，释放后按目标血量与自身输出/亲和结算反噬。反转（反转键 F）：打开咒言编辑器。词条经古代咒术残卷学习，残卷在各类战利品箱中随机开出。咏叹词→咒力消耗、敬称→作用强度、祈求语→持续时间、结谢语→反噬削减。咒力输出与亲和构成「咒力强度」=1+（输出+亲和/10）/10，同时放大效果与作用半径（6格×强度），范围内所有非友方活体一并生效。占用术式槽。",
