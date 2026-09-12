@@ -325,6 +325,11 @@ public class Modifiers {
         MODIFIERS.register("curse_speed",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.CurseSpeedModifier::new);
 
+    /** 防御槽强化·闭耳塞听（仅头盔：头盔交互键开关耳塞；开启时听不见声音并无视咒言术；单级、占1防御槽） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.EarplugModifier> EARPLUGS =
+        MODIFIERS.register("earplugs",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.EarplugModifier::new);
+
     /** 无槽位强化·渎神（安装不占槽：护甲 +2 防御槽，受到的伤害 +10%；单级，不可洗/不可剥） */
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.BlasphemyModifier> BLASPHEMY =
         MODIFIERS.register("blasphemy",

@@ -1,0 +1,16 @@
+{
+    "name": "Stuffed Ears",
+    "category": "tinkersnewlife:traits",
+    "icon": "tconstruct:slime_helmet",
+    "sortnum": 44,
+    "pages": [
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)Defense-slot modifier - Stuffed Ears$(): plug your ears and let them curse the heavens.(br2)Restriction: $(l)helmets only$() (Tinkers' helmet parts), single level, costs $(bold)1 defense slot$().(br2)Usage: press the $(bold)Tinkers' helmet interaction key$() (TCon's \"Helmet Interaction\" binding, default Z) to toggle the earplugs. The state is stored on that helmet, so each helmet remembers its own."
+        },
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)While on$():$(li)You $(bold)hear no sound at all$() (steps, mobs, music - everything is muted)$(li)You $(bold)ignore cursed speech$() - never picked as a chant target and immune to its area effect (the caster still takes their own backlash)(br2)$(bold)While off$(): everything is normal again, both sound and cursed speech affect you.(br2)Recipe: White Wool + Honeycomb + String."
+        }
+    ]
+}

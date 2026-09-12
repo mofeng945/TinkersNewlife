@@ -964,6 +964,44 @@ public final class WuWeiHandler {
     }
 
     // ============================================================
+    //  ⭐ 无为转变出来的单位：死亡不掉任何战利品（也不给经验）
+    // ============================================================
+
+    /**
+     * 该实体是否为"被无为转变出来的生物"：
+     * <ul>
+     *   <li>永久变形 / 领域变形出来的<b>守护形态</b>（带 {@link #KEY_GUARD_OWNER}）；</li>
+     *   <li>被"原地换形态"的<b>可操控单位</b>（带 {@link #KEY_MOB_FORM}，如傀儡/黑鸟被转成别的形态）。</li>
+     * </ul>
+     */
+    public static boolean isTransformedUnit(net.minecraft.world.entity.Entity entity) {
+        if (entity == null) return false;
+        var tag = entity.getPersistentData();
+        return tag.contains(KEY_GUARD_OWNER) || !tag.getString(KEY_MOB_FORM).isEmpty();
+    }
+
+    /**
+     * ⭐ 转变出来的生物<b>不掉战利品</b>。
+     * <p>
+     * 否则"把便宜生物转成值钱的形态再杀掉"就是一条稳定的刷材料路线
+     * （形态的战利品表照常结算，而它只是拟态出来的临时生物）。
+     */
+    @SubscribeEvent
+    public static void onTransformedDrops(net.minecraftforge.event.entity.living.LivingDropsEvent event) {
+        if (isTransformedUnit(event.getEntity())) {
+            event.setCanceled(true);
+        }
+    }
+
+    /** 同上：转变出来的生物也不掉经验（避免同样的刷取路线） */
+    @SubscribeEvent
+    public static void onTransformedXp(net.minecraftforge.event.entity.living.LivingExperienceDropEvent event) {
+        if (isTransformedUnit(event.getEntity())) {
+            event.setCanceled(true);
+        }
+    }
+
+    // ============================================================
     //  ⭐ 可操控单位（傀儡操术的傀儡 / 黑鸟操术的黑鸟）的"原地转变"
     // ============================================================
 

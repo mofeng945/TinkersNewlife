@@ -292,6 +292,8 @@ public final class CursedSpeechTechnique extends BaseTechnique {
     /**
      * 咒言作用目标：以「瞄准到的目标」为中心（未瞄到则以自身为中心），
      * 半径 {@code 6 格 × 咒力强度} 内的所有非友方活体，按距离由近到远排序。
+     * <p>
+     * ⭐ 戴着头盔强化「闭耳塞听」且耳塞开启的目标<b>听不见咒言</b> → 不会被选中、也吃不到范围效果。
      */
     private static List<LivingEntity> findChantTargets(ServerPlayer player) {
         double radius = AOE_RADIUS * powerScale(player);
@@ -303,6 +305,8 @@ public final class CursedSpeechTechnique extends BaseTechnique {
         for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class, box)) {
             if (le == player || le.isRemoved() || !le.isAlive() || le.isSpectator()) continue;
             if (PuppetUtil.isAllyOf(le, player)) continue;
+            // 「闭耳塞听」：塞着耳朵 → 无视咒言术影响
+            if (com.mofengbaizhi.tinkersnewlife.content.modifier.EarplugModifier.isMuffled(le)) continue;
             if (le.position().distanceTo(center) > radius) continue;
             list.add(le);
         }
