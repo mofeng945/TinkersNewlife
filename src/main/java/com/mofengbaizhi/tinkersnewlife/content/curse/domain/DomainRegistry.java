@@ -123,7 +123,7 @@ public final class DomainRegistry {
         // 扫描佩戴咒力核心上的领域特性
         ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
         if (core.isEmpty()) {
-            player.displayClientMessage(Component.translatable("message.tinkersnewlife.domain.no_core"), true);
+            // ⭐ 未佩戴咒力核心时按键静默（不再弹提示）
             return;
         }
         ToolStack tool = ToolHelper.getToolStack(core);

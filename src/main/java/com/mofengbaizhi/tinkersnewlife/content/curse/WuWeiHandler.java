@@ -467,7 +467,7 @@ public final class WuWeiHandler {
             return;
         }
         if (!hasTechnique(player)) {
-            player.displayClientMessage(Component.translatable("message.tinkersnewlife.domain.no_core"), true);
+            // ⭐ 未佩戴咒力核心时按键静默（不再弹提示）
             return;
         }
         if (CursePowerHelper.isBurnout(player)) {

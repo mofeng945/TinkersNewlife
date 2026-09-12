@@ -125,7 +125,7 @@ public final class TechniqueHandler {
     public static void onSwitch(ServerPlayer player) {
         List<ModifierId> techniques = effectiveTechniques(player);
         if (techniques == null) {
-            player.displayClientMessage(Component.translatable("message.tinkersnewlife.domain.no_core"), true);
+            // ⭐ 未佩戴咒力核心时按键静默（不再弹提示）
             return;
         }
         if (techniques.isEmpty()) {
@@ -380,7 +380,7 @@ public final class TechniqueHandler {
         if (selected == null) {
             ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
             if (core.isEmpty()) {
-                player.displayClientMessage(Component.translatable("message.tinkersnewlife.domain.no_core"), true);
+                // ⭐ 未佩戴咒力核心时按键静默（不再弹提示）
             } else {
                 player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_trait"), true);
             }

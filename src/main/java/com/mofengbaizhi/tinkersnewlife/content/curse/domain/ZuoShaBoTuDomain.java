@@ -63,7 +63,7 @@ public class ZuoShaBoTuDomain extends BaseDomain {
     public static ZuoShaBoTuDomain tryCreate(ServerPlayer player) {
         ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
         if (core.isEmpty()) {
-            sendMessage(player, "message.tinkersnewlife.domain.no_core");
+            // ⭐ 未佩戴核心：静默（不再提示）
             return null;
         }
         ToolStack tool = ToolHelper.getToolStack(core);
