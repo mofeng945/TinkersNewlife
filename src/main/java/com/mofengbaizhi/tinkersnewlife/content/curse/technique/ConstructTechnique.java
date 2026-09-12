@@ -1242,9 +1242,103 @@ public final class ConstructTechnique extends BaseTechnique {
             //    档次全写在名字里（common/uncommon/rare/epic/legendary…）→ 按词给分；
             //    这一分会被"原料价值"递归带到下游产物（比如卷轴）上。
             score += tierBonus(itemId);
+
+            // ③ "获取难度"代理：不少高价材料<b>根本没有配方</b>（挖矿/采集/掉落），
+            //    配方链估值对它们无能为力，只能靠下面几条代理把价值补回来。
+            //    a) 不可堆叠（堆叠上限 1）几乎都是独特之物：鞘翅/图腾/三叉戟…
+            try {
+                if (item.getMaxStackSize() == 1) {
+                    score += uniqueItemBonus();
+                }
+            } catch (Throwable ignored) {
+            }
+            //    b) 方块硬度：黑曜石 50、远古残骸 30、铁矿 3、泥土 0.5 → 采起来越费劲越值钱
+            if (item instanceof BlockItem blockItem) {
+                try {
+                    float hardness = blockItem.getBlock().defaultBlockState().getDestroySpeed(null, null);
+                    if (hardness > 0) {
+                        score += Math.min(hardnessCap(), hardness / 2.0);
+                    }
+                } catch (Throwable ignored) {
+                }
+            }
+            //    c) 通用标签价值：矿石/粗矿/矿锭/宝石/矿粉…（可配，可叠加但有总上限）
+            score += tagValue(item);
             return score;
         } catch (Throwable t) {
             return 1.0;
+        }
+    }
+
+    // ============================================================
+    //  获取难度代理：独特物品 / 方块硬度 / 标签价值
+    // ============================================================
+
+    /** 内置标签价值（对所有物品叠加计算；矿石等"没有配方"的材料靠它定价） */
+    private static Map<String, Double> DEFAULT_TAG_VALUES() {
+        Map<String, Double> m = new java.util.LinkedHashMap<>();
+        m.put("#forge:ores", 12.0);
+        m.put("#forge:raw_materials", 8.0);
+        m.put("#forge:ingots", 10.0);
+        m.put("#forge:gems", 25.0);
+        m.put("#forge:dusts", 6.0);
+        m.put("#forge:nuggets", 2.0);
+        m.put("#forge:storage_blocks", 20.0);
+        m.put("#minecraft:coals", 5.0);
+        return m;
+    }
+
+    private static Map<String, Double> tagValueTable;
+
+    private static void ensureTagValues() {
+        if (tagValueTable != null) return;
+        tagValueTable = DEFAULT_TAG_VALUES();
+        try {
+            for (String s : com.mofengbaizhi.tinkersnewlife.config.ModConfig.CONSTRUCT_TAG_VALUES.get()) {
+                String[] kv = splitPair(s);
+                if (kv != null && kv[0].startsWith("#")) {
+                    tagValueTable.put(kv[0], parseDouble(kv[1], 0));
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** 标签价值（多个标签相加，但有总上限） */
+    private static double tagValue(Item item) {
+        ensureTagValues();
+        double total = 0;
+        for (Map.Entry<String, Double> e : tagValueTable.entrySet()) {
+            ResourceLocation tagId = ResourceLocation.tryParse(e.getKey().substring(1));
+            if (tagId == null) continue;
+            if (item.builtInRegistryHolder().is(TagKey.create(Registries.ITEM, tagId))) {
+                total += e.getValue();
+            }
+        }
+        return Math.min(tagValueCap(), total);
+    }
+
+    private static double uniqueItemBonus() {
+        try {
+            return Math.max(0.0, com.mofengbaizhi.tinkersnewlife.config.ModConfig.CONSTRUCT_UNIQUE_ITEM_BONUS.get());
+        } catch (Throwable t) {
+            return 8.0;
+        }
+    }
+
+    private static double hardnessCap() {
+        try {
+            return Math.max(0.0, com.mofengbaizhi.tinkersnewlife.config.ModConfig.CONSTRUCT_HARDNESS_CAP.get());
+        } catch (Throwable t) {
+            return 25.0;
+        }
+    }
+
+    private static double tagValueCap() {
+        try {
+            return Math.max(0.0, com.mofengbaizhi.tinkersnewlife.config.ModConfig.CONSTRUCT_TAG_VALUE_CAP.get());
+        } catch (Throwable t) {
+            return 60.0;
         }
     }
 

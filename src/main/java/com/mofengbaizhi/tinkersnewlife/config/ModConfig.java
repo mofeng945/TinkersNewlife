@@ -59,6 +59,14 @@ public final class ModConfig {
     public static final ConfigValue<List<? extends String>> CONSTRUCT_TIER_BONUS;
     /** 手动指定物品价值（"物品id=分数"、通配符 "*_ink=200"、标签 "#forge:gems=20"；直接替代计算结果） */
     public static final ConfigValue<List<? extends String>> CONSTRUCT_VALUE_OVERRIDES;
+    /** 标签价值表（"#forge:gems=25"；可叠加，用于给"没有配方"的采集物定价） */
+    public static final ConfigValue<List<? extends String>> CONSTRUCT_TAG_VALUES;
+    /** 不可堆叠物品的加成分（独特物品，如鞘翅/图腾） */
+    public static final ConfigValue<Double> CONSTRUCT_UNIQUE_ITEM_BONUS;
+    /** 方块硬度折算成的分数上限（硬度/2，封顶此值） */
+    public static final ConfigValue<Double> CONSTRUCT_HARDNESS_CAP;
+    /** 标签价值合计上限 */
+    public static final ConfigValue<Double> CONSTRUCT_TAG_VALUE_CAP;
 
     // ==================== 术式/领域缩放系数 ====================
     /** 各术式 modifier id → [damage, cost] 缩放 */
@@ -120,6 +128,14 @@ public final class ModConfig {
                 "             *_ink=120                            (glob)",
                 "             #forge:gems=25                       (item tag)",
                 "",
+                "--- value of items that have NO recipe (mining / gathering / drops) ---",
+                "tag_values  = additive score per item tag. Built-in: #forge:ores=12 #forge:raw_materials=8",
+                "              #forge:ingots=10 #forge:gems=25 #forge:dusts=6 #forge:nuggets=2",
+                "              #forge:storage_blocks=20 #minecraft:coals=5  (sum is capped by tag_value_cap)",
+                "unique_item_bonus = bonus for non-stackable items (stack size 1: elytra, totem, trident...)",
+                "hardness_cap      = cap for the block-hardness proxy (obsidian 50 -> 25, ancient debris 30 -> 15)",
+                "tag_value_cap     = cap of the summed tag values for one item",
+                "",
                 "blacklist = extra entries that must NOT appear in the construct menu. Supported formats:",
                 "  goety                 -> whole mod          (bare modid)",
                 "  iceandfire:*          -> whole mod          (modid:*)",
@@ -141,6 +157,11 @@ public final class ModConfig {
                 o -> o instanceof String);
         CONSTRUCT_VALUE_OVERRIDES = b.defineList("value_overrides", new java.util.ArrayList<String>(),
                 o -> o instanceof String);
+        CONSTRUCT_TAG_VALUES = b.defineList("tag_values", new java.util.ArrayList<String>(),
+                o -> o instanceof String);
+        CONSTRUCT_UNIQUE_ITEM_BONUS = b.defineInRange("unique_item_bonus", 8.0D, 0.0D, 10000.0D);
+        CONSTRUCT_HARDNESS_CAP = b.defineInRange("hardness_cap", 25.0D, 0.0D, 10000.0D);
+        CONSTRUCT_TAG_VALUE_CAP = b.defineInRange("tag_value_cap", 60.0D, 0.0D, 10000.0D);
         CONSTRUCT_BLACKLIST = b.defineList("blacklist", new java.util.ArrayList<String>(),
                 o -> o instanceof String);
         b.pop();
