@@ -806,23 +806,46 @@ public final class ConstructTechnique extends BaseTechnique {
     }
 
     /**
-     * 一条配方的"成本描述"：产物 + 物品原料（每个原料保留候选列表，按候选平均）+ 流体投入。
+     * 一条配方的"成本描述"：产物 + <b>产出数量</b> + 物品原料（每个原料保留候选列表，按候选平均）+ 流体投入。
      * 预抽一次，之后每轮迭代只做求和，避免反复反射/解包。
      */
-    private record RecipeCost(Item resultItem, java.util.List<Item[]> ingredients,
+    private record RecipeCost(Item resultItem, int outputCount, java.util.List<Item[]> ingredients,
                               java.util.List<FluidAmount> fluidsIn) {}
 
     /** 不动点迭代轮数（每轮把"上游价值"往上游再传一层；4 轮足够覆盖大多数合成链） */
     private static final int VALUE_ITERATIONS = 4;
 
-    /** 抽出一条配方的成本描述（取不到产物/原料就返回 null） */
+    /** 反射兜底：按类缓存"Ingredient 类型的字段"（用于 getIngredients() 返回空表的配方，见 describeRecipe） */
+    private static final Map<Class<?>, java.util.List<java.lang.reflect.Field>> INGREDIENT_FIELDS =
+            new java.util.HashMap<>();
+
+    /**
+     * 抽出一条配方的成本描述（取不到产物就返回 null）。
+     *
+     * <p>⭐ 两个关键坑：
+     * <ol>
+     *   <li>{@code Recipe#getIngredients()} 是<b>默认空实现</b>，很多配方类型不覆写它——最典型的是
+     *       1.20.1 的 {@code SmithingTransformRecipe}（锻造台升级）：它把 template/base/addition
+     *       存成自己的字段，{@code getIngredients()} 返回空表 → "用神灵金属锭升级出的盔甲"原料价值算成 0，
+     *       造价只剩盔甲自身分（200 咒力），比原材料还便宜。这里补一层反射兜底。</li>
+     *   <li>配方可能有<b>多产物</b>（如神灵金属锭：8 黑暗锭 → <b>9</b> 锭）。
+     *       成本必须除以此数量，否则会把 8 个锭的成本全算到 1 个锭头上（曾导致该锭 1200+ 咒力）。</li>
+     * </ol>
+     */
     private static RecipeCost describeRecipe(net.minecraft.world.item.crafting.Recipe<?> recipe,
                                              net.minecraft.core.RegistryAccess access) {
         try {
             ItemStack out = recipe.getResultItem(access);
             if (out.isEmpty() || out.getItem() == Items.AIR) return null;
+            java.util.List<net.minecraft.world.item.crafting.Ingredient> raw = new java.util.ArrayList<>();
+            try {
+                raw.addAll(recipe.getIngredients());
+                if (raw.isEmpty()) raw.addAll(reflectIngredients(recipe));   // 兜底
+            } catch (Throwable ignored) {
+                raw.addAll(reflectIngredients(recipe));
+            }
             java.util.List<Item[]> ingredients = new java.util.ArrayList<>();
-            for (var ingredient : recipe.getIngredients()) {
+            for (net.minecraft.world.item.crafting.Ingredient ingredient : raw) {
                 if (ingredient == null || ingredient.isEmpty()) continue;
                 ItemStack[] cands = ingredient.getItems();
                 if (cands == null || cands.length == 0) continue;
@@ -834,10 +857,62 @@ public final class ConstructTechnique extends BaseTechnique {
             var fluids = ConstructFluidValues.enabled()
                     ? ConstructFluidValues.inputsOf(recipe)
                     : java.util.List.<FluidAmount>of();
-            return new RecipeCost(out.getItem(), ingredients, fluids);
+            return new RecipeCost(out.getItem(), Math.max(1, out.getCount()), ingredients, fluids);
         } catch (Throwable t) {
             return null;
         }
+    }
+
+    /** 一条配方的<b>单位产出</b>成本 = 总投入 ÷ 产出数量（多产物配方必须除，否则单个产物被算成整批的价） */
+    private static double unitCostOf(RecipeCost cost, Map<Item, Double> itemValues, Map<Fluid, Double> fluidValues) {
+        return costOf(cost, itemValues, fluidValues) / Math.max(1, cost.outputCount());
+    }
+
+    /** 反射兜底取原料：类里所有 Ingredient 类型的字段（含 Ingredient[]、List&lt;Ingredient&gt;） */
+    private static java.util.List<net.minecraft.world.item.crafting.Ingredient> reflectIngredients(
+            net.minecraft.world.item.crafting.Recipe<?> recipe) {
+        java.util.List<net.minecraft.world.item.crafting.Ingredient> out = new java.util.ArrayList<>();
+        try {
+            var fields = INGREDIENT_FIELDS.computeIfAbsent(recipe.getClass(), ConstructTechnique::scanIngredientFields);
+            for (var f : fields) {
+                Object v = f.get(recipe);
+                if (v instanceof net.minecraft.world.item.crafting.Ingredient ing) {
+                    out.add(ing);
+                } else if (v instanceof net.minecraft.world.item.crafting.Ingredient[] arr) {
+                    for (var ing : arr) out.add(ing);
+                } else if (v instanceof java.util.Collection<?> col) {
+                    for (Object o : col) {
+                        if (o instanceof net.minecraft.world.item.crafting.Ingredient ing) out.add(ing);
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return out;
+    }
+
+    /** 扫描类层次里所有"像原料"的字段（Ingredient / Ingredient[] / List&lt;Ingredient&gt;） */
+    private static java.util.List<java.lang.reflect.Field> scanIngredientFields(Class<?> type) {
+        java.util.List<java.lang.reflect.Field> list = new java.util.ArrayList<>();
+        Class<?> c = type;
+        while (c != null && c != Object.class) {
+            for (var f : c.getDeclaredFields()) {
+                if (java.lang.reflect.Modifier.isStatic(f.getModifiers())) continue;
+                Class<?> ft = f.getType();
+                boolean ok = net.minecraft.world.item.crafting.Ingredient.class.isAssignableFrom(ft)
+                        || ft == net.minecraft.world.item.crafting.Ingredient[].class
+                        || (java.util.Collection.class.isAssignableFrom(ft)
+                        && f.getGenericType().getTypeName().contains("Ingredient"));
+                if (!ok) continue;
+                try {
+                    f.setAccessible(true);
+                    list.add(f);
+                } catch (Throwable ignored) {
+                }
+            }
+            c = c.getSuperclass();
+        }
+        return list;
     }
 
     /** 一条配方的投入总价值 = Σ(物品原料，候选取平均) + Σ(流体投入 mB × 每 mB 价值) */
@@ -931,7 +1006,7 @@ public final class ConstructTechnique extends BaseTechnique {
             // 流体：先把桶/标签地板价夹住，再用产出它的配方的投入成本抬升
             for (Map.Entry<Fluid, java.util.List<RecipeCost>> e : fluidProducers.entrySet()) {
                 double sum = 0;
-                for (RecipeCost c : e.getValue()) sum += costOf(c, itemValues, fluidValues);
+                for (RecipeCost c : e.getValue()) sum += unitCostOf(c, itemValues, fluidValues);
                 double avg = sum / e.getValue().size();
                 double floor = fluidFloor(e.getKey(), itemValues);
                 double v = Math.max(floor, Math.min(INGREDIENT_VALUE_CAP, avg));
@@ -940,7 +1015,7 @@ public final class ConstructTechnique extends BaseTechnique {
             // 物品：自身分与"配方投入成本"取大（同样被上限夹住）
             for (Map.Entry<Item, java.util.List<RecipeCost>> e : itemProducers.entrySet()) {
                 double sum = 0;
-                for (RecipeCost c : e.getValue()) sum += costOf(c, itemValues, fluidValues);
+                for (RecipeCost c : e.getValue()) sum += unitCostOf(c, itemValues, fluidValues);
                 double avg = sum / e.getValue().size();
                 double v = Math.max(intrinsicScore(e.getKey()), Math.min(INGREDIENT_VALUE_CAP, avg));
                 itemValues.put(e.getKey(), Math.max(itemValues.getOrDefault(e.getKey(), 0.0), v));
@@ -949,7 +1024,7 @@ public final class ConstructTechnique extends BaseTechnique {
         Map<Item, Double> terms = new java.util.HashMap<>();
         for (Map.Entry<Item, java.util.List<RecipeCost>> e : itemProducers.entrySet()) {
             double sum = 0;
-            for (RecipeCost c : e.getValue()) sum += costOf(c, itemValues, fluidValues);
+            for (RecipeCost c : e.getValue()) sum += unitCostOf(c, itemValues, fluidValues);
             terms.put(e.getKey(), sum / e.getValue().size());
         }
 
