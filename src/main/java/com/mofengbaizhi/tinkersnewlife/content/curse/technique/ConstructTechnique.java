@@ -81,6 +81,9 @@ public final class ConstructTechnique extends BaseTechnique {
     /** 被右键"安装"的拟造部件（AE2 ME 输入接口等非方块形态，到期摘除）；服务端主线程访问 */
     private static final List<PlacedTempPart> PLACED_TEMP_PARTS = new ArrayList<>();
 
+    /** 右键瞬间的待确认部件放置（2 tick 后对比"新增面"）；服务端主线程访问 */
+    private static final List<PendingPartPlace> PENDING_PARTS = new ArrayList<>();
+
     /** 扫描容器时用的随机数（挑玩家用） */
     private static final java.util.Random RANDOM = new java.util.Random();
 
@@ -958,8 +961,11 @@ public final class ConstructTechnique extends BaseTechnique {
         /**
          * ⭐ 兜底记录：右键用拟造物"安装"的东西<b>不会</b>触发 {@code EntityPlaceEvent}
          * （典型例子：AE2 的 ME 输入接口 / 各种线缆部件 —— 它们不是方块，而是挂在方块上的 part，
-         * 由模组自己的网络包处理放置）。这里在右键方块时就把（位置 + 物品 + 到期时刻）记下来，
-         * 到期时再按"部件"或"方块"两种方式尝试移除。
+         * 由模组自己的网络包处理放置）。
+         *
+         * <p>为了<b>精确到实例</b>（同一根线缆上可能还挂着玩家正常合成的同款部件，不能删错），
+         * 这里在右键瞬间给宿主拍"已占用面"快照，几 tick 后（部件真正装上了）对比出新增面，
+         * 只记那一面。
          */
         @net.minecraftforge.eventbus.api.SubscribeEvent
         public static void onRightClickBlock(net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickBlock event) {
@@ -973,13 +979,17 @@ public final class ConstructTechnique extends BaseTechnique {
                 until = held.hasTag() ? held.getTag().getLong(KEY_TEMP_UNTIL) : 0;
             }
             if (until <= 0 || held.isEmpty()) return;
-            // 点到的那个方块 + 其六个邻居都记一份（不同模组把 part 挂在不同位置上）
             Item item = held.getItem();
             net.minecraft.core.BlockPos pos = event.getPos();
-            PLACED_TEMP_PARTS.add(new PlacedTempPart(level, pos.immutable(), item, until));
+            long now = level.getGameTime();
+            PartHost host = findPartHost(level, pos);
+            int before = host == null ? -1 : occupiedMask(host);
+            net.minecraft.core.BlockPos hostPos = host == null ? pos.immutable() : host.pos;
+            PENDING_PARTS.add(new PendingPartPlace(level, hostPos, item, until, before, now + 2));
             net.minecraft.core.Direction face = event.getFace();
-            if (face != null) {
-                PLACED_TEMP_PARTS.add(new PlacedTempPart(level, pos.relative(face).immutable(), item, until));
+            if (face != null && host == null) {
+                // 也可能在点击面的邻位新拉一根线缆承载部件
+                PENDING_PARTS.add(new PendingPartPlace(level, pos.relative(face).immutable(), item, until, -1, now + 2));
             }
         }
 
@@ -1016,7 +1026,35 @@ public final class ConstructTechnique extends BaseTechnique {
                 tickContainerSweep(event.getServer());
                 return;
             }
-            // ⭐ 拟造"部件"（AE2 ME 输入接口等非方块形态）到期移除
+            // ⭐ 待确认的部件放置：右键后 2 tick 对比"新增面"，精确锁定拟造部件所在的那一面
+            if (!PENDING_PARTS.isEmpty()) {
+                long now = 0;
+                Iterator<PendingPartPlace> qit = PENDING_PARTS.iterator();
+                while (qit.hasNext()) {
+                    PendingPartPlace q = qit.next();
+                    ServerLevel level = q.level;
+                    if (level == null) {
+                        qit.remove();
+                        continue;
+                    }
+                    now = level.getGameTime();
+                    if (now < q.scanAt) continue;
+                    qit.remove();
+                    if (!level.isLoaded(q.hostPos)) continue;
+                    PartHost host = findPartHostExact(level, q.hostPos);
+                    if (host == null) continue;
+                    int after = occupiedMask(host);
+                    int added = q.sidesBefore < 0 ? 0 : (after & ~q.sidesBefore);
+                    if (added == 0) {
+                        // 快照失效（新拉线缆 / 没装上）：退化为"该宿主上刚好只有一个同款部件"才认
+                        int single = singleMatchingSide(host, q.item);
+                        if (single == 0) continue;
+                        added = single;
+                    }
+                    PLACED_TEMP_PARTS.add(new PlacedTempPart(level, host.pos, q.item, q.until, added));
+                }
+            }
+            // ⭐ 拟造"部件"（AE2 ME 输入接口等非方块形态）到期移除：只摘当初记下的那一面
             if (!PLACED_TEMP_PARTS.isEmpty()) {
                 Iterator<PlacedTempPart> pit = PLACED_TEMP_PARTS.iterator();
                 while (pit.hasNext()) {
@@ -1026,7 +1064,7 @@ public final class ConstructTechnique extends BaseTechnique {
                     long now = level.getGameTime();
                     if (now < p.until) continue;
                     // 先按"线缆部件"尝试摘掉（AE2 软依赖，纯反射），失败再按方块处理
-                    if (!tryRemovePart(level, p.pos, p.item)) {
+                    if (!removeRecordedSides(level, p)) {
                         net.minecraft.world.level.block.state.BlockState cur = level.getBlockState(p.pos);
                         if (p.item instanceof net.minecraft.world.item.BlockItem bi
                                 && cur.getBlock() == bi.getBlock()) {
@@ -1198,47 +1236,116 @@ public final class ConstructTechnique extends BaseTechnique {
         }
 
         // ============================================================
-        //  ⭐ 线缆部件（AE2 ME 输入接口这类非方块形态）到期摘除
+        //  ⭐ 线缆部件（AE2 ME 输入接口这类非方块形态）到期摘除：精确到"哪一面"
         // ============================================================
 
-        /**
-         * 尝试把该位置上的"线缆部件"摘掉。用<b>纯反射</b>判断 AE2 的
-         * {@code appeng.api.parts.IPartHost}（AE2 不在时直接返回 false），
-         * 命中"物品和拟造物一致"的部件就 {@code removePartFromSide(side)}。
-         */
-        private static boolean tryRemovePart(ServerLevel level, BlockPos pos, Item item) {
-            BlockEntity be = level.getBlockEntity(pos);
-            if (be == null) return false;
-            Class<?> hostIf = findInterface(be.getClass(), "appeng.api.parts.IPartHost");
-            if (hostIf == null) {
-                // 也试试六个邻居（不同模组把挂载点放在相邻位置）
-                for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values()) {
-                    BlockEntity nb = level.getBlockEntity(pos.relative(d));
-                    if (nb != null && findInterface(nb.getClass(), "appeng.api.parts.IPartHost") != null) {
-                        be = nb;
-                        hostIf = findInterface(nb.getClass(), "appeng.api.parts.IPartHost");
-                        break;
-                    }
+        /** 带反射句柄的部件宿主（AE2 的 {@code appeng.api.parts.IPartHost}） */
+        private static final class PartHost {
+            final BlockEntity be;
+            final BlockPos pos;
+            final java.lang.reflect.Method getPart;
+            final java.lang.reflect.Method removeFromSide;
+
+            PartHost(BlockEntity be, Class<?> iface) throws NoSuchMethodException {
+                this.be = be;
+                this.pos = be.getBlockPos().immutable();
+                this.getPart = iface.getMethod("getPart", net.minecraft.core.Direction.class);
+                this.removeFromSide = iface.getMethod("removePartFromSide", net.minecraft.core.Direction.class);
+            }
+
+            Object part(net.minecraft.core.Direction d) {
+                try {
+                    return getPart.invoke(be, d);
+                } catch (Throwable t) {
+                    return null;
                 }
             }
-            if (hostIf == null) return false;
-            try {
-                var getPart = hostIf.getMethod("getPart", net.minecraft.core.Direction.class);
-                var removePart = hostIf.getMethod("removePartFromSide", net.minecraft.core.Direction.class);
-                for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values()) {
-                    Object part = getPart.invoke(be, d);
-                    if (part == null) continue;
-                    Object partItem = part.getClass().getMethod("getPartItem").invoke(part);
-                    if (partItem instanceof net.minecraft.world.level.ItemLike like && like.asItem() == item) {
-                        removePart.invoke(be, d);
-                        smoke(level, be.getBlockPos());
-                        TinkersNewlife.LOGGER.info("[构筑] 已摘除到期拟造部件: {} @ {}", item, be.getBlockPos());
-                        return true;
-                    }
+
+            boolean remove(net.minecraft.core.Direction d) {
+                try {
+                    removeFromSide.invoke(be, d);
+                    return true;
+                } catch (Throwable t) {
+                    return false;
                 }
+            }
+        }
+
+        /** 该位置或其六个邻居上的部件宿主（软依赖：找不到 AE2 就是 null） */
+        private static PartHost findPartHost(ServerLevel level, BlockPos pos) {
+            PartHost h = findPartHostExact(level, pos);
+            if (h != null) return h;
+            for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values()) {
+                h = findPartHostExact(level, pos.relative(d));
+                if (h != null) return h;
+            }
+            return null;
+        }
+
+        private static PartHost findPartHostExact(ServerLevel level, BlockPos pos) {
+            BlockEntity be = level.getBlockEntity(pos);
+            if (be == null) return null;
+            Class<?> iface = findInterface(be.getClass(), "appeng.api.parts.IPartHost");
+            if (iface == null) return null;
+            try {
+                return new PartHost(be, iface);
+            } catch (Throwable t) {
+                return null;
+            }
+        }
+
+        /** 六个面里哪些被占用（位掩码），用于"新增面"对比 */
+        private static int occupiedMask(PartHost host) {
+            int mask = 0;
+            for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values()) {
+                if (host.part(d) != null) mask |= 1 << d.ordinal();
+            }
+            return mask;
+        }
+
+        /** 该宿主上"物品匹配且全局唯一"的那一面（0 = 没有或不止一个，无法确定就不动） */
+        private static int singleMatchingSide(PartHost host, Item item) {
+            int mask = 0;
+            int count = 0;
+            for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values()) {
+                if (partItemOf(host.part(d)) == item) {
+                    mask |= 1 << d.ordinal();
+                    count++;
+                }
+            }
+            return count == 1 ? mask : 0;
+        }
+
+        private static Item partItemOf(Object part) {
+            if (part == null) return null;
+            try {
+                Object partItem = part.getClass().getMethod("getPartItem").invoke(part);
+                if (partItem instanceof net.minecraft.world.level.ItemLike like) return like.asItem();
             } catch (Throwable ignored) {
             }
-            return false;
+            return null;
+        }
+
+        /**
+         * 到期摘除：<b>只摘当初记录的那一面</b>，并且那一面上还得是同款物品才动。
+         * 这样同一根线缆上玩家后来正常合成的同款部件不会被误删。
+         *
+         * @return true = 按部件处理过了（无论是否真摘掉）
+         */
+        private static boolean removeRecordedSides(ServerLevel level, PlacedTempPart p) {
+            PartHost host = findPartHostExact(level, p.pos);
+            if (host == null) return false;
+            boolean handled = false;
+            for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values()) {
+                if ((p.sidesMask & (1 << d.ordinal())) == 0) continue;
+                handled = true;
+                if (partItemOf(host.part(d)) != p.item) continue;   // 那一面已被换掉 → 不动
+                if (host.remove(d)) {
+                    smoke(level, host.pos);
+                    TinkersNewlife.LOGGER.info("[构筑] 已摘除到期拟造部件: {} @ {} {}", p.item, host.pos, d);
+                }
+            }
+            return handled;
         }
 
         /** 在类层次（含接口继承）里找指定名称的接口 */
@@ -1256,18 +1363,41 @@ public final class ConstructTechnique extends BaseTechnique {
         }
     }
 
-    /** 一个"被右键安装的拟造部件"记录（AE2 线缆部件等非方块形态） */
+    /** 待确认的部件放置（右键快照 → 2 tick 后对比新增面） */
+    private static final class PendingPartPlace {
+        final ServerLevel level;
+        final BlockPos hostPos;
+        final Item item;
+        final long until;
+        /** -1 = 放置前没有宿主（快照不可用） */
+        final int sidesBefore;
+        final long scanAt;
+
+        PendingPartPlace(ServerLevel level, BlockPos hostPos, Item item, long until, int sidesBefore, long scanAt) {
+            this.level = level;
+            this.hostPos = hostPos;
+            this.item = item;
+            this.until = until;
+            this.sidesBefore = sidesBefore;
+            this.scanAt = scanAt;
+        }
+    }
+
+    /** 一个"被右键安装的拟造部件"记录（AE2 线缆部件等非方块形态；sidesMask 精确到哪一面） */
     private static final class PlacedTempPart {
         final ServerLevel level;
         final BlockPos pos;
         final Item item;
         final long until;
+        /** 位掩码：Direction.ordinal() 位；哪个面上是这颗拟造部件 */
+        final int sidesMask;
 
-        PlacedTempPart(ServerLevel level, BlockPos pos, Item item, long until) {
+        PlacedTempPart(ServerLevel level, BlockPos pos, Item item, long until, int sidesMask) {
             this.level = level;
             this.pos = pos;
             this.item = item;
             this.until = until;
+            this.sidesMask = sidesMask;
         }
     }
 
