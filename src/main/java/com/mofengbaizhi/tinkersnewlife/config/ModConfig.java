@@ -67,6 +67,19 @@ public final class ModConfig {
     public static final ConfigValue<Double> CONSTRUCT_HARDNESS_CAP;
     /** 标签价值合计上限 */
     public static final ConfigValue<Double> CONSTRUCT_TAG_VALUE_CAP;
+    // ---- 掉落来源扫描（缺省证据，不主导价格）----
+    /** 是否启用掉落来源扫描（扫描命令本身始终可用） */
+    public static final ConfigValue<Boolean> CONSTRUCT_LOOT_SOURCE_ENABLED;
+    /** 是否自动应用扫描结果（默认 false：只生成建议文件，人工合并） */
+    public static final ConfigValue<Boolean> CONSTRUCT_LOOT_SOURCE_AUTO_APPLY;
+    /** 掉落项分数上限 */
+    public static final ConfigValue<Double> CONSTRUCT_LOOT_SOURCE_CAP;
+    /** 掉落自动加价的黑名单（物品 id / modid） */
+    public static final ConfigValue<List<? extends String>> CONSTRUCT_LOOT_SOURCE_BLACKLIST;
+    /** 实体难度覆盖（"minecraft:wither=120" / "minecraft:wither_skeleton=55"） */
+    public static final ConfigValue<List<? extends String>> CONSTRUCT_ENTITY_VALUE_OVERRIDES;
+    /** 结构难度覆盖（"minecraft:chests/ancient_city=50"） */
+    public static final ConfigValue<List<? extends String>> CONSTRUCT_STRUCTURE_VALUE_OVERRIDES;
 
     // ==================== 术式/领域缩放系数 ====================
     /** 各术式 modifier id → [damage, cost] 缩放 */
@@ -136,6 +149,18 @@ public final class ModConfig {
                 "hardness_cap      = cap for the block-hardness proxy (obsidian 50 -> 25, ancient debris 30 -> 15)",
                 "tag_value_cap     = cap of the summed tag values for one item",
                 "",
+                "--- loot / structure source scan (evidence only, does NOT lead pricing) ---",
+                "Run:  /tinkersnewlife construct lootsuggest     (scans entity drops + chest loot)",
+                "It writes config/mofengbaizhi/construct/loot_index.json  (cache)",
+                "      and config/mofengbaizhi/construct/loot_suggestions.toml (paste into value_overrides).",
+                "loot_source_enabled = allow the scan / the auto-apply lookup",
+                "loot_source_auto_apply = false (default) keep it suggestions-only. When true it only affects",
+                "                        items with NO recipe, NOT a block, stackable, not covered by",
+                "                        value_overrides/tag_values and not in loot_source_blacklist.",
+                "loot_source_cap = upper bound of the loot term",
+                "loot_source_blacklist = farmable junk (rotten flesh, bone, string...) excluded from auto-apply",
+                "entity_value_overrides / structure_value_overrides = difficulty base overrides",
+                "",
                 "blacklist = extra entries that must NOT appear in the construct menu. Supported formats:",
                 "  goety                 -> whole mod          (bare modid)",
                 "  iceandfire:*          -> whole mod          (modid:*)",
@@ -162,6 +187,21 @@ public final class ModConfig {
         CONSTRUCT_UNIQUE_ITEM_BONUS = b.defineInRange("unique_item_bonus", 8.0D, 0.0D, 10000.0D);
         CONSTRUCT_HARDNESS_CAP = b.defineInRange("hardness_cap", 25.0D, 0.0D, 10000.0D);
         CONSTRUCT_TAG_VALUE_CAP = b.defineInRange("tag_value_cap", 60.0D, 0.0D, 10000.0D);
+        CONSTRUCT_LOOT_SOURCE_ENABLED = b.define("loot_source_enabled", true);
+        CONSTRUCT_LOOT_SOURCE_AUTO_APPLY = b.define("loot_source_auto_apply", false);
+        CONSTRUCT_LOOT_SOURCE_CAP = b.defineInRange("loot_source_cap", 60.0D, 0.0D, 10000.0D);
+        CONSTRUCT_LOOT_SOURCE_BLACKLIST = b.defineList("loot_source_blacklist",
+                new java.util.ArrayList<String>(java.util.List.of(
+                        "minecraft:rotten_flesh", "minecraft:bone", "minecraft:string", "minecraft:arrow",
+                        "minecraft:gunpowder", "minecraft:spider_eye", "minecraft:feather", "minecraft:leather",
+                        "minecraft:beef", "minecraft:porkchop", "minecraft:chicken", "minecraft:mutton",
+                        "minecraft:cod", "minecraft:salmon", "minecraft:ink_sac", "minecraft:bowl",
+                        "minecraft:wheat_seeds", "minecraft:wheat", "minecraft:carrot", "minecraft:potato")),
+                o -> o instanceof String);
+        CONSTRUCT_ENTITY_VALUE_OVERRIDES = b.defineList("entity_value_overrides",
+                new java.util.ArrayList<String>(), o -> o instanceof String);
+        CONSTRUCT_STRUCTURE_VALUE_OVERRIDES = b.defineList("structure_value_overrides",
+                new java.util.ArrayList<String>(), o -> o instanceof String);
         CONSTRUCT_BLACKLIST = b.defineList("blacklist", new java.util.ArrayList<String>(),
                 o -> o instanceof String);
         b.pop();

@@ -780,7 +780,8 @@ public final class ConstructTechnique extends BaseTechnique {
                                   Map<Item, java.util.Set<net.minecraft.world.item.crafting.RecipeType<?>>> outputs,
                                   Map<Item, Double> ingredientTerms,
                                   Map<Item, ItemStack> samples,
-                                  Map<Item, Double> functionTerms) {}
+                                  Map<Item, Double> functionTerms,
+                                  Map<Item, Double> lootTerms) {}
 
     private static final Map<net.minecraft.world.item.crafting.RecipeManager, ConstructCache> CONSTRUCT_CACHE =
             new java.util.IdentityHashMap<>();
@@ -850,8 +851,23 @@ public final class ConstructTechnique extends BaseTechnique {
             functionTerms.put(item, functionValue(item));
         }
 
+        // 5) "掉落来源"项（缺省证据）：只在 loot_source_auto_apply=true 时生效，
+        //    且仅对"无配方 + 非方块 + 可堆叠 + 未被覆盖 + 不在黑名单"的物品加价（见 ConstructLootIndex）
+        Map<Item, Double> lootTerms = new java.util.HashMap<>();
+        if (ConstructLootIndex.enabled() && ConstructLootIndex.autoApply()) {
+            ConstructLootIndex.loadCachedIndex();
+            for (Item item : outputs.keySet()) {
+                ResourceLocation key = ForgeRegistries.ITEMS.getKey(item);
+                if (key == null) continue;
+                // 有配方的物品不走掉落项（配方链已经能定价）
+                if (byItem.containsKey(item)) continue;
+                double v = ConstructLootIndex.lootScoreFor(key.toString());
+                if (v > 0) lootTerms.put(item, v);
+            }
+        }
+
         if (CONSTRUCT_CACHE.size() > 2) CONSTRUCT_CACHE.clear();
-        ConstructCache fresh = new ConstructCache(all.size(), outputs, terms, samples, functionTerms);
+        ConstructCache fresh = new ConstructCache(all.size(), outputs, terms, samples, functionTerms, lootTerms);
         CONSTRUCT_CACHE.put(manager, fresh);
         TinkersNewlife.LOGGER.debug("[构筑] 可拟造物品表已重建：{} 项（黑名单后）", outputs.size());
         return fresh;
@@ -1164,8 +1180,14 @@ public final class ConstructTechnique extends BaseTechnique {
             fn = Math.max(0.0, functionValue(item));
         } catch (Throwable ignored) {
         }
+        double loot = 0.0;
+        try {
+            ResourceLocation ik = ForgeRegistries.ITEMS.getKey(item);
+            if (ik != null) loot = ConstructLootIndex.lootScoreFor(ik.toString());
+        } catch (Throwable ignored) {
+        }
         return computeCost(CursePowerHelper.getCurseAffinity(player),
-                CursePowerHelper.getCurseOutputLevel(player), item, term, fn);
+                CursePowerHelper.getCurseOutputLevel(player), item, term, fn, loot);
     }
 
     /** 兼容旧调用（不含原料项） */
@@ -1184,14 +1206,20 @@ public final class ConstructTechnique extends BaseTechnique {
      * </pre>
      */
     public static int computeCost(int affinity, int output, Item item, double ingredientTerm) {
-        return computeCost(affinity, output, item, ingredientTerm, 0.0);
+        return computeCost(affinity, output, item, ingredientTerm, 0.0, 0.0);
     }
 
-    /** 完整版：自身分 + 原料项×权重 + 功能价值项(魔法类) */
     public static int computeCost(int affinity, int output, Item item, double ingredientTerm, double functionTerm) {
+        return computeCost(affinity, output, item, ingredientTerm, functionTerm, 0.0);
+    }
+
+    /** 完整版：自身分 + 原料项×权重 + 功能价值项(魔法类) + 掉落来源项 */
+    public static int computeCost(int affinity, int output, Item item, double ingredientTerm, double functionTerm,
+                                  double lootTerm) {
         double score = intrinsicScore(item)
                 + Math.max(0.0, ingredientTerm) * ingredientWeight()
-                + Math.max(0.0, functionTerm);
+                + Math.max(0.0, functionTerm)
+                + Math.max(0.0, lootTerm);
         double affinityMul = Math.max(0.25, 1.0 - Math.max(0, affinity) / 100.0);
         double raw = Math.max(3.0, Math.ceil(score * affinityMul * (1.0 + output * 0.2)));
         double cost = raw * costMultiplier();
@@ -1609,6 +1637,8 @@ public final class ConstructTechnique extends BaseTechnique {
         @net.minecraftforge.eventbus.api.SubscribeEvent
         public static void onServerTick(net.minecraftforge.event.TickEvent.ServerTickEvent event) {
             if (event.phase != net.minecraftforge.event.TickEvent.Phase.END) return;
+            // 掉落来源扫描（分帧推进；未在扫描时是空操作）
+            ConstructLootIndex.tick(event.getServer());
             // 掉落地上的拟造物实体：按各自世界的 gameTime 到期消散
             if (!TRACKED_TEMP_ITEMS.isEmpty()) {
                 Iterator<net.minecraft.world.entity.item.ItemEntity> eit = TRACKED_TEMP_ITEMS.iterator();

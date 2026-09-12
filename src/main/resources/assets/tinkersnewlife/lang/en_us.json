@@ -1,4 +1,5 @@
 {
+  "message.tinkersnewlife.construct.loot_scan_done": "Loot source scan done: %s items (%s auto-eligible), suggestions written to %s",
   "screen.tinkersnewlife.construct.empty": "No matching items",
   "screen.tinkersnewlife.construct.cost_free_line": "Construct cost: infinite curse (free)",
   "screen.tinkersnewlife.construct.cost_line": "Construct cost: %s",
