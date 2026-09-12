@@ -163,10 +163,14 @@ public final class TianNiHuoInterruptHandler {
             any = true;
             WuliangWuxianTechnique.deactivate(victim);
         }
-        // 领域强制关闭
+        // 领域强制关闭（⭐ 视为对抗失败：若场上还有对抗，则他被锁到所有对抗结束前，
+        //    期间不能再展开领域、也不能使用术式）
         if (DomainRegistry.isActive(victim.getUUID())) {
             any = true;
+            boolean wasClashing = DomainRegistry.get(victim.getUUID()) != null
+                    && DomainRegistry.get(victim.getUUID()).isClashing();
             DomainRegistry.close(victim, "message.tinkersnewlife.domain.interrupted");
+            DomainRegistry.markClashLoser(victim, wasClashing);
         }
         // 投射咒法罚站解除
         if (ProjectionTechnique.isStunned(victim)) {

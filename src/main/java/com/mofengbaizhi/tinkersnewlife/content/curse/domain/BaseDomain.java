@@ -205,20 +205,52 @@ public abstract class BaseDomain {
     //  领域对抗（两个领域球体相交时触发，见 DomainRegistry）
     // ============================================================
 
-    public boolean isClashing() { return clashOpponent != null; }
+    /** ⭐ 多方对抗：本领域当前的所有对手（两两相交 + 通过中间领域连通进来的） */
+    protected final java.util.Set<UUID> clashOpponents = new java.util.LinkedHashSet<>();
 
+    public boolean isClashing() { return !clashOpponents.isEmpty(); }
+
+    /** 主要对手（胜出/拉人这类只需要一个目标的旧逻辑用）：取最后加入的那个 */
     public UUID getClashOpponent() { return clashOpponent; }
+
+    /** 全部对手（多方混战） */
+    public java.util.Set<UUID> getClashOpponents() {
+        return java.util.Collections.unmodifiableSet(clashOpponents);
+    }
+
+    public boolean isClashingWith(UUID ownerId) { return clashOpponents.contains(ownerId); }
 
     public double getClashCostMultiplier() { return clashCostMultiplier; }
 
     /** 进入对抗：记录对手并设置本领域消耗倍率（倍率由对方输出/亲和决定） */
     public void setClash(UUID opponentOwner, double costMultiplier) {
+        addClash(opponentOwner, costMultiplier);
+    }
+
+    /** 加入一个对手（多方混战可多次调用）；消耗倍率取最"贵"的对手 */
+    public void addClash(UUID opponentOwner, double costMultiplier) {
+        if (opponentOwner == null) return;
+        boolean first = clashOpponents.isEmpty();
+        this.clashOpponents.add(opponentOwner);
         this.clashOpponent = opponentOwner;
-        this.clashCostMultiplier = costMultiplier;
+        this.clashCostMultiplier = first ? costMultiplier
+                : Math.max(this.clashCostMultiplier, costMultiplier);
+    }
+
+    /** 移除一个对手（其领域已关闭）；没有对手了就自动结束对抗 */
+    public void removeClash(UUID opponentOwner) {
+        this.clashOpponents.remove(opponentOwner);
+        if (clashOpponents.isEmpty()) {
+            this.clashOpponent = null;
+            this.clashCostMultiplier = 1.0;
+        } else if (opponentOwner != null && opponentOwner.equals(this.clashOpponent)) {
+            this.clashOpponent = clashOpponents.iterator().next();
+        }
     }
 
     /** 对抗结束：清除对抗状态（领域效果恢复） */
     public void clearClash() {
+        this.clashOpponents.clear();
         this.clashOpponent = null;
         this.clashCostMultiplier = 1.0;
     }

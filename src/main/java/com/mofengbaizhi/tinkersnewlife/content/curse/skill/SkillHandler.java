@@ -104,6 +104,8 @@ public final class SkillHandler {
      */
     public static boolean isProtected(ServerPlayer player, BaseDomain source) {
         if (DomainRegistry.findEnemyDomain(player) != source) return false;
+        // ⭐ 领域对抗中双方领域效果本就暂停 → 技巧不该（也不该被算作）生效
+        if (source.isClashing()) return false;
         SkillType t = skillOn(player);
         if (t == null) return false;
         if (!canAfford(player)) return false;
@@ -113,7 +115,10 @@ public final class SkillHandler {
 
     /** 技巧激活期是否禁止使用术式（弥虚葛笼/简易领域禁；落花可用） */
     public static boolean blocksTechnique(ServerPlayer player) {
-        if (DomainRegistry.findEnemyDomain(player) == null) return false;
+        BaseDomain enemy = DomainRegistry.findEnemyDomain(player);
+        if (enemy == null) return false;
+        // 对抗中领域效果暂停 → 技巧不启用，自然也不封锁术式
+        if (enemy.isClashing()) return false;
         SkillType t = skillOn(player);
         if (t == null || !canAfford(player)) return false;
         return t == SkillType.MIXU_GELONG || t == SkillType.JIANYI_LINGYU;
@@ -128,6 +133,8 @@ public final class SkillHandler {
         if (server == null) return;
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
             BaseDomain enemy = DomainRegistry.findEnemyDomain(p);
+            // 对抗中：双方领域效果暂停 → 技巧不启用（也不扣费）
+            if (enemy != null && enemy.isClashing()) enemy = null;
             SkillType t = enemy != null ? skillOn(p) : null;
             if (t == null || !canAfford(p)) {
                 // 不在他人领域 / 没带技巧 / 咒力不足 → 解除技巧态

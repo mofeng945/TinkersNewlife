@@ -129,6 +129,22 @@ public class JacobLadderEntity extends Entity {
         }
     }
 
+    /** 是否"原样伤害"目标：亡灵（含亡灵 Boss）、灾厄（含女巫）、Boss、以及高血量首领（模组 Boss 兜底） */
+    private static boolean isFullDamageTarget(LivingEntity target) {
+        if (target.getMobType() == MobType.UNDEAD) return true;
+        if (target.getType().is(net.minecraft.tags.EntityTypeTags.RAIDERS)) return true;
+        if (target instanceof net.minecraft.world.entity.boss.wither.WitherBoss
+                || target instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon
+                || target instanceof net.minecraft.world.entity.monster.warden.Warden) {
+            return true;
+        }
+        // 模组 Boss 兜底：血量很高的目标按"首领"对待（阈值可配）
+        return target.getMaxHealth() >= BOSS_HP_THRESHOLD;
+    }
+
+    /** Boss 血量兜底阈值（模组 Boss 往往没有统一标签） */
+    private static final float BOSS_HP_THRESHOLD = 100.0F;
+
     /** 光柱伤害：法阵正下方（Y 由法阵到底面）半径内所有实体 */
     private void beamDamage(ServerLevel server) {
         Entity caster = casterId != null ? server.getEntity(casterId) : null;
@@ -142,9 +158,15 @@ public class JacobLadderEntity extends Entity {
             double dx = target.getX() - getX();
             double dz = target.getZ() - getZ();
             if (dx * dx + dz * dz > r * r) continue;
+            // ⭐ 伤害分级：
+            //   亡灵（含凋灵等亡灵 Boss）/ 灾厄（含女巫）/ Boss → 原样（每 2 tick 帧伤，亡灵 ×8）；
+            //   其它生物 → 每 3 秒（60 tick）才吃一次，且伤害降到 1/10。
+            boolean full = isFullDamageTarget(target);
+            if (!full && tickCount % 60 != 0) continue;
             // 帧伤（亡灵 ×8）
             float dmg = frameDamage;
             if (target.getMobType() == MobType.UNDEAD) dmg *= 8.0F;
+            if (!full) dmg *= 0.1F;
             if (casterPlayer != null) {
                 dmg = (float) com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper
                         .applyCurseCoreTraits(casterPlayer, target, dmg);
@@ -226,31 +248,49 @@ public class JacobLadderEntity extends Entity {
         Vector3f bright = new Vector3f(1.0F, 1.0F, 0.7F);
         double r = radius;
         double inner = r * 0.5;
+        // ⭐ 粒子密度随半径增长：点数按圆周（∝ 半径）取，8 半径时与旧版一致（32/20 点）
+        int outerPts = circlePoints(4.0, 32, 240);
+        int innerPts = Math.max(20, outerPts / 2);
+        int stride = particleStride(outerPts + innerPts);
         // 大圆
-        for (int i = 0; i < 32; i++) {
-            double a = Math.PI * 2 * i / 32.0;
+        for (int i = 0; i < outerPts; i += stride) {
+            double a = Math.PI * 2 * i / (double) outerPts;
             server.sendParticles(new DustParticleOptions(gold, 1.3F),
                     getX() + Math.cos(a) * r, getY(), getZ() + Math.sin(a) * r, 1, 0, 0, 0, 0);
         }
         // 小圆
-        for (int i = 0; i < 20; i++) {
-            double a = Math.PI * 2 * i / 20.0;
+        for (int i = 0; i < innerPts; i += stride) {
+            double a = Math.PI * 2 * i / (double) innerPts;
             server.sendParticles(new DustParticleOptions(bright, 1.2F),
                     getX() + Math.cos(a) * inner, getY(), getZ() + Math.sin(a) * inner, 1, 0, 0, 0, 0);
         }
-        // 七芒星：7 顶点在大圆上，绕中心轴转动（角速度 base）
+        // 七芒星：7 顶点在大圆上，绕中心轴转动（角速度 base）——连线采样数也随半径增长
         double starAngle = tickCount * 0.04; // 基准转速
-        drawStar(server, r, 7, 2, starAngle, gold);
+        int samples = Math.max(5, Math.min(16, (int) Math.round(radius * 0.75)));
+        drawStar(server, r, 7, 2, starAngle, gold, samples);
         // 三角形：3 顶点在小圆上，转速为七芒星的 2 倍
         double triAngle = tickCount * 0.08;
-        drawStar(server, inner, 3, 1, triAngle, bright);
+        drawStar(server, inner, 3, 1, triAngle, bright, samples);
         // 中心能量光点
         server.sendParticles(new DustParticleOptions(bright, 1.8F), getX(), getY(), getZ(), 3, 0.3, 0.5, 0.3, 0.02);
     }
 
     /** 星形连线粒子：n 个顶点均匀分布在半径 radius 的圆上（初始角 baseAngle + 旋转角），
      *  按 step 间隔连线（step=1 正多边形，step=2 五芒星/七芒星等）。 */
-    private void drawStar(ServerLevel server, double radius, int vertices, int step, double rotate, Vector3f color) {
+    /** 圆周点数：按半径线性增长（密度不随范围变稀），并夹在上下限内 */
+    private int circlePoints(double perBlock, int min, int max) {
+        return Math.max(min, Math.min(max, (int) Math.round(radius * perBlock)));
+    }
+
+    /** 粒子预算：本次计划数超过预算时按步长抽样，避免大范围领域刷爆网络包 */
+    private static final int PARTICLE_BUDGET = 360;
+
+    private static int particleStride(int planned) {
+        return Math.max(1, (int) Math.ceil(planned / (double) PARTICLE_BUDGET));
+    }
+
+    private void drawStar(ServerLevel server, double radius, int vertices, int step, double rotate,
+                          Vector3f color, int samples) {
         double[][] pts = new double[vertices][2];
         for (int i = 0; i < vertices; i++) {
             double a = rotate + Math.PI * 2 * i / vertices;
@@ -259,8 +299,8 @@ public class JacobLadderEntity extends Entity {
         }
         for (int i = 0; i < vertices; i++) {
             int j = (i + step) % vertices;
-            for (int s = 1; s <= 5; s++) {
-                double t = s / 6.0;
+            for (int s = 1; s <= samples; s++) {
+                double t = s / (double) (samples + 1);
                 double px = pts[i][0] + (pts[j][0] - pts[i][0]) * t;
                 double pz = pts[i][1] + (pts[j][1] - pts[i][1]) * t;
                 server.sendParticles(new DustParticleOptions(color, 1.2F), px, getY(), pz, 1, 0, 0, 0, 0);
@@ -272,18 +312,24 @@ public class JacobLadderEntity extends Entity {
     private void spawnBeamParticlesServer(ServerLevel server) {
         Vector3f white = new Vector3f(1.0F, 1.0F, 0.9F);
         Vector3f gold = new Vector3f(1.0F, 0.85F, 0.3F);
+        // 光柱横截面同样随半径变宽 → 每层粒子数同步增长
+        int perLevel = Math.max(2, Math.min(16, (int) Math.round(radius / 4.0)));
         for (int y = 1; y <= 20; y += 2) {
+            for (int k = 0; k < perLevel; k++) {
             double ox = (server.random.nextDouble() - 0.5) * radius * 0.5;
             double oz = (server.random.nextDouble() - 0.5) * radius * 0.5;
             server.sendParticles(new DustParticleOptions(white, 1.7F),
                     getX() + ox, getY() - y, getZ() + oz, 2, 0.2, 0.2, 0.2, 0.01);
             server.sendParticles(new DustParticleOptions(gold, 1.0F),
                     getX() + ox, getY() - y, getZ() + oz, 1, 0.4, 0.4, 0.4, 0.0);
+            }
         }
         // 法阵中心强光
         server.sendParticles(ParticleTypes.END_ROD, getX(), getY() - 1, getZ(), 6, 0.4, 1.0, 0.4, 0.02);
         // 底部光圈
-        for (int i = 0; i < 24; i++) {
+        int bottomPts = Math.max(24, Math.min(192, (int) Math.round(radius * 3.0)));
+        int bottomStride = particleStride(bottomPts);
+        for (int i = 0; i < bottomPts; i += bottomStride) {
             double a = server.random.nextDouble() * Math.PI * 2;
             double rr = server.random.nextDouble() * radius;
             server.sendParticles(new DustParticleOptions(white, 1.5F),

@@ -131,6 +131,23 @@ public class PuppetSnowGolem extends SnowGolem implements PuppetGolemMob {
     private double animPrevX;
     private double animPrevZ;
 
+    /**
+     * ⭐ 拟造雪傀儡不怕下界/炎热群系的融化：
+     * 原版 {@code SnowGolem#aiStep} 会在 {@code BiomeTags.SNOW_GOLEM_MELTS} 群系里每 tick 用它自己的
+     * {@code onFire} 伤害源融掉雪傀儡，而那段逻辑无法通过覆写 aiStep 单独摘掉（父类实现里和雪痕写在一起），
+     * 所以在这里只忽略"环境融化"这一类火焰伤害。
+     */
+    @Override
+    public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
+        if (source.getEntity() == null && source.getDirectEntity() == null
+                && source.is(net.minecraft.world.damagesource.DamageTypes.ON_FIRE)
+                && level().getBiome(blockPosition())
+                        .is(net.minecraft.tags.BiomeTags.SNOW_GOLEM_MELTS)) {
+            return false;
+        }
+        return super.hurt(source, amount);
+    }
+
     @Override
     public void tick() {
         super.tick();

@@ -99,6 +99,16 @@ public final class ClientWuWeiData {
         return proxy;
     }
 
+    /** ⭐ 反查：这个渲染代理属于哪个玩家（用于把玩家的装备/手持物品画到伪装生物身上） */
+    @javax.annotation.Nullable
+    public static UUID ownerOfProxy(net.minecraft.world.entity.Entity proxy) {
+        if (proxy == null) return null;
+        for (Map.Entry<UUID, Entity> e : PROXIES.entrySet()) {
+            if (e.getValue() == proxy) return e.getKey();
+        }
+        return null;
+    }
+
     /** 释放某玩家的代理（玩家登出/世界切换时调用） */
     public static void clearProxy(UUID playerId) {
         PROXIES.remove(playerId);

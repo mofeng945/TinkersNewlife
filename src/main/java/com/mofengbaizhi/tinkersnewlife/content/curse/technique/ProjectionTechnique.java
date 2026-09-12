@@ -57,9 +57,9 @@ public final class ProjectionTechnique extends BaseTechnique {
                     CursePowerHelper.getBurnoutRemainingSeconds(player)), true);
             return;
         }
-        // 消耗咒力上限的 1/12
+        // 消耗咒力上限的 1/24（原为 1/12，实测过贵 → 减半）
         double max = CursePowerHelper.getMaxCurse(player);
-        int cost = Math.max(1, (int) Math.ceil(max / 12.0));
+        int cost = Math.max(1, (int) Math.ceil(max / 24.0));
         if (!CursePowerHelper.isCurseInfinite(player)
                 && CursePowerHelper.payCurseWithSoulFallback(player, cost) < 0) {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_curse"), true);

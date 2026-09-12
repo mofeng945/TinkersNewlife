@@ -504,7 +504,18 @@ public class TinkersNewlife {
             }
         }
 
-        /** 投射咒法：罚站期间无法攻击 */
+        /**
+     * ⭐ 拟造雪傀儡不留雪痕：原版 {@code SnowGolem#aiStep} 的留雪逻辑外层是
+     * {@code ForgeEventFactory.getMobGriefingEvent(level, this)} —— 这里对拟造雪傀儡一律 DENY，
+     * 既去掉了脚下雪痕，也顺带避免了拟造傀儡乱改地形。
+     */
+    @SubscribeEvent
+    public static void onMobGriefing(net.minecraftforge.event.entity.EntityMobGriefingEvent event) {
+        if (!(event.getEntity() instanceof com.mofengbaizhi.tinkersnewlife.content.entity.PuppetSnowGolem)) return;
+        event.setResult(net.minecraftforge.eventbus.api.Event.Result.DENY);
+    }
+
+    /** 投射咒法：罚站期间无法攻击 */
         @SubscribeEvent
         public static void onLivingAttack(net.minecraftforge.event.entity.living.LivingAttackEvent event) {
             var src = event.getSource();

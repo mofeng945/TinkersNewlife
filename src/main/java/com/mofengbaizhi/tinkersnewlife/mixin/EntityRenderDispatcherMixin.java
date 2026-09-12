@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.mixin;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.client.data.ClientWuWeiData;
 import com.mofengbaizhi.tinkersnewlife.client.renderer.WuWeiDisguiseRenderer;
+import com.mofengbaizhi.tinkersnewlife.client.renderer.WuWeiDisguiseLayers;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
@@ -106,6 +107,11 @@ public abstract class EntityRenderDispatcherMixin {
             if (renderer == null) return;
 
             WuWeiDisguiseRenderer.syncProxy(player, proxyLiving);
+
+            // ⭐ 伪装期间也要看得到装备/手持物品：给该生物渲染器注入"装备 layer"（幂等，失败仅是不显示）
+            if (renderer instanceof net.minecraft.client.renderer.entity.LivingEntityRenderer<?, ?> ler) {
+                WuWeiDisguiseLayers.ensure(ler);
+            }
 
             Vec3 offset = renderer.getRenderOffset(proxy, partialTicks);
             poseStack.pushPose();

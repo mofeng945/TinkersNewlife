@@ -345,20 +345,26 @@ public class DangYunPingXianDomain extends BaseDomain {
                 continue;
             }
             drowned.setTarget(target);
-            double reach = 3.2;
-            if (drowned.distanceToSqr(target) > reach * reach) {
-                drowned.getNavigation().moveTo(target, 1.1);
-            } else {
-                drowned.getNavigation().stop();
-                drowned.lookAt(target, 30.0F, 30.0F);
-                double dmg = drowned.getAttribute(
-                        net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) != null
-                        ? drowned.getAttribute(
-                        net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE).getValue()
-                        : 3.0;
-                target.invulnerableTime = 0;
-                target.hurt(drowned.damageSources().mobAttack(drowned), (float) dmg);
+            // ⭐ 贴身近战：判定距离压到 1.6 格（原 3.2 格看起来像"隔空攻击"），
+            //    并且必须真的走到身边才出手；够不着就继续游过去（导航失败时用移动控制兜底）。
+            double reach = 1.6;
+            double distSq = drowned.distanceToSqr(target);
+            if (distSq > reach * reach) {
+                drowned.getNavigation().moveTo(target, 1.25);
+                if (drowned.getNavigation().isDone()) {
+                    drowned.getMoveControl().setWantedPosition(
+                            target.getX(), target.getY(), target.getZ(), 1.25);
+                }
+                continue;
             }
+            drowned.getNavigation().stop();
+            drowned.lookAt(target, 30.0F, 30.0F);
+            drowned.getLookControl().setLookAt(target, 30.0F, 30.0F);
+            // 出手节奏对齐原版近战（每 20 tick 一次，扫描本身 10 tick 一次）
+            if (level.getGameTime() % 20 != 0) continue;
+            if (drowned.attackAnim > 0.0F) continue;
+            drowned.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+            drowned.doHurtTarget(target);
         }
     }
 

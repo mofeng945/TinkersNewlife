@@ -113,6 +113,13 @@ public final class DomainRegistry {
             return;
         }
 
+        // ⭐ 对抗失败锁定期：不能再展开领域（要等所有对抗结束）
+        if (isClashLocked(player)) {
+            player.displayClientMessage(Component.translatable(
+                    "message.tinkersnewlife.clash.locked_domain"), true);
+            return;
+        }
+
         // 封印期间无法展开领域（雅各布天梯）
         if (CursePowerHelper.isSealed(player)) {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.sealed.active",
@@ -141,6 +148,12 @@ public final class DomainRegistry {
             domain.buildBarrier(player.serverLevel());
             // 展开时：给领域内所有玩家显示领域名大标题
             broadcastDomainTitle(player.serverLevel(), domain);
+            // ⭐ 说明：领域展开<b>不受</b>新阴流技巧限制（弥虚葛笼/简易领域只禁"术式"）。
+            //    技巧若正处于激活态（被他人领域包裹），这里额外提示一句，避免玩家以为按键没生效。
+            if (com.mofengbaizhi.tinkersnewlife.content.curse.skill.SkillHandler.blocksTechnique(player)) {
+                player.displayClientMessage(Component.translatable(
+                        "message.tinkersnewlife.domain.opened_skill_active"), true);
+            }
             return;
         }
         // 核心上没有已注册的领域特性
@@ -199,6 +212,9 @@ public final class DomainRegistry {
         if (server == null) return;
         long now = server.getTickCount();
 
+        // ⭐ 对抗全部结束 → 解除"对抗失败"锁
+        tickClashLoserLock(server);
+
         // 快照迭代：对抗检测/结算需要同时看到双方领域
         java.util.List<BaseDomain> snapshot = new java.util.ArrayList<>(DOMAINS.values());
         for (BaseDomain domain : snapshot) {
@@ -232,9 +248,13 @@ public final class DomainRegistry {
             // 领域对抗：先结算/检测，再消耗
             boolean clashing = domain.isClashing();
             if (clashing) {
-                // 对手领域已关闭（败者）→ 本领域胜出：恢复效果、重建球壳、拉入败者
-                BaseDomain opponent = DOMAINS.get(domain.getClashOpponent());
-                if (opponent == null) {
+                // ⭐ 多方混战：逐个清掉"已关闭"的对手（各算一次败者拉入）；全部清空才算胜出
+                for (UUID oppId : new java.util.ArrayList<>(domain.getClashOpponents())) {
+                    if (DOMAINS.get(oppId) != null) continue;
+                    domain.removeClash(oppId);
+                    pullLoserInto(server, domain, oppId);
+                }
+                if (!domain.isClashing()) {
                     endClashVictory(server, player, domain);
                     clashing = false;
                 }
@@ -277,9 +297,11 @@ public final class DomainRegistry {
      * - 双方消耗变为 (1+(对方输出等级+对方亲和/10)/100) × 原消耗
      */
     private static void tryStartClash(MinecraftServer server, ServerPlayer player, BaseDomain domain) {
-        for (BaseDomain other : DOMAINS.values()) {
+        // ⭐ 多方混战：只要球体相交就互为对手（不再限制"一领域对一对手"）；
+        //    并且把对方已有的对手也连通进来（A↔B、B↔C ⇒ A、B、C 同一场混战）。
+        for (BaseDomain other : new java.util.ArrayList<>(DOMAINS.values())) {
             if (other == domain) continue;
-            if (other.isClashing()) continue; // 对方已在对抗（一领域对一对手）
+            if (domain.isClashingWith(other.getOwner())) continue;
             ServerPlayer otherPlayer = server.getPlayerList().getPlayer(other.getOwner());
             if (otherPlayer == null || !otherPlayer.isAlive()) continue;
 
@@ -287,59 +309,75 @@ public final class DomainRegistry {
             double rSum = domain.getRadius() + other.getRadius();
             if (delta.lengthSqr() >= rSum * rSum) continue; // 不相交
 
-            // 消耗倍率：本领域用"对方"的输出/亲和；对方用"本领域"的
-            double otherStats = CursePowerHelper.getCurseOutputLevel(otherPlayer)
-                    + CursePowerHelper.getCurseAffinity(otherPlayer) / 10.0;
-            double thisStats = CursePowerHelper.getCurseOutputLevel(player)
-                    + CursePowerHelper.getCurseAffinity(player) / 10.0;
-            domain.setClash(other.getOwner(), 1.0 + otherStats / 100.0);
-            other.setClash(domain.getOwner(), 1.0 + thisStats / 100.0);
+            joinClash(server, player, domain, otherPlayer, other);
 
-            ServerLevel level = player.serverLevel();
-            // 打通重合部分：移除双方阻挡墙的重叠块
-            domain.removeBarrierOverlap(level, other.getCenter(), other.getRadius());
-            other.removeBarrierOverlap(level, domain.getCenter(), domain.getRadius());
-
-            // 双方领域效果暂停
-            domain.onClashStart(player, other);
-            other.onClashStart(otherPlayer, domain);
-
-            // 客户端：隐藏双方黑色球壳的重合部分边缘
-            syncClashVisual(level, domain, other);
-            syncClashVisual(level, other, domain);
-
-            // 提示双方
-            player.displayClientMessage(Component.translatable("message.tinkersnewlife.clash.start"), true);
-            otherPlayer.displayClientMessage(Component.translatable("message.tinkersnewlife.clash.start"), true);
-            return;
+            // 连通合并：把对方原来的对手也拉进本领域（反向同样登记）
+            for (UUID thirdId : new java.util.ArrayList<>(other.getClashOpponents())) {
+                if (thirdId.equals(domain.getOwner())) continue;
+                BaseDomain third = DOMAINS.get(thirdId);
+                ServerPlayer thirdPlayer = server.getPlayerList().getPlayer(thirdId);
+                if (third == null || thirdPlayer == null || !thirdPlayer.isAlive()) continue;
+                if (domain.isClashingWith(thirdId)) continue;
+                domain.addClash(thirdId, 1.0 + stats(thirdPlayer) / 100.0);
+                third.addClash(domain.getOwner(), 1.0 + stats(player) / 100.0);
+                domain.onClashStart(player, third);
+                third.onClashStart(thirdPlayer, domain);
+                domain.removeBarrierOverlap(player.serverLevel(), third.getCenter(), third.getRadius());
+                third.removeBarrierOverlap(player.serverLevel(), domain.getCenter(), domain.getRadius());
+                thirdPlayer.displayClientMessage(Component.translatable("message.tinkersnewlife.clash.start"), true);
+            }
         }
+    }
+
+    /** 领域输出/亲和综合值（对抗消耗倍率用） */
+    private static double stats(ServerPlayer player) {
+        return CursePowerHelper.getCurseOutputLevel(player)
+                + CursePowerHelper.getCurseAffinity(player) / 10.0;
+    }
+
+    /** 让 domain 与 other 互相成为对手：打通墙、暂停效果、提示双方 */
+    private static void joinClash(MinecraftServer server, ServerPlayer player, BaseDomain domain,
+                                  ServerPlayer otherPlayer, BaseDomain other) {
+        domain.addClash(other.getOwner(), 1.0 + stats(otherPlayer) / 100.0);
+        other.addClash(domain.getOwner(), 1.0 + stats(player) / 100.0);
+
+        ServerLevel level = player.serverLevel();
+        domain.removeBarrierOverlap(level, other.getCenter(), other.getRadius());
+        other.removeBarrierOverlap(level, domain.getCenter(), domain.getRadius());
+        domain.onClashStart(player, other);
+        other.onClashStart(otherPlayer, domain);
+
+        player.displayClientMessage(Component.translatable("message.tinkersnewlife.clash.start"), true);
+        otherPlayer.displayClientMessage(Component.translatable("message.tinkersnewlife.clash.start"), true);
     }
 
     /** 对抗结束（本领域胜出）：恢复领域效果、重建完整球壳、把败者强行拉入本领域 */
     private static void endClashVictory(MinecraftServer server, ServerPlayer winner, BaseDomain domain) {
-        UUID loserId = domain.getClashOpponent();
-        ServerPlayer loser = server.getPlayerList().getPlayer(loserId);
         domain.clearClash();
-
         // 重建完整球壳（补回对抗期间移除的重合部分）
         domain.buildBarrier(winner.serverLevel());
         // 领域效果恢复
         domain.onClashEnd(winner, null);
         // 客户端：恢复完整黑色球壳
         clearClashVisual(winner.serverLevel(), domain);
-
-        // 败者被强行拉入胜者领域（仅同维度且在线存活时）
-        if (loser != null && loser.isAlive()
-                && loser.level().dimension() == winner.level().dimension()) {
-            Vec3 target = domain.getClashPullTarget(winner.serverLevel());
-            loser.teleportTo(target.x, target.y, target.z);
-            loser.displayClientMessage(Component.translatable("message.tinkersnewlife.clash.lose"), true);
-        }
         winner.displayClientMessage(Component.translatable("message.tinkersnewlife.clash.win"), true);
+    }
+
+    /** 某个对手领域已关闭（败者）→ 把他拉进胜者领域 */
+    private static void pullLoserInto(MinecraftServer server, BaseDomain winnerDomain, UUID loserId) {
+        ServerPlayer loser = server.getPlayerList().getPlayer(loserId);
+        if (loser == null || !loser.isAlive()) return;
+        ServerPlayer winner = server.getPlayerList().getPlayer(winnerDomain.getOwner());
+        if (winner == null) return;
+        if (loser.level().dimension() != winner.level().dimension()) return;
+        Vec3 target = winnerDomain.getClashPullTarget(winner.serverLevel());
+        loser.teleportTo(target.x, target.y, target.z);
+        loser.displayClientMessage(Component.translatable("message.tinkersnewlife.clash.lose"), true);
     }
 
     /** 客户端视觉：让视觉实体隐藏落入对方球体内的黑色边缘部分 */
     private static void syncClashVisual(ServerLevel level, BaseDomain domain, BaseDomain opponent) {
+        // 客户端改为"按所有相交的领域视觉实体自己挖洞"（支持多方混战），这里只做兜底标记
         Integer entityId = VISUAL_ENTITY_IDS.get(domain.getOwner());
         if (entityId != null && level.getEntity(entityId) instanceof DomainVisualEntity visual) {
             visual.setClashRegion(opponent.getCenter(), opponent.getRadius());
@@ -394,6 +432,55 @@ public final class DomainRegistry {
     //  咒具破坏领域（天逆鉾等）
     // ============================================================
 
+    // ============================================================
+    //  ⭐ 对抗失败锁（天逆鉾右键领域展开者 → 视为对抗失败）
+    // ============================================================
+
+    /** 被判"对抗失败"的玩家：在所有领域对抗结束前不能再展开领域、也不能使用术式 */
+    private static final java.util.Set<UUID> CLASH_LOSERS = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    /** 场上是否还有任何领域正在对抗 */
+    public static boolean hasAnyClash() {
+        for (BaseDomain d : DOMAINS.values()) {
+            if (d.isClashing()) return true;
+        }
+        return false;
+    }
+
+    /**
+     * 标记"对抗失败"（天逆鉾右键领域展开者时调用）。
+     * <p>
+     * 语义：领域被强制关闭 → 视为对抗失败；只要场上还有对抗，他就被锁住，
+     * 直到<b>所有</b>对抗结束（见 {@link #onServerTick} 的解锁检查）。
+     */
+    public static void markClashLoser(ServerPlayer player, boolean wasClashing) {
+        if (player == null) return;
+        if (!wasClashing && !hasAnyClash()) return;   // 没对抗可失败 → 不锁
+        if (CLASH_LOSERS.add(player.getUUID())) {
+            player.displayClientMessage(Component.translatable(
+                    "message.tinkersnewlife.clash.loser_lock"), true);
+        }
+    }
+
+    /** 该玩家是否处于"对抗失败"锁定期 */
+    public static boolean isClashLocked(ServerPlayer player) {
+        return player != null && CLASH_LOSERS.contains(player.getUUID());
+    }
+
+    /** 所有对抗结束 → 解锁（每 tick 检查）*/
+    private static void tickClashLoserLock(MinecraftServer server) {
+        if (CLASH_LOSERS.isEmpty()) return;
+        if (hasAnyClash()) return;
+        for (UUID id : CLASH_LOSERS) {
+            ServerPlayer p = server.getPlayerList().getPlayer(id);
+            if (p != null) {
+                p.displayClientMessage(Component.translatable(
+                        "message.tinkersnewlife.clash.loser_unlock"), true);
+            }
+        }
+        CLASH_LOSERS.clear();
+    }
+
     /** 该屏障方块位置所属的领域（无则 null） */
     public static BaseDomain findDomainByBarrier(ServerLevel level, BlockPos barrierPos) {
         for (BaseDomain domain : DOMAINS.values()) {
@@ -412,15 +499,31 @@ public final class DomainRegistry {
         BaseDomain domain = findDomainByBarrier(level, barrierPos);
         if (domain == null) return;
         if (domain.isClashing()) {
-            // 对抗中：双方领域同时崩坏
-            BaseDomain opponent = DOMAINS.get(domain.getClashOpponent());
-            breakDomain(breaker, level, domain);
-            if (opponent != null) {
-                breakDomain(breaker, level, opponent);
+            // ⭐ 对抗中（含多方混战）：终止整场对抗，并把这一场里<b>所有</b>领域一起崩坏
+            java.util.List<BaseDomain> group = clashGroup(domain);
+            for (BaseDomain member : group) {
+                breakDomain(breaker, level, member);
             }
             return;
         }
         breakDomain(breaker, level, domain);
+    }
+
+    /** 取得与该领域连通的整场对抗（多方混战：递归收集所有对手） */
+    private static java.util.List<BaseDomain> clashGroup(BaseDomain start) {
+        java.util.LinkedHashSet<BaseDomain> out = new java.util.LinkedHashSet<>();
+        java.util.ArrayDeque<BaseDomain> queue = new java.util.ArrayDeque<>();
+        queue.add(start);
+        out.add(start);
+        while (!queue.isEmpty()) {
+            BaseDomain cur = queue.poll();
+            for (UUID oppId : cur.getClashOpponents()) {
+                BaseDomain opp = DOMAINS.get(oppId);
+                if (opp == null || !out.add(opp)) continue;
+                queue.add(opp);
+            }
+        }
+        return new java.util.ArrayList<>(out);
     }
 
     /** 破坏单个领域：掉落碎片（防刷限制）→ 移除视觉/墙 → 关闭 → 熔断 */

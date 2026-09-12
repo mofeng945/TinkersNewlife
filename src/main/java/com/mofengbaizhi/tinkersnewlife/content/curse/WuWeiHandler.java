@@ -287,7 +287,8 @@ public final class WuWeiHandler {
         d.maxHealth = stats[0];
         d.armor = stats[1];
         d.toughness = stats[2];
-        d.speed = stats[3];
+        // ⭐ 变身移速减半（原封不动套用生物速度会明显过快；倍率见配置 wuwei_disguise/speed_scale）
+        d.speed = (float) (stats[3] * com.mofengbaizhi.tinkersnewlife.config.ModConfig.WUWEI_SPEED_SCALE.get());
         d.attack = stats[4];
         TRANSFORMS.put(player.getUUID(), d);
         broadcastDisguise(player, formId);
@@ -422,7 +423,8 @@ public final class WuWeiHandler {
         d.maxHealth = stats[0];
         d.armor = stats[1];
         d.toughness = stats[2];
-        d.speed = stats[3];
+        // ⭐ 变身移速减半（原封不动套用生物速度会明显过快；倍率见配置 wuwei_disguise/speed_scale）
+        d.speed = (float) (stats[3] * com.mofengbaizhi.tinkersnewlife.config.ModConfig.WUWEI_SPEED_SCALE.get());
         d.attack = stats[4];
         // 保存玩家原值（含当前生命，恢复时按比例）
         d.origMaxHealth = getAttr(player, Attributes.MAX_HEALTH);

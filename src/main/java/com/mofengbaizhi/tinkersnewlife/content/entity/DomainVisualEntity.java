@@ -114,6 +114,25 @@ public class DomainVisualEntity extends Entity {
         tag.putFloat("radius", getRadius());
     }
 
+    /**
+     * ⭐ 修复"玩家移动到不合适的位置就看不到黑色球壳"：
+     * 默认实现按 {@code 包围盒尺寸 × 64} 限制渲染距离，本实体只有 0.5 格 → 球心超过约 32 格就整颗球不画了
+     * （而领域半径可达 40+ 格：站在球壳边缘时球心就在 40 格外，于是黑球"消失"）。
+     * 这里取消距离剔除，并给出真实球体包围盒，让其它剔除模组（如 EntityCulling）也能正确判定。
+     */
+    @Override
+    public boolean shouldRenderAtSqrDistance(double distanceSqr) {
+        return true;
+    }
+
+    @Override
+    public net.minecraft.world.phys.AABB getBoundingBoxForCulling() {
+        double r = Math.max(1.0, getRadius());
+        return new net.minecraft.world.phys.AABB(
+                getX() - r, getY() - r, getZ() - r,
+                getX() + r, getY() + r, getZ() + r);
+    }
+
     // 纯视觉实体：不移动、不推挤、不可碰撞
     @Override
     public boolean isPushable() { return false; }

@@ -33,7 +33,10 @@ public final class DomainSphereRenderer {
      *  entity 携带对抗信息（为 null 或未对抗时绘制完整球壳） */
     public static void render(PoseStack poseStack, float progress, DomainVisualEntity entity) {
         setupState();
-        boolean clash = entity != null && entity.isClashActive();
+        // ⭐ 多方混战：挖洞区域由客户端自己算 —— 与本领域相交的<b>所有</b>领域视觉实体都算对手
+        //    （不再依赖服务端只同步一个对手，避免 3 个以上领域对抗时只挖一个洞）
+        java.util.List<double[]> regions = overlapRegions(entity);
+        boolean clash = !regions.isEmpty() || (entity != null && entity.isClashActive());
         if (progress >= 1.0f && !clash) {
             ensureFullBuffer();
             fullShellBuffer.bind();
@@ -45,7 +48,7 @@ public final class DomainSphereRenderer {
             double phiMax = Math.max(0.0001, progress * Math.PI);
             BufferBuilder builder = Tesselator.getInstance().getBuilder();
             builder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
-            buildShell(builder, phiMax, entity);
+            buildShell(builder, phiMax, entity, regions);
             // 立即绘制：把 PoseStack 模型矩阵压入 RenderSystem 模型视图栈
             RenderSystem.getModelViewStack().pushPose();
             RenderSystem.getModelViewStack().mulPoseMatrix(poseStack.last().pose());
@@ -69,9 +72,35 @@ public final class DomainSphereRenderer {
     }
 
     /** 球冠网格：从球顶（phi=0）到 phiMax，含边界部分环；对抗时剔除落入对方球体的三角形 */
-    private static void buildShell(BufferBuilder builder, double phiMax, DomainVisualEntity entity) {
-        Vec3 clashCenter = entity != null && entity.isClashActive() ? entity.getClashCenter() : null;
-        double clashR = clashCenter != null ? entity.getClashRadius() : 0;
+    /** 客户端计算：与本领域球体相交的其它领域（球心 + 半径），用于挖洞 */
+    private static java.util.List<double[]> overlapRegions(DomainVisualEntity entity) {
+        java.util.List<double[]> out = new java.util.ArrayList<>();
+        if (entity == null) return out;
+        net.minecraft.client.multiplayer.ClientLevel level = net.minecraft.client.Minecraft.getInstance().level;
+        if (level == null) return out;
+        Vec3 c = entity.position();
+        double r = entity.getRadius();
+        double reach = r + 256.0;
+        for (DomainVisualEntity other : level.getEntitiesOfClass(DomainVisualEntity.class,
+                new net.minecraft.world.phys.AABB(c.x - reach, c.y - reach, c.z - reach,
+                        c.x + reach, c.y + reach, c.z + reach))) {
+            if (other == entity) continue;
+            Vec3 oc = other.position();
+            double or = other.getRadius();
+            if (c.distanceTo(oc) < r + or) {
+                out.add(new double[]{oc.x, oc.y, oc.z, or});
+            }
+        }
+        // 兜底：服务端同步过来的对手区域（客户端还没收到对方视觉实体时）
+        if (out.isEmpty() && entity.isClashActive()) {
+            Vec3 cc = entity.getClashCenter();
+            out.add(new double[]{cc.x, cc.y, cc.z, entity.getClashRadius()});
+        }
+        return out;
+    }
+
+    private static void buildShell(BufferBuilder builder, double phiMax, DomainVisualEntity entity,
+                                   java.util.List<double[]> regions) {
         // 单位球顶点 → 世界坐标：实体位置(领域球心) + 单位向量×半径
         Vec3 origin = entity != null ? entity.position() : Vec3.ZERO;
         float radius = entity != null ? entity.getRadius() : 1.0f;
@@ -80,34 +109,39 @@ public final class DomainSphereRenderer {
         for (int i = 0; i < maxRing; i++) {
             double phi1 = Math.PI * i / RINGS;
             double phi2 = Math.PI * (i + 1) / RINGS;
-            addRing(builder, phi1, phi2, origin, radius, clashCenter, clashR);
+            addRing(builder, phi1, phi2, origin, radius, regions);
         }
         if (maxRing < RINGS) {
             double phi1 = Math.PI * maxRing / RINGS;
-            addRing(builder, phi1, phiMax, origin, radius, clashCenter, clashR);
+            addRing(builder, phi1, phiMax, origin, radius, regions);
         }
     }
 
     /** 一个纬度带：SEGMENTS 个四边形面片（各两个三角形）；对抗时按三角形重心剔除 */
     private static void addRing(BufferBuilder builder, double phi1, double phi2,
-                                Vec3 origin, float radius, Vec3 clashCenter, double clashR) {
+                                Vec3 origin, float radius, java.util.List<double[]> regions) {
         for (int j = 0; j < SEGMENTS; j++) {
             double a1 = 2 * Math.PI * j / SEGMENTS;
             double a2 = 2 * Math.PI * (j + 1) / SEGMENTS;
             // 三角形 1：(phi1,a1) (phi2,a1) (phi1,a2)
-            addTri(builder, phi1, a1, phi2, a1, phi1, a2, origin, radius, clashCenter, clashR);
+            addTri(builder, phi1, a1, phi2, a1, phi1, a2, origin, radius, regions);
             // 三角形 2：(phi1,a2) (phi2,a1) (phi2,a2)
-            addTri(builder, phi1, a2, phi2, a1, phi2, a2, origin, radius, clashCenter, clashR);
+            addTri(builder, phi1, a2, phi2, a1, phi2, a2, origin, radius, regions);
         }
     }
 
     private static void addTri(BufferBuilder builder,
                                double p1, double a1, double p2, double a2, double p3, double a3,
-                               Vec3 origin, float radius, Vec3 clashCenter, double clashR) {
-        if (clashCenter != null) {
-            // 重心（世界坐标）落入对方球体 → 整个三角形剔除（黑色边缘删去）
+                               Vec3 origin, float radius, java.util.List<double[]> regions) {
+        if (regions != null && !regions.isEmpty()) {
+            // 重心（世界坐标）落入<b>任一</b>对手球体 → 整个三角形剔除（多方混战时挖多个洞）
             Vec3 c = worldPos(origin, radius, (float) ((p1 + p2 + p3) / 3), (float) ((a1 + a2 + a3) / 3));
-            if (c.distanceToSqr(clashCenter) <= clashR * clashR) return;
+            for (double[] reg : regions) {
+                double dx = c.x - reg[0];
+                double dy = c.y - reg[1];
+                double dz = c.z - reg[2];
+                if (dx * dx + dy * dy + dz * dz <= reg[3] * reg[3]) return;
+            }
         }
         addVertex(builder, p1, a1);
         addVertex(builder, p2, a2);
@@ -134,7 +168,7 @@ public final class DomainSphereRenderer {
         if (fullShellBuffer != null) return;
         BufferBuilder builder = Tesselator.getInstance().getBuilder();
         builder.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
-        buildShell(builder, Math.PI, null);
+        buildShell(builder, Math.PI, null, java.util.List.of());
         var rendered = builder.end();
         fullShellBuffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
         fullShellBuffer.bind();

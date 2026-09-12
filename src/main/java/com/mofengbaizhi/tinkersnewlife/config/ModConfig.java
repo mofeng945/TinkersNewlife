@@ -31,6 +31,10 @@ public final class ModConfig {
     // ==================== 无为转变 伪装渲染 ====================
     /** 无为转变·伪装渲染替换（客户端）：把变形玩家渲染成目标生物。与 YSM 等接管玩家渲染的模组冲突时可关闭 */
     public static final ConfigValue<Boolean> WUWEI_DISGUISE_RENDER;
+    /** 无为转变：变形后移动速度倍率（默认 0.5 = 减半，1.0 = 直接用生物速度） */
+    public static final ConfigValue<Double> WUWEI_SPEED_SCALE;
+    /** 无为转变：伪装期间是否把玩家的盔甲与手持物品画在生物形态上（默认开；人形形态才有效果） */
+    public static final ConfigValue<Boolean> WUWEI_EQUIPMENT_RENDER;
 
     // ==================== 飞剑流光拖尾 ====================
     /** 飞剑流光拖尾（客户端）：动态条带 + 自写流光着色器 */
@@ -155,6 +159,8 @@ public final class ModConfig {
                 "Set enable_disguise_render=false if another mod that takes over player rendering",
                 "(e.g. YSM / Yes Steve Model) conflicts with the disguise.");
         WUWEI_DISGUISE_RENDER = b.define("enable_disguise_render", true);
+        WUWEI_SPEED_SCALE = b.defineInRange("speed_scale", 0.5D, 0.05D, 4.0D);
+        WUWEI_EQUIPMENT_RENDER = b.define("render_equipment", true);
         b.pop();
 
         // 构筑术式（拟造）：费用倍率 + 黑名单

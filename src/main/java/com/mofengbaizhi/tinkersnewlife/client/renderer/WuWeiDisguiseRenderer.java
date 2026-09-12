@@ -137,6 +137,18 @@ public final class WuWeiDisguiseRenderer {
         proxy.setSwimming(real.isSwimming());
         proxy.setShiftKeyDown(real.isShiftKeyDown());
         proxy.setDeltaMovement(real.getDeltaMovement());
+        // ⭐ 攻击/挥手动画与位置历史：模型摆臂用 attackAnim，插值用 xo/yo/zo（之前没同步 → 走路像"立着滑行"）
+        proxy.attackAnim = real.attackAnim;
+        proxy.oAttackAnim = real.oAttackAnim;
+        proxy.xo = real.xo;
+        proxy.yo = real.yo;
+        proxy.zo = real.zo;
+        proxy.xOld = real.xOld;
+        proxy.yOld = real.yOld;
+        proxy.zOld = real.zOld;
+        proxy.hurtDuration = real.hurtDuration;
+        proxy.invulnerableTime = real.invulnerableTime;
+        proxy.setAirSupply(real.getAirSupply());
         // 走路动画状态（speedOld/speed/position）
         if (fieldsReady) {
             try {

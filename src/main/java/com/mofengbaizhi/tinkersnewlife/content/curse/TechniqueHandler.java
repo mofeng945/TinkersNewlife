@@ -61,6 +61,12 @@ public final class TechniqueHandler {
 
     /** 按键按下：熔断检查（反转术式豁免）→ 封印检查 → 技巧禁用检查 → 当前选中的术式 → 按下行为（即时释放 / 开始蓄力） */
     public static void onKeyPress(ServerPlayer player) {
+        // ⭐ 对抗失败锁定期：不能用术式（要等所有对抗结束）
+        if (com.mofengbaizhi.tinkersnewlife.content.curse.domain.DomainRegistry.isClashLocked(player)) {
+            player.displayClientMessage(Component.translatable(
+                    "message.tinkersnewlife.clash.locked_technique"), true);
+            return;
+        }
         // ⭐ 新阴流技巧：弥虚葛笼/简易领域激活期间禁用术式
         if (com.mofengbaizhi.tinkersnewlife.content.curse.skill.SkillHandler.blocksTechnique(player)) {
             player.displayClientMessage(Component.translatable(
@@ -94,6 +100,11 @@ public final class TechniqueHandler {
 
     /** 术式反转按键按下（F）：封印检查 → 当前选中的术式 → 反转行为（如无下限·苍 → 赫） */
     public static void onReverseKeyPress(ServerPlayer player) {
+        if (com.mofengbaizhi.tinkersnewlife.content.curse.domain.DomainRegistry.isClashLocked(player)) {
+            player.displayClientMessage(Component.translatable(
+                    "message.tinkersnewlife.clash.locked_technique"), true);
+            return;
+        }
         if (com.mofengbaizhi.tinkersnewlife.content.curse.skill.SkillHandler.blocksTechnique(player)) {
             player.displayClientMessage(Component.translatable(
                     "message.tinkersnewlife.skill.no_technique"), true);
