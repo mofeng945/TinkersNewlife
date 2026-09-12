@@ -158,15 +158,18 @@ public class DangYunPingXianDomain extends BaseDomain {
             drownedIds.clear();
             // ⭐ 注的水复原为空气：从每个记录的水源出发，把与之连通的水全部删掉
             //（含扩散出的流动水），避免"关领域后残留水塘"。
-            clearWater(levelRef);
+            java.util.Set<BlockPos> cleared = clearWater(levelRef);
+            // ⭐ 含水方块（waterlogged）也要一起清：注水后原版流体会把台阶/楼梯/栅栏/珊瑚
+            // 这类"可含水"方块灌成含水状态，只删水方块的话它们会永远含着水。
+            dryWaterlogged(levelRef, cleared);
             waterBlocks.clear();
         }
         // 施术者水呼吸随效果自然过期即可
         clearResist();
     }
 
-    /** 从记录水源出发 BFS，清除所有连通的水方块（仅限领域附近的连通水域） */
-    private void clearWater(ServerLevel level) {
+    /** 从记录水源出发 BFS，清除所有连通的水方块（仅限领域附近的连通水域），返回被清掉的位置 */
+    private java.util.Set<BlockPos> clearWater(ServerLevel level) {
         java.util.ArrayDeque<net.minecraft.core.BlockPos> queue = new java.util.ArrayDeque<>();
         java.util.Set<net.minecraft.core.BlockPos> visited = new java.util.HashSet<>();
         for (BlockPos pos : waterBlocks) {
@@ -189,6 +192,48 @@ public class DangYunPingXianDomain extends BaseDomain {
                     queue.add(next);
                 }
             }
+        }
+        return visited;
+    }
+
+    /**
+     * 把「因本次注水而含水的方块」（{@code WATERLOGGED=true}）烘干。
+     * <p>
+     * 注水后原版流体会顺着扩散把台阶/楼梯/栅栏/珊瑚这类「可含水」方块灌成含水状态，
+     * 而 {@link #clearWater} 只处理真正的 {@code minecraft:water} 方块，含水方块会残留。
+     * 这里从「刚被清掉的水 + 当初记录的水位」出发，沿含水方块做 BFS（含水方块彼此也连通），
+     * 逐个把 {@code WATERLOGGED} 置回 false —— 只影响与领域水域连通的那些，
+     * 不会误伤领域外/原本就含水的方块。
+     */
+    private void dryWaterlogged(ServerLevel level, java.util.Set<BlockPos> cleared) {
+        java.util.ArrayDeque<BlockPos> queue = new java.util.ArrayDeque<>();
+        java.util.Set<BlockPos> visited = new java.util.HashSet<>(cleared);
+        queue.addAll(cleared);
+        for (BlockPos pos : waterBlocks) {          // 水位可能已被玩家破坏 → 一并作为种子
+            if (visited.add(pos)) queue.add(pos);
+        }
+        double limitSq = (radius + 8.0) * (radius + 8.0);
+        BlockPos centerPos = BlockPos.containing(center);
+        int dried = 0;
+        while (!queue.isEmpty()) {
+            BlockPos pos = queue.poll();
+            for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
+                BlockPos next = pos.relative(dir);
+                if (!visited.add(next)) continue;
+                if (next.distSqr(centerPos) > limitSq) continue;
+                var state = level.getBlockState(next);
+                if (!state.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED)
+                        || !state.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED)) {
+                    continue;
+                }
+                level.setBlock(next, state.setValue(
+                        net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED, false), 2);
+                dried++;
+                queue.add(next);   // 含水方块之间也连通：继续往深处找
+            }
+        }
+        if (dried > 0) {
+            TinkersNewlife.LOGGER.info("[荡蕴平线] 已烘干 {} 个含水方块（waterlogged）", dried);
         }
     }
 

@@ -653,13 +653,17 @@ public final class WuWeiHandler {
             return true;
         }
         ServerLevel level = player.serverLevel();
+        // ⭐ 正被操控的单位（傀儡/黑鸟/坐骑）：原地换形态，保留实体 —— 操控链路不能断。
+        //    否则下面"discard + 生成新生物 + 挂守护 AI"会让它彻底失去 AI、再也操控不了。
+        boolean inPlace = victim instanceof Mob cm && isPlayerControlled(player, cm)
+                && transformControllableInPlace(player, cm, formId, type);
         if (victim instanceof ServerPlayer targetPlayer) {
             // 玩家目标：对方本体直接变形（限时 60s、由对方自己操控、禁工具）
             if (enterForm(targetPlayer, formId, true, REVERSE_TICKS)) {
                 targetPlayer.displayClientMessage(Component.translatable("message.tinkersnewlife.wu_wei.self",
                         formDisplayName(formId)), true);
             }
-        } else if (victim instanceof Mob targetMob) {
+        } else if (!inPlace && victim instanceof Mob targetMob) {
             // 生物目标：永久变形（不可恢复）→ 移除原生物，生成所选生物，
             // AI 替换为"玉犬式守护 AI"（跟随/护主/近战）；死亡即真死
             ReverseMobData rd = new ReverseMobData();
@@ -945,6 +949,96 @@ public final class WuWeiHandler {
         rd.restXRot = mob.getXRot();
         // 守护形态同时是咒灵释放体时：按 guardUuid 恢复释放位链接（跨登出/区块重载）
         com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique.relinkGuardByUuid(mob);
+    }
+
+    // ============================================================
+    //  ⭐ 可操控单位（傀儡操术的傀儡 / 黑鸟操术的黑鸟）的"原地转变"
+    // ============================================================
+
+    /** 被无为转变"原地换形态"的可操控单位：形态注册名（持久数据键） */
+    public static final String KEY_MOB_FORM = "tinkersnewlife.wuwei_mob_form";
+    /** 同上：形态攻击倍率（= 形态基础攻击 / 基准 8），供操控单位自己的伤害公式乘算 */
+    private static final String KEY_MOB_ATK_FACTOR = "tinkersnewlife.wuwei_mob_atk_factor";
+    /** 形态攻击倍率的基准攻击力（一个中性基准，避免"猪 = 0 伤害 / 铁傀儡 = 爆炸"） */
+    private static final double FORM_ATK_BASE = 8.0;
+
+    /** 该单位是否正被这个玩家操控（正骑乘 / 傀儡操术的傀儡 / 黑鸟操术的黑鸟） */
+    public static boolean isPlayerControlled(ServerPlayer player, Mob mob) {
+        if (player == null || mob == null) return false;
+        if (player.getVehicle() == mob) return true;
+        if (mob instanceof com.mofengbaizhi.tinkersnewlife.content.entity.PuppetGolemMob p
+                && p.puppetOwner() == player) return true;
+        if (mob instanceof com.mofengbaizhi.tinkersnewlife.content.entity.BlackBirdEntity b
+                && b.getOwner() == player) return true;
+        return false;
+    }
+
+    /** 该单位被换过形态后的攻击倍率（没换过返回 1） */
+    public static float formAttackFactor(net.minecraft.world.entity.Entity e) {
+        float f = e.getPersistentData().getFloat(KEY_MOB_ATK_FACTOR);
+        return f <= 0 ? 1.0F : f;
+    }
+
+    /**
+     * ⭐ 把"正被玩家操控的单位"<b>原地</b>换成目标形态，而不是删掉重建。
+     * <p>
+     * 傀儡操术 / 黑鸟操术的操控链路是「实体 id 绑相机 + 每 tick 输入包 → findActivePuppet/findActiveBird」。
+     * 一旦按普通流程 discard() 旧实体再生成新生物：输入包找不到目标、相机指向已删除实体，
+     * 表现就是"转变后失去所有 AI、完全操控不了"。所以这里：
+     * <ol>
+     *   <li><b>保留实体本身</b>——操控链路一根不断，只把它渲染成目标形态
+     *       （持久数据记形态 + {@code PacketMobDisguise} 广播 → 客户端用渲染代理画目标生物）；</li>
+     *   <li><b>数值换成形态的</b>——生命上限/护甲/韧性/攻击按该玩家 (1+亲和/100)×输出 缩放写入属性，
+     *       移速夹在原速 ±50% 内保操控手感，并记下"形态攻击倍率"供单位自己的伤害公式乘算。</li>
+     * </ol>
+     * 返回 true 表示已处理（调用方不要再走"删掉重建"的老路）。
+     */
+    public static boolean transformControllableInPlace(ServerPlayer player, Mob mob, String formId,
+                                                       EntityType<?> type) {
+        float[] form = readFormStats(player.serverLevel(), type);
+        double mult = (1.0 + CursePowerHelper.getCurseAffinity(player) / 100.0)
+                * Math.max(1, CursePowerHelper.getCurseOutputLevel(player));
+        // 1) 数值：换成形态的
+        AttributeInstance hp = mob.getAttribute(Attributes.MAX_HEALTH);
+        if (hp != null) {
+            hp.setBaseValue(Math.max(1.0, form[0] * mult));
+            mob.setHealth(mob.getMaxHealth());
+        }
+        AttributeInstance armor = mob.getAttribute(Attributes.ARMOR);
+        if (armor != null) armor.setBaseValue(Math.max(0.0, form[1]));
+        AttributeInstance tough = mob.getAttribute(Attributes.ARMOR_TOUGHNESS);
+        if (tough != null) tough.setBaseValue(Math.max(0.0, form[2]));
+        AttributeInstance atk = mob.getAttribute(Attributes.ATTACK_DAMAGE);
+        if (atk != null) atk.setBaseValue(Math.max(1.0, form[4] * mult));
+        AttributeInstance spd = mob.getAttribute(Attributes.MOVEMENT_SPEED);
+        if (spd != null) {
+            double base = spd.getBaseValue();
+            double want = form[3] * Math.min(mult, 2.0);
+            spd.setBaseValue(Math.max(Math.max(0.05, base * 0.5), Math.min(base * 1.5, want)));
+        }
+        mob.getPersistentData().putFloat(KEY_MOB_ATK_FACTOR,
+                (float) Math.max(0.3, Math.min(4.0, form[4] / FORM_ATK_BASE)));
+        mob.refreshDimensions();
+        // 2) 外观：记形态 + 广播（客户端代理渲染成目标生物）
+        mob.getPersistentData().putString(KEY_MOB_FORM, formId);
+        TinkersNewlife.CHANNEL.send(PacketDistributor.ALL.noArg(),
+                new com.mofengbaizhi.tinkersnewlife.network.curse.PacketMobDisguise(mob.getUUID(), formId));
+        TinkersNewlife.LOGGER.info("[无为转变] 可操控单位 {} 原地转变：形态={} 生命上限={} 攻击倍率={}",
+                mob.getType().getDescription().getString(), formId,
+                String.format("%.1f", mob.getMaxHealth()),
+                String.format("%.2f", formAttackFactor(mob)));
+        return true;
+    }
+
+    /** 新玩家开始跟踪某个已换形态的可操控单位：补发一次形态包（否则后来的人看到的还是原样） */
+    @SubscribeEvent
+    public static void onStartTracking(PlayerEvent.StartTracking event) {
+        if (!(event.getTarget() instanceof LivingEntity target)) return;
+        String form = target.getPersistentData().getString(KEY_MOB_FORM);
+        if (form.isEmpty()) return;
+        if (!(event.getEntity() instanceof ServerPlayer watcher)) return;
+        TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> watcher),
+                new com.mofengbaizhi.tinkersnewlife.network.curse.PacketMobDisguise(target.getUUID(), form));
     }
 
     /** 玉犬式守护 AI：跟随主人、追击主人目标/伤害主人的实体、近战攻击（等价式神玉犬行为） */

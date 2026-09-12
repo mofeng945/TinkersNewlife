@@ -114,8 +114,12 @@ public final class WuWeiDisguiseRenderer {
         }
     }
 
-    /** 把真实玩家的动画状态完整拷贝到代理（让代理"动起来"）；供本类与伪装渲染 Mixin 共用 */
-    public static void syncProxy(Player real, LivingEntity proxy) {
+    /**
+     * 把真实实体（玩家 / 被无为转变换形态的可操控单位）的动画状态完整拷贝到代理（让代理"动起来"）；
+     * 供本类与伪装渲染 Mixin 共用。用 {@link LivingEntity} 而不是 {@link Player}：
+     * 傀儡操术的傀儡、黑鸟操术的黑鸟这些"原地换形态"的单位也要走同一套同步。
+     */
+    public static void syncProxy(LivingEntity real, LivingEntity proxy) {
         // 位置与朝向（渲染以 pose 为基准，此处保证字段一致供模型姿态计算）
         proxy.moveTo(real.getX(), real.getY(), real.getZ(), real.getYRot(), real.getXRot());
         proxy.xRotO = real.xRotO;

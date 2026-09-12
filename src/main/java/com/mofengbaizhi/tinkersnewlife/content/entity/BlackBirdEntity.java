@@ -208,7 +208,8 @@ public class BlackBirdEntity extends Bat {
         int affinity = CursePowerHelper.getCurseAffinity(owner);
         int output = CursePowerHelper.getCurseOutputLevel(owner);
         double hp = getHealth();
-        double center = (1.0 + affinity / 100.0) * (output * 3 + hp) * 10.0;
+        double center = (1.0 + affinity / 100.0) * (output * 3 + hp) * 10.0
+                * com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiHandler.formAttackFactor(this);
         double radius = 3.0;
         List<LivingEntity> victims = level.getEntitiesOfClass(LivingEntity.class,
                 AABB.ofSize(position(), radius * 2, radius * 2, radius * 2),

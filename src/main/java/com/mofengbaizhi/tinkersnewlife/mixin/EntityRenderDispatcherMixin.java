@@ -44,6 +44,7 @@ public abstract class EntityRenderDispatcherMixin {
     /** 诊断用：Hook 是否确实被调用过（只打一次） */
     private static boolean tinkersnewlife$hookLogged = false;
 
+
     // ⭐ 两个 HEAD 注入器功能完全相同（都调用 tinkersnewlife$replace）：
     //   ① 用 MCP 名 render + refmap 解析成 SRG 名；
     //   ② 直接用 SRG 名 m_114384_ 且 remap=false，完全绕开 refmap。
@@ -73,6 +74,14 @@ public abstract class EntityRenderDispatcherMixin {
                                         PoseStack poseStack, MultiBufferSource buffer, int packedLight,
                                         CallbackInfo ci) {
         try {
+            // ⭐ 非玩家：被无为转变"原地换形态"的可操控单位（傀儡操术的傀儡 / 黑鸟操术的黑鸟等）。
+            //    这类单位不能删掉重建（操控链路是"相机绑实体 id + 输入包"），所以保留实体、只换渲染。
+            if (!(entity instanceof Player) && entity instanceof LivingEntity livingMob) {
+                if (tinkersnewlife$replaceMob(livingMob, x, y, z, rotationYaw, partialTicks,
+                        poseStack, buffer, packedLight, ci)) {
+                    return;
+                }
+            }
             if (!(entity instanceof Player player)) return;
             boolean disguised = ClientWuWeiData.isDisguised(player.getUUID());
             // ⭐ 诊断：证明本 Hook 确实在跑（同时给出"客户端是否已知该玩家伪装"）
@@ -114,5 +123,31 @@ public abstract class EntityRenderDispatcherMixin {
             // 任何异常都退回原渲染，绝不影响正常游戏
             TinkersNewlife.LOGGER.warn("[WuWei] 伪装渲染替换异常，已回退原渲染: {}", t.toString());
         }
+    }
+
+    /**
+     * 非玩家实体（可操控单位）的形态替换：查客户端"实体形态伪装"表，命中就用渲染代理画目标生物。
+     *
+     * @return true 表示已接管并取消了原渲染
+     */
+    private boolean tinkersnewlife$replaceMob(LivingEntity living, double x, double y, double z,
+                                              float rotationYaw, float partialTicks,
+                                              PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+                                              CallbackInfo ci) {
+        if (ClientWuWeiData.getMobDisguise(living.getUUID()).isEmpty()) return false;
+        if (!com.mofengbaizhi.tinkersnewlife.config.ModConfig.WUWEI_DISGUISE_RENDER.get()) return false;
+        Entity proxy = ClientWuWeiData.getOrCreateMobProxy(living.getUUID(), living);
+        if (!(proxy instanceof LivingEntity proxyLiving)) return false;
+        EntityRenderDispatcher dispatcher = (EntityRenderDispatcher) (Object) this;
+        EntityRenderer<? super Entity> renderer = dispatcher.getRenderer(proxy);
+        if (renderer == null) return false;
+        WuWeiDisguiseRenderer.syncProxy(living, proxyLiving);
+        Vec3 offset = renderer.getRenderOffset(proxy, partialTicks);
+        poseStack.pushPose();
+        poseStack.translate(x + offset.x, y + offset.y, z + offset.z);
+        renderer.render(proxy, rotationYaw, partialTicks, poseStack, buffer, packedLight);
+        poseStack.popPose();
+        ci.cancel();
+        return true;
     }
 }

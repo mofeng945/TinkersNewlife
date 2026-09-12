@@ -89,6 +89,12 @@ public final class ConstructTechnique extends BaseTechnique {
     /** 右键瞬间的待确认部件放置（2 tick 后对比"新增面"）；服务端主线程访问 */
     private static final List<PendingPartPlace> PENDING_PARTS = new ArrayList<>();
 
+    /** 拟造物"召唤实体"（假人 / 盔甲架 / 刷怪蛋这类用物品生成实体）的待确认快照；服务端主线程访问 */
+    private static final List<PendingEntitySpawn> PENDING_MOB_SPAWNS = new ArrayList<>();
+
+    /** 已被拟造物召唤出来的实体（到期自动消散）；服务端主线程访问 */
+    private static final List<net.minecraft.world.entity.Entity> TRACKED_TEMP_MOBS = new ArrayList<>();
+
     /** 扫描容器时用的随机数（挑玩家用） */
     private static final java.util.Random RANDOM = new java.util.Random();
 
@@ -1773,6 +1779,25 @@ public final class ConstructTechnique extends BaseTechnique {
             TRACKED_TEMP_ITEMS.add(item);
         }
 
+        /**
+         * 拟造物在空中右键（不点方块）时也可能召唤实体（假人 / 盔甲架等），同样拍快照。
+         * 这里只负责"记一笔"，真正的登记与到期清除都在 onServerTick 里统一处理。
+         */
+        @net.minecraftforge.eventbus.api.SubscribeEvent
+        public static void onRightClickItem(net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickItem event) {
+            if (event.getLevel().isClientSide()) return;
+            if (!(event.getEntity() instanceof ServerPlayer sp)) return;
+            if (!(event.getLevel() instanceof ServerLevel level)) return;
+            ItemStack held = event.getItemStack();
+            long until = held.hasTag() ? held.getTag().getLong(KEY_TEMP_UNTIL) : 0;
+            if (until <= 0) {
+                held = sp.getOffhandItem();
+                until = held.hasTag() ? held.getTag().getLong(KEY_TEMP_UNTIL) : 0;
+            }
+            if (until <= 0) return;
+            watchEntitySpawn(level, sp, until);
+        }
+
         /** 拟造中受击 → 打断拟造（咒力已扣，不返还） */
         @net.minecraftforge.eventbus.api.SubscribeEvent
         public static void onLivingHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
@@ -1780,6 +1805,17 @@ public final class ConstructTechnique extends BaseTechnique {
             if (event.getEntity() instanceof ServerPlayer sp) {
                 interruptForge(sp);
             }
+        }
+
+        /** 拟造物"召唤实体"：给玩家附近实体拍 id 快照，2 tick 后对比出新出现的那批 */
+        private static void watchEntitySpawn(ServerLevel level, ServerPlayer player, long until) {
+            if (until <= 0) return;
+            java.util.Set<Integer> before = new java.util.HashSet<>();
+            for (net.minecraft.world.entity.Entity e : level.getEntitiesOfClass(
+                    net.minecraft.world.entity.Entity.class, player.getBoundingBox().inflate(6.0))) {
+                before.add(e.getId());
+            }
+            PENDING_MOB_SPAWNS.add(new PendingEntitySpawn(level, player, until, level.getGameTime() + 2, before));
         }
 
         /**
@@ -1850,6 +1886,9 @@ public final class ConstructTechnique extends BaseTechnique {
                 until = held.hasTag() ? held.getTag().getLong(KEY_TEMP_UNTIL) : 0;
             }
             if (until <= 0 || held.isEmpty()) return;
+            // ⭐ 拟造物"用物品生成实体"（假人 / 盔甲架 / 刷怪蛋……）不会走 EntityPlaceEvent，
+            //    这里先给玩家附近的实体拍 id 快照，2 tick 后对比出"新增实体"再登记到期时间。
+            watchEntitySpawn(level, sp, until);
             Item item = held.getItem();
             net.minecraft.core.BlockPos pos = event.getPos();
             long now = level.getGameTime();
@@ -1893,6 +1932,50 @@ public final class ConstructTechnique extends BaseTechnique {
                         item.discard();
                         eit.remove();
                     }
+                }
+            }
+            // ⭐ 拟造实体：待确认的新增实体（2 tick 后对比）+ 到期消散
+            if (!PENDING_MOB_SPAWNS.isEmpty()) {
+                Iterator<PendingEntitySpawn> mit = PENDING_MOB_SPAWNS.iterator();
+                while (mit.hasNext()) {
+                    PendingEntitySpawn q = mit.next();
+                    ServerLevel lvl = q.level;
+                    if (lvl == null) {
+                        mit.remove();
+                        continue;
+                    }
+                    if (lvl.getGameTime() < q.scanAt) continue;
+                    mit.remove();
+                    ServerPlayer owner = q.player;
+                    if (owner == null || !owner.isAlive()) continue;
+                    for (net.minecraft.world.entity.Entity e :
+                            lvl.getEntitiesOfClass(net.minecraft.world.entity.Entity.class,
+                                    owner.getBoundingBox().inflate(6.0))) {
+                        if (e == owner) continue;
+                        if (e instanceof net.minecraft.world.entity.item.ItemEntity) continue;
+                        if (q.before.contains(e.getId())) continue;
+                        markTempMob(lvl, e, q.until);
+                    }
+                }
+            }
+            if (!TRACKED_TEMP_MOBS.isEmpty()) {
+                Iterator<net.minecraft.world.entity.Entity> mobIt = TRACKED_TEMP_MOBS.iterator();
+                while (mobIt.hasNext()) {
+                    net.minecraft.world.entity.Entity e = mobIt.next();
+                    if (e == null || e.isRemoved()) {
+                        mobIt.remove();
+                        continue;
+                    }
+                    if (!(e.level() instanceof ServerLevel slevel)) {
+                        mobIt.remove();
+                        continue;
+                    }
+                    long until = e.getPersistentData().getLong(KEY_TEMP_UNTIL);
+                    if (until <= 0 || until > slevel.getGameTime()) continue;
+                    slevel.sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE,
+                            e.getX(), e.getY() + e.getBbHeight() * 0.5, e.getZ(), 10, 0.3, 0.3, 0.3, 0.02);
+                    e.discard();
+                    mobIt.remove();
                 }
             }
             if (PLACED_TEMPS.isEmpty() && PLACED_TEMP_PARTS.isEmpty() && SWEEP_QUEUE.isEmpty()) {
@@ -2263,6 +2346,34 @@ public final class ConstructTechnique extends BaseTechnique {
             this.until = until;
             this.sidesBefore = sidesBefore;
             this.scanAt = scanAt;
+        }
+    }
+
+    /** 给"拟造召唤出来的实体"打上到期标记并纳入跟踪（幂等） */
+    private static void markTempMob(ServerLevel level, net.minecraft.world.entity.Entity e, long until) {
+        e.getPersistentData().putLong(KEY_TEMP_UNTIL, until);
+        if (!TRACKED_TEMP_MOBS.contains(e)) {
+            TRACKED_TEMP_MOBS.add(e);
+        }
+        level.sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE,
+                e.getX(), e.getY() + e.getBbHeight() * 0.5, e.getZ(), 8, 0.3, 0.3, 0.3, 0.02);
+    }
+
+    /** 一次"拟造物召唤实体"的待确认快照：右键瞬间的实体 id 集合 + 到期时间 */
+    private static final class PendingEntitySpawn {
+        final ServerLevel level;
+        final ServerPlayer player;
+        final long until;
+        final long scanAt;
+        final java.util.Set<Integer> before;
+
+        PendingEntitySpawn(ServerLevel level, ServerPlayer player, long until, long scanAt,
+                           java.util.Set<Integer> before) {
+            this.level = level;
+            this.player = player;
+            this.until = until;
+            this.scanAt = scanAt;
+            this.before = before;
         }
     }
 

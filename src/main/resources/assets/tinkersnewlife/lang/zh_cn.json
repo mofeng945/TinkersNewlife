@@ -498,6 +498,7 @@
   "message.tinkersnewlife.ritual.no_xp": "§c仪式需要 %s 级经验",
   "message.tinkersnewlife.technique.no_target": "§c未命中目标实体",
   "message.tinkersnewlife.technique.no_curse": "§c咒力不足，无法释放术式",
+    "message.tinkersnewlife.technique.core_removed": "§7咒力核心已卸下：所有持续性术式已解除",
   "message.tinkersnewlife.technique.too_far": "§c距离目标过远（需 3 格内接触）",
   "message.tinkersnewlife.technique.no_blood": "§c血量不足，无法发动赤血操术·穿血",
   "recipe.tconstruct.extract_modifier.techniques": "剥离术式",

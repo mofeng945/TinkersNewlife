@@ -28,6 +28,19 @@ public final class ClientWuWeiData {
     /** 玩家 UUID → 渲染代理实体（目标类型实例，仅渲染用，不进世界） */
     private static final Map<UUID, Entity> PROXIES = new HashMap<>();
 
+    // ===== 非玩家实体（傀儡操术的傀儡 / 黑鸟操术的黑鸟等"可操控单位"）的形态伪装 =====
+    /** 实体 UUID → 形态注册名；用 UUID 而非实体 id（id 会被复用）。带访问序淘汰，见 MOB_LIMIT */
+    private static final Map<UUID, String> MOB_DISGUISES =
+            new java.util.LinkedHashMap<>(16, 0.75F, true);
+    /** 实体 UUID → 渲染代理实体 */
+    private static final Map<UUID, Entity> MOB_PROXIES =
+            new java.util.LinkedHashMap<>(16, 0.75F, true);
+    /**
+     * 伪装项上限：实体消失后客户端收不到通知，只能靠"最久未用先淘汰"兜底。
+     * 正常游玩同时存在的傀儡/黑鸟只有个位数，这个上限纯粹是防御性内存保护。
+     */
+    private static final int MOB_LIMIT = 512;
+
     private ClientWuWeiData() {}
 
     /** 设置/解除某玩家的伪装（空 formId = 解除） */
@@ -96,7 +109,64 @@ public final class ClientWuWeiData {
     public static void clearAll() {
         DISGUISES.clear();
         PROXIES.clear();
+        MOB_DISGUISES.clear();
+        MOB_PROXIES.clear();
     }
+
+    // ============================================================
+    //  非玩家实体（可操控单位）的形态伪装
+    // ============================================================
+
+    /** 设置/解除某实体的形态伪装（formId 空 = 解除） */
+    public static void setMobDisguise(UUID entityId, String formId) {
+        if (entityId == null) return;
+        boolean empty = formId == null || formId.isEmpty();
+        String old = MOB_DISGUISES.get(entityId);
+        if (empty) {
+            MOB_DISGUISES.remove(entityId);
+            MOB_PROXIES.remove(entityId);
+        } else {
+            MOB_DISGUISES.put(entityId, formId);
+            if (!formId.equals(old)) MOB_PROXIES.remove(entityId);   // 形态变了才重建代理
+            // 兜底淘汰：实体没了客户端不会收到通知，靠访问序把最久未用的挤出去
+            java.util.Iterator<UUID> it = MOB_DISGUISES.keySet().iterator();
+            while (MOB_DISGUISES.size() > MOB_LIMIT && it.hasNext()) {
+                UUID victim = it.next();
+                if (victim.equals(entityId)) continue;
+                MOB_PROXIES.remove(victim);
+                it.remove();
+            }
+        }
+        if (empty ? old != null : !formId.equals(old)) {
+            TinkersNewlife.LOGGER.debug("[WuWei] 实体形态伪装同步: {} -> {}", entityId, empty ? "解除" : formId);
+        }
+    }
+
+    /** 某实体的形态伪装注册名（空字符串 = 无） */
+    public static String getMobDisguise(UUID entityId) {
+        String id = MOB_DISGUISES.get(entityId);
+        return id == null ? "" : id;
+    }
+
+    /** 取实体渲染代理（没有则按形态创建；失败返回 null） */
+    public static Entity getOrCreateMobProxy(UUID entityId, LivingEntity real) {
+        Entity proxy = MOB_PROXIES.get(entityId);
+        String formId = MOB_DISGUISES.get(entityId);
+        if (formId == null) return null;
+        if (proxy == null || !proxy.getType().equals(entityType(formId))) {
+            EntityType<?> type = entityType(formId);
+            if (type == null || Minecraft.getInstance().level == null) return null;
+            try {
+                proxy = type.create(Minecraft.getInstance().level);
+            } catch (Exception e) {
+                return null;
+            }
+            if (proxy == null) return null;
+            MOB_PROXIES.put(entityId, proxy);
+        }
+        return proxy;
+    }
+
 
     private static EntityType<?> entityType(String id) {
         return ForgeRegistries.ENTITY_TYPES.getValue(ResourceLocation.tryParse(id));

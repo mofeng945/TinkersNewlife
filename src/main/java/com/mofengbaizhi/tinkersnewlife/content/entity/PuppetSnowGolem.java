@@ -217,7 +217,8 @@ public class PuppetSnowGolem extends SnowGolem implements PuppetGolemMob {
         snowCd = SNOW_CD;
         int output = CursePowerHelper.getCurseOutputLevel(owner);
         int affinity = CursePowerHelper.getCurseAffinity(owner);
-        float dmg = Math.round((2.0F + 2.0F * output) * (1.0F + affinity / 100.0F));
+        float dmg = Math.round((2.0F + 2.0F * output) * (1.0F + affinity / 100.0F)
+                * com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiHandler.formAttackFactor(this));
         dmg = com.mofengbaizhi.tinkersnewlife.content.modifier.ModularStaffModifier
                 .getSpellAmplification(owner, dmg);
         int frostTicks = 40 + output * 20;
@@ -241,7 +242,8 @@ public class PuppetSnowGolem extends SnowGolem implements PuppetGolemMob {
         ServerLevel level = (ServerLevel) this.level();
         int output = owner != null ? CursePowerHelper.getCurseOutputLevel(owner) : 0;
         int affinity = owner != null ? CursePowerHelper.getCurseAffinity(owner) : 0;
-        double center = (12.0 + 6.0 * output) * (1.0 + affinity / 100.0);
+        double center = (12.0 + 6.0 * output) * (1.0 + affinity / 100.0)
+                * com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiHandler.formAttackFactor(this);
         if (owner != null) {
             center = com.mofengbaizhi.tinkersnewlife.content.modifier.ModularStaffModifier
                     .getSpellAmplification(owner, (float) center);

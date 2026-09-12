@@ -289,6 +289,11 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiDisguise::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiDisguise::new,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketWuWeiDisguise::handle);
+        // 猸?鏃犱负杞彉锛氬彲鎿嶆帶鍗曚綅锛堝個鍎℃搷鏈殑鍌€鍎?/ 榛戦笩鎿嶆湳鐨勯粦楦燂級"鍘熷湴鎹㈠舰鎬?鐨勫鎴风娓叉煋鍚屾
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketMobDisguise.class,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketMobDisguise::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketMobDisguise::new,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketMobDisguise::handle);
         registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoOpen.class,
                 com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoOpen::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoOpen::new,

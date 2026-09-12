@@ -288,6 +288,69 @@ public final class TechniqueHandler {
         }
     }
 
+    // ============================================================
+    //  ⭐ 咒力核心被摘下 / 被换掉 → 立刻收掉持续性术式
+    // ============================================================
+
+    /** 上一次检查到的「佩戴核心指纹」（物品 + 术式列表），用于检测摘下/换核心 */
+    private static final Map<UUID, String> CORE_FINGERPRINT = new ConcurrentHashMap<>();
+
+    /**
+     * 每 10 tick 检查一次佩戴的咒力核心：
+     * <ul>
+     *   <li><b>核心被摘下</b> → 立刻停止身上所有持续性/开关型术式（无限屏障、压力场、无限弹药、
+     *       黑鸟操控、拟造物、变形本体……都算「持续性状态」），并清空当前选中；</li>
+     *   <li><b>核心被换成另一个</b> → 只停「新核心上没有的」持续状态，选中回退到新核心的第一个术式。</li>
+     * </ul>
+     * 用轮询而不是监听某个槽位：摘下核心的路径太多（背包移动 / 饰品栏 / 死亡掉落 / 被清除等），
+     * 轮询才能全覆盖。领域不必管：{@code DomainRegistry} 每 tick 用 {@code isValid} 校验核心，会自己关。
+     */
+    @SubscribeEvent
+    public static void onPlayerTick(net.minecraftforge.event.TickEvent.PlayerTickEvent event) {
+        if (event.phase != net.minecraftforge.event.TickEvent.Phase.END) return;
+        if (!(event.player instanceof ServerPlayer player)) return;
+        if (player.tickCount % 10 != 0) return;
+        String now = coreFingerprint(player);
+        String prev = CORE_FINGERPRINT.put(player.getUUID(), now);
+        if (prev == null || prev.equals(now)) return;
+        if (now.isEmpty()) {
+            // 核心被摘下：所有持续性术式一并解除（变形本体也算；「被他人转变」不由自己的核心负责）
+            if (com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiHandler.isTransformed(player)
+                    && !com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiHandler.isForcedTransform(player)) {
+                com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiHandler.endTransformPublic(player);
+            }
+            stopAllSustained(player);
+            SELECTED.remove(player.getUUID());
+            BORROW_ORIGINAL.remove(player.getUUID());
+            CursePowerHandler.syncToClient(player);
+            player.displayClientMessage(Component.translatable(
+                    "message.tinkersnewlife.technique.core_removed"), true);
+            TinkersNewlife.LOGGER.info("[术式] {} 摘下咒力核心：已解除全部持续性术式",
+                    player.getName().getString());
+        } else {
+            // 换了核心：停掉新核心上没有的持续状态，选中回退到新核心的第一个术式
+            closeBorrowedSustained(player);
+            List<ModifierId> onCore = getTechniquesOnCore(player);
+            ModifierId sel = SELECTED.get(player.getUUID());
+            if (onCore != null && !onCore.isEmpty() && (sel == null || !onCore.contains(sel))) {
+                SELECTED.put(player.getUUID(), onCore.get(0));
+            }
+            CursePowerHandler.syncToClient(player);
+        }
+    }
+
+    /** 佩戴核心的指纹：物品注册名 + 其上的术式列表；没有核心返回空串 */
+    private static String coreFingerprint(ServerPlayer player) {
+        ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
+        if (core.isEmpty()) return "";
+        StringBuilder sb = new StringBuilder(
+                String.valueOf(net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(core.getItem())));
+        List<ModifierId> list = getTechniquesOnCore(player);
+        if (list != null) {
+            for (ModifierId id : list) sb.append('|').append(id);
+        }
+        return sb.toString();
+    }
     /** 玩家核心上是否装有该术式 modifier */
     private static boolean hasOnCore(ServerPlayer player, ModifierId id) {
         List<ModifierId> onCore = getTechniquesOnCore(player);

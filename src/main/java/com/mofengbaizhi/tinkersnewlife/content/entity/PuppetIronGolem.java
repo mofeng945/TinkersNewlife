@@ -251,7 +251,8 @@ public class PuppetIronGolem extends IronGolem implements PuppetGolemMob {
         }
         if (best != null) {
             int[] stat = stats(owner);
-            float dmg = Math.round((4.0F + 4.0F * stat[0]) * (1.0F + stat[1] / 100.0F));
+            float dmg = Math.round((4.0F + 4.0F * stat[0]) * (1.0F + stat[1] / 100.0F)
+                    * com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiHandler.formAttackFactor(this));
             dmg = com.mofengbaizhi.tinkersnewlife.content.modifier.ModularStaffModifier
                     .getSpellAmplification(owner, dmg);
             best.hurt(damageSources().mobAttack(this), dmg);
@@ -299,7 +300,8 @@ public class PuppetIronGolem extends IronGolem implements PuppetGolemMob {
         ServerPlayer owner = getOwner();
         ServerLevel level = (ServerLevel) this.level();
         int[] stat = owner != null ? stats(owner) : new int[]{0, 0};
-        double center = (30.0 + 10.0 * stat[0]) * (1.0 + stat[1] / 100.0);
+        double center = (30.0 + 10.0 * stat[0]) * (1.0 + stat[1] / 100.0)
+                * com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiHandler.formAttackFactor(this);
         if (owner != null) {
             center = com.mofengbaizhi.tinkersnewlife.content.modifier.ModularStaffModifier
                     .getSpellAmplification(owner, (float) center);
