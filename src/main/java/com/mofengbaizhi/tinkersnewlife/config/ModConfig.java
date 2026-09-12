@@ -59,6 +59,18 @@ public final class ModConfig {
      * 这些物品由"离手即散 / 容器立即清除 / 槽位拒绝"三层防线兜底。
      */
     public static final ConfigValue<Boolean> CONSTRUCT_BLUEPRINT_TCON_TOOLS_LEGACY;
+    /** 命中"风险"（依赖自身类型判定的接口/模组）时是否退回真副本（默认 true；设 false 则一律用蓝本） */
+    public static final ConfigValue<Boolean> CONSTRUCT_BLUEPRINT_RISKY_LEGACY;
+    /** 强制退回真副本的清单：物品id / {@code @模组} / {@code #标签}（支持 * 通配） */
+    public static final ConfigValue<List<? extends String>> CONSTRUCT_BLUEPRINT_EXEMPT;
+    /** 追加的"风险接口"类名（实现即退回真副本，软依赖，模组不在自动忽略） */
+    public static final ConfigValue<List<? extends String>> CONSTRUCT_BLUEPRINT_RISKY_INTERFACES;
+    /** 风险模组清单：这些模组的物品默认退回真副本（默认值按整合包静态扫描结果预置） */
+    public static final ConfigValue<List<? extends String>> CONSTRUCT_BLUEPRINT_RISKY_MODS;
+    /** 服务器启动时自动生成一次兼容报告（config/mofengbaizhi/construct/blueprint_report.txt） */
+    public static final ConfigValue<Boolean> CONSTRUCT_BLUEPRINT_REPORT_ON_START;
+    /** 物品自带 Forge 能力（能量/流体/存储/饰品等）时是否退回真副本（默认 true） */
+    public static final ConfigValue<Boolean> CONSTRUCT_BLUEPRINT_CAPABILITY_LEGACY;
     public static final ConfigValue<Boolean> CONSTRUCT_VANISH_ON_DROP;
     /** 容器/机器里的拟造物立即清除（不等到期）——防止被熔炼等自动化配方加工成真材料 */
     public static final ConfigValue<Boolean> CONSTRUCT_CONTAINER_INSTANT_PURGE;
@@ -255,6 +267,43 @@ public final class ModConfig {
         // ---- 拟造物防自动化 ----
         CONSTRUCT_BLUEPRINT_ENABLED = b.define("blueprint_enabled", true);
         CONSTRUCT_BLUEPRINT_TCON_TOOLS_LEGACY = b.define("blueprint_tcon_tools_legacy", true);
+        CONSTRUCT_BLUEPRINT_RISKY_LEGACY = b.define("blueprint_risky_legacy", true);
+        CONSTRUCT_BLUEPRINT_EXEMPT = b.defineList("blueprint_exempt",
+                new java.util.ArrayList<String>(), o -> o instanceof String);
+        CONSTRUCT_BLUEPRINT_RISKY_INTERFACES = b.defineList("blueprint_risky_interfaces",
+                new java.util.ArrayList<String>(), o -> o instanceof String);
+        CONSTRUCT_BLUEPRINT_RISKY_MODS = b.defineList("blueprint_risky_mods",
+                new java.util.ArrayList<String>(java.util.List.of(
+                        // —— 依据：对整合包 380 个 jar / 98644 个类做静态扫描（javap 反汇编找 instanceof），
+                        //    命中的都是"模组自己代码对其物品类做类型判定"的模组；匠魂/AE2/Curios 走的是接口
+                        //    （IModifiable / IPartItem / ICurio），由内置接口清单覆盖 ——
+                        "@tconstruct",         // 匠魂：工具/部件（IModifiable，另有 blueprint_tcon_tools_legacy 精细控制）
+                        "@create",             // 机械动力：FilterItem/ZapperItem/SandPaperItem/PotatoCannon/SuperGlue/Backtank…
+                        "@railways",           // 汽鸣铁道：PaintPitcher/ConductorCap/Handcar…
+                        "@ae2",                // 应用能源2：Facade/EncodedPattern/WirelessTerminal/PartItem/MatterCannon…
+                        "@extendedae", "@advanced_ae", "@ae2wtlib", "@megacells", "@appliedcreate",
+                        "@irons_spellbooks",   // 法术书/卷轴/施法器（Scroll/SpellBook/CastingItem…）
+                        "@tacz",               // 永恒枪械：AbstractGunItem/AmmoItem
+                        "@twilightforest",     // 暮色森林：巨人镐/奖杯/链条/弓/甲/盾…
+                        "@mowziesmobs",        // 撼地护手/乌姆武萨纳面具/长矛/毒牙匕首/吹箭
+                        "@alexsmobs",          // 次元切割器/浮木滑板等
+                        "@touhoulittlemaid",   // 博丽御币/狐符/女仆床
+                        "@sophisticatedcore", "@sophisticatedbackpacks", "@sophisticatedstorage",
+                        "@create_vampirism",
+                        "@mekanism", "@mekanismtools", "@mekanismgenerators", "@mekanismadditions",
+                        "@iceandfire", "@iceandfire_curios",
+                        "@goety", "@goetyrevelation", "@goety_cataclysm",
+                        "@l2weaponry", "@l2hostility", "@l2complements",
+                        "@farmersdelight", "@apotheosis",
+                        "@artifacts", "@relics", "@enigmaticlegacy", "@celestial_artifacts",
+                        "@vampirism", "@aquaculture", "@dummmmmmy", "@slashblade",
+                        "@simplyswords", "@curseofpandora",
+                        // 原版物品不做限制：引擎级判定（护盾格挡/工具动作/鞘翅/护甲槽…）已全部转发到位
+                        // 想放开某个模组：删掉对应条目即可（或整体 blueprint_risky_legacy=false）
+                        "@nonexistent_placeholder")),
+                o -> o instanceof String);
+        CONSTRUCT_BLUEPRINT_REPORT_ON_START = b.define("blueprint_report_on_start", true);
+        CONSTRUCT_BLUEPRINT_CAPABILITY_LEGACY = b.define("blueprint_capability_legacy", true);
         CONSTRUCT_VANISH_ON_DROP = b.define("vanish_on_drop", true);
         CONSTRUCT_CONTAINER_INSTANT_PURGE = b.define("container_instant_purge", true);
         CONSTRUCT_DENY_CONTAINER_SLOTS = b.define("deny_container_slots", true);

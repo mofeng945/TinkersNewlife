@@ -33,7 +33,9 @@ public final class ConstructCommand {
                         .then(Commands.literal("lootsuggest")
                                 .executes(ctx -> lootSuggest(ctx.getSource())))
                         .then(Commands.literal("lootstatus")
-                                .executes(ctx -> lootStatus(ctx.getSource())))));
+                                .executes(ctx -> lootStatus(ctx.getSource())))
+                        .then(Commands.literal("blueprintscan")
+                                .executes(ctx -> blueprintScan(ctx.getSource())))));
     }
 
     private static int lootSuggest(CommandSourceStack source) {
@@ -56,6 +58,32 @@ public final class ConstructCommand {
             source.sendFailure(Component.literal("扫描启动失败"));
         }
         return started ? 1 : 0;
+    }
+
+    /**
+     * {@code /tinkersnewlife construct blueprintscan} —— 体检全部已注册物品
+     * "能不能安全做成拟造蓝本"，把结果写到
+     * {@code config/mofengbaizhi/construct/blueprint_report.txt}，并在聊天栏给出汇总。
+     */
+    private static int blueprintScan(CommandSourceStack source) {
+        try {
+            BlueprintCompat.Report r = BlueprintCompat.generateReport();
+            StringBuilder top = new StringBuilder();
+            r.riskyModCounts().entrySet().stream()
+                    .sorted(java.util.Comparator.comparingInt(
+                            (java.util.Map.Entry<String, Integer> e) -> e.getValue()).reversed())
+                    .limit(8)
+                    .forEach(e -> top.append(e.getKey()).append("(").append(e.getValue()).append(") "));
+            source.sendSuccess(() -> Component.literal(
+                    "拟造蓝本兼容体检完成：可蓝本 " + r.blueprint() + " / 退回真副本 " + r.legacy()
+                            + "（已注册物品共 " + r.total() + "）\n"
+                            + "退回最多的模组：" + (top.length() == 0 ? "无" : top.toString().trim()) + "\n"
+                            + "报告：" + (r.file() == null ? "?" : r.file().getPath())), true);
+            return r.legacy() + r.blueprint();
+        } catch (Throwable t) {
+            source.sendFailure(Component.literal("体检失败：" + t));
+            return 0;
+        }
     }
 
     private static int lootStatus(CommandSourceStack source) {

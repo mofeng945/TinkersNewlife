@@ -1,0 +1,192 @@
+﻿模组 → 被自身代码 instanceof 检查的物品类（前若干）
+
+===== [机械动力] create-1.20.1-6.0.8.jar：被 instanceof 检查的物品类 17 个 =====
+   [20] com/simibubi/create/content/logistics/filter/FilterItem
+   [6] com/simibubi/create/content/equipment/zapper/ZapperItem
+   [3] com/simibubi/create/content/trains/track/TrackTargetingBlockItem
+   [3] com/simibubi/create/content/logistics/packagerLink/LogisticallyLinkedBlockItem
+   [3] com/simibubi/create/content/equipment/sandPaper/SandPaperItem
+   [2] com/simibubi/create/content/equipment/potatoCannon/PotatoCannonItem
+   [2] com/simibubi/create/content/contraptions/glue/SuperGlueItem
+   [2] com/simibubi/create/content/equipment/armor/BacktankItem$BacktankBlockItem
+   [1] com/simibubi/create/content/equipment/armor/DivingHelmetItem
+   [1] com/simibubi/create/content/equipment/armor/BacktankItem
+   [1] com/simibubi/create/content/logistics/tableCloth/ShoppingListItem
+   [1] com/simibubi/create/content/trains/schedule/ScheduleItem
+   [1] com/simibubi/create/content/equipment/armor/CardboardArmorItem
+   [1] com/simibubi/create/content/contraptions/mounted/CartAssemblerBlockItem
+   [1] com/simibubi/create/content/processing/burner/BlazeBurnerBlockItem
+   [1] com/simibubi/create/content/equipment/symmetryWand/SymmetryWandItem
+   [1] com/simibubi/create/content/logistics/box/PackageItem
+
+===== [应用能源2] appliedenergistics2-forge-15.4.10.jar：被 instanceof 检查的物品类 16 个 =====
+   [7] appeng/items/parts/FacadeItem
+   [6] appeng/crafting/pattern/EncodedPatternItem
+   [3] appeng/items/tools/powered/WirelessTerminalItem
+   [2] appeng/items/tools/powered/ColorApplicatorItem
+   [2] appeng/items/storage/CreativeCellItem
+   [2] appeng/items/parts/PartItem
+   [2] appeng/items/parts/ColoredPartItem
+   [2] appeng/items/misc/WrappedGenericStack
+   [1] appeng/items/tools/NetworkToolItem
+   [1] appeng/items/tools/powered/MatterCannonItem
+   [1] appeng/block/networking/EnergyCellBlockItem
+   [1] appeng/items/AEBaseItem
+   [1] appeng/items/tools/MemoryCardItem
+   [1] appeng/block/AEBaseBlockItem
+   [1] appeng/items/misc/PaintBallItem
+   [1] appeng/items/storage/SpatialStorageCellItem
+
+===== [Alex 的生物] alexsmobs-1.22.9.jar：被 instanceof 检查的物品类 2 个 =====
+   [3] com/github/alexthe666/alexsmobs/item/ItemDimensionalCarver
+   [1] com/github/alexthe666/alexsmobs/item/ItemStraddleboard
+
+===== [车万女仆] touhoulittlemaid-1.5.3-forge+mc1.20.1.jar：被 instanceof 检查的物品类 3 个 =====
+   [3] com/github/tartaricacid/touhoulittlemaid/item/ItemHakureiGohei
+   [2] com/github/tartaricacid/touhoulittlemaid/item/ItemFoxScroll
+   [1] com/github/tartaricacid/touhoulittlemaid/item/ItemMaidBed
+
+===== [Iron的法术与魔法书] irons_spellbooks-1.20.1-3.16.2.jar：被 instanceof 检查的物品类 11 个 =====
+   [19] io/redspace/ironsspellbooks/item/Scroll
+   [18] io/redspace/ironsspellbooks/item/SpellBook
+   [8] io/redspace/ironsspellbooks/item/InkItem
+   [6] io/redspace/ironsspellbooks/item/CastingItem
+   [2] io/redspace/ironsspellbooks/item/FurledMapItem
+   [2] io/redspace/ironsspellbooks/item/curios/AffinityRing
+   [1] io/redspace/ironsspellbooks/item/SpellSlotUpgradeItem
+   [1] io/redspace/ironsspellbooks/item/curios/CurioBaseItem
+   [1] io/redspace/ironsspellbooks/item/UpgradeOrbItem
+   [1] io/redspace/ironsspellbooks/api/item/weapons/ExtendedSwordItem
+   [1] io/redspace/ironsspellbooks/item/consumables/SimpleElixir
+
+===== create_vampirism-1.20.1_0.5.0.jar：被 instanceof 检查的物品类 2 个 =====
+   [2] de/jogamer207/create_vampirism/item/weaponItems/VampireBlaster/VampireBlasterItem
+   [2] de/jogamer207/create_vampirism/item/weaponItems/HolyBlaster/HolyBlasterItem
+
+===== [暮色森林] twilightforest-1.20.1-4.3.2508-universal.jar：被 instanceof 检查的物品类 14 个 =====
+   [2] twilightforest/item/GiantPickItem
+   [2] twilightforest/item/TrophyItem
+   [2] twilightforest/item/ChainBlockItem
+   [2] twilightforest/item/SkullCandleItem
+   [1] twilightforest/item/SeekerBowItem
+   [1] twilightforest/item/EnderBowItem
+   [1] twilightforest/item/FieryArmorItem
+   [1] twilightforest/item/ArcticArmorItem
+   [1] twilightforest/item/MinotaurAxeItem
+   [1] twilightforest/item/YetiArmorItem
+   [1] twilightforest/item/KnightmetalShieldItem
+   [1] twilightforest/item/IceBowItem
+   [1] twilightforest/item/TripleBowItem
+   [1] twilightforest/item/MazebreakerPickItem
+
+===== [机械动力：汽鸣铁道] Steam_Rails-1.7.2+forge-mc1.20.1.jar：被 instanceof 检查的物品类 4 个 =====
+   [6] com/railwayteam/railways/content/palettes/painting/PaintPitcherItem
+   [4] com/railwayteam/railways/content/conductor/ConductorCapItem
+   [2] com/railwayteam/railways/content/handcar/HandcarItem
+   [1] com/railwayteam/railways/content/switches/TrackSwitchBlockItem
+
+===== [Mowzie的生物] mowziesmobs-1.8.2.jar：被 instanceof 检查的物品类 5 个 =====
+   [2] com/bobmowzie/mowziesmobs/server/item/ItemEarthrendGauntlet
+   [2] com/bobmowzie/mowziesmobs/server/item/ItemUmvuthanaMask
+   [1] com/bobmowzie/mowziesmobs/server/item/ItemSpear
+   [1] com/bobmowzie/mowziesmobs/server/item/ItemNagaFangDagger
+   [1] com/bobmowzie/mowziesmobs/server/item/ItemBlowgun
+
+===== [精妙核心] sophisticatedcore-1.20.1-1.3.73.2192.jar：被 instanceof 检查的物品类 1 个 =====
+   [4] net/p3pp3rf1y/sophisticatedcore/upgrades/UpgradeItemBase
+
+===== [永恒枪械工坊：零] tacz-1.20.1-1.1.8-hotfix.jar：被 instanceof 检查的物品类 3 个 =====
+   [19] com/tacz/guns/api/item/gun/AbstractGunItem
+   [1] com/tacz/guns/item/AmmoItem
+   [1] com/tacz/guns/item/AttachmentItem
+
+===== [诡厄巫法] goety-2.5.54.5.jar：被 instanceof 检查的物品类 29 个 =====
+   [7] com/Polarice3/Goety/common/items/curios/MagicCrownItem
+   [6] com/Polarice3/Goety/common/items/magic/TaglockKit
+   [5] com/Polarice3/Goety/common/items/brew/BrewItem
+   [4] com/Polarice3/Goety/common/items/equipment/BladeOfEnderItem
+   [4] com/Polarice3/Goety/common/items/TramplerArmorItem
+   [3] com/Polarice3/Goety/common/items/equipment/DarkScytheItem
+   [3] com/Polarice3/Goety/common/items/RavagerArmorItem
+   [2] com/Polarice3/Goety/common/items/magic/DarkStaff
+   [2] com/Polarice3/Goety/common/items/magic/InfernalTome
+   [2] com/Polarice3/Goety/common/items/equipment/IceAxeItem
+   [2] com/Polarice3/Goety/common/items/equipment/HammerItem
+   [2] com/Polarice3/Goety/common/items/magic/MagicFocus
+   [2] com/Polarice3/Goety/common/items/curios/UnholyHatItem
+   [2] com/Polarice3/Goety/common/items/equipment/PhilosophersMaceItem
+   [1] com/Polarice3/Goety/common/items/curios/SingleStackItem
+   [1] com/Polarice3/Goety/common/items/research/ResearchScroll
+   [1] com/Polarice3/Goety/common/items/magic/FocusBag
+   [1] com/Polarice3/Goety/common/items/magic/DarkWand
+   [1] com/Polarice3/Goety/common/items/curios/UnholyRobeItem
+   [1] com/Polarice3/Goety/common/items/equipment/HuntersBowItem
+   [1] com/Polarice3/Goety/common/items/equipment/FangedDaggerItem
+   [1] com/Polarice3/Goety/common/items/equipment/EeriePickaxeItem
+   [1] com/Polarice3/Goety/common/items/armor/MaleficHelm
+   [1] com/Polarice3/Goety/common/items/magic/GroundGrimoire
+   [1] com/Polarice3/Goety/common/items/curios/NetherRobeItem
+
+===== [莱特兰-武器] l2weaponry-2.6.1.jar：被 instanceof 检查的物品类 15 个 =====
+   [16] dev/xkmc/l2weaponry/content/item/base/BaseShieldItem
+   [5] dev/xkmc/l2weaponry/content/item/base/BaseThrowableWeaponItem
+   [4] dev/xkmc/l2weaponry/content/item/base/GenericWeaponItem
+   [3] dev/xkmc/l2weaponry/content/item/base/WeaponItem
+   [3] dev/xkmc/l2weaponry/content/item/types/MacheteItem
+   [2] dev/xkmc/l2weaponry/content/item/base/DoubleWieldItem
+   [1] dev/xkmc/l2weaponry/content/item/types/ThrowingAxeItem
+   [1] dev/xkmc/l2weaponry/content/item/types/ScytheItem
+   [1] dev/xkmc/l2weaponry/content/item/types/JavelinItem
+   [1] dev/xkmc/l2weaponry/content/item/types/NunchakuItem
+   [1] dev/xkmc/l2weaponry/content/item/types/BattleAxeItem
+   [1] dev/xkmc/l2weaponry/content/item/types/ClawItem
+   [1] dev/xkmc/l2weaponry/content/item/base/GenericShieldItem
+   [1] dev/xkmc/l2weaponry/content/item/types/HammerItem
+   [1] dev/xkmc/l2weaponry/content/item/types/DaggerItem
+
+===== [莱特兰-恶意] l2hostility-2.5.19.jar：被 instanceof 检查的物品类 3 个 =====
+   [2] dev/xkmc/l2hostility/content/item/consumable/BookCopy
+   [2] dev/xkmc/l2hostility/content/item/curio/core/CurseCurioItem
+   [1] dev/xkmc/l2hostility/content/item/consumable/HostilityChargeItem
+
+===== [农夫乐事] FarmersDelight-1.20.1-1.3.2.jar：被 instanceof 检查的物品类 2 个 =====
+   [2] vectorwing/farmersdelight/common/item/SkilletItem
+   [2] vectorwing/farmersdelight/common/item/KnifeItem
+
+===== [奇异饰品] artifacts-forge-9.5.19.jar：被 instanceof 检查的物品类 1 个 =====
+   [4] artifacts/item/wearable/WearableArtifactItem
+
+===== [遗物] relics-1.20.1-0.8.0.13.jar：被 instanceof 检查的物品类 1 个 =====
+   [1] it/hurts/sskirillss/relics/items/relics/InfinityHamItem
+
+===== [神秘遗物] EnigmaticLegacy-2.30.1.jar：被 instanceof 检查的物品类 14 个 =====
+   [3] com/aizistral/enigmaticlegacy/items/CosmicHeart
+   [3] com/aizistral/enigmaticlegacy/items/EnchantmentTransposer
+   [3] com/aizistral/enigmaticlegacy/items/InfernalShield
+   [2] com/aizistral/enigmaticlegacy/items/RevelationTome
+   [2] com/aizistral/enigmaticlegacy/items/SoulCrystal
+   [2] com/aizistral/enigmaticlegacy/items/StorageCrystal
+   [2] com/aizistral/enigmaticlegacy/items/Insignia
+   [2] com/aizistral/enigmaticlegacy/items/TheAcknowledgment
+   [1] com/aizistral/enigmaticlegacy/items/generic/ItemSpellstoneCurio
+   [1] com/aizistral/enigmaticlegacy/items/TheInfinitum
+   [1] com/aizistral/enigmaticlegacy/items/EldritchPan
+   [1] com/aizistral/enigmaticlegacy/items/CursedRing
+   [1] com/aizistral/enigmaticlegacy/items/TheTwist
+   [1] com/aizistral/enigmaticlegacy/items/LoreFragment
+
+===== [水产业2／水产品2] Aquaculture-1.20.1-2.5.7.jar：被 instanceof 检查的物品类 2 个 =====
+   [3] com/teammetallurgy/aquaculture/item/HookItem
+   [2] com/teammetallurgy/aquaculture/item/AquaFishingRodItem
+
+===== [通用机械工具] MekanismTools-1.20.1-10.4.16.80.jar：被 instanceof 检查的物品类 2 个 =====
+   [2] mekanism/tools/common/item/ItemMekanismShield
+   [1] mekanism/tools/common/item/ItemMekanismArmor
+
+===== [通用机械工具] MekanismTools-1.20.1-10.4.16.80.jar：被 instanceof 检查的物品类 2 个 =====
+   [2] mekanism/tools/common/item/ItemMekanismShield
+   [1] mekanism/tools/common/item/ItemMekanismArmor
+
+===== [星月遗物] celestial_artifacts-1.5.9.jar：被 instanceof 检查的物品类 1 个 =====
+   [5] com/xiaoyue/celestial_artifacts/content/core/modular/ModularCurio
+

@@ -482,6 +482,176 @@ public class ConstructedBlueprintItem extends Item {
         return target != null ? target.getBurnTime(stack, recipeType) : super.getBurnTime(stack, recipeType);
     }
 
+    // ---- Forge 扩展钩子（引擎里"护盾格挡 / 工具动作 / 鞘翅飞行 / 护甲槽 / 持续 tick"等判定全走这里）----
+
+    /**
+     * ⭐ 工具动作（护盾格挡 SHIELD_BLOCK、斧头去皮、锹压平、锄翻地、剪刀、剑横扫……）：
+     * {@code LivingEntity#isBlocking()} 用的就是它，不转发的话拟造盾牌挡不了伤害。
+     */
+    @Override
+    public boolean canPerformAction(ItemStack stack, net.minecraftforge.common.ToolAction toolAction) {
+        Item target = targetItem(stack);
+        return target != null && target.canPerformAction(stack, toolAction);
+    }
+
+    /** ⭐ 鞘翅飞行（{@code Player#tryToStartFallFlying} → {@code stack.canElytraFly(this)}） */
+    @Override
+    public boolean canElytraFly(ItemStack stack, LivingEntity entity) {
+        Item target = targetItem(stack);
+        return target != null && target.canElytraFly(stack, entity);
+    }
+
+    @Override
+    public boolean elytraFlightTick(ItemStack stack, LivingEntity entity, int flightTicks) {
+        Item target = targetItem(stack);
+        return target != null && target.elytraFlightTick(stack, entity, flightTicks);
+    }
+
+    /** 该栈该进哪个装备槽（护甲/鞘翅/盾牌等） */
+    @Override
+    public net.minecraft.world.entity.EquipmentSlot getEquipmentSlot(ItemStack stack) {
+        Item target = targetItem(stack);
+        return target != null ? target.getEquipmentSlot(stack) : super.getEquipmentSlot(stack);
+    }
+
+    @Override
+    public void onArmorTick(ItemStack stack, Level level, Player player) {
+        Item target = targetItem(stack);
+        if (target != null) target.onArmorTick(stack, level, player);
+    }
+
+    @Override
+    public void onInventoryTick(ItemStack stack, Level level, Player player, int slotIndex, int selectedIndex) {
+        Item target = targetItem(stack);
+        if (target != null) target.onInventoryTick(stack, level, player, slotIndex, selectedIndex);
+    }
+
+    @Override
+    public void onHorseArmorTick(ItemStack stack, Level level, net.minecraft.world.entity.Mob horse) {
+        Item target = targetItem(stack);
+        if (target != null) target.onHorseArmorTick(stack, level, horse);
+    }
+
+    @Override
+    public Component getHighlightTip(ItemStack stack, Component displayName) {
+        Item target = targetItem(stack);
+        return target != null ? target.getHighlightTip(stack, displayName) : super.getHighlightTip(stack, displayName);
+    }
+
+    @Override
+    public boolean onDroppedByPlayer(ItemStack stack, Player player) {
+        Item target = targetItem(stack);
+        return target == null || target.onDroppedByPlayer(stack, player);
+    }
+
+    @Override
+    public boolean onBlockStartBreak(ItemStack stack, BlockPos pos, Player player) {
+        Item target = targetItem(stack);
+        return target != null && target.onBlockStartBreak(stack, pos, player);
+    }
+
+    @Override
+    public boolean onLeftClickEntity(ItemStack stack, Player player, Entity entity) {
+        Item target = targetItem(stack);
+        return target != null && target.onLeftClickEntity(stack, player, entity);
+    }
+
+    @Override
+    public void onStopUsing(ItemStack stack, LivingEntity entity, int count) {
+        Item target = targetItem(stack);
+        if (target != null) target.onStopUsing(stack, entity, count);
+    }
+
+    @Override
+    public boolean onEntitySwing(ItemStack stack, LivingEntity entity) {
+        Item target = targetItem(stack);
+        return target != null && target.onEntitySwing(stack, entity);
+    }
+
+    @Override
+    public boolean doesSneakBypassUse(ItemStack stack, net.minecraft.world.level.LevelReader level, BlockPos pos,
+                                      Player player) {
+        Item target = targetItem(stack);
+        return target != null && target.doesSneakBypassUse(stack, level, pos, player);
+    }
+
+    @Override
+    public boolean shouldCauseBlockBreakReset(ItemStack oldStack, ItemStack newStack) {
+        Item target = targetItem(oldStack);
+        return target != null
+                ? target.shouldCauseBlockBreakReset(oldStack, newStack)
+                : super.shouldCauseBlockBreakReset(oldStack, newStack);
+    }
+
+    @Override
+    public boolean canContinueUsing(ItemStack oldStack, ItemStack newStack) {
+        Item target = targetItem(oldStack);
+        return target != null ? target.canContinueUsing(oldStack, newStack)
+                : super.canContinueUsing(oldStack, newStack);
+    }
+
+    /** 斧头破盾：{@code Player#blockUsingShield} 走这里 */
+    @Override
+    public boolean canDisableShield(ItemStack stack, ItemStack shield, LivingEntity entity, LivingEntity attacker) {
+        Item target = targetItem(stack);
+        return target != null && target.canDisableShield(stack, shield, entity, attacker);
+    }
+
+    @Override
+    public boolean isBookEnchantable(ItemStack stack, ItemStack book) {
+        Item target = targetItem(stack);
+        return target != null && target.isBookEnchantable(stack, book);
+    }
+
+    @Override
+    public boolean isPiglinCurrency(ItemStack stack) {
+        Item target = targetItem(stack);
+        return target != null && target.isPiglinCurrency(stack);
+    }
+
+    @Override
+    public boolean makesPiglinsNeutral(ItemStack stack, LivingEntity entity) {
+        Item target = targetItem(stack);
+        return target != null && target.makesPiglinsNeutral(stack, entity);
+    }
+
+    @Override
+    public float getXpRepairRatio(ItemStack stack) {
+        Item target = targetItem(stack);
+        return target != null ? target.getXpRepairRatio(stack) : super.getXpRepairRatio(stack);
+    }
+
+    @Override
+    public String getCreatorModId(ItemStack stack) {
+        Item target = targetItem(stack);
+        return target != null ? target.getCreatorModId(stack) : super.getCreatorModId(stack);
+    }
+
+    @Override
+    public int getEnchantmentLevel(ItemStack stack, Enchantment enchantment) {
+        Item target = targetItem(stack);
+        return target != null ? target.getEnchantmentLevel(stack, enchantment)
+                : super.getEnchantmentLevel(stack, enchantment);
+    }
+
+    @Override
+    public java.util.Map<Enchantment, Integer> getAllEnchantments(ItemStack stack) {
+        Item target = targetItem(stack);
+        return target != null ? target.getAllEnchantments(stack) : super.getAllEnchantments(stack);
+    }
+
+    @Override
+    public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot, String type) {
+        Item target = targetItem(stack);
+        return target != null ? target.getArmorTexture(stack, entity, slot, type)
+                : super.getArmorTexture(stack, entity, slot, type);
+    }
+
+    // ⚠️ 以下两个<b>故意不转发</b>：
+    //   getShareTag / readShareTag —— 蓝本的 construct_target / construct_temp_until 必须完整同步到客户端，
+    //   转发给目标物品的话，某些模组会裁剪 NBT 导致客户端认不出这是蓝本。
+    //   initCapabilities 同理：能力是"按物品类"注册的，转发会破坏目标物品自己的语义。
+
     /** 目标物品的放置逻辑（{@link net.minecraft.world.item.BlockItem} 代理放置用） */
     @Nullable
     public static net.minecraft.world.item.BlockItem targetBlockItem(ItemStack stack) {

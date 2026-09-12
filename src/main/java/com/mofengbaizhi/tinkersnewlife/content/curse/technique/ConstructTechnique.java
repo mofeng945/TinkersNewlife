@@ -105,13 +105,16 @@ public final class ConstructTechnique extends BaseTechnique {
     private static boolean useBlueprintFor(ItemStack target) {
         if (target == null || target.isEmpty()) return true;
         try {
-            if (target.getItem() instanceof slimeknights.tconstruct.library.tools.item.IModifiable) {
-                return !com.mofengbaizhi.tinkersnewlife.config.ModConfig.CONSTRUCT_BLUEPRINT_TCON_TOOLS_LEGACY.get();
+            // 匠魂工具另有细粒度开关（蓝本转发不了 IModifiable，默认保持真副本）
+            if (target.getItem() instanceof slimeknights.tconstruct.library.tools.item.IModifiable
+                    && com.mofengbaizhi.tinkersnewlife.config.ModConfig.CONSTRUCT_BLUEPRINT_TCON_TOOLS_LEGACY.get()) {
+                return false;
             }
         } catch (Throwable ignored) {
-            // TCon 缺失等异常：照常按蓝本处理
+            // TCon 缺失等异常：继续走下面的通用判定
         }
-        return true;
+        // 统一兼容判定：配置豁免 / 已知依赖自身类型的接口 / 风险模组（详见 BlueprintCompat）
+        return !BlueprintCompat.useLegacyFor(target);
     }
 
     /** 配置：拟造物是否使用「拟造蓝本」代理物品（默认开） */
@@ -2311,6 +2314,28 @@ public final class ConstructTechnique extends BaseTechnique {
         private static final java.util.Map<net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>,
                 java.util.concurrent.ConcurrentLinkedDeque<Long>> GLOBAL_QUEUES =
                 new java.util.concurrent.ConcurrentHashMap<>();
+
+        /** 服务器启动：生成一次"拟造蓝本兼容报告"（用户要的"检测"结果，落在 config 目录） */
+        @net.minecraftforge.eventbus.api.SubscribeEvent
+        public static void onServerStarted(net.minecraftforge.event.server.ServerStartedEvent event) {
+            try {
+                if (!com.mofengbaizhi.tinkersnewlife.config.ModConfig
+                        .CONSTRUCT_BLUEPRINT_REPORT_ON_START.get()) {
+                    return;
+                }
+            } catch (Throwable ignored) {
+                // 配置不可用时默认生成
+            }
+            try {
+                BlueprintCompat.Report r = BlueprintCompat.generateReport();
+                TinkersNewlife.LOGGER.info(
+                        "[构筑] 拟造蓝本兼容报告：可蓝本 {} / 退回真副本 {}（总 {}），已写入 {}",
+                        r.blueprint(), r.legacy(), r.total(),
+                        r.file() == null ? "?" : r.file().getPath());
+            } catch (Throwable t) {
+                TinkersNewlife.LOGGER.warn("[构筑] 生成蓝本兼容报告失败: {}", t.toString());
+            }
+        }
 
         /** 区块加载：登记 + 插队优先扫（机器可能刚加载就开始干活） */
         @net.minecraftforge.eventbus.api.SubscribeEvent
