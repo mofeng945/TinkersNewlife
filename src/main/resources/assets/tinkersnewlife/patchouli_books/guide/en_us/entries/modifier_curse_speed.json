@@ -6,7 +6,7 @@
     "pages": [
         {
             "type": "patchouli:text",
-            "text": "$(bold)Upgrade-slot modifier - Cursed Tempo$(): the words leave your tongue at once, no long recital needed.(br2)Effect: cursed speech chant time x max(0.1, 1/(level+1)) - L1 0.50x, L2 0.33x, L3 0.25x, L4 0.20x, L5 0.17x (up to 10x speed).(br2)Restriction: $(l)curse cores only$(); $(l)level 1 costs 1 upgrade slot$(), levels 2-5 are free, max level 5."
+            "text": "$(bold)Upgrade-slot modifier - Cursed Tempo$(): the words leave your tongue at once, no long recital needed.(br2)Effect: cursed speech chant time x max(0.1, 1/(level+1)) - L1 0.50x, L2 0.33x, L3 0.25x, L4 0.20x, L5 0.17x (up to 10x speed).$(br2)$(bold)Also$(): the Construction Technique conjuration time is shortened by the same factor (the cost stays the same).(br2)Restriction: $(l)curse cores only$(); $(l)level 1 costs 1 upgrade slot$(), levels 2-5 are free, max level 5."
         },
         {
             "type": "patchouli:text",

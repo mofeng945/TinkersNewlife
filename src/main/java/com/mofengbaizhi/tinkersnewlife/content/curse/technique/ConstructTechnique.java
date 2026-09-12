@@ -66,8 +66,15 @@ public final class ConstructTechnique extends BaseTechnique {
     private static final int AMMO_CHECK_INTERVAL = 2;
     /** 临时拟造物到期 NBT 键（值为到期 gameTime） */
     public static final String KEY_TEMP_UNTIL = "tinkersnewlife.construct_temp_until";
+    /**
+     * 拟造实体持久数据：<b>把它弄出来的那件拟造物</b>（目标物品注册名）。
+     * 用于"实体被收起/拆掉 → 掉出来的正是这件物品"的精确认领
+     * （试验假人就是可以被捡起来换个地方放的典型）。
+     */
+    public static final String KEY_TEMP_SOURCE = "tinkersnewlife.construct_temp_source";
     /** 临时拟造物存在时长（60 秒） */
-    public static final int TEMP_TICKS = 1200;
+    /** 拟造物存在时长（tick）：12 分钟 */
+    public static final int TEMP_TICKS = 12 * 60 * 20;
     /** 临时物到期检查间隔（tick） */
     private static final int TEMP_CHECK_INTERVAL = 10;
 
@@ -889,10 +896,13 @@ public final class ConstructTechnique extends BaseTechnique {
             return 3;
         }
         // 拟造耗时 = 咒力数（1 咒力 = 1 tick），即时扣除咒力
+        // ⭐ 「咒术速吟（咒速输出）」同时加速拟造：耗时按 max(0.1, 1/(等级+1)) 缩放——**价格不变**（咒力照扣）。
+        double speed = com.mofengbaizhi.tinkersnewlife.content.modifier.CurseSpeedModifier.chantScale(player);
+        int forgeTicks = Math.max(1, (int) Math.round(cost * speed));
         var data = player.getPersistentData();
         data.putString(KEY_FORGE_ITEM, itemId);
-        data.putLong(KEY_FORGE_END, player.serverLevel().getGameTime() + cost);
-        data.putLong(KEY_FORGE_TOTAL, cost);
+        data.putLong(KEY_FORGE_END, player.serverLevel().getGameTime() + forgeTicks);
+        data.putLong(KEY_FORGE_TOTAL, forgeTicks);
         // 立即推送进度条（start=now, end=now+cost）
         syncForge(player, player.serverLevel().getGameTime());
         player.serverLevel().playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -900,7 +910,7 @@ public final class ConstructTechnique extends BaseTechnique {
                 net.minecraft.sounds.SoundSource.PLAYERS, 0.6F, 1.4F);
         player.displayClientMessage(Component.translatable(
                 "message.tinkersnewlife.construct.forge_start", stackName(item), cost,
-                (cost + 19) / 20), false);
+                (forgeTicks + 19) / 20), false);
         return 0;
     }
 
@@ -2013,7 +2023,11 @@ public final class ConstructTechnique extends BaseTechnique {
                 until = held.hasTag() ? held.getTag().getLong(KEY_TEMP_UNTIL) : 0;
             }
             if (until <= 0) return;
-            watchEntitySpawn(level, sp, until);
+            Item item = blueprintEnabled()
+                    ? com.mofengbaizhi.tinkersnewlife.content.item.ConstructedBlueprintItem.targetItem(held)
+                    : held.getItem();
+            if (item == null) item = held.getItem();
+            watchEntitySpawn(level, sp, until, item);
         }
 
         /** 拟造中受击 → 打断拟造（咒力已扣，不返还） */
@@ -2026,19 +2040,19 @@ public final class ConstructTechnique extends BaseTechnique {
         }
 
         /** 拟造物"召唤实体"：给玩家附近实体拍 id 快照，2 tick 后对比出新出现的那批 */
-        private static void watchEntitySpawn(ServerLevel level, ServerPlayer player, long until) {
+        private static void watchEntitySpawn(ServerLevel level, ServerPlayer player, long until, Item sourceItem) {
             if (until <= 0) return;
             java.util.Set<Integer> before = new java.util.HashSet<>();
             for (net.minecraft.world.entity.Entity e : level.getEntitiesOfClass(
                     net.minecraft.world.entity.Entity.class, player.getBoundingBox().inflate(6.0))) {
                 before.add(e.getId());
             }
-            PENDING_MOB_SPAWNS.add(new PendingEntitySpawn(level, player, until, level.getGameTime() + 2, before));
+            PENDING_MOB_SPAWNS.add(new PendingEntitySpawn(level, player, until, level.getGameTime() + 2, before, sourceItem));
             // ⭐ 同时记一笔"刚用拟造物右键"：新实体加入世界时（EntityJoinLevelEvent）直接认领，
             //    不再依赖"2 tick 后玩家 6 格内的快照对比"——延迟生成 / 生成点稍远 / 玩家走开都能覆盖。
             long now = level.getGameTime();
             RECENT_USES.removeIf(u -> u.level != level || now - u.at > CLAIM_TICKS);
-            RECENT_USES.add(new RecentUse(level, until, now, player.position()));
+            RECENT_USES.add(new RecentUse(level, until, now, player.position(), sourceItem));
         }
 
         /**
@@ -2084,7 +2098,7 @@ public final class ConstructTechnique extends BaseTechnique {
                     if (!ist.is(c.item)) continue;
                     if (ie.position().distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(c.pos))
                             > CLAIM_ITEM_RADIUS * CLAIM_ITEM_RADIUS) continue;
-                    claimDroppedTemp(ie);
+                    claimDroppedTemp(ie, c.until);
                     return;
                 }
                 // (b) ⭐ 同 tick 竞态兜底：机器（钻头/破坏面板/矿机）常常在同一 tick 里"先毁方块、再产掉落物"，
@@ -2096,7 +2110,7 @@ public final class ConstructTechnique extends BaseTechnique {
                     if (ie.position().distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(p.pos))
                             > CLAIM_ITEM_RADIUS * CLAIM_ITEM_RADIUS) continue;
                     if (level.getBlockState(p.pos).getBlock() == p.state.getBlock()) continue;  // 方块还在 → 不是它掉的
-                    claimDroppedTemp(ie);
+                    claimDroppedTemp(ie, p.expireUntil);
                     return;
                 }
                 return;
@@ -2112,7 +2126,7 @@ public final class ConstructTechnique extends BaseTechnique {
                 if (u.level != level) continue;
                 if (now - u.at > CLAIM_TICKS) continue;
                 if (e.position().distanceToSqr(u.pos) > CLAIM_RADIUS * CLAIM_RADIUS) continue;
-                markTempMob(level, e, u.until);
+                markTempMob(level, e, u.until, u.sourceItem);
                 TinkersNewlife.LOGGER.info("[构筑] 拟造实体登记：{}（{} tick 后消散）",
                         e.getType().getDescription().getString(), u.until - now);
                 return;
@@ -2130,7 +2144,15 @@ public final class ConstructTechnique extends BaseTechnique {
             Iterator<net.minecraft.world.entity.Entity> mobIt = TRACKED_TEMP_MOBS.iterator();
             while (mobIt.hasNext()) {
                 net.minecraft.world.entity.Entity e = mobIt.next();
-                if (e == null || e.isRemoved()) {
+                if (e == null) {
+                    mobIt.remove();
+                    continue;
+                }
+                if (e.isRemoved()) {
+                    // ⭐ 没到点就被移除（试验假人被"捡起来换个地方放"、被拆掉、被别的模组收走……）：
+                    //    它会掉出那件拟造物本体。开一个认领窗口，把掉出来的物品换回"带原到期时间的拟造物"——
+                    //    否则玩家捡起来换个地方放下，新实体没有任何标记 → 永远不再消散（实测报的就是这条）。
+                    registerRemovalClaim(e);
                     mobIt.remove();
                     continue;
                 }
@@ -2152,8 +2174,7 @@ public final class ConstructTechnique extends BaseTechnique {
 
         /** 拟造实体的"认领"参数：右键后多久内 / 多远内的新实体算作拟造召唤物 */
         private static final long CLAIM_TICKS = 10L;
-        private static final double CLAIM_RADIUS = 24.0;
-        /** 最近的"用拟造物右键"记录（见 {@link #watchEntitySpawn} / {@link #onEntityJoin}） */
+        private static final double CLAIM_RADIUS = 24.0;        /** 最近的"用拟造物右键"记录（见 {@link #watchEntitySpawn} / {@link #onEntityJoin}） */
         private static final List<RecentUse> RECENT_USES = new ArrayList<>();
 
         /** 一次"刚用拟造物右键"的记录（认领新实体用） */
@@ -2162,12 +2183,15 @@ public final class ConstructTechnique extends BaseTechnique {
             final long until;
             final long at;
             final net.minecraft.world.phys.Vec3 pos;
+            /** 这次用的是<哪件>拟造物（目标物品）——登记实体时记到实体上，供"被收起后认领掉落物"用 */
+            final Item sourceItem;
 
-            RecentUse(ServerLevel level, long until, long at, net.minecraft.world.phys.Vec3 pos) {
+            RecentUse(ServerLevel level, long until, long at, net.minecraft.world.phys.Vec3 pos, Item sourceItem) {
                 this.level = level;
                 this.until = until;
                 this.at = at;
                 this.pos = pos;
+                this.sourceItem = sourceItem;
             }
         }
 
@@ -2181,18 +2205,25 @@ public final class ConstructTechnique extends BaseTechnique {
         private static final long CLAIM_ITEM_TICKS = 5L;
         private static final double CLAIM_ITEM_RADIUS = 2.0;
 
-        /** 一次"拟造方块消失"的记录：位置 + 消失时刻 + 该方块的物品（只认这一种，避免误伤旁边的真掉落） */
+        /**
+         * 一次"拟造物消失"的记录：位置 + 消失时刻 + 对应物品 + <b>该拟造物原本的到期时间</b>。
+         * <p>
+         * 认领时不销毁掉落物，而是把它<b>换回"带原到期时间的拟造物本体"</b>——
+         * 玩家可以换个地方重新放下（时间不重置），不放下就在背包里到点消散。
+         */
         private static final class TempBreakClaim {
             final ServerLevel level;
             final net.minecraft.core.BlockPos pos;
             final long at;
             final Item item;
+            final long until;
 
-            TempBreakClaim(ServerLevel level, net.minecraft.core.BlockPos pos, long at, Item item) {
+            TempBreakClaim(ServerLevel level, net.minecraft.core.BlockPos pos, long at, Item item, long until) {
                 this.level = level;
                 this.pos = pos;
                 this.at = at;
                 this.item = item;
+                this.until = until;
             }
         }
 
@@ -2217,14 +2248,44 @@ public final class ConstructTechnique extends BaseTechnique {
                 if (p.previousState != null && !p.previousState.isAir()) continue;
                 Item dropItem = p.state.getBlock().asItem();
                 if (dropItem == net.minecraft.world.item.Items.AIR) continue;
-                TEMP_BREAK_CLAIMS.add(new TempBreakClaim(level, p.pos, now, dropItem));
+                TEMP_BREAK_CLAIMS.add(new TempBreakClaim(level, p.pos, now, dropItem, p.expireUntil));
                 // 已经掉出来的（水流/机器/活塞往往在同一 tick 就产生掉落物）：就地认领
                 for (net.minecraft.world.entity.item.ItemEntity ie :
                         level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
                                 new net.minecraft.world.phys.AABB(p.pos).inflate(CLAIM_ITEM_RADIUS))) {
-                    if (ie.getItem().is(dropItem)) claimDroppedTemp(ie);
+                    if (ie.getItem().is(dropItem)) claimDroppedTemp(ie, p.expireUntil);
                 }
             }
+        }
+
+        /**
+         * 拟造实体"没到点就被移除" → 开一个掉落物认领窗口。
+         * <p>
+         * 典型就是<b>试验假人被捡起来想换个地方放</b>：假人拆解走的是 {@code spawnAtLocation}（不经掉落表），
+         * 实体也没了；那件掉出来的物品如果不认领，玩家换个地方放下就是一只"永不消散"的假人。
+         * 这里把掉出来的本体换回"带原到期时间的拟造物"，可以再放一次、时间不重置。
+         */
+        private static void registerRemovalClaim(net.minecraft.world.entity.Entity e) {
+            if (!(e.level() instanceof ServerLevel level)) return;
+            var tag = e.getPersistentData();
+            long until = tag.getLong(KEY_TEMP_UNTIL);
+            if (until <= 0) return;
+            String src = tag.getString(KEY_TEMP_SOURCE);
+            if (src.isEmpty()) return;
+            net.minecraft.resources.ResourceLocation rl = net.minecraft.resources.ResourceLocation.tryParse(src);
+            Item item = rl == null ? null : net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(rl);
+            if (item == null || item == Items.AIR) return;
+            net.minecraft.core.BlockPos pos = e.blockPosition();
+            long now = level.getGameTime();
+            TEMP_BREAK_CLAIMS.add(new TempBreakClaim(level, pos, now, item, until));
+            // 拆解通常在同一 tick 就 spawnAtLocation：就地扫一遍认领
+            for (net.minecraft.world.entity.item.ItemEntity ie :
+                    level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
+                            new net.minecraft.world.phys.AABB(pos).inflate(CLAIM_ITEM_RADIUS))) {
+                if (ie.getItem().is(item)) claimDroppedTemp(ie, until);
+            }
+            TinkersNewlife.LOGGER.info("[构筑] 拟造实体被提前移除（{}），已开掉落物认领窗口",
+                    e.getType().getDescription().getString());
         }
 
         /** 全部维度都校验一遍（ServerTickEvent 用；每玩家 tick 的那条只校验自己所在维度） */
@@ -2233,14 +2294,22 @@ public final class ConstructTechnique extends BaseTechnique {
             for (ServerLevel level : server.getAllLevels()) validatePlacedTemps(level);
         }
 
-        /** 认领一颗"拟造方块掉出来的"掉落物：标记为立即到期（下一 tick 由临时物清理静默消散） */
-        private static void claimDroppedTemp(net.minecraft.world.entity.item.ItemEntity ie) {
+        /**
+         * 认领一颗"拟造物掉出来的"掉落物：把它<b>换回带原到期时间的拟造物本体</b>。
+         * <p>
+         * 为什么不直接销毁：拟造方块被水流/机器弄掉、或<b>试验假人被捡起来想换个地方放</b>时，
+         * 玩家手上那件东西本来就是他欠着时间的拟造物——还给他一件"同样欠着时间"的拟造物，
+         * 既能让他重新放下（时间不重置），又不会让它变成真材料（到期照样消散）。
+         *
+         * @param until 该拟造物原本的到期 gameTime
+         */
+        private static void claimDroppedTemp(net.minecraft.world.entity.item.ItemEntity ie, long until) {
             ItemStack st = ie.getItem();
             if (st.isEmpty() || isTemp(st)) return;
-            st.getOrCreateTag().putLong(KEY_TEMP_UNTIL, ie.level().getGameTime());
-            TRACKED_TEMP_ITEMS.add(ie);
-            TinkersNewlife.LOGGER.info("[构筑] 拟造方块掉落物已认领（即将消散）：{}",
-                    st.getHoverName().getString());
+            ItemStack replacement = makeTempStack(st.copy(), until);
+            ie.setItem(replacement);
+            TinkersNewlife.LOGGER.info("[构筑] 拟造物掉落物已认领并换回本体（保留原到期时间）：{}",
+                    replacement.getHoverName().getString());
         }
 
         /**
@@ -2340,14 +2409,15 @@ public final class ConstructTechnique extends BaseTechnique {
                 until = held.hasTag() ? held.getTag().getLong(KEY_TEMP_UNTIL) : 0;
             }
             if (until <= 0 || held.isEmpty()) return;
-            // ⭐ 拟造物"用物品生成实体"（假人 / 盔甲架 / 刷怪蛋……）不会走 EntityPlaceEvent，
-            //    这里先给玩家附近的实体拍 id 快照，2 tick 后对比出"新增实体"再登记到期时间。
-            watchEntitySpawn(level, sp, until);
-            // ⭐ 蓝本模式下 held 是代理物品：部件身份要用「目标物品」才认得出（否则到期摘不干净）
+            // ⭐ 蓝本模式下 held 是代理物品：身份要用「目标物品」才认得出
             Item item = blueprintEnabled()
                     ? com.mofengbaizhi.tinkersnewlife.content.item.ConstructedBlueprintItem.targetItem(held)
                     : held.getItem();
             if (item == null) item = held.getItem();
+            // ⭐ 拟造物"用物品生成实体"（假人 / 盔甲架 / 刷怪蛋……）不会走 EntityPlaceEvent，
+            //    这里先给玩家附近的实体拍 id 快照，2 tick 后对比出"新增实体"再登记到期时间；
+            //    同时把"是哪件拟造物"记到实体上（供实体被收起时认领掉落物）。
+            watchEntitySpawn(level, sp, until, item);
             net.minecraft.core.BlockPos pos = event.getPos();
             long now = level.getGameTime();
             PartHost host = findPartHost(level, pos);
@@ -2412,7 +2482,7 @@ public final class ConstructTechnique extends BaseTechnique {
                         if (e == owner) continue;
                         if (e instanceof net.minecraft.world.entity.item.ItemEntity) continue;
                         if (q.before.contains(e.getId())) continue;
-                        markTempMob(lvl, e, q.until);
+                        markTempMob(lvl, e, q.until, q.sourceItem);
                     }
                 }
             }
@@ -2985,8 +3055,16 @@ public final class ConstructTechnique extends BaseTechnique {
     }
 
     /** 给"拟造召唤出来的实体"打上到期标记并纳入跟踪（幂等） */
-    private static void markTempMob(ServerLevel level, net.minecraft.world.entity.Entity e, long until) {
+    private static void markTempMob(ServerLevel level, net.minecraft.world.entity.Entity e, long until,
+                                     @javax.annotation.Nullable Item sourceItem) {
         e.getPersistentData().putLong(KEY_TEMP_UNTIL, until);
+        // ⭐ 记下"是哪个拟造物把它弄出来的"：这个生物若被拆掉/收起（假人可以被捡起来换个地方放），
+        //    掉出来的正是这件物品 —— 靠它精确认领，避免把旁边无关的掉落物也一起吸走。
+        if (sourceItem != null && sourceItem != Items.AIR) {
+            net.minecraft.resources.ResourceLocation key =
+                    net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(sourceItem);
+            if (key != null) e.getPersistentData().putString(KEY_TEMP_SOURCE, key.toString());
+        }
         if (!TRACKED_TEMP_MOBS.contains(e)) {
             TRACKED_TEMP_MOBS.add(e);
         }
@@ -3001,14 +3079,17 @@ public final class ConstructTechnique extends BaseTechnique {
         final long until;
         final long scanAt;
         final java.util.Set<Integer> before;
+        /** 这次用的是哪件拟造物（目标物品），登记时记到实体上 */
+        final Item sourceItem;
 
         PendingEntitySpawn(ServerLevel level, ServerPlayer player, long until, long scanAt,
-                           java.util.Set<Integer> before) {
+                           java.util.Set<Integer> before, Item sourceItem) {
             this.level = level;
             this.player = player;
             this.until = until;
             this.scanAt = scanAt;
             this.before = before;
+            this.sourceItem = sourceItem;
         }
     }
 
