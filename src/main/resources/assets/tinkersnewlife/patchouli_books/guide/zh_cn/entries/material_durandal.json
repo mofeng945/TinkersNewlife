@@ -7,7 +7,7 @@
     {
       "type": "patchouli:spotlight",
       "item": "tinkersnewlife:molten_durandal_bucket",
-      "text": "$(bold)获取方式$()：$(li)获得$(bold)熔融杜兰达尔$()——在冶炼炉中熔炼$(l:relics/relic_durandal_shard)杜兰达尔破碎剑刃$()（击杀凋灵掉落）$(li)在铸造台用熔融杜兰达尔 $(bold)90 mB$()（1 锭）制作杜兰达尔材料$(br2)等级：$(bold)特殊（T99）$()，传说级材料。"
+      "text": "$(bold)获取方式$()：$(li)获得$(bold)熔融杜兰达尔$()——在冶炼炉中熔炼$(l:relics/relic_durandal_shard)杜兰达尔破碎剑刃$()（击杀凋灵掉落）$(li)在铸造台用熔融杜兰达尔 $(bold)90 mB$()（1 锭）制作杜兰达尔材料$(br2)等级：$(bold)特殊（T99）$()，传说级材料。$(br2)$(bold)可铸造部件$()：$(l)头部$()（小型剑刃／宽刃／大板）、$(l)手柄$()（工具手柄／坚韧手柄）、$(l)绑定结$()（绑定结／坚韧套环）——因此可以做出$(bold)全身杜兰达尔$()的匠魂工具（材料不可用部件台打造，请走$(bold)铸造台$()注熔融杜兰达尔）。"
     },
     {
       "type": "patchouli:text",

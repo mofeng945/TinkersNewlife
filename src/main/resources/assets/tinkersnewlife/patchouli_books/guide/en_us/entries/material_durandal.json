@@ -7,7 +7,7 @@
     {
       "type": "patchouli:spotlight",
       "item": "tinkersnewlife:molten_durandal_bucket",
-      "text": "$(bold)How to obtain$():$(li)Get $(bold)Molten Durandal$() by smelting a $(l:relics/relic_durandal_shard)Durandal's Broken Blade$() in the Smeltery (dropped by killing the Wither)$(li)At the Casting Table, pour $(bold)90 mB$() of Molten Durandal (1 ingot) to make Durandal material$(br2)Tier: $(bold)Special (T99)$() - a legendary material."
+      "text": "$(bold)How to obtain$():$(li)Get $(bold)Molten Durandal$() by smelting a $(l:relics/relic_durandal_shard)Durandal's Broken Blade$() in the Smeltery (dropped by killing the Wither)$(li)At the Casting Table, pour $(bold)90 mB$() of Molten Durandal (1 ingot) to make Durandal material$(br2)Tier: $(bold)Special (T99)$() - a legendary material.$(br2)$(bold)Castable parts$(): $(l)head$() (Small Blade / Broad Blade / Large Plate), $(l)handle$() (Tool Handle / Tough Handle) and $(l)binding$() (Tool Binding / Tough Binding) - so a tool made $(bold)entirely of Durandal$() is possible (this material cannot be used at the Part Builder; pour Molten Durandal at the $(bold)Casting Table$())."
     },
     {
       "type": "patchouli:text",

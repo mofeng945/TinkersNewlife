@@ -7,7 +7,7 @@
                   {
                       "type":  "patchouli:spotlight",
                       "item":  "tinkersnewlife:durandal_sword",
-                      "text":  "$(bold)Durandal$()$(br2)Obtaining: evolves from an item made entirely of Durandal (forged / crafted with $(bold)Durandal material$()) — eternally indestructible.$(br2)Features:$(li)made of $(bold)Durandal$() material, it natively carries the $(l:traits/trait_unbreakable)Unbreakable$() trait — $(bold)never takes damage$()$(li)a legendary-grade weapon with extremely high base stats"
+                      "text":  "$(bold)Durandal$()$(br2)Obtaining: evolves from a tool whose $(bold)every part is Durandal$() (cast each part from Molten Durandal at the Casting Table and assemble it) — a Tinkers' $(l)sword$(), $(l)cleaver$() or $(l)flying sword$() built that way is converted into the Durandal Sword as soon as you hold it.$(br2)Features:$(li)made of $(bold)Durandal$() material, it natively carries the $(l:traits/trait_unbreakable)Unbreakable$() trait — $(bold)never takes damage$()$(li)a legendary-grade weapon with extremely high base stats"
                   }
               ]
 }
