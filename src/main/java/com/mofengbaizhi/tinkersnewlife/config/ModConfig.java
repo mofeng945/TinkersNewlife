@@ -45,6 +45,8 @@ public final class ModConfig {
     public static final ConfigValue<Double> CONSTRUCT_COST_MULTIPLIER;
     /** 拟造黑名单：禁止出现在构筑列表里的物品（支持 mod / 物品 / 标签 / 配方类型） */
     public static final ConfigValue<List<? extends String>> CONSTRUCT_BLACKLIST;
+    /** "配方原料价值"项的权重（0 = 关闭该项） */
+    public static final ConfigValue<Double> CONSTRUCT_INGREDIENT_WEIGHT;
 
     // ==================== 术式/领域缩放系数 ====================
     /** 各术式 modifier id → [damage, cost] 缩放 */
@@ -95,6 +97,7 @@ public final class ModConfig {
                 "                               (also accepts: type:minecraft:smelting)",
                 "Lines starting with // are ignored. Matching is case-insensitive for ids.");
         CONSTRUCT_COST_MULTIPLIER = b.defineInRange("cost_multiplier", 10.0D, 0.0D, 10000.0D);
+        CONSTRUCT_INGREDIENT_WEIGHT = b.defineInRange("ingredient_weight", 0.75D, 0.0D, 100.0D);
         CONSTRUCT_BLACKLIST = b.defineList("blacklist", new java.util.ArrayList<String>(),
                 o -> o instanceof String);
         b.pop();

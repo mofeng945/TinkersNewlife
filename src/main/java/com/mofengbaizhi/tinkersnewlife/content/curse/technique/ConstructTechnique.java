@@ -774,10 +774,16 @@ public final class ConstructTechnique extends BaseTechnique {
 
     /** 每个配方管理器一份缓存（集成服务器里客户端/服务端是两个管理器，用 IdentityHashMap 各自缓存） */
     private record ConstructCache(int recipeCount,
-                                  Map<Item, java.util.Set<net.minecraft.world.item.crafting.RecipeType<?>>> outputs) {}
+                                  Map<Item, java.util.Set<net.minecraft.world.item.crafting.RecipeType<?>>> outputs,
+                                  Map<Item, Double> ingredientTerms) {}
 
     private static final Map<net.minecraft.world.item.crafting.RecipeManager, ConstructCache> CONSTRUCT_CACHE =
             new java.util.IdentityHashMap<>();
+
+    /** 原料价值递归深度上限 */
+    private static final int VALUE_MAX_DEPTH = 2;
+    /** 单个原料（标签型可能上百候选）最多取前几个候选估值，避免建表过慢 */
+    private static final int VALUE_MAX_CANDIDATES = 8;
 
     /**
      * 构建"可拟造物品 → 产出它的配方类型集合"。服务端判定与客户端列表<b>共用同一份逻辑</b>，
@@ -786,26 +792,109 @@ public final class ConstructTechnique extends BaseTechnique {
     public static Map<Item, java.util.Set<net.minecraft.world.item.crafting.RecipeType<?>>> constructibleMap(
             net.minecraft.world.item.crafting.RecipeManager manager,
             net.minecraft.core.RegistryAccess access) {
+        return cacheFor(manager, access).outputs();
+    }
+
+    /** 取（必要时重建）某个配方管理器的缓存 */
+    private static ConstructCache cacheFor(net.minecraft.world.item.crafting.RecipeManager manager,
+                                           net.minecraft.core.RegistryAccess access) {
         java.util.Collection<net.minecraft.world.item.crafting.Recipe<?>> all = manager.getRecipes();
         ConstructCache cached = CONSTRUCT_CACHE.get(manager);
-        if (cached != null && cached.recipeCount() == all.size()) return cached.outputs();
+        if (cached != null && cached.recipeCount() == all.size()) return cached;
 
-        Map<Item, java.util.Set<net.minecraft.world.item.crafting.RecipeType<?>>> map = new java.util.HashMap<>();
+        // 1) 物品 → 产出它的所有配方
+        Map<Item, java.util.List<net.minecraft.world.item.crafting.Recipe<?>>> byItem = new java.util.HashMap<>();
         for (net.minecraft.world.item.crafting.Recipe<?> recipe : all) {
             try {
                 ItemStack out = recipe.getResultItem(access);
                 if (out.isEmpty() || out.getItem() == Items.AIR) continue;
-                map.computeIfAbsent(out.getItem(), k -> new java.util.HashSet<>()).add(recipe.getType());
+                byItem.computeIfAbsent(out.getItem(), k -> new java.util.ArrayList<>()).add(recipe);
             } catch (Throwable ignored) {
                 // CustomRecipe 等取产物需要容器上下文 → 跳过
             }
         }
-        // 黑名单过滤（mod / 单物品 / 标签 / 配方类型）
-        map.keySet().removeIf(item -> isBlacklisted(item, map.get(item)));
+
+        // 2) 原料价值项：该物品**各配方原料价值合计的平均值**（多配方取平均）
+        Map<Item, Double> values = new java.util.HashMap<>();
+        Map<Item, Double> terms = new java.util.HashMap<>();
+        for (Map.Entry<Item, java.util.List<net.minecraft.world.item.crafting.Recipe<?>>> e : byItem.entrySet()) {
+            double sum = 0;
+            for (net.minecraft.world.item.crafting.Recipe<?> r : e.getValue()) {
+                sum += ingredientValue(r, byItem, values, new java.util.HashSet<>(), 0);
+            }
+            terms.put(e.getKey(), sum / e.getValue().size());
+        }
+
+        // 3) 物品 → 配方类型集合 + 黑名单过滤
+        Map<Item, java.util.Set<net.minecraft.world.item.crafting.RecipeType<?>>> outputs = new java.util.HashMap<>();
+        for (Map.Entry<Item, java.util.List<net.minecraft.world.item.crafting.Recipe<?>>> e : byItem.entrySet()) {
+            java.util.Set<net.minecraft.world.item.crafting.RecipeType<?>> types = new java.util.HashSet<>();
+            for (net.minecraft.world.item.crafting.Recipe<?> r : e.getValue()) types.add(r.getType());
+            outputs.put(e.getKey(), types);
+        }
+        outputs.keySet().removeIf(item -> isBlacklisted(item, outputs.get(item)));
 
         if (CONSTRUCT_CACHE.size() > 2) CONSTRUCT_CACHE.clear();
-        CONSTRUCT_CACHE.put(manager, new ConstructCache(all.size(), map));
-        return map;
+        ConstructCache fresh = new ConstructCache(all.size(), outputs, terms);
+        CONSTRUCT_CACHE.put(manager, fresh);
+        TinkersNewlife.LOGGER.debug("[构筑] 可拟造物品表已重建：{} 项（黑名单后）", outputs.size());
+        return fresh;
+    }
+
+    /** 该物品的"原料价值项"（= 各配方原料价值合计的平均值；没有配方 → 0） */
+    public static double ingredientTerm(net.minecraft.world.item.crafting.RecipeManager manager,
+                                        net.minecraft.core.RegistryAccess access, Item item) {
+        try {
+            return cacheFor(manager, access).ingredientTerms().getOrDefault(item, 0.0);
+        } catch (Throwable t) {
+            return 0.0;
+        }
+    }
+
+    /** 一条配方里所有原料的价值合计（标签型原料取候选物品的平均值） */
+    private static double ingredientValue(net.minecraft.world.item.crafting.Recipe<?> recipe,
+                                          Map<Item, java.util.List<net.minecraft.world.item.crafting.Recipe<?>>> byItem,
+                                          Map<Item, Double> valueCache,
+                                          java.util.Set<Item> visiting, int depth) {
+        double total = 0;
+        try {
+            for (var ingredient : recipe.getIngredients()) {
+                if (ingredient == null || ingredient.isEmpty()) continue;
+                ItemStack[] candidates = ingredient.getItems();
+                if (candidates == null || candidates.length == 0) continue;
+                int limit = Math.min(candidates.length, VALUE_MAX_CANDIDATES);
+                double sum = 0;
+                for (int i = 0; i < limit; i++) {
+                    sum += itemValue(candidates[i].getItem(), byItem, valueCache, visiting, depth + 1);
+                }
+                total += sum / limit;
+            }
+        } catch (Throwable ignored) {
+        }
+        return total;
+    }
+
+    /**
+     * 单个物品的"价值"：取<b>自身分</b>与<b>原料价值×0.5</b>的较大者。
+     * 记忆化 + 深度上限 + 环检测（如"木板 ↔ 原木"互相引用）保证不会递归爆掉。
+     */
+    private static double itemValue(Item item,
+                                    Map<Item, java.util.List<net.minecraft.world.item.crafting.Recipe<?>>> byItem,
+                                    Map<Item, Double> valueCache,
+                                    java.util.Set<Item> visiting, int depth) {
+        Double hit = valueCache.get(item);
+        if (hit != null) return hit;
+        double base = intrinsicScore(item);
+        double value = base;
+        var recipes = byItem.get(item);
+        if (recipes != null && !recipes.isEmpty() && depth < VALUE_MAX_DEPTH && visiting.add(item)) {
+            double sum = 0;
+            for (var r : recipes) sum += ingredientValue(r, byItem, valueCache, visiting, depth);
+            value = Math.max(base, sum / recipes.size() * 0.5);
+            visiting.remove(item);
+        }
+        valueCache.put(item, value);
+        return value;
     }
 
     /**
@@ -885,19 +974,41 @@ public final class ConstructTechnique extends BaseTechnique {
      * </pre>
      */
     public static int computeCost(ServerPlayer player, Item item) {
+        double term = 0.0;
+        try {
+            var level = player.serverLevel();
+            term = ingredientTerm(level.getRecipeManager(), level.registryAccess(), item);
+        } catch (Throwable ignored) {
+        }
         return computeCost(CursePowerHelper.getCurseAffinity(player),
-                CursePowerHelper.getCurseOutputLevel(player), item);
+                CursePowerHelper.getCurseOutputLevel(player), item, term);
+    }
+
+    /** 兼容旧调用（不含原料项） */
+    public static int computeCost(int affinity, int output, Item item) {
+        return computeCost(affinity, output, item, 0.0);
     }
 
     /**
      * 拟造费用（纯函数，服务端权威扣费 / 客户端界面预估共用）：
      * <pre>
-     * 基础 = 稀有度分（普通1 / 少见3 / 稀有6 / 史诗12）＋ 方块 0、材料/食物 1
-     * 威力加成 = 攻击 ×4 ＋ 护甲(防御+韧性) ×3 ＋ 耐久/300（封顶 20）
-     * 最终 = 上限(3, ceil(分数 × (1-亲和/100) × (1 + 输出×0.2)))
+     * 自身分 = 稀有度分（普通1 / 少见3 / 稀有6 / 史诗12）＋ 方块 0、材料/食物 1
+     *          ＋ 攻击 ×4 ＋ 护甲(防御+韧性) ×3 ＋ 耐久/300（封顶 20）
+     * 原料项 = 产出它的各配方"原料价值合计"的**平均值** × 配置权重（多配方取平均）
+     * 分数   = 自身分 ＋ 原料项
+     * 最终   = round( 上限(3, ceil(分数 × max(0.25, 1-亲和/100) × (1+输出×0.2))) × 配置倍率 )
      * </pre>
      */
-    public static int computeCost(int affinity, int output, Item item) {
+    public static int computeCost(int affinity, int output, Item item, double ingredientTerm) {
+        double score = intrinsicScore(item) + Math.max(0.0, ingredientTerm) * ingredientWeight();
+        double affinityMul = Math.max(0.25, 1.0 - Math.max(0, affinity) / 100.0);
+        double raw = Math.max(3.0, Math.ceil(score * affinityMul * (1.0 + output * 0.2)));
+        double cost = raw * costMultiplier();
+        return (int) Math.min(Integer.MAX_VALUE, Math.max(1.0, Math.round(cost)));
+    }
+
+    /** 物品"自身分"：稀有度 + 材料/方块 + 攻击 + 护甲 + 耐久（不含原料项） */
+    public static double intrinsicScore(Item item) {
         try {
             ItemStack probe = new ItemStack(item);
             Rarity rarity = item.getRarity(probe);
@@ -931,17 +1042,9 @@ public final class ConstructTechnique extends BaseTechnique {
             if (maxDamage > 0) {
                 score += Math.min(20.0, maxDamage / 300.0);
             }
-            // ⭐ 亲和减价<b>最多 75%</b>：亲和高时可以叠到 100 以上（多件饰品累加），
-            //    原式 (1 - 亲和/100) 会变成 ≤0 → 所有物品都被压到下限 3 咒力，
-            //    表现就是"不管拟造什么都只花 3 咒力"。
-            double affinityMul = Math.max(0.25, 1.0 - Math.max(0, affinity) / 100.0);
-            double raw = Math.max(3.0, Math.ceil(score * affinityMul * (1.0 + output * 0.2)));
-            // ⭐ 配置倍率（默认 10 倍）
-            double cost = raw * costMultiplier();
-            return (int) Math.min(Integer.MAX_VALUE, Math.max(1.0, Math.round(cost)));
+            return score;
         } catch (Throwable t) {
-            // GUI 逐行预览时个别异常物品不阻塞整个界面
-            return (int) Math.max(1.0, Math.round(3.0 * costMultiplier()));
+            return 1.0;
         }
     }
 
@@ -951,6 +1054,15 @@ public final class ConstructTechnique extends BaseTechnique {
             return Math.max(0.0, com.mofengbaizhi.tinkersnewlife.config.ModConfig.CONSTRUCT_COST_MULTIPLIER.get());
         } catch (Throwable t) {
             return 10.0;
+        }
+    }
+
+    /** 配置里的"原料价值项"权重（读不到时默认 0.75） */
+    private static double ingredientWeight() {
+        try {
+            return Math.max(0.0, com.mofengbaizhi.tinkersnewlife.config.ModConfig.CONSTRUCT_INGREDIENT_WEIGHT.get());
+        } catch (Throwable t) {
+            return 0.75;
         }
     }
 
