@@ -47,6 +47,8 @@ public final class ModConfig {
     public static final ConfigValue<List<? extends String>> CONSTRUCT_BLACKLIST;
     /** "配方原料价值"项的权重（0 = 关闭该项） */
     public static final ConfigValue<Double> CONSTRUCT_INGREDIENT_WEIGHT;
+    /** 是否启用<b>内置默认黑名单</b>（矿石/粗矿/矿锭/矿粒/矿粉/宝石/碎片） */
+    public static final ConfigValue<Boolean> CONSTRUCT_USE_DEFAULT_BLACKLIST;
 
     // ==================== 术式/领域缩放系数 ====================
     /** 各术式 modifier id → [damage, cost] 缩放 */
@@ -88,16 +90,22 @@ public final class ModConfig {
                 "",
                 "cost_multiplier = final curse cost multiplier. 1.0 = original formula, 10.0 = 10x cost (default).",
                 "",
-                "blacklist = entries that must NOT appear in the construct menu. Supported formats:",
+                "use_default_blacklist = built-in list: all ores / raw materials / ingots / nuggets / dusts / gems / shards",
+                "                          (#forge:ores, #forge:raw_materials, #forge:ingots, #forge:nuggets,",
+                "                           #forge:dusts, #forge:gems, #c:* equivalents, and *:*_shard / *:*_dust / *:*_nugget globs).",
+                "",
+                "blacklist = extra entries that must NOT appear in the construct menu. Supported formats:",
                 "  goety                 -> whole mod          (bare modid)",
                 "  iceandfire:*          -> whole mod          (modid:*)",
                 "  minecraft:bedrock     -> single item        (modid:item)",
                 "  #forge:ingots         -> item tag           (#modid:tag)",
+                "  *:*_shard             -> wildcard glob        (* matches anything)",
                 "  recipe:minecraft:smelting -> every item that can be produced by that recipe type",
                 "                               (also accepts: type:minecraft:smelting)",
                 "Lines starting with // are ignored. Matching is case-insensitive for ids.");
         CONSTRUCT_COST_MULTIPLIER = b.defineInRange("cost_multiplier", 10.0D, 0.0D, 10000.0D);
         CONSTRUCT_INGREDIENT_WEIGHT = b.defineInRange("ingredient_weight", 0.75D, 0.0D, 100.0D);
+        CONSTRUCT_USE_DEFAULT_BLACKLIST = b.define("use_default_blacklist", true);
         CONSTRUCT_BLACKLIST = b.defineList("blacklist", new java.util.ArrayList<String>(),
                 o -> o instanceof String);
         b.pop();

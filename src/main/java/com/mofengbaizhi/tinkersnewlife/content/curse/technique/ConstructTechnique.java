@@ -904,24 +904,60 @@ public final class ConstructTechnique extends BaseTechnique {
      *   iceandfire:*               整个模组（等价写法）
      *   minecraft:bedrock          单个物品
      *   #forge:ingots              物品标签
+     *   *:*_shard                  通配符（* 匹配任意字符，可写 "*:raw_*" 等）
      *   recipe:minecraft:smelting  凡能被该配方类型产出的物品（也可写 type:...）
      *   // 开头                 注释，忽略
      * </pre>
+     * 内置默认名单（{@link #DEFAULT_BLACKLIST}，可用配置 {@code use_default_blacklist} 关闭）会先匹配。
      */
     public static boolean isBlacklisted(Item item,
                                         java.util.Set<net.minecraft.world.item.crafting.RecipeType<?>> types) {
+        ResourceLocation id = ForgeRegistries.ITEMS.getKey(item);
+        String itemId = id == null ? "" : id.toString();
+
+        // 内置默认：矿石 / 粗矿 / 矿锭 / 矿粒 / 矿粉 / 宝石 / 碎片
+        if (useDefaultBlacklist() && matchEntry(DEFAULT_BLACKLIST, item, itemId, types)) return true;
+
+        // 用户配置的额外条目
         java.util.List<? extends String> list;
         try {
             list = com.mofengbaizhi.tinkersnewlife.config.ModConfig.CONSTRUCT_BLACKLIST.get();
         } catch (Throwable t) {
             return false;
         }
-        if (list == null || list.isEmpty()) return false;
+        return list != null && !list.isEmpty() && matchEntry(list, item, itemId, types);
+    }
 
-        ResourceLocation id = ForgeRegistries.ITEMS.getKey(item);
-        String itemId = id == null ? "" : id.toString();
-        String modId = id == null ? "" : id.getNamespace();
+    /** 内置默认黑名单：跨模组的通用标签 + 通配符兜底（矿石/粗矿/矿锭/矿粒/矿粉/宝石/碎片） */
+    private static final java.util.List<String> DEFAULT_BLACKLIST = java.util.List.of(
+            // Forge 通用标签（1.20.1 的主流约定，已确认本整合包在用）
+            "#forge:ores",            // 各类矿石（含深层/下界/模组矿）
+            "#forge:raw_materials",   // 粗矿
+            "#forge:ingots",          // 矿锭
+            "#forge:nuggets",         // 矿粒
+            "#forge:dusts",           // 矿粉
+            "#forge:gems",            // 宝石（钻石/绿宝石等）
+            // 少数模组用的是 c: 约定，一并兜住
+            "#c:ores", "#c:raw_materials", "#c:ingots", "#c:nuggets", "#c:dusts", "#c:gems",
+            // 没有通用标签的：用通配符兜底
+            "*:*_shard", "*:*_shards",        // 矿碎片
+            "*:*_fragment", "*:*_fragments",  // 矿碎片（另一种写法）
+            "*:*_dust",                       // 未被 #forge:dusts 收录的矿粉
+            "*:*_nugget"                      // 未被 #forge:nuggets 收录的矿粒
+    );
 
+    private static boolean useDefaultBlacklist() {
+        try {
+            return com.mofengbaizhi.tinkersnewlife.config.ModConfig.CONSTRUCT_USE_DEFAULT_BLACKLIST.get();
+        } catch (Throwable t) {
+            return true;
+        }
+    }
+
+    /** 逐条匹配名单（标签 / 配方类型 / mod / 通配符 / 单物品） */
+    private static boolean matchEntry(java.util.List<? extends String> list, Item item, String itemId,
+                                      java.util.Set<net.minecraft.world.item.crafting.RecipeType<?>> types) {
+        String modId = itemId.contains(":") ? itemId.substring(0, itemId.indexOf(':')) : itemId;
         for (String raw : list) {
             if (raw == null) continue;
             String e = raw.trim();
@@ -946,19 +982,45 @@ public final class ConstructTechnique extends BaseTechnique {
                 }
                 continue;
             }
-            // 整个模组：只写 modid，或 modid:*
+            // 整个模组：只写 modid
             if (!e.contains(":")) {
                 if (e.equalsIgnoreCase(modId)) return true;
                 continue;
             }
-            if (e.endsWith(":*")) {
-                if (e.substring(0, e.length() - 2).equalsIgnoreCase(modId)) return true;
+            // 通配符：* 匹配任意字符（也覆盖 modid:* 与 *:*_shard 这类写法）
+            if (e.indexOf('*') >= 0) {
+                if (globMatch(e, itemId)) return true;
                 continue;
             }
             // 单个物品：modid:item
             if (e.equalsIgnoreCase(itemId)) return true;
         }
         return false;
+    }
+
+    /** 简单的 '*' 通配匹配（大小写不敏感） */
+    private static boolean globMatch(String pattern, String value) {
+        String p = pattern.toLowerCase(java.util.Locale.ROOT);
+        String v = value.toLowerCase(java.util.Locale.ROOT);
+        String[] parts = p.split("\\*", -1);
+        int idx = 0;
+        for (int i = 0; i < parts.length; i++) {
+            String part = parts[i];
+            if (part.isEmpty()) continue;
+            if (i == 0) {
+                if (!v.startsWith(part)) return false;
+                idx = part.length();
+                continue;
+            }
+            int found = v.indexOf(part, idx);
+            if (found < 0) return false;
+            if (i == parts.length - 1 && p.charAt(p.length() - 1) != '*'
+                    && found + part.length() != v.length()) {
+                return false;
+            }
+            idx = found + part.length();
+        }
+        return true;
     }
 
     // ============================================================
