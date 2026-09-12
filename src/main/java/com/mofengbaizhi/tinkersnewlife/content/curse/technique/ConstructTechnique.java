@@ -287,6 +287,8 @@ public final class ConstructTechnique extends BaseTechnique {
         //    放到这条"每玩家每 tick 必跑"的路径上，而不是只挂在 ServerTickEvent 上——
         //    这样即使那条事件处理器因为别的原因没跑/提前抛异常，拟造实体也不会永久留在世界里。
         ConstructEvents.tickTempMobs(player.serverLevel());
+        // 拟造方块是否还在原位（水流/活塞/机器等非玩家破坏途径的兜底，见 validatePlacedTemps）
+        ConstructEvents.validatePlacedTemps(player.serverLevel());
     }
 
     /**
@@ -2034,7 +2036,36 @@ public final class ConstructTechnique extends BaseTechnique {
             if (!(event.getLevel() instanceof ServerLevel level)) return;
             net.minecraft.world.entity.Entity e = event.getEntity();
             if (e instanceof ServerPlayer) return;
-            if (e instanceof net.minecraft.world.entity.item.ItemEntity) return;
+
+            // ⭐ 拟造的"重力方块"（沙/砾石/铁砧/龙蛋…）不下落：
+            //    一旦变成下落实体，方块就不在原位了（记录失效），落地后在别处变成真方块/掉落物 → 洗白。
+            //    直接取消这个下落实体并把方块放回原位（下落实体此时已经把原位清空了，见 FallingBlockEntity#fall）。
+            if (e instanceof net.minecraft.world.entity.item.FallingBlockEntity fe) {
+                net.minecraft.core.BlockPos fpos = fe.blockPosition();
+                PlacedTempBlock frec = findPlacedTemp(level, fpos);
+                if (frec != null && frec.state.getBlock() == fe.getBlockState().getBlock()) {
+                    event.setCanceled(true);
+                    level.setBlock(fpos, frec.state, 3);
+                    level.sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE,
+                            fpos.getX() + 0.5, fpos.getY() + 0.5, fpos.getZ() + 0.5, 6, 0.25, 0.25, 0.25, 0.01);
+                    return;
+                }
+            }
+
+            // ⭐ 拟造方块刚消失 → 短时间内在原位掉出来的"该方块的掉落物"按拟造物处理（不留真材料）
+            if (e instanceof net.minecraft.world.entity.item.ItemEntity ie) {
+                long jnow = level.getGameTime();
+                for (TempBreakClaim c : TEMP_BREAK_CLAIMS) {
+                    if (c.level != level) continue;
+                    if (jnow - c.at > CLAIM_ITEM_TICKS) continue;
+                    if (!ie.getItem().is(c.item)) continue;
+                    if (ie.position().distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(c.pos))
+                            > CLAIM_ITEM_RADIUS * CLAIM_ITEM_RADIUS) continue;
+                    claimDroppedTemp(ie);
+                    break;
+                }
+                return;
+            }
 
             long existing = e.getPersistentData().getLong(KEY_TEMP_UNTIL);
             if (existing > 0) {
@@ -2102,6 +2133,107 @@ public final class ConstructTechnique extends BaseTechnique {
                 this.until = until;
                 this.at = at;
                 this.pos = pos;
+            }
+        }
+
+        // ============================================================
+        //  拟造方块的"下落认领"：方块不在原位后，短时间内在原位掉出来的东西一律按拟造物处理
+        //  （水流冲走 / 机器挖掉 / 活塞推掉 / 其它模组替换……都不是"玩家挖掘"，也拦不到破坏事件）
+        // ============================================================
+
+        /** 拟造方块刚消失的认领窗口 */
+        private static final List<TempBreakClaim> TEMP_BREAK_CLAIMS = new ArrayList<>();
+        private static final long CLAIM_ITEM_TICKS = 5L;
+        private static final double CLAIM_ITEM_RADIUS = 2.0;
+
+        /** 一次"拟造方块消失"的记录：位置 + 消失时刻 + 该方块的物品（只认这一种，避免误伤旁边的真掉落） */
+        private static final class TempBreakClaim {
+            final ServerLevel level;
+            final net.minecraft.core.BlockPos pos;
+            final long at;
+            final Item item;
+
+            TempBreakClaim(ServerLevel level, net.minecraft.core.BlockPos pos, long at, Item item) {
+                this.level = level;
+                this.pos = pos;
+                this.at = at;
+                this.item = item;
+            }
+        }
+
+        /**
+         * ⭐ 每 tick 校验拟造方块是否还在原位（开销极小：拟造方块通常只有几颗）。
+         * <p>
+         * 不在了就注销记录并<b>开一个认领窗口</b>：接下来几 tick 内出现在该位置、且正是该方块对应的掉落物
+         * → 直接认领为拟造物（下一 tick 静默消散），不让它变成玩家手里的真材料。
+         * 覆盖"玩家挖掘/爆炸"之外的所有破坏途径（水流、活塞、机器、其它模组替换方块……）。
+         */
+        private static void validatePlacedTemps(ServerLevel level) {
+            long now = level.getGameTime();
+            TEMP_BREAK_CLAIMS.removeIf(c -> c.level == level && now - c.at > CLAIM_ITEM_TICKS);
+            if (PLACED_TEMPS.isEmpty()) return;
+            Iterator<PlacedTempBlock> it = PLACED_TEMPS.iterator();
+            while (it.hasNext()) {
+                PlacedTempBlock p = it.next();
+                if (p.level != level || !level.isLoaded(p.pos)) continue;
+                if (level.getBlockState(p.pos).getBlock() == p.state.getBlock()) continue;
+                it.remove();
+                // "改宿主状态"的记录：宿主被换掉就没什么可撤回的，直接放弃
+                if (p.previousState != null && !p.previousState.isAir()) continue;
+                Item dropItem = p.state.getBlock().asItem();
+                if (dropItem == net.minecraft.world.item.Items.AIR) continue;
+                TEMP_BREAK_CLAIMS.add(new TempBreakClaim(level, p.pos, now, dropItem));
+                // 已经掉出来的（水流/机器/活塞往往在同一 tick 就产生掉落物）：就地认领
+                for (net.minecraft.world.entity.item.ItemEntity ie :
+                        level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
+                                new net.minecraft.world.phys.AABB(p.pos).inflate(CLAIM_ITEM_RADIUS))) {
+                    if (ie.getItem().is(dropItem)) claimDroppedTemp(ie);
+                }
+            }
+        }
+
+        /** 全部维度都校验一遍（ServerTickEvent 用；每玩家 tick 的那条只校验自己所在维度） */
+        private static void validatePlacedTempsAll(MinecraftServer server) {
+            if (server == null) return;
+            for (ServerLevel level : server.getAllLevels()) validatePlacedTemps(level);
+        }
+
+        /** 认领一颗"拟造方块掉出来的"掉落物：标记为立即到期（下一 tick 由临时物清理静默消散） */
+        private static void claimDroppedTemp(net.minecraft.world.entity.item.ItemEntity ie) {
+            ItemStack st = ie.getItem();
+            if (st.isEmpty() || isTemp(st)) return;
+            st.getOrCreateTag().putLong(KEY_TEMP_UNTIL, ie.level().getGameTime());
+            TRACKED_TEMP_ITEMS.add(ie);
+            TinkersNewlife.LOGGER.info("[构筑] 拟造方块掉落物已认领（即将消散）：{}",
+                    st.getHoverName().getString());
+        }
+
+        /**
+         * ⭐ 拟造方块不被活塞推动/顶掉。
+         * <p>
+         * 活塞推动等于<b>把方块搬家</b>：新位置没有临时标记 → 又是永久方块（和"挖掉换地方放"同一个漏洞）。
+         * 这里提前用 {@link net.minecraftforge.event.level.PistonEvent.Pre#getStructureHelper()} 算一遍
+         * 这次推动会动到哪些格子，碰到拟造方块就取消整次推动（活塞原地不动，方块照旧到期消散）。
+         */
+        @net.minecraftforge.eventbus.api.SubscribeEvent
+        public static void onPistonPre(net.minecraftforge.event.level.PistonEvent.Pre event) {
+            if (event.getLevel().isClientSide()) return;
+            if (PLACED_TEMPS.isEmpty()) return;
+            if (!(event.getLevel() instanceof ServerLevel level)) return;
+            net.minecraft.world.level.block.piston.PistonStructureResolver helper = event.getStructureHelper();
+            if (helper == null) return;
+            if (!helper.resolve()) return;
+            for (net.minecraft.core.BlockPos pos : helper.getToPush()) {
+                if (findPlacedTemp(level, pos) != null) {
+                    event.setCanceled(true);
+                    return;
+                }
+            }
+            for (net.minecraft.core.BlockPos pos : helper.getToDestroy()) {
+                if (findPlacedTemp(level, pos) != null) {
+                    event.setCanceled(true);
+                    return;
+                }
             }
         }
 
@@ -2252,6 +2384,8 @@ public final class ConstructTechnique extends BaseTechnique {
             if (!TRACKED_TEMP_MOBS.isEmpty()) {
                 tickTempMobs((ServerLevel) null);
             }
+            // 拟造方块原位校验（每 tick、全维度；拟造方块通常只有几颗，开销可忽略）
+            validatePlacedTempsAll(event.getServer());
             if (PLACED_TEMPS.isEmpty() && PLACED_TEMP_PARTS.isEmpty() && SWEEP_QUEUE.isEmpty()) {
                 tickContainerSweep(event.getServer());
             tickGlobalSweep(event.getServer());
