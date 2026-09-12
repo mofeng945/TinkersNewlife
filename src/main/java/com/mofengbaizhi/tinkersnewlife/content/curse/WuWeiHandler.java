@@ -540,6 +540,14 @@ public final class WuWeiHandler {
         EntityType<?> type = EntityType.byString(formId).orElse(null);
         if (type == null) return false;
 
+        // ⭐ 正被玩家操控的单位（傀儡操术的傀儡 / 黑鸟操术的黑鸟 / 正被骑乘的坐骑）：
+        //    必须走"原地换形态"，否则 discard + 重新生成会把"相机绑实体 id + 输入包"这条
+        //    操控链路直接掐断——表现就是"无为转变后傀儡依旧无法操纵"（领域·自闭圆顿裹走的正是本方法）。
+        ServerPlayer controller = controllerOf(target);
+        if (controller != null && transformControllableInPlace(controller, target, formId, type)) {
+            return true;
+        }
+
         ServerLevel level = caster.serverLevel();
         ReverseMobData rd = new ReverseMobData();
         rd.ownerId = caster.getUUID();
@@ -657,8 +665,10 @@ public final class WuWeiHandler {
         ServerLevel level = player.serverLevel();
         // ⭐ 正被操控的单位（傀儡/黑鸟/坐骑）：原地换形态，保留实体 —— 操控链路不能断。
         //    否则下面"discard + 生成新生物 + 挂守护 AI"会让它彻底失去 AI、再也操控不了。
-        boolean inPlace = victim instanceof Mob cm && isPlayerControlled(player, cm)
-                && transformControllableInPlace(player, cm, formId, type);
+        //    ⭐ 这里用 controllerOf 而不是"必须是施术者本人操控"：别人正操控的单位同样不能删。
+        ServerPlayer unitController = victim instanceof Mob cm ? controllerOf(cm) : null;
+        boolean inPlace = unitController != null && victim instanceof Mob controlled
+                && transformControllableInPlace(unitController, controlled, formId, type);
         if (victim instanceof ServerPlayer targetPlayer) {
             // 玩家目标：对方本体直接变形（限时 60s、由对方自己操控、禁工具）
             if (enterForm(targetPlayer, formId, true, REVERSE_TICKS)) {
@@ -973,6 +983,24 @@ public final class WuWeiHandler {
         if (mob instanceof com.mofengbaizhi.tinkersnewlife.content.entity.BlackBirdEntity b
                 && b.getOwner() == player) return true;
         return false;
+    }
+
+    /**
+     * 该单位当前被谁操控（傀儡主人 / 黑鸟主人 / 骑乘者），没人操控返回 null。
+     * <p>
+     * 与 {@link #isPlayerControlled} 的区别：这里不限定"必须是某个玩家"，
+     * 因为领域（自闭圆顿裹）转变的是范围内所有单位——施术者未必就是操控者。
+     */
+    public static ServerPlayer controllerOf(Mob mob) {
+        if (mob == null) return null;
+        if (mob instanceof com.mofengbaizhi.tinkersnewlife.content.entity.PuppetGolemMob p) {
+            return p.puppetOwner();
+        }
+        if (mob instanceof com.mofengbaizhi.tinkersnewlife.content.entity.BlackBirdEntity b) {
+            return b.getOwner();
+        }
+        if (mob.getControllingPassenger() instanceof ServerPlayer sp) return sp;
+        return null;
     }
 
     /** 该单位被换过形态后的攻击倍率（没换过返回 1） */

@@ -42,6 +42,11 @@ public abstract class BaseDomain {
     private final Map<UUID, Boolean> entityInside = new ConcurrentHashMap<>();
     /** 阻挡墙方块位置（关闭领域时移除） */
     private final java.util.List<net.minecraft.core.BlockPos> barrierPositions = new java.util.ArrayList<>();
+    /**
+     * 展开瞬间"本该放墙却放不下"的位置（被生物占位）——留给每 tick 的补墙
+     * （见 {@link #refillBarrierGaps}）：既不把生物闷死在墙里，也不在壳上留永久缺口。
+     */
+    private final java.util.Set<net.minecraft.core.BlockPos> barrierGaps = new java.util.LinkedHashSet<>();
 
     /** 领域对抗中的对手（对方咒力核心主人 UUID）；null = 未在对抗 */
     protected UUID clashOpponent = null;
@@ -122,42 +127,95 @@ public abstract class BaseDomain {
     //  阻挡墙：生成隐形物理墙（任何生物进不来也出不去）
     // ============================================================
 
-    /** 生成隐形阻挡墙：在球壳表面放置领域阻挡方块（1 格厚球壳） */
+    /**
+     * 生成隐形阻挡墙：以「方块中心在球内 + 六面邻里至少一个方块中心在球外」判定球壳。
+     * <p>
+     * ⭐ 为什么不能再用「|距离 - 半径| ≤ 0.5」那种写法：那个判定在<b>极点</b>会跳层——
+     * 半径在球顶/球底变化极快（r=20 时 y=±19 层的水平半径已经是 6.2，下一层就变 0），
+     * 于是球顶只剩"一个方块 + 6 格外一圈环"，中间一圈全是空洞，可以从上下两处钻出去/
+     * 射出去（实测现象："领域上下还是有空洞，没有被外壳完全封闭"）。
+     * <p>
+     * 换成"在球内、且贴着球外"的判定后，壳是逐层封闭的阶梯：每一层只要中心在球内、
+     * 且上一格中心在球外，就必须放墙 → 顶点自然被封成实心圆盘，整球无孔。
+     */
     protected final void buildBarrier(ServerLevel level) {
         barrierPositions.clear();
+        barrierGaps.clear();
         int r = radius;
         int cx = (int) Math.floor(center.x);
         int cy = (int) Math.floor(center.y);
         int cz = (int) Math.floor(center.z);
-        for (int y = -r; y <= r; y++) {
-            double rH = Math.sqrt(Math.max(0, r * r - y * y));
-            int rhi = (int) Math.ceil(rH);
-            // ⭐ 顶部/底部层（水平半径 ≤1.5）填实心圆盘作"封盖"——否则球壳只在顶点留一个点、
-            // 周围留一圈孔洞，顶端不封闭（可被看到/射入）
-            boolean capLayer = rH <= 1.5;
-            for (int x = -rhi; x <= rhi; x++) {
-                for (int z = -rhi; z <= rhi; z++) {
-                    if (capLayer) {
-                        if (Math.sqrt(x * x + z * z) > rH + 0.5) continue;
-                    } else {
-                        double d = Math.sqrt(x * x + y * y + z * z);
-                        if (d < r - 0.5 || d > r + 0.5) continue;
-                    }
-                    net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(cx + x, cy + y, cz + z);
-                    var state = level.getBlockState(pos);
-                    // ⭐ 已存在的本领域墙块（如对抗结束后重建）也要补记，否则关闭时无法移除
-                    if (state.is(com.mofengbaizhi.tinkersnewlife.content.ModBlocks.DOMAIN_BARRIER.get())) {
-                        barrierPositions.add(pos);
-                        continue;
-                    }
-                    if (!state.isAir()) continue;
-                    // 避免在生物站立的方块上放置（防窒息），留出的缺口由每 tick 位置钳制兜底
-                    if (!level.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class,
-                            new AABB(pos)).isEmpty()) continue;
-                    level.setBlock(pos, com.mofengbaizhi.tinkersnewlife.content.ModBlocks.DOMAIN_BARRIER.get().defaultBlockState(), 2);
-                    barrierPositions.add(pos);
+        double rSq = (double) r * r;
+        int lim = r + 1;
+        for (int y = -lim; y <= lim; y++) {
+            for (int x = -lim; x <= lim; x++) {
+                for (int z = -lim; z <= lim; z++) {
+                    if (!isShellBlock(cx, cy, cz, x, y, z, rSq)) continue;
+                    placeBarrier(level, new net.minecraft.core.BlockPos(cx + x, cy + y, cz + z));
                 }
             }
+        }
+    }
+
+    /** 方块中心到球心的距离平方（方块中心 = floor(center) + 偏移 + 0.5） */
+    private double centerDistSq(int cx, int cy, int cz, double ox, double oy, double oz) {
+        double dx = cx + ox - center.x;
+        double dy = cy + oy - center.y;
+        double dz = cz + oz - center.z;
+        return dx * dx + dy * dy + dz * dz;
+    }
+
+    /** 该方块是否为壳块：方块中心在球内，且六面邻中存在方块中心在球外的邻居 */
+    private boolean isShellBlock(int cx, int cy, int cz, int x, int y, int z, double rSq) {
+        if (centerDistSq(cx, cy, cz, x + 0.5, y + 0.5, z + 0.5) > rSq) return false;
+        return centerDistSq(cx, cy, cz, x + 1.5, y + 0.5, z + 0.5) > rSq
+                || centerDistSq(cx, cy, cz, x - 0.5, y + 0.5, z + 0.5) > rSq
+                || centerDistSq(cx, cy, cz, x + 0.5, y + 1.5, z + 0.5) > rSq
+                || centerDistSq(cx, cy, cz, x + 0.5, y - 0.5, z + 0.5) > rSq
+                || centerDistSq(cx, cy, cz, x + 0.5, y + 0.5, z + 1.5) > rSq
+                || centerDistSq(cx, cy, cz, x + 0.5, y + 0.5, z - 0.5) > rSq;
+    }
+
+    /** 放一块墙：已有墙块直接登记；非空气（实心地形/水）跳过；生物占位则记账等补墙 */
+    private void placeBarrier(ServerLevel level, net.minecraft.core.BlockPos pos) {
+        var state = level.getBlockState(pos);
+        if (state.is(com.mofengbaizhi.tinkersnewlife.content.ModBlocks.DOMAIN_BARRIER.get())) {
+            barrierPositions.add(pos);
+            return;
+        }
+        if (!state.isAir()) return;
+        // 避免在生物站立的方块上放置（防窒息）：记入待补清单，生物走开后由每 tick 补墙补上
+        if (!level.getEntitiesOfClass(LivingEntity.class, new AABB(pos)).isEmpty()) {
+            barrierGaps.add(pos);
+            return;
+        }
+        level.setBlock(pos, com.mofengbaizhi.tinkersnewlife.content.ModBlocks.DOMAIN_BARRIER.get().defaultBlockState(), 2);
+        barrierPositions.add(pos);
+    }
+
+    /**
+     * 补墙（每 5 tick 与困锁一起调用）：把展开瞬间因生物占位而跳过的壳块补上，
+     * 保证外壳最终一定是封闭的（否则那几格就是永久缺口）。
+     */
+    public final void refillBarrierGaps(ServerLevel level) {
+        if (barrierGaps.isEmpty()) return;
+        java.util.Iterator<net.minecraft.core.BlockPos> it = barrierGaps.iterator();
+        while (it.hasNext()) {
+            net.minecraft.core.BlockPos pos = it.next();
+            var state = level.getBlockState(pos);
+            if (state.is(com.mofengbaizhi.tinkersnewlife.content.ModBlocks.DOMAIN_BARRIER.get())) {
+                barrierPositions.add(pos);
+                it.remove();
+                continue;
+            }
+            if (!state.isAir()) {
+                it.remove();
+                continue;
+            }
+            if (!level.getEntitiesOfClass(LivingEntity.class, new AABB(pos)).isEmpty()) continue;
+            level.setBlock(pos, com.mofengbaizhi.tinkersnewlife.content.ModBlocks.DOMAIN_BARRIER.get().defaultBlockState(), 2);
+            barrierPositions.add(pos);
+            it.remove();
         }
     }
 
@@ -169,6 +227,7 @@ public abstract class BaseDomain {
             }
         }
         barrierPositions.clear();
+        barrierGaps.clear();
     }
 
     /** 当前阻挡墙位置列表（供天逆鉾等咒具破坏领域时统计碎片掉落） */

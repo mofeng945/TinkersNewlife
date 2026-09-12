@@ -39,6 +39,9 @@ public final class WuWeiDisguiseRenderer {
     /** 代理实体缓存：玩家 uuid → 目标类型实例（不进世界） */
     private static final Map<UUID, Entity> PROXIES = new ConcurrentHashMap<>();
 
+    /** 走路动画推进去重：代理 → 上次推进所用的 tickCount（代理不进世界，需要自己按 tick 推进） */
+    private static final Map<Entity, Integer> WALK_TICK = new java.util.WeakHashMap<>();
+
     // WalkAnimationState 私有字段反射（拷贝走路动画状态用）
     private static Field WAS_SPEED_OLD;
     private static Field WAS_SPEED;
@@ -122,7 +125,17 @@ public final class WuWeiDisguiseRenderer {
     public static void syncProxy(LivingEntity real, LivingEntity proxy) {
         // 位置与朝向（渲染以 pose 为基准，此处保证字段一致供模型姿态计算）
         proxy.moveTo(real.getX(), real.getY(), real.getZ(), real.getYRot(), real.getXRot());
-        proxy.xRotO = real.xRotO;
+        // ⭐ 俯仰角方向修正：原版幻翼（Phantom）的 xRot 与"视线俯仰"符号相反——
+        //    Phantom 在 AI 里按飞行方向写 xRot（俯冲朝下时为负），而玩家/多数生物的
+        //    xRot 是"低头为正"。直接用玩家的 xRot 喂给幻翼代理 → 上下偏转整个反了
+        //    （报告现象："幻翼的上下偏转头部动画还反了"）。这里按形态翻一次符号。
+        boolean invertPitch = proxy instanceof net.minecraft.world.entity.monster.Phantom;
+        if (invertPitch) {
+            proxy.setXRot(-real.getXRot());
+            proxy.xRotO = -real.xRotO;
+        } else {
+            proxy.xRotO = real.xRotO;
+        }
         proxy.yRotO = real.yRotO;
         proxy.yBodyRot = real.yBodyRot;
         proxy.yBodyRotO = real.yBodyRotO;
@@ -149,7 +162,20 @@ public final class WuWeiDisguiseRenderer {
         proxy.hurtDuration = real.hurtDuration;
         proxy.invulnerableTime = real.invulnerableTime;
         proxy.setAirSupply(real.getAirSupply());
-        // 走路动画状态（speedOld/speed/position）
+        // ⭐ 走路动画：反射拷字段原先只是"尽力而为"（字段名/映射一变就静默失效 → 模型只滑不迈步）。
+        //    现在改成用公开 API 按原版公式推进代理自己的 walkAnimation：
+        //    LivingEntityRenderer 用的是 walkAnimation.speed(partialTick)/position(partialTick)，
+        //    而 update(target, 0.4F) 正是原版每个 tick 的做法（含 speedOld 插值）。
+        //    输入取真实实体"本 tick 的水平位移"，与 real 完全同源 → 迈步节奏一致。
+        //    每个客户端 tick 只推进一次（用 tickCount 去重），避免多帧渲染把动画推快。
+        Integer lastTick = WALK_TICK.get(proxy);
+        if (lastTick == null || lastTick != real.tickCount) {
+            WALK_TICK.put(proxy, real.tickCount);
+            float moved = (float) net.minecraft.util.Mth.length(
+                    real.getX() - real.xo, 0.0D, real.getZ() - real.zo);
+            proxy.walkAnimation.update(Math.min(moved * 4.0F, 1.0F), 0.4F);
+        }
+        // 兼容：反射可用时再直接对齐一次精确值（取不到就依赖上面的推进，不影响观感）
         if (fieldsReady) {
             try {
                 WalkAnimationState src = real.walkAnimation;
@@ -158,7 +184,7 @@ public final class WuWeiDisguiseRenderer {
                 WAS_SPEED.setFloat(dst, WAS_SPEED.getFloat(src));
                 WAS_POSITION.setFloat(dst, WAS_POSITION.getFloat(src));
             } catch (Throwable t) {
-                // 忽略：个别字段失败不影响主体渲染
+                // 忽略：上面的公开 API 推进已经保证动画存在
             }
         }
     }

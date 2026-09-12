@@ -276,9 +276,10 @@ public final class DomainRegistry {
             // 对抗中：领域效果与困锁暂时失效（空间已合并，双方效果停摆）
             if (clashing) continue;
 
-            // 通用外壳：困锁生物（每 5 tick）
+            // 通用外壳：困锁生物（每 5 tick）+ 补上展开瞬间被生物占位跳过的墙块
             if (now % 5 == 0) {
                 domain.clampEntities(player.level());
+                domain.refillBarrierGaps(player.serverLevel());
             }
 
             // 子类逻辑（抽奖等）
