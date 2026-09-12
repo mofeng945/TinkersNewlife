@@ -75,5 +75,8 @@
   "tinkersnewlife:pale_plating": "tinkersnewlife:gui/modifiers/pale_plating",
   "tinkersnewlife:commander": "tinkersnewlife:gui/modifiers/commander",
   "tinkersnewlife:final_brand": "tinkersnewlife:gui/modifiers/final_brand",
-  "tinkersnewlife:cursed_adrenaline": "tinkersnewlife:gui/modifiers/cursed_adrenaline"
+  "tinkersnewlife:cursed_adrenaline": "tinkersnewlife:gui/modifiers/cursed_adrenaline",
+  "tinkersnewlife:butcher": "tinkersnewlife:gui/modifiers/butcher",
+  "tinkersnewlife:curse_speed": "tinkersnewlife:gui/modifiers/curse_speed",
+  "tinkersnewlife:earplugs": "tinkersnewlife:gui/modifiers/earplugs"
 }
