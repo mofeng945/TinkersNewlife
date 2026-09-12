@@ -325,6 +325,26 @@ public final class ConstructTechnique extends BaseTechnique {
     }
 
     /**
+     * 该位置是否为"已登记的拟造方块"，且方块类型与登记一致。
+     * <p>
+     * 供 {@code BlockDropsMixin} 使用：在掉落表生成的源头把拟造方块的掉落清空，
+     * 这样"AE2 破坏面板 / 矿机 / 钻头"这类<b>直接算掉落塞进自己库存</b>、既没有 BreakEvent
+     * 也不一定产生掉落物实体的机器，也不可能把拟造方块洗成真材料。
+     */
+    public static boolean isConstructedBlockAt(net.minecraft.world.level.Level level,
+                                               net.minecraft.core.BlockPos pos,
+                                               net.minecraft.world.level.block.state.BlockState state) {
+        if (level == null || pos == null || state == null) return false;
+        if (level.isClientSide) return false;
+        if (PLACED_TEMPS.isEmpty()) return false;
+        for (PlacedTempBlock rec : PLACED_TEMPS) {
+            if (rec.level != level || !rec.pos.equals(pos)) continue;
+            return rec.state.getBlock() == state.getBlock();
+        }
+        return false;
+    }
+
+    /**
      * 用模板造一个"拟造临时物"栈（蓝本模式走代理物，否则真物品 + 到期标记）。
      * <p>
      * 抽出成方法是因为"挖掉拟造方块要把本体还给玩家"（见 {@code ConstructEvents#onBlockBreak}），
@@ -2055,14 +2075,29 @@ public final class ConstructTechnique extends BaseTechnique {
             // ⭐ 拟造方块刚消失 → 短时间内在原位掉出来的"该方块的掉落物"按拟造物处理（不留真材料）
             if (e instanceof net.minecraft.world.entity.item.ItemEntity ie) {
                 long jnow = level.getGameTime();
+                ItemStack ist = ie.getItem();
+                if (ist.isEmpty() || isTemp(ist)) return;
+                // (a) 5 tick 认领窗口（方块在前几 tick 就没了，掉落物现在才出现）
                 for (TempBreakClaim c : TEMP_BREAK_CLAIMS) {
                     if (c.level != level) continue;
                     if (jnow - c.at > CLAIM_ITEM_TICKS) continue;
-                    if (!ie.getItem().is(c.item)) continue;
+                    if (!ist.is(c.item)) continue;
                     if (ie.position().distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(c.pos))
                             > CLAIM_ITEM_RADIUS * CLAIM_ITEM_RADIUS) continue;
                     claimDroppedTemp(ie);
-                    break;
+                    return;
+                }
+                // (b) ⭐ 同 tick 竞态兜底：机器（钻头/破坏面板/矿机）常常在同一 tick 里"先毁方块、再产掉落物"，
+                //     而此时本 tick 的原位校验还没跑到；直接看"登记过的拟造方块位置现在还有没有那个方块"
+                //     —— 没有（=刚被毁）且掉落物正是该方块 → 当场认领。
+                for (PlacedTempBlock p : PLACED_TEMPS) {
+                    if (p.level != level) continue;
+                    if (p.state.getBlock().asItem() != ist.getItem()) continue;
+                    if (ie.position().distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(p.pos))
+                            > CLAIM_ITEM_RADIUS * CLAIM_ITEM_RADIUS) continue;
+                    if (level.getBlockState(p.pos).getBlock() == p.state.getBlock()) continue;  // 方块还在 → 不是它掉的
+                    claimDroppedTemp(ie);
+                    return;
                 }
                 return;
             }

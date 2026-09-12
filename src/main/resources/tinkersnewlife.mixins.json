@@ -5,7 +5,8 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "tinkersnewlife.refmap.json",
   "mixins": [
-    "SlotMixin"
+    "SlotMixin",
+    "BlockDropsMixin"
   ],
   "client": [
     "EntityRenderDispatcherMixin",
