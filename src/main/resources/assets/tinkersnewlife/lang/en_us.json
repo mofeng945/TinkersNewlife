@@ -1,4 +1,7 @@
 {
+  "modifier.tinkersnewlife.resonance": "Resonance",
+  "modifier.tinkersnewlife.resonance.flavor": "§7The bell rings, the sculk answers, and silence shatters.",
+  "modifier.tinkersnewlife.resonance.description": "The silent glove no longer intercepts sounds: everything is heard normally while worn (its other functions are unaffected). Slotless upgrade.",
   "message.tinkersnewlife.domain.cleanup_after_borrow": "Zhenyan Xiangai ended: switched back to the core's first technique and stopped all sustained techniques",
   "message.tinkersnewlife.construct.loot_scan_done": "Loot source scan done: %s items (%s auto-eligible), suggestions written to %s",
   "screen.tinkersnewlife.construct.empty": "No matching items",

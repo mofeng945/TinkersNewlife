@@ -1,0 +1,17 @@
+{
+  "type": "tconstruct:modifier",
+  "allow_crystal": false,
+  "inputs": [
+    {
+      "item": "minecraft:clock"
+    },
+    {
+      "item": "minecraft:sculk_catalyst"
+    }
+  ],
+  "level": 1,
+  "result": "tinkersnewlife:resonance",
+  "tools": {
+    "tag": "tinkersnewlife:silent_glove"
+  }
+}

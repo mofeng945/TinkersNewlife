@@ -125,19 +125,15 @@ public class SilentGloveSoundHandler {
 
     private static boolean isWearingSilentGlove(Player player) {
         // 主手检查
-        ItemStack mainHand = player.getMainHandItem();
-        if (mainHand.getItem() instanceof SilentGloveItem) {
+        if (isMuting(player.getMainHandItem())) {
             return true;
         }
-
         // 副手检查
-        ItemStack offHand = player.getOffhandItem();
-        if (offHand.getItem() instanceof SilentGloveItem) {
+        if (isMuting(player.getOffhandItem())) {
             return true;
         }
-
-        // ⭐ Curios 槽位检查（hands + ring）：统一由 GloveHelper 处理 hands 槽
-        if (GloveHelper.isWearingGlove(player)) {
+        // ⭐ Curios 槽位检查（hands）：统一由 GloveHelper 处理
+        if (isMuting(GloveHelper.findWornGlove(player))) {
             return true;
         }
 
@@ -148,13 +144,24 @@ public class SilentGloveSoundHandler {
             inventory.getStacksHandler("ring").ifPresent(handler -> {
                 IItemHandlerModifiable stacks = handler.getStacks();
                 for (int i = 0; i < stacks.getSlots(); i++) {
-                    ItemStack stack = stacks.getStackInSlot(i);
-                    if (stack.getItem() instanceof SilentGloveItem) {
+                    if (isMuting(stacks.getStackInSlot(i))) {
                         found.set(true);
                     }
                 }
             });
         });
         return found.get();
+    }
+
+    /**
+     * 该物品是否为"<b>正在拦截声音</b>"的缄默手套。
+     * <p>
+     * ⭐ 装了「回响」强化（{@code tinkersnewlife:resonance}）的手套<b>不再拦截</b>任何声音，
+     * 这里返回 false → {@link #onPlaySound} 直接放行，整段白名单/静默逻辑被跳过。
+     */
+    private static boolean isMuting(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return false;
+        if (!(stack.getItem() instanceof SilentGloveItem)) return false;
+        return !com.mofengbaizhi.tinkersnewlife.content.modifier.ResonanceModifier.hasResonance(stack);
     }
 }

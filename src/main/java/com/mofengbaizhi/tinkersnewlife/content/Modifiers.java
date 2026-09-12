@@ -315,6 +315,11 @@ public class Modifiers {
         MODIFIERS.register("final_brand",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.FinalBrandModifier::new);
 
+    /** 无槽位强化·回响（安装不占槽：缄默手套不再拦截声音；单级，不可洗/不可剥） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.ResonanceModifier> RESONANCE =
+        MODIFIERS.register("resonance",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.ResonanceModifier::new);
+
     /** 无槽位强化·渎神（安装不占槽：护甲 +2 防御槽，受到的伤害 +10%；单级，不可洗/不可剥） */
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.BlasphemyModifier> BLASPHEMY =
         MODIFIERS.register("blasphemy",
