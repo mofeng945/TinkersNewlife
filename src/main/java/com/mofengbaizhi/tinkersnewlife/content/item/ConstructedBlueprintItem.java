@@ -166,6 +166,10 @@ public class ConstructedBlueprintItem extends Item {
     public Component getName(ItemStack stack) {
         Item target = targetItem(stack);
         Component base = target != null ? target.getName(stack) : super.getName(stack);
+        // ⭐ 幂等：先把基础名里已有的"拟造·"前缀全部剥掉再加一次 ——
+        //    蓝本套蓝本、或目标名本身带前缀时，名字会一层层叠成"拟造·拟造·…"（实测 8 层）。
+        base = com.mofengbaizhi.tinkersnewlife.content.curse.technique.ConstructTechnique
+                .stripConstructPrefix(base);
         return Component.translatable("item.tinkersnewlife.construct.prefix").append(base);
     }
 

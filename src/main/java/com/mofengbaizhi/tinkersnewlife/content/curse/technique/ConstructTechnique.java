@@ -295,6 +295,10 @@ public final class ConstructTechnique extends BaseTechnique {
         if (player.isAlive() && !player.isRemoved() && now % TEMP_CHECK_INTERVAL == 0) {
             sweepTemps(player, now);
         }
+        // ⭐ 旧存档遗留：把"拟造·拟造·…"这种叠了多层前缀的拟造物名字洗干净（每 40 tick，代价极小）
+        if (player.isAlive() && !player.isRemoved() && now % 40 == 0) {
+            normalizeTempNames(player);
+        }
         // ⭐ 拟造"实体"到期清理（假人/盔甲架/刷怪蛋召唤物…）：
         //    放到这条"每玩家每 tick 必跑"的路径上，而不是只挂在 ServerTickEvent 上——
         //    这样即使那条事件处理器因为别的原因没跑/提前抛异常，拟造实体也不会永久留在世界里。
@@ -379,19 +383,71 @@ public final class ConstructTechnique extends BaseTechnique {
         } else {
             stack = template.copy();
             net.minecraft.nbt.CompoundTag tag = stack.getOrCreateTag();
-            tag.putLong(KEY_TEMP_UNTIL, until);            // ⭐ 幂等保护之二：前缀**只加一次**——"原始名字"记进标签，之后一律按它重建显示名。
-            //    （即使某条路径把带前缀的名字传进来、又丢了到期标记，也不会再叠一层。）
+            tag.putLong(KEY_TEMP_UNTIL, until);
+            // ⭐ 幂等保护之二：前缀**只加一次**——"原始名字"记进标签，之后一律按它重建显示名。
+            //    ⭐ 幂等保护之三：重建前先把"原始名字"里已有的前缀**全部剥掉**
+            //    （旧存档/异常路径留下的 拟造·拟造·… 一次性洗干净），保证任何情况下只有一个"拟造·"。
             Component original;
             if (tag.contains(KEY_ORIGINAL_NAME, net.minecraft.nbt.Tag.TAG_STRING)) {
                 original = Component.Serializer.fromJson(tag.getString(KEY_ORIGINAL_NAME));
                 if (original == null) original = stack.getHoverName();
             } else {
                 original = stack.getHoverName();
-                tag.putString(KEY_ORIGINAL_NAME, Component.Serializer.toJson(original));
             }
+            // 诊断：剥掉多余前缀时打一条日志（带调用者），便于定位是哪条路径在反复包装
+            String rawName = stack.getHoverName().getString();
+            String preStr = Component.translatable("item.tinkersnewlife.construct.prefix").getString();
+            if (!preStr.isEmpty() && rawName.startsWith(preStr + preStr)) {
+                StackTraceElement[] trace = new Throwable().getStackTrace();
+                StackTraceElement caller = trace.length > 2 ? trace[2] : null;
+                TinkersNewlife.LOGGER.info("[构筑] 拟造物名带了多层前缀，已洗成一层（调用者={}）",
+                        caller == null ? "?" : caller.getClassName() + "#" + caller.getMethodName());
+            }
+            original = stripConstructPrefix(original);
+            tag.putString(KEY_ORIGINAL_NAME, Component.Serializer.toJson(original));
             stack.setHoverName(Component.translatable("item.tinkersnewlife.construct.prefix").append(original));
         }
         return stack;
+    }
+
+    /**
+     * 把名字里**已有的"拟造·"前缀全部剥掉**，返回干净的原始名。
+     * <p>
+     * 显示名可能被反复拼前缀（旧存档、蓝本套蓝本、以及"名字留着但到期标记丢了"的异常路径），
+     * 所以统一在"要加前缀"的地方先剥干净再加一次 —— 这样无论调用多少次，名字里最多一个"拟造·"。
+     * 用循环剥离是为了一次洗净多层旧前缀（实测见过 8 层）。
+     */
+    public static Component stripConstructPrefix(Component name) {
+        if (name == null) return Component.empty();
+        String prefixStr = Component.translatable("item.tinkersnewlife.construct.prefix").getString();
+        String s = name.getString();
+        if (!prefixStr.isEmpty()) {
+            int guard = 0;
+            while (s.startsWith(prefixStr) && guard++ < 64) {
+                s = s.substring(prefixStr.length());
+            }
+        }
+        if (s.isEmpty()) s = name.getString();
+        return Component.literal(s).withStyle(name.getStyle());
+    }
+
+    /**
+     * 修正"已经带了一串前缀"的拟造物（旧存档遗留）：把显示名洗成单个前缀。
+     * 每 40 tick 扫一遍玩家背包/护甲/副手，只处理带拟造标记的栈（代价极小）。
+     */
+    public static void normalizeTempNames(ServerPlayer player) {
+        java.util.List<ItemStack> stacks = new java.util.ArrayList<>(42);
+        for (ItemStack s : player.getInventory().items) stacks.add(s);
+        for (ItemStack s : player.getInventory().armor) stacks.add(s);
+        for (ItemStack s : player.getInventory().offhand) stacks.add(s);
+        for (ItemStack s : stacks) {
+            if (s.isEmpty() || !isTemp(s)) continue;
+            if (com.mofengbaizhi.tinkersnewlife.content.item.ConstructedBlueprintItem.isBlueprint(s)) continue;
+            if (!s.hasCustomHoverName()) continue;
+            Component cleaned = stripConstructPrefix(s.getHoverName());
+            s.setHoverName(Component.translatable("item.tinkersnewlife.construct.prefix").append(cleaned));
+            s.getOrCreateTag().putString(KEY_ORIGINAL_NAME, Component.Serializer.toJson(cleaned));
+        }
     }
 
     /** 是否构筑术式拟造物（临时物标记；供领域·三重疾苦判定"手中拟造物"） */
