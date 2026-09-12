@@ -1,4 +1,5 @@
 {
+  "message.tinkersnewlife.domain.cleanup_after_borrow": "真赝相爱结束：已切回核心第一个术式，并停止所有持续术式",
   "message.tinkersnewlife.construct.loot_scan_done": "掉落来源扫描完成：%s 个物品（可自动应用 %s 个），建议文件已写入 %s",
   "screen.tinkersnewlife.construct.empty": "没有匹配的物品",
   "screen.tinkersnewlife.construct.cost_free_line": "拟造费用：咒力无限（免费）",

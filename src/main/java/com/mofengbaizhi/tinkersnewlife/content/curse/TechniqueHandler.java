@@ -208,6 +208,86 @@ public final class TechniqueHandler {
         CursePowerHandler.syncToClient(player);
     }
 
+    /**
+     * ⭐ <b>真赝相爱领域结束后的统一收尾</b>（修复"借来的无下限在领域结束后仍然开启"）：
+     * <ol>
+     *   <li><b>自动切换到身上咒力核心佩戴的第一个术式</b>（没有核心/核心上没有术式 → 清空选中）；</li>
+     *   <li><b>停止身上所有持续性/开关型术式</b>（不再区分"是否装在核心上"——领域里借来的状态一律收掉）。</li>
+     * </ol>
+     * 与 {@link #disableBorrow} 的区别：那个只关"核心上没有的"术式，而且依赖进入领域前记录的原选中；
+     * 本方法是不依赖任何历史状态的兜底收尾，因此对"切换顺序异常 / 领域内死亡 / 核心被换掉"等情况同样有效。
+     */
+    public static void resetAfterDomain(ServerPlayer player) {
+        if (player == null) return;
+        // 1) 选中：核心上的第一个术式
+        List<ModifierId> onCore = getTechniquesOnCore(player);
+        if (onCore != null && !onCore.isEmpty()) {
+            SELECTED.put(player.getUUID(), onCore.get(0));
+        } else {
+            SELECTED.remove(player.getUUID());
+        }
+        // 2) 停掉所有持续性术式
+        stopAllSustained(player);
+        BORROW_ORIGINAL.remove(player.getUUID());
+        CursePowerHandler.syncToClient(player);
+        if (player.isAlive()) {
+            player.displayClientMessage(Component.translatable(
+                    "message.tinkersnewlife.domain.cleanup_after_borrow"), true);
+        }
+    }
+
+    /**
+     * 停止该玩家身上<b>所有</b>持续性 / 开关型 / 蓄力型术式状态（逐一调用各术式自己的收尾方法，
+     * 全部幂等；与 {@link #closeBorrowedSustained} 不同，这里<b>不看术式是否在核心上</b>）。
+     */
+    public static void stopAllSustained(ServerPlayer player) {
+        if (player == null) return;
+        try {
+            // 无下限·无限（开关型）
+            if (com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangWuxianTechnique.isActive(player)) {
+                com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangWuxianTechnique.deactivate(player);
+            }
+            // 反重力机构·压力场
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.AntiGravityTechnique.cleanup(player);
+            // 构筑术式：无限弹药 / 拟造中
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.ConstructTechnique.cleanup(player);
+            // 咒言 / 咒灵
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpeechTechnique.cleanup(player);
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique.cleanup(player);
+            // 灶·开
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.FlameManipulationTechnique.cleanup(player);
+            // 雷电操术：幻兽琥珀解放 + 收尾
+            if (com.mofengbaizhi.tinkersnewlife.content.curse.technique.LightningManipulationTechnique.isReleased(player)) {
+                com.mofengbaizhi.tinkersnewlife.content.curse.technique.LightningManipulationTechnique.deactivate(player);
+            }
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.LightningManipulationTechnique.cleanup(player);
+            // 草木操术：蓄力 + 收尾
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.PlantManipulationTechnique.cancelCharge(player);
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.PlantManipulationTechnique.cleanup(player);
+            // 投影术式：自身眩晕状态
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.ProjectionTechnique.endStun(player);
+            // 傀儡操术：视角转移
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.PuppetTechnique.cleanup(player);
+            // 十划咒法：标记
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.TenDivideTechnique.cleanup(player);
+            // 无下限·苍/赫 与 宇宙子：蓄力
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangCangTechnique.cancelCharge(player);
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.YuchuziTechnique.cancelCharge(player);
+            // 黑鸟操术：操控结束、视角回归
+            if (com.mofengbaizhi.tinkersnewlife.content.curse.technique.BlackBirdTechnique.findActiveBird(player) != null) {
+                com.mofengbaizhi.tinkersnewlife.content.curse.technique.BlackBirdTechnique.sealRecall(player);
+            }
+            // 无为转变·转变外放开关（变形本体不强制解除：那涉及属性/生命还原，交给它自己的流程）
+            if (com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiHandler.isReversalActive(player)) {
+                com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiHandler.setReversal(player, false);
+            }
+            TinkersNewlife.LOGGER.debug("[术式] 已停止 {} 的所有持续性术式状态",
+                    player.getName().getString());
+        } catch (Throwable t) {
+            TinkersNewlife.LOGGER.warn("[术式] 收尾持续性术式时出现异常: {}", t.toString());
+        }
+    }
+
     /** 玩家核心上是否装有该术式 modifier */
     private static boolean hasOnCore(ServerPlayer player, ModifierId id) {
         List<ModifierId> onCore = getTechniquesOnCore(player);

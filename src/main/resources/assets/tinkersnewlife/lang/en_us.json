@@ -1,4 +1,5 @@
 {
+  "message.tinkersnewlife.domain.cleanup_after_borrow": "Zhenyan Xiangai ended: switched back to the core's first technique and stopped all sustained techniques",
   "message.tinkersnewlife.construct.loot_scan_done": "Loot source scan done: %s items (%s auto-eligible), suggestions written to %s",
   "screen.tinkersnewlife.construct.empty": "No matching items",
   "screen.tinkersnewlife.construct.cost_free_line": "Construct cost: infinite curse (free)",

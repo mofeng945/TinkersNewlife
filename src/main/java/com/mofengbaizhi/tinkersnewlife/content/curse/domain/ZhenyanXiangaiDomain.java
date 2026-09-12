@@ -78,9 +78,11 @@ public class ZhenyanXiangaiDomain extends BaseDomain {
 
     @Override
     public void onClose(ServerPlayer player, String messageKey) {
-        // 退出借术式模式：恢复进入领域前的选中术式
-        if (player != null && player.isAlive()) {
-            TechniqueHandler.disableBorrow(player);
-        }
+        if (player == null) return;
+        // 退出借术式模式：恢复进入领域前的选中术式（死亡时也要执行，否则会残留借用状态）
+        TechniqueHandler.disableBorrow(player);
+        // ⭐ 领域结束统一收尾（修复"借来的无下限在领域结束后仍保持开启"）：
+        //    自动切换到核心上的第一个术式，并停止身上所有持续性/开关型术式。
+        TechniqueHandler.resetAfterDomain(player);
     }
 }
