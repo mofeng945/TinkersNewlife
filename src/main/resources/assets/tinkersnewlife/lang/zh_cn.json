@@ -632,6 +632,7 @@
   "message.tinkersnewlife.gourd.released": "§d狱门疆被破坏，囚犯已释放！",
   "message.tinkersnewlife.gourd.unsealed": "§d你被释放了！",
   "message.tinkersnewlife.gourd.no_travel": "§c狱门疆维度中无法传送！",
+  "message.tinkersnewlife.gourd.void_escape": "§c狱门疆已毁——你被送出狱门疆维度（避免坠入虚空）",
   "entity.tinkersnewlife.momo_merchant": "武器商人·墨默",
   "item.tinkersnewlife.momo_spawn_egg": "墨默刷怪蛋",
   "screen.tinkersnewlife.momo.title": "武器商人 · 墨默",

@@ -173,7 +173,7 @@ public class DangYunPingXianDomain extends BaseDomain {
         java.util.ArrayDeque<net.minecraft.core.BlockPos> queue = new java.util.ArrayDeque<>();
         java.util.Set<net.minecraft.core.BlockPos> visited = new java.util.HashSet<>();
         for (BlockPos pos : waterBlocks) {
-            if (level.getBlockState(pos).is(Blocks.WATER)) {
+            if (isWaterBody(level.getBlockState(pos))) {
                 queue.add(pos);
                 visited.add(pos);
             }
@@ -187,13 +187,42 @@ public class DangYunPingXianDomain extends BaseDomain {
                 BlockPos next = pos.relative(dir);
                 if (visited.contains(next)) continue;
                 if (next.distSqr(BlockPos.containing(center)) > limitSq) continue;
-                if (level.getBlockState(next).is(Blocks.WATER)) {
+                if (isWaterBody(level.getBlockState(next))) {
                     visited.add(next);
                     queue.add(next);
                 }
             }
         }
+        // ⭐ 复核：气泡柱依赖「下方灵魂沙/岩浆块 + 上方有水」，邻居更新或流体回填可能
+        //    把刚清掉的位置重新变回水/气泡柱 → 再扫一遍，保证注的水一滴不留。
+        int leftover = 0;
+        for (BlockPos pos : waterBlocks) {          // 记录水位（含被破坏后又被灌成气泡柱的）
+            if (isWaterBody(level.getBlockState(pos))) {
+                level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
+                leftover++;
+            }
+        }
+        for (BlockPos pos : visited) {
+            if (isWaterBody(level.getBlockState(pos))) {
+                level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
+                leftover++;
+            }
+        }
+        if (leftover > 0) {
+            TinkersNewlife.LOGGER.info("[荡蕴平线] 复核清除残留水体（含气泡柱）{} 块", leftover);
+        }
         return visited;
+    }
+
+    /**
+     * 该方块是否属于「本次注入的水体」：真水方块 + <b>气泡柱</b>。
+     * <p>
+     * ⭐ 关键修复：灵魂沙/岩浆块上方的水会被原版自动转成 {@code minecraft:bubble_column}，
+     * 它<b>不是</b> {@code Blocks.WATER}——只按水方块判定时，气泡柱既不会被 BFS 遍历到、
+     * 也不会被删除，于是关领域后原地留下一整根气泡柱水源（看起来就是"水没清干净"）。
+     */
+    private static boolean isWaterBody(net.minecraft.world.level.block.state.BlockState state) {
+        return state.is(Blocks.WATER) || state.is(Blocks.BUBBLE_COLUMN);
     }
 
     /**
