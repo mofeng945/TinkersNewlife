@@ -1782,7 +1782,24 @@ public final class ConstructTechnique extends BaseTechnique {
             }
         }
 
-        /** 玩家放置拟造方块 → 记录到期时间，到期自动移除 */
+        /**
+         * 玩家用拟造物"改动世界" → 记录到期时间。到期行为分两种：
+         * <ul>
+         *   <li><b>凭空放下一个新方块</b>（原位置是空气）→ 整块收回（原行为）。</li>
+         *   <li><b>只改了宿主方块的状态</b>（末影之眼塞进传送门框架、锄头翻地、打火石点火、斧头去皮……）→
+         *       到期把<b>旧状态撤回</b>，<b>绝不删宿主方块</b>。</li>
+         * </ul>
+         *
+         * <p>⭐ 这里的坑：{@code ItemStack#useOn} → {@code ForgeHooks.onPlaceItemIntoWorld} 会打开
+         * {@code Level#captureBlockSnapshots}，于是<b>任何 useOn 内部的 setBlock 都会被当成一次"放置"</b>
+         * 并触发本事件。末影之眼就是典型：它把传送门框架的 {@code has_eye} 从 false 改成 true，
+         * 快照里的"被替换方块"是<b>同一个传送门框架</b>。老代码无条件按"放下的方块"记录，
+         * 到期时 {@code current.getBlock() == 记录方块} 成立（还是那个框架），于是把<b>框架本身</b>炸成空气。
+         * 所以必须区分"新方块"与"改状态"，后者要记下被替换掉的旧状态。
+         *
+         * <p>另外 {@code EntityMultiPlaceEvent}（门/床/高植物一次改两格）也走这里，
+         * 每个快照都要记，否则另一半会永远留着。
+         */
         @net.minecraftforge.eventbus.api.SubscribeEvent
         public static void onBlockPlaced(net.minecraftforge.event.level.BlockEvent.EntityPlaceEvent event) {
             if (event.getLevel().isClientSide()) return;
@@ -1795,8 +1812,21 @@ public final class ConstructTechnique extends BaseTechnique {
                 until = held.hasTag() ? held.getTag().getLong(KEY_TEMP_UNTIL) : 0;
             }
             if (until <= 0) return;
-            // 记录该位置与该方块形态，到期后仅当仍是该方块时移除（避免误删被替换的方块）
-            PLACED_TEMPS.add(new PlacedTempBlock(level, event.getPos(), event.getPlacedBlock(), until));
+            // 多方块放置：逐个快照记录（每格各自带"放下的状态 + 被替换的旧状态"）
+            if (event instanceof net.minecraftforge.event.level.BlockEvent.EntityMultiPlaceEvent multi) {
+                var snaps = multi.getReplacedBlockSnapshots();
+                if (snaps != null && !snaps.isEmpty()) {
+                    for (var snap : snaps) {
+                        if (snap == null) continue;
+                        PLACED_TEMPS.add(new PlacedTempBlock(level, snap.getPos(),
+                                snap.getCurrentBlock(), snap.getReplacedBlock(), until));
+                    }
+                    return;
+                }
+            }
+            net.minecraftforge.common.util.BlockSnapshot snap = event.getBlockSnapshot();
+            PLACED_TEMPS.add(new PlacedTempBlock(level, event.getPos(), event.getPlacedBlock(),
+                    snap == null ? null : snap.getReplacedBlock(), until));
         }
 
         /**
@@ -1929,16 +1959,26 @@ public final class ConstructTechnique extends BaseTechnique {
                 if (level == null || !level.isLoaded(p.pos)) continue;
                 long now = level.getGameTime();
                 if (now < p.expireUntil) continue;
-                // 到期：仅当该位置仍旧是当初放置的方块时移除
+                // 到期：仅当该位置仍旧是当初记录的那个方块时才动它（避免误删被替换的方块）
                 BlockState current = level.getBlockState(p.pos);
                 if (current.getBlock() == p.state.getBlock()) {
-                    level.levelEvent(2001, p.pos, net.minecraft.world.level.block.Block.getId(current));
-                    // ⭐ 若方块是容器（箱子/潜影盒等），先把内部物品弹出，避免被直接移除吞掉
-                    ejectContainerContents(level, p.pos);
-                    level.setBlock(p.pos, Blocks.AIR.defaultBlockState(), 3);
-                    level.sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE,
-                            p.pos.getX() + 0.5, p.pos.getY() + 0.5, p.pos.getZ() + 0.5, 10,
-                            0.3, 0.3, 0.3, 0.02);
+                    if (p.previousState == null || p.previousState.isAir()) {
+                        // ① 当初是"凭空放下一个新方块" → 整块收回
+                        level.levelEvent(2001, p.pos, net.minecraft.world.level.block.Block.getId(current));
+                        // ⭐ 若方块是容器（箱子/潜影盒等），先把内部物品弹出，避免被直接移除吞掉
+                        ejectContainerContents(level, p.pos);
+                        level.setBlock(p.pos, Blocks.AIR.defaultBlockState(), 3);
+                        level.sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE,
+                                p.pos.getX() + 0.5, p.pos.getY() + 0.5, p.pos.getZ() + 0.5, 10,
+                                0.3, 0.3, 0.3, 0.02);
+                    } else if (current == p.state) {
+                        // ② 当初只是"改了宿主方块的状态"（末影之眼塞框架 / 翻地 / 点火 / 去皮）→
+                        //    只把旧状态撤回，宿主方块原地保留（末影之眼到期 = 框架恢复成"没镶眼"）
+                        level.setBlock(p.pos, p.previousState, 3);
+                        level.sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE,
+                                p.pos.getX() + 0.5, p.pos.getY() + 0.7, p.pos.getZ() + 0.5, 6,
+                                0.25, 0.25, 0.25, 0.02);
+                    }
                 }
                 it.remove();
             }
@@ -2248,13 +2288,21 @@ public final class ConstructTechnique extends BaseTechnique {
     private static final class PlacedTempBlock {
         final ServerLevel level;
         final BlockPos pos;
+        /** 拟造物"放下"之后的方块状态 */
         final BlockState state;
+        /**
+         * 放下之前的旧状态（null 当作空气）。
+         * <p>非空气 → 说明拟造物只是"改了宿主方块的状态"（末影之眼 → 传送门框架 has_eye、
+         * 锄头 → 耕地、打火石 → 火……），到期只把旧状态撤回，<b>不能删宿主方块</b>。
+         */
+        final BlockState previousState;
         final long expireUntil;
 
-        PlacedTempBlock(ServerLevel level, BlockPos pos, BlockState state, long expireUntil) {
+        PlacedTempBlock(ServerLevel level, BlockPos pos, BlockState state, BlockState previousState, long expireUntil) {
             this.level = level;
             this.pos = pos.immutable();
             this.state = state;
+            this.previousState = previousState;
             this.expireUntil = expireUntil;
         }
     }
