@@ -517,8 +517,18 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         return null;
     }
 
-    /** 反射读取 Goety 仆从（IServant/IOwned 实现）的主人实体 */
+    /**
+     * Goety 仆从（IServant/IOwned 实现）的主人实体。
+     * <p>
+     * ⭐ 先确认"它真的是 Goety 仆从"再去读主人：以前只按"方法名带 owner/master 且返回 LivingEntity"
+     * 盲扫所有公开方法，于是 {@code TamableAnimal#getOwner()}（以及式神自己 {@code getOwner} 的桥接方法）
+     * 都会被当成一条"主人链"——结果自己的宠物/式神被算成同队，未调伏式神连主人都打不动。
+     */
     private static LivingEntity goetyOwnerOf(LivingEntity entity) {
+        if (!com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isGoetyServant(entity)) return null;
+        LivingEntity viaApi = com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.getServantOwner(entity);
+        if (viaApi != null) return viaApi;
+        // 兜底：仍按方法名找，但只对"确实是仆从"的实体生效
         try {
             for (java.lang.reflect.Method m : entity.getClass().getMethods()) {
                 if (m.getParameterCount() != 0 || m.getReturnType() != LivingEntity.class) continue;
@@ -565,6 +575,13 @@ public final class CursedSpiritTechnique extends BaseTechnique {
      */
     public static boolean isSpiritTeam(LivingEntity target, ServerPlayer owner) {
         if (target == null || owner == null) return false;
+        // ⭐ 十影式神不是 Goety 仆从：只有「已调伏 + 同主人」才算同队。
+        //   未调伏（调伏战中）是敌人——主人必须能打死它，所以绝不能因为带 ownerId 就判成友军。
+        //   （下面按方法名反射找主人的 goetyOwnerOf 会把 TamableAnimal#getOwner()/式神自己的
+        //     getOwner 桥接方法误当"Goety 主人链"，玉犬这类 TamableAnimal 式神就会被算成同队。）
+        if (target instanceof com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiMob sm) {
+            return sm.isTamed() && owner.getUUID().equals(sm.getOwnerId());
+        }
         LivingEntity cur = target;
         for (int depth = 0; depth < 6; depth++) {
             if (cur == owner) return true;

@@ -102,10 +102,11 @@ public class ZiBiYuanDunGuoDomain extends BaseDomain {
                     continue;
                 }
             } else if (e instanceof Mob mob) {
-                // 施术者同队（自己的咒灵/守卫）或自己的十影式神不转变
+                // 施术者同队（自己的咒灵/守卫）或自己"已调伏"的十影式神不转变
+                //（未调伏式神是敌人，照转不误）
                 if (CursedSpiritTechnique.isSpiritTeam(mob, player)) continue;
                 if (e instanceof com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiMob sm
-                        && player.getUUID().equals(sm.getOwnerId())) {
+                        && sm.isTamed() && player.getUUID().equals(sm.getOwnerId())) {
                     continue;
                 }
             } else {

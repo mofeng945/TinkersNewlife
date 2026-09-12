@@ -338,7 +338,7 @@ public class DangYunPingXianDomain extends BaseDomain {
         return best;
     }
 
-    /** 是否属于施术者阵营（本人/驯养宠物/式神/咒灵/守护/本领域溺尸） */
+    /** 是否属于施术者阵营（本人/驯养宠物/已调伏式神/咒灵/守护/本领域溺尸） */
     private static boolean isFriendlyTo(ServerPlayer owner, LivingEntity e) {
         if (e == owner) return true;
         if (e instanceof Player) return false;
@@ -349,8 +349,9 @@ public class DangYunPingXianDomain extends BaseDomain {
             return true;
         }
         if (e instanceof TamableAnimal tame && owner.getUUID().equals(tame.getOwnerUUID())) return true;
+        // ⭐ 只有"已调伏"的式神才算己方：未调伏式神是敌人（调伏战中主人必须能打死它）
         if (e instanceof com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiMob sm
-                && owner.getUUID().equals(sm.getOwnerId())) return true;
+                && sm.isTamed() && owner.getUUID().equals(sm.getOwnerId())) return true;
         if (tag.contains(com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiHandler.KEY_GUARD_OWNER)
                 && owner.getUUID().equals(tag.getUUID(
                 com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiHandler.KEY_GUARD_OWNER))) {

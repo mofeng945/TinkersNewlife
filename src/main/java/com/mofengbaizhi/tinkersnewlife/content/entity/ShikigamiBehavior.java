@@ -423,9 +423,12 @@ public final class ShikigamiBehavior {
         }
     }
 
-    /** AoE 目标过滤：排除自身、主人、主人咒灵操术同队、同主人已调伏式神（避免打到自己人） */
+    /** AoE 目标过滤：排除自身、<b>已调伏时</b>的主人、主人咒灵操术同队、同主人已调伏式神（避免打到自己人） */
     private static boolean isFriendly(Mob self, ShikigamiMob info, LivingEntity e) {
-        if (e == self || e == info.getOwner()) return true;
+        if (e == self) return true;
+        // ⭐ 主人只有在式神"已调伏"时才算友军：未调伏（调伏战中）它同时攻击主人与锁定目标，
+        //    AoE（踏压/喷水/闪电）必须也能打到主人，否则调伏战只能靠近战磨。
+        if (e == info.getOwner()) return info.getState().tamed;
         if (e instanceof ShikigamiMob other) {
             ShikigamiState os = other.getState();
             if (os.tamed && os.ownerId != null && os.ownerId.equals(info.getState().ownerId)) return true;

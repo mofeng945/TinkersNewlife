@@ -256,4 +256,83 @@ public final class ShikigamiHandler {
         TinkersNewlife.LOGGER.info("[式神] 玩家 {} 死亡，场上 {} 只未回收式神已直接清除",
                 sp.getName().getString(), active.size());
     }
+
+    // ============================================================
+    //  ⭐ 调伏战保护：主人打"未调伏式神"永远算数
+    // ============================================================
+
+    /**
+     * 未调伏的式神在数据上同样带着 {@code ownerId}，于是特别容易被各式"友军保护"顺手豁免掉：
+     * 领域/AoE 的阵营判定（{@code isFriendlyTo}）、
+     * {@code TamableAnimal#getOwner()} 这类"按方法名反射找主人"的兼容代码、
+     * 以及<b>整合包里其它模组</b>的同类逻辑，都可能把"主人打自己的未调伏式神"变成 0 伤害。
+     * 而调伏的唯一途径就是<b>击败它</b>——这一卡，调伏战就彻底打不下去了。
+     *
+     * <p>这里在<b>最低优先级</b>兜底（此时其它监听器都已跑完）：
+     * 只要是"主人打自己的未调伏式神"，就撤销任何取消；
+     * 若伤害已在事件阶段被抹成 0，则恢复到攻击者的攻击力（至少 1）。
+     *
+     * <p>例外：<b>攻击者自身</b>被禁止攻击的情况<b>不</b>撤销——投射咒法「静止」罚站、
+     * 伏诛赐死「亡灵有罪」攻击力归零，都是对攻击者的惩罚，不该被调伏战绕过。
+     */
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
+    public static void onOwnerAttackUntamedShikigami(
+            net.minecraftforge.event.entity.living.LivingAttackEvent event) {
+        if (event.getEntity().level().isClientSide) return;
+        ServerPlayer owner = untamedShikigamiOwnerAttacker(event.getEntity(), event.getSource());
+        if (owner == null) return;
+        if (event.isCanceled()) {
+            event.setCanceled(false);
+            TinkersNewlife.LOGGER.warn("[调伏战] 撤销了一次对未调伏式神（{}）的攻击拦截：攻击者 {} —— "
+                            + "说明有「友军保护」把未调伏式神算成了友军，请把这条日志反馈给作者",
+                    net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(event.getEntity().getType()),
+                    owner.getName().getString());
+        }
+    }
+
+    /**
+     * 同上，但处理"事件阶段伤害被抹成 0"的情况（{@code LivingHurtEvent}/{@code LivingDamageEvent}
+     * 都可能被别的模组把 amount 改成 0）：恢复成攻击者的攻击力（至少 1），保证调伏战打得动。
+     */
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
+    public static void onOwnerHurtUntamedShikigami(
+            net.minecraftforge.event.entity.living.LivingHurtEvent event) {
+        if (event.getEntity().level().isClientSide) return;
+        ServerPlayer owner = untamedShikigamiOwnerAttacker(event.getEntity(), event.getSource());
+        if (owner == null || event.getAmount() > 0.0F) return;
+        float attack = (float) owner.getAttributeValue(
+                net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        event.setAmount(Math.max(1.0F, attack));
+        TinkersNewlife.LOGGER.warn("[调伏战] 未调伏式神的伤害在受伤事件里被抹成 0，已按攻击力恢复：攻击者 {}",
+                owner.getName().getString());
+    }
+
+    /** 同上，兜住 {@code LivingDamageEvent}（最后一关）里被抹成 0 的伤害 */
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
+    public static void onOwnerDamageUntamedShikigami(
+            net.minecraftforge.event.entity.living.LivingDamageEvent event) {
+        if (event.getEntity().level().isClientSide) return;
+        ServerPlayer owner = untamedShikigamiOwnerAttacker(event.getEntity(), event.getSource());
+        if (owner == null || event.getAmount() > 0.0F) return;
+        float attack = (float) owner.getAttributeValue(
+                net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        event.setAmount(Math.max(1.0F, attack));
+    }
+
+    /** "主人打自己的未调伏式神"则返回该主人；其它情况（含攻击者自身被限制）返回 null */
+    @javax.annotation.Nullable
+    private static ServerPlayer untamedShikigamiOwnerAttacker(
+            LivingEntity victim, net.minecraft.world.damagesource.DamageSource source) {
+        if (!(victim instanceof ShikigamiMob sm) || sm.isTamed()) return null;
+        if (sm.getOwnerId() == null) return null;
+        if (!(source.getEntity() instanceof ServerPlayer sp)) return null;
+        if (!sm.getOwnerId().equals(sp.getUUID())) return null;
+        // 投射咒法·静止：攻击者被罚站（正常走 AttackEntityEvent，这里只做防御性排除）
+        if (com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.isStunned(sp)) return null;
+        // 伏诛赐死·亡灵有罪：攻击力归零是对攻击者的惩罚
+        Long zeroUntil = com.mofengbaizhi.tinkersnewlife.content.curse.domain.ExecutionDomain
+                .ATK_ZERO_UNTIL.get(sp.getUUID());
+        if (zeroUntil != null && sp.getServer() != null && sp.getServer().getTickCount() < zeroUntil) return null;
+        return sp;
+    }
 }
