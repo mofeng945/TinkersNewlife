@@ -1193,7 +1193,15 @@ public final class ConstructTechnique extends BaseTechnique {
             "*:*_shard", "*:*_shards",        // 矿碎片
             "*:*_fragment", "*:*_fragments",  // 矿碎片（另一种写法）
             "*:*_dust",                       // 未被 #forge:dusts 收录的矿粉
-            "*:*_nugget"                      // 未被 #forge:nuggets 收录的矿粒
+            "*:*_nugget",                     // 未被 #forge:nuggets 收录的矿粒
+            // ---- 流体容器：桶 / 药水瓶 / 流体瓶（含有内容物的瓶装流体）----
+            "#forge:buckets", "#c:buckets",   // 通用桶标签（存在则生效）
+            "*:*_bucket", "*:bucket_*",       // 各类命名习惯的桶（molten_iron_bucket / bucket_ethanol …）
+            "minecraft:potion", "minecraft:splash_potion", "minecraft:lingering_potion",
+            "minecraft:glass_bottle",         // 空瓶
+            "*:*_potion", "*:potion_*",       // 模组药水
+            "*:*_bottle", "*:bottle_*",       // 流体瓶（blood_bottle / slime_bottle / lightning_bottle …）
+            "#forge:potion", "#c:potion"      // 药水标签
     );
 
     private static boolean useDefaultBlacklist() {
