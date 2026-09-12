@@ -136,6 +136,11 @@ public class SilentGloveInteractionHandler {
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         UUID uuid = event.getEntity().getUUID();
         DarkSilentManager.removePlayer(uuid);
+        // ⭐ 登出/崩溃/服务器重启会丢掉内存里的"借出记录"，武器却还在玩家身上（带着手套借出标记）。
+        //    先按标记收回库，再清理旧记录——否则那把武器永远留在手上/背包里回不去。
+        if (event.getEntity() instanceof ServerPlayer sp) {
+            GloveWeaponStorage.recoverOrphanedTools(sp);
+        }
         GloveWeaponStorage.removePlayerData(uuid);
     }
 

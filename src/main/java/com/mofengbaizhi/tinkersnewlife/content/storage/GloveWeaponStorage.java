@@ -106,17 +106,32 @@ public class GloveWeaponStorage {
         ItemStack taken = vault.extractItem(slot, original.getCount(), false);
         if (taken.isEmpty()) return ItemStack.EMPTY;
 
-        taken.getOrCreateTag().putBoolean("from_silent_glove", true);
+        taken.getOrCreateTag().putBoolean(TAG_FROM_GLOVE, true);
 
         PENDING_TOOLS.put(playerId, new PendingTool(slot, original, playerId));
         return taken;
+    }
+
+    /**
+     * 掏出武器时打的临时标记：<b>这是"该物品正被手套借出"的唯一可靠凭据</b>。
+     * <p>
+     * ⭐ 不能只靠"NBT 全等"找回借出的武器：工具体系会在使用中改写 NBT——
+     * 除耐久（{@code Damage}）外，匠魂还有 {@code tic_volatile_data} / {@code tic_persistent_data}
+     * （特性计数、法术状态等），本模组不少特性也在上面记数。只要玩家挥了一下，
+     * 全等匹配就失效 → 找不到武器 → 永远回不了库（表现：武器留在手上 / 最后被塞进背包）。
+     */
+    public static final String TAG_FROM_GLOVE = "from_silent_glove";
+
+    /** 该物品是否带着"手套借出"标记 */
+    public static boolean isDrawnFromGlove(ItemStack stack) {
+        return !stack.isEmpty() && stack.hasTag() && stack.getTag().getBoolean(TAG_FROM_GLOVE);
     }
 
     public static boolean returnTool(Player player, int slot, ItemStack stack) {
         if (stack.isEmpty()) return true;
         if (DarkSilentManager.isActive(player.getUUID())) return false;
 
-        if (stack.hasTag()) stack.getTag().remove("from_silent_glove");
+        if (stack.hasTag()) stack.getTag().remove(TAG_FROM_GLOVE);
 
         // ⭐ 统一查找佩戴的手套（GloveHelper）
         ItemStack gloveStack = GloveHelper.findWornGlove(player);
@@ -125,33 +140,30 @@ public class GloveWeaponStorage {
         SilentGloveHandler vault = SilentGloveItem.getHandler(gloveStack);
         if (vault == null) return false;
 
-        ItemStack remaining = vault.insertItem(slot, stack, false);
+        // 1) 先回原槽位（该槽位此时通常已空）
+        ItemStack remaining = stack;
+        if (slot >= 0 && slot < vault.getSlots()) {
+            remaining = vault.insertItem(slot, stack, false);
+        }
+        // ⭐ 2) 其余槽位**逐个尝试**：insertItem 会自己叠放并把放不下的余量返回。
+        //    旧实现只在"空槽"里找 → 库位被占但仍有可叠放槽位时，武器会被判成"库已满"丢进背包
+        //    （报告现象："放在第一格的物品不会被正常回收"）。
+        for (int i = 0; i < vault.getSlots() && !remaining.isEmpty(); i++) {
+            if (i == slot) continue;
+            remaining = vault.insertItem(i, remaining, false);
+        }
+
         if (remaining.isEmpty()) {
             vault.save();
             DarkSilentManager.checkAndTriggerOnStored(player, stack);
             return true;
         }
 
-        for (int i = 0; i < vault.getSlots(); i++) {
-            if (i == slot) continue;
-            if (vault.getStackInSlot(i).isEmpty()) {
-                remaining = vault.insertItem(i, remaining, false);
-                if (remaining.isEmpty()) {
-                    vault.save();
-                    DarkSilentManager.checkAndTriggerOnStored(player, stack);
-                    return true;
-                }
-            }
-        }
-
-        if (!remaining.isEmpty()) {
-            vault.save();
-            ItemHandlerHelper.giveItemToPlayer(player, remaining);
-            LOGGER.warn("手套空间奇点库已满，工具 {} 已返还到玩家背包",
-                    remaining.getDisplayName().getString());
-            return true;
-        }
-        return false;
+        vault.save();
+        ItemHandlerHelper.giveItemToPlayer(player, remaining);
+        LOGGER.warn("手套空间奇点库已满，工具 {} 已返还到玩家背包",
+                remaining.getDisplayName().getString());
+        return true;
     }
 
     /**
@@ -198,7 +210,7 @@ public class GloveWeaponStorage {
 
         ItemStack remaining = stack.copy();
         // ⭐ 移除掏出时的临时标记，保证库中物品 NBT 干净（不干扰后续匹配）
-        if (remaining.hasTag()) remaining.getTag().remove("from_silent_glove");
+        if (remaining.hasTag()) remaining.getTag().remove(TAG_FROM_GLOVE);
         for (int i = 0; i < vault.getSlots(); i++) {
             if (remaining.isEmpty()) break;
             remaining = vault.insertItem(i, remaining, false);
@@ -288,6 +300,8 @@ public class GloveWeaponStorage {
     public static void tickScan(Player player) {
         if (player == null) return;
         UUID playerId = player.getUUID();
+        // ⭐ 顺便找回"借出记录已丢"的孤儿武器（重登/重启/匹配失败留下的）
+        recoverOrphanedTools(player);
         List<PendingRecovery> recoveries = PENDING_RECOVERIES.get(playerId);
         if (recoveries == null || recoveries.isEmpty()) return;
 
@@ -336,22 +350,79 @@ public class GloveWeaponStorage {
         }, 20, TimeUnit.SECONDS);
     }
 
+    /**
+     * 从背包里找出"借出的那把武器"并取走。
+     * <p>
+     * ⭐ 两级匹配：**先认"手套借出"标记**（唯一可靠），再退回"NBT 全等"（忽略耐久）。
+     * 只用后者时，玩家一旦挥过刀（耐久/匠魂 volatile、persistent 数据都会变）就再也找不回来。
+     */
     private static ItemStack findItemInInventory(Player player, ItemStack target) {
         ItemStack main = player.getMainHandItem();
+        if (isDrawnFromGlove(main)) {
+            ItemStack found = main.copy();
+            player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+            return found;
+        }
         if (isSameFixedItem(main, target)) {
             ItemStack found = main.copy();
             player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
             return found;
         }
+        int taggedIndex = -1;
+        ItemStack tagged = ItemStack.EMPTY;
+        int matchedIndex = -1;
+        ItemStack matched = ItemStack.EMPTY;
         for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
             ItemStack invStack = player.getInventory().getItem(i);
-            if (isSameFixedItem(invStack, target)) {
-                ItemStack found = invStack.copy();
-                player.getInventory().removeItem(i, invStack.getCount());
-                return found;
+            if (invStack.isEmpty()) continue;
+            if (taggedIndex < 0 && isDrawnFromGlove(invStack)) {
+                tagged = invStack.copy();
+                taggedIndex = i;
+            } else if (matchedIndex < 0 && isSameFixedItem(invStack, target)) {
+                matched = invStack.copy();
+                matchedIndex = i;
             }
+            if (taggedIndex >= 0 && matchedIndex >= 0) break;
+        }
+        if (taggedIndex >= 0) {
+            player.getInventory().removeItem(taggedIndex, tagged.getCount());
+            return tagged;
+        }
+        if (matchedIndex >= 0) {
+            player.getInventory().removeItem(matchedIndex, matched.getCount());
+            return matched;
         }
         return ItemStack.EMPTY;
+    }
+
+    /**
+     * 找回"借出后没能归还"的武器（孤儿回收）。
+     * <p>
+     * 触发场景：登出/服务器重启把 {@code PENDING_TOOLS} 清空了（内存态），
+     * 而武器还带在玩家身上；或归还时匹配失败被当成"待回收"。这些物品身上仍带
+     * {@link #TAG_FROM_GLOVE} 标记，直接据此收进库里，避免"武器一直留在手上/背包里"。
+     * <p>
+     * 注意：正在借出中的那把（{@code PENDING_TOOLS} 有记录）不动——那是玩家正在用的。
+     */
+    public static void recoverOrphanedTools(Player player) {
+        if (player == null || player.level().isClientSide) return;
+        UUID playerId = player.getUUID();
+        if (DarkSilentManager.isActive(playerId)) return;
+        if (PENDING_TOOLS.containsKey(playerId)) return;   // 正在用，别抢
+
+        ItemStack gloveStack = GloveHelper.findWornGlove(player);
+        if (gloveStack.isEmpty()) return;
+        if (SilentGloveItem.getHandler(gloveStack) == null) return;
+
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            ItemStack st = player.getInventory().getItem(i);
+            if (!isDrawnFromGlove(st)) continue;
+            ItemStack found = st.copy();
+            player.getInventory().removeItem(i, found.getCount());
+            boolean ok = returnTool(player, -1, found);
+            LOGGER.info("[噤默手套] 孤儿回收：{} 已{}", found.getDisplayName().getString(),
+                    ok ? "归还空间奇点库" : "归还失败，已留在背包");
+        }
     }
 
     /**
@@ -367,11 +438,11 @@ public class GloveWeaponStorage {
         ItemStack cb = b.copy();
         if (ca.getTag() != null) {
             ca.getTag().remove("Damage");
-            ca.getTag().remove("from_silent_glove");
+            ca.getTag().remove(TAG_FROM_GLOVE);
         }
         if (cb.getTag() != null) {
             cb.getTag().remove("Damage");
-            cb.getTag().remove("from_silent_glove");
+            cb.getTag().remove(TAG_FROM_GLOVE);
         }
         return ItemStack.isSameItemSameTags(ca, cb);
     }
