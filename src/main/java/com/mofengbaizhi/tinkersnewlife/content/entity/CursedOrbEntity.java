@@ -63,6 +63,8 @@ public class CursedOrbEntity extends Entity {
     private Vec3 dir = Vec3.ZERO;
     /** 已飞行的累计距离（格） */
     private double travelled = 0;
+    /** 诊断：本球是否已打过一条"范围内实体数/拉扯数"日志 */
+    private boolean diagLogged = false;
 
     public CursedOrbEntity(EntityType<?> type, Level level) {
         super(type, level);
@@ -138,15 +140,28 @@ public class CursedOrbEntity extends Entity {
                 AABB.ofSize(position(), FORCE_RADIUS * 2, FORCE_RADIUS * 2, FORCE_RADIUS * 2),
                 e -> e.isAlive() && e != caster && !e.isSpectator());
         Vec3 c = position();
+        int pulled = 0;
         for (LivingEntity e : entities) {
             double d = Math.sqrt(e.distanceToSqr(this));
             if (d > FORCE_RADIUS || d < 1e-4) continue;
             // 拉向球心：速度朝向球心，强度随距离增大（近处轻、远处狠，符合"越远越被拽"的手感）
             double strength = Math.min(0.55, 0.22 + 0.03 * d);
-            Vec3 pull = c.subtract(e.position()).normalize().scale(strength);
-            e.setDeltaMovement(e.getDeltaMovement().add(pull).scale(0.9));
-            // ⭐ 玩家目标：服务端改的速度会被客户端自己上报的移动覆盖 → 标记 hurtMarked 强制同步一次
+            Vec3 dir = c.subtract(e.position()).normalize();
+            // ① 速度：给一个朝向球心的速度分量（受重力/摩擦/自身 AI 影响）
+            e.setDeltaMovement(e.getDeltaMovement().add(dir.scale(strength * 0.6)).scale(0.9));
+            // ② ⭐ 直接位移兜底：单位自己的 AI（或别的模组每 tick 覆写速度）会把①吃掉，
+            //    所以再直接推一格——这样"被吸住"是必然发生的，不依赖速度是否被尊重。
+            e.move(net.minecraft.world.entity.MoverType.SELF, dir.scale(strength * 0.5));
+            // ③ 玩家目标：服务端改的速度会被客户端自己上报的移动覆盖 → 标记 hurtMarked 强制同步一次
             e.hurtMarked = true;
+            pulled++;
+        }
+        // ⭐ 诊断：每个球只打一条，便于确认"范围内有没有实体 / 到底拉没拉"
+        if (!diagLogged && server.getGameTime() % 5 == 0) {
+            diagLogged = true;
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[苍] 球心=({}, {}, {}) 半径{}格内活体={} 只，已拉扯={} 只",
+                    String.format("%.1f", getX()), String.format("%.1f", getY()), String.format("%.1f", getZ()),
+                    (int) FORCE_RADIUS, entities.size(), pulled);
         }
         // 实体接触球心 → 爆炸
         for (LivingEntity e : entities) {
