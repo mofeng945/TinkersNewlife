@@ -7,6 +7,7 @@ import com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenConstructScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.ItemTags;
@@ -23,6 +24,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ProjectileWeaponItem;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -75,6 +77,12 @@ public final class ConstructTechnique extends BaseTechnique {
 
     /** 已放置在地上的拟造方块（到期自动消失）；服务端主线程访问 */
     private static final List<PlacedTempBlock> PLACED_TEMPS = new ArrayList<>();
+
+    /** 被右键"安装"的拟造部件（AE2 ME 输入接口等非方块形态，到期摘除）；服务端主线程访问 */
+    private static final List<PlacedTempPart> PLACED_TEMP_PARTS = new ArrayList<>();
+
+    /** 扫描容器时用的随机数（挑玩家用） */
+    private static final java.util.Random RANDOM = new java.util.Random();
 
     /** 掉落地上的拟造物实体（到期自动消散）；服务端 tick 线程访问 */
     private static final Set<net.minecraft.world.entity.item.ItemEntity> TRACKED_TEMP_ITEMS =
@@ -747,14 +755,42 @@ public final class ConstructTechnique extends BaseTechnique {
         return new ItemStack(item).getHoverName();
     }
 
-    /** 物品是否至少是一个合成配方的产物（含 shaping/shapeless/special 的输出） */
+    /**
+     * 物品是否有"可产出它的配方"——<b>覆盖所有配方类型</b>（工作台/熔炉/高炉/烟熏/营火/切石机/锻造台，
+     * 以及模组自定义的配方类型），不再是只看 {@code RecipeType.CRAFTING}。
+     * 之前只查工作台配方，导致"熔炼出的锭、切石出的石砖"之类物品被判成"无配方"而无法拟造。
+     */
     public static boolean hasCraftingRecipe(ServerPlayer player, Item item) {
-        return player.serverLevel().getRecipeManager().getAllRecipesFor(
-                        net.minecraft.world.item.crafting.RecipeType.CRAFTING).stream()
-                .anyMatch(r -> {
-                    ItemStack out = r.getResultItem(player.serverLevel().registryAccess());
-                    return !out.isEmpty() && out.is(item);
-                });
+        return constructibleOutputs(player.serverLevel()).contains(item);
+    }
+
+    /** 有配方可产出的物品集合缓存（配方数量变化时重建，即 /reload 后自动失效） */
+    private static net.minecraft.world.item.crafting.RecipeManager cachedRecipeManager;
+    private static int cachedRecipeCount = -1;
+    private static java.util.Set<Item> cachedOutputs = java.util.Set.of();
+
+    private static java.util.Set<Item> constructibleOutputs(net.minecraft.server.level.ServerLevel level) {
+        net.minecraft.world.item.crafting.RecipeManager manager = level.getRecipeManager();
+        java.util.Collection<net.minecraft.world.item.crafting.Recipe<?>> all = manager.getRecipes();
+        int count = all.size();
+        if (manager == cachedRecipeManager && count == cachedRecipeCount) return cachedOutputs;
+
+        java.util.Set<Item> set = new java.util.HashSet<>();
+        var access = level.registryAccess();
+        for (net.minecraft.world.item.crafting.Recipe<?> recipe : all) {
+            try {
+                ItemStack out = recipe.getResultItem(access);
+                if (!out.isEmpty() && out.getItem() != Items.AIR) {
+                    set.add(out.getItem());
+                }
+            } catch (Throwable ignored) {
+                // 少数特殊配方（CustomRecipe 等）取产物需要容器上下文 → 跳过
+            }
+        }
+        cachedRecipeManager = manager;
+        cachedRecipeCount = count;
+        cachedOutputs = set;
+        return set;
     }
 
     // ============================================================
@@ -816,7 +852,11 @@ public final class ConstructTechnique extends BaseTechnique {
             if (maxDamage > 0) {
                 score += Math.min(20.0, maxDamage / 300.0);
             }
-            double cost = Math.max(3.0, Math.ceil(score * (1.0 - affinity / 100.0) * (1.0 + output * 0.2)));
+            // ⭐ 亲和减价<b>最多 75%</b>：亲和高时可以叠到 100 以上（多件饰品累加），
+            //    原式 (1 - 亲和/100) 会变成 ≤0 → 所有物品都被压到下限 3 咒力，
+            //    表现就是"不管拟造什么都只花 3 咒力"。
+            double affinityMul = Math.max(0.25, 1.0 - Math.max(0, affinity) / 100.0);
+            double cost = Math.max(3.0, Math.ceil(score * affinityMul * (1.0 + output * 0.2)));
             return (int) Math.min(Integer.MAX_VALUE, cost);
         } catch (Throwable t) {
             // GUI 逐行预览时个别异常物品不阻塞整个界面
@@ -915,6 +955,34 @@ public final class ConstructTechnique extends BaseTechnique {
             PLACED_TEMPS.add(new PlacedTempBlock(level, event.getPos(), event.getPlacedBlock(), until));
         }
 
+        /**
+         * ⭐ 兜底记录：右键用拟造物"安装"的东西<b>不会</b>触发 {@code EntityPlaceEvent}
+         * （典型例子：AE2 的 ME 输入接口 / 各种线缆部件 —— 它们不是方块，而是挂在方块上的 part，
+         * 由模组自己的网络包处理放置）。这里在右键方块时就把（位置 + 物品 + 到期时刻）记下来，
+         * 到期时再按"部件"或"方块"两种方式尝试移除。
+         */
+        @net.minecraftforge.eventbus.api.SubscribeEvent
+        public static void onRightClickBlock(net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickBlock event) {
+            if (event.getLevel().isClientSide()) return;
+            if (!(event.getEntity() instanceof ServerPlayer sp)) return;
+            if (!(event.getLevel() instanceof ServerLevel level)) return;
+            ItemStack held = sp.getMainHandItem();
+            long until = held.hasTag() ? held.getTag().getLong(KEY_TEMP_UNTIL) : 0;
+            if (until <= 0) {
+                held = sp.getOffhandItem();
+                until = held.hasTag() ? held.getTag().getLong(KEY_TEMP_UNTIL) : 0;
+            }
+            if (until <= 0 || held.isEmpty()) return;
+            // 点到的那个方块 + 其六个邻居都记一份（不同模组把 part 挂在不同位置上）
+            Item item = held.getItem();
+            net.minecraft.core.BlockPos pos = event.getPos();
+            PLACED_TEMP_PARTS.add(new PlacedTempPart(level, pos.immutable(), item, until));
+            net.minecraft.core.Direction face = event.getFace();
+            if (face != null) {
+                PLACED_TEMP_PARTS.add(new PlacedTempPart(level, pos.relative(face).immutable(), item, until));
+            }
+        }
+
         /** 服务端每 tick：到期拟造物实体消散 + 拟造方块移除 */
         @net.minecraftforge.eventbus.api.SubscribeEvent
         public static void onServerTick(net.minecraftforge.event.TickEvent.ServerTickEvent event) {
@@ -944,6 +1012,34 @@ public final class ConstructTechnique extends BaseTechnique {
                     }
                 }
             }
+            if (PLACED_TEMPS.isEmpty() && PLACED_TEMP_PARTS.isEmpty() && SWEEP_QUEUE.isEmpty()) {
+                tickContainerSweep(event.getServer());
+                return;
+            }
+            // ⭐ 拟造"部件"（AE2 ME 输入接口等非方块形态）到期移除
+            if (!PLACED_TEMP_PARTS.isEmpty()) {
+                Iterator<PlacedTempPart> pit = PLACED_TEMP_PARTS.iterator();
+                while (pit.hasNext()) {
+                    PlacedTempPart p = pit.next();
+                    ServerLevel level = p.level;
+                    if (level == null || !level.isLoaded(p.pos)) continue;
+                    long now = level.getGameTime();
+                    if (now < p.until) continue;
+                    // 先按"线缆部件"尝试摘掉（AE2 软依赖，纯反射），失败再按方块处理
+                    if (!tryRemovePart(level, p.pos, p.item)) {
+                        net.minecraft.world.level.block.state.BlockState cur = level.getBlockState(p.pos);
+                        if (p.item instanceof net.minecraft.world.item.BlockItem bi
+                                && cur.getBlock() == bi.getBlock()) {
+                            level.levelEvent(2001, p.pos, net.minecraft.world.level.block.Block.getId(cur));
+                            ejectContainerContents(level, p.pos);
+                            level.setBlock(p.pos, Blocks.AIR.defaultBlockState(), 3);
+                            smoke(level, p.pos);
+                        }
+                    }
+                    pit.remove();
+                }
+            }
+            tickContainerSweep(event.getServer());
             if (PLACED_TEMPS.isEmpty()) return;
             Iterator<PlacedTempBlock> it = PLACED_TEMPS.iterator();
             while (it.hasNext()) {
@@ -1003,6 +1099,175 @@ public final class ConstructTechnique extends BaseTechnique {
                     level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, stack);
             drop.setPickUpDelay(10);
             level.addFreshEntity(drop);
+        }
+
+        private static void smoke(ServerLevel level, BlockPos pos) {
+            level.sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE,
+                    pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 10, 0.3, 0.3, 0.3, 0.02);
+        }
+
+        // ============================================================
+        //  ⭐ 拟造物进入容器后也会到期消失（防自动化吸取后永久保留）
+        // ============================================================
+
+        /** 扫描半径（区块） */
+        private static final int SWEEP_RADIUS_CHUNKS = 8;
+        /** 每 tick 扫描的区块数（预算式，避免卡服） */
+        private static final int SWEEP_CHUNKS_PER_TICK = 2;
+        /** 待扫区块队列（围绕某个玩家，轮流换人） */
+        private static final java.util.ArrayDeque<net.minecraft.world.level.ChunkPos> SWEEP_QUEUE =
+                new java.util.ArrayDeque<>();
+        private static java.util.UUID sweepPlayerId;
+
+        /**
+         * 漏斗/管道/机器把拟造物吸进容器后，原来那套清理（玩家背包 + 正打开的容器 + 掉落物）就够不着了，
+         * 物品会一直留着。这里<b>预算式</b>扫已加载区块的方块实体：每 tick 只处理
+         * {@link #SWEEP_CHUNKS_PER_TICK} 个区块，围着在线玩家轮流推进，
+         * 把到期拟造物从中抽出来。扫不完也不会卡服。
+         */
+        private static void tickContainerSweep(MinecraftServer server) {
+            if (server == null) return;
+            for (int n = 0; n < SWEEP_CHUNKS_PER_TICK; n++) {
+                if (SWEEP_QUEUE.isEmpty() && !buildSweepQueue(server)) return;
+                net.minecraft.world.level.ChunkPos cp = SWEEP_QUEUE.poll();
+                ServerPlayer owner = sweepPlayerId == null ? null
+                        : server.getPlayerList().getPlayer(sweepPlayerId);
+                if (owner == null) {
+                    SWEEP_QUEUE.clear();
+                    return;
+                }
+                ServerLevel level = owner.serverLevel();
+                net.minecraft.world.level.chunk.LevelChunk chunk = level.getChunkSource().getChunkNow(cp.x, cp.z);
+                if (chunk != null) sweepChunk(level, chunk, level.getGameTime());
+            }
+        }
+
+        /** 挑一个在线玩家，把它周围的已加载区块排进队列 */
+        private static boolean buildSweepQueue(MinecraftServer server) {
+            var players = server.getPlayerList().getPlayers();
+            if (players.isEmpty()) return false;
+            ServerPlayer sp = players.get(RANDOM.nextInt(players.size()));
+            sweepPlayerId = sp.getUUID();
+            ServerLevel level = sp.serverLevel();
+            net.minecraft.world.level.ChunkPos center = new net.minecraft.world.level.ChunkPos(sp.blockPosition());
+            for (int dx = -SWEEP_RADIUS_CHUNKS; dx <= SWEEP_RADIUS_CHUNKS; dx++) {
+                for (int dz = -SWEEP_RADIUS_CHUNKS; dz <= SWEEP_RADIUS_CHUNKS; dz++) {
+                    int x = center.x + dx, z = center.z + dz;
+                    if (level.getChunkSource().getChunkNow(x, z) != null) {
+                        SWEEP_QUEUE.add(new net.minecraft.world.level.ChunkPos(x, z));
+                    }
+                }
+            }
+            return !SWEEP_QUEUE.isEmpty();
+        }
+
+        /** 扫一个区块里的方块实体：容器 / ITEM_HANDLER capability 里的到期拟造物清除 */
+        private static void sweepChunk(ServerLevel level, net.minecraft.world.level.chunk.LevelChunk chunk, long now) {
+            for (BlockEntity be : chunk.getBlockEntities().values()) {
+                if (be == null || be.isRemoved()) continue;
+                try {
+                    if (be instanceof net.minecraft.world.Container container) {
+                        for (int i = 0; i < container.getContainerSize(); i++) {
+                            if (isExpiredTemp(container.getItem(i), now)) {
+                                container.setItem(i, ItemStack.EMPTY);
+                            }
+                        }
+                        continue;
+                    }
+                    var cap = be.getCapability(net.minecraftforge.common.capabilities.ForgeCapabilities.ITEM_HANDLER, null);
+                    if (cap.isPresent()) {
+                        var handler = cap.resolve().orElse(null);
+                        if (handler == null) continue;
+                        for (int i = 0; i < handler.getSlots(); i++) {
+                            ItemStack s = handler.getStackInSlot(i);
+                            if (isExpiredTemp(s, now)) {
+                                handler.extractItem(i, s.getCount(), false);
+                            }
+                        }
+                    }
+                } catch (Throwable ignored) {
+                    // 单个方块实体出问题不影响整体扫描
+                }
+            }
+        }
+
+        private static boolean isExpiredTemp(ItemStack stack, long now) {
+            if (stack == null || stack.isEmpty() || !stack.hasTag()) return false;
+            long until = stack.getTag().getLong(KEY_TEMP_UNTIL);
+            return until > 0 && until <= now;
+        }
+
+        // ============================================================
+        //  ⭐ 线缆部件（AE2 ME 输入接口这类非方块形态）到期摘除
+        // ============================================================
+
+        /**
+         * 尝试把该位置上的"线缆部件"摘掉。用<b>纯反射</b>判断 AE2 的
+         * {@code appeng.api.parts.IPartHost}（AE2 不在时直接返回 false），
+         * 命中"物品和拟造物一致"的部件就 {@code removePartFromSide(side)}。
+         */
+        private static boolean tryRemovePart(ServerLevel level, BlockPos pos, Item item) {
+            BlockEntity be = level.getBlockEntity(pos);
+            if (be == null) return false;
+            Class<?> hostIf = findInterface(be.getClass(), "appeng.api.parts.IPartHost");
+            if (hostIf == null) {
+                // 也试试六个邻居（不同模组把挂载点放在相邻位置）
+                for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values()) {
+                    BlockEntity nb = level.getBlockEntity(pos.relative(d));
+                    if (nb != null && findInterface(nb.getClass(), "appeng.api.parts.IPartHost") != null) {
+                        be = nb;
+                        hostIf = findInterface(nb.getClass(), "appeng.api.parts.IPartHost");
+                        break;
+                    }
+                }
+            }
+            if (hostIf == null) return false;
+            try {
+                var getPart = hostIf.getMethod("getPart", net.minecraft.core.Direction.class);
+                var removePart = hostIf.getMethod("removePartFromSide", net.minecraft.core.Direction.class);
+                for (net.minecraft.core.Direction d : net.minecraft.core.Direction.values()) {
+                    Object part = getPart.invoke(be, d);
+                    if (part == null) continue;
+                    Object partItem = part.getClass().getMethod("getPartItem").invoke(part);
+                    if (partItem instanceof net.minecraft.world.level.ItemLike like && like.asItem() == item) {
+                        removePart.invoke(be, d);
+                        smoke(level, be.getBlockPos());
+                        TinkersNewlife.LOGGER.info("[构筑] 已摘除到期拟造部件: {} @ {}", item, be.getBlockPos());
+                        return true;
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
+            return false;
+        }
+
+        /** 在类层次（含接口继承）里找指定名称的接口 */
+        private static Class<?> findInterface(Class<?> type, String name) {
+            Class<?> c = type;
+            while (c != null && c != Object.class) {
+                for (Class<?> itf : c.getInterfaces()) {
+                    if (name.equals(itf.getName())) return itf;
+                    Class<?> deep = findInterface(itf, name);
+                    if (deep != null) return deep;
+                }
+                c = c.getSuperclass();
+            }
+            return null;
+        }
+    }
+
+    /** 一个"被右键安装的拟造部件"记录（AE2 线缆部件等非方块形态） */
+    private static final class PlacedTempPart {
+        final ServerLevel level;
+        final BlockPos pos;
+        final Item item;
+        final long until;
+
+        PlacedTempPart(ServerLevel level, BlockPos pos, Item item, long until) {
+            this.level = level;
+            this.pos = pos;
+            this.item = item;
+            this.until = until;
         }
     }
 

@@ -34,9 +34,10 @@ public class ConstructSelectScreen extends AbstractRowListScreen<String> {
     private static final int LIST_TOP = 58;
     private static final int BOTTOM_PAD = 18;
 
-    /** 全部候选（有合成配方的物品 id，注册名排序）；配方管理器变化时自动重建 */
+    /** 全部候选（有配方产出的物品 id，注册名排序）；配方管理器或配方数量变化时自动重建 */
     private static List<String> allCandidates;
     private static Object cachedRecipeManager;
+    private static int cachedRecipeCount = -1;
 
     private EditBox searchBox;
     private String filter = "";
@@ -46,19 +47,24 @@ public class ConstructSelectScreen extends AbstractRowListScreen<String> {
                 new ArrayList<>(collectCandidates()), W, ROW_H, ROW_H, LIST_TOP, BOTTOM_PAD);
     }
 
-    /** 枚举所有有合成配方的物品（客户端配方管理器与服务器一致）；配方更新时自动重建缓存 */
-    private static List<String> collectCandidates() {        var level = Minecraft.getInstance().level;
+    /** 枚举所有"有配方可产出"的物品（<b>覆盖所有配方类型</b>，与服务器端判定一致）；配方数量变化时重建缓存 */
+    private static List<String> collectCandidates() {
+        var level = Minecraft.getInstance().level;
         Object rm = level == null ? null : level.getRecipeManager();
-        if (allCandidates != null && cachedRecipeManager == rm) {
+        int count = rm == null ? -1 : level.getRecipeManager().getRecipes().size();
+        if (allCandidates != null && cachedRecipeManager == rm && cachedRecipeCount == count) {
             return allCandidates;
         }
         allCandidates = new ArrayList<>();
         cachedRecipeManager = rm;
+        cachedRecipeCount = count;
         Set<String> ids = new HashSet<>();
         if (level != null) {
             var access = level.registryAccess();
-            try {
-                for (var recipe : level.getRecipeManager().getAllRecipesFor(RecipeType.CRAFTING)) {
+            // ⭐ 不再只查工作台配方：熔炉/高炉/烟熏/营火/切石机/锻造台以及模组配方类型都算，
+            //    否则"熔炼出来的锭、切石出来的砖"这类物品在列表里根本不出现。
+            for (var recipe : level.getRecipeManager().getRecipes()) {
+                try {
                     ItemStack out = recipe.getResultItem(access);
                     if (out == null || out.isEmpty()) continue;
                     Item item = out.getItem();
@@ -66,9 +72,9 @@ public class ConstructSelectScreen extends AbstractRowListScreen<String> {
                     if (key != null) {
                         ids.add(key.toString());
                     }
+                } catch (Throwable t) {
+                    // 个别特殊配方（CustomRecipe 等）取产物需要容器上下文，跳过即可
                 }
-            } catch (Throwable t) {
-                // 个别特殊配方异常不阻塞整个界面
             }
         }
         allCandidates.addAll(ids);
