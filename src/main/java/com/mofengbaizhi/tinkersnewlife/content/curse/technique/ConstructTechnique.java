@@ -72,6 +72,11 @@ public final class ConstructTechnique extends BaseTechnique {
      * （试验假人就是可以被捡起来换个地方放的典型）。
      */
     public static final String KEY_TEMP_SOURCE = "tinkersnewlife.construct_temp_source";
+    /**
+     * 拟造物持久标签：<b>原始显示名</b>（加"拟造·"前缀之前的名字，JSON 文本）。
+     * 前缀永远按它重建，所以无论转换多少次都只会有一个"拟造·"（不会 拟造·拟造·拟造·）。
+     */
+    public static final String KEY_ORIGINAL_NAME = "tinkersnewlife.construct_original_name";
     /** 临时拟造物存在时长（60 秒） */
     /** 拟造物存在时长（tick）：12 分钟 */
     public static final int TEMP_TICKS = 12 * 60 * 20;
@@ -358,6 +363,13 @@ public final class ConstructTechnique extends BaseTechnique {
      * 那条路径同样要生成"原样但保留到期时间"的拟造物。
      */
     static ItemStack makeTempStack(ItemStack template, long until) {
+        // ⭐ 幂等保护之一：**已经是拟造物**（蓝本 / 带到期标记的真物品）→ 只刷新到期时间，绝不重新包装。
+        //    否则"拆一次假人 → 放下 → 再拆"会把"拟造·"前缀一层层叠上去（实测：拟造·拟造·拟造·假人）。
+        if (isTemp(template)) {
+            ItemStack again = template.copy();
+            again.getOrCreateTag().putLong(KEY_TEMP_UNTIL, until);
+            return again;
+        }
         ItemStack stack;
         if (blueprintEnabled() && useBlueprintFor(template)) {
             // ⭐ 拟造蓝本：所有拟造物共用同一个物品 id（目标物品与它自己的 NBT 记在栈里），
@@ -366,8 +378,17 @@ public final class ConstructTechnique extends BaseTechnique {
             stack = com.mofengbaizhi.tinkersnewlife.content.item.ConstructedBlueprintItem.create(template, until);
         } else {
             stack = template.copy();
-            stack.getOrCreateTag().putLong(KEY_TEMP_UNTIL, until);
-            Component original = stack.getHoverName();
+            net.minecraft.nbt.CompoundTag tag = stack.getOrCreateTag();
+            tag.putLong(KEY_TEMP_UNTIL, until);            // ⭐ 幂等保护之二：前缀**只加一次**——"原始名字"记进标签，之后一律按它重建显示名。
+            //    （即使某条路径把带前缀的名字传进来、又丢了到期标记，也不会再叠一层。）
+            Component original;
+            if (tag.contains(KEY_ORIGINAL_NAME, net.minecraft.nbt.Tag.TAG_STRING)) {
+                original = Component.Serializer.fromJson(tag.getString(KEY_ORIGINAL_NAME));
+                if (original == null) original = stack.getHoverName();
+            } else {
+                original = stack.getHoverName();
+                tag.putString(KEY_ORIGINAL_NAME, Component.Serializer.toJson(original));
+            }
             stack.setHoverName(Component.translatable("item.tinkersnewlife.construct.prefix").append(original));
         }
         return stack;

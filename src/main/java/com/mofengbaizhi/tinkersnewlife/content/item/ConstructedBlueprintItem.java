@@ -77,6 +77,14 @@ public class ConstructedBlueprintItem extends Item {
 
     /** 用目标物品栈铸造一个蓝本栈（目标 NBT 扁平化 + 我们两个键） */
     public static ItemStack create(ItemStack target, long until) {
+        // ⭐ 幂等保护：万一把"已经是蓝本的东西"再包一次（拟造物被反复转换，例如假人拆了又放），
+        //    先解开成它真正的目标物品——否则蓝本的显示名会一层层叠"拟造·"（实测：拆一次多一个前缀）。
+        if (isBlueprint(target)) {
+            ItemStack shadow = shadowOf(target);
+            if (!shadow.isEmpty()) {
+                target = shadow;
+            }
+        }
         Item item;
         if (target.isEdible()) {
             item = com.mofengbaizhi.tinkersnewlife.content.ModItems.CONSTRUCT_BLUEPRINT_FOOD.get();
