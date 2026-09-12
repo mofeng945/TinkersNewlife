@@ -785,8 +785,10 @@ public final class ConstructTechnique extends BaseTechnique {
     private static final Map<net.minecraft.world.item.crafting.RecipeManager, ConstructCache> CONSTRUCT_CACHE =
             new java.util.IdentityHashMap<>();
 
-    /** 原料价值递归深度上限 */
-    private static final int VALUE_MAX_DEPTH = 2;
+    /** 原料价值递归深度上限（链子长一点，才能把"高级墨水→卷轴"这类价值传下去） */
+    private static final int VALUE_MAX_DEPTH = 3;
+    /** 递归传播时的价值上限（防止 9 个一组的那种配方把价格炸飞） */
+    private static final double INGREDIENT_VALUE_CAP = 80.0;
     /** 单个原料（标签型可能上百候选）最多取前几个候选估值，避免建表过慢 */
     private static final int VALUE_MAX_CANDIDATES = 8;
 
@@ -1002,7 +1004,9 @@ public final class ConstructTechnique extends BaseTechnique {
         if (recipes != null && !recipes.isEmpty() && depth < VALUE_MAX_DEPTH && visiting.add(item)) {
             double sum = 0;
             for (var r : recipes) sum += ingredientValue(r, byItem, valueCache, visiting, depth);
-            value = Math.max(base, sum / recipes.size() * 0.5);
+            // ⭐ 不再打 0.5 折：折损会让"多级合成链"上的价值迅速归零（高级墨水就废了）；
+            //    改为全额传播 + 上限兜底，环检测与深度上限照旧。
+            value = Math.max(base, Math.min(INGREDIENT_VALUE_CAP, sum / recipes.size()));
             visiting.remove(item);
         }
         valueCache.put(item, value);
@@ -1196,6 +1200,11 @@ public final class ConstructTechnique extends BaseTechnique {
 
     /** 物品"自身分"：稀有度 + 材料/方块 + 攻击 + 护甲 + 耐久（不含原料项） */
     public static double intrinsicScore(Item item) {
+        ResourceLocation key = ForgeRegistries.ITEMS.getKey(item);
+        String itemId = key == null ? "" : key.toString().toLowerCase(java.util.Locale.ROOT);
+        // ① 手动指定价值（优先级最高，直接**替代**计算结果）
+        Double override = overrideValue(item, itemId);
+        if (override != null) return Math.max(0.0, override);
         try {
             ItemStack probe = new ItemStack(item);
             Rarity rarity = item.getRarity(probe);
@@ -1229,10 +1238,112 @@ public final class ConstructTechnique extends BaseTechnique {
             if (maxDamage > 0) {
                 score += Math.min(20.0, maxDamage / 300.0);
             }
+            // ② 品质词加成：不同品质的墨水/精华/结晶这类物品，稀有度普通、无攻防耐久，
+            //    档次全写在名字里（common/uncommon/rare/epic/legendary…）→ 按词给分；
+            //    这一分会被"原料价值"递归带到下游产物（比如卷轴）上。
+            score += tierBonus(itemId);
             return score;
         } catch (Throwable t) {
             return 1.0;
         }
+    }
+
+    // ============================================================
+    //  品质词加成 / 手动指定价值
+    // ============================================================
+
+    /** 内置品质词 → 分数（对物品 id 做子串匹配） */
+    private static final Map<String, Double> DEFAULT_TIER_BONUS = Map.of(
+            "uncommon", 6.0,
+            "rare", 14.0,
+            "epic", 30.0,
+            "legendary", 60.0,
+            "mythic", 90.0,
+            "divine", 90.0,
+            "supreme", 120.0,
+            "ultimate", 120.0
+    );
+
+    private static Map<String, Double> tierBonusTable;
+    private static Map<String, Double> overrideTable;
+    private static java.util.List<String> overridePatterns;
+    private static boolean valueTablesLoaded = false;
+
+    private static void ensureTables() {
+        if (valueTablesLoaded) return;
+        valueTablesLoaded = true;
+        tierBonusTable = new java.util.LinkedHashMap<>(DEFAULT_TIER_BONUS);
+        overrideTable = new java.util.LinkedHashMap<>();
+        overridePatterns = new java.util.ArrayList<>();
+        try {
+            for (String s : com.mofengbaizhi.tinkersnewlife.config.ModConfig.CONSTRUCT_TIER_BONUS.get()) {
+                String[] kv = splitPair(s);
+                if (kv != null && !kv[1].isEmpty()) {
+                    tierBonusTable.put(kv[0].toLowerCase(java.util.Locale.ROOT), parseDouble(kv[1], 0));
+                }
+            }
+            for (String s : com.mofengbaizhi.tinkersnewlife.config.ModConfig.CONSTRUCT_VALUE_OVERRIDES.get()) {
+                String[] kv = splitPair(s);
+                if (kv == null) continue;
+                String k = kv[0];
+                double v = parseDouble(kv[1], -1);
+                if (v < 0) continue;
+                if (k.startsWith("#") || k.indexOf(42) >= 0) {          // 42 = '*'，标签/通配符
+                    overridePatterns.add(k + "=" + v);
+                } else {
+                    overrideTable.put(k.toLowerCase(java.util.Locale.ROOT), v);
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** 解析 "键=值" */
+    private static String[] splitPair(String s) {
+        if (s == null) return null;
+        String t = s.trim();
+        int i = t.indexOf(61);                                          // 61 = '='
+        if (i <= 0 || i == t.length() - 1) return null;
+        return new String[]{t.substring(0, i).trim(), t.substring(i + 1).trim()};
+    }
+
+    private static double parseDouble(String s, double fallback) {
+        try {
+            return Double.parseDouble(s);
+        } catch (Throwable t) {
+            return fallback;
+        }
+    }
+
+    /** 品质词加成（命中多个词取最高分，不叠加） */
+    private static double tierBonus(String itemId) {
+        ensureTables();
+        double best = 0;
+        for (Map.Entry<String, Double> e : tierBonusTable.entrySet()) {
+            if (itemId.contains(e.getKey()) && e.getValue() > best) best = e.getValue();
+        }
+        return best;
+    }
+
+    /** 手动指定价值：精确 id → 通配符 → 标签（都没有返回 null，走正常计算） */
+    private static Double overrideValue(Item item, String itemId) {
+        ensureTables();
+        Double exact = overrideTable.get(itemId);
+        if (exact != null) return exact;
+        for (String entry : overridePatterns) {
+            String[] kv = splitPair(entry);
+            if (kv == null) continue;
+            String pattern = kv[0];
+            double v = parseDouble(kv[1], -1);
+            if (v < 0) continue;
+            if (pattern.startsWith("#")) {
+                ResourceLocation tagId = ResourceLocation.tryParse(pattern.substring(1));
+                if (tagId != null && item.builtInRegistryHolder().is(TagKey.create(Registries.ITEM, tagId))) return v;
+                continue;
+            }
+            if (globMatch(pattern, itemId)) return v;
+        }
+        return null;
     }
 
     /** 配置里的拟造费用倍率（读不到时按默认 10 倍） */

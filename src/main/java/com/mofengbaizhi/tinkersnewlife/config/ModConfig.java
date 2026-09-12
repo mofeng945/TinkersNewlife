@@ -55,6 +55,10 @@ public final class ModConfig {
     public static final ConfigValue<List<? extends String>> CONSTRUCT_MAGIC_EXTRA_KEYWORDS;
     /** 追加的魔法类物品标签（如 #curios:spellbook） */
     public static final ConfigValue<List<? extends String>> CONSTRUCT_MAGIC_EXTRA_TAGS;
+    /** 品质词加成表（"词=分数"，如 legendary=60；覆盖内置同名项） */
+    public static final ConfigValue<List<? extends String>> CONSTRUCT_TIER_BONUS;
+    /** 手动指定物品价值（"物品id=分数"、通配符 "*_ink=200"、标签 "#forge:gems=20"；直接替代计算结果） */
+    public static final ConfigValue<List<? extends String>> CONSTRUCT_VALUE_OVERRIDES;
 
     // ==================== 术式/领域缩放系数 ====================
     /** 各术式 modifier id → [damage, cost] 缩放 */
@@ -107,6 +111,15 @@ public final class ModConfig {
                 "                   or by class/interface name keywords (scroll/focus/spellbook/rune/charm/wand/staff/...).",
                 "magic_extra_keywords / magic_extra_tags = your own additions.",
                 "",
+                "tier_bonus = value score by quality keyword found in the item id. Built-in: uncommon=6 rare=14",
+                "             epic=30 legendary=60 mythic=90 divine=90 supreme=120 ultimate=120.",
+                "             This is how tiered inks/essences get priced (they are plain common items otherwise),",
+                "             and the score propagates into their products through the ingredient term.",
+                "value_overrides = hard-set an item value, replaces the computed score. Formats:",
+                "             irons_spellbooks:legendary_ink=200   (exact item)",
+                "             *_ink=120                            (glob)",
+                "             #forge:gems=25                       (item tag)",
+                "",
                 "blacklist = extra entries that must NOT appear in the construct menu. Supported formats:",
                 "  goety                 -> whole mod          (bare modid)",
                 "  iceandfire:*          -> whole mod          (modid:*)",
@@ -123,6 +136,10 @@ public final class ModConfig {
         CONSTRUCT_MAGIC_EXTRA_KEYWORDS = b.defineList("magic_extra_keywords", new java.util.ArrayList<String>(),
                 o -> o instanceof String);
         CONSTRUCT_MAGIC_EXTRA_TAGS = b.defineList("magic_extra_tags", new java.util.ArrayList<String>(),
+                o -> o instanceof String);
+        CONSTRUCT_TIER_BONUS = b.defineList("tier_bonus", new java.util.ArrayList<String>(),
+                o -> o instanceof String);
+        CONSTRUCT_VALUE_OVERRIDES = b.defineList("value_overrides", new java.util.ArrayList<String>(),
                 o -> o instanceof String);
         CONSTRUCT_BLACKLIST = b.defineList("blacklist", new java.util.ArrayList<String>(),
                 o -> o instanceof String);
