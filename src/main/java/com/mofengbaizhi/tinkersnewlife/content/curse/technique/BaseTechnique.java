@@ -148,7 +148,7 @@ public abstract class BaseTechnique {
     }
 
     /** 本术式 modifier path（config 系数键）；无 modifierId 返回空（helper 兜底 1.0） */
-    private String scalePath() {
+    protected String scalePath() {
         return modifierId != null ? modifierId.getPath() : "";
     }
 

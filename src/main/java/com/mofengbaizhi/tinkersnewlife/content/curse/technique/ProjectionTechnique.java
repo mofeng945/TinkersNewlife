@@ -46,6 +46,9 @@ public final class ProjectionTechnique extends BaseTechnique {
 
     private static final Random RANDOM = new Random();
 
+    /** 固定咒力消耗（点）：历史上是"咒力上限的 1/12"，实测过贵 → 改为固定 800 */
+    public static final int FIXED_COST = 800;
+
     private ProjectionTechnique() {
         super(Modifiers.PROJECTION.getId());
     }
@@ -57,9 +60,10 @@ public final class ProjectionTechnique extends BaseTechnique {
                     CursePowerHelper.getBurnoutRemainingSeconds(player)), true);
             return;
         }
-        // 消耗咒力上限的 1/24（原为 1/12，实测过贵 → 减半）
-        double max = CursePowerHelper.getMaxCurse(player);
-        int cost = Math.max(1, (int) Math.ceil(max / 24.0));
+        // ⭐ 固定消耗 FIXED_COST 点咒力（不再按咒力上限的百分比计算；
+        //    仍受配置 techniques/projection/cost_scale 缩放，方便日后微调）
+        int cost = (int) Math.max(1, Math.round(FIXED_COST
+                * com.mofengbaizhi.tinkersnewlife.config.ModConfig.techniqueCost(scalePath())));
         if (!CursePowerHelper.isCurseInfinite(player)
                 && CursePowerHelper.payCurseWithSoulFallback(player, cost) < 0) {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_curse"), true);

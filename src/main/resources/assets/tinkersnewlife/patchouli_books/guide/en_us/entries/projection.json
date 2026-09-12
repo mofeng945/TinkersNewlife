@@ -7,7 +7,7 @@
     "pages": [
         {
             "type": "patchouli:text",
-            "text": "$(bold)Projection Sorcery$(): in the blink of an eye, I am already behind you. $(br2)On activation, compute the $(bold)maximum straight-line distance you can cover in 1 second$() from your current movement speed, then spawn a player $(bold)afterimage$() (a translucent blue figure) $(bold)on the same horizontal plane$() in your line of sight, at a distance between 2/3 and 1 times that maximum. $(br2)$(bold)Touching the afterimage within 1 second$() → the afterimage vanishes and you gain a 10-second buff: $(li)damage ×2 (cap ×2^10)$(li)speed ×2 (cap ×32)$(li)jump height ×2 (cap ×8)$(br2)each touch adds +1 to the stack and stacks combine; $(bold)failing to touch it in time$() → you stand frozen in place for 3 seconds (camera locked, mouse and keyboard fully disabled). $(br2)Cost: 1/12 of your maximum Cursed Energy."
+            "text": "$(bold)Projection Sorcery$(): in the blink of an eye, I am already behind you. $(br2)On activation, compute the $(bold)maximum straight-line distance you can cover in 1 second$() from your current movement speed, then spawn a player $(bold)afterimage$() (a translucent blue figure) $(bold)on the same horizontal plane$() in your line of sight, at a distance between 2/3 and 1 times that maximum. $(br2)$(bold)Touching the afterimage within 1 second$() → the afterimage vanishes and you gain a 10-second buff: $(li)damage ×2 (cap ×2^10)$(li)speed ×2 (cap ×32)$(li)jump height ×2 (cap ×8)$(br2)each touch adds +1 to the stack and stacks combine; $(bold)failing to touch it in time$() → you stand frozen in place for 3 seconds (camera locked, mouse and keyboard fully disabled). $(br2)Cost: a fixed $(bold)800$() Cursed Energy."
         }
     ]
 }
