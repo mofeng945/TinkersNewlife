@@ -320,6 +320,11 @@ public class Modifiers {
         MODIFIERS.register("resonance",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.ResonanceModifier::new);
 
+    /** 升级槽强化·咒速输出（仅咒力核心：吟唱读条 × max(0.1, 1/(等级+1))；1级占1槽，2~5级免费） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.CurseSpeedModifier> CURSE_SPEED =
+        MODIFIERS.register("curse_speed",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.CurseSpeedModifier::new);
+
     /** 无槽位强化·渎神（安装不占槽：护甲 +2 防御槽，受到的伤害 +10%；单级，不可洗/不可剥） */
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.BlasphemyModifier> BLASPHEMY =
         MODIFIERS.register("blasphemy",

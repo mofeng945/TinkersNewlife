@@ -7,11 +7,11 @@
     "pages": [
         {
             "type": "patchouli:text",
-            "text": "$(bold)Execution$(): the court is in session; the guilty shall die.$(br2)$(bold)Expansion$(): press the domain expansion key while looking at a target - the domain unfolds centered on that target (the defendant). Every entity inside except the caster is frozen in place and cannot move, and $(red)the New Shadow Style techniques (Mikoshi Kago / Simple Domain) are ineffective$().$(br2)$(bold)Trial of the Defendant$():$(li)Undead: found guilty outright after 3 seconds - attack power reduced to zero for 60 seconds$(li)Arthropods: judged after 3 seconds by the time of day - innocent by daylight, guilty at night$(li)Players: a 6-second trial, with each step broadcast to everyone as a title (player name / kill count / verdict / sentence)"
+            "text": "$(bold)Verdict$(): $(li)Non-player entities: whatever the type (undead/arthropod/animal/other), all are found $(bold)guilty after 5 seconds$() - attack power zeroed for 60s$(li)Players: a 6 second trial with on-screen titles (name / guilt score / verdict)"
         },
         {
             "type": "patchouli:text",
-            "text": "$(bold)Guilt Criterion (Players)$(): a player whose villager kills plus animal kills exceed 1000 is guilty.$(br2)$(bold)Execution$(): when the domain ends, guilty undead and arthropods cause the caster to be granted the $(bold)Executioner's Sword$() (1 durability, dissipates after 120 seconds, and is not granted again while one is already in the inventory): striking the defendant kills it instantly, while striking any other creature deals 200% damage.$(br2)$(bold)Player Punishment$(): guilty players are stripped for 60 seconds after the domain ends - in order: cursed tools (a held cursed tool is forcibly returned to the inventory) -> techniques (sealed) -> curse power (locked at zero). If the same player is tried again, the punishment escalates by one stage."
+            "text": "$(bold)Guilt threshold (players)$(): villagers killed + animals killed + players defeated above $(bold)100$() means guilty. $(br2)$(bold)Execution$(): once a guilty verdict lands, the caster receives the Executioner Sword (1 durability, 120s, only one at a time): hitting the $(bold)defendant of this trial$() executes them instantly; hitting a $(bold)non-player$() creature that has killed you before also executes it (players can never be killed this way); any other target only takes 200% damage."
         }
     ]
 }

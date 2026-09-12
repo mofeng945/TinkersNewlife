@@ -47,7 +47,11 @@ public class ExecutionDomain extends BaseDomain {
     protected String configScaleId() { return "fuzhu_cisi"; }
 
     /** 亡灵/节肢审判时长（tick）：3s */
-    private static final int JUDGE_MOB_TICKS = 60;
+    /** 非玩家被告的判罪时间（tick）：5 秒（原 3 秒） */
+    private static final int JUDGE_MOB_TICKS = 100;
+
+    /** 玩家定罪阈值：罪行分（击杀村民 + 击杀动物 + 击败玩家数）&gt; 此值即有罪 */
+    public static final int PLAYER_GUILT_THRESHOLD = 100;
     /** 玩家审判时长（tick）：6s */
     private static final int JUDGE_PLAYER_TICKS = 120;
     /** 攻击力归零 / 没收时长（tick）：60s */
@@ -150,8 +154,8 @@ public class ExecutionDomain extends BaseDomain {
         // 2) 玩家被告：审判期间逐条向领域内所有玩家显示 title（每 1.5s 一条）
         Entity t = level.getEntity(targetId);
         if (t instanceof ServerPlayer targetPlayer && targetPlayer.isAlive()) {
-            long total = killScore(targetPlayer);
-            boolean guilty = total > 1000;
+            int total = playerGuiltScore(targetPlayer);
+            boolean guilty = total > PLAYER_GUILT_THRESHOLD;
             if (elapsed >= 0 && elapsed < 5) {
                 broadcastTitle(level, targetPlayer.getDisplayName());
             } else if (elapsed >= 30 && elapsed < 35) {
@@ -188,22 +192,16 @@ public class ExecutionDomain extends BaseDomain {
 
         boolean guilty = true;
         if (living instanceof ServerPlayer p) {
-            // 玩家：击杀村民+动物 > 1000 有罪（须最先判定——玩家 getMobType 亦为 UNDEAD）
-            guilty = killScore(p) > 1000;
+            // 玩家：罪行分 = 击杀村民 + 击杀动物 + 击败玩家数，> 100 有罪
+            guilty = playerGuiltScore(p) > PLAYER_GUILT_THRESHOLD;
             if (guilty) {
                 applyPlayerPenalty(owner, p);
             }
             return; // 玩家不用处刑剑
-        } else if (isUndead(living)) {
-            // 亡灵：直接有罪
-            guilty = true;
-        } else if (isArthropod(living)) {
-            // 节肢动物：白昼无罪 / 夜晚有罪
-            guilty = !level.isDay();
-        } else {
-            // 其它生物：无罪
-            guilty = false;
         }
+        // ⭐ 非玩家实体：<b>不论种类，指向即被告、5 秒后一律有罪</b>
+        //   （原逻辑是"亡灵有罪 / 节肢按天色 / 其它无罪"，现在统一判有罪）
+        guilty = true;
 
         if (!guilty) {
             owner.displayClientMessage(Component.translatable(
@@ -298,15 +296,24 @@ public class ExecutionDomain extends BaseDomain {
         return data.getInt(KEY_KILL_VILLAGER) + (long) data.getInt(KEY_KILL_ANIMAL);
     }
 
+    /**
+     * 玩家罪行分 = 击杀村民/动物数 + <b>击败玩家数</b>（原版统计 {@code minecraft:player_kills}）。
+     * 判罪阈值见 {@link #PLAYER_GUILT_THRESHOLD}。
+     */
+    public static int playerGuiltScore(ServerPlayer p) {
+        int playerKills = 0;
+        try {
+            playerKills = p.getStats().getValue(
+                    net.minecraft.stats.Stats.CUSTOM.get(net.minecraft.stats.Stats.PLAYER_KILLS));
+        } catch (Throwable ignored) {
+            // 统计读不到就不计
+        }
+        return (int) (killScore(p) + playerKills);
+    }
+
     // ==================== 类别判定 ====================
 
-    private static boolean isUndead(LivingEntity e) {
-        return !(e instanceof Player) && e.getMobType() == net.minecraft.world.entity.MobType.UNDEAD;
-    }
-
-    private static boolean isArthropod(LivingEntity e) {
-        return e.getMobType() == net.minecraft.world.entity.MobType.ARTHROPOD;
-    }
+    // （类别判定已移除：非玩家实体现在一律有罪）
 
     /** 向领域内所有玩家（含展开者）广播大标题 */
     private void broadcastTitle(ServerLevel level, Component text) {
@@ -362,9 +369,15 @@ public class ExecutionDomain extends BaseDomain {
             }
             if (!main) return;
             UUID swordTarget = ExecutionSwordItem.getTarget(held);
-            if (swordTarget != null && swordTarget.equals(victim.getUUID())
-                    || killedMeBefore(p, victim)) {
-                // 命中被告 / 或曾被该生物杀死（复仇处决，如亚波伦等不可被杀 Boss）→ 直接处死
+            boolean isJudged = swordTarget != null && swordTarget.equals(victim.getUUID());
+            // ⭐ 修复：复仇处决只对<b>非玩家</b>生效。
+            //   原来 `killedMeBefore(p, victim)` 只看"该实体类型是否杀过我"，
+            //   于是只要曾被任何玩家杀过一次，处刑人之剑就对<b>任何</b>玩家必杀（判罪目标是谁都无所谓）。
+            //   玩家必须正好是本次判决的被告（swordTarget）才处死。
+            boolean revenge = !(victim instanceof net.minecraft.world.entity.player.Player)
+                    && killedMeBefore(p, victim);
+            if (isJudged || revenge) {
+                // 命中被告（或被杀过的非玩家生物：亚波伦这类不可杀 Boss 的复仇处决）→ 直接处死
                 execute(p, victim, event);
             } else {
                 // 命中其它生物 → 200% 伤害

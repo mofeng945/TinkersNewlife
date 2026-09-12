@@ -1,0 +1,16 @@
+{
+    "name": "咒速输出",
+    "category": "tinkersnewlife:traits",
+    "icon": "tinkersnewlife:curse_core",
+    "sortnum": 43,
+    "pages": [
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)升级槽强化·咒速输出$()：咒文脱口而出，无需长诵。(br2)效果：咒言术的咏唱读条时长 × max(0.1, 1/(等级+1))——1 级 0.50x、2 级 0.33x、3 级 0.25x、4 级 0.20x、5 级 0.17x（最快 10 倍速）。(br2)限制：$(l)仅可装在咒力核心上$()；$(l)1 级占用 1 个升级槽$()，2~5 级为免费升级，上限 5 级。"
+        },
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)配方$()：(br)1 级：糖 ×2 ＋ 青金石(br)2~3 级：时钟 ＋ 紫水晶碎片 ×2(br)4~5 级：回响碎片 ×2 ＋ 时钟"
+        }
+    ]
+}

@@ -1,0 +1,23 @@
+{
+  "type": "tconstruct:modifier",
+  "allow_crystal": true,
+  "inputs": [
+    {
+      "item": "minecraft:echo_shard"
+    },
+    {
+      "item": "minecraft:echo_shard"
+    },
+    {
+      "item": "minecraft:clock"
+    }
+  ],
+  "level": {
+    "min": 4,
+    "max": 5
+  },
+  "result": "tinkersnewlife:curse_speed",
+  "tools": {
+    "tag": "tinkersnewlife:curse_cores"
+  }
+}

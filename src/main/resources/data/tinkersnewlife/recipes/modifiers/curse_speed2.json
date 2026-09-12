@@ -1,0 +1,23 @@
+{
+  "type": "tconstruct:modifier",
+  "allow_crystal": true,
+  "inputs": [
+    {
+      "item": "minecraft:clock"
+    },
+    {
+      "item": "minecraft:amethyst_shard"
+    },
+    {
+      "item": "minecraft:amethyst_shard"
+    }
+  ],
+  "level": {
+    "min": 2,
+    "max": 3
+  },
+  "result": "tinkersnewlife:curse_speed",
+  "tools": {
+    "tag": "tinkersnewlife:curse_cores"
+  }
+}
