@@ -609,6 +609,8 @@
   "screen.tinkersnewlife.wu_wei.empty": "尚未记录任何生物形态——先去击杀一些生物吧",
   "screen.tinkersnewlife.wu_wei.current": "§a当前形态 · 点击可更换",
   "screen.tinkersnewlife.wu_wei.click": "§7点击选用",
+    "screen.tinkersnewlife.wu_wei.search": "搜索生物…（本地化名/英文名/注册名，@模组 过滤）",
+    "screen.tinkersnewlife.wu_wei.no_result": "没有匹配的形态",
   "key.tinkersnewlife.open_wu_wei": "无为转变·形态选择（P）",
   "item.tinkersnewlife.gourd_jail": "狱门疆",
 

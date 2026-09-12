@@ -13,6 +13,10 @@ import java.util.List;
  * 无为转变 / 咒灵操术等"一行一个可点选项、超出视口滚动"的术式选择界面共用。
  * 基类负责：居中布局、视口裁剪、滚轮（平滑累积）、右侧滚动条（轨道+滑块+拖拽）、
  * 行 hover 判定与点击分发；每行画什么（文字/3D 实体）由子类 {@link #drawRow} 决定。
+ * <p>
+ * {@code columns > 1} 时同一"视觉行"里并排 {@code columns} 个格子（网格布局，
+ * 无为转变就是 3 列）。子类无需改 {@link #drawRow} 签名：基类传进来的
+ * {@code x/w} 已经是<b>格子</b>的几何，{@code index} 始终是<b>真实条目下标</b>。
  */
 public abstract class AbstractRowListScreen<T> extends Screen {
 
@@ -23,18 +27,26 @@ public abstract class AbstractRowListScreen<T> extends Screen {
     protected final int rowFill;     // 行内容/点击高度（≤ rowPitch）
     protected final int listTop;     // 列表视口顶部
     protected final int bottomPad;   // 底部留白
+    protected final int columns;     // 每行的格子数（1 = 传统单列）
 
     protected int startX;
     protected int listBottom;
-    protected int visibleRows;
+    protected int visibleRows;       // 可视行数（网格时 = 可视"视觉行"数）
     protected int maxScroll;
     protected int scrollOffset = 0;
+    protected int cellWidth;         // 单个格子宽度（= listWidth / columns）
+    protected int lineCount;         // 总视觉行数 = ceil(条目数 / columns)
 
     private double scrollAccum = 0;  // 平滑滚轮累积
     private boolean dragging = false; // 拖动滚动条滑块中
 
     protected AbstractRowListScreen(Component title, List<T> rows, int listWidth, int rowPitch,
                                     int rowFill, int listTop, int bottomPad) {
+        this(title, rows, listWidth, rowPitch, rowFill, listTop, bottomPad, 1);
+    }
+
+    protected AbstractRowListScreen(Component title, List<T> rows, int listWidth, int rowPitch,
+                                    int rowFill, int listTop, int bottomPad, int columns) {
         super(title);
         this.rows = rows == null ? new ArrayList<>() : rows;
         this.listWidth = listWidth;
@@ -42,6 +54,8 @@ public abstract class AbstractRowListScreen<T> extends Screen {
         this.rowFill = rowFill;
         this.listTop = listTop;
         this.bottomPad = bottomPad;
+        this.columns = Math.max(1, columns);
+        this.cellWidth = Math.max(1, listWidth / this.columns);
     }
 
     // ============================================================
@@ -52,13 +66,23 @@ public abstract class AbstractRowListScreen<T> extends Screen {
     protected void init() {
         startX = (width - listWidth) / 2;
         listBottom = height - bottomPad;
+        refreshLayout();
+    }
+
+    /**
+     * 重算网格/视口/滚动上限（窗口尺寸变化、或子类过滤后 {@link #rows} 变了都要调）。
+     * 过滤搜索框改内容后记得调它，否则滚动条与命中判定会对不上。
+     */
+    protected void refreshLayout() {
+        cellWidth = Math.max(1, listWidth / columns);
+        lineCount = (rows.size() + columns - 1) / columns;
         int viewH = Math.max(0, listBottom - listTop);
         visibleRows = Math.max(1, viewH / rowPitch);
-        maxScroll = Math.max(0, rows.size() - visibleRows);
+        maxScroll = Math.max(0, lineCount - visibleRows);
         scrollOffset = clampScroll(scrollOffset);
     }
 
-    /** 行在屏幕上的 y（相对滚动偏移，内容随 scrollOffset 增大而上移） */
+    /** 视觉行在屏幕上的 y（相对滚动偏移，内容随 scrollOffset 增大而上移） */
     protected int rowY(int row) {
         return listTop + (row - scrollOffset) * rowPitch;
     }
@@ -73,7 +97,7 @@ public abstract class AbstractRowListScreen<T> extends Screen {
 
     private int thumbHeight() {
         int trackH = listBottom - listTop;
-        return Math.max(1, Math.min(trackH, Math.max(12, trackH * visibleRows / Math.max(1, rows.size()))));
+        return Math.max(1, Math.min(trackH, Math.max(12, trackH * visibleRows / Math.max(1, lineCount))));
     }
 
     private int thumbTravel() {
@@ -94,13 +118,16 @@ public abstract class AbstractRowListScreen<T> extends Screen {
                 && mouseY >= listTop && mouseY <= listBottom;
     }
 
-    /** 命中第几行（按行内容高度 rowFill 判定），未命中返回 -1 */
+    /** 命中第几个条目（按格子行列 + 行内容高度 rowFill 判定），未命中返回 -1 */
     protected int rowAt(double mouseX, double mouseY) {
         if (mouseX < startX || mouseX > startX + listWidth) return -1;
-        int r = (int) ((mouseY - listTop) / rowPitch) + scrollOffset;
-        if (r < 0 || r >= rows.size()) return -1;
-        int y = rowY(r);
-        return (mouseY >= y && mouseY <= y + rowFill) ? r : -1;
+        int line = (int) ((mouseY - listTop) / rowPitch) + scrollOffset;
+        if (line < 0 || line >= lineCount) return -1;
+        int y = rowY(line);
+        if (mouseY < y || mouseY > y + rowFill) return -1;
+        int col = Math.min(columns - 1, Math.max(0, (int) ((mouseX - startX) / cellWidth)));
+        int idx = line * columns + col;
+        return idx < rows.size() ? idx : -1;
     }
 
     // ============================================================
@@ -142,13 +169,18 @@ public abstract class AbstractRowListScreen<T> extends Screen {
         int right = startX + listWidth;
         // 视口裁剪：只绘制可视区域内的行
         graphics.enableScissor(left, listTop, right, listBottom + 1);
-        int last = Math.min(rows.size(), scrollOffset + visibleRows);
-        for (int row = scrollOffset; row < last; row++) {
-            int y = rowY(row);
+        int last = Math.min(lineCount, scrollOffset + visibleRows);
+        for (int line = scrollOffset; line < last; line++) {
+            int y = rowY(line);
             if (y + rowFill < listTop || y > listBottom) continue;
-            boolean hover = mouseX >= left && mouseX <= right
-                    && mouseY >= y && mouseY <= y + rowFill;
-            drawRow(graphics, rows.get(row), row, left, y, listWidth, rowFill, hover, mouseX, mouseY);
+            for (int col = 0; col < columns; col++) {
+                int idx = line * columns + col;
+                if (idx >= rows.size()) break;
+                int x = left + col * cellWidth;
+                boolean hover = mouseX >= x && mouseX <= x + cellWidth
+                        && mouseY >= y && mouseY <= y + rowFill;
+                drawRow(graphics, rows.get(idx), idx, x, y, cellWidth, rowFill, hover, mouseX, mouseY);
+            }
         }
         graphics.disableScissor();
         if (maxScroll > 0) {
