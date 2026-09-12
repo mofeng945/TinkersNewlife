@@ -544,7 +544,7 @@
   "item.tinkersnewlife.guide_book": "新生神秘学编年史",
   "modifier.tinkersnewlife.wuliang_wuxian": "无下限·无限",
   "modifier.tinkersnewlife.wuliang_wuxian.flavor": "§7无限，缠绕于万物之间。",
-  "modifier.tinkersnewlife.wuliang_wuxian.description": "按下术式释放键（C）开启，再按关闭（切换型，切术式后仍保持开启）。开启期间受到的伤害若低于阈值则无效；若高于阈值，每点溢出伤害消耗咒力，咒力耗尽自动关闭并受到一次破盾伤害（溢出×5）。阈值 = (1+(亲和/10+输出)/10)×10。占用术式槽。",
+  "modifier.tinkersnewlife.wuliang_wuxian.description": "按下术式释放键（C）开启，再按关闭（切换型，切术式后仍保持开启）。开启期间受到的伤害若不高于阈值则完全无效且不消耗咒力；若高于阈值，每点溢出伤害消耗咒力，咒力耗尽自动关闭并受到一次破盾伤害（溢出×5）——咒力无限时视作咒力充足，直接抵消、不会破盾。阈值 = 10 + 输出×2 + 亲和×0.1（输出5/亲和0 → 20）。占用术式槽。",
   "message.tinkersnewlife.wuxian.on": "§d无下限·无限：展开！",
   "message.tinkersnewlife.wuxian.off": "§7无下限·无限：解除。",
   "message.tinkersnewlife.wuxian.shield_break": "§c无下限被打破！承受破盾伤害",
