@@ -1,4 +1,8 @@
 {
+  "screen.tinkersnewlife.construct.empty": "No matching items",
+  "screen.tinkersnewlife.construct.cost_free_line": "Construct cost: infinite curse (free)",
+  "screen.tinkersnewlife.construct.cost_line": "Construct cost: %s",
+  "screen.tinkersnewlife.construct.hint_jei": "Left click to construct · scroll to page · search supports name/english/@mod/#tag",
   "message.tinkersnewlife.wu_wei.disguise_hint": "Disguise active: press F5 (third person) to see your form",
   "hud.tinkersnewlife.curse_hud.hint": "Drag the bar to move · scroll to resize · ESC to save",
   "hud.tinkersnewlife.curse.infinite_value": "Curse ∞",

@@ -1,4 +1,8 @@
 {
+  "screen.tinkersnewlife.construct.empty": "没有匹配的物品",
+  "screen.tinkersnewlife.construct.cost_free_line": "拟造费用：咒力无限（免费）",
+  "screen.tinkersnewlife.construct.cost_line": "拟造费用：%s",
+  "screen.tinkersnewlife.construct.hint_jei": "左键拟造 · 滚轮翻页 · 搜索支持 名称/英文名/@模组/#标签",
   "message.tinkersnewlife.wu_wei.disguise_hint": "伪装已生效：按 F5 切第三人称查看自己的形态",
   "hud.tinkersnewlife.curse_hud.hint": "拖动进度条调整位置 · 滚轮调宽度 · ESC 保存",
   "hud.tinkersnewlife.curse.infinite_value": "咒力 ∞",
