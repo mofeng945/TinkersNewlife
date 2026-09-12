@@ -71,6 +71,66 @@ public final class ConstructTechnique extends BaseTechnique {
     /** 临时物到期检查间隔（tick） */
     private static final int TEMP_CHECK_INTERVAL = 10;
 
+    /** 该物品栈是否为"拟造物"（带到期标记）。供 Slot mixin / 仪式拦截 / 外部逻辑判断 */
+    public static boolean isConstructed(ItemStack stack) {
+        return stack != null && !stack.isEmpty() && stack.hasTag()
+                && stack.getTag().getLong(KEY_TEMP_UNTIL) > 0;
+    }
+
+    /**
+     * ③ 手动放入容器拦截（由 {@code SlotMixin} 在 {@code Slot#mayPlace} 头部调用）：
+     * <b>非玩家背包</b>的槽位一律拒绝拟造物（箱子/机器/熔炉/工作台/各式工作方块……）。
+     * <p>
+     * 目的是把"拟造物只能存在于主人身上"这条不变量守住：手动塞进机器也不行，
+     * 而不是"塞进去 1 秒后被扫描清掉"。
+     */
+    public static boolean denyContainerSlot(net.minecraft.world.Container slotContainer, ItemStack stack) {
+        if (!isConstructed(stack)) return false;
+        try {
+            if (!com.mofengbaizhi.tinkersnewlife.config.ModConfig.CONSTRUCT_DENY_CONTAINER_SLOTS.get()) return false;
+        } catch (Throwable ignored) {
+            return false;
+        }
+        // 玩家自己的背包（含快捷栏/副手）照旧可以放
+        return !(slotContainer instanceof net.minecraft.world.entity.player.Inventory);
+    }
+
+    /** 配置：容器里的拟造物是否立即清除（不等到期） */
+    private static boolean containerInstantPurge() {
+        try {
+            return com.mofengbaizhi.tinkersnewlife.config.ModConfig.CONSTRUCT_CONTAINER_INSTANT_PURGE.get();
+        } catch (Throwable t) {
+            return true;
+        }
+    }
+
+    /** 配置：拟造物掉地是否立即消散 */
+    private static boolean vanishOnDrop() {
+        try {
+            return com.mofengbaizhi.tinkersnewlife.config.ModConfig.CONSTRUCT_VANISH_ON_DROP.get();
+        } catch (Throwable t) {
+            return true;
+        }
+    }
+
+    /** 配置：是否禁止诡厄仪式祭坛/基座接收拟造物 */
+    private static boolean blockGoetyRitual() {
+        try {
+            return com.mofengbaizhi.tinkersnewlife.config.ModConfig.CONSTRUCT_BLOCK_GOETY_RITUAL.get();
+        } catch (Throwable t) {
+            return true;
+        }
+    }
+
+    /** 配置：每 tick 全局扫描多少已加载区块（0 = 关闭全局扫描） */
+    private static int globalSweepChunks() {
+        try {
+            return Math.max(0, com.mofengbaizhi.tinkersnewlife.config.ModConfig.CONSTRUCT_GLOBAL_SWEEP_CHUNKS.get());
+        } catch (Throwable t) {
+            return 8;
+        }
+    }
+
     /** 反转拟造中：目标物品注册名（持久数据键） */
     private static final String KEY_FORGE_ITEM = "tinkersnewlife.construct_forge_item";
     /** 反转拟造中：完成时刻 gameTime（持久数据键） */
@@ -1769,14 +1829,94 @@ public final class ConstructTechnique extends BaseTechnique {
             long until = stack.getTag().getLong(KEY_TEMP_UNTIL);
             if (until <= 0) return;
             long now = event.getLevel().getGameTime();
-            if (until <= now) {
-                // 已经过期：不让它进入世界
+            // ⭐ 拟造物"离手即散"：不再允许它躺在地上等自动化来捡。
+            //    地上有拟造物 = 漏斗/管道/传送带/风扇、甚至直接吃地上物品的机器都能把它送进配方，
+            //    而流体产物（熔融金属）没有 NBT，一旦被熔炼就再也追不回来。
+            //    所以干脆让它在落地这一瞬间就消散（静默：只给烟雾）。
+            if (vanishOnDrop() || until <= now) {
                 event.setCanceled(true);
+                ((ServerLevel) event.getLevel()).sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE,
+                        item.getX(), item.getY() + 0.2, item.getZ(), 8, 0.25, 0.25, 0.25, 0.02);
                 return;
             }
             // 加入跟踪集：服务端每 tick 精确按 gameTime 到期移除（不依赖实体 tick/lifespan）
             item.lifespan = (int) Math.min(until - now + 20, ITEM_ENTITY_LIFESPAN_CAP);
             TRACKED_TEMP_ITEMS.add(item);
+        }
+
+        /**
+         * ⭐ 诡厄巫法（Goety）仪式祭坛 / 基座：拟造物一律不许上供。
+         * <p>
+         * 祭坛（{@code goety:dark_altar*}）与基座（{@code goety:pedestal*}）都用
+         * Forge {@code ITEM_HANDLER} 存供品，仪式一激活就<b>当场消耗</b>：
+         * 全局扫描根本来不及拦。所以在这里（{@code RightClickBlock}，HIGHEST 优先级）
+         * 直接拒绝交互，并顺手把祭坛/周围基座上"已经被管道塞进去"的拟造供品清掉，
+         * 让仪式的配方判定自然失败。
+         * <p>
+         * 软依赖：只按方块注册名判断，不 import Goety 任何类。
+         */
+        @net.minecraftforge.eventbus.api.SubscribeEvent(
+                priority = net.minecraftforge.eventbus.api.EventPriority.HIGHEST)
+        public static void onGoetyRitualInteract(
+                net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickBlock event) {
+            if (event.getLevel().isClientSide()) return;
+            if (!blockGoetyRitual()) return;
+            if (!(event.getEntity() instanceof ServerPlayer sp)) return;
+            if (!(event.getLevel() instanceof ServerLevel level)) return;
+            BlockState state = level.getBlockState(event.getPos());
+            if (!isGoetyRitualBlock(state)) return;
+            // 1) 先清掉已经躺在祭坛/基座上的拟造供品（可能来自管道/漏斗）
+            boolean cleansed = cleanseConstructedAround(level, event.getPos());
+            // 2) 手里的拟造物：直接不让上供（静默 + 粒子/音效）
+            ItemStack held = event.getItemStack();
+            if (!isConstructed(held)) {
+                if (cleansed) {
+                    sp.displayClientMessage(Component.translatable(
+                            "message.tinkersnewlife.construct.ritual_cleansed"), true);
+                }
+                return;
+            }
+            event.setCanceled(true);
+            level.sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE,
+                    event.getPos().getX() + 0.5, event.getPos().getY() + 1.1, event.getPos().getZ() + 0.5,
+                    12, 0.3, 0.2, 0.3, 0.02);
+            level.playSound(null, event.getPos(), net.minecraft.sounds.SoundEvents.FIRE_EXTINGUISH,
+                    net.minecraft.sounds.SoundSource.BLOCKS, 0.7F, 0.8F);
+            sp.displayClientMessage(Component.translatable(
+                    "message.tinkersnewlife.construct.ritual_denied"), true);
+        }
+
+        /** 是否是诡厄的仪式祭坛/基座（按注册名判断，软依赖） */
+        private static boolean isGoetyRitualBlock(BlockState state) {
+            net.minecraft.resources.ResourceLocation id =
+                    net.minecraftforge.registries.ForgeRegistries.BLOCKS.getKey(state.getBlock());
+            if (id == null || !"goety".equals(id.getNamespace())) return false;
+            String path = id.getPath();
+            return path.contains("altar") || path.contains("pedestal");
+        }
+
+        /** 清掉以 pos 为中心 8 格内所有方块实体里的拟造物（祭坛 + 周围基座），返回是否有清除 */
+        private static boolean cleanseConstructedAround(ServerLevel level, BlockPos pos) {
+            boolean any = false;
+            for (BlockPos p : BlockPos.betweenClosed(pos.offset(-8, -4, -8), pos.offset(8, 4, 8))) {
+                if (!level.isLoaded(p)) continue;   // 不为了扫一格容器去同步加载区块
+                BlockEntity be = level.getBlockEntity(p);
+                if (be == null || be.isRemoved()) continue;
+                var cap = be.getCapability(
+                        net.minecraftforge.common.capabilities.ForgeCapabilities.ITEM_HANDLER, null);
+                if (!cap.isPresent()) continue;
+                var handler = cap.resolve().orElse(null);
+                if (handler == null) continue;
+                for (int i = 0; i < handler.getSlots(); i++) {
+                    if (isConstructed(handler.getStackInSlot(i))) {
+                        handler.extractItem(i, handler.getStackInSlot(i).getCount(), false);
+                        any = true;
+                        level.sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE,
+                                p.getX() + 0.5, p.getY() + 1.1, p.getZ() + 0.5, 8, 0.25, 0.2, 0.25, 0.02);
+                    }
+                }
+            }
+            return any;
         }
 
         /**
@@ -1980,6 +2120,7 @@ public final class ConstructTechnique extends BaseTechnique {
             }
             if (PLACED_TEMPS.isEmpty() && PLACED_TEMP_PARTS.isEmpty() && SWEEP_QUEUE.isEmpty()) {
                 tickContainerSweep(event.getServer());
+            tickGlobalSweep(event.getServer());
                 return;
             }
             // ⭐ 待确认的部件放置：右键后 2 tick 对比"新增面"，精确锁定拟造部件所在的那一面
@@ -2034,6 +2175,7 @@ public final class ConstructTechnique extends BaseTechnique {
                 }
             }
             tickContainerSweep(event.getServer());
+            tickGlobalSweep(event.getServer());
             if (PLACED_TEMPS.isEmpty()) return;
             Iterator<PlacedTempBlock> it = PLACED_TEMPS.iterator();
             while (it.hasNext()) {
@@ -2114,10 +2256,78 @@ public final class ConstructTechnique extends BaseTechnique {
         //  ⭐ 拟造物进入容器后也会到期消失（防自动化吸取后永久保留）
         // ============================================================
 
-        /** 扫描半径（区块） */
+        /** 扫描半径（区块）：玩家附近的"快扫"范围 */
         private static final int SWEEP_RADIUS_CHUNKS = 8;
-        /** 每 tick 扫描的区块数（预算式，避免卡服） */
+        /** 每 tick 扫描的区块数（预算式，避免卡服）——玩家附近的快扫 */
         private static final int SWEEP_CHUNKS_PER_TICK = 2;
+
+        // ---- 全局轮询（覆盖"离玩家很远"的容器/机器）----
+        /** 各维度已加载区块（由 ChunkEvent.Load/Unload 维护，避免反射拿 ChunkMap） */
+        private static final java.util.Map<net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>,
+                java.util.Set<Long>> LOADED_CHUNKS = new java.util.concurrent.ConcurrentHashMap<>();
+        /** 各维度待扫区块（用 ConcurrentLinkedDeque，新加载的区块 addFirst 优先扫） */
+        private static final java.util.Map<net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>,
+                java.util.concurrent.ConcurrentLinkedDeque<Long>> GLOBAL_QUEUES =
+                new java.util.concurrent.ConcurrentHashMap<>();
+
+        /** 区块加载：登记 + 插队优先扫（机器可能刚加载就开始干活） */
+        @net.minecraftforge.eventbus.api.SubscribeEvent
+        public static void onChunkLoad(net.minecraftforge.event.level.ChunkEvent.Load event) {
+            if (!(event.getLevel() instanceof ServerLevel level)) return;
+            long key = event.getChunk().getPos().toLong();
+            LOADED_CHUNKS.computeIfAbsent(level.dimension(),
+                    k -> java.util.concurrent.ConcurrentHashMap.newKeySet()).add(key);
+            GLOBAL_QUEUES.computeIfAbsent(level.dimension(),
+                    k -> new java.util.concurrent.ConcurrentLinkedDeque<>()).addFirst(key);
+        }
+
+        /** 区块卸载：移出登记（别让队列无限增长） */
+        @net.minecraftforge.eventbus.api.SubscribeEvent
+        public static void onChunkUnload(net.minecraftforge.event.level.ChunkEvent.Unload event) {
+            if (!(event.getLevel() instanceof ServerLevel level)) return;
+            java.util.Set<Long> set = LOADED_CHUNKS.get(level.dimension());
+            if (set != null) set.remove(event.getChunk().getPos().toLong());
+        }
+
+        /**
+         * 全局轮询清扫：每 tick 按预算扫 N 个<b>已加载区块</b>（跨所有维度轮转）。
+         * <p>
+         * 原来的扫描只围着一个随机在线玩家 8 区块、每 tick 2 个区块 —— 一个区块约 7 秒才轮到一次，
+         * 而<b>玩家下线/别的基地/别的维度</b>里的容器永远扫不到。这里补上全局覆盖，
+         * 让"被管道送进远处机器"的拟造物也能在 1~2 秒内被清掉。
+         */
+        private static void tickGlobalSweep(MinecraftServer server) {
+            int budget = globalSweepChunks();
+            if (budget <= 0 || server == null) return;
+            int scanned = 0;
+            while (scanned < budget) {
+                boolean any = false;
+                for (ServerLevel level : server.getAllLevels()) {
+                    if (scanned >= budget) break;
+                    Long key = nextGlobalChunk(level);
+                    if (key == null) continue;
+                    any = true;
+                    scanned++;
+                    net.minecraft.world.level.chunk.LevelChunk chunk = level.getChunkSource()
+                            .getChunkNow(net.minecraft.world.level.ChunkPos.getX(key),
+                                    net.minecraft.world.level.ChunkPos.getZ(key));
+                    if (chunk != null) sweepChunk(level, chunk, level.getGameTime());
+                }
+                if (!any) break;
+            }
+        }
+
+        /** 取该维度下一个待扫区块；队列空了就从"已加载集合"重新装满一轮 */
+        private static Long nextGlobalChunk(ServerLevel level) {
+            var queue = GLOBAL_QUEUES.computeIfAbsent(level.dimension(),
+                    k -> new java.util.concurrent.ConcurrentLinkedDeque<>());
+            Long key = queue.pollFirst();
+            if (key != null) return key;
+            java.util.Set<Long> set = LOADED_CHUNKS.get(level.dimension());
+            if (set == null || set.isEmpty()) return null;
+            for (Long k : set) queue.addLast(k);
+            return queue.pollFirst();
+        }
         /** 待扫区块队列（围绕某个玩家，轮流换人） */
         private static final java.util.ArrayDeque<net.minecraft.world.level.ChunkPos> SWEEP_QUEUE =
                 new java.util.ArrayDeque<>();
@@ -2165,14 +2375,21 @@ public final class ConstructTechnique extends BaseTechnique {
             return !SWEEP_QUEUE.isEmpty();
         }
 
-        /** 扫一个区块里的方块实体：容器 / ITEM_HANDLER capability 里的到期拟造物清除 */
+        /**
+         * 扫一个区块里的方块实体：容器 / ITEM_HANDLER capability 里的拟造物清除。
+         * <p>
+         * ⭐ {@code container_instant_purge=true}（默认）时<b>不看到期时间</b>——只要容器里出现拟造物就清掉。
+         * 理由：机器消耗往往在几秒内完成（熔炼 dwell、管道瞬时消耗），"等到期"永远抢不过它；
+         * 而"拟造物只能存在于主人身上"才是我们要守住的不变量。
+         */
         private static void sweepChunk(ServerLevel level, net.minecraft.world.level.chunk.LevelChunk chunk, long now) {
+            boolean instant = containerInstantPurge();
             for (BlockEntity be : chunk.getBlockEntities().values()) {
                 if (be == null || be.isRemoved()) continue;
                 try {
                     if (be instanceof net.minecraft.world.Container container) {
                         for (int i = 0; i < container.getContainerSize(); i++) {
-                            if (isExpiredTemp(container.getItem(i), now)) {
+                            if (isPurgeTarget(container.getItem(i), now, instant)) {
                                 container.setItem(i, ItemStack.EMPTY);
                             }
                         }
@@ -2184,7 +2401,7 @@ public final class ConstructTechnique extends BaseTechnique {
                         if (handler == null) continue;
                         for (int i = 0; i < handler.getSlots(); i++) {
                             ItemStack s = handler.getStackInSlot(i);
-                            if (isExpiredTemp(s, now)) {
+                            if (isPurgeTarget(s, now, instant)) {
                                 handler.extractItem(i, s.getCount(), false);
                             }
                         }
@@ -2193,6 +2410,12 @@ public final class ConstructTechnique extends BaseTechnique {
                     // 单个方块实体出问题不影响整体扫描
                 }
             }
+        }
+
+        /** 容器里的这一格该不该清：立即清除模式看"是不是拟造物"，否则只看"到没到期" */
+        private static boolean isPurgeTarget(ItemStack stack, long now, boolean instant) {
+            if (instant) return isConstructed(stack);
+            return isExpiredTemp(stack, now);
         }
 
         private static boolean isExpiredTemp(ItemStack stack, long now) {

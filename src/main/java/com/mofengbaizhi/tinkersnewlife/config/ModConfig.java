@@ -45,6 +45,17 @@ public final class ModConfig {
     public static final ConfigValue<Double> CONSTRUCT_COST_MULTIPLIER;
     /** 拟造黑名单：禁止出现在构筑列表里的物品（支持 mod / 物品 / 标签 / 配方类型） */
     public static final ConfigValue<List<? extends String>> CONSTRUCT_BLACKLIST;
+    // ---- 拟造物防自动化（拟造物只能存在于主人身上）----
+    /** 拟造物掉到地上立即消散（静默：只给烟雾/音效，不给文字提示） */
+    public static final ConfigValue<Boolean> CONSTRUCT_VANISH_ON_DROP;
+    /** 容器/机器里的拟造物立即清除（不等到期）——防止被熔炼等自动化配方加工成真材料 */
+    public static final ConfigValue<Boolean> CONSTRUCT_CONTAINER_INSTANT_PURGE;
+    /** 禁止把拟造物手动放进"非玩家背包"的容器槽位（Slot#mayPlace 拦截） */
+    public static final ConfigValue<Boolean> CONSTRUCT_DENY_CONTAINER_SLOTS;
+    /** 禁止诡厄巫法（Goety）仪式祭坛/基座接收拟造物 */
+    public static final ConfigValue<Boolean> CONSTRUCT_BLOCK_GOETY_RITUAL;
+    /** 每 tick 全局扫描的已加载区块数（0 = 只扫玩家附近的旧逻辑；越大清得越快、开销越高） */
+    public static final ConfigValue<Integer> CONSTRUCT_GLOBAL_SWEEP_CHUNKS;
     /** "配方原料价值"项的权重（0 = 关闭该项） */
     public static final ConfigValue<Double> CONSTRUCT_INGREDIENT_WEIGHT;
     /** 是否启用<b>内置默认黑名单</b>（矿石/粗矿/矿锭/矿粒/矿粉/宝石/碎片） */
@@ -229,6 +240,12 @@ public final class ModConfig {
         CONSTRUCT_FLUID_VALUE_CAP = b.defineInRange("fluid_value_cap", 500.0D, 0.0D, 100000.0D);
         CONSTRUCT_BLACKLIST = b.defineList("blacklist", new java.util.ArrayList<String>(),
                 o -> o instanceof String);
+        // ---- 拟造物防自动化 ----
+        CONSTRUCT_VANISH_ON_DROP = b.define("vanish_on_drop", true);
+        CONSTRUCT_CONTAINER_INSTANT_PURGE = b.define("container_instant_purge", true);
+        CONSTRUCT_DENY_CONTAINER_SLOTS = b.define("deny_container_slots", true);
+        CONSTRUCT_BLOCK_GOETY_RITUAL = b.define("block_goety_ritual", true);
+        CONSTRUCT_GLOBAL_SWEEP_CHUNKS = b.defineInRange("global_sweep_chunks", 8, 0, 256);
         b.pop();
 
         // 飞剑流光拖尾（客户端）

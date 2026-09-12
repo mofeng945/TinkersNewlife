@@ -4,6 +4,9 @@
   "package": "com.mofengbaizhi.tinkersnewlife.mixin",
   "compatibilityLevel": "JAVA_17",
   "refmap": "tinkersnewlife.refmap.json",
+  "mixins": [
+    "SlotMixin"
+  ],
   "client": [
     "EntityRenderDispatcherMixin"
   ],

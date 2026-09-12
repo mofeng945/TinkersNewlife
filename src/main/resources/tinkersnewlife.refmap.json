@@ -2,12 +2,18 @@
   "mappings": {
     "com/mofengbaizhi/tinkersnewlife/mixin/EntityRenderDispatcherMixin": {
       "render": "Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;m_114384_(Lnet/minecraft/world/entity/Entity;DDDFFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V"
+    },
+    "com/mofengbaizhi/tinkersnewlife/mixin/SlotMixin": {
+      "mayPlace": "Lnet/minecraft/world/inventory/Slot;m_5857_(Lnet/minecraft/world/item/ItemStack;)Z"
     }
   },
   "data": {
     "searge": {
       "com/mofengbaizhi/tinkersnewlife/mixin/EntityRenderDispatcherMixin": {
         "render": "Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;m_114384_(Lnet/minecraft/world/entity/Entity;DDDFFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V"
+      },
+      "com/mofengbaizhi/tinkersnewlife/mixin/SlotMixin": {
+        "mayPlace": "Lnet/minecraft/world/inventory/Slot;m_5857_(Lnet/minecraft/world/item/ItemStack;)Z"
       }
     }
   }
