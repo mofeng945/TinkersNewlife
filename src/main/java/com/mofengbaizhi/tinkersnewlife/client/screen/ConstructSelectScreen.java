@@ -302,7 +302,8 @@ public class ConstructSelectScreen extends Screen {
         var level = Minecraft.getInstance().level;
         double term = level == null ? 0.0
                 : ConstructTechnique.ingredientTerm(level.getRecipeManager(), level.registryAccess(), item);
-        int cost = ConstructTechnique.computeCost(ClientCurseData.getAffinity(), ClientCurseData.getOutput(), item, term);
+        int cost = ConstructTechnique.computeCost(ClientCurseData.getAffinity(), ClientCurseData.getOutput(), item, term,
+                ConstructTechnique.functionTerm(level.getRecipeManager(), level.registryAccess(), item));
         boolean enough = ClientCurseData.getCurse() >= cost;
         Component text = Component.translatable("screen.tinkersnewlife.construct.cost_time", cost, (cost + 19) / 20);
         return Component.translatable("screen.tinkersnewlife.construct.cost_line",

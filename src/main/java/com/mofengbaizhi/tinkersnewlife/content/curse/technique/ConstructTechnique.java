@@ -10,7 +10,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -285,7 +287,8 @@ public final class ConstructTechnique extends BaseTechnique {
         ResourceLocation id = ResourceLocation.tryParse(itemId);
         Item item = id == null ? null : ForgeRegistries.ITEMS.getValue(id);
         if (item == null || item == Items.AIR) return;
-        ItemStack stack = new ItemStack(item);
+        // ⭐ 优先用"配方真实产物"作模板：法术卷轴这类产物本身带 NBT，裸 new ItemStack 会变成空壳
+        ItemStack stack = sampleResult(player, item);
         stack.getOrCreateTag().putLong(KEY_TEMP_UNTIL, player.serverLevel().getGameTime() + TEMP_TICKS);
         Component original = stack.getHoverName();
         stack.setHoverName(Component.translatable("item.tinkersnewlife.construct.prefix").append(original));
@@ -775,7 +778,9 @@ public final class ConstructTechnique extends BaseTechnique {
     /** 每个配方管理器一份缓存（集成服务器里客户端/服务端是两个管理器，用 IdentityHashMap 各自缓存） */
     private record ConstructCache(int recipeCount,
                                   Map<Item, java.util.Set<net.minecraft.world.item.crafting.RecipeType<?>>> outputs,
-                                  Map<Item, Double> ingredientTerms) {}
+                                  Map<Item, Double> ingredientTerms,
+                                  Map<Item, ItemStack> samples,
+                                  Map<Item, Double> functionTerms) {}
 
     private static final Map<net.minecraft.world.item.crafting.RecipeManager, ConstructCache> CONSTRUCT_CACHE =
             new java.util.IdentityHashMap<>();
@@ -802,13 +807,15 @@ public final class ConstructTechnique extends BaseTechnique {
         ConstructCache cached = CONSTRUCT_CACHE.get(manager);
         if (cached != null && cached.recipeCount() == all.size()) return cached;
 
-        // 1) 物品 → 产出它的所有配方
+        // 1) 物品 → 产出它的所有配方（顺便留一份"配方真实产物"作为模板）
         Map<Item, java.util.List<net.minecraft.world.item.crafting.Recipe<?>>> byItem = new java.util.HashMap<>();
+        Map<Item, ItemStack> samples = new java.util.HashMap<>();
         for (net.minecraft.world.item.crafting.Recipe<?> recipe : all) {
             try {
                 ItemStack out = recipe.getResultItem(access);
                 if (out.isEmpty() || out.getItem() == Items.AIR) continue;
                 byItem.computeIfAbsent(out.getItem(), k -> new java.util.ArrayList<>()).add(recipe);
+                samples.putIfAbsent(out.getItem(), out.copy());
             } catch (Throwable ignored) {
                 // CustomRecipe 等取产物需要容器上下文 → 跳过
             }
@@ -834,11 +841,116 @@ public final class ConstructTechnique extends BaseTechnique {
         }
         outputs.keySet().removeIf(item -> isBlacklisted(item, outputs.get(item)));
 
+        // 4) "功能价值"项：高功能魔法类物品（法术卷轴 / 聚晶 / 法术书 / 符文 …）自身分极低，
+        //    但实际价值远高于同材料的手工品 → 单独加一笔权重
+        Map<Item, Double> functionTerms = new java.util.HashMap<>();
+        for (Item item : outputs.keySet()) {
+            functionTerms.put(item, functionValue(item));
+        }
+
         if (CONSTRUCT_CACHE.size() > 2) CONSTRUCT_CACHE.clear();
-        ConstructCache fresh = new ConstructCache(all.size(), outputs, terms);
+        ConstructCache fresh = new ConstructCache(all.size(), outputs, terms, samples, functionTerms);
         CONSTRUCT_CACHE.put(manager, fresh);
         TinkersNewlife.LOGGER.debug("[构筑] 可拟造物品表已重建：{} 项（黑名单后）", outputs.size());
         return fresh;
+    }
+
+    // ============================================================
+    //  高功能魔法类物品的价值加成
+    // ============================================================
+
+    /**
+     * 判定并返回一件物品的"功能价值"加成（默认 0）。
+     *
+     * <p>为什么需要它：法术卷轴 / 聚晶 / 法术书这类东西，<b>稀有度和攻防耐久全是垫底</b>
+     * （普通稀有度、非方块、没攻击没护甲、无耐久），按原公式只值最低档的几咒力，
+     * 但它们的功能性远超同材料的普通物品。
+     *
+     * <p>判定方式（两者任一命中即算）：
+     * <ol>
+     *   <li><b>标签</b>：内置 {@code #curios:scroll} / {@code #curios:spellbook} / {@code #curios:spellstone}
+     *       / {@code #irons_spellbooks:school_focus} / {@code #irons_spellbooks:inscribed_rune}，
+     *       外加配置 {@code magic_extra_tags}；</li>
+     *   <li><b>类名关键词</b>：沿着物品类的继承链与接口看名字，命中 scroll/focus/spellbook/rune/… 任一
+     *       （软依赖：只看名字，不 import 任何模组类），外加配置 {@code magic_extra_keywords}。</li>
+     * </ol>
+     * 加成大小由配置 {@code magic_item_bonus} 决定（默认 40 分，0 = 关闭）。
+     */
+    private static double functionValue(Item item) {
+        double bonus = magicBonus();
+        if (bonus <= 0) return 0.0;
+        // 标签
+        for (String tagText : magicTags()) {
+            ResourceLocation tagId = ResourceLocation.tryParse(tagText.startsWith("#") ? tagText.substring(1) : tagText);
+            if (tagId == null) continue;
+            if (item.builtInRegistryHolder().is(TagKey.create(Registries.ITEM, tagId))) return bonus;
+        }
+        // 类名关键词
+        String[] keywords = magicKeywords();
+        Class<?> c = item.getClass();
+        while (c != null && c != Object.class) {
+            String name = c.getName().toLowerCase(java.util.Locale.ROOT);
+            for (String k : keywords) {
+                if (!k.isEmpty() && name.contains(k)) return bonus;
+            }
+            for (Class<?> itf : c.getInterfaces()) {
+                String itfName = itf.getName().toLowerCase(java.util.Locale.ROOT);
+                for (String k : keywords) {
+                    if (!k.isEmpty() && itfName.contains(k)) return bonus;
+                }
+            }
+            c = c.getSuperclass();
+        }
+        return 0.0;
+    }
+
+    /** 内置魔法类关键词（类名/接口名子串，全小写） */
+    private static final String[] DEFAULT_MAGIC_KEYWORDS = {
+            "scroll", "focus", "spellbook", "grimoire", "tome", "codex",
+            "rune", "talisman", "charm", "amulet", "phylactery",
+            "wand", "staff", "scepter", "sceptre", "elixir", "incant"
+    };
+
+    /** 内置魔法类标签 */
+    private static final String[] DEFAULT_MAGIC_TAGS = {
+            "#curios:scroll", "#curios:spellbook", "#curios:spellstone",
+            "#irons_spellbooks:school_focus", "#irons_spellbooks:inscribed_rune"
+    };
+
+    private static double magicBonus() {
+        try {
+            return Math.max(0.0, com.mofengbaizhi.tinkersnewlife.config.ModConfig.CONSTRUCT_MAGIC_BONUS.get());
+        } catch (Throwable t) {
+            return 40.0;
+        }
+    }
+
+    private static String[] magicKeywords() {
+        try {
+            var extra = com.mofengbaizhi.tinkersnewlife.config.ModConfig.CONSTRUCT_MAGIC_EXTRA_KEYWORDS.get();
+            if (extra == null || extra.isEmpty()) return DEFAULT_MAGIC_KEYWORDS;
+            java.util.List<String> all = new java.util.ArrayList<>(java.util.List.of(DEFAULT_MAGIC_KEYWORDS));
+            for (String s : extra) {
+                if (s != null && !s.isBlank()) all.add(s.trim().toLowerCase(java.util.Locale.ROOT));
+            }
+            return all.toArray(new String[0]);
+        } catch (Throwable t) {
+            return DEFAULT_MAGIC_KEYWORDS;
+        }
+    }
+
+    private static java.util.List<String> magicTags() {
+        try {
+            var extra = com.mofengbaizhi.tinkersnewlife.config.ModConfig.CONSTRUCT_MAGIC_EXTRA_TAGS.get();
+            if (extra == null || extra.isEmpty()) return java.util.List.of(DEFAULT_MAGIC_TAGS);
+            java.util.List<String> all = new java.util.ArrayList<>(java.util.List.of(DEFAULT_MAGIC_TAGS));
+            for (String s : extra) {
+                if (s != null && !s.isBlank()) all.add(s.trim());
+            }
+            return all;
+        } catch (Throwable t) {
+            return java.util.List.of(DEFAULT_MAGIC_TAGS);
+        }
     }
 
     /** 该物品的"原料价值项"（= 各配方原料价值合计的平均值；没有配方 → 0） */
@@ -1042,8 +1154,14 @@ public final class ConstructTechnique extends BaseTechnique {
             term = ingredientTerm(level.getRecipeManager(), level.registryAccess(), item);
         } catch (Throwable ignored) {
         }
+        double fn = 0.0;
+        try {
+            var level = player.serverLevel();
+            fn = Math.max(0.0, functionValue(item));
+        } catch (Throwable ignored) {
+        }
         return computeCost(CursePowerHelper.getCurseAffinity(player),
-                CursePowerHelper.getCurseOutputLevel(player), item, term);
+                CursePowerHelper.getCurseOutputLevel(player), item, term, fn);
     }
 
     /** 兼容旧调用（不含原料项） */
@@ -1062,7 +1180,14 @@ public final class ConstructTechnique extends BaseTechnique {
      * </pre>
      */
     public static int computeCost(int affinity, int output, Item item, double ingredientTerm) {
-        double score = intrinsicScore(item) + Math.max(0.0, ingredientTerm) * ingredientWeight();
+        return computeCost(affinity, output, item, ingredientTerm, 0.0);
+    }
+
+    /** 完整版：自身分 + 原料项×权重 + 功能价值项(魔法类) */
+    public static int computeCost(int affinity, int output, Item item, double ingredientTerm, double functionTerm) {
+        double score = intrinsicScore(item)
+                + Math.max(0.0, ingredientTerm) * ingredientWeight()
+                + Math.max(0.0, functionTerm);
         double affinityMul = Math.max(0.25, 1.0 - Math.max(0, affinity) / 100.0);
         double raw = Math.max(3.0, Math.ceil(score * affinityMul * (1.0 + output * 0.2)));
         double cost = raw * costMultiplier();
@@ -1116,6 +1241,27 @@ public final class ConstructTechnique extends BaseTechnique {
             return Math.max(0.0, com.mofengbaizhi.tinkersnewlife.config.ModConfig.CONSTRUCT_COST_MULTIPLIER.get());
         } catch (Throwable t) {
             return 10.0;
+        }
+    }
+
+    /** 取该物品的"配方真实产物"模板（取不到则退回裸 new ItemStack） */
+    public static ItemStack sampleResult(ServerPlayer player, Item item) {
+        try {
+            var level = player.serverLevel();
+            ItemStack sample = cacheFor(level.getRecipeManager(), level.registryAccess()).samples().get(item);
+            if (sample != null && !sample.isEmpty()) return sample.copy();
+        } catch (Throwable ignored) {
+        }
+        return new ItemStack(item);
+    }
+
+    /** 该物品的功能价值项（魔法类加成；客户端列表预览用） */
+    public static double functionTerm(net.minecraft.world.item.crafting.RecipeManager manager,
+                                      net.minecraft.core.RegistryAccess access, Item item) {
+        try {
+            return cacheFor(manager, access).functionTerms().getOrDefault(item, 0.0);
+        } catch (Throwable t) {
+            return functionValue(item);
         }
     }
 

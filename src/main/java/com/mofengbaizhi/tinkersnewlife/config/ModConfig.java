@@ -49,6 +49,12 @@ public final class ModConfig {
     public static final ConfigValue<Double> CONSTRUCT_INGREDIENT_WEIGHT;
     /** 是否启用<b>内置默认黑名单</b>（矿石/粗矿/矿锭/矿粒/矿粉/宝石/碎片） */
     public static final ConfigValue<Boolean> CONSTRUCT_USE_DEFAULT_BLACKLIST;
+    /** 高功能魔法类物品（法术卷轴/聚晶/法术书/符文…）的额外价值分（0 = 关闭该判定） */
+    public static final ConfigValue<Double> CONSTRUCT_MAGIC_BONUS;
+    /** 追加的魔法类关键词（按物品类名/接口名匹配，小写子串） */
+    public static final ConfigValue<List<? extends String>> CONSTRUCT_MAGIC_EXTRA_KEYWORDS;
+    /** 追加的魔法类物品标签（如 #curios:spellbook） */
+    public static final ConfigValue<List<? extends String>> CONSTRUCT_MAGIC_EXTRA_TAGS;
 
     // ==================== 术式/领域缩放系数 ====================
     /** 各术式 modifier id → [damage, cost] 缩放 */
@@ -94,6 +100,13 @@ public final class ModConfig {
                 "                          (#forge:ores, #forge:raw_materials, #forge:ingots, #forge:nuggets,",
                 "                           #forge:dusts, #forge:gems, #c:* equivalents, and *:*_shard / *:*_dust / *:*_nugget globs).",
                 "",
+                "magic_item_bonus = extra value score for high-function magic items (spell scrolls, focuses, spellbooks,",
+                "                   runes, wands...). They have no attack/armor/durability so the normal formula prices them",
+                "                   like dirt. 0 disables the check. Detected by tags (#curios:scroll, #curios:spellbook,",
+                "                   #curios:spellstone, #irons_spellbooks:school_focus, #irons_spellbooks:inscribed_rune)",
+                "                   or by class/interface name keywords (scroll/focus/spellbook/rune/charm/wand/staff/...).",
+                "magic_extra_keywords / magic_extra_tags = your own additions.",
+                "",
                 "blacklist = extra entries that must NOT appear in the construct menu. Supported formats:",
                 "  goety                 -> whole mod          (bare modid)",
                 "  iceandfire:*          -> whole mod          (modid:*)",
@@ -106,6 +119,11 @@ public final class ModConfig {
         CONSTRUCT_COST_MULTIPLIER = b.defineInRange("cost_multiplier", 10.0D, 0.0D, 10000.0D);
         CONSTRUCT_INGREDIENT_WEIGHT = b.defineInRange("ingredient_weight", 0.75D, 0.0D, 100.0D);
         CONSTRUCT_USE_DEFAULT_BLACKLIST = b.define("use_default_blacklist", true);
+        CONSTRUCT_MAGIC_BONUS = b.defineInRange("magic_item_bonus", 40.0D, 0.0D, 10000.0D);
+        CONSTRUCT_MAGIC_EXTRA_KEYWORDS = b.defineList("magic_extra_keywords", new java.util.ArrayList<String>(),
+                o -> o instanceof String);
+        CONSTRUCT_MAGIC_EXTRA_TAGS = b.defineList("magic_extra_tags", new java.util.ArrayList<String>(),
+                o -> o instanceof String);
         CONSTRUCT_BLACKLIST = b.defineList("blacklist", new java.util.ArrayList<String>(),
                 o -> o instanceof String);
         b.pop();
