@@ -6,7 +6,7 @@
     "pages":  [
                   {
                       "type":  "patchouli:text",
-                      "text":  "$(bold)Dragon Blood Infusion$(): The power of dragon blood, infused into the blade.$(br2)Effect: Consumes dragon blood to apply effects to enemies:$(li)Fire Dragon Blood → Ignites$(li)Ice Dragon Blood → Frost$(li)Lightning Dragon Blood → Disarms$(br2)Synergy: Combine it with the $(l:traits/trait_dragon_blood_tank)Dragon Blood Tank$()."
+                      "text":  "$(bold)Dragon Blood Infusion$(): The power of dragon blood, infused into the blade.$(br2)Effect: Consumes dragon blood to apply effects to enemies:$(li)Fire Dragon Blood → Ignites$(li)Ice Dragon Blood → Frost$(li)Lightning Dragon Blood → Disarms$(br2)Synergy: Combine it with the $(l:trait_dragon_blood_tank)Dragon Blood Tank$()."
                   }
               ],
     "flag":  "mod:iceandfire"

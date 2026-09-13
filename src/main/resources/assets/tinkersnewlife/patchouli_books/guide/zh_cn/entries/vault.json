@@ -1,0 +1,21 @@
+{
+  "name": "呪蔵",
+  "category": "tinkersnewlife:curse",
+  "icon": "tinkersnewlife:curse_vault",
+  "sortnum": 5,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)呪蔵$() 是可以放在地上的咒力仓库。$(br2)$(li)放下时$(bold)绑定放置者为使用者$()$(li)容量 $(bold)10 万（10w）$()点咒力，是封呪瓶的 20 倍$(li)$(bold)无法破坏$()：硬度与基岩同级、抗爆、活塞推不动$(br2)咒力恢复的优先级是：$(l:bottle)封呪瓶$() → $(bold)呪蔵$() → 咒力核心（临时存储）。"
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:curse_vault",
+      "text": "$(bold)取回$()：使用者$(bold)空手左键$()（或 潜行 + 空手 + 右键）即可把呪蔵收回手中，$(bold)其中的咒力一并保留$()（写在物品耐久条上）。$(br2)不是自己的呪蔵收不走，只会提示“这不是你的呪蔵”。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)存取方式$()：$(li)空手左键 / 潜行空手右键：回收$(li)空手右键：报出当前储量$(li)手拿$(bold)装着咒力残秽的容器$()右键：倒进去（1 mb = 10 咒力）$(li)手拿$(bold)空容器$()右键：把残秽接出来$(br2)$(bold)准星对准呪蔵$()时，准星下方会直接显示它的咒力量与容量条（超过 1 万用“万”记法，如 1.2w）。"
+    }
+  ]
+}

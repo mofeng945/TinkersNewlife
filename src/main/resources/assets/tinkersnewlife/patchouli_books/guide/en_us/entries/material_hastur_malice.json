@@ -7,11 +7,11 @@
     {
       "type": "patchouli:spotlight",
       "item": "tinkersnewlife:hastur_malice_bucket",
-      "text": "$(bold)How to obtain$():$(li)First get $(bold)Molten Hastur's Malice$() by smelting a $(l:relics/relic_yellow_king_remnant)Remnant of the King in Yellow$() in the Smeltery (1 piece = 10 mB)$(li)At the Casting Table, combine the $(bold)Chorus$() material (tconstruct:chorus) with $(bold)80 mB$() of Molten Hastur's Malice to craft Hastur's Malice material$(br2)Tier: $(bold)T2$()."
+      "text": "$(bold)How to obtain$():$(li)First get $(bold)Molten Hastur's Malice$() by smelting a $(l:relic_yellow_king_remnant)Remnant of the King in Yellow$() in the Smeltery (1 piece = 10 mB)$(li)At the Casting Table, combine the $(bold)Chorus$() material (tconstruct:chorus) with $(bold)80 mB$() of Molten Hastur's Malice to craft Hastur's Malice material$(br2)Tier: $(bold)T2$()."
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)Innate traits$():$(li)$(l:traits/trait_hastur_malice)Gale$(): attacking creates a wind field that pulls nearby creatures in and continuously damages everything inside it$(br2)Hastur's Malice is all about control and pulling - gather enemies together, then follow up with area damage."
+      "text": "$(bold)Innate traits$():$(li)$(l:trait_hastur_malice)Gale$(): attacking creates a wind field that pulls nearby creatures in and continuously damages everything inside it$(br2)Hastur's Malice is all about control and pulling - gather enemies together, then follow up with area damage."
     }
   ]
 }

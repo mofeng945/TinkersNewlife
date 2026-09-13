@@ -7,7 +7,7 @@
                   {
                       "type":  "patchouli:spotlight",
                       "item":  "tinkersnewlife:rlyeh_call",
-                      "text":  "$(bold)R'lyeh Call$()$(br2)Obtaining: go fishing in water at $(bold)night · full moon · depth 30+$(); when you catch a fish, there is a $(bold)50%$() chance to obtain it (inflicted with Unnamable for 5 seconds).$(br2)Usage: smelt it in a smeltery → $(bold)1000 mB$() of Molten Ashen Ink, the source of the $(l:materials/material_ashen_ink)Ashen Ink$() material."
+                      "text":  "$(bold)R'lyeh Call$()$(br2)Obtaining: go fishing in water at $(bold)night · full moon · depth 30+$(); when you catch a fish, there is a $(bold)50%$() chance to obtain it (inflicted with Unnamable for 5 seconds).$(br2)Usage: smelt it in a smeltery → $(bold)1000 mB$() of Molten Ashen Ink, the source of the $(l:material_ashen_ink)Ashen Ink$() material."
                   }
               ]
 }

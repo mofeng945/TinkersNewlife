@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(bold)Black Flash$(): time, at this moment, stands still...$(br2)Effect: each attack has a $(bold)0.01%$() chance to trigger Black Flash, dealing $(bold)2.5×$() damage; for 60 seconds after triggering, the chance increases by 10%, and Speed/Attack/Jump are boosted by 20%.$(br2)Pairing: $(l:traits/trait_west_tiger)West Tiger$() can further increase the Black Flash trigger rate."
+      "text": "$(bold)Black Flash$(): time, at this moment, stands still...$(br2)Effect: each attack has a $(bold)0.01%$() chance to trigger Black Flash, dealing $(bold)2.5×$() damage; for 60 seconds after triggering, the chance increases by 10%, and Speed/Attack/Jump are boosted by 20%.$(br2)Pairing: $(l:trait_west_tiger)West Tiger$() can further increase the Black Flash trigger rate."
     }
   ]
 }

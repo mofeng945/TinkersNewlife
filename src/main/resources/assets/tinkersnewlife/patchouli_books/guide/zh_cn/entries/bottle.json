@@ -1,0 +1,21 @@
+{
+  "name": "封呪瓶",
+  "category": "tinkersnewlife:curse",
+  "icon": "tinkersnewlife:curse_bottle",
+  "sortnum": 4,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)封呪瓶$() 是随身携带的咒力容器，佩戴在 curios 的$(bold)通用「饰品」槽$()（本整合包里就是显示为“饰品”的那个槽）。$(br2)佩戴后它会替你囤积咒力：$(li)$(bold)咒力优先进瓶$()：回复、战利品奖励、返还都先灌瓶，瓶子满了才进咒力核心$(li)瓶内上限 $(bold)5000$() 点咒力，以 $(bold)耐久条$()显示$(li)$(bold)死亡不丢$()：瓶内咒力写在物品上，与玩家咒力池独立，重生也不会消失"
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:curse_bottle",
+      "text": "有了瓶子，$(bold)咒力消耗顺序$()变为：$(br)$(li)咒力核心（临时存储）$(li)封呪瓶$(li)$(l:vault)呪蔵$()（放下的方块容器）$(li)最后才动用诡厄巫法的灵魂能量（1 咒力 = 3 灵魂能量）$(br2)所以瓶子既是“备用电池”，也是出门在外最不容易丢掉的那份存量。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)它还是流体容器$()：瓶身带流体接口，能接住冶炼炉里的$(l:residue)咒力残秽$()。$(br2)$(bold)1 mb 咒力残秽 = 10 点咒力$()，满瓶 500 mb = 5000 咒力。$(br2)拿瓶子对着匠魂熔炉的$(bold)排液口$()右键，或者对着$(l:vault)呪蔵$()右键，都能完成注入与取出。"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "咒力残秽",
+  "category": "tinkersnewlife:curse",
+  "icon": "tinkersnewlife:curse_residue_bucket",
+  "sortnum": 6,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)咒力残秽$() 是咒力的“实体形态”：把$(bold)古代咒术残卷$()丢进匠魂熔炉熔炼即可得到，$(bold)一份残卷 = 1 mb$()。$(br2)换算关系：$(bold)1 mb 咒力残秽 = 10 点咒力$()。$(br2)残卷平时是战利品箱里开出来的咒言学习用品；学完词条后多余的残卷就可以拿来炼。"
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:curse_residue_bucket",
+      "text": "残秽算正式的匠魂流体：有桶、有液体方块，也能被管道与浇口搬运。$(br2)把$(l:bottle)封呪瓶$()或空桶对着熔炉的排液口右键就能接出来；对着$(l:vault)呪蔵$()右键则可直接转成咒力存进去。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "常见用法：$(li)残卷太多 → 炼成残秽 → 灌进$(l:bottle)封呪瓶$()随身带着$(li)长期囤积 → 灌进$(l:vault)呪蔵$()（一个 10 万，比瓶子大得多）$(li)需要搬运 → 用桶或管道在基地之间转移$(br2)注意：残秽只是“咒力的封装”，久放不会失效；但液体方块会流动，别直接泼在地上。"
+    }
+  ]
+}

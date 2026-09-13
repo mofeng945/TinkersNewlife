@@ -1,0 +1,21 @@
+{
+  "name": "Curse Residue",
+  "category": "tinkersnewlife:curse",
+  "icon": "tinkersnewlife:curse_residue_bucket",
+  "sortnum": 6,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Curse Residue$() is the physical form of curse power: melt an $(bold)Ancient Cursed Scroll$() in a Tinkers smeltery and you get $(bold)1 mb per scroll$().$(br2)Conversion: $(bold)1 mb Curse Residue = 10 curse power$().$(br2)Scrolls are normally loot found in chests and are used to learn cursed speech words; once you know them, spare scrolls can be melted."
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:curse_residue_bucket",
+      "text": "Residue is a real Tinkers fluid: it has a bucket and a fluid block, and can be moved by pipes and faucets.$(br2)Right-click a smeltery drain with a $(l:bottle)bottle$() or a bucket to take it out; right-click a $(l:vault)Curse Vault$() to store it directly as curse power."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Typical uses:$(li)too many scrolls to melt into residue and carry in a $(l:bottle)bottle$()$(li)long-term bulk storage in a $(l:vault)Curse Vault$() (100k each)$(li)transporting between bases with buckets or pipes$(br2)Note: residue is just packaged curse power and does not expire, but a fluid block will flow, so do not spill it on the ground."
+    }
+  ]
+}

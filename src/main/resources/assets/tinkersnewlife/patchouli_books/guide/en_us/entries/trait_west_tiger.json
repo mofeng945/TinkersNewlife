@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(bold)West Tiger$(): the tiger of the west, awe-inspiring across the land!$(br2)Effect: when added to a $(l:traits/trait_black_flash)Black Flash$() weapon, the base trigger chance of Black Flash is further increased by (current attack damage ÷ 10000)."
+      "text": "$(bold)West Tiger$(): the tiger of the west, awe-inspiring across the land!$(br2)Effect: when added to a $(l:trait_black_flash)Black Flash$() weapon, the base trigger chance of Black Flash is further increased by (current attack damage ÷ 10000)."
     }
   ]
 }

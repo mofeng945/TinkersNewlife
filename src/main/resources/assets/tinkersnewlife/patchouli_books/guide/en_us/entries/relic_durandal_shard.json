@@ -7,7 +7,7 @@
                   {
                       "type":  "patchouli:spotlight",
                       "item":  "tinkersnewlife:durandal_shard",
-                      "text":  "$(bold)Durandal Shard$()$(br2)Obtaining: when a player slays the $(bold)Wither$(), a $(bold)25%$() chance to drop 1-2.$(br2)Usage: smelt it → $(bold)Molten Durandal$(), used to craft the $(l:materials/material_durandal)Durandal material$(), from which the $(l:tools/tool_durandal_sword)Durandal Sword$() is forged."
+                      "text":  "$(bold)Durandal Shard$()$(br2)Obtaining: when a player slays the $(bold)Wither$(), a $(bold)25%$() chance to drop 1-2.$(br2)Usage: smelt it → $(bold)Molten Durandal$(), used to craft the $(l:material_durandal)Durandal material$(), from which the $(l:tool_durandal_sword)Durandal Sword$() is forged."
                   }
               ]
 }

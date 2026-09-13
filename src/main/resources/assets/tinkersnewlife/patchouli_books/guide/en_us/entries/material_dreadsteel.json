@@ -11,7 +11,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)Innate traits$():$(li)$(l:traits/trait_dreadsteel)Dread$(): every sword swing releases a wide blade arc that pierces through enemies, ignoring armor; hits inflict Weakness, Blindness and Wither$(br2)Dreadsteel shines on both offense and defense: its sword and its armor each carry a dedicated trait (the armor one is \"Dread Armor\" - see the armor entry)."
+      "text": "$(bold)Innate traits$():$(li)$(l:trait_dreadsteel)Dread$(): every sword swing releases a wide blade arc that pierces through enemies, ignoring armor; hits inflict Weakness, Blindness and Wither$(br2)Dreadsteel shines on both offense and defense: its sword and its armor each carry a dedicated trait (the armor one is \"Dread Armor\" - see the armor entry)."
     }
   ],
   "flag": "mod:iceandfire"

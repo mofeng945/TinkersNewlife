@@ -10,7 +10,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)Technique Reversal$(): some Techniques have a corresponding $(bold)reversal$() (e.g. Blue → Red). While equipped with such a Technique, press the $(bold)Technique Reversal key$() (default F) to cast its reversal.$(br2)Combination: while charging Blue, press the Reversal key (F) to combine both into \"$(l:techniques/wuliang_cang)Hollow Purple$()\" and fire it immediately.$(br2)See each Technique's own entry to find out whether it has a reversal."
+      "text": "$(bold)Technique Reversal$(): some Techniques have a corresponding $(bold)reversal$() (e.g. Blue → Red). While equipped with such a Technique, press the $(bold)Technique Reversal key$() (default F) to cast its reversal.$(br2)Combination: while charging Blue, press the Reversal key (F) to combine both into \"$(l:wuliang_cang)Hollow Purple$()\" and fire it immediately.$(br2)See each Technique's own entry to find out whether it has a reversal."
     }
   ]
 }

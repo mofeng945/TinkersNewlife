@@ -1,0 +1,21 @@
+{
+  "name": "Curse Vault",
+  "category": "tinkersnewlife:curse",
+  "icon": "tinkersnewlife:curse_vault",
+  "sortnum": 5,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "The $(bold)Curse Vault$() is a curse power storehouse you can place in the world.$(br2)$(li)Placing it $(bold)binds the placer as its user$()$(li)Capacity $(bold)100,000 (100k)$() curse power, 20 times the bottle$(li)$(bold)Indestructible$(): bedrock-level hardness, blast proof, pistons cannot move it$(br2)Restore priority is: $(l:bottle)bottle$() then $(bold)vault$() then the curse core (temporary storage)."
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:curse_vault",
+      "text": "$(bold)Retrieving$(): the user can $(bold)left-click with an empty hand$() (or sneak + empty hand + right-click) to pick the vault back up, $(bold)keeping all stored curse power$() (shown on the item durability bar).$(br2)Other players cannot take it; they only get a message that it belongs to someone else."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Ways to use it$():$(li)empty-hand left-click / sneak right-click: pick up$(li)empty-hand right-click: report stored amount$(li)right-click holding a $(bold)container with Curse Residue$(): pour it in (1 mb = 10 curse)$(li)right-click holding an $(bold)empty container$(): draw residue back out$(br2)$(bold)Look at the vault$() with your crosshair and the stored curse power plus a capacity bar appear right below the crosshair (above 10,000 it is shown in k/wan notation, e.g. 1.2w)."
+    }
+  ]
+}

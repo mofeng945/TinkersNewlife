@@ -7,7 +7,7 @@
                   {
                       "type":  "patchouli:spotlight",
                       "item":  "tinkersnewlife:nexus_of_spacetime",
-                      "text":  "$(bold)Nexus of Spacetime$()$(br2)Obtaining: $(bold)Ancient City$() chests, with a $(bold)50%$() chance of 1.$(br2)Usage: serves as the $(bold)addition$() in the smithing table recipe for the $(l:relics/relic_yog_sothoth_gate_key)Yog-Sothoth Gate Key$()."
+                      "text":  "$(bold)Nexus of Spacetime$()$(br2)Obtaining: $(bold)Ancient City$() chests, with a $(bold)50%$() chance of 1.$(br2)Usage: serves as the $(bold)addition$() in the smithing table recipe for the $(l:relic_yog_sothoth_gate_key)Yog-Sothoth Gate Key$()."
                   }
               ]
 }

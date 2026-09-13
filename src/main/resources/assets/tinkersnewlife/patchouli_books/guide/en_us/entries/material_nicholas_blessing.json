@@ -7,11 +7,11 @@
     {
       "type": "patchouli:spotlight",
       "item": "tinkersnewlife:nicholas_blessing",
-      "text": "$(bold)How to obtain$():$(li)First get $(bold)Molten Nicholas' Blessing$() by smelting a $(l:relics/relic_nicholas_blessing)Nicholas' Blessing$() in the Smeltery (1 piece = 5 mB)$(li)At the Casting Table, combine the $(bold)Pig Iron$() material (tconstruct:pig_iron) with $(bold)80 mB$() of Molten Nicholas' Blessing to craft Nicholas' Blessing material$(br2)Tier: $(bold)T3$()."
+      "text": "$(bold)How to obtain$():$(li)First get $(bold)Molten Nicholas' Blessing$() by smelting a $(l:relic_nicholas_blessing)Nicholas' Blessing$() in the Smeltery (1 piece = 5 mB)$(li)At the Casting Table, combine the $(bold)Pig Iron$() material (tconstruct:pig_iron) with $(bold)80 mB$() of Molten Nicholas' Blessing to craft Nicholas' Blessing material$(br2)Tier: $(bold)T3$()."
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)Innate traits$():$(li)$(l:traits/trait_charm)Charm$(): after attacking a creature, it falls into a charmed state during which it cannot attack you - 30 second cooldown$(br2)Nicholas' Blessing comes from the gift of Nicholas, the mother goddess of fertility - a gentle path built around survival and control."
+      "text": "$(bold)Innate traits$():$(li)$(l:trait_charm)Charm$(): after attacking a creature, it falls into a charmed state during which it cannot attack you - 30 second cooldown$(br2)Nicholas' Blessing comes from the gift of Nicholas, the mother goddess of fertility - a gentle path built around survival and control."
     }
   ]
 }

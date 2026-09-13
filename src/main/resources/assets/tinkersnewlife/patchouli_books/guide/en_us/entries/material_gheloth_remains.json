@@ -11,7 +11,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)Innate traits$():$(li)$(l:traits/trait_cosmic_order_voice)Voice of the Cosmic Order$(): on hit, inflicts Slowness and Blindness, with durations that grow stronger as the trait levels up$(br2)Gheloth Remains itself is also one of the $(l:relics/relic_gheloth_remains)Ancient Relics$() - a single source that feeds both rituals and materials."
+      "text": "$(bold)Innate traits$():$(li)$(l:trait_cosmic_order_voice)Voice of the Cosmic Order$(): on hit, inflicts Slowness and Blindness, with durations that grow stronger as the trait levels up$(br2)Gheloth Remains itself is also one of the $(l:relic_gheloth_remains)Ancient Relics$() - a single source that feeds both rituals and materials."
     }
   ]
 }

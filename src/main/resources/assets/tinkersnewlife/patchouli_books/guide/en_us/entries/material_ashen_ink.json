@@ -7,11 +7,11 @@
     {
       "type": "patchouli:spotlight",
       "item": "tinkersnewlife:ashen_ink_bucket",
-      "text": "$(bold)How to obtain$():$(li)First get $(bold)Molten Ashen Ink$() by smelting a $(l:relics/relic_rlyeh_call)Call of R'lyeh$() in the Smeltery (1 piece = 1000 mB)$(li)At the Casting Table, combine the $(bold)Molten Rose Gold$() material with $(bold)80 mB$() of Molten Ashen Ink to craft Ashen Ink material$(br2)Tier: $(bold)T3$()."
+      "text": "$(bold)How to obtain$():$(li)First get $(bold)Molten Ashen Ink$() by smelting a $(l:relic_rlyeh_call)Call of R'lyeh$() in the Smeltery (1 piece = 1000 mB)$(li)At the Casting Table, combine the $(bold)Molten Rose Gold$() material with $(bold)80 mB$() of Molten Ashen Ink to craft Ashen Ink material$(br2)Tier: $(bold)T3$()."
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)Innate traits$():$(li)$(l:traits/trait_child_of_the_stars)Child of the Stars$() (default): raises the final damage you deal to $(bold)twice$() the original, doubling again with each level (×2^level)$(br2)Ashen Ink is a rare damage-boosting material - an ideal core for builds that chase burst damage."
+      "text": "$(bold)Innate traits$():$(li)$(l:trait_child_of_the_stars)Child of the Stars$() (default): raises the final damage you deal to $(bold)twice$() the original, doubling again with each level (×2^level)$(br2)Ashen Ink is a rare damage-boosting material - an ideal core for builds that chase burst damage."
     }
   ]
 }

@@ -6,16 +6,16 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(bold)Curse Core$() is the foundation of the Cursed Energy system. It is a Tinkers' Construct tool worn in the $(bold)curios Curse Core slot$(), providing:$(li)Cursed Energy capacity and regeneration$(li)Techniques ($(l:techniques/yuchuzi)Yu Chu Zi$()/$(l:techniques/blood_manipulation)Blood Manipulation$(), etc.)$(li)Domains ($(l:domains/zuosha_botu)Self-Embodiment of Perfection$()/$(l:domains/wuliang_kongchu)Unlimited Void$()/$(l:domains/fumo_yuchuzi)Malevolent Shrine$())$(li)Material combat traits (active depending on the core's material)"
+      "text": "$(bold)Curse Core$() is the foundation of the Cursed Energy system. It is a Tinkers' Construct tool worn in the $(bold)curios Curse Core slot$(), providing:$(li)Cursed Energy capacity and regeneration$(li)Techniques ($(l:yuchuzi)Yu Chu Zi$()/$(l:blood_manipulation)Blood Manipulation$(), etc.)$(li)Domains ($(l:zuosha_botu)Self-Embodiment of Perfection$()/$(l:wuliang_kongchu)Unlimited Void$()/$(l:fumo_yuchuzi)Malevolent Shrine$())$(li)Material combat traits (active depending on the core's material)"
     },
     {
       "type": "patchouli:spotlight",
       "item": "tinkersnewlife:curse_core",
-      "text": "Cores can only be obtained through the $(l:basics/ritual)Curse Core Ritual$() and cannot be hand-assembled on a crafting table.$(br2)A core produced by the ritual randomly rolls a $(bold)Cursed Energy Reserve$() level and a $(bold)Cursed Output$() level (1–5), comes with one random Technique trait and one Domain trait, and has a 30% chance to gain an extra Technique slot (up to 3)."
+      "text": "Cores can only be obtained through the $(l:ritual)Curse Core Ritual$() and cannot be hand-assembled on a crafting table.$(br2)A core produced by the ritual randomly rolls a $(bold)Cursed Energy Reserve$() level and a $(bold)Cursed Output$() level (1–5), comes with one random Technique trait and one Domain trait, and has a 30% chance to gain an extra Technique slot (up to 3)."
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)Smelting recovery$(): since a Curse Core is a Tinkers' Construct tool, it can be thrown directly into the $(bold)Smeltery or Foundry$() to be melted down into $(bold)the fluid of its material$() (e.g. a Rose Gold core → Molten Rose Gold).$(br2)Unwanted cores can be burned to reclaim their materials, or kept for $(l:techniques/transfer)Technique / Domain Transfer$()."
+      "text": "$(bold)Smelting recovery$(): since a Curse Core is a Tinkers' Construct tool, it can be thrown directly into the $(bold)Smeltery or Foundry$() to be melted down into $(bold)the fluid of its material$() (e.g. a Rose Gold core → Molten Rose Gold).$(br2)Unwanted cores can be burned to reclaim their materials, or kept for $(l:transfer)Technique / Domain Transfer$()."
     }
   ]
 }

@@ -7,7 +7,7 @@
                   {
                       "type":  "patchouli:spotlight",
                       "item":  "tinkersnewlife:nicholas_blessing",
-                      "text":  "$(bold)Nicholas' Blessing$()$(br2)Obtaining: when you $(bold)feed animals to make them breed$(), there is a $(bold)25%$() chance to trigger a 60-second event; if you survive it, a $(bold)50%$() chance to receive $(bold)32$() of this item plus Regeneration for 10 minutes — otherwise, you suffer $(bold)Wither for 60 seconds$().$(br2)Usage: smelt → $(bold)5 mB$() of Molten Life Impulse, the source of the $(l:materials/material_nicholas_blessing)Life Impulse$() material."
+                      "text":  "$(bold)Nicholas' Blessing$()$(br2)Obtaining: when you $(bold)feed animals to make them breed$(), there is a $(bold)25%$() chance to trigger a 60-second event; if you survive it, a $(bold)50%$() chance to receive $(bold)32$() of this item plus Regeneration for 10 minutes — otherwise, you suffer $(bold)Wither for 60 seconds$().$(br2)Usage: smelt → $(bold)5 mB$() of Molten Life Impulse, the source of the $(l:material_nicholas_blessing)Life Impulse$() material."
                   }
               ]
 }

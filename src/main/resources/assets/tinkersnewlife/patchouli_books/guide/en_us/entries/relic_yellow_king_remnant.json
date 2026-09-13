@@ -7,7 +7,7 @@
                   {
                       "type":  "patchouli:spotlight",
                       "item":  "tinkersnewlife:yellow_king_remnant",
-                      "text":  "$(bold)Yellow King Remnant$()$(br2)Obtaining: fall freely from $(bold)Y \u003e 400$() all the way down to $(bold)Y \u003c -50$(), surviving the $(bold)20-second$() ordeal (taking 3 magic damage every 3 seconds), and a $(bold)50%$() chance to receive $(bold)16$() of this item — otherwise, you suffer $(bold)Wither for 60 seconds$().$(br2)Usage: smelt → $(bold)10 mB$() of Molten Hastur Malice, the source of the $(l:materials/material_hastur_malice)Hastur Malice$() material."
+                      "text":  "$(bold)Yellow King Remnant$()$(br2)Obtaining: fall freely from $(bold)Y \u003e 400$() all the way down to $(bold)Y \u003c -50$(), surviving the $(bold)20-second$() ordeal (taking 3 magic damage every 3 seconds), and a $(bold)50%$() chance to receive $(bold)16$() of this item — otherwise, you suffer $(bold)Wither for 60 seconds$().$(br2)Usage: smelt → $(bold)10 mB$() of Molten Hastur Malice, the source of the $(l:material_hastur_malice)Hastur Malice$() material."
                   }
               ]
 }
