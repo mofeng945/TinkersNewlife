@@ -50,15 +50,60 @@ public final class CurseVaultInteractionHandler {
     @SubscribeEvent
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
         Player player = event.getEntity();
-        if (!player.getMainHandItem().isEmpty()) return;   // 手里有东西：完全不干预（放方块/用工具/桶）
         Level level = event.getLevel();
         BlockPos pos = event.getPos();
         if (!isVault(level, pos)) return;
 
+        // ① 手里拿着流体容器（桶 / 封呪瓶 …）：做咒力残秽的接与倒
+        if (!player.getMainHandItem().isEmpty()) {
+            if (tryFluidTransfer(level, pos, player)) {
+                event.setCanceled(true);
+                event.setCancellationResult(InteractionResult.SUCCESS);
+            }
+            return;   // 手里有东西且不是流体交互 → 完全不干预（放方块/用工具）
+        }
+
+        // ② 空手：潜行回收 / 报储量
         InteractionResult result = CurseVaultBlock.handleInteraction(level, pos, player, true);
         if (result == null) return;
         event.setCanceled(true);
         event.setCancellationResult(result);
+    }
+
+    /**
+     * 手里的流体容器 ⇄ 呪蔵：
+     * ① 容器里装着「咒力残秽」→ 倒进呪蔵（1mb = 10 咒力）；
+     * ② 容器是空的 → 从呪蔵里接出残秽（扣对应咒力）。
+     * <p>用的是 Forge 的 {@code FluidUtil.tryEmptyContainer / tryFillContainer}，
+     * 它们会自动处理"桶→空桶"这类容器替换。
+     */
+    private static boolean tryFluidTransfer(Level level, BlockPos pos, Player player) {
+        if (level.isClientSide || !(level instanceof ServerLevel)) return false;
+        ItemStack held = player.getMainHandItem();
+        var handlerOpt = net.minecraftforge.fluids.FluidUtil.getFluidHandler(level, pos, null);
+        if (!handlerOpt.isPresent()) return false;
+        net.minecraftforge.fluids.capability.IFluidHandler vault = handlerOpt.orElse(null);
+
+        // ① 先试"把手里的倒进去"
+        net.minecraftforge.fluids.FluidActionResult emptied = net.minecraftforge.fluids.FluidUtil
+                .tryEmptyContainer(held, vault, Integer.MAX_VALUE, player, true);
+        if (emptied.isSuccess()) {
+            double power = CurseVaultData.get((ServerLevel) level).getPower(pos);
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.curse_vault.deposited",
+                    com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper.formatAmount(power)), true);
+            return true;
+        }
+
+        // ② 再试"从呪蔵里接出来"
+        net.minecraftforge.fluids.FluidActionResult filled = net.minecraftforge.fluids.FluidUtil
+                .tryFillContainer(held, vault, Integer.MAX_VALUE, player, true);
+        if (filled.isSuccess()) {
+            double power = CurseVaultData.get((ServerLevel) level).getPower(pos);
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.curse_vault.withdrawn",
+                    com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper.formatAmount(power)), true);
+            return true;
+        }
+        return false;
     }
 
     /** 左键：潜行+空手 → 回收；非潜行空手 → 提示（带冷却） */

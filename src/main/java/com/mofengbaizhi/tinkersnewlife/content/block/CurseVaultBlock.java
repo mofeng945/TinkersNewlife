@@ -56,6 +56,16 @@ public class CurseVaultBlock extends Block implements EntityBlock {
         return new CurseVaultBlockEntity(pos, state);
     }
 
+    /** 每 20 tick 把存量广播给客户端（十字光标提示用） */
+    @Nullable
+    @Override
+    public <T extends BlockEntity> net.minecraft.world.level.block.entity.BlockEntityTicker<T> getTicker(
+            Level level, BlockState state, net.minecraft.world.level.block.entity.BlockEntityType<T> type) {
+        return type == com.mofengbaizhi.tinkersnewlife.content.ModBlockEntities.CURSE_VAULT.get()
+                ? (lvl, pos, st, be) -> CurseVaultBlockEntity.serverTick(lvl, pos, st, (CurseVaultBlockEntity) be)
+                : null;
+    }
+
     // ============================================================
     //  放置：绑定使用者 + 继承物品里的咒力
     // ============================================================

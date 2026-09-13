@@ -26,10 +26,57 @@ import javax.annotation.Nullable;
  */
 public class CurseVaultBlockEntity extends BlockEntity {
 
+    /** 广播间隔（tick）：存量变了就同步给附近客户端，供十字光标提示显示 */
+    private static final int SYNC_INTERVAL = 20;
+
     private final LazyOptional<IFluidHandler> fluidHolder = LazyOptional.of(() -> new VaultFluidHandler(this));
+
+    /** 服务端：最近一次广播出去的值（-1 = 还没同步过） */
+    private double syncedPower = -1;
+    /** 客户端：拿到的显示用值（十字光标对准时显示） */
+    private double clientPower = 0;
 
     public CurseVaultBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.CURSE_VAULT.get(), pos, state);
+    }
+
+    /** 客户端显示用的存量（由方块实体数据包同步而来） */
+    public double getClientPower() {
+        return clientPower;
+    }
+
+    /** 该坐标当前的真实存量（来自 world data；客户端/无数据时返回 0） */
+    public double currentPower() {
+        CurseVaultData data = CurseVaultData.getOrNull(getLevel());
+        return data == null ? 0 : data.getPower(getBlockPos());
+    }
+
+    // ============================================================
+    //  每 20 tick 检查一次：存量变化就广播（客户端 HUD 用）
+    // ============================================================
+
+    public static void serverTick(net.minecraft.world.level.Level level, BlockPos pos, BlockState state,
+                                 CurseVaultBlockEntity be) {
+        if (level.isClientSide) return;
+        if (level.getGameTime() % SYNC_INTERVAL != 0) return;
+        double now = be.currentPower();
+        if (be.syncedPower >= 0 && Math.abs(now - be.syncedPower) < 0.5) return;
+        be.syncedPower = now;
+        level.sendBlockUpdated(pos, state, state, net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+    }
+
+    @Override
+    public CompoundTag getUpdateTag() {
+        CompoundTag tag = new CompoundTag();
+        tag.putDouble("power", currentPower());
+        return tag;
+    }
+
+    @Override
+    public void onDataPacket(net.minecraft.network.Connection net,
+                            net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket pkt) {
+        CompoundTag tag = pkt.getTag();
+        if (tag != null) clientPower = tag.getDouble("power");
     }
 
     @Nonnull

@@ -71,6 +71,9 @@ public class ClientEventHandler {
     @SubscribeEvent
     public static void registerOverlays(RegisterGuiOverlaysEvent event) {
         event.registerAboveAll("curse_hud", ClientCurseData::render);
+        // 十字光标对准呪蔵时显示其咒力量
+        event.registerAboveAll("curse_vault_hud",
+                com.mofengbaizhi.tinkersnewlife.client.hud.CurseVaultHudRenderer::render);
         event.registerAboveAll("puppet_hud", com.mofengbaizhi.tinkersnewlife.client.hud.PuppetHudRenderer::render);
         event.registerAboveAll("forge_hud",
                 com.mofengbaizhi.tinkersnewlife.client.data.ClientForgeData::render);
