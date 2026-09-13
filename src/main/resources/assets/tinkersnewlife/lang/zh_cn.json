@@ -1009,5 +1009,6 @@
   "block.tinkersnewlife.curse_vault.hint": "放下即绑定使用者：咒力优先存入；使用者空手潜行右键可回收并保留咒力（无法破坏）",
   "message.tinkersnewlife.curse_vault.status": "呪蔵：%s / %s 咒力",
   "message.tinkersnewlife.curse_vault.picked_up": "已回收呪蔵（保留 %s 咒力）",
-  "message.tinkersnewlife.curse_vault.not_owner": "这不是你的呪蔵"
+  "message.tinkersnewlife.curse_vault.not_owner": "这不是你的呪蔵",
+  "message.tinkersnewlife.curse_vault.hint": "呪蔵（%s / %s 咒力）：潜行 + 空手 右键（或左键）即可回收，咒力保留"
 }

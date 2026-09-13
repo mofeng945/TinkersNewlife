@@ -76,14 +76,29 @@ public class CurseVaultBlock extends Block implements EntityBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player,
                                  InteractionHand hand, BlockHitResult hit) {
-        if (level.isClientSide) return InteractionResult.SUCCESS;
+        // ⚠ 这条路径只在"主手与副手都为空"时才会被原版调用（潜行时副手拿东西原版直接跳过方块 use）。
+        //    真正的入口是 CurseVaultInteractionHandler（Forge 的 RightClickBlock 事件），这里只是兜底。
+        InteractionResult result = handleInteraction(level, pos, player, player.getMainHandItem().isEmpty());
+        return result == null ? InteractionResult.PASS : result;
+    }
+
+    /**
+     * 共享交互逻辑：
+     * <ul>
+     *   <li>潜行 + 主手为空 → 回收成物品（保留咒力；仅使用者本人）；</li>
+     *   <li>主手为空（未潜行）→ 报储量；</li>
+     *   <li>手里有东西 → 返回 {@code null} 表示"不处理"，交给正常逻辑。</li>
+     * </ul>
+     */
+    @Nullable
+    public static InteractionResult handleInteraction(Level level, BlockPos pos, Player player, boolean emptyMainHand) {
+        if (level.isClientSide) return InteractionResult.SUCCESS;   // 客户端预测成功，真正执行在服务端
         if (!(level instanceof ServerLevel serverLevel)) return InteractionResult.PASS;
 
         CurseVaultData data = CurseVaultData.get(serverLevel);
         CurseVaultData.Entry entry = data.get(pos);
 
         // 1) 使用者 + 主手为空 + 潜行 → 回收成物品（保留咒力）
-        boolean emptyMainHand = player.getMainHandItem().isEmpty();
         if (player.isShiftKeyDown() && emptyMainHand) {
             if (entry != null && !entry.owner.equals(player.getUUID())) {
                 player.displayClientMessage(Component.translatable("message.tinkersnewlife.curse_vault.not_owner")
@@ -96,7 +111,7 @@ public class CurseVaultBlock extends Block implements EntityBlock {
             ItemStack stack = new ItemStack(ModItems.CURSE_VAULT.get());
             com.mofengbaizhi.tinkersnewlife.content.item.CurseVaultItem.setPower(stack, power);
             level.removeBlock(pos, false);
-            if (!player.getInventory().add(stack)) player.drop(stack, false);
+            CurseVaultInteractionHandler.giveStackToPlayer(player, stack);
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.curse_vault.picked_up",
                     CursePowerHelper.formatAmount(power)), true);
             return InteractionResult.SUCCESS;
@@ -112,7 +127,7 @@ public class CurseVaultBlock extends Block implements EntityBlock {
             return InteractionResult.SUCCESS;
         }
         // 手里有东西（拿方块/工具/桶…）→ 不拦截，交给正常逻辑（放方块、用工具、倒流体等）
-        return InteractionResult.PASS;
+        return null;
     }
 
     // ============================================================

@@ -413,5 +413,6 @@
   "block.tinkersnewlife.curse_vault.hint": "Placing it binds you as its user: curse power is stored here; sneak-right-click with an empty hand to pick it up with its power kept (indestructible).",
   "message.tinkersnewlife.curse_vault.status": "Curse Vault: %s / %s curse",
   "message.tinkersnewlife.curse_vault.picked_up": "Curse Vault recovered (%s curse kept)",
-  "message.tinkersnewlife.curse_vault.not_owner": "This Curse Vault belongs to someone else"
+  "message.tinkersnewlife.curse_vault.not_owner": "This Curse Vault belongs to someone else",
+  "message.tinkersnewlife.curse_vault.hint": "Curse Vault (%s / %s curse): sneak + empty hand and right-click (or left-click) to pick it up with the power kept"
 }
