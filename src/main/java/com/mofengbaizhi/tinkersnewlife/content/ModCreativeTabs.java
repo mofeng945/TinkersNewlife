@@ -23,12 +23,15 @@ import slimeknights.tconstruct.library.materials.MaterialRegistry;
 import slimeknights.tconstruct.library.materials.definition.IMaterial;
 import slimeknights.tconstruct.library.materials.definition.MaterialId;
 import slimeknights.tconstruct.library.materials.definition.MaterialVariant;
+import slimeknights.tconstruct.library.materials.stats.MaterialStatsId;
+import slimeknights.tconstruct.library.tools.definition.module.material.ToolMaterialHook;
+import slimeknights.tconstruct.library.tools.helper.ToolBuildHandler;
+import slimeknights.tconstruct.library.tools.item.IModifiable;
 import slimeknights.tconstruct.library.tools.definition.ToolDefinition;
-import slimeknights.tconstruct.library.tools.nbt.MaterialNBT;
-import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 import slimeknights.tconstruct.library.tools.part.ToolPartItem;
 
 import java.util.Collection;
+import java.util.List;
 
 public class ModCreativeTabs {
 
@@ -127,22 +130,22 @@ public class ModCreativeTabs {
                                 // ⭐ 咒力核心部件已从创造物品栏移除（易与成品咒力核心混淆，需用核心请取成品变体）
 
                                 if (anyLoaded("iceandfire")) {
-                                    addAllToolVariants(output, DRAGON_STAFF_DEFINITION, ModItems.DRAGON_STAFF.get(), 3);
+                                    addAllToolVariants(output, DRAGON_STAFF_DEFINITION, ModItems.DRAGON_STAFF.get());
                                 }
 
-                                addAllToolVariants(output, SILENT_GLOVE_DEFINITION, ModItems.SILENT_GLOVE.get(), 2);
+                                addAllToolVariants(output, SILENT_GLOVE_DEFINITION, ModItems.SILENT_GLOVE.get());
 
-                                addAllToolVariants(output, WarScytheItem.WAR_SCYTHE_DEFINITION, ModItems.WAR_SCYTHE.get(), 5);
+                                addAllToolVariants(output, WarScytheItem.WAR_SCYTHE_DEFINITION, ModItems.WAR_SCYTHE.get());
 
                                 if (anyLoaded("irons_spellbooks", "goety")) {
-                                    addAllToolVariants(output, ModularStaffItem.MODULAR_STAFF_DEFINITION, ModItems.MODULAR_STAFF.get(), 4);
+                                    addAllToolVariants(output, ModularStaffItem.MODULAR_STAFF_DEFINITION, ModItems.MODULAR_STAFF.get());
                                 }
 
-                                addAllToolVariants(output, FlyingSwordItem.FLYING_SWORD_DEFINITION, ModItems.FLYING_SWORD.get(), 5);
+                                addAllToolVariants(output, FlyingSwordItem.FLYING_SWORD_DEFINITION, ModItems.FLYING_SWORD.get());
 
-                                addAllToolVariants(output, YoYoItem.YO_YO_DEFINITION, ModItems.YO_YO.get(), 4);
+                                addAllToolVariants(output, YoYoItem.YO_YO_DEFINITION, ModItems.YO_YO.get());
 
-                                addAllToolVariants(output, CurseCoreItem.CURSE_CORE_DEFINITION, ModItems.CURSE_CORE.get(), 1);
+                                addAllToolVariants(output, CurseCoreItem.CURSE_CORE_DEFINITION, ModItems.CURSE_CORE.get());
 
                                 output.accept(ModItems.DURANDAL_SWORD.get());
 
@@ -162,28 +165,15 @@ public class ModCreativeTabs {
     //  辅助方法：添加所有部件材质变体
     // ============================================================
 
-    /**
-     * 不参与创造栏"材质变体"生成的材料（按材料 path 记）。
-     *
-     * <p><b>tall_skull（高头骨）</b>：它是**黏液头颅专用材料**，数据里只有
-     * {@code tconstruct:skull} 一项统计（见 {@code tinkering/materials/stats/tall_skull.json}），
-     * 没有任何工具/部件统计。硬给它生成工具或部件变体，
-     * {@code ToolStack.rebuildStats()} / {@code ToolPartItem.setMaterial} 会拿不到部件统计而报错，
-     * 整个创造物品栏都构建不出来 —— 所以这里直接跳过（实测问题，用户明确要求）。
-     */
-    private static final java.util.Set<String> VARIANT_SKIP_MATERIALS = java.util.Set.of("tall_skull");
-
-    private static boolean skipVariantMaterial(MaterialId materialId) {
-        return VARIANT_SKIP_MATERIALS.contains(materialId.getPath());
-    }
-
     private static void addAllPartVariants(CreativeModeTab.Output output, ToolPartItem partItem) {
         Collection<IMaterial> materials = MaterialRegistry.getInstance().getAllMaterials();
         for (IMaterial material : materials) {
             MaterialId materialId = material.getIdentifier();
             if (!materialId.getNamespace().equals(TinkersNewlife.MOD_ID)) continue;
-            if (skipVariantMaterial(materialId)) continue;          // ⭐ 黏液头颅材料等不做部件变体
             if (!isMaterialDependencyLoaded(materialId)) continue;   // 联动来源 mod 未装 → 创造栏不显示
+            // ⭐ 与匠魂本体同款：材料用不了这个部件就跳过（IMaterialItem#setMaterial 遇到不可用材料会
+            //    原样返回，结果就是塞进一个"没有材料"的空部件 —— 之前创造栏出问题正是这里）
+            if (!partItem.canUseMaterial(materialId)) continue;
 
             try {
                 ItemStack stack = new ItemStack(partItem);
@@ -251,43 +241,40 @@ public class ModCreativeTabs {
     }
 
     // ============================================================
-    //  辅助方法：添加所有工具材质变体（手动传入部件数量）
+    //  辅助方法：添加所有工具材质变体（部件清单取自 ToolDefinition，与匠魂本体一致）
     // ============================================================
 
-    private static void addAllToolVariants(CreativeModeTab.Output output, ToolDefinition definition, Item toolItem, int partCount) {
+    private static void addAllToolVariants(CreativeModeTab.Output output, ToolDefinition definition, Item toolItem) {
         if (definition == null || toolItem == null) return;
+
+        // ⭐ 与匠魂本体同款逻辑（ToolBuildHandler#createSingleMaterial）：
+        //    · 首选材料能用的部件 → 用该材料；
+        //    · 用不了的部件 → **自动换成"该部件统计类型的第一个可用材料"**（不因此丢掉整个变体）；
+        //    · 该材料在所有部件上都用不了 → 整个变体跳过（绝不生成"没有材料"的工具）。
+        //    于是 tall_skull（只有 tconstruct:skull 统计）这类材料会被自动跳过，无需硬编码名单。
+        if (!(toolItem instanceof IModifiable modifiable)) return;
+        if (!definition.isDataLoaded() || ToolMaterialHook.stats(definition).isEmpty()) {
+            output.accept(new ItemStack(toolItem));   // 定义/部件没读到：与匠魂一致，只放本体
+            return;
+        }
 
         Collection<IMaterial> materials = MaterialRegistry.getInstance().getAllMaterials();
 
         for (IMaterial material : materials) {
             MaterialId materialId = material.getIdentifier();
             if (!materialId.getNamespace().equals(TinkersNewlife.MOD_ID)) continue;
-            if (skipVariantMaterial(materialId)) continue;          // ⭐ 黏液头颅材料等不做工具变体
             if (!isMaterialDependencyLoaded(materialId)) continue;   // 联动来源 mod 未装 → 创造栏不显示
 
             try {
-                ItemStack stack = new ItemStack(toolItem);
-                ToolStack tool = ToolStack.from(stack);
-                if (tool == null) continue;
+                // 匠魂本体语义：可用的部件用该材料，不可用的部件自动用该类型的第一个可用材料
+                ItemStack result = ToolBuildHandler.createSingleMaterial(modifiable, MaterialVariant.of(material));
+                if (result.isEmpty()) continue;   // 该材料在所有部件上都用不了 → 跳过这个变体
 
-                // 根据传入的部件数量构建材质列表（⭐ 消除 2/3/4/5 魔法数字分支）
-                MaterialVariant[] variants = new MaterialVariant[partCount];
-                for (int i = 0; i < variants.length; i++) {
-                    variants[i] = MaterialVariant.of(material);
+                // ⭐ 噤默手套：生成时即确定额外戒指槽数量（1~6，服务端固定写入持久数据，之后不再变化）
+                if (result.getItem() instanceof SilentGloveItem) {
+                    SilentGloveItem.getOrCreateExtraRings(result);
                 }
-                MaterialNBT materialNBT = MaterialNBT.of(variants);
-
-                tool.setMaterials(materialNBT);
-                tool.rebuildStats();
-
-                ItemStack result = tool.createStack();
-                if (!result.isEmpty()) {
-                    // ⭐ 噤默手套：生成时即确定额外戒指槽数量（1~6，服务端固定写入持久数据，之后不再变化）
-                    if (result.getItem() instanceof SilentGloveItem) {
-                        SilentGloveItem.getOrCreateExtraRings(result);
-                    }
-                    output.accept(result);
-                }
+                output.accept(result);
             } catch (Throwable t) {
                 // 单个材料出问题（缺部件统计等）只跳过它，绝不让整个创造栏构建失败
                 TinkersNewlife.LOGGER.warn("[创造栏] 工具 {} 的材料变体 {} 生成失败，已跳过：{}",
