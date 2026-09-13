@@ -1,9 +1,24 @@
 {
-  "type": "tconstruct:material_fluid",
-  "fluid": {
-    "fluid": "tinkersnewlife:molten_dark_metal_still",
-    "amount": 90
-  },
-  "temperature": 1000,
-  "output": "tinkersnewlife:dark_metal"
+    "type":  "tconstruct:material_fluid",
+    "fluid":  {
+                  "fluid":  "tinkersnewlife:molten_dark_metal_still",
+                  "amount":  90
+              },
+    "temperature":  1000,
+    "output":  "tinkersnewlife:dark_metal",
+  "conditions": [
+    {
+      "type": "forge:or",
+      "values": [
+        {
+          "type": "tconstruct:config",
+          "prop": "force_integration_materials"
+        },
+        {
+          "type": "forge:mod_loaded",
+          "modid": "goety"
+        }
+      ]
+    }
+  ]
 }

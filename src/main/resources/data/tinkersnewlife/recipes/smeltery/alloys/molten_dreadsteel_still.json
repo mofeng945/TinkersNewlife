@@ -1,18 +1,33 @@
 {
-  "type": "tconstruct:alloy",
-  "inputs": [
+    "type":  "tconstruct:alloy",
+    "inputs":  [
+                   {
+                       "amount":  250,
+                       "fluid":  "tinkersnewlife:molten_dread_still"
+                   },
+                   {
+                       "amount":  250,
+                       "tag":  "tinkersnewlife:molten_dragonsteel"
+                   }
+               ],
+    "result":  {
+                   "fluid":  "tinkersnewlife:molten_dreadsteel_still",
+                   "amount":  250
+               },
+    "temperature":  1600,
+  "conditions": [
     {
-      "amount": 250,
-      "fluid": "tinkersnewlife:molten_dread_still"
-    },
-    {
-      "amount": 250,
-      "tag": "tinkersnewlife:molten_dragonsteel"
+      "type": "forge:or",
+      "values": [
+        {
+          "type": "tconstruct:config",
+          "prop": "force_integration_materials"
+        },
+        {
+          "type": "forge:mod_loaded",
+          "modid": "iceandfire"
+        }
+      ]
     }
-  ],
-  "result": {
-    "fluid": "tinkersnewlife:molten_dreadsteel_still",
-    "amount": 250
-  },
-  "temperature": 1600
+  ]
 }

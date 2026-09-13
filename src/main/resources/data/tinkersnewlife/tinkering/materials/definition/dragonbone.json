@@ -1,5 +1,18 @@
 {
-    "craftable":  true,
-    "hidden":  false,
-    "tier":  1
+  "condition": {
+    "type": "forge:or",
+    "values": [
+      {
+        "type": "tconstruct:config",
+        "prop": "force_integration_materials"
+      },
+      {
+        "type": "forge:mod_loaded",
+        "modid": "iceandfire"
+      }
+    ]
+  },
+  "craftable": true,
+  "hidden": false,
+  "tier": 1
 }

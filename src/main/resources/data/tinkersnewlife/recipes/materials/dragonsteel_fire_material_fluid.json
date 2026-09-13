@@ -1,9 +1,24 @@
 {
-  "type": "tconstruct:material_fluid",
-  "fluid": {
-    "fluid": "tinkersnewlife:molten_dragonsteel_fire_still",
-    "amount": 90
-  },
-  "temperature": 1200,
-  "output": "tinkersnewlife:dragonsteel_fire"
+    "type":  "tconstruct:material_fluid",
+    "fluid":  {
+                  "fluid":  "tinkersnewlife:molten_dragonsteel_fire_still",
+                  "amount":  90
+              },
+    "temperature":  1200,
+    "output":  "tinkersnewlife:dragonsteel_fire",
+  "conditions": [
+    {
+      "type": "forge:or",
+      "values": [
+        {
+          "type": "tconstruct:config",
+          "prop": "force_integration_materials"
+        },
+        {
+          "type": "forge:mod_loaded",
+          "modid": "iceandfire"
+        }
+      ]
+    }
+  ]
 }
