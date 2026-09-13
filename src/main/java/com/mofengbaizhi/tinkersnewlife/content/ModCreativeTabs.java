@@ -162,18 +162,40 @@ public class ModCreativeTabs {
     //  辅助方法：添加所有部件材质变体
     // ============================================================
 
+    /**
+     * 不参与创造栏"材质变体"生成的材料（按材料 path 记）。
+     *
+     * <p><b>tall_skull（高头骨）</b>：它是**黏液头颅专用材料**，数据里只有
+     * {@code tconstruct:skull} 一项统计（见 {@code tinkering/materials/stats/tall_skull.json}），
+     * 没有任何工具/部件统计。硬给它生成工具或部件变体，
+     * {@code ToolStack.rebuildStats()} / {@code ToolPartItem.setMaterial} 会拿不到部件统计而报错，
+     * 整个创造物品栏都构建不出来 —— 所以这里直接跳过（实测问题，用户明确要求）。
+     */
+    private static final java.util.Set<String> VARIANT_SKIP_MATERIALS = java.util.Set.of("tall_skull");
+
+    private static boolean skipVariantMaterial(MaterialId materialId) {
+        return VARIANT_SKIP_MATERIALS.contains(materialId.getPath());
+    }
+
     private static void addAllPartVariants(CreativeModeTab.Output output, ToolPartItem partItem) {
         Collection<IMaterial> materials = MaterialRegistry.getInstance().getAllMaterials();
         for (IMaterial material : materials) {
             MaterialId materialId = material.getIdentifier();
             if (!materialId.getNamespace().equals(TinkersNewlife.MOD_ID)) continue;
+            if (skipVariantMaterial(materialId)) continue;          // ⭐ 黏液头颅材料等不做部件变体
             if (!isMaterialDependencyLoaded(materialId)) continue;   // 联动来源 mod 未装 → 创造栏不显示
 
-            ItemStack stack = new ItemStack(partItem);
-            partItem.setMaterial(stack, materialId);
+            try {
+                ItemStack stack = new ItemStack(partItem);
+                partItem.setMaterial(stack, materialId);
 
-            if (!stack.isEmpty()) {
-                output.accept(stack);
+                if (!stack.isEmpty()) {
+                    output.accept(stack);
+                }
+            } catch (Throwable t) {
+                // 单个材料出问题（缺统计等）只跳过它，绝不让整个创造栏构建失败
+                TinkersNewlife.LOGGER.warn("[创造栏] 部件 {} 的材料变体 {} 生成失败，已跳过：{}",
+                        partItem, materialId, t.toString());
             }
         }
     }
@@ -240,29 +262,36 @@ public class ModCreativeTabs {
         for (IMaterial material : materials) {
             MaterialId materialId = material.getIdentifier();
             if (!materialId.getNamespace().equals(TinkersNewlife.MOD_ID)) continue;
+            if (skipVariantMaterial(materialId)) continue;          // ⭐ 黏液头颅材料等不做工具变体
             if (!isMaterialDependencyLoaded(materialId)) continue;   // 联动来源 mod 未装 → 创造栏不显示
 
-            ItemStack stack = new ItemStack(toolItem);
-            ToolStack tool = ToolStack.from(stack);
-            if (tool == null) continue;
+            try {
+                ItemStack stack = new ItemStack(toolItem);
+                ToolStack tool = ToolStack.from(stack);
+                if (tool == null) continue;
 
-            // 根据传入的部件数量构建材质列表（⭐ 消除 2/3/4/5 魔法数字分支）
-            MaterialVariant[] variants = new MaterialVariant[partCount];
-            for (int i = 0; i < variants.length; i++) {
-                variants[i] = MaterialVariant.of(material);
-            }
-            MaterialNBT materialNBT = MaterialNBT.of(variants);
-
-            tool.setMaterials(materialNBT);
-            tool.rebuildStats();
-
-            ItemStack result = tool.createStack();
-            if (!result.isEmpty()) {
-                // ⭐ 噤默手套：生成时即确定额外戒指槽数量（1~6，服务端固定写入持久数据，之后不再变化）
-                if (result.getItem() instanceof SilentGloveItem) {
-                    SilentGloveItem.getOrCreateExtraRings(result);
+                // 根据传入的部件数量构建材质列表（⭐ 消除 2/3/4/5 魔法数字分支）
+                MaterialVariant[] variants = new MaterialVariant[partCount];
+                for (int i = 0; i < variants.length; i++) {
+                    variants[i] = MaterialVariant.of(material);
                 }
-                output.accept(result);
+                MaterialNBT materialNBT = MaterialNBT.of(variants);
+
+                tool.setMaterials(materialNBT);
+                tool.rebuildStats();
+
+                ItemStack result = tool.createStack();
+                if (!result.isEmpty()) {
+                    // ⭐ 噤默手套：生成时即确定额外戒指槽数量（1~6，服务端固定写入持久数据，之后不再变化）
+                    if (result.getItem() instanceof SilentGloveItem) {
+                        SilentGloveItem.getOrCreateExtraRings(result);
+                    }
+                    output.accept(result);
+                }
+            } catch (Throwable t) {
+                // 单个材料出问题（缺部件统计等）只跳过它，绝不让整个创造栏构建失败
+                TinkersNewlife.LOGGER.warn("[创造栏] 工具 {} 的材料变体 {} 生成失败，已跳过：{}",
+                        toolItem, materialId, t.toString());
             }
         }
     }
