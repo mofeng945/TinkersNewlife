@@ -115,18 +115,68 @@ public final class IntegrationLoader {
         Map<String, Boolean> detected = new LinkedHashMap<>();
         for (String id : WATCHED) detected.put(id, isLoaded(id));
         LOGGER.info("[联动] 环境探测：{}", detected);
+        LOGGER.info("[联动] 联动内容（流体整组）注册决策：goety = {}；iceandfire = {}；goety_revelation = {}",
+                linkDecision(GOETY), linkDecision(ICEANDFIRE), linkDecision(GOETY_REVELATION));
 
-        // ---- 逐模组分派：调用点位于 isLoaded 分支内，未安装时联动类不会被加载 ----
-        if (isGoety()) {
+        // ---- 逐模组分派：调用点位于 shouldRegisterLinked 分支内，未安装时联动类不会被加载 ----
+        // ⭐ 联动内容（流体整组）是否注册 = 模组在场 **或** 匠魂 force_integration_materials 打开
+        //    （后者会让联动材料定义照常加载，此时流体必须存在，否则材料引用悬空）。
+        if (shouldRegisterLinked(GOETY)) {
             try {
                 new com.mofengbaizhi.tinkersnewlife.integration.goety.GoetyIntegration().register(bus);
             } catch (Throwable t) {
                 LOGGER.error("[联动] 诡厄巫法模块初始化失败（已降级为普通形态）", t);
             }
         }
+        if (shouldRegisterLinked(ICEANDFIRE)) {
+            try {
+                new com.mofengbaizhi.tinkersnewlife.integration.iceandfire.IceAndFireIntegration().register(bus);
+            } catch (Throwable t) {
+                LOGGER.error("[联动] 冰火传说模块初始化失败", t);
+            }
+        }
+        if (shouldRegisterLinked(GOETY_REVELATION)) {
+            try {
+                new com.mofengbaizhi.tinkersnewlife.integration.goety_revelation.GoetyRevelationIntegration().register(bus);
+            } catch (Throwable t) {
+                LOGGER.error("[联动] 诡厄巫法·启示录模块初始化失败", t);
+            }
+        }
 
         // 铁魔法：纯反射软依赖（无编译依赖），此处只做一次反射装填
         com.mofengbaizhi.tinkersnewlife.util.IronSpellsReflector.init();
+    }
+
+    /**
+     * 联动内容是否需要注册：模组在场，或匠魂的 {@code force_integration_materials} 打开。
+     *
+     * <p>匠魂该配置打开时，联动<b>材料定义</b>照样加载（我们的材料定义条件就是
+     * {@code forge:or(tconstruct:config force_integration_materials, forge:mod_loaded …)}），
+     * 此时对应流体必须注册，否则材料定义会引用一个不存在的流体。
+     * 配置读不到（尚未加载）时<b>保守返回 true</b>＝维持旧行为（注册），绝不因时序问题误删内容。
+     */
+    public static boolean shouldRegisterLinked(String modId) {
+        if (isLoaded(modId)) return true;
+        Boolean forced = forcedIntegrationMaterials();
+        return forced == null || forced;
+    }
+
+    /** 匠魂 force_integration_materials 当前值；配置尚未加载／读不到时返回 null（调用方保守处理） */
+    @javax.annotation.Nullable
+    private static Boolean forcedIntegrationMaterials() {
+        try {
+            return slimeknights.tconstruct.common.config.Config.COMMON.forceIntegrationMaterials.get();
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    /** 注册决策的可读描述（写进启动日志，便于排查"联动流体该不该注册"） */
+    private static String linkDecision(String modId) {
+        if (isLoaded(modId)) return "注册（模组在场）";
+        Boolean forced = forcedIntegrationMaterials();
+        if (forced == null) return "注册（匠魂配置未就绪，保守沿用旧行为）";
+        return forced ? "注册（force_integration_materials=true）" : "不注册（模组缺失且未强制）";
     }
 
     // ============================================================

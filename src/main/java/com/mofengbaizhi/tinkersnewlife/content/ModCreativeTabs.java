@@ -74,35 +74,29 @@ public class ModCreativeTabs {
                                 // ----- 墨默刷怪蛋（位于所有旧日材料之后、匠魂部件之前） -----
                                 output.accept(ModItems.MOMO_SPAWN_EGG.get());
 
-                                // ----- 所有流体桶（联动来源流体仅对应 mod 加载时显示） -----
+                                // ----- 所有流体桶 -----
+                                // 原生流体：直接取字段；联动流体桶：按注册名取（联动模组不在场 → 那一组流体/桶根本没注册 → 取不到即跳过）
                                 output.accept(ModFluids.GHELOTH_BLOOD.bucket.get());
                                 output.accept(ModFluids.MOLTEN_NICHOLAS_BLESSING.bucket.get());
                                 output.accept(ModFluids.HASTUR_MALICE.bucket.get());
                                 output.accept(ModFluids.ASHEN_INK.bucket.get());
                                 output.accept(ModFluids.MOLTEN_DURANDAL.bucket.get());
-                                if (anyLoaded("iceandfire")) {
-                                    output.accept(ModFluids.MOLTEN_DRAGONSTEEL_FIRE.bucket.get());
-                                    output.accept(ModFluids.MOLTEN_DRAGONSTEEL_ICE.bucket.get());
-                                    output.accept(ModFluids.MOLTEN_DRAGONSTEEL_LIGHTNING.bucket.get());
-                                    output.accept(ModFluids.FIRE_BLOOD.bucket.get());
-                                    output.accept(ModFluids.ICE_BLOOD.bucket.get());
-                                    output.accept(ModFluids.LIGHTNING_BLOOD.bucket.get());
-                                    output.accept(ModFluids.MOLTEN_DREAD.bucket.get());
-                                    output.accept(ModFluids.MOLTEN_DREADSTEEL.bucket.get());
-                                }
-                                if (anyLoaded("goety")) {
-                                    output.accept(ModFluids.MOLTEN_CURSED_METAL.bucket.get());
-                                    output.accept(ModFluids.MOLTEN_DARK_METAL.bucket.get());
-                                }
-                                // 熔融破碎之环（诡厄启示录 broken_halo 熔炼；神灵金原料流体）——仅在启示录加载时显示
-                                if (anyLoaded("goety_revelation")) {
-                                    output.accept(ModFluids.MOLTEN_BROKEN_RING.bucket.get());
-                                }
-                                // 不洁之血（熔融 goety:unholy_blood）+ 永燃圣火（烈焰血+不洁之血合金）——goety 门控
-                                if (anyLoaded("goety")) {
-                                    output.accept(ModFluids.UNHOLY_BLOOD.bucket.get());
-                                    output.accept(ModFluids.EVERBURNING_HOLY_FIRE.bucket.get());
-                                }
+                                // 冰火传说组：熔融龙钢×3 + 龙血×3 + 悚怖×2
+                                acceptItemIfPresent(output, "molten_dragonsteel_fire_bucket");
+                                acceptItemIfPresent(output, "molten_dragonsteel_ice_bucket");
+                                acceptItemIfPresent(output, "molten_dragonsteel_lightning_bucket");
+                                acceptItemIfPresent(output, "fire_blood_bucket");
+                                acceptItemIfPresent(output, "ice_blood_bucket");
+                                acceptItemIfPresent(output, "lightning_blood_bucket");
+                                acceptItemIfPresent(output, "molten_dread_bucket");
+                                acceptItemIfPresent(output, "molten_dreadsteel_bucket");
+                                // 诡厄巫法组：熔融诅咒金属 + 熔融黑暗金属 + 不洁之血 + 永燃圣火
+                                acceptItemIfPresent(output, "molten_cursed_metal_bucket");
+                                acceptItemIfPresent(output, "molten_dark_metal_bucket");
+                                acceptItemIfPresent(output, "unholy_blood_bucket");
+                                acceptItemIfPresent(output, "everburning_holy_fire_bucket");
+                                // 诡厄巫法·启示录组：熔融破碎之环（神灵金原料流体）
+                                acceptItemIfPresent(output, "molten_broken_ring_bucket");
 
                                 // ----- 铸模（联动工具的铸模仅在对应 mod 加载时显示） -----
                                 if (anyLoaded("iceandfire")) {
@@ -190,16 +184,21 @@ public class ModCreativeTabs {
 
     /** 任一列出的 mod 已加载（联动工具需任一施法/龙 mod 在场才显示） */
     private static boolean anyLoaded(String... mods) {
-        try {
-            net.minecraftforge.fml.ModList list = net.minecraftforge.fml.ModList.get();
-            if (list == null) return false;
-            for (String m : mods) {
-                if (list.isLoaded(m)) return true;
-            }
-            return false;
-        } catch (Throwable t) {
-            return false;
+        for (String m : mods) {
+            if (com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.isLoaded(m)) return true;
         }
+        return false;
+    }
+
+    /**
+     * 按注册名把物品加入创造栏；物品不存在则跳过。
+     * <p>联动内容的注册点都在 {@code integration/<modid>/} 里（模组不在场 → 整组不注册），
+     * 所以公共代码只能按注册名取用，绝不引用联动类的静态字段。
+     */
+    private static void acceptItemIfPresent(CreativeModeTab.Output output, String itemPath) {
+        net.minecraft.world.item.Item item =
+                com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.item(itemPath);
+        if (item != null) output.accept(item);
     }
 
     // ============================================================
@@ -223,12 +222,7 @@ public class ModCreativeTabs {
     private static boolean isMaterialDependencyLoaded(MaterialId materialId) {
         String sourceMod = MATERIAL_SOURCE_MOD.get(materialId.getPath());
         if (sourceMod == null) return true;
-        try {
-            return net.minecraftforge.fml.ModList.get() != null
-                    && net.minecraftforge.fml.ModList.get().isLoaded(sourceMod);
-        } catch (Throwable t) {
-            return false;
-        }
+        return com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.isLoaded(sourceMod);
     }
 
     // ============================================================

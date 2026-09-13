@@ -14,5 +14,20 @@
     "fluid": "tinkersnewlife:everburning_holy_fire_still",
     "amount": 500
   },
-  "temperature": 1500
+  "temperature": 1500,
+  "conditions": [
+    {
+      "type": "forge:or",
+      "values": [
+        {
+          "type": "tconstruct:config",
+          "prop": "force_integration_materials"
+        },
+        {
+          "type": "forge:mod_loaded",
+          "modid": "goety"
+        }
+      ]
+    }
+  ]
 }

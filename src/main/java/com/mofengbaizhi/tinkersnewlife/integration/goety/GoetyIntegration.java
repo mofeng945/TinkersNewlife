@@ -34,7 +34,11 @@ public final class GoetyIntegration implements Integration {
 
     @Override
     public void register(IEventBus bus) {
-        // 本模组在诡厄侧没有需要单独注册的注册表对象：
+        // 1) 联动流体整组（FluidType/静止/流动/方块/桶）同生共死：
+        //    熔融诅咒金属、熔融黑暗金属、不洁之血、永燃圣火
+        GoetyFluids.register(bus);
+
+        // 2) 本模组在诡厄侧没有其它需要单独注册的注册表对象：
         //  · 魔杖真形态（GoetyStaffItem）与普通形态共用同一物品 id "tinkersnewlife:modular_staff"，
         //    注册点必须留在公共侧（ModItems），只有"构造哪一类"的分叉走 IntegrationLoader.createModularStaff；
         //  · 高头骨（tall_skull）黏液头颅外观属纯客户端渲染，由 goety.client.GoetyClientIntegration 订阅客户端事件注册；

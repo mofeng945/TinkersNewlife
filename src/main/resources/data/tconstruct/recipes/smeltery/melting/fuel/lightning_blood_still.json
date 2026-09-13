@@ -6,5 +6,20 @@
     "fluid": "tinkersnewlife:lightning_blood_still"
   },
   "rate": 20,
-  "temperature": 1350
+  "temperature": 1350,
+  "conditions": [
+    {
+      "type": "forge:or",
+      "values": [
+        {
+          "type": "tconstruct:config",
+          "prop": "force_integration_materials"
+        },
+        {
+          "type": "forge:mod_loaded",
+          "modid": "iceandfire"
+        }
+      ]
+    }
+  ]
 }

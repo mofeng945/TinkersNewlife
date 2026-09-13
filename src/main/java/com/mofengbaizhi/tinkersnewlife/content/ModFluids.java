@@ -1,194 +1,68 @@
 package com.mofengbaizhi.tinkersnewlife.content;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
-import com.mofengbaizhi.tinkersnewlife.content.fluid.type.MantleFluidType;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.BucketItem;
+import com.mofengbaizhi.tinkersnewlife.content.fluid.FluidRegistrar;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.LiquidBlock;
-import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.material.FlowingFluid;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraftforge.fluids.FluidType;
-import net.minecraftforge.fluids.ForgeFlowingFluid;
 import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
 
+/**
+ * 本模组<b>原生</b>流体（原料来自原版 / 本模组内容 / 本模组事件，与任何联动模组无关）。
+ *
+ * <p>⭐ 联动材料的流体（熔融龙钢、龙血、熔融诅咒金属、不洁之血、熔融破碎之环…）**不在这里**：
+ * 它们按"联动注册标准写法"放在 {@code integration/<modid>/} 里，与对应模组同生共死
+ * （模组不在场 → 流体/FluidType/液体方块/桶整组不注册）。见
+ * {@code integration.iceandfire.IceAndFireFluids} / {@code integration.goety.GoetyFluids} /
+ * {@code integration.goety_revelation.GoetyRevelationFluids}。
+ */
 public class ModFluids {
-    // ============================================================
-    // 注册表
-    // ============================================================
-    public static final DeferredRegister<Fluid> FLUIDS =
-            DeferredRegister.create(ForgeRegistries.FLUIDS, TinkersNewlife.MOD_ID);
-    public static final DeferredRegister<FluidType> FLUID_TYPES =
-            DeferredRegister.create(ForgeRegistries.Keys.FLUID_TYPES, TinkersNewlife.MOD_ID);
-    public static final DeferredRegister<Block> FLUID_BLOCKS =
-            DeferredRegister.create(ForgeRegistries.BLOCKS, TinkersNewlife.MOD_ID);
-    public static final DeferredRegister<Item> FLUID_BUCKETS =
-            DeferredRegister.create(ForgeRegistries.ITEMS, TinkersNewlife.MOD_ID);
 
     // ============================================================
-    // 辅助方法：创建 MantleFluidType（使用 JSON 纹理配置）
+    // 注册表（原生流体共用一套；联动流体各有自己的一套，见 FluidRegistrar）
     // ============================================================
-    private static MantleFluidType createFluidType(String name, int density, int viscosity,
-                                                   int temperature, int tintColor) {
-        return new MantleFluidType(
-                FluidType.Properties.create()
-                        .density(density)
-                        .viscosity(viscosity)
-                        .temperature(temperature)
-                        .canPushEntity(false)
-                        .canDrown(true)
-                        .canExtinguish(false)
-                        .supportsBoating(true)
-                        .descriptionId("fluid_type." + TinkersNewlife.MOD_ID + "." + name), // 匹配语言文件
-                new ResourceLocation(TinkersNewlife.MOD_ID, "block/" + name + "_still"),   // 默认纹理（后备）
-                tintColor
-        );
-    }
+    public static final FluidRegistrar REGISTRAR = new FluidRegistrar(TinkersNewlife.MOD_ID);
 
-    private static BlockBehaviour.Properties waterProps(MapColor color) {
-        return BlockBehaviour.Properties.copy(Blocks.WATER).mapColor(color).noLootTable();
-    }
+    public static final DeferredRegister<Fluid> FLUIDS = REGISTRAR.fluids;
+    public static final DeferredRegister<FluidType> FLUID_TYPES = REGISTRAR.types;
+    public static final DeferredRegister<Block> FLUID_BLOCKS = REGISTRAR.blocks;
+    public static final DeferredRegister<Item> FLUID_BUCKETS = REGISTRAR.buckets;
 
-    private static BlockBehaviour.Properties lavaProps(MapColor color) {
-        return BlockBehaviour.Properties.copy(Blocks.LAVA).mapColor(color).noLootTable();
+    /** 声明原生流体（转发到公共注册器） */
+    private static FluidRegistrar.FluidEntry entry(String name, int density, int viscosity, int temperature,
+                                                   int tintColor,
+                                                   net.minecraft.world.level.block.state.BlockBehaviour.Properties props) {
+        return REGISTRAR.entry(name, density, viscosity, temperature, tintColor, props);
     }
 
     // ============================================================
-    // 内部类：封装一个完整流体的注册（使用 Supplier 避免循环依赖）
-    // ============================================================
-    public static class FluidEntry {
-        public final RegistryObject<FluidType> type;
-        public final RegistryObject<FlowingFluid> still;
-        public final RegistryObject<FlowingFluid> flowing;
-        public final RegistryObject<LiquidBlock> block;
-        public final RegistryObject<BucketItem> bucket;
-
-        public FluidEntry(String name, int density, int viscosity, int temperature,
-                          int tintColor, BlockBehaviour.Properties blockProps) {
-            // 1. 创建 FluidType
-            this.type = FLUID_TYPES.register(name,
-                    () -> createFluidType(name, density, viscosity, temperature, tintColor));
-
-            // 2. 使用数组延迟引用 still 和 flowing
-            RegistryObject<FlowingFluid>[] stillHolder = new RegistryObject[1];
-            RegistryObject<FlowingFluid>[] flowingHolder = new RegistryObject[1];
-
-            // 3. 创建 Fluid Properties
-            ForgeFlowingFluid.Properties props = new ForgeFlowingFluid.Properties(
-                    this.type,
-                    () -> stillHolder[0].get(),
-                    () -> flowingHolder[0].get()
-            );
-
-            // 4. 注册 Block
-            this.block = FLUID_BLOCKS.register(name + "_block",
-                    () -> new LiquidBlock(() -> stillHolder[0].get(), blockProps));
-
-            // 5. 注册 Bucket
-            this.bucket = FLUID_BUCKETS.register(name + "_bucket",
-                    () -> new BucketItem(() -> stillHolder[0].get(),
-                            new Item.Properties().craftRemainder(Items.BUCKET).stacksTo(1)));
-
-            // 6. 绑定 block 和 bucket
-            props.block(this.block).bucket(this.bucket);
-
-            // 7. 注册 still 和 flowing
-            this.still = FLUIDS.register(name + "_still",
-                    () -> new ForgeFlowingFluid.Source(props));
-            this.flowing = FLUIDS.register(name + "_flowing",
-                    () -> new ForgeFlowingFluid.Flowing(props));
-
-            // 8. 完成延迟绑定
-            stillHolder[0] = this.still;
-            flowingHolder[0] = this.flowing;
-        }
-    }
-
-    // ============================================================
-    // 注册所有流体
+    // 原生流体
     // ============================================================
 
-    public static final FluidEntry GHELOTH_BLOOD = new FluidEntry("gheloth_blood",
+    /** 格赫罗斯之血（本模组下界矿/内容） */
+    public static final FluidRegistrar.FluidEntry GHELOTH_BLOOD = entry("gheloth_blood",
             1500, 2000, 300, 0xFFFF4500,
-            waterProps(MapColor.CRIMSON_STEM));
+            FluidRegistrar.waterProps(MapColor.CRIMSON_STEM));
 
-    public static final FluidEntry MOLTEN_DRAGONSTEEL_FIRE = new FluidEntry("molten_dragonsteel_fire",
-            2000, 10000, 1300, 0xFFFF4500,
-            lavaProps(MapColor.COLOR_ORANGE));
-
-    public static final FluidEntry MOLTEN_DRAGONSTEEL_ICE = new FluidEntry("molten_dragonsteel_ice",
-            2000, 10000, 1300, 0xFF00BFFF,
-            lavaProps(MapColor.ICE));
-
-    public static final FluidEntry MOLTEN_DRAGONSTEEL_LIGHTNING = new FluidEntry("molten_dragonsteel_lightning",
-            2000, 10000, 1300, 0xFF8A2BE2,
-            lavaProps(MapColor.COLOR_YELLOW));
-
-    public static final FluidEntry FIRE_BLOOD = new FluidEntry("fire_blood",
-            1500, 2000, 1870, 0xFFFF4500,
-            waterProps(MapColor.FIRE));
-
-    public static final FluidEntry ICE_BLOOD = new FluidEntry("ice_blood",
-            1500, 2000, 250, 0xFF00BFFF,
-            waterProps(MapColor.ICE));
-
-    public static final FluidEntry LIGHTNING_BLOOD = new FluidEntry("lightning_blood",
-            1500, 2000, 350, 0xFF8A2BE2,
-            waterProps(MapColor.COLOR_YELLOW));
-
-    public static final FluidEntry MOLTEN_DREAD = new FluidEntry("molten_dread",
-            1500, 5000, 800, 0xFF6A0DAD,
-            lavaProps(MapColor.COLOR_PURPLE));
-
-    public static final FluidEntry MOLTEN_DREADSTEEL = new FluidEntry("molten_dreadsteel",
-            2000, 8000, 1700, 0xFF2F2F2F,
-            lavaProps(MapColor.COLOR_BLACK));
-            
-    public static final FluidEntry MOLTEN_NICHOLAS_BLESSING = new FluidEntry("molten_nicholas_blessing",
+    /** 熔融尼古拉斯的祝福（本模组喂食繁殖掉落） */
+    public static final FluidRegistrar.FluidEntry MOLTEN_NICHOLAS_BLESSING = entry("molten_nicholas_blessing",
             2000, 6000, 800, 0xFF9B59B6,
-            lavaProps(MapColor.COLOR_PURPLE));
+            FluidRegistrar.lavaProps(MapColor.COLOR_PURPLE));
 
-    public static final FluidEntry HASTUR_MALICE = new FluidEntry("hastur_malice",
+    /** 哈斯塔之恶（本模组 Y>400 坠落事件） */
+    public static final FluidRegistrar.FluidEntry HASTUR_MALICE = entry("hastur_malice",
             1500, 2000, 300, 0xFF4B0082,
-            waterProps(MapColor.COLOR_PURPLE));
+            FluidRegistrar.waterProps(MapColor.COLOR_PURPLE));
 
-    public static final FluidEntry ASHEN_INK = new FluidEntry("ashen_ink",
+    /** 灰烬之墨（本模组钓鱼产出） */
+    public static final FluidRegistrar.FluidEntry ASHEN_INK = entry("ashen_ink",
             1500, 2000, 300, 0xFFC0C0C0,
-            waterProps(MapColor.COLOR_LIGHT_GRAY));
+            FluidRegistrar.waterProps(MapColor.COLOR_LIGHT_GRAY));
 
-    public static final FluidEntry MOLTEN_DURANDAL = new FluidEntry("molten_durandal",
-        2000, 10000, 1500, 0xFFFFD700,  // 金黄色
-        lavaProps(MapColor.COLOR_ORANGE));
-
-    /** 熔融诅咒金属（诡厄巫法 诅咒金属锭 熔炼；tier2 材料「诅咒金属」原料流体，配色沿用诡厄诅咒金属青色） */
-    public static final FluidEntry MOLTEN_CURSED_METAL = new FluidEntry("molten_cursed_metal",
-        2000, 8000, 900, 0xFF435C6A,  // 诡厄诅咒金属青
-        lavaProps(MapColor.COLOR_LIGHT_BLUE));
-
-    /** 熔融黑暗金属（诡厄巫法 黑暗金属锭 熔炼；tier2 材料「黑暗金属」原料流体，配色取 goety dark_ingot 真实暗蓝灰） */
-    public static final FluidEntry MOLTEN_DARK_METAL = new FluidEntry("molten_dark_metal",
-        2000, 8000, 1000, 0xFF343540,  // goety dark_ingot 暗蓝灰 (52,53,64)
-        lavaProps(MapColor.COLOR_BLACK));
-
-    /** 熔融破碎之环（诡厄启示录 破碎之环 broken_halo 熔炼；浇在黑暗金属上成「神灵金」材料，配色取 broken_halo 暖金橙） */
-    public static final FluidEntry MOLTEN_BROKEN_RING = new FluidEntry("molten_broken_ring",
-        2000, 6000, 1200, 0xFFB87848,  // broken_halo 金橙 (184,120,72)
-        lavaProps(MapColor.COLOR_ORANGE));
-
-    /** 不洁之血（熔融 goety:unholy_blood 得到；纯色暗血红，作为永燃圣火的合金成分之一） */
-    public static final FluidEntry UNHOLY_BLOOD = new FluidEntry("unholy_blood",
-        1500, 2500, 1200, 0xFF5A0A0A,  // 纯色暗血红 (90,10,10)
-        waterProps(MapColor.COLOR_RED));
-
-    /** 永燃圣火（烈焰血 + 不洁之血 合金；更高亮度烈焰血混一点红，顶级燃料，温度 2200） */
-    public static final FluidEntry EVERBURNING_HOLY_FIRE = new FluidEntry("everburning_holy_fire",
-        1500, 2000, 2200, 0xFFFF2211,  // 更高亮度烈焰血偏红 (255,34,17)
-        lavaProps(MapColor.FIRE));
+    /** 熔融杜兰达尔（本模组凋灵掉落线） */
+    public static final FluidRegistrar.FluidEntry MOLTEN_DURANDAL = entry("molten_durandal",
+            2000, 10000, 1500, 0xFFFFD700,  // 金黄色
+            FluidRegistrar.lavaProps(MapColor.COLOR_ORANGE));
 }
