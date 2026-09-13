@@ -142,10 +142,12 @@ public final class CurseHudRenderer {
         }
 
         // 计数文字（居中，带阴影）
+        // ⭐ 总量超过 1 万后用"万(w)"记法显示（10000 → 1w，12345 → 1.2w）
         Component text = infinite
                 ? Component.translatable("hud.tinkersnewlife.curse.infinite_value")
                 : Component.translatable("hud.tinkersnewlife.curse",
-                (int) Math.floor(cur), (int) Math.ceil(max));
+                com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper.formatAmount(Math.floor(cur)),
+                com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper.formatAmount(Math.ceil(max)));
         int tw = font.width(text);
         int ty = y + (BAR_H - 8) / 2 + 1;
         graphics.drawString(font, text, x + (width - tw) / 2, ty, 0xFFFFFFFF, true);

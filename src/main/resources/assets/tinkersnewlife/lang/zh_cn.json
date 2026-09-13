@@ -1002,5 +1002,12 @@
   "item.tinkersnewlife.curse_bottle.hint": "佩戴于饰品槽：咒力优先存入瓶中，死亡不丢；可接取熔炉中的咒力残秽（1mb = 10 咒力）",
   "fluid_type.tinkersnewlife.curse_residue": "咒力残秽",
   "block.tinkersnewlife.curse_residue_block": "咒力残秽",
-  "item.tinkersnewlife.curse_residue_bucket": "咒力残秽桶"
+  "item.tinkersnewlife.curse_residue_bucket": "咒力残秽桶",
+  "block.tinkersnewlife.curse_vault": "呪蔵",
+  "block.tinkersnewlife.curse_vault.power": "储存咒力：%s / %s",
+  "block.tinkersnewlife.curse_vault.fluid": "咒力残秽：%s / %s mb",
+  "block.tinkersnewlife.curse_vault.hint": "放下即绑定使用者：咒力优先存入；使用者空手潜行右键可回收并保留咒力（无法破坏）",
+  "message.tinkersnewlife.curse_vault.status": "呪蔵：%s / %s 咒力",
+  "message.tinkersnewlife.curse_vault.picked_up": "已回收呪蔵（保留 %s 咒力）",
+  "message.tinkersnewlife.curse_vault.not_owner": "这不是你的呪蔵"
 }

@@ -314,4 +314,11 @@ public class ModItems {
     public static final RegistryObject<Item> CURSE_BOTTLE =
             ITEMS.register("curse_bottle",
                     () -> new com.mofengbaizhi.tinkersnewlife.content.item.CurseBottleItem());
+
+    /**
+     * 呪蔵（方块物品）：放置后绑定放置者，容量 10 万咒力；回收时把咒力带回物品 NBT。
+     */
+    public static final RegistryObject<Item> CURSE_VAULT =
+            ITEMS.register("curse_vault",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.CurseVaultItem(ModBlocks.CURSE_VAULT.get()));
 }

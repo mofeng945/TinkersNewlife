@@ -160,6 +160,7 @@ public class ModCreativeTabs {
 
                                 // ----- 封呪瓶（咒力容器饰品）+ 其专属流体「咒力残秽」的桶 -----
                                 output.accept(ModItems.CURSE_BOTTLE.get());
+                                output.accept(ModItems.CURSE_VAULT.get());
                                 output.accept(ModFluids.CURSE_RESIDUE.bucket.get());
                             })
                             .build()

@@ -197,10 +197,14 @@ public final class CursePowerHelper {
         player.getPersistentData().putDouble(KEY_CURSE, Math.max(0, Math.min(value, max)));
     }
 
-    /** 增加咒力（不超过上限）。⭐ 佩戴封呪瓶时**优先灌进瓶里**，灌不下的余量才进咒力核心池 */
+    /**
+     * 增加咒力（不超过上限）。⭐ 存储优先级：**佩戴的封呪瓶 → 绑定自己的呪蔵（放下的方块）→ 咒力核心池**
+     * （核心池是"临时存储"，垫底）。
+     */
     public static void addCurse(Player player, double amount) {
         if (amount <= 0) return;
         double leftover = CurseBottleHelper.storeIntoWorn(player, amount);
+        if (leftover > 0) leftover = storeIntoVaults(player, leftover);
         if (leftover > 0) setCurse(player, getCurse(player) + leftover);
     }
 
@@ -222,7 +226,41 @@ public final class CursePowerHelper {
         if (used > 0) setCurse(player, pool - used);
         double remaining = amount - used;
         if (remaining <= 0) return 0;
-        return Math.max(0, remaining - CurseBottleHelper.consumeFromWorn(player, remaining));
+        remaining = Math.max(0, remaining - CurseBottleHelper.consumeFromWorn(player, remaining));
+        if (remaining <= 0) return 0;
+        return Math.max(0, remaining - consumeFromVaults(player, remaining));
+    }
+
+    // ------------------------------------------------------------
+    //  呪蔵（放置的方块容器）
+    // ------------------------------------------------------------
+
+    /** 把咒力灌进该玩家绑定的所有呪蔵，返回灌不下的余量（数据在 world data 里，不要求区块加载） */
+    public static double storeIntoVaults(Player player, double amount) {
+        if (amount <= 0) return 0;
+        net.minecraft.server.MinecraftServer server = player.getServer();
+        if (server == null) return amount;   // 客户端/无服务器：交给上层处理
+        return CurseVaultData.storeForPlayer(server, player.getUUID(), amount);
+    }
+
+    /** 从该玩家绑定的呪蔵里扣咒力，返回实际扣掉的量 */
+    public static double consumeFromVaults(Player player, double amount) {
+        if (amount <= 0) return 0;
+        net.minecraft.server.MinecraftServer server = player.getServer();
+        if (server == null) return 0;
+        return CurseVaultData.consumeForPlayer(server, player.getUUID(), amount);
+    }
+
+    /** 绑定该玩家的所有呪蔵里储存的咒力（跨维度） */
+    public static double getVaultCurse(Player player) {
+        net.minecraft.server.MinecraftServer server = player.getServer();
+        return server == null ? 0 : CurseVaultData.sumPowerFor(server, player.getUUID());
+    }
+
+    /** 绑定该玩家的呪蔵提供的总容量（每个 10 万） */
+    public static double getVaultCapacity(Player player) {
+        net.minecraft.server.MinecraftServer server = player.getServer();
+        return server == null ? 0 : CurseVaultData.capacityFor(server, player.getUUID());
     }
 
     // ------------------------------------------------------------
@@ -239,14 +277,33 @@ public final class CursePowerHelper {
         return CurseBottleHelper.getWornCapacity(player);
     }
 
-    /** 统计总量 = 咒力核心池 + 封呪瓶（HUD/统计显示用） */
+    /** 统计总量 = 咒力核心池 + 佩戴的封呪瓶 + 绑定自己的所有呪蔵（HUD/统计显示用） */
     public static double getTotalCurse(Player player) {
-        return getCurse(player) + getBottleCurse(player);
+        return getCurse(player) + getBottleCurse(player) + getVaultCurse(player);
     }
 
-    /** 统计总上限 = 咒力核心上限 + 封呪瓶容量（HUD/统计显示用） */
+    /** 统计总上限 = 咒力核心上限 + 封呪瓶容量 + 呪蔵容量（HUD/统计显示用） */
     public static double getTotalMaxCurse(Player player) {
-        return getMaxCurse(player) + getBottleCapacity(player);
+        return getMaxCurse(player) + getBottleCapacity(player) + getVaultCapacity(player);
+    }
+
+    // ------------------------------------------------------------
+    //  数值显示：超过 1 万（1w）用"万"记法
+    // ------------------------------------------------------------
+
+    /**
+     * 咒力数值显示：{@code < 10000} 照旧显示整数/一位小数；{@code >= 10000} 用"万"记法
+     * （10000 → {@code 1w}，12345 → {@code 1.2w}，1234567 → {@code 123.5w}）。
+     */
+    public static String formatAmount(double value) {
+        double v = Math.max(0, value);
+        if (v < 10000.0) {
+            if (v == Math.floor(v)) return String.valueOf((long) v);
+            return String.format(java.util.Locale.ROOT, "%.1f", v);
+        }
+        double wan = v / 10000.0;
+        if (wan == Math.floor(wan)) return String.valueOf((long) wan) + "w";
+        return String.format(java.util.Locale.ROOT, "%.1fw", wan);
     }
 
     /** 背包中结界碎片数量（1 碎片 = 25 咒力） */

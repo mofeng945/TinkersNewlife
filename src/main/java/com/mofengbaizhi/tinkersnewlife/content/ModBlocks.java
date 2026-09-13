@@ -22,6 +22,13 @@ public class ModBlocks {
     public static final DeferredRegister<Block> BLOCKS =
             DeferredRegister.create(ForgeRegistries.BLOCKS, TinkersNewlife.MOD_ID);
 
+    /**
+     * 呪蔵：可放置的咒力容器（容量 10 万咒力，放置即绑定使用者，无法破坏，
+     * 使用者空手潜行右键可回收并保留其中咒力）。
+     */
+    public static final RegistryObject<Block> CURSE_VAULT = BLOCKS.register("curse_vault",
+            com.mofengbaizhi.tinkersnewlife.content.block.CurseVaultBlock::new);
+
     // 格赫罗斯矿石
     public static final RegistryObject<Block> GHELOTH_ORE = BLOCKS.register("gheloth_ore",
             () -> new Block(BlockBehaviour.Properties.of()
