@@ -426,7 +426,7 @@
   "jei.tinkersnewlife.curse_craft.core_hint": "Core old-god item: place it on the lantern above the Gheloth Ore",
   "jei.tinkersnewlife.curse_craft.result_hint": "The product floats on the lantern above the ore; right-click to take it",
   "message.tinkersnewlife.curse_craft.formed": "The curse crafting ritual structure is complete (hear the thunder)",
-  "message.tinkersnewlife.curse_craft.not_formed": "Structure incomplete: Gheloth Ore in the centre, modifier worktable below, obsidian / crying obsidian / soul sand around it, brick walls and soul fire on the second layer, a seared lantern above every wall and the ore",
+  "message.tinkersnewlife.curse_craft.not_formed": "Structure incomplete (see chat for the exact mismatch)",
   "message.tinkersnewlife.curse_craft.material_placed": "Material placed: %s",
   "message.tinkersnewlife.curse_craft.material_taken": "Material taken back",
   "message.tinkersnewlife.curse_craft.hand_empty": "You are not holding anything",

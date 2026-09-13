@@ -108,6 +108,11 @@ public final class CurseCraftRitualHandler {
         }
         if (!formed) {
             player.displayClientMessage(msg("not_formed").withStyle(ChatFormatting.RED), true);
+            // ⭐ 报出第一处不符的方块，省得玩家一格一格对（聊天栏，方便照着改）
+            String problem = CurseCraftStructure.firstProblem(serverLevel, ore);
+            if (problem != null) {
+                player.displayClientMessage(Component.literal("· " + problem).withStyle(ChatFormatting.GRAY), false);
+            }
             return;
         }
 

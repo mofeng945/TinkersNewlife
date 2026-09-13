@@ -10,6 +10,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.ForgeRegistries;
 
+import javax.annotation.Nullable;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,12 +66,13 @@ public final class CurseCraftStructure {
     private static Block layer1Block(int dx, int dz) {
         int adx = Math.abs(dx);
         int adz = Math.abs(dz);
-        if (adx == 0 && adz == 0) return null;                                                   // a：调配台单独判定
-        if ((adx == 1 && adz == 0) || (adx == 0 && adz == 1)) return Blocks.OBSIDIAN;            // b
-        if (adx == adz) return Blocks.CRYING_OBSIDIAN;                                           // c（内对角 (1,1)）
-        if ((adx == 2 && adz == 0) || (adx == 0 && adz == 2)) return Blocks.CRYING_OBSIDIAN;     // c（边中点）
-        if ((adx == 1 && adz == 2) || (adx == 2 && adz == 1)) return Blocks.SOUL_SAND;           // d
-        return null;                                                                             // e（四角）
+        if (adx == 0 && adz == 0) return null;                                              // a：调配台单独判定
+        if (adx == 2 && adz == 2) return null;                                              // e：四角任意（务必放在对角判定之前）
+        if ((adx == 1 && adz == 0) || (adx == 0 && adz == 1)) return Blocks.OBSIDIAN;       // b：四正方向黑曜石
+        if ((adx == 1 && adz == 1)
+                || (adx == 2 && adz == 0) || (adx == 0 && adz == 2)) return Blocks.CRYING_OBSIDIAN;  // c：哭泣黑曜石
+        if ((adx == 1 && adz == 2) || (adx == 2 && adz == 1)) return Blocks.SOUL_SAND;      // d：灵魂沙
+        return null;
     }
 
     private enum Kind { ORE, WALL, SOUL_FIRE, AIR }
@@ -79,9 +82,9 @@ public final class CurseCraftStructure {
         int adx = Math.abs(dx);
         int adz = Math.abs(dz);
         if (adx == 0 && adz == 0) return Kind.ORE;
-        if ((adx == 2 && adz == 0) || (adx == 0 && adz == 2) || (adx == 1 && adz == 1)) return Kind.WALL;
-        if ((adx == 1 && adz == 2) || (adx == 2 && adz == 1) || (adx == 2 && adz == 2)) return Kind.SOUL_FIRE;
-        return Kind.AIR;
+        if ((adx == 2 && adz == 0) || (adx == 0 && adz == 2) || (adx == 1 && adz == 1)) return Kind.WALL;   // b：砖墙
+        if ((adx == 1 && adz == 2) || (adx == 2 && adz == 1)) return Kind.SOUL_FIRE;                       // c：灵魂火
+        return Kind.AIR;   // e：四角 (2,2) 以及 (1,0)/(0,1) 都必须是空
     }
 
     /** 第三层需要灯笼的偏移（矿石正上方 + 各石砖墙上方） */
@@ -151,6 +154,72 @@ public final class CurseCraftStructure {
         return true;
     }
 
+    /**
+     * 返回"第一处不符"的可读描述；null = 结构成型。
+     * <p>给玩家排查用：比如 {@code 第一层 (+1,+1) 应为 哭泣黑曜石（现在是 空气）}。
+     */
+    @Nullable
+    public static String firstProblem(Level level, BlockPos orePos) {
+        if (!level.getBlockState(orePos).is(ModBlocks.GHELOTH_ORE.get())) {
+            return "第二层 中心 应为 格赫罗斯矿石（现在是 " + name(level.getBlockState(orePos)) + "）";
+        }
+        BlockPos below = orePos.below();
+        if (!isBlock(level, below, "tconstruct", "modifier_worktable")) {
+            return "第一层 中心 应为 强化调配台（现在是 " + name(level.getBlockState(below)) + "）";
+        }
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                Block expected = layer1Block(dx, dz);
+                if (expected == null) continue;
+                BlockPos pos = below.offset(dx, 0, dz);
+                if (!level.getBlockState(pos).is(expected)) {
+                    return "第一层 " + offset(dx, dz) + " 应为 " + expected.getName().getString()
+                            + "（现在是 " + name(level.getBlockState(pos)) + "）";
+                }
+            }
+        }
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                if (dx == 0 && dz == 0) continue;
+                BlockPos pos = orePos.offset(dx, 0, dz);
+                BlockState state = level.getBlockState(pos);
+                switch (layer2Kind(dx, dz)) {
+                    case WALL -> {
+                        if (!isBrickWall(state)) {
+                            return "第二层 " + offset(dx, dz) + " 应为 焦黑砖墙（现在是 " + name(state) + "）";
+                        }
+                    }
+                    case SOUL_FIRE -> {
+                        if (!state.is(Blocks.SOUL_FIRE)) {
+                            return "第二层 " + offset(dx, dz) + " 应为 灵魂火（灵魂沙上点火，现在是 " + name(state) + "）";
+                        }
+                    }
+                    default -> {
+                        if (!state.isAir()) {
+                            return "第二层 " + offset(dx, dz) + " 应为空（现在是 " + name(state) + "）";
+                        }
+                    }
+                }
+            }
+        }
+        for (int[] off : lanternOffsets()) {
+            BlockPos pos = orePos.offset(off[0], 2, off[1]);
+            if (!isLantern(level.getBlockState(pos))) {
+                boolean core = isCoreOffset(off[0], off[1]);
+                return "第三层 " + offset(off[0], off[1]) + (core ? "（矿石正上方）" : "")
+                        + " 应为 焦黑灯笼（现在是 " + name(level.getBlockState(pos)) + "）";
+            }
+        }
+        return null;
+    }
+
+    private static String offset(int dx, int dz) {
+        return String.format(java.util.Locale.ROOT, "(%+d,%+d)", dx, dz);
+    }
+
+    private static String name(BlockState state) {
+        return state.isAir() ? "空气" : state.getBlock().getName().getString();
+    }
     /** 材料位灯笼坐标（不含核心位） */
     public static List<BlockPos> materialLanterns(BlockPos orePos) {
         List<BlockPos> list = new ArrayList<>();

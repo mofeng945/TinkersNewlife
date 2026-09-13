@@ -1022,7 +1022,7 @@
   "jei.tinkersnewlife.curse_craft.core_hint": "核心古神物品：放到格赫罗斯矿石正上方的那盏灯笼",
   "jei.tinkersnewlife.curse_craft.result_hint": "仪式完成后产物悬浮在矿石上方的灯笼处，右键取下",
   "message.tinkersnewlife.curse_craft.formed": "咒力合成仪式结构已成型（雷声为证）",
-  "message.tinkersnewlife.curse_craft.not_formed": "仪式结构尚未成型：格赫罗斯矿石居中，下方强化调配台，四周黑曜石/哭泣黑曜石/灵魂沙，第二层焦黑砖墙与灵魂火，砖墙与矿石上方各一盏焦黑灯笼",
+  "message.tinkersnewlife.curse_craft.not_formed": "仪式结构尚未成型（具体差哪块看聊天栏）",
   "message.tinkersnewlife.curse_craft.material_placed": "已放上材料：%s",
   "message.tinkersnewlife.curse_craft.material_taken": "已取回材料",
   "message.tinkersnewlife.curse_craft.hand_empty": "手上没有物品",
