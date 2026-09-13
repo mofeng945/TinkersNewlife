@@ -64,17 +64,25 @@ public final class CurseCraftRitualHandler {
 
     /** 玩家离得超过这个距离就中断（方块） */
     private static final double MAX_DISTANCE = 16.0;
+    /** 悬浮物坐在灯笼上方多高（灯笼碰撞箱顶面约 y+0.5，必须完全避开） */
+    private static final double DISPLAY_DY = 1.15;
 
     /** 已提示过"结构成型"的结构（维度@坐标），避免反复播雷声 */
     private static final Set<String> ANNOUNCED = ConcurrentHashMap.newKeySet();
     /** 进行中的仪式：维度@矿石坐标 → 仪式 */
     private static final Map<String, Ritual> ACTIVE = new ConcurrentHashMap<>();
+    /** 活着的悬浮物：维度@灯笼座标@角色 → 记录（每 10 tick 拉回灯笼上方，绝不漂走） */
+    private static final Map<String, Display> DISPLAYS = new ConcurrentHashMap<>();
 
     private CurseCraftRitualHandler() {
     }
 
     private static String key(ServerLevel level, BlockPos ore) {
         return level.dimension().location() + "@" + ore.asLong();
+    }
+
+    /** 一盏灯笼上的一个悬浮物记录 */
+    private record Display(net.minecraft.resources.ResourceKey<Level> dim, BlockPos lantern, UUID id, String role) {
     }
 
     /** 灯笼附近是否有格赫罗斯矿石（区分"搭歪了"与"只是在乱点灯笼"） */
@@ -268,41 +276,98 @@ public final class CurseCraftRitualHandler {
     // ============================================================
 
     public static ItemEntity spawnDisplay(ServerLevel level, BlockPos lantern, ItemStack stack, String role) {
+        // ⚠ 位置：灯笼实体形状的顶面在 y+0.5 左右，若把掉落物生成在灯笼"体内"（y+0.45），
+        //   原版碰撞会每 tick 把它往外（多半向上）挤一点，表现为"材料慢慢飘到高空、还取不回来"。
+        //   所以生成在灯笼上方 DISPLAY_DY 格，并关掉物理（noPhysics）——永不掉落、永不被挤出。
+        BlockPos anchor = lantern.immutable();
         ItemEntity entity = new ItemEntity(level,
-                lantern.getX() + 0.5, lantern.getY() + 0.45, lantern.getZ() + 0.5, stack.copyWithCount(1));
+                anchor.getX() + 0.5, anchor.getY() + DISPLAY_DY, anchor.getZ() + 0.5, stack.copyWithCount(1));
         entity.setNoGravity(true);
+        entity.noPhysics = true;
         entity.setNeverPickUp();
         entity.setUnlimitedLifetime();
         entity.setInvulnerable(true);
         entity.setDeltaMovement(Vec3.ZERO);
         entity.getPersistentData().putString(KEY_ROLE, role);
-        entity.getPersistentData().putLong(KEY_LANTERN, lantern.asLong());
+        entity.getPersistentData().putLong(KEY_LANTERN, anchor.asLong());
         level.addFreshEntity(entity);
+        DISPLAYS.put(displayKey(level, anchor, role), new Display(level.dimension(), anchor, entity.getUUID(), role));
         return entity;
     }
 
-    /** 某盏灯笼上的悬浮物（按角色） */
-    public static ItemEntity findDisplay(ServerLevel level, BlockPos lantern, String role) {
-        AABB box = new AABB(lantern).inflate(2.5, 1.5, 2.5);
-        for (ItemEntity entity : level.getEntitiesOfClass(ItemEntity.class, box)) {
-            if (entity.getPersistentData().getLong(KEY_LANTERN) != lantern.asLong()) continue;
-            if (!role.equals(entity.getPersistentData().getString(KEY_ROLE))) continue;
-            return entity;
-        }
-        return null;
+    /** 悬浮物登记键 */
+    private static String displayKey(ServerLevel level, BlockPos lantern, String role) {
+        return level.dimension().location() + "@" + lantern.asLong() + "@" + role;
     }
 
-    /** 结构内所有材料悬浮物（含正在聚合中的；按角色扫描，不依赖灯笼高度） */
+    /**
+     * 每 10 tick 把登记在册的悬浮物拉回自己那盏灯笼上方。
+     * <p>悬浮物是"全息影像"：无重力 + 无碰撞，好处是绝不会被方块挤出去，
+     * 代价是任何外力（爆炸、活塞、水、其它模组的推挤）都会把它推走后**再也回不来**。
+     * 所以这里定期归位，保证"放上去就一定取得下来"。
+     */
+    private static void pinDisplays(MinecraftServer server) {
+        if (DISPLAYS.isEmpty() || !ACTIVE.isEmpty()) return;   // 仪式进行中由 animate() 接管
+        for (java.util.Iterator<Map.Entry<String, Display>> it = DISPLAYS.entrySet().iterator(); it.hasNext(); ) {
+            Display display = it.next().getValue();
+            ServerLevel level = server.getLevel(display.dim());
+            if (level == null) continue;                        // 维度没加载：先留着（区块重新加载后会再次接管）
+            net.minecraft.world.entity.Entity found = level.getEntity(display.id());
+            if (found == null) continue;                        // 区块未加载或世界刚载入：保留登记
+            if (!(found instanceof ItemEntity item) || !item.isAlive()) {
+                it.remove();
+                continue;
+            }
+            double x = display.lantern().getX() + 0.5;
+            double y = display.lantern().getY() + DISPLAY_DY;
+            double z = display.lantern().getZ() + 0.5;
+            if (item.position().distanceToSqr(x, y, z) > 1.0E-6) {
+                item.setPos(x, y, z);
+                item.setDeltaMovement(Vec3.ZERO);
+                item.hurtMarked = true;
+            }
+        }
+    }
+
+    /**
+     * 某盏灯笼上的悬浮物（按角色）。
+     * <p>先按"灯笼坐标键"在较大范围内精确匹配；万一实体被外力挪走，
+     * 退化为"取附近最近的同角色悬浮物"，保证一定取得回来（不再出现"放上去拿不下来"）。
+     */
+    public static ItemEntity findDisplay(ServerLevel level, BlockPos lantern, String role) {
+        AABB box = new AABB(lantern).inflate(8.0);
+        ItemEntity nearest = null;
+        double best = Double.MAX_VALUE;
+        for (ItemEntity entity : level.getEntitiesOfClass(ItemEntity.class, box)) {
+            if (!role.equals(entity.getPersistentData().getString(KEY_ROLE))) continue;
+            if (entity.getPersistentData().getLong(KEY_LANTERN) == lantern.asLong()) return entity;
+            if (!entity.getPersistentData().contains(KEY_LANTERN)) continue;
+            double d = entity.distanceToSqr(lantern.getX() + 0.5, lantern.getY() + DISPLAY_DY, lantern.getZ() + 0.5);
+            if (d < best) {
+                best = d;
+                nearest = entity;
+            }
+        }
+        return nearest;
+    }
+
+    /**
+     * 结构内所有材料悬浮物（含正在聚合中的；按角色扫描，不依赖灯笼高度）。
+     * <p>按"堆叠数量"展开：万一两个同款材料被原版合并成一个 count&gt;1 的掉落物，
+     * 也仍然会被当成 2 份材料参与配方匹配（不会变成"材料数量对不上 → 说没有材料"）。
+     */
     private static List<ItemStack> collectMaterials(ServerLevel level, BlockPos ore) {
         List<ItemStack> list = new ArrayList<>();
-        for (ItemEntity entity : level.getEntitiesOfClass(ItemEntity.class, CurseCraftStructure.bounds(ore),
+        for (ItemEntity entity : level.getEntitiesOfClass(ItemEntity.class, CurseCraftStructure.bounds(ore).inflate(24.0),
                 e -> ROLE_MATERIAL.equals(e.getPersistentData().getString(KEY_ROLE)))) {
-            list.add(entity.getItem());
+            ItemStack stack = entity.getItem();
+            int count = Math.max(1, Math.min(stack.getCount(), 64));
+            for (int i = 0; i < count; i++) list.add(stack.copyWithCount(1));
         }
         return list;
     }
     private static List<ItemEntity> allDisplays(ServerLevel level, BlockPos ore) {
-        return level.getEntitiesOfClass(ItemEntity.class, new AABB(ore).inflate(6.0),
+        return level.getEntitiesOfClass(ItemEntity.class, new AABB(ore).inflate(20.0),
                 e -> !e.getPersistentData().getString(KEY_ROLE).isEmpty()
                         && e.getPersistentData().contains(KEY_LANTERN));
     }
@@ -344,7 +409,10 @@ public final class CurseCraftRitualHandler {
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
         MinecraftServer server = event.getServer();
-        if (server == null || ACTIVE.isEmpty()) return;
+        if (server == null) return;
+        // 悬浮物归位（每 10 tick 一次，代价可忽略：只遍历"登记在册的几件物品"）
+        if (server.getTickCount() % 10 == 0) pinDisplays(server);
+        if (ACTIVE.isEmpty()) return;
         for (Map.Entry<String, Ritual> entry : new ArrayList<>(ACTIVE.entrySet())) {
             String k = entry.getKey();
             Ritual ritual = entry.getValue();
@@ -393,11 +461,16 @@ public final class CurseCraftRitualHandler {
     private static void animate(ServerLevel level, Ritual ritual, ServerPlayer player) {
         Vec3 center = CurseCraftStructure.convergePoint(ritual.ore);
         List<ItemEntity> displays = allDisplays(level, ritual.ore);
+        // 按"相对矿石的角度"排序后再分配环形位置：每个物品朝自己那一侧聚拢，
+        // 轨迹基本是径向的、不会互相穿插（半径 1.4 也保证同款材料不会贴近到自动合并）
+        displays.sort(java.util.Comparator.comparingDouble(e -> {
+            double a = Math.atan2(e.getZ() - center.z, e.getX() - center.x);
+            return a < 0 ? a + Math.PI * 2 : a;
+        }));
         int index = 0;
         for (ItemEntity entity : displays) {
-            // 环形散开一点，避免完全重叠
             double angle = index * (Math.PI * 2 / Math.max(1, displays.size()));
-            Vec3 target = center.add(Math.cos(angle) * 0.55, 0.0, Math.sin(angle) * 0.55);
+            Vec3 target = center.add(Math.cos(angle) * 1.4, 0.0, Math.sin(angle) * 1.4);
             Vec3 now = entity.position();
             entity.setPos(now.x + (target.x - now.x) * 0.35,
                     now.y + (target.y - now.y) * 0.35,
@@ -459,7 +532,7 @@ public final class CurseCraftRitualHandler {
         for (ItemEntity entity : allDisplays(level, ritual.ore)) {
             long lantern = entity.getPersistentData().getLong(KEY_LANTERN);
             BlockPos pos = BlockPos.of(lantern);
-            entity.setPos(pos.getX() + 0.5, pos.getY() + 0.45, pos.getZ() + 0.5);
+            entity.setPos(pos.getX() + 0.5, pos.getY() + DISPLAY_DY, pos.getZ() + 0.5);
             entity.setDeltaMovement(Vec3.ZERO);
             entity.hurtMarked = true;
         }
