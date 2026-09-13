@@ -331,24 +331,30 @@ public final class CurseCraftRitualHandler {
 
     /**
      * 某盏灯笼上的悬浮物（按角色）。
-     * <p>先按"灯笼坐标键"在较大范围内精确匹配；万一实体被外力挪走，
-     * 退化为"取附近最近的同角色悬浮物"，保证一定取得回来（不再出现"放上去拿不下来"）。
+     * <p>两步，且**绝不按距离找邻居**（第三层 9 盏灯笼是 1 格间距，
+     * 任何"附近的同角色悬浮物"兜底都会变成"点空灯笼把隔壁那件抢过来"——实测就是这个 bug）：
+     * <ol>
+     *   <li>按灯笼坐标键精确匹配（搜索盒 8 格，被外力挪远也取得回来）；</li>
+     *   <li>匹配不到就查登记表 {@link #DISPLAYS}，按 UUID 把自己的那一件找回来（哪怕它飞出去 30 格）。</li>
+     * </ol>
      */
     public static ItemEntity findDisplay(ServerLevel level, BlockPos lantern, String role) {
         AABB box = new AABB(lantern).inflate(8.0);
-        ItemEntity nearest = null;
-        double best = Double.MAX_VALUE;
         for (ItemEntity entity : level.getEntitiesOfClass(ItemEntity.class, box)) {
-            if (!role.equals(entity.getPersistentData().getString(KEY_ROLE))) continue;
-            if (entity.getPersistentData().getLong(KEY_LANTERN) == lantern.asLong()) return entity;
-            if (!entity.getPersistentData().contains(KEY_LANTERN)) continue;
-            double d = entity.distanceToSqr(lantern.getX() + 0.5, lantern.getY() + DISPLAY_DY, lantern.getZ() + 0.5);
-            if (d < best) {
-                best = d;
-                nearest = entity;
+            if (role.equals(entity.getPersistentData().getString(KEY_ROLE))
+                    && entity.getPersistentData().getLong(KEY_LANTERN) == lantern.asLong()) {
+                return entity;
             }
         }
-        return nearest;
+        Display display = DISPLAYS.get(displayKey(level, lantern, role));
+        if (display == null) return null;
+        net.minecraft.world.entity.Entity found = level.getEntity(display.id());
+        if (found instanceof ItemEntity item && item.isAlive()
+                && role.equals(item.getPersistentData().getString(KEY_ROLE))) {
+            return item;    // 登记表认得它：把它拉回灯笼上方再交给上层
+        }
+        DISPLAYS.remove(displayKey(level, lantern, role));
+        return null;
     }
 
     /**
