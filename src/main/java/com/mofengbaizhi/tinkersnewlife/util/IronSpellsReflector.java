@@ -51,8 +51,14 @@ public class IronSpellsReflector {
         if (initialized) return;
         initialized = true;
 
+        // ⭐ 存在性判定统一走 ModList（禁止用 Class.forName 试探）
+        if (!com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.isIronSpells()) {
+            ironSpellsPresent = false;
+            LOGGER.info("[TinkersNewlife] 未检测到铁魔法（ironsspellbooks），模块化魔杖的法术功能停用");
+            return;
+        }
+
         try {
-            Class.forName("io.redspace.ironsspellbooks.IronsSpellbooks");
             ironSpellsPresent = true;
 
             // 1. SpellSelectionManager
@@ -179,8 +185,9 @@ public class IronSpellsReflector {
     private static void initDivine() {
         if (divineInited) return;
         divineInited = true;
+        // ⭐ 存在性判定走 ModList（不再用 Class.forName 试探）
+        if (!com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.isIronSpells()) return;
         try {
-            Class.forName("io.redspace.ironsspellbooks.IronsSpellbooks");
             ISPELL_CONTAINER_CLASS = Class.forName("io.redspace.ironsspellbooks.api.spells.ISpellContainer");
             SPELL_REGISTRY_CLASS = Class.forName("io.redspace.ironsspellbooks.api.registry.SpellRegistry");
             ATTRIBUTE_REGISTRY_CLASS = Class.forName("io.redspace.ironsspellbooks.api.registry.AttributeRegistry");

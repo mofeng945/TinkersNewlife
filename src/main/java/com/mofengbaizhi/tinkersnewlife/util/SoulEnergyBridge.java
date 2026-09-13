@@ -40,7 +40,8 @@ public final class SoulEnergyBridge {
         if (resolved) return;
         resolved = true;
         try {
-            if (!ModList.get().isLoaded("goety")) return;
+            // ⭐ 存在性判定统一走 ModList（不再直接摸 ModList，改用联动层常量）
+            if (!com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.isGoety()) return;
             Class<?> helper = Class.forName(SEHELPER);
             getSESoulsMethod = helper.getMethod("getSESouls", Player.class);
             setSESoulsMethod = helper.getMethod("setSESouls", Player.class, int.class);

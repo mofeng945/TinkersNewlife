@@ -1,6 +1,7 @@
 package com.mofengbaizhi.tinkersnewlife.content.curse.technique;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -52,12 +53,20 @@ public final class BlueprintCompat {
     private BlueprintCompat() {}
 
     /** 内置：玩法依赖"物品自身类型/接口"的接口实现（按类名软依赖探测，模组不在就自动跳过） */
+    /**
+     * 已知接口：{@code {接口类名, 说明, 归属模组 id}}。
+     * <p>⭐ 归属模组不在场时直接跳过探测（存在性判定走 {@code ModList}，不再靠 {@code Class.forName} 失败来推断）。
+     */
     private static final String[][] KNOWN_INTERFACES = {
             {"slimeknights.tconstruct.library.tools.item.IModifiable",
-                    "匠魂工具（需要 IModifiable + ToolDefinition）"},
-            {"appeng.api.parts.IPartItem", "AE2 部件（需要 IPartItem 才能装机）"},
-            {"top.theillusivec4.curios.api.type.capability.ICurioItem", "Curios 饰品（需要 ICurioItem 才能佩戴）"},
-            {"top.theillusivec4.curios.api.type.capability.ICurio", "Curios 饰品（旧接口）"},
+                    "匠魂工具（需要 IModifiable + ToolDefinition）",
+                    com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.TCONSTRUCT},
+            {"appeng.api.parts.IPartItem", "AE2 部件（需要 IPartItem 才能装机）",
+                    com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.AE2},
+            {"top.theillusivec4.curios.api.type.capability.ICurioItem", "Curios 饰品（需要 ICurioItem 才能佩戴）",
+                    com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.CURIOS},
+            {"top.theillusivec4.curios.api.type.capability.ICurio", "Curios 饰品（旧接口）",
+                    com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.CURIOS},
     };
 
     /** 类名 → Class 缓存；缺失的类名记进 MISSING，避免反复 Class.forName */
@@ -105,8 +114,9 @@ public final class BlueprintCompat {
         Item item = target.getItem();
         ResourceLocation id = ForgeRegistries.ITEMS.getKey(item);
         if (id == null) return null;
-        // 1) 已知接口（内置 + 配置追加）
+        // 1) 已知接口（内置 + 配置追加）；内置项要求归属模组在场
         for (String[] entry : KNOWN_INTERFACES) {
+            if (entry.length > 2 && !IntegrationLoader.isLoaded(entry[2])) continue;
             if (implementsInterface(item, entry[0])) return entry[1];
         }
         for (String iface : riskyInterfaces()) {

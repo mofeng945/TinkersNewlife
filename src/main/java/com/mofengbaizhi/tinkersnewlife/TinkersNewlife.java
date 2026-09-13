@@ -43,7 +43,7 @@ import com.mofengbaizhi.tinkersnewlife.network.curse.PacketSyncCurse;
 import com.mofengbaizhi.tinkersnewlife.network.curse.PacketToggleDomain;
 import com.mofengbaizhi.tinkersnewlife.network.tools.PacketUseSkill;
 import com.mofengbaizhi.tinkersnewlife.network.curse.PacketUseTechnique;
-import com.mofengbaizhi.tinkersnewlife.util.IronSpellsReflector;
+import com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.storage.LevelResource;
@@ -142,7 +142,9 @@ public class TinkersNewlife {
 
         LootModifierSerializers.LOOT_MODIFIERS.register(modEventBus);
 
-        IronSpellsReflector.init();
+        // ⭐ 联动注册总入口：存在性判定（ModList）+ 逐模组模块分派（含铁魔法反射装填）
+        // 公共代码不直接引用任何联动类型，各联动类只在对应模组在场时被加载。
+        IntegrationLoader.init(modEventBus);
 
 
         // 强制加载 ModCurios 类，确保其事件订阅生效（特别是槽位注册）

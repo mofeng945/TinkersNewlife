@@ -517,6 +517,8 @@ public class ClientEventHandler {
         private static java.lang.reflect.Method ironWheelClose;
 
         private static void closeIronSpellWheel() {
+            // ⭐ 存在性判定走 ModList：铁魔法不在场时连反射都不必尝试
+            if (!com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.isIronSpells()) return;
             try {
                 if (ironWheelClass == null) {
                     ironWheelClass = Class.forName("io.redspace.ironsspellbooks.gui.overlays.SpellWheelOverlay");

@@ -60,10 +60,10 @@ public final class GoetyBridge {
         if (resolved) return;
         resolved = true;
         try {
-            goetyPresent = ModList.get().getMods().stream()
-                    .anyMatch(m -> m.getModId().toLowerCase().contains("goety"));
+            // ⭐ 存在性判定统一走 ModList（goety 系 = 本体或启示录）
+            goetyPresent = com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.isGoetyFamily();
             if (!goetyPresent) {
-                LOGGER.info("[GoetyBridge] 未检测到 goety 系模组（mods=" + ModList.get().getMods().size() + "），Goety 相关逻辑全部停用");
+                LOGGER.info("[GoetyBridge] 未检测到 goety 系模组，Goety 相关逻辑全部停用");
                 return;
             }
             for (EntityType<?> type : ForgeRegistries.ENTITY_TYPES) {

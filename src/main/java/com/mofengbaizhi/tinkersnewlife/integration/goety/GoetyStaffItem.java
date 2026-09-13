@@ -1,4 +1,4 @@
-package com.mofengbaizhi.tinkersnewlife.content.item;
+package com.mofengbaizhi.tinkersnewlife.integration.goety;
 
 import com.Polarice3.Goety.api.items.magic.IWand;
 import com.Polarice3.Goety.api.magic.SpellType;
@@ -7,6 +7,7 @@ import com.Polarice3.Goety.common.items.magic.DarkWand;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.Modifiers;
 import com.mofengbaizhi.tinkersnewlife.content.goety.ModularStaffGoety;
+import com.mofengbaizhi.tinkersnewlife.content.item.ModularStaffItem;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;

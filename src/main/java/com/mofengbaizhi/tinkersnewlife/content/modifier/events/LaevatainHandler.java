@@ -151,6 +151,8 @@ public final class LaevatainHandler {
     }
 
     private static Object goetyEffect(String field) {
+        // ⭐ 存在性判定走 ModList（不再靠 Class.forName 试探）
+        if (!com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.isGoety()) return null;
         try {
             java.lang.reflect.Field f = java.lang.Class.forName("com.Polarice3.Goety.common.effects.GoetyEffects")
                     .getField(field);

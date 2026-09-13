@@ -3,7 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.content.goety;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.item.ModularStaffItem;
 import com.mofengbaizhi.tinkersnewlife.network.curse.PacketStaffGoetySync;
-import com.mofengbaizhi.tinkersnewlife.util.GoetyStaffBridge;
+import com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -134,14 +134,9 @@ public final class ModularStaffGoety {
         return null;
     }
 
-    /** 诡厄巫法是否加载（运行时守卫：任何 GoetyStaffItem 的直接引用前必须先过此检查） */
+    /** 诡厄巫法是否加载（存在性判定统一走 ModList；真法杖类的加载由 IntegrationLoader 分支兜住） */
     public static boolean isGoetyLoaded() {
-        try {
-            Class.forName("com.Polarice3.Goety.api.items.magic.IWand");
-            return true;
-        } catch (Throwable t) {
-            return false;
-        }
+        return IntegrationLoader.isGoety();
     }
 
     // ================= 自动连招（开关式：客户端长按 5s 开启，再按右键解除） =================
@@ -225,7 +220,7 @@ public final class ModularStaffGoety {
         if (!isGoetyLoaded()) return;
         ItemStack staff = heldStaff(player);
         if (staff == null) return;
-        GoetyStaffBridge.mirrorEquippedFocus(player, staff);
+        IntegrationLoader.mirrorEquippedFocus(player, staff);
     }
 
     // ================= 动作 =================
@@ -345,6 +340,8 @@ public final class ModularStaffGoety {
     }
 
     private static boolean isFocusItem(ItemStack s) {
+        // ⭐ 存在性判定走 ModList（不再靠 Class.forName 失败来推断）
+        if (!IntegrationLoader.isGoety()) return false;
         try {
             Class<?> iface = Class.forName("com.Polarice3.Goety.api.items.magic.IFocus");
             Class<?> c = s.getItem().getClass();
@@ -395,10 +392,10 @@ public final class ModularStaffGoety {
     private static void refreshSpellAttrsTick(ServerPlayer sp) {
         if (!isGoetyLoaded()) return;
         ItemStack staff = heldStaff(sp);
-        if (staff != null && !staff.isEmpty() && GoetyStaffBridge.isGoetyStaffItem(staff)) {
-            GoetyStaffBridge.refreshSpellAttrs(sp, staff);
+        if (staff != null && !staff.isEmpty() && IntegrationLoader.isGoetyStaffItem(staff)) {
+            IntegrationLoader.refreshSpellAttrs(sp, staff);
         } else {
-            GoetyStaffBridge.clearSpellAttrs(sp);
+            IntegrationLoader.clearSpellAttrs(sp);
         }
     }
 
@@ -417,7 +414,7 @@ public final class ModularStaffGoety {
     public static void onPlayerClone(net.minecraftforge.event.entity.player.PlayerEvent.Clone event) {
         if (event.getEntity() instanceof ServerPlayer sp) {
             if (isGoetyLoaded()) {
-                GoetyStaffBridge.clearSpellAttrs(sp);
+                IntegrationLoader.clearSpellAttrs(sp);
                 setAutoCast(sp, false);
             }
         }
@@ -437,7 +434,7 @@ public final class ModularStaffGoety {
         if (getMode(staff) == MODE_GOETY) {
             // 真法杖形态（GoetyStaffItem implements IWand）：不取消，交给原版 use() →
             // GoetyStaffItem.use → 诡厄原生施法（长吟唱蓄力/冷却/灵魂全走原生管线，双端一致）
-            if (isGoetyLoaded() && GoetyStaffBridge.isGoetyStaffItem(staff)) {
+            if (isGoetyLoaded() && IntegrationLoader.isGoetyStaffItem(staff)) {
                 return;
             }
             // 旧版/异常环境兜底：换手拿真法杖施法（仅普通形态魔杖且处于巫法模式时可能走到）
@@ -453,6 +450,8 @@ public final class ModularStaffGoety {
             new java.util.concurrent.ConcurrentHashMap<>();
 
     private static void tryCast(ServerPlayer player, ItemStack staff, ItemStack focus) {
+        // ⭐ 存在性判定走 ModList（不再靠 Class.forName 失败来推断）
+        if (!IntegrationLoader.isGoety()) return;
         try {
             Class<?> iwand = Class.forName("com.Polarice3.Goety.api.items.magic.IWand");
             Item wandItem = null;

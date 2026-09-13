@@ -49,6 +49,8 @@ public final class GungnirHandler {
 
     /** 原版效果：goety STUNNED（震撼）+ BURN_HEX（狱火药效）+ 目标脚下生成 Hellfire 投射物（反射/软依赖） */
     private static void applyOriginalEffects(LivingEntity target, net.minecraft.world.level.Level level) {
+        // ⭐ 存在性判定走 ModList：诡厄不在场直接跳过（不再靠 Class.forName 试探）
+        if (!com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.isGoety()) return;
         Object stunned = goetyEffect("STUNNED");
         if (stunned instanceof net.minecraft.world.effect.MobEffect e) {
             target.addEffect(new MobEffectInstance(e, 40, 0, false, false, true));

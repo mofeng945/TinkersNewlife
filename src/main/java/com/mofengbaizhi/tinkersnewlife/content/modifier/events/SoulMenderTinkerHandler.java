@@ -435,6 +435,8 @@ public class SoulMenderTinkerHandler {
     }
 
     private static int menderCost() {
+        // ⭐ 存在性判定走 ModList：诡厄不在场直接取默认值
+        if (!com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.isGoety()) return 1;
         return readConfigInt("com.Polarice3.Goety.config.MainConfig", "SoulMenderCost", 1);
     }
 

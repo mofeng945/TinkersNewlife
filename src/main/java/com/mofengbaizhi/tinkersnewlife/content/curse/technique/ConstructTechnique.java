@@ -824,6 +824,8 @@ public final class ConstructTechnique extends BaseTechnique {
     private static Method taczAmmoGetAmmoId; // IAmmo.getAmmoId(ItemStack) 读 AmmoItem 的弹药 id
 
     private static boolean isTaczGun(Item item) {
+        // ⭐ 存在性判定走 ModList（不再靠 Class.forName 试探）；tacz 无编译依赖，取用一律反射
+        if (!com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.isTacz()) return false;
         try {
             if (taczIGunClass == null) {
                 taczIGunClass = Class.forName("com.tacz.guns.api.item.IGun");
@@ -836,6 +838,7 @@ public final class ConstructTechnique extends BaseTechnique {
 
     /** IGun.getGunId(ItemStack) → gunId RL（this=枪 Item，参数=枪栈） */
     private static ResourceLocation taczGetGunId(ItemStack gun) {
+        if (!com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.isTacz()) return null;
         try {
             if (taczIGunClass == null) taczIGunClass = Class.forName("com.tacz.guns.api.item.IGun");
             if (taczGetGunId == null) taczGetGunId = taczIGunClass.getMethod("getGunId", ItemStack.class);
@@ -848,6 +851,7 @@ public final class ConstructTechnique extends BaseTechnique {
 
     /** TimelessAPI.getCommonGunIndex(gunId) → CommonGunIndex（Optional.get） */
     private static Object taczGetGunIndex(ResourceLocation gunId) {
+        if (!com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.isTacz()) return null;
         try {
             if (taczTimelessApiClass == null) taczTimelessApiClass = Class.forName("com.tacz.guns.api.TimelessAPI");
             if (taczGetCommonGunIndex == null) {

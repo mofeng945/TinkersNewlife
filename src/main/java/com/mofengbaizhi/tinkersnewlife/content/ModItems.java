@@ -211,13 +211,14 @@ public class ModItems {
                         0.006f  // 每点 Fever 增加 0.006 攻击速度（100 Fever 时 +0.6）
                 ));
 
-    /** 模块化魔杖（折中方案：安装了诡厄巫法时注册为"真法杖"形态 GoetyStaffItem——实现 IWand、
-     *  原生施法+冷却 HUD；未安装时注册普通 ModularStaffItem。物品 id/数据/模型完全一致，无硬依赖）。
-     *  ⭐ 必须经 GoetyStaffBridge 反射创建：`new GoetyStaffItem` 的字节码引用会让 JVM 在类加载
-     *  验证阶段解析 implements IWand，无诡厄巫法时构造即 NoClassDefFoundError。 */
+    /** 模块化魔杖（联动形态：安装了诡厄巫法时构造为"真法杖"形态 GoetyStaffItem——实现 IWand、
+     *  原生施法+冷却 HUD；未安装时构造普通 ModularStaffItem。物品 id/数据/模型完全一致，无硬依赖）。
+     *  ⭐ 构造分叉统一走 {@link com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader#createModularStaff}：
+     *  公共代码不引用任何诡厄类型，真法杖类只在诡厄在场时被加载。 */
         public static final RegistryObject<ModularStaffItem> MODULAR_STAFF =
                 ITEMS.register("modular_staff", () ->
-                        com.mofengbaizhi.tinkersnewlife.util.GoetyStaffBridge.createStaff(new Item.Properties().stacksTo(1)));
+                        com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader
+                                .createModularStaff(new Item.Properties().stacksTo(1)));
 
         public static final RegistryObject<FlyingSwordItem> FLYING_SWORD =
         ITEMS.register("flying_sword",
