@@ -31,9 +31,17 @@ import java.util.UUID;
 /**
  * 黑鸟操术 · 黑鸟（蝙蝠）：
  * 玩家视角切换到本实体，客户端每 tick 发送 {@link com.mofengbaizhi.tinkersnewlife.network.curse.PacketBlackBirdInput}
- * 驱动其飞行（W 朝视线 / A/D 侧移 / 空格上升）；Shift 俯冲（2 倍速直线朝视线），
- * 撞到实体或方块自爆（不破坏方块，中心伤害 = (1+亲和/100)×(输出×3+蝙蝠血量)×10，半径 2 格）。
- * 玩家身体留在原地（隐形/无敌/钉位）。
+ * 驱动其飞行：
+ * <ul>
+ *   <li>{@code W / S}：<b>沿完整视线方向</b>前后飞（含俯仰 —— 抬头前进＝上升，低头前进＝下降）；</li>
+ *   <li>{@code A / D}：水平侧移（不跟随俯仰，免得侧飞时上下乱飘）；</li>
+ *   <li>{@code 空格}：额外上升（平视时也能快速拉升）；</li>
+ *   <li>{@code Shift}：俯冲（2 倍速直线朝视线），撞到实体或方块自爆
+ *       ——<b>不破坏方块</b>，中心伤害 = (1+亲和/100)×(输出×3+蝙蝠血量)×10，半径 3 格。</li>
+ * </ul>
+ * ⭐ 历史坑：W 曾经只用"水平向量"（把 look.y 抹成 0）＋空格单独上升，于是**只能升不能降**；
+ * 现在垂直方向完全交给视线，低头按 W 就是下降。
+ * <p>玩家身体留在原地（隐形/无敌/钉位）。
  */
 public class BlackBirdEntity extends Bat {
 
@@ -136,23 +144,28 @@ public class BlackBirdEntity extends Bat {
             }
             return;
         }
-        // 普通操控：W 水平朝视线方向飞（不含俯仰）、A/D 侧移、空格上升
+        // 普通操控：W/S <b>沿完整视线方向</b>飞（含俯仰 —— 抬头前进就上升、低头前进就下降），
+        //             A/D 水平侧移，空格额外上升（平视时也能快速拉升），Shift 进入俯冲自爆。
+        //             ⭐ 以前 W 只用"水平向量"（look.y 被抹成 0）＋空格单独上升，结果**只能升不能降**；
+        //                现在垂直方向完全交给视线，低头按 W 就是下降。
         Vec3 look = viewVector(viewPitch, viewYaw);
+        if (look.lengthSqr() < 1e-6) look = new Vec3(0, 0, 1);
+        look = look.normalize();
         Vec3 flatLook = new Vec3(look.x, 0, look.z);
         if (flatLook.lengthSqr() < 1e-6) flatLook = new Vec3(0, 0, 1);
         flatLook = flatLook.normalize();
         double speed = 0.7;
         Vec3 motion = Vec3.ZERO;
         if (inputZza != 0) {
-            motion = motion.add(flatLook.scale(inputZza * speed));
+            motion = motion.add(look.scale(inputZza * speed));   // 含俯仰：抬头升 / 低头降
         }
         if (inputXxa != 0) {
-            // 左侧向量：视线顺时针旋转 90°（A=左移）
+            // 左侧向量：水平视线顺时针旋转 90°（A=左移）——侧移保持水平，避免"侧飞也上下飘"
             Vec3 side = new Vec3(flatLook.z, 0, -flatLook.x).normalize();
             motion = motion.add(side.scale(inputXxa * speed * 0.6));
         }
         if (inputJump) {
-            motion = motion.add(0, 0.6, 0);
+            motion = motion.add(0, 0.6, 0);                      // 空格：额外上升
         }
         setDeltaMovement(motion);
         move(MoverType.SELF, motion);
