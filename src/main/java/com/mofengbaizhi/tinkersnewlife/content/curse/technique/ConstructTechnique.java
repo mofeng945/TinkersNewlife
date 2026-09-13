@@ -361,6 +361,30 @@ public final class ConstructTechnique extends BaseTechnique {
     }
 
     /**
+     * 拟造方块被<b>它自己的收放逻辑</b>收回时用（例：呪蔵的空手潜行右键回收、外力移除后的掉落兜底）：
+     * 把要还给玩家的物品重新包装成"保留原到期时间的拟造物"，并注销该位置的拟造方块记录。
+     *
+     * <p>为什么必须有这个入口：方块的"收回"是方块自己的代码，它 {@code new ItemStack(方块物品)} 重建一个栈，
+     * 从栈上<b>看不出这个方块是拟造物</b>——于是拟造前缀与到期时间双双丢失
+     * （实测：拟造咒藏放下再收起 → 变成一件真咒藏，等于白嫖）。
+     * 走这里等于把 {@link ConstructEvents} 里"挖掉拟造方块要把本体还给玩家"的那套逻辑复用一遍。
+     *
+     * @param requireSameBlock 调用时该位置是否仍是当初那个方块。
+     *                         {@code Block#onRemove} 里方块已经被换掉了，那种情况传 {@code false}。
+     * @return 重新包装后的栈；该位置不是拟造方块时原样返回
+     */
+    public static ItemStack reclaimPlacedTemp(ServerLevel level, BlockPos pos, ItemStack stack, boolean requireSameBlock) {
+        if (level == null || pos == null || stack == null || stack.isEmpty()) return stack;
+        if (PLACED_TEMPS.isEmpty()) return stack;
+        PlacedTempBlock rec = ConstructEvents.findPlacedTemp(level, pos);
+        if (rec == null) return stack;
+        if (rec.previousState != null && !rec.previousState.isAir()) return stack;   // 只处理"凭空放下"的
+        if (requireSameBlock && level.getBlockState(pos).getBlock() != rec.state.getBlock()) return stack;
+        PLACED_TEMPS.remove(rec);
+        return makeTempStack(stack, rec.expireUntil);
+    }
+
+    /**
      * 用模板造一个"拟造临时物"栈（蓝本模式走代理物，否则真物品 + 到期标记）。
      * <p>
      * 抽出成方法是因为"挖掉拟造方块要把本体还给玩家"（见 {@code ConstructEvents#onBlockBreak}），
@@ -380,33 +404,46 @@ public final class ConstructTechnique extends BaseTechnique {
             //    因此任何配方/机器/仪式都<b>认不出它</b>——不用再追着每个模组堵自动化。
             //    物品行为由 ConstructedBlueprintItem 全 API 转发给目标物品实例。
             stack = com.mofengbaizhi.tinkersnewlife.content.item.ConstructedBlueprintItem.create(template, until);
+            if (stack.isEmpty()) {
+                // 目标解析不出来（空气 / 未注册物品 / 空栈）→ 绝不发放"拟造·空气"这种空壳，
+                // 退回"真副本 + 到期标记"，玩家至少拿到一件能用的东西
+                TinkersNewlife.LOGGER.warn("[构筑] 蓝本创建失败（目标无法解析）：{}，已改回真副本",
+                        template.isEmpty() ? "<空栈>" : String.valueOf(template.getItem()));
+                stack = legacyTemp(template, until);
+            }
         } else {
-            stack = template.copy();
-            net.minecraft.nbt.CompoundTag tag = stack.getOrCreateTag();
-            tag.putLong(KEY_TEMP_UNTIL, until);
-            // ⭐ 幂等保护之二：前缀**只加一次**——"原始名字"记进标签，之后一律按它重建显示名。
-            //    ⭐ 幂等保护之三：重建前先把"原始名字"里已有的前缀**全部剥掉**
-            //    （旧存档/异常路径留下的 拟造·拟造·… 一次性洗干净），保证任何情况下只有一个"拟造·"。
-            Component original;
-            if (tag.contains(KEY_ORIGINAL_NAME, net.minecraft.nbt.Tag.TAG_STRING)) {
-                original = Component.Serializer.fromJson(tag.getString(KEY_ORIGINAL_NAME));
-                if (original == null) original = stack.getHoverName();
-            } else {
-                original = stack.getHoverName();
-            }
-            // 诊断：剥掉多余前缀时打一条日志（带调用者），便于定位是哪条路径在反复包装
-            String rawName = stack.getHoverName().getString();
-            String preStr = Component.translatable("item.tinkersnewlife.construct.prefix").getString();
-            if (!preStr.isEmpty() && rawName.startsWith(preStr + preStr)) {
-                StackTraceElement[] trace = new Throwable().getStackTrace();
-                StackTraceElement caller = trace.length > 2 ? trace[2] : null;
-                TinkersNewlife.LOGGER.info("[构筑] 拟造物名带了多层前缀，已洗成一层（调用者={}）",
-                        caller == null ? "?" : caller.getClassName() + "#" + caller.getMethodName());
-            }
-            original = stripConstructPrefix(original);
-            tag.putString(KEY_ORIGINAL_NAME, Component.Serializer.toJson(original));
-            stack.setHoverName(Component.translatable("item.tinkersnewlife.construct.prefix").append(original));
+            stack = legacyTemp(template, until);
         }
+        return stack;
+    }
+
+    /** 旧路径：真副本 + 到期标记 + 只加一次"拟造·"前缀（幂等靠 {@link #KEY_ORIGINAL_NAME}） */
+    private static ItemStack legacyTemp(ItemStack template, long until) {
+        ItemStack stack = template.copy();
+        net.minecraft.nbt.CompoundTag tag = stack.getOrCreateTag();
+        tag.putLong(KEY_TEMP_UNTIL, until);
+        // ⭐ 幂等保护之二：前缀**只加一次**——"原始名字"记进标签，之后一律按它重建显示名。
+        //    ⭐ 幂等保护之三：重建前先把"原始名字"里已有的前缀**全部剥掉**
+        //    （旧存档/异常路径留下的 拟造·拟造·… 一次性洗干净），保证任何情况下只有一个"拟造·"。
+        Component original;
+        if (tag.contains(KEY_ORIGINAL_NAME, net.minecraft.nbt.Tag.TAG_STRING)) {
+            original = Component.Serializer.fromJson(tag.getString(KEY_ORIGINAL_NAME));
+            if (original == null) original = stack.getHoverName();
+        } else {
+            original = stack.getHoverName();
+        }
+        // 诊断：剥掉多余前缀时打一条日志（带调用者），便于定位是哪条路径在反复包装
+        String rawName = stack.getHoverName().getString();
+        String preStr = Component.translatable("item.tinkersnewlife.construct.prefix").getString();
+        if (!preStr.isEmpty() && rawName.startsWith(preStr + preStr)) {
+            StackTraceElement[] trace = new Throwable().getStackTrace();
+            StackTraceElement caller = trace.length > 2 ? trace[2] : null;
+            TinkersNewlife.LOGGER.info("[构筑] 拟造物名带了多层前缀，已洗成一层（调用者={}）",
+                    caller == null ? "?" : caller.getClassName() + "#" + caller.getMethodName());
+        }
+        original = stripConstructPrefix(original);
+        tag.putString(KEY_ORIGINAL_NAME, Component.Serializer.toJson(original));
+        stack.setHoverName(Component.translatable("item.tinkersnewlife.construct.prefix").append(original));
         return stack;
     }
 
@@ -519,9 +556,17 @@ public final class ConstructTechnique extends BaseTechnique {
         Item item = id == null ? null : ForgeRegistries.ITEMS.getValue(id);
         if (item == null || item == Items.AIR) return;
         // ⭐ 优先用"配方真实产物"作模板：法术卷轴这类产物本身带 NBT，裸 new ItemStack 会变成空壳
+        //    （匠魂装备的产物是裸物品、没有材料数据，sampleResult 里会替它把材料补上）
         ItemStack template = sampleResult(player, item);
         long until = player.serverLevel().getGameTime() + TEMP_TICKS;
         ItemStack stack = makeTempStack(template, until);
+        if (stack.isEmpty()) {
+            // 兜底：绝不发放"拟造·空气"这类空壳
+            TinkersNewlife.LOGGER.warn("[构筑] 拟造产物为空，已放弃发放（来源 {}）", itemId);
+            return;
+        }
+        TinkersNewlife.LOGGER.info("[构筑] 拟造完成：{}（来源 {}，模板 {}）",
+                stack.getHoverName().getString(), itemId, template.getItem());
         boolean added = player.getInventory().add(stack);
         if (!added) {
             net.minecraft.world.entity.item.ItemEntity drop = new net.minecraft.world.entity.item.ItemEntity(
@@ -1913,15 +1958,80 @@ public final class ConstructTechnique extends BaseTechnique {
         }
     }
 
-    /** 取该物品的"配方真实产物"模板（取不到则退回裸 new ItemStack） */
+    /**
+     * 取该物品的"配方真实产物"模板（取不到则退回裸 new ItemStack）。
+     *
+     * <p>⭐ 匠魂装备必须特殊处理：匠魂的装备配方是 {@code tconstruct:tool_building}，
+     * 它的 {@code getResultItem()} 就是 <b>{@code new ItemStack(盔甲/工具)}——一点材料数据都没有</b>
+     * （真正的成品要等玩家在工匠站里选好材料才组装出来）。直接拿它当模板，拟造出来的就是一件
+     * <b>"空材料"的匠魂装备</b>：没有材料 → 名字退化成裸物品名、没有材料决定的属性/耐久/外观，
+     * 玩家看到的就是"拟造的神灵金盔甲穿不上、还显示成一坨空气"。
+     * 所以这里替它补上材料：<b>优先照抄玩家身上/背包里同一件装备的材料</b>（想复刻什么材料就穿/带什么），
+     * 找不到就用匠魂自带的随机材料构建入口。
+     */
     public static ItemStack sampleResult(ServerPlayer player, Item item) {
         try {
             var level = player.serverLevel();
             ItemStack sample = cacheFor(level.getRecipeManager(), level.registryAccess()).samples().get(item);
-            if (sample != null && !sample.isEmpty()) return sample.copy();
+            ItemStack base = sample != null && !sample.isEmpty() ? sample.copy() : new ItemStack(item);
+            ItemStack tcon = materializeTCon(player, base);
+            return tcon != null && !tcon.isEmpty() ? tcon : base;
         } catch (Throwable ignored) {
         }
         return new ItemStack(item);
+    }
+
+    /**
+     * 匠魂装备（{@code IModifiable}）补材料：返回一件真正可用的成品栈；不是匠魂物品 / 已有材料 / 失败 → null。
+     * <p>材料来源优先级：主手 → 副手 → 护甲槽 → 背包里<b>同一件物品</b>（跳过拟造物本身）。
+     */
+    @javax.annotation.Nullable
+    private static ItemStack materializeTCon(ServerPlayer player, ItemStack bare) {
+        try {
+            if (!(bare.getItem() instanceof slimeknights.tconstruct.library.tools.item.IModifiable modifiable)) return null;
+            // 自带材料数据（例如配方产物本来就带）→ 不动它
+            if (!slimeknights.tconstruct.library.tools.nbt.ToolStack.from(bare).getMaterials().isEmpty()) return null;
+            slimeknights.tconstruct.library.tools.nbt.MaterialNBT same = sameItemMaterials(player, bare.getItem());
+            if (same != null && !same.isEmpty()) {
+                return slimeknights.tconstruct.library.tools.helper.ToolBuildHandler
+                        .buildItemFromMaterials(modifiable, same);
+            }
+            return slimeknights.tconstruct.library.tools.helper.ToolBuildHandler
+                    .buildItemRandomMaterials(modifiable, player.getRandom());
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    /** 在玩家身上找同一件匠魂装备的材料（主手/副手 → 护甲 → 背包；拟造物不算） */
+    @javax.annotation.Nullable
+    private static slimeknights.tconstruct.library.tools.nbt.MaterialNBT sameItemMaterials(ServerPlayer player, Item item) {
+        slimeknights.tconstruct.library.tools.nbt.MaterialNBT m = materialsOf(player.getMainHandItem(), item);
+        if (m != null) return m;
+        m = materialsOf(player.getOffhandItem(), item);
+        if (m != null) return m;
+        net.minecraft.world.entity.player.Inventory inv = player.getInventory();
+        for (ItemStack s : inv.armor) {
+            m = materialsOf(s, item);
+            if (m != null) return m;
+        }
+        for (ItemStack s : inv.items) {
+            m = materialsOf(s, item);
+            if (m != null) return m;
+        }
+        return null;
+    }
+
+    @javax.annotation.Nullable
+    private static slimeknights.tconstruct.library.tools.nbt.MaterialNBT materialsOf(ItemStack stack, Item item) {
+        if (stack == null || stack.isEmpty() || stack.getItem() != item || isTemp(stack)) return null;
+        try {
+            slimeknights.tconstruct.library.tools.nbt.MaterialNBT m =
+                    slimeknights.tconstruct.library.tools.nbt.ToolStack.from(stack).getMaterials();
+            return m.isEmpty() ? null : m;
+        } catch (Throwable t) {
+            return null;
+        }
     }
 
     /** 该物品的功能价值项（魔法类加成；客户端列表预览用） */

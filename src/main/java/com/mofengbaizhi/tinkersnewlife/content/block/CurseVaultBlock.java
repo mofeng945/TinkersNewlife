@@ -117,6 +117,10 @@ public class CurseVaultBlock extends Block implements EntityBlock {
         data.remove(pos);
         ItemStack stack = new ItemStack(ModItems.CURSE_VAULT.get());
         com.mofengbaizhi.tinkersnewlife.content.item.CurseVaultItem.setPower(stack, power);
+        // ⭐ 这一块如果是"拟造"出来的方块，收回时要把拟造标记（前缀 + 原到期时间）一并还回去：
+        //    否则放下再收起就变成一件真呪蔵 = 白嫖一个永久方块。
+        stack = com.mofengbaizhi.tinkersnewlife.content.curse.technique.ConstructTechnique
+                .reclaimPlacedTemp(serverLevel, pos, stack, true);
         level.removeBlock(pos, false);
         CurseVaultInteractionHandler.giveStackToPlayer(player, stack);
         player.displayClientMessage(Component.translatable("message.tinkersnewlife.curse_vault.picked_up",
@@ -147,10 +151,22 @@ public class CurseVaultBlock extends Block implements EntityBlock {
             CurseVaultData data = CurseVaultData.get(serverLevel);
             CurseVaultData.Entry entry = data.get(pos);
             if (entry != null) {
-                data.remove(pos);
-                ItemStack stack = new ItemStack(ModItems.CURSE_VAULT.get());
-                com.mofengbaizhi.tinkersnewlife.content.item.CurseVaultItem.setPower(stack, entry.power);
-                Block.popResource(level, pos, stack);
+                if (com.mofengbaizhi.tinkersnewlife.content.curse.technique.ConstructTechnique
+                        .isConstructedBlockAt(serverLevel, pos, state)) {
+                    // ⭐ 这是"拟造"出来的呪蔵，而且是**到期消散**（ConstructTechnique 那边无掉落直接消失）：
+                    //    这里绝不能掉出一件真呪蔵——否则一件临时方块到期反而洗成永久方块 + 白送存量。
+                    //    玩家主动挖掉走的是 ConstructTechnique#onBlockBreak（会把带原到期时间的本体还给他），
+                    //    走不到这条分支。
+                    data.remove(pos);
+                } else {
+                    data.remove(pos);
+                    ItemStack stack = new ItemStack(ModItems.CURSE_VAULT.get());
+                    com.mofengbaizhi.tinkersnewlife.content.item.CurseVaultItem.setPower(stack, entry.power);
+                    // 拟造方块被外力移除（这里方块已经换掉了，所以 requireSameBlock=false）→ 同样保留拟造标记
+                    stack = com.mofengbaizhi.tinkersnewlife.content.curse.technique.ConstructTechnique
+                            .reclaimPlacedTemp(serverLevel, pos, stack, false);
+                    Block.popResource(level, pos, stack);
+                }
             }
         }
         super.onRemove(state, level, pos, newState, isMoving);
