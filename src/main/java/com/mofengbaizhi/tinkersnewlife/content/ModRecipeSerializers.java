@@ -5,7 +5,10 @@ import com.mofengbaizhi.tinkersnewlife.content.recipe.AutoMaterialMeltingRecipe;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.CrystalModifierRecipe;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.GenericToolMeltingRecipe;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.TagModifierSalvage;
+import com.mofengbaizhi.tinkersnewlife.content.recipe.CurseCraftRecipe;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
@@ -18,6 +21,22 @@ public class ModRecipeSerializers {
 
     public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS =
             DeferredRegister.create(ForgeRegistries.RECIPE_SERIALIZERS, TinkersNewlife.MOD_ID);
+
+    /** 自定义配方类型注册表（咒力合成仪式） */
+    public static final DeferredRegister<RecipeType<?>> RECIPE_TYPES =
+            DeferredRegister.create(Registries.RECIPE_TYPE, TinkersNewlife.MOD_ID);
+
+    /** 咒力合成仪式：data/<ns>/recipes/curse_craft/*.json */
+    public static final RegistryObject<RecipeType<CurseCraftRecipe>> CURSE_CRAFT_TYPE =
+            RECIPE_TYPES.register("curse_craft", () -> new RecipeType<>() {
+                @Override
+                public String toString() {
+                    return TinkersNewlife.MOD_ID + ":curse_craft";
+                }
+            });
+
+    public static final RegistryObject<RecipeSerializer<CurseCraftRecipe>> CURSE_CRAFT =
+            RECIPE_SERIALIZERS.register("curse_craft", CurseCraftRecipe.Serializer::new);
 
     /** 仅水晶添加的修饰符配方（术式/领域专用，见 CrystalModifierRecipe） */
     public static final RegistryObject<RecipeSerializer<CrystalModifierRecipe>> CRYSTAL_MODIFIER =

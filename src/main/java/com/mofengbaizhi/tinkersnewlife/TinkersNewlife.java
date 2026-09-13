@@ -140,6 +140,7 @@ public class TinkersNewlife {
         ModMenus.MENUS.register(modEventBus);
 
         ModRecipeSerializers.RECIPE_SERIALIZERS.register(modEventBus);
+        ModRecipeSerializers.RECIPE_TYPES.register(modEventBus);
 
         LootModifierSerializers.LOOT_MODIFIERS.register(modEventBus);
 

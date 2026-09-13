@@ -1,0 +1,27 @@
+{
+  "type": "tinkersnewlife:curse_craft",
+  "core": {
+    "item": "tinkersnewlife:nyarlathotep_desire"
+  },
+  "result": {
+    "item": "tinkersnewlife:curse_bottle"
+  },
+  "materials": [
+    {
+      "item": "minecraft:glass_bottle"
+    },
+    {
+      "item": "tinkersnewlife:boundary_fragment"
+    },
+    {
+      "item": "tinkersnewlife:boundary_fragment"
+    },
+    {
+      "item": "tinkersnewlife:boundary_fragment"
+    },
+    {
+      "item": "tconstruct:seared_soul_glass_pane"
+    }
+  ],
+  "curse": 500
+}

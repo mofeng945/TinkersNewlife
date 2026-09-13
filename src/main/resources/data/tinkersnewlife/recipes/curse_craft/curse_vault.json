@@ -1,0 +1,36 @@
+{
+  "type": "tinkersnewlife:curse_craft",
+  "core": {
+    "item": "tinkersnewlife:rlyeh_call"
+  },
+  "result": {
+    "item": "tinkersnewlife:curse_vault"
+  },
+  "materials": [
+    {
+      "item": "minecraft:obsidian"
+    },
+    {
+      "item": "tinkersnewlife:gourd_jail"
+    },
+    {
+      "item": "tinkersnewlife:boundary_fragment"
+    },
+    {
+      "item": "tinkersnewlife:boundary_fragment"
+    },
+    {
+      "item": "tinkersnewlife:boundary_fragment"
+    },
+    {
+      "item": "tinkersnewlife:boundary_fragment"
+    },
+    {
+      "item": "tconstruct:seared_brick"
+    },
+    {
+      "item": "tconstruct:seared_brick"
+    }
+  ],
+  "curse": 3000
+}
