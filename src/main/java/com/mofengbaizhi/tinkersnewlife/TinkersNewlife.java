@@ -202,6 +202,15 @@ public class TinkersNewlife {
         registerPacket(PacketUseSkill.class, PacketUseSkill::toBytes, PacketUseSkill::new, PacketUseSkill::handle);
         registerPacket(PacketDragonStaffUse.class, PacketDragonStaffUse::toBytes, PacketDragonStaffUse::new, PacketDragonStaffUse::handle);
         registerPacket(PacketOpenBag.class, PacketOpenBag::toBytes, PacketOpenBag::new, PacketOpenBag::handle);
+        // 呪蔵存量查询（C2S）与回包（S2C）：准星对准时显示
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketQueryCurseVault.class,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketQueryCurseVault::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketQueryCurseVault::new,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketQueryCurseVault::handle);
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketSyncCurseVault.class,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketSyncCurseVault::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketSyncCurseVault::new,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketSyncCurseVault::handle);
         registerPacket(PacketSortBag.class, PacketSortBag::toBytes, PacketSortBag::new, PacketSortBag::handle);
         registerPacket(PacketSwitchFlyingSwordMode.class, PacketSwitchFlyingSwordMode::toBytes, PacketSwitchFlyingSwordMode::new, PacketSwitchFlyingSwordMode::handle);
         registerPacket(PacketToggleDomain.class, PacketToggleDomain::toBytes, PacketToggleDomain::new, PacketToggleDomain::handle);

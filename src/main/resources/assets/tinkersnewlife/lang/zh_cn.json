@@ -1013,5 +1013,6 @@
   "message.tinkersnewlife.curse_vault.hint": "呪蔵（%s / %s 咒力）：潜行 + 空手 右键（或左键）即可回收，咒力保留",
   "hud.tinkersnewlife.curse_vault": "呪蔵：%s / %s 咒力",
   "message.tinkersnewlife.curse_vault.deposited": "已注入咒力残秽 → 呪蔵现有 %s 咒力",
-  "message.tinkersnewlife.curse_vault.withdrawn": "已接出咒力残秽 → 呪蔵剩余 %s 咒力"
+  "message.tinkersnewlife.curse_vault.withdrawn": "已接出咒力残秽 → 呪蔵剩余 %s 咒力",
+  "hud.tinkersnewlife.curse_vault.unknown": "呪蔵：查询中…"
 }

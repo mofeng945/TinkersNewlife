@@ -71,68 +71,69 @@ public final class CurseVaultInteractionHandler {
     }
 
     /**
-     * 手里的流体容器 ⇄ 呪蔵：
-     * ① 容器里装着「咒力残秽」→ 倒进呪蔵（1mb = 10 咒力）；
-     * ② 容器是空的 → 从呪蔵里接出残秽（扣对应咒力）。
-     * <p>用的是 Forge 的 {@code FluidUtil.tryEmptyContainer / tryFillContainer}，
-     * 它们会自动处理"桶→空桶"这类容器替换。
+     * 手里的流体容器 ⇄ 呪蔵（**手动搬运，不用 Forge 的 tryEmptyContainer**）。
+     * <p>⚠ 踩过的坑：{@code FluidUtil.tryEmptyContainer} 最终走的是 {@code ...AndStow}，会把"处理后的容器"
+     * <b>塞进玩家背包</b>，而手里那个原容器还在 —— 于是出现"呪蔵里的残秽涨了、瓶子却没清空"的复制现象。
+     * 所以这里改成：在**副本**上做 fill/drain，成功后把 {@code handler.getContainer()} 写回手持槽。
      */
     private static boolean tryFluidTransfer(Level level, BlockPos pos, Player player) {
         if (level.isClientSide || !(level instanceof ServerLevel)) return false;
         ItemStack held = player.getMainHandItem();
-        var handlerOpt = net.minecraftforge.fluids.FluidUtil.getFluidHandler(level, pos, null);
-        if (!handlerOpt.isPresent()) return false;
-        net.minecraftforge.fluids.capability.IFluidHandler vault = handlerOpt.orElse(null);
+        if (held.isEmpty()) return false;
 
-        // ① 先试"把手里的倒进去"
-        net.minecraftforge.fluids.FluidActionResult emptied = net.minecraftforge.fluids.FluidUtil
-                .tryEmptyContainer(held, vault, Integer.MAX_VALUE, player, true);
-        if (emptied.isSuccess()) {
-            double power = CurseVaultData.get((ServerLevel) level).getPower(pos);
-            player.displayClientMessage(Component.translatable("message.tinkersnewlife.curse_vault.deposited",
-                    com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper.formatAmount(power)), true);
-            return true;
+        var vaultOpt = net.minecraftforge.fluids.FluidUtil.getFluidHandler(level, pos, null);
+        if (!vaultOpt.isPresent()) return false;
+        net.minecraftforge.fluids.capability.IFluidHandler vault = vaultOpt.orElse(null);
+
+        // 在副本上操作（避免中途失败留下半成品状态）
+        ItemStack work = held.copyWithCount(1);
+        var itemOpt = net.minecraftforge.fluids.FluidUtil.getFluidHandler(work);
+        if (!itemOpt.isPresent()) return false;
+        net.minecraftforge.fluids.capability.IFluidHandlerItem container = itemOpt.orElse(null);
+
+        boolean deposit = false;
+        boolean withdraw = false;
+        // ① 容器里有残秽 → 倒进呪蔵
+        net.minecraftforge.fluids.FluidStack contained =
+                container.drain(Integer.MAX_VALUE, net.minecraftforge.fluids.capability.IFluidHandler.FluidAction.SIMULATE);
+        if (!contained.isEmpty() && isResidue(contained)) {
+            int accepted = vault.fill(contained, net.minecraftforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+            if (accepted > 0) {
+                container.drain(accepted, net.minecraftforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+                deposit = true;
+            }
+        } else {
+            // ② 容器是空的 → 从呪蔵接出残秽
+            net.minecraftforge.fluids.FluidStack drained =
+                    vault.drain(Integer.MAX_VALUE, net.minecraftforge.fluids.capability.IFluidHandler.FluidAction.SIMULATE);
+            if (!drained.isEmpty()) {
+                int filled = container.fill(drained, net.minecraftforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+                if (filled > 0) {
+                    vault.drain(filled, net.minecraftforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+                    withdraw = true;
+                }
+            }
         }
 
-        // ② 再试"从呪蔵里接出来"
-        net.minecraftforge.fluids.FluidActionResult filled = net.minecraftforge.fluids.FluidUtil
-                .tryFillContainer(held, vault, Integer.MAX_VALUE, player, true);
-        if (filled.isSuccess()) {
-            double power = CurseVaultData.get((ServerLevel) level).getPower(pos);
-            player.displayClientMessage(Component.translatable("message.tinkersnewlife.curse_vault.withdrawn",
-                    com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper.formatAmount(power)), true);
-            return true;
-        }
-        return false;
+        if (!deposit && !withdraw) return false;
+
+        // ⭐ 把处理后的容器写回手持槽（原地替换；绝不 insertItem，避免复制）
+        ItemStack result = container.getContainer();
+        result.setCount(held.getCount());
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, result);
+
+        double power = CurseVaultData.get((ServerLevel) level).getPower(pos);
+        player.displayClientMessage(Component.translatable(deposit
+                        ? "message.tinkersnewlife.curse_vault.deposited"
+                        : "message.tinkersnewlife.curse_vault.withdrawn",
+                com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper.formatAmount(power)), true);
+        return true;
     }
 
-    /** 左键：潜行+空手 → 回收；非潜行空手 → 提示（带冷却） */
-    @SubscribeEvent
-    public static void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
-        Player player = event.getEntity();
-        if (!player.getMainHandItem().isEmpty()) return;
-        Level level = event.getLevel();
-        BlockPos pos = event.getPos();
-        if (!isVault(level, pos)) return;
-
-        if (player.isShiftKeyDown()) {
-            InteractionResult result = CurseVaultBlock.handleInteraction(level, pos, player, true);
-            if (result != null) {
-                event.setCanceled(true);
-                event.setCancellationResult(result);
-            }
-            return;
-        }
-
-        // 非潜行（比如直接想挖掉它）：给一次提示，避免"怎么挖不掉"的困惑
-        if (level.isClientSide || !(level instanceof ServerLevel serverLevel)) return;
-        if (!(player.getPersistentData().getLong(KEY_HINT_TICK) + HINT_COOLDOWN_TICKS < serverLevel.getGameTime())) return;
-        player.getPersistentData().putLong(KEY_HINT_TICK, serverLevel.getGameTime());
-        CurseVaultData.Entry entry = CurseVaultData.get(serverLevel).get(pos);
-        double power = entry == null ? 0 : entry.power;
-        player.displayClientMessage(Component.translatable("message.tinkersnewlife.curse_vault.hint",
-                com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper.formatAmount(power),
-                com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper.formatAmount(CurseVaultData.CAPACITY)), true);
+    /** 是不是本模组的「咒力残秽」 */
+    private static boolean isResidue(net.minecraftforge.fluids.FluidStack stack) {
+        var fluid = com.mofengbaizhi.tinkersnewlife.content.ModFluids.CURSE_RESIDUE.still.get();
+        return fluid != null && stack.getFluid() == fluid;
     }
 
     /** 供方块自身调用（原版 use 路径的兜底；正常情况下事件层已经处理并取消） */

@@ -417,5 +417,6 @@
   "message.tinkersnewlife.curse_vault.hint": "Curse Vault (%s / %s curse): sneak + empty hand and right-click (or left-click) to pick it up with the power kept",
   "hud.tinkersnewlife.curse_vault": "Curse Vault: %s / %s curse",
   "message.tinkersnewlife.curse_vault.deposited": "Curse Residue poured in → vault now holds %s curse",
-  "message.tinkersnewlife.curse_vault.withdrawn": "Curse Residue taken out → vault now holds %s curse"
+  "message.tinkersnewlife.curse_vault.withdrawn": "Curse Residue taken out → vault now holds %s curse",
+  "hud.tinkersnewlife.curse_vault.unknown": "Curse Vault: querying…"
 }
