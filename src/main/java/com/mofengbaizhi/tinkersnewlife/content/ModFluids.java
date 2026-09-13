@@ -65,4 +65,12 @@ public class ModFluids {
     public static final FluidRegistrar.FluidEntry MOLTEN_DURANDAL = entry("molten_durandal",
             2000, 10000, 1500, 0xFFFFD700,  // 金黄色
             FluidRegistrar.lavaProps(MapColor.COLOR_ORANGE));
+
+    /**
+     * 咒力残秽（古代咒术残卷熔炼所得，1 份残卷 = 1 mb）：
+     * 装进「封呪瓶」即可转化为咒力（1 mb = 10 咒力，满瓶 500 mb = 5000 咒力）。
+     */
+    public static final FluidRegistrar.FluidEntry CURSE_RESIDUE = entry("curse_residue",
+            1200, 1500, 1200, 0xFF3B0A5A,  // 深紫（咒力色）
+            FluidRegistrar.waterProps(MapColor.COLOR_PURPLE));
 }

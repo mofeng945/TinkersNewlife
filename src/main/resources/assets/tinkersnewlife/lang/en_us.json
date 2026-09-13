@@ -399,5 +399,12 @@
   "modifier.tinkersnewlife.yog_sothoth_gift.flavor": "\u00a77Time is a currency, and the gate pays generously.",
   "modifier.tinkersnewlife.zuosha_botu": "Zuo Sha Bo Tu",
   "modifier.tinkersnewlife.zuosha_botu.description": "Press the key to unfold the domain and lock enemies in: it drains radius x 20 curse energy per second and closes automatically when empty. Every 3 seconds the domain draws a prize (70% small / 29% large / 1% grand; after 10 misses in a row the 11th is guaranteed grand). Small: +250 curse energy and 10 seconds of Absorption IV. Large: +900 curse energy and 30 seconds of Regeneration. Grand: unlimited curse energy for 33 seconds, health locked to its maximum, and +100 curse affinity.",
-  "modifier.tinkersnewlife.zuosha_botu.flavor": "\u00a77Sit, kill, and let the dice decide."
+  "modifier.tinkersnewlife.zuosha_botu.flavor": "\u00a77Sit, kill, and let the dice decide.",
+  "item.tinkersnewlife.curse_bottle": "Curse-Sealing Bottle",
+  "item.tinkersnewlife.curse_bottle.power": "Stored Curse Power: %s / %s",
+  "item.tinkersnewlife.curse_bottle.fluid": "Curse Residue: %s / %s mb",
+  "item.tinkersnewlife.curse_bottle.hint": "Wear in a curio slot: curse power is stored in the bottle first and kept on death; accepts Curse Residue from the smeltery (1 mb = 10 curse).",
+  "fluid_type.tinkersnewlife.curse_residue": "Curse Residue",
+  "block.tinkersnewlife.curse_residue_block": "Curse Residue",
+  "item.tinkersnewlife.curse_residue_bucket": "Curse Residue Bucket"
 }

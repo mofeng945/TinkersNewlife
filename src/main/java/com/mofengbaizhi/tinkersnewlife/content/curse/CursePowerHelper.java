@@ -197,14 +197,56 @@ public final class CursePowerHelper {
         player.getPersistentData().putDouble(KEY_CURSE, Math.max(0, Math.min(value, max)));
     }
 
-    /** 增加咒力（不超过上限） */
+    /** 增加咒力（不超过上限）。⭐ 佩戴封呪瓶时**优先灌进瓶里**，灌不下的余量才进咒力核心池 */
     public static void addCurse(Player player, double amount) {
-        setCurse(player, getCurse(player) + amount);
+        if (amount <= 0) return;
+        double leftover = CurseBottleHelper.storeIntoWorn(player, amount);
+        if (leftover > 0) setCurse(player, getCurse(player) + leftover);
     }
 
-    /** 消耗咒力（不低于 0） */
+    /** 消耗咒力（不低于 0）。⭐ 先扣咒力核心池，扣完再扣佩戴的封呪瓶 */
     public static void spendCurse(Player player, double amount) {
-        setCurse(player, getCurse(player) - amount);
+        spendCurseCascade(player, amount);
+    }
+
+    /**
+     * 咒力消耗级联：**咒力核心池 → 封呪瓶**。
+     * <p>灵魂能量兜底不在这里（见 {@link #payCurseWithSoulFallback}），本方法只处理咒力本体。
+     *
+     * @return 仍然付不清的余量（0 = 已付清）
+     */
+    public static double spendCurseCascade(Player player, double amount) {
+        if (amount <= 0) return 0;
+        double pool = getCurse(player);
+        double used = Math.min(pool, amount);
+        if (used > 0) setCurse(player, pool - used);
+        double remaining = amount - used;
+        if (remaining <= 0) return 0;
+        return Math.max(0, remaining - CurseBottleHelper.consumeFromWorn(player, remaining));
+    }
+
+    // ------------------------------------------------------------
+    //  封呪瓶统计（咒力核心"统计"要算上瓶中的咒力与容量）
+    // ------------------------------------------------------------
+
+    /** 佩戴的封呪瓶里储存的咒力（未佩戴 = 0） */
+    public static double getBottleCurse(Player player) {
+        return CurseBottleHelper.getWornPower(player);
+    }
+
+    /** 佩戴的封呪瓶提供的咒力容量（每瓶 5000，未佩戴 = 0） */
+    public static double getBottleCapacity(Player player) {
+        return CurseBottleHelper.getWornCapacity(player);
+    }
+
+    /** 统计总量 = 咒力核心池 + 封呪瓶（HUD/统计显示用） */
+    public static double getTotalCurse(Player player) {
+        return getCurse(player) + getBottleCurse(player);
+    }
+
+    /** 统计总上限 = 咒力核心上限 + 封呪瓶容量（HUD/统计显示用） */
+    public static double getTotalMaxCurse(Player player) {
+        return getMaxCurse(player) + getBottleCapacity(player);
     }
 
     /** 背包中结界碎片数量（1 碎片 = 25 咒力） */
@@ -232,7 +274,8 @@ public final class CursePowerHelper {
 
     /**
      * 支付咒力（领域消耗与术式消耗共用）：
-     * 优先消耗背包中的结界碎片（1 碎片 = 25 咒力）→ 咒力 → 差额按 1:3 由诡厄巫法灵魂能量兜底。
+     * 优先消耗背包中的结界碎片（1 碎片 = 25 咒力）→ 咒力核心池 → **封呪瓶** →
+     * 差额按 1:3 由诡厄巫法灵魂能量兜底。
      * 返回 0 = 咒力/碎片支付，1 = 灵魂能量兜底支付，-1 = 全部不足。
      */
     public static int payCurseWithSoulFallback(Player player, double cost) {
@@ -248,14 +291,9 @@ public final class CursePowerHelper {
             consumeBoundaryFragments(player, fragments);
             cost -= fragValue;
         }
-        // 2) 咒力
-        double curse = getCurse(player);
-        if (curse >= cost) {
-            spendCurse(player, cost);
-            return 0;
-        }
-        double deficit = cost - curse;
-        spendCurse(player, curse); // 咒力清零
+        // 2) 咒力：咒力核心池 → 封呪瓶（级联）
+        double deficit = spendCurseCascade(player, cost);
+        if (deficit <= 0) return 0;
         // 3) 灵魂能量兜底（神灵金盔甲"灵魂折扣"：每级 -5% 灵魂消耗）
         int soulsNeeded = (int) Math.ceil(deficit * 3.0);
         int discount = soulDiscountLevel(player);

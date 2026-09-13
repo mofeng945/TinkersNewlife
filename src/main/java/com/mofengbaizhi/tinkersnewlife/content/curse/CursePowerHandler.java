@@ -72,8 +72,9 @@ public class CursePowerHandler {
     public static void syncToClient(ServerPlayer player) {
         ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
         boolean wearing = !core.isEmpty();
-        double curse = wearing ? CursePowerHelper.getCurse(player) : 0;
-        double max = wearing ? CursePowerHelper.getMaxCurse(player) : 0;
+        // ⭐ 统计口径：咒力核心池 + 佩戴的封呪瓶（含瓶中储存的咒力与其容量）
+        double curse = wearing ? CursePowerHelper.getTotalCurse(player) : 0;
+        double max = wearing ? CursePowerHelper.getTotalMaxCurse(player) : 0;
         boolean domainActive = DomainRegistry.isActive(player.getUUID());
         boolean infinite = wearing && CursePowerHelper.isCurseInfinite(player);
         ModifierId technique = wearing ? TechniqueHandler.getSelectedTechniqueId(player) : null;

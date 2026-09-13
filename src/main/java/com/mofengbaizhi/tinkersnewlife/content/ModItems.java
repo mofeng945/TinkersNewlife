@@ -305,4 +305,13 @@ public class ModItems {
     public static final RegistryObject<Item> ANCIENT_CURSED_SCROLL =
             ITEMS.register("ancient_cursed_scroll",
                     () -> new com.mofengbaizhi.tinkersnewlife.content.item.AncientCursedScrollItem());
+
+    /**
+     * 封呪瓶：咒力容器饰品（curios 通用「饰品」槽）。
+     * 佩戴时咒力优先存入瓶中（上限 5000），死亡不丢；可作为流体容器接取熔炉里的「咒力残秽」
+     * （1 mb = 10 咒力，古代咒术残卷熔炼每份得 1 mb）。
+     */
+    public static final RegistryObject<Item> CURSE_BOTTLE =
+            ITEMS.register("curse_bottle",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.CurseBottleItem());
 }

@@ -995,5 +995,12 @@
   "modifier.tinkersnewlife.soul_discount.description": "盔甲特性（神灵金盔甲自带）：每级提供 5% 的灵魂能量消耗减免。",
   "modifier.tinkersnewlife.cursed_adrenaline": "咒上·腺速",
   "modifier.tinkersnewlife.cursed_adrenaline.flavor": "§7生死之间，咒血奔涌。",
-  "modifier.tinkersnewlife.cursed_adrenaline.description": "穿戴者受到敌对伤害或摔落伤害时，消耗 10 点灵魂能量，获得 5 秒迅捷 II（等效移速加成，无视角变化）；冷却 1 分钟。"
+  "modifier.tinkersnewlife.cursed_adrenaline.description": "穿戴者受到敌对伤害或摔落伤害时，消耗 10 点灵魂能量，获得 5 秒迅捷 II（等效移速加成，无视角变化）；冷却 1 分钟。",
+  "item.tinkersnewlife.curse_bottle": "封呪瓶",
+  "item.tinkersnewlife.curse_bottle.power": "储存咒力：%s / %s",
+  "item.tinkersnewlife.curse_bottle.fluid": "咒力残秽：%s / %s mb",
+  "item.tinkersnewlife.curse_bottle.hint": "佩戴于饰品槽：咒力优先存入瓶中，死亡不丢；可接取熔炉中的咒力残秽（1mb = 10 咒力）",
+  "fluid_type.tinkersnewlife.curse_residue": "咒力残秽",
+  "block.tinkersnewlife.curse_residue_block": "咒力残秽",
+  "item.tinkersnewlife.curse_residue_bucket": "咒力残秽桶"
 }

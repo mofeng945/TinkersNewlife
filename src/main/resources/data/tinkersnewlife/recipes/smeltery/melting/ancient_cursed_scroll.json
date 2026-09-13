@@ -1,0 +1,12 @@
+{
+  "type": "tconstruct:melting",
+  "ingredient": {
+    "item": "tinkersnewlife:ancient_cursed_scroll"
+  },
+  "result": {
+    "fluid": "tinkersnewlife:curse_residue_still",
+    "amount": 1
+  },
+  "temperature": 800,
+  "time": 20
+}
