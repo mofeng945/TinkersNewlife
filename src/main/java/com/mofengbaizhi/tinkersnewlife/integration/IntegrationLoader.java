@@ -40,6 +40,8 @@ public final class IntegrationLoader {
     public static final String JEI = "jei";
     /** 帕秋莉手册 */
     public static final String PATCHOULI = "patchouli";
+    /** 玉（Jade，方块信息显示） */
+    public static final String JADE = "jade";
     /** 应用能源2（蓝本接口探测用） */
     public static final String AE2 = "ae2";
     /** Curios（硬依赖，但蓝本接口探测仍按名判定） */
@@ -51,7 +53,7 @@ public final class IntegrationLoader {
 
     /** 环境探测日志用的关注清单（顺序即日志顺序） */
     private static final String[] WATCHED = {
-            GOETY, GOETY_REVELATION, ICEANDFIRE, IRON_SPELLBOOKS, TACZ, JEI, PATCHOULI, AE2
+            GOETY, GOETY_REVELATION, ICEANDFIRE, IRON_SPELLBOOKS, TACZ, JEI, PATCHOULI, JADE, AE2
     };
 
     private IntegrationLoader() {
@@ -95,6 +97,15 @@ public final class IntegrationLoader {
 
     public static boolean isPatchouli() {
         return isLoaded(PATCHOULI);
+    }
+
+    /**
+     * 玉（Jade）是否在场。
+     * <p>注意：玉的联动**不需要在这里分派** —— {@code integration/jade/CurseVaultJadePlugin} 由玉自己
+     * 扫描 {@code @WailaPlugin} 注解后加载（被玉反向加载），本方法只用于日志/其它判断。
+     */
+    public static boolean isJade() {
+        return isLoaded(JADE);
     }
 
     public static boolean isAe2() {

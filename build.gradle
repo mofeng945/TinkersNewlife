@@ -179,6 +179,10 @@ dependencies {
     // 未装诡厄的环境里 GoetyStaffItem 类不会被加载（注册分支按 ModList 判定），全部代码走反射兜底。
     compileOnly files('libs/goety-2.5.54.5_mapped_official_1.20.1.jar')
     implementation fg.deobf("maven.modrinth:vvuO3ImH:IPQlZkz1")
+    // ⭐ 玉（Jade）：仅编译期引用其 API（IWailaPlugin/IBlockComponentProvider/IServerDataProvider…）。
+    // libs/ 下放安装用 jar（SRG 名，经 fg.deobf 转开发映射）；运行时由玩家自装玉本体。
+    // 玉的插件是**被玉扫描 @WailaPlugin 后加载**的，未装玉时 integration/jade/ 下的类根本不会被加载。
+    compileOnly fg.deobf("blank:Jade-1.20.1-Forge:11.13.3")
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
