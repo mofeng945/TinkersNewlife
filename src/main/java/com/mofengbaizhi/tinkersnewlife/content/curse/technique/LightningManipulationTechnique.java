@@ -185,11 +185,11 @@ public final class LightningManipulationTechnique extends BaseTechnique {
                 double curseCost = Math.max(1.0, (1.0 - affinity / 100.0) * (2.0 + output));
                 double hpCost = 0.15 + output * 0.05;
                 if (!CursePowerHelper.isCurseInfinite(p)) {
-                    double curse = CursePowerHelper.getCurse(p);
-                    if (curse >= curseCost) {
+                    // ⭐ 判定看总量（核心池 + 封呪瓶 + 呪蔵）：只看核心池的话，瓶子/呪蔵里存着咒力也扣不到
+                    if (CursePowerHelper.canPayCurse(p, curseCost)) {
                         CursePowerHelper.spendCurse(p, curseCost);
                     }
-                    // 咒力不足：本次跳过咒力消耗（不自动解除）
+                    // 咒力（含瓶/蔵）全都不足：本次跳过咒力消耗（不自动解除）
                 }
                 // 创造模式不会死亡，"直到死亡"契约不成立 → 不扣生命，琥珀持续维持（仅耗咒力）
                 if (!p.isCreative() && hpCost > 0) {

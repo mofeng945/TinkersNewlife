@@ -107,8 +107,8 @@ public final class WuliangWuxianTechnique extends BaseTechnique {
         if (CursePowerHelper.isCurseInfinite(player)) {
             return 0.0F;
         }
-        double curse = CursePowerHelper.getCurse(player);
-        if (curse >= curseCost) {
+        // ⭐ 判定看总量（核心池 + 封呪瓶 + 呪蔵）：只看核心池会有"瓶/蔵里明明还有咒力却破盾"的怪事
+        if (CursePowerHelper.canPayCurse(player, curseCost)) {
             CursePowerHelper.spendCurse(player, curseCost);
             return 0.0F; // 完全用咒力抵消溢出
         }

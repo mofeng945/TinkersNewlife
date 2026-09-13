@@ -91,10 +91,11 @@ public final class SkillHandler {
         return null;
     }
 
-    /** 咒力是否够维持技巧（宽松判：≥ 2 tick 分片；无限模式恒真） */
+    /** 咒力是否够维持技巧（宽松判：≥ 2 tick 分片；无限模式恒真）。
+     *  ⭐ 口径 = 核心池 + 封呪瓶 + 呪蔵（{@link CursePowerHelper#canPayCurse}），
+     *  否则核心池空了就会在瓶/蔵还有咒力时误判"技巧维持不住"。 */
     private static boolean canAfford(ServerPlayer p) {
-        return CursePowerHelper.isCurseInfinite(p)
-                || CursePowerHelper.getCurse(p) >= COST_PER_SECOND / 20.0 * 2.0;
+        return CursePowerHelper.canPayCurse(p, COST_PER_SECOND / 20.0 * 2.0);
     }
 
     /**

@@ -89,7 +89,8 @@ public final class AntiGravityTechnique extends BaseTechnique {
         long unit = unitCost(player);
         long total = unit * targets.size();
         if (!CursePowerHelper.isCurseInfinite(player)) {
-            if (CursePowerHelper.getCurse(player) < total) {
+            // ⭐ 判定走"核心池 + 封呪瓶 + 呪蔵"的总量，不能只看核心池（否则瓶/蔵里有咒力也放不出来）
+            if (!CursePowerHelper.canPayCurse(player, total)) {
                 player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_curse"), true);
                 return;
             }
@@ -188,7 +189,8 @@ public final class AntiGravityTechnique extends BaseTechnique {
                 // 持续扣费（无限模式免费）；咒力不足自动关闭
                 double cost = tickCost(p);
                 if (!CursePowerHelper.isCurseInfinite(p)) {
-                    if (CursePowerHelper.getCurse(p) < cost) {
+                    // ⭐ 维持判定同样看总量（核心池 + 封呪瓶 + 呪蔵），别在瓶/蔵还有咒力时就报"咒力耗尽"
+                    if (!CursePowerHelper.canPayCurse(p, cost)) {
                         FIELD.remove(p.getUUID());
                         p.displayClientMessage(Component.translatable(
                                 "message.tinkersnewlife.anti_gravity.drained"), true);

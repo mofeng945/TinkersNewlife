@@ -208,13 +208,16 @@ public final class CursePowerHelper {
         if (leftover > 0) setCurse(player, getCurse(player) + leftover);
     }
 
-    /** 消耗咒力（不低于 0）。⭐ 先扣咒力核心池，扣完再扣佩戴的封呪瓶 */
+    /**
+     * 消耗咒力（不低于 0）。⭐ 级联顺序：**核心池 → 佩戴的封呪瓶 → 绑定自己的呪蔵**。
+     * <p>判定"够不够"请配套用 {@link #canPayCurse}（同样口径），不要只看核心池。
+     */
     public static void spendCurse(Player player, double amount) {
         spendCurseCascade(player, amount);
     }
 
     /**
-     * 咒力消耗级联：**咒力核心池 → 封呪瓶**。
+     * 咒力消耗级联：**咒力核心池 → 封呪瓶 → 呪蔵**（与 {@link #getTotalCurse} 的口径一致）。
      * <p>灵魂能量兜底不在这里（见 {@link #payCurseWithSoulFallback}），本方法只处理咒力本体。
      *
      * @return 仍然付不清的余量（0 = 已付清）
@@ -229,6 +232,20 @@ public final class CursePowerHelper {
         remaining = Math.max(0, remaining - CurseBottleHelper.consumeFromWorn(player, remaining));
         if (remaining <= 0) return 0;
         return Math.max(0, remaining - consumeFromVaults(player, remaining));
+    }
+
+    /**
+     * 付得起吗？**口径 = 核心池 + 佩戴的封呪瓶 + 绑定自己的所有呪蔵**（与 {@link #spendCurseCascade} 的扣费顺序一致）。
+     *
+     * <p>⭐ <b>所有"能不能发动"的判定都必须用它</b>：以前好几处直接看 {@link #getCurse}（核心池），
+     * 于是核心池一空就误判"咒力不足"——哪怕封呪瓶、呪蔵里还存着几十万咒力
+     * （实测用户报的正是这个：术式扣费不读瓶子和呪蔵）。
+     * 咒力无限时恒为 true。
+     */
+    public static boolean canPayCurse(Player player, double amount) {
+        if (amount <= 0) return true;
+        if (isCurseInfinite(player)) return true;
+        return getTotalCurse(player) >= amount;
     }
 
     // ------------------------------------------------------------

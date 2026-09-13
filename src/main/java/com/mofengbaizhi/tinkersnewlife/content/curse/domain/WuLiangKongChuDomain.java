@@ -69,7 +69,7 @@ public class WuLiangKongChuDomain extends BaseDomain {
             sendMessage(player, "message.tinkersnewlife.domain.no_trait");
             return null;
         }
-        if (!CursePowerHelper.isCurseInfinite(player) && CursePowerHelper.getCurse(player) <= 0) {
+        if (!CursePowerHelper.isCurseInfinite(player) && !CursePowerHelper.canPayCurse(player, 1.0)) {
             sendMessage(player, "message.tinkersnewlife.domain.no_curse");
             return null;
         }
