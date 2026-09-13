@@ -32,8 +32,10 @@ public final class IntegrationLoader {
     public static final String GOETY_REVELATION = "goety_revelation";
     /** 冰火传说 */
     public static final String ICEANDFIRE = "iceandfire";
-    /** 铁魔法 */
-    public static final String IRON_SPELLBOOKS = "ironsspellbooks";
+    /** 铁魔法（Iron's Spells 'n Spellbooks）——⚠ modid 是 <b>带下划线</b>的 {@code irons_spellbooks}
+     *  （Java 包名 {@code io.redspace.ironsspellbooks} 没有下划线，极易写错；写错的后果是联动判定恒为 false、
+     *  模块化魔杖的法术功能被静默停用） */
+    public static final String IRON_SPELLBOOKS = "irons_spellbooks";
     /** 永恒枪械工坊 */
     public static final String TACZ = "tacz";
     /** JEI */
@@ -71,6 +73,42 @@ public final class IntegrationLoader {
             return list != null && list.isLoaded(modId);
         } catch (Throwable t) {
             return false;
+        }
+    }
+
+    /**
+     * <b>modid 自检</b>：关注清单里判定为"不在场"的 id，如果它去掉下划线 / 忽略大小写之后
+     * 能匹配到某个<b>确实已加载</b>的模组，那基本就是我们自己把 modid 写错了。
+     *
+     * <p>为什么必须自检：这类错字**不会报错**，只会让整条联动静默失效。
+     * 实测踩过两个：
+     * <ul>
+     *   <li>{@code ironsspellbooks} vs 真实 {@code irons_spellbooks}（少一个下划线）
+     *       → 模块化魔杖"发不出铁魔法"；</li>
+     *   <li>蓝图兼容清单里的 {@code @goetyrevelation} vs 真实命名空间 {@code goety_revelation}
+     *       → 启示录的神灵金盔甲被做成蓝本代理物（穿不上、看不见模型）。</li>
+     * </ul>
+     * 判定本身仍然只用 {@link ModList}（这里的"模糊匹配"仅用于打印警告）。
+     */
+    private static void warnAboutMisspelledIds() {
+        try {
+            ModList list = ModList.get();
+            if (list == null) return;
+            for (String id : WATCHED) {
+                if (isLoaded(id)) continue;
+                String norm = id.replace("_", "").toLowerCase(java.util.Locale.ROOT);
+                for (var info : list.getMods()) {
+                    String other = info.getModId();
+                    if (other == null || other.equals(id)) continue;
+                    if (other.replace("_", "").toLowerCase(java.util.Locale.ROOT).equals(norm)) {
+                        LOGGER.warn("[联动] ⚠ 关注的模组 id「{}」实际应为「{}」——IntegrationLoader 里的常量写错了，"
+                                + "当前这条联动静默失效，请修正", id, other);
+                        break;
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+            // 自检失败绝不影响启动
         }
     }
 
@@ -126,6 +164,7 @@ public final class IntegrationLoader {
         Map<String, Boolean> detected = new LinkedHashMap<>();
         for (String id : WATCHED) detected.put(id, isLoaded(id));
         LOGGER.info("[联动] 环境探测：{}", detected);
+        warnAboutMisspelledIds();
         LOGGER.info("[联动] 联动内容（流体整组）注册决策：goety = {}；iceandfire = {}；goety_revelation = {}",
                 linkDecision(GOETY), linkDecision(ICEANDFIRE), linkDecision(GOETY_REVELATION));
 

@@ -52,9 +52,12 @@ public class IronSpellsReflector {
         initialized = true;
 
         // ⭐ 存在性判定统一走 ModList（禁止用 Class.forName 试探）
+        // ⚠ 铁魔法的 modid 是带下划线的 irons_spellbooks（Java 包名 io.redspace.ironsspellbooks 没有下划线），
+        //    常量在 IntegrationLoader 里（曾把它写成 ironsspellbooks → 判定恒 false → 法杖法术功能被静默停用）
         if (!com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.isIronSpells()) {
             ironSpellsPresent = false;
-            LOGGER.info("[TinkersNewlife] 未检测到铁魔法（ironsspellbooks），模块化魔杖的法术功能停用");
+            LOGGER.info("[TinkersNewlife] 未检测到铁魔法（modid {}），模块化魔杖的法术功能停用",
+                    com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.IRON_SPELLBOOKS);
             return;
         }
 
