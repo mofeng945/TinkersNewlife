@@ -83,51 +83,58 @@ public class CurseVaultBlock extends Block implements EntityBlock {
     }
 
     /**
-     * 共享交互逻辑：
+     * 共享交互逻辑（右键路径）：
      * <ul>
-     *   <li>潜行 + 主手为空 → 回收成物品（保留咒力；仅使用者本人）；</li>
+     *   <li>潜行 + 主手为空 → {@link #pickup}（回收成物品，保留咒力）；</li>
      *   <li>主手为空（未潜行）→ 报储量；</li>
      *   <li>手里有东西 → 返回 {@code null} 表示"不处理"，交给正常逻辑。</li>
      * </ul>
      */
     @Nullable
     public static InteractionResult handleInteraction(Level level, BlockPos pos, Player player, boolean emptyMainHand) {
+        if (player.isShiftKeyDown() && emptyMainHand) return pickup(level, pos, player);
+        if (emptyMainHand) return statusMessage(level, pos, player);
+        // 手里有东西（拿方块/工具/桶…）→ 不拦截，交给正常逻辑（放方块、用工具、倒流体等）
+        return null;
+    }
+
+    /**
+     * **回收**成物品并保留其中咒力（仅使用者本人；主手为空时由右键-潜行 或 左键触发）。
+     * <p>先删数据再拆方块：{@link #onRemove} 发现条目已不存在，就不会再掉一份物品。
+     */
+    public static InteractionResult pickup(Level level, BlockPos pos, Player player) {
         if (level.isClientSide) return InteractionResult.SUCCESS;   // 客户端预测成功，真正执行在服务端
         if (!(level instanceof ServerLevel serverLevel)) return InteractionResult.PASS;
 
         CurseVaultData data = CurseVaultData.get(serverLevel);
         CurseVaultData.Entry entry = data.get(pos);
-
-        // 1) 使用者 + 主手为空 + 潜行 → 回收成物品（保留咒力）
-        if (player.isShiftKeyDown() && emptyMainHand) {
-            if (entry != null && !entry.owner.equals(player.getUUID())) {
-                player.displayClientMessage(Component.translatable("message.tinkersnewlife.curse_vault.not_owner")
-                        .withStyle(ChatFormatting.RED), true);
-                return InteractionResult.SUCCESS;
-            }
-            double power = entry == null ? 0 : entry.power;
-            // ⭐ 先删数据再拆方块：onRemove 发现条目已不存在就不会再掉一份物品
-            data.remove(pos);
-            ItemStack stack = new ItemStack(ModItems.CURSE_VAULT.get());
-            com.mofengbaizhi.tinkersnewlife.content.item.CurseVaultItem.setPower(stack, power);
-            level.removeBlock(pos, false);
-            CurseVaultInteractionHandler.giveStackToPlayer(player, stack);
-            player.displayClientMessage(Component.translatable("message.tinkersnewlife.curse_vault.picked_up",
-                    CursePowerHelper.formatAmount(power)), true);
+        if (entry != null && !entry.owner.equals(player.getUUID())) {
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.curse_vault.not_owner")
+                    .withStyle(ChatFormatting.RED), true);
             return InteractionResult.SUCCESS;
         }
+        double power = entry == null ? 0 : entry.power;
+        data.remove(pos);
+        ItemStack stack = new ItemStack(ModItems.CURSE_VAULT.get());
+        com.mofengbaizhi.tinkersnewlife.content.item.CurseVaultItem.setPower(stack, power);
+        level.removeBlock(pos, false);
+        CurseVaultInteractionHandler.giveStackToPlayer(player, stack);
+        player.displayClientMessage(Component.translatable("message.tinkersnewlife.curse_vault.picked_up",
+                CursePowerHelper.formatAmount(power)), true);
+        return InteractionResult.SUCCESS;
+    }
 
-        // 2) 空手右键 → 报储量
-        if (emptyMainHand) {
-            double power = entry == null ? 0 : entry.power;
-            player.displayClientMessage(Component.translatable("message.tinkersnewlife.curse_vault.status",
-                            CursePowerHelper.formatAmount(power),
-                            CursePowerHelper.formatAmount(CurseVaultData.CAPACITY))
-                    .withStyle(ChatFormatting.LIGHT_PURPLE), true);
-            return InteractionResult.SUCCESS;
-        }
-        // 手里有东西（拿方块/工具/桶…）→ 不拦截，交给正常逻辑（放方块、用工具、倒流体等）
-        return null;
+    /** 空手右键：报出储量 / 容量 */
+    public static InteractionResult statusMessage(Level level, BlockPos pos, Player player) {
+        if (level.isClientSide) return InteractionResult.SUCCESS;
+        if (!(level instanceof ServerLevel serverLevel)) return InteractionResult.PASS;
+        CurseVaultData.Entry entry = CurseVaultData.get(serverLevel).get(pos);
+        double power = entry == null ? 0 : entry.power;
+        player.displayClientMessage(Component.translatable("message.tinkersnewlife.curse_vault.status",
+                        CursePowerHelper.formatAmount(power),
+                        CursePowerHelper.formatAmount(CurseVaultData.CAPACITY))
+                .withStyle(ChatFormatting.LIGHT_PURPLE), true);
+        return InteractionResult.SUCCESS;
     }
 
     // ============================================================

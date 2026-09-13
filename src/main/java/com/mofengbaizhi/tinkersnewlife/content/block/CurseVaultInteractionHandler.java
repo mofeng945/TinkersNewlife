@@ -30,7 +30,7 @@ import net.minecraftforge.fml.common.Mod;
  * 只要主手为空就由我们自己处理，不受副手影响。
  *
  * <p>另外补一条**左键**路径：方块无法破坏，玩家很容易习惯性地去"挖"它 ——
- * 潜行 + 空手左键同样能回收，非潜行空手左键则提示怎么回收（带冷却，避免刷屏）。
+ * <b>空手左键直接回收</b>（不要求潜行）；手上有东西时给一次提示（带冷却）。
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class CurseVaultInteractionHandler {
@@ -134,6 +134,39 @@ public final class CurseVaultInteractionHandler {
     private static boolean isResidue(net.minecraftforge.fluids.FluidStack stack) {
         var fluid = com.mofengbaizhi.tinkersnewlife.content.ModFluids.CURSE_RESIDUE.still.get();
         return fluid != null && stack.getFluid() == fluid;
+    }
+
+    /**
+     * 左键：
+     * <ul>
+     *   <li><b>空手（不要求潜行）→ 直接回收</b>：方块"无法破坏"，玩家左键本来就是"拆"的意思，
+     *       所以空手左键直接收成物品（保留咒力）；</li>
+     *   <li>手上拿着东西 → 给一次提示（40 tick 冷却），避免"怎么挖不掉"的困惑。</li>
+     * </ul>
+     */
+    @SubscribeEvent
+    public static void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
+        Player player = event.getEntity();
+        Level level = event.getLevel();
+        BlockPos pos = event.getPos();
+        if (!isVault(level, pos)) return;
+
+        if (player.getMainHandItem().isEmpty()) {
+            InteractionResult result = CurseVaultBlock.pickup(level, pos, player);
+            event.setCanceled(true);
+            event.setCancellationResult(result);
+            return;
+        }
+
+        // 手上有东西（想挖）：方块无法破坏，提示一下怎么回收
+        if (level.isClientSide || !(level instanceof ServerLevel serverLevel)) return;
+        if (!(player.getPersistentData().getLong(KEY_HINT_TICK) + HINT_COOLDOWN_TICKS < serverLevel.getGameTime())) return;
+        player.getPersistentData().putLong(KEY_HINT_TICK, serverLevel.getGameTime());
+        CurseVaultData.Entry entry = CurseVaultData.get(serverLevel).get(pos);
+        double power = entry == null ? 0 : entry.power;
+        player.displayClientMessage(Component.translatable("message.tinkersnewlife.curse_vault.hint",
+                com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper.formatAmount(power),
+                com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper.formatAmount(CurseVaultData.CAPACITY)), true);
     }
 
     /** 供方块自身调用（原版 use 路径的兜底；正常情况下事件层已经处理并取消） */
