@@ -1,6 +1,6 @@
 {
-  "parent": "item/generated",
-  "textures": {
-    "layer0": "tinkersnewlife:item/lightning_blood_bucket"
-  }
+  "parent": "forge:item/bucket_drip",
+  "loader": "tconstruct:fluid_container",
+  "fluid": "tinkersnewlife:lightning_blood_still",
+  "flip_gas": false
 }

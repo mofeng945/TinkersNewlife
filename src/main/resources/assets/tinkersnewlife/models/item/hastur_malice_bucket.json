@@ -1,6 +1,6 @@
 {
-  "parent": "item/generated",
-  "textures": {
-    "layer0": "tinkersnewlife:item/hastur_malice_bucket"
-  }
+  "parent": "forge:item/bucket_drip",
+  "loader": "tconstruct:fluid_container",
+  "fluid": "tinkersnewlife:hastur_malice_still",
+  "flip_gas": false
 }

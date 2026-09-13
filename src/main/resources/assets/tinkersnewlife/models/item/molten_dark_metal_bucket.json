@@ -1,6 +1,6 @@
 {
-  "parent": "item/generated",
-  "textures": {
-    "layer0": "tinkersnewlife:item/molten_dark_metal_bucket"
-  }
+  "parent": "forge:item/bucket_drip",
+  "loader": "tconstruct:fluid_container",
+  "fluid": "tinkersnewlife:molten_dark_metal_still",
+  "flip_gas": false
 }

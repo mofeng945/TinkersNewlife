@@ -1,6 +1,6 @@
 {
-  "parent": "item/generated",
-  "textures": {
-    "layer0": "tinkersnewlife:item/molten_durandal_bucket"
-  }
+  "parent": "forge:item/bucket_drip",
+  "loader": "tconstruct:fluid_container",
+  "fluid": "tinkersnewlife:molten_durandal_still",
+  "flip_gas": false
 }
