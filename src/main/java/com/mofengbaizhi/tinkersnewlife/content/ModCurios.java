@@ -40,16 +40,9 @@ public class ModCurios {
                         .build()
         );
 
-        // ⭐ 通用「饰品」槽（curio）：Curios 自带的槽位定义**没有 size（默认 0 = 不显示）**，
-        //    必须由模组用 IMC 显式给一个 size，槽位才会真的出现在饰品栏里
-        //    （本模组的 hands / ring / feet / curse_core 都是这么登记的）。
-        //    封呪瓶佩戴在这里，所以这一条不可省 —— 少了它就会出现"物品放不进饰品槽"。
-        //    图标沿用 Curios 自带的空饰品槽图标。
-        InterModComms.sendTo(CuriosApi.MODID, SlotTypeMessage.REGISTER_TYPE,
-                () -> new SlotTypeMessage.Builder("curio")
-                        .size(1)
-                        .icon(new net.minecraft.resources.ResourceLocation("curios", "slot/empty_curio_slot"))
-                        .build()
-        );
+        // ⚠ 这里**不要**注册通用的「饰品」槽（curio / charm 之类的共享槽位）：
+        //    这类槽位是整合包里其它饰品模组（如神秘遗物把 curios 的 charm 槽中文名覆盖成"饰品"、
+        //    奇异饰品、星月遗物…）已经在用的公共槽，本模组再注册一次会覆盖别人的 size/图标。
+        //    封呪瓶通过 canEquip 认这些槽位标识 + 写物品标签（data/curios/tags/items/charm.json）来适配。
     }
 }

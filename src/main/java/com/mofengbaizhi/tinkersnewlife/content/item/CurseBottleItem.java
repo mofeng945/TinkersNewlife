@@ -28,7 +28,7 @@ import java.util.List;
  * 封呪瓶：存储咒力的饰品容器。
  *
  * <ul>
- *   <li>佩戴于 curios 通用「饰品」槽（{@code curio}）；</li>
+ *   <li>佩戴于整合包的通用「饰品」槽（本包 = curios {@code charm} 槽，神秘遗物把它的中文名覆盖成了"饰品"）；</li>
  *   <li>佩戴时**咒力优先进瓶**（回复/奖励/返还都先灌瓶，满了才进咒力核心池）；</li>
  *   <li>消耗顺序：咒力核心池 → 瓶 → 诡厄灵魂能量兜底（见 {@code CursePowerHelper}）；</li>
  *   <li>瓶内咒力写在物品 NBT，**死亡不丢**（玩家咒力池被清空也不影响瓶中储备）；</li>
@@ -48,9 +48,20 @@ public class CurseBottleItem extends Item implements ICurioItem {
 
     // ========== ICurioItem：通用「饰品」槽 ==========
 
+    /**
+     * 可佩戴的槽位标识：
+     * <ul>
+     *   <li>{@code charm} —— 本整合包里的通用「饰品」槽（神秘遗物把 curios 的 charm 槽中文名覆盖成了"饰品"，
+     *       该槽带 {@code curios:tag} 校验，物品必须写进 {@code curio?}:charm 标签，见
+     *       {@code data/curios/tags/items/charm.json}）；</li>
+     *   <li>{@code curio} —— Curios 自带的通用槽标识，兼容其它整合包；</li>
+     * </ul>
+     * 本模组**不注册**这些公共槽位，避免覆盖其它饰品模组已经设好的槽位大小/图标。
+     */
     @Override
     public boolean canEquip(SlotContext context, ItemStack stack) {
-        return "curio".equals(context.identifier());
+        String id = context.identifier();
+        return "charm".equals(id) || "curio".equals(id);
     }
 
     @Override
