@@ -4,12 +4,10 @@ import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModRecipeSerializers;
 import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.CurseCraftRecipe;
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -85,31 +83,14 @@ public final class CurseCraftRitualHandler {
     private record Display(net.minecraft.resources.ResourceKey<Level> dim, BlockPos lantern, UUID id, String role) {
     }
 
-    /** 灯笼附近是否有格赫罗斯矿石（区分"搭歪了"与"只是在乱点灯笼"） */
-    private static boolean hasOreNearby(ServerLevel level, BlockPos lantern) {
-        for (BlockPos pos : BlockPos.betweenClosed(lantern.offset(-4, -4, -4), lantern.offset(4, 4, 4))) {
-            if (level.getBlockState(pos).is(com.mofengbaizhi.tinkersnewlife.content.ModBlocks.GHELOTH_ORE.get())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /** 结构提示冷却（每 2 秒最多一次） */
-    private static boolean hintReady(ServerPlayer player, ServerLevel level) {
-        String keyTick = "tinkersnewlife.curse_craft_hint_tick";
-        long now = level.getGameTime();
-        if (player.getPersistentData().getLong(keyTick) + 40 > now) return false;
-        player.getPersistentData().putLong(keyTick, now);
-        return true;
-    }
-    private static net.minecraft.network.chat.MutableComponent msg(String path, Object... args) {
-        return Component.translatable("message.tinkersnewlife.curse_craft." + path, args);
-    }
-
     // ============================================================
     //  右键灯笼
     // ============================================================
+    //
+    //  ⚠ 本仪式**没有任何提示文本**（不聊天栏、不动作栏）：
+    //    结构、灯笼分工、材料与核心怎么放，全部写在帕秋莉指南「咒力合成仪式」条目里
+    //    （条目里带多方块示例结构，可以点"可视化"在世界里看幽灵结构）。
+    //    成功/失败只靠声音与粒子表现，玩家按指南自己对照。
 
     @SubscribeEvent
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
@@ -117,18 +98,10 @@ public final class CurseCraftRitualHandler {
         BlockPos pos = event.getPos();
         if (!CurseCraftStructure.isLantern(level.getBlockState(pos))) return;
 
-        // 灯笼本身直接退出（避免误拦无关灯笼的交互），但"结构里的灯笼"一律拦下并给反馈
+        // 不属于任何仪式结构的灯笼：直接不管（焦黑灯笼本身还是 TCon 的储罐）
         CurseCraftStructure.Anchor anchor = CurseCraftStructure.findAnchor(level, pos);
-        if (anchor == null) {
-            // 不属于任何仪式结构：完全不动它（焦黑灯笼本身还是 TCon 的储罐）
-            // 只有"附近确实有格赫罗斯矿石但结构不对"时才弱提示一次，避免玩家以为"没反应"
-            if (!level.isClientSide && level instanceof ServerLevel sl
-                    && event.getEntity() instanceof ServerPlayer sp
-                    && hasOreNearby(sl, pos) && hintReady(sp, sl)) {
-                sp.displayClientMessage(msg("need_ore").withStyle(ChatFormatting.GRAY), true);
-            }
-            return;
-        }
+        if (anchor == null) return;
+
         event.setCanceled(true);
         event.setCancellationResult(InteractionResult.SUCCESS);
         if (level.isClientSide || !(level instanceof ServerLevel serverLevel)) return;
@@ -138,24 +111,15 @@ public final class CurseCraftRitualHandler {
         boolean formed = CurseCraftStructure.isFormed(serverLevel, ore, anchor.dy());
         String k = key(serverLevel, ore);
 
-        // 结构成型的一次性提示（雷声）
+        // 结构成型：第一次交互时来一声雷（只有声音，没有文字）
         if (formed && ANNOUNCED.add(k)) {
             serverLevel.playSound(null, ore, SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.BLOCKS, 1.2F, 1.0F);
-            player.displayClientMessage(msg("formed").withStyle(ChatFormatting.LIGHT_PURPLE), false);
         }
-        if (!formed) {
-            player.displayClientMessage(msg("not_formed").withStyle(ChatFormatting.RED), true);
-            // ⭐ 报出第一处不符的方块，省得玩家一格一格对（聊天栏，方便照着改）
-            String problem = CurseCraftStructure.firstProblem(serverLevel, ore, anchor.dy());
-            if (problem != null) {
-                player.displayClientMessage(Component.literal("· " + problem).withStyle(ChatFormatting.GRAY), false);
-            }
-            return;
-        }
+        if (!formed) return;   // 没成型：静默（结构对不对看指南里的示例图案）
 
         // 仪式进行中：任意灯笼交互视为打断
         if (ACTIVE.containsKey(k)) {
-            abort(serverLevel, k, "interrupted");
+            abort(serverLevel, k);
             return;
         }
 
@@ -170,23 +134,15 @@ public final class CurseCraftRitualHandler {
         if (existing != null) {
             giveOrDrop(player, existing.getItem().copy());
             existing.discard();
-            player.displayClientMessage(msg("material_taken").withStyle(ChatFormatting.GRAY), true);
             return;
         }
         ItemStack held = player.getMainHandItem();
-        if (held.isEmpty()) {
-            player.displayClientMessage(msg("hand_empty").withStyle(ChatFormatting.GRAY), true);
-            return;
-        }
+        if (held.isEmpty()) return;
         // 别把核心往材料位上放（核心要去矿石正上方那盏灯）
-        if (isCoreForAnyRecipe(level, held)) {
-            player.displayClientMessage(msg("core_goes_center").withStyle(ChatFormatting.YELLOW), true);
-            return;
-        }
+        if (isCoreForAnyRecipe(level, held)) return;
         ItemStack one = held.copyWithCount(1);
         held.shrink(1);
         spawnDisplay(level, lantern, one, ROLE_MATERIAL);
-        player.displayClientMessage(msg("material_placed", one.getHoverName()).withStyle(ChatFormatting.GRAY), true);
     }
 
     /** 核心灯笼：取下产物 / 取回核心 / 投入核心开仪式 */
@@ -195,28 +151,19 @@ public final class CurseCraftRitualHandler {
         if (product != null) {
             giveOrDrop(player, product.getItem().copy());
             product.discard();
-            player.displayClientMessage(msg("product_taken").withStyle(ChatFormatting.LIGHT_PURPLE), true);
             return;
         }
         ItemEntity core = findDisplay(level, lantern, ROLE_CORE);
         if (core != null) {
             giveOrDrop(player, core.getItem().copy());
             core.discard();
-            player.displayClientMessage(msg("core_taken").withStyle(ChatFormatting.GRAY), true);
             return;
         }
         ItemStack held = player.getMainHandItem();
-        if (held.isEmpty()) {
-            player.displayClientMessage(msg("need_core").withStyle(ChatFormatting.GRAY), true);
-            return;
-        }
+        if (held.isEmpty()) return;
         List<ItemStack> materials = collectMaterials(level, ore);
         CurseCraftRecipe recipe = matchRecipe(level, held, materials);
-        if (recipe == null) {
-            player.displayClientMessage(msg("no_recipe",
-                    materials.size(), maxMaterialSlots(level, ore)).withStyle(ChatFormatting.RED), true);
-            return;
-        }
+        if (recipe == null) return;
         ItemStack one = held.copyWithCount(1);
         held.shrink(1);
         spawnDisplay(level, lantern, one, ROLE_CORE);
@@ -265,10 +212,6 @@ public final class CurseCraftRitualHandler {
             if (!found) return false;
         }
         return true;
-    }
-
-    private static int maxMaterialSlots(ServerLevel level, BlockPos ore) {
-        return CurseCraftStructure.lanternOffsets().size() - 1;   // 9 盏灯笼去掉核心位 = 8 个材料位
     }
 
     // ============================================================
@@ -405,10 +348,8 @@ public final class CurseCraftRitualHandler {
 
     private static void startRitual(ServerLevel level, BlockPos ore, BlockPos coreLantern, ServerPlayer player, CurseCraftRecipe recipe) {
         ACTIVE.put(key(level, ore), new Ritual(ore, coreLantern, player.getUUID(), recipe));
+        // 只有声音：不聊天栏、不动作栏（仪式的一切说明都在帕秋莉指南里）
         level.playSound(null, ore, SoundEvents.BEACON_ACTIVATE, SoundSource.BLOCKS, 1.0F, 0.7F);
-        player.displayClientMessage(msg("started",
-                CursePowerHelper.formatAmount(recipe.curse()),
-                CursePowerHelper.formatAmount(CurseCraftRecipe.CURSE_PER_TICK)).withStyle(ChatFormatting.LIGHT_PURPLE), false);
     }
 
     @SubscribeEvent
@@ -429,29 +370,29 @@ public final class CurseCraftRitualHandler {
             }
             ServerPlayer player = server.getPlayerList().getPlayer(ritual.player);
             if (player == null || player.level() != level) {
-                abort(level, k, "player_left");
+                abort(level, k);
                 continue;
             }
             if (player.distanceToSqr(ritual.ore.getX() + 0.5, ritual.ore.getY() + 0.5, ritual.ore.getZ() + 0.5)
                     > MAX_DISTANCE * MAX_DISTANCE) {
-                abort(level, k, "too_far");
+                abort(level, k);
                 continue;
             }
             // 吸咒：核心池 → 封呪瓶 → 呪蔵（不动用灵魂能量，仪式只吃咒力）
             double remaining = CursePowerHelper.spendCurseCascade(player, CurseCraftRecipe.CURSE_PER_TICK);
             if (remaining > 0) {
-                abort(level, k, "not_enough_curse");
+                abort(level, k);
                 continue;
             }
             // 每 20 tick 复检结构：被拆掉就中断（材料各自飘回灯笼）
             if (ritual.elapsed % 20 == 0 && !CurseCraftStructure.isFormed(level, ritual.ore)) {
-                abort(level, k, "structure_broken");
+                abort(level, k);
                 continue;
             }
 
             ritual.elapsed++;
             animate(level, ritual, player);
-            if (ritual.elapsed >= ritual.totalTicks) complete(level, k, ritual, player);
+            if (ritual.elapsed >= ritual.totalTicks) complete(level, k, ritual);
         }
     }
 
@@ -512,8 +453,8 @@ public final class CurseCraftRitualHandler {
         }
     }
 
-    /** 完成：爆炸特效 + 产物悬浮在矿石上方灯笼 */
-    private static void complete(ServerLevel level, String k, Ritual ritual, ServerPlayer player) {
+    /** 完成：爆炸特效 + 产物悬浮在矿石上方灯笼（全程无文字提示） */
+    private static void complete(ServerLevel level, String k, Ritual ritual) {
         ACTIVE.remove(k);
         Vec3 center = CurseCraftStructure.convergePoint(ritual.ore);
         level.explode(null, center.x, center.y, center.z, 2.0F, Level.ExplosionInteraction.NONE);
@@ -527,12 +468,10 @@ public final class CurseCraftRitualHandler {
 
         ItemStack result = ritual.recipe.getResultItem(level.registryAccess()).copy();
         spawnDisplay(level, ritual.coreLantern, result, ROLE_PRODUCT);
-        player.displayClientMessage(msg("finished", result.getHoverName())
-                .withStyle(ChatFormatting.LIGHT_PURPLE), false);
     }
 
-    /** 中断：物品各自飘回原灯笼 */
-    private static void abort(ServerLevel level, String k, String reason) {
+    /** 中断：物品各自飘回原灯笼（只播一声熄灭音，不给文字） */
+    private static void abort(ServerLevel level, String k) {
         Ritual ritual = ACTIVE.remove(k);
         if (ritual == null) return;
         for (ItemEntity entity : allDisplays(level, ritual.ore)) {
@@ -543,17 +482,12 @@ public final class CurseCraftRitualHandler {
             entity.hurtMarked = true;
         }
         level.playSound(null, ritual.ore, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 1.0F, 0.7F);
-        ServerPlayer player = level.getServer() == null ? null
-                : level.getServer().getPlayerList().getPlayer(ritual.player);
-        if (player != null) {
-            player.displayClientMessage(msg("aborted." + reason).withStyle(ChatFormatting.RED), true);
-        }
     }
 
     /** 供外部（如方块被破坏）主动中断：结构范围内所有仪式 */
     public static void abortAllAt(ServerLevel level, BlockPos ore) {
         String k = key(level, ore);
-        if (ACTIVE.containsKey(k)) abort(level, k, "interrupted");
+        if (ACTIVE.containsKey(k)) abort(level, k);
     }
 
     /** 玩家下线/换维度时的清理由 tick 检测负责；这里只暴露查询给 JEI/调试用 */

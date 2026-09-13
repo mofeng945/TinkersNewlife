@@ -6,20 +6,48 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "The $(bold)Curse Crafting Ritual$() uses curse power itself as an ingredient, together with old-god items, to make special gear.$(br2)$(bold)Structure (5x5x3, Gheloth Ore at the centre of layer 2)$():$(li)Layer 1 (one below the ore): $(bold)modifier worktable$() in the centre, $(bold)obsidian$() in the four cardinal directions, $(bold)crying obsidian$() and $(bold)soul sand$() alternating around the ring (corners are free)$(li)Layer 2 (the ore level): eight $(bold)seared brick walls$() (scorched also works), eight $(bold)soul fire$() blocks (lit on the soul sand)$(li)Layer 3: one $(bold)seared lantern$() above every wall and above the ore (9 lanterns)"
+      "text": "The $(bold)Curse Crafting Ritual$() uses curse power itself as an ingredient, together with old-god items, to make special gear.$(br2)The structure is a $(bold)5x5x3$() multiblock with the $(bold)Gheloth Ore$() at the centre of layer 2; the next page holds a $(bold)sample structure you can Visualise$() - just copy it.$(br2)Note: the ritual shows $(bold)no text at all$() (no chat, no action bar). Compare your build with this guide instead; the first interaction after it is complete plays a $(bold)thunderclap$()."
+    },
+    {
+      "type": "patchouli:multiblock",
+      "name": "Sample structure (5x5x3)",
+      "enable_visualize": true,
+      "multiblock": {
+        "pattern": [
+          ["  L  ", " L L ", "L L L", " L L ", "  L  "],
+          [" FWF ", "FW WF", "W 0 W", "FW WF", " FWF "],
+          ["_SCS_", "SCOCS", "COKOC", "SCOCS", "_SCS_"]
+        ],
+        "mapping": {
+          "0": "tinkersnewlife:gheloth_ore",
+          "W": "tconstruct:seared_bricks_wall",
+          "L": "tconstruct:seared_lantern",
+          "F": "minecraft:soul_fire",
+          "S": "minecraft:soul_sand",
+          "O": "minecraft:obsidian",
+          "C": "minecraft:crying_obsidian",
+          "K": "tconstruct:modifier_worktable"
+        },
+        "symmetrical": true
+      },
+      "text": "Press the $(bold)Visualise$() button on this page to return to the world, aim the ghost structure at the ground and build block by block.$(br2)The pattern reads $(bold)top-down$() in three layers:$(li)$(bold)Top$(): nine seared lanterns$(li)$(bold)Middle$(): the ore in the centre, eight seared brick walls and eight soul fire blocks around it$(li)$(bold)Bottom$(): modifier worktable in the centre, obsidian / crying obsidian / soul sand around it"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Layer by layer$() (offsets from the ore; dx is east, dz is south):$(br2)$(bold)Bottom$() y = ore - 1:$(li)(0,0) $(bold)modifier worktable$()$(li)(+/-1,0) (0,+/-1) $(bold)obsidian$()$(li)(+/-1,+/-1) (+/-2,0) (0,+/-2) $(bold)crying obsidian$()$(li)(+/-1,+/-2) (+/-2,+/-1) $(bold)soul sand$()$(li)(+/-2,+/-2) the four corners are free$(br2)$(bold)Middle$() y = ore:$(li)(0,0) $(bold)Gheloth Ore$()$(li)(+/-2,0) (0,+/-2) (+/-1,+/-1) $(bold)seared brick wall$() (scorched also works)$(li)(+/-1,+/-2) (+/-2,+/-1) $(bold)soul fire$() (lit on the soul sand below)$(li)everything else (the corners and the four cells touching the ore) $(bold)must be air$()"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Top$() y = ore + 1: put one $(bold)seared lantern$() $(bold)directly on top$() of every brick wall and on top of the ore - nine lanterns in total (scorched lanterns also work).$(br2)The middle one (above the ore) is the $(bold)core slot$(): that is where the recipe's old-god item goes and where you take the product from. The other eight are $(bold)material slots$().$(br2)Right-click a material lantern while holding an item to place it (it floats one block above the lantern, has no collision and bobs like a dropped item); right-click the same lantern again to take it back. Items only ever belong to their own lantern, so an empty lantern never steals a neighbour's material."
     },
     {
       "type": "patchouli:spotlight",
       "item": "tinkersnewlife:gheloth_ore",
-      "text": "When the structure is complete you hear $(bold)thunder$().$(br2)The lantern directly above the ore is the $(bold)core slot$() (put the recipe core item there, and take the product from it); the other eight are $(bold)material slots$().$(br2)Right-click a material lantern while holding an item to place it (it floats, has no collision, bobs and spins like a dropped item); right-click again to take it back."
-    },
-    {
-      "type": "patchouli:text",
       "text": "$(bold)Starting$(): once every material is placed, hold the $(bold)core old-god item$() the recipe asks for and right-click the lantern $(bold)above the ore$().$(br2)$(bold)During the ritual$() all items gather three blocks above the ore, constantly emitting item-coloured break particles, and a $(bold)deep purple particle beam$() links you to the cluster, $(bold)draining 10 curse power per tick$() from you (first the curse core pool, then the $(l:bottle)bottle$(), then a $(l:vault)vault$(); soul energy is never used)."
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)Finishing$(): when the curse is fully absorbed the cluster explodes and the product floats on the lantern above the ore; right-click to take it.$(br2)$(bold)Interruptions$(): not enough curse power, moving more than 16 blocks away, breaking the structure, or touching a lantern mid-ritual. On interruption every material floats back to its own lantern, $(bold)nothing is consumed$().$(br2)Recipes live in $(bold)data/tinkersnewlife/recipes/curse_craft/$(), and can also be browsed in JEI (catalyst: Gheloth Ore)."
+      "text": "$(bold)Finishing$(): when the curse is fully absorbed the cluster explodes (thunder and a dragon wingbeat) and the product floats on the lantern above the ore; right-click to take it.$(br2)$(bold)Interruptions$(): not enough curse power, moving more than 16 blocks away, breaking the structure, or touching a lantern mid-ritual. On interruption you only hear an extinguish sound, every material floats back to its own lantern, and $(bold)nothing is consumed$().$(br2)Recipes live in $(bold)data/tinkersnewlife/recipes/curse_craft/$(), and can also be browsed in JEI (catalyst: Gheloth Ore)."
     }
   ]
 }

@@ -189,69 +189,7 @@ public final class CurseCraftStructure {
         return true;
     }
 
-    /** 返回"第一处不符"的可读描述；null = 成型。用于右键灯笼时的排查提示。 */
-    @Nullable
-    public static String firstProblem(Level level, BlockPos orePos, int lanternDy) {
-        if (!level.getBlockState(orePos).is(ModBlocks.GHELOTH_ORE.get())) {
-            return "第二层 中心 应为 格赫罗斯矿石（现在是 " + name(level.getBlockState(orePos)) + "）";
-        }
-        BlockPos below = orePos.below();
-        if (!isBlock(level, below, "tconstruct", "modifier_worktable")) {
-            return "第一层 中心 应为 强化调配台（现在是 " + name(level.getBlockState(below)) + "）";
-        }
-        for (int dx = -2; dx <= 2; dx++) {
-            for (int dz = -2; dz <= 2; dz++) {
-                Block expected = layer1Block(dx, dz);
-                if (expected == null) continue;
-                BlockPos pos = below.offset(dx, 0, dz);
-                if (!level.getBlockState(pos).is(expected)) {
-                    return "第一层 " + offset(dx, dz) + " 应为 " + expected.getName().getString()
-                            + "（现在是 " + name(level.getBlockState(pos)) + "）";
-                }
-            }
-        }
-        for (int dx = -2; dx <= 2; dx++) {
-            for (int dz = -2; dz <= 2; dz++) {
-                if (dx == 0 && dz == 0) continue;
-                BlockPos pos = orePos.offset(dx, 0, dz);
-                BlockState state = level.getBlockState(pos);
-                switch (layer2Kind(dx, dz)) {
-                    case WALL -> {
-                        if (!isBrickWall(state)) {
-                            return "第二层 " + offset(dx, dz) + " 应为 焦黑砖墙（现在是 " + name(state) + "）";
-                        }
-                    }
-                    case SOUL_FIRE -> {
-                        if (!state.is(Blocks.SOUL_FIRE)) {
-                            return "第二层 " + offset(dx, dz) + " 应为 灵魂火（在灵魂沙上点火，现在是 " + name(state) + "）";
-                        }
-                    }
-                    default -> {
-                        if (!state.isAir()) {
-                            return "第二层 " + offset(dx, dz) + " 应为空（现在是 " + name(state) + "）";
-                        }
-                    }
-                }
-            }
-        }
-        for (int[] off : lanternOffsets()) {
-            BlockPos pos = orePos.offset(off[0], lanternDy, off[1]);
-            if (!isLantern(level.getBlockState(pos))) {
-                boolean core = isCoreOffset(off[0], off[1]);
-                return "第三层 " + offset(off[0], off[1]) + (core ? "（矿石正上方，紧贴矿石那一格）" : "")
-                        + " 应为 焦黑灯笼（现在是 " + name(level.getBlockState(pos)) + "）";
-            }
-        }
-        return null;
-    }
 
-    private static String offset(int dx, int dz) {
-        return String.format(java.util.Locale.ROOT, "(%+d,%+d)", dx, dz);
-    }
-
-    private static String name(BlockState state) {
-        return state.isAir() ? "空气" : state.getBlock().getName().getString();
-    }
 
     /** 材料位灯笼坐标（不含核心位） */
     public static List<BlockPos> materialLanterns(Anchor anchor) {
