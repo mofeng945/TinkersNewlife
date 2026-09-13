@@ -298,7 +298,12 @@ public final class ModConfig {
                         "@create_vampirism",
                         "@mekanism", "@mekanismtools", "@mekanismgenerators", "@mekanismadditions",
                         "@iceandfire", "@iceandfire_curios",
-                        "@goety", "@goetyrevelation", "@goety_cataclysm",
+                        // ⚠ 这里比的是"物品命名空间"，不是 modid：有些修复/扩展模组会把物品注册进被修复模组的命名空间
+                        //    （例：RevelationFix 把 goety_revelation:apocalyptium_* 注册进 goety_revelation）。
+                        //    写错了不会报错、只会静默失效 —— BlueprintCompat 里另有一份"内置关键项"兜底，
+                        //    启动时还会把匹配不到任何已注册命名空间的条目 WARN 出来。
+                        "@goety", "@goety_revelation", "@revelationfix", "@goety_cataclysm",
+                        "@ending_library",
                         "@l2weaponry", "@l2hostility", "@l2complements",
                         "@farmersdelight", "@apotheosis",
                         "@artifacts", "@relics", "@enigmaticlegacy", "@celestial_artifacts",

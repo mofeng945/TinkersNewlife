@@ -69,6 +69,25 @@ public final class BlueprintCompat {
                     com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.CURIOS},
     };
 
+    /**
+     * <b>内置"必须真副本"的物品命名空间（永远生效，与配置的 {@code blueprint_risky_mods} 相加）</b>。
+     *
+     * <p>为什么不只靠配置：配置是<b>首次生成时写死的快照</b>，之后改默认值也不会同步到老整合包
+     * （实测就踩到了：老配置里写的是 {@code @goetyrevelation}，而真正的物品命名空间是
+     * {@code goety_revelation}——差一个下划线，整条规则等于没写，于是启示录的"神灵金盔甲"
+     * 被做成了蓝本代理物：穿上没属性、模型也渲染不出来，看着就像一件"拟造空气"）。
+     * 这类"能一眼看错、错了就完全失效"的关键项必须写死在代码里。
+     *
+     * <p>判定按物品命名空间（{@link ResourceLocation#getNamespace()}），不是 modid——
+     * 因为有些"修复/扩展"模组把物品注册进被修复模组的命名空间
+     * （例：RevelationFix 把 {@code goety_revelation:apocalyptium_*} 注册进 {@code goety_revelation}）。
+     */
+    private static final String[][] BUILTIN_RISKY_NAMESPACES = {
+            {"goety_revelation", "启示录内容（含 RevelationFix 注册进该命名空间的物品：神灵金盔甲等）"},
+            {"revelationfix", "启示录修复（RevelationFix 自身命名空间）"},
+            {"ending_library", "终焉图书馆（护甲/物品依赖它自己的 API 与自定义渲染，蓝本转发不到）"},
+    };
+
     /** 类名 → Class 缓存；缺失的类名记进 MISSING，避免反复 Class.forName */
     private static final Map<String, Class<?>> CLASS_CACHE = new ConcurrentHashMap<>();
     private static final Set<String> MISSING = ConcurrentHashMap.newKeySet();
@@ -135,6 +154,11 @@ public final class BlueprintCompat {
             if (m.equals(id.getNamespace().toLowerCase(Locale.ROOT))) {
                 return "风险模组（blueprint_risky_mods：" + m + "）";
             }
+        }
+        // 4) 内置关键项（永远生效：老配置里的写法错了也照样退真副本）
+        String ns = id.getNamespace().toLowerCase(Locale.ROOT);
+        for (String[] entry : BUILTIN_RISKY_NAMESPACES) {
+            if (entry[0].equals(ns)) return "内置关键项（" + entry[1] + "）";
         }
         return null;
     }
@@ -283,6 +307,7 @@ public final class BlueprintCompat {
         Map<String, Integer> reasons = new LinkedHashMap<>();
         Map<String, Integer> riskyMods = new LinkedHashMap<>();
         List<String> legacySamples = new ArrayList<>();
+        java.util.Set<String> namespaces = new java.util.HashSet<>();
         AtomicInteger total = new AtomicInteger();
         AtomicInteger blueprint = new AtomicInteger();
         AtomicInteger legacy = new AtomicInteger();
@@ -302,14 +327,30 @@ public final class BlueprintCompat {
                     legacySamples.add(String.valueOf(id) + "    <- " + reason);
                 }
             }
+            ResourceLocation itemId = ForgeRegistries.ITEMS.getKey(item);
+            if (itemId != null) namespaces.add(itemId.getNamespace().toLowerCase(Locale.ROOT));
         }
-        File file = writeReport(total.get(), blueprint.get(), legacy.get(), reasons, riskyMods, legacySamples);
+        // ⭐ 自检：配置里"一个物品命名空间都没匹配到"的条目基本就是写错了
+        //    （实测踩过：@goetyrevelation 少了条下划线，真正的命名空间是 goety_revelation，
+        //     于是整条规则静默失效，启示录的神灵金盔甲被做成了蓝本代理物）。
+        List<String> deadEntries = new ArrayList<>();
+        for (String mod : riskyMods()) {
+            if (mod == null || mod.isBlank()) continue;
+            String m = mod.trim().toLowerCase(Locale.ROOT);
+            if (m.startsWith("@")) m = m.substring(1);
+            if (!namespaces.contains(m)) deadEntries.add(mod.trim());
+        }
+        if (!deadEntries.isEmpty()) {
+            TinkersNewlife.LOGGER.warn("[构筑] blueprint_risky_mods 里有 {} 条匹配不到任何已注册物品命名空间"
+                    + "（多半是写错了，条目会静默失效）：{}", deadEntries.size(), deadEntries);
+        }
+        File file = writeReport(total.get(), blueprint.get(), legacy.get(), reasons, riskyMods, legacySamples, deadEntries);
         return new Report(file, total.get(), blueprint.get(), legacy.get(), reasons, riskyMods);
     }
 
     private static File writeReport(int total, int blueprint, int legacy,
                                     Map<String, Integer> reasons, Map<String, Integer> riskyMods,
-                                    List<String> samples) {
+                                    List<String> samples, List<String> deadEntries) {
         File dir = new File("config/mofengbaizhi/construct");
         if (!dir.exists() && !dir.mkdirs()) {
             TinkersNewlife.LOGGER.warn("[构筑] 无法创建报告目录 {}", dir.getPath());
@@ -333,6 +374,12 @@ public final class BlueprintCompat {
         sb.append('\n').append("-- 样例（前 400 条）--\n");
         for (String s : samples) {
             sb.append(s).append('\n');
+        }
+        if (!deadEntries.isEmpty()) {
+            sb.append('\n').append("⚠ 以下 blueprint_risky_mods 条目匹配不到任何已注册物品命名空间（多半写错了，已静默失效）：\n");
+            for (String d : deadEntries) {
+                sb.append("    ").append(d).append('\n');
+            }
         }
         sb.append('\n').append("提示：想让某个物品/模组用蓝本 → 从 blueprint_exempt / blueprint_risky_mods 里删掉；\n");
         sb.append("      想无条件全用蓝本 → blueprint_risky_legacy = false。\n");
