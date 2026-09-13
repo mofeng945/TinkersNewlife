@@ -441,5 +441,6 @@
   "message.tinkersnewlife.curse_craft.aborted.too_far": "Ritual interrupted: too far from the structure",
   "message.tinkersnewlife.curse_craft.aborted.not_enough_curse": "Ritual interrupted: not enough curse power",
   "message.tinkersnewlife.curse_craft.aborted.interrupted": "Ritual interrupted: lantern touched",
-  "message.tinkersnewlife.curse_craft.aborted.structure_broken": "Ritual interrupted: structure broken"
+  "message.tinkersnewlife.curse_craft.aborted.structure_broken": "Ritual interrupted: structure broken",
+  "message.tinkersnewlife.curse_craft.need_ore": "There is Gheloth Ore nearby, but the ritual structure is not right: the ore sits directly above the modifier worktable, and the nine seared lanterns sit directly on the walls and the ore"
 }

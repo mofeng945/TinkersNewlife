@@ -77,6 +77,24 @@ public final class CurseCraftRitualHandler {
         return level.dimension().location() + "@" + ore.asLong();
     }
 
+    /** 灯笼附近是否有格赫罗斯矿石（区分"搭歪了"与"只是在乱点灯笼"） */
+    private static boolean hasOreNearby(ServerLevel level, BlockPos lantern) {
+        for (BlockPos pos : BlockPos.betweenClosed(lantern.offset(-4, -4, -4), lantern.offset(4, 4, 4))) {
+            if (level.getBlockState(pos).is(com.mofengbaizhi.tinkersnewlife.content.ModBlocks.GHELOTH_ORE.get())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 结构提示冷却（每 2 秒最多一次） */
+    private static boolean hintReady(ServerPlayer player, ServerLevel level) {
+        String keyTick = "tinkersnewlife.curse_craft_hint_tick";
+        long now = level.getGameTime();
+        if (player.getPersistentData().getLong(keyTick) + 40 > now) return false;
+        player.getPersistentData().putLong(keyTick, now);
+        return true;
+    }
     private static net.minecraft.network.chat.MutableComponent msg(String path, Object... args) {
         return Component.translatable("message.tinkersnewlife.curse_craft." + path, args);
     }
@@ -90,15 +108,26 @@ public final class CurseCraftRitualHandler {
         Level level = event.getLevel();
         BlockPos pos = event.getPos();
         if (!CurseCraftStructure.isLantern(level.getBlockState(pos))) return;
-        BlockPos ore = CurseCraftStructure.oreFromLantern(level, pos);
-        if (ore == null) return;   // 不是仪式结构里的灯笼
 
-        event.setCanceled(true);   // 灯笼自身的交互（储罐/放置）不再参与
+        // 灯笼本身直接退出（避免误拦无关灯笼的交互），但"结构里的灯笼"一律拦下并给反馈
+        CurseCraftStructure.Anchor anchor = CurseCraftStructure.findAnchor(level, pos);
+        if (anchor == null) {
+            // 不属于任何仪式结构：完全不动它（焦黑灯笼本身还是 TCon 的储罐）
+            // 只有"附近确实有格赫罗斯矿石但结构不对"时才弱提示一次，避免玩家以为"没反应"
+            if (!level.isClientSide && level instanceof ServerLevel sl
+                    && event.getEntity() instanceof ServerPlayer sp
+                    && hasOreNearby(sl, pos) && hintReady(sp, sl)) {
+                sp.displayClientMessage(msg("need_ore").withStyle(ChatFormatting.GRAY), true);
+            }
+            return;
+        }
+        event.setCanceled(true);
         event.setCancellationResult(InteractionResult.SUCCESS);
         if (level.isClientSide || !(level instanceof ServerLevel serverLevel)) return;
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
 
-        boolean formed = CurseCraftStructure.isFormed(serverLevel, ore);
+        BlockPos ore = anchor.ore();
+        boolean formed = CurseCraftStructure.isFormed(serverLevel, ore, anchor.dy());
         String k = key(serverLevel, ore);
 
         // 结构成型的一次性提示（雷声）
@@ -109,7 +138,7 @@ public final class CurseCraftRitualHandler {
         if (!formed) {
             player.displayClientMessage(msg("not_formed").withStyle(ChatFormatting.RED), true);
             // ⭐ 报出第一处不符的方块，省得玩家一格一格对（聊天栏，方便照着改）
-            String problem = CurseCraftStructure.firstProblem(serverLevel, ore);
+            String problem = CurseCraftStructure.firstProblem(serverLevel, ore, anchor.dy());
             if (problem != null) {
                 player.displayClientMessage(Component.literal("· " + problem).withStyle(ChatFormatting.GRAY), false);
             }
@@ -122,7 +151,7 @@ public final class CurseCraftRitualHandler {
             return;
         }
 
-        boolean core = pos.equals(CurseCraftStructure.coreLantern(ore));
+        boolean core = pos.equals(anchor.coreLantern());
         if (core) handleCoreLantern(player, serverLevel, ore, pos);
         else handleMaterialLantern(player, serverLevel, pos);
     }
@@ -183,7 +212,7 @@ public final class CurseCraftRitualHandler {
         ItemStack one = held.copyWithCount(1);
         held.shrink(1);
         spawnDisplay(level, lantern, one, ROLE_CORE);
-        startRitual(level, ore, player, recipe);
+        startRitual(level, ore, lantern, player, recipe);
     }
 
     // ============================================================
@@ -231,7 +260,7 @@ public final class CurseCraftRitualHandler {
     }
 
     private static int maxMaterialSlots(ServerLevel level, BlockPos ore) {
-        return CurseCraftStructure.materialLanterns(ore).size();
+        return CurseCraftStructure.lanternOffsets().size() - 1;   // 9 盏灯笼去掉核心位 = 8 个材料位
     }
 
     // ============================================================
@@ -263,23 +292,15 @@ public final class CurseCraftRitualHandler {
         return null;
     }
 
-    /** 结构内所有材料悬浮物（含正在聚合中的） */
+    /** 结构内所有材料悬浮物（含正在聚合中的；按角色扫描，不依赖灯笼高度） */
     private static List<ItemStack> collectMaterials(ServerLevel level, BlockPos ore) {
         List<ItemStack> list = new ArrayList<>();
-        for (BlockPos lantern : CurseCraftStructure.materialLanterns(ore)) {
-            ItemEntity entity = findDisplay(level, lantern, ROLE_MATERIAL);
-            if (entity != null) list.add(entity.getItem());
-        }
-        // 聚合阶段物品已离开灯笼位，兜底按"角色"全局收集
-        if (list.isEmpty()) {
-            for (ItemEntity entity : level.getEntitiesOfClass(ItemEntity.class,
-                    new AABB(ore).inflate(6.0), e -> ROLE_MATERIAL.equals(e.getPersistentData().getString(KEY_ROLE)))) {
-                list.add(entity.getItem());
-            }
+        for (ItemEntity entity : level.getEntitiesOfClass(ItemEntity.class, CurseCraftStructure.bounds(ore),
+                e -> ROLE_MATERIAL.equals(e.getPersistentData().getString(KEY_ROLE)))) {
+            list.add(entity.getItem());
         }
         return list;
     }
-
     private static List<ItemEntity> allDisplays(ServerLevel level, BlockPos ore) {
         return level.getEntitiesOfClass(ItemEntity.class, new AABB(ore).inflate(6.0),
                 e -> !e.getPersistentData().getString(KEY_ROLE).isEmpty()
@@ -296,21 +317,23 @@ public final class CurseCraftRitualHandler {
 
     private static final class Ritual {
         final BlockPos ore;
+        final BlockPos coreLantern;
         final UUID player;
         final CurseCraftRecipe recipe;
         final int totalTicks;
         int elapsed = 0;
 
-        Ritual(BlockPos ore, UUID player, CurseCraftRecipe recipe) {
+        Ritual(BlockPos ore, BlockPos coreLantern, UUID player, CurseCraftRecipe recipe) {
             this.ore = ore;
+            this.coreLantern = coreLantern;
             this.player = player;
             this.recipe = recipe;
             this.totalTicks = Math.max(20, recipe.durationTicks());
         }
     }
 
-    private static void startRitual(ServerLevel level, BlockPos ore, ServerPlayer player, CurseCraftRecipe recipe) {
-        ACTIVE.put(key(level, ore), new Ritual(ore, player.getUUID(), recipe));
+    private static void startRitual(ServerLevel level, BlockPos ore, BlockPos coreLantern, ServerPlayer player, CurseCraftRecipe recipe) {
+        ACTIVE.put(key(level, ore), new Ritual(ore, coreLantern, player.getUUID(), recipe));
         level.playSound(null, ore, SoundEvents.BEACON_ACTIVATE, SoundSource.BLOCKS, 1.0F, 0.7F);
         player.displayClientMessage(msg("started",
                 CursePowerHelper.formatAmount(recipe.curse()),
@@ -424,7 +447,7 @@ public final class CurseCraftRitualHandler {
         for (ItemEntity entity : allDisplays(level, ritual.ore)) entity.discard();
 
         ItemStack result = ritual.recipe.getResultItem(level.registryAccess()).copy();
-        spawnDisplay(level, CurseCraftStructure.coreLantern(ritual.ore), result, ROLE_PRODUCT);
+        spawnDisplay(level, ritual.coreLantern, result, ROLE_PRODUCT);
         player.displayClientMessage(msg("finished", result.getHoverName())
                 .withStyle(ChatFormatting.LIGHT_PURPLE), false);
     }

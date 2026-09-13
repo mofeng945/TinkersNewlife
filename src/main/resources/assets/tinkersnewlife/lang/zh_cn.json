@@ -1037,5 +1037,6 @@
   "message.tinkersnewlife.curse_craft.aborted.too_far": "仪式中断：离结构太远了",
   "message.tinkersnewlife.curse_craft.aborted.not_enough_curse": "仪式中断：咒力不足",
   "message.tinkersnewlife.curse_craft.aborted.interrupted": "仪式中断：灯笼被触碰",
-  "message.tinkersnewlife.curse_craft.aborted.structure_broken": "仪式中断：结构被破坏"
+  "message.tinkersnewlife.curse_craft.aborted.structure_broken": "仪式中断：结构被破坏",
+  "message.tinkersnewlife.curse_craft.need_ore": "附近有格赫罗斯矿石，但仪式结构没搭对：矿石要紧贴强化调配台上方，九盏焦黑灯笼要直接放在砖墙与矿石上（紧贴一格）"
 }
