@@ -7,19 +7,10 @@
               },
     "temperature":  1200,
     "output":  "tinkersnewlife:divine_gold",
-  "conditions": [
-    {
-      "type": "forge:or",
-      "values": [
-        {
-          "type": "tconstruct:config",
-          "prop": "force_integration_materials"
-        },
-        {
-          "type": "forge:mod_loaded",
-          "modid": "goety_revelation"
-        }
-      ]
-    }
-  ]
+    "conditions":  [
+                       {
+                           "type":  "forge:mod_loaded",
+                           "modid":  "goety_revelation"
+                       }
+                   ]
 }

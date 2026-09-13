@@ -184,7 +184,7 @@ public class DragonBloodTankHandler {
 
             ResourceLocation fluidId = DragonBloodTankTrait.getFluidId(type);
             if (fluidId == null) continue;
-            var fluid = ForgeRegistries.FLUIDS.getValue(fluidId);
+            var fluid = com.mofengbaizhi.tinkersnewlife.util.SafeRegistry.fluid(fluidId);
             if (fluid == null) continue;
 
             FluidStack toolFluid = new FluidStack(fluid, amount);
@@ -223,7 +223,7 @@ public class DragonBloodTankHandler {
                     int toFill = Math.min(availableAmount, remaining);
                     ResourceLocation fluidId = DragonBloodTankTrait.getFluidId(foundType);
                     if (fluidId != null) {
-                        var fluid = ForgeRegistries.FLUIDS.getValue(fluidId);
+                        var fluid = com.mofengbaizhi.tinkersnewlife.util.SafeRegistry.fluid(fluidId);
                         if (fluid != null) {
                             FluidStack drained = tankHandler.drain(new FluidStack(fluid, toFill), IFluidHandler.FluidAction.EXECUTE);
                             if (!drained.isEmpty()) {

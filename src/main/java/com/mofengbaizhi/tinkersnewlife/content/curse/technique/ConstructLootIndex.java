@@ -173,7 +173,7 @@ public final class ConstructLootIndex {
         try {
             LootParams params;
             if (entityTable && entityTypeId != null) {
-                EntityType<?> et = ForgeRegistries.ENTITY_TYPES.getValue(entityTypeId);
+                EntityType<?> et = com.mofengbaizhi.tinkersnewlife.util.SafeRegistry.entityType(entityTypeId);
                 if (et == null) {
                     failedTables++;
                     return;
@@ -294,7 +294,7 @@ public final class ConstructLootIndex {
     private static boolean autoEligible(String itemId) {
         ResourceLocation id = ResourceLocation.tryParse(itemId);
         if (id == null) return false;
-        var item = ForgeRegistries.ITEMS.getValue(id);
+        var item = com.mofengbaizhi.tinkersnewlife.util.SafeRegistry.item(id);
         if (item == null) return false;
         if (item instanceof net.minecraft.world.item.BlockItem) return false;   // 方块 → 硬度代理管
         try {

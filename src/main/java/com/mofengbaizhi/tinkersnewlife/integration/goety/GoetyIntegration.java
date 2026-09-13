@@ -53,26 +53,26 @@ public final class GoetyIntegration implements Integration {
 
     /** 直接构造真法杖（不再需要反射：本类只在诡厄在场时加载） */
     public static ModularStaffItem createStaff(Item.Properties properties) {
-        return new GoetyStaffItem(properties);
+        return GoetyStaffLink.createStaff(properties);
     }
 
     /** 是否为真法杖形态 */
     public static boolean isStaff(ItemStack stack) {
-        return stack != null && !stack.isEmpty() && stack.getItem() instanceof GoetyStaffItem;
+        return GoetyStaffLink.isStaff(stack);
     }
 
     /** 把"装备中聚晶"镜像写入真法杖本体槽 */
     public static void mirrorEquippedFocus(ServerPlayer player, ItemStack staff) {
-        GoetyStaffItem.mirrorEquippedFocus(player, staff);
+        GoetyStaffLink.mirrorEquippedFocus(player, staff);
     }
 
     /** 按真法杖强度刷新持有者诡厄 Spell 属性 */
     public static void refreshSpellAttrs(ServerPlayer player, ItemStack staff) {
-        GoetyStaffItem.refreshSpellAttrs(player, staff);
+        GoetyStaffLink.refreshSpellAttrs(player, staff);
     }
 
     /** 清空真法杖给持有者上的 Spell 属性 */
     public static void clearSpellAttrs(ServerPlayer player) {
-        GoetyStaffItem.clearSpellAttrs(player);
+        GoetyStaffLink.clearSpellAttrs(player);
     }
 }

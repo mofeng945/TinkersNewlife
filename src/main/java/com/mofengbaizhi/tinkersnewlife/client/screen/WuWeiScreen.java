@@ -241,7 +241,7 @@ public class WuWeiScreen extends AbstractRowListScreen<String> {
 
     private static EntityType<?> type(String entityTypeId) {
         return entityTypeId == null ? null
-                : ForgeRegistries.ENTITY_TYPES.getValue(ResourceLocation.tryParse(entityTypeId));
+                : com.mofengbaizhi.tinkersnewlife.util.SafeRegistry.entityType(ResourceLocation.tryParse(entityTypeId));
     }
 
     /** 形态显示名：EntityType 本地化键，找不到则显示注册名 */

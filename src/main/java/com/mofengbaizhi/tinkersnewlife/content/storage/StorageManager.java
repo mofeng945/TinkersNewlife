@@ -98,7 +98,7 @@ public class StorageManager {
 
                     ItemStack stack = ItemStack.EMPTY;
                     if (!id.isEmpty()) {
-                        var item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(id));
+                        var item = com.mofengbaizhi.tinkersnewlife.util.SafeRegistry.item(new ResourceLocation(id));
                         if (item != null) {
                             stack = new ItemStack(item, Math.min(count, maxStackSize));
                             if (tag != null && !tag.isEmpty()) {

@@ -179,6 +179,6 @@ public final class ClientWuWeiData {
 
 
     private static EntityType<?> entityType(String id) {
-        return ForgeRegistries.ENTITY_TYPES.getValue(ResourceLocation.tryParse(id));
+        return com.mofengbaizhi.tinkersnewlife.util.SafeRegistry.entityType(ResourceLocation.tryParse(id));
     }
 }

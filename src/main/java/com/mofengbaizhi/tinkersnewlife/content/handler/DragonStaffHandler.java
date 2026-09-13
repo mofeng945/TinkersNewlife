@@ -271,7 +271,7 @@ public class DragonStaffHandler {
             if (entry.getInt("state") == 1) {
                 CompoundTag data = entry.getCompound("data");
                 ResourceLocation typeId = new ResourceLocation(entry.getString("type"));
-                EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(typeId);
+                EntityType<?> type = com.mofengbaizhi.tinkersnewlife.util.SafeRegistry.entityType(typeId);
                 if (type == null) {
                     player.displayClientMessage(Component.translatable("modifier.tinkersnewlife.dragon_staff.release_fail_type"), true);
                     return;

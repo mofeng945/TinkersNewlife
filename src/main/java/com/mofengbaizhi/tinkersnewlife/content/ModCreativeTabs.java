@@ -194,11 +194,14 @@ public class ModCreativeTabs {
      * 按注册名把物品加入创造栏；物品不存在则跳过。
      * <p>联动内容的注册点都在 {@code integration/<modid>/} 里（模组不在场 → 整组不注册），
      * 所以公共代码只能按注册名取用，绝不引用联动类的静态字段。
+     * <p>⚠ {@link com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader#item(String)} 已处理
+     * "Forge 对不存在的 id 返回默认值 AIR"的陷阱（AIR 的 ItemStack 计数是 0，塞进创造栏会抛
+     * {@code The stack count must be 1}）；这里再兜一道，AIR 一律不加。
      */
     private static void acceptItemIfPresent(CreativeModeTab.Output output, String itemPath) {
         net.minecraft.world.item.Item item =
                 com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.item(itemPath);
-        if (item != null) output.accept(item);
+        if (item != null && item != net.minecraft.world.item.Items.AIR) output.accept(item);
     }
 
     // ============================================================

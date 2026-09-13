@@ -6,19 +6,10 @@
               },
     "temperature":  900,
     "output":  "tinkersnewlife:cursed_metal",
-  "conditions": [
-    {
-      "type": "forge:or",
-      "values": [
-        {
-          "type": "tconstruct:config",
-          "prop": "force_integration_materials"
-        },
-        {
-          "type": "forge:mod_loaded",
-          "modid": "goety"
-        }
-      ]
-    }
-  ]
+    "conditions":  [
+                       {
+                           "type":  "forge:mod_loaded",
+                           "modid":  "goety"
+                       }
+                   ]
 }

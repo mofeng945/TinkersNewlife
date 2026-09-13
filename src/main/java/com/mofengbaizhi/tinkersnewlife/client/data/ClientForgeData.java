@@ -92,7 +92,7 @@ public class ClientForgeData {
         if (itemId.isEmpty()) return "";
         ResourceLocation loc = ResourceLocation.tryParse(itemId);
         if (loc == null) return itemId;
-        var item = ForgeRegistries.ITEMS.getValue(loc);
+        var item = com.mofengbaizhi.tinkersnewlife.util.SafeRegistry.item(loc);
         if (item == null) return itemId;
         return new ItemStack(item).getHoverName().getString();
     }

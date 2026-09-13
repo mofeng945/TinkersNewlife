@@ -148,35 +148,20 @@ public final class IntegrationLoader {
     }
 
     /**
-     * 联动内容是否需要注册：模组在场，或匠魂的 {@code force_integration_materials} 打开。
+     * 联动内容是否需要注册：**只看模组是否在场**。
      *
-     * <p>匠魂该配置打开时，联动<b>材料定义</b>照样加载（我们的材料定义条件就是
-     * {@code forge:or(tconstruct:config force_integration_materials, forge:mod_loaded …)}），
-     * 此时对应流体必须注册，否则材料定义会引用一个不存在的流体。
-     * 配置读不到（尚未加载）时<b>保守返回 true</b>＝维持旧行为（注册），绝不因时序问题误删内容。
+     * <p>为什么不看匠魂的 {@code force_integration_materials}：该配置在 mod 构造阶段**读不到**
+     * （配置装载晚于构造），只能"保守返回 true"＝在模组缺失时也照样注册，等于没有门控；
+     * 而它唯一的意义是"强制让联动材料定义加载"，那条路会引用到并不存在的流体。
+     * 因此统一口径：**注册/材料定义/配方全部只认 {@code forge:mod_loaded}**，三方一致、无悬空引用。
      */
     public static boolean shouldRegisterLinked(String modId) {
-        if (isLoaded(modId)) return true;
-        Boolean forced = forcedIntegrationMaterials();
-        return forced == null || forced;
-    }
-
-    /** 匠魂 force_integration_materials 当前值；配置尚未加载／读不到时返回 null（调用方保守处理） */
-    @javax.annotation.Nullable
-    private static Boolean forcedIntegrationMaterials() {
-        try {
-            return slimeknights.tconstruct.common.config.Config.COMMON.forceIntegrationMaterials.get();
-        } catch (Throwable t) {
-            return null;
-        }
+        return isLoaded(modId);
     }
 
     /** 注册决策的可读描述（写进启动日志，便于排查"联动流体该不该注册"） */
     private static String linkDecision(String modId) {
-        if (isLoaded(modId)) return "注册（模组在场）";
-        Boolean forced = forcedIntegrationMaterials();
-        if (forced == null) return "注册（匠魂配置未就绪，保守沿用旧行为）";
-        return forced ? "注册（force_integration_materials=true）" : "不注册（模组缺失且未强制）";
+        return isLoaded(modId) ? "注册（模组在场）" : "不注册（模组未安装）";
     }
 
     // ============================================================
@@ -242,10 +227,28 @@ public final class IntegrationLoader {
         }
     }
 
-    /** 共通物品：按注册名取本模组物品（公共代码的推荐取用方式） */
+    // ============================================================
+    //  公共代码按注册名取用（联动类静态字段一律不引用）
+    //  ⚠ 一律经 SafeRegistry：Forge 的 getValue 对不存在的 id 返回"默认值"
+    //    （ITEMS→AIR、FLUIDS→EMPTY），直接当物品用会得到 count=0 的空栈
+    // ============================================================
+
+    /** 按注册名取本模组物品；不存在返回 null（不是 {@code Items.AIR}） */
+    @javax.annotation.Nullable
     public static Item item(String path) {
-        return net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(
-                new net.minecraft.resources.ResourceLocation(
-                        com.mofengbaizhi.tinkersnewlife.TinkersNewlife.MOD_ID, path));
+        return com.mofengbaizhi.tinkersnewlife.util.SafeRegistry.item(
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.MOD_ID, path);
+    }
+
+    /** 按注册名取本模组流体；不存在返回 null（不是 {@code Fluids.EMPTY}） */
+    @javax.annotation.Nullable
+    public static net.minecraft.world.level.material.Fluid fluid(String path) {
+        return com.mofengbaizhi.tinkersnewlife.util.SafeRegistry.fluid(
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.MOD_ID, path);
+    }
+
+    /** 该物品是否真的存在（联动模组不在场时其内容整组未注册 → false） */
+    public static boolean hasItem(String path) {
+        return item(path) != null;
     }
 }

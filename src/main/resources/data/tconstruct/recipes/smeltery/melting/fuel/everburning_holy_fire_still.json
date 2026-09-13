@@ -1,25 +1,16 @@
 {
-  "type": "tconstruct:melting_fuel",
-  "duration": 200,
-  "fluid": {
-    "amount": 50,
-    "fluid": "tinkersnewlife:everburning_holy_fire_still"
-  },
-  "rate": 18,
-  "temperature": 2200,
-  "conditions": [
-    {
-      "type": "forge:or",
-      "values": [
-        {
-          "type": "tconstruct:config",
-          "prop": "force_integration_materials"
-        },
-        {
-          "type": "forge:mod_loaded",
-          "modid": "goety"
-        }
-      ]
-    }
-  ]
+    "type":  "tconstruct:melting_fuel",
+    "duration":  200,
+    "fluid":  {
+                  "amount":  50,
+                  "fluid":  "tinkersnewlife:everburning_holy_fire_still"
+              },
+    "rate":  18,
+    "temperature":  2200,
+    "conditions":  [
+                       {
+                           "type":  "forge:mod_loaded",
+                           "modid":  "goety"
+                       }
+                   ]
 }

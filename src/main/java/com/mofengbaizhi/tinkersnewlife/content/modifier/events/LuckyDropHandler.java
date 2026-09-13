@@ -104,16 +104,22 @@ public class LuckyDropHandler {
                 }
             }
             if (!found) {
-                ItemStack forcedDrop = new ItemStack(ForgeRegistries.ITEMS.getValue(rareDropId), 1);
-                ItemEntity newDrop = new ItemEntity(
-                        entity.level(),
-                        entity.getX() + (entity.level().random.nextDouble() - 0.5) * 0.5,
-                        entity.getY() + 0.5,
-                        entity.getZ() + (entity.level().random.nextDouble() - 0.5) * 0.5,
-                        forcedDrop
-                );
-                newDrop.setPickUpDelay(10);
-                event.getDrops().add(newDrop);
+                // ⭐ 按注册名取物品必须走 SafeRegistry：Forge 对不存在的 id 返回默认值 Items.AIR，
+                // 直接 new ItemStack(AIR,1) 会得到 count=0 的"空栈"并生成一个空的掉落物
+                net.minecraft.world.item.Item forcedItem =
+                        com.mofengbaizhi.tinkersnewlife.util.SafeRegistry.item(rareDropId);
+                if (forcedItem != null) {
+                    ItemStack forcedDrop = new ItemStack(forcedItem, 1);
+                    ItemEntity newDrop = new ItemEntity(
+                            entity.level(),
+                            entity.getX() + (entity.level().random.nextDouble() - 0.5) * 0.5,
+                            entity.getY() + 0.5,
+                            entity.getZ() + (entity.level().random.nextDouble() - 0.5) * 0.5,
+                            forcedDrop
+                    );
+                    newDrop.setPickUpDelay(10);
+                    event.getDrops().add(newDrop);
+                }
             }
         } else {
             // 🎲 普通生物：判定成功后，额外在战利品表中 roll 选一次。

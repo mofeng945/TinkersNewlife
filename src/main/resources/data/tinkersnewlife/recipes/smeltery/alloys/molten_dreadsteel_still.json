@@ -15,19 +15,10 @@
                    "amount":  250
                },
     "temperature":  1600,
-  "conditions": [
-    {
-      "type": "forge:or",
-      "values": [
-        {
-          "type": "tconstruct:config",
-          "prop": "force_integration_materials"
-        },
-        {
-          "type": "forge:mod_loaded",
-          "modid": "iceandfire"
-        }
-      ]
-    }
-  ]
+    "conditions":  [
+                       {
+                           "type":  "forge:mod_loaded",
+                           "modid":  "iceandfire"
+                       }
+                   ]
 }

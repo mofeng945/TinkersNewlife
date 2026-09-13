@@ -131,7 +131,7 @@ public class CurseCoreRitualHandler {
     private CurseCoreRitualHandler() {}
 
     private static Fluid fluid(String id) {
-        return ForgeRegistries.FLUIDS.getValue(ResourceLocation.tryParse(id));
+        return com.mofengbaizhi.tinkersnewlife.util.SafeRegistry.fluid(ResourceLocation.tryParse(id));
     }
 
     // ============================================================
@@ -180,8 +180,8 @@ public class CurseCoreRitualHandler {
         // 1. 量器在矿石正下方（焦黑 seared_ingot_gauge / 焦褐 scorched_ingot_gauge 均可）
         BlockPos gaugePos = orePos.below();
         if (gaugeSeared == null) {
-            gaugeSeared = ForgeRegistries.BLOCKS.getValue(ResourceLocation.tryParse("tconstruct:seared_ingot_gauge"));
-            gaugeScorched = ForgeRegistries.BLOCKS.getValue(ResourceLocation.tryParse("tconstruct:scorched_ingot_gauge"));
+            gaugeSeared = com.mofengbaizhi.tinkersnewlife.util.SafeRegistry.block(ResourceLocation.tryParse("tconstruct:seared_ingot_gauge"));
+            gaugeScorched = com.mofengbaizhi.tinkersnewlife.util.SafeRegistry.block(ResourceLocation.tryParse("tconstruct:scorched_ingot_gauge"));
         }
         BlockState gaugeState = level.getBlockState(gaugePos);
         if (gaugeSeared == null || (!gaugeState.is(gaugeSeared) && !gaugeState.is(gaugeScorched))) return null;
