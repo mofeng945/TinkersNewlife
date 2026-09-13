@@ -55,7 +55,8 @@ public class CurseBottleItem extends Item implements ICurioItem {
 
     @Override
     public boolean canEquipFromUse(SlotContext context, ItemStack stack) {
-        return false;
+        // 允许"手持右键直接装备到饰品槽"（瓶子没有别的右键功能，开着更顺手）
+        return canEquip(context, stack);
     }
 
     // ========== 耐久条 = 瓶内咒力 ==========

@@ -39,5 +39,17 @@ public class ModCurios {
                         .icon(new net.minecraft.resources.ResourceLocation(TinkersNewlife.MOD_ID, "gui/tinker_pattern/curse_core"))
                         .build()
         );
+
+        // ⭐ 通用「饰品」槽（curio）：Curios 自带的槽位定义**没有 size（默认 0 = 不显示）**，
+        //    必须由模组用 IMC 显式给一个 size，槽位才会真的出现在饰品栏里
+        //    （本模组的 hands / ring / feet / curse_core 都是这么登记的）。
+        //    封呪瓶佩戴在这里，所以这一条不可省 —— 少了它就会出现"物品放不进饰品槽"。
+        //    图标沿用 Curios 自带的空饰品槽图标。
+        InterModComms.sendTo(CuriosApi.MODID, SlotTypeMessage.REGISTER_TYPE,
+                () -> new SlotTypeMessage.Builder("curio")
+                        .size(1)
+                        .icon(new net.minecraft.resources.ResourceLocation("curios", "slot/empty_curio_slot"))
+                        .build()
+        );
     }
 }
