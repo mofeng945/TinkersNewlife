@@ -16,6 +16,17 @@
     {
       "type": "patchouli:text",
       "text": "It is also a $(bold)fluid container$(): the bottle exposes a fluid handler and can take $(l:residue)Curse Residue$() from a smeltery.$(br2)$(bold)1 mb Curse Residue = 10 curse power$(), a full bottle holds 500 mb = 5000 curse.$(br2)Right-click a smeltery drain with the bottle, or right-click a $(l:vault)Curse Vault$(), to move residue in and out."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Recipe",
+      "text": "The $(bold)Curse-Sealing Bottle$() is made by the $(l:curse_craft)Curse Crafting Ritual$() (JEI shows the same recipe):$(br2)$(bold)Core slot$() (the lantern right above the ore) takes:$(li)1 x Nyarlathotep's Desire$(br2)$(bold)Material slots$() (the other 8 lanterns) take:$(li)1 x Glass Bottle$(li)3 x Boundary Fragment$(li)1 x Seared Soul Glass Pane$(br2)$(bold)Curse cost$(): $(bold)500$() (the ritual drains 10 per tick, about 2.5 seconds)$(br2)Note: the material count must be $(bold)exact$() - one extra item means no match and the ritual will not start. See $(l:curse_craft)Curse Crafting Ritual$() for how to build the structure (that entry has a visualisable sample structure)."
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:nyarlathotep_desire",
+      "title": "Core: Nyarlathotep's Desire",
+      "text": "Put the $(bold)core item$() on the lantern right above the ore (right-click), place the materials on the eight material lanterns, then $(bold)hold the core and right-click the core lantern$() to start.$(br2)The product floats above the core lantern afterwards; right-click to take it."
     }
   ]
 }

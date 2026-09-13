@@ -16,6 +16,17 @@
     {
       "type": "patchouli:text",
       "text": "$(bold)Ways to use it$():$(li)empty-hand left-click / sneak right-click: pick up$(li)empty-hand right-click: report stored amount$(li)right-click holding a $(bold)container with Curse Residue$(): pour it in (1 mb = 10 curse)$(li)right-click holding an $(bold)empty container$(): draw residue back out$(br2)$(bold)Look at the vault$() with your crosshair and the stored curse power plus a capacity bar appear right below the crosshair (above 10,000 it is shown in k/wan notation, e.g. 1.2w)."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Recipe",
+      "text": "The $(bold)Curse Vault$() is made by the $(l:curse_craft)Curse Crafting Ritual$() (JEI shows the same recipe):$(br2)$(bold)Core slot$() (the lantern right above the ore) takes:$(li)1 x The Call of R'lyeh$(br2)$(bold)Material slots$() (the other 8 lanterns) take:$(li)1 x Obsidian$(li)1 x Prison Realm Gate$(li)4 x Boundary Fragment$(li)2 x Seared Brick$(br2)$(bold)Curse cost$(): $(bold)3000$() (the ritual drains 10 per tick, about 15 seconds)$(br2)Note: the material count must be $(bold)exact$() (here exactly 8 items) - one extra item means no match and the ritual will not start. See $(l:curse_craft)Curse Crafting Ritual$() for how to build the structure."
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:rlyeh_call",
+      "title": "Core: The Call of R'lyeh",
+      "text": "Put the $(bold)core item$() on the lantern right above the ore (right-click), place the materials on the eight material lanterns, then $(bold)hold the core and right-click the core lantern$() to start.$(br2)The product floats above the core lantern afterwards; right-click to take it."
     }
   ]
 }
