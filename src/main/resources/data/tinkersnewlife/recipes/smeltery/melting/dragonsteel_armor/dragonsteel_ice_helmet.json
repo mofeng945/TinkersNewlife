@@ -1,0 +1,18 @@
+{
+    "type":  "tconstruct:melting",
+    "ingredient":  {
+                       "item":  "iceandfire:dragonsteel_ice_helmet"
+                   },
+    "result":  {
+                   "fluid":  "tinkersnewlife:molten_dragonsteel_ice_still",
+                   "amount":  450
+               },
+    "temperature":  1200,
+    "time":  150,
+    "conditions":  [
+                       {
+                           "type":  "forge:mod_loaded",
+                           "modid":  "iceandfire"
+                       }
+                   ]
+}

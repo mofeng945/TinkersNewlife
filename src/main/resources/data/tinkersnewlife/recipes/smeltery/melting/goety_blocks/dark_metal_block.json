@@ -1,0 +1,18 @@
+{
+    "type":  "tconstruct:melting",
+    "ingredient":  {
+                       "item":  "goety:dark_metal_block"
+                   },
+    "result":  {
+                   "fluid":  "tinkersnewlife:molten_dark_metal_still",
+                   "amount":  810
+               },
+    "temperature":  1000,
+    "time":  180,
+    "conditions":  [
+                       {
+                           "type":  "forge:mod_loaded",
+                           "modid":  "goety"
+                       }
+                   ]
+}

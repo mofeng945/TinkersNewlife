@@ -1,0 +1,17 @@
+{
+    "type":  "tconstruct:casting_basin",
+    "fluid":  {
+                  "name":  "tinkersnewlife:molten_dragonsteel_ice_still",
+                  "amount":  810
+              },
+    "result":  {
+                   "item":  "iceandfire:dragonsteel_ice_block"
+               },
+    "cooling_time":  200,
+    "conditions":  [
+                       {
+                           "type":  "forge:mod_loaded",
+                           "modid":  "iceandfire"
+                       }
+                   ]
+}
