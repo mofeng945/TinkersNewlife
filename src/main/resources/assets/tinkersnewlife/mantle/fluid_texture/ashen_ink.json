@@ -1,8 +1,8 @@
 {
-  "still": "tinkersnewlife:block/ashen_ink",
-  "flowing": "tinkersnewlife:block/ashen_ink",
-  "color": "FFFFFFFF",
-  "fogColor": "FF2E0505",
-  "fogStart": 0.3,
-  "fogEnd": 4.0
+    "still":  "tinkersnewlife:block/ashen_ink_still",
+    "flowing":  "tinkersnewlife:block/ashen_ink_flowing",
+    "color":  "FFFFFFFF",
+    "fogColor":  "FF2E0505",
+    "fogStart":  0.3,
+    "fogEnd":  4.0
 }
