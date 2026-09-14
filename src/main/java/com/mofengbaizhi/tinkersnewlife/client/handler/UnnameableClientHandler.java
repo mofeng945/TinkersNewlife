@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.client.handler;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.config.ModConfig;
 import com.mofengbaizhi.tinkersnewlife.client.renderer.UnnameableGlitchRenderer;
+import com.mofengbaizhi.tinkersnewlife.client.renderer.UnnameableWhisperRenderer;
 import com.mofengbaizhi.tinkersnewlife.content.ModEffects;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -85,6 +86,14 @@ public class UnnameableClientHandler {
     private static boolean postEffectEnabled() {
         try {
             return ModConfig.UNNAMEABLE_POST_EFFECT.get();
+        } catch (Throwable ignored) {
+            return true;
+        }
+    }
+
+    private static boolean whispersEnabled() {
+        try {
+            return ModConfig.UNNAMEABLE_WHISPERS.get();
         } catch (Throwable ignored) {
             return true;
         }
@@ -215,7 +224,7 @@ public class UnnameableClientHandler {
     }
 
     /**
-     * 模拟"信号干扰 / 花屏"：整屏覆盖层（撕裂条 + 噪点 + 滚动干扰带 + 不定时闪屏）。
+     * 模拟"信号干扰 / 花屏"（撕裂条 + 噪点 + 滚动干扰带 + 闪屏）以及<b>低语文字</b>。
      *
      * <p>画在 {@code RenderGuiEvent.Post}（整块 GUI 画完之后），所以血条/物品栏/HUD 也会被"干扰"到，
      * 观感就是"显示器坏了"而不是"画面里多了一层贴图"。
@@ -224,12 +233,19 @@ public class UnnameableClientHandler {
     public static void onRenderGuiPost(RenderGuiEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
-        if (unnameable(player) == null) return;
+        MobEffectInstance effect = unnameable(player);
+        if (effect == null) return;
 
         // 1.20.1 的 RenderGuiEvent 只给 GuiGraphics/partialTick，屏幕尺寸从窗口取（GUI 缩放后的尺寸）
         int width = mc.getWindow().getGuiScaledWidth();
         int height = mc.getWindow().getGuiScaledHeight();
-        UnnameableGlitchRenderer.render(
-                event.getGuiGraphics(), width, height, player.tickCount, unnameable(player));
+
+        UnnameableGlitchRenderer.render(event.getGuiGraphics(), width, height, player.tickCount, effect);
+
+        if (whispersEnabled()) {
+            // 低语强度 0~1：等级 0 就已经有低语，等级越高同时出现的条数越多、越亮
+            float level = Math.min(1.0F, 0.35F + effect.getAmplifier() * 0.22F);
+            UnnameableWhisperRenderer.render(event.getGuiGraphics(), width, height, player.tickCount, level);
+        }
     }
 }

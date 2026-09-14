@@ -47,6 +47,8 @@ public final class ModConfig {
     public static final ConfigValue<Boolean> UNNAMEABLE_POST_EFFECT;
     /** 后处理是否"闪断"（默认 true：亮 2~5 秒 / 断 0.5~1.5 秒随机交替，避免反转色一直糊着） */
     public static final ConfigValue<Boolean> UNNAMEABLE_POST_EFFECT_PULSE;
+    /** 「不可名状」的屏幕低语文字（客户端，默认开；文字走可翻译键 whisper.tinkersnewlife.*） */
+    public static final ConfigValue<Boolean> UNNAMEABLE_WHISPERS;
 
     // ==================== 飞剑流光拖尾 ====================
     /** 飞剑流光拖尾（客户端）：动态条带 + 自写流光着色器 */
@@ -196,6 +198,7 @@ public final class ModConfig {
         UNNAMEABLE_FOV_MULTIPLIER = b.defineInRange("fov_multiplier", 1.4D, 1.0D, 2.5D);
         UNNAMEABLE_POST_EFFECT = b.define("post_effect", true);
         UNNAMEABLE_POST_EFFECT_PULSE = b.define("post_effect_pulse", true);
+        UNNAMEABLE_WHISPERS = b.define("whispers", true);
         UNNAMEABLE_GLITCH = b.define("glitch", true);
         UNNAMEABLE_GLITCH_INTENSITY = b.defineInRange("glitch_intensity", 1.0D, 0.0D, 3.0D);
         b.pop();
