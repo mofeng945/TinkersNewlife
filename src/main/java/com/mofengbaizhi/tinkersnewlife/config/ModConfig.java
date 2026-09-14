@@ -62,6 +62,10 @@ public final class ModConfig {
     // 说明：HUD 的位置/宽度由游戏内拖动界面写入独立文件 config/mofengbaizhi/curse_hud.json
     //       （见 client/hud/CurseHudConfig），不放这里以免与主配置的写回时机打架。
 
+    // ==================== 领域 ====================
+    /** 领域被破坏时，每个结界方块掉落结界碎片的概率分母（默认 1000 = 1/1000，比原来的 1/100 稀十倍） */
+    public static final ConfigValue<Integer> DOMAIN_FRAGMENT_DROP_DENOMINATOR;
+
     // ==================== 构筑术式（拟造） ====================
     /** 拟造费用倍率（默认 10.0 = 原价的 10 倍） */
     public static final ConfigValue<Double> CONSTRUCT_COST_MULTIPLIER;
@@ -408,7 +412,13 @@ public final class ModConfig {
         b.pop();
 
         // 领域系数：每领域 radius / damage / cost 缩放
-        b.push("domains").comment("Per-domain formula scale multipliers (1.0 = vanilla values).");
+        b.push("domains").comment(
+                "Domain formula scale multipliers (1.0 = vanilla values).",
+                "",
+                "fragment_drop_denominator = when a domain is DESTROYED, each boundary block has a 1/N chance",
+                "to drop a Boundary Fragment. Default 1000 (= 0.1%, ten times rarer than the old 1/100).",
+                "Set 1 to make every block drop one (for testing / generous packs).");
+        DOMAIN_FRAGMENT_DROP_DENOMINATOR = b.defineInRange("fragment_drop_denominator", 1000, 1, 1000000);
         String[][] domains = {
                 {"zuosha_botu", "Self-Embodiment of Perfection"}, {"wuliang_kongchu", "Unlimited Void"},
                 {"fumo_yuchuzi", "Malevolent Shrine"}, {"fuzhu_cisi", "Execution by Verdict"},
@@ -463,5 +473,18 @@ public final class ModConfig {
     public static double domainCost(String id) {
         ConfigValue<Double>[] arr = DOMAIN_SCALES.get(id);
         return arr == null ? 1.0 : arr[2].get();
+    }
+
+    /**
+     * 领域被破坏时结界碎片的掉落分母：每个结界方块 1/N 概率掉落。
+     *
+     * <p>默认 1000（原为 100）；返回 1 表示"每块都掉"。配置没就绪时按默认值处理。
+     */
+    public static int domainFragmentDropDenominator() {
+        try {
+            return Math.max(1, DOMAIN_FRAGMENT_DROP_DENOMINATOR.get());
+        } catch (Throwable ignored) {
+            return 1000;
+        }
     }
 }

@@ -7,7 +7,7 @@
                   {
                       "type":  "patchouli:spotlight",
                       "item":  "tinkersnewlife:boundary_fragment",
-                      "text":  "$(bold)Boundary Fragment$()$(br2)Shards stripped from Domain Boundary blocks when a domain is $(bold)destroyed$() (each boundary block has a $(bold)1/100$() chance to drop one; stack size 60).$(br2)Uses:$(li)whenever you spend cursed energy (techniques / domains), $(bold)Boundary Fragments in your inventory are consumed first$() — $(bold)1 fragment = 25 Cursed Energy$()$(li)any shortfall is then deducted from your Cursed Energy / Soul Energy in the normal order"
+                      "text":  "$(bold)Boundary Fragment$()$(br2)Shards stripped from Domain Boundary blocks when a domain is $(bold)destroyed$() (each boundary block has a $(bold)1/1000$() chance to drop one (tunable via $(bold)[domains] fragment_drop_denominator$(), default 1000); stack size 60).$(br2)Uses:$(li)whenever you spend cursed energy (techniques / domains), $(bold)Boundary Fragments in your inventory are consumed first$() — $(bold)1 fragment = 25 Cursed Energy$()$(li)any shortfall is then deducted from your Cursed Energy / Soul Energy in the normal order"
                   }
               ]
 }

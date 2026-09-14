@@ -539,7 +539,7 @@ public final class DomainRegistry {
 
     /**
      * 咒具右键领域结界方块：破坏该领域；若该领域正处于领域对抗中，则双方领域同时崩坏。
-     * 领域崩坏掉落结界碎片（1/100，散落为掉落物，谁都能捡）；
+     * 领域崩坏掉落结界碎片（默认 1/1000，见 [domains] fragment_drop_denominator；散落为掉落物，谁都能捡）；
      * 仅有的防刷限制：领域展开不足 2 秒被破坏 → 不掉碎片（防"展开瞬间"低成本刷取）。
      * 领域崩坏仍会使主人进入术式熔断（创造模式豁免）。
      */
@@ -598,12 +598,20 @@ public final class DomainRegistry {
         applyBurnoutIfSurvival(owner);
     }
 
-    /** 领域崩坏时：每个结界方块 1/100 概率掉落一个结界碎片（散落为掉落物）；展开不足 2 秒不掉 */
+    /**
+     * 领域崩坏时：每个结界方块按 {@code [domains] fragment_drop_denominator} 的 1/N 概率掉落一个结界碎片
+     * （默认 <b>1/1000</b>，散落为掉落物，谁都能捡）；展开不足 2 秒不掉。
+     *
+     * <p>结界方块是"球壳"，数量随半径平方增长：半径 10 的领域约 1250 块、半径 20 约 5000 块，
+     * 所以 1/1000 下一次崩坏大概掉 1~5 个（旧值 1/100 会掉十几个，太多了）。
+     */
     private static void dropBoundaryFragments(ServerLevel level, BaseDomain domain) {
         if (domain.getAgeTicks(level.getGameTime()) < 40) return; // 展开不足 2 秒
+        int denominator = com.mofengbaizhi.tinkersnewlife.config.ModConfig.domainFragmentDropDenominator();
         var fragment = com.mofengbaizhi.tinkersnewlife.content.ModItems.BOUNDARY_FRAGMENT.get();
         for (BlockPos pos : domain.getBarrierPositions()) {
-            if (level.random.nextInt(100) != 0) continue;
+            // denominator = 1 → 每块都掉（调试/大方整合包用）
+            if (denominator > 1 && level.random.nextInt(denominator) != 0) continue;
             net.minecraft.world.entity.item.ItemEntity item = new net.minecraft.world.entity.item.ItemEntity(level,
                     pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
                     new net.minecraft.world.item.ItemStack(fragment));

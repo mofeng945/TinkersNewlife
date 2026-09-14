@@ -32,6 +32,10 @@ A visual-and-audio release for the **Unnameable** effect and for **Domains**: th
 - **Having a domain broken** (smashing the barrier with a cursed tool, or losing the curse core that sustained it) plays the vanilla **glass-shattering** crash at the domain's centre.
 - Domain sounds are positional (played at the sphere's centre on the `BLOCKS` / `PLAYERS` channels), so they fade with distance like any world sound — and the two expansion tracks are also listed as subtitles (「领域：展开」/「Domain: expands」).
 
+### Boundary Fragments Are Ten Times Rarer
+- Destroying a domain used to drop a **Boundary Fragment** from roughly **1 %** of its boundary blocks; that is now **1/1000 (0.1 %)** per block. Boundary blocks scale with the square of the radius (a radius-10 domain is about 1250 blocks, radius 20 about 5000), so a destroyed domain now yields roughly **1–5 fragments** instead of a dozen or more.
+- The rate is configurable: `[domains] fragment_drop_denominator` (default `1000`; set `1` to make every boundary block drop one). The in-game guide and item tooltips were updated to match.
+
 ## Configuration
 ```toml
 [unnameable]

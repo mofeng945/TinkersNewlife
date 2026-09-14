@@ -270,7 +270,7 @@ public class ModItems {
     public static final RegistryObject<Item> GUIDE_BOOK =
             ITEMS.register("guide_book", () -> new vazkii.patchouli.common.item.ItemModBook());
 
-    /** 结界碎片：领域被破坏时 1/100 概率掉落；消耗咒力时优先消耗（1 碎片 = 25 咒力） */
+    /** 结界碎片：领域被破坏时 1/1000 概率掉落（[domains] fragment_drop_denominator）；消耗咒力时优先消耗（1 碎片 = 25 咒力） */
     public static final RegistryObject<Item> BOUNDARY_FRAGMENT =
             ITEMS.register("boundary_fragment", () -> new Item(new Item.Properties().stacksTo(60)));
 
