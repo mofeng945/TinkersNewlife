@@ -59,3 +59,9 @@ player.txt
 mobrenderer.txt
 .tmp_tacz/
 .tmp_goety/
+# 反编译/分析用的临时源码树（可随时从 jar 重新导出，绝不进仓库）
+.tcsrc/
+.tmp_goety_src/
+.tmp_tacz/
+# 数据生成器（runData）输出
+run-data/

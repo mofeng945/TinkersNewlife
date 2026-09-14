@@ -223,6 +223,11 @@ tasks.named('jar', Jar).configure {
         ])
     }
 
+    // ⭐ 排掉数据生成器（runData）留在 src/generated/resources 里的状态文件：
+    //    `.cache/<hash>` 是 Forge DataGenerator 用来记录"这份文件是谁生成的"的元数据，
+    //    对游戏毫无用处，却会跟着打进 jar（实测两个 .cache 条目）。顺手清干净。
+    exclude '.cache/**'
+
     // This is the preferred method to reobfuscate your jar file
     finalizedBy 'reobfJar'
 }

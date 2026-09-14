@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.client.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.config.ModConfig;
+import com.mofengbaizhi.tinkersnewlife.client.renderer.UnnameableGlitchRenderer;
 import com.mofengbaizhi.tinkersnewlife.content.ModEffects;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -228,7 +229,7 @@ public class UnnameableClientHandler {
         // 1.20.1 的 RenderGuiEvent 只给 GuiGraphics/partialTick，屏幕尺寸从窗口取（GUI 缩放后的尺寸）
         int width = mc.getWindow().getGuiScaledWidth();
         int height = mc.getWindow().getGuiScaledHeight();
-        com.mofengbaizhi.tinkersnewlife.client.renderer.UnnameableGlitchRenderer.render(
+        UnnameableGlitchRenderer.render(
                 event.getGuiGraphics(), width, height, player.tickCount, unnameable(player));
     }
 }

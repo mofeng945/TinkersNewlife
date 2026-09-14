@@ -36,11 +36,6 @@ A curse-power-storage and ritual release: two new containers — the **Curse-Sea
 ### Black Bird Manipulation: look-direction flight
 - **W / S** now fly along your **full look direction** — look up to climb, **look down to descend** (previously the only vertical input was Space, so the bird could only go up). A / D still strafe horizontally, Space still gives an extra ascent, and Shift is still the dive-bomb.
 
-### The Unnameable Effect Now Glitches Your Screen
-- Being **Unnameable** no longer means just black fog and a swaying camera: the whole screen now suffers **signal interference** — horizontal tearing bands with a red/cyan chromatic split, static noise, a rolling interference bar sweeping downward, and irregular white/dark screen flashes.
-- The pattern is deliberately **re-drawn only a few times per second** (instead of every frame), so it reads like a failing display rather than smooth snow; intensity scales with the effect's level.
-- Config: `unnameable.glitch` (on/off) and `unnameable.glitch_intensity` (0–3, default 1). The black fog and camera sway are unaffected by these keys.
-
 ## Fixes
 - **Ritual interaction** could do nothing at all because the lanterns were expected one block too high; the guide's structure page now matches the code exactly.
 - Floating ritual materials used to drift up out of reach and become unretrievable; the core lantern also reported "0 materials" even with a full setup.
