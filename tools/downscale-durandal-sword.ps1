@@ -24,9 +24,12 @@ $SIZE = 64
 $MASK_THRESHOLD = 0.28   # 区块 alpha 最大值 >= 它才算实体（越小越粗、细刺越不容易断）
 $CORE_ALPHA = 0.60       # 求颜色时只统计 alpha >= 它的实心像素
 $DILATE = 1              # 膨胀像素数（0/1/2）：让剑更硬朗，MC 风格偏粗
-$LEVEL_BLACK = 30.0      # 黑场：亮度 <= 它 → 纯黑（原图整体极暗，靠它把剑身压成黑）
-$LEVEL_WHITE = 42.0      # 白场：亮度 >= 它 → 纯白（刃口最亮的那条带子就是它）
-$GAMMA_OUT = 0.70        # 输出 gamma（<1 提亮中间调）
+$L_IN = 2.0                  # input black (source art is very dark)
+$H_IN = 112.0                # input white
+$LO_OUT = 20.0               # output floor: keep some grey, pure black has no form
+$HI_OUT = 252.0              # output ceiling
+$BEVEL = 0.34                # across-blade bevel light (0 = off)
+$GAMMA_OUT = 0.90            # midtones
 $POSTERIZE = 6           # 色调量化档数（0/1 = 不量化）
 $SMOOTH = 1              # 上色前的平滑次数（3x3 平均，去掉缩绘产生的麻点，让亮带更干净）
 
@@ -176,10 +179,15 @@ for ($idx = 0; $idx -lt $N; $idx++) {
     $r = $pR[$idx]; $g = $pG[$idx]; $b = $pB[$idx]
     $lum = 0.299 * $r + 0.587 * $g + 0.114 * $b
     # 黑白场映射：<=黑场 → 0（纯黑），>=白场 → 255（纯白），中间按 gamma 过渡
-    $tt = ($lum - $LEVEL_BLACK) / ($LEVEL_WHITE - $LEVEL_BLACK)
+    $tt = ($lum - $L_IN) / ($H_IN - $L_IN)
     if ($tt -lt 0) { $tt = 0.0 } elseif ($tt -gt 1) { $tt = 1.0 }
-    $tt = [Math]::Pow($tt, $GAMMA_OUT)
-    $target = $tt * 255.0
+    $tt = $tt * $tt * (3.0 - 2.0 * $tt)   # smoothstep S-curve: darks stay dark, band pops
+    $xpx = ($idx % $SIZE) + 0.5
+    $ypx = [Math]::Floor($idx / $SIZE) + 0.5
+    $ss = ($xpx - 6.0 * $SIZE / 256.0) * 0.6967 + ($ypx - 245.0 * $SIZE / 256.0) * 0.7172
+    $bev = 1.0 + $BEVEL * [Math]::Max(-1.0, [Math]::Min(1.0, -$ss / 4.0))
+    $target = ($LO_OUT + ($HI_OUT - $LO_OUT) * $tt) * $bev
+    if ($target -gt 255) { $target = 255 } elseif ($target -lt 0) { $target = 0 }
     $scale = 0.0
     if ($lum -gt 0.0001) { $scale = $target / $lum }
     $r2 = $r * $scale; $g2 = $g * $scale; $b2 = $b * $scale
