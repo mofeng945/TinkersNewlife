@@ -13,6 +13,9 @@ $outDir = Join-Path $root 'src\main\resources\assets\tinkersnewlife\textures\ite
 if (-not (Test-Path $outDir)) { New-Item -ItemType Directory -Path $outDir -Force | Out-Null }
 
 $W = 32
+# NOTE (pitfall): on a 32px canvas the centre is 16.0, NOT 15.5. Pixel p is centred at p+0.5,
+# so left/right symmetry means left + right = 31. Using 15.5 shifts the whole sprite half a pixel
+# to the left, which reads as an asymmetric pot. Mirror paired parts as 32 - c (handle 5.0 <-> 27.0).
 $canvas = New-Object System.Drawing.Bitmap $W, $W
 for ($y = 0; $y -lt $W; $y++) { for ($x = 0; $x -lt $W; $x++) { $canvas.SetPixel($x, $y, [System.Drawing.Color]::FromArgb(0, 0, 0, 0)) } }
 
@@ -80,13 +83,13 @@ function Draw-RectOnBody([int]$x1, [int]$y1, [int]$x2, [int]$y2, $color) {
 
 # ============ 1) 壶身 ============
 # 肚子（最宽）
-Draw-Ellipse 15.5 21.0 8.6 7.4 $CLAY_M
+Draw-Ellipse 16.0 21.0 8.6 7.4 $CLAY_M
 # 肩部
-Draw-Ellipse 15.5 15.0 6.2 4.0 $CLAY_M
+Draw-Ellipse 16.0 15.0 6.2 4.0 $CLAY_M
 # 颈
 Draw-Rect 13 10 18 16 $CLAY_M
 # 足（外撇的圈足）
-Draw-Ellipse 15.5 27.4 5.0 2.0 $CLAY_M
+Draw-Ellipse 16.0 27.4 5.0 2.0 $CLAY_M
 Draw-Rect 12 26 19 28 $CLAY_M
 Draw-Rect 12 29 19 29 $CLAY_D
 
@@ -95,7 +98,7 @@ for ($y = 0; $y -lt $W; $y++) {
     for ($x = 0; $x -lt $W; $x++) {
         $c = Get-Px $x $y
         if (-not $c -or $c.ToArgb() -ne $CLAY_M.ToArgb()) { continue }
-        $dx = ($x - 15.5) / 8.6; $dy = ($y - 21.0) / 7.6
+        $dx = ($x + 0.5 - 16.0) / 8.6; $dy = ($y + 0.5 - 21.0) / 7.4
         $d = [Math]::Sqrt($dx * $dx + $dy * $dy)
         $light = -$dx * 0.9 - $dy * 0.9     # 左上更亮
         if ($light -gt 0.45) { Set-Px $x $y $CLAY_H }
@@ -105,10 +108,10 @@ for ($y = 0; $y -lt $W; $y++) {
 }
 
 # ============ 3) 能量窗口：肚子里透出的紫色咒力 ============
-Draw-Ellipse 15.5 21.5 5.8 4.4 $P_DEEP -OnlyIfEmpty:$false
+Draw-Ellipse 16.0 21.5 5.8 4.4 $P_DEEP -OnlyIfEmpty:$false
 for ($y = 14; $y -le 28; $y++) {
     for ($x = 4; $x -le 27; $x++) {
-        $dx = ($x + 0.5 - 15.5) / 5.8
+        $dx = ($x + 0.5 - 16.0) / 5.8
         $dy = ($y + 0.5 - 21.5) / 4.4
         if ($dx * $dx + $dy * $dy -gt 1.0) { continue }
         $r = [Math]::Sqrt($dx * $dx + $dy * $dy)
@@ -122,7 +125,7 @@ for ($y = 14; $y -le 28; $y++) {
     }
 }
 # 窗口边缘压一圈深紫，像嵌进去的玻璃口
-Draw-Ellipse 15.5 21.5 5.8 4.4 $P_DEEP -inner 0.80
+Draw-Ellipse 16.0 21.5 5.8 4.4 $P_DEEP -inner 0.80
 
 # ============ 4) 铁箍（跨越肚子上部）与圈足铁边 ============
 Draw-RectOnBody 5 15 26 16 $IRON_M
@@ -136,12 +139,12 @@ foreach ($bx in @(8, 13, 18, 23)) {
 Draw-RectOnBody 12 29 19 29 $IRON_D
 
 # ============ 5) 壶口 + 盖子 + 封条 ============
-Draw-Ellipse 15.5 10.0 5.0 1.6 $IRON_D     # 口沿
+Draw-Ellipse 16.0 10.0 5.0 1.6 $IRON_D     # 口沿
 Draw-Rect 12 9 19 10 $IRON_M
 Draw-Rect 12 9 19 9 $IRON_H
 # 盖
-Draw-Ellipse 15.5 6.4 4.6 3.2 $CLAY_L
-Draw-Ellipse 15.5 5.6 3.8 2.2 $CLAY_H
+Draw-Ellipse 16.0 6.4 4.6 3.2 $CLAY_L
+Draw-Ellipse 16.0 5.6 3.8 2.2 $CLAY_H
 Draw-Rect 14 2 17 3 $IRON_M                # 盖钮
 Set-Px 14 2 $IRON_H; Set-Px 17 3 $IRON_D
 # 封条（压在盖与颈上，黑红符纸）
@@ -159,9 +162,9 @@ Draw-RectOnBody 17 10 18 11 $SEAL_D
 
 # ============ 6) 两只把手（耳） ============
 Draw-Ellipse 5.0 14.0 2.0 2.7 $CLAY_M -inner 0.45
-Draw-Ellipse 26.0 14.0 2.0 2.7 $CLAY_M -inner 0.45
+Draw-Ellipse 27.0 14.0 2.0 2.7 $CLAY_M -inner 0.45
 Draw-Ellipse 5.0 14.0 2.0 2.7 $CLAY_L -inner 0.68
-Draw-Ellipse 26.0 14.0 2.0 2.7 $CLAY_D -inner 0.68
+Draw-Ellipse 27.0 14.0 2.0 2.7 $CLAY_D -inner 0.68
 
 # ============ 7) 自动描边（透明像素挨着实体就画深色边） ============
 # ⚠ 必须"先收集、后落笔"：如果边扫边写，新写进去的描边像素会让它外侧的像素也变成"挨着实体"，
