@@ -28,8 +28,26 @@ public class ModSounds {
     /** 低语音频：assets/tinkersnewlife/sounds/effects/whispers.ogg */
     public static final RegistryObject<SoundEvent> EFFECT_WHISPERS = reg("effect.whispers");
 
+    // ===== 领域展开音频（两层叠加播放，见 DomainRegistry#playExpandSounds）=====
+    /**
+     * 领域展开·底层轰鸣：assets/tinkersnewlife/sounds/domain/base.ogg
+     *
+     * <p>⚠ 这两个用 {@link #reg(String, float)}（固定传播距离 64 格）而不是
+     * {@link #reg(String)}（默认 16 格）：领域半径可以到 40+ 格，
+     * 站在球壳边上的玩家离球心就有 40 格，用默认距离他根本听不到展开声。
+     */
+    public static final RegistryObject<SoundEvent> DOMAIN_BASE = reg("domain.base", 64.0F);
+    /** 领域展开·展开爆音：assets/tinkersnewlife/sounds/domain/open.ogg（与 base 同时播放 → 叠加） */
+    public static final RegistryObject<SoundEvent> DOMAIN_OPEN = reg("domain.open", 64.0F);
+
     private static RegistryObject<SoundEvent> reg(String name) {
         return SOUNDS.register(name,
                 () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(TinkersNewlife.MOD_ID, name)));
+    }
+
+    /** 固定传播距离的音效（用于领域这种"范围远大于 16 格"的场合） */
+    private static RegistryObject<SoundEvent> reg(String name, float range) {
+        return SOUNDS.register(name,
+                () -> SoundEvent.createFixedRangeEvent(new ResourceLocation(TinkersNewlife.MOD_ID, name), range));
     }
 }

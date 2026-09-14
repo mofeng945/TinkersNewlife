@@ -11,6 +11,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
@@ -146,6 +148,8 @@ public final class DomainRegistry {
             domain.onOpen(player);
             spawnVisual(player.serverLevel(), domain);
             domain.buildBarrier(player.serverLevel());
+            // ⭐ 展开音效：base（底层轰鸣）+ open（展开爆音）<b>同时</b>播放，叠成一层
+            playExpandSounds(player.serverLevel(), domain);
             // 展开时：给领域内所有玩家显示领域名大标题
             broadcastDomainTitle(player.serverLevel(), domain);
             // ⭐ 说明：领域展开<b>不受</b>新阴流技巧限制（弥虚葛笼/简易领域只禁"术式"）。
@@ -167,6 +171,8 @@ public final class DomainRegistry {
         ServerLevel level = player.serverLevel();
         removeVisual(level, player.getUUID());
         domain.removeBarrier(level);
+        // 领域收场 = 火焰熄灭（"术式烧完了"）
+        playCloseSound(level, domain);
         domain.onClose(player, messageKey);
         if (player.isAlive()) {
             player.displayClientMessage(Component.translatable(messageKey), true);
@@ -188,6 +194,44 @@ public final class DomainRegistry {
         // ⭐ 必须调用 onClose：无量空处等需要为被定身实体设置延续时长，
         // 否则保持 10 万 tick 的静止效果 → 永久定身
         domain.onClose(player, null);
+    }
+
+    // ============================================================
+    //  领域音效：展开（两层叠加）/ 关闭（火焰熄灭）/ 被破坏（玻璃碎裂）
+    // ============================================================
+
+    /**
+     * 领域展开：{@code domain.base}（底层轰鸣）与 {@code domain.open}（展开爆音）<b>同时</b>播放。
+     *
+     * <p>两个音效都注册成固定 64 格传播距离（见 {@code ModSounds}）：领域半径可达 40+ 格，
+     * 站在球壳边上的玩家离球心就有 40 格，用默认 16 格他什么都听不到。
+     * 在球心播放，所以整个领域内的玩家都能听见。
+     */
+    private static void playExpandSounds(ServerLevel level, BaseDomain domain) {
+        Vec3 c = domain.getCenter();
+        level.playSound(null, c.x, c.y, c.z,
+                com.mofengbaizhi.tinkersnewlife.content.ModSounds.DOMAIN_BASE.get(),
+                SoundSource.PLAYERS, 1.0F, 1.0F);
+        level.playSound(null, c.x, c.y, c.z,
+                com.mofengbaizhi.tinkersnewlife.content.ModSounds.DOMAIN_OPEN.get(),
+                SoundSource.PLAYERS, 1.0F, 1.0F);
+    }
+
+    /** 领域收场（按键关闭 / 咒力耗尽 / 被封印 / 核心失效）：原版<b>火焰熄灭</b>声，压在球心 */
+    private static void playCloseSound(ServerLevel level, BaseDomain domain) {
+        if (level == null) return;
+        Vec3 c = domain.getCenter();
+        // 音量 4 倍 → 传播距离 16×4 = 64 格，覆盖整个领域；音调压低一点，像一大团火慢慢熄掉
+        level.playSound(null, c.x, c.y, c.z, SoundEvents.FIRE_EXTINGUISH,
+                SoundSource.BLOCKS, 4.0F, 0.7F);
+    }
+
+    /** 领域<b>被破坏</b>（咒具砸结界 / 对抗崩坏）：原版<b>玻璃碎裂</b>声，压在球心 */
+    private static void playBreakSound(ServerLevel level, BaseDomain domain) {
+        if (level == null) return;
+        Vec3 c = domain.getCenter();
+        level.playSound(null, c.x, c.y, c.z, SoundEvents.GLASS_BREAK,
+                SoundSource.BLOCKS, 4.0F, 0.9F);
     }
 
     /**
@@ -230,6 +274,7 @@ public final class DomainRegistry {
             if (!domain.isValid(player)) {
                 DOMAINS.remove(domain.getOwner());
                 forceRemove(player, domain);
+                playBreakSound(player.serverLevel(), domain);
                 domain.onClose(player, "message.tinkersnewlife.domain.broken");
                 player.displayClientMessage(Component.translatable("message.tinkersnewlife.domain.broken"), true);
                 applyBurnoutIfSurvival(player);
@@ -240,6 +285,7 @@ public final class DomainRegistry {
             if (CursePowerHelper.isSealed(player)) {
                 DOMAINS.remove(domain.getOwner());
                 forceRemove(player, domain);
+                playCloseSound(player.serverLevel(), domain);
                 domain.onClose(player, "message.tinkersnewlife.domain.sealed_closed");
                 player.displayClientMessage(Component.translatable("message.tinkersnewlife.domain.sealed_closed"), true);
                 continue;
@@ -268,6 +314,7 @@ public final class DomainRegistry {
             if (!domain.spendCurse(player)) {
                 DOMAINS.remove(domain.getOwner());
                 forceRemove(player, domain);
+                playCloseSound(player.serverLevel(), domain);
                 domain.onClose(player, "message.tinkersnewlife.domain.exhausted");
                 player.displayClientMessage(Component.translatable("message.tinkersnewlife.domain.exhausted"), true);
                 continue;
@@ -537,6 +584,8 @@ public final class DomainRegistry {
         // 2) 移除视觉与阻挡墙
         removeVisual(level, ownerId);
         domain.removeBarrier(level);
+        // 2.5) 被砸碎的音效（玻璃碎裂），压在球心
+        playBreakSound(level, domain);
         // 3) 领域效果收尾
         domain.onClose(owner, "message.tinkersnewlife.domain.broken");
         if (owner != null && owner.isAlive()) {

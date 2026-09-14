@@ -2,7 +2,7 @@
 
 **Minecraft 1.20.1 · Forge 47.4.22+ · Tinkers' Construct 3.11.2+** (soft-requires Goety)
 
-A visual-overhaul release for the **Unnameable** effect: the old "simulated blindness" is gone, replaced by a full-screen signal-failure look — blown-up field of view, a sharpened/high-contrast/high-saturation image with **inverted colours**, an intermittent screen-tearing glitch overlay, and whispered words *and a whispered voice* while it lasts.
+A visual-and-audio release for the **Unnameable** effect and for **Domains**: the old "simulated blindness" is gone, replaced by a full-screen signal-failure look — blown-up field of view, a sharpened/high-contrast/high-saturation image with **inverted colours**, an intermittent screen-tearing glitch overlay, and whispered words *and a whispered voice* while it lasts. Domains also got their own sound design.
 
 ---
 
@@ -25,6 +25,12 @@ A visual-overhaul release for the **Unnameable** effect: the old "simulated blin
 - A **whispered voice track** (`tinkersnewlife:effect.whispers`, 30 s, looped) plays for as long as the effect lasts and **stops the instant it ends** — it is driven by a self-ticking sound instance, so expiry, `/effect clear`, death or a milk bucket all silence it within a tick.
 - Both the whispers and the glitch now **fade in and out smoothly** (the intensity is interpolated every frame), so the effect creeps in and drains away instead of snapping on and off.
 - Higher effect levels bring **more lines at once and brighter** ones; `whispers = false` turns the text off.
+
+### Domains Now Have a Voice
+- **Expanding a domain** plays two brand-new tracks **layered on top of each other** at the domain's centre — `tinkersnewlife:domain.base` (a low rumble) and `tinkersnewlife:domain.open` (the opening blast). Both are registered with a **64-block range** so everyone standing anywhere in a large domain (radius can exceed 40 blocks) actually hears it.
+- **Closing a domain** (pressing the key, running out of curse power, getting sealed) plays the vanilla **fire-extinguishing** hiss, pitched down and boosted so it carries across the whole sphere — the technique burning itself out.
+- **Having a domain broken** (smashing the barrier with a cursed tool, or losing the curse core that sustained it) plays the vanilla **glass-shattering** crash at the domain's centre.
+- Domain sounds are positional (played at the sphere's centre on the `BLOCKS` / `PLAYERS` channels), so they fade with distance like any world sound — and the two expansion tracks are also listed as subtitles (「领域：展开」/「Domain: expands」).
 
 ## Configuration
 ```toml

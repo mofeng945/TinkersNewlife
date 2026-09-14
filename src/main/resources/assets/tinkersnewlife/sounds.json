@@ -37,5 +37,17 @@
     "sounds": [
       "tinkersnewlife:effects/whispers"
     ]
+  },
+  "domain.base": {
+    "subtitle": "subtitles.tinkersnewlife.domain.base",
+    "sounds": [
+      "tinkersnewlife:domain/base"
+    ]
+  },
+  "domain.open": {
+    "subtitle": "subtitles.tinkersnewlife.domain.open",
+    "sounds": [
+      "tinkersnewlife:domain/open"
+    ]
   }
 }
