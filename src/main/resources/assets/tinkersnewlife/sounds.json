@@ -31,5 +31,11 @@
     "sounds": [
       "tinkersnewlife:entity/momo/momo_ambient2"
     ]
+  },
+  "effect.whispers": {
+    "subtitle": "subtitles.tinkersnewlife.effect.whispers",
+    "sounds": [
+      "tinkersnewlife:effects/whispers"
+    ]
   }
 }

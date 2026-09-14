@@ -49,6 +49,10 @@ public final class ModConfig {
     public static final ConfigValue<Boolean> UNNAMEABLE_POST_EFFECT_PULSE;
     /** 「不可名状」的屏幕低语文字（客户端，默认开；文字走可翻译键 whisper.tinkersnewlife.*） */
     public static final ConfigValue<Boolean> UNNAMEABLE_WHISPERS;
+    /** 「不可名状」的低语音频（客户端，默认开；获得效果时循环播放 tinkersnewlife:effect.whispers，效果结束即停） */
+    public static final ConfigValue<Boolean> UNNAMEABLE_WHISPER_SOUND;
+    /** 低语音频音量（默认 1.0；音源是"环境音"滑条，所以这里再给一个倍率） */
+    public static final ConfigValue<Double> UNNAMEABLE_WHISPER_SOUND_VOLUME;
 
     // ==================== 飞剑流光拖尾 ====================
     /** 飞剑流光拖尾（客户端）：动态条带 + 自写流光着色器 */
@@ -194,11 +198,18 @@ public final class ModConfig {
                 "",
                 "glitch = whole-screen signal interference overlay",
                 "(tearing bands + static + a rolling interference bar + occasional flashes);",
-                "glitch_intensity scales it: 1.0 = default, 2.0 = much messier, 0 = off.");
+                "glitch_intensity scales it: 1.0 = default, 2.0 = much messier, 0 = off.",
+                "",
+                "whispers = whispered WORDS flickering across the screen (translatable: whisper.tinkersnewlife.*);",
+                "whisper_sound = the whispered VOICE AUDIO, looped while the effect lasts and stopped the moment",
+                "it ends (sound event tinkersnewlife:effect.whispers, played on the AMBIENT sound channel);",
+                "whisper_sound_volume = extra volume multiplier for that audio (0 = silent, 1.0 = default).");
         UNNAMEABLE_FOV_MULTIPLIER = b.defineInRange("fov_multiplier", 1.4D, 1.0D, 2.5D);
         UNNAMEABLE_POST_EFFECT = b.define("post_effect", true);
         UNNAMEABLE_POST_EFFECT_PULSE = b.define("post_effect_pulse", true);
         UNNAMEABLE_WHISPERS = b.define("whispers", true);
+        UNNAMEABLE_WHISPER_SOUND = b.define("whisper_sound", true);
+        UNNAMEABLE_WHISPER_SOUND_VOLUME = b.defineInRange("whisper_sound_volume", 1.0D, 0.0D, 2.0D);
         UNNAMEABLE_GLITCH = b.define("glitch", true);
         UNNAMEABLE_GLITCH_INTENSITY = b.defineInRange("glitch_intensity", 1.0D, 0.0D, 3.0D);
         b.pop();

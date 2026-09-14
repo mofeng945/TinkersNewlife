@@ -24,6 +24,10 @@ public class ModSounds {
     /** 交易成功：固定播放空闲语音 2（momo_ambient2.ogg），替换自带的村民高兴语音 */
     public static final RegistryObject<SoundEvent> MOMO_TRADE_SUCCESS = reg("entity.momo.trade_success");
 
+    // ===== 「不可名状」低语音频（客户端循环播放，见 client/sound/UnnameableWhisperSound）=====
+    /** 低语音频：assets/tinkersnewlife/sounds/effects/whispers.ogg */
+    public static final RegistryObject<SoundEvent> EFFECT_WHISPERS = reg("effect.whispers");
+
     private static RegistryObject<SoundEvent> reg(String name) {
         return SOUNDS.register(name,
                 () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(TinkersNewlife.MOD_ID, name)));

@@ -664,6 +664,7 @@
   "subtitles.tinkersnewlife.entity.momo.death": "墨默：倒下",
   "subtitles.tinkersnewlife.entity.momo.trade": "墨默：招呼客人",
   "subtitles.tinkersnewlife.entity.momo.trade_success": "墨默：成交",
+  "subtitles.tinkersnewlife.effect.whispers": "低语……",
   "modifier.tinkersnewlife.puppet": "傀儡操术",
   "modifier.tinkersnewlife.puppet.flavor": "§7以线为引，以偶为身。",
   "modifier.tinkersnewlife.puppet.description": "发动后在面前召唤铁傀儡/雪傀儡（GUI 选择），玩家视角转移到傀儡身上操控：铁傀儡左键攻击、右键击飞、Shift自爆（半径5不破坏方块）；雪傀儡右键投雪球（命中附霜冻）、Shift自爆（半径3附霜冻）。再次按释放键召回返还30%咒力；傀儡死亡视角回归。占用术式槽。",

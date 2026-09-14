@@ -2,7 +2,7 @@
 
 **Minecraft 1.20.1 · Forge 47.4.22+ · Tinkers' Construct 3.11.2+** (soft-requires Goety)
 
-A visual-overhaul release for the **Unnameable** effect: the old "simulated blindness" is gone, replaced by a full-screen signal-failure look — blown-up field of view, a sharpened/high-contrast/high-saturation image with **inverted colours**, an intermittent screen-tearing glitch overlay, and whispered words drifting across your screen.
+A visual-overhaul release for the **Unnameable** effect: the old "simulated blindness" is gone, replaced by a full-screen signal-failure look — blown-up field of view, a sharpened/high-contrast/high-saturation image with **inverted colours**, an intermittent screen-tearing glitch overlay, and whispered words *and a whispered voice* while it lasts.
 
 ---
 
@@ -22,6 +22,7 @@ A visual-overhaul release for the **Unnameable** effect: the old "simulated blin
 ### Unnameable Whispers To You
 - Words now flicker in and out at random spots on the screen while the effect is on — pale violet, sickly cyan and diseased pink, each line fading in and out instead of sitting still. Positions and lines are re-rolled only every **0.4–1 second** and every frame independently decides whether to draw (and how bright), so it reads as *something talking to you*, not as a wall of text.
 - The whisper lines are **translatable** (keys `whisper.tinkersnewlife.*`), so resource packs and translations can replace every one of them — or add more lines.
+- A **whispered voice track** (`tinkersnewlife:effect.whispers`, 30 s, looped) plays for as long as the effect lasts and **stops the instant it ends** — it is driven by a self-ticking sound instance, so expiry, `/effect clear`, death or a milk bucket all silence it within a tick.
 - Higher effect levels bring **more lines at once and brighter** ones; `whispers = false` turns them off completely.
 
 ## Configuration
@@ -33,6 +34,8 @@ A visual-overhaul release for the **Unnameable** effect: the old "simulated blin
   glitch = true             # screen tearing / static / rolling bar / flashes
   glitch_intensity = 1.0    # 0 - 3
   whispers = true           # whispered text flickering across the screen
+  whisper_sound = true      # looped whispered voice audio (AMBIENT sound channel)
+  whisper_sound_volume = 1.0  # 0 - 2
 ```
 Everything here is client-side and can be switched off individually; with all of them off the effect keeps only its gameplay penalties (hunger drain, slowness, weakness) and the camera sway.
 

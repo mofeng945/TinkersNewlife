@@ -4,10 +4,12 @@ import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.config.ModConfig;
 import com.mofengbaizhi.tinkersnewlife.client.renderer.UnnameableGlitchRenderer;
 import com.mofengbaizhi.tinkersnewlife.client.renderer.UnnameableWhisperRenderer;
+import com.mofengbaizhi.tinkersnewlife.client.sound.UnnameableWhisperSound;
 import com.mofengbaizhi.tinkersnewlife.content.ModEffects;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
@@ -29,7 +31,9 @@ import java.util.Random;
  *       （{@code assets/tinkersnewlife/shaders/post/unnameable.json} → program → fsh），
  *       用原版同款的 {@code GameRenderer#loadEffect} 挂、{@code shutdownEffect} 摘；</li>
  *   <li><b>视角晃动</b>（反胃）；</li>
- *   <li><b>信号干扰花屏</b>覆盖层（{@code UnnameableGlitchRenderer}）。</li>
+ *   <li><b>信号干扰花屏</b>覆盖层（{@code UnnameableGlitchRenderer}）；</li>
+ *   <li><b>低语文字</b>（{@code UnnameableWhisperRenderer}）与<b>低语音频</b>
+ *       （{@link UnnameableWhisperSound}：获得效果时循环播放，效果结束 1 tick 内停）。</li>
  * </ul>
  *
  * <h2>⚠ 色彩效果"绝不常驻"（两条保险）</h2>
@@ -68,6 +72,11 @@ public class UnnameableClientHandler {
     private static int nextPulseAt = 0;
     private static int clientTicks = 0;
 
+    /** 当前正在循环播放的低语音频（没有效果时为 null） */
+    private static UnnameableWhisperSound whisperSound = null;
+    /** 低语音频"起播失败（比如玩家把环境音滑条拉到 0）"时的下次重试 tick */
+    private static int whisperRetryAt = 0;
+
     private UnnameableClientHandler() {
     }
 
@@ -99,6 +108,22 @@ public class UnnameableClientHandler {
         }
     }
 
+    private static boolean whisperSoundEnabled() {
+        try {
+            return ModConfig.UNNAMEABLE_WHISPER_SOUND.get();
+        } catch (Throwable ignored) {
+            return true;
+        }
+    }
+
+    private static float whisperSoundVolume() {
+        try {
+            return (float) Math.max(0.0D, Math.min(2.0D, ModConfig.UNNAMEABLE_WHISPER_SOUND_VOLUME.get()));
+        } catch (Throwable ignored) {
+            return 1.0F;
+        }
+    }
+
     private static void applyPost() {
         if (postApplied) return;
         Minecraft.getInstance().gameRenderer.loadEffect(POST_CHAIN);
@@ -125,6 +150,53 @@ public class UnnameableClientHandler {
         } catch (Throwable ignored) {
             // 渲染器还没起来 / 已经关了：忽略
         }
+        // 低语音频也一起停：断线/退出世界时声音引擎会自己清空，但死亡重生/换维度不会
+        stopWhisperSound(Minecraft.getInstance());
+    }
+
+    /**
+     * 维护低语音频：有效果就循环播放，没效果就停。
+     *
+     * <p>停止主要靠 {@link UnnameableWhisperSound} 自己在 tick 里发现"效果没了"→ 立即静音（1 tick 内）；
+     * 这里做的只是<b>起播</b>和两类兜底：
+     * <ul>
+     *   <li>实例被引擎丢掉（资源重载、换维度、环境音滑条从 0 拉回来……）→ 重新起播；</li>
+     *   <li>没有效果 → 顺手把引用清掉。</li>
+     * </ul>
+     * 失败重试有 1 秒冷却，避免"环境音=0 时每 tick 造一个新对象"。
+     */
+    private static void maintainWhisperSound(Minecraft mc, LocalPlayer player) {
+        if (unnameable(player) == null || !whisperSoundEnabled()) {
+            stopWhisperSound(mc);
+            return;
+        }
+        if (mc.getSoundManager() == null) return;
+        if (whisperSound != null && !whisperSound.isStopped() && mc.getSoundManager().isActive(whisperSound)) {
+            return;
+        }
+        if (clientTicks < whisperRetryAt) return;
+        whisperRetryAt = clientTicks + 20;
+        // 环境音滑条拉到 0 时通道根本不会建，isActive 永远是 false → 别每 tick 重造
+        if (mc.options.getSoundSourceVolume(SoundSource.AMBIENT) <= 0.0F) return;
+        whisperSound = new UnnameableWhisperSound(whisperSoundVolume(), 1.0F);
+        mc.getSoundManager().play(whisperSound);
+        TinkersNewlife.LOGGER.info("[不可名状] 低语音频起播（循环，效果结束自动停）");
+    }
+
+    /** 停掉并清空当前的低语音频 */
+    private static void stopWhisperSound(Minecraft mc) {
+        whisperRetryAt = 0;
+        UnnameableWhisperSound sound = whisperSound;
+        if (sound == null) return;
+        whisperSound = null;
+        try {
+            if (mc.getSoundManager() != null) {
+                // 先让实例自己"标记停止"，引擎下一次轮询就会把通道关掉；再显式停一次保证立刻静音
+                mc.getSoundManager().stop(sound);
+            }
+        } catch (Throwable ignored) {
+            // 声音引擎还没起来 / 已经关了：忽略
+        }
     }
 
     /** 拉高 FOV：视野被撑开 */
@@ -143,12 +215,13 @@ public class UnnameableClientHandler {
     }
 
     /**
-     * 每 tick 维护后处理：
+     * 每 tick 维护后处理<b>与低语音频</b>：
      * <ul>
      *   <li>没有效果 → 立刻摘掉（兜底）；</li>
      *   <li>有效果且开了闪断 → 亮/断按随机节奏交替（这是"色彩效果不常驻"的常态表现）；</li>
      *   <li>有效果且关了闪断 → 一直挂着。</li>
      * </ul>
+     * 低语音频的"停"不依赖这里（声音实例自己每 tick 检查效果），这里只管起播与兜底重播。
      */
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
@@ -156,6 +229,9 @@ public class UnnameableClientHandler {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         clientTicks++;
+
+        // 低语音频（起播/兜底）—— 必须放在下面那些 early return 之前，否则没效果时会漏掉"停"
+        maintainWhisperSound(mc, player);
 
         // ⚠⚠ 这里**只能**由"身上真的有不可名状"来决定是否挂后处理。
         //    曾经有个 TNL_DEBUG_POST_EFFECT 调试开关能让它无条件挂上（为了验证着色器编译），

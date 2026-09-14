@@ -422,6 +422,7 @@
   "hud.tinkersnewlife.curse_vault": "Curse Vault: %s / %s curse",
   "message.tinkersnewlife.curse_vault.deposited": "Curse Residue poured in → vault now holds %s curse",
   "message.tinkersnewlife.curse_vault.withdrawn": "Curse Residue taken out → vault now holds %s curse",
+  "subtitles.tinkersnewlife.effect.whispers": "Whispers…",
   "whisper.tinkersnewlife.i_see_you": "I see you…",
   "whisper.tinkersnewlife.he_watches": "…He is watching you…",
   "whisper.tinkersnewlife.life_ascend": "Life… must ascend…",
