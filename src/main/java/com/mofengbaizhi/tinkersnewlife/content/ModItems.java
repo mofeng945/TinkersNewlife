@@ -123,12 +123,8 @@ public class ModItems {
                     )
             );
 
-    public static final RegistryObject<ToolPartItem> DURANDAL_PART =
-        ITEMS.register("durandal",
-                () -> new ToolPartItem(new Item.Properties(),
-                        new MaterialStatsId(new ResourceLocation("tconstruct", "head"))
-                )
-        );
+    // 注：杜兰达尔剑已改为「古代工具」（tool_definitions 用 material_stats，不依赖部件），
+    //     所以不再注册「杜兰达尔剑刃」这个 ToolPartItem（它只用于转化，不需要单独造出来）。
 
     /** 悠悠球轮（头部统计，悠悠球的主体部件） */
     public static final RegistryObject<ToolPartItem> YO_YO_WHEEL =

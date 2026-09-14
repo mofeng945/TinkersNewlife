@@ -1,12 +1,12 @@
 {
   "modules": [
     {
-      "type": "tconstruct:part_stats",
-      "parts": [
-        "tinkersnewlife:silent_glove_core",
-        "tinkersnewlife:silent_glove_binding"
-      ],
-      "primary_part": 0
+      "type": "tconstruct:material_stats",
+      "primary_part": 0,
+      "stat_types": [
+        "tconstruct:head",
+        "tconstruct:handle"
+      ]
     },
     {
       "type": "tconstruct:default_materials",

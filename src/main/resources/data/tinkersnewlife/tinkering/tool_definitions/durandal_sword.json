@@ -1,11 +1,11 @@
 {
   "modules": [
     {
-      "type": "tconstruct:part_stats",
-      "parts": [
-        "tinkersnewlife:durandal"
-      ],
-      "primary_part": 0
+      "type": "tconstruct:material_stats",
+      "primary_part": 0,
+      "stat_types": [
+        "tconstruct:head"
+      ]
     },
     {
     "type": "tconstruct:default_materials",
