@@ -37,6 +37,14 @@ foreach ($t in $targets) {
         Write-Host ("跳过（目录不存在）：" + $t)
         continue
     }
+    # ⚠ 版本号一变，jar 文件名就变了：必须先把旧版本的 tinkersnewlife-*.jar 删掉，
+    #   否则 mods 里会同时存在两个版本 → Forge 报 "Duplicate mod" 直接加载失败。
+    Get-ChildItem -LiteralPath $t -Filter 'tinkersnewlife-*.jar' -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -ne $jar.Name } |
+        ForEach-Object {
+            Remove-Item -LiteralPath $_.FullName -Force
+            Write-Host ("  已删除旧版本：" + $_.Name)
+        }
     $dest = Join-Path $t $jar.Name
     Copy-Item -LiteralPath $jar.FullName -Destination $dest -Force
     $item = Get-Item -LiteralPath $dest
