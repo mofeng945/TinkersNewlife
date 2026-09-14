@@ -21,17 +21,18 @@ $srcPath = Join-Path $root 'tools\art-src\durandal_sword_256.png'
 $outDir = Join-Path $root 'src\main\resources\assets\tinkersnewlife\textures\item'
 
 $SIZE = 64
-$MASK_THRESHOLD = 0.28   # 区块 alpha 最大值 >= 它才算实体（越小越粗、细刺越不容易断）
+$MASK_THRESHOLD = 0.50   # 0.5 = 区块半数以上被覆盖才算实体（贴合原图粗细；越小越粗）
 $CORE_ALPHA = 0.60       # 求颜色时只统计 alpha >= 它的实心像素
-$DILATE = 1              # 膨胀像素数（0/1/2）：让剑更硬朗，MC 风格偏粗
-$L_IN = 2.0                  # input black (source art is very dark)
-$H_IN = 112.0                # input white
-$LO_OUT = 20.0               # output floor: keep some grey, pure black has no form
-$HI_OUT = 252.0              # output ceiling
-$BEVEL = 0.34                # across-blade bevel light (0 = off)
-$GAMMA_OUT = 0.90            # midtones
+$DILATE = 0              # 0 = 不加粗（加粗会明显变胖，原图是细剑）
+$L_IN = 0.0              # 亮度映射区间：0~255 + 输出 0~255 = 恒等
+$H_IN = 255.0
+$LO_OUT = 0.0            # 输出下限 0（原图本身就是黑剑，不额外提亮）
+$HI_OUT = 255.0
+$BEVEL = 0.0             # 0 = 不加人为斜面光（要立体感可 0.2~0.35）
+$GAMMA_OUT = 1.00
 $POSTERIZE = 6           # 色调量化档数（0/1 = 不量化）
-$SMOOTH = 1              # 上色前的平滑次数（3x3 平均，去掉缩绘产生的麻点，让亮带更干净）
+$SMOOTH = 1              # 上色前 3x3 平均（去麻点）
+$HILIGHT = 0.0           # 0 = 纯平均（保持原图那种含蓄的亮线；调高会让亮带变宽变亮）
 
 if (-not (Test-Path $srcPath)) { throw ("missing source art: " + $srcPath) }
 $src = New-Object System.Drawing.Bitmap $srcPath
@@ -55,6 +56,7 @@ $pB = [double[]]::new($N)
 for ($oy = 0; $oy -lt $SIZE; $oy++) {
     for ($ox = 0; $ox -lt $SIZE; $ox++) {
         $maxA = 0.0; $cSum = 0.0; $rSum = 0.0; $gSum = 0.0; $bSum = 0.0
+        $maxLum = -1.0; $maxR = 0.0; $maxG = 0.0; $maxB = 0.0
         $y0 = [int][Math]::Floor($oy * $block); $y1 = [int][Math]::Ceiling(($oy + 1) * $block)
         $x0 = [int][Math]::Floor($ox * $block); $x1 = [int][Math]::Ceiling(($ox + 1) * $block)
         for ($sy = $y0; $sy -lt $y1; $sy++) {
@@ -67,6 +69,8 @@ for ($oy = 0; $oy -lt $SIZE; $oy++) {
                 if ($a -gt $maxA) { $maxA = $a }
                 if ($a -ge $CORE_ALPHA) {
                     $cSum += 1.0
+                    $pl = 0.299 * $sb[$i + 2] + 0.587 * $sb[$i + 1] + 0.114 * $sb[$i]
+                    if ($pl -gt $maxLum) { $maxLum = $pl; $maxR = $sb[$i + 2]; $maxG = $sb[$i + 1]; $maxB = $sb[$i] }
                     $bSum += $sb[$i]; $gSum += $sb[$i + 1]; $rSum += $sb[$i + 2]
                 }
             }
@@ -74,7 +78,17 @@ for ($oy = 0; $oy -lt $SIZE; $oy++) {
         $idx = $oy * $SIZE + $ox
         if ($maxA -ge $MASK_THRESHOLD) {
             $mask[$idx] = 1
-            if ($cSum -gt 0) { $pR[$idx] = $rSum / $cSum; $pG[$idx] = $gSum / $cSum; $pB[$idx] = $bSum / $cSum }
+            if ($cSum -gt 0) {
+                $mr = $rSum / $cSum; $mg = $gSum / $cSum; $mb = $bSum / $cSum
+                $meanLum = 0.299 * $mr + 0.587 * $mg + 0.114 * $mb
+                $mixLum = $meanLum
+                if ($maxLum -gt $meanLum) { $mixLum = $meanLum + ($maxLum - $meanLum) * $HILIGHT }
+                $k2 = 1.0
+                if ($meanLum -gt 0.0001) { $k2 = $mixLum / $meanLum }
+                $pR[$idx] = [Math]::Min(255.0, $mr * $k2)
+                $pG[$idx] = [Math]::Min(255.0, $mg * $k2)
+                $pB[$idx] = [Math]::Min(255.0, $mb * $k2)
+            }
         }
     }
 }
