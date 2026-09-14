@@ -1,19 +1,18 @@
-﻿# 杜兰达尔之剑：把原 256×256 贴图"忠实缩绘"成像素风（保留原本造型，不重新设计）
+﻿# 杜兰达尔之剑：把原 256×256 贴图缩绘成像素风（保留原本造型）
 #
-# 输入：tools/art-src/durandal_sword_256.png（用户原图，256×256）
-# 输出：textures/item/durandal_sword.png（默认 64×64；$SIZE 改成 32 出 32×32）
+# 输入：tools/art-src/durandal_sword_256.png（用户原图）
+# 输出：textures/item/durandal_sword.png（默认 64×64；$SIZE 改 32 出 32×32）
 #
-# 为什么缩绘而不是重画：原图是写实向的黑剑（实测饱和度比 0.006 ≈ 纯灰阶，
-# 4115/5767 个不透明像素落在最暗的 0~15 亮度区间），造型细节都在轮廓里，重画必然走形。
+# 直接"方块平均 + 阈值"会让细处（尖刺、剑尖）被透明像素稀释，断成虚线，像一团残缺的雾。所以：
+#   1) 轮廓用「区块内 alpha 最大值」判定 —— 细刺只要碰到就保留，不会断；
+#   2) 颜色只用「区块内 alpha>=0.6 的实心像素」求平均 —— 不被边缘半透明拉灰；
+#   3) 形态学三步：去孤立点 → 填 1px 孔洞 → 膨胀 Npx（加粗，MC 风格更硬朗）；
+#   4) 色调量化到有限档位 —— 避免渐变糊成一团。
 #
-# 性能：全程 LockBits + byte[] 直接读写像素。
-# （不要用 GetPixel/SetPixel：6 万次托管调用要几十秒，这是上一版"跑很久"的原因。）
-#
-# 可调参数：
-#   $SIZE             目标分辨率（32 / 64）
-#   $ALPHA_THRESHOLD  轮廓阈值：方块平均不透明度低于它就判透明（决定胖瘦）
-#   $GAIN / $GAMMA    亮度映射（原图极暗；GAIN 越小越"黑"，太小细节会糊掉）
-#   $OUTLINE          是否描 1px 深色边
+# 性能：LockBits + byte[]（GetPixel/SetPixel 6 万次托管调用要几十秒）。
+# 注意 1：数组一律用 [double[]]::new($n) —— New-Object double[] $n 在 PowerShell 里会得到 null。
+# 注意 2：PowerShell 变量名不区分大小写！颜色数组叫 $pR/$pG/$pB，累加变量叫 $r/$g/$b，
+#         否则 `$r = 0.0` 会把数组 $R 覆盖成 double（"Unable to index into an object of type System.Double"）。
 
 Add-Type -AssemblyName System.Drawing
 
@@ -22,94 +21,161 @@ $srcPath = Join-Path $root 'tools\art-src\durandal_sword_256.png'
 $outDir = Join-Path $root 'src\main\resources\assets\tinkersnewlife\textures\item'
 
 $SIZE = 64
-$ALPHA_THRESHOLD = 0.52
-$GAIN = 1.5
+$MASK_THRESHOLD = 0.28   # 区块 alpha 最大值 >= 它才算实体（越小越粗、细刺越不容易断）
+$CORE_ALPHA = 0.60       # 求颜色时只统计 alpha >= 它的实心像素
+$DILATE = 1              # 膨胀像素数（0/1/2）：让剑更硬朗，MC 风格偏粗
+$GAIN = 1.55             # 亮度增益（原图极暗）
 $GAMMA = 0.95
-$OUTLINE = $false
-$OUTLINE_HEX = '#0A0A0F'
+$POSTERIZE = 6           # 色调量化档数（0/1 = 不量化）
 
 if (-not (Test-Path $srcPath)) { throw ("missing source art: " + $srcPath) }
 $src = New-Object System.Drawing.Bitmap $srcPath
 $SW = $src.Width; $SH = $src.Height
-$data = $src.LockBits((New-Object System.Drawing.Rectangle 0, 0, $SW, $SH), [System.Drawing.Imaging.ImageLockMode]::ReadOnly, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
-$stride = $data.Stride
-$srcBytes = New-Object byte[] ($stride * $SH)
-[System.Runtime.InteropServices.Marshal]::Copy($data.Scan0, $srcBytes, 0, $srcBytes.Length)
-$src.UnlockBits($data)
+$pf = [System.Drawing.Imaging.PixelFormat]::Format32bppArgb
+$srcData = $src.LockBits((New-Object System.Drawing.Rectangle 0, 0, $SW, $SH), [System.Drawing.Imaging.ImageLockMode]::ReadOnly, $pf)
+$stride = $srcData.Stride
+$sb = [byte[]]::new($stride * $SH)
+[System.Runtime.InteropServices.Marshal]::Copy($srcData.Scan0, $sb, 0, $sb.Length)
+$src.UnlockBits($srcData)
 $src.Dispose()
 
 $block = $SW / [double]$SIZE
-$outB = New-Object byte[] ($SIZE * $SIZE * 4)   # 输出像素（BGRA）
-$outA = New-Object byte[] ($SIZE * $SIZE)       # 只记 alpha，供描边判断
+$N = $SIZE * $SIZE
+$mask = [byte[]]::new($N)
+$pR = [double[]]::new($N)
+$pG = [double[]]::new($N)
+$pB = [double[]]::new($N)
 
-function Clamp255([double]$v) { if ($v -lt 0) { return 0 } elseif ($v -gt 255) { return 255 } else { return [int][Math]::Round($v) } }
-
+# ---- 1) 逐区块统计 ----
 for ($oy = 0; $oy -lt $SIZE; $oy++) {
     for ($ox = 0; $ox -lt $SIZE; $ox++) {
-        $aSum = 0.0; $rSum = 0.0; $gSum = 0.0; $bSum = 0.0; $n = 0
+        $maxA = 0.0; $cSum = 0.0; $rSum = 0.0; $gSum = 0.0; $bSum = 0.0
         $y0 = [int][Math]::Floor($oy * $block); $y1 = [int][Math]::Ceiling(($oy + 1) * $block)
         $x0 = [int][Math]::Floor($ox * $block); $x1 = [int][Math]::Ceiling(($ox + 1) * $block)
         for ($sy = $y0; $sy -lt $y1; $sy++) {
             if ($sy -lt 0 -or $sy -ge $SH) { continue }
-            $rowBase = $sy * $stride
+            $base = $sy * $stride
             for ($sx = $x0; $sx -lt $x1; $sx++) {
                 if ($sx -lt 0 -or $sx -ge $SW) { continue }
-                $i = $rowBase + $sx * 4
-                $a = $srcBytes[$i + 3] / 255.0
-                $aSum += $a
-                $bSum += $srcBytes[$i] * $a
-                $gSum += $srcBytes[$i + 1] * $a
-                $rSum += $srcBytes[$i + 2] * $a
-                $n++
+                $i = $base + $sx * 4
+                $a = $sb[$i + 3] / 255.0
+                if ($a -gt $maxA) { $maxA = $a }
+                if ($a -ge $CORE_ALPHA) {
+                    $cSum += 1.0
+                    $bSum += $sb[$i]; $gSum += $sb[$i + 1]; $rSum += $sb[$i + 2]
+                }
             }
         }
-        if ($n -eq 0) { continue }
-        if (($aSum / $n) -lt $ALPHA_THRESHOLD) { continue }
-
-        if ($aSum -le 0.0001) { $r = 0.0; $g = 0.0; $b = 0.0 }
-        else { $r = $rSum / $aSum; $g = $gSum / $aSum; $b = $bSum / $aSum }
-
-        $lum = (0.299 * $r + 0.587 * $g + 0.114 * $b) / 255.0
-        $boost = [Math]::Pow($lum, $GAMMA) * $GAIN
-        $scale = if ($lum -gt 0.0001) { $boost / $lum } else { 1.0 }
-        $o = ($oy * $SIZE + $ox) * 4
-        $outB[$o]     = Clamp255 ($b * $scale)
-        $outB[$o + 1] = Clamp255 ($g * $scale)
-        $outB[$o + 2] = Clamp255 ($r * $scale)
-        $outB[$o + 3] = 255
-        $outA[$oy * $SIZE + $ox] = 1
-    }
-}
-
-if ($OUTLINE) {
-    $ocB = [Convert]::ToInt32($OUTLINE_HEX.Substring(5, 2), 16)
-    $ocG = [Convert]::ToInt32($OUTLINE_HEX.Substring(3, 2), 16)
-    $ocR = [Convert]::ToInt32($OUTLINE_HEX.Substring(1, 2), 16)
-    $edge = New-Object System.Collections.Generic.List[int]
-    for ($y = 0; $y -lt $SIZE; $y++) {
-        for ($x = 0; $x -lt $SIZE; $x++) {
-            if ($outA[$y * $SIZE + $x] -eq 1) { continue }
-            $near = $false
-            if ($x -gt 0 -and $outA[$y * $SIZE + $x - 1] -eq 1) { $near = $true }
-            if (-not $near -and $x -lt $SIZE - 1 -and $outA[$y * $SIZE + $x + 1] -eq 1) { $near = $true }
-            if (-not $near -and $y -gt 0 -and $outA[($y - 1) * $SIZE + $x] -eq 1) { $near = $true }
-            if (-not $near -and $y -lt $SIZE - 1 -and $outA[($y + 1) * $SIZE + $x] -eq 1) { $near = $true }
-            if ($near) { $edge.Add($y * $SIZE + $x) }
+        $idx = $oy * $SIZE + $ox
+        if ($maxA -ge $MASK_THRESHOLD) {
+            $mask[$idx] = 1
+            if ($cSum -gt 0) { $pR[$idx] = $rSum / $cSum; $pG[$idx] = $gSum / $cSum; $pB[$idx] = $bSum / $cSum }
         }
     }
-    foreach ($idx in $edge) {
-        $o = $idx * 4
-        $outB[$o] = $ocB; $outB[$o + 1] = $ocG; $outB[$o + 2] = $ocR; $outB[$o + 3] = 255
+}
+$afterMask = 0; for ($k = 0; $k -lt $N; $k++) { if ($mask[$k] -eq 1) { $afterMask++ } }
+
+# ---- 2) 去孤立点 ----
+$kill = New-Object System.Collections.Generic.List[int]
+for ($y = 0; $y -lt $SIZE; $y++) {
+    for ($x = 0; $x -lt $SIZE; $x++) {
+        $idx = $y * $SIZE + $x
+        if ($mask[$idx] -ne 1) { continue }
+        $deg = 0
+        if ($x -gt 0 -and $mask[$idx - 1] -eq 1) { $deg++ }
+        if ($x -lt $SIZE - 1 -and $mask[$idx + 1] -eq 1) { $deg++ }
+        if ($y -gt 0 -and $mask[$idx - $SIZE] -eq 1) { $deg++ }
+        if ($y -lt $SIZE - 1 -and $mask[$idx + $SIZE] -eq 1) { $deg++ }
+        if ($deg -eq 0) { $kill.Add($idx) }
+    }
+}
+foreach ($k in $kill) { $mask[$k] = 0 }
+
+# ---- 3) 填 1px 孔洞（3 个以上邻居是实体就填实；颜色取邻居平均）----
+$fill = New-Object System.Collections.Generic.List[int]
+for ($y = 1; $y -lt $SIZE - 1; $y++) {
+    for ($x = 1; $x -lt $SIZE - 1; $x++) {
+        $idx = $y * $SIZE + $x
+        if ($mask[$idx] -eq 1) { continue }
+        $deg = 0
+        if ($mask[$idx - 1] -eq 1) { $deg++ }
+        if ($mask[$idx + 1] -eq 1) { $deg++ }
+        if ($mask[$idx - $SIZE] -eq 1) { $deg++ }
+        if ($mask[$idx + $SIZE] -eq 1) { $deg++ }
+        if ($deg -ge 3) { $fill.Add($idx) }
+    }
+}
+foreach ($k in $fill) {
+    $mask[$k] = 1
+    $r = 0.0; $g = 0.0; $b = 0.0; $c = 0.0
+    foreach ($d in @(-1, 1, -$SIZE, $SIZE)) {
+        $nidx = $k + $d
+        if ($nidx -lt 0 -or $nidx -ge $N -or $nidx -eq $k) { continue }
+        if ($mask[$nidx] -eq 1) { $r += $pR[$nidx]; $g += $pG[$nidx]; $b += $pB[$nidx]; $c += 1.0 }
+    }
+    if ($c -gt 0) { $pR[$k] = $r / $c; $pG[$k] = $g / $c; $pB[$k] = $b / $c }
+}
+
+# ---- 4) 膨胀 N 次 ----
+for ($step = 0; $step -lt $DILATE; $step++) {
+    $add = New-Object System.Collections.Generic.List[int]
+    for ($y = 0; $y -lt $SIZE; $y++) {
+        for ($x = 0; $x -lt $SIZE; $x++) {
+            $idx = $y * $SIZE + $x
+            if ($mask[$idx] -eq 1) { continue }
+            $hit = $false
+            if ($x -gt 0 -and $mask[$idx - 1] -eq 1) { $hit = $true }
+            elseif ($x -lt $SIZE - 1 -and $mask[$idx + 1] -eq 1) { $hit = $true }
+            elseif ($y -gt 0 -and $mask[$idx - $SIZE] -eq 1) { $hit = $true }
+            elseif ($y -lt $SIZE - 1 -and $mask[$idx + $SIZE] -eq 1) { $hit = $true }
+            if ($hit) { $add.Add($idx) }
+        }
+    }
+    foreach ($k in $add) {
+        $mask[$k] = 1
+        $r = 0.0; $g = 0.0; $b = 0.0; $c = 0.0
+        foreach ($d in @(-1, 1, -$SIZE, $SIZE)) {
+            $nidx = $k + $d
+            if ($nidx -lt 0 -or $nidx -ge $N -or $nidx -eq $k) { continue }
+            if ($mask[$nidx] -eq 1) { $r += $pR[$nidx]; $g += $pG[$nidx]; $b += $pB[$nidx]; $c += 1.0 }
+        }
+        if ($c -gt 0) { $pR[$k] = $r / $c * 0.88; $pG[$k] = $g / $c * 0.88; $pB[$k] = $b / $c * 0.88 }
     }
 }
 
-$pf = [System.Drawing.Imaging.PixelFormat]::Format32bppArgb   # 用 ::new() 传枚举，New-Object 会把枚举当字符串解析
+# ---- 5) 亮度拉伸 + 量化 + 写图 ----
+$outB = [byte[]]::new($N * 4)
+for ($idx = 0; $idx -lt $N; $idx++) {
+    if ($mask[$idx] -ne 1) { continue }
+    $r = $pR[$idx]; $g = $pG[$idx]; $b = $pB[$idx]
+    $lum = (0.299 * $r + 0.587 * $g + 0.114 * $b) / 255.0
+    $boost = [Math]::Pow($lum, $GAMMA) * $GAIN
+    $scale = 1.0
+    if ($lum -gt 0.0001) { $scale = $boost / $lum }
+    $r2 = $r * $scale; $g2 = $g * $scale; $b2 = $b * $scale
+    if ($r2 -lt 0) { $r2 = 0 } elseif ($r2 -gt 255) { $r2 = 255 }
+    if ($g2 -lt 0) { $g2 = 0 } elseif ($g2 -gt 255) { $g2 = 255 }
+    if ($b2 -lt 0) { $b2 = 0 } elseif ($b2 -gt 255) { $b2 = 255 }
+    if ($POSTERIZE -gt 1) {
+        $stepv = 255.0 / ($POSTERIZE - 1)
+        $r2 = [Math]::Round($r2 / $stepv) * $stepv
+        $g2 = [Math]::Round($g2 / $stepv) * $stepv
+        $b2 = [Math]::Round($b2 / $stepv) * $stepv
+    }
+    $o = $idx * 4
+    $outB[$o] = [byte][Math]::Round($b2)
+    $outB[$o + 1] = [byte][Math]::Round($g2)
+    $outB[$o + 2] = [byte][Math]::Round($r2)
+    $outB[$o + 3] = 255
+}
+
 $canvas = [System.Drawing.Bitmap]::new($SIZE, $SIZE, $pf)
-$dst = $canvas.LockBits((New-Object System.Drawing.Rectangle 0, 0, $SIZE, $SIZE), [System.Drawing.Imaging.ImageLockMode]::WriteOnly, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+$dst = $canvas.LockBits((New-Object System.Drawing.Rectangle 0, 0, $SIZE, $SIZE), [System.Drawing.Imaging.ImageLockMode]::WriteOnly, $pf)
 [System.Runtime.InteropServices.Marshal]::Copy($outB, 0, $dst.Scan0, $outB.Length)
 $canvas.UnlockBits($dst)
-
 $out = Join-Path $outDir 'durandal_sword.png'
 $canvas.Save($out, [System.Drawing.Imaging.ImageFormat]::Png)
 $canvas.Dispose()
-Write-Host ("generated " + $out + " (" + $SIZE + "x" + $SIZE + ", gain=" + $GAIN + ", outline=" + $OUTLINE + ")")
+
+$final = 0; for ($k = 0; $k -lt $N; $k++) { if ($mask[$k] -eq 1) { $final++ } }
+Write-Host ("generated " + $out + " (" + $SIZE + "px) mask " + $afterMask + " -> kill " + $kill.Count + " -> fill " + $fill.Count + " -> final " + $final)
