@@ -32,6 +32,14 @@ A visual-and-audio release for the **Unnameable** effect and for **Domains**: th
 - **Having a domain broken** (smashing the barrier with a cursed tool, or losing the curse core that sustained it) plays the vanilla **glass-shattering** crash at the domain's centre.
 - Domain sounds are positional (played at the sphere's centre on the `BLOCKS` / `PLAYERS` channels), so they fade with distance like any world sound — and the two expansion tracks are also listed as subtitles (「领域：展开」/「Domain: expands」).
 
+### The Prison Realm Can Now Be Crafted
+- A new **Curse Crafting Ritual** recipe for the **Prison Realm** (`tinkersnewlife:gourd_jail`):
+  - **Core slot**: 1 × a **Modifier Crystal carrying Idle Transfiguration** (`tinkersnewlife:wu_wei`)
+  - **Material slots (8)**: Obsidian · Gheloth Remains · Boundary Fragment · Soul Lantern · Curse Bottle · Seared Soul Glass · Crying Obsidian · Eye of Ender
+  - **Curse cost**: **10000** (the ritual drains 10 per tick — about 50 seconds)
+- The core is matched by **NBT**: only the crystal that actually carries Idle Transfiguration works (a blank crystal or a different technique will not match), so the ritual asks for a real technique crystal rather than "any crystal".
+- The in-game guide entry for the Prison Realm now documents the recipe on its own page.
+
 ### Boundary Fragments Are Ten Times Rarer
 - Destroying a domain used to drop a **Boundary Fragment** from roughly **1 %** of its boundary blocks; that is now **1/1000 (0.1 %)** per block. Boundary blocks scale with the square of the radius (a radius-10 domain is about 1250 blocks, radius 20 about 5000), so a destroyed domain now yields roughly **1–5 fragments** instead of a dozen or more.
 - The rate is configurable: `[domains] fragment_drop_denominator` (default `1000`; set `1` to make every boundary block drop one). The in-game guide and item tooltips were updated to match.

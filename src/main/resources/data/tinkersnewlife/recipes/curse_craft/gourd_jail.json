@@ -1,0 +1,38 @@
+{
+  "type": "tinkersnewlife:curse_craft",
+  "core": {
+    "type": "forge:partial_nbt",
+    "item": "tconstruct:modifier_crystal",
+    "nbt": "{modifier:\"tinkersnewlife:wu_wei\"}"
+  },
+  "result": {
+    "item": "tinkersnewlife:gourd_jail"
+  },
+  "materials": [
+    {
+      "item": "minecraft:obsidian"
+    },
+    {
+      "item": "tinkersnewlife:gheloth_remains"
+    },
+    {
+      "item": "tinkersnewlife:boundary_fragment"
+    },
+    {
+      "item": "minecraft:soul_lantern"
+    },
+    {
+      "item": "tinkersnewlife:curse_bottle"
+    },
+    {
+      "item": "tconstruct:seared_soul_glass"
+    },
+    {
+      "item": "minecraft:crying_obsidian"
+    },
+    {
+      "item": "minecraft:ender_eye"
+    }
+  ],
+  "curse": 10000
+}

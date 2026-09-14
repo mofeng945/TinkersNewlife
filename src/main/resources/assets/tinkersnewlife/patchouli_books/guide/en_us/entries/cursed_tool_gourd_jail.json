@@ -13,6 +13,11 @@
       "type": "patchouli:spotlight",
       "item": "tinkersnewlife:gourd_jail_sealed",
       "text": "After dragging in a creature, the Prison Realm transforms into its $(bold)sealed form$() (with a new texture) and will no longer seal other creatures.$(br2)Both forms can be $(bold)picked back up into your hand with right-click$() or $(bold)placed on the ground with right-click$() — only the $(bold)placer$() may pick one up; the sealed / idle forms show different textures in the inventory than they do in hand.$(br2)$(bold)Releasing$(): $(bold)right-clicking a sealed Prison Realm with the Inverted Spear of Heaven$(), or $(bold)shining Jacob's Ladder$() on a sealed Prison Realm, breaks the Prison Realm and releases the entity sealed inside; once released, the cage sphere is cleared and the coordinates are freed."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Recipe",
+      "text": "The $(bold)Prison Realm$() is made with the $(l:curse_craft)Curse Crafting Ritual$() (the same recipe is visible in JEI):$(br2)$(bold)Core slot$() (the lantern directly above the ore):$(li)1 × Idle Transfiguration $(bold)Modifier Crystal$()$(br2)$(bold)Material slots$() (the other 8 lanterns):$(li)1 × Obsidian$(li)1 × Gheloth Remains$(li)1 × Boundary Fragment$(li)1 × Soul Lantern$(li)1 × Curse Bottle$(li)1 × Seared Soul Glass$(li)1 × Crying Obsidian$(li)1 × Eye of Ender$(br2)$(bold)Curse cost$(): $(bold)10000$() (the ritual drains 10 per tick, so roughly 50 seconds)$(br2)⚠ The core must be the crystal that actually $(bold)carries Idle Transfiguration$() (the Momo merchant sells two random technique crystals) — a blank crystal or a different technique will not match. The material count must also be $(bold)exact$() (8 here); one extra item and the ritual will not start."
     }
   ]
 }
