@@ -330,22 +330,50 @@ public final class BlueprintCompat {
             ResourceLocation itemId = ForgeRegistries.ITEMS.getKey(item);
             if (itemId != null) namespaces.add(itemId.getNamespace().toLowerCase(Locale.ROOT));
         }
-        // ⭐ 自检：配置里"一个物品命名空间都没匹配到"的条目基本就是写错了
-        //    （实测踩过：@goetyrevelation 少了条下划线，真正的命名空间是 goety_revelation，
-        //     于是整条规则静默失效，启示录的神灵金盔甲被做成了蓝本代理物）。
+        // ⭐ 自检：清单条目"匹配不到任何已注册物品命名空间"，**但去下划线/忽略大小写后能对上某个已加载模组**
+        //    —— 这就是"id 写错了"（实测踩过：@goetyrevelation 少了条下划线，真正的命名空间是 goety_revelation，
+        //    于是整条规则静默失效，启示录的神灵金盔甲被做成了蓝本代理物）。
+        //    ⚠ 必须带上"模组已加载"这个前提：开发环境/精简包里那些模组根本没装，
+        //    无条件报"匹配不到命名空间"会刷出一整屏误报（实测 dev 里刷了 43 条）。
         List<String> deadEntries = new ArrayList<>();
         for (String mod : riskyMods()) {
             if (mod == null || mod.isBlank()) continue;
             String m = mod.trim().toLowerCase(Locale.ROOT);
             if (m.startsWith("@")) m = m.substring(1);
-            if (!namespaces.contains(m)) deadEntries.add(mod.trim());
+            if (namespaces.contains(m)) continue;
+            String normalized = m.replace("_", "");
+            boolean typo = false;
+            for (var info : loadedModIdsNormalized().entrySet()) {
+                if (info.getKey().equals(normalized)) {
+                    typo = true;
+                    break;
+                }
+            }
+            if (typo) deadEntries.add(mod.trim());
         }
         if (!deadEntries.isEmpty()) {
-            TinkersNewlife.LOGGER.warn("[构筑] blueprint_risky_mods 里有 {} 条匹配不到任何已注册物品命名空间"
-                    + "（多半是写错了，条目会静默失效）：{}", deadEntries.size(), deadEntries);
+            TinkersNewlife.LOGGER.warn("[构筑] blueprint_risky_mods 里有 {} 条 id 写错了"
+                    + "（模组在场、但物品命名空间对不上，条目会静默失效）：{}", deadEntries.size(), deadEntries);
         }
         File file = writeReport(total.get(), blueprint.get(), legacy.get(), reasons, riskyMods, legacySamples, deadEntries);
         return new Report(file, total.get(), blueprint.get(), legacy.get(), reasons, riskyMods);
+    }
+
+    /** 已加载模组 id（去掉下划线、小写）→ 原 id；仅用于"id 写错了"的自检 */
+    private static Map<String, String> loadedModIdsNormalized() {
+        Map<String, String> map = new LinkedHashMap<>();
+        try {
+            net.minecraftforge.fml.ModList list = net.minecraftforge.fml.ModList.get();
+            if (list == null) return map;
+            for (var info : list.getMods()) {
+                String id = info.getModId();
+                if (id == null || id.isEmpty()) continue;
+                map.putIfAbsent(id.toLowerCase(Locale.ROOT).replace("_", ""), id);
+            }
+        } catch (Throwable ignored) {
+            // 自检失败不影响报告生成
+        }
+        return map;
     }
 
     private static File writeReport(int total, int blueprint, int legacy,
@@ -376,7 +404,7 @@ public final class BlueprintCompat {
             sb.append(s).append('\n');
         }
         if (!deadEntries.isEmpty()) {
-            sb.append('\n').append("⚠ 以下 blueprint_risky_mods 条目匹配不到任何已注册物品命名空间（多半写错了，已静默失效）：\n");
+            sb.append('\n').append("⚠ 以下 blueprint_risky_mods 条目 id 写错了（模组在场但物品命名空间对不上，规则已静默失效）：\n");
             for (String d : deadEntries) {
                 sb.append("    ").append(d).append('\n');
             }
