@@ -76,4 +76,26 @@ public class UnnameableClientHandler {
         event.setPitch(event.getPitch() + swayPitch);
         event.setRoll(event.getRoll() + swayRoll);
     }
+
+    /**
+     * 模拟"信号干扰 / 花屏"：整屏覆盖层（撕裂条 + 噪点 + 滚动干扰带 + 不定时闪屏）。
+     *
+     * <p>画在 {@code RenderGuiEvent.Post}（整块 GUI 画完之后），所以血条/物品栏/HUD 也会被"干扰"到，
+     * 观感就是"显示器坏了"而不是"画面里多了一层贴图"。
+     */
+    @SubscribeEvent
+    public static void onRenderGuiPost(net.minecraftforge.client.event.RenderGuiEvent.Post event) {
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer player = mc.player;
+        if (player == null) return;
+
+        MobEffectInstance effect = player.getEffect(ModEffects.UNNAMEABLE.get());
+        if (effect == null) return;
+
+        // 1.20.1 的 RenderGuiEvent 只给 GuiGraphics/partialTick，屏幕尺寸从窗口取（GUI 缩放后的尺寸）
+        int width = mc.getWindow().getGuiScaledWidth();
+        int height = mc.getWindow().getGuiScaledHeight();
+        com.mofengbaizhi.tinkersnewlife.client.renderer.UnnameableGlitchRenderer.render(
+                event.getGuiGraphics(), width, height, player.tickCount, effect);
+    }
 }

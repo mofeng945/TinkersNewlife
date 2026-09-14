@@ -36,6 +36,12 @@ public final class ModConfig {
     /** 无为转变：伪装期间是否把玩家的盔甲与手持物品画在生物形态上（默认开；人形形态才有效果） */
     public static final ConfigValue<Boolean> WUWEI_EQUIPMENT_RENDER;
 
+    // ==================== 不可名状 · 信号干扰花屏 ====================
+    /** 「不可名状」效果的整屏信号干扰/花屏特效（客户端，默认开） */
+    public static final ConfigValue<Boolean> UNNAMEABLE_GLITCH;
+    /** 花屏强度倍率（默认 1.0；调大更糊更闪，0 = 只剩雾和视角晃动） */
+    public static final ConfigValue<Double> UNNAMEABLE_GLITCH_INTENSITY;
+
     // ==================== 飞剑流光拖尾 ====================
     /** 飞剑流光拖尾（客户端）：动态条带 + 自写流光着色器 */
     public static final ConfigValue<Boolean> FLYING_SWORD_TRAIL;
@@ -161,6 +167,18 @@ public final class ModConfig {
         WUWEI_DISGUISE_RENDER = b.define("enable_disguise_render", true);
         WUWEI_SPEED_SCALE = b.defineInRange("speed_scale", 0.5D, 0.05D, 4.0D);
         WUWEI_EQUIPMENT_RENDER = b.define("render_equipment", true);
+        b.pop();
+
+        // 不可名状效果：信号干扰花屏（客户端观感）
+        b.push("unnameable").comment(
+                "The Unnameable effect: screen-glitch visuals (client side only).",
+                "",
+                "glitch = whole-screen signal interference / screen tearing overlay",
+                "(tearing bands + static + a rolling interference bar + occasional flashes).",
+                "intensity scales it: 1.0 = default, 2.0 = much messier, 0.5 = subtle, 0 = off",
+                "(the black fog and the camera sway are NOT affected by this option).");
+        UNNAMEABLE_GLITCH = b.define("glitch", true);
+        UNNAMEABLE_GLITCH_INTENSITY = b.defineInRange("glitch_intensity", 1.0D, 0.0D, 3.0D);
         b.pop();
 
         // 构筑术式（拟造）：费用倍率 + 黑名单
