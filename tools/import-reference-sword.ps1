@@ -37,6 +37,7 @@ Write-Host ("reference: " + $W + "x" + $H)
 
 # ---- 1) 检测块宽 k：统计"水平颜色跳变"的 x 位置，正确块宽下跳变都落在 k 的整数倍上 ----
 # （不能用"游程长度众数"：剑身大片纯黑会让游程跨越多个块，众数会被背景/纯色区带偏）
+if ($Out -le 0) {   # 给了 -Out 就跳过网格检测（检测依赖"无滤镜放大"，遇到带滤镜的截图会不准且慢）
 $trans = New-Object System.Collections.Generic.List[int]
 for ($y = 0; $y -lt $H; $y += 2) {
     $row = $y * $SS
@@ -74,6 +75,9 @@ foreach ($S in ($scores.Keys | Sort-Object)) {
 }
 Write-Host ("grid fit: best S=" + $bestS + " (mismatch " + [Math]::Round($bestScore * 100, 2) + "%)  ->  chosen S=" + $finalS)
 $S = $finalS
+    $S = [int]$Out
+    Write-Host ("grid detection skipped, using -Out = " + $S)
+}
 if ($Out -gt 0) { $S = $Out }
 $k = $W / [double]$S
 Write-Host ("using sprite " + $S + "x" + $S + " (block width " + [Math]::Round($k, 3) + " px)")
@@ -134,3 +138,8 @@ for ($sy = 0; $sy -lt $S; $sy++) {
 }
 Write-Host ("verify: sampled " + $cnt + " px, avg diff = " + [Math]::Round($total / [Math]::Max(1, $cnt), 3) + ", not-identical = " + $bad + ", transparent = " + $transparent)
 $src.Dispose()
+# 实测经验（2026-09 用户给的那张参考图）：
+#   · 该图是把贴图**带滤镜**放大到 940x945 的（相邻色块之间有 1px 过渡带），
+#     这种输入下"跳变落在整数倍"的自动识别会失准 -> 直接用 -Out 64 指定尺寸最稳。
+#   · 背景是**双色棋盘格**（看图软件表示透明区），且与剑身暗部亮度很接近；
+#     容差默认 12：26 会把剑身暗灰一起扣掉（实测剑身上半截被啃出缺口）。
