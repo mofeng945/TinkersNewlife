@@ -40,6 +40,11 @@ A visual-and-audio release for the **Unnameable** effect and for **Domains**: th
 - The core is matched by **NBT**: only the crystal that actually carries Idle Transfiguration works (a blank crystal or a different technique will not match), so the ritual asks for a real technique crystal rather than "any crystal".
 - The in-game guide entry for the Prison Realm now documents the recipe on its own page.
 
+### Two More Curse Crafting Recipes: Playful Cloud & Inverted Spear of Heaven
+- **Playful Cloud** (`tinkersnewlife:you_yun`) — core: a **Modifier Crystal carrying Cursed Energy Release**; materials: 2 × Netherite Ingot, 3 × Blessing of Nicholas, 2 × Chain; curse cost **8500** (~43 s).
+- **Inverted Spear of Heaven** (`tinkersnewlife:tian_ni_huo`) — core: a **Modifier Crystal carrying Jacob's Ladder**; materials: Iron Ingot, Netherite Ingot, Stick, Soul Torch, String, Yellow King's Lingering Wind, Broken Durandal Blade; curse cost **11500** (~58 s).
+- Both cores are matched **by NBT**, so only the crystal carrying that exact technique works. The in-game guide entries for both weapons now document their recipes.
+
 ### Boundary Fragments Are Ten Times Rarer
 - Destroying a domain used to drop a **Boundary Fragment** from roughly **1 %** of its boundary blocks; that is now **1/1000 (0.1 %)** per block. Boundary blocks scale with the square of the radius (a radius-10 domain is about 1250 blocks, radius 20 about 5000), so a destroyed domain now yields roughly **1–5 fragments** instead of a dozen or more.
 - The rate is configurable: `[domains] fragment_drop_denominator` (default `1000`; set `1` to make every boundary block drop one). The in-game guide and item tooltips were updated to match.

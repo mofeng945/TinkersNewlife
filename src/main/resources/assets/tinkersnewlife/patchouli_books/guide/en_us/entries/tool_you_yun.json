@@ -12,6 +12,11 @@
                   {
                       "type":  "patchouli:text",
                       "text":  "$(bold)Armor-piercing, shield-breaking strikes$(): every hit $(bold)breaks through shield blocking$() (like a vanilla axe — the moment it connects, the target's shield is disabled).$(br2)$(bold)Fixed +120% damage$(): each attack is $(bold)boosted by an extra 120%$() based on the player's current melee damage.$(li)$(bold)undead bonus +10%$(): deals 10% extra damage to undead creatures such as zombies / skeletons$(li)$(bold)extra knockback$(): each hit also knocks the target back $(bold)this hit's damage / 100$() blocks$(br2)$(bold)Physical damage that cannot pierce Infinity$(): Playful Cloud deals physical damage and $(bold)cannot$() bypass the defenses of \"Infinity\" the way the Inverted Spear of Heaven does (it is reduced by them)."
+                  },
+                  {
+                      "type":  "patchouli:text",
+                      "title":  "Recipe",
+                      "text":  "The $(bold)Playful Cloud$() is made with the $(l:curse_craft)Curse Crafting Ritual$() (the same recipe is visible in JEI):$(br2)$(bold)Core slot$() (the lantern directly above the ore):$(li)1 × Cursed Energy Release $(bold)Modifier Crystal$()$(br2)$(bold)Material slots$() (the other 8 lanterns):$(li)2 × Netherite Ingot$(li)3 × Blessing of Nicholas$(li)2 × Chain$(br2)$(bold)Curse cost$(): $(bold)8500$() (the ritual drains 10 per tick, so about 43 seconds)$(br2)⚠ The core must be the crystal that actually $(bold)carries Cursed Energy Release$() (the Momo merchant sells two random technique crystals) — a blank crystal or a different technique will not match. The material count must be $(bold)exact$() (7 here); one extra item and the ritual will not start."
                   }
               ]
 }

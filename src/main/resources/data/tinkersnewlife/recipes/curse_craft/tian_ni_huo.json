@@ -1,0 +1,35 @@
+{
+  "type": "tinkersnewlife:curse_craft",
+  "core": {
+    "type": "forge:partial_nbt",
+    "item": "tconstruct:modifier_crystal",
+    "nbt": "{modifier:\"tinkersnewlife:jacobs_ladder\"}"
+  },
+  "result": {
+    "item": "tinkersnewlife:tian_ni_huo"
+  },
+  "materials": [
+    {
+      "item": "minecraft:iron_ingot"
+    },
+    {
+      "item": "minecraft:netherite_ingot"
+    },
+    {
+      "item": "minecraft:stick"
+    },
+    {
+      "item": "minecraft:soul_torch"
+    },
+    {
+      "item": "minecraft:string"
+    },
+    {
+      "item": "tinkersnewlife:yellow_king_remnant"
+    },
+    {
+      "item": "tinkersnewlife:durandal_shard"
+    }
+  ],
+  "curse": 11500
+}

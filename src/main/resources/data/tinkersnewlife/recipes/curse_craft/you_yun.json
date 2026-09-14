@@ -1,0 +1,35 @@
+{
+  "type": "tinkersnewlife:curse_craft",
+  "core": {
+    "type": "forge:partial_nbt",
+    "item": "tconstruct:modifier_crystal",
+    "nbt": "{modifier:\"tinkersnewlife:cursed_energy_release\"}"
+  },
+  "result": {
+    "item": "tinkersnewlife:you_yun"
+  },
+  "materials": [
+    {
+      "item": "minecraft:netherite_ingot"
+    },
+    {
+      "item": "minecraft:netherite_ingot"
+    },
+    {
+      "item": "tinkersnewlife:nicholas_blessing"
+    },
+    {
+      "item": "tinkersnewlife:nicholas_blessing"
+    },
+    {
+      "item": "tinkersnewlife:nicholas_blessing"
+    },
+    {
+      "item": "minecraft:chain"
+    },
+    {
+      "item": "minecraft:chain"
+    }
+  ],
+  "curse": 8500
+}
