@@ -2,8 +2,6 @@ package com.mofengbaizhi.tinkersnewlife.client.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.config.ModConfig;
-import com.mofengbaizhi.tinkersnewlife.client.renderer.UnnameableGlitchRenderer;
-import com.mofengbaizhi.tinkersnewlife.client.renderer.UnnameableWhisperRenderer;
 import com.mofengbaizhi.tinkersnewlife.client.sound.UnnameableWhisperSound;
 import com.mofengbaizhi.tinkersnewlife.content.ModEffects;
 import net.minecraft.client.Minecraft;
@@ -13,7 +11,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
-import net.minecraftforge.client.event.RenderGuiEvent;
 import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.level.LevelEvent;
@@ -31,9 +28,10 @@ import java.util.Random;
  *       （{@code assets/tinkersnewlife/shaders/post/unnameable.json} → program → fsh），
  *       用原版同款的 {@code GameRenderer#loadEffect} 挂、{@code shutdownEffect} 摘；</li>
  *   <li><b>视角晃动</b>（反胃）；</li>
- *   <li><b>信号干扰花屏</b>覆盖层（{@code UnnameableGlitchRenderer}）；</li>
- *   <li><b>低语文字</b>（{@code UnnameableWhisperRenderer}）与<b>低语音频</b>
- *       （{@link UnnameableWhisperSound}：获得效果时循环播放，效果结束 1 tick 内停）。</li>
+ *   <li><b>信号干扰花屏 + 低语文字</b>：强度由 {@link UnnameableAmbience} 平滑提供，
+ *       实际绘制在 HUD 层的 {@code client.hud.UnnameableOverlay}（{@code registerAboveAll}，
+ *       <b>不是</b> {@code RenderGuiEvent.Post} —— 那条路在实机里什么都没画出来）；</li>
+ *   <li><b>低语音频</b>（{@link UnnameableWhisperSound}：获得效果时循环播放，效果结束 1 tick 内停）。</li>
  * </ul>
  *
  * <h2>⚠ 色彩效果"绝不常驻"（两条保险）</h2>
@@ -100,14 +98,6 @@ public class UnnameableClientHandler {
         }
     }
 
-    private static boolean whispersEnabled() {
-        try {
-            return ModConfig.UNNAMEABLE_WHISPERS.get();
-        } catch (Throwable ignored) {
-            return true;
-        }
-    }
-
     private static boolean whisperSoundEnabled() {
         try {
             return ModConfig.UNNAMEABLE_WHISPER_SOUND.get();
@@ -152,6 +142,8 @@ public class UnnameableClientHandler {
         }
         // 低语音频也一起停：断线/退出世界时声音引擎会自己清空，但死亡重生/换维度不会
         stopWhisperSound(Minecraft.getInstance());
+        // 花屏/低语的平滑强度立刻归零（渲染层下一帧就不画了）
+        UnnameableAmbience.reset();
     }
 
     /**
@@ -233,6 +225,11 @@ public class UnnameableClientHandler {
         // 低语音频（起播/兜底）—— 必须放在下面那些 early return 之前，否则没效果时会漏掉"停"
         maintainWhisperSound(mc, player);
 
+        // 花屏 + 低语文字的强度：每 tick 把"目标强度"写给 UnnameableAmbience，
+        // 渲染层每帧再平滑趋近（所以是渐显/渐隐，且效果一结束就会回到 0，不会残留）
+        MobEffectInstance current = unnameable(player);
+        UnnameableAmbience.setTarget(current == null ? 0.0F : 0.35F + current.getAmplifier() * 0.22F);
+
         // ⚠⚠ 这里**只能**由"身上真的有不可名状"来决定是否挂后处理。
         //    曾经有个 TNL_DEBUG_POST_EFFECT 调试开关能让它无条件挂上（为了验证着色器编译），
         //    结果那个环境变量被 Gradle 守护进程记住、后续 runClient 全都继承了
@@ -297,31 +294,5 @@ public class UnnameableClientHandler {
         event.setYaw(event.getYaw() + swayYaw);
         event.setPitch(event.getPitch() + swayPitch);
         event.setRoll(event.getRoll() + swayRoll);
-    }
-
-    /**
-     * 模拟"信号干扰 / 花屏"（撕裂条 + 噪点 + 滚动干扰带 + 闪屏）以及<b>低语文字</b>。
-     *
-     * <p>画在 {@code RenderGuiEvent.Post}（整块 GUI 画完之后），所以血条/物品栏/HUD 也会被"干扰"到，
-     * 观感就是"显示器坏了"而不是"画面里多了一层贴图"。
-     */
-    @SubscribeEvent
-    public static void onRenderGuiPost(RenderGuiEvent.Post event) {
-        Minecraft mc = Minecraft.getInstance();
-        LocalPlayer player = mc.player;
-        MobEffectInstance effect = unnameable(player);
-        if (effect == null) return;
-
-        // 1.20.1 的 RenderGuiEvent 只给 GuiGraphics/partialTick，屏幕尺寸从窗口取（GUI 缩放后的尺寸）
-        int width = mc.getWindow().getGuiScaledWidth();
-        int height = mc.getWindow().getGuiScaledHeight();
-
-        UnnameableGlitchRenderer.render(event.getGuiGraphics(), width, height, player.tickCount, effect);
-
-        if (whispersEnabled()) {
-            // 低语强度 0~1：等级 0 就已经有低语，等级越高同时出现的条数越多、越亮
-            float level = Math.min(1.0F, 0.35F + effect.getAmplifier() * 0.22F);
-            UnnameableWhisperRenderer.render(event.getGuiGraphics(), width, height, player.tickCount, level);
-        }
     }
 }

@@ -20,10 +20,11 @@ A visual-overhaul release for the **Unnameable** effect: the old "simulated blin
 - The pattern is deliberately **re-drawn only a few times per second** (instead of every frame) so it looks like a failing display rather than smooth snow, and the intensity scales with the effect's level.
 
 ### Unnameable Whispers To You
-- Words now flicker in and out at random spots on the screen while the effect is on — pale violet, sickly cyan and diseased pink, each line fading in and out instead of sitting still. Positions and lines are re-rolled only every **0.4–1 second** and every frame independently decides whether to draw (and how bright), so it reads as *something talking to you*, not as a wall of text.
+- Words now flicker in and out at random spots on the screen while the effect is on — pale violet, sickly cyan and a washed-out blood pink, each line appearing only on some frames (random skip) so it reads as *something talking to you* rather than as a wall of text. Every line is drawn **bold**, and both its position and its opacity are re-rolled constantly.
 - The whisper lines are **translatable** (keys `whisper.tinkersnewlife.*`), so resource packs and translations can replace every one of them — or add more lines.
 - A **whispered voice track** (`tinkersnewlife:effect.whispers`, 30 s, looped) plays for as long as the effect lasts and **stops the instant it ends** — it is driven by a self-ticking sound instance, so expiry, `/effect clear`, death or a milk bucket all silence it within a tick.
-- Higher effect levels bring **more lines at once and brighter** ones; `whispers = false` turns them off completely.
+- Both the whispers and the glitch now **fade in and out smoothly** (the intensity is interpolated every frame), so the effect creeps in and drains away instead of snapping on and off.
+- Higher effect levels bring **more lines at once and brighter** ones; `whispers = false` turns the text off.
 
 ## Configuration
 ```toml

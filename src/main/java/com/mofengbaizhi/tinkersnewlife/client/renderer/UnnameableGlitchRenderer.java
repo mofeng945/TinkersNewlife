@@ -2,7 +2,6 @@ package com.mofengbaizhi.tinkersnewlife.client.renderer;
 
 import com.mofengbaizhi.tinkersnewlife.config.ModConfig;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.world.effect.MobEffectInstance;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,9 +58,9 @@ public final class UnnameableGlitchRenderer {
     private UnnameableGlitchRenderer() {
     }
 
-    /** 每帧调用（RenderGuiEvent.Post）。不在特效里 / 关掉了就什么都不画 */
-    public static void render(GuiGraphics graphics, int width, int height, int tick, MobEffectInstance effect) {
-        float intensity = intensityOf(effect);
+    /** 每帧调用（HUD 层 overlay）。关掉了 / 强度太低就什么都不画 */
+    public static void render(GuiGraphics graphics, int width, int height, int tick, float level) {
+        float intensity = intensityOf(level);
         if (intensity <= 0.01F || width <= 0 || height <= 0) return;
 
         if (tick - patternTick >= PATTERN_TICKS || width != patternWidth || height != patternHeight) {
@@ -142,9 +141,13 @@ public final class UnnameableGlitchRenderer {
         }
     }
 
-    /** 强度 = (1 + 等级×0.4) × 配置倍率，夹在 0.2~3.0 */
-    private static float intensityOf(MobEffectInstance effect) {
-        if (effect == null) return 0F;
+    /**
+     * 强度 = {@code (0.4 + 平滑强度×1.6) × 配置倍率}，夹在 0~3。
+     *
+     * <p>平滑强度来自 {@code UnnameableAmbience}（0~1，已按效果等级折算并做过过渡），
+     * 所以效果消退时花屏会跟着一起淡出，而不是"啪"地消失。
+     */
+    private static float intensityOf(float level) {
         float config = 1.0F;
         try {
             if (!ModConfig.UNNAMEABLE_GLITCH.get()) return 0F;
@@ -152,7 +155,7 @@ public final class UnnameableGlitchRenderer {
         } catch (Throwable ignored) {
             // 配置还没加载（极端情况）→ 用默认强度
         }
-        float value = (1.0F + effect.getAmplifier() * 0.4F) * config;
+        float value = (0.4F + Math.max(0.0F, Math.min(1.0F, level)) * 1.6F) * config;
         return Math.max(0.0F, Math.min(3.0F, value));
     }
 }

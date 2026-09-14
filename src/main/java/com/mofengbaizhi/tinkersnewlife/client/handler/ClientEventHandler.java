@@ -79,6 +79,10 @@ public class ClientEventHandler {
                 com.mofengbaizhi.tinkersnewlife.client.data.ClientForgeData::render);
         event.registerAboveAll("chant_hud",
                 com.mofengbaizhi.tinkersnewlife.client.data.ClientCursedChant::render);
+        // 「不可名状」的失稳屏幕（花屏 + 低语文字）：放最后 → 盖在其它 HUD 之上，
+        // 观感才是"显示器坏了"而不是"画面里多了一层贴图"
+        event.registerAboveAll("unnameable_overlay",
+                com.mofengbaizhi.tinkersnewlife.client.hud.UnnameableOverlay::render);
     }
 
     @SubscribeEvent
