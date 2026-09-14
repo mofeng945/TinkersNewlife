@@ -39,7 +39,7 @@ public final class UnnameableOverlay {
         int tick = mc.player.tickCount;
         UnnameableGlitchRenderer.render(graphics, width, height, tick, level);
         if (UnnameableWhisperRenderer.enabled()) {
-            UnnameableWhisperRenderer.render(graphics, width, height, level);
+            UnnameableWhisperRenderer.render(graphics, width, height, tick, level);
         }
     }
 }
