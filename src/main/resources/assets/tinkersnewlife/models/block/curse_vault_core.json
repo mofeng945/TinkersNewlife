@@ -1,0 +1,22 @@
+{
+  "parent": "block/block",
+  "textures": {
+    "particle": "tinkersnewlife:block/curse_vault_energy",
+    "energy": "tinkersnewlife:block/curse_vault_energy"
+  },
+  "elements": [
+    {
+      "name": "core",
+      "from": [4, 4, 4],
+      "to": [12, 12, 12],
+      "faces": {
+        "down":  { "texture": "#energy", "uv": [0, 0, 16, 16] },
+        "up":    { "texture": "#energy", "uv": [0, 0, 16, 16] },
+        "north": { "texture": "#energy", "uv": [0, 0, 16, 16] },
+        "south": { "texture": "#energy", "uv": [0, 0, 16, 16] },
+        "west":  { "texture": "#energy", "uv": [0, 0, 16, 16] },
+        "east":  { "texture": "#energy", "uv": [0, 0, 16, 16] }
+      }
+    }
+  ]
+}

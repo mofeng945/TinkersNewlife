@@ -36,10 +36,29 @@ import javax.annotation.Nullable;
  *   <li><b>无法破坏</b>：硬度 -1（同基岩）、抗爆 3600000、活塞推不动、无掉落物表；</li>
  *   <li><b>回收</b>：使用者主手为空 + 潜行 + 右键 → 收回成物品并**保留其中咒力**；</li>
  *   <li><b>空手右键</b>：报出当前储量 / 容量与使用者；</li>
+ *   <li><b>存量越亮</b>：{@link #POWER}（0~15 共 16 档）由方块实体每 tick 按存量同步（只在档位变化时才写世界），
+ *       既驱动方块自身发光（{@code lightLevel}），也决定笼内能量团的亮度/体积/火花数量
+ *       （见 {@code client/renderer/CurseVaultRenderer}）；</li>
  *   <li>流体能力见 {@link CurseVaultBlockEntity}（接匠魂熔炉里的咒力残秽）。</li>
  * </ul>
  */
 public class CurseVaultBlock extends Block implements EntityBlock {
+
+    /**
+     * 存量档位 0~15（共 16 级）：0 = 空，15 = 满（10 万咒力）。
+     *
+     * <p>存成<b>方块状态</b>而不是方块实体数据，是因为：
+     * <ul>
+     *   <li>光照必须由状态驱动（{@code Properties#lightLevel}），动态光照靠状态最省事、最稳；</li>
+     *   <li>方块状态会自动同步到客户端，而存量真值在服务端 world data（客户端拿不到），
+     *       渲染器直接读状态即可。</li>
+     * </ul>
+     */
+    public static final net.minecraft.world.level.block.state.properties.IntegerProperty POWER =
+            net.minecraft.world.level.block.state.properties.IntegerProperty.create("power", 0, 15);
+
+    /** 满存量对应的档位 */
+    public static final int MAX_POWER_LEVEL = 15;
 
     public CurseVaultBlock() {
         super(BlockBehaviour.Properties.of()
@@ -47,7 +66,33 @@ public class CurseVaultBlock extends Block implements EntityBlock {
                 .strength(-1.0F, 3600000.0F)   // 无法破坏（同基岩硬度 -1 + 高抗爆）
                 .sound(SoundType.NETHERITE_BLOCK)
                 .pushReaction(PushReaction.BLOCK)   // 活塞推不动
+                // 存量越多越亮：0 档不发光，15 档满亮度（室内能当光源用）
+                .lightLevel(state -> state.getValue(POWER))
                 .noLootTable());
+        registerDefaultState(stateDefinition.any().setValue(POWER, 0));
+    }
+
+    @Override
+    protected void createBlockStateDefinition(
+            net.minecraft.world.level.block.state.StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(POWER);
+    }
+
+    /** 按存量算档位：0 = 空，15 = 满 */
+    public static int levelFor(double power) {
+        if (power <= 0) return 0;
+        int lvl = (int) Math.ceil(power / CurseVaultData.CAPACITY * (MAX_POWER_LEVEL + 1));
+        return Math.max(1, Math.min(MAX_POWER_LEVEL, lvl));
+    }
+
+    @Nullable
+    @Override
+    public <T extends BlockEntity> net.minecraft.world.level.block.entity.BlockEntityTicker<T> getTicker(
+            Level level, BlockState state, net.minecraft.world.level.block.entity.BlockEntityType<T> type) {
+        if (level.isClientSide) return null;
+        return (lvl, pos, st, be) -> {
+            if (be instanceof CurseVaultBlockEntity vault) vault.syncPowerLevel();
+        };
     }
 
     @Nullable

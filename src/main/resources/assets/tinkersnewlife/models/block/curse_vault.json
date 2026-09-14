@@ -1,6 +1,3 @@
 {
-  "parent": "block/cube_all",
-  "textures": {
-    "all": "tinkersnewlife:block/curse_vault"
-  }
+  "parent": "tinkersnewlife:block/curse_vault_cage"
 }

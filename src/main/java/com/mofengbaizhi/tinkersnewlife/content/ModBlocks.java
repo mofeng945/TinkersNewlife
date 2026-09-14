@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.content;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.block.BloodRedstoneBlock;
 import com.mofengbaizhi.tinkersnewlife.content.block.DomainBarrierBlock;
+import com.mofengbaizhi.tinkersnewlife.content.block.CurseVaultVisualBlock;
 import com.mofengbaizhi.tinkersnewlife.content.block.GourdJailVisualBlock;
 
 import net.minecraft.core.BlockPos;
@@ -68,4 +69,13 @@ public class ModBlocks {
     /** 狱门疆视觉方块：仅作为狱门疆实体的模型渲染载体（方块模型+贴图），无物品形态、不会真实生成 */
     public static final RegistryObject<Block> GOURD_JAIL_VISUAL = BLOCKS.register("gourd_jail_visual",
             () -> new GourdJailVisualBlock());
+
+    // ===== 呪蔵笼内能量（纯渲染载体，见 client/renderer/CurseVaultRenderer）=====
+    /** 呪蔵主能量团模型载体：blockstate → tinkersnewlife:block/curse_vault_core */
+    public static final RegistryObject<Block> CURSE_VAULT_CORE_VISUAL = BLOCKS.register("curse_vault_core_visual",
+            CurseVaultVisualBlock::new);
+
+    /** 呪蔵环绕火花模型载体：blockstate → tinkersnewlife:block/curse_vault_spark */
+    public static final RegistryObject<Block> CURSE_VAULT_SPARK_VISUAL = BLOCKS.register("curse_vault_spark_visual",
+            CurseVaultVisualBlock::new);
 }

@@ -1,5 +1,20 @@
 {
   "variants": {
-    "": { "model": "tinkersnewlife:block/curse_vault" }
+    "power=0": { "model": "tinkersnewlife:block/curse_vault" },
+    "power=1": { "model": "tinkersnewlife:block/curse_vault" },
+    "power=2": { "model": "tinkersnewlife:block/curse_vault" },
+    "power=3": { "model": "tinkersnewlife:block/curse_vault" },
+    "power=4": { "model": "tinkersnewlife:block/curse_vault" },
+    "power=5": { "model": "tinkersnewlife:block/curse_vault" },
+    "power=6": { "model": "tinkersnewlife:block/curse_vault" },
+    "power=7": { "model": "tinkersnewlife:block/curse_vault" },
+    "power=8": { "model": "tinkersnewlife:block/curse_vault" },
+    "power=9": { "model": "tinkersnewlife:block/curse_vault" },
+    "power=10": { "model": "tinkersnewlife:block/curse_vault" },
+    "power=11": { "model": "tinkersnewlife:block/curse_vault" },
+    "power=12": { "model": "tinkersnewlife:block/curse_vault" },
+    "power=13": { "model": "tinkersnewlife:block/curse_vault" },
+    "power=14": { "model": "tinkersnewlife:block/curse_vault" },
+    "power=15": { "model": "tinkersnewlife:block/curse_vault" }
   }
 }

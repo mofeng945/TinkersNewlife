@@ -85,8 +85,13 @@ public class ClientEventHandler {
                 com.mofengbaizhi.tinkersnewlife.client.hud.UnnameableOverlay::render);
     }
 
+
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        // 呪蔵：笼子里那团会转的能量（方块模型只画笼子，能量走 BER）
+        event.registerBlockEntityRenderer(
+                com.mofengbaizhi.tinkersnewlife.content.ModBlockEntities.CURSE_VAULT.get(),
+                com.mofengbaizhi.tinkersnewlife.client.renderer.CurseVaultRenderer::new);
         event.registerEntityRenderer(ModEntities.DREADSTEEL_SLASH.get(), DreadsteelSlashRenderer::new);
         event.registerEntityRenderer(ModEntities.FLYING_SWORD.get(), FlyingSwordRenderer::new);
         event.registerEntityRenderer(ModEntities.FLYING_SWORD_FOOT.get(), FlyingSwordFootRenderer::new);

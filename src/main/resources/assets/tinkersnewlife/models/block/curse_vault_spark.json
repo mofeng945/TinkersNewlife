@@ -1,0 +1,22 @@
+{
+  "parent": "block/block",
+  "textures": {
+    "particle": "tinkersnewlife:block/curse_vault_energy",
+    "energy": "tinkersnewlife:block/curse_vault_energy"
+  },
+  "elements": [
+    {
+      "name": "spark",
+      "from": [7, 7, 7],
+      "to": [9, 9, 9],
+      "faces": {
+        "down":  { "texture": "#energy", "uv": [2, 2, 10, 10] },
+        "up":    { "texture": "#energy", "uv": [2, 2, 10, 10] },
+        "north": { "texture": "#energy", "uv": [2, 2, 10, 10] },
+        "south": { "texture": "#energy", "uv": [2, 2, 10, 10] },
+        "west":  { "texture": "#energy", "uv": [2, 2, 10, 10] },
+        "east":  { "texture": "#energy", "uv": [2, 2, 10, 10] }
+      }
+    }
+  ]
+}

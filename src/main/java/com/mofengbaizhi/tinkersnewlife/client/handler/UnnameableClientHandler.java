@@ -63,6 +63,7 @@ public class UnnameableClientHandler {
     private static final int PULSE_OFF_MAX = 35;
 
     private static final Random RNG = new Random();
+    /** ⚠ 临时诊断开关（本轮验证后删除） */
 
     /** 我们此刻是否把后处理挂上去了（避免重复 load，也避免误摘别人的效果） */
     private static boolean postApplied = false;

@@ -6,6 +6,7 @@ import com.mofengbaizhi.tinkersnewlife.content.curse.CurseVaultData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
@@ -36,6 +37,28 @@ public class CurseVaultBlockEntity extends BlockEntity {
     public double currentPower() {
         CurseVaultData data = CurseVaultData.getOrNull(getLevel());
         return data == null ? 0 : data.getPower(getBlockPos());
+    }
+
+    /**
+     * 每 tick 由 {@code CurseVaultBlock#getTicker} 调（仅服务端）：
+     * 把"存量 → 0~15 档"写进方块状态 {@link CurseVaultBlock#POWER}。
+     *
+     * <p>为什么用方块状态而不是方块实体数据：
+     * <ul>
+     *   <li>发光只能由状态驱动（{@code Properties#lightLevel}），改状态会顺带触发光照更新；</li>
+     *   <li>状态会自动同步给客户端，而存量真值在服务端 world data ——
+     *       客户端渲染器读状态就能知道该多亮。</li>
+     * </ul>
+     * 只在档位真的变了才 {@code setBlock}（避免每 tick 写世界）。
+     */
+    public void syncPowerLevel() {
+        Level level = getLevel();
+        if (level == null || level.isClientSide) return;
+        BlockState state = getBlockState();
+        if (!state.hasProperty(CurseVaultBlock.POWER)) return;
+        int want = CurseVaultBlock.levelFor(currentPower());
+        if (state.getValue(CurseVaultBlock.POWER) == want) return;
+        level.setBlock(getBlockPos(), state.setValue(CurseVaultBlock.POWER, want), 3);
     }
 
     @Nonnull
