@@ -33,6 +33,12 @@ build-*.log
 # local mod jars for dev testing
 libs/
 
+# release secrets / generated upload files (⚠ 绝不能提交 Modrinth Token)
+release.env
+tools/release.env
+.modrinth.env
+upload-response.json
+
 # debug scratch dumps (javap/log analysis)
 *.log.txt
 build-*.txt
