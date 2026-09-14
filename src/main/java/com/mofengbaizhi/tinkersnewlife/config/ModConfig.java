@@ -36,11 +36,17 @@ public final class ModConfig {
     /** 无为转变：伪装期间是否把玩家的盔甲与手持物品画在生物形态上（默认开；人形形态才有效果） */
     public static final ConfigValue<Boolean> WUWEI_EQUIPMENT_RENDER;
 
-    // ==================== 不可名状 · 信号干扰花屏 ====================
-    /** 「不可名状」效果的整屏信号干扰/花屏特效（客户端，默认开） */
+    // ==================== 不可名状 · 观感 ====================
+    /** 「不可名状」的整屏信号干扰/花屏覆盖层（客户端，默认开） */
     public static final ConfigValue<Boolean> UNNAMEABLE_GLITCH;
-    /** 花屏强度倍率（默认 1.0；调大更糊更闪，0 = 只剩雾和视角晃动） */
+    /** 花屏强度倍率（默认 1.0；调大更糊更闪，0 = 只剩后处理与视角晃动） */
     public static final ConfigValue<Double> UNNAMEABLE_GLITCH_INTENSITY;
+    /** 「不可名状」的 FOV 倍率（默认 1.4 = 视野拉高 40%） */
+    public static final ConfigValue<Double> UNNAMEABLE_FOV_MULTIPLIER;
+    /** 「不可名状」的后处理（锐化 + 高对比度 + 高饱和度 + 反转颜色，客户端，默认开） */
+    public static final ConfigValue<Boolean> UNNAMEABLE_POST_EFFECT;
+    /** 后处理是否"闪断"（默认 true：亮 2~5 秒 / 断 0.5~1.5 秒随机交替，避免反转色一直糊着） */
+    public static final ConfigValue<Boolean> UNNAMEABLE_POST_EFFECT_PULSE;
 
     // ==================== 飞剑流光拖尾 ====================
     /** 飞剑流光拖尾（客户端）：动态条带 + 自写流光着色器 */
@@ -169,14 +175,27 @@ public final class ModConfig {
         WUWEI_EQUIPMENT_RENDER = b.define("render_equipment", true);
         b.pop();
 
-        // 不可名状效果：信号干扰花屏（客户端观感）
+        // 不可名状效果：客户端观感（撑开视野 + 后处理 + 信号干扰花屏）
         b.push("unnameable").comment(
-                "The Unnameable effect: screen-glitch visuals (client side only).",
+                "The Unnameable effect: client-side visuals.",
                 "",
-                "glitch = whole-screen signal interference / screen tearing overlay",
-                "(tearing bands + static + a rolling interference bar + occasional flashes).",
-                "intensity scales it: 1.0 = default, 2.0 = much messier, 0.5 = subtle, 0 = off",
-                "(the black fog and the camera sway are NOT affected by this option).");
+                "fov_multiplier = field of view multiplier while affected (1.4 = +40%).",
+                "",
+                "post_effect = post-processing shader while affected:",
+                "sharpen (unsharp mask) + higher contrast + higher saturation + INVERTED COLORS.",
+                "Set false if another shader mod conflicts, or if you dislike inverted colours.",
+                "",
+                "post_effect_pulse = keep the colour effect INTERMITTENT instead of always-on:",
+                "roughly 2-5 seconds on, then 0.5-1.5 seconds off, randomly (default true).",
+                "Set false to hold the effect continuously for the whole duration.",
+                "(Either way it is ALWAYS removed the moment the effect ends / you die / leave the world.)",
+                "",
+                "glitch = whole-screen signal interference overlay",
+                "(tearing bands + static + a rolling interference bar + occasional flashes);",
+                "glitch_intensity scales it: 1.0 = default, 2.0 = much messier, 0 = off.");
+        UNNAMEABLE_FOV_MULTIPLIER = b.defineInRange("fov_multiplier", 1.4D, 1.0D, 2.5D);
+        UNNAMEABLE_POST_EFFECT = b.define("post_effect", true);
+        UNNAMEABLE_POST_EFFECT_PULSE = b.define("post_effect_pulse", true);
         UNNAMEABLE_GLITCH = b.define("glitch", true);
         UNNAMEABLE_GLITCH_INTENSITY = b.defineInRange("glitch_intensity", 1.0D, 0.0D, 3.0D);
         b.pop();
