@@ -24,9 +24,11 @@ $SIZE = 64
 $MASK_THRESHOLD = 0.28   # 区块 alpha 最大值 >= 它才算实体（越小越粗、细刺越不容易断）
 $CORE_ALPHA = 0.60       # 求颜色时只统计 alpha >= 它的实心像素
 $DILATE = 1              # 膨胀像素数（0/1/2）：让剑更硬朗，MC 风格偏粗
-$GAIN = 1.55             # 亮度增益（原图极暗）
-$GAMMA = 0.95
+$LEVEL_BLACK = 30.0      # 黑场：亮度 <= 它 → 纯黑（原图整体极暗，靠它把剑身压成黑）
+$LEVEL_WHITE = 42.0      # 白场：亮度 >= 它 → 纯白（刃口最亮的那条带子就是它）
+$GAMMA_OUT = 0.70        # 输出 gamma（<1 提亮中间调）
 $POSTERIZE = 6           # 色调量化档数（0/1 = 不量化）
+$SMOOTH = 1              # 上色前的平滑次数（3x3 平均，去掉缩绘产生的麻点，让亮带更干净）
 
 if (-not (Test-Path $srcPath)) { throw ("missing source art: " + $srcPath) }
 $src = New-Object System.Drawing.Bitmap $srcPath
@@ -143,15 +145,43 @@ for ($step = 0; $step -lt $DILATE; $step++) {
     }
 }
 
+# ---- 4.5) 平滑：3x3 平均（只统计实体像素），去掉缩绘产生的麻点 ----
+for ($pass = 0; $pass -lt $SMOOTH; $pass++) {
+    $tR = [double[]]::new($N); $tG = [double[]]::new($N); $tB = [double[]]::new($N)
+    for ($y = 0; $y -lt $SIZE; $y++) {
+        for ($x = 0; $x -lt $SIZE; $x++) {
+            $idx = $y * $SIZE + $x
+            if ($mask[$idx] -ne 1) { continue }
+            $sr = 0.0; $sg = 0.0; $sbl = 0.0; $sc = 0.0
+            for ($dy = -1; $dy -le 1; $dy++) {
+                $ny = $y + $dy
+                if ($ny -lt 0 -or $ny -ge $SIZE) { continue }
+                for ($dx = -1; $dx -le 1; $dx++) {
+                    $nx = $x + $dx
+                    if ($nx -lt 0 -or $nx -ge $SIZE) { continue }
+                    $nidx = $ny * $SIZE + $nx
+                    if ($mask[$nidx] -ne 1) { continue }
+                    $sr += $pR[$nidx]; $sg += $pG[$nidx]; $sbl += $pB[$nidx]; $sc += 1.0
+                }
+            }
+            if ($sc -gt 0) { $tR[$idx] = $sr / $sc; $tG[$idx] = $sg / $sc; $tB[$idx] = $sbl / $sc }
+        }
+    }
+    for ($idx = 0; $idx -lt $N; $idx++) { if ($mask[$idx] -eq 1) { $pR[$idx] = $tR[$idx]; $pG[$idx] = $tG[$idx]; $pB[$idx] = $tB[$idx] } }
+}
 # ---- 5) 亮度拉伸 + 量化 + 写图 ----
 $outB = [byte[]]::new($N * 4)
 for ($idx = 0; $idx -lt $N; $idx++) {
     if ($mask[$idx] -ne 1) { continue }
     $r = $pR[$idx]; $g = $pG[$idx]; $b = $pB[$idx]
-    $lum = (0.299 * $r + 0.587 * $g + 0.114 * $b) / 255.0
-    $boost = [Math]::Pow($lum, $GAMMA) * $GAIN
-    $scale = 1.0
-    if ($lum -gt 0.0001) { $scale = $boost / $lum }
+    $lum = 0.299 * $r + 0.587 * $g + 0.114 * $b
+    # 黑白场映射：<=黑场 → 0（纯黑），>=白场 → 255（纯白），中间按 gamma 过渡
+    $tt = ($lum - $LEVEL_BLACK) / ($LEVEL_WHITE - $LEVEL_BLACK)
+    if ($tt -lt 0) { $tt = 0.0 } elseif ($tt -gt 1) { $tt = 1.0 }
+    $tt = [Math]::Pow($tt, $GAMMA_OUT)
+    $target = $tt * 255.0
+    $scale = 0.0
+    if ($lum -gt 0.0001) { $scale = $target / $lum }
     $r2 = $r * $scale; $g2 = $g * $scale; $b2 = $b * $scale
     if ($r2 -lt 0) { $r2 = 0 } elseif ($r2 -gt 255) { $r2 = 255 }
     if ($g2 -lt 0) { $g2 = 0 } elseif ($g2 -gt 255) { $g2 = 255 }
