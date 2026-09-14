@@ -158,12 +158,15 @@ Draw-RectOnBody 13 10 14 11 $SEAL_D
 Draw-RectOnBody 17 10 18 11 $SEAL_D
 
 # ============ 6) 两只把手（耳） ============
-Draw-Ellipse 6.2 15.5 2.2 2.9 $CLAY_M -inner 0.30
-Draw-Ellipse 24.8 15.5 2.2 2.9 $CLAY_M -inner 0.30
-Draw-Ellipse 6.2 15.5 2.2 2.9 $CLAY_L -inner 0.62
-Draw-Ellipse 24.8 15.5 2.2 2.9 $CLAY_D -inner 0.62
+Draw-Ellipse 5.0 14.0 2.0 2.7 $CLAY_M -inner 0.45
+Draw-Ellipse 26.0 14.0 2.0 2.7 $CLAY_M -inner 0.45
+Draw-Ellipse 5.0 14.0 2.0 2.7 $CLAY_L -inner 0.68
+Draw-Ellipse 26.0 14.0 2.0 2.7 $CLAY_D -inner 0.68
 
 # ============ 7) 自动描边（透明像素挨着实体就画深色边） ============
+# ⚠ 必须"先收集、后落笔"：如果边扫边写，新写进去的描边像素会让它外侧的像素也变成"挨着实体"，
+#    于是一圈变一片、一路扩散到画布边缘（第一次就是这么把背景涂黑的）。
+$edgePixels = New-Object System.Collections.Generic.List[string]
 for ($y = 0; $y -lt $W; $y++) {
     for ($x = 0; $x -lt $W; $x++) {
         if (Get-Px $x $y) { continue }
@@ -171,8 +174,12 @@ for ($y = 0; $y -lt $W; $y++) {
         foreach ($d in @(@(1, 0), @(-1, 0), @(0, 1), @(0, -1))) {
             if (Get-Px ($x + $d[0]) ($y + $d[1])) { $near = $true; break }
         }
-        if ($near) { Set-Px $x $y $OUT }
+        if ($near) { $edgePixels.Add("$x,$y") }
     }
+}
+foreach ($k in $edgePixels) {
+    $p2 = $k -split ','
+    Set-Px ([int]$p2[0]) ([int]$p2[1]) $OUT
 }
 
 # ============ 8) 落笔 ============
