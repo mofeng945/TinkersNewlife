@@ -155,6 +155,7 @@ public class ModCreativeTabs {
                                 output.accept(ModItems.YOU_YUN.get());
                                 output.accept(ModItems.GOURD_JAIL.get());
                                 output.accept(ModItems.BOUNDARY_FRAGMENT.get());
+                                output.accept(ModItems.LIFE_LAMP_RING.get());   // 命灯指轮（戒指槽饰品）
 
                                 // ----- 咒言术残卷（学习咒言词条）-----
                                 output.accept(ModItems.ANCIENT_CURSED_SCROLL.get());

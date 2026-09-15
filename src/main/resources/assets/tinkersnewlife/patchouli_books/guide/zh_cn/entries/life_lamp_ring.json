@@ -1,0 +1,22 @@
+{
+  "name": "命灯指轮",
+  "category": "tinkersnewlife:cursed_tools",
+  "icon": "tinkersnewlife:life_lamp_ring",
+  "sortnum": 6,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)命灯指轮$() 是一枚戴在 curios $(bold)戒指槽$()的咒具。$(br2)灯芯不灭，灯下之人便不会死 —— 只要你戴着它，$(bold)你打出的任何伤害都不会真的杀死目标$()：$(li)致死的一击会被截断，目标$(bold)永远留下 1 点生命$()$(li)连处决类的直杀效果也会被灯焰拦下$(li)飞剑、魔法弹、被指使的仆从打出的伤害同样受此约束$(br2)$(bold)慈悲是最大的恶，善念或许也会铸就业果。$()"
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:life_lamp_ring",
+      "text": "它$(bold)只保护你的对手，不保护你$() —— 你自己受到的伤害照常结算；对已只剩 1 点生命的目标，攻击不再造成伤害。$(br2)想收割时，把戒指摘下来即可。$(br2)$(italic)把敌人钉在"只差一口气"的位置上，有时比直接杀了它更残忍。$()"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "配方",
+      "text": "$(bold)命灯指轮$() 由$(l:curse_craft)咒力合成仪式$()造出（JEI 里能查到同一份配方）：$(br2)$(bold)核心位$()（矿石正上方那盏灯笼）放：$(li)1 × 反转术式$(br2)$(bold)材料位$()（其余 8 盏灯笼）放：$(li)1 × 铁粒$(li)1 × 金粒$(li)1 × 尼古拉斯之赐$(li)1 × 灵魂灯笼$(li)1 × 兰花$(li)1 × 玫瑰$(li)1 × 矢车菊$(br2)$(bold)咒力消耗$()：$(bold)5000$() 点$(br2)⚠ 材料数量要$(bold)正好$()：多放一件就不匹配、仪式不会开始。结构怎么搭看$(l:curse_craft)咒力合成仪式$()那一条。"
+    }
+  ]
+}

@@ -258,6 +258,13 @@ public class ModItems {
                     )
             );
 
+    /**
+     * 命灯指轮：戒指槽饰品。
+     * 佩戴后佩戴者打出的伤害永远不会致死 —— 目标最终总会留下 1 点生命。
+     */
+    public static final RegistryObject<Item> LIFE_LAMP_RING =
+            ITEMS.register("life_lamp_ring",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.LifeLampRingItem());
     /** 火焰箭（手持蓄力）：灶·开蓄力时临时装备的视觉物品（动态纹理），不可获取/使用 */
     public static final RegistryObject<Item> FLAME_ARROW_ITEM =
             ITEMS.register("flame_arrow_item", FlameArrowItem::new);

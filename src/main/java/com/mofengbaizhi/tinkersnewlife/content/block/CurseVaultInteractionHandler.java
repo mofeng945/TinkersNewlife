@@ -145,6 +145,9 @@ public final class CurseVaultInteractionHandler {
         result.setCount(held.getCount());
         player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, result);
 
+        // ⭐ 音效：倒空 / 灌满分不同音色（瓶子用瓶音、桶用桶音），附近玩家都能听到
+        playTransferSound(level, pos, held, deposit);
+
         double power = CurseVaultData.get((ServerLevel) level).getPower(pos);
         player.displayClientMessage(Component.translatable(deposit
                         ? "message.tinkersnewlife.curse_vault.deposited"
@@ -157,6 +160,31 @@ public final class CurseVaultInteractionHandler {
     private static boolean isResidue(net.minecraftforge.fluids.FluidStack stack) {
         var fluid = com.mofengbaizhi.tinkersnewlife.content.ModFluids.CURSE_RESIDUE.still.get();
         return fluid != null && stack.getFluid() == fluid;
+    }
+
+    /**
+     * 流体交互音效。
+     *
+     * <p>用原版现成的音色，不额外注册：
+     * <ul>
+     *   <li><b>封呪瓶</b>（或其它"瓶子类"）→ {@code BOTTLE_EMPTY}（倒进呪蔵）/ {@code BOTTLE_FILL}（从呪蔵接出）；</li>
+     *   <li><b>桶</b>（以及其它流体容器）→ {@code BUCKET_EMPTY} / {@code BUCKET_FILL}。</li>
+     * </ul>
+     * 走 {@code SoundSource.BLOCKS} + 方块坐标播放，和原版"用桶装水"的位置感一致。
+     *
+     * @param deposit true = 容器往呪蔵里倒（倒空容器），false = 从呪蔵接出（灌满容器）
+     */
+    private static void playTransferSound(Level level, BlockPos pos, ItemStack held, boolean deposit) {
+        boolean bottle = held.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.CurseBottleItem;
+        net.minecraft.sounds.SoundEvent sound;
+        if (bottle) {
+            sound = deposit ? net.minecraft.sounds.SoundEvents.BOTTLE_EMPTY
+                            : net.minecraft.sounds.SoundEvents.BOTTLE_FILL;
+        } else {
+            sound = deposit ? net.minecraft.sounds.SoundEvents.BUCKET_EMPTY
+                            : net.minecraft.sounds.SoundEvents.BUCKET_FILL;
+        }
+        level.playSound(null, pos, sound, net.minecraft.sounds.SoundSource.BLOCKS, 1.0F, 1.0F);
     }
 
     /**

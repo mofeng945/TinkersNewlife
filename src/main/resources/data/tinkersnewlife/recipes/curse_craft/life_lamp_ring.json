@@ -1,0 +1,35 @@
+{
+  "type": "tinkersnewlife:curse_craft",
+  "core": {
+    "type": "forge:partial_nbt",
+    "item": "tconstruct:modifier_crystal",
+    "nbt": "{modifier:\"tinkersnewlife:reverse_cursed\"}"
+  },
+  "result": {
+    "item": "tinkersnewlife:life_lamp_ring"
+  },
+  "materials": [
+    {
+      "item": "minecraft:iron_nugget"
+    },
+    {
+      "item": "minecraft:gold_nugget"
+    },
+    {
+      "item": "tinkersnewlife:nicholas_blessing"
+    },
+    {
+      "item": "minecraft:soul_lantern"
+    },
+    {
+      "item": "minecraft:blue_orchid"
+    },
+    {
+      "item": "minecraft:rose_bush"
+    },
+    {
+      "item": "minecraft:cornflower"
+    }
+  ],
+  "curse": 5000
+}

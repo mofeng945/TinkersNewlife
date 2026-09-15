@@ -1,0 +1,22 @@
+{
+  "name": "Life Lamp Ring",
+  "category": "tinkersnewlife:cursed_tools",
+  "icon": "tinkersnewlife:life_lamp_ring",
+  "sortnum": 6,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "The $(bold)Life Lamp Ring$() is a cursed tool worn in a Curios $(bold)ring slot$().$(br2)While its wick burns, no one beneath it may die - $(bold)no damage you deal can ever kill your target$():$(li)A lethal blow is cut short, leaving the target at $(bold)1 health$()$(li)Even execution-style instant kills are held back by the flame$(li)Damage from your flying swords, magic bolts and commanded servants is bound the same way$(br2)$(bold)Mercy is the greatest evil; even good intent may bear karmic fruit.$()"
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:life_lamp_ring",
+      "text": "It $(bold)protects only your foes, never you$() - damage you take is settled as usual, and a target already at 1 health takes no further damage.$(br2)Take the ring off when you mean to finish someone.$(br2)$(italic)Pinning an enemy at one breath from death is sometimes crueller than killing it outright.$()"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Recipe",
+      "text": "$(bold)Life Lamp Ring$() is made by the $(l:curse_craft)Curse Crafting Ritual$() (the same recipe is shown in JEI):$(br2)$(bold)Core slot$() (the lantern directly above the ore):$(li)1 x Reverse Cursed Technique$(br2)$(bold)Material slots$() (the other 8 lanterns):$(li)1 x Iron Nugget$(li)1 x Gold Nugget$(li)1 x Nicholas' Blessing$(li)1 x Soul Lantern$(li)1 x Blue Orchid$(li)1 x Rose Bush$(li)1 x Cornflower$(br2)$(bold)Curse cost$(): $(bold)5000$()$(br2)Note: material $(bold)counts must be exact$() - one extra item and the ritual will not start. See $(l:curse_craft)Curse Crafting Ritual$() for the structure."
+    }
+  ]
+}
