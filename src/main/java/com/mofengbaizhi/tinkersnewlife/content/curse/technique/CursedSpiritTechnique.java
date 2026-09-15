@@ -77,6 +77,14 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         public float maxHp;
         public float atk;
         public int releasedId = -1; // 当前场上释放体 entity id，-1 = 未释放
+        /**
+         * 当前场上释放体的 <b>UUID</b>（普通释放体也要记）。
+         * <p>为什么需要：entity id 只在一次会话内有效 —— 登出/重启后 {@code normalize()}
+         * 会把 {@code releasedId} 复位，而普通释放体没有 UUID 就**再也认不回**场上的实体，
+         * 于是出现"UI 不更新、收回无效、还能再放一只"。守护体靠 {@code guardUuid} 早就解决了，
+         * 这里把同一套办法补到所有释放体上。
+         */
+        public String releasedUuid = "";
         /** 无为转变·守护形态：释放/重链时按守护随从 AI 处理 */
         public boolean guard = false;
         /** 守护实体 UUID（跨登出/区块卸载后按此重链回释放位） */
@@ -93,6 +101,7 @@ public final class CursedSpiritTechnique extends BaseTechnique {
             t.putFloat("maxHp", maxHp);
             t.putFloat("atk", atk);
             t.putInt("released", releasedId);
+            t.putString("releasedUuid", releasedUuid == null ? "" : releasedUuid);
             t.putBoolean("guard", guard);
             t.putString("guardUuid", guardUuid == null ? "" : guardUuid);
             return t;
@@ -107,6 +116,7 @@ public final class CursedSpiritTechnique extends BaseTechnique {
             e.maxHp = t.getFloat("maxHp");
             e.atk = t.getFloat("atk");
             e.releasedId = t.getInt("released");
+            e.releasedUuid = t.getString("releasedUuid");
             e.guard = t.getBoolean("guard");
             e.guardUuid = t.getString("guardUuid");
             return e;
@@ -303,6 +313,7 @@ public final class CursedSpiritTechnique extends BaseTechnique {
             }
         }
         entry.releasedId = living.getId();
+        entry.releasedUuid = living.getStringUUID();
         if (entry.guard) {
             entry.guardUuid = living.getStringUUID();
         }
@@ -420,6 +431,7 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         String uuid = target.getStringUUID();
         for (SpiritEntry e : entries(owner)) {
             if (e.releasedId >= 0 && target.getId() == e.releasedId) return e;
+            if (e.releasedUuid != null && !e.releasedUuid.isEmpty() && e.releasedUuid.equals(uuid)) return e;
             if (e.guardUuid != null && !e.guardUuid.isEmpty() && e.guardUuid.equals(uuid)) return e;
         }
         return null;
@@ -503,6 +515,7 @@ public final class CursedSpiritTechnique extends BaseTechnique {
                 e.guard = true;
                 e.guardUuid = newForm.getStringUUID();
                 e.releasedId = newForm.getId();
+                e.releasedUuid = newForm.getStringUUID();
                 saveAll(owner, list);
                 owner.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.modified", e.name), true);
                 return;
@@ -532,8 +545,9 @@ public final class CursedSpiritTechnique extends BaseTechnique {
     }
 
     /**
-     * 场上活着的释放体实体：先按 {@code releasedId} 找，再按守护 UUID 跨世界找。
-     * <p>收回忆（{@code toggleRelease}）与"是否在场"判断都走这里，保证守护形态也能被收回。
+     * 场上活着的释放体实体：先按 {@code releasedId} 找，再按 {@code releasedUuid} / 守护 UUID 跨世界找。
+     * <p>收回忆（{@code toggleRelease}）、"是否在场"判断、天逆鉾右键收回都走这里，
+     * 保证跨登出/跨维度/被无为转变改写之后依然认得出自己人。
      */
     private static Mob resolveLive(ServerPlayer player, SpiritEntry entry) {
         if (entry.releasedId >= 0) {
@@ -541,14 +555,17 @@ public final class CursedSpiritTechnique extends BaseTechnique {
                 return mob;
             }
         }
-        return findGuardEntity(player, entry);
+        Mob byUuid = findUuidEntity(player, entry.releasedUuid);
+        if (byUuid != null) return byUuid;
+        return findUuidEntity(player, entry.guardUuid);
     }
 
-    /** 找某记录守护实体是否仍在场（跨世界按 UUID 查） */
-    private static Mob findGuardEntity(ServerPlayer owner, SpiritEntry e) {        if (e.guardUuid == null || e.guardUuid.isEmpty()) return null;
+    /** 跨世界按 UUID 字符串找活着的生物（非法 UUID 返回 null） */
+    private static Mob findUuidEntity(ServerPlayer owner, String uuidText) {
+        if (uuidText == null || uuidText.isEmpty()) return null;
         UUID uuid;
         try {
-            uuid = UUID.fromString(e.guardUuid);
+            uuid = UUID.fromString(uuidText);
         } catch (Throwable t) {
             return null;
         }
@@ -557,6 +574,11 @@ public final class CursedSpiritTechnique extends BaseTechnique {
             if (ent instanceof Mob m && m.isAlive()) return m;
         }
         return null;
+    }
+
+    /** 找某记录守护实体是否仍在场（跨世界按 UUID 查） */
+    private static Mob findGuardEntity(ServerPlayer owner, SpiritEntry e) {
+        return findUuidEntity(owner, e.guardUuid);
     }
 
     /**
@@ -652,15 +674,21 @@ public final class CursedSpiritTechnique extends BaseTechnique {
     private static final java.util.Set<java.util.UUID> RECALLING =
             java.util.concurrent.ConcurrentHashMap.newKeySet();
 
+    /** 该实体当前是否正在被"主动收回"（掉落/经验抑制要用） */
+    public static boolean isRecalling(net.minecraft.world.entity.Entity e) {
+        return e != null && RECALLING.contains(e.getUUID());
+    }
+
     /**
      * 收回一个释放体（保留记录）。
      *
-     * <p><b>为什么走原版死亡链路</b>：这样所有"仆从死亡"相关逻辑、Boss 血条与实体追踪解除
-     * 都按原版正常路径结算（以前直接 {@code discard()} 是"静默移除"，绕过了这一整套）。
+     * <p><b>为什么走原版死亡链路</b>：这样所有"仆从死亡"相关逻辑与实体追踪解除都按原版正常路径结算
+     * （以前直接 {@code discard()} 是"静默移除"，绕过了这一整套）。
      *
-     * <p><b>两道保险</b>：
+     * <p><b>三道保险</b>：
      * <ol>
-     *   <li>击杀期间打上 {@link #RECALLING} 标记 → {@link #onMinionDeath} 不删记录；</li>
+     *   <li>击杀期间打上 {@link #RECALLING} 标记 → {@link #onMinionDeath} 不删记录（收回 ≠ 战死）；</li>
+     *   <li>同标记让 WuWeiHandler 的掉落/经验抑制放行收回体 → <b>收回不掉任何东西</b>；</li>
      *   <li>若死亡被别的 mod 取消（复活/免疫/阶段转换），兜底 {@code discard()}，收回一定生效。</li>
      * </ol>
      * 顺手 {@code setSilent(true)}：收回不是击杀，不该冒出死亡音效。
@@ -720,8 +748,9 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         }
         // 守护形态：找场上守护实体（可能已加载）恢复链接
         for (SpiritEntry e : list) {
-            if (e.guard && e.releasedId < 0) {
+            if (e.releasedId < 0 && (e.guard || !e.releasedUuid.isEmpty())) {
                 Mob g = findGuardEntity(player, e);
+                if (g == null) g = findUuidEntity(player, e.releasedUuid);
                 if (g != null) {
                     e.releasedId = g.getId();
                     changed = true;

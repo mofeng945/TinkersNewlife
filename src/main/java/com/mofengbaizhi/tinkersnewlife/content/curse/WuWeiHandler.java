@@ -988,7 +988,8 @@ public final class WuWeiHandler {
      */
     @SubscribeEvent
     public static void onTransformedDrops(net.minecraftforge.event.entity.living.LivingDropsEvent event) {
-        if (isTransformedUnit(event.getEntity())) {
+        if (isTransformedUnit(event.getEntity())
+                || com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique.isRecalling(event.getEntity())) {
             event.setCanceled(true);
         }
     }
@@ -996,7 +997,8 @@ public final class WuWeiHandler {
     /** 同上：转变出来的生物也不掉经验（避免同样的刷取路线） */
     @SubscribeEvent
     public static void onTransformedXp(net.minecraftforge.event.entity.living.LivingExperienceDropEvent event) {
-        if (isTransformedUnit(event.getEntity())) {
+        if (isTransformedUnit(event.getEntity())
+                || com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique.isRecalling(event.getEntity())) {
             event.setCanceled(true);
         }
     }
