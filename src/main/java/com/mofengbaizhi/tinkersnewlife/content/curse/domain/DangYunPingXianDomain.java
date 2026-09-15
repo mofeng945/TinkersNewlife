@@ -55,6 +55,15 @@ public class DangYunPingXianDomain extends BaseDomain {
     /** 溺尸主人标记（本领域溺尸的 PersistentData） */
     private static final String KEY_DROWNED_OWNER = "tnl_dangyun_owner";
 
+    /**
+     * 该实体是不是本领域召唤的溺尸。
+     * <p>召唤时会给它打上 {@link #KEY_DROWNED_OWNER} 持久标记；掉落/经验抑制
+     * （{@code SummonDropSuppressor}）用它区分"领域召的"与"野生的"溺尸。
+     */
+    public static boolean isSummonedDrowned(net.minecraft.world.entity.Entity entity) {
+        return entity instanceof Drowned && entity.getPersistentData().contains(KEY_DROWNED_OWNER);
+    }
+
     /** 领域内部注水半径（留出球壳内缘） */
     private final double fillRadius;
     /** 被本领域灌成水的位置（结束时复原为空气） */
