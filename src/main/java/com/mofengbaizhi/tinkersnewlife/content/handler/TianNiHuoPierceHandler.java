@@ -108,6 +108,10 @@ public final class TianNiHuoPierceHandler {
             while (remaining > 0 && target.isAlive() && !target.isRemoved() && guard++ < 64) {
                 float part = Math.min(remaining, PIERCE_CHUNK);
                 target.invulnerableTime = 0;
+                // 接入穿透EX那套"事件层顶开"：登记本段想造成的伤害，
+                // 这样别的 mod 在 LivingHurt/Damage 里的限伤或减伤也不会吃掉这几段真伤。
+                com.mofengbaizhi.tinkersnewlife.content.modifier.events.ExPierceHandler
+                        .markPierce(target, part);
                 target.hurt(src, part);
                 remaining -= part;
             }
