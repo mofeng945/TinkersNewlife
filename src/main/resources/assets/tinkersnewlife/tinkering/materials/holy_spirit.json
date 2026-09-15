@@ -1,0 +1,50 @@
+{
+    "color": "FFFFF0BE",
+    "fallbacks": [
+        "metal",
+        "rock"
+    ],
+    "generator": {
+        "supported_stats": [
+            "tconstruct:handle",
+            "tconstruct:binding",
+            "tconstruct:maille",
+            "tconstruct:armor_maille",
+            "tconstruct:arrow_shaft"
+        ],
+        "transformer": {
+            "type": "tconstruct:grey_to_sprite",
+            "palette": [
+                {
+                    "color": "FF6B5A2A",
+                    "grey": 0
+                },
+                {
+                    "color": "FF8A7434",
+                    "grey": 63
+                },
+                {
+                    "color": "FFAE9448",
+                    "grey": 102
+                },
+                {
+                    "color": "FFD8BC6E",
+                    "grey": 140
+                },
+                {
+                    "color": "FFEED79A",
+                    "grey": 178
+                },
+                {
+                    "color": "FFFFF0BE",
+                    "grey": 216
+                },
+                {
+                    "color": "FFFFFFFF",
+                    "grey": 255
+                }
+            ]
+        }
+    },
+    "luminosity": 8
+}

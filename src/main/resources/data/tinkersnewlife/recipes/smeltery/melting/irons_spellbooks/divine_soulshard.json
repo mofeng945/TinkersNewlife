@@ -1,0 +1,16 @@
+{
+    "type": "tconstruct:melting",
+    "ingredient": {
+        "item": "irons_spellbooks:divine_soulshard"
+    },
+    "result": {
+        "fluid": "tinkersnewlife:primordial_fire_soul_still",
+        "amount": 250
+    },
+    "temperature": 1400,
+    "time": 60,    "conditions": [
+        {
+            "type": "forge:mod_loaded",
+            "modid": "irons_spellbooks"
+        }
+    ]}

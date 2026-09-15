@@ -193,6 +193,14 @@ public final class IntegrationLoader {
             }
         }
 
+        // 铁魔法：流体组走标准联动注册（模组在场才注册）；法术/属性读写仍走反射装填
+        if (shouldRegisterLinked(IRON_SPELLBOOKS)) {
+            try {
+                new com.mofengbaizhi.tinkersnewlife.integration.irons_spellbooks.IronSpellsIntegration().register(bus);
+            } catch (Throwable t) {
+                LOGGER.error("[联动] 铁魔法模块初始化失败", t);
+            }
+        }
         // 铁魔法：纯反射软依赖（无编译依赖），此处只做一次反射装填
         com.mofengbaizhi.tinkersnewlife.util.IronSpellsReflector.init();
     }

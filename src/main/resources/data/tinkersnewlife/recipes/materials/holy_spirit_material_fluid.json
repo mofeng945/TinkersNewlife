@@ -1,0 +1,13 @@
+{
+    "type": "tconstruct:material_fluid",
+    "fluid": {
+        "fluid": "tinkersnewlife:holy_spirit_still",
+        "amount": 90
+    },
+    "temperature": 1250,
+    "output": "tinkersnewlife:holy_spirit",    "conditions": [
+        {
+            "type": "forge:mod_loaded",
+            "modid": "irons_spellbooks"
+        }
+    ]}

@@ -1,0 +1,22 @@
+{
+    "type": "tconstruct:alloy",
+    "inputs": [
+        {
+            "amount": 100,
+            "fluid": "tinkersnewlife:primordial_fire_soul_still"
+        },
+        {
+            "amount": 100,
+            "fluid": "tinkersnewlife:molten_arcane_ingot_still"
+        }
+    ],
+    "result": {
+        "fluid": "tinkersnewlife:holy_spirit_still",
+        "amount": 360
+    },
+    "temperature": 1500,    "conditions": [
+        {
+            "type": "forge:mod_loaded",
+            "modid": "irons_spellbooks"
+        }
+    ]}

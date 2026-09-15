@@ -451,5 +451,16 @@
   "jei.tinkersnewlife.curse_craft.per_tick": "Drains %s curse per tick",
   "jei.tinkersnewlife.curse_craft.materials": "Materials: %s / up to %s slots",
   "jei.tinkersnewlife.curse_craft.core_hint": "Core old-god item: place it on the lantern above the Gheloth Ore",
-  "jei.tinkersnewlife.curse_craft.result_hint": "The product floats on the lantern above the ore; right-click to take it"
+  "jei.tinkersnewlife.curse_craft.result_hint": "The product floats on the lantern above the ore; right-click to take it",
+  "material.tinkersnewlife.holy_spirit": "Holy Spirit",
+  "material.tinkersnewlife.holy_spirit.flavor": "The sanctuary flame never died; the remnant soul still whispers inside the metal.",
+  "fluid_type.tinkersnewlife.primordial_fire_soul": "Primordial Scorched Soul",
+  "block.tinkersnewlife.primordial_fire_soul_block": "Primordial Scorched Soul",
+  "item.tinkersnewlife.primordial_fire_soul_bucket": "Primordial Scorched Soul Bucket",
+  "fluid_type.tinkersnewlife.molten_arcane_ingot": "Molten Arcane Ingot",
+  "block.tinkersnewlife.molten_arcane_ingot_block": "Molten Arcane Ingot",
+  "item.tinkersnewlife.molten_arcane_ingot_bucket": "Molten Arcane Ingot Bucket",
+  "fluid_type.tinkersnewlife.holy_spirit": "Holy Spirit Ichor",
+  "block.tinkersnewlife.holy_spirit_block": "Holy Spirit Ichor",
+  "item.tinkersnewlife.holy_spirit_bucket": "Holy Spirit Ichor Bucket"
 }
