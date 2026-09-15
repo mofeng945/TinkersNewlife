@@ -56,10 +56,24 @@ public final class CurseVaultInteractionHandler {
 
         // ① 手里拿着流体容器（桶 / 封呪瓶 …）：做咒力残秽的接与倒
         if (!player.getMainHandItem().isEmpty()) {
-            if (tryFluidTransfer(level, pos, player)) {
-                event.setCanceled(true);
-                event.setCancellationResult(InteractionResult.SUCCESS);
+            // ⭐⭐ 只接管"能装/能倒咒力残秽"的容器（空桶、装着残秽的桶、封呪瓶…）。
+            //     水桶、方块、工具一律不干预，交回正常逻辑。
+            if (!isResidueContainer(player.getMainHandItem())) return;
+
+            boolean moved = false;
+            if (!level.isClientSide) {
+                moved = tryFluidTransfer(level, pos, player);
             }
+            // ⭐⭐ 客户端与**服务端都必须取消**：
+            //   以前只在服务端取消（客户端因为不能查方块实体直接 return 了），客户端于是照常走完原版交互、
+            //   又补发一个 useItem 包 → 服务端接着执行一次 Item#use，后果是：
+            //     · 空桶：刚接满的残秽被"倒在外面"，桶还变空；
+            //     · 封呪瓶：Curios 的 canEquipFromUse 走 PlayerInteractEvent.RightClickItem 把它戴到饰品槽上。
+            //   两端一起取消，客户端就不会再发那个包，两个毛病一起消失。
+            event.setCanceled(true);
+            event.setCancellationResult(!level.isClientSide && !moved
+                    ? InteractionResult.PASS
+                    : InteractionResult.SUCCESS);
             return;   // 手里有东西且不是流体交互 → 完全不干预（放方块/用工具）
         }
 
@@ -103,14 +117,23 @@ public final class CurseVaultInteractionHandler {
                 deposit = true;
             }
         } else {
-            // ② 容器是空的 → 从呪蔵接出残秽
-            net.minecraftforge.fluids.FluidStack drained =
-                    vault.drain(Integer.MAX_VALUE, net.minecraftforge.fluids.capability.IFluidHandler.FluidAction.SIMULATE);
-            if (!drained.isEmpty()) {
-                int filled = container.fill(drained, net.minecraftforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
-                if (filled > 0) {
-                    vault.drain(filled, net.minecraftforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
-                    withdraw = true;
+            // ② 容器是空的（或装的不是残秽）→ 从呪蔵接出残秽
+            //    ⚠ 以前直接把"呪蔵全部存量"丢给 container.fill()：存量 1000~2000 时会出现
+            //      "容器只接了 1000、呪蔵却按容器返回的量扣"的错配，>2000 时更是把 2000+ 塞进一个桶。
+            //    现在改成"先问容器能接多少（SIMULATE），再按这个量精确取"。
+            int available = vault.drain(Integer.MAX_VALUE, net.minecraftforge.fluids.capability.IFluidHandler.FluidAction.SIMULATE).getAmount();
+            if (available > 0) {
+                int want = Math.min(available, 1000);      // 单次最多搬一桶（1000mb），桶/瓶都按各自容量自动截断
+                net.minecraftforge.fluids.FluidStack probe = new net.minecraftforge.fluids.FluidStack(
+                        com.mofengbaizhi.tinkersnewlife.content.ModFluids.CURSE_RESIDUE.still.get(), want);
+                int accepted = container.fill(probe, net.minecraftforge.fluids.capability.IFluidHandler.FluidAction.SIMULATE);
+                if (accepted > 0) {
+                    net.minecraftforge.fluids.FluidStack taken =
+                            vault.drain(accepted, net.minecraftforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+                    if (!taken.isEmpty()) {
+                        container.fill(taken, net.minecraftforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+                        withdraw = true;
+                    }
                 }
             }
         }
@@ -134,6 +157,28 @@ public final class CurseVaultInteractionHandler {
     private static boolean isResidue(net.minecraftforge.fluids.FluidStack stack) {
         var fluid = com.mofengbaizhi.tinkersnewlife.content.ModFluids.CURSE_RESIDUE.still.get();
         return fluid != null && stack.getFluid() == fluid;
+    }
+
+    /**
+     * 手里这件东西是不是"能装 / 能倒咒力残秽"的容器。
+     *
+     * <p>客户端也要能判断（客户端拿不到呪蔵的方块实体数据），所以我们**只看手里那件物品**：
+     * <ul>
+     *   <li>没有流体能力的物品 → 不干预；</li>
+     *   <li>容器里装的是**别的**流体（如水桶）→ 不干预，交给原版倒水；</li>
+     *   <li>容器是空的（可接残秽）或装着残秽（可倒回呪蔵）→ 由我们接管。</li>
+     * </ul>
+     */
+    private static boolean isResidueContainer(ItemStack stack) {
+        if (stack.isEmpty()) return false;
+        ItemStack probe = stack.copyWithCount(1);
+        var opt = net.minecraftforge.fluids.FluidUtil.getFluidHandler(probe);
+        if (!opt.isPresent()) return false;
+        var handler = opt.orElse(null);
+        if (handler == null) return false;
+        net.minecraftforge.fluids.FluidStack contained =
+                handler.drain(Integer.MAX_VALUE, net.minecraftforge.fluids.capability.IFluidHandler.FluidAction.SIMULATE);
+        return contained.isEmpty() || isResidue(contained);
     }
 
     /**

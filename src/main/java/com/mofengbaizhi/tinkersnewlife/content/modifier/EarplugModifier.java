@@ -3,7 +3,6 @@ package com.mofengbaizhi.tinkersnewlife.content.modifier;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -50,8 +49,8 @@ public class EarplugModifier extends SingleLevelModifier implements KeybindInter
     public static final ResourceLocation KEY_ON =
             new ResourceLocation(TinkersNewlife.MOD_ID, "earplugs_on");
 
-    /** 玩家物品栏菜单里头盔槽的索引（0..8 快捷栏 / 9..35 背包 / 36 靴 / 37 腿 / 38 胸 / 39 头） */
-    private static final int HELMET_MENU_SLOT = 39;
+    // 注：不要再拿"玩家 Inventory 的物品索引"（36 靴 / 37 腿 / 38 胸 / 39 头）当菜单槽位号用 ——
+    //     背包菜单里盔甲是 5~8（5 = 头），两者的 39 正好是"快捷栏第 4 格"，曾经因此把假头盔塞进物品栏。
 
     /** 登记钩子：头盔交互键（见类注释——不登记就收不到按键） */
     @Override
@@ -79,10 +78,16 @@ public class EarplugModifier extends SingleLevelModifier implements KeybindInter
         stack.updateStack(helmet);
 
         if (player instanceof ServerPlayer sp) {
-            // 主动同步头盔槽：客户端要靠这件物品的持久数据决定是否屏蔽声音
-            sp.connection.send(new ClientboundContainerSetSlotPacket(
-                    sp.inventoryMenu.containerId, sp.inventoryMenu.incrementStateId(),
-                    HELMET_MENU_SLOT, helmet));
+            // ⭐ 主动同步头盔槽：客户端要靠这件物品的持久数据决定是否屏蔽声音。
+            //
+            // ⚠⚠ 踩过的坑：这里以前发的是 ClientboundContainerSetSlotPacket(..., HELMET_MENU_SLOT=39, helmet)，
+            //   而 39 是**玩家 Inventory 的物品索引**（36 靴 / 37 腿 / 38 胸 / 39 头），
+            //   **不是**玩家背包菜单（InventoryMenu）的槽位号 —— 菜单里盔甲是 5~8（5 = 头）。
+            //   于是那个包把头盔塞进了**菜单第 39 号槽 = 快捷栏第 4 格**，表现为：
+            //   按头盔交互键后物品栏第 4 格变成一个"头盔假物品"（只是客户端显示，服务端没变），
+            //   打开背包点一下它才复原。
+            //   现在改成让菜单自己广播变更：不用手写槽位号，两个索引体系不会再搞混。
+            sp.inventoryMenu.broadcastChanges();
             sp.displayClientMessage(Component.translatable(
                     now ? "message.tinkersnewlife.earplugs.on" : "message.tinkersnewlife.earplugs.off"), true);
             TinkersNewlife.LOGGER.debug("[闭耳塞听] {} 耳塞 -> {}", sp.getName().getString(), now ? "开" : "关");
