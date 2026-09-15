@@ -54,6 +54,16 @@ public final class ModConfig {
     /** 低语音频音量（默认 1.0；音源是"环境音"滑条，所以这里再给一个倍率） */
     public static final ConfigValue<Double> UNNAMEABLE_WHISPER_SOUND_VOLUME;
 
+    // ==================== 噤默手套 ====================
+    /**
+     * 噤默手套是否"全部静音"。
+     *
+     * <p>默认 false = <b>只静音生物（敌对/中立）的叫声</b>：环境音、方块音、音乐、其它玩家、以及自己的一切照常。
+     * true = 旧行为（只放行一份 id 白名单，其余全静音）—— 整合包里因为别的 mod 会用不同 id 播放
+     * 脚步等声音，白名单必然漏，实测表现就是"整个游戏没声音"。
+     */
+    public static final ConfigValue<Boolean> SILENT_GLOVE_MUTE_ALL;
+
     // ==================== 飞剑流光拖尾 ====================
     /** 飞剑流光拖尾（客户端）：动态条带 + 自写流光着色器 */
     public static final ConfigValue<Boolean> FLYING_SWORD_TRAIL;
@@ -212,6 +222,7 @@ public final class ModConfig {
         UNNAMEABLE_POST_EFFECT = b.define("post_effect", true);
         UNNAMEABLE_POST_EFFECT_PULSE = b.define("post_effect_pulse", true);
         UNNAMEABLE_WHISPERS = b.define("whispers", true);
+        SILENT_GLOVE_MUTE_ALL = b.define("silent_glove_mute_all", false);
         UNNAMEABLE_WHISPER_SOUND = b.define("whisper_sound", true);
         UNNAMEABLE_WHISPER_SOUND_VOLUME = b.defineInRange("whisper_sound_volume", 1.0D, 0.0D, 2.0D);
         UNNAMEABLE_GLITCH = b.define("glitch", true);
@@ -480,6 +491,15 @@ public final class ModConfig {
      *
      * <p>默认 1000（原为 100）；返回 1 表示"每块都掉"。配置没就绪时按默认值处理。
      */
+    /** 噤默手套是否全部静音（默认 false：只静音生物叫声；配置没就绪按默认处理） */
+    public static boolean silentGloveMuteAll() {
+        try {
+            return SILENT_GLOVE_MUTE_ALL.get();
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
     public static int domainFragmentDropDenominator() {
         try {
             return Math.max(1, DOMAIN_FRAGMENT_DROP_DENOMINATOR.get());

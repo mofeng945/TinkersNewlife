@@ -92,6 +92,26 @@ public class SilentGloveSoundHandler {
 
         if (!isWearingSilentGlove(player)) return;
 
+        // ============================================================
+        //  默认模式：按"声音来源类别"判定，只静音**生物**的叫声
+        // ============================================================
+        // ⭐ 为什么不再默认走白名单：白名单是"id 精确匹配"，装在整合包里必然漏 ——
+        //    比如脚步声常由"脚步声/环境音"类 mod 用别的 id（甚至别的音源）播放，
+        //    不在名单里就被一起静音了，玩家实测就是"连脚步声都没有、整个游戏没声音"。
+        //    换成按 SoundSource 判定：敌对/中立生物的声音静音，环境、方块、音乐、
+        //    其它玩家与自己的声音（PLAYERS）全部照常 —— 与 mod 无关，不会漏。
+        if (!com.mofengbaizhi.tinkersnewlife.config.ModConfig.silentGloveMuteAll()) {
+            net.minecraft.sounds.SoundSource src = event.getSound().getSource();
+            if (src == net.minecraft.sounds.SoundSource.HOSTILE
+                    || src == net.minecraft.sounds.SoundSource.NEUTRAL) {
+                event.setSound(null);
+            }
+            return;
+        }
+
+        // ============================================================
+        //  旧模式（silent_glove_mute_all = true）：只放行白名单，其余全静音
+        // ============================================================
         String soundPath = event.getSound().getLocation().toString();
 
         // 1. 精确匹配白名单
