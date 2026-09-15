@@ -1111,6 +1111,21 @@ public final class WuWeiHandler {
 
     /** 玉犬式守护 AI：跟随主人、追击主人目标/伤害主人的实体、近战攻击（等价式神玉犬行为） */
     private static void driveGuardDog(MinecraftServer server, Mob self, ServerPlayer owner, ReverseMobData rd) {
+        // ⭐ 监守者（Warden）必须特殊对待：它是"大脑 AI"驱动的，
+        //    attachGuardAi 里清空 goal/targetSelector 拦不住它 —— 挖地逃跑是 brain 的 DIGGING 活动，
+        //    而该活动被 MemoryModuleType.DIG_COOLDOWN 记忆 gate 住（原版只在刚钻出地面时带这个记忆）。
+        //    守护/咒灵释放体不该自己钻地跑路（跑了还会把 Boss 血条留在屏幕上），所以每 tick 续期这个记忆。
+        if (self instanceof net.minecraft.world.entity.monster.warden.Warden warden) {
+            // DIG_COOLDOWN 的类型是 MemoryModuleType<Unit>，值固定用 Unit.INSTANCE
+            warden.getBrain().setMemoryWithExpiry(
+                    net.minecraft.world.entity.ai.memory.MemoryModuleType.DIG_COOLDOWN,
+                    net.minecraft.util.Unit.INSTANCE, 400L);
+            if (warden.getPose() == net.minecraft.world.entity.Pose.DIGGING) {
+                // 极端情况下已经开始挖（记忆刚失效的那一 tick）：把姿态掰回"钻出地面"，
+                // 同时上面已重新压住记忆，避免它真的沉下去消失
+                warden.setPose(net.minecraft.world.entity.Pose.EMERGING);
+            }
+        }
         if (self.distanceToSqr(owner) > 256.0 * 256.0) {
             // 过远直接传回主人身边（防丢失）
             self.moveTo(owner.getX(), owner.getY(), owner.getZ(), owner.getYRot(), 0);

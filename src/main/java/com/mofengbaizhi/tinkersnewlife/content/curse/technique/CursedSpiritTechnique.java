@@ -239,17 +239,26 @@ public final class CursedSpiritTechnique extends BaseTechnique {
     }
 
     private static void toggleRelease(ServerPlayer player, SpiritEntry entry) {
-        if (entry.releasedId >= 0) {
+        // ⭐ "场上有没有这个释放体"必须同时看 releasedId 与 guardUuid：
+        //    守护体跨登出/区块重载、或主人把它无为转变之后，releasedId 可能已经失效（甚至 -1），
+        //    只剩 guardUuid 还能认亲。以前只判 releasedId >= 0，于是出现
+        //    "被转成村民的守护体收不回来、还能再放一只旧的"。
+        Mob live = resolveLive(player, entry);
+        if (live != null) {
             // 收回（保留记录），其召唤物一并清除
-            if (player.serverLevel().getEntity(entry.releasedId) instanceof Mob mob && mob.isAlive()) {
-                dismissServantsOf(mob);
-                mob.discard();
-            }
+            dismissServantsOf(live);
+            live.discard();
             entry.releasedId = -1;
             entry.guardUuid = "";
             updateEntry(player, entry);
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.recall", entry.name), true);
             return;
+        }
+        // 记录说"已释放"但实体其实不在了（被打死/区块卸载/换形态丢了 id）→ 先清掉失效标记再重新释放
+        if (entry.releasedId >= 0 || (entry.guardUuid != null && !entry.guardUuid.isEmpty())) {
+            entry.releasedId = -1;
+            entry.guardUuid = "";
+            updateEntry(player, entry);
         }
         // 释放满血个体
         EntityType<?> type = EntityType.byString(entry.type).orElse(null);
@@ -392,10 +401,29 @@ public final class CursedSpiritTechnique extends BaseTechnique {
     /** 该实体是否为某玩家的场上释放体（同队豁免用） */
     public static boolean isReleasedMinionOf(Entity target, ServerPlayer owner) {
         if (target == null || owner == null) return false;
+        return findEntryFor(owner, target) != null;
+    }
+
+    /**
+     * 找某玩家记录里"对应这个实体"的条目。
+     *
+     * <p>⭐ 必须同时认两种身份，缺一个就会出 bug：
+     * <ul>
+     *   <li>{@code releasedId}：当前场上的释放体（entity id）；</li>
+     *   <li>{@code guardUuid}：<b>守护形态</b>的 UUID —— 守护体的 {@code releasedId} 在
+     *       跨登出/区块重载/被无为转变改写后可能已经失效（甚至指向别的实体），
+     *       这时只能靠 UUID 认亲。以前这里只比 {@code releasedId}，于是出现
+     *       "被转成村民的守护体：UI 里还是旧形态、收回也收不掉、还能再放一只旧的"。</li>
+     * </ul>
+     */
+    public static SpiritEntry findEntryFor(ServerPlayer owner, Entity target) {
+        if (owner == null || target == null) return null;
+        String uuid = target.getStringUUID();
         for (SpiritEntry e : entries(owner)) {
-            if (e.releasedId >= 0 && target.getId() == e.releasedId) return true;
+            if (e.releasedId >= 0 && target.getId() == e.releasedId) return e;
+            if (e.guardUuid != null && !e.guardUuid.isEmpty() && e.guardUuid.equals(uuid)) return e;
         }
-        return false;
+        return null;
     }
 
     /** 该实体是哪位玩家的场上释放体；不是任何人的释放体返回 null（服务端用） */
@@ -504,9 +532,21 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         }
     }
 
+    /**
+     * 场上活着的释放体实体：先按 {@code releasedId} 找，再按守护 UUID 跨世界找。
+     * <p>收回忆（{@code toggleRelease}）与"是否在场"判断都走这里，保证守护形态也能被收回。
+     */
+    private static Mob resolveLive(ServerPlayer player, SpiritEntry entry) {
+        if (entry.releasedId >= 0) {
+            if (player.serverLevel().getEntity(entry.releasedId) instanceof Mob mob && mob.isAlive()) {
+                return mob;
+            }
+        }
+        return findGuardEntity(player, entry);
+    }
+
     /** 找某记录守护实体是否仍在场（跨世界按 UUID 查） */
-    private static Mob findGuardEntity(ServerPlayer owner, SpiritEntry e) {
-        if (e.guardUuid == null || e.guardUuid.isEmpty()) return null;
+    private static Mob findGuardEntity(ServerPlayer owner, SpiritEntry e) {        if (e.guardUuid == null || e.guardUuid.isEmpty()) return null;
         UUID uuid;
         try {
             uuid = UUID.fromString(e.guardUuid);
