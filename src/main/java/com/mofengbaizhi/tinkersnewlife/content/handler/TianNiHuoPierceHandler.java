@@ -51,9 +51,11 @@ public final class TianNiHuoPierceHandler {
         if (!(held.getItem() instanceof TianNiHuoItem)) return;
 
         try {
-            boolean limitedBoss = GoetyBridge.isDamageLimitedBoss(target);
-            boolean wither = target instanceof WitherBoss;
-            if (!limitedBoss && !wither) return;
+            // ⭐ 对所有目标都走穿透（与穿透EX、墨默共用 TruePierce 引擎）。
+            //    以前这里只放行"诡厄受限 Boss / 凋灵"，打普通生物会 return → 退化成普通攻击，
+            //    于是戴着命灯指轮时就被慈悲锁在 1 点血（玩家实测）。
+            //    受限 Boss 的额外前置（碎保护柱、凋灵出生无敌清零、保护计时还原）仍保留在 pierceDamage 里，
+            //    对普通目标它们本来就是空操作。
 
             // 取消原版攻击，改由天逆鉾直接结算（无视无敌帧/凋灵出生无敌/诡厄巫法限伤与柱保护）
             event.setCanceled(true);

@@ -158,7 +158,7 @@ public final class LifeLampRingHandler {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onLivingHurt(LivingHurtEvent event) {
         // ⭐ 穿透（真伤）不受慈悲约束：带穿透的近战/投射物应当能照常杀死目标
-        if (com.mofengbaizhi.tinkersnewlife.util.TruePierce.isTruePierce(event.getSource())) return;
+        if (com.mofengbaizhi.tinkersnewlife.util.TruePierce.isTruePierce(event.getSource())) { TinkersNewlife.LOGGER.info("[慈悲] 真伤放行：{} <- {}", event.getEntity().getName().getString(), event.getSource().getMsgId()); return; }
         if (!byRingWearer(event.getEntity(), event.getSource())) return;
         clamp(event.getEntity(), event.getAmount(), event::setAmount);
     }
@@ -171,7 +171,7 @@ public final class LifeLampRingHandler {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onLivingDamage(LivingDamageEvent event) {
         // ⭐ 穿透（真伤）不受慈悲约束：带穿透的近战/投射物应当能照常杀死目标
-        if (com.mofengbaizhi.tinkersnewlife.util.TruePierce.isTruePierce(event.getSource())) return;
+        if (com.mofengbaizhi.tinkersnewlife.util.TruePierce.isTruePierce(event.getSource())) { TinkersNewlife.LOGGER.info("[慈悲] 真伤放行：{} <- {}", event.getEntity().getName().getString(), event.getSource().getMsgId()); return; }
         if (!byRingWearer(event.getEntity(), event.getSource())) return;
         clamp(event.getEntity(), event.getAmount(), event::setAmount);
     }
@@ -197,6 +197,9 @@ public final class LifeLampRingHandler {
             return;
         }
         if (amount >= hp) {
+            TinkersNewlife.LOGGER.info("[慈悲] 拦截致死伤害：{} 当前 {} 点、本次 {} 点 -> 留 {} 点",
+                    target.getName().getString(), String.format("%.2f", hp),
+                    String.format("%.2f", amount), String.format("%.2f", keep));
             setter.accept(hp - keep);
         }
     }
