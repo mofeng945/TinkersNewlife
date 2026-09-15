@@ -206,7 +206,7 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         entry.name = target.getName().getString();
         entry.nbt = nbt;
         entry.maxHp = (float) maxHp;
-        entry.atk = (float) target.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        entry.atk = attackDamageOf(target);
         append(player, entry);
 
         // 消散（黑色粒子）；boss 战直接结束
@@ -489,7 +489,7 @@ public final class CursedSpiritTechnique extends BaseTechnique {
                 e.type = EntityType.getKey(newForm.getType()).toString();
                 e.name = newForm.getName().getString();
                 e.maxHp = newForm.getMaxHealth();
-                e.atk = (float) newForm.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+                e.atk = attackDamageOf(newForm);
                 e.releasedId = -1;
                 saveAll(owner, list);
                 owner.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.modified", e.name), true);
@@ -511,7 +511,7 @@ public final class CursedSpiritTechnique extends BaseTechnique {
                 e.type = EntityType.getKey(newForm.getType()).toString();
                 e.name = newForm.getName().getString();
                 e.maxHp = newForm.getMaxHealth();
-                e.atk = (float) newForm.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+                e.atk = attackDamageOf(newForm);
                 e.guard = true;
                 e.guardUuid = newForm.getStringUUID();
                 e.releasedId = newForm.getId();
@@ -677,6 +677,25 @@ public final class CursedSpiritTechnique extends BaseTechnique {
     /** 该实体当前是否正在被"主动收回"（掉落/经验抑制要用） */
     public static boolean isRecalling(net.minecraft.world.entity.Entity e) {
         return e != null && RECALLING.contains(e.getUUID());
+    }
+
+    /**
+     * 安全读取攻击力。
+     *
+     * <p>⚠⚠ <b>必须判空</b>：蝙蝠、村民这类生物<b>没有</b>
+     * {@code minecraft:generic.attack_damage} 属性，
+     * 直接 {@code getAttributeValue(ATTACK_DAMAGE)} 会抛
+     * {@code IllegalArgumentException: Can't find attribute minecraft:generic.attack_damage}。
+     *
+     * <p>实测事故：这个异常在 {@link #relinkReleasedAsGuard} 里抛出，
+     * 使整段"改写记录"逻辑<b>中途中断、{@code saveAll} 从未执行</b> ——
+     * 表现就是玩家报的"无为转变后 GUI 不更新、按收回又召一只"（日志里能看到完整栈）。
+     * 凡是要读<b>任意生物</b>的属性，一律走这里。
+     */
+    private static float attackDamageOf(LivingEntity entity) {
+        if (entity == null) return 0.0F;
+        var inst = entity.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+        return inst == null ? 0.0F : (float) inst.getValue();
     }
 
     /**
