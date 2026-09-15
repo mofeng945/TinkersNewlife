@@ -11,8 +11,7 @@
   "client": [
     "EntityRenderDispatcherMixin",
     "ItemRendererMixin",
-    "HumanoidArmorLayerMixin",
-    "BossHealthOverlayAccessor"
+    "HumanoidArmorLayerMixin"
   ],
   "injectors": {
     "defaultRequire": 0
