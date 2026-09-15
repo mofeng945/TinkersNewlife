@@ -1,8 +1,11 @@
 package com.mofengbaizhi.tinkersnewlife.integration.irons_spellbooks;
 
+import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -11,16 +14,21 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
- * 铁魔法法术访问层（<b>按"参数/返回类型"反射扫描，不依赖方法名</b>）。
+ * 铁魔法法术访问层（纯反射软依赖）。
  *
- * <p>为什么这么写：本模组对铁魔法是**纯反射软依赖**（build.gradle 不引用它），
- * 而它的方法名虽然有规律、却没有稳定契约 —— 之前 akaishi 的 `removeBar`、原版
- * `BossHealthOverlay#events` 都吃过"按名字反射"的亏（名字变了/字段是 SRG 名就失效）。
- * 这里统一按<b>签名形状</b>找方法：静态 + 参数 `ItemStack` + 返回 `ISpellContainer` 就是"取容器"，
- * 无参 + 返回 `AbstractSpell` 就是"取槽位里的法术"…… 改名不影响。
+ * <h2>方法定位策略</h2>
+ * 先用 {@code javap} 把 ISS 的真实签名抄下来，再按<b>名字 + 精确参数类型</b>取方法：
+ * <pre>
+ *   castSpell(Level, int, ServerPlayer, CastSource, boolean)           ← 真正的施法入口（5 参！）
+ *   onServerCastComplete(Level, int, LivingEntity, MagicData, boolean) ← 读条结束 → 执行效果
+ *   MagicData.resetCastingState() / getMana():float / setMana(float)
+ *   AbstractSpell.onServerCastTick(Level, int, LivingEntity, MagicData)
+ * </pre>
  *
- * <p>只在铁魔法在场时被 {@link IronSpellsArcaneHandler} 触达；任何一步失败都只是返回空值，
- * 绝不抛出（法术联动属于增强内容，坏了也不能影响本体）。
+ * <p>⚠ 踩过的坑：`(Level,int,LivingEntity,MagicData)` 这个 4 参签名在 {@code AbstractSpell} 里有
+ * 好几个（`onServerCastTick` 等内部方法），<b>不是施法入口</b> —— 之前按签名扫描取到它，
+ * 结果日志显示"释放成功"但游戏里毫无效果（它只是被调用了一下、什么也不做）。
+ * 另外 `MagicData.setMana` 的参数是 <b>float</b>，按 int 反射会静默失败（法力其实没垫上）。
  */
 public final class IronSpellsSpellAccess {
 
@@ -37,20 +45,15 @@ public final class IronSpellsSpellAccess {
     private static Class<?> cSpellRegistry;
     private static Class<?> cCastSource;
 
-    /** 静态 ItemStack → ISpellContainer */
-    private static Method mContainerGet;
-    /** SpellSlot[] getAllSpells() */
-    private static Method mAllSpells;
-    /** SpellSlot → AbstractSpell */
-    private static Method mSlotSpell;
-    /** AbstractSpell → ResourceLocation */
-    private static Method mSpellResource;
-    /** 静态 ResourceLocation → AbstractSpell（SpellRegistry） */
-    private static Method mSpellById;
-    /** (Level,int,LivingEntity,MagicData)bool */
-    private static Method mCastSpell;
-    /** 静态 LivingEntity → MagicData */
-    private static Method mMagicDataGet;
+    private static Method mContainerGet;    // static ItemStack -> ISpellContainer
+    private static Method mAllSpells;       // SpellSlot[] / List<SpellSlot>
+    private static Method mSlotSpell;       // SpellSlot -> AbstractSpell
+    private static Method mSpellResource;   // AbstractSpell -> ResourceLocation
+    private static Method mSpellById;       // static ResourceLocation -> AbstractSpell
+    private static Method mCastSpell;       // castSpell(Level,int,ServerPlayer,CastSource,boolean)
+    private static Method mCastComplete;    // onServerCastComplete(Level,int,LivingEntity,MagicData,boolean)
+    private static Method mMagicDataGet;    // static LivingEntity -> MagicData
+    private static Object defaultCastSource;
 
     private static synchronized void init() {
         if (ready || failed) return;
@@ -62,7 +65,6 @@ public final class IronSpellsSpellAccess {
             cSpellRegistry = Class.forName("io.redspace.ironsspellbooks.api.registry.SpellRegistry");
             cCastSource = Class.forName("io.redspace.ironsspellbooks.api.spells.CastSource");
 
-            // 静态 ItemStack -> ISpellContainer
             for (Method m : cContainer.getMethods()) {
                 if (Modifier.isStatic(m.getModifiers()) && m.getParameterCount() == 1
                         && m.getParameterTypes()[0] == ItemStack.class
@@ -71,29 +73,26 @@ public final class IronSpellsSpellAccess {
                     break;
                 }
             }
-            // SpellSlot[] / List<SpellSlot> 无参
             for (Method m : cContainer.getMethods()) {
                 if (m.getParameterCount() == 0
-                        && (m.getReturnType() == cSlot.arrayType() || java.util.List.class.isAssignableFrom(m.getReturnType()))) {
+                        && (m.getReturnType() == cSlot.arrayType()
+                            || java.util.List.class.isAssignableFrom(m.getReturnType()))) {
                     mAllSpells = m;
                     break;
                 }
             }
-            // SpellSlot -> AbstractSpell
             for (Method m : cSlot.getMethods()) {
                 if (m.getParameterCount() == 0 && cSpell.isAssignableFrom(m.getReturnType())) {
                     mSlotSpell = m;
                     break;
                 }
             }
-            // AbstractSpell -> ResourceLocation
             for (Method m : cSpell.getMethods()) {
                 if (m.getParameterCount() == 0 && m.getReturnType() == ResourceLocation.class) {
                     mSpellResource = m;
                     break;
                 }
             }
-            // 静态 ResourceLocation -> AbstractSpell
             for (Method m : cSpellRegistry.getMethods()) {
                 if (Modifier.isStatic(m.getModifiers()) && m.getParameterCount() == 1
                         && m.getParameterTypes()[0] == ResourceLocation.class
@@ -102,27 +101,18 @@ public final class IronSpellsSpellAccess {
                     break;
                 }
             }
-            // 施法入口：(Level,int,LivingEntity,MagicData)
-            // ⚠ 同签名的有两个（一个返回 boolean、一个 void），方法顺序不保证 →
-            //   优先取**名字为 castSpell** 的那个；取不到再退回"返回 boolean"的那个。
-            //   （之前取到 void 的那个 → 日志显示"释放成功"但游戏里毫无特效）
-            Method boolVariant = null;
+            // ⭐ 真正的施法入口：5 参（Level,int,ServerPlayer,CastSource,boolean）
             for (Method m : cSpell.getMethods()) {
                 Class<?>[] p = m.getParameterTypes();
-                if (p.length != 4 || p[0] != net.minecraft.world.level.Level.class || p[1] != int.class
-                        || p[2] != LivingEntity.class || p[3] != cMagicData) {
-                    continue;
-                }
-                if ("castSpell".equals(m.getName())) {
+                if (p.length == 5 && p[0] == Level.class && p[1] == int.class
+                        && ServerPlayer.class.isAssignableFrom(p[2]) && p[3] == cCastSource
+                        && p[4] == boolean.class) {
                     mCastSpell = m;
                     break;
                 }
-                if (m.getReturnType() == boolean.class && boolVariant == null) {
-                    boolVariant = m;
-                }
             }
-            if (mCastSpell == null) mCastSpell = boolVariant;
-            // 静态 LivingEntity -> MagicData
+            mCastComplete = find(cSpell, "onServerCastComplete",
+                    Level.class, int.class, LivingEntity.class, cMagicData, boolean.class);
             for (Method m : cMagicData.getMethods()) {
                 if (Modifier.isStatic(m.getModifiers()) && m.getParameterCount() == 1
                         && m.getParameterTypes()[0] == LivingEntity.class
@@ -131,19 +121,37 @@ public final class IronSpellsSpellAccess {
                     break;
                 }
             }
+            // 施法来源：优先 SPELLBOOK，退回 SCROLL，再退回枚举第一个
+            Object[] constants = cCastSource.getEnumConstants();
+            if (constants != null && constants.length > 0) {
+                defaultCastSource = constants[0];
+                for (Object c : constants) {
+                    String n = String.valueOf(c);
+                    if ("SPELLBOOK".equals(n)) {
+                        defaultCastSource = c;
+                        break;
+                    }
+                    if ("SCROLL".equals(n)) defaultCastSource = c;
+                }
+            }
             ready = true;
         } catch (Throwable t) {
             failed = true;
+            TinkersNewlife.LOGGER.warn("[联动] 铁魔法法术访问层初始化失败", t);
         }
     }
 
-    /** 铁魔法法术可用？（任一步失败即视为不可用，调用方直接跳过） */
+    /** 铁魔法法术可用？ */
     public static boolean available() {
         init();
-        return ready && mContainerGet != null && mSpellById != null;
+        return ready && mContainerGet != null && mSpellById != null && mCastSpell != null;
     }
 
-    /** 该物品内刻印了哪些法术（返回法术 id 字符串；没容器/没刻印就是空集） */
+    // ============================================================
+    //  容器读取（魔导用）
+    // ============================================================
+
+    /** 该物品内刻印了哪些法术（返回法术 id 字符串） */
     public static Set<String> inscribedSpellIds(ItemStack stack) {
         init();
         if (!ready || stack == null || stack.isEmpty() || mContainerGet == null || mAllSpells == null
@@ -198,45 +206,75 @@ public final class IronSpellsSpellAccess {
         }
     }
 
+    // ============================================================
+    //  施法
+    // ============================================================
+
     /**
-     * 无吟唱施放指定法术（对 {@code caster} 生效）。
+     * <b>无吟唱</b>施放指定法术（对 {@code caster} 生效）。
      *
-     * @param spell 由 {@link #spellById} 取到的法术对象
-     * @param level 法术等级
-     * @return 是否成功发起
+     * <p>为什么不能只调一次入口方法：`raise_hell` 是<b>读条法术</b>，正规流程是
+     * `castSpell`（发起 + 设置施法状态）→ 服务端每 tick `onServerCastTick` →
+     * 读条结束 `onServerCastComplete`（<b>这里才真正执行效果</b>）。
+     * 只调发起那一步 → 日志"成功"但游戏里什么都没有。
+     * 这里"立刻补完读条"：发起 → 直接调 `onServerCastComplete` → 清掉施法状态（防重复执行）。
      */
     public static boolean cast(LivingEntity caster, Object spell, int level) {
         init();
-        if (!ready || spell == null || caster == null || mCastSpell == null || mMagicDataGet == null) return false;
+        if (!ready || spell == null || !(caster instanceof ServerPlayer player)) return false;
+        if (mCastSpell == null || mMagicDataGet == null) return false;
         try {
             Object magicData = mMagicDataGet.invoke(null, caster);
             if (magicData == null) return false;
-            Object r = mCastSpell.invoke(spell, caster.level(), level, caster, magicData);
-            return !(r instanceof Boolean b) || b;
+
+            // ① 正规入口：发动画/音效包 + 设置读条状态
+            mCastSpell.invoke(spell, caster.level(), level, player, defaultCastSource, true);
+
+            // ② 无吟唱：立刻走"读条完成"，真正执行法术效果
+            boolean completed = false;
+            if (mCastComplete != null) {
+                mCastComplete.invoke(spell, caster.level(), level, caster, magicData, true);
+                completed = true;
+            }
+            // ③ 清掉施法状态：避免 ISS 的 tick 再补一次（双份效果）
+            try {
+                Method reset = find(cMagicData, "resetCastingState");
+                if (reset != null) reset.invoke(magicData);
+            } catch (Throwable ignored) {
+            }
+            if (!completed) {
+                TinkersNewlife.LOGGER.warn("[联动] 铁魔法施法完成入口缺失（onServerCastComplete）");
+            }
+            return completed;
         } catch (Throwable t) {
+            TinkersNewlife.LOGGER.warn("[联动] 铁魔法施法失败: {}", t.toString());
             return false;
         }
     }
+
+    // ============================================================
+    //  法力（⚠ setMana 参数是 float，不是 int）
+    // ============================================================
 
     /** 玩家当前法力（读不到返回 -1） */
     public static int manaOf(LivingEntity entity) {
         Object md = magicDataOf(entity);
         if (md == null) return -1;
         try {
-            Method m = find0(md.getClass(), "getMana");
-            return m == null ? -1 : ((Number) m.invoke(md)).intValue();
+            Method m = find(md.getClass(), "getMana");
+            return m == null ? -1 : (int) ((Number) m.invoke(md)).floatValue();
         } catch (Throwable t) {
             return -1;
         }
     }
 
-    /** 写玩家法力（失败静默） */
+    /** 写玩家法力（float 版；失败静默） */
     public static void setMana(LivingEntity entity, int mana) {
         Object md = magicDataOf(entity);
         if (md == null || mana < 0) return;
         try {
-            Method m = find1(md.getClass(), "setMana", int.class);
-            if (m != null) m.invoke(md, mana);
+            Method m = find(md.getClass(), "setMana", float.class);
+            if (m != null) m.invoke(md, (float) mana);
         } catch (Throwable ignored) {
         }
     }
@@ -246,9 +284,9 @@ public final class IronSpellsSpellAccess {
         init();
         if (!ready || spell == null) return -1;
         try {
-            Method m = find1(spell.getClass(), "getManaCost", int.class);
-            if (m == null) m = find1(cSpell, "getManaCost", int.class);
-            return m == null ? -1 : ((Number) m.invoke(spell, level)).intValue();
+            Method m = find(spell.getClass(), "getManaCost", int.class);
+            if (m == null) m = find(cSpell, "getManaCost", int.class);
+            return m == null ? -1 : (int) ((Number) m.invoke(spell, level)).floatValue();
         } catch (Throwable t) {
             return -1;
         }
@@ -264,22 +302,14 @@ public final class IronSpellsSpellAccess {
         }
     }
 
-    private static Method find0(Class<?> type, String name) {
-        for (Class<?> c = type; c != null && c != Object.class; c = c.getSuperclass()) {
-            try {
-                Method m = c.getDeclaredMethod(name);
-                m.setAccessible(true);
-                return m;
-            } catch (NoSuchMethodException ignored) {
-            }
-        }
-        return null;
-    }
+    // ============================================================
+    //  反射小工具
+    // ============================================================
 
-    private static Method find1(Class<?> type, String name, Class<?> param) {
+    private static Method find(Class<?> type, String name, Class<?>... params) {
         for (Class<?> c = type; c != null && c != Object.class; c = c.getSuperclass()) {
             try {
-                Method m = c.getDeclaredMethod(name, param);
+                Method m = c.getDeclaredMethod(name, params);
                 m.setAccessible(true);
                 return m;
             } catch (NoSuchMethodException ignored) {
