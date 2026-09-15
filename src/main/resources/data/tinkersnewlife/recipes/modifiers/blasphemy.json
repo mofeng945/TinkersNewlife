@@ -3,7 +3,9 @@
   "allow_crystal": false,
   "inputs": [
     {
-      "item": "goety:pure_unholy_blood"
+      "type": "forge:partial_nbt",
+      "item": "goety:unholy_blood",
+      "nbt": "{Pure:1b}"
     },
     {
       "item": "goety:shadow_essence",
