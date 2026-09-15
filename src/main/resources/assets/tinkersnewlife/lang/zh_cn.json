@@ -1054,5 +1054,8 @@
   "item.tinkersnewlife.molten_arcane_ingot_bucket": "熔融奥术锭桶",
   "fluid_type.tinkersnewlife.holy_spirit": "神圣灵液",
   "block.tinkersnewlife.holy_spirit_block": "神圣灵液",
-  "item.tinkersnewlife.holy_spirit_bucket": "神圣灵液桶"
+  "item.tinkersnewlife.holy_spirit_bucket": "神圣灵液桶",
+  "modifier.tinkersnewlife.arcane_conduction": "魔导",
+  "modifier.tinkersnewlife.arcane_conduction.description": "物品内刻印的法术强度得到魔导等级倍的强化；手持或身穿时释放的法术伤害提高 0.4×等级（兼容诡厄巫法法术）。",
+  "modifier.tinkersnewlife.arcane_conduction.tip": "刻印法术等级 +等级；施法伤害 +"
 }

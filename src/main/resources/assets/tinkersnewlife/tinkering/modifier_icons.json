@@ -78,5 +78,6 @@
   "tinkersnewlife:cursed_adrenaline": "tinkersnewlife:gui/modifiers/cursed_adrenaline",
   "tinkersnewlife:butcher": "tinkersnewlife:gui/modifiers/butcher",
   "tinkersnewlife:curse_speed": "tinkersnewlife:gui/modifiers/curse_speed",
-  "tinkersnewlife:earplugs": "tinkersnewlife:gui/modifiers/earplugs"
+  "tinkersnewlife:earplugs": "tinkersnewlife:gui/modifiers/earplugs",
+  "tinkersnewlife:arcane_conduction": "tinkersnewlife:gui/modifiers/arcane_conduction"
 }

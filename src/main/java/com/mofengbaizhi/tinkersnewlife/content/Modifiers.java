@@ -345,6 +345,11 @@ public class Modifiers {
         MODIFIERS.register("laevatain",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.LaevatainModifier::new);
 
+    /** 铁魔法联动特性·魔导（材料「圣灵」自带，有等级）：强化物品内刻印法术的强度 + 施法增伤 */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.ArcaneConductionModifier> ARCANE_CONDUCTION =
+            MODIFIERS.register("arcane_conduction",
+                    com.mofengbaizhi.tinkersnewlife.content.modifier.ArcaneConductionModifier::new);
+
     /** 近战特性·神圣之力（神灵金近战头自带，联动铁魔法/启示录：+180法力、注入火墙术Lv5/天使之翼Lv5/治愈之环Lv10、火墙无视无敌帧） */
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.DivinePowerModifier> DIVINE_POWER =
         MODIFIERS.register("divine_power",

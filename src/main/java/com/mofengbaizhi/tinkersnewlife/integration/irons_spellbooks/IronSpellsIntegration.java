@@ -36,6 +36,8 @@ public final class IronSpellsIntegration implements Integration {
         // 联动流体整组（FluidType / 静止 / 流动 / 方块 / 桶）同生共死：
         // 原初受火遗魂、熔融奥术锭、神圣灵液
         IronSpellsFluids.register(bus);
+        // 特性「魔导」的事件监听（铁魔法事件类在运行时才确定 → 原始 addListener）
+        IronSpellsArcaneHandler.attach(bus);
         LOGGER.info("[联动] 铁魔法在场：圣灵材料流体组已注册（原初受火遗魂 / 熔融奥术锭 / 神圣灵液）");
     }
 }
