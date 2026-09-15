@@ -474,7 +474,7 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         if (owner == null) return;
         String name = target.getName().getString();
         List<SpiritEntry> list = entries(owner);
-        list.removeIf(e -> e.releasedId >= 0 && target.getId() == e.releasedId);
+        SpiritEntry hit = findEntryFor(owner, target); if (hit != null) list.remove(hit);
         saveAll(owner, list);
         owner.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.lost_foreign", name), true);
     }
@@ -483,7 +483,7 @@ public final class CursedSpiritTechnique extends BaseTechnique {
     public static void modifyOnOwnerTransform(ServerPlayer owner, Entity oldReleased, Mob newForm) {
         List<SpiritEntry> list = entries(owner);
         for (SpiritEntry e : list) {
-            if (e.releasedId >= 0 && oldReleased.getId() == e.releasedId) {
+            if (findEntryFor(owner, oldReleased) == e) {
                 CompoundTag nbt = newForm.saveWithoutId(new CompoundTag());
                 e.nbt = nbt;
                 e.type = EntityType.getKey(newForm.getType()).toString();
@@ -505,7 +505,7 @@ public final class CursedSpiritTechnique extends BaseTechnique {
     public static void relinkReleasedAsGuard(ServerPlayer owner, Entity oldReleased, Mob newForm) {
         List<SpiritEntry> list = entries(owner);
         for (SpiritEntry e : list) {
-            if (e.releasedId >= 0 && oldReleased.getId() == e.releasedId) {
+            if (findEntryFor(owner, oldReleased) == e) {
                 CompoundTag nbt = newForm.saveWithoutId(new CompoundTag());
                 e.nbt = nbt;
                 e.type = EntityType.getKey(newForm.getType()).toString();
@@ -750,7 +750,7 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         if (RECALLING.contains(dead.getUUID())) return;
         for (ServerPlayer p : sl.getServer().getPlayerList().getPlayers()) {
             List<SpiritEntry> list = entries(p);
-            boolean removed = list.removeIf(e -> e.releasedId >= 0 && dead.getId() == e.releasedId);
+            SpiritEntry hit = findEntryFor(p, dead); boolean removed = hit != null && list.remove(hit);
             if (removed) {
                 saveAll(p, list);
                 p.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.lost", dead.getName().getString()), true);
