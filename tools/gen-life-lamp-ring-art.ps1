@@ -1,4 +1,7 @@
-﻿# 命灯指轮（life_lamp_ring）物品贴图
+﻿# [OBSOLETE] The life_lamp_ring texture is now hand-drawn by the author (PNG is the source of truth).
+#            Running this script OVERWRITES that artwork. Only run it to build a brand new image,
+#            and back up textures/item/life_lamp_ring.png first.
+# 命灯指轮（life_lamp_ring）物品贴图
 #
 # 造型：一枚金环（circle）+ 环顶一盏小小的紫色命灯（灯焰 + 光晕），环身左下受光、右下压暗。
 # 输出：textures/item/life_lamp_ring.png（16×16；$SCALE=2 可出 32×32）
