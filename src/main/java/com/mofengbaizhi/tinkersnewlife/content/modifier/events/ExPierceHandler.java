@@ -17,7 +17,11 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
+import net.minecraftforge.event.entity.living.LivingDamageEvent;
+import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -107,6 +111,7 @@ public final class ExPierceHandler {
      * </ol>
      */
     private static void applyPierce(LivingEntity attacker, LivingEntity target, float damage) {
+        markPierce(target, damage);
         if (!target.hurt(pierceSource(attacker), damage) && target.isAlive() && !target.isRemoved()) {
             target.hurt(anonymousPierceSource(target.level()), damage);
         }
@@ -145,6 +150,74 @@ public final class ExPierceHandler {
 
     private static Holder<DamageType> pierceType(Entity context) {
         return pierceTypeFromLevel(context.level());
+    }
+
+    // ============================================================
+    //  事件层"顶开"限伤/减伤
+    // ============================================================
+
+    /**
+     * 本次穿透"想造成多少"（key = 目标 UUID，含 tick 防残留）。
+     *
+     * <p><b>为什么需要</b>：{@code true_pierce} 的标签能穿 {@code isInvulnerableTo}／护甲／抗性／无敌帧
+     * （这些判断在 {@code hurt()} 里、事件之前），但**事件层的限伤照样生效** ——
+     * 例如 akaishi 的 {@code WardenBossHandler#onDamageCap} 会在 {@code LivingHurtEvent} 里
+     * 把**任何来源**对监守者的单次伤害压到 24 点。
+     * 所以穿透要真的"穿透"，就得在事件层的最后一刻把数值按原意放回去。
+     *
+     * <p>安全性：只有"刚刚由本模组登记过、且同一 tick"的那一击会被改写，
+     * 其它任何伤害（包括别人家的限伤逻辑）都不受影响。
+     */
+    private record PierceIntent(float amount, long tick) {
+    }
+
+    private static final java.util.Map<java.util.UUID, PierceIntent> PIERCE_INTENT =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** 供其它穿透路径（如天逆鉾的破结界源）登记"这一击想造成多少" */
+    public static void markPierce(LivingEntity target, float amount) {
+        if (target == null || target.level().isClientSide) return;
+        PIERCE_INTENT.put(target.getUUID(), new PierceIntent(amount, target.level().getGameTime()));
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onPierceHurt(LivingHurtEvent event) {
+        forcePierce(event.getEntity(), event.getSource(), event::setAmount);
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onPierceDamage(LivingDamageEvent event) {
+        forcePierce(event.getEntity(), event.getSource(), event::setAmount);
+    }
+
+    private static void forcePierce(LivingEntity target, DamageSource source,
+                                    java.util.function.Consumer<Float> setter) {
+        if (target == null || target.level().isClientSide) return;
+        PierceIntent it = PIERCE_INTENT.remove(target.getUUID());
+        if (it == null || it.tick() != target.level().getGameTime()) return;
+        if (!isPierceLike(source)) return;
+        // ⭐ 与命灯指轮共存：攻击者戴着命灯时，穿透也必须"打不死"（否则两个功能会互相抵消，
+        //    而且两个监听器都是 LOWEST 优先级，执行顺序不该被依赖 —— 这里就地补齐规则，与顺序无关）
+        if (source.getEntity() instanceof net.minecraft.world.entity.LivingEntity attacker
+                && com.mofengbaizhi.tinkersnewlife.content.item.LifeLampRingItem.isWorn(attacker)) {
+            float keep = com.mofengbaizhi.tinkersnewlife.content.curse.LifeLampRingHandler.keepHealth(target);
+            float hp = target.getHealth();
+            if (hp <= keep) {
+                setter.accept(0.0F);
+                return;
+            }
+            if (it.amount() >= hp) {
+                setter.accept(hp - keep);
+                return;
+            }
+        }
+        setter.accept(it.amount());
+    }
+
+    /** 我们的 true_pierce，或其它"带 bypasses_invulnerability 标签"的真伤源（如 Goety 的破结界源） */
+    private static boolean isPierceLike(DamageSource source) {
+        if (source == null) return false;
+        return source.is(PIERCE_TYPE_KEY) || source.is(DamageTypeTags.BYPASSES_INVULNERABILITY);
     }
 
     private static Holder<DamageType> pierceTypeFromLevel(net.minecraft.world.level.Level level) {
