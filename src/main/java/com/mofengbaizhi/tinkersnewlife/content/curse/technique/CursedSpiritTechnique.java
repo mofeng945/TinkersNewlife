@@ -680,6 +680,26 @@ public final class CursedSpiritTechnique extends BaseTechnique {
     }
 
     /**
+     * 顺手调用 <b>akaishi</b> 的 {@code WardenBossHandler.removeBar(Warden)}。
+     *
+     * <p>该 mod 会给**每一只**监守者挂一个紫色 BossBar（{@code Map<Entity, ServerBossEvent>}），
+     * 它的清理由它自己的死亡/消亡逻辑触发；我们主动收回时（尤其是走 {@code discard()} 兜底那条路）
+     * 它可能收不到信号，血条就留在屏幕上。它这个方法是 {@code private static}、类名固定（未混淆），
+     * 所以用反射直接调一次；**类不存在/方法改了都只是吞掉**，不影响收回本身。
+     */
+    private static void removeAkaishiWardenBar(net.minecraft.world.entity.monster.warden.Warden warden) {
+        try {
+            Class<?> handler = Class.forName("com.example.akaishi.forge.life.WardenBossHandler");
+            java.lang.reflect.Method remove =
+                    handler.getDeclaredMethod("removeBar", net.minecraft.world.entity.monster.warden.Warden.class);
+            remove.setAccessible(true);
+            remove.invoke(null, warden);
+        } catch (Throwable ignored) {
+            // 没装 akaishi / 它改了实现：都无所谓
+        }
+    }
+
+    /**
      * 安全读取攻击力。
      *
      * <p>⚠⚠ <b>必须判空</b>：蝙蝠、村民这类生物<b>没有</b>
@@ -754,14 +774,21 @@ public final class CursedSpiritTechnique extends BaseTechnique {
 
         boolean wasSilent = mob.isSilent();
         clearEntityBossBar(mob);
-        if (mob instanceof net.minecraft.world.entity.monster.warden.Warden) {
+        if (mob instanceof net.minecraft.world.entity.monster.warden.Warden warden) {
             com.mofengbaizhi.tinkersnewlife.network.curse.PacketDropWardenBars.broadcast();
+            removeAkaishiWardenBar(warden);
         }
         mob.setSilent(true);
         RECALLING.add(mob.getUUID());
         try {
-            mob.invulnerableTime = 0;
-            mob.hurt(mob.damageSources().genericKill(), Float.MAX_VALUE);
+            // ⚠ 循环补刀：有些 mod 会给特定生物加"单次受击上限"
+            //   （例如 akaishi 把每个监守者都做成 boss，单次最多 24 点）。
+            //   一次巨额伤害打不死它 -> 就不会触发 LivingDeathEvent ->
+            //   别人的"死亡时清理"（血条等）也就不会跑。所以这里反复补刀直到真死。
+            for (int i = 0; i < 64 && mob.isAlive() && !mob.isRemoved(); i++) {
+                mob.invulnerableTime = 0;
+                mob.hurt(mob.damageSources().genericKill(), Float.MAX_VALUE);
+            }
         } finally {
             RECALLING.remove(mob.getUUID());
         }
@@ -779,8 +806,9 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         if (!(dead.level() instanceof ServerLevel sl)) return;
         dismissServantsOf(dead);
         clearEntityBossBar(dead);
-        if (dead instanceof net.minecraft.world.entity.monster.warden.Warden) {
+        if (dead instanceof net.minecraft.world.entity.monster.warden.Warden warden) {
             com.mofengbaizhi.tinkersnewlife.network.curse.PacketDropWardenBars.broadcast();
+            removeAkaishiWardenBar(warden);
         }
         // ⭐ 主动收回（recallReleased）也会走到这里：保留记录，只清召唤物
         if (RECALLING.contains(dead.getUUID())) return;
