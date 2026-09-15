@@ -245,9 +245,8 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         //    "被转成村民的守护体收不回来、还能再放一只旧的"。
         Mob live = resolveLive(player, entry);
         if (live != null) {
-            // 收回（保留记录），其召唤物一并清除
-            dismissServantsOf(live);
-            live.discard();
+            // 收回（保留记录）：走原版死亡链路（含召唤物清理），见 recallReleased
+            recallReleased(live);
             entry.releasedId = -1;
             entry.guardUuid = "";
             updateEntry(player, entry);
@@ -442,10 +441,10 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         if (owner == null) return false;
         List<SpiritEntry> list = entries(owner);
         for (SpiritEntry e : list) {
-            if (e.releasedId >= 0 && target.getId() == e.releasedId) {
-                if (owner.serverLevel().getEntity(e.releasedId) instanceof Mob mob && mob.isAlive()) {
-                    dismissServantsOf(mob);
-                    mob.discard();
+            if (findEntryFor(owner, target) == e) {
+                Mob live = resolveLive(owner, e);
+                if (live != null) {
+                    recallReleased(live);          // 走原版死亡链路（含召唤物清理）
                 }
                 e.releasedId = -1;
                 e.guardUuid = "";
@@ -645,12 +644,58 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         return null;
     }
 
+    /**
+     * 正在"主动收回"的实体：收回走的是死亡链路（见 {@link #recallReleased}），
+     * 但**收回本意是保留记录**（下次还能再放），所以 {@link #onMinionDeath} 必须放行它们，
+     * 不能按"战死"把记录删掉。
+     */
+    private static final java.util.Set<java.util.UUID> RECALLING =
+            java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    /**
+     * 收回一个释放体（保留记录）。
+     *
+     * <p><b>为什么走原版死亡链路</b>：这样所有"仆从死亡"相关逻辑、Boss 血条与实体追踪解除
+     * 都按原版正常路径结算（以前直接 {@code discard()} 是"静默移除"，绕过了这一整套）。
+     *
+     * <p><b>两道保险</b>：
+     * <ol>
+     *   <li>击杀期间打上 {@link #RECALLING} 标记 → {@link #onMinionDeath} 不删记录；</li>
+     *   <li>若死亡被别的 mod 取消（复活/免疫/阶段转换），兜底 {@code discard()}，收回一定生效。</li>
+     * </ol>
+     * 顺手 {@code setSilent(true)}：收回不是击杀，不该冒出死亡音效。
+     */
+    public static void recallReleased(Mob mob) {
+        if (mob == null) return;
+        dismissServantsOf(mob);
+        if (!mob.isAlive() || mob.isRemoved()) {
+            mob.discard();
+            return;
+        }
+        boolean wasSilent = mob.isSilent();
+        mob.setSilent(true);
+        RECALLING.add(mob.getUUID());
+        try {
+            mob.invulnerableTime = 0;
+            mob.hurt(mob.damageSources().genericKill(), Float.MAX_VALUE);
+        } finally {
+            RECALLING.remove(mob.getUUID());
+        }
+        if (mob.isAlive() && !mob.isRemoved()) {
+            mob.discard();          // 死亡被取消 → 兜底
+        } else {
+            mob.setSilent(wasSilent);
+        }
+    }
+
     /** 释放体战死 → 记录从 GUI 消失，其召唤物一并清除（玩家本人死亡绝不算释放体战死） */
     public static void onMinionDeath(Entity dead) {
         if (dead.level().isClientSide) return;
         if (dead instanceof net.minecraft.world.entity.player.Player) return; // 玩家不是释放体
         if (!(dead.level() instanceof ServerLevel sl)) return;
         dismissServantsOf(dead);
+        // ⭐ 主动收回（recallReleased）也会走到这里：保留记录，只清召唤物
+        if (RECALLING.contains(dead.getUUID())) return;
         for (ServerPlayer p : sl.getServer().getPlayerList().getPlayers()) {
             List<SpiritEntry> list = entries(p);
             boolean removed = list.removeIf(e -> e.releasedId >= 0 && dead.getId() == e.releasedId);
