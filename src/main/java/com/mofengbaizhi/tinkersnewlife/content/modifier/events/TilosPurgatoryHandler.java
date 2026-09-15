@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
+import net.minecraftforge.event.entity.living.LivingChangeTargetEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -64,6 +65,7 @@ public final class TilosPurgatoryHandler {
         if (player.tickCount % 10 != 0) return;                 // 每 0.5s 检查一次
         long now = player.level().getGameTime();
         despawnExpired(player.serverLevel(), now);
+        clearFriendlyTargets(player.serverLevel(), now);
         tryTrigger(player, now);
     }
 
@@ -138,6 +140,58 @@ public final class TilosPurgatoryHandler {
             if (e != null && e.getUUID().equals(id)) {            // 核对 UUID，防实体 id 复用
                 e.discard();
             }
+        }
+    }
+
+    // ============================================================
+    //  骑士不该打自己人
+    // ============================================================
+
+    /**
+     * 铁魔法的远古骑士自带敌对目标（会锁定附近的怪物/玩家）—— 干掉攻击者之后
+     * <b>两只骑士会互相锁定并把对方当怪打</b>。这里从目标选择的源头拦掉：
+     * 目标是"主人的其它仆从"（带 {@link WuWeiHandler#KEY_GUARD_OWNER} 标记）或主人本人 → 取消。
+     */
+    @SubscribeEvent
+    public static void onFriendlyTarget(LivingChangeTargetEvent event) {
+        if (!(event.getEntity() instanceof Mob mob)) return;
+        if (!isOurKnight(mob)) return;
+        var target = event.getNewTarget();
+        if (target == null) return;
+        // 打另一只骑士 / 主人的其它仆从
+        if (target.getPersistentData().contains(WuWeiHandler.KEY_GUARD_OWNER)) {
+            event.setCanceled(true);
+            return;
+        }
+        // 打主人本人
+        if (target instanceof net.minecraft.world.entity.player.Player) {
+            UUID ownerId = mob.getPersistentData().contains(WuWeiHandler.KEY_GUARD_OWNER)
+                    ? mob.getPersistentData().getUUID(WuWeiHandler.KEY_GUARD_OWNER) : null;
+            if (ownerId != null && ownerId.equals(target.getUUID())) {
+                event.setCanceled(true);
+            }
+        }
+    }
+
+    /** 这只怪是不是本特性召唤的远古骑士（按召唤记录判定，不依赖类名） */
+    private static boolean isOurKnight(Mob mob) {
+        return KNIGHTS.containsKey(mob.getUUID());
+    }
+
+    /** 兜底：把已经互相锁定的目标清掉（目标事件偶尔会被别的 goal 绕过） */
+    private static void clearFriendlyTargets(ServerLevel level, long now) {
+        if (KNIGHTS.isEmpty()) return;
+        for (UUID id : KNIGHTS.keySet()) {
+            Integer entityId = KNIGHT_IDS.get(id);
+            if (entityId == null) continue;
+            Entity e = level.getEntity(entityId);
+            if (!(e instanceof Mob mob) || !mob.getUUID().equals(id)) continue;
+            var target = mob.getTarget();
+            if (target == null) continue;
+            boolean friendly = target.getPersistentData().contains(WuWeiHandler.KEY_GUARD_OWNER)
+                    || (mob.getPersistentData().contains(WuWeiHandler.KEY_GUARD_OWNER)
+                        && mob.getPersistentData().getUUID(WuWeiHandler.KEY_GUARD_OWNER).equals(target.getUUID()));
+            if (friendly) mob.setTarget(null);
         }
     }
 

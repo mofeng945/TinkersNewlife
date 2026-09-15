@@ -43,7 +43,13 @@ public final class IronSpellsArcaneHandler {
 
     /** 由 {@link IronSpellsIntegration#register(IEventBus)} 在铁魔法在场时调用 */
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public static void attach(IEventBus bus) {
+    public static void attach(IEventBus modBus) {
+        // ⚠ 关键：Integration.register(bus) 传进来的是 **mod 事件总线**（只接受 IModBusEvent），
+        //    而 ISS 的这两个事件是**游戏内事件**（SpellDamageEvent extends LivingEvent）
+        //    → 必须挂到 **Forge 总线**。曾经挂错总线，报
+        //    "takes an argument that is not a subtype of the interface IModBusEvent"，
+        //    两个监听全部没生效（日志里能看到）。
+        IEventBus bus = net.minecraftforge.common.MinecraftForge.EVENT_BUS;
         try {
             Class<?> levelEvent = Class.forName("io.redspace.ironsspellbooks.api.events.ModifySpellLevelEvent");
             bus.addListener(EventPriority.NORMAL, false, (Class) levelEvent,

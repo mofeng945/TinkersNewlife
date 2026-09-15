@@ -102,15 +102,26 @@ public final class IronSpellsSpellAccess {
                     break;
                 }
             }
-            // (Level,int,LivingEntity,MagicData) -> bool
+            // 施法入口：(Level,int,LivingEntity,MagicData)
+            // ⚠ 同签名的有两个（一个返回 boolean、一个 void），方法顺序不保证 →
+            //   优先取**名字为 castSpell** 的那个；取不到再退回"返回 boolean"的那个。
+            //   （之前取到 void 的那个 → 日志显示"释放成功"但游戏里毫无特效）
+            Method boolVariant = null;
             for (Method m : cSpell.getMethods()) {
                 Class<?>[] p = m.getParameterTypes();
-                if (p.length == 4 && p[0] == net.minecraft.world.level.Level.class && p[1] == int.class
-                        && p[2] == LivingEntity.class && p[3] == cMagicData) {
+                if (p.length != 4 || p[0] != net.minecraft.world.level.Level.class || p[1] != int.class
+                        || p[2] != LivingEntity.class || p[3] != cMagicData) {
+                    continue;
+                }
+                if ("castSpell".equals(m.getName())) {
                     mCastSpell = m;
                     break;
                 }
+                if (m.getReturnType() == boolean.class && boolVariant == null) {
+                    boolVariant = m;
+                }
             }
+            if (mCastSpell == null) mCastSpell = boolVariant;
             // 静态 LivingEntity -> MagicData
             for (Method m : cMagicData.getMethods()) {
                 if (Modifier.isStatic(m.getModifiers()) && m.getParameterCount() == 1
