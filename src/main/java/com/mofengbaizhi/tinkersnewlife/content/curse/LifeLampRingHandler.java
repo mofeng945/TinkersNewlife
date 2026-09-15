@@ -157,6 +157,8 @@ public final class LifeLampRingHandler {
     /** 第 ① 关：主伤害（此时 amount 还没过护甲/附魔/吸收） */
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onLivingHurt(LivingHurtEvent event) {
+        // ⭐ 穿透（真伤）不受慈悲约束：带穿透的近战/投射物应当能照常杀死目标
+        if (com.mofengbaizhi.tinkersnewlife.util.TruePierce.isTruePierce(event.getSource())) return;
         if (!byRingWearer(event.getEntity(), event.getSource())) return;
         clamp(event.getEntity(), event.getAmount(), event::setAmount);
     }
@@ -168,6 +170,8 @@ public final class LifeLampRingHandler {
      */
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onLivingDamage(LivingDamageEvent event) {
+        // ⭐ 穿透（真伤）不受慈悲约束：带穿透的近战/投射物应当能照常杀死目标
+        if (com.mofengbaizhi.tinkersnewlife.util.TruePierce.isTruePierce(event.getSource())) return;
         if (!byRingWearer(event.getEntity(), event.getSource())) return;
         clamp(event.getEntity(), event.getAmount(), event::setAmount);
     }

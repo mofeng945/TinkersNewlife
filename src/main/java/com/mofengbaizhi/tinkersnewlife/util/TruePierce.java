@@ -1,8 +1,6 @@
 package com.mofengbaizhi.tinkersnewlife.util;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
-import com.mofengbaizhi.tinkersnewlife.content.curse.LifeLampRingHandler;
-import com.mofengbaizhi.tinkersnewlife.content.item.LifeLampRingItem;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
@@ -90,16 +88,9 @@ public final class TruePierce {
         if (target == null || damage <= 0.0F) return;
         if (target.level().isClientSide || target.isRemoved()) return;
 
-        // ① 命灯指轮共存：攻击者戴命灯 → 这一击不许致死（只打到剩一点血）
-        boolean lamp = attacker != null && LifeLampRingItem.isWorn(attacker);
+        // ① 穿透是"真伤"：**不受命灯指轮的慈悲效果约束** —— 带穿透的近战/投射物可以照常杀死目标。
+        //    命灯那边也有对应的早退（LifeLampRingHandler 见到真伤源直接放行），两端一致、与事件顺序无关。
         float want = damage;
-        if (lamp) {
-            float keep = LifeLampRingHandler.keepHealth(target);
-            float hp = target.getHealth();
-            if (hp <= keep) return;                       // 已经只剩一点 → 不再打
-            want = Math.min(damage, hp - keep);
-            if (want <= 0.0F) return;
-        }
 
         // ② 禁疗（否则再生会把伤害吃回去）+ 清掉本模组自己的"伤害限幅"效果（它会取消多段伤害）
         suppressRegen(target);
@@ -110,7 +101,7 @@ public final class TruePierce {
 
         // ③ 下界亚波伦：hurt() 管线被它的免疫窗整个取消 → 直接扣血
         if (GoetyBridge.isNetherApollyon(target)) {
-            directDamage(target, want, withAttacker, lamp);
+            directDamage(target, want, withAttacker);
             return;
         }
 
@@ -127,17 +118,14 @@ public final class TruePierce {
         if (shortfall <= 0.01F) return;
         if (!target.isAlive() || target.isRemoved()) return;
         float hp = target.getHealth() - shortfall;
-        float keep = lamp ? LifeLampRingHandler.keepHealth(target) : 0.0F;
-        if (hp <= keep) hp = keep;
         if (hp <= 0.0F) {
             target.setHealth(0.0F);
-            if (!lamp && target.isAlive() && !target.isRemoved()) target.die(withAttacker);
+            if (target.isAlive() && !target.isRemoved()) target.die(withAttacker);
         } else {
             target.setHealth(hp);
         }
         // 顺带：低血阶段的"受击全额回血"免伤（启示录使徒那类），若差额直补也吃不动 → 走处决兜底
         if (GoetyBridge.isGoetyApostle(target) && target.isAlive() && !target.isRemoved()
-                && !lamp
                 && target.getHealth() <= target.getMaxHealth() * 0.18F
                 && (startHp - target.getHealth()) < 5.0F) {
             target.setHealth(0.0F);
@@ -165,13 +153,11 @@ public final class TruePierce {
     }
 
     /** 不经 hurt() 的直伤（下界亚波伦）：扣血 + 打空后主动 die()，让击败状态机正常结算 */
-    private static void directDamage(LivingEntity target, float dmg, DamageSource src, boolean lamp) {
-        float keep = lamp ? LifeLampRingHandler.keepHealth(target) : 0.0F;
+    private static void directDamage(LivingEntity target, float dmg, DamageSource src) {
         float hp = target.getHealth() - dmg;
-        if (hp <= keep) hp = keep;
         if (hp <= 0.0F) {
             target.setHealth(0.0F);
-            if (!lamp && target.isAlive() && !target.isRemoved()) target.die(src);
+            if (target.isAlive() && !target.isRemoved()) target.die(src);
         } else {
             target.setHealth(hp);
         }
