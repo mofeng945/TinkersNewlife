@@ -307,6 +307,10 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketMobDisguise::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketMobDisguise::new,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketMobDisguise::handle);
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketDropWardenBars.class,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketDropWardenBars::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketDropWardenBars::new,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketDropWardenBars::handle);
         registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoOpen.class,
                 com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoOpen::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoOpen::new,

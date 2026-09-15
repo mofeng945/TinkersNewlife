@@ -453,7 +453,7 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         if (owner == null) return false;
         List<SpiritEntry> list = entries(owner);
         for (SpiritEntry e : list) {
-            if (findEntryFor(owner, target) == e) {
+            if (isSameEntry(owner, target, e)) {
                 Mob live = resolveLive(owner, e);
                 if (live != null) {
                     recallReleased(live);          // 走原版死亡链路（含召唤物清理）
@@ -474,7 +474,7 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         if (owner == null) return;
         String name = target.getName().getString();
         List<SpiritEntry> list = entries(owner);
-        SpiritEntry hit = findEntryFor(owner, target); if (hit != null) list.remove(hit);
+        SpiritEntry hit = findEntryFor(owner, target); if (hit != null) list.removeIf(x -> x.uid != null && x.uid.equals(hit.uid));
         saveAll(owner, list);
         owner.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.lost_foreign", name), true);
     }
@@ -483,7 +483,7 @@ public final class CursedSpiritTechnique extends BaseTechnique {
     public static void modifyOnOwnerTransform(ServerPlayer owner, Entity oldReleased, Mob newForm) {
         List<SpiritEntry> list = entries(owner);
         for (SpiritEntry e : list) {
-            if (findEntryFor(owner, oldReleased) == e) {
+            if (isSameEntry(owner, oldReleased, e)) {
                 CompoundTag nbt = newForm.saveWithoutId(new CompoundTag());
                 e.nbt = nbt;
                 e.type = EntityType.getKey(newForm.getType()).toString();
@@ -505,7 +505,7 @@ public final class CursedSpiritTechnique extends BaseTechnique {
     public static void relinkReleasedAsGuard(ServerPlayer owner, Entity oldReleased, Mob newForm) {
         List<SpiritEntry> list = entries(owner);
         for (SpiritEntry e : list) {
-            if (findEntryFor(owner, oldReleased) == e) {
+            if (isSameEntry(owner, oldReleased, e)) {
                 CompoundTag nbt = newForm.saveWithoutId(new CompoundTag());
                 e.nbt = nbt;
                 e.type = EntityType.getKey(newForm.getType()).toString();
@@ -680,6 +680,17 @@ public final class CursedSpiritTechnique extends BaseTechnique {
     }
 
     /**
+     * 是不是同一条记录。
+     * <p>⚠ {@link #findEntryFor} 每次都是从 NBT **重新解析**出新对象，所以绝不能比引用（{@code == e}），
+     * 必须比记录自身的 {@code uid} —— 曾经因此出现"找到了主人、却匹配不上记录"，
+     * 表现就是无为转变后 GUI 不更新、收回又召一只。
+     */
+    private static boolean isSameEntry(ServerPlayer owner, Entity target, SpiritEntry e) {
+        SpiritEntry hit = findEntryFor(owner, target);
+        return hit != null && e.uid != null && e.uid.equals(hit.uid);
+    }
+
+    /**
      * 顺手清掉"以该实体 UUID 为 id"的 Boss 血条（收回/守护体死亡时调用）。
      *
      * <p><b>为什么要这么写</b>：原版监守者**没有** Boss 血条（1.20.1 里 {@code ServerBossEvent}
@@ -724,6 +735,9 @@ public final class CursedSpiritTechnique extends BaseTechnique {
 
         boolean wasSilent = mob.isSilent();
         clearEntityBossBar(mob);
+        if (mob instanceof net.minecraft.world.entity.monster.warden.Warden) {
+            com.mofengbaizhi.tinkersnewlife.network.curse.PacketDropWardenBars.broadcast();
+        }
         mob.setSilent(true);
         RECALLING.add(mob.getUUID());
         try {
@@ -746,11 +760,14 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         if (!(dead.level() instanceof ServerLevel sl)) return;
         dismissServantsOf(dead);
         clearEntityBossBar(dead);
+        if (dead instanceof net.minecraft.world.entity.monster.warden.Warden) {
+            com.mofengbaizhi.tinkersnewlife.network.curse.PacketDropWardenBars.broadcast();
+        }
         // ⭐ 主动收回（recallReleased）也会走到这里：保留记录，只清召唤物
         if (RECALLING.contains(dead.getUUID())) return;
         for (ServerPlayer p : sl.getServer().getPlayerList().getPlayers()) {
             List<SpiritEntry> list = entries(p);
-            SpiritEntry hit = findEntryFor(p, dead); boolean removed = hit != null && list.remove(hit);
+            SpiritEntry hit = findEntryFor(p, dead); boolean removed = hit != null && list.removeIf(x -> x.uid != null && x.uid.equals(hit.uid));
             if (removed) {
                 saveAll(p, list);
                 p.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.lost", dead.getName().getString()), true);
