@@ -39,8 +39,12 @@ public class TilosPurgatoryModifier extends Modifier implements TooltipModifierH
     public static final int KNIGHT_COUNT = 2;
     /** 仆从存在时间（tick）= 150s */
     public static final int KNIGHT_LIFETIME = 150 * 20;
-    /** 冷却（tick）= 200s */
-    public static final int COOLDOWN = 200 * 20;
+    /**
+     * 冷却（tick）。
+     *
+     * <p>⚠ <b>调试用：暂定 5 秒</b>（正式版请改回 {@code 200 * 20}）。
+     */
+    public static final int COOLDOWN = 5 * 20;
     /** 触发血量比例：半血 */
     public static final float TRIGGER_RATIO = 0.5F;
     /** 地狱浮现等级 */

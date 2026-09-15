@@ -1056,8 +1056,8 @@
   "block.tinkersnewlife.holy_spirit_block": "神圣灵液",
   "item.tinkersnewlife.holy_spirit_bucket": "神圣灵液桶",
   "modifier.tinkersnewlife.arcane_conduction": "魔导",
-  "modifier.tinkersnewlife.arcane_conduction.description": "物品内刻印的法术强度得到魔导等级倍的强化；手持或身穿时释放的法术伤害提高 0.4×等级（兼容诡厄巫法法术）。",
-  "modifier.tinkersnewlife.arcane_conduction.tip": "刻印法术等级 +等级；施法伤害 +",
+  "modifier.tinkersnewlife.arcane_conduction.description": "物品内刻印的法术强度得到强化：每级 +5 级法术等级；手持或身穿时释放的法术伤害每级 +40%（兼容诡厄巫法法术）。",
+  "modifier.tinkersnewlife.arcane_conduction.tip": "物品内刻印的法术等级 +%1$s；施法伤害 +%2$s%%",
   "modifier.tinkersnewlife.tilos_purgatory": "提洛斯炼狱",
   "modifier.tinkersnewlife.tilos_purgatory.description": "生命降到一半以下时，在身旁召唤两只远古骑士（存在 150 秒）并无吟唱释放一次 5 级地狱浮现（对仆从无伤害）。冷却 200 秒。",
   "modifier.tinkersnewlife.tilos_purgatory.tip": "半血：召唤 2 只远古骑士（150s）+ 无吟唱地狱浮现 Lv5，冷却 200s"

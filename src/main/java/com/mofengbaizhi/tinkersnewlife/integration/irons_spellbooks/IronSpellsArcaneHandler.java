@@ -85,16 +85,18 @@ public final class IronSpellsArcaneHandler {
                 best = Math.max(best, ArcaneConductionModifier.levelOf(stack));
             }
             if (best <= 0) return;
+            // 每级 +5 级法术等级（用户口径：注入法术强度 = 5 × 魔导等级）
+            final int boost = best * ArcaneConductionModifier.SPELL_LEVEL_PER_LEVEL;
 
             Method add = find(event.getClass(), "addLevels", int.class);
             if (add != null) {
-                add.invoke(event, best);
+                add.invoke(event, boost);
                 return;
             }
             Method get = find(event.getClass(), "getLevel");
             Method set = find(event.getClass(), "setLevel", int.class);
             if (get != null && set != null) {
-                set.invoke(event, ((Number) get.invoke(event)).intValue() + best);
+                set.invoke(event, ((Number) get.invoke(event)).intValue() + boost);
             }
         } catch (Throwable ignored) {
         }

@@ -27,7 +27,7 @@ import java.util.List;
  *
  * <ol>
  *   <li><b>强化物品内刻印的法术</b>：持有/穿着的「圣灵」物品里刻印了某个铁魔法法术时，
- *       施放该法术会按魔导等级<b>提升法术等级</b>（不是整体法强）。见
+ *       施放该法术会按魔导等级<b>提升法术等级</b>（每级 +5 级，不是整体法强）。见
  *       {@code integration.irons_spellbooks.IronSpellsArcaneHandler}；</li>
  *   <li><b>施法增伤</b>：手持/身穿带此特性的物品施放法术（<b>兼容诡厄巫法法术</b>）时，
  *       伤害 ×(1 + 0.4 × 等级)。</li>
@@ -46,6 +46,9 @@ public class ArcaneConductionModifier extends Modifier implements TooltipModifie
     /** 每级施法增伤倍率（0.4 / 级） */
     public static final double DAMAGE_BONUS_PER_LEVEL = 0.4;
 
+    /** 每级给"物品内刻印的法术"提升的等级数（用户口径：5 × 魔导等级） */
+    public static final int SPELL_LEVEL_PER_LEVEL = 5;
+
     /** 等级上限（TCon 的 Modifier 没有 getMaxLevel 覆写点，这里在查询处夹住） */
     public static int clampLevel(int level) {
         return Math.max(0, Math.min(MAX_LEVEL, level));
@@ -62,6 +65,7 @@ public class ArcaneConductionModifier extends Modifier implements TooltipModifie
                            @Nullable Player player, List<Component> tooltip,
                            TooltipKey tooltipKey, TooltipFlag tooltipFlag) {
         tooltip.add(Component.translatable("modifier.tinkersnewlife.arcane_conduction.tip",
+                String.valueOf(SPELL_LEVEL_PER_LEVEL * modifier.getLevel()),
                 String.format("%.1f", DAMAGE_BONUS_PER_LEVEL * modifier.getLevel())));
     }
 
