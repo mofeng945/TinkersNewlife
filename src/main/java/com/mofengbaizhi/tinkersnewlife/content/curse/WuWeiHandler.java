@@ -866,6 +866,10 @@ public final class WuWeiHandler {
             endTransform(player, false, false);
             return true;
         }
+        // 每 10 tick 兜底：清掉正在打变形玩家的同种生物的目标（同类相安）
+        if (player.tickCount % 10 == 0) {
+            clearSameFormAggro(player, d.formId);
+        }
         if (d.remaining > 0) {
             d.remaining--;
             if (d.remaining <= 0) {
@@ -978,6 +982,46 @@ public final class WuWeiHandler {
         if (entity == null) return false;
         var tag = entity.getPersistentData();
         return tag.contains(KEY_GUARD_OWNER) || !tag.getString(KEY_MOB_FORM).isEmpty();
+    }
+
+    /**
+     * 变形玩家与同种生物"<b>同类相安</b>"：玩家正在变形为某生物时，**同种生物**不再把玩家当目标（保持中立）。
+     *
+     * <p>实现要点：目标选择最终都会走 {@code Mob#setTarget}，Forge 在那里发
+     * {@link net.minecraftforge.event.entity.living.LivingChangeTargetEvent}，
+     * 从源头拦掉最干净 —— 也正好**压过**"七咒之戒 / 灾厄之册"那类
+     * "中立生物主动攻击被诅咒者"的效果（它们同样是靠设置目标实现的）。
+     *
+     * <p>例外：玩家先动过手（{@code getLastHurtByMob() == 玩家}）→ 允许反击，不做无赖。
+     */
+    @SubscribeEvent
+    public static void onSameFormNeutral(net.minecraftforge.event.entity.living.LivingChangeTargetEvent event) {
+        if (event.getEntity().level().isClientSide) return;
+        if (!(event.getNewTarget() instanceof ServerPlayer player)) return;
+        if (!isTransformed(player)) return;
+        String form = getFormOf(player);
+        if (form == null || form.isEmpty()) return;
+        net.minecraft.world.entity.LivingEntity mob = event.getEntity();
+        if (!net.minecraft.world.entity.EntityType.getKey(mob.getType()).toString().equals(form)) return;
+        if (mob.getLastHurtByMob() == player) return;      // 玩家先动手 → 允许还手
+        event.setCanceled(true);
+    }
+
+    /**
+     * 每 10 tick 兜底：把"正在打变形玩家的同种生物"的目标清掉。
+     * <p>{@link #onSameFormNeutral} 已经能从源头拦住新目标选择；这一步是防
+     * "有 mod 直接改 target 字段 / 绕过事件"以及"变形前就已经锁定玩家"的情况。
+     */
+    private static void clearSameFormAggro(ServerPlayer player, String form) {
+        if (form == null || form.isEmpty()) return;
+        for (Mob mob : player.serverLevel().getEntitiesOfClass(Mob.class,
+                player.getBoundingBox().inflate(32.0),
+                m -> m.isAlive()
+                        && net.minecraft.world.entity.EntityType.getKey(m.getType()).toString().equals(form)
+                        && m.getTarget() == player
+                        && m.getLastHurtByMob() != player)) {
+            mob.setTarget(null);
+        }
     }
 
     /**
