@@ -26,7 +26,7 @@ import java.util.List;
  * <p>佩戴者生命降到一半以下时，在身旁召唤<b>两只远古骑士</b>（铁魔法 {@code citadel_keeper}，
  * 用咒灵操术那套仆从通用 AI：{@code WuWeiHandler.attachGuardAi}），存在 <b>150 秒</b>；
  * 同时<b>无吟唱</b>释放一次<b>5 级地狱浮现</b>（{@code irons_spellbooks:raise_hell}），
- * 以玩家为中心、<b>不伤害这两只仆从</b>。冷却 <b>200 秒</b>。
+ * 以玩家为中心、<b>不伤害这两只仆从</b>。冷却 <b>150 秒</b>。
  *
  * <p>结算在 {@code content.modifier.events.TilosPurgatoryHandler}。
  */
@@ -39,12 +39,8 @@ public class TilosPurgatoryModifier extends Modifier implements TooltipModifierH
     public static final int KNIGHT_COUNT = 2;
     /** 仆从存在时间（tick）= 150s */
     public static final int KNIGHT_LIFETIME = 150 * 20;
-    /**
-     * 冷却（tick）。
-     *
-     * <p>⚠ <b>调试用：暂定 5 秒</b>（正式版请改回 {@code 200 * 20}）。
-     */
-    public static final int COOLDOWN = 5 * 20;
+    /** 冷却（tick）= 150s */
+    public static final int COOLDOWN = 150 * 20;
     /** 触发血量比例：半血 */
     public static final float TRIGGER_RATIO = 0.5F;
     /** 地狱浮现等级 */

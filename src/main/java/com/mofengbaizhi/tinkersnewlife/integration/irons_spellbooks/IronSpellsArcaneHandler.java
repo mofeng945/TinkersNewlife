@@ -88,19 +88,6 @@ public final class IronSpellsArcaneHandler {
             // 每级 +5 级法术等级（用户口径：注入法术强度 = 5 × 魔导等级）
             final int boost = best * ArcaneConductionModifier.SPELL_LEVEL_PER_LEVEL;
 
-            // 日志：直接看"加了几级 / 最终多少级"。ISS 的施法链路**不做上限钳制**
-            // （getLevelFor 把事件结果原样返回，中间没有 Math.min/getMaxLevel），
-            // 所以这里加多少就是多少；若日志显示加了但游戏内等级没变，问题一定在别处（客户端显示等）。
-            int base = 0;
-            try {
-                Method gb = find(event.getClass(), "getBaseLevel");
-                if (gb != null) base = ((Number) gb.invoke(event)).intValue();
-            } catch (Throwable ignored) {
-            }
-            TinkersNewlife.LOGGER.debug("[魔导] 刻印法术 {} 等级 {} -> {}（魔导 Lv{}，+{}）",
-                    IronSpellsSpellAccess.spellId(spell), base,
-                    ((Number) find(event.getClass(), "getLevel").invoke(event)).intValue() + boost,
-                    best, boost);
 
             Method add = find(event.getClass(), "addLevels", int.class);
             if (add != null) {

@@ -5,6 +5,7 @@ import com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiHandler;
 import com.mofengbaizhi.tinkersnewlife.content.modifier.TilosPurgatoryModifier;
 import com.mofengbaizhi.tinkersnewlife.integration.irons_spellbooks.IronSpellsSpellAccess;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -51,8 +52,8 @@ public final class TilosPurgatoryHandler {
     /** 仆从的法术免疫窗口：实体 UUID → 到期 gameTime */
     private static final Map<UUID, Long> SPELL_IMMUNE = new ConcurrentHashMap<>();
 
-    /** 召唤后的法术免疫窗口（tick）：20s，覆盖地狱浮现及其残留 */
-    private static final int IMMUNE_TICKS = 20 * 20;
+    /** 召唤后的免疫窗口（tick）：30s，覆盖地狱浮现的火焰与残留 */
+    private static final int IMMUNE_TICKS = 30 * 20;
 
     // ============================================================
     //  触发
@@ -66,6 +67,7 @@ public final class TilosPurgatoryHandler {
         long now = player.level().getGameTime();
         despawnExpired(player.serverLevel(), now);
         clearFriendlyTargets(player.serverLevel(), now);
+        extinguishKnights(player.serverLevel(), now);
         tryTrigger(player, now);
     }
 
@@ -106,19 +108,22 @@ public final class TilosPurgatoryHandler {
             // ⭐ 咒灵操术那套仆从通用 AI：跟随 + 只打玩家的敌人，不攻击玩家
             WuWeiHandler.attachGuardAi(mob, player);
 
+            // 地狱浮现会在地面留下火焰：给仆从防火（它们本来就是火系骑士，这里只是保险）+ 立即灭火
+            mob.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                    net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE, IMMUNE_TICKS, 0, false, false));
+            mob.setRemainingFireTicks(0);
             KNIGHTS.put(mob.getUUID(), now + TilosPurgatoryModifier.KNIGHT_LIFETIME);
             KNIGHT_IDS.put(mob.getUUID(), mob.getId());
             SPELL_IMMUNE.put(mob.getUUID(), now + IMMUNE_TICKS);
         }
-        TinkersNewlife.LOGGER.debug("[提洛斯炼狱] {} 触发：召唤 {} 只远古骑士", player.getName().getString(),
-                TilosPurgatoryModifier.KNIGHT_COUNT);
+
     }
 
     /** 无吟唱、以玩家为中心释放地狱浮现 */
     private static void castHell(ServerPlayer player) {
         Object spell = IronSpellsSpellAccess.spellById(TilosPurgatoryModifier.HELL_SPELL);
         if (spell == null) {
-            TinkersNewlife.LOGGER.debug("[提洛斯炼狱] 取不到法术 {}（铁魔法未就绪）", TilosPurgatoryModifier.HELL_SPELL);
+
             return;
         }
         int level = TilosPurgatoryModifier.HELL_LEVEL;
@@ -136,8 +141,7 @@ public final class TilosPurgatoryHandler {
                 IronSpellsSpellAccess.setMana(player, before);
             }
         }
-        TinkersNewlife.LOGGER.debug("[提洛斯炼狱] 地狱浮现 Lv{} 释放{}（法力 {} / 消耗 {}）",
-                level, ok ? "成功" : "失败", before, cost);
+
     }
 
     // ============================================================
@@ -216,7 +220,14 @@ public final class TilosPurgatoryHandler {
     //  对仆从无伤害
     // ============================================================
 
-    /** 处于免疫窗口内的远古骑士：免疫铁魔法法术造成的伤害（地狱浮现对仆从无伤害） */
+    /**
+     * 处于免疫窗口内的远古骑士：免疫"召唤者这次法术"造成的伤害（地狱浮现对仆从无伤害）。
+     *
+     * <p>⚠ 只按伤害类型前缀（{@code irons_spellbooks.}）判断**不够** —— 实测地狱浮现会伤到仆从：
+     * 它的火焰/范围伤害往往挂的是原版伤害类型（{@code in_fire}/{@code on_fire}/{@code magic} 等），
+     * 与 ISS 前缀无关。所以这里改成"<b>只要来源是主人</b>（攻击者/直接实体/法术实体所属者）
+     * 或 ISS 法术类型"就取消；再叠加召唤时的防火与每 0.5s 灭火双保险。
+     */
     @SubscribeEvent
     public static void onServantSpellDamage(LivingHurtEvent event) {
         if (!(event.getEntity() instanceof Mob mob)) return;
@@ -228,9 +239,51 @@ public final class TilosPurgatoryHandler {
             SPELL_IMMUNE.remove(id);
             return;
         }
-        String damageId = event.getSource().getMsgId();
-        if (damageId != null && damageId.toLowerCase().startsWith("irons_spellbooks.")) {
+        if (isFromOwner(mob, event.getSource())) {
             event.setCanceled(true);
+        }
+    }
+
+    /** 这次伤害是不是"召唤他的主人"造成的（含主人的法术实体与火焰） */
+    private static boolean isFromOwner(Mob knight, DamageSource src) {
+        if (src == null) return false;
+        String damageId = src.getMsgId();
+        if (damageId != null && damageId.toLowerCase().startsWith("irons_spellbooks.")) return true;
+        UUID ownerId = knight.getPersistentData().contains(WuWeiHandler.KEY_GUARD_OWNER)
+                ? knight.getPersistentData().getUUID(WuWeiHandler.KEY_GUARD_OWNER) : null;
+        if (ownerId == null) return false;
+        if (matchesOwner(src.getEntity(), ownerId)) return true;
+        if (matchesOwner(src.getDirectEntity(), ownerId)) return true;
+        // 法术实体（火墙/火球那类）：看它的 owner/caster
+        for (Entity e : new Entity[]{src.getDirectEntity(), src.getEntity()}) {
+            if (e == null) continue;
+            for (String m : new String[]{"getOwner", "getCaster"}) {
+                try {
+                    Object o = e.getClass().getMethod(m).invoke(e);
+                    if (matchesOwner(o instanceof Entity en ? en : null, ownerId)) return true;
+                } catch (Throwable ignored) {
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean matchesOwner(Entity entity, UUID ownerId) {
+        return entity != null && ownerId.equals(entity.getUUID());
+    }
+
+    /** 免疫窗口内持续灭火（地狱浮现留下的火焰会反复点燃仆从） */
+    private static void extinguishKnights(ServerLevel level, long now) {
+        if (KNIGHTS.isEmpty()) return;
+        for (UUID id : KNIGHTS.keySet()) {
+            Long until = SPELL_IMMUNE.get(id);
+            if (until == null || now > until) continue;
+            Integer entityId = KNIGHT_IDS.get(id);
+            if (entityId == null) continue;
+            Entity e = level.getEntity(entityId);
+            if (e instanceof Mob mob && mob.getUUID().equals(id) && mob.getRemainingFireTicks() > 0) {
+                mob.setRemainingFireTicks(0);
+            }
         }
     }
 }
