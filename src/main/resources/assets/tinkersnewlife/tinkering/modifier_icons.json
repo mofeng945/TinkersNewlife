@@ -79,5 +79,6 @@
   "tinkersnewlife:butcher": "tinkersnewlife:gui/modifiers/butcher",
   "tinkersnewlife:curse_speed": "tinkersnewlife:gui/modifiers/curse_speed",
   "tinkersnewlife:earplugs": "tinkersnewlife:gui/modifiers/earplugs",
-  "tinkersnewlife:arcane_conduction": "tinkersnewlife:gui/modifiers/arcane_conduction"
+  "tinkersnewlife:arcane_conduction": "tinkersnewlife:gui/modifiers/arcane_conduction",
+  "tinkersnewlife:tilos_purgatory": "tinkersnewlife:gui/modifiers/tilos_purgatory"
 }

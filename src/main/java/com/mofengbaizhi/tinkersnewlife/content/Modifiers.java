@@ -350,6 +350,11 @@ public class Modifiers {
             MODIFIERS.register("arcane_conduction",
                     com.mofengbaizhi.tinkersnewlife.content.modifier.ArcaneConductionModifier::new);
 
+    /** 铁魔法联动特性·提洛斯炼狱（材料「圣灵」自带，无等级）：半血召唤两只远古骑士 + 无吟唱地狱浮现Lv5 */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.TilosPurgatoryModifier> TILOS_PURGATORY =
+            MODIFIERS.register("tilos_purgatory",
+                    com.mofengbaizhi.tinkersnewlife.content.modifier.TilosPurgatoryModifier::new);
+
     /** 近战特性·神圣之力（神灵金近战头自带，联动铁魔法/启示录：+180法力、注入火墙术Lv5/天使之翼Lv5/治愈之环Lv10、火墙无视无敌帧） */
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.DivinePowerModifier> DIVINE_POWER =
         MODIFIERS.register("divine_power",

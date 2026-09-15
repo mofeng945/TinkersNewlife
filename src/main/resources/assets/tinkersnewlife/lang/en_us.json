@@ -465,5 +465,8 @@
   "item.tinkersnewlife.holy_spirit_bucket": "Holy Spirit Ichor Bucket",
   "modifier.tinkersnewlife.arcane_conduction": "Arcane Conduction",
   "modifier.tinkersnewlife.arcane_conduction.description": "Strengthens the spell inscribed in this item by the trait level, and increases the damage of spells you cast while holding or wearing it by 0.4 x level (works with Goety spells too).",
-  "modifier.tinkersnewlife.arcane_conduction.tip": "Inscribed spell level +1 per level; spell damage +"
+  "modifier.tinkersnewlife.arcane_conduction.tip": "Inscribed spell level +1 per level; spell damage +",
+  "modifier.tinkersnewlife.tilos_purgatory": "Tilos Purgatory",
+  "modifier.tinkersnewlife.tilos_purgatory.description": "When your health drops below half, two Ancient Knights are summoned beside you (lasting 150s) and a level 5 Raise Hell is cast without incantation (harmless to your servants). Cooldown 200s.",
+  "modifier.tinkersnewlife.tilos_purgatory.tip": "Below half health: summon 2 Ancient Knights (150s) + instant Raise Hell Lv5, cooldown 200s"
 }
