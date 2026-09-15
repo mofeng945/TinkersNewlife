@@ -236,6 +236,31 @@ public class IronSpellsReflector {
         }
     }
 
+    /**
+     * 确保物品带一个<b>法术容器</b>（空容器即可）。
+     *
+     * <p>为什么要这一步：铁魔法的<b>奥术铁砧</b>只接受"已经是法术容器"的物品
+     * （它内部调 {@code ISpellContainer.isSpellContainer(stack)} 判定，没有额外的物品类型门槛），
+     * 而匠魂工具/盔甲默认不是容器 → 玩家无法用铁砧往里注入法术。
+     * 这里给它建一个空容器，铁砧随后就能正常刻印/升级；带魔导特性的物品在背包里会自动获得。
+     *
+     * @param slots 容器容量（武器/盔甲给 1 格即可）
+     * @return 现在是否已经是容器
+     */
+    public static boolean ensureSpellContainer(ItemStack stack, int slots) {
+        if (!ironSpellsPresent || stack == null || stack.isEmpty()) return false;
+        initDivine();
+        try {
+            if ((Boolean) ISPELL_CONTAINER_IS_CONTAINER.invoke(null, stack)) return true;
+            Object container = ISPELL_CONTAINER_CREATE.invoke(null, Math.max(1, slots), true, false);
+            ISPELL_CONTAINER_SAVE.invoke(container, stack);
+            return true;
+        } catch (Throwable t) {
+            LOGGER.warn("[TinkersNewlife] 铁魔法建立空法术容器失败: {}", t.toString());
+            return false;
+        }
+    }
+
     /** 获取铁魔法 MAX_MANA 属性（Attribute）；不存在返回 null */
     public static net.minecraft.world.entity.ai.attributes.Attribute maxManaAttribute() {
         if (!ironSpellsPresent) return null;

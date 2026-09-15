@@ -14,6 +14,7 @@ import slimeknights.tconstruct.library.modifiers.ModifierEntry;
 import slimeknights.tconstruct.library.modifiers.ModifierHooks;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
 import slimeknights.tconstruct.library.modifiers.hook.display.TooltipModifierHook;
+import slimeknights.tconstruct.library.modifiers.hook.interaction.InventoryTickModifierHook;
 import slimeknights.tconstruct.library.module.ModuleHookMap;
 import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
 
@@ -35,7 +36,7 @@ import java.util.List;
  * <p>铁魔法未安装时本特性不存在（材料本身带 {@code forge:mod_loaded} 条件），
  * 因此这里不需要额外的软依赖处理。
  */
-public class ArcaneConductionModifier extends Modifier implements TooltipModifierHook {
+public class ArcaneConductionModifier extends Modifier implements TooltipModifierHook, InventoryTickModifierHook {
 
     public static final ModifierId ID = new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "arcane_conduction"));
 
@@ -53,7 +54,7 @@ public class ArcaneConductionModifier extends Modifier implements TooltipModifie
     @Override
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         super.registerHooks(hookBuilder);
-        hookBuilder.addHook(this, ModifierHooks.TOOLTIP);
+        hookBuilder.addHook(this, ModifierHooks.TOOLTIP, ModifierHooks.INVENTORY_TICK);
     }
 
     @Override
@@ -64,6 +65,23 @@ public class ArcaneConductionModifier extends Modifier implements TooltipModifie
                 String.format("%.1f", DAMAGE_BONUS_PER_LEVEL * modifier.getLevel())));
     }
 
+
+    /**
+     * 背包 tick：给带魔导的匠魂工具/盔甲<b>补一个空法术容器</b>，这样铁魔法的
+     * <b>奥术铁砧</b>才会接受它（铁砧只认"已是法术容器"的物品），玩家就能把卷轴里的法术刻进去。
+     * 已是容器则直接跳过（一次布尔判断），每 20 tick 查一次。
+     */
+    @Override
+    public void onInventoryTick(IToolStackView tool, ModifierEntry modifier, net.minecraft.world.level.Level world,
+                                net.minecraft.world.entity.LivingEntity holder, int itemSlot,
+                                boolean isSelected, boolean isCorrectSlot, ItemStack stack) {
+        if (world.isClientSide) return;
+        if (holder.tickCount % 20 != 0) return;
+        com.mofengbaizhi.tinkersnewlife.util.IronSpellsReflector.ensureSpellContainer(stack, SPELL_SLOTS);
+    }
+
+    /** 武器/盔甲给 1 格刻印位 */
+    private static final int SPELL_SLOTS = 1;
     // ============================================================
     //  查询工具（结算器用）
     // ============================================================
