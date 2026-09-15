@@ -1156,6 +1156,19 @@ public final class WuWeiHandler {
     }
 
     /** 玉犬式守护 AI：跟随主人、追击主人目标/伤害主人的实体、近战攻击（等价式神玉犬行为） */
+    /**
+     * 是不是"<b>同一主人的其它仆从</b>"（守护形态 / 咒灵释放体 / 本模组召唤物都带 {@link #KEY_GUARD_OWNER}）。
+     *
+     * <p>⚠ 这是"仆从互相打起来"的总根子：`driveGuardDog` 的"附近敌对生物"筛选只排除了
+     * `isFriendlyToOwner` / `isSpiritTeam`，而 ISS 的远古骑士之类召唤物是标准 `Enemy`，
+     * 于是<b>同主人的两只仆从会把对方当敌人</b>（干掉真正的敌人后立刻互殴）。
+     */
+    public static boolean isSameOwnerMinion(LivingEntity entity, ServerPlayer owner) {
+        if (entity == null || owner == null) return false;
+        var tag = entity.getPersistentData();
+        if (!tag.contains(KEY_GUARD_OWNER)) return false;
+        return owner.getUUID().equals(tag.getUUID(KEY_GUARD_OWNER));
+    }
     private static void driveGuardDog(MinecraftServer server, Mob self, ServerPlayer owner, ReverseMobData rd) {
         // ⭐ 监守者（Warden）必须特殊对待：它是"大脑 AI"驱动的，
         //    attachGuardAi 里清空 goal/targetSelector 拦不住它 —— 挖地逃跑是 brain 的 DIGGING 活动，
@@ -1184,7 +1197,8 @@ public final class WuWeiHandler {
         if (lastHurt != null && lastHurt.isAlive() && lastHurt != self
                 && !isFriendlyToOwner(lastHurt, owner)
                 && !com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
-                .isSpiritTeam(lastHurt, owner)) {
+                .isSpiritTeam(lastHurt, owner)
+                              && !isSameOwnerMinion(lastHurt, owner)) {
             target = lastHurt;
         }
         if (target == null) {
@@ -1192,7 +1206,8 @@ public final class WuWeiHandler {
             if (lastBy != null && lastBy.isAlive() && lastBy != self
                     && !isFriendlyToOwner(lastBy, owner)
                     && !com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
-                    .isSpiritTeam(lastBy, owner)) {
+                    .isSpiritTeam(lastBy, owner)
+                              && !isSameOwnerMinion(lastBy, owner)) {
                 target = lastBy;
             }
         }
@@ -1206,7 +1221,8 @@ public final class WuWeiHandler {
                             && e instanceof net.minecraft.world.entity.monster.Enemy
                             && !isFriendlyToOwner(e, owner)
                             && !com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
-                            .isSpiritTeam(e, owner))) {
+                            .isSpiritTeam(e, owner)
+                              && !isSameOwnerMinion(e, owner))) {
                 double d = e.distanceToSqr(owner);
                 if (d < best) {
                     best = d;

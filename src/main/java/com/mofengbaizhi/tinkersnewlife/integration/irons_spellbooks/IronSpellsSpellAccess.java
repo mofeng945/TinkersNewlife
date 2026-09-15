@@ -218,6 +218,76 @@ public final class IronSpellsSpellAccess {
         }
     }
 
+    /** 玩家当前法力（读不到返回 -1） */
+    public static int manaOf(LivingEntity entity) {
+        Object md = magicDataOf(entity);
+        if (md == null) return -1;
+        try {
+            Method m = find0(md.getClass(), "getMana");
+            return m == null ? -1 : ((Number) m.invoke(md)).intValue();
+        } catch (Throwable t) {
+            return -1;
+        }
+    }
+
+    /** 写玩家法力（失败静默） */
+    public static void setMana(LivingEntity entity, int mana) {
+        Object md = magicDataOf(entity);
+        if (md == null || mana < 0) return;
+        try {
+            Method m = find1(md.getClass(), "setMana", int.class);
+            if (m != null) m.invoke(md, mana);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** 该法术在指定等级下的法力消耗（读不到返回 -1） */
+    public static int manaCostOf(Object spell, int level) {
+        init();
+        if (!ready || spell == null) return -1;
+        try {
+            Method m = find1(spell.getClass(), "getManaCost", int.class);
+            if (m == null) m = find1(cSpell, "getManaCost", int.class);
+            return m == null ? -1 : ((Number) m.invoke(spell, level)).intValue();
+        } catch (Throwable t) {
+            return -1;
+        }
+    }
+
+    private static Object magicDataOf(LivingEntity entity) {
+        init();
+        if (!ready || entity == null || mMagicDataGet == null) return null;
+        try {
+            return mMagicDataGet.invoke(null, entity);
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    private static Method find0(Class<?> type, String name) {
+        for (Class<?> c = type; c != null && c != Object.class; c = c.getSuperclass()) {
+            try {
+                Method m = c.getDeclaredMethod(name);
+                m.setAccessible(true);
+                return m;
+            } catch (NoSuchMethodException ignored) {
+            }
+        }
+        return null;
+    }
+
+    private static Method find1(Class<?> type, String name, Class<?> param) {
+        for (Class<?> c = type; c != null && c != Object.class; c = c.getSuperclass()) {
+            try {
+                Method m = c.getDeclaredMethod(name, param);
+                m.setAccessible(true);
+                return m;
+            } catch (NoSuchMethodException ignored) {
+            }
+        }
+        return null;
+    }
+
     /** 法术类型类（事件监听要用 Class 做原始 addListener） */
     public static Class<?> spellClass() {
         init();

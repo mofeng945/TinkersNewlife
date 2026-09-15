@@ -117,10 +117,27 @@ public final class TilosPurgatoryHandler {
     /** 无吟唱、以玩家为中心释放地狱浮现 */
     private static void castHell(ServerPlayer player) {
         Object spell = IronSpellsSpellAccess.spellById(TilosPurgatoryModifier.HELL_SPELL);
-        if (spell == null) return;
-        boolean ok = IronSpellsSpellAccess.cast(player, spell, TilosPurgatoryModifier.HELL_LEVEL);
-        TinkersNewlife.LOGGER.debug("[提洛斯炼狱] 地狱浮现 Lv{} 释放{}",
-                TilosPurgatoryModifier.HELL_LEVEL, ok ? "成功" : "失败（法术不可用）");
+        if (spell == null) {
+            TinkersNewlife.LOGGER.debug("[提洛斯炼狱] 取不到法术 {}（铁魔法未就绪）", TilosPurgatoryModifier.HELL_SPELL);
+            return;
+        }
+        int level = TilosPurgatoryModifier.HELL_LEVEL;
+        int before = IronSpellsSpellAccess.manaOf(player);
+        int cost = IronSpellsSpellAccess.manaCostOf(spell, level);
+        // 特性赠送：法力不足就临时垫上，施法后原样还原（这一发是"白送"的，不该因缺蓝而哑火）
+        if (cost > 0 && before >= 0 && before < cost) {
+            IronSpellsSpellAccess.setMana(player, cost);
+        }
+        boolean ok;
+        try {
+            ok = IronSpellsSpellAccess.cast(player, spell, level);
+        } finally {
+            if (cost > 0 && before >= 0) {
+                IronSpellsSpellAccess.setMana(player, before);
+            }
+        }
+        TinkersNewlife.LOGGER.debug("[提洛斯炼狱] 地狱浮现 Lv{} 释放{}（法力 {} / 消耗 {}）",
+                level, ok ? "成功" : "失败", before, cost);
     }
 
     // ============================================================
