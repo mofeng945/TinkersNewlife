@@ -2399,7 +2399,7 @@ public class MomoMerchant extends PathfinderMob implements MomoConst {
     private void pierceDamageDirect(LivingEntity target, float dmg) {
         if (target.level().isClientSide || target.isRemoved()) return;
         // 鍏ㄩ绌块€忥細hurt 浜嬩欢 + 宸鐩磋ˉ锛堟€婚噺绮剧‘鍏ㄩ銆佷笉鍙楀厤鐤獥/鍗曟涓婇檺褰卞搷锛?
-        com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.pierceFullDamage(target, dmg);
+        com.mofengbaizhi.tinkersnewlife.util.TruePierce.apply(this, target, dmg);   // 万能穿透（与天逆鉾/穿透EX 同一套）
     }
 
     /** 鍙楀嚮鏍兼尅鎴愬姛鍚庣殑鍙嶅嚮锛堥泧浣ｇ増锛?0/80/100% 脳 20锛屽繀涓級 */

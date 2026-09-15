@@ -96,26 +96,9 @@ public final class TianNiHuoPierceHandler {
             // 天逆鉾穿透黑曜石柱保护：保护柱直接碎掉（柱死 → 使徒 1 分钟内召不出新柱）
             pillarShattered = GoetyBridge.shatterProtectingPillars(target);
         }
-        if (GoetyBridge.isGoetyApostle(target)) {
-            // 诡厄受限 Boss：全额穿透（hurt 事件 + 差额直补，总量精确全额、不受免疫窗/单次上限影响）
-            GoetyBridge.pierceFullDamage(target, dmg);
-        } else {
-            // 其他（如凋灵）：多段 hurt 直伤
-            net.minecraft.world.damagesource.DamageSource src = GoetyBridge.truePierceSource(target.level());
-            if (src == null) src = target.damageSources().genericKill();
-            float remaining = dmg;
-            int guard = 0;
-            while (remaining > 0 && target.isAlive() && !target.isRemoved() && guard++ < 64) {
-                float part = Math.min(remaining, PIERCE_CHUNK);
-                target.invulnerableTime = 0;
-                // 接入穿透EX那套"事件层顶开"：登记本段想造成的伤害，
-                // 这样别的 mod 在 LivingHurt/Damage 里的限伤或减伤也不会吃掉这几段真伤。
-                com.mofengbaizhi.tinkersnewlife.content.modifier.events.ExPierceHandler
-                        .markPierce(target, part);
-                target.hurt(src, part);
-                remaining -= part;
-            }
-        }
+        // ⭐ 统一走"万能穿透"引擎（与穿透EX、墨默挥击同一套）：
+        //    真伤源 → 分块连打 → 无主源回退 → 差额直补 → 事件层顶开（见 util/TruePierce）。
+        com.mofengbaizhi.tinkersnewlife.util.TruePierce.apply(player, target, dmg);
         // 柱已碎 → 保持保护计时清零（使徒要等召柱冷却，Boss 对全员敞开）；
         // 未碎柱（没被保护 / 残余保护但无柱可碎）→ 还原保护计时，避免同 tick 误伤窗口
         if (!pillarShattered && target.isAlive() && !target.isRemoved()) {
