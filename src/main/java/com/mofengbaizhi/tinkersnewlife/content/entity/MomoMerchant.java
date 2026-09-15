@@ -522,6 +522,7 @@ public class MomoMerchant extends PathfinderMob implements MomoConst {
         cursedTools.add(ModItems.TIAN_NI_HUO.get());
         cursedTools.add(ModItems.YOU_YUN.get());
         cursedTools.add(ModItems.GOURD_JAIL.get());
+        cursedTools.add(ModItems.LIFE_LAMP_RING.get());   // 命灯指轮（戒指槽饰品：打不死人）
         Collections.shuffle(cursedTools, new java.util.Random(random.nextInt()));
         offers.add(new Offer(new ItemStack(cursedTools.get(0)), 10 + random.nextInt(11)));   // 10-20
         offers.add(new Offer(new ItemStack(cursedTools.get(1)), 10 + random.nextInt(11)));
