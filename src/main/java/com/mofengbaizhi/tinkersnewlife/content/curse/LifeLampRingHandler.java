@@ -2,10 +2,12 @@ package com.mofengbaizhi.tinkersnewlife.content.curse;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.item.LifeLampRingItem;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
@@ -63,6 +65,93 @@ public final class LifeLampRingHandler {
     public static float keepHealth(LivingEntity target) {
         float max = Math.max(1.0F, target.getMaxHealth());
         return Math.min(KEEP_HEALTH, max * KEEP_RATIO_FOR_TINY);
+    }
+
+    // ============================================================
+    //  命灯指轮 × 七咒之戒：无效化"第一诅咒：任何来源受到的伤害加倍"
+    // ============================================================
+
+    /** 神秘遗物的七咒之戒（curios 戒指槽饰品）。只按物品 id 匹配，没装该 mod 时永不命中。 */
+    private static final net.minecraft.resources.ResourceLocation EL_CURSED_RING =
+            new net.minecraft.resources.ResourceLocation("enigmaticlegacy", "cursed_ring");
+
+    /** 一次受击的原始伤害快照（带 tick，避免事件被取消后残留到下一次） */
+    private record PreCurse(float amount, long tick) {
+    }
+
+    private static final java.util.Map<java.util.UUID, PreCurse> PRE_CURSE =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * 第 ① 步（{@link EventPriority#HIGHEST} = <b>最先</b>跑）：记下"七咒之戒放大之前"的伤害。
+     * <p>只在<b>同时</b>戴着命灯指轮与七咒之戒时才记，平时零开销。
+     */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onSnapshotHurt(LivingHurtEvent event) {
+        snapshot(event.getEntity(), event.getAmount());
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onSnapshotDamage(LivingDamageEvent event) {
+        snapshot(event.getEntity(), event.getAmount());
+    }
+
+    /**
+     * 第 ② 步（{@link EventPriority#LOWEST} = <b>最后</b>跑）：把伤害还原成快照值 ——
+     * 也就是把七咒之戒"受伤加倍"这条诅咒<b>抵消掉</b>。
+     *
+     * <p><b>为什么"还原"而不是"除以 2"</b>：倍率是神秘遗物的配置项（默认 200%，整合包可改），
+     * 写死 2 会在改过配置的包里算错；记下放大前的值再还原，则与配置无关、恒等于"没有这条诅咒"。
+     *
+     * <p>Hurt 与 Damage 两关都做（哪一关被放大都兜得住）；对同一击是<b>幂等</b>的。
+     */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onUndoCurseHurt(LivingHurtEvent event) {
+        restore(event.getEntity(), event::setAmount);
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onUndoCurseDamage(LivingDamageEvent event) {
+        restore(event.getEntity(), event::setAmount);
+    }
+
+    private static void snapshot(LivingEntity target, float amount) {
+        if (target == null || target.level().isClientSide) return;
+        if (!(target instanceof ServerPlayer player)) return;
+        if (!LifeLampRingItem.isWorn(player)) return;
+        if (!carriesCursedRing(player)) return;
+        PRE_CURSE.put(player.getUUID(), new PreCurse(amount, player.level().getGameTime()));
+    }
+
+    private static void restore(LivingEntity target, java.util.function.Consumer<Float> setter) {
+        if (!(target instanceof ServerPlayer player)) return;
+        PreCurse pre = PRE_CURSE.remove(player.getUUID());
+        if (pre == null) return;
+        if (pre.tick() != player.level().getGameTime()) return;   // 隔了 tick 的残留 → 丢弃
+        if (pre.amount() >= 0.0F) setter.accept(pre.amount());
+    }
+
+    /** 玩家身上（饰品槽或背包）是否带着七咒之戒；没装神秘遗物时永远 false */
+    private static boolean carriesCursedRing(ServerPlayer player) {
+        var curios = top.theillusivec4.curios.api.CuriosApi.getCuriosInventory(player).resolve();
+        if (curios.isPresent()) {
+            for (var handler : curios.get().getCurios().values()) {
+                var stacks = handler.getStacks();
+                for (int i = 0; i < stacks.getSlots(); i++) {
+                    if (isCursedRing(stacks.getStackInSlot(i))) return true;
+                }
+            }
+        }
+        var inv = player.getInventory();
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            if (isCursedRing(inv.getItem(i))) return true;
+        }
+        return false;
+    }
+
+    private static boolean isCursedRing(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return false;
+        return stack.getItem().builtInRegistryHolder().key().location().equals(EL_CURSED_RING);
     }
 
     /** 第 ① 关：主伤害（此时 amount 还没过护甲/附魔/吸收） */
