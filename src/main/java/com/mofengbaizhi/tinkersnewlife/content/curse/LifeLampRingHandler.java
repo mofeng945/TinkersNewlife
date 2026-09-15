@@ -52,6 +52,37 @@ public final class LifeLampRingHandler {
     /** 直杀兜底的追溯窗口（tick）：最后攻击者必须是这么久以内打过它的命灯佩戴者 */
     private static final long DIRECT_KILL_WINDOW = 100L;
 
+    /**
+     * 「故意处决」豁免：实体 UUID → 豁免截止 tick。
+     *
+     * <p><b>为什么必须有</b>：有些机制本来就靠"杀死目标"生效 —— 最典型的是
+     * <b>咒灵操术收服</b>（{@code CursedSpiritTechnique#capture}：先 playerAttack 1e9、再 magic 1e9、
+     * 最后 {@code kill()} 兜底）与 <b>领域处决</b>（{@code ExecutionDomain#execute}）。
+     * 命灯指轮要是把这些也拦下，收服就完不成（目标留在原地、记录却已经进了灵册）。
+     *
+     * <p>窗口 40 tick（2 秒）：足够覆盖"伤害 + 兜底 kill + 下一 tick 的静默致死救回"整条链；
+     * 过期自动清理，不会永久豁免某个实体。
+     */
+    private static final java.util.Map<java.util.UUID, Long> DELIBERATE = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final long DELIBERATE_TICKS = 40L;
+
+    /** 模组的"主动击杀"调用它登记豁免（见 {@link #DELIBERATE}） */
+    public static void markDeliberateKill(LivingEntity target) {
+        if (target == null) return;
+        DELIBERATE.put(target.getUUID(), target.level().getGameTime() + DELIBERATE_TICKS);
+    }
+
+    /** 该目标当前是否处于"故意处决"豁免期 */
+    private static boolean isDeliberate(LivingEntity target) {
+        Long until = DELIBERATE.get(target.getUUID());
+        if (until == null) return false;
+        if (target.level().getGameTime() > until) {
+            DELIBERATE.remove(target.getUUID());
+            return false;
+        }
+        return true;
+    }
+
     /** 第 ② 道：主伤害（过护甲前） */
     @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
     public static void onLivingHurt(LivingHurtEvent event) {
@@ -90,6 +121,7 @@ public final class LifeLampRingHandler {
         LivingEntity entity = event.getEntity();
         if (entity == null || entity.level().isClientSide) return;
         if (entity.getHealth() > 0.0F) return;          // 99.9% 的情况在这里就返回
+        if (isDeliberate(entity)) return;               // 故意处决（收服/领域处决）不救
         LivingEntity last = entity.getLastHurtByMob();
         if (last == null || !LifeLampRingItem.isWorn(last)) return;
         long dt = entity.level().getGameTime() - entity.getLastHurtByMobTimestamp();
@@ -101,9 +133,10 @@ public final class LifeLampRingHandler {
     //  工具
     // ============================================================
 
-    /** 取"该为这次伤害负责的命灯佩戴者"；不适用（无凶手/自己打自己/没戴戒指）返回 null */
+    /** 取"该为这次伤害负责的命灯佩戴者"；不适用（无凶手/自己打自己/没戴戒指/故意处决）返回 null */
     private static LivingEntity wearerFor(LivingEntity target, DamageSource source) {
         if (target == null || target.level().isClientSide) return null;
+        if (isDeliberate(target)) return null;
         LivingEntity wearer = attackerOf(source);
         if (wearer == null || wearer == target) return null;
         return LifeLampRingItem.isWorn(wearer) ? wearer : null;
