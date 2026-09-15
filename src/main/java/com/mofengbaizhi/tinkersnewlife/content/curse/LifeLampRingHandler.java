@@ -46,8 +46,32 @@ public final class LifeLampRingHandler {
     private LifeLampRingHandler() {
     }
 
-    /** 伤害被截住时至少留下的生命值 */
+    /** 伤害被截住时至少留下的生命值（大血量生物按这个留） */
     private static final float KEEP_HEALTH = 1.0F;
+
+    /** 咒灵操术的斩杀线：血量 ≤ 上限的 2.5% 才能收服（见 CursedSpiritTechnique#capture） */
+    private static final float CAPTURE_LINE = 0.025F;
+
+    /**
+     * 小血量生物（1 点就已经超过斩杀线）改按这个比例留血。
+     *
+     * <p>为什么需要：僵尸/骷髅上限只有 20，斩杀线 = 0.5 点 —— 固定留 1 点的话
+     * **永远进不了收服线**（玩家实测反馈）。取 2%（&lt; 2.5%）既能被收服，又保证还活着。
+     */
+    private static final float KEEP_RATIO_FOR_TINY = 0.02F;
+
+    /**
+     * 这一击应该给目标留多少血：
+     * <pre>
+     *   上限 ≥ 40 → 留 1 点（1 ≤ 上限×2.5%，本来就在收服线内）
+     *   上限 &lt; 40 → 留 2% 上限（此时 1 点已经超出 2.5% 的收服线，必须按比例留才收得服）
+     * </pre>
+     * 两种情况下结果都 &gt; 0 且 ≤ 斩杀线，所以"打不死"与"能收服"同时成立。
+     */
+    public static float keepHealth(LivingEntity target) {
+        float max = Math.max(1.0F, target.getMaxHealth());
+        return Math.min(KEEP_HEALTH, max * KEEP_RATIO_FOR_TINY);
+    }
 
     /** 直杀兜底的追溯窗口（tick）：最后攻击者必须是这么久以内打过它的命灯佩戴者 */
     private static final long DIRECT_KILL_WINDOW = 100L;
@@ -142,21 +166,26 @@ public final class LifeLampRingHandler {
         return LifeLampRingItem.isWorn(wearer) ? wearer : null;
     }
 
-    /** 把致死伤害截到"只打到剩 1 血"；已只剩 1 血则本次不扣血 */
+    /**
+     * 把致死伤害截到"只留 {@link #keepHealth} 那么多血"；已经到那个血量则本次不扣血。
+     * <p>大血量生物留 1 点；上限 &lt; 40 的小生物留 2% 上限 —— 否则 1 点会高出咒灵操术的
+     * 2.5% 斩杀线，导致"打不死但永远收不服"。
+     */
     private static void clamp(LivingEntity target, float amount, java.util.function.Consumer<Float> setter) {
+        float keep = keepHealth(target);
         float hp = target.getHealth();
-        if (hp <= KEEP_HEALTH) {
+        if (hp <= keep) {
             setter.accept(0.0F);
             return;
         }
         if (amount >= hp) {
-            setter.accept(hp - KEEP_HEALTH);
+            setter.accept(hp - keep);
         }
     }
 
-    /** 把"已经死了/正在死"的目标拉回 1 血，并清掉致死状态 */
+    /** 把"已经死了/正在死"的目标拉回到 {@link #keepHealth} 的血量，并清掉致死状态 */
     private static void revive(LivingEntity target) {
-        target.setHealth(KEEP_HEALTH);
+        target.setHealth(keepHealth(target));
         target.deathTime = 0;
         target.clearFire();
         target.hurtTime = 0;

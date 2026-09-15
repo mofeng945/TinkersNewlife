@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "The $(bold)Life Lamp Ring$() is a cursed tool worn in a Curios $(bold)ring slot$().$(br2)While its wick burns, no one beneath it may die - $(bold)no damage you deal can ever kill your target$():$(li)A lethal blow is cut short, leaving the target at $(bold)1 health$()$(li)Even execution-style instant kills are held back by the flame$(li)Damage from your flying swords, magic bolts and commanded servants is bound the same way$(br2)$(bold)Mercy is the greatest evil; even good intent may bear karmic fruit.$()"
+      "text": "The $(bold)Life Lamp Ring$() is a cursed tool worn in a Curios $(bold)ring slot$().$(br2)While its wick burns, no one beneath it may die - $(bold)no damage you deal can ever kill your target$():$(li)A lethal blow is cut short, leaving the target at $(bold)1 health$()$(li)If the target's max health is below 40 (1 health would already be above the 2.5% execute line of $(l:cursed_spirit)Cursed Spirit Manipulation$()), they are left at $(bold)2% of their max health$() instead - still unkillable, but inside capture range$(li)Execution-style instant kills, flying swords and commanded servants are bound the same way$(br2)$(bold)Mercy is the greatest evil; even good intent may bear karmic fruit.$()"
     },
     {
       "type": "patchouli:spotlight",

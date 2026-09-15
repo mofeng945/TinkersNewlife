@@ -1004,7 +1004,7 @@
   "item.tinkersnewlife.curse_bottle.fluid": "咒力残秽：%s / %s mb",
   "item.tinkersnewlife.curse_bottle.hint": "佩戴于饰品槽：咒力优先存入瓶中，死亡不丢；可接取熔炉中的咒力残秽（1mb = 10 咒力）",
   "item.tinkersnewlife.life_lamp_ring": "命灯指轮",
-  "item.tinkersnewlife.life_lamp_ring.effect": "佩戴于戒指槽：你打出的伤害永远不会杀死目标——致死一击会被截断，目标至少保留 1 点生命",
+  "item.tinkersnewlife.life_lamp_ring.effect": "佩戴于戒指槽：你打出的伤害永远不会杀死目标——致死一击会被截断，目标至少保留 1 点生命（血量上限不足 40 的生物按 2% 保留，好让你用咒灵操术收服）",
   "item.tinkersnewlife.life_lamp_ring.flavor": "慈悲是最大的恶，善念或许也会铸就业果。",
   "fluid_type.tinkersnewlife.curse_residue": "咒力残秽",
   "block.tinkersnewlife.curse_residue_block": "咒力残秽",
