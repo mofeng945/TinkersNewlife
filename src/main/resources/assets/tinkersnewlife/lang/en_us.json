@@ -181,7 +181,7 @@
   "item.tinkersnewlife.durandal_sword": "Durandal Sword",
   "item.tinkersnewlife.durandal_sword.description": "Legendary blade: unbreakable, extremely high attack, freely modifiable as a Tinkers' tool.",
   "item.tinkersnewlife.silent_glove": "Silent Glove",
-  "item.tinkersnewlife.silent_glove.description": "Worn on the hands: automatically draws a weapon from the singularity storage when empty. Hushes creature sounds while worn; adding Resonance restores everything.",
+  "item.tinkersnewlife.silent_glove.description": "Worn on the hands: automatically draws a weapon from the singularity storage when empty. While worn, only footsteps and your own sounds are audible (creature, ambient and explosion sounds are hushed); adding Resonance restores everything.",
   "item.tinkersnewlife.war_scythe": "War Scythe",
   "item.tinkersnewlife.war_scythe.description": "Each hit builds Fever, and attack speed scales with it. Spend Fever to blink; at full Fever unleash a finisher slash.",
   "item.tinkersnewlife.flying_sword": "Flying Sword",

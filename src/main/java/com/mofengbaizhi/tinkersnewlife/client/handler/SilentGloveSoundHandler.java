@@ -98,12 +98,10 @@ public class SilentGloveSoundHandler {
         // ⭐ 为什么不再默认走白名单：白名单是"id 精确匹配"，装在整合包里必然漏 ——
         //    比如脚步声常由"脚步声/环境音"类 mod 用别的 id（甚至别的音源）播放，
         //    不在名单里就被一起静音了，玩家实测就是"连脚步声都没有、整个游戏没声音"。
-        //    换成按 SoundSource 判定：敌对/中立生物的声音静音，环境、方块、音乐、
-        //    其它玩家与自己的声音（PLAYERS）全部照常 —— 与 mod 无关，不会漏。
+        //    改成按**语义**判定：只保留"脚步声 + 玩家自身音效"，其余（生物叫声、环境音、
+        //    爆炸与方块音、天气、音乐、其它玩家的声音）一律静音 —— 与 mod 无关，不会漏。
         if (!com.mofengbaizhi.tinkersnewlife.config.ModConfig.silentGloveMuteAll()) {
-            net.minecraft.sounds.SoundSource src = event.getSound().getSource();
-            if (src == net.minecraft.sounds.SoundSource.HOSTILE
-                    || src == net.minecraft.sounds.SoundSource.NEUTRAL) {
+            if (!keepForSelf(event.getSound(), player)) {
                 event.setSound(null);
             }
             return;
@@ -143,6 +141,66 @@ public class SilentGloveSoundHandler {
         event.setSound(null);
     }
 
+    /**
+     * 默认模式（{@code silent_glove_mute_all = false}）：<b>只保留"脚步声 + 玩家自身音效"</b>。
+     * 其余全部静音：生物叫声、环境音、爆炸与方块音、天气、音乐、以及**其它玩家**的声音。
+     *
+     * <p>判定刻意**不依赖任何具体 id**（整合包里 id 会被别的 mod 换掉、白名单必然漏），只按语义：
+     * <ol>
+     *   <li>音效<b>绑在自己身上</b>（{@link net.minecraft.client.resources.sounds.EntityBoundSoundInstance}）
+     *       → 保留。原版与多数 mod 的脚步声、挥砍、受伤、进食都走这条（含整合包里换了音源的脚步）；</li>
+     *   <li>{@link net.minecraft.sounds.SoundSource#PLAYERS} 频道（未绑定实体）→ 保留；</li>
+     *   <li>兼容例外：TACZ 枪械全套、铁魔法里"玩家施法"（非生物）的音效。</li>
+     * </ol>
+     * 绑在别的实体（别的玩家 / 生物）身上的音效一律静音 —— 所以别人的脚步也听不见。
+     */
+    /** 缓存的 EntityBoundSoundInstance#entity 字段（运行时是 SRG 名 + private，只能按"类型是 Entity"来找） */
+    private static java.lang.reflect.Field boundEntityField;
+
+    /** 取"这条音效绑在哪个实体上"；不是绑定音效/取不到时返回 null */
+    private static net.minecraft.world.entity.Entity boundEntityOf(
+            net.minecraft.client.resources.sounds.SoundInstance sound) {
+        if (!(sound instanceof net.minecraft.client.resources.sounds.EntityBoundSoundInstance)) return null;
+        try {
+            java.lang.reflect.Field f = boundEntityField;
+            if (f == null) {
+                outer:
+                for (Class<?> c = sound.getClass(); c != null && c != Object.class; c = c.getSuperclass()) {
+                    for (java.lang.reflect.Field cand : c.getDeclaredFields()) {
+                        if (net.minecraft.world.entity.Entity.class.isAssignableFrom(cand.getType())) {
+                            cand.setAccessible(true);
+                            f = cand;
+                            break outer;
+                        }
+                    }
+                }
+                boundEntityField = f;
+            }
+            return f == null ? null : (net.minecraft.world.entity.Entity) f.get(sound);
+        } catch (Throwable t) {
+            return null;      // 反射失败 → 当作"未绑定"，后面的频道判定兜底
+        }
+    }
+    private static boolean keepForSelf(net.minecraft.client.resources.sounds.SoundInstance sound,
+                                       LocalPlayer player) {
+        net.minecraft.world.entity.Entity bound = boundEntityOf(sound);
+        if (bound != null) {
+            return bound == player;
+        }
+        if (sound.getSource() == net.minecraft.sounds.SoundSource.PLAYERS) {
+            return true;
+        }
+        String path = sound.getLocation().toString();
+        if (path.startsWith("tacz:")) {
+            return true;
+        }
+        if (path.startsWith("irons_spellbooks:")
+                && !(path.contains("entity") || path.contains("mob") || path.contains("boss")
+                     || path.contains("creature") || path.contains("animal") || path.contains("monster"))) {
+            return true;
+        }
+        return false;
+    }
     private static boolean isWearingSilentGlove(Player player) {
         // 主手检查
         if (isMuting(player.getMainHandItem())) {

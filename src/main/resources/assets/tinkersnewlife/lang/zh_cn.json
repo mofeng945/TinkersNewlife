@@ -142,7 +142,7 @@
   "item.tinkersnewlife.yo_yo": "悠悠球",
   "item.tinkersnewlife.curse_core": "咒力核心",
   "item.tinkersnewlife.durandal_sword.description": "传说之剑：永不损坏，攻击力极高，可作为匠魂工具自由强化。",
-  "item.tinkersnewlife.silent_glove.description": "戴于手部：空手时自动从空间奇点库中取出武器；佩戴时听不见生物（怪物/动物）的叫声，装上「回响」即可全部恢复",
+  "item.tinkersnewlife.silent_glove.description": "戴于手部：空手时自动从空间奇点库中取出武器；佩戴时只听得见脚步声与自己的音效（生物叫声、环境音、爆炸音等一概不闻），装上「回响」即可全部恢复",
   "item.tinkersnewlife.war_scythe.description": "每次攻击积攒 Fever，攻速随 Fever 提升；消耗 Fever 可瞬移，Fever 满时释放终极斩击。",
   "item.tinkersnewlife.flying_sword.description": "右键发射飞剑，命中后返回；可切换 追击模式自动攻击敌人（命中后会自动转移目标，16 格内无其他敌人则继续打原目标）；场上最多同时存在 5 把投影。",
   "message.tinkersnewlife.flying_sword.limit": "§c场上飞剑投影已达上限（%s 把），等它们返回或消失后再发射",
