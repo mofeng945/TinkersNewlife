@@ -207,10 +207,9 @@ public final class CursedSpiritTechnique extends BaseTechnique {
                 target.getX(), target.getY() + target.getBbHeight() / 2, target.getZ(), 40, 0.5, 0.8, 0.5, 0.01);
         level.playSound(null, target.getX(), target.getY(), target.getZ(),
                 SoundEvents.GENERIC_EXTINGUISH_FIRE, SoundSource.HOSTILE, 1.0F, 0.6F);
-        // ⭐ 告诉命灯指轮：这是"故意处决"，别再救回目标。
-        //    否则佩戴者用收服时，目标会被留在原地、而记录已经进了灵册（玩家反馈的正是这个 bug）。
-        //    豁免窗口 2 秒，覆盖下面三次击杀尝试；见 LifeLampRingHandler#markDeliberateKill。
-        com.mofengbaizhi.tinkersnewlife.content.curse.LifeLampRingHandler.markDeliberateKill(target);
+        // 注：命灯指轮只截"攻击者是佩戴者"的**伤害**，不会拦死亡事件 ——
+        //     所以下面 playerAttack/magic 两下巨伤会被截（无害），最后那下 kill() 伤害源是
+        //     genericKill（没有攻击者），命灯完全不介入，收服照常完成。
         target.invulnerableTime = 0;
         target.hurt(player.damageSources().playerAttack(player), 1.0E9F);
         if (target.isAlive()) {

@@ -396,8 +396,8 @@ public class ExecutionDomain extends BaseDomain {
         /** 处决：无视无敌帧直接击杀（Boss 也能秒） */
         private static void execute(ServerPlayer p, LivingEntity victim,
                                     LivingDamageEvent event) {
-            // ⭐ 登记"故意处决"豁免：否则戴着命灯指轮的领域主处决不死人（伤害被截＋死亡被取消）。
-            com.mofengbaizhi.tinkersnewlife.content.curse.LifeLampRingHandler.markDeliberateKill(victim);
+            // 注：命灯指轮只截"攻击者是佩戴者"的伤害，不碰死亡事件 ——
+            //     这里的 victim.kill() 伤害源是 genericKill（无攻击者），命灯不介入，处决照常生效。
             victim.invulnerableTime = 0;
             // 先尝试直接击杀（绕过大部分 Boss 的伤害上限/免疫）
             if (victim.isAlive() && !victim.isRemoved()) {
