@@ -92,10 +92,7 @@ public final class TruePierce {
         //    命灯那边也有对应的早退（LifeLampRingHandler 见到真伤源直接放行），两端一致、与事件顺序无关。
         float want = damage;
 
-        TinkersNewlife.LOGGER.debug("[穿透] {} -> {} 期望={} 点，源={}",
-                attacker == null ? "无主" : attacker.getName().getString(),
-                target.getName().getString(), damage,
-                source(target.level(), attacker).getMsgId());
+
         // ② 禁疗（否则再生会把伤害吃回去）+ 清掉本模组自己的"伤害限幅"效果（它会取消多段伤害）
         suppressRegen(target);
         clearOwnDamageLimit(target);
@@ -117,9 +114,7 @@ public final class TruePierce {
             dealt = chunkedHurt(target, anonymous, want);
         }
 
-        TinkersNewlife.LOGGER.debug("[穿透] {} 分段实打={} 点（血量 {} -> {}）",
-                target.getName().getString(), String.format("%.2f", Math.max(dealt, 0.0F)),
-                String.format("%.2f", startHp), String.format("%.2f", target.getHealth()));
+
         // ⑤ 差额直补
         float shortfall = want - Math.max(dealt, 0.0F);
         if (shortfall <= 0.01F) return;
