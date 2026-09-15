@@ -680,6 +680,27 @@ public final class CursedSpiritTechnique extends BaseTechnique {
     }
 
     /**
+     * 顺手清掉"以该实体 UUID 为 id"的 Boss 血条（收回/守护体死亡时调用）。
+     *
+     * <p><b>为什么要这么写</b>：原版监守者**没有** Boss 血条（1.20.1 里 {@code ServerBossEvent}
+     * 只属于凋灵 / 袭击 / 末影龙），玩家看到的监守者血条来自**别的 mod**。
+     * 不少 mod 会把血条 id 设成实体 UUID，对这类实现发一个标准 REMOVE 包即可清掉；
+     * 对"随机 UUID"实现无效，但也不会有任何副作用（客户端找不到该 id 就忽略）。
+     */
+    public static void clearEntityBossBar(net.minecraft.world.entity.Entity entity) {
+        if (entity == null || entity.level().isClientSide) return;
+        if (!(entity.level() instanceof ServerLevel sl)) return;
+        net.minecraft.network.protocol.game.ClientboundBossEventPacket pkt =
+                net.minecraft.network.protocol.game.ClientboundBossEventPacket
+                        .createRemovePacket(entity.getUUID());
+        for (ServerPlayer p : sl.getServer().getPlayerList().getPlayers()) {
+            if (p.level() == sl) {
+                p.connection.send(pkt);
+            }
+        }
+    }
+
+    /**
      * 收回一个释放体（保留记录）。
      *
      * <p><b>为什么走原版死亡链路</b>：这样所有"仆从死亡"相关逻辑与实体追踪解除都按原版正常路径结算
@@ -700,7 +721,9 @@ public final class CursedSpiritTechnique extends BaseTechnique {
             mob.discard();
             return;
         }
+
         boolean wasSilent = mob.isSilent();
+        clearEntityBossBar(mob);
         mob.setSilent(true);
         RECALLING.add(mob.getUUID());
         try {
@@ -722,6 +745,7 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         if (dead instanceof net.minecraft.world.entity.player.Player) return; // 玩家不是释放体
         if (!(dead.level() instanceof ServerLevel sl)) return;
         dismissServantsOf(dead);
+        clearEntityBossBar(dead);
         // ⭐ 主动收回（recallReleased）也会走到这里：保留记录，只清召唤物
         if (RECALLING.contains(dead.getUUID())) return;
         for (ServerPlayer p : sl.getServer().getPlayerList().getPlayers()) {
