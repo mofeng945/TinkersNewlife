@@ -54,6 +54,7 @@ public final class IronSpellsSpellAccess {
     private static Method mCastComplete;    // onServerCastComplete(Level,int,LivingEntity,MagicData,boolean)
     private static Method mMagicDataGet;    // static LivingEntity -> MagicData
     private static Object defaultCastSource;
+    private static Object iceSpellPower;    // Attribute：铁魔法 ICE_SPELL_POWER
 
     private static synchronized void init() {
         if (ready || failed) return;
@@ -64,6 +65,17 @@ public final class IronSpellsSpellAccess {
             cMagicData = Class.forName("io.redspace.ironsspellbooks.api.magic.MagicData");
             cSpellRegistry = Class.forName("io.redspace.ironsspellbooks.api.registry.SpellRegistry");
             cCastSource = Class.forName("io.redspace.ironsspellbooks.api.spells.CastSource");
+            // 冰霜法术强度属性（ISS 自己的字段名，不会被重映射）
+            try {
+                Class<?> attrReg = Class.forName("io.redspace.ironsspellbooks.api.registry.AttributeRegistry");
+                for (java.lang.reflect.Field fld : attrReg.getFields()) {
+                    if (!"ICE_SPELL_POWER".equals(fld.getName())) continue;
+                    Object ro = fld.get(null);
+                    iceSpellPower = ro.getClass().getMethod("get").invoke(ro);
+                    break;
+                }
+            } catch (Throwable ignored) {
+            }
 
             for (Method m : cContainer.getMethods()) {
                 if (Modifier.isStatic(m.getModifiers()) && m.getParameterCount() == 1
@@ -316,6 +328,12 @@ public final class IronSpellsSpellAccess {
             }
         }
         return null;
+    }
+
+    /** 铁魔法「冰霜法术强度」属性（拿不到返回 null） */
+    public static net.minecraft.world.entity.ai.attributes.Attribute iceSpellPower() {
+        init();
+        return iceSpellPower instanceof net.minecraft.world.entity.ai.attributes.Attribute a ? a : null;
     }
 
     /** 法术类型类（事件监听要用 Class 做原始 addListener） */

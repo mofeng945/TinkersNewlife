@@ -468,5 +468,18 @@
   "modifier.tinkersnewlife.arcane_conduction.tip": "Inscribed spell level +%1$s; spell damage +%2$s%%",
   "modifier.tinkersnewlife.tilos_purgatory": "Tilos Purgatory",
   "modifier.tinkersnewlife.tilos_purgatory.description": "When your health drops below half, two Ancient Knights are summoned beside you (lasting 150s) and a level 5 Raise Hell is cast without incantation (harmless to your servants). Cooldown 150s.",
-  "modifier.tinkersnewlife.tilos_purgatory.tip": "Below half health: summon 2 Ancient Knights (150s) + instant Raise Hell Lv5, cooldown 150s"
+  "modifier.tinkersnewlife.tilos_purgatory.tip": "Below half health: summon 2 Ancient Knights (150s) + instant Raise Hell Lv5, cooldown 150s",
+  "material.tinkersnewlife.formless_ice": "Formless Ice",
+  "material.tinkersnewlife.formless_ice.flavor": "§7No shape to hold it; the cold comes from within.",
+  "fluid_type.tinkersnewlife.scorching_ice": "Scorching Ice",
+  "block.tinkersnewlife.scorching_ice_block": "Scorching Ice",
+  "item.tinkersnewlife.scorching_ice_bucket": "Scorching Ice Bucket",
+  "modifier.tinkersnewlife.cold_blooded": "Cold-Blooded",
+  "modifier.tinkersnewlife.cold_blooded.description": "Every attack (melee, ranged or spell) appends a burst of Ice-school spell damage after the damage resolves, equal to 0.1 x (1 + level) of the damage dealt.",
+  "modifier.tinkersnewlife.cold_blooded.tip": "Appends Ice spell damage: %1$s%% of the hit",
+  "modifier.tinkersnewlife.endless_cold_wind": "Endless Cold Wind",
+  "modifier.tinkersnewlife.endless_cold_wind.description": "While holding this tool, your Ice-school spell power is increased by 50%.",
+  "modifier.tinkersnewlife.endless_cold_wind.tip": "While held: Ice spell power +50%",
+  "modifier.tinkersnewlife.cold_blooded.flavor": "§7Cold to the bone, cold to the heart.",
+  "modifier.tinkersnewlife.endless_cold_wind.flavor": "§7The wind never stops; the cold never ends."
 }

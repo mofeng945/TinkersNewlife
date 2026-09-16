@@ -1,0 +1,13 @@
+{
+    "type": "tconstruct:material_fluid",
+    "fluid": {
+        "fluid": "tinkersnewlife:scorching_ice_still",
+        "amount": 50
+    },
+    "temperature": 400,
+    "output": "tinkersnewlife:formless_ice",    "conditions": [
+        {
+            "type": "forge:mod_loaded",
+            "modid": "irons_spellbooks"
+        }
+    ]}

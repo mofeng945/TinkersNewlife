@@ -43,6 +43,11 @@ public final class IronSpellsFluids {
             1500, 2500, 1250, 0xFFFFF0BE,  // 圣金象牙白
             FluidRegistrar.lavaProps(MapColor.COLOR_YELLOW));
 
+    /** 灼热之冰（材料「无相冰」的原料流体；熔炼永冻碎片 500mB/碎片、冰封手柄 150mB/个） */
+    public static final FluidRegistrar.FluidEntry SCORCHING_ICE = REG.entry("scorching_ice",
+            1200, 2000, 400, 0xFF7FD8F0,  // 苍冰蓝（冰里透热）
+            FluidRegistrar.waterProps(MapColor.ICE));
+
     /** 把本组四张注册表挂到模组总线（仅铁魔法在场时被调用） */
     public static void register(IEventBus bus) {
         REG.register(bus);

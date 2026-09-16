@@ -1060,5 +1060,18 @@
   "modifier.tinkersnewlife.arcane_conduction.tip": "物品内刻印的法术等级 +%1$s；施法伤害 +%2$s%%",
   "modifier.tinkersnewlife.tilos_purgatory": "提洛斯炼狱",
   "modifier.tinkersnewlife.tilos_purgatory.description": "生命降到一半以下时，在身旁召唤两只远古骑士（存在 150 秒）并无吟唱释放一次 5 级地狱浮现（对仆从无伤害）。冷却 150 秒。",
-  "modifier.tinkersnewlife.tilos_purgatory.tip": "半血：召唤 2 只远古骑士（150s）+ 无吟唱地狱浮现 Lv5，冷却 150s"
+  "modifier.tinkersnewlife.tilos_purgatory.tip": "半血：召唤 2 只远古骑士（150s）+ 无吟唱地狱浮现 Lv5，冷却 150s",
+  "material.tinkersnewlife.formless_ice": "无相冰",
+  "material.tinkersnewlife.formless_ice.flavor": "§7形无可依，寒自心生。",
+  "fluid_type.tinkersnewlife.scorching_ice": "灼热之冰",
+  "block.tinkersnewlife.scorching_ice_block": "灼热之冰",
+  "item.tinkersnewlife.scorching_ice_bucket": "灼热之冰桶",
+  "modifier.tinkersnewlife.cold_blooded": "冷酷",
+  "modifier.tinkersnewlife.cold_blooded.description": "每次攻击（近战、远程、法术皆可）在伤害结算之后追加一段冰霜学派法术伤害，大小为玩家伤害的 0.1×(1+等级) 倍。",
+  "modifier.tinkersnewlife.cold_blooded.tip": "追加冰霜法术伤害：本次伤害的 %1$s%%",
+  "modifier.tinkersnewlife.endless_cold_wind": "无止寒风",
+  "modifier.tinkersnewlife.endless_cold_wind.description": "手持此工具施法时，冰霜学派法术强度提高 50%。",
+  "modifier.tinkersnewlife.endless_cold_wind.tip": "手持时：冰霜法术强度 +50%",
+  "modifier.tinkersnewlife.cold_blooded.flavor": "§7寒入骨，心亦冷。",
+  "modifier.tinkersnewlife.endless_cold_wind.flavor": "§7风不止，寒无尽。"
 }

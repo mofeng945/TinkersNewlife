@@ -355,6 +355,16 @@ public class Modifiers {
             MODIFIERS.register("tilos_purgatory",
                     com.mofengbaizhi.tinkersnewlife.content.modifier.TilosPurgatoryModifier::new);
 
+    /** 铁魔法联动特性·冷酷（材料「无相冰」自带，有等级）：伤害结算后追加冰霜学派法术伤害 */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.ColdBloodedModifier> COLD_BLOODED =
+            MODIFIERS.register("cold_blooded",
+                    com.mofengbaizhi.tinkersnewlife.content.modifier.ColdBloodedModifier::new);
+
+    /** 铁魔法联动特性·无止寒风（材料「无相冰」自带，无等级）：手持时冰霜法术强度 +50% */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.EndlessColdWindModifier> ENDLESS_COLD_WIND =
+            MODIFIERS.register("endless_cold_wind",
+                    com.mofengbaizhi.tinkersnewlife.content.modifier.EndlessColdWindModifier::new);
+
     /** 近战特性·神圣之力（神灵金近战头自带，联动铁魔法/启示录：+180法力、注入火墙术Lv5/天使之翼Lv5/治愈之环Lv10、火墙无视无敌帧） */
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.DivinePowerModifier> DIVINE_POWER =
         MODIFIERS.register("divine_power",

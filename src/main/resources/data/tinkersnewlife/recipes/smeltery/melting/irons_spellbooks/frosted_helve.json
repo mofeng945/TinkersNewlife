@@ -1,0 +1,16 @@
+{
+    "type": "tconstruct:melting",
+    "ingredient": {
+        "item": "irons_spellbooks:frosted_helve"
+    },
+    "result": {
+        "fluid": "tinkersnewlife:scorching_ice_still",
+        "amount": 150
+    },
+    "temperature": 400,
+    "time": 45,    "conditions": [
+        {
+            "type": "forge:mod_loaded",
+            "modid": "irons_spellbooks"
+        }
+    ]}

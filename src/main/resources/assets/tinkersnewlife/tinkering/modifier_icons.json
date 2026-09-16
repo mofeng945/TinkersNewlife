@@ -80,5 +80,7 @@
   "tinkersnewlife:curse_speed": "tinkersnewlife:gui/modifiers/curse_speed",
   "tinkersnewlife:earplugs": "tinkersnewlife:gui/modifiers/earplugs",
   "tinkersnewlife:arcane_conduction": "tinkersnewlife:gui/modifiers/arcane_conduction",
-  "tinkersnewlife:tilos_purgatory": "tinkersnewlife:gui/modifiers/tilos_purgatory"
+  "tinkersnewlife:tilos_purgatory": "tinkersnewlife:gui/modifiers/tilos_purgatory",
+  "tinkersnewlife:cold_blooded": "tinkersnewlife:gui/modifiers/cold_blooded",
+  "tinkersnewlife:endless_cold_wind": "tinkersnewlife:gui/modifiers/endless_cold_wind"
 }
