@@ -132,9 +132,7 @@ public class DangYunPingXianDomain extends BaseDomain {
         player.addEffect(new MobEffectInstance(MobEffects.WATER_BREATHING, 80, 0, false, false));
         // 每 20 tick：友方/技巧玩家水呼吸 + 溺尸补充
         if (now % 20 == 0) {
-            for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class,
-                    new AABB(center.x - radius, center.y - radius, center.z - radius,
-                            center.x + radius, center.y + radius, center.z + radius))) {
+            for (LivingEntity e : entitiesInSphere(level)) {
                 if (e.position().distanceToSqr(center) > radius * radius) continue;
                 // 施术者阵营 + 新阴流技巧保护者（抵御溺水环境，技巧可挡本领域窒息）
                 if (isFriendlyTo(player, e)
@@ -411,9 +409,7 @@ public class DangYunPingXianDomain extends BaseDomain {
         LivingEntity best = null;
         double bestSq = Double.MAX_VALUE;
         double r = radius;
-        for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class,
-                new AABB(center.x - r, center.y - r, center.z - r,
-                        center.x + r, center.y + r, center.z + r))) {
+        for (LivingEntity e : entitiesInSphere(level)) {
             if (e == self || !e.isAlive()) continue;
             if (e.getUUID().equals(owner)) continue;
             if (e.position().distanceToSqr(center) > r * r) continue;

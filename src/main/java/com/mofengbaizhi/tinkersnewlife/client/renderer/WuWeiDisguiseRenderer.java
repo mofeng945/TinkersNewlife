@@ -39,8 +39,34 @@ public final class WuWeiDisguiseRenderer {
     /** 代理实体缓存：玩家 uuid → 目标类型实例（不进世界） */
     private static final Map<UUID, Entity> PROXIES = new ConcurrentHashMap<>();
 
-    /** 走路动画推进去重：代理 → 上次推进所用的 tickCount（代理不进世界，需要自己按 tick 推进） */
-    private static final Map<Entity, Integer> WALK_TICK = new java.util.WeakHashMap<>();
+    /**
+     * 走路动画推进去重：代理 → 上次推进所用的 tickCount（代理不进世界，需要自己按 tick 推进）。
+     * <p>
+     * ⭐ 键用弱引用：代理被替换/回收后条目自动消失（无需跟着 {@link #PROXIES} 手工清理）；
+     * 读写加同一把锁 —— 集成服务器的玩家登出事件与渲染线程都可能碰到这张表，
+     * 原版 {@link java.util.WeakHashMap} 在并发扩容时会错乱（偶发死循环/丢条目）。
+     */
+    private static final Map<Entity, Integer> WALK_TICK = new WeakKeyTickMap<>();
+
+    /** 键弱引用 + 读写加锁的极简 Map（只为"按 tick 去重"这一处用途存在，不做完整 Map 实现） */
+    private static final class WeakKeyTickMap<K, V> extends java.util.AbstractMap<K, V> {
+        private final Map<K, V> backing = java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+
+        @Override
+        public V get(Object key) {
+            return backing.get(key);
+        }
+
+        @Override
+        public V put(K key, V value) {
+            return backing.put(key, value);
+        }
+
+        @Override
+        public java.util.Set<Entry<K, V>> entrySet() {
+            return backing.entrySet();
+        }
+    }
 
     // WalkAnimationState 私有字段反射（拷贝走路动画状态用）
     private static Field WAS_SPEED_OLD;
@@ -64,12 +90,42 @@ public final class WuWeiDisguiseRenderer {
 
     private WuWeiDisguiseRenderer() {}
 
-    /** 玩家登出/世界切换清理 */
+    /**
+     * 玩家登出/世界切换清理。
+     * <p>
+     * ⭐ 代理实体<b>不进世界</b>，MC 的实体回收机制管不到它：若不在"离开"的时机摘掉，
+     * 这张表会一直攥着旧世界的实体（连带其 level 引用）。玩家登出在这里处理；
+     * 世界卸载（单人存档间切换、断线重连）由 {@link ClientWuWeiCleanup} 兜底。
+     */
     @SubscribeEvent
     public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         Player p = event.getEntity();
         PROXIES.remove(p.getUUID());
         ClientWuWeiData.clearProxy(p.getUUID());
+    }
+
+    /** 客户端生命周期的兜底清理钩子（玩家登出 / 世界卸载） */
+    @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
+    public static final class ClientWuWeiCleanup {
+
+        /** 登出：清掉所有伪装玩家代理（含本地玩家） */
+        @SubscribeEvent
+        public static void onLoggingOut(net.minecraftforge.client.event.ClientPlayerNetworkEvent.LoggingOut event) {
+            clearAllProxies();
+        }
+
+        /** 世界卸载（退出到主菜单 / 换存档 / 断线）：代理持有的旧世界引用一并释放 */
+        @SubscribeEvent
+        public static void onLevelUnload(net.minecraftforge.event.level.LevelEvent.Unload event) {
+            if (!event.getLevel().isClientSide()) return; // 只清客户端这一份
+            clearAllProxies();
+        }
+
+        private static void clearAllProxies() {
+            PROXIES.clear();
+            WALK_TICK.clear();
+            ClientWuWeiData.clearAll();
+        }
     }
 
     /**

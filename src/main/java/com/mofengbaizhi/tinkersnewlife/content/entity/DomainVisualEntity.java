@@ -70,10 +70,12 @@ public class DomainVisualEntity extends Entity {
         entityData.set(CLASH_CY, (float) center.y);
         entityData.set(CLASH_CZ, (float) center.z);
         entityData.set(CLASH_RADIUS, (float) radius);
+        invalidateRenderRegions();
     }
 
     public void clearClashRegion() {
         entityData.set(CLASH_ACTIVE, false);
+        invalidateRenderRegions();
     }
 
     public boolean isClashActive() {
@@ -86,6 +88,70 @@ public class DomainVisualEntity extends Entity {
 
     public float getClashRadius() {
         return entityData.get(CLASH_RADIUS);
+    }
+
+    // ============================================================
+    //  ⭐ 渲染侧缓存：与本球相交的其它领域球体（每帧挖洞判定用）
+    //  <p>原先渲染器<b>每帧</b>都要扫一遍身边 256 格范围内的领域视觉实体并新建一个 List，
+    //  领域对抗时逐帧构建网格，等于每秒白扫 60 次。这里把结果按 gameTime 缓存：
+    //  同一 tick 内多帧共用一份，几何变化（球心/半径/对抗区域）立即令缓存失效。
+    // ============================================================
+
+    /** 缓存：{x, y, z, 半径}，null 表示尚未计算 */
+    private java.util.List<double[]> renderRegionsCache;
+    /** 缓存所属 gameTime（±1 让同一次 tick 内的多帧命中） */
+    private long renderRegionsTime = Long.MIN_VALUE;
+
+    /** 令渲染相交缓存立即失效（球心/半径/对抗区域变化时调用） */
+    public void invalidateRenderRegions() {
+        renderRegionsCache = null;
+        renderRegionsTime = Long.MIN_VALUE;
+    }
+
+    /**
+     * 与本球相交的其它领域球体（含服务端兜底同步的对手区域）。
+     * 结果按 tick 缓存；调用方只读，勿修改返回的列表。
+     */
+    public java.util.List<double[]> getOrComputeRenderRegions() {
+        long t = level() == null ? 0L : level().getGameTime();
+        long dt = t - renderRegionsTime;
+        if (renderRegionsCache == null || dt < 0 || dt > 1) {
+            renderRegionsTime = t;
+            renderRegionsCache = computeRenderRegions();
+        }
+        return renderRegionsCache;
+    }
+
+    /** 渲染几何（球心/半径）变化时令缓存失效 */
+    @Override
+    public void setPos(double x, double y, double z) {
+        super.setPos(x, y, z);
+        invalidateRenderRegions();
+    }
+
+    private java.util.List<double[]> computeRenderRegions() {
+        java.util.List<double[]> out = new java.util.ArrayList<>();
+        if (level() == null) return out;
+        Vec3 c = position();
+        double r = getRadius();
+        double reach = r + 256.0;
+        net.minecraft.world.phys.AABB box = new net.minecraft.world.phys.AABB(
+                c.x - reach, c.y - reach, c.z - reach,
+                c.x + reach, c.y + reach, c.z + reach);
+        for (DomainVisualEntity other : level().getEntitiesOfClass(DomainVisualEntity.class, box)) {
+            if (other == this) continue;
+            Vec3 oc = other.position();
+            double or = other.getRadius();
+            if (c.distanceTo(oc) < r + or) {
+                out.add(new double[]{oc.x, oc.y, oc.z, or});
+            }
+        }
+        // 兜底：服务端同步过来的对手区域（客户端还没收到对方视觉实体时）
+        if (out.isEmpty() && isClashActive()) {
+            Vec3 cc = getClashCenter();
+            out.add(new double[]{cc.x, cc.y, cc.z, getClashRadius()});
+        }
+        return out;
     }
 
     @Override

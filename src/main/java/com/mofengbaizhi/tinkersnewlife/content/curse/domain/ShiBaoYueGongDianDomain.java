@@ -81,9 +81,7 @@ public class ShiBaoYueGongDianDomain extends BaseDomain {
         if (now % STUN_REFRESH_TICKS != 0) return;
         ServerLevel level = player.serverLevel();
         double r = radius;
-        for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class,
-                new AABB(center.x - r - 1.5, center.y - r - 1.5, center.z - r - 1.5,
-                        center.x + r + 1.5, center.y + r + 1.5, center.z + r + 1.5))) {
+        for (LivingEntity e : entitiesInSphere(level)) {
             if (e.getUUID().equals(owner)) continue;
             if (e.position().distanceToSqr(center) > r * r) continue;
 
@@ -123,9 +121,7 @@ public class ShiBaoYueGongDianDomain extends BaseDomain {
         ServerLevel level = player != null ? player.serverLevel() : null;
         if (level != null) {
             double r = radius;
-            for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class,
-                    new AABB(center.x - r - 1.5, center.y - r - 1.5, center.z - r - 1.5,
-                            center.x + r + 1.5, center.y + r + 1.5, center.z + r + 1.5))) {
+            for (LivingEntity e : entitiesInSphere(level)) {
                 if (e.getUUID().equals(owner)) continue;
                 if (e.position().distanceToSqr(center) > r * r) continue;
                 e.removeEffect(ModEffects.STUN.get());

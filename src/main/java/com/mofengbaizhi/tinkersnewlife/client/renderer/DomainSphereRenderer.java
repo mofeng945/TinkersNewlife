@@ -72,31 +72,12 @@ public final class DomainSphereRenderer {
     }
 
     /** 球冠网格：从球顶（phi=0）到 phiMax，含边界部分环；对抗时剔除落入对方球体的三角形 */
-    /** 客户端计算：与本领域球体相交的其它领域（球心 + 半径），用于挖洞 */
+    /** 客户端计算：与本领域球体相交的其它领域（球心 + 半径），用于挖洞。
+     *  ⭐ 每帧都调用：实际扫描由 {@link DomainVisualEntity#getOrComputeRenderRegions()} 按 tick 缓存，
+     *  同一次 tick 内的多帧共用同一份结果（原先每帧都扫一遍 256 格并新建 List）。 */
     private static java.util.List<double[]> overlapRegions(DomainVisualEntity entity) {
-        java.util.List<double[]> out = new java.util.ArrayList<>();
-        if (entity == null) return out;
-        net.minecraft.client.multiplayer.ClientLevel level = net.minecraft.client.Minecraft.getInstance().level;
-        if (level == null) return out;
-        Vec3 c = entity.position();
-        double r = entity.getRadius();
-        double reach = r + 256.0;
-        for (DomainVisualEntity other : level.getEntitiesOfClass(DomainVisualEntity.class,
-                new net.minecraft.world.phys.AABB(c.x - reach, c.y - reach, c.z - reach,
-                        c.x + reach, c.y + reach, c.z + reach))) {
-            if (other == entity) continue;
-            Vec3 oc = other.position();
-            double or = other.getRadius();
-            if (c.distanceTo(oc) < r + or) {
-                out.add(new double[]{oc.x, oc.y, oc.z, or});
-            }
-        }
-        // 兜底：服务端同步过来的对手区域（客户端还没收到对方视觉实体时）
-        if (out.isEmpty() && entity.isClashActive()) {
-            Vec3 cc = entity.getClashCenter();
-            out.add(new double[]{cc.x, cc.y, cc.z, entity.getClashRadius()});
-        }
-        return out;
+        if (entity == null) return java.util.List.of();
+        return entity.getOrComputeRenderRegions();
     }
 
     private static void buildShell(BufferBuilder builder, double phiMax, DomainVisualEntity entity,

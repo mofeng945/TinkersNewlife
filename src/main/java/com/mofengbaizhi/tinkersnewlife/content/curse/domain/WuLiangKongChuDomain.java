@@ -102,9 +102,7 @@ public class WuLiangKongChuDomain extends BaseDomain {
         if (now % STUN_REFRESH_TICKS != 0) return;
         ServerLevel level = player.serverLevel();
         double r = radius;
-        AABB box = new AABB(center.x - r - 1.5, center.y - r - 1.5, center.z - r - 1.5,
-                center.x + r + 1.5, center.y + r + 1.5, center.z + r + 1.5);
-        for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, box)) {
+        for (LivingEntity entity : entitiesInSphere(level)) {
             if (entity.getUUID().equals(owner)) continue;
             if (entity.position().distanceToSqr(center) > r * r) continue;
 
@@ -166,9 +164,7 @@ public class WuLiangKongChuDomain extends BaseDomain {
     public void onClashStart(ServerPlayer player, BaseDomain opponent) {
         ServerLevel level = player.serverLevel();
         double r = radius;
-        for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class,
-                new AABB(center.x - r - 1.5, center.y - r - 1.5, center.z - r - 1.5,
-                        center.x + r + 1.5, center.y + r + 1.5, center.z + r + 1.5))) {
+        for (LivingEntity entity : entitiesInSphere(level)) {
             if (entity.getUUID().equals(owner)) continue;
             if (entity.position().distanceToSqr(center) > r * r) continue;
             entity.removeEffect(ModEffects.STUN.get());

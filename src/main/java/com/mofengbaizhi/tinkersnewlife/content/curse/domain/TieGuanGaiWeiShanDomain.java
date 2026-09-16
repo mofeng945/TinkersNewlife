@@ -76,9 +76,7 @@ public class TieGuanGaiWeiShanDomain extends BaseDomain {
         double r = radius;
         boolean burnTick = now % BURN_INTERVAL_TICKS == 0;
         // 每 tick 圈选并补火；每 5 tick 额外施加咒力灼烧
-        for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class,
-                new AABB(center.x - r - 1.5, center.y - r - 1.5, center.z - r - 1.5,
-                        center.x + r + 1.5, center.y + r + 1.5, center.z + r + 1.5))) {
+        for (LivingEntity e : entitiesInSphere(level)) {
             if (e.getUUID().equals(owner)) continue;
             if (e.position().distanceToSqr(center) > r * r) continue;
             // ⭐ 新阴流技巧抵御：带技巧且咒力足够 → 免疫本领域点燃与灼烧

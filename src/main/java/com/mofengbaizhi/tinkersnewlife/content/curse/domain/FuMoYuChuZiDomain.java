@@ -102,9 +102,7 @@ public class FuMoYuChuZiDomain extends BaseDomain {
         ServerLevel level = player.serverLevel();
         double r = radius;
         DamageSource source = player.damageSources().mobAttack(player);
-        for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class,
-                new AABB(center.x - r - 1.5, center.y - r - 1.5, center.z - r - 1.5,
-                        center.x + r + 1.5, center.y + r + 1.5, center.z + r + 1.5))) {
+        for (LivingEntity entity : entitiesInSphere(level)) {
             if (entity.getUUID().equals(owner)) continue;
             if (entity.position().distanceToSqr(center) > r * r) continue;
 

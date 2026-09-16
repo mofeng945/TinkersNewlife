@@ -217,9 +217,7 @@ public class SanChongJiKuDomain extends BaseDomain {
         LivingEntity best = null;
         double bestSq = Double.MAX_VALUE;
         double r = radius;
-        for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class,
-                new AABB(center.x - r, center.y - r, center.z - r,
-                        center.x + r, center.y + r, center.z + r))) {
+        for (LivingEntity e : entitiesInSphere(level)) {
             if (e == owner || !e.isAlive()) continue;
             if (e.position().distanceToSqr(center) > r * r) continue;
             if (isFriendlyTo(owner, e)) continue;

@@ -76,9 +76,7 @@ public class TaizangBianyeDomain extends BaseDomain {
         double r = radius;
         // 压力 = 反重力反转压力 × 2
         double pr = AntiGravityTechnique.pressure(player) * 2.0;
-        AABB box = new AABB(center.x - r - 1.5, center.y - r - 1.5, center.z - r - 1.5,
-                center.x + r + 1.5, center.y + r + 1.5, center.z + r + 1.5);
-        for (LivingEntity t : level.getEntitiesOfClass(LivingEntity.class, box)) {
+        for (LivingEntity t : entitiesInSphere(level)) {
             if (t.getUUID().equals(owner)) continue;
             if (t.position().distanceToSqr(center) > r * r) continue;
             // ⭐ 技巧抵挡：新阴流三技巧（咒力足够时）免疫本领域压力

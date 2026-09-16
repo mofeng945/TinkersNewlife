@@ -80,9 +80,7 @@ public class QianheYingyiDomain extends BaseDomain {
         if (now % 5 != 0) return;
         ServerLevel level = player.serverLevel();
         double r = radius;
-        for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class,
-                new AABB(center.x - r - 1.5, center.y - r - 1.5, center.z - r - 1.5,
-                        center.x + r + 1.5, center.y + r + 1.5, center.z + r + 1.5))) {
+        for (LivingEntity e : entitiesInSphere(level)) {
             if (e.getUUID().equals(owner)) continue;
             if (e.position().distanceToSqr(center) > r * r) continue;
             // ⭐ 新阴流技巧抵御：被包裹玩家带技巧且咒力足够 → 本领域定身对其无效

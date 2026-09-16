@@ -71,6 +71,70 @@ public abstract class BaseDomain {
     /** 领域通用抵抗：实体 → 抵抗截止时刻（服务器 tick）。抵抗期内本领域负面效果不生效 */
     private final Map<UUID, Long> resistUntil = new ConcurrentHashMap<>();
 
+    // ============================================================
+    //  ⭐ 空间查询缓存（性能）
+    //  <p>领域效果每 tick 都要圈选球内生物：若每个调用点各写一遍
+    //  {@code level.getEntitiesOfClass(LivingEntity.class, new AABB(...))}，同一个领域在同一 tick
+    //  内会重复扫描同一片区域（弹射物导引更是<b>每颗子弹一次</b>），并把 AABB 反复分配。
+    //  这里把"球外接盒 + 盒内生物表"按 gameTime 缓存一份，同一 tick 内所有调用点共用，
+    //  跨 tick 自动失效——效果与逐点扫描完全一致，只是不再重复劳动。
+    // ============================================================
+
+    /** 缓存的球外接盒（随领域实例存活，跨 tick 复用同一对象） */
+    private AABB cachedSphereBox;
+    /** 缓存的盒内生物表（只读使用，勿改动） */
+    private java.util.List<LivingEntity> cachedInsideBox = java.util.List.of();
+    /** 缓存所属的 gameTime（±1 让同一次 tick 内的多次调用都命中） */
+    private long cachedEntitiesTime = Long.MIN_VALUE;
+
+    /**
+     * 领域球体外接盒（缓存复用）。语义为"至少覆盖半径 {@link #radius} 的球"——
+     * 各调用点原本的 ±1.5 缓冲不再需要（那只是为了防止实体正好卡在球面上被判漏），
+     * 调用点仍保留自己的 {@code distanceToSqr(center) > r*r} 精确判定。
+     */
+    protected final AABB sphereBox() {
+        AABB box = cachedSphereBox;
+        if (box == null) {
+            double r = radius;
+            box = new AABB(center.x - r, center.y - r, center.z - r,
+                    center.x + r, center.y + r, center.z + r);
+            cachedSphereBox = box;
+        }
+        return box;
+    }
+
+    /** 领域球外接盒内的生物（含玩家；不含领域主人判定，由调用点自行处理）。同一 tick 内共享缓存 */
+    public final java.util.List<LivingEntity> entitiesInSphere(Level level) {
+        long t = level.getGameTime();
+        long dt = t - cachedEntitiesTime;
+        if (dt < 0 || dt > 1) {
+            cachedEntitiesTime = t;
+            cachedInsideBox = level.getEntitiesOfClass(LivingEntity.class, sphereBox());
+        }
+        return cachedInsideBox;
+    }
+
+    /** 球壳体积内的"生物占位方块"：一次盒选 → 逐生物登记方块坐标（替代逐方块盒查） */
+    private static java.util.Set<net.minecraft.core.BlockPos> occupancyOf(java.util.List<LivingEntity> entities) {
+        java.util.Set<net.minecraft.core.BlockPos> occupied = new java.util.HashSet<>();
+        for (LivingEntity e : entities) {
+            int x0 = net.minecraft.util.Mth.floor(e.getBoundingBox().minX);
+            int y0 = net.minecraft.util.Mth.floor(e.getBoundingBox().minY);
+            int z0 = net.minecraft.util.Mth.floor(e.getBoundingBox().minZ);
+            int x1 = net.minecraft.util.Mth.floor(e.getBoundingBox().maxX);
+            int y1 = net.minecraft.util.Mth.floor(e.getBoundingBox().maxY);
+            int z1 = net.minecraft.util.Mth.floor(e.getBoundingBox().maxZ);
+            for (int x = x0; x <= x1; x++) {
+                for (int y = y0; y <= y1; y++) {
+                    for (int z = z0; z <= z1; z++) {
+                        occupied.add(new net.minecraft.core.BlockPos(x, y, z));
+                    }
+                }
+            }
+        }
+        return occupied;
+    }
+
     protected BaseDomain(UUID owner, Vec3 center, int radius, double curseCostPerSecond) {
         this.owner = owner;
         this.center = center;
@@ -141,6 +205,8 @@ public abstract class BaseDomain {
     protected final void buildBarrier(ServerLevel level) {
         barrierPositions.clear();
         barrierGaps.clear();
+        // 一次盒选拿到球壳体积内的生物占位（原先每个壳块各查一次实体）
+        java.util.Set<net.minecraft.core.BlockPos> occupied = occupancyOf(entitiesInSphere(level));
         int r = radius;
         int cx = (int) Math.floor(center.x);
         int cy = (int) Math.floor(center.y);
@@ -151,10 +217,11 @@ public abstract class BaseDomain {
             for (int x = -lim; x <= lim; x++) {
                 for (int z = -lim; z <= lim; z++) {
                     if (!isShellBlock(cx, cy, cz, x, y, z, rSq)) continue;
-                    placeBarrier(level, new net.minecraft.core.BlockPos(cx + x, cy + y, cz + z));
+                    placeBarrier(level, new net.minecraft.core.BlockPos(cx + x, cy + y, cz + z), occupied);
                 }
             }
         }
+        cachedEntitiesTime = Long.MIN_VALUE; // 建墙期间生物可能被传送 → 作废本 tick 缓存
     }
 
     /** 方块中心到球心的距离平方（方块中心 = floor(center) + 偏移 + 0.5） */
@@ -177,7 +244,8 @@ public abstract class BaseDomain {
     }
 
     /** 放一块墙：已有墙块直接登记；非空气（实心地形/水）跳过；生物占位则记账等补墙 */
-    private void placeBarrier(ServerLevel level, net.minecraft.core.BlockPos pos) {
+    private void placeBarrier(ServerLevel level, net.minecraft.core.BlockPos pos,
+                              java.util.Set<net.minecraft.core.BlockPos> occupied) {
         var state = level.getBlockState(pos);
         if (state.is(com.mofengbaizhi.tinkersnewlife.content.ModBlocks.DOMAIN_BARRIER.get())) {
             barrierPositions.add(pos);
@@ -185,7 +253,7 @@ public abstract class BaseDomain {
         }
         if (!state.isAir()) return;
         // 避免在生物站立的方块上放置（防窒息）：记入待补清单，生物走开后由每 tick 补墙补上
-        if (!level.getEntitiesOfClass(LivingEntity.class, new AABB(pos)).isEmpty()) {
+        if (occupied.contains(pos)) {
             barrierGaps.add(pos);
             return;
         }
@@ -199,6 +267,7 @@ public abstract class BaseDomain {
      */
     public final void refillBarrierGaps(ServerLevel level) {
         if (barrierGaps.isEmpty()) return;
+        java.util.Set<net.minecraft.core.BlockPos> occupied = occupancyOf(entitiesInSphere(level));
         java.util.Iterator<net.minecraft.core.BlockPos> it = barrierGaps.iterator();
         while (it.hasNext()) {
             net.minecraft.core.BlockPos pos = it.next();
@@ -212,7 +281,7 @@ public abstract class BaseDomain {
                 it.remove();
                 continue;
             }
-            if (!level.getEntitiesOfClass(LivingEntity.class, new AABB(pos)).isEmpty()) continue;
+            if (occupied.contains(pos)) continue;
             level.setBlock(pos, com.mofengbaizhi.tinkersnewlife.content.ModBlocks.DOMAIN_BARRIER.get().defaultBlockState(), 2);
             barrierPositions.add(pos);
             it.remove();
@@ -383,9 +452,7 @@ public abstract class BaseDomain {
      */
     protected final void clampEntities(Level level) {
         double r = radius;
-        AABB box = new AABB(
-                center.x - r - 1.5, center.y - r - 1.5, center.z - r - 1.5,
-                center.x + r + 1.5, center.y + r + 1.5, center.z + r + 1.5);
+        AABB box = sphereBox();
         java.util.Set<UUID> seen = new java.util.HashSet<>();
         for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, box)) {
             seen.add(entity.getUUID());

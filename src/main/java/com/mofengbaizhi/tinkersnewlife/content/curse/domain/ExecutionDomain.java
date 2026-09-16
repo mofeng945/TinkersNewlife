@@ -136,9 +136,7 @@ public class ExecutionDomain extends BaseDomain {
         // 1) 领域内除展开者外所有实体定身（技巧无效：不查 SkillHandler、不给通用抵抗）
         if (now % 5 == 0) {
             double r = radius;
-            for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class,
-                    new AABB(center.x - r - 1.5, center.y - r - 1.5, center.z - r - 1.5,
-                            center.x + r + 1.5, center.y + r + 1.5, center.z + r + 1.5))) {
+            for (LivingEntity e : entitiesInSphere(level)) {
                 if (e.getUUID().equals(owner)) continue;
                 if (e.position().distanceToSqr(center) > r * r) continue;
                 e.addEffect(new MobEffectInstance(ModEffects.STUN.get(), 60, 0, false, false));
