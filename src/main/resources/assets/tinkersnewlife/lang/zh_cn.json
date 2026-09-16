@@ -1073,5 +1073,8 @@
   "modifier.tinkersnewlife.endless_cold_wind.description": "手持此工具施法时，冰霜学派法术强度提高 50%。",
   "modifier.tinkersnewlife.endless_cold_wind.tip": "手持时：冰霜法术强度 +50%",
   "modifier.tinkersnewlife.cold_blooded.flavor": "§7寒入骨，心亦冷。",
-  "modifier.tinkersnewlife.endless_cold_wind.flavor": "§7风不止，寒无尽。"
+  "modifier.tinkersnewlife.endless_cold_wind.flavor": "§7风不止，寒无尽。",
+  "fluid_type.tinkersnewlife.liquid_arcane": "液态奥术",
+  "block.tinkersnewlife.liquid_arcane_block": "液态奥术",
+  "item.tinkersnewlife.liquid_arcane_bucket": "液态奥术桶"
 }

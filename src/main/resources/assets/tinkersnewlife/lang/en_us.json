@@ -481,5 +481,8 @@
   "modifier.tinkersnewlife.endless_cold_wind.description": "While holding this tool, your Ice-school spell power is increased by 50%.",
   "modifier.tinkersnewlife.endless_cold_wind.tip": "While held: Ice spell power +50%",
   "modifier.tinkersnewlife.cold_blooded.flavor": "§7Cold to the bone, cold to the heart.",
-  "modifier.tinkersnewlife.endless_cold_wind.flavor": "§7The wind never stops; the cold never ends."
+  "modifier.tinkersnewlife.endless_cold_wind.flavor": "§7The wind never stops; the cold never ends.",
+  "fluid_type.tinkersnewlife.liquid_arcane": "Liquid Arcane",
+  "block.tinkersnewlife.liquid_arcane_block": "Liquid Arcane",
+  "item.tinkersnewlife.liquid_arcane_bucket": "Liquid Arcane Bucket"
 }

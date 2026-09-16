@@ -9,7 +9,7 @@
   },
   "byproducts": [
     {
-      "fluid": "tinkersnewlife:molten_arcane_ingot_still",
+      "fluid": "tinkersnewlife:liquid_arcane_still",
       "amount": 50
     }
   ],

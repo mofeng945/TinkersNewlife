@@ -48,6 +48,16 @@ public final class IronSpellsFluids {
             1200, 2000, 400, 0xFF7FD8F0,  // 苍冰蓝（冰里透热）
             FluidRegistrar.waterProps(MapColor.ICE));
 
+    /**
+     * 液态奥术（<b>独立流体</b>，不是"熔融奥术锭"）。
+     *
+     * <p>用途：材料「无相冰」的配方里，熔炼冰封手柄的**副产物**（150mb 灼热之冰 + 50mb 液态奥术）。
+     * 铁魔法本身只有奥术源质/锭/符文这些**物品**，没有对应流体，所以这一支由本模组提供。
+     */
+    public static final FluidRegistrar.FluidEntry LIQUID_ARCANE = REG.entry("liquid_arcane",
+            1500, 3000, 900, 0xFF8A6BFF,  // 奥术紫
+            FluidRegistrar.waterProps(MapColor.COLOR_PURPLE));
+
     /** 把本组四张注册表挂到模组总线（仅铁魔法在场时被调用） */
     public static void register(IEventBus bus) {
         REG.register(bus);
