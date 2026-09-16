@@ -1110,7 +1110,7 @@
   "item.tinkersnewlife.molten_mithril_bucket": "熔融秘银桶",
   "modifier.tinkersnewlife.focus": "专注",
   "modifier.tinkersnewlife.focus.description": "手持此工具时吟唱不会被打断，且每级提高 5% 吟唱速度。",
-  "modifier.tinkersnewlife.focus.tip": "§a吟唱不会被打断；吟唱速度 +%1$s%%",
+  "modifier.tinkersnewlife.focus.tip": "§a吟唱速度 +%1$s%%",
   "modifier.tinkersnewlife.focus.flavor": "§7心不散，术不成。",
   "modifier.tinkersnewlife.spell_break": "破法",
   "modifier.tinkersnewlife.spell_break.description": "工具自带 1 级「法术反制」（可用于中断目标施法或魔法效果）。",

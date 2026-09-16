@@ -518,7 +518,7 @@
   "item.tinkersnewlife.molten_mithril_bucket": "Molten Mithril Bucket",
   "modifier.tinkersnewlife.focus": "Focus",
   "modifier.tinkersnewlife.focus.description": "While holding this tool your casting cannot be interrupted, and each level adds 5% cast speed.",
-  "modifier.tinkersnewlife.focus.tip": "§aCasting cannot be interrupted; cast speed +%1$s%%",
+  "modifier.tinkersnewlife.focus.tip": "§aCast speed +%1$s%%",
   "modifier.tinkersnewlife.focus.flavor": "§7An undivided mind completes every spell.",
   "modifier.tinkersnewlife.spell_break": "Spell Break",
   "modifier.tinkersnewlife.spell_break.description": "Comes with a level 1 Counterspell inscribed (interrupts enemy casting or magic effects).",
