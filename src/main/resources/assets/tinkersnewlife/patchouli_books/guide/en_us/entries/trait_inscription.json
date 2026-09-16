@@ -1,0 +1,13 @@
+{
+  "name": "Inscription",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:textures/gui/modifiers/inscription.png",
+  "sortnum": 52,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Inscription$() (comes with Hogskin, $(bold)no levels$())$(br2)Effect: while holding this tool or wearing this armor, $(bold)spell power +10%$()$(br2)Note: Iron's Spells' generic spell power attribute defaults to 1.0 and applies to every school, so +0.1 means +10% across the board. Multiple pieces (main hand / off hand / armor) each count separately and $(bold)stack$(), and they do not overwrite $(l:trait_arcane_domination)Arcane Domination$() or $(l:trait_all_spells_unity)Myriad Spells as One$().$(br2)$(italic)What is carved into the hide is a curse.$()"
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}

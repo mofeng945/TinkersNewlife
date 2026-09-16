@@ -1139,5 +1139,15 @@
   "modifier.tinkersnewlife.mana_armor.tip": "§9每 100 法力上限：伤害减免 +%1$s（可叠加）",
   "modifier.tinkersnewlife.mana_armor.flavor": "§7把法力穿在身上。",
   "item.tinkersnewlife.magic_gold_ingot": "魔金锭",
-  "item.tinkersnewlife.holy_spirit_ingot": "圣灵锭"
+  "item.tinkersnewlife.holy_spirit_ingot": "圣灵锭",
+  "material.tinkersnewlife.arcane_cloth": "奥术布匹",
+  "material.tinkersnewlife.arcane_cloth.flavor": "织进线里的咒文，比绣上去的牢。",
+  "material.tinkersnewlife.mithril_weave": "秘银织物",
+  "material.tinkersnewlife.mithril_weave.flavor": "轻得几乎没有重量，却挡得住打断。",
+  "material.tinkersnewlife.hogskin": "疣猪皮",
+  "material.tinkersnewlife.hogskin.flavor": "皮糙肉厚，正适合刻字。",
+  "modifier.tinkersnewlife.inscription": "刻印",
+  "modifier.tinkersnewlife.inscription.description": "手持此工具或穿戴此盔甲时，法术强度属性提升 10%（每件各算一份，可叠加）。",
+  "modifier.tinkersnewlife.inscription.tip": "§d法术强度 +%1$s%%",
+  "modifier.tinkersnewlife.inscription.flavor": "§7刻在皮上的，是咒。"
 }

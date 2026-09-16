@@ -1,0 +1,18 @@
+{
+  "name": "奥术布匹",
+  "category": "tinkersnewlife:materials",
+  "icon": "irons_spellbooks:magic_cloth",
+  "sortnum": 26,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "irons_spellbooks:magic_cloth",
+      "text": "$(bold)获取方式$()（铁魔法联动）：在$(bold)部件制作台$()上用铁魔法的$(bold)奥术布匹$()（$(bold)irons_spellbooks:magic_cloth$()）直接制作 —— $(bold)绑定结 1 个原料 / 锁链基底 2 个原料$()（部件成本由匠魂定义：tool_binding=1、maille=2）$(br2)可用于：$(bold)绑定结 / 锁链基底$()$(br2)等级：$(bold)T1$()（略高于木 T0）$(br2)说明：绑定结与锁链基底在匠魂里是$(bold)无数值部件$()（只带特性），所以这三个布/皮材料之间的差别全在$(bold)特性$()上。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)自带特性$()：$(li)$(l:trait_arcane_conduction)魔导$()（有等级）：强化该物品内刻印的法术（每级 +3 级），并给施法增伤$(br2)$(italic)织进线里的咒文，比绣上去的牢。$()"
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}

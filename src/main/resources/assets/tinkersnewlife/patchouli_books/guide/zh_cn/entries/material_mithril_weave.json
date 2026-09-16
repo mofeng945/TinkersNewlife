@@ -1,0 +1,18 @@
+{
+  "name": "秘银织物",
+  "category": "tinkersnewlife:materials",
+  "icon": "irons_spellbooks:mithril_weave",
+  "sortnum": 27,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "irons_spellbooks:mithril_weave",
+      "text": "$(bold)获取方式$()（铁魔法联动）：在$(bold)部件制作台$()上用铁魔法的$(bold)秘银织物$()（$(bold)irons_spellbooks:mithril_weave$()）直接制作 —— $(bold)绑定结 1 个原料 / 锁链基底 2 个原料$()（部件成本由匠魂定义：tool_binding=1、maille=2）$(br2)可用于：$(bold)绑定结 / 锁链基底$()$(br2)等级：$(bold)T2$()（与铁同级）$(br2)说明：绑定结与锁链基底在匠魂里是$(bold)无数值部件$()（只带特性）。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)自带特性$()：$(li)$(l:trait_focus)专注$()（有等级）：手持时$(bold)吟唱不会被打断$()，且每级 +5% 吟唱速度$(br2)$(italic)轻得几乎没有重量，却挡得住打断。$()"
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}

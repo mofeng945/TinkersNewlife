@@ -1,0 +1,18 @@
+{
+  "name": "Mithril Weave",
+  "category": "tinkersnewlife:materials",
+  "icon": "irons_spellbooks:mithril_weave",
+  "sortnum": 27,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "irons_spellbooks:mithril_weave",
+      "text": "$(bold)Obtaining$() (Iron's Spells crossover): craft it directly in the $(bold)Part Builder$() from the mod's $(bold)Mithril Weave$() ($(bold)irons_spellbooks:mithril_weave$()) - $(bold)1 ingredient per binding / 2 per maille$() (part costs come from Tinkers: tool_binding=1, maille=2)$(br2)Usable for: $(bold)binding / maille$()$(br2)Tier: $(bold)T2$() (same as iron)$(br2)Note: bindings and maille are $(bold)statless parts$() in Tinkers' Construct (they carry traits only)."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Traits$():$(li)$(l:trait_focus)Focus$() (leveled): your casting $(bold)cannot be interrupted$() while held, and each level adds 5% cast speed$(br2)$(italic)Almost weightless, yet it holds the cast together.$()"
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}

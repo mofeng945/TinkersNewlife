@@ -1,0 +1,27 @@
+{
+  "color": "FF9BC0C7",
+  "fallbacks": [
+    "cloth"
+  ],
+  "generator": {
+    "supported_stats": [
+      "tconstruct:binding",
+      "tconstruct:maille",
+      "tconstruct:armor_maille",
+      "tconstruct:repair_kit"
+    ],
+    "transformer": {
+      "type": "tconstruct:grey_to_sprite",
+      "palette": [
+        { "color": "FF22333D", "grey": 0 },
+        { "color": "FF2E4655", "grey": 63 },
+        { "color": "FF3E5F72", "grey": 102 },
+        { "color": "FF5C858F", "grey": 140 },
+        { "color": "FF7DACAF", "grey": 178 },
+        { "color": "FF99CDD9", "grey": 216 },
+        { "color": "FFD8FBFA", "grey": 255 }
+      ]
+    }
+  },
+  "luminosity": 3
+}

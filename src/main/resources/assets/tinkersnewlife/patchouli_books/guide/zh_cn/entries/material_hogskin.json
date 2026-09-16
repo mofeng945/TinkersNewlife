@@ -1,0 +1,18 @@
+{
+  "name": "疣猪皮",
+  "category": "tinkersnewlife:materials",
+  "icon": "irons_spellbooks:hogskin",
+  "sortnum": 28,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "irons_spellbooks:hogskin",
+      "text": "$(bold)获取方式$()（铁魔法联动）：在$(bold)部件制作台$()上用铁魔法的$(bold)疣猪皮$()（$(bold)irons_spellbooks:hogskin$()）直接制作 —— $(bold)绑定结 1 个原料 / 锁链基底 2 个原料$()（部件成本由匠魂定义：tool_binding=1、maille=2）$(br2)可用于：$(bold)绑定结 / 锁链基底$()$(br2)等级：$(bold)T1$()（略高于木 T0）$(br2)说明：绑定结与锁链基底在匠魂里是$(bold)无数值部件$()（只带特性）。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)自带特性$()：$(li)$(l:trait_inscription)刻印$()（无等级）：手持此工具或穿戴此盔甲时，法术强度 +10%（按件叠加）$(br2)$(italic)皮糙肉厚，正适合刻字。$()"
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}

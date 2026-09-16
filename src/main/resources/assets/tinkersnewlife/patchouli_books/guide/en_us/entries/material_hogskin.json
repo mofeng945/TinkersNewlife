@@ -1,0 +1,18 @@
+{
+  "name": "Hogskin",
+  "category": "tinkersnewlife:materials",
+  "icon": "irons_spellbooks:hogskin",
+  "sortnum": 28,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "irons_spellbooks:hogskin",
+      "text": "$(bold)Obtaining$() (Iron's Spells crossover): craft it directly in the $(bold)Part Builder$() from the mod's $(bold)Hogskin$() ($(bold)irons_spellbooks:hogskin$()) - $(bold)1 ingredient per binding / 2 per maille$() (part costs come from Tinkers: tool_binding=1, maille=2)$(br2)Usable for: $(bold)binding / maille$()$(br2)Tier: $(bold)T1$() (slightly above wood, T0)$(br2)Note: bindings and maille are $(bold)statless parts$() in Tinkers' Construct (they carry traits only)."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Traits$():$(li)$(l:trait_inscription)Inscription$() (no levels): while holding this tool or wearing this armor, spell power +10% (stacks per piece)$(br2)$(italic)Tough hide - perfect for carving into.$()"
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}

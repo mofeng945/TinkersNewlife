@@ -51,7 +51,8 @@
     "super_tier_magic": "#dfa845",
     "all_spells_unity": "#dfa845",
     "arcane_domination": "#b06bff",
-    "mana_armor": "#dfa845"
+    "mana_armor": "#dfa845",
+    inscription: "#d58b72"
   },
   "material.tinkersnewlife": {
     "mithril": "#c9d6e8",
@@ -73,6 +74,9 @@
     "hastur_malice": "#00593d",
     "nicholas_blessing": "#ff69b4",
     "tall_skull": "#8fb84a",
-    "magic_gold": "#dfa845"
+    "magic_gold": "#dfa845",
+    arcane_cloth: "#777fad",
+    mithril_weave: "#9bc0c7",
+    hogskin: "#bb7765"
   }
 }

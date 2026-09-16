@@ -1,0 +1,13 @@
+{
+  "name": "刻印",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:textures/gui/modifiers/inscription.png",
+  "sortnum": 52,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)刻印$()（疣猪皮自带，$(bold)无等级$()）$(br2)效果：手持此工具或穿戴此盔甲时，$(bold)法术强度属性 +10%$()$(br2)说明：铁魔法的通用法术强度属性默认是 1.0，且它对所有学派生效 —— 所以 +0.1 就是全学派 +10% ✓；多件（主手 / 副手 / 护甲）各算一份、$(bold)可叠加$()，且与$(l:trait_arcane_domination)奥法支配$()、$(l:trait_all_spells_unity)万法归一$()互不覆盖 ✓。$(br2)$(italic)刻在皮上的，是咒。$()"
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}
