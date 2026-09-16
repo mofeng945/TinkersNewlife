@@ -2,7 +2,7 @@
   "modifier.tinkersnewlife": {
     "focus": "#c9d6e8",
     "spell_break": "#e4edf8",
-    "magic_conduction": "#8fa3c8",
+    "magic_conduction": "#888ccc",
     "blazing": "#ffae3c",
     "holy_war_relic": "#ffe3a8",
     "ancient_sanctuary": "#c46a18",
@@ -55,7 +55,7 @@
   },
   "material.tinkersnewlife": {
     "mithril": "#c9d6e8",
-    "arcane_iron": "#8fa3c8",
+    "arcane_iron": "#888ccc",
     "pyrium": "#ffae3c",
     "holy_spirit": "#ffeead",
     "formless_ice": "#cbeeff",

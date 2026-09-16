@@ -2,7 +2,7 @@
     "still":  "tinkersnewlife:block/molten_arcane_ingot_still",
     "flowing":  "tinkersnewlife:block/molten_arcane_ingot_flowing",
     "color":  "FFFFFFFF",
-    "fogColor":  "FF0A2C34",
+    "fogColor":  "FF43479E",
     "fogStart":  0.5,
     "fogEnd":  6
 }

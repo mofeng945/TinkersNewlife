@@ -35,8 +35,8 @@ public final class IronSpellsFluids {
 
     /** 熔融奥术锭（熔炼铁魔法奥术锭；90 mb/锭） */
     public static final FluidRegistrar.FluidEntry MOLTEN_ARCANE_INGOT = REG.entry("molten_arcane_ingot",
-            2000, 7000, 1000, 0xFF35A7B8,  // 奥术青（贴近铁魔法奥术锭）
-            FluidRegistrar.lavaProps(MapColor.COLOR_LIGHT_BLUE));
+            2000, 7000, 1000, 0xFF5D65C4,  // 奥术紫蓝（照铁魔法奥术锭实测：均色 #888CCC）
+            FluidRegistrar.lavaProps(MapColor.COLOR_BLUE));
 
     /** 神圣灵液（原初受火遗魂 + 熔融奥术锭 合金；材料「圣灵」的原料流体，1 单位 = 90 mb） */
     public static final FluidRegistrar.FluidEntry HOLY_SPIRIT = REG.entry("holy_spirit",

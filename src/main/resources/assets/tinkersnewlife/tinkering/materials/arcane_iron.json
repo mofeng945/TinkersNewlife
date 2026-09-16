@@ -1,5 +1,5 @@
 {
-    "color": "FF8FA3C8",
+    "color": "FF888CCC",
     "fallbacks": [
         "metal"
     ],
@@ -22,36 +22,15 @@
         "transformer": {
             "type": "tconstruct:grey_to_sprite",
             "palette": [
-                {
-                    "color": "FF1E2530",
-                    "grey": 0
-                },
-                {
-                    "color": "FF323C4E",
-                    "grey": 63
-                },
-                {
-                    "color": "FF4E5B72",
-                    "grey": 102
-                },
-                {
-                    "color": "FF6F7F9C",
-                    "grey": 140
-                },
-                {
-                    "color": "FF8FA3C8",
-                    "grey": 178
-                },
-                {
-                    "color": "FFB6C6E4",
-                    "grey": 216
-                },
-                {
-                    "color": "FFE4ECFF",
-                    "grey": 255
-                }
+                { "color": "FF141C36", "grey": 0 },
+                { "color": "FF233556", "grey": 63 },
+                { "color": "FF42549E", "grey": 102 },
+                { "color": "FF5D65C4", "grey": 140 },
+                { "color": "FF8C9AEB", "grey": 178 },
+                { "color": "FFCBB5FA", "grey": 216 },
+                { "color": "FFE3DDFA", "grey": 255 }
             ]
         }
     },
-    "luminosity": 5
+    "luminosity": 7
 }
