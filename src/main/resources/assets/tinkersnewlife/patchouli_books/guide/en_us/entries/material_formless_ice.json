@@ -7,7 +7,7 @@
                   {
                       "type":  "patchouli:spotlight",
                       "item":  "irons_spellbooks:permafrost_shard",
-                      "text":  "$(bold)Obtaining$() (Iron's Spells crossover):$(li)Melt $(bold)Permafrost Shard$() ($(bold)irons_spellbooks:permafrost_shard$()) into $(bold)Scorching Ice$() - $(bold)500 mB per shard$()$(li)Melt $(bold)Frosted Helve$() ($(bold)irons_spellbooks:frosted_helve$()) into $(bold)150 mB Scorching Ice$() with $(bold)50 mB Liquid Arcane$() as a byproduct$(li)Cast $(bold)50 mB$() of Scorching Ice (one unit) into Formless Ice parts$(br2)Usable for: $(bold)handle / bow limb / binding$()$(br2)Tier: $(bold)T3$()."
+                      "text":  "$(bold)Obtaining$() (Iron's Spells crossover):$(li)Melt $(bold)Permafrost Shard$() ($(bold)irons_spellbooks:permafrost_shard$()) into $(bold)Scorching Ice$() - $(bold)500 mB per shard$()$(li)Melt $(bold)Frosted Helve$() ($(bold)irons_spellbooks:frosted_helve$()) into $(bold)150 mB Scorching Ice$() with $(bold)50 mB Liquid Arcane$() as a byproduct$(li)Cast $(bold)50 mB$() of Scorching Ice (one unit) into Formless Ice parts$(li)Place a $(bold)Bone$() on a casting table and pour $(bold)50 mB Scorching Ice$() over it (the cast is consumed) to make Iron's Spells $(bold)Frozen Bone$() ($(bold)irons_spellbooks:frozen_bone$())$(br2)Usable for: $(bold)handle / bow limb / binding$()$(br2)Tier: $(bold)T3$()."
                   },
                   {
                       "type":  "patchouli:text",

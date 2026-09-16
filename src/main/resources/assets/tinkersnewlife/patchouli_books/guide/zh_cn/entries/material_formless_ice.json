@@ -7,7 +7,7 @@
                   {
                       "type":  "patchouli:spotlight",
                       "item":  "irons_spellbooks:permafrost_shard",
-                      "text":  "$(bold)获取方式$()（铁魔法联动）：$(li)熔炼铁魔法的 $(bold)永冻碎片$()（$(bold)irons_spellbooks:permafrost_shard$()）得到 $(bold)灼热之冰$() —— $(bold)500 mB / 碎片$()$(li)熔炼铁魔法的 $(bold)冰封手柄$()（$(bold)irons_spellbooks:frosted_helve$()）得到 $(bold)灼热之冰 150 mB$()，并副产 $(bold)液态奥术 50 mB$()$(li)在铸造台（或冶炼炉浇注）用 $(bold)灼热之冰 50 mB$()（1 单位）制作无相冰部件$(br2)可用于：$(bold)手柄 / 弓臂 / 绑定结$()$(br2)等级：$(bold)T3$()。"
+                      "text":  "$(bold)获取方式$()（铁魔法联动）：$(li)熔炼铁魔法的 $(bold)永冻碎片$()（$(bold)irons_spellbooks:permafrost_shard$()）得到 $(bold)灼热之冰$() —— $(bold)500 mB / 碎片$()$(li)熔炼铁魔法的 $(bold)冰封手柄$()（$(bold)irons_spellbooks:frosted_helve$()）得到 $(bold)灼热之冰 150 mB$()，并副产 $(bold)液态奥术 50 mB$()$(li)在铸造台（或冶炼炉浇注）用 $(bold)灼热之冰 50 mB$()（1 单位）制作无相冰部件$(li)把 $(bold)骨头$()放在浇筑台上，浇 $(bold)灼热之冰 50 mB$()（铸型会被消耗）即可制成铁魔法的 $(bold)冰封骨头$()（$(bold)irons_spellbooks:frozen_bone$()）$(br2)可用于：$(bold)手柄 / 弓臂 / 绑定结$()$(br2)等级：$(bold)T3$()。"
                   },
                   {
                       "type":  "patchouli:text",

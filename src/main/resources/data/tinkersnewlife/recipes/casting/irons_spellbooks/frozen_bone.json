@@ -1,0 +1,19 @@
+{
+  "type": "tconstruct:casting_table",
+  "cast": {
+    "item": "minecraft:bone"
+  },
+  "cast_consumed": true,
+  "fluid": {
+    "name": "tinkersnewlife:scorching_ice_still",
+    "amount": 50
+  },
+  "result": "irons_spellbooks:frozen_bone",
+  "cooling_time": 40,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "irons_spellbooks"
+    }
+  ]
+}
