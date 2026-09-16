@@ -101,6 +101,15 @@ public class ModCreativeTabs {
                                 acceptItemIfPresent(output, "everburning_holy_fire_bucket");
                                 // 诡厄巫法·启示录组：熔融破碎之环（神灵金原料流体）
                                 acceptItemIfPresent(output, "molten_broken_ring_bucket");
+        // 铁魔法（irons_spellbooks）联动流体桶：原初受火遗魂 / 熔融奥铁 / 神圣灵液 /
+        // 灼热之冰 / 液态奥术 / 流体灰烬 / 熔融炽金（未安装铁魔法时这些物品不存在，自动跳过）
+        acceptItemIfPresent(output, "primordial_fire_soul_bucket");
+        acceptItemIfPresent(output, "molten_arcane_ingot_bucket");
+        acceptItemIfPresent(output, "holy_spirit_bucket");
+        acceptItemIfPresent(output, "scorching_ice_bucket");
+        acceptItemIfPresent(output, "liquid_arcane_bucket");
+        acceptItemIfPresent(output, "cinder_ash_bucket");
+        acceptItemIfPresent(output, "molten_pyrium_bucket");
 
                                 // ----- 铸模（联动工具的铸模仅在对应 mod 加载时显示） -----
                                 if (anyLoaded("iceandfire")) {
