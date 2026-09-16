@@ -87,6 +87,7 @@ public final class IronSpellsArcaneHandler {
             if (best <= 0) return;
             // 每级 +5 级法术等级（用户口径：注入法术强度 = 5 × 魔导等级）
             final int boost = best * ArcaneConductionModifier.SPELL_LEVEL_PER_LEVEL;
+            TinkersNewlife.LOGGER.debug("[魔导] {} 在刻印列表里命中（魔导 {} 级）→ 法术等级 +{}", spellId, best, boost);
 
 
             Method add = find(event.getClass(), "addLevels", int.class);

@@ -48,7 +48,8 @@ public final class IronSpellsSpellAccess {
     private static Method mContainerGet;    // static ItemStack -> ISpellContainer
     private static Method mAllSpells;       // SpellSlot[] / List<SpellSlot>
     private static Method mSlotSpell;       // SpellSlot -> AbstractSpell
-    private static Method mSpellResource;   // AbstractSpell -> ResourceLocation
+    private static Method mSpellResource;   // AbstractSpell -> ResourceLocation（getSpellResource = 真 id）
+    private static Method mSpellId;         // AbstractSpell -> String（getSpellId = 真 id 字符串）
     private static Method mSpellById;       // static ResourceLocation -> AbstractSpell
     private static Method mCastSpell;       // castSpell(Level,int,ServerPlayer,CastSource,boolean)
     private static Method mCastComplete;    // onServerCastComplete(Level,int,LivingEntity,MagicData,boolean)
@@ -81,40 +82,56 @@ public final class IronSpellsSpellAccess {
             } catch (Throwable ignored) {
             }
 
-            for (Method m : cContainer.getMethods()) {
-                if (Modifier.isStatic(m.getModifiers()) && m.getParameterCount() == 1
-                        && m.getParameterTypes()[0] == ItemStack.class
-                        && cContainer.isAssignableFrom(m.getReturnType())) {
-                    mContainerGet = m;
-                    break;
+            // ⚠ 一律**按名字**取：ISpellContainer 上 get / getOrCreate 都是「静态 + ItemStack → 容器」，
+            //   靠返回类型撞可能命中 getOrCreate → "是否已有容器"永远为真 → 永远不会刻印 ✗（静默失效）。
+            //   名字取不到时再退回"按类型挑"，兼容别的 ISS 版本。
+            mContainerGet = find(cContainer, "get", ItemStack.class);
+            if (mContainerGet == null) {
+                for (Method m : cContainer.getMethods()) {
+                    if (Modifier.isStatic(m.getModifiers()) && m.getParameterCount() == 1
+                            && m.getParameterTypes()[0] == ItemStack.class
+                            && cContainer.isAssignableFrom(m.getReturnType())) {
+                        mContainerGet = m;
+                        break;
+                    }
                 }
             }
-            for (Method m : cContainer.getMethods()) {
-                if (m.getParameterCount() == 0
-                        && (m.getReturnType() == cSlot.arrayType()
-                            || java.util.List.class.isAssignableFrom(m.getReturnType()))) {
-                    mAllSpells = m;
-                    break;
+            // getAllSpells()（全量）而不是 getActiveSpells()（漏掉未激活的格子）✓
+            mAllSpells = find(cContainer, "getAllSpells");
+            if (mAllSpells == null) {
+                for (Method m : cContainer.getMethods()) {
+                    if (m.getParameterCount() == 0
+                            && (m.getReturnType() == cSlot.arrayType()
+                                || java.util.List.class.isAssignableFrom(m.getReturnType()))) {
+                        mAllSpells = m;
+                        break;
+                    }
                 }
             }
-            for (Method m : cSlot.getMethods()) {
-                if (m.getParameterCount() == 0 && cSpell.isAssignableFrom(m.getReturnType())) {
-                    mSlotSpell = m;
-                    break;
+            mSlotSpell = find(cSlot, "getSpell");
+            if (mSlotSpell == null) {
+                for (Method m : cSlot.getMethods()) {
+                    if (m.getParameterCount() == 0 && cSpell.isAssignableFrom(m.getReturnType())) {
+                        mSlotSpell = m;
+                        break;
+                    }
                 }
             }
-            for (Method m : cSpell.getMethods()) {
-                if (m.getParameterCount() == 0 && m.getReturnType() == ResourceLocation.class) {
-                    mSpellResource = m;
-                    break;
-                }
-            }
-            for (Method m : cSpellRegistry.getMethods()) {
-                if (Modifier.isStatic(m.getModifiers()) && m.getParameterCount() == 1
-                        && m.getParameterTypes()[0] == ResourceLocation.class
-                        && cSpell.isAssignableFrom(m.getReturnType())) {
-                    mSpellById = m;
-                    break;
+            // ⚠ 必须**按名字**取：cSpell 上返回 ResourceLocation 的零参方法有两个
+            //   getSpellResource()     → 真 id（如 irons_spellbooks:counterspell）✓
+            //   getSpellIconResource() → 图标贴图（…/textures/gui/spell_icons/counterspell.png）✗
+            //   之前用"第一个返回 ResourceLocation 的方法"撞上了图标那个 → 破法 tooltip 打出了贴图路径。
+            mSpellResource = find(cSpell, "getSpellResource");
+            mSpellId = find(cSpell, "getSpellId");
+            mSpellById = find(cSpellRegistry, "getSpell", ResourceLocation.class);
+            if (mSpellById == null) {
+                for (Method m : cSpellRegistry.getMethods()) {
+                    if (Modifier.isStatic(m.getModifiers()) && m.getParameterCount() == 1
+                            && m.getParameterTypes()[0] == ResourceLocation.class
+                            && cSpell.isAssignableFrom(m.getReturnType())) {
+                        mSpellById = m;
+                        break;
+                    }
                 }
             }
             // ⭐ 真正的施法入口：5 参（Level,int,ServerPlayer,CastSource,boolean）
@@ -174,7 +191,7 @@ public final class IronSpellsSpellAccess {
     public static Set<String> inscribedSpellIds(ItemStack stack) {
         init();
         if (!ready || stack == null || stack.isEmpty() || mContainerGet == null || mAllSpells == null
-                || mSlotSpell == null || mSpellResource == null) {
+                || mSlotSpell == null || (mSpellId == null && mSpellResource == null)) {
             return Collections.emptySet();
         }
         try {
@@ -196,8 +213,8 @@ public final class IronSpellsSpellAccess {
     private static void addSlot(Set<String> out, Object slot) {
         try {
             Object spell = mSlotSpell.invoke(slot);
-            Object id = mSpellResource.invoke(spell);
-            if (id != null) out.add(id.toString());
+            String id = spellId(spell);
+            if (!id.isEmpty()) out.add(id);
         } catch (Throwable ignored) {
         }
     }
@@ -213,16 +230,45 @@ public final class IronSpellsSpellAccess {
         }
     }
 
-    /** 该法术的 id 字符串（取不到返回 ""） */
+    /**
+     * 该法术的 id 字符串（如 {@code irons_spellbooks:counterspell}；取不到返回 ""）。
+     *
+     * <p>⚠ 这里必须给"真 id"，不能给图标贴图路径 —— {@code IronSpellsArcaneHandler} 拿它跟
+     * 物品内刻印的法术 id 集合做包含判断（魔导加等级），给错了就永远匹配不上 ✗。
+     * {@code getSpellId()} 本身就是 {@code getSpellResource().toString()} 的缓存 ✓。
+     */
     public static String spellId(Object spell) {
         init();
-        if (!ready || spell == null || mSpellResource == null) return "";
+        if (!ready || spell == null) return "";
         try {
-            Object id = mSpellResource.invoke(spell);
-            return id == null ? "" : id.toString();
+            if (mSpellId != null) {
+                Object id = mSpellId.invoke(spell);
+                if (id instanceof String s && !s.isEmpty()) return s;
+            }
+            Object res = mSpellResource == null ? null : mSpellResource.invoke(spell);
+            return idFromResource(res);
         } catch (Throwable t) {
             return "";
         }
+    }
+
+    /**
+     * 退路：从资源路径反推法术 id。
+     * <p>兼容两种形状：{@code irons_spellbooks:counterspell} 与
+     * {@code irons_spellbooks:textures/gui/spell_icons/counterspell.png} → 都得到
+     * {@code irons_spellbooks:counterspell} ✓。
+     */
+    private static String idFromResource(Object res) {
+        if (res == null) return "";
+        String s = res.toString();
+        int colon = s.indexOf(':');
+        if (colon <= 0) return "";
+        String ns = s.substring(0, colon);
+        String path = s.substring(colon + 1);
+        int slash = path.lastIndexOf('/');
+        String file = slash < 0 ? path : path.substring(slash + 1);
+        if (file.endsWith(".png")) file = file.substring(0, file.length() - 4);
+        return file.isEmpty() ? "" : ns + ":" + file;
     }
 
     // ============================================================
