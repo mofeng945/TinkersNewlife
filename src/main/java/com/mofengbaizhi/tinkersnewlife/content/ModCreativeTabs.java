@@ -112,6 +112,7 @@ public class ModCreativeTabs {
         acceptItemIfPresent(output, "molten_pyrium_bucket");
         acceptItemIfPresent(output, "molten_mithril_bucket");
         acceptItemIfPresent(output, "magic_gold_essence_bucket");
+        acceptItemIfPresent(output, "origin_polymer_bucket");
         // 纯合金流体的"物品形态"（浇铸回环的另一半）：物品本身常驻注册，但铁魔法不在场时拿不到流体，
         // 所以在创造栏里只在铁魔法加载时显示 ✓
         if (anyLoaded("irons_spellbooks")) {

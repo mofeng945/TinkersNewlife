@@ -1155,5 +1155,22 @@
   "modifier.tinkersnewlife.biting_frost": "寒霜刺骨",
   "modifier.tinkersnewlife.biting_frost.description": "命中后使敌人获得霜冻效果，持续 3 × 等级 秒，冷却 6 秒。",
   "modifier.tinkersnewlife.biting_frost.tip": "§b命中使敌人霜冻 %1$s 秒（冷却 %2$s 秒）",
-  "modifier.tinkersnewlife.biting_frost.flavor": "§7骨里带霜，触之刺骨。"
+  "modifier.tinkersnewlife.biting_frost.flavor": "§7骨里带霜，触之刺骨。",
+  "fluid_type.tinkersnewlife.origin_polymer": "源流聚合物",
+  "block.tinkersnewlife.origin_polymer_block": "源流聚合物",
+  "item.tinkersnewlife.origin_polymer_bucket": "源流聚合物桶",
+  "material.tinkersnewlife.origin_alloy": "源钻合金",
+  "material.tinkersnewlife.origin_alloy.flavor": "万物之始，皆归于此。",
+  "modifier.tinkersnewlife.origin_magic": "奥术始源",
+  "modifier.tinkersnewlife.origin_magic.description": "最高等级的单件生效：你释放的所有法术等级 +2 × 等级；且无需学习即可使用未学会的邪术。",
+  "modifier.tinkersnewlife.origin_magic.tip": "§d所有法术等级 +%1$s；邪术无需学习",
+  "modifier.tinkersnewlife.origin_magic.flavor": "§7万法之始，本不需许可。",
+  "modifier.tinkersnewlife.chaos_flow": "混沌之流",
+  "modifier.tinkersnewlife.chaos_flow.description": "你的任何近战或远程伤害都会被均分为多段：1 段物理伤害，其余每段对应一种学派法术伤害（环境中有多少个学派就分多少段），每段各自结算抗性。",
+  "modifier.tinkersnewlife.chaos_flow.tip": "§d近战/远程伤害均分：1 段物理 + 每学派 1 段",
+  "modifier.tinkersnewlife.chaos_flow.flavor": "§7一斩落十色。",
+  "modifier.tinkersnewlife.order_origin": "秩序之初",
+  "modifier.tinkersnewlife.order_origin.description": "你受到的任何伤害都会被重新计算为物理伤害再施加在你身上，因此可以被你的护甲、饰品与属性正常减免。",
+  "modifier.tinkersnewlife.order_origin.tip": "§d受到的伤害重算为物理伤害（可被护甲减免）",
+  "modifier.tinkersnewlife.order_origin.flavor": "§7先有秩序，后有伤。"
 }

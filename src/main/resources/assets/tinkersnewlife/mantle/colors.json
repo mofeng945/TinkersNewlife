@@ -104,7 +104,10 @@
     "zhenyan_xiangai": "#ffd166",
     "zi_bi_yuan_dun_guo": "#b06bff",
     "zuosha_botu": "#ff4444",
-    "biting_frost": "#a5cbca"
+    "biting_frost": "#a5cbca",
+    "origin_magic": "#9a92e8",
+    "chaos_flow": "#ff7ce0",
+    "order_origin": "#dcd8ff"
   },
   "material.tinkersnewlife": {
     "mithril": "#c9d6e8",
@@ -130,6 +133,7 @@
     "arcane_cloth": "#777fad",
     "mithril_weave": "#9bc0c7",
     "hogskin": "#bb7765",
-    "frozen_bone": "#abbfc1"
+    "frozen_bone": "#abbfc1",
+    "origin_alloy": "#9a92e8"
   }
 }

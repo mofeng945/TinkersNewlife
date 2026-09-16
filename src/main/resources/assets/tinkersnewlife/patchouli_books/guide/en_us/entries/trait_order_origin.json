@@ -1,0 +1,13 @@
+{
+  "name": "Order of Origin",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:textures/gui/modifiers/order_origin.png",
+  "sortnum": 56,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Order of Origin$() (comes with Origin Alloy armor, $(bold)no levels$())$(br2)Effect: $(bold)any damage you take is recomputed as physical damage$() before it lands on you, so it goes through your $(bold)armor points / toughness / protection enchantments / curios and attributes$() as usual.$(br2)Typical use: damage that used to ignore armor (magic, true damage, and so on) must now get past your plate first.$(br2)$(bold)Scope note$(): this covers $(bold)damage that goes through damage events$() (practically all combat damage); effects that bypass events and write your health directly are not covered.$(br2)$(italic)Order first, then the wound.$()"
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}

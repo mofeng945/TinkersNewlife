@@ -10,7 +10,8 @@
     "SpellInterruptFocusMixin",
     "SuperTierPowerMixin",
     "SuperTierCastContextMixin",
-    "SuperTierEffectMixin"
+    "SuperTierEffectMixin",
+    "EldritchLearningMixin"
   ],
   "client": [
     "EntityRenderDispatcherMixin",

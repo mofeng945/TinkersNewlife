@@ -563,5 +563,22 @@
   "modifier.tinkersnewlife.biting_frost": "Biting Frost",
   "modifier.tinkersnewlife.biting_frost.description": "Hits inflict Frost on the enemy for 3 x level seconds, with a 6 second cooldown.",
   "modifier.tinkersnewlife.biting_frost.tip": "§bHits freeze the enemy for %1$s s (cooldown %2$s s)",
-  "modifier.tinkersnewlife.biting_frost.flavor": "§7Frost in the bone, biting to the touch."
+  "modifier.tinkersnewlife.biting_frost.flavor": "§7Frost in the bone, biting to the touch.",
+  "fluid_type.tinkersnewlife.origin_polymer": "Origin Polymer",
+  "block.tinkersnewlife.origin_polymer_block": "Origin Polymer",
+  "item.tinkersnewlife.origin_polymer_bucket": "Origin Polymer Bucket",
+  "material.tinkersnewlife.origin_alloy": "Origin Alloy",
+  "material.tinkersnewlife.origin_alloy.flavor": "Everything begins here, and returns here.",
+  "modifier.tinkersnewlife.origin_magic": "Origin Magic",
+  "modifier.tinkersnewlife.origin_magic.description": "Only the single highest-level piece applies: all spells you cast get +2 x level levels, and unlearned eldritch spells can be used without learning them.",
+  "modifier.tinkersnewlife.origin_magic.tip": "§dAll spells +%1$s levels; eldritch needs no learning",
+  "modifier.tinkersnewlife.origin_magic.flavor": "§7The first magic never needed permission.",
+  "modifier.tinkersnewlife.chaos_flow": "Chaos Flow",
+  "modifier.tinkersnewlife.chaos_flow.description": "Any melee or ranged damage you deal is split evenly into several segments: one physical, and one per magic school present (as many segments as there are schools), each resolved against its own resistance.",
+  "modifier.tinkersnewlife.chaos_flow.tip": "§dMelee/ranged damage split: 1 physical + 1 per school",
+  "modifier.tinkersnewlife.chaos_flow.flavor": "§7One cut, ten colors.",
+  "modifier.tinkersnewlife.order_origin": "Order of Origin",
+  "modifier.tinkersnewlife.order_origin.description": "Any damage you take is recomputed as physical damage before it is applied to you, so your armor, curios and attributes can reduce it normally.",
+  "modifier.tinkersnewlife.order_origin.tip": "§dIncoming damage recast as physical (armor applies)",
+  "modifier.tinkersnewlife.order_origin.flavor": "§7Order first, then the wound."
 }

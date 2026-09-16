@@ -100,8 +100,13 @@ public final class IronSpellsArcaneHandler {
             }
 
             // 每级 +5 级法术等级（用户口径：注入法术强度 = 5 × 魔导等级）
-            final int boost = Math.max(superBoost,
-                    best * ArcaneConductionModifier.SPELL_LEVEL_PER_LEVEL);
+            // ⭐ 源钻合金「奥术始源」：**所有法术** +2 × 等级 级（最高单件生效 ✓）——
+            //    与魔导不同，它不要求法术刻印在物品里 ✓。
+            int originBoost = com.mofengbaizhi.tinkersnewlife.content.modifier.OriginMagicModifier
+                    .SPELL_LEVEL_PER_LEVEL
+                    * com.mofengbaizhi.tinkersnewlife.content.modifier.OriginMagicModifier.bestLevel(caster);
+            final int boost = Math.max(Math.max(superBoost,
+                    best * ArcaneConductionModifier.SPELL_LEVEL_PER_LEVEL), originBoost);
             if (boost <= 0) return;
             if (best > 0) {
                 TinkersNewlife.LOGGER.debug("[魔导] {} 在刻印列表里命中（魔导 {} 级）→ 法术等级 +{}",

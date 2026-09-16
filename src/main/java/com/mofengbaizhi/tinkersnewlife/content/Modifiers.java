@@ -425,6 +425,21 @@ public class Modifiers {
             MODIFIERS.register("biting_frost",
                     com.mofengbaizhi.tinkersnewlife.content.modifier.BitingFrostModifier::new);
 
+    /** 铁魔法联动特性·奥术始源（材料「源钻合金」通用，有等级，最高单件生效）：所有法术 +2×等级 级；邪术无需学习 */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.OriginMagicModifier> ORIGIN_MAGIC =
+            MODIFIERS.register("origin_magic",
+                    com.mofengbaizhi.tinkersnewlife.content.modifier.OriginMagicModifier::new);
+
+    /** 铁魔法联动特性·混沌之流（材料「源钻合金」工具，无等级）：近战/弹射伤害按"1 段物理 + 每学派 1 段"均分 */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.ChaosFlowModifier> CHAOS_FLOW =
+            MODIFIERS.register("chaos_flow",
+                    com.mofengbaizhi.tinkersnewlife.content.modifier.ChaosFlowModifier::new);
+
+    /** 铁魔法联动特性·秩序之初（材料「源钻合金」盔甲，无等级）：受到的伤害重算为物理伤害再施加 */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.OrderOriginModifier> ORDER_ORIGIN =
+            MODIFIERS.register("order_origin",
+                    com.mofengbaizhi.tinkersnewlife.content.modifier.OrderOriginModifier::new);
+
     /** 近战特性·神圣之力（神灵金近战头自带，联动铁魔法/启示录：+180法力、注入火墙术Lv5/天使之翼Lv5/治愈之环Lv10、火墙无视无敌帧） */
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.DivinePowerModifier> DIVINE_POWER =
         MODIFIERS.register("divine_power",

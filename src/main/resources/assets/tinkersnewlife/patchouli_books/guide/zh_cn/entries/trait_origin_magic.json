@@ -1,0 +1,13 @@
+{
+  "name": "奥术始源",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:textures/gui/modifiers/origin_magic.png",
+  "sortnum": 54,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)奥术始源$()（源钻合金通用自带，$(bold)有等级$()）$(br2)$(bold)只有等级最高的单件生效$()（不叠加）：$(li)你释放的$(bold)所有法术等级 +2 × 等级$()（与「魔导」不同：魔导只强化刻印在物品里的法术，这里对所有法术生效）$(li)$(bold)无需学习即可使用未学会的邪术$()（邪术＝铁魔法的 eldritch 学派；法术信息也不会再被打码）$(br2)$(italic)万法之始，本不需许可。$()"
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}

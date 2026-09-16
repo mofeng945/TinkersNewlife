@@ -12,6 +12,9 @@ import java.lang.reflect.Modifier;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
+import net.minecraft.resources.ResourceKey;
 
 /**
  * 铁魔法法术访问层（纯反射软依赖）。
@@ -51,6 +54,10 @@ public final class IronSpellsSpellAccess {
     private static Method mSpellResource;   // AbstractSpell -> ResourceLocation（getSpellResource = 真 id）
     private static Method mSpellId;         // AbstractSpell -> String（getSpellId = 真 id 字符串）
     private static Method mSpellMaxLevel;   // AbstractSpell -> int（getMaxLevel = 该法术等级上限）
+    private static Method mSpellSchool;     // AbstractSpell -> SchoolType
+    private static Method mSchoolId;        // SchoolType -> ResourceLocation（getId）
+    private static Method mSchoolDamageType;// SchoolType -> ResourceKey<DamageType>（getDamageType）
+    private static Method mSchoolsGet;      // static SchoolRegistry.REGISTRY.get() -> IForgeRegistry
     private static Method mSpellById;       // static ResourceLocation -> AbstractSpell
     private static Method mCastSpell;       // castSpell(Level,int,ServerPlayer,CastSource,boolean)
     private static Method mCastComplete;    // onServerCastComplete(Level,int,LivingEntity,MagicData,boolean)
@@ -125,6 +132,23 @@ public final class IronSpellsSpellAccess {
             mSpellResource = find(cSpell, "getSpellResource");
             mSpellId = find(cSpell, "getSpellId");
             mSpellMaxLevel = find(cSpell, "getMaxLevel");
+            // 学派相关（「混沌之流」按学派拆段 + 「奥术始源」识别邪术）
+            try {
+                Class<?> cSchool = Class.forName("io.redspace.ironsspellbooks.api.spells.SchoolType");
+                Class<?> cSchoolRegistry = Class.forName("io.redspace.ironsspellbooks.api.registry.SchoolRegistry");
+                mSpellSchool = find(cSpell, "getSchoolType");
+                mSchoolId = find(cSchool, "getId");
+                mSchoolDamageType = find(cSchool, "getDamageType");
+                for (java.lang.reflect.Field f : cSchoolRegistry.getFields()) {
+                    if (f.getName().equals("REGISTRY") && java.lang.reflect.Modifier.isStatic(f.getModifiers())) {
+                        Object supplier = f.get(null);
+                        mSchoolsGet = find(supplier.getClass(), "get");
+                        break;
+                    }
+                }
+            } catch (Throwable ignored) {
+                // 铁魔法版本不同 / 不在场 → 这两个特性静默降级（不拆段、不放开邪术）✓
+            }
             mSpellById = find(cSpellRegistry, "getSpell", ResourceLocation.class);
             if (mSpellById == null) {
                 for (Method m : cSpellRegistry.getMethods()) {
@@ -466,6 +490,57 @@ public final class IronSpellsSpellAccess {
             TinkersNewlife.LOGGER.warn("[破法] 刻入 {} 失败: {}", spellId, t.toString());
             return false;
         }
+    }
+
+    /**
+     * 该法术是否属于<b>邪术</b>学派（{@code irons_spellbooks:eldritch}）—— 供「奥术始源」放开学习限制 ✓。
+     */
+    public static boolean isEldritch(Object spell) {
+        init();
+        if (!ready || spell == null || mSpellSchool == null || mSchoolId == null) return false;
+        try {
+            Object school = mSpellSchool.invoke(spell);
+            Object id = mSchoolId.invoke(school);
+            return id instanceof ResourceLocation rl && "eldritch".equals(rl.getPath());
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /**
+     * <b>所有已注册学派</b>的法术伤害类型（用于「混沌之流」按学派拆段）✓。
+     *
+     * <p>从学派注册表现取 ✓ —— 每个 {@code SchoolType} 自带 {@code getDamageType()}
+     * （返回 {@code ResourceKey<DamageType>}）✓，所以<b>附属模组新加的学派自动算进来</b> ✓。
+     * 取不到（铁魔法不在场）返回空表 ✓。
+     */
+    public static List<ResourceKey<net.minecraft.world.damagesource.DamageType>> schoolDamageKeys() {
+        init();
+        List<ResourceKey<net.minecraft.world.damagesource.DamageType>> out = new ArrayList<>();
+        if (!ready || mSchoolsGet == null || mSchoolDamageType == null) return out;
+        try {
+            Object registry = mSchoolsGet.invoke(null);
+            if (registry == null) return out;
+            Method values = find(registry.getClass(), "getValues");
+            if (values == null) return out;
+            Object raw = values.invoke(registry);
+            if (raw instanceof Iterable<?> it) {
+                for (Object school : it) {
+                    try {
+                        Object key = mSchoolDamageType.invoke(school);
+                        if (key instanceof ResourceKey<?> rk) {
+                            @SuppressWarnings("unchecked")
+                            ResourceKey<net.minecraft.world.damagesource.DamageType> typed =
+                                    (ResourceKey<net.minecraft.world.damagesource.DamageType>) rk;
+                            if (!out.contains(typed)) out.add(typed);
+                        }
+                    } catch (Throwable ignored) {
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return out;
     }
 
     /** 法术类型类（事件监听要用 Class 做原始 addListener） */

@@ -1,0 +1,18 @@
+{
+  "name": "源钻合金",
+  "category": "tinkersnewlife:materials",
+  "icon": "tinkersnewlife:origin_polymer_bucket",
+  "sortnum": 30,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:origin_polymer_bucket",
+      "text": "$(bold)获取方式$()（铁魔法联动·四熔合一）：$(li)合金：$(bold)120 mB 液态奥术 + 120 mB 流体灰烬 + 90 mB 熔融钻石 + 90 mB 熔融残骸 → 180 mB 源流聚合物$()$(br2)一单位 = $(bold)90 mB$()$(br2)可用于：$(bold)除弓弦与箭羽外的所有部件$()（顶端 / 手柄 / 绑定结 / 弓臂 / 弓把 / 箭杆 / 锁链基底 / 全部盔甲盾牌）$(br2)等级：$(bold)T4$()；顶端 $(bold)挖掘等级为下界合金$()。$(br2)数值：整体$(bold)高于玛玉灵、低于悚怖钢$()（取两者之间）。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)自带特性$()：$(li)$(l:trait_origin_magic)奥术始源$()（有等级·通用·最高单件生效）：所有法术 +2×等级 级；邪术无需学习$(li)$(l:trait_chaos_flow)混沌之流$()（无等级·工具）：近战 / 远程伤害均分为 1 段物理 + 每学派 1 段$(li)$(l:trait_order_origin)秩序之初$()（无等级·盔甲）：受到的伤害重算为物理伤害，可被护甲减免$(br2)$(italic)万物之始，皆归于此。$()"
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}

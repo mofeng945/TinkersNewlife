@@ -1,0 +1,17 @@
+{
+  "type": "tconstruct:alloy",
+  "inputs": [
+    { "amount": 120, "fluid": "tinkersnewlife:liquid_arcane_still" },
+    { "amount": 120, "fluid": "tinkersnewlife:cinder_ash_still" },
+    { "amount": 90, "tag": "tconstruct:molten_diamond" },
+    { "amount": 90, "tag": "tconstruct:molten_debris" }
+  ],
+  "result": {
+    "fluid": "tinkersnewlife:origin_polymer_still",
+    "amount": 180
+  },
+  "temperature": 2200,
+  "conditions": [
+    { "type": "forge:mod_loaded", "modid": "irons_spellbooks" }
+  ]
+}

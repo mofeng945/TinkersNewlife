@@ -1,0 +1,13 @@
+{
+  "name": "秩序之初",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:textures/gui/modifiers/order_origin.png",
+  "sortnum": 56,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)秩序之初$()（源钻合金盔甲自带，$(bold)无等级$()）$(br2)效果：你受到的$(bold)任何伤害都会被重新计算为物理伤害$()再落到你身上 —— 于是它会正常经过你的$(bold)护甲值 / 韧性 / 保护附魔 / 饰品与属性$()的减免。$(br2)典型用途：那些原本无视护甲的伤害（魔法、真实伤害等）从此也要先过你的甲。$(br2)$(bold)口径说明$()：覆盖的是$(bold)走伤害事件的伤害$()（实战中几乎全部）；$(bold)绕过伤害事件直接改血的效果不在此列$()。$(br2)$(italic)先有秩序，后有伤。$()"
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}

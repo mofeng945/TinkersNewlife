@@ -1,0 +1,13 @@
+{
+  "name": "Origin Magic",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:textures/gui/modifiers/origin_magic.png",
+  "sortnum": 54,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Origin Magic$() (comes with Origin Alloy, $(bold)leveled$())$(br2)$(bold)Only the single highest-level piece applies$() (it does not stack):$(li)$(bold)all spells you cast get +2 x level levels$() (unlike Arcane Conduction, which only boosts spells inscribed in the item, this applies to every spell)$(li)$(bold)unlearned eldritch spells can be used without learning$() (eldritch = Iron's Spells' eldritch school; their tooltips are no longer scrambled either)$(br2)$(italic)The first magic never needed permission.$()"
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}

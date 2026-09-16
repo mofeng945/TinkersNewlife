@@ -1,0 +1,13 @@
+{
+  "name": "混沌之流",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:textures/gui/modifiers/chaos_flow.png",
+  "sortnum": 55,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)混沌之流$()（源钻合金工具自带，$(bold)无等级$()）$(br2)效果：你的$(bold)近战 / 弹射物伤害$()会被均分为多段 —— $(bold)1 段物理 + 每学派 1 段$()，每段各按自己的伤害类型结算，所以目标的各项抗性会$(bold)分别生效$()。$(br2)段数是$(bold)动态$()的：铁魔法默认 9 个学派 → 共 10 段（每段 1/10）；附属模组新加的学派也会自动算进来。$(br2)总伤害不变，变的是「它由哪些伤害类型构成」 —— 对高抗性的目标可能更疼，对免疫某学派的目标则那一段落空。$(br2)$(italic)一斩落十色。$()"
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}

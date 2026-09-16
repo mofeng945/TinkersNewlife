@@ -1,0 +1,13 @@
+{
+  "name": "Chaos Flow",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:textures/gui/modifiers/chaos_flow.png",
+  "sortnum": 55,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Chaos Flow$() (comes with Origin Alloy tools, $(bold)no levels$())$(br2)Effect: your $(bold)melee / projectile damage$() is split evenly into several segments - $(bold)1 physical plus 1 per magic school$() - and each segment resolves against its own resistance, so the target's resistances $(bold)apply separately$().$(br2)The count is $(bold)dynamic$(): Iron's Spells has 9 schools by default, so 10 segments of 1/10 each; schools added by addons are counted automatically.$(br2)Total damage is unchanged - what changes is which damage types make it up. Against a highly resistant target it may hurt more; against a target immune to one school that segment is simply lost.$(br2)$(italic)One cut, ten colors.$()"
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}

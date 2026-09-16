@@ -1,0 +1,12 @@
+{
+  "default": [
+    { "level": 1, "name": "tinkersnewlife:origin_magic" },
+    { "level": 1, "name": "tinkersnewlife:chaos_flow" }
+  ],
+  "perStat": {
+    "tconstruct:armor": [
+      { "level": 1, "name": "tinkersnewlife:origin_magic" },
+      { "level": 1, "name": "tinkersnewlife:order_origin" }
+    ]
+  }
+}

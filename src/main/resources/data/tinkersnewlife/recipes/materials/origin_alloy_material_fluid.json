@@ -1,0 +1,12 @@
+{
+  "type": "tconstruct:material_fluid",
+  "fluid": {
+    "fluid": "tinkersnewlife:origin_polymer_still",
+    "amount": 90
+  },
+  "temperature": 2200,
+  "output": "tinkersnewlife:origin_alloy",
+  "conditions": [
+    { "type": "forge:mod_loaded", "modid": "irons_spellbooks" }
+  ]
+}

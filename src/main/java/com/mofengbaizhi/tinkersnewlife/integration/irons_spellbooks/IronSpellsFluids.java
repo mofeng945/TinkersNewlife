@@ -83,6 +83,16 @@ public final class IronSpellsFluids {
             2500, 9000, 1200, 0xFFDFA845,  // 紫影魔金
             FluidRegistrar.lavaProps(MapColor.COLOR_ORANGE));
 
+    /**
+     * 源流聚合物（材料「<b>源钻合金</b>」的原料流体，4 级材料的唯一来源）。
+     *
+     * <p>合金：<b>120 mB 液态奥术 + 120 mB 流体灰烬 + 90 mB 熔融钻石 + 90 mB 熔融残骸 → 180 mB 源流聚合物</b>
+     * （四种熔体合一；钻石与残骸用匠魂自带的熔融流体 ✓）。1 单位材料 = 90 mB ✓。
+     */
+    public static final FluidRegistrar.FluidEntry ORIGIN_POLYMER = REG.entry("origin_polymer",
+            3000, 9000, 1500, 0xFF7C74CF,  // 源光紫（紫 → 白）
+            FluidRegistrar.lavaProps(MapColor.COLOR_PURPLE));
+
     /** 把本组四张注册表挂到模组总线（仅铁魔法在场时被调用） */
     public static void register(IEventBus bus) {
         REG.register(bus);

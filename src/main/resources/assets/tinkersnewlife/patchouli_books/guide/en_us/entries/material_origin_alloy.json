@@ -1,0 +1,18 @@
+{
+  "name": "Origin Alloy",
+  "category": "tinkersnewlife:materials",
+  "icon": "tinkersnewlife:origin_polymer_bucket",
+  "sortnum": 30,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:origin_polymer_bucket",
+      "text": "$(bold)Obtaining$() (Iron's Spells crossover - four melts in one):$(li)Alloy: $(bold)120 mB Liquid Arcane + 120 mB Cinder Ash + 90 mB Molten Diamond + 90 mB Molten Debris -> 180 mB Origin Polymer$()$(br2)One unit = $(bold)90 mB$()$(br2)Usable for: $(bold)every part type except bowstring and fletching$() (head / handle / binding / limb / grip / arrow shaft / maille / all armor and shields)$(br2)Tier: $(bold)T4$(); the head mines at $(bold)netherite level$().$(br2)Stats: $(bold)above Manyullyn, below Dreadsteel$() (the midpoint of the two)."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Traits$():$(li)$(l:trait_origin_magic)Origin Magic$() (leveled, general, highest single piece only): all spells +2 x level levels; eldritch needs no learning$(li)$(l:trait_chaos_flow)Chaos Flow$() (no levels, tools): melee/ranged damage split into 1 physical + 1 per school$(li)$(l:trait_order_origin)Order of Origin$() (no levels, armor): incoming damage recast as physical so armor applies$(br2)$(italic)Everything begins here, and returns here.$()"
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}

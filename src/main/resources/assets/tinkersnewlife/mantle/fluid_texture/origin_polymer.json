@@ -1,0 +1,8 @@
+{
+  "still": "tinkersnewlife:block/origin_polymer_still",
+  "flowing": "tinkersnewlife:block/origin_polymer_flowing",
+  "color": "FFFFFFFF",
+  "fogColor": "FF6A5ED0",
+  "fogStart": 0.5,
+  "fogEnd": 6.0
+}
