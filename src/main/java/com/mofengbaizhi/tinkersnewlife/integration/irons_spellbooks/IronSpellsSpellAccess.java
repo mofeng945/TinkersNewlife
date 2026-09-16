@@ -157,17 +157,21 @@ public final class IronSpellsSpellAccess {
                     break;
                 }
             }
-            // 施法来源：优先 SPELLBOOK，退回 SCROLL，再退回枚举第一个
+            // 施法来源：优先 **SCROLL** —— 反汇编 CastSource#consumesMana() 可知：
+            //   只有 SPELLBOOK（以及开配置时的 SWORD）消耗法力，SCROLL/MOB/COMMAND/NONE 都不消耗 ✓
+            //   （respectsCooldown() 同样是 SPELLBOOK/SWORD 才为真 → 赠送施法也不会吃 ISS 自身冷却 ✓）。
+            //   "特性白送的法术"（提洛斯炼狱的地狱浮现、万法归一的回响打击/深渊庇佑）就该走这个语义 ✓，
+            //   否则会真的扣蓝 ✗。退回 SPELLBOOK，再退回枚举第一个。
             Object[] constants = cCastSource.getEnumConstants();
             if (constants != null && constants.length > 0) {
                 defaultCastSource = constants[0];
                 for (Object c : constants) {
                     String n = String.valueOf(c);
-                    if ("SPELLBOOK".equals(n)) {
+                    if ("SCROLL".equals(n)) {
                         defaultCastSource = c;
                         break;
                     }
-                    if ("SCROLL".equals(n)) defaultCastSource = c;
+                    if ("SPELLBOOK".equals(n)) defaultCastSource = c;
                 }
             }
             ready = true;

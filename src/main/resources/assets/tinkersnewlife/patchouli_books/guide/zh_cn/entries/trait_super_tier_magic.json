@@ -1,0 +1,13 @@
+{
+  "name": "超位魔法",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:textures/gui/modifiers/super_tier_magic.png",
+  "sortnum": 48,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)超位魔法$()（魔金工具自带，$(bold)无等级$()）$(br2)效果：$(li)工具自带$(bold)法术容器$()，可以用$(bold)奥术铁砧$()把卷轴里的法术刻进去（手持或穿戴后可在法术轮盘里选到）$(li)刻印的法术$(bold)强度提升至 50 级$()（已经更高的保持原样）$(li)$(bold)范围 ×5$()$(li)$(bold)持续时间 ×3$()$(br2)说明：铁魔法里范围与持续都由法术强度派生，所以实现上是「强度 ×5 → 范围 ×5」，再把伤害与治疗$(bold)除回原值$()、把状态时长乘 $(bold)3/5$() 落到 ×3 —— 最终只放大范围与持续，$(bold)伤害不吃额外的 ×5$()（只按 50 级曲线走）。"
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}

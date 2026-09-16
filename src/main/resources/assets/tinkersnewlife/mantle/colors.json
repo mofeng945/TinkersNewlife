@@ -47,7 +47,11 @@
     "godrealm_overstep": "#ff55ff",
     "heaven_earth_forged": "#555555",
     "soul_discount": "#ffff55",
-    "cursed_adrenaline": "#55ff55"
+    "cursed_adrenaline": "#55ff55",
+    "super_tier_magic": "#dfa845",
+    "all_spells_unity": "#dfa845",
+    "arcane_domination": "#b06bff",
+    "mana_armor": "#dfa845"
   },
   "material.tinkersnewlife": {
     "mithril": "#c9d6e8",
@@ -68,6 +72,7 @@
     "gheloth_remains": "#2a0d0d",
     "hastur_malice": "#00593d",
     "nicholas_blessing": "#ff69b4",
-    "tall_skull": "#8fb84a"
+    "tall_skull": "#8fb84a",
+    "magic_gold": "#dfa845"
   }
 }

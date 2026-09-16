@@ -1,0 +1,18 @@
+{
+  "name": "魔金",
+  "category": "tinkersnewlife:materials",
+  "icon": "tinkersnewlife:magic_gold_essence_bucket",
+  "sortnum": 25,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:magic_gold_essence_bucket",
+      "text": "$(bold)获取方式$()（铁魔法联动·三材合一）：$(li)合金：$(bold)90 mB 熔融炽金 + 90 mB 熔融秘银 + 90 mB 熔融奥术锭 → 180 mB 魔金精华$()（也就是把三种联动材料的熔体并到一起）$(br2)一单位 = $(bold)90 mB$()$(br2)可用于：$(bold)顶端 / 绑定结 / 手柄 / 弓臂 / 弓把 / 全部盔甲盾牌 / 锁链基底$()$(br2)等级：$(bold)T4$()；顶端 $(bold)挖掘等级为下界合金$()。$(br2)面板（整体$(bold)略低于玛玉灵$()）：顶端 1150 耐久 / 6.0 速度 / 3.25 攻击；手柄 +9% 耐久 / +18% 攻击 / −4% 攻速 / −8% 挖掘；弓臂 1150 耐久 / −0.30 拉弓 / +0.22 初速；弓把 −0.16 精准 / 3.2 攻击。盔甲：头盔 360+2.0、胸甲 530+6.5、护腿 500+5.0、靴子 430+2.0、盾 600（韧性均为 2.5）。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)自带特性$()：$(li)$(l:trait_super_tier_magic)超位魔法$()（无等级·工具）：工具内可注入法术，被注入的法术强度视为 50 级，范围 ×5、持续 ×3$(li)$(l:trait_all_spells_unity)万法归一$()（有等级·通用·最高单件生效）：法力上限 +100×等级；攻击赠 5 级回响打击（30 秒）、血量 20% 赠 3 级深渊庇佑（200 秒）$(li)$(l:trait_arcane_domination)奥法支配$()（无等级·通用）：全学派法术强度 +200%$(li)$(l:trait_mana_armor)魔力铠甲$()（有等级·盔甲·可叠加）：每 100 点法力上限提供 5 点伤害减免$(br2)$(italic)三种联动熔体合一，才配叫魔金。$()"
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}

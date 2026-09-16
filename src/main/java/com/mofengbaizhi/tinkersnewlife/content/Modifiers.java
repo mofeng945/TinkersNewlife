@@ -395,6 +395,26 @@ public class Modifiers {
             MODIFIERS.register("spell_break",
                     com.mofengbaizhi.tinkersnewlife.content.modifier.SpellBreakModifier::new);
 
+    /** 铁魔法联动特性·超位魔法（材料「魔金」工具自带，无等级）：可注入法术 + 强度抬到 50 级 + 范围×5/持续×3 */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.SuperTierMagicModifier> SUPER_TIER_MAGIC =
+            MODIFIERS.register("super_tier_magic",
+                    com.mofengbaizhi.tinkersnewlife.content.modifier.SuperTierMagicModifier::new);
+
+    /** 铁魔法联动特性·万法归一（材料「魔金」通用，有等级）：法力上限+100/级（最高单件）+ 攻击赠回响打击 + 残血赠深渊庇佑 */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.AllSpellsUnityModifier> ALL_SPELLS_UNITY =
+            MODIFIERS.register("all_spells_unity",
+                    com.mofengbaizhi.tinkersnewlife.content.modifier.AllSpellsUnityModifier::new);
+
+    /** 铁魔法联动特性·奥法支配（材料「魔金」通用，无等级）：全学派法术强度 +200% */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.ArcaneDominationModifier> ARCANE_DOMINATION =
+            MODIFIERS.register("arcane_domination",
+                    com.mofengbaizhi.tinkersnewlife.content.modifier.ArcaneDominationModifier::new);
+
+    /** 铁魔法联动特性·魔力铠甲（材料「魔金」盔甲，有等级、可叠加）：每 100 法力上限给 5 点伤害减免 */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.ManaArmorModifier> MANA_ARMOR =
+            MODIFIERS.register("mana_armor",
+                    com.mofengbaizhi.tinkersnewlife.content.modifier.ManaArmorModifier::new);
+
     /** 近战特性·神圣之力（神灵金近战头自带，联动铁魔法/启示录：+180法力、注入火墙术Lv5/天使之翼Lv5/治愈之环Lv10、火墙无视无敌帧） */
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.DivinePowerModifier> DIVINE_POWER =
         MODIFIERS.register("divine_power",

@@ -1,0 +1,14 @@
+{
+  "default": [
+    { "level": 1, "name": "tinkersnewlife:super_tier_magic" },
+    { "level": 1, "name": "tinkersnewlife:all_spells_unity" },
+    { "level": 1, "name": "tinkersnewlife:arcane_domination" }
+  ],
+  "perStat": {
+    "tconstruct:armor": [
+      { "level": 1, "name": "tinkersnewlife:all_spells_unity" },
+      { "level": 1, "name": "tinkersnewlife:arcane_domination" },
+      { "level": 1, "name": "tinkersnewlife:mana_armor" }
+    ]
+  }
+}

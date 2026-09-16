@@ -1,0 +1,13 @@
+{
+  "name": "Myriad Spells as One",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:textures/gui/modifiers/all_spells_unity.png",
+  "sortnum": 49,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Myriad Spells as One$() (comes with Magic Gold, $(bold)leveled$())$(br2)$(bold)Only the single highest-level piece applies$() (it does not stack):$(li)max mana $(bold)+100 per level$()$(li)on hit: $(bold)level 5 Echoing Strikes$(), $(bold)free of mana$(), 30s cooldown$(li)at $(bold)20%$() health: $(bold)level 3 Abyssal Shroud$(), $(bold)free of mana$(), 200s cooldown$(br2)Note: both gifted spells use the scroll cast source - in Iron's Spells only spellbooks (and swords, if configured) consume mana, while scrolls consume none and ignore the mod's own cooldown, so these really are free.$(br2)$(italic)Every path of magic ends in the same place.$()"
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}

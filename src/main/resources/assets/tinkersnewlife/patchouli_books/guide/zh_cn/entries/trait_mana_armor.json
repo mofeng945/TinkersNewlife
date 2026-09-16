@@ -1,0 +1,13 @@
+{
+  "name": "魔力铠甲",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:textures/gui/modifiers/mana_armor.png",
+  "sortnum": 51,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)魔力铠甲$()（魔金盔甲自带，$(bold)有等级$()）$(br2)效果：每 $(bold)100 点法力值上限$()提供 $(bold)5 点伤害减免$()（每件按自己的等级结算，$(bold)多件可叠加$()）$(br2)例：法力上限 300、等级 1 的一件盔甲 = 减伤 15 点。$(br2)与$(l:trait_all_spells_unity)万法归一$()天然配套：它抬高的法力上限会直接换成更多减伤。$(br2)$(italic)把法力穿在身上。$()"
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}

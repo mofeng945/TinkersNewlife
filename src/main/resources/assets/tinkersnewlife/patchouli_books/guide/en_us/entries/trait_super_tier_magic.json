@@ -1,0 +1,13 @@
+{
+  "name": "Super-Tier Magic",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:textures/gui/modifiers/super_tier_magic.png",
+  "sortnum": 48,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Super-Tier Magic$() (comes with Magic Gold tools, $(bold)no levels$())$(br2)Effects:$(li)the tool carries a $(bold)spell container$(), so the $(bold)Arcane Anvil$() accepts it and you can inscribe scroll spells (then pick them from the spell wheel while held or worn)$(li)inscribed spells are treated as $(bold)level 50$() (anything higher stays as it is)$(li)$(bold)5x range$()$(li)$(bold)3x duration$()$(br2)Note: in Iron's Spells both range and duration derive from spell power, so the implementation is \"power x5 -> range x5\", then damage and healing are $(bold)divided back$() to their original values and status durations are multiplied by $(bold)3/5$() to land on x3 - so only range and duration grow, and $(bold)damage gets no extra x5$() (it only follows the level-50 curve)."
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}

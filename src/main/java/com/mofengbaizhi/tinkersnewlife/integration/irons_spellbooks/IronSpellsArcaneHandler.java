@@ -84,10 +84,25 @@ public final class IronSpellsArcaneHandler {
                 if (!inscribed.contains(spellId)) continue;
                 best = Math.max(best, ArcaneConductionModifier.levelOf(stack));
             }
-            if (best <= 0) return;
+
+            // ⭐ 超位魔法（材料「魔金」）：刻印的法术"提升至 50 级"——
+            //    是**抬到** 50（不是 +50），已经更高的保持原样 ✓；比魔导的加成更高时以它为准。
+            int superBoost = 0;
+            if (com.mofengbaizhi.tinkersnewlife.content.modifier.SuperTierMagicModifier
+                    .inscribedFor(caster, spellId)) {
+                int current = currentLevel(event);
+                superBoost = Math.max(0, com.mofengbaizhi.tinkersnewlife.content.modifier
+                        .SuperTierMagicModifier.INSCRIBED_LEVEL - current);
+            }
+
             // 每级 +5 级法术等级（用户口径：注入法术强度 = 5 × 魔导等级）
-            final int boost = best * ArcaneConductionModifier.SPELL_LEVEL_PER_LEVEL;
-            TinkersNewlife.LOGGER.debug("[魔导] {} 在刻印列表里命中（魔导 {} 级）→ 法术等级 +{}", spellId, best, boost);
+            final int boost = Math.max(superBoost,
+                    best * ArcaneConductionModifier.SPELL_LEVEL_PER_LEVEL);
+            if (boost <= 0) return;
+            if (best > 0) {
+                TinkersNewlife.LOGGER.debug("[魔导] {} 在刻印列表里命中（魔导 {} 级）→ 法术等级 +{}",
+                        spellId, best, boost);
+            }
 
 
             Method add = find(event.getClass(), "addLevels", int.class);
@@ -108,20 +123,73 @@ public final class IronSpellsArcaneHandler {
     //  ② 施法增伤（铁魔法侧）
     // ============================================================
 
+    /**
+     * 超位魔法：把"范围 ×5"顺带抬起来的<b>伤害 ÷5 还原</b>（用户只要求范围变大，
+     * 强度按"50 级"走，不该额外再 ×5）✓。
+     *
+     * <p>法术 id 从 {@code SpellDamageSource.spell()} 取（反汇编确认的方法 ✓），
+     * 取不到就退回"当前这一发是不是超位魔法施法"的上下文标记 ✓。
+     */
     private static void onSpellDamage(Object event) {
         try {
             Object src = invoke(event, "getSpellDamageSource");
             LivingEntity caster = casterOf(src);
-            int level = ArcaneConductionModifier.bestLevel(caster);
-            if (level <= 0) return;
             Object amountObj = invoke(event, "getAmount");
             if (!(amountObj instanceof Number n)) return;
             Method set = find(event.getClass(), "setAmount", float.class);
             if (set == null) return;
-            float boosted = (float) (n.floatValue() * (1.0 + ArcaneConductionModifier.DAMAGE_BONUS_PER_LEVEL * level));
-            set.invoke(event, boosted);
+            float amount = n.floatValue();
+
+            // ① 魔导：施法增伤
+            int level = ArcaneConductionModifier.bestLevel(caster);
+            if (level > 0) {
+                amount = (float) (amount * (1.0 + ArcaneConductionModifier.DAMAGE_BONUS_PER_LEVEL * level));
+            }
+
+            // ② 超位魔法：把 getSpellPower 的 ×5 除回去
+            if (isSuperTierHit(caster, src)) {
+                amount /= com.mofengbaizhi.tinkersnewlife.content.modifier.SuperTierMagicModifier
+                        .RANGE_MULTIPLIER;
+            }
+
+            if (amount != n.floatValue()) set.invoke(event, amount);
         } catch (Throwable ignored) {
         }
+    }
+
+    /**
+     * 这一发伤害是不是"超位魔法"打出来的（法术 id 命中刻印，或被上下文标记包着）
+     */
+    private static boolean isSuperTierHit(LivingEntity caster, Object damageSource) {
+        if (caster == null) return false;
+        try {
+            Method spellGetter = find(damageSource.getClass(), "spell");
+            if (spellGetter != null) {
+                Object spell = spellGetter.invoke(damageSource);
+                String id = IronSpellsSpellAccess.spellId(spell);
+                if (!id.isEmpty()) {
+                    return com.mofengbaizhi.tinkersnewlife.content.modifier.SuperTierMagicModifier
+                            .inscribedFor(caster, id);
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return com.mofengbaizhi.tinkersnewlife.content.modifier.SuperTierMagicModifier.inSuperTierCast()
+                && caster == com.mofengbaizhi.tinkersnewlife.content.modifier
+                        .SuperTierMagicModifier.castingCaster();
+    }
+
+    /** 事件里"当前法术等级"（读不到按 1 算） */
+    private static int currentLevel(Object event) {
+        try {
+            Method get = find(event.getClass(), "getLevel");
+            if (get != null) {
+                Object v = get.invoke(event);
+                if (v instanceof Number num) return num.intValue();
+            }
+        } catch (Throwable ignored) {
+        }
+        return 1;
     }
 
     // ============================================================

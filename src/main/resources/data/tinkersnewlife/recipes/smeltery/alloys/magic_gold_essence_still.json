@@ -1,0 +1,16 @@
+{
+  "type": "tconstruct:alloy",
+  "inputs": [
+    { "amount": 90, "fluid": "tinkersnewlife:molten_pyrium_still" },
+    { "amount": 90, "fluid": "tinkersnewlife:molten_mithril_still" },
+    { "amount": 90, "fluid": "tinkersnewlife:molten_arcane_ingot_still" }
+  ],
+  "result": {
+    "fluid": "tinkersnewlife:magic_gold_essence_still",
+    "amount": 180
+  },
+  "temperature": 1800,
+  "conditions": [
+    { "type": "forge:mod_loaded", "modid": "irons_spellbooks" }
+  ]
+}

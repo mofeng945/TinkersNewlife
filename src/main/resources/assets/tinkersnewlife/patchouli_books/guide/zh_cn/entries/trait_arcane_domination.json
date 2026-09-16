@@ -1,0 +1,13 @@
+{
+  "name": "奥法支配",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:textures/gui/modifiers/arcane_domination.png",
+  "sortnum": 50,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)奥法支配$()（魔金通用自带，$(bold)无等级$()）$(br2)效果：$(bold)全学派法术强度 +200%$()（持有或穿戴期间生效）$(br2)说明：铁魔法的通用法术强度属性默认是 1.0，且它本身就对所有学派生效 —— 所以 +2.0 就是全学派三倍。$(br2)$(italic)不是借力，是号令。$()"
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}

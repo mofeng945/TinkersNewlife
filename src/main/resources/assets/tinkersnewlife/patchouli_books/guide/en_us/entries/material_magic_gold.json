@@ -1,0 +1,18 @@
+{
+  "name": "Magic Gold",
+  "category": "tinkersnewlife:materials",
+  "icon": "tinkersnewlife:magic_gold_essence_bucket",
+  "sortnum": 25,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:magic_gold_essence_bucket",
+      "text": "$(bold)Obtaining$() (Iron's Spells crossover - three in one):$(li)Alloy: $(bold)90 mB Molten Pyrium + 90 mB Molten Mithril + 90 mB Molten Arcane Ingot -> 180 mB Magic Gold Essence$() (all three crossover melts combined)$(br2)One unit = $(bold)90 mB$()$(br2)Usable for: $(bold)head / binding / handle / bow limb / grip / all armor and shields / maille$()$(br2)Tier: $(bold)T4$(); the head mines at $(bold)netherite level$().$(br2)Stats (slightly $(bold)below Manyullyn$()): head 1150 durability / 6.0 speed / 3.25 attack; handle +9% durability / +18% attack / -4% attack speed / -8% mining; limb 1150 durability / -0.30 draw speed / +0.22 velocity; grip -0.16 accuracy / 3.2 attack. Armor: helmet 360+2.0, chestplate 530+6.5, leggings 500+5.0, boots 430+2.0, shield 600 (toughness 2.5 each)."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Traits$():$(li)$(l:trait_super_tier_magic)Super-Tier Magic$() (no levels, tools): spells can be inscribed into the tool and count as level 50, with 5x range and 3x duration$(li)$(l:trait_all_spells_unity)Myriad Spells as One$() (leveled, general, highest single piece only): +100 max mana per level; attacking grants level 5 Echoing Strikes (30s) and dropping to 20% health grants level 3 Abyssal Shroud (200s)$(li)$(l:trait_arcane_domination)Arcane Domination$() (no levels, general): all schools +200% spell power$(li)$(l:trait_mana_armor)Mana Armor$() (leveled, armor, stacks): every 100 max mana grants 5 damage reduction$(br2)$(italic)Only the union of three crossover melts deserves the name Magic Gold.$()"
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}

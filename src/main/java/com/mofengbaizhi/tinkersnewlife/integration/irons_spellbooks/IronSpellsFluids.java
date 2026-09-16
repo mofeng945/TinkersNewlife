@@ -73,6 +73,16 @@ public final class IronSpellsFluids {
             2000, 7000, 1100, 0xFFC9D6E8,  // 秘银银蓝
             FluidRegistrar.lavaProps(MapColor.COLOR_LIGHT_BLUE));
 
+    /**
+     * 魔金精华（材料「<b>魔金</b>」的原料流体）。
+     *
+     * <p>获取方式只有一条合金：<b>90 mB 熔融炽金 + 90 mB 熔融秘银 + 90 mB 熔融奥术锭 → 180 mB 魔金精华</b>
+     * （也就是"三种联动材料的熔体合一"）✓，1 单位材料 = 90 mB ✓。
+     */
+    public static final FluidRegistrar.FluidEntry MAGIC_GOLD_ESSENCE = REG.entry("magic_gold_essence",
+            2500, 9000, 1200, 0xFFDFA845,  // 紫影魔金
+            FluidRegistrar.lavaProps(MapColor.COLOR_ORANGE));
+
     /** 把本组四张注册表挂到模组总线（仅铁魔法在场时被调用） */
     public static void register(IEventBus bus) {
         REG.register(bus);
