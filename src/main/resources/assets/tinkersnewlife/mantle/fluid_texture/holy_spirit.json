@@ -1,0 +1,8 @@
+{
+    "still":  "tinkersnewlife:block/holy_spirit_still",
+    "flowing":  "tinkersnewlife:block/holy_spirit_flowing",
+    "color":  "FFFFFFFF",
+    "fogColor":  "FF6B5A2A",
+    "fogStart":  0.3,
+    "fogEnd":  4
+}

@@ -1,0 +1,8 @@
+{
+    "still":  "tinkersnewlife:block/primordial_fire_soul_still",
+    "flowing":  "tinkersnewlife:block/primordial_fire_soul_flowing",
+    "color":  "FFFFFFFF",
+    "fogColor":  "FF5A1400",
+    "fogStart":  0.5,
+    "fogEnd":  6
+}

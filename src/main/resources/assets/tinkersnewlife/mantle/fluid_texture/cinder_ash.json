@@ -1,0 +1,8 @@
+{
+    "still":  "tinkersnewlife:block/cinder_ash_still",
+    "flowing":  "tinkersnewlife:block/cinder_ash_flowing",
+    "color":  "FFFFFFFF",
+    "fogColor":  "FF282420",
+    "fogStart":  0.3,
+    "fogEnd":  4
+}

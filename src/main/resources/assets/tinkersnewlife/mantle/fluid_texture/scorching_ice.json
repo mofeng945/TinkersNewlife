@@ -1,0 +1,8 @@
+{
+    "still":  "tinkersnewlife:block/scorching_ice_still",
+    "flowing":  "tinkersnewlife:block/scorching_ice_flowing",
+    "color":  "FFFFFFFF",
+    "fogColor":  "FF16323F",
+    "fogStart":  0.3,
+    "fogEnd":  4
+}

@@ -1,0 +1,8 @@
+{
+    "still":  "tinkersnewlife:block/molten_pyrium_still",
+    "flowing":  "tinkersnewlife:block/molten_pyrium_flowing",
+    "color":  "FFFFFFFF",
+    "fogColor":  "FF5A2A08",
+    "fogStart":  0.5,
+    "fogEnd":  6
+}

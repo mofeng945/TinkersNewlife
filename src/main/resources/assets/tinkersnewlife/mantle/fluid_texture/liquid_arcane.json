@@ -1,0 +1,8 @@
+{
+    "still":  "tinkersnewlife:block/liquid_arcane_still",
+    "flowing":  "tinkersnewlife:block/liquid_arcane_flowing",
+    "color":  "FFFFFFFF",
+    "fogColor":  "FF26184A",
+    "fogStart":  0.3,
+    "fogEnd":  4
+}
