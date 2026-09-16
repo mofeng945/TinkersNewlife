@@ -1,0 +1,13 @@
+{
+  "type": "tconstruct:material_fluid",
+  "fluid": {
+    "fluid": "tinkersnewlife:molten_pyrium_still",
+    "amount": 90
+  },
+  "temperature": 1100,
+  "output": "tinkersnewlife:pyrium",    "conditions": [
+        {
+            "type": "forge:mod_loaded",
+            "modid": "irons_spellbooks"
+        }
+    ]}

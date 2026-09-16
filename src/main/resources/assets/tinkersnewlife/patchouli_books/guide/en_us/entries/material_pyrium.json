@@ -1,0 +1,18 @@
+{
+    "name":  "Pyrium",
+    "category":  "tinkersnewlife:materials",
+    "icon":  "irons_spellbooks:pyrium_ingot",
+    "sortnum":  22,
+    "pages":  [
+                  {
+                      "type":  "patchouli:spotlight",
+                      "item":  "irons_spellbooks:pyrium_ingot",
+                      "text":  "$(bold)Obtaining$() (Iron's Spells crossover):$(li)Melt Iron's Spells $(bold)Pyrium Ingot$() ($(bold)irons_spellbooks:pyrium_ingot$()) into $(bold)Molten Pyrium$() - $(bold)90 mB per ingot$()$(li)Alloy $(bold)45 mB Cinder Ash + 45 mB Molten Gold$() in a smeltery (or scorched alloyer) for the same $(bold)90 mB Molten Pyrium$()$(li)$(bold)Cinder Ash$() comes from melting $(bold)Cinder Essence$() ($(bold)irons_spellbooks:cinder_essence$()), 45 mB each$(br2)One unit = $(bold)90 mB$()$(br2)Usable for: $(bold)tool head / handle / bow limb / grip$() and $(bold)all armor and shields$() (four platings + shield + maille)$(br2)Tier: $(bold)T3$()."
+                  },
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)Traits$():$(li)$(l:trait_blazing)Blazing$() (leveled, tools): each attack has a $(bold)5% x level$() chance to ignite the target for 5s, then appends Fire spell damage equal to $(bold)0.1 x (level + 1)$() of the hit$(li)$(l:trait_holy_war_relic)Holy War Relic$() (no levels, general): $(bold)+1 upgrade, +1 defense and +2 ability slots$()$(li)$(l:trait_ancient_sanctuary)Ancient Sanctuary$() (no levels, armor): permanent $(bold)5% damage reduction$() (stacks per piece); wearing any piece grants $(bold)+50% Fire spell power$()"
+                  }
+              ],
+    "flag":  "mod:irons_spellbooks"
+}

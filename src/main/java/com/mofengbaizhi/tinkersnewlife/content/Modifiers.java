@@ -365,6 +365,21 @@ public class Modifiers {
             MODIFIERS.register("endless_cold_wind",
                     com.mofengbaizhi.tinkersnewlife.content.modifier.EndlessColdWindModifier::new);
 
+    /** 铁魔法联动特性·炽热（材料「炽金」工具自带，有等级）：概率点燃 + 追加炽焰法术伤害 */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.BlazingModifier> BLAZING =
+            MODIFIERS.register("blazing",
+                    com.mofengbaizhi.tinkersnewlife.content.modifier.BlazingModifier::new);
+
+    /** 铁魔法联动特性·圣战之遗（材料「炽金」自带，无等级）：升级/防御槽各 +1，能力槽 +2 */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.HolyWarRelicModifier> HOLY_WAR_RELIC =
+            MODIFIERS.register("holy_war_relic",
+                    com.mofengbaizhi.tinkersnewlife.content.modifier.HolyWarRelicModifier::new);
+
+    /** 铁魔法联动特性·远古庇护（材料「炽金」盔甲自带，无等级）：5% 减伤（按件叠加）+ 炽焰法强 +50% */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.AncientSanctuaryModifier> ANCIENT_SANCTUARY =
+            MODIFIERS.register("ancient_sanctuary",
+                    com.mofengbaizhi.tinkersnewlife.content.modifier.AncientSanctuaryModifier::new);
+
     /** 近战特性·神圣之力（神灵金近战头自带，联动铁魔法/启示录：+180法力、注入火墙术Lv5/天使之翼Lv5/治愈之环Lv10、火墙无视无敌帧） */
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.DivinePowerModifier> DIVINE_POWER =
         MODIFIERS.register("divine_power",

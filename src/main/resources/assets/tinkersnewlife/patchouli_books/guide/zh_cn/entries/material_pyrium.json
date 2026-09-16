@@ -1,0 +1,18 @@
+{
+    "name":  "炽金",
+    "category":  "tinkersnewlife:materials",
+    "icon":  "irons_spellbooks:pyrium_ingot",
+    "sortnum":  22,
+    "pages":  [
+                  {
+                      "type":  "patchouli:spotlight",
+                      "item":  "irons_spellbooks:pyrium_ingot",
+                      "text":  "$(bold)获取方式$()（铁魔法联动）：$(li)熔炼铁魔法的 $(bold)炽金锭$()（$(bold)irons_spellbooks:pyrium_ingot$()）得到 $(bold)熔融炽金$() —— $(bold)90 mB / 锭$()$(li)在冶炼炉（或焦褐合金炉）里用 $(bold)流体灰烬 45 mB + 熔融金 45 mB$() 合金，同样得到 $(bold)熔融炽金 90 mB$()$(li)$(bold)流体灰烬$()由熔炼铁魔法的 $(bold)灰烬源质$()（$(bold)irons_spellbooks:cinder_essence$()）得到，45 mB / 个$(br2)一单位 = $(bold)90 mB$()$(br2)可用于：$(bold)顶端 / 手柄 / 弓臂 / 弓把$() 以及 $(bold)全部盔甲与盾牌$()（镶板四件 + 盾牌 + 锁链基底）$(br2)等级：$(bold)T3$()。"
+                  },
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)自带特性$()：$(li)$(l:trait_blazing)炽热$()（有等级，工具）：每次攻击 $(bold)5%×等级$() 概率点燃目标 5 秒；伤害结算后追加 $(bold)0.1×(等级+1)$() 倍的炽焰学派法术伤害$(li)$(l:trait_holy_war_relic)圣战之遗$()（无等级，通用）：$(bold)升级槽 +1、防御槽 +1、能力槽 +2$()$(li)$(l:trait_ancient_sanctuary)远古庇护$()（无等级，盔甲）：常驻 $(bold)5% 减伤$()（按件叠加）；穿着任意一件时 $(bold)炽焰法强 +50%$()"
+                  }
+              ],
+    "flag":  "mod:irons_spellbooks"
+}

@@ -1,0 +1,13 @@
+{
+    "name":  "炽热",
+    "category":  "tinkersnewlife:traits",
+    "icon":  "tinkersnewlife:textures/gui/modifiers/blazing.png",
+    "sortnum":  42,
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)炽热$()（炽金的工具默认特性，$(bold)有等级$()）$(br2)效果：$(li)每次攻击有 $(bold)5%×等级$() 的概率点燃目标 $(bold)5 秒$()$(li)每次攻击伤害结算之后，追加一段 $(bold)炽焰学派法术伤害$()，为本次伤害的 $(bold)0.1×(等级+1)$() 倍（1 级 20%、3 级 40%）$(br2)追加段以玩家为攻击者，$(l:../cursed_tools/life_lamp_ring)命灯指轮$()的慈悲与穿透规则同样生效。"
+                  }
+              ],
+    "flag":  "mod:irons_spellbooks"
+}

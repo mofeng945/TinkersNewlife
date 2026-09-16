@@ -58,6 +58,16 @@ public final class IronSpellsFluids {
             1500, 3000, 900, 0xFF8A6BFF,  // 奥术紫
             FluidRegistrar.waterProps(MapColor.COLOR_PURPLE));
 
+    /** 流体灰烬（熔炼铁魔法「灰烬源质」cinder_essence 得到；材料「炽金」合金的原料之一） */
+    public static final FluidRegistrar.FluidEntry CINDER_ASH = REG.entry("cinder_ash",
+            1200, 2500, 900, 0xFF7A6E63,  // 暖灰
+            FluidRegistrar.waterProps(MapColor.COLOR_GRAY));
+
+    /** 熔融炽金（材料「炽金」的原料流体；熔炼炽金锭 或 流体灰烬+熔融金 合金） */
+    public static final FluidRegistrar.FluidEntry MOLTEN_PYRIUM = REG.entry("molten_pyrium",
+            2000, 8000, 1100, 0xFFFFAE3C,  // 炽金橙
+            FluidRegistrar.lavaProps(MapColor.COLOR_ORANGE));
+
     /** 把本组四张注册表挂到模组总线（仅铁魔法在场时被调用） */
     public static void register(IEventBus bus) {
         REG.register(bus);

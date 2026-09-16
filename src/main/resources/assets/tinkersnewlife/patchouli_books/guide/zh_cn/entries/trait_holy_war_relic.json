@@ -1,0 +1,13 @@
+{
+    "name":  "圣战之遗",
+    "category":  "tinkersnewlife:traits",
+    "icon":  "tinkersnewlife:textures/gui/modifiers/holy_war_relic.png",
+    "sortnum":  43,
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)圣战之遗$()（炽金自带，$(bold)无等级$()，通用特性）$(br2)效果：$(bold)每种槽位数量各加一个，再额外增加一个能力槽$()。$(br2)匠魂 3.11 的槽位只有 $(bold)升级 / 防御 / 能力$() 三类，所以实际是：$(li)升级槽 $(bold)+1$()$(li)防御槽 $(bold)+1$()$(li)能力槽 $(bold)+2$()（「各加一个」再加额外一个）$(br2)它$(bold)不占槽位$()（材料自带），与终末烙印那类无槽位强化可以共存。"
+                  }
+              ],
+    "flag":  "mod:irons_spellbooks"
+}

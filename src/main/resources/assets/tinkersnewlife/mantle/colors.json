@@ -1,5 +1,8 @@
 {
   "modifier.tinkersnewlife": {
+    "blazing": "#ffae3c",
+    "holy_war_relic": "#ffe3a8",
+    "ancient_sanctuary": "#c46a18",
     "arcane_conduction": "#9a6bff",
     "tilos_purgatory": "#ff5a1e",
     "cold_blooded": "#4fc3e8",
@@ -44,6 +47,7 @@
     "cursed_adrenaline": "#55ff55"
   },
   "material.tinkersnewlife": {
+    "pyrium": "#ffae3c",
     "holy_spirit": "#ffeead",
     "formless_ice": "#cbeeff",
     "ashen_ink": "#c0c0c0",

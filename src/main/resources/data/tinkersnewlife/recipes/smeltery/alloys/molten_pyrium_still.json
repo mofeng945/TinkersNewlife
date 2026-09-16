@@ -1,0 +1,22 @@
+{
+  "type": "tconstruct:alloy",
+  "inputs": [
+    {
+      "amount": 45,
+      "fluid": "tinkersnewlife:cinder_ash_still"
+    },
+    {
+      "amount": 45,
+      "fluid": "tconstruct:molten_gold"
+    }
+  ],
+  "result": {
+    "fluid": "tinkersnewlife:molten_pyrium_still",
+    "amount": 90
+  },
+  "temperature": 1200,    "conditions": [
+        {
+            "type": "forge:mod_loaded",
+            "modid": "irons_spellbooks"
+        }
+    ]}

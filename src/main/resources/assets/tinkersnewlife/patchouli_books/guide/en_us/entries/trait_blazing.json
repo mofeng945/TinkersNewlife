@@ -1,0 +1,13 @@
+{
+    "name":  "Blazing",
+    "category":  "tinkersnewlife:traits",
+    "icon":  "tinkersnewlife:textures/gui/modifiers/blazing.png",
+    "sortnum":  42,
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)Blazing$() (default tool trait of Pyrium, $(bold)leveled$())$(br2)Each attack has a $(bold)5% x level$() chance to set the target on fire for $(bold)5 seconds$(), and appends $(bold)Fire-school spell damage$() equal to $(bold)0.1 x (level + 1)$() of the hit after it resolves (20% at level 1, 40% at level 3).$(br2)The burst is attributed to the player, so Life Lamp Ring mercy and true piercing apply to it too."
+                  }
+              ],
+    "flag":  "mod:irons_spellbooks"
+}

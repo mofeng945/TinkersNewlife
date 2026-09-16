@@ -1,0 +1,13 @@
+{
+    "name":  "Holy War Relic",
+    "category":  "tinkersnewlife:traits",
+    "icon":  "tinkersnewlife:textures/gui/modifiers/holy_war_relic.png",
+    "sortnum":  43,
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)Holy War Relic$() (comes with Pyrium, $(bold)no levels$(), general trait)$(br2)Effect: $(bold)one extra slot of every kind, plus one more ability slot$().$(br2)Tinkers 3.11 only has $(bold)upgrade / defense / ability$() slots, so in practice:$(li)upgrade $(bold)+1$()$(li)defense $(bold)+1$()$(li)ability $(bold)+2$()$(br2)It costs no slots itself (it comes from the material) and stacks with slotless upgrades."
+                  }
+              ],
+    "flag":  "mod:irons_spellbooks"
+}

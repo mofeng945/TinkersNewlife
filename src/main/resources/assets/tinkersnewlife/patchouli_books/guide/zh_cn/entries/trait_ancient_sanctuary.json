@@ -1,0 +1,13 @@
+{
+    "name":  "远古庇护",
+    "category":  "tinkersnewlife:traits",
+    "icon":  "tinkersnewlife:textures/gui/modifiers/ancient_sanctuary.png",
+    "sortnum":  44,
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)远古庇护$()（炽金的盔甲默认特性，$(bold)无等级$()，盔甲特性）$(br2)效果：$(li)常驻 $(bold)5% 受到伤害减免$() —— $(bold)按穿戴件数叠加$()：1 件 5%、2 件约 9.8%、4 件约 $(bold)18.5%$()（逐件链乘）$(li)只要穿着 $(bold)任意一件$()带此特性的装备，$(bold)炽焰学派法术强度 +50%$()（固定值，不按件数叠加）$(br2)减伤在护甲减免与吸收之后结算（最接近最终伤害）。"
+                  }
+              ],
+    "flag":  "mod:irons_spellbooks"
+}

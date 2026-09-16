@@ -1,0 +1,24 @@
+{
+    "default": [
+        {
+            "level": 1,
+            "name": "tinkersnewlife:blazing"
+        },
+        {
+            "level": 1,
+            "name": "tinkersnewlife:holy_war_relic"
+        }
+    ],
+    "perStat": {
+        "tconstruct:armor": [
+            {
+                "level": 1,
+                "name": "tinkersnewlife:holy_war_relic"
+            },
+            {
+                "level": 1,
+                "name": "tinkersnewlife:ancient_sanctuary"
+            }
+        ]
+    }
+}

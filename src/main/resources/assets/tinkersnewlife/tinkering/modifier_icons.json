@@ -82,5 +82,8 @@
   "tinkersnewlife:arcane_conduction": "tinkersnewlife:gui/modifiers/arcane_conduction",
   "tinkersnewlife:tilos_purgatory": "tinkersnewlife:gui/modifiers/tilos_purgatory",
   "tinkersnewlife:cold_blooded": "tinkersnewlife:gui/modifiers/cold_blooded",
-  "tinkersnewlife:endless_cold_wind": "tinkersnewlife:gui/modifiers/endless_cold_wind"
+  "tinkersnewlife:endless_cold_wind": "tinkersnewlife:gui/modifiers/endless_cold_wind",
+  "tinkersnewlife:blazing": "tinkersnewlife:gui/modifiers/blazing",
+  "tinkersnewlife:holy_war_relic": "tinkersnewlife:gui/modifiers/holy_war_relic",
+  "tinkersnewlife:ancient_sanctuary": "tinkersnewlife:gui/modifiers/ancient_sanctuary"
 }

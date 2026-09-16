@@ -1,0 +1,13 @@
+{
+    "name":  "Ancient Sanctuary",
+    "category":  "tinkersnewlife:traits",
+    "icon":  "tinkersnewlife:textures/gui/modifiers/ancient_sanctuary.png",
+    "sortnum":  44,
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)Ancient Sanctuary$() (default armor trait of Pyrium, $(bold)no levels$())$(br2)Effect:$(li)permanent $(bold)5% damage reduction$() that $(bold)stacks per worn piece$(): 5% at one, about 9.8% at two and $(bold)18.5%$() at four (chained multiplication)$(li)while wearing $(bold)any$() piece with this trait, $(bold)Fire-school spell power +50%$() (a flat bonus, not per piece)$(br2)The reduction applies after armor and absorption, closest to the final damage."
+                  }
+              ],
+    "flag":  "mod:irons_spellbooks"
+}

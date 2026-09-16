@@ -55,6 +55,7 @@ public final class IronSpellsSpellAccess {
     private static Method mMagicDataGet;    // static LivingEntity -> MagicData
     private static Object defaultCastSource;
     private static Object iceSpellPower;    // Attribute：铁魔法 ICE_SPELL_POWER
+    private static final java.util.Map<String, Object> SPELL_POWERS = new java.util.concurrent.ConcurrentHashMap<>();
 
     private static synchronized void init() {
         if (ready || failed) return;
@@ -334,6 +335,30 @@ public final class IronSpellsSpellAccess {
     public static net.minecraft.world.entity.ai.attributes.Attribute iceSpellPower() {
         init();
         return iceSpellPower instanceof net.minecraft.world.entity.ai.attributes.Attribute a ? a : null;
+    }
+
+    /**
+     * 铁魔法某学派的法术强度属性（字段名如 {@code "FIRE_SPELL_POWER"} / {@code "ICE_SPELL_POWER"}）。
+     * <p>⚠ ISS 的 AttributeRegistry 字段不被重映射，可按名字取；取不到返回 null（调用方跳过）。
+     */
+    public static net.minecraft.world.entity.ai.attributes.Attribute spellPower(String fieldName) {
+        init();
+        if (!ready || fieldName == null) return null;
+        Object cached = SPELL_POWERS.get(fieldName);
+        if (cached != null) return cached instanceof net.minecraft.world.entity.ai.attributes.Attribute a ? a : null;
+        try {
+            Class<?> attrReg = Class.forName("io.redspace.ironsspellbooks.api.registry.AttributeRegistry");
+            for (java.lang.reflect.Field fld : attrReg.getFields()) {
+                if (!fieldName.equals(fld.getName())) continue;
+                Object ro = fld.get(null);
+                Object attr = ro.getClass().getMethod("get").invoke(ro);
+                SPELL_POWERS.put(fieldName, attr);
+                return attr instanceof net.minecraft.world.entity.ai.attributes.Attribute a ? a : null;
+            }
+        } catch (Throwable ignored) {
+        }
+        SPELL_POWERS.put(fieldName, Boolean.FALSE);
+        return null;
     }
 
     /** 法术类型类（事件监听要用 Class 做原始 addListener） */
