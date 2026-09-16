@@ -44,6 +44,8 @@
     "cursed_adrenaline": "#55ff55"
   },
   "material.tinkersnewlife": {
+    "holy_spirit": "#ffeead",
+    "formless_ice": "#cbeeff",
     "ashen_ink": "#c0c0c0",
     "cursed_metal": "#436a84",
     "dark_metal": "#343540",
