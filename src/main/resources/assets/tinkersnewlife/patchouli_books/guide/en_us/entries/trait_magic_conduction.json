@@ -1,0 +1,13 @@
+{
+    "name":  "Magic Conduction",
+    "category":  "tinkersnewlife:traits",
+    "icon":  "tinkersnewlife:textures/gui/modifiers/magic_conduction.png",
+    "sortnum":  45,
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)Magic Conduction$() (default armor trait of Arcane Iron, $(bold)leveled$())$(br2)Reduces $(bold)all magic damage$() taken by $(bold)5% x (level + 1)$() - 10% at level 1 and 20% at level 3.$(br2)Multiple armor pieces $(bold)stack$() (chained multiplication): four level 1 pieces give about 34%.$(br2)$(bold)What counts as magic damage$() (checked in order):$(li)vanilla witch-resistant tag (magic / indirect magic / sonic boom and more)$(li)the $(bold)forge:is_magic$() tag - Goety registers 8 types, Celestial Core 2$(li)damage types whose name contains magic$(li)namespace fallback: $(bold)irons_spellbooks.*$() (the nine schools) and $(bold)goety.*$() (Goety spells)$(br2)$(italic)Note: Iron's Spells registers its tag under the neoforge namespace, which does nothing on Forge 1.20.1 - hence the namespace fallback.$()"
+                  }
+              ],
+    "flag":  "mod:irons_spellbooks"
+}

@@ -1,0 +1,18 @@
+{
+    "name":  "Arcane Iron",
+    "category":  "tinkersnewlife:materials",
+    "icon":  "irons_spellbooks:arcane_ingot",
+    "sortnum":  23,
+    "pages":  [
+                  {
+                      "type":  "patchouli:spotlight",
+                      "item":  "irons_spellbooks:arcane_ingot",
+                      "text":  "$(bold)Obtaining$() (Iron's Spells crossover):$(li)Melt Iron's Spells $(bold)Arcane Ingot$() ($(bold)irons_spellbooks:arcane_ingot$()) into $(bold)Molten Arcane Iron$() - $(bold)90 mB per ingot$()$(li)Alloy $(bold)45 mB Liquid Arcane + 45 mB Molten Iron$() in a smeltery (or scorched alloyer) for the same $(bold)90 mB$()$(br2)One unit = $(bold)90 mB$()$(br2)Usable for: $(bold)tool head / handle / bow limb / grip$() and $(bold)armor and shields$() (four platings + shield + maille)$(br2)Tier: $(bold)T2$() (iron tier, slightly better).$(br2)Stats (vs iron): head 290 durability / 6.5 speed / 2.25 attack; handle +12% durability; limb 280 durability / +0.12 velocity; platings 2.25 / 5.5 / 4.5 / 2.25."
+                  },
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)Traits$():$(li)$(l:trait_magic_conduction)Magic Conduction$() (leveled, armor): reduces $(bold)all magic damage$() taken (vanilla, Goety, Iron's Spells and more) by $(bold)5% x (level + 1)$(), stacking per piece$(li)Magnetic (vanilla Tinkers, general): pulls in nearby drops and experience$(li)Arcane Conduction (tools): strengthens inscribed spells and boosts spell damage$(br2)$(italic)Arcane Iron is iron bound with the arcane: a little tougher, a little lighter, and it takes the edge off incoming magic.$()"
+                  }
+              ],
+    "flag":  "mod:irons_spellbooks"
+}

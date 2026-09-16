@@ -1096,5 +1096,11 @@
   "modifier.tinkersnewlife.ancient_sanctuary": "远古庇护",
   "modifier.tinkersnewlife.ancient_sanctuary.description": "常驻 5% 受到伤害减免（按穿戴件数叠加，4 件约 18.5%）；穿着任意一件带此特性的装备时，炽焰学派法术强度 +50%。",
   "modifier.tinkersnewlife.ancient_sanctuary.tip": "§a受到伤害 -5%（按件叠加）；炽焰法强 +50%",
-  "modifier.tinkersnewlife.ancient_sanctuary.flavor": "§7古盾虽朽，其誓未改。"
+  "modifier.tinkersnewlife.ancient_sanctuary.flavor": "§7古盾虽朽，其誓未改。",
+  "material.tinkersnewlife.arcane_iron": "奥铁",
+  "material.tinkersnewlife.arcane_iron.flavor": "§7铁里掺了星光，握起来有点凉。",
+  "modifier.tinkersnewlife.magic_conduction": "导魔",
+  "modifier.tinkersnewlife.magic_conduction.description": "对受到的全类型魔法伤害（原版、诡厄巫法、铁魔法等）减伤 5%×(等级+1)；多件盔甲逐件叠加。",
+  "modifier.tinkersnewlife.magic_conduction.tip": "§a魔法伤害 -%1$s%%（按件叠加）",
+  "modifier.tinkersnewlife.magic_conduction.flavor": "§7铁骨能导魔，也能把魔导开。"
 }

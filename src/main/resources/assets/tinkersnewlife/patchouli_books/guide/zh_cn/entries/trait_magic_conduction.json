@@ -1,0 +1,13 @@
+{
+    "name":  "导魔",
+    "category":  "tinkersnewlife:traits",
+    "icon":  "tinkersnewlife:textures/gui/modifiers/magic_conduction.png",
+    "sortnum":  45,
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)导魔$()（奥铁的盔甲默认特性，$(bold)有等级$()）$(br2)效果：对受到的$(bold)全类型魔法伤害$()减伤 $(bold)5%×(等级+1)$() —— 1 级即 10%、3 级 20%。$(br2)$(bold)多件盔甲可叠加$()（逐件链乘）：4 件 1 级约减 34%。$(br2)$(bold)什么算魔法伤害$()（判定顺序）：$(li)原版女巫抗性标签（魔法 / 间接魔法 / 音爆等）$(li)$(bold)forge:is_magic$() 标签 —— 诡厄巫法登记了 8 个类型、星月核心登记了 2 个$(li)名字里含 magic 的伤害类型$(li)命名空间兜底：$(bold)irons_spellbooks.*$()（铁魔法九学派）与 $(bold)goety.*$()（诡厄巫法法术）$(br2)$(italic)注：铁魔法登记的是 neoforge 命名空间的标签，在 Forge 1.20.1 下不生效，所以必须按命名空间补上。$()"
+                  }
+              ],
+    "flag":  "mod:irons_spellbooks"
+}

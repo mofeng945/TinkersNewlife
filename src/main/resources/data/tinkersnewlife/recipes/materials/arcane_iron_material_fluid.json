@@ -1,0 +1,13 @@
+{
+  "type": "tconstruct:material_fluid",
+  "fluid": {
+    "fluid": "tinkersnewlife:molten_arcane_ingot_still",
+    "amount": 90
+  },
+  "temperature": 1000,
+  "output": "tinkersnewlife:arcane_iron",    "conditions": [
+        {
+            "type": "forge:mod_loaded",
+            "modid": "irons_spellbooks"
+        }
+    ]}

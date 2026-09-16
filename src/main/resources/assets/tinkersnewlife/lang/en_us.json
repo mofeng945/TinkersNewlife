@@ -504,5 +504,11 @@
   "modifier.tinkersnewlife.ancient_sanctuary": "Ancient Sanctuary",
   "modifier.tinkersnewlife.ancient_sanctuary.description": "Permanent 5% damage reduction (stacks per worn piece; about 18.5% at four pieces). While wearing any piece with this trait, your Fire-school spell power is increased by 50%.",
   "modifier.tinkersnewlife.ancient_sanctuary.tip": "§a-5% damage taken (stacks per piece); Fire spell power +50%",
-  "modifier.tinkersnewlife.ancient_sanctuary.flavor": "§7The old shield is worn, but its oath holds."
+  "modifier.tinkersnewlife.ancient_sanctuary.flavor": "§7The old shield is worn, but its oath holds.",
+  "material.tinkersnewlife.arcane_iron": "Arcane Iron",
+  "material.tinkersnewlife.arcane_iron.flavor": "§7Iron laced with starlight; it feels a little cold.",
+  "modifier.tinkersnewlife.magic_conduction": "Magic Conduction",
+  "modifier.tinkersnewlife.magic_conduction.description": "Reduces all magic damage taken (vanilla, Goety, Iron's Spells and more) by 5% x (level + 1); multiple armor pieces stack.",
+  "modifier.tinkersnewlife.magic_conduction.tip": "§aMagic damage -%1$s%% (stacks per piece)",
+  "modifier.tinkersnewlife.magic_conduction.flavor": "§7Iron bones conduct magic - and can ground it."
 }

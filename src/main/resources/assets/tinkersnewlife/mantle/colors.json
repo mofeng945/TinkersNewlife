@@ -1,5 +1,6 @@
 {
   "modifier.tinkersnewlife": {
+    "magic_conduction": "#8fa3c8",
     "blazing": "#ffae3c",
     "holy_war_relic": "#ffe3a8",
     "ancient_sanctuary": "#c46a18",
@@ -47,6 +48,7 @@
     "cursed_adrenaline": "#55ff55"
   },
   "material.tinkersnewlife": {
+    "arcane_iron": "#8fa3c8",
     "pyrium": "#ffae3c",
     "holy_spirit": "#ffeead",
     "formless_ice": "#cbeeff",

@@ -1,0 +1,18 @@
+{
+    "name":  "奥铁",
+    "category":  "tinkersnewlife:materials",
+    "icon":  "irons_spellbooks:arcane_ingot",
+    "sortnum":  23,
+    "pages":  [
+                  {
+                      "type":  "patchouli:spotlight",
+                      "item":  "irons_spellbooks:arcane_ingot",
+                      "text":  "$(bold)获取方式$()（铁魔法联动）：$(li)熔炼铁魔法的 $(bold)奥术锭$()（$(bold)irons_spellbooks:arcane_ingot$()）得到 $(bold)熔融奥铁$() —— $(bold)90 mB / 锭$()$(li)在冶炼炉（或焦褐合金炉）里用 $(bold)液态奥术 45 mB + 熔融铁 45 mB$() 合金，同样得到 $(bold)熔融奥铁 90 mB$()$(br2)一单位 = $(bold)90 mB$()$(br2)可用于：$(bold)顶端 / 手柄 / 弓臂 / 弓把$() 与 $(bold)盔甲盾牌$()（镶板四件 + 盾牌 + 锁链基底）$(br2)等级：$(bold)T2$()（与铁同级，数值略高）。$(br2)面板（对照铁）：顶端耐久 290 / 6.5 速度 / 2.25 攻击；手柄 +12% 耐久；弓臂 280 耐久 / 初速 +0.12；护甲板 2.25 / 5.5 / 4.5 / 2.25。"
+                  },
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)自带特性$()：$(li)$(l:trait_magic_conduction)导魔$()（有等级，盔甲）：对受到的$(bold)全类型魔法伤害$()（原版、诡厄巫法、铁魔法等）减伤 $(bold)5%×(等级+1)$()，多件盔甲逐件叠加$(li)$(l:../traits/trait_overview)磁性$()（匠魂原有，通用）：自动吸附附近掉落物与经验$(li)$(l:../materials/material_holy_spirit)魔导$()（工具）：强化物品内刻印的法术并给施法增伤$(br2)$(italic)奥铁是铁与奥术的结合：比铁硬一点、比铁轻一点，还能替你挡下一部分魔法伤害。$()"
+                  }
+              ],
+    "flag":  "mod:irons_spellbooks"
+}
