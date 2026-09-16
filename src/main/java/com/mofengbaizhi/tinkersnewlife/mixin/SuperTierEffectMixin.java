@@ -36,7 +36,8 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 public class SuperTierEffectMixin {
 
     /** 状态时长：×(3/5) → 与"范围 ×5"相乘后净得 ×3 ✓ */
-    @ModifyVariable(method = "m_7292_", at = @At("HEAD"), argsOnly = true, remap = false)
+    @ModifyVariable(method = "m_7292_(Lnet/minecraft/world/effect/MobEffectInstance;)Z",
+            at = @At("HEAD"), argsOnly = true, remap = false)
     private MobEffectInstance tinkersnewlife$superTierDuration(MobEffectInstance effect) {
         try {
             if (effect == null || !SuperTierMagicModifier.inSuperTierCast()) return effect;
@@ -51,7 +52,7 @@ public class SuperTierEffectMixin {
     }
 
     /** 治疗量：÷5（把 getSpellPower 的 ×5 抵掉） */
-    @ModifyVariable(method = "m_5634_", at = @At("HEAD"), argsOnly = true, remap = false)
+    @ModifyVariable(method = "m_5634_(F)V", at = @At("HEAD"), argsOnly = true, remap = false)
     private float tinkersnewlife$superTierHeal(float amount) {
         try {
             if (amount <= 0.0F || !SuperTierMagicModifier.inSuperTierCast()) return amount;
