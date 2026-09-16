@@ -61,8 +61,8 @@ public class QuantumVaultScreen extends AbstractContainerScreen<QuantumVaultMenu
     private final List<PacketVaultSync.Entry> view = new ArrayList<>();
     private final UUID uuid;
 
-    /** 诊断开关：排查"点了没反应"用 ✓（正常游玩可置 false ✓） */
-    public static final boolean DEBUG = true;
+    /** 诊断开关：直接引用共享的那一个 ✓（单一来源，别再各写一份 ✗） */
+    public static final boolean DEBUG = QuantumVault.DEBUG;
 
     private EditBox search;
     private int page = 0;

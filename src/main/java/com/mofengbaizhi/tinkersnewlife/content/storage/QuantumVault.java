@@ -27,8 +27,8 @@ import java.util.Map;
  */
 public class QuantumVault {
 
-    /** 诊断开关（排查界面点击用；正常可置 false ✓） */
-    public static final boolean DEBUG = true;
+    /** 诊断开关（排查界面点击用；正常 false ✓，需要时改 true 即可） */
+    public static final boolean DEBUG = false;
 
     /** 总容量：64 × 2 × 81 × 64 = 663552 个物品 ✓ */
     public static final long TOTAL_CAPACITY = 64L * 2L * 81L * 64L;
