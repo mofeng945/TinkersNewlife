@@ -52,7 +52,19 @@ public class QuantumVaultMenu extends AbstractContainerMenu {
         Slot slot = this.slots.get(index);
         if (slot == null || !slot.hasItem()) return ItemStack.EMPTY;
 
+        // ⚠ 客户端不做预测 ✗：单机里客户端与集成服务端**共用同一份静态 QuantumVaultManager** ✓，
+        //   而原版 quickMoveStack 两端都会调用 → "客户端插一次 + 服务端插一次" = 凭空多一份 ✗✗
+        //   （用户实测：Shift 存入会在存储里复制一份，且两份都能取出 ✓）。这里客户端直接返回，
+        //   由服务端执行后用快照同步回去 ✓。
+        if (player.level().isClientSide) return ItemStack.EMPTY;
+
         ItemStack stack = slot.getItem();
+        if (stack.isEmpty()) return ItemStack.EMPTY;
+        // ⚠ 不允许把**量子背包本体**存进去 ✗（否则背包被吞、又取不出来 → 锁死 ✓）
+        if (com.mofengbaizhi.tinkersnewlife.content.modifier.QuantumBagModifier.getBagLevel(stack) > 0) {
+            return ItemStack.EMPTY;
+        }
+
         QuantumVault vault = QuantumVaultManager.getInstance().getOrCreate(uuid);
         int inserted = vault.insert(stack);
         if (inserted <= 0) return ItemStack.EMPTY;
