@@ -181,6 +181,63 @@ public class SuperTierMagicModifier extends Modifier implements TooltipModifierH
     }
 
     /** 是否还有任何超位魔法施法在窗口内（伤害补偿的兜底判定用） */
+    /**
+     * 给施法者挂上"法术强度 ×3"：给 {@code SPELL_POWER} 属性加 <b>+2.0</b>
+     * （默认 1.0 → 3.0 = ×3 ✓），transient 修饰符、用独立 UUID ✓，幂等（先移除再加 ✓）。
+     *
+     * <p>为什么用属性而不是 mixin {@code getSpellPower}：范围/持续时间在铁魔法里都经由
+     * {@code getSpellPower → getRadius()/getDuration()} 派生（反汇编确认：火球/黑洞/冰浪都是 ✓），
+     * 而 {@code getSpellPower} 读的就是 {@code SPELL_POWER} × 学派法术强度属性 ✓；
+     * 改属性是"从源头改"，比拦方法更可靠 ✓（而且能在日志里验证 ✓）。
+     */
+    public static void applyCastPower(LivingEntity caster) {
+        try {
+            var attr = IronSpellsSpellAccess.attribute("SPELL_POWER");
+            if (attr == null) return;
+            var inst = caster.getAttribute(attr);
+            if (inst == null) return;
+            inst.removeModifier(POWER_MODIFIER_ID);
+            inst.addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+                    POWER_MODIFIER_ID, "super_tier_cast_power", CAST_POWER_BONUS,
+                    net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADDITION));
+            POWER_APPLIED.put(caster.getUUID(), Boolean.TRUE);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** 撤掉"法术强度 ×3"（只对挂过的对象动手，避免每 tick 白扫一遍 ✓） */
+    public static void clearCastPower(LivingEntity caster) {
+        try {
+            if (caster == null || POWER_APPLIED.remove(caster.getUUID()) == null) return;
+            var attr = IronSpellsSpellAccess.attribute("SPELL_POWER");
+            if (attr == null) return;
+            var inst = caster.getAttribute(attr);
+            if (inst != null) inst.removeModifier(POWER_MODIFIER_ID);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** 续期（读条法术每 tick 调用：把窗口推迟到"读完那一刻还在" ✓） */
+    public static void extendCast(LivingEntity caster) {
+        try {
+            if (caster == null) return;
+            if (CAST_UNTIL.containsKey(caster.getUUID())) {
+                CAST_UNTIL.put(caster.getUUID(), caster.level().getGameTime() + CAST_WINDOW);
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** 施法期间的 SPELL_POWER 加成：+2.0 = ×3（与 RANGE_MULTIPLIER 一致 ✓） */
+    public static final double CAST_POWER_BONUS = RANGE_MULTIPLIER - 1.0D;
+    private static final UUID POWER_MODIFIER_ID = UUID.fromString("c4e1a8d2-6b35-4f70-9a2d-5e8c1f3b7d09");
+    private static final Map<UUID, Boolean> POWER_APPLIED = new ConcurrentHashMap<>();
+
+    /** 该生物当前标记的法术 id（没有则 null） */
+    public static String currentSpell(LivingEntity caster) {
+        return caster == null ? null : CAST_SPELL.get(caster.getUUID());
+    }
+
     public static boolean inSuperTierCast() {
         long now = Long.MIN_VALUE;
         for (Map.Entry<UUID, Long> e : CAST_UNTIL.entrySet()) {

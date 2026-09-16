@@ -282,6 +282,28 @@ public final class IronSpellsArcaneHandler {
      * 就标记"这一发是超位魔法"（{@code SuperTierMagicModifier#markCast}）✓ ——
      * 供 {@code SuperTierEffectMixin} 做治疗 ÷3 与状态时长 ×(2/3) ✓。
      */
+    private static volatile long lastSuperTierLog = 0L;
+
+    /**
+     * 每 tick 维护「超位魔法」的法术强度加成：
+     * 窗口内就（幂等地）挂上；读条法术还在读就续期 ✓；窗口过期就撤掉 ✓。
+     */
+    @SubscribeEvent
+    public static void onSuperTierTick(net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent event) {
+        if (!(event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player)) return;
+        if (player.level().isClientSide) return;
+        var mod = com.mofengbaizhi.tinkersnewlife.content.modifier.SuperTierMagicModifier.class;
+        if (com.mofengbaizhi.tinkersnewlife.content.modifier.SuperTierMagicModifier.isSuperTierCastActive(player)) {
+            String spell = com.mofengbaizhi.tinkersnewlife.content.modifier.SuperTierMagicModifier.currentSpell(player);
+            if (spell != null && IronSpellsSpellAccess.isCastingSpell(player, spell)) {
+                com.mofengbaizhi.tinkersnewlife.content.modifier.SuperTierMagicModifier.extendCast(player);
+            }
+            com.mofengbaizhi.tinkersnewlife.content.modifier.SuperTierMagicModifier.applyCastPower(player);
+        } else {
+            com.mofengbaizhi.tinkersnewlife.content.modifier.SuperTierMagicModifier.clearCastPower(player);
+        }
+    }
+
     private static void onSpellOnCast(Object event) {
         try {
             Object playerObj = invoke(event, "getEntity");
@@ -289,6 +311,16 @@ public final class IronSpellsArcaneHandler {
             Object idObj = invoke(event, "getSpellId");
             if (!(idObj instanceof String spellId) || spellId.isEmpty()) return;
             com.mofengbaizhi.tinkersnewlife.content.modifier.SuperTierMagicModifier.markCast(caster, spellId);
+            // ⭐ 属性方案：施法瞬间给 SPELL_POWER +2.0（×3）——
+            //    getRadius()/getDuration() 都经由 getSpellPower → 读这个属性 ✓，
+            //    所以范围/持续会立刻变大 ✓（不再依赖 mixin ✗）
+            com.mofengbaizhi.tinkersnewlife.content.modifier.SuperTierMagicModifier.applyCastPower(caster);
+            long now = System.currentTimeMillis();
+            if (now - lastSuperTierLog > 2000L) {
+                lastSuperTierLog = now;
+                TinkersNewlife.LOGGER.info("[超位魔法] {} 施放 {} → 法术强度 +200%（范围/持续放大生效）",
+                        caster.getName().getString(), spellId);
+            }
         } catch (Throwable ignored) {
         }
     }

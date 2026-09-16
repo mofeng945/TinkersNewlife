@@ -557,6 +557,28 @@ public final class IronSpellsSpellAccess {
     }
 
     /** 法术类型类（事件监听要用 Class 做原始 addListener） */
+    /**
+     * 该生物此刻是否正在<b>读条</b>某个法术（{@code MagicData.isCasting()} + {@code getCastingSpellId()}）✓。
+     * <p>用途：「超位魔法」在施法期间维持"法术强度 ×3"的属性修饰符 —— 即时法术一次性覆盖，
+     * 读条法术则每 tick 续期到读完 ✓。
+     */
+    public static boolean isCastingSpell(LivingEntity entity, String spellId) {
+        init();
+        if (entity == null || spellId == null || mMagicDataGet == null || cMagicData == null) return false;
+        try {
+            Object md = mMagicDataGet.invoke(null, entity);
+            if (md == null) return false;
+            Method isCasting = find(cMagicData, "isCasting");
+            if (isCasting == null || !(Boolean) isCasting.invoke(md)) return false;
+            Method getSpell = find(cMagicData, "getCastingSpellId");
+            if (getSpell == null) return false;
+            Object id = getSpell.invoke(md);
+            return id instanceof String s && s.equals(spellId);
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
     public static Class<?> spellClass() {
         init();
         return cSpell;
