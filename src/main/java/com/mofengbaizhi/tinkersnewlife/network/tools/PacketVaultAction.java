@@ -82,8 +82,12 @@ public class PacketVaultAction {
             switch (packet.action) {
                 case WITHDRAW_ONE -> give(player, vault.extract(packet.template, 1));
                 // 右键"取一组"= 取**这个物品自己的一整叠**（桶这种 maxStack=1 就只取 1 ✓）
+                case WITHDRAW_STACK -> give(player, vault.extract(packet.template,
+                        Math.max(1, packet.template.getMaxStackSize())));
                 case WITHDRAW_ALL -> give(player, vault.extractAll(packet.template));
                 case DEPOSIT_ALL -> depositInventory(player, vault);
+                // 光标上拿着东西点进格子 = 存入 ✓（动作 5；上一轮补丁把这条 case 吃掉了 ✗）
+                case DEPOSIT_CARRIED -> depositCarried(player, vault);
                 default -> {
                 }
             }
