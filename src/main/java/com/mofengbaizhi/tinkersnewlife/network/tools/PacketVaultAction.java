@@ -57,12 +57,19 @@ public class PacketVaultAction {
             ServerPlayer player = ctx.get().getSender();
             if (player == null) return;
 
-            // ⭐ 防伪校验：这个 UUID 必须是玩家**当前手持/副手**量子背包的 UUID ✓
-            UUID real = QuantumBagModifier.getBagUUID(player.getMainHandItem());
-            if (real == null) real = QuantumBagModifier.getBagUUID(player.getOffhandItem());
-            if (real == null || !real.equals(packet.uuid)) return;
-            if (QuantumBagModifier.getBagLevel(player.getMainHandItem()) < 6
-                    && QuantumBagModifier.getBagLevel(player.getOffhandItem()) < 6) return;
+            // ⭐ 防伪校验：优先认"**正开着的界面**就是这只背包"（这样背包本体被存进存储里时仍能取出 ✓），
+            //    否则退回"手上/副手拿着它"✓ —— 两种情况之外的请求一律拒绝 ✓。
+            boolean authorized = player.containerMenu
+                    instanceof com.mofengbaizhi.tinkersnewlife.content.storage.QuantumVaultMenu menu
+                    && packet.uuid.equals(menu.getBagUUID());
+            if (!authorized) {
+                UUID real = QuantumBagModifier.getBagUUID(player.getMainHandItem());
+                if (real == null) real = QuantumBagModifier.getBagUUID(player.getOffhandItem());
+                authorized = real != null && real.equals(packet.uuid)
+                        && (QuantumBagModifier.getBagLevel(player.getMainHandItem()) >= 6
+                            || QuantumBagModifier.getBagLevel(player.getOffhandItem()) >= 6);
+            }
+            if (!authorized) return;
 
             QuantumVault vault = QuantumVaultManager.getInstance().getOrCreate(packet.uuid);
             switch (packet.action) {
@@ -93,6 +100,9 @@ public class PacketVaultAction {
         for (int i = 0; i < inv.getContainerSize(); i++) {
             ItemStack stack = inv.getItem(i);
             if (stack.isEmpty()) continue;
+            // ⚠ 绝不把**量子背包本体**存进去 ✗ —— 第一版就是这么"自噬"的：
+            //   背包进了存储、而取出又要校验手持 → 直接锁死 ✓
+            if (QuantumBagModifier.getBagLevel(stack) > 0) continue;
             int inserted = vault.insert(stack);
             if (inserted > 0) {
                 stack.shrink(inserted);

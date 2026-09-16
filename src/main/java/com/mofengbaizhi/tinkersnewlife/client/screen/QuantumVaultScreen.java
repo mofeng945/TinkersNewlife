@@ -11,6 +11,7 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
@@ -21,17 +22,20 @@ import java.util.UUID;
 /**
  * 6 级量子背包界面：<b>按数量存放</b>（类似 AE / RS）✓
  *
- * <ul>
- *   <li>上方搜索框 ✓（按物品名过滤，客户端本地过滤 ✓）；</li>
- *   <li>中间 9 × 6 = 54 格一页，物品图标 + <b>数量</b>（1.2k / 3.4M 缩写 ✓）；</li>
- *   <li>底部翻页 ◀ ▶ + 页码 + 「存入全部」按钮 ✓；</li>
- *   <li>操作：<b>左键取 1 / 右键取 64 / Shift+左键取光这种</b> ✓；
- *       背包里的物品 <b>Shift 点击</b>即存入（在 {@link QuantumVaultMenu#quickMoveStack} 里 ✓）。</li>
- * </ul>
+ * <h2>布局（别再"算"常量 ✗）</h2>
+ * 第一版把 {@code imageHeight} 算成 384、而菜单里的槽位却写死在 140/198 ✗ —— 结果整体偏上、
+ * 槽位跑到画面外 ✗（用户实测反馈 ✓）。现在所有 Y 都用下面这组常量推导，菜单里的槽位坐标也按同一组写 ✓：
+ * <pre>
+ *   y+0   .. 20   搜索框
+ *   y+22  .. 130  存储格 9×6（每格 18）
+ *   y+132 .. 148  翻页 / 页数 / 存入全部
+ *   y+152 .. 206  玩家背包 3×9
+ *   y+210 .. 228  快捷栏
+ *   imageHeight = 234
+ * </pre>
  *
- * <p>界面不持有任何"真实存储" ✗：数据是服务端发来的快照（{@code PacketVaultSync} ✓），
- * 每次操作都发 {@code PacketVaultAction} 回服务端、由服务端执行并回传新快照 ✓ ——
- * 所以客户端伪造不了物品 ✓。
+ * <p>槽位方框是**自己画的** ✓ —— 原版容器靠贴图提供边框，我们没贴图 ✗，
+ * 所以对"存储格"和"菜单里的玩家槽位"统一画 18×18 凹槽 ✓。
  */
 public class QuantumVaultScreen extends AbstractContainerScreen<QuantumVaultMenu> {
 
@@ -39,6 +43,13 @@ public class QuantumVaultScreen extends AbstractContainerScreen<QuantumVaultMenu
     private static final int ROWS = 6;
     private static final int PER_PAGE = COLS * ROWS;
     private static final int CELL = 18;
+
+    private static final int GRID_TOP = 22;
+    private static final int BAR_TOP = GRID_TOP + ROWS * CELL + 2;      // 132
+    private static final int INV_TOP = BAR_TOP + 20;                    // 152
+    private static final int HOTBAR_TOP = INV_TOP + 3 * CELL + 4;       // 210
+    private static final int HEIGHT = HOTBAR_TOP + CELL + 6;            // 234
+    private static final int WIDTH = 8 + COLS * CELL + 8;               // 178
 
     /** 服务端快照（已按物品名排序 ✓） */
     private static List<PacketVaultSync.Entry> snapshot = new ArrayList<>();
@@ -49,17 +60,14 @@ public class QuantumVaultScreen extends AbstractContainerScreen<QuantumVaultMenu
     private final UUID uuid;
 
     private EditBox search;
-    private Button prev;
-    private Button next;
-    private Button depositAll;
     private int page = 0;
 
     public QuantumVaultScreen(QuantumVaultMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
         this.uuid = menu.getBagUUID();
-        this.imageWidth = 8 + COLS * CELL + 8;              // 178
-        this.imageHeight = 22 + ROWS * CELL + 22 + 4 + 3 * 18 + 6 + 9 * 18 + 6;
-        this.inventoryLabelY = 22 + ROWS * CELL + 22 + 4 + 4;
+        this.imageWidth = WIDTH;
+        this.imageHeight = HEIGHT;
+        this.inventoryLabelY = INV_TOP - 11;
     }
 
     /** 服务端快照到达（{@code PacketVaultSync} 的处理器调用 ✓） */
@@ -90,26 +98,42 @@ public class QuantumVaultScreen extends AbstractContainerScreen<QuantumVaultMenu
         });
         addRenderableWidget(this.search);
 
-        int buttonY = y + 22 + ROWS * CELL + 6;
-        this.prev = addRenderableWidget(Button.builder(Component.literal("◀"), b -> {
+        addRenderableWidget(Button.builder(Component.literal("◀"), b -> {
             if (this.page > 0) {
                 this.page--;
                 rebuildView();
             }
-        }).bounds(x + 8, buttonY, 20, 16).build());
-        this.next = addRenderableWidget(Button.builder(Component.literal("▶"), b -> {
+        }).bounds(x + 8, y + BAR_TOP + 2, 20, 16).build());
+        addRenderableWidget(Button.builder(Component.literal("▶"), b -> {
             if ((this.page + 1) * PER_PAGE < this.view.size()) {
                 this.page++;
                 rebuildView();
             }
-        }).bounds(x + 30, buttonY, 20, 16).build());
-        this.depositAll = addRenderableWidget(Button.builder(
-                Component.translatable("gui.tinkersnewlife.quantum_vault.deposit_all"), b -> {
-                    if (this.minecraft != null && this.minecraft.player != null) {
-                        TinkersNewlife.CHANNEL.sendToServer(new PacketVaultAction(
-                                this.uuid, PacketVaultAction.DEPOSIT_ALL, ItemStack.EMPTY, 0));
-                    }
-                }).bounds(x + this.imageWidth - 84, buttonY, 76, 16).build());
+        }).bounds(x + 30, y + BAR_TOP + 2, 20, 16).build());
+        addRenderableWidget(Button.builder(
+                Component.translatable("gui.tinkersnewlife.quantum_vault.deposit_all"), b ->
+                        send(PacketVaultAction.DEPOSIT_ALL, ItemStack.EMPTY))
+                .bounds(x + this.imageWidth - 84, y + BAR_TOP + 2, 76, 16).build());
+
+        // 刚打开时先向服务端要一份快照 ✓
+        // 服务端在 openScreen 之后已经主动同步过一次快照（包按序到达 ✓），这里不用再请求 ✓
+    }
+
+    /** 搜索框获得焦点时，别让 'E' 之类的按键把界面关掉 ✓ */
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (this.search != null && this.search.isFocused()) {
+            if (this.search.keyPressed(keyCode, scanCode, modifiers)) return true;
+            if (keyCode == 256) {                       // Esc：先退出输入框 ✓
+                this.search.setFocused(false);
+                return true;
+            }
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    private void send(byte action, ItemStack template) {
+        TinkersNewlife.CHANNEL.sendToServer(new PacketVaultAction(this.uuid, action, template, 0));
     }
 
     private void rebuildView() {
@@ -130,17 +154,30 @@ public class QuantumVaultScreen extends AbstractContainerScreen<QuantumVaultMenu
     //  绘制
     // ============================================================
 
+    /** 画一个 18×18 凹槽（原版靠贴图，我们自绘 ✓） */
+    private void drawSlotFrame(GuiGraphics graphics, int x, int y) {
+        graphics.fill(x - 1, y - 1, x + 17, y + 17, 0xFF8B8B8B);
+        graphics.fill(x, y, x + 16, y + 16, 0xFF373737);
+        graphics.fill(x, y, x + 16, y + 1, 0xFF000000);
+        graphics.fill(x, y, x + 1, y + 16, 0xFF000000);
+    }
+
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         int x = this.leftPos;
         int y = this.topPos;
+
         graphics.fill(x, y, x + this.imageWidth, y + this.imageHeight, 0xFFC6C6C6);
-        graphics.fill(x, y, x + this.imageWidth, y + 24, 0xFF404040);
-        int gridTop = y + 22;
-        graphics.fill(x + 6, gridTop - 2, x + this.imageWidth - 6, gridTop + ROWS * CELL + 2, 0xFF8B8B8B);
-        // 玩家背包区底色
-        int invTop = gridTop + ROWS * CELL + 22;
-        graphics.fill(x + 6, invTop - 2, x + this.imageWidth - 6, invTop + 4 + 3 * 18 + 4 + 18 + 2, 0xFF8B8B8B);
+        graphics.fill(x, y, x + this.imageWidth, y + 21, 0xFF404040);
+
+        // ① 存储格 9×6
+        for (int i = 0; i < PER_PAGE; i++) {
+            drawSlotFrame(graphics, x + 8 + (i % COLS) * CELL, y + GRID_TOP + (i / COLS) * CELL);
+        }
+        // ② 玩家背包 + 快捷栏（槽位来自菜单 ✓，坐标与 QuantumVaultMenu 保持一致 ✓）
+        for (Slot slot : this.menu.slots) {
+            drawSlotFrame(graphics, x + slot.x, y + slot.y);
+        }
     }
 
     @Override
@@ -149,29 +186,26 @@ public class QuantumVaultScreen extends AbstractContainerScreen<QuantumVaultMenu
         super.render(graphics, mouseX, mouseY, partialTick);
 
         int gridLeft = this.leftPos + 8;
-        int gridTop = this.topPos + 22;
+        int gridTop = this.topPos + GRID_TOP;
         for (int i = 0; i < PER_PAGE; i++) {
             int idx = this.page * PER_PAGE + i;
+            if (idx >= this.view.size()) break;
+            PacketVaultSync.Entry e = this.view.get(idx);
             int cx = gridLeft + (i % COLS) * CELL;
             int cy = gridTop + (i / COLS) * CELL;
-
-            if (idx < this.view.size()) {
-                PacketVaultSync.Entry e = this.view.get(idx);
-                graphics.renderItem(e.stack(), cx, cy);
-                graphics.renderItemDecorations(this.font, e.stack(), cx, cy, shortCount(e.amount()));
-                if (isHovering(cx - this.leftPos, cy - this.topPos, 16, 16, mouseX, mouseY)) {
-                    graphics.renderTooltip(this.font, e.stack(), mouseX, mouseY);
-                }
+            graphics.renderItem(e.stack(), cx, cy);
+            graphics.renderItemDecorations(this.font, e.stack(), cx, cy, shortCount(e.amount()));
+            if (mouseX >= cx && mouseX < cx + 16 && mouseY >= cy && mouseY < cy + 16) {
+                graphics.renderTooltip(this.font, e.stack(), mouseX, mouseY);
             }
         }
 
-        // 页码 + 总量
         Component info = Component.translatable("gui.tinkersnewlife.quantum_vault.page",
-                this.page + 1, Math.max(1, (this.view.size() - 1) / PER_PAGE + 1))
-                .append("  ")
+                        this.page + 1, Math.max(1, (this.view.size() - 1) / PER_PAGE + 1))
+                .append("   ")
                 .append(Component.translatable("gui.tinkersnewlife.quantum_vault.total",
                         String.valueOf(snapshotTotal), String.valueOf(QuantumVault.TOTAL_CAPACITY)));
-        graphics.drawString(this.font, info, this.leftPos + 56, this.topPos + 22 + ROWS * CELL + 10, 0x404040, false);
+        graphics.drawString(this.font, info, this.leftPos + 56, this.topPos + BAR_TOP + 6, 0x404040, false);
 
         this.renderTooltip(graphics, mouseX, mouseY);
     }
@@ -190,7 +224,7 @@ public class QuantumVaultScreen extends AbstractContainerScreen<QuantumVaultMenu
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         int gridLeft = this.leftPos + 8;
-        int gridTop = this.topPos + 22;
+        int gridTop = this.topPos + GRID_TOP;
         for (int i = 0; i < PER_PAGE; i++) {
             int cx = gridLeft + (i % COLS) * CELL;
             int cy = gridTop + (i / COLS) * CELL;
@@ -208,7 +242,7 @@ public class QuantumVaultScreen extends AbstractContainerScreen<QuantumVaultMenu
                 } else {
                     return true;
                 }
-                TinkersNewlife.CHANNEL.sendToServer(new PacketVaultAction(this.uuid, action, e.stack(), 0));
+                send(action, e.stack());
                 return true;
             }
         }

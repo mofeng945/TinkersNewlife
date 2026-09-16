@@ -28,12 +28,12 @@ public class QuantumVaultMenu extends AbstractContainerMenu {
         // 玩家背包 27 格（3×9）
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                addSlot(new Slot(playerInventory, col + row * 9 + 9, 8 + col * 18, 140 + row * 18));
+                addSlot(new Slot(playerInventory, col + row * 9 + 9, 8 + col * 18, 152 + row * 18));   // 与界面 INV_TOP 一致 ✓
             }
         }
         // 快捷栏 9 格
         for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(playerInventory, col, 8 + col * 18, 198));
+            addSlot(new Slot(playerInventory, col, 8 + col * 18, 210));                            // 与界面 HOTBAR_TOP 一致 ✓
         }
     }
 
