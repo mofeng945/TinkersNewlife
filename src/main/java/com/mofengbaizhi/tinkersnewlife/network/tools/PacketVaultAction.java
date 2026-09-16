@@ -24,7 +24,7 @@ public class PacketVaultAction {
     public static final byte WITHDRAW_STACK = 1;    // 右键：取 64 个
     public static final byte WITHDRAW_ALL = 2;      // Shift+左键：取光这种
     public static final byte DEPOSIT_ALL = 3;       // 「存入全部」按钮：把玩家背包能存的都存进去
-    public static final byte DEPOSIT_ONE_TYPE = 4;  // 对某个类型：把背包里同类型物品存进去（未使用，留作扩展）
+    public static final byte DEPOSIT_CARRIED = 5;   // 把光标上拿着的物品存进去（左键拖入 ✓）  // 对某个类型：把背包里同类型物品存进去（未使用，留作扩展）
 
     private final UUID uuid;
     private final byte action;
@@ -74,7 +74,7 @@ public class PacketVaultAction {
             QuantumVault vault = QuantumVaultManager.getInstance().getOrCreate(packet.uuid);
             switch (packet.action) {
                 case WITHDRAW_ONE -> give(player, vault.extract(packet.template, 1));
-                case WITHDRAW_STACK -> give(player, vault.extract(packet.template, 64));
+                // 右键"取一组"= 取**这个物品自己的一整叠**（桶这种 maxStack=1 就只取 1 ✓）
                 case WITHDRAW_ALL -> give(player, vault.extractAll(packet.template));
                 case DEPOSIT_ALL -> depositInventory(player, vault);
                 default -> {
@@ -86,12 +86,33 @@ public class PacketVaultAction {
         ctx.get().setPacketHandled(true);
     }
 
-    /** 取出：优先塞进背包，塞不下的掉在脚下 ✓ */
+    /** 取出：优先塞进背包，塞不下的掉在脚下 ✓。
+     *  ⚠ 必须**按物品自身的堆叠上限拆开** ✗ —— 第一版直接把 64 个（或整叠）塞给
+     *  {@code Inventory#add}，桶这种 maxStack=1 的就被塞成"一叠 2 个" ✗（用户实测反馈 ✓）。 */
     private static void give(ServerPlayer player, ItemStack stack) {
         if (stack.isEmpty()) return;
-        if (!player.getInventory().add(stack)) {
-            player.drop(stack, false);
+        int max = Math.max(1, stack.getMaxStackSize());
+        while (!stack.isEmpty()) {
+            int take = Math.min(stack.getCount(), max);
+            ItemStack part = stack.copy();
+            part.setCount(take);
+            if (!player.getInventory().add(part)) {
+                player.drop(part, false);
+            }
+            stack.shrink(take);
         }
+    }
+
+    /** 存入"光标上拿着的那一份"（左键把物品拖进界面 ✓） */
+    private static void depositCarried(ServerPlayer player, QuantumVault vault) {
+        ItemStack carried = player.containerMenu.getCarried();
+        if (carried.isEmpty()) return;
+        if (QuantumBagModifier.getBagLevel(carried) > 0) return;          // 背包本体不许存 ✗
+        int inserted = vault.insert(carried);
+        if (inserted <= 0) return;
+        carried.shrink(inserted);
+        player.containerMenu.setCarried(carried.isEmpty() ? ItemStack.EMPTY : carried);
+        player.containerMenu.broadcastChanges();
     }
 
     /** 存入全部：背包（含快捷栏）里能存的全存 ✓ */

@@ -67,7 +67,9 @@ public class QuantumVaultScreen extends AbstractContainerScreen<QuantumVaultMenu
         this.uuid = menu.getBagUUID();
         this.imageWidth = WIDTH;
         this.imageHeight = HEIGHT;
-        this.inventoryLabelY = INV_TOP - 11;
+        // ⚠ 原版这两个标签的位置会和"搜索框 / 翻页行"重叠 ✗（用户截图可见）→ 直接不画 ✓
+        this.titleLabelY = -1000;
+        this.inventoryLabelY = -1000;
     }
 
     /** 服务端快照到达（{@code PacketVaultSync} 的处理器调用 ✓） */
@@ -221,10 +223,22 @@ public class QuantumVaultScreen extends AbstractContainerScreen<QuantumVaultMenu
     //  操作
     // ============================================================
 
+    /** 不画原版标签（标题会压到搜索框、物品栏会压到翻页行 ✗） */
+    @Override
+    protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+        // 故意留空：界面信息由搜索框与下方那行"第 x / y 页  已存 …"承担 ✓
+    }
+
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         int gridLeft = this.leftPos + 8;
         int gridTop = this.topPos + GRID_TOP;
+        // ⭐ 光标上拿着东西时，点到存储格里 = 存入 ✓（不然只能 Shift 点背包 ✗）
+        if (!this.menu.getCarried().isEmpty() && mouseX >= gridLeft && mouseY >= gridTop
+                && mouseX < gridLeft + COLS * CELL && mouseY < gridTop + ROWS * CELL) {
+            send(PacketVaultAction.DEPOSIT_CARRIED, ItemStack.EMPTY);
+            return true;
+        }
         for (int i = 0; i < PER_PAGE; i++) {
             int cx = gridLeft + (i % COLS) * CELL;
             int cy = gridTop + (i / COLS) * CELL;
