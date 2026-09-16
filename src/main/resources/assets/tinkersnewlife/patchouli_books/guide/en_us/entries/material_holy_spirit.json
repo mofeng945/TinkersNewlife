@@ -7,7 +7,7 @@
                   {
                       "type":  "patchouli:spotlight",
                       "item":  "irons_spellbooks:arcane_ingot",
-                      "text":  "$(bold)Obtaining$() (Iron's Spells crossover):$(li)Melt $(bold)Divine Soulshard$() ($(bold)irons_spellbooks:divine_soulshard$()) into $(bold)Primordial Scorched Soul$() - $(bold)250 mB per shard$()$(li)Melt $(bold)Arcane Ingot$() ($(bold)irons_spellbooks:arcane_ingot$()) into $(bold)Molten Arcane Ingot$() - $(bold)90 mB per ingot$()$(li)Alloy $(bold)100 mB Primordial Scorched Soul + 100 mB Molten Arcane Ingot$() into $(bold)360 mB Holy Spirit Ichor$()$(li)Cast $(bold)90 mB$() of Holy Spirit Ichor (one unit) into Holy Spirit parts$(br2)Usable for: $(bold)handle / binding / maille / arrow shaft$()$(br2)Tier: $(bold)T3$()."
+                      "text":  "$(bold)Obtaining$() (Iron's Spells crossover):$(li)Melt $(bold)Divine Soulshard$() ($(bold)irons_spellbooks:divine_soulshard$()) into $(bold)Primordial Scorched Soul$() - $(bold)250 mB per shard$()$(li)Melt $(bold)Arcane Ingot$() ($(bold)irons_spellbooks:arcane_ingot$()) into $(bold)Molten Arcane Iron$() - $(bold)90 mB per ingot$()$(li)Alloy $(bold)100 mB Primordial Scorched Soul + 100 mB Molten Arcane Iron$() into $(bold)360 mB Holy Spirit Ichor$()$(li)Cast $(bold)90 mB$() of Holy Spirit Ichor (one unit) into Holy Spirit parts$(br2)Usable for: $(bold)handle / binding / maille / arrow shaft$()$(br2)Tier: $(bold)T3$()."
                   },
                   {
                       "type":  "patchouli:text",
