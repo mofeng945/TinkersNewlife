@@ -1,0 +1,16 @@
+{
+  "type": "tconstruct:melting",
+  "ingredient": {
+    "item": "irons_spellbooks:raw_mithril"
+  },
+  "result": {
+    "fluid": "tinkersnewlife:molten_mithril_still",
+    "amount": 30
+  },
+  "temperature": 1100,
+  "time": 40,    "conditions": [
+        {
+            "type": "forge:mod_loaded",
+            "modid": "irons_spellbooks"
+        }
+    ]}

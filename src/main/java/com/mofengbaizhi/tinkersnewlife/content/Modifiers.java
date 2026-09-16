@@ -385,6 +385,16 @@ public class Modifiers {
             MODIFIERS.register("magic_conduction",
                     com.mofengbaizhi.tinkersnewlife.content.modifier.MagicConductionModifier::new);
 
+    /** 铁魔法联动特性·专注（材料「秘银」工具自带，有等级）：吟唱不被打断 + 每级 +5% 吟唱速度 */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.FocusModifier> FOCUS =
+            MODIFIERS.register("focus",
+                    com.mofengbaizhi.tinkersnewlife.content.modifier.FocusModifier::new);
+
+    /** 铁魔法联动特性·破法（材料「秘银」自带，无等级）：工具自带 1 级法术反制 */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.SpellBreakModifier> SPELL_BREAK =
+            MODIFIERS.register("spell_break",
+                    com.mofengbaizhi.tinkersnewlife.content.modifier.SpellBreakModifier::new);
+
     /** 近战特性·神圣之力（神灵金近战头自带，联动铁魔法/启示录：+180法力、注入火墙术Lv5/天使之翼Lv5/治愈之环Lv10、火墙无视无敌帧） */
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.DivinePowerModifier> DIVINE_POWER =
         MODIFIERS.register("divine_power",

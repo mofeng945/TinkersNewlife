@@ -1,0 +1,16 @@
+{
+    "default": [
+        {
+            "level": 1,
+            "name": "tinkersnewlife:focus"
+        },
+        {
+            "level": 1,
+            "name": "tinkersnewlife:arcane_conduction"
+        },
+        {
+            "level": 1,
+            "name": "tinkersnewlife:spell_break"
+        }
+    ]
+}

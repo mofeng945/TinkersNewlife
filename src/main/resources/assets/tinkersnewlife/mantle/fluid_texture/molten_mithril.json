@@ -1,0 +1,8 @@
+{
+    "still":  "tinkersnewlife:block/molten_mithril_still",
+    "flowing":  "tinkersnewlife:block/molten_mithril_flowing",
+    "color":  "FFFFFFFF",
+    "fogColor":  "FF93A6BD",
+    "fogStart":  0.5,
+    "fogEnd":  6.0
+}

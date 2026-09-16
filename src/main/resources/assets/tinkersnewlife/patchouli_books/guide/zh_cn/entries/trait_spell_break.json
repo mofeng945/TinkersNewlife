@@ -1,0 +1,13 @@
+{
+    "name":  "破法",
+    "category":  "tinkersnewlife:traits",
+    "icon":  "tinkersnewlife:textures/gui/modifiers/spell_break.png",
+    "sortnum":  47,
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)破法$()（秘银自带，$(bold)无等级$()）$(br2)效果：工具$(bold)自带 1 级「法术反制」$()（铁魔法法术，可用于中断目标施法或魔法效果）。$(br2)刻印是写进物品的$(bold)法术容器$()里的：$(li)因此它$(bold)可以被奥术铁砧继续编辑$()（加别的法术、升级）$(li)配合$(l:../materials/material_holy_spirit)魔导$()可以把这个反制抬到更高等级$(br2)已刻印过的物品不会被反复覆盖，手动编辑过的容器也不会被动。"
+                  }
+              ],
+    "flag":  "mod:irons_spellbooks"
+}

@@ -53,6 +53,9 @@ public final class IronSpellsSpellAccess {
     private static Method mCastSpell;       // castSpell(Level,int,ServerPlayer,CastSource,boolean)
     private static Method mCastComplete;    // onServerCastComplete(Level,int,LivingEntity,MagicData,boolean)
     private static Method mMagicDataGet;    // static LivingEntity -> MagicData
+    private static Method mContainerCreate; // static create(int,boolean,boolean)
+    private static Method mContainerAdd;    // addSpell(AbstractSpell,int,boolean,ItemStack)
+    private static Method mContainerSave;   // save(ItemStack)
     private static Object defaultCastSource;
     private static Object iceSpellPower;    // Attribute：铁魔法 ICE_SPELL_POWER
     private static final java.util.Map<String, Object> SPELL_POWERS = new java.util.concurrent.ConcurrentHashMap<>();
@@ -124,6 +127,9 @@ public final class IronSpellsSpellAccess {
                     break;
                 }
             }
+            mContainerCreate = find(cContainer, "create", int.class, boolean.class, boolean.class);
+            mContainerAdd = find(cContainer, "addSpell", cSpell, int.class, boolean.class, ItemStack.class);
+            mContainerSave = find(cContainer, "save", ItemStack.class);
             mCastComplete = find(cSpell, "onServerCastComplete",
                     Level.class, int.class, LivingEntity.class, cMagicData, boolean.class);
             for (Method m : cMagicData.getMethods()) {
@@ -359,6 +365,33 @@ public final class IronSpellsSpellAccess {
         }
         SPELL_POWERS.put(fieldName, Boolean.FALSE);
         return null;
+    }
+
+    /** 通用属性存取（字段名如 CAST_TIME_REDUCTION / FIRE_SPELL_POWER / ICE_SPELL_POWER） */
+    public static net.minecraft.world.entity.ai.attributes.Attribute attribute(String fieldName) {
+        return spellPower(fieldName);
+    }
+
+    /**
+     * 确保物品里刻印了指定法术（<b>仅当该物品还没有法术容器时</b>写入 ✗ 免得跟奥术铁砧的编辑打架）。
+     * <p>用途：材料「秘银」的「破法」特性 —— 工具自带 1 级「法术反制」。
+     */
+    public static boolean ensureInscribed(ItemStack stack, String spellId, int level, int slots) {
+        init();
+        if (!ready || stack == null || stack.isEmpty()) return false;
+        if (mContainerGet == null || mContainerCreate == null || mContainerAdd == null || mContainerSave == null) return false;
+        try {
+            if (mContainerGet.invoke(null, stack) != null) return true;   // 已是容器（可能已被铁砧编辑过）→ 不动
+            Object spell = spellById(spellId);
+            if (spell == null) return false;
+            Object container = mContainerCreate.invoke(null, Math.max(1, slots), true, false);
+            mContainerAdd.invoke(container, spell, level, true, stack);
+            mContainerSave.invoke(container, stack);
+            return true;
+        } catch (Throwable t) {
+            TinkersNewlife.LOGGER.warn("[破法] 刻入 {} 失败: {}", spellId, t.toString());
+            return false;
+        }
     }
 
     /** 法术类型类（事件监听要用 Class 做原始 addListener） */

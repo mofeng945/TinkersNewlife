@@ -1102,5 +1102,18 @@
   "modifier.tinkersnewlife.magic_conduction": "导魔",
   "modifier.tinkersnewlife.magic_conduction.description": "对受到的全类型魔法伤害（原版、诡厄巫法、铁魔法等）减伤 5%×(等级+1)；多件盔甲逐件叠加。",
   "modifier.tinkersnewlife.magic_conduction.tip": "§a魔法伤害 -%1$s%%（按件叠加）",
-  "modifier.tinkersnewlife.magic_conduction.flavor": "§7铁骨能导魔，也能把魔导开。"
+  "modifier.tinkersnewlife.magic_conduction.flavor": "§7铁骨能导魔，也能把魔导开。",
+  "material.tinkersnewlife.mithril": "秘银",
+  "material.tinkersnewlife.mithril.flavor": "§7月光锻出的银，轻得像没有重量。",
+  "fluid_type.tinkersnewlife.molten_mithril": "熔融秘银",
+  "block.tinkersnewlife.molten_mithril_block": "熔融秘银",
+  "item.tinkersnewlife.molten_mithril_bucket": "熔融秘银桶",
+  "modifier.tinkersnewlife.focus": "专注",
+  "modifier.tinkersnewlife.focus.description": "手持此工具时吟唱不会被打断，且每级提高 5% 吟唱速度。",
+  "modifier.tinkersnewlife.focus.tip": "§a吟唱不会被打断；吟唱速度 +%1$s%%",
+  "modifier.tinkersnewlife.focus.flavor": "§7心不散，术不成。",
+  "modifier.tinkersnewlife.spell_break": "破法",
+  "modifier.tinkersnewlife.spell_break.description": "工具自带 1 级「法术反制」（可用于中断目标施法或魔法效果）。",
+  "modifier.tinkersnewlife.spell_break.tip": "§d自带 1 级法术反制",
+  "modifier.tinkersnewlife.spell_break.flavor": "§7以银为引，破其术式。"
 }

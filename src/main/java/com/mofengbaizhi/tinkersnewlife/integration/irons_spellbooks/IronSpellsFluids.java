@@ -68,6 +68,11 @@ public final class IronSpellsFluids {
             2000, 8000, 1100, 0xFFFFAE3C,  // 炽金橙
             FluidRegistrar.lavaProps(MapColor.COLOR_ORANGE));
 
+    /** 熔融秘银（材料「秘银」的原料流体；熔炼粗秘银 30mB / 碎片 20mB / 锭 90mB） */
+    public static final FluidRegistrar.FluidEntry MOLTEN_MITHRIL = REG.entry("molten_mithril",
+            2000, 7000, 1100, 0xFFC9D6E8,  // 秘银银蓝
+            FluidRegistrar.lavaProps(MapColor.COLOR_LIGHT_BLUE));
+
     /** 把本组四张注册表挂到模组总线（仅铁魔法在场时被调用） */
     public static void register(IEventBus bus) {
         REG.register(bus);

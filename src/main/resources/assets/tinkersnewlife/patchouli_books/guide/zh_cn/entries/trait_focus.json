@@ -1,0 +1,13 @@
+{
+    "name":  "专注",
+    "category":  "tinkersnewlife:traits",
+    "icon":  "tinkersnewlife:textures/gui/modifiers/focus.png",
+    "sortnum":  46,
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)专注$()（秘银的工具默认特性，$(bold)有等级$()）$(br2)效果：$(li)手持该工具时，$(bold)吟唱不会被打断$()$(li)每级提高 $(bold)5% 吟唱速度$()（走铁魔法的法术吟唱缩减属性）$(br2)$(bold)为什么能不被打断$()：铁魔法的打断判定是「长吟唱法术且未佩戴专注护符」—— 本特性直接拦在那个判定入口，只要手持带专注的工具就判为不可打断。$(br2)脱手立即失效（属性每 10 tick 重新维持一次）。"
+                  }
+              ],
+    "flag":  "mod:irons_spellbooks"
+}

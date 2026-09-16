@@ -110,6 +110,7 @@ public class ModCreativeTabs {
         acceptItemIfPresent(output, "liquid_arcane_bucket");
         acceptItemIfPresent(output, "cinder_ash_bucket");
         acceptItemIfPresent(output, "molten_pyrium_bucket");
+        acceptItemIfPresent(output, "molten_mithril_bucket");
 
                                 // ----- 铸模（联动工具的铸模仅在对应 mod 加载时显示） -----
                                 if (anyLoaded("iceandfire")) {

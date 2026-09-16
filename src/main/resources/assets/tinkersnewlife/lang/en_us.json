@@ -510,5 +510,18 @@
   "modifier.tinkersnewlife.magic_conduction": "Magic Conduction",
   "modifier.tinkersnewlife.magic_conduction.description": "Reduces all magic damage taken (vanilla, Goety, Iron's Spells and more) by 5% x (level + 1); multiple armor pieces stack.",
   "modifier.tinkersnewlife.magic_conduction.tip": "§aMagic damage -%1$s%% (stacks per piece)",
-  "modifier.tinkersnewlife.magic_conduction.flavor": "§7Iron bones conduct magic - and can ground it."
+  "modifier.tinkersnewlife.magic_conduction.flavor": "§7Iron bones conduct magic - and can ground it.",
+  "material.tinkersnewlife.mithril": "Mithril",
+  "material.tinkersnewlife.mithril.flavor": "§7Silver forged from moonlight, light as if weightless.",
+  "fluid_type.tinkersnewlife.molten_mithril": "Molten Mithril",
+  "block.tinkersnewlife.molten_mithril_block": "Molten Mithril",
+  "item.tinkersnewlife.molten_mithril_bucket": "Molten Mithril Bucket",
+  "modifier.tinkersnewlife.focus": "Focus",
+  "modifier.tinkersnewlife.focus.description": "While holding this tool your casting cannot be interrupted, and each level adds 5% cast speed.",
+  "modifier.tinkersnewlife.focus.tip": "§aCasting cannot be interrupted; cast speed +%1$s%%",
+  "modifier.tinkersnewlife.focus.flavor": "§7An undivided mind completes every spell.",
+  "modifier.tinkersnewlife.spell_break": "Spell Break",
+  "modifier.tinkersnewlife.spell_break.description": "Comes with a level 1 Counterspell inscribed (interrupts enemy casting or magic effects).",
+  "modifier.tinkersnewlife.spell_break.tip": "§dComes with a level 1 Counterspell",
+  "modifier.tinkersnewlife.spell_break.flavor": "§7Silver cuts through sorcery."
 }

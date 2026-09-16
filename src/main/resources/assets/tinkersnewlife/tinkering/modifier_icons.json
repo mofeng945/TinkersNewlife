@@ -86,5 +86,7 @@
   "tinkersnewlife:blazing": "tinkersnewlife:gui/modifiers/blazing",
   "tinkersnewlife:holy_war_relic": "tinkersnewlife:gui/modifiers/holy_war_relic",
   "tinkersnewlife:ancient_sanctuary": "tinkersnewlife:gui/modifiers/ancient_sanctuary",
-  "tinkersnewlife:magic_conduction": "tinkersnewlife:gui/modifiers/magic_conduction"
+  "tinkersnewlife:magic_conduction": "tinkersnewlife:gui/modifiers/magic_conduction",
+  "tinkersnewlife:focus": "tinkersnewlife:gui/modifiers/focus",
+  "tinkersnewlife:spell_break": "tinkersnewlife:gui/modifiers/spell_break"
 }

@@ -6,7 +6,8 @@
   "refmap": "tinkersnewlife.refmap.json",
   "mixins": [
     "SlotMixin",
-    "BlockDropsMixin"
+    "BlockDropsMixin",
+    "SpellInterruptFocusMixin"
   ],
   "client": [
     "EntityRenderDispatcherMixin",

@@ -1,5 +1,7 @@
 {
   "modifier.tinkersnewlife": {
+    "focus": "#c9d6e8",
+    "spell_break": "#e4edf8",
     "magic_conduction": "#8fa3c8",
     "blazing": "#ffae3c",
     "holy_war_relic": "#ffe3a8",
@@ -48,6 +50,7 @@
     "cursed_adrenaline": "#55ff55"
   },
   "material.tinkersnewlife": {
+    "mithril": "#c9d6e8",
     "arcane_iron": "#8fa3c8",
     "pyrium": "#ffae3c",
     "holy_spirit": "#ffeead",

@@ -1,0 +1,13 @@
+{
+    "name":  "Spell Break",
+    "category":  "tinkersnewlife:traits",
+    "icon":  "tinkersnewlife:textures/gui/modifiers/spell_break.png",
+    "sortnum":  47,
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)Spell Break$() (comes with Mithril, $(bold)no levels$())$(br2)The tool $(bold)comes with a level 1 Counterspell$() inscribed (an Iron's Spells spell that interrupts enemy casting or magic effects).$(br2)It is written into the item's $(bold)spell container$(), which means:$(li)the Arcane Anvil $(bold)can keep editing it$() (add or upgrade spells)$(li)together with Arcane Conduction you can raise that Counterspell to a higher level$(br2)Items that already carry a container are never overwritten, so manual edits stay intact."
+                  }
+              ],
+    "flag":  "mod:irons_spellbooks"
+}

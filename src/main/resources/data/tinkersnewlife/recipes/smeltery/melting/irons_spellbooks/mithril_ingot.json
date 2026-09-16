@@ -1,0 +1,16 @@
+{
+  "type": "tconstruct:melting",
+  "ingredient": {
+    "item": "irons_spellbooks:mithril_ingot"
+  },
+  "result": {
+    "fluid": "tinkersnewlife:molten_mithril_still",
+    "amount": 90
+  },
+  "temperature": 1100,
+  "time": 60,    "conditions": [
+        {
+            "type": "forge:mod_loaded",
+            "modid": "irons_spellbooks"
+        }
+    ]}

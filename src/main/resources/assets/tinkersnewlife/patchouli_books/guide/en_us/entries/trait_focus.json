@@ -1,0 +1,13 @@
+{
+    "name":  "Focus",
+    "category":  "tinkersnewlife:traits",
+    "icon":  "tinkersnewlife:textures/gui/modifiers/focus.png",
+    "sortnum":  46,
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)Focus$() (default tool trait of Mithril, $(bold)leveled$())$(br2)While holding this tool your $(bold)casting cannot be interrupted$(), and each level grants $(bold)+5% cast speed$() (via the Cast Time Reduction attribute).$(br2)$(bold)How the interruption is blocked$(): Iron's Spells interrupts long casts unless the caster wears the Concentration Amulet - this trait simply intercepts that check while a Focus tool is held.$(br2)It stops the moment you put the tool away (the attribute is re-applied every 10 ticks)."
+                  }
+              ],
+    "flag":  "mod:irons_spellbooks"
+}

@@ -1,0 +1,18 @@
+{
+    "name":  "Mithril",
+    "category":  "tinkersnewlife:materials",
+    "icon":  "irons_spellbooks:mithril_ingot",
+    "sortnum":  24,
+    "pages":  [
+                  {
+                      "type":  "patchouli:spotlight",
+                      "item":  "irons_spellbooks:mithril_ingot",
+                      "text":  "$(bold)Obtaining$() (Iron's Spells crossover):$(li)Melt $(bold)Raw Mithril$() ($(bold)irons_spellbooks:raw_mithril$()) - $(bold)30 mB each$()$(li)Melt $(bold)Mithril Scrap$() ($(bold)irons_spellbooks:mithril_scrap$()) - $(bold)20 mB each$()$(li)Melt $(bold)Mithril Ingot$() ($(bold)irons_spellbooks:mithril_ingot$()) - $(bold)90 mB per ingot$()$(br2)One unit = $(bold)90 mB$()$(br2)Usable for: $(bold)tool head / binding / handle / bow limb / grip$()$(br2)Tier: $(bold)T3$(); the head mines at $(bold)netherite level$() (the ore itself needs a netherite pick).$(br2)Stats: head 340 durability / $(bold)9.5 speed$() / 3.1 attack; handle +8% attack speed; limb $(bold)+0.20 accuracy$() / +0.12 draw speed; grip +0.15 accuracy. $(bold)Hard, accurate and light - but low durability.$()"
+                  },
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)Traits$():$(li)$(l:trait_focus)Focus$() (leveled): your casting $(bold)cannot be interrupted$() while held, and each level adds 5% cast speed$(li)Arcane Conduction: strengthens inscribed spells and boosts spell damage$(li)$(l:trait_spell_break)Spell Break$() (no levels): comes with a $(bold)level 1 Counterspell$()$(br2)$(italic)Mithril is a mage's metal: light, precise and quick - just do not expect it to take a beating.$()"
+                  }
+              ],
+    "flag":  "mod:irons_spellbooks"
+}
