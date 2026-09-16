@@ -67,17 +67,26 @@ public final class ChaosFlowHandler {
         if (attacker == target) return;
 
         ToolStack tool = ToolHelper.getCombatToolWith(source, attacker, ChaosFlowModifier.ID);
-        if (tool == null || tool.getModifierLevel(ChaosFlowModifier.ID) <= 0) return;
+        if (tool == null || tool.getModifierLevel(ChaosFlowModifier.ID) <= 0) {
+            logDiagnostic(attacker, tool);                       // 手里有匠魂工具但没这个特性 → 记一笔 ✓
+            return;
+        }
 
         float total = event.getAmount();
         if (total <= 0.0F) return;
 
         List<ResourceKey<DamageType>> schoolKeys = IronSpellsSpellAccess.schoolDamageKeys();
-        if (schoolKeys.isEmpty()) return;                        // 铁魔法不在场 / 没有学派 → 不拆
+        if (schoolKeys.isEmpty()) {
+            logOnce("[混沌之流] 学派注册表为空（铁魔法不在场或反射失败）→ 本次不拆分");
+            return;
+        }
 
         int segments = 1 + schoolKeys.size();
         float per = total / segments;
         if (per <= 0.0F) return;
+
+        TinkersNewlife.LOGGER.info("[混沌之流] {} 的 {} 点伤害拆成 {} 段（每段 {}，学派 {} 个）",
+                attacker.getName().getString(), total, segments, per, schoolKeys.size());
 
         event.setCanceled(true);                                 // 原始那一次不再结算 ✓
         SPLITTING.set(Boolean.TRUE);
@@ -97,6 +106,29 @@ public final class ChaosFlowHandler {
         } finally {
             SPLITTING.set(Boolean.FALSE);
         }
+    }
+
+    // ============================================================
+    //  诊断（排查"为什么只看到一段伤害"用；限流，不刷屏）
+    // ============================================================
+
+    private static volatile long lastLogTime = 0L;
+
+    /** 手里拿着匠魂工具、但这个工具上没有「混沌之流」→ 记一笔（5 秒最多一条） */
+    private static void logDiagnostic(LivingEntity attacker, ToolStack tool) {
+        if (tool == null) return;
+        long now = System.currentTimeMillis();
+        if (now - lastLogTime < 5000L) return;
+        lastLogTime = now;
+        TinkersNewlife.LOGGER.info("[混沌之流] 攻击者 {} 手持 {} 但没有该特性（工具等级 0）→ 未拆分",
+                attacker.getName().getString(), tool.getItem());
+    }
+
+    private static void logOnce(String message) {
+        long now = System.currentTimeMillis();
+        if (now - lastLogTime < 5000L) return;
+        lastLogTime = now;
+        TinkersNewlife.LOGGER.info(message);
     }
 
     // ============================================================
