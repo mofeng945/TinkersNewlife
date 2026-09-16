@@ -55,12 +55,21 @@ public class SuperTierMagicModifier extends Modifier implements TooltipModifierH
     public static final ModifierId ID =
             new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "super_tier_magic"));
 
-    /** 刻印的法术被"提升至"的等级（取 max，不叠加） */
-    public static final int INSCRIBED_LEVEL = 50;
+    /**
+     * 刻印法术的强度 = <b>该法术自身的等级上限 × 本值</b>（"超位"= 突破上限）。
+     *
+     * <p>为什么不是"固定 50 级"：铁魔法各法术的上限差得很远
+     * （反汇编：<b>深渊庇佑只有 3 级</b>、回响打击 5 级、多数 10 级），
+     * 统一抬到 50 级 = 把一个 3 级法术放大到 16 倍强度，深渊庇佑时长直接飙到几分钟的无敌 ✗。
+     * 改成"自身满级 ×2"既能表达"超位"，又不会把短时长法术炸掉 ✓。
+     */
+    public static final int LEVEL_MULTIPLIER = 2;
+    /** 读不到法术上限时的兜底等级 */
+    public static final int FALLBACK_LEVEL = 20;
     /** 范围倍数（借道 getSpellPower） */
-    public static final float RANGE_MULTIPLIER = 5.0F;
+    public static final float RANGE_MULTIPLIER = 3.0F;
     /** 期望的状态持续倍数 */
-    public static final float DURATION_MULTIPLIER = 3.0F;
+    public static final float DURATION_MULTIPLIER = 2.0F;
     /** 状态时长补偿系数：getSpellPower 已经 ×5，这里再 ×(3/5) 才能净得 ×3 ✓ */
     public static final float EFFECT_DURATION_FACTOR = DURATION_MULTIPLIER / RANGE_MULTIPLIER;
     /** 给工具预留的刻印位 */
@@ -82,8 +91,7 @@ public class SuperTierMagicModifier extends Modifier implements TooltipModifierH
     public void addTooltip(IToolStackView tool, ModifierEntry modifier,
                            @Nullable Player player, List<Component> tooltip,
                            TooltipKey tooltipKey, TooltipFlag tooltipFlag) {
-        tooltip.add(Component.translatable("modifier.tinkersnewlife.super_tier_magic.tip",
-                String.valueOf(INSCRIBED_LEVEL)));
+        tooltip.add(Component.translatable("modifier.tinkersnewlife.super_tier_magic.tip"));
     }
 
     @Override

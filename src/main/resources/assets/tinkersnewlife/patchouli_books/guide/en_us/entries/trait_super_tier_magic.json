@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(bold)Super-Tier Magic$() (comes with Magic Gold tools, $(bold)no levels$())$(br2)Effects:$(li)the tool carries a $(bold)spell container$(), so the $(bold)Arcane Anvil$() accepts it and you can inscribe scroll spells (then pick them from the spell wheel while held or worn)$(li)inscribed spells are treated as $(bold)level 50$() (anything higher stays as it is)$(li)$(bold)5x range$()$(li)$(bold)3x duration$()$(br2)Note: in Iron's Spells both range and duration derive from spell power, so the implementation is \"power x5 -> range x5\", then damage and healing are $(bold)divided back$() to their original values and status durations are multiplied by $(bold)3/5$() to land on x3 - so only range and duration grow, and $(bold)damage gets no extra x5$() (it only follows the level-50 curve)."
+      "text": "$(bold)Super-Tier Magic$() (comes with Magic Gold tools, $(bold)no levels$())$(br2)Effects:$(li)the tool carries a $(bold)spell container$(), so the $(bold)Arcane Anvil$() accepts it and you can inscribe scroll spells (then pick them from the spell wheel while held or worn)$(li)inscribed spells are cast at $(bold)twice their own level cap$() ('super-tier' = beyond the cap; anything higher stays as it is)$(li)$(bold)3x range$()$(li)$(bold)2x duration$()$(br2)Note: in Iron's Spells both range and duration derive from spell power, so the implementation is 'power x3 -> range x3', then damage and healing are $(bold)divided back$() to their original values and status durations are multiplied by $(bold)2/3$() to land on x2 - so only range and duration grow, and $(bold)damage gets no extra multiplier$() (it only follows the raised level)."
     }
   ],
   "flag": "mod:irons_spellbooks"

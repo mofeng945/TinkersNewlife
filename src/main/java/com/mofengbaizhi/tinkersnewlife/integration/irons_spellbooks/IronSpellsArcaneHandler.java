@@ -85,14 +85,18 @@ public final class IronSpellsArcaneHandler {
                 best = Math.max(best, ArcaneConductionModifier.levelOf(stack));
             }
 
-            // ⭐ 超位魔法（材料「魔金」）：刻印的法术"提升至 50 级"——
-            //    是**抬到** 50（不是 +50），已经更高的保持原样 ✓；比魔导的加成更高时以它为准。
+            // ⭐ 超位魔法（材料「魔金」）：刻印的法术强度 = **该法术自身等级上限 ×2**（"超位"= 突破上限）。
+            //    不是固定 50 级 ✗ —— 各法术上限差得远（反汇编：深渊庇佑只有 3 级），
+            //    统一抬到 50 级会把 3 级法术放大 16 倍、深渊庇佑变成几分钟无敌 ✗。
             int superBoost = 0;
             if (com.mofengbaizhi.tinkersnewlife.content.modifier.SuperTierMagicModifier
                     .inscribedFor(caster, spellId)) {
-                int current = currentLevel(event);
-                superBoost = Math.max(0, com.mofengbaizhi.tinkersnewlife.content.modifier
-                        .SuperTierMagicModifier.INSCRIBED_LEVEL - current);
+                int cap = IronSpellsSpellAccess.maxLevel(spell);
+                int target = (cap > 0 ? cap : com.mofengbaizhi.tinkersnewlife.content.modifier
+                        .SuperTierMagicModifier.FALLBACK_LEVEL)
+                        * com.mofengbaizhi.tinkersnewlife.content.modifier
+                        .SuperTierMagicModifier.LEVEL_MULTIPLIER;
+                superBoost = Math.max(0, target - currentLevel(event));
             }
 
             // 每级 +5 级法术等级（用户口径：注入法术强度 = 5 × 魔导等级）

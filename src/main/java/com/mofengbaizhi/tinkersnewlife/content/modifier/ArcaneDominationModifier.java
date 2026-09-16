@@ -22,7 +22,7 @@ import java.util.List;
 
 /**
  * 铁魔法联动特性·<b>奥法支配</b>（材料「魔金」通用自带，<b>无等级</b>）：
- * <b>全学派法术强度提升 200%</b>。
+ * <b>全学派法术强度提升 100%</b>。
  *
  * <h2>为什么只加 {@code SPELL_POWER} 一项</h2>
  * 铁魔法的 {@code AbstractSpell#getSpellPower} 是这么算的（反汇编 ✓）：
@@ -30,8 +30,8 @@ import java.util.List;
  *   强度 = (基础 + 每级成长 × 等级) × SPELL_POWER 属性 × 该学派法术强度属性 × 配置倍率
  * </pre>
  * 也就是说 {@code SPELL_POWER}（默认 <b>1.0</b>）本身就是<b>对所有学派生效</b>的乘数 ✓ ——
- * 所以 +2.0 就是"全学派 +200%"（1.0 → 3.0 = 三倍）✓。
- * <b>不能</b>再往九个学派属性上各加 +2.0 ✗：那会变成 3.0 × 3.0 = <b>9 倍</b>（重复计算）✗。
+ * 所以 +1.0 就是"全学派 +100%"（1.0 → 2.0 = 两倍）✓。
+ * <b>不能</b>再往九个学派属性上各加一遍 ✗：那会重复计算（两倍 × 两倍 = <b>4 倍</b>）✗。
  *
  * <p>持有/穿戴期间生效（transient 修饰符，每 10 tick 维持），见
  * {@code content.modifier.events.MagicGoldHandler} ✓。
@@ -41,8 +41,8 @@ public class ArcaneDominationModifier extends Modifier implements TooltipModifie
     public static final ModifierId ID =
             new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "arcane_domination"));
 
-    /** 法术强度加成：+2.0 = +200%（属性默认 1.0） */
-    public static final double POWER_BONUS = 2.0D;
+    /** 法术强度加成：+1.0 = +100%（属性默认 1.0） */
+    public static final double POWER_BONUS = 1.0D;
 
     /** 效果固定 → 显示名不带等级 */
     @Override

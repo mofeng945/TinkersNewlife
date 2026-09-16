@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(bold)Arcane Domination$() (comes with Magic Gold, $(bold)no levels$())$(br2)Effect: $(bold)all schools gain +200% spell power$() (while held or worn)$(br2)Note: Iron's Spells' generic spell power attribute defaults to 1.0 and already applies to every school, so +2.0 means triple power across the board.$(br2)$(italic)Not borrowed power - commanded.$()"
+      "text": "$(bold)Arcane Domination$() (comes with Magic Gold, $(bold)no levels$())$(br2)Effect: $(bold)all schools gain +100% spell power$() (while held or worn)$(br2)Note: Iron's Spells' generic spell power attribute defaults to 1.0 and already applies to every school, so +1.0 means double power across the board.$(br2)$(italic)Not borrowed power - commanded.$()"
     }
   ],
   "flag": "mod:irons_spellbooks"

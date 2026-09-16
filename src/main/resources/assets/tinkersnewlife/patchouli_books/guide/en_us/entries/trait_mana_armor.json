@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(bold)Mana Armor$() (comes with Magic Gold armor, $(bold)leveled$())$(br2)Effect: every $(bold)100 max mana$() grants $(bold)5 points of damage reduction$() (each piece counts its own level, and multiple pieces $(bold)stack$())$(br2)Example: 300 max mana with a level 1 piece = 15 points of reduction.$(br2)A natural partner for $(l:trait_all_spells_unity)Myriad Spells as One$(): the max mana it raises turns straight into more reduction.$(br2)$(italic)Wearing your mana as plate.$()"
+      "text": "$(bold)Mana Armor$() (comes with Magic Gold armor, $(bold)leveled$())$(br2)Effect: every $(bold)100 max mana$() grants $(bold)1 point of damage reduction$() (each piece counts its own level, and multiple pieces $(bold)stack$())$(br2)Example: 300 max mana with a level 1 piece = 3 points of reduction.$(br2)A natural partner for $(l:trait_all_spells_unity)Myriad Spells as One$(): the max mana it raises turns straight into more reduction.$(br2)$(italic)Wearing your mana as plate.$()"
     }
   ],
   "flag": "mod:irons_spellbooks"

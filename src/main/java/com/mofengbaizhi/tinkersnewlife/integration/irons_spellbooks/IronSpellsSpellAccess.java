@@ -50,6 +50,7 @@ public final class IronSpellsSpellAccess {
     private static Method mSlotSpell;       // SpellSlot -> AbstractSpell
     private static Method mSpellResource;   // AbstractSpell -> ResourceLocation（getSpellResource = 真 id）
     private static Method mSpellId;         // AbstractSpell -> String（getSpellId = 真 id 字符串）
+    private static Method mSpellMaxLevel;   // AbstractSpell -> int（getMaxLevel = 该法术等级上限）
     private static Method mSpellById;       // static ResourceLocation -> AbstractSpell
     private static Method mCastSpell;       // castSpell(Level,int,ServerPlayer,CastSource,boolean)
     private static Method mCastComplete;    // onServerCastComplete(Level,int,LivingEntity,MagicData,boolean)
@@ -123,6 +124,7 @@ public final class IronSpellsSpellAccess {
             //   之前用"第一个返回 ResourceLocation 的方法"撞上了图标那个 → 破法 tooltip 打出了贴图路径。
             mSpellResource = find(cSpell, "getSpellResource");
             mSpellId = find(cSpell, "getSpellId");
+            mSpellMaxLevel = find(cSpell, "getMaxLevel");
             mSpellById = find(cSpellRegistry, "getSpell", ResourceLocation.class);
             if (mSpellById == null) {
                 for (Method m : cSpellRegistry.getMethods()) {
@@ -231,6 +233,23 @@ public final class IronSpellsSpellAccess {
             return mSpellById.invoke(null, new ResourceLocation(id));
         } catch (Throwable t) {
             return null;
+        }
+    }
+
+    /**
+     * 该法术的<b>等级上限</b>（如深渊庇佑 3、回响打击 5、多数法术 10；取不到返回 0）。
+     *
+     * <p>用途：「超位魔法」把刻印法术抬到 <b>上限 ×2</b> 而不是固定 50 级 ——
+     * 各法术上限差得远，固定 50 会把短时长法术（深渊庇佑只有 3 级）炸成几分钟无敌 ✗。
+     */
+    public static int maxLevel(Object spell) {
+        init();
+        if (!ready || spell == null || mSpellMaxLevel == null) return 0;
+        try {
+            Object v = mSpellMaxLevel.invoke(spell);
+            return v instanceof Number n ? n.intValue() : 0;
+        } catch (Throwable t) {
+            return 0;
         }
     }
 

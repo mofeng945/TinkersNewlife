@@ -52,12 +52,12 @@ public class AllSpellsUnityModifier extends Modifier implements TooltipModifierH
     /** 赠送法术：回响打击 */
     public static final String ECHO_SPELL = "irons_spellbooks:echoing_strikes";
     public static final int ECHO_LEVEL = 5;
-    public static final int ECHO_COOLDOWN = 30 * 20;
+    public static final int ECHO_COOLDOWN = 45 * 20;
 
     /** 赠送法术：深渊庇佑 */
     public static final String SHROUD_SPELL = "irons_spellbooks:abyssal_shroud";
-    public static final int SHROUD_LEVEL = 3;
-    public static final int SHROUD_COOLDOWN = 200 * 20;
+    public static final int SHROUD_LEVEL = 2;
+    public static final int SHROUD_COOLDOWN = 300 * 20;
     /** 触发血量比例 */
     public static final float TRIGGER_RATIO = 0.2F;
 
