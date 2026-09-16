@@ -1,29 +1,24 @@
 package com.mofengbaizhi.tinkersnewlife.content.modifier;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
-import com.mofengbaizhi.tinkersnewlife.content.ModEffects;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import slimeknights.mantle.client.TooltipKey;
 import slimeknights.tconstruct.library.modifiers.Modifier;
 import slimeknights.tconstruct.library.modifiers.ModifierEntry;
 import slimeknights.tconstruct.library.modifiers.ModifierHooks;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
-import slimeknights.tconstruct.library.modifiers.hook.combat.MeleeHitModifierHook;
 import slimeknights.tconstruct.library.modifiers.hook.display.TooltipModifierHook;
 import slimeknights.tconstruct.library.module.ModuleHookMap;
-import slimeknights.tconstruct.library.tools.context.ToolAttackContext;
 import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
 
 import javax.annotation.Nullable;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 特性·<b>寒霜刺骨</b>（材料「冰封骨头」自带，<b>有等级</b>）：
@@ -31,17 +26,17 @@ import java.util.concurrent.ConcurrentHashMap;
  * 持续 <b>3 × 等级 秒</b>，冷却 <b>6 秒</b>。
  *
  * <p>霜冻效果的行为（见 {@code content.effect.FrostEffect}）：持续期间每 tick 累加目标的
- * "冻结刻度"（目标会真的被冻住），效果结束时再补 100 tick 寒霜 ✓ ——
- * 所以"挂上霜冻"就等于"把敌人冻住一段时间" ✓。
+ * "冻结刻度"（目标会真的被冻住），效果结束时再补 100 tick 寒霜 ✓。
  *
- * <p>挂钩用匠魂自己的 {@link MeleeHitModifierHook#afterMeleeHit}（命中之后）✓ ——
- * 比用 Forge 事件更准：它天然只对"这次攻击用的那把工具"生效 ✓，
- * 且自动覆盖近战与投掷类工具 ✓。
- *
- * <p>冷却按<b>攻击者</b>记（不是按目标）✓：同一个人 6 秒内只能触发一次，
- * 防止一刀一片全冻上 ✗。
+ * <h2>⚠ 为什么不用匠魂的 {@code MELEE_HIT} 钩子（踩过的坑）</h2>
+ * 第一版用了 {@code MeleeHitModifierHook#afterMeleeHit} ✗ —— <b>用户实测完全没效果</b> ✗。
+ * 排查发现：<b>普通挥砍时匠魂并不会调用这个钩子</b> ✗（本模组里 {@code CurseCoreTraitHelper}
+ * 甚至是<b>手动</b>调 {@code hook.afterMeleeHit(...)} 的 ✓），
+ * 而现有的命中类特性（炽热 / 冷酷 / 冰龙血注魔…）**一律走 Forge 事件** ✓：
+ * {@code LivingHurtEvent} + {@link ToolHelper#getCombatToolWith}（同时覆盖近战与弹射物 ✓）。
+ * 所以这里也照那套来，结算在 {@code content.modifier.events.BitingFrostHandler} ✓。
  */
-public class BitingFrostModifier extends Modifier implements MeleeHitModifierHook, TooltipModifierHook {
+public class BitingFrostModifier extends Modifier implements TooltipModifierHook {
 
     public static final ModifierId ID =
             new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "biting_frost"));
@@ -55,9 +50,6 @@ public class BitingFrostModifier extends Modifier implements MeleeHitModifierHoo
     /** 触发冷却（tick）= 6s */
     public static final int COOLDOWN = 6 * 20;
 
-    /** 冷却：攻击者 UUID → 下次可用 gameTime */
-    private static final Map<UUID, Long> COOLDOWN_MAP = new ConcurrentHashMap<>();
-
     public static int clampLevel(int level) {
         return Math.max(0, Math.min(MAX_LEVEL, level));
     }
@@ -65,29 +57,7 @@ public class BitingFrostModifier extends Modifier implements MeleeHitModifierHoo
     @Override
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         super.registerHooks(hookBuilder);
-        hookBuilder.addHook(this, ModifierHooks.MELEE_HIT, ModifierHooks.TOOLTIP);
-    }
-
-    @Override
-    public void afterMeleeHit(IToolStackView tool, ModifierEntry modifier, ToolAttackContext context, float damage) {
-        LivingEntity attacker = context.getAttacker();
-        LivingEntity target = context.getLivingTarget();
-        if (attacker == null || target == null || target == attacker) return;
-        if (attacker.level().isClientSide) return;
-
-        int level = clampLevel(modifier.getLevel());
-        if (level <= 0) return;
-
-        long now = attacker.level().getGameTime();
-        Long next = COOLDOWN_MAP.get(attacker.getUUID());
-        if (next != null && now < next) return;
-        COOLDOWN_MAP.put(attacker.getUUID(), now + COOLDOWN);
-
-        // 霜冻：持续 3 × 等级 秒（amplifier 固定 0，等级只影响时长 ✓）
-        if (ModEffects.FROST.get() != null) {
-            target.addEffect(new MobEffectInstance(ModEffects.FROST.get(),
-                    SECONDS_PER_LEVEL * level * 20, 0, false, true));
-        }
+        hookBuilder.addHook(this, ModifierHooks.TOOLTIP);
     }
 
     @Override
@@ -97,5 +67,12 @@ public class BitingFrostModifier extends Modifier implements MeleeHitModifierHoo
         tooltip.add(Component.translatable("modifier.tinkersnewlife.biting_frost.tip",
                 String.valueOf(SECONDS_PER_LEVEL * clampLevel(modifier.getLevel())),
                 String.valueOf(COOLDOWN / 20)));
+    }
+
+    /** 该物品是否带寒霜刺骨 */
+    public static boolean has(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return false;
+        var tool = ToolHelper.getToolStack(stack);
+        return tool != null && tool.getModifierLevel(ID) > 0;
     }
 }
