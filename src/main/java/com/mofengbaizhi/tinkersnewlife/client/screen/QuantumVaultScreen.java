@@ -45,10 +45,11 @@ public class QuantumVaultScreen extends AbstractContainerScreen<QuantumVaultMenu
     private static final int CELL = 18;
 
     private static final int GRID_TOP = 22;
-    private static final int BAR_TOP = GRID_TOP + ROWS * CELL + 2;      // 132
-    private static final int INV_TOP = BAR_TOP + 20;                    // 152
-    private static final int HOTBAR_TOP = INV_TOP + 3 * CELL + 4;       // 210
-    private static final int HEIGHT = HOTBAR_TOP + CELL + 6;            // 234
+    private static final int INFO_TOP = GRID_TOP + ROWS * CELL + 2;     // 132：信息单独一行 ✓（原来和按钮挤一起 ✗）
+    private static final int BAR_TOP = INFO_TOP + 14;                   // 146：按钮行
+    private static final int INV_TOP = BAR_TOP + 20;                    // 166：玩家背包
+    private static final int HOTBAR_TOP = INV_TOP + 3 * CELL + 4;       // 224
+    private static final int HEIGHT = HOTBAR_TOP + CELL + 6;            // 248
     private static final int WIDTH = 8 + COLS * CELL + 8;               // 178
 
     /** 服务端快照（已按物品名排序 ✓） */
@@ -58,6 +59,9 @@ public class QuantumVaultScreen extends AbstractContainerScreen<QuantumVaultMenu
 
     private final List<PacketVaultSync.Entry> view = new ArrayList<>();
     private final UUID uuid;
+
+    /** 诊断开关：排查"点了没反应"用 ✓（正常游玩可置 false ✓） */
+    public static final boolean DEBUG = true;
 
     private EditBox search;
     private int page = 0;
@@ -207,7 +211,7 @@ public class QuantumVaultScreen extends AbstractContainerScreen<QuantumVaultMenu
                 .append("   ")
                 .append(Component.translatable("gui.tinkersnewlife.quantum_vault.total",
                         String.valueOf(snapshotTotal), String.valueOf(QuantumVault.TOTAL_CAPACITY)));
-        graphics.drawString(this.font, info, this.leftPos + 56, this.topPos + BAR_TOP + 6, 0x404040, false);
+        graphics.drawString(this.font, info, this.leftPos + 8, this.topPos + INFO_TOP + 3, 0x404040, false);
 
         this.renderTooltip(graphics, mouseX, mouseY);
     }
@@ -255,6 +259,10 @@ public class QuantumVaultScreen extends AbstractContainerScreen<QuantumVaultMenu
                     action = PacketVaultAction.WITHDRAW_ONE;
                 } else {
                     return true;
+                }
+                if (DEBUG) {
+                    TinkersNewlife.LOGGER.info("[保险库/客户端] 点击格子 idx={} button={} shift={} → 动作 {} 物品 {} x{}",
+                            idx, button, hasShiftDown(), action, e.stack().getItem(), e.amount());
                 }
                 send(action, e.stack());
                 return true;

@@ -71,6 +71,13 @@ public class PacketVaultAction {
             }
             if (!authorized) return;
 
+            if (com.mofengbaizhi.tinkersnewlife.content.storage.QuantumVault.DEBUG) {
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
+                        "[保险库/服务端] 收到动作 {} 物品 {} 数量 {}（手持={} 打开界面授权={}）",
+                        packet.action, packet.template.getItem(), packet.amount,
+                        QuantumBagModifier.getBagLevel(player.getMainHandItem()),
+                        player.containerMenu instanceof com.mofengbaizhi.tinkersnewlife.content.storage.QuantumVaultMenu);
+            }
             QuantumVault vault = QuantumVaultManager.getInstance().getOrCreate(packet.uuid);
             switch (packet.action) {
                 case WITHDRAW_ONE -> give(player, vault.extract(packet.template, 1));

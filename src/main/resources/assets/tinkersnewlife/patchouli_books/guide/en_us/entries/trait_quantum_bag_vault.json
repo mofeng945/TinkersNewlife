@@ -1,0 +1,12 @@
+{
+  "name": "Quantum Vault (by amount)",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:textures/gui/modifiers/quantum_bag.png",
+  "sortnum": 57,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Quantum Bag (Level 6)$()$(br2)At level 6, pressing B opens a quantity-based vault (like AE / RS):$(li)no longer slot-based: item type + amount$(li)capacity: $(bold)663,552 items$() (= 64x2x81x64, exactly level 6 = 27x6 slots x 4096)$(li)unlimited types; same id with different NBT counts separately$(br2)$(bold)Controls$():$(li)$(bold)Search box$(): filter by item name$(li)9x6 per page with paging; amount shown as 1.2k / 3.4M$(li)$(bold)Left click: 1 / Right click: one stack / Shift+Left: all of that type$()$(li)$(bold)Deposit$(): click into the grid while carrying the item, or Shift-click items in your inventory; there is also a $(bold)Deposit All$() button$(br2)Upgrading $(bold)migrates everything from the old level 1-5 slots$() automatically - nothing is lost (capacity only grows).$(br2)Note: the $(bold)bag itself can never be stored$(), so you cannot lock yourself out."
+    }
+  ]
+}
