@@ -11,7 +11,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)Traits$():$(li)$(l:trait_super_tier_magic)Super-Tier Magic$() (no levels, tools): spells can be inscribed into the tool and are cast at twice their own level cap, with 3x range and 2x duration$(li)$(l:trait_all_spells_unity)Myriad Spells as One$() (leveled, general, highest single piece only): +100 max mana per level; attacking grants level 5 Echoing Strikes (45s) and dropping to 20% health grants level 2 Abyssal Shroud (300s)$(li)$(l:trait_arcane_domination)Arcane Domination$() (no levels, general): all schools +100% spell power$(li)$(l:trait_mana_armor)Mana Armor$() (leveled, armor, stacks): every 100 max mana grants 1 damage reduction$(br2)$(italic)Only the union of three crossover melts deserves the name Magic Gold.$()"
+      "text": "$(bold)Traits$():$(li)$(l:trait_super_tier_magic)Super-Tier Magic$() (no levels, tools): spells can be inscribed into the tool and are cast at twice their own level cap, with 3x range and 2x duration$(li)$(l:trait_all_spells_unity)Myriad Spells as One$() (leveled, general, highest single piece only): +100 max mana per level; attacking grants level 5 Echoing Strikes (45s) and dropping to 20% health grants level 2 Abyssal Shroud (300s)$(li)$(l:trait_arcane_domination)Arcane Domination$() (no levels, general): all schools +100% spell power$(li)$(l:trait_mana_armor)Mana Armor$() (leveled, armor, stacks): every 100 max mana grants 0.5 damage reduction$(br2)$(italic)Only the union of three crossover melts deserves the name Magic Gold.$()"
     }
   ],
   "flag": "mod:irons_spellbooks"

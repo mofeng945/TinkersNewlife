@@ -543,7 +543,7 @@
   "modifier.tinkersnewlife.arcane_domination.tip": "§5All schools spell power +%1$s%%",
   "modifier.tinkersnewlife.arcane_domination.flavor": "§7Not borrowed power - commanded.",
   "modifier.tinkersnewlife.mana_armor": "Mana Armor",
-  "modifier.tinkersnewlife.mana_armor.description": "Every 100 max mana grants 1 point of damage reduction; pieces stack.",
+  "modifier.tinkersnewlife.mana_armor.description": "Every 100 max mana grants 0.5 points of damage reduction; pieces stack.",
   "modifier.tinkersnewlife.mana_armor.tip": "§9Per 100 max mana: damage reduction +%1$s (stacks)",
   "modifier.tinkersnewlife.mana_armor.flavor": "§7Wearing your mana as plate."
 }

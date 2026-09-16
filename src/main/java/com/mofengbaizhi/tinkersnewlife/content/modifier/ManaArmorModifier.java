@@ -26,10 +26,10 @@ import java.util.List;
 
 /**
  * 铁魔法联动特性·<b>魔力铠甲</b>（材料「魔金」盔甲自带，<b>有等级、可叠加</b>）：
- * 每 <b>100 点法力上限</b>提供 <b>1 点伤害减免</b>。
+ * 每 <b>100 点法力上限</b>提供 <b>0.5 点伤害减免</b>。
  *
  * <p>实现走 TCon 的护甲钩子 {@link ModifyDamageModifierHook#modifyDamageTaken}（和「导魔」同一套 ✓）：
- * 每件盔甲各自扣掉 {@code 1 × 等级 × floor(法力上限 / 100)} 点 →
+ * 每件盔甲各自扣掉 {@code 0.5 × 等级 × floor(法力上限 / 100)} 点 →
  * 多件<b>自然叠加</b> ✓，且扣完不小于 0 ✓。
  *
  * <p>法力上限取铁魔法的 {@code MAX_MANA} 属性（默认 100）✓ —— 所以「万法归一」给的法力上限
@@ -46,7 +46,7 @@ public class ManaArmorModifier extends Modifier implements ModifyDamageModifierH
     private static final int MAX_LEVEL = 3;
 
     /** 每 100 点法力上限的减伤点数 */
-    public static final float REDUCTION_PER_100_MANA = 1.0F;
+    public static final float REDUCTION_PER_100_MANA = 0.5F;
 
     public static int clampLevel(int level) {
         return Math.max(0, Math.min(MAX_LEVEL, level));
@@ -74,7 +74,7 @@ public class ManaArmorModifier extends Modifier implements ModifyDamageModifierH
                            @Nullable Player player, List<Component> tooltip,
                            TooltipKey tooltipKey, TooltipFlag tooltipFlag) {
         tooltip.add(Component.translatable("modifier.tinkersnewlife.mana_armor.tip",
-                String.format("%.0f", REDUCTION_PER_100_MANA * modifier.getLevel())));
+                String.format("%.1f", REDUCTION_PER_100_MANA * modifier.getLevel())));
     }
 
     // ============================================================
