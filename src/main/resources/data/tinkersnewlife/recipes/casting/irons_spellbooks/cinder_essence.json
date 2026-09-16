@@ -1,0 +1,19 @@
+{
+  "type": "tconstruct:casting_table",
+  "cast": {
+    "tag": "tconstruct:casts/multi_use/nugget"
+  },
+  "cast_consumed": false,
+  "fluid": {
+    "amount": 10,
+    "fluid": "tinkersnewlife:cinder_ash_still"
+  },
+  "result": "irons_spellbooks:cinder_essence",
+  "cooling_time": 30,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "irons_spellbooks"
+    }
+  ]
+}

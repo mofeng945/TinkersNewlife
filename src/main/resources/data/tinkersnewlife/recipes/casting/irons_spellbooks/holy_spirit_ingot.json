@@ -1,0 +1,19 @@
+{
+  "type": "tconstruct:casting_table",
+  "cast": {
+    "tag": "tconstruct:casts/multi_use/ingot"
+  },
+  "cast_consumed": false,
+  "fluid": {
+    "amount": 90,
+    "fluid": "tinkersnewlife:holy_spirit_still"
+  },
+  "result": "tinkersnewlife:holy_spirit_ingot",
+  "cooling_time": 100,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "irons_spellbooks"
+    }
+  ]
+}

@@ -324,4 +324,32 @@ public class ModItems {
     public static final RegistryObject<Item> CURSE_VAULT =
             ITEMS.register("curse_vault",
                     () -> new com.mofengbaizhi.tinkersnewlife.content.item.CurseVaultItem(ModBlocks.CURSE_VAULT.get()));
+
+    // ============================================================
+    //  铁魔法联动材料的"物品形态"（浇铸回环的另一半）
+    // ============================================================
+
+    /**
+     * 魔金锭：材料「魔金」的物品形态。
+     *
+     * <p>魔金精华是<b>纯合金流体</b>（90 熔融炽金 + 90 熔融秘银 + 90 熔融奥术锭 → 180 mB），
+     * 本身没有熔炼源 —— 所以这里给它一个锭，让流体和物品能互相转换 ✓：
+     * <pre>
+     *   浇筑：90 mB 魔金精华 + 锭铸模 → 魔金锭
+     *   熔炼：魔金锭 → 90 mB 魔金精华
+     * </pre>
+     * 两侧都是 90 mB = 1 单位 ✓ 严格 1:1，不会凭空生出材料 ✓。
+     */
+    public static final RegistryObject<Item> MAGIC_GOLD_INGOT =
+            ITEMS.register("magic_gold_ingot", () -> new Item(new Item.Properties()));
+
+    /**
+     * 圣灵锭：材料「圣灵」的物品形态（同样是纯合金流体，理由同魔金锭）✓。
+     * <pre>
+     *   浇筑：90 mB 神圣灵液 + 锭铸模 → 圣灵锭
+     *   熔炼：圣灵锭 → 90 mB 神圣灵液
+     * </pre>
+     */
+    public static final RegistryObject<Item> HOLY_SPIRIT_INGOT =
+            ITEMS.register("holy_spirit_ingot", () -> new Item(new Item.Properties()));
 }

@@ -1137,5 +1137,7 @@
   "modifier.tinkersnewlife.mana_armor": "魔力铠甲",
   "modifier.tinkersnewlife.mana_armor.description": "每 100 点法力值上限提供 0.5 点伤害减免；多件可叠加。",
   "modifier.tinkersnewlife.mana_armor.tip": "§9每 100 法力上限：伤害减免 +%1$s（可叠加）",
-  "modifier.tinkersnewlife.mana_armor.flavor": "§7把法力穿在身上。"
+  "modifier.tinkersnewlife.mana_armor.flavor": "§7把法力穿在身上。",
+  "item.tinkersnewlife.magic_gold_ingot": "魔金锭",
+  "item.tinkersnewlife.holy_spirit_ingot": "圣灵锭"
 }

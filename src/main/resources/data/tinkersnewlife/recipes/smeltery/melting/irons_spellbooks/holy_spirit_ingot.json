@@ -1,0 +1,18 @@
+{
+  "type": "tconstruct:melting",
+  "ingredient": {
+    "item": "tinkersnewlife:holy_spirit_ingot"
+  },
+  "result": {
+    "fluid": "tinkersnewlife:holy_spirit_still",
+    "amount": 90
+  },
+  "temperature": 1500,
+  "time": 80,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "irons_spellbooks"
+    }
+  ]
+}

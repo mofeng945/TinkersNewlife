@@ -545,5 +545,7 @@
   "modifier.tinkersnewlife.mana_armor": "Mana Armor",
   "modifier.tinkersnewlife.mana_armor.description": "Every 100 max mana grants 0.5 points of damage reduction; pieces stack.",
   "modifier.tinkersnewlife.mana_armor.tip": "§9Per 100 max mana: damage reduction +%1$s (stacks)",
-  "modifier.tinkersnewlife.mana_armor.flavor": "§7Wearing your mana as plate."
+  "modifier.tinkersnewlife.mana_armor.flavor": "§7Wearing your mana as plate.",
+  "item.tinkersnewlife.magic_gold_ingot": "Magic Gold Ingot",
+  "item.tinkersnewlife.holy_spirit_ingot": "Holy Spirit Ingot"
 }

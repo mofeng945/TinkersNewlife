@@ -1,0 +1,19 @@
+{
+  "type": "tconstruct:casting_table",
+  "cast": {
+    "tag": "tconstruct:casts/multi_use/gem"
+  },
+  "cast_consumed": false,
+  "fluid": {
+    "amount": 250,
+    "fluid": "tinkersnewlife:primordial_fire_soul_still"
+  },
+  "result": "irons_spellbooks:divine_soulshard",
+  "cooling_time": 150,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "irons_spellbooks"
+    }
+  ]
+}
