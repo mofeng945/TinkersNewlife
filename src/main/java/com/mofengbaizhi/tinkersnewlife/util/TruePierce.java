@@ -42,6 +42,9 @@ import java.util.function.Consumer;
  *
  * <h2>做法（顺序即优先级）</h2>
  * <pre>
+ *   ⓪ 绝对防御穿透：把"不看伤害标签、只看攻击者属性"的免疫临时失效
+ *      （{@link AbsoluteDefense}：潘多拉之咒·现实压制在 LivingAttackEvent 里直接取消打击，
+ *       标签与事件层顶开都够不着 → 只能把攻击者的"现实指数"临时抬过阈值）
  *   ① 命灯指轮共存：攻击者戴着命灯 → 本次最多打到"只剩一点血"（不杀死）
  *   ② 先禁疗 + 清掉本模组自己的"伤害限幅"效果（否则会把多段伤害吞掉）
  *   ③ 下界亚波伦这类"hurt() 管线全被取消"的 Boss → 直接 setHealth 扣血 + 主动 die()
@@ -88,6 +91,19 @@ public final class TruePierce {
         if (target == null || damage <= 0.0F) return;
         if (target.level().isClientSide || target.isRemoved()) return;
 
+        // ⓪ 绝对防御穿透：把"根本不看伤害标签、只看攻击者属性"的免疫（潘多拉之咒·现实压制）
+        //    临时失效 —— 它是在 LivingAttackEvent 里直接取消打击的，标签和事件层顶开都够不着。
+        //    必须包住整个打击过程，且无论从哪个分支返回都要摘掉临时修饰符。
+        boolean transcend = AbsoluteDefense.begin(attacker);
+        AbsoluteDefense.noteSunblockTarget(target);
+        try {
+            applyInner(attacker, target, damage);
+        } finally {
+            if (transcend) AbsoluteDefense.end(attacker);
+        }
+    }
+
+    private static void applyInner(@Nullable LivingEntity attacker, LivingEntity target, float damage) {
         // ① 穿透是"真伤"：**不受命灯指轮的慈悲效果约束** —— 带穿透的近战/投射物可以照常杀死目标。
         //    命灯那边也有对应的早退（LifeLampRingHandler 见到真伤源直接放行），两端一致、与事件顺序无关。
         float want = damage;
