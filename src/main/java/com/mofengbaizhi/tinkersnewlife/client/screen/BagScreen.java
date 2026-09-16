@@ -65,29 +65,29 @@ public class BagScreen extends AbstractContainerScreen<BagContainer> {
             for (int col = 0; col < 9; col++) {
                 int slotX = slotStartX + col * 18;
                 int slotY = slotStartY + row * 18;
-                graphics.fill(slotX, slotY, slotX + 18, slotY + 18, 0xFF8B8B8B);
-                graphics.fill(slotX + 1, slotY + 1, slotX + 17, slotY + 17, 0xFF373737);
+                graphics.fill(slotX - 1, slotY - 1, slotX + 17, slotY + 17, 0xFF8B8B8B);
+                graphics.fill(slotX, slotY, slotX + 16, slotY + 16, 0xFF373737);
             }
         }
 
         int playerInvY = y + 18 + rows * 18 + 14;
-        graphics.fill(x + 7, playerInvY - 1, x + 169, playerInvY + 3 * 18 + 1, 0xFF8B8B8B);
+        graphics.fill(x + 6, playerInvY - 2, x + 168, playerInvY + 3 * 18 + 1, 0xFF8B8B8B);
         graphics.fill(x + 7, playerInvY + 3 * 18 + 3, x + 169, playerInvY + 3 * 18 + 18 + 3, 0xFF8B8B8B);
 
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
                 int slotX = x + 8 + col * 18;
                 int slotY = playerInvY + row * 18;
-                graphics.fill(slotX, slotY, slotX + 18, slotY + 18, 0xFF555555);
-                graphics.fill(slotX + 1, slotY + 1, slotX + 17, slotY + 17, 0xFF8B8B8B);
+                graphics.fill(slotX - 1, slotY - 1, slotX + 17, slotY + 17, 0xFF555555);
+                graphics.fill(slotX, slotY, slotX + 16, slotY + 16, 0xFF8B8B8B);
             }
         }
 
         for (int col = 0; col < 9; col++) {
             int slotX = x + 8 + col * 18;
             int slotY = playerInvY + 58;
-            graphics.fill(slotX, slotY, slotX + 18, slotY + 18, 0xFF555555);
-            graphics.fill(slotX + 1, slotY + 1, slotX + 17, slotY + 17, 0xFF8B8B8B);
+            graphics.fill(slotX - 1, slotY - 1, slotX + 17, slotY + 17, 0xFF555555);
+            graphics.fill(slotX, slotY, slotX + 16, slotY + 16, 0xFF8B8B8B);
         }
     }
 
