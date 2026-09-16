@@ -24,7 +24,8 @@ import java.util.List;
  * 铁魔法联动特性·<b>提洛斯炼狱</b>（材料「圣灵」自带，<b>无等级</b>）：
  *
  * <p>佩戴者生命降到一半以下时，在身旁召唤<b>两只远古骑士</b>（铁魔法 {@code citadel_keeper}，
- * 用咒灵操术那套仆从通用 AI：{@code WuWeiHandler.attachGuardAi}），存在 <b>150 秒</b>；
+ * 套用咒灵操术那套<b>仆从类</b>处理：只摘掉它的目标选择、目标由外部每 tick 指派，
+ * <b>骑士原生 AI 完整保留</b>），存在 <b>150 秒</b>；
  * 同时<b>无吟唱</b>释放一次<b>5 级地狱浮现</b>（{@code irons_spellbooks:raise_hell}），
  * 以玩家为中心、<b>不伤害这两只仆从</b>。冷却 <b>150 秒</b>。
  *

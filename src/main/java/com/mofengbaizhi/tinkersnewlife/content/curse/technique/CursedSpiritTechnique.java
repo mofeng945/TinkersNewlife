@@ -850,8 +850,15 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         }
     }
 
-    /** 反射移除该 Mob 的所有目标选择目标（目标统一由操控 tick 指派） */
-    private static void stripTargetGoals(Mob mob) {
+    /**
+     * 反射移除该 Mob 的所有目标选择目标（目标统一由操控 tick 指派）。
+     *
+     * <p>本模组召唤的"仆从"统一走这条路：<b>只摘目标选择，不碰 goalSelector</b> ——
+     * 生物自带的攻击/施法/动画 AI 原样保留，目标是"谁"由外面每 tick 指派。
+     * 对比 {@code WuWeiHandler#attachGuardAi}（那套会连 goalSelector 一起清空，改成玉犬式近战追击，
+     * 非玉犬形态的生物用它等于把原生 AI 全废掉）。
+     */
+    public static void stripTargetGoals(Mob mob) {
         try {
             java.lang.reflect.Field field = Mob.class.getDeclaredField("targetSelector");
             field.setAccessible(true);
