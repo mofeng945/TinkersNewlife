@@ -1,5 +1,9 @@
 {
   "modifier.tinkersnewlife": {
+    "arcane_conduction": "#9a6bff",
+    "tilos_purgatory": "#ff5a1e",
+    "cold_blooded": "#4fc3e8",
+    "endless_cold_wind": "#cbeeff",
     "butcher": "#ff55ff",
     "hastur_malice": "#00aaaa",
     "lucky_drop": "#ffff55",
