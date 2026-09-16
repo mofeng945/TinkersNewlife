@@ -1,0 +1,13 @@
+{
+    "name":  "Endless Cold Wind",
+    "category":  "tinkersnewlife:traits",
+    "icon":  "tinkersnewlife:textures/gui/modifiers/endless_cold_wind.png",
+    "sortnum":  41,
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)Endless Cold Wind$() (default trait of Formless Ice, $(bold)no levels$())$(br2)While $(bold)holding$() this tool (main or off hand), your $(bold)Ice-school spell power is increased by 50%$().$(br2)It drops the moment you stop holding it (the attribute is re-applied every 10 ticks)."
+                  }
+              ],
+    "flag":  "mod:irons_spellbooks"
+}

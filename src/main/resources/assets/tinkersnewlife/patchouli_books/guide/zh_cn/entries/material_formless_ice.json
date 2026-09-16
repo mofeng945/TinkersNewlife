@@ -1,0 +1,18 @@
+{
+    "name":  "无相冰",
+    "category":  "tinkersnewlife:materials",
+    "icon":  "irons_spellbooks:permafrost_shard",
+    "sortnum":  21,
+    "pages":  [
+                  {
+                      "type":  "patchouli:spotlight",
+                      "item":  "irons_spellbooks:permafrost_shard",
+                      "text":  "$(bold)获取方式$()（铁魔法联动）：$(li)熔炼铁魔法的 $(bold)永冻碎片$()（$(bold)irons_spellbooks:permafrost_shard$()）得到 $(bold)灼热之冰$() —— $(bold)500 mB / 碎片$()$(li)熔炼铁魔法的 $(bold)冰封手柄$()（$(bold)irons_spellbooks:frosted_helve$()）得到 $(bold)灼热之冰 150 mB$()，并副产 $(bold)液态奥术 50 mB$()$(li)在铸造台（或冶炼炉浇注）用 $(bold)灼热之冰 50 mB$()（1 单位）制作无相冰部件$(br2)可用于：$(bold)手柄 / 弓臂 / 绑定结$()$(br2)等级：$(bold)T3$()。"
+                  },
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)面板$()：硬度低而轻便、精准度高 —— $(li)手柄：耐久 $(bold)-8%$()、挖掘 +5%、攻速 $(bold)+12%$()$(li)弓臂：耐久 210（偏低）、拉弓 +0.10、初速 +0.05、$(bold)精准 +0.15$()$(li)绑定结：无数值$(br2)$(bold)自带特性$()：$(li)$(l:trait_cold_blooded)冷酷$()（有等级）：每次攻击（近战 / 远程 / 法术）在伤害结算后追加一段冰霜学派法术伤害，为玩家伤害的 $(bold)0.1×(1+等级)$() 倍$(li)$(l:trait_endless_cold_wind)无止寒风$()（无等级）：手持该工具施法时，$(bold)冰霜学派法术强度 +50%$()"
+                  }
+              ],
+    "flag":  "mod:irons_spellbooks"
+}

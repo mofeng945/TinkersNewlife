@@ -1,0 +1,13 @@
+{
+    "name":  "Cold-Blooded",
+    "category":  "tinkersnewlife:traits",
+    "icon":  "tinkersnewlife:textures/gui/modifiers/cold_blooded.png",
+    "sortnum":  40,
+    "pages":  [
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)Cold-Blooded$() (default trait of Formless Ice, $(bold)leveled$())$(br2)Every attack - $(bold)melee, ranged or spell$() - appends a burst of $(bold)Ice-school spell damage$() $(bold)after$() the hit resolves, equal to $(bold)0.1 x (1 + level)$() of the damage dealt.$(br2)Level 1 is 20%, level 3 is 40%. The burst is attributed to the player, so rules like the Life Lamp Ring's mercy and true piercing apply to it as usual."
+                  }
+              ],
+    "flag":  "mod:irons_spellbooks"
+}
