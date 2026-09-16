@@ -1,0 +1,13 @@
+{
+  "name": "寒霜刺骨",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:textures/gui/modifiers/biting_frost.png",
+  "sortnum": 53,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)寒霜刺骨$()（冰封骨头自带，$(bold)有等级$()）$(br2)效果：命中后使敌人获得$(bold)霜冻$()，持续 $(bold)3 × 等级 秒$()，冷却 $(bold)6 秒$()$(br2)「霜冻」是本模组的状态效果：持续期间不断累积目标的$(bold)冻结刻度$()（目标会真的被冻住），效果结束时还会留一段寒霜。$(br2)冷却按$(bold)攻击者$()计算（不是按目标）—— 6 秒内只能触发一次，避免一刀冻住一片。$(br2)$(italic)冻透的骨头，比刀还快。$()"
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}

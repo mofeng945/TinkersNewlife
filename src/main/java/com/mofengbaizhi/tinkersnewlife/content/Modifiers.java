@@ -420,6 +420,11 @@ public class Modifiers {
             MODIFIERS.register("inscription",
                     com.mofengbaizhi.tinkersnewlife.content.modifier.InscriptionModifier::new);
 
+    /** 特性·寒霜刺骨（材料「冰封骨头」自带，有等级）：命中后给敌人挂霜冻，3×等级 秒，冷却 6 秒 */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.BitingFrostModifier> BITING_FROST =
+            MODIFIERS.register("biting_frost",
+                    com.mofengbaizhi.tinkersnewlife.content.modifier.BitingFrostModifier::new);
+
     /** 近战特性·神圣之力（神灵金近战头自带，联动铁魔法/启示录：+180法力、注入火墙术Lv5/天使之翼Lv5/治愈之环Lv10、火墙无视无敌帧） */
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.DivinePowerModifier> DIVINE_POWER =
         MODIFIERS.register("divine_power",

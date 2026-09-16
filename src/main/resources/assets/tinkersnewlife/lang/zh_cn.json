@@ -1149,5 +1149,11 @@
   "modifier.tinkersnewlife.inscription": "刻印",
   "modifier.tinkersnewlife.inscription.description": "手持此工具或穿戴此盔甲时，法术强度属性提升 10%（每件各算一份，可叠加）。",
   "modifier.tinkersnewlife.inscription.tip": "§d法术强度 +%1$s%%",
-  "modifier.tinkersnewlife.inscription.flavor": "§7刻在皮上的，是咒。"
+  "modifier.tinkersnewlife.inscription.flavor": "§7刻在皮上的，是咒。",
+  "material.tinkersnewlife.frozen_bone": "冰封骨头",
+  "material.tinkersnewlife.frozen_bone.flavor": "冻透的骨头，比刀还快。",
+  "modifier.tinkersnewlife.biting_frost": "寒霜刺骨",
+  "modifier.tinkersnewlife.biting_frost.description": "命中后使敌人获得霜冻效果，持续 3 × 等级 秒，冷却 6 秒。",
+  "modifier.tinkersnewlife.biting_frost.tip": "§b命中使敌人霜冻 %1$s 秒（冷却 %2$s 秒）",
+  "modifier.tinkersnewlife.biting_frost.flavor": "§7骨里带霜，触之刺骨。"
 }

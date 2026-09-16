@@ -557,5 +557,11 @@
   "modifier.tinkersnewlife.inscription": "Inscription",
   "modifier.tinkersnewlife.inscription.description": "While holding this tool or wearing this armor, spell power is increased by 10% (each piece counts separately and they stack).",
   "modifier.tinkersnewlife.inscription.tip": "§dSpell power +%1$s%%",
-  "modifier.tinkersnewlife.inscription.flavor": "§7What is carved into the hide is a curse."
+  "modifier.tinkersnewlife.inscription.flavor": "§7What is carved into the hide is a curse.",
+  "material.tinkersnewlife.frozen_bone": "Frozen Bone",
+  "material.tinkersnewlife.frozen_bone.flavor": "Frozen through, it cuts faster than a blade.",
+  "modifier.tinkersnewlife.biting_frost": "Biting Frost",
+  "modifier.tinkersnewlife.biting_frost.description": "Hits inflict Frost on the enemy for 3 x level seconds, with a 6 second cooldown.",
+  "modifier.tinkersnewlife.biting_frost.tip": "§bHits freeze the enemy for %1$s s (cooldown %2$s s)",
+  "modifier.tinkersnewlife.biting_frost.flavor": "§7Frost in the bone, biting to the touch."
 }

@@ -1,0 +1,18 @@
+{
+  "name": "冰封骨头",
+  "category": "tinkersnewlife:materials",
+  "icon": "irons_spellbooks:frozen_bone",
+  "sortnum": 29,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "irons_spellbooks:frozen_bone",
+      "text": "$(bold)获取方式$()（铁魔法联动）：$(li)$(bold)浇筑$()：骨头 + 50 mB 灼热之冰 → $(bold)冰封骨头$()（骨头作为铸件被消耗）$(li)在$(bold)部件制作台$()上用它直接制作部件 —— $(bold)绑定结 1 个原料 / 手柄 1 个原料$()$(br2)可用于：$(bold)手柄 / 绑定结$()$(br2)等级：$(bold)T1$()$(br2)数值（对比骨头）：$(bold)耐久略低$()（−27% vs 骨头 −25%），但$(bold)攻击 +10%、攻速 +15%、挖掘 +5%$() 都高于骨头 —— 更脆，但更快更利。$(br2)绑定结在匠魂里是$(bold)无数值部件$()（只带特性）。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)自带特性$()：$(li)$(l:trait_biting_frost)寒霜刺骨$()（有等级）：命中后使敌人获得$(bold)霜冻$()，持续 3 × 等级 秒，冷却 6 秒$(br2)$(italic)冻透的骨头，比刀还快。$()"
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}

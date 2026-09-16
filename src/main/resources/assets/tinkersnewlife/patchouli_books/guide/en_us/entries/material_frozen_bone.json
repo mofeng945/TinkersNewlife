@@ -1,0 +1,18 @@
+{
+  "name": "Frozen Bone",
+  "category": "tinkersnewlife:materials",
+  "icon": "irons_spellbooks:frozen_bone",
+  "sortnum": 29,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "irons_spellbooks:frozen_bone",
+      "text": "$(bold)Obtaining$() (Iron's Spells crossover):$(li)$(bold)Casting$(): bone + 50 mB Scorching Ice -> $(bold)Frozen Bone$() (the bone is consumed as the cast)$(li)craft parts with it directly in the $(bold)Part Builder$() - $(bold)1 ingredient per binding / 1 per handle$()$(br2)Usable for: $(bold)handle / binding$()$(br2)Tier: $(bold)T1$()$(br2)Stats (vs Bone): $(bold)slightly less durable$() (-27% vs Bone's -25%), but $(bold)+10% attack, +15% attack speed, +5% mining$() - all above Bone. More brittle, but faster and sharper.$(br2)Bindings are $(bold)statless parts$() in Tinkers' Construct (they carry traits only)."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Traits$():$(li)$(l:trait_biting_frost)Biting Frost$() (leveled): hits inflict $(bold)Frost$() on the enemy for 3 x level seconds, with a 6 second cooldown$(br2)$(italic)Frozen through, it cuts faster than a blade.$()"
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}

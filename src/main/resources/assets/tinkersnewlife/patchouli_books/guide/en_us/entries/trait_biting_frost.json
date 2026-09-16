@@ -1,0 +1,13 @@
+{
+  "name": "Biting Frost",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:textures/gui/modifiers/biting_frost.png",
+  "sortnum": 53,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Biting Frost$() (comes with Frozen Bone, $(bold)leveled$())$(br2)Effect: hits inflict $(bold)Frost$() on the enemy for $(bold)3 x level seconds$(), with a $(bold)6 second$() cooldown$(br2)Frost is this mod's status effect: while it lasts it keeps adding frozen ticks to the target (they really do get frozen solid), and it leaves a chill behind when it ends.$(br2)The cooldown is per $(bold)attacker$() (not per target), so you cannot freeze a whole crowd with one swing.$(br2)$(italic)Frozen through, it cuts faster than a blade.$()"
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}
