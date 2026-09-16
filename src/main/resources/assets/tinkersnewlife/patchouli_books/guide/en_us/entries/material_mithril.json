@@ -11,7 +11,7 @@
                   },
                   {
                       "type":  "patchouli:text",
-                      "text":  "$(bold)Traits$():$(li)$(l:trait_focus)Focus$() (leveled): your casting $(bold)cannot be interrupted$() while held, and each level adds 5% cast speed$(li)Arcane Conduction: strengthens inscribed spells and boosts spell damage$(li)$(l:trait_spell_break)Spell Break$() (no levels): comes with a $(bold)level 1 Counterspell$()$(br2)$(italic)Mithril is a mage's metal: light, precise and quick - just do not expect it to take a beating.$()"
+                      "text":  "$(bold)Traits$():$(li)$(l:trait_focus)Focus$() (leveled): your casting $(bold)cannot be interrupted$() while held, and each level adds 5% cast speed$(li)$(l:trait_spell_break)Spell Break$() (no levels): comes with a $(bold)level 1 Counterspell$() (pick it from the spell wheel while held / worn)$(br2)$(italic)Mithril is a mage's metal: light, precise and quick - just do not expect it to take a beating.$()"
                   }
               ],
     "flag":  "mod:irons_spellbooks"

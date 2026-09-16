@@ -379,7 +379,11 @@ public final class IronSpellsSpellAccess {
     public static boolean ensureInscribed(ItemStack stack, String spellId, int level, int slots) {
         init();
         if (!ready || stack == null || stack.isEmpty()) return false;
-        if (mContainerGet == null || mContainerCreate == null || mContainerAdd == null || mContainerSave == null) return false;
+        if (mContainerGet == null || mContainerCreate == null || mContainerAdd == null || mContainerSave == null) {
+            TinkersNewlife.LOGGER.warn("[破法] 容器方法缺失：get={} create={} addSpell={} save={}",
+                    mContainerGet != null, mContainerCreate != null, mContainerAdd != null, mContainerSave != null);
+            return false;
+        }
         try {
             if (mContainerGet.invoke(null, stack) != null) return true;   // 已是容器（可能已被铁砧编辑过）→ 不动
             Object spell = spellById(spellId);
@@ -387,6 +391,7 @@ public final class IronSpellsSpellAccess {
             Object container = mContainerCreate.invoke(null, Math.max(1, slots), true, false);
             mContainerAdd.invoke(container, spell, level, true, stack);
             mContainerSave.invoke(container, stack);
+            TinkersNewlife.LOGGER.debug("[破法] 已向 {} 刻入法术 {} Lv{}", stack.getItem(), spellId, level);
             return true;
         } catch (Throwable t) {
             TinkersNewlife.LOGGER.warn("[破法] 刻入 {} 失败: {}", spellId, t.toString());

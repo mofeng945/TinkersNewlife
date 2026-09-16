@@ -53,6 +53,21 @@ public class SpellBreakModifier extends Modifier implements TooltipModifierHook 
                            @Nullable Player player, List<Component> tooltip,
                            TooltipKey tooltipKey, TooltipFlag tooltipFlag) {
         tooltip.add(Component.translatable("modifier.tinkersnewlife.spell_break.tip"));
+        // ⭐ 实况显示：把物品里**真实刻印**的法术列出来（用于确认注入是否真的成功）
+        if (player != null) {
+            for (ItemStack stack : new ItemStack[]{player.getMainHandItem(), player.getOffhandItem()}) {
+                if (!has(stack)) continue;
+                var ids = com.mofengbaizhi.tinkersnewlife.integration.irons_spellbooks.IronSpellsSpellAccess
+                        .inscribedSpellIds(stack);
+                if (ids.isEmpty()) {
+                    tooltip.add(Component.translatable("modifier.tinkersnewlife.spell_break.empty"));
+                } else {
+                    tooltip.add(Component.translatable("modifier.tinkersnewlife.spell_break.actual",
+                            String.join(", ", ids)));
+                }
+                break;
+            }
+        }
     }
 
     /** 该物品是否带破法 */

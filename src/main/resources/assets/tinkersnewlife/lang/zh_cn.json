@@ -1115,5 +1115,7 @@
   "modifier.tinkersnewlife.spell_break": "破法",
   "modifier.tinkersnewlife.spell_break.description": "工具自带 1 级「法术反制」（可用于中断目标施法或魔法效果）。",
   "modifier.tinkersnewlife.spell_break.tip": "§d自带 1 级法术反制",
-  "modifier.tinkersnewlife.spell_break.flavor": "§7以银为引，破其术式。"
+  "modifier.tinkersnewlife.spell_break.flavor": "§7以银为引，破其术式。",
+  "modifier.tinkersnewlife.spell_break.actual": "§7已刻印：§f%1$s",
+  "modifier.tinkersnewlife.spell_break.empty": "§7尚未刻入（放入背包后自动注入）"
 }

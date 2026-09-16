@@ -11,7 +11,7 @@
                   },
                   {
                       "type":  "patchouli:text",
-                      "text":  "$(bold)自带特性$()：$(li)$(l:trait_focus)专注$()（有等级）：手持时$(bold)吟唱不会被打断$()，且每级 +5% 吟唱速度$(li)$(l:../materials/material_holy_spirit)魔导$()：强化物品内刻印的法术并给施法增伤$(li)$(l:trait_spell_break)破法$()（无等级）：工具$(bold)自带 1 级法术反制$()$(br2)$(italic)秘银是法师的金属：轻、准、快，但别指望它扛揍。$()"
+                      "text":  "$(bold)自带特性$()：$(li)$(l:trait_focus)专注$()（有等级）：手持时$(bold)吟唱不会被打断$()，且每级 +5% 吟唱速度$(li)$(l:trait_spell_break)破法$()（无等级）：工具$(bold)自带 1 级法术反制$()（手持 / 穿戴后可在法术轮盘里选到）$(br2)$(italic)秘银是法师的金属：轻、准、快，但别指望它扛揍。$()"
                   }
               ],
     "flag":  "mod:irons_spellbooks"

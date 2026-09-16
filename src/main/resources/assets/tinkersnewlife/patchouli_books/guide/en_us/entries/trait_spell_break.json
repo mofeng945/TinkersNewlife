@@ -6,7 +6,7 @@
     "pages":  [
                   {
                       "type":  "patchouli:text",
-                      "text":  "$(bold)Spell Break$() (comes with Mithril, $(bold)no levels$())$(br2)The tool $(bold)comes with a level 1 Counterspell$() inscribed (an Iron's Spells spell that interrupts enemy casting or magic effects).$(br2)It is written into the item's $(bold)spell container$(), which means:$(li)the Arcane Anvil $(bold)can keep editing it$() (add or upgrade spells)$(li)together with Arcane Conduction you can raise that Counterspell to a higher level$(br2)Items that already carry a container are never overwritten, so manual edits stay intact."
+                      "text":  "$(bold)Spell Break$() (comes with Mithril, $(bold)no levels$())$(br2)The tool $(bold)comes with a level 1 Counterspell$() inscribed (an Iron's Spells spell that interrupts enemy casting or magic effects).$(br2)$(bold)How to use$(): hold it in your $(bold)main or off hand$() (wear it, for armor) and it shows up in the Iron's Spells $(bold)spell wheel$() - select and cast it like a spellbook spell (it spends your own mana).$(br2)It is written into the item's $(bold)spell container$(), which means:$(li)the Arcane Anvil $(bold)can keep editing it$() (add or upgrade spells)$(li)with Arcane Conduction gear from elsewhere (Holy Spirit / Arcane Iron) you can raise that Counterspell to a higher level$(br2)Items that already carry a container are never overwritten, so manual edits stay intact.$(br2)$(bold)Want to check it took?$() Hold the item and read its tooltip: the Spell Break line lists the $(bold)actually inscribed spells$()."
                   }
               ],
     "flag":  "mod:irons_spellbooks"

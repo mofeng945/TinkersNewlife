@@ -523,5 +523,7 @@
   "modifier.tinkersnewlife.spell_break": "Spell Break",
   "modifier.tinkersnewlife.spell_break.description": "Comes with a level 1 Counterspell inscribed (interrupts enemy casting or magic effects).",
   "modifier.tinkersnewlife.spell_break.tip": "§dComes with a level 1 Counterspell",
-  "modifier.tinkersnewlife.spell_break.flavor": "§7Silver cuts through sorcery."
+  "modifier.tinkersnewlife.spell_break.flavor": "§7Silver cuts through sorcery.",
+  "modifier.tinkersnewlife.spell_break.actual": "§7Inscribed: §f%1$s",
+  "modifier.tinkersnewlife.spell_break.empty": "§7Not inscribed yet (injected while in your inventory)"
 }
