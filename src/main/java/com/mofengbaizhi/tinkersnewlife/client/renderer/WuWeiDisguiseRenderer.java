@@ -91,41 +91,19 @@ public final class WuWeiDisguiseRenderer {
     private WuWeiDisguiseRenderer() {}
 
     /**
-     * 玩家登出/世界切换清理。
+     * 玩家登出清理：摘掉该玩家的代理与伪装状态。
      * <p>
-     * ⭐ 代理实体<b>不进世界</b>，MC 的实体回收机制管不到它：若不在"离开"的时机摘掉，
-     * 这张表会一直攥着旧世界的实体（连带其 level 引用）。玩家登出在这里处理；
-     * 世界卸载（单人存档间切换、断线重连）由 {@link ClientWuWeiCleanup} 兜底。
+     * ⭐ 代理实体<b>不进世界</b>，MC 的实体回收机制管不到它（还会连带攥着旧世界的 level 引用）。
+     * 这里按玩家清；世界卸载（换存档/断线重连）由
+     * {@link com.mofengbaizhi.tinkersnewlife.client.handler.UnnameableClientHandler} 那套
+     * 客户端生命周期钩子兜底（已在那里调 {@code ClientWuWeiData.clearAll()}）。
      */
     @SubscribeEvent
     public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         Player p = event.getEntity();
         PROXIES.remove(p.getUUID());
+        WALK_TICK.clear(); // 弱引用键，这里只是顺手让表更早收缩
         ClientWuWeiData.clearProxy(p.getUUID());
-    }
-
-    /** 客户端生命周期的兜底清理钩子（玩家登出 / 世界卸载） */
-    @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
-    public static final class ClientWuWeiCleanup {
-
-        /** 登出：清掉所有伪装玩家代理（含本地玩家） */
-        @SubscribeEvent
-        public static void onLoggingOut(net.minecraftforge.client.event.ClientPlayerNetworkEvent.LoggingOut event) {
-            clearAllProxies();
-        }
-
-        /** 世界卸载（退出到主菜单 / 换存档 / 断线）：代理持有的旧世界引用一并释放 */
-        @SubscribeEvent
-        public static void onLevelUnload(net.minecraftforge.event.level.LevelEvent.Unload event) {
-            if (!event.getLevel().isClientSide()) return; // 只清客户端这一份
-            clearAllProxies();
-        }
-
-        private static void clearAllProxies() {
-            PROXIES.clear();
-            WALK_TICK.clear();
-            ClientWuWeiData.clearAll();
-        }
     }
 
     /**

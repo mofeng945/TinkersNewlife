@@ -267,6 +267,8 @@ public class UnnameableClientHandler {
     @SubscribeEvent
     public static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
         forceShutdown();
+        // 断开连接：伪装代理表必须清空（代理不进世界，MC 不会回收它）
+        com.mofengbaizhi.tinkersnewlife.client.data.ClientWuWeiData.clearAll();
     }
 
     @SubscribeEvent
@@ -278,6 +280,12 @@ public class UnnameableClientHandler {
     @SubscribeEvent
     public static void onLevelUnload(LevelEvent.Unload event) {
         forceShutdown();
+        // ⭐ 无为转变的"渲染代理实体"不进世界，MC 的实体回收管不到它。
+        //    这里（退出到主菜单 / 换存档 / 断线）必须把代理表连同旧世界的引用一起清掉，
+        //    否则换存档后旧世界的代理实体会一直被静态表攥着。
+        if (event.getLevel().isClientSide()) {
+            com.mofengbaizhi.tinkersnewlife.client.data.ClientWuWeiData.clearAll();
+        }
     }
 
     /** 模拟反胃：视角晃动 */
