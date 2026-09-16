@@ -34,6 +34,8 @@ public final class BitingFrostHandler {
     /** 冷却：攻击者 UUID → 下次可用 gameTime */
     private static final Map<UUID, Long> COOLDOWN = new ConcurrentHashMap<>();
 
+    /** 诊断日志开关（平时 false 不刷屏 ✓） */
+    private static final boolean DEBUG = false;
     private static volatile long lastLogTime = 0L;
 
     @SubscribeEvent
@@ -61,7 +63,7 @@ public final class BitingFrostHandler {
             long ms = System.currentTimeMillis();
             if (ms - lastLogTime > 2000L) {
                 lastLogTime = ms;
-                TinkersNewlife.LOGGER.info("[寒霜刺骨] {} 命中 {} → 霜冻 {} 秒（等级 {}）",
+                if (DEBUG) TinkersNewlife.LOGGER.info("[寒霜刺骨] {} 命中 {} → 霜冻 {} 秒（等级 {}）",
                         attacker.getName().getString(), target.getName().getString(), ticks / 20, level);
             }
         } else {

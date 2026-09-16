@@ -148,10 +148,10 @@ public final class IronSpellsSpellAccess {
                     }
                 }
             } catch (Throwable t) {
-                TinkersNewlife.LOGGER.warn("[联动] 学派反射初始化失败（混沌之流将只用兜底学派表）: {}", t.toString());
+                TinkersNewlife.LOGGER.debug("[联动] 学派反射初始化失败（混沌之流将只用兜底学派表）: {}", t.toString());
             }
             if (mSchoolsGet == null || mSchoolDamageType == null || mSpellSchool == null || mSchoolId == null) {
-                TinkersNewlife.LOGGER.warn("[联动] 学派反射不完整：schoolsGet={} damageType={} spellSchool={} schoolId={}",
+                TinkersNewlife.LOGGER.debug("[联动] 学派反射不完整：schoolsGet={} damageType={} spellSchool={} schoolId={}",
                         mSchoolsGet != null, mSchoolDamageType != null, mSpellSchool != null, mSchoolId != null);
             }
             mSpellById = find(cSpellRegistry, "getSpell", ResourceLocation.class);

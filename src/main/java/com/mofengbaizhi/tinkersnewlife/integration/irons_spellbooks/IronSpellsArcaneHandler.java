@@ -282,6 +282,8 @@ public final class IronSpellsArcaneHandler {
      * 就标记"这一发是超位魔法"（{@code SuperTierMagicModifier#markCast}）✓ ——
      * 供 {@code SuperTierEffectMixin} 做治疗 ÷3 与状态时长 ×(2/3) ✓。
      */
+    /** 诊断日志开关（平时 false 不刷屏 ✓） */
+    private static final boolean DEBUG = false;
     private static volatile long lastSuperTierLog = 0L;
 
     /**
@@ -318,7 +320,7 @@ public final class IronSpellsArcaneHandler {
             long now = System.currentTimeMillis();
             if (now - lastSuperTierLog > 2000L) {
                 lastSuperTierLog = now;
-                TinkersNewlife.LOGGER.info("[超位魔法] {} 施放 {} → 法术强度 +200%（范围/持续放大生效）",
+                if (DEBUG) TinkersNewlife.LOGGER.info("[超位魔法] {} 施放 {} → 法术强度 +200%（范围/持续放大生效）",
                         caster.getName().getString(), spellId);
             }
         } catch (Throwable ignored) {

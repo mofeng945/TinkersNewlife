@@ -85,7 +85,7 @@ public final class ChaosFlowHandler {
         float per = total / segments;
         if (per <= 0.0F) return;
 
-        TinkersNewlife.LOGGER.info("[混沌之流] {} 的 {} 点伤害拆成 {} 段（每段 {}，学派 {} 个）",
+        if (DEBUG) TinkersNewlife.LOGGER.info("[混沌之流] {} 的 {} 点伤害拆成 {} 段（每段 {}，学派 {} 个）",
                 attacker.getName().getString(), total, segments, per, schoolKeys.size());
 
         event.setCanceled(true);                                 // 原始那一次不再结算 ✓
@@ -112,10 +112,13 @@ public final class ChaosFlowHandler {
     //  诊断（排查"为什么只看到一段伤害"用；限流，不刷屏）
     // ============================================================
 
+    /** 诊断日志开关（排查"为什么只看到一段伤害"时改 true ✓；平时保持 false 不刷屏） */
+    private static final boolean DEBUG = false;
     private static volatile long lastLogTime = 0L;
 
     /** 手里拿着匠魂工具、但这个工具上没有「混沌之流」→ 记一笔（5 秒最多一条） */
     private static void logDiagnostic(LivingEntity attacker, ToolStack tool) {
+        if (!DEBUG) return;
         if (tool == null) return;
         long now = System.currentTimeMillis();
         if (now - lastLogTime < 5000L) return;
@@ -125,6 +128,7 @@ public final class ChaosFlowHandler {
     }
 
     private static void logOnce(String message) {
+        if (!DEBUG) return;
         long now = System.currentTimeMillis();
         if (now - lastLogTime < 5000L) return;
         lastLogTime = now;
