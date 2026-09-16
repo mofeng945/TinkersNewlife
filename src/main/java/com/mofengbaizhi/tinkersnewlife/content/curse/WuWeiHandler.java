@@ -1014,10 +1014,12 @@ public final class WuWeiHandler {
      */
     private static void clearSameFormAggro(ServerPlayer player, String form) {
         if (form == null || form.isEmpty()) return;
+        net.minecraft.resources.ResourceLocation formKey = net.minecraft.resources.ResourceLocation.tryParse(form);
+        if (formKey == null) return;
         for (Mob mob : player.serverLevel().getEntitiesOfClass(Mob.class,
                 player.getBoundingBox().inflate(32.0),
                 m -> m.isAlive()
-                        && net.minecraft.world.entity.EntityType.getKey(m.getType()).toString().equals(form)
+                        && formKey.equals(net.minecraft.world.entity.EntityType.getKey(m.getType()))
                         && m.getTarget() == player
                         && m.getLastHurtByMob() != player)) {
             mob.setTarget(null);
