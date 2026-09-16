@@ -115,11 +115,10 @@ public final class QuantumVaultManager {
             return;
         }
         if (dirty.isEmpty()) return;
-        for (UUID uuid : dirty.toArray(new UUID[0])) {
-            save(uuid);
-            dirty.remove(uuid);
-        }
-        missing.clear();
+        // ⚡ 错峰：一次只落盘**一个**背包 ✓（原来一次写全部，多个大背包会在同一 tick 造成明显卡顿 ✗）
+        UUID first = dirty.iterator().next();
+        save(first);
+        dirty.remove(first);
     }
 
     // ============================================================
@@ -153,6 +152,9 @@ public final class QuantumVaultManager {
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
+        // ⚠ 界面同步必须**每 tick** 冲刷 ✓（合并的意思只是"同一 tick 内只发一份"，
+        //   挂到 100 tick 那个分支上会让点击最多 5 秒才反映到界面 ✗ —— 我自己刚踩到的）
+        com.mofengbaizhi.tinkersnewlife.network.VaultNetwork.flushPending();
         if (event.getServer().getTickCount() % 100 != 0) return;
         INSTANCE.flush(false);
     }

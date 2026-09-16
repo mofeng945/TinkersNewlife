@@ -53,10 +53,12 @@ public class QuantumVaultScreen extends AbstractContainerScreen<QuantumVaultMenu
     private static final int HEIGHT = QuantumVaultMenu.IMAGE_HEIGHT;
     private static final int WIDTH = QuantumVaultMenu.IMAGE_WIDTH;
 
-    /** 服务端快照（已按物品名排序 ✓） */
-    private static List<PacketVaultSync.Entry> snapshot = new ArrayList<>();
-    private static long snapshotTotal = 0L;
-    private static int snapshotWindow = -1;
+    /** 服务端快照（已按物品名排序 ✓）
+     *  ⚠ 原来是 static ✗：关掉界面后仍被静态引用（内存里一直留着上一只背包的全部物品），
+     *  而且换界面时可能串台 ✓ → 改成**实例字段**（随界面一起被回收 ✓）。 */
+    private List<PacketVaultSync.Entry> snapshot = new ArrayList<>();
+    private long snapshotTotal = 0L;
+    private int snapshotWindow = -1;
 
     private final List<PacketVaultSync.Entry> view = new ArrayList<>();
     private final UUID uuid;
@@ -70,6 +72,7 @@ public class QuantumVaultScreen extends AbstractContainerScreen<QuantumVaultMenu
     public QuantumVaultScreen(QuantumVaultMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
         this.uuid = menu.getBagUUID();
+        this.snapshotWindow = menu.containerId;                 // 请求在本界面之前到达也不串台 ✓
         this.imageWidth = WIDTH;
         this.imageHeight = HEIGHT;
         // ⚠ 原版这两个标签的位置会和"搜索框 / 翻页行"重叠 ✗（用户截图可见）→ 直接不画 ✓
@@ -80,11 +83,12 @@ public class QuantumVaultScreen extends AbstractContainerScreen<QuantumVaultMenu
     /** 服务端快照到达（{@code PacketVaultSync} 的处理器调用 ✓） */
     public void acceptSync(int windowId, long total, List<PacketVaultSync.Entry> entries) {
         if (windowId != this.menu.containerId) return;
-        snapshot = new ArrayList<>(entries);
-        snapshot.sort((a, b) -> a.stack().getHoverName().getString()
+        // ⚡ 排序只在快照到达时做一次 ✓（原来每次点击都全表重排 ✗）
+        List<PacketVaultSync.Entry> fresh = new ArrayList<>(entries);
+        fresh.sort((a, b) -> a.stack().getHoverName().getString()
                 .compareToIgnoreCase(b.stack().getHoverName().getString()));
-        snapshotTotal = total;
-        snapshotWindow = windowId;
+        this.snapshot = fresh;
+        this.snapshotTotal = total;
         rebuildView();
     }
 

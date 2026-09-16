@@ -92,7 +92,10 @@ public class PacketVaultAction {
                 }
             }
             QuantumVaultManager.getInstance().markDirty(packet.uuid);
-            VaultNetwork.sync(player, packet.uuid, player.containerMenu.containerId);
+            // ⚡ 同步合并：连续快速点击（比如连点取物）只在**本 tick 结束前发一份快照** ✓，
+            //    避免"每点一次就全量重发 + 客户端整表重排" ✗（类型多时这是明显的卡顿源）
+            com.mofengbaizhi.tinkersnewlife.network.VaultNetwork.scheduleSync(
+                    player, packet.uuid, player.containerMenu.containerId);
         });
         ctx.get().setPacketHandled(true);
     }

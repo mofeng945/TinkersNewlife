@@ -18,6 +18,28 @@ public final class VaultNetwork {
     private VaultNetwork() {
     }
 
+    /** 待同步（每 tick 合并成一份 ✓）：UUID → 窗口 id */
+    private static final java.util.Map<UUID, Integer> PENDING = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** 登记一次"待同步"，本 tick 末统一发 ✓（同一背包 tick 内多次操作只发一份 ✓） */
+    public static void scheduleSync(ServerPlayer player, UUID uuid, int windowId) {
+        PENDING.put(uuid, windowId);
+        PENDING_PLAYERS.put(uuid, player);
+    }
+
+    private static final java.util.Map<UUID, ServerPlayer> PENDING_PLAYERS = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** 服务端每 tick 末冲刷（由 {@code QuantumVaultManager} 的 tick 钩子调用 ✓） */
+    public static void flushPending() {
+        if (PENDING.isEmpty()) return;
+        for (UUID uuid : PENDING.keySet().toArray(new UUID[0])) {
+            Integer window = PENDING.remove(uuid);
+            ServerPlayer player = PENDING_PLAYERS.remove(uuid);
+            if (window == null || player == null) continue;
+            sync(player, uuid, window);
+        }
+    }
+
     public static void sync(ServerPlayer player, UUID uuid, int windowId) {
         QuantumVault vault = QuantumVaultManager.getInstance().getOrCreate(uuid);
         List<PacketVaultSync.Entry> entries = new ArrayList<>();

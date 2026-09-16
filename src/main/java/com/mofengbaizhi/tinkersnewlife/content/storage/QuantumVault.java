@@ -40,9 +40,15 @@ public class QuantumVault {
     private final Map<Key, Long> amounts = new LinkedHashMap<>();
     private long total = 0L;
 
+    /** 查找用键：**不复制** NBT ✓（每 tick 都可能调用；复制整棵 NBT 树是纯浪费 ✗）。
+     *  写入新条目时才需要独立副本，见 {@link #canonicalKey(QuantumVault.Key)} ✓。 */
     public static Key keyOf(ItemStack stack) {
-        CompoundTag tag = stack.getTag();
-        return new Key(stack.getItem(), tag == null ? null : tag.copy());
+        return new Key(stack.getItem(), stack.getTag());
+    }
+
+    /** 写入新条目时用：把键里的 NBT 复制一份 ✓（防止原栈之后被改动污染键 ✓） */
+    private static Key canonicalKey(Key key) {
+        return key.tag() == null ? key : new Key(key.item(), key.tag().copy());
     }
 
     /** 当前已存总数 */
@@ -75,7 +81,9 @@ public class QuantumVault {
         if (space <= 0L) return 0;
         int want = (int) Math.min(stack.getCount(), space);
         if (want <= 0) return 0;
-        amounts.merge(keyOf(stack), (long) want, Long::sum);
+        Key key = keyOf(stack);
+        if (!amounts.containsKey(key)) key = canonicalKey(key);      // 新键才复制 ✓
+        amounts.merge(key, (long) want, Long::sum);
         total += want;
         return want;
     }
