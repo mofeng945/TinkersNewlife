@@ -8,5 +8,6 @@
                       "type":  "patchouli:text",
                       "text":  "$(bold)Dreadsteel$() (Default trait of Dreadsteel)$(br2)Effect: Each swing releases a $(bold)wide blade wave$() that $(bold)ignores armor$() to pierce enemies, applying $(bold)Weakness, Blindness and Wither$() on hit.$(br2)Its piercing, armor-ignoring blade waves make Dreadsteel extremely deadly against heavily armored targets, with Wither draining health over time."
                   }
-              ]
+              ],
+    "flag": "mod:iceandfire"
 }
