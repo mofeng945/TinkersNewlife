@@ -9,7 +9,6 @@
     "BlockDropsMixin",
     "SpellInterruptFocusMixin",
     "SuperTierPowerMixin",
-    "SuperTierCastContextMixin",
     "SuperTierEffectMixin",
     "EldritchLearningMixin"
   ],

@@ -58,6 +58,7 @@ public final class IronSpellsSpellAccess {
     private static Method mSchoolId;        // SchoolType -> ResourceLocation（getId）
     private static Method mSchoolDamageType;// SchoolType -> ResourceKey<DamageType>（getDamageType）
     private static Method mSchoolsGet;      // static SchoolRegistry.REGISTRY.get() -> IForgeRegistry
+    private static volatile boolean loggedSchoolExtra = false;
     private static Method mSpellById;       // static ResourceLocation -> AbstractSpell
     private static Method mCastSpell;       // castSpell(Level,int,ServerPlayer,CastSource,boolean)
     private static Method mCastComplete;    // onServerCastComplete(Level,int,LivingEntity,MagicData,boolean)
@@ -146,8 +147,12 @@ public final class IronSpellsSpellAccess {
                         break;
                     }
                 }
-            } catch (Throwable ignored) {
-                // 铁魔法版本不同 / 不在场 → 这两个特性静默降级（不拆段、不放开邪术）✓
+            } catch (Throwable t) {
+                TinkersNewlife.LOGGER.warn("[联动] 学派反射初始化失败（混沌之流将只用兜底学派表）: {}", t.toString());
+            }
+            if (mSchoolsGet == null || mSchoolDamageType == null || mSpellSchool == null || mSchoolId == null) {
+                TinkersNewlife.LOGGER.warn("[联动] 学派反射不完整：schoolsGet={} damageType={} spellSchool={} schoolId={}",
+                        mSchoolsGet != null, mSchoolDamageType != null, mSpellSchool != null, mSchoolId != null);
             }
             mSpellById = find(cSpellRegistry, "getSpell", ResourceLocation.class);
             if (mSpellById == null) {
@@ -497,7 +502,7 @@ public final class IronSpellsSpellAccess {
      */
     public static boolean isEldritch(Object spell) {
         init();
-        if (!ready || spell == null || mSpellSchool == null || mSchoolId == null) return false;
+        if (spell == null || mSpellSchool == null || mSchoolId == null) return false;
         try {
             Object school = mSpellSchool.invoke(spell);
             Object id = mSchoolId.invoke(school);
@@ -517,7 +522,15 @@ public final class IronSpellsSpellAccess {
     public static List<ResourceKey<net.minecraft.world.damagesource.DamageType>> schoolDamageKeys() {
         init();
         List<ResourceKey<net.minecraft.world.damagesource.DamageType>> out = new ArrayList<>();
-        if (!ready || mSchoolsGet == null || mSchoolDamageType == null) return out;
+        // 兜底基线：铁魔法自带的 9 个学派伤害类型（数据包里的固定条目 ✓）——
+        // 动态反射成功时再补上附属新增的学派 ✓；失败也不至于"整条特性失效" ✗。
+        for (String school : new String[]{"fire", "ice", "lightning", "holy", "ender",
+                "blood", "evocation", "nature", "eldritch"}) {
+            out.add(ResourceKey.create(net.minecraft.core.registries.Registries.DAMAGE_TYPE,
+                    new ResourceLocation("irons_spellbooks", school + "_magic")));
+        }
+        if (mSchoolsGet == null || mSchoolDamageType == null) return out;
+        int dynamic = 0;
         try {
             Object registry = mSchoolsGet.invoke(null);
             if (registry == null) return out;
@@ -532,7 +545,7 @@ public final class IronSpellsSpellAccess {
                             @SuppressWarnings("unchecked")
                             ResourceKey<net.minecraft.world.damagesource.DamageType> typed =
                                     (ResourceKey<net.minecraft.world.damagesource.DamageType>) rk;
-                            if (!out.contains(typed)) out.add(typed);
+                            if (!out.contains(typed)) { out.add(typed); dynamic++; }
                         }
                     } catch (Throwable ignored) {
                     }

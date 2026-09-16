@@ -40,7 +40,7 @@ public class SuperTierEffectMixin {
             at = @At("HEAD"), argsOnly = true, remap = false)
     private MobEffectInstance tinkersnewlife$superTierDuration(MobEffectInstance effect) {
         try {
-            if (effect == null || !SuperTierMagicModifier.inSuperTierCast()) return effect;
+            if (effect == null || !SuperTierMagicModifier.isSuperTierCastActive((LivingEntity) (Object) this)) return effect;
             int duration = effect.getDuration();
             if (duration <= 0) return effect;
             int scaled = Math.max(1, Math.round(duration * SuperTierMagicModifier.EFFECT_DURATION_FACTOR));
@@ -55,7 +55,7 @@ public class SuperTierEffectMixin {
     @ModifyVariable(method = "m_5634_(F)V", at = @At("HEAD"), argsOnly = true, remap = false)
     private float tinkersnewlife$superTierHeal(float amount) {
         try {
-            if (amount <= 0.0F || !SuperTierMagicModifier.inSuperTierCast()) return amount;
+            if (amount <= 0.0F || !SuperTierMagicModifier.isSuperTierCastActive((LivingEntity) (Object) this)) return amount;
             return amount / SuperTierMagicModifier.RANGE_MULTIPLIER;
         } catch (Throwable ignored) {
             return amount;

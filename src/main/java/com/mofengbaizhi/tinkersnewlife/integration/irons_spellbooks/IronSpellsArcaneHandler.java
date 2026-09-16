@@ -51,6 +51,13 @@ public final class IronSpellsArcaneHandler {
         //    两个监听全部没生效（日志里能看到）。
         IEventBus bus = net.minecraftforge.common.MinecraftForge.EVENT_BUS;
         try {
+            Class<?> castEvent = Class.forName("io.redspace.ironsspellbooks.api.events.SpellOnCastEvent");
+            bus.addListener(EventPriority.NORMAL, false, (Class) castEvent,
+                    (Consumer) (Object e) -> onSpellOnCast(e));
+        } catch (Throwable t) {
+            TinkersNewlife.LOGGER.warn("[联动] 超位魔法：SpellOnCastEvent 挂载失败（范围/持续补偿不生效）", t);
+        }
+        try {
             Class<?> levelEvent = Class.forName("io.redspace.ironsspellbooks.api.events.ModifySpellLevelEvent");
             bus.addListener(EventPriority.NORMAL, false, (Class) levelEvent,
                     (Consumer) (Object e) -> onModifySpellLevel(e));
@@ -184,8 +191,7 @@ public final class IronSpellsArcaneHandler {
         } catch (Throwable ignored) {
         }
         return com.mofengbaizhi.tinkersnewlife.content.modifier.SuperTierMagicModifier.inSuperTierCast()
-                && caster == com.mofengbaizhi.tinkersnewlife.content.modifier
-                        .SuperTierMagicModifier.castingCaster();
+                && com.mofengbaizhi.tinkersnewlife.content.modifier.SuperTierMagicModifier.isSuperTierCastActive(caster);
     }
 
     /** 事件里"当前法术等级"（读不到按 1 算） */
@@ -269,5 +275,21 @@ public final class IronSpellsArcaneHandler {
         } catch (Throwable ignored) {
         }
         return null;
+    }
+
+    /**
+     * 铁魔法施法开始（{@code SpellOnCastEvent}）：若施法者身上有刻印了这个法术的超位魔法物品，
+     * 就标记"这一发是超位魔法"（{@code SuperTierMagicModifier#markCast}）✓ ——
+     * 供 {@code SuperTierEffectMixin} 做治疗 ÷3 与状态时长 ×(2/3) ✓。
+     */
+    private static void onSpellOnCast(Object event) {
+        try {
+            Object playerObj = invoke(event, "getEntity");
+            if (!(playerObj instanceof net.minecraft.world.entity.LivingEntity caster)) return;
+            Object idObj = invoke(event, "getSpellId");
+            if (!(idObj instanceof String spellId) || spellId.isEmpty()) return;
+            com.mofengbaizhi.tinkersnewlife.content.modifier.SuperTierMagicModifier.markCast(caster, spellId);
+        } catch (Throwable ignored) {
+        }
     }
 }

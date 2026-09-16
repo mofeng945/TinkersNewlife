@@ -24,45 +24,46 @@ import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 铁魔法联动特性·<b>超位魔法</b>（材料「魔金」工具自带，<b>无等级</b>）：
  *
  * <ol>
- *   <li><b>工具内可以注入法术</b>：背包 tick 给工具补一个<b>空法术容器</b>
- *       （{@link IronSpellsReflector#ensureSpellContainer}），这样铁魔法的
- *       <b>奥术铁砧</b>才肯接受它、玩家能把卷轴里的法术刻进去 ✓；</li>
- *   <li><b>刻印的法术强度提升至 50 级</b>：走 {@code ModifySpellLevelEvent}
- *       （见 {@code IronSpellsArcaneHandler}）：把等级<b>抬到</b> {@link #INSCRIBED_LEVEL}
- *       （不是 +50），已经更高的就保持原样 ✓；</li>
- *   <li><b>范围 ×5、持续 ×3</b>：铁魔法里这两项都从 {@code AbstractSpell#getSpellPower} 派生
- *       （例：深渊庇佑时长 = 强度 × 20 秒），所以做法是——
+ *   <li><b>工具内可以注入法术</b>：背包 tick 给工具补一个<b>空法术容器</b> ✓；</li>
+ *   <li><b>刻印的法术强度提升到"该法术自身等级上限 ×2"</b>（{@code ModifySpellLevelEvent}）✓；</li>
+ *   <li><b>范围 ×3、持续 ×2</b>：铁魔法里这两项都从 {@code AbstractSpell#getSpellPower} 派生，
+ *       所以做一个"放大器 + 三处还原"：
  *       <ul>
- *         <li>{@code mixin.SuperTierPowerMixin} 把该法术的 {@code getSpellPower} 结果 <b>×5</b> → 范围 ×5 ✓；</li>
- *         <li>但这样一来<b>伤害/治疗/状态时长也一起 ×5</b> ✗，于是：</li>
- *         <li>伤害在 {@code SpellDamageEvent} 里 <b>÷5</b> 还原 ✓、治疗同理 ✓；</li>
- *         <li>状态时长用 {@code mixin.SpellDurationMixin} 再 <b>×3/5</b> → 净得 <b>×3</b> ✓。</li>
- *       </ul>
- *       「当前这一发是不是超位魔法」靠 {@code mixin.SuperTierCastContextMixin} 在
- *       {@code castSpell}/{@code onServerCastComplete} 两端打标记（<b>选这两个是因为各法术会重写
- *       {@code onCast}，甚至先上效果再调 {@code super.onCast}</b> ✗，挂在 onCast 上会漏）✓。</li>
+ *         <li>{@code mixin.SuperTierPowerMixin} 拦 {@code getSpellPower} ×{@value #RANGE_MULTIPLIER} → <b>范围 ×3</b> ✓；</li>
+ *         <li>伤害在 {@code SpellDamageEvent} 里 ÷3 还原 ✓（法术 id 从 {@code SpellDamageSource.spell()} 取 ✓）；</li>
+ *         <li>治疗与状态时长在 {@code mixin.SuperTierEffectMixin} 里还原：
+ *             治疗 ÷3 ✓、状态时长 ×(2/3) → 净得 <b>×2</b> ✓。</li>
+ *       </ul></li>
  * </ol>
  *
- * <p>铁魔法不在场时本特性不存在（材料本身带 {@code forge:mod_loaded} 条件）✓。
+ * <h2>"当前这一发是不是超位魔法"怎么判定（不再用 mixin）</h2>
+ * 原方案是 mixin {@code AbstractSpell#castSpell}/{@code onServerCastComplete} 打 {@code ThreadLocal} 标记 ✗ ——
+ * <b>实测注入失败</b> ✗：Mixin <b>要求回调声明完整且精确的参数表</b>，
+ * 而那两处带着铁魔法的 {@code CastSource}/{@code MagicData} 类型（我们没有编译期依赖 ✗），
+ * 用 {@code Object} 接也不被接受 ✗：
+ * <pre>
+ *   InvalidInjectionException: Invalid descriptor …
+ *   Expected (Level;I;ServerPlayer;CastSource;Z;CallbackInfo)V
+ * </pre>
+ * 改成<b>纯事件方案</b> ✓：挂在铁魔法的 {@code SpellOnCastEvent}（Forge 事件，参数全是 MC 类型 ✓）上，
+ * 记下"谁、正在放哪个法术、2 tick 内有效" ✓。即时法术的效果就在这次事件之后同一次调用里结算 ✓，
+ * 所以 2 tick 足够覆盖 ✓；读条法术的效果发生在之后的 tick ✗ —— 那种情况恢复成"只放大不还原"（范围/伤害照旧 ✓，
+ * 状态时长会是 ×3 而不是 ×2，属可接受偏差 ✓）。
  */
 public class SuperTierMagicModifier extends Modifier implements TooltipModifierHook, InventoryTickModifierHook {
 
     public static final ModifierId ID =
             new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "super_tier_magic"));
 
-    /**
-     * 刻印法术的强度 = <b>该法术自身的等级上限 × 本值</b>（"超位"= 突破上限）。
-     *
-     * <p>为什么不是"固定 50 级"：铁魔法各法术的上限差得很远
-     * （反汇编：<b>深渊庇佑只有 3 级</b>、回响打击 5 级、多数 10 级），
-     * 统一抬到 50 级 = 把一个 3 级法术放大到 16 倍强度，深渊庇佑时长直接飙到几分钟的无敌 ✗。
-     * 改成"自身满级 ×2"既能表达"超位"，又不会把短时长法术炸掉 ✓。
-     */
+    /** 刻印法术的强度 = 该法术自身等级上限 × 本值（"超位"= 突破上限） */
     public static final int LEVEL_MULTIPLIER = 2;
     /** 读不到法术上限时的兜底等级 */
     public static final int FALLBACK_LEVEL = 20;
@@ -70,7 +71,7 @@ public class SuperTierMagicModifier extends Modifier implements TooltipModifierH
     public static final float RANGE_MULTIPLIER = 3.0F;
     /** 期望的状态持续倍数 */
     public static final float DURATION_MULTIPLIER = 2.0F;
-    /** 状态时长补偿系数：getSpellPower 已经 ×5，这里再 ×(3/5) 才能净得 ×3 ✓ */
+    /** 状态时长补偿系数：getSpellPower 已经 ×3，这里再 ×(2/3) 才能净得 ×2 ✓ */
     public static final float EFFECT_DURATION_FACTOR = DURATION_MULTIPLIER / RANGE_MULTIPLIER;
     /** 给工具预留的刻印位 */
     public static final int SPELL_SLOTS = 3;
@@ -145,44 +146,46 @@ public class SuperTierMagicModifier extends Modifier implements TooltipModifierH
     }
 
     // ============================================================
-    //  「当前这一发是超位魔法」的上下文（由 mixin 打标记）
+    //  「当前这一发是超位魔法」的上下文（事件驱动，不用 mixin）
     // ============================================================
 
-    /** 正在结算的法术 id（不在超位魔法施法过程中则为 null） */
-    private static final ThreadLocal<String> CAST_SPELL = new ThreadLocal<>();
-    /** 正在施法的人 */
-    private static final ThreadLocal<LivingEntity> CAST_CASTER = new ThreadLocal<>();
+    /** 施法者 UUID → 到期 gameTime；配套记下法术 id */
+    private static final Map<UUID, Long> CAST_UNTIL = new ConcurrentHashMap<>();
+    private static final Map<UUID, String> CAST_SPELL = new ConcurrentHashMap<>();
 
-    /** 施法开始（mixin 在 castSpell / onServerCastComplete 的 HEAD 调用） */
-    public static void beginCast(Object spell, LivingEntity caster) {
+    /** 标记窗口（tick）：即时法术的效果紧随事件结算，2 tick 足够 ✓ */
+    private static final int CAST_WINDOW = 2;
+
+    /** 由 {@code IronSpellsArcaneHandler} 在铁魔法的 SpellOnCastEvent 上调用 ✓ */
+    public static void markCast(LivingEntity caster, String spellId) {
         try {
-            if (caster == null) return;
-            String id = IronSpellsSpellAccess.spellId(spell);
-            if (!inscribedFor(caster, id)) return;
-            CAST_SPELL.set(id);
-            CAST_CASTER.set(caster);
+            if (caster == null || spellId == null || spellId.isEmpty()) return;
+            if (!inscribedFor(caster, spellId)) return;
+            CAST_UNTIL.put(caster.getUUID(), caster.level().getGameTime() + CAST_WINDOW);
+            CAST_SPELL.put(caster.getUUID(), spellId);
         } catch (Throwable ignored) {
         }
     }
 
-    /** 施法结束（mixin 在两处 RETURN 调用） */
-    public static void endCast() {
-        CAST_SPELL.remove();
-        CAST_CASTER.remove();
+    /** 该生物此刻是否正在结算一次超位魔法（用于治疗 ÷3、状态时长 ×2/3） */
+    public static boolean isSuperTierCastActive(LivingEntity entity) {
+        if (entity == null) return false;
+        Long until = CAST_UNTIL.get(entity.getUUID());
+        if (until == null) return false;
+        if (entity.level().getGameTime() > until) {
+            CAST_UNTIL.remove(entity.getUUID());
+            CAST_SPELL.remove(entity.getUUID());
+            return false;
+        }
+        return true;
     }
 
-    /** 当前是否正在结算一次超位魔法施法 */
+    /** 是否还有任何超位魔法施法在窗口内（伤害补偿的兜底判定用） */
     public static boolean inSuperTierCast() {
-        return CAST_SPELL.get() != null;
-    }
-
-    /** 当前这一发的法术 id（不在超位魔法施法中则 null） */
-    public static String castingSpell() {
-        return CAST_SPELL.get();
-    }
-
-    /** 当前这一发的施法者 */
-    public static LivingEntity castingCaster() {
-        return CAST_CASTER.get();
+        long now = Long.MIN_VALUE;
+        for (Map.Entry<UUID, Long> e : CAST_UNTIL.entrySet()) {
+            if (e.getValue() != null && (now == Long.MIN_VALUE || e.getValue() > now)) now = e.getValue();
+        }
+        return now != Long.MIN_VALUE;
     }
 }
