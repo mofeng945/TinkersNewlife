@@ -19,6 +19,16 @@ import java.util.UUID;
  */
 public class QuantumVaultMenu extends AbstractContainerMenu {
 
+    // ⚠ 布局常量的**唯一定义处** ✓ —— 界面(QuantumVaultScreen)直接引用这些值 ✓，
+    //   免得两边各写一份坐标、改了一边忘了另一边（上一轮就是这么把按钮压到槽位上的 ✗）。
+    public static final int GRID_TOP = 22;                              // 存储格区
+    public static final int INFO_TOP = 132;                             // 信息行
+    public static final int BAR_TOP = 146;                              // 按钮行
+    public static final int INV_TOP = 166;                              // 玩家背包
+    public static final int HOTBAR_TOP = 224;                           // 快捷栏
+    public static final int IMAGE_HEIGHT = HOTBAR_TOP + 18 + 6;         // 248
+    public static final int IMAGE_WIDTH = 8 + 9 * 18 + 8;               // 178
+
     private final UUID uuid;
 
     public QuantumVaultMenu(int containerId, Inventory playerInventory, UUID uuid) {
@@ -28,12 +38,12 @@ public class QuantumVaultMenu extends AbstractContainerMenu {
         // 玩家背包 27 格（3×9）
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                addSlot(new Slot(playerInventory, col + row * 9 + 9, 8 + col * 18, 152 + row * 18));   // 与界面 INV_TOP 一致 ✓
+                addSlot(new Slot(playerInventory, col + row * 9 + 9, 8 + col * 18, INV_TOP + row * 18));
             }
         }
         // 快捷栏 9 格
         for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(playerInventory, col, 8 + col * 18, 210));                            // 与界面 HOTBAR_TOP 一致 ✓
+            addSlot(new Slot(playerInventory, col, 8 + col * 18, HOTBAR_TOP));
         }
     }
 

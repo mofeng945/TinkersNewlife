@@ -44,13 +44,14 @@ public class QuantumVaultScreen extends AbstractContainerScreen<QuantumVaultMenu
     private static final int PER_PAGE = COLS * ROWS;
     private static final int CELL = 18;
 
-    private static final int GRID_TOP = 22;
-    private static final int INFO_TOP = GRID_TOP + ROWS * CELL + 2;     // 132：信息单独一行 ✓（原来和按钮挤一起 ✗）
-    private static final int BAR_TOP = INFO_TOP + 14;                   // 146：按钮行
-    private static final int INV_TOP = BAR_TOP + 20;                    // 166：玩家背包
-    private static final int HOTBAR_TOP = INV_TOP + 3 * CELL + 4;       // 224
-    private static final int HEIGHT = HOTBAR_TOP + CELL + 6;            // 248
-    private static final int WIDTH = 8 + COLS * CELL + 8;               // 178
+    // ⚠ 全部取自菜单里的唯一定义 ✓（两边各写一份坐标 = 上一轮按钮压住槽位的原因 ✗）
+    private static final int GRID_TOP = QuantumVaultMenu.GRID_TOP;
+    private static final int INFO_TOP = QuantumVaultMenu.INFO_TOP;
+    private static final int BAR_TOP = QuantumVaultMenu.BAR_TOP;
+    private static final int INV_TOP = QuantumVaultMenu.INV_TOP;
+    private static final int HOTBAR_TOP = QuantumVaultMenu.HOTBAR_TOP;
+    private static final int HEIGHT = QuantumVaultMenu.IMAGE_HEIGHT;
+    private static final int WIDTH = QuantumVaultMenu.IMAGE_WIDTH;
 
     /** 服务端快照（已按物品名排序 ✓） */
     private static List<PacketVaultSync.Entry> snapshot = new ArrayList<>();
