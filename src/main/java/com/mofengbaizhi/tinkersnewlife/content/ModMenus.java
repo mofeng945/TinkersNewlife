@@ -42,6 +42,12 @@ public class ModMenus {
                     })
             );
 
+    // ===== 量子背包 6 级：按数量存放的界面（客户端只收快照 ✓） =====
+    public static final RegistryObject<MenuType<com.mofengbaizhi.tinkersnewlife.content.storage.QuantumVaultMenu>> QUANTUM_VAULT =
+            MENUS.register("quantum_vault",
+                    () -> IForgeMenuType.create((windowId, inv, data) ->
+                            new com.mofengbaizhi.tinkersnewlife.content.storage.QuantumVaultMenu(windowId, inv, data.readUUID()))
+            );
     // ===== 噤默手套（客户端使用临时 Handler） =====
     public static final RegistryObject<MenuType<SilentGloveContainer>> SILENT_GLOVE_CONTAINER =
             MENUS.register("silent_glove_container",

@@ -1,0 +1,20 @@
+{
+  "type": "tconstruct:modifier",
+  "allow_crystal": true,
+  "inputs": [
+    { "item": "minecraft:dragon_egg" },
+    { "item": "minecraft:piston" },
+    { "item": "minecraft:piston" },
+    { "item": "minecraft:chest" },
+    { "item": "minecraft:chest" }
+  ],
+  "level": { "min": 5, "max": 5 },
+  "result": "tinkersnewlife:quantum_bag",
+  "tools": [
+    { "tag": "tconstruct:modifiable/melee" },
+    { "tag": "tconstruct:modifiable/ranged" }
+  ],
+  "conditions": [
+    { "type": "forge:not", "value": { "type": "forge:mod_loaded", "modid": "ae2" } }
+  ]
+}

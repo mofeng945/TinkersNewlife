@@ -1172,5 +1172,10 @@
   "modifier.tinkersnewlife.order_origin": "秩序之初",
   "modifier.tinkersnewlife.order_origin.description": "你受到的任何伤害都会被重新计算为物理伤害再施加在你身上，因此可以被你的护甲、饰品与属性正常减免。",
   "modifier.tinkersnewlife.order_origin.tip": "§d受到的伤害重算为物理伤害（可被护甲减免）",
-  "modifier.tinkersnewlife.order_origin.flavor": "§7先有秩序，后有伤。"
+  "modifier.tinkersnewlife.order_origin.flavor": "§7先有秩序，后有伤。",
+  "container.tinkersnewlife.quantum_vault": "量子背包·按数量存放",
+  "gui.tinkersnewlife.quantum_vault.search": "搜索物品…",
+  "gui.tinkersnewlife.quantum_vault.deposit_all": "存入全部",
+  "gui.tinkersnewlife.quantum_vault.page": "第 %s / %s 页",
+  "gui.tinkersnewlife.quantum_vault.total": "已存 %s / %s"
 }

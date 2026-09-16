@@ -203,6 +203,14 @@ public class TinkersNewlife {
         registerPacket(PacketUseSkill.class, PacketUseSkill::toBytes, PacketUseSkill::new, PacketUseSkill::handle);
         registerPacket(PacketDragonStaffUse.class, PacketDragonStaffUse::toBytes, PacketDragonStaffUse::new, PacketDragonStaffUse::handle);
         registerPacket(PacketOpenBag.class, PacketOpenBag::toBytes, PacketOpenBag::new, PacketOpenBag::handle);
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.tools.PacketVaultAction.class,
+                com.mofengbaizhi.tinkersnewlife.network.tools.PacketVaultAction::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.tools.PacketVaultAction::new,
+                com.mofengbaizhi.tinkersnewlife.network.tools.PacketVaultAction::handle);
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.tools.PacketVaultSync.class,
+                com.mofengbaizhi.tinkersnewlife.network.tools.PacketVaultSync::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.tools.PacketVaultSync::new,
+                com.mofengbaizhi.tinkersnewlife.network.tools.PacketVaultSync::handle);
         // 呪蔵存量查询（C2S）与回包（S2C）：准星对准时显示
         registerPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketQueryCurseVault.class,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketQueryCurseVault::toBytes,

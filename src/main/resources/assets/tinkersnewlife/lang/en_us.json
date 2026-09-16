@@ -580,5 +580,10 @@
   "modifier.tinkersnewlife.order_origin": "Order of Origin",
   "modifier.tinkersnewlife.order_origin.description": "Any damage you take is recomputed as physical damage before it is applied to you, so your armor, curios and attributes can reduce it normally.",
   "modifier.tinkersnewlife.order_origin.tip": "§dIncoming damage recast as physical (armor applies)",
-  "modifier.tinkersnewlife.order_origin.flavor": "§7Order first, then the wound."
+  "modifier.tinkersnewlife.order_origin.flavor": "§7Order first, then the wound.",
+  "container.tinkersnewlife.quantum_vault": "Quantum Vault (by amount)",
+  "gui.tinkersnewlife.quantum_vault.search": "Search items...",
+  "gui.tinkersnewlife.quantum_vault.deposit_all": "Deposit All",
+  "gui.tinkersnewlife.quantum_vault.page": "Page %s / %s",
+  "gui.tinkersnewlife.quantum_vault.total": "Stored %s / %s"
 }

@@ -124,6 +124,38 @@ public class QuantumBagModifier extends Modifier {
         final UUID finalUUID = uuid;
         final int finalLevel = level;
 
+        // ⭐ QUANTUM VAULT（6 级）：改用"按数量存放"的新界面 ✓
+        if (finalLevel >= 6) {
+            com.mofengbaizhi.tinkersnewlife.content.storage.QuantumVaultManager vaults =
+                    com.mofengbaizhi.tinkersnewlife.content.storage.QuantumVaultManager.getInstance();
+            vaults.markCreated(finalUUID);
+            // 把 1~5 级的格子内容**整体并入**（容量只增不减 → 不会溢出 ✓），并入后清空格子防重复 ✓
+            StorageManager.BigStackHandler old = StorageManager.getInstance().getOrCreate(finalUUID, finalLevel);
+            java.util.List<ItemStack> oldContents = new java.util.ArrayList<>();
+            for (int i = 0; i < old.getSlots(); i++) oldContents.add(old.getStackInSlot(i).copy());
+            boolean any = oldContents.stream().anyMatch(s -> !s.isEmpty());
+            if (any) {
+                java.util.List<ItemStack> leftovers = vaults.migrateFrom(finalUUID, oldContents);
+                for (int i = 0; i < old.getSlots(); i++) old.setStackInSlot(i, ItemStack.EMPTY);
+                StorageManager.getInstance().markDirty(finalUUID);
+                for (ItemStack rest : leftovers) serverPlayer.drop(rest, false);
+            }
+            NetworkHooks.openScreen(serverPlayer, new net.minecraft.world.MenuProvider() {
+                @Override
+                public net.minecraft.network.chat.Component getDisplayName() {
+                    return net.minecraft.network.chat.Component.translatable("container.tinkersnewlife.quantum_vault");
+                }
+
+                @Override
+                public net.minecraft.world.inventory.AbstractContainerMenu createMenu(
+                        int id, net.minecraft.world.entity.player.Inventory inv, Player p) {
+                    return new com.mofengbaizhi.tinkersnewlife.content.storage.QuantumVaultMenu(id, inv, finalUUID);
+                }
+            }, (FriendlyByteBuf buf) -> buf.writeUUID(finalUUID));
+            com.mofengbaizhi.tinkersnewlife.network.VaultNetwork.sync(
+                    serverPlayer, finalUUID, serverPlayer.containerMenu.containerId);
+            return true;
+        }
         NetworkHooks.openScreen(serverPlayer, new BagMenuProvider(finalUUID, finalLevel), (FriendlyByteBuf buf) -> {
             buf.writeUUID(finalUUID);
             buf.writeInt(finalLevel);
