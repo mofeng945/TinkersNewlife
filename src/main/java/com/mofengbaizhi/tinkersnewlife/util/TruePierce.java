@@ -90,6 +90,9 @@ public final class TruePierce {
     public static void apply(@Nullable LivingEntity attacker, LivingEntity target, float damage) {
         if (target == null || damage <= 0.0F) return;
         if (target.level().isClientSide || target.isRemoved()) return;
+        // ⭐ 同心戒：互为同伴的两名玩家互相免疫术式与领域效果 —— 穿透（真伤）也不例外。
+        //    必须挡在这里：本方法是"差额直接 setHealth 补齐"的，事件层（LivingAttackEvent）拦不住它 ✗
+        if (com.mofengbaizhi.tinkersnewlife.content.curse.TwinRingLink.arePaired(attacker, target)) return;
 
         // ⓪ 绝对防御穿透：把"根本不看伤害标签、只看攻击者属性"的免疫（潘多拉之咒·现实压制）
         //    临时失效 —— 它是在 LivingAttackEvent 里直接取消打击的，标签和事件层顶开都够不着。

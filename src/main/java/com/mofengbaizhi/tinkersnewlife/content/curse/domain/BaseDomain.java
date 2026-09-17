@@ -84,6 +84,8 @@ public abstract class BaseDomain {
     private AABB cachedSphereBox;
     /** 缓存的盒内生物表（只读使用，勿改动） */
     private java.util.List<LivingEntity> cachedInsideBox = java.util.List.of();
+    /** 缓存的"已排除同心戒同伴"的球内生物表（只读使用，勿改动） */
+    private java.util.List<LivingEntity> cachedAffected = java.util.List.of();
     /** 缓存所属的 gameTime（±1 让同一次 tick 内的多次调用都命中） */
     private long cachedEntitiesTime = Long.MIN_VALUE;
 
@@ -103,15 +105,47 @@ public abstract class BaseDomain {
         return box;
     }
 
-    /** 领域球外接盒内的生物（含玩家；不含领域主人判定，由调用点自行处理）。同一 tick 内共享缓存 */
-    public final java.util.List<LivingEntity> entitiesInSphere(Level level) {
+    /**
+     * 原始球内生物（<b>含</b>同心戒同伴）：仅供"生物占位"判定使用 ——
+     * 若在这里把同伴剔掉，阻挡墙就会长在同伴身上 ✗。
+     */
+    private java.util.List<LivingEntity> rawInSphere(Level level) {
         long t = level.getGameTime();
         long dt = t - cachedEntitiesTime;
         if (dt < 0 || dt > 1) {
             cachedEntitiesTime = t;
             cachedInsideBox = level.getEntitiesOfClass(LivingEntity.class, sphereBox());
+            cachedAffected = null;   // 同一 tick 内作废
         }
         return cachedInsideBox;
+    }
+
+    /**
+     * 领域球外接盒内的生物（含玩家；不含领域主人判定，由调用点自行处理）。同一 tick 内共享缓存。
+     *
+     * <p>⭐ <b>已剔除"领域主人的同心戒同伴"</b>：戴着同一对同心戒的两人互相免疫对方的
+     * <b>领域效果</b> —— 领域的所有效果循环都走本方法，因此不必逐个领域改 ✓
+     * （占位判定走 {@link #rawInSphere}，同伴仍算占位，墙不会长在他身上 ✓）。
+     */
+    public final java.util.List<LivingEntity> entitiesInSphere(Level level) {
+        java.util.List<LivingEntity> all = rawInSphere(level);
+        if (cachedAffected != null) return cachedAffected;
+        net.minecraft.world.entity.player.Player twin = ownerPlayer(level);
+        if (twin == null) {
+            cachedAffected = all;
+            return all;
+        }
+        java.util.List<LivingEntity> out = new java.util.ArrayList<>(all.size());
+        for (LivingEntity e : all) {
+            if (!com.mofengbaizhi.tinkersnewlife.content.curse.TwinRingLink.arePaired(e, twin)) out.add(e);
+        }
+        cachedAffected = out;
+        return out;
+    }
+
+    /** 领域主人的实体（用来判定"谁是主人的同心戒同伴"）；主人离线/不在本维度 = null */
+    private net.minecraft.world.entity.player.Player ownerPlayer(Level level) {
+        return owner == null ? null : level.getPlayerByUUID(owner);
     }
 
     /** 球壳体积内的"生物占位方块"：一次盒选 → 逐生物登记方块坐标（替代逐方块盒查） */
@@ -206,7 +240,8 @@ public abstract class BaseDomain {
         barrierPositions.clear();
         barrierGaps.clear();
         // 一次盒选拿到球壳体积内的生物占位（原先每个壳块各查一次实体）
-        java.util.Set<net.minecraft.core.BlockPos> occupied = occupancyOf(entitiesInSphere(level));
+        // ⚠ 用 rawInSphere：同伴要算占位，否则墙会长在他身上
+        java.util.Set<net.minecraft.core.BlockPos> occupied = occupancyOf(rawInSphere(level));
         int r = radius;
         int cx = (int) Math.floor(center.x);
         int cy = (int) Math.floor(center.y);
@@ -267,7 +302,7 @@ public abstract class BaseDomain {
      */
     public final void refillBarrierGaps(ServerLevel level) {
         if (barrierGaps.isEmpty()) return;
-        java.util.Set<net.minecraft.core.BlockPos> occupied = occupancyOf(entitiesInSphere(level));
+        java.util.Set<net.minecraft.core.BlockPos> occupied = occupancyOf(rawInSphere(level));
         java.util.Iterator<net.minecraft.core.BlockPos> it = barrierGaps.iterator();
         while (it.hasNext()) {
             net.minecraft.core.BlockPos pos = it.next();

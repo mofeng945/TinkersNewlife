@@ -410,7 +410,7 @@
   "item.tinkersnewlife.life_lamp_ring.blessing": "yet mercy makes your body unyieldingly tough",
   "item.tinkersnewlife.life_lamp_ring.flavor": "Mercy is the greatest evil; even good intent may bear karmic fruit.",
   "item.tinkersnewlife.ring_of_one_mind": "Ring of One Mind",
-  "item.tinkersnewlife.ring_of_one_mind.effect": "Worn in a ring slot: share cursed energy and techniques with the other player wearing the matching ring of the same pair (curse pools, curse bottles, curse vaults and core techniques all flow both ways)",
+  "item.tinkersnewlife.ring_of_one_mind.effect": "Worn in a ring slot (ring slot only): share cursed energy and techniques with the other player wearing the matching ring of the same pair (curse pools, curse bottles, curse vaults and core techniques all flow both ways), and both of you are immune to each other's techniques and domain effects",
   "item.tinkersnewlife.ring_of_one_mind.pair": "Twin mark: %s (two rings with the same mark are one pair)",
   "item.tinkersnewlife.ring_of_one_mind.no_pair": "Twin mark: unbound (a pair is bound automatically when crafted or bought)",
   "item.tinkersnewlife.ring_of_one_mind.flavor": "One mind, two rings; the art turns as you will it.",

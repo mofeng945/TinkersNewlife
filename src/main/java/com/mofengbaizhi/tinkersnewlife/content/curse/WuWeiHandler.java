@@ -1315,9 +1315,11 @@ public final class WuWeiHandler {
         }
     }
 
-    /** 是否与主人友好的实体（其它式神/主人自身不攻击） */
+    /** 是否与主人友好的实体（其它式神/主人自身/同心戒同伴不攻击） */
     private static boolean isFriendlyToOwner(LivingEntity e, ServerPlayer owner) {
         if (e == owner) return true;
+        // ⭐ 同心戒：戴着同一对戒指的同伴不该被守护生物/无为转变当成敌人
+        if (com.mofengbaizhi.tinkersnewlife.content.curse.TwinRingLink.arePaired(e, owner)) return true;
         if (e instanceof TamableAnimal tame) {
             UUID o = tame.getOwnerUUID();
             return o != null && o.equals(owner.getUUID());

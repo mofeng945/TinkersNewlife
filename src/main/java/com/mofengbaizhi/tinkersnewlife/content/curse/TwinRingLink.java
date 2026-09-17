@@ -91,6 +91,29 @@ public final class TwinRingLink {
     }
 
     // ============================================================
+    //  ⭐ 互为同伴 = 同队豁免（双向免疫对方的术式与领域效果）
+    // ============================================================
+
+    /**
+     * 两名实体是否戴着<b>同一对</b>同心戒（互为同伴）。
+     *
+     * <p>与 {@link #findPartner} 的区别：这里只看<b>这两个实体各自戴的印记是否相同</b> ——
+     * 不需要它们在线、不需要走玩家列表，因此双端都可用、也不会被"第一匹配"影响
+     * （三名玩家同戴一对的极端情况下 {@code findPartner} 只会给出第一个匹配 ✗）。
+     *
+     * <p>用途：<b>同队豁免</b> —— 戴同一对戒指的两人互相免疫对方的术式与领域效果
+     * （术式选敌、领域效果圈选、穿透真伤、伤害事件四层都查它 ✓）。
+     */
+    public static boolean arePaired(@Nullable net.minecraft.world.entity.LivingEntity a,
+                                    @Nullable net.minecraft.world.entity.LivingEntity b) {
+        if (a == null || b == null || a == b) return false;
+        if (!(a instanceof Player) || !(b instanceof Player)) return false;
+        String pa = RingOfOneMindItem.wornPairId(a);
+        if (pa == null) return false;
+        return pa.equals(RingOfOneMindItem.wornPairId(b));
+    }
+
+    // ============================================================
     //  咒力共享
     // ============================================================
 

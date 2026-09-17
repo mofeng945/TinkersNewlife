@@ -1008,7 +1008,7 @@
   "item.tinkersnewlife.life_lamp_ring.blessing": "但慈悲使你的身躯变得无比坚韧",
   "item.tinkersnewlife.life_lamp_ring.flavor": "慈悲是最大的恶，善念或许也会铸就业果。",
   "item.tinkersnewlife.ring_of_one_mind": "同心戒",
-  "item.tinkersnewlife.ring_of_one_mind.effect": "佩戴于戒指槽：与戴着同一对戒指的另一名玩家共享咒力与术式（彼此的核心池/封呪瓶/呪蔵与核心上的术式双向互通）",
+  "item.tinkersnewlife.ring_of_one_mind.effect": "佩戴于戒指槽（只认戒指槽）：与戴着同一对戒指的另一名玩家共享咒力与术式（彼此的核心池/封呪瓶/呪蔵与核心上的术式双向互通），且双方互相免疫对方的术式与领域效果",
   "item.tinkersnewlife.ring_of_one_mind.pair": "同心印记：%s（两枚同印记者即为一对）",
   "item.tinkersnewlife.ring_of_one_mind.no_pair": "同心印记：未结成（合成/购买时自动成对）",
   "item.tinkersnewlife.ring_of_one_mind.flavor": "同心一体，术随意转。",

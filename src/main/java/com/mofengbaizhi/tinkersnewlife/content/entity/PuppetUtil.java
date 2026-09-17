@@ -36,6 +36,8 @@ public final class PuppetUtil {
     public static boolean isAllyOf(LivingEntity target, ServerPlayer owner) {
         if (target == null || owner == null) return false;
         if (target == owner) return true;
+        // ⭐ 同心戒：戴着同一对戒指的两名玩家互为同伴 → 术式不该把他当目标（双向，谁看谁都一样）
+        if (com.mofengbaizhi.tinkersnewlife.content.curse.TwinRingLink.arePaired(target, owner)) return true;
         UUID ownerId = owner.getUUID();
         if (target instanceof MomoMerchant momo && momo.isHired()) {
             ServerPlayer boss = momo.getEmployer();

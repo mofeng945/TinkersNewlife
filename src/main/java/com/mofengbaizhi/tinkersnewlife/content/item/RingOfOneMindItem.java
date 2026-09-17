@@ -41,8 +41,15 @@ import java.util.UUID;
  * </ul>
  *
  * <h2>效果</h2>
- * 两名玩家各自戴上同一对里的一枚时，他们共享咒力与术式
- * （服务端解析见 {@code com.mofengbaizhi.tinkersnewlife.content.curse.TwinRingLink}）。
+ * 两名玩家各自戴上同一对里的一枚时：
+ * <ul>
+ *   <li>共享咒力与术式（服务端解析见 {@code content.curse.TwinRingLink}）；</li>
+ *   <li><b>互相免疫对方的术式与领域效果</b> —— 互为同伴 = 同队完全豁免
+ *       （术式选敌 / 领域效果循环 / 穿透真伤 / 伤害事件 四层，见 {@code TwinRingImmunityHandler}）。</li>
+ * </ul>
+ *
+ * <p><b>只戴在戒指槽</b>（curios {@code ring}）：不接受通用饰品槽 {@code curio}，
+ * 也不出现在 {@code curios:curio} 物品标签里 ✓。
  *
  * <p>同一名玩家身上<b>不允许同时戴同一对的两枚</b>（{@link #canEquip} 拒绝）：
  * 那样等于把一对浪费在一个人的两个戒指槽上，谁也共享不到 ✗。
@@ -70,8 +77,10 @@ public class RingOfOneMindItem extends Item implements ICurioItem {
 
     @Override
     public boolean canEquip(SlotContext context, ItemStack stack) {
-        String id = context.identifier();
-        if (!"ring".equals(id) && !"curio".equals(id)) return false;
+        // ⚠ **只认戒指槽**：同心戒是"一对"、靠卦在手指上的对戒生效，
+        //    不该塞进通用饰品槽（curio）——所以既不接受 curio 槽位，
+        //    也不出现在 curios:curio 物品标签里（见 data/curios/tags/items/curio.json）✓
+        if (!"ring".equals(context.identifier())) return false;
         // 同一对的两枚不许戴在同一个人身上（那样就没有"另一名佩戴者"了）
         String pair = pairId(stack);
         return pair == null || !wearsPair(context.entity(), pair, stack);
