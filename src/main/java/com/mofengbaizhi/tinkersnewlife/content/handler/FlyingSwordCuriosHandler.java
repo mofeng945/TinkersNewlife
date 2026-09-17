@@ -89,6 +89,11 @@ public class FlyingSwordCuriosHandler {
         return ItemStack.EMPTY;
     }
 
+    /** 脚部槽里那把飞剑（客户端渲染层也要用，见 FlyingSwordFootRenderHandler） */
+    public static ItemStack feetSwordOf(Player player) {
+        return getFeetSword(player);
+    }
+
     @SubscribeEvent
     public static void onCurioEquip(CurioEquipEvent event) {
         ItemStack stack = event.getStack();
@@ -97,6 +102,10 @@ public class FlyingSwordCuriosHandler {
 
         Player player = (Player) event.getEntity();
         if (player.level().isClientSide) return;
+        // 创造/旁观本来就会飞：既不记快照也不授予 ✓
+        // ⚠ 旧代码在这里无条件把当前 mayfly 记进 prev_mayfly —— 创造模式下那是 true ✗，
+        //    之后摘掉飞剑 clearFlyingState 就把 mayfly 还原成 true ⇒ **永久飞行** ✗（用户实测）
+        if (player.isCreative() || player.isSpectator()) return;
 
         // 右键发射飞剑时 TCon 会更新工具 NBT，可能连带触发一次伪装备事件 → 忽略
         UUID emittingId = FlyingSwordItem.EMITTING_PLAYER.get();
@@ -107,11 +116,17 @@ public class FlyingSwordCuriosHandler {
         if (isFlyingSwordBroken(stack)) return;
 
         // ⭐ 只授予"飞行权限"，不强制起飞（原来直接 flying=true 会导致一装备就悬空）
-        player.getPersistentData().putBoolean(FLYING_SWORD_ACTIVE, true);
-        player.getPersistentData().putBoolean("flying_sword_prev_mayfly", player.getAbilities().mayfly);
-        player.getAbilities().mayfly = true;
-        player.onUpdateAbilities();
-        TinkersNewlife.LOGGER.info("[飞剑] 授予飞行能力（脚部饰品）：玩家={}", player.getName().getString());
+        // ⭐ 快照**只记一次**：已经处于"飞剑生效中"时再触发（伪装备/耐久更新等）不得覆盖，
+        //    否则会把"已经能飞"当成玩家的原始状态存下来 ✗（同上，永久飞行的另一半来源）
+        if (!player.getPersistentData().getBoolean(FLYING_SWORD_ACTIVE)) {
+            player.getPersistentData().putBoolean("flying_sword_prev_mayfly", player.getAbilities().mayfly);
+            player.getPersistentData().putBoolean(FLYING_SWORD_ACTIVE, true);
+        }
+        if (!player.getAbilities().mayfly) {
+            player.getAbilities().mayfly = true;
+            player.onUpdateAbilities();
+            TinkersNewlife.LOGGER.info("[飞剑] 授予飞行能力（脚部饰品）：玩家={}", player.getName().getString());
+        }
     }
 
     @SubscribeEvent
@@ -130,6 +145,8 @@ public class FlyingSwordCuriosHandler {
     public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
         Player player = event.getEntity();
         if (player.level().isClientSide) return;
+        // 创造/旁观无需授予，也不记快照（否则会把 true 存成"玩家原始状态" ✗）
+        if (player.isCreative() || player.isSpectator()) return;
 
         // 死亡复活后先清空遗留的飞行状态（避免 curios 重放 equip 造成状态错乱）
         clearFlyingState(player);
@@ -138,8 +155,9 @@ public class FlyingSwordCuriosHandler {
         ItemStack stack = getFeetSword(player);
         if (stack.isEmpty() || isFlyingSwordBroken(stack)) return;
 
-        player.getPersistentData().putBoolean(FLYING_SWORD_ACTIVE, true);
+        // 快照此刻"原本能不能飞"（上面刚 clear 过，标记一定是空的 ✓）
         player.getPersistentData().putBoolean("flying_sword_prev_mayfly", player.getAbilities().mayfly);
+        player.getPersistentData().putBoolean(FLYING_SWORD_ACTIVE, true);
         player.getAbilities().mayfly = true;
         player.getAbilities().flying = false;
         player.onUpdateAbilities();
@@ -155,31 +173,39 @@ public class FlyingSwordCuriosHandler {
         boolean active = player.getPersistentData().getBoolean(FLYING_SWORD_ACTIVE);
         // ⭐ 严格判定：只有脚部饰品槽里的飞剑才算"装备中"（手持/其他饰品槽都不算）
         ItemStack feetSword = getFeetSword(player);
-        boolean equipped = !feetSword.isEmpty();
+        boolean usable = !feetSword.isEmpty() && !isFlyingSwordBroken(feetSword);
 
-        // 标记为启用中，但实际没有（或损坏）→ 撤销
-        if (active) {
-            if (!equipped || isFlyingSwordBroken(feetSword)) {
-                clearFlyingState(player);
-                return;
-            }
-        } else if (equipped && !isFlyingSwordBroken(feetSword) && player.getAbilities().mayfly) {
-            // 外部把标记清了但权限还在（例如其它模组/维度切换）：补回标记，保持状态一致
+        if (!usable) {
+            if (active) clearFlyingState(player);
+            return;
+        }
+
+        // ⭐ 装了 → 保证"标记 + 权限"同时到位（自愈）：
+        //   重登 / 切游戏模式 / 被别的模组清掉时，服务端都会按游戏模式把 mayfly 重置 ✗ ——
+        //   旧代码只在"标记为空且 mayfly 已为真"时补标记，等于**从不补权限** ✗，
+        //   于是"每次进服务器或切模式后脚上的飞剑默认不生效"（用户实测）✓→✓ 已修。
+        if (!active) {
+            player.getPersistentData().putBoolean("flying_sword_prev_mayfly", player.getAbilities().mayfly);
             player.getPersistentData().putBoolean(FLYING_SWORD_ACTIVE, true);
+            active = true;
         }
+        if (!player.getAbilities().mayfly) {
+            player.getAbilities().mayfly = true;
+            player.onUpdateAbilities();
+        }
+    }
 
-        // 正在飞行 → 确保脚下的飞剑实体存在；否则清掉
-        if (equipped && !isFlyingSwordBroken(feetSword)) {
-            if (player.getAbilities().flying) {
-                if (!hasFootEntity(player)) {
-                    spawnFootEntity(player, feetSword);
-                }
-            } else if (hasFootEntity(player)) {
-                removeFootEntity(player);
-            }
-        } else if (hasFootEntity(player)) {
-            removeFootEntity(player);
-        }
+    /**
+     * 登录时清一次"脚下飞剑实体"的残留。
+     * <p>⭐ 脚部飞剑的**渲染已改为客户端直接画在玩家身上**（见 {@code FlyingSwordFootRenderHandler}），
+     * 服务端不再生成/每 tick 瞬移那个实体了（那是"持续瞬移、很影响 tick"的根源 ✗）；
+     * 旧存档里可能还留着实体 → 登录时统一清掉，免得和新渲染叠成两把 ✓。
+     */
+    @SubscribeEvent
+    public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        Player player = event.getEntity();
+        if (player.level().isClientSide) return;
+        removeFootEntity(player);
     }
 
     @SubscribeEvent
@@ -240,21 +266,6 @@ public class FlyingSwordCuriosHandler {
         }
         // 无论是否主动开启，都移除实体
         removeFootEntity(player);
-    }
-
-    private static boolean hasFootEntity(Player player) {
-        List<FlyingSwordFootEntity> entities = player.level().getEntitiesOfClass(
-                FlyingSwordFootEntity.class,
-                player.getBoundingBox().inflate(3),
-                e -> e.getOwnerUUID() != null && e.getOwnerUUID().equals(player.getUUID())
-        );
-        return !entities.isEmpty();
-    }
-
-    private static void spawnFootEntity(Player player, ItemStack stack) {
-        if (player.level().isClientSide) return;
-        FlyingSwordFootEntity footEntity = new FlyingSwordFootEntity(player.level(), player, stack);
-        player.level().addFreshEntity(footEntity);
     }
 
     private static void removeFootEntity(Player player) {
