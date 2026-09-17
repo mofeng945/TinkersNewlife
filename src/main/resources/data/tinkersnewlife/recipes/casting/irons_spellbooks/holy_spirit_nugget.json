@@ -1,0 +1,19 @@
+{
+  "type": "tconstruct:casting_table",
+  "cast": {
+    "tag": "tconstruct:casts/multi_use/nugget"
+  },
+  "cast_consumed": false,
+  "fluid": {
+    "amount": 10,
+    "fluid": "tinkersnewlife:holy_spirit_still"
+  },
+  "result": "tinkersnewlife:holy_spirit_nugget",
+  "cooling_time": 12,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "irons_spellbooks"
+    }
+  ]
+}

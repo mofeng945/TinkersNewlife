@@ -1,0 +1,15 @@
+{
+  "type": "tconstruct:casting_basin",
+  "fluid": {
+    "amount": 810,
+    "fluid": "tinkersnewlife:holy_spirit_still"
+  },
+  "result": "tinkersnewlife:holy_spirit_storage_block",
+  "cooling_time": 900,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "irons_spellbooks"
+    }
+  ]
+}

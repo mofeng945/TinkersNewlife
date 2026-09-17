@@ -1,0 +1,15 @@
+{
+  "type": "tconstruct:casting_basin",
+  "fluid": {
+    "amount": 810,
+    "fluid": "tinkersnewlife:magic_gold_essence_still"
+  },
+  "result": "tinkersnewlife:magic_gold_storage_block",
+  "cooling_time": 1080,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "irons_spellbooks"
+    }
+  ]
+}

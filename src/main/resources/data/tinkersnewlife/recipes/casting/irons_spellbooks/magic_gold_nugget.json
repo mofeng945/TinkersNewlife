@@ -1,0 +1,19 @@
+{
+  "type": "tconstruct:casting_table",
+  "cast": {
+    "tag": "tconstruct:casts/multi_use/nugget"
+  },
+  "cast_consumed": false,
+  "fluid": {
+    "amount": 10,
+    "fluid": "tinkersnewlife:magic_gold_essence_still"
+  },
+  "result": "tinkersnewlife:magic_gold_nugget",
+  "cooling_time": 14,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "irons_spellbooks"
+    }
+  ]
+}

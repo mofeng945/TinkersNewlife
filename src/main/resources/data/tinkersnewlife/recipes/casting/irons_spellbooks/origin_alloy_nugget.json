@@ -1,0 +1,19 @@
+{
+  "type": "tconstruct:casting_table",
+  "cast": {
+    "tag": "tconstruct:casts/multi_use/nugget"
+  },
+  "cast_consumed": false,
+  "fluid": {
+    "amount": 10,
+    "fluid": "tinkersnewlife:origin_polymer_still"
+  },
+  "result": "tinkersnewlife:origin_alloy_nugget",
+  "cooling_time": 17,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "irons_spellbooks"
+    }
+  ]
+}
