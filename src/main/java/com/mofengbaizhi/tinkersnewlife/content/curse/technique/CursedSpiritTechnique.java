@@ -824,6 +824,9 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         }
 
         boolean wasSilent = mob.isSilent();
+        TinkersNewlife.LOGGER.info("[收回] 开始：{}（{}，血量={}/{}）",
+                mob.getName().getString(), net.minecraft.world.entity.EntityType.getKey(mob.getType()),
+                mob.getHealth(), mob.getMaxHealth());
         clearEntityBossBar(mob);
         if (mob instanceof net.minecraft.world.entity.monster.warden.Warden warden) {
             com.mofengbaizhi.tinkersnewlife.network.curse.PacketDropWardenBars.broadcast();
@@ -848,8 +851,12 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         }
         if (mob.isAlive() && !mob.isRemoved()) {
             mob.discard();          // 死亡被取消 → 兜底
+            TinkersNewlife.LOGGER.info("[收回] 结束：{} 补刀没打死 → 走 discard 兜底（此路不产生死亡事件/掉落 ✓）",
+                    mob.getName().getString());
         } else {
             mob.setSilent(wasSilent);
+            TinkersNewlife.LOGGER.info("[收回] 结束：{} 已进入死亡链路（存活={} 已移除={}）→ 后续 true 死时的掉落/记录看 [收回掉落抑制] 日志",
+                    mob.getName().getString(), mob.isAlive(), mob.isRemoved());
         }
     }
 

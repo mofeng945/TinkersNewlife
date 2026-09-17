@@ -1172,17 +1172,39 @@ public final class WuWeiHandler {
      */
     @SubscribeEvent
     public static void onTransformedDrops(net.minecraftforge.event.entity.living.LivingDropsEvent event) {
-        if (isTransformedUnit(event.getEntity())
-                || com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique.isRecalling(event.getEntity())) {
+        LivingEntity dropped = event.getEntity();
+        boolean recalling = com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
+                .isRecalling(dropped);
+        // ⭐ 第二道保险（**不依赖标记**）：只要是"某位玩家的释放体"，就一律不掉战利品 ✓ ——
+        //    释放体是收服时存的 NBT 快照复制出来的 ✓，让它掉战利品等于一条稳定刷材料的路 ✗，
+        //    与"拟态体不掉落"同一口径 ✓（主动收回只是它死亡的一种情形）。
+        boolean releasedSpirit = com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
+                .ownerOfReleased(dropped) != null;
+        boolean suppressed = isTransformedUnit(dropped) || recalling || releasedSpirit;
+        // ⭐ 诊断（只打 Boss 级 / 收回体，避免刷屏）：判断"收回体仍然掉物品"到底走不走本事件 ——
+        //    若收回时**完全没有**这行日志，说明那些物品不是本事件发的（是那个 mod 自己 spawn 的 ✗），
+        //    那就只能从"别让它在死亡链路里死"下手（改成静默移除）✓。
+        if (suppressed || dropped.getMaxHealth() >= 100.0F) {
+            TinkersNewlife.LOGGER.info("[收回掉落抑制] {}（{}，血量上限 {}）掉落 {} 件 → {}",
+                    dropped.getName().getString(),
+                    net.minecraft.world.entity.EntityType.getKey(dropped.getType()),
+                    dropped.getMaxHealth(), event.getDrops().size(),
+                    suppressed ? ("已取消 ✓（原因：" + (recalling ? "收回中" : (releasedSpirit ? "释放体" : "拟态体")) + "）")
+                            : "放行 ✗（它不是收回体：标记没落在它身上，或这就是别的实体）");
+        }
+        if (suppressed) {
             event.setCanceled(true);
         }
     }
 
-    /** 同上：转变出来的生物也不掉经验（避免同样的刷取路线） */
+    /** 同上：转变出来的生物也不掉经验（避免同样的刷取路线；释放体同理 ✓） */
     @SubscribeEvent
     public static void onTransformedXp(net.minecraftforge.event.entity.living.LivingExperienceDropEvent event) {
-        if (isTransformedUnit(event.getEntity())
-                || com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique.isRecalling(event.getEntity())) {
+        LivingEntity xp = event.getEntity();
+        if (isTransformedUnit(xp)
+                || com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique.isRecalling(xp)
+                || com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
+                        .ownerOfReleased(xp) != null) {
             event.setCanceled(true);
         }
     }
