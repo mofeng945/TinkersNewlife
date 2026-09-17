@@ -1,0 +1,18 @@
+{
+  "type": "tconstruct:melting",
+  "ingredient": {
+    "item": "irons_spellbooks:divine_pearl"
+  },
+  "result": {
+    "fluid": "tinkersnewlife:liquid_holy_light_still",
+    "amount": 1000
+  },
+  "temperature": 1200,
+  "time": 120,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "irons_spellbooks"
+    }
+  ]
+}

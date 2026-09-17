@@ -115,6 +115,8 @@ public class ModCreativeTabs {
         acceptItemIfPresent(output, "origin_polymer_bucket");
         // 液态闪电（雷电瓶的流体形态，来源与去向都只有雷电瓶）
         acceptItemIfPresent(output, "liquid_lightning_bucket");
+        // 液态圣光（熔炼铁魔法神圣珍珠所得，用于浇神圣符文）
+        acceptItemIfPresent(output, "liquid_holy_light_bucket");
         // 纯合金流体的"物品形态"（浇铸回环的另一半）：物品本身常驻注册，但铁魔法不在场时拿不到流体，
         // 所以在创造栏里只在铁魔法加载时显示 ✓
         if (anyLoaded("irons_spellbooks")) {

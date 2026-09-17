@@ -112,6 +112,18 @@ public final class IronSpellsFluids {
             1400, 1800, 900, 0xFFF6D75A,  // 电光黄（靠近白色）
             FluidRegistrar.waterProps(MapColor.COLOR_YELLOW));
 
+    /**
+     * <b>液态圣光</b>（{@code liquid_holy_light}）：熔炼铁魔法「<b>神圣珍珠</b>」
+     * （{@code irons_spellbooks:divine_pearl}）所得。
+     *
+     * <p>乳白色金属质感（贴图按项目口径取自匠魂本体 {@code molten/alloy/queens_slime} 改色，
+     * 色带做成乳白 → 纯白）✓。用途：与「空白符文」浇筑成<b>神圣符文</b>
+     * （1000 mB + 空白符文当消耗铸模 → `irons_spellbooks:holy_rune`）✓。
+     */
+    public static final FluidRegistrar.FluidEntry LIQUID_HOLY_LIGHT = REG.entry("liquid_holy_light",
+            1800, 4000, 1200, 0xFFF2EDD6,  // 乳白（微暖）
+            FluidRegistrar.lavaProps(MapColor.COLOR_YELLOW));
+
     /** 把本组四张注册表挂到模组总线（仅铁魔法在场时被调用） */
     public static void register(IEventBus bus) {
         REG.register(bus);

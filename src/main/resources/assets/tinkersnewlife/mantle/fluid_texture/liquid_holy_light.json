@@ -1,0 +1,8 @@
+{
+  "still": "tinkersnewlife:block/liquid_holy_light_still",
+  "flowing": "tinkersnewlife:block/liquid_holy_light_flowing",
+  "color": "FFFFFFFF",
+  "fogColor": "FFE8E4D8",
+  "fogStart": 0.35,
+  "fogEnd": 4.5
+}

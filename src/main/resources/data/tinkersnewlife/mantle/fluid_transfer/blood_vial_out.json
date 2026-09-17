@@ -1,0 +1,19 @@
+{
+  "type": "mantle:empty_item",
+  "input": {
+    "item": "irons_spellbooks:blood_vial"
+  },
+  "fluid": {
+    "fluid": "irons_spellbooks:blood",
+    "amount": 250
+  },
+  "result": {
+    "item": "minecraft:glass_bottle"
+  },
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "irons_spellbooks"
+    }
+  ]
+}
