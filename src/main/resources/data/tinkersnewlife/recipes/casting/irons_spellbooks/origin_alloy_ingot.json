@@ -1,0 +1,19 @@
+{
+  "type": "tconstruct:casting_table",
+  "cast": {
+    "tag": "tconstruct:casts/multi_use/ingot"
+  },
+  "cast_consumed": false,
+  "fluid": {
+    "amount": 90,
+    "fluid": "tinkersnewlife:origin_polymer_still"
+  },
+  "result": "tinkersnewlife:origin_alloy_ingot",
+  "cooling_time": 150,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "irons_spellbooks"
+    }
+  ]
+}

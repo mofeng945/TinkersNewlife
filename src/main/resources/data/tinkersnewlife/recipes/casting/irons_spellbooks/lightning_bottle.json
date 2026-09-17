@@ -1,0 +1,19 @@
+{
+  "type": "tconstruct:casting_table",
+  "cast": {
+    "item": "minecraft:glass_bottle"
+  },
+  "cast_consumed": true,
+  "fluid": {
+    "amount": 1000,
+    "fluid": "tinkersnewlife:liquid_lightning_still"
+  },
+  "result": "irons_spellbooks:lightning_bottle",
+  "cooling_time": 40,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "irons_spellbooks"
+    }
+  ]
+}

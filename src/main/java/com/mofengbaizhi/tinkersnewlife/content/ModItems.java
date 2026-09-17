@@ -352,4 +352,21 @@ public class ModItems {
      */
     public static final RegistryObject<Item> HOLY_SPIRIT_INGOT =
             ITEMS.register("holy_spirit_ingot", () -> new Item(new Item.Properties()));
+
+    /**
+     * 源钻合金锭：材料「<b>源钻合金</b>」（T4）的物品形态，同样是纯合金流体，理由同魔金锭 ✓。
+     *
+     * <p>源流聚合物只有一条来源（合金 120 液态奥术 + 120 流体灰烬 + 90 熔融钻石 + 90 熔融残骸
+     * → 180 mB），而「源钻合金」这个材料 {@code craftable: false}（没有锭/宝石这类物品形态），
+     * 于是它既<b>没有反浇筑</b>也没有<b>回熔</b> —— 整个材料是条单行道 ✗。
+     * 这里给它一个锭，把两侧补齐 ✓：
+     * <pre>
+     *   浇筑：90 mB 源流聚合物 + 锭铸模 → 源钻合金锭
+     *   熔炼：源钻合金锭 → 90 mB 源流聚合物
+     * </pre>
+     * 两侧都是 90 mB = 1 单位 ✓ 严格 1:1，不会凭空生出材料 ✓
+     * （合金本身是 420 mB 进 / 180 mB 出，净亏损，所以这条回环不可能被用来刷材料 ✓）。
+     */
+    public static final RegistryObject<Item> ORIGIN_ALLOY_INGOT =
+            ITEMS.register("origin_alloy_ingot", () -> new Item(new Item.Properties()));
 }

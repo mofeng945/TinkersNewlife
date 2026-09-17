@@ -1,0 +1,19 @@
+{
+  "type": "mantle:fill_item",
+  "input": {
+    "item": "minecraft:glass_bottle"
+  },
+  "fluid": {
+    "fluid": "tinkersnewlife:liquid_lightning_still",
+    "amount": 1000
+  },
+  "result": {
+    "item": "irons_spellbooks:lightning_bottle"
+  },
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "irons_spellbooks"
+    }
+  ]
+}

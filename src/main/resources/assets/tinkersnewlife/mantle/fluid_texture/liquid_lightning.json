@@ -1,0 +1,8 @@
+{
+  "still": "tinkersnewlife:block/liquid_lightning_still",
+  "flowing": "tinkersnewlife:block/liquid_lightning_flow",
+  "color": "FFFFFFFF",
+  "fogColor": "FF6B5A08",
+  "fogStart": 0.35,
+  "fogEnd": 4.5
+}

@@ -93,6 +93,26 @@ public final class IronSpellsFluids {
             3000, 9000, 1500, 0xFF7C74CF,  // 源光紫（紫 → 白）
             FluidRegistrar.lavaProps(MapColor.COLOR_PURPLE));
 
+    /**
+     * <b>液态闪电</b>（{@code liquid_lightning}）：「<b>雷电瓶</b>」的流体形态。
+     *
+     * <p>来源与去向都只有雷电瓶（{@code irons_spellbooks:lightning_bottle}，
+     * 铁魔法里"对闪电苦力怕使用玻璃瓶"得到的那个道具），严格 1:1 的回环 ✓：
+     * <pre>
+     *   浇筑：1000 mB 液态闪电 + 玻璃瓶铸模 → 雷电瓶
+     *   倒出：雷电瓶 → 1000 mB 液态闪电（排液口 / 浇口都行）
+     * </pre>
+     * 所以它放在<b>铁魔法联动组</b>（与雷电瓶同生共死：没装铁魔法 → 这一支连同它的桶、
+     * 液体方块、两条配方一起不注册/不加载 ✓）。
+     *
+     * <p>1000 mB / 瓶：雷电瓶是"一瓶闪电"，与匠魂默认的 250 mB（一瓶龙血）区分开，
+     * 也正好是闪电苦力怕 20 点血 × 50 mB 的量 —— 以后若要再挂"熔炼闪电苦力怕"，
+     * 数值直接对得上 ✓。
+     */
+    public static final FluidRegistrar.FluidEntry LIQUID_LIGHTNING = REG.entry("liquid_lightning",
+            1400, 1800, 900, 0xFFF6D75A,  // 电光黄（靠近白色）
+            FluidRegistrar.waterProps(MapColor.COLOR_YELLOW));
+
     /** 把本组四张注册表挂到模组总线（仅铁魔法在场时被调用） */
     public static void register(IEventBus bus) {
         REG.register(bus);
