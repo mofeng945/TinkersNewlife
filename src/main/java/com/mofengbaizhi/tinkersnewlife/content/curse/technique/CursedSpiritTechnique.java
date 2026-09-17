@@ -693,9 +693,12 @@ public final class CursedSpiritTechnique extends BaseTechnique {
      * 现在改成"标记后 {@value #RECALL_GRACE_TICKS} tick 内都算收回中" ✓ ——
      * 这期间它无论何时、以何种方式真正死掉，都按"收回"结算（不掉落、不删记录 ✓）。
      */
-    private static final int RECALL_GRACE_TICKS = 200;   // 10 秒，足够任何死亡动画/变身收尾
+    private static final int RECALL_GRACE_TICKS = 200;   // 10 秒（快路径：短动画够用）
     private static final java.util.Map<java.util.UUID, Long> RECALLING =
             new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** 实体 ForgeData 键：这具实体是被"主动收回"的（跨 tick 有效，直到它真正消失 ✓） */
+    private static final String KEY_RECALLING = "tinkersnewlife.recalling";
 
     /** 打上"正在收回"标记（带时刻，{@value #RECALL_GRACE_TICKS} tick 内有效） */
     private static void markRecalling(net.minecraft.world.entity.Entity e) {
@@ -705,11 +708,17 @@ public final class CursedSpiritTechnique extends BaseTechnique {
             RECALLING.entrySet().removeIf(en -> now - en.getValue() > RECALL_GRACE_TICKS);
         }
         RECALLING.put(e.getUUID(), now);
+        // ⭐ 同时打**实体持久标记**：有的 Boss 死亡动画比时间窗更长（用户实测："原初受火者收服后，
+        //    每次收回，死亡动画结束后都会掉落物品" ✗）—— 光靠计时永远可能被更长的动画拖出去 ✗，
+        //    所以只要这具实体还没消失就一直算"收回中" ✓（实体死了标记随它一起没 ✓，无需清理 ✓）。
+        e.getPersistentData().putBoolean(KEY_RECALLING, true);
     }
 
     /** 该实体当前是否正在被"主动收回"（掉落/经验抑制、记录保留都要用） */
     public static boolean isRecalling(net.minecraft.world.entity.Entity e) {
         if (e == null) return false;
+        // ⭐ 持久标记优先：死亡动画可能比时间窗长得多，只要实体还在、标记就还在 ⇒ 无论多久都兜得住 ✓
+        if (e.getPersistentData().getBoolean(KEY_RECALLING)) return true;
         Long marked = RECALLING.get(e.getUUID());
         if (marked == null) return false;
         long now = e.level().getGameTime();
