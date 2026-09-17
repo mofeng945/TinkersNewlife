@@ -1,0 +1,18 @@
+{
+  "type": "tconstruct:melting",
+  "ingredient": {
+    "item": "tinkersnewlife:origin_alloy_nugget"
+  },
+  "result": {
+    "fluid": "tinkersnewlife:origin_polymer_still",
+    "amount": 10
+  },
+  "temperature": 2200,
+  "time": 12,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "irons_spellbooks"
+    }
+  ]
+}

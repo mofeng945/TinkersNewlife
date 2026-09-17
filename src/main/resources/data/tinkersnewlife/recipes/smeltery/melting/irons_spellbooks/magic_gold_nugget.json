@@ -1,0 +1,18 @@
+{
+  "type": "tconstruct:melting",
+  "ingredient": {
+    "item": "tinkersnewlife:magic_gold_nugget"
+  },
+  "result": {
+    "fluid": "tinkersnewlife:magic_gold_essence_still",
+    "amount": 10
+  },
+  "temperature": 2500,
+  "time": 10,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "irons_spellbooks"
+    }
+  ]
+}
