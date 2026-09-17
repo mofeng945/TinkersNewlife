@@ -274,6 +274,15 @@ public class ModItems {
     public static final RegistryObject<Item> RING_OF_ONE_MIND =
             ITEMS.register("ring_of_one_mind",
                     () -> new com.mofengbaizhi.tinkersnewlife.content.item.RingOfOneMindItem());
+
+    /**
+     * 双向认知阻碍面具：头饰（curios 头部槽）。
+     * 向外：别人看不到你的名字、怪物锁定不到你、小地图雷达也显示不出你（靠隐身标记实现）；
+     * 向内：你把**除玩家以外**的所有生物视为亡灵（咒具亡灵特攻 / 反转术式 / 咒灵操术回收都按亡灵算）。
+     */
+    public static final RegistryObject<Item> COGNITIVE_MASK =
+            ITEMS.register("cognitive_mask",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.CognitiveMaskItem());
     /** 火焰箭（手持蓄力）：灶·开蓄力时临时装备的视觉物品（动态纹理），不可获取/使用 */
     public static final RegistryObject<Item> FLAME_ARROW_ITEM =
             ITEMS.register("flame_arrow_item", FlameArrowItem::new);

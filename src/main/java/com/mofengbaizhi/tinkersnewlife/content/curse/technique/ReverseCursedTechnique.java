@@ -71,7 +71,9 @@ public final class ReverseCursedTechnique extends BaseTechnique {
             return;
         }
         double heal = getHealAmount(player);
-        if (target.getMobType() == MobType.UNDEAD) {
+        // ⭐ 戴「双向认知阻碍面具」者把**除玩家以外**的一切视为亡灵 → 反转术式对任何非玩家目标都造成伤害
+        //    （玩家不受影响：对自己/同伴用依然是治疗 ✓）
+        if (com.mofengbaizhi.tinkersnewlife.content.item.CognitiveMaskItem.treatedAsUndead(player, target)) {
             // 亡灵：受到应恢复生命数值的 2 倍伤害
             float dmg = (float) (heal * 2.0);
             dmg = (float) amplifyTechniqueDamage(player, dmg);

@@ -1,0 +1,22 @@
+{
+  "name": "Two-way Cognitive Obstruction Mask",
+  "category": "tinkersnewlife:cursed_tools",
+  "icon": "tinkersnewlife:cognitive_mask",
+  "sortnum": 8,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "The $(bold)Two-way Cognitive Obstruction Mask$() is worn in the curios $(bold)head slot$() - $(bold)that slot only$() (it is not accepted in the generic curio slot).$(br2)$(bold)Outward - nobody can perceive you$():$(li)other players $(bold)cannot see your name$()$(li)mobs $(bold)cannot lock onto you$() - new locks are voided, and mobs that were already locked onto you let go within a second$(li)minimap radars $(bold)cannot show you$() either$(br2)Warning: the first two are guaranteed; the $(bold)third one requires actual invisibility$(). Radars like Xaero's decide purely by the entity's $(bold)invisibility flag$() and expose no API to hide a visible player. So the wearer becomes $(bold)invisible$() ($(bold)body hidden; armour and held items still render$()).$(br2)To keep the body visible set the config $(bold)cognitive_mask.invisible$() to false - the name tag and mob targeting stay blocked, but $(bold)radars will show you$()."
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:cognitive_mask",
+      "text": "$(bold)Inward - the world looks different to you$(): while wearing the mask you treat $(bold)every living entity except players$() as $(bold)undead$(), so every undead-specific mechanic applies to them:$(li)$(bold)cursed tool$() undead bonus (Inverted Spear of Heaven +6, Cloud +10%)$(li)$(bold)reverse cursed technique$(): against non-player targets it deals $(bold)double the heal amount as damage$() instead of healing$(li)$(bold)Jacob's Ladder$(): takes the undead branch (x8 frame damage, full damage)$(li)$(bold)Cursed Spirit Technique$(): capture normally only works on undead - now $(bold)any non-player creature can be captured$()$(br2)$(bold)Players are unaffected$(): reverse cursed technique on yourself or your partner still heals.$(br2)$(italic)What lies beyond cognition is what unsettles us most.$()"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Obtaining",
+      "text": "$(bold)Momo$() (the weapon merchant) randomly stocks it on her cursed tool shelf (same pool as the Inverted Spear of Heaven / Cloud / Prison Realm / Life Lamp Ring / Ring of One Mind, 10-20 Gheloth Remains).$(br2)There is no cursed energy synthesis ritual recipe for it yet - tell the author the core / materials / cursed energy cost if you want one."
+    }
+  ]
+}

@@ -130,8 +130,10 @@ public class JacobLadderEntity extends Entity {
     }
 
     /** 是否"原样伤害"目标：亡灵（含亡灵 Boss）、灾厄（含女巫）、Boss、以及高血量首领（模组 Boss 兜底） */
-    private static boolean isFullDamageTarget(LivingEntity target) {
-        if (target.getMobType() == MobType.UNDEAD) return true;
+    private static boolean isFullDamageTarget(LivingEntity target,
+                                             @javax.annotation.Nullable net.minecraft.server.level.ServerPlayer caster) {
+        if (com.mofengbaizhi.tinkersnewlife.content.item.CognitiveMaskItem
+                .treatedAsUndead(caster, target)) return true;
         if (target.getType().is(net.minecraft.tags.EntityTypeTags.RAIDERS)) return true;
         if (target instanceof net.minecraft.world.entity.boss.wither.WitherBoss
                 || target instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon
@@ -161,11 +163,12 @@ public class JacobLadderEntity extends Entity {
             // ⭐ 伤害分级：
             //   亡灵（含凋灵等亡灵 Boss）/ 灾厄（含女巫）/ Boss → 原样（每 2 tick 帧伤，亡灵 ×8）；
             //   其它生物 → 每 3 秒（60 tick）才吃一次，且伤害降到 1/10。
-            boolean full = isFullDamageTarget(target);
+            boolean full = isFullDamageTarget(target, casterPlayer);
             if (!full && tickCount % 60 != 0) continue;
             // 帧伤（亡灵 ×8）
             float dmg = frameDamage;
-            if (target.getMobType() == MobType.UNDEAD) dmg *= 8.0F;
+            if (com.mofengbaizhi.tinkersnewlife.content.item.CognitiveMaskItem
+                    .treatedAsUndead(casterPlayer, target)) dmg *= 8.0F;
             if (!full) dmg *= 0.1F;
             if (casterPlayer != null) {
                 dmg = (float) com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper

@@ -63,7 +63,8 @@ public final class TianNiHuoPierceHandler {
 
             // 基础伤害 = 玩家攻击力属性（含天逆鉾 24 点与力量等）；亡灵额外 +6（凋灵为亡灵）
             float dmg = (float) player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
-            if (target.getMobType() == MobType.UNDEAD) {
+            if (com.mofengbaizhi.tinkersnewlife.content.item.CognitiveMaskItem
+                    .treatedAsUndead(player, target)) {
                 dmg += 6.0F;
             }
             pierceDamage(player, target, dmg);

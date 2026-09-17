@@ -47,7 +47,7 @@ public final class YouYunAttackHandler {
                 net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
         if (dmg <= 0) return;
         // 对亡灵生物额外 +10%
-        if (target.getMobType() == MobType.UNDEAD) {
+        if (com.mofengbaizhi.tinkersnewlife.content.item.CognitiveMaskItem.treatedAsUndead(player, target)) {
             dmg *= 1.1f;
         }
         // 固定增伤 120%

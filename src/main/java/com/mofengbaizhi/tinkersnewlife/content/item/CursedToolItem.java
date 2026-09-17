@@ -49,7 +49,8 @@ public abstract class CursedToolItem extends SwordItem {
     public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
         boolean vanilla = super.hurtEnemy(stack, target, attacker);
         // 亡灵特攻（对亡灵额外 +6）
-        if (target.getMobType() == MobType.UNDEAD) {
+        // ⭐ 戴「双向认知阻碍面具」者把**除玩家以外**的一切视为亡灵（见 CognitiveMaskItem）
+        if (CognitiveMaskItem.treatedAsUndead(attacker, target)) {
             target.hurt(target.damageSources().mobAttack(attacker), UNDEAD_BONUS + extraAttackBonus(target));
         } else {
             float extra = extraAttackBonus(target);

@@ -177,7 +177,10 @@ public final class CursedSpiritTechnique extends BaseTechnique {
     @Override
     public void onKeyPress(ServerPlayer player) {
         LivingEntity target = findTarget(player);
-        if (target != null && target.getMobType() == MobType.UNDEAD && target.isAlive()
+        // ⭐ 收服判定：原本只收 MobType.UNDEAD；戴「双向认知阻碍面具」者把**除玩家以外**的一切视为亡灵
+        //    → 于是任何非玩家生物都能被咒灵操术回收 ✓（见 CognitiveMaskItem）
+        if (target != null && com.mofengbaizhi.tinkersnewlife.content.item.CognitiveMaskItem
+                .treatedAsUndead(player, target) && target.isAlive()
                 && target.getHealth() <= target.getMaxHealth() * 0.025F) {
             capture(player, target);
             return;

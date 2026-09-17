@@ -28,6 +28,15 @@ public final class ModConfig {
     // ==================== 咒力核心 ====================
     public static final ConfigValue<Boolean> CURSE_CORE_ENABLED;
 
+    // ==================== 双向认知阻碍面具 ====================
+    /**
+     * 面具佩戴者是否隐身（身体不可见，盔甲/手持物照常显示）。
+     * <p>⭐ 这是"小地图雷达也显示不出你"的**唯一**实现手段：Xaero's 之类只按 {@code isInvisible()}
+     * 决定要不要画点，没有任何"只屏蔽雷达、保留身体"的接口。关掉则名字与怪物锁定照旧屏蔽，
+     * 但雷达会照常显示你。
+     */
+    public static final ConfigValue<Boolean> COGNITIVE_MASK_INVISIBLE;
+
     // ==================== 无为转变 伪装渲染 ====================
     /** 无为转变·伪装渲染替换（客户端）：把变形玩家渲染成目标生物。与 YSM 等接管玩家渲染的模组冲突时可关闭 */
     public static final ConfigValue<Boolean> WUWEI_DISGUISE_RENDER;
@@ -183,6 +192,24 @@ public final class ModConfig {
         // 咒力核心
         b.push("curse_core").comment("Curse Core: allow crafting (ritual) and using (equipping/techniques). Default on.");
         CURSE_CORE_ENABLED = b.define("allow_curse_core_craft_and_use", true);
+        b.pop();
+
+        // 双向认知阻碍面具（头饰）
+        b.push("cognitive_mask").comment(
+                "Two-way Cognitive Obstruction Mask (head curio).",
+                "",
+                "Wearing it always: other players cannot see your name tag, and mobs cannot lock onto you",
+                "(both newly attempted locks and locks that already existed before you put it on).",
+                "It also makes you treat EVERY living entity except players as UNDEAD: cursed tool",
+                "undead bonus, reverse cursed technique (damage instead of heal on undead), Jacob's Ladder",
+                "and the Cursed Spirit Technique capture check all take the undead branch.",
+                "",
+                "invisible = also make the wearer invisible (body hidden; armour and held items still render).",
+                "⭐ This is the ONLY way to hide the wearer from minimap radars: Xaero's and friends decide",
+                "purely by the invisibility flag and expose no API to hide a visible player.",
+                "Set false to keep the body visible - name tag and mob targeting stay blocked, but minimap",
+                "radars WILL show you.");
+        COGNITIVE_MASK_INVISIBLE = b.define("invisible", true);
         b.pop();
 
         // 无为转变·伪装渲染替换（客户端）
