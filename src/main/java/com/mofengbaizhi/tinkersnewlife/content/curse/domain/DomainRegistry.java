@@ -84,6 +84,11 @@ public final class DomainRegistry {
         net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dim = player.level().dimension();
         for (BaseDomain d : DOMAINS.values()) {
             if (d.getOwner().equals(pid)) continue;
+            // ⭐ 同心戒同伴的领域**不算"他人领域"**：合并后两人是共同主人，
+            //    不该触发新阴流三技巧（用户要求"彼此不会展开技巧"）✓
+            //    （同伴的领域本来也影响不到你 —— entitiesInSphere 已把同伴剔除 ✓，技巧自然无意义 ✓）
+            if (com.mofengbaizhi.tinkersnewlife.content.curse.TwinRingLink.arePaired(
+                    player, player.server.getPlayerList().getPlayer(d.getOwner()))) continue;
             if (d.getDimension() == null || !d.getDimension().equals(dim)) continue;
             double r = d.getRadius();
             if (player.position().distanceToSqr(d.getCenter()) <= r * r) return d;
@@ -329,7 +334,7 @@ public final class DomainRegistry {
                         || !com.mofengbaizhi.tinkersnewlife.content.curse.TwinRingLink
                         .arePaired(player, ally)) {
                     domain.clearMergedAlly();
-                    domain.buildBarrier(player.serverLevel());
+                    domain.rebuildBarrier(player.serverLevel());   // 拆伙：恢复自己的球壳 ✓
                 }
             }
 
@@ -420,8 +425,14 @@ public final class DomainRegistry {
                                          ServerPlayer otherPlayer, BaseDomain other) {
         domain.setMergedAlly(other.getOwner(), other.getCenter(), other.getRadius());
         other.setMergedAlly(domain.getOwner(), domain.getCenter(), domain.getRadius());
-        domain.removeBarrierOverlap(level, other.getCenter(), other.getRadius());
-        other.removeBarrierOverlap(level, domain.getCenter(), domain.getRadius());
+        // ⭐ 墙只由 host 造：host 重建为"并集外壳"（= 一个不规则的大领域 ✓），guest 拆掉自己的球壳 ✓
+        //    → 合并区内部没有墙、外圈是一整圈**能砸碎**的墙 ✓
+        //    （不再用"两人各建球壳、再互相拆掉嵌入对方球内的部分"：两球几乎重合时会把整圈墙拆光，
+        //     出现"没有墙、无处可敲、只能被别的领域覆盖"的开放领域 ✗ —— 用户实测。）
+        domain.setWallHost(true);
+        other.setWallHost(false);
+        domain.rebuildBarrier(level);
+        other.removeBarrier(level);
         player.displayClientMessage(Component.translatable("message.tinkersnewlife.clash.merge"), true);
         otherPlayer.displayClientMessage(Component.translatable("message.tinkersnewlife.clash.merge"), true);
     }
@@ -445,16 +456,9 @@ public final class DomainRegistry {
     /** 对抗结束（本领域胜出）：恢复领域效果、重建完整球壳、把败者强行拉入本领域 */
     private static void endClashVictory(MinecraftServer server, ServerPlayer winner, BaseDomain domain) {
         domain.clearClash();
-        // 重建完整球壳（补回对抗期间移除的重合部分）
-        domain.buildBarrier(winner.serverLevel());
-        // ⭐ 但若本领域还和同伴**友好合并**着：重建会把嵌进同伴球内的墙也砌回来 ✗
-        //    → 立刻再拆一次（否则"与第三方对抗胜出"会把合并空间重新堵上）
-        if (domain.isMerged()) {
-            BaseDomain ally = DOMAINS.get(domain.getMergedAlly());
-            if (ally != null) {
-                domain.removeBarrierOverlap(winner.serverLevel(), ally.getCenter(), ally.getRadius());
-            }
-        }
+        // 重建外壳：与同伴**友好合并**中 → 重建"并集外壳" ✓；否则自己的球壳 ✓
+        // （对抗期间被移除的重合部分，由 rebuildBarrier 的"先拆干净再重建"一并处理 ✓）
+        domain.rebuildBarrier(winner.serverLevel());
         // 领域效果恢复
         domain.onClashEnd(winner, null);
         // 客户端：恢复完整黑色球壳
@@ -604,6 +608,15 @@ public final class DomainRegistry {
                 breakDomain(breaker, level, member);
             }
             return;
+        }
+        // ⭐ 同心戒友好合并：外壳是两人**共用**的（墙只由 host 造）→ 砸碎外壳必须一起崩坏 ✓
+        //   （否则会剩下一个"没有墙、无处可敲"的开放领域 ✗ —— 用户实测）
+        UUID allyId = domain.getMergedAlly();
+        if (allyId != null) {
+            BaseDomain ally = DOMAINS.get(allyId);
+            if (ally != null) {
+                breakDomain(breaker, level, ally);
+            }
         }
         breakDomain(breaker, level, domain);
     }

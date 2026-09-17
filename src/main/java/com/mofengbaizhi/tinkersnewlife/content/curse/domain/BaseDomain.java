@@ -302,7 +302,10 @@ public abstract class BaseDomain {
      */
     public final void refillBarrierGaps(ServerLevel level) {
         if (barrierGaps.isEmpty()) return;
-        java.util.Set<net.minecraft.core.BlockPos> occupied = occupancyOf(rawInSphere(level));
+        // 合并中：占位按并集盒查（外壳是并集的 ✓）
+        java.util.Set<net.minecraft.core.BlockPos> occupied = occupancyOf(
+                allyCenter == null ? rawInSphere(level)
+                        : level.getEntitiesOfClass(LivingEntity.class, unionBox()));
         java.util.Iterator<net.minecraft.core.BlockPos> it = barrierGaps.iterator();
         while (it.hasNext()) {
             net.minecraft.core.BlockPos pos = it.next();
@@ -450,6 +453,15 @@ public abstract class BaseDomain {
     /** 同伴领域半径 */
     private double allyRadius = 0;
 
+    /**
+     * 合并后由谁负责造墙（host）。
+     * <p>⭐ 合并区**共用一圈"并集外壳"**：只有 host 建墙（外壳 = 并集的边界 ✓ 不规则 ✓），
+     * guest 把自己的球壳拆掉 ✓ —— 于是合并区内部没有墙、外圈是一整圈可被天逆鉾砸碎的墙 ✓。
+     * （旧做法是"两人各建球壳 + 互相拆掉嵌入对方球内的部分"：两球几乎重合时整圈墙都会被拆光，
+     * 出现"没有墙、无处可敲、只能被别的领域覆盖掉"的开放领域 ✗ —— 用户实测。）
+     */
+    private boolean wallHost = true;
+
     /** 是否处于"同心戒同伴领域友好合并"状态 */
     public boolean isMerged() { return mergedAlly != null; }
 
@@ -475,7 +487,104 @@ public abstract class BaseDomain {
         this.mergedAlly = null;
         this.allyCenter = null;
         this.allyRadius = 0;
+        this.wallHost = true;   // 拆伙后自己重新负责造墙 ✓
         entityInside.clear();
+    }
+
+    /** 合并后是否由本领域负责造墙（见 {@link #wallHost}） */
+    public boolean isWallHost() { return wallHost; }
+
+    /** 设定合并后的造墙责任（由 DomainRegistry 在建立合并时指定 host/guest） */
+    public void setWallHost(boolean host) { this.wallHost = host; }
+
+    /**
+     * 重建外壳（口径自适应）：
+     * <ul>
+     *   <li>不是 host（合并中的 guest）→ 只把自己的墙拆掉，不建 ✓；</li>
+     *   <li>合并中且是 host → 建**并集外壳**（不规则大领域 ✓）；</li>
+     *   <li>其余（单体领域）→ 建自己的球壳 ✓。</li>
+     * </ul>
+     * ⚠ 先 {@link #removeBarrier} 再建：{@code buildBarrier} 只清列表、不拆方块，
+     * 旧墙不拆会留在原地变成"内部墙" ✗。
+     */
+    public final void rebuildBarrier(ServerLevel level) {
+        removeBarrier(level);
+        if (!wallHost) return;
+        if (isMerged()) {
+            buildMergedBarrier(level);
+        } else {
+            buildBarrier(level);
+        }
+    }
+
+    /**
+     * 点（世界坐标）是否在"共享空间"里 = 自己的球 ∪ 同伴的球 ✓。
+     * <p>作为并集外壳的成员判定。
+     */
+    private boolean inUnion(double x, double y, double z) {
+        double dx = x - center.x, dy = y - center.y, dz = z - center.z;
+        if (dx * dx + dy * dy + dz * dz <= (double) radius * radius) return true;
+        if (allyCenter == null) return false;
+        double ax = x - allyCenter.x, ay = y - allyCenter.y, az = z - allyCenter.z;
+        return ax * ax + ay * ay + az * az <= allyRadius * allyRadius;
+    }
+
+    /** 该方块是不是"并集外壳"：方块中心在并集内，且六邻中存在方块中心在并集外的邻居 ✓ */
+    private boolean isUnionShellBlock(int x, int y, int z) {
+        if (!inUnion(x + 0.5, y + 0.5, z + 0.5)) return false;
+        return !inUnion(x + 1.5, y + 0.5, z + 0.5)
+                || !inUnion(x - 0.5, y + 0.5, z + 0.5)
+                || !inUnion(x + 0.5, y + 1.5, z + 0.5)
+                || !inUnion(x + 0.5, y - 0.5, z + 0.5)
+                || !inUnion(x + 0.5, y + 0.5, z + 1.5)
+                || !inUnion(x + 0.5, y + 0.5, z - 0.5);
+    }
+
+    /**
+     * 造墙/补墙用的生物占位查询盒：合并中 = 并集包围盒 ✓，否则 = 自己的球盒 ✓。
+     * （合并后外壳属于"并集"，占位也必须按并集查，否则同伴那半边的墙会砌进生物身上 ✗）
+     */
+    private AABB unionBox() {
+        if (allyCenter == null) return sphereBox();
+        return new AABB(
+                Math.min(center.x - radius, allyCenter.x - allyRadius),
+                Math.min(center.y - radius, allyCenter.y - allyRadius),
+                Math.min(center.z - radius, allyCenter.z - allyRadius),
+                Math.max(center.x + radius, allyCenter.x + allyRadius),
+                Math.max(center.y + radius, allyCenter.y + allyRadius),
+                Math.max(center.z + radius, allyCenter.z + allyRadius));
+    }
+
+    /**
+     * 同心戒友好合并：<b>并集外壳</b>（两个球的并集的边界 = 一个不规则的大领域 ✓）。
+     * <p>只在 {@link #isWallHost()} 时调用；合并区内部不产生任何墙 ✓。
+     */
+    public final void buildMergedBarrier(ServerLevel level) {
+        barrierPositions.clear();
+        barrierGaps.clear();
+        if (allyCenter == null) {   // 不该发生（同伴球体已缓存）→ 退回单球
+            buildBarrier(level);
+            return;
+        }
+        // 并集包围盒内的生物占位（占位处不砌墙，免得把人闷在墙里 ✓）
+        AABB box = unionBox();
+        java.util.Set<net.minecraft.core.BlockPos> occupied = occupancyOf(
+                level.getEntitiesOfClass(LivingEntity.class, box));
+        int x0 = net.minecraft.util.Mth.floor(box.minX) - 1;
+        int x1 = net.minecraft.util.Mth.floor(box.maxX) + 1;
+        int y0 = net.minecraft.util.Mth.floor(box.minY) - 1;
+        int y1 = net.minecraft.util.Mth.floor(box.maxY) + 1;
+        int z0 = net.minecraft.util.Mth.floor(box.minZ) - 1;
+        int z1 = net.minecraft.util.Mth.floor(box.maxZ) + 1;
+        for (int x = x0; x <= x1; x++) {
+            for (int y = y0; y <= y1; y++) {
+                for (int z = z0; z <= z1; z++) {
+                    if (!isUnionShellBlock(x, y, z)) continue;
+                    placeBarrier(level, new net.minecraft.core.BlockPos(x, y, z), occupied);
+                }
+            }
+        }
+        cachedEntitiesTime = Long.MIN_VALUE;   // 建墙期间生物可能被传送 → 作废本 tick 缓存
     }
 
     /**
