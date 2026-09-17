@@ -5,7 +5,7 @@
   },
   "cast_consumed": true,
   "fluid": {
-    "amount": 1000,
+    "amount": 250,
     "fluid": "tinkersnewlife:liquid_lightning_still"
   },
   "result": "irons_spellbooks:lightning_bottle",

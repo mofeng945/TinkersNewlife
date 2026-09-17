@@ -5,7 +5,7 @@
   },
   "fluid": {
     "fluid": "tinkersnewlife:liquid_lightning_still",
-    "amount": 1000
+    "amount": 250
   },
   "result": {
     "item": "minecraft:glass_bottle"
