@@ -112,6 +112,11 @@ public final class WuWeiHandler {
         Entity killed = event.getEntity();
         if (!(killed instanceof Mob mob)) return;
         if (killed instanceof Player) return;
+        // ⭐ 主动收回 ≠ 击杀（与咒灵操术"收回不删记录"同一口径 ✓）：
+        //    收回走死亡链路，且死亡可能延后到标记窗口内才真正发生（见 CursedSpiritTechnique 的
+        //    RECALLING 字段说明）—— 那种死亡不该被记成击杀形态 ✗，否则"放出→收回"会凭空多一条记录。
+        if (com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
+                .isRecalling(killed)) return;
         Entity attacker = event.getSource().getEntity() != null
                 ? event.getSource().getEntity() : event.getSource().getDirectEntity();
         ServerPlayer killer = resolveKiller(attacker, mob);
