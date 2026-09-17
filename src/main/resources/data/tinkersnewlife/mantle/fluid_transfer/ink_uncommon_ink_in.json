@@ -1,0 +1,19 @@
+{
+  "type": "mantle:fill_item",
+  "input": {
+    "item": "minecraft:glass_bottle"
+  },
+  "fluid": {
+    "fluid": "irons_spellbooks:uncommon_ink",
+    "amount": 250
+  },
+  "result": {
+    "item": "irons_spellbooks:uncommon_ink"
+  },
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "irons_spellbooks"
+    }
+  ]
+}
