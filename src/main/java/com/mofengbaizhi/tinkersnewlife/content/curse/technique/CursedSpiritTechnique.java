@@ -804,6 +804,18 @@ public final class CursedSpiritTechnique extends BaseTechnique {
     /**
      * 收回一个释放体（保留记录）。
      *
+     * <p>⭐ <b>现在改为"静默移除"（{@code discard()}），不再走死亡链路</b> ——
+     * 走死亡链路时，被收回的 Boss 会照常跑完它<b>自己的死亡逻辑</b>（死亡动画 + 战利品表），
+     * 于是"主动收回反而掉一地战利品" ✗：使徒（记录被当战死删掉 + 掉物品）、
+     * 原初受火者（死亡动画结束后掉"奥术源质、钥匙之类"）两次都是这个原因 ✓（用户实测）。
+     * 而这些掉落有的**根本不经过** {@code LivingDropsEvent}（是那个 mod 自己在死亡动画里 spawn 的 ✗），
+     * 所以"标记 + 取消掉落"永远拦不全 ✗。收回需要的清理
+     * （{@code dismissServantsOf} / {@code clearEntityBossBar} / akaishi 监守者血条）
+     * 本来就已单独显式调用 ✓，实体追踪解除由 {@code discard()} 自己完成 ✓
+     * ⇒ 直接静默移除最干净：无死亡事件 ⇒ 无掉落、无经验、无动画、无"被诅咒致死"文案 ✓。
+     *
+     * <p>下面那段"为什么走原版死亡链路"的旧说明**已作废**，保留仅作历史记录 ✗。
+     *
      * <p><b>为什么走原版死亡链路</b>：这样所有"仆从死亡"相关逻辑与实体追踪解除都按原版正常路径结算
      * （以前直接 {@code discard()} 是"静默移除"，绕过了这一整套）。
      *
@@ -823,7 +835,6 @@ public final class CursedSpiritTechnique extends BaseTechnique {
             return;
         }
 
-        boolean wasSilent = mob.isSilent();
         TinkersNewlife.LOGGER.info("[收回] 开始：{}（{}，血量={}/{}）",
                 mob.getName().getString(), net.minecraft.world.entity.EntityType.getKey(mob.getType()),
                 mob.getHealth(), mob.getMaxHealth());
@@ -832,32 +843,17 @@ public final class CursedSpiritTechnique extends BaseTechnique {
             com.mofengbaizhi.tinkersnewlife.network.curse.PacketDropWardenBars.broadcast();
             removeAkaishiWardenBar(warden);
         }
-        mob.setSilent(true);
-        // ⭐ 收回 ≠ 击杀（用户实测："吸收使徒再回收会判定为死亡"✗）：
-        //    ① 清掉归属记忆 —— 否则这具释放体若在 20 秒内被记过归属，收回会被算成那位玩家的击杀
-        //       （无为转变的形态记录会凭空多一条 ✗）；
-        //    ② **不再**打咒力致死标记 —— 收回不是被谁打死的，不该套用"被诅咒致死"那套文案 ✗。
-        //    下面用 genericKill()（无攻击者）⇒ 既不留击杀归属，也不套咒力文案 ✓。
+        // 收回 ≠ 击杀：清掉归属记忆（否则 20 秒内被记过归属的话，收回会被算成那位玩家的击杀 ✗），
+        // 并打上"收回中"标记（兜底：万一有 mod 在实体被移除时补一道死亡，记录保留与掉落抑制仍生效 ✓）。
         com.mofengbaizhi.tinkersnewlife.content.curse.KillAttribution.forget(mob);
-        // ⭐ 标记带时效（见 RECALLING 字段说明）：死亡可能延后到补刀循环结束之后才真正发生 ✗
         markRecalling(mob);
-        // ⚠ 循环补刀：有些 mod 会给特定生物加"单次受击上限"
-        //   （例如 akaishi 把每个监守者都做成 boss，单次最多 24 点）。
-        //   一次巨额伤害打不死它 -> 就不会触发 LivingDeathEvent ->
-        //   别人的"死亡时清理"（血条等）也就不会跑。所以这里反复补刀直到真死。
-        for (int i = 0; i < 64 && mob.isAlive() && !mob.isRemoved(); i++) {
-            mob.invulnerableTime = 0;
-            mob.hurt(mob.damageSources().genericKill(), Float.MAX_VALUE);
-        }
-        if (mob.isAlive() && !mob.isRemoved()) {
-            mob.discard();          // 死亡被取消 → 兜底
-            TinkersNewlife.LOGGER.info("[收回] 结束：{} 补刀没打死 → 走 discard 兜底（此路不产生死亡事件/掉落 ✓）",
-                    mob.getName().getString());
-        } else {
-            mob.setSilent(wasSilent);
-            TinkersNewlife.LOGGER.info("[收回] 结束：{} 已进入死亡链路（存活={} 已移除={}）→ 后续 true 死时的掉落/记录看 [收回掉落抑制] 日志",
-                    mob.getName().getString(), mob.isAlive(), mob.isRemoved());
-        }
+        mob.setSilent(true);
+        // ⭐ 静默移除：**不走死亡链路** ⇒ 没有死亡事件、没有死亡动画、没有战利品/经验 ✓
+        //    （为什么不再补刀：被收回的 Boss 会照常跑完它自己的死亡逻辑，
+        //      "奥术源质、钥匙之类"就是这么掉出来的 ✗；见方法注释）
+        mob.discard();
+        TinkersNewlife.LOGGER.info("[收回] 结束：{} 已静默移除（不走死亡链路 ⇒ 不掉落/不记形态 ✓）",
+                mob.getName().getString());
     }
 
     /** 释放体战死 → 记录从 GUI 消失，其召唤物一并清除（玩家本人死亡绝不算释放体战死） */
