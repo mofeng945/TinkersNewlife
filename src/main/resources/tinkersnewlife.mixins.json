@@ -14,7 +14,8 @@
   "client": [
     "EntityRenderDispatcherMixin",
     "ItemRendererMixin",
-    "HumanoidArmorLayerMixin"
+    "HumanoidArmorLayerMixin",
+    "LivingEntityRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 0

@@ -22,8 +22,9 @@ import net.minecraftforge.fml.common.Mod;
  *       （凡是"新的锁定目标是戴着面具的玩家"一律作废）；</li>
  *   <li><b>清扫已有锁定</b>：每秒扫一遍，把"戴上之前就锁着你"的怪物的目标清掉
  *       —— 只靠事件的话，戴面具前已经被锁的怪会一直打你 ✗；</li>
- *   <li><b>隐身态</b>（可配置）：雷达那一层只能靠隐身标记实现（见物品类注释），
- *       每 tick 续期；配置关掉则只保留上面两条。</li>
+ *   <li><b>隐身标记</b>（可配置 {@code cognitive_mask.hide_from_radar}）：MC 里"雷达不显示/索敌不到/名牌不显示"
+ *       共用的就是这一个标记，所以只能给它；但**身体照常渲染**（{@code LivingEntityRendererMixin} 强制
+ *       {@code isBodyVisible} 返回 true ✓），人不会被隐掉 ✓。每 tick 续期；配置关掉则只保留上面两条。</li>
  * </ol>
  *
  * <p>⚠ 隐身态只影响"别人怎么感知你"，不改变任何数值；{@code BlackBirdEntity} 结束时会把主人的隐身
@@ -60,10 +61,11 @@ public final class CognitiveMaskHandler {
         MinecraftServer server = event.getServer();
         if (server == null) return;
 
-        boolean invisible = ModConfig.COGNITIVE_MASK_INVISIBLE.get();
-        // 隐身态：每 tick 续期；面具摘下 / 配置关掉 → 还原（见 MASK_INVISIBLE 的注释）
+        boolean hideFromRadar = ModConfig.COGNITIVE_MASK_HIDE_FROM_RADAR.get();
+        // 隐身标记：每 tick 续期；面具摘下 / 配置关掉 → 还原（见 MASK_INVISIBLE 的注释）
+        // ⚠ 它只让"雷达/索敌/名牌"把你当隐身；身体由 LivingEntityRendererMixin 强制照常渲染 ✓
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            if (CognitiveMaskItem.isWorn(player) && invisible) {
+            if (CognitiveMaskItem.isWorn(player) && hideFromRadar) {
                 if (!player.isInvisible()) player.setInvisible(true);
                 MASK_INVISIBLE.add(player.getUUID());
             } else if (MASK_INVISIBLE.remove(player.getUUID())) {

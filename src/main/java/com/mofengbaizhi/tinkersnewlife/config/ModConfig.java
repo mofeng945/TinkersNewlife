@@ -30,12 +30,13 @@ public final class ModConfig {
 
     // ==================== 双向认知阻碍面具 ====================
     /**
-     * 面具佩戴者是否隐身（身体不可见，盔甲/手持物照常显示）。
-     * <p>⭐ 这是"小地图雷达也显示不出你"的**唯一**实现手段：Xaero's 之类只按 {@code isInvisible()}
-     * 决定要不要画点，没有任何"只屏蔽雷达、保留身体"的接口。关掉则名字与怪物锁定照旧屏蔽，
-     * 但雷达会照常显示你。
+     * 面具佩戴者是否被<b>当作隐身</b>处理（小地图雷达不显示你 / 生物索敌不到你 / 名牌不显示）。
+     *
+     * <p>⚠ 名字叫"隐身"，但人<b>看得见</b>：这只是 MC 的隐身标记（雷达、索敌、名牌共用它），
+     * 身体由 {@code LivingEntityRendererMixin} 强制照常渲染 ✓。关掉则雷达会照常显示你
+     * （名牌与索敌仍由本模组的事件层拦住 ✓）。
      */
-    public static final ConfigValue<Boolean> COGNITIVE_MASK_INVISIBLE;
+    public static final ConfigValue<Boolean> COGNITIVE_MASK_HIDE_FROM_RADAR;
 
     // ==================== 无为转变 伪装渲染 ====================
     /** 无为转变·伪装渲染替换（客户端）：把变形玩家渲染成目标生物。与 YSM 等接管玩家渲染的模组冲突时可关闭 */
@@ -204,12 +205,13 @@ public final class ModConfig {
                 "undead bonus, reverse cursed technique (damage instead of heal on undead), Jacob's Ladder",
                 "and the Cursed Spirit Technique capture check all take the undead branch.",
                 "",
-                "invisible = also make the wearer invisible (body hidden; armour and held items still render).",
-                "⭐ This is the ONLY way to hide the wearer from minimap radars: Xaero's and friends decide",
-                "purely by the invisibility flag and expose no API to hide a visible player.",
-                "Set false to keep the body visible - name tag and mob targeting stay blocked, but minimap",
-                "radars WILL show you.");
-        COGNITIVE_MASK_INVISIBLE = b.define("invisible", true);
+                "hide_from_radar = also flag the wearer as INVISIBLE, which is what minimap radars,",
+                "mob sensing and the vanilla name tag all key on. The BODY IS STILL RENDERED normally",
+                "(LivingEntityRendererMixin force-renders it) - the mask does not make you unseen.",
+                "This is the only way to keep a visible player off minimap radars (Xaero's hides",
+                "invisible entities by default and exposes no API for anything else).",
+                "Set false to stay on radars: name tag and mob targeting are still blocked by this mod.");
+        COGNITIVE_MASK_HIDE_FROM_RADAR = b.define("hide_from_radar", true);
         b.pop();
 
         // 无为转变·伪装渲染替换（客户端）
