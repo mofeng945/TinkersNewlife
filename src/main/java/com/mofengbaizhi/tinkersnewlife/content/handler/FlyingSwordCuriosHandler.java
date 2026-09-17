@@ -17,10 +17,11 @@ import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.event.CurioEquipEvent;
 import top.theillusivec4.curios.api.event.CurioUnequipEvent;
-import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
 
-import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 飞剑·脚部饰品飞行。
@@ -31,18 +32,40 @@ import java.util.UUID;
  * 飞行能力被错误开启（玩家没穿在脚上却能飞）。本类因此：
  * <ul>
  *   <li>{@link #hasFlyingSwordInFeet(Player)}：只认 <b>feet</b> 槽位里的飞剑；</li>
- *   <li>装备时<b>只授予 mayfly（飞行权限），不再强制 flying=true</b>——是否起飞交给玩家
+ *   <li>装备时<b>只授予 mayfly（飞行权限），不强制 flying=true</b>——是否起飞交给玩家
  *       （双击空格），避免"一装备就悬空"；</li>
  *   <li>每 tick 校验：不在脚部 → 立即撤销飞行并还原玩家原本的 mayfly 权限。</li>
  * </ul>
+ *
+ * <h3>⭐ 授予/快照状态**只放服务器内存**，不写玩家持久数据</h3>
+ * 旧做法把 {@code flying_sword_active} 与 {@code flying_sword_prev_mayfly} 写进
+ * {@code player.getPersistentData()} ✗，于是：
+ * <ul>
+ *   <li><b>快照会跨会话带过来</b>：旧版本曾在"玩家已经能飞"时写快照（创造模式装备、
+ *       TCon 更新 NBT 触发的伪装备事件…）⇒ 存进去的 `true` 是**污染值** ✗；
+ *       摘下飞剑时"还原"成 true ⇒ <b>摘了还能飞</b> ✗（用户实测）；</li>
+ *   <li><b>标记跨会话保留</b>：重登后 {@code mayfly} 已被服务端按游戏模式重置，
+ *       而标记还在 → 旧逻辑以为"已生效"从而从不补权限 ✗（"每次进服务器/切模式后默认不生效" ✗）。</li>
+ * </ul>
+ * 现在这两样都放进 {@link #GRANTED} / {@link #PREV_MAYFLY}（**服务器本次运行内存** ✓）：
+ * 跨会话必然为空 → 重新按"登录时服务端刚设好的游戏模式默认值"取快照 ✓，
+ * 所以**永远还原到正确的值** ✓；登录时还会把旧版遗留的持久键一并删掉 ✓（老存档一次性修好 ✓）。
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class FlyingSwordCuriosHandler {
 
     private static int tickCounter = 0;
-    private static final String FLYING_SWORD_ACTIVE = "flying_sword_active";
     /** 飞剑所在的脚部饰品槽标识 */
     private static final String FEET_SLOT = "feet";
+
+    /** 旧版本写进**持久数据**的键（遗留：登录时清理 ✓） */
+    private static final String LEGACY_ACTIVE = "flying_sword_active";
+    private static final String LEGACY_PREV_MAYFLY = "flying_sword_prev_mayfly";
+
+    /** 本会话内"由飞剑授予过飞行"的玩家（不写持久数据 ✓，见类注释） */
+    private static final Set<UUID> GRANTED = ConcurrentHashMap.newKeySet();
+    /** 本会话内记下的"授予前玩家能不能飞"快照（只在第一次授予时写入，绝不覆盖 ✓） */
+    private static final Map<UUID, Boolean> PREV_MAYFLY = new ConcurrentHashMap<>();
 
     private static boolean isFlyingSwordBroken(ItemStack stack) {
         if (stack.isEmpty()) return true;
@@ -94,6 +117,38 @@ public class FlyingSwordCuriosHandler {
         return getFeetSword(player);
     }
 
+    // ============================================================
+    //  授予 / 撤销（幂等，会话内记忆）
+    // ============================================================
+
+    /** 授予飞行权限：只在"本会话第一次由飞剑授予"时记快照 ✓（绝不覆盖 ✓） */
+    private static void grantFlight(Player player) {
+        if (player.isCreative() || player.isSpectator()) return;   // 本来就会飞：不记快照也不授予 ✓
+        if (!GRANTED.add(player.getUUID())) return;                // 已经授予过 → 保持原快照 ✓
+        PREV_MAYFLY.put(player.getUUID(), player.getAbilities().mayfly);
+        if (!player.getAbilities().mayfly) {
+            player.getAbilities().mayfly = true;
+            player.onUpdateAbilities();
+            TinkersNewlife.LOGGER.info("[飞剑] 授予飞行能力（脚部饰品）：玩家={}", player.getName().getString());
+        }
+    }
+
+    /** 撤销飞剑授予的飞行：还原本会话记下的快照 ✓（没授予过则什么都不动 ✓） */
+    private static void revokeFlight(Player player) {
+        if (!GRANTED.remove(player.getUUID())) return;
+        Boolean prev = PREV_MAYFLY.remove(player.getUUID());
+        if (!player.isCreative() && !player.isSpectator()) {
+            player.getAbilities().mayfly = prev != null && prev;   // 快照缺失时保守收回 ✓
+            player.getAbilities().flying = false;
+            player.onUpdateAbilities();
+            TinkersNewlife.LOGGER.info("[飞剑] 撤销飞行能力：玩家={}", player.getName().getString());
+        }
+    }
+
+    // ============================================================
+    //  事件
+    // ============================================================
+
     @SubscribeEvent
     public static void onCurioEquip(CurioEquipEvent event) {
         ItemStack stack = event.getStack();
@@ -102,10 +157,6 @@ public class FlyingSwordCuriosHandler {
 
         Player player = (Player) event.getEntity();
         if (player.level().isClientSide) return;
-        // 创造/旁观本来就会飞：既不记快照也不授予 ✓
-        // ⚠ 旧代码在这里无条件把当前 mayfly 记进 prev_mayfly —— 创造模式下那是 true ✗，
-        //    之后摘掉飞剑 clearFlyingState 就把 mayfly 还原成 true ⇒ **永久飞行** ✗（用户实测）
-        if (player.isCreative() || player.isSpectator()) return;
 
         // 右键发射飞剑时 TCon 会更新工具 NBT，可能连带触发一次伪装备事件 → 忽略
         UUID emittingId = FlyingSwordItem.EMITTING_PLAYER.get();
@@ -116,17 +167,7 @@ public class FlyingSwordCuriosHandler {
         if (isFlyingSwordBroken(stack)) return;
 
         // ⭐ 只授予"飞行权限"，不强制起飞（原来直接 flying=true 会导致一装备就悬空）
-        // ⭐ 快照**只记一次**：已经处于"飞剑生效中"时再触发（伪装备/耐久更新等）不得覆盖，
-        //    否则会把"已经能飞"当成玩家的原始状态存下来 ✗（同上，永久飞行的另一半来源）
-        if (!player.getPersistentData().getBoolean(FLYING_SWORD_ACTIVE)) {
-            player.getPersistentData().putBoolean("flying_sword_prev_mayfly", player.getAbilities().mayfly);
-            player.getPersistentData().putBoolean(FLYING_SWORD_ACTIVE, true);
-        }
-        if (!player.getAbilities().mayfly) {
-            player.getAbilities().mayfly = true;
-            player.onUpdateAbilities();
-            TinkersNewlife.LOGGER.info("[飞剑] 授予飞行能力（脚部饰品）：玩家={}", player.getName().getString());
-        }
+        grantFlight(player);
     }
 
     @SubscribeEvent
@@ -145,22 +186,44 @@ public class FlyingSwordCuriosHandler {
     public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
         Player player = event.getEntity();
         if (player.level().isClientSide) return;
-        // 创造/旁观无需授予，也不记快照（否则会把 true 存成"玩家原始状态" ✗）
-        if (player.isCreative() || player.isSpectator()) return;
 
         // 死亡复活后先清空遗留的飞行状态（避免 curios 重放 equip 造成状态错乱）
         clearFlyingState(player);
 
-        // 若脚部仍装备着未损坏的飞剑，重新授予飞行权限（不强制起飞）
+        // 若脚部仍装备着未损坏的飞剑，重新授予飞行权限（不强制起飞 ✓）
         ItemStack stack = getFeetSword(player);
         if (stack.isEmpty() || isFlyingSwordBroken(stack)) return;
-
-        // 快照此刻"原本能不能飞"（上面刚 clear 过，标记一定是空的 ✓）
-        player.getPersistentData().putBoolean("flying_sword_prev_mayfly", player.getAbilities().mayfly);
-        player.getPersistentData().putBoolean(FLYING_SWORD_ACTIVE, true);
-        player.getAbilities().mayfly = true;
+        grantFlight(player);
         player.getAbilities().flying = false;
         player.onUpdateAbilities();
+    }
+
+    /**
+     * 登录：清掉旧版遗留的持久键与会话表条目 + 残留的脚部实体。
+     * <p>旧版把 {@code flying_sword_active}/{@code flying_sword_prev_mayfly} 写进持久数据，
+     * 其中快照可能是被污染的 `true` ✗ —— 一律删除 ✓（{@code mayfly} 本身不是持久数据：
+     * 登录时服务端已按游戏模式重新设过 ✓，所以删掉键就干净了 ✓）；
+     * 之后的授予由每 tick 的自愈逻辑用**正确的新快照**重新完成 ✓。
+     */
+    @SubscribeEvent
+    public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        Player player = event.getEntity();
+        if (player.level().isClientSide) return;
+        var data = player.getPersistentData();
+        data.remove(LEGACY_ACTIVE);
+        data.remove(LEGACY_PREV_MAYFLY);
+        GRANTED.remove(player.getUUID());
+        PREV_MAYFLY.remove(player.getUUID());
+        // 脚部飞剑的渲染已改为客户端直接画（见 FlyingSwordFootRenderHandler），
+        // 这里清掉旧存档可能残留的实体，免得和新渲染叠成两把 ✓
+        removeFootEntity(player);
+    }
+
+    /** 登出：丢掉会话表条目（下次登录重新按当次状态取快照 ✓） */
+    @SubscribeEvent
+    public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        GRANTED.remove(event.getEntity().getUUID());
+        PREV_MAYFLY.remove(event.getEntity().getUUID());
     }
 
     @SubscribeEvent
@@ -170,42 +233,21 @@ public class FlyingSwordCuriosHandler {
         if (player.level().isClientSide) return;
         if (player.isCreative()) return; // 创造性玩家不干预
 
-        boolean active = player.getPersistentData().getBoolean(FLYING_SWORD_ACTIVE);
         // ⭐ 严格判定：只有脚部饰品槽里的飞剑才算"装备中"（手持/其他饰品槽都不算）
         ItemStack feetSword = getFeetSword(player);
         boolean usable = !feetSword.isEmpty() && !isFlyingSwordBroken(feetSword);
 
         if (!usable) {
-            if (active) clearFlyingState(player);
+            // ⭐ 不在脚部槽就**必须撤销** —— 不能只看某个"标记"：
+            //   旧版持久数据里的污染快照会让一次"还原"把 mayfly 变回 true ✗（用户实测：摘了还能飞）。
+            //   revokeFlight 幂等：不是飞剑授予的（例如别的模组给的飞行）就什么都不动 ✓。
+            revokeFlight(player);
             return;
         }
 
-        // ⭐ 装了 → 保证"标记 + 权限"同时到位（自愈）：
-        //   重登 / 切游戏模式 / 被别的模组清掉时，服务端都会按游戏模式把 mayfly 重置 ✗ ——
-        //   旧代码只在"标记为空且 mayfly 已为真"时补标记，等于**从不补权限** ✗，
-        //   于是"每次进服务器或切模式后脚上的飞剑默认不生效"（用户实测）✓→✓ 已修。
-        if (!active) {
-            player.getPersistentData().putBoolean("flying_sword_prev_mayfly", player.getAbilities().mayfly);
-            player.getPersistentData().putBoolean(FLYING_SWORD_ACTIVE, true);
-            active = true;
-        }
-        if (!player.getAbilities().mayfly) {
-            player.getAbilities().mayfly = true;
-            player.onUpdateAbilities();
-        }
-    }
-
-    /**
-     * 登录时清一次"脚下飞剑实体"的残留。
-     * <p>⭐ 脚部飞剑的**渲染已改为客户端直接画在玩家身上**（见 {@code FlyingSwordFootRenderHandler}），
-     * 服务端不再生成/每 tick 瞬移那个实体了（那是"持续瞬移、很影响 tick"的根源 ✗）；
-     * 旧存档里可能还留着实体 → 登录时统一清掉，免得和新渲染叠成两把 ✓。
-     */
-    @SubscribeEvent
-    public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        Player player = event.getEntity();
-        if (player.level().isClientSide) return;
-        removeFootEntity(player);
+        // 装了 → 保证"权限"到位：重登 / 切游戏模式 / 被别的模组清掉，服务端都会按游戏模式
+        // 重置 mayfly ✗ —— 旧代码从不补权限，于是"每次进服务器或切模式后默认不生效" ✗ → 已修 ✓。
+        grantFlight(player);
     }
 
     @SubscribeEvent
@@ -247,24 +289,9 @@ public class FlyingSwordCuriosHandler {
 
     // ===== 辅助方法 =====
 
-    /**
-     * 清除飞剑带来的飞行状态，并恢复玩家原有的 mayfly 权限
-     */
+    /** 清除飞剑带来的飞行状态（撤销权限 + 移除残留的脚部实体 ✓） */
     private static void clearFlyingState(Player player) {
-        // 只有飞剑主动开启了飞行，才恢复 mayfly 和清除标记
-        if (player.getPersistentData().getBoolean(FLYING_SWORD_ACTIVE)) {
-            boolean prevMayfly = player.getPersistentData().getBoolean("flying_sword_prev_mayfly");
-            if (!player.isCreative() && !player.isSpectator()) {
-                player.getAbilities().mayfly = prevMayfly;
-                player.getAbilities().flying = false;
-                player.onUpdateAbilities();
-                TinkersNewlife.LOGGER.info("[飞剑] 撤销飞行能力：玩家={}", player.getName().getString());
-            }
-
-            player.getPersistentData().remove(FLYING_SWORD_ACTIVE);
-            player.getPersistentData().remove("flying_sword_prev_mayfly");
-        }
-        // 无论是否主动开启，都移除实体
+        revokeFlight(player);
         removeFootEntity(player);
     }
 
