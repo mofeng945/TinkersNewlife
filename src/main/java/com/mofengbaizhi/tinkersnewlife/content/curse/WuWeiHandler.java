@@ -611,7 +611,14 @@ public final class WuWeiHandler {
         // 咒灵/守护同款处理：释放体的随从一起消失；他人释放体清记录；自己释放体改写记录为新形态
         ServerPlayer spiritOwner = com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
                 .ownerOfReleased(target);
-        boolean selfSpirit = spiritOwner != null && spiritOwner.getUUID().equals(caster.getUUID());
+        // ⭐ 同心戒共享术式：**同伴不是"他人"** ✗ —— 以前只比对施术者自己的 UUID，
+        //    于是同伴去变形对方的释放体时被判成外人 ⇒ removeOnForeignTransform 把**整条记录删掉** ✗
+        //    （用户实测："共享术式时…使徒被删除记录"）。现在同伴也算"自己人" ✓；
+        //    下面的守护 AI 绑定与记录改写都用**记录的主人** spiritMaster（而不是施术者）✓。
+        boolean selfSpirit = spiritOwner != null
+                && (spiritOwner.getUUID().equals(caster.getUUID()) || TwinRingLink.arePaired(spiritOwner, caster));
+        ServerPlayer spiritMaster = selfSpirit ? spiritOwner : caster;
+        rd.ownerId = spiritMaster.getUUID();
         if (spiritOwner != null) {
             com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique.dismissServantsOf(target);
             if (!selfSpirit) {
@@ -626,10 +633,10 @@ public final class WuWeiHandler {
             fm.setPersistenceRequired();
             fm.setHealth(fm.getMaxHealth());
             level.addFreshEntity(fm);
-            attachGuardAi(fm, caster, rd);
+            attachGuardAi(fm, spiritMaster, rd);
             if (selfSpirit) {
                 com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
-                        .relinkReleasedAsGuard(caster, target, fm);
+                        .relinkReleasedAsGuard(spiritMaster, target, fm);
             }
             return true;
         }
@@ -741,7 +748,11 @@ public final class WuWeiHandler {
             // owner transforming their own spirit will rewrite the record to the new form below.
             ServerPlayer spiritOwner = com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
                     .ownerOfReleased(targetMob);
-            boolean selfSpirit = spiritOwner != null && spiritOwner.getUUID().equals(player.getUUID());
+            // ⭐ 与上面"原地换形态"同一处修法：同伴也算"自己人"，并让记录改写落到**记录的主人**头上 ✓
+            boolean selfSpirit = spiritOwner != null
+                    && (spiritOwner.getUUID().equals(player.getUUID()) || TwinRingLink.arePaired(spiritOwner, player));
+            ServerPlayer spiritMaster = selfSpirit ? spiritOwner : player;
+            rd.ownerId = spiritMaster.getUUID();
             if (spiritOwner != null) {
                 // its summoned minions vanish together
                 com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique.dismissServantsOf(targetMob);
@@ -758,11 +769,11 @@ public final class WuWeiHandler {
                 fm.setHealth(fm.getMaxHealth());
                 level.addFreshEntity(fm);
                 // 玉犬式守护随从 AI（入世后挂，登记守护表）
-                attachGuardAi(fm, player, rd);
+                attachGuardAi(fm, spiritMaster, rd);
                 if (selfSpirit) {
-                    // 主人自己转自己的释放体：改写记录为新形态，并保持"场上释放体"身份（守护随从）
+                    // 自己/同伴转自己的释放体：改写记录为新形态，并保持"场上释放体"身份（守护随从）
                     com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
-                            .relinkReleasedAsGuard(player, targetMob, fm);
+                            .relinkReleasedAsGuard(spiritMaster, targetMob, fm);
                 }
             }
         }
