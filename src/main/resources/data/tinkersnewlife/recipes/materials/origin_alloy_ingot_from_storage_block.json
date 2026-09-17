@@ -3,7 +3,7 @@
   "category": "misc",
   "group": "tinkersnewlife:origin_alloy_ingot",
   "ingredients": [
-    { "item": "tinkersnewlife:origin_alloy_block" }
+    { "item": "tinkersnewlife:origin_alloy_storage_block" }
   ],
   "result": {
     "count": 9,

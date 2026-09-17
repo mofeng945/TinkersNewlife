@@ -1,10 +1,10 @@
 {
   "type": "minecraft:crafting_shaped",
   "category": "misc",
-  "group": "tinkersnewlife:origin_alloy_block",
+  "group": "tinkersnewlife:holy_spirit_storage_block",
   "key": {
     "#": {
-      "tag": "forge:ingots/origin_alloy"
+      "tag": "forge:ingots/holy_spirit"
     }
   },
   "pattern": [
@@ -13,7 +13,7 @@
     "###"
   ],
   "result": {
-    "item": "tinkersnewlife:origin_alloy_block"
+    "item": "tinkersnewlife:holy_spirit_storage_block"
   },
   "show_notification": true
 }

@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "tinkersnewlife:block/magic_gold_block"
+    "all": "tinkersnewlife:block/holy_spirit_storage_block"
   }
 }

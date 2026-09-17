@@ -125,9 +125,9 @@ public class ModCreativeTabs {
             acceptItemIfPresent(output, "magic_gold_nugget");
             acceptItemIfPresent(output, "holy_spirit_nugget");
             acceptItemIfPresent(output, "origin_alloy_nugget");
-            acceptItemIfPresent(output, "magic_gold_block");
-            acceptItemIfPresent(output, "holy_spirit_block");
-            acceptItemIfPresent(output, "origin_alloy_block");
+            acceptItemIfPresent(output, "magic_gold_storage_block");
+            acceptItemIfPresent(output, "holy_spirit_storage_block");
+            acceptItemIfPresent(output, "origin_alloy_storage_block");
         }
 
                                 // ----- 铸模（联动工具的铸模仅在对应 mod 加载时显示） -----

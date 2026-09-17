@@ -84,16 +84,29 @@ public class ModBlocks {
     //  与 ModItems 里的三个锭（魔金锭 / 圣灵锭 / 源钻合金锭）配对，
     //  走的是原版"9 锭 ↔ 1 块"的常规口径 ✓
     //  物品（BlockItem）在 ModItems 里注册；方块这里只登记本体 ✓
+    //
+    //  ⚠⚠ 命名必须避开 `<流体名>_block` ✗ —— {@code FluidRegistrar} 给**每支流体**注册的
+    //  液体方块就叫 `name + "_block"`，而「神圣灵液」这支流体的名字是 {@code holy_spirit}
+    //  → 它的液体方块**已经**叫 {@code tinkersnewlife:holy_spirit_block} ✗。
+    //  第一版我把储存块也叫 holy_spirit_block，于是同一个注册表里两个 DeferredRegister
+    //  抢同一个名字 → 后者把前者覆盖成 `Block{minecraft:air}`（"Override did not have an
+    //  associated owner object"）→ 紧接着 `ForgeRegistry.sync` 的 ID 对不上 → **启动即崩** ✗。
+    //  所以三个储存块统一用 `_storage_block` 后缀，跟液体方块彻底分开 ✓
+    //  （magic_gold 的流体叫 magic_gold_essence、origin_alloy 的叫 origin_polymer，
+    //   本来不撞；统一后缀是为了以后加流体时不会再踩同一个坑 ✓）
     // ============================================================
 
-    /** 魔金块 */
-    public static final RegistryObject<Block> MAGIC_GOLD_BLOCK = metalBlock("magic_gold_block", MapColor.COLOR_ORANGE);
+    /** 魔金块（储存块，不是「魔金精华」的液体方块——那个叫 magic_gold_essence_block） */
+    public static final RegistryObject<Block> MAGIC_GOLD_BLOCK =
+            metalBlock("magic_gold_storage_block", MapColor.COLOR_ORANGE);
 
-    /** 圣灵块 */
-    public static final RegistryObject<Block> HOLY_SPIRIT_BLOCK = metalBlock("holy_spirit_block", MapColor.COLOR_YELLOW);
+    /** 圣灵块（储存块，不是「神圣灵液」的液体方块——那个叫 holy_spirit_block） */
+    public static final RegistryObject<Block> HOLY_SPIRIT_BLOCK =
+            metalBlock("holy_spirit_storage_block", MapColor.COLOR_YELLOW);
 
-    /** 源钻合金块 */
-    public static final RegistryObject<Block> ORIGIN_ALLOY_BLOCK = metalBlock("origin_alloy_block", MapColor.COLOR_PURPLE);
+    /** 源钻合金块（储存块，不是「源流聚合物」的液体方块——那个叫 origin_polymer_block） */
+    public static final RegistryObject<Block> ORIGIN_ALLOY_BLOCK =
+            metalBlock("origin_alloy_storage_block", MapColor.COLOR_PURPLE);
 
     /** 金属储存块的统一属性（对齐原版铁块：5.0 硬度 / 6.0 抗爆 / 需要正确工具 / 金属音效） */
     private static RegistryObject<Block> metalBlock(String name, MapColor color) {

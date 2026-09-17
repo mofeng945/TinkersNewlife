@@ -3,7 +3,7 @@
   "category": "misc",
   "group": "tinkersnewlife:magic_gold_ingot",
   "ingredients": [
-    { "item": "tinkersnewlife:magic_gold_block" }
+    { "item": "tinkersnewlife:magic_gold_storage_block" }
   ],
   "result": {
     "count": 9,

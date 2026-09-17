@@ -2,7 +2,7 @@
   "replace": false,
   "values": [
     {
-      "id": "tinkersnewlife:origin_alloy_block",
+      "id": "tinkersnewlife:origin_alloy_storage_block",
       "required": false
     }
   ]

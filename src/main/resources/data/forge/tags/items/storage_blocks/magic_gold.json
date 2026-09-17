@@ -2,7 +2,7 @@
   "replace": false,
   "values": [
     {
-      "id": "tinkersnewlife:magic_gold_block",
+      "id": "tinkersnewlife:magic_gold_storage_block",
       "required": false
     }
   ]

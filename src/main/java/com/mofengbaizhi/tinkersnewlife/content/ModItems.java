@@ -388,18 +388,18 @@ public class ModItems {
     public static final RegistryObject<Item> ORIGIN_ALLOY_NUGGET =
             ITEMS.register("origin_alloy_nugget", () -> new Item(new Item.Properties()));
 
-    /** 魔金块（BlockItem） */
+    /** 魔金块（BlockItem；注册名 _storage_block，见 ModBlocks 的说明） */
     public static final RegistryObject<Item> MAGIC_GOLD_BLOCK =
-            ITEMS.register("magic_gold_block",
+            ITEMS.register("magic_gold_storage_block",
                     () -> new BlockItem(ModBlocks.MAGIC_GOLD_BLOCK.get(), new Item.Properties()));
 
-    /** 圣灵块（BlockItem） */
+    /** 圣灵块（BlockItem；注册名 _storage_block，见 ModBlocks 的说明） */
     public static final RegistryObject<Item> HOLY_SPIRIT_BLOCK =
-            ITEMS.register("holy_spirit_block",
+            ITEMS.register("holy_spirit_storage_block",
                     () -> new BlockItem(ModBlocks.HOLY_SPIRIT_BLOCK.get(), new Item.Properties()));
 
-    /** 源钻合金块（BlockItem） */
+    /** 源钻合金块（BlockItem；注册名 _storage_block，见 ModBlocks 的说明） */
     public static final RegistryObject<Item> ORIGIN_ALLOY_BLOCK =
-            ITEMS.register("origin_alloy_block",
+            ITEMS.register("origin_alloy_storage_block",
                     () -> new BlockItem(ModBlocks.ORIGIN_ALLOY_BLOCK.get(), new Item.Properties()));
 }

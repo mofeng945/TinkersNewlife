@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "tinkersnewlife:block/origin_alloy_block"
+    "all": "tinkersnewlife:block/origin_alloy_storage_block"
   }
 }
