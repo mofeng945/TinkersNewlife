@@ -1,0 +1,19 @@
+{
+  "type": "tconstruct:casting_table",
+  "cast": {
+    "item": "irons_spellbooks:blank_rune"
+  },
+  "cast_consumed": true,
+  "fluid": {
+    "name": "tinkersnewlife:liquid_lightning_still",
+    "amount": 1000
+  },
+  "result": "irons_spellbooks:lightning_rune",
+  "cooling_time": 100,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "irons_spellbooks"
+    }
+  ]
+}
