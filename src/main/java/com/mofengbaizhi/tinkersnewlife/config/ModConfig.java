@@ -46,6 +46,12 @@ public final class ModConfig {
     /** 无为转变：伪装期间是否把玩家的盔甲与手持物品画在生物形态上（默认开；人形形态才有效果） */
     public static final ConfigValue<Boolean> WUWEI_EQUIPMENT_RENDER;
 
+    // ==================== 混沌之流（源钻合金 · 铁魔法联动） ====================
+    /** 混沌之流是否把一次近战拆成「物理 + 各学派」多段（默认开；关掉后不再拆分，也就不会触发成串的学派反应） */
+    public static final ConfigValue<Boolean> CHAOS_FLOW_ENABLED;
+    /** 混沌之流最多用几个学派分段（默认 16：普通整合包约 9 个学派 ⇒ 行为不变）。学派注册表很大时（法术反应类附属）每次攻击的分段数会爆炸 ⇒ 卡顿 */
+    public static final ConfigValue<Integer> CHAOS_FLOW_MAX_SCHOOL_SEGMENTS;
+
     // ==================== 不可名状 · 观感 ====================
     /** 「不可名状」的整屏信号干扰/花屏覆盖层（客户端，默认开） */
     public static final ConfigValue<Boolean> UNNAMEABLE_GLITCH;
@@ -222,6 +228,23 @@ public final class ModConfig {
         WUWEI_DISGUISE_RENDER = b.define("enable_disguise_render", true);
         WUWEI_SPEED_SCALE = b.defineInRange("speed_scale", 0.5D, 0.05D, 4.0D);
         WUWEI_EQUIPMENT_RENDER = b.define("render_equipment", true);
+        b.pop();
+
+        // 混沌之流：学派分段上限（源钻合金 origin_alloy）
+        b.push("chaos_flow").comment(
+                "Chaos Flow (the Origin Alloy material trait): a melee hit is split into",
+                "1 physical segment + one segment per registered spell school - each a separate damage instance.",
+                "",
+                "Spell-reaction addons react school-by-school and process every damage instance, so in a pack that",
+                "registers many schools one swing can cost dozens of instances => a visible hitch every hit.",
+                "",
+                "enabled=false disables the split entirely (the hit lands normally as physical damage).",
+                "max_school_segments caps how many schools are used (default 16: normal packs have ~9 schools, so they are unaffected).",
+                "TOTAL damage is unchanged - only the granularity changes: fewer, larger segments",
+                "=> far fewer school-reaction procs and no stutter.",
+                "0 = physical segment only (no school segments at all).");
+        CHAOS_FLOW_ENABLED = b.define("enabled", true);
+        CHAOS_FLOW_MAX_SCHOOL_SEGMENTS = b.defineInRange("max_school_segments", 16, 0, 64);
         b.pop();
 
         // 不可名状效果：客户端观感（撑开视野 + 后处理 + 信号干扰花屏）

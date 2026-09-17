@@ -32,6 +32,15 @@ import java.util.List;
  *   <li>每段各按自己的伤害类型结算 → 目标的各项抗性分别生效 ✓（这正是这个特性的意义）。</li>
  * </ol>
  *
+ * <h2>⭐ 为什么要有"学派分段上限"（性能，2026-09-17 用户实测）</h2>
+ * 用户整合包里装了<b>法术反应</b>类附属模组：它注册了<b>大量学派</b>，而且学派之间互相反应 ✗ ——
+ * 而本特性原本是"1 + **全部**学派数"段 ⇒ 一刀就是几十次 {@code hurt()}，
+ * 每一次都会触发一轮学派反应结算 ⇒ <b>源钻合金每次攻击都卡一下</b> ✗。
+ *
+ * <p>对策（见配置 {@code chaos_flow}）：<b>学派分段上限</b>（默认 4 ✓）+ 学派列表<b>缓存</b>（30 秒 ✓）
+ * + 可整体关闭 ✓（默认上限 <b>16</b>：普通整合包约 9 个学派 ⇒ 行为完全不变 ✓）。⭐ <b>总伤害不变</b>，变的只是"颗粒度"：段数少 ⇒ 每段更大、反应结算次数大幅减少 ✓
+ * （段数变少也会略微提高实际伤害 —— 段数越多越容易被各种"单次限伤/抗性"逐段吃掉 ✓）。
+ *
  * <h2>为什么学派是"动态"的</h2>
  * 学分数从铁魔法的<b>学派注册表</b>里现取（{@code SchoolRegistry}#getAllSchools），
  * 每个学派自带 {@code getDamageType()} ✓ —— 所以<b>附属模组新加的学派也自动算进来</b> ✓，
@@ -75,18 +84,26 @@ public final class ChaosFlowHandler {
         float total = event.getAmount();
         if (total <= 0.0F) return;
 
-        List<ResourceKey<DamageType>> schoolKeys = IronSpellsSpellAccess.schoolDamageKeys();
-        if (schoolKeys.isEmpty()) {
+        // ⭐ 配置：可整体关闭；学派分段上限（默认 4）—— 见类注释"为什么要有上限" ✓
+        if (!com.mofengbaizhi.tinkersnewlife.config.ModConfig.CHAOS_FLOW_ENABLED.get()) return;
+        int cap = maxSchoolSegments();
+        if (cap <= 0) return;                                    // 上限 0 = 只用物理那一段 = 等价于不拆 ✓
+
+        List<ResourceKey<DamageType>> allSchools = schoolKeysCached();
+        if (allSchools.isEmpty()) {
             logOnce("[混沌之流] 学派注册表为空（铁魔法不在场或反射失败）→ 本次不拆分");
             return;
         }
+        // 只取前 cap 个学派（缓存列表是共享的 ⇒ subList 只是视图，不改原表 ✓）
+        List<ResourceKey<DamageType>> schoolKeys = allSchools.size() > cap
+                ? allSchools.subList(0, cap) : allSchools;
 
         int segments = 1 + schoolKeys.size();
         float per = total / segments;
         if (per <= 0.0F) return;
 
-        if (DEBUG) TinkersNewlife.LOGGER.info("[混沌之流] {} 的 {} 点伤害拆成 {} 段（每段 {}，学派 {} 个）",
-                attacker.getName().getString(), total, segments, per, schoolKeys.size());
+        if (DEBUG) TinkersNewlife.LOGGER.info("[混沌之流] {} 的 {} 点伤害拆成 {} 段（每段 {}，学派 {}/{} 个，上限 {}）",
+                attacker.getName().getString(), total, segments, per, schoolKeys.size(), allSchools.size(), cap);
 
         event.setCanceled(true);                                 // 原始那一次不再结算 ✓
         SPLITTING.set(Boolean.TRUE);
@@ -105,6 +122,38 @@ public final class ChaosFlowHandler {
             TinkersNewlife.LOGGER.debug("[混沌之流] 分段失败（已忽略）: {}", t.toString());
         } finally {
             SPLITTING.set(Boolean.FALSE);
+        }
+    }
+
+    // ============================================================
+    //  配置 / 学派缓存
+    // ============================================================
+
+    /** 学派列表缓存时长（毫秒）：注册表很大时"每刀遍历一遍注册表"本身也是开销 ✗ */
+    private static final long SCHOOL_CACHE_MS = 30_000L;
+    private static volatile List<ResourceKey<DamageType>> cachedSchools = List.of();
+    private static volatile long cachedSchoolsAt = 0L;
+
+    /** 学派列表（带 30 秒缓存 ✓；数据包重载后最多 30 秒跟上 ✓） */
+    private static List<ResourceKey<DamageType>> schoolKeysCached() {
+        long now = System.currentTimeMillis();
+        List<ResourceKey<DamageType>> cached = cachedSchools;
+        if (!cached.isEmpty() && now - cachedSchoolsAt < SCHOOL_CACHE_MS) return cached;
+        List<ResourceKey<DamageType>> fresh = IronSpellsSpellAccess.schoolDamageKeys();
+        if (!fresh.isEmpty()) {
+            cachedSchools = fresh;
+            cachedSchoolsAt = now;
+        }
+        return fresh;
+    }
+
+    /** 学派分段上限（读配置；出任何问题退回默认 16 ✓ —— 性能兜底绝不能因为配置异常而失效 ✗） */
+    private static int maxSchoolSegments() {
+        try {
+            return Math.max(0, com.mofengbaizhi.tinkersnewlife.config.ModConfig
+                    .CHAOS_FLOW_MAX_SCHOOL_SEGMENTS.get());
+        } catch (Throwable ignored) {
+            return 16;
         }
     }
 
