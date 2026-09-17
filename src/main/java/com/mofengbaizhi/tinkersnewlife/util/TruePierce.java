@@ -97,6 +97,10 @@ public final class TruePierce {
         //    死亡可能不在 hurt() 里发生，但标记在 hurt() 之前打上就够 ——
         //    见 CurseDeath 的说明（天逆鉾/游云/领域/术式的穿透都路过这里 ✓）
         com.mofengbaizhi.tinkersnewlife.content.curse.CurseDeath.mark(target);
+        // ⭐ 击杀归属：穿透是"分块连打 → 带攻击者的源打不动就换**无主源** → 差额 setHealth 补齐"，
+        //    收尾那一下的伤害源可能根本没有攻击者 ✗（死亡事件只认 getSource().getEntity()）→
+        //    在这里把"这一击是谁打的"记下来，死亡时按最后一击回溯归属 ✓（见 KillAttribution）
+        com.mofengbaizhi.tinkersnewlife.content.curse.KillAttribution.remember(target, attacker);
 
         // ⓪ 绝对防御穿透：把"根本不看伤害标签、只看攻击者属性"的免疫（潘多拉之咒·现实压制）
         //    临时失效 —— 它是在 LivingAttackEvent 里直接取消打击的，标签和事件层顶开都够不着。

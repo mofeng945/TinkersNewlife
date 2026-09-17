@@ -110,15 +110,11 @@ public final class WuWeiHandler {
     public static void onKill(LivingDeathEvent event) {
         if (event.getEntity().level().isClientSide) return;
         Entity killed = event.getEntity();
-        if (!(killed instanceof Mob)) return;
+        if (!(killed instanceof Mob mob)) return;
         if (killed instanceof Player) return;
-        ServerPlayer killer = null;
-        if (event.getSource().getEntity() instanceof ServerPlayer sp) {
-            killer = sp;
-        } else if (event.getSource().getDirectEntity() instanceof net.minecraft.world.entity.projectile.Projectile p
-                && p.getOwner() instanceof ServerPlayer sp2) {
-            killer = sp2;
-        }
+        Entity attacker = event.getSource().getEntity() != null
+                ? event.getSource().getEntity() : event.getSource().getDirectEntity();
+        ServerPlayer killer = resolveKiller(attacker, mob);
         if (killer == null) return;
         // 仅咒力核心上装有「无为转变」修饰符的玩家才记录形态（未学会术式不写入）
         if (!hasTechnique(killer)) return;
@@ -128,6 +124,38 @@ public final class WuWeiHandler {
             records.add(id);
             saveRecords(killer, records);
         }
+    }
+
+    /**
+     * 这次击杀该算在谁头上（形态记录要写给"真正动手的玩家"）。
+     *
+     * <p>⭐ 为什么不能只看 {@code getSource().getEntity()}：本模组**大量伤害源是 entity-less 的**
+     * （领域直伤/咒言/反转兜底用 {@code magic()}、天逆鉾穿透会**换无主源**再打一遍、
+     * 狱门疆用 {@code genericKill()}…，见 {@link CurseDeath} 同一段说明）⇒
+     * 被这些伤害收尾的 Boss（诡厄巫法的使徒/亚波伦这类必须靠穿透才打得动的）在死亡事件里
+     * **根本没有玩家** ⇒ 形态记录写不进去 ✗（用户实测："杀死诡厄巫法使徒没有记录"）。
+     *
+     * <p>回溯顺序（从最可信到兜底）：
+     * <ol>
+     *   <li>本人 / 投射物主人 / 玩家拥有的生物 —— {@link KillAttribution#playerBehind}（O(1) ✓）；</li>
+     *   <li><b>最后一击归属记忆</b> —— {@link KillAttribution#find}：伤害发生时记下的"谁刚打过它" ✓
+     *       （无主伤害收尾就靠这条 ✓，20 秒内有效 ✓）；</li>
+     *   <li>本模组释放体（咒灵操术召出的仆从）的归属 —— 放最后，因为它是 O(玩家数) 的查询 ✗，
+     *       只在死亡这种低频时机才值得跑 ✓。</li>
+     * </ol>
+     */
+    @javax.annotation.Nullable
+    private static ServerPlayer resolveKiller(@javax.annotation.Nullable Entity attacker, LivingEntity victim) {
+        ServerPlayer direct = KillAttribution.playerBehind(attacker);
+        if (direct != null) return direct;
+        ServerPlayer byLastHit = KillAttribution.find(victim);
+        if (byLastHit != null) return byLastHit;
+        if (attacker != null) {
+            ServerPlayer byReleased = com.mofengbaizhi.tinkersnewlife.content.curse.technique
+                    .CursedSpiritTechnique.ownerOfReleased(attacker);
+            if (byReleased != null) return byReleased;
+        }
+        return null;
     }
 
     private static List<String> getRecords(ServerPlayer player) {
