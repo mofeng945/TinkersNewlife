@@ -141,27 +141,41 @@ public class ZuoShaBoTuDomain extends BaseDomain {
         }
     }
 
-    /** 小奖：+250 咒力 + 10 秒伤害吸收 IV */
+    /** 小奖：+250 咒力 + 10 秒伤害吸收 IV（⭐ 同心戒同伴一并生效 ✓） */
     private void smallPrize(ServerPlayer player) {
         CursePowerHelper.addCurse(player, SMALL_PRIZE_CURSE);
         player.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 10 * 20, 3));
+        net.minecraft.world.entity.LivingEntity twin = twinInSpace(player.serverLevel());
+        if (twin != null) twin.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 10 * 20, 3));
         broadcastActionBar(player, "message.tinkersnewlife.gamble.small");
     }
 
-    /** 大奖：+900 咒力 + 30 秒与咒力输出等级相同的生命恢复 */
+    /** 大奖：+900 咒力 + 30 秒与咒力输出等级相同的生命恢复（⭐ 同伴一并生效 ✓） */
     private void bigPrize(ServerPlayer player) {
         CursePowerHelper.addCurse(player, BIG_PRIZE_CURSE);
         int output = CursePowerHelper.getCurseOutputLevel(player);
         player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 30 * 20, Math.max(0, output - 1)));
+        net.minecraft.world.entity.LivingEntity twin = twinInSpace(player.serverLevel());
+        if (twin != null) {
+            twin.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 30 * 20, Math.max(0, output - 1)));
+        }
         broadcastActionBar(player, "message.tinkersnewlife.gamble.big");
     }
 
-    /** 特等奖：33 秒内咒力无限、HP 锁定上限、咒力亲和 +100 */
+    /** 特等奖：33 秒内咒力无限、HP 锁定上限、咒力亲和 +100（⭐ 同伴一并生效 ✓） */
     private void grandPrize(ServerPlayer player) {
         long until = player.level().getGameTime() + GRAND_BUFF_TICKS;
         CursePowerHelper.setInfiniteUntil(player, until);
         CursePowerHelper.setGrandUntil(player, until);
         CursePowerHelper.setCurseAffinityBuff(player, GRAND_AFFINITY_BUFF, until);
+        // ⭐ 同心戒同伴：同样的三重 buff（同截止时刻 ✓）；咒力本身不用给 ——
+        //    两人的咒力池本来就是共享的（同心戒），给了反而重复 ✓
+        net.minecraft.world.entity.LivingEntity twin = twinInSpace(player.serverLevel());
+        if (twin instanceof ServerPlayer twinPlayer) {
+            CursePowerHelper.setInfiniteUntil(twinPlayer, until);
+            CursePowerHelper.setGrandUntil(twinPlayer, until);
+            CursePowerHelper.setCurseAffinityBuff(twinPlayer, GRAND_AFFINITY_BUFF, until);
+        }
         broadcastActionBar(player, "message.tinkersnewlife.gamble.grand");
     }
 

@@ -132,7 +132,9 @@ public class DangYunPingXianDomain extends BaseDomain {
         player.addEffect(new MobEffectInstance(MobEffects.WATER_BREATHING, 80, 0, false, false));
         // 每 20 tick：友方/技巧玩家水呼吸 + 溺尸补充
         if (now % 20 == 0) {
-            for (LivingEntity e : entitiesInSphere(level)) {
+            // ⭐ 增益用 allyTargetsInSphere（= 球内实体 + 同心戒同伴 ✓）：
+            //    entitiesInSphere 为"互相免疫负面效果"把同伴剔除了 ✗，增益必须另外照顾到他 ✓
+            for (LivingEntity e : allyTargetsInSphere(level)) {
                 if (e.position().distanceToSqr(center) > radius * radius) continue;
                 // 施术者阵营 + 新阴流技巧保护者（抵御溺水环境，技巧可挡本领域窒息）
                 if (isFriendlyTo(player, e)
@@ -426,6 +428,9 @@ public class DangYunPingXianDomain extends BaseDomain {
     /** 是否属于施术者阵营（本人/驯养宠物/已调伏式神/咒灵/守护/本领域溺尸） */
     private static boolean isFriendlyTo(ServerPlayer owner, LivingEntity e) {
         if (e == owner) return true;
+        // ⭐ 同心戒同伴：合并领域里也算"己方" ✓ ——
+        //    必须放在下面 `e instanceof Player → false` 之前，否则同伴（也是玩家）会被挡掉 ✗
+        if (com.mofengbaizhi.tinkersnewlife.content.curse.TwinRingLink.arePaired(owner, e)) return true;
         if (e instanceof Player) return false;
         // ⭐ getUUID 在 key 缺失时抛 NPE——必须先 contains 再取值
         var tag = e.getPersistentData();

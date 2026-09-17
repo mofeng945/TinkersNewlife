@@ -148,6 +148,39 @@ public abstract class BaseDomain {
         return owner == null ? null : level.getPlayerByUUID(owner);
     }
 
+    /**
+     * 同心戒同伴（戴着同一对戒指、且此刻处于"合并后的共享空间"内）；没有则 null ✓。
+     * <p>未合并时共享空间就是本领域球体 ✓；合并后是并集 ✓。
+     */
+    @javax.annotation.Nullable
+    public final LivingEntity twinInSpace(Level level) {
+        if (!(level instanceof ServerLevel)) return null;
+        net.minecraft.world.entity.player.Player me = ownerPlayer(level);
+        if (me == null) return null;
+        ServerPlayer twin = com.mofengbaizhi.tinkersnewlife.content.curse.TwinRingLink.findPartner(me);
+        if (twin == null) return null;
+        return inMergedSpace(twin.position()) ? twin : null;
+    }
+
+    /**
+     * 领域内**应当吃到增益**的实体列表 = {@link #entitiesInSphere} + 同心戒同伴 ✓。
+     *
+     * <p>⭐ 为什么单独要这个：{@link #entitiesInSphere} 为了"两位主人互相免疫对方的**伤害/负面**效果"
+     * 把同伴<b>整个剔除</b>了 ✗ —— 那是针对负面效果的；而**增益**（水呼吸、摇奖 buff…）
+     * 必须照顾到同伴 ✓（用户实测：同伴吃不到坐杀搏徒 / 荡蕴平线这类领域的增益）。
+     * 所以：负面效果继续用 {@link #entitiesInSphere}（同伴免疫 ✓），
+     * 增益效果改用本方法（同伴也吃 ✓）。
+     */
+    public final java.util.List<LivingEntity> allyTargetsInSphere(Level level) {
+        java.util.List<LivingEntity> all = entitiesInSphere(level);
+        LivingEntity twin = twinInSpace(level);
+        if (twin == null) return all;
+        java.util.List<LivingEntity> out = new java.util.ArrayList<>(all.size() + 1);
+        out.addAll(all);
+        out.add(twin);
+        return out;
+    }
+
     /** 球壳体积内的"生物占位方块"：一次盒选 → 逐生物登记方块坐标（替代逐方块盒查） */
     private static java.util.Set<net.minecraft.core.BlockPos> occupancyOf(java.util.List<LivingEntity> entities) {
         java.util.Set<net.minecraft.core.BlockPos> occupied = new java.util.HashSet<>();
