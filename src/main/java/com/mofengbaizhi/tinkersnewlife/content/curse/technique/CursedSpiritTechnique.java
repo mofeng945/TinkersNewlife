@@ -224,6 +224,12 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         //     所以下面 playerAttack/magic 两下巨伤会被截（无害），最后那下 kill() 伤害源是
         //     genericKill（没有攻击者），命灯完全不介入，收服照常完成。
         target.invulnerableTime = 0;
+        // ⭐ 收服 = 由这位玩家击杀：先把归属记下来。
+        //    下面三下里，**真正打死大多数 Boss 的是第三下**（①② 的 1e9 会被 Goety 使徒那类
+        //    "单次限伤/免疫窗"吃掉），而 ② magic() 与 ③ kill()(=genericKill) **都没有攻击者** ✗ ⇒
+        //    死亡事件里抓不到人 ⇒ 无为转变的形态记录写不进去 ✗
+        //    （用户实测："杀死诡厄巫法使徒没有记录"——他走的正是"收服"这条路）。
+        com.mofengbaizhi.tinkersnewlife.content.curse.KillAttribution.remember(target, player);
         com.mofengbaizhi.tinkersnewlife.content.curse.CurseDeath.mark(target);
         target.hurt(player.damageSources().playerAttack(player), 1.0E9F);
         if (target.isAlive()) {
@@ -784,6 +790,12 @@ public final class CursedSpiritTechnique extends BaseTechnique {
             removeAkaishiWardenBar(warden);
         }
         mob.setSilent(true);
+        // ⭐ 收回 ≠ 击杀（用户实测："吸收使徒再回收会判定为死亡"✗）：
+        //    ① 清掉归属记忆 —— 否则这具释放体若在 20 秒内被记过归属，收回会被算成那位玩家的击杀
+        //       （无为转变的形态记录会凭空多一条 ✗）；
+        //    ② **不再**打咒力致死标记 —— 收回不是被谁打死的，不该套用"被诅咒致死"那套文案 ✗。
+        //    下面用 genericKill()（无攻击者）⇒ 既不留击杀归属，也不套咒力文案 ✓。
+        com.mofengbaizhi.tinkersnewlife.content.curse.KillAttribution.forget(mob);
         RECALLING.add(mob.getUUID());
         try {
             // ⚠ 循环补刀：有些 mod 会给特定生物加"单次受击上限"
@@ -792,7 +804,6 @@ public final class CursedSpiritTechnique extends BaseTechnique {
             //   别人的"死亡时清理"（血条等）也就不会跑。所以这里反复补刀直到真死。
             for (int i = 0; i < 64 && mob.isAlive() && !mob.isRemoved(); i++) {
                 mob.invulnerableTime = 0;
-                com.mofengbaizhi.tinkersnewlife.content.curse.CurseDeath.mark(mob);
                 mob.hurt(mob.damageSources().genericKill(), Float.MAX_VALUE);
             }
         } finally {

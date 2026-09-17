@@ -115,6 +115,11 @@ public final class KillAttribution {
         return null;
     }
 
+    /** 忘掉某个目标的归属（"静默移除／主动收回"这类**不算击杀**的死亡必须调它 ✗，否则会被算成玩家的击杀）； */
+    public static void forget(@Nullable Entity victim) {
+        if (victim != null) LAST_HIT.remove(victim.getUUID());
+    }
+
     private static void prune(long now) {
         LAST_HIT.entrySet().removeIf(e -> now - e.getValue().tick() > TTL_TICKS);
     }
