@@ -224,9 +224,11 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         //     所以下面 playerAttack/magic 两下巨伤会被截（无害），最后那下 kill() 伤害源是
         //     genericKill（没有攻击者），命灯完全不介入，收服照常完成。
         target.invulnerableTime = 0;
+        com.mofengbaizhi.tinkersnewlife.content.curse.CurseDeath.mark(target);
         target.hurt(player.damageSources().playerAttack(player), 1.0E9F);
         if (target.isAlive()) {
             target.invulnerableTime = 0;
+            com.mofengbaizhi.tinkersnewlife.content.curse.CurseDeath.mark(target);
             target.hurt(player.damageSources().magic(), 1.0E9F);
         }
         if (target.isAlive()) {
@@ -790,6 +792,7 @@ public final class CursedSpiritTechnique extends BaseTechnique {
             //   别人的"死亡时清理"（血条等）也就不会跑。所以这里反复补刀直到真死。
             for (int i = 0; i < 64 && mob.isAlive() && !mob.isRemoved(); i++) {
                 mob.invulnerableTime = 0;
+                com.mofengbaizhi.tinkersnewlife.content.curse.CurseDeath.mark(mob);
                 mob.hurt(mob.damageSources().genericKill(), Float.MAX_VALUE);
             }
         } finally {

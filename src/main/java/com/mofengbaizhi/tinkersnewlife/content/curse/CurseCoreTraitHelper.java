@@ -32,6 +32,11 @@ public final class CurseCoreTraitHelper {
 
     /** 应用咒力核心材料特性后的伤害（无核心时原样返回） */
     public static double applyCurseCoreTraits(ServerPlayer player, LivingEntity target, double damage) {
+        // ⭐ 记一笔"这一下是咒力伤害"（死亡信息统一成"被诅咒致死"用）——
+        //    必须放在下面的 early return **之前**：没有咒力核心的施术者也要算 ✓；
+        //    而且必须在调用方的 hurt() 之前（死亡信息在 hurt() 内部就定下了 ✗）。
+        //    本模组绝大多数术式/领域/弹射物在结算伤害前都会路过这里 ✓
+        CurseDeath.mark(target);
         ToolStack tool = getCoreTool(player);
         if (tool == null) return damage;
         ToolAttackContext context = buildContext(player, target);

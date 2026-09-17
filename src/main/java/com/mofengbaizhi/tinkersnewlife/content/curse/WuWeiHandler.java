@@ -1303,6 +1303,7 @@ public final class WuWeiHandler {
             var attr = self.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
             if (attr != null) dmg = Math.max(2.0, attr.getValue());
             target.invulnerableTime = 0;
+            com.mofengbaizhi.tinkersnewlife.content.curse.CurseDeath.mark(target);
             target.hurt(self.damageSources().mobAttack(self), (float) dmg);
             // 令目标反击指向自己（原版 AI 行为）
             if (target instanceof Mob tm && tm.getTarget() == null) {

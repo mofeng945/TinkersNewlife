@@ -51,10 +51,12 @@ public abstract class CursedToolItem extends SwordItem {
         // 亡灵特攻（对亡灵额外 +6）
         // ⭐ 戴「双向认知阻碍面具」者把**除玩家以外**的一切视为亡灵（见 CognitiveMaskItem）
         if (CognitiveMaskItem.treatedAsUndead(attacker, target)) {
+            com.mofengbaizhi.tinkersnewlife.content.curse.CurseDeath.mark(target);
             target.hurt(target.damageSources().mobAttack(attacker), UNDEAD_BONUS + extraAttackBonus(target));
         } else {
             float extra = extraAttackBonus(target);
             if (extra > 0) {
+                com.mofengbaizhi.tinkersnewlife.content.curse.CurseDeath.mark(target);
                 target.hurt(target.damageSources().mobAttack(attacker), extra);
             }
         }

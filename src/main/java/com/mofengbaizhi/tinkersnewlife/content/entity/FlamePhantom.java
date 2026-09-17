@@ -162,6 +162,7 @@ public class FlamePhantom extends Phantom {
             double curse = com.mofengbaizhi.tinkersnewlife.content.curse.technique.FlameManipulationTechnique
                     .computeHitDamage(owner, target);
             target.invulnerableTime = 0;
+            com.mofengbaizhi.tinkersnewlife.content.curse.CurseDeath.mark(target);
             target.hurt(owner.damageSources().mobAttack(owner), (float) curse);
             com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper
                     .afterCurseCoreHit(owner, target, curse);

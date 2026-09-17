@@ -57,6 +57,7 @@ public final class YouYunAttackHandler {
         event.setCanceled(true);
         player.swing(InteractionHand.MAIN_HAND);
 
+        com.mofengbaizhi.tinkersnewlife.content.curse.CurseDeath.mark(target);
         target.hurt(player.level().damageSources().playerAttack(player), dmg);
 
         // 破甲 = 突破盾牌格挡（类似原版斧头）：目标正在格挡则立即使其盾失效

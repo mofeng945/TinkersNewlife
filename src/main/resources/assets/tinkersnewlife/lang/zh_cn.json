@@ -1018,6 +1018,8 @@
   "item.tinkersnewlife.cognitive_mask.in": "你眼中的一切（除玩家外）皆为亡灵：咒具亡灵特攻、反转术式、咒灵操术收服全部按亡灵算",
   "item.tinkersnewlife.cognitive_mask.flavor": "认知之外的东西，才最让人不安。",
   "message.tinkersnewlife.cognitive_mask.hidden_name": "？？？",
+  "death.attack.tinkersnewlife.curse": "%1$s被诅咒致死",
+  "death.attack.tinkersnewlife.true_pierce": "%1$s被诅咒致死",
   "fluid_type.tinkersnewlife.curse_residue": "咒力残秽",
   "block.tinkersnewlife.curse_residue_block": "咒力残秽",
   "item.tinkersnewlife.curse_residue_bucket": "咒力残秽桶",

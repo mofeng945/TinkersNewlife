@@ -420,6 +420,8 @@
   "item.tinkersnewlife.cognitive_mask.in": "Everything but players looks undead to you: cursed tool undead bonus, reverse cursed technique and Cursed Spirit Technique capture all take the undead branch",
   "item.tinkersnewlife.cognitive_mask.flavor": "What lies beyond cognition is what unsettles us most.",
   "message.tinkersnewlife.cognitive_mask.hidden_name": "???",
+  "death.attack.tinkersnewlife.curse": "%1$s was cursed to death",
+  "death.attack.tinkersnewlife.true_pierce": "%1$s was cursed to death",
   "item.tinkersnewlife.curse_bottle.power": "Stored Curse Power: %s / %s",
   "item.tinkersnewlife.curse_bottle.fluid": "Curse Residue: %s / %s mb",
   "item.tinkersnewlife.curse_bottle.hint": "Wear in a curio slot: curse power is stored in the bottle first and kept on death; accepts Curse Residue from the smeltery (1 mb = 10 curse).",

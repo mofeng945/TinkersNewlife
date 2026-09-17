@@ -125,9 +125,11 @@ public final class TianNiHuoInterruptHandler {
     /** 击杀式神/傀儡/黑鸟（巨大伤害走正常死亡结算，召唤主视角/回收逻辑正常收尾） */
     private static void killSummon(ServerPlayer player, LivingEntity target) {
         target.invulnerableTime = 0;
+        com.mofengbaizhi.tinkersnewlife.content.curse.CurseDeath.mark(target);
         target.hurt(player.damageSources().playerAttack(player), 1.0E9F);
         if (target.isAlive()) {
             target.invulnerableTime = 0;
+            com.mofengbaizhi.tinkersnewlife.content.curse.CurseDeath.mark(target);
             target.hurt(player.damageSources().magic(), 1.0E9F);
         }
         ServerLevel sl = (ServerLevel) target.level();
@@ -183,6 +185,7 @@ public final class TianNiHuoInterruptHandler {
             if (e instanceof LivingEntity le && le.isAlive()) {
                 any = true;
                 le.invulnerableTime = 0;
+                com.mofengbaizhi.tinkersnewlife.content.curse.CurseDeath.mark(le);
                 le.hurt(level.damageSources().magic(), 1.0E9F);
             }
         }

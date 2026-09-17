@@ -101,6 +101,7 @@ public class TaizangBianyeDomain extends BaseDomain {
                     double over = pr - thr;
                     float dmg = (float) (1.5 + over * 0.35);
                     t.invulnerableTime = 0;
+                    com.mofengbaizhi.tinkersnewlife.content.curse.CurseDeath.mark(t);
                     t.hurt(level.damageSources().magic(), dmg);
                 }
             }

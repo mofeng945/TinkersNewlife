@@ -195,6 +195,7 @@ public class SanChongJiKuDomain extends BaseDomain {
                     net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE).getValue()
                     : 1.0;
             target.invulnerableTime = 0;
+            com.mofengbaizhi.tinkersnewlife.content.curse.CurseDeath.mark(target);
             target.hurt(player.damageSources().playerAttack(player), (float) dmg);
             // 命中的横扫粒子
             level.sendParticles(ParticleTypes.SWEEP_ATTACK,

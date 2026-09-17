@@ -115,6 +115,7 @@ public final class WuliangWuxianTechnique extends BaseTechnique {
         // 咒力不足 → 自动关闭 + 破盾伤害
         deactivate(player);
         player.displayClientMessage(Component.translatable("message.tinkersnewlife.wuxian.shield_break"), true);
+        com.mofengbaizhi.tinkersnewlife.content.curse.CurseDeath.mark(player);
         player.hurt(player.damageSources().magic(), (float) Math.max(1.0, overflow * 5.0));
         return 0.0F;
     }

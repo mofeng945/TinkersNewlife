@@ -90,6 +90,7 @@ public class TieGuanGaiWeiShanDomain extends BaseDomain {
             // 咒力灼烧：每 5 tick 一次，无视无敌帧
             if (burnTick) {
                 e.invulnerableTime = 0;
+                com.mofengbaizhi.tinkersnewlife.content.curse.CurseDeath.mark(e);
                 e.hurt(level.damageSources().magic(), burnDamage(player));
             }
         }

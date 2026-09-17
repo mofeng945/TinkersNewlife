@@ -9,7 +9,8 @@
     "BlockDropsMixin",
     "SpellInterruptFocusMixin",
     "SuperTierEffectMixin",
-    "EldritchLearningMixin"
+    "EldritchLearningMixin",
+    "ServerPlayerDeathMixin"
   ],
   "client": [
     "EntityRenderDispatcherMixin",
