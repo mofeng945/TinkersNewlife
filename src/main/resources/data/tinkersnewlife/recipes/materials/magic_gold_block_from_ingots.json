@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "tinkersnewlife:magic_gold_block",
+  "key": {
+    "#": {
+      "tag": "forge:ingots/magic_gold"
+    }
+  },
+  "pattern": [
+    "###",
+    "###",
+    "###"
+  ],
+  "result": {
+    "item": "tinkersnewlife:magic_gold_block"
+  },
+  "show_notification": true
+}

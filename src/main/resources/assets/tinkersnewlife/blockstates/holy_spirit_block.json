@@ -1,5 +1,5 @@
 {
   "variants": {
-    "": { "model": "tconstruct:block/fluid" }
+    "": { "model": "tinkersnewlife:block/holy_spirit_block" }
   }
 }

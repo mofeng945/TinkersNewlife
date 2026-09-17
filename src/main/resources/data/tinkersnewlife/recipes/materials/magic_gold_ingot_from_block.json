@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "tinkersnewlife:magic_gold_ingot",
+  "ingredients": [
+    { "item": "tinkersnewlife:magic_gold_block" }
+  ],
+  "result": {
+    "count": 9,
+    "item": "tinkersnewlife:magic_gold_ingot"
+  }
+}

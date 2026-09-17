@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "tinkersnewlife:holy_spirit_ingot",
+  "key": {
+    "#": {
+      "tag": "forge:nuggets/holy_spirit"
+    }
+  },
+  "pattern": [
+    "###",
+    "###",
+    "###"
+  ],
+  "result": {
+    "item": "tinkersnewlife:holy_spirit_ingot"
+  },
+  "show_notification": true
+}

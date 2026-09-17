@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "tinkersnewlife:holy_spirit_ingot",
+  "ingredients": [
+    { "item": "tinkersnewlife:holy_spirit_block" }
+  ],
+  "result": {
+    "count": 9,
+    "item": "tinkersnewlife:holy_spirit_ingot"
+  }
+}

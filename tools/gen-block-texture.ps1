@@ -1,25 +1,22 @@
-﻿# 生成 16×16「锭」贴图：**拿原版铁锭做模板改色**。
+﻿# 生成 16×16「储存块」贴图：**拿原版铁块做模板改色**（与 gen-ingot-texture.ps1 同一套口径）。
 #
-# 用户口径："能不能模仿原版铁锭改色？" —— 所以轮廓与明暗层次**完全沿用原版铁锭** ✓，
-# 只把每个像素的**亮度**映射到材料自己的色带上（明暗关系不变，颜色全换）✓。
-# 之前自己画的版本（手写字符掩码 / 圆角长方条）都被否掉了：一个像砖、一个像按钮 ✗。
+# 为什么用原版铁块当模板：项目口径是"原版已有标准形状的物品/方块就沿用轮廓改色，
+# 不自己从零画" ✓（见备忘录 266：我自己画的三版锭贴图全被否 ✗）。
+# 铁块是 16×16 的金属块纹理，正好对应"金属锭 ×9 压成块"这种储存块 ✓。
 #
-# 模板从哪来：脚本会**自动**在本地 Minecraft 版本 jar 里找
-#   assets/minecraft/textures/item/iron_ingot.png
+# 模板从哪来：脚本自动在本地 Minecraft 版本 jar 里找
+#   assets/minecraft/textures/block/iron_block.png
 # 并缓存到 build/ 下 —— 不把原版贴图复制进本模组仓库 ✓。
-# 也可以用 -Source 直接指定一张 16×16 的模板 PNG ✓。
 #
 # 用法：
-#   powershell -ExecutionPolicy Bypass -File tools\gen-ingot-texture.ps1 `
-#       -Name magic_gold_ingot -Ramp FF2B1A33,FF57307A,FF8A4A6E,FFC07A50,FFDFA845,FFF5CE72,FFFFF2BC
+#   powershell -NoProfile -ExecutionPolicy Bypass -File tools\gen-block-texture.ps1 `
+#       -Name magic_gold_block -Ramp FF2B1A33,FF57307A,FF8A4A6E,FFC07A50,FFDFA845,FFF5CE72,FFFFF2BC
 #
 # 色带 7 个色对应亮度 0/63/102/140/178/216/255（与材料 grey_to_sprite 调色板同一组）✓
 param(
     [Parameter(Mandatory = $true)][string]$Name,
     [Parameter(Mandatory = $true)][string[]]$Ramp,
-    [string]$Source = '',
-    # 只影响最后那行提示文字：传 -Label 说明实际用的模板（如"原版金粒"），避免提示与实际不符
-    [string]$Label = '原版铁锭'
+    [string]$Source = ''
 )
 
 Add-Type -AssemblyName System.Drawing
@@ -27,7 +24,7 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 $ErrorActionPreference = 'Stop'
 
 $root = Split-Path -Parent $PSScriptRoot
-$outDir = Join-Path $root 'src\main\resources\assets\tinkersnewlife\textures\item'
+$outDir = Join-Path $root 'src\main\resources\assets\tinkersnewlife\textures\block'
 if (-not (Test-Path $outDir)) { New-Item -ItemType Directory -Path $outDir -Force | Out-Null }
 
 if ($Ramp.Count -eq 1 -and $Ramp[0] -like '*,*') { $Ramp = $Ramp[0].Split(',') }
@@ -47,7 +44,6 @@ $stops = @(0, 63, 102, 140, 178, 216, 255)
 $colors = @()
 foreach ($x in $Ramp) { $colors += (Parse-Color $x) }
 
-# 亮度 → 色带（相邻两档之间线性插值）
 function Ramp-Color([int]$grey) {
     if ($grey -le $stops[0]) { return $colors[0] }
     if ($grey -ge $stops[6]) { return $colors[6] }
@@ -69,14 +65,14 @@ function Ramp-Color([int]$grey) {
 # ---------- 取模板 ----------
 $template = $Source
 if (-not $template -or -not (Test-Path $template)) {
-    $cached = Join-Path $root 'build\vanilla_iron_ingot.png'
+    $cached = Join-Path $root 'build\vanilla_iron_block.png'
     if (Test-Path $cached) {
         $template = $cached
     } else {
         $jars = @()
         $jars += (Get-ChildItem 'G:\tex\.minecraft\versions' -Directory -ErrorAction SilentlyContinue |
             ForEach-Object { Get-ChildItem $_.FullName -Filter '*.jar' -ErrorAction SilentlyContinue })
-        $entryName = 'assets/minecraft/textures/item/iron_ingot.png'
+        $entryName = 'assets/minecraft/textures/block/iron_block.png'
         $from = $null
         foreach ($jar in $jars) {
             try {
@@ -93,16 +89,16 @@ if (-not $template -or -not (Test-Path $template)) {
             } catch { }
         }
         if (-not $from) {
-            throw "找不到原版铁锭模板：请用 -Source 指定一张锭贴图（脚本会在本地版本 jar 里找 assets/minecraft/textures/item/iron_ingot.png）"
+            throw "找不到原版铁块模板：请用 -Source 指定一张方块贴图（脚本找 assets/minecraft/textures/block/iron_block.png）"
         }
-        Write-Host "  模板取自 $from（缓存到 build\vanilla_iron_ingot.png）"
+        Write-Host "  模板取自 $from（缓存到 build\vanilla_iron_block.png）"
         $template = $cached
     }
 }
 
 $bmp = [System.Drawing.Bitmap]::new($template)
 
-# ---------- 亮度归一化（按 1%~99% 分位拉伸，让原版明暗铺满整条色带）----------
+# ---------- 亮度归一化（1%~99% 分位拉伸）----------
 $hist = New-Object 'int[]' 256
 $count = 0
 for ($y = 0; $y -lt $bmp.Height; $y++) {
@@ -136,4 +132,4 @@ for ($y = 0; $y -lt $bmp.Height; $y++) {
 $dst = Join-Path $outDir "$Name.png"
 $bmp.Save($dst, [System.Drawing.Imaging.ImageFormat]::Png)
 $bmp.Dispose()
-Write-Host "  生成 $Name.png（16x16，照$Label 改色；亮度 $lo~$hi；主色 $($Ramp[4])）"
+Write-Host "  生成 $Name.png（16x16，照原版铁块改色；亮度 $lo~$hi；主色 $($Ramp[4])）"

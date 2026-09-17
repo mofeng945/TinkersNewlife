@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "#forge:nuggets/magic_gold",
+    "#forge:nuggets/holy_spirit",
+    "#forge:nuggets/origin_alloy"
+  ]
+}

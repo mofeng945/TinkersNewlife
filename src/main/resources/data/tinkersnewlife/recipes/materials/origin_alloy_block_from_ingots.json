@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "tinkersnewlife:origin_alloy_block",
+  "key": {
+    "#": {
+      "tag": "forge:ingots/origin_alloy"
+    }
+  },
+  "pattern": [
+    "###",
+    "###",
+    "###"
+  ],
+  "result": {
+    "item": "tinkersnewlife:origin_alloy_block"
+  },
+  "show_notification": true
+}

@@ -369,4 +369,37 @@ public class ModItems {
      */
     public static final RegistryObject<Item> ORIGIN_ALLOY_INGOT =
             ITEMS.register("origin_alloy_ingot", () -> new Item(new Item.Properties()));
+
+    // ============================================================
+    //  纯合金材料的「粒」与「储存块」
+    //  与上面三个锭配对：原版"9 粒 ↔ 1 锭 ↔ 9 锭 ↔ 1 块"的常规口径 ✓
+    //  方块本体在 ModBlocks、物品（BlockItem）在这里 ✓
+    // ============================================================
+
+    /** 魔金粒 */
+    public static final RegistryObject<Item> MAGIC_GOLD_NUGGET =
+            ITEMS.register("magic_gold_nugget", () -> new Item(new Item.Properties()));
+
+    /** 圣灵粒 */
+    public static final RegistryObject<Item> HOLY_SPIRIT_NUGGET =
+            ITEMS.register("holy_spirit_nugget", () -> new Item(new Item.Properties()));
+
+    /** 源钻合金粒 */
+    public static final RegistryObject<Item> ORIGIN_ALLOY_NUGGET =
+            ITEMS.register("origin_alloy_nugget", () -> new Item(new Item.Properties()));
+
+    /** 魔金块（BlockItem） */
+    public static final RegistryObject<Item> MAGIC_GOLD_BLOCK =
+            ITEMS.register("magic_gold_block",
+                    () -> new BlockItem(ModBlocks.MAGIC_GOLD_BLOCK.get(), new Item.Properties()));
+
+    /** 圣灵块（BlockItem） */
+    public static final RegistryObject<Item> HOLY_SPIRIT_BLOCK =
+            ITEMS.register("holy_spirit_block",
+                    () -> new BlockItem(ModBlocks.HOLY_SPIRIT_BLOCK.get(), new Item.Properties()));
+
+    /** 源钻合金块（BlockItem） */
+    public static final RegistryObject<Item> ORIGIN_ALLOY_BLOCK =
+            ITEMS.register("origin_alloy_block",
+                    () -> new BlockItem(ModBlocks.ORIGIN_ALLOY_BLOCK.get(), new Item.Properties()));
 }

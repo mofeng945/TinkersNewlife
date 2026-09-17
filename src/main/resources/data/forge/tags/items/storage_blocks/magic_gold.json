@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "tinkersnewlife:magic_gold_block",
+      "required": false
+    }
+  ]
+}

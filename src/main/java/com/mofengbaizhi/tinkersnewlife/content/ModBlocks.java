@@ -78,4 +78,30 @@ public class ModBlocks {
     /** 呪蔵环绕火花模型载体：blockstate → tinkersnewlife:block/curse_vault_spark */
     public static final RegistryObject<Block> CURSE_VAULT_SPARK_VISUAL = BLOCKS.register("curse_vault_spark_visual",
             CurseVaultVisualBlock::new);
+
+    // ============================================================
+    //  纯合金材料「物品形态」的储存块（锭 ×9 ↔ 块）
+    //  与 ModItems 里的三个锭（魔金锭 / 圣灵锭 / 源钻合金锭）配对，
+    //  走的是原版"9 锭 ↔ 1 块"的常规口径 ✓
+    //  物品（BlockItem）在 ModItems 里注册；方块这里只登记本体 ✓
+    // ============================================================
+
+    /** 魔金块 */
+    public static final RegistryObject<Block> MAGIC_GOLD_BLOCK = metalBlock("magic_gold_block", MapColor.COLOR_ORANGE);
+
+    /** 圣灵块 */
+    public static final RegistryObject<Block> HOLY_SPIRIT_BLOCK = metalBlock("holy_spirit_block", MapColor.COLOR_YELLOW);
+
+    /** 源钻合金块 */
+    public static final RegistryObject<Block> ORIGIN_ALLOY_BLOCK = metalBlock("origin_alloy_block", MapColor.COLOR_PURPLE);
+
+    /** 金属储存块的统一属性（对齐原版铁块：5.0 硬度 / 6.0 抗爆 / 需要正确工具 / 金属音效） */
+    private static RegistryObject<Block> metalBlock(String name, MapColor color) {
+        return BLOCKS.register(name, () -> new Block(BlockBehaviour.Properties.of()
+                .strength(5.0f, 6.0f)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops()
+                .mapColor(color)
+        ));
+    }
 }
