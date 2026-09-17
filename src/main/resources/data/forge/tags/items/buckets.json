@@ -1,0 +1,107 @@
+{
+  "replace": false,
+  "values": [
+    "tinkersnewlife:gheloth_blood_bucket",
+    "tinkersnewlife:molten_nicholas_blessing_bucket",
+    "tinkersnewlife:hastur_malice_bucket",
+    "tinkersnewlife:ashen_ink_bucket",
+    "tinkersnewlife:molten_durandal_bucket",
+    "tinkersnewlife:curse_residue_bucket",
+    {
+      "id": "tinkersnewlife:fire_blood_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:ice_blood_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:lightning_blood_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_dread_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_dreadsteel_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_dragonsteel_fire_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_dragonsteel_ice_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_dragonsteel_lightning_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_cursed_metal_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_dark_metal_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:unholy_blood_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:everburning_holy_fire_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_broken_ring_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:primordial_fire_soul_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_arcane_ingot_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:holy_spirit_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:scorching_ice_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:liquid_arcane_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:cinder_ash_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_pyrium_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:molten_mithril_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:magic_gold_essence_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:origin_polymer_bucket",
+      "required": false
+    },
+    {
+      "id": "tinkersnewlife:liquid_lightning_bucket",
+      "required": false
+    }
+  ]
+}

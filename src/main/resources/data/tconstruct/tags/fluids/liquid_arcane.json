@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "tinkersnewlife:liquid_arcane_still",
+      "required": false
+    }
+  ]
+}

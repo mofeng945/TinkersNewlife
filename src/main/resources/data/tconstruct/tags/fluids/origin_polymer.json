@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "tinkersnewlife:origin_polymer_still",
+      "required": false
+    }
+  ]
+}

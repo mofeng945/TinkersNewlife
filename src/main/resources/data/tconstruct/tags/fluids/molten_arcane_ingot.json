@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "tinkersnewlife:molten_arcane_ingot_still",
+      "required": false
+    }
+  ]
+}

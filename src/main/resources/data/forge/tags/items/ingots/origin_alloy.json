@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "tinkersnewlife:origin_alloy_ingot",
+      "required": false
+    }
+  ]
+}
