@@ -37,9 +37,12 @@ import java.util.List;
  * 而本特性原本是"1 + **全部**学派数"段 ⇒ 一刀就是几十次 {@code hurt()}，
  * 每一次都会触发一轮学派反应结算 ⇒ <b>源钻合金每次攻击都卡一下</b> ✗。
  *
- * <p>对策（见配置 {@code chaos_flow}）：<b>学派分段上限</b>（默认 4 ✓）+ 学派列表<b>缓存</b>（30 秒 ✓）
- * + 可整体关闭 ✓（默认上限 <b>16</b>：普通整合包约 9 个学派 ⇒ 行为完全不变 ✓）。⭐ <b>总伤害不变</b>，变的只是"颗粒度"：段数少 ⇒ 每段更大、反应结算次数大幅减少 ✓
- * （段数变少也会略微提高实际伤害 —— 段数越多越容易被各种"单次限伤/抗性"逐段吃掉 ✓）。
+ * <p>⭐ 但**段数不能砍** —— 用户指出："我混沌之流重要的是**伤害类型**不是段数啊" ✓
+ * （这个特性的意义就是"每个学派的伤害类型各按自己的抗性结算" ✗ ⇒ 少打几种就变味了 ✗）。
+ * 所以对策是<b>把同一串摊到后面若干 tick</b>（{@code segments_per_tick}，默认 4 ✓）：
+ * <b>伤害类型一个不少 ✓、总伤害不变 ✓、单帧只跑几段 ⇒ 不再卡帧 ✓</b>。
+ * 另外：学派列表<b>缓存</b>（30 秒 ✓）、可整体关闭 ✓、{@code max_school_segments} 只作
+ * "学派爆炸"时的硬保险（默认 64 ≈ 不限 ✓）。
  *
  * <h2>为什么学派是"动态"的</h2>
  * 学分数从铁魔法的<b>学派注册表</b>里现取（{@code SchoolRegistry}#getAllSchools），
@@ -84,7 +87,7 @@ public final class ChaosFlowHandler {
         float total = event.getAmount();
         if (total <= 0.0F) return;
 
-        // ⭐ 配置：可整体关闭；学派分段上限（默认 4）—— 见类注释"为什么要有上限" ✓
+        // ⭐ 配置：可整体关闭；学派段上限（默认 64 ≈ 不限，只作"学派爆炸"的硬保险）；每 tick 限量几段 ✓
         if (!com.mofengbaizhi.tinkersnewlife.config.ModConfig.CHAOS_FLOW_ENABLED.get()) return;
         int cap = maxSchoolSegments();
         if (cap <= 0) return;                                    // 上限 0 = 只用物理那一段 = 等价于不拆 ✓
@@ -94,7 +97,8 @@ public final class ChaosFlowHandler {
             logOnce("[混沌之流] 学派注册表为空（铁魔法不在场或反射失败）→ 本次不拆分");
             return;
         }
-        // 只取前 cap 个学派（缓存列表是共享的 ⇒ subList 只是视图，不改原表 ✓）
+        // ⭐ <b>不丢伤害类型</b>：默认上限 64 ⇒ 学派**全部**参与 ✓
+        //    （用户 2026-09-17 指出："我混沌之流重要的是伤害类型不是段数啊" ⇒ 不能靠"只取前 N 个学派"省开销 ✗）
         List<ResourceKey<DamageType>> schoolKeys = allSchools.size() > cap
                 ? allSchools.subList(0, cap) : allSchools;
 
@@ -102,26 +106,145 @@ public final class ChaosFlowHandler {
         float per = total / segments;
         if (per <= 0.0F) return;
 
-        if (DEBUG) TinkersNewlife.LOGGER.info("[混沌之流] {} 的 {} 点伤害拆成 {} 段（每段 {}，学派 {}/{} 个，上限 {}）",
-                attacker.getName().getString(), total, segments, per, schoolKeys.size(), allSchools.size(), cap);
-
         event.setCanceled(true);                                 // 原始那一次不再结算 ✓
+
+        int perTick = segmentsPerTick();
+        if (DEBUG) TinkersNewlife.LOGGER.info("[混沌之流] {} 的 {} 点伤害拆成 {} 段（每段 {}，学派 {} 个，每 tick 最多 {} 段）",
+                attacker.getName().getString(), total, segments, per, schoolKeys.size(), perTick);
+
+        // ① 物理段：同 tick 立即结算 ✓
         SPLITTING.set(Boolean.TRUE);
         try {
             target.invulnerableTime = 0;
-            target.hurt(physicalSource(target, attacker), per);   // ① 物理段
-            for (ResourceKey<DamageType> key : schoolKeys) {
-                DamageSource schoolSource = schoolSource(target, attacker, key);
-                if (schoolSource == null) continue;
-                if (target.isDeadOrDying()) break;
-                target.invulnerableTime = 0;                      // ② 每段都清无敌帧
-                target.hurt(schoolSource, per);
-            }
-            target.invulnerableTime = 20;                         // 恢复成原版命中后的无敌时间 ✓
+            target.hurt(physicalSource(target, attacker), per);
         } catch (Throwable t) {
-            TinkersNewlife.LOGGER.debug("[混沌之流] 分段失败（已忽略）: {}", t.toString());
+            TinkersNewlife.LOGGER.debug("[混沌之流] 物理段失败（已忽略）: {}", t.toString());
         } finally {
             SPLITTING.set(Boolean.FALSE);
+        }
+
+        // ② 学派段：段数不多（≤ 16 段，普通整合包 ≈ 9 学派 ✓）⇒ 同 tick 全打完，行为与以前完全一致 ✓；
+        //    段数多（学派爆炸的包）⇒ 摊到后面若干 tick，每 tick 只发 perTick 段 ⇒ 单帧不再卡 ✓
+        if (perTick <= 0 || schoolKeys.size() <= BURST_LIMIT) {
+            SPLITTING.set(Boolean.TRUE);
+            try {
+                for (ResourceKey<DamageType> key : schoolKeys) {
+                    if (target.isDeadOrDying()) break;
+                    DamageSource schoolSource = schoolSource(target, attacker, key);
+                    if (schoolSource == null) continue;
+                    target.invulnerableTime = 0;                  // 每段都清无敌帧
+                    target.hurt(schoolSource, per);
+                }
+                target.invulnerableTime = 20;                     // 恢复成原版命中后的无敌时间 ✓
+            } catch (Throwable t) {
+                TinkersNewlife.LOGGER.debug("[混沌之流] 分段失败（已忽略）: {}", t.toString());
+            } finally {
+                SPLITTING.set(Boolean.FALSE);
+            }
+            return;
+        }
+        enqueue(target, attacker, per, schoolKeys);
+    }
+
+    // ============================================================
+    //  ⭐ 学派段的"每 tick 限量发放"（不丢伤害类型，只摊开时间）
+    // ============================================================
+
+    /**
+     * 一"串"待发放的学派段。
+     *
+     * <p>为什么需要它：学派爆炸的整合包里，"1 段物理 + 全部学派"这种打法在**同一 tick** 里
+     * 要跑几十次完整 {@code hurt()}（每条伤害管线 + 全模组监听）⇒ 单帧直接卡住 ✗。
+     * 而段数本身**不能砍**（用户："我混沌之流重要的是伤害类型不是段数啊" ✗）——
+     * 所以改成把同一串摊到后面若干 tick：**类型一个不少 ✓、总伤害不变 ✓、单帧只跑几段 ✓**。
+     */
+    private static final class Flurry {
+        final java.util.UUID targetId;
+        final java.util.UUID attackerId;
+        final float per;
+        final List<ResourceKey<DamageType>> keys;
+        int index;
+
+        Flurry(java.util.UUID targetId, java.util.UUID attackerId, float per, List<ResourceKey<DamageType>> keys) {
+            this.targetId = targetId;
+            this.attackerId = attackerId;
+            this.per = per;
+            this.keys = keys;
+        }
+    }
+
+    /** 每维度一条待发放队列（key = 维度） */
+    private static final java.util.Map<net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>,
+            List<Flurry>> QUEUES = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** 段数不超过这个值时仍然"同 tick 打完"（普通整合包 ≈ 9 学派 ⇒ 行为与以前完全一致 ✓） */
+    private static final int BURST_LIMIT = 16;
+
+    private static void enqueue(LivingEntity target, LivingEntity attacker, float per,
+                                List<ResourceKey<DamageType>> keys) {
+        if (!(target.level() instanceof ServerLevel sl)) return;
+        QUEUES.computeIfAbsent(sl.dimension(), k -> new java.util.ArrayList<>())
+                .add(new Flurry(target.getUUID(), attacker.getUUID(), per, List.copyOf(keys)));
+    }
+
+    /**
+     * 每 tick 发放：**全局**（整个维度）最多 {@code segments_per_tick} 段 ✓ ——
+     * 这样无论同时有多少串、或玩家疯狂点，单帧的伤害管线开销都有硬上限 ✓。
+     */
+    @SubscribeEvent
+    public static void onLevelTick(net.minecraftforge.event.TickEvent.LevelTickEvent event) {
+        if (event.phase != net.minecraftforge.event.TickEvent.Phase.END) return;
+        if (event.level.isClientSide) return;
+        if (!(event.level instanceof ServerLevel serverLevel)) return;
+
+        List<Flurry> queue = QUEUES.get(serverLevel.dimension());
+        if (queue == null || queue.isEmpty()) return;
+
+        int budget = Math.max(1, segmentsPerTick());
+        SPLITTING.set(Boolean.TRUE);
+        try {
+            java.util.Iterator<Flurry> it = queue.iterator();
+            while (it.hasNext() && budget > 0) {
+                Flurry f = it.next();
+                net.minecraft.world.entity.Entity te = serverLevel.getEntity(f.targetId);
+                net.minecraft.world.entity.Entity ae = serverLevel.getEntity(f.attackerId);
+                if (!(te instanceof LivingEntity target) || target.isRemoved() || target.isDeadOrDying()
+                        || !(ae instanceof LivingEntity attacker)) {
+                    if (te instanceof LivingEntity gone) gone.invulnerableTime = 20;
+                    it.remove();
+                    continue;
+                }
+                while (f.index < f.keys.size() && budget > 0) {
+                    DamageSource src = schoolSource(target, attacker, f.keys.get(f.index++));
+                    if (src == null) continue;
+                    target.invulnerableTime = 0;
+                    target.hurt(src, f.per);
+                    budget--;
+                    if (target.isDeadOrDying()) break;
+                }
+                if (f.index >= f.keys.size() || target.isDeadOrDying()) {
+                    target.invulnerableTime = 20;                    // 收尾恢复原版无敌时间 ✓
+                    it.remove();
+                } else {
+                    // ⭐ 这一 tick 没发完 ⇒ 也先把无敌帧恢复成原版的 20 ✓
+                    //    （否则"摊开的这段时间"里目标等于没有受击间隔，别人可以随便打 ✗）
+                    target.invulnerableTime = 20;
+                }
+            }
+            if (queue.isEmpty()) QUEUES.remove(serverLevel.dimension());
+        } catch (Throwable t) {
+            TinkersNewlife.LOGGER.debug("[混沌之流] 分段队列结算失败（已忽略）: {}", t.toString());
+        } finally {
+            SPLITTING.set(Boolean.FALSE);
+        }
+    }
+
+    /** 每 tick 最多发放几段（读配置；异常退回默认 4 ✓ —— 性能兜底不能因为配置异常而失效 ✗） */
+    private static int segmentsPerTick() {
+        try {
+            return com.mofengbaizhi.tinkersnewlife.config.ModConfig.CHAOS_FLOW_SEGMENTS_PER_TICK.get();
+        } catch (Throwable ignored) {
+            return 4;
         }
     }
 
@@ -147,13 +270,13 @@ public final class ChaosFlowHandler {
         return fresh;
     }
 
-    /** 学派分段上限（读配置；出任何问题退回默认 16 ✓ —— 性能兜底绝不能因为配置异常而失效 ✗） */
+    /** 学派段上限（读配置；出任何问题退回默认 64 ≈ 不限 ✓ —— 性能兜底绝不能因为配置异常而失效 ✗） */
     private static int maxSchoolSegments() {
         try {
             return Math.max(0, com.mofengbaizhi.tinkersnewlife.config.ModConfig
                     .CHAOS_FLOW_MAX_SCHOOL_SEGMENTS.get());
         } catch (Throwable ignored) {
-            return 16;
+            return 64;
         }
     }
 
