@@ -17,36 +17,41 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
-import net.minecraftforge.client.event.RenderPlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 /**
- * 脚部飞剑的<b>客户端渲染</b>：飞起来时把飞剑画在玩家脚下、跟着玩家模型走。
+ * 脚部飞剑的<b>客户端渲染</b>：飞起来时把飞剑画在玩家脚下、跟着玩家走。
  *
  * <h2>为什么不再用"脚下实体"</h2>
  * 旧做法是一个真实体 {@code FlyingSwordFootEntity}：服务端**每 tick** {@code setPos} 跟着玩家跑、
  * 再把位置同步给所有客户端 ✗ —— 纯视觉的东西却持续占用 tick 与带宽（"持续瞬移很影响游戏tick" ✗）。
  * 现在服务端不生成它（登录时还会清理旧存档残留 ✓），客户端自己画 ✓。
  *
- * <h2>两条渲染路径</h2>
+ * <h2>⭐ 为什么画在"世界渲染阶段"这一层（YSM 兼容的关键）</h2>
  * <ul>
- *   <li><b>第三人称 / 他人视角</b>：{@link RenderPlayerEvent.Post} —— 就在原版玩家渲染那一趟里、
- *       模型画完之后 ✓，PoseStack 正停在"已平移到该玩家"那一层 ✓，所以只下移 0.1 就到脚下 ✓
- *       （与模型同帧同源 ✓，这就是"跟模型画在一起" ✓）；</li>
- *   <li><b>第一人称</b>：原版**不渲染自己**（上面那个事件不触发 ✗）→ 另走
- *       {@link RenderLevelStageEvent}（{@code AFTER_ENTITIES}）补一趟，只画自己 ✓。</li>
+ *   <li>本模组的无为转变伪装渲染之所以能在<b>史蒂夫模型（YSM）开启时照常显示</b>，
+ *       根本原因不是它做了什么特别的事，而是它挂在 {@code EntityRenderDispatcher#render} 这一层 ——
+ *       <b>比"谁来画玩家模型"更高</b>。挂在更下层的 {@code RenderPlayerEvent.Post}（在
+ *       {@code PlayerRenderer} 里）会被 YSM 整条绕开 ✗（YSM 自己 mixin 了调度器来接管玩家渲染，
+ *       原版 {@code PlayerRenderer} 这条链根本走不到 ✗）。</li>
+ *   <li>飞剑与伪装<b>需求不同</b>：伪装是"<b>替换</b>玩家外观"，必须去调度器那里 {@code cancel}；
+ *       飞剑是"<b>额外叠加</b>一个物品"，所以挂在比调度器<b>再高一层</b>最干净 ——
+ *       {@link RenderLevelStageEvent}（{@code AFTER_ENTITIES}）里直接遍历玩家自己画 ✓。
+ *       这一层连"谁在画玩家模型"都不经过 ⇒ <b>装什么模型模组都拦不住</b> ✓，
+ *       也天然保证"每帧每个玩家只画一次"（不会像调度器层那样因双注入或被 cancel 而重复或漏画 ✓）。</li>
+ *   <li>实体在 {@code AFTER_ENTITIES} 之前已经画完 ⇒ 深度缓冲里已有玩家模型 ✓，
+ *       剑与腿脚的前后遮挡关系仍然正确 ✓；这一阶段写入的顶点仍会随本趟 {@code BufferSource} 一起刷出 ✓。</li>
  * </ul>
- * ⚠ 接管玩家渲染的模组（如 YSM）会替换 {@code LivingEntityRenderer#render} → 上面第一条自然不生效，
- * 也就是"YSM 下看不见" —— 用户明确接受这一点（原版模型能画出来就行 ✓）。
  *
  * <h2>⭐ 必须用"插值"位置与朝向（"一顿一顿"的根因）</h2>
  * 相机与玩家模型都是按 {@code partialTick} 插值渲染的；如果直接用 {@code getX()/getY()/getZ()}
  * （整 tick 的位置），剑最多会落后一 tick 的距离 ⇒ 快速飞行时看起来一跳一跳 ✗（用户实测）。
  * 所以这里位置用 {@code Mth.lerp(partialTick, xOld, x)}、朝向用
  * {@link Player#getViewVector(float)}（插值视向量）—— 与模型完全同口径 ✓。
+ * 别人的位置同理（{@code xOld} 由位置包维护 ✓），所以多人下也不会抖 ✓。
  *
  * <p>朝向数学是从旧的 {@code FlyingSwordFootRenderer} 原样搬的（世界空间：模型默认前向
  * {@code (0.707,0.707,0)} → 立起 → 平躺 → 水平转到玩家朝向，缩放 1.2 ✓）。
@@ -63,54 +68,41 @@ public final class FlyingSwordFootRenderHandler {
     /** 飞剑离脚底多高（旧实体就生成在 owner.y - 0.1 ✓） */
     private static final double FOOT_OFFSET_Y = -0.1;
 
-    /** 第三人称 / 他人视角：跟原版玩家模型同一趟渲染 ✓ */
-    @SubscribeEvent
-    public static void onRenderPlayer(RenderPlayerEvent.Post event) {
-        Player player = event.getEntity();
-        if (!airborne(player)) return;
-        ItemStack stack = FlyingSwordCuriosHandler.feetSwordOf(player);
-        if (stack.isEmpty()) return;
-
-        float partialTick = event.getPartialTick();
-        PoseStack poseStack = event.getPoseStack();
-        poseStack.pushPose();
-        // 该事件里 PoseStack 的原点已经平移到玩家（脚底）✓ → 只下移 0.1 ✓
-        poseStack.translate(0.0, FOOT_OFFSET_Y, 0.0);
-        applyOrientation(poseStack, player, partialTick);
-        drawSword(poseStack, event.getMultiBufferSource(), event.getPackedLight(), stack, player);
-        poseStack.popPose();
-    }
-
     /**
-     * 第一人称：原版不渲染自己 → 在世界渲染阶段补一趟（只画自己，且只在第一人称，
-     * 免得第三人称被画两把 ✗）。
+     * 统一渲染路径：{@code AFTER_ENTITIES} 阶段遍历可见玩家，各自在脚下画一把飞剑 ✓。
+     * <p>自己（第一人称/第三人称）与他人都在 {@code level.players()} 里 ⇒ 一个循环全覆盖 ✓；
+     * 第一人称也照画（用户要求"第一人称可见"，所以<b>不</b>跳过自己 ✓）。
      */
     @SubscribeEvent
     public static void onRenderLevelStage(RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) return;
         Minecraft mc = Minecraft.getInstance();
-        if (!mc.options.getCameraType().isFirstPerson()) return;   // 第三人称交给上面那趟 ✓
         ClientLevel level = mc.level;
-        Player player = mc.player;
-        if (level == null || player == null || !airborne(player)) return;
-        ItemStack stack = FlyingSwordCuriosHandler.feetSwordOf(player);
-        if (stack.isEmpty()) return;
+        if (level == null) return;
 
         float partialTick = event.getPartialTick();
-        // ⭐ 插值位置：相机是插值的，这里不插值就会"一顿一顿" ✗
-        double x = Mth.lerp(partialTick, player.xOld, player.getX());
-        double y = Mth.lerp(partialTick, player.yOld, player.getY());
-        double z = Mth.lerp(partialTick, player.zOld, player.getZ());
         Camera camera = event.getCamera();
         Vec3 cam = camera.getPosition();
-
         PoseStack poseStack = event.getPoseStack();
-        poseStack.pushPose();
-        poseStack.translate(x - cam.x, y + FOOT_OFFSET_Y - cam.y, z - cam.z);
-        applyOrientation(poseStack, player, partialTick);
-        int light = LevelRenderer.getLightColor(level, BlockPos.containing(x, y, z));
-        drawSword(poseStack, mc.renderBuffers().bufferSource(), light, stack, player);
-        poseStack.popPose();
+        MultiBufferSource buffer = mc.renderBuffers().bufferSource();
+
+        for (Player player : level.players()) {
+            if (!airborne(player)) continue;
+            ItemStack stack = FlyingSwordCuriosHandler.feetSwordOf(player);
+            if (stack.isEmpty()) continue;
+
+            // ⭐ 插值位置：相机是插值的，这里不插值就会"一顿一顿" ✗（与模型同口径 ✓）
+            double x = Mth.lerp(partialTick, player.xOld, player.getX());
+            double y = Mth.lerp(partialTick, player.yOld, player.getY());
+            double z = Mth.lerp(partialTick, player.zOld, player.getZ());
+
+            poseStack.pushPose();
+            poseStack.translate(x - cam.x, y + FOOT_OFFSET_Y - cam.y, z - cam.z);
+            applyOrientation(poseStack, player, partialTick);
+            int light = LevelRenderer.getLightColor(level, BlockPos.containing(x, y, z));
+            drawSword(poseStack, buffer, light, stack, player);
+            poseStack.popPose();
+        }
     }
 
     /** 只在"飞起来"时画（自己的 abilities 精确 ✓；别人的 abilities 不同步 → 用是否离地判断 ✓） */
