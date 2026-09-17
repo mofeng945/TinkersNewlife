@@ -524,6 +524,7 @@
     "message.tinkersnewlife.clash.loser_unlock": "§7所有领域对抗已结束，你重新可以使用领域与术式",
     "message.tinkersnewlife.clash.locked_domain": "§4对抗失败锁定中：所有领域对抗结束前无法展开领域",
     "message.tinkersnewlife.clash.locked_technique": "§4对抗失败锁定中：所有领域对抗结束前无法使用术式",    "message.tinkersnewlife.clash.start": "§c领域对抗！空间合并，双方领域效果暂时失效，咒力消耗加剧！",
+    "message.tinkersnewlife.clash.merge": "§d同心戒共鸣·领域合并！两套领域效果同时生效，同伴之间互不影响",
   "message.tinkersnewlife.clash.win": "§6领域对抗胜利！败者已被强行拉入你的领域！",
   "message.tinkersnewlife.clash.lose": "§c领域被击破，你被强行拉入了对方的领域！",
   "message.tinkersnewlife.gamble.small": "§a小奖！恢复 250 点咒力，获得 10 秒伤害吸收 IV",

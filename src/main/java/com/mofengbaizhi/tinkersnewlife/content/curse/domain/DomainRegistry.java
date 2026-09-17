@@ -320,6 +320,19 @@ public final class DomainRegistry {
                 continue;
             }
 
+            // ⭐ 同心戒友好合并的维护：同伴领域已关闭 / 同伴下线 / 两人已不再成对（摘下戒指）
+            //    → 解除合并并**重建自己的完整球壳**（合并时拆掉的墙要补回来）
+            if (domain.isMerged()) {
+                UUID allyId = domain.getMergedAlly();
+                ServerPlayer ally = server.getPlayerList().getPlayer(allyId);
+                if (DOMAINS.get(allyId) == null || ally == null
+                        || !com.mofengbaizhi.tinkersnewlife.content.curse.TwinRingLink
+                        .arePaired(player, ally)) {
+                    domain.clearMergedAlly();
+                    domain.buildBarrier(player.serverLevel());
+                }
+            }
+
             // 对抗中：领域效果与困锁暂时失效（空间已合并，双方效果停摆）
             if (clashing) continue;
 
@@ -357,6 +370,16 @@ public final class DomainRegistry {
             double rSum = domain.getRadius() + other.getRadius();
             if (delta.lengthSqr() >= rSum * rSum) continue; // 不相交
 
+            // ⭐⭐ 同心戒同伴：**友好合并**，不是对抗 ——
+            // 空间一样打通，但双方效果**照常生效**：领域内其他目标同时吃两套效果，
+            // 两位主人互相免疫（entitiesInSphere 已剔除同伴）。不暂停、不加剧消耗、不分胜负 ✓
+            // 已合并的直接跳过（球心静止 → 相交关系不变；"是否还成对"由 onServerTick 的维护统一处理）
+            if (domain.isMergedWith(other.getOwner())) continue;
+            if (com.mofengbaizhi.tinkersnewlife.content.curse.TwinRingLink.arePaired(player, otherPlayer)) {
+                mergeAllyDomains(player.serverLevel(), player, domain, otherPlayer, other);
+                continue;
+            }
+
             joinClash(server, player, domain, otherPlayer, other);
 
             // 连通合并：把对方原来的对手也拉进本领域（反向同样登记）
@@ -383,6 +406,26 @@ public final class DomainRegistry {
                 + CursePowerHelper.getCurseAffinity(player) / 10.0;
     }
 
+    /**
+     * 同心戒同伴的领域<b>友好合并</b>：两个球体互相嵌进对方球内的那部分阻挡墙拆掉（空间打通），
+     * 并互相记录对方球体（供 {@code clampEntities} 按"共享空间"判定困锁）。
+     *
+     * <p>与 {@link #joinClash} 的区别（这是本功能的关键）：<b>不进对抗表</b> ——
+     * 因此 {@code onServerTick} 里那句 {@code if (clashing) continue;} 不会命中，
+     * 两套领域效果都会照常每 tick 结算 ✓；消耗不变、没有胜负、也不触发"对抗失败"锁 ✓。
+     * <p>视觉不用管：{@code DomainVisualEntity} 对**任何相交**的领域球都会自己挖洞
+     * （与是否对抗无关），所以合并后的外壳看起来本来就是通的 ✓。
+     */
+    private static void mergeAllyDomains(ServerLevel level, ServerPlayer player, BaseDomain domain,
+                                         ServerPlayer otherPlayer, BaseDomain other) {
+        domain.setMergedAlly(other.getOwner(), other.getCenter(), other.getRadius());
+        other.setMergedAlly(domain.getOwner(), domain.getCenter(), domain.getRadius());
+        domain.removeBarrierOverlap(level, other.getCenter(), other.getRadius());
+        other.removeBarrierOverlap(level, domain.getCenter(), domain.getRadius());
+        player.displayClientMessage(Component.translatable("message.tinkersnewlife.clash.merge"), true);
+        otherPlayer.displayClientMessage(Component.translatable("message.tinkersnewlife.clash.merge"), true);
+    }
+
     /** 让 domain 与 other 互相成为对手：打通墙、暂停效果、提示双方 */
     private static void joinClash(MinecraftServer server, ServerPlayer player, BaseDomain domain,
                                   ServerPlayer otherPlayer, BaseDomain other) {
@@ -404,6 +447,14 @@ public final class DomainRegistry {
         domain.clearClash();
         // 重建完整球壳（补回对抗期间移除的重合部分）
         domain.buildBarrier(winner.serverLevel());
+        // ⭐ 但若本领域还和同伴**友好合并**着：重建会把嵌进同伴球内的墙也砌回来 ✗
+        //    → 立刻再拆一次（否则"与第三方对抗胜出"会把合并空间重新堵上）
+        if (domain.isMerged()) {
+            BaseDomain ally = DOMAINS.get(domain.getMergedAlly());
+            if (ally != null) {
+                domain.removeBarrierOverlap(winner.serverLevel(), ally.getCenter(), ally.getRadius());
+            }
+        }
         // 领域效果恢复
         domain.onClashEnd(winner, null);
         // 客户端：恢复完整黑色球壳

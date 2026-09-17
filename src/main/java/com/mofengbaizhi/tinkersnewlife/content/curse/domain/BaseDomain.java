@@ -361,6 +361,10 @@ public abstract class BaseDomain {
                 removed++;
             }
         }
+        // ⭐ "待补墙"里落在合并区的也要一起剔除：敌对对抗期间不补墙，所以旧代码没暴露这个问题；
+        //    但同心戒的**友好合并照常补墙**（效果不停摆 → 每 5 tick 仍会 refill），
+        //    不剔除就会把墙又砌回合并区、把打通的空间重新堵上 ✗
+        barrierGaps.removeIf(pos -> Vec3.atCenterOf(pos).distanceToSqr(otherCenter) <= otherRadius * otherRadius);
         return removed;
     }
 
@@ -429,6 +433,61 @@ public abstract class BaseDomain {
         return findSafeSpot(level, new Vec3(0, 0, 0), radius * 0.6);
     }
 
+    // ============================================================
+    //  ⭐ 同心戒同伴：领域**友好合并**（与"对抗"是两套东西，别混）
+    //
+    //  对抗 = 敌对：空间合并但**双方效果停摆**、消耗加剧、分胜负。
+    //  友好合并 = 同伴：空间同样打通，但**两套效果都照常生效** ——
+    //  领域内其他目标同时吃两个领域的效果，两位主人则互相免疫（{@link #entitiesInSphere} 已剔除同伴）✓
+    //  所以这里**绝不能**借用 clashOpponents：一旦进了那张表，DomainRegistry 的
+    //  `if (clashing) continue;` 就会把效果停掉、败者拉入等逻辑也会跟着跑 ✗。
+    // ============================================================
+
+    /** 同伴（同心戒同对）的领域主人；null = 未合并 */
+    private UUID mergedAlly = null;
+    /** 同伴领域球心（合并时缓存，避免每 tick 反查注册表） */
+    private Vec3 allyCenter = null;
+    /** 同伴领域半径 */
+    private double allyRadius = 0;
+
+    /** 是否处于"同心戒同伴领域友好合并"状态 */
+    public boolean isMerged() { return mergedAlly != null; }
+
+    /** 是否与指定领域主人友好合并 */
+    public boolean isMergedWith(UUID ownerId) { return ownerId != null && ownerId.equals(mergedAlly); }
+
+    /** 友好合并的同伴领域主人（未合并 = null） */
+    public UUID getMergedAlly() { return mergedAlly; }
+
+    /** 建立友好合并（记录同伴球体；"拆掉互相嵌入的那部分墙"由 DomainRegistry 做） */
+    public void setMergedAlly(UUID ownerId, Vec3 center, double radius) {
+        this.mergedAlly = ownerId;
+        this.allyCenter = center;
+        this.allyRadius = radius;
+    }
+
+    /**
+     * 解除友好合并（同伴领域关闭 / 主人下线 / 两人不再成对）。
+     * <p>同时清掉"实体进出追踪"：解除瞬间正站在同伴球内（其实在本领域外）的实体会被当作
+     * "首次出现"，从而不会被"试图离开"的逻辑一把拽回球内 ✗→✓。
+     */
+    public void clearMergedAlly() {
+        this.mergedAlly = null;
+        this.allyCenter = null;
+        this.allyRadius = 0;
+        entityInside.clear();
+    }
+
+    /**
+     * 该点是否落在"合并后的共享空间"内（自己的球 ∪ 同伴的球）。
+     * <p>困锁（{@link #clampEntities}）的"内/外"判定要用它：否则两个领域会各自把
+     * 对方球内的实体往外推，共享空间实际只剩"自己的球减去同伴的球" ✗。
+     */
+    private boolean inMergedSpace(Vec3 pos) {
+        if (pos.distanceToSqr(center) <= (double) radius * radius) return true;
+        return allyCenter != null && pos.distanceToSqr(allyCenter) <= allyRadius * allyRadius;
+    }
+
     public UUID getOwner() { return owner; }
     public Vec3 getCenter() { return center; }
     public int getRadius() { return radius; }
@@ -494,7 +553,7 @@ public abstract class BaseDomain {
 
             Vec3 delta = entity.position().subtract(center);
             double dist = delta.length();
-            boolean inside = dist <= r;
+            boolean inside = inMergedSpace(entity.position());   // ⭐ 合并后按"共享空间"判定（见 inMergedSpace）
             Boolean prevInside = entityInside.put(entity.getUUID(), inside);
             if (prevInside == null) continue; // 首次出现：按当前位置定性（在内部即被困，外部即保持在外）
 
