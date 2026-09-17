@@ -1,0 +1,15 @@
+{
+  "type": "tconstruct:casting_table",
+  "cooling_time": 100,
+  "fluid": {
+    "amount": 1000,
+    "fluid": "tinkersnewlife:liquid_holy_light_still"
+  },
+  "result": "irons_spellbooks:divine_pearl",
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "irons_spellbooks"
+    }
+  ]
+}
