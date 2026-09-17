@@ -681,13 +681,44 @@ public final class CursedSpiritTechnique extends BaseTechnique {
      * 正在"主动收回"的实体：收回走的是死亡链路（见 {@link #recallReleased}），
      * 但**收回本意是保留记录**（下次还能再放），所以 {@link #onMinionDeath} 必须放行它们，
      * 不能按"战死"把记录删掉。
+     *
+     * <p>⭐ 为什么是**带时效的窗口**（UUID → 标记时刻），而不是"补刀循环期间的一个集合"：
+     * 收回确实走死亡链路，但<b>死亡不一定在同一 tick 内发生</b> ✗ ——
+     * Boss（诡厄巫法的使徒/亚波伦这类有死亡动画、阶段转换甚至"击败后变形态"的）
+     * 常常是"血打到 0 之后隔几 tick 才真正 {@code die()}"，甚至先复活/变身再死；
+     * 那段延迟里标记早已被摘掉 ⇒
+     * ① {@link #onMinionDeath} 把记录当"战死"删掉 ✗；
+     * ② 掉落/经验抑制（{@link #isRecalling}）也放行 ⇒ **主动收回反而掉一地战利品** ✗
+     * （用户实测："本人放出再收回导致使徒死亡掉落物品并删除记录"）。
+     * 现在改成"标记后 {@value #RECALL_GRACE_TICKS} tick 内都算收回中" ✓ ——
+     * 这期间它无论何时、以何种方式真正死掉，都按"收回"结算（不掉落、不删记录 ✓）。
      */
-    private static final java.util.Set<java.util.UUID> RECALLING =
-            java.util.concurrent.ConcurrentHashMap.newKeySet();
+    private static final int RECALL_GRACE_TICKS = 200;   // 10 秒，足够任何死亡动画/变身收尾
+    private static final java.util.Map<java.util.UUID, Long> RECALLING =
+            new java.util.concurrent.ConcurrentHashMap<>();
 
-    /** 该实体当前是否正在被"主动收回"（掉落/经验抑制要用） */
+    /** 打上"正在收回"标记（带时刻，{@value #RECALL_GRACE_TICKS} tick 内有效） */
+    private static void markRecalling(net.minecraft.world.entity.Entity e) {
+        if (e == null) return;
+        long now = e.level().getGameTime();
+        if (RECALLING.size() > 64) {
+            RECALLING.entrySet().removeIf(en -> now - en.getValue() > RECALL_GRACE_TICKS);
+        }
+        RECALLING.put(e.getUUID(), now);
+    }
+
+    /** 该实体当前是否正在被"主动收回"（掉落/经验抑制、记录保留都要用） */
     public static boolean isRecalling(net.minecraft.world.entity.Entity e) {
-        return e != null && RECALLING.contains(e.getUUID());
+        if (e == null) return false;
+        Long marked = RECALLING.get(e.getUUID());
+        if (marked == null) return false;
+        long now = e.level().getGameTime();
+        // now < marked：换维度/存档重载导致 gameTime 回退 → 当过期处理，免得一直"收回中" ✗
+        if (now < marked || now - marked > RECALL_GRACE_TICKS) {
+            RECALLING.remove(e.getUUID(), marked);
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -796,18 +827,15 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         //    ② **不再**打咒力致死标记 —— 收回不是被谁打死的，不该套用"被诅咒致死"那套文案 ✗。
         //    下面用 genericKill()（无攻击者）⇒ 既不留击杀归属，也不套咒力文案 ✓。
         com.mofengbaizhi.tinkersnewlife.content.curse.KillAttribution.forget(mob);
-        RECALLING.add(mob.getUUID());
-        try {
-            // ⚠ 循环补刀：有些 mod 会给特定生物加"单次受击上限"
-            //   （例如 akaishi 把每个监守者都做成 boss，单次最多 24 点）。
-            //   一次巨额伤害打不死它 -> 就不会触发 LivingDeathEvent ->
-            //   别人的"死亡时清理"（血条等）也就不会跑。所以这里反复补刀直到真死。
-            for (int i = 0; i < 64 && mob.isAlive() && !mob.isRemoved(); i++) {
-                mob.invulnerableTime = 0;
-                mob.hurt(mob.damageSources().genericKill(), Float.MAX_VALUE);
-            }
-        } finally {
-            RECALLING.remove(mob.getUUID());
+        // ⭐ 标记带时效（见 RECALLING 字段说明）：死亡可能延后到补刀循环结束之后才真正发生 ✗
+        markRecalling(mob);
+        // ⚠ 循环补刀：有些 mod 会给特定生物加"单次受击上限"
+        //   （例如 akaishi 把每个监守者都做成 boss，单次最多 24 点）。
+        //   一次巨额伤害打不死它 -> 就不会触发 LivingDeathEvent ->
+        //   别人的"死亡时清理"（血条等）也就不会跑。所以这里反复补刀直到真死。
+        for (int i = 0; i < 64 && mob.isAlive() && !mob.isRemoved(); i++) {
+            mob.invulnerableTime = 0;
+            mob.hurt(mob.damageSources().genericKill(), Float.MAX_VALUE);
         }
         if (mob.isAlive() && !mob.isRemoved()) {
             mob.discard();          // 死亡被取消 → 兜底
@@ -828,7 +856,7 @@ public final class CursedSpiritTechnique extends BaseTechnique {
             removeAkaishiWardenBar(warden);
         }
         // ⭐ 主动收回（recallReleased）也会走到这里：保留记录，只清召唤物
-        if (RECALLING.contains(dead.getUUID())) return;
+        if (isRecalling(dead)) return;
         for (ServerPlayer p : sl.getServer().getPlayerList().getPlayers()) {
             List<SpiritEntry> list = entries(p);
             SpiritEntry hit = findEntryFor(p, dead); boolean removed = hit != null && list.removeIf(x -> x.uid != null && x.uid.equals(hit.uid));
