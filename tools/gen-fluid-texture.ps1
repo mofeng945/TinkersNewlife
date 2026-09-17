@@ -1,4 +1,4 @@
-﻿# 按"亮度 → 色带"给流体贴图重新上色，生成一套新的 still/flowing + .mcmeta。
+# 按"亮度 → 色带"给流体贴图重新上色，生成一套新的 still/flowing + .mcmeta。
 #
 # 为什么需要它：新流体（如「魔金精华」）要有一张和材料配色一致的贴图，
 # 而手画 16×N / 32×M 的动画条不现实 —— 所以直接拿一张现成的同风格流体贴图
@@ -9,6 +9,13 @@
 #   powershell -ExecutionPolicy Bypass -File tools\gen-fluid-texture.ps1 `
 #       -Name magic_gold_essence -Source molten_mithril `
 #       -Ramp FF2B1A33,FF57307A,FF8A4A6E,FFC07A50,FFDFA845,FFF5CE72,FFFFF2BC
+#
+# ⚠ `-Source` 指的是**本模组 textures/block 下已有的 `<Source>_still.png`**（"拿我们自己的贴图再改一次色"）。
+#   如果你要的底图是**匠魂本体**的（`molten/transparent`、`molten/alloy/rose_gold` …），
+#   不要用这个脚本 —— 用 `tools\gen-fluid-from-tcon.ps1` ✓：
+#   它会去匠魂 jar 里按 `assets/tconstruct/textures/fluid/<路径>/still.png` 取底图，
+#   并顺带裁到 16×256 / 32×256、写好 `.mcmeta` 与 `mantle/fluid_texture` 配置 ✓。
+#   （项目口径：**流体材质尽量复用匠魂改色** ✓。）
 #
 # 色带 7 个色对应亮度 0/63/102/140/178/216/255（与材料 grey_to_sprite 调色板同一组）✓
 param(
@@ -126,7 +133,7 @@ function Convert-Texture([string]$srcPath, [string]$dstPath) {
 $mcmeta = "{`n  `"animation`": {`n    `"frametime`": $Frametime`n  }`n}`n"
 foreach ($kind in @('still', 'flowing')) {
     $src = Join-Path $texDir "${Source}_${kind}.png"
-    if (-not (Test-Path $src)) { throw "找不到源贴图 $src" }
+    if (-not (Test-Path $src)) { throw "找不到源贴图 $src —— 底图必须是本模组 textures/block 下已有的 <Source>_still.png；要取匠魂本体的底图请改用 tools\gen-fluid-from-tcon.ps1" }
     $dst = Join-Path $texDir "${Name}_${kind}.png"
     Convert-Texture $src $dst
     [System.IO.File]::WriteAllText("$dst.mcmeta", $mcmeta, (New-Object System.Text.UTF8Encoding($false)))
