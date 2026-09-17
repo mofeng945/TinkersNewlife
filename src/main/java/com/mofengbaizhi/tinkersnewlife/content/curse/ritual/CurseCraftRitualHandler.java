@@ -145,7 +145,10 @@ public final class CurseCraftRitualHandler {
         ItemStack held = player.getMainHandItem();
         if (held.isEmpty()) return;
         // 别把核心往材料位上放（核心要去矿石正上方那盏灯）
-        if (isCoreForAnyRecipe(level, held)) return;
+        // ⚠ 但"既是某配方的核心、又是另一配方的材料"的**歧义物品必须放行** ——
+        //   奈亚的欲念就是这种（封呪瓶的核心 + 认知阻碍面具的材料）。
+        //   原来一刀切 `isCoreForAnyRecipe` 会把它永久挡在材料位之外 ✗（用户实测：摆不上仪式）
+        if (isCoreForAnyRecipe(level, held) && !isMaterialForAnyRecipe(level, held)) return;
         ItemStack one = held.copyWithCount(1);
         held.shrink(1);
         spawnDisplay(level, lantern, one, ROLE_MATERIAL);
@@ -188,6 +191,20 @@ public final class CurseCraftRitualHandler {
     private static boolean isCoreForAnyRecipe(ServerLevel level, ItemStack stack) {
         for (CurseCraftRecipe recipe : recipes(level)) {
             if (recipe.core().test(stack)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * 该物品是不是**某个配方的材料**。
+     * <p>与 {@link #isCoreForAnyRecipe} 配对，用来放行"核心兼材料"的歧义物品 ✓
+     * （例：奈亚的欲念 = 封呪瓶的核心 + 认知阻碍面具的材料 ✓）。
+     */
+    private static boolean isMaterialForAnyRecipe(ServerLevel level, ItemStack stack) {
+        for (CurseCraftRecipe recipe : recipes(level)) {
+            for (Ingredient ingredient : recipe.materials()) {
+                if (ingredient.test(stack)) return true;
+            }
         }
         return false;
     }

@@ -147,11 +147,25 @@ public final class WuWeiHandler {
     }
 
     public static List<String> getRecordedForms(ServerPlayer player) {
-        return getRecords(player);
+        List<String> own = getRecords(player);
+        // ⭐ 同心戒共享术式：把同伴记录到的形态并进来（去重）——
+        //    否则"借来无为转变"的一方永远是空列表，选了也没得选 ✗（用户实测）
+        ServerPlayer partner = TwinRingLink.findPartner(player);
+        if (partner != null) {
+            for (String id : getRecords(partner)) {
+                if (!own.contains(id)) own.add(id);
+            }
+        }
+        return own;
     }
 
     public static String getSelected(ServerPlayer player) {
-        return player.getPersistentData().getString(KEY_SELECTED);
+        String own = player.getPersistentData().getString(KEY_SELECTED);
+        if (!own.isEmpty()) return own;
+        // ⭐ 同心戒共享术式：自己没选形态时，借用同伴当前选的形态 ✓
+        //    （摘戒指 / 同伴下线 → 立刻回落为空，与其它共享效果一致 ✓）
+        ServerPlayer partner = TwinRingLink.findPartner(player);
+        return partner == null ? "" : partner.getPersistentData().getString(KEY_SELECTED);
     }
 
     public static void setSelected(ServerPlayer player, String entityTypeId) {
@@ -162,7 +176,19 @@ public final class WuWeiHandler {
         return !getSelected(player).isEmpty();
     }
 
+    /**
+     * 该玩家能否使用「无为转变」：<b>自己核心上装了，或同心戒共鸣的同伴装了</b>（共享术式 ✓）。
+     * <p>同名方法原先只查自己核心 ✗ —— 借来的一方会在 {@link #onSelfKey} / 形态记录 /
+     * 自闭圆顿郭 取形态等处被直接挡掉，表现为"共享的术式用不了"（用户实测）。
+     */
     public static boolean hasTechnique(ServerPlayer player) {
+        if (ownsTechnique(player)) return true;
+        ServerPlayer partner = TwinRingLink.findPartner(player);
+        return partner != null && ownsTechnique(partner);
+    }
+
+    /** 严格看自己核心上有没有装「无为转变」 */
+    private static boolean ownsTechnique(ServerPlayer player) {
         ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
         if (core.isEmpty()) return false;
         ToolStack tool = ToolHelper.getToolStack(core);
