@@ -799,6 +799,25 @@ public final class CursedSpiritTechnique extends BaseTechnique {
                 p.connection.send(pkt);
             }
         }
+        // ⭐ ② 反查"实体自己持有的 ServerBossEvent 字段"（含子类，例如铁魔法的 ExtendedServerBossEvent ✗）：
+        //    这类 Boss 把血条当字段挂在实体上，而且**只在 die() 里清**（很可能没覆写 remove() ✗）——
+        //    我们改成静默移除后不会触发 die() ⇒ 血条会一直留在屏幕上 ✗（用户实测提问："那 boss 的战斗条会消失吗"）。
+        //    反射直接 removeAllPlayers() + setVisible(false) ⇒ 不依赖它的 UUID、也不依赖它覆写哪个方法 ✓。
+        //    失败一律吞掉（血条残留顶多是观感问题，绝不能影响收回 ✓）。
+        for (Class<?> c = entity.getClass(); c != null && c != Object.class; c = c.getSuperclass()) {
+            for (java.lang.reflect.Field f : c.getDeclaredFields()) {
+                if (!net.minecraft.server.level.ServerBossEvent.class.isAssignableFrom(f.getType())) continue;
+                try {
+                    f.setAccessible(true);
+                    if (f.get(entity) instanceof net.minecraft.server.level.ServerBossEvent bar) {
+                        bar.removeAllPlayers();
+                        bar.setVisible(false);
+                    }
+                } catch (Throwable ignored) {
+                    // 字段拿不到/类型不对 → 跳过 ✓
+                }
+            }
+        }
     }
 
     /**
