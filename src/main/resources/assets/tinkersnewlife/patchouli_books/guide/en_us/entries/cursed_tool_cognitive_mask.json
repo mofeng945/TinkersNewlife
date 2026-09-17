@@ -15,8 +15,8 @@
     },
     {
       "type": "patchouli:text",
-      "title": "Obtaining",
-      "text": "$(bold)Momo$() (the weapon merchant) randomly stocks it on her cursed tool shelf (same pool as the Inverted Spear of Heaven / Cloud / Prison Realm / Life Lamp Ring / Ring of One Mind, 10-20 Gheloth Remains).$(br2)There is no cursed energy synthesis ritual recipe for it yet - tell the author the core / materials / cursed energy cost if you want one."
+      "title": "Recipe",
+      "text": "The $(bold)Two-way Cognitive Obstruction Mask$() is produced by the $(l:curse_craft)Cursed Energy Synthesis Ritual$() (JEI shows the same recipe):$(br2)$(bold)Core slot$() (the lantern directly above the ore):$(li)1 x Infinity crystal$(br2)$(bold)Material slots$() (the other 8 lanterns):$(li)1 x Obsidian$(li)1 x White Wool$(li)1 x Yellow King Remnant$(li)1 x Nyarlathotep's Desire$(li)1 x Seared Soul Glass Pane$(li)1 x Eye of Ender$(li)1 x Eye of Ender$(li)1 x Phantom Membrane$(br2)$(bold)Cursed energy cost$(): $(bold)15000$()$(br2)Warning: the amounts must be $(bold)exact$() - one extra item and nothing matches, so the ritual will not start. See $(l:curse_craft)Cursed Energy Synthesis Ritual$() for how to build the structure.$(br2)$(bold)Momo$() (the weapon merchant) also randomly stocks it on her cursed tool shelf (same pool as the Inverted Spear of Heaven / Cloud / Prison Realm / Life Lamp Ring / Ring of One Mind)."
     }
   ]
 }

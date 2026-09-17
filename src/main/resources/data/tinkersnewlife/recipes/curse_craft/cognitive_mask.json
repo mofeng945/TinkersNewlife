@@ -1,0 +1,38 @@
+{
+  "type": "tinkersnewlife:curse_craft",
+  "core": {
+    "type": "forge:partial_nbt",
+    "item": "tconstruct:modifier_crystal",
+    "nbt": "{modifier:\"tinkersnewlife:wuliang_wuxian\"}"
+  },
+  "result": {
+    "item": "tinkersnewlife:cognitive_mask"
+  },
+  "materials": [
+    {
+      "item": "minecraft:obsidian"
+    },
+    {
+      "item": "minecraft:white_wool"
+    },
+    {
+      "item": "tinkersnewlife:yellow_king_remnant"
+    },
+    {
+      "item": "tinkersnewlife:nyarlathotep_desire"
+    },
+    {
+      "item": "tconstruct:seared_soul_glass_pane"
+    },
+    {
+      "item": "minecraft:ender_eye"
+    },
+    {
+      "item": "minecraft:ender_eye"
+    },
+    {
+      "item": "minecraft:phantom_membrane"
+    }
+  ],
+  "curse": 15000
+}
