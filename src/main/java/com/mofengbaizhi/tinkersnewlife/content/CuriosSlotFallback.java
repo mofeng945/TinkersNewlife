@@ -36,6 +36,18 @@ import java.util.Map;
  * 所以这里走运行时兜底：<b>只在"确实没有格子"时补</b>，并且把别人设好的
  * 图标/顺序/校验器/开关原样带过来 ✓ —— 有提供者在场时本类什么都不做 ✓。
  *
+ * <h2>⚠ 本类的能力边界（反编译确认过，别指望它顶事）</h2>
+ * Curios 的槽位表 {@code CuriosSlotManager.slots} 是 <b>{@code ImmutableMap}</b>
+ * （{@code apply()} 与 {@code applySyncPacket()} 都用 {@code toImmutableMap} / {@code ImmutableMap.Builder} 建），
+ * 而给客户端的同步包 {@code getSyncPacket()} 读的就是它 ✗ —— 所以：
+ * <ul>
+ *   <li>本类写的 {@code ISlotHelper}（{@code idToType}）只影响 <b>服务端玩法</b>
+ *       （能不能戴、格子怎么建）；</li>
+ *   <li><b>客户端看不到</b>本类补的槽（GUI 不显示）—— 真正的保证必须是
+ *       {@link ModCurios#enqueueIMC} 的 IMC 注册（它同时进权威表+同步包+玩法 ✓）。
+ *       本类只在"IMC 因故没生效 / 别人注册成 0 格"时兜服务端这一层 ✓。</li>
+ * </ul>
+ *
  * <p>时机两个：{@link ServerAboutToStartEvent}（初次数据包加载完、任何玩家加入之前）+
  * {@link OnDatapackSyncEvent}（{@code /reload} 会按数据包+IMC 重建槽位表、把这里补的冲掉，
  * 用 HIGHEST 优先级抢在 Curios 把槽位表下发给客户端之前再补一次 ✓）。

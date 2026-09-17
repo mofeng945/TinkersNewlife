@@ -26,6 +26,20 @@ public class ModCurios {
                         .build()
         );
 
+        // ⭐ 头部槽（双向认知阻碍面具）：Curios 自带的**数据包**只定义了 head 的"类型"
+        //    （名字/图标/顺序/validators），**格数 size 必须由模组注册** —— 没人注册就是 0 格，
+        //    只有本模组 + Curios 时面具根本戴不上 ✗。
+        //    ⚠ 这一条**必须走 IMC**：Curios 的槽位表（CuriosSlotManager）是 ImmutableMap，
+        //    运行时再由 API 补槽只能补到"服务端玩法"那份表上，**进不了给客户端的同步包** ✗
+        //    （反编译确认 applySyncPacket/getSyncPacket 读的就是那张不可变表）。
+        //    所以：IMC = 真正的保证（权威表 + 客户端同步 + 玩法三处都有 ✓），
+        //    CuriosSlotFallback 那份运行时兜底只当"服务端玩法"的保险 ✓。
+        InterModComms.sendTo(CuriosApi.MODID, SlotTypeMessage.REGISTER_TYPE,
+                () -> new SlotTypeMessage.Builder("head")
+                        .size(1)
+                        .build()
+        );
+
         InterModComms.sendTo(CuriosApi.MODID, SlotTypeMessage.REGISTER_TYPE,
                 () -> new SlotTypeMessage.Builder("feet")
                         .size(1)
