@@ -33,10 +33,11 @@ public class CursePowerHandler {
 
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
-            boolean wearing = !core.isEmpty();
+            boolean hasCore = !core.isEmpty();
 
             // 咒力恢复：原 5 秒恢复量 (输出+亲和/10)×5 分散到每 tick（总量不变，回复更平滑）
-            if (wearing) {
+            // ⚠ 仍只按"戴着自己的核心"给回复：同心戒共鸣不产生回复（否则没核心的佩戴者会凭空生咒力 ✗）
+            if (hasCore) {
                 int output = CursePowerHelper.getCurseOutputLevel(player);
                 int affinity = CursePowerHelper.getCurseAffinity(player);
                 double regenPerTick = (output + affinity / 10.0) * 5.0 / 100.0;
@@ -71,7 +72,10 @@ public class CursePowerHandler {
      */
     public static void syncToClient(ServerPlayer player) {
         ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
-        boolean wearing = !core.isEmpty();
+        // ⭐ 佩戴判定 = 自己的核心 **或** 同心戒共鸣（自己没核心、同伴戴着另一枚时，
+        //    共享来的咒力与术式同样要显示出来 —— 否则"共享了但 HUD 一片空白"很费解 ✗）
+        boolean wearing = !core.isEmpty() || com.mofengbaizhi.tinkersnewlife.content.curse.TwinRingLink
+                .isLinked(player);
         // ⭐ 统计口径：咒力核心池 + 佩戴的封呪瓶（含瓶中储存的咒力与其容量）
         double curse = wearing ? CursePowerHelper.getTotalCurse(player) : 0;
         double max = wearing ? CursePowerHelper.getTotalMaxCurse(player) : 0;
