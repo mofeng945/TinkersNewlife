@@ -27,12 +27,9 @@ import java.util.List;
  * <ul>
  *   <li><b>向外（别人感知不到你）</b>：其他玩家看不到你的名字（{@code RenderNameTagEvent} 取消）；
  *       怪物锁定不到你（{@code LivingChangeTargetEvent} 取消 + 定期清扫已有锁定）；
- *       小地图雷达也显示不出你 —— 这三件事在 MC 里共用一个"隐身标记"
- *       （Xaero's 的雷达只看 {@code isInvisibleTo}，且它"隐藏隐身实体"的开关默认开着），
- *       所以佩戴者会被打上隐身标记，**但身体照常渲染**
- *       （{@code LivingEntityRendererMixin} 强制 {@code isBodyVisible = true}）——
- *       也就是"看得见人、看不到名字、锁不住、雷达上没有你" ✓；
- *       不想要雷达隐藏就关配置 {@code cognitive_mask.hide_from_radar} ✓（名字与索敌照旧屏蔽）。</li>
+ *       小地图雷达也显示不出你（{@code XaeroRadarMixin} 在雷达遍历实体处定点过滤）——
+ *       三条<b>都不给玩家挂任何状态</b>，所以人（原版 / YSM 等接管渲染的模组）照常可见 ✓✓。
+ *       关掉雷达那条用配置 {@code cognitive_mask.hide_from_radar} ✓（名字与索敌照旧屏蔽）。</li>
  *   <li><b>向内（你感知里的世界变了）</b>：你把<b>除玩家以外</b>的所有生物都<b>视为亡灵</b> ——
  *       咒具的亡灵特攻、反转术式"对亡灵造成伤害"、以及<b>咒灵操术的收服判定</b>
  *       （原本只收 {@code MobType.UNDEAD}，见 {@code CursedSpiritTechnique}）全部按亡灵算 ✓。

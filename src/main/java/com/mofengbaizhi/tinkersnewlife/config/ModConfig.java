@@ -30,11 +30,11 @@ public final class ModConfig {
 
     // ==================== 双向认知阻碍面具 ====================
     /**
-     * 面具佩戴者是否被<b>当作隐身</b>处理（小地图雷达不显示你 / 生物索敌不到你 / 名牌不显示）。
+     * 佩戴认知阻碍面具的玩家是否从小地图雷达上隐藏（默认开）。
      *
-     * <p>⚠ 名字叫"隐身"，但人<b>看得见</b>：这只是 MC 的隐身标记（雷达、索敌、名牌共用它），
-     * 身体由 {@code LivingEntityRendererMixin} 强制照常渲染 ✓。关掉则雷达会照常显示你
-     * （名牌与索敌仍由本模组的事件层拦住 ✓）。
+     * <p>实现是 {@code XaeroRadarMixin} 在雷达遍历实体那一处定点过滤 ——
+     * <b>玩家身上不带任何状态</b>，所以人（原版 / YSM 等接管渲染的模组）照常可见 ✓。
+     * 关掉则雷达会照常显示你（无名字与索敌不到仍由各自的事件层拦住 ✓）。
      */
     public static final ConfigValue<Boolean> COGNITIVE_MASK_HIDE_FROM_RADAR;
 
@@ -205,12 +205,12 @@ public final class ModConfig {
                 "undead bonus, reverse cursed technique (damage instead of heal on undead), Jacob's Ladder",
                 "and the Cursed Spirit Technique capture check all take the undead branch.",
                 "",
-                "hide_from_radar = also flag the wearer as INVISIBLE, which is what minimap radars,",
-                "mob sensing and the vanilla name tag all key on. The BODY IS STILL RENDERED normally",
-                "(LivingEntityRendererMixin force-renders it) - the mask does not make you unseen.",
-                "This is the only way to keep a visible player off minimap radars (Xaero's hides",
-                "invisible entities by default and exposes no API for anything else).",
-                "Set false to stay on radars: name tag and mob targeting are still blocked by this mod.");
+                "hide_from_radar = also hide the wearer from the Xaero's minimap radar (default true).",
+                "Implemented by a targeted mixin (XaeroRadarMixin) that filters the radar's entity",
+                "iteration - NO state is put on the player, so the body stays visible in vanilla AND",
+                "in mods that take over player rendering (YSM / Yes Steve Model) - which is exactly why",
+                "the earlier invisibility-flag approach was dropped.",
+                "Set false to stay on radars: the name tag and mob targeting are still blocked.");
         COGNITIVE_MASK_HIDE_FROM_RADAR = b.define("hide_from_radar", true);
         b.pop();
 

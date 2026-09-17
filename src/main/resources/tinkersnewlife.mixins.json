@@ -15,7 +15,7 @@
     "EntityRenderDispatcherMixin",
     "ItemRendererMixin",
     "HumanoidArmorLayerMixin",
-    "LivingEntityRendererMixin"
+    "XaeroRadarMixin"
   ],
   "injectors": {
     "defaultRequire": 0

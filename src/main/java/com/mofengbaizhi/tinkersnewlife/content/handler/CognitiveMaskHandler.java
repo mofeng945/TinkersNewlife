@@ -1,7 +1,6 @@
 package com.mofengbaizhi.tinkersnewlife.content.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
-import com.mofengbaizhi.tinkersnewlife.config.ModConfig;
 import com.mofengbaizhi.tinkersnewlife.content.item.CognitiveMaskItem;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -15,33 +14,33 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 /**
- * 双向认知阻碍面具·服务端效果。
+ * 双向认知阻碍面具·服务端效果：<b>怪物锁定不到你</b>。
  *
  * <ol>
- *   <li><b>怪物锁定不到你</b>：{@link LivingChangeTargetEvent} 直接取消
- *       （凡是"新的锁定目标是戴着面具的玩家"一律作废）；</li>
- *   <li><b>清扫已有锁定</b>：每秒扫一遍，把"戴上之前就锁着你"的怪物的目标清掉
- *       —— 只靠事件的话，戴面具前已经被锁的怪会一直打你 ✗；</li>
- *   <li><b>隐身标记</b>（可配置 {@code cognitive_mask.hide_from_radar}）：MC 里"雷达不显示/索敌不到/名牌不显示"
- *       共用的就是这一个标记，所以只能给它；但**身体照常渲染**（{@code LivingEntityRendererMixin} 强制
- *       {@code isBodyVisible} 返回 true ✓），人不会被隐掉 ✓。每 tick 续期；配置关掉则只保留上面两条。</li>
+ *   <li>{@link LivingChangeTargetEvent} 直接取消 —— 凡是"新的锁定目标是戴着面具的玩家"一律作废
+ *       （该事件由 {@code ForgeHooks.onLivingChangeTarget} 触发，脑 AI（监守者那类）也走它 ✓）；</li>
+ *   <li><b>清扫已有锁定</b>：每秒扫一遍，把"戴上之前就已经锁着你"的怪物的目标清掉
+ *       —— 只靠事件的话，戴面具前已经被锁的怪会一直打你 ✗。</li>
  * </ol>
  *
- * <p>⚠ 隐身态只影响"别人怎么感知你"，不改变任何数值；{@code BlackBirdEntity} 结束时会把主人的隐身
- * 置回 false（黑鸟操术的收尾），本类每 tick 续期，因此戴着面具时操控黑鸟结束也不会"破隐" ✓。
+ * <h2>⚠ 这里**故意不再**给玩家挂"隐身标记"（用户实测教训）</h2>
+ * 曾经的做法是：把佩戴者标记成 {@code isInvisible()}（MC 里"雷达不显示/索敌不到/名牌不显示"共用它），
+ * 再在渲染层把身体画回来。
+ * <ul>
+ *   <li>原版渲染路径能画回来 ✓，**但接管玩家渲染的模组（YSM / 是，史蒂夫模型）自己读那个标记、
+ *       模型照样被藏掉** ✗ —— 用户实测："不渲染 ysm 时没隐身，但 ysm 还是把模型隐藏了"；</li>
+ *   <li>YSM 的类是混淆名，往它身上注入又脆又脏 ✗。</li>
+ * </ul>
+ * 所以现在**玩家身上不带任何状态**：人（原版 / YSM / 任何渲染模组）照常可见 ✓，
+ * "雷达不显示"改由 {@code XaeroRadarMixin} 在雷达层定点过滤、
+ * "无名字"由 {@code CognitiveMaskClientHandler} 挡、">索敌不到"由本类挡 ✓。
+ * <p>代价：以前靠 {@code isInvisible()} 判断目标是否可见的**其他模组**（部分怪 AI、部分雷达）
+ * 不再自动把你当隐身 ✗ —— 本整合包内需要的那几处已由上面三条覆盖 ✓。
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class CognitiveMaskHandler {
 
     private CognitiveMaskHandler() {}
-
-    /**
-     * 被本面具置为隐身态的玩家。
-     * <p>⭐ 必须有这张表：只"每 tick 设 true"的话，摘下面具（或把配置关掉）会把人**永久隐下去** ✗。
-     * 还原时若玩家另有效果类隐身，原版的药水 tick 会自己再置回 true ✓（两者不打架）。
-     */
-    private static final java.util.Set<java.util.UUID> MASK_INVISIBLE =
-            java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     /** 新锁定：目标是面具佩戴者 → 作废（非玩家实体才管；佩戴者自己锁定别人不受影响） */
     @SubscribeEvent(priority = EventPriority.HIGH)
@@ -55,26 +54,14 @@ public final class CognitiveMaskHandler {
         }
     }
 
+    /** 每秒清扫一次"已经锁在面具佩戴者身上"的怪物目标 */
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
         MinecraftServer server = event.getServer();
         if (server == null) return;
-
-        boolean hideFromRadar = ModConfig.COGNITIVE_MASK_HIDE_FROM_RADAR.get();
-        // 隐身标记：每 tick 续期；面具摘下 / 配置关掉 → 还原（见 MASK_INVISIBLE 的注释）
-        // ⚠ 它只让"雷达/索敌/名牌"把你当隐身；身体由 LivingEntityRendererMixin 强制照常渲染 ✓
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            if (CognitiveMaskItem.isWorn(player) && hideFromRadar) {
-                if (!player.isInvisible()) player.setInvisible(true);
-                MASK_INVISIBLE.add(player.getUUID());
-            } else if (MASK_INVISIBLE.remove(player.getUUID())) {
-                player.setInvisible(false);
-            }
-        }
-
-        // 清扫已有锁定：每秒一次（戴面具前就被锁住的怪也要松开）
         if (server.getTickCount() % 20 != 0) return;
+
         for (ServerLevel level : server.getAllLevels()) {
             for (Entity entity : level.getAllEntities()) {
                 if (!(entity instanceof Mob mob)) continue;
