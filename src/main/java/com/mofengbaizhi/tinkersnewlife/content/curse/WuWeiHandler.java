@@ -905,6 +905,8 @@ public final class WuWeiHandler {
         if (owner == null || !owner.isAlive()) {
             // 主人离线/死亡：原地待命，不消失也不还原（永久变形）
             ((Mob) form).getNavigation().stop();
+            // 凋灵侧头也要哑火：这条分支提前 return，不写就会漏掉本 tick 的同步
+            syncWitherSideHeads((Mob) form, null);
             return false;
         }
         // 玉犬式守护 AI（每 tick 驱动）
@@ -914,8 +916,11 @@ public final class WuWeiHandler {
 
     /**
      * 挂"玉犬式守护随从 AI"（须在实体已入世后调用——REVERSE_MOBS 需要有效实体 id）：
-     * 清空原生 AI、可驯服认主、守护名、持久 owner 标记、登记守护表。
+     * 清空原生 AI、可驯服认主、持久 owner 标记、登记守护表。
      * 咒灵操术·守护形态释放体复用此逻辑。
+     * <p>
+     * ⭐ <b>不改名字</b>：以前这里会 setCustomName(原名 + "(守护)")，用户要求去掉 ✓ ——
+     * 守护化只该动 AI，不该改生物的名字（有名字的生物会被顶掉名字，玩家自己起的名字也保不住）✓。
      */
     public static void attachGuardAi(Mob mob, ServerPlayer owner) {
         attachGuardAi(mob, owner, new ReverseMobData());
@@ -927,9 +932,7 @@ public final class WuWeiHandler {
         if (mob instanceof TamableAnimal tame) {
             tame.tame(owner);
         }
-        mob.setCustomName(Component.translatable(mob.getType().getDescriptionId()).copy()
-                .append(Component.literal("(守护)")));
-        mob.setCustomNameVisible(false);
+        // ⭐ 这里**故意不碰 mob 的名字**（原本会加"(守护)"后缀）—— 只改 AI ✓
         mob.getPersistentData().putUUID(KEY_GUARD_OWNER, owner.getUUID());
         rd.ownerId = owner.getUUID();
         rd.formId = mob.getId();
@@ -937,6 +940,43 @@ public final class WuWeiHandler {
         rd.restYRot = mob.getYRot();
         rd.restXRot = mob.getXRot();
         REVERSE_MOBS.put(mob.getUUID(), rd);
+    }
+
+    // ============================================================
+    //  凋灵侧头（守护 / 咒灵释放体专用）
+    // ============================================================
+
+    /**
+     * 侧头"无目标"占位 id：**必须 &gt; 0 且指向一个不存在的实体**。
+     *
+     * <p>为什么不能直接写 0：原版 {@code WitherBoss.customServerAiStep} 里每个头是这么跑的
+     * （反编译 1.20.1 确认 ✓）：
+     * <pre>
+     *   int id = getAlternativeTarget(head);
+     *   if (id &gt; 0) { 校验(存在/可攻击/距离≤30/有视线) → performRangedAttack(head, 目标); 否则 setAlternativeTarget(head, 0); }
+     *   else        { 在自身 20×8×20 范围内<b>随机挑一个 LivingEntity</b> → setAlternativeTarget(head, 它的 id); }
+     * </pre>
+     * 也就是说 <b>id = 0 反而会触发"随机抓附近活体"</b> ✗ —— 主人就在那个池子里，
+     * 这正是"两只侧头老想打主人"的根因 ✓（它<b>不走 goalSelector/TargetGoal</b>，
+     * 所以 {@code stripTargetGoals} 清目标选择器对它无效 ✗）。
+     *
+     * <p>写一个大于 0 但不存在的 id，原版拿到就是"无效 → 清成 0、且不开火" ✓ ——
+     * 我们再每 tick 把它写回去，于是<b>永远不进随机挑人那个分支</b> ✓。
+     */
+    private static final int WITHER_NO_TARGET_ID = Integer.MAX_VALUE;
+
+    /**
+     * 同步凋灵<b>两侧头</b>（1、2 号）的目标：有敌人时与主头打同一个目标（三头齐射 ✓），
+     * 没敌人时让它们彻底哑火（而不是随机抓附近活体，包括主人）✓。
+     *
+     * @param mob    守护 / 释放体（非凋灵则直接返回，零开销）
+     * @param target 指派的目标；null = 无目标
+     */
+    public static void syncWitherSideHeads(Mob mob, LivingEntity target) {
+        if (!(mob instanceof net.minecraft.world.entity.boss.wither.WitherBoss wither)) return;
+        int id = (target != null && target.isAlive()) ? target.getId() : WITHER_NO_TARGET_ID;
+        wither.setAlternativeTarget(1, id);
+        wither.setAlternativeTarget(2, id);
     }
 
     /**
@@ -1189,6 +1229,8 @@ public final class WuWeiHandler {
         }
         if (self.distanceToSqr(owner) > 256.0 * 256.0) {
             // 过远直接传回主人身边（防丢失）
+            // 传回后主人就在侧头的随机挑选半径内，先哑火再传（本分支提前 return，否则漏同步）
+            syncWitherSideHeads(self, null);
             self.moveTo(owner.getX(), owner.getY(), owner.getZ(), owner.getYRot(), 0);
             return;
         }
@@ -1234,6 +1276,8 @@ public final class WuWeiHandler {
         }
         if (target == null) {
             // 无目标：跟随主人（保持 3~6 格）
+            // 凋灵侧头一并哑火（绝不让它们随机抓附近活体，主人也在那个池子里）
+            syncWitherSideHeads(self, null);
             double d = self.distanceToSqr(owner);
             if (d > 6.0 * 6.0) {
                 self.getNavigation().moveTo(owner, 1.2);
@@ -1242,6 +1286,8 @@ public final class WuWeiHandler {
             }
             return;
         }
+        // 凋灵：两侧头与主头打同一个目标（三头齐射，而不是把火力浪费在主人身上）
+        syncWitherSideHeads(self, target);
         // 追击目标
         double reachSq = 2.0 * 2.0;
         if (self.distanceToSqr(target) > reachSq) {

@@ -920,12 +920,23 @@ public final class CursedSpiritTechnique extends BaseTechnique {
                     }
                     if (want != null) {
                         minion.setTarget(want);
+                        // ⭐ 凋灵：两侧头跟随主头打同一个目标
+                        //    （原版侧头不走 goalSelector，stripTargetGoals 管不到它 ✗）
+                        com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiHandler
+                                .syncWitherSideHeads(minion, want);
                         continue;
                     }
                     // 无指令：清掉指向主人/同队的目标（无视施术者）
                     LivingEntity cur = minion.getTarget();
                     if (cur == null || PuppetUtil.isAllyOf(cur, player)) {
                         minion.setTarget(null);
+                        // 凋灵：没目标时两侧头彻底哑火（否则它们会随机抓附近活体 —— 主人也在池子里 ✗）
+                        com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiHandler
+                                .syncWitherSideHeads(minion, null);
+                    } else {
+                        // 已有合法目标：侧头跟着打它
+                        com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiHandler
+                                .syncWitherSideHeads(minion, cur);
                     }
                     // 跟随主人：过远传送、稍远走过去、贴身待命
                     double distSq = minion.distanceToSqr(player);
