@@ -1,0 +1,22 @@
+{
+  "name": "Ring of One Mind",
+  "category": "tinkersnewlife:cursed_tools",
+  "icon": "tinkersnewlife:ring_of_one_mind",
+  "sortnum": 7,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "The $(bold)Ring of One Mind$() is a cursed tool worn in a curios $(bold)ring slot$(), and it $(bold)always comes as a pair$(): one craft or one purchase hands you $(bold)two separate rings$() sharing a single twin mark — give one to your partner.$(br2)When two players each wear one ring of $(bold)the same pair$(), they $(bold)share cursed energy and techniques$():$(li)$(bold)Cursed energy$(): what you can pay with = your own $(bold)curse core pool + curse bottle + curse vaults$(), plus $(bold)the same three on your partner$(); your partner's is only touched once yours runs dry$(li)$(bold)Techniques$(): whatever is installed on your partner's curse core joins your $(bold)available technique list$() — the switch key cycles to it, the cast key fires it$(li)$(bold)Both ways$(): whoever wears a ring can use the other's resources$(br2)$(bold)It breaks$() the moment your partner $(bold)takes the ring off / logs out / is on another server$() — nothing is cached or persisted.$(br2)$(bold)Note$(): the two rings of one pair $(bold)cannot be worn by the same player$() — there would be no $(bold)second wearer$(), so equipping the second one is refused."
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:ring_of_one_mind",
+      "text": "A pair shares one $(bold)twin mark$() (stored in the item NBT):$(li)split the stack in two and both rings keep the same mark$(li)the $(bold)short mark$() in the tooltip (8 characters) is what you compare — read it out and check they match$(br2)$(bold)Versus Zhenyan Xiangai$(): the $(l:zhenyan_xiangai)Zhenyan Xiangai$() domain borrows techniques only $(bold)while the domain is open$(), and only from $(bold)your own unlocked$() set; the ring works $(bold)at all times$() and shares whatever your partner $(bold)actually has installed$() (if they swap cores, your list follows).$(br2)$(italic)One mind, two rings; the art turns as you will it.$()"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Recipe",
+      "text": "The $(bold)Ring of One Mind$() is produced by the $(l:curse_craft)Cursed Energy Synthesis Ritual$(), and it $(bold)yields a pair (2 rings)$() (JEI shows the same recipe):$(br2)$(bold)Core slot$() (the lantern directly above the ore):$(li)1 x Zhenyan Xiangai domain crystal$(br2)$(bold)Material slots$() (the other 8 lanterns):$(li)1 x Poppy$(li)1 x Iron Nugget$(li)1 x Gold Nugget$(li)1 x Diamond$(li)1 x Netherite Scrap$(li)1 x Curse-Sealing Bottle$(li)1 x Soul Lantern$(li)1 x Wither Rose$(br2)$(bold)Cursed energy cost$(): $(bold)10000$()$(br2)Warning: the amounts must be $(bold)exact$() — one extra item and nothing matches, so the ritual will not start.$(br2)$(bold)Momo$() also stocks it (each purchase binds a fresh pair, so buying twice gives you two pairs). See $(l:curse_craft)Cursed Energy Synthesis Ritual$() for how to build the structure."
+    }
+  ]
+}

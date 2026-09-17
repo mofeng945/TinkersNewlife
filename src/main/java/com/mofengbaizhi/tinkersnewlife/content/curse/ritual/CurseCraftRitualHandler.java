@@ -59,6 +59,12 @@ public final class CurseCraftRitualHandler {
     public static final String ROLE_MATERIAL = "material";
     public static final String ROLE_CORE = "core";
     public static final String ROLE_PRODUCT = "product";
+    /**
+     * 第二个产物位（只有"成对产物"会用：一次仪式产出<b>两枚</b>同心戒）。
+     * <p>悬浮物是按「维度@灯笼@角色」登记的，一盏灯笼一个角色只能挂一件，
+     * 所以第二枚必须用另一个角色名；取货时两件依次领取 ✓。
+     */
+    public static final String ROLE_PRODUCT_B = "product_b";
 
     /** 玩家离得超过这个距离就中断（方块） */
     private static final double MAX_DISTANCE = 16.0;
@@ -148,6 +154,7 @@ public final class CurseCraftRitualHandler {
     /** 核心灯笼：取下产物 / 取回核心 / 投入核心开仪式 */
     private static void handleCoreLantern(ServerPlayer player, ServerLevel level, BlockPos ore, BlockPos lantern) {
         ItemEntity product = findDisplay(level, lantern, ROLE_PRODUCT);
+        if (product == null) product = findDisplay(level, lantern, ROLE_PRODUCT_B);   // 成对产物的第二枚
         if (product != null) {
             giveOrDrop(player, product.getItem().copy());
             product.discard();
@@ -379,7 +386,8 @@ public final class CurseCraftRitualHandler {
                 continue;
             }
             // 吸咒：核心池 → 封呪瓶 → 呪蔵（不动用灵魂能量，仪式只吃咒力）
-            double remaining = CursePowerHelper.spendCurseCascade(player, CurseCraftRecipe.CURSE_PER_TICK);
+            // ⭐ 同心戒共鸣：自己付不清时可由同伴的池子接上（共享咒力）
+            double remaining = CursePowerHelper.spendCurseShared(player, CurseCraftRecipe.CURSE_PER_TICK);
             if (remaining > 0) {
                 abort(level, k);
                 continue;
@@ -467,6 +475,17 @@ public final class CurseCraftRitualHandler {
         for (ItemEntity entity : allDisplays(level, ritual.ore)) entity.discard();
 
         ItemStack result = ritual.recipe.getResultItem(level.registryAccess()).copy();
+        // ⭐ 成对物品（同心戒）：产出一对 = **两枚各自独立的一栈**（共用同一个新印记）。
+        //   配方 JSON 里的 count=2 只用于 JEI 展示"一对"；实际发放必须拆成两枚 ——
+        //   一枚能堆叠的话，Curios 右键装备（不拆分整栈）会把一对塞进同一个戒指槽 ✗
+        //   （另注：spawnDisplay 内部本来就会 copyWithCount(1)，一栈两枚也只会掉出一枚）。
+        if (result.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.RingOfOneMindItem ring) {
+            java.util.List<ItemStack> pair =
+                    com.mofengbaizhi.tinkersnewlife.content.item.RingOfOneMindItem.newPairStacks(ring);
+            spawnDisplay(level, ritual.coreLantern, pair.get(0), ROLE_PRODUCT);
+            spawnDisplay(level, ritual.coreLantern, pair.get(1), ROLE_PRODUCT_B);
+            return;
+        }
         spawnDisplay(level, ritual.coreLantern, result, ROLE_PRODUCT);
     }
 

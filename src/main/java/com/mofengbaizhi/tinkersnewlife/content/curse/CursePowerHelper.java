@@ -209,15 +209,32 @@ public final class CursePowerHelper {
     }
 
     /**
-     * 消耗咒力（不低于 0）。⭐ 级联顺序：**核心池 → 佩戴的封呪瓶 → 绑定自己的呪蔵**。
+     * 消耗咒力（不低于 0）。⭐ 级联顺序：**核心池 → 佩戴的封呪瓶 → 绑定自己的呪蔵 →（同心戒共鸣）同伴的同一条级联**。
      * <p>判定"够不够"请配套用 {@link #canPayCurse}（同样口径），不要只看核心池。
      */
     public static void spendCurse(Player player, double amount) {
-        spendCurseCascade(player, amount);
+        spendCurseShared(player, amount);
     }
 
     /**
-     * 咒力消耗级联：**咒力核心池 → 封呪瓶 → 呪蔵**（与 {@link #getTotalCurse} 的口径一致）。
+     * ⭐ <b>同心戒共鸣级联</b>：先扣自己的（{@link #spendCurseCascade}），不够再扣同伴的。
+     * <p>只在<b>自己付不清</b>时才动同伴的池子 —— 不会出现"先掏同伴的、自己的留着"这种反直觉顺序 ✓。
+     * 无共鸣（没戴同心戒 / 同伴离线）时与 {@link #spendCurseCascade} 完全等价 ✓。
+     *
+     * @return 仍然付不清的余量（0 = 已付清）
+     */
+    public static double spendCurseShared(Player player, double amount) {
+        double left = spendCurseCascade(player, amount);
+        if (left <= 0) return 0;
+        Player partner = TwinRingLink.findPartner(player);
+        if (partner == null) return left;
+        return spendCurseCascade(partner, left);
+    }
+
+    /**
+     * 咒力消耗级联（<b>只看自己</b>）：**咒力核心池 → 封呪瓶 → 呪蔵**。
+     * <p>⚠ 不含同心戒共鸣：需要"共享扣费"请用 {@link #spendCurseShared} / {@link #spendCurse}。
+     * 保留本方法是为了让级联本身可被复用（也避免 A↔B 互算造成无限递归 ✗）。
      * <p>灵魂能量兜底不在这里（见 {@link #payCurseWithSoulFallback}），本方法只处理咒力本体。
      *
      * @return 仍然付不清的余量（0 = 已付清）
@@ -235,7 +252,8 @@ public final class CursePowerHelper {
     }
 
     /**
-     * 付得起吗？**口径 = 核心池 + 佩戴的封呪瓶 + 绑定自己的所有呪蔵**（与 {@link #spendCurseCascade} 的扣费顺序一致）。
+     * 付得起吗？**口径 = 核心池 + 佩戴的封呪瓶 + 绑定自己的所有呪蔵（+ 同心戒共鸣同伴的同样三项）**
+     * （与 {@link #spendCurseShared} 的扣费顺序一致）。
      *
      * <p>⭐ <b>所有"能不能发动"的判定都必须用它</b>：以前好几处直接看 {@link #getCurse}（核心池），
      * 于是核心池一空就误判"咒力不足"——哪怕封呪瓶、呪蔵里还存着几十万咒力
@@ -294,14 +312,28 @@ public final class CursePowerHelper {
         return CurseBottleHelper.getWornCapacity(player);
     }
 
-    /** 统计总量 = 咒力核心池 + 佩戴的封呪瓶 + 绑定自己的所有呪蔵（HUD/统计显示用） */
-    public static double getTotalCurse(Player player) {
+    /** 统计总量（<b>只看自己</b>）= 咒力核心池 + 佩戴的封呪瓶 + 绑定自己的所有呪蔵（HUD/统计显示用） */
+    public static double localTotalCurse(Player player) {
         return getCurse(player) + getBottleCurse(player) + getVaultCurse(player);
     }
 
-    /** 统计总上限 = 咒力核心上限 + 封呪瓶容量 + 呪蔵容量（HUD/统计显示用） */
-    public static double getTotalMaxCurse(Player player) {
+    /** 统计总上限（<b>只看自己</b>）= 咒力核心上限 + 封呪瓶容量 + 呪蔵容量 */
+    public static double localTotalMaxCurse(Player player) {
         return getMaxCurse(player) + getBottleCapacity(player) + getVaultCapacity(player);
+    }
+
+    /**
+     * 统计总量（⭐ <b>含同心戒共鸣</b>）= 自己的 {@link #localTotalCurse} + 同伴的。
+     * <p>判定"付不付得起"用的是这个口径，所以共鸣双方看到的是<b>同一个共享池</b> ✓
+     * （两个人 HUD 上的当前/上限都会变成两者之和）。
+     */
+    public static double getTotalCurse(Player player) {
+        return localTotalCurse(player) + TwinRingLink.partnerLocalCurse(player);
+    }
+
+    /** 统计总上限（⭐ <b>含同心戒共鸣</b>）= 自己的 {@link #localTotalMaxCurse} + 同伴的 */
+    public static double getTotalMaxCurse(Player player) {
+        return localTotalMaxCurse(player) + TwinRingLink.partnerLocalMaxCurse(player);
     }
 
     // ------------------------------------------------------------
@@ -365,8 +397,8 @@ public final class CursePowerHelper {
             consumeBoundaryFragments(player, fragments);
             cost -= fragValue;
         }
-        // 2) 咒力：咒力核心池 → 封呪瓶（级联）
-        double deficit = spendCurseCascade(player, cost);
+        // 2) 咒力：咒力核心池 → 封呪瓶（级联）+ 同心戒共鸣（自己付不清才动同伴的）
+        double deficit = spendCurseShared(player, cost);
         if (deficit <= 0) return 0;
         // 3) 灵魂能量兜底（神灵金盔甲"灵魂折扣"：每级 -5% 灵魂消耗）
         int soulsNeeded = (int) Math.ceil(deficit * 3.0);

@@ -265,6 +265,15 @@ public class ModItems {
     public static final RegistryObject<Item> LIFE_LAMP_RING =
             ITEMS.register("life_lamp_ring",
                     () -> new com.mofengbaizhi.tinkersnewlife.content.item.LifeLampRingItem());
+
+    /**
+     * 同心戒：戒指槽饰品，<b>永远成对</b>产出 —— 一次合成 / 一次购买得到的是<b>同一栈的两枚</b>
+     * （共用同一个成对印记 NBT）。两名玩家各戴一枚时，共享彼此的咒力与术式
+     * （服务端解析见 {@code content.curse.TwinRingLink}）。
+     */
+    public static final RegistryObject<Item> RING_OF_ONE_MIND =
+            ITEMS.register("ring_of_one_mind",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.RingOfOneMindItem());
     /** 火焰箭（手持蓄力）：灶·开蓄力时临时装备的视觉物品（动态纹理），不可获取/使用 */
     public static final RegistryObject<Item> FLAME_ARROW_ITEM =
             ITEMS.register("flame_arrow_item", FlameArrowItem::new);

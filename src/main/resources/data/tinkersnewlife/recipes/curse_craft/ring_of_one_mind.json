@@ -1,0 +1,39 @@
+{
+  "type": "tinkersnewlife:curse_craft",
+  "core": {
+    "type": "forge:partial_nbt",
+    "item": "tconstruct:modifier_crystal",
+    "nbt": "{modifier:\"tinkersnewlife:zhenyan_xiangai\"}"
+  },
+  "result": {
+    "item": "tinkersnewlife:ring_of_one_mind",
+    "count": 2
+  },
+  "materials": [
+    {
+      "item": "minecraft:poppy"
+    },
+    {
+      "item": "minecraft:iron_nugget"
+    },
+    {
+      "item": "minecraft:gold_nugget"
+    },
+    {
+      "item": "minecraft:diamond"
+    },
+    {
+      "item": "minecraft:netherite_scrap"
+    },
+    {
+      "item": "tinkersnewlife:curse_bottle"
+    },
+    {
+      "item": "minecraft:soul_lantern"
+    },
+    {
+      "item": "minecraft:wither_rose"
+    }
+  ],
+  "curse": 10000
+}

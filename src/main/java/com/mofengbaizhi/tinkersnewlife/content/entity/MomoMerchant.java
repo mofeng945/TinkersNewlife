@@ -523,9 +523,10 @@ public class MomoMerchant extends PathfinderMob implements MomoConst {
         cursedTools.add(ModItems.YOU_YUN.get());
         cursedTools.add(ModItems.GOURD_JAIL.get());
         cursedTools.add(ModItems.LIFE_LAMP_RING.get());   // 命灯指轮（戒指槽饰品：打不死人）
+        cursedTools.add(ModItems.RING_OF_ONE_MIND.get());   // 同心戒（成对产出：上架即"一栈两枚"）
         Collections.shuffle(cursedTools, new java.util.Random(random.nextInt()));
-        offers.add(new Offer(new ItemStack(cursedTools.get(0)), 10 + random.nextInt(11)));   // 10-20
-        offers.add(new Offer(new ItemStack(cursedTools.get(1)), 10 + random.nextInt(11)));
+        offers.add(new Offer(offerStack(cursedTools.get(0)), 10 + random.nextInt(11)));   // 10-20
+        offers.add(new Offer(offerStack(cursedTools.get(1)), 10 + random.nextInt(11)));
 
         // 3-4锛氬拻鏈按鏅讹紙roll 涓や釜鍜掓湳锛?
         List<slimeknights.tconstruct.library.modifiers.ModifierId> techniques =
@@ -559,6 +560,22 @@ public class MomoMerchant extends PathfinderMob implements MomoConst {
 
     public List<Offer> getOffers() {
         return offers;
+    }
+
+    /**
+     * 咒具池里的物品 → 摆上货架的物品栈。
+     * <p>⭐ <b>成对物品（同心戒）上架是"两枚"</b>（{@code count = 2}，只为在货架上显示成一对），
+     * 但<b>成对印记故意留到成交时才结</b>（见 {@link #buyFrom}）：若在货架上就结好，
+     * 同一个槽位买两次会拿到<b>同一个印记的 4 枚</b>（= 三四人同对）✗；
+     * 成交时现结则"买两次 = 两对"✓，货架上的展示栈也永远不带印记（不会被翻出陈旧编号）。
+     * <p>注意：这个展示栈<b>不会原样塞给玩家</b> —— 成交时拆成两枚独立的一栈（理由见 buyFrom）。
+     */
+    private static ItemStack offerStack(Item item) {
+        if (item == ModItems.RING_OF_ONE_MIND.get()) {
+            return new ItemStack(item,
+                    com.mofengbaizhi.tinkersnewlife.content.item.RingOfOneMindItem.MAX_PAIR);
+        }
+        return new ItemStack(item);
     }
 
     /** 妲戒綅瀵瑰簲璐у竵锛?-3 鏍艰但缃楁柉娈嬮锛?-5 鏍艰但缃楁柉鐭跨煶 */
@@ -608,6 +625,19 @@ public class MomoMerchant extends PathfinderMob implements MomoConst {
         Item currency = currencyForSlot(slot);
         if (countItem(buyer, currency) < offer.price()) return BuyResult.INSUFFICIENT;
         consumeItem(buyer, currency, offer.price());
+        // ⭐ 成对物品（同心戒）：成交时现结一**新**印记，并发**两枚独立的一栈** ——
+        //    一枚能堆叠的话，Curios 右键装备（整栈塞进一个戒指槽、不拆分）会把一对废在一个人身上 ✗；
+        //    同一槽位买两次得到的是"两对"✓
+        if (offer.result().getItem()
+                instanceof com.mofengbaizhi.tinkersnewlife.content.item.RingOfOneMindItem ring) {
+            for (ItemStack one :
+                    com.mofengbaizhi.tinkersnewlife.content.item.RingOfOneMindItem.newPairStacks(ring)) {
+                if (!buyer.getInventory().add(one)) {
+                    buyer.drop(one, false);
+                }
+            }
+            return BuyResult.OK;
+        }
         ItemStack give = offer.result().copy();
         if (!buyer.getInventory().add(give)) {
             buyer.drop(give, false);

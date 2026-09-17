@@ -186,6 +186,12 @@ public class ModCreativeTabs {
                                 output.accept(ModItems.GOURD_JAIL.get());
                                 output.accept(ModItems.BOUNDARY_FRAGMENT.get());
                                 output.accept(ModItems.LIFE_LAMP_RING.get());   // 命灯指轮（戒指槽饰品）
+                                // 同心戒：成对产出 —— 创造栏直接给"一对"（两枚独立栈，共用同一成对印记）
+                                for (ItemStack twin :
+                                        com.mofengbaizhi.tinkersnewlife.content.item.RingOfOneMindItem
+                                                .newPairStacks(ModItems.RING_OF_ONE_MIND.get())) {
+                                    output.accept(twin);
+                                }
 
                                 // ----- 咒言术残卷（学习咒言词条）-----
                                 output.accept(ModItems.ANCIENT_CURSED_SCROLL.get());

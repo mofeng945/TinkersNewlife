@@ -170,15 +170,28 @@ public final class TechniqueHandler {
     }
 
     /**
-     * 有效术式列表：真赝相爱领域开启期间 = 本存档已帕秋莉解锁的全部术式；
-     * 平时 = 佩戴核心上的术式（无核心返回 null）。
+     * 有效术式列表：
+     * <ol>
+     *   <li>真赝相爱领域开启期间 = 本存档已帕秋莉解锁的全部术式；</li>
+     *   <li>平时 = 佩戴核心上的术式 <b>∪ 同心戒共鸣同伴核心上的术式</b>
+     *       （戴着同一对同心戒的两名玩家共享术式 ✓）；</li>
+     *   <li>两边都没有（无核心且无共鸣）= null（保持"没戴核心不响应按键"的原行为）。</li>
+     * </ol>
      */
     @Nullable
     private static List<ModifierId> effectiveTechniques(ServerPlayer player) {
         if (BORROW_ORIGINAL.containsKey(player.getUUID())) {
             return unlockedTechniques(player);
         }
-        return getTechniquesOnCore(player);
+        List<ModifierId> own = techniquesOnCore(player);              // null = 自己没有核心
+        List<ModifierId> linked = TwinRingLink.partnerTechniques(player);   // 无共鸣/同伴无核心 = 空表
+        if (own == null && linked.isEmpty()) return null;
+        List<ModifierId> out = new ArrayList<>();
+        if (own != null) out.addAll(own);
+        for (ModifierId id : linked) {
+            if (!out.contains(id)) out.add(id);   // 并集去重：两枚核心上都有同一个术式时不重复
+        }
+        return out;
     }
 
     // ==================== 真赝相爱：借术式模式 ====================
@@ -231,7 +244,7 @@ public final class TechniqueHandler {
     public static void resetAfterDomain(ServerPlayer player) {
         if (player == null) return;
         // 1) 选中：核心上的第一个术式
-        List<ModifierId> onCore = getTechniquesOnCore(player);
+        List<ModifierId> onCore = techniquesOnCore(player);
         if (onCore != null && !onCore.isEmpty()) {
             SELECTED.put(player.getUUID(), onCore.get(0));
         } else {
@@ -341,7 +354,7 @@ public final class TechniqueHandler {
         } else {
             // 换了核心：停掉新核心上没有的持续状态，选中回退到新核心的第一个术式
             closeBorrowedSustained(player);
-            List<ModifierId> onCore = getTechniquesOnCore(player);
+            List<ModifierId> onCore = techniquesOnCore(player);
             ModifierId sel = SELECTED.get(player.getUUID());
             if (onCore != null && !onCore.isEmpty() && (sel == null || !onCore.contains(sel))) {
                 SELECTED.put(player.getUUID(), onCore.get(0));
@@ -350,22 +363,34 @@ public final class TechniqueHandler {
         }
     }
 
-    /** 佩戴核心的指纹：物品注册名 + 其上的术式列表；没有核心返回空串 */
+    /**
+     * 佩戴核心的指纹：物品注册名 + 其上的术式列表；没有核心返回空串。
+     * <p>⭐ 末尾再接上<b>同心戒共鸣同伴</b>的指纹（同伴换核心/换术式/摘下戒指/下线都会让指纹变化），
+     * 于是"共鸣带来的术式不再可用"会被 {@link #onPlayerTick} 的变更分支收拾干净
+     * （重选可用术式 + 收掉已不可用的持续术式）✓。
+     */
     private static String coreFingerprint(ServerPlayer player) {
         ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
         if (core.isEmpty()) return "";
         StringBuilder sb = new StringBuilder(
                 String.valueOf(net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(core.getItem())));
-        List<ModifierId> list = getTechniquesOnCore(player);
+        List<ModifierId> list = techniquesOnCore(player);
         if (list != null) {
             for (ModifierId id : list) sb.append('|').append(id);
         }
+        String partner = TwinRingLink.partnerFingerprint(player);
+        if (!partner.isEmpty()) sb.append('#').append(partner);
         return sb.toString();
     }
-    /** 玩家核心上是否装有该术式 modifier */
+
+    /**
+     * 该术式当前是否"<b>可用</b>"：自己核心上有，<b>或</b>同心戒共鸣的同伴核心上有。
+     * <p>（原本只查自己的核心：共享术式开了持续状态后，自己一换核心就会被误判成"借来的"而收掉 ✗）
+     */
     private static boolean hasOnCore(ServerPlayer player, ModifierId id) {
-        List<ModifierId> onCore = getTechniquesOnCore(player);
-        return onCore != null && onCore.contains(id);
+        List<ModifierId> onCore = techniquesOnCore(player);
+        if (onCore != null && onCore.contains(id)) return true;
+        return TwinRingLink.partnerTechniques(player).contains(id);
     }
 
     /**
@@ -432,9 +457,12 @@ public final class TechniqueHandler {
         return out;
     }
 
-    /** 取佩戴核心上已注册的术式 id 列表（按修饰符列表顺序）；无核心返回 null */
+    /**
+     * 取佩戴核心上已注册的术式 id 列表（按修饰符列表顺序）；无核心返回 null。
+     * <p>⭐ 公开给同心戒共鸣（{@link TwinRingLink}）读取<b>同伴</b>核心上的术式。
+     */
     @Nullable
-    private static List<ModifierId> getTechniquesOnCore(ServerPlayer player) {
+    public static List<ModifierId> techniquesOnCore(net.minecraft.world.entity.player.Player player) {
         ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
         if (core.isEmpty()) return null;
         ToolStack tool = ToolHelper.getToolStack(core);
