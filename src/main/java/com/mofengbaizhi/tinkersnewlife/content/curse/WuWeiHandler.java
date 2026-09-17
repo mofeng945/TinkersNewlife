@@ -112,23 +112,51 @@ public final class WuWeiHandler {
         Entity killed = event.getEntity();
         if (!(killed instanceof Mob mob)) return;
         if (killed instanceof Player) return;
+        // 诊断：**Boss 级目标**（最大生命 ≥ 100）把整条记录链路逐道门打日志 ✓。
+        // 为什么需要它：Boss（诡厄巫法的使徒/亚波伦这类）的死亡常常"延后 / 变身 / 复活"，
+        // 只靠读代码无法确定卡在哪一道门 ✗ —— 实机一次击杀 + 一段日志就能定死 ✓。
+        final boolean bossLike = mob.getMaxHealth() >= 100.0F;
         // ⭐ 主动收回 ≠ 击杀（与咒灵操术"收回不删记录"同一口径 ✓）：
         //    收回走死亡链路，且死亡可能延后到标记窗口内才真正发生（见 CursedSpiritTechnique 的
         //    RECALLING 字段说明）—— 那种死亡不该被记成击杀形态 ✗，否则"放出→收回"会凭空多一条记录。
         if (com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
-                .isRecalling(killed)) return;
+                .isRecalling(killed)) {
+            if (bossLike) TinkersNewlife.LOGGER.info("[无为转变] 记录：{} 正在主动收回 → 不算击杀 ✓",
+                    mob.getName().getString());
+            return;
+        }
         Entity attacker = event.getSource().getEntity() != null
                 ? event.getSource().getEntity() : event.getSource().getDirectEntity();
         ServerPlayer killer = resolveKiller(attacker, mob);
-        if (killer == null) return;
+        if (killer == null) {
+            if (bossLike) TinkersNewlife.LOGGER.info(
+                    "[无为转变] 记录：{} 死亡时归属为空 ✗（伤害源={}）→ 没有记录就是卡在这一步",
+                    mob.getName().getString(), event.getSource().getMsgId());
+            return;
+        }
         // 仅咒力核心上装有「无为转变」修饰符的玩家才记录形态（未学会术式不写入）
-        if (!hasTechnique(killer)) return;
+        if (!hasTechnique(killer)) {
+            if (bossLike) TinkersNewlife.LOGGER.info(
+                    "[无为转变] 记录：{} 归属={} ✓，但该玩家与其同心戒同伴的核心上都没有无为转变 → 不记 ✗",
+                    mob.getName().getString(), killer.getName().getString());
+            return;
+        }
         String id = EntityType.getKey(killed.getType()).toString();
         List<String> records = getRecords(killer);
-        if (!records.contains(id) && records.size() < 200) {
-            records.add(id);
-            saveRecords(killer, records);
+        if (records.contains(id)) {
+            if (bossLike) TinkersNewlife.LOGGER.info("[无为转变] 记录：{} 已在 {} 的形态列表里 ✓（共 {} 条）",
+                    id, killer.getName().getString(), records.size());
+            return;
         }
+        if (records.size() >= 200) {
+            if (bossLike) TinkersNewlife.LOGGER.info("[无为转变] 记录：{} 想记给 {}，但形态列表已满 200 ✗",
+                    id, killer.getName().getString());
+            return;
+        }
+        records.add(id);
+        saveRecords(killer, records);
+        if (bossLike) TinkersNewlife.LOGGER.info("[无为转变] 记录：{} 已记入 {} 的形态列表 ✓（共 {} 条）—— 若界面里没有，见 WuWeiScreen 的搜索框/缓存",
+                id, killer.getName().getString(), records.size());
     }
 
     /**
