@@ -4,7 +4,23 @@
     { "level": 1, "name": "tinkersnewlife:chaos_flow" }
   ],
   "perStat": {
-    "tconstruct:armor": [
+    "tconstruct:plating_helmet": [
+      { "level": 1, "name": "tinkersnewlife:origin_magic" },
+      { "level": 1, "name": "tinkersnewlife:order_origin" }
+    ],
+    "tconstruct:plating_chestplate": [
+      { "level": 1, "name": "tinkersnewlife:origin_magic" },
+      { "level": 1, "name": "tinkersnewlife:order_origin" }
+    ],
+    "tconstruct:plating_leggings": [
+      { "level": 1, "name": "tinkersnewlife:origin_magic" },
+      { "level": 1, "name": "tinkersnewlife:order_origin" }
+    ],
+    "tconstruct:plating_boots": [
+      { "level": 1, "name": "tinkersnewlife:origin_magic" },
+      { "level": 1, "name": "tinkersnewlife:order_origin" }
+    ],
+    "tconstruct:maille": [
       { "level": 1, "name": "tinkersnewlife:origin_magic" },
       { "level": 1, "name": "tinkersnewlife:order_origin" }
     ]

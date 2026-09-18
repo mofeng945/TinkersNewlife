@@ -10,7 +10,47 @@
         }
     ],
     "perStat": {
-        "tconstruct:armor": [
+    "tconstruct:plating_helmet": [
+            {
+                "level": 1,
+                "name": "tconstruct:magnetic"
+            },
+            {
+                "level": 1,
+                "name": "tinkersnewlife:magic_conduction"
+            }
+        ],
+    "tconstruct:plating_chestplate": [
+            {
+                "level": 1,
+                "name": "tconstruct:magnetic"
+            },
+            {
+                "level": 1,
+                "name": "tinkersnewlife:magic_conduction"
+            }
+        ],
+    "tconstruct:plating_leggings": [
+            {
+                "level": 1,
+                "name": "tconstruct:magnetic"
+            },
+            {
+                "level": 1,
+                "name": "tinkersnewlife:magic_conduction"
+            }
+        ],
+    "tconstruct:plating_boots": [
+            {
+                "level": 1,
+                "name": "tconstruct:magnetic"
+            },
+            {
+                "level": 1,
+                "name": "tinkersnewlife:magic_conduction"
+            }
+        ],
+    "tconstruct:maille": [
             {
                 "level": 1,
                 "name": "tconstruct:magnetic"

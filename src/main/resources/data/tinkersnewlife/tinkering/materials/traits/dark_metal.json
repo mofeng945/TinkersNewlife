@@ -14,7 +14,63 @@
     }
   ],
   "perStat": {
-    "tconstruct:armor": [
+    "tconstruct:plating_helmet": [
+      {
+        "level": 1,
+        "name": "tconstruct:ductile"
+      },
+      {
+        "level": 1,
+        "name": "tinkersnewlife:dark_metal_magic_resist"
+      },
+      {
+        "level": 1,
+        "name": "tinkersnewlife:soul_repair"
+      }
+    ],
+    "tconstruct:plating_chestplate": [
+      {
+        "level": 1,
+        "name": "tconstruct:ductile"
+      },
+      {
+        "level": 1,
+        "name": "tinkersnewlife:dark_metal_magic_resist"
+      },
+      {
+        "level": 1,
+        "name": "tinkersnewlife:soul_repair"
+      }
+    ],
+    "tconstruct:plating_leggings": [
+      {
+        "level": 1,
+        "name": "tconstruct:ductile"
+      },
+      {
+        "level": 1,
+        "name": "tinkersnewlife:dark_metal_magic_resist"
+      },
+      {
+        "level": 1,
+        "name": "tinkersnewlife:soul_repair"
+      }
+    ],
+    "tconstruct:plating_boots": [
+      {
+        "level": 1,
+        "name": "tconstruct:ductile"
+      },
+      {
+        "level": 1,
+        "name": "tinkersnewlife:dark_metal_magic_resist"
+      },
+      {
+        "level": 1,
+        "name": "tinkersnewlife:soul_repair"
+      }
+    ],
+    "tconstruct:maille": [
       {
         "level": 1,
         "name": "tconstruct:ductile"

@@ -10,7 +10,47 @@
     }
   ],
   "perStat": {
-    "tconstruct:armor": [
+    "tconstruct:plating_helmet": [
+      {
+        "level": 1,
+        "name": "tconstruct:projectile_protection"
+      },
+      {
+        "level": 1,
+        "name": "tinkersnewlife:cursed_adrenaline"
+      }
+    ],
+    "tconstruct:plating_chestplate": [
+      {
+        "level": 1,
+        "name": "tconstruct:projectile_protection"
+      },
+      {
+        "level": 1,
+        "name": "tinkersnewlife:cursed_adrenaline"
+      }
+    ],
+    "tconstruct:plating_leggings": [
+      {
+        "level": 1,
+        "name": "tconstruct:projectile_protection"
+      },
+      {
+        "level": 1,
+        "name": "tinkersnewlife:cursed_adrenaline"
+      }
+    ],
+    "tconstruct:plating_boots": [
+      {
+        "level": 1,
+        "name": "tconstruct:projectile_protection"
+      },
+      {
+        "level": 1,
+        "name": "tinkersnewlife:cursed_adrenaline"
+      }
+    ],
+    "tconstruct:maille": [
       {
         "level": 1,
         "name": "tconstruct:projectile_protection"

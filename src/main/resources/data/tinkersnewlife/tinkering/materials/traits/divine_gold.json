@@ -10,7 +10,31 @@
       { "level": 1, "name": "tinkersnewlife:gungnir" },
       { "level": 1, "name": "tconstruct:returning" }
     ],
-    "tconstruct:armor": [
+    "tconstruct:plating_helmet": [
+      { "level": 1, "name": "tinkersnewlife:soul_repair" },
+      { "level": 1, "name": "tinkersnewlife:godrealm_overstep" },
+      { "level": 1, "name": "tinkersnewlife:heaven_earth_forged" },
+      { "level": 1, "name": "tinkersnewlife:soul_discount" }
+    ],
+    "tconstruct:plating_chestplate": [
+      { "level": 1, "name": "tinkersnewlife:soul_repair" },
+      { "level": 1, "name": "tinkersnewlife:godrealm_overstep" },
+      { "level": 1, "name": "tinkersnewlife:heaven_earth_forged" },
+      { "level": 1, "name": "tinkersnewlife:soul_discount" }
+    ],
+    "tconstruct:plating_leggings": [
+      { "level": 1, "name": "tinkersnewlife:soul_repair" },
+      { "level": 1, "name": "tinkersnewlife:godrealm_overstep" },
+      { "level": 1, "name": "tinkersnewlife:heaven_earth_forged" },
+      { "level": 1, "name": "tinkersnewlife:soul_discount" }
+    ],
+    "tconstruct:plating_boots": [
+      { "level": 1, "name": "tinkersnewlife:soul_repair" },
+      { "level": 1, "name": "tinkersnewlife:godrealm_overstep" },
+      { "level": 1, "name": "tinkersnewlife:heaven_earth_forged" },
+      { "level": 1, "name": "tinkersnewlife:soul_discount" }
+    ],
+    "tconstruct:maille": [
       { "level": 1, "name": "tinkersnewlife:soul_repair" },
       { "level": 1, "name": "tinkersnewlife:godrealm_overstep" },
       { "level": 1, "name": "tinkersnewlife:heaven_earth_forged" },
