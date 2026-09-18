@@ -197,7 +197,7 @@ public final class LightningManipulationTechnique extends BaseTechnique {
                     if (hp <= 0.0F) {
                         // 扣到死亡：结算死亡（死亡清理会移除解放）
                         p.setHealth(0.0F);
-                        if (p.isAlive() && !p.isRemoved()) {
+                        if (!p.isRemoved()) {                               // ⚠ setHealth(0) 后 isAlive() 恒 false ✗
                             p.die(p.damageSources().magic());
                         }
                         continue;

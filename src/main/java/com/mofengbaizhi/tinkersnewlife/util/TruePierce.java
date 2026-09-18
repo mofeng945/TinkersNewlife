@@ -159,7 +159,7 @@ public final class TruePierce {
         float hp = target.getHealth() - shortfall;
         if (hp <= 0.0F) {
             target.setHealth(0.0F);
-            if (target.isAlive() && !target.isRemoved()) target.die(withAttacker);
+            if (!target.isRemoved()) target.die(withAttacker);   // ⚠ setHealth(0) 之后 isAlive() 恒为 false ⇒ 原来 die() 永远不执行 ✗（怪停在 0 血：不掉落、不给经验、无死亡事件 ✗）
         } else {
             target.setHealth(hp);
         }
@@ -196,7 +196,7 @@ public final class TruePierce {
         float hp = target.getHealth() - dmg;
         if (hp <= 0.0F) {
             target.setHealth(0.0F);
-            if (target.isAlive() && !target.isRemoved()) target.die(src);
+            if (!target.isRemoved()) target.die(src);           // 同上 ✗
         } else {
             target.setHealth(hp);
         }

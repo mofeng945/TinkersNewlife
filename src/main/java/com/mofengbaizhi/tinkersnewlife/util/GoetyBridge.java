@@ -366,7 +366,7 @@ public final class GoetyBridge {
             float hp = target.getHealth() - dmg;
             if (hp <= 0.0F) {
                 target.setHealth(0.0F);
-                if (target.isAlive() && !target.isRemoved()) {
+                if (!target.isRemoved()) {                          // ⚠ setHealth(0) 后 isAlive() 恒 false ✗
                     target.die(src);
                 }
             } else {
