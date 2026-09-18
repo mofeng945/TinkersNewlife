@@ -2728,33 +2728,26 @@ public class MomoMerchant extends PathfinderMob
         this.lastDamageTaken = amount;
     }
 
+    /**
+     * 是否"这一击就打掉了 ≥ 最大生命的伤害"。
+     * <p>⚠ 掉落**已不再**依赖它 ✓（用户定案：走正常掉落逻辑 ✓）—— 保留此方法只是为了将来需要
+     * "秒杀判定"时能直接取用 ✓（{@code lastDamageTaken} 仍由 {@code MomoMerchantHandler} 与穿透告知维护 ✓）。
+     */
     public boolean isOneShotKill() {
         return this.lastDamageTaken >= this.getMaxHealth();
     }
 
     /**
      * ⭐ <b>穿透告知</b>（见 {@code TruePierce.PierceAware}）：穿透是"分块连打 + 差额直补"✗，
-     * 墨默常常**根本不经过 {@code hurt()}** ⇒ 两件事会坏 ✗：
-     * <ol>
-     *   <li>{@code lastDamageTaken} 只记到"最后那一小块"（或压根没记 ✗）⇒ {@link #isOneShotKill()} 永远 false
-     *       ⇒ **一击必杀却什么都不掉** ✗（用户实测 ✓）；</li>
-     *   <li>受击语音在 {@code hurt()} 里才播 ✗（而且格挡姿态会提前 {@code return false} ✗）⇒ **打它没声音** ✗（用户实测 ✓）。</li>
-     * </ol>
-     * ⇒ 这里用"这一击的总伤害"补记一次账，并补上受击红闪 + 受击语音 ✓。
+     * 墨默常常**根本不经过 {@code hurt()}** ⇒ 受击反馈会丢 ✗：
+     * 受击语音在 {@code hurt()} 里才播 ✗（格挡姿态还会提前 {@code return false} ✗）⇒ **打它没声音** ✗（用户实测 ✓）。
+     * ⇒ 这里补受击红闪 + 受击语音 ✓，并把"这一击的总伤害"记一笔（留给需要它的逻辑用 ✓）。
      */
     @Override
     public void onTruePierce(float totalDamage, net.minecraft.world.damagesource.DamageSource source) {
         this.recordDamageTaken(totalDamage);
         this.hurtTime = 10;
         this.hurtDuration = 10;
-        // 🔍 临时排查（用户反馈"用穿透打她只掉镰刀、不掉呼唤和经验" ✓ 加完确认后删）
-        try {
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
-                    "[墨默穿透] 本击总伤害={} 最大生命={} 现在血={} 记账lastDamageTaken={} 算一击必杀={} 伤害源={}",
-                    totalDamage, this.getMaxHealth(), this.getHealth(), this.lastDamageTaken,
-                    this.isOneShotKill(), source == null ? "null" : source.getMsgId());
-        } catch (Throwable ignored) {
-        }
         try {
             this.playHurtSound(source);
         } catch (Throwable ignored) {
@@ -2766,18 +2759,15 @@ public class MomoMerchant extends PathfinderMob
     //  死亡 / 掉落 / 语音
     // ============================================================
 
+    /**
+     * 死亡掉落：**正常掉落逻辑** ✓（用户 2026-09-18 定案："我其实并没有判定过必须秒掉，走正常掉落逻辑吧" ✓）
+     * —— 原版实现是"必须一击必杀（单次伤害 ≥ 最大生命）才掉"，那会让**穿透低伤连打**
+     * （每下 19~31 点，见日志 ✓）永远拿不到呼唤 ✗ ⇒ 已去掉该判定 ✓：**她死了就掉** ✓。
+     */
     @Override
     protected void dropCustomDeathLoot(DamageSource source, int lootingLevel, boolean recentlyHitIn) {
         super.dropCustomDeathLoot(source, lootingLevel, recentlyHitIn);
-        // 🔍 临时排查（确认后删）
-        try {
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
-                    "[墨默死亡] 记账lastDamageTaken={} 最大生命={} 算一击必杀={} 伤害源={}",
-                    this.lastDamageTaken, this.getMaxHealth(), this.isOneShotKill(),
-                    source == null ? "null" : source.getMsgId());
-        } catch (Throwable ignored) {
-        }
-        if (isOneShotKill() && level() instanceof ServerLevel sl) {
+        if (level() instanceof ServerLevel sl) {
             this.spawnAtLocation(new ItemStack(ModItems.RLYEH_CALL.get()), 0.5F);
             net.minecraft.world.entity.ExperienceOrb orb = new net.minecraft.world.entity.ExperienceOrb(sl,
                     this.getX(), this.getY() + 0.5, this.getZ(), 15);
