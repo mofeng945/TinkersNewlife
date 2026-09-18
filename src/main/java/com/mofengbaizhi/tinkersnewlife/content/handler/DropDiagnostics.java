@@ -41,8 +41,8 @@ public final class DropDiagnostics {
     private static final ModifierId CHAOS_FLOW = new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "chaos_flow"));
     private static final ModifierId LUCKY_DROP = new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "lucky_drop"));
 
-    private static final int MAX_LINES_PER_SESSION = 40;
-    private static final long MIN_GAP_MS = 300L;
+    private static final int MAX_LINES_PER_SESSION = 80;
+    private static final long MIN_GAP_MS = 150L;
 
     private static long lastLog = 0L;
     private static int lines = 0;
@@ -56,22 +56,23 @@ public final class DropDiagnostics {
         TinkersNewlife.LOGGER.info("[掉落诊断] 已启用（每次玩家击杀记一条，最多 {} 条，间隔 {}ms）", MAX_LINES_PER_SESSION, MIN_GAP_MS);
     }
 
-    /** ⭐ 死亡事件：确认"怪到底死没死、死于什么伤害"（掉落事件之前的一环 ✓） */
+    /** ⭐ 死亡事件：**不限击杀者**（任何非玩家实体死亡都记 ✓ —— 先确认"到底死没死、死于什么" ✓） */
     @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
     public static void onDeath(net.minecraftforge.event.entity.living.LivingDeathEvent event) {
         try {
             if (!announced) return;
             LivingEntity entity = event.getEntity();
             if (entity == null || entity.level().isClientSide) return;
+            if (entity instanceof Player) return;                        // 玩家自己死不用看 ✓
             DamageSource source = event.getSource();
             Player killer = killerOf(source);
-            if (killer == null) return;
             if (!takeSlot()) return;
-            TinkersNewlife.LOGGER.info("[掉落诊断·死亡 #{}/{}] {} 死亡 / 伤害类型={} / 击杀者={} / 主手={} / 事件被取消={}",
+            TinkersNewlife.LOGGER.info("[掉落诊断·死亡 #{}/{}] {} 死亡 / 伤害类型={} / 击杀者={} / 直接来源={} / 主手={}",
                     lines, MAX_LINES_PER_SESSION, entity.getType(), source.getMsgId(),
-                    killer.getName().getString(),
-                    killer.getMainHandItem().isEmpty() ? "空手" : killer.getMainHandItem().getHoverName().getString(),
-                    event.isCanceled());
+                    killer == null ? "无（不是玩家击杀）" : killer.getName().getString(),
+                    source.getDirectEntity() == null ? "null" : source.getDirectEntity().getType().toString(),
+                    killer == null || killer.getMainHandItem().isEmpty()
+                            ? "-" : killer.getMainHandItem().getHoverName().getString());
         } catch (Throwable ignored) {
         }
     }
@@ -121,14 +122,12 @@ public final class DropDiagnostics {
             if (entity == null || entity.level().isClientSide) return;
 
             DamageSource source = event.getSource();
-            Player killer = null;
-            if (source.getEntity() instanceof Player p) killer = p;
-            else if (source.getDirectEntity() instanceof Player p) killer = p;
-            if (killer == null) return;                       // 只看玩家击杀 ✓
+            Player killer = killerOf(source);                 // 可能为 null（非玩家击杀也记 ✓）
+            if (entity instanceof Player) return;             // 玩家自己死不用看 ✓
 
             if (!takeSlot()) return;
 
-            ItemStack hand = killer.getMainHandItem();
+            ItemStack hand = killer == null ? ItemStack.EMPTY : killer.getMainHandItem();
             TinkersNewlife.LOGGER.info(
                     "[掉落诊断 #{}/{}] {} → 掉落 {} 件 {} / 取消={} / 伤害类型={} / 击杀者={} 主手={} / 特性：{} / 死亡时 lastHurtByMob={} / 抑制：无为变形={} 释放体={} 召唤物={} 狱门疆={}",
                     lines, MAX_LINES_PER_SESSION,
@@ -137,9 +136,9 @@ public final class DropDiagnostics {
                     dropNames(event),
                     event.isCanceled(),
                     source.getMsgId(),
-                    killer.getName().getString(),
+                    killer == null ? "无（非玩家击杀）" : killer.getName().getString(),
                     hand.isEmpty() ? "空手" : hand.getHoverName().getString(),
-                    modifierSources(killer),
+                    killer == null ? "-" : modifierSources(killer),
                     entity.getLastHurtByMob() == null ? "null" : entity.getLastHurtByMob().getName().getString(),
                     com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiHandler.isTransformedUnit(entity),
                     com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
