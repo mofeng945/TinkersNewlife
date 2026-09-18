@@ -11,8 +11,8 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 Add-Type -AssemblyName System.Drawing
 
-$texDir = Join-Path $root 'src\main\resources\assets\tinkersnewlife\textures\tinker_armor\wizard_armor'
-$greyPath = Join-Path $texDir 'all_grey.png'
+$texDir = Join-Path $root 'src\main\resources\assets\tinkersnewlife\textures\armor\wizard'
+$greyPath = Join-Path $texDir 'grey.png'
 $colorsPath = Join-Path $root 'src\main\resources\assets\tinkersnewlife\mantle\colors.json'
 
 if (-not (Test-Path -LiteralPath $greyPath)) { Write-Host "缺灰阶底图：$greyPath"; exit 1 }

@@ -38,7 +38,7 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
             new ModelLayerLocation(new ResourceLocation(TinkersNewlife.MOD_ID, "wizard_armor"), "main");
 
     /** 灰阶贴图（颜色靠顶点着色；画布 128x128） */
-    public static final String TEX_GREY = "textures/tinker_armor/wizard_armor/all_grey.png";
+    public static final String TEX_GREY = "textures/armor/wizard/grey.png";
     public static final int TEX_W = 128;
     public static final int TEX_H = 128;
 

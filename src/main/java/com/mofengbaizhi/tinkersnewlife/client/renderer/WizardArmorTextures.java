@@ -34,13 +34,13 @@ public final class WizardArmorTextures {
     private WizardArmorTextures() {}
 
     /** 兜底灰阶底图（配合顶点着色 ✓） */
-    public static final ResourceLocation GREY = tex("tinker_armor/wizard_armor/all_grey.png");
+    public static final ResourceLocation GREY = tex("armor/wizard/grey.png");
 
     /** 各组的贴图前缀（与匠魂盔甲惯例一致：<prefix><材料>armor.png / ...leggings.png ✓） */
-    public static final String PREFIX_HAT = "tinker_armor/wizard_armor/hat_";
-    public static final String PREFIX_ROBE = "tinker_armor/wizard_armor/robe_";
-    public static final String PREFIX_LEGGINGS = "tinker_armor/wizard_armor/mage_leggings_";
-    public static final String PREFIX_BOOTS = "tinker_armor/wizard_armor/mage_boots_";
+    public static final String PREFIX_HAT = "armor/wizard/hat_";
+    public static final String PREFIX_ROBE = "armor/wizard/robe_";
+    public static final String PREFIX_LEGGINGS = "armor/wizard/mage_leggings_";
+    public static final String PREFIX_BOOTS = "armor/wizard/mage_boots_";
 
     /** 存在性缓存：key = 完整贴图路径，value = 是否真的存在 ✓ */
     private static final Map<String, Boolean> EXISTS = new HashMap<>();
@@ -58,7 +58,7 @@ public final class WizardArmorTextures {
     public static void setLayerOk(boolean ok) { layerOk = ok; }
 
     /** 透明贴图（渲染层接手时用，避免原版层重复绘制 ✓；由 tools 脚本生成 ✓） */
-    public static final ResourceLocation TRANSPARENT = tex("tinker_armor/wizard_armor/transparent.png");
+    public static final ResourceLocation TRANSPARENT = tex("armor/wizard/transparent.png");
 
     /** 懒烘焙自绘模型（失败返回 null ⇒ 渲染层直接跳过，外观由原版层兜底 ✓） */
     public static com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorModel model() {

@@ -43,7 +43,7 @@ public class WizardArmorItem extends ModifiableArmorItem {
         // 渲染层正常工作时由它逐组绘制 ⇒ 这里给透明图避免重复；层异常则回退灰阶图 ✓
         boolean layer = com.mofengbaizhi.tinkersnewlife.client.renderer.WizardArmorTextures.isLayerOk();
         return TinkersNewlife.MOD_ID + ":" + (layer
-                ? "textures/tinker_armor/wizard_armor/transparent.png"
+                ? "textures/armor/wizard/transparent.png"
                 : com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorModel.TEX_GREY);
     }
 
