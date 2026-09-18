@@ -1,4 +1,4 @@
-# 按材料生成巫师套装的盔甲贴图（给"每材料一张图"用）
+﻿# 按材料生成巫师套装的盔甲贴图（给"每材料一张图"用）
 #
 # 输入：textures/tinker_armor/wizard_armor/all_grey.png（灰阶底图，128×128）
 #       assets/tinkersnewlife/mantle/colors.json（材料色总表）
