@@ -2,11 +2,11 @@
   "loader": "tconstruct:tool",
   "parent": "forge:item/default",
   "textures": {
-    "plating": "tinkersnewlife:item/wizard_hat_body",
-    "maille":  "tinkersnewlife:item/wizard_hat_trim",
-    "maille2": "tinkersnewlife:item/wizard_hat_lace",
-    "binding": "tinkersnewlife:item/wizard_hat_cloth",
-    "large":   "tinkersnewlife:item/wizard_hat_buckle"
+    "plating": "tinkersnewlife:item/tool/armor/wizard/wizard_hat_body",
+    "maille":  "tinkersnewlife:item/tool/armor/wizard/wizard_hat_trim",
+    "maille2": "tinkersnewlife:item/tool/armor/wizard/wizard_hat_lace",
+    "binding": "tinkersnewlife:item/tool/armor/wizard/wizard_hat_cloth",
+    "large":   "tinkersnewlife:item/tool/armor/wizard/wizard_hat_buckle"
   },
   "parts": [
     { "name": "plating", "index": 0 },

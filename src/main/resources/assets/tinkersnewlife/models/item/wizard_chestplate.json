@@ -2,11 +2,11 @@
   "loader": "tconstruct:tool",
   "parent": "forge:item/default",
   "textures": {
-    "plating": "tinkersnewlife:item/wizard_robe_body",
-    "maille":  "tinkersnewlife:item/wizard_robe_trim",
-    "maille2": "tinkersnewlife:item/wizard_robe_lace",
-    "binding": "tinkersnewlife:item/wizard_robe_cloth",
-    "large":   "tinkersnewlife:item/wizard_robe_buckle"
+    "plating": "tinkersnewlife:item/tool/armor/wizard/wizard_robe_body",
+    "maille":  "tinkersnewlife:item/tool/armor/wizard/wizard_robe_trim",
+    "maille2": "tinkersnewlife:item/tool/armor/wizard/wizard_robe_lace",
+    "binding": "tinkersnewlife:item/tool/armor/wizard/wizard_robe_cloth",
+    "large":   "tinkersnewlife:item/tool/armor/wizard/wizard_robe_buckle"
   },
   "parts": [
     { "name": "plating", "index": 0 },
