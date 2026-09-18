@@ -26,7 +26,7 @@ param(
     [double]$ScaleOverride = 0,   # 0 = 从 WizardArmorModel.java 读 HAT_SCALE
     [double]$UvScale = 0,         # 0 = 自动推定（UV 空间 → 贴图像素 的缩放 ✓）
     [double]$DarkRatio = 0,       # >0 时：某面亮度 < 同方块亮面均值 × 该比例 ⇒ 平涂成亮面色（治"小岛落在深色底上" ✓）
-    [switch]$NoFillHoles          # 关掉"补透明缝"（默认开 ✓：小面矩形是小数坐标，取整会留缝 ⇒ 采样到透明就看不见 ✗）
+    [switch]$FillHoles           # 默认关 ✓：补"透明缝"会把用户故意留的透明（孔洞）也填掉 ✗
 )
 
 $ErrorActionPreference = 'Stop'
@@ -236,6 +236,42 @@ function CopyRect($srcBmp, [double]$sx, [double]$sy, [double]$sw, [double]$sh,
 
 $map0 = 'up', 'down', 'east', 'north', 'west', 'south'
 
+# ---------- 逐像素最近邻搬运（替代 DrawImage ✓） ----------
+# 为什么必须自己搬：① DrawImage 按整数像素取整 ⇒ 只有 1~2 像素高的小面会留下透明缝 ✗（面会"缺一块" ✗）；
+#   ② 但**不能靠"补透明缝"来治** ✗ —— 用户贴图里**故意留的透明**（例如脑后垂布的孔洞 ✓）会被一起填掉 ✗。
+#   ⇒ 正确做法：对**每一个会被面采样到的底图像素**，按 uv 反算回源图像素，连 alpha 一起搬 ✓
+#     （透明处保持透明 ✓；取整缝也不存在了，因为每个采样像素都被写过 ✓）。
+function BlitFaceNearest($srcBmp, [double]$sx, [double]$sy, [double]$sw, [double]$sh,
+                         [double]$dx, [double]$dy, [double]$dw, [double]$dh,
+                         [bool]$flipX, [bool]$flipY, [int]$rot) {
+    if ($sw -le 0 -or $sh -le 0 -or $dw -le 0 -or $dh -le 0) { return 0 }
+    $n = 0
+    for ($y = [int][Math]::Floor($dy); $y -le ([int][Math]::Ceiling($dy + $dh) - 1); $y++) {
+        for ($x = [int][Math]::Floor($dx); $x -le ([int][Math]::Ceiling($dx + $dw) - 1); $x++) {
+            # ⚠ 写的是**被这个面碰到的所有底图像素**（不要求像素中心落在矩形内 ✓）：
+            #   只有 0.2 像素高的薄面若按"中心判定"，会一个像素都轮不到 ⇒ 采样到邻居或透明 ⇒ 缺面 ✗。
+            if ($x -lt 0 -or $y -lt 0 -or $x -ge $out.Width -or $y -ge $out.Height) { continue }
+            $cx = $x + 0.5; $cy = $y + 0.5
+            # ⚠ 必须夹到 [0, 1) 而不是 [0, 1]：夹到 1.0 会取到矩形**外面那一行/列** ✗
+            #   （薄面源只有 1 行时 floor(sy + 1.0×1) = sy+1 ⇒ 取到隔壁内容 ⇒ 颜色错乱 ✗）
+            $u = [Math]::Max(0.0, [Math]::Min(0.999999, ($cx - $dx) / $dw))
+            $v = [Math]::Max(0.0, [Math]::Min(0.999999, ($cy - $dy) / $dh))
+            # Blockbench 的面旋转 / 镜像 ⇒ 反算回源图坐标 ✓
+            if ($rot -eq 90) { $t = $u; $u = $v; $v = 1 - $t }
+            elseif ($rot -eq 180) { $u = 1 - $u; $v = 1 - $v }
+            elseif ($rot -eq 270) { $t = $u; $u = 1 - $v; $v = $t }
+            if ($flipX) { $u = 1 - $u }
+            if ($flipY) { $v = 1 - $v }
+            $px = [int][Math]::Floor($sx + $u * $sw)
+            $py = [int][Math]::Floor($sy + $v * $sh)
+            if ($px -lt 0 -or $py -lt 0 -or $px -ge $srcBmp.Width -or $py -ge $srcBmp.Height) { continue }
+            $out.SetPixel($x, $y, $srcBmp.GetPixel($px, $py))
+            $n++
+        }
+    }
+    return $n
+}
+
 # ---------- 可选：过暗面自动跟随同方块的亮面（-DarkRatio，默认关 ✓） ----------
 # 用途：手绘时常常只画了"看得见的大面"，那些细长/很小的 UV 岛仍留在铺的深色底上 ✓
 #   ⇒ 上线后表现为"某个方块发黑 / 同一部件几块颜色对不上" ✗。
@@ -318,11 +354,10 @@ foreach ($c in $cubes) {
             $faceFills += [pscustomobject]@{ X0 = $m.dx; Y0 = $m.dy; X1 = ($m.dx + $m.dw); Y1 = ($m.dy + $m.dh); V = $vv }
             continue
         }
-        CopyRect $paint $sx $sy ($ex - $sx) ($ey - $sy) $m.dx $m.dy $m.dw $m.dh $flipX $flipY $fr
-        $mv = Mean-Opaque $paint $sx $sy $ex $ey
-        if ($mv -lt 0) { $mv = 210 }          # 源整块透明 ⇒ 补洞时用中性灰 ✓（不然那个面还是看不见 ✓）
-        $faceFills += [pscustomobject]@{ X0 = $m.dx; Y0 = $m.dy; X1 = ($m.dx + $m.dw); Y1 = ($m.dy + $m.dh); V = [int][Math]::Round($mv) }
+        $wrote = BlitFaceNearest $paint $sx $sy ($ex - $sx) ($ey - $sy) $m.dx $m.dy $m.dw $m.dh $flipX $flipY $fr
+        if ($env:TN_HAT_DEBUG) { Write-Host ("  [dbg] #{0}.{1,-6} dest=({2},{3},{4},{5}) src=({6},{7},{8},{9}) 写入={10}" -f $c.Index, $m.f, $m.dx, $m.dy, $m.dw, $m.dh, $sx, $sy, ($ex - $sx), ($ey - $sy), $wrote) }
     }
+    if ($env:TN_HAT_DEBUG) { Write-Host ("  [dbg] 循环中读回 #0.east 所在像素(5,20) = A{0} R{1}" -f $out.GetPixel(5, 20).A, $out.GetPixel(5, 20).R) }
     # Java：x/z 用 from，y 用 to（Y 轴方向与 Blockbench 相反 ✓，见模型类注释）
     $jx = [Math]::Round(($c.FromX - $ORIGIN) * $S, 5)
     $jz = [Math]::Round(($c.FromZ - $ORIGIN) * $S, 5)
@@ -332,9 +367,9 @@ foreach ($c in $cubes) {
     $javaBoxes += ("        addBox(head, `"{0}`", {1}F, {2}F, {3}F, {4}F, {5}F, {6}F, {7}, {8});" -f `
         $name, $c.FromX, $c.FromY, $c.FromZ, $c.ToX, $c.ToY, $c.ToZ, $c.U, $c.V)
 }
-# ---------- 补洞：小面/薄面的目标矩形是小数坐标，绘制取整会留下透明缝 ⇒ 采样到透明就"看不见" ✗ ----------
+# ---------- 可选：补透明缝（默认**关** ✗ —— 会把用户故意留的透明一起填掉 ✗，正常情况不需要 ✓） ----------
 $holeCnt = 0; $holeFaces = 0
-if (-not $NoFillHoles) {
+if ($FillHoles) {
     foreach ($ff in $faceFills) {
         $hit = $false
         for ($y = [Math]::Floor($ff.Y0); $y -lt [Math]::Ceiling($ff.Y1); $y++) {
@@ -353,7 +388,8 @@ $g.Dispose()
 # ---------- 汇总 ----------
 Write-Host ""
 Write-Host ("镜像面：{0} 个   带旋转面：{1} 个（都会按 Blockbench 的 uv 顺序 / rotation 摆正 ✓）" -f $flipCnt, $rotCnt)
-Write-Host ("补透明缝：{0} 个像素（涉及 {1} 个面）—— 小数坐标取整留下的缝会让面`"看不见`" ✗" -f $holeCnt, $holeFaces)
+if ($FillHoles) { Write-Host ("补透明缝：{0} 个像素（涉及 {1} 个面）—— ⚠ 会填掉用户故意留的透明 ✗" -f $holeCnt, $holeFaces) }
+else { Write-Host "补透明缝：关 ✓（逐像素搬运已保证无缝隙，且用户故意留的透明原样保留 ✓）" }
 if ($DarkRatio -gt 0) { Write-Host ("过暗面平涂：{0} 个面（-DarkRatio {1}）" -f $darkCnt, $DarkRatio) }
 Write-Host ("{0,-16} {1,-8} {2,4} {3,4} {4,7} {5,7} {6,7} {7,9} {8,9}" -f '名字', '组', 'u', 'v', 'w', 'h', 'd', '布局宽', '布局高')
 foreach ($c in $cubes) {
