@@ -80,17 +80,22 @@ public final class WizardArmorTextures {
     }
 
     /**
-     * 某一组的材料贴图（{@code <prefix><材料>armor.png}）——
+     * 某一组的材料贴图（生成器命名 ✓）——
      * 不存在时返回 {@code null} ⇒ 调用方退回 {@link #GREY} + 顶点着色 ✓。
      *
-     * @param prefix       组的贴图前缀（见上面的常量 ✓）
-     * @param materialPath 材料 id 的路径部分（如 {@code origin_alloy} ✓）
-     * @param leggings     是否取腿部层（{@code ...leggings.png} ✓）
+     * <p>命名照抄匠魂 {@code MaterialPartTextureGenerator#outputPath}：
+     * {@code 部件路径 + "_" + 材料贴图命名空间 + "_" + 材料贴图路径} ✓。
+     * ⚠ 材料贴图 id 必须取匠魂的渲染信息（{@code MaterialRenderInfo#texture} ✓）而**不能写死成我们的命名空间** ✗：
+     * 铜那种匠魂本体材料生成出来的是 {@code robe_tconstruct_copper.png} ✗，写死 {@code tinkersnewlife} 就永远找不到 ✗。
+     *
+     * @param prefix     组的贴图前缀（见上面的常量 ✓）
+     * @param materialId 完整材料 id（如 {@code tconstruct:copper} ✓）
+     * @param leggings   是否取腿部层（{@code ...leggings.png} ✓）
      */
-    public static ResourceLocation materialArmorTexture(String prefix, String materialPath, boolean leggings) {
-        if (materialPath == null || materialPath.isEmpty()) return null;
-        // 生成器命名规则：<底图路径>_<命名空间>_<材料>（见 TConstructGeneratedPartTextures 输出 ✓）
-        String path = prefix + "_" + TinkersNewlife.MOD_ID + "_" + materialPath + ".png";
+    public static ResourceLocation materialArmorTexture(String prefix, String materialId, boolean leggings) {
+        if (materialId == null || materialId.isEmpty()) return null;
+        String path = generatedTexturePath(prefix, materialId);
+        if (path == null) return null;
         Boolean cached = EXISTS.get(path);
         if (cached != null) return cached ? tex(path) : null;
         boolean exists = false;
@@ -102,6 +107,28 @@ public final class WizardArmorTextures {
         }
         EXISTS.put(path, exists);
         return exists ? tex(path) : null;
+    }
+
+    /**
+     * 生成器会产出的那张图的路径（相对 {@code textures/} ✓）；
+     * 材料在匠魂里查不到渲染信息时退回"我们自己的命名空间 + 材料路径"（老行为 ✓）。
+     */
+    @javax.annotation.Nullable
+    public static String generatedTexturePath(String prefix, String materialId) {
+        try {
+            slimeknights.tconstruct.library.materials.definition.MaterialVariantId id =
+                    slimeknights.tconstruct.library.materials.definition.MaterialVariantId.parse(materialId);
+            java.util.Optional<slimeknights.tconstruct.library.client.materials.MaterialRenderInfo> info =
+                    slimeknights.tconstruct.library.client.materials.MaterialRenderInfoLoader.INSTANCE.getRenderInfo(id);
+            if (info.isPresent() && info.get().texture() != null) {
+                ResourceLocation t = info.get().texture();
+                return prefix + "_" + t.getNamespace() + "_" + t.getPath() + ".png";
+            }
+        } catch (Throwable ignored) {
+            // 落到下面的兜底命名 ✓
+        }
+        String p = com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorColors.pathOf(materialId);
+        return p == null ? null : prefix + "_" + TinkersNewlife.MOD_ID + "_" + p + ".png";
     }
 
     /** 按装备槽取"这一件的组的贴图前缀" ✓ */
@@ -117,10 +144,10 @@ public final class WizardArmorTextures {
     /**
      * 读匠魂工具 NBT 里第 index 个材料（照抄匠魂 {@code MaterialArmorTextureSupplier.Material#getMaterial} ✓）。
      *
-     * @return 材料 id 的路径部分（如 {@code origin_alloy}）；读不到返回 {@code null} ✓
+     * @return **完整**材料 id（如 {@code tconstruct:copper}、{@code tconstruct:wood#oak} ✓）；读不到返回 {@code null} ✓
      */
     @javax.annotation.Nullable
-    public static String materialPathOf(net.minecraft.world.item.ItemStack stack, int index) {
+    public static String materialIdOf(net.minecraft.world.item.ItemStack stack, int index) {
         try {
             if (stack == null || stack.isEmpty()) return null;
             net.minecraft.nbt.CompoundTag tag = stack.getTag();
@@ -130,12 +157,18 @@ public final class WizardArmorTextures {
             net.minecraft.nbt.ListTag list = tag.getList(key, net.minecraft.nbt.Tag.TAG_STRING);
             if (index < 0 || index >= list.size()) return null;
             String s = list.getString(index);
-            if (s == null || s.isEmpty()) return null;
-            int colon = s.indexOf(':');
-            return colon >= 0 ? s.substring(colon + 1) : s;
+            return (s == null || s.isEmpty()) ? null : s;
         } catch (Throwable ignored) {
             return null;
         }
+    }
+
+    /**
+     * @return 材料 id 的**路径**部分（{@code tconstruct:copper} → {@code copper} ✓）；读不到返回 {@code null} ✓
+     */
+    @javax.annotation.Nullable
+    public static String materialPathOf(net.minecraft.world.item.ItemStack stack, int index) {
+        return com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorColors.pathOf(materialIdOf(stack, index));
     }
 
     /**
@@ -145,7 +178,7 @@ public final class WizardArmorTextures {
      */
     public static String fallbackArmorTexture(net.minecraft.world.item.ItemStack stack, EquipmentSlot slot) {
         try {
-            String mat = materialPathOf(stack, 0);
+            String mat = materialIdOf(stack, 0);
             if (mat != null) {
                 ResourceLocation rl = materialArmorTexture(prefixFor(slot), mat, usesLeggingsLayer(slot));
                 if (rl != null) return rl.getNamespace() + ":" + rl.getPath();

@@ -257,7 +257,7 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
     /** 用"第 index 个材料槽"的颜色绘制这些部件，并先套上父部件变换 */
     private void draw(PoseStack poseStack, VertexConsumer buffer, int light, int overlay, int index,
                       ModelPart parent, ModelPart... parts) {
-        float[] c = WizardArmorColors.of(materialPath(index));
+        float[] c = WizardArmorColors.resolve(materialId(index));
         for (ModelPart part : parts) {
             if (part == null) continue;
             poseStack.pushPose();
@@ -266,8 +266,6 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
             poseStack.popPose();
         }
     }
-
-    /** 反射读匠魂材料 id（读不到就退回兜底色） */
     /**
      * 渲染层用：只画"这一件"的部件组，**按组取匠魂生成器产出的按材料贴图** ✓；
      * 某组没有对应贴图时退回 {@code all_grey.png} + 顶点着色 ✓（外观与 renderToBuffer 完全一致 ✓）。
@@ -319,12 +317,12 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
     private void group(PoseStack poseStack, net.minecraft.client.renderer.MultiBufferSource buffers,
                        int light, int overlay, int index, String prefix, boolean legsLayer,
                        ModelPart parent, ModelPart... parts) {
-        String mat = materialPath(index);
+        String mat = materialId(index);
         net.minecraft.resources.ResourceLocation tex =
                 com.mofengbaizhi.tinkersnewlife.client.renderer.WizardArmorTextures
                         .materialArmorTexture(prefix, mat, legsLayer);
         float[] c = tex != null ? new float[]{ 1.0F, 1.0F, 1.0F }
-                                : WizardArmorColors.of(mat);
+                                : WizardArmorColors.resolve(mat);
         net.minecraft.resources.ResourceLocation use =
                 tex != null ? tex : com.mofengbaizhi.tinkersnewlife.client.renderer.WizardArmorTextures.GREY;
         VertexConsumer buffer = buffers.getBuffer(
@@ -338,31 +336,21 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
         }
     }
     /**
-     * 读第 index 个材料槽的材料 id（路径部分）。
+     * 读第 index 个材料槽的**完整**材料 id（如 {@code tconstruct:copper} ✓）。
      *
      * <p>⭐ <b>照抄匠魂源码</b>（{@code MaterialArmorTextureSupplier.Material#getMaterial} ✓）：
      * 匠魂**不**通过 {@code ToolStack} 对象取材料，而是直接读物品 NBT 里的材料字符串表
      * —— {@code ToolStack.TAG_MATERIALS}（{@code tic_materials}）是一个字符串列表，按 index 取即可 ✓。
      *
-     * <p>我此前用反射猜方法名 ✗ ⇒ 取不到就所有槽退回同一材料 ⇒ "不同槽用了不同材料，甲上却只有单色" ✗
-     * （用户实测 ✓）。这段改成与匠魂一致的读法后退回兜底色只在真正没有材料时发生 ✓。
+     * <p>⚠ 两处踩过的坑：
+     * ① 我此前用反射猜方法名 ✗ ⇒ 取不到就所有槽退回同一材料 ⇒ "不同槽用了不同材料，甲上却只有单色" ✗；
+     * ② 取到之后又被我**砍掉命名空间**再查一张硬编码 12 材料色表 ✗ ⇒
+     *    铜 / 圣灵这类表外材料一律落兜底紫 ⇒ <b>整件全紫</b> ✗（用户实测 ✓）。
+     * 现在把**完整 id** 交给 {@link WizardArmorColors#resolve} 去问匠魂的渲染信息 ✓，表只当兜底 ✓。
      */
     @javax.annotation.Nullable
-    private String materialPath(int index) {
-        try {
-            if (currentStack == null || currentStack.isEmpty()) return null;
-            net.minecraft.nbt.CompoundTag tag = currentStack.getTag();
-            if (tag == null) return null;
-            String key = slimeknights.tconstruct.library.tools.nbt.ToolStack.TAG_MATERIALS;
-            if (!tag.contains(key, net.minecraft.nbt.Tag.TAG_LIST)) return null;
-            net.minecraft.nbt.ListTag list = tag.getList(key, net.minecraft.nbt.Tag.TAG_STRING);
-            if (index < 0 || index >= list.size()) return null;
-            String s = list.getString(index);
-            if (s == null || s.isEmpty()) return null;
-            int colon = s.indexOf(':');
-            return colon >= 0 ? s.substring(colon + 1) : s;
-        } catch (Throwable ignored) {
-            return null;
-        }
+    private String materialId(int index) {
+        return com.mofengbaizhi.tinkersnewlife.client.renderer.WizardArmorTextures
+                .materialIdOf(currentStack, index);
     }
 }
