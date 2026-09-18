@@ -37,16 +37,10 @@ public class WizardArmorItem extends ModifiableArmorItem {
         super(material, type, properties);
     }
 
-    /** 按**装备槽**选贴图 ⇒ 四件各自显示自己的造型 ✓（四张贴图只画自己那组 UV 区域、其余透明 ✓） */
+    /** 四件共用一张**灰阶**贴图：颜色由模型逐组用材料色顶点着色 ✓（见 WizardArmorModel） */
     @Override
     public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot, String type) {
-        String path = switch (slot) {
-            case HEAD -> com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorModel.TEX_HAT;
-            case CHEST -> com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorModel.TEX_ROBE;
-            case LEGS -> com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorModel.TEX_LEGGINGS;
-            default -> com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorModel.TEX_BOOTS;
-        };
-        return TinkersNewlife.MOD_ID + ":" + path;
+        return TinkersNewlife.MOD_ID + ":" + com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorModel.TEX_GREY;
     }
 
     @Override
@@ -62,6 +56,7 @@ public class WizardArmorItem extends ModifiableArmorItem {
                             net.minecraft.client.Minecraft.getInstance().getEntityModels()
                                     .bakeLayer(com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorModel.LAYER));
                 }
+                model.setCurrent(stack, slot);   // ⭐ 告诉模型"这一件 + 哪个槽"⇒ 只画该件并逐组染材料色 ✓
                 return model;
             }        });
     }
