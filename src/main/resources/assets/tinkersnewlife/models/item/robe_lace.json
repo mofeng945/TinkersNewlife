@@ -1,1 +1,1 @@
-{ "loader": "tconstruct:material", "parent": "forge:item/default", "textures": { "texture": "tconstruct:item/tool/parts/maille" } }
+{ "loader": "tconstruct:material", "parent": "forge:item/default", "textures": { "texture": "tinkersnewlife:item/wizard_hat_lace" } }

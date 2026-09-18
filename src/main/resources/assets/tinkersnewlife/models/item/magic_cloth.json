@@ -1,1 +1,1 @@
-{ "loader": "tconstruct:material", "parent": "forge:item/default", "textures": { "texture": "tconstruct:item/tool/parts/tough_binding" } }
+{ "loader": "tconstruct:material", "parent": "forge:item/default", "textures": { "texture": "tinkersnewlife:item/wizard_hat_cloth" } }

@@ -2,17 +2,17 @@
   "loader": "tconstruct:tool",
   "parent": "forge:item/default",
   "textures": {
-    "body":   "tinkersnewlife:armor/wizard/icons/wizard_boots_body",
-    "trim":   "tinkersnewlife:armor/wizard/icons/wizard_boots_trim",
-    "lace":   "tinkersnewlife:armor/wizard/icons/wizard_boots_lace",
-    "cloth":  "tinkersnewlife:armor/wizard/icons/wizard_boots_cloth",
-    "buckle": "tinkersnewlife:armor/wizard/icons/wizard_boots_buckle"
+    "plating": "tinkersnewlife:item/wizard_boots_body",
+    "maille":  "tinkersnewlife:item/wizard_boots_trim",
+    "maille2": "tinkersnewlife:item/wizard_boots_lace",
+    "binding": "tinkersnewlife:item/wizard_boots_cloth",
+    "large":   "tinkersnewlife:item/wizard_boots_buckle"
   },
   "parts": [
-    { "name": "body",   "index": 0 },
-    { "name": "trim",   "index": 1 },
-    { "name": "lace",   "index": 2 },
-    { "name": "cloth",  "index": 3 },
-    { "name": "buckle", "index": 4 }
+    { "name": "plating", "index": 0 },
+    { "name": "maille",  "index": 1 },
+    { "name": "maille2", "index": 2 },
+    { "name": "binding", "index": 3 },
+    { "name": "large",   "index": 4 }
   ]
 }
