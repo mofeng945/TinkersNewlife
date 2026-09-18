@@ -163,12 +163,9 @@ public class ModItems {
                 )
         );
 
-    public static final RegistryObject<ToolPartItem> MAGIC_CLOTH =
-        ITEMS.register("magic_cloth",
-                () -> new ToolPartItem(new Item.Properties(),
-                        new MaterialStatsId(new ResourceLocation("tconstruct", "cuirass"))
-                )
-        );
+    /** 魔法布料：**普通物品**（无材质、不作为部件 ✓）—— 由丝绢浇铸哈斯塔恶念得到 ✓，仅用于合成 ✓ */
+    public static final RegistryObject<Item> MAGIC_CLOTH =
+        ITEMS.register("magic_cloth", () -> new Item(new Item.Properties()));
 
     /** 悠悠球轮铸模（金铸模） */
     public static final RegistryObject<Item> YO_YO_WHEEL_CAST =

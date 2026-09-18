@@ -160,7 +160,7 @@ public class ModCreativeTabs {
                                 addAllPartVariants(output, ModItems.YO_YO_SPOOL.get());
                                 // 巫师套装的两个专属部件（盔甲统计 ⇒ 只带护甲特性 ✓）
                                 addAllPartVariants(output, ModItems.ROBE_LACE.get());
-                                addAllPartVariants(output, ModItems.MAGIC_CLOTH.get());
+                                output.accept(ModItems.MAGIC_CLOTH.get());   // 魔法布料是普通物品 ✓（不再是部件）
                                 // ⭐ 咒力核心部件已从创造物品栏移除（易与成品咒力核心混淆，需用核心请取成品变体）
 
                                 if (anyLoaded("iceandfire")) {

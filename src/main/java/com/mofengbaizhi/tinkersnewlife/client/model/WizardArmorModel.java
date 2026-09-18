@@ -177,7 +177,7 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
                 draw(poseStack, buffer, packedLight, packedOverlay, 0, this.head, hatCrown);
                 draw(poseStack, buffer, packedLight, packedOverlay, 0, this.head, hatTower);
                 draw(poseStack, buffer, packedLight, packedOverlay, 1, this.head, hatTip);
-                draw(poseStack, buffer, packedLight, packedOverlay, 4, this.head, hatBand);
+                draw(poseStack, buffer, packedLight, packedOverlay, 2, this.head, hatBand);
             }
             case CHEST -> {
                 draw(poseStack, buffer, packedLight, packedOverlay, 2, this.body, robe);
@@ -228,7 +228,7 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
                 group(poseStack, buffers, light, overlay, 0, prefix, legsLayer, this.head, hatCrown);
                 group(poseStack, buffers, light, overlay, 0, prefix, legsLayer, this.head, hatTower);
                 group(poseStack, buffers, light, overlay, 1, prefix, legsLayer, this.head, hatTip);
-                group(poseStack, buffers, light, overlay, 4, prefix, legsLayer, this.head, hatBand);
+                group(poseStack, buffers, light, overlay, 2, prefix, legsLayer, this.head, hatBand);
             }
             case CHEST -> {
                 group(poseStack, buffers, light, overlay, 2, prefix, legsLayer, this.body, robe);
