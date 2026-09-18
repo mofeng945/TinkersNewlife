@@ -58,10 +58,11 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
      */
     private static final float HAT_SCALE = 0.8F;
     /**
-     * 整体压低（像素，Y 向下 ⇒ 正数=更贴近头）。用户要求"帽子故意压低一点"，
+     * 整体压低/抬高（像素，Y 向下 ⇒ 数越大越贴近头、数越小越往上）。
+     * 用户要求"帽子故意压低一点"，第一次定 3.0；后来要求"整体上移 0.5" ⇒ 2.5 ✓。
      * 想再低/再高只改这一个数即可（1.0 = 一个像素）。
      */
-    private static final float HAT_SINK = 3.0F;
+    private static final float HAT_SINK = 2.5F;
 
     // 法帽：按"材料槽"分三组（对应 Blockbench 里的 plating / maille / lance 三个组）
     private final ModelPart[] hatPlating;  // 槽0 镶板
