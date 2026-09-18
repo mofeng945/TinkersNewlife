@@ -14,6 +14,8 @@
 #     南 south= x[u+d+w+d, u+2d+2w] y[v+d, v+d+h]     宽w 高h
 #   整块矩形总宽 = 2d+2w、总高 = d+h ✓
 param(
+    [string]$Atlas = '',
+    [string]$Out = '',
     [string]$Java = 'src\main\java\com\mofengbaizhi\tinkersnewlife\client\model\WizardArmorModel.java',
     [int]$Zoom = 8
 )
@@ -22,7 +24,9 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 Add-Type -AssemblyName System.Drawing
 
-$atlasPath = Join-Path $root 'src\main\resources\assets\tinkersnewlife\textures\armor\wizard\grey.png'
+$atlasPath = if ($Atlas -and (Test-Path -LiteralPath $Atlas)) { (Resolve-Path -LiteralPath $Atlas).Path }
+             else { Join-Path $root 'src\main\resources\assets\tinkersnewlife\textures\armor\wizard\grey.png' }
+if ($Out) { $outName = $Out } else { $outName = 'wizard-atlas-guide-x8.png' }
 $outDir = Join-Path $root 'build'
 if (-not (Test-Path $outDir)) { New-Item -ItemType Directory -Path $outDir | Out-Null }
 
@@ -122,7 +126,7 @@ for ($i = 0; $i -le 128; $i += 8) {
     }
 }
 $g.Dispose()
-$guide = Join-Path $outDir 'wizard-atlas-guide-x8.png'
+$guide = Join-Path $outDir $outName
 $big.Save($guide, [System.Drawing.Imaging.ImageFormat]::Png)
 $big.Dispose(); $img.Dispose()
 
