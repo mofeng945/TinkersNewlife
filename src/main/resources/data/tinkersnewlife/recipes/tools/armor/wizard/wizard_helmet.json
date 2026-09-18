@@ -1,0 +1,11 @@
+{
+  "type": "tconstruct:tool_building",
+  "result": "tinkersnewlife:wizard_helmet",
+  "result_count": 1,
+  "slot_layout": "tinkersnewlife:wizard_armor",
+  "extra_requirements": [
+    {
+      "item": "tinkersnewlife:magic_cloth"
+    }
+  ]
+}
