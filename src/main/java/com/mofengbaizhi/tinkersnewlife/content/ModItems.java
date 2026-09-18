@@ -142,6 +142,34 @@ public class ModItems {
                 )
         );
 
+    // ==================== 巫师套装的两个专属部件 ====================
+    /**
+     * 巫师套装·法袍系带 与 魔术布料。
+     *
+     * <p>⭐ 为什么用自定义部件而不是匠魂的「坚韧套环 / 大板」：
+     * 那两个部件走的是**工具统计**（`tough_binding`→binding、`large_plate`→head ✗），
+     * 套装会因此显示"绑定结/头部"的**武器特性** ✗（用户实测）。
+     * 这两个部件把统计挂在**盔甲统计 `tconstruct:maille`** 上 ✓ ⇒
+     * 它们带来的只有该材料的 `maille` 统计（无护甲值 ✓）与其**护甲特性**（`perStat` ✓），
+     * 于是五槽全都是盔甲口径、不再漏工具特性 ✓，同时"多两个槽位"的设计保留 ✓。
+     *
+     * <p>图标复用匠魂自带的部件底图（`tconstruct:material` 加载器会按材料自动着色 ✓，不用自绘 ✓）：
+     * 法袍系带用 maille 底图、魔术布料用 tough_binding 底图，方便区分 ✓。
+     */
+    public static final RegistryObject<ToolPartItem> ROBE_LACE =
+        ITEMS.register("robe_lace",
+                () -> new ToolPartItem(new Item.Properties(),
+                        new MaterialStatsId(new ResourceLocation("tconstruct", "maille"))
+                )
+        );
+
+    public static final RegistryObject<ToolPartItem> MAGIC_CLOTH =
+        ITEMS.register("magic_cloth",
+                () -> new ToolPartItem(new Item.Properties(),
+                        new MaterialStatsId(new ResourceLocation("tconstruct", "maille"))
+                )
+        );
+
     /** 悠悠球轮铸模（金铸模） */
     public static final RegistryObject<Item> YO_YO_WHEEL_CAST =
             ITEMS.register("yo_yo_wheel_cast", () -> new Item(new Item.Properties().stacksTo(1)));
