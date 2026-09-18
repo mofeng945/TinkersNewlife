@@ -51,6 +51,11 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
      * 直接搬过来又大又高；收到 0.7 后帽筒约 9.1、帽檐约 12.6，正好罩住原版头。
      */
     private static final float HAT_SCALE = 0.7F;
+    /**
+     * 整体压低（像素，Y 向下 ⇒ 正数=更贴近头）。用户要求"帽子故意压低一点"，
+     * 想再低/再高只改这一个数即可（1.0 = 一个像素）。
+     */
+    private static final float HAT_SINK = 1.0F;
 
     // 法帽五组
     private final ModelPart hatBrim;
@@ -104,7 +109,7 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
         float w = (toX - fromX) * HAT_SCALE;
         float h = (toY - fromY) * HAT_SCALE;
         float d = (toZ - fromZ) * HAT_SCALE;
-        float y = -8.0F - (toY - HAT_BASE_Y) * HAT_SCALE;
+        float y = -8.0F - (toY - HAT_BASE_Y) * HAT_SCALE + HAT_SINK;
         parent.addOrReplaceChild(name,
                 CubeListBuilder.create().texOffs(u, v)
                         .addBox(x, y, z, w, h, d, new CubeDeformation(0.0F)),
@@ -121,7 +126,7 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
         addBox(head, "hat_crown", 1.5F, 11.59375F, 1.5F, 14.5F, 15.34766F, 14.5F, 0, 20);
         addBox(head, "hat_tower_a", 3F, 14.48828F, 3F, 13F, 18.48828F, 13F, 0, 38);
         addBox(head, "hat_tower_b", 5.49609F, 18.01172F, 6.41016F, 10.50391F, 22.86719F, 11.95703F, 0, 53);
-        addBox(head, "hat_tip", 6.64258F, 20.62109F, 6.26129F, 9.35742F, 24.05859F, 9.73871F, 0, 65);
+        addBox(head, "hat_tip", 6.64258F, 20.62109F, 10.83984F, 9.35742F, 24.05859F, 14.31641F, 0, 65);
         addBox(head, "hat_band_a", 7F, 12.26953F, 1.33984F, 9F, 14.26953F, 1.53984F, 0, 73);
         addBox(head, "hat_band_b", 7.25F, 12.48047F, 1.15625F, 8.75F, 13.98047F, 1.45625F, 8, 73);
         addBox(head, "hat_band_c", 1.37891F, 12.625F, 1.39063F, 14.57891F, 13.67578F, 1.59063F, 0, 77);
