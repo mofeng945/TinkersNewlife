@@ -1,33 +1,36 @@
 package com.mofengbaizhi.tinkersnewlife.content.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.registries.ForgeRegistries;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
 /**
- * <b>掉落诊断</b>（临时排查用 ✓）：玩家击杀的怪"没掉东西"或"掉落事件被取消"时打一条 INFO，
- * 把<b>所有可能的抑制来源</b>一次性列清楚 ✓ —— 免得靠猜 ✗。
+ * <b>掉落诊断</b>（临时排查用 ✓）：用户反馈"原钻合金（自带混沌之流）打怪不掉东西" ✓，
+ * 而关掉 {@code chaos_flow} 就恢复正常 ⇒ 需要看清楚到底哪一环吃掉了掉落 ✓。
  *
- * <p>排查目标（用户反馈"原钻合金打怪不掉东西"）：
+ * <p>记录内容（每次玩家击杀一条，限流 300ms、每局最多 40 条 ✓）：
  * <ul>
- *   <li>掉落件数 / 事件是否被取消；</li>
- *   <li>伤害类型（混沌之流会把一次伤害拆成"1 物理 + N 学派"✓，学派段可能是别 mod 的类型 ✓）；</li>
- *   <li>击杀者主手/副手/护甲上有没有 <b>混沌之流</b>、<b>幸运掉落</b>；</li>
- *   <li>四个已知抑制器是否命中：无为变形体 / 咒灵释放体 / 召唤物 / 狱门疆封印体。</li>
+ *   <li>怪物、**掉落件数与物品 id**、事件是否被取消；</li>
+ *   <li>伤害类型（混沌之流会把一刀拆成 "1 物理 + N 学派"，看类型就知道死于哪一段 ✓）；</li>
+ *   <li>{@code getLastHurtByMob()} —— 判断"死亡结算时是否认得击杀者"（关系到 {@code killed_by_player} 类战利品 ✓）；</li>
+ *   <li>击杀者主手/副手/四件护甲上的 <b>混沌之流</b> / <b>幸运掉落</b> 等级；</li>
+ *   <li>四个已知抑制器是否命中（无为变形 / 咒灵释放体 / 召唤物 / 狱门疆）。</li>
  * </ul>
  *
- * <p>限流：2 秒最多一条 ✓；正式发布前可整类删除 ✓。
+ * <p>开服时会打一行"已启用"，用来确认这段代码真的挂上了 ✓。
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class DropDiagnostics {
@@ -38,12 +41,26 @@ public final class DropDiagnostics {
     private static final ModifierId CHAOS_FLOW = new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "chaos_flow"));
     private static final ModifierId LUCKY_DROP = new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "lucky_drop"));
 
-    private static long lastLog = 0L;
+    private static final int MAX_LINES_PER_SESSION = 40;
+    private static final long MIN_GAP_MS = 300L;
 
-    /** receiveCanceled = true ⇒ 被别的处理器取消掉的事件我们也能看到 ✓（这正是要查的情况 ✓） */
+    private static long lastLog = 0L;
+    private static int lines = 0;
+    private static boolean announced = false;
+
+    /** 开服一行：确认诊断已挂上 ✓（拿不到就把日志级别放没关系的 INFO ✓） */
+    @SubscribeEvent
+    public static void onServerStarted(ServerStartedEvent event) {
+        announced = true;
+        lines = 0;
+        TinkersNewlife.LOGGER.info("[掉落诊断] 已启用（每次玩家击杀记一条，最多 {} 条，间隔 {}ms）", MAX_LINES_PER_SESSION, MIN_GAP_MS);
+    }
+
+    /** receiveCanceled = true ⇒ 被别的处理器取消掉的事件我们也能看到 ✓（这正是要查的情况之一 ✓） */
     @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
     public static void onDrops(LivingDropsEvent event) {
         try {
+            if (!announced) return;
             LivingEntity entity = event.getEntity();
             if (entity == null || entity.level().isClientSide) return;
 
@@ -51,24 +68,27 @@ public final class DropDiagnostics {
             Player killer = null;
             if (source.getEntity() instanceof Player p) killer = p;
             else if (source.getDirectEntity() instanceof Player p) killer = p;
-
-            // 只在"玩家击杀 + （被取消 或 一件都没掉）"时记录 ✓
-            boolean suspicious = event.isCanceled() || event.getDrops().isEmpty();
-            if (killer == null || !suspicious) return;
+            if (killer == null) return;                       // 只看玩家击杀 ✓
 
             long now = System.currentTimeMillis();
-            if (now - lastLog < 2000L) return;
+            if (now - lastLog < MIN_GAP_MS) return;
+            if (lines >= MAX_LINES_PER_SESSION) return;
             lastLog = now;
+            lines++;
 
             ItemStack hand = killer.getMainHandItem();
             TinkersNewlife.LOGGER.info(
-                    "[掉落诊断] {} 掉落 {} 件 / 事件被取消={} / 伤害类型={} / 击杀者主手={} / 特性来源：{} / 抑制判定：无为变形={} 释放体={} 召唤物={} 狱门疆={}",
+                    "[掉落诊断 #{}/{}] {} → 掉落 {} 件 {} / 取消={} / 伤害类型={} / 击杀者={} 主手={} / 特性：{} / 死亡时 lastHurtByMob={} / 抑制：无为变形={} 释放体={} 召唤物={} 狱门疆={}",
+                    lines, MAX_LINES_PER_SESSION,
                     entity.getType(),
                     event.getDrops().size(),
+                    dropNames(event),
                     event.isCanceled(),
                     source.getMsgId(),
+                    killer.getName().getString(),
                     hand.isEmpty() ? "空手" : hand.getHoverName().getString(),
                     modifierSources(killer),
+                    entity.getLastHurtByMob() == null ? "null" : entity.getLastHurtByMob().getName().getString(),
                     com.mofengbaizhi.tinkersnewlife.content.curse.WuWeiHandler.isTransformedUnit(entity),
                     com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
                             .ownerOfReleased(entity) != null,
@@ -77,6 +97,21 @@ public final class DropDiagnostics {
         } catch (Throwable ignored) {
             // 诊断本身绝不影响游戏 ✓
         }
+    }
+
+    /** 掉落物 id 列表（最多列 6 个 ✓） */
+    private static String dropNames(LivingDropsEvent event) {
+        if (event.getDrops().isEmpty()) return "[]";
+        StringBuilder sb = new StringBuilder("[");
+        int i = 0;
+        for (ItemEntity drop : event.getDrops()) {
+            if (i++ > 0) sb.append(", ");
+            ItemStack stack = drop.getItem();
+            ResourceLocation id = ForgeRegistries.ITEMS.getKey(stack.getItem());
+            sb.append(id == null ? "?" : id.toString()).append('x').append(stack.getCount());
+            if (i >= 6) { sb.append(", …"); break; }
+        }
+        return sb.append(']').toString();
     }
 
     /** 把"混沌之流 / 幸运掉落"这两个关键特性出现在哪个部位列出来（主手 / 副手 / 四件护甲） */
@@ -100,16 +135,11 @@ public final class DropDiagnostics {
             int lucky = tool.getModifierLevel(LUCKY_DROP);
             if (chaos <= 0 && lucky <= 0) return;
             if (sb.length() > 0) sb.append("， ");
-            sb.append(where).append("=").append(shortName(stack));
-            if (chaos > 0) sb.append("(混沌之流x").append(chaos).append(")");
-            if (lucky > 0) sb.append("(幸运掉落x").append(lucky).append(")");
+            sb.append(where).append('=').append(stack.getHoverName().getString());
+            if (chaos > 0) sb.append("(混沌之流x").append(chaos).append(')');
+            if (lucky > 0) sb.append("(幸运掉落x").append(lucky).append(')');
         } catch (Throwable ignored) {
             // 不是匠魂工具就跳过 ✓
         }
-    }
-
-    private static String shortName(ItemStack stack) {
-        Component name = stack.getHoverName();
-        return name == null ? "?" : name.getString();
     }
 }
