@@ -11,10 +11,16 @@
 #   左右判定   ：按 x 正负（用户模型 x>8 那侧 = MC 的 left_arm ✓ 名字是镜像的 ✗）
 #   槽映射     ：body→plating、trim→maille、lace→lace ✓（可改）
 
+# 下摆加长（HemExtend）：用户 2026-09-18 要求"下摆再拉长一点" ✓
+#   规则：骨骼 body + 槽 plating + 顶面比领口低 6 格以上的方块 = 裙摆 ✓（即模型里的 body/body 两块 #1/#2 ✓）
+#   加长 = 在**用户坐标系**里把 from.y 往下拉 HemExtend 格（y 向上 ⇒ 减 ✓）⇒ 高度 +3、顶面不动 ✓
+#   效果：下摆末端 局部 y 17.2 → 20.2（贴到小腿 ✓，靴口在 24 ✓）。想再长/短只改这个参数 ✓。
 param(
     [string]$Json = "$env:USERPROFILE\Desktop\wizard_robe.json",
+    [double]$HemExtend = 3.0,
     [switch]$PaintAtlas = $true,
-    [switch]$NoPaint
+    [switch]$NoPaint,
+    [switch]$NoClean
 )
 
 $ErrorActionPreference = 'Stop'
@@ -68,6 +74,9 @@ for ($i = 0; $i -lt $j.elements.Count; $i++) {
     $b = $bones[$bone]
     $fx = [double]$e.from[0]; $fy = [double]$e.from[1]; $fz = [double]$e.from[2]
     $tx = [double]$e.to[0];   $ty = [double]$e.to[1];   $tz = [double]$e.to[2]
+    # 下摆加长：躯干主体（顶面在领口附近）不动 ✓，只把"裙摆"那两块往下拉 ✓
+    $isHem = ($bone -eq 'body') -and ($info.Slot -eq 'plating') -and ($ty -lt ($b.YRef - 6))
+    if ($isHem -and $HemExtend -ne 0) { $fy = $fy - $HemExtend }
     $lw = ($tx - $fx) * $b.SXZ
     $lh = ($ty - $fy) * $b.SY
     $ld = ($tz - $fz) * $b.SXZ
@@ -80,6 +89,37 @@ for ($i = 0; $i -lt $j.elements.Count; $i++) {
         LW = (2 * $lw + 2 * $ld); LH = ($lh + $ld)
         U = 0; V = 0
     }
+}
+
+# ---------- 先清理底图上"无人引用"的旧法袍区域 ✓ ----------
+# 为什么要清：装箱是"从当前底图的空闲处找位置"✓ ⇒ 上一轮画进去的法袍区域会被当成"已用" ✗
+#   ⇒ 每跑一次就多留一堆没人引用的灰块 ✗，空闲越来越少 ✗（这正是"旧 11 块区域"的来历 ✓）。
+# 做法：白名单 = 帽子 13 块 + 护腿/靴子 2 块占位 ✓（下面 $reserved ✓）；其余不透明像素全部擦成透明 ✓。
+#   ⚠ 帽子是用户手绘的 ✓ 绝不能在白名单外 ✗（白名单就是那 13 块的整块矩形 ✓）。
+$protected = @(
+    @(0, 0, 80, 21), @(62, 37, 17, 5), @(80, 37, 7, 4), @(0, 22, 42, 14), @(0, 37, 32, 12),
+    @(33, 37, 17, 9), @(51, 37, 10, 6), @(23, 50, 6, 2), @(88, 37, 4, 2), @(30, 50, 22, 2),
+    @(0, 50, 22, 2), @(43, 22, 22, 12), @(66, 22, 22, 12),
+    @(96, 36, 32, 14), @(96, 52, 32, 11)
+)
+if (-not $NoClean) {
+    $srcImg = [System.Drawing.Image]::FromFile($atlasPath)
+    $img = New-Object System.Drawing.Bitmap $srcImg
+    $srcImg.Dispose()
+    $kept = 0; $erased = 0
+    for ($y = 0; $y -lt 128; $y++) {
+        for ($x = 0; $x -lt 128; $x++) {
+            if ($img.GetPixel($x, $y).A -eq 0) { continue }
+            $keep = $false
+            foreach ($r in $protected) {
+                if ($x -ge $r[0] -and $x -lt ($r[0] + $r[2]) -and $y -ge $r[1] -and $y -lt ($r[1] + $r[3])) { $keep = $true; break }
+            }
+            if ($keep) { $kept++ } else { $img.SetPixel($x, $y, [System.Drawing.Color]::FromArgb(0, 0, 0, 0)); $erased++ }
+        }
+    }
+    $img.Save($atlasPath, [System.Drawing.Imaging.ImageFormat]::Png)
+    $img.Dispose()
+    Write-Host "清理底图：保留 $kept 像素（帽子+护腿/靴子占位 ✓），擦掉 $erased 个无引用的旧区域像素 ✓"
 }
 
 # ---------- UV 装箱（带碰撞检测 ✓） ----------
@@ -101,12 +141,8 @@ for ($y = 0; $y -lt 128; $y++) {
     }
 }
 # ② 帽子那 13 个方块 + 护腿/靴子占位区的**整块区域**一律保留 ✓（哪怕只画了细条 ✓）
-$reserved = @(
-    @(0, 0, 80, 21), @(62, 37, 17, 5), @(80, 37, 7, 4), @(0, 22, 42, 14), @(0, 37, 32, 12),
-    @(33, 37, 17, 9), @(51, 37, 10, 6), @(23, 50, 6, 2), @(88, 37, 4, 2), @(30, 50, 22, 2),
-    @(0, 50, 22, 2), @(43, 22, 22, 12), @(66, 22, 22, 12),
-    @(96, 36, 32, 14), @(96, 52, 32, 11)     # 护腿 / 靴子占位（还没重做 ⇒ 保留 ✓）
-)
+#    （与上面清理用的白名单是同一份 ✓ 避免两处走偏 ✓）
+$reserved = $protected
 foreach ($r in $reserved) {
     for ($yy = $r[1]; $yy -lt ($r[1] + $r[3]); $yy++) {
         for ($xx = $r[0]; $xx -lt ($r[0] + $r[2]); $xx++) {

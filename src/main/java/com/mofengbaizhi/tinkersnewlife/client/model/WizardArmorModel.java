@@ -176,21 +176,21 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
         PartDefinition armLPart = root.getChild("left_arm");
         PartDefinition armRPart = root.getChild("right_arm");
         // —— 袍身（槽0 镶板）：主身 + 前后裙摆
-        addLocalBox(bodyPart, "body_plating_0", -4.65F, -0.49531F, -2.35F, 9.3F, 9F, 4.7F, 28, 85);
-        addLocalBox(bodyPart, "body_plating_1", -4.53516F, 8.19609F, -2.28906F, 4.2F, 9F, 4.7F, 102, 86);
-        addLocalBox(bodyPart, "body_plating_2", 0.33516F, 8.19609F, -2.28906F, 4.2F, 9F, 4.7F, 83, 86);
+        addLocalBox(bodyPart, "body_plating_0", -4.65F, -0.49531F, -2.35F, 9.3F, 9F, 4.7F, 62, 43);
+        addLocalBox(bodyPart, "body_plating_1", -4.53516F, 8.19609F, -2.28906F, 4.2F, 12F, 4.7F, 80, 0);
+        addLocalBox(bodyPart, "body_plating_2", 0.33516F, 8.19609F, -2.28906F, 4.2F, 12F, 4.7F, 99, 0);
         // —— 内衬（槽1 锁链基底）
-        addLocalBox(bodyPart, "body_maille_4", -4.5F, -0.34688F, -2.25F, 9F, 10F, 4.5F, 0, 81);
+        addLocalBox(bodyPart, "body_maille_4", -4.5F, -0.34688F, -2.25F, 9F, 10F, 4.5F, 89, 18);
         // —— 腰带（槽2 法袍系带）
-        addLocalBox(bodyPart, "body_lace_3", -4.75F, 6.93437F, -2.5F, 9.5F, 2F, 5F, 61, 109);
+        addLocalBox(bodyPart, "body_lace_3", -4.75F, 6.93437F, -2.5F, 9.5F, 2F, 5F, 0, 67);
         // —— 左袖（MC 的 left_arm ✓）
-        addLocalBox(armLPart, "left_arm_plating_5", -1.40713F, 0.45379F, -2.408F, 4.816F, 7.5F, 4.816F, 0, 97);
-        addLocalBox(armLPart, "left_arm_maille_7", -1.34149F, -1.99836F, -2.31875F, 4.704F, 2.625F, 4.704F, 21, 100);
-        addLocalBox(armLPart, "left_arm_lace_6", -1.429F, 7.63446F, -2.464F, 4.928F, 1.5F, 4.928F, 61, 101);
+        addLocalBox(armLPart, "left_arm_plating_5", -1.40713F, 0.45379F, -2.408F, 4.816F, 7.5F, 4.816F, 21, 53);
+        addLocalBox(armLPart, "left_arm_maille_7", -1.34149F, -1.99836F, -2.31875F, 4.704F, 2.625F, 4.704F, 42, 53);
+        addLocalBox(armLPart, "left_arm_lace_6", -1.429F, 7.63446F, -2.464F, 4.928F, 1.5F, 4.928F, 82, 63);
         // —— 右袖（MC 的 right_arm ✓）
-        addLocalBox(armRPart, "right_arm_plating_8", -3.37527F, 0.45379F, -2.408F, 4.816F, 7.5F, 4.816F, 57, 87);
-        addLocalBox(armRPart, "right_arm_maille_10", -3.32889F, -1.99836F, -2.31875F, 4.704F, 2.625F, 4.704F, 41, 101);
-        addLocalBox(armRPart, "right_arm_lace_9", -3.4654F, 7.63446F, -2.464F, 4.928F, 1.5F, 4.928F, 82, 101);
+        addLocalBox(armRPart, "right_arm_plating_8", -3.37527F, 0.45379F, -2.408F, 4.816F, 7.5F, 4.816F, 0, 53);
+        addLocalBox(armRPart, "right_arm_maille_10", -3.32889F, -1.99836F, -2.31875F, 4.704F, 2.625F, 4.704F, 62, 58);
+        addLocalBox(armRPart, "right_arm_lace_9", -3.4654F, 7.63446F, -2.464F, 4.928F, 1.5F, 4.928F, 103, 63);
 
         // 法师护腿
         for (String leg : new String[]{"right_leg", "left_leg"}) {
