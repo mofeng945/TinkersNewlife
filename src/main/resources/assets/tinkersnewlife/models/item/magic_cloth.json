@@ -1,1 +1,6 @@
-{ "loader": "tconstruct:material", "parent": "forge:item/default", "textures": { "texture": "tinkersnewlife:item/tool/armor/wizard/wizard_hat_cloth" } }
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "tinkersnewlife:item/tool/armor/wizard/wizard_hat_cloth"
+  }
+}
