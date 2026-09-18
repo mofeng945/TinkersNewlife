@@ -1,28 +1,21 @@
 {
-  "_comment": "巫师套装的图标底图登记：游戏内 /tconstruct generate_part_textures 会按这里的 path+stat_type 生成 <path>_<材料> 贴图（格式照匠魂本体 assets/tconstruct/tinkering/generator_part_textures.json）。",
+  "_comment": "巫师套装的图标底图登记：游戏内 /tconstruct generate_part_textures 会按这里的 path+stat_type 生成 <path>_<材料> 贴图（格式照匠魂本体 assets/tconstruct/tinkering/generator_part_textures.json）。套装现在是 3 部件（镶板 / 锁链基底 / 法袍系带）⇒ 每件只登记 body/trim/lace 三张 ✓。",
   "parts": [
     { "path": "tinkersnewlife:armor/wizard/hat", "stat_type": "tconstruct:plating_helmet" },
     { "path": "tinkersnewlife:armor/wizard/robe", "stat_type": "tconstruct:plating_chestplate" },
     { "path": "tinkersnewlife:armor/wizard/mage_leggings", "stat_type": "tconstruct:plating_leggings" },
-    { "path": "tinkersnewlife:armor/wizard/mage_boots", "stat_type": "tconstruct:plating_boots" },    { "path": "tinkersnewlife:item/tool/armor/wizard/wizard_hat_body", "stat_type": "tconstruct:plating_helmet" },
+    { "path": "tinkersnewlife:armor/wizard/mage_boots", "stat_type": "tconstruct:plating_boots" },
+    { "path": "tinkersnewlife:item/tool/armor/wizard/wizard_hat_body", "stat_type": "tconstruct:plating_helmet" },
     { "path": "tinkersnewlife:item/tool/armor/wizard/wizard_hat_trim", "stat_type": "tconstruct:maille" },
     { "path": "tinkersnewlife:item/tool/armor/wizard/wizard_hat_lace", "stat_type": "tconstruct:maille" },
-    { "path": "tinkersnewlife:item/tool/armor/wizard/wizard_hat_cloth", "stat_type": "tconstruct:maille" },
-    { "path": "tinkersnewlife:item/tool/armor/wizard/wizard_hat_buckle", "stat_type": "tconstruct:maille" },
     { "path": "tinkersnewlife:item/tool/armor/wizard/wizard_robe_body", "stat_type": "tconstruct:plating_chestplate" },
     { "path": "tinkersnewlife:item/tool/armor/wizard/wizard_robe_trim", "stat_type": "tconstruct:maille" },
     { "path": "tinkersnewlife:item/tool/armor/wizard/wizard_robe_lace", "stat_type": "tconstruct:maille" },
-    { "path": "tinkersnewlife:item/tool/armor/wizard/wizard_robe_cloth", "stat_type": "tconstruct:maille" },
-    { "path": "tinkersnewlife:item/tool/armor/wizard/wizard_robe_buckle", "stat_type": "tconstruct:maille" },
     { "path": "tinkersnewlife:item/tool/armor/wizard/wizard_leggings_body", "stat_type": "tconstruct:plating_leggings" },
     { "path": "tinkersnewlife:item/tool/armor/wizard/wizard_leggings_trim", "stat_type": "tconstruct:maille" },
     { "path": "tinkersnewlife:item/tool/armor/wizard/wizard_leggings_lace", "stat_type": "tconstruct:maille" },
-    { "path": "tinkersnewlife:item/tool/armor/wizard/wizard_leggings_cloth", "stat_type": "tconstruct:maille" },
-    { "path": "tinkersnewlife:item/tool/armor/wizard/wizard_leggings_buckle", "stat_type": "tconstruct:maille" },
     { "path": "tinkersnewlife:item/tool/armor/wizard/wizard_boots_body", "stat_type": "tconstruct:plating_boots" },
     { "path": "tinkersnewlife:item/tool/armor/wizard/wizard_boots_trim", "stat_type": "tconstruct:maille" },
-    { "path": "tinkersnewlife:item/tool/armor/wizard/wizard_boots_lace", "stat_type": "tconstruct:maille" },
-    { "path": "tinkersnewlife:item/tool/armor/wizard/wizard_boots_cloth", "stat_type": "tconstruct:maille" },
-    { "path": "tinkersnewlife:item/tool/armor/wizard/wizard_boots_buckle", "stat_type": "tconstruct:maille" }
+    { "path": "tinkersnewlife:item/tool/armor/wizard/wizard_boots_lace", "stat_type": "tconstruct:maille" }
   ]
 }
