@@ -148,35 +148,48 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
     public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay,
                                float red, float green, float blue, float alpha) {
         switch (currentSlot) {
-            case HEAD -> draw(poseStack, buffer, packedLight, packedOverlay, 0,
+            case HEAD -> draw(poseStack, buffer, packedLight, packedOverlay, 0, this.head,
                     hatBrim, hatCrown, hatTip);
             case CHEST -> {
-                draw(poseStack, buffer, packedLight, packedOverlay, 2, robe);          // 下摆 ← 槽2 锁链基底
-                draw(poseStack, buffer, packedLight, packedOverlay, 1, sleeveRight, sleeveLeft); // 宽袖 ← 槽1 锁链基底
+                draw(poseStack, buffer, packedLight, packedOverlay, 2, this.body, robe);        // 下摆 ← 槽2
+                draw(poseStack, buffer, packedLight, packedOverlay, 1, this.rightArm, sleeveRight); // 宽袖 ← 槽1
+                draw(poseStack, buffer, packedLight, packedOverlay, 1, this.leftArm, sleeveLeft);
             }
             case LEGS -> {
-                draw(poseStack, buffer, packedLight, packedOverlay, 0, legWrapRight, legWrapLeft);
-                draw(poseStack, buffer, packedLight, packedOverlay, 3, bootCuffRight, bootCuffLeft);
+                draw(poseStack, buffer, packedLight, packedOverlay, 0, this.rightLeg, legWrapRight); // 主体 ← 槽0
+                draw(poseStack, buffer, packedLight, packedOverlay, 0, this.leftLeg, legWrapLeft);
+                draw(poseStack, buffer, packedLight, packedOverlay, 3, this.rightLeg, bootCuffRight); // 束带 ← 槽3
+                draw(poseStack, buffer, packedLight, packedOverlay, 3, this.leftLeg, bootCuffLeft);
             }
             default -> {
-                draw(poseStack, buffer, packedLight, packedOverlay, 0, bootCuffRight, bootCuffLeft);
-                draw(poseStack, buffer, packedLight, packedOverlay, 4, legWrapRight, legWrapLeft);
+                draw(poseStack, buffer, packedLight, packedOverlay, 0, this.rightLeg, bootCuffRight); // 主体 ← 槽0
+                draw(poseStack, buffer, packedLight, packedOverlay, 0, this.leftLeg, bootCuffLeft);
+                draw(poseStack, buffer, packedLight, packedOverlay, 4, this.rightLeg, legWrapRight);  // 靴口 ← 槽4
+                draw(poseStack, buffer, packedLight, packedOverlay, 4, this.leftLeg, legWrapLeft);
             }
-        }
-    }
-
-    /** 用"第 index 个材料槽"的颜色绘制这些部件 ✓ */
-    private void draw(PoseStack poseStack, VertexConsumer buffer, int light, int overlay, int index, ModelPart... parts) {
-        float[] c = WizardArmorColors.of(materialPath(index));
-        for (ModelPart part : parts) {
-            if (part != null) part.render(poseStack, buffer, light, overlay, c[0], c[1], c[2], 1.0F);
         }
     }
 
     /**
-     * 读第 index 个材料槽的材料 id。**反射**调用匠魂 API ⇒ 读不到就用兜底色 ✓
-     * （不硬编码方法名，匠魂改 API 也不会让本模型崩 ✗）。
+     * 用"第 index 个材料槽"的颜色绘制这些部件，并**先套上父部件的变换** ✓。
+     *
+     * <p>⭐ 为什么必须套：{@code ModelPart#render} 只应用**自己**的姿势 ✗，父部件的位移/旋转是在
+     * 父节点的 render 里做的 ⇒ 直接渲染"挂在腿下的靴筒/护腿"会漏掉腿的髋部位移 ⇒
+     * 它们被画到身体位置 ✗（用户实测："护腿和靴子渲染到身体上了？"）。
+     * 这里用 {@code parent.translateAndRotate(...)} 把父变换补上 ✓；
+     * 我们的部件都是原版部件的直接子节点 ⇒ 套一层就够 ✓。
      */
+    private void draw(PoseStack poseStack, VertexConsumer buffer, int light, int overlay, int index,
+                      ModelPart parent, ModelPart... parts) {
+        float[] c = WizardArmorColors.of(materialPath(index));
+        for (ModelPart part : parts) {
+            if (part == null) continue;
+            poseStack.pushPose();
+            if (parent != null) parent.translateAndRotate(poseStack);
+            part.render(poseStack, buffer, light, overlay, c[0], c[1], c[2], 1.0F);
+            poseStack.popPose();
+        }
+    }
     private String materialPath(int index) {
         try {
             Object tool = slimeknights.tconstruct.library.tools.nbt.ToolStack.from(currentStack);
