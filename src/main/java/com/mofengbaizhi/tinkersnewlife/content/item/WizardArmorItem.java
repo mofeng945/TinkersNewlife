@@ -1,6 +1,7 @@
 package com.mofengbaizhi.tinkersnewlife.content.item;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import com.mofengbaizhi.tinkersnewlife.client.renderer.WizardArmorTextures;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -40,11 +41,17 @@ public class WizardArmorItem extends ModifiableArmorItem {
     /** 四件共用一张**灰阶**贴图：颜色由模型逐组用材料色顶点着色 ✓（见 WizardArmorModel） */
     @Override
     public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot, String type) {
-        // 渲染层正常工作时由它逐组绘制 ⇒ 这里给透明图避免重复；层异常则回退灰阶图 ✓
-        boolean layer = com.mofengbaizhi.tinkersnewlife.client.renderer.WizardArmorTextures.isLayerOk();
-        return TinkersNewlife.MOD_ID + ":" + (layer
-                ? "textures/armor/wizard/transparent.png"
-                : com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorModel.TEX_GREY);
+        // ⚠ 只有"本模组的渲染层真的会逐组画"的实体才可以给透明图 ✗
+        //   之前是**全局**判断（layerOk 一 true 就给透明图）⇒ 你穿上法师套之后，
+        //   **假人 / 其它实体**身上的这套盔甲也被原版层画成透明 ⇒ 整件消失 ✗（用户实测 ✓）。
+        boolean layerDraws = WizardArmorTextures.isLayerOk()
+                && (entity instanceof net.minecraft.world.entity.player.Player
+                    || entity instanceof net.minecraft.world.entity.decoration.ArmorStand);
+        if (layerDraws) {
+            return TinkersNewlife.MOD_ID + ":textures/armor/wizard/transparent.png";
+        }
+        // 本层不管的实体（僵尸、其它 mod 的假人…）⇒ 给一张**真贴图**：优先该材料生成的图 ✓，否则灰阶图 ✓
+        return WizardArmorTextures.fallbackArmorTexture(stack, slot);
     }
 
     @Override

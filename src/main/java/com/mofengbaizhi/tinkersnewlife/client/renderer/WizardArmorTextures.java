@@ -114,6 +114,48 @@ public final class WizardArmorTextures {
         };
     }
 
+    /**
+     * 读匠魂工具 NBT 里第 index 个材料（照抄匠魂 {@code MaterialArmorTextureSupplier.Material#getMaterial} ✓）。
+     *
+     * @return 材料 id 的路径部分（如 {@code origin_alloy}）；读不到返回 {@code null} ✓
+     */
+    @javax.annotation.Nullable
+    public static String materialPathOf(net.minecraft.world.item.ItemStack stack, int index) {
+        try {
+            if (stack == null || stack.isEmpty()) return null;
+            net.minecraft.nbt.CompoundTag tag = stack.getTag();
+            if (tag == null) return null;
+            String key = slimeknights.tconstruct.library.tools.nbt.ToolStack.TAG_MATERIALS;
+            if (!tag.contains(key, net.minecraft.nbt.Tag.TAG_LIST)) return null;
+            net.minecraft.nbt.ListTag list = tag.getList(key, net.minecraft.nbt.Tag.TAG_STRING);
+            if (index < 0 || index >= list.size()) return null;
+            String s = list.getString(index);
+            if (s == null || s.isEmpty()) return null;
+            int colon = s.indexOf(':');
+            return colon >= 0 ? s.substring(colon + 1) : s;
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    /**
+     * ⭐ 给"本模组渲染层不管的实体"（僵尸、其它 mod 的假人…）用的兜底贴图路径字符串 ✓
+     * （{@code Item#getArmorTexture} 只能返回一个字符串 ✓）：
+     * 优先用该物品**镶板槽材料**生成的那张图（存在时 ✓，颜色就跟材料走了 ✓），否则用灰阶图 ✓。
+     */
+    public static String fallbackArmorTexture(net.minecraft.world.item.ItemStack stack, EquipmentSlot slot) {
+        try {
+            String mat = materialPathOf(stack, 0);
+            if (mat != null) {
+                ResourceLocation rl = materialArmorTexture(prefixFor(slot), mat, usesLeggingsLayer(slot));
+                if (rl != null) return rl.getNamespace() + ":" + rl.getPath();
+            }
+        } catch (Throwable ignored) {
+            // 兜底到灰阶图 ✓
+        }
+        return GREY.getNamespace() + ":" + GREY.getPath();
+    }
+
     /** 腿部层判定：护腿与靴子这两件会取 {@code ...leggings.png} ✓ */
     public static boolean usesLeggingsLayer(EquipmentSlot slot) {
         return slot == EquipmentSlot.LEGS || slot == EquipmentSlot.FEET;

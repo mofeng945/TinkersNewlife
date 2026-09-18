@@ -554,7 +554,7 @@ public class ClientEventHandler {
         event.registerLayerDefinition(com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorModel.LAYER,
                 com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorModel::createBodyLayer);
     }
-    /** 巫师套装的盔甲渲染层（让它吃上匠魂生成器产出的按材料贴图 ✓） */
+    /** 巫师套装的盔甲渲染层（让它吃上匠魂生成器产出的按材料贴图 ✓）—— 玩家皮肤 + **盔甲架** ✓ */
     @SuppressWarnings({"unchecked", "rawtypes"})
     @net.minecraftforge.eventbus.api.SubscribeEvent
     public static void addWizardArmorLayer(EntityRenderersEvent.AddLayers event) {
@@ -567,5 +567,15 @@ public class ClientEventHandler {
             } catch (Throwable ignored) {
                 // 某个皮肤挂不上就算了，不影响其它 ✓
             }
+        }
+        // ⭐ 假人（盔甲架）也要挂：否则它穿这套盔甲时会被 getArmorTexture 的透明图"画没" ✗
+        try {
+            net.minecraft.client.renderer.entity.EntityRenderer<?> stand =
+                    event.getRenderer(net.minecraft.world.entity.EntityType.ARMOR_STAND);
+            if (stand instanceof net.minecraft.client.renderer.entity.LivingEntityRenderer ler) {
+                ler.addLayer(new com.mofengbaizhi.tinkersnewlife.client.renderer.WizardArmorLayer(ler));
+            }
+        } catch (Throwable ignored) {
+            // 拿不到就算了，getArmorTexture 会给它一张真贴图 ⇒ 至少看得见 ✓
         }
     }}
