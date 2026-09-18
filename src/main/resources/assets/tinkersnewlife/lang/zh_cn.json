@@ -157,7 +157,7 @@
   "item.tinkersnewlife.wizard_leggings.description": "以任意材料组合打造的巫师护腿：护腿镶板 ＋ 两块锁链基底 ＋ 坚韧套环 ＋ 大板。",
   "item.tinkersnewlife.wizard_boots.description": "以任意材料组合打造的巫师靴子：靴子镶板 ＋ 两块锁链基底 ＋ 坚韧套环 ＋ 大板。",
   "item.tinkersnewlife.robe_lace": "法袍系带",
-  "item.tinkersnewlife.magic_cloth": "魔术布料",
+  "item.tinkersnewlife.magic_cloth": "魔法布料",
   "item.tinkersnewlife.robe_lace.description": "巫师套装的部件之一（盔甲统计：锁链基底）：把材料特性带进这套法袍，而不引入任何武器特性。",
   "item.tinkersnewlife.magic_cloth.description": "巫师套装的部件之一（盔甲统计：锁链基底）：与法袍系带一同构成法袍的衬里与束带。",  "item.tinkersnewlife.flying_sword.description": "右键发射飞剑，命中后返回；可切换 追击模式自动攻击敌人（命中后会自动转移目标，16 格内无其他敌人则继续打原目标）；场上最多同时存在 5 把投影。",
   "message.tinkersnewlife.flying_sword.limit": "§c场上飞剑投影已达上限（%s 把），等它们返回或消失后再发射",

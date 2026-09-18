@@ -1,36 +1,66 @@
 {
-  "modules": [
-    {
-      "type": "tconstruct:part_stats",
-      "parts": [
-        "tconstruct:leggings_plating",
-        "tconstruct:maille",
-        "tconstruct:maille",
-        "tinkersnewlife:robe_lace",
-        "tinkersnewlife:magic_cloth"
-      ],
-      "primary_part": 0
-    },
-    {
-      "type": "tconstruct:default_materials",
-      "materials": [
-        { "type": "tconstruct:random", "tier": { "min": 1, "max": 3 } },
-        { "type": "tconstruct:random", "tier": { "min": 1, "max": 3 } },
-        { "type": "tconstruct:random", "tier": { "min": 1, "max": 3 } },
-        { "type": "tconstruct:random", "tier": { "min": 1, "max": 3 } },
-        { "type": "tconstruct:random", "tier": { "min": 1, "max": 3 } }
-      ]
-    },
-    {
-      "type": "tconstruct:modifier_slots",
-      "slots": {
-        "defense": 3,
-        "upgrades": 2
-      }
-    },
-    {
-      "type": "tconstruct:fixed_material_name",
-      "index": 0
-    }
-  ]
+    "modules":  [
+                    {
+                        "primary_part":  0,
+                        "parts":  [
+                                      "tconstruct:leggings_plating",
+                                      "tconstruct:maille",
+                                      "tinkersnewlife:magic_cloth",
+                                      "tinkersnewlife:magic_cloth",
+                                      "tinkersnewlife:robe_lace"
+                                  ],
+                        "type":  "tconstruct:part_stats"
+                    },
+                    {
+                        "type":  "tconstruct:default_materials",
+                        "materials":  [
+                                          {
+                                              "type":  "tconstruct:random",
+                                              "tier":  {
+                                                           "min":  1,
+                                                           "max":  3
+                                                       }
+                                          },
+                                          {
+                                              "type":  "tconstruct:random",
+                                              "tier":  {
+                                                           "min":  1,
+                                                           "max":  3
+                                                       }
+                                          },
+                                          {
+                                              "type":  "tconstruct:random",
+                                              "tier":  {
+                                                           "min":  1,
+                                                           "max":  3
+                                                       }
+                                          },
+                                          {
+                                              "type":  "tconstruct:random",
+                                              "tier":  {
+                                                           "min":  1,
+                                                           "max":  3
+                                                       }
+                                          },
+                                          {
+                                              "type":  "tconstruct:random",
+                                              "tier":  {
+                                                           "min":  1,
+                                                           "max":  3
+                                                       }
+                                          }
+                                      ]
+                    },
+                    {
+                        "type":  "tconstruct:modifier_slots",
+                        "slots":  {
+                                      "upgrades":  2,
+                                      "defense":  3
+                                  }
+                    },
+                    {
+                        "type":  "tconstruct:fixed_material_name",
+                        "index":  0
+                    }
+                ]
 }
