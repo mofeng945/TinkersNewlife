@@ -54,6 +54,10 @@ public final class DropDiagnostics {
     private static long lastDropLog = 0L;
     private static int dropLines = 0;
 
+    /** 受击单独一套（100ms / 80 条 ✓）—— 用于看"根本没死"的那些刀 ✓ */
+    private static long lastHurtLog = 0L;
+    private static int hurtLines = 0;
+
     /** 开服一行：确认诊断已挂上 ✓（拿不到就把日志级别放没关系的 INFO ✓） */
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
@@ -95,6 +99,41 @@ public final class DropDiagnostics {
                     entity.getLastHurtByMob() == null ? "null" : entity.getLastHurtByMob().getName().getString(),
                     killer == null || killer.getMainHandItem().isEmpty()
                             ? "-" : killer.getMainHandItem().getHoverName().getString());
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /**
+     * ⭐ <b>受击日志</b>：玩家打出的每一刀都记（血量 → 扣多少 → 剩余 / 伤害类型 / 攻击者 / 武器特性）✓
+     *
+     * <p>为什么还需要它：法杖那一类"根本没造成死亡"的情况（怪没死 ⇒ 既没有死亡事件也没有掉落事件 ✗）
+     * 只能靠受击这一层才看得见 ✓ —— 也能看出它的伤害到底是不是穿透、走的是哪条路 ✓。
+     */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
+        try {
+            if (!announced) return;
+            LivingEntity victim = event.getEntity();
+            if (victim == null || victim.level().isClientSide) return;
+            if (victim instanceof Player) return;
+            DamageSource source = event.getSource();
+            Player killer = killerOf(source);
+            if (killer == null) return;                      // 只看玩家造成的 ✓
+            long now = System.currentTimeMillis();
+            if (now - lastHurtLog < 100L) return;
+            if (hurtLines >= MAX_LINES_PER_SESSION) return;
+            lastHurtLog = now;
+            hurtLines++;
+            float before = victim.getHealth();
+            float amount = event.getAmount();
+            TinkersNewlife.LOGGER.info(
+                    "[掉落诊断·受击 #{}/{}] {} 血 {}/{} 受到 {} → 剩 {} / 伤害类型={} / 攻击者={} / 直接={} / 武器：{} / 取消={}",
+                    hurtLines, MAX_LINES_PER_SESSION, victim.getType(),
+                    String.format("%.1f", before), String.format("%.1f", victim.getMaxHealth()),
+                    String.format("%.1f", amount), String.format("%.1f", Math.max(0.0F, before - amount)),
+                    source.getMsgId(), killer.getName().getString(),
+                    source.getDirectEntity() == null ? "null" : source.getDirectEntity().getType().toString(),
+                    modifierSources(killer), event.isCanceled());
         } catch (Throwable ignored) {
         }
     }
