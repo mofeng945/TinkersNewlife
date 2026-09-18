@@ -133,3 +133,33 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools\deploy.ps1   # 游戏�
 4. 你进游戏看，继续微调 ✓。
 
 > 如果你只想动**贴图**（不动形状），那连代码都不用碰：直接替换 `all_grey.png` 与 20 张图标 PNG 即可 ✓。
+
+
+---
+
+## 8. 待做：接匠魂生成器到"穿戴外观"（渲染层实施方案）
+
+**背景**：`Item#getArmorTexture` **整件只能给一张贴图** ✗，而我们的法帽有 5 组部件、每组要用
+**自己材料槽**那张图（帽檐用锁链基底的生成图、帽筒用魔术布料的生成图…）⇒ 必须**在渲染层逐组换图** ✗。
+已完成的前置：`client/renderer/WizardArmorTextures.java`（材料 → `<前缀><材料>armor.png` /
+`...leggings.png` 的解析 + 存在性缓存；不存在返回 null ⇒ 退回 `all_grey.png` + 顶点着色 ✓）。
+
+**要写的**：`client/renderer/WizardArmorLayer.java`（`RenderLayer<AbstractClientPlayer, PlayerModel<...>>`），
+在 `client/handler/ClientEventHandler` 里用 `EntityRenderersEvent.AddLayers` 挂到
+`player` / `humanoid`（含 `armor_stand`）渲染器上 ✓。
+
+**每帧逻辑**：
+1. 遍历四个装备槽，挑出 `WizardArmorItem` 的件 ✓；
+2. `ToolStack.from(stack)` 取该件 5 个材料槽（反射读，读不到走兜底 ✓）；
+3. 按组（帽：hat_*；袍：robe/sleeve_*；护腿：leg_wrap_*/boot_cuff_*；靴：同）逐组：
+   - `WizardArmorTextures.materialArmorTexture(prefix, 材料, 是否腿部层)` 取图 ✓；
+   - 有图 ⇒ `bufferSource.getBuffer(RenderType.armorCutoutNoCull(tex))` 画该组 ✓（**这时才能换图** ✓）；
+   - 无图 ⇒ 用 `all_grey.png` 的 RenderType + 顶点色（`ModelPart#render(..., r,g,b,a)` ✓）画该组 ✓；
+4. 姿态：`model.copyPropertiesFrom(playerModel)` 之类把玩家姿态拷进来（同名部件 ✓），
+   自加部件是原版部件的子节点 ⇒ 自动跟随 ✓；
+5. 第一人称 / 其它类人生物 / 盔甲架：这一层是**附加绘制**，不要动原版层 ⇒
+   需要把本模组件的 `getArmorTexture` 指向**透明贴图**以免原版层重复画 ✗（注意失败兜底：万一本层异常，
+   盔甲不能整件消失 ⇒ 在 catch 里回退到"让原版层正常画" ✗）。
+
+**验证**：跑生成指令产出 `<前缀><材料>armor.png` 后，只改材料不改模型 ⇒ 外观应立刻跟着变 ✓；
+把生成图删掉 ⇒ 应自动回到灰阶 + 顶点着色（外观不坏 ✓）。
