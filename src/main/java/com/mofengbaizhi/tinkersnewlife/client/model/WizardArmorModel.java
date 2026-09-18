@@ -55,7 +55,7 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
      * 整体压低（像素，Y 向下 ⇒ 正数=更贴近头）。用户要求"帽子故意压低一点"，
      * 想再低/再高只改这一个数即可（1.0 = 一个像素）。
      */
-    private static final float HAT_SINK = 1.0F;
+    private static final float HAT_SINK = 3.0F;
 
     // 法帽五组
     private final ModelPart hatBrim;
