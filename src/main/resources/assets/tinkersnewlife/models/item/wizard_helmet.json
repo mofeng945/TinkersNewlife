@@ -2,11 +2,11 @@
   "loader": "tconstruct:tool",
   "parent": "forge:item/default",
   "textures": {
-    "body": "tinkersnewlife:item/wizard_hat_body",
-    "trim": "tinkersnewlife:item/wizard_hat_trim",
-    "lace": "tinkersnewlife:item/wizard_hat_lace",
-    "cloth": "tinkersnewlife:item/wizard_hat_cloth",
-    "buckle": "tinkersnewlife:item/wizard_hat_buckle"
+    "body": "tinkersnewlife:armor/wizard/icons/wizard_hat_body",
+    "trim": "tinkersnewlife:armor/wizard/icons/wizard_hat_trim",
+    "lace": "tinkersnewlife:armor/wizard/icons/wizard_hat_lace",
+    "cloth": "tinkersnewlife:armor/wizard/icons/wizard_hat_cloth",
+    "buckle": "tinkersnewlife:armor/wizard/icons/wizard_hat_buckle"
   },
   "parts": [
     { "name": "body", "index": 0 },
