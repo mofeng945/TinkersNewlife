@@ -49,10 +49,13 @@ foreach ($g in $j.groups) {
 
 # ---------- 每根骨骼的换算参数 ----------
 # 局部空间：MC 模型 y 向下 ✓；body 局部 y 0 = 颈肩；arm 局部 y -2 = 肩顶
+# ⚠ 横向(SXZ)与纵向(SY)分开：袖子横向要留松量(1.12 ✓)，但纵向要压短 ✓
+#   （用户反馈"两个胳膊太长了" ✓：原来 SY=SXZ=1.12 ⇒ 袖长 16.6 格 ✗，手臂只有 12 格 ⇒ 多出手腕 4.6 格 ✗；
+#    现在 SY=0.75 ⇒ 袖长 11.1 格 ✓ 正好到手腕 ✓）
 $bones = @{
-    'body'      = @{ S = 1.00; YRef = 18.70; YAt = -0.5; XCenter = 8.0;  XAt = 0.0  }
-    'left_arm'  = @{ S = 1.12; YRef = 18.51; YAt = -2.0; XCenter = 14.95; XAt = 1.0  }
-    'right_arm' = @{ S = 1.12; YRef = 18.51; YAt = -2.0; XCenter = 1.02;  XAt = -1.0 }
+    'body'      = @{ SXZ = 1.00; SY = 1.00; YRef = 18.70; YAt = -0.5; XCenter = 8.0;   XAt = 0.0  }
+    'left_arm'  = @{ SXZ = 1.12; SY = 0.75; YRef = 18.51; YAt = -2.0; XCenter = 14.95; XAt = 1.0  }
+    'right_arm' = @{ SXZ = 1.12; SY = 0.75; YRef = 18.51; YAt = -2.0; XCenter = 1.02;  XAt = -1.0 }
 }
 
 $boxes = @()
@@ -65,12 +68,12 @@ for ($i = 0; $i -lt $j.elements.Count; $i++) {
     $b = $bones[$bone]
     $fx = [double]$e.from[0]; $fy = [double]$e.from[1]; $fz = [double]$e.from[2]
     $tx = [double]$e.to[0];   $ty = [double]$e.to[1];   $tz = [double]$e.to[2]
-    $lw = ($tx - $fx) * $b.S
-    $lh = ($ty - $fy) * $b.S
-    $ld = ($tz - $fz) * $b.S
-    $lx = ($fx - $b.XCenter) * $b.S + $b.XAt
-    $lz = ($fz - 8.0) * $b.S
-    $ly = $b.YAt - ($ty - $b.YRef) * $b.S        # 顶面（y 向下 ⇒ 用 toY 对齐 ✓）
+    $lw = ($tx - $fx) * $b.SXZ
+    $lh = ($ty - $fy) * $b.SY
+    $ld = ($tz - $fz) * $b.SXZ
+    $lx = ($fx - $b.XCenter) * $b.SXZ + $b.XAt
+    $lz = ($fz - 8.0) * $b.SXZ
+    $ly = $b.YAt - ($ty - $b.YRef) * $b.SY      # 顶面（y 向下 ⇒ 用 toY 对齐 ✓）
     $boxes += [pscustomobject]@{
         Index = $i; Bone = $bone; Slot = $info.Slot
         X = $lx; Y = $ly; Z = $lz; W = $lw; H = $lh; D = $ld
