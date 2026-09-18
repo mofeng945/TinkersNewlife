@@ -2747,6 +2747,14 @@ public class MomoMerchant extends PathfinderMob
         this.recordDamageTaken(totalDamage);
         this.hurtTime = 10;
         this.hurtDuration = 10;
+        // 🔍 临时排查（用户反馈"用穿透打她只掉镰刀、不掉呼唤和经验" ✓ 加完确认后删）
+        try {
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
+                    "[墨默穿透] 本击总伤害={} 最大生命={} 现在血={} 记账lastDamageTaken={} 算一击必杀={} 伤害源={}",
+                    totalDamage, this.getMaxHealth(), this.getHealth(), this.lastDamageTaken,
+                    this.isOneShotKill(), source == null ? "null" : source.getMsgId());
+        } catch (Throwable ignored) {
+        }
         try {
             this.playHurtSound(source);
         } catch (Throwable ignored) {
@@ -2761,6 +2769,14 @@ public class MomoMerchant extends PathfinderMob
     @Override
     protected void dropCustomDeathLoot(DamageSource source, int lootingLevel, boolean recentlyHitIn) {
         super.dropCustomDeathLoot(source, lootingLevel, recentlyHitIn);
+        // 🔍 临时排查（确认后删）
+        try {
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
+                    "[墨默死亡] 记账lastDamageTaken={} 最大生命={} 算一击必杀={} 伤害源={}",
+                    this.lastDamageTaken, this.getMaxHealth(), this.isOneShotKill(),
+                    source == null ? "null" : source.getMsgId());
+        } catch (Throwable ignored) {
+        }
         if (isOneShotKill() && level() instanceof ServerLevel sl) {
             this.spawnAtLocation(new ItemStack(ModItems.RLYEH_CALL.get()), 0.5F);
             net.minecraft.world.entity.ExperienceOrb orb = new net.minecraft.world.entity.ExperienceOrb(sl,
