@@ -65,7 +65,25 @@ public final class KillAttribution {
     public static void onLivingHurt(LivingHurtEvent event) {
         DamageSource source = event.getSource();
         Entity attacker = source.getEntity() != null ? source.getEntity() : source.getDirectEntity();
-        remember(event.getEntity(), attacker);
+        LivingEntity victim = event.getEntity();
+        if (attacker != null) {
+            remember(victim, attacker);
+            return;
+        }
+        // ⭐ <b>无主伤害</b>（穿透/真伤 TruePierce、领域直伤、咒言…）：
+        //   这一段 {@code getEntity()} 是 null ✗ ⇒ 原版不会把"玩家击杀"写进目标的
+        //   {@code lastHurtByPlayer} ⇒ 战利品表里带 {@code killed_by_player} 的怪**什么都不掉** ✗
+        //   （用户实测：带穿透的法杖打怪不掉东西 ✓；关掉混沌之流就正常 ✓ —— 因为那一刀会被拆段并再次走无主穿透 ✗）
+        //   ⇒ 这里把"最近一次打这个目标的玩家"补回到目标的击杀归属上 ✓，让死亡结算认得玩家 ✓。
+        try {
+            ServerPlayer owner = find(victim);
+            if (owner != null) {
+                victim.setLastHurtByPlayer(owner);
+                victim.setLastHurtByMob(owner);
+            }
+        } catch (Throwable ignored) {
+            // 补归属失败不影响伤害结算 ✓
+        }
     }
 
     /**
