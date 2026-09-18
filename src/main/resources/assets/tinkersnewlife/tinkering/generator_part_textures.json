@@ -1,117 +1,25 @@
 {
-  "replace": false,
+  "_comment": "巫师套装的图标底图登记：游戏内 /tconstruct generate_part_textures 会按这里的 path+stat_type 生成 <path>_<材料> 贴图（格式照匠魂本体 assets/tconstruct/tinkering/generator_part_textures.json）。",
   "parts": [
-    {
-      "path": "tinkersnewlife:item/tool/parts/dragon_core",
-      "stat_type": "tconstruct:head"
-    },
-    {
-      "path": "tinkersnewlife:item/tool/dragon_staff/head",
-      "stat_type": "tconstruct:head"
-    },
-    {
-      "path": "tinkersnewlife:item/tool/dragon_staff/handle",
-      "stat_type": "tconstruct:handle"
-    },
-    {
-      "path": "tinkersnewlife:item/tool/dragon_staff/handle2",
-      "stat_type": "tconstruct:handle"
-    },
-    {
-      "path": "tinkersnewlife:item/tool/silent_glove/silent_glove_core",
-      "stat_type": "tconstruct:head"
-    },
-    {
-      "path": "tinkersnewlife:item/tool/silent_glove/silent_glove_binding",
-      "stat_type": "tconstruct:handle"
-    },
-    {
-      "path": "tinkersnewlife:item/tool/war_scythe/head1",
-      "stat_type": "tconstruct:head"
-    },
-    {
-      "path": "tinkersnewlife:item/tool/war_scythe/head2",
-      "stat_type": "tconstruct:head"
-    },
-    {
-      "path": "tinkersnewlife:item/tool/war_scythe/binding",
-      "stat_type": "tconstruct:binding"
-    },
-    {
-      "path": "tinkersnewlife:item/tool/war_scythe/handle1",
-      "stat_type": "tconstruct:handle"
-    },
-    {
-      "path": "tinkersnewlife:item/tool/war_scythe/handle2",
-      "stat_type": "tconstruct:handle"
-    },
-    {
-      "path": "tinkersnewlife:item/tool/modular_staff/head",
-      "stat_type": "tconstruct:head"
-    },
-    {
-      "path": "tinkersnewlife:item/tool/modular_staff/binding",
-      "stat_type": "tconstruct:binding"
-    },
-    {
-      "path": "tinkersnewlife:item/tool/modular_staff/handle1",
-      "stat_type": "tconstruct:handle"
-    },
-    {
-      "path": "tinkersnewlife:item/tool/modular_staff/handle2",
-      "stat_type": "tconstruct:handle"
-    },
-    {
-      "path": "tinkersnewlife:item/tool/parts/spell_core",
-      "stat_type": "tconstruct:head"
-    },
-    {
-      "path": "tinkersnewlife:item/tool/flying_sword/blade1",
-      "stat_type": "tconstruct:head"
-    },
-    {
-      "path": "tinkersnewlife:item/tool/flying_sword/blade2",
-      "stat_type": "tconstruct:head"
-    },
-    {
-      "path": "tinkersnewlife:item/tool/flying_sword/tough_handle1",
-      "stat_type": "tconstruct:handle"
-    },
-    {
-      "path": "tinkersnewlife:item/tool/flying_sword/tough_handle2",
-      "stat_type": "tconstruct:handle"
-    },
-    {
-      "path": "tinkersnewlife:item/tool/flying_sword/tool_handle",
-      "stat_type": "tconstruct:handle"
-    },
-    {
-      "path": "tinkersnewlife:item/tool/parts/yo_yo_wheel",
-      "stat_type": "tconstruct:head"
-    },
-    {
-      "path": "tinkersnewlife:item/tool/parts/curse_core_part",
-      "stat_type": "tconstruct:head"
-    },
-    {
-      "path": "tinkersnewlife:item/tool/parts/yo_yo_spool",
-      "stat_type": "tconstruct:handle"
-    },
-    {
-      "path": "tinkersnewlife:item/tool/yo_yo/wheel1",
-      "stat_type": "tconstruct:head"
-    },
-    {
-      "path": "tinkersnewlife:item/tool/yo_yo/wheel2",
-      "stat_type": "tconstruct:head"
-    },
-    {
-      "path": "tinkersnewlife:item/tool/yo_yo/spool",
-      "stat_type": "tconstruct:handle"
-    },
-    {
-      "path": "tinkersnewlife:item/tool/yo_yo/bowstring",
-      "stat_type": "tconstruct:bowstring"
-    }
+    { "path": "tinkersnewlife:item/wizard_hat_body", "stat_type": "tconstruct:plating_helmet" },
+    { "path": "tinkersnewlife:item/wizard_hat_trim", "stat_type": "tconstruct:maille" },
+    { "path": "tinkersnewlife:item/wizard_hat_lace", "stat_type": "tconstruct:maille" },
+    { "path": "tinkersnewlife:item/wizard_hat_cloth", "stat_type": "tconstruct:maille" },
+    { "path": "tinkersnewlife:item/wizard_hat_buckle", "stat_type": "tconstruct:maille" },
+    { "path": "tinkersnewlife:item/wizard_robe_body", "stat_type": "tconstruct:plating_chestplate" },
+    { "path": "tinkersnewlife:item/wizard_robe_trim", "stat_type": "tconstruct:maille" },
+    { "path": "tinkersnewlife:item/wizard_robe_lace", "stat_type": "tconstruct:maille" },
+    { "path": "tinkersnewlife:item/wizard_robe_cloth", "stat_type": "tconstruct:maille" },
+    { "path": "tinkersnewlife:item/wizard_robe_buckle", "stat_type": "tconstruct:maille" },
+    { "path": "tinkersnewlife:item/wizard_leggings_body", "stat_type": "tconstruct:plating_leggings" },
+    { "path": "tinkersnewlife:item/wizard_leggings_trim", "stat_type": "tconstruct:maille" },
+    { "path": "tinkersnewlife:item/wizard_leggings_lace", "stat_type": "tconstruct:maille" },
+    { "path": "tinkersnewlife:item/wizard_leggings_cloth", "stat_type": "tconstruct:maille" },
+    { "path": "tinkersnewlife:item/wizard_leggings_buckle", "stat_type": "tconstruct:maille" },
+    { "path": "tinkersnewlife:item/wizard_boots_body", "stat_type": "tconstruct:plating_boots" },
+    { "path": "tinkersnewlife:item/wizard_boots_trim", "stat_type": "tconstruct:maille" },
+    { "path": "tinkersnewlife:item/wizard_boots_lace", "stat_type": "tconstruct:maille" },
+    { "path": "tinkersnewlife:item/wizard_boots_cloth", "stat_type": "tconstruct:maille" },
+    { "path": "tinkersnewlife:item/wizard_boots_buckle", "stat_type": "tconstruct:maille" }
   ]
 }
