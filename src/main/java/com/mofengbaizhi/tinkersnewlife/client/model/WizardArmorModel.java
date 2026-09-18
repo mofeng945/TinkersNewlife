@@ -213,6 +213,65 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
     }
 
     /** 反射读匠魂材料 id（读不到就退回兜底色） */
+    /**
+     * 渲染层用：只画"这一件"的部件组，**按组取匠魂生成器产出的按材料贴图** ✓；
+     * 某组没有对应贴图时退回 {@code all_grey.png} + 顶点着色 ✓（外观与 renderToBuffer 完全一致 ✓）。
+     */
+    public void renderMulti(PoseStack poseStack, net.minecraft.client.renderer.MultiBufferSource buffers,
+                            int light, int overlay, ItemStack stack, EquipmentSlot slot) {
+        setCurrent(stack, slot);
+        String prefix = com.mofengbaizhi.tinkersnewlife.client.renderer.WizardArmorTextures.prefixFor(slot);
+        boolean legsLayer = com.mofengbaizhi.tinkersnewlife.client.renderer.WizardArmorTextures.usesLeggingsLayer(slot);
+        switch (slot) {
+            case HEAD -> {
+                group(poseStack, buffers, light, overlay, 1, prefix, legsLayer, this.head, hatBrim);
+                group(poseStack, buffers, light, overlay, 4, prefix, legsLayer, this.head, hatCrown);
+                group(poseStack, buffers, light, overlay, 0, prefix, legsLayer, this.head, hatTower);
+                group(poseStack, buffers, light, overlay, 2, prefix, legsLayer, this.head, hatTip);
+                group(poseStack, buffers, light, overlay, 3, prefix, legsLayer, this.head, hatBand);
+            }
+            case CHEST -> {
+                group(poseStack, buffers, light, overlay, 2, prefix, legsLayer, this.body, robe);
+                group(poseStack, buffers, light, overlay, 1, prefix, legsLayer, this.rightArm, sleeveRight);
+                group(poseStack, buffers, light, overlay, 1, prefix, legsLayer, this.leftArm, sleeveLeft);
+            }
+            case LEGS -> {
+                group(poseStack, buffers, light, overlay, 0, prefix, legsLayer, this.rightLeg, legWrapRight);
+                group(poseStack, buffers, light, overlay, 0, prefix, legsLayer, this.leftLeg, legWrapLeft);
+                group(poseStack, buffers, light, overlay, 3, prefix, legsLayer, this.rightLeg, bootCuffRight);
+                group(poseStack, buffers, light, overlay, 3, prefix, legsLayer, this.leftLeg, bootCuffLeft);
+            }
+            default -> {
+                group(poseStack, buffers, light, overlay, 0, prefix, legsLayer, this.rightLeg, bootCuffRight);
+                group(poseStack, buffers, light, overlay, 0, prefix, legsLayer, this.leftLeg, bootCuffLeft);
+                group(poseStack, buffers, light, overlay, 4, prefix, legsLayer, this.rightLeg, legWrapRight);
+                group(poseStack, buffers, light, overlay, 4, prefix, legsLayer, this.leftLeg, legWrapLeft);
+            }
+        }
+    }
+
+    /** 单组：有生成贴图 ⇒ 用图且不再染色；没有 ⇒ 灰图 + 材料色顶点着色 ✓ */
+    private void group(PoseStack poseStack, net.minecraft.client.renderer.MultiBufferSource buffers,
+                       int light, int overlay, int index, String prefix, boolean legsLayer,
+                       ModelPart parent, ModelPart... parts) {
+        String mat = materialPath(index);
+        net.minecraft.resources.ResourceLocation tex =
+                com.mofengbaizhi.tinkersnewlife.client.renderer.WizardArmorTextures
+                        .materialArmorTexture(prefix, mat, legsLayer);
+        float[] c = tex != null ? new float[]{ 1.0F, 1.0F, 1.0F }
+                                : WizardArmorColors.of(mat);
+        net.minecraft.resources.ResourceLocation use =
+                tex != null ? tex : com.mofengbaizhi.tinkersnewlife.client.renderer.WizardArmorTextures.GREY;
+        VertexConsumer buffer = buffers.getBuffer(
+                net.minecraft.client.renderer.RenderType.armorCutoutNoCull(use));
+        for (ModelPart part : parts) {
+            if (part == null) continue;
+            poseStack.pushPose();
+            if (parent != null) parent.translateAndRotate(poseStack);
+            part.render(poseStack, buffer, light, overlay, c[0], c[1], c[2], 1.0F);
+            poseStack.popPose();
+        }
+    }
     private String materialPath(int index) {
         try {
             Object tool = slimeknights.tconstruct.library.tools.nbt.ToolStack.from(currentStack);

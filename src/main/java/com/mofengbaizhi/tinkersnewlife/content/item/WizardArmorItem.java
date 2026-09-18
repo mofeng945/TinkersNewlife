@@ -40,7 +40,11 @@ public class WizardArmorItem extends ModifiableArmorItem {
     /** 四件共用一张**灰阶**贴图：颜色由模型逐组用材料色顶点着色 ✓（见 WizardArmorModel） */
     @Override
     public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot, String type) {
-        return TinkersNewlife.MOD_ID + ":" + com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorModel.TEX_GREY;
+        // 渲染层正常工作时由它逐组绘制 ⇒ 这里给透明图避免重复；层异常则回退灰阶图 ✓
+        boolean layer = com.mofengbaizhi.tinkersnewlife.client.renderer.WizardArmorTextures.isLayerOk();
+        return TinkersNewlife.MOD_ID + ":" + (layer
+                ? "textures/tinker_armor/wizard_armor/transparent.png"
+                : com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorModel.TEX_GREY);
     }
 
     @Override

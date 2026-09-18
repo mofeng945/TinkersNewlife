@@ -553,4 +553,19 @@ public class ClientEventHandler {
     public static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
         event.registerLayerDefinition(com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorModel.LAYER,
                 com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorModel::createBodyLayer);
+    }
+    /** 巫师套装的盔甲渲染层（让它吃上匠魂生成器产出的按材料贴图 ✓） */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @net.minecraftforge.eventbus.api.SubscribeEvent
+    public static void addWizardArmorLayer(EntityRenderersEvent.AddLayers event) {
+        for (String skin : event.getSkins()) {
+            try {
+                net.minecraft.client.renderer.entity.EntityRenderer<?> r = event.getSkin(skin);
+                if (r instanceof net.minecraft.client.renderer.entity.LivingEntityRenderer ler) {
+                    ler.addLayer(new com.mofengbaizhi.tinkersnewlife.client.renderer.WizardArmorLayer(ler));
+                }
+            } catch (Throwable ignored) {
+                // 某个皮肤挂不上就算了，不影响其它 ✓
+            }
+        }
     }}

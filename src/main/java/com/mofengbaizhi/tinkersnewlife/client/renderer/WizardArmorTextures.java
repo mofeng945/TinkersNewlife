@@ -49,6 +49,31 @@ public final class WizardArmorTextures {
         return new ResourceLocation(TinkersNewlife.MOD_ID, "textures/" + path);
     }
 
+    /** 渲染层是否正常工作（正常 ⇒ 本模组自己画、原版层画透明图避免重复 ✓；异常 ⇒ 回退原版层画灰图 ✓） */
+    private static volatile boolean layerOk = false;
+    /** 懒烘焙的自绘模型（渲染层用 ✓） */
+    private static com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorModel model;
+
+    public static boolean isLayerOk() { return layerOk; }
+    public static void setLayerOk(boolean ok) { layerOk = ok; }
+
+    /** 透明贴图（渲染层接手时用，避免原版层重复绘制 ✓；由 tools 脚本生成 ✓） */
+    public static final ResourceLocation TRANSPARENT = tex("tinker_armor/wizard_armor/transparent.png");
+
+    /** 懒烘焙自绘模型（失败返回 null ⇒ 渲染层直接跳过，外观由原版层兜底 ✓） */
+    public static com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorModel model() {
+        try {
+            if (model == null) {
+                model = new com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorModel(
+                        net.minecraft.client.Minecraft.getInstance().getEntityModels()
+                                .bakeLayer(com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorModel.LAYER));
+            }
+            return model;
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
     /** 材质包/资源重载后清缓存 ✓ */
     public static void clearCache() {
         EXISTS.clear();
