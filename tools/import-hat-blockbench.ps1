@@ -321,12 +321,14 @@ $javaBoxes = @()
 foreach ($c in $cubes) {
     $u = $c.U; $v = $c.V; $w = $c.W; $h = $c.H; $d = $c.D
     # 面 → (目的矩形, 源 uv 字段名)
+    # ⚠ 布局照抄 MC 源码（ModelPart$Cube ✓ 2026-09-19 核对 ✓）：上排 [down][up]、中排 [west][north][east][south] ✓
+    #   原先写成 [up][down] + [east]…[west] ✗ ⇒ 每个方块东西面整体互换 ✗（帽子也一样中招 ✗ 已修 ✓）
     $map = @(
-        @{ f = 'up';    dx = $u + $d;           dy = $v;     dw = $w; dh = $d },
-        @{ f = 'down';  dx = $u + $d + $w;      dy = $v;     dw = $w; dh = $d },
-        @{ f = 'east';  dx = $u;                dy = $v + $d; dw = $d; dh = $h },
+        @{ f = 'down';  dx = $u + $d;           dy = $v;     dw = $w; dh = $d },
+        @{ f = 'up';    dx = $u + $d + $w;      dy = $v;     dw = $w; dh = $d },
+        @{ f = 'west';  dx = $u;                dy = $v + $d; dw = $d; dh = $h },
         @{ f = 'north'; dx = $u + $d;           dy = $v + $d; dw = $w; dh = $h },
-        @{ f = 'west';  dx = $u + $d + $w;      dy = $v + $d; dw = $d; dh = $h },
+        @{ f = 'east';  dx = $u + $d + $w;      dy = $v + $d; dw = $d; dh = $h },
         @{ f = 'south'; dx = $u + $d + $w + $d; dy = $v + $d; dw = $w; dh = $h }
     )
     foreach ($m in $map) {

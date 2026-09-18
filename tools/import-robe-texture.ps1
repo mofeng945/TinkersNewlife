@@ -72,16 +72,26 @@ foreach ($line in $srcLines) {
 Write-Host ("我们的法袍方块 {0} 个；用户模型 {1} 个" -f $ours.Count, $j.elements.Count)
 
 # ---------- ③ 面名 ↔ MC 面矩形 ----------
-# MC 盒式 UV（与我们画底图时的布局一致 ✓）：整块 2d+2w 宽、d+h 高
+# ⚠ 布局**必须照抄 MC 源码**（net/minecraft/client/model/geom/ModelPart$Cube 构造函数 ✓ 2026-09-19 实测核对 ✓）：
+#   设 u0/v0 = texOffs、w = dimX、h = dimY、d = dimZ：
+#     上排： [DOWN] x[u0+d,   u0+d+w]   y[v0, v0+d]        ← 注意：**先是 down（底）** ✓
+#            [UP]   x[u0+d+w, u0+2w+d]  y[v0, v0+d]
+#     中排： [WEST] x[u0,     u0+d]     y[v0+d, v0+d+h]    ← 注意：**第一列是 west（-x）** ✓
+#            [NORTH] x[u0+d,  u0+d+w]   y[v0+d, v0+d+h]
+#            [EAST] x[u0+d+w, u0+w+d]   y[v0+d, v0+d+h]    ← east 在第三列 ✓
+#            [SOUTH] x[u0+w+d, u0+2w+d] y[v0+d, v0+d+h]
+#   ⇒ 四列顺序是 **[west][north][east][south]** ✓（不是 east…west ✗），上排顺序是 **[down][up]** ✓。
+#   我原先凭"常见说法"写成 [east][north][west][south] + [up][down] ✗ ⇒ **每个方块的东西面整体互换** ✗
+#   （用户实测：裙摆"腿内侧两个面应该在外侧" ✓ —— 画在外侧面上的图被搬到了内侧面 ✓）。
 function FaceRect($box, [string]$face) {
     $u = [double]$box.U; $v = [double]$box.V; $w = [double]$box.W; $h = [double]$box.H; $d = [double]$box.D
     # ⚠ PowerShell 里逗号比 + 结合更紧 ✗ ⇒ `$u + $d, $v` 会被解析成 `$u + @($d,$v)` ✗ 必须逐项加括号 ✓
     switch ($face) {
-        'up'    { return @(($u + $d), $v, $w, $d) }
-        'down'  { return @(($u + $d + $w), $v, $w, $d) }
-        'east'  { return @($u, ($v + $d), $d, $h) }
+        'down'  { return @(($u + $d), $v, $w, $d) }
+        'up'    { return @(($u + $d + $w), $v, $w, $d) }
+        'west'  { return @($u, ($v + $d), $d, $h) }
         'north' { return @(($u + $d), ($v + $d), $w, $h) }
-        'west'  { return @(($u + $d + $w), ($v + $d), $d, $h) }
+        'east'  { return @(($u + $d + $w), ($v + $d), $d, $h) }
         'south' { return @(($u + $d + $w + $d), ($v + $d), $w, $h) }
     }
     throw "未知面 $face"
@@ -150,7 +160,10 @@ for ($i = 0; $i -lt $j.elements.Count; $i++) {
             for ($px = $px0; $px -lt $px1; $px++) {
                 $tu = (($px + 0.5) - $dx0) / $dw
                 $tv = (($py + 0.5) - $dy0) / $dh
-                if ($tu -lt 0 -or $tu -gt 1 -or $tv -lt 0 -or $tv -gt 1) { continue }
+                # ⚠ 夹住而不是跳过 ✓：矩形起点是小数时，边界像素中心会落在矩形外一点点 ✗
+                #   跳过的话那圈像素会留着**上一次的旧内容** ✗ ⇒ 重跑不再是"完全重写" ✗（与帽子工具同一处理 ✓）
+                $tu = [Math]::Max(0.0, [Math]::Min(1.0, $tu))
+                $tv = [Math]::Max(0.0, [Math]::Min(1.0, $tv))
                 $total++
                 $su = $tu; $sv = $tv
                 if ($flipX) { $su = 1 - $su }
