@@ -24,7 +24,8 @@ param(
     [Parameter(Mandatory = $true)][string]$Texture,
     [switch]$Apply,
     [double]$ScaleOverride = 0,   # 0 = 从 WizardArmorModel.java 读 HAT_SCALE
-    [double]$UvScale = 0          # 0 = 自动推定（UV 空间 → 贴图像素 的缩放 ✓）
+    [double]$UvScale = 0,         # 0 = 自动推定（UV 空间 → 贴图像素 的缩放 ✓）
+    [double]$DarkRatio = 0        # >0 时：某面亮度 < 同方块亮面均值 × 该比例 ⇒ 平涂成亮面色（治"小岛落在深色底上" ✓）
 )
 
 $ErrorActionPreference = 'Stop'
@@ -232,7 +233,52 @@ function CopyRect($srcBmp, [double]$sx, [double]$sy, [double]$sw, [double]$sh,
     $tmp.Dispose()
 }
 
-$flipCnt = 0; $rotCnt = 0
+$map0 = 'up', 'down', 'east', 'north', 'west', 'south'
+
+# ---------- 可选：过暗面自动跟随同方块的亮面（-DarkRatio，默认关 ✓） ----------
+# 用途：手绘时常常只画了"看得见的大面"，那些细长/很小的 UV 岛仍留在铺的深色底上 ✓
+#   ⇒ 上线后表现为"某个方块发黑 / 同一部件几块颜色对不上" ✗。
+#   给一个阈值（如 0.6）：某面平均亮度 < 该方块最亮面 × 阈值 ⇒ 用"亮面的平均色"整块平涂 ✓。
+function Mean-Opaque($bmp, [double]$x0, [double]$y0, [double]$x1, [double]$y1) {
+    $s = 0.0; $n = 0
+    for ($y = [Math]::Floor($y0); $y -lt [Math]::Ceiling($y1); $y++) {
+        for ($x = [Math]::Floor($x0); $x -lt [Math]::Ceiling($x1); $x++) {
+            if ($x -lt 0 -or $y -lt 0 -or $x -ge $bmp.Width -or $y -ge $bmp.Height) { continue }
+            $p = $bmp.GetPixel($x, $y)
+            if ($p.A -eq 0) { continue }
+            $s += $p.R; $n++
+        }
+    }
+    if ($n -eq 0) { return -1 }
+    return $s / $n
+}
+$darkFill = @{}          # "cubeIndex.face" → 是否改成平涂
+$brightMean = @{}        # cubeIndex → 亮面平均色
+if ($DarkRatio -gt 0) {
+    foreach ($c in $cubes) {
+        $means = @{}
+        foreach ($m in $map0) {
+            $face = $c.Faces.($m)
+            if (-not $face -or -not $face.uv) { continue }
+            $uv = $face.uv
+            $sx = [Math]::Min([double]$uv[0], [double]$uv[2]) * $k + $offX
+            $sy = [Math]::Min([double]$uv[1], [double]$uv[3]) * $k + $offY
+            $ex = [Math]::Max([double]$uv[0], [double]$uv[2]) * $k + $offX
+            $ey = [Math]::Max([double]$uv[1], [double]$uv[3]) * $k + $offY
+            $means[$m] = Mean-Opaque $paint $sx $sy $ex $ey
+        }
+        if ($means.Count -eq 0) { continue }
+        $mx = ($means.Values | Measure-Object -Maximum).Maximum
+        $bright = @($means.Values | Where-Object { $_ -ge ($mx * $DarkRatio) -and $_ -ge 0 })
+        $bm = if ($bright.Count -gt 0) { ($bright | Measure-Object -Average).Average } else { $mx }
+        $brightMean[$c.Index] = $bm
+        foreach ($m in $means.Keys) {
+            if ($means[$m] -ge 0 -and $means[$m] -lt ($bm * $DarkRatio)) { $darkFill["$($c.Index).$m"] = $true }
+        }
+    }
+}
+
+$flipCnt = 0; $rotCnt = 0; $darkCnt = 0
 $javaBoxes = @()
 foreach ($c in $cubes) {
     $u = $c.U; $v = $c.V; $w = $c.W; $h = $c.H; $d = $c.D
@@ -260,6 +306,15 @@ foreach ($c in $cubes) {
         $sy = [Math]::Min($v1, $v2) * $k + $offY
         $ex = [Math]::Max($u1, $u2) * $k + $offX
         $ey = [Math]::Max($v1, $v2) * $k + $offY
+        # 过暗面 ⇒ 整块平涂成该方块的亮面平均色 ✓（不黑、且同部件各面颜色一致 ✓）
+        if ($darkFill.ContainsKey("$($c.Index).$($m.f)")) {
+            $vv = [int][Math]::Round($brightMean[$c.Index])
+            $br = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, $vv, $vv, $vv))
+            $g.FillRectangle($br, ([single]$m.dx), ([single]$m.dy), ([single][Math]::Max(0.5, $m.dw)), ([single][Math]::Max(0.5, $m.dh)))
+            $br.Dispose()
+            $darkCnt++
+            continue
+        }
         CopyRect $paint $sx $sy ($ex - $sx) ($ey - $sy) $m.dx $m.dy $m.dw $m.dh $flipX $flipY $fr
     }
     # Java：x/z 用 from，y 用 to（Y 轴方向与 Blockbench 相反 ✓，见模型类注释）
