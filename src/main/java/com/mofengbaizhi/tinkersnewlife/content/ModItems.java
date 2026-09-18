@@ -233,6 +233,39 @@ public class ModItems {
         ITEMS.register("yo_yo",
                 () -> new YoYoItem(new Item.Properties().stacksTo(1)));
 
+    // ==================== 巫师套装（四件套 · 部件式） ====================
+    /**
+     * 巫师套装：{@code ModifiableArmorMaterial.create(id, 音效)} 会按 id 自动生成 4 个工具定义
+     * （{@code wizard_armor_helmet / _chestplate / _leggings / _boots} ✓ 见 data/.../tool_definitions）。
+     *
+     * <p>每件是<b>部件式</b>：5 个材料槽 = 部位镶板 + 锁链基底 ×2 + 坚韧套环 + 大板 ✓
+     * （用户指定的配方组合 ⇒ 可以用任意材料各自打造、混搭 ✓；护甲值来自"部位镶板"的
+     * {@code tconstruct:plating_*} 统计 ✓，其余部件提供耐久与各自的材料特性 ✓）。
+     *
+     * <p>物品注册名用短名（{@code wizard_helmet}），与工具定义 id（{@code wizard_armor_helmet}）**不同名** ✓
+     * —— 匠魂允许这样，但语言键两条都要写（见 lang ✓）。
+     */
+    public static final slimeknights.tconstruct.library.tools.definition.ModifiableArmorMaterial WIZARD_ARMOR =
+            slimeknights.tconstruct.library.tools.definition.ModifiableArmorMaterial
+                    .create(new ResourceLocation(TinkersNewlife.MOD_ID, "wizard_armor"),
+                            net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_LEATHER);
+
+    public static final RegistryObject<slimeknights.tconstruct.library.tools.item.armor.ModifiableArmorItem> WIZARD_HELMET =
+            ITEMS.register("wizard_helmet", () -> new slimeknights.tconstruct.library.tools.item.armor.ModifiableArmorItem(
+                    WIZARD_ARMOR, net.minecraft.world.item.ArmorItem.Type.HELMET, new Item.Properties().stacksTo(1)));
+
+    public static final RegistryObject<slimeknights.tconstruct.library.tools.item.armor.ModifiableArmorItem> WIZARD_CHESTPLATE =
+            ITEMS.register("wizard_chestplate", () -> new slimeknights.tconstruct.library.tools.item.armor.ModifiableArmorItem(
+                    WIZARD_ARMOR, net.minecraft.world.item.ArmorItem.Type.CHESTPLATE, new Item.Properties().stacksTo(1)));
+
+    public static final RegistryObject<slimeknights.tconstruct.library.tools.item.armor.ModifiableArmorItem> WIZARD_LEGGINGS =
+            ITEMS.register("wizard_leggings", () -> new slimeknights.tconstruct.library.tools.item.armor.ModifiableArmorItem(
+                    WIZARD_ARMOR, net.minecraft.world.item.ArmorItem.Type.LEGGINGS, new Item.Properties().stacksTo(1)));
+
+    public static final RegistryObject<slimeknights.tconstruct.library.tools.item.armor.ModifiableArmorItem> WIZARD_BOOTS =
+            ITEMS.register("wizard_boots", () -> new slimeknights.tconstruct.library.tools.item.armor.ModifiableArmorItem(
+                    WIZARD_ARMOR, net.minecraft.world.item.ArmorItem.Type.BOOTS, new Item.Properties().stacksTo(1)));
+
     /** 处刑人之剑（伏诛赐死领域发放的行刑武器：1 耐久 / 120 秒限时 / 命中目标即处决） */
     public static final RegistryObject<ExecutionSwordItem> EXECUTION_SWORD =
         ITEMS.register("execution_sword",

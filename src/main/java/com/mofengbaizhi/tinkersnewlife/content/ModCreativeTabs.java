@@ -176,6 +176,20 @@ public class ModCreativeTabs {
 
                                 addAllToolVariants(output, YoYoItem.YO_YO_DEFINITION, ModItems.YO_YO.get());
 
+                                // ----- 巫师套装（四件套 · 部件式：部位镶板 + 锁链基底×2 + 坚韧套环 + 大板）-----
+                                addAllToolVariants(output,
+                                        ModItems.WIZARD_ARMOR.getArmorDefinition(net.minecraft.world.item.ArmorItem.Type.HELMET),
+                                        ModItems.WIZARD_HELMET.get());
+                                addAllToolVariants(output,
+                                        ModItems.WIZARD_ARMOR.getArmorDefinition(net.minecraft.world.item.ArmorItem.Type.CHESTPLATE),
+                                        ModItems.WIZARD_CHESTPLATE.get());
+                                addAllToolVariants(output,
+                                        ModItems.WIZARD_ARMOR.getArmorDefinition(net.minecraft.world.item.ArmorItem.Type.LEGGINGS),
+                                        ModItems.WIZARD_LEGGINGS.get());
+                                addAllToolVariants(output,
+                                        ModItems.WIZARD_ARMOR.getArmorDefinition(net.minecraft.world.item.ArmorItem.Type.BOOTS),
+                                        ModItems.WIZARD_BOOTS.get());
+
                                 addAllToolVariants(output, CurseCoreItem.CURSE_CORE_DEFINITION, ModItems.CURSE_CORE.get());
 
                                 output.accept(ModItems.DURANDAL_SWORD.get());
