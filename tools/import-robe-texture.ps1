@@ -16,6 +16,9 @@ param(
     [string]$Json = "$env:USERPROFILE\Desktop\wizard_robe.json",
     [string]$Png  = "$env:USERPROFILE\Desktop\wizard_robe.png",
     [double]$UvScale = 8.0,
+    # 需要"按身体中线左右镜像"的方块名，逗号分隔（如 body_plating_1,body_plating_2 ✓）：逐面把源的 u 反向再取样 ✓
+    # ⚠ 声明成 [string] 而不是 [string[]] ✗ —— `powershell -File` 传数组参数会被塞成一整个字符串 ✗（踩过 ✓）
+    [string]$MirrorX = '',
     [switch]$Apply,
     [switch]$KeepUnpainted   # 源面整面透明时保留底图原有像素（不砸出洞 ✓）
 )
@@ -24,6 +27,8 @@ $root = Split-Path -Parent $PSScriptRoot
 Add-Type -AssemblyName System.Drawing
 
 $texDir  = Join-Path $root 'src\main\resources\assets\tinkersnewlife\textures\armor\wizard'
+$mirrorList = @()
+if ($MirrorX) { $mirrorList = @($MirrorX -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ }) }
 $greyPath = Join-Path $texDir 'grey.png'
 $javaPath = Join-Path $root 'src\main\java\com\mofengbaizhi\tinkersnewlife\client\model\WizardArmorModel.java'
 $outDir = Join-Path $root 'build'
@@ -115,8 +120,11 @@ for ($i = 0; $i -lt $j.elements.Count; $i++) {
     $name = "{0}_{1}_{2}" -f $bone, $info.Slot, $i
     if (-not $ours.ContainsKey($name)) { throw "我们模型里找不到方块 $name ✗" }
     $box = $ours[$name]
+    # -MirrorX：把这个方块的整块外观按身体中线左右镜像一次 ✓（用户实测"下摆左右反了" ✓ → 见备忘录 §364 ✓）
+    #   只翻 u ✓（不翻 v、不换面名 ✓）⇒ 前后面仍是前后面 ✓，朝外的侧面各自镜像 ✓ = 整块绕身体中线翻过来 ✓
+    $mirrored = ($mirrorList -contains $name)
 
-    $line = "  #{0,-2} {1,-22}" -f $i, $name
+    $line = "  #{0,-2} {1,-22}{2}" -f $i, $name, $(if ($mirrored) { ' [镜像]' } else { '' })
     foreach ($fn in 'up', 'down', 'east', 'north', 'west', 'south') {
         $fd = $e.faces.$fn
         if (-not $fd -or -not $fd.uv) { $line += "  $fn:无UV ✗"; continue }
@@ -127,6 +135,7 @@ for ($i = 0; $i -lt $j.elements.Count; $i++) {
         $sy1 = [Math]::Max([double]$uv[1], [double]$uv[3]) * $UvScale
         $flipX = ([double]$uv[0] -gt [double]$uv[2])
         $flipY = ([double]$uv[1] -gt [double]$uv[3])
+        if ($mirrored) { $flipX = -not $flipX }
         $rot = 0
         if ($fd.rotation) { $rot = [int]$fd.rotation }
 
