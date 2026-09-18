@@ -122,17 +122,17 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
         PartDefinition head = root.getChild("head");
 
         // 法帽：用户原型的 11 个立方体，坐标原样，UV 重新分配到 128x128
-        addBox(head, "hat_brim", -1F, 11.04688F, -1F, 17F, 11.61888F, 17F, 0, 0);
-        addBox(head, "hat_crown", 1.5F, 11.59375F, 1.5F, 14.5F, 15.34766F, 14.5F, 0, 20);
-        addBox(head, "hat_tower_a", 3F, 14.48828F, 3F, 13F, 18.48828F, 13F, 0, 38);
-        addBox(head, "hat_tower_b", 5.49609F, 18.01172F, 6.41016F, 10.50391F, 22.86719F, 11.95703F, 0, 53);
-        addBox(head, "hat_tip", 6.64258F, 20.62109F, 10.83984F, 9.35742F, 24.05859F, 14.31641F, 0, 65);
-        addBox(head, "hat_band_a", 7F, 12.26953F, 1.33984F, 9F, 14.26953F, 1.53984F, 0, 73);
-        addBox(head, "hat_band_b", 7.25F, 12.48047F, 1.15625F, 8.75F, 13.98047F, 1.45625F, 8, 73);
-        addBox(head, "hat_band_c", 1.37891F, 12.625F, 1.39063F, 14.57891F, 13.67578F, 1.59063F, 0, 77);
-        addBox(head, "hat_band_d", 1.37891F, 12.63672F, 14.42969F, 14.57891F, 13.67969F, 14.62969F, 0, 80);
-        addBox(head, "hat_band_e", 1.39453F, 12.58984F, 1.4F, 1.59453F, 13.68359F, 14.6F, 0, 83);
-        addBox(head, "hat_band_f", 14.40547F, 12.64453F, 1.4F, 14.60547F, 13.62891F, 14.6F, 0, 87);
+        addBox(head, "hat_brim", -4.5F, 11.61888F, -4.5F, 20.5F, 11.61888F, 20.5F, 0, 0);
+        addBox(head, "hat_crown", 1.5F, 11.59375F, 1.5F, 14.5F, 15.12891F, 14.5F, 0, 20);
+        addBox(head, "hat_tower_a", 3F, 14.48828F, 3F, 13F, 18.26953F, 13F, 0, 38);
+        addBox(head, "hat_tower_b", 5.49609F, 18.01172F, 6.41016F, 10.50391F, 22.64844F, 11.95703F, 0, 53);
+        addBox(head, "hat_tip", 6.64258F, 20.62109F, 10.83984F, 9.35742F, 23.83984F, 14.31641F, 0, 65);
+        addBox(head, "hat_band_a", 7F, 12.26953F, 1.33984F, 9F, 14.05078F, 1.53984F, 0, 73);
+        addBox(head, "hat_band_b", 7.25F, 12.48047F, 1.15625F, 8.75F, 13.76172F, 1.45625F, 8, 73);
+        addBox(head, "hat_band_c", 1.37891F, 12.625F, 1.39063F, 14.57891F, 13.45703F, 1.59063F, 0, 77);
+        addBox(head, "hat_band_d", 1.37891F, 12.63672F, 14.42969F, 14.57891F, 13.46094F, 14.62969F, 0, 80);
+        addBox(head, "hat_band_e", 1.39453F, 12.58984F, 1.4F, 1.59453F, 13.46484F, 14.6F, 0, 83);
+        addBox(head, "hat_band_f", 14.40547F, 12.64453F, 1.4F, 14.60547F, 13.41016F, 14.6F, 0, 87);
 
         // 法袍（下摆 + 宽袖）
         root.getChild("body").addOrReplaceChild("robe",
