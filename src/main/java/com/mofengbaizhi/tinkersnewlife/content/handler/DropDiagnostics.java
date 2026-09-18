@@ -40,6 +40,7 @@ public final class DropDiagnostics {
 
     private static final ModifierId CHAOS_FLOW = new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "chaos_flow"));
     private static final ModifierId LUCKY_DROP = new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "lucky_drop"));
+    private static final ModifierId EX_PIERCE = new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "ex_pierce"));
 
     private static final int MAX_LINES_PER_SESSION = 80;
     private static final long MIN_GAP_MS = 150L;
@@ -48,12 +49,28 @@ public final class DropDiagnostics {
     private static int lines = 0;
     private static boolean announced = false;
 
+    // ⚠ 死亡与掉落是**同一 tick 前后脚**发生的 ✗ ⇒ 共用一条限流会把"掉落"那条吞掉 ✗
+    //   （上一版就吃了这个亏：只看到"死亡"、看不到"掉落 N 件" ✗）⇒ 掉落单独一套计数/间隔 ✓
+    private static long lastDropLog = 0L;
+    private static int dropLines = 0;
+
     /** 开服一行：确认诊断已挂上 ✓（拿不到就把日志级别放没关系的 INFO ✓） */
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
         announced = true;
         lines = 0;
-        TinkersNewlife.LOGGER.info("[掉落诊断] 已启用（每次玩家击杀记一条，最多 {} 条，间隔 {}ms）", MAX_LINES_PER_SESSION, MIN_GAP_MS);
+        dropLines = 0;
+        TinkersNewlife.LOGGER.info("[掉落诊断] 已启用（死亡/掉落各自独立记录，各最多 {} 条）", MAX_LINES_PER_SESSION);
+    }
+
+    /** 掉落用：独立限流（几乎不间隔 ✓，保证每次死亡后面都能看到掉落件数 ✓） */
+    private static boolean takeDropSlot() {
+        long now = System.currentTimeMillis();
+        if (now - lastDropLog < 5L) return false;
+        if (dropLines >= MAX_LINES_PER_SESSION) return false;
+        lastDropLog = now;
+        dropLines++;
+        return true;
     }
 
     /** ⭐ 死亡事件：**不限击杀者**（任何非玩家实体死亡都记 ✓ —— 先确认"到底死没死、死于什么" ✓） */
@@ -67,10 +84,15 @@ public final class DropDiagnostics {
             DamageSource source = event.getSource();
             Player killer = killerOf(source);
             if (!takeSlot()) return;
-            TinkersNewlife.LOGGER.info("[掉落诊断·死亡 #{}/{}] {} 死亡 / 伤害类型={} / 击杀者={} / 直接来源={} / 主手={}",
+            // ⭐ "记忆表里有没有玩家归属" + "目标自己的 lastHurtByMob" —— 这两条决定战利品能不能带玩家参数 ✓
+            net.minecraft.server.level.ServerPlayer remembered =
+                    com.mofengbaizhi.tinkersnewlife.content.curse.KillAttribution.find(entity);
+            TinkersNewlife.LOGGER.info("[掉落诊断·死亡 #{}/{}] {} 死亡 / 伤害类型={} / 来源击杀者={} / 直接来源={} / 记忆归属={} / lastHurtByMob={} / 主手={}",
                     lines, MAX_LINES_PER_SESSION, entity.getType(), source.getMsgId(),
-                    killer == null ? "无（不是玩家击杀）" : killer.getName().getString(),
+                    killer == null ? "无" : killer.getName().getString(),
                     source.getDirectEntity() == null ? "null" : source.getDirectEntity().getType().toString(),
+                    remembered == null ? "无" : remembered.getName().getString(),
+                    entity.getLastHurtByMob() == null ? "null" : entity.getLastHurtByMob().getName().getString(),
                     killer == null || killer.getMainHandItem().isEmpty()
                             ? "-" : killer.getMainHandItem().getHoverName().getString());
         } catch (Throwable ignored) {
@@ -86,9 +108,9 @@ public final class DropDiagnostics {
             if (event.getLevel().isClientSide) return;
             Player near = event.getLevel().getNearestPlayer(item, 16.0D);
             if (near == null) return;
-            if (!takeSlot()) return;
+            if (!takeDropSlot()) return;
             TinkersNewlife.LOGGER.info("[掉落诊断·掉落物 #{}/{}] 生成 {} x{}（距最近玩家 {} 格）",
-                    lines, MAX_LINES_PER_SESSION,
+                    dropLines, MAX_LINES_PER_SESSION,
                     ForgeRegistries.ITEMS.getKey(item.getItem().getItem()),
                     item.getItem().getCount(),
                     (int) Math.sqrt(near.distanceToSqr(item)));
@@ -125,12 +147,12 @@ public final class DropDiagnostics {
             Player killer = killerOf(source);                 // 可能为 null（非玩家击杀也记 ✓）
             if (entity instanceof Player) return;             // 玩家自己死不用看 ✓
 
-            if (!takeSlot()) return;
+            if (!takeDropSlot()) return;                      // ⭐ 掉落单独限流（死亡那条不会把它吞掉 ✓）
 
             ItemStack hand = killer == null ? ItemStack.EMPTY : killer.getMainHandItem();
             TinkersNewlife.LOGGER.info(
                     "[掉落诊断 #{}/{}] {} → 掉落 {} 件 {} / 取消={} / 伤害类型={} / 击杀者={} 主手={} / 特性：{} / 死亡时 lastHurtByMob={} / 抑制：无为变形={} 释放体={} 召唤物={} 狱门疆={}",
-                    lines, MAX_LINES_PER_SESSION,
+                    dropLines, MAX_LINES_PER_SESSION,
                     entity.getType(),
                     event.getDrops().size(),
                     dropNames(event),
@@ -165,7 +187,7 @@ public final class DropDiagnostics {
         return sb.append(']').toString();
     }
 
-    /** 把"混沌之流 / 幸运掉落"这两个关键特性出现在哪个部位列出来（主手 / 副手 / 四件护甲） */
+    /** 把"穿透EX / 混沌之流 / 幸运掉落"这几个关键特性出现在哪个部位列出来（主手 / 副手 / 四件护甲） */
     private static String modifierSources(Player player) {
         StringBuilder sb = new StringBuilder();
         append(sb, "主手", player.getMainHandItem());
@@ -182,11 +204,13 @@ public final class DropDiagnostics {
         try {
             ToolStack tool = ToolStack.from(stack);
             if (tool == null) return;
+            int pierce = tool.getModifierLevel(EX_PIERCE);
             int chaos = tool.getModifierLevel(CHAOS_FLOW);
             int lucky = tool.getModifierLevel(LUCKY_DROP);
-            if (chaos <= 0 && lucky <= 0) return;
+            if (pierce <= 0 && chaos <= 0 && lucky <= 0) return;
             if (sb.length() > 0) sb.append("， ");
             sb.append(where).append('=').append(stack.getHoverName().getString());
+            if (pierce > 0) sb.append("(穿透EX)");
             if (chaos > 0) sb.append("(混沌之流x").append(chaos).append(')');
             if (lucky > 0) sb.append("(幸运掉落x").append(lucky).append(')');
         } catch (Throwable ignored) {
