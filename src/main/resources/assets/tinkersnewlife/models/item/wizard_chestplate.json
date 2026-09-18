@@ -1,1 +1,18 @@
-{ "parent": "item/generated", "textures": { "layer0": "tinkersnewlife:item/wizard_robe" } }
+{
+  "loader": "tconstruct:tool",
+  "parent": "forge:item/default",
+  "textures": {
+    "body": "tinkersnewlife:item/wizard_robe_body",
+    "trim": "tinkersnewlife:item/wizard_robe_trim",
+    "lace": "tinkersnewlife:item/wizard_robe_lace",
+    "cloth": "tinkersnewlife:item/wizard_robe_cloth",
+    "buckle": "tinkersnewlife:item/wizard_robe_buckle"
+  },
+  "parts": [
+    { "name": "body", "index": 0 },
+    { "name": "trim", "index": 1 },
+    { "name": "lace", "index": 2 },
+    { "name": "cloth", "index": 3 },
+    { "name": "buckle", "index": 4 }
+  ]
+}

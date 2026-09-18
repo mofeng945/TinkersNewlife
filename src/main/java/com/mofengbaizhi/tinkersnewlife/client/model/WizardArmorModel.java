@@ -151,8 +151,8 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
             case HEAD -> draw(poseStack, buffer, packedLight, packedOverlay, 0,
                     hatBrim, hatCrown, hatTip);
             case CHEST -> {
-                draw(poseStack, buffer, packedLight, packedOverlay, 0, robe);
-                draw(poseStack, buffer, packedLight, packedOverlay, 1, sleeveRight, sleeveLeft);
+                draw(poseStack, buffer, packedLight, packedOverlay, 2, robe);          // 下摆 ← 槽2 锁链基底
+                draw(poseStack, buffer, packedLight, packedOverlay, 1, sleeveRight, sleeveLeft); // 宽袖 ← 槽1 锁链基底
             }
             case LEGS -> {
                 draw(poseStack, buffer, packedLight, packedOverlay, 0, legWrapRight, legWrapLeft);

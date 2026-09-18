@@ -1,1 +1,18 @@
-{ "parent": "item/generated", "textures": { "layer0": "tinkersnewlife:item/wizard_boots" } }
+{
+  "loader": "tconstruct:tool",
+  "parent": "forge:item/default",
+  "textures": {
+    "body": "tinkersnewlife:item/wizard_boots_body",
+    "trim": "tinkersnewlife:item/wizard_boots_trim",
+    "lace": "tinkersnewlife:item/wizard_boots_lace",
+    "cloth": "tinkersnewlife:item/wizard_boots_cloth",
+    "buckle": "tinkersnewlife:item/wizard_boots_buckle"
+  },
+  "parts": [
+    { "name": "body", "index": 0 },
+    { "name": "trim", "index": 1 },
+    { "name": "lace", "index": 2 },
+    { "name": "cloth", "index": 3 },
+    { "name": "buckle", "index": 4 }
+  ]
+}
