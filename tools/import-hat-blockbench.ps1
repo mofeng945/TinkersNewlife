@@ -25,7 +25,8 @@ param(
     [switch]$Apply,
     [double]$ScaleOverride = 0,   # 0 = 从 WizardArmorModel.java 读 HAT_SCALE
     [double]$UvScale = 0,         # 0 = 自动推定（UV 空间 → 贴图像素 的缩放 ✓）
-    [double]$DarkRatio = 0        # >0 时：某面亮度 < 同方块亮面均值 × 该比例 ⇒ 平涂成亮面色（治"小岛落在深色底上" ✓）
+    [double]$DarkRatio = 0,       # >0 时：某面亮度 < 同方块亮面均值 × 该比例 ⇒ 平涂成亮面色（治"小岛落在深色底上" ✓）
+    [switch]$NoFillHoles          # 关掉"补透明缝"（默认开 ✓：小面矩形是小数坐标，取整会留缝 ⇒ 采样到透明就看不见 ✗）
 )
 
 $ErrorActionPreference = 'Stop'
@@ -279,6 +280,7 @@ if ($DarkRatio -gt 0) {
 }
 
 $flipCnt = 0; $rotCnt = 0; $darkCnt = 0
+$faceFills = @()
 $javaBoxes = @()
 foreach ($c in $cubes) {
     $u = $c.U; $v = $c.V; $w = $c.W; $h = $c.H; $d = $c.D
@@ -313,9 +315,13 @@ foreach ($c in $cubes) {
             $g.FillRectangle($br, ([single]$m.dx), ([single]$m.dy), ([single][Math]::Max(0.5, $m.dw)), ([single][Math]::Max(0.5, $m.dh)))
             $br.Dispose()
             $darkCnt++
+            $faceFills += [pscustomobject]@{ X0 = $m.dx; Y0 = $m.dy; X1 = ($m.dx + $m.dw); Y1 = ($m.dy + $m.dh); V = $vv }
             continue
         }
         CopyRect $paint $sx $sy ($ex - $sx) ($ey - $sy) $m.dx $m.dy $m.dw $m.dh $flipX $flipY $fr
+        $mv = Mean-Opaque $paint $sx $sy $ex $ey
+        if ($mv -lt 0) { $mv = 210 }          # 源整块透明 ⇒ 补洞时用中性灰 ✓（不然那个面还是看不见 ✓）
+        $faceFills += [pscustomobject]@{ X0 = $m.dx; Y0 = $m.dy; X1 = ($m.dx + $m.dw); Y1 = ($m.dy + $m.dh); V = [int][Math]::Round($mv) }
     }
     # Java：x/z 用 from，y 用 to（Y 轴方向与 Blockbench 相反 ✓，见模型类注释）
     $jx = [Math]::Round(($c.FromX - $ORIGIN) * $S, 5)
@@ -326,11 +332,29 @@ foreach ($c in $cubes) {
     $javaBoxes += ("        addBox(head, `"{0}`", {1}F, {2}F, {3}F, {4}F, {5}F, {6}F, {7}, {8});" -f `
         $name, $c.FromX, $c.FromY, $c.FromZ, $c.ToX, $c.ToY, $c.ToZ, $c.U, $c.V)
 }
+# ---------- 补洞：小面/薄面的目标矩形是小数坐标，绘制取整会留下透明缝 ⇒ 采样到透明就"看不见" ✗ ----------
+$holeCnt = 0; $holeFaces = 0
+if (-not $NoFillHoles) {
+    foreach ($ff in $faceFills) {
+        $hit = $false
+        for ($y = [Math]::Floor($ff.Y0); $y -lt [Math]::Ceiling($ff.Y1); $y++) {
+            for ($x = [Math]::Floor($ff.X0); $x -lt [Math]::Ceiling($ff.X1); $x++) {
+                if ($x -lt 0 -or $y -lt 0 -or $x -ge $out.Width -or $y -ge $out.Height) { continue }
+                if ($out.GetPixel($x, $y).A -ne 0) { continue }
+                $out.SetPixel($x, $y, [System.Drawing.Color]::FromArgb(255, $ff.V, $ff.V, $ff.V))
+                $holeCnt++; $hit = $true
+            }
+        }
+        if ($hit) { $holeFaces++ }
+    }
+}
 $g.Dispose()
 
 # ---------- 汇总 ----------
 Write-Host ""
 Write-Host ("镜像面：{0} 个   带旋转面：{1} 个（都会按 Blockbench 的 uv 顺序 / rotation 摆正 ✓）" -f $flipCnt, $rotCnt)
+Write-Host ("补透明缝：{0} 个像素（涉及 {1} 个面）—— 小数坐标取整留下的缝会让面`"看不见`" ✗" -f $holeCnt, $holeFaces)
+if ($DarkRatio -gt 0) { Write-Host ("过暗面平涂：{0} 个面（-DarkRatio {1}）" -f $darkCnt, $DarkRatio) }
 Write-Host ("{0,-16} {1,-8} {2,4} {3,4} {4,7} {5,7} {6,7} {7,9} {8,9}" -f '名字', '组', 'u', 'v', 'w', 'h', 'd', '布局宽', '布局高')
 foreach ($c in $cubes) {
     Write-Host ("{0,-16} {1,-8} {2,4} {3,4} {4,7:N2} {5,7:N2} {6,7:N2} {7,9:N2} {8,9:N2}" -f `
