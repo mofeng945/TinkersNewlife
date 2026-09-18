@@ -113,6 +113,7 @@ public final class ChaosFlowHandler {
                 attacker.getName().getString(), total, segments, per, schoolKeys.size(), perTick);
 
         // ① 物理段：同 tick 立即结算 ✓
+        creditKill(target, attacker);                            // ⭐ 先补击杀归属（关系到 killed_by_player 类战利品 ✓）
         SPLITTING.set(Boolean.TRUE);
         try {
             target.invulnerableTime = 0;
@@ -132,6 +133,7 @@ public final class ChaosFlowHandler {
                     if (target.isDeadOrDying()) break;
                     DamageSource schoolSource = schoolSource(target, attacker, key);
                     if (schoolSource == null) continue;
+                    creditKill(target, attacker);                 // ⭐ 每段前都补一次 ✓
                     target.invulnerableTime = 0;                  // 每段都清无敌帧
                     target.hurt(schoolSource, per);
                 }
@@ -217,6 +219,7 @@ public final class ChaosFlowHandler {
                 while (f.index < f.keys.size() && budget > 0) {
                     DamageSource src = schoolSource(target, attacker, f.keys.get(f.index++));
                     if (src == null) continue;
+                    creditKill(target, attacker);                // ⭐ 摊开路径每段前也补一次 ✓
                     target.invulnerableTime = 0;
                     target.hurt(src, f.per);
                     budget--;
@@ -311,10 +314,33 @@ public final class ChaosFlowHandler {
     //  伤害源
     // ============================================================
 
-    /** 物理段：沿用原版的物理类型（保留攻击者 → 击杀归属不丢 ✓） */
+    /** 物理段：**玩家攻击就用"玩家攻击"类型** ✓（原来一律 mobAttack ⇒ 玩家的击杀被标成"生物攻击" ✗，可能丢掉 killed_by_player 类战利品条件 ✗） */
     private static DamageSource physicalSource(LivingEntity target, LivingEntity attacker) {
-        Holder<DamageType> holder = target.damageSources().mobAttack(attacker).typeHolder();
+        Holder<DamageType> holder;
+        if (attacker instanceof net.minecraft.world.entity.player.Player player) {
+            holder = target.damageSources().playerAttack(player).typeHolder();
+        } else {
+            holder = target.damageSources().mobAttack(attacker).typeHolder();
+        }
         return new DamageSource(holder, attacker, attacker);
+    }
+
+    /**
+     * 显式把"击杀归属"写给目标 ✓。
+     *
+     * <p>为什么需要：混沌之流是**嵌套 hurt**（在 {@code LivingHurtEvent} 里取消原始伤害、再自己打几段 ✓），
+     * 而不少模组的战利品表带 {@code killed_by_player} 之类条件 ✓ —— 显式补一次归属，
+     * 让"这一刀是玩家打的"在死亡结算时一定成立 ✓（用户实测：开了混沌之流后打怪不掉东西 ✗）。
+     */
+    private static void creditKill(LivingEntity target, LivingEntity attacker) {
+        try {
+            target.setLastHurtByMob(attacker);
+            if (attacker instanceof net.minecraft.world.entity.player.Player player) {
+                target.setLastHurtByPlayer(player);
+            }
+        } catch (Throwable ignored) {
+            // 补不上也不影响伤害结算 ✓
+        }
     }
 
     /** 学派段：用该学派的法术伤害类型（{@code SchoolType#getDamageType()}）✓ */

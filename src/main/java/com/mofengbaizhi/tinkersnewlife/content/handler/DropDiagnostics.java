@@ -56,6 +56,62 @@ public final class DropDiagnostics {
         TinkersNewlife.LOGGER.info("[掉落诊断] 已启用（每次玩家击杀记一条，最多 {} 条，间隔 {}ms）", MAX_LINES_PER_SESSION, MIN_GAP_MS);
     }
 
+    /** ⭐ 死亡事件：确认"怪到底死没死、死于什么伤害"（掉落事件之前的一环 ✓） */
+    @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
+    public static void onDeath(net.minecraftforge.event.entity.living.LivingDeathEvent event) {
+        try {
+            if (!announced) return;
+            LivingEntity entity = event.getEntity();
+            if (entity == null || entity.level().isClientSide) return;
+            DamageSource source = event.getSource();
+            Player killer = killerOf(source);
+            if (killer == null) return;
+            if (!takeSlot()) return;
+            TinkersNewlife.LOGGER.info("[掉落诊断·死亡 #{}/{}] {} 死亡 / 伤害类型={} / 击杀者={} / 主手={} / 事件被取消={}",
+                    lines, MAX_LINES_PER_SESSION, entity.getType(), source.getMsgId(),
+                    killer.getName().getString(),
+                    killer.getMainHandItem().isEmpty() ? "空手" : killer.getMainHandItem().getHoverName().getString(),
+                    event.isCanceled());
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** ⭐ 掉落物实体生成：确认"东西到底有没有生成出来"（生成又消失 ⇒ 是别处吞了 ✗） */
+    @SubscribeEvent
+    public static void onEntityJoin(net.minecraftforge.event.entity.EntityJoinLevelEvent event) {
+        try {
+            if (!announced) return;
+            if (!(event.getEntity() instanceof ItemEntity item)) return;
+            if (event.getLevel().isClientSide) return;
+            Player near = event.getLevel().getNearestPlayer(item, 16.0D);
+            if (near == null) return;
+            if (!takeSlot()) return;
+            TinkersNewlife.LOGGER.info("[掉落诊断·掉落物 #{}/{}] 生成 {} x{}（距最近玩家 {} 格）",
+                    lines, MAX_LINES_PER_SESSION,
+                    ForgeRegistries.ITEMS.getKey(item.getItem().getItem()),
+                    item.getItem().getCount(),
+                    (int) Math.sqrt(near.distanceToSqr(item)));
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** 限流 + 每局条数上限（三个入口共用 ✓） */
+    private static boolean takeSlot() {
+        long now = System.currentTimeMillis();
+        if (now - lastLog < MIN_GAP_MS) return false;
+        if (lines >= MAX_LINES_PER_SESSION) return false;
+        lastLog = now;
+        lines++;
+        return true;
+    }
+
+    private static Player killerOf(DamageSource source) {
+        if (source == null) return null;
+        if (source.getEntity() instanceof Player p) return p;
+        if (source.getDirectEntity() instanceof Player p) return p;
+        return null;
+    }
+
     /** receiveCanceled = true ⇒ 被别的处理器取消掉的事件我们也能看到 ✓（这正是要查的情况之一 ✓） */
     @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
     public static void onDrops(LivingDropsEvent event) {
@@ -70,11 +126,7 @@ public final class DropDiagnostics {
             else if (source.getDirectEntity() instanceof Player p) killer = p;
             if (killer == null) return;                       // 只看玩家击杀 ✓
 
-            long now = System.currentTimeMillis();
-            if (now - lastLog < MIN_GAP_MS) return;
-            if (lines >= MAX_LINES_PER_SESSION) return;
-            lastLog = now;
-            lines++;
+            if (!takeSlot()) return;
 
             ItemStack hand = killer.getMainHandItem();
             TinkersNewlife.LOGGER.info(
