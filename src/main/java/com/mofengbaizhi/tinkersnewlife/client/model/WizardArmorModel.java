@@ -30,13 +30,13 @@ import net.minecraft.world.item.ItemStack;
  *
  * <h2>颜色（顶点着色，逐组按材料槽取色）</h2>
  * 套装是 **3 槽**：槽0 镶板 / 槽1 锁链基底 / 槽2 法袍系带 ✓。
- * 帽子按 Blockbench 里方块的<b>调色板颜色</b>分组（用户 2026-09-18 的新导出 ✓）：
+ * 帽子按用户在 Blockbench 里分的**组名**归槽（2026-09-18 第二次导出 ✓）：
  * <pre>
- *   颜色 3 = 帽檐；颜色 8 = 帽身 + 塔身下段 + 系带扣座  ⇒ 槽0 镶板
- *   颜色 6 = 塔身上段 + 锥顶                          ⇒ 槽1 锁链基底
- *   颜色 7/5/1 = 前后饰带 / 左右饰带 / 扣             ⇒ 槽2 法袍系带
+ *   plating → 槽0 镶板      ：尖顶小球、帽身、塔身上段+下段、锥顶
+ *   maille  → 槽1 锁链基底  ：帽檐、背后垂布
+ *   lance   → 槽2 法袍系带  ：系带扣座、扣、前后左右四条饰带（组名是 lace 的笔误，按系带处理 ✓）
  * </pre>
- * 想换分组只改 {@link #createBodyLayer()} 里这些组画到第几槽即可 ✓。
+ * 想换分组只改 {@link #createBodyLayer()} 里 `addBox` 出来的组 + 下面两个 render 里画到第几槽 ✓。
  */
 public class WizardArmorModel extends HumanoidModel<LivingEntity> {
 
@@ -63,14 +63,10 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
      */
     private static final float HAT_SINK = 3.0F;
 
-    // 法帽：按"材料槽"分三组（槽0 / 槽1 / 槽2）
-    private final ModelPart hatBrim;       // 槽0 帽檐
-    private final ModelPart hatCrown;      // 槽0 帽身
-    private final ModelPart hatTowerBody;  // 槽0 塔身下段
-    private final ModelPart hatBandPlate;  // 槽0 系带扣座
-    private final ModelPart hatTower;      // 槽1 塔身上段
-    private final ModelPart hatTip;        // 槽1 锥顶
-    private final ModelPart[] hatLace;     // 槽2 扣 + 四向饰带
+    // 法帽：按"材料槽"分三组（对应 Blockbench 里的 plating / maille / lance 三个组）
+    private final ModelPart[] hatPlating;  // 槽0 镶板
+    private final ModelPart[] hatMaille;   // 槽1 锁链基底
+    private final ModelPart[] hatLace;     // 槽2 法袍系带
 
     // 其余三件（沿用先前几何）
     private final ModelPart robe;
@@ -87,15 +83,14 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
     public WizardArmorModel(ModelPart root) {
         super(root);
         ModelPart head = root.getChild("head");
-        this.hatBrim = head.getChild("hat_brim");
-        this.hatCrown = head.getChild("hat_crown");
-        this.hatTowerBody = head.getChild("hat_tower_body");
-        this.hatBandPlate = head.getChild("hat_band_plate");
-        this.hatTower = head.getChild("hat_tower");
-        this.hatTip = head.getChild("hat_tip");
+        this.hatPlating = new ModelPart[]{
+                head.getChild("hat_tip_ornament"), head.getChild("hat_crown"), head.getChild("hat_tower"),
+                head.getChild("hat_tower_body"), head.getChild("hat_tip") };
+        this.hatMaille = new ModelPart[]{
+                head.getChild("hat_brim"), head.getChild("hat_veil") };
         this.hatLace = new ModelPart[]{
-                head.getChild("hat_buckle"), head.getChild("hat_band_front"), head.getChild("hat_band_back"),
-                head.getChild("hat_band_left"), head.getChild("hat_band_right") };
+                head.getChild("hat_band_plate"), head.getChild("hat_buckle"), head.getChild("hat_band_front"),
+                head.getChild("hat_band_back"), head.getChild("hat_band_left"), head.getChild("hat_band_right") };
         this.robe = root.getChild("body").getChild("robe");
         this.sleeveRight = root.getChild("right_arm").getChild("sleeve_right");
         this.sleeveLeft = root.getChild("left_arm").getChild("sleeve_left");
@@ -131,16 +126,18 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
         PartDefinition root = mesh.getRoot();
         PartDefinition head = root.getChild("head");
 
-        // 法帽：用户原型（2026-09-18 版）的 11 个立方体，坐标原样，UV 重新分配到 128x128
-        // —— 槽0 镶板（颜色 3 / 8）
-        addBox(head, "hat_brim", -4.5F, 11.28685F, -4.5F, 20.5F, 11.61888F, 20.5F, 0, 0);
+        // 法帽：用户原型（2026-09-18 第二次导出，13 个立方体）坐标原样，UV 重新分配到 128x128
+        // —— Blockbench 组 plating ⇒ 槽0 镶板
+        addBox(head, "hat_tip_ornament", 7F, 22.13281F, 13.72266F, 9F, 24.13281F, 15.72266F, 24, 100);
         addBox(head, "hat_crown", 1.5F, 11.59375F, 1.5F, 14.5F, 15.12891F, 14.5F, 0, 20);
-        addBox(head, "hat_tower_body", 5.49609F, 18.01172F, 6.41016F, 10.50391F, 22.64844F, 11.95703F, 0, 53);
-        addBox(head, "hat_band_plate", 6.5F, 12.26953F, 1.33984F, 9.5F, 14.26953F, 1.53984F, 0, 73);
-        // —— 槽1 锁链基底（颜色 6）
         addBox(head, "hat_tower", 3F, 14.48828F, 3F, 13F, 18.26953F, 13F, 0, 38);
+        addBox(head, "hat_tower_body", 5.49609F, 18.01172F, 6.41016F, 10.50391F, 22.64844F, 11.95703F, 0, 53);
         addBox(head, "hat_tip", 6.64258F, 20.62109F, 10.83984F, 9.35742F, 23.83984F, 14.31641F, 0, 65);
-        // —— 槽2 法袍系带（颜色 1 / 5 / 7）
+        // —— Blockbench 组 maille ⇒ 槽1 锁链基底
+        addBox(head, "hat_brim", -4.5F, 11.28685F, -4.5F, 20.5F, 11.61888F, 20.5F, 0, 0);
+        addBox(head, "hat_veil", 3F, 5.44922F, 14.64844F, 13F, 11.44922F, 14.74844F, 0, 100);
+        // —— Blockbench 组 lance（系带）⇒ 槽2 法袍系带
+        addBox(head, "hat_band_plate", 6.5F, 12.26953F, 1.33984F, 9.5F, 14.26953F, 1.53984F, 0, 73);
         addBox(head, "hat_buckle", 7F, 12.625F, 1.15625F, 9F, 13.90625F, 1.45625F, 8, 73);
         addBox(head, "hat_band_front", 1.37891F, 12.625F, 1.39063F, 14.57891F, 14.125F, 1.59063F, 0, 77);
         addBox(head, "hat_band_back", 1.37891F, 12.63672F, 14.42969F, 14.57891F, 14.13672F, 14.62969F, 0, 80);
@@ -186,15 +183,11 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
                                float red, float green, float blue, float alpha) {
         switch (currentSlot) {
             case HEAD -> {
-                // 槽0 镶板：帽檐 / 帽身 / 塔身下段 / 系带扣座
-                draw(poseStack, buffer, packedLight, packedOverlay, 0, this.head, hatBrim);
-                draw(poseStack, buffer, packedLight, packedOverlay, 0, this.head, hatCrown);
-                draw(poseStack, buffer, packedLight, packedOverlay, 0, this.head, hatTowerBody);
-                draw(poseStack, buffer, packedLight, packedOverlay, 0, this.head, hatBandPlate);
-                // 槽1 锁链基底：塔身上段 / 锥顶
-                draw(poseStack, buffer, packedLight, packedOverlay, 1, this.head, hatTower);
-                draw(poseStack, buffer, packedLight, packedOverlay, 1, this.head, hatTip);
-                // 槽2 法袍系带：扣 + 四向饰带
+                // 槽0 镶板：尖顶小球 / 帽身 / 塔身 / 锥顶
+                draw(poseStack, buffer, packedLight, packedOverlay, 0, this.head, hatPlating);
+                // 槽1 锁链基底：帽檐 / 背后垂布
+                draw(poseStack, buffer, packedLight, packedOverlay, 1, this.head, hatMaille);
+                // 槽2 法袍系带：扣座 + 扣 + 四向饰带
                 draw(poseStack, buffer, packedLight, packedOverlay, 2, this.head, hatLace);
             }
             case CHEST -> {
@@ -242,15 +235,11 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
         boolean legsLayer = com.mofengbaizhi.tinkersnewlife.client.renderer.WizardArmorTextures.usesLeggingsLayer(slot);
         switch (slot) {
             case HEAD -> {
-                // 槽0 镶板：帽檐 / 帽身 / 塔身下段 / 系带扣座
-                group(poseStack, buffers, light, overlay, 0, prefix, legsLayer, this.head, hatBrim);
-                group(poseStack, buffers, light, overlay, 0, prefix, legsLayer, this.head, hatCrown);
-                group(poseStack, buffers, light, overlay, 0, prefix, legsLayer, this.head, hatTowerBody);
-                group(poseStack, buffers, light, overlay, 0, prefix, legsLayer, this.head, hatBandPlate);
-                // 槽1 锁链基底：塔身上段 / 锥顶
-                group(poseStack, buffers, light, overlay, 1, prefix, legsLayer, this.head, hatTower);
-                group(poseStack, buffers, light, overlay, 1, prefix, legsLayer, this.head, hatTip);
-                // 槽2 法袍系带：扣 + 四向饰带
+                // 槽0 镶板：尖顶小球 / 帽身 / 塔身 / 锥顶
+                group(poseStack, buffers, light, overlay, 0, prefix, legsLayer, this.head, hatPlating);
+                // 槽1 锁链基底：帽檐 / 背后垂布
+                group(poseStack, buffers, light, overlay, 1, prefix, legsLayer, this.head, hatMaille);
+                // 槽2 法袍系带：扣座 + 扣 + 四向饰带
                 group(poseStack, buffers, light, overlay, 2, prefix, legsLayer, this.head, hatLace);
             }
             case CHEST -> {
