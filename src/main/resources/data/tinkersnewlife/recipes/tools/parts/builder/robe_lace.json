@@ -1,0 +1,13 @@
+{
+  "type": "tconstruct:part_builder",
+  "cost": 2,
+  "pattern": "tinkersnewlife:robe_lace",
+  "pattern_item": [
+    {
+      "tag": "tconstruct:patterns/default"
+    }
+  ],
+  "result": {
+    "item": "tinkersnewlife:robe_lace"
+  }
+}

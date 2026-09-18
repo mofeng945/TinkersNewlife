@@ -1,0 +1,9 @@
+{
+  "type": "tconstruct:table_casting_material",
+  "cast": {
+    "item": "tinkersnewlife:magic_cloth"
+  },
+  "cast_consumed": true,
+  "item_cost": 2,
+  "result": "tinkersnewlife:robe_lace"
+}
