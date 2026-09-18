@@ -69,10 +69,15 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
     private final ModelPart[] hatMaille;   // 槽1 锁链基底
     private final ModelPart[] hatLace;     // 槽2 法袍系带
 
-    // 其余三件（沿用先前几何）
-    private final ModelPart robe;
-    private final ModelPart sleeveRight;
-    private final ModelPart sleeveLeft;
+    // 法袍（用户 2026-09-18 第三份模型 ✓）：主体挂 body、袖子挂 left_arm / right_arm ✓
+    // 槽映射同帽子：plating → 槽0、maille → 槽1、lace → 槽2 ✓（换算见 tools\convert-robe-model.ps1 ✓）
+    private final ModelPart[] robePlating;   // 槽0 镶板（袍身 + 前後裙摆）
+    private final ModelPart[] robeMaille;    // 槽1 锁链基底（内衬）
+    private final ModelPart[] robeLace;      // 槽2 法袍系带（腰带）
+    private final ModelPart[] sleeveLPlating, sleeveLMaille, sleeveLLace;   // 左袖（MC 的 left_arm ✓）
+    private final ModelPart[] sleeveRPlating, sleeveRMaille, sleeveRLace;   // 右袖（MC 的 right_arm ✓）
+
+    // 其余两件（护腿 / 靴子，还是占位几何 ✓）
     private final ModelPart legWrapRight;
     private final ModelPart legWrapLeft;
     private final ModelPart bootCuffRight;
@@ -90,9 +95,19 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
         this.hatMaille = new ModelPart[]{ head.getChild("maille_0"), head.getChild("maille_1") };
         this.hatLace = new ModelPart[]{ head.getChild("lace_7"), head.getChild("lace_8"), head.getChild("lace_9"), head.getChild("lace_10"), head.getChild("lace_11"), head.getChild("lace_12") };
         // <<< /HAT_PARTS >>>
-        this.robe = root.getChild("body").getChild("robe");
-        this.sleeveRight = root.getChild("right_arm").getChild("sleeve_right");
-        this.sleeveLeft = root.getChild("left_arm").getChild("sleeve_left");
+        ModelPart body = root.getChild("body");
+        ModelPart armL = root.getChild("left_arm");
+        ModelPart armR = root.getChild("right_arm");
+        this.robePlating = new ModelPart[]{
+                body.getChild("body_plating_0"), body.getChild("body_plating_1"), body.getChild("body_plating_2") };
+        this.robeMaille = new ModelPart[]{ body.getChild("body_maille_4") };
+        this.robeLace = new ModelPart[]{ body.getChild("body_lace_3") };
+        this.sleeveLPlating = new ModelPart[]{ armL.getChild("left_arm_plating_5") };
+        this.sleeveLMaille = new ModelPart[]{ armL.getChild("left_arm_maille_7") };
+        this.sleeveLLace = new ModelPart[]{ armL.getChild("left_arm_lace_6") };
+        this.sleeveRPlating = new ModelPart[]{ armR.getChild("right_arm_plating_8") };
+        this.sleeveRMaille = new ModelPart[]{ armR.getChild("right_arm_maille_10") };
+        this.sleeveRLace = new ModelPart[]{ armR.getChild("right_arm_lace_9") };
         this.legWrapRight = root.getChild("right_leg").getChild("leg_wrap_right_leg");
         this.legWrapLeft = root.getChild("left_leg").getChild("leg_wrap_left_leg");
         this.bootCuffRight = root.getChild("right_leg").getChild("boot_cuff_right_leg");
@@ -114,6 +129,19 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
         float h = (toY - fromY) * HAT_SCALE;
         float d = (toZ - fromZ) * HAT_SCALE;
         float y = -8.0F - (toY - HAT_BASE_Y) * HAT_SCALE + HAT_SINK;
+        parent.addOrReplaceChild(name,
+                CubeListBuilder.create().texOffs(u, v)
+                        .addBox(x, y, z, w, h, d, new CubeDeformation(0.0F)),
+                PartPose.ZERO);
+    }
+
+    /**
+     * 法袍专用：**直接把"骨骼局部坐标"加进模型** ✓
+     * （换算、缩放、居中都在 {@code tools\convert-robe-model.ps1} 里算好了 ✓：
+     * body 缩放 1.0 / 袖子 1.12 并按手臂居中 ✓；局部空间 y 向下，body 局部 0 = 颈肩 ✓）
+     */
+    private static void addLocalBox(PartDefinition parent, String name,
+                                    float x, float y, float z, float w, float h, float d, int u, int v) {
         parent.addOrReplaceChild(name,
                 CubeListBuilder.create().texOffs(u, v)
                         .addBox(x, y, z, w, h, d, new CubeDeformation(0.0F)),
@@ -143,19 +171,26 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
         addBox(head, "lace_12", 14.40547F, 12.64453F, 1.4F, 14.60547F, 14.14453F, 14.6F, 66, 22);
         // <<< /HAT_ADD_BOX >>>
 
-        // 法袍（下摆 + 宽袖）
-        root.getChild("body").addOrReplaceChild("robe",
-                CubeListBuilder.create().texOffs(96, 0)
-                        .addBox(-4.0F, 0.0F, -2.0F, 8.0F, 12.0F, 4.0F, new CubeDeformation(0.0F)),
-                PartPose.offset(0.0F, 10.0F, 0.0F));
-        root.getChild("right_arm").addOrReplaceChild("sleeve_right",
-                CubeListBuilder.create().texOffs(96, 17)
-                        .addBox(-2.0F, -2.0F, -2.0F, 4.0F, 8.0F, 4.0F, new CubeDeformation(0.0F)),
-                PartPose.offset(-1.0F, 4.0F, 0.0F));
-        root.getChild("left_arm").addOrReplaceChild("sleeve_left",
-                CubeListBuilder.create().texOffs(112, 17)
-                        .addBox(-2.0F, -2.0F, -2.0F, 4.0F, 8.0F, 4.0F, new CubeDeformation(0.0F)),
-                PartPose.offset(1.0F, 4.0F, 0.0F));
+        // 法袍：用户第三份模型（11 个方块）—— 由 tools\convert-robe-model.ps1 换算好的**局部坐标** ✓
+        PartDefinition bodyPart = root.getChild("body");
+        PartDefinition armLPart = root.getChild("left_arm");
+        PartDefinition armRPart = root.getChild("right_arm");
+        // —— 袍身（槽0 镶板）：主身 + 前后裙摆
+        addLocalBox(bodyPart, "body_plating_0", -4.65F, -0.49531F, -2.35F, 9.3F, 9F, 4.7F, 49, 61);
+        addLocalBox(bodyPart, "body_plating_1", -4.53516F, 8.19609F, -2.28906F, 4.2F, 9F, 4.7F, 97, 63);
+        addLocalBox(bodyPart, "body_plating_2", 0.33516F, 8.19609F, -2.28906F, 4.2F, 9F, 4.7F, 78, 63);
+        // —— 内衬（槽1 锁链基底）
+        addLocalBox(bodyPart, "body_maille_4", -4.5F, -0.34688F, -2.25F, 9F, 10F, 4.5F, 21, 53);
+        // —— 腰带（槽2 法袍系带）
+        addLocalBox(bodyPart, "body_lace_3", -4.75F, 6.93437F, -2.5F, 9.5F, 2F, 5F, 83, 78);
+        // —— 左袖（MC 的 left_arm ✓）
+        addLocalBox(armLPart, "left_arm_plating_5", -1.40713F, 1.66433F, -2.408F, 4.816F, 11.2F, 4.816F, 0, 53);
+        addLocalBox(armLPart, "left_arm_maille_7", -1.34149F, -1.99755F, -2.31875F, 4.704F, 3.92F, 4.704F, 0, 71);
+        addLocalBox(armLPart, "left_arm_lace_6", -1.429F, 12.38745F, -2.464F, 4.928F, 2.24F, 4.928F, 62, 78);
+        // —— 右袖（MC 的 right_arm ✓）
+        addLocalBox(armRPart, "right_arm_plating_8", -3.37527F, 1.66433F, -2.408F, 4.816F, 11.2F, 4.816F, 62, 43);
+        addLocalBox(armRPart, "right_arm_maille_10", -3.32889F, -1.99755F, -2.31875F, 4.704F, 3.92F, 4.704F, 21, 69);
+        addLocalBox(armRPart, "right_arm_lace_9", -3.4654F, 12.38745F, -2.464F, 4.928F, 2.24F, 4.928F, 41, 76);
 
         // 法师护腿
         for (String leg : new String[]{"right_leg", "left_leg"}) {
@@ -190,9 +225,19 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
                 draw(poseStack, buffer, packedLight, packedOverlay, 2, this.head, hatLace);
             }
             case CHEST -> {
-                draw(poseStack, buffer, packedLight, packedOverlay, 2, this.body, robe);
-                draw(poseStack, buffer, packedLight, packedOverlay, 1, this.rightArm, sleeveRight);
-                draw(poseStack, buffer, packedLight, packedOverlay, 1, this.leftArm, sleeveLeft);
+                // 槽0 镶板：袍身 + 前后裙摆
+                draw(poseStack, buffer, packedLight, packedOverlay, 0, this.body, robePlating);
+                // 槽1 锁链基底：内衬（+ 两袖肩片）
+                draw(poseStack, buffer, packedLight, packedOverlay, 1, this.body, robeMaille);
+                draw(poseStack, buffer, packedLight, packedOverlay, 1, this.leftArm, sleeveLMaille);
+                draw(poseStack, buffer, packedLight, packedOverlay, 1, this.rightArm, sleeveRMaille);
+                // 槽2 法袍系带：腰带 + 两袖袖口
+                draw(poseStack, buffer, packedLight, packedOverlay, 2, this.body, robeLace);
+                draw(poseStack, buffer, packedLight, packedOverlay, 2, this.leftArm, sleeveLLace);
+                draw(poseStack, buffer, packedLight, packedOverlay, 2, this.rightArm, sleeveRLace);
+                // 袖子主体（槽0 镶板）
+                draw(poseStack, buffer, packedLight, packedOverlay, 0, this.leftArm, sleeveLPlating);
+                draw(poseStack, buffer, packedLight, packedOverlay, 0, this.rightArm, sleeveRPlating);
             }
             case LEGS -> {
                 draw(poseStack, buffer, packedLight, packedOverlay, 0, this.rightLeg, legWrapRight);
@@ -242,9 +287,18 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
                 group(poseStack, buffers, light, overlay, 2, prefix, legsLayer, this.head, hatLace);
             }
             case CHEST -> {
-                group(poseStack, buffers, light, overlay, 2, prefix, legsLayer, this.body, robe);
-                group(poseStack, buffers, light, overlay, 1, prefix, legsLayer, this.rightArm, sleeveRight);
-                group(poseStack, buffers, light, overlay, 1, prefix, legsLayer, this.leftArm, sleeveLeft);
+                // 槽0 镶板：袍身 + 裙摆 + 两袖主体
+                group(poseStack, buffers, light, overlay, 0, prefix, legsLayer, this.body, robePlating);
+                group(poseStack, buffers, light, overlay, 0, prefix, legsLayer, this.leftArm, sleeveLPlating);
+                group(poseStack, buffers, light, overlay, 0, prefix, legsLayer, this.rightArm, sleeveRPlating);
+                // 槽1 锁链基底：内衬 + 两袖肩片
+                group(poseStack, buffers, light, overlay, 1, prefix, legsLayer, this.body, robeMaille);
+                group(poseStack, buffers, light, overlay, 1, prefix, legsLayer, this.leftArm, sleeveLMaille);
+                group(poseStack, buffers, light, overlay, 1, prefix, legsLayer, this.rightArm, sleeveRMaille);
+                // 槽2 法袍系带：腰带 + 两袖袖口
+                group(poseStack, buffers, light, overlay, 2, prefix, legsLayer, this.body, robeLace);
+                group(poseStack, buffers, light, overlay, 2, prefix, legsLayer, this.leftArm, sleeveLLace);
+                group(poseStack, buffers, light, overlay, 2, prefix, legsLayer, this.rightArm, sleeveRLace);
             }
             case LEGS -> {
                 group(poseStack, buffers, light, overlay, 0, prefix, legsLayer, this.rightLeg, legWrapRight);
