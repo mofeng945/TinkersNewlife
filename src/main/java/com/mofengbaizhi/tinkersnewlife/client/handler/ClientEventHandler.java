@@ -547,4 +547,10 @@ public class ClientEventHandler {
             }
         }
     }
-}
+
+    /** 巫师套装的自绘盔甲模型层（尖顶法帽 + 法袍，见 WizardArmorModel ✓） */
+    @net.minecraftforge.eventbus.api.SubscribeEvent
+    public static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
+        event.registerLayerDefinition(com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorModel.LAYER,
+                com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorModel::createBodyLayer);
+    }}

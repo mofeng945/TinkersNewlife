@@ -278,20 +278,20 @@ public class ModItems {
                     .create(new ResourceLocation(TinkersNewlife.MOD_ID, "wizard_armor"),
                             net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_LEATHER);
 
-    public static final RegistryObject<slimeknights.tconstruct.library.tools.item.armor.ModifiableArmorItem> WIZARD_HELMET =
-            ITEMS.register("wizard_helmet", () -> new slimeknights.tconstruct.library.tools.item.armor.ModifiableArmorItem(
+    public static final RegistryObject<com.mofengbaizhi.tinkersnewlife.content.item.WizardArmorItem> WIZARD_HELMET =
+            ITEMS.register("wizard_helmet", () -> new com.mofengbaizhi.tinkersnewlife.content.item.WizardArmorItem(
                     WIZARD_ARMOR, net.minecraft.world.item.ArmorItem.Type.HELMET, new Item.Properties().stacksTo(1)));
 
-    public static final RegistryObject<slimeknights.tconstruct.library.tools.item.armor.ModifiableArmorItem> WIZARD_CHESTPLATE =
-            ITEMS.register("wizard_chestplate", () -> new slimeknights.tconstruct.library.tools.item.armor.ModifiableArmorItem(
+    public static final RegistryObject<com.mofengbaizhi.tinkersnewlife.content.item.WizardArmorItem> WIZARD_CHESTPLATE =
+            ITEMS.register("wizard_chestplate", () -> new com.mofengbaizhi.tinkersnewlife.content.item.WizardArmorItem(
                     WIZARD_ARMOR, net.minecraft.world.item.ArmorItem.Type.CHESTPLATE, new Item.Properties().stacksTo(1)));
 
-    public static final RegistryObject<slimeknights.tconstruct.library.tools.item.armor.ModifiableArmorItem> WIZARD_LEGGINGS =
-            ITEMS.register("wizard_leggings", () -> new slimeknights.tconstruct.library.tools.item.armor.ModifiableArmorItem(
+    public static final RegistryObject<com.mofengbaizhi.tinkersnewlife.content.item.WizardArmorItem> WIZARD_LEGGINGS =
+            ITEMS.register("wizard_leggings", () -> new com.mofengbaizhi.tinkersnewlife.content.item.WizardArmorItem(
                     WIZARD_ARMOR, net.minecraft.world.item.ArmorItem.Type.LEGGINGS, new Item.Properties().stacksTo(1)));
 
-    public static final RegistryObject<slimeknights.tconstruct.library.tools.item.armor.ModifiableArmorItem> WIZARD_BOOTS =
-            ITEMS.register("wizard_boots", () -> new slimeknights.tconstruct.library.tools.item.armor.ModifiableArmorItem(
+    public static final RegistryObject<com.mofengbaizhi.tinkersnewlife.content.item.WizardArmorItem> WIZARD_BOOTS =
+            ITEMS.register("wizard_boots", () -> new com.mofengbaizhi.tinkersnewlife.content.item.WizardArmorItem(
                     WIZARD_ARMOR, net.minecraft.world.item.ArmorItem.Type.BOOTS, new Item.Properties().stacksTo(1)));
 
     /** 处刑人之剑（伏诛赐死领域发放的行刑武器：1 耐久 / 120 秒限时 / 命中目标即处决） */
