@@ -84,14 +84,12 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
     public WizardArmorModel(ModelPart root) {
         super(root);
         ModelPart head = root.getChild("head");
-        this.hatPlating = new ModelPart[]{
-                head.getChild("hat_tip_ornament"), head.getChild("hat_crown"), head.getChild("hat_tower"),
-                head.getChild("hat_tower_body"), head.getChild("hat_tip") };
-        this.hatMaille = new ModelPart[]{
-                head.getChild("hat_brim"), head.getChild("hat_veil") };
-        this.hatLace = new ModelPart[]{
-                head.getChild("hat_band_plate"), head.getChild("hat_buckle"), head.getChild("hat_band_front"),
-                head.getChild("hat_band_back"), head.getChild("hat_band_left"), head.getChild("hat_band_right") };
+        // ⚠ 下面三行由 tools\import-hat-blockbench.ps1 生成/替换（标记之间勿手改 ✓）
+        // <<< HAT_PARTS (generated) >>>
+        this.hatPlating = new ModelPart[]{ head.getChild("plating_2"), head.getChild("plating_3"), head.getChild("plating_4"), head.getChild("plating_5"), head.getChild("plating_6") };
+        this.hatMaille = new ModelPart[]{ head.getChild("maille_0"), head.getChild("maille_1") };
+        this.hatLace = new ModelPart[]{ head.getChild("lace_7"), head.getChild("lace_8"), head.getChild("lace_9"), head.getChild("lace_10"), head.getChild("lace_11"), head.getChild("lace_12") };
+        // <<< /HAT_PARTS >>>
         this.robe = root.getChild("body").getChild("robe");
         this.sleeveRight = root.getChild("right_arm").getChild("sleeve_right");
         this.sleeveLeft = root.getChild("left_arm").getChild("sleeve_left");
@@ -128,22 +126,22 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
         PartDefinition head = root.getChild("head");
 
         // 法帽：用户原型（2026-09-18 第二次导出，13 个立方体）坐标原样，UV 重新分配到 128x128
-        // —— Blockbench 组 plating ⇒ 槽0 镶板
-        addBox(head, "hat_tip_ornament", 7F, 22.13281F, 13.72266F, 9F, 24.13281F, 15.72266F, 24, 100);
-        addBox(head, "hat_crown", 1.5F, 11.59375F, 1.5F, 14.5F, 15.12891F, 14.5F, 0, 20);
-        addBox(head, "hat_tower", 3F, 14.48828F, 3F, 13F, 18.26953F, 13F, 0, 38);
-        addBox(head, "hat_tower_body", 5.49609F, 18.01172F, 6.41016F, 10.50391F, 22.64844F, 11.95703F, 0, 53);
-        addBox(head, "hat_tip", 6.64258F, 20.62109F, 10.83984F, 9.35742F, 23.83984F, 14.31641F, 0, 65);
-        // —— Blockbench 组 maille ⇒ 槽1 锁链基底
-        addBox(head, "hat_brim", -4.5F, 11.28685F, -4.5F, 20.5F, 11.61888F, 20.5F, 0, 0);
-        addBox(head, "hat_veil", 3F, 5.44922F, 14.64844F, 13F, 11.44922F, 14.74844F, 0, 100);
-        // —— Blockbench 组 lance（系带）⇒ 槽2 法袍系带
-        addBox(head, "hat_band_plate", 6.5F, 12.26953F, 1.33984F, 9.5F, 14.26953F, 1.53984F, 0, 73);
-        addBox(head, "hat_buckle", 7F, 12.625F, 1.15625F, 9F, 13.90625F, 1.45625F, 8, 73);
-        addBox(head, "hat_band_front", 1.37891F, 12.625F, 1.39063F, 14.57891F, 14.125F, 1.59063F, 0, 77);
-        addBox(head, "hat_band_back", 1.37891F, 12.63672F, 14.42969F, 14.57891F, 14.13672F, 14.62969F, 0, 80);
-        addBox(head, "hat_band_left", 1.39453F, 12.58984F, 1.4F, 1.59453F, 14.08984F, 14.6F, 0, 83);
-        addBox(head, "hat_band_right", 14.40547F, 12.64453F, 1.4F, 14.60547F, 14.14453F, 14.6F, 0, 87);
+        // ⚠ 下面这段由 tools\import-hat-blockbench.ps1 生成/替换（标记之间勿手改 ✓）
+        // <<< HAT_ADD_BOX (generated) >>>
+        addBox(head, "maille_0", -4.5F, 11.28685F, -4.5F, 20.5F, 11.61888F, 20.5F, 0, 0);
+        addBox(head, "maille_1", 3F, 5.44922F, 14.64844F, 13F, 11.44922F, 14.74844F, 62, 37);
+        addBox(head, "plating_2", 7F, 22.13281F, 13.72266F, 9F, 24.13281F, 15.72266F, 80, 37);
+        addBox(head, "plating_3", 1.5F, 11.59375F, 1.5F, 14.5F, 15.12891F, 14.5F, 0, 22);
+        addBox(head, "plating_4", 3F, 14.48828F, 3F, 13F, 18.26953F, 13F, 0, 37);
+        addBox(head, "plating_5", 5.49609F, 18.01172F, 6.41016F, 10.50391F, 22.64844F, 11.95703F, 33, 37);
+        addBox(head, "plating_6", 6.64258F, 20.62109F, 10.83984F, 9.35742F, 23.83984F, 14.31641F, 51, 37);
+        addBox(head, "lace_7", 6.5F, 12.26953F, 1.33984F, 9.5F, 14.26953F, 1.53984F, 23, 50);
+        addBox(head, "lace_8", 7F, 12.625F, 1.15625F, 9F, 13.90625F, 1.45625F, 88, 37);
+        addBox(head, "lace_9", 1.37891F, 12.625F, 1.39063F, 14.57891F, 14.125F, 1.59063F, 30, 50);
+        addBox(head, "lace_10", 1.37891F, 12.63672F, 14.42969F, 14.57891F, 14.13672F, 14.62969F, 0, 50);
+        addBox(head, "lace_11", 1.39453F, 12.58984F, 1.4F, 1.59453F, 14.08984F, 14.6F, 43, 22);
+        addBox(head, "lace_12", 14.40547F, 12.64453F, 1.4F, 14.60547F, 14.14453F, 14.6F, 66, 22);
+        // <<< /HAT_ADD_BOX >>>
 
         // 法袍（下摆 + 宽袖）
         root.getChild("body").addOrReplaceChild("robe",

@@ -195,29 +195,44 @@ $old.Dispose()
 $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::NearestNeighbor
 $g.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::Half
 
-function CopyRect($srcBmp, [double]$sx, [double]$sy, [double]$sw, [double]$sh, [double]$dx, [double]$dy, [double]$dw, [double]$dh, [int]$flip = 0) {
+# 面的翻转/旋转说明：
+#   Blockbench 导出的 uv 是 [u1,v1,u2,v2]；**u1>u2 或 v1>v2 表示该面被镜像** ✓
+#   （和 Minecraft 方块模型一个约定：uv 反着写就是翻转 ✓），另外还有 rotation 0/90/180/270 ✓。
+#   所以复制时要：先按 uv 的"正矩形"取图 → 按 uv 顺序施加翻转 → 再施加 rotation ✓。
+function CopyRect($srcBmp, [double]$sx, [double]$sy, [double]$sw, [double]$sh,
+                  [double]$dx, [double]$dy, [double]$dw, [double]$dh,
+                  [bool]$flipX = $false, [bool]$flipY = $false, [int]$rot = 0) {
     if ($sw -le 0 -or $sh -le 0 -or $dw -le 0 -or $dh -le 0) { return }
-    if ($flip -eq 180) {
-        # 这个面在 Blockbench 里被 180 度翻转 ⇒ 取图时再翻回来 ✓
-        $tw = [int][Math]::Max(1, [Math]::Ceiling($sw)); $th = [int][Math]::Max(1, [Math]::Ceiling($sh))
-        $tmp = New-Object System.Drawing.Bitmap $tw, $th
-        $tg = [System.Drawing.Graphics]::FromImage($tmp)
-        $tg.DrawImage($srcBmp, (New-Object System.Drawing.Rectangle 0, 0, $tw, $th),
-            (New-Object System.Drawing.RectangleF ([single]$sx), ([single]$sy), ([single]$sw), ([single]$sh)),
-            [System.Drawing.GraphicsUnit]::Pixel)
-        $tg.Dispose()
-        $tmp.RotateFlip([System.Drawing.RotateFlipType]::RotateNoneFlipXY)
-        $dr = New-Object System.Drawing.RectangleF ([single]$dx), ([single]$dy), ([single][Math]::Max(0.01, $dw)), ([single][Math]::Max(0.01, $dh))
-        $g.DrawImage($tmp, $dr)
-        $tmp.Dispose()
+    $dr = New-Object System.Drawing.RectangleF ([single]$dx), ([single]$dy), ([single][Math]::Max(0.01, $dw)), ([single][Math]::Max(0.01, $dh))
+    if (-not ($flipX -or $flipY -or $rot -ne 0)) {
+        $sr = New-Object System.Drawing.RectangleF ([single]$sx), ([single]$sy), ([single][Math]::Max(0.01, $sw)), ([single][Math]::Max(0.01, $sh))
+        $g.DrawImage($srcBmp, $dr, $sr, [System.Drawing.GraphicsUnit]::Pixel)
         return
     }
-    $sr = New-Object System.Drawing.RectangleF ([single]$sx), ([single]$sy), ([single][Math]::Max(0.01, $sw)), ([single][Math]::Max(0.01, $sh))
-    $dr = New-Object System.Drawing.RectangleF ([single]$dx), ([single]$dy), ([single][Math]::Max(0.01, $dw)), ([single][Math]::Max(0.01, $dh))
-    $g.DrawImage($srcBmp, $dr, $sr, [System.Drawing.GraphicsUnit]::Pixel)
+    # 有翻转/旋转 ⇒ 先取到临时图，摆正后再贴 ✓
+    $tw = [int][Math]::Max(1, [Math]::Ceiling($sw)); $th = [int][Math]::Max(1, [Math]::Ceiling($sh))
+    $tmp = New-Object System.Drawing.Bitmap $tw, $th
+    $tg = [System.Drawing.Graphics]::FromImage($tmp)
+    $tg.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::NearestNeighbor
+    $tg.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::Half
+    $tg.DrawImage($srcBmp,
+        (New-Object System.Drawing.RectangleF 0, 0, ([single]$tw), ([single]$th)),
+        (New-Object System.Drawing.RectangleF ([single]$sx), ([single]$sy), ([single][Math]::Max(0.01, $sw)), ([single][Math]::Max(0.01, $sh))),
+        [System.Drawing.GraphicsUnit]::Pixel)
+    $tg.Dispose()
+    if ($flipX -and $flipY) { $tmp.RotateFlip([System.Drawing.RotateFlipType]::RotateNoneFlipXY) }
+    elseif ($flipX) { $tmp.RotateFlip([System.Drawing.RotateFlipType]::RotateNoneFlipX) }
+    elseif ($flipY) { $tmp.RotateFlip([System.Drawing.RotateFlipType]::RotateNoneFlipY) }
+    switch ($rot) {
+        90 { $tmp.RotateFlip([System.Drawing.RotateFlipType]::Rotate90FlipNone) }
+        180 { $tmp.RotateFlip([System.Drawing.RotateFlipType]::Rotate180FlipNone) }
+        270 { $tmp.RotateFlip([System.Drawing.RotateFlipType]::Rotate270FlipNone) }
+    }
+    $g.DrawImage($tmp, $dr)
+    $tmp.Dispose()
 }
 
-$oddRot = @()
+$flipCnt = 0; $rotCnt = 0
 $javaBoxes = @()
 foreach ($c in $cubes) {
     $u = $c.U; $v = $c.V; $w = $c.W; $h = $c.H; $d = $c.D
@@ -234,13 +249,18 @@ foreach ($c in $cubes) {
         $face = $c.Faces.($m.f)
         if (-not $face -or -not $face.uv) { continue }
         $uv = $face.uv
+        $u1 = [double]$uv[0]; $v1 = [double]$uv[1]; $u2 = [double]$uv[2]; $v2 = [double]$uv[3]
+        $flipX = $u1 -gt $u2
+        $flipY = $v1 -gt $v2
         $fr = 0
         if ($face.rotation) { $fr = [int]$face.rotation }
-        if ($fr -eq 90 -or $fr -eq 270) { $oddRot += ("#{0}.{1} 旋转 {2} 度" -f $c.Index, $m.f, $fr); continue }
-        $sx = [double]$uv[0] * $k + $offX; $sy = [double]$uv[1] * $k + $offY
-        $ex = [double]$uv[2] * $k + $offX; $ey = [double]$uv[3] * $k + $offY
-        $flip = if ($fr -eq 180) { 180 } else { 0 }
-        CopyRect $paint $sx $sy ($ex - $sx) ($ey - $sy) $m.dx $m.dy $m.dw $m.dh $flip
+        if ($flipX -or $flipY) { $flipCnt++ }
+        if ($fr -ne 0) { $rotCnt++ }
+        $sx = [Math]::Min($u1, $u2) * $k + $offX
+        $sy = [Math]::Min($v1, $v2) * $k + $offY
+        $ex = [Math]::Max($u1, $u2) * $k + $offX
+        $ey = [Math]::Max($v1, $v2) * $k + $offY
+        CopyRect $paint $sx $sy ($ex - $sx) ($ey - $sy) $m.dx $m.dy $m.dw $m.dh $flipX $flipY $fr
     }
     # Java：x/z 用 from，y 用 to（Y 轴方向与 Blockbench 相反 ✓，见模型类注释）
     $jx = [Math]::Round(($c.FromX - $ORIGIN) * $S, 5)
@@ -255,6 +275,7 @@ $g.Dispose()
 
 # ---------- 汇总 ----------
 Write-Host ""
+Write-Host ("镜像面：{0} 个   带旋转面：{1} 个（都会按 Blockbench 的 uv 顺序 / rotation 摆正 ✓）" -f $flipCnt, $rotCnt)
 Write-Host ("{0,-16} {1,-8} {2,4} {3,4} {4,7} {5,7} {6,7} {7,9} {8,9}" -f '名字', '组', 'u', 'v', 'w', 'h', 'd', '布局宽', '布局高')
 foreach ($c in $cubes) {
     Write-Host ("{0,-16} {1,-8} {2,4} {3,4} {4,7:N2} {5,7:N2} {6,7:N2} {7,9:N2} {8,9:N2}" -f `
