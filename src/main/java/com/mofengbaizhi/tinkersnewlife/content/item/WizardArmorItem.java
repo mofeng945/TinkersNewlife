@@ -37,10 +37,16 @@ public class WizardArmorItem extends ModifiableArmorItem {
         super(material, type, properties);
     }
 
-    /** Forge 的盔甲贴图钩子（IForgeItem）：返回自绘法袍贴图 ✓ */
+    /** 按**装备槽**选贴图 ⇒ 四件各自显示自己的造型 ✓（四张贴图只画自己那组 UV 区域、其余透明 ✓） */
     @Override
     public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot, String type) {
-        return ROBE_TEXTURE_PATH;
+        String path = switch (slot) {
+            case HEAD -> com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorModel.TEX_HAT;
+            case CHEST -> com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorModel.TEX_ROBE;
+            case LEGS -> com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorModel.TEX_LEGGINGS;
+            default -> com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorModel.TEX_BOOTS;
+        };
+        return TinkersNewlife.MOD_ID + ":" + path;
     }
 
     @Override

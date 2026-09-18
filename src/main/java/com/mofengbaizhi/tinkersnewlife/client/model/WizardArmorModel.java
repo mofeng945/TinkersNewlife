@@ -14,72 +14,92 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 
 /**
- * 巫师套装的<b>自绘模型</b>（路线 B，见 {@code docs/新盔甲开发步骤.md} §6.5）。
+ * 巫师套装的<b>自绘模型</b>（路线 B）：法帽 / 法袍 / 法师护腿 / 法师靴子四组部件。
  *
- * <h2>造型（用户要求：头部只做法帽，不做兜帽）</h2>
- * <ul>
- *   <li><b>尖顶法帽</b>：帽檐（14×1×14）+ 帽筒（9×5×9）+ 锥顶（5×4×5）三层箱体 ✓ ——
- *       全部挂在 {@code head} 之下 ⇒ 转头/潜行等姿态**自动跟随** ✓（不用自己同步 ✓）；</li>
- *   <li><b>法袍</b>：躯干下方接一圈下摆（10×14×6，挂在 {@code body} 下 ⇒ 不随腿分开 ✓ 像长袍 ✓）；
- *       两条手臂各加一段宽袖（5×8×5 ✓）。</li>
- * </ul>
+ * <h2>⭐ 四组部件各有独立的 UV 区域（关键）</h2>
+ * 盔甲层是"**同一套模型逐件渲染**"的 ✓ —— 每件显示哪些部件，靠**这件自己的贴图**决定
+ * （原版就是这样：胸甲贴图里腿部区域是透明的 ✗）。
+ * 所以本模型把四组部件的 UV 分别放在 64×64 的四块互不重叠的区域里 ✓：
  *
- * <h2>为什么所有箱体都 texOffs(0,0)</h2>
- * 贴图是**脚本按材料色生成的纯色图**（见 {@code tools/gen-wizard-armor-textures.ps1} ✓），
- * 整张图基本同色 + 下摆处一条深色镶边 ⇒ UV 取在哪一块**看起来都一样** ✓
- * ⇒ 不必为每个箱体算 UV，省掉最容易出错的一环 ✓（用户要的是"像法袍"的轮廓，不是细节纹样 ✓）。
+ * <pre>
+ *   法帽   cols 0..32  rows 0..30   （帽檐 8×1×8 / 帽筒 8×4×8 / 锥顶 4×3×4）
+ *   法袍   cols 32..64 rows 0..29   （下摆 8×12×4 / 宽袖 4×8×4 ×2）
+ *   护腿   cols 0..20  rows 33..48  （腿部束带 5×10×5 ×2）
+ *   靴子   cols 22..46 rows 33..43  （靴筒 6×4×6 ×2）
+ * </pre>
  *
- * <h2>姿态拷贝</h2>
- * 本模型用 {@link HumanoidModel#createMesh} 的原版骨架（head/hat/body/arms/legs ✓ 同名部件 ✓），
- * 所以 Forge 的 {@code copyModelProperties} 能把玩家姿态整套拷过来 ✓；
- * 自加的 {@code hat_*}/{@code robe}/{@code sleeve_*} 都是这些部件的**子部件** ⇒ 一起跟着动 ✓。
+ * 于是四张贴图各只画自己那一块、其余**全透明** ⇒ 只穿靴子就只显示靴子 ✓
+ * （上一版是"一张实色贴图 + 所有箱体都 texOffs(0,0)"✗ ⇒ 只穿一件也会把帽袍一起画出来 ✗，
+ *  用户指出后返工 ✓）。
+ *
+ * <h2>姿态</h2>
+ * 骨架用原版 {@link HumanoidModel#createMesh}（同名部件 head/hat/body/arm/leg ✓），
+ * Forge 的姿态拷贝照常生效 ✓；自加部件都是它们的**子部件** ⇒ 一起跟着动 ✓。
  */
 public class WizardArmorModel extends HumanoidModel<LivingEntity> {
 
-    /** 模型层 id（客户端注册用） */
     public static final ModelLayerLocation LAYER =
             new ModelLayerLocation(new ResourceLocation(TinkersNewlife.MOD_ID, "wizard_armor"), "main");
+
+    /** 四张贴图（按部位遮罩；由 tools/gen-wizard-armor-art.ps1 生成 ✓） */
+    public static final String TEX_HAT = "textures/armor/wizard_armor/hat.png";
+    public static final String TEX_ROBE = "textures/armor/wizard_armor/robe.png";
+    public static final String TEX_LEGGINGS = "textures/armor/wizard_armor/mage_leggings.png";
+    public static final String TEX_BOOTS = "textures/armor/wizard_armor/mage_boots.png";
 
     public WizardArmorModel(ModelPart root) {
         super(root);
     }
 
-    /** 生成模型层定义（在 {@code EntityRenderersEvent.RegisterLayerDefinitions} 里注册 ✓） */
     public static LayerDefinition createBodyLayer() {
-        // 以原版盔甲骨架为基底（外扩 0.5 = 盔甲层厚度 ✓）
         MeshDefinition mesh = HumanoidModel.createMesh(new CubeDeformation(0.5F), 0.0F);
         PartDefinition root = mesh.getRoot();
 
-        // ---------- 尖顶法帽（挂 head 下 ⇒ 跟随头部 ✓） ----------
+        // ---------- 法帽（cols 0..32 / rows 0..30）----------
         PartDefinition head = root.getChild("head");
         head.addOrReplaceChild("hat_brim",
                 CubeListBuilder.create().texOffs(0, 0)
-                        .addBox(-7.0F, -1.0F, -7.0F, 14.0F, 1.0F, 14.0F, new CubeDeformation(0.0F)),
+                        .addBox(-4.0F, -1.0F, -4.0F, 8.0F, 1.0F, 8.0F, new CubeDeformation(0.0F)),
                 PartPose.offset(0.0F, -7.0F, 0.0F));
         head.addOrReplaceChild("hat_crown",
-                CubeListBuilder.create().texOffs(0, 0)
-                        .addBox(-4.5F, -5.0F, -4.5F, 9.0F, 5.0F, 9.0F, new CubeDeformation(0.0F)),
-                PartPose.offset(0.0F, -7.0F, 0.0F));
+                CubeListBuilder.create().texOffs(0, 10)
+                        .addBox(-4.0F, -4.0F, -4.0F, 8.0F, 4.0F, 8.0F, new CubeDeformation(0.0F)),
+                PartPose.offset(0.0F, -7.5F, 0.0F));
         head.addOrReplaceChild("hat_tip",
-                CubeListBuilder.create().texOffs(0, 0)
-                        .addBox(-2.5F, -4.0F, -2.5F, 5.0F, 4.0F, 5.0F, new CubeDeformation(0.0F)),
-                PartPose.offset(0.0F, -12.0F, 0.0F));
+                CubeListBuilder.create().texOffs(0, 23)
+                        .addBox(-2.0F, -3.0F, -2.0F, 4.0F, 3.0F, 4.0F, new CubeDeformation(0.0F)),
+                PartPose.offset(0.0F, -11.5F, 0.0F));
 
-        // ---------- 法袍：躯干下摆 + 宽袖 ----------
+        // ---------- 法袍（cols 32..64 / rows 0..29）----------
         PartDefinition body = root.getChild("body");
         body.addOrReplaceChild("robe",
-                CubeListBuilder.create().texOffs(0, 0)
-                        .addBox(-5.0F, 0.0F, -3.0F, 10.0F, 14.0F, 6.0F, new CubeDeformation(0.0F)),
+                CubeListBuilder.create().texOffs(32, 0)
+                        .addBox(-4.0F, 0.0F, -2.0F, 8.0F, 12.0F, 4.0F, new CubeDeformation(0.0F)),
                 PartPose.offset(0.0F, 10.0F, 0.0F));
-
         root.getChild("right_arm").addOrReplaceChild("sleeve_right",
-                CubeListBuilder.create().texOffs(0, 0)
-                        .addBox(-2.5F, -2.0F, -2.5F, 5.0F, 8.0F, 5.0F, new CubeDeformation(0.0F)),
+                CubeListBuilder.create().texOffs(32, 17)
+                        .addBox(-2.0F, -2.0F, -2.0F, 4.0F, 8.0F, 4.0F, new CubeDeformation(0.0F)),
                 PartPose.offset(-1.0F, 4.0F, 0.0F));
         root.getChild("left_arm").addOrReplaceChild("sleeve_left",
-                CubeListBuilder.create().texOffs(0, 0)
-                        .addBox(-2.5F, -2.0F, -2.5F, 5.0F, 8.0F, 5.0F, new CubeDeformation(0.0F)),
+                CubeListBuilder.create().texOffs(48, 17)
+                        .addBox(-2.0F, -2.0F, -2.0F, 4.0F, 8.0F, 4.0F, new CubeDeformation(0.0F)),
                 PartPose.offset(1.0F, 4.0F, 0.0F));
+
+        // ---------- 法师护腿（cols 0..20 / rows 33..48）----------
+        for (String leg : new String[]{"right_leg", "left_leg"}) {
+            root.getChild(leg).addOrReplaceChild("leg_wrap_" + leg,
+                    CubeListBuilder.create().texOffs(0, 33)
+                            .addBox(-2.5F, 0.0F, -2.5F, 5.0F, 10.0F, 5.0F, new CubeDeformation(0.0F)),
+                    PartPose.offset(0.5F, 1.0F, 0.0F));
+        }
+
+        // ---------- 法师靴子（cols 22..46 / rows 33..43）----------
+        for (String leg : new String[]{"right_leg", "left_leg"}) {
+            root.getChild(leg).addOrReplaceChild("boot_cuff_" + leg,
+                    CubeListBuilder.create().texOffs(22, 33)
+                            .addBox(-3.0F, 0.0F, -3.0F, 6.0F, 4.0F, 6.0F, new CubeDeformation(0.0F)),
+                    PartPose.offset(0.5F, 10.0F, 0.0F));
+        }
 
         return LayerDefinition.create(mesh, 64, 64);
     }
