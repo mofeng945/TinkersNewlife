@@ -50,7 +50,7 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
      * 整体缩放：用户模型是按"更大的头"做的（帽檐 18 宽 / 帽筒 13 宽，原版头只有 8 宽），
      * 直接搬过来又大又高；收到 0.7 后帽筒约 9.1、帽檐约 12.6，正好罩住原版头。
      */
-    private static final float HAT_SCALE = 0.7F;
+    private static final float HAT_SCALE = 0.8F;
     /**
      * 整体压低（像素，Y 向下 ⇒ 正数=更贴近头）。用户要求"帽子故意压低一点"，
      * 想再低/再高只改这一个数即可（1.0 = 一个像素）。
@@ -122,7 +122,7 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
         PartDefinition head = root.getChild("head");
 
         // 法帽：用户原型的 11 个立方体，坐标原样，UV 重新分配到 128x128
-        addBox(head, "hat_brim", -4.5F, 11.61888F, -4.5F, 20.5F, 11.61888F, 20.5F, 0, 0);
+        addBox(head, "hat_brim", -4.5F, 11.28685F, -4.5F, 20.5F, 11.61888F, 20.5F, 0, 0);
         addBox(head, "hat_crown", 1.5F, 11.59375F, 1.5F, 14.5F, 15.12891F, 14.5F, 0, 20);
         addBox(head, "hat_tower_a", 3F, 14.48828F, 3F, 13F, 18.26953F, 13F, 0, 38);
         addBox(head, "hat_tower_b", 5.49609F, 18.01172F, 6.41016F, 10.50391F, 22.64844F, 11.95703F, 0, 53);
