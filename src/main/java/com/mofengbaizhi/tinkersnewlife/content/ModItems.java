@@ -166,7 +166,7 @@ public class ModItems {
     public static final RegistryObject<ToolPartItem> MAGIC_CLOTH =
         ITEMS.register("magic_cloth",
                 () -> new ToolPartItem(new Item.Properties(),
-                        new MaterialStatsId(new ResourceLocation("tconstruct", "maille"))
+                        new MaterialStatsId(new ResourceLocation("tconstruct", "cuirass"))
                 )
         );
 

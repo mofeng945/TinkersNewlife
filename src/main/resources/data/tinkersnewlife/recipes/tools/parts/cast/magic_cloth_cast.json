@@ -1,0 +1,8 @@
+{
+  "type": "tconstruct:casting_table",
+  "cast": { "item": "tconstruct:silky_cloth" },
+  "cast_consumed": true,
+  "fluid": { "name": "tinkersnewlife:hastur_malice_still", "amount": 10 },
+  "result": "tinkersnewlife:magic_cloth",
+  "cooling_time": 40
+}
