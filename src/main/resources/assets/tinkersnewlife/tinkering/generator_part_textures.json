@@ -1,7 +1,10 @@
 {
   "_comment": "巫师套装的图标底图登记：游戏内 /tconstruct generate_part_textures 会按这里的 path+stat_type 生成 <path>_<材料> 贴图（格式照匠魂本体 assets/tconstruct/tinkering/generator_part_textures.json）。",
   "parts": [
-    { "path": "tinkersnewlife:armor/wizard/icons/wizard_hat_body", "stat_type": "tconstruct:plating_helmet" },
+    { "path": "tinkersnewlife:armor/wizard/hat", "stat_type": "tconstruct:plating_helmet" },
+    { "path": "tinkersnewlife:armor/wizard/robe", "stat_type": "tconstruct:plating_chestplate" },
+    { "path": "tinkersnewlife:armor/wizard/mage_leggings", "stat_type": "tconstruct:plating_leggings" },
+    { "path": "tinkersnewlife:armor/wizard/mage_boots", "stat_type": "tconstruct:plating_boots" },    { "path": "tinkersnewlife:armor/wizard/icons/wizard_hat_body", "stat_type": "tconstruct:plating_helmet" },
     { "path": "tinkersnewlife:armor/wizard/icons/wizard_hat_trim", "stat_type": "tconstruct:maille" },
     { "path": "tinkersnewlife:armor/wizard/icons/wizard_hat_lace", "stat_type": "tconstruct:maille" },
     { "path": "tinkersnewlife:armor/wizard/icons/wizard_hat_cloth", "stat_type": "tconstruct:maille" },

@@ -37,10 +37,10 @@ public final class WizardArmorTextures {
     public static final ResourceLocation GREY = tex("armor/wizard/grey.png");
 
     /** 各组的贴图前缀（与匠魂盔甲惯例一致：<prefix><材料>armor.png / ...leggings.png ✓） */
-    public static final String PREFIX_HAT = "armor/wizard/hat_";
-    public static final String PREFIX_ROBE = "armor/wizard/robe_";
-    public static final String PREFIX_LEGGINGS = "armor/wizard/mage_leggings_";
-    public static final String PREFIX_BOOTS = "armor/wizard/mage_boots_";
+    public static final String PREFIX_HAT = "armor/wizard/hat";
+    public static final String PREFIX_ROBE = "armor/wizard/robe";
+    public static final String PREFIX_LEGGINGS = "armor/wizard/mage_leggings";
+    public static final String PREFIX_BOOTS = "armor/wizard/mage_boots";
 
     /** 存在性缓存：key = 完整贴图路径，value = 是否真的存在 ✓ */
     private static final Map<String, Boolean> EXISTS = new HashMap<>();
@@ -89,7 +89,8 @@ public final class WizardArmorTextures {
      */
     public static ResourceLocation materialArmorTexture(String prefix, String materialPath, boolean leggings) {
         if (materialPath == null || materialPath.isEmpty()) return null;
-        String path = prefix + materialPath + (leggings ? "leggings" : "armor") + ".png";
+        // 生成器命名规则：<底图路径>_<命名空间>_<材料>（见 TConstructGeneratedPartTextures 输出 ✓）
+        String path = prefix + "_" + TinkersNewlife.MOD_ID + "_" + materialPath + ".png";
         Boolean cached = EXISTS.get(path);
         if (cached != null) return cached ? tex(path) : null;
         boolean exists = false;
