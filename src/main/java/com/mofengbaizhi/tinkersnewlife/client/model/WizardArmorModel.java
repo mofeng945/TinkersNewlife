@@ -272,37 +272,32 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
             poseStack.popPose();
         }
     }
+    /**
+     * 读第 index 个材料槽的材料 id（路径部分）。
+     *
+     * <p>⭐ <b>照抄匠魂源码</b>（{@code MaterialArmorTextureSupplier.Material#getMaterial} ✓）：
+     * 匠魂**不**通过 {@code ToolStack} 对象取材料，而是直接读物品 NBT 里的材料字符串表
+     * —— {@code ToolStack.TAG_MATERIALS}（{@code tic_materials}）是一个字符串列表，按 index 取即可 ✓。
+     *
+     * <p>我此前用反射猜方法名 ✗ ⇒ 取不到就所有槽退回同一材料 ⇒ "不同槽用了不同材料，甲上却只有单色" ✗
+     * （用户实测 ✓）。这段改成与匠魂一致的读法后退回兜底色只在真正没有材料时发生 ✓。
+     */
+    @javax.annotation.Nullable
     private String materialPath(int index) {
         try {
-            Object tool = slimeknights.tconstruct.library.tools.nbt.ToolStack.from(currentStack);
-            if (tool == null) return null;
-            Object materials = tool.getClass().getMethod("getMaterials").invoke(tool);
-            if (materials == null) return null;
-            Object material = null;
-            for (String m : new String[]{"getMaterial", "get"}) {
-                try {
-                    material = materials.getClass().getMethod(m, int.class).invoke(materials, index);
-                    break;
-                } catch (Throwable ignored) {
-                    // 试下一个名字
-                }
-            }
-            if (material == null) return null;
-            for (String m : new String[]{"getLocation", "getId", "getIdentifier"}) {
-                try {
-                    Object id = material.getClass().getMethod(m).invoke(material);
-                    if (id != null) {
-                        String s = id.toString();
-                        int slash = s.indexOf(':');
-                        return slash >= 0 ? s.substring(slash + 1) : s;
-                    }
-                } catch (Throwable ignored) {
-                    // 试下一个名字
-                }
-            }
+            if (currentStack == null || currentStack.isEmpty()) return null;
+            net.minecraft.nbt.CompoundTag tag = currentStack.getTag();
+            if (tag == null) return null;
+            String key = slimeknights.tconstruct.library.tools.nbt.ToolStack.TAG_MATERIALS;
+            if (!tag.contains(key, net.minecraft.nbt.Tag.TAG_LIST)) return null;
+            net.minecraft.nbt.ListTag list = tag.getList(key, net.minecraft.nbt.Tag.TAG_STRING);
+            if (index < 0 || index >= list.size()) return null;
+            String s = list.getString(index);
+            if (s == null || s.isEmpty()) return null;
+            int colon = s.indexOf(':');
+            return colon >= 0 ? s.substring(colon + 1) : s;
         } catch (Throwable ignored) {
-            // 兜底色
+            return null;
         }
-        return null;
     }
 }
