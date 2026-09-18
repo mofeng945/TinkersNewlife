@@ -101,6 +101,16 @@ public final class TruePierce {
         //    收尾那一下的伤害源可能根本没有攻击者 ✗（死亡事件只认 getSource().getEntity()）→
         //    在这里把"这一击是谁打的"记下来，死亡时按最后一击回溯归属 ✓（见 KillAttribution）
         com.mofengbaizhi.tinkersnewlife.content.curse.KillAttribution.remember(target, attacker);
+        // ⭐⭐ 用户实测（命灯指轮 + 带穿透的法杖打怪**什么都不掉**）：
+        //   命灯指轮的"慈悲"会把致死伤害截到留 1 血，但**特意豁免了穿透** ⇒ 于是这一击成了收尾一击 ✓，
+        //   而穿透的收尾段常常是**无主源**（本方法第 ③ 条分支甚至直接 setHealth + die()，
+        //   **根本不经过 LivingHurtEvent** ✗）⇒ 目标的 lastHurtByPlayer 永远是空的 ✗
+        //   ⇒ 战利品表里 `killed_by_player` 的条件不成立 ⇒ 一件都不掉 ✗✗
+        //   ⇒ 这里**直接把归属写进目标本身**（不依赖任何事件），三条分支全覆盖 ✓。
+        if (attacker instanceof net.minecraft.world.entity.player.Player pierceOwner) {
+            target.setLastHurtByPlayer(pierceOwner);
+            target.setLastHurtByMob(pierceOwner);
+        }
 
         // ⓪ 绝对防御穿透：把"根本不看伤害标签、只看攻击者属性"的免疫（潘多拉之咒·现实压制）
         //    临时失效 —— 它是在 LivingAttackEvent 里直接取消打击的，标签和事件层顶开都够不着。
