@@ -117,11 +117,34 @@ public final class TruePierce {
         //    必须包住整个打击过程，且无论从哪个分支返回都要摘掉临时修饰符。
         boolean transcend = AbsoluteDefense.begin(attacker);
         AbsoluteDefense.noteSunblockTarget(target);
+        float hpBefore = target.getHealth();
         try {
             applyInner(attacker, target, damage);
         } finally {
             if (transcend) AbsoluteDefense.end(attacker);
         }
+
+        // ⭐ 穿透"告知"（见 {@link PierceAware}）：穿透是**分块连打 + 差额直补**，
+        //   目标常常**根本不经过 hurt()** ✗ ⇒ 想在"这一击"上做反馈/记账的实体，
+        //   例如墨默（一击必杀判定用 lastDamageTaken、受击语音在 hurt() 里播 ✗）会静音、记错账 ✗。
+        //   只在**真的掉血或已死**时通知 ✓（免疫时不该有受击音效/记账 ✗）。
+        if (target instanceof PierceAware aware) {
+            try {
+                if (target.getHealth() < hpBefore || target.isDeadOrDying()) {
+                    aware.onTruePierce(damage, source(target.level(), attacker));
+                }
+            } catch (Throwable ignored) {
+                // 告知失败不影响伤害结算 ✓
+            }
+        }
+    }
+
+    /**
+     * 穿透"告知"接口：实现它的实体会在**每次穿透命中**收到
+     * {@code (这一击的总伤害, 伤害源)} ✓ —— 用来补"因为不经过 {@code hurt()} 而拿不到的反馈/记账" ✓。
+     */
+    public interface PierceAware {
+        void onTruePierce(float totalDamage, net.minecraft.world.damagesource.DamageSource source);
     }
 
     private static void applyInner(@Nullable LivingEntity attacker, LivingEntity target, float damage) {

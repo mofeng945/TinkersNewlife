@@ -78,7 +78,8 @@ import java.util.UUID;
  *   <li>瀹㈡埛绔鐢ㄧ帺瀹舵ā鍨?+ momo_common 璐村浘锛涜闊宠蛋鏈ā缁勮嚜娉ㄥ唽闊虫晥锛堝崰浣嶆枃浠跺彲瑕嗙洊锛?/li>
  * </ul>
  */
-public class MomoMerchant extends PathfinderMob implements MomoConst {
+public class MomoMerchant extends PathfinderMob
+        implements MomoConst, com.mofengbaizhi.tinkersnewlife.util.TruePierce.PierceAware {
 
     // ===== 鐘舵€?=====
     private static final int S_SWEEP_WAIT = 2;   // 妯柀鍚庣瓑 0.5s 鍐嶇珫鍔?
@@ -2729,6 +2730,28 @@ public class MomoMerchant extends PathfinderMob implements MomoConst {
 
     public boolean isOneShotKill() {
         return this.lastDamageTaken >= this.getMaxHealth();
+    }
+
+    /**
+     * ⭐ <b>穿透告知</b>（见 {@code TruePierce.PierceAware}）：穿透是"分块连打 + 差额直补"✗，
+     * 墨默常常**根本不经过 {@code hurt()}** ⇒ 两件事会坏 ✗：
+     * <ol>
+     *   <li>{@code lastDamageTaken} 只记到"最后那一小块"（或压根没记 ✗）⇒ {@link #isOneShotKill()} 永远 false
+     *       ⇒ **一击必杀却什么都不掉** ✗（用户实测 ✓）；</li>
+     *   <li>受击语音在 {@code hurt()} 里才播 ✗（而且格挡姿态会提前 {@code return false} ✗）⇒ **打它没声音** ✗（用户实测 ✓）。</li>
+     * </ol>
+     * ⇒ 这里用"这一击的总伤害"补记一次账，并补上受击红闪 + 受击语音 ✓。
+     */
+    @Override
+    public void onTruePierce(float totalDamage, net.minecraft.world.damagesource.DamageSource source) {
+        this.recordDamageTaken(totalDamage);
+        this.hurtTime = 10;
+        this.hurtDuration = 10;
+        try {
+            this.playHurtSound(source);
+        } catch (Throwable ignored) {
+            // 语音播不出来不影响伤害结算 ✓
+        }
     }
 
     // ============================================================
