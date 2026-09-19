@@ -8,6 +8,7 @@ import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
 import com.mofengbaizhi.tinkersnewlife.content.entity.PuppetUtil;
 import com.mofengbaizhi.tinkersnewlife.content.entity.SpiritVortexEntity;
 import com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenSpiritScreen;
+import com.mofengbaizhi.tinkersnewlife.network.curse.PacketSpiritState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -48,7 +49,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * 已释放个体再次选择 → 收回；释放体战死 → 该记录从 GUI 消失。
  * <p>
  * 反转：GUI 选择一名未释放个体 → 清除其数据并进入漩涡蓄力；
- * 再次按反转键 → 向视线笔直射出黑色漩涡（伤害 = round((1+亲和/100) × (输出×6 + 生命上限×0.4 + 攻击×6))）。
+ * 再次按反转键 → 向视线笔直射出黑色漩涡（伤害<b>固定 160</b>，不再随亲和/输出/个体属性缩放）。
+ * <p>
+ * <b>服务端权威</b>：客户端只发"选了哪个个体"的请求（带个体 uid），
+ * 释放/收回/成败判定全在服务端；服务端决定后<b>发回执</b>（{@code PacketSpiritState}）+ 聊天提示，
+ * 客户端 UI 只照着回执显示 ⇒ 不会出现"UI 说在场上、场上其实没有"的幽灵态。
  */
 public final class CursedSpiritTechnique extends BaseTechnique {
 
@@ -62,6 +67,45 @@ public final class CursedSpiritTechnique extends BaseTechnique {
 
     /** 漩涡蓄力中：玩家 UUID → 漩涡伤害快照 */
     private static final Map<UUID, Float> VORTEX_CHARGE = new ConcurrentHashMap<>();
+
+    /**
+     * 黑色漩涡的伤害：<b>固定 160</b>（用户指定）。
+     *
+     * <p>原来 = {@code round((1 + 亲和/100) × (输出×6 + 献祭个体生命上限×0.4 + 其攻击×6))}，
+     * 再在发射时过一遍模块化魔杖的 {@code getSpellAmplification}。
+     * 现在这两处缩放<b>全部去掉</b>：不再看亲和/输出/献祭个体的生命上限与攻击、也不吃魔杖增幅
+     * ⇒ 命中中心永远 160（目标侧的护甲/抗性/无敌帧等原逻辑照旧，半径 3 格线性衰减也照旧）。
+     */
+    public static final float VORTEX_DAMAGE = 160.0F;
+
+    /**
+     * 快照里"离线太久就拒载"的存档键（铁魔法 Boss 用它标记"上次存档时的世界时间"）。
+     * 释放时会被消毒掉，见 {@link #sanitizeSnapshot}。
+     */
+    private static final String KEY_SNAPSHOT_TIME_GATE = "unloadedGametime";
+
+    /** "强制清理幽灵记录"的确认窗口（tick）：60 秒内再点一次即认定玩家确认 */
+    private static final int GHOST_CONFIRM_TICKS = 1200;
+
+    /** 待确认的幽灵清理（玩家 UUID → 上次点击的个体 + 时刻） */
+    private static final Map<UUID, GhostConfirm> GHOST_CONFIRM = new ConcurrentHashMap<>();
+
+    /**
+     * 个体 uid → <b>连续</b>"在已加载区块里找不到"的扫描次数。
+     * 自愈扫描要连查 ≥3 次（约 3 秒）才敢断言"它确实已被移出世界" ——
+     * 单次查不到可能只是实体刚加入/区块状态切换的瞬时现象，误判会把活着的仆从变成"收不回的野怪"✗。
+     */
+    private static final Map<String, Integer> GHOST_MISSES = new ConcurrentHashMap<>();
+
+    private static final class GhostConfirm {
+        final String uid;
+        final long tick;
+
+        GhostConfirm(String uid, long tick) {
+            this.uid = uid;
+            this.tick = tick;
+        }
+    }
 
     private CursedSpiritTechnique() {
         super(Modifiers.CURSED_SPIRIT.getId());
@@ -89,6 +133,20 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         public boolean guard = false;
         /** 守护实体 UUID（跨登出/区块卸载后按此重链回释放位） */
         public String guardUuid = "";
+        /**
+         * 释放体<b>最后待过的维度</b> + <b>最后已知坐标</b>（{@code hasReleasedPos=false} 表示"还没记过"）。
+         *
+         * <p>为什么需要：单靠"在已加载区块里找不到"<b>无法区分</b>下面两件事 ✗：
+         * ① 它已被静默移出世界（例如铁魔法 Boss 自己 {@code remove()}，没有死亡事件）→ 该清幽灵记录 ✓；
+         * ② 它只是所在区块没加载（离得远 / 在别的维度）→ 清记录会把一只活着的仆从变成"永远收不回的野怪" ✗✗。
+         * 有了"最后已知位置"，就能用 {@code hasChunkAt(该位置)} 判断"刚才那一带明明是加载的、
+         * 却找不到它" ⇒ 才能<b>断言</b>它真的没了（见 {@link #certainGone}）。
+         */
+        public String releasedDim = "";
+        public double releasedX;
+        public double releasedY;
+        public double releasedZ;
+        public boolean hasReleasedPos = false;
 
         SpiritEntry() {}
 
@@ -104,6 +162,13 @@ public final class CursedSpiritTechnique extends BaseTechnique {
             t.putString("releasedUuid", releasedUuid == null ? "" : releasedUuid);
             t.putBoolean("guard", guard);
             t.putString("guardUuid", guardUuid == null ? "" : guardUuid);
+            t.putString("releasedDim", releasedDim == null ? "" : releasedDim);
+            t.putBoolean("hasReleasedPos", hasReleasedPos);
+            if (hasReleasedPos) {
+                t.putDouble("releasedX", releasedX);
+                t.putDouble("releasedY", releasedY);
+                t.putDouble("releasedZ", releasedZ);
+            }
             return t;
         }
 
@@ -119,6 +184,11 @@ public final class CursedSpiritTechnique extends BaseTechnique {
             e.releasedUuid = t.getString("releasedUuid");
             e.guard = t.getBoolean("guard");
             e.guardUuid = t.getString("guardUuid");
+            e.releasedDim = t.getString("releasedDim");
+            e.hasReleasedPos = t.getBoolean("hasReleasedPos");
+            e.releasedX = t.getDouble("releasedX");
+            e.releasedY = t.getDouble("releasedY");
+            e.releasedZ = t.getDouble("releasedZ");
             return e;
         }
     }
@@ -247,11 +317,29 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         player.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.captured", entry.name), true);
     }
 
-    /** GUI 选择（顺转：释放/收回；反转：献祭蓄力）。row 为当前列表下标 */
-    public static void selectRow(ServerPlayer player, int mode, int row) {
+    /**
+     * GUI 选择（顺转：释放/收回；反转：献祭蓄力）。
+     *
+     * <p>⭐ <b>行身份用 uid，不用下标</b>：客户端那份列表是"打开 GUI 那一刻"的服务端快照，
+     * 而玩家在远程服务器上点一下要经过一个来回 —— 这期间列表完全可能变（某个体战死 → 记录被删、
+     * 主人又收服了一只）。以前只发下标，于是"点的是甲、服务端操作的是乙"✗。
+     * 现在带上 uid 优先匹配；uid 匹配不上（旧客户端/空 uid）才退回下标。
+     */
+    public static void selectRow(ServerPlayer player, int mode, int row, String uid) {
         List<SpiritEntry> list = entries(player);
-        if (row < 0 || row >= list.size()) return;
-        SpiritEntry entry = list.get(row);
+        SpiritEntry entry = null;
+        if (uid != null && !uid.isEmpty()) {
+            for (SpiritEntry e : list) {
+                if (e.uid != null && uid.equals(e.uid.toString())) {
+                    entry = e;
+                    break;
+                }
+            }
+        }
+        if (entry == null) {
+            if (row < 0 || row >= list.size()) return;
+            entry = list.get(row);
+        }
         if (mode == MODE_RELEASE) {
             toggleRelease(player, entry);
         } else {
@@ -259,47 +347,146 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         }
     }
 
+    /** 兼容旧签名（不带 uid）：退化为按下标选择 */
+    public static void selectRow(ServerPlayer player, int mode, int row) {
+        selectRow(player, mode, row, "");
+    }
+
+    /**
+     * 顺转点击某个体：<b>记录说"在场上" ⇒ 这次点击的意图就是"收回"</b>；
+     * 记录说"没放出" ⇒ 意图是"释放"。
+     *
+     * <p>⚠ 意图必须由<b>记录</b>决定，不能由"找不找得到实体"决定 ——
+     * 以前是"找不到实体就当没释放、直接再放一只"，于是幽灵态（记录说在场上、实体其实没了）
+     * 会被判成"释放"，玩家点多少次都是"已释放"、永远收不回来 ✗（用户实测：
+     * "显示已释放、UI 也说在场上、但并没有出现，而且收不回来"）。
+     */
     private static void toggleRelease(ServerPlayer player, SpiritEntry entry) {
-        // ⭐ "场上有没有这个释放体"必须同时看 releasedId 与 guardUuid：
+        // ⭐ "场上有没有这个释放体"看 releasedId 与 guardUuid：
         //    守护体跨登出/区块重载、或主人把它无为转变之后，releasedId 可能已经失效（甚至 -1），
-        //    只剩 guardUuid 还能认亲。以前只判 releasedId >= 0，于是出现
-        //    "被转成村民的守护体收不回来、还能再放一只旧的"。
+        //    只剩 guardUuid 还能认亲。
         Mob live = resolveLive(player, entry);
         if (live != null) {
-            // 收回（保留记录）：走原版死亡链路（含召唤物清理），见 recallReleased
+            // 收回（保留记录）：静默移除（含召唤物清理），见 recallReleased
             recallReleased(live);
-            entry.releasedId = -1;
-            entry.guardUuid = "";
+            clearFieldLink(entry);
             updateEntry(player, entry);
+            GHOST_CONFIRM.remove(player.getUUID());
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.recall", entry.name), true);
+            sendState(player);
             return;
         }
-        // 记录说"已释放"但实体其实不在了（被打死/区块卸载/换形态丢了 id）→ 先清掉失效标记再重新释放
-        if (entry.releasedId >= 0 || (entry.guardUuid != null && !entry.guardUuid.isEmpty())) {
-            entry.releasedId = -1;
-            entry.guardUuid = "";
-            updateEntry(player, entry);
+        if (isOnField(entry)) {
+            // 记录说"在场上"，但任何已加载区块里都找不到 →
+            // 先判"它到底还在不在"，绝不无脑清标记 + 再放一只（那正是幽灵态的成因）
+            if (certainGone(player, entry)) {
+                ghostClear(player, entry, "message.tinkersnewlife.spirit.ghost_cleared");
+            } else {
+                ghostConfirm(player, entry);
+            }
+            return;
         }
-        // 释放满血个体
+        release(player, entry);
+    }
+
+    /** 记录是否宣称"这个个体正在场上"（守护体只认 guardUuid 也能认亲） */
+    private static boolean isOnField(SpiritEntry e) {
+        if (e.releasedId >= 0) return true;
+        return e.guardUuid != null && !e.guardUuid.isEmpty();
+    }
+
+    /**
+     * 清掉"场上释放体"的全部链接（记录本身保留）。
+     * <p>⭐ 连 {@code releasedUuid} 一起清：它只是"重登后按 UUID 重链"的线索（见 {@link #normalize}），
+     * 收回之后场上已经没有这具实体了，留着只会让 `resolveLive` 每次多查一遍、
+     * 也会让"到底算不算在场上"的判定出现两套口径。
+     */
+    private static void clearFieldLink(SpiritEntry e) {
+        e.releasedId = -1;
+        e.releasedUuid = "";
+        e.guardUuid = "";
+        e.hasReleasedPos = false;
+        e.releasedDim = "";
+    }
+
+    /**
+     * <b>能不能断言"它已经被移出世界了"</b>？
+     *
+     * <p>只有"它最后待过的那片区块<b>现在是加载的</b>、却全服（所有维度）都找不到它"才算数 ✓；
+     * 区块没加载（离得远 / 在别的维度）时<b>一律不下结论</b> ✗ ——
+     * 否则会把一只活着的仆从当成幽灵清掉，它就成了永远收不回的野怪。
+     */
+    private static boolean certainGone(ServerPlayer owner, SpiritEntry e) {
+        if (!e.hasReleasedPos || e.releasedDim == null || e.releasedDim.isEmpty()) return false;
+        ServerLevel lvl = levelOf(owner, e.releasedDim);
+        if (lvl == null) return false;
+        return lvl.hasChunkAt(net.minecraft.core.BlockPos.containing(e.releasedX, e.releasedY, e.releasedZ));
+    }
+
+    /** 按维度 id 字符串找服务端世界（找不到返回 null） */
+    private static ServerLevel levelOf(ServerPlayer owner, String dim) {
+        if (dim == null || dim.isEmpty()) return null;
+        for (ServerLevel lvl : owner.serverLevel().getServer().getAllLevels()) {
+            if (lvl.dimension().location().toString().equals(dim)) return lvl;
+        }
+        return null;
+    }
+
+    /**
+     * 幽灵记录清理：记录宣称"在场上"、实体却<b>确证</b>已不在世界 → 清字段（记录保留，可再次释放）。
+     * 会显示消息 + 发回执。
+     */
+    private static void ghostClear(ServerPlayer player, SpiritEntry entry, String messageKey) {
+        clearFieldLink(entry);
+        updateEntry(player, entry);
+        GHOST_CONFIRM.remove(player.getUUID());
+        GHOST_MISSES.remove(entry.uid == null ? "" : entry.uid.toString());
+        player.displayClientMessage(Component.translatable(messageKey, entry.name), true);
+        TinkersNewlife.LOGGER.info("[咒灵操术] 清理幽灵记录：{}（{}）—— 记录保留，可再次释放",
+                entry.name, entry.type);
+        sendState(player);
+    }
+
+    /**
+     * "找不到实体、又不敢断言它没了"时的回执：**不清任何标记**，如实告诉玩家为什么收不回来，
+     * 并给一条"确认它真的没了 → 再次点击强制清理"的后路（否则玩家会卡在永远收不回来的死局里 ✗）。
+     */
+    private static void ghostConfirm(ServerPlayer player, SpiritEntry entry) {
+        String uid = entry.uid == null ? "" : entry.uid.toString();
+        long now = player.serverLevel().getGameTime();
+        GhostConfirm pending = GHOST_CONFIRM.get(player.getUUID());
+        if (pending != null && pending.uid.equals(uid) && now >= pending.tick
+                && now - pending.tick <= GHOST_CONFIRM_TICKS) {
+            GHOST_CONFIRM.remove(player.getUUID());
+            ghostClear(player, entry, "message.tinkersnewlife.spirit.ghost_forced");
+            return;
+        }
+        GHOST_CONFIRM.put(player.getUUID(), new GhostConfirm(uid, now));
+        player.displayClientMessage(
+                Component.translatable("message.tinkersnewlife.spirit.recall_unloaded", entry.name), true);
+    }
+
+    /**
+     * 释放满血个体（服务端权威）。
+     *
+     * <p>⭐ <b>必须校验生成结果</b>：以前 {@code addFreshEntity} 的返回值被丢掉、也不检查实体是否
+     * 已被移除，于是"生成失败"照样写 releasedId、照样提示"已释放" ⇒
+     * UI 说在场上、场上什么都没有、还收不回来（用户实测的幽灵态）✗。
+     * 现在：生成失败 → <b>不写任何释放标记</b>（记录原样）→ 回执失败原因 ✓。
+     */
+    private static boolean release(ServerPlayer player, SpiritEntry entry) {
         EntityType<?> type = EntityType.byString(entry.type).orElse(null);
         if (type == null) {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.invalid"), true);
-            return;
+            return false;
         }
         ServerLevel level = player.serverLevel();
         Entity spawned = type.create(level);
         if (!(spawned instanceof LivingEntity living)) {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.invalid"), true);
-            return;
+            return false;
         }
-        CompoundTag nbt = entry.nbt.copy();
-        nbt.remove("UUID");
-        nbt.remove("Pos");
-        nbt.remove("Dimension");
-        nbt.remove("Motion");
-        nbt.remove("WorldUUIDMost");
-        nbt.remove("WorldUUIDLeast");
-        living.load(nbt);
+        living.load(sanitizeSnapshot(entry.nbt));
         living.setHealth(Math.max(1.0F, entry.maxHp));
         if (living instanceof Mob mob) {
             mob.setPersistenceRequired();
@@ -312,7 +499,21 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         double pz = player.getZ() + fwd.z * 1.5;
         double py = safeY(level, px, player.getY(), pz, living);
         living.moveTo(px, py, pz, player.getYRot(), 0);
-        level.addFreshEntity(living);
+        boolean added = level.addFreshEntity(living);
+        // ⭐ 成败判定：addFreshEntity 是布尔 + 实体可能在自己 load() 里就把自己移除了
+        //    （典型：铁魔法 Boss 的"离线太久拒载"闸门，见 sanitizeSnapshot）
+        if (!added || living.isRemoved() || !living.isAlive()) {
+            if (added) {
+                living.discard();
+            }
+            TinkersNewlife.LOGGER.warn("[咒灵操术] 释放失败：{}（{}）addFreshEntity={} removed={} alive={} —— "
+                            + "记录保持未释放；快照顶层键={}",
+                    entry.name, entry.type, added, living.isRemoved(), living.isAlive(),
+                    entry.nbt == null ? "null" : entry.nbt.getAllKeys());
+            player.displayClientMessage(
+                    Component.translatable("message.tinkersnewlife.spirit.release_failed", entry.name), true);
+            return false;
+        }
         if (living instanceof Mob mob) {
             if (entry.guard) {
                 // 守护形态：释放后按"玉犬式守护随从 AI"行动（无为转变·守护；入世后再挂，需有效实体 id）
@@ -328,17 +529,53 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         if (entry.guard) {
             entry.guardUuid = living.getStringUUID();
         }
+        // 记下"最后已知位置/维度"：自愈扫描靠它区分"被静默移除"与"只是区块没加载"
+        entry.releasedDim = level.dimension().location().toString();
+        entry.releasedX = living.getX();
+        entry.releasedY = living.getY();
+        entry.releasedZ = living.getZ();
+        entry.hasReleasedPos = true;
         updateEntry(player, entry);
+        GHOST_CONFIRM.remove(player.getUUID());
         player.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.released", entry.name), true);
+        sendState(player);
+        return true;
+    }
+
+    /**
+     * 快照"消毒"：把**不该跟着个体一起复活的存档字段**去掉。
+     *
+     * <p>⭐ 本次幽灵态的<b>真凶</b>就在这里：铁魔法 {@code FireBossEntity} 覆写了
+     * {@code load(CompoundTag)}，里面有一道"离线太久就拒载"的闸门 ——
+     * 快照里带着捕获那一刻的 {@code unloadedGametime}，只要"捕获 → 释放"相隔超过
+     * 6000 tick（5 分钟世界时间），{@code load()} 会<b>当场把自己 {@code remove(DISCARDED)} 掉</b>
+     * 并提前 return（日志：{@code Refusing to load ... elapsed time ... greater than limit}）。
+     * 于是：{@code addFreshEntity} 返回 false（实体已被标记移除）→ 场上什么都没有，
+     * 但我们照样写了 releasedId、照样说"已释放" ✗。
+     * 去掉这个键 ⇒ 闸门不生效、正常读档 ✓（该键的语义是"区块卸载后过了多久"，
+     * 对"从快照重新生成"这件事本来就不成立）。
+     */
+    private static CompoundTag sanitizeSnapshot(CompoundTag snapshot) {
+        CompoundTag nbt = snapshot == null ? new CompoundTag() : snapshot.copy();
+        // 位置/身份：由释放现场重新决定（否则会"落回捕获点"或 UUID 撞车）
+        nbt.remove("UUID");
+        nbt.remove("Pos");
+        nbt.remove("Dimension");
+        nbt.remove("Motion");
+        nbt.remove("WorldUUIDMost");
+        nbt.remove("WorldUUIDLeast");
+        // ⭐ 存档时间闸门（铁魔法 Boss）：见方法注释
+        nbt.remove(KEY_SNAPSHOT_TIME_GATE);
+        return nbt;
     }
 
     private static void sacrifice(ServerPlayer player, SpiritEntry entry) {
         // 献祭：清除记录并进入漩涡蓄力
         removeEntry(player, entry.uid);
-        float dmg = (float) Math.round((1.0 + CursePowerHelper.getCurseAffinity(player) / 100.0)
-                * (CursePowerHelper.getCurseOutputLevel(player) * 6.0 + entry.maxHp * 0.4 + entry.atk * 6.0));
-        VORTEX_CHARGE.put(player.getUUID(), dmg);
+        // ⭐ 漩涡伤害固定 160：不再按"献祭个体的生命上限/攻击 + 施术者亲和/输出"算（见 VORTEX_DAMAGE）
+        VORTEX_CHARGE.put(player.getUUID(), VORTEX_DAMAGE);
         player.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.vortex_charge"), true);
+        sendState(player);
     }
 
     // ================= 反转 =================
@@ -365,9 +602,11 @@ public final class CursedSpiritTechnique extends BaseTechnique {
             return;
         }
         ServerLevel level = player.serverLevel();
-        // 模块化魔杖增幅（无杖时原样）
-        damage = com.mofengbaizhi.tinkersnewlife.content.modifier.ModularStaffModifier
-                .getSpellAmplification(player, damage);
+        // ⭐ 漩涡伤害固定 160：**不再过模块化魔杖的法术增幅**（原第 576-578 行
+        //    `getSpellAmplification(player, damage)`，那也是一层"按攻击力/玩家属性缩放"✗）。
+        //    若日后想恢复"持杖更强"，把下面两行加回来即可：
+        //    damage = com.mofengbaizhi.tinkersnewlife.content.modifier.ModularStaffModifier
+        //            .getSpellAmplification(player, damage);
         SpiritVortexEntity vortex = new SpiritVortexEntity(ModEntities.SPIRIT_VORTEX.get(), level);
         Vec3 eye = player.getEyePosition(1.0F);
         Vec3 look = player.getLookAngle();
@@ -383,8 +622,8 @@ public final class CursedSpiritTechnique extends BaseTechnique {
     private void openGui(ServerPlayer player, int mode) {
         List<SpiritEntry> list = entries(player);
         if (mode == MODE_SACRIFICE) {
-            // 献祭只能选未释放个体
-            list.removeIf(e -> e.releasedId >= 0);
+            // 献祭只能选未释放个体（守护体 releasedId 可能失效，但 guardUuid 仍算"在场上"）
+            list.removeIf(CursedSpiritTechnique::isOnField);
             if (list.isEmpty()) {
                 player.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.no_stored"), true);
                 return;
@@ -397,10 +636,28 @@ public final class CursedSpiritTechnique extends BaseTechnique {
                 new PacketOpenSpiritScreen(mode, list));
     }
 
+    /**
+     * 服务端 → 客户端回执：把"每个个体的释放状态"（按 uid）同步给该玩家。
+     * <p>⭐ 服务端权威：客户端那份列表只是快照，任何"释放/收回/幽灵清理/战死删记录"
+     * 由服务端决定后都回执一次 ⇒ 若玩家此刻正开着列表 GUI，它按回执更新（不会停在成功态）✓。
+     */
+    private static void sendState(ServerPlayer player) {
+        List<SpiritEntry> list = entries(player);
+        List<String> uids = new ArrayList<>();
+        List<Boolean> released = new ArrayList<>();
+        for (SpiritEntry e : list) {
+            uids.add(e.uid == null ? "" : e.uid.toString());
+            released.add(e.releasedId >= 0);
+        }
+        TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                new PacketSpiritState(uids, released));
+    }
+
     /** 登出/死亡清理：撤销场上普通释放体（保留记录，召唤物一并清除），清除蓄力；
      *  守护形态（无为转变·守护）随从保留在场（由无为守护系统持久），仅解除释放位链接。 */
     public static void cleanup(ServerPlayer player) {
         VORTEX_CHARGE.remove(player.getUUID());
+        GHOST_CONFIRM.remove(player.getUUID());
         List<SpiritEntry> list = entries(player);
         for (SpiritEntry e : list) {
             if (e.releasedId >= 0
@@ -413,7 +670,11 @@ public final class CursedSpiritTechnique extends BaseTechnique {
                 }
                 dismissServantsOf(mob);
                 mob.discard();
+                // 已经亲手移除 ⇒ 链接全清（releasedUuid 留着只会让重登时白查一遍）
+                clearFieldLink(e);
+                continue;
             }
+            // 没找到（多半只是区块没加载）：只复位 id，保留 releasedUuid 供重登后重链
             e.releasedId = -1;
         }
         saveAll(player, list);
@@ -467,12 +728,12 @@ public final class CursedSpiritTechnique extends BaseTechnique {
             if (isSameEntry(owner, target, e)) {
                 Mob live = resolveLive(owner, e);
                 if (live != null) {
-                    recallReleased(live);          // 走原版死亡链路（含召唤物清理）
+                    recallReleased(live);          // 静默移除（含召唤物清理）
                 }
-                e.releasedId = -1;
-                e.guardUuid = "";
+                clearFieldLink(e);
                 saveAll(owner, list);
                 owner.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.recall", e.name), true);
+                sendState(owner);
                 return true;
             }
         }
@@ -487,6 +748,7 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         List<SpiritEntry> list = entries(owner);
         SpiritEntry hit = findEntryFor(owner, target); if (hit != null) list.removeIf(x -> x.uid != null && x.uid.equals(hit.uid));
         saveAll(owner, list);
+        sendState(owner);
         owner.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.lost_foreign", name), true);
     }
 
@@ -501,8 +763,9 @@ public final class CursedSpiritTechnique extends BaseTechnique {
                 e.name = newForm.getName().getString();
                 e.maxHp = newForm.getMaxHealth();
                 e.atk = attackDamageOf(newForm);
-                e.releasedId = -1;
+                clearFieldLink(e);
                 saveAll(owner, list);
+                sendState(owner);
                 owner.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.modified", e.name), true);
                 return;
             }
@@ -527,7 +790,14 @@ public final class CursedSpiritTechnique extends BaseTechnique {
                 e.guardUuid = newForm.getStringUUID();
                 e.releasedId = newForm.getId();
                 e.releasedUuid = newForm.getStringUUID();
+                // 最后已知位置：自愈扫描靠它区分"被静默移除"与"只是区块没加载"
+                e.releasedDim = newForm.level().dimension().location().toString();
+                e.releasedX = newForm.getX();
+                e.releasedY = newForm.getY();
+                e.releasedZ = newForm.getZ();
+                e.hasReleasedPos = true;
                 saveAll(owner, list);
+                sendState(owner);
                 owner.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.modified", e.name), true);
                 return;
             }
@@ -545,6 +815,11 @@ public final class CursedSpiritTechnique extends BaseTechnique {
                 if (e.guard && e.releasedId < 0
                         && e.guardUuid != null && e.guardUuid.equals(guard.getStringUUID())) {
                     e.releasedId = guard.getId();
+                    e.releasedDim = guard.level().dimension().location().toString();
+                    e.releasedX = guard.getX();
+                    e.releasedY = guard.getY();
+                    e.releasedZ = guard.getZ();
+                    e.hasReleasedPos = true;
                     changed = true;
                 }
             }
@@ -893,6 +1168,7 @@ public final class CursedSpiritTechnique extends BaseTechnique {
             SpiritEntry hit = findEntryFor(p, dead); boolean removed = hit != null && list.removeIf(x -> x.uid != null && x.uid.equals(hit.uid));
             if (removed) {
                 saveAll(p, list);
+                sendState(p);   // 记录没了 ⇒ 回执（正开着 GUI 的话那一行会消失，不会停在"在场上"）
                 p.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.lost", dead.getName().getString()), true);
                 return;
             }
@@ -965,12 +1241,20 @@ public final class CursedSpiritTechnique extends BaseTechnique {
     @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
     public static class SpiritEvents {
 
+        /** 自愈扫描间隔（tick）：1 秒一次 */
+        private static final int SWEEP_INTERVAL = 20;
+
         @SubscribeEvent
         public static void onServerTick(TickEvent.ServerTickEvent event) {
             if (event.phase != TickEvent.Phase.END) return;
             net.minecraft.server.MinecraftServer server = event.getServer();
             if (server == null) return;
+            boolean sweepTick = server.getTickCount() % SWEEP_INTERVAL == 0;
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+                // ⭐ 先自愈（记录 ↔ 现实对齐），再操控；否则操控会被"幽灵记录"整段跳过
+                if (sweepTick) {
+                    sweep(player);
+                }
                 for (SpiritEntry e : entries(player)) {
                     if (e.releasedId < 0) continue;
                     if (!(player.serverLevel().getEntity(e.releasedId) instanceof Mob minion)
@@ -1027,6 +1311,88 @@ public final class CursedSpiritTechnique extends BaseTechnique {
                         minion.getNavigation().stop();
                     }
                 }
+            }
+        }
+
+        /**
+         * 自愈扫描（每 {@value #SWEEP_INTERVAL} tick）：让"记录"始终跟得上"现实"。
+         *
+         * <p>为什么必须有：实体可能<b>没有死亡事件</b>地离开世界 ——
+         * 别的 mod 自己 `remove()`（典型：铁魔法 Boss 离线太久拒载 / 停战太久自行消散）、
+         * 换维度、区块卸载、主人登出等。以前记录只在"死亡事件"里更新 ✗，于是记录能永远停在
+         * "已在场上"，而场上早就空了 ⇒ UI 骗人 + 收不回来（用户实测）。
+         *
+         * <ul>
+         *   <li>找得到实体、但记录里的 id/uuid/位置对不上（登出、换维度、区块重载、静默换 id）
+         *       → <b>重新链接 + 刷新最后已知位置</b> ✓；</li>
+         *   <li>找不到、且它最后待过的区块<b>现在是加载的</b>（{@link #certainGone}）→ 断言它已被移出世界
+         *       → 清幽灵标记 + 通知 + 回执 ✓。</li>
+         * </ul>
+         * 判定不成立（区块没加载）时<b>什么也不做</b>：宁可让记录多留一会儿，也不能把活着的仆从
+         * 变成"永远收不回的野怪" ✗。
+         */
+        private static void sweep(ServerPlayer player) {
+            List<SpiritEntry> list = entries(player);
+            boolean changed = false;
+            List<SpiritEntry> ghosted = new ArrayList<>();
+            for (SpiritEntry e : list) {
+                if (!isOnField(e)) continue;
+                String uid = e.uid == null ? "" : e.uid.toString();
+                Mob live = resolveLive(player, e);
+                if (live != null) {
+                    GHOST_MISSES.remove(uid);
+                    if (e.releasedId != live.getId()) {
+                        e.releasedId = live.getId();
+                        changed = true;
+                    }
+                    String uuid = live.getStringUUID();
+                    if (e.releasedUuid == null || !e.releasedUuid.equals(uuid)) {
+                        e.releasedUuid = uuid;
+                        changed = true;
+                    }
+                    if (e.guard && (e.guardUuid == null || !e.guardUuid.equals(uuid))) {
+                        e.guardUuid = uuid;
+                        changed = true;
+                    }
+                    // 位置只在"首次"或"移动超过 32 格"时落盘：玩家持久数据里存着完整快照 NBT，
+                    // 不能每 tick 重写一遍（见 SpiritEntry#hasReleasedPos）
+                    String dim = live.level().dimension().location().toString();
+                    if (!e.hasReleasedPos || !dim.equals(e.releasedDim)
+                            || live.distanceToSqr(e.releasedX, e.releasedY, e.releasedZ) > 32.0 * 32.0) {
+                        e.releasedDim = dim;
+                        e.releasedX = live.getX();
+                        e.releasedY = live.getY();
+                        e.releasedZ = live.getZ();
+                        e.hasReleasedPos = true;
+                        changed = true;
+                    }
+                } else if ((e.guardUuid == null || e.guardUuid.isEmpty()) && certainGone(player, e)) {
+                    // ⭐ 只自动清理"普通释放体"：守护随从本来就以 guardUuid 身份在场（跨登出/区块重载是常态），
+                    //    自动清它的链接收益很小、误判代价却大（会把守在原地的守护体变成"收不回的野怪"）✗
+                    //    ⇒ 守护体的幽灵态交给玩家点击时的判定处理（见 toggleRelease）。
+                    // 另外：必须"连续 3 次"都查不到才动手，单次查不到可能只是瞬时现象（见 GHOST_MISSES）
+                    if (GHOST_MISSES.merge(uid, 1, Integer::sum) >= 3) {
+                        ghosted.add(e);
+                    }
+                } else {
+                    GHOST_MISSES.remove(uid);
+                }
+            }
+            if (!ghosted.isEmpty()) {
+                for (SpiritEntry e : ghosted) {
+                    GHOST_MISSES.remove(e.uid == null ? "" : e.uid.toString());
+                    clearFieldLink(e);
+                    changed = true;
+                    player.displayClientMessage(
+                            Component.translatable("message.tinkersnewlife.spirit.ghost_cleared", e.name), true);
+                    TinkersNewlife.LOGGER.info("[咒灵操术] 自愈：{}（{}）已不在世界（最后所在区块是加载的却找不到）"
+                            + " → 幽灵记录已清理（记录保留，可再次释放）", e.name, e.type);
+                }
+                GHOST_CONFIRM.remove(player.getUUID());
+            }
+            if (changed) {
+                saveAll(player, list);
+                sendState(player);
             }
         }
 

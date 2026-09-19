@@ -302,6 +302,11 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenSpiritScreen::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenSpiritScreen::new,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenSpiritScreen::handle);
+        // 咒灵操术回执：个体"是否在场上"的权威状态（服务端决定成败后同步，客户端只照着改 UI）
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketSpiritState.class,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketSpiritState::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketSpiritState::new,
+                com.mofengbaizhi.tinkersnewlife.network.curse.PacketSpiritState::handle);
         registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketStaffGoetySync.class,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketStaffGoetySync::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketStaffGoetySync::new,

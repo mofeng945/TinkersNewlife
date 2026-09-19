@@ -20,12 +20,16 @@ import java.util.function.Supplier;
 public class PacketOpenSpiritScreen {
 
     public static final class RowData {
+        /** 个体记录自身的 UUID 文本：客户端点击时回传它（服务端按 uid 选行，不再依赖下标） */
+        public final String uid;
         public final String name;
         public final String type;
         public final CompoundTag nbt;
-        public final boolean released;
+        /** ⭐ 唯一的"在场上"依据 = 服务端记录里的 releasedId ≥ 0；客户端从不自行推断/先行置位 */
+        public boolean released;
 
         RowData(SpiritEntry e) {
+            this.uid = e.uid == null ? "" : e.uid.toString();
             this.name = e.name;
             this.type = e.type;
             this.nbt = e.nbt;
@@ -33,6 +37,7 @@ public class PacketOpenSpiritScreen {
         }
 
         RowData(FriendlyByteBuf buf) {
+            this.uid = buf.readUtf();
             this.name = buf.readUtf();
             this.type = buf.readUtf();
             this.nbt = buf.readNbt();
@@ -40,6 +45,7 @@ public class PacketOpenSpiritScreen {
         }
 
         void write(FriendlyByteBuf buf) {
+            buf.writeUtf(uid == null ? "" : uid);
             buf.writeUtf(name == null ? "" : name);
             buf.writeUtf(type);
             buf.writeNbt(nbt);

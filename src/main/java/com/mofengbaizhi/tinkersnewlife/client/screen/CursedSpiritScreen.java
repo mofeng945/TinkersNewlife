@@ -91,9 +91,45 @@ public class CursedSpiritScreen extends AbstractRowListScreen<RowData> {
         graphics.drawString(font, foot, (width - font.width(foot)) / 2, height - 16, 0x9A9A9A);
     }
 
+    /**
+     * 服务端回执（{@code PacketSpiritState}）：按 uid 覆盖"是否在场上"，并删掉服务端已不再记录的个体行。
+     *
+     * <p>⭐ 界面上"已在场上 / 未释放"这行字<b>只有服务端说了算</b>：
+     * 本方法只做"照抄回执"，不推断、也绝不先行置位 ——
+     * 否则服务端那次释放失败时，UI 会停在成功态（用户实测的"UI 说在场上、其实没有"✗）。
+     * <p>只改/删、不新增：新增行没有 NBT 就画不出 3D 展示，等玩家重开界面时服务端会发完整列表。
+     */
+    public void applyState(List<String> uids, List<Boolean> released) {
+        java.util.Map<String, Boolean> state = new java.util.HashMap<>();
+        for (int i = 0; i < uids.size(); i++) {
+            state.put(uids.get(i), i < released.size() && released.get(i));
+        }
+        boolean changed = false;
+        for (RowData r : rows) {
+            Boolean now = state.get(r.uid);
+            if (now != null && now.booleanValue() != r.released) {
+                r.released = now.booleanValue();
+                changed = true;
+            }
+        }
+        for (int i = rows.size() - 1; i >= 0; i--) {
+            String uid = rows.get(i).uid;
+            if (uid == null || uid.isEmpty() || state.containsKey(uid)) continue;
+            rows.remove(i);
+            if (i < dummies.size()) {
+                dummies.remove(i);
+            }
+            changed = true;
+        }
+        if (changed) {
+            refreshLayout();
+        }
+    }
+
     @Override
     protected void onRowClick(int index, RowData row) {
-        TinkersNewlife.CHANNEL.sendToServer(new PacketSpiritSelect(mode, index));
+        // 只发"请求"（带 uid，服务端按 uid 选行）；UI 不自行改状态，等服务端回执 + 聊天提示
+        TinkersNewlife.CHANNEL.sendToServer(new PacketSpiritSelect(mode, index, row.uid));
         Minecraft.getInstance().setScreen(null);
     }
 }
