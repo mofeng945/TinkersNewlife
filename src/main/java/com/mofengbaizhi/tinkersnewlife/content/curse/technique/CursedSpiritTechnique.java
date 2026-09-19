@@ -7,6 +7,7 @@ import com.mofengbaizhi.tinkersnewlife.content.Modifiers;
 import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
 import com.mofengbaizhi.tinkersnewlife.content.entity.PuppetUtil;
 import com.mofengbaizhi.tinkersnewlife.content.entity.SpiritVortexEntity;
+import com.mofengbaizhi.tinkersnewlife.content.modifier.ModularStaffModifier;
 import com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenSpiritScreen;
 import com.mofengbaizhi.tinkersnewlife.network.curse.PacketSpiritState;
 import net.minecraft.core.BlockPos;
@@ -50,7 +51,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>
  * 反转：GUI 选择一名未释放个体 → 清除其数据并进入漩涡蓄力；
  * 再次按反转键 → 向视线笔直射出黑色漩涡（伤害 = <b>该个体最大生命上限 × {@link #VORTEX_HP_RATIO}</b>，
- * 即按"献祭/施放的那只咒灵的血量上限"动态变化，见 {@link #vortexDamageFor}）。
+ * 即按"献祭/施放的那只咒灵的血量上限"动态变化，见 {@link #vortexDamageFor}；
+ * 该底数在<b>发射时</b>再乘上<b>模块化魔杖的法术增幅</b>，见 {@link #fireVortex}）。
  * <p>
  * <b>服务端权威</b>：客户端只发"选了哪个个体"的请求（带个体 uid），
  * 释放/收回/成败判定全在服务端；服务端决定后<b>发回执</b>（{@code PacketSpiritState}）+ 聊天提示，
@@ -66,18 +68,25 @@ public final class CursedSpiritTechnique extends BaseTechnique {
     public static final int MODE_RELEASE = 0;
     public static final int MODE_SACRIFICE = 1;
 
-    /** 漩涡蓄力中：玩家 UUID → 漩涡伤害快照（献祭那一刻按"该个体生命上限"算好，发射时不再重算） */
+    /**
+     * 漩涡蓄力中：玩家 UUID → 漩涡伤害<b>底数</b>。
+     * <p>献祭那一刻按"该个体生命上限 × {@link #VORTEX_HP_RATIO}"算好并<b>冻结</b>（发射时不再重算血量上限）；
+     * 模块化魔杖的法术增幅<b>不在这一步</b>结算，而是发射时由 {@link #fireVortex} 在这份底数上乘一次 ⇒
+     * 蓄力期间换手/换杖，伤害按<b>发射时</b>手持的杖算（与"献祭时不算杖"两条互不重复 ✓）。
+     */
     private static final Map<UUID, Float> VORTEX_CHARGE = new ConcurrentHashMap<>();
 
     /**
-     * 黑色漩涡的伤害系数：<b>伤害 = 该咒灵的最大生命上限 × 此系数</b>。
+     * 黑色漩涡的伤害系数：<b>底数伤害 = 该咒灵的最大生命上限 × 此系数</b>。
      *
-     * <p>用户口径："漩涡伤害<b>随咒灵血量上限动态变化</b>" ⇒ 只保留"献祭/施放的那只个体生命上限"
-     * 这一项（{@link #vortexDamageFor}）。系数 {@code 0.4} <b>沿用旧公式</b>里那一项
+     * <p>该底数只含"献祭/施放的那只个体生命上限"这一项（{@link #vortexDamageFor}）；
+     * 系数 {@code 0.4} <b>沿用旧公式</b>里那一项
      * {@code 献祭个体生命上限 × 0.4}（旧整条公式
      * {@code round((1 + 亲和/100) × (输出×6 + 生命上限×0.4 + 其攻击×6))} 已不再使用）。
+     * <p>用户口径（本轮）：这个底数<b>要吃模块化魔杖的法术增幅</b>（"可以吃增幅"）⇒ 发射时乘一次，
+     * 见 {@link #fireVortex}；亲和 / 输出 / 该个体攻击力那三项<b>仍然不参与</b> ✓。
      * <p><b>想调强弱改这一行即可</b>（例如 0.5 ⇒ 更疼、0.3 ⇒ 更轻）；只影响漩涡，别的招式都不碰 ✓。
-     * <p>对照：僵尸 20 血 ⇒ 8；凋灵 300 血 ⇒ 120；普通 Boss 级亡灵 150 血 ⇒ 60。
+     * <p>对照（<b>无增幅</b>时）：僵尸 20 血 ⇒ 8；凋灵 300 血 ⇒ 120；普通 Boss 级亡灵 150 血 ⇒ 60。
      */
     public static final float VORTEX_HP_RATIO = 0.4F;
 
@@ -590,15 +599,19 @@ public final class CursedSpiritTechnique extends BaseTechnique {
     private static void sacrifice(ServerPlayer player, SpiritEntry entry) {
         // 献祭：清除记录并进入漩涡蓄力
         removeEntry(player, entry.uid);
-        // ⭐ 漩涡伤害 = 该个体（被献祭的这只式神）的**最大生命上限** × VORTEX_HP_RATIO（见 vortexDamageFor）
-        //    用户口径："根据咒灵血量上限动态变化" ⇒ 亲和/输出/个体攻击/魔杖增幅那几项一律不加回来 ✓
+        // ⭐ 漩涡伤害**底数** = 该个体（被献祭的这只式神）的**最大生命上限** × VORTEX_HP_RATIO（见 vortexDamageFor）
+        //    用户口径："根据咒灵血量上限动态变化" + "可以吃增幅" ⇒ 亲和/输出/个体攻击力那三项一律不加回来 ✓，
+        //    模块化魔杖的法术增幅则在**发射时**乘一次（见 fireVortex 的 ⭐ 注释）✓
         VORTEX_CHARGE.put(player.getUUID(), vortexDamageFor(entry));
         player.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.vortex_charge"), true);
         sendState(player);
     }
 
     /**
-     * 计算漩涡伤害：<b>该咒灵的最大生命上限 × {@link #VORTEX_HP_RATIO}</b>。
+     * 计算漩涡伤害<b>底数</b>：<b>该咒灵的最大生命上限 × {@link #VORTEX_HP_RATIO}</b>。
+     *
+     * <p>⚠ 这里返回的是<b>底数</b>（不含模块化魔杖增幅）：增幅在发射时由 {@link #fireVortex}
+     * 乘在这份底数之上 —— 全流程<b>只乘这一次</b>，献祭这一步不碰杖 ✓。
      *
      * <p><b>取值来源（按优先级）</b>：
      * <ol>
@@ -670,12 +683,16 @@ public final class CursedSpiritTechnique extends BaseTechnique {
             return;
         }
         ServerLevel level = player.serverLevel();
-        // ⭐ 漩涡伤害：**只按"被献祭的那只咒灵的最大生命上限"算**（献祭时快照进 VORTEX_CHARGE，
-        //    见 vortexDamageFor）。**不再过模块化魔杖的法术增幅** —— 那是一条"按魔杖攻击力/玩家属性缩放"
-        //    的独立乘区，加回来就不是"只看咒灵血量上限"了 ✗（原第 576-578 行
-        //    `getSpellAmplification(player, damage)`）。若日后想恢复"持杖更强"，把下面两行加回来即可：
-        //    damage = com.mofengbaizhi.tinkersnewlife.content.modifier.ModularStaffModifier
-        //            .getSpellAmplification(player, damage);
+        // ⭐ 漩涡伤害 = **底数**（献祭那一刻按"被献祭的那只咒灵的最大生命上限 × VORTEX_HP_RATIO"算好，
+        //    见 vortexDamageFor）→ **发射时再吃一次模块化魔杖的法术增幅**（用户口径："可以吃增幅" ✓）。
+        //    亲和 / 输出 / 该个体攻击力**不参与** ✓（只加增幅这一项）。
+        // ⚠ 只乘一次：`VORTEX_CHARGE` 里存的就是"未增幅的底数"（sacrifice() 不碰杖），这里乘完直接交给
+        //    实体，`SpiritVortexEntity.explode()` 用 `caster.damageSources().mobAttack(caster)` 结算 ——
+        //    其 msgId 为 `mob`，落不进 `ModularStaffModifier.onLivingHurt` 的 `isSpellDamage` 白名单
+        //    （退一步说那也要求 source.getEntity() 是 Player），所以**全局事件不会再来一遍** ⇒ 不重复乘 ✓。
+        //    `getSpellAmplification` 的语义是"返回增幅后的伤害值"（= 原伤害 ×(1+倍率) + 附加），
+        //    不是倍率 ⇒ 直接赋值，切勿再 `damage *=` 或调用第二次 ✓。
+        damage = ModularStaffModifier.getSpellAmplification(player, damage);
         SpiritVortexEntity vortex = new SpiritVortexEntity(ModEntities.SPIRIT_VORTEX.get(), level);
         Vec3 eye = player.getEyePosition(1.0F);
         Vec3 look = player.getLookAngle();

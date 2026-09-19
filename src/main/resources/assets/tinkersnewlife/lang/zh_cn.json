@@ -732,7 +732,7 @@
   "entity.tinkersnewlife.flame_phantom": "焰羽",
   "modifier.tinkersnewlife.cursed_spirit": "咒灵操术",
   "modifier.tinkersnewlife.cursed_spirit.flavor": "§7万物皆可食，咒灵皆可驭。",
-  "modifier.tinkersnewlife.cursed_spirit.description": "顺转：视线内亡灵血量≤2.5%时将其个体记录入GUI（完整NBT）并令其消散（Boss战直接结束），消耗随其生命上限/你的输出与亲和而定，并获得30s饥饿+10s反胃；否则打开个体列表（滚动条+3D展示）：点击释放满血个体（以你为主人，只打威胁你/你攻击的目标），已释放的再点收回，释放体战死则记录消失。反转（F）：选一名未释放个体献祭并蓄力黑色漩涡，再按F向视线射出（伤害 = 该咒灵最大生命上限 × 40% ⇒ 随献祭个体的血量上限动态变化）。占用术式槽。",
+  "modifier.tinkersnewlife.cursed_spirit.description": "顺转：视线内亡灵血量≤2.5%时将其个体记录入GUI（完整NBT）并令其消散（Boss战直接结束），消耗随其生命上限/你的输出与亲和而定，并获得30s饥饿+10s反胃；否则打开个体列表（滚动条+3D展示）：点击释放满血个体（以你为主人，只打威胁你/你攻击的目标），已释放的再点收回，释放体战死则记录消失。反转（F）：选一名未释放个体献祭并蓄力黑色漩涡，再按F向视线射出（伤害 = 该咒灵最大生命上限 × 40% ⇒ 随献祭个体的血量上限动态变化，再乘模块化魔杖的法术增幅）。占用术式槽。",
   "screen.tinkersnewlife.spirit.title": "咒灵操术 · 释放 / 收回",
   "screen.tinkersnewlife.spirit.title_sacrifice": "咒灵操术 · 献祭（蓄力漩涡）",
   "screen.tinkersnewlife.spirit.count": "已记录 %s 个亡灵个体",
