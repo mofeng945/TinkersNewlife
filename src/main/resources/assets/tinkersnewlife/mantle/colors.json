@@ -1,5 +1,8 @@
 {
   "modifier.tinkersnewlife": {
+    "mana_surge": "#55ffff",
+    "mana_shield": "#7fb2ff",
+    "all_paths_one": "#c9a0ff",
     "focus": "#c9d6e8",
     "spell_break": "#e4edf8",
     "magic_conduction": "#888ccc",
