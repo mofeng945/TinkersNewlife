@@ -79,7 +79,7 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
 
     // 法袍护腿（用户 2026-09-19 第四份模型 ✓）：每条腿 3 块，槽映射同法袍（plating→0 / maille→1 / lace→2 ✓）
     private final ModelPart[] legRPlating, legRMaille, legRLace;
-    private final ModelPart[] legLPlating, legLMaille, legLLace;
+    private final ModelPart[] legLPlating, legLLace;   // 左腿**故意没有锁链基底块** ✓（用户确认 2026-09-19 ✓）
     // 靴子（还没做模型 ⇒ 仍是占位几何 ✓）
     private final ModelPart bootCuffRight;
     private final ModelPart bootCuffLeft;
@@ -115,9 +115,8 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
         this.legRPlating = new ModelPart[]{ legR.getChild("right_leg_plating_1") };
         this.legRMaille = new ModelPart[]{ legR.getChild("right_leg_maille_2") };
         this.legRLace = new ModelPart[]{ legR.getChild("right_leg_lace_0") };
-        this.legLPlating = new ModelPart[]{ legL.getChild("left_leg_plating_1") };
-        this.legLMaille = new ModelPart[]{ legL.getChild("left_leg_maille_2") };
-        this.legLLace = new ModelPart[]{ legL.getChild("left_leg_lace_0") };
+        this.legLPlating = new ModelPart[]{ legL.getChild("left_leg_plating_3") };
+        this.legLLace = new ModelPart[]{ legL.getChild("left_leg_lace_4") };
         this.bootCuffRight = root.getChild("right_leg").getChild("boot_cuff_right_leg");
         this.bootCuffLeft = root.getChild("left_leg").getChild("boot_cuff_left_leg");
     }
@@ -206,12 +205,11 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
         //   左腿的贴图由 import 的 -SymPairs 从右腿反射生成 ✓（几何本身左右对称 ✓ 都相对腿骨居中 ✓）。
         PartDefinition legRPart = root.getChild("right_leg");
         PartDefinition legLPart = root.getChild("left_leg");
-        addLocalBox(legRPart, "right_leg_lace_0", -2.231F, 3.58463F, -2.2795F, 4.462F, 3.13326F, 4.559F, 61, 67);
-        addLocalBox(legRPart, "right_leg_plating_1", -2.1825F, 0F, -2.231F, 4.365F, 3.07323F, 4.462F, 30, 71);
-        addLocalBox(legRPart, "right_leg_maille_2", -2.08551F, 6.46819F, -2.134F, 4.17101F, 1.72781F, 4.268F, 0, 7);
-        addLocalBox(legLPart, "left_leg_lace_0", -2.231F, 3.58463F, -2.2795F, 4.462F, 3.13326F, 4.559F, 81, 71);
-        addLocalBox(legLPart, "left_leg_plating_1", -2.1825F, 0F, -2.231F, 4.365F, 3.07323F, 4.462F, 42, 62);
-        addLocalBox(legLPart, "left_leg_maille_2", -2.08551F, 6.46819F, -2.134F, 4.17101F, 1.72781F, 4.268F, 61, 0);
+        addLocalBox(legRPart, "right_leg_lace_0", -2.231F, 3.58463F, -2.2795F, 4.462F, 3.13326F, 4.559F, 42, 66);
+        addLocalBox(legRPart, "right_leg_plating_1", -2.1825F, 0F, -2.231F, 4.365F, 3.07323F, 4.462F, 62, 67);
+        addLocalBox(legRPart, "right_leg_maille_2", -2.08551F, 6.46819F, -2.134F, 4.17101F, 1.72781F, 4.268F, 61, 0);
+        addLocalBox(legLPart, "left_leg_lace_4", -2.231F, 3.4862F, -2.2795F, 4.46201F, 1.84394F, 4.559F, 81, 71);
+        addLocalBox(legLPart, "left_leg_plating_3", -2.1825F, 0F, -2.231F, 4.365F, 3.07323F, 4.462F, 0, 7);
 
         // 法师靴子（占位，等用户第五份模型 ✓）
         for (String leg : new String[]{"right_leg", "left_leg"}) {
@@ -257,7 +255,6 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
                 draw(poseStack, buffer, packedLight, packedOverlay, 0, this.rightLeg, legRPlating);
                 draw(poseStack, buffer, packedLight, packedOverlay, 0, this.leftLeg, legLPlating);
                 draw(poseStack, buffer, packedLight, packedOverlay, 1, this.rightLeg, legRMaille);
-                draw(poseStack, buffer, packedLight, packedOverlay, 1, this.leftLeg, legLMaille);
                 draw(poseStack, buffer, packedLight, packedOverlay, 2, this.rightLeg, legRLace);
                 draw(poseStack, buffer, packedLight, packedOverlay, 2, this.leftLeg, legLLace);
             }
@@ -318,7 +315,6 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
                 group(poseStack, buffers, light, overlay, 0, prefix, legsLayer, this.rightLeg, legRPlating);
                 group(poseStack, buffers, light, overlay, 0, prefix, legsLayer, this.leftLeg, legLPlating);
                 group(poseStack, buffers, light, overlay, 1, prefix, legsLayer, this.rightLeg, legRMaille);
-                group(poseStack, buffers, light, overlay, 1, prefix, legsLayer, this.leftLeg, legLMaille);
                 group(poseStack, buffers, light, overlay, 2, prefix, legsLayer, this.rightLeg, legRLace);
                 group(poseStack, buffers, light, overlay, 2, prefix, legsLayer, this.leftLeg, legLLace);
             }
