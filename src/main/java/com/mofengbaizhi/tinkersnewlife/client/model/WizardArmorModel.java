@@ -81,8 +81,9 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
     private final ModelPart[] legRPlating, legRMaille, legRLace;
     private final ModelPart[] legLPlating, legLLace;   // 左腿**故意没有锁链基底块** ✓（用户确认 2026-09-19 ✓）
     // 靴子（还没做模型 ⇒ 仍是占位几何 ✓）
-    private final ModelPart bootCuffRight;
-    private final ModelPart bootCuffLeft;
+    // 巫师靴子（用户第五份模型 ✓）：一双一样 ⇒ 两条腿共用同一套 UV 槽 ✓
+    private final ModelPart[] bootRPlating, bootRMaille, bootRLace;
+    private final ModelPart[] bootLPlating, bootLMaille, bootLLace;
 
     private ItemStack currentStack = ItemStack.EMPTY;
     private EquipmentSlot currentSlot = EquipmentSlot.HEAD;
@@ -117,8 +118,12 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
         this.legRLace = new ModelPart[]{ legR.getChild("right_leg_lace_0") };
         this.legLPlating = new ModelPart[]{ legL.getChild("left_leg_plating_3") };
         this.legLLace = new ModelPart[]{ legL.getChild("left_leg_lace_4") };
-        this.bootCuffRight = root.getChild("right_leg").getChild("boot_cuff_right_leg");
-        this.bootCuffLeft = root.getChild("left_leg").getChild("boot_cuff_left_leg");
+        this.bootRPlating = new ModelPart[]{ legR.getChild("boot_plating_0") };
+        this.bootRMaille = new ModelPart[]{ legR.getChild("boot_maille_2") };
+        this.bootRLace = new ModelPart[]{ legR.getChild("boot_lace_1") };
+        this.bootLPlating = new ModelPart[]{ legL.getChild("boot_left_plating_0") };
+        this.bootLMaille = new ModelPart[]{ legL.getChild("boot_left_maille_2") };
+        this.bootLLace = new ModelPart[]{ legL.getChild("boot_left_lace_1") };
     }
 
     public void setCurrent(ItemStack stack, EquipmentSlot slot) {
@@ -211,13 +216,12 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
         addLocalBox(legLPart, "left_leg_lace_4", -2.231F, 3.4862F, -2.2795F, 4.46201F, 1.84394F, 4.559F, 81, 71);
         addLocalBox(legLPart, "left_leg_plating_3", -2.1825F, 0F, -2.231F, 4.365F, 3.07323F, 4.462F, 0, 7);
 
-        // 法师靴子（占位，等用户第五份模型 ✓）
-        for (String leg : new String[]{"right_leg", "left_leg"}) {
-            root.getChild(leg).addOrReplaceChild("boot_cuff_" + leg,
-                    CubeListBuilder.create().texOffs(96, 52)
-                            .addBox(-3.0F, 0.0F, -3.0F, 6.0F, 4.0F, 6.0F, new CubeDeformation(0.0F)),
-                    PartPose.offset(0.5F, 10.0F, 0.0F));
-        }
+        addLocalBox(legRPart, "boot_plating_0", -2.0925F, 10.8F, -2.51754F, 4.185F, 1.2F, 4.65F, 42, 62);
+        addLocalBox(legRPart, "boot_maille_2", -2.046F, 9.06797F, -2.0925F, 4.092F, 1.8F, 4.185F, 61, 11);
+        addLocalBox(legRPart, "boot_lace_1", -2.0925F, 9.1875F, -2.139F, 4.185F, 0.6F, 4.278F, 90, 71);
+        addLocalBox(legLPart, "boot_left_plating_0", -2.0925F, 10.8F, -2.51754F, 4.185F, 1.2F, 4.65F, 42, 62);
+        addLocalBox(legLPart, "boot_left_maille_2", -2.046F, 9.06797F, -2.0925F, 4.092F, 1.8F, 4.185F, 61, 11);
+        addLocalBox(legLPart, "boot_left_lace_1", -2.0925F, 9.1875F, -2.139F, 4.185F, 0.6F, 4.278F, 90, 71);
 
         return LayerDefinition.create(mesh, TEX_W, TEX_H);
     }
@@ -260,8 +264,12 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
             }
             default -> {
                 // 靴子（FEET 那件 ✓ 还是占位几何）
-                draw(poseStack, buffer, packedLight, packedOverlay, 0, this.rightLeg, bootCuffRight);
-                draw(poseStack, buffer, packedLight, packedOverlay, 0, this.leftLeg, bootCuffLeft);
+                draw(poseStack, buffer, packedLight, packedOverlay, 0, this.rightLeg, bootRPlating);
+                draw(poseStack, buffer, packedLight, packedOverlay, 0, this.leftLeg, bootLPlating);
+                draw(poseStack, buffer, packedLight, packedOverlay, 1, this.rightLeg, bootRMaille);
+                draw(poseStack, buffer, packedLight, packedOverlay, 1, this.leftLeg, bootLMaille);
+                draw(poseStack, buffer, packedLight, packedOverlay, 2, this.rightLeg, bootRLace);
+                draw(poseStack, buffer, packedLight, packedOverlay, 2, this.leftLeg, bootLLace);
             }
         }
     }
@@ -319,8 +327,12 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
                 group(poseStack, buffers, light, overlay, 2, prefix, legsLayer, this.leftLeg, legLLace);
             }
             default -> {
-                group(poseStack, buffers, light, overlay, 0, prefix, legsLayer, this.rightLeg, bootCuffRight);
-                group(poseStack, buffers, light, overlay, 0, prefix, legsLayer, this.leftLeg, bootCuffLeft);
+                group(poseStack, buffers, light, overlay, 0, prefix, legsLayer, this.rightLeg, bootRPlating);
+                group(poseStack, buffers, light, overlay, 0, prefix, legsLayer, this.leftLeg, bootLPlating);
+                group(poseStack, buffers, light, overlay, 1, prefix, legsLayer, this.rightLeg, bootRMaille);
+                group(poseStack, buffers, light, overlay, 1, prefix, legsLayer, this.leftLeg, bootLMaille);
+                group(poseStack, buffers, light, overlay, 2, prefix, legsLayer, this.rightLeg, bootRLace);
+                group(poseStack, buffers, light, overlay, 2, prefix, legsLayer, this.leftLeg, bootLLace);
             }
         }
     }
