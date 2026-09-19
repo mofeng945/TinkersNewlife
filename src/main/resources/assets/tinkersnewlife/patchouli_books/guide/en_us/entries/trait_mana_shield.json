@@ -6,15 +6,15 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(bold)Mana Shield$() (default trait of all four $(bold)Wizard Set$() pieces, $(bold)unleveled$())$(br2)Active as long as you wear $(bold)any single piece$() carrying this trait.$(br2)$(bold)Three effects$():$(li)$(bold)-10% non-physical damage per piece$() ($(bold)chained$(): about -19% with two pieces, -34.4% with four)$(li)$(bold)+2 max health per piece$() (stacks, +8 for the full set)$(li)$(bold)All buffs and debuffs on you last half as long$() ($(bold)does not stack$() - always x0.5 no matter how many pieces; infinite effects are unaffected)"
+      "text": "$(bold)Mana Shield$() (default trait of all four $(bold)Wizard Set$() pieces, $(bold)unleveled$())$(br2)Active as long as you wear $(bold)any single piece$() carrying this trait.$(br2)$(bold)Three effects$():$(li)$(bold)-10% magic damage per piece$() ($(bold)chained$(): about -19% with two pieces, -34.4% with four)$(li)$(bold)+2 max health per piece$() (stacks, +8 for the full set)$(li)$(bold)All buffs and debuffs on you last half as long$() ($(bold)does not stack$() - always x0.5 no matter how many pieces; infinite effects are unaffected)"
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)Three kinds the shield never reduces$():$(li)$(bold)physical$() - melee / contact, entity projectiles (arrows, tridents, thrown items), kinetic (fall, falling blocks), explosions$(li)$(bold)void$() - falling out of the world, plus modded void types (Goety $(bold)voided$(), gun mod $(bold)bullet_void$(), L2 Complements $(bold)void_eye$() ...)$(li)$(bold)piercing$() - this mod's $(bold)true_pierce$() (the true damage used by Pierce EX, sword aura, Laevatain and friends)$(br2)Rule-level damage such as $(bold)/kill$() and out-of-world is never reduced either."
+      "text": "$(bold)Only these three kinds of magic are reduced$():$(li)$(bold)vanilla magic$() - potion damage, evoker fangs, warden sonic boom, thorns$(li)$(bold)Iron's Spells$() - all nine schools (fire / ice / lightning / holy / ender / blood / evocation / nature / eldritch)$(li)$(bold)Goety$() spells$(br2)$(bold)Everything else is untouched$(): physical (melee / arrows / explosions / fall), void, piercing and true damage, vanilla fire and lava, vanilla lightning, wither, poison, dragon breath, drowning, freezing, starvation - all at $(bold)full$() value."
     },
     {
       "type": "patchouli:text",
-      "text": "Everything else (fire, lava, lightning, magic, Iron's Spells and Goety spells, wither, freezing, drowning, sonic boom ...) is $(bold)-10% per piece$().$(br2)$(italic)Two datapack tags define this and can be edited:$(li)$(bold)tinkersnewlife:is_physical$() - what counts as physical$(li)$(bold)tinkersnewlife:ignores_mana_shield$() - void / piercing / rule-level$(br2)The trait also reads Goety's own $(bold)goety:physical$() tag, falls back to \"direct source is a living entity and not magic\" for modded melee, and to \"id contains void\" for modded void damage.$()"
+      "text": "$(italic)The check is shared with $(l:trait_magic_conduction)Magic Conduction$() (see that entry), and two $(bold)vetoes$() run before it:$(li)$(bold)physical$() - the $(bold)tinkersnewlife:is_physical$() tag, Goety's own $(bold)goety:physical$() tag, and \"direct source is a living entity and not magic\"$(li)$(bold)void / piercing / rule-level$() - the $(bold)tinkersnewlife:ignores_mana_shield$() tag, vanilla $(bold)bypasses_invulnerability$(), this mod's $(bold)true_pierce$(), and \"id contains void\"$(br2)Both tags live in the datapack and can be edited freely.$()"
     }
   ],
   "flag": "mod:irons_spellbooks"

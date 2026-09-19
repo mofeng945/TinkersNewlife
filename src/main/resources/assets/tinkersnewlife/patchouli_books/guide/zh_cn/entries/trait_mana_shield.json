@@ -6,15 +6,15 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(bold)魔力护盾$()（$(bold)巫师套装$()四件自带的默认特性，$(bold)无等级$()）$(br2)只要穿着$(bold)任意一件$()带此特性的巫师甲就生效。$(br2)$(bold)三个效果$()：$(li)$(bold)非物理伤害 −10%/件$()（多件$(bold)链乘$()：2 件 ≈ −19%、4 件 ≈ −34.4%）$(li)$(bold)生命上限 +2/件$()（可叠加，四件 +8）$(li)$(bold)自身一切增益与减益的持续时间减半$()（$(bold)不可叠加$() —— 穿几件都是 ×0.5 ✓ 无限时长的效果不受影响）"
+      "text": "$(bold)魔力护盾$()（$(bold)巫师套装$()四件自带的默认特性，$(bold)无等级$()）$(br2)只要穿着$(bold)任意一件$()带此特性的巫师甲就生效。$(br2)$(bold)三个效果$()：$(li)$(bold)魔法伤害 −10%/件$()（多件$(bold)链乘$()：2 件 ≈ −19%、4 件 ≈ −34.4%）$(li)$(bold)生命上限 +2/件$()（可叠加，四件 +8）$(li)$(bold)自身一切增益与减益的持续时间减半$()（$(bold)不可叠加$() —— 穿几件都是 ×0.5 ✓ 无限时长的效果不受影响）"
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)护盾挡不住的三类$()：$(li)$(bold)物理伤害$() —— 近战 / 接触、实体投射物（箭、三叉戟、投掷物）、动能（坠落、落方块）、爆炸$(li)$(bold)虚空伤害$() —— 掉出世界，以及各 mod 的虚空类型（诡厄 $(bold)voided$()、枪械 $(bold)bullet_void$()、莱特兰扩充 $(bold)void_eye$() …）$(li)$(bold)穿透伤害$() —— 本模组的 $(bold)true_pierce$()（穿透EX、剑气、莱瓦汀那类真伤）$(br2)另外 $(bold)/kill$()、虚空外这类规则级伤害也一律不减。"
+      "text": "$(bold)只削这三种魔法$()：$(li)$(bold)原版魔法$() —— 药水伤害、唤魔者尖牙、监守者音爆、荆棘反伤$(li)$(bold)铁魔法$()九学派法术（火焰 / 冰霜 / 闪电 / 神圣 / 末影 / 血 / 唤魔 / 自然 / 异界）$(li)$(bold)诡厄巫法$()法术$(br2)$(bold)其余一律不减$()：物理（近战 / 箭矢 / 爆炸 / 坠落）、虚空、穿透 / 真伤、原版火焰与岩浆、原版闪电、凋零、中毒、龙息、溺水、冰冻、饥饿 —— 这些打在身上是$(bold)全额$()。"
     },
     {
       "type": "patchouli:text",
-      "text": "其余（火焰、岩浆、闪电、魔法、铁魔法与诡厄巫法的法术、凋零、冰冻、溺水、音爆…）$(bold)全部 −10%/件$()。$(br2)$(italic)定义写在两个数据包标签里，可自行增删：$(li)$(bold)tinkersnewlife:is_physical$() —— 什么算物理$(li)$(bold)tinkersnewlife:ignores_mana_shield$() —— 虚空 / 穿透 / 规则级$(br2)另外还会读诡厄巫法自带的 $(bold)goety:physical$() 标签，并兜住「直接来源是生物且不是魔法」的近战与「id 里含 void」的虚空伤害。$()"
+      "text": "$(italic)判定与「导魔」共用同一套（见 $(l:trait_magic_conduction)导魔$() 那一篇）✓，另有两条$(bold)一票否决$()会在魔法判定之前先拦一道：$(li)$(bold)物理$() —— 标签 $(bold)tinkersnewlife:is_physical$() + 诡厄自带的 $(bold)goety:physical$() + \"直接来源是生物且不是魔法\"$(li)$(bold)虚空 / 穿透 / 规则级$() —— 标签 $(bold)tinkersnewlife:ignores_mana_shield$() + 原版 $(bold)bypasses_invulnerability$() + 本模组 $(bold)true_pierce$() + \"id 里含 void\"$(br2)两个标签都在数据包里，可自行增删 ✓ $()"
     }
   ],
   "flag": "mod:irons_spellbooks"

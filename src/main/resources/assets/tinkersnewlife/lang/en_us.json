@@ -434,7 +434,7 @@
   "item.tinkersnewlife.ring_of_one_mind.flavor": "One mind, two rings; the art turns as you will it.",
   "item.tinkersnewlife.cognitive_mask": "Two-way Cognitive Obstruction Mask",
   "modifier.tinkersnewlife.mana_shield": "Mana Shield",
-  "modifier.tinkersnewlife.mana_shield.tip": "With %s piece(s): -%s%% non-physical damage, +%s max health, buff/debuff duration x0.5",
+  "modifier.tinkersnewlife.mana_shield.tip": "With %s piece(s): -%s%% magic damage, +%s max health, buff/debuff duration x0.5",
   "modifier.tinkersnewlife.mana_shield.flavor": "§7Mana hardens into a thin shell beyond the plates; spells break on it, and whatever clings to you fades fast.",
   "trait.tinkersnewlife.mana_shield": "Mana Shield",
   "modifier.tinkersnewlife.mana_surge": "Mana Surge",

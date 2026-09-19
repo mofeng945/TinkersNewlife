@@ -33,24 +33,28 @@ import java.util.List;
  * 巫师套装特性·<b>魔力护盾</b>（<b>无等级</b> ✓ 按件叠加 ✓）—— 内建在四件巫师套上
  * （走工具定义的 {@code tconstruct:traits} 模块 ✓ 与材料无关 ✓）。
  *
- * <p>每 1 件：<b>非物理伤害 −10%</b>（多件链乘 ✓）、<b>生命上限 +2</b>（可叠加 ✓）；
+ * <p>每 1 件：<b>魔法伤害 −10%</b>（多件链乘 ✓）、<b>生命上限 +2</b>（可叠加 ✓）；
  * 只要穿着<b>任意一件</b>：自身身上<b>一切增益与减益的持续时间减半</b>（<b>不可叠加</b> ✓ 用户口径 ✓）。
  *
- * <h2>为什么"减时长"是特性的一部分</h2>
- * 用户设计：护盾把"外来的术法"一并快速排掉 —— 好处（buff 短了也没关系）与代价（debuff 也短）
- * 同时成立 ✓，所以它是<b>判定有无</b>而不是按件叠加 ✓。
+ * <h2>只削魔法（用户最终口径 ✓）</h2>
+ * 判定直接复用「导魔」的 {@link MagicConductionModifier#isMagicDamage} ✓，
+ * 也就是只削这三类：
+ * <ol>
+ *   <li><b>原版魔法</b>：{@code witch_resistant_to} 标签 = {@code magic}（药水）、
+ *       {@code indirect_magic}（唤魔者尖牙）、{@code sonic_boom}（音爆）、{@code thorns}（荆棘反伤）✓；</li>
+ *   <li><b>铁魔法</b>九学派法术：其伤害类型消息 id 全是 {@code *_magic}（fire_magic / eldritch_magic …✓）
+ *       ⇒ 被"消息 id 含 magic"这条兜住 ✓（⚠ 它登记的 {@code neoforge:is_magic} 标签在 Forge 1.20.1 下
+ *       不生效 ✗ 所以不能只靠标签 ✓）；</li>
+ *   <li><b>诡厄巫法</b>法术：{@code forge:is_magic} 标签里的 8 个类型 ✓ + {@code goety.*} 命名空间兜底 ✓。</li>
+ * </ol>
+ * 其余<b>一律不减</b>：物理 ✓ 虚空 ✓ 穿透 ✓ 火焰 / 岩浆 / 闪电（原版）✓ 坠落 ✓ 爆炸 ✓
+ * 凋零 / 中毒 / 龙息 ✓ 溺水 / 冰冻 ✓ 饥饿 ✓ 等 ✓。
  *
- * <h2>"什么算物理伤害"</h2>
- * 见 {@link #isPhysicalDamage}：优先读我们自己的 {@code tinkersnewlife:is_physical} 标签
- * （<b>可数据包改</b> ✓）+ 诡厄巫法自带的 {@code goety:physical} 标签（软依赖 ✓）+
- * "直接来源是生物且不是魔法"的兜底 ✓。
- *
- * <h2>护盾<b>挡不住</b>的三类（用户口径 ✓）</h2>
- * <b>物理</b>（{@link #isPhysicalDamage} ✓）、<b>虚空</b>、<b>穿透</b> —— 后两类与规则级伤害
- * 由 {@link #ignoresShield} 判 ✓：原版 {@code out_of_world}（虚空）与 {@code generic_kill}
- * 本来就在 {@link DamageTypeTags#BYPASSES_INVULNERABILITY} 里 ✓，本模组 {@code true_pierce}
- * 也往那个标签贴了 ⇒ 两者天然被挡 ✓；另外再加 {@code tinkersnewlife:ignores_mana_shield}
- * 标签（可数据包改 ✓）与"id 里含 void"的兜底 ⇒ 覆盖别的 mod 的虚空伤害 ✓。
+ * <h2>仍然保留的两条"一票否决"（覆盖兜底判定的误伤 ✓）</h2>
+ * {@link #isPhysicalDamage}（{@code tinkersnewlife:is_physical} + {@code goety:physical} 标签 +
+ * 近战兜底 ✓）与 {@link #ignoresShield}（虚空 / 穿透 / 规则级 ✓）会在魔法判定<b>之前</b>先拦一道 ✓
+ * —— 因为魔法判定里有 {@code goety.*} 这种<b>按命名空间</b>的粗兜底 ✗，
+ * 会把诡厄的物理类（如 {@code goety:summon} ✓ 它自带在 {@code goety:physical} 里 ✓）误判成魔法 ✗。
  *
  * <p>减伤走 TCon 的护甲钩子 {@link ModifierHooks#MODIFY_DAMAGE} ⇒ 与「导魔」
  * {@link MagicConductionModifier} 同一套，多件<b>逐件链乘</b>（4 件 = 1−0.9⁴ ≈ 34.4% ✓）✓。
@@ -142,8 +146,11 @@ public class ManaShieldTrait extends Modifier implements TooltipModifierHook, Mo
                                    EquipmentSlot slotType, DamageSource source, float amount,
                                    boolean isDirectDamage) {
         if (amount <= 0.0F) return amount;
+        // ⭐ 用户口径（最新）：护盾**只削魔法** —— 原版魔法 ✓ 铁魔法九学派法术 ✓ 诡厄巫法法术 ✓
+        //   其余一律不减（物理 / 虚空 / 穿透 / 火焰 / 坠落 / 爆炸 / 凋零 / 中毒 …✓）
         if (isPhysicalDamage(source)) return amount;              // 物理 ⇒ 不削 ✓
-        if (ignoresShield(source)) return amount;                 // 虚空 / 穿透 / 规则级 ⇒ 不削 ✓（用户口径 ✓）
+        if (ignoresShield(source)) return amount;                 // 虚空 / 穿透 / 规则级 ⇒ 不削 ✓
+        if (!MagicConductionModifier.isMagicDamage(source)) return amount;   // 不是魔法 ⇒ 不削 ✓
         return amount * (float) (1.0D - REDUCTION_PER_PIECE);
     }
 
