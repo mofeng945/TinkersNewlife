@@ -1,6 +1,5 @@
 {
   "stats": {
-    "tconstruct:maille": {},
     "tconstruct:head": {
       "durability": 500,
       "mining_speed": 15.0,

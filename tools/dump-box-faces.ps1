@@ -4,11 +4,21 @@ param(
     [string]$Png  = "$env:USERPROFILE\Desktop\wizard_robe.png",
     [int]$Index = 7,
     [string]$BoxName = 'left_arm_maille_7',
-    [double]$UvScale = 8.0
+    [double]$UvScale = 8.0,
+    [string]$Only = ''   # 只打印这些面（逗号分隔 ✓ 默认六个都打）
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 Add-Type -AssemblyName System.Drawing
+# 输入文件常被挪来挪去 ✗ ⇒ 找不到就到桌面下找两层 ✓（再找不到才报错 ✓）
+function Resolve-Input([string]$p, [string]$leaf) {
+    if (Test-Path -LiteralPath $p) { return (Resolve-Path -LiteralPath $p).Path }
+    $hit = Get-ChildItem "$env:USERPROFILE\Desktop" -Recurse -Depth 2 -Filter $leaf -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($hit) { Write-Host ("（{0} 不在 ⇒ 改用 {1} ✓）" -f $p, $hit.FullName); return $hit.FullName }
+    throw "找不到 $leaf ✗（用 -Json/-Png/-Texture 指定路径 ✓）"
+}
+$Json = Resolve-Input $Json (Split-Path $Json -Leaf)
+$Png  = Resolve-Input $Png  (Split-Path $Png -Leaf)
 $j = [System.IO.File]::ReadAllText($Json, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
 $sheet = New-Object System.Drawing.Bitmap ([System.Drawing.Image]::FromFile($Png))
 $grey = New-Object System.Drawing.Bitmap ([System.Drawing.Image]::FromFile((Join-Path $root 'src\main\resources\assets\tinkersnewlife\textures\armor\wizard\grey.png')))
@@ -40,6 +50,7 @@ function Ch($p) {
 }
 "方块 $BoxName  w×h×d = $w×$h×$d   texOffs u=$u v=$v"
 foreach ($fn in 'down', 'up', 'west', 'north', 'east', 'south') {
+    if ($Only -and -not ($Only -split ',' -contains $fn)) { continue }
     $src = $j.elements[$Index].faces.$fn
     Write-Host ""
     Write-Host ("=== {0} ===" -f $fn)

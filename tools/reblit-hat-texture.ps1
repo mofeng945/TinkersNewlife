@@ -48,6 +48,15 @@ foreach ($l in $javaLines) {
 Write-Host ("模型里法帽方块 {0} 个（HAT_SCALE={1} ✓）" -f $hats.Count, $scale)
 
 # ---------- ② 用户的帽子模型：索引 → 组名（Java 里名字是 <组名>_<索引> ✓） ----------
+# 输入文件常被挪来挪去 ✗ ⇒ 找不到就到桌面下找两层 ✓（再找不到才报错 ✓）
+function Resolve-Input([string]$p, [string]$leaf) {
+    if (Test-Path -LiteralPath $p) { return (Resolve-Path -LiteralPath $p).Path }
+    $hit = Get-ChildItem "$env:USERPROFILE\Desktop" -Recurse -Depth 2 -Filter $leaf -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($hit) { Write-Host ("（{0} 不在 ⇒ 改用 {1} ✓）" -f $p, $hit.FullName); return $hit.FullName }
+    throw "找不到 $leaf ✗（用 -Json/-Png/-Texture 指定路径 ✓）"
+}
+$Json = Resolve-Input $Json (Split-Path $Json -Leaf)
+$Texture = Resolve-Input $Texture (Split-Path $Texture -Leaf)
 $j = [System.IO.File]::ReadAllText($Json, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
 $groupOf = @{}
 function Walk-G($node, [string]$inherited) {
@@ -127,7 +136,12 @@ for ($i = 0; $i -lt $j.elements.Count; $i++) {
         $uv = $fd.uv
         $sx0 = [Math]::Min([double]$uv[0], [double]$uv[2]) * $bestK; $sx1 = [Math]::Max([double]$uv[0], [double]$uv[2]) * $bestK
         $sy0 = [Math]::Min([double]$uv[1], [double]$uv[3]) * $bestK; $sy1 = [Math]::Max([double]$uv[1], [double]$uv[3]) * $bestK
-        $flipX = ([double]$uv[0] -gt [double]$uv[2]); $flipY = ([double]$uv[1] -gt [double]$uv[3])
+        # 逐面翻转规则（同 import-robe-texture.ps1，推导见备忘录 368）：
+        #   四侧面 flipU = (u 没反向)；上下面 flipU = (u 反向)；所有面 flipV = (v 反向)
+        $uRev = ([double]$uv[0] -gt [double]$uv[2])
+        $vRev = ([double]$uv[1] -gt [double]$uv[3])
+        $flipX = if ($fn -eq 'up' -or $fn -eq 'down') { $uRev } else { -not $uRev }
+        $flipY = $vRev
         $rot = 0; if ($fd.rotation) { $rot = [int]$fd.rotation }
         $fr = FaceRect $box $fn
         $dx0 = $fr[0]; $dy0 = $fr[1]; $dw = $fr[2]; $dh = $fr[3]

@@ -2,7 +2,5 @@
   "default": [
     { "level": 1, "name": "tinkersnewlife:hastur_malice" }
   ],
-  "perStat": {
-    "tconstruct:maille": []
-  }
+  "perStat": {}
 }

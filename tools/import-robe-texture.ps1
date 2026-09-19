@@ -19,7 +19,7 @@ param(
     # 需要"按身体中线左右镜像"的方块名，逗号分隔 ✓：逐面把源的 u 反向再取样 ✓
     # 默认 = 裙摆"右半"（body_plating_1 ✓）：用户实测原方向左右反了 ✓，镜像后是他要的方向 ✓（§364 ✓）
     # ⚠ 声明成 [string] 而不是 [string[]] ✗ —— `powershell -File` 传数组参数会被塞成一整个字符串 ✗（踩过 ✓）
-    [string]$MirrorX = 'body_plating_1',
+    [string]$MirrorX = '',
     # 左右成对的方块：**由左边那块的成品反射生成右边** ✓（格式 源>派生，逗号分隔 ✓；传空串关掉 ✓）
     # 默认就是巫师法袍的四对 ✓：裙摆两半 + 两袖的镶板/系带/锁链基底 ✓（用户："缩放调整了纹理好歹给我左右对称一下" ✓）
     [string]$SymPairs = 'body_plating_1>body_plating_2,left_arm_plating_5>right_arm_plating_8,left_arm_lace_6>right_arm_lace_9,left_arm_maille_7>right_arm_maille_10',
@@ -48,6 +48,15 @@ $outDir = Join-Path $root 'build'
 if (-not (Test-Path $outDir)) { New-Item -ItemType Directory -Path $outDir | Out-Null }
 
 # ---------- ① 读用户模型：方块索引 → 六面 uv ----------
+# 输入文件常被挪来挪去 ✗ ⇒ 找不到就到桌面下找两层 ✓（再找不到才报错 ✓）
+function Resolve-Input([string]$p, [string]$leaf) {
+    if (Test-Path -LiteralPath $p) { return (Resolve-Path -LiteralPath $p).Path }
+    $hit = Get-ChildItem "$env:USERPROFILE\Desktop" -Recurse -Depth 2 -Filter $leaf -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($hit) { Write-Host ("（{0} 不在 ⇒ 改用 {1} ✓）" -f $p, $hit.FullName); return $hit.FullName }
+    throw "找不到 $leaf ✗（用 -Json/-Png/-Texture 指定路径 ✓）"
+}
+$Json = Resolve-Input $Json (Split-Path $Json -Leaf)
+$Png  = Resolve-Input $Png  (Split-Path $Png -Leaf)
 $j = [System.IO.File]::ReadAllText($Json, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
 
 # 组路径 → (骨骼, 槽)：与 tools\convert-robe-model.ps1 同一套规则 ✓
@@ -165,8 +174,14 @@ for ($i = 0; $i -lt $j.elements.Count; $i++) {
         $sx1 = [Math]::Max([double]$uv[0], [double]$uv[2]) * $UvScale
         $sy0 = [Math]::Min([double]$uv[1], [double]$uv[3]) * $UvScale
         $sy1 = [Math]::Max([double]$uv[1], [double]$uv[3]) * $UvScale
-        $flipX = ([double]$uv[0] -gt [double]$uv[2])
-        $flipY = ([double]$uv[1] -gt [double]$uv[3])
+        # ⭐ 逐面翻转规则（两边约定都照抄源码推出 ✓ 详见备忘录 §368）：
+        #   MC 实体盒式 UV 与方块模型（Blockbench ✓）在"哪个角对哪个顶点"上**不一样** ✓，
+        #   再加上实体模型 y 向下 / 方块模型 y 向上 ⇒ 侧面与上下面的规则**不同** ✗：
+        #     四侧面：flipU = (源 uv 的 u **没**反向)   上下面：flipU = (u 反向)   所有面：flipV = (v 反向)
+        $uRev = ([double]$uv[0] -gt [double]$uv[2])
+        $vRev = ([double]$uv[1] -gt [double]$uv[3])
+        $flipX = if ($fn -eq 'up' -or $fn -eq 'down') { $uRev } else { -not $uRev }
+        $flipY = $vRev
         if ($mirrored) { $flipX = -not $flipX }
         $rot = 0
         if ($fd.rotation) { $rot = [int]$fd.rotation }
