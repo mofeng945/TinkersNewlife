@@ -1,0 +1,21 @@
+{
+  "title": "Wizard Armor",
+  "text": [
+    {
+      "text": "The Wizard Armor is this mod's part-based armor set. All four pieces (hat / robe / leggings / boots) are built the same way: at the Tinkers' Anvil from plating + maille + robe lace, consuming one magic cloth as well.",
+      "paragraph": true
+    },
+    {
+      "text": "Armor value comes from the material in the plating slot; the other parts add durability and their own armor traits, so every piece can mix materials freely.",
+      "paragraph": true
+    },
+    {
+      "text": "Every piece carries the same three exclusive traits (no levels, independent of materials): Mana Surge, Mana Shield and All Paths Are One. They live in the tool definition, so only armor that still has the traits keeps the effects - wash a trait off with a modifier crystal and its bonus goes with it.",
+      "paragraph": true
+    },
+    {
+      "text": "This section is supplied by our own book repository and shows up next to the stock Tinkers' chapters.",
+      "paragraph": true
+    }
+  ]
+}

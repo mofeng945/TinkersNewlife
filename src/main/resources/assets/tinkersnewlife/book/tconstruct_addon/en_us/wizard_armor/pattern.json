@@ -1,0 +1,24 @@
+{
+  "title": "Wizard Armor Pattern",
+  "image": {
+    "file": "tinkersnewlife:textures/gui/tinker_pattern/wizard_armor.png",
+    "width": 64,
+    "height": 64,
+    "u": 0,
+    "v": 0,
+    "uw": 16,
+    "vh": 16,
+    "texWidth": 16,
+    "texHeight": 16
+  },
+  "text": [
+    {
+      "text": "This is the pattern drawn on the station layout when you pick the Wizard Armor at the Tinkers' Anvil: the silhouette of a pointed hat and a robe.",
+      "paragraph": true
+    },
+    {
+      "text": "It is a 16x16 transparent PNG at assets/tinkersnewlife/textures/gui/tinker_pattern/wizard_armor.png, shared by all four pieces.",
+      "paragraph": true
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "title": "Robe Lace",
+  "item": "tinkersnewlife:robe_lace",
+  "text": [
+    {
+      "text": "One of the Wizard Armor exclusive parts. Its stat is the armor stat maille - it only carries that material's armor traits and never drags in a weapon trait.",
+      "paragraph": true
+    },
+    {
+      "text": "Build it in the Part Builder with a blank pattern plus any craftable material (2 material units), or cast it from the fluid of 2 material units using a cast.",
+      "paragraph": true
+    },
+    {
+      "text": "The three casts: gold cast (reusable), sand cast and red sand cast (single use). The gold cast is cast from 1 robe lace + 90 mB molten gold; sand casts can be molded from the gold cast, or pressed directly from sand / red sand in the Part Builder.",
+      "paragraph": true
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "tinkersnewlife:item/tool/cast/robe_lace_red_sand_cast"
+  }
+}

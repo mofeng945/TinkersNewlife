@@ -1,0 +1,24 @@
+{
+  "title": "巫师甲的图案",
+  "image": {
+    "file": "tinkersnewlife:textures/gui/tinker_pattern/wizard_armor.png",
+    "width": 64,
+    "height": 64,
+    "u": 0,
+    "v": 0,
+    "uw": 16,
+    "vh": 16,
+    "texWidth": 16,
+    "texHeight": 16
+  },
+  "text": [
+    {
+      "text": "在工匠砧（组装盔甲的站台）里选择巫师套装时，站位图上用的就是这张图案：一顶尖顶法帽与一件法袍的剪影。",
+      "paragraph": true
+    },
+    {
+      "text": "它是一张 16×16 的透明底 PNG，放在 assets/tinkersnewlife/textures/gui/tinker_pattern/wizard_armor.png，四件巫师甲共用同一张。",
+      "paragraph": true
+    }
+  ]
+}

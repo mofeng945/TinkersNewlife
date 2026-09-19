@@ -160,6 +160,10 @@ public class ModCreativeTabs {
                                 addAllPartVariants(output, ModItems.YO_YO_SPOOL.get());
                                 // 巫师套装的两个专属部件（盔甲统计 ⇒ 只带护甲特性 ✓）
                                 addAllPartVariants(output, ModItems.ROBE_LACE.get());
+                                // 法袍系带的铸模（与其它部件一致：金铸模 / 沙铸模 / 红沙铸模 ✓，无模组门控 ✓）
+                                output.accept(ModItems.ROBE_LACE_CAST.get());
+                                output.accept(ModItems.ROBE_LACE_SAND_CAST.get());
+                                output.accept(ModItems.ROBE_LACE_RED_SAND_CAST.get());
                                 output.accept(ModItems.MAGIC_CLOTH.get());   // 魔法布料是普通物品 ✓（不再是部件）
                                 // ⭐ 咒力核心部件已从创造物品栏移除（易与成品咒力核心混淆，需用核心请取成品变体）
 

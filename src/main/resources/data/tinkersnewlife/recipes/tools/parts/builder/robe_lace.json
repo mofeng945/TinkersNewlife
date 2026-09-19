@@ -5,6 +5,9 @@
   "pattern_item": [
     {
       "tag": "tconstruct:patterns/default"
+    },
+    {
+      "item": "tinkersnewlife:robe_lace_cast"
     }
   ],
   "result": {

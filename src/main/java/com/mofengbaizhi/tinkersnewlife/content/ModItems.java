@@ -167,6 +167,18 @@ public class ModItems {
     public static final RegistryObject<Item> MAGIC_CLOTH =
         ITEMS.register("magic_cloth", () -> new Item(new Item.Properties()));
 
+    /** 法袍系带铸模（金铸模） */
+    public static final RegistryObject<Item> ROBE_LACE_CAST =
+            ITEMS.register("robe_lace_cast", () -> new Item(new Item.Properties().stacksTo(1)));
+
+    /** 法袍系带铸模（沙铸模） */
+    public static final RegistryObject<Item> ROBE_LACE_SAND_CAST =
+            ITEMS.register("robe_lace_sand_cast", () -> new Item(new Item.Properties().stacksTo(1)));
+
+    /** 法袍系带铸模（红沙铸模） */
+    public static final RegistryObject<Item> ROBE_LACE_RED_SAND_CAST =
+            ITEMS.register("robe_lace_red_sand_cast", () -> new Item(new Item.Properties().stacksTo(1)));
+
     /** 悠悠球轮铸模（金铸模） */
     public static final RegistryObject<Item> YO_YO_WHEEL_CAST =
             ITEMS.register("yo_yo_wheel_cast", () -> new Item(new Item.Properties().stacksTo(1)));

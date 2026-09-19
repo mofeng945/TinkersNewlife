@@ -1,0 +1,44 @@
+[
+  {
+    "name": "intro",
+    "type": "mantle:text",
+    "data": "wizard_armor/intro.json"
+  },
+  {
+    "name": "mana_surge",
+    "type": "tconstruct:modifier",
+    "data": "wizard_armor/mana_surge.json",
+    "condition": {
+      "type": "forge:mod_loaded",
+      "modid": "irons_spellbooks"
+    }
+  },
+  {
+    "name": "mana_shield",
+    "type": "tconstruct:modifier",
+    "data": "wizard_armor/mana_shield.json",
+    "condition": {
+      "type": "forge:mod_loaded",
+      "modid": "irons_spellbooks"
+    }
+  },
+  {
+    "name": "all_paths_one",
+    "type": "tconstruct:modifier",
+    "data": "wizard_armor/all_paths_one.json",
+    "condition": {
+      "type": "forge:mod_loaded",
+      "modid": "irons_spellbooks"
+    }
+  },
+  {
+    "name": "robe_lace",
+    "type": "mantle:showcase",
+    "data": "wizard_armor/robe_lace.json"
+  },
+  {
+    "name": "wizard_pattern",
+    "type": "mantle:image_text",
+    "data": "wizard_armor/pattern.json"
+  }
+]
