@@ -19,7 +19,7 @@ param(
     [double]$LegTopUserY = 19.52344,
     [double]$OurLegHeight = 12.0,
     [switch]$NoPaint,
-    [switch]$NoClamp
+    [switch]$Clamp      # 默认关：不截短（用户要求 ✓）；要截才加 -Clamp
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
@@ -82,7 +82,7 @@ Write-Host ("换算：SXZ={0}  SY={1:N4}  方块 {2} 个" -f $SXZ, $SY, $boxes.C
 
 # ---------- 截短：越过袍摆底边的一律缩到刚好不越界（腿局部 8.196 ✓）----------
 $hemBottomLocal = 20.196 - 12.0
-if (-not $NoClamp) {
+if ($Clamp) {   # ⚠ 默认**不截**（用户 2026-09-19：要缩就整体缩 ✓ 不许截掉长出来的部分 ✗）
     foreach ($b in $boxes) {
         if ($b.Y + $b.H -gt $hemBottomLocal + 0.0001) {
             $oldH = $b.H

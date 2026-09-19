@@ -207,7 +207,7 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
         PartDefinition legLPart = root.getChild("left_leg");
         addLocalBox(legRPart, "right_leg_lace_0", -2.231F, 3.58463F, -2.2795F, 4.462F, 3.13326F, 4.559F, 42, 66);
         addLocalBox(legRPart, "right_leg_plating_1", -2.1825F, 0F, -2.231F, 4.365F, 3.07323F, 4.462F, 62, 67);
-        addLocalBox(legRPart, "right_leg_maille_2", -2.08551F, 6.46819F, -2.134F, 4.17101F, 1.72781F, 4.268F, 61, 0);
+        addLocalBox(legRPart, "right_leg_maille_2", -2.08551F, 6.46819F, -2.134F, 4.17101F, 5.53181F, 4.268F, 61, 0);
         addLocalBox(legLPart, "left_leg_lace_4", -2.231F, 3.4862F, -2.2795F, 4.46201F, 1.84394F, 4.559F, 81, 71);
         addLocalBox(legLPart, "left_leg_plating_3", -2.1825F, 0F, -2.231F, 4.365F, 3.07323F, 4.462F, 0, 7);
 
