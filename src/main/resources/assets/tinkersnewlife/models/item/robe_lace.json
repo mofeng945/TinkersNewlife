@@ -1,1 +1,1 @@
-{ "parent": "minecraft:item/generated", "textures": { "layer0": "tinkersnewlife:item/robe_lace" } }
+{ "loader": "tconstruct:material", "parent": "forge:item/default", "textures": { "texture": "tinkersnewlife:item/tool/parts/robe_lace" } }
