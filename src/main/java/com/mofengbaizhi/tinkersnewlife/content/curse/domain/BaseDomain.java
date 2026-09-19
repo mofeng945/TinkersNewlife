@@ -662,12 +662,20 @@ public abstract class BaseDomain {
      *  领域对抗期间消耗按 clashCostMultiplier 倍率放大（对方输出/亲和越高，消耗越猛）。
      *  ⭐ 咒力耗尽时自动改为消耗诡厄巫法（Goety）灵魂能量兜底：咒力:灵魂能量 = 1:3，
      *  即 3 点灵魂能量相当于 1 点咒力；灵魂能量也不足时才判定领域关闭。 */
+    /** 万法有道·法力兜底提示只报一次（与灵魂兜底同一套 ✓） */
+    private boolean manaFallbackNotified = false;
+
     protected final boolean spendCurse(ServerPlayer player) {
         if (CursePowerHelper.isCurseInfinite(player)) return true;
         double cost = curseCostPerSecond * clashCostMultiplier / 20.0;
         int result = CursePowerHelper.payCurseWithSoulFallback(player, cost);
         if (result >= 0) {
             // 首次进入灵魂兜底时提示一次（每个领域实例）
+            if (result == 2 && !manaFallbackNotified) {
+                manaFallbackNotified = true;
+                player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                        "message.tinkersnewlife.mana_fallback"), true);
+            }
             if (result == 1 && !soulFallbackNotified) {
                 soulFallbackNotified = true;
                 player.displayClientMessage(net.minecraft.network.chat.Component.translatable(

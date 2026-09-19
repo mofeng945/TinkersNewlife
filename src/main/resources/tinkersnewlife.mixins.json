@@ -11,7 +11,9 @@
     "SuperTierEffectMixin",
     "EldritchLearningMixin",
     "ServerPlayerDeathMixin",
-    "ManaShieldEffectMixin"
+    "ManaShieldEffectMixin",
+    "AllPathsOneManaMixin",
+    "AllPathsOneSoulMixin"
   ],
   "client": [
     "EntityRenderDispatcherMixin",

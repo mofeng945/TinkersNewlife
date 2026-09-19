@@ -18,6 +18,9 @@ public class Modifiers {
     /** 巫师套装特性·魔力护盾（无等级 ✓ 按件叠加 ✓ 内建在四件巫师套上 ✓） */
     public static final StaticModifier<ManaShieldTrait> MANA_SHIELD =
             MODIFIERS.register("mana_shield", ManaShieldTrait::new);
+    /** 巫师套装特性·万法有道（无等级 ✓ 任意一件即生效 ✓ 三系资源互垫 ✓） */
+    public static final StaticModifier<AllPathsOneTrait> ALL_PATHS_ONE =
+            MODIFIERS.register("all_paths_one", AllPathsOneTrait::new);
     public static final StaticModifier<DragonsteelFireTrait> DRAGONSTEEL_FIRE =
             MODIFIERS.register("dragonsteel_fire", DragonsteelFireTrait::new);
 
