@@ -45,6 +45,13 @@ import java.util.List;
  * （<b>可数据包改</b> ✓）+ 诡厄巫法自带的 {@code goety:physical} 标签（软依赖 ✓）+
  * "直接来源是生物且不是魔法"的兜底 ✓。
  *
+ * <h2>护盾<b>挡不住</b>的三类（用户口径 ✓）</h2>
+ * <b>物理</b>（{@link #isPhysicalDamage} ✓）、<b>虚空</b>、<b>穿透</b> —— 后两类与规则级伤害
+ * 由 {@link #ignoresShield} 判 ✓：原版 {@code out_of_world}（虚空）与 {@code generic_kill}
+ * 本来就在 {@link DamageTypeTags#BYPASSES_INVULNERABILITY} 里 ✓，本模组 {@code true_pierce}
+ * 也往那个标签贴了 ⇒ 两者天然被挡 ✓；另外再加 {@code tinkersnewlife:ignores_mana_shield}
+ * 标签（可数据包改 ✓）与"id 里含 void"的兜底 ⇒ 覆盖别的 mod 的虚空伤害 ✓。
+ *
  * <p>减伤走 TCon 的护甲钩子 {@link ModifierHooks#MODIFY_DAMAGE} ⇒ 与「导魔」
  * {@link MagicConductionModifier} 同一套，多件<b>逐件链乘</b>（4 件 = 1−0.9⁴ ≈ 34.4% ✓）✓。
  *
@@ -73,6 +80,15 @@ public class ManaShieldTrait extends Modifier implements TooltipModifierHook, Mo
     /** 诡厄巫法自带的物理标签（软依赖 ✓ 没装就是空标签 ✓ 不会崩 ✓） */
     private static final TagKey<DamageType> GOETY_PHYSICAL =
             TagKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("goety", "physical"));
+
+    /**
+     * <b>护盾挡不住</b>的伤害标签（虚空 / 穿透 / 规则级 ✓ 用户口径 ✓ 可数据包改 ✓）：
+     * 原版 {@code out_of_world}（掉出世界 = 虚空 ✓）与 {@code generic_kill}（/kill ✓）、
+     * 本模组 {@code true_pierce}（穿透 / 真伤 ✓）、诡厄巫法 {@code voided}、
+     * 枪械的 {@code bullet_void*}、莱特兰扩充的 {@code void_eye} ✓。
+     */
+    private static final TagKey<DamageType> TN_IGNORES_SHIELD =
+            TagKey.create(Registries.DAMAGE_TYPE, new ResourceLocation(TinkersNewlife.MOD_ID, "ignores_mana_shield"));
 
     /**
      * 已经被我们减半过的实例（判"这个时长是不是减半后的"✓ 防"重加刷新"时一路塌到 1 tick ✗）。
@@ -127,8 +143,52 @@ public class ManaShieldTrait extends Modifier implements TooltipModifierHook, Mo
                                    boolean isDirectDamage) {
         if (amount <= 0.0F) return amount;
         if (isPhysicalDamage(source)) return amount;              // 物理 ⇒ 不削 ✓
-        if (isRuleLevel(source)) return amount;                   // 规则级（/kill、虚空外）不吃护盾 ✓
+        if (ignoresShield(source)) return amount;                 // 虚空 / 穿透 / 规则级 ⇒ 不削 ✓（用户口径 ✓）
         return amount * (float) (1.0D - REDUCTION_PER_PIECE);
+    }
+
+    /**
+     * 这次伤害是不是<b>护盾一律挡不住</b>的那几类（用户口径：物理 ✓ 虚空 ✓ 穿透 ✓）——
+     * 物理由 {@link #isPhysicalDamage} 单独判，这里管**虚空 / 穿透 / 规则级** ✓。
+     *
+     * <p>判定顺序：
+     * <ol>
+     *   <li>我们的 {@code tinkersnewlife:ignores_mana_shield} 标签（<b>可数据包改</b> ✓）；</li>
+     *   <li>{@link DamageTypeTags#BYPASSES_INVULNERABILITY} —— 原版 {@code out_of_world}（虚空 ✓）
+     *       与 {@code generic_kill}（/kill ✓）本身就在这个标签里 ✓，本模组 {@code true_pierce}
+     *       也往它里面贴了（见 {@code data/minecraft/tags/damage_type/bypasses_invulnerability.json} ✓）⇒
+     *       「原版虚空」与「穿透」到这里就已经被挡住了 ✓；</li>
+     *   <li>{@code TruePierce.isTruePierce} —— 本模组真伤判定（含诡厄巫法那支真伤源 ✓）；</li>
+     *   <li>虚空兜底：伤害类型 id 的 <b>path</b> 是 {@code void*} / {@code *_void} / {@code *_void_*}
+     *       ⇒ 覆盖"别的 mod 的虚空伤害但没打标签"的情况 ✓（{@code goety:voided}、
+     *       {@code tacz:bullet_void}、{@code l2complements:void_eye} …✓）。</li>
+     * </ol>
+     */
+    public static boolean ignoresShield(@Nullable DamageSource source) {
+        if (source == null) return false;
+        try {
+            if (source.is(TN_IGNORES_SHIELD)) return true;
+        } catch (Throwable ignored) {
+        }
+        try {
+            if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) return true;
+        } catch (Throwable ignored) {
+        }
+        try {
+            if (com.mofengbaizhi.tinkersnewlife.util.TruePierce.isTruePierce(source)) return true;
+        } catch (Throwable ignored) {
+        }
+        try {
+            String id = source.getMsgId();
+            if (id != null && !id.isEmpty()) {
+                String s = id.toLowerCase();
+                int colon = s.indexOf(':');
+                String path = colon < 0 ? s : s.substring(colon + 1);
+                if (path.startsWith("void") || path.contains("_void")) return true;
+            }
+        } catch (Throwable ignored) {
+        }
+        return false;
     }
 
     /** 这次伤害算"物理"吗（判定顺序见类注释 ✓） */
@@ -146,15 +206,6 @@ public class ManaShieldTrait extends Modifier implements TooltipModifierHook, Mo
         try {
             return source.getDirectEntity() instanceof LivingEntity
                     && !MagicConductionModifier.isMagicDamage(source);
-        } catch (Throwable ignored) {
-            return false;
-        }
-    }
-
-    /** 规则级伤害（无视无敌帧的那类 ✗ 例如 /kill、虚空外）不吃护盾 ✓ */
-    private static boolean isRuleLevel(DamageSource source) {
-        try {
-            return source.is(DamageTypeTags.BYPASSES_INVULNERABILITY);
         } catch (Throwable ignored) {
             return false;
         }

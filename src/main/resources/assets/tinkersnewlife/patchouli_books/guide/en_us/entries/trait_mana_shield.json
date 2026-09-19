@@ -10,7 +10,11 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)What counts as \"physical\"$() (these are $(bold)not$() reduced):$(li)melee / contact: $(bold)player_attack$(), $(bold)mob_attack$(), $(bold)sting$(), cactus, sweet berry bush$(li)entity projectiles: arrows, tridents, thrown items, $(bold)mob_projectile$(), llama spit$(li)kinetic: fall, elytra wall crash, falling anvil / stone / block, fireworks$(li)explosions: TNT, creeper, bed and respawn anchor$(br2)Everything else (fire, lava, lightning, magic, Iron's Spells and Goety spells, wither, freezing, drowning, void, sonic boom ...) is $(bold)-10% per piece$().$(br2)$(italic)The definition lives in the datapack tag $(bold)tinkersnewlife:is_physical$() so you can edit it; the trait also reads Goety's own $(bold)goety:physical$() tag and falls back to \"direct source is a living entity and not magic\" for modded melee. $(bold)Rule-level$() damage such as $(bold)/kill$() and out-of-world is never reduced.$()"
+      "text": "$(bold)Three kinds the shield never reduces$():$(li)$(bold)physical$() - melee / contact, entity projectiles (arrows, tridents, thrown items), kinetic (fall, falling blocks), explosions$(li)$(bold)void$() - falling out of the world, plus modded void types (Goety $(bold)voided$(), gun mod $(bold)bullet_void$(), L2 Complements $(bold)void_eye$() ...)$(li)$(bold)piercing$() - this mod's $(bold)true_pierce$() (the true damage used by Pierce EX, sword aura, Laevatain and friends)$(br2)Rule-level damage such as $(bold)/kill$() and out-of-world is never reduced either."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Everything else (fire, lava, lightning, magic, Iron's Spells and Goety spells, wither, freezing, drowning, sonic boom ...) is $(bold)-10% per piece$().$(br2)$(italic)Two datapack tags define this and can be edited:$(li)$(bold)tinkersnewlife:is_physical$() - what counts as physical$(li)$(bold)tinkersnewlife:ignores_mana_shield$() - void / piercing / rule-level$(br2)The trait also reads Goety's own $(bold)goety:physical$() tag, falls back to \"direct source is a living entity and not magic\" for modded melee, and to \"id contains void\" for modded void damage.$()"
     }
   ],
   "flag": "mod:irons_spellbooks"

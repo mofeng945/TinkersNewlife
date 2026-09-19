@@ -10,7 +10,11 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)什么算\"物理伤害\"$()（这些$(bold)不减$()）：$(li)近战 / 接触：$(bold)player_attack$()、$(bold)mob_attack$()、$(bold)sting$()、仙人掌、甜浆果丛$(li)实体投射物：箭、三叉戟、投掷物、$(bold)mob_projectile$()、羊驼唾沫$(li)动能：坠落、鞘翅撞墙、落铁砧 / 落石 / 落方块、烟花$(li)爆炸：TNT、苦力怕、床与重生锚$(br2)其余（火焰、岩浆、闪电、魔法、铁魔法与诡厄巫法的法术、凋零、冰冻、溺水、虚空、音爆…）$(bold)全部 −10%/件$()。$(br2)$(italic)定义写在数据包标签 $(bold)tinkersnewlife:is_physical$() 里，可自行增删；另外会读诡厄巫法自带的 $(bold)goety:physical$() 标签，并兜住\"直接来源是生物且不是魔法\"的近战。$(bold)/kill$()、虚空外这类$(bold)规则级$()伤害不吃护盾。$()"
+      "text": "$(bold)护盾挡不住的三类$()：$(li)$(bold)物理伤害$() —— 近战 / 接触、实体投射物（箭、三叉戟、投掷物）、动能（坠落、落方块）、爆炸$(li)$(bold)虚空伤害$() —— 掉出世界，以及各 mod 的虚空类型（诡厄 $(bold)voided$()、枪械 $(bold)bullet_void$()、莱特兰扩充 $(bold)void_eye$() …）$(li)$(bold)穿透伤害$() —— 本模组的 $(bold)true_pierce$()（穿透EX、剑气、莱瓦汀那类真伤）$(br2)另外 $(bold)/kill$()、虚空外这类规则级伤害也一律不减。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "其余（火焰、岩浆、闪电、魔法、铁魔法与诡厄巫法的法术、凋零、冰冻、溺水、音爆…）$(bold)全部 −10%/件$()。$(br2)$(italic)定义写在两个数据包标签里，可自行增删：$(li)$(bold)tinkersnewlife:is_physical$() —— 什么算物理$(li)$(bold)tinkersnewlife:ignores_mana_shield$() —— 虚空 / 穿透 / 规则级$(br2)另外还会读诡厄巫法自带的 $(bold)goety:physical$() 标签，并兜住「直接来源是生物且不是魔法」的近战与「id 里含 void」的虚空伤害。$()"
     }
   ],
   "flag": "mod:irons_spellbooks"
