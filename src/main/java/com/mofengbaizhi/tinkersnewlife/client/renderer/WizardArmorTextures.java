@@ -212,8 +212,12 @@ public final class WizardArmorTextures {
         try {
             net.minecraft.client.renderer.entity.EntityRenderer<?> renderer =
                     net.minecraft.client.Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(living);
-            return renderer instanceof net.minecraft.client.renderer.entity.LivingEntityRenderer<?, ?> ler
-                    && ler.getModel() instanceof net.minecraft.client.model.HumanoidModel<?>;
+            if (!(renderer instanceof net.minecraft.client.renderer.entity.LivingEntityRenderer<?, ?> ler)) return false;
+            if (!(ler.getModel() instanceof net.minecraft.client.model.HumanoidModel<?>)) return false;
+            // ⚠ 只接管**原版模型**的人形 ✗→✓：模组渲染器（Goety 仆从那类）常在自己模型外面套一层翻转/缩放 ✗，
+            //   而 RenderLivingEvent.Post 的姿势栈**不保证**等于模型自己的姿势 ✗ ⇒ 我们的甲会整件上下翻转 ✗
+            //   （用户实测 ✓）。交给原版盔甲层反而正常 ✓（形状是原版甲、贴图仍是我们的 ✓）。
+            return ler.getModel().getClass().getName().startsWith("net.minecraft.");
         } catch (Throwable ignored) {
             return false;   // 拿不到渲染器 ⇒ 交给原版层兜底 ✓
         }

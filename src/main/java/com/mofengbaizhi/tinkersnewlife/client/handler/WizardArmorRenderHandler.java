@@ -36,6 +36,8 @@ public final class WizardArmorRenderHandler {
         if (entity instanceof Player || entity instanceof ArmorStand) {
             return;   // 图层已处理 ✓ 这里再画就双画了 ✗
         }
+        // 判定与 getArmorTexture 共用一处 ✓（否则会出现"两个都画"或"两个都不画" ✗）
+        if (!com.mofengbaizhi.tinkersnewlife.client.renderer.WizardArmorTextures.drawsWizardLayer(entity)) return;
         if (!(event.getRenderer().getModel() instanceof HumanoidModel<?> parent)) return;
         boolean wears = false;
         for (EquipmentSlot slot : EquipmentSlot.values()) {
