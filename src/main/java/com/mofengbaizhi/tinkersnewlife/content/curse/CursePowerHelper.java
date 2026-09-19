@@ -263,10 +263,7 @@ public final class CursePowerHelper {
     public static boolean canPayCurse(Player player, double amount) {
         if (amount <= 0) return true;
         if (isCurseInfinite(player)) return true;
-        if (getTotalCurse(player) >= amount) return true;
-        // ⭐ 万法有道：咒力不够时，**灵魂（1 咒力 = 3 灵魂）与法力（1 咒力 = 0.75 法力）也算可用** ✓
-        //   仅在该玩家穿着带此特性的巫师甲时成立 ✓（否则保持原口径 ✗）
-        return com.mofengbaizhi.tinkersnewlife.content.modifier.AllPathsOneTrait.canCoverCurse(player, amount);
+        return getTotalCurse(player) >= amount;
     }
 
     // ------------------------------------------------------------
@@ -410,23 +407,8 @@ public final class CursePowerHelper {
             soulsNeeded = Math.max(1, (int) Math.ceil(soulsNeeded * (1.0 - 0.05 * discount)));
         }
         int souls = com.mofengbaizhi.tinkersnewlife.util.SoulEnergyBridge.getSouls(player);
-        if (souls >= soulsNeeded) {
-            return com.mofengbaizhi.tinkersnewlife.util.SoulEnergyBridge.decreaseSouls(player, soulsNeeded) ? 1 : -1;
-        }
-        // ⭐ 万法有道：灵魂也不够 ⇒ 先尽力扣光灵魂，剩下的用**法力**补（1 法力 = 4 灵魂 ✓ 用户口径 ✓）
-        if (!com.mofengbaizhi.tinkersnewlife.content.modifier.AllPathsOneTrait.active(player)) return -1;
-        int soulsUsed = Math.max(0, souls);
-        if (soulsUsed > 0
-                && !com.mofengbaizhi.tinkersnewlife.util.SoulEnergyBridge.decreaseSouls(player, soulsUsed)) {
-            return -1;
-        }
-        double soulsLeft = soulsNeeded - soulsUsed;
-        int manaNeeded = (int) Math.ceil(
-                soulsLeft / com.mofengbaizhi.tinkersnewlife.content.modifier.AllPathsOneTrait.SOULS_PER_MANA);
-        if (!com.mofengbaizhi.tinkersnewlife.content.modifier.AllPathsOneTrait.spendMana(player, manaNeeded)) {
-            return -1;
-        }
-        return 2;   // 2 = **法力**兜底 ✓（与 1 = 灵魂兜底区分 ✓ 调用方只在 result==1 时提示灵魂 ✓）
+        if (souls < soulsNeeded) return -1;
+        return com.mofengbaizhi.tinkersnewlife.util.SoulEnergyBridge.decreaseSouls(player, soulsNeeded) ? 1 : -1;
     }
 
     /** 读取穿戴护甲上"灵魂折扣"特性总级数（对任意穿戴者生效） */
