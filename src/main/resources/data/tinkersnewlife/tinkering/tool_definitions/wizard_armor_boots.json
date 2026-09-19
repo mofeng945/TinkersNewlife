@@ -50,7 +50,8 @@
                     {
                         "type":  "tconstruct:traits",
                         "traits":  [
-                                         { "level":  1, "name":  "tinkersnewlife:mana_surge" }
+                                         { "level":  1, "name":  "tinkersnewlife:mana_surge" },
+                                         { "level":  1, "name":  "tinkersnewlife:mana_shield" }
                                      ]
                     }
                 ]

@@ -82,8 +82,12 @@ public final class WizardArmorSetHandler {
             for (Entity entity : level.getAllEntities()) {
                 if (!(entity instanceof LivingEntity living)) continue;
                 int pieces = wornPieces(living);
-                if (pieces == 0 && !hasOurModifier(living)) continue;   // 无关实体直接跳过 ✓
+                int shield = com.mofengbaizhi.tinkersnewlife.content.modifier.ManaShieldTrait.countWorn(living);
+                if (pieces == 0 && shield == 0 && !hasOurModifier(living)
+                        && !ManaShieldHandler.hasOurModifier(living)) continue;   // 无关实体直接跳过 ✓
                 applySurge(living, pieces);
+                // ⭐ 魔力护盾的生命上限顺带在这里结算 ✓ —— 并入同一次实体遍历（不为每个特性各扫全世界 ✗）
+                ManaShieldHandler.applyShield(living, shield);
             }
         }
     }

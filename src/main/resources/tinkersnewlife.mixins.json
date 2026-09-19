@@ -10,7 +10,8 @@
     "SpellInterruptFocusMixin",
     "SuperTierEffectMixin",
     "EldritchLearningMixin",
-    "ServerPlayerDeathMixin"
+    "ServerPlayerDeathMixin",
+    "ManaShieldEffectMixin"
   ],
   "client": [
     "EntityRenderDispatcherMixin",

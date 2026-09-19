@@ -1,0 +1,17 @@
+{
+  "name": "Mana Shield",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:textures/gui/modifiers/mana_shield.png",
+  "sortnum": 58,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Mana Shield$() (default trait of all four $(bold)Wizard Set$() pieces, $(bold)unleveled$())$(br2)Active as long as you wear $(bold)any single piece$() carrying this trait.$(br2)$(bold)Three effects$():$(li)$(bold)-10% non-physical damage per piece$() ($(bold)chained$(): about -19% with two pieces, -34.4% with four)$(li)$(bold)+2 max health per piece$() (stacks, +8 for the full set)$(li)$(bold)All buffs and debuffs on you last half as long$() ($(bold)does not stack$() - always x0.5 no matter how many pieces; infinite effects are unaffected)"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)What counts as \"physical\"$() (these are $(bold)not$() reduced):$(li)melee / contact: $(bold)player_attack$(), $(bold)mob_attack$(), $(bold)sting$(), cactus, sweet berry bush$(li)entity projectiles: arrows, tridents, thrown items, $(bold)mob_projectile$(), llama spit$(li)kinetic: fall, elytra wall crash, falling anvil / stone / block, fireworks$(li)explosions: TNT, creeper, bed and respawn anchor$(br2)Everything else (fire, lava, lightning, magic, Iron's Spells and Goety spells, wither, freezing, drowning, void, sonic boom ...) is $(bold)-10% per piece$().$(br2)$(italic)The definition lives in the datapack tag $(bold)tinkersnewlife:is_physical$() so you can edit it; the trait also reads Goety's own $(bold)goety:physical$() tag and falls back to \"direct source is a living entity and not magic\" for modded melee. $(bold)Rule-level$() damage such as $(bold)/kill$() and out-of-world is never reduced.$()"
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}

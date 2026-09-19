@@ -1,0 +1,17 @@
+{
+  "name": "魔力护盾",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:textures/gui/modifiers/mana_shield.png",
+  "sortnum": 58,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)魔力护盾$()（$(bold)巫师套装$()四件自带的默认特性，$(bold)无等级$()）$(br2)只要穿着$(bold)任意一件$()带此特性的巫师甲就生效。$(br2)$(bold)三个效果$()：$(li)$(bold)非物理伤害 −10%/件$()（多件$(bold)链乘$()：2 件 ≈ −19%、4 件 ≈ −34.4%）$(li)$(bold)生命上限 +2/件$()（可叠加，四件 +8）$(li)$(bold)自身一切增益与减益的持续时间减半$()（$(bold)不可叠加$() —— 穿几件都是 ×0.5 ✓ 无限时长的效果不受影响）"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)什么算\"物理伤害\"$()（这些$(bold)不减$()）：$(li)近战 / 接触：$(bold)player_attack$()、$(bold)mob_attack$()、$(bold)sting$()、仙人掌、甜浆果丛$(li)实体投射物：箭、三叉戟、投掷物、$(bold)mob_projectile$()、羊驼唾沫$(li)动能：坠落、鞘翅撞墙、落铁砧 / 落石 / 落方块、烟花$(li)爆炸：TNT、苦力怕、床与重生锚$(br2)其余（火焰、岩浆、闪电、魔法、铁魔法与诡厄巫法的法术、凋零、冰冻、溺水、虚空、音爆…）$(bold)全部 −10%/件$()。$(br2)$(italic)定义写在数据包标签 $(bold)tinkersnewlife:is_physical$() 里，可自行增删；另外会读诡厄巫法自带的 $(bold)goety:physical$() 标签，并兜住\"直接来源是生物且不是魔法\"的近战。$(bold)/kill$()、虚空外这类$(bold)规则级$()伤害不吃护盾。$()"
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}
