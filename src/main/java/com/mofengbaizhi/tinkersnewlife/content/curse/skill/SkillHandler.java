@@ -86,7 +86,7 @@ public final class SkillHandler {
         ToolStack tool = ToolHelper.getToolStack(core);
         if (tool == null) return null;
         for (SkillType t : SkillType.values()) {
-            if (tool.getModifierLevel(skillModifier(t)) > 0) return t;
+            if (ToolHelper.getActiveModifierLevel(tool, skillModifier(t)) > 0) return t;
         }
         return null;
     }

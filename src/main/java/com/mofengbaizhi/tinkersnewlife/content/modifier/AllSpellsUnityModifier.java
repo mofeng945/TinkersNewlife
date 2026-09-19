@@ -89,7 +89,7 @@ public class AllSpellsUnityModifier extends Modifier implements TooltipModifierH
     public static int levelOf(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return 0;
         var tool = ToolHelper.getToolStack(stack);
-        return tool == null ? 0 : clampLevel(tool.getModifierLevel(ID));
+        return clampLevel(ToolHelper.getActiveModifierLevel(tool, ID));
     }
 
     /** 身上（主手/副手/护甲）带此特性的物品 */

@@ -48,7 +48,7 @@ public class CorruptionHandler {
 
         ToolStack tool = ToolHelper.getCombatToolWith(event.getSource(), player, CORRUPTION);
         if (tool == null) return;
-        int level = tool.getModifierLevel(CORRUPTION);
+        int level = ToolHelper.getActiveModifierLevel(tool, CORRUPTION);
         if (level <= 0) return;
 
         // 灵魂上限 × 0.5%，封顶 100；灵魂不足则不增幅

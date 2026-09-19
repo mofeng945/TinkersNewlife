@@ -6,15 +6,23 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(bold)All Paths Are One$() (default trait of all four $(bold)Wizard Set$() pieces, $(bold)unleveled$())$(br2)Active while wearing $(bold)any single piece$() (the effect itself does $(bold)not$() stack per piece).$(br2)$(bold)The three pools cover each other$() - when one runs short, the next one in line pays:$(li)$(bold)Iron's mana$() short -> $(bold)curse$() first -> then $(bold)souls$()$(li)$(bold)Goety souls$() short -> $(bold)curse$() first -> then $(bold)mana$()$(li)$(bold)this mod's curse$() short -> $(bold)souls$() first (as before) -> then $(bold)mana$()"
+      "text": "$(bold)All Paths Are One$() (default trait of all four $(bold)Wizard Set$() pieces, $(bold)unleveled$())$(br2)Active while wearing $(bold)any single piece$() (the effect itself does $(bold)not$() stack per piece).$(br2)$(bold)The three pools cover each other$():$(li)$(bold)Iron's mana$() short -> $(bold)curse$() first -> then $(bold)souls$()$(li)$(bold)Goety souls$() short -> $(bold)curse$() first -> then $(bold)mana$()$(li)$(bold)this mod's curse$() short -> $(bold)souls$() first (as before) -> then $(bold)mana$()"
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)Exchange rates$() (all normalised onto souls, so they stay consistent):$(li)$(bold)1 mana = 4 souls$()$(li)$(bold)1 curse = 3 souls$() (the long-standing soul fallback ratio)$(li)=> $(bold)1 curse = 0.75 mana$()$(br2)$(bold)Example$(): you have 20 mana and the spell costs 60, so 40 mana worth of curse is consumed (about 54 curse); if curse runs out too, souls keep paying (40 mana = 160 souls).$(br2)$(italic)The resources are really spent - nothing is free, and when all three are empty the spell still fails."
+      "text": "$(bold)Exchange rates$() (all normalised onto souls, so they stay consistent):$(li)$(bold)1 mana = 4 souls$()$(li)$(bold)1 curse = 3 souls$() (the long-standing soul fallback ratio)$(li)=> $(bold)1 curse = 0.75 mana$()$(br2)$(bold)Example$(): you have 20 mana and the spell costs 60, so 40 mana worth of curse is consumed (about 54 curse); if curse runs out too, souls keep paying (40 mana = 160 souls)."
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)Details$():$(li)Settled on the $(bold)server$() only - the mana bar and soul counter always show $(bold)real$() values, never inflated$(li)On the Iron's side the affordability check is first told the convertible amount, and the ledger is corrected at the actual deduction - so charged spells (check and deduction dozens of ticks apart) still come out right$(li)On the Goety side the check only $(bold)predicts$() and the real payment happens at deduction, and only while you actually $(bold)hold a Goety item$() - so robe / charm threshold checks are not exploited$(li)The curse side only counts souls and mana as spendable while this trait is worn$(br2)$(italic)A message appears when mana has to step in, matching the existing soul-fallback message.$()"
+      "text": "$(bold)The resources are really spent$() - nothing is free, and when all three are empty the spell still fails.$(br2)$(italic)It is inactive while the armor is broken (durability exhausted), and comes back once repaired.$()"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Details (1)$():$(li)Settled on the $(bold)server$() only - the mana bar and soul counter always show $(bold)real$() values, never inflated$(li)On the Iron's side the affordability check is first told the convertible amount, and the ledger is corrected at the actual deduction - so charged spells still come out right"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Details (2)$():$(li)On the Goety side the check only $(bold)predicts$() and the real payment happens at deduction, and only while you actually $(bold)hold a Goety item$() - so robe / charm threshold checks are not exploited$(li)The curse side only counts souls and mana as spendable while this trait is worn$(br2)$(italic)A message appears when mana has to step in, matching the soul-fallback message.$()"
     }
   ],
   "flag": "mod:irons_spellbooks"

@@ -74,7 +74,8 @@ public class ArmorModifierHelper {
             // ✅ 使用 ToolHelper 安全获取（非匠魂工具返回 null，避免 "non-modifiable tool" 警告）
             ToolStack tool = ToolHelper.getToolStack(stack);
             if (tool == null) continue;
-            if (tool.getModifierLevel(id) > 0) {
+            // ⭐ 用户口径：护甲损坏（tic_broken）时其特性一律不生效 ⇒ getActiveModifierLevel 返回 0
+            if (ToolHelper.getActiveModifierLevel(tool, id) > 0) {
                 return true;
             }
         }
@@ -98,7 +99,8 @@ public class ArmorModifierHelper {
             // ✅ 使用 ToolHelper 安全获取
             ToolStack tool = ToolHelper.getToolStack(stack);
             if (tool == null) continue;
-            total += tool.getModifierLevel(id);
+            // ⭐ 损坏的护甲不计入等级（与 hasModifierOnArmor 同一口径）
+            total += ToolHelper.getActiveModifierLevel(tool, id);
         }
         return total;
     }

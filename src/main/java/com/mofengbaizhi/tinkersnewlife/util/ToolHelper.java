@@ -9,6 +9,7 @@ import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
 import slimeknights.tconstruct.library.tools.item.IModifiable;
+import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
 import javax.annotation.Nullable;
@@ -34,6 +35,24 @@ public final class ToolHelper {
         if (stack.isEmpty()) return null;
         if (!(stack.getItem() instanceof IModifiable)) return null;
         return ToolStack.from(stack);
+    }
+
+    /**
+     * 查询<b>未损坏</b>匠魂工具上某修饰符的等级 —— <b>本模组"损坏即失效"的统一闸口</b>。
+     * <p>
+     * 用户口径：<b>工具 / 盔甲一旦损坏（TCon 的 {@code tic_broken}），本模组的特性一律不生效</b>。
+     * 各特性的 {@code has(...)} / {@code levelOf(...)} 查询一律改走这里（不再直接用
+     * {@link #getToolStack(ItemStack)}），因此在<b>少数几处查询层</b>就统一把"损坏"挡掉，
+     * 而不需要去动上百个效果类。
+     *
+     * @param tool 已解析的 ToolStack（可为 null）
+     * @param id   修饰符 id
+     * @return 等级；工具为 null / 已损坏 / 没有该修饰符时返回 <b>0</b>
+     */
+    public static int getActiveModifierLevel(@Nullable IToolStackView tool, ModifierId id) {
+        if (tool == null || id == null) return 0;
+        if (tool.isBroken()) return 0;
+        return tool.getModifierLevel(id);
     }
 
     /**
@@ -152,7 +171,8 @@ public final class ToolHelper {
         if (hasAny(primary, ids)) return primary;
         ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
         if (core.isEmpty()) return primary;
-        ToolStack coreTool = getToolStack(core);
+        // ⭐ 损坏的核心不能兜底（与 getValidTool 同一口径：损坏即失效）
+        ToolStack coreTool = getValidTool(core);
         if (hasAny(coreTool, ids)) return coreTool;
         return primary;
     }
@@ -161,7 +181,7 @@ public final class ToolHelper {
     private static boolean hasAny(ToolStack tool, ModifierId[] ids) {
         if (tool == null || ids.length == 0) return false;
         for (ModifierId id : ids) {
-            if (tool.getModifierLevel(id) > 0) return true;
+            if (ToolHelper.getActiveModifierLevel(tool, id) > 0) return true;
         }
         return false;
     }

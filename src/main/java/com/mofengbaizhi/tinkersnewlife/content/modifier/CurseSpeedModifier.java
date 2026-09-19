@@ -35,7 +35,7 @@ public class CurseSpeedModifier extends Modifier {
         if (stack == null || stack.isEmpty()) return 0;
         try {
             ToolStack tool = ToolStack.from(stack);
-            return tool == null ? 0 : tool.getModifierLevel(ID);
+            return com.mofengbaizhi.tinkersnewlife.util.ToolHelper.getActiveModifierLevel(tool, ID);
         } catch (Throwable t) {
             return 0;
         }

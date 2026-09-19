@@ -39,7 +39,7 @@ public class DreadsteelHandler {
         ToolStack tool = ToolHelper.getCombatToolWith(event.getSource(), attacker, DREADSTEEL);
         if (tool == null) return;
 
-        int level = tool.getModifierLevel(DREADSTEEL);
+        int level = ToolHelper.getActiveModifierLevel(tool, DREADSTEEL);
         if (level > 0) applyDreadsteelEffect(tool, attacker, target, level);
     }
 
@@ -54,7 +54,7 @@ public class DreadsteelHandler {
         ToolStack tool = ToolHelper.getCombatToolWith(event.getProjectile(), attacker, DREADSTEEL);
         if (tool == null) return;
 
-        int level = tool.getModifierLevel(DREADSTEEL);
+        int level = ToolHelper.getActiveModifierLevel(tool, DREADSTEEL);
         if (level > 0) applyDreadsteelEffect(tool, attacker, target, level);
     }
 

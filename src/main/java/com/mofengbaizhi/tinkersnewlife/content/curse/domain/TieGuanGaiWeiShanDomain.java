@@ -59,7 +59,7 @@ public class TieGuanGaiWeiShanDomain extends BaseDomain {
         ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
         if (core.isEmpty()) return false;
         ToolStack tool = ToolHelper.getToolStack(core);
-        return tool != null && tool.getModifierLevel(Modifiers.TIE_GUAN_GAI_WEI_SHAN.getId()) > 0;
+        return ToolHelper.getActiveModifierLevel(tool, Modifiers.TIE_GUAN_GAI_WEI_SHAN.getId()) > 0;
     }
 
     @Override

@@ -45,7 +45,7 @@ public class InfusionHandler {
         ToolStack tool = ToolHelper.getCombatToolWith(event.getSource(), attacker, DRAGON_BLOOD_INFUSION);
         if (tool == null) return;
 
-        int level = tool.getModifierLevel(DRAGON_BLOOD_INFUSION);
+        int level = ToolHelper.getActiveModifierLevel(tool, DRAGON_BLOOD_INFUSION);
         if (level > 0) applyInfusionEffect(tool, target, level);
     }
 
@@ -60,12 +60,12 @@ public class InfusionHandler {
         ToolStack tool = ToolHelper.getCombatToolWith(event.getProjectile(), attacker, DRAGON_BLOOD_INFUSION);
         if (tool == null) return;
 
-        int level = tool.getModifierLevel(DRAGON_BLOOD_INFUSION);
+        int level = ToolHelper.getActiveModifierLevel(tool, DRAGON_BLOOD_INFUSION);
         if (level > 0) applyInfusionEffect(tool, target, level);
     }
 
     private static void applyInfusionEffect(ToolStack tool, LivingEntity target, int level) {
-        int tankLevel = tool.getModifierLevel(DRAGON_BLOOD_TANK);
+        int tankLevel = ToolHelper.getActiveModifierLevel(tool, DRAGON_BLOOD_TANK);
         if (tankLevel <= 0) return;
 
         int capacity = tankLevel * DragonBloodTankTrait.CAPACITY_PER_LEVEL;

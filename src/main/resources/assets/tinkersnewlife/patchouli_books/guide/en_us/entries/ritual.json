@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "Perform the ritual on a $(bold)Gheloth Ore$() block, offering up fluid and experience to condense a brand-new Cursed Energy Core.$(br2)Requirements:$(li)At least 6 ingots (540 mB) of any fluid, poured into the Seared Ingot Gauge at the center$(li)Player level ≥ 50 (50 levels are consumed when the ritual completes)$(li)Place the four blocks and the soul lanterns around the ore as shown in the diagram"
+      "text": "Perform the ritual on a $(bold)Gheloth Ore$() block, offering up fluid and experience to condense a brand-new Cursed Energy Core.$(br2)Requirements:$(li)At least 6 ingots (540 mB) of any fluid, poured into the Seared Ingot Gauge at the center$(li)Player level ≥ 100 (100 levels are consumed when the ritual completes)$(li)Place the four blocks and the soul lanterns around the ore as shown in the diagram"
     },
     {
       "type": "patchouli:multiblock",
@@ -32,7 +32,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "Steps:$(li)1. Build the structure and pour at least 540 mB of any fluid into the gauge$(li)2. Right-click the Gheloth Ore with an empty hand to start the ritual$(li)3. Wait about 5 seconds while the particles guide the ritual$(li)4. The ritual completes: it consumes the injected fluid and 50 levels of experience, and produces a core at the ore$(br2)The core's material depends on the injected fluid (e.g. molten rose gold → rose gold). If the structure or fluid is wrong, the ritual fails silently without consuming anything."
+      "text": "Steps:$(li)1. Build the structure and pour at least 540 mB of any fluid into the gauge$(li)2. Right-click the Gheloth Ore with an empty hand to start the ritual$(li)3. Wait about 5 seconds while the particles guide the ritual$(li)4. The ritual completes: it consumes the injected fluid and 100 levels of experience, and produces a core at the ore$(br2)The core's material depends on the injected fluid (e.g. molten rose gold → rose gold). If the structure or fluid is wrong, the ritual fails silently without consuming anything."
     }
   ]
 }

@@ -47,7 +47,7 @@ public class DarkMetalBreakerHandler {
         // ⭐ 统一取工具：玩家近战/弹射双路径+咒力核心兜底；怪物只查主手
         ToolStack tool = ToolHelper.getCombatToolWith(event.getSource(), attacker, BREAKER);
         if (tool == null) return;
-        int lv = tool.getModifierLevel(BREAKER);
+        int lv = ToolHelper.getActiveModifierLevel(tool, BREAKER);
         if (lv <= 0) return;
 
         target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 20 * 2 * lv, 0));
@@ -63,7 +63,7 @@ public class DarkMetalBreakerHandler {
 
         ToolStack tool = ToolHelper.getCombatToolWith(event.getSource(), player, BREAKER);
         if (tool == null) return;
-        if (tool.getModifierLevel(BREAKER) <= 0) return;
+        if (ToolHelper.getActiveModifierLevel(tool, BREAKER) <= 0) return;
         if (!hasMagicResistance(target)) return;
         if (RANDOM.nextFloat() < 0.45f) {
             target.level().addFreshEntity(new ItemEntity(target.level(),

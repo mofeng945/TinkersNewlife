@@ -253,7 +253,7 @@ public final class WuWeiHandler {
         ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
         if (core.isEmpty()) return false;
         ToolStack tool = ToolHelper.getToolStack(core);
-        return tool != null && tool.getModifierLevel(Modifiers.WU_WEI.getId()) > 0;
+        return ToolHelper.getActiveModifierLevel(tool, Modifiers.WU_WEI.getId()) > 0;
     }
 
     // ============================================================

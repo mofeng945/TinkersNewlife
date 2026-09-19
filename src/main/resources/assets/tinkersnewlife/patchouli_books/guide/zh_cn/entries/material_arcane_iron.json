@@ -11,7 +11,7 @@
                   },
                   {
                       "type":  "patchouli:text",
-                      "text":  "$(bold)自带特性$()：$(li)$(l:trait_magic_conduction)导魔$()（有等级，盔甲）：对受到的$(bold)全类型魔法伤害$()（原版、诡厄巫法、铁魔法等）减伤 $(bold)5%×(等级+1)$()，多件盔甲逐件叠加$(li)$(l:../traits/trait_overview)磁性$()（匠魂原有，通用）：自动吸附附近掉落物与经验$(li)$(l:../materials/material_holy_spirit)魔导$()（工具）：强化物品内刻印的法术并给施法增伤$(br2)$(italic)奥铁是铁与奥术的结合：比铁硬一点、比铁轻一点，还能替你挡下一部分魔法伤害。$()"
+                      "text":  "$(bold)自带特性$()：$(li)$(l:trait_magic_conduction)导魔$()（有等级，盔甲）：对受到的$(bold)全类型魔法伤害$()（原版、诡厄巫法、铁魔法等）减伤 $(bold)5%×(等级+1)$()，多件盔甲逐件叠加$(li)$(l:trait_overview)磁性$()（匠魂原有，通用）：自动吸附附近掉落物与经验$(li)$(l:material_holy_spirit)魔导$()（工具）：强化物品内刻印的法术并给施法增伤$(br2)$(italic)奥铁是铁与奥术的结合：比铁硬一点、比铁轻一点，还能替你挡下一部分魔法伤害。$()"
                   }
               ],
     "flag":  "mod:irons_spellbooks"

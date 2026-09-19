@@ -60,7 +60,7 @@ public class WuLiangKongChuDomain extends BaseDomain {
             return null;
         }
         ToolStack tool = ToolHelper.getToolStack(core);
-        if (tool == null || tool.getModifierLevel(Modifiers.WULIANG_KONGCHU.getId()) <= 0) {
+        if (tool == null || ToolHelper.getActiveModifierLevel(tool, Modifiers.WULIANG_KONGCHU.getId()) <= 0) {
             sendMessage(player, "message.tinkersnewlife.domain.no_trait");
             return null;
         }
@@ -89,7 +89,7 @@ public class WuLiangKongChuDomain extends BaseDomain {
     public boolean isValid(ServerPlayer player) {
         ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
         ToolStack tool = ToolHelper.getToolStack(core);
-        return tool != null && tool.getModifierLevel(Modifiers.WULIANG_KONGCHU.getId()) > 0;
+        return ToolHelper.getActiveModifierLevel(tool, Modifiers.WULIANG_KONGCHU.getId()) > 0;
     }
 
     @Override

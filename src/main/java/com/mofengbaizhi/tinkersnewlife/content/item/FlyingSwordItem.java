@@ -72,7 +72,7 @@ public class FlyingSwordItem extends ModifiableItem implements ICurioItem {
                     return InteractionResultHolder.fail(stack);
                 }
 
-                if (tool.getModifierLevel(FLYING_SWORD_MODIFIER) <= 0) {
+                if (ToolHelper.getActiveModifierLevel(tool, FLYING_SWORD_MODIFIER) <= 0) {
                     return InteractionResultHolder.pass(stack);
                 }
 
@@ -97,7 +97,7 @@ public class FlyingSwordItem extends ModifiableItem implements ICurioItem {
                 }
                 fireData.putInt(KEY_LAST_FIRE, nowTick);
 
-                boolean hasUnbreakable = tool.getModifierLevel(UNBREAKABLE_MODIFIER) > 0;
+                boolean hasUnbreakable = ToolHelper.getActiveModifierLevel(tool, UNBREAKABLE_MODIFIER) > 0;
                 int actualCost = 0;
 
                 if (!hasUnbreakable) {
@@ -134,7 +134,8 @@ public class FlyingSwordItem extends ModifiableItem implements ICurioItem {
                             ItemStack currentStack = player.getItemInHand(hand);
                             // ✅ 使用 ToolHelper 安全获取
                             ToolStack currentTool = ToolHelper.getToolStack(currentStack);
-                            if (currentTool != null && currentTool.getModifierLevel(FLYING_SWORD_MODIFIER) > 0) {
+                            // ⭐ 损坏的飞剑不接受返还修复（与"损坏即失效"统一口径）
+                            if (ToolHelper.getActiveModifierLevel(currentTool, FLYING_SWORD_MODIFIER) > 0) {
                                 int newDamage = Math.max(0, currentTool.getDamage() - repair);
                                 currentTool.setDamage(newDamage);
                                 currentTool.updateStack(currentStack);

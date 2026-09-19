@@ -65,7 +65,7 @@ public class ButcherHandler {
     private static boolean hasButcher(ItemStack stack) {
         if (stack.isEmpty()) return false;
         ToolStack tool = ToolHelper.getToolStack(stack);
-        return tool != null && tool.getModifierLevel(ButcherModifier.ID) > 0;
+        return ToolHelper.getActiveModifierLevel(tool, ButcherModifier.ID) > 0;
     }
 
     /** 佩戴者（主/副手 + 盔甲槽）上是否有人屠特性（材料特性位于佩戴的头甲上） */

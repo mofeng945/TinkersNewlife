@@ -52,7 +52,7 @@ public class FusRoDahHandler {
         ToolStack tool = ToolHelper.getCombatToolWith(event.getSource(), attacker, FUS_RO_DAH);
         if (tool == null) return;
 
-        int level = tool.getModifierLevel(FUS_RO_DAH);
+        int level = ToolHelper.getActiveModifierLevel(tool, FUS_RO_DAH);
         if (level > 0) applyFusRoDah(attacker, target, level);
     }
 
@@ -67,7 +67,7 @@ public class FusRoDahHandler {
         ToolStack tool = ToolHelper.getCombatToolWith(event.getProjectile(), attacker, FUS_RO_DAH);
         if (tool == null) return;
 
-        int level = tool.getModifierLevel(FUS_RO_DAH);
+        int level = ToolHelper.getActiveModifierLevel(tool, FUS_RO_DAH);
         if (level > 0) applyFusRoDah(attacker, target, level);
     }
 

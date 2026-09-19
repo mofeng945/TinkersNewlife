@@ -90,14 +90,14 @@ public class BlackFlashHandler {
         // ✅ 统一获取攻击工具（近战/弹射物/悠悠球从球实体读取），主手无武器时兜底取佩戴的咒力核心
         ToolStack tool = ToolHelper.getCombatToolWith(event.getSource(), player, BLACK_FLASH_ID);
         if (tool == null) return;
-        int level = tool.getModifierLevel(BLACK_FLASH_ID);
+        int level = ToolHelper.getActiveModifierLevel(tool, BLACK_FLASH_ID);
         if (level <= 0) return;
 
         PlayerData data = PLAYER_DATA.computeIfAbsent(player.getUUID(), k -> new PlayerData());
         double totalChance = BASE_CHANCE + data.probabilityBoost;
 
         // 🐯 西中之虎：黑闪基础概率额外增加（玩家当前攻击力 ÷ 10000）
-        if (tool.getModifierLevel(WEST_TIGER_ID) > 0) {
+        if (ToolHelper.getActiveModifierLevel(tool, WEST_TIGER_ID) > 0) {
             double attack = player.getAttributeValue(Attributes.ATTACK_DAMAGE);
             totalChance += attack / 10000.0;
         }

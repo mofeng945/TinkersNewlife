@@ -47,9 +47,9 @@ public final class BitingFrostHandler {
         if (attacker == target) return;
 
         ToolStack tool = ToolHelper.getCombatToolWith(event.getSource(), attacker, BitingFrostModifier.ID);
-        if (tool == null || tool.getModifierLevel(BitingFrostModifier.ID) <= 0) return;
+        if (tool == null || ToolHelper.getActiveModifierLevel(tool, BitingFrostModifier.ID) <= 0) return;
 
-        int level = BitingFrostModifier.clampLevel(tool.getModifierLevel(BitingFrostModifier.ID));
+        int level = BitingFrostModifier.clampLevel(ToolHelper.getActiveModifierLevel(tool, BitingFrostModifier.ID));
         if (level <= 0) return;
 
         long now = attacker.level().getGameTime();

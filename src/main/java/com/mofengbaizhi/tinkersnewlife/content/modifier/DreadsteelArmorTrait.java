@@ -252,7 +252,8 @@ public class DreadsteelArmorTrait extends Modifier implements TooltipModifierHoo
                 // ✅ 使用 ToolHelper 安全获取
                 ToolStack tool = ToolHelper.getToolStack(stack);
                 if (tool == null) continue;
-                if (tool.getModifierLevel(DREADSTEEL_ARMOR_ID) <= 0) continue;
+                // ⭐ 损坏（tic_broken）的盔甲不算：getActiveModifierLevel 返回 0
+                if (ToolHelper.getActiveModifierLevel(tool, DREADSTEEL_ARMOR_ID) <= 0) continue;
                 long cooldownEnd = getCooldownEnd(tool);
                 if (cooldownEnd <= currentTime) {
                     canTrigger = true;
@@ -277,7 +278,8 @@ public class DreadsteelArmorTrait extends Modifier implements TooltipModifierHoo
                 // ✅ 使用 ToolHelper 安全获取
                 ToolStack tool = ToolHelper.getToolStack(stack);
                 if (tool == null) continue;
-                if (tool.getModifierLevel(DREADSTEEL_ARMOR_ID) <= 0) continue;
+                // ⭐ 损坏（tic_broken）的盔甲不算：getActiveModifierLevel 返回 0
+                if (ToolHelper.getActiveModifierLevel(tool, DREADSTEEL_ARMOR_ID) <= 0) continue;
                 if (getCooldownEnd(tool) <= currentTime) {
                     activatedTool = tool;
                     break;
@@ -312,7 +314,8 @@ public class DreadsteelArmorTrait extends Modifier implements TooltipModifierHoo
                 // ✅ 使用 ToolHelper 安全获取
                 ToolStack tool = ToolHelper.getToolStack(stack);
                 if (tool == null) continue;
-                if (tool.getModifierLevel(DREADSTEEL_ARMOR_ID) <= 0) continue;
+                // ⭐ 损坏（tic_broken）的盔甲不算：getActiveModifierLevel 返回 0
+                if (ToolHelper.getActiveModifierLevel(tool, DREADSTEEL_ARMOR_ID) <= 0) continue;
                 if (isActive(tool)) {
                     activeTool = tool;
                     break;

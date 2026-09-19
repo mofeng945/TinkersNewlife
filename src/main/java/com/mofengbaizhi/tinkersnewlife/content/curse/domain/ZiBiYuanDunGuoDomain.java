@@ -70,7 +70,7 @@ public class ZiBiYuanDunGuoDomain extends BaseDomain {
         ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
         if (core.isEmpty()) return false;
         ToolStack tool = ToolHelper.getToolStack(core);
-        return tool != null && tool.getModifierLevel(Modifiers.ZI_BI_YUAN_DUN_GUO.getId()) > 0;
+        return ToolHelper.getActiveModifierLevel(tool, Modifiers.ZI_BI_YUAN_DUN_GUO.getId()) > 0;
     }
 
     @Override

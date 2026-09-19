@@ -116,7 +116,8 @@ public class DragonBloodTankTrait extends Modifier implements TooltipModifierHoo
         // ✅ 使用 ToolHelper 安全获取
         ToolStack tool = ToolHelper.getToolStack(stack);
         if (tool == null) return 0;
-        int level = tool.getModifierLevel(MODIFIER_ID);
+        // ⭐ 损坏（tic_broken）时容量为 0 ⇒ 龙血箱不再提供存储/输送
+        int level = com.mofengbaizhi.tinkersnewlife.util.ToolHelper.getActiveModifierLevel(tool, MODIFIER_ID);
         return level * CAPACITY_PER_LEVEL;
     }
 

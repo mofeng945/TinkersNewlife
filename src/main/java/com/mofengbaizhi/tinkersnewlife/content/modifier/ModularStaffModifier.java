@@ -100,7 +100,7 @@ public class ModularStaffModifier extends Modifier implements MeleeDamageModifie
         ToolStack tool = ToolHelper.getToolStack(staffStack);
         if (tool == null) return originalDamage;
 
-        int level = tool.getModifierLevel(Modifiers.MODULAR_STAFF_MODIFIER.getId());
+        int level = ToolHelper.getActiveModifierLevel(tool, Modifiers.MODULAR_STAFF_MODIFIER.getId());
         if (level <= 0) return originalDamage;
 
         // 法杖近战伤害

@@ -59,7 +59,7 @@ public class FuMoYuChuZiDomain extends BaseDomain {
             return null;
         }
         ToolStack tool = ToolHelper.getToolStack(core);
-        if (tool == null || tool.getModifierLevel(FUMO_YUCHUZI_ID) <= 0) {
+        if (tool == null || ToolHelper.getActiveModifierLevel(tool, FUMO_YUCHUZI_ID) <= 0) {
             sendMessage(player, "message.tinkersnewlife.domain.no_trait");
             return null;
         }
@@ -88,7 +88,7 @@ public class FuMoYuChuZiDomain extends BaseDomain {
     public boolean isValid(ServerPlayer player) {
         ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
         ToolStack tool = ToolHelper.getToolStack(core);
-        return tool != null && tool.getModifierLevel(FUMO_YUCHUZI_ID) > 0;
+        return ToolHelper.getActiveModifierLevel(tool, FUMO_YUCHUZI_ID) > 0;
     }
 
     @Override

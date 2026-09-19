@@ -75,7 +75,7 @@ public class AncientSanctuaryModifier extends Modifier implements ModifyDamageMo
     public static boolean has(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return false;
         var tool = ToolHelper.getToolStack(stack);
-        return tool != null && tool.getModifierLevel(ID) > 0;
+        return ToolHelper.getActiveModifierLevel(tool, ID) > 0;
     }
 
     /** 是否穿着/持有任意一件带此特性的装备（护甲槽 + 主副手，盾牌在副手） */

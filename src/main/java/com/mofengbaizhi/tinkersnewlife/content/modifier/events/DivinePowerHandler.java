@@ -95,6 +95,6 @@ public final class DivinePowerHandler {
     private static boolean hasDivinePower(ItemStack stack) {
         if (stack.isEmpty()) return false;
         ToolStack tool = ToolHelper.getToolStack(stack);
-        return tool != null && tool.getModifierLevel(DivinePowerModifier.ID) > 0;
+        return ToolHelper.getActiveModifierLevel(tool, DivinePowerModifier.ID) > 0;
     }
 }

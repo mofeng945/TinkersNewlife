@@ -77,7 +77,7 @@ public class SoulRepairHandler {
             if (stack.isEmpty()) continue;
             ToolStack tool = ToolHelper.getToolStack(stack);
             if (tool == null || tool.isBroken()) continue;
-            if (tool.getModifierLevel(SOUL_REPAIR) > 0) return true;
+            if (ToolHelper.getActiveModifierLevel(tool, SOUL_REPAIR) > 0) return true;
         }
         return false;
     }
@@ -90,7 +90,7 @@ public class SoulRepairHandler {
             if (stack.isEmpty()) continue;
             ToolStack tool = ToolHelper.getToolStack(stack);
             if (tool == null || tool.isBroken()) continue;
-            int lv = tool.getModifierLevel(SOUL_REPAIR);
+            int lv = ToolHelper.getActiveModifierLevel(tool, SOUL_REPAIR);
             if (lv <= 0) continue;
             if (tool.getDamage() <= 0) continue;                     // 耐久已满：不修也不耗灵魂
             int cost = Math.max(1, 6 - lv);

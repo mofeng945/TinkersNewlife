@@ -69,11 +69,17 @@ public final class CursePowerHelper {
         return worn == stack || ItemStack.isSameItemSameTags(worn, stack);
     }
 
-    /** 读取咒力核心工具上指定修改器的等级 */
+    /**
+     * 读取咒力核心工具上指定修改器的等级。
+     * <p>
+     * ⭐ <b>损坏即失效</b>（用户口径）：咒力核心是匠魂工具，一旦损坏（{@code tic_broken}）
+     * 就当作<b>没有这个修改器</b> ⇒ 该核心上的术式 / 领域 / 咒力总量·输出 / 咒速 等一律失效。
+     * 这里是咒力核心侧<b>唯一的等级查询闸口</b>，所以只改这一处即可覆盖整套咒力系统。
+     */
     public static int getModifierLevel(ItemStack core, ModifierId id) {
         if (core.isEmpty()) return 0;
         ToolStack tool = ToolHelper.getToolStack(core);
-        return tool == null ? 0 : tool.getModifierLevel(id);
+        return ToolHelper.getActiveModifierLevel(tool, id);
     }
 
     /** 咒力输出等级（佩戴的咒力核心；天与咒缚·咒力者佩戴时自动 +1 级；咒种寄生时 -1 级且不低于 1） */
@@ -438,10 +444,9 @@ public final class CursePowerHelper {
             if (armor.isEmpty()) continue;
             slimeknights.tconstruct.library.tools.nbt.ToolStack tool =
                     com.mofengbaizhi.tinkersnewlife.util.ToolHelper.getToolStack(armor);
-            if (tool != null) {
-                total += tool.getModifierLevel(
-                        com.mofengbaizhi.tinkersnewlife.content.modifier.SoulDiscountModifier.ID);
-            }
+            // ⭐ 损坏的护甲不算：getActiveModifierLevel 在 tic_broken 时返回 0
+            total += com.mofengbaizhi.tinkersnewlife.util.ToolHelper.getActiveModifierLevel(
+                    tool, com.mofengbaizhi.tinkersnewlife.content.modifier.SoulDiscountModifier.ID);
         }
         return total;
     }

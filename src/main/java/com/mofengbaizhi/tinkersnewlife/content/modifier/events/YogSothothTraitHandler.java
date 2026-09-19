@@ -35,7 +35,7 @@ public class YogSothothTraitHandler {
         ToolStack tool = ToolHelper.getToolWithModifier(player, ToolHelper.getToolStack(weapon), YOG_SOTHOTH_GIFT);
         if (tool == null) return;
 
-        int level = tool.getModifierLevel(YOG_SOTHOTH_GIFT);
+        int level = ToolHelper.getActiveModifierLevel(tool, YOG_SOTHOTH_GIFT);
         if (level <= 0) return;
 
         int original = event.getAmount();

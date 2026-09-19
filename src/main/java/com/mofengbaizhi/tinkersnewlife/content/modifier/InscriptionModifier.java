@@ -68,7 +68,7 @@ public class InscriptionModifier extends Modifier implements TooltipModifierHook
     public static boolean has(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return false;
         var tool = ToolHelper.getToolStack(stack);
-        return tool != null && tool.getModifierLevel(ID) > 0;
+        return ToolHelper.getActiveModifierLevel(tool, ID) > 0;
     }
 
     /** 身上（主手/副手/护甲）带刻印的件数 —— 刻印按件叠加 ✓ */

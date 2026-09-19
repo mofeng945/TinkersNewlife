@@ -62,7 +62,7 @@ public class TaizangBianyeDomain extends BaseDomain {
         ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
         if (core.isEmpty()) return false;
         ToolStack tool = ToolHelper.getToolStack(core);
-        return tool != null && tool.getModifierLevel(Modifiers.TAIZANG_BIANYE.getId()) > 0;
+        return ToolHelper.getActiveModifierLevel(tool, Modifiers.TAIZANG_BIANYE.getId()) > 0;
     }
 
     @Override

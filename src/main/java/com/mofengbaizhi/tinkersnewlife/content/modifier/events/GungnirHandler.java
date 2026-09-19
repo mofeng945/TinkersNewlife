@@ -93,6 +93,6 @@ public final class GungnirHandler {
     private static boolean hasGungnir(ItemStack stack) {
         if (stack.isEmpty()) return false;
         ToolStack tool = ToolHelper.getToolStack(stack);
-        return tool != null && tool.getModifierLevel(GungnirModifier.ID) > 0;
+        return ToolHelper.getActiveModifierLevel(tool, GungnirModifier.ID) > 0;
     }
 }

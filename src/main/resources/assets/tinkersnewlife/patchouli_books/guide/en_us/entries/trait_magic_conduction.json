@@ -6,7 +6,23 @@
     "pages":  [
                   {
                       "type":  "patchouli:text",
-                      "text":  "$(bold)Magic Conduction$() (default armor trait of Arcane Iron, $(bold)leveled$())$(br2)Reduces $(bold)all magic damage$() taken by $(bold)5% x (level + 1)$() - 10% at level 1 and 20% at level 3.$(br2)Multiple armor pieces $(bold)stack$() (chained multiplication): four level 1 pieces give about 34%.$(br2)$(bold)What counts as magic damage$() (checked in order):$(li)vanilla witch-resistant tag (magic / indirect magic / sonic boom and more)$(li)the $(bold)forge:is_magic$() tag - Goety registers 8 types, Celestial Core 2$(li)damage types whose name contains magic$(li)namespace fallback: $(bold)irons_spellbooks.*$() (the nine schools) and $(bold)goety.*$() (Goety spells)$(br2)$(italic)Note: Iron's Spells registers its tag under the neoforge namespace, which does nothing on Forge 1.20.1 - hence the namespace fallback.$()"
+                      "text":  "$(bold)Magic Conduction$() (default armor trait of Arcane Iron, $(bold)leveled$())$(br2)Reduces $(bold)all magic damage$() taken by $(bold)5% x (level + 1)$().$(br2)That is 10% at level 1 and 20% at level 3."
+                  },
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)Multiple armor pieces stack$() (chained multiplication):$(li)one level 1 piece is about 10%$(li)two pieces about 19%$(li)four level 1 pieces about 34%$(br2)$(italic)(It shares both the check and the chaining with Mana Shield.)$()"
+                  },
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)What counts as magic damage$() (checked in order):$(li)vanilla witch-resistant tag (magic / indirect magic / sonic boom and more)$(li)the $(bold)forge:is_magic$() tag - Goety registers 8 types, Celestial Core 2$(li)damage types whose name contains magic$(li)namespace fallback: $(bold)irons_spellbooks.*$() (the nine schools) and $(bold)goety.*$() (Goety spells)"
+                  },
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(italic)Note: Iron's Spells registers its tag under the neoforge namespace, which does nothing on Forge 1.20.1 - hence the namespace fallback.$()$(br2)$(bold)Magic only$() - physical, void, piercing and true damage, vanilla fire and lava, wither, poison and the rest all stay at $(bold)full$() value (the complete list is in the $(l:trait_mana_shield)Mana Shield$() entry)."
+                  },
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)Where it shows up$():$(li)On armor it reduces damage directly (this entry)$(li)Weapons and trinkets of the same material can carry it too (each settles at its own level)$(br2)$(italic)It is inactive while the armor is broken (durability exhausted), and comes back once repaired.$()"
                   }
               ],
     "flag":  "mod:irons_spellbooks"

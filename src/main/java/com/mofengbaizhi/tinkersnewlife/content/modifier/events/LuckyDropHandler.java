@@ -84,7 +84,7 @@ public class LuckyDropHandler {
         ToolStack tool = ToolHelper.getToolWithModifier(player, ToolHelper.getToolStack(weaponStack), LUCKY_DROP);
         if (tool == null) return;
 
-        int level = tool.getModifierLevel(LUCKY_DROP);
+        int level = ToolHelper.getActiveModifierLevel(tool, LUCKY_DROP);
         if (level <= 0) return;
 
         if (entity.level().random.nextDouble() >= DROP_CHANCE) return;

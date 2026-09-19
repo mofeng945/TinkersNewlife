@@ -58,7 +58,7 @@ public class CharmHandler {
         ToolStack tool = ToolHelper.getCombatToolWith(event.getSource(), player, CHARM_ID);
         if (tool == null) return;
 
-        int level = tool.getModifierLevel(CHARM_ID);
+        int level = ToolHelper.getActiveModifierLevel(tool, CHARM_ID);
         if (level <= 0) return;
 
         applyCharm(player, target, level, tool);
@@ -75,7 +75,7 @@ public class CharmHandler {
         ToolStack tool = ToolHelper.getCombatToolWith(event.getProjectile(), player, CHARM_ID);
         if (tool == null) return;
 
-        int level = tool.getModifierLevel(CHARM_ID);
+        int level = ToolHelper.getActiveModifierLevel(tool, CHARM_ID);
         if (level <= 0) return;
 
         applyCharm(player, target, level, tool);

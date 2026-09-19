@@ -11,7 +11,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)自带特性$()：$(li)$(l:trait_arcane_conduction)魔导$()（有等级）：强化该物品内刻印的法术（每级 +3 级），并给施法增伤$(br2)$(italic)织进线里的咒文，比绣上去的牢。$()"
+      "text": "$(bold)自带特性$()：$(li)$(l:trait_magic_conduction)导魔$()（有等级）：强化该物品内刻印的法术（每级 +3 级），并给施法增伤$(br2)$(italic)织进线里的咒文，比绣上去的牢。$()"
     }
   ],
   "flag": "mod:irons_spellbooks"

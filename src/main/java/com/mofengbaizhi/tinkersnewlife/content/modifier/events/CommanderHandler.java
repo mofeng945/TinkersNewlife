@@ -47,7 +47,7 @@ public class CommanderHandler {
         // 玩家使用的匠魂战斗工具（近战/弹射）必须带统御者
         ToolStack tool = ToolHelper.getCombatToolWith(event.getSource(), player, COMMANDER);
         if (tool == null) return;
-        if (tool.getModifierLevel(COMMANDER) <= 0) return;
+        if (ToolHelper.getActiveModifierLevel(tool, COMMANDER) <= 0) return;
 
         // 扫半径 8 格内的刌民
         AABB box = new AABB(player.blockPosition()).inflate(RADIUS);

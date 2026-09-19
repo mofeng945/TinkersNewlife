@@ -65,7 +65,7 @@ public class ShiBaoYueGongDianDomain extends BaseDomain {
         ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
         if (core.isEmpty()) return false;
         ToolStack tool = ToolHelper.getToolStack(core);
-        return tool != null && tool.getModifierLevel(Modifiers.SHI_BAO_YUE_GONG_DIAN.getId()) > 0;
+        return ToolHelper.getActiveModifierLevel(tool, Modifiers.SHI_BAO_YUE_GONG_DIAN.getId()) > 0;
     }
 
     @Override

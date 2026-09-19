@@ -114,7 +114,7 @@ public class DragonStaffHandler {
         // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
         ToolStack tool = ToolHelper.getToolStack(stack);
         if (tool == null) return null;
-        if (tool.getModifierLevel(DRAGON_STAFF_ID) <= 0) return null;
+        if (ToolHelper.getActiveModifierLevel(tool, DRAGON_STAFF_ID) <= 0) return null;
         ensureOwner(tool, player);
         return tool;
     }
@@ -236,7 +236,7 @@ public class DragonStaffHandler {
         }
 
         if (!found) {
-            int level = tool.getModifierLevel(DRAGON_STAFF_ID);
+            int level = ToolHelper.getActiveModifierLevel(tool, DRAGON_STAFF_ID);
             int maxSlots = DragonStaffTrait.getMaxSlots(level);
             if (slots.size() >= maxSlots) {
                 player.displayClientMessage(Component.translatable("modifier.tinkersnewlife.dragon_staff.slots_full"), true);
@@ -333,7 +333,7 @@ public class DragonStaffHandler {
             player.displayClientMessage(Component.translatable("modifier.tinkersnewlife.dragon_staff.no_xp", SKILL_XP_COST), true);
             return;
         }
-        int level = tool.getModifierLevel(DRAGON_STAFF_ID);
+        int level = ToolHelper.getActiveModifierLevel(tool, DRAGON_STAFF_ID);
         int maxSlots = DragonStaffTrait.getMaxSlots(level);
         if (getSlots(tool).size() >= maxSlots) {
             player.displayClientMessage(Component.translatable("modifier.tinkersnewlife.dragon_staff.slots_full"), true);
@@ -462,7 +462,7 @@ public class DragonStaffHandler {
             if (!(stack.getItem() instanceof IModifiable)) continue;
             // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
             ToolStack tool = ToolHelper.getToolStack(stack);
-            if (tool == null || tool.getModifierLevel(DRAGON_STAFF_ID) <= 0) continue;
+            if (tool == null || ToolHelper.getActiveModifierLevel(tool, DRAGON_STAFF_ID) <= 0) continue;
             ListTag slots = getSlots(tool);
             boolean changed = false;
             for (int i = slots.size() - 1; i >= 0; i--) {
@@ -499,7 +499,7 @@ public class DragonStaffHandler {
             if (!(stack.getItem() instanceof IModifiable)) continue;
             // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
             ToolStack tool = ToolHelper.getToolStack(stack);
-            if (tool == null || tool.getModifierLevel(DRAGON_STAFF_ID) <= 0) continue;
+            if (tool == null || ToolHelper.getActiveModifierLevel(tool, DRAGON_STAFF_ID) <= 0) continue;
             ListTag slots = getSlots(tool);
             boolean changed = false;
             for (int i = slots.size() - 1; i >= 0; i--) {

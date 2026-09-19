@@ -95,7 +95,7 @@ public class HasturMaliceHandler {
         ToolStack tool = ToolHelper.getCombatToolWith(event.getSource(), player, HASTUR_MALICE);
         if (tool == null) return;
 
-        int level = tool.getModifierLevel(HASTUR_MALICE);
+        int level = ToolHelper.getActiveModifierLevel(tool, HASTUR_MALICE);
         if (level <= 0) return;
 
         UUID playerId = player.getUUID();

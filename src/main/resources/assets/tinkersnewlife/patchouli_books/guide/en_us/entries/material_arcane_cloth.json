@@ -11,7 +11,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)Traits$():$(li)$(l:trait_arcane_conduction)Arcane Conduction$() (leveled): strengthens spells inscribed in the item (+3 levels per level) and boosts spell damage$(br2)$(italic)The runes are woven in, not stitched on.$()"
+      "text": "$(bold)Traits$():$(li)$(l:trait_magic_conduction)Arcane Conduction$() (leveled): strengthens spells inscribed in the item (+3 levels per level) and boosts spell damage$(br2)$(italic)The runes are woven in, not stitched on.$()"
     }
   ],
   "flag": "mod:irons_spellbooks"

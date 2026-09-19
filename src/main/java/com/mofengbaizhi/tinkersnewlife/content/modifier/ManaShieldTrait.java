@@ -271,7 +271,7 @@ public class ManaShieldTrait extends Modifier implements TooltipModifierHook, Mo
     public static boolean has(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return false;
         var tool = ToolHelper.getToolStack(stack);
-        return tool != null && tool.getModifierLevel(ID) > 0;
+        return ToolHelper.getActiveModifierLevel(tool, ID) > 0;
     }
 
     /** 身上穿了几件带魔力护盾的盔甲（0~4 ✓） */

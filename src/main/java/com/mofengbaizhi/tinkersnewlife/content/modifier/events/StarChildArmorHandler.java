@@ -42,7 +42,8 @@ public class StarChildArmorHandler {
             // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
             ToolStack tool = ToolHelper.getToolStack(armor);
             if (tool == null) continue;
-            int level = tool.getModifierLevel(StarChildArmorTrait.ID);
+            // ⭐ 损坏（tic_broken）的盔甲不算：不再累积击杀、也不提供生命上限
+            int level = ToolHelper.getActiveModifierLevel(tool, StarChildArmorTrait.ID);
             if (level <= 0) continue;
 
             ModDataNBT persistent = tool.getPersistentData();
@@ -82,7 +83,7 @@ public class StarChildArmorHandler {
             // ✅ 使用 ToolHelper 安全获取，避免 "non-modifiable tool" 警告
             ToolStack tool = ToolHelper.getToolStack(armor);
             if (tool == null) continue;
-            int level = tool.getModifierLevel(StarChildArmorTrait.ID);
+            int level = ToolHelper.getActiveModifierLevel(tool, StarChildArmorTrait.ID);
             if (level > 0) {
                 totalLevel += level;
                 totalKills += tool.getPersistentData().getInt(TAG_KILLS);

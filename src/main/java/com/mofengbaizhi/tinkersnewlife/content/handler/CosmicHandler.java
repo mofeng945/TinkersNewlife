@@ -32,7 +32,7 @@ public class CosmicHandler {
         ToolStack tool = ToolHelper.getCombatToolWith(event.getSource(), attacker, COSMIC_ORDER_VOICE);
         if (tool == null) return;
 
-        int level = tool.getModifierLevel(COSMIC_ORDER_VOICE);
+        int level = ToolHelper.getActiveModifierLevel(tool, COSMIC_ORDER_VOICE);
         if (level > 0) {
             applyEffect(target, level);
         }

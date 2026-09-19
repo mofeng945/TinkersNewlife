@@ -108,7 +108,7 @@ public class EarplugModifier extends SingleLevelModifier implements KeybindInter
     public static boolean hasEarplugs(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return false;
         ToolStack tool = ToolHelper.getToolStack(stack);
-        return tool != null && !tool.isBroken() && tool.getModifierLevel(ID) > 0;
+        return tool != null && !tool.isBroken() && ToolHelper.getActiveModifierLevel(tool, ID) > 0;
     }
 
     /**
@@ -121,6 +121,6 @@ public class EarplugModifier extends SingleLevelModifier implements KeybindInter
         ItemStack helmet = living.getItemBySlot(EquipmentSlot.HEAD);
         if (helmet.isEmpty()) return false;
         ToolStack tool = ToolHelper.getToolStack(helmet);
-        return tool != null && !tool.isBroken() && tool.getModifierLevel(ID) > 0 && isOn(tool);
+        return tool != null && !tool.isBroken() && ToolHelper.getActiveModifierLevel(tool, ID) > 0 && isOn(tool);
     }
 }

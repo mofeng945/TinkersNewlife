@@ -7,19 +7,31 @@
     {
       "type": "patchouli:spotlight",
       "item": "tinkersnewlife:wizard_helmet",
-      "text": "$(bold)Wizard Armor$() is the $(bold)modular armor set$() added by this mod; all four pieces are built the same way.$(br2)After selecting the piece you want at the $(bold)Tinker Station$(): put the $(bold)plating$(), the $(bold)maille$() and the $(bold)robe lace$() into their slots; the $(bold)leggings$() and $(bold)boots$() additionally require one $(bold)magic cloth$() each, which is consumed while assembling and is not part of the armor.$(br2)The armor value comes only from the material in the $(bold)plating$() slot, while the other parts add durability and their own armor traits, so $(bold)every piece can mix materials$()."
+      "text": "$(bold)Wizard Armor$() is the $(bold)modular armor set$() added by this mod; all four pieces are built the same way.$(br2)At the $(bold)Tinker Station$(): put the $(bold)plating$(), the $(bold)maille$() and the $(bold)robe lace$() into their slots; the $(bold)leggings$() and $(bold)boots$() also need one $(bold)magic cloth$() each, consumed while assembling."
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)The four pieces and their parts$() (the plating in brackets):$(li)$(bold)Wizard Hat$() (helmet plating)$(li)$(bold)Wizard Robe$() (chestplate plating)$(li)$(bold)Wizard Leggings$() (leggings plating)$(li)$(bold)Wizard Boots$() (boots plating)$(br2)All four also take one $(bold)maille$() and one $(l:tools)robe lace$() each.$(br2)$(bold)How to make them$(): first build the parts at the $(bold)Part Builder$() with a blank pattern plus materials (robe lace = 2 materials; casting from fluid works too); then place the three parts into their slots at the $(bold)Tinker Station$() to assemble the piece, adding the magic cloth for the two pieces that consume it."
+      "text": "$(bold)Where the armor value comes from$(): only the material in the $(bold)plating$() slot.$(br2)The other parts add $(bold)durability$() and their own $(bold)material traits$().$(br2)So $(bold)every piece can mix materials$(): plating for armor value, lace and maille for traits."
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)Three traits$(): each of the four pieces carries three $(bold)Wizard Armor exclusive traits$() (no levels, independent of material); wearing any single piece activates them.$(li)$(l:trait_mana_surge)Mana Surge$(): per-piece Iron's Spellbooks max mana, spell power and spell damage$(li)$(l:trait_mana_shield)Mana Shield$(): reduces all magic damage and raises max health$(li)$(l:trait_all_paths_one)All Paths Are One$(): mana / cursed energy / soul cover for each other$(br2)They live in the tool definition, so only armor that still has these traits benefits: wash a trait off with a $(l:trait_overview)Modifier Crystal$() and its effect goes with it."
+      "text": "$(bold)The four pieces and their platings$():$(li)$(bold)Wizard Hat$() - helmet plating$(li)$(bold)Wizard Robe$() - chestplate plating$(li)$(bold)Wizard Leggings$() - leggings plating$(li)$(bold)Wizard Boots$() - boots plating$(br2)All four also take one $(bold)maille$() and one $(bold)robe lace$() each."
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)The pattern at the Tinker Station$(): all four pieces share a single selection pattern (shipped with this mod's resources); picking that pattern at the Tinker Station brings up the Wizard Armor slot layout, so there is nothing to draw yourself.$(br2)$(italic)The armor's appearance is rendered by Tinkers' own armor rendering and is unrelated to that pattern.$()"
+      "text": "$(bold)How to make them$():$(li)1. Build the parts at the $(bold)Part Builder$() with a blank pattern plus materials$(li)2. Place the parts into their slots at the $(bold)Tinker Station$()$(li)3. Add the magic cloth for the two pieces that consume it$(br2)(Robe lace = 2 materials; casting from fluid works too.)"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Three traits$(): each of the four pieces carries three $(bold)Wizard Armor exclusive traits$() (no levels, independent of material); wearing any single piece activates them.$(li)$(l:trait_mana_surge)Mana Surge$() - per-piece max mana, spell power and spell damage$(li)$(l:trait_mana_shield)Mana Shield$() - reduces magic damage, raises max health$(li)$(l:trait_all_paths_one)All Paths Are One$() - mana / curse / soul cover each other"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)They live in the tool definition$(), so only armor that still has these traits benefits.$(br2)Wash a trait off with a $(l:trait_overview)Modifier Crystal$() and its effect goes with it.$(br2)$(italic)While the armor is broken (durability exhausted) none of these apply - repair it to get them back.$()"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)The pattern at the Tinker Station$(): all four pieces share one selection pattern (shipped with this mod), which brings up the Wizard Armor slot layout - nothing to draw yourself.$(br2)$(italic)The armor texture is rendered by Tinkers' armor rendering and is unrelated to that pattern.$()"
     }
   ]
 }

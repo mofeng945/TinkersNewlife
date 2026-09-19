@@ -1,6 +1,7 @@
 package com.mofengbaizhi.tinkersnewlife.content.modifier;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.resources.ResourceLocation;
 import slimeknights.tconstruct.library.modifiers.Modifier;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
@@ -23,7 +24,7 @@ public class DragonboneTrait extends Modifier {
      * 改用 getModifierLevel(id) 直接查询（O(1) 语义）。
      */
     public static boolean hasDragonbone(IToolStackView tool) {
-        return tool.getModifierLevel(DRAGONBONE_ID) > 0;
+        return ToolHelper.getActiveModifierLevel(tool, DRAGONBONE_ID) > 0;
     }
 
     public static boolean isConductionActive(IToolStackView tool) {

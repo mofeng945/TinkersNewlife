@@ -6,15 +6,23 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(bold)Mana Shield$() (default trait of all four $(bold)Wizard Set$() pieces, $(bold)unleveled$())$(br2)Active as long as you wear $(bold)any single piece$() carrying this trait.$(br2)$(bold)Three effects$():$(li)$(bold)-10% magic damage per piece$() ($(bold)chained$(): about -19% with two pieces, -34.4% with four)$(li)$(bold)+2 max health per piece$() (stacks, +8 for the full set)$(li)$(bold)All buffs and debuffs on you last half as long$() ($(bold)does not stack$() - always x0.5 no matter how many pieces; infinite effects are unaffected)"
+      "text": "$(bold)Mana Shield$() (default trait of all four $(bold)Wizard Set$() pieces, $(bold)unleveled$())$(br2)Active as long as you wear $(bold)any single piece$() carrying this trait.$(br2)$(bold)Three effects$():$(li)$(bold)-10% magic damage per piece$() ($(bold)chained$(): about -19% with two pieces, -34.4% with four)$(li)$(bold)+2 max health per piece$() (stacks, +8 for the full set)"
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)Only these three kinds of magic are reduced$():$(li)$(bold)vanilla magic$() - potion damage, evoker fangs, warden sonic boom, thorns$(li)$(bold)Iron's Spells$() - all nine schools (fire / ice / lightning / holy / ender / blood / evocation / nature / eldritch)$(li)$(bold)Goety$() spells$(br2)$(bold)Everything else is untouched$(): physical (melee / arrows / explosions / fall), void, piercing and true damage, vanilla fire and lava, vanilla lightning, wither, poison, dragon breath, drowning, freezing, starvation - all at $(bold)full$() value."
+      "text": "$(bold)Halved durations$(): all buffs and debuffs on you last half as long.$(br2)It $(bold)does not stack$() - always $(bold)x0.5$() no matter how many pieces; $(bold)infinite$() effects are unaffected.$(br2)$(italic)None of these apply while the armor is broken (durability exhausted); they return once repaired.$()"
     },
     {
       "type": "patchouli:text",
-      "text": "$(italic)The check is shared with $(l:trait_magic_conduction)Magic Conduction$() (see that entry), and two $(bold)vetoes$() run before it:$(li)$(bold)physical$() - the $(bold)tinkersnewlife:is_physical$() tag, Goety's own $(bold)goety:physical$() tag, and \"direct source is a living entity and not magic\"$(li)$(bold)void / piercing / rule-level$() - the $(bold)tinkersnewlife:ignores_mana_shield$() tag, vanilla $(bold)bypasses_invulnerability$(), this mod's $(bold)true_pierce$(), and \"id contains void\"$(br2)Both tags live in the datapack and can be edited freely.$()"
+      "text": "$(bold)Only these three kinds of magic are reduced$():$(li)$(bold)vanilla magic$() - potion damage, evoker fangs, warden sonic boom, thorns$(li)$(bold)Iron's Spells$() - all nine schools (fire / ice / lightning / holy / ender / blood / evocation / nature / eldritch)$(li)$(bold)Goety$() spells"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Everything else is untouched$(): physical (melee / arrows / explosions / fall), void, piercing and true damage, vanilla fire and lava, vanilla lightning, wither, poison, dragon breath, drowning, freezing, starvation - all at $(bold)full$() value."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(italic)The check is shared with $(l:trait_magic_conduction)Magic Conduction$(), and two $(bold)vetoes$() run first:$(li)$(bold)physical$() - the $(bold)tinkersnewlife:is_physical$() tag and Goety's $(bold)goety:physical$() tag$(li)$(bold)void / piercing / rule-level$() - the $(bold)tinkersnewlife:ignores_mana_shield$() tag and vanilla $(bold)bypasses_invulnerability$()$(br2)Both tags live in the datapack and can be edited freely.$()"
     }
   ],
   "flag": "mod:irons_spellbooks"

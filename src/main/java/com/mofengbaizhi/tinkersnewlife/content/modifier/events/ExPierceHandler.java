@@ -94,6 +94,6 @@ public final class ExPierceHandler {
     private static boolean hasExPierce(ItemStack stack) {
         if (stack.isEmpty()) return false;
         ToolStack tool = ToolHelper.getToolStack(stack);
-        return tool != null && tool.getModifierLevel(ExPierceModifier.ID) > 0;
+        return ToolHelper.getActiveModifierLevel(tool, ExPierceModifier.ID) > 0;
     }
 }

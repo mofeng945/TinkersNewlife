@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.content.modifier;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.integration.irons_spellbooks.IronSpellsSpellAccess;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.damagesource.DamageSource;
@@ -98,6 +99,6 @@ public class ManaArmorModifier extends Modifier implements ModifyDamageModifierH
     public static int levelOf(net.minecraft.world.item.ItemStack stack) {
         if (stack == null || stack.isEmpty()) return 0;
         var tool = com.mofengbaizhi.tinkersnewlife.util.ToolHelper.getToolStack(stack);
-        return tool == null ? 0 : clampLevel(tool.getModifierLevel(ID));
+        return clampLevel(ToolHelper.getActiveModifierLevel(tool, ID));
     }
 }

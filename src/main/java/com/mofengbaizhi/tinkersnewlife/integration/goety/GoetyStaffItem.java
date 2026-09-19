@@ -315,7 +315,7 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
     private static double[] spellAttrValues(ToolStack tool) {
         double[] zero = {0, 0, 0, 0, 0, 0};
         if (tool == null) return zero;
-        if (tool.getModifierLevel(Modifiers.MODULAR_STAFF_MODIFIER.getId()) <= 0) return zero;
+        if (ToolHelper.getActiveModifierLevel(tool, Modifiers.MODULAR_STAFF_MODIFIER.getId()) <= 0) return zero;
         float dmg = tool.getStats().get(ToolStats.ATTACK_DAMAGE);
         if (dmg <= 0) return zero;
         return new double[]{

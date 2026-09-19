@@ -1,6 +1,7 @@
 package com.mofengbaizhi.tinkersnewlife.content.modifier;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import slimeknights.tconstruct.library.modifiers.Modifier;
@@ -29,7 +30,7 @@ public class ResonanceModifier extends Modifier {
         if (stack == null || stack.isEmpty()) return false;
         try {
             ToolStack tool = ToolStack.from(stack);
-            return tool != null && tool.getModifierLevel(ID) > 0;
+            return ToolHelper.getActiveModifierLevel(tool, ID) > 0;
         } catch (Throwable t) {
             return false;
         }

@@ -67,7 +67,7 @@ public class ZuoShaBoTuDomain extends BaseDomain {
             return null;
         }
         ToolStack tool = ToolHelper.getToolStack(core);
-        if (tool == null || tool.getModifierLevel(ZUOSHA_BOTU_ID) <= 0) {
+        if (tool == null || ToolHelper.getActiveModifierLevel(tool, ZUOSHA_BOTU_ID) <= 0) {
             sendMessage(player, "message.tinkersnewlife.domain.no_trait");
             return null;
         }
@@ -100,7 +100,7 @@ public class ZuoShaBoTuDomain extends BaseDomain {
     public boolean isValid(ServerPlayer player) {
         ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
         ToolStack tool = ToolHelper.getToolStack(core);
-        return tool != null && tool.getModifierLevel(ZUOSHA_BOTU_ID) > 0;
+        return ToolHelper.getActiveModifierLevel(tool, ZUOSHA_BOTU_ID) > 0;
     }
 
     @Override

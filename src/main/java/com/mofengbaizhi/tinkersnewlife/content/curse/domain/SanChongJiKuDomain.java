@@ -63,7 +63,7 @@ public class SanChongJiKuDomain extends BaseDomain {
         ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
         if (core.isEmpty()) return false;
         ToolStack tool = ToolHelper.getToolStack(core);
-        return tool != null && tool.getModifierLevel(Modifiers.SAN_CHONG_JI_KU.getId()) > 0;
+        return ToolHelper.getActiveModifierLevel(tool, Modifiers.SAN_CHONG_JI_KU.getId()) > 0;
     }
 
     @Override

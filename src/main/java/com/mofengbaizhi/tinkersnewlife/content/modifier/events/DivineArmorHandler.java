@@ -31,7 +31,8 @@ public final class DivineArmorHandler {
         for (ItemStack armor : wearer.getArmorSlots()) {
             if (armor.isEmpty()) continue;
             ToolStack tool = ToolHelper.getToolStack(armor);
-            if (tool == null || tool.getModifierLevel(GodrealmOverstepModifier.ID) <= 0) continue;
+            // ⭐ 损坏（tic_broken）的盔甲不提供「越过神域」免疫
+            if (tool == null || ToolHelper.getActiveModifierLevel(tool, GodrealmOverstepModifier.ID) <= 0) continue;
             DamageSource src = event.getSource();
             if (src.is(DamageTypeTags.IS_FIRE) || src.is(DamageTypeTags.IS_EXPLOSION)
                     || isMagic(src)) {

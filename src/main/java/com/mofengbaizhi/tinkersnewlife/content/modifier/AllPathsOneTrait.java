@@ -112,7 +112,7 @@ public class AllPathsOneTrait extends Modifier implements TooltipModifierHook {
     public static boolean has(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return false;
         var tool = ToolHelper.getToolStack(stack);
-        return tool != null && tool.getModifierLevel(ID) > 0;
+        return ToolHelper.getActiveModifierLevel(tool, ID) > 0;
     }
 
     public static int worn(@Nullable LivingEntity entity) {

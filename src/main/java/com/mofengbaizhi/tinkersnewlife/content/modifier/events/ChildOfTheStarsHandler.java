@@ -29,7 +29,7 @@ public class ChildOfTheStarsHandler {
         ToolStack tool = ToolHelper.getCombatToolWith(event.getSource(), attacker, CHILD_OF_THE_STARS);
         if (tool == null) return;
 
-        int level = tool.getModifierLevel(CHILD_OF_THE_STARS);
+        int level = ToolHelper.getActiveModifierLevel(tool, CHILD_OF_THE_STARS);
         if (level <= 0) return;
 
         float originalDamage = event.getAmount();

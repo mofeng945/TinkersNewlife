@@ -62,7 +62,7 @@ public class QianheYingyiDomain extends BaseDomain {
         ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
         if (core.isEmpty()) return false;
         ToolStack tool = ToolHelper.getToolStack(core);
-        return tool != null && tool.getModifierLevel(Modifiers.QIANHE_YINGYI.getId()) > 0;
+        return ToolHelper.getActiveModifierLevel(tool, Modifiers.QIANHE_YINGYI.getId()) > 0;
     }
 
     @Override

@@ -71,7 +71,7 @@ public class SoulEaterHandler {
         for (ItemStack stack : candidateStacks(sp)) {
             ToolStack tool = ToolHelper.getToolStack(stack);
             if (tool != null) {
-                total += tool.getModifierLevel(id);
+                total += ToolHelper.getActiveModifierLevel(tool, id);
             }
         }
         return total;

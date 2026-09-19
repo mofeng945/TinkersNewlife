@@ -79,7 +79,7 @@ public final class ChaosFlowHandler {
         if (attacker == target) return;
 
         ToolStack tool = ToolHelper.getCombatToolWith(source, attacker, ChaosFlowModifier.ID);
-        if (tool == null || tool.getModifierLevel(ChaosFlowModifier.ID) <= 0) {
+        if (tool == null || ToolHelper.getActiveModifierLevel(tool, ChaosFlowModifier.ID) <= 0) {
             logDiagnostic(attacker, tool);                       // 手里有匠魂工具但没这个特性 → 记一笔 ✓
             return;
         }

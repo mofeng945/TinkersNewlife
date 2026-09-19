@@ -89,9 +89,9 @@ public class DragonsteelHandler {
 
     /** 根据工具上的龙钢三系特性等级施加效果（近战/弹射共用） */
     private static void applyDragonsteelEffects(Level level, LivingEntity attacker, LivingEntity target, ToolStack tool) {
-        int baseFireLevel = tool.getModifierLevel(DRAGONSTEEL_FIRE);
-        int baseIceLevel = tool.getModifierLevel(DRAGONSTEEL_ICE);
-        int baseLightningLevel = tool.getModifierLevel(DRAGONSTEEL_LIGHTNING);
+        int baseFireLevel = ToolHelper.getActiveModifierLevel(tool, DRAGONSTEEL_FIRE);
+        int baseIceLevel = ToolHelper.getActiveModifierLevel(tool, DRAGONSTEEL_ICE);
+        int baseLightningLevel = ToolHelper.getActiveModifierLevel(tool, DRAGONSTEEL_LIGHTNING);
 
         boolean hasDragonbone = DragonboneTrait.isConductionActive(tool);
 

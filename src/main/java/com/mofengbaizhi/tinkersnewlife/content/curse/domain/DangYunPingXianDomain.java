@@ -97,7 +97,7 @@ public class DangYunPingXianDomain extends BaseDomain {
         ItemStack core = CursePowerHelper.findEquippedCurseCore(player);
         if (core.isEmpty()) return false;
         ToolStack tool = ToolHelper.getToolStack(core);
-        return tool != null && tool.getModifierLevel(Modifiers.DANG_YUN_PING_XIAN.getId()) > 0;
+        return ToolHelper.getActiveModifierLevel(tool, Modifiers.DANG_YUN_PING_XIAN.getId()) > 0;
     }
 
     @Override

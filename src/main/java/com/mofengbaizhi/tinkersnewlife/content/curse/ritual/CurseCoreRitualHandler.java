@@ -78,7 +78,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>
  * 空手右键格赫罗斯矿石发动：仪式持续 5 秒（量器按流体颜色发射信标光束，
  * 四面灯笼顶端向矿石发射其下方方块破碎粒子连线，密度较高）。
- * 完成时消耗 6 锭材料流体 + 玩家 50 级经验，在格赫罗斯矿石上生成咒力核心：
+ * 完成时消耗 6 锭材料流体 + 玩家 100 级经验，在格赫罗斯矿石上生成咒力核心：
  * - 咒力核心材质 = 消耗的材料流体对应材料（经匠魂 material_fluid 配方数据关联，
  *   流体无对应材料时静默失败）
  * - 咒力总量/输出等级各随机 1-5，随机附一个术式与一个领域（各占一个术式槽/领域槽）
@@ -95,8 +95,8 @@ public class CurseCoreRitualHandler {
     /** 匠魂 1 锭 = 90 mB（FluidValues.INGOT） */
     private static final int MB_PER_UNIT = 90;
     private static final int REQUIRED_MB = FLUID_UNITS * MB_PER_UNIT; // 540
-    /** 消耗玩家经验等级 */
-    private static final int XP_LEVELS = 50;
+    /** 消耗玩家经验等级（用户 2026 定案：咒力核心门槛 = <b>100 级</b>，原 50 级） */
+    private static final int XP_LEVELS = 100;
     /** 材料方块距量器的水平距离（隔一格） */
     private static final int STRUCTURE_DISTANCE = 2;
     /** 仪式信标光柱高度（格） */
@@ -291,7 +291,7 @@ public class CurseCoreRitualHandler {
         }
     }
 
-    /** 完成：消耗 6 锭流体 + 50 级经验，在矿石上生成随机咒力核心 */
+    /** 完成：消耗 6 锭流体 + 100 级经验，在矿石上生成随机咒力核心 */
     private static void complete(MinecraftServer server, ServerLevel level, BlockPos orePos, RitualData data) {
         // 消耗材料流体 6 锭
         if (level.getBlockEntity(data.gaugePos) != null) {
@@ -301,7 +301,7 @@ public class CurseCoreRitualHandler {
                 handler.drain(new FluidStack(data.fluid, REQUIRED_MB), IFluidHandler.FluidAction.EXECUTE);
             }
         }
-        // 消耗 50 级经验
+        // 消耗 100 级经验
         ServerPlayer player = server.getPlayerList().getPlayer(data.playerId);
         if (player != null) {
             player.giveExperienceLevels(-XP_LEVELS);

@@ -67,7 +67,7 @@ public class BlazingModifier extends Modifier implements TooltipModifierHook {
     public static int levelOf(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return 0;
         var tool = ToolHelper.getToolStack(stack);
-        return tool == null ? 0 : clampLevel(tool.getModifierLevel(ID));
+        return clampLevel(ToolHelper.getActiveModifierLevel(tool, ID));
     }
 
     /** 玩家身上（主手/副手/护甲）最高的炽热等级 */
