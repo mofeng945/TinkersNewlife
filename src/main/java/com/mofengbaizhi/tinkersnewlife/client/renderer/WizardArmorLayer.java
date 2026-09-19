@@ -38,13 +38,27 @@ public class WizardArmorLayer<T extends LivingEntity, M extends HumanoidModel<T>
     public void render(PoseStack poseStack, MultiBufferSource buffers, int packedLight, T entity,
                        float limbSwing, float limbSwingAmount, float partialTick, float ageInTicks,
                        float netHeadYaw, float headPitch) {
+        renderArmor(entity, getParentModel(), poseStack, buffers, packedLight);
+    }
+
+    /**
+     * ⭐ <b>通用绘制入口</b>：图层（玩家 / 盔甲架 ✓）与 {@code RenderLivingEvent.Post}
+     *（其余**一切人形生物**：原版僵尸骷髅、模组人形、宝宝等小体型 ✓）都走这里 ✓。
+     *
+     * <p>尺寸**不做任何额外缩放** ✓ —— 渲染器已经把实体自身的旋转与缩放（宝宝 0.5 ✓、
+     * 模组小体型生物自带的 scale ✓）放进了 poseStack ✓，我们只管套自己的模型 ✓。
+     *
+     * @param parent 该实体渲染器用的 {@link HumanoidModel}（用来拷贝姿态 ✓）
+     */
+    public static void renderArmor(LivingEntity entity, HumanoidModel<?> parent, PoseStack poseStack,
+                                   MultiBufferSource buffers, int packedLight) {
         try {
             WizardArmorModel model = WizardArmorTextures.model();
             if (model == null) {
                 WizardArmorTextures.setLayerOk(false);
                 return;
             }
-            copyPose(getParentModel(), model);
+            copyPose(parent, model);
             boolean drew = false;
             for (EquipmentSlot slot : new EquipmentSlot[]{
                     EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET }) {
