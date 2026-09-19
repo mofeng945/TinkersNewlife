@@ -68,6 +68,9 @@ public class WizardArmorItem extends ModifiableArmorItem {
                                     .bakeLayer(com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorModel.LAYER));
                 }
                 model.setCurrent(stack, slot);   // ⭐ 告诉模型"这一件 + 哪个槽"⇒ 只画该件并逐组染材料色 ✓
+            // ⭐ 原版盔甲层（非本模组自绘路径的实体）拿到的也是这个模型 ✗
+            //   ⇒ 必须先告诉它"这是哪一件"，否则它按默认槽（帽子）画 ⇒ 出现"裤在躯干、衣在腿上" ✗（用户实测 ✓）
+            model.setCurrent(stack, slot);
                 return model;
             }        });
     }
