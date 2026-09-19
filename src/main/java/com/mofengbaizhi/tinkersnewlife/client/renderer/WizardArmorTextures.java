@@ -189,6 +189,36 @@ public final class WizardArmorTextures {
         return GREY.getNamespace() + ":" + GREY.getPath();
     }
 
+    /**
+     * ⭐ 本模组的**自绘路径**会不会画这个实体 ✓ —— 决定 {@code getArmorTexture} 要不要给透明图 ✓。
+     *
+     * <p>为什么必须逐实体判断 ✗：以前玩家/盔甲架看全局标志 {@link #isLayerOk()}、其余一律给真贴图 ✗
+     * ⇒ 仆从 / 模组人形身上，原版盔甲层会拿**原版模型 + 我们的图集**再画一遍 ✗
+     * （用户实测："裤子在身上额外渲染一条、衣服在腿上额外渲染一件" ✓）。
+     *
+     * <p>规则与本模组渲染路径**一一对应** ✓：
+     * <ul>
+     *   <li>玩家 / 盔甲架 ⇒ {@code WizardArmorLayer} 画 ✓（受 layerOk 控制 ✓）；</li>
+     *   <li>其余实体 ⇒ 只要它的渲染器模型是 {@code HumanoidModel} ✓，
+     *       就会由 {@code WizardArmorRenderHandler}（RenderLivingEvent.Post ✓）补画 ✓ ⇒ 同样给透明图 ✓。</li>
+     * </ul>
+     */
+    public static boolean drawsWizardLayer(net.minecraft.world.entity.Entity entity) {
+        if (!(entity instanceof net.minecraft.world.entity.LivingEntity living)) return false;
+        if (living instanceof net.minecraft.world.entity.player.Player
+                || living instanceof net.minecraft.world.entity.decoration.ArmorStand) {
+            return isLayerOk();
+        }
+        try {
+            net.minecraft.client.renderer.entity.EntityRenderer<?> renderer =
+                    net.minecraft.client.Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(living);
+            return renderer instanceof net.minecraft.client.renderer.entity.LivingEntityRenderer<?, ?> ler
+                    && ler.getModel() instanceof net.minecraft.client.model.HumanoidModel<?>;
+        } catch (Throwable ignored) {
+            return false;   // 拿不到渲染器 ⇒ 交给原版层兜底 ✓
+        }
+    }
+
     /** 腿部层判定：护腿与靴子这两件会取 {@code ...leggings.png} ✓ */
     public static boolean usesLeggingsLayer(EquipmentSlot slot) {
         return slot == EquipmentSlot.LEGS || slot == EquipmentSlot.FEET;

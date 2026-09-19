@@ -44,9 +44,9 @@ public class WizardArmorItem extends ModifiableArmorItem {
         // ⚠ 只有"本模组的渲染层真的会逐组画"的实体才可以给透明图 ✗
         //   之前是**全局**判断（layerOk 一 true 就给透明图）⇒ 你穿上法师套之后，
         //   **假人 / 其它实体**身上的这套盔甲也被原版层画成透明 ⇒ 整件消失 ✗（用户实测 ✓）。
-        boolean layerDraws = WizardArmorTextures.isLayerOk()
-                && (entity instanceof net.minecraft.world.entity.player.Player
-                    || entity instanceof net.minecraft.world.entity.decoration.ArmorStand);
+        // ⭐ 逐实体判断（玩家/盔甲架看图层 ✓；其余人形生物看 RenderLivingEvent 那条路 ✓）——
+        //   否则仆从身上原版层会用原版模型再画一遍 ✗（"多一条/多一件" ✓ 用户实测 ✓）
+        boolean layerDraws = WizardArmorTextures.drawsWizardLayer(entity);
         if (layerDraws) {
             return TinkersNewlife.MOD_ID + ":textures/armor/wizard/transparent.png";
         }
