@@ -23,6 +23,8 @@ param(
     # 左右成对的方块：**由左边那块的成品反射生成右边** ✓（格式 源>派生，逗号分隔 ✓；传空串关掉 ✓）
     # 默认就是巫师法袍的四对 ✓：裙摆两半 + 两袖的镶板/系带/锁链基底 ✓（用户："缩放调整了纹理好歹给我左右对称一下" ✓）
     [string]$SymPairs = 'body_plating_1>body_plating_2,left_arm_plating_5>right_arm_plating_8,left_arm_lace_6>right_arm_lace_9,left_arm_maille_7>right_arm_maille_10',
+    # 跳过这些顶层组的元素（护腿：左腿由 -SymPairs 反射生成 ✓ 不需要采它自己的图 ✓）
+    [string]$SkipTops = '',
     [switch]$Apply,
     [switch]$KeepUnpainted   # 源面整面透明时保留底图原有像素（不砸出洞 ✓）
 )
@@ -33,6 +35,10 @@ Add-Type -AssemblyName System.Drawing
 $texDir  = Join-Path $root 'src\main\resources\assets\tinkersnewlife\textures\armor\wizard'
 $mirrorList = @()
 if ($MirrorX) { $mirrorList = @($MirrorX -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ }) }
+if ($env:TN_SKIP_TOPS) { $SkipTops = $env:TN_SKIP_TOPS }   # env 优先 ✓ 实测 -File 传这两个参数不生效 ✗
+if ($env:TN_SYM_PAIRS) { $SymPairs = $env:TN_SYM_PAIRS }
+$skipTops = @()
+if ($SkipTops) { $skipTops = @($SkipTops -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ }) }
 $derivedOf = @{}    # 派生方块 → 源方块 ✓
 if ($SymPairs) {
     foreach ($pair in ($SymPairs -split ',')) {
@@ -141,6 +147,7 @@ $gTmp.Dispose()
 $loaded.Dispose()
 $ms0.Dispose()
 $report = @()
+$skippedNames = @()
 $lostFaces = 0; $copiedFaces = 0; $blankFaces = @()
 # 面名互换（左右反射时用 ✓）：绕身体中线翻过来 ⇒ 朝外的 west 对上另一侧朝外的 east ✓，其余面名不变 ✓
 $swapFace = @{ 'west' = 'east'; 'east' = 'west'; 'north' = 'north'; 'south' = 'south'; 'up' = 'up'; 'down' = 'down' }
@@ -152,7 +159,14 @@ for ($i = 0; $i -lt $j.elements.Count; $i++) {
     # 用户命名是镜像的：x > 8 的 right_arm 组其实是 MC 的 left_arm ✓（与换算脚本同规则 ✓）
     if ($bone -eq 'right_arm') { $bone = 'left_arm' } elseif ($bone -eq 'left_arm') { $bone = 'right_arm' }
     $name = "{0}_{1}_{2}" -f $bone, $info.Slot, $i
-    if (-not $ours.ContainsKey($name)) { throw "我们模型里找不到方块 $name ✗" }
+    if ($skipTops -contains $info.Bone) { continue }
+    if (-not $ours.ContainsKey($name)) {
+        # 用户模型里有、我们模型里没有的块 ⇒ 跳过并**明确报警** ✓
+        # （护腿就是这样：左腿那两块我们故意不做（缺 trim、尺寸也不一致 ✗）⇒ 左腿整块由 -SymPairs 反射生成 ✓）
+        Write-Host ("  [跳过] 模型里没有 {0}（用户这版多出的一块 ✓ 若它该存在就是名字/换算对不上 ✗）" -f $name)
+        $skippedNames += $name
+        continue
+    }
     $box = $ours[$name]
     # -MirrorX：把这个方块的整块外观按身体中线左右镜像一次 ✓（用户实测"下摆左右反了" ✓ → 见备忘录 §364 ✓）
     #   只翻 u ✓（不翻 v、不换面名 ✓）⇒ 前后面仍是前后面 ✓，朝外的侧面各自镜像 ✓ = 整块绕身体中线翻过来 ✓
@@ -266,6 +280,38 @@ for ($i = 0; $i -lt $j.elements.Count; $i++) {
     $report += $line
 }
 $src.Dispose()
+
+# ---------- 第二遍：对称派生（按**箱名**反射 ✓ 与 JSON 索引无关 ✓）----------
+# 需求来源（护腿 ✓）：用户模型左腿缺块/尺寸不一致 ✗ ⇒ 直接由右腿反射生成左腿 ✓；
+#   第一遍已用 -SkipTops 跳过左腿元素 ✓ ⇒ 这里成对处理最干净 ✓（法袍那边两遍都跑也无害 ✓ 结果相同 ✓）。
+foreach ($dstName in @($derivedOf.Keys)) {
+    $srcName = $derivedOf[$dstName]
+    if (-not $ours.ContainsKey($srcName) -or -not $ours.ContainsKey($dstName)) { throw "对称对缺方块：$srcName → $dstName ✗" }
+    $sbox = $ours[$srcName]; $dbox = $ours[$dstName]
+    $line = "  [反射] {0} → {1}" -f $srcName, $dstName
+    foreach ($fn in 'down', 'up', 'west', 'north', 'east', 'south') {
+        $sf = $swapFace[$fn]
+        $srect = FaceRect $sbox $sf
+        $drect = FaceRect $dbox $fn
+        $rx0 = $srect[0]; $ry0 = $srect[1]; $rw = $srect[2]; $rh = $srect[3]
+        $dx0 = $drect[0]; $dy0 = $drect[1]; $dw = $drect[2]; $dh = $drect[3]
+        $n = 0
+        for ($py = [Math]::Floor($dy0); $py -lt [Math]::Ceiling($dy0 + $dh); $py++) {
+            for ($px = [Math]::Floor($dx0); $px -lt [Math]::Ceiling($dx0 + $dw); $px++) {
+                $tu = (($px + 0.5) - $dx0) / $dw; $tv = (($py + 0.5) - $dy0) / $dh
+                $tu = [Math]::Max(0.0, [Math]::Min(1.0, $tu)); $tv = [Math]::Max(0.0, [Math]::Min(1.0, $tv))
+                $su = 1.0 - $tu; $sv = $tv      # 横向翻 ✓（= 关于 x=0 的反射 ✓）
+                $spx = [int][Math]::Floor($rx0 + $su * $rw); $spy = [int][Math]::Floor($ry0 + $sv * $rh)
+                $spx = [Math]::Max([Math]::Floor($rx0), [Math]::Min([Math]::Ceiling($rx0 + $rw) - 1, $spx))
+                $spy = [Math]::Max([Math]::Floor($ry0), [Math]::Min([Math]::Ceiling($ry0 + $rh) - 1, $spy))
+                $dst.SetPixel([int]$px, [int]$py, $dst.GetPixel([int]$spx, [int]$spy))
+                $n++
+            }
+        }
+        $line += ("  {0}<-{1}:{2}" -f $fn, $sf, $n)
+    }
+    $report += $line
+}
 
 Write-Host ""
 $report | ForEach-Object { Write-Host $_ }

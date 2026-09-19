@@ -77,9 +77,10 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
     private final ModelPart[] sleeveLPlating, sleeveLMaille, sleeveLLace;   // 左袖（MC 的 left_arm ✓）
     private final ModelPart[] sleeveRPlating, sleeveRMaille, sleeveRLace;   // 右袖（MC 的 right_arm ✓）
 
-    // 其余两件（护腿 / 靴子，还是占位几何 ✓）
-    private final ModelPart legWrapRight;
-    private final ModelPart legWrapLeft;
+    // 法袍护腿（用户 2026-09-19 第四份模型 ✓）：每条腿 3 块，槽映射同法袍（plating→0 / maille→1 / lace→2 ✓）
+    private final ModelPart[] legRPlating, legRMaille, legRLace;
+    private final ModelPart[] legLPlating, legLMaille, legLLace;
+    // 靴子（还没做模型 ⇒ 仍是占位几何 ✓）
     private final ModelPart bootCuffRight;
     private final ModelPart bootCuffLeft;
 
@@ -108,8 +109,15 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
         this.sleeveRPlating = new ModelPart[]{ armR.getChild("right_arm_plating_8") };
         this.sleeveRMaille = new ModelPart[]{ armR.getChild("right_arm_maille_10") };
         this.sleeveRLace = new ModelPart[]{ armR.getChild("right_arm_lace_9") };
-        this.legWrapRight = root.getChild("right_leg").getChild("leg_wrap_right_leg");
-        this.legWrapLeft = root.getChild("left_leg").getChild("leg_wrap_left_leg");
+        // 法袍护腿（用户 2026-09-19 第四份模型 ✓ 3 块 × 两条腿 ✓ 换算见 tools\convert-leggings-model.ps1 ✓）
+        ModelPart legR = root.getChild("right_leg");
+        ModelPart legL = root.getChild("left_leg");
+        this.legRPlating = new ModelPart[]{ legR.getChild("right_leg_plating_1") };
+        this.legRMaille = new ModelPart[]{ legR.getChild("right_leg_maille_2") };
+        this.legRLace = new ModelPart[]{ legR.getChild("right_leg_lace_0") };
+        this.legLPlating = new ModelPart[]{ legL.getChild("left_leg_plating_1") };
+        this.legLMaille = new ModelPart[]{ legL.getChild("left_leg_maille_2") };
+        this.legLLace = new ModelPart[]{ legL.getChild("left_leg_lace_0") };
         this.bootCuffRight = root.getChild("right_leg").getChild("boot_cuff_right_leg");
         this.bootCuffLeft = root.getChild("left_leg").getChild("boot_cuff_left_leg");
     }
@@ -192,15 +200,20 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
         addLocalBox(armRPart, "right_arm_maille_10", -3.32889F, -1.99836F, -2.31875F, 4.704F, 2.625F, 4.704F, 62, 58);
         addLocalBox(armRPart, "right_arm_lace_9", -3.4654F, 7.63446F, -2.464F, 4.928F, 1.5F, 4.928F, 103, 63);
 
-        // 法师护腿
-        for (String leg : new String[]{"right_leg", "left_leg"}) {
-            root.getChild(leg).addOrReplaceChild("leg_wrap_" + leg,
-                    CubeListBuilder.create().texOffs(96, 36)
-                            .addBox(-2.5F, 0.0F, -2.5F, 5.0F, 10.0F, 5.0F, new CubeDeformation(0.0F)),
-                    PartPose.offset(0.5F, 1.0F, 0.0F));
-        }
+        // 法袍护腿：用户第四份模型（3 块 × 两条腿 ✓）—— 由 tools\convert-leggings-model.ps1 算好的**腿骨局部坐标** ✓
+        //   ⚠ 全部落在袍摆轮廓内（x ±4.535 / z −2.289~2.411 / 底 ≤ 世界 y 20.196 ✓ 用户要求 ✓）；
+        //     链甲内衬那块被**截短**到袍摆底边（原高 5.53 → 1.73 ✓ 压扁的是重复方格纹 ✓ 看不出来 ✓）。
+        //   左腿的贴图由 import 的 -SymPairs 从右腿反射生成 ✓（几何本身左右对称 ✓ 都相对腿骨居中 ✓）。
+        PartDefinition legRPart = root.getChild("right_leg");
+        PartDefinition legLPart = root.getChild("left_leg");
+        addLocalBox(legRPart, "right_leg_lace_0", -2.231F, 3.58463F, -2.2795F, 4.462F, 3.13326F, 4.559F, 61, 67);
+        addLocalBox(legRPart, "right_leg_plating_1", -2.1825F, 0F, -2.231F, 4.365F, 3.07323F, 4.462F, 30, 71);
+        addLocalBox(legRPart, "right_leg_maille_2", -2.08551F, 6.46819F, -2.134F, 4.17101F, 1.72781F, 4.268F, 0, 7);
+        addLocalBox(legLPart, "left_leg_lace_0", -2.231F, 3.58463F, -2.2795F, 4.462F, 3.13326F, 4.559F, 81, 71);
+        addLocalBox(legLPart, "left_leg_plating_1", -2.1825F, 0F, -2.231F, 4.365F, 3.07323F, 4.462F, 42, 62);
+        addLocalBox(legLPart, "left_leg_maille_2", -2.08551F, 6.46819F, -2.134F, 4.17101F, 1.72781F, 4.268F, 61, 0);
 
-        // 法师靴子
+        // 法师靴子（占位，等用户第五份模型 ✓）
         for (String leg : new String[]{"right_leg", "left_leg"}) {
             root.getChild(leg).addOrReplaceChild("boot_cuff_" + leg,
                     CubeListBuilder.create().texOffs(96, 52)
@@ -240,16 +253,18 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
                 draw(poseStack, buffer, packedLight, packedOverlay, 0, this.rightArm, sleeveRPlating);
             }
             case LEGS -> {
-                draw(poseStack, buffer, packedLight, packedOverlay, 0, this.rightLeg, legWrapRight);
-                draw(poseStack, buffer, packedLight, packedOverlay, 0, this.leftLeg, legWrapLeft);
-                draw(poseStack, buffer, packedLight, packedOverlay, 3, this.rightLeg, bootCuffRight);
-                draw(poseStack, buffer, packedLight, packedOverlay, 3, this.leftLeg, bootCuffLeft);
+                // 槽0 镶板（大腿外侧装饰）✓ 槽1 锁链基底（链甲内衬 ✓ 藏在袍下）✓ 槽2 法袍系带（膝部饰带）✓
+                draw(poseStack, buffer, packedLight, packedOverlay, 0, this.rightLeg, legRPlating);
+                draw(poseStack, buffer, packedLight, packedOverlay, 0, this.leftLeg, legLPlating);
+                draw(poseStack, buffer, packedLight, packedOverlay, 1, this.rightLeg, legRMaille);
+                draw(poseStack, buffer, packedLight, packedOverlay, 1, this.leftLeg, legLMaille);
+                draw(poseStack, buffer, packedLight, packedOverlay, 2, this.rightLeg, legRLace);
+                draw(poseStack, buffer, packedLight, packedOverlay, 2, this.leftLeg, legLLace);
             }
             default -> {
+                // 靴子（FEET 那件 ✓ 还是占位几何）
                 draw(poseStack, buffer, packedLight, packedOverlay, 0, this.rightLeg, bootCuffRight);
                 draw(poseStack, buffer, packedLight, packedOverlay, 0, this.leftLeg, bootCuffLeft);
-                draw(poseStack, buffer, packedLight, packedOverlay, 4, this.rightLeg, legWrapRight);
-                draw(poseStack, buffer, packedLight, packedOverlay, 4, this.leftLeg, legWrapLeft);
             }
         }
     }
@@ -299,16 +314,17 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
                 group(poseStack, buffers, light, overlay, 2, prefix, legsLayer, this.rightArm, sleeveRLace);
             }
             case LEGS -> {
-                group(poseStack, buffers, light, overlay, 0, prefix, legsLayer, this.rightLeg, legWrapRight);
-                group(poseStack, buffers, light, overlay, 0, prefix, legsLayer, this.leftLeg, legWrapLeft);
-                group(poseStack, buffers, light, overlay, 3, prefix, legsLayer, this.rightLeg, bootCuffRight);
-                group(poseStack, buffers, light, overlay, 3, prefix, legsLayer, this.leftLeg, bootCuffLeft);
+                // 护腿三槽（同法袍 ✓）：0 镶板 / 1 锁链基底 / 2 法袍系带 ✓（用腿层贴图 ✓ legsLayer ✓）
+                group(poseStack, buffers, light, overlay, 0, prefix, legsLayer, this.rightLeg, legRPlating);
+                group(poseStack, buffers, light, overlay, 0, prefix, legsLayer, this.leftLeg, legLPlating);
+                group(poseStack, buffers, light, overlay, 1, prefix, legsLayer, this.rightLeg, legRMaille);
+                group(poseStack, buffers, light, overlay, 1, prefix, legsLayer, this.leftLeg, legLMaille);
+                group(poseStack, buffers, light, overlay, 2, prefix, legsLayer, this.rightLeg, legRLace);
+                group(poseStack, buffers, light, overlay, 2, prefix, legsLayer, this.leftLeg, legLLace);
             }
             default -> {
                 group(poseStack, buffers, light, overlay, 0, prefix, legsLayer, this.rightLeg, bootCuffRight);
                 group(poseStack, buffers, light, overlay, 0, prefix, legsLayer, this.leftLeg, bootCuffLeft);
-                group(poseStack, buffers, light, overlay, 4, prefix, legsLayer, this.rightLeg, legWrapRight);
-                group(poseStack, buffers, light, overlay, 4, prefix, legsLayer, this.leftLeg, legWrapLeft);
             }
         }
     }
