@@ -1,9 +1,0 @@
-[
-  {
-    "name": "wizard_armor",
-    "data": "sections/wizard_armor.json",
-    "icon": {
-      "item": "tinkersnewlife:robe_lace"
-    }
-  }
-]
