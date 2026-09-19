@@ -38,6 +38,15 @@ public final class ModConfig {
      */
     public static final ConfigValue<Boolean> COGNITIVE_MASK_HIDE_FROM_RADAR;
 
+    /**
+     * 佩戴面具时，**被你打过的怪可以还手**（默认开 ✓）。
+     *
+     * <p>用户要求："佩戴时怪物不会主动攻击，但受击会还手" ✓。
+     * 判定读 MC 自己的 {@code LivingEntity#getLastHurtByMob()} ✓（MC 5 秒后自动清空 ⇒ 天然是"近期" ✓）。
+     * 关掉则恢复旧行为：戴着面具谁都锁不住你（包括你打过的怪 ✗）。
+     */
+    public static final ConfigValue<Boolean> COGNITIVE_MASK_ALLOW_RETALIATION;
+
     // ==================== 无为转变 伪装渲染 ====================
     /** 无为转变·伪装渲染替换（客户端）：把变形玩家渲染成目标生物。与 YSM 等接管玩家渲染的模组冲突时可关闭 */
     public static final ConfigValue<Boolean> WUWEI_DISGUISE_RENDER;
@@ -209,9 +218,15 @@ public final class ModConfig {
                 "",
                 "Wearing it always: other players cannot see your name tag, and mobs cannot lock onto you",
                 "(both newly attempted locks and locks that already existed before you put it on).",
+                "EXCEPT mobs you hit yourself: they are allowed to fight back (see allow_retaliation).",
                 "It also makes you treat EVERY living entity except players as UNDEAD: cursed tool",
                 "undead bonus, reverse cursed technique (damage instead of heal on undead), Jacob's Ladder",
                 "and the Cursed Spirit Technique capture check all take the undead branch.",
+                "",
+                "allow_retaliation = a mob you hurt may target you back (default true).",
+                "Uses vanilla's own getLastHurtByMob(), which vanilla clears after 100 ticks (5 s) and",
+                "refreshes on every hit, so it is exactly a 'recently attacked' window.",
+                "Set false to go back to the old behaviour: nothing can ever lock onto you.",
                 "",
                 "hide_from_radar = also hide the wearer from the Xaero's minimap radar (default true).",
                 "Implemented by a targeted mixin (XaeroRadarMixin) that filters the radar's entity",
@@ -220,6 +235,7 @@ public final class ModConfig {
                 "the earlier invisibility-flag approach was dropped.",
                 "Set false to stay on radars: the name tag and mob targeting are still blocked.");
         COGNITIVE_MASK_HIDE_FROM_RADAR = b.define("hide_from_radar", true);
+        COGNITIVE_MASK_ALLOW_RETALIATION = b.define("allow_retaliation", true);
         b.pop();
 
         // 无为转变·伪装渲染替换（客户端）

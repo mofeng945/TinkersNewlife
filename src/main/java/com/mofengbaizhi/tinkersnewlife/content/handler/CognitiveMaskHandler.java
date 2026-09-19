@@ -1,6 +1,7 @@
 package com.mofengbaizhi.tinkersnewlife.content.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import com.mofengbaizhi.tinkersnewlife.config.ModConfig;
 import com.mofengbaizhi.tinkersnewlife.content.item.CognitiveMaskItem;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -20,7 +21,12 @@ import net.minecraftforge.fml.common.Mod;
  *   <li>{@link LivingChangeTargetEvent} 直接取消 —— 凡是"新的锁定目标是戴着面具的玩家"一律作废
  *       （该事件由 {@code ForgeHooks.onLivingChangeTarget} 触发，脑 AI（监守者那类）也走它 ✓）；</li>
  *   <li><b>清扫已有锁定</b>：每秒扫一遍，把"戴上之前就已经锁着你"的怪物的目标清掉
- *       —— 只靠事件的话，戴面具前已经被锁的怪会一直打你 ✗。</li>
+ *       —— 只靠事件的话，戴面具前已经被锁的怪会一直打你 ✗；</li>
+ *   <li>⭐ <b>但"受击会还手"</b>（用户要求 ✓）：被你打过的怪**允许**锁定你 ✓ ——
+ *       判定用 {@link #mayRetaliate} ✓，它读 MC 自己的 {@code getLastHurtByMob()} ✓
+ *       （MC 5 秒后自动清空 ⇒ 天然是"近期被打过"的窗口 ✓，且每次挨打都刷新 ✓）。
+ *       ⚠ 只有**被你打的那一只**会还手 ✓；同类怪被 {@code HurtByTargetGoal.alertOthers()} 叫上来的那批
+ *       仍然会被本类拦掉 ✓（这正是面具该有的效果 ✓）。</li>
  * </ol>
  *
  * <h2>⚠ 这里**故意不再**给玩家挂"隐身标记"（用户实测教训）</h2>
@@ -49,12 +55,12 @@ public final class CognitiveMaskHandler {
         if (!(event.getEntity() instanceof Mob)) return;
         if (!(event.getNewTarget() instanceof ServerPlayer prey)) return;
         if (prey == event.getEntity()) return;
-        if (CognitiveMaskItem.isWorn(prey)) {
-            event.setCanceled(true);
-        }
+        if (!CognitiveMaskItem.isWorn(prey)) return;
+        if (mayRetaliate((Mob) event.getEntity(), prey)) return;   // 被打过的怪可以还手 ✓
+        event.setCanceled(true);
     }
 
-    /** 每秒清扫一次"已经锁在面具佩戴者身上"的怪物目标 */
+    /** 每秒清扫一次"已经锁在面具佩戴者身上"的怪物目标（正在还手的除外 ✓） */
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
@@ -66,10 +72,26 @@ public final class CognitiveMaskHandler {
             for (Entity entity : level.getAllEntities()) {
                 if (!(entity instanceof Mob mob)) continue;
                 if (mob.getTarget() instanceof ServerPlayer prey
-                        && CognitiveMaskItem.isWorn(prey)) {
+                        && CognitiveMaskItem.isWorn(prey)
+                        && !mayRetaliate(mob, prey)) {                 // 还手中的不松手 ✓
                     mob.setTarget(null);
                 }
             }
         }
+    }
+
+    /**
+     * 这只怪最近被这位佩戴者打过吗 —— 打过就允许它还手 ✓（用户要求："佩戴时怪物不会主动攻击，
+     * 但受击会还手" ✓）。
+     *
+     * <p>判定直接读 MC 自己的 {@code LivingEntity#getLastHurtByMob()} ✓：
+     * MC 在 {@code LivingEntity#aiStep} 里会在 **100 tick（5 秒）** 后自动把它清空 ✓
+     * ⇒ 天然就是"近期被打过"的窗口 ✓ 不必自己记时间戳 ✓；而且**每次挨打都会刷新** ✓
+     * ⇒ 只要还在互殴，它就一直是你的"还手者" ✓。
+     *
+     * <p>关掉 {@code cognitive_mask.allow_retaliation} 就恢复旧行为（一律锁不住你 ✓）。
+     */
+    private static boolean mayRetaliate(Mob mob, ServerPlayer prey) {
+        return ModConfig.COGNITIVE_MASK_ALLOW_RETALIATION.get() && mob.getLastHurtByMob() == prey;
     }
 }
