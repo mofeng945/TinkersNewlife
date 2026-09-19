@@ -16,9 +16,13 @@ param(
     [string]$Json = "$env:USERPROFILE\Desktop\wizard_robe.json",
     [string]$Png  = "$env:USERPROFILE\Desktop\wizard_robe.png",
     [double]$UvScale = 8.0,
-    # 需要"按身体中线左右镜像"的方块名，逗号分隔（如 body_plating_1,body_plating_2 ✓）：逐面把源的 u 反向再取样 ✓
+    # 需要"按身体中线左右镜像"的方块名，逗号分隔 ✓：逐面把源的 u 反向再取样 ✓
+    # 默认 = 裙摆"右半"（body_plating_1 ✓）：用户实测原方向左右反了 ✓，镜像后是他要的方向 ✓（§364 ✓）
     # ⚠ 声明成 [string] 而不是 [string[]] ✗ —— `powershell -File` 传数组参数会被塞成一整个字符串 ✗（踩过 ✓）
-    [string]$MirrorX = '',
+    [string]$MirrorX = 'body_plating_1',
+    # 左右成对的方块：**由左边那块的成品反射生成右边** ✓（格式 源>派生，逗号分隔 ✓；传空串关掉 ✓）
+    # 默认就是巫师法袍的四对 ✓：裙摆两半 + 两袖的镶板/系带/锁链基底 ✓（用户："缩放调整了纹理好歹给我左右对称一下" ✓）
+    [string]$SymPairs = 'body_plating_1>body_plating_2,left_arm_plating_5>right_arm_plating_8,left_arm_lace_6>right_arm_lace_9,left_arm_maille_7>right_arm_maille_10',
     [switch]$Apply,
     [switch]$KeepUnpainted   # 源面整面透明时保留底图原有像素（不砸出洞 ✓）
 )
@@ -29,6 +33,15 @@ Add-Type -AssemblyName System.Drawing
 $texDir  = Join-Path $root 'src\main\resources\assets\tinkersnewlife\textures\armor\wizard'
 $mirrorList = @()
 if ($MirrorX) { $mirrorList = @($MirrorX -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ }) }
+$derivedOf = @{}    # 派生方块 → 源方块 ✓
+if ($SymPairs) {
+    foreach ($pair in ($SymPairs -split ',')) {
+        $pair = $pair.Trim(); if (-not $pair) { continue }
+        $parts = $pair -split '>'
+        if ($parts.Count -ne 2) { throw "对称对格式应为 源>派生 ✗：$pair" }
+        $derivedOf[$parts[1].Trim()] = $parts[0].Trim()
+    }
+}
 $greyPath = Join-Path $texDir 'grey.png'
 $javaPath = Join-Path $root 'src\main\java\com\mofengbaizhi\tinkersnewlife\client\model\WizardArmorModel.java'
 $outDir = Join-Path $root 'build'
@@ -120,6 +133,8 @@ $loaded.Dispose()
 $ms0.Dispose()
 $report = @()
 $lostFaces = 0; $copiedFaces = 0; $blankFaces = @()
+# 面名互换（左右反射时用 ✓）：绕身体中线翻过来 ⇒ 朝外的 west 对上另一侧朝外的 east ✓，其余面名不变 ✓
+$swapFace = @{ 'west' = 'east'; 'east' = 'west'; 'north' = 'north'; 'south' = 'south'; 'up' = 'up'; 'down' = 'down' }
 
 for ($i = 0; $i -lt $j.elements.Count; $i++) {
     $e = $j.elements[$i]
@@ -133,8 +148,15 @@ for ($i = 0; $i -lt $j.elements.Count; $i++) {
     # -MirrorX：把这个方块的整块外观按身体中线左右镜像一次 ✓（用户实测"下摆左右反了" ✓ → 见备忘录 §364 ✓）
     #   只翻 u ✓（不翻 v、不换面名 ✓）⇒ 前后面仍是前后面 ✓，朝外的侧面各自镜像 ✓ = 整块绕身体中线翻过来 ✓
     $mirrored = ($mirrorList -contains $name)
+    # -SymPairs：这一块是"由另一块反射生成"的 ✓（源块必须先处理，索引天然递增 ✓）
+    $symFrom = $null
+    if ($derivedOf.ContainsKey($name)) { $symFrom = $derivedOf[$name] }
+    if ($symFrom -and -not $ours.ContainsKey($symFrom)) { throw "对称源方块 $symFrom 不在模型里 ✗" }
 
-    $line = "  #{0,-2} {1,-22}{2}" -f $i, $name, $(if ($mirrored) { ' [镜像]' } else { '' })
+    $tag = ''
+    if ($mirrored) { $tag += ' [镜像]' }
+    if ($symFrom) { $tag += " [对称←$symFrom]" }
+    $line = "  #{0,-2} {1,-22}{2}" -f $i, $name, $tag
     foreach ($fn in 'up', 'down', 'east', 'north', 'west', 'south') {
         $fd = $e.faces.$fn
         if (-not $fd -or -not $fd.uv) { $line += "  $fn:无UV ✗"; continue }
@@ -151,6 +173,39 @@ for ($i = 0; $i -lt $j.elements.Count; $i++) {
 
         $fr = FaceRect $box $fn
         $dx0 = $fr[0]; $dy0 = $fr[1]; $dw = $fr[2]; $dh = $fr[3]
+
+        # ---------- 对称派生：直接抄"源方块已被处理好的目标像素"，横向翻一下 ✓ ----------
+        # 为什么要这么做 ✗→✓：左右两块即使画得一模一样（镜像 ✓），各自对源图**重采样**时相位不同 ✗
+        #   ⇒ 下降采样（用户 2 像素/格 vs 底图 1 像素/格 ✓）会取到不同的源像素 ⇒ 两侧图案对不上 ✗
+        #   （用户实测："你缩放调整了纹理好歹给我左右对称一下" ✓）。抄一份再翻 ⇒ 像素级完全对称 ✓✓。
+        #   左右反射的对应关系：几何上 west(-x) ↔ 另一侧的 east(+x) ✓，且每个面的 u 轴都要反 ✓
+        #   （这就是"整块绕身体中线翻过来"✓ 与 -MirrorX 同一几何含义 ✓）。
+        if ($symFrom) {
+            $sbox = $ours[$symFrom]
+            $sf = $swapFace[$fn]
+            $srect = FaceRect $sbox $sf
+            $rx0 = $srect[0]; $ry0 = $srect[1]; $rw = $srect[2]; $rh = $srect[3]
+            $n = 0
+            for ($py = [Math]::Floor($dy0); $py -lt [Math]::Ceiling($dy0 + $dh); $py++) {
+                for ($px = [Math]::Floor($dx0); $px -lt [Math]::Ceiling($dx0 + $dw); $px++) {
+                    $tu = (($px + 0.5) - $dx0) / $dw
+                    $tv = (($py + 0.5) - $dy0) / $dh
+                    $tu = [Math]::Max(0.0, [Math]::Min(1.0, $tu)); $tv = [Math]::Max(0.0, [Math]::Min(1.0, $tv))
+                    $su = 1.0 - $tu                       # 横向翻 ✓
+                    $sv = $tv
+                    $spx = [int][Math]::Floor($rx0 + $su * $rw)
+                    $spy = [int][Math]::Floor($ry0 + $sv * $rh)
+                    $spx = [Math]::Max([Math]::Floor($rx0), [Math]::Min([Math]::Ceiling($rx0 + $rw) - 1, $spx))
+                    $spy = [Math]::Max([Math]::Floor($ry0), [Math]::Min([Math]::Ceiling($ry0 + $rh) - 1, $spy))
+                    # ⚠ 读的是 dst（源方块已经写好了 ✓），写的是本方块 ⇒ 两块矩形不相交 ⇒ 无别名问题 ✓
+                    $dst.SetPixel([int]$px, [int]$py, $dst.GetPixel([int]$spx, [int]$spy))
+                    $n++
+                }
+            }
+            $copiedFaces++
+            $line += ("  {0}<-{1}:{2}" -f $fn, $sf, $n)
+            continue
+        }
 
         # 逐目标像素反查源像素（最近邻 ✓ 保留 alpha ✓）
         $painted = 0; $total = 0

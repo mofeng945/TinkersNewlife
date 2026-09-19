@@ -1,5 +1,9 @@
 ﻿# 诊断：查"哪些面 uv 反向"以及"两半裙摆的画是否互为镜像"
 param(
+    [int]$PairA = 1,
+    [string]$FaceA = 'west',
+    [string]$FaceB = 'east',
+    [int]$PairB = 2,
     [string]$Json = "$env:USERPROFILE\Desktop\wizard_robe.json",
     [string]$Png  = "$env:USERPROFILE\Desktop\wizard_robe.png",
     [double]$UvScale = 8.0
@@ -51,17 +55,17 @@ function CmpBlock($a, $b, [bool]$mirror) {
 Write-Host ""
 Write-Host "裙摆 #1 与 #2 各面对照（原样相同率 / 镜像相同率 ✓ 高者说明关系）："
 foreach ($fn in 'north', 'south', 'east', 'west', 'up', 'down') {
-    $a = Grab $j.elements[1] $fn
-    $b = Grab $j.elements[2] $fn
+    $a = Grab $j.elements[$PairA] $fn
+    $b = Grab $j.elements[$PairB] $fn
     Write-Host ("  {0,-6} 原样 {1,-8} 镜像 {2}" -f $fn, (CmpBlock $a $b $false), (CmpBlock $a $b $true))
 }
 Write-Host ""
 Write-Host "裙摆 #1 的外侧面 west 与 #2 的外侧面 east（这一对才是朝外的 ✓）对照："
-$wa = Grab $j.elements[1] 'west'
-$eb = Grab $j.elements[2] 'east'
+$wa = Grab $j.elements[$PairA] $FaceA
+$eb = Grab $j.elements[$PairB] $FaceB
 Write-Host ("  #1.west vs #2.east   原样 {0,-8} 镜像 {1}" -f (CmpBlock $wa $eb $false), (CmpBlock $wa $eb $true))
-$ea = Grab $j.elements[1] 'east'
-$wb = Grab $j.elements[2] 'west'
+$ea = Grab $j.elements[$PairA] $FaceB
+$wb = Grab $j.elements[$PairB] $FaceA
 Write-Host ("  #1.east vs #2.west（内侧面，应为空 ✓） 原样 {0,-8} 镜像 {1}" -f (CmpBlock $ea $wb $false), (CmpBlock $ea $wb $true))
 Write-Host ""
 Write-Host "躯干 #0 与内衬 #4 对照（单件，看有没有整体镜像关系）："
