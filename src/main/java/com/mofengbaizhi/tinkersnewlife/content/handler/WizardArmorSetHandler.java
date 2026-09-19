@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.content.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.item.WizardArmorItem;
+import com.mofengbaizhi.tinkersnewlife.content.modifier.MagicConductionModifier;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -11,6 +12,7 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraft.server.MinecraftServer;
@@ -22,9 +24,9 @@ import java.util.UUID;
  *
  * <p>每穿 1 件巫师套（头/胸/腿/靴 ✓）：
  * <ul>
- *   <li>铁魔法：<b>法力上限 +125</b>、<b>法术强度 +5%</b>（走反射 ✓ 软依赖 ✓）；</li>
- *   <li>诡厄巫法：全学派法术强度 +5%（后续接 ✓）；</li>
- *   <li>全类型法术：法术伤害 <b>+7%</b>（后续接 ✓ 挂我们自己的伤害结算 ✓）。</li>
+ *   <li><b>法力上限 +125</b>、<b>法术强度 +5%</b> —— 铁魔法属性 ✓ 走反射 ✓ 软依赖 ✓；</li>
+ *   <li><b>法术伤害 +7%</b> —— 我们自己的出伤结算（{@link #onSpellHurt} ✓ 对铁魔法<b>与</b>诡厄巫法
+ *       的法术一并生效 ✓ 判定复用「导魔」的{@link MagicConductionModifier#isMagicDamage} ✓）。</li>
  * </ul>
  *
  * <p>⭐ 实现方式：**属性修饰符**（瞬时修饰符 ✓ 幂等刷新 ✓），不是往玩家身上塞状态 ✗
@@ -39,13 +41,14 @@ public final class WizardArmorSetHandler {
     private WizardArmorSetHandler() {}
 
     /** 每件的数值（用户定案 ✓） */
-    public static final int MANA_PER_PIECE = 125;
-    public static final double SPELL_POWER_PER_PIECE = 0.05D;
-    public static final double SPELL_DAMAGE_PER_PIECE = 0.07D;
+    public static final int MANA_PER_PIECE = com.mofengbaizhi.tinkersnewlife.content.modifier.ManaSurgeTrait.MANA_PER_PIECE;
+    public static final double SPELL_POWER_PER_PIECE = com.mofengbaizhi.tinkersnewlife.content.modifier.ManaSurgeTrait.SPELL_POWER_PER_PIECE;
+    public static final double SPELL_DAMAGE_PER_PIECE = com.mofengbaizhi.tinkersnewlife.content.modifier.ManaSurgeTrait.SPELL_DAMAGE_PER_PIECE;
 
     /** 修饰符身份（固定 UUID ✓ 保证"刷新=替换"而不是叠加 ✗） */
     private static final UUID MANA_UUID = UUID.fromString("7a13c0de-0001-4a11-9d10-1c5e0f5a0001");
     private static final UUID POWER_UUID = UUID.fromString("7a13c0de-0002-4a11-9d10-1c5e0f5a0002");
+    private static final UUID POTENCY_UUID = UUID.fromString("7a13c0de-0003-4a11-9d10-1c5e0f5a0003");
 
     /** 穿着一件巫师套吗（任意一件即启用 ✓ 用户确认 ✓） */
     public static boolean wearsAny(LivingEntity entity) {
@@ -58,12 +61,8 @@ public final class WizardArmorSetHandler {
 
     /** 穿了几件（0~4 ✓ 魔力涌动按这个叠加 ✓） */
     public static int wornPieces(LivingEntity entity) {
-        int n = 0;
-        for (EquipmentSlot slot : new EquipmentSlot[]{
-                EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET }) {
-            if (entity.getItemBySlot(slot).getItem() instanceof WizardArmorItem) n++;
-        }
-        return n;
+        // ⭐ 以**特性**为准 ✓（不是"物品类型" ✗）：把魔力涌动从甲上洗掉，效果就随之消失 ✓
+        return com.mofengbaizhi.tinkersnewlife.content.modifier.ManaSurgeTrait.countWorn(entity);
     }
 
     /** 动态提示行（工具提示用 ✓ 数字随件数变 ✓ 用户要求"别一大串静态描述" ✓） */
@@ -91,7 +90,9 @@ public final class WizardArmorSetHandler {
 
     private static boolean hasOurModifier(LivingEntity living) {
         AttributeInstance mana = attributeOf(living, IRON_MAX_MANA);
-        return mana != null && mana.getModifier(MANA_UUID) != null;
+        if (mana != null && mana.getModifier(MANA_UUID) != null) return true;
+        AttributeInstance potency = attributeOf(living, GOETY_SPELL_POTENCY);
+        return potency != null && potency.getModifier(POTENCY_UUID) != null;
     }
 
     private static void applySurge(LivingEntity living, int pieces) {
@@ -99,6 +100,31 @@ public final class WizardArmorSetHandler {
                 pieces * (double) MANA_PER_PIECE, AttributeModifier.Operation.ADDITION);
         setModifier(living, IRON_SPELL_POWER, POWER_UUID, "tn_wizard_power",
                 pieces * SPELL_POWER_PER_PIECE, AttributeModifier.Operation.MULTIPLY_TOTAL);
+        // ⭐ 诡厄巫法：全学派法术强度（= Goety 的 SPELL_POTENCY 属性 ✓）
+        //   用 MULTIPLY_TOTAL 而不是 ADDITION ✓ —— 与它的基准值无关：
+        //   无论 potency 基准是 1.0（Goety 自己的袍子用 ADDITION +0.05 口径 ✓）还是别的，
+        //   x*(1+0.05n) 都是"每件 +5%" ✓（软依赖：没装 Goety 时这一段静默跳过 ✓）
+        setModifier(living, GOETY_SPELL_POTENCY, POTENCY_UUID, "tn_wizard_potency",
+                pieces * SPELL_POWER_PER_PIECE, AttributeModifier.Operation.MULTIPLY_TOTAL);
+    }
+
+    /**
+     * 出伤侧：穿着整套/部分巫师甲的实体<b>施放法术</b>时，伤害 ×(1 + 7% × 件数) ✓。
+     *
+     * <p>判定复用「导魔」的{@link MagicConductionModifier#isMagicDamage}（原版女巫抗性标签、
+     * {@code forge:is_magic}、名字含 magic、以及 {@code irons_spellbooks.*} / {@code goety.*}
+     * 命名空间兜底 ✓）⇒ <b>铁魔法与诡厄巫法的法术一并生效</b> ✓。
+     *
+     * <p>放在 {@link EventPriority#LOWEST}（别人都改完之后 ✓）再乘，避免被后续结算抹掉；
+     * 只乘一次、不改伤害类型 ⇒ 不会触发递归 ✗（与「混沌之流」那种嵌套 hurt 不同 ✓）。
+     */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onSpellHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
+        if (!(event.getSource().getEntity() instanceof LivingEntity caster)) return;
+        int pieces = wornPieces(caster);
+        if (pieces <= 0) return;
+        if (!MagicConductionModifier.isMagicDamage(event.getSource())) return;
+        event.setAmount(event.getAmount() * (1.0F + (float) (pieces * SPELL_DAMAGE_PER_PIECE)));
     }
 
     /** 增删一个瞬时修饰符（值为 0 就移除 ✓ 幂等 ✓） */
@@ -124,6 +150,8 @@ public final class WizardArmorSetHandler {
     // ---------- 铁魔法属性（反射解析一次后缓存 ✓ 软依赖 ✓）----------
     private static Attribute IRON_MAX_MANA;
     private static Attribute IRON_SPELL_POWER;
+    // ---------- 诡厄巫法属性（同上 ✓）----------
+    private static Attribute GOETY_SPELL_POTENCY;
     private static boolean ironResolved;
 
     private static void resolveIron() {
@@ -131,6 +159,19 @@ public final class WizardArmorSetHandler {
         ironResolved = true;
         IRON_MAX_MANA = ironAttribute("MAX_MANA");
         IRON_SPELL_POWER = ironAttribute("SPELL_POWER");
+        GOETY_SPELL_POTENCY = goetyAttribute("SPELL_POTENCY");
+    }
+
+    /** 诡厄巫法的全学派法术强度属性（软依赖 ✓ 没装就返回 null ✓） */
+    private static Attribute goetyAttribute(String field) {
+        try {
+            Class<?> reg = Class.forName("com.Polarice3.Goety.init.ModAttributes");
+            Object holder = reg.getField(field).get(null);
+            Object attr = holder.getClass().getMethod("get").invoke(holder);
+            return attr instanceof Attribute a ? a : null;
+        } catch (Throwable ignored) {
+            return null;
+        }
     }
 
     private static Attribute ironAttribute(String field) {

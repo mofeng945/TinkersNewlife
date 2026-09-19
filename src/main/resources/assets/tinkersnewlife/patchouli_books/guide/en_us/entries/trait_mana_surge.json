@@ -1,0 +1,17 @@
+{
+  "name": "Mana Surge",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:textures/gui/modifiers/mana_surge.png",
+  "sortnum": 57,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Mana Surge$() (default trait of all four $(bold)Wizard Set$() pieces, $(bold)unleveled$())$(br2)Active as long as you wear $(bold)any single piece$() carrying this trait, and it $(bold)stacks per piece$().$(br2)Per piece:$(li)Iron's Spells $(bold)max mana +125$()$(li)$(bold)spell power +5%$()$(li)$(bold)spell damage +7%$()$(br2)All four pieces give $(bold)+500 mana / +20% spell power / +28% spell damage$(). Removing a piece removes its share (recalculated every second, no relog needed)."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Spell inscribing$(): every wizard armor piece with this trait carries $(bold)one spell slot$() - the Arcane Anvil only accepts items that already are spell containers, so this set is what lets you inscribe a $(bold)scroll$() spell onto your armor (one per piece, independent of each other).$(br2)$(bold)Removing the trait removes this$(): the effect follows the $(bold)trait$(), not the item. Wash Mana Surge off with a $(l:trait_overview)modifier crystal$() and that piece loses both its bonuses and its spell slot."
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}

@@ -1,0 +1,17 @@
+{
+  "name": "魔力涌动",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:textures/gui/modifiers/mana_surge.png",
+  "sortnum": 57,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)魔力涌动$()（$(bold)巫师套装$()四件自带的默认特性，$(bold)无等级$()）$(br2)只要身上穿着$(bold)任意一件$()带此特性的巫师甲，效果就生效；$(bold)按件叠加$()。$(br2)每件的效果：$(li)铁魔法 $(bold)法力上限 +125$()$(li)$(bold)法术强度 +5%$()$(li)$(bold)法术伤害 +7%$()$(br2)穿满四件即 $(bold)+500 法力 / +20% 法强 / +28% 法术伤害$()。脱下即少一份（每秒重算一次，无需重登）。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)注入法术$()：带此特性的每一件巫师甲都会自带 $(bold)1 格法术容器$()——铁魔法的$(bold)奥术铁砧$()只接受\"已经是法术容器\"的物品，所以只有穿上这套甲，才能把$(bold)卷轴$()里的法术刻进盔甲（四件各刻一个，互不影响）。$(br2)$(bold)洗掉即失效$()：本效果以$(bold)特性$()为准，不是以物品为准。用$(l:trait_overview)修饰符水晶$()把魔力涌动洗掉，那一件的加成与刻印位就一起消失。"
+    }
+  ],
+  "flag": "mod:irons_spellbooks"
+}

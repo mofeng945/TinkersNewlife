@@ -54,27 +54,6 @@ public class WizardArmorItem extends ModifiableArmorItem {
         return WizardArmorTextures.fallbackArmorTexture(stack, slot);
     }
 
-    /**
-     * ⭐ 特性提示**动态**加（用户要求："和模块化魔杖一样动态加 ✓ 别一大串静态描述 ✗"）：
-     * 只加一行算出来的数值，数字跟着客户端玩家身上**穿了几件**变 ✓；规则细则放帕秋莉手册 ✓。
-     */
-    @Override
-    public void appendHoverText(net.minecraft.world.item.ItemStack stack, @javax.annotation.Nullable net.minecraft.world.level.Level level,
-                                java.util.List<net.minecraft.network.chat.Component> tooltip,
-                                net.minecraft.world.item.TooltipFlag flag) {
-        super.appendHoverText(stack, level, tooltip, flag);
-        try {
-            net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
-            if (player == null) return;
-            int pieces = com.mofengbaizhi.tinkersnewlife.content.handler.WizardArmorSetHandler.wornPieces(player);
-            if (pieces <= 0) return;
-            tooltip.add(com.mofengbaizhi.tinkersnewlife.content.handler.WizardArmorSetHandler.surgeLine(pieces)
-                    .withStyle(net.minecraft.ChatFormatting.AQUA));
-        } catch (Throwable ignored) {
-            // 专用服 / 拿不到客户端玩家 ⇒ 不加这一行 ✓（绝不让工具提示崩 ✗）
-        }
-    }
-
     @Override
     public void initializeClient(Consumer<IClientItemExtensions> consumer) {
         consumer.accept(new IClientItemExtensions() {
@@ -88,11 +67,12 @@ public class WizardArmorItem extends ModifiableArmorItem {
                             net.minecraft.client.Minecraft.getInstance().getEntityModels()
                                     .bakeLayer(com.mofengbaizhi.tinkersnewlife.client.model.WizardArmorModel.LAYER));
                 }
-                model.setCurrent(stack, slot);   // ⭐ 告诉模型"这一件 + 哪个槽"⇒ 只画该件并逐组染材料色 ✓
-            // ⭐ 原版盔甲层（非本模组自绘路径的实体）拿到的也是这个模型 ✗
-            //   ⇒ 必须先告诉它"这是哪一件"，否则它按默认槽（帽子）画 ⇒ 出现"裤在躯干、衣在腿上" ✗（用户实测 ✓）
-            model.setCurrent(stack, slot);
+                // ⭐ 告诉模型"这一件 + 哪个槽"⇒ 只画该件并逐组染材料色 ✓
+                //   原版盔甲层（非本模组自绘路径的实体）拿到的也是这个模型 ✗
+                //   ⇒ 必须先告诉它"这是哪一件"，否则它按默认槽（帽子）画 ⇒ "裤在躯干、衣在腿上" ✗（用户实测 ✓）
+                model.setCurrent(stack, slot);
                 return model;
-            }        });
+            }
+        });
     }
 }

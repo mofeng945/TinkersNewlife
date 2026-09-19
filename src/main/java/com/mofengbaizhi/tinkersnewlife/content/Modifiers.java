@@ -12,6 +12,9 @@ public class Modifiers {
     public static final StaticModifier<CosmicOrderVoiceTrait> COSMIC_ORDER_VOICE =
             MODIFIERS.register("cosmic_order_voice", CosmicOrderVoiceTrait::new);
 
+    /** 巫师套装特性·魔力涌动（无等级 ✓ 按件叠加 ✓ 内建在四件巫师套上 ✓） */
+    public static final StaticModifier<ManaSurgeTrait> MANA_SURGE =
+            MODIFIERS.register("mana_surge", ManaSurgeTrait::new);
     public static final StaticModifier<DragonsteelFireTrait> DRAGONSTEEL_FIRE =
             MODIFIERS.register("dragonsteel_fire", DragonsteelFireTrait::new);
 
