@@ -581,30 +581,4 @@ public class ClientEventHandler {
     }
 
     /**
-     * ⭐ 小体型 / 模组人形生物兼容（2026-09-19 ✓ 用户要求"所有会穿盔甲的人形生物" ✓）：
-     * 玩家与盔甲架由 {@link com.mofengbaizhi.tinkersnewlife.client.renderer.WizardArmorLayer} 负责 ✓，
-     * 其余"模型是 HumanoidModel + 戴着本模组盔甲"的实体在这里补画 ✓。
-     *
-     * <p>尺寸**跟随实体自身缩放** ✓（宝宝在渲染器里已缩 0.5 ✓、模组小体型生物自带 scale ✓），
-     * 本处不再额外缩放 ✓；也不再挂任何实体名单 ✓ ⇒ 原版 / 模组 / 宝宝一体覆盖 ✓。
-     */
-    @SubscribeEvent
-    public static void onRenderLivingWizardArmor(
-            net.minecraftforge.client.event.RenderLivingEvent.Post<net.minecraft.world.entity.LivingEntity,
-                    net.minecraft.client.model.EntityModel<net.minecraft.world.entity.LivingEntity>> event) {
-        net.minecraft.world.entity.LivingEntity e = event.getEntity();
-        if (e instanceof net.minecraft.world.entity.player.Player
-                || e instanceof net.minecraft.world.entity.decoration.ArmorStand) {
-            return;   // 图层已处理 ✓ 这里再画就双画了 ✗
-        }
-        if (!(event.getRenderer().getModel() instanceof net.minecraft.client.model.HumanoidModel<?> hm)) return;
-        boolean wears = false;
-        for (net.minecraft.world.entity.EquipmentSlot s : net.minecraft.world.entity.EquipmentSlot.values()) {
-            if (e.getItemBySlot(s).getItem()
-                    instanceof com.mofengbaizhi.tinkersnewlife.content.item.WizardArmorItem) { wears = true; break; }
-        }
-        if (!wears) return;
-        com.mofengbaizhi.tinkersnewlife.client.renderer.WizardArmorLayer.renderArmor(
-                e, hm, event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight());
-    }
 }
