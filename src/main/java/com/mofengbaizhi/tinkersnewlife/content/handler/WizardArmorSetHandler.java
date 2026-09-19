@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.content.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.item.WizardArmorItem;
+import com.mofengbaizhi.tinkersnewlife.integration.irons_spellbooks.IronSpellsSpellAccess;
 import com.mofengbaizhi.tinkersnewlife.content.modifier.MagicConductionModifier;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -93,22 +94,22 @@ public final class WizardArmorSetHandler {
     }
 
     private static boolean hasOurModifier(LivingEntity living) {
-        AttributeInstance mana = attributeOf(living, IRON_MAX_MANA);
+        AttributeInstance mana = attributeOf(living, ironMaxMana());
         if (mana != null && mana.getModifier(MANA_UUID) != null) return true;
-        AttributeInstance potency = attributeOf(living, GOETY_SPELL_POTENCY);
+        AttributeInstance potency = attributeOf(living, goetyPotency());
         return potency != null && potency.getModifier(POTENCY_UUID) != null;
     }
 
     private static void applySurge(LivingEntity living, int pieces) {
-        setModifier(living, IRON_MAX_MANA, MANA_UUID, "tn_wizard_mana",
+        setModifier(living, ironMaxMana(), MANA_UUID, "tn_wizard_mana",
                 pieces * (double) MANA_PER_PIECE, AttributeModifier.Operation.ADDITION);
-        setModifier(living, IRON_SPELL_POWER, POWER_UUID, "tn_wizard_power",
+        setModifier(living, ironSpellPower(), POWER_UUID, "tn_wizard_power",
                 pieces * SPELL_POWER_PER_PIECE, AttributeModifier.Operation.MULTIPLY_TOTAL);
         // ⭐ 诡厄巫法：全学派法术强度（= Goety 的 SPELL_POTENCY 属性 ✓）
         //   用 MULTIPLY_TOTAL 而不是 ADDITION ✓ —— 与它的基准值无关：
         //   无论 potency 基准是 1.0（Goety 自己的袍子用 ADDITION +0.05 口径 ✓）还是别的，
         //   x*(1+0.05n) 都是"每件 +5%" ✓（软依赖：没装 Goety 时这一段静默跳过 ✓）
-        setModifier(living, GOETY_SPELL_POTENCY, POTENCY_UUID, "tn_wizard_potency",
+        setModifier(living, goetyPotency(), POTENCY_UUID, "tn_wizard_potency",
                 pieces * SPELL_POWER_PER_PIECE, AttributeModifier.Operation.MULTIPLY_TOTAL);
     }
 
@@ -151,45 +152,59 @@ public final class WizardArmorSetHandler {
         return attr == null ? null : living.getAttribute(attr);
     }
 
-    // ---------- 铁魔法属性（反射解析一次后缓存 ✓ 软依赖 ✓）----------
+    // ---------- 铁魔法 / 诡厄属性（⭐ 懒解析 + 逐次重试 ✓ 软依赖 ✓）----------
+
     private static Attribute IRON_MAX_MANA;
     private static Attribute IRON_SPELL_POWER;
-    // ---------- 诡厄巫法属性（同上 ✓）----------
     private static Attribute GOETY_SPELL_POTENCY;
-    private static boolean ironResolved;
+    private static boolean loggedResolution;
 
-    private static void resolveIron() {
-        if (ironResolved) return;
-        ironResolved = true;
-        IRON_MAX_MANA = ironAttribute("MAX_MANA");
-        IRON_SPELL_POWER = ironAttribute("SPELL_POWER");
-        GOETY_SPELL_POTENCY = goetyAttribute("SPELL_POTENCY");
+    /**
+     * ⚠ 踩过的坑（用户实测"穿甲法力上限没提升"）：以前是在<b>静态初始化块</b>里解析一次、
+     * 并且先把 {@code ironResolved = true} 置上 ✗ —— 而本类是 {@code @Mod.EventBusSubscriber}
+     * ⇒ <b>模组构造期就会被加载</b> ✗，那时铁魔法 / 诡厄的属性注册表<b>还没填好</b> ✗ ⇒
+     * {@code RegistryObject.get()} 抛异常被吞掉 ✗ ⇒ 属性永久 null 且<b>永不重试</b> ✗✗
+     * （特性提示照常显示 ⇒ 看起来就像"特性没效果" ✗）。
+     *
+     * <p>现在改成"<b>取到就缓存、取不到下次再来</b>" ✓ —— 走「刻印」已在用的
+     * {@link IronSpellsSpellAccess#attribute(String)} ✓（它同样"没就绪就不缓存" ✓）。
+     */
+    private static Attribute ironMaxMana() {
+        if (IRON_MAX_MANA != null) return IRON_MAX_MANA;
+        IRON_MAX_MANA = IronSpellsSpellAccess.attribute("MAX_MANA");
+        logResolved();
+        return IRON_MAX_MANA;
     }
 
-    /** 诡厄巫法的全学派法术强度属性（软依赖 ✓ 没装就返回 null ✓） */
+    private static Attribute ironSpellPower() {
+        if (IRON_SPELL_POWER != null) return IRON_SPELL_POWER;
+        IRON_SPELL_POWER = IronSpellsSpellAccess.attribute("SPELL_POWER");
+        return IRON_SPELL_POWER;
+    }
+
+    private static Attribute goetyPotency() {
+        if (GOETY_SPELL_POTENCY != null) return GOETY_SPELL_POTENCY;
+        GOETY_SPELL_POTENCY = goetyAttribute("SPELL_POTENCY");
+        return GOETY_SPELL_POTENCY;
+    }
+
+    /** 第一次成功解析时打一条日志 ✓（便于在 logs 里确认属性到底挂上没有 ✓） */
+    private static void logResolved() {
+        if (loggedResolution || IRON_MAX_MANA == null) return;
+        loggedResolution = true;
+        TinkersNewlife.LOGGER.info("[TinkersNewlife] 魔力涌动：铁魔法 MAX_MANA 属性已解析 ✓");
+    }
+
+    /** 诡厄巫法的全学派法术强度属性（软依赖 ✓ 没装就返回 null ✓ 下次再试 ✓） */
     private static Attribute goetyAttribute(String field) {
         try {
             Class<?> reg = Class.forName("com.Polarice3.Goety.init.ModAttributes");
             Object holder = reg.getField(field).get(null);
+            if (holder == null) return null;
             Object attr = holder.getClass().getMethod("get").invoke(holder);
             return attr instanceof Attribute a ? a : null;
         } catch (Throwable ignored) {
             return null;
         }
-    }
-
-    private static Attribute ironAttribute(String field) {
-        try {
-            Class<?> reg = Class.forName("io.redspace.ironsspellbooks.api.registry.AttributeRegistry");
-            Object holder = reg.getField(field).get(null);
-            Object attr = holder.getClass().getMethod("get").invoke(holder);
-            return attr instanceof Attribute a ? a : null;
-        } catch (Throwable ignored) {
-            return null;   // 没装铁魔法（或版本不同）⇒ 无效果但不崩 ✓
-        }
-    }
-
-    static {
-        resolveIron();
     }
 }

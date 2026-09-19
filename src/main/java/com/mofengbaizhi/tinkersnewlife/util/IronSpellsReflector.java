@@ -136,8 +136,11 @@ public class IronSpellsReflector {
             Object magicData = MAGIC_DATA_GET_PLAYER_MAGIC_DATA_METHOD.invoke(null, player);
             if (magicData == null) return false;
 
-            float mana = (float) MAGIC_DATA_GET_MANA_METHOD.invoke(magicData);
             int manaCost = (int) ABSTRACT_SPELL_GET_MANA_COST_METHOD.invoke(spell, spellLevel);
+            // ⭐ 万法有道：法力不够时先用咒力 / 灵魂**真的**把法力补上 ✓ 再走原本判定 ✓
+            //   （**不**"假装法力更高" ✗ —— 那种做法会被回蓝的 min() 夹紧算错 ✓ 见备忘录 §381）
+            com.mofengbaizhi.tinkersnewlife.content.modifier.AllPathsOneTrait.topUpManaFor(player, manaCost);
+            float mana = (float) MAGIC_DATA_GET_MANA_METHOD.invoke(magicData);
             if (mana < manaCost) return false;
 
             // 3. 获取 CastSource

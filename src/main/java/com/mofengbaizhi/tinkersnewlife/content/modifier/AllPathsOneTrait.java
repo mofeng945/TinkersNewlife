@@ -53,13 +53,16 @@ import java.util.List;
  *       再收替代资源 ✓ —— 顺序反了就会出现"资源扣了、事没办成" ✗。</li>
  * </ol>
  *
- * <h2>三处注入点</h2>
+ * <h2>注入点</h2>
  * <ol>
- *   <li><b>法力侧</b> {@code mixin.AllPathsOneManaMixin}（铁魔法 {@code MagicData} ✓）——
- *       {@code getMana()} 在服务端把"还能垫出的法力"一并报出 ✓（仅当手里拿着施法物品 ✓），
- *       随后 {@code setMana()} 把账做正并真扣咒力/灵魂 ✓；</li>
+ *   <li><b>法力侧</b>：<b>不撒谎</b> ✓ —— 由"我们要自己走判定"的调用方
+ *       （{@code IronSpellsReflector#tryCastSpell} ✓ 模块化魔杖 ✓）在判定前调
+ *       {@link #topUpManaFor} <b>把法力真的补出来</b> ✓（先扣咒力 → 灵魂 ✓）。
+ *       ⚠ 早先那版是"让 {@code getMana()} 多报一截、再在 {@code setMana} 里减掉" ✗ ——
+ *       只要有人<b>夹紧</b>法力（铁魔法回蓝的 {@code min(上限, …)} ✗）就会算成负数 ✗ ⇒
+ *       每次都误判"法力不够"⇒ 吃咒力 + 把法力压到 0 ✗（用户实测 ✓ 已废除此方案 ✗）；</li>
  *   <li><b>灵魂侧</b> {@code mixin.AllPathsOneSoulMixin}（诡厄 {@code SEHelper} ✓）——
- *       检查点只"预测"（且只认咒力 + 法力 ✓ 干跑 ✓ 不扣费 ✓），真扣时才垫（先给后收 ✓）；</li>
+ *       检查点只"预测"（只认咒力 + 法力 ✓ 干跑 ✓ 不扣费 ✓），真扣时才垫（先给后收 ✓）；</li>
  *   <li><b>咒力侧</b>：直接改 {@link CursePowerHelper}（我们自己的代码 ✓ 不用 mixin ✓），
  *       且<b>只在穿着本特性时</b>生效 ✓。</li>
  * </ol>
@@ -282,6 +285,32 @@ public class AllPathsOneTrait extends Modifier implements TooltipModifierHook {
             return missing - Math.max(0, remaining);
         } catch (Throwable ignored) {
             return 0;   // fail-safe ✓
+        }
+    }
+
+    /**
+     * 法力不够时<b>先把法力真的补出来</b>（咒力 → 灵魂 ✓）—— 给"我们要自己走一遍施法判定"的
+     * 调用方用（典型：{@code IronSpellsReflector#tryCastSpell} ✓ 模块化魔杖 ✓）。
+     *
+     * <p>⭐ 为什么不"假装法力更高"：早先那版是让 {@code MagicData.getMana()} 多报一截、
+     * 再在 {@code setMana} 里减掉 ✗ —— 一旦有代码<b>夹紧</b>法力（铁魔法回蓝就是
+     * {@code setMana(min(上限, getMana()+回复))} ✗）"传入值 − 膨胀量"就会变成负数 ✗ ⇒
+     * 判定成"法力不够"⇒ <b>每 tick 回蓝都去吃咒力</b> ✗✗ 还把法力压到 0 ✗（用户实测 ✓）。
+     * 现在改成<b>真的把法力补进数值里</b> ✓ ⇒ 后续所有判定与扣费都是真账 ✓ 永远不会有这种事 ✓。
+     */
+    public static void topUpManaFor(Player player, int cost) {
+        try {
+            if (player == null || cost <= 0) return;
+            if (player.level().isClientSide) return;
+            if (!active(player)) return;
+            int have = realManaOf(player);
+            if (have < 0) return;                       // 没装铁魔法 ✓
+            int missing = cost - have;
+            if (missing <= 0) return;                   // 本来就够 ✓ 一点不动 ✓
+            int paid = payManaShortfall(player, missing);
+            if (paid > 0) writeManaRaw(player, have + paid);   // 真补 ✓
+        } catch (Throwable ignored) {
+            // fail-safe ✓（补不上 ⇒ 判定照旧不通过 ✓ 与没装特性时一致 ✓）
         }
     }
 

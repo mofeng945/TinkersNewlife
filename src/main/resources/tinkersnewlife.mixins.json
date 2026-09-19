@@ -12,7 +12,6 @@
     "EldritchLearningMixin",
     "ServerPlayerDeathMixin",
     "ManaShieldEffectMixin",
-    "AllPathsOneManaMixin",
     "AllPathsOneSoulMixin"
   ],
   "client": [
