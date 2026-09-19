@@ -22,8 +22,8 @@ foreach ($l in $java) {
 function FaceRect($b, [string]$f) {
     $u = $b.U; $v = $b.V; $w = $b.W; $h = $b.H; $d = $b.D
     switch ($f) {
-        'down'  { return @(($u + $d), $v, $w, $d) }
-        'up'    { return @(($u + $d + $w), $v, $w, $d) }
+        'down'  { return @(($u + $d + $w), $v, $w, $d) }
+        'up'    { return @(($u + $d), $v, $w, $d) }
         'west'  { return @($u, ($v + $d), $d, $h) }
         'north' { return @(($u + $d), ($v + $d), $w, $h) }
         'east'  { return @(($u + $d + $w), ($v + $d), $d, $h) }

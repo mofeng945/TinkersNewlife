@@ -203,8 +203,8 @@ if (-not $NoPaint) {
         $u = $c.U; $v = $c.V; $w = $c.W; $h = $c.H; $d = $c.D
         # ⚠ 布局照抄 MC 源码（ModelPart$Cube ✓ 说明见 import-robe-texture.ps1 ✓）：
         #   上排 [down][up]、中排 [west][north][east][south] ✓（原先写成 [up][down] + [east]…[west] ✗ 已修 ✓）
-        FillRect ($u + $d) $v ($u + $d + $w) ($v + $d) 160                          # 底 down
-        FillRect ($u + $d + $w) $v ($u + $d + $w + $w) ($v + $d) 249                # 顶 up
+        FillRect ($u + $d) $v ($u + $d + $w) ($v + $d) 249                          # 源 up（视觉上）→ MC 的 DOWN 槽 ✓
+        FillRect ($u + $d + $w) $v ($u + $d + $w + $w) ($v + $d) 160                # 源 down（视觉下）→ MC 的 UP 槽 ✓
         FillRect $u ($v + $d) ($u + $d) ($v + $d + $h) 215                          # 西 west（-x ✓第一列 ✓）
         FillRect ($u + $d) ($v + $d) ($u + $d + $w) ($v + $d + $h) 205              # 北 north
         FillRect ($u + $d + $w) ($v + $d) ($u + $d + $w + $d) ($v + $d + $h) 179    # 东 east（第三列 ✓）

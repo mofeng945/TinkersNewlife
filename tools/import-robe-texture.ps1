@@ -100,8 +100,8 @@ function FaceRect($box, [string]$face) {
     $u = [double]$box.U; $v = [double]$box.V; $w = [double]$box.W; $h = [double]$box.H; $d = [double]$box.D
     # ⚠ PowerShell 里逗号比 + 结合更紧 ✗ ⇒ `$u + $d, $v` 会被解析成 `$u + @($d,$v)` ✗ 必须逐项加括号 ✓
     switch ($face) {
-        'down'  { return @(($u + $d), $v, $w, $d) }
-        'up'    { return @(($u + $d + $w), $v, $w, $d) }
+        'down'  { return @(($u + $d + $w), $v, $w, $d) }
+        'up'    { return @(($u + $d), $v, $w, $d) }
         'west'  { return @($u, ($v + $d), $d, $h) }
         'north' { return @(($u + $d), ($v + $d), $w, $h) }
         'east'  { return @(($u + $d + $w), ($v + $d), $d, $h) }

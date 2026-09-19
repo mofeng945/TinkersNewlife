@@ -63,8 +63,8 @@ for ($i = 0; $i -lt $j.elements.Count; $i++) { if (-not $groupOf.ContainsKey($i)
 function FaceRect($box, [string]$face) {
     $u = [double]$box.U; $v = [double]$box.V; $w = [double]$box.W; $h = [double]$box.H; $d = [double]$box.D
     switch ($face) {
-        'down'  { return @(($u + $d), $v, $w, $d) }
-        'up'    { return @(($u + $d + $w), $v, $w, $d) }
+        'down'  { return @(($u + $d + $w), $v, $w, $d) }
+        'up'    { return @(($u + $d), $v, $w, $d) }
         'west'  { return @($u, ($v + $d), $d, $h) }
         'north' { return @(($u + $d), ($v + $d), $w, $h) }
         'east'  { return @(($u + $d + $w), ($v + $d), $d, $h) }
