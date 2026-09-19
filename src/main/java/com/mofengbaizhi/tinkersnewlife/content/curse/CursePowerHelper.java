@@ -263,7 +263,10 @@ public final class CursePowerHelper {
     public static boolean canPayCurse(Player player, double amount) {
         if (amount <= 0) return true;
         if (isCurseInfinite(player)) return true;
-        return getTotalCurse(player) >= amount;
+        if (getTotalCurse(player) >= amount) return true;
+        // ⭐ 万法有道：咒力不够时，**灵魂（1 咒力 = 3 灵魂）与法力（1 咒力 = 0.75 法力）也算可用** ✓
+        //   仅在该玩家穿着带此特性的巫师甲时成立 ✓；内部全程 try/catch（fail-safe ✓ 出错=False ✓）
+        return com.mofengbaizhi.tinkersnewlife.content.modifier.AllPathsOneTrait.canCoverCurse(player, amount);
     }
 
     // ------------------------------------------------------------
@@ -407,8 +410,25 @@ public final class CursePowerHelper {
             soulsNeeded = Math.max(1, (int) Math.ceil(soulsNeeded * (1.0 - 0.05 * discount)));
         }
         int souls = com.mofengbaizhi.tinkersnewlife.util.SoulEnergyBridge.getSouls(player);
-        if (souls < soulsNeeded) return -1;
-        return com.mofengbaizhi.tinkersnewlife.util.SoulEnergyBridge.decreaseSouls(player, soulsNeeded) ? 1 : -1;
+        if (souls >= soulsNeeded) {
+            return com.mofengbaizhi.tinkersnewlife.util.SoulEnergyBridge.decreaseSouls(player, soulsNeeded) ? 1 : -1;
+        }
+        // ⭐ 万法有道：灵魂也不够 ⇒ 用**法力**补（1 法力 = 4 灵魂 ✓ 用户口径 ✓）。
+        //   ⚠ 铁律「先检查后扣费」：先干跑确认法力够 ✓ 再动灵魂 ✓
+        //   —— 免得出现"灵魂扣了、法力却没付成"的半付状态 ✗（§379）
+        if (!com.mofengbaizhi.tinkersnewlife.content.modifier.AllPathsOneTrait.active(player)) return -1;
+        double soulsLeft = soulsNeeded - Math.max(0, souls);
+        int manaNeeded = (int) Math.ceil(
+                soulsLeft / com.mofengbaizhi.tinkersnewlife.content.modifier.AllPathsOneTrait.SOULS_PER_MANA);
+        int manaHave = com.mofengbaizhi.tinkersnewlife.content.modifier.AllPathsOneTrait.realManaOf(player);
+        if (manaHave < manaNeeded) return -1;                        // 干跑：法力也不够 ⇒ 一点不扣 ✓
+        if (souls > 0
+                && !com.mofengbaizhi.tinkersnewlife.util.SoulEnergyBridge.decreaseSouls(player, souls)) {
+            return -1;
+        }
+        com.mofengbaizhi.tinkersnewlife.content.modifier.AllPathsOneTrait
+                .writeManaRaw(player, manaHave - manaNeeded);
+        return 2;   // 2 = **法力**兜底 ✓（与 1 = 灵魂兜底区分 ✓ 调用方只在 result==1 时提示灵魂 ✓）
     }
 
     /** 读取穿戴护甲上"灵魂折扣"特性总级数（对任意穿戴者生效） */
