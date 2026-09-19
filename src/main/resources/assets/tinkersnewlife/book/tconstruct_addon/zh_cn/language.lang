@@ -1,3 +1,4 @@
-// 追加到匠魂宝典（tconstruct:materials_and_you）的章节名 —— 由 BookData 从各 repository 的
-// language.lang 合并而来，键名 = 我们 index.json 里的 section name。
+// 追加到匠魂宝典（tconstruct:materials_and_you）与工匠大百科（tconstruct:encyclopedia）的章节名 ——
+// 同一份 repository 同时挂给两本书；由 BookData 从各 repository 的 language.lang 合并而来，
+// 键名 = 我们 index.json 里的 section name。
 wizard_armor=巫师套装

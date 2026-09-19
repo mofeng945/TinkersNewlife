@@ -1,3 +1,4 @@
-// Section name appended to Tinkers' Materials and You (tconstruct:materials_and_you).
+// Section name appended to Tinkers' Materials and You (tconstruct:materials_and_you) and to the
+// Encyclopedia (tconstruct:encyclopedia) - the same repository is attached to both books.
 // The key is the section name from our index.json; BookData merges language.lang from all repositories.
 wizard_armor=Wizard Armor
