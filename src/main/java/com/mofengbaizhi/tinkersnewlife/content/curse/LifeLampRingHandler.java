@@ -9,6 +9,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -25,6 +26,9 @@ import net.minecraftforge.fml.common.Mod;
  * <ul>
  *   <li><b>附加伤害</b>（词条/术式在 {@code LivingHurtEvent} 之后补的刀）也在口径内
  *       —— 所以 {@link LivingHurtEvent} 与 {@link LivingDamageEvent} <b>两关都要截</b>；</li>
+ *   <li><b>⭐ 第三关（2026-09 加固）：{@link LivingDeathEvent} 兜底回滚</b> ——
+ *       前两关都在伤害管线里，而管线之外还有一堆"绕过方式"（见 {@link #onLivingDeath} 的说明）；
+ *       这一关直接卡在"死"这个动作上，<b>与其它 mod 怎么改数值、怎么取消事件都无关</b> ✓。</li>
  *   <li><b>处决 / 收服之类的机制不受影响</b>：它们要么走 {@code target.kill()}
  *       （伤害源是 {@code genericKill}，<b>没有攻击者</b>），要么直接改血量，
  *       我们的判定自然为 false，压根不会插手。咒灵操术的
@@ -66,6 +70,28 @@ public final class LifeLampRingHandler {
         float max = Math.max(1.0F, target.getMaxHealth());
         return Math.min(KEEP_HEALTH, max * KEEP_RATIO_FOR_TINY);
     }
+
+    // ============================================================
+    //  第三关（LivingDeathEvent 兜底）的凭证表
+    // ============================================================
+
+    /** 排查"兜底到底有没有触发"时改 true（平时 false，不刷屏） */
+    private static final boolean DEBUG = false;
+
+    /**
+     * 一条"这一下是戴命灯的人打出的致死伤害"的凭证。
+     * <p>只存发生时那一个 tick，值 1 次 —— 因为"事件被取消/重发导致死亡另起一 tick"的情况
+     * 本来就不该被兜（那已经不是这一下了）✓。
+     */
+    private record Lethal(long tick) {
+    }
+
+    /** 凭证表上限（每 tick 每个目标最多一条；超了就清一遍过期的，防长期挂机累积） */
+    private static final int MAX_LETHAL = 1024;
+
+    /** key = 受击者 UUID（与 {@link #PRE_CURSE} 同一套"带 tick 防残留"的做法 ✓） */
+    private static final java.util.Map<java.util.UUID, Lethal> LETHAL =
+            new java.util.concurrent.ConcurrentHashMap<>();
 
     // ============================================================
     //  命灯指轮 × 七咒之戒：无效化"第一诅咒：任何来源受到的伤害加倍"
@@ -158,9 +184,11 @@ public final class LifeLampRingHandler {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onLivingHurt(LivingHurtEvent event) {
         // ⭐ 穿透（真伤）不受慈悲约束：带穿透的近战/投射物应当能照常杀死目标
-        if (com.mofengbaizhi.tinkersnewlife.util.TruePierce.isTruePierce(event.getSource())) return;
+        if (isTruePierce(event.getSource())) return;
         if (!byRingWearer(event.getEntity(), event.getSource())) return;
-        clamp(event.getEntity(), event.getAmount(), event::setAmount);
+        LivingEntity target = event.getEntity();
+        rememberLethal(target, event.getAmount());   // 第三关的"这一下是命中者打的致死伤"凭证
+        clamp(target, event.getAmount(), event::setAmount);
     }
 
     /**
@@ -171,10 +199,113 @@ public final class LifeLampRingHandler {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onLivingDamage(LivingDamageEvent event) {
         // ⭐ 穿透（真伤）不受慈悲约束：带穿透的近战/投射物应当能照常杀死目标
-        if (com.mofengbaizhi.tinkersnewlife.util.TruePierce.isTruePierce(event.getSource())) return;
+        if (isTruePierce(event.getSource())) return;
         if (!byRingWearer(event.getEntity(), event.getSource())) return;
-        clamp(event.getEntity(), event.getAmount(), event::setAmount);
+        LivingEntity target = event.getEntity();
+        rememberLethal(target, event.getAmount());   // 同上（这一关才是"真正要扣的血"）
+        clamp(target, event.getAmount(), event::setAmount);
     }
+
+    // ============================================================
+    //  ⭐ 第三关（兜底）：LivingDeathEvent —— 卡住"死"这个动作本身
+    // ============================================================
+
+    /**
+     * 该伤害源是不是"穿透 / 真伤"（不受慈悲约束）。
+     * <p>口径与 {@code util/TruePierce} 完全一致（本模组 {@code true_pierce}，或任何带
+     * {@code bypasses_invulnerability} 的源）；只做转发，方便本类两处引用同一套判断 ✓。
+     */
+    private static boolean isTruePierce(DamageSource source) {
+        return com.mofengbaizhi.tinkersnewlife.util.TruePierce.isTruePierce(source);
+    }
+
+    /**
+     * 本次受击"如果不拦就会致死"吗？
+     * <p>判据 = 这一下的量足以把血打到 {@link #keepHealth} 以下。
+     * 只有"致死的那一下"才在第三关留凭证 —— 否则平时每一下都要建/删一条记录 ✗。
+     */
+    private static boolean isLethal(LivingEntity target, float amount) {
+        if (amount <= 0.0F) return false;
+        return amount >= target.getHealth() - keepHealth(target);
+    }
+
+    /** 记录"目标 {@code victim} 刚刚被戴着命灯指轮的人打了一下致死伤害"（key = 受击者 UUID） */
+    private static void rememberLethal(LivingEntity victim, float amount) {
+        if (victim == null || victim.level().isClientSide) return;
+        if (!isLethal(victim, amount)) return;
+        try {
+            if (LETHAL.size() > MAX_LETHAL) pruneLethal(victim.level().getGameTime());
+            LETHAL.put(victim.getUUID(), new Lethal(victim.level().getGameTime()));
+        } catch (Throwable ignored) {
+            // 记不上凭证不影响前两关的拦截 ✓
+        }
+    }
+
+    /**
+     * 第 ③ 关（{@link EventPriority#HIGHEST} = <b>最先</b>跑，在别的死亡处理器改动之前就卡住）：
+     * <b>兜底回滚</b> —— 只要"目标刚被戴命灯的人打过致死伤害"、
+     * 且这一下的伤害源不是穿透/真伤、目标血已经被打到慈悲线以下，就<b>取消这次死亡并把血补回慈悲线</b> ✓。
+     *
+     * <h2>为什么前两关不够（这一关要解决的，就是"被绕过"）</h2>
+     * 前两关都挂在伤害管线（{@code hurt() → actuallyHurt()}）上，而这个管线之外还有若干条路：
+     * <ul>
+     *   <li><b>直接改血</b>：{@code setHealth(0) + die()} 这类"根本不经过任何伤害事件"的收尾
+     *       （本模组 {@code TruePierce} 的第 ③ 条分支就是这种写法 ✓）—— 两个伤害事件一次都不发 ✗；</li>
+     *   <li><b>数值被写回去</b>：别人也在 {@code LOWEST} 上监听，
+     *       而同一优先级内的执行顺序只由"注册顺序"决定 —— 它<b>可以在我们之后</b>把 amount 改回致死值 ✗
+     *       （本模组 {@code TruePierce.force} 就是"按原意把数值放回去"这种做法 ✓，
+     *       所以"事件顺序不该被依赖"这条教训是现成的 ✓）；</li>
+     *   <li><b>嵌套 hurt</b>：一次挥击被拆成"1 物理 + N 学派"多段（{@code ChaosFlowHandler}），
+     *       段与段之间还夹着别的 mod 的反应伤害（它们会在伤害事件里<b>再开一次 hurt</b>）✗ ——
+     *       段数一多，"某一段恰好没被截住"的概率就不再是 0 ✓；</li>
+     *   <li><b>别的 mod 在我们之后兜底致死</b>：例如 1.20.1 的 {@code LivingDeathEvent} 之前
+     *       还有 {@code SpiritOfVengeance}/图腾一类"死亡时才触发"的逻辑 ✓。</li>
+     * </ul>
+     * 这一关不依赖以上任何一条：**死亡动作本身**才是"打不死"的最终关口 ✓。
+     *
+     * <h2>为什么不会破坏既有语义</h2>
+     * <ul>
+     *   <li><b>穿透 / 真伤照常能杀</b>：{@link #isTruePierce} 的源直接放行（与前两关同一口径）✓；</li>
+     *   <li><b>/kill、{@code genericKill()}、收服兜底照常生效</b>：它们要么没有攻击者、
+     *       要么源不是佩戴者的伤害 —— {@link #LETHAL} 里没有凭证 ⇒ 不介入 ✓。
+     *       咒灵操术的 {@code capture()} 正是靠最后那下无攻击者的 {@code target.kill()} 完成收服 ✓；</li>
+     *   <li><b>凭证只朝"最近一笔"存</b>（{@link #MAX_LETHAL} 条上限、带 tick 校验）：
+     *       一轮多段伤害里每个目标只留一条 ⇒ 内存有硬上限、也几乎不会误伤 ✓；</li>
+     *   <li><b>不吃事件顺序</b>：前两关仍然照常截（这是主要路径）；本关只在它们被绕过的**罕见**情况下
+     *       才真的触发 ⇒ 正常游戏里它一次都不会动 ✓。</li>
+     * </ul>
+     */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onLivingDeath(LivingDeathEvent event) {
+        LivingEntity victim = event.getEntity();
+        if (victim == null || victim.level().isClientSide) return;
+        if (isTruePierce(event.getSource())) return;              // 穿透/真伤按设计放行 ✓
+        if (!recentlyLethallyHit(victim)) return;                 // 不是"刚被戴命灯的人打到死"→ 不介入 ✓
+        float keep = keepHealth(victim);
+        if (victim.getHealth() > keep) return;                    // 血还在慈悲线之上，死亡与慈悲无关 ✓
+        victim.setHealth(keep);                                   // 回滚：把血补回慈悲线
+        victim.invulnerableTime = Math.max(victim.invulnerableTime, 20);
+        event.setCanceled(true);                                   // 取消这次死亡（Forge 会直接 return，不走 die() 其余流程）
+        if (DEBUG) {
+            TinkersNewlife.LOGGER.info("[慈悲·兜底] 取消死亡并回滚血量：{} -> {} 点（源={}）",
+                    victim.getName().getString(), keep, event.getSource().getMsgId());
+        }
+    }
+
+    /**
+     * 目标身上有没有"刚被戴命灯的人打过致死伤害"的凭证（同 tick 才有效）。
+     * <p>用 {@code remove} 取值 ⇒ 一条凭证只兜一次死亡，取不到或隔了 tick 的一律丢弃 ✓。
+     */
+    private static boolean recentlyLethallyHit(LivingEntity victim) {
+        Lethal lethal = LETHAL.remove(victim.getUUID());
+        if (lethal == null) return false;
+        return lethal.tick() == victim.level().getGameTime();
+    }
+
+    private static void pruneLethal(long now) {
+        LETHAL.entrySet().removeIf(e -> now - e.getValue().tick() > 1L);
+    }
+
 
     // ============================================================
     //  工具
