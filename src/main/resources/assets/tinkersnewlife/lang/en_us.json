@@ -785,6 +785,8 @@
   "pattern.tinkersnewlife.spell_core": "Spell Core",
   "pattern.tinkersnewlife.yo_yo_spool": "Yo-Yo Spool",
   "pattern.tinkersnewlife.yo_yo_wheel": "Yo-Yo Wheel",
+  "pattern.tinkersnewlife.magic_cloth": "Magic Cloth",
+  "pattern.tinkersnewlife.robe_lace": "Robe Lace",
   "recipe.tconstruct.extract_modifier.domains": "Extract Domain",
   "recipe.tconstruct.extract_modifier.techniques": "Extract Technique",
   "slot.tinkersnewlife.curse_core.part": "Curse Core Part",
@@ -1241,5 +1243,6 @@
   "word.tinkersnewlife.wuzu.desc": "Target: Ancestor Witch of Curses - increases the strength of the curse speech",
   "word.tinkersnewlife.yog": "Yog-Sothoth",
   "word.tinkersnewlife.yog.desc": "Target: Yog-Sothoth - Unnameable honorific only; grants continuous experience after chanting",
-  "word.tinkersnewlife.zako": "Small Fry"
+  "word.tinkersnewlife.zako": "Small Fry",
+  "pattern.tinkersnewlife.wizard_armor": "Wizard Armor"
 }

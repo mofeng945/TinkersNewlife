@@ -421,6 +421,8 @@
   "pattern.tinkersnewlife.yo_yo_spool": "悠悠球线轴",
   "pattern.tinkersnewlife.dragon_core": "龙魂核心",
   "pattern.tinkersnewlife.spell_core": "法术核心",
+  "pattern.tinkersnewlife.magic_cloth": "魔法布料",
+  "pattern.tinkersnewlife.robe_lace": "法袍系带",
   "slot.tinkersnewlife.flying_sword.head": "宽刃",
   "slot.tinkersnewlife.flying_sword.head2": "宽刃",
   "slot.tinkersnewlife.flying_sword.handle1": "坚韧手柄",
@@ -1240,5 +1242,6 @@
   "gui.tinkersnewlife.quantum_vault.search": "搜索物品…",
   "gui.tinkersnewlife.quantum_vault.deposit_all": "存入全部",
   "gui.tinkersnewlife.quantum_vault.page": "第 %s / %s 页",
-  "gui.tinkersnewlife.quantum_vault.total": "已存 %s / %s"
+  "gui.tinkersnewlife.quantum_vault.total": "已存 %s / %s",
+  "pattern.tinkersnewlife.wizard_armor": "巫师套装"
 }
