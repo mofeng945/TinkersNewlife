@@ -49,7 +49,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * 已释放个体再次选择 → 收回；释放体战死 → 该记录从 GUI 消失。
  * <p>
  * 反转：GUI 选择一名未释放个体 → 清除其数据并进入漩涡蓄力；
- * 再次按反转键 → 向视线笔直射出黑色漩涡（伤害<b>固定 160</b>，不再随亲和/输出/个体属性缩放）。
+ * 再次按反转键 → 向视线笔直射出黑色漩涡（伤害 = <b>该个体最大生命上限 × {@link #VORTEX_HP_RATIO}</b>，
+ * 即按"献祭/施放的那只咒灵的血量上限"动态变化，见 {@link #vortexDamageFor}）。
  * <p>
  * <b>服务端权威</b>：客户端只发"选了哪个个体"的请求（带个体 uid），
  * 释放/收回/成败判定全在服务端；服务端决定后<b>发回执</b>（{@code PacketSpiritState}）+ 聊天提示，
@@ -65,17 +66,34 @@ public final class CursedSpiritTechnique extends BaseTechnique {
     public static final int MODE_RELEASE = 0;
     public static final int MODE_SACRIFICE = 1;
 
-    /** 漩涡蓄力中：玩家 UUID → 漩涡伤害快照 */
+    /** 漩涡蓄力中：玩家 UUID → 漩涡伤害快照（献祭那一刻按"该个体生命上限"算好，发射时不再重算） */
     private static final Map<UUID, Float> VORTEX_CHARGE = new ConcurrentHashMap<>();
 
     /**
-     * 黑色漩涡的伤害：<b>固定 160</b>（用户指定）。
+     * 黑色漩涡的伤害系数：<b>伤害 = 该咒灵的最大生命上限 × 此系数</b>。
      *
-     * <p>原来 = {@code round((1 + 亲和/100) × (输出×6 + 献祭个体生命上限×0.4 + 其攻击×6))}，
-     * 再在发射时过一遍模块化魔杖的 {@code getSpellAmplification}。
-     * 现在这两处缩放<b>全部去掉</b>：不再看亲和/输出/献祭个体的生命上限与攻击、也不吃魔杖增幅
-     * ⇒ 命中中心永远 160（目标侧的护甲/抗性/无敌帧等原逻辑照旧，半径 3 格线性衰减也照旧）。
+     * <p>用户口径："漩涡伤害<b>随咒灵血量上限动态变化</b>" ⇒ 只保留"献祭/施放的那只个体生命上限"
+     * 这一项（{@link #vortexDamageFor}）。系数 {@code 0.4} <b>沿用旧公式</b>里那一项
+     * {@code 献祭个体生命上限 × 0.4}（旧整条公式
+     * {@code round((1 + 亲和/100) × (输出×6 + 生命上限×0.4 + 其攻击×6))} 已不再使用）。
+     * <p><b>想调强弱改这一行即可</b>（例如 0.5 ⇒ 更疼、0.3 ⇒ 更轻）；只影响漩涡，别的招式都不碰 ✓。
+     * <p>对照：僵尸 20 血 ⇒ 8；凋灵 300 血 ⇒ 120；普通 Boss 级亡灵 150 血 ⇒ 60。
      */
+    public static final float VORTEX_HP_RATIO = 0.4F;
+
+    /**
+     * 快照里<b>取不到属性</b>时的兜底生命上限（= 原版普通生物 20 血 ⇒ 伤害 8）。
+     * <p>兜底只在"旧存档里没有 {@code Attributes} 的快照 / 属性列表被别的 mod 改烂"时才用得上，
+     * 属于最后一道保险；正常路径一律以快照或记录里的真实最大生命为准 ✓。
+     */
+    private static final float VORTEX_HP_FALLBACK = 20.0F;
+
+    /**
+     * 漩涡伤害倍率的<b>旧常量</b>：上一轮（commit {@code babb8bf1}）曾把伤害写死成 160。
+     * <p>用户本轮要求改回"按咒灵血量上限动态变化" ⇒ 已不再参与计算，
+     * 仅保留该字段以免外部引用编译不过（如需彻底删除，先确认没有别处引用）。
+     */
+    @Deprecated
     public static final float VORTEX_DAMAGE = 160.0F;
 
     /**
@@ -572,10 +590,60 @@ public final class CursedSpiritTechnique extends BaseTechnique {
     private static void sacrifice(ServerPlayer player, SpiritEntry entry) {
         // 献祭：清除记录并进入漩涡蓄力
         removeEntry(player, entry.uid);
-        // ⭐ 漩涡伤害固定 160：不再按"献祭个体的生命上限/攻击 + 施术者亲和/输出"算（见 VORTEX_DAMAGE）
-        VORTEX_CHARGE.put(player.getUUID(), VORTEX_DAMAGE);
+        // ⭐ 漩涡伤害 = 该个体（被献祭的这只式神）的**最大生命上限** × VORTEX_HP_RATIO（见 vortexDamageFor）
+        //    用户口径："根据咒灵血量上限动态变化" ⇒ 亲和/输出/个体攻击/魔杖增幅那几项一律不加回来 ✓
+        VORTEX_CHARGE.put(player.getUUID(), vortexDamageFor(entry));
         player.displayClientMessage(Component.translatable("message.tinkersnewlife.spirit.vortex_charge"), true);
         sendState(player);
+    }
+
+    /**
+     * 计算漩涡伤害：<b>该咒灵的最大生命上限 × {@link #VORTEX_HP_RATIO}</b>。
+     *
+     * <p><b>取值来源（按优先级）</b>：
+     * <ol>
+     *   <li>该个体快照 NBT 的 {@code Attributes} 列表里 {@code minecraft:generic.max_health} 的
+     *       {@code Base} —— 这正是"释放（顺转）时读档复活的同一份数据"，也就是玩家在场上真正会看到的
+     *       那只式神的血量上限；换算后的伤害 ≈ 它落地后的血量上限 × 系数 ✓；</li>
+     *   <li>取不到（旧存档快照没属性 / 键名非 {@code Base}）⇒ 退回记录里的
+     *       {@link SpiritEntry#maxHp}（收服那一刻 {@code target.getMaxHealth()} 的快照，
+     *       无为转变改写形态时也会同步）；</li>
+     *   <li>连记录也没有（{@code ≤ 0}）⇒ 最终兜底 {@link #VORTEX_HP_FALLBACK}（20）⇒ 伤害 8，
+     *       保证永远不会算出 0 伤害或负数 ✓。</li>
+     * </ol>
+     * <p>为什么不读"场上活着的实体"：献祭/蓄力这一步玩家是在 <b>GUI 里选一只未释放的个体</b>，
+     * 它此刻<b>并不在场</b>（没有实体可读）—— 来源只能是快照/记录 ✓。
+     */
+    private static float vortexDamageFor(SpiritEntry entry) {
+        float maxHp = maxHealthFromSnapshot(entry == null ? null : entry.nbt);
+        if (maxHp <= 0.0F && entry != null) {
+            maxHp = entry.maxHp; // 兜底①：收服时记下的最大生命（含无为转变后的新形态）
+        }
+        if (maxHp <= 0.0F) {
+            maxHp = VORTEX_HP_FALLBACK; // 兜底②：最后一道保险
+        }
+        return Math.max(1.0F, maxHp * VORTEX_HP_RATIO);
+    }
+
+    /**
+     * 从实体快照 NBT 里读"最大生命上限"（属性列表里的 {@code minecraft:generic.max_health} 基数）。
+     *
+     * <p>与 {@code LivingEntity#load} 读属性的结构一致：
+     * {@code Attributes = [{Name:"minecraft:generic.max_health", Base:20.0d}, …]}（1.20.1 的键就是 {@code Base}）。
+     * <p>返回 {@code ≤ 0} 表示"这份快照里读不到" ⇒ 调用方再去走兜底 ✓（不抛异常、不改任何东西）。
+     */
+    private static float maxHealthFromSnapshot(CompoundTag snapshot) {
+        if (snapshot == null || !snapshot.contains("Attributes", Tag.TAG_LIST)) return 0.0F;
+        ListTag attrs = snapshot.getList("Attributes", Tag.TAG_COMPOUND);
+        for (int i = 0; i < attrs.size(); i++) {
+            CompoundTag a = attrs.getCompound(i);
+            if (!"minecraft:generic.max_health".equals(a.getString("Name"))) continue;
+            double base = a.contains("Base", Tag.TAG_ANY_NUMERIC)
+                    ? a.getDouble("Base")
+                    : a.getDouble("base"); // 极老存档里见过小写写法，顺手兼容（拿不到就是 0）
+            if (base > 0.0D) return (float) base;
+        }
+        return 0.0F;
     }
 
     // ================= 反转 =================
@@ -602,9 +670,10 @@ public final class CursedSpiritTechnique extends BaseTechnique {
             return;
         }
         ServerLevel level = player.serverLevel();
-        // ⭐ 漩涡伤害固定 160：**不再过模块化魔杖的法术增幅**（原第 576-578 行
-        //    `getSpellAmplification(player, damage)`，那也是一层"按攻击力/玩家属性缩放"✗）。
-        //    若日后想恢复"持杖更强"，把下面两行加回来即可：
+        // ⭐ 漩涡伤害：**只按"被献祭的那只咒灵的最大生命上限"算**（献祭时快照进 VORTEX_CHARGE，
+        //    见 vortexDamageFor）。**不再过模块化魔杖的法术增幅** —— 那是一条"按魔杖攻击力/玩家属性缩放"
+        //    的独立乘区，加回来就不是"只看咒灵血量上限"了 ✗（原第 576-578 行
+        //    `getSpellAmplification(player, damage)`）。若日后想恢复"持杖更强"，把下面两行加回来即可：
         //    damage = com.mofengbaizhi.tinkersnewlife.content.modifier.ModularStaffModifier
         //            .getSpellAmplification(player, damage);
         SpiritVortexEntity vortex = new SpiritVortexEntity(ModEntities.SPIRIT_VORTEX.get(), level);

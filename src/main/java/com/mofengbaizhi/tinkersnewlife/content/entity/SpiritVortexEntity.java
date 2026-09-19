@@ -20,8 +20,10 @@ import java.util.UUID;
 /**
  * 咒灵操术 · 反转：黑色漩涡弹（虚式直射）。
  * 笔直朝视线方向飞行，命中实体/方块或到达射程后爆散：
- * 半径 3 线性衰减伤害 = <b>固定 160</b>（中心；由 {@code CursedSpiritTechnique.VORTEX_DAMAGE} 在发射时快照，
- * 不再随献祭个体生命上限/攻击或施术者输出/亲和缩放）；目标侧护甲/抗性/无敌帧等仍按原逻辑结算。
+ * 半径 3 线性衰减伤害（中心）= <b>被献祭/施放的那只咒灵的最大生命上限 ×
+ * {@code CursedSpiritTechnique.VORTEX_HP_RATIO}（0.4）</b>，在发射时由
+ * {@code CursedSpiritTechnique} 算好快照进来（献祭僵尸 20 血 ⇒ 中心 8；凋灵 300 血 ⇒ 中心 120）；
+ * 不再随施术者输出/亲和或模块化魔杖增幅缩放；目标侧护甲/抗性/无敌帧等仍按原逻辑结算。
  * 视觉：飞行中绕轨迹旋转的黑烟漩涡。
  */
 public class SpiritVortexEntity extends Entity {
