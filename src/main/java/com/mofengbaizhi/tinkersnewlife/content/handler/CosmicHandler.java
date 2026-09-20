@@ -21,6 +21,11 @@ public class CosmicHandler {
     private static final int DURATION_BASE = 100;
     private static final int DURATION_PER_LEVEL = 50;
 
+    /** ⭐ 用户口径（2026-09-20）：**每次触发后冷却 20 秒** ✓ */
+    private static final int COOLDOWN_TICKS = 20 * 20;
+    /** 上次触发的世界时间（写在**工具**的持久数据里 ✓ 与「魅惑」同款 ✓） */
+    private static final ResourceLocation KEY_LAST_TRIGGER =
+            new ResourceLocation(TinkersNewlife.MOD_ID, "last_cosmic_trigger");
     @SubscribeEvent
     public static void onLivingAttack(LivingAttackEvent event) {
         if (!(event.getSource().getEntity() instanceof LivingEntity attacker)) return;
@@ -34,6 +39,11 @@ public class CosmicHandler {
 
         int level = ToolHelper.getActiveModifierLevel(tool, COSMIC_ORDER_VOICE);
         if (level > 0) {
+            int now = (int) attacker.level().getGameTime();
+            if (now - tool.getPersistentData().getInt(KEY_LAST_TRIGGER) < COOLDOWN_TICKS) {
+                return;                      // ⭐ 冷却中 ⇒ 本次不触发 ✓（也不刷新已有状态 ✓）
+            }
+            tool.getPersistentData().putInt(KEY_LAST_TRIGGER, now);
             applyEffect(target, level);
         }
     }

@@ -284,7 +284,7 @@
   "modifier.tinkersnewlife.construct.description": "Forward (technique key C): toggles Infinite Ammo mode - while holding a weapon that draws ammo from your inventory (vanilla bows/crossbows, Tinkers bows, TACZ guns, etc.), running dry spends curse energy to conjure the matching arrow/bullet. Reverse (reverse key F): opens the construct inventory; pick any item that has a crafting recipe - its curse energy cost is computed from its value and power and deducted at once, then construction begins. 1 curse energy = 1 tick of build time; you move slower and cannot reverse again while working, and being hit interrupts it without refunding the energy. On completion you receive a temporary item that fades after 60 seconds. Uses a technique slot.",
   "modifier.tinkersnewlife.construct.flavor": "\u00a77Nothing comes from nothing - only from will.",
   "modifier.tinkersnewlife.cosmic_order_voice": "Voice of Cosmic Order",
-  "modifier.tinkersnewlife.cosmic_order_voice.description": "Hits apply Slowness and Blindness to the target, with duration increasing per level.",
+  "modifier.tinkersnewlife.cosmic_order_voice.description": "Hitting a target inflicts Slowness and Blindness, with duration scaling per level. Triggers have a 20s cooldown.",
   "modifier.tinkersnewlife.cosmic_order_voice.flavor": "\u00a77The spheres speak, and the small things stumble.",
   "modifier.tinkersnewlife.curse_output": "Curse Output",
   "modifier.tinkersnewlife.curse_output.description": "Determines your curse domain radius (5 blocks per level), curse energy cap and regeneration.",

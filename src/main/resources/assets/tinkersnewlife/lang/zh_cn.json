@@ -353,7 +353,7 @@
   "modifier.tinkersnewlife.cosmic_order_voice.flavor": "§7远古的低语在耳边回荡……",
   "modifier.tinkersnewlife.cosmic_order_voice": "天体秩序之音",
   "modifier.tinkersnewlife.dragonsteel_fire": "龙炎",
-  "modifier.tinkersnewlife.cosmic_order_voice.description": "命中目标时施加迟缓和失明效果，持续时间随等级提升增强",
+  "modifier.tinkersnewlife.cosmic_order_voice.description": "命中目标时施加迟缓和失明效果，持续时间随等级提升增强。每次触发后冷却 20 秒",
   "modifier.tinkersnewlife.dragonsteel_fire_armor.description": "穿戴时获得防火效果，受到攻击时点燃攻击者",
   "modifier.tinkersnewlife.dragonsteel_ice_armor.description": "穿戴时免疫细雪和冰冻伤害，受到攻击时冻结攻击者",
   "modifier.tinkersnewlife.dragonsteel_ice_armor.flavor": "§7天气这么热，你看起来像一根冰棍？",
