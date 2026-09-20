@@ -1,0 +1,37 @@
+{
+  "name": "Conscience",
+  "category": "tinkersnewlife:cursed_tools",
+  "icon": "tinkersnewlife:conscience",
+  "sortnum": 8,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Conscience$() sits in its own $(bold)heart$() curio slot. It cannot be taken off and you never equip it yourself - it is already there the first time you enter a world.$(br2)It tracks your $(bold)alignment$() (-50% ~ +50%, one point is one percent):$(li)$(bold)Good$(): take less damage, higher max health, but hit softer$(li)$(bold)Evil$(): hit much harder, but take more damage and have less max health$(br2)Three multipliers, each in its $(bold)own bucket$() - they never compete with additive bonuses like Sharpness or Strength:$(li)Damage taken x (1 - alignment%)$(li)Attack damage x (1 - alignment%)$(li)Max health x (1 + alignment%)"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Curses",
+      "text": "Each of these pulls your alignment down (change in brackets):$(li)Meeting a trader without ever browsing their goods (-1%)$(li)Killing the Ender Dragon without breaking a crystal (-1%)$(li)Breaking blocks inside any structure other than a village, per 5 (-1%)$(li)Killing anything in a single hit (-1%)$(li)Killing the same player 5 times (-10%)$(li)Gaining over 3 stacks of one item within 5s (-1%)$(li)Making a villager run out of any offer within 20s (-1%)$(li)Opening 20 loot chests within 5 minutes (-5%)$(li)Breeding animals over 10 times within 20s (-5%)$(li)Villagers breeding within 10 blocks of you (-5%)$(li)Charming a creature for over 10s (-1%)$(li)A villager infected within 10 blocks of you (-3%)$(li)Making a creature drop its weapon or armor (-1%)$(li)Killing the Wither before it heals back up (-1%)$(li)Restoring over 4/5 of your hunger within 10s (-3%)$(li)Eating or drinking while hunger is full (-1%)$(li)Eating a whole cake within 5s (-1%)$(li)Staying at full hunger for over 60s (-3%)$(li)Killing a mob within 2s of being hit by it (-1%)$(li)Breaking 100 blocks in total darkness (-1%)$(li)Sleeping under open sky (-3%)$(li)Tilling soil with a wooden hoe (-1%)$(li)Chopping logs with a wooden axe (-1%)$(li)Sleeping through 3 nights in a row (-5%)$(li)Killing another player's servant (-2%)$(li)Killing any Touhou Little Maid (-10%)"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Virtues",
+      "text": "Each of these lifts your alignment up:$(li)Trading at least twice with a trader you met (+1%)$(li)Fighting alongside a servant or another player (+1%)$(li)Planting or harvesting crops by hand, per 10 (+1%)$(li)Building an iron golem yourself (+1%)$(li)Spending 2 stacks of emeralds on trades within 10s (+3%)$(li)Arming your servant with armor and a weapon (+3%)$(li)Restoring under 1/5 of your hunger within 10s (+5%)$(li)Crafting items by hand, per 20 (+1%)$(li)Fishing continuously for 5 minutes (+5%)$(li)Using bone meal 20 times (+1%)$(li)Being hit 3 times in a row without fighting back (+10%)$(li)Stripping logs with an axe by hand, per 5 (+1%)"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Thresholds",
+      "text": "These trigger the moment you reach them:$(br2)$(bold)Evil$()$(li)-20%: the Life-Lamp Ring stops lifting the Seven Curses$(li)-30%: Luck -50%$(li)-40%: Fortune level drops to 0$(li)-45%: Unnameable (40% every 200s) and villagers charge +90%$(li)-50%: everything turns against you$(br2)$(bold)Good$()$(li)+20%: constant Regeneration II$(li)+30%: Luck +50%$(li)+40%: Fortune level +1$(li)+45%: villager trades at 10%$(li)+50%: nothing attacks you unprovoked (it still fights back) and you cheat death once (200s cooldown)"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Reading it",
+      "text": "$(li)The icon above your hotbar is this heart; its color follows your alignment: $(bold)grey at 0$(), $(bold)white at full good$(), $(bold)black at full evil$()$(li)The icon in the curio slot uses the very same shades$(li)Hovering shows only your alignment at first - $(bold)hold Shift$() to list the effects you have active$(br2)$(italic)A heart without regret.()"
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:conscience",
+      "text": "There is no recipe - you are already wearing it from the moment the world loads.$(br2)Your alignment lives in $(bold)player data$(), not on the item: even if something like Apollyon confiscates the heart, restoring it $(bold)loses no progress at all$()."
+    }
+  ]
+}
