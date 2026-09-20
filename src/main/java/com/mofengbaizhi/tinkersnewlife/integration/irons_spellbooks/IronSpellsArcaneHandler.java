@@ -20,7 +20,7 @@ import java.util.function.Consumer;
  *
  * <h2>两件事</h2>
  * <ol>
- *   <li><b>强化物品内刻印的法术</b>（{@link #onModifySpellLevel}）：监听到铁魔法的
+ *   <li><b>全类型法术 / 巫术 / 咒术伤害每级 +5%（原"强化刻印法术等级"已移除 ✗）</b>（{@link #onModifySpellLevel}）：监听到铁魔法的
  *       {@code ModifySpellLevelEvent} 时，若施法者持有/穿着带魔导、且<b>该物品里刻印了正在施放的这个法术</b>，
  *       就把法术等级按魔导等级抬高（用户明确：强化的是<b>该法术</b>的强度，不是整体法强）；</li>
  *   <li><b>施法增伤</b>（{@link #onSpellDamage} + {@link #onLivingHurt}）：
@@ -57,13 +57,9 @@ public final class IronSpellsArcaneHandler {
         } catch (Throwable t) {
             TinkersNewlife.LOGGER.warn("[联动] 超位魔法：SpellOnCastEvent 挂载失败（范围/持续补偿不生效）", t);
         }
-        try {
-            Class<?> levelEvent = Class.forName("io.redspace.ironsspellbooks.api.events.ModifySpellLevelEvent");
-            bus.addListener(EventPriority.NORMAL, false, (Class) levelEvent,
-                    (Consumer) (Object e) -> onModifySpellLevel(e));
-        } catch (Throwable t) {
-            TinkersNewlife.LOGGER.warn("[联动] 魔导：ModifySpellLevelEvent 挂载失败（法术等级强化不生效）", t);
-        }
+          // ⭐ 用户口径（2026-09-20）：魔导只保留「全类型法术/巫术/咒术伤害 +5%/级」✓
+          //   ⇒ 「强化物品内刻印法术等级」那条效果已移除 ✗ ⇒ ModifySpellLevelEvent 监听器不再注册 ✓
+          //   （onModifySpellLevel 方法保留以便回退 ✓ 只是不会被调用 ✓）
         try {
             Class<?> dmgEvent = Class.forName("io.redspace.ironsspellbooks.api.events.SpellDamageEvent");
             bus.addListener(EventPriority.LOW, false, (Class) dmgEvent,
@@ -106,14 +102,14 @@ public final class IronSpellsArcaneHandler {
                 superBoost = Math.max(0, target - currentLevel(event));
             }
 
-            // 每级 +5 级法术等级（用户口径：注入法术强度 = 5 × 魔导等级）
+            // （魔导的"刻印等级强化"已按用户口径移除 ✗ —— 本方法现在只服务超位魔法与奥术始源 ✓）
             // ⭐ 源钻合金「奥术始源」：**所有法术** +2 × 等级 级（最高单件生效 ✓）——
             //    与魔导不同，它不要求法术刻印在物品里 ✓。
             int originBoost = com.mofengbaizhi.tinkersnewlife.content.modifier.OriginMagicModifier
                     .SPELL_LEVEL_PER_LEVEL
                     * com.mofengbaizhi.tinkersnewlife.content.modifier.OriginMagicModifier.bestLevel(caster);
-            final int boost = Math.max(Math.max(superBoost,
-                    best * ArcaneConductionModifier.SPELL_LEVEL_PER_LEVEL), originBoost);
+            // ⚠ 魔导那一项已按用户口径删除（不再提升刻印法术等级 ✗）⇒ 只剩超位魔法与奥术始源 ✓
+              final int boost = Math.max(superBoost, originBoost);
             if (boost <= 0) return;
             if (best > 0) {
                 TinkersNewlife.LOGGER.debug("[魔导] {} 在刻印列表里命中（魔导 {} 级）→ 法术等级 +{}",

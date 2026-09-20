@@ -11,7 +11,7 @@
                   },
                   {
                       "type":  "patchouli:text",
-                      "text":  "$(bold)Traits$():$(li)$(bold)Arcane Conduction$() (leveled): strengthens the $(bold)spell inscribed in this item$() by the trait level (not overall spell power); spells you cast while holding or wearing it deal $(bold)+0.4 x level$() damage, $(bold)Goety spells included$()$(li)$(bold)Tilos Purgatory$() (no levels): below $(bold)half health$() two $(bold)Ancient Knights$() are summoned beside you (150s, servant AI) and a $(bold)level 5 Raise Hell$() is cast without incantation (centered on you, harmless to your servants); cooldown $(bold)200s$()"
+                      "text":  "$(bold)Traits$():$(li)$(bold)Arcane Conduction$() (leveled): all $(bold)spell / witchcraft / curse damage +5% per level$() while holding or wearing it (Goety spells and this mod's curses included, true damage excluded)$(li)$(bold)Tilos Purgatory$() (no levels): below $(bold)half health$() two $(bold)Ancient Knights$() are summoned beside you (150s, servant AI) and a $(bold)level 5 Raise Hell$() is cast without incantation (centered on you, harmless to your servants); cooldown $(bold)200s$()"
                   }
               ],
     "flag":  "mod:irons_spellbooks"

@@ -46,12 +46,9 @@ public class ArcaneConductionModifier extends Modifier implements TooltipModifie
     /** 每级施法增伤倍率（用户口径：**全类型法术 / 巫术 / 咒术伤害** 每级 +5% ✓） */
     public static final double DAMAGE_BONUS_PER_LEVEL = 0.05;
 
-    /**
-     * @deprecated 用户口径已改为"只做伤害增幅"（2026-09-20）✓ —— 本常量**不再参与任何计算** ✗，
-     * 保留字段只是为了让 {@code IronSpellsArcaneHandler} 不改也能编译 ✓ 便于回退 ✓。
-     */
-    @Deprecated
-    public static final int SPELL_LEVEL_PER_LEVEL = 3;
+    // ⚠ 原本这里还有 SPELL_LEVEL_PER_LEVEL（"刻印法术等级 +3/级"）✗
+    //   —— 已按用户口径（2026-09-20）**彻底删除** ✓：魔导现在只剩
+    //   "全类型法术 / 巫术 / 咒术伤害每级 +5%" 这一条效果 ✓（回退见 git 历史 ✓）。
 
     /** 等级上限（TCon 的 Modifier 没有 getMaxLevel 覆写点，这里在查询处夹住） */
     public static int clampLevel(int level) {
