@@ -237,6 +237,10 @@ public final class IronSpellsArcaneHandler {
         if (id == null || id.isEmpty()) return false;
         String s = id.toLowerCase();
         if (s.startsWith("irons_spellbooks.")) return false;
+        // ⭐ 用户口径（2026-09-20）：魔导要覆盖"全类型法术 / 巫术 / **咒术**伤害" ✓
+        //   ⇒ 本模组自己的咒术伤害也吃增幅 ✓（⚠ 但**剔除真伤** `true_pierce`：
+        //     那是"穿透/真伤"体系，与咒术增幅不是一回事 ✗）
+        if (s.startsWith("tinkersnewlife.")) return !s.contains("true_pierce");
         return s.contains("magic") || s.startsWith("goety.");
     }
 

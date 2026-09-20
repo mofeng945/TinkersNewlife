@@ -43,10 +43,14 @@ public class ArcaneConductionModifier extends Modifier implements TooltipModifie
     /** 最高 3 级 */
     private static final int MAX_LEVEL = 3;
 
-    /** 每级施法增伤倍率（0.4 / 级） */
-    public static final double DAMAGE_BONUS_PER_LEVEL = 0.4;
+    /** 每级施法增伤倍率（用户口径：**全类型法术 / 巫术 / 咒术伤害** 每级 +5% ✓） */
+    public static final double DAMAGE_BONUS_PER_LEVEL = 0.05;
 
-    /** 每级给"物品内刻印的法术"提升的等级数（用户口径：3 × 魔导等级） */
+    /**
+     * @deprecated 用户口径已改为"只做伤害增幅"（2026-09-20）✓ —— 本常量**不再参与任何计算** ✗，
+     * 保留字段只是为了让 {@code IronSpellsArcaneHandler} 不改也能编译 ✓ 便于回退 ✓。
+     */
+    @Deprecated
     public static final int SPELL_LEVEL_PER_LEVEL = 3;
 
     /** 等级上限（TCon 的 Modifier 没有 getMaxLevel 覆写点，这里在查询处夹住） */
@@ -65,8 +69,7 @@ public class ArcaneConductionModifier extends Modifier implements TooltipModifie
                            @Nullable Player player, List<Component> tooltip,
                            TooltipKey tooltipKey, TooltipFlag tooltipFlag) {
         tooltip.add(Component.translatable("modifier.tinkersnewlife.arcane_conduction.tip",
-                String.valueOf(SPELL_LEVEL_PER_LEVEL * modifier.getLevel()),
-                String.format("%.1f", DAMAGE_BONUS_PER_LEVEL * modifier.getLevel())));
+                String.format("%.0f", DAMAGE_BONUS_PER_LEVEL * modifier.getLevel() * 100)));
     }
 
 
