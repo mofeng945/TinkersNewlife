@@ -141,22 +141,9 @@ public final class ConscienceThresholdHandler {
             new Tier(MARKUP_AT, "item.tinkersnewlife.conscience.evil.45"),       // −45（不可名状 · 涨价 ✓）
             new Tier(-FULL, "item.tinkersnewlife.conscience.evil.50"));          // −50（万物为敌 ✓）
 
-    /** 该档是否已达成（善侧阈值正 ✓ 恶侧阈值负 ✓ 统一比较 ✓） */
+    /** 该档是否已达成（善侧阈值正 ✓ 恶侧阈值负 ✓ 统一比较 ✓）—— tooltip 与以后可能的逻辑共用 ✓ */
     public static boolean reached(int alignment, Tier tier) {
         return tier.threshold() >= 0 ? alignment >= tier.threshold() : alignment <= tier.threshold();
-    }
-
-    /** 当前侧"下一个还没达成的档"（没有就 null ⇒ 已至极限 ✓） */
-    public static Tier nextTier(int alignment) {
-        for (Tier tier : alignment >= 0 ? TIERS_GOOD : TIERS_EVIL) {
-            if (!reached(alignment, tier)) return tier;
-        }
-        return null;
-    }
-
-    /** 还差几个百分点到该档 ✓（绝对值之差 ✓） */
-    public static int gapTo(int alignment, Tier tier) {
-        return Math.abs(tier.threshold()) - Math.abs(alignment);
     }
 
     // ============================================================

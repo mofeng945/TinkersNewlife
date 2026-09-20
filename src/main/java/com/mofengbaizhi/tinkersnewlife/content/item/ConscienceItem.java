@@ -82,23 +82,22 @@ public class ConscienceItem extends Item implements ICurioItem {
     }
 
     // ============================================================
-    //  动态 tooltip（三期③ ✓ 用户口径）
+    //  动态 tooltip（三期③ ✓ 用户口径 **第二轮修正**）
     // ============================================================
     //
-    //  平时（精简）：
+    //  平时（不按 Shift）—— **只有两行** ✓ 用户口径：
     //      言行举止，无悔于心
     //      善恶 +32%
-    //      ✔ 持续生命恢复 II
-    //      ✔ 幸运值 +50%
-    //      ✘ 时运等级 +1（还差 8%）
-    //      按住 Shift 查看全部
-    //  ⇒ **只列当前这一侧**（善恶为正 ⇒ 善侧 ✓ 为负 ⇒ 恶侧 ✓ 恰好 0 ⇒ 只留前两行 ✓）
-    //     已达成逐条 ✔ ✓ 再加"下一个未达成档"一行（带还差多少 ✓）
+    //  ⇒ 不列条目 ✗ 不提示"下一档"✗ 也不写"按住 Shift"提示 ✗（用户明确要求只有善恶值和 flavor ✓）
     //
-    //  按住 Shift：把两侧全部 10 档列出来 ✓ 已达成用对应色 ✓ 未达成深灰 ✓
+    //  按住 Shift —— 只列**已经激活**的条目 ✓（未激活的一律不显示 ✗ 两侧都查 ✓ 但同一时刻只有一侧非零 ✓）：
+    //      言行举止，无悔于心
+    //      善恶 +32%
+    //      持续生命恢复 II
+    //      幸运值 +50%
     //
-    //  ⚠ 用户口径：**不写档位百分比** ✗ **不写"善行/恶行"标题** ✗ **同一档只一行** ✓
-    //  （恶 −45 的"不可名状 + 村民涨价"在文案里就用「 · 」连成一行 ✓）
+    //  ⚠ 用户口径（累计）：**不写档位百分比** ✗ **不写"善行/恶行"标题** ✗ **同一档只一行** ✓
+    //  **不显示未激活/待激活** ✗
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
@@ -110,44 +109,26 @@ public class ConscienceItem extends Item implements ICurioItem {
         tooltip.add(Component.translatable("item.tinkersnewlife.conscience.alignment",
                 (alignment > 0 ? "+" : "") + alignment).withStyle(toneOf(alignment)));
 
-        if (shiftDown()) {
-            for (var tier : ConscienceThresholdHandler.TIERS_GOOD) {
-                addTierLine(tooltip, tier, alignment);
-            }
-            for (var tier : ConscienceThresholdHandler.TIERS_EVIL) {
-                addTierLine(tooltip, tier, alignment);
-            }
+        // 平时：只加一行 Shift 提示 ✓（文案是用户给的原文 ✓「按下shift查看所有影响」✓）
+        // 中立 0% 时也给这一行 ✓（否则没人知道能按 Shift 看 ✓）
+        if (!shiftDown()) {
+            tooltip.add(Component.translatable("item.tinkersnewlife.conscience.expand")
+                    .withStyle(ChatFormatting.DARK_GRAY));
             return;
         }
+        if (alignment == 0) return;                 // 按住 Shift 但中立 ⇒ 没有任何已激活条目 ✓
 
-        if (alignment != 0) {
-            for (var tier : alignment > 0 ? ConscienceThresholdHandler.TIERS_GOOD
-                    : ConscienceThresholdHandler.TIERS_EVIL) {
-                if (ConscienceThresholdHandler.reached(alignment, tier)) {
-                    tooltip.add(Component.translatable(tier.key()).withStyle(toneOf(alignment)));
-                }
-            }
-            var next = ConscienceThresholdHandler.nextTier(alignment);
-            if (next == null) {
-                tooltip.add(Component.translatable("item.tinkersnewlife.conscience.max")
-                        .withStyle(ChatFormatting.DARK_GRAY));
-            } else {
-                tooltip.add(Component.translatable("item.tinkersnewlife.conscience.gap",
-                                Component.translatable(next.key()),
-                                ConscienceThresholdHandler.gapTo(alignment, next))
-                        .withStyle(ChatFormatting.DARK_GRAY));
+        // 按住 Shift：把已激活的条目逐行列出 ✓（按阈值从小到大 ✓ 恶侧同样的表 ✓）
+        for (var tier : ConscienceThresholdHandler.TIERS_GOOD) {
+            if (ConscienceThresholdHandler.reached(alignment, tier)) {
+                tooltip.add(Component.translatable(tier.key()).withStyle(ChatFormatting.BLUE));
             }
         }
-        tooltip.add(Component.translatable("item.tinkersnewlife.conscience.expand")
-                .withStyle(ChatFormatting.DARK_GRAY));
-    }
-
-    /** 全表里的一行：达成 ⇒ ✔ + 对应色 ✓ 未达成 ⇒ ✘ + 深灰 ✓ */
-    private static void addTierLine(List<Component> tooltip, ConscienceThresholdHandler.Tier tier, int alignment) {
-        boolean on = ConscienceThresholdHandler.reached(alignment, tier);
-        tooltip.add(Component.literal(on ? "✔ " : "✘ ")
-                .append(Component.translatable(tier.key()))
-                .withStyle(on ? toneOf(alignment) : ChatFormatting.DARK_GRAY));
+        for (var tier : ConscienceThresholdHandler.TIERS_EVIL) {
+            if (ConscienceThresholdHandler.reached(alignment, tier)) {
+                tooltip.add(Component.translatable(tier.key()).withStyle(ChatFormatting.RED));
+            }
+        }
     }
 
     private static ChatFormatting toneOf(int alignment) {
