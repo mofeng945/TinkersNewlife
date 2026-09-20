@@ -213,6 +213,11 @@ public final class IronSpellsArcaneHandler {
 
     @SubscribeEvent
     public static void onLivingHurt(LivingHurtEvent event) {
+        // ⭐ 混沌之流的嵌套段不逐段吃"魔导增伤" ✗（见 util/DamagePipeline）
+        //    注：本闸门对混沌之流而言**目前是冗余的** ✓ —— 它的学派段是 `irons_spellbooks.*`，
+        //    已被 looksLikeForeignSpell 明确排除（铁魔法的伤害在 SpellDamageEvent 加过一次，
+        //    不在这里重复加成 ✓）。留着是为了以后"段类型扩展到 goety/magic"时不会突然漏 ✗。
+        if (com.mofengbaizhi.tinkersnewlife.util.DamagePipeline.skipNested()) return;
         DamageSource source = event.getSource();
         if (!(source.getEntity() instanceof LivingEntity attacker) || attacker.level().isClientSide) return;
         if (!looksLikeForeignSpell(source)) return;

@@ -20,6 +20,9 @@ public class ChildOfTheStarsHandler {
 
     @SubscribeEvent
     public static void onLivingHurt(LivingHurtEvent event) {
+        // ⭐ 混沌之流的嵌套段（1 物理 + 每学派 1 段）不再逐段吃"群星之子 ×2^级" ✗
+        //    否则 段数 × 2^级 = 指数级膨胀 ✗（见 util/DamagePipeline）
+        if (com.mofengbaizhi.tinkersnewlife.util.DamagePipeline.skipNested()) return;
         if (!(event.getSource().getEntity() instanceof LivingEntity attacker)) return;
         if (attacker.level().isClientSide) return;
         LivingEntity target = event.getEntity();

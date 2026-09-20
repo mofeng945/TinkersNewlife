@@ -76,6 +76,9 @@ public class BlackFlashHandler {
 
     @SubscribeEvent
     public static void onLivingHurt(LivingHurtEvent event) {
+        // ⭐ 混沌之流的嵌套段（1 物理 + 每学派 1 段）不再逐段吃黑闪 ✗
+        //    否则 原伤^2.5 会在每一段上各乘一次 ⇒ 段数 × 增幅 = 指数级膨胀 ✗（见 util/DamagePipeline）
+        if (com.mofengbaizhi.tinkersnewlife.util.DamagePipeline.skipNested()) return;
         if (!(event.getSource().getEntity() instanceof Player)) return;
         Player player = (Player) event.getSource().getEntity();
 

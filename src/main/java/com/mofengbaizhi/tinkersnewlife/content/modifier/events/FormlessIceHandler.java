@@ -69,6 +69,10 @@ public final class FormlessIceHandler {
 
     @SubscribeEvent
     public static void onLivingDamage(LivingDamageEvent event) {
+        // ⭐ 混沌之流的嵌套段不再逐段"记录追加冰霜伤害" ✗
+        //    否则 追加量 = 每段 × 0.1×(1+级)、N 段就追加 N 份 ⇒ 总伤害被抬成 (1 + N×追加比) ✗
+        //    （见 util/DamagePipeline：追加伤害只应针对"这一次命中"算一次 ✓）
+        if (com.mofengbaizhi.tinkersnewlife.util.DamagePipeline.skipNested()) return;
         LivingEntity target = event.getEntity();
         if (target.level().isClientSide) return;
         DamageSource source = event.getSource();

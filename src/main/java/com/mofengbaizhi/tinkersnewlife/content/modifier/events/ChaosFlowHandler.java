@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.content.modifier.events;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.modifier.ChaosFlowModifier;
 import com.mofengbaizhi.tinkersnewlife.integration.irons_spellbooks.IronSpellsSpellAccess;
+import com.mofengbaizhi.tinkersnewlife.util.DamagePipeline;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
@@ -51,11 +52,53 @@ import java.util.List;
  *
  * <h2>几个必须处理的坑</h2>
  * <ul>
- *   <li><b>递归</b>：我们施加的每一段又会触发 {@code LivingHurtEvent} ✗ → 用
- *       {@link ThreadLocal} 标记把重入挡掉 ✓（我们施加的多段伤害<b>不再被拆分</b> ✓）；</li>
+ *   <li><b>递归</b>：我们施加的每一段又会触发 {@code LivingHurtEvent} ✗ →
+ *       用 {@link DamagePipeline} 的<b>同线程嵌套标记</b>把重入挡掉 ✓
+ *       （我们施加的多段伤害<b>不再被拆分</b>、也<b>不再被我们自己的放大器逐段放大</b> ✓）；</li>
  *   <li><b>无敌帧</b>：第二段开始会被目标的 {@code invulnerableTime} 吃掉 ✗ →
  *       每段前后手动清零 ✓，结束时恢复成原版命中后的 20 tick ✓，所以"挨一下的无敌时间"手感不变 ✓；</li>
  *   <li><b>已死目标</b>：中途死去时后续段自然落空 ✓（不特殊处理）。</li>
+ * </ul>
+ *
+ * <h2>⭐⭐ 2026-09-19 用户报告：附加伤害被拆段 + 每段再吃一遍增幅 ⇒ 数值爆炸</h2>
+ *
+ * 用户原话：「其他特性或饰品效果的<b>附加伤害</b>也会被混沌之流拆成多段伤害，
+ * 而且<b>每一段伤害还会吃到饰品或其他特性的增幅</b>，导致出现极大数值膨胀」✓。
+ *
+ * <p>拆成两个独立缺陷（都在这一条链路上）：
+ * <ol>
+ *   <li><b>附加伤害被一起拆段</b>：本处理器在 {@code LOWEST} 读到的 {@code amount} 是
+ *       "**上游全部处理器（放大类 + 附加类）改完之后**的值"，旧实现把它**当成基数**均分 ✗
+ *       ⇒ 别人加进来的那部分也被摊成 N 份 ✓（不是它该有的语义 ✗）；</li>
+ *   <li><b>每段再吃一遍增幅</b>：旧实现逐段 {@code hurt()} ⇒ 每一段都会把整条伤害管线重跑一遍 ✗
+ *       ⇒ 所有"在伤害事件里改数值"的处理器（黑闪 {@code ^2.5}、群星之子 {@code ×2^级}、
+ *       巫师套装 {@code ×(1+0.1×件数)}、模块化魔杖法术增幅、投射咒法 {@code ×2^层}、
+ *       堕落 {@code +bonus}、闪电 {@code +bonus}、炽热/冷酷的"追加伤害"…）对每段各生效一次 ✗✗
+ *       ⇒ <b>段数 × 增幅 = 指数级膨胀</b> ✗。</li>
+ * </ol>
+ *
+ * <h2>本轮修法（不改任何既有语义 ✓）</h2>
+ *
+ * <ol>
+ *   <li><b>只拆"进入本处理器时的原始数值"</b>：{@code total} 仍然原样拆（段数组成 / 每段大小 /
+ *       伤害类型 / 命中特效 / 无敌帧关系<b>全部不变</b> ✓）；
+ *       同时记录"**上游把自己的数值抬了多少**" = {@code total − 进入时的快照} ✓（见 {@code SNAPSHOT}）；</li>
+ *   <li><b>把"抬升的那一份"只发一次</b>：抬升量整体并入<b>第一段（物理段）</b>，作为它的一部分，
+ *       **不再参与均分** ✓ ⇒ 总伤害 = 基数（照旧均分）+ 抬升量（一次） ✓；</li>
+ *   <li><b>嵌套段打标</b>：每段 {@code hurt()} 都被 {@link DamagePipeline#enter()}/{@link DamagePipeline#exit()}
+ *       包起来 ✓ ⇒ 我们自己的放大类 / 附加类处理器在内层**一律跳过** ✗✗（不再逐段乘）✓。</li>
+ * </ol>
+ *
+ * <p>⚠ <b>能力边界（如实记录，不许含糊）</b>：
+ * <ul>
+ *   <li>✅ <b>我们自己的</b>处理器：全部管得住（放大类与附加类都加了内层早退 ✓，清单见备忘录）；</li>
+ *   <li>✗ <b>外部 mod 的</b>增幅处理器：<b>管不了</b> ✗ —— 标记只存在于我们自己的 {@code ThreadLocal} 里，
+ *       别的 mod 读不到它 ⇒ 它们仍会对**每一段**各乘一次 ✗。
+ *       典型如「法术反应」（{@code event/ServerHurtEvent}，默认 NORMAL 优先级，按被打中那一下等比放大 ✓）；
+ *       测试实例（{@code G:\tex\.minecraft\versions\1.20.1-Forge_47.4.22}）里**没有**它，
+ *       也没扫到别的"放大型"外部处理器 ⇒ **本实例下这条风险只停留在理论层面** ✓（备忘录里有清单）。
+ *       缓解手段仍然是既有的"减少段数"：{@code chaos_flow.max_school_segments = 0/较小值} 或
+ *       {@code chaos_flow.enabled = false} ✓（段数一变少、被外部 mod 各乘一次的次数就变少 ✓）。</li>
  * </ul>
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -64,12 +107,75 @@ public final class ChaosFlowHandler {
     private ChaosFlowHandler() {
     }
 
-    /** 拆分中标记：防止我们施加的分段伤害又被自己拆一遍 */
+    /**
+     * 嵌套段结算标记：本处理器**自己造出来的**每一段 {@code hurt()} 期间为 {@code true}。
+     * <p>它同时承担两个职责（原来是两套东西，2026-09-19 合并 ✓）：
+     * <ol>
+     *   <li><b>防递归</b>：段内又触发 {@code LivingHurtEvent} 时，本方法在最开头就早退 ✗
+     *       （不会"段又被拆" ✗）；</li>
+     *   <li><b>让"我们的"放大/附加处理器在内层跳过</b> ✗ —— 它们一律调
+     *       {@code DamagePipeline.skipNested()} 早退，于是"一次命中只被放大一次" ✓。
+     *       为什么必须与①共用同一个标记：段内既可能**又**被拆、**又**被放大，
+     *       两个语义必须同时成立，分开两套标记迟早会出现"只挡了一半"✗。</li>
+     * </ol>
+     * 见 {@link DamagePipeline} 的说明（同线程同步 ⇒ ThreadLocal 足够且零开销 ✓）。
+     */
     private static final ThreadLocal<Boolean> SPLITTING = ThreadLocal.withInitial(() -> Boolean.FALSE);
+
+    /**
+     * 上游"改了数值"的凭证：{@code 进入本处理器时的 amount#identity → 那一次的快照值} ✓。
+     *
+     * <p>为什么必须做成"快照"而不是直接看 {@link LivingHurtEvent} 里的值：
+     * 本处理器挂在 {@link EventPriority#LOWEST}（别人都改完之后 ✓）——
+     * 这一层**看不到**"别人改之前是多少" ✗。所以在**更早**的 {@link EventPriority#HIGHEST} 里
+     * 先记一份快照，到 {@code LOWEST} 再取回来做差 ✓：
+     * <pre>抬升量 = 进入 LOWEST 时的 amount − HIGHEST 时的 amount</pre>
+     * 差 > 0 ⇒ 上游（放大类 / 附加类处理器）把这一发抬高了 ✓。
+     *
+     * <p>⚠ 为什么"抬升量"里同时含**放大**与**附加**：两者在事件里都是同一个 {@code float}，
+     * 无法区分 ✗（没有 mod 会标注"这是我加的" ✗）。而无论它俩哪来的，
+     * <b>正确语义都只有一个</b>：这一发命中"本来该打出多少"就是 {@code total}（上游处理完的值 ✓）——
+     * 所以只要保证 {@code total} **完整发一次**，就不会因为拆分而丢伤害或翻倍 ✓。
+     *
+     * <p>键用 <b>事件对象的 identity</b>（{@code IdentityHashMap} ✓）而不是目标 UUID：
+     * 同一 tick 同一目标可能挨好几发（扫击 / 连击 / 多段），用 UUID 会串味 ✗（§392 的教训 ✓）；
+     * {@code IdentityHashMap} 在服务端主线程串行访问 ⇒ 不需要锁 ✓。
+     * 取值即删（一条凭证只服务一次进入 ✓），双保险。
+     */
+    private static final java.util.Map<LivingHurtEvent, Float> SNAPSHOT =
+            new java.util.IdentityHashMap<>();
+
+    /**
+     * 第 ① 步（{@link EventPriority#HIGHEST} = <b>最先</b>跑）：记下"进入混沌之流之前"的伤害 ✓。
+     *
+     * <p>⚠ 必须**零开销**：本方法对**全服每一发伤害**都会跑 ✗（不只是混沌之流的武器）——
+     * 所以第一件事就是"手里有没有带混沌之流的工具"，没有就直接返回 ✓（一次 {@code ThreadLocal}
+     * 读 + 一次工具查询，与既有的其它命中类特性同量级 ✓）。
+     * 另外：嵌套段期间（{@code SPLITTING}）一律不记 ✗（段不该有自己的快照 ✓）。
+     */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onSnapshotHurt(LivingHurtEvent event) {
+        if (Boolean.TRUE.equals(SPLITTING.get())) return;         // 我们自己造的段 → 不记 ✓
+        LivingEntity target = event.getEntity();
+        if (target == null || target.level().isClientSide) return;
+        if (!(event.getSource().getEntity() instanceof LivingEntity attacker)) return;
+        if (attacker == target) return;
+        if (ToolHelper.getCombatToolWith(event.getSource(), attacker, ChaosFlowModifier.ID) == null) return;
+        SNAPSHOT.put(event, event.getAmount());
+        if (SNAPSHOT.size() > 512) SNAPSHOT.clear();              // 兜底：正常永远到不了（见下面 take 的取值即删 ✓）
+    }
+
+    /** 取出快照（取值即删 ✓；没有凭证 / 没被抬升 ⇒ 返回 {@code 0} = 不发"抬升"那一段 ✓） */
+    private static float takeMarkup(LivingHurtEvent event, float total) {
+        Float snap = SNAPSHOT.remove(event);
+        if (snap == null) return 0.0F;
+        float markup = total - snap;
+        return markup > 0.0F ? markup : 0.0F;                     // 被上层"减伤"减掉的不管 ✓（照旧均分 ✓）
+    }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onLivingHurt(LivingHurtEvent event) {
-        if (Boolean.TRUE.equals(SPLITTING.get())) return;
+        if (Boolean.TRUE.equals(SPLITTING.get())) return;         // 我们自己造的段 → 不再拆分 ✓
 
         LivingEntity target = event.getEntity();
         if (target.level().isClientSide) return;
@@ -85,6 +191,9 @@ public final class ChaosFlowHandler {
         }
 
         float total = event.getAmount();
+        // ⭐ 先把快照取走（取值即删 ✓）：即便下面因为"关闭 / 学派表为空 / 上限 0"等理由**不拆**，
+        //    凭证也不会留在 IdentityHashMap 里 ✗（那才是真的内存泄漏 ✗）。不拆时 markup 直接丢弃即可 ✓。
+        float markup = takeMarkup(event, total);
         if (total <= 0.0F) return;
 
         // ⭐ 配置：可整体关闭；学派段上限（默认 64 ≈ 不限，只作"学派爆炸"的硬保险）；每 tick 限量几段 ✓
@@ -102,25 +211,31 @@ public final class ChaosFlowHandler {
         List<ResourceKey<DamageType>> schoolKeys = allSchools.size() > cap
                 ? allSchools.subList(0, cap) : allSchools;
 
+        // ⭐⭐ 2026-09-19：段数组成与每段大小**完全照旧** —— 基数就是进入本处理器时的 total ✓；
+        //     唯一的变化是"上游抬升的那一份"只发一次（并入物理段），不再参与均分 ✓。
+        //     没有附加伤害、也没有增幅时 markup = 0 ⇒ 与旧实现**逐位一致** ✓。
         int segments = 1 + schoolKeys.size();
-        float per = total / segments;
+        float base = total - markup;
+        float per = base / segments;
         if (per <= 0.0F) return;
 
         event.setCanceled(true);                                 // 原始那一次不再结算 ✓
 
         int perTick = segmentsPerTick();
-        if (DEBUG) TinkersNewlife.LOGGER.info("[混沌之流] {} 的 {} 点伤害拆成 {} 段（每段 {}，学派 {} 个，每 tick 最多 {} 段）",
-                attacker.getName().getString(), total, segments, per, schoolKeys.size(), perTick);
+        if (DEBUG) TinkersNewlife.LOGGER.info("[混沌之流] {} 的 {} 点伤害拆成 {} 段（每段 {}，上游抬升 {} 只发一次，学派 {} 个，每 tick 最多 {} 段）",
+                attacker.getName().getString(), total, segments, per, markup, schoolKeys.size(), perTick);
 
-        // ① 物理段：同 tick 立即结算 ✓
+        // ① 物理段：同 tick 立即结算 ✓ —— "上游抬升的那一份"并进这一段（只发这一次 ✓）
         creditKill(target, attacker);                            // ⭐ 先补击杀归属（关系到 killed_by_player 类战利品 ✓）
         SPLITTING.set(Boolean.TRUE);
+        DamagePipeline.enter();
         try {
             target.invulnerableTime = 0;
-            target.hurt(physicalSource(target, attacker), per);
+            target.hurt(physicalSource(target, attacker), per + markup);
         } catch (Throwable t) {
             TinkersNewlife.LOGGER.debug("[混沌之流] 物理段失败（已忽略）: {}", t.toString());
         } finally {
+            DamagePipeline.exit();
             SPLITTING.set(Boolean.FALSE);
         }
 
@@ -128,6 +243,7 @@ public final class ChaosFlowHandler {
         //    段数多（学派爆炸的包）⇒ 摊到后面若干 tick，每 tick 只发 perTick 段 ⇒ 单帧不再卡 ✓
         if (perTick <= 0 || schoolKeys.size() <= BURST_LIMIT) {
             SPLITTING.set(Boolean.TRUE);
+            DamagePipeline.enter();
             try {
                 for (ResourceKey<DamageType> key : schoolKeys) {
                     if (target.isDeadOrDying()) break;
@@ -141,6 +257,7 @@ public final class ChaosFlowHandler {
             } catch (Throwable t) {
                 TinkersNewlife.LOGGER.debug("[混沌之流] 分段失败（已忽略）: {}", t.toString());
             } finally {
+                DamagePipeline.exit();
                 SPLITTING.set(Boolean.FALSE);
             }
             return;
@@ -204,6 +321,7 @@ public final class ChaosFlowHandler {
 
         int budget = Math.max(1, segmentsPerTick());
         SPLITTING.set(Boolean.TRUE);
+        DamagePipeline.enter();
         try {
             java.util.Iterator<Flurry> it = queue.iterator();
             while (it.hasNext() && budget > 0) {
@@ -238,6 +356,7 @@ public final class ChaosFlowHandler {
         } catch (Throwable t) {
             TinkersNewlife.LOGGER.debug("[混沌之流] 分段队列结算失败（已忽略）: {}", t.toString());
         } finally {
+            DamagePipeline.exit();
             SPLITTING.set(Boolean.FALSE);
         }
     }
