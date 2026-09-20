@@ -32,7 +32,7 @@ public class EndlessColdWindModifier extends Modifier implements TooltipModifier
             new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "endless_cold_wind"));
 
     /** 冰霜法强加成：+50%（铁魔法该属性以 1.0 为 100%） */
-    public static final double ICE_POWER_BONUS = 0.5;
+    public static final double ICE_POWER_BONUS = 0.25;
 
     /** 效果固定 → 显示名不带等级 */
     @Override

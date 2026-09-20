@@ -38,7 +38,7 @@ public class InscriptionModifier extends Modifier implements TooltipModifierHook
             new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "inscription"));
 
     /** 每件提供的法术强度：+0.1 = +10%（属性默认 1.0） */
-    public static final double POWER_PER_ITEM = 0.1D;
+    public static final double POWER_PER_ITEM = 0.03D;
 
     /** 效果固定 → 显示名不带等级 */
     @Override
