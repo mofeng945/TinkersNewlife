@@ -155,9 +155,12 @@ public class CharmHandler {
 
             // ⭐ 用户口径（2026-09-20）：魅惑期间不能索敌施术者 ✓
             //   若"施术者"是**魅惑之前**就已经锁定的目标 ⇒ 这里每 tick 清掉它 ✓（否则它会一直追 ✓）
-            LivingEntity locked = entity.getTarget();
-            if (locked != null && locked.getUUID().equals(data.casterUUID)) {
-                entity.setTarget(null);
+            //   ⚠ getTarget/setTarget 是 **Mob** 上的方法（不在 LivingEntity 上 ✗ 编译期就报"找不到符号" ✓）
+            if (entity instanceof net.minecraft.world.entity.Mob mob) {
+                LivingEntity locked = mob.getTarget();
+                if (locked != null && locked.getUUID().equals(data.casterUUID)) {
+                    mob.setTarget(null);
+                }
             }
 
             if (data.remainingTicks % 5 == 0) {
