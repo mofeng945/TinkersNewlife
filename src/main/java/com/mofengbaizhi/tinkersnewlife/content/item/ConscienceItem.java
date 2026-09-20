@@ -89,5 +89,12 @@ public class ConscienceItem extends Item implements ICurioItem {
         super.appendHoverText(stack, level, tooltip, flag);
         tooltip.add(Component.translatable("item.tinkersnewlife.conscience.flavor")
                 .withStyle(ChatFormatting.DARK_PURPLE));
+        // 第二期：先把「当前善恶 %」露出来 ✓（12 条规则实机核对全靠它 ✓
+        // 三期的完整动态 tooltip（红字恶行/蓝字善行清单）再覆盖这里 ✓）
+        int alignment = ConscienceHandler.mirrorOf(stack, ConscienceHandler.BAR_ZERO) - ConscienceHandler.BAR_ZERO;
+        ChatFormatting color = alignment > 0 ? ChatFormatting.BLUE
+                : alignment < 0 ? ChatFormatting.RED : ChatFormatting.GRAY;
+        tooltip.add(Component.translatable("item.tinkersnewlife.conscience.alignment",
+                (alignment > 0 ? "+" : "") + alignment).withStyle(color));
     }
 }

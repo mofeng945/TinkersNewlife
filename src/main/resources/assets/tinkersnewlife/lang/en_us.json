@@ -277,6 +277,7 @@
   "modifier.tinkersnewlife.charm": "Charm",
   "item.tinkersnewlife.conscience": "Heart",
   "item.tinkersnewlife.conscience.flavor": "Words and deeds - a heart without regret.",
+  "item.tinkersnewlife.conscience.alignment": "Conscience %s%%",
   "curios.identifier.tinkersnewlife_heart": "Heart",
   "modifier.tinkersnewlife.charm.description": "Hitting a creature charms it: while charmed it cannot attack you and will not target you. Cooldown 30s.",
   "modifier.tinkersnewlife.charm.flavor": "A glance, and the will is no longer its own.",

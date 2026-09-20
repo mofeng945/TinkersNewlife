@@ -73,8 +73,11 @@ public final class ConscienceHandler {
     /** 直接设值（会夹在 −50~+50 ✓）—— 第二期的 12 条增减规则都走这里 ✓ */
     public static void setAlignment(Player player, int value) {
         if (player == null) return;
-        player.getPersistentData().putInt(KEY_ALIGNMENT,
-                Math.max(ALIGNMENT_MIN, Math.min(ALIGNMENT_MAX, value)));
+        int clamped = Math.max(ALIGNMENT_MIN, Math.min(ALIGNMENT_MAX, value));
+        if (clamped == getAlignment(player)) return;
+        player.getPersistentData().putInt(KEY_ALIGNMENT, clamped);
+        // 一变就同步最大生命修饰符 ✓（第二期口径：最大生命 ×(1 + 善恶%) ✓）
+        ConscienceAlignmentHandler.onAlignmentChanged(player);
     }
 
     /** 增减（第二期用 ✓） */
@@ -124,6 +127,7 @@ public final class ConscienceHandler {
     public static void ensure(ServerPlayer player) {
         clearForeignHearts(player);          // 先清掉混在别人槽里的「心」✗（历史存档会残留 ✓）
         int alignment = getAlignment(player);
+        ConscienceAlignmentHandler.refreshMaxHealth(player);   // 最大生命 ×(1+善恶%) 兜底对齐 ✓（登录/重生/换维度 ✓）
         ItemStack existing = getHeartStack(player);
         if (existing != null && existing.getItem() instanceof ConscienceItem) {
             writeMirror(existing, alignment);

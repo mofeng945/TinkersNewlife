@@ -271,6 +271,7 @@
   "modifier.tinkersnewlife.charm": "魅惑",
   "item.tinkersnewlife.conscience": "心",
   "item.tinkersnewlife.conscience.flavor": "言行举止，无悔于心",
+  "item.tinkersnewlife.conscience.alignment": "善恶 %s%%",
   "curios.identifier.tinkersnewlife_heart": "心",
   "modifier.tinkersnewlife.lucky_drop.description": "击杀生物时有机会额外掉落一次战利品，并提高冰火传说稀有掉落物的出现概率",
   "modifier.tinkersnewlife.dragon_staff.cooldown": "技能冷却中，还需 %d tick",
