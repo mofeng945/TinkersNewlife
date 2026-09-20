@@ -841,7 +841,6 @@
   "message.tinkersnewlife.fuzhu_cisi.end": "§7审判结束，领域关闭",
   "message.tinkersnewlife.fuzhu_cisi.guilty_end": "§c判处有罪！%s 的攻击力已归零 60 秒",
   "message.tinkersnewlife.fuzhu_cisi.innocent_end": "§a无罪——%s 被当庭释放",
-  "message.tinkersnewlife.fuzhu_cisi.kills": "杀人数：%s",
   "message.tinkersnewlife.fuzhu_cisi.guilty": "判断：有罪",
   "message.tinkersnewlife.fuzhu_cisi.innocent": "判断：无罪",
   "message.tinkersnewlife.fuzhu_cisi.death": "死刑，立即执行！",

@@ -885,7 +885,6 @@
   "message.tinkersnewlife.fuzhu_cisi.guilty": "Verdict: guilty",
   "message.tinkersnewlife.fuzhu_cisi.innocent": "Verdict: innocent",
   "message.tinkersnewlife.fuzhu_cisi.innocent_end": "§aInnocent - %s is released",
-  "message.tinkersnewlife.fuzhu_cisi.kills": "Kills: %s",
   "message.tinkersnewlife.fuzhu_cisi.penalty_curse": "§c%s is guilty - curse energy confiscated for 60 seconds",
   "message.tinkersnewlife.fuzhu_cisi.penalty_technique": "§c%s is guilty - techniques sealed for 60 seconds",
   "message.tinkersnewlife.fuzhu_cisi.penalty_tool": "§c%s is guilty - cursed tools confiscated for 60 seconds (any held cursed tool is forced back into the inventory)",

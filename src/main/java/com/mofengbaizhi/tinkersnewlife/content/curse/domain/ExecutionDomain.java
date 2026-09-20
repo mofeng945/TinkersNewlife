@@ -51,12 +51,10 @@ public class ExecutionDomain extends BaseDomain {
     /** 非玩家被告的判罪时间（tick）：5 秒（原 3 秒） */
     private static final int JUDGE_MOB_TICKS = 100;
 
-    /** 玩家定罪阈值：罪行分（击杀村民 + 击杀动物 + 击败玩家数）&gt; 此值即有罪 */
-    public static final int PLAYER_GUILT_THRESHOLD = 100;
-
     /**
-     * 「心」口径（用户 ✓）：<b>玩家善恶值低于 −20% ⇒ 一律判有罪</b> ✓
-     * （与"罪行分 &gt; 100"是**或**关系 ✓ 任一满足即有罪 ✓）
+     * 「心」口径（用户 ✓）：<b>玩家善恶值低于 −20% ⇒ 有罪</b> ✓
+     * （**完全**按善恶值审判 ✓ 不再看罪行分/击杀数 ✗ —— 原来的 `PLAYER_GUILT_THRESHOLD` 与
+     * {@code playerGuiltScore()/killScore()} 已按用户要求清理 ✓ 见备忘录 §448/§449 ✓）
      */
     public static final int CONSCIENCE_GUILTY_ALIGNMENT = -20;
     /** 玩家审判时长（tick）：6s */
@@ -281,39 +279,10 @@ public class ExecutionDomain extends BaseDomain {
     }
 
     // ==================== 击杀统计 ====================
-
-    private static final String KEY_KILL_VILLAGER = "tnl_exec_kill_villager";
-    private static final String KEY_KILL_ANIMAL = "tnl_exec_kill_animal";
-
-    public static void recordKill(ServerPlayer killer, LivingEntity victim) {
-        var data = killer.getPersistentData();
-        if (victim instanceof Villager) {
-            data.putInt(KEY_KILL_VILLAGER, data.getInt(KEY_KILL_VILLAGER) + 1);
-        } else if (victim instanceof Animal) {
-            data.putInt(KEY_KILL_ANIMAL, data.getInt(KEY_KILL_ANIMAL) + 1);
-        }
-    }
-
-    /** 杀人数 = 击杀村民 + 击杀动物 */
-    public static long killScore(ServerPlayer p) {
-        var data = p.getPersistentData();
-        return data.getInt(KEY_KILL_VILLAGER) + (long) data.getInt(KEY_KILL_ANIMAL);
-    }
-
-    /**
-     * 玩家罪行分 = 击杀村民/动物数 + <b>击败玩家数</b>（原版统计 {@code minecraft:player_kills}）。
-     * 判罪阈值见 {@link #PLAYER_GUILT_THRESHOLD}。
-     */
-    public static int playerGuiltScore(ServerPlayer p) {
-        int playerKills = 0;
-        try {
-            playerKills = p.getStats().getValue(
-                    net.minecraft.stats.Stats.CUSTOM.get(net.minecraft.stats.Stats.PLAYER_KILLS));
-        } catch (Throwable ignored) {
-            // 统计读不到就不计
-        }
-        return (int) (killScore(p) + playerKills);
-    }
+    // ⚠ 用户口径（§448/§449）：玩家审判**完全按善恶值** ✓ ⇒ 原来那套"击杀村民/动物/玩家计数 + 罪行分"整段**已删除** ✓
+    //   （删掉的东西：`recordKill()` ✓ `killScore()` ✓ `playerGuiltScore()` ✓ 持久键
+    //    `tnl_exec_kill_villager` / `tnl_exec_kill_animal` ✓ 以及它在事件里唯一的调用方 ✓）
+    //   ⇒ 旧存档里那两个键会自然变成"没人读写的残留数据" ✓ 不占什么空间 ✓ 也不影响任何逻辑 ✓
 
     // ==================== 类别判定 ====================
 
@@ -335,18 +304,13 @@ public class ExecutionDomain extends BaseDomain {
     /** 攻击力归零截止：UUID → 服务器 tick（亡灵有罪 60s） */
     public static final Map<UUID, Long> ATK_ZERO_UNTIL = new ConcurrentHashMap<>();
 
-    // ==================== 事件（统计 / 剑 / 攻击力0 / 没收执行 / 剑过期） ====================
+    // ==================== 事件（剑 / 攻击力0 / 没收执行 / 剑过期） ====================
 
     @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
     public static class ExecutionEvents {
 
-        /** 统计击杀村民/动物 */
-        @SubscribeEvent
-        public static void onKill(LivingDeathEvent event) {
-            if (event.getEntity().level().isClientSide) return;
-            if (!(event.getSource().getEntity() instanceof ServerPlayer killer)) return;
-            recordKill(killer, event.getEntity());
-        }
+        // ⚠ 原来这里还有一个 `onKill(LivingDeathEvent)` ✓ 只负责调 `recordKill()` 记"击杀村民/动物"数 ✗
+        //   ⇒ 玩家审判改成按善恶值之后它就没用了 ✓ 已按用户要求**整段删除** ✓（§449）
 
         /** 处刑人之剑命中 / 攻击力归零拦截 */
         @SubscribeEvent
