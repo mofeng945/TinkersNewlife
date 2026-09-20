@@ -56,6 +56,11 @@ public class ModCurios {
         //      ② 「心」是 canUnequip=false **卸不下来** ⇒ 它那 4 个心脏**永远戴不上** ✗✗（严重事故）。
         //    ⇒ 改用**带模组 id 前缀的独占槽位** ✓ 并在 data/tinkersnewlife/curios/slots/ 里定义
         //      图标/顺序/校验器（我们的 «head» 槽就是这么做的 ✓）。同届的 charm 槽同理（见下方注释 ✓）。
+        //    ⚠⚠ 还有**第二份文件不能漏**：`data/<modid>/curios/entities/*.json`（实体↔槽位映射 ✓）。
+        //      玩家的"饰品槽列表"来自 CuriosApi.getEntitySlots(player) ✓ 由 CuriosEntityManager
+        //      读 curios/entities 得到 ✓（curos/slots 那份只定义**槽类型**·图标/顺序/大小 ✗ 不管"谁有这个槽" ✗）。
+        //      没有 entities 那份 ⇒ 槽类型注册了、**玩家列表里却没有这个槽** ✗（用户实测踩到过 ✓ 见备忘录 §428 ✓）。
+        //      合并语义：默认 putAll ✓ 只有显式 "replace": true 才整体替换 ✓ 所以不会挤掉别家的槽 ✓。
         InterModComms.sendTo(CuriosApi.MODID, SlotTypeMessage.REGISTER_TYPE,
                 () -> new SlotTypeMessage.Builder("tinkersnewlife_heart")
                         .size(1)
