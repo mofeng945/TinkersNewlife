@@ -1,22 +1,27 @@
-﻿# 静态自检：混沌之流的"单次结算 + 随机二选一"闸门（2026-09-19 第二轮：用户口径「改简单一点，每次攻击在物理 / 某一学派法术里随机选一种，不拆分了」）
+﻿# 静态自检：混沌之流的"单次结算 + 随机二选一 + 三连禁令"闸门
+# （2026-09-19 第二轮：用户口径「改简单一点，每次攻击在物理 / 某一学派法术里随机选一种，不拆分了」；
+#   2026-09-19 第三轮：用户口径「连续三次攻击不能打出有相同种类的伤害」⇒ 不得三连，相邻两次相同允许 ✓）
 #
 # 为什么要有它：
 #   ① 本特性的关键不变量**不靠优先级、也不靠配置**——
-#      "每次攻击只结算一次" + "改判类型那一次必须包在 DamagePipeline 里"，
+#      "每次攻击只结算一次" + "改判类型那一次必须包在 DamagePipeline 里" + "同一类型不得三连"，
 #      都是"字符串/注解之外的东西"，编译期不会报错 ✗：
 #      · 少包一次 enter/exit ⇒ 我们自己的放大器会在重发的那一发上**再叠一次**（＝变相翻倍 ✗）；
 #      · 又冒出第二处 hurt()（或多段循环）⇒ 又回到"段数 × 增幅"膨胀 ✗；
-#      而且**表面上一切正常** ✗。
+#      · 三连禁令的三条分支少一条 / 历史记账时机不对 ⇒ **表面上一切正常**，但"三连同色"又回来了 ✗。
 #   ② 全工程"会改数值"的伤害事件处理器**逐个**都得有 skipNested 闸门（外部 mod 管不了，至少我们自己的要管住 ✓）。
 #
-# 本脚本钉死 6 组断言（不需要开游戏）：
+# 本脚本钉死 9 组断言（不需要开游戏）：
 #   [1] util/DamagePipeline 闸门本体语义正确（ThreadLocal + enter/exit/skipNested/isNested）；
 #   [2] ChaosFlowHandler 是**单次**结算（全类只有 1 处 hurt()），且 enter/exit 成对、exit 在 finally 里；
 #   [3] 随机二选一（物理 = 什么都不做直接 return；法术 = setCanceled(true) + 随机学派 + 同样数值重发一次）；
+#   [3b] **三连禁令**（本轮新增）：按施法者 UUID 的历史结构/上限/超时 + 三条分支
+#        （物×2 ⇒ 必出法术 / 学派×2 ⇒ 必换类型 / 其余 ⇒ 随机二选一）+ 记账时机；
 #   [4] **没有**任何残留的分段痕迹（Flurry / QUEUES / BURST_LIMIT / per = base / segments / markup 快照 /
 #       invulnerableTime 清零 / LevelTickEvent 滞后队列）；配置键也只剩 enabled；
 #   [5] 原有语义仍在（LOWEST 优先级 + 手持带 chaos_flow 的工具这道门槛）；
-#   [6] 全工程"会改数值"的处理器清单：非白名单的**逐个**都有闸门（含用户报告链路上的 13 处点名）。
+#   [6] 全工程"会改数值"的处理器清单：非白名单的**逐个**都有闸门（含用户报告链路上的 13 处点名）；
+#   [8] 8 个文案文件已写上新口径 + **三连禁令那一句**（中英各一处抽查）。
 #
 # 用法： powershell -ExecutionPolicy Bypass -File tools\check-chaos-flow-gates.ps1
 # 退出码：0 = 全过；1 = 有断言失败。
@@ -66,7 +71,7 @@ function Get-JavaCode([string]$text) {
     return $sb.ToString()
 }
 
-Write-Host "== 混沌之流『单次结算 + 随机二选一』静态自检 =="
+Write-Host "== 混沌之流『单次结算 + 随机二选一 + 三连禁令』静态自检 =="
 
 # ⚠ 源文件与文案都**没有 BOM**，而 Windows PowerShell 5.1 的 Get-Content -Raw 会按 ANSI 读
 #   ⇒ 中文注释/文案会变乱码、涉及中文的断言会**假失败** ✗。所以一律走这个 UTF-8 读取器 ✓。
@@ -113,12 +118,12 @@ else { Bad '重发前没有 creditKill —— killed_by_player 类战利品会�
 
 # --- ③ 随机二选一 ---
 Write-Host "`n[3] 随机二选一：物理（放行原伤害）或 法术（改判类型后单发）"
-if ($flow -match 'RANDOM\.nextFloat\(\)\s*<\s*CHANCE_PHYSICAL') { Ok '先掷一次骰子决定「物理 / 法术」' }
-else { Bad '没有找到"物理 / 法术"的随机分支（应当只掷一次骰子）' }
+if ($flow -match 'RANDOM\.nextFloat\(\)\s*<\s*CHANCE_PHYSICAL') { Ok '仍有"物理 / 法术"的随机分支（常规路径，未被三连禁令替换掉 ✓）' }
+else { Bad '没有找到"物理 / 法术"的随机分支（应当仍保留随机二选一）' }
 if ($flow -match 'private static final float CHANCE_PHYSICAL') { Ok '物理概率是常量 CHANCE_PHYSICAL' }
 else { Bad '缺 CHANCE_PHYSICAL 常量' }
-# 物理那一路必须"什么都不做"：return 出现在掷骰分支里，且不 setCanceled / 不 hurt
-$physBranch = [regex]::Match($flow, '(?s)if \(RANDOM\.nextFloat\(\) < CHANCE_PHYSICAL\)\s*\{(.{0,400}?)\n        \}')
+# 物理那一路必须"什么都不做"：return 出现在分支里，且不 setCanceled / 不 hurt
+$physBranch = [regex]::Match($flow, '(?s)if \(pick\.school\(\) == null\)\s*\{(.{0,400}?)\n        \}')
 if (-not $physBranch.Success) { Bad '拿不到"物理"分支的代码块' }
 else {
     $b = $physBranch.Groups[1].Value
@@ -131,10 +136,67 @@ if ($flow -match 'event\.setCanceled\(true\);') { Ok '法术分支取消原始�
 else { Bad '法术分支没有取消原始事件 —— 会变成"打两次"✗' }
 if ($flow -match 'schoolKeysCached\(\)') { Ok '学派表走 schoolKeysCached()（沿用既有实现，带 30 秒缓存）' }
 else { Bad '没有沿用既有的学派表读取（schoolKeysCached）' }
-if ($flow -match 'schools\.get\(RANDOM\.nextInt\(schools\.size\(\)\)\)') { Ok '随机取一个学派（nextInt(size)，均匀分布 ✓）' }
-else { Bad '没有"随机取一个学派"的写法' }
+if ($flow -match 'pool\.get\(RANDOM\.nextInt\(pool\.size\(\)\)\)') { Ok '随机取一个学派（nextInt(size)，均匀分布 ✓；pool 支持"排除已连出两次的那个学派"✓）' }
+else { Bad '没有"随机取一个学派"的写法（应为 pool.get(RANDOM.nextInt(pool.size()))）' }
 if ($flow -match 'schoolSource\(target, attacker, school\)') { Ok '沿用既有的"学派 → DamageSource"映射（schoolSource）' }
 else { Bad '没有沿用 schoolSource(...) 这套学派伤害源构造' }
+
+# --- ③b 三连禁令（本轮新增的用户口径：「连续三次攻击不能打出有相同种类的伤害」）---
+Write-Host "`n[3b] 三连禁令：同一类型不得连续出现 3 次（相邻两次相同允许 ✓）"
+# (a) 历史结构：按施法者 UUID 记"最近两次"，并声明了上限/超时（内存不会无限增长 ✓）
+if ($flow -match 'private static final Map<UUID, History> HISTORY = new HashMap<>\(\);') {
+    Ok '历史表 HISTORY = Map<UUID, History>（按施法者 UUID 分别记录 ✓）'
+} else { Bad '没有按施法者 UUID 记录历史的表（HISTORY）' }
+foreach ($fld in @(
+    @{ Re='private record History\(List<String> picks, long stamp\)';  Why='"最近两次选择 + 时间戳"的记录结构' },
+    @{ Re='private record DamageTypePick\(ResourceKey<DamageType> school, boolean forced\)'; Why='"改判结果（物理 / 某学派 + 是否被强制）"的结构' },
+    @{ Re='HISTORY_KEEP\s*=\s*2';        Why='每个玩家只留最近两次（够判"是否已连续两次同类型"✓）' },
+    @{ Re='HISTORY_TTL_MS\s*=';          Why='超过 N 秒没攻击就清空该玩家记录（"连续"断了 ✓）' },
+    @{ Re='HISTORY_MAX_ENTRIES\s*=\s*256'; Why='条目数上限（UUID 不会无限堆积 ✓）' },
+    @{ Re='import java\.util\.UUID;';    Why='按施法者 UUID 记账要用它' },
+    @{ Re='picks\.remove\(0\)';          Why='只保留最近两次的裁剪（历史不会越攒越长 ✓）' },
+    @{ Re='purgeExpired\(System\.currentTimeMillis\(\)\)'; Why='每次决策前做一次超时清理 ✓' },
+    @{ Re='evictOldest\(HISTORY\.size\(\) - HISTORY_MAX_ENTRIES\)'; Why='超上限时按"最久没动"淘汰 ✓' },
+    @{ Re='remember\(caster,';           Why='把"这一发实际打出的类型"记进历史 ✓' }
+)) {
+    if ($flow -match $fld.Re) { Ok "历史结构/清理：$($fld.Why)" }
+    else { Bad "缺历史结构/清理：$($fld.Re)（$($fld.Why)）" }
+}
+# (b) 三种分支：物理×2 ⇒ 必出法术；学派 S×2 ⇒ 必换类型（含"非 S 之外的任一学派"）；其余 ⇒ 随机二选一
+if ($flow -match 'PHYSICAL_KEY\.equals\(last\)\s*&&\s*PHYSICAL_KEY\.equals\(prev\)') {
+    Ok '分支①：最近两次都是物理 ⇒ 强制走法术（pickSchool(schools, null)）'
+} else { Bad '缺分支①（最近两次物理 ⇒ 必出法术）的判定' }
+if ($flow -match 'last\.equals\(prev\)\s*&&\s*!PHYSICAL_KEY\.equals\(last\)') {
+    Ok '分支②：最近两次都是同一学派 S ⇒ 强制换类型（物理 或 非 S 的学派 ✓）'
+} else { Bad '缺分支②（最近两次同一学派 ⇒ 必换类型）的判定' }
+if ($flow -match 'pickSchool\(schools, last\)') { Ok '分支②里"除 S 之外"的学派池（pickSchool 传排除键 ✓）' }
+else { Bad '分支②没有排除"已连出两次的那个学派"' }
+if ($flow -match 'if \(schools\.size\(\) > 1\) return new DamageTypePick\(null, true\);') {
+    Ok '分支②的另一半：可以换成物理（同样换型 ✓）'
+} else { Bad '分支②没有"换成物理"这条路' }
+# 排除池必须真的按"类型键"过滤（不是随便挑）
+if ($flow -match '!excludeKey\.equals\(schoolKey\(k\)\)\s*\)\s*pool\.add\(k\);') {
+    Ok '排除池按类型键过滤（excludeKey.equals(schoolKey(k)) ⇒ 不会又抽回同一个学派 ✗）'
+} else { Bad '排除池没有按类型键过滤 —— 可能又抽回同一个学派 ✗' }
+# 随机二选一必须仍是"其余情况"的兜底（没有被删除）
+if ($flow -match '(?s)//\s*常规：随机二选一.*?RANDOM\.nextFloat\(\)\s*<\s*CHANCE_PHYSICAL') {
+    Ok '分支③：其余情况仍是随机二选一（物理 50% / 法术 50%，法术再随机学派 ✓）'
+} else { Bad '分支③（其余情况保持随机二选一）不在了 ✗' }
+# 决策必须由 decide(caster, schools) 统一给出（物理/法术两条路都经过它 ⇒ 禁令无法被绕过 ✓）
+if ($flow -match 'DamageTypePick pick = decide\(caster, schools\);') {
+    Ok '两条路都经过同一个 decide(...) ⇒ 三连禁令不可能被绕过 ✓'
+} else { Bad '决策没有收敛到一个 decide(...) 里 ✗' }
+# 约束只影响"选哪一种"：单次结算的三条不变量不能被这次改动破坏
+if ($hurtCalls -eq 1 -and $enters -eq 1 -and $exits -eq 1) {
+    Ok '约束没有引入第二次结算（hurt() 仍 1 处、DamagePipeline.enter/exit 仍各 1 次 ✓）'
+} else { Bad '三连禁令把"单次结算"破坏了（hurt 或 enter/exit 次数变了 ✗）' }
+# 记账时机：必须在"确实按该类型打出去"之后（物理分支 / 法术分支确认可打之后 ✓）
+if ($flow -match '(?s)if \(pick\.school\(\) == null\)\s*\{.*?remember\(caster, PHYSICAL_KEY\);') {
+    Ok '物理那一发才记物理（不是"掷骰掷到物理"就记 ✓）'
+} else { Bad '物理分支没有记账 remember(caster, PHYSICAL_KEY)' }
+if ($flow -match '(?s)event\.setCanceled\(true\);\s*//[^\n]*\n\s*remember\(caster, schoolKey\(school\)\);') {
+    Ok '法术那一发取消原事件之后才记该学派（记账与实际打出的类型一致 ✓）'
+} else { Bad '法术分支的记账位置不对（应在确认能打出去之后 ✓）' }
 
 # --- ④ 不许有分段痕迹（只看**代码**：类注释里为解释"删了什么"提到旧名字是允许的 ✓） ---
 Write-Host "`n[4] 分段痕迹必须清零（新模型是单次结算）"
@@ -253,8 +315,8 @@ foreach ($m in $must) {
     else { Bad "$($m.Name)：$($m.File) 没有 DamagePipeline 闸门" }
 }
 
-# --- ⑧ 文案：不许再出现"均分 / 拆成多段 / 每学派 1 段" ---
-Write-Host "`n[8] 文案（语言文件 + 帕秋莉）必须已改成新口径"
+# --- ⑧ 文案：不许再出现"均分 / 拆成多段 / 每学派 1 段"，且必须写上"三连禁令" ---
+Write-Host "`n[8] 文案（语言文件 + 帕秋莉）必须已改成新口径，并写上三连禁令那一句"
 $textFiles = @(
     (Join-Path $res 'assets\tinkersnewlife\lang\zh_cn.json'),
     (Join-Path $res 'assets\tinkersnewlife\lang\en_us.json'),
@@ -283,6 +345,36 @@ else { Bad '中文本地化没有写明新口径（随机挑一种 / 不再拆�
 $enLang = [System.IO.File]::ReadAllText($textFiles[1], [System.Text.Encoding]::UTF8)
 if ($enLang -match 'rolls randomly' -and $enLang -match 'no more splitting') { Ok '英文本地化里写明 "rolls randomly" 与 "no more splitting" ✓' }
 else { Bad '英文本地化没有写明新口径（rolls randomly / no more splitting）' }
+# ⭐ 三连禁令那一句：本地化（.tip 与 .description 都要）+ 帕秋莉正文
+if ($zhLang -match '同一类型不会连续出现 3 次') { Ok '中文本地化里写明三连禁令（同一类型不会连续出现 3 次 ✓）' }
+else { Bad '中文本地化里没有三连禁令那一句（同一类型不会连续出现 3 次）' }
+if ($enLang -match 'never the same type 3 times in a row') { Ok '英文本地化里写明三连禁令（never the same type 3 times in a row ✓）' }
+else { Bad '英文本地化里没有三连禁令那一句（never the same type 3 times in a row）' }
+if ($zhLang -match '"modifier\.tinkersnewlife\.chaos_flow\.tip":\s*"[^"]*同一类型不会连续出现 3 次') {
+    Ok '.tip 那一行（一行/简洁风格）里补上了该规则 ✓'
+} else { Bad '.tip 里没有补上三连禁令那一句 ✗' }
+if ($enLang -match '"modifier\.tinkersnewlife\.chaos_flow\.tip":\s*"[^"]*never the same type 3 times in a row') {
+    Ok '英文 .tip 那一行里补上了该规则 ✓'
+} else { Bad '英文 .tip 里没有补上三连禁令那一句 ✗' }
+$zhBook = [System.IO.File]::ReadAllText($textFiles[2], [System.Text.Encoding]::UTF8)
+$enBook = [System.IO.File]::ReadAllText($textFiles[3], [System.Text.Encoding]::UTF8)
+if ($zhBook -match '三连禁令' -and $zhBook -match '物 物' -and $zhBook -match '火 火') {
+    Ok '帕秋莉中文页写明三连禁令 + 两个例子（物 物 ⇒ 必出法术 / 火 火 ⇒ 必出非火 ✓）'
+} else { Bad '帕秋莉中文页缺三连禁令或例子' }
+if ($enBook -match 'No-triple rule' -and $enBook -match 'phys phys' -and $enBook -match 'fire fire') {
+    Ok '帕秋莉英文页写明 No-triple rule + 两个例子 ✓'
+} else { Bad '帕秋莉英文页缺 No-triple rule 或例子' }
+# 另外两个"顺带提到混沌之流"的页面（材料页 / 特性总览）也要跟上（中英各一处）
+$zhAlloy = $true; $enAlloy = $true; $zhOver = $true; $enOver = $true
+if ([System.IO.File]::ReadAllText($textFiles[4], [System.Text.Encoding]::UTF8) -notmatch '同一类型不会连续出现 3 次') { $zhAlloy = $false }
+if ([System.IO.File]::ReadAllText($textFiles[5], [System.Text.Encoding]::UTF8) -notmatch 'never the same type 3 times in a row') { $enAlloy = $false }
+if ([System.IO.File]::ReadAllText($textFiles[6], [System.Text.Encoding]::UTF8) -notmatch '同一类型不会连续出现 3 次') { $zhOver = $false }
+if ([System.IO.File]::ReadAllText($textFiles[7], [System.Text.Encoding]::UTF8) -notmatch 'never the same type 3 times in a row') { $enOver = $false }
+if ($zhAlloy -and $enAlloy -and $zhOver -and $enOver) { Ok '材料页 + 特性总览页（中英）也同步了该规则 ✓' }
+else { Bad ("材料页/总览页没同步：" + (@(@('zh 材料页',$zhAlloy),@('en 材料页',$enAlloy),@('zh 总览页',$zhOver),@('en 总览页',$enOver)) | Where-Object { -not $_[1] } | ForEach-Object { $_[0] }) -join ', ') }
+# 类注释也必须有（代码里看不到规则、只靠文案不够 ✓）
+if ($flow -match '三连禁令' -and $flow -match '不得三连') { Ok 'ChaosFlowHandler 类注释写明了三连禁令（并明确是"不得三连"✓）' }
+else { Bad 'ChaosFlowHandler 类注释没写三连禁令' }
 
 Write-Host ""
 if ($fail -eq 0) { Write-Host "全部通过：bad 0"; exit 0 }

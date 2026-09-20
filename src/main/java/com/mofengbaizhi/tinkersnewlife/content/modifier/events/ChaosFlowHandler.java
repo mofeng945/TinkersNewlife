@@ -20,7 +20,11 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * 特性「<b>混沌之流</b>」结算器（铁魔法联动，见 {@link ChaosFlowModifier}）。
@@ -62,6 +66,41 @@ import java.util.List;
  * <p>⚠ <b>能力边界（如实记录，不许含糊）</b>：标记只存在于我们自己的 {@code ThreadLocal} 里，
  * <b>外部模组读不到</b> ✗ ⇒ 它们仍会对这一发（改判后的法术伤害）按自己的规则各算一次。
  * 这是"改判类型 + 重发一次"这件事的固有代价 ✓（旧实现是每段各一次 ⇒ 现在是"一次" ✓，已经是最小值）。
+ *
+ * <h2>⭐ 三连禁令（本轮新增的用户口径：「连续三次攻击不能打出有相同种类的伤害」）</h2>
+ *
+ * <b>实现的是"不得三连"</b>：<b>同一"类型"不会连续出现 3 次</b> ✓
+ * —— 这里"类型"= <b>物理</b> 或 <b>某一个学派</b>（{@link IronSpellsSpellAccess#schoolDamageKeys()} 里的一个 ✓）。
+ * 注意<b>任意两次相邻相同是允许的</b> ✓（例如 火 → 火 → 冰 ✓ 是合法的；只有 火 → 火 → 火 ✗ 被禁）。
+ *
+ * <p>做法：按<b>施法者 UUID</b> 记录"最近两次选了什么"（{@link #HISTORY}，只留最近 2 条 ⇒ 够判"是否已连续两次同类型"✓），
+ * 每次掷骰<b>之前</b>先问一次 {@link #decide(UUID, List)}：
+ * <ol>
+ *   <li>最近两次都是<b>物理</b> ⇒ 这一发<b>必须走法术</b>（在全部学派里随机取一个 ✓）；</li>
+ *   <li>最近两次都是<b>同一个学派 S</b> ⇒ 这一发<b>必须换类型</b>（物理，或<b>除 S 之外</b>的任一学派 ✓）；</li>
+ *   <li>其余情况 ⇒ 保持原来的<b>随机二选一</b>（物理 50% / 法术 50%，法术再随机学派 ✓）。</li>
+ * </ol>
+ * 约束<b>只影响"选哪一种"</b>：总量不变 ✓、单次结算不变 ✓、{@link DamagePipeline} 的用法不变 ✓
+ * —— 它只改"掷骰的结果"，不改"打几次 / 打多少" ✓。
+ *
+ * <p>举例：{@code 物 物 ⇒ 下一发必出法术}；{@code 火 火 ⇒ 下一发必出非火}（可以是物理，也可以是冰/神圣/…）✓。
+ *
+ * <p><b>历史什么时候清</b>（由本实现自行决定，理由如实写在下面）：
+ * <ul>
+ *   <li><b>超过 {@link #HISTORY_TTL_MS}（5 分钟）没打 ⇒ 清空该玩家记录</b> ✓ ——
+ *       用户口径是"连续三次攻击"，隔了太久就<b>不再是"连续"</b>了 ✗；
+ *       但这个窗口也<b>不能太短</b> ⚠：太短 ⇒ 下一轮攻击常常从"干净历史"开始，
+ *       于是"最多三连"这件事<b>在观感上不生效</b>（三刀之间一旦插进一次空档就失效 ✗）——
+ *       5 分钟足以覆盖"同一场战斗 + 顺手换一下维度/喘口气"✓；</li>
+ *   <li>维度切换<b>不</b>清 ✓（历史按施法者 UUID 记，与维度无关 ✓）；</li>
+ *   <li>下线<b>不</b>专门清 ✗ —— 它由 5 分钟超时自然覆盖 ✓（少一个事件钩子、少一处遗漏 ✗）；</li>
+ *   <li>内存不会无限增长 ✓：条目数上限 {@link #HISTORY_MAX_ENTRIES}（256，超出按"最久没动"淘汰 ✓），
+ *       且每次记录顺手做个 O(n) 超时清理 ✓（n ≤ 256，主线程上可忽略 ✓）。</li>
+ * </ul>
+ * <p>⚠ <b>与"更强的版本"的区别（用户可能要的其实是那个）</b>：本轮实现的是"<b>不得三连</b>"。
+ * 若想要"<b>任意连续三次两两不同</b>"（即 火 火 ⇒ 下一发既要非火、又<b>不能与上上发相同</b>，例如 火 冰 ⇒ 下一发既不能火也不能冰），
+ * 只需改一处：{@link #decide(UUID, List)} 里三次判断中的<b>相等判定</b>（把"两次是否相同"读法换成"两次是否<b>两两</b>不同"、
+ * 并把 {@link #pickSchool(List, String)} 的排除集从"一个学派"扩成"两个"）✓ —— 大约 <b>3 行 / 1 个条件</b> ✓。
  *
  * <h2>几个必须处理的坑</h2>
  * <ul>
@@ -148,29 +187,39 @@ public final class ChaosFlowHandler {
 
         if (!com.mofengbaizhi.tinkersnewlife.config.ModConfig.CHAOS_FLOW_ENABLED.get()) return;
 
-        // ① 掷骰：这一下是"物理"还是"法术"
-        if (RANDOM.nextFloat() < CHANCE_PHYSICAL) {
+        // ① 掷骰：这一下是"物理"还是"法术"（⭐ 三连禁令在这一个方法里生效，见 decide() ✓）
+        List<ResourceKey<DamageType>> schools = schoolKeysCached();
+        UUID caster = attacker.getUUID();
+        DamageTypePick pick = decide(caster, schools);
+
+        if (pick.school() == null) {
             // ⭐ 物理：**什么都不做** —— 原始那一次照常结算 ✓
             //    （伤害源、数值、无敌帧、击杀归属、下游减伤/限伤/真伤语义全部原样 ✓）
-            if (DEBUG) TinkersNewlife.LOGGER.info("[混沌之流] {} 的 {} 点伤害 → 本次走【物理】（原始伤害源不改）",
-                    attacker.getName().getString(), total);
+            remember(caster, PHYSICAL_KEY);                      // ⭐ 记进"最近两次"（为了三连禁令 ✓）
+            if (DEBUG) TinkersNewlife.LOGGER.info("[混沌之流] {} 的 {} 点伤害 → 本次走【物理】（原始伤害源不改{}）",
+                    attacker.getName().getString(), total, pick.forced() ? "·连出两次同类型⇒强制换型" : "");
             return;
         }
 
-        // ② 法术：随机挑一个学派 —— 学派注册表为空（铁魔法不在场/反射失败）时退回物理 ✓
-        List<ResourceKey<DamageType>> schools = schoolKeysCached();
+        // ② 法术：用掷出的那个学派 —— 学派注册表为空（铁魔法不在场/反射失败）时退回物理 ✓
         if (schools.isEmpty()) {
             logOnce("[混沌之流] 学派注册表为空（铁魔法不在场或反射失败）→ 本次走物理");
+            remember(caster, PHYSICAL_KEY);                      // 退回物理 ⇒ 历史也按物理记 ✓（否则禁令会与实际不符 ✗）
             return;
         }
-        ResourceKey<DamageType> school = schools.get(RANDOM.nextInt(schools.size()));
+        ResourceKey<DamageType> school = pick.school();
         DamageSource schoolDamage = schoolSource(target, attacker, school);
-        if (schoolDamage == null) return;                        // 拿不到伤害源 ⇒ 退回物理（照旧）✓
+        if (schoolDamage == null) {                              // 拿不到伤害源 ⇒ 退回物理（照旧）✓
+            remember(caster, PHYSICAL_KEY);
+            return;
+        }
 
-        if (DEBUG) TinkersNewlife.LOGGER.info("[混沌之流] {} 的 {} 点伤害 → 本次走【法术·{}】（单次结算）",
-                attacker.getName().getString(), total, school.location());
+        if (DEBUG) TinkersNewlife.LOGGER.info("[混沌之流] {} 的 {} 点伤害 → 本次走【法术·{}】（单次结算{}）",
+                attacker.getName().getString(), total, school.location(),
+                pick.forced() ? "·连出两次同类型⇒强制换型" : "");
 
         event.setCanceled(true);                                 // 原始那一次不再结算 ✓
+        remember(caster, schoolKey(school));                     // ⭐ 这一发真的按该学派打出去了 ⇒ 才记账 ✓
 
         // ③ 重发**一次**：总数值不变 ✓
         creditKill(target, attacker);                            // ⭐ 先补击杀归属（killed_by_player 类战利品 ✓）
@@ -183,6 +232,130 @@ public final class ChaosFlowHandler {
         } finally {
             DamagePipeline.exit();
             SPLITTING.set(Boolean.FALSE);
+        }
+    }
+
+    // ============================================================
+    //  三连禁令：按施法者记录"最近两次选了什么"
+    // ============================================================
+
+    /** "物理"在历史里的类型键 ✓（学派用 {@link #schoolKey(ResourceKey)} 的字符串 ✓） */
+    private static final String PHYSICAL_KEY = "physical";
+
+    /** 历史保留时长（毫秒）：超过这么久没打 ⇒ "连续"断了 ⇒ 清空该玩家记录 ✓（理由见类注释 ✓） */
+    private static final long HISTORY_TTL_MS = 5 * 60 * 1000L;
+
+    /** 历史表条目上限（防止 UUID 无限堆积 ✗；超出后按"最久没动"淘汰 ✓） */
+    private static final int HISTORY_MAX_ENTRIES = 256;
+
+    /** 每个玩家只留<b>最近两次</b>选择（够判"是否已连续两次同类型"✓；不需要更多 ✓） */
+    private static final int HISTORY_KEEP = 2;
+
+    /**
+     * 施法者 UUID ⇒ 最近两次选择（列表尾 = 最近一次 ✓）。
+     * <p>只在<b>服务端主线程</b>访问（{@code hurt()} 与事件派发都在主线程 ✓）⇒ 用普通 {@link HashMap} 就够 ✓。
+     * <p>{@code stamp} 是该玩家<b>最近一次</b>记录的时间戳，用于超时清理 ✓。
+     */
+    private static final Map<UUID, History> HISTORY = new HashMap<>();
+
+    /** 一个玩家的"最近两次选择" + 最近一次时间戳 ✓ */
+    private record History(List<String> picks, long stamp) {
+    }
+
+    /** 掷骰结果：{@code school == null} ⇒ 走物理 ✓；{@code forced} ⇒ 是被三连禁令强制换的型（只用于日志 ✓） */
+    private record DamageTypePick(ResourceKey<DamageType> school, boolean forced) {
+    }
+
+    /** 类型键：物理或某个学派（两者直接比字符串 ⇒ 不依赖 damage type 的注册顺序 ✓） */
+    private static String schoolKey(ResourceKey<DamageType> key) {
+        return key.location().toString();
+    }
+
+    /**
+     * <b>三连禁令的核心</b>：决定这一发走"物理"还是"哪个学派" ✓。
+     *
+     * <p>先清理过期记录（{@link #HISTORY_TTL_MS}），再看该玩家"最近两次"：
+     * <ol>
+     *   <li>最近两次都是物理 ⇒ <b>必须走法术</b>（{@link #pickSchool(List, String)} 传 {@code null} 作排除项 ✓）；</li>
+     *   <li>最近两次都是同一学派 S ⇒ <b>必须换类型</b>（物理，或除 S 外的任一学派 ✓）；</li>
+     *   <li>其余（含"没历史 / 只有一次 / 两次不同"）⇒ 原来的<b>随机二选一</b> ✓。</li>
+     * </ol>
+     * <p>强制时若"退无可退"（要法术但没有学派可选 / 要非 S 但没有别的学派 ✗）
+     * ⇒ 如实<b>退回随机二选一</b> ✓ —— 宁可破坏禁令也不取消伤害 ✓（"不影响总量"优先 ✓）。
+     */
+    private static DamageTypePick decide(UUID caster, List<ResourceKey<DamageType>> schools) {
+        purgeExpired(System.currentTimeMillis());
+        List<String> h = HISTORY.containsKey(caster) ? HISTORY.get(caster).picks() : List.of();
+        boolean two = h.size() >= HISTORY_KEEP;
+        String last = two ? h.get(h.size() - 1) : null;
+        String prev = two ? h.get(h.size() - 2) : null;
+
+        if (two && PHYSICAL_KEY.equals(last) && PHYSICAL_KEY.equals(prev)) {          // 物 · 物 ⇒ 必出法术 ✓
+            ResourceKey<DamageType> s = pickSchool(schools, null);
+            if (s != null) return new DamageTypePick(s, true);
+        }
+        if (two && last.equals(prev) && !PHYSICAL_KEY.equals(last)) {                 // 学派 S · 学派 S ⇒ 必换 ✓
+            ResourceKey<DamageType> s = pickSchool(schools, last);                    // 非 S 的学派…
+            if (s != null && RANDOM.nextBoolean()) return new DamageTypePick(s, true);
+            if (schools.size() > 1) return new DamageTypePick(null, true);            // …或者物理 ✓（两条路各一半 ✓）
+            // 只有一个学派 ⇒ 退无可退 ⇒ 落到下面的随机二选一 ✓
+        }
+        // 常规：随机二选一（物理 50% / 法术 50%，法术再随机学派 ✓）—— 与上一轮完全一致 ✓
+        if (RANDOM.nextFloat() < CHANCE_PHYSICAL) return new DamageTypePick(null, false);
+        ResourceKey<DamageType> s = pickSchool(schools, null);
+        return s == null ? new DamageTypePick(null, false) : new DamageTypePick(s, false);
+    }
+
+    /** 从学派表里随机取一个，可排除一个（三连禁令的"除 S 之外"✓）；表空 ⇒ {@code null} ✓ */
+    private static ResourceKey<DamageType> pickSchool(List<ResourceKey<DamageType>> schools, String excludeKey) {
+        if (schools.isEmpty()) return null;
+        List<ResourceKey<DamageType>> pool = schools;
+        if (excludeKey != null) {
+            pool = new ArrayList<>(schools.size());
+            for (ResourceKey<DamageType> k : schools) {
+                if (!excludeKey.equals(schoolKey(k))) pool.add(k);
+            }
+            if (pool.isEmpty()) return null;                     // 排除完没得选 ⇒ 交给调用方退让 ✓
+        }
+        return pool.get(RANDOM.nextInt(pool.size()));
+    }
+
+    /** 记一笔"这一发实际打出去的是什么类型"（只留最近 {@link #HISTORY_KEEP} 条 ✓） */
+    private static void remember(UUID caster, String key) {
+        long now = System.currentTimeMillis();
+        List<String> picks = new ArrayList<>(HISTORY_KEEP);
+        History old = HISTORY.get(caster);
+        if (old != null) {
+            for (String p : old.picks()) picks.add(p);
+        }
+        picks.add(key);
+        while (picks.size() > HISTORY_KEEP) picks.remove(0);       // 只留最近两次 ✓
+        HISTORY.put(caster, new History(picks, now));
+        if (HISTORY.size() > HISTORY_MAX_ENTRIES) {
+            purgeExpired(now);
+            evictOldest(HISTORY.size() - HISTORY_MAX_ENTRIES);     // 仍然超 ⇒ 按"最久没动"淘汰 ✓
+        }
+    }
+
+    /** 清掉超过 {@link #HISTORY_TTL_MS} 没再攻击的玩家（"连续"已经断了 ✓） */
+    private static void purgeExpired(long now) {
+        if (HISTORY.isEmpty()) return;
+        HISTORY.entrySet().removeIf(e -> now - e.getValue().stamp() > HISTORY_TTL_MS);
+    }
+
+    /** 条目数超限时淘汰最久没动的那几个 ✓（n ≤ {@link #HISTORY_MAX_ENTRIES} ⇒ 主线程上可忽略 ✓） */
+    private static void evictOldest(int count) {
+        for (int i = 0; i < count && !HISTORY.isEmpty(); i++) {
+            UUID oldest = null;
+            long oldestStamp = Long.MAX_VALUE;
+            for (Map.Entry<UUID, History> e : HISTORY.entrySet()) {
+                if (e.getValue().stamp() < oldestStamp) {
+                    oldestStamp = e.getValue().stamp();
+                    oldest = e.getKey();
+                }
+            }
+            if (oldest == null) return;
+            HISTORY.remove(oldest);
         }
     }
 
