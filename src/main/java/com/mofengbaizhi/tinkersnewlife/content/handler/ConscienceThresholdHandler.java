@@ -116,6 +116,50 @@ public final class ConscienceThresholdHandler {
     private static final String LUCK_MOD_NAME = "tn_conscience_luck";
 
     // ============================================================
+    //  阈值表（**游戏逻辑与 tooltip 共用这一份** ✓ 免得两边写岔 ✗）
+    // ============================================================
+
+    /**
+     * 一个档位 = 阈值 + 描述 lang 键 ✓。
+     * <b>用户口径：同一档多条效果也写成一行</b>（用「 · 」连 ✓ 文案里就已经连好了 ✓）。
+     */
+    public record Tier(int threshold, String key) {}
+
+    /** 善侧 5 档（+20 / +30 / +40 / +45 / +50 ✓ 由低到高 ✓） */
+    public static final List<Tier> TIERS_GOOD = List.of(
+            new Tier(REGEN_AT, "item.tinkersnewlife.conscience.good.20"),
+            new Tier(LUCK_AT, "item.tinkersnewlife.conscience.good.30"),
+            new Tier(FORTUNE_AT, "item.tinkersnewlife.conscience.good.40"),
+            new Tier(DISCOUNT_AT, "item.tinkersnewlife.conscience.good.45"),
+            new Tier(FULL, "item.tinkersnewlife.conscience.good.50"));
+
+    /** 恶侧 5 档（−20 / −30 / −40 / −45 / −50 ✓ 由轻到重 ✓） */
+    public static final List<Tier> TIERS_EVIL = List.of(
+            new Tier(LAMP_AT, "item.tinkersnewlife.conscience.evil.20"),         // −20（命灯失效 ✓）
+            new Tier(-LUCK_AT, "item.tinkersnewlife.conscience.evil.30"),        // −30（幸运 −50% ✓）
+            new Tier(-FORTUNE_AT, "item.tinkersnewlife.conscience.evil.40"),     // −40（时运归零 ✓）
+            new Tier(MARKUP_AT, "item.tinkersnewlife.conscience.evil.45"),       // −45（不可名状 · 涨价 ✓）
+            new Tier(-FULL, "item.tinkersnewlife.conscience.evil.50"));          // −50（万物为敌 ✓）
+
+    /** 该档是否已达成（善侧阈值正 ✓ 恶侧阈值负 ✓ 统一比较 ✓） */
+    public static boolean reached(int alignment, Tier tier) {
+        return tier.threshold() >= 0 ? alignment >= tier.threshold() : alignment <= tier.threshold();
+    }
+
+    /** 当前侧"下一个还没达成的档"（没有就 null ⇒ 已至极限 ✓） */
+    public static Tier nextTier(int alignment) {
+        for (Tier tier : alignment >= 0 ? TIERS_GOOD : TIERS_EVIL) {
+            if (!reached(alignment, tier)) return tier;
+        }
+        return null;
+    }
+
+    /** 还差几个百分点到该档 ✓（绝对值之差 ✓） */
+    public static int gapTo(int alignment, Tier tier) {
+        return Math.abs(tier.threshold()) - Math.abs(alignment);
+    }
+
+    // ============================================================
     //  每秒：幸运 / 再生 / 不可名状 / 生物态度 / 村民折扣
     // ============================================================
 

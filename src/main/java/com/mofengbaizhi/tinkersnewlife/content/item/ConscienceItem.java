@@ -1,6 +1,7 @@
 package com.mofengbaizhi.tinkersnewlife.content.item;
 
 import com.mofengbaizhi.tinkersnewlife.content.handler.ConscienceHandler;
+import com.mofengbaizhi.tinkersnewlife.content.handler.ConscienceThresholdHandler;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
@@ -81,20 +82,91 @@ public class ConscienceItem extends Item implements ICurioItem {
     }
 
     // ============================================================
-    //  提示：暂时只有名字 + 紫色 flavor ✓（善恶百分比与红蓝效果清单在第二/三期 ✓）
+    //  动态 tooltip（三期③ ✓ 用户口径）
     // ============================================================
+    //
+    //  平时（精简）：
+    //      言行举止，无悔于心
+    //      善恶 +32%
+    //      ✔ 持续生命恢复 II
+    //      ✔ 幸运值 +50%
+    //      ✘ 时运等级 +1（还差 8%）
+    //      按住 Shift 查看全部
+    //  ⇒ **只列当前这一侧**（善恶为正 ⇒ 善侧 ✓ 为负 ⇒ 恶侧 ✓ 恰好 0 ⇒ 只留前两行 ✓）
+    //     已达成逐条 ✔ ✓ 再加"下一个未达成档"一行（带还差多少 ✓）
+    //
+    //  按住 Shift：把两侧全部 10 档列出来 ✓ 已达成用对应色 ✓ 未达成深灰 ✓
+    //
+    //  ⚠ 用户口径：**不写档位百分比** ✗ **不写"善行/恶行"标题** ✗ **同一档只一行** ✓
+    //  （恶 −45 的"不可名状 + 村民涨价"在文案里就用「 · 」连成一行 ✓）
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, level, tooltip, flag);
         tooltip.add(Component.translatable("item.tinkersnewlife.conscience.flavor")
                 .withStyle(ChatFormatting.DARK_PURPLE));
-        // 第二期：先把「当前善恶 %」露出来 ✓（12 条规则实机核对全靠它 ✓
-        // 三期的完整动态 tooltip（红字恶行/蓝字善行清单）再覆盖这里 ✓）
+
         int alignment = ConscienceHandler.mirrorOf(stack, ConscienceHandler.BAR_ZERO) - ConscienceHandler.BAR_ZERO;
-        ChatFormatting color = alignment > 0 ? ChatFormatting.BLUE
-                : alignment < 0 ? ChatFormatting.RED : ChatFormatting.GRAY;
         tooltip.add(Component.translatable("item.tinkersnewlife.conscience.alignment",
-                (alignment > 0 ? "+" : "") + alignment).withStyle(color));
+                (alignment > 0 ? "+" : "") + alignment).withStyle(toneOf(alignment)));
+
+        if (shiftDown()) {
+            for (var tier : ConscienceThresholdHandler.TIERS_GOOD) {
+                addTierLine(tooltip, tier, alignment);
+            }
+            for (var tier : ConscienceThresholdHandler.TIERS_EVIL) {
+                addTierLine(tooltip, tier, alignment);
+            }
+            return;
+        }
+
+        if (alignment != 0) {
+            for (var tier : alignment > 0 ? ConscienceThresholdHandler.TIERS_GOOD
+                    : ConscienceThresholdHandler.TIERS_EVIL) {
+                if (ConscienceThresholdHandler.reached(alignment, tier)) {
+                    tooltip.add(Component.translatable(tier.key()).withStyle(toneOf(alignment)));
+                }
+            }
+            var next = ConscienceThresholdHandler.nextTier(alignment);
+            if (next == null) {
+                tooltip.add(Component.translatable("item.tinkersnewlife.conscience.max")
+                        .withStyle(ChatFormatting.DARK_GRAY));
+            } else {
+                tooltip.add(Component.translatable("item.tinkersnewlife.conscience.gap",
+                                Component.translatable(next.key()),
+                                ConscienceThresholdHandler.gapTo(alignment, next))
+                        .withStyle(ChatFormatting.DARK_GRAY));
+            }
+        }
+        tooltip.add(Component.translatable("item.tinkersnewlife.conscience.expand")
+                .withStyle(ChatFormatting.DARK_GRAY));
+    }
+
+    /** 全表里的一行：达成 ⇒ ✔ + 对应色 ✓ 未达成 ⇒ ✘ + 深灰 ✓ */
+    private static void addTierLine(List<Component> tooltip, ConscienceThresholdHandler.Tier tier, int alignment) {
+        boolean on = ConscienceThresholdHandler.reached(alignment, tier);
+        tooltip.add(Component.literal(on ? "✔ " : "✘ ")
+                .append(Component.translatable(tier.key()))
+                .withStyle(on ? toneOf(alignment) : ChatFormatting.DARK_GRAY));
+    }
+
+    private static ChatFormatting toneOf(int alignment) {
+        return alignment > 0 ? ChatFormatting.BLUE : alignment < 0 ? ChatFormatting.RED : ChatFormatting.GRAY;
+    }
+
+    /**
+     * Shift 是否按下 ✓。
+     *
+     * <p>⚠ 这个类在**公共源码集**里 ✗（服务端也会加载 ✓）⇒ 先查 dist ✓ 再看客户端类 ✗：
+     * {@code Screen} 在服务端不存在 ✓ 真被碰到也是 {@code NoClassDefFoundError}（Error ✗）
+     * ⇒ 用 {@code catch (Throwable)} 兜住 ✓（而且 dist 判断在前 ⇒ 服务端根本不会走到那一步 ✓）。
+     */
+    private static boolean shiftDown() {
+        try {
+            return net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()
+                    && net.minecraft.client.gui.screens.Screen.hasShiftDown();
+        } catch (Throwable ignored) {
+            return false;
+        }
     }
 }
