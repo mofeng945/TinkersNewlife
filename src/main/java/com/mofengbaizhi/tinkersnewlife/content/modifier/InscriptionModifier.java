@@ -14,6 +14,7 @@ import slimeknights.tconstruct.library.modifiers.ModifierEntry;
 import slimeknights.tconstruct.library.modifiers.ModifierHooks;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
 import slimeknights.tconstruct.library.modifiers.hook.display.TooltipModifierHook;
+import slimeknights.tconstruct.library.modifiers.hook.interaction.InventoryTickModifierHook;
 import slimeknights.tconstruct.library.module.ModuleHookMap;
 import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
 
@@ -32,7 +33,7 @@ import java.util.List;
  * 脱手/脱下立即移除 ✓）—— 与「奥法支配」「万法归一」用的是同一套做法，
  * 但各用各的修饰符 UUID，所以彼此**叠加而不覆盖** ✓。
  */
-public class InscriptionModifier extends Modifier implements TooltipModifierHook {
+public class InscriptionModifier extends Modifier implements TooltipModifierHook, InventoryTickModifierHook {
 
     public static final ModifierId ID =
             new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "inscription"));
@@ -49,7 +50,7 @@ public class InscriptionModifier extends Modifier implements TooltipModifierHook
     @Override
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         super.registerHooks(hookBuilder);
-        hookBuilder.addHook(this, ModifierHooks.TOOLTIP);
+        hookBuilder.addHook(this, ModifierHooks.TOOLTIP, ModifierHooks.INVENTORY_TICK);
     }
 
     @Override
@@ -82,4 +83,21 @@ public class InscriptionModifier extends Modifier implements TooltipModifierHook
         }
         return n;
     }
+
+    /**
+     * 背包 tick：给带刻印的工具/盔甲<b>补 1 个空法术容器位</b>（用户口径 2026-09-20 ✓）。
+     * <p>⚠ 只在<b>还没有容器</b>时补 ✓（{@code ensureSpellContainer} 语义如此 ✓ 与「魔导」完全同款 ✓）；
+     * 已经是容器（例如已经用奥术铁砧刻过、或魔导补过）⇒ 原样不动 ✓。
+     */
+    @Override
+    public void onInventoryTick(IToolStackView tool, ModifierEntry modifier, net.minecraft.world.level.Level world,
+                                LivingEntity holder, int itemSlot,
+                                boolean isSelected, boolean isCorrectSlot, ItemStack stack) {
+        if (world.isClientSide) return;
+        if (holder.tickCount % 20 != 0) return;
+        com.mofengbaizhi.tinkersnewlife.util.IronSpellsReflector.ensureSpellContainer(stack, SPELL_SLOTS);
+    }
+
+    /** 刻印给 1 格刻印位 ✓（用户口径：增加 1 个法术容器位 ✓） */
+    private static final int SPELL_SLOTS = 1;
 }
