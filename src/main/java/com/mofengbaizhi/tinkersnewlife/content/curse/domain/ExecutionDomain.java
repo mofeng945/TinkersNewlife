@@ -159,13 +159,11 @@ public class ExecutionDomain extends BaseDomain {
         // 2) 玩家被告：审判期间逐条向领域内所有玩家显示 title（每 1.5s 一条）
         Entity t = level.getEntity(targetId);
         if (t instanceof ServerPlayer targetPlayer && targetPlayer.isAlive()) {
-            int total = playerGuiltScore(targetPlayer);
-            boolean guilty = total > PLAYER_GUILT_THRESHOLD;
+            // ⭐ 用户口径：玩家审判**完全按善恶值**（不再看罪行分/击杀数 ✗）
+            //   ⚠ 同时**删掉了原来 30~35 tick 那条"杀人数：%s"的 title** ✓（lang 键留着没删 ✓ 无副作用 ✓）
+            boolean guilty = ConscienceHandler.getAlignment(targetPlayer) < CONSCIENCE_GUILTY_ALIGNMENT;
             if (elapsed >= 0 && elapsed < 5) {
                 broadcastTitle(level, targetPlayer.getDisplayName());
-            } else if (elapsed >= 30 && elapsed < 35) {
-                broadcastTitle(level, Component.translatable(
-                        "message.tinkersnewlife.fuzhu_cisi.kills", total));
             } else if (elapsed >= 60 && elapsed < 65) {
                 broadcastTitle(level, Component.translatable(guilty
                         ? "message.tinkersnewlife.fuzhu_cisi.guilty"
@@ -197,13 +195,9 @@ public class ExecutionDomain extends BaseDomain {
 
         boolean guilty = true;
         if (living instanceof ServerPlayer p) {
-            // 玩家：罪行分 = 击杀村民 + 击杀动物 + 击败玩家数，> 100 有罪
-            guilty = playerGuiltScore(p) > PLAYER_GUILT_THRESHOLD;
-            // ⭐ 「心」口径（用户 ✓）：**善恶值低于 −20% 一律判有罪** ✓（与罪行分是"或"关系 ✓ 满足任一条即有罪 ✓）
-            //   ⚠ 用"严格低于"（−20 本身不算 ✓ 因为 −20 那档另有"命灯指轮失效"的效果 ✓）✓ 要改成 ≤ 说一声 ✓
-            if (!guilty && ConscienceHandler.getAlignment(p) < CONSCIENCE_GUILTY_ALIGNMENT) {
-                guilty = true;
-            }
+            // ⭐ 用户口径：玩家审判**完全按善恶值** ✓ —— 低于 −20% 有罪 ✓ 其余无罪 ✓
+            //   （不再看"罪行分 = 击杀村民+动物+玩家数" ✗ 那个阈值与算法保留在文件里但玩家审判已不用它 ✓）
+            guilty = ConscienceHandler.getAlignment(p) < CONSCIENCE_GUILTY_ALIGNMENT;
             if (guilty) {
                 applyPlayerPenalty(owner, p);
             }
