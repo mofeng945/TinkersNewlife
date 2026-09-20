@@ -40,11 +40,31 @@ public class CharmHandler {
     private static class CharmData {
         final UUID casterUUID;
         int remainingTicks;
+        /** 初始时长（只读给「心」的 E11 用 ✓ 算"已经魅惑了多久" ✓） */
+        final int initialTicks;
 
         CharmData(UUID casterUUID, int duration) {
             this.casterUUID = casterUUID;
             this.remainingTicks = duration;
+            this.initialTicks = duration;
         }
+    }
+
+    /**
+     * 「心」善恶规则 E11 用：这只生物**已经被魅惑了多少 tick** ✓（0 = 现在没被魅惑 ✓）。
+     *
+     * <p>用户口径：<b>魅惑某个生物超过 10s ⇒ −1%</b> ✓（基础时长正好就是 10s ✓ 所以只有强化等级 ≥1
+     * 把时长顶过 10s 才会命中 ✓ 属预期 ✓）。
+     */
+    public static int charmedElapsedTicks(UUID entity) {
+        CharmData data = entity == null ? null : CHARMED_ENTITIES.get(entity);
+        return data == null ? 0 : Math.max(0, data.initialTicks - data.remainingTicks);
+    }
+
+    /** 「心」E11 用：这只生物是不是**这个玩家**魅惑的 ✓ */
+    public static boolean charmedBy(UUID entity, UUID caster) {
+        CharmData data = entity == null ? null : CHARMED_ENTITIES.get(entity);
+        return data != null && data.casterUUID.equals(caster);
     }
 
     @SubscribeEvent
