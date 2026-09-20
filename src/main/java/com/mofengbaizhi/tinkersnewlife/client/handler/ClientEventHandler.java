@@ -50,6 +50,18 @@ public class ClientEventHandler {
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
+            // ⭐ 「心」的物品图标**随善恶变色** ✓（饰品槽 / 物品栏 / 手上 / 地上全生效 ✓）
+            //    做法：模型 `item/conscience.json` 自带 10 条 `overrides` ✓ 这里的谓词给出 0..1 的值 ✓
+            //      = 物品 NBT 镜像 `tn_alignment` / 100 ✓（50 ⇒ 0.5 ⇒ 落在"中性 = 底图原样"那一档 ✓）
+            //    11 张灰度图由 `tools\make-conscience-shades.ps1` 从底图生成 ✓ 你重画底图后重跑它即可 ✓
+            //    （✗ 不用原版 tintindex：那是**乘法** ✗ 灰底乘白还是灰 ✗ 到不了"满善全白" ✓）
+            net.minecraft.client.renderer.item.ItemProperties.register(
+                    com.mofengbaizhi.tinkersnewlife.content.ModItems.CONSCIENCE.get(),
+                    new net.minecraft.resources.ResourceLocation(
+                            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.MOD_ID, "conscience"),
+                    (stack, level, entity, seed) -> com.mofengbaizhi.tinkersnewlife.content.handler
+                            .ConscienceHandler.mirrorOf(stack, com.mofengbaizhi.tinkersnewlife.content.handler
+                                    .ConscienceHandler.BAR_ZERO) / 100.0F);
             MenuScreens.register(ModMenus.BAG_CONTAINER.get(), BagScreen::new);
         MenuScreens.register(ModMenus.QUANTUM_VAULT.get(), com.mofengbaizhi.tinkersnewlife.client.screen.QuantumVaultScreen::new);
             // ✅ 注册噤默手套 GUI

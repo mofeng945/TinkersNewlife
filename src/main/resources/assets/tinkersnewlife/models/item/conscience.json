@@ -1,1 +1,68 @@
-{ "parent": "minecraft:item/generated", "textures": { "layer0": "tinkersnewlife:item/conscience" } }
+{
+    "parent":  "minecraft:item/generated",
+    "overrides":  [
+                      {
+                          "predicate":  {
+                                            "tinkersnewlife:conscience":  0.1
+                                        },
+                          "model":  "tinkersnewlife:item/conscience_shade_1"
+                      },
+                      {
+                          "predicate":  {
+                                            "tinkersnewlife:conscience":  0.2
+                                        },
+                          "model":  "tinkersnewlife:item/conscience_shade_2"
+                      },
+                      {
+                          "predicate":  {
+                                            "tinkersnewlife:conscience":  0.3
+                                        },
+                          "model":  "tinkersnewlife:item/conscience_shade_3"
+                      },
+                      {
+                          "predicate":  {
+                                            "tinkersnewlife:conscience":  0.4
+                                        },
+                          "model":  "tinkersnewlife:item/conscience_shade_4"
+                      },
+                      {
+                          "predicate":  {
+                                            "tinkersnewlife:conscience":  0.5
+                                        },
+                          "model":  "tinkersnewlife:item/conscience_shade_5"
+                      },
+                      {
+                          "predicate":  {
+                                            "tinkersnewlife:conscience":  0.6
+                                        },
+                          "model":  "tinkersnewlife:item/conscience_shade_6"
+                      },
+                      {
+                          "predicate":  {
+                                            "tinkersnewlife:conscience":  0.7
+                                        },
+                          "model":  "tinkersnewlife:item/conscience_shade_7"
+                      },
+                      {
+                          "predicate":  {
+                                            "tinkersnewlife:conscience":  0.8
+                                        },
+                          "model":  "tinkersnewlife:item/conscience_shade_8"
+                      },
+                      {
+                          "predicate":  {
+                                            "tinkersnewlife:conscience":  0.9
+                                        },
+                          "model":  "tinkersnewlife:item/conscience_shade_9"
+                      },
+                      {
+                          "predicate":  {
+                                            "tinkersnewlife:conscience":  0.95
+                                        },
+                          "model":  "tinkersnewlife:item/conscience_shade_10"
+                      }
+                  ],
+    "textures":  {
+                     "layer0":  "tinkersnewlife:item/conscience"
+                 }
+}
