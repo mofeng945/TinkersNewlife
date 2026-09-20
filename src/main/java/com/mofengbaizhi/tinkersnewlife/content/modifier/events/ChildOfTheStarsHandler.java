@@ -14,6 +14,8 @@ import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class ChildOfTheStarsHandler {
 
+    /** 每级倍率（用户口径 2026-09-20：原 ×2/级 ⇒ **×1.3/级** ✓） */
+    public static final double PER_LEVEL_MULTIPLIER = 1.3D;
     private static final ModifierId CHILD_OF_THE_STARS = new ModifierId(
             new ResourceLocation(TinkersNewlife.MOD_ID, "child_of_the_stars")
     );
@@ -36,7 +38,7 @@ public class ChildOfTheStarsHandler {
         if (level <= 0) return;
 
         float originalDamage = event.getAmount();
-        float multipliedDamage = (float) (originalDamage * Math.pow(2, level));
+        float multipliedDamage = (float) (originalDamage * Math.pow(PER_LEVEL_MULTIPLIER, level));
         event.setAmount(multipliedDamage);
     }
 }

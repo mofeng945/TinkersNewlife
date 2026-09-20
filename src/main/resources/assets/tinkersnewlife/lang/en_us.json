@@ -278,7 +278,7 @@
   "modifier.tinkersnewlife.charm.description": "Hitting a creature charms it; while charmed it cannot attack you. 30 second cooldown.",
   "modifier.tinkersnewlife.charm.flavor": "\u00a77A glance, and the will is no longer its own.",
   "modifier.tinkersnewlife.child_of_the_stars": "Child of the Stars",
-  "modifier.tinkersnewlife.child_of_the_stars.description": "Doubles the final damage you deal (doubles again per level).",
+  "modifier.tinkersnewlife.child_of_the_stars.description": "Increases the player's final damage.",
   "modifier.tinkersnewlife.child_of_the_stars.flavor": "\u00a77Born under every star at once.",
   "modifier.tinkersnewlife.construct": "Construct",
   "modifier.tinkersnewlife.construct.description": "Forward (technique key C): toggles Infinite Ammo mode - while holding a weapon that draws ammo from your inventory (vanilla bows/crossbows, Tinkers bows, TACZ guns, etc.), running dry spends curse energy to conjure the matching arrow/bullet. Reverse (reverse key F): opens the construct inventory; pick any item that has a crafting recipe - its curse energy cost is computed from its value and power and deducted at once, then construction begins. 1 curse energy = 1 tick of build time; you move slower and cannot reverse again while working, and being hit interrupts it without refunding the energy. On completion you receive a temporary item that fades after 60 seconds. Uses a technique slot.",
