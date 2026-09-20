@@ -27,7 +27,7 @@ import java.util.List;
  * </ul>
  *
  * <h2>显示</h2>
- * 耐久条 = 善恶进度（0 灰 / 中间白 / 满恶黑 的染色在第三期做 ✓ 本轮先给条 ✓）；
+ * 耐久条 = 善恶进度（长度按善恶值 ✓ 颜色按用户口径：<b>&lt; −10% 红 / &gt; +10% 蓝 / 其余绿</b> ✓）；
  * 物品 NBT 里的 {@code tn_alignment} 只是<b>镜像</b>（权威值在玩家持久数据 ✓），
  * 好让条/染色/物品栏上方的颜色条能<b>只读物品</b>就画出来 ✓。
  */
@@ -35,6 +35,13 @@ public class ConscienceItem extends Item implements ICurioItem {
 
     /** 进度条上限（0~100；{@link ConscienceHandler#BAR_ZERO}=50 表示 0% ✓） */
     public static final int BAR_MAX = 100;
+
+    /**
+     * 条色阈值（镜像 0~100 ⇒ 50 = 0% ✓ 用户口径）：
+     * <b>低于 −10% 红 ✓ / 高于 +10% 蓝 ✓ / 其余（±10% 内）绿 ✓</b>。
+     */
+    public static final int BAR_RED_BELOW = ConscienceHandler.BAR_ZERO - 10;   // 镜像 < 40 = 善恶 < −10
+    public static final int BAR_BLUE_ABOVE = ConscienceHandler.BAR_ZERO + 10;  // 镜像 > 60 = 善恶 > +10
 
     public ConscienceItem(Properties properties) {
         super(properties);
@@ -68,7 +75,9 @@ public class ConscienceItem extends Item implements ICurioItem {
     @Override
     public int getBarColor(ItemStack stack) {
         int v = ConscienceHandler.mirrorOf(stack, ConscienceHandler.BAR_ZERO);
-        return v >= ConscienceHandler.BAR_ZERO ? 0x55FF55 : 0xFF5555;   // 善绿 / 恶红 ✓
+        if (v < BAR_RED_BELOW) return 0xFF5555;     // 恶：< −10% → 红 ✓
+        if (v > BAR_BLUE_ABOVE) return 0x5555FF;    // 善：> +10% → 蓝 ✓
+        return 0x55FF55;                            // 中性：±10% 以内 → 绿 ✓
     }
 
     // ============================================================

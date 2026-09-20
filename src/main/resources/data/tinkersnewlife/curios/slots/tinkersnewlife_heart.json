@@ -1,0 +1,6 @@
+{
+  "order": 90,
+  "size": 1,
+  "icon": "tinkersnewlife:item/conscience",
+  "validators": ["curios:tag"]
+}

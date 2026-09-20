@@ -46,11 +46,20 @@ public class ModCurios {
                         .build()
         );
 
-        // 咒力核心饰品槽位（图标复用匠魂 pattern 图标，与玩家画的咒力核心纹理一致）
-        // 用户自定槽位「心」：只给饰品「心」用 ✓ 我们自己注册 ✓
+        // ⚠ 用户自定槽位「心」：**id 绝对不能叫 `heart`** ✗✗
+        //    星月遗物（celestial_artifacts）已经用**数据包**占了 `heart`：
+        //      data/celestial_artifacts/curios/slots/heart.json → {order:22, size:1, icon:…empty_heart_slot}
+        //      data/curios/tags/items/heart.json → 它的 4 个心脏饰品（heart_of_revenge / twisted_heart /
+        //      greedy_heart / demon_heart）
+        //    Curios 的槽位**按 id 全局唯一** ⇒ 我们再用 `heart` 就是**和它共用同一个槽** ✗：
+        //      ① 槽名显示成它的「星月-心」（用户实测撞到过 ✓ 报过 ✓）；
+        //      ② 「心」是 canUnequip=false **卸不下来** ⇒ 它那 4 个心脏**永远戴不上** ✗✗（严重事故）。
+        //    ⇒ 改用**带模组 id 前缀的独占槽位** ✓ 并在 data/tinkersnewlife/curios/slots/ 里定义
+        //      图标/顺序/校验器（我们的 «head» 槽就是这么做的 ✓）。同届的 charm 槽同理（见下方注释 ✓）。
         InterModComms.sendTo(CuriosApi.MODID, SlotTypeMessage.REGISTER_TYPE,
-                () -> new SlotTypeMessage.Builder("heart")
+                () -> new SlotTypeMessage.Builder("tinkersnewlife_heart")
                         .size(1)
+                        .icon(new net.minecraft.resources.ResourceLocation(TinkersNewlife.MOD_ID, "item/conscience"))
                         .build());
         InterModComms.sendTo(CuriosApi.MODID, SlotTypeMessage.REGISTER_TYPE,
                 () -> new SlotTypeMessage.Builder("curse_core")

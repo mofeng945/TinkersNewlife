@@ -42,8 +42,14 @@ public final class ConscienceHandler {
 
     private ConscienceHandler() {}
 
-    /** 我们自定义的饰品槽 id（「心」✓ 显示名走 {@code curios.identifier.heart} ✓） */
-    public static final String SLOT_ID = "heart";
+    /**
+     * 我们自定义的饰品槽 id（「心」✓ 显示名走 {@code curios.identifier.tinkersnewlife_heart} ✓）。
+     *
+     * <p>⚠ <b>绝不能叫 {@code heart}</b> ✗：星月遗物已经用数据包占了这个 id
+     * （{@code data/celestial_artifacts/curios/slots/heart.json} ✓ size 1 ✓），
+     * 同名会共用同一个槽 ⇒ 卸不下来的「心」会把它的 4 个心脏饰品全挤掉 ✗（已修 ✓ 见备忘录 §426）。
+     */
+    public static final String SLOT_ID = "tinkersnewlife_heart";
 
     /** 进度条映射：50 = 0%（善恶值 −50..+50 ⇒ 条上 0..100 ✓） */
     public static final int BAR_ZERO = 50;
@@ -116,6 +122,7 @@ public final class ConscienceHandler {
 
     /** 保证「心」在槽里（不在就补一个 ✓）并把善恶值镜像写进去 ✓ */
     public static void ensure(ServerPlayer player) {
+        clearForeignHearts(player);          // 先清掉混在别人槽里的「心」✗（历史存档会残留 ✓）
         int alignment = getAlignment(player);
         ItemStack existing = getHeartStack(player);
         if (existing != null && existing.getItem() instanceof ConscienceItem) {
@@ -165,6 +172,33 @@ public final class ConscienceHandler {
             if (h == null) return;
             IDynamicStackHandler stacks = h.getStacks();
             if (stacks.getSlots() > 0) stacks.setStackInSlot(0, stack);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /**
+     * 清掉混在**别人的饰品槽**里的「心」✓。
+     *
+     * <p>为什么必须我们来做：{@code canUnequip=false} ⇒ <b>玩家自己拖不出来</b> ✗。
+     * 历史原因：早期我们把槽位 id 误设成 {@code heart} ✗ 与星月遗物撞车 ✓
+     * ⇒ 已装过旧版的存档里，那枚「心」正卡在它的「星月-心」槽里 ✓
+     * （而且会把它的 4 个心脏饰品全占掉 ✗）。这一层保证换 id 后**自动清干净** ✓ 不丢善恶值 ✓
+     * （权威值在玩家持久数据里 ✓ 补一枚新的即可 ✓）。
+     */
+    private static void clearForeignHearts(ServerPlayer player) {
+        try {
+            var handler = CuriosApi.getCuriosInventory(player).resolve().orElse(null);
+            if (handler == null) return;
+            for (var entry : handler.getCurios().entrySet()) {
+                if (SLOT_ID.equals(entry.getKey())) continue;            // 自己的槽不动 ✓
+                IDynamicStackHandler stacks = entry.getValue().getStacks();
+                for (int i = 0; i < stacks.getSlots(); i++) {
+                    ItemStack s = stacks.getStackInSlot(i);
+                    if (!s.isEmpty() && s.getItem() == ModItems.CONSCIENCE.get()) {
+                        stacks.setStackInSlot(i, ItemStack.EMPTY);
+                    }
+                }
+            }
         } catch (Throwable ignored) {
         }
     }
