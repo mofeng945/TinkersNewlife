@@ -145,6 +145,9 @@ public final class LifeLampRingHandler {
         if (target == null || target.level().isClientSide) return;
         if (!(target instanceof ServerPlayer player)) return;
         if (!LifeLampRingItem.isWorn(player)) return;
+        // 「心」恶意 ≥ 20% ⇒ 命灯指轮的「七咒解除」不再适用 ✓（用户口径 ✓ 见 ConscienceThresholdHandler ✓）
+        if (com.mofengbaizhi.tinkersnewlife.content.handler.ConscienceThresholdHandler
+                .lampCancelDisabled(player)) return;
         if (!carriesCursedRing(player)) return;
         PRE_CURSE.put(player.getUUID(), new PreCurse(amount, player.level().getGameTime()));
     }

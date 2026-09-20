@@ -279,6 +279,8 @@
   "item.tinkersnewlife.conscience.flavor": "Words and deeds - a heart without regret.",
   "item.tinkersnewlife.conscience.alignment": "Conscience %s%%",
   "curios.identifier.tinkersnewlife_heart": "Heart",
+  "event.tinkersnewlife.conscience.unspeakable": "§5An unnameable gaze falls upon you...",
+  "event.tinkersnewlife.conscience.revive": "§bYour conscience took that death for you.",
   "modifier.tinkersnewlife.charm.description": "Hitting a creature charms it: while charmed it cannot attack you and will not target you. Cooldown 30s.",
   "modifier.tinkersnewlife.charm.flavor": "A glance, and the will is no longer its own.",
   "modifier.tinkersnewlife.child_of_the_stars": "Child of the Stars",

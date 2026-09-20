@@ -273,6 +273,8 @@
   "item.tinkersnewlife.conscience.flavor": "言行举止，无悔于心",
   "item.tinkersnewlife.conscience.alignment": "善恶 %s%%",
   "curios.identifier.tinkersnewlife_heart": "心",
+  "event.tinkersnewlife.conscience.unspeakable": "§5不可名状的目光落在了你身上……",
+  "event.tinkersnewlife.conscience.revive": "§b你的良心替你挡下了这一死。",
   "modifier.tinkersnewlife.lucky_drop.description": "击杀生物时有机会额外掉落一次战利品，并提高冰火传说稀有掉落物的出现概率",
   "modifier.tinkersnewlife.dragon_staff.cooldown": "技能冷却中，还需 %d tick",
   "modifier.tinkersnewlife.dragon_staff.recycled": "龙已收回",
