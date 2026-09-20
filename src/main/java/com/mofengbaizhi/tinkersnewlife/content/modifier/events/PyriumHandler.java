@@ -64,9 +64,9 @@ public final class PyriumHandler {
 
     @SubscribeEvent
     public static void onLivingDamage(LivingDamageEvent event) {
-        // ⭐ 混沌之流的嵌套段不再逐段"记录追加炽焰伤害" ✗
-        //    否则 追加量 = 每段 × 0.1×(级+1)、N 段就追加 N 份 ⇒ 总伤害被抬成 (1 + N×追加比) ✗
-        //    ⚠ 顺带：防的是"点燃概率"也被掷 N 次（5%×级 掷 N 次 ⇒ 实际点燃率被抬高 ✗）（见 util/DamagePipeline）
+        // ⭐ 混沌之流改判成法术时会自己重发一次那一发 ⇒ 炽热不再对它再"记录一次追加炽焰伤害" ✗
+        //    否则 追加量 = 同一次命中 × 0.1×(级+1) 会被算两遍 ⇒ 总伤害被抬成 (1 + 2×追加比) ✗
+        //    ⚠ 顺带：防的是"点燃概率"也被掷两次（5%×级 掷两次 ⇒ 实际点燃率被抬高 ✗）（见 util/DamagePipeline）
         if (com.mofengbaizhi.tinkersnewlife.util.DamagePipeline.skipNested()) return;
         LivingEntity target = event.getEntity();
         if (target.level().isClientSide) return;

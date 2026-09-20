@@ -495,8 +495,8 @@ public class TinkersNewlife {
         /** 投射咒法：伤害 ×2^层数（攻击者处于增益）；无下限·无限：低伤抵挡/溢出扣咒力 */
         @SubscribeEvent
         public static void onLivingHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
-            // ⭐ 混沌之流的嵌套段不逐段吃"投射咒法 ×2^层" ✗
-            //    否则 段数 × 2^层 = 指数级膨胀 ✗（见 util/DamagePipeline）
+            // ⭐ 混沌之流改判成法术时会自己重发一次那一发 ⇒ 投射咒法 "×2^层" 不再对重发的那一发再乘一次 ✗
+            //    否则同一次命中被乘两遍（数值爆炸）✗（见 util/DamagePipeline）
             if (com.mofengbaizhi.tinkersnewlife.util.DamagePipeline.skipNested()) return;
             var src = event.getSource();
             if (src != null && src.getEntity() instanceof net.minecraft.server.level.ServerPlayer attacker

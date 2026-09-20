@@ -22,14 +22,15 @@ import java.util.List;
 
 /**
  * 铁魔法联动特性·<b>混沌之流</b>（材料「源钻合金」工具自带，<b>无等级</b>）：
- * 你的<b>近战 / 弹射物</b>伤害会被均分为多段 —— <b>1 段物理 + 每学派 1 段</b>
- * （学分数<b>动态</b>读取铁魔法的学派注册表，所以附属模组新加的学派也算 ✓）。
+ * 你的<b>近战 / 弹射物</b>伤害，每次攻击会<b>随机二选一</b> —— 以<b>物理伤害</b>打出，
+ * 或以<b>某一学派的法术伤害</b>打出；<b>只结算一次、总数值不变</b>（<b>不再拆分</b> ✓）。
  *
- * <p>例：铁魔法默认 9 个学派 → 共 <b>10 段</b>，每段是总伤害的 1/10 ✓；
- * 每段各按自己的伤害类型结算，因此会被目标<b>各自的抗性</b>分别减免 ✓。
+ * <p>例：这一刀 100 点 ⇒ 要么就是那一下物理 100 点（伤害源与数值原样不动 ✓），
+ * 要么被改判成"火焰/冰霜/…某一学派的法术伤害"100 点 ✓（学派从铁魔法学派注册表<b>动态</b>随机取，
+ * 所以附属模组新加的学派也算 ✓）。
  *
- * <p>结算在 {@code content.modifier.events.ChaosFlowHandler}（{@code LivingHurtEvent} 里
- * 取消原始那一次、再按类型逐段施加 ✓）。
+ * <p>结算在 {@code content.modifier.events.ChaosFlowHandler}（{@code LivingHurtEvent} @ LOWEST：
+ * 掷骰 → 物理就放行原始那一次；法术就取消原始那一次、换学派的伤害源、以同样的数值重发<b>一次</b> ✓）。
  */
 public class ChaosFlowModifier extends Modifier implements TooltipModifierHook {
 

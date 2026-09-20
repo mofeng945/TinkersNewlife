@@ -125,8 +125,8 @@ public final class WizardArmorSetHandler {
      */
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onSpellHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
-        // ⭐ 混沌之流的每段都是法术类型 ⇒ 巫师套装的"法术增伤 ×(1+0.1×件数)"不逐段乘 ✗
-        //    否则段数 × 增幅 = 指数级膨胀 ✗（见 util/DamagePipeline）
+        // ⭐ 混沌之流抽到"法术"时，重发的那一发本身就是铁魔法学派的法术类型 ⇒ 巫师套装的
+        //    "法术增伤 ×(1+0.1×件数)" 不再对它再乘一次 ✗（否则同一次命中被放大两遍 ✗，见 util/DamagePipeline）
         if (com.mofengbaizhi.tinkersnewlife.util.DamagePipeline.skipNested()) return;
         if (!(event.getSource().getEntity() instanceof LivingEntity caster)) return;
         int pieces = wornPieces(caster);

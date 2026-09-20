@@ -56,12 +56,8 @@ public final class ModConfig {
     public static final ConfigValue<Boolean> WUWEI_EQUIPMENT_RENDER;
 
     // ==================== 混沌之流（源钻合金 · 铁魔法联动） ====================
-    /** 混沌之流是否把一次近战拆成「物理 + 各学派」多段（默认开；关掉后不再拆分，也就不会触发成串的学派反应） */
+    /** 混沌之流是否启用（默认开；关掉后每次攻击都按原来的物理伤害原样结算） */
     public static final ConfigValue<Boolean> CHAOS_FLOW_ENABLED;
-    /** 混沌之流最多用几个学派分段（默认 64 ≈ 不限，只作"学派爆炸"的硬保险；0 = 只用物理那一段） */
-    public static final ConfigValue<Integer> CHAOS_FLOW_MAX_SCHOOL_SEGMENTS;
-    /** 混沌之流每 tick（整个维度）最多结算几段学派伤害（默认 4；0 = 同一 tick 全部结算＝旧行为） */
-    public static final ConfigValue<Integer> CHAOS_FLOW_SEGMENTS_PER_TICK;
 
     // ==================== 不可名状 · 观感 ====================
     /** 「不可名状」的整屏信号干扰/花屏覆盖层（客户端，默认开） */
@@ -248,26 +244,21 @@ public final class ModConfig {
         WUWEI_EQUIPMENT_RENDER = b.define("render_equipment", true);
         b.pop();
 
-        // 混沌之流：学派段的时间摊开（源钻合金 origin_alloy）
+        // 混沌之流：每次攻击随机二选一（物理 / 某一学派的法术），只结算一次（源钻合金 origin_alloy）
         b.push("chaos_flow").comment(
-                "Chaos Flow (the Origin Alloy material trait): a melee hit is split into",
-                "1 physical segment + one segment per registered spell school - each a separate damage instance,",
-                "so that every school's damage TYPE is applied and each of the target's resistances matters",
-                "(that IS the point of the trait, so the damage types are never dropped).",
+                "Chaos Flow (the Origin Alloy material trait): every attack randomly rolls ONE of two outcomes",
+                "and then lands a SINGLE damage instance (the total amount is unchanged):",
                 "",
-                "In a pack that registers many schools (spell-reaction addons etc.) one swing would otherwise run",
-                "dozens of full damage instances inside a single tick => a visible hitch every hit.",
-                "So the school segments are spread over the following ticks instead:",
+                "  - physical: the original hit is left completely untouched (same damage source, same amount);",
+                "  - spell:    the original hit is cancelled and re-sent ONCE as a random spell school's damage",
+                "              type (taken from Iron's Spells' school registry, so addon schools count too).",
                 "",
-                "segments_per_tick = how many school segments the whole level may fire per tick (default 4).",
-                "  The types are all still applied and TOTAL damage is unchanged - it just lands over a few ticks.",
-                "  0 = fire them all in the same tick (the old behaviour).",
-                "max_school_segments = hard safety cap on how many schools are used (default 64 ~ unlimited).",
-                "  0 = physical segment only.",
-                "enabled=false disables the split entirely (the hit lands normally as physical damage).");
+                "The hit is NOT split up any more - so there is no per-segment re-amplification",
+                "(black flash ^2.5, Child of the Stars x2^level, wizard set, staff spell power, ...)",
+                "and no 'segment count x amplification' inflation.",
+                "",
+                "enabled=false disables the roll entirely (every hit lands normally as physical damage).");
         CHAOS_FLOW_ENABLED = b.define("enabled", true);
-        CHAOS_FLOW_MAX_SCHOOL_SEGMENTS = b.defineInRange("max_school_segments", 64, 0, 256);
-        CHAOS_FLOW_SEGMENTS_PER_TICK = b.defineInRange("segments_per_tick", 4, 0, 64);
         b.pop();
 
         // 不可名状效果：客户端观感（撑开视野 + 后处理 + 信号干扰花屏）

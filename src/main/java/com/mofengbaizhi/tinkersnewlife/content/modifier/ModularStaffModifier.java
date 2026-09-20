@@ -56,8 +56,8 @@ public class ModularStaffModifier extends Modifier implements MeleeDamageModifie
     // ============================================================
     @SubscribeEvent
     public static void onLivingHurt(LivingHurtEvent event) {
-        // ⭐ 混沌之流拆出来的每段伤害**本身就是铁魔法学派的法术类型** ✗ ⇒ 不加这道闸门的话，
-        //    "魔杖法术增幅 = 原伤×k + 固定值" 会在每一段上各生效一次 ⇒ 段数 × 增幅 ✗（见 util/DamagePipeline）
+        // ⭐ 混沌之流抽到"法术"时重发的那一发**本身就是铁魔法学派的法术类型** ✗ ⇒ 不加这道闸门的话，
+        //    "魔杖法术增幅 = 原伤×k + 固定值" 会对同一次命中生效两遍（数值爆炸）✗（见 util/DamagePipeline）
         if (com.mofengbaizhi.tinkersnewlife.util.DamagePipeline.skipNested()) return;
         if (!(event.getSource().getEntity() instanceof Player player)) return;
         if (player.level().isClientSide) return; // ⭐ 客户端 setAmount 无效，且防止双端重复计算

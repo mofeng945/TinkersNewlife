@@ -606,8 +606,8 @@ public class DragonStaffHandler {
     // ---------- 伤害加成 ----------
     @SubscribeEvent
     public static void onLivingHurt(LivingHurtEvent event) {
-        // ⭐ 混沌之流的嵌套段不逐段吃"龙杖每龙 +攻击" ✗
-        //    否则 段数 × bonus ⇒ 平白多出 (段数-1) 份 bonus ✗（见 util/DamagePipeline）
+        // ⭐ 混沌之流改判成法术时会自己重发一次那一发 ⇒ 龙杖"每龙 +攻击"不再对它再加一遍 ✗
+        //    否则同一次命中被加两遍 ✗（见 util/DamagePipeline）
         if (com.mofengbaizhi.tinkersnewlife.util.DamagePipeline.skipNested()) return;
         if (!(event.getSource().getEntity() instanceof Player player)) return;
         ToolStack tool = getTool(player);

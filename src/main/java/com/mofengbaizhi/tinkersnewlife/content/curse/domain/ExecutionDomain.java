@@ -345,9 +345,9 @@ public class ExecutionDomain extends BaseDomain {
         /** 处刑人之剑命中 / 攻击力归零拦截 */
         @SubscribeEvent
         public static void onDamage(LivingDamageEvent event) {
-            // ⭐ 混沌之流的嵌套段不再逐段吃"处刑人之剑 200% 伤害" ✗
-            //    否则 段数 × 2 ⇒ 一刀被抬成 2 倍以上 ✗；处决本体（kill / 巨额数值）是绝对量 ✓，
-            //    不受"逐段"影响 ⇒ 这里一并早退也不会漏掉处决（它由外层的第一次命中就已经跑了 ✓）。
+            // ⭐ 混沌之流改判成法术时会自己重发一次那一发 ⇒ "处刑人之剑 200% 伤害"不再对它再乘一次 ✗
+            //    否则同一刀被抬成 4 倍 ✗；处决本体（kill / 巨额数值）是绝对量 ✓，
+            //    不受"重发"影响 ⇒ 这里一并早退也不会漏掉处决（它由外层的第一次命中就已经跑了 ✓）。
             if (com.mofengbaizhi.tinkersnewlife.util.DamagePipeline.skipNested()) return;
             if (event.getEntity().level().isClientSide) return;
             // 攻击力归零（亡灵有罪 60s）：该生物造成伤害 → 无效

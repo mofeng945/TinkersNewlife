@@ -146,8 +146,8 @@ public final class LightningManipulationTechnique extends BaseTechnique {
         /** 幻兽琥珀：自身每次造成伤害（近战/远程，含箭等投射物）附带咒术闪电 */
         @SubscribeEvent
         public static void onDamageDealt(LivingDamageEvent event) {
-            // ⭐ 混沌之流的嵌套段不逐段吃"幻兽琥珀 +bonus" ✗
-            //    否则 段数 × bonus ⇒ 平白多出 (段数-1) 份 bonus ✗，而且会刷 N 轮粒子 ✗（见 util/DamagePipeline）
+            // ⭐ 混沌之流改判成法术时会自己重发一次那一发 ⇒ 幻兽琥珀 "+bonus" 不再对它再加一遍 ✗
+            //    否则同一次命中被加两遍，而且会多刷一轮粒子 ✗（见 util/DamagePipeline）
             if (com.mofengbaizhi.tinkersnewlife.util.DamagePipeline.skipNested()) return;
             if (event.getEntity().level().isClientSide) return;
             if (event.getAmount() <= 0) return;

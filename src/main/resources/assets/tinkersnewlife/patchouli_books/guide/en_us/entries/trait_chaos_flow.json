@@ -6,7 +6,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(bold)Chaos Flow$() (comes with Origin Alloy tools, $(bold)no levels$())$(br2)Effect: your $(bold)melee / projectile damage$() is split evenly into several segments - $(bold)1 physical plus 1 per magic school$() - and each segment resolves against its own resistance, so the target's resistances $(bold)apply separately$().$(br2)The count is $(bold)dynamic$(): Iron's Spells has 9 schools by default, so 10 segments of 1/10 each; schools added by addons are counted automatically.$(br2)Total damage is unchanged - what changes is which damage types make it up. Against a highly resistant target it may hurt more; against a target immune to one school that segment is simply lost.$(br2)$(italic)One cut, ten colors.$()"
+      "text": "$(bold)Chaos Flow$() (comes with Origin Alloy tools, $(bold)no levels$())$(br2)Effect: every $(bold)melee / projectile attack$() you make randomly rolls ONE of the following and lands as that single instance:$(li)$(bold)physical damage$() - the original hit resolves completely untouched (same source, same amount);$(li)$(bold)one magic school's spell damage$() - the hit is recast as a random school's damage type.$(br2)The total amount is $(bold)unchanged$() and it is $(bold)no longer split into segments$().$(br2)The school is rolled dynamically from Iron's Spells' $(bold)school registry$() (9 schools by default), so schools added by addons are counted automatically.$(br2)So the very same swing may land as physical - or as fire / ice / holy / eldritch / ... Whichever resistance the target has most of decides whether that hit hurts more or less.$(br2)$(italic)One cut, one colour - never the same twice.$()"
     }
   ],
   "flag": "mod:irons_spellbooks"

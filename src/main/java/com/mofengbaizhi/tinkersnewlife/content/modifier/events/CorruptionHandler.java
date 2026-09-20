@@ -40,8 +40,8 @@ public class CorruptionHandler {
     /** 伤害结算前补增幅：在 LivingDamageEvent 中把增幅加入本次伤害，随后正常走护甲结算 */
     @SubscribeEvent
     public static void onDamage(LivingDamageEvent event) {
-        // ⭐ 混沌之流的嵌套段不逐段吃"堕落 +bonus" ✗
-        //    否则 段数 × bonus ⇒ 平白多出 (段数-1) 份 bonus ✗，而且**灵魂也会被多扣 N 次** ✗（见 util/DamagePipeline）
+        // ⭐ 混沌之流改判成法术时会自己重发一次那一发 ⇒ 堕落 "+bonus" 不再对它再加一遍 ✗
+        //    否则同一次命中被加两遍，而且**灵魂也会被多扣一次** ✗（见 util/DamagePipeline）
         if (com.mofengbaizhi.tinkersnewlife.util.DamagePipeline.skipNested()) return;
         if (event.getEntity().level().isClientSide) return;
         Entity sourceEntity = event.getSource().getEntity();

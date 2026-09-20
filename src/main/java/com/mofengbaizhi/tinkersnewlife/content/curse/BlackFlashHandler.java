@@ -76,8 +76,8 @@ public class BlackFlashHandler {
 
     @SubscribeEvent
     public static void onLivingHurt(LivingHurtEvent event) {
-        // ⭐ 混沌之流的嵌套段（1 物理 + 每学派 1 段）不再逐段吃黑闪 ✗
-        //    否则 原伤^2.5 会在每一段上各乘一次 ⇒ 段数 × 增幅 = 指数级膨胀 ✗（见 util/DamagePipeline）
+        // ⭐ 混沌之流改判成法术时会**自己重发一次**那一发 ⇒ 黑闪 "原伤^2.5" 不再对重发的那一发再幂一次 ✗
+        //    否则同一次命中会被幂两次（数值爆炸）✗（见 util/DamagePipeline；旧实现逐段打，会逐段重幂）
         if (com.mofengbaizhi.tinkersnewlife.util.DamagePipeline.skipNested()) return;
         if (!(event.getSource().getEntity() instanceof Player)) return;
         Player player = (Player) event.getSource().getEntity();
