@@ -218,7 +218,9 @@ public final class ConscienceThresholdHandler {
                     new AABB(sp.blockPosition()).inflate(MOB_RANGE));
             for (Mob mob : mobs) {
                 if (a >= FULL) {
-                    if (mob.getTarget() == sp) mob.setTarget(null);          // 满善：不再主动攻击 ✓
+                    // 满善：**不主动**攻击 ✓ 但**还手要放行** ✓（用户口径 ✓）
+                    // ⇒ 只有"目标是你、且最近不是被你打的"才清 ✓（`getLastHurtByMob()==你` ⇒ 它在还手 ⇒ 留着 ✓）
+                    if (mob.getTarget() == sp && mob.getLastHurtByMob() != sp) mob.setTarget(null);
                 } else if (mob instanceof Animal animal) {
                     animal.setLastHurtByMob(sp);                              // 满恶：被动生物主动逃跑 ✓（触发原版 PanicGoal ✓）
                 } else if (mob instanceof Monster || mob instanceof NeutralMob) {
@@ -229,12 +231,20 @@ public final class ConscienceThresholdHandler {
         }
     }
 
-    /** 满善拦"把满善玩家设为目标" ✓（照 CharmHandler 的写法 ✓） */
+    /**
+     * 满善拦"把满善玩家设为目标" ✓（照 CharmHandler 的写法 ✓）。
+     *
+     * <p>⚠ <b>用户口径修正</b>：「不主动攻击」<b>不代表被打了不还手</b> ✗ ⇒
+     * 只要 {@code getLastHurtByMob() == 这个玩家}（原版"最近被谁打过"✓ 还手 AI 就是读它 ✓ 会随时间淡掉 ✓）
+     * 就<b>放行</b> ✓ 不拦 ✓ —— 所以主动索敌（`NearestAttackableTargetGoal` ✓）被拦 ✓
+     * 而被你打之后的还手（`HurtByTargetGoal` ✓）照常生效 ✓。
+     */
     @SubscribeEvent
     public static void onLivingChangeTarget(LivingChangeTargetEvent event) {
         try {
             if (!(event.getNewTarget() instanceof ServerPlayer sp)) return;
             if (ConscienceHandler.getAlignment(sp) < FULL) return;
+            if (event.getEntity().getLastHurtByMob() == sp) return;      // 还手 ✓ 放行 ✓
             event.setNewTarget(null);
         } catch (Throwable ignored) {
         }
