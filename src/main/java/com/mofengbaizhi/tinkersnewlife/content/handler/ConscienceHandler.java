@@ -104,6 +104,29 @@ public final class ConscienceHandler {
         stack.getOrCreateTag().putInt(KEY_MIRROR, alignment + BAR_ZERO);
     }
 
+    /**
+     * <b>镜像善恶值</b>：直接读玩家「心」槽里那枚物品的 NBT 镜像 ✓。
+     *
+     * <p>为什么需要它：权威值在<b>服务端</b>玩家持久数据里 ✓ 而<b>客户端拿不到</b> ✗
+     * （ForgeData 不走同步 ✗）⇒ 凡是<b>客户端</b>要用的地方（物品提示 ✓ HUD 图标 ✓ 七咒之戒提示改写 ✓）
+     * 一律读这个镜像 ✓（Curios 会把饰品槽同步到客户端 ✓）⇒ 最多 1 秒延迟 ✓。
+     *
+     * <p>⚠ 游戏逻辑（伤害/属性/阈值效果）仍然一律用服务端权威的 {@link #getAlignment} ✓ 不用这个 ✓。
+     */
+    public static int mirrorAlignment(Player player) {
+        if (player == null) return 0;
+        try {
+            ItemStack heart = CuriosApi.getCuriosInventory(player).resolve()
+                    .map(h -> h.getCurios().get(SLOT_ID))
+                    .map(h -> h.getStacks().getSlots() > 0 ? h.getStacks().getStackInSlot(0) : ItemStack.EMPTY)
+                    .orElse(ItemStack.EMPTY);
+            if (!(heart.getItem() instanceof ConscienceItem)) return 0;
+            return mirrorOf(heart, BAR_ZERO) - BAR_ZERO;
+        } catch (Throwable ignored) {
+            return 0;
+        }
+    }
+
     // ============================================================
     //  自动装备 / 兜底补回
     // ============================================================

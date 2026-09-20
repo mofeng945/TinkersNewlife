@@ -43,6 +43,10 @@ public final class CursedRingTooltipHandler {
         if (player == null) return;
         if (!isCursedRing(event.getItemStack())) return;
         if (!LifeLampRingItem.isWorn(player)) return;      // 没戴命灯指轮 → 提示照旧
+        // 「心」恶意 ≥20% ⇒ 命灯指轮的七咒解除**已被阻塞** ✓ ⇒ 这里也不能再改写提示 ✓
+        // 一律用**客户端镜像**读善恶值 ✓（权威值在服务端持久数据 ✗ 客户端拿不到 ✓ 见 mirrorAlignment ✓）
+        if (com.mofengbaizhi.tinkersnewlife.content.handler.ConscienceHandler.mirrorAlignment(player)
+                <= com.mofengbaizhi.tinkersnewlife.content.handler.ConscienceThresholdHandler.LAMP_AT) return;
 
         String expected = strip(Component.translatable(FIRST_CURSE_KEY).getString());
         List<Component> lines = event.getToolTip();

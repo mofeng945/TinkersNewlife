@@ -253,10 +253,19 @@ public final class ConscienceThresholdHandler {
     }
 
     // ============================================================
-    //  时运等级（恶 0 / 善 +1）：临时改主手工具附魔 ✓ 下一 tick 还原 ✓
+    //  时运 / 幸运等级：原版附魔 + **匠魂强化** 都要跟（用户口径 ✓）
+    //  恶：时运归 0 ✓ 幸运 −50% ✓；善：时运 +1 ✓ 幸运 +50% ✓
+    //  ✗ 不用 mixin：在 BreakEvent（掉落计算之前 ✓）把主手工具**临时改掉** ✓ 下一 tick 还原 ✓
     // ============================================================
 
-    private record PendingTool(ItemStack stack, Map<Enchantment, Integer> original, long tick) {}
+    /** 匠魂自家强化的 id（`ModifierIds.fortune` / `.luck` 解析出来就是这两个 ✓ 已核 TCon 源码 ✓） */
+    private static final slimeknights.tconstruct.library.modifiers.ModifierId TCON_FORTUNE =
+            slimeknights.tconstruct.tools.data.ModifierIds.fortune;
+    private static final slimeknights.tconstruct.library.modifiers.ModifierId TCON_LUCK =
+            slimeknights.tconstruct.tools.data.ModifierIds.luck;
+
+    private record PendingTool(ItemStack stack, Map<Enchantment, Integer> enchantOriginal,
+                               int fortuneBefore, int luckBefore, long tick) {}
 
     private static final Map<UUID, PendingTool> PENDING = new HashMap<>();
 
@@ -265,34 +274,81 @@ public final class ConscienceThresholdHandler {
         try {
             if (!(event.getPlayer() instanceof ServerPlayer sp)) return;
             int a = ConscienceHandler.getAlignment(sp);
-            if (a < FORTUNE_AT && a > -FORTUNE_AT) return;
-            if (PENDING.containsKey(sp.getUUID())) return;             // 同 tick 多块：只改一次 ✓
+            if (a < LUCK_AT && a > -LUCK_AT) return;                    // 两侧都没到 −30/+30 ⇒ 什么都不用改 ✓
+            if (PENDING.containsKey(sp.getUUID())) return;              // 同 tick 多块：只改一次 ✓
             ItemStack tool = sp.getMainHandItem();
             if (tool.isEmpty()) return;
 
+            // ① 原版附魔表（时运 ✓ +40 / −40 那一档）
             Map<Enchantment, Integer> original = EnchantmentHelper.getEnchantments(tool);
             Map<Enchantment, Integer> modified = new HashMap<>(original);
-            if (a <= -FORTUNE_AT) {
-                modified.remove(Enchantments.BLOCK_FORTUNE);            // 恶：时运归 0 ✓
-            } else {
-                modified.put(Enchantments.BLOCK_FORTUNE,
-                        original.getOrDefault(Enchantments.BLOCK_FORTUNE, 0) + 1);   // 善：时运 +1 ✓
+            boolean enchantChanged = false;
+            if (a >= FORTUNE_AT || a <= -FORTUNE_AT) {
+                if (a <= -FORTUNE_AT) {
+                    enchantChanged = modified.remove(Enchantments.BLOCK_FORTUNE) != null;   // 恶：时运归 0 ✓
+                } else {
+                    modified.put(Enchantments.BLOCK_FORTUNE,
+                            original.getOrDefault(Enchantments.BLOCK_FORTUNE, 0) + 1);      // 善：时运 +1 ✓
+                    enchantChanged = true;
+                }
             }
-            if (modified.equals(original)) return;
-            EnchantmentHelper.setEnchantments(modified, tool);
-            PENDING.put(sp.getUUID(), new PendingTool(tool, original, sp.level().getGameTime()));
+
+            // ② 匠魂强化（时运 ✓ 幸运 ✓ 两档都覆盖 ✓）
+            int fortuneBefore = 0;
+            int fortuneDelta = 0;
+            int luckBefore = 0;
+            int luckDelta = 0;
+            try {
+                var tcon = slimeknights.tconstruct.library.tools.nbt.ToolStack.from(tool);
+                if (tcon != null) {
+                    fortuneBefore = tcon.getModifiers().getLevel(TCON_FORTUNE);
+                    luckBefore = tcon.getModifiers().getLevel(TCON_LUCK);
+                    if (a <= -FORTUNE_AT) {
+                        fortuneDelta = -fortuneBefore;                                          // 恶：归 0 ✓
+                    } else if (a >= FORTUNE_AT) {
+                        fortuneDelta = 1;                                                       // 善：+1 级 ✓
+                    }
+                    if (a <= -LUCK_AT) {
+                        luckDelta = luckBefore / 2 - luckBefore;                                // 恶：−50%（向下取整 ✓ 1 级 ⇒ 0 ✓）
+                    } else if (a >= LUCK_AT) {
+                        luckDelta = (luckBefore + 1) / 2;                                       // 善：+50%（向上取整 ✓ 1 级 ⇒ 2 ✓）
+                    }
+                    if (fortuneDelta > 0) tcon.addModifier(TCON_FORTUNE, fortuneDelta);
+                    else if (fortuneDelta < 0) tcon.removeModifier(TCON_FORTUNE, -fortuneDelta);
+                    if (luckDelta > 0) tcon.addModifier(TCON_LUCK, luckDelta);
+                    else if (luckDelta < 0) tcon.removeModifier(TCON_LUCK, -luckDelta);
+                }
+            } catch (Throwable ignored) {
+                // 匠魂不在 / API 变了 ⇒ 只做原版那部分 ✓ 绝不连累挖掘 ✓
+            }
+
+            if (!enchantChanged && fortuneDelta == 0 && luckDelta == 0) return;
+            if (enchantChanged) EnchantmentHelper.setEnchantments(modified, tool);
+            PENDING.put(sp.getUUID(), new PendingTool(tool, original, fortuneBefore, luckBefore,
+                    sp.level().getGameTime()));
         } catch (Throwable ignored) {
         }
     }
 
-    /** 把临时改过的附魔还原 ✓（至少等过完整个 tick ✓ 掉落早就算完了 ✓） */
+    /** 把临时改过的**原版附魔 + 匠魂强化等级**还原 ✓（至少等过完整个 tick ✓ 掉落早就算完了 ✓） */
     private static void restoreTool(ServerPlayer sp) {
         PendingTool p = PENDING.get(sp.getUUID());
         if (p == null) return;
         if (sp.level().getGameTime() <= p.tick()) return;
         PENDING.remove(sp.getUUID());
         try {
-            EnchantmentHelper.setEnchantments(p.original(), p.stack());
+            EnchantmentHelper.setEnchantments(p.enchantOriginal(), p.stack());
+        } catch (Throwable ignored) {
+        }
+        try {
+            var tcon = slimeknights.tconstruct.library.tools.nbt.ToolStack.from(p.stack());
+            if (tcon == null) return;
+            int nowFortune = tcon.getModifiers().getLevel(TCON_FORTUNE);
+            int nowLuck = tcon.getModifiers().getLevel(TCON_LUCK);
+            if (nowFortune > p.fortuneBefore()) tcon.removeModifier(TCON_FORTUNE, nowFortune - p.fortuneBefore());
+            else if (nowFortune < p.fortuneBefore()) tcon.addModifier(TCON_FORTUNE, p.fortuneBefore() - nowFortune);
+            if (nowLuck > p.luckBefore()) tcon.removeModifier(TCON_LUCK, nowLuck - p.luckBefore());
+            else if (nowLuck < p.luckBefore()) tcon.addModifier(TCON_LUCK, p.luckBefore() - nowLuck);
         } catch (Throwable ignored) {
         }
     }
