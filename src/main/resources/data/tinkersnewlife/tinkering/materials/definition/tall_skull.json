@@ -4,6 +4,6 @@
     "modid": "goety"
   },
   "craftable": false,
-  "hidden": true,
+  "hidden": false,
   "tier": 1
 }
