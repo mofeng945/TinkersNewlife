@@ -113,6 +113,23 @@ public class CharmHandler {
         }
     }
 
+    /**
+     * ⭐ 用户口径（2026-09-20）：魅惑期间**也不能索敌魅惑者** ✓
+     * <p>原来只做到"打不到"（{@link #onLivingAttack} 取消伤害 ✗），但生物仍会把施术者**设为目标**并一直追 ✓
+     * ⇒ 这里在"改目标"的那一刻直接拦掉 ✓。
+     */
+    @SubscribeEvent
+    public static void onLivingChangeTarget(net.minecraftforge.event.entity.living.LivingChangeTargetEvent event) {
+        if (event.getEntity().level().isClientSide) return;
+        LivingEntity newTarget = event.getNewTarget();
+        if (newTarget == null) return;
+        CharmData data = CHARMED_ENTITIES.get(event.getEntity().getUUID());
+        if (data == null) return;
+        if (newTarget.getUUID().equals(data.casterUUID)) {
+            event.setNewTarget(null);            // ⭐ 不能把施术者设为目标 ✓
+        }
+    }
+
     @SubscribeEvent
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         UUID uuid = event.getEntity().getUUID();
@@ -134,6 +151,13 @@ public class CharmHandler {
             if (entity == null || !entity.isAlive()) {
                 CHARMED_ENTITIES.remove(uuid);
                 continue;
+            }
+
+            // ⭐ 用户口径（2026-09-20）：魅惑期间不能索敌施术者 ✓
+            //   若"施术者"是**魅惑之前**就已经锁定的目标 ⇒ 这里每 tick 清掉它 ✓（否则它会一直追 ✓）
+            LivingEntity locked = entity.getTarget();
+            if (locked != null && locked.getUUID().equals(data.casterUUID)) {
+                entity.setTarget(null);
             }
 
             if (data.remainingTicks % 5 == 0) {

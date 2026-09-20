@@ -263,7 +263,7 @@
   "modifier.tinkersnewlife.dragon_staff.release_fail_data": "释放失败：龙数据损坏",
   "modifier.tinkersnewlife.dragon_staff.release_fail_create": "释放失败：无法创建龙实体",
   "modifier.tinkersnewlife.dragon_staff.dead_dragon_cannot_recycle": "死龙无法回收！",
-  "modifier.tinkersnewlife.charm.description": "攻击生物后使其陷入魅惑状态，期间无法攻击你。冷却30秒",
+  "modifier.tinkersnewlife.charm.description": "攻击生物后使其陷入魅惑状态，期间无法攻击你、也不会把你当作索敌目标。冷却30秒",
   "modifier.tinkersnewlife.charm.flavor": "§7爱意弥漫，敌意消散❤",
   "modifier.tinkersnewlife.hastur_malice.flavor": "§7狂风呼啸……",
   "modifier.tinkersnewlife.hastur_malice": "罡风",
