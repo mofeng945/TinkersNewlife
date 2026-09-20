@@ -58,11 +58,14 @@ import java.util.UUID;
  *   <tr><td>12</td><td>杀死<b>已驯服的宠物</b></td><td>−3%</td><td>同上</td></tr>
  * </table>
  *
- * <h2>两条最外层乘算（用户口径 ✓）</h2>
+ * <h2>三条最外层乘算（用户口径 ✓）</h2>
  * <ul>
- *   <li><b>受到伤害 ×(1 − 善恶%)</b> ✓ 挂在 {@link LivingDamageEvent}（<b>减伤/护甲之后</b>的最终伤害 ✓
+ *   <li><b>①受到伤害 ×(1 − 善恶%)</b> ✓ 挂在 {@link LivingDamageEvent}（<b>减伤/护甲之后</b>的最终伤害 ✓
  *       = 能拿到的最外层 ✓）；善 ⇒ 承伤降低 ✓ 恶 ⇒ 承伤升高 ✓。</li>
- *   <li><b>最大生命 ×(1 + 善恶%)</b> ✓ 走 {@link Attributes#MAX_HEALTH} 的
+ *   <li><b>②攻击伤害（独立乘区）</b> ✓ 直接改玩家的 {@link Attributes#ATTACK_DAMAGE} 属性 ✓
+ *       用 {@link AttributeModifier.Operation#MULTIPLY_TOTAL} ⇒ <b>独立乘区</b> ✓（不与锋利/力量等<b>加算</b>加成同池 ✓）；
+ *       修饰符量 = <b>−善恶%</b> ⇒ 恶者手狠 ✓ 善者手软 ✓（恶 −50% ⇒ ×1.5 ✓ 善 +50% ⇒ ×0.5 ✓）。</li>
+ *   <li><b>③最大生命 ×(1 + 善恶%)</b> ✓ 走 {@link Attributes#MAX_HEALTH} 的
  *       {@link AttributeModifier.Operation#MULTIPLY_TOTAL} 修饰符（乘算里最外层的一档 ✓）。</li>
  * </ul>
  *
@@ -298,17 +301,61 @@ public final class ConscienceAlignmentHandler {
     }
 
     // ============================================================
-    //  最外层乘算之一：受到伤害 ×(1 − 善恶%)
+    //  最外层乘算①：受到伤害 ×(1 − 善恶%)
     // ============================================================
 
+    /**
+     * <b>承伤侧</b>：{@code event.getEntity()} 是玩家 ⇒ ×(1 − 该玩家善恶%) ✓
+     * 挂在 {@link LivingDamageEvent}（<b>护甲/减伤之后</b>的最终伤害 ✓ = 能拿到的最外层 ✓）。
+     */
     @SubscribeEvent
     public static void onLivingDamage(LivingDamageEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer p)) return;
-        double pct = ConscienceHandler.getAlignment(p) * DMG_SCALE;   // ±0.5
+        if (!(event.getEntity() instanceof ServerPlayer victim)) return;
+        double pct = ConscienceHandler.getAlignment(victim) * DMG_SCALE;   // ±0.5
         if (pct == 0.0D) return;
         float amount = event.getAmount();
         if (amount <= 0.0F) return;
         event.setAmount((float) (amount * (1.0D - pct)));
+    }
+
+    // ============================================================
+    //  最外层乘算②：攻击伤害的**独立乘区** —— 直接改玩家的 ATTACK_DAMAGE 属性 ✓
+    // ============================================================
+
+    /** 攻击伤害修饰符的固定 UUID（同 UUID ⇒ 重加即替换 ✓ 不叠加 ✓） */
+    private static final UUID ATTACK_MOD_ID = UUID.nameUUIDFromBytes(
+            "tinkersnewlife:conscience_attack".getBytes(StandardCharsets.UTF_8));
+    private static final String ATTACK_MOD_NAME = "tn_conscience_attack";
+
+    /**
+     * 把玩家的 {@link Attributes#ATTACK_DAMAGE} 修饰符对齐到当前善恶值 ✓（用户口径 ✓）。
+     *
+     * <p>为什么用属性而不是在伤害事件里乘：属性上的
+     * {@link AttributeModifier.Operation#MULTIPLY_TOTAL} 就是**独立乘区** ✓——
+     * 它与锋利/力量/装备加算等**加算**加成天然不同池 ✓ 也不会被别的 mod 的事件顺序影响 ✓；
+     * 走属性还顺带体现在**物品栏的攻击伤害数字**上 ✓。
+     *
+     * <p>方向：<b>恶者手狠、善者手软</b> ⇒ 修饰符量 = <b>−善恶%</b> ✓
+     * （善恶 −50% ⇒ +0.5 = ×1.5 ✓ 善恶 +50% ⇒ −0.5 = ×0.5 ✓）。
+     *
+     * <p>⚠ 口径差别照实写：{@code ATTACK_DAMAGE} 只吃**由该属性算出来的伤害**（近战/工具/武器 ✓），
+     * <b>弓弩箭矢伤害与法术伤害不走这个属性</b> ✗ —— 如果那两类也要跟着善恶变，告诉我再加一层 ✓。
+     */
+    public static void refreshAttackDamage(Player player) {
+        if (player == null) return;
+        try {
+            AttributeInstance attr = player.getAttribute(Attributes.ATTACK_DAMAGE);
+            if (attr == null) return;
+            double desired = -ConscienceHandler.getAlignment(player) * DMG_SCALE;   // 恶 ⇒ 正 ✓
+            AttributeModifier old = attr.getModifier(ATTACK_MOD_ID);
+            if (old != null && Math.abs(old.getAmount() - desired) < 1.0E-6D) return;
+            if (old != null) attr.removeModifier(ATTACK_MOD_ID);
+            if (desired != 0.0D) {
+                attr.addTransientModifier(new AttributeModifier(ATTACK_MOD_ID, ATTACK_MOD_NAME, desired,
+                        AttributeModifier.Operation.MULTIPLY_TOTAL));
+            }
+        } catch (Throwable ignored) {
+        }
     }
 
     // ============================================================
@@ -336,8 +383,9 @@ public final class ConscienceAlignmentHandler {
         }
     }
 
-    /** 善恶值一变就立刻同步最大生命 ✓（由 {@link ConscienceHandler#setAlignment} 回调 ✓） */
+    /** 善恶值一变就立刻同步最大生命 + 攻击伤害 ✓（由 {@link ConscienceHandler#setAlignment} 回调 ✓） */
     public static void onAlignmentChanged(Player player) {
         refreshMaxHealth(player);
+        refreshAttackDamage(player);
     }
 }

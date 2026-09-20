@@ -128,6 +128,7 @@ public final class ConscienceHandler {
         clearForeignHearts(player);          // 先清掉混在别人槽里的「心」✗（历史存档会残留 ✓）
         int alignment = getAlignment(player);
         ConscienceAlignmentHandler.refreshMaxHealth(player);   // 最大生命 ×(1+善恶%) 兜底对齐 ✓（登录/重生/换维度 ✓）
+        ConscienceAlignmentHandler.refreshAttackDamage(player); // 攻击伤害独立乘区 ×(1−善恶%) 同上 ✓
         ItemStack existing = getHeartStack(player);
         if (existing != null && existing.getItem() instanceof ConscienceItem) {
             writeMirror(existing, alignment);
