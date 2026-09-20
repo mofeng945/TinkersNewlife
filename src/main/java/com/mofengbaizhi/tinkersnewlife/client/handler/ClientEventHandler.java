@@ -24,7 +24,6 @@ import com.mofengbaizhi.tinkersnewlife.network.tools.PacketSwitchFlyingSwordMode
 import com.mofengbaizhi.tinkersnewlife.network.curse.PacketSwitchTechnique;
 import com.mofengbaizhi.tinkersnewlife.network.curse.PacketToggleDomain;
 import com.mofengbaizhi.tinkersnewlife.network.curse.PacketUseTechnique;
-import com.mofengbaizhi.tinkersnewlife.network.tools.PacketUseSkill;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.player.LocalPlayer;
@@ -433,10 +432,6 @@ public class ClientEventHandler {
         public static void onKeyInput(InputEvent.Key event) {
             LocalPlayer player = Minecraft.getInstance().player;
             if (player == null) return;
-
-            if (KeyBindings.USE_SKILL.get().consumeClick()) {
-                TinkersNewlife.CHANNEL.sendToServer(new PacketUseSkill());
-            }
 
             // ⭐ 咒术 HUD 位置调整：打开拖动界面（拖动进度条改位置，滚轮调宽度，ESC 保存）
             if (KeyBindings.EDIT_CURSE_HUD.get().consumeClick()) {

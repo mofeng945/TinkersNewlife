@@ -41,7 +41,6 @@ import net.minecraft.world.item.ItemStack;
 import com.mofengbaizhi.tinkersnewlife.network.curse.PacketSwitchTechnique;
 import com.mofengbaizhi.tinkersnewlife.network.curse.PacketSyncCurse;
 import com.mofengbaizhi.tinkersnewlife.network.curse.PacketToggleDomain;
-import com.mofengbaizhi.tinkersnewlife.network.tools.PacketUseSkill;
 import com.mofengbaizhi.tinkersnewlife.network.curse.PacketUseTechnique;
 import com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader;
 
@@ -200,7 +199,6 @@ public class TinkersNewlife {
         TechniqueHandler.register(com.mofengbaizhi.tinkersnewlife.content.curse.technique.TenDivideTechnique.INSTANCE);
 
         // 注册网络包
-        registerPacket(PacketUseSkill.class, PacketUseSkill::toBytes, PacketUseSkill::new, PacketUseSkill::handle);
         registerPacket(PacketDragonStaffUse.class, PacketDragonStaffUse::toBytes, PacketDragonStaffUse::new, PacketDragonStaffUse::handle);
         registerPacket(PacketOpenBag.class, PacketOpenBag::toBytes, PacketOpenBag::new, PacketOpenBag::handle);
         registerPacket(com.mofengbaizhi.tinkersnewlife.network.tools.PacketVaultAction.class,

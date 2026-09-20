@@ -29,7 +29,7 @@ import java.util.List;
  * <ul>
  *   <li><b>常驻 5% 受到伤害减免</b> —— 走护甲 {@link ModifierHooks#MODIFY_DAMAGE}，
  *       多件穿戴时 TCon 会逐件链乘 → 4 件约 18.5%，与"可根据装备数量叠加"一致 ✓；</li>
- *   <li><b>炽焰学派法术强度 +50%</b> —— 只要穿着任意一件带此特性的装备即生效（**固定 +50%，不叠加**，
+ *   <li><b>炽焰学派法术强度 +25%</b> —— 只要穿着任意一件带此特性的装备即生效（**固定 +25%，不叠加**，
  *       因为用户只把"可叠加"写在减伤上 ✓）。属性维持见 {@code content.modifier.events.PyriumHandler}。</li>
  * </ul>
  */
@@ -40,8 +40,8 @@ public class AncientSanctuaryModifier extends Modifier implements ModifyDamageMo
 
     /** 每件 5% 减伤 → 乘 0.95 */
     public static final float DAMAGE_TAKEN_MULTIPLIER = 0.95F;
-    /** 炽焰法强加成：+50%（固定） */
-    public static final double FIRE_POWER_BONUS = 0.5;
+    /** 炽焰法强加成：+25%（固定） */
+    public static final double FIRE_POWER_BONUS = 0.25;
 
     @Override
     public Component getDisplayName(int level) {

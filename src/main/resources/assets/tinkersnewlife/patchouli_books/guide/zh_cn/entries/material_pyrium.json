@@ -11,7 +11,7 @@
                   },
                   {
                       "type":  "patchouli:text",
-                      "text":  "$(bold)自带特性$()：$(li)$(l:trait_blazing)炽热$()（有等级，工具）：每次攻击 $(bold)5%×等级$() 概率点燃目标 5 秒；伤害结算后追加 $(bold)0.1×(等级+1)$() 倍的炽焰学派法术伤害$(li)$(l:trait_holy_war_relic)圣战之遗$()（无等级，通用）：$(bold)升级槽 +1、防御槽 +1、能力槽 +2$()$(li)$(l:trait_ancient_sanctuary)远古庇护$()（无等级，盔甲）：常驻 $(bold)5% 减伤$()（按件叠加）；穿着任意一件时 $(bold)炽焰法强 +50%$()"
+                      "text":  "$(bold)自带特性$()：$(li)$(l:trait_blazing)炽热$()（有等级，工具）：每次攻击 $(bold)5%×等级$() 概率点燃目标 5 秒；伤害结算后追加 $(bold)0.1×(等级+1)$() 倍的炽焰学派法术伤害$(li)$(l:trait_holy_war_relic)圣战之遗$()（无等级，通用）：$(bold)升级槽 +1、防御槽 +1、能力槽 +2$()$(li)$(l:trait_ancient_sanctuary)远古庇护$()（无等级，盔甲）：常驻 $(bold)5% 减伤$()（按件叠加）；穿着任意一件时 $(bold)炽焰法强 +25%$()"
                   }
               ],
     "flag":  "mod:irons_spellbooks"

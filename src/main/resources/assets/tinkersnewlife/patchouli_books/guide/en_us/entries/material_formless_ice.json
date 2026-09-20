@@ -11,7 +11,7 @@
                   },
                   {
                       "type":  "patchouli:text",
-                      "text":  "$(bold)Stats$(): low hardness, light and very accurate - $(li)Handle: durability $(bold)-8%$(), mining speed +5%, attack speed $(bold)+12%$()$(li)Bow limb: durability 210 (low), draw speed +0.10, velocity +0.05, $(bold)accuracy +0.15$()$(li)Binding: no stats$(br2)$(bold)Traits$():$(li)$(l:trait_cold_blooded)Cold-Blooded$() (leveled): every attack (melee / ranged / spell) appends Ice-school spell damage equal to $(bold)0.1 x (1 + level)$() of the damage dealt$(li)$(l:trait_endless_cold_wind)Endless Cold Wind$() (no levels): while holding this tool, $(bold)Ice spell power +50%$()"
+                      "text":  "$(bold)Stats$(): low hardness, light and very accurate - $(li)Handle: durability $(bold)-8%$(), mining speed +5%, attack speed $(bold)+12%$()$(li)Bow limb: durability 210 (low), draw speed +0.10, velocity +0.05, $(bold)accuracy +0.15$()$(li)Binding: no stats$(br2)$(bold)Traits$():$(li)$(l:trait_cold_blooded)Cold-Blooded$() (leveled): every attack (melee / ranged / spell) appends Ice-school spell damage equal to $(bold)0.1 x (1 + level)$() of the damage dealt$(li)$(l:trait_endless_cold_wind)Endless Cold Wind$() (no levels): while holding this tool, $(bold)Ice spell power +25%$()"
                   }
               ],
     "flag":  "mod:irons_spellbooks"

@@ -14,12 +14,6 @@ public class KeyBindings {
 
     public static final String KEY_CATEGORY = "key.tinkersnewlife.category";
 
-    public static final Lazy<KeyMapping> USE_SKILL = Lazy.of(() -> new KeyMapping(
-            "key.tinkersnewlife.use_skill",
-            GLFW.GLFW_KEY_R,
-            KEY_CATEGORY
-    ));
-
     public static final Lazy<KeyMapping> DRAGON_STAFF_USE = Lazy.of(() -> new KeyMapping(
             "key.tinkersnewlife.dragon_staff_use",
             GLFW.GLFW_KEY_G,
@@ -32,10 +26,10 @@ public class KeyBindings {
             KEY_CATEGORY
     ));
 
-    // ✅ 新增飞剑模式切换按键（与 USE_SKILL 冲突，我们将其改为其他键，比如 Z）
+    // ✅ 飞剑模式切换按键（Z 键）
     public static final Lazy<KeyMapping> SWITCH_FLYING_SWORD_MODE = Lazy.of(() -> new KeyMapping(
             "key.tinkersnewlife.switch_flying_sword_mode",
-            GLFW.GLFW_KEY_Z,   // 改为 Z 键，因为 R 已被 USE_SKILL 占用
+            GLFW.GLFW_KEY_Z,   // Z 键（R 键留给模块化魔杖的聚晶循环）
             KEY_CATEGORY
     ));
 
@@ -81,7 +75,7 @@ public class KeyBindings {
             KEY_CATEGORY
     ));
 
-    // ✅ 模块化魔杖·巫法：R 循环装备聚晶（与 USE_SKILL 同键，二者场景不重叠；可在设置改键）
+    // ✅ 模块化魔杖·巫法：R 循环装备聚晶（可在设置改键）
     public static final Lazy<KeyMapping> STAFF_CYCLE = Lazy.of(() -> new KeyMapping(
             "key.tinkersnewlife.staff_cycle",
             GLFW.GLFW_KEY_R,
@@ -98,7 +92,6 @@ public class KeyBindings {
     @SubscribeEvent
     public static void register(RegisterKeyMappingsEvent event) {
         event.register(EDIT_CURSE_HUD.get());
-        event.register(USE_SKILL.get());
         event.register(DRAGON_STAFF_USE.get());
         event.register(OPEN_BAG.get());
         event.register(SWITCH_FLYING_SWORD_MODE.get()); // 确保注册
