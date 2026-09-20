@@ -47,8 +47,8 @@ import java.util.UUID;
  *       <td>{@code LifeLampRingHandler.snapshot()} 里加的一道闸门 ✓（本类给常量 ✓）</td></tr>
  *   <tr><td>−30%</td><td><b>幸运值 −50%</b></td><td>{@link Attributes#LUCK} 的 {@code MULTIPLY_TOTAL} 修饰符 −0.5 ✓</td></tr>
  *   <tr><td>−40%</td><td><b>时运等级归 0</b></td><td>挖掘前临时把工具上的<b>时运附魔摘掉</b> ✓ 下一 tick 还原 ✓（见下 ✓）</td></tr>
- *   <tr><td>−45%</td><td><b>每 200s，40% 概率附加「不可名状」5s</b></td>
- *       <td>{@link ModEffects#UNNAMEABLE}（我们自己的效果 ✓ 5s = 100 tick ✓）</td></tr>
+ *   <tr><td>−45%</td><td><b>每 200s，40% 概率附加「不可名状」5s</b> ✓ 且 <b>村民涨价 90%</b>（实际价 ×1.9）</td>
+ *       <td>{@link ModEffects#UNNAMEABLE}（我们自己的效果 ✓ 5s = 100 tick ✓）；价格同下方"1 折"那套 ✓ 只是系数反过来 ✓</td></tr>
  *   <tr><td>−50%</td><td><b>所有生物与你为敌</b>（怪物/中立生物主动打你 ✓ <b>被动生物主动逃跑</b> ✓）</td>
  *       <td>每秒：怪物&中立 {@code setTarget(player)} ✓ 动物 {@code setLastHurtByMob(player)} ✓（触发原版 {@code PanicGoal} ✓）</td></tr>
  * </table>
@@ -91,6 +91,11 @@ public final class ConscienceThresholdHandler {
     public static final int UNSPEAKABLE_AT = -45;
     /** 善意：村民 1 折 ✓ */
     public static final int DISCOUNT_AT = 45;
+    /** 恶意：村民涨价 90%（实际价 ×1.9 ✓ 用户后补口径 ✓） */
+    public static final int MARKUP_AT = -45;
+    /** 善意 1 折 / 恶意 ×1.9 的倍率 ✓ */
+    public static final double PRICE_DOWN = 0.1D;
+    public static final double PRICE_UP = 1.9D;
     /** 善意：生命恢复 II ✓ */
     public static final int REGEN_AT = 20;
     /** 满值（恶 −50 / 善 +50 ✓） */
@@ -262,27 +267,33 @@ public final class ConscienceThresholdHandler {
     }
 
     // ============================================================
-    //  村民 1 折（善意 ≥45% ✓）
+    //  村民价格：善 ≥45% ⇒ 1 折 ✓ 恶 ≤−45% ⇒ ×1.9（涨价 90% ✓）
     // ============================================================
 
-    /** 每秒修正一次（只在村民界面开着时 ✓）：把实际价格压到 10% ✓；掉出阈值就恢复原价 ✓ */
+    private static final String KEY_PRICE_MOD = "tn_price_mod_on";
+
+    /** 每秒修正一次（只在村民界面开着时 ✓）：把实际价格压到 10% / 抬到 190% ✓；掉出阈值就恢复原价 ✓ */
     private static void tickVillagerDiscount(ServerPlayer sp, int a) {
         try {
             if (!(sp.containerMenu instanceof MerchantMenu menu)) return;
             MerchantOffers offers = menu.getOffers();
-            boolean active = a >= DISCOUNT_AT;
-            if (!active) {
-                if (sp.getPersistentData().getBoolean("tn_discount_on")) {
+
+            double factor = a >= DISCOUNT_AT ? PRICE_DOWN : (a <= MARKUP_AT ? PRICE_UP : 1.0D);
+            if (factor == 1.0D) {
+                // 掉出阈值 ⇒ 只复原一次 ✓（用持久标记防每秒乱重置 ✓ 免得把原版"需求涨价"也一直清掉 ✗）
+                if (sp.getPersistentData().getBoolean(KEY_PRICE_MOD)) {
                     for (MerchantOffer offer : offers) offer.resetSpecialPriceDiff();
-                    sp.getPersistentData().putBoolean("tn_discount_on", false);
+                    sp.getPersistentData().putBoolean(KEY_PRICE_MOD, false);
                 }
                 return;
             }
-            sp.getPersistentData().putBoolean("tn_discount_on", true);
+            sp.getPersistentData().putBoolean(KEY_PRICE_MOD, true);
             for (MerchantOffer offer : offers) {
                 int base = offer.getBaseCostA().getCount();
+                // ⚠ 上限必须跟原版一样夹在 maxStackSize ✓ 否则被原版夹住后"当前 ≠ 目标"⇒ 每秒无限累加差值 ✗
+                int cap = Math.max(1, offer.getBaseCostA().getMaxStackSize());
+                int desired = Math.max(1, Math.min(cap, (int) Math.round(base * factor)));
                 int current = offer.getCostA().getCount();
-                int desired = Math.max(1, (int) Math.round(base * 0.1D));
                 if (current != desired) offer.addToSpecialPriceDiff(desired - current);
             }
         } catch (Throwable ignored) {
