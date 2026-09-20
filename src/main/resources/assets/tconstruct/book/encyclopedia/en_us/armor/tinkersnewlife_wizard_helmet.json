@@ -1,23 +1,14 @@
 {
   "tool": "tinkersnewlife:wizard_helmet",
   "text": [
-    {
-      "text": "One of the four Wizard Armor pieces. All four (hat / robe / leggings / boots) are built the same way: at the Tinkers' Anvil from plating + maille + robe lace, consuming one magic cloth as well.",
-      "paragraph": true
-    },
-    {
-      "text": "Armor value comes from the material in the plating slot; the other parts add durability and their own armor traits, so every piece can mix materials freely. Every piece carries the same three exclusive traits (no levels, independent of materials): Mana Surge, Mana Shield and All Paths Are One - they live in the tool definition, so washing a trait off with a modifier crystal removes its bonus.",
-      "paragraph": true
-    },
-    {
-      "text": "All four share one 16x16 station pattern, tinkersnewlife:wizard_armor - it is what the station layout draws when you pick the Wizard Armor at the Tinkers' Anvil.",
-      "paragraph": true
-    }
+    { "text": "One of the four Wizard Armor pieces, built at the Tinkers' Anvil from helmet plating, maille and robe lace." },
+    { "text": "Traits: Mana Surge, Mana Shield, All Paths Are One.", "paragraph": true }
   ],
   "properties": [
-    "Parts: helmet plating + maille + robe lace, plus 1 magic cloth",
-    "2 upgrade slots / 3 defense slots",
-    "Built-in traits: Mana Surge, Mana Shield, All Paths Are One",
-    "Station pattern: tinkersnewlife:wizard_armor (shared by all four)"
+    "Stats from materials",
+    "2 Upgrade Slots",
+    "3 Defense Slots",
+    "Traits from parts",
+    "3 built-in traits"
   ]
 }
