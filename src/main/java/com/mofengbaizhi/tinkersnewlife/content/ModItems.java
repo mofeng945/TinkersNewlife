@@ -42,6 +42,11 @@ public class ModItems {
     public static final RegistryObject<Item> CONSTRUCT_BLUEPRINT_FOOD =
             ITEMS.register("construct_blueprint_food", () -> new ConstructedBlueprintItem(new Item.Properties(), true));
 
+    /** 饰品·心（用户自定「心」槽专用 ✓ 不可卸下 ✓ 见 ConscienceHandler ✓） */
+    public static final RegistryObject<com.mofengbaizhi.tinkersnewlife.content.item.ConscienceItem> CONSCIENCE =
+            ITEMS.register("conscience", () -> new com.mofengbaizhi.tinkersnewlife.content.item.ConscienceItem(
+                    new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.EPIC)));
+
     public static final RegistryObject<Item> GHELOTH_REMAINS =
             ITEMS.register("gheloth_remains", () -> new Item(new Item.Properties()));
 

@@ -47,6 +47,11 @@ public class ModCurios {
         );
 
         // 咒力核心饰品槽位（图标复用匠魂 pattern 图标，与玩家画的咒力核心纹理一致）
+        // 用户自定槽位「心」：只给饰品「心」用 ✓ 我们自己注册 ✓
+        InterModComms.sendTo(CuriosApi.MODID, SlotTypeMessage.REGISTER_TYPE,
+                () -> new SlotTypeMessage.Builder("heart")
+                        .size(1)
+                        .build());
         InterModComms.sendTo(CuriosApi.MODID, SlotTypeMessage.REGISTER_TYPE,
                 () -> new SlotTypeMessage.Builder("curse_core")
                         .size(1)

@@ -159,7 +159,8 @@ public class ModCreativeTabs {
                                 addAllPartVariants(output, ModItems.YO_YO_WHEEL.get());
                                 addAllPartVariants(output, ModItems.YO_YO_SPOOL.get());
                                 // 巫师套装的两个专属部件（盔甲统计 ⇒ 只带护甲特性 ✓）
-                                addAllPartVariants(output, ModItems.ROBE_LACE.get());
+                                output.accept(ModItems.CONSCIENCE.get());
+            addAllPartVariants(output, ModItems.ROBE_LACE.get());
                                 // 法袍系带的铸模（与其它部件一致：金铸模 / 沙铸模 / 红沙铸模 ✓，无模组门控 ✓）
                                 output.accept(ModItems.ROBE_LACE_CAST.get());
                                 output.accept(ModItems.ROBE_LACE_SAND_CAST.get());
