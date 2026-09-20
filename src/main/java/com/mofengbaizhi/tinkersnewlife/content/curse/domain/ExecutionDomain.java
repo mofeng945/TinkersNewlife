@@ -4,6 +4,7 @@ import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModEffects;
 import com.mofengbaizhi.tinkersnewlife.content.ModItems;
 import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
+import com.mofengbaizhi.tinkersnewlife.content.handler.ConscienceHandler;
 import com.mofengbaizhi.tinkersnewlife.content.item.ExecutionSwordItem;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -52,6 +53,12 @@ public class ExecutionDomain extends BaseDomain {
 
     /** 玩家定罪阈值：罪行分（击杀村民 + 击杀动物 + 击败玩家数）&gt; 此值即有罪 */
     public static final int PLAYER_GUILT_THRESHOLD = 100;
+
+    /**
+     * 「心」口径（用户 ✓）：<b>玩家善恶值低于 −20% ⇒ 一律判有罪</b> ✓
+     * （与"罪行分 &gt; 100"是**或**关系 ✓ 任一满足即有罪 ✓）
+     */
+    public static final int CONSCIENCE_GUILTY_ALIGNMENT = -20;
     /** 玩家审判时长（tick）：6s */
     private static final int JUDGE_PLAYER_TICKS = 120;
     /** 攻击力归零 / 没收时长（tick）：60s */
@@ -192,6 +199,11 @@ public class ExecutionDomain extends BaseDomain {
         if (living instanceof ServerPlayer p) {
             // 玩家：罪行分 = 击杀村民 + 击杀动物 + 击败玩家数，> 100 有罪
             guilty = playerGuiltScore(p) > PLAYER_GUILT_THRESHOLD;
+            // ⭐ 「心」口径（用户 ✓）：**善恶值低于 −20% 一律判有罪** ✓（与罪行分是"或"关系 ✓ 满足任一条即有罪 ✓）
+            //   ⚠ 用"严格低于"（−20 本身不算 ✓ 因为 −20 那档另有"命灯指轮失效"的效果 ✓）✓ 要改成 ≤ 说一声 ✓
+            if (!guilty && ConscienceHandler.getAlignment(p) < CONSCIENCE_GUILTY_ALIGNMENT) {
+                guilty = true;
+            }
             if (guilty) {
                 applyPlayerPenalty(owner, p);
             }
