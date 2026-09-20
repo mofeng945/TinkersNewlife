@@ -6,7 +6,7 @@
     "pages": [
         {
             "type": "patchouli:text",
-            "text": "$(bold)Child of the Stars$() (default trait of Ashen Ink)$(br2)Effect: $(bold)increases the damage you deal$() - x1.3 per level (i.e. x1.3^level).$(br2)Note: this applies $(bold)before$() armor / resistance, so it is not literally "final damage" (armor still cuts it down).$(br2)Trigger: a passive that is always active — no action required."
+            "text": "$(bold)Child of the Stars$() (default trait of Ashen Ink)$(br2)Effect: $(bold)increases the damage you deal$() - x1.3 per level (i.e. x1.3^level).$(br2)Note: this applies $(bold)before$() armor / resistance, so it is not literally 'final damage' (armor still cuts it down).$(br2)Trigger: a passive that is always active — no action required."
         }
     ]
 }
