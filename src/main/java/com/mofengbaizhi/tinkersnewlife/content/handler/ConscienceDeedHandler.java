@@ -298,7 +298,7 @@ public final class ConscienceDeedHandler {
             if (event.getAbstractVillager() instanceof Villager villager) {
                 String key = sp.getUUID() + "|" + villager.getUUID();
                 long first = VILLAGER_FIRST_TRADE.computeIfAbsent(key, k -> now);
-                if (now - first <= 20 * 20 && allOutOfStock(villager)) {
+                if (now - first <= 20 * 20 && anyOutOfStock(villager)) {
                     VILLAGER_FIRST_TRADE.put(key, now);                       // 重置窗口 ⇒ 同一村民再来一轮才会再扣 ✓
                     ConscienceHandler.addAlignment(sp, -1);
                 }
@@ -311,13 +311,12 @@ public final class ConscienceDeedHandler {
         return stack != null && !stack.isEmpty() && stack.is(Items.EMERALD) ? stack.getCount() : 0;
     }
 
-    private static boolean allOutOfStock(Villager villager) {
-        boolean any = false;
+    /** E7 判定（**用户口径修正** ✓）：<b>只要有一条报价缺货就算</b> ✓ 不是"全部缺货" ✗ */
+    private static boolean anyOutOfStock(Villager villager) {
         for (MerchantOffer offer : villager.getOffers()) {
-            any = true;
-            if (!offer.isOutOfStock()) return false;
+            if (offer.isOutOfStock()) return true;
         }
-        return any;
+        return false;
     }
 
     // ============================================================
