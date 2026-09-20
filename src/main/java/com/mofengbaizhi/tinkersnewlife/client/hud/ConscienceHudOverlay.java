@@ -82,7 +82,10 @@ public final class ConscienceHudOverlay {
 
         GuiGraphics graphics = event.getGuiGraphics();
         int x = mc.getWindow().getGuiScaledWidth() / 2 - 8;
-        int y = mc.getWindow().getGuiScaledHeight() - 47;
+        // ⚠ 原先是 h−47（16 高 ⇒ h−47 ~ h−31）✗ 实机里和经验条顶边（h−29 起）看着还是黏在一起 ✗
+        // ⇒ 用户要求抬一抬 ✓ 改成 **h−55**（占 h−55 ~ h−39 ✓ 与经验条留 10px 空隙 ✓）
+        //   注意：h−59 附近是原版"切物品时显示的名字"那一行 ✓ 那是**一闪而过**的 ✓ 只可能短暂压到图标上边 ✓
+        int y = mc.getWindow().getGuiScaledHeight() - 55;
         RenderSystem.enableBlend();
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         graphics.blit(DYNAMIC, x, y, 0.0F, 0.0F, 16, 16, 16, 16);
