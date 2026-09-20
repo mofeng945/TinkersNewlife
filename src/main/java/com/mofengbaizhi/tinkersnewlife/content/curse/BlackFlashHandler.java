@@ -105,6 +105,10 @@ public class BlackFlashHandler {
             totalChance += attack / 10000.0;
         }
 
+        // ⭐ 用户口径（2026-09-20）：黑闪多一条前提 —— 必须**佩戴咒力核心**且**咒力不为 0** ✓
+        //   （没有核心 / 咒力为 0 ⇒ 连掷骰都不掷 ✓ 直接不触发 ✓；无限咒力视为非 0 ✓）
+        if (CursePowerHelper.findEquippedCurseCore(player).isEmpty()) return;
+        if (!CursePowerHelper.isCurseInfinite(player) && CursePowerHelper.getTotalCurse(player) <= 0.0D) return;
         if (player.getRandom().nextDouble() < totalChance) {
             float originalDamage = event.getAmount();
             float flashDamage = (float) Math.pow(originalDamage, 2.5);
