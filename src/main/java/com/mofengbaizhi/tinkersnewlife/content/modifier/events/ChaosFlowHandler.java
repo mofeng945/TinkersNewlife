@@ -222,14 +222,33 @@ public final class ChaosFlowHandler {
         remember(caster, schoolKey(school));                     // ⭐ 这一发真的按该学派打出去了 ⇒ 才记账 ✓
 
         // ③ 重发**一次**：总数值不变 ✓
+        //   ⚠ 必须先把无敌帧清零 ✗：原版 hurt() 在 invulnerableTime > 10 且"这一发 ≤ 上次伤害"时
+        //     会**直接 return、一点血都不掉** ✓ —— 用户实测的"有时候 roll 不出伤害"就是这条 ✓
+        //     （我们取消了原始那一次、又自己重发，目标身上留的还是**上一次命中**的无敌帧 ✓）
+        //   ⚠ 而且**绝不允许**"原始伤害被取消、重发又失败 ⇒ 这一下白打" ✗
+        //     ⇒ 重发没落上/抛异常时，用**原始伤害源**兜底再补一发 ✓（原始那次此刻还没结算过 ✓）
         creditKill(target, attacker);                            // ⭐ 先补击杀归属（killed_by_player 类战利品 ✓）
         SPLITTING.set(Boolean.TRUE);
         DamagePipeline.enter();                                  // ⭐ 我们自己的放大器/附加器在内层一律跳过 ✓
+        boolean landed = false;
+        int savedInvulnerable = target.invulnerableTime;
         try {
-            target.hurt(schoolDamage, total);
+            target.invulnerableTime = 0;
+            landed = target.hurt(schoolDamage, total);
+            if (!landed) {                                       // 没落上（被挡 / 免疫 / 其它）⇒ 换原始源再试 ✓
+                target.invulnerableTime = 0;
+                landed = target.hurt(event.getSource(), total);
+            }
         } catch (Throwable t) {
-            TinkersNewlife.LOGGER.debug("[混沌之流] 改判后的法术伤害结算失败（已忽略）: {}", t.toString());
+            TinkersNewlife.LOGGER.debug("[混沌之流] 改判后的法术伤害结算失败，改用原始伤害源兜底: {}", t.toString());
+            try {
+                target.invulnerableTime = 0;
+                landed = target.hurt(event.getSource(), total);
+            } catch (Throwable ignored) {
+                // 两次都没打出去 ⇒ 只能算了 ✓（下面把无敌帧还回去 ✓）
+            }
         } finally {
+            if (!landed) target.invulnerableTime = savedInvulnerable;   // 一点伤害都没打出去 ⇒ 无敌帧别弄丢 ✗
             DamagePipeline.exit();
             SPLITTING.set(Boolean.FALSE);
         }
