@@ -99,7 +99,16 @@ public class MomoMerchantHandler {
         if (event.phase != TickEvent.Phase.END) return;
         if (++tickCounter % SPAWN_INTERVAL != 0) return;
         for (ServerLevel level : event.getServer().getAllLevels()) {
-            if (level.dimension() != Level.OVERWORLD) continue;
+            // ⭐ 用户口径：**允许所有维度** ✓（原先写死"只在主世界" ✗ ⇒ ATM 采矿维度 allthemodium:mining
+            //    永远进不了刷出流程 ✓ 那就是"墨默在采矿维度刷不出来"的根因 ✓ 见备忘录 §452）
+            //    落点偏好照旧：优先草方块上 / 亮度≥8 ✓ 两者都没有则退回"任意可落脚的 2 格高空地" ✓（不是硬性 ✗）
+            // ⭐ 配置里的**维度刷新黑名单**（用户口径 ✓）：名单里的维度一律不刷 ✓
+            //    config/tinkersnewlife-common.toml → momo_spawn_dimension_blacklist ✓ 写维度 id（如 allthemodium:mining）✓
+            try {
+                if (com.mofengbaizhi.tinkersnewlife.config.ModConfig.MOMO_SPAWN_DIMENSION_BLACKLIST.get()
+                        .contains(level.dimension().location().toString())) continue;
+            } catch (Throwable ignored) {
+            }
             trySpawnAtFullMoon(level);
         }
     }

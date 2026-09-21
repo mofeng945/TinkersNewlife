@@ -174,6 +174,9 @@ public final class ModConfig {
     public static final ConfigValue<List<? extends String>> CONSTRUCT_ENTITY_VALUE_OVERRIDES;
     /** 结构难度覆盖（"minecraft:chests/ancient_city=50"） */
     public static final ConfigValue<List<? extends String>> CONSTRUCT_STRUCTURE_VALUE_OVERRIDES;
+
+    /** 墨默刷新**维度黑名单**（写维度 id ✓ 例如 allthemodium:mining ✓ 空 = 不排除任何维度 ✓） */
+    public static final ConfigValue<List<? extends String>> MOMO_SPAWN_DIMENSION_BLACKLIST;
     // ---- 流体价值（桶代理 + 流标签 + 软依赖适配器）----
     /** 是否启用流体价值层（关闭则配方里的流体投入不计价） */
     public static final ConfigValue<Boolean> CONSTRUCT_FLUID_VALUE_ENABLED;
@@ -405,6 +408,9 @@ public final class ModConfig {
         // ---- 拟造物防自动化 ----
         CONSTRUCT_BLUEPRINT_ENABLED = b.define("blueprint_enabled", true);
         CONSTRUCT_BLUEPRINT_TCON_TOOLS_LEGACY = b.define("blueprint_tcon_tools_legacy", true);
+        // 墨默刷新的维度黑名单（用户口径）：留空 = 所有维度都能刷；填维度 id 则那些维度不刷
+        MOMO_SPAWN_DIMENSION_BLACKLIST = b.defineList("momo_spawn_dimension_blacklist",
+                new java.util.ArrayList<String>(), o -> o instanceof String);
         CONSTRUCT_BLUEPRINT_RISKY_LEGACY = b.define("blueprint_risky_legacy", true);
         CONSTRUCT_BLUEPRINT_EXEMPT = b.defineList("blueprint_exempt",
                 new java.util.ArrayList<String>(), o -> o instanceof String);
