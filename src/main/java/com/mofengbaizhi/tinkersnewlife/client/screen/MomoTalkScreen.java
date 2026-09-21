@@ -127,6 +127,7 @@ public class MomoTalkScreen extends Screen {
     private int panelX, panelW;              // 左侧文字区（右侧留给立绘）
     private int listY, listH;
     private int backX, backY;
+    private int tailY;                       // 尖角竖直位置（跟着当前气泡算 ✓）
 
     public MomoTalkScreen(int favor, String playerName) {
         super(Component.translatable("menu.tinkersnewlife.momo"));
@@ -179,20 +180,30 @@ public class MomoTalkScreen extends Screen {
         if (page > 0 && reveal < answerText.length()) reveal = Math.min(answerText.length(), reveal + 1.5F);
     }
 
-    /** 九宫格拼装（半径 9 / 19×19 ✓ 中间 1 行/列拉伸 ✓） */
+    /**
+     * 九宫格拼装（半径 9 / 19×19 ✓ 中间 1 行/列拉伸 ✓）。
+     *
+     * <p><b>必须用 11 参 `blit`</b>：`(rl, x, y, 宽, 高, u, v, 源宽, 源高, 贴图宽, 贴图高)` ——
+     * 源尺寸与目标尺寸**解耦** ✓。9 参那个（`(rl,x,y,float u,float v,w,h,texW,texH)`）内部把
+     * `uWidth = 目标宽`，是 **1:1** 取样 ⇒ 拿它拉伸会取样越界、被钳成一条边 ⇒ 画出一排圆点（踩过 ✗）。</p>
+     */
     private void nine(GuiGraphics g, ResourceLocation tex, int x, int y, int w, int h) {
         int r = RADIUS, t = NINE;
         w = Math.max(w, r * 2 + 2);
         h = Math.max(h, r * 2 + 2);
-        g.blit(tex, x, y, 0F, 0F, r, r, t, t);
-        g.blit(tex, x + w - r, y, (float) (t - r), 0F, r, r, t, t);
-        g.blit(tex, x, y + h - r, 0F, (float) (t - r), r, r, t, t);
-        g.blit(tex, x + w - r, y + h - r, (float) (t - r), (float) (t - r), r, r, t, t);
-        g.blit(tex, x + r, y, (float) r, 0F, w - r * 2, r, t, t);
-        g.blit(tex, x + r, y + h - r, (float) r, (float) (t - r), w - r * 2, r, t, t);
-        g.blit(tex, x, y + r, 0F, (float) r, r, h - r * 2, t, t);
-        g.blit(tex, x + w - r, y + r, (float) (t - r), (float) r, r, h - r * 2, t, t);
-        g.blit(tex, x + r, y + r, (float) r, (float) r, w - r * 2, h - r * 2, t, t);
+        int mw = w - r * 2, mh = h - r * 2;
+        // 四角 1:1
+        g.blit(tex, x, y, r, r, 0F, 0F, r, r, t, t);
+        g.blit(tex, x + w - r, y, r, r, (float) (t - r), 0F, r, r, t, t);
+        g.blit(tex, x, y + h - r, r, r, 0F, (float) (t - r), r, r, t, t);
+        g.blit(tex, x + w - r, y + h - r, r, r, (float) (t - r), (float) (t - r), r, r, t, t);
+        // 四边：取中间那 1 像素拉伸
+        g.blit(tex, x + r, y, mw, r, (float) r, 0F, 1, r, t, t);
+        g.blit(tex, x + r, y + h - r, mw, r, (float) r, (float) (t - r), 1, r, t, t);
+        g.blit(tex, x, y + r, r, mh, 0F, (float) r, r, 1, t, t);
+        g.blit(tex, x + w - r, y + r, r, mh, (float) (t - r), (float) r, r, 1, t, t);
+        // 中心 1×1 拉伸
+        g.blit(tex, x + r, y + r, mw, mh, (float) r, (float) r, 1, 1, t, t);
     }
 
     /** @param expr PORTRAIT 下标（逐条对话各不相同 ✓） */
@@ -204,9 +215,9 @@ public class MomoTalkScreen extends Screen {
             int targetW = Math.max(1, Math.round(TEX_W * (targetH / (float) TEX_H)));
             int x = this.width - targetW - 16;
             int y = this.height - targetH;
-            g.blit(rl, x, y, 0F, 0F, targetW, targetH, TEX_W, TEX_H);
+            // 11 参 blit：源 = 整张贴图，目标 = 按屏高等比 ⇒ 不再有失真 ✓
+            g.blit(rl, x, y, targetW, targetH, 0F, 0F, TEX_W, TEX_H, TEX_W, TEX_H);
             // 气泡尖角：指向立绘方向的纯色小三角（不用贴图，随气泡颜色）
-            int tailY = page == 0 ? listY - 6 : listY + 34;
             for (int i = 0; i < 8; i++) {
                 g.fill(panelX + panelW + i, tailY - (8 - i) / 2, panelX + panelW + i + 1, tailY + (8 - i) / 2 + 1, 0xFFF7F3E7);
             }
@@ -238,11 +249,18 @@ public class MomoTalkScreen extends Screen {
                 }
             }
         }
+        // 尖角要对准「正在说话的那个气泡」的竖直中点 ✓
+        if (page == 0) {
+            int headH = this.font.split(Component.literal(greeting()), panelW - PAD * 2).size() * 10 + PAD * 2;
+            tailY = listY - 12 - headH + Math.max(10, Math.min(headH, 60) / 2);
+        } else {
+            int bh = Math.min(listH, this.font.split(Component.literal(answerText), panelW - PAD * 2).size() * 10 + PAD * 2);
+            tailY = listY + Math.max(10, Math.min(bh, 60) / 2);
+        }
         renderPortrait(graphics, currentExpr());
 
         if (page == 0) renderList(graphics, mouseX, mouseY);
         else renderAnswer(graphics);
-
         boolean backHover = hovering(backX, backY, 90, 20, mouseX, mouseY);
         nine(graphics, OPTION, backX, backY, 90, 20);
         if (backHover) graphics.fill(backX + 2, backY + 2, backX + 88, backY + 18, 0x33FFFFFF);
