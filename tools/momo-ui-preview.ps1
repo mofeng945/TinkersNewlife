@@ -72,6 +72,9 @@ if ($portraitW -gt $cap) {
 $faceY = ($GuiH - $portraitH) + [int][Math]::Round($portraitH * (($TEX_H * $FACE_IN_TEX) / [double]$cropH))
 $panelX = 24
 $panelW = [Math]::Max(200, $GuiW - $portraitW - 48)
+$bubbleW = [Math]::Max(150, [int]($panelW * 2 / 3))
+$momoX = $panelX + $panelW - $bubbleW
+$playerX = $panelX
 $greetH = 1 * 10 + $PAD * 2
 $listY = [Math]::Max(10, $faceY - [int]($greetH / 2))
 $rowsTop = $listY + $greetH + 10
@@ -106,8 +109,9 @@ if ($Screen -eq "menu") {
     # ---- MomoTalkScreen 布局 ✓ ----
     $headH = 1 * 10 + $PAD * 2
     $headY = $listY
-    Nine $bub ($panelX * $Scale) ($headY * $Scale) ($panelW * $Scale) ($headH * $Scale)
-    $g.DrawString("今天有什么收获？又想聊聊天吗？", $font, $brushDark, (($panelX + $PAD) * $Scale), (($headY + $PAD) * $Scale))
+    Nine $bub ($momoX * $Scale) ($headY * $Scale) ($bubbleW * $Scale) ($headH * $Scale)
+    $script:g.FillRectangle((New-Object System.Drawing.SolidBrush([System.Drawing.Color]::FromArgb(28, 255, 217, 160))), (($momoX + 2) * $Scale), (($headY + 2) * $Scale), (($bubbleW - 4) * $Scale), (($headH - 4) * $Scale))
+    $g.DrawString("今天有什么收获？又想聊聊天吗？", $font, $brushDark, (($momoX + $PAD) * $Scale), (($headY + $PAD) * $Scale))
     $tailTop = $listY
     $tailY = [Math]::Max($tailTop + 8, [Math]::Min($tailTop + $headH - 8, $faceY))
     for ($i = 0; $i -lt 8; $i++) {
@@ -122,8 +126,9 @@ if ($Screen -eq "menu") {
         "· 你的喜好？", "· 关于这个世界？", "· 关于咒术？", "· 什么是高纬度存在？", "· 你的镰刀？")
     for ($i = 0; $i -lt $qs.Count; $i++) {
         $ry = $rowsTop + $i * $ROW_H
-        Nine $opt ($panelX * $Scale) ($ry * $Scale) ($panelW * $Scale) (($ROW_H - 4) * $Scale)
-        $g.DrawString($qs[$i], $font, $brushDark, (($panelX + $PAD) * $Scale), (($ry + 6) * $Scale))
+        Nine $opt ($playerX * $Scale) ($ry * $Scale) ($bubbleW * $Scale) (($ROW_H - 4) * $Scale)
+        $script:g.FillRectangle((New-Object System.Drawing.SolidBrush([System.Drawing.Color]::FromArgb(46, 143, 184, 232))), (($playerX + 2) * $Scale), (($ry + 2) * $Scale), (($bubbleW - 4) * $Scale), (($ROW_H - 8) * $Scale))
+        $g.DrawString($qs[$i], $font, $brushDark, (($playerX + $PAD) * $Scale), (($ry + 6) * $Scale))
     }
     $g.DrawString("滚轮翻动（1/10）", $font, $brushLight, ($panelX * $Scale), ([Math]::Min($GuiH - 46, $rowsTop + 10 * $ROW_H + 2) * $Scale))
 
