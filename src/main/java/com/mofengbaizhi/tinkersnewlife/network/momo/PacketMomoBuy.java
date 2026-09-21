@@ -44,6 +44,7 @@ public class PacketMomoBuy {
             MomoMerchant.BuyResult result = momo.buyFrom(player, packet.slot);
             switch (result) {
                 case OK -> {
+                    com.mofengbaizhi.tinkersnewlife.content.handler.MomoFavor.onTrade(player);   // 成交一次 +1 好感（用户口径 ✓ 封顶 +50 ✓）
                     // 交易成功：播放墨默"空闲2"语音（替换村民高兴声）
                     momo.playTradeSuccessSound();
                     if (momo.level() instanceof net.minecraft.server.level.ServerLevel sl) {
