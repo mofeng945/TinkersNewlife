@@ -8,7 +8,12 @@ import javax.imageio.ImageIO;
  * <p>为什么不用"全局色键"：角色身上有大量近白衣物（头巾/衣领/十字架高光）⇒ 全局按颜色抠会把衣服一起抠掉 ✗
  * ⇒ 只抠"与画面边缘连通的背景色" ✓ 内部白衣服因为不连通，安全 ✓。
  *
- * <p>用法：{@code java tools/Cutout.java <容差> <src.jpg> <dst.png> [<src2> <dst2> ...]}
+ * <p><b>容差口径 = 逐通道最大差</b>（不是三通道差值和 ✗）：
+ * 米白背景 (252,252,236) 对**浅色皮肤** (255,224,196) 的**差值和**只有 71 ⇒ 用"和"做阈值会把腿当背景、
+ * 顺着画面下边缘从下往上吃干净（墨默两条腿就是这么没的 ✗）；
+ * 改成逐通道后皮肤在 G/B 通道分别差 28/40 ⇒ 阈值 20 就能安全保住 ✓，同时 jpg 噪点 ±20 内照样清得掉 ✓。
+ *
+ * <p>用法：{@code java tools/Cutout.java <逐通道容差> <src.jpg> <dst.png> [<src2> <dst2> ...]}
  * （JDK 11+ 直接单文件运行 ✓ 不需要编译 ✓）
  */
 public final class Cutout {
@@ -61,7 +66,7 @@ public final class Cutout {
         int br = (((bestKey >> 10) & 31) << 3) | 4;
         int bg = (((bestKey >> 5) & 31) << 3) | 4;
         int bb = ((bestKey & 31) << 3) | 4;
-        int limit = tol * 3;
+        int limit = tol;                                    // **逐通道**阈值（见类注释：用"和"会吃掉腿 ✗）
 
         boolean[] seen = new boolean[w * h];
         int[] stack = new int[w * h];
@@ -105,7 +110,10 @@ public final class Cutout {
         if (seen[id]) return sp;
         seen[id] = true;
         int p = px[id];
-        int d = Math.abs(((p >> 16) & 0xFF) - br) + Math.abs(((p >> 8) & 0xFF) - bg) + Math.abs((p & 0xFF) - bb);
+        int dr = Math.abs(((p >> 16) & 0xFF) - br);
+        int dg = Math.abs(((p >> 8) & 0xFF) - bg);
+        int db = Math.abs((p & 0xFF) - bb);
+        int d = Math.max(dr, Math.max(dg, db));             // 逐通道最大差 ✓
         if (d > limit) return sp;
         px[id] = p & 0x00FFFFFF;        // 清掉 alpha ⇒ 透明
         stack[sp++] = id;
