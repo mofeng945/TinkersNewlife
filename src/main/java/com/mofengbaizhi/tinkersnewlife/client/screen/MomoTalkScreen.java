@@ -222,19 +222,24 @@ public class MomoTalkScreen extends Screen {
         return Math.min(bubbleW, textW(lines) + PAD * 2);
     }
 
-    /** 画一行（带缩放 + 阴影 ✓）；`bold` 用于打字机那种"丢掉了样式"的纯文本 ✓ */
+    /**
+     * 画一行（带缩放 ✓）。
+     * <p>⚠️ **不打阴影**（`dropShadow = false`）：缩放 1.25 时阴影是按**字体单位**偏移 1px（屏上 1.25px），
+     * 跟字身几乎重合 —— 中文字形本来就密，叠起来看着像"字被描了一遍 / 重叠" ✗（用户截图反馈 §496）。
+     * 气泡底色是浅米色，本来也不需要阴影来压对比 ✓。
+     */
     private void text(GuiGraphics g, FormattedCharSequence seq, int x, int y, int color) {
         g.pose().pushPose();
         g.pose().scale(TEXT_SCALE, TEXT_SCALE, 1F);
-        g.drawString(this.font, seq, Math.round(x / TEXT_SCALE), Math.round(y / TEXT_SCALE), color, true);
+        g.drawString(this.font, seq, Math.round(x / TEXT_SCALE), Math.round(y / TEXT_SCALE), color, false);
         g.pose().popPose();
     }
 
-    /** 画一段纯文本（带缩放 + 阴影 ✓；§495 起**不再加粗** ✓） */
+    /** 同上，但吃纯文本（打字机用 ✓） */
     private void text(GuiGraphics g, String s, int x, int y, int color) {
         g.pose().pushPose();
         g.pose().scale(TEXT_SCALE, TEXT_SCALE, 1F);
-        g.drawString(this.font, s, Math.round(x / TEXT_SCALE), Math.round(y / TEXT_SCALE), color, true);
+        g.drawString(this.font, s, Math.round(x / TEXT_SCALE), Math.round(y / TEXT_SCALE), color, false);
         g.pose().popPose();
     }
 
