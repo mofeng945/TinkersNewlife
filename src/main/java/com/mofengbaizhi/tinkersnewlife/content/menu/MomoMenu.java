@@ -70,6 +70,7 @@ public class MomoMenu extends AbstractContainerMenu {
                         sp.getPersistentData().putBoolean("tn_momo_chronicle_given", true);
                         ItemStack book = new ItemStack(
                                 com.mofengbaizhi.tinkersnewlife.content.ModItems.GUIDE_BOOK.get());
+                        book.getOrCreateTag().putString("patchouli:book", "tinkersnewlife:guide");   // 帕秋莉靠这个键找书
                         if (!sp.getInventory().add(book)) sp.drop(book, false);
                         sp.displayClientMessage(
                                 Component.translatable("menu.tinkersnewlife.momo.chronicle"), false);
