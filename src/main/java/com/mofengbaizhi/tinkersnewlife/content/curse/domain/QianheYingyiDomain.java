@@ -89,7 +89,9 @@ public class QianheYingyiDomain extends BaseDomain {
                 continue;
             }
             // ⭐ 用户口径：嵌合影翼庭 = 只锁移动（可转动/可切工具/可用工具 ✓）且**不锁自己的式神** ✓
-                if (!(e instanceof com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiMob)) {
+                // 只豁免**施术者自己的**式神（用户口径 ✓）：别人的式神照常被定住 ✓
+                if (!(e instanceof com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiMob sm)
+                        || sm.getOwnerId() == null || !sm.getOwnerId().equals(owner)) {
                     com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.apply(e, 60, com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.Mode.MOVE_ONLY);
                 }
             if (e instanceof Mob mob) {
