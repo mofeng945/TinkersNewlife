@@ -64,8 +64,19 @@ public class MomoMenu extends AbstractContainerMenu {
         switch (id) {
             case BTN_TALK -> {
                 // TODO 批 4：打开对话树（负数不能对话 ⇒ 这里也要挡一道 ✓）
-                if (MomoFavor.canTalk(sp)) sp.displayClientMessage(
-                        Component.translatable("menu.tinkersnewlife.momo.todo_talk"), true);
+                if (MomoFavor.canTalk(sp)) {
+                    // ⭐ 用户口径：**首次与墨默对话 ⇒ 获得「新生神秘学编年史」** ✓（持久标记 ⇒ 只送一次 ✓）
+                    if (!sp.getPersistentData().getBoolean("tn_momo_chronicle_given")) {
+                        sp.getPersistentData().putBoolean("tn_momo_chronicle_given", true);
+                        ItemStack book = new ItemStack(
+                                com.mofengbaizhi.tinkersnewlife.content.ModItems.GUIDE_BOOK.get());
+                        if (!sp.getInventory().add(book)) sp.drop(book, false);
+                        sp.displayClientMessage(
+                                Component.translatable("menu.tinkersnewlife.momo.chronicle"), false);
+                    }
+                    sp.displayClientMessage(
+                            Component.translatable("menu.tinkersnewlife.momo.todo_talk"), true);
+                }
             }
             case BTN_TRADE -> {
                 // 批 2 第一步：**接回墨默原有的交易界面** ✓（`PacketMomoOpen.sendTo` 就是它原本右键打开那条路 ✓
