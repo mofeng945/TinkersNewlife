@@ -27,11 +27,12 @@ public class MomoTradeScreen extends Screen {
 
     private final int momoId;
     private final int favor;
+    private final int[] sold;
     public boolean hired;
     public String employer;
     private final List<Row> rows = new ArrayList<>();
 
-    private record Row(ItemStack result, ItemStack currency, int price) {}
+    private record Row(ItemStack result, ItemStack currency, int price, int base) {}
 
     private int left() { return (this.width - PANEL_W) / 2; }
     private int top() { return Math.max(10, (this.height - panelH()) / 2); }
@@ -42,19 +43,20 @@ public class MomoTradeScreen extends Screen {
     private int backX() { return left() + PANEL_W - 62; }
     private int backY() { return top() + panelH() - 24; }
 
-    public MomoTradeScreen(int momoId, List<MomoMerchant.Offer> offers, boolean hired, String employer, int favor) {
+    public MomoTradeScreen(int momoId, List<MomoMerchant.Offer> offers, boolean hired, String employer, int favor, int[] sold) {
         super(Component.translatable("screen.tinkersnewlife.momo.title"));
         this.momoId = momoId;
         this.hired = hired;
         this.employer = employer == null ? "" : employer;
         this.favor = favor;
+        this.sold = sold == null ? new int[0] : sold;
         if (offers != null) {
             for (int i = 0; i < offers.size(); i++) {
                 MomoMerchant.Offer offer = offers.get(i);
                 if (offer.result().isEmpty()) continue;
                 // 显示折后价（与服务端 buyFrom 同一算法 ✓）
                 int shown = Math.max(1, (int) Math.ceil(offer.price() * MomoFavor.priceFactor(favor)));
-                rows.add(new Row(offer.result().copy(), new ItemStack(MomoMerchant.currencyForSlot(i)), shown));
+                rows.add(new Row(offer.result().copy(), new ItemStack(MomoMerchant.currencyForSlot(i)), shown, offer.price()));
             }
         }
     }
@@ -99,15 +101,32 @@ public class MomoTradeScreen extends Screen {
         for (int i = 0; i < rows.size(); i++) {
             Row r = rows.get(i);
             int ry = rowY(i);
-            boolean hover = hovering(rowX(), ry, rowW(), ROW_H - 2, mouseX, mouseY);
-            graphics.fill(rowX(), ry, rowX() + rowW(), ry + ROW_H - 2, hover ? 0xFF9FB6DE : 0xFF8A8A8A);
+            boolean soldOut = i < sold.length && sold[i] >= MomoMerchant.MAX_PER_DAY;
+            boolean hover = !soldOut && hovering(rowX(), ry, rowW(), ROW_H - 2, mouseX, mouseY);
+            graphics.fill(rowX(), ry, rowX() + rowW(), ry + ROW_H - 2, soldOut ? 0xFF6A6A6A : (hover ? 0xFF9FB6DE : 0xFF8A8A8A));
             graphics.renderItem(r.result(), rowX() + 2, ry + 3);
             String name = r.result().getHoverName().getString();
             if (r.result().getCount() > 1) name = name + " ×" + r.result().getCount();
-            graphics.drawString(this.font, name, rowX() + 22, ry + 4, 0x202020, false);
+            graphics.drawString(this.font, name, rowX() + 22, ry + 4, soldOut ? 0x8A8A8A : 0x202020, false);
             int cx = rowX() + rowW() - 46;
             graphics.renderItem(r.currency(), cx, ry + 3);
-            graphics.drawString(this.font, "×" + r.price(), cx + 20, ry + 7, 0x7A4A00, false);
+            if (soldOut) {
+                graphics.drawString(this.font, "缺货", cx + 20, ry + 7, 0xFFAA00, false);
+            } else {
+                // 原价用红色删除线划掉 + 显示折后价（用户口径）
+                int px = cx + 20;
+                if (r.base() != r.price()) {
+                    String base = "×" + r.base();
+                    graphics.drawString(this.font,
+                            net.minecraft.network.chat.Component.literal(base).withStyle(
+                                    net.minecraft.ChatFormatting.RED,
+                                    net.minecraft.ChatFormatting.STRIKETHROUGH),
+                            px, ry + 7, 0xFF5555);
+                    px += this.font.width(base) + 4;
+                }
+                graphics.drawString(this.font, "×" + r.price(), px, ry + 7,
+                        r.price() > r.base() ? 0xAA0000 : 0x1F6B1F, false);
+            }
         }
 
         boolean backHover = hovering(backX(), backY(), 54, 18, mouseX, mouseY);
@@ -124,6 +143,7 @@ public class MomoTradeScreen extends Screen {
             }
             for (int i = 0; i < rows.size(); i++) {
                 int ry = rowY(i);
+                if (i < sold.length && sold[i] >= MomoMerchant.MAX_PER_DAY) continue;   // 缺货行点不动
                 if (hovering(rowX(), ry, rowW(), ROW_H - 2, mouseX, mouseY)) {
                     TinkersNewlife.CHANNEL.sendToServer(new PacketMomoBuy(momoId, i));
                     return true;

@@ -291,6 +291,7 @@
   "item.tinkersnewlife.conscience.expand": "Press shift to see all effects",
   "curios.identifier.tinkersnewlife_heart": "Heart",
   "menu.tinkersnewlife.momo": "Momo",
+  "message.tinkersnewlife.momo.sold_out": "§eSold out for today - come back tomorrow.",
   "menu.tinkersnewlife.momo.chronicle": "Momo hands you a copy of the Chronicle of Nascent Mysticism.",
   "menu.tinkersnewlife.momo.todo_talk": "(dialogue screen arrives in batch 4)",
   "menu.tinkersnewlife.momo.todo_trade": "(trade window arrives in batch 2)",

@@ -560,6 +560,41 @@ public class MomoMerchant extends PathfinderMob
         offers.add(new Offer(new ItemStack(relics.get(1), relics.get(1).getMaxStackSize()), 5 + random.nextInt(9)));
     }
 
+    // ==== 每日限购（用户口径：每件每天最多 2 次，买满即缺货，次日刷新补货） ====
+    private static final String TAG_SOLD = "MomoSoldPerDay";
+    private static final String TAG_SOLD_DAY = "MomoSoldDay";
+    public static final int MAX_PER_DAY = 2;
+
+    private long dayKey() { return this.level() == null ? 0L : this.level().getDayTime() / 24000L; }
+
+    /** 这件商品今天买了几次（跨天视为 0） */
+    public int soldOf(int slot) {
+        var d = getPersistentData();
+        if (d.getLong(TAG_SOLD_DAY) != dayKey()) return 0;
+        int[] arr = d.getIntArray(TAG_SOLD);
+        return slot >= 0 && slot < arr.length ? arr[slot] : 0;
+    }
+
+    /** 今天各槽的已买次数（给客户端画"缺货变灰"） */
+    public int[] soldToday() {
+        var d = getPersistentData();
+        return d.getLong(TAG_SOLD_DAY) == dayKey() ? d.getIntArray(TAG_SOLD) : new int[0];
+    }
+
+    private void markSold(int slot) {
+        var d = getPersistentData();
+        int size = Math.max(offers.size(), slot + 1);
+        int[] arr = d.getLong(TAG_SOLD_DAY) == dayKey() ? d.getIntArray(TAG_SOLD) : new int[size];
+        if (arr.length < size) {
+            int[] bigger = new int[size];
+            System.arraycopy(arr, 0, bigger, 0, arr.length);
+            arr = bigger;
+        }
+        if (slot >= 0 && slot < arr.length) arr[slot]++;
+        d.putIntArray(TAG_SOLD, arr);
+        d.putLong(TAG_SOLD_DAY, dayKey());
+    }
+
     public List<Offer> getOffers() {
         return offers;
     }
@@ -681,6 +716,7 @@ public class MomoMerchant extends PathfinderMob
         ensureOffers();
         if (slot < 0 || slot >= offers.size()) return BuyResult.NO_OFFER;
         Offer offer = offers.get(slot);
+        if (soldOf(slot) >= MAX_PER_DAY) return BuyResult.NO_OFFER;   // 今天的 2 次买满了 ⇒ 缺货
         Item currency = currencyForSlot(slot);
         int cost = Math.max(1, (int) Math.ceil(offer.price() * com.mofengbaizhi.tinkersnewlife.content.handler.MomoFavor.priceFactor(buyer)));   // 好感度定价：负好感更贵 / 满好感七折
         if (countItem(buyer, currency) < cost) return BuyResult.INSUFFICIENT;
@@ -696,12 +732,14 @@ public class MomoMerchant extends PathfinderMob
                     buyer.drop(one, false);
                 }
             }
-            return BuyResult.OK;
+        markSold(slot);   // 记一次购买（次日自动清零）
+        return BuyResult.OK;
         }
         ItemStack give = offer.result().copy();
         if (!buyer.getInventory().add(give)) {
             buyer.drop(give, false);
         }
+        markSold(slot);   // 记一次购买（次日自动清零）
         return BuyResult.OK;
     }
 

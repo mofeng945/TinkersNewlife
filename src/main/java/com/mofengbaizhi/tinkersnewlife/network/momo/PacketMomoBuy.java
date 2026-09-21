@@ -56,6 +56,8 @@ public class PacketMomoBuy {
                 }
                 case INSUFFICIENT -> player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
                         "message.tinkersnewlife.momo.insufficient"), true);
+                case NO_OFFER -> player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                        "message.tinkersnewlife.momo.sold_out"), true);
                 case TOO_FAR -> player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
                         "message.tinkersnewlife.momo.too_far"), true);
                 default -> {
