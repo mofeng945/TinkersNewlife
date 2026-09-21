@@ -39,14 +39,7 @@ public final class MomoInteractHandler {
                 // 好感度负数：仍然让他开菜单看得到（界面里会变灰 ✓）—— 只提示一句 ✓
                 sp.displayClientMessage(Component.translatable("menu.tinkersnewlife.momo.cold"), true);
             }
-            NetworkHooks.openScreen(sp, new SimpleMenuProvider(
-                            (id, inv, p) -> new MomoMenu(id, inv, momo),
-                            Component.translatable("menu.tinkersnewlife.momo")),
-                    buf -> {
-                        buf.writeInt(momo.getId());
-                        buf.writeInt(MomoFavor.get(sp));
-                    });
-        } catch (Throwable ignored) {
+            com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoMenuOpen.sendTo(sp, momo.getId());} catch (Throwable ignored) {
         }
     }
 

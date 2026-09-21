@@ -224,6 +224,10 @@ public class TinkersNewlife {
         registerPacket(PacketUseTechnique.class, PacketUseTechnique::toBytes, PacketUseTechnique::new, PacketUseTechnique::handle);
         // 墨默菜单三选项（自建显式包，不走容器按钮包）
         registerPacket(com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoMenuAction.class, com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoMenuAction::toBytes, com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoMenuAction::new, com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoMenuAction::handle);
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoMenuOpen.class,
+                com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoMenuOpen::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoMenuOpen::new,
+                com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoMenuOpen::handle);
         registerPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketUseReverseTechnique.class,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketUseReverseTechnique::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketUseReverseTechnique::new,

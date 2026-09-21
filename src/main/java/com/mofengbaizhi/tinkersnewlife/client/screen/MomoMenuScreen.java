@@ -1,122 +1,144 @@
 package com.mofengbaizhi.tinkersnewlife.client.screen;
 
-import com.mofengbaizhi.tinkersnewlife.content.menu.MomoMenu;
+import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoMenuAction;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.player.Inventory;
 
 /**
- * 墨默三选项菜单的**客户端界面**（用户口径 §455 A/E）。
+ * 墨默三选项菜单 —— **纯客户端 Screen**（用户口径 §455 A/E ✓）。
  *
- * <p>三个主按钮 **对话 / 交易 / 雇佣** ＋ 右下角 **回退** ✓；
- * 好感度为负时：**雇佣变灰不可点** ✓（用户口径：负数不能雇佣 ✓）；**交易仍然可点** ✓ 只是**更贵** ✓
- * （`MomoFavor.priceFactor`：负好感每点 +1.5% ⇒ −50 时 1.75 倍 ✓ 用户口径"会涨价" ✓）；**对话**负数时也不可点 ✓。
+ * <p>⚠ 改版原因（用户实测 ✓）：早先做成"无槽位容器菜单 + MenuScreens"那套时**三个按钮连回退都点不动** ✗
+ * ⇒ 说明点击根本没进 `mouseClicked` ✓ ⇒ 现在**彻底不碰容器菜单** ✓ 只由服务端的
+ * {@code PacketMomoMenuOpen} 把屏打开 ✓ 按钮点击直接发 {@link PacketMomoMenuAction} ✓。
  *
- * <p>自绘（`graphics.fill` 画面板与按钮 ✓ 沿用仓库里 {@code SilentGloveScreen} 的写法 ✓ 不用贴图 ✓）。
- * 批 1 只有这一屏 ✓；批 4 的对话屏、批 2 的交易屏、批 3 的雇佣屏都会各自带**回退** ✓。
+ * <p>另外加了**键盘兜底**（1/2/3 = 对话/交易/雇佣 ✓ ESC = 关 ✓）：万一鼠标那条路在某些环境下还是不灵 ✓ 也能用 ✓。
  */
-public class MomoMenuScreen extends AbstractContainerScreen<MomoMenu> {
+public class MomoMenuScreen extends Screen {
 
-    private static final int PANEL = 0xFFC6C6C6;
-    private static final int PANEL_DARK = 0xFF8B8B8B;
-    private static final int BTN = 0xFF6E6E6E;
-    private static final int BTN_HOVER = 0xFF8FA8D8;
-    private static final int BTN_OFF = 0xFF4A4A4A;
-    private static final int TEXT = 0xFF202020;
-    private static final int TEXT_OFF = 0xFF7A7A7A;
+    private static final int PANEL_W = 200;
+    private static final int PANEL_H = 160;
+    private static final int BTN_H = 22;
 
-    public MomoMenuScreen(MomoMenu menu, Inventory inv, Component title) {
-        super(menu, inv, title);
-        this.imageWidth = 190;
-        this.imageHeight = 150;
-        this.inventoryLabelY = -1000;   // 不画玩家背包标签 ✓（这个界面没有背包 ✗）
-        this.titleLabelX = 8;
-        this.titleLabelY = 6;
+    private final int momoId;
+    private final int favor;
+    private int hovered = -1;
+
+    public MomoMenuScreen(int momoId, int favor) {
+        super(Component.translatable("menu.tinkersnewlife.momo"));
+        this.momoId = momoId;
+        this.favor = favor;
     }
 
-    private int left() { return (this.width - this.imageWidth) / 2; }
-    private int top() { return (this.height - this.imageHeight) / 2; }
-
+    private int left() { return (this.width - PANEL_W) / 2; }
+    private int top() { return (this.height - PANEL_H) / 2; }
     private int btnX() { return left() + 20; }
-    private int btnY(int index) { return top() + 34 + index * 26; }
-    private int btnW() { return this.imageWidth - 40; }
-    private int btnH() { return 20; }
+    private int btnY(int i) { return top() + 36 + i * (BTN_H + 6); }
+    private int btnW() { return PANEL_W - 40; }
+    private int backX() { return left() + PANEL_W - 62; }
+    private int backY() { return top() + PANEL_H - 26; }
 
-    private int backX() { return left() + this.imageWidth - 62; }
-    private int backY() { return top() + this.imageHeight - 26; }
+    private boolean canTalk() { return favor >= 0; }
+    private boolean canHire() { return favor >= 0; }
 
-    private boolean enabled(int index) {
-        if (index == MomoMenu.BTN_TALK) return this.menu.canTalk();
-        if (index == MomoMenu.BTN_TRADE) return true;   // 负数**照样能交易**，只是更贵（用户口径 ✓ 见 priceFactor）
-        if (index == MomoMenu.BTN_HIRE) return this.menu.canHire();
-        return true;
+    private boolean enabled(int i) {
+        if (i == 0) return canTalk();
+        if (i == 2) return canHire();
+        return true;                       // 交易：负好感也能点（只是更贵 ✓ 用户口径）
     }
 
-    private static String label(int index) {
-        return switch (index) {
-            case MomoMenu.BTN_TALK -> "对话";
-            case MomoMenu.BTN_TRADE -> "交易";
-            case MomoMenu.BTN_HIRE -> "雇佣";
+    private static String label(int i) {
+        return switch (i) {
+            case 0 -> "对话";
+            case 1 -> "交易";
+            case 2 -> "雇佣";
             default -> "回退";
         };
     }
 
-    @Override
-    protected void renderBg(GuiGraphics graphics, float partialTicks, int mouseX, int mouseY) {
-        int x = left();
-        int y = top();
-        graphics.fill(x, y, x + this.imageWidth, y + this.imageHeight, PANEL);
-        graphics.fill(x, y, x + this.imageWidth, y + 17, PANEL_DARK);
-        for (int i = 0; i <= 2; i++) {
-            boolean on = enabled(i);
-            boolean hover = on && isHovering(btnX(), btnY(i), btnW(), btnH(), mouseX, mouseY);
-            graphics.fill(btnX(), btnY(i), btnX() + btnW(), btnY(i) + btnH(), !on ? BTN_OFF : (hover ? BTN_HOVER : BTN));
-        }
-        boolean backHover = isHovering(backX(), backY(), 54, 18, mouseX, mouseY);
-        graphics.fill(backX(), backY(), backX() + 54, backY() + 18, backHover ? BTN_HOVER : BTN);
+    private boolean hovering(int x, int y, int w, int h, double mx, double my) {
+        return mx >= x && mx < x + w && my >= y && my < y + h;
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+    public boolean isPauseScreen() {
+        return false;
+    }
+
+    @Override
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(graphics);
-        super.render(graphics, mouseX, mouseY, partialTicks);
+        int x = left();
+        int y = top();
+        graphics.fill(x, y, x + PANEL_W, y + PANEL_H, 0xFFC6C6C6);
+        graphics.fill(x, y, x + PANEL_W, y + 17, 0xFF404040);
+        graphics.drawString(this.font, "墨默", x + 8, y + 5, 0xFFFFFF, false);
+        graphics.drawString(this.font, "好感度 " + favor, x + 8, y + 21, 0xFF303030, false);
+
+        hovered = -1;
         for (int i = 0; i <= 2; i++) {
             boolean on = enabled(i);
+            boolean hov = on && hovering(btnX(), btnY(i), btnW(), BTN_H, mouseX, mouseY);
+            if (hov) hovered = i;
+            graphics.fill(btnX(), btnY(i), btnX() + btnW(), btnY(i) + BTN_H,
+                    !on ? 0xFF4A4A4A : (hov ? 0xFF8FA8D8 : 0xFF6E6E6E));
             String s = label(i);
-            int w = this.font.width(s);
-            graphics.drawString(this.font, s, btnX() + (btnW() - w) / 2, btnY(i) + 6,
-                    on ? TEXT : TEXT_OFF, false);
+            graphics.drawString(this.font, s, btnX() + (btnW() - this.font.width(s)) / 2, btnY(i) + 7,
+                    on ? 0x202020 : 0xFF7A7A7A, false);
         }
-        graphics.drawString(this.font, label(MomoMenu.BTN_BACK), backX() + 27 - this.font.width(label(MomoMenu.BTN_BACK)) / 2,
-                backY() + 5, TEXT, false);
-        // 好感度显示（调试友好 ✓ 玩家一眼能看到自己多少好感 ✓）
-        graphics.drawString(this.font, "好感度 " + this.menu.favor(), left() + 8, top() + 20, TEXT, false);
-        this.renderTooltip(graphics, mouseX, mouseY);
+        boolean backHov = hovering(backX(), backY(), 54, 18, mouseX, mouseY);
+        graphics.fill(backX(), backY(), backX() + 54, backY() + 18, backHov ? 0xFF8FA8D8 : 0xFF6E6E6E);
+        graphics.drawString(this.font, "回退", backX() + 27 - this.font.width("回退") / 2, backY() + 5, 0x202020, false);
+    }
+
+    /** 真正干活的地方（鼠标 / 键盘共用 ✓ 只此一处 ✓ 便于确认到底有没有被调用 ✓） */
+    private void click(int action) {
+        if (action == 3) {
+            this.onClose();
+            return;
+        }
+        if (!enabled(action)) return;
+        TinkersNewlife.CHANNEL.sendToServer(new PacketMomoMenuAction(momoId, action));
+        if (action == 0) {
+            String name = this.minecraft != null && this.minecraft.player != null
+                    ? this.minecraft.player.getGameProfile().getName() : "";
+            this.setScreenCompat(new MomoTalkScreen(favor, name));
+        } else {
+            this.onClose();      // 交易/雇佣：交给服务端开交易界面 ✓ 先把菜单关掉 ✓
+        }
+    }
+
+    private void setScreenCompat(Screen screen) {
+        if (this.minecraft != null) this.minecraft.setScreen(screen);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0 && this.minecraft != null && this.minecraft.gameMode != null) {
-            if (isHovering(backX(), backY(), 54, 18, mouseX, mouseY)) {
-                this.onClose();   // 回退：客户端直接关（服务端随之关掉容器）
+        if (button == 0) {
+            if (hovering(backX(), backY(), 54, 18, mouseX, mouseY)) {
+                click(3);
                 return true;
             }
             for (int i = 0; i <= 2; i++) {
-                if (enabled(i) && isHovering(btnX(), btnY(i), btnW(), btnH(), mouseX, mouseY)) {
-                    // 自建显式包：容器按钮包在无槽位菜单上点不动
-                    com.mofengbaizhi.tinkersnewlife.TinkersNewlife.CHANNEL.sendToServer(
-                            new com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoMenuAction(this.menu.momoId(), i));
-                    if (i == MomoMenu.BTN_TALK) {
-                        // ⭐ 对话树在**客户端直接打开** ✓（文案全是静态的 ✓ 好感度已在菜单里同步 ✓ 不用新网络包 ✓）
-                        String name = this.minecraft.player == null ? ""
-                                : this.minecraft.player.getGameProfile().getName();
-                        this.minecraft.setScreen(new MomoTalkScreen(this.menu.favor(), name));
-                    }
+                if (hovering(btnX(), btnY(i), btnW(), BTN_H, mouseX, mouseY)) {
+                    click(i);
                     return true;
                 }
             }
         }
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        switch (keyCode) {
+            case 49 -> { click(0); return true; }     // 1
+            case 50 -> { click(1); return true; }     // 2
+            case 51 -> { click(2); return true; }     // 3
+            case 256 -> { this.onClose(); return true; }   // ESC
+            default -> { }
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 }
