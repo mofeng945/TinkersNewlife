@@ -22,7 +22,7 @@ import net.minecraft.world.item.ItemStack;
 public class MomoHireScreen extends Screen {
 
     private static final int PANEL_W = 250;
-    private static final int PANEL_H = 196;
+    private static final int PANEL_H = 226;
     private static final int ROW_H = 22;
     private static final int BTN_H = 20;
 
@@ -43,20 +43,18 @@ public class MomoHireScreen extends Screen {
     private int left() { return (availW() - PANEL_W) / 2; }
     private int top() { return (this.height - PANEL_H) / 2; }
     /**
-     * §498 天数选择挪到**面板右边的空白处**（用户口径：「把加减号那一行移动到气泡右边的空白位置」✓）。
-     * 原来它画在面板里 `top()+30`，正好压在"好感度"那行上 ✗。
+     * 天数选择：**面板内单独占一行**（§500）。
+     * <p>⚠️ §498 我把它挪到"面板右边的空位"是错的 ✗：面板本来就在「立绘左侧可用区」里居中，
+     * 它和立绘之间只剩十几像素（`gapW()` 里那个 `Math.max(140, …)` 下限骗了自己）⇒
+     * 那行被摆到**她的头发上**，深色字压深色头发根本看不清 ✗。
+     * 现在放回面板内、放在分隔线下面**独立一行**（并把面板加高 196→226 + 下方按钮下移 ✓ 谁也不压谁 ✓）。
      */
-    private int gapX() { return left() + PANEL_W + 10; }
-    private int gapW() {
-        return Math.max(140, this.width - MomoArt.portraitWidth(this.width, this.height) - 16 - gapX());
-    }
-    /** 固定按最大天数（两位）算宽度 ⇒ 天数变化时 ± 按钮**不会左右跳** ✓ */
-    private int selW() { return 24 + MomoArt.textWidth(this.font, "× 88 天") + 10 + 18; }
-    private int dayY() { return top() + 26; }
-    private int minusX() { return gapX() + Math.max(0, (gapW() - selW()) / 2); }
-    private int plusX() { return minusX() + selW() - 18; }
+    private int minusX() { return left() + 16; }
+    private int dayY() { return top() + 50; }
     private int dayTextX() { return minusX() + 24; }
-    private int rowY(int i) { return top() + 56 + i * ROW_H; }
+    /** 固定按两位天数（"× 88 天"）算宽 ⇒ 天数变化时 ＋ 按钮**不左右跳** ✓ */
+    private int plusX() { return dayTextX() + MomoArt.textWidth(this.font, "× 88 天") + 10; }
+    private int rowY(int i) { return top() + 78 + i * ROW_H; }
     private int hireX() { return left() + PANEL_W - 96; }
     private int hireY() { return top() + PANEL_H - 28; }
     private int backX() { return left() + 14; }
@@ -94,9 +92,9 @@ public class MomoHireScreen extends Screen {
         MomoArt.nine(graphics, MomoArt.BUBBLE, x, y, PANEL_W, PANEL_H);      // 面板 = 同一套九宫格 ✓
         MomoArt.text(graphics, this.font, "雇佣墨默", x + 14, y + 10, MomoArt.TEXT_DARK);
         MomoArt.text(graphics, this.font, "好感度 " + favor, x + 14, y + 10 + MomoArt.LINE_H + 2, 0x505050);
-        graphics.fill(x + 12, y + 48 - 6, x + PANEL_W - 12, y + 48 - 5, 0x558C7F63);
+        graphics.fill(x + 12, y + 44, x + PANEL_W - 12, y + 45, 0x558C7F63);
 
-        // 天数选择：**面板右边的空白处**（§498 ✓ 不再压住"好感度"那行 ✗）
+        // 天数选择：面板内独立一行（§500 ✓ 在分隔线下面、五种等价物上面 ✓）
         boolean minusHov = hovering(minusX(), dayY(), 18, 18, mouseX, mouseY);
         boolean plusHov = hovering(plusX(), dayY(), 18, 18, mouseX, mouseY);
         MomoArt.nine(graphics, MomoArt.OPTION, minusX(), dayY(), 18, 18);
