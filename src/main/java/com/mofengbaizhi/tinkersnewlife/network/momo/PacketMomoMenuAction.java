@@ -58,6 +58,9 @@ public class PacketMomoMenuAction {
                         player.getPersistentData().putBoolean("tn_momo_chronicle_given", true);
                         ItemStack book = new ItemStack(
                                 com.mofengbaizhi.tinkersnewlife.content.ModItems.GUIDE_BOOK.get());
+                        // ⭐ 帕秋莉的书物品靠 **NBT 里的 `patchouli:book`** 指向具体书
+                        //    ⇒ 只给裸物品会显示「Book ID: null! / 无效的书：没有定义ID」（用户实测）
+                        book.getOrCreateTag().putString("patchouli:book", "tinkersnewlife:guide");
                         if (!player.getInventory().add(book)) player.drop(book, false);
                         player.displayClientMessage(
                                 Component.translatable("menu.tinkersnewlife.momo.chronicle"), false);
