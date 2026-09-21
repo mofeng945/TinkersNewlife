@@ -97,7 +97,24 @@ public class MomoTalkScreen extends Screen {
     private static final ResourceLocation BUBBLE = MomoArt.BUBBLE;
     private static final ResourceLocation OPTION = MomoArt.OPTION;
     private static final int PAD = MomoArt.PAD;      // 气泡内边距
-    private static final int ROW_H = 24;
+    private static final int ROW_H = 26;
+
+    /**
+     * §493 用户口径「字可以大一点，粗一点，让格式不要这么僵硬」：
+     * <ul>
+     *   <li><b>放大</b>：文字统一走 {@link #TEXT_SCALE} 倍缩放（`pose().scale`）⇒ 比原版 8px 字大一圈 ✓；</li>
+     *   <li><b>加粗</b>：正文一律 `ChatFormatting.BOLD` ✓（**换行宽度也按加粗算**，否则行尾会溢出色框 ✗）；</li>
+     *   <li><b>不那么僵硬</b>：气泡**按内容自适应宽度**（不再人人一板 2/3 宽 ✓ 上限仍是 2/3 ✓）、
+     *       去掉选项前面的「·」、行距加宽、文字带阴影 ⇒ 像聊天窗而不是表格 ✓。</li>
+     * </ul>
+     */
+    private static final float TEXT_SCALE = 1.25F;
+    /** 每行占高（= 原版 10 × 缩放 ✓） */
+    private static final int LINE_H = Math.round(10 * TEXT_SCALE);
+    /** 她的字偏暖、你的字偏冷（再补一层层次 ✓） */
+    private static final int MOMO_TEXT = 0x2B2118;
+    private static final int PLAYER_TEXT = 0x1C2430;
+    private static final int HINT_TEXT = 0xCCCCCC;
 
     /** §492 层次：她的气泡加一层**暖色**、你的提问加一层**冷色** ✓（同一套九宫格皮，但一眼分得清谁在说 ✓） */
     private static final int MOMO_TINT = 0x1CFFD9A0;
@@ -121,6 +138,7 @@ public class MomoTalkScreen extends Screen {
     private int listY, listH;                // listY = 开场白气泡顶（回答页 = 回答气泡顶 ✓）
     private int rowsTop;                     // 选项第一行的 Y ✓
     private int greetH;                      // 开场白气泡高度 ✓
+    private List<FormattedCharSequence> greetLines;   // 开场白换行结果（init 里算好 ✓）
     private int backX, backY;
     private int tailY;                       // 尖角竖直位置（跟着当前气泡算 ✓）
 
@@ -152,6 +170,51 @@ public class MomoTalkScreen extends Screen {
         return mx >= x && mx < x + w && my >= y && my < y + h;
     }
 
+    /** 换行用的最大字宽（**反算回未缩放的字体单位** ⇒ 缩放后正好塞进气泡内边距里 ✓） */
+    private int wrapW() {
+        return Math.max(40, (int) ((bubbleW - PAD * 2) / TEXT_SCALE));
+    }
+
+    /** 按加粗算好的换行（加粗比常规宽约 1px/字 ⇒ **必须按加粗换行**，否则行尾溢出色框 ✗） */
+    private List<FormattedCharSequence> wrap(String text) {
+        return this.font.split(Component.literal(text).withStyle(net.minecraft.ChatFormatting.BOLD), wrapW());
+    }
+
+    /** 整段文字在屏上的实际宽度（已含缩放 ✓ 用于气泡自适应宽度 ✓） */
+    private int textW(List<FormattedCharSequence> lines) {
+        int max = 0;
+        for (FormattedCharSequence line : lines) {
+            max = Math.max(max, this.font.width(line));
+        }
+        return Math.round(max * TEXT_SCALE);
+    }
+
+    /** 气泡宽度 = 内容宽 + 内边距，**上限仍是空白区 2/3** ✓（这样长短句气泡宽窄不一，不呆板 ✓） */
+    private int bubbleWidthFor(List<FormattedCharSequence> lines) {
+        return Math.min(bubbleW, textW(lines) + PAD * 2);
+    }
+
+    /** 画一行（带缩放 + 阴影 ✓）；`bold` 用于打字机那种"丢掉了样式"的纯文本 ✓ */
+    private void text(GuiGraphics g, FormattedCharSequence seq, int x, int y, int color) {
+        g.pose().pushPose();
+        g.pose().scale(TEXT_SCALE, TEXT_SCALE, 1F);
+        g.drawString(this.font, seq, Math.round(x / TEXT_SCALE), Math.round(y / TEXT_SCALE), color, true);
+        g.pose().popPose();
+    }
+
+    /** 同上，但吃纯文本（打字机用 ✓ `bold` = 补回加粗样式 ✓） */
+    private void text(GuiGraphics g, String s, int x, int y, int color, boolean bold) {
+        g.pose().pushPose();
+        g.pose().scale(TEXT_SCALE, TEXT_SCALE, 1F);
+        g.drawString(this.font, bold ? "§l" + s : s, Math.round(x / TEXT_SCALE), Math.round(y / TEXT_SCALE), color, true);
+        g.pose().popPose();
+    }
+
+    /** 选项那一条气泡的宽度（点击判定和绘制共用 ✓ 内容自适应 ✓） */
+    private int optionW(Entry e) {
+        return Math.min(bubbleW, Math.round(this.font.width("§l" + e.q()) * TEXT_SCALE) + PAD * 2);
+    }
+
     @Override
     protected void init() {
         super.init();
@@ -166,9 +229,10 @@ public class MomoTalkScreen extends Screen {
         momoX = panelX + panelW - bubbleW;      // 她的气泡右缘 = 空白区右缘 ⇒ 尖角正好从这儿指出去 ✓
         playerX = panelX;                       // 你的气泡左缘 ✓
         // §490：开场白气泡**正对她脸居中** ⇒ 尖角百分百指到她脸上 ✓；选项从气泡下方开始排 ✓
-        this.greetH = this.font.split(Component.literal(greeting()), bubbleW - PAD * 2).size() * 10 + PAD * 2;
+        this.greetLines = wrap(greeting());
+        this.greetH = this.greetLines.size() * LINE_H + PAD * 2;
         listY = Math.max(10, MomoArt.faceY(this.width, this.height) - this.greetH / 2);
-        rowsTop = listY + this.greetH + 10;
+        rowsTop = listY + this.greetH + 12;
         listH = Math.max(72, this.height - rowsTop - 44);
         backX = panelX;
         backY = this.height - 34;
@@ -220,7 +284,7 @@ public class MomoTalkScreen extends Screen {
             int top = listY;
             tailY = Math.max(top + 8, Math.min(top + greetH - 8, faceY));
         } else {
-            int bh = Math.min(listH, this.font.split(Component.literal(answerText), bubbleW - PAD * 2).size() * 10 + PAD * 2);
+            int bh = Math.min(listH, wrap(answerText).size() * LINE_H + PAD * 2);
             tailY = Math.max(listY + 8, Math.min(listY + bh - 8, faceY));
         }
         renderPortrait(graphics, currentExpr());
@@ -231,19 +295,23 @@ public class MomoTalkScreen extends Screen {
         nine(graphics, OPTION, backX, backY, 90, 20);
         if (backHover) graphics.fill(backX + 2, backY + 2, backX + 88, backY + 18, 0x33FFFFFF);
         String back = page == 0 ? "关闭" : "回退";
-        graphics.drawString(this.font, back, backX + 45 - this.font.width(back) / 2, backY + 6, 0x202020, false);
+        int backW = Math.round(this.font.width(back) * TEXT_SCALE);
+        text(graphics, back, backX + 45 - backW / 2, backY + (20 - LINE_H) / 2, 0x202020, false);
     }
 
     private void renderList(GuiGraphics g, int mouseX, int mouseY) {
-        List<FormattedCharSequence> head = this.font.split(Component.literal(greeting()), bubbleW - PAD * 2);
-        int headH = head.size() * 10 + PAD * 2;
+        // 她的话：右对齐、按内容自适应宽 ✓
+        List<FormattedCharSequence> head = this.greetLines;
+        int headH = head.size() * LINE_H + PAD * 2;
+        int headW = bubbleWidthFor(head);
+        int headX = panelX + panelW - headW;
         int headY = listY;                       // §490：开场白就在 listY（她脸那一带 ✓）
-        nine(g, BUBBLE, momoX, headY, bubbleW, headH);          // 她的话：靠右 ✓
-        g.fill(momoX + 2, headY + 2, momoX + bubbleW - 2, headY + headH - 2, MOMO_TINT);
+        nine(g, BUBBLE, headX, headY, headW, headH);
+        g.fill(headX + 2, headY + 2, headX + headW - 2, headY + headH - 2, MOMO_TINT);
         int ly = headY + PAD;
         for (FormattedCharSequence line : head) {
-            g.drawString(this.font, line, momoX + PAD, ly, 0x202020, false);
-            ly += 10;
+            text(g, line, headX + PAD, ly, MOMO_TEXT);
+            ly += LINE_H;
         }
 
         int visible = Math.max(1, listH / ROW_H);
@@ -252,49 +320,52 @@ public class MomoTalkScreen extends Screen {
         for (int i = 0; i < visible && i + scroll < entries.size(); i++) {
             Entry e = entries.get(i + scroll);
             int ry = rowsTop + i * ROW_H;
-            boolean hov = hovering(playerX, ry, bubbleW, ROW_H - 4, mouseX, mouseY);
-            nine(g, OPTION, playerX, ry, bubbleW, ROW_H - 4);   // 你的提问：靠左 ✓ 冷色 ✓
-            g.fill(playerX + 2, ry + 2, playerX + bubbleW - 2, ry + ROW_H - 6, PLAYER_TINT);
-            if (hov) g.fill(playerX + 2, ry + 2, playerX + bubbleW - 2, ry + ROW_H - 6, 0x33FFFFFF);
-            g.drawString(this.font, "· " + e.q(), playerX + PAD, ry + 6, 0x202020, false);
+            int rw = optionW(e);                             // 你的提问：靠左、跟内容一样宽 ✓
+            boolean hov = hovering(playerX, ry, rw, ROW_H - 6, mouseX, mouseY);
+            nine(g, OPTION, playerX, ry, rw, ROW_H - 6);
+            g.fill(playerX + 2, ry + 2, playerX + rw - 2, ry + ROW_H - 8, PLAYER_TINT);
+            if (hov) g.fill(playerX + 2, ry + 2, playerX + rw - 2, ry + ROW_H - 8, 0x33FFFFFF);
+            text(g, "§l" + e.q(), playerX + PAD, ry + (ROW_H - 6 - LINE_H) / 2 + 1, PLAYER_TEXT, false);
         }
         if (maxScroll > 0) {
-            g.drawString(this.font, "滚轮翻动（" + (scroll + 1) + "/" + (maxScroll + 1) + "）",
-                    playerX, Math.min(this.height - 46, rowsTop + visible * ROW_H + 2), 0xCCCCCC, false);
+            text(g, "滚轮翻动（" + (scroll + 1) + "/" + (maxScroll + 1) + "）",
+                    playerX, Math.min(this.height - 48, rowsTop + visible * ROW_H + 2), HINT_TEXT, false);
         }
     }
 
     private void renderAnswer(GuiGraphics g) {
-        // 你的提问（左 ✓ 冷色 ✓）
-        List<FormattedCharSequence> q = this.font.split(Component.literal(entries.get(page - 1).q()), bubbleW - PAD * 2);
-        int qh = q.size() * 10 + PAD * 2;
-        int qy0 = Math.max(6, listY - qh - 10);
-        nine(g, OPTION, playerX, qy0, bubbleW, qh);
-        g.fill(playerX + 2, qy0 + 2, playerX + bubbleW - 2, qy0 + qh - 2, PLAYER_TINT);
+        // 你的提问（左 ✓ 冷色 ✓ 自适应宽 ✓）
+        List<FormattedCharSequence> q = wrap(entries.get(page - 1).q());
+        int qh = q.size() * LINE_H + PAD * 2;
+        int qw = bubbleWidthFor(q);
+        int qy0 = Math.max(6, listY - qh - 12);
+        nine(g, OPTION, playerX, qy0, qw, qh);
+        g.fill(playerX + 2, qy0 + 2, playerX + qw - 2, qy0 + qh - 2, PLAYER_TINT);
         int qy = qy0 + PAD;
         for (FormattedCharSequence line : q) {
-            g.drawString(this.font, line, playerX + PAD, qy, 0x202020, false);
-            qy += 10;
+            text(g, line, playerX + PAD, qy, PLAYER_TEXT);
+            qy += LINE_H;
         }
 
-        // 她的回答（右 ✓ 暖色 ✓ 打字机 ✓）
-        List<FormattedCharSequence> lines = this.font.split(Component.literal(answerText), bubbleW - PAD * 2);
-        int bh = Math.min(listH, lines.size() * 10 + PAD * 2);
-        nine(g, BUBBLE, momoX, listY, bubbleW, bh);
-        g.fill(momoX + 2, listY + 2, momoX + bubbleW - 2, listY + bh - 2, MOMO_TINT);
+        // 她的回答（右 ✓ 暖色 ✓ 自适应宽 ✓ 打字机 ✓）
+        List<FormattedCharSequence> lines = wrap(answerText);
+        int bh = Math.min(listH, lines.size() * LINE_H + PAD * 2);
+        int bw = bubbleWidthFor(lines);
+        int bx = panelX + panelW - bw;
+        nine(g, BUBBLE, bx, listY, bw, bh);
+        g.fill(bx + 2, listY + 2, bx + bw - 2, listY + bh - 2, MOMO_TINT);
         int budget = Math.max(0, (int) reveal);
         int ly = listY + PAD;
         for (FormattedCharSequence line : lines) {
             if (budget <= 0) break;
             String s = flatten(line);
             int n = Math.min(budget, s.length());
-            g.drawString(this.font, s.substring(0, n), momoX + PAD, ly, 0x202020, false);
+            text(g, s.substring(0, n), bx + PAD, ly, MOMO_TEXT, true);
             budget -= s.length();
-            ly += 10;
+            ly += LINE_H;
             if (ly > listY + bh - PAD) break;
         }
-        g.drawString(this.font, typing() ? "按空格跳过" : "按空格继续",
-                momoX + PAD, listY + bh + 4, 0xCCCCCC, false);
+        text(g, typing() ? "按空格跳过" : "按空格继续", bx + PAD, listY + bh + 4, HINT_TEXT, false);
     }
 
     private static String flatten(FormattedCharSequence seq) {
@@ -342,8 +413,9 @@ public class MomoTalkScreen extends Screen {
             if (page == 0) {
                 int visible = Math.max(1, listH / ROW_H);
                 for (int i = 0; i < visible && i + scroll < entries.size(); i++) {
+                    Entry e = entries.get(i + scroll);
                     int ry = rowsTop + i * ROW_H;
-                    if (hovering(playerX, ry, bubbleW, ROW_H - 4, mouseX, mouseY)) {
+                    if (hovering(playerX, ry, optionW(e), ROW_H - 6, mouseX, mouseY)) {
                         page = i + scroll + 1;
                         answerText = entries.get(page - 1).a();
                         reveal = 0F;
