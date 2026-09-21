@@ -1,0 +1,14 @@
+{
+  "loader": "tconstruct:tool",
+  "parent": "forge:item/default",
+  "textures": {
+    "plating": "tinkersnewlife:item/tool/armor/wizard/wizard_robe_body_broken",
+    "maille":  "tinkersnewlife:item/tool/armor/wizard/wizard_robe_trim_broken",
+    "maille2": "tinkersnewlife:item/tool/armor/wizard/wizard_robe_lace_broken"
+  },
+  "parts": [
+    { "name": "plating", "index": 0 },
+    { "name": "maille",  "index": 1 },
+    { "name": "maille2", "index": 2 }
+  ]
+}

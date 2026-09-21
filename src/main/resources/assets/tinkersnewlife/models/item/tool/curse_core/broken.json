@@ -1,0 +1,10 @@
+{
+  "loader": "tconstruct:tool",
+  "parent": "tconstruct:item/base/default",
+  "textures": {
+    "head": "tinkersnewlife:item/tool/parts/curse_core_part_broken"
+  },
+  "parts": [
+    { "name": "head", "index": 0 }
+  ]
+}
