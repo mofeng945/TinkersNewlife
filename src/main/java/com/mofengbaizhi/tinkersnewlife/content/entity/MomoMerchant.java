@@ -627,7 +627,7 @@ public class MomoMerchant extends PathfinderMob
         Item currency = currencyForSlot(slot);
         int cost = Math.max(1, (int) Math.ceil(offer.price() * com.mofengbaizhi.tinkersnewlife.content.handler.MomoFavor.priceFactor(buyer)));   // 好感度定价：负好感更贵 / 满好感七折
         if (countItem(buyer, currency) < cost) return BuyResult.INSUFFICIENT;
-        consumeItem(buyer, currency, offer.price());
+        consumeItem(buyer, currency, cost);   // 按好感度定价后的实际花费（与上面那道 check 用同一个 cost）
         // ⭐ 成对物品（同心戒）：成交时现结一**新**印记，并发**两枚独立的一栈** ——
         //    一枚能堆叠的话，Curios 右键装备（整栈塞进一个戒指槽、不拆分）会把一对废在一个人身上 ✗；
         //    同一槽位买两次得到的是"两对"✓
