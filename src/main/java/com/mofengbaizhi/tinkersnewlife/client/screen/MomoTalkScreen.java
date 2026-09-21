@@ -461,12 +461,13 @@ public class MomoTalkScreen extends Screen {
 
     /**
      * §497 回**上一级（主菜单）** —— 用户口径：「每个菜单回退不应该回到上一级菜单吗？为什么直接关 GUI」✗
-     * 让服务端重发菜单包（顺带把**最新好感**带上 ✓ 本地那份是打开时的旧快照 ✗），然后关掉本屏 ✓。
+     * 让服务端重发菜单包（顺带把**最新好感**带上 ✓ 本地那份是打开时的旧快照 ✗）。
+     * <p>⚠️ §499 **这里不能 `onClose()`** ✗：先关界面会让 MC `grabMouse()` 把鼠标拉回屏幕中心 ✗；
+     * 保持本屏不动、等服务端的菜单包来**替换**它 ✓ 中间没有空档 ⇒ 鼠标不跳 ✓。
      */
     private void backToMenu() {
         com.mofengbaizhi.tinkersnewlife.TinkersNewlife.CHANNEL.sendToServer(
                 new com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoMenuAction(momoId, 4));
-        this.onClose();
     }
 
     @Override

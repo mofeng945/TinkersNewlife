@@ -154,11 +154,13 @@ public class MomoTradeScreen extends Screen {
                 MomoArt.TEXT_DARK);
     }
 
-    /** §497 回上一级主菜单（服务端重发菜单包、带最新好感 ✓ 交易后好感会 +1 ✓） */
+    /**
+     * §497 回上一级主菜单（服务端重发菜单包、带最新好感 ✓ 交易后好感会 +1 ✓）。
+     * <p>⚠️ §499 **不 `onClose()`** ✗：先关界面会让 MC `grabMouse()` 把鼠标拉回屏幕中心 ✗ ⇒ 等菜单包来替换本屏 ✓。
+     */
     private void backToMenu() {
         TinkersNewlife.CHANNEL.sendToServer(
                 new com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoMenuAction(momoId, 4));
-        this.onClose();
     }
 
     @Override

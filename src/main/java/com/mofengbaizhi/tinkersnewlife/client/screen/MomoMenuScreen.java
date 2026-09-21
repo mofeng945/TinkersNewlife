@@ -119,9 +119,9 @@ public class MomoMenuScreen extends Screen {
             String name = this.minecraft != null && this.minecraft.player != null
                     ? this.minecraft.player.getGameProfile().getName() : "";
             this.setScreenCompat(new MomoTalkScreen(momoId, favor, name));
-        } else {
-            this.onClose();      // 交易/雇佣：交给服务端开交易界面 ✓ 先把菜单关掉 ✓
         }
+        // §499 交易/雇佣：**不要在这里 onClose ✗** —— 先关界面会让 MC `grabMouse()` 把鼠标拉回屏幕中心 ✗；
+        // 直接等服务端把新界面（交易/雇佣）发过来**替换**掉本屏 ✓ 中间不留空档 ⇒ 鼠标不动 ✓
     }
 
     private void setScreenCompat(Screen screen) {
