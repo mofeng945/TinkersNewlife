@@ -473,6 +473,12 @@ public class MomoMerchant extends PathfinderMob
     private static final class MomoLureCurrency extends Behavior<MomoMerchant> {
 
         private int probe = 0;
+        /**
+         * 正在追的货币。**只有它非空时本行为才允许清 `WALK_TARGET`** ✓
+         * —— §488 修的 bug：原来"探测没找到货币"就无条件清记忆，把 `MomoStrollNearHome`
+         * 刚写进去的游走目标也擦掉了 ⇒ 表现为"**不会游走**" ✗。
+         */
+        private ItemEntity lure = null;
 
         MomoLureCurrency() {
             super(ImmutableMap.of());
@@ -486,31 +492,40 @@ public class MomoMerchant extends PathfinderMob
         @Override
         protected void tick(ServerLevel level, MomoMerchant mob, long gameTime) {
             if (mob.getTarget() != null) return;
-            if (++this.probe < 10) return;      // 探测冷却 10 tick（与原逻辑一致 ✓）
-            this.probe = 0;
-            ItemEntity target = null;
-            double best = WANDER_RADIUS * WANDER_RADIUS;
-            for (ItemEntity ie : level.getEntitiesOfClass(ItemEntity.class,
-                    mob.getBoundingBox().inflate(WANDER_RADIUS), e -> e.isAlive() && !e.getItem().isEmpty())) {
-                ItemStack stack = ie.getItem();
-                if (!stack.is(ModItems.GHELOTH_REMAINS.get()) && !stack.is(ModItems.GHELOTH_ORE.get())) continue;
-                double d = mob.distanceToSqr(ie);
-                if (d < best) {
-                    best = d;
-                    target = ie;
-                }
+            if (++this.probe >= 10) {                    // 探测冷却 10 tick（与原逻辑一致 ✓）
+                this.probe = 0;
+                this.lure = nearestCurrency(level, mob);
             }
-            if (target == null) {
-                mob.getBrain().eraseMemory(MemoryModuleType.WALK_TARGET);
-                return;
+            ItemEntity target = this.lure;
+            if (target == null || !target.isAlive() || target.getItem().isEmpty()) {
+                this.lure = null;
+                return;              // 没在追货币 ⇒ **绝不碰 WALK_TARGET** ✓（§488：别把游走目标擦掉 ✗）
             }
             if (mob.distanceTo(target) <= 1.6) {          // 到跟前：停下、看人、偶尔低语 ✓
                 mob.getBrain().eraseMemory(MemoryModuleType.WALK_TARGET);
+                this.lure = null;
                 mob.onReachedCurrency();
                 return;
             }
             mob.getBrain().setMemory(MemoryModuleType.WALK_TARGET,
                     new WalkTarget(target, IDLE_MOVE_SPEED, 1));   // 走路交给核心层 MoveToTargetSink ✓
+        }
+
+        /** 半径 {@link MomoConst#WANDER_RADIUS} 内最近的格赫罗斯残骸/矿石（只认这两种 ✓ 原逻辑原样 ✓） */
+        private static ItemEntity nearestCurrency(ServerLevel level, MomoMerchant mob) {
+            ItemEntity best = null;
+            double bestD = WANDER_RADIUS * WANDER_RADIUS;
+            for (ItemEntity ie : level.getEntitiesOfClass(ItemEntity.class,
+                    mob.getBoundingBox().inflate(WANDER_RADIUS), e -> e.isAlive() && !e.getItem().isEmpty())) {
+                ItemStack stack = ie.getItem();
+                if (!stack.is(ModItems.GHELOTH_REMAINS.get()) && !stack.is(ModItems.GHELOTH_ORE.get())) continue;
+                double d = mob.distanceToSqr(ie);
+                if (d < bestD) {
+                    bestD = d;
+                    best = ie;
+                }
+            }
+            return best;
         }
     }
 
@@ -521,6 +536,9 @@ public class MomoMerchant extends PathfinderMob
      */
     private static final class MomoStrollNearHome extends Behavior<MomoMerchant> {
 
+        /** 走完一段歇 100~240 tick（5~12s），与原 `wanderTimer = 100 + rand(140)` 一致 ✓ */
+        private int pause = 0;
+
         MomoStrollNearHome() {
             super(ImmutableMap.of(MemoryModuleType.WALK_TARGET, MemoryStatus.VALUE_ABSENT));
         }
@@ -528,16 +546,23 @@ public class MomoMerchant extends PathfinderMob
         @Override
         protected boolean checkExtraStartConditions(ServerLevel level, MomoMerchant mob) {
             if (mob.hired || mob.getTarget() != null) return false;
-            if (level.getNearestPlayer(mob, 2.5) != null) return false;
-            return mob.pickStrollTarget() != null;
+            // 2.5 格内有玩家 ⇒ 站定待客（原 tickIdle 里那条 ✓）
+            return level.getNearestPlayer(mob, 2.5) == null;
         }
 
         @Override
         protected void start(ServerLevel level, MomoMerchant mob, long gameTime) {
-            BlockPos goal = mob.pickStrollTarget();
-            if (goal != null) {
-                mob.getBrain().setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(goal, IDLE_MOVE_SPEED, 1));
+            if (this.pause > 0) {          // 歇够了再选下一个目标 ✓（原 wanderTimer ✓）
+                this.pause--;
+                return;
             }
+            BlockPos goal = mob.pickStrollTarget();
+            if (goal == null) {
+                this.pause = 60;           // 找不到可走的目标：3 秒后再试 ✓（原逻辑 ✓）
+                return;
+            }
+            this.pause = 100 + mob.getRandom().nextInt(140);
+            mob.getBrain().setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(goal, IDLE_MOVE_SPEED, 1));
         }
     }
 
@@ -553,14 +578,25 @@ public class MomoMerchant extends PathfinderMob
         }
     }
 
-    /** 家（生成点）半径 {@link MomoConst#WANDER_RADIUS} 内随机取一个能站的目标格 ✓（旧 `tickWanderPath` 同思路 ✓） */
+    /**
+     * 游走目标（**逐条对齐旧 `tickWanderPath` ✓**）：
+     * 16 格内有玩家 ⇒ 锚点 = 那个玩家、半径 **6**；否则锚点 = 生成点、半径 **{@link MomoConst#WANDER_RADIUS}(20)** ✓；
+     * 随机角度+半径取点、8 次尝试、用 `ascendToReachable` 抬到能站的高度 ✓（原逻辑用的就是它，不是 groundCell ✗）。
+     */
     BlockPos pickStrollTarget() {
-        BlockPos anchor = homePos != null ? homePos : this.blockPosition();
-        int r = (int) WANDER_RADIUS;
-        for (int i = 0; i < 10; i++) {
-            BlockPos p = anchor.offset(this.random.nextInt(r * 2 + 1) - r, 0, this.random.nextInt(r * 2 + 1) - r);
-            BlockPos g = groundCell(p);
-            if (g != null) return g;
+        if (homePos == null) homePos = this.blockPosition();
+        Player near = this.level().getNearestPlayer(this, 16.0);
+        BlockPos center = near != null ? near.blockPosition() : homePos;
+        double radius = near != null ? 6.0 : WANDER_RADIUS;
+        for (int tries = 0; tries < 8; tries++) {
+            double angle = this.random.nextDouble() * Math.PI * 2.0;
+            double r = this.random.nextDouble() * radius;
+            BlockPos col = new BlockPos(
+                    center.getX() + (int) Math.round(Math.cos(angle) * r),
+                    this.blockPosition().getY(),
+                    center.getZ() + (int) Math.round(Math.sin(angle) * r));
+            BlockPos goal = ascendToReachable(col);
+            if (goal != null) return goal;
         }
         return null;
     }
