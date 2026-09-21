@@ -56,6 +56,29 @@ public final class ToolHelper {
     }
 
     /**
+     * 查询匠魂工具上某修饰符的等级 —— <b>无视破损（{@code tic_broken}）状态</b>。
+     * <p>
+     * ⚠️ <b>只给"专门用来修破损工具"的逻辑用</b>：当前唯一调用者是灵魂修复
+     * {@code SoulRepairHandler}（破损工具必须先读到 soul_repair 等级才谈得上修它）。
+     * 其余一切特性一律继续走 {@link #getActiveModifierLevel}（用户口径：破损即失效）。
+     * <p>
+     * 源码依据：TCon 的 {@code IToolContext.getModifierLevel(ModifierId)}
+     * 就是 {@code getModifiers().getLevel(id)} —— 纯 NBT 读取、<b>完全不看 tic_broken</b>
+     * （{@code TConstruct-1.20.1-3.11.2.166-sources.jar} →
+     * {@code slimeknights/tconstruct/library/tools/nbt/IToolContext.java:96-98}）。
+     * 即"破损即失效"是本模组在 {@link #getActiveModifierLevel} 里<b>自己加的闸口</b>，
+     * 不是 TCon 的行为。
+     *
+     * @param tool 已解析的 ToolStack（可为 null）
+     * @param id   修饰符 id
+     * @return 等级；工具为 null / 没有该修饰符时返回 0（<b>破损不影响</b>）
+     */
+    public static int getModifierLevelIgnoringBroken(@Nullable IToolStackView tool, ModifierId id) {
+        if (tool == null || id == null) return 0;
+        return tool.getModifierLevel(id);
+    }
+
+    /**
      * 从攻击伤害源获取攻击者使用的匠魂战斗工具。
      * <p>
      * 统一处理近战（主手）与弹射物（弓/弩/标枪等，经 {@link ProjectileWeaponHelper}）两条路径，
