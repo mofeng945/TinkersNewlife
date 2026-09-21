@@ -90,6 +90,14 @@ public class MomoTalkScreen extends Screen {
     private static final int TEX_W = 363;
     private static final int TEX_H = 800;
 
+    /**
+     * 立绘大小（**要调只改这两个数** ✓）：
+     * 高 = 屏幕高 × {@code PORTRAIT_H_RATIO} ✓；宽再受 {@code PORTRAIT_W_RATIO} 限制（窄窗口时防挤压文字区 ✓）。
+     * 用户口径：原来 0.78 太大、「只显示不到半张脸」⇒ 现在 0.62（宽度上限 28%）。
+     */
+    private static final float PORTRAIT_H_RATIO = 0.62F;
+    private static final float PORTRAIT_W_RATIO = 0.28F;
+
     /** 开场白的表情（每好感档一个 ✓） */
     private static final int[] GREET_EXPR = { 0, 0, 1, 2, 3, 4 };
 
@@ -125,6 +133,7 @@ public class MomoTalkScreen extends Screen {
     private int hoverEntry = -1;             // 选项页悬停的那条（用来预览表情 ✓）
 
     private int panelX, panelW;              // 左侧文字区（右侧留给立绘）
+    private int portraitW, portraitH;        // init() 里算好的立绘尺寸 ✓
     private int listY, listH;
     private int backX, backY;
     private int tailY;                       // 尖角竖直位置（跟着当前气泡算 ✓）
@@ -160,7 +169,14 @@ public class MomoTalkScreen extends Screen {
     @Override
     protected void init() {
         super.init();
-        int portraitW = Math.min((int) (this.width * 0.42F), 420);   // 立绘占右侧约 42% 宽
+        // 立绘尺寸：先按屏幕高算，再受屏幕宽上限约束（两层限制都留着 ⇒ 窄窗口也不会把文字区挤没 ✓）
+        portraitH = (int) (this.height * PORTRAIT_H_RATIO);
+        portraitW = Math.max(1, Math.round(TEX_W * (portraitH / (float) TEX_H)));
+        int cap = (int) (this.width * PORTRAIT_W_RATIO);
+        if (portraitW > cap) {
+            portraitW = Math.max(1, cap);
+            portraitH = Math.max(1, Math.round(TEX_H * (portraitW / (float) TEX_W)));
+        }
         panelX = 24;
         panelW = Math.max(200, this.width - portraitW - 48);
         listY = (int) (this.height * 0.30F);
@@ -211,8 +227,8 @@ public class MomoTalkScreen extends Screen {
         try {
             ResourceLocation rl = new ResourceLocation(TinkersNewlife.MOD_ID,
                     "textures/gui/momo/" + PORTRAIT[Math.max(0, Math.min(PORTRAIT.length - 1, expr))] + ".png");
-            int targetH = (int) (this.height * 0.78F);
-            int targetW = Math.max(1, Math.round(TEX_W * (targetH / (float) TEX_H)));
+            int targetH = portraitH > 0 ? portraitH : (int) (this.height * PORTRAIT_H_RATIO);
+            int targetW = portraitW > 0 ? portraitW : Math.max(1, Math.round(TEX_W * (targetH / (float) TEX_H)));
             int x = this.width - targetW - 16;
             int y = this.height - targetH;
             // 11 参 blit：源 = 整张贴图，目标 = 按屏高等比 ⇒ 不再有失真 ✓
