@@ -17,13 +17,15 @@ import net.minecraft.network.chat.Component;
  */
 public class MomoMenuScreen extends Screen {
 
-    private static final int PANEL_W = 200;
-    private static final int PANEL_H = 160;
+    private static final int PANEL_W = 190;
+    private static final int PANEL_H = 158;
     private static final int BTN_H = 22;
+    private static final int GAP = 8;
 
     private final int momoId;
     private final int favor;
     private int hovered = -1;
+    private int panelX, panelY;
 
     public MomoMenuScreen(int momoId, int favor) {
         super(Component.translatable("menu.tinkersnewlife.momo"));
@@ -31,12 +33,17 @@ public class MomoMenuScreen extends Screen {
         this.favor = favor;
     }
 
-    private int left() { return (this.width - PANEL_W) / 2; }
+    /** 面板靠**左侧可**用区域居中（右侧给立绘让位 ✓ 用户口径：「进入菜单界面也显示立绘」） */
+    private int availW() {
+        return Math.max(PANEL_W + 8, this.width - MomoArt.portraitWidth(this.width, this.height) - 24);
+    }
+
+    private int left() { return (availW() - PANEL_W) / 2; }
     private int top() { return (this.height - PANEL_H) / 2; }
-    private int btnX() { return left() + 20; }
-    private int btnY(int i) { return top() + 36 + i * (BTN_H + 6); }
-    private int btnW() { return PANEL_W - 40; }
-    private int backX() { return left() + PANEL_W - 62; }
+    private int btnX() { return left() + 16; }
+    private int btnY(int i) { return top() + 42 + i * (BTN_H + GAP); }
+    private int btnW() { return PANEL_W - 32; }
+    private int backX() { return left() + PANEL_W - 56; }
     private int backY() { return top() + PANEL_H - 26; }
 
     private boolean canTalk() { return favor >= 0; }
@@ -69,27 +76,35 @@ public class MomoMenuScreen extends Screen {
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(graphics);
+        graphics.fill(0, 0, this.width, this.height, 0x99000000);          // 压暗背景（和对话界面一致 ✓）
+        MomoArt.portrait(graphics, MomoArt.exprForFavor(favor), this.width, this.height);   // 立绘随好感变脸 ✓
+
         int x = left();
         int y = top();
-        graphics.fill(x, y, x + PANEL_W, y + PANEL_H, 0xFFC6C6C6);
-        graphics.fill(x, y, x + PANEL_W, y + 17, 0xFF404040);
-        graphics.drawString(this.font, "墨默", x + 8, y + 5, 0xFFFFFF, false);
-        graphics.drawString(this.font, "好感度 " + favor, x + 8, y + 21, 0xFF303030, false);
+        MomoArt.nine(graphics, MomoArt.BUBBLE, x, y, PANEL_W, PANEL_H);     // 面板 = 气泡九宫格 ✓
+        graphics.drawString(this.font, "墨默", x + 14, y + 12, 0x202020, false);
+        graphics.drawString(this.font, "好感度 " + favor, x + 14, y + 26, 0x505050, false);
+        graphics.fill(x + 12, y + 38, x + PANEL_W - 12, y + 39, 0x558C7F63);
 
         hovered = -1;
         for (int i = 0; i <= 2; i++) {
             boolean on = enabled(i);
             boolean hov = on && hovering(btnX(), btnY(i), btnW(), BTN_H, mouseX, mouseY);
             if (hov) hovered = i;
-            graphics.fill(btnX(), btnY(i), btnX() + btnW(), btnY(i) + BTN_H,
-                    !on ? 0xFF4A4A4A : (hov ? 0xFF8FA8D8 : 0xFF6E6E6E));
+            MomoArt.nine(graphics, MomoArt.OPTION, btnX(), btnY(i), btnW(), BTN_H);
+            if (!on) {
+                graphics.fill(btnX() + 2, btnY(i) + 2, btnX() + btnW() - 2, btnY(i) + BTN_H - 2, 0x55202020);
+            } else if (hov) {
+                graphics.fill(btnX() + 2, btnY(i) + 2, btnX() + btnW() - 2, btnY(i) + BTN_H - 2, 0x33FFFFFF);
+            }
             String s = label(i);
             graphics.drawString(this.font, s, btnX() + (btnW() - this.font.width(s)) / 2, btnY(i) + 7,
-                    on ? 0x202020 : 0xFF7A7A7A, false);
+                    on ? 0x202020 : 0xFF6A6A6A, false);
         }
-        boolean backHov = hovering(backX(), backY(), 54, 18, mouseX, mouseY);
-        graphics.fill(backX(), backY(), backX() + 54, backY() + 18, backHov ? 0xFF8FA8D8 : 0xFF6E6E6E);
-        graphics.drawString(this.font, "回退", backX() + 27 - this.font.width("回退") / 2, backY() + 5, 0x202020, false);
+        boolean backHov = hovering(backX(), backY(), 44, 18, mouseX, mouseY);
+        MomoArt.nine(graphics, MomoArt.OPTION, backX(), backY(), 44, 18);
+        if (backHov) graphics.fill(backX() + 2, backY() + 2, backX() + 42, backY() + 16, 0x33FFFFFF);
+        graphics.drawString(this.font, "回退", backX() + 22 - this.font.width("回退") / 2, backY() + 5, 0x202020, false);
     }
 
     /** 真正干活的地方（鼠标 / 键盘共用 ✓ 只此一处 ✓ 便于确认到底有没有被调用 ✓） */
@@ -116,7 +131,7 @@ public class MomoMenuScreen extends Screen {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0) {
-            if (hovering(backX(), backY(), 54, 18, mouseX, mouseY)) {
+            if (hovering(backX(), backY(), 44, 18, mouseX, mouseY)) {
                 click(3);
                 return true;
             }

@@ -83,31 +83,7 @@ public class MomoTalkScreen extends Screen {
             }
     };
 
-    /** 六张立绘（实测全是 363×800 ⇒ 统一常量；`blit` 缩放要显式给纹理尺寸 ✓） */
-    private static final String[] PORTRAIT = {
-            "momo_normal", "momo_happy", "momo_blush", "momo_awkward", "momo_surprised", "momo_disgust"
-    };
-    private static final int TEX_W = 363;
-    private static final int TEX_H = 800;
-
-    /**
-     * 立绘大小（**要调只改这两个数** ✓）：
-     * 高 = 屏幕高 × {@code PORTRAIT_H_RATIO} ✓；宽再受 {@code PORTRAIT_W_RATIO} 限制（窄窗口时防挤压文字区 ✓）。
-     * 用户口径：原来 0.78 太大、「只显示不到半张脸」⇒ 现在 0.62（宽度上限 28%）。
-     */
-    private static final float PORTRAIT_H_RATIO = 0.62F;
-    private static final float PORTRAIT_W_RATIO = 0.28F;
-
-    /**
-     * **没悬停任何选项时**露哪张脸（= 开场白对应的表情，每好感档一个 ✓）。
-     *
-     * <p>⚠️ 这里**只放"寒暄该有的脸"**：平静 / 开心 / 脸红 ✓
-     * —— 之前写成 `{0,0,1,2,3,4}`，40 档是**尴尬**、50 档是**惊讶**，跟问候语完全不搭
-     * （用户：「为什么常态是惊讶」✗ ⇒ 已改）。尴尬 / 惊讶 / 嫌恶只留给**具体某条回答**（见下面的 EXPR ✓）。</p>
-     */
-    private static final int[] GREET_EXPR = { 0, 0, 1, 2, 1, 1 };
-
-    /** **逐条对话**的表情：[档位][该档第几条问题] ⇒ PORTRAIT 下标（N=平静 H=开心 B=脸红 A=尴尬 S=吃惊 D=嫌恶 ✓） */
+    /** 逐条对话的表情：[档位][该档第几条问题] ⇒ {@link MomoArt} 的表情下标 ✓ */
     private static final int[][] EXPR = {
             { 0, 0, 3 },   // 自我介绍 N / 地点 N / 变故 A
             { 1, 2, 3 },   // 圣女 H / 喜好 B / 世界 A
@@ -117,12 +93,10 @@ public class MomoTalkScreen extends Screen {
             { 0, 3, 0 }    // 计划 N / 真相 A / 未来 N
     };
 
-    /** 九宫格气泡（自绘纯色版 ✓ 手绘同路径同名即可替换 ✓） */
-    private static final ResourceLocation BUBBLE = new ResourceLocation(TinkersNewlife.MOD_ID, "textures/gui/momo/bubble_momo.png");
-    private static final ResourceLocation OPTION = new ResourceLocation(TinkersNewlife.MOD_ID, "textures/gui/momo/bubble_option.png");
-    private static final int NINE = 19;      // 贴图边长
-    private static final int RADIUS = 9;     // 圆角半径（= 四角切片大小 ✓）
-    private static final int PAD = 9;        // 气泡内边距
+    /** 九宫格气泡（自绘纯色版 ✓ 手绘同路径同名即可替换 ✓）—— 真身在 {@link MomoArt} ✓ 两屏共用 */
+    private static final ResourceLocation BUBBLE = MomoArt.BUBBLE;
+    private static final ResourceLocation OPTION = MomoArt.OPTION;
+    private static final int PAD = MomoArt.PAD;      // 气泡内边距
     private static final int ROW_H = 24;
 
     private record Entry(String q, String a, int tier, int expr) {}
@@ -175,14 +149,10 @@ public class MomoTalkScreen extends Screen {
     @Override
     protected void init() {
         super.init();
-        // 立绘尺寸：先按屏幕高算，再受屏幕宽上限约束（两层限制都留着 ⇒ 窄窗口也不会把文字区挤没 ✓）
-        portraitH = (int) (this.height * PORTRAIT_H_RATIO);
-        portraitW = Math.max(1, Math.round(TEX_W * (portraitH / (float) TEX_H)));
-        int cap = (int) (this.width * PORTRAIT_W_RATIO);
-        if (portraitW > cap) {
-            portraitW = Math.max(1, cap);
-            portraitH = Math.max(1, Math.round(TEX_H * (portraitW / (float) TEX_W)));
-        }
+        // 立绘尺寸（MomoArt 统一算 ✓）
+        int[] ps = MomoArt.portraitSize(this.width, this.height);
+        portraitW = ps[0];
+        portraitH = ps[1];
         panelX = 24;
         panelW = Math.max(200, this.width - portraitW - 48);
         listY = (int) (this.height * 0.30F);
@@ -202,57 +172,23 @@ public class MomoTalkScreen extends Screen {
         if (page > 0 && reveal < answerText.length()) reveal = Math.min(answerText.length(), reveal + 1.5F);
     }
 
-    /**
-     * 九宫格拼装（半径 9 / 19×19 ✓ 中间 1 行/列拉伸 ✓）。
-     *
-     * <p><b>必须用 11 参 `blit`</b>：`(rl, x, y, 宽, 高, u, v, 源宽, 源高, 贴图宽, 贴图高)` ——
-     * 源尺寸与目标尺寸**解耦** ✓。9 参那个（`(rl,x,y,float u,float v,w,h,texW,texH)`）内部把
-     * `uWidth = 目标宽`，是 **1:1** 取样 ⇒ 拿它拉伸会取样越界、被钳成一条边 ⇒ 画出一排圆点（踩过 ✗）。</p>
-     */
+    /** 九宫格（真身在 {@link MomoArt} ✓） */
     private void nine(GuiGraphics g, ResourceLocation tex, int x, int y, int w, int h) {
-        int r = RADIUS, t = NINE;
-        w = Math.max(w, r * 2 + 2);
-        h = Math.max(h, r * 2 + 2);
-        int mw = w - r * 2, mh = h - r * 2;
-        // 四角 1:1
-        g.blit(tex, x, y, r, r, 0F, 0F, r, r, t, t);
-        g.blit(tex, x + w - r, y, r, r, (float) (t - r), 0F, r, r, t, t);
-        g.blit(tex, x, y + h - r, r, r, 0F, (float) (t - r), r, r, t, t);
-        g.blit(tex, x + w - r, y + h - r, r, r, (float) (t - r), (float) (t - r), r, r, t, t);
-        // 四边：取中间那 1 像素拉伸
-        g.blit(tex, x + r, y, mw, r, (float) r, 0F, 1, r, t, t);
-        g.blit(tex, x + r, y + h - r, mw, r, (float) r, (float) (t - r), 1, r, t, t);
-        g.blit(tex, x, y + r, r, mh, 0F, (float) r, r, 1, t, t);
-        g.blit(tex, x + w - r, y + r, r, mh, (float) (t - r), (float) r, r, 1, t, t);
-        // 中心 1×1 拉伸
-        g.blit(tex, x + r, y + r, mw, mh, (float) r, (float) r, 1, 1, t, t);
+        MomoArt.nine(g, tex, x, y, w, h);
     }
 
-    /** @param expr PORTRAIT 下标（逐条对话各不相同 ✓） */
+    /** @param expr {@link MomoArt} 表情下标（逐条对话各不相同 ✓） */
     private void renderPortrait(GuiGraphics g, int expr) {
-        try {
-            ResourceLocation rl = new ResourceLocation(TinkersNewlife.MOD_ID,
-                    "textures/gui/momo/" + PORTRAIT[Math.max(0, Math.min(PORTRAIT.length - 1, expr))] + ".png");
-            int targetH = portraitH > 0 ? portraitH : (int) (this.height * PORTRAIT_H_RATIO);
-            int targetW = portraitW > 0 ? portraitW : Math.max(1, Math.round(TEX_W * (targetH / (float) TEX_H)));
-            int x = this.width - targetW - 16;
-            int y = this.height - targetH;
-            // 11 参 blit：源 = 整张贴图，目标 = 按屏高等比 ⇒ 不再有失真 ✓
-            g.blit(rl, x, y, targetW, targetH, 0F, 0F, TEX_W, TEX_H, TEX_W, TEX_H);
-            // 气泡尖角：指向立绘方向的纯色小三角（不用贴图，随气泡颜色）
-            for (int i = 0; i < 8; i++) {
-                g.fill(panelX + panelW + i, tailY - (8 - i) / 2, panelX + panelW + i + 1, tailY + (8 - i) / 2 + 1, 0xFFF7F3E7);
-            }
-        } catch (Throwable ignored) {
-            // 立绘缺失不该让整个界面崩 ⇒ 静默降级为纯气泡
-        }
+        MomoArt.portrait(g, expr, this.width, this.height);
+        // 气泡尖角：指向立绘方向（颜色 = 气泡米色 ✓）
+        MomoArt.tail(g, panelX + panelW, tailY, 0xFFF7F3E7);
     }
 
-    /** 当前该露哪张脸：看回答 ⇒ 那条回答自己的表情；在选项页 ⇒ 悬停预览那条，没悬停就是开场白的 ✓ */
+    /** 当前该露哪张脸：看回答 ⇒ 那条回答自己的表情；在选项页 ⇒ 悬停预览那条，没悬停就是该好感档的默认脸 ✓ */
     private int currentExpr() {
         if (page > 0) return entries.get(page - 1).expr();
         if (hoverEntry >= 0 && hoverEntry < entries.size()) return entries.get(hoverEntry).expr();
-        return GREET_EXPR[tierIndex()];
+        return MomoArt.exprForFavor(favor);
     }
 
     @Override
