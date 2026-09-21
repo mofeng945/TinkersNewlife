@@ -1,8 +1,13 @@
 package com.mofengbaizhi.tinkersnewlife.client.screen;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FormattedCharSequence;
+
+import java.util.List;
 
 /**
  * 墨默的**美术零件**：立绘 + 九宫格气泡 + 好感度→表情 的**唯一数据源** ✓。
@@ -152,5 +157,64 @@ public final class MomoArt {
         for (int i = 0; i < 8; i++) {
             g.fill(x + i, tailY - (8 - i) / 2, x + i + 1, tailY + (8 - i) / 2 + 1, color);
         }
+    }
+
+    // ============================================================
+    //  统一文字/配色（对话·交易·雇佣·菜单 **四个界面共用** ✓ §497 用户口径"都改成相同风格"）
+    // ============================================================
+
+    /** 字号缩放（**不加粗、不打阴影** ✓ §495/§496 用户口径） */
+    public static final float TEXT_SCALE = 1.25F;
+    public static final int LINE_H = Math.round(10 * TEXT_SCALE);
+
+    public static final int TEXT_DARK = 0x202020;
+    public static final int MOMO_TEXT = 0x2B2118;      // 她的话：暖色
+    public static final int PLAYER_TEXT = 0x1C2430;    // 你的话：冷色
+    public static final int HINT_TEXT = 0xDDDDDD;
+    public static final int MOMO_TINT = 0x1CFFD9A0;
+    public static final int PLAYER_TINT = 0x2E8FB8E8;
+    public static final int HOVER_TINT = 0x33FFFFFF;
+    public static final int DISABLED_TINT = 0x55202020;
+    public static final int DISABLED_TEXT = 0xFF6A6A6A;
+    public static final int BUBBLE_FILL = 0xFFF7F3E7;
+
+    /** 统一压暗背景 ✓ */
+    public static void dim(GuiGraphics g, int screenW, int screenH) {
+        g.fill(0, 0, screenW, screenH, 0x99000000);
+    }
+
+    /** 统一画文字（缩放、不阴影、不删边 ✓） */
+    public static void text(GuiGraphics g, Font font, String s, int x, int y, int color) {
+        g.pose().pushPose();
+        g.pose().scale(TEXT_SCALE, TEXT_SCALE, 1F);
+        g.drawString(font, s, Math.round(x / TEXT_SCALE), Math.round(y / TEXT_SCALE), color, false);
+        g.pose().popPose();
+    }
+
+    public static void text(GuiGraphics g, Font font, FormattedCharSequence seq, int x, int y, int color) {
+        g.pose().pushPose();
+        g.pose().scale(TEXT_SCALE, TEXT_SCALE, 1F);
+        g.drawString(font, seq, Math.round(x / TEXT_SCALE), Math.round(y / TEXT_SCALE), color, false);
+        g.pose().popPose();
+    }
+
+    /** 屏上实际字宽（含缩放 ✓ 用来居中/自适应气泡 ✓） */
+    public static int textWidth(Font font, String s) {
+        return Math.round(font.width(s) * TEXT_SCALE);
+    }
+
+    /** 按缩放反算的换行 ✓ */
+    public static List<FormattedCharSequence> wrap(Font font, String s, int maxScreenW) {
+        return font.split(Component.literal(s), Math.max(40, (int) (maxScreenW / TEXT_SCALE)));
+    }
+
+    /** 立绘左边留给 UI 的宽度（四个界面统一口径 ✓） */
+    public static int panelWidth(int screenW, int screenH) {
+        return Math.max(200, screenW - portraitWidth(screenW, screenH) - 48);
+    }
+
+    /** 气泡宽度上限 = 空白区 2/3 ✓（用户口径 §492） */
+    public static int bubbleMaxW(int panelW) {
+        return Math.max(150, panelW * 2 / 3);
     }
 }

@@ -118,7 +118,7 @@ public class MomoMenuScreen extends Screen {
         if (action == 0) {
             String name = this.minecraft != null && this.minecraft.player != null
                     ? this.minecraft.player.getGameProfile().getName() : "";
-            this.setScreenCompat(new MomoTalkScreen(favor, name));
+            this.setScreenCompat(new MomoTalkScreen(momoId, favor, name));
         } else {
             this.onClose();      // 交易/雇佣：交给服务端开交易界面 ✓ 先把菜单关掉 ✓
         }

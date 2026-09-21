@@ -76,6 +76,11 @@ public class PacketMomoMenuAction {
                     player.closeContainer();
                     PacketMomoMenuOpen.sendHire(player, momo.getId());
                 }
+                case 4 -> {
+                    // §497 **回菜单**（用户口径：三个子界面回退应当回上一级菜单，而不是直接关 GUI ✗）
+                    // 由服务端重发菜单包 ⇒ 顺带把**最新好感**带上（交易/雇佣后好感会变 ✓ 本地那份是旧的 ✗）
+                    PacketMomoMenuOpen.sendMenu(player, momo.getId());
+                }
                 default -> {
                     // 回退 / 未知：什么都不做
                 }

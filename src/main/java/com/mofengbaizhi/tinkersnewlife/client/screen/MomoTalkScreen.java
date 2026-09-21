@@ -124,6 +124,7 @@ public class MomoTalkScreen extends Screen {
     private record Entry(String q, String a, int tier, int expr) {}
 
     private final int favor;
+    private final int momoId;                // §497 回菜单要用 ✓
     private final String playerName;
     private final List<Entry> entries = new ArrayList<>();
 
@@ -146,8 +147,9 @@ public class MomoTalkScreen extends Screen {
     private int backX, backY;
     private int tailY;                       // 尖角竖直位置（跟着当前气泡算 ✓）
 
-    public MomoTalkScreen(int favor, String playerName) {
+    public MomoTalkScreen(int momoId, int favor, String playerName) {
         super(Component.translatable("menu.tinkersnewlife.momo"));
+        this.momoId = momoId;
         this.favor = favor;
         this.playerName = playerName == null ? "" : playerName;
         for (int t = 0; t < TIER.length; t++) {
@@ -457,6 +459,16 @@ public class MomoTalkScreen extends Screen {
         relayout();
     }
 
+    /**
+     * §497 回**上一级（主菜单）** —— 用户口径：「每个菜单回退不应该回到上一级菜单吗？为什么直接关 GUI」✗
+     * 让服务端重发菜单包（顺带把**最新好感**带上 ✓ 本地那份是打开时的旧快照 ✗），然后关掉本屏 ✓。
+     */
+    private void backToMenu() {
+        com.mofengbaizhi.tinkersnewlife.TinkersNewlife.CHANNEL.sendToServer(
+                new com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoMenuAction(momoId, 4));
+        this.onClose();
+    }
+
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
         if (page == 0 && maxScroll > 0) {
@@ -471,7 +483,7 @@ public class MomoTalkScreen extends Screen {
         if (button == 0) {
             if (hovering(backX, backY, 90, 20, mouseX, mouseY)) {
                 if (page > 0) goToList();
-                else this.onClose();
+                else backToMenu();                  // §497：选项页的回退 = 回主菜单 ✓（不再直接关 GUI ✗）
                 return true;
             }
             if (page == 0) {
