@@ -81,6 +81,9 @@ public class MomoHireScreen extends Screen {
         return false;
     }
 
+    /** §501 打开雇佣界面时她说的话（用户指定 ✓） */
+    private static final String HELLO = "需要我帮忙吗？我出手可不便宜哦？";
+
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(graphics);
@@ -89,6 +92,13 @@ public class MomoHireScreen extends Screen {
 
         int x = left();
         int y = top();
+
+        // §501 开场白气泡：右缘 = 面板右缘 ⇒ 尖角指向她 ✓ 摆在面板**上方** ✓
+        int sayH = MomoArt.sayHeight(this.font, HELLO, PANEL_W);
+        int[] box = MomoArt.sayRight(graphics, this.font, left() + PANEL_W, Math.max(6, y - 12 - sayH), HELLO, PANEL_W);
+        int tailY = Math.max(box[1] + 8, Math.min(box[1] + box[3] - 8, MomoArt.faceY(this.width, this.height)));
+        MomoArt.tail(graphics, left() + PANEL_W, tailY, MomoArt.BUBBLE_FILL);
+
         MomoArt.nine(graphics, MomoArt.BUBBLE, x, y, PANEL_W, PANEL_H);      // 面板 = 同一套九宫格 ✓
         MomoArt.text(graphics, this.font, "雇佣墨默", x + 14, y + 10, MomoArt.TEXT_DARK);
         MomoArt.text(graphics, this.font, "好感度 " + favor, x + 14, y + 10 + MomoArt.LINE_H + 2, 0x505050);

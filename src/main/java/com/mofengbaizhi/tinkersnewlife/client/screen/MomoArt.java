@@ -217,4 +217,38 @@ public final class MomoArt {
     public static int bubbleMaxW(int panelW) {
         return Math.max(150, panelW * 2 / 3);
     }
+
+    /**
+     * 画一段**她说的话**的气泡（右对齐到 {@code rightX} ✓ §501 交易/雇佣界面开场白用）。
+     *
+     * @return {左缘X, 顶Y, 宽, 高} —— 尖角按它对齐 ✓
+     */
+    public static int[] sayRight(GuiGraphics g, Font font, int rightX, int y, String text, int maxW) {
+        List<FormattedCharSequence> lines = wrap(font, text, Math.max(60, maxW - PAD * 2));
+        int w = Math.min(maxW, maxLineWidth(font, lines) + PAD * 2);
+        int h = lines.size() * LINE_H + PAD * 2;
+        int x = rightX - w;
+        nine(g, BUBBLE, x, y, w, h);
+        g.fill(x + 2, y + 2, x + w - 2, y + h - 2, MOMO_TINT);
+        int ly = y + PAD;
+        for (FormattedCharSequence line : lines) {
+            text(g, font, line, x + PAD, ly, MOMO_TEXT);
+            ly += LINE_H;
+        }
+        return new int[] { x, y, w, h };
+    }
+
+    /** 这段话说出来会占多高（用来把它摆在面板上方 ✓） */
+    public static int sayHeight(Font font, String text, int maxW) {
+        return wrap(font, text, Math.max(60, maxW - PAD * 2)).size() * LINE_H + PAD * 2;
+    }
+
+    /** 换行后最宽那行的屏上宽度 ✓ */
+    public static int maxLineWidth(Font font, List<FormattedCharSequence> lines) {
+        int max = 0;
+        for (FormattedCharSequence l : lines) {
+            max = Math.max(max, font.width(l));
+        }
+        return Math.round(max * TEXT_SCALE);
+    }
 }

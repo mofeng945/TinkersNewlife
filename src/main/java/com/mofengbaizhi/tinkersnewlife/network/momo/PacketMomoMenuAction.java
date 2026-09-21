@@ -70,6 +70,7 @@ public class PacketMomoMenuAction {
                     // 交易：关掉我们的菜单 ✓ 再让他原有的交易界面登场 ✓
                     player.closeContainer();
                     PacketMomoOpen.sendTo(player, momo);
+                    momo.playTradeVoice();      // §501 打开交易界面 → 播那句"闲置"的交易语音 ✓
                 }
                 case 2 -> {
                     // 雇佣：打开**独立的雇佣界面**（用户口径：两个界面分开 ✓ 天数 + 五种等价物在那边 ✓）

@@ -88,6 +88,9 @@ public class MomoTradeScreen extends Screen {
         return false;
     }
 
+    /** §501 打开交易界面时她说的话（用户指定 ✓） */
+    private static final String HELLO = "嗯……你好，有什么想要的吗？";
+
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(graphics);
@@ -97,6 +100,13 @@ public class MomoTradeScreen extends Screen {
         int x = left();
         int y = top();
         int h = panelH();
+
+        // §501 开场白气泡：右缘 = 面板右缘 ⇒ 尖角从这里指向她 ✓ 摆在面板**上方** ✓
+        int sayH = MomoArt.sayHeight(this.font, HELLO, PANEL_W);
+        int[] box = MomoArt.sayRight(graphics, this.font, left() + PANEL_W, Math.max(6, y - 12 - sayH), HELLO, PANEL_W);
+        int tailY = Math.max(box[1] + 8, Math.min(box[1] + box[3] - 8, MomoArt.faceY(this.width, this.height)));
+        MomoArt.tail(graphics, left() + PANEL_W, tailY, MomoArt.BUBBLE_FILL);
+
         MomoArt.nine(graphics, MomoArt.BUBBLE, x, y, PANEL_W, h);                            // 面板 = 同一套九宫格 ✓
         MomoArt.text(graphics, this.font, "墨默 · 交易", x + 14, y + 10, MomoArt.TEXT_DARK);
 

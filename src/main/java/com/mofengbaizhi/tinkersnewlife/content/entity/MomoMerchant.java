@@ -789,6 +789,19 @@ public class MomoMerchant extends PathfinderMob
     }
 
     /** 浜ゆ槗鎴愬姛锛氭挱鏀惧浐瀹?绌洪棽2"璇煶锛堟浛浠ｆ潙姘戦珮鍏村０锛夛紝鍙槻涓庤嚜韬繛缁挱鏀鹃噸鍙?*/
+    /**
+     * §501 打开**交易界面**时的招呼语音（用户口径：「播放那段已经闲置的交易语音」✓）。
+     * <p>为什么是"闲置"：原来这句在 {@code mobInteract} 里播，但右键早被 {@code MomoInteractHandler}
+     * 取消掉了（`EntityInteract` cancel）⇒ 那段代码**从来没执行过** ✗ ⇒ 现在由
+     * {@code PacketMomoMenuAction} case 1（真正打开交易界面那一刻）调用 ✓ 服务端播 ⇒ 位置音量正确 ✓。
+     */
+    public void playTradeVoice() {
+        if (level().isClientSide) return;
+        if (!voiceReady()) return;                 // 与其它语音防重叠 ✓
+        voicePlayed(VOICE_TIMINGS.trade);
+        this.playSound(ModSounds.MOMO_TRADE.get(), 1.0F, 1.0F);
+    }
+
     public void playTradeSuccessSound() {
         if (level().isClientSide) return;
         if (this.tickCount < tradeSuccessVoiceEnd) return;
