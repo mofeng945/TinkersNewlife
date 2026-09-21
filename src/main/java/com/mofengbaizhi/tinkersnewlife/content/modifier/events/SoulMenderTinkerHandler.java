@@ -28,7 +28,9 @@ import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+import slimeknights.tconstruct.library.tools.helper.ToolDamageUtil;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
+import slimeknights.tconstruct.library.tools.stat.ToolStats;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -45,7 +47,7 @@ import org.slf4j.LoggerFactory;
  * goety 原生修补器只认原版 {@code isDamageableItem} 物品（读写 NBT {@code Damage} 字段），
  * 匠魂耐久走 ToolStack，放进去会被当「不可修物品」弹出或白扣灵魂。本 handler 软依赖接管：
  * <ul>
- *   <li><b>放入</b>：玩家右击 soul_mender 且主手持<b>可用且耐久未满的匠魂工具/盔甲</b>
+ *   <li><b>放入</b>：玩家右击 soul_mender 且主手持<b>可用（含已破损 {@code tic_broken}）且耐久未满的匠魂工具/盔甲</b>
  *       （与 goety 原生一致，放入不看笼子）→ cancel goety 原交互，消耗主手 1 个，
  *       在修补器中心生成一个<b>{@link Display.ItemDisplay} 展示实体</b>承载该物品。
  *       ItemDisplay 无碰撞/无重力/无 AI：不会被方块挤飞、不参与物理，随区块存档保存
@@ -53,7 +55,11 @@ import org.slf4j.LoggerFactory;
  *   <li><b>修补</b>：服务端每 0.5 秒对登记中的修补器——若正下方有 CursedCage 且有灵魂则
  *       扣 {@code soulMenderCost} 灵魂（反射 {@code getSouls/decreaseSouls}），修 ToolStack 1 点耐久，
  *       并通过 {@code getSlot(0).set()} 写回展示实体（客户端同步可见）；
- *       笼子缺失/灵魂不足 → 悬浮等待不修。</li>
+ *       笼子缺失/灵魂不足 → 悬浮等待不修。
+ *       ⭐ <b>破损工具也修</b>（§517）：修复走 TCon 官方 {@link ToolDamageUtil#repair}，
+ *       其内部 {@code ToolStack.setDamage} 在 {@code damage < durability} 时会
+ *       {@code setBrokenRaw(false)} ⇒ <b>破损工具第一次被修即解除 {@code tic_broken}</b>，
+ *       之后继续修到耐久满为止（破损态 {@code getDamage()} 返回"满耐久"，见 ToolStack.java:376-384）。</li>
  *   <li><b>取回</b>：玩家右击 soul_mender（空手或同主手）时若该修补器有自己放下的展示物
  *       → 取出物品归还背包/主手，并移除展示实体。修完也可直接右键取回。</li>
  *   <li><b>修完/方块被拆</b>：取出物品转为普通可拾取掉落物（真实 ItemEntity，物理正常）。</li>
@@ -120,10 +126,13 @@ public class SoulMenderTinkerHandler {
 
         ItemStack held = player.getMainHandItem();
         ToolStack tool = ToolHelper.getToolStack(held);
+        // ⭐ §517：破损（tic_broken）工具<b>也能放进去修</b>。破损态 ToolStack.getDamage() 返回"满耐久"
+        //    （ToolStack.java:376-384）⇒ 只要去掉 isBroken 闸口，破损工具自然满足"有耐久缺口"；
+        //    held.getMaxDamage() 依然 > 0（破损时 ModifiableItem.getMaxDamage = durability+1，
+        //    见 ModifiableItem.java:215-217 与 ToolDamageUtil.java:54-55）⇒ 无需额外放行条件。
         boolean repairable = tool != null
-                && !tool.isBroken()
-                && tool.getDamage() > 0        // 耐久未满才需要修
-                && held.getMaxDamage() > 0;    // 有耐久概念
+                && (tool.isBroken() || tool.getDamage() > 0)   // 破损 或 耐久未满 才需要修
+                && held.getMaxDamage() > 0;                    // 有耐久概念
 
         // ① 放入优先：主手是可修匠魂工具 → 放进修补器
         if (repairable) {
@@ -172,16 +181,19 @@ public class SoulMenderTinkerHandler {
         }
 
         // ③ 匠魂工具但放不进去：给出原因提示（不 cancel，避免干扰 goety 原交互）
+        //   ⭐ §517：破损工具已归入 ①（放入即可修、修好顺手解除破损）⇒ 原来的 §c"工具已损坏，无法放入修复"
+        //     已是误导（且实际不可达），改成"物品没有耐久 / 已满耐久"两类真实原因；
+        //     破损分支只作"耐久统计异常"的兜底，不再宣称"破损就不能放"。
         if (tool != null) {
-            if (tool.isBroken()) {
+            if (held.getMaxDamage() <= 0) {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                        "§c[灵魂修补器] 工具已损坏，无法放入修复。"));
+                        "§7[灵魂修补器] 该物品没有耐久，无需修复。"));
+            } else if (tool.isBroken()) {
+                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                        "§7[灵魂修补器] 该工具已损坏但没有可修复的耐久统计，无法放入。"));
             } else if (tool.getDamage() <= 0) {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
                         "§7[灵魂修补器] 工具耐久已满，无需修复。"));
-            } else if (held.getMaxDamage() <= 0) {
-                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                        "§7[灵魂修补器] 该物品没有耐久，无需修复。"));
             }
         }
     }
@@ -310,7 +322,12 @@ public class SoulMenderTinkerHandler {
 
             ItemStack stack = display.getSlot(0).get();
             ToolStack tool = ToolHelper.getToolStack(stack);
-            if (tool == null || tool.isBroken() || tool.getDamage() <= 0) {
+            // ⭐ §517：破损工具<b>不再</b>在这里被当成"修完"弹出。破损态 getDamage() = 满耐久（ToolStack.java:376-384）
+            //    ⇒ 只有"未破损且无耐久缺口"才是真的修完；显式写 !isBroken() 是为了兜住
+            //    "破损 + 耐久统计 0"的退化组合（被误判成修完），同时另一处 DURABILITY 检查负责防"白扣灵魂"。
+            if (tool == null
+                    || tool.getStats().getInt(ToolStats.DURABILITY) <= 0   // 无耐久统计（理论不可达）：直接取出，避免每 0.5s 白扣灵魂
+                    || (!tool.isBroken() && tool.getDamage() <= 0)) {      // 修完：未破损且耐久已满
                 // 修完 → 完成粒子 + 取出物品转为普通掉落物（可拾取），移除展示实体
                 it.remove();
                 finishParticles(level, menderPos);
@@ -341,7 +358,11 @@ public class SoulMenderTinkerHandler {
 
             // 扣灵魂 + 修 1 点，写回展示实体（客户端物品渲染同步更新）
             cageDecreaseSouls(level, cagePos, cost);
-            tool.setDamage(tool.getDamage() - 1);
+            // ⭐ §517：改走 TCon 官方修复路径（Station/修复工具/§516 灵魂修复全都用它）。
+            //    内部 ToolStack.setDamage(damage - 1)，而 setDamage 在 damage < durability 时
+            //    setBrokenRaw(false)（ToolStack.java:404-414）⇒ 破损工具第一次被修就<b>顺手摘掉 tic_broken</b> ✓
+            //    （来源：ToolDamageUtil.java:173-189）
+            ToolDamageUtil.repair(tool, 1);
             tool.updateStack(stack);
             display.getSlot(0).set(stack);
             // 粒子/火焰音由每 tick 的 spinFloating 统一判定（与 goety tick() 同频），这里只修复
