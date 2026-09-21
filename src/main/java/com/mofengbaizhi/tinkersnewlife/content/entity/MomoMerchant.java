@@ -659,8 +659,7 @@ public class MomoMerchant extends PathfinderMob
             }
             return HireResult.ALREADY_HIRED;
         }
-        if (countItem(buyer, ModItems.RLYEH_CALL.get()) < 1) return HireResult.NO_ITEM;
-        consumeItem(buyer, ModItems.RLYEH_CALL.get(), 1);
+        if (!payHireCost(buyer, 1)) return HireResult.NO_ITEM;   // 用户口径 §455 C：走多货币优先级（求唤→30残骸→10矿石→50金锭→20钻石）
         employerId = buyer.getUUID();
         hireUntilTick = this.level().getGameTime() + HIRE_DURATION_TICKS; // 雇佣一个游戏日
         hired = true;

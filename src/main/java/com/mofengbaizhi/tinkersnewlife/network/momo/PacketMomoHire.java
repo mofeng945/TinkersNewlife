@@ -16,17 +16,21 @@ import java.util.function.Supplier;
 public class PacketMomoHire {
 
     private final int momoId;
+    private final int days;
 
-    public PacketMomoHire(int momoId) {
+    public PacketMomoHire(int momoId, int days) {
         this.momoId = momoId;
+        this.days = Math.max(1, Math.min(30, days));
     }
 
     public PacketMomoHire(FriendlyByteBuf buf) {
         this.momoId = buf.readInt();
+        this.days = Math.max(1, Math.min(30, buf.readInt()));
     }
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeInt(momoId);
+        buf.writeInt(days);
     }
 
     public static void handle(PacketMomoHire packet, Supplier<NetworkEvent.Context> ctx) {
@@ -37,7 +41,7 @@ public class PacketMomoHire {
                 player.displayClientMessage(Component.translatable("message.tinkersnewlife.momo.gone"), true);
                 return;
             }
-            MomoMerchant.HireResult result = momo.hireFrom(player);
+            MomoMerchant.HireResult result = momo.hireFrom(player, packet.days);   // 用户口径：雇 N 天 ✓
             switch (result) {
                 case HIRED -> {
                     momo.playTradeSuccessSound();

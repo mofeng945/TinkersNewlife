@@ -31,6 +31,9 @@ public class MomoTradeScreen extends Screen {
 
     private final int momoId;
     private final int favor;
+    /** 雇佣天数（−/＋ 选择 ✓ 1~30 ✓ 用户口径 §455 C ✓） */
+    private int hireDays = 1;
+    private int dayMinusX, dayPlusX;
     private boolean hired;
     private String employer;
     private final List<Row> rows = new ArrayList<>();
@@ -158,6 +161,13 @@ public class MomoTradeScreen extends Screen {
         graphics.drawString(font, price, hireX + 28, hireY + 24, 0xFFD76A);
         Component line2 = Component.translatable("screen.tinkersnewlife.momo.hire_cost");
         graphics.drawString(font, line2, hireX + 6, hireY + 40, 0xFFFFFF);
+        // ⭐ 雇佣天数选择（− / ＋ ✓ 1~30 ✓ 用户口径 §455 C）
+        dayMinusX = hireX + 34; dayPlusX = hireX + HIRE_W - 18;
+        graphics.drawString(font, ("×" + hireDays + " 天"), hireX + 50, hireY + 24, 0xFFD76A);
+        graphics.fill(dayMinusX, hireY + 20, dayMinusX + 12, hireY + 32, 0xFF5A4A6A);
+        graphics.fill(dayPlusX, hireY + 20, dayPlusX + 12, hireY + 32, 0xFF5A4A6A);
+        graphics.drawString(font, "−", dayMinusX + 3, hireY + 22, 0xFFFFFF);
+        graphics.drawString(font, "+", dayPlusX + 3, hireY + 22, 0xFFFFFF);
         // 状态
         String status;
         int color;
@@ -176,8 +186,17 @@ public class MomoTradeScreen extends Screen {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0) {
             // 雇佣栏
+            // 先判天数按钮（在雇佣栏内部 ✓ 要抢在整栏点击之前 ✓）
+            if (mouseX >= dayMinusX && mouseX <= dayMinusX + 12 && mouseY >= hireY + 20 && mouseY <= hireY + 32) {
+                hireDays = Math.max(1, hireDays - 1);
+                return true;
+            }
+            if (mouseX >= dayPlusX && mouseX <= dayPlusX + 12 && mouseY >= hireY + 20 && mouseY <= hireY + 32) {
+                hireDays = Math.min(30, hireDays + 1);
+                return true;
+            }
             if (mouseX >= hireX && mouseX <= hireX + HIRE_W && mouseY >= hireY && mouseY <= hireY + HIRE_H) {
-                TinkersNewlife.CHANNEL.sendToServer(new PacketMomoHire(momoId));
+                TinkersNewlife.CHANNEL.sendToServer(new PacketMomoHire(momoId, hireDays));   // 带上天数 ✓
                 return true;
             }
             // 商品行
