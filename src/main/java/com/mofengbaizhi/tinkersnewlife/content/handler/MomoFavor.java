@@ -37,6 +37,16 @@ public final class MomoFavor {
         return get(target);
     }
 
+    /**
+     * §509 **墨默眼中的好感度**：戴着双向认知阻碍面具 ⇒ **她也认不出你** ⇒ 一律按 **0**（中立价）✓
+     * （用户口径：「墨默也认不出」✓）。用在：服务端定价 + 发给客户端的界面好感快照 ✓
+     * —— 两边都用同一个值 ⇒ **界面显示与实际扣费永远一致** ✓。
+     */
+    public static int favorAsSeenByMomo(Player target) {
+        if (target == null) return 0;
+        return com.mofengbaizhi.tinkersnewlife.content.item.CognitiveMaskItem.isWorn(target) ? 0 : get(target);
+    }
+
     public static void set(Player player, int value) {
         if (player == null) return;
         player.getPersistentData().putInt(KEY, Math.max(MIN, Math.min(MAX, value)));

@@ -719,7 +719,7 @@ public class MomoMerchant extends PathfinderMob
         Offer offer = offers.get(slot);
         if (soldOf(slot) >= MAX_PER_DAY) return BuyResult.NO_OFFER;   // 今天的 2 次买满了 ⇒ 缺货
         Item currency = currencyForSlot(slot);
-        int cost = Math.max(1, (int) Math.ceil(offer.price() * com.mofengbaizhi.tinkersnewlife.content.handler.MomoFavor.priceFactor(buyer)));   // 好感度定价：负好感更贵 / 满好感七折
+        int cost = Math.max(1, (int) Math.ceil(offer.price() * com.mofengbaizhi.tinkersnewlife.content.handler.MomoFavor.priceFactor(com.mofengbaizhi.tinkersnewlife.content.handler.MomoFavor.favorAsSeenByMomo(buyer))));   // §509 面具 ⇒ 她认不出你 ⇒ 按 0 好感（中立价 ✓）
         if (countItem(buyer, currency) < cost) return BuyResult.INSUFFICIENT;
         consumeItem(buyer, currency, cost);   // 按好感度定价后的实际花费（与上面那道 check 用同一个 cost）
         // ⭐ 成对物品（同心戒）：成交时现结一**新**印记，并发**两枚独立的一栈** ——

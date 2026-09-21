@@ -77,7 +77,7 @@ public class PacketMomoOpen {
     public static void sendTo(ServerPlayer player, MomoMerchant momo) {
         TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
                 new PacketMomoOpen(momo.getId(), momo.getOffers(), momo.isHired(), momo.employerDisplayName(),
-                        MomoFavor.get(player), momo.soldToday()));
+                        MomoFavor.favorAsSeenByMomo(player), momo.soldToday()));
     }
 
     public static void handle(PacketMomoOpen packet, Supplier<NetworkEvent.Context> ctx) {

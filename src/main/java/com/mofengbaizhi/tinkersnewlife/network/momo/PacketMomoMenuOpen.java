@@ -64,7 +64,7 @@ public class PacketMomoMenuOpen {
     private static void send(ServerPlayer player, int momoId, int kind) {
         com.mofengbaizhi.tinkersnewlife.TinkersNewlife.CHANNEL.send(
                 PacketDistributor.PLAYER.with(() -> player),
-                new PacketMomoMenuOpen(momoId, MomoFavor.get(player), kind));
+                new PacketMomoMenuOpen(momoId, MomoFavor.favorAsSeenByMomo(player), kind));
     }
 
     public static void handle(PacketMomoMenuOpen packet, Supplier<NetworkEvent.Context> ctx) {

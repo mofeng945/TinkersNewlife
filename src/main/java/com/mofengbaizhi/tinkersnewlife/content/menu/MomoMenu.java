@@ -38,7 +38,7 @@ public class MomoMenu extends AbstractContainerMenu {
 
     /** 服务端：直接拿实体 ✓（同时把好感度快照进去 ✓ 与发给客户端的那份一致 ✓） */
     public MomoMenu(int windowId, Inventory inv, Entity momo) {
-        this(windowId, inv, momo == null ? -1 : momo.getId(), MomoFavor.get(inv.player));
+        this(windowId, inv, momo == null ? -1 : momo.getId(), MomoFavor.favorAsSeenByMomo(inv.player));
     }
 
     /** 服务端 / 客户端共用：显式给 id 与好感度 ✓ */
