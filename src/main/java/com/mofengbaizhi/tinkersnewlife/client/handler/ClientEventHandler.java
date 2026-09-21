@@ -218,7 +218,7 @@ public class ClientEventHandler {
             //    为什么必须在客户端做：1.20.1 玩家移动是**客户端权威**的——服务端清 xxa/zza 既晚了一拍
             //    （ServerTickEvent.END 时移动早算完了），也管不到客户端自己发的位置。
             //    之前只有服务端那段"清输入"，所以在游戏里表现为"静止了还能随便走"。
-            if (player.hasEffect(com.mofengbaizhi.tinkersnewlife.content.ModEffects.STUN.get())) {
+            if (com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.modeOf(player) == com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.Mode.FULL) {   // 锁快捷栏只在 FULL 档（BEDROCK/MOVE_ONLY/USE_BAN 都允许切工具）
                 // 定身（清移动输入）在 onMovementInputUpdate 里做，这里只管"快捷栏/界面"
                 // 无法切换物品栏（滚轮/数字键都会改 selected，这里直接锁回原槽位）
                 if (stunLockedSlot < 0) {
@@ -406,7 +406,7 @@ public class ClientEventHandler {
         public static void onMovementInputUpdate(net.minecraftforge.client.event.MovementInputUpdateEvent event) {
             if (!(event.getEntity() instanceof LocalPlayer player)) return;   // MovementInputUpdateEvent extends PlayerEvent
             boolean frozen = com.mofengbaizhi.tinkersnewlife.client.data.ClientProjectionData.isStunned()
-                    || player.hasEffect(com.mofengbaizhi.tinkersnewlife.content.ModEffects.STUN.get());
+                    || com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.blocksMovement(player);   // USE_BAN 档可移动，其余三档锁移动
             if (!frozen) return;
             net.minecraft.client.player.Input input = event.getInput();
             input.leftImpulse = 0;
@@ -428,8 +428,7 @@ public class ClientEventHandler {
             }
             // ⭐ 静止效果：攻击/使用/丢弃都不该有反应（服务端另有同名拦截，这里连挥手动画都不给）
             if (Minecraft.getInstance().player != null
-                    && Minecraft.getInstance().player.hasEffect(
-                            com.mofengbaizhi.tinkersnewlife.content.ModEffects.STUN.get())) {
+                    && com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.blocksUse(Minecraft.getInstance().player)) {   // FULL / USE_BAN 才禁攻击与使用
                 event.setCanceled(true);
                 return;
             }

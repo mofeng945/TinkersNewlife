@@ -157,7 +157,7 @@ public final class SkillHandler {
             switch (t) {
                 case MIXU_GELONG -> {
                     // 自我定身：弥虚葛笼完全不动（物品/攻击/界面由 StunHandler 拦截）
-                    p.addEffect(new MobEffectInstance(ModEffects.STUN.get(), 60, 0, false, false));
+                    com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.apply(p, 60, com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.Mode.USE_BAN);   // ⭐ 弥虚葛笼自我定身：可移动，但禁工具/术式/背包 ✓
                     SELF_STUN.add(p.getUUID());
                 }
                 case LUOHUA -> {

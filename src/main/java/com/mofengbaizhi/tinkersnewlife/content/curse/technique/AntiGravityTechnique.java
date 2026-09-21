@@ -212,7 +212,7 @@ public final class AntiGravityTechnique extends BaseTechnique {
                         t.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 25, amp, false, false));
                     } else {
                         // 超出阈值：定身 + 压碎 + 持续伤害
-                        t.addEffect(new MobEffectInstance(ModEffects.STUN.get(), 25, 0, false, false));
+                        com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.apply(t, 25, com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.Mode.BEDROCK);   // ⭐ BEDROCK：锁移动+锁视角
                         if (t instanceof Mob mob) {
                             StunHandler.onStunApplied(mob);
                         }

@@ -96,7 +96,7 @@ public class ShiBaoYueGongDianDomain extends BaseDomain {
             }
 
             // 命中投射咒法未成功式罚站定身：无法移动/攻击/使用物品/转视角
-            e.addEffect(new MobEffectInstance(ModEffects.STUN.get(), STUN_DURATION_TICKS, 0, false, false));
+            com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.apply(e, STUN_DURATION_TICKS, com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.Mode.BEDROCK);   // ⭐ BEDROCK：锁移动+锁视角（迷你基岩 ✓）
             if (e instanceof Mob mob) {
                 StunHandler.onStunApplied(mob);
             }

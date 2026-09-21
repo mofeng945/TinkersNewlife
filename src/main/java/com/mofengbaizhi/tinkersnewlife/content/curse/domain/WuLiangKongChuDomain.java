@@ -119,7 +119,7 @@ public class WuLiangKongChuDomain extends BaseDomain {
             }
 
             // 施加/刷新静止效果（持续期间几乎不结束）
-            entity.addEffect(new MobEffectInstance(ModEffects.STUN.get(), STUN_DURATION_TICKS, 0, false, false));
+            com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.apply(entity, STUN_DURATION_TICKS, com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.Mode.BEDROCK);   // ⭐ BEDROCK：锁移动+锁视角
             if (entity instanceof Mob mob) {
                 StunHandler.onStunApplied(mob);
             }
@@ -150,7 +150,7 @@ public class WuLiangKongChuDomain extends BaseDomain {
             duration = Math.min(duration, STUN_DURATION_TICKS);
             // ⭐ 先移除再施加：原版 addEffect 在新效果更短时不替换，直接施加会导致永久定身
             living.removeEffect(ModEffects.STUN.get());
-            living.addEffect(new MobEffectInstance(ModEffects.STUN.get(), (int) Math.max(1, duration), 0, false, false));
+            com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.apply(living, (int) Math.max(1, duration), com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.Mode.BEDROCK);
         }
         insideTicks.clear();
         clearResist();

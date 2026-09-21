@@ -142,9 +142,10 @@ public class ExecutionDomain extends BaseDomain {
         if (now % 5 == 0) {
             double r = radius;
             for (LivingEntity e : entitiesInSphere(level)) {
-                if (e.getUUID().equals(owner)) continue;
                 if (e.position().distanceToSqr(center) > r * r) continue;
-                e.addEffect(new MobEffectInstance(ModEffects.STUN.get(), 60, 0, false, false));
+                // ⭐ 用户口径：伏诛赐死的禁锢**与改造前逻辑相同** ✓ 只是**同时作用到施术者自己** ✓
+                com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.apply(e, 60,
+                        com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.Mode.FULL);
                 if (e instanceof Mob mob) {
                     net.minecraft.world.entity.ai.navigation.PathNavigation nav = mob.getNavigation();
                     if (nav != null) nav.stop();

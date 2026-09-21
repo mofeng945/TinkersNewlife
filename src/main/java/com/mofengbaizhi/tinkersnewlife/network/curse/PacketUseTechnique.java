@@ -32,6 +32,8 @@ public class PacketUseTechnique {
         ctx.get().enqueueWork(() -> {
             ServerPlayer player = ctx.get().getSender();
             if (player == null) return;
+            // 禁锢 USE_BAN 档：连术式也放不出来（用户口径）
+            if (com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.blocksUse(player)) return;
             if (packet.press) {
                 TechniqueHandler.onKeyPress(player);
             } else {

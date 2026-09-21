@@ -88,7 +88,10 @@ public class QianheYingyiDomain extends BaseDomain {
                     && com.mofengbaizhi.tinkersnewlife.content.curse.skill.SkillHandler.isProtected(sp, this)) {
                 continue;
             }
-            e.addEffect(new MobEffectInstance(ModEffects.STUN.get(), 60, 0, false, false));
+            // ⭐ 用户口径：嵌合影翼庭 = 只锁移动（可转动/可切工具/可用工具 ✓）且**不锁自己的式神** ✓
+                if (!(e instanceof com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiMob)) {
+                    com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.apply(e, 60, com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.Mode.MOVE_ONLY);
+                }
             if (e instanceof Mob mob) {
                 net.minecraft.world.entity.ai.navigation.PathNavigation nav = mob.getNavigation();
                 if (nav != null) nav.stop();

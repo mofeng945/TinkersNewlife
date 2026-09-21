@@ -359,7 +359,7 @@ public final class CursedSpeechTechnique extends BaseTechnique {
             case CursedSpeechRegistry.FX_WEAK ->
                     target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, baseDur, 1, false, true));
             case CursedSpeechRegistry.FX_BIND -> {
-                target.addEffect(new MobEffectInstance(ModEffects.STUN.get(), baseDur, 0, false, true));
+                com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.apply(target, baseDur, com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.Mode.BEDROCK);   // ⭐ BEDROCK：锁移动+锁视角
                 if (target instanceof net.minecraft.world.entity.Mob mob) {
                     StunHandler.onStunApplied(mob);
                 }
@@ -455,7 +455,7 @@ public final class CursedSpeechTechnique extends BaseTechnique {
             }
             case CursedSpeechRegistry.OBJ_CTHULHU -> {
                 // 克图露：天体秩序之音 → 目标眩晕/失明复合
-                target.addEffect(new MobEffectInstance(ModEffects.STUN.get(), Math.min(dur, 60), 0, false, true));
+                com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.apply(target, Math.min(dur, 60), com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.Mode.BEDROCK);
                 target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, dur, 0, false, true));
                 if (target instanceof net.minecraft.world.entity.Mob mob) {
                     StunHandler.onStunApplied(mob);
@@ -487,7 +487,7 @@ public final class CursedSpeechTechnique extends BaseTechnique {
                 if (primary) {
                     player.addEffect(new MobEffectInstance(ModEffects.UNNAMEABLE.get(), dur, 0, false, true));
                 }
-                target.addEffect(new MobEffectInstance(ModEffects.STUN.get(), Math.min(dur, 80), 0, false, true));
+                com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.apply(target, Math.min(dur, 80), com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.Mode.BEDROCK);
                 if (target instanceof net.minecraft.world.entity.Mob mob) {
                     StunHandler.onStunApplied(mob);
                 }
