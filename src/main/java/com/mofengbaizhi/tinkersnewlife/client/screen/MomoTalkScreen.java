@@ -83,12 +83,24 @@ public class MomoTalkScreen extends Screen {
             }
     };
 
-    /** 立绘：每档一张 + 原始尺寸（`blit` 缩放要显式给纹理尺寸；六张尺寸不全一样 ⇒ 查表 ✓） */
+    /** 六张立绘（实测全是 363×800 ⇒ 统一常量；`blit` 缩放要显式给纹理尺寸 ✓） */
     private static final String[] PORTRAIT = {
-            "momo_normal", "momo_normal", "momo_happy", "momo_blush", "momo_awkward", "momo_surprised"
+            "momo_normal", "momo_happy", "momo_blush", "momo_awkward", "momo_surprised", "momo_disgust"
     };
-    private static final int[][] PORTRAIT_SIZE = {
-            { 363, 800 }, { 363, 800 }, { 587, 800 }, { 587, 800 }, { 587, 800 }, { 587, 800 }
+    private static final int TEX_W = 363;
+    private static final int TEX_H = 800;
+
+    /** 开场白的表情（每好感档一个 ✓） */
+    private static final int[] GREET_EXPR = { 0, 0, 1, 2, 3, 4 };
+
+    /** **逐条对话**的表情：[档位][该档第几条问题] ⇒ PORTRAIT 下标（N=平静 H=开心 B=脸红 A=尴尬 S=吃惊 D=嫌恶 ✓） */
+    private static final int[][] EXPR = {
+            { 0, 0, 3 },   // 自我介绍 N / 地点 N / 变故 A
+            { 1, 2, 3 },   // 圣女 H / 喜好 B / 世界 A
+            { 3, 2, 1 },   // 咒术 A / 高维度 B（笨蛋！）/ 镰刀 H（女朋友送的）
+            { 0, 1, 4 },   // 收集格赫罗斯 N / 教会 H / 关于我 S
+            { 0, 0, 5 },   // 格赫罗斯散落 N / 没看到怪物 N / 能免费吗 D（你在说什么小猪话）
+            { 0, 3, 0 }    // 计划 N / 真相 A / 未来 N
     };
 
     /** 九宫格气泡（自绘纯色版 ✓ 手绘同路径同名即可替换 ✓） */
@@ -99,7 +111,7 @@ public class MomoTalkScreen extends Screen {
     private static final int PAD = 9;        // 气泡内边距
     private static final int ROW_H = 24;
 
-    private record Entry(String q, String a, int tier) {}
+    private record Entry(String q, String a, int tier, int expr) {}
 
     private final int favor;
     private final String playerName;
@@ -110,6 +122,7 @@ public class MomoTalkScreen extends Screen {
     private String answerText = "";
     private int scroll = 0;
     private int maxScroll = 0;
+    private int hoverEntry = -1;             // 选项页悬停的那条（用来预览表情 ✓）
 
     private int panelX, panelW;              // 左侧文字区（右侧留给立绘）
     private int listY, listH;
@@ -122,7 +135,7 @@ public class MomoTalkScreen extends Screen {
         for (int t = 0; t < TIER.length; t++) {
             if (favor < TIER[t]) continue;
             for (int i = 0; i < QUESTIONS[t].length; i++) {
-                entries.add(new Entry(QUESTIONS[t][i], ANSWERS[t][i], t));
+                entries.add(new Entry(QUESTIONS[t][i], ANSWERS[t][i], t, EXPR[t][i]));
             }
         }
     }
@@ -182,17 +195,16 @@ public class MomoTalkScreen extends Screen {
         g.blit(tex, x + r, y + r, (float) r, (float) r, w - r * 2, h - r * 2, t, t);
     }
 
-    private void renderPortrait(GuiGraphics g) {
-        int t = tierIndex();
+    /** @param expr PORTRAIT 下标（逐条对话各不相同 ✓） */
+    private void renderPortrait(GuiGraphics g, int expr) {
         try {
             ResourceLocation rl = new ResourceLocation(TinkersNewlife.MOD_ID,
-                    "textures/gui/momo/" + PORTRAIT[t] + ".png");
-            int texW = PORTRAIT_SIZE[t][0], texH = PORTRAIT_SIZE[t][1];
+                    "textures/gui/momo/" + PORTRAIT[Math.max(0, Math.min(PORTRAIT.length - 1, expr))] + ".png");
             int targetH = (int) (this.height * 0.78F);
-            int targetW = Math.max(1, Math.round(texW * (targetH / (float) texH)));
+            int targetW = Math.max(1, Math.round(TEX_W * (targetH / (float) TEX_H)));
             int x = this.width - targetW - 16;
             int y = this.height - targetH;
-            g.blit(rl, x, y, 0F, 0F, targetW, targetH, texW, texH);
+            g.blit(rl, x, y, 0F, 0F, targetW, targetH, TEX_W, TEX_H);
             // 气泡尖角：指向立绘方向的纯色小三角（不用贴图，随气泡颜色）
             int tailY = page == 0 ? listY - 6 : listY + 34;
             for (int i = 0; i < 8; i++) {
@@ -203,11 +215,30 @@ public class MomoTalkScreen extends Screen {
         }
     }
 
+    /** 当前该露哪张脸：看回答 ⇒ 那条回答自己的表情；在选项页 ⇒ 悬停预览那条，没悬停就是开场白的 ✓ */
+    private int currentExpr() {
+        if (page > 0) return entries.get(page - 1).expr();
+        if (hoverEntry >= 0 && hoverEntry < entries.size()) return entries.get(hoverEntry).expr();
+        return GREET_EXPR[tierIndex()];
+    }
+
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(graphics);
         graphics.fill(0, 0, this.width, this.height, 0x99000000);      // 压暗背景
-        renderPortrait(graphics);
+
+        // 先算悬停（立绘要先知道露哪张脸 ✓）
+        hoverEntry = -1;
+        if (page == 0) {
+            int visible = Math.max(1, listH / ROW_H);
+            for (int i = 0; i < visible && i + scroll < entries.size(); i++) {
+                if (hovering(panelX, listY + 6 + i * ROW_H, panelW, ROW_H - 4, mouseX, mouseY)) {
+                    hoverEntry = i + scroll;
+                    break;
+                }
+            }
+        }
+        renderPortrait(graphics, currentExpr());
 
         if (page == 0) renderList(graphics, mouseX, mouseY);
         else renderAnswer(graphics);
