@@ -18,7 +18,7 @@ $opt = [System.Drawing.Image]::FromFile((Join-Path $texDir "bubble_option.png"))
 
 # --- constants copied from MomoArt.java ---
 $PAD = 9; $NINE = 19; $RADIUS = 9; $ROW_H = 24; $TEX_W = 363; $TEX_H = 800
-$PORTRAIT_H_RATIO = 0.98; $PORTRAIT_W_RATIO = 0.50; $CROP_FRAC = 0.95; $FACE_IN_TEX = 165.0 / 800.0
+$PORTRAIT_H_RATIO = 0.98; $PORTRAIT_W_RATIO = 0.50; $CROP_FRAC = 1.0; $FACE_IN_TEX = 0.27
 # 好感档 -> 默认表情（MomoArt.GREET_EXPR ✓）
 $GREET = @(0, 0, 1, 2, 1, 1); $TIERS = @(0, 10, 20, 30, 40, 50)
 $EXPR_FILES = @("momo_normal", "momo_happy", "momo_blush", "momo_awkward", "momo_surprised", "momo_disgust")

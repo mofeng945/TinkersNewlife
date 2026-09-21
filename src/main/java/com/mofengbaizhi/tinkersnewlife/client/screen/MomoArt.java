@@ -44,12 +44,16 @@ public final class MomoArt {
      * 高度拉到**屏高的 {@link #H_RATIO}（98%）**（比最早那版 62% 高了约 1.6 倍 ⇒ 既大又看得见腿 ✓），
      * 宽度上限屏宽 {@link #W_RATIO} ⇒ 854×480 下实测 **227×470** ✓。
      */
-    private static final float CROP_FRAC = 0.95F;   // 可见源区 = 贴图上部 95%（≈全身，只切掉脚 ✓；腿在贴图 520~760 段 ✓）
+    private static final float CROP_FRAC = 1.0F;    // 用户新图内容一直画到 y=798 ⇒ **整张都用**（裁 0.95 会切掉腿下段 ✗）
     private static final float H_RATIO = 0.98F;     // 可见高度 = 屏高 × 0.98
     private static final float W_RATIO = 0.50F;     // 宽度上限 = 屏宽 × 0.50（≈半个屏幕 ✓）
 
-    /** **脸中心**在贴图里的纵向位置（六张实测都是 363×800、脸约在 y=165 ✓）⇒ 用来算尖角该指哪 ✓ */
-    private static final float FACE_IN_TEX = 165.0F / TEX_H;
+    /**
+     * **脸中心**在贴图里的纵向位置 —— 用来算气泡尖角该指哪 ✓。
+     * <p>⚠️ 用户 §504 换了自己抠的新图：头像占 y≈28~198、眼睛在 y≈**210 上下** ⇒ 从旧的 165/800(0.206) 改成 **0.27** ✓
+     * （旧图脸更靠上；新图更靠下）。**嫌尖角偏高/偏低就改这一个数** ✓。
+     */
+    private static final float FACE_IN_TEX = 0.27F;
 
     /** 好感档位（与对话树的解锁档一致 ✓） */
     public static final int[] TIER = { 0, 10, 20, 30, 40, 50 };
