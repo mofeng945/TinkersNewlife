@@ -5,10 +5,6 @@ import com.mofengbaizhi.tinkersnewlife.content.ModItems;
 import com.mofengbaizhi.tinkersnewlife.content.ModSounds;
 import com.mofengbaizhi.tinkersnewlife.content.curse.TechniqueHandler;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.mojang.serialization.Dynamic;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -35,21 +31,10 @@ import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.SpawnGroupData;
-import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.behavior.Behavior;
-import net.minecraft.world.entity.ai.behavior.BehaviorControl;
-import net.minecraft.world.entity.ai.behavior.EntityTracker;
-import net.minecraft.world.entity.ai.behavior.LookAtTargetSink;
-import net.minecraft.world.entity.ai.behavior.MoveToTargetSink;
-import net.minecraft.world.entity.ai.memory.MemoryModuleType;
-import net.minecraft.world.entity.ai.memory.MemoryStatus;
-import net.minecraft.world.entity.ai.memory.WalkTarget;
-import net.minecraft.world.entity.ai.sensing.Sensor;
-import net.minecraft.world.entity.ai.sensing.SensorType;
-import net.minecraft.world.entity.schedule.Activity;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.warden.Warden;
 import net.minecraft.world.entity.player.Player;
@@ -368,294 +353,8 @@ public class MomoMerchant extends PathfinderMob
 
     @Override
     protected void registerGoals() {
-        // §486 用户口径：「把墨默的 ai 从 goal 试着改成 brain」⇒ 这里**不再注册任何 goal** ✓
-        //   ⚠ 实情：她原本也**只有一个 goal**（HurtByTargetGoal），其余全是下面那套自写 tick 状态机。
-        //   现在"唯一的 goal"搬进了 Brain 的 CORE activity（见 MomoSetTargetFromHurtBy ✓ 行为等价 ✓），
-        //   核心层（游泳/注视）与"空闲看玩家"也在 Brain 里 ✓；战斗/雇佣状态机**原样保留**
-        //   —— 那是手写的连招/格挡/大招/斩杀，塞进 activity 只会全丢 ✗。
-    }
-
-    /**
-     * §487：**空闲游走 / 货币吸引**改由 Brain 接管（写 `WALK_TARGET` 记忆 + vanilla `MoveToTargetSink` 走路 ✓）。
-     * <p>逻辑逐条照旧 ✓：20 格内格赫罗斯残骸/矿石优先（到跟前 1.6 格停下、看 8 格内玩家、偶尔低语）；
-     * 没货币可追、且 2.5 格内没有玩家 ⇒ 在生成点 20 格内随机走动（近身站定待客 ✓）。
-     * <p>**雇佣中仍然走自写 A* 那套**（跟随雇主 / 雇主附近 6 格游走 ✓）⇒ 这里只在"未雇佣"时接管 ✓。
-     * <p>把它改成 `false` 就能**立刻回退**到自写 A* 版本（两套代码都还在 ✓）。
-     */
-    private static final boolean BRAIN_IDLE_LOCOMOTION = true;
-
-    // ============================================================
-    //  Brain（memory / sensor / activity ✓）—— §486
-    // ============================================================
-
-    private static final ImmutableList<MemoryModuleType<?>> MOMO_MEMORIES = ImmutableList.of(
-            MemoryModuleType.WALK_TARGET,
-            MemoryModuleType.LOOK_TARGET,
-            MemoryModuleType.ATTACK_TARGET,
-            MemoryModuleType.HURT_BY,
-            MemoryModuleType.HURT_BY_ENTITY,
-            MemoryModuleType.NEAREST_PLAYERS,
-            MemoryModuleType.NEAREST_VISIBLE_PLAYER,
-            MemoryModuleType.NEAREST_VISIBLE_ATTACKABLE_PLAYER,
-            MemoryModuleType.NEAREST_LIVING_ENTITIES,
-            MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES,
-            MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE);
-
-    private static final ImmutableList<SensorType<? extends Sensor<? super MomoMerchant>>> MOMO_SENSORS =
-            ImmutableList.of(SensorType.NEAREST_PLAYERS, SensorType.HURT_BY);
-
-    @Override
-    protected Brain.Provider<MomoMerchant> brainProvider() {
-        return Brain.provider(MOMO_MEMORIES, MOMO_SENSORS);
-    }
-
-    @Override
-    protected Brain<?> makeBrain(Dynamic<?> dynamic) {
-        return this.makeMomoBrain(this.brainProvider().makeBrain(dynamic));
-    }
-
-    private Brain<MomoMerchant> makeMomoBrain(Brain<MomoMerchant> brain) {
-        // 核心层：转头看 LOOK_TARGET / 走到 WALK_TARGET / 受击设目标
-        // （MoveToTargetSink 只在有人写了 WALK_TARGET 记忆时才动 ⇒ 不会跟自写寻路抢导航 ✓；
-        //  **不放 vanilla `Swim`**：她的水下是自写的（憋气不窒息 / 微浮力 / 游向目标 §水下），
-        //  再叠一层 Swim 会跟她抢跳跃与浮力 ✗）
-        ImmutableList<BehaviorControl<? super MomoMerchant>> core = ImmutableList.of(
-                new LookAtTargetSink(45, 90),
-                new MoveToTargetSink(),
-                new MomoSetTargetFromHurtBy());
-        brain.addActivity(Activity.CORE, 0, core);
-
-        // 空闲层：看向 8 格内玩家 / 货币吸引 / 家附近游走
-        // （三者不互斥也没关系：吸引写了 WALK_TARGET 之后，游走的入口条件 VALUE_ABSENT 自然不成立 ✓
-        //   近身 2.5 格内不走动、开战不盯玩家 —— 条件都写在各自行为里 ✓ 与原逻辑一致）
-        ImmutableList<BehaviorControl<? super MomoMerchant>> idle = ImmutableList.of(
-                new MomoLookAtNearestPlayer(),
-                new MomoLureCurrency(),
-                new MomoStrollNearHome());
-        brain.addActivity(Activity.IDLE, 10, idle);
-
-        // 战斗层：同一条"受击⇒设目标"（开战后活动切到 FIGHT，语义清楚 ✓）
-        ImmutableList<BehaviorControl<? super MomoMerchant>> fight = ImmutableList.of(
-                new MomoSetTargetFromHurtBy());
-        brain.addActivity(Activity.FIGHT, 10, fight);
-
-        brain.setCoreActivities(ImmutableSet.of(Activity.CORE));
-        brain.setDefaultActivity(Activity.IDLE);
-        brain.useDefaultActivity();
-        return brain;
-    }
-
-    /**
-     * 协变返回的 `getBrain()` —— vanilla 村民也是这么写的 ✓
-     * （`LivingEntity#getBrain()` 返回 `Brain<?>`，直接用会撞 wildcard capture：
-     * 「MomoMerchant 无法转换为 CAP#1」⇒ 必须先收窄成 `Brain<MomoMerchant>` ✓）。
-     */
-    @Override
-    @SuppressWarnings("unchecked")
-    public Brain<MomoMerchant> getBrain() {
-        return (Brain<MomoMerchant>) super.getBrain();
-    }
-
-    /** brain 每 tick 跑一遍（vanilla 村民也是这么接的 ✓：`customServerAiStep` 里 tick ✓） */
-    @Override
-    protected void customServerAiStep() {
-        if (this.level() instanceof ServerLevel sl) {
-            this.getBrain().tick(sl, this);
-        }
-        super.customServerAiStep();
-    }
-
-    /**
-     * 空闲①：**货币吸引**（= 旧 `tickCurrencyLure` 的逻辑，改成 brain 记忆式 ✓）
-     * 20 格内最近的格赫罗斯残骸/矿石 ⇒ 走过去（**不拾取** ✓）；
-     * 到跟前 1.6 格 ⇒ 停下 + 看向 8 格内玩家 + 1% 概率低语 ✓。
-     */
-    private static final class MomoLureCurrency extends Behavior<MomoMerchant> {
-
-        private int probe = 0;
-        /**
-         * 正在追的货币。**只有它非空时本行为才允许清 `WALK_TARGET`** ✓
-         * —— §488 修的 bug：原来"探测没找到货币"就无条件清记忆，把 `MomoStrollNearHome`
-         * 刚写进去的游走目标也擦掉了 ⇒ 表现为"**不会游走**" ✗。
-         */
-        private ItemEntity lure = null;
-
-        MomoLureCurrency() {
-            super(ImmutableMap.of());
-        }
-
-        @Override
-        protected boolean checkExtraStartConditions(ServerLevel level, MomoMerchant mob) {
-            return !mob.hired;          // 雇佣中跟随雇主那套自己做 ✓
-        }
-
-        @Override
-        protected void tick(ServerLevel level, MomoMerchant mob, long gameTime) {
-            if (mob.getTarget() != null) return;
-            if (++this.probe >= 10) {                    // 探测冷却 10 tick（与原逻辑一致 ✓）
-                this.probe = 0;
-                this.lure = nearestCurrency(level, mob);
-            }
-            ItemEntity target = this.lure;
-            if (target == null || !target.isAlive() || target.getItem().isEmpty()) {
-                this.lure = null;
-                return;              // 没在追货币 ⇒ **绝不碰 WALK_TARGET** ✓（§488：别把游走目标擦掉 ✗）
-            }
-            if (mob.distanceTo(target) <= 1.6) {          // 到跟前：停下、看人、偶尔低语 ✓
-                mob.getBrain().eraseMemory(MemoryModuleType.WALK_TARGET);
-                this.lure = null;
-                mob.onReachedCurrency();
-                return;
-            }
-            mob.getBrain().setMemory(MemoryModuleType.WALK_TARGET,
-                    new WalkTarget(target, IDLE_MOVE_SPEED, 1));   // 走路交给核心层 MoveToTargetSink ✓
-        }
-
-        /** 半径 {@link MomoConst#WANDER_RADIUS} 内最近的格赫罗斯残骸/矿石（只认这两种 ✓ 原逻辑原样 ✓） */
-        private static ItemEntity nearestCurrency(ServerLevel level, MomoMerchant mob) {
-            ItemEntity best = null;
-            double bestD = WANDER_RADIUS * WANDER_RADIUS;
-            for (ItemEntity ie : level.getEntitiesOfClass(ItemEntity.class,
-                    mob.getBoundingBox().inflate(WANDER_RADIUS), e -> e.isAlive() && !e.getItem().isEmpty())) {
-                ItemStack stack = ie.getItem();
-                if (!stack.is(ModItems.GHELOTH_REMAINS.get()) && !stack.is(ModItems.GHELOTH_ORE.get())) continue;
-                double d = mob.distanceToSqr(ie);
-                if (d < bestD) {
-                    bestD = d;
-                    best = ie;
-                }
-            }
-            return best;
-        }
-    }
-
-    /**
-     * 空闲②：**家附近游走**（= 旧 `tickWanderPath` 未雇佣时的逻辑 ✓）
-     * 入口条件带 `WALK_TARGET` 缺席 ⇒ 正在追货币时**不会**同时游走 ✓；
-     * 2.5 格内有玩家 ⇒ 站定待客（不游走 ✓ 原逻辑）。
-     */
-    private static final class MomoStrollNearHome extends Behavior<MomoMerchant> {
-
-        /** 走完一段歇 100~240 tick（5~12s），与原 `wanderTimer = 100 + rand(140)` 一致 ✓ */
-        private int pause = 0;
-
-        MomoStrollNearHome() {
-            super(ImmutableMap.of(MemoryModuleType.WALK_TARGET, MemoryStatus.VALUE_ABSENT));
-        }
-
-        @Override
-        protected boolean checkExtraStartConditions(ServerLevel level, MomoMerchant mob) {
-            if (mob.hired || mob.getTarget() != null) return false;
-            // 2.5 格内有玩家 ⇒ 站定待客（原 tickIdle 里那条 ✓）
-            return level.getNearestPlayer(mob, 2.5) == null;
-        }
-
-        @Override
-        protected void start(ServerLevel level, MomoMerchant mob, long gameTime) {
-            if (this.pause > 0) {          // 歇够了再选下一个目标 ✓（原 wanderTimer ✓）
-                this.pause--;
-                return;
-            }
-            BlockPos goal = mob.pickStrollTarget();
-            if (goal == null) {
-                this.pause = 60;           // 找不到可走的目标：3 秒后再试 ✓（原逻辑 ✓）
-                return;
-            }
-            this.pause = 100 + mob.getRandom().nextInt(140);
-            mob.getBrain().setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(goal, IDLE_MOVE_SPEED, 1));
-        }
-    }
-
-    /** 到货币跟前的小动作（看最近的玩家 + 偶尔低语）—— 旧 `tickCurrencyLure` 里那段，原样搬出来给 brain 行为复用 ✓ */
-    void onReachedCurrency() {
-        Player p = this.level().getNearestPlayer(this, 8.0);
-        if (p != null) {
-            this.getLookControl().setLookAt(p, 10.0F, 10.0F);
-        }
-        if (this.random.nextInt(100) == 0 && voiceReady()) {
-            voicePlayed(VOICE_TIMINGS.ambient);
-            this.playSound(ModSounds.MOMO_AMBIENT.get(), 0.8F, 1.0F);
-        }
-    }
-
-    /**
-     * 游走目标（**逐条对齐旧 `tickWanderPath` ✓**）：
-     * 16 格内有玩家 ⇒ 锚点 = 那个玩家、半径 **6**；否则锚点 = 生成点、半径 **{@link MomoConst#WANDER_RADIUS}(20)** ✓；
-     * 随机角度+半径取点、8 次尝试、用 `ascendToReachable` 抬到能站的高度 ✓（原逻辑用的就是它，不是 groundCell ✗）。
-     */
-    BlockPos pickStrollTarget() {
-        if (homePos == null) homePos = this.blockPosition();
-        Player near = this.level().getNearestPlayer(this, 16.0);
-        BlockPos center = near != null ? near.blockPosition() : homePos;
-        double radius = near != null ? 6.0 : WANDER_RADIUS;
-        for (int tries = 0; tries < 8; tries++) {
-            double angle = this.random.nextDouble() * Math.PI * 2.0;
-            double r = this.random.nextDouble() * radius;
-            BlockPos col = new BlockPos(
-                    center.getX() + (int) Math.round(Math.cos(angle) * r),
-                    this.blockPosition().getY(),
-                    center.getZ() + (int) Math.round(Math.sin(angle) * r));
-            BlockPos goal = ascendToReachable(col);
-            if (goal != null) return goal;
-        }
-        return null;
-    }
-
-    /**
-     * 空闲时看向最近的玩家 ✓
-     * <p>写 `LOOK_TARGET` 记忆（brain 的规矩：行为只写记忆，动作交给核心层 ✓）。
-     * 开战后就不盯玩家了（战斗注视由自写状态机负责 ✓ 不抢）。
-     */
-    private static final class MomoLookAtNearestPlayer extends Behavior<MomoMerchant> {
-
-        MomoLookAtNearestPlayer() {
-            super(ImmutableMap.of(MemoryModuleType.NEAREST_VISIBLE_PLAYER, MemoryStatus.VALUE_PRESENT));
-        }
-
-        @Override
-        protected void start(ServerLevel level, MomoMerchant mob, long gameTime) {
-            mob.getBrain().getMemory(MemoryModuleType.NEAREST_VISIBLE_PLAYER).ifPresent(player -> {
-                if (mob.distanceToSqr(player) <= 64.0) {
-                    mob.getBrain().setMemory(MemoryModuleType.LOOK_TARGET, new EntityTracker(player, true));
-                }
-            });
-        }
-
-        @Override
-        protected boolean canStillUse(ServerLevel level, MomoMerchant mob, long gameTime) {
-            return mob.getTarget() == null;
-        }
-    }
-
-    /**
-     * 受击 ⇒ 把攻击者设为当前目标 —— **等价于原来的 `HurtByTargetGoal`** ✓
-     * （玩家/怪物/监守者都能打她、她也会反击 ✓ 但创造模式玩家等不可攻击目标跳过 ✓）。
-     * 优先读 brain 记忆 `HURT_BY_ENTITY`，读不到就兜底 `getLastHurtByMob()`（不依赖传感器也能工作 ✓）。
-     */
-    private static final class MomoSetTargetFromHurtBy extends Behavior<MomoMerchant> {
-
-        MomoSetTargetFromHurtBy() {
-            super(ImmutableMap.of());
-        }
-
-        private static LivingEntity attackerOf(MomoMerchant mob) {
-            return mob.getBrain().getMemory(MemoryModuleType.HURT_BY_ENTITY).orElse(mob.getLastHurtByMob());
-        }
-
-        @Override
-        protected boolean checkExtraStartConditions(ServerLevel level, MomoMerchant mob) {
-            if (mob.getTarget() != null && mob.getTarget().isAlive()) return false;
-            LivingEntity attacker = attackerOf(mob);
-            return attacker != null && attacker != mob && attacker.isAlive() && mob.canAttack(attacker);
-        }
-
-        @Override
-        protected void start(ServerLevel level, MomoMerchant mob, long gameTime) {
-            LivingEntity attacker = attackerOf(mob);
-            if (attacker != null) {
-                mob.setTarget(attacker);
-            }
-        }
+        // 受击反击：把攻击者设为目标（玩家/怪物/监守者均可）
+        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
     }
 
     public void setNaturalSpawn(boolean natural) {
@@ -1183,23 +882,6 @@ public class MomoMerchant extends PathfinderMob
     private void tickServer() {
         if (homePos == null) homePos = this.blockPosition();
 
-        // §486 brain 活动切换：有目标 ⇒ FIGHT；否则回默认 IDLE（CORE 永远在跑 ✓）
-        // （真正的"设目标"在 CORE 的 MomoSetTargetFromHurtBy 里，这里只切活动语义 ✓）
-        try {
-            Brain<MomoMerchant> brain = this.getBrain();
-            if (this.getTarget() != null && this.getTarget().isAlive()) {
-                brain.setActiveActivityIfPossible(Activity.FIGHT);
-                brain.eraseMemory(MemoryModuleType.WALK_TARGET);      // 打仗时走路/定位归自写状态机 ✓
-            } else {
-                brain.useDefaultActivity();
-                if (hired) {
-                    brain.eraseMemory(MemoryModuleType.WALK_TARGET);  // 雇佣时跟随雇主归自写 AI ✓
-                }
-            }
-        } catch (Throwable ignored) {
-            // brain 没建好也不该拖垮整只实体（极端兜底 ✓）
-        }
-
         // 鑷劧鍒锋柊鐨勫ⅷ榛橈細鐧藉ぉ鍒版潵鏃舵秷澶憋紙闆囦剑涓?鍒版湡杩斿洖鍚庣殑缁泧瀹介檺鍐呬笉娑堝け锛?
         // 鍒锋€泲鍙敜鐨勫父椹伙紱鎷掔粷缁泧鍒欏闄愮粨鏉熼殢澶╀寒娑堝け锛?
         if (naturalSpawn && !hired && returnGraceTicks <= 0) {
@@ -1403,7 +1085,6 @@ public class MomoMerchant extends PathfinderMob
 
     /** 20 鏍煎唴鏍艰但缃楁柉娈嬮/鐭跨煶 鈫?A* 璧拌繃鍘伙紙涓嶆嬀鍙栵級锛涜繑鍥炴槸鍚﹁繕鍦ㄧЩ鍔?*/
     private boolean tickCurrencyLure() {
-        if (BRAIN_IDLE_LOCOMOTION && !hired) return false;   // §487：空闲吸引改由 Brain（MomoLureCurrency ✓）接管
         if (++currencyProbeTimer < 10) {
             // 鎺㈡祴鍐峰嵈涓細姝ｅ湪杩借揣甯?鈫?缁х画娌胯矾寰勮蛋锛涘惁鍒欎笉鍔紙涓嶅姩娓歌蛋璺緞锛?
             if (lureTarget != null && !path.isEmpty() && pathIsLure) {
@@ -1469,9 +1150,6 @@ public class MomoMerchant extends PathfinderMob
 
     /** 鏃犵帺瀹舵椂鍦ㄧ敓鎴愮偣 20 鏍煎唴娓歌蛋锛圓* 瀵昏矾锛夛紱杩斿洖鏄惁鍦ㄧЩ鍔?*/
     private boolean tickWanderPath() {
-        // §487：**未雇佣**时的空闲游走已交给 Brain（MomoStrollNearHome ✓）；
-        //  **雇佣中**仍然走这套自写 A*（跟随雇主 / 雇主附近 6 格游走 ✓ 见 tickHiredAI）
-        if (BRAIN_IDLE_LOCOMOTION && !hired) return false;
         if (!path.isEmpty()) {
             boolean moving = followPath(IDLE_MOVE_SPEED);
             if (!moving) {
