@@ -69,9 +69,9 @@ public class PacketMomoMenuAction {
                     PacketMomoOpen.sendTo(player, momo);
                 }
                 case 2 -> {
-                    // 雇佣：同样先进交易界面（左边的雇佣栏就是雇佣入口 ✓ 天数在那里选 ✓）
+                    // 雇佣：打开**独立的雇佣界面**（用户口径：两个界面分开 ✓ 天数 + 五种等价物在那边 ✓）
                     player.closeContainer();
-                    PacketMomoOpen.sendTo(player, momo);
+                    PacketMomoMenuOpen.sendHire(player, momo.getId());
                 }
                 default -> {
                     // 回退 / 未知：什么都不做

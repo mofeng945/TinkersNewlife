@@ -172,7 +172,7 @@ public class MomoTalkScreen extends Screen {
             int ry = listY + i * ROW_H;
             boolean hover = hovering(listX, ry, listW, ROW_H - 2, mouseX, mouseY);
             graphics.fill(listX, ry, listX + listW, ry + ROW_H - 2, hover ? 0xFF8FA8D8 : 0xFF6E6E6E);
-            graphics.drawString(this.font, "· " + e.q(), listX + 6, ry + 4, 0xFFFFFF, false);
+            graphics.drawString(this.font, "· " + e.q(), listX + 6, ry + 4, 0x202020, false);   // 深色：浅面板上看得见
         }
         if (maxScroll > 0) {
             graphics.drawString(this.font, "滚轮翻动（" + (scroll + 1) + "/" + (maxScroll + 1) + "）",
@@ -189,7 +189,7 @@ public class MomoTalkScreen extends Screen {
             if (budget <= 0) break;
             String s = flatten(line);
             int n = Math.min(budget, s.length());
-            graphics.drawString(this.font, s.substring(0, n), listX, ly, 0xFFFFFF, false);
+            graphics.drawString(this.font, s.substring(0, n), listX, ly, 0x202020, false);   // 深色：浅面板上看得见
             budget -= s.length();
             ly += 10;
             if (ly > top() + PANEL_H - 46) break;
