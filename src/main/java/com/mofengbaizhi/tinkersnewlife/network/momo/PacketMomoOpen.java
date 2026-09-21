@@ -26,12 +26,14 @@ public class PacketMomoOpen {
     private final List<MomoMerchant.Offer> offers;
     private final boolean hired;
     private final String employer;
+    private final int favor;
 
-    public PacketMomoOpen(int momoId, List<MomoMerchant.Offer> offers, boolean hired, String employer) {
+    public PacketMomoOpen(int momoId, List<MomoMerchant.Offer> offers, boolean hired, String employer, int favor) {
         this.momoId = momoId;
         this.offers = offers == null ? new ArrayList<>() : offers;
         this.hired = hired;
         this.employer = employer == null ? "" : employer;
+        this.favor = favor;
     }
 
     public PacketMomoOpen(FriendlyByteBuf buf) {
@@ -45,6 +47,7 @@ public class PacketMomoOpen {
         }
         this.hired = buf.readBoolean();
         this.employer = buf.readUtf();
+        this.favor = buf.readInt();
     }
 
     public void toBytes(FriendlyByteBuf buf) {
@@ -56,17 +59,19 @@ public class PacketMomoOpen {
         }
         buf.writeBoolean(hired);
         buf.writeUtf(employer);
+        buf.writeInt(favor);
     }
 
     public static void sendTo(ServerPlayer player, MomoMerchant momo) {
         TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-                new PacketMomoOpen(momo.getId(), momo.getOffers(), momo.isHired(), momo.employerDisplayName()));
+                new PacketMomoOpen(momo.getId(), momo.getOffers(), momo.isHired(), momo.employerDisplayName(),
+                        com.mofengbaizhi.tinkersnewlife.content.handler.MomoFavor.get(player)));
     }
 
     public static void handle(PacketMomoOpen packet, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
                 () -> () -> Minecraft.getInstance().setScreen(
-                        new MomoTradeScreen(packet.momoId, packet.offers, packet.hired, packet.employer))));
+                        new MomoTradeScreen(packet.momoId, packet.offers, packet.hired, packet.employer, packet.favor))));
         ctx.get().setPacketHandled(true);
     }
 }

@@ -30,6 +30,7 @@ public class MomoTradeScreen extends Screen {
     private static final int OFFER_X_OFF = HIRE_W + 14;
 
     private final int momoId;
+    private final int favor;
     private boolean hired;
     private String employer;
     private final List<Row> rows = new ArrayList<>();
@@ -65,9 +66,10 @@ public class MomoTradeScreen extends Screen {
 
     private final List<View> views = new ArrayList<>();
 
-    public MomoTradeScreen(int momoId, List<MomoMerchant.Offer> offers, boolean hired, String employer) {
+    public MomoTradeScreen(int momoId, List<MomoMerchant.Offer> offers, boolean hired, String employer, int favor) {
         super(Component.translatable("screen.tinkersnewlife.momo.title"));
         this.momoId = momoId;
+        this.favor = favor;   // 好感度（随 PacketMomoOpen 同步过来 ✓ 用来显示折后价 ✓）
         this.hired = hired;
         this.employer = employer == null ? "" : employer;
         if (offers != null) {
@@ -78,7 +80,10 @@ public class MomoTradeScreen extends Screen {
                 if (i < 2) cat = "screen.tinkersnewlife.momo.cat_cursed_tool";
                 else if (i < 4) cat = "screen.tinkersnewlife.momo.cat_crystal";
                 else cat = "screen.tinkersnewlife.momo.cat_relic";
-                views.add(new View(cat, offer.result(), new ItemStack(MomoMerchant.currencyForSlot(i)), offer.price()));
+                // 显示**折后价**（与服务端 buyFrom 里那一份算法一致 ✓ 见 MomoFavor.priceFactor ✓）
+                int shown = Math.max(1, (int) Math.ceil(offer.price()
+                        * com.mofengbaizhi.tinkersnewlife.content.handler.MomoFavor.priceFactor(this.favor)));
+                views.add(new View(cat, offer.result(), new ItemStack(MomoMerchant.currencyForSlot(i)), shown));
             }
         }
     }

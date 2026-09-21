@@ -49,7 +49,12 @@ public final class MomoFavor {
      * 负好感每点 **+1.5%** 涨价 ⇒ −50 时 **1.75 倍** ✓（用户口径"负数会涨价" ✓）。
      */
     public static double priceFactor(Player player) {
-        int f = get(player);
+        return priceFactor(get(player));
+    }
+
+    /** 同上，但直接吃一个好感度数值 ✓（客户端从同步包里拿到的那份也能算 ✓） */
+    public static double priceFactor(int favor) {
+        int f = Math.max(MIN, Math.min(MAX, favor));
         return f >= 0 ? 1.0D - 0.3D * (f / (double) MAX) : 1.0D + 0.015D * (-f);
     }
 
