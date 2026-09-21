@@ -35,6 +35,9 @@ public final class MomoCommand {
         d.register(Commands.literal("tinkersnewlife")
                 .then(Commands.literal("momo")
                         .then(Commands.literal("favor")
+                                // §507 用户口径「所有指令都需要权限」⇒ 整支 `momo favor` 一律要权限 2（OP）✓
+                                //   （原来"改自己不用权限"是留给单机自测的后门 ✗ 现在**堵上** ✓）
+                                .requires(src -> src.hasPermission(2))
                                 .then(Commands.literal("get")
                                         .executes(ctx -> show(ctx.getSource(), self(ctx.getSource())))
                                         .then(Commands.argument("target", EntityArgument.player())
