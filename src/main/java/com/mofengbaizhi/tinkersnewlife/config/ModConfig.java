@@ -410,7 +410,10 @@ public final class ModConfig {
         CONSTRUCT_BLUEPRINT_TCON_TOOLS_LEGACY = b.define("blueprint_tcon_tools_legacy", true);
         // 墨默刷新的维度黑名单（用户口径）：留空 = 所有维度都能刷；填维度 id 则那些维度不刷
         MOMO_SPAWN_DIMENSION_BLACKLIST = b.defineList("momo_spawn_dimension_blacklist",
-                new java.util.ArrayList<String>(), o -> o instanceof String);
+                new java.util.ArrayList<String>(java.util.List.of(
+                        "irons_spellbooks:pocket_dimension",
+                        "tinkersnewlife:gourd")),
+                o -> o instanceof String);
         CONSTRUCT_BLUEPRINT_RISKY_LEGACY = b.define("blueprint_risky_legacy", true);
         CONSTRUCT_BLUEPRINT_EXEMPT = b.defineList("blueprint_exempt",
                 new java.util.ArrayList<String>(), o -> o instanceof String);
