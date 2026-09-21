@@ -20,8 +20,15 @@ public class MomoMerchantRenderer extends HumanoidMobRenderer<MomoMerchant, Huma
     private static final ResourceLocation TEXTURE =
             new ResourceLocation("tinkersnewlife", "textures/entity/momo_common.png");
 
+    /**
+     * 模型缩放（用户口径：「实体模型大小缩小 0.7 倍，现在有点太高了」✓）。
+     * `scale()` 的缩放以**脚底**为原点 ⇒ 缩完她还是站在地上 ✓ 不会浮空/陷地 ✓。
+     * 判定箱同步缩到 0.7（见 `ModEntities` 的 `.sized(0.42f, 1.26f)` ✓）⇒ 视觉与碰撞一致 ✓。
+     */
+    private static final float MODEL_SCALE = 0.7F;
+
     public MomoMerchantRenderer(EntityRendererProvider.Context context) {
-        super(context, new HumanoidModel<>(context.bakeLayer(ModelLayers.PLAYER)), 0.5F);
+        super(context, new HumanoidModel<>(context.bakeLayer(ModelLayers.PLAYER)), 0.35F);   // 影子半径也跟着缩 ✓
         // 玩家模型对应的手持动画：主手（战镰）挥动；进食时收起镰刀
         this.addLayer(new ItemInHandLayer<>(this, context.getItemInHandRenderer()) {
             @Override
@@ -33,6 +40,11 @@ public class MomoMerchantRenderer extends HumanoidMobRenderer<MomoMerchant, Huma
                         partialTick, ageInTicks, netHeadYaw, headPitch);
             }
         });
+    }
+
+    @Override
+    protected void scale(MomoMerchant entity, PoseStack poseStack, float partialTick) {
+        poseStack.scale(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE);
     }
 
     @Override

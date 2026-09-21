@@ -113,7 +113,9 @@ public class MomoTalkScreen extends Screen {
 
     private int panelX, panelW;              // 左侧文字区（右侧留给立绘）
     private int portraitW, portraitH;        // init() 里算好的立绘尺寸 ✓
-    private int listY, listH;
+    private int listY, listH;                // listY = 开场白气泡顶（回答页 = 回答气泡顶 ✓）
+    private int rowsTop;                     // 选项第一行的 Y ✓
+    private int greetH;                      // 开场白气泡高度 ✓
     private int backX, backY;
     private int tailY;                       // 尖角竖直位置（跟着当前气泡算 ✓）
 
@@ -154,8 +156,11 @@ public class MomoTalkScreen extends Screen {
         portraitH = ps[1];
         panelX = 24;
         panelW = Math.max(200, this.width - portraitW - 48);
-        listY = (int) (this.height * 0.30F);
-        listH = (int) (this.height * 0.58F);
+        // §490：开场白气泡直接摆在**她脸那一带** ⇒ 尖角对准她的头 ✓；选项从气泡下方开始排 ✓
+        this.greetH = this.font.split(Component.literal(greeting()), panelW - PAD * 2).size() * 10 + PAD * 2;
+        listY = Math.max((int) (this.height * 0.24F), MomoArt.faceY(this.width, this.height) - this.greetH / 2);
+        rowsTop = listY + this.greetH + 10;
+        listH = Math.max(72, this.height - rowsTop - 44);
         backX = panelX;
         backY = this.height - 34;
     }
@@ -199,13 +204,15 @@ public class MomoTalkScreen extends Screen {
         this.renderBackground(graphics);
         graphics.fill(0, 0, this.width, this.height, 0x99000000);      // 压暗背景
 
-        // 尖角要对准「正在说话的那个气泡」的竖直中点 ✓
+        // 尖角对准**她的脸**（§490 用户口径：原来对不上她的头 ✗）：
+        // 取脸高，再夹进"当前这个气泡的竖直范围"里 —— 脸在气泡范围内就正好指脸，否则摆在最近的那条边 ✓
+        int faceY = MomoArt.faceY(this.width, this.height);
         if (page == 0) {
-            int headH = this.font.split(Component.literal(greeting()), panelW - PAD * 2).size() * 10 + PAD * 2;
-            tailY = listY - 12 - headH + Math.max(10, Math.min(headH, 60) / 2);
+            int top = listY;
+            tailY = Math.max(top + 8, Math.min(top + greetH - 8, faceY));
         } else {
             int bh = Math.min(listH, this.font.split(Component.literal(answerText), panelW - PAD * 2).size() * 10 + PAD * 2);
-            tailY = listY + Math.max(10, Math.min(bh, 60) / 2);
+            tailY = Math.max(listY + 8, Math.min(listY + bh - 8, faceY));
         }
         renderPortrait(graphics, currentExpr());
 
@@ -221,7 +228,7 @@ public class MomoTalkScreen extends Screen {
     private void renderList(GuiGraphics g, int mouseX, int mouseY) {
         List<FormattedCharSequence> head = this.font.split(Component.literal(greeting()), panelW - PAD * 2);
         int headH = head.size() * 10 + PAD * 2;
-        int headY = listY - headH - 12;
+        int headY = listY;                       // §490：开场白就在 listY（她脸那一带 ✓）
         nine(g, BUBBLE, panelX, headY, panelW, headH);
         int ly = headY + PAD;
         for (FormattedCharSequence line : head) {
@@ -234,7 +241,7 @@ public class MomoTalkScreen extends Screen {
         if (scroll > maxScroll) scroll = maxScroll;
         for (int i = 0; i < visible && i + scroll < entries.size(); i++) {
             Entry e = entries.get(i + scroll);
-            int ry = listY + 6 + i * ROW_H;
+            int ry = rowsTop + i * ROW_H;
             boolean hov = hovering(panelX, ry, panelW, ROW_H - 4, mouseX, mouseY);
             nine(g, OPTION, panelX, ry, panelW, ROW_H - 4);
             if (hov) g.fill(panelX + 2, ry + 2, panelX + panelW - 2, ry + ROW_H - 6, 0x33FFFFFF);
@@ -242,7 +249,7 @@ public class MomoTalkScreen extends Screen {
         }
         if (maxScroll > 0) {
             g.drawString(this.font, "滚轮翻动（" + (scroll + 1) + "/" + (maxScroll + 1) + "）",
-                    panelX, listY + listH + 2, 0xCCCCCC, false);
+                    panelX, Math.min(this.height - 46, rowsTop + visible * ROW_H + 2), 0xCCCCCC, false);
         }
     }
 
@@ -320,7 +327,7 @@ public class MomoTalkScreen extends Screen {
             if (page == 0) {
                 int visible = Math.max(1, listH / ROW_H);
                 for (int i = 0; i < visible && i + scroll < entries.size(); i++) {
-                    int ry = listY + 6 + i * ROW_H;
+                    int ry = rowsTop + i * ROW_H;
                     if (hovering(panelX, ry, panelW, ROW_H - 4, mouseX, mouseY)) {
                         page = i + scroll + 1;
                         answerText = entries.get(page - 1).a();

@@ -18,7 +18,7 @@ $opt = [System.Drawing.Image]::FromFile((Join-Path $texDir "bubble_option.png"))
 
 # --- constants copied from MomoArt.java ---
 $PAD = 9; $NINE = 19; $RADIUS = 9; $ROW_H = 24; $TEX_W = 363; $TEX_H = 800
-$PORTRAIT_H_RATIO = 0.62; $PORTRAIT_W_RATIO = 0.28
+$PORTRAIT_H_RATIO = 0.98; $PORTRAIT_W_RATIO = 0.50; $CROP_FRAC = 0.52; $FACE_IN_TEX = 165.0 / 800.0
 # 好感档 -> 默认表情（MomoArt.GREET_EXPR ✓）
 $GREET = @(0, 0, 1, 2, 1, 1); $TIERS = @(0, 10, 20, 30, 40, 50)
 $EXPR_FILES = @("momo_normal", "momo_happy", "momo_blush", "momo_awkward", "momo_surprised", "momo_disgust")
@@ -61,22 +61,26 @@ function Nine($img, $x, $y, $w, $h) {
 }
 
 # --- layout, same math as init() ---
+$cropH = [int][Math]::Round($TEX_H * $CROP_FRAC)
 $portraitH = [int]($GuiH * $PORTRAIT_H_RATIO)
-$portraitW = [int][Math]::Round($TEX_W * ($portraitH / [double]$TEX_H))
+$portraitW = [int][Math]::Round($TEX_W * ($portraitH / [double]$cropH))
 $cap = [int]($GuiW * $PORTRAIT_W_RATIO)
 if ($portraitW -gt $cap) {
     $portraitW = $cap
-    $portraitH = [int][Math]::Round($TEX_H * ($portraitW / [double]$TEX_W))
+    $portraitH = [int][Math]::Round($cropH * ($portraitW / [double]$TEX_W))
 }
+$faceY = ($GuiH - $portraitH) + [int][Math]::Round($portraitH * (($TEX_H * $FACE_IN_TEX) / [double]$cropH))
 $panelX = 24
 $panelW = [Math]::Max(200, $GuiW - $portraitW - 48)
-$listY = [int]($GuiH * 0.30)
-$listH = [int]($GuiH * 0.58)
+$greetH = 1 * 10 + $PAD * 2
+$listY = [Math]::Max([int]($GuiH * 0.24), $faceY - [int]($greetH / 2))
+$rowsTop = $listY + $greetH + 10
+$listH = [Math]::Max(72, $GuiH - $rowsTop - 44)
 $backX = $panelX; $backY = $GuiH - 34
 
 # portrait: bottom aligned, right side (both screens ✓)
 $px = $W - (($portraitW + 16) * $Scale); $py = $H - ($portraitH * $Scale)
-$g.DrawImage($por, (New-Object System.Drawing.Rectangle($px, $py, ($portraitW * $Scale), ($portraitH * $Scale))))
+$g.DrawImage($por, (New-Object System.Drawing.Rectangle($px, $py, ($portraitW * $Scale), ($portraitH * $Scale))), 0, 0, $TEX_W, $cropH, [System.Drawing.GraphicsUnit]::Pixel)
 
 if ($Screen -eq "menu") {
     # ---- MomoMenuScreen 布局 ✓ ----
@@ -101,10 +105,11 @@ if ($Screen -eq "menu") {
 } else {
     # ---- MomoTalkScreen 布局 ✓ ----
     $headH = 1 * 10 + $PAD * 2
-    $headY = $listY - $headH - 12
+    $headY = $listY
     Nine $bub ($panelX * $Scale) ($headY * $Scale) ($panelW * $Scale) ($headH * $Scale)
     $g.DrawString("今天有什么收获？又想聊聊天吗？", $font, $brushDark, (($panelX + $PAD) * $Scale), (($headY + $PAD) * $Scale))
-    $tailY = $listY - 12 - $headH + [Math]::Max(10, [Math]::Min($headH, 60) / 2)
+    $tailTop = $listY
+    $tailY = [Math]::Max($tailTop + 8, [Math]::Min($tailTop + $headH - 8, $faceY))
     for ($i = 0; $i -lt 8; $i++) {
         $x0 = ($panelX + $panelW + $i) * $Scale
         $y0 = ($tailY - [int]((8 - $i) / 2)) * $Scale
@@ -116,11 +121,11 @@ if ($Screen -eq "menu") {
     $qs = @("· 你是……？", "· 这里是什么地方？", "· 这个世界为什么和我想象中不太一样？", "· 关于你的穿着？",
         "· 你的喜好？", "· 关于这个世界？", "· 关于咒术？", "· 什么是高纬度存在？", "· 你的镰刀？")
     for ($i = 0; $i -lt $qs.Count; $i++) {
-        $ry = $listY + 6 + $i * $ROW_H
+        $ry = $rowsTop + $i * $ROW_H
         Nine $opt ($panelX * $Scale) ($ry * $Scale) ($panelW * $Scale) (($ROW_H - 4) * $Scale)
         $g.DrawString($qs[$i], $font, $brushDark, (($panelX + $PAD) * $Scale), (($ry + 6) * $Scale))
     }
-    $g.DrawString("滚轮翻动（1/10）", $font, $brushLight, ($panelX * $Scale), (($listY + $listH + 2) * $Scale))
+    $g.DrawString("滚轮翻动（1/10）", $font, $brushLight, ($panelX * $Scale), ([Math]::Min($GuiH - 46, $rowsTop + 10 * $ROW_H + 2) * $Scale))
 
     # back / close button
     Nine $opt ($backX * $Scale) ($backY * $Scale) (90 * $Scale) (20 * $Scale)

@@ -32,9 +32,19 @@ public final class MomoArt {
     private static final int TEX_W = 363;
     private static final int TEX_H = 800;
 
-    /** 立绘大小（**要调只改这两个数** ✓）：屏高比例 + 屏宽上限 */
-    private static final float H_RATIO = 0.62F;
-    private static final float W_RATIO = 0.28F;
+    /**
+     * 立绘显示区（**要调只改这几个数** ✓）
+     * <p>用户口径：「放大一点，至少占半个屏幕」+「气泡尖角对不上她的头」⇒ 改成**半身裁剪 + 放大**：
+     * 只取贴图**最上面 {@link #CROP_FRAC} 那段**（头 → 胯 ≈ 363×416），拉到屏高的 {@link #H_RATIO}（≈满屏），
+     * 宽度上限放宽到屏宽的 {@link #W_RATIO} ⇒ 实测 854×480 下 **410×470**（宽 ≈ 屏宽 48%）✓
+     * 这样她的脸正好落在 `listY`（0.40 屏高）那一带，气泡尖角就能对准她的头 ✓。
+     */
+    private static final float CROP_FRAC = 0.52F;   // 可见源区 = 贴图上部 52%（半身 ✓）
+    private static final float H_RATIO = 0.98F;     // 可见高度 = 屏高 × 0.98
+    private static final float W_RATIO = 0.50F;     // 宽度上限 = 屏宽 × 0.50（≈半个屏幕 ✓）
+
+    /** **脸中心**在贴图里的纵向位置（六张实测都是 363×800、脸约在 y=165 ✓）⇒ 用来算尖角该指哪 ✓ */
+    private static final float FACE_IN_TEX = 165.0F / TEX_H;
 
     /** 好感档位（与对话树的解锁档一致 ✓） */
     public static final int[] TIER = { 0, 10, 20, 30, 40, 50 };
@@ -67,16 +77,29 @@ public final class MomoArt {
         return GREET_EXPR[Math.max(0, Math.min(GREET_EXPR.length - 1, best))];
     }
 
-    /** 立绘尺寸 {宽, 高} ✓ */
+    /** 可见源区高度（贴图像素）= 贴图高 × {@link #CROP_FRAC} ✓ */
+    private static int cropH() {
+        return Math.round(TEX_H * CROP_FRAC);
+    }
+
+    /** 立绘尺寸 {宽, 高} ✓（按**可见源区**的宽高比缩放 ✓） */
     public static int[] portraitSize(int screenW, int screenH) {
+        int ch = cropH();
         int h = (int) (screenH * H_RATIO);
-        int w = Math.max(1, Math.round(TEX_W * (h / (float) TEX_H)));
+        int w = Math.max(1, Math.round(TEX_W * (h / (float) ch)));
         int cap = (int) (screenW * W_RATIO);
         if (w > cap) {
             w = Math.max(1, cap);
-            h = Math.max(1, Math.round(TEX_H * (w / (float) TEX_W)));
+            h = Math.max(1, Math.round(ch * (w / (float) TEX_W)));
         }
         return new int[] { w, h };
+    }
+
+    /** **她的脸在屏幕上的 Y**（气泡尖角按这个对准她的头 ✓） */
+    public static int faceY(int screenW, int screenH) {
+        int[] s = portraitSize(screenW, screenH);
+        float frac = (TEX_H * FACE_IN_TEX) / cropH();     // 脸在可见区里的比例
+        return (screenH - s[1]) + Math.round(s[1] * frac);
     }
 
     /** 立绘占的宽度（给文字区让位用 ✓） */
@@ -84,15 +107,16 @@ public final class MomoArt {
         return portraitSize(screenW, screenH)[0];
     }
 
-    /** 画立绘：**右侧、底部对齐** ✓ 贴图缺失静默降级（不让界面崩 ✓） */
+    /** 画立绘：**右侧、底部对齐** ✓ **只画上部 {@link #CROP_FRAC} 那段并放大**（半身 ✓）；贴图缺失静默降级 ✓ */
     public static void portrait(GuiGraphics g, int expr, int screenW, int screenH) {
         int[] s = portraitSize(screenW, screenH);
         int idx = Math.max(0, Math.min(PORTRAIT.length - 1, expr));
         try {
             ResourceLocation rl = new ResourceLocation(TinkersNewlife.MOD_ID,
                     "textures/gui/momo/" + PORTRAIT[idx] + ".png");
-            // 11 参 blit：源 = 整张贴图（源尺寸与目标尺寸解耦 ✓ 9 参那个是 1:1 取样，会失真 ✗）
-            g.blit(rl, screenW - s[0] - 16, screenH - s[1], s[0], s[1], 0F, 0F, TEX_W, TEX_H, TEX_W, TEX_H);
+            // 11 参 blit：源矩形 = 贴图上部的半身段（0,0,363,cropH），目标 = 放大后的 s[0]×s[1] ✓
+            g.blit(rl, screenW - s[0] - 16, screenH - s[1], s[0], s[1],
+                    0F, 0F, TEX_W, cropH(), TEX_W, TEX_H);
         } catch (Throwable ignored) {
         }
     }
