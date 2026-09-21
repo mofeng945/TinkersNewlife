@@ -587,6 +587,64 @@ public class MomoMerchant extends PathfinderMob
 
     public enum BuyResult { OK, NO_OFFER, INSUFFICIENT, TOO_FAR, DEAD }
 
+    /** 雇 N 天（用户口径 ✓ 多货币按优先级 ✓；**先算够不够再扣** ✓ 不会扣一半 ✗） */
+    public HireResult hireFrom(ServerPlayer buyer, int days) {
+        if (days <= 0) return HireResult.NO_ITEM;
+        if (level().isClientSide) return HireResult.DEAD;
+        if (!this.isAlive() || this.isRemoved()) return HireResult.DEAD;
+        if (buyer.distanceToSqr(this) > 8.0 * 8.0) return HireResult.TOO_FAR;
+        if (hired) {
+            if (employerId != null && !employerId.equals(buyer.getUUID())) return HireResult.HIRED_BY_OTHER;
+            return HireResult.ALREADY_HIRED;
+        }
+        if (!payHireCost(buyer, days)) return HireResult.NO_ITEM;
+        employerId = buyer.getUUID();
+        hireUntilTick = this.level().getGameTime() + (long) days * HIRE_DURATION_TICKS;
+        hired = true;
+        returnGraceTicks = 0;
+        this.setTarget(null);
+        clearPath();
+        if (this.level() instanceof ServerLevel sl) {
+            sl.sendParticles(ParticleTypes.HEART, this.getX(), this.getY() + 1.6, this.getZ(),
+                    6, 0.3, 0.3, 0.3, 0.02);
+        }
+        return HireResult.HIRED;
+    }
+
+    /**
+     * 按优先级扣 {@code days} 份等价物 ✓（1 呼唤 / 30 残骸 / 10 矿石 / 50 金锭 / 20 钻石 ✓ 用户口径 §455 C ✓）
+     * 先在副本上模拟 ✓ 有任何一份凑不出来就**原样返回 false 且不扣任何东西** ✓。
+     */
+    private boolean payHireCost(ServerPlayer buyer, int days) {
+        Item[] cur = {
+                ModItems.RLYEH_CALL.get(),
+                ModItems.GHELOTH_REMAINS.get(),
+                ModItems.GHELOTH_ORE.get(),
+                net.minecraft.world.item.Items.GOLD_INGOT,
+                net.minecraft.world.item.Items.DIAMOND
+        };
+        int[] per = { 1, 30, 10, 50, 20 };
+        int[] have = new int[cur.length];
+        int[] use = new int[cur.length];
+        for (int i = 0; i < cur.length; i++) have[i] = countItem(buyer, cur[i]);
+        for (int d = 0; d < days; d++) {
+            boolean paid = false;
+            for (int i = 0; i < cur.length; i++) {
+                if (have[i] >= per[i]) {
+                    have[i] -= per[i];
+                    use[i] += per[i];
+                    paid = true;
+                    break;
+                }
+            }
+            if (!paid) return false;
+        }
+        for (int i = 0; i < cur.length; i++) {
+            if (use[i] > 0) consumeItem(buyer, cur[i], use[i]);
+        }
+        return true;
+    }
+
     public enum HireResult { HIRED, ALREADY_HIRED, HIRED_BY_OTHER, NO_ITEM, TOO_FAR, DEAD }
 
     /** 鐜╁鐐瑰嚮闆囦剑锛氭敮浠?1 涓媺鑾辫€剁殑鍛煎敜锛岄泧浣ｄ竴澶┿€傞泧浣ｆ湡闂村啀娆＄偣鍑讳笉鎵ｈ垂銆佺洿鎺ユ嫆缁濓紝闃叉閲嶅涓婁氦 */
