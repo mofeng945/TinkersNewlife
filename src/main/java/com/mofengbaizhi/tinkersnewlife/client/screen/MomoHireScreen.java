@@ -42,9 +42,20 @@ public class MomoHireScreen extends Screen {
 
     private int left() { return (availW() - PANEL_W) / 2; }
     private int top() { return (this.height - PANEL_H) / 2; }
-    private int minusX() { return left() + 18; }
-    private int plusX() { return left() + 104; }
-    private int dayY() { return top() + 30; }
+    /**
+     * §498 天数选择挪到**面板右边的空白处**（用户口径：「把加减号那一行移动到气泡右边的空白位置」✓）。
+     * 原来它画在面板里 `top()+30`，正好压在"好感度"那行上 ✗。
+     */
+    private int gapX() { return left() + PANEL_W + 10; }
+    private int gapW() {
+        return Math.max(140, this.width - MomoArt.portraitWidth(this.width, this.height) - 16 - gapX());
+    }
+    /** 固定按最大天数（两位）算宽度 ⇒ 天数变化时 ± 按钮**不会左右跳** ✓ */
+    private int selW() { return 24 + MomoArt.textWidth(this.font, "× 88 天") + 10 + 18; }
+    private int dayY() { return top() + 26; }
+    private int minusX() { return gapX() + Math.max(0, (gapW() - selW()) / 2); }
+    private int plusX() { return minusX() + selW() - 18; }
+    private int dayTextX() { return minusX() + 24; }
     private int rowY(int i) { return top() + 56 + i * ROW_H; }
     private int hireX() { return left() + PANEL_W - 96; }
     private int hireY() { return top() + PANEL_H - 28; }
@@ -85,7 +96,7 @@ public class MomoHireScreen extends Screen {
         MomoArt.text(graphics, this.font, "好感度 " + favor, x + 14, y + 10 + MomoArt.LINE_H + 2, 0x505050);
         graphics.fill(x + 12, y + 48 - 6, x + PANEL_W - 12, y + 48 - 5, 0x558C7F63);
 
-        // 天数选择（九宫格按钮 ✓）
+        // 天数选择：**面板右边的空白处**（§498 ✓ 不再压住"好感度"那行 ✗）
         boolean minusHov = hovering(minusX(), dayY(), 18, 18, mouseX, mouseY);
         boolean plusHov = hovering(plusX(), dayY(), 18, 18, mouseX, mouseY);
         MomoArt.nine(graphics, MomoArt.OPTION, minusX(), dayY(), 18, 18);
@@ -94,7 +105,7 @@ public class MomoHireScreen extends Screen {
         if (plusHov) graphics.fill(plusX() + 2, dayY() + 2, plusX() + 16, dayY() + 16, MomoArt.HOVER_TINT);
         MomoArt.text(graphics, this.font, "−", minusX() + 5, dayY() + 4, MomoArt.TEXT_DARK);
         MomoArt.text(graphics, this.font, "＋", plusX() + 3, dayY() + 4, MomoArt.TEXT_DARK);
-        MomoArt.text(graphics, this.font, "× " + days + " 天", minusX() + 26, dayY() + 4, MomoArt.TEXT_DARK);
+        MomoArt.text(graphics, this.font, "× " + days + " 天", dayTextX(), dayY() + 4, MomoArt.TEXT_DARK);
 
         // 五种等价物的应付量
         ItemStack[] us = units();
