@@ -67,14 +67,15 @@ public class ModItems {
                     )
             ));
 
+    // §503 用户口径：**古神部件不可堆叠**（堆叠上限 1 ✓）—— 这类东西本该是"一件一件"的 ✗ 不该一组 64
     public static final RegistryObject<Item> ECHO_OF_THE_VOID =
-            ITEMS.register("echo_of_the_void", () -> new Item(new Item.Properties()));
+            ITEMS.register("echo_of_the_void", () -> new Item(new Item.Properties().stacksTo(1)));
 
     public static final RegistryObject<Item> ASTRAL_ANCHOR =
-            ITEMS.register("astral_anchor", () -> new Item(new Item.Properties()));
+            ITEMS.register("astral_anchor", () -> new Item(new Item.Properties().stacksTo(1)));
 
     public static final RegistryObject<Item> NEXUS_OF_SPACETIME =
-            ITEMS.register("nexus_of_spacetime", () -> new Item(new Item.Properties()));
+            ITEMS.register("nexus_of_spacetime", () -> new Item(new Item.Properties().stacksTo(1)));   // §503 时空枢纽核心 = 1
 
     public static final RegistryObject<Item> YOG_SOTHOTH_GATE_KEY =
             ITEMS.register("yog_sothoth_gate_key", () -> new Item(new Item.Properties().stacksTo(1)));
@@ -83,7 +84,7 @@ public class ModItems {
             ITEMS.register("nyarlathotep_desire", () -> new Item(new Item.Properties()));
 
     public static final RegistryObject<Item> DURANDAL_SHARD =
-        ITEMS.register("durandal_shard", () -> new Item(new Item.Properties().stacksTo(64)));
+        ITEMS.register("durandal_shard", () -> new Item(new Item.Properties().stacksTo(64)));   // 用户没点名 ⇒ 保持原样（凋灵掉 1-2 个，堆叠有意义 ✓）
 
     // ============================================================
     //  矿石方块物品
