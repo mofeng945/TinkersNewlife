@@ -68,8 +68,12 @@ public class MomoMenu extends AbstractContainerMenu {
                         Component.translatable("menu.tinkersnewlife.momo.todo_talk"), true);
             }
             case BTN_TRADE -> {
-                // TODO 批 2：打开"仿原版村民样式"的交易窗（自绘 ✓ 见备忘录 §457）
-                sp.displayClientMessage(Component.translatable("menu.tinkersnewlife.momo.todo_trade"), true);
+                // 批 2 第一步：**接回墨默原有的交易界面** ✓（`PacketMomoOpen.sendTo` 就是它原本右键打开那条路 ✓
+                //   批 1 的右键拦截把那条路切断了 ✗ ⇒ 这里补回来 ✓）
+                if (sp.level().getEntity(momoId) instanceof com.mofengbaizhi.tinkersnewlife.content.entity.MomoMerchant momo) {
+                    sp.closeContainer();
+                    com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoOpen.sendTo(sp, momo);
+                }
             }
             case BTN_HIRE -> {
                 // TODO 批 3：雇佣（天数 + 多货币优先级）；负数不能雇佣 ⇒ 挡一道 ✓
