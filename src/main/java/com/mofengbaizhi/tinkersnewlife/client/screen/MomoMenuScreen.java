@@ -105,6 +105,12 @@ public class MomoMenuScreen extends AbstractContainerScreen<MomoMenu> {
             for (int i = 0; i <= 2; i++) {
                 if (enabled(i) && isHovering(btnX(), btnY(i), btnW(), btnH(), mouseX, mouseY)) {
                     this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, i);
+                    if (i == MomoMenu.BTN_TALK) {
+                        // ⭐ 对话树在**客户端直接打开** ✓（文案全是静态的 ✓ 好感度已在菜单里同步 ✓ 不用新网络包 ✓）
+                        String name = this.minecraft.player == null ? ""
+                                : this.minecraft.player.getGameProfile().getName();
+                        this.minecraft.setScreen(new MomoTalkScreen(this.menu.favor(), name));
+                    }
                     return true;
                 }
             }
