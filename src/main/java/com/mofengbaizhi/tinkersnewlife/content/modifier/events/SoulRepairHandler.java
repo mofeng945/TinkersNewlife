@@ -76,7 +76,7 @@ public class SoulRepairHandler {
         for (ItemStack stack : repairCandidates(mob)) {
             if (stack.isEmpty()) continue;
             ToolStack tool = ToolHelper.getToolStack(stack);
-            if (tool == null) continue;                              // §514 破损的也留着（下面能修好并解除破损 ✓）
+            if (tool == null || tool.isBroken()) continue;
             if (ToolHelper.getActiveModifierLevel(tool, SOUL_REPAIR) > 0) return true;
         }
         return false;
@@ -89,10 +89,10 @@ public class SoulRepairHandler {
         for (ItemStack stack : candidates) {
             if (stack.isEmpty()) continue;
             ToolStack tool = ToolHelper.getToolStack(stack);
-            if (tool == null) continue;   // §514 破损的也留着修 ✓
+            if (tool == null || tool.isBroken()) continue;
             int lv = ToolHelper.getActiveModifierLevel(tool, SOUL_REPAIR);
             if (lv <= 0) continue;
-            if (tool.getDamage() <= 0 && !tool.isBroken()) continue;                     // 耐久已满：不修也不耗灵魂
+            if (tool.getDamage() <= 0) continue;                     // 耐久已满：不修也不耗灵魂
             int cost = Math.max(1, 6 - lv);
             if (SoulEnergyBridge.getSouls(payer) < cost) continue;   // 灵魂不足：不修不耗
             if (!SoulEnergyBridge.decreaseSouls(payer, cost)) continue;
@@ -101,14 +101,7 @@ public class SoulRepairHandler {
             if (RANDOM.nextFloat() < 0.05f * lv) repair += 1;        // 5%×等级 概率额外 1 点
             int newDmg = Math.max(0, tool.getDamage() - repair);
             tool.setDamage(newDmg);
-            // §514 破损态一起解除：灵魂修复修好的那一刻，破损工具立刻恢复可用 ✓
-            // （匠魂 `fixTool` 只在耐久 < 上限时摘 `tic_broken` ✓ 正是我们要的语义 ✓）
-            net.minecraft.world.item.ItemStack rebuilt = tool.updateStack(stack);
-            slimeknights.tconstruct.library.tools.nbt.ToolStack after = ToolHelper.getToolStack(rebuilt);
-            if (after != null && after.isBroken()) {
-                after.getPersistentData().remove("tic_broken");   // = ToolStack.TAG_BROKEN（用字面量，避免符号名不确定 ✓）
-                after.updateStack(rebuilt);
-            }
+            tool.updateStack(stack);
             // 身份比较：确认这件是不是饰品栏里的那把（是则稍后回写同步）
             for (ItemStack curio : curioList) {
                 if (curio == stack) { repairedCurio = true; break; }
