@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "#forge:storage_blocks/magic_gold",
+    "#forge:storage_blocks/holy_spirit",
+    "#forge:storage_blocks/origin_alloy"
+  ]
+}

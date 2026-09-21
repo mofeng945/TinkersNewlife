@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "#forge:ingots/magic_gold",
+    "#forge:ingots/holy_spirit",
+    "#forge:ingots/origin_alloy"
+  ]
+}
