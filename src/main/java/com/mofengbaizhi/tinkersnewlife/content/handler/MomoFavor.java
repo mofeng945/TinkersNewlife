@@ -33,18 +33,25 @@ public final class MomoFavor {
     public static int favorAsSeenBy(Player target, @org.jetbrains.annotations.Nullable net.minecraft.world.entity.Entity observer) {
         if (target == null) return 0;
         if (observer == null || observer == target) return get(target);
-        if (com.mofengbaizhi.tinkersnewlife.content.item.CognitiveMaskItem.isWorn(target)) return 0;
-        return get(target);
+        return masking(target) ? MASKED_FAVOR : get(target);      // §511 第三方视角：面具 ⇒ −1 ✓
     }
 
     /**
-     * §509 **墨默眼中的好感度**：戴着双向认知阻碍面具 ⇒ **她也认不出你** ⇒ 一律按 **0**（中立价）✓
-     * （用户口径：「墨默也认不出」✓）。用在：服务端定价 + 发给客户端的界面好感快照 ✓
+     * §511 **戴面具时她对你的"默认好感"= −1**（用户口径：「戴面具默认好感度是 -1」✓）。
+     * <p>效果（都是 −1 自然带来的 ✓）：价格按 −1 算（**比中立略贵 +1.5%** ✓）、
+     * 而 `canTalk` / `canHire` 要求 ≥ 0 ⇒ **面具下一律不能对话、不能雇佣** ✓（她认不出你，凭啥跟你聊/受雇 ✓）。
+     * <p>⚠ 从 §509 的 0 改成 −1 ⇒ 如果你其实想要"中立 0、还能对话"，把这个常量改回 0 即可 ✓。
+     */
+    public static final int MASKED_FAVOR = -1;
+
+    /**
+     * §509 **墨默眼中的好感度**：戴着双向认知阻碍面具 ⇒ **她也认不出你** ⇒ 按 {@link #MASKED_FAVOR}（−1）✓
+     * （用户口径：「墨默也认不出」+「默认好感度是 -1」✓）。用在：服务端定价 + 发给客户端的界面好感快照 ✓
      * —— 两边都用同一个值 ⇒ **界面显示与实际扣费永远一致** ✓。
      */
     public static int favorAsSeenByMomo(Player target) {
         if (target == null) return 0;
-        return com.mofengbaizhi.tinkersnewlife.content.item.CognitiveMaskItem.isWorn(target) ? 0 : get(target);
+        return masking(target) ? MASKED_FAVOR : get(target);
     }
 
     public static void set(Player player, int value) {
