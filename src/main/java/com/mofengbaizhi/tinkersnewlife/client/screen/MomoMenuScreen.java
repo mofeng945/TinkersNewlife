@@ -10,8 +10,8 @@ import net.minecraft.world.entity.player.Inventory;
  * 墨默三选项菜单的**客户端界面**（用户口径 §455 A/E）。
  *
  * <p>三个主按钮 **对话 / 交易 / 雇佣** ＋ 右下角 **回退** ✓；
- * 好感度为负时 **交易/雇佣变灰不可点**（用户口径：负数不能雇佣 ✓ 且会涨价 ⇒ 交易允许但更贵 ✓，
- * 这里把"交易"也一并变灰 ✗ —— ⚠ 这一点我拿不准 ✓ 先按"负数只能看不能点"做 ✓ 你要改成"交易仍可点但涨价"说一声 ✓）。
+ * 好感度为负时：**雇佣变灰不可点** ✓（用户口径：负数不能雇佣 ✓）；**交易仍然可点** ✓ 只是**更贵** ✓
+ * （`MomoFavor.priceFactor`：负好感每点 +1.5% ⇒ −50 时 1.75 倍 ✓ 用户口径"会涨价" ✓）；**对话**负数时也不可点 ✓。
  *
  * <p>自绘（`graphics.fill` 画面板与按钮 ✓ 沿用仓库里 {@code SilentGloveScreen} 的写法 ✓ 不用贴图 ✓）。
  * 批 1 只有这一屏 ✓；批 4 的对话屏、批 2 的交易屏、批 3 的雇佣屏都会各自带**回退** ✓。
@@ -48,7 +48,7 @@ public class MomoMenuScreen extends AbstractContainerScreen<MomoMenu> {
 
     private boolean enabled(int index) {
         if (index == MomoMenu.BTN_TALK) return this.menu.canTalk();
-        if (index == MomoMenu.BTN_TRADE) return this.menu.canTalk();   // ⚠ 见类注释：负数暂禁交易
+        if (index == MomoMenu.BTN_TRADE) return true;   // 负数**照样能交易**，只是更贵（用户口径 ✓ 见 priceFactor）
         if (index == MomoMenu.BTN_HIRE) return this.menu.canHire();
         return true;
     }
