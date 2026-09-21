@@ -5,6 +5,10 @@ import com.mofengbaizhi.tinkersnewlife.content.ModItems;
 import com.mofengbaizhi.tinkersnewlife.content.ModSounds;
 import com.mofengbaizhi.tinkersnewlife.content.curse.TechniqueHandler;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.mojang.serialization.Dynamic;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -31,10 +35,20 @@ import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.ai.behavior.Behavior;
+import net.minecraft.world.entity.ai.behavior.BehaviorControl;
+import net.minecraft.world.entity.ai.behavior.EntityTracker;
+import net.minecraft.world.entity.ai.behavior.LookAtTargetSink;
+import net.minecraft.world.entity.ai.behavior.MoveToTargetSink;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
+import net.minecraft.world.entity.ai.sensing.Sensor;
+import net.minecraft.world.entity.ai.sensing.SensorType;
+import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.warden.Warden;
 import net.minecraft.world.entity.player.Player;
@@ -353,8 +367,145 @@ public class MomoMerchant extends PathfinderMob
 
     @Override
     protected void registerGoals() {
-        // 受击反击：把攻击者设为目标（玩家/怪物/监守者均可）
-        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        // §486 用户口径：「把墨默的 ai 从 goal 试着改成 brain」⇒ 这里**不再注册任何 goal** ✓
+        //   ⚠ 实情：她原本也**只有一个 goal**（HurtByTargetGoal），其余全是下面那套自写 tick 状态机。
+        //   现在"唯一的 goal"搬进了 Brain 的 CORE activity（见 MomoSetTargetFromHurtBy ✓ 行为等价 ✓），
+        //   核心层（游泳/注视）与"空闲看玩家"也在 Brain 里 ✓；战斗/雇佣状态机**原样保留**
+        //   —— 那是手写的连招/格挡/大招/斩杀，塞进 activity 只会全丢 ✗。
+    }
+
+    // ============================================================
+    //  Brain（memory / sensor / activity ✓）—— §486
+    // ============================================================
+
+    private static final ImmutableList<MemoryModuleType<?>> MOMO_MEMORIES = ImmutableList.of(
+            MemoryModuleType.WALK_TARGET,
+            MemoryModuleType.LOOK_TARGET,
+            MemoryModuleType.ATTACK_TARGET,
+            MemoryModuleType.HURT_BY,
+            MemoryModuleType.HURT_BY_ENTITY,
+            MemoryModuleType.NEAREST_PLAYERS,
+            MemoryModuleType.NEAREST_VISIBLE_PLAYER,
+            MemoryModuleType.NEAREST_VISIBLE_ATTACKABLE_PLAYER,
+            MemoryModuleType.NEAREST_LIVING_ENTITIES,
+            MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES,
+            MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE);
+
+    private static final ImmutableList<SensorType<? extends Sensor<? super MomoMerchant>>> MOMO_SENSORS =
+            ImmutableList.of(SensorType.NEAREST_PLAYERS, SensorType.HURT_BY);
+
+    @Override
+    protected Brain.Provider<MomoMerchant> brainProvider() {
+        return Brain.provider(MOMO_MEMORIES, MOMO_SENSORS);
+    }
+
+    @Override
+    protected Brain<?> makeBrain(Dynamic<?> dynamic) {
+        return this.makeMomoBrain(this.brainProvider().makeBrain(dynamic));
+    }
+
+    private Brain<MomoMerchant> makeMomoBrain(Brain<MomoMerchant> brain) {
+        // 核心层：转头看 LOOK_TARGET / 走到 WALK_TARGET / 受击设目标
+        // （MoveToTargetSink 只在有人写了 WALK_TARGET 记忆时才动 ⇒ 不会跟自写寻路抢导航 ✓；
+        //  **不放 vanilla `Swim`**：她的水下是自写的（憋气不窒息 / 微浮力 / 游向目标 §水下），
+        //  再叠一层 Swim 会跟她抢跳跃与浮力 ✗）
+        ImmutableList<BehaviorControl<? super MomoMerchant>> core = ImmutableList.of(
+                new LookAtTargetSink(45, 90),
+                new MoveToTargetSink(),
+                new MomoSetTargetFromHurtBy());
+        brain.addActivity(Activity.CORE, 0, core);
+
+        // 空闲层：看向 8 格内的玩家（只写记忆，真转头交给核心层的 LookAtTargetSink ✓）
+        ImmutableList<BehaviorControl<? super MomoMerchant>> idle = ImmutableList.of(
+                new MomoLookAtNearestPlayer());
+        brain.addActivity(Activity.IDLE, 10, idle);
+
+        // 战斗层：同一条"受击⇒设目标"（开战后活动切到 FIGHT，语义清楚 ✓）
+        ImmutableList<BehaviorControl<? super MomoMerchant>> fight = ImmutableList.of(
+                new MomoSetTargetFromHurtBy());
+        brain.addActivity(Activity.FIGHT, 10, fight);
+
+        brain.setCoreActivities(ImmutableSet.of(Activity.CORE));
+        brain.setDefaultActivity(Activity.IDLE);
+        brain.useDefaultActivity();
+        return brain;
+    }
+
+    /**
+     * 协变返回的 `getBrain()` —— vanilla 村民也是这么写的 ✓
+     * （`LivingEntity#getBrain()` 返回 `Brain<?>`，直接用会撞 wildcard capture：
+     * 「MomoMerchant 无法转换为 CAP#1」⇒ 必须先收窄成 `Brain<MomoMerchant>` ✓）。
+     */
+    @Override
+    @SuppressWarnings("unchecked")
+    public Brain<MomoMerchant> getBrain() {
+        return (Brain<MomoMerchant>) super.getBrain();
+    }
+
+    /** brain 每 tick 跑一遍（vanilla 村民也是这么接的 ✓：`customServerAiStep` 里 tick ✓） */
+    @Override
+    protected void customServerAiStep() {
+        if (this.level() instanceof ServerLevel sl) {
+            this.getBrain().tick(sl, this);
+        }
+        super.customServerAiStep();
+    }
+
+    /**
+     * 空闲时看向最近的玩家 ✓
+     * <p>写 `LOOK_TARGET` 记忆（brain 的规矩：行为只写记忆，动作交给核心层 ✓）。
+     * 开战后就不盯玩家了（战斗注视由自写状态机负责 ✓ 不抢）。
+     */
+    private static final class MomoLookAtNearestPlayer extends Behavior<MomoMerchant> {
+
+        MomoLookAtNearestPlayer() {
+            super(ImmutableMap.of(MemoryModuleType.NEAREST_VISIBLE_PLAYER, MemoryStatus.VALUE_PRESENT));
+        }
+
+        @Override
+        protected void start(ServerLevel level, MomoMerchant mob, long gameTime) {
+            mob.getBrain().getMemory(MemoryModuleType.NEAREST_VISIBLE_PLAYER).ifPresent(player -> {
+                if (mob.distanceToSqr(player) <= 64.0) {
+                    mob.getBrain().setMemory(MemoryModuleType.LOOK_TARGET, new EntityTracker(player, true));
+                }
+            });
+        }
+
+        @Override
+        protected boolean canStillUse(ServerLevel level, MomoMerchant mob, long gameTime) {
+            return mob.getTarget() == null;
+        }
+    }
+
+    /**
+     * 受击 ⇒ 把攻击者设为当前目标 —— **等价于原来的 `HurtByTargetGoal`** ✓
+     * （玩家/怪物/监守者都能打她、她也会反击 ✓ 但创造模式玩家等不可攻击目标跳过 ✓）。
+     * 优先读 brain 记忆 `HURT_BY_ENTITY`，读不到就兜底 `getLastHurtByMob()`（不依赖传感器也能工作 ✓）。
+     */
+    private static final class MomoSetTargetFromHurtBy extends Behavior<MomoMerchant> {
+
+        MomoSetTargetFromHurtBy() {
+            super(ImmutableMap.of());
+        }
+
+        private static LivingEntity attackerOf(MomoMerchant mob) {
+            return mob.getBrain().getMemory(MemoryModuleType.HURT_BY_ENTITY).orElse(mob.getLastHurtByMob());
+        }
+
+        @Override
+        protected boolean checkExtraStartConditions(ServerLevel level, MomoMerchant mob) {
+            if (mob.getTarget() != null && mob.getTarget().isAlive()) return false;
+            LivingEntity attacker = attackerOf(mob);
+            return attacker != null && attacker != mob && attacker.isAlive() && mob.canAttack(attacker);
+        }
+
+        @Override
+        protected void start(ServerLevel level, MomoMerchant mob, long gameTime) {
+            LivingEntity attacker = attackerOf(mob);
+            if (attacker != null) {
+                mob.setTarget(attacker);
+            }
+        }
     }
 
     public void setNaturalSpawn(boolean natural) {
@@ -881,6 +1032,19 @@ public class MomoMerchant extends PathfinderMob
 
     private void tickServer() {
         if (homePos == null) homePos = this.blockPosition();
+
+        // §486 brain 活动切换：有目标 ⇒ FIGHT；否则回默认 IDLE（CORE 永远在跑 ✓）
+        // （真正的"设目标"在 CORE 的 MomoSetTargetFromHurtBy 里，这里只切活动语义 ✓）
+        try {
+            Brain<MomoMerchant> brain = this.getBrain();
+            if (this.getTarget() != null && this.getTarget().isAlive()) {
+                brain.setActiveActivityIfPossible(Activity.FIGHT);
+            } else {
+                brain.useDefaultActivity();
+            }
+        } catch (Throwable ignored) {
+            // brain 没建好也不该拖垮整只实体（极端兜底 ✓）
+        }
 
         // 鑷劧鍒锋柊鐨勫ⅷ榛橈細鐧藉ぉ鍒版潵鏃舵秷澶憋紙闆囦剑涓?鍒版湡杩斿洖鍚庣殑缁泧瀹介檺鍐呬笉娑堝け锛?
         // 鍒锋€泲鍙敜鐨勫父椹伙紱鎷掔粷缁泧鍒欏闄愮粨鏉熼殢澶╀寒娑堝け锛?
