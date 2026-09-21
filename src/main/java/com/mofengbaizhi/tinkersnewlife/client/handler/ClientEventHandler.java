@@ -63,6 +63,7 @@ public class ClientEventHandler {
                             .ConscienceHandler.mirrorOf(stack, com.mofengbaizhi.tinkersnewlife.content.handler
                                     .ConscienceHandler.BAR_ZERO) / 100.0F);
             MenuScreens.register(ModMenus.BAG_CONTAINER.get(), BagScreen::new);
+            MenuScreens.register(ModMenus.MOMO_MENU.get(), com.mofengbaizhi.tinkersnewlife.client.screen.MomoMenuScreen::new);   // 墨默三选项菜单
         MenuScreens.register(ModMenus.QUANTUM_VAULT.get(), com.mofengbaizhi.tinkersnewlife.client.screen.QuantumVaultScreen::new);
             // ✅ 注册噤默手套 GUI
             MenuScreens.register(ModMenus.SILENT_GLOVE_CONTAINER.get(), SilentGloveScreen::new);

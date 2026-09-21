@@ -28,6 +28,11 @@ public class ModMenus {
             DeferredRegister.create(ForgeRegistries.MENU_TYPES, TinkersNewlife.MOD_ID);
 
     // ===== 量子背包 =====
+    /** 墨默三选项菜单（对话/交易/雇佣 ✓ 用户口径 §455）：data = 实体 id + 好感度 ✓ */
+    public static final RegistryObject<MenuType<com.mofengbaizhi.tinkersnewlife.content.menu.MomoMenu>> MOMO_MENU =
+            MENUS.register("momo_menu",
+                    () -> IForgeMenuType.create(com.mofengbaizhi.tinkersnewlife.content.menu.MomoMenu::new));
+
     public static final RegistryObject<MenuType<BagContainer>> BAG_CONTAINER =
             MENUS.register("bag_container",
                     () -> IForgeMenuType.create((windowId, inv, data) -> {
