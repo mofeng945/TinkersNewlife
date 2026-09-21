@@ -100,12 +100,13 @@ public class MomoTalkScreen extends Screen {
     private static final int ROW_H = 26;
 
     /**
-     * §493 用户口径「字可以大一点，粗一点，让格式不要这么僵硬」：
+     * §493 用户口径「字可以大一点，粗一点，让格式不要这么僵硬」；
+     * **§495 用户改口「不加粗了」⇒ 现在只放大、不加粗** ✓（`BOLD` 相关全部去掉，宽度也按常规字重算 ✓）。
      * <ul>
      *   <li><b>放大</b>：文字统一走 {@link #TEXT_SCALE} 倍缩放（`pose().scale`）⇒ 比原版 8px 字大一圈 ✓；</li>
-     *   <li><b>加粗</b>：正文一律 `ChatFormatting.BOLD` ✓（**换行宽度也按加粗算**，否则行尾会溢出色框 ✗）；</li>
-     *   <li><b>不那么僵硬</b>：气泡**按内容自适应宽度**（不再人人一板 2/3 宽 ✓ 上限仍是 2/3 ✓）、
-     *       去掉选项前面的「·」、行距加宽、文字带阴影 ⇒ 像聊天窗而不是表格 ✓。</li>
+     *   <li><b>不加粗</b>：常规字重 + 阴影（dropShadow ✓）；</li>
+     *   <li><b>不那么僵硬</b>：气泡**按内容自适应宽度**（上限仍是空白区 2/3 ✓）、
+     *       去掉选项前面的「·」、行距加宽 ⇒ 像聊天窗而不是表格 ✓。</li>
      * </ul>
      */
     private static final float TEXT_SCALE = 1.25F;
@@ -183,7 +184,7 @@ public class MomoTalkScreen extends Screen {
             if (budget <= 0) break;
             String s = flatten(line);
             int n = Math.min(budget, s.length());
-            w = Math.max(w, this.font.width("§l" + s.substring(0, n)));
+            w = Math.max(w, this.font.width(s.substring(0, n)));
             rows++;
             budget -= s.length();
         }
@@ -202,9 +203,9 @@ public class MomoTalkScreen extends Screen {
         return Math.max(40, (int) ((bubbleW - PAD * 2) / TEXT_SCALE));
     }
 
-    /** 按加粗算好的换行（加粗比常规宽约 1px/字 ⇒ **必须按加粗换行**，否则行尾溢出色框 ✗） */
+    /** 按常规字重换行（§495 用户口径「不加粗了」⇒ 已去掉 `ChatFormatting.BOLD` ✓） */
     private List<FormattedCharSequence> wrap(String text) {
-        return this.font.split(Component.literal(text).withStyle(net.minecraft.ChatFormatting.BOLD), wrapW());
+        return this.font.split(Component.literal(text), wrapW());
     }
 
     /** 整段文字在屏上的实际宽度（已含缩放 ✓ 用于气泡自适应宽度 ✓） */
@@ -229,17 +230,17 @@ public class MomoTalkScreen extends Screen {
         g.pose().popPose();
     }
 
-    /** 同上，但吃纯文本（打字机用 ✓ `bold` = 补回加粗样式 ✓） */
-    private void text(GuiGraphics g, String s, int x, int y, int color, boolean bold) {
+    /** 画一段纯文本（带缩放 + 阴影 ✓；§495 起**不再加粗** ✓） */
+    private void text(GuiGraphics g, String s, int x, int y, int color) {
         g.pose().pushPose();
         g.pose().scale(TEXT_SCALE, TEXT_SCALE, 1F);
-        g.drawString(this.font, bold ? "§l" + s : s, Math.round(x / TEXT_SCALE), Math.round(y / TEXT_SCALE), color, true);
+        g.drawString(this.font, s, Math.round(x / TEXT_SCALE), Math.round(y / TEXT_SCALE), color, true);
         g.pose().popPose();
     }
 
     /** 选项那一条气泡的宽度（点击判定和绘制共用 ✓ 内容自适应 ✓） */
     private int optionW(Entry e) {
-        return Math.min(bubbleW, Math.round(this.font.width("§l" + e.q()) * TEXT_SCALE) + PAD * 2);
+        return Math.min(bubbleW, Math.round(this.font.width(e.q()) * TEXT_SCALE) + PAD * 2);
     }
 
     /**
@@ -260,7 +261,7 @@ public class MomoTalkScreen extends Screen {
             if (budget <= 0) break;
             String s = flatten(line);
             int n = Math.min(budget, s.length());
-            text(g, s.substring(0, n), bx + PAD, ly, MOMO_TEXT, true);
+            text(g, s.substring(0, n), bx + PAD, ly, MOMO_TEXT);
             budget -= s.length();
             ly += LINE_H;
             if (ly > layoutTop + bh - PAD) break;
@@ -374,7 +375,7 @@ public class MomoTalkScreen extends Screen {
         if (backHover) graphics.fill(backX + 2, backY + 2, backX + 88, backY + 18, 0x33FFFFFF);
         String back = page == 0 ? "关闭" : "回退";
         int backW = Math.round(this.font.width(back) * TEXT_SCALE);
-        text(graphics, back, backX + 45 - backW / 2, backY + (20 - LINE_H) / 2, 0x202020, false);
+        text(graphics, back, backX + 45 - backW / 2, backY + (20 - LINE_H) / 2, 0x202020);
     }
 
     private void renderList(GuiGraphics g, int mouseX, int mouseY) {
@@ -390,11 +391,11 @@ public class MomoTalkScreen extends Screen {
             nine(g, OPTION, playerX, ry, rw, ROW_H - 6);
             g.fill(playerX + 2, ry + 2, playerX + rw - 2, ry + ROW_H - 8, PLAYER_TINT);
             if (hov) g.fill(playerX + 2, ry + 2, playerX + rw - 2, ry + ROW_H - 8, 0x33FFFFFF);
-            text(g, "§l" + e.q(), playerX + PAD, ry + (ROW_H - 6 - LINE_H) / 2 + 1, PLAYER_TEXT, false);
+            text(g, e.q(), playerX + PAD, ry + (ROW_H - 6 - LINE_H) / 2 + 1, PLAYER_TEXT);
         }
         if (maxScroll > 0) {
             text(g, "滚轮翻动（" + (scroll + 1) + "/" + (maxScroll + 1) + "）",
-                    playerX, Math.min(this.height - 48, rowsTop + visibleRows * ROW_H + 2), HINT_TEXT, false);
+                    playerX, Math.min(this.height - 48, rowsTop + visibleRows * ROW_H + 2), HINT_TEXT);
         }
     }
 
@@ -414,7 +415,7 @@ public class MomoTalkScreen extends Screen {
 
         // 她的回答（右 ✓ 打字机 ✓ 气泡随字长大 ✓）
         int[] box = drawMomoBubble(g, wrap(answerText), answerTop);
-        text(g, typing() ? "按空格跳过" : "按空格继续", box[0] + PAD, box[1] + box[3] + 4, HINT_TEXT, false);
+        text(g, typing() ? "按空格跳过" : "按空格继续", box[0] + PAD, box[1] + box[3] + 4, HINT_TEXT);
     }
 
     private static String flatten(FormattedCharSequence seq) {
