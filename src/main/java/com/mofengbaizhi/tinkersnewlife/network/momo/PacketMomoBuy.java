@@ -46,6 +46,7 @@ public class PacketMomoBuy {
                 case OK -> {
                     com.mofengbaizhi.tinkersnewlife.content.handler.MomoFavor.onTrade(player);   // 成交一次 +1 好感（用户口径 ✓ 封顶 +50 ✓）
                     // 交易成功：播放墨默"空闲2"语音（替换村民高兴声）
+                    com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoSoldState.sendTo(player, momo);   // 立刻同步已买次数 ⇒ 缺货马上变灰
                     momo.playTradeSuccessSound();
                     if (momo.level() instanceof net.minecraft.server.level.ServerLevel sl) {
                         sl.sendParticles(net.minecraft.core.particles.ParticleTypes.HAPPY_VILLAGER,

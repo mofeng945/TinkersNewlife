@@ -27,7 +27,7 @@ public class MomoTradeScreen extends Screen {
 
     private final int momoId;
     private final int favor;
-    private final int[] sold;
+    private int[] sold;   // 会被 PacketMomoSoldState 就地刷新 ✓
     public boolean hired;
     public String employer;
     private final List<Row> rows = new ArrayList<>();
@@ -62,6 +62,10 @@ public class MomoTradeScreen extends Screen {
     }
 
     /** 兼容旧调用：这只墨默是不是本界面的那只（PacketMomoHireState 会调 ✓） */
+    /** 就地刷新今日已买次数（`PacketMomoSoldState` 收到就调 ⇒ 缺货立刻变灰，不用重开界面） */
+    public void updateSold(int[] sold) {
+        this.sold = sold == null ? new int[0] : sold;
+    }
     public boolean matches(int id) {
         return this.momoId == id;
     }
@@ -108,23 +112,28 @@ public class MomoTradeScreen extends Screen {
             String name = r.result().getHoverName().getString();
             if (r.result().getCount() > 1) name = name + " ×" + r.result().getCount();
             graphics.drawString(this.font, name, rowX() + 22, ry + 4, soldOut ? 0x8A8A8A : 0x202020, false);
-            int cx = rowX() + rowW() - 46;
-            graphics.renderItem(r.currency(), cx, ry + 3);
+            // ⭐ 价格块（货币图标 + 原价 + 折后价）**整体右对齐**，宽度不够就**整体左移**（用户口径：原价一定要画 ✓ 不许写到行外 ✗）
+            String now = "×" + r.price();
+            String base = "×" + r.base();
+            boolean showBase = !soldOut && r.base() != r.price();
+            int nowW = this.font.width(now);
+            int baseW = showBase ? this.font.width(base) : 0;
+            int totalW = baseW + (showBase ? 5 : 0) + nowW;
+            int iconX = Math.max(rowX() + 62, rowX() + rowW() - 6 - totalW - 20);
+            graphics.renderItem(r.currency(), iconX, ry + 3);
             if (soldOut) {
-                graphics.drawString(this.font, "缺货", cx + 20, ry + 7, 0xFFAA00, false);
+                graphics.drawString(this.font, "缺货", iconX + 20, ry + 7, 0xFFAA00, false);
             } else {
-                // 原价用红色删除线划掉 + 显示折后价（用户口径）
-                int px = cx + 20;
-                if (r.base() != r.price()) {
-                    String base = "×" + r.base();
+                int px = iconX + 20;
+                if (showBase) {
                     graphics.drawString(this.font,
                             net.minecraft.network.chat.Component.literal(base).withStyle(
                                     net.minecraft.ChatFormatting.RED,
                                     net.minecraft.ChatFormatting.STRIKETHROUGH),
                             px, ry + 7, 0xFF5555);
-                    px += this.font.width(base) + 4;
+                    px += baseW + 5;
                 }
-                graphics.drawString(this.font, "×" + r.price(), px, ry + 7,
+                graphics.drawString(this.font, now, px, ry + 7,
                         r.price() > r.base() ? 0xAA0000 : 0x1F6B1F, false);
             }
         }
