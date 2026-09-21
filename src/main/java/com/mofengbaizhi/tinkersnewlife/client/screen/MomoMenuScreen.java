@@ -99,12 +99,14 @@ public class MomoMenuScreen extends AbstractContainerScreen<MomoMenu> {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0 && this.minecraft != null && this.minecraft.gameMode != null) {
             if (isHovering(backX(), backY(), 54, 18, mouseX, mouseY)) {
-                this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, MomoMenu.BTN_BACK);
+                this.onClose();   // 回退：客户端直接关（服务端随之关掉容器）
                 return true;
             }
             for (int i = 0; i <= 2; i++) {
                 if (enabled(i) && isHovering(btnX(), btnY(i), btnW(), btnH(), mouseX, mouseY)) {
-                    this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, i);
+                    // 自建显式包：容器按钮包在无槽位菜单上点不动
+                    com.mofengbaizhi.tinkersnewlife.TinkersNewlife.CHANNEL.sendToServer(
+                            new com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoMenuAction(this.menu.momoId(), i));
                     if (i == MomoMenu.BTN_TALK) {
                         // ⭐ 对话树在**客户端直接打开** ✓（文案全是静态的 ✓ 好感度已在菜单里同步 ✓ 不用新网络包 ✓）
                         String name = this.minecraft.player == null ? ""

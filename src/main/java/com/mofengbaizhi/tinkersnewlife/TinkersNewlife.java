@@ -222,6 +222,8 @@ public class TinkersNewlife {
         registerPacket(PacketSwitchFlyingSwordMode.class, PacketSwitchFlyingSwordMode::toBytes, PacketSwitchFlyingSwordMode::new, PacketSwitchFlyingSwordMode::handle);
         registerPacket(PacketToggleDomain.class, PacketToggleDomain::toBytes, PacketToggleDomain::new, PacketToggleDomain::handle);
         registerPacket(PacketUseTechnique.class, PacketUseTechnique::toBytes, PacketUseTechnique::new, PacketUseTechnique::handle);
+        // 墨默菜单三选项（自建显式包，不走容器按钮包）
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoMenuAction.class, com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoMenuAction::toBytes, com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoMenuAction::new, com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoMenuAction::handle);
         registerPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketUseReverseTechnique.class,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketUseReverseTechnique::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketUseReverseTechnique::new,
