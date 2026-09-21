@@ -270,8 +270,8 @@ public class ModEntities {
         ENTITIES.register("momo_merchant",
                 () -> EntityType.Builder.<com.mofengbaizhi.tinkersnewlife.content.entity.MomoMerchant>of(
                                 com.mofengbaizhi.tinkersnewlife.content.entity.MomoMerchant::new, MobCategory.CREATURE)
-                        // 模型 ×0.7（用户口径「太高了」§490）⇒ 判定箱同步缩：0.6*0.7=0.42 / 1.8*0.7=1.26 ✓
-                        .sized(0.42f, 1.26f).clientTrackingRange(16).updateInterval(3)
+                        // 模型 ×0.85（用户口径「0.7 太小了」§491）⇒ 判定箱同步缩：0.6*0.85=0.51 / 1.8*0.85=1.53 ✓
+                        .sized(0.51f, 1.53f).clientTrackingRange(16).updateInterval(3)
                         .build(TinkersNewlife.MOD_ID + ":momo_merchant"));
 
     /** 十划咒法·弱点实体（金色小球，跟随目标，可被施术者击打触发暴击） */

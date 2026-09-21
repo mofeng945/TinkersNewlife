@@ -21,14 +21,14 @@ public class MomoMerchantRenderer extends HumanoidMobRenderer<MomoMerchant, Huma
             new ResourceLocation("tinkersnewlife", "textures/entity/momo_common.png");
 
     /**
-     * 模型缩放（用户口径：「实体模型大小缩小 0.7 倍，现在有点太高了」✓）。
+     * 模型缩放（用户口径：先「缩小 0.7 倍」⇒ 又「0.85，现在太小了」✓ 取 0.85）。
      * `scale()` 的缩放以**脚底**为原点 ⇒ 缩完她还是站在地上 ✓ 不会浮空/陷地 ✓。
-     * 判定箱同步缩到 0.7（见 `ModEntities` 的 `.sized(0.42f, 1.26f)` ✓）⇒ 视觉与碰撞一致 ✓。
+     * 判定箱同步缩到 0.85（见 `ModEntities` 的 `.sized(0.51f, 1.53f)` ✓）⇒ 视觉与碰撞一致 ✓。
      */
-    private static final float MODEL_SCALE = 0.7F;
+    private static final float MODEL_SCALE = 0.85F;
 
     public MomoMerchantRenderer(EntityRendererProvider.Context context) {
-        super(context, new HumanoidModel<>(context.bakeLayer(ModelLayers.PLAYER)), 0.35F);   // 影子半径也跟着缩 ✓
+        super(context, new HumanoidModel<>(context.bakeLayer(ModelLayers.PLAYER)), 0.43F);   // 影子半径 = 0.5 × 0.85 ✓
         // 玩家模型对应的手持动画：主手（战镰）挥动；进食时收起镰刀
         this.addLayer(new ItemInHandLayer<>(this, context.getItemInHandRenderer()) {
             @Override

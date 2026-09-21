@@ -156,9 +156,9 @@ public class MomoTalkScreen extends Screen {
         portraitH = ps[1];
         panelX = 24;
         panelW = Math.max(200, this.width - portraitW - 48);
-        // §490：开场白气泡直接摆在**她脸那一带** ⇒ 尖角对准她的头 ✓；选项从气泡下方开始排 ✓
+        // §490：开场白气泡**正对她脸居中** ⇒ 尖角百分百指到她脸上 ✓；选项从气泡下方开始排 ✓
         this.greetH = this.font.split(Component.literal(greeting()), panelW - PAD * 2).size() * 10 + PAD * 2;
-        listY = Math.max((int) (this.height * 0.24F), MomoArt.faceY(this.width, this.height) - this.greetH / 2);
+        listY = Math.max(10, MomoArt.faceY(this.width, this.height) - this.greetH / 2);
         rowsTop = listY + this.greetH + 10;
         listH = Math.max(72, this.height - rowsTop - 44);
         backX = panelX;
