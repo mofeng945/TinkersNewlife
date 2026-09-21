@@ -160,7 +160,7 @@ public class ExecutionDomain extends BaseDomain {
         if (t instanceof ServerPlayer targetPlayer && targetPlayer.isAlive()) {
             // ⭐ 用户口径：玩家审判**完全按善恶值**（不再看罪行分/击杀数 ✗）
             //   ⚠ 同时**删掉了原来 30~35 tick 那条"杀人数：%s"的 title** ✓（lang 键留着没删 ✓ 无副作用 ✓）
-            boolean guilty = ConscienceHandler.getAlignment(targetPlayer) < CONSCIENCE_GUILTY_ALIGNMENT;
+            boolean guilty = ConscienceHandler.alignmentAsSeenBy(targetPlayer, null) < CONSCIENCE_GUILTY_ALIGNMENT;
             if (elapsed >= 0 && elapsed < 5) {
                 broadcastTitle(level, targetPlayer.getDisplayName());
             } else if (elapsed >= 60 && elapsed < 65) {
@@ -196,7 +196,7 @@ public class ExecutionDomain extends BaseDomain {
         if (living instanceof ServerPlayer p) {
             // ⭐ 用户口径：玩家审判**完全按善恶值** ✓ —— 低于 −20% 有罪 ✓ 其余无罪 ✓
             //   （不再看"罪行分 = 击杀村民+动物+玩家数" ✗ 那个阈值与算法保留在文件里但玩家审判已不用它 ✓）
-            guilty = ConscienceHandler.getAlignment(p) < CONSCIENCE_GUILTY_ALIGNMENT;
+            guilty = ConscienceHandler.alignmentAsSeenBy(p, null) < CONSCIENCE_GUILTY_ALIGNMENT;
             if (guilty) {
                 applyPlayerPenalty(owner, p);
             }

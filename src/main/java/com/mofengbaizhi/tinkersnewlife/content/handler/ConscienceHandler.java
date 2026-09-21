@@ -70,6 +70,20 @@ public final class ConscienceHandler {
         return player.getPersistentData().getInt(KEY_ALIGNMENT);
     }
 
+    /**
+     * §508 **别人眼中的善恶值**（用户口径：「双向认知阻碍面具……佩戴者的善恶值……都将对外视为 0（自己看不是 0）」✓）。
+     *
+     * @param target   被观察的玩家
+     * @param observer 观察者：**自己 / 系统内部**传 {@code null} 或 {@code target} ⇒ 真实值 ✓；
+     *                 任何**第三方**（处刑域、指令、NPC、别的玩家…）传它自己 ⇒ 戴面具者一律视为 **0** ✓
+     */
+    public static int alignmentAsSeenBy(Player target, @org.jetbrains.annotations.Nullable net.minecraft.world.entity.Entity observer) {
+        if (target == null) return 0;
+        if (observer == null || observer == target) return getAlignment(target);
+        if (com.mofengbaizhi.tinkersnewlife.content.item.CognitiveMaskItem.isWorn(target)) return 0;
+        return getAlignment(target);
+    }
+
     /** 直接设值（会夹在 −50~+50 ✓）—— 第二期的 12 条增减规则都走这里 ✓ */
     public static void setAlignment(Player player, int value) {
         if (player == null) return;

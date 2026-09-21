@@ -83,7 +83,10 @@ public final class MomoCommand {
 
     private static int show(CommandSourceStack source, ServerPlayer player) {
         int v = MomoFavor.get(player);
-        source.sendSuccess(() -> Component.literal("§b[墨默] §f" + player.getScoreboardName() + " 的好感度：§e" + describe(v)), false);
+        // §508 OP 视角也是"第三方"：佩戴双向认知阻碍面具的玩家 ⇒ 对外显示 0，但**标注真实值**便于管理 ✓
+        boolean masked = com.mofengbaizhi.tinkersnewlife.content.item.CognitiveMaskItem.isWorn(player);
+        String shown = masked ? "0 §7（面具掩盖，实际 §e" + v + "§7）§f" : describe(v);
+        source.sendSuccess(() -> Component.literal("§b[墨默] §f" + player.getScoreboardName() + " 的好感度：§e" + shown), false);
         return v;
     }
 
