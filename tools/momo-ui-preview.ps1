@@ -25,6 +25,7 @@ $EXPR_FILES = @("momo_normal", "momo_happy", "momo_blush", "momo_awkward", "momo
 $best = 0
 for ($i = 0; $i -lt 6; $i++) { if ($Favor -ge $TIERS[$i]) { $best = $i } }
 $exprIdx = $GREET[$best]
+if ($Favor -lt 0) { $exprIdx = 5 }   # 负好感 = 嫌恶（与 MomoArt.exprForFavor 一致 ✓）
 $por = [System.Drawing.Image]::FromFile((Join-Path $texDir ($EXPR_FILES[$exprIdx] + ".png")))
 
 $W = $GuiW * $Scale; $H = $GuiH * $Scale

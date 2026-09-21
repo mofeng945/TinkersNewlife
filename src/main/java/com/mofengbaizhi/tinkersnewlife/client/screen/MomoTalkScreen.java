@@ -110,7 +110,6 @@ public class MomoTalkScreen extends Screen {
     private String answerText = "";
     private int scroll = 0;
     private int maxScroll = 0;
-    private int hoverEntry = -1;             // 选项页悬停的那条（用来预览表情 ✓）
 
     private int panelX, panelW;              // 左侧文字区（右侧留给立绘）
     private int portraitW, portraitH;        // init() 里算好的立绘尺寸 ✓
@@ -184,10 +183,14 @@ public class MomoTalkScreen extends Screen {
         MomoArt.tail(g, panelX + panelW, tailY, 0xFFF7F3E7);
     }
 
-    /** 当前该露哪张脸：看回答 ⇒ 那条回答自己的表情；在选项页 ⇒ 悬停预览那条，没悬停就是该好感档的默认脸 ✓ */
+    /**
+     * 当前该露哪张脸：看回答 ⇒ 那条回答自己的表情 ✓；
+     * 选项页 ⇒ **只按好感度**（{@link MomoArt#exprForFavor}）✓
+     * —— ⚠️ **悬停选项不改脸**（用户口径：「鼠标放置在对话选项上时表情不应该发生变化」；
+     * 原来那套"悬停预览表情"已删 ✓ 选项高亮框保留 ✓）。
+     */
     private int currentExpr() {
         if (page > 0) return entries.get(page - 1).expr();
-        if (hoverEntry >= 0 && hoverEntry < entries.size()) return entries.get(hoverEntry).expr();
         return MomoArt.exprForFavor(favor);
     }
 
@@ -196,17 +199,6 @@ public class MomoTalkScreen extends Screen {
         this.renderBackground(graphics);
         graphics.fill(0, 0, this.width, this.height, 0x99000000);      // 压暗背景
 
-        // 先算悬停（立绘要先知道露哪张脸 ✓）
-        hoverEntry = -1;
-        if (page == 0) {
-            int visible = Math.max(1, listH / ROW_H);
-            for (int i = 0; i < visible && i + scroll < entries.size(); i++) {
-                if (hovering(panelX, listY + 6 + i * ROW_H, panelW, ROW_H - 4, mouseX, mouseY)) {
-                    hoverEntry = i + scroll;
-                    break;
-                }
-            }
-        }
         // 尖角要对准「正在说话的那个气泡」的竖直中点 ✓
         if (page == 0) {
             int headH = this.font.split(Component.literal(greeting()), panelW - PAD * 2).size() * 10 + PAD * 2;

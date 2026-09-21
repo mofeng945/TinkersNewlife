@@ -56,8 +56,12 @@ public final class MomoArt {
     public static final ResourceLocation OPTION =
             new ResourceLocation(TinkersNewlife.MOD_ID, "textures/gui/momo/bubble_option.png");
 
-    /** 好感度 ⇒ 默认表情（两个界面共用 ✓ 保证菜单和对话里"同一好感同一张脸" ✓） */
+    /**
+     * 好感度 ⇒ 默认表情（两个界面共用 ✓ 保证菜单和对话里"同一好感同一张脸" ✓）。
+     * <b>负好感一律嫌恶</b> ✓（用户口径：「负数好感度时应当是嫌恶表情」——那种关系下她不该给你好脸 ✗）。
+     */
     public static int exprForFavor(int favor) {
+        if (favor < 0) return EXPR_DISGUST;
         int best = 0;
         for (int t = 0; t < TIER.length; t++) if (favor >= TIER[t]) best = t;
         return GREET_EXPR[Math.max(0, Math.min(GREET_EXPR.length - 1, best))];
