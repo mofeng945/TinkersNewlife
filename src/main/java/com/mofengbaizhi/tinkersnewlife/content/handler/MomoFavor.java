@@ -81,13 +81,25 @@ public final class MomoFavor {
         return f >= 0 ? 1.0D - 0.3D * (f / (double) MAX) : 1.0D + 0.015D * (-f);
     }
 
-    /** 交易成功一次 ✓ +1（封顶 ✓） */
+    /** 交易成功一次 ✓ +1（封顶 ✓）；§510 **戴面具时她认不出你 ⇒ 不会记住这次交易 ⇒ 不加好感** ✓（用户口径） */
     public static void onTrade(Player player) {
+        if (masking(player)) return;
         add(player, +1);
     }
 
-    /** 攻击墨默一次 ✓ −1（下限 ✓） */
+    /**
+     * 攻击墨默一次 ✓ −1（下限 ✓）。
+     * <p>§510 同理：面具下**她不知道是谁打的** ⇒ 也不减好感 ✓（与"交易不加"保持同一套逻辑 ✓；
+     * 若你想让"打她照样掉好感"，把这一行守卫删掉即可 ✓）。
+     */
     public static void onHit(Player player) {
+        if (masking(player)) return;
         add(player, -1);
+    }
+
+    /** 是否戴着双向认知阻碍面具（她认不出你的身份 ✓ §508~§510 共用一个判断 ✓） */
+    private static boolean masking(Player player) {
+        return player != null
+                && com.mofengbaizhi.tinkersnewlife.content.item.CognitiveMaskItem.isWorn(player);
     }
 }
