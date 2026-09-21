@@ -98,8 +98,14 @@ public class MomoTalkScreen extends Screen {
     private static final float PORTRAIT_H_RATIO = 0.62F;
     private static final float PORTRAIT_W_RATIO = 0.28F;
 
-    /** 开场白的表情（每好感档一个 ✓） */
-    private static final int[] GREET_EXPR = { 0, 0, 1, 2, 3, 4 };
+    /**
+     * **没悬停任何选项时**露哪张脸（= 开场白对应的表情，每好感档一个 ✓）。
+     *
+     * <p>⚠️ 这里**只放"寒暄该有的脸"**：平静 / 开心 / 脸红 ✓
+     * —— 之前写成 `{0,0,1,2,3,4}`，40 档是**尴尬**、50 档是**惊讶**，跟问候语完全不搭
+     * （用户：「为什么常态是惊讶」✗ ⇒ 已改）。尴尬 / 惊讶 / 嫌恶只留给**具体某条回答**（见下面的 EXPR ✓）。</p>
+     */
+    private static final int[] GREET_EXPR = { 0, 0, 1, 2, 1, 1 };
 
     /** **逐条对话**的表情：[档位][该档第几条问题] ⇒ PORTRAIT 下标（N=平静 H=开心 B=脸红 A=尴尬 S=吃惊 D=嫌恶 ✓） */
     private static final int[][] EXPR = {
