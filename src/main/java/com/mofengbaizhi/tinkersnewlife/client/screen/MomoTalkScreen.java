@@ -1,21 +1,25 @@
 package com.mofengbaizhi.tinkersnewlife.client.screen;
 
+import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 墨默的**对话树**（用户口径 §455 D/E ✓ 文案逐字照抄自备忘录 §455 D ✓）。
+ * 墨默的**对话树**（用户口径 §455 D/E ✓ 文案逐字照抄 ✓ **立绘 + 九宫格气泡版** ✓）。
  *
  * <ul>
- *   <li>开场白按好感度 6 档 ✓（第 5 条含《玩家名》✓ 由客户端自己填 ✓）；</li>
- *   <li>选项 6 档 × 3 = 18 条 ✓ **未达好感的不显示** ✓（负好感根本进不来 ✓ 菜单那道已经挡了 ✓）；</li>
- *   <li>选中后回答**一个字一个字出现**（打字机 ✓）；**按空格跳过**动画 ✓；**打完后按空格回到对话界面** ✓；</li>
- *   <li>选项**超出屏幕可用滚轮滑动** ✓；**每个界面都有回退按钮** ✓（答案页 ⇒ 回选项页 ✓ 选项页 ⇒ 关闭 ✓）。</li>
+ *   <li><b>立绘</b>：右侧、底部对齐、按屏幕高等比缩放 ✓ 表情按好感档位切换 ✓
+ *       （0/10 normal ✓ 20 happy ✓ 30 blush ✓ 40 awkward ✓ 50 surprised ✓）；</li>
+ *   <li><b>气泡</b>：九宫格贴图 {@code bubble_momo.png}（半径 9 / 19×19 ✓）⇒ 任意长回答都能撑开 ✓ 内边距 9px ✓；</li>
+ *   <li><b>选项</b>：{@code bubble_option.png} 九宫格按钮 ✓ 悬停叠亮层 ✓ **未达好感整档不显示** ✓ 超出可滚轮 ✓；</li>
+ *   <li><b>打字机</b>：每 tick +1.5 字 ✓ **空格跳过**动画 ✓ **打完后空格回到选项页** ✓；**回退按钮每屏都有** ✓；</li>
+ *   <li>背景压暗一层半透明黑 ✓（有立绘这样才看得清 ✓）。</li>
  * </ul>
  */
 public class MomoTalkScreen extends Screen {
@@ -79,56 +83,76 @@ public class MomoTalkScreen extends Screen {
             }
     };
 
-    private static final int ROW_H = 18;
-    private static final int PANEL_W = 270;
-    private static final int PANEL_H = 180;
+    /** 立绘：每档一张 + 原始尺寸（`blit` 缩放要显式给纹理尺寸；六张尺寸不全一样 ⇒ 查表 ✓） */
+    private static final String[] PORTRAIT = {
+            "momo_normal", "momo_normal", "momo_happy", "momo_blush", "momo_awkward", "momo_surprised"
+    };
+    private static final int[][] PORTRAIT_SIZE = {
+            { 363, 800 }, { 363, 800 }, { 587, 800 }, { 587, 800 }, { 587, 800 }, { 587, 800 }
+    };
 
-    private record Entry(String q, String a) {}
+    /** 九宫格气泡（自绘纯色版 ✓ 手绘同路径同名即可替换 ✓） */
+    private static final ResourceLocation BUBBLE = new ResourceLocation(TinkersNewlife.MOD_ID, "textures/gui/momo/bubble_momo.png");
+    private static final ResourceLocation OPTION = new ResourceLocation(TinkersNewlife.MOD_ID, "textures/gui/momo/bubble_option.png");
+    private static final int NINE = 19;      // 贴图边长
+    private static final int RADIUS = 9;     // 圆角半径（= 四角切片大小 ✓）
+    private static final int PAD = 9;        // 气泡内边距
+    private static final int ROW_H = 24;
+
+    private record Entry(String q, String a, int tier) {}
 
     private final int favor;
     private final String playerName;
     private final List<Entry> entries = new ArrayList<>();
 
-    /** 0 = 选项页 ✓；>0 = 正在看第 (page-1) 条回答 ✓ */
-    private int page = 0;
-    /** 打字机：已显示字符数（每 tick +1.5 ✓） */
+    private int page = 0;                    // 0 = 选项页；>0 = 看第 (page-1) 条回答
     private float reveal = 0F;
     private String answerText = "";
     private int scroll = 0;
     private int maxScroll = 0;
-    private int listX, listY, listW, listH, backX, backY;
+
+    private int panelX, panelW;              // 左侧文字区（右侧留给立绘）
+    private int listY, listH;
+    private int backX, backY;
 
     public MomoTalkScreen(int favor, String playerName) {
         super(Component.translatable("menu.tinkersnewlife.momo"));
         this.favor = favor;
         this.playerName = playerName == null ? "" : playerName;
         for (int t = 0; t < TIER.length; t++) {
-            if (favor < TIER[t]) continue;                        // 未达好感 ⇒ 整档不显示 ✓
+            if (favor < TIER[t]) continue;
             for (int i = 0; i < QUESTIONS[t].length; i++) {
-                entries.add(new Entry(QUESTIONS[t][i], ANSWERS[t][i]));
+                entries.add(new Entry(QUESTIONS[t][i], ANSWERS[t][i], t));
             }
         }
     }
 
-    private String greeting() {
+    private int tierIndex() {
         int best = 0;
         for (int t = 0; t < TIER.length; t++) if (favor >= TIER[t]) best = t;
-        return String.format(GREET[best], playerName);
+        return best;
     }
 
-    private int left() { return (this.width - PANEL_W) / 2; }
-    private int top() { return (this.height - PANEL_H) / 2; }
+    private String greeting() {
+        return String.format(GREET[tierIndex()], playerName);
+    }
+
     private boolean typing() { return page > 0 && reveal < answerText.length(); }
+
+    private boolean hovering(int x, int y, int w, int h, double mx, double my) {
+        return mx >= x && mx < x + w && my >= y && my < y + h;
+    }
 
     @Override
     protected void init() {
         super.init();
-        listX = left() + 8;
-        listY = top() + 34;
-        listW = PANEL_W - 16;
-        listH = PANEL_H - 44 - 22;
-        backX = left() + PANEL_W - 62;
-        backY = top() + PANEL_H - 24;
+        int portraitW = Math.min((int) (this.width * 0.42F), 420);   // 立绘占右侧约 42% 宽
+        panelX = 24;
+        panelW = Math.max(200, this.width - portraitW - 48);
+        listY = (int) (this.height * 0.30F);
+        listH = (int) (this.height * 0.58F);
+        backX = panelX;
+        backY = this.height - 34;
     }
 
     @Override
@@ -139,67 +163,117 @@ public class MomoTalkScreen extends Screen {
     @Override
     public void tick() {
         super.tick();
-        if (page > 0 && reveal < answerText.length()) {
-            reveal = Math.min(answerText.length(), reveal + 1.5F);   // 一个字一个字 ✓
+        if (page > 0 && reveal < answerText.length()) reveal = Math.min(answerText.length(), reveal + 1.5F);
+    }
+
+    /** 九宫格拼装（半径 9 / 19×19 ✓ 中间 1 行/列拉伸 ✓） */
+    private void nine(GuiGraphics g, ResourceLocation tex, int x, int y, int w, int h) {
+        int r = RADIUS, t = NINE;
+        w = Math.max(w, r * 2 + 2);
+        h = Math.max(h, r * 2 + 2);
+        g.blit(tex, x, y, 0F, 0F, r, r, t, t);
+        g.blit(tex, x + w - r, y, (float) (t - r), 0F, r, r, t, t);
+        g.blit(tex, x, y + h - r, 0F, (float) (t - r), r, r, t, t);
+        g.blit(tex, x + w - r, y + h - r, (float) (t - r), (float) (t - r), r, r, t, t);
+        g.blit(tex, x + r, y, (float) r, 0F, w - r * 2, r, t, t);
+        g.blit(tex, x + r, y + h - r, (float) r, (float) (t - r), w - r * 2, r, t, t);
+        g.blit(tex, x, y + r, 0F, (float) r, r, h - r * 2, t, t);
+        g.blit(tex, x + w - r, y + r, (float) (t - r), (float) r, r, h - r * 2, t, t);
+        g.blit(tex, x + r, y + r, (float) r, (float) r, w - r * 2, h - r * 2, t, t);
+    }
+
+    private void renderPortrait(GuiGraphics g) {
+        int t = tierIndex();
+        try {
+            ResourceLocation rl = new ResourceLocation(TinkersNewlife.MOD_ID,
+                    "textures/gui/momo/" + PORTRAIT[t] + ".png");
+            int texW = PORTRAIT_SIZE[t][0], texH = PORTRAIT_SIZE[t][1];
+            int targetH = (int) (this.height * 0.78F);
+            int targetW = Math.max(1, Math.round(texW * (targetH / (float) texH)));
+            int x = this.width - targetW - 16;
+            int y = this.height - targetH;
+            g.blit(rl, x, y, 0F, 0F, targetW, targetH, texW, texH);
+            // 气泡尖角：指向立绘方向的纯色小三角（不用贴图，随气泡颜色）
+            int tailY = page == 0 ? listY - 6 : listY + 34;
+            for (int i = 0; i < 8; i++) {
+                g.fill(panelX + panelW + i, tailY - (8 - i) / 2, panelX + panelW + i + 1, tailY + (8 - i) / 2 + 1, 0xFFF7F3E7);
+            }
+        } catch (Throwable ignored) {
+            // 立绘缺失不该让整个界面崩 ⇒ 静默降级为纯气泡
         }
     }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(graphics);
-        int x = left();
-        int y = top();
-        graphics.fill(x, y, x + PANEL_W, y + PANEL_H, 0xFFC6C6C6);
-        graphics.fill(x, y, x + PANEL_W, y + 17, 0xFF404040);
-        graphics.drawString(this.font, "墨默", x + 8, y + 5, 0xFFFFFF, false);
+        graphics.fill(0, 0, this.width, this.height, 0x99000000);      // 压暗背景
+        renderPortrait(graphics);
 
         if (page == 0) renderList(graphics, mouseX, mouseY);
         else renderAnswer(graphics);
 
-        boolean backHover = hovering(backX, backY, 54, 16, mouseX, mouseY);
-        graphics.fill(backX, backY, backX + 54, backY + 16, backHover ? 0xFF8FA8D8 : 0xFF6E6E6E);
+        boolean backHover = hovering(backX, backY, 90, 20, mouseX, mouseY);
+        nine(graphics, OPTION, backX, backY, 90, 20);
+        if (backHover) graphics.fill(backX + 2, backY + 2, backX + 88, backY + 18, 0x33FFFFFF);
         String back = page == 0 ? "关闭" : "回退";
-        graphics.drawString(this.font, back, backX + 27 - this.font.width(back) / 2, backY + 4, 0x202020, false);
+        graphics.drawString(this.font, back, backX + 45 - this.font.width(back) / 2, backY + 6, 0x202020, false);
     }
 
-    private void renderList(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawString(this.font, greeting(), listX, top() + 21, 0xFF303030, false);
+    private void renderList(GuiGraphics g, int mouseX, int mouseY) {
+        List<FormattedCharSequence> head = this.font.split(Component.literal(greeting()), panelW - PAD * 2);
+        int headH = head.size() * 10 + PAD * 2;
+        int headY = listY - headH - 12;
+        nine(g, BUBBLE, panelX, headY, panelW, headH);
+        int ly = headY + PAD;
+        for (FormattedCharSequence line : head) {
+            g.drawString(this.font, line, panelX + PAD, ly, 0x202020, false);
+            ly += 10;
+        }
+
         int visible = Math.max(1, listH / ROW_H);
         maxScroll = Math.max(0, entries.size() - visible);
         if (scroll > maxScroll) scroll = maxScroll;
         for (int i = 0; i < visible && i + scroll < entries.size(); i++) {
             Entry e = entries.get(i + scroll);
-            int ry = listY + i * ROW_H;
-            boolean hover = hovering(listX, ry, listW, ROW_H - 2, mouseX, mouseY);
-            graphics.fill(listX, ry, listX + listW, ry + ROW_H - 2, hover ? 0xFF8FA8D8 : 0xFF6E6E6E);
-            graphics.drawString(this.font, "· " + e.q(), listX + 6, ry + 4, 0x202020, false);   // 深色：浅面板上看得见
+            int ry = listY + 6 + i * ROW_H;
+            boolean hov = hovering(panelX, ry, panelW, ROW_H - 4, mouseX, mouseY);
+            nine(g, OPTION, panelX, ry, panelW, ROW_H - 4);
+            if (hov) g.fill(panelX + 2, ry + 2, panelX + panelW - 2, ry + ROW_H - 6, 0x33FFFFFF);
+            g.drawString(this.font, "· " + e.q(), panelX + PAD, ry + 6, 0x202020, false);
         }
         if (maxScroll > 0) {
-            graphics.drawString(this.font, "滚轮翻动（" + (scroll + 1) + "/" + (maxScroll + 1) + "）",
-                    listX, top() + PANEL_H - 38, 0x606060, false);
+            g.drawString(this.font, "滚轮翻动（" + (scroll + 1) + "/" + (maxScroll + 1) + "）",
+                    panelX, listY + listH + 2, 0xCCCCCC, false);
         }
     }
 
-    private void renderAnswer(GuiGraphics graphics) {
-        graphics.drawString(this.font, entries.get(page - 1).q(), listX, top() + 21, 0xFF303030, false);
-        List<FormattedCharSequence> lines = this.font.split(Component.literal(answerText), listW);
+    private void renderAnswer(GuiGraphics g) {
+        List<FormattedCharSequence> q = this.font.split(Component.literal(entries.get(page - 1).q()), panelW - PAD * 2);
+        int qh = q.size() * 10 + PAD * 2;
+        int qy0 = listY - qh - 10;
+        nine(g, OPTION, panelX, qy0, panelW, qh);
+        int qy = qy0 + PAD;
+        for (FormattedCharSequence line : q) {
+            g.drawString(this.font, line, panelX + PAD, qy, 0x202020, false);
+            qy += 10;
+        }
+
+        List<FormattedCharSequence> lines = this.font.split(Component.literal(answerText), panelW - PAD * 2);
+        int bh = Math.min(listH, lines.size() * 10 + PAD * 2);
+        nine(g, BUBBLE, panelX, listY, panelW, bh);
         int budget = Math.max(0, (int) reveal);
-        int ly = listY;
+        int ly = listY + PAD;
         for (FormattedCharSequence line : lines) {
             if (budget <= 0) break;
             String s = flatten(line);
             int n = Math.min(budget, s.length());
-            graphics.drawString(this.font, s.substring(0, n), listX, ly, 0x202020, false);   // 深色：浅面板上看得见
+            g.drawString(this.font, s.substring(0, n), panelX + PAD, ly, 0x202020, false);
             budget -= s.length();
             ly += 10;
-            if (ly > top() + PANEL_H - 46) break;
+            if (ly > listY + bh - PAD) break;
         }
-        graphics.drawString(this.font, typing() ? "按空格跳过" : "按空格继续", listX, top() + PANEL_H - 38, 0x606060, false);
-    }
-
-    /** Screen 在 1.20.1 没有 isHovering（那是 AbstractContainerScreen 的）⇒ 自己判 */
-    private boolean hovering(int x, int y, int w, int h, double mx, double my) {
-        return mx >= x && mx < x + w && my >= y && my < y + h;
+        g.drawString(this.font, typing() ? "按空格跳过" : "按空格继续",
+                panelX, listY + bh + 4, 0xCCCCCC, false);
     }
 
     private static String flatten(FormattedCharSequence seq) {
@@ -213,13 +287,10 @@ public class MomoTalkScreen extends Screen {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == 32) {                                       // 空格 ✓
+        if (keyCode == 32) {
             if (page > 0) {
-                if (typing()) {
-                    reveal = answerText.length();                  // 跳过打字动画 ✓
-                } else {
-                    page = 0;                                      // 显示完 ⇒ 回到对话界面 ✓
-                }
+                if (typing()) reveal = answerText.length();
+                else page = 0;
             }
             return true;
         }
@@ -242,27 +313,24 @@ public class MomoTalkScreen extends Screen {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0) {
-            if (hovering(backX, backY, 54, 16, mouseX, mouseY)) {
-                if (page > 0) {
-                    page = 0;                                      // 回退 ⇒ 回选项页 ✓
-                } else {
-                    this.onClose();
-                }
+            if (hovering(backX, backY, 90, 20, mouseX, mouseY)) {
+                if (page > 0) page = 0;
+                else this.onClose();
                 return true;
             }
             if (page == 0) {
                 int visible = Math.max(1, listH / ROW_H);
                 for (int i = 0; i < visible && i + scroll < entries.size(); i++) {
-                    int ry = listY + i * ROW_H;
-                    if (hovering(listX, ry, listW, ROW_H - 2, mouseX, mouseY)) {
+                    int ry = listY + 6 + i * ROW_H;
+                    if (hovering(panelX, ry, panelW, ROW_H - 4, mouseX, mouseY)) {
                         page = i + scroll + 1;
                         answerText = entries.get(page - 1).a();
-                        reveal = 0F;                               // 从头开始打字 ✓
+                        reveal = 0F;
                         return true;
                     }
                 }
             } else if (typing()) {
-                reveal = answerText.length();                      // 点一下也能跳过 ✓
+                reveal = answerText.length();
                 return true;
             }
         }
