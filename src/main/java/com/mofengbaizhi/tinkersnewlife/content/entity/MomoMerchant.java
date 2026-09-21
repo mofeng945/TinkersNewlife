@@ -544,7 +544,7 @@ public class MomoMerchant extends PathfinderMob
             offers.add(new Offer(new ItemStack(ModItems.GHELOTH_REMAINS.get()), 40));
         }
 
-        // 5-6：旧日遗物任选两个（一次卖一组）
+        // 5-6：旧日遗物任选两个（§502 用户口径：**每次只给 1 个**，原来给一整组 64 太多 ✗）
         List<Item> relics = new ArrayList<>();
         relics.add(ModItems.NICHOLAS_BLESSING.get());
         relics.add(ModItems.YELLOW_KING_REMNANT.get());
@@ -556,8 +556,9 @@ public class MomoMerchant extends PathfinderMob
         relics.add(ModItems.NYARLATHOTEP_DESIRE.get());
         relics.add(ModItems.DURANDAL_SHARD.get());
         Collections.shuffle(relics, new java.util.Random(random.nextInt()));
-        offers.add(new Offer(new ItemStack(relics.get(0), relics.get(0).getMaxStackSize()), 5 + random.nextInt(9)));   // 5-13
-        offers.add(new Offer(new ItemStack(relics.get(1), relics.get(1).getMaxStackSize()), 5 + random.nextInt(9)));
+        // §502 只给 **1 个**（虚空回响 / 星界之锚 / 其它旧日遗物都一样 ✓ 原来 `getMaxStackSize()` = 一组 64 太多了 ✗）
+        offers.add(new Offer(new ItemStack(relics.get(0)), 5 + random.nextInt(9)));   // 5-13
+        offers.add(new Offer(new ItemStack(relics.get(1)), 5 + random.nextInt(9)));
     }
 
     // ==== 每日限购（用户口径：每件每天最多 2 次，买满即缺货，次日刷新补货） ====
