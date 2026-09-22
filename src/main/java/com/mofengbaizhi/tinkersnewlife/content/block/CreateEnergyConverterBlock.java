@@ -104,7 +104,8 @@ public class CreateEnergyConverterBlock extends KineticBlock
      */
     @Override
     public Direction.Axis getRotationAxis(BlockState state) {
-        return Direction.Axis.Y;
+        // §575 轴 = 朝向的水平轴（原来是竖直 Y ✗ ⇒ 只有上下能接轴 ✗ 与"正面接杆"口径不符 ✓）
+        return state.getValue(EnergyConverterBlock.FACING).getAxis();
     }
 
     /**
@@ -115,7 +116,8 @@ public class CreateEnergyConverterBlock extends KineticBlock
      */
     @Override
     public boolean hasShaftTowards(LevelReader world, BlockPos pos, BlockState state, Direction side) {
-        return true;
+        // §575 用户口径：**只有正面**能接传动杆 ✓（原来六面全开 ✗ ⇒ 随便哪面都能驱动 ✗）
+        return side == state.getValue(EnergyConverterBlock.FACING);
     }
 
     // ============================================================
