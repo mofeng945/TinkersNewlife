@@ -70,6 +70,13 @@ public final class EeConverterCore implements EeStorage, IEnergyStorage {
     /** FE 池（≤ {@link ModConfig#converterBufferFe()} ✓ 持久化 ✓） */
     private int feBuffer = 0;
 
+    /**
+     * §571 <b>换算残差池</b>（FE）✗ —— 低转速 / 小额度时"不足 1 FE"的小数原来被 `floor` 直接丢掉 ✗
+     * （例：1 RPM = 0.703 FE/tick ⇒ floor 永远是 0 ⇒ **一点电都发不出来** ✗）。现在小数攒在这里 ✓
+     * 攒够 1 FE 才吐出去 ✓（<b>绝不凭空发电</b> ✗ 只是把本该给的补上 ✓）。
+     */
+    private double feResidual = 0.0D;
+
     /** 从相邻 EE 容器收进来、还没凑够 1 FE 的 EE（<b>小于 8</b> ✓；持久化 ⇒ 重启不丢那几 EE ✓） */
     private double eeInput = 0.0D;
 
@@ -137,14 +144,14 @@ public final class EeConverterCore implements EeStorage, IEnergyStorage {
         }
 
         // ①-B 相邻 Forge Energy（FE ✓ 直接进池子）
-        int feBudget = Math.min(outputCap, ModConfig.converterInputFePerTick());
+        int feBudget = ModConfig.converterInputFePerTick();   // §571 闸门拆分：输入只看输入闸门 ✓
         if (feBudget > 0) {
             pullForgeEnergy(level, pos, feBudget);
         }
 
         // ①-C 四家模组适配器（J / RPM / EU / AE ⇒ 都折成 FE ✓）
         //      额度用"这一 tick 剩下的吞吐" ⇒ 多条路同时接上也不会串出超过 outputCap 的功率 ✗
-        int adapterBudget = Math.max(0, outputCap - Math.min(feBuffer, outputCap));
+        int adapterBudget = ModConfig.converterInputFePerTick();   // §571 同上 ✓ 输入不再被输出闸门夹 ✗
         if (adapterBudget > 0) {
             for (EnergyInputAdapter adapter : EnergyInputs.all()) {
                 if (adapterBudget <= 0) break;
@@ -164,8 +171,8 @@ public final class EeConverterCore implements EeStorage, IEnergyStorage {
         if (ctx.rpmEnabled()) {
             double rpm = rpm();
             if (rpm > 0.0D) {
-                int fromRpm = (int) Math.floor(EnergyUnits.Fe.rpmToFePerTick(rpm));
-                int room = Math.max(0, outputCap - Math.min(feBuffer, outputCap));
+                int fromRpm = withResidual(EnergyUnits.Fe.rpmToFePerTick(rpm));   // §571 残差：低转速不再恒 0 ✓
+                int room = Math.max(0, getMaxEnergyStored() - feBuffer);
                 if (fromRpm > 0 && room > 0) {
                     insertFe(Math.min(fromRpm, room), false);
                 }
@@ -179,6 +186,24 @@ public final class EeConverterCore implements EeStorage, IEnergyStorage {
     // ============================================================
     //  FE 池（内部）
     // ============================================================
+
+    /**
+     * §571 把"带小数的 FE 产量"攒进残差池并吐出凑整的部分 ✓（不足 1 FE 不丢 ✓ 攒够再出 ✓）。
+     *
+     * @return 这一次真正可以入池的整数 FE（可能为 0 ⇒ 说明还在攒 ✓）
+     */
+    public int withResidual(double fe) {
+        if (!(fe > 0.0D)) return 0;
+        feResidual += fe;
+        int whole = (int) Math.floor(feResidual);
+        if (whole > 0) feResidual -= whole;
+        return whole;
+    }
+
+    /** §571 给外部桥用的入口（J→FE / AE→FE 这类换算带小数时走它 ✓ 免得每 tick 都被 floor 丢一点 ✗） */
+    public int residualFloor(double fe) {
+        return withResidual(fe);
+    }
 
     /** 往 FE 池里放（返回实际接受的 ✓ 满了就拒收 ✓；§559 起对"外部桥"可见 ✓） */
     public int insertFe(int amount, boolean simulate) {
@@ -334,7 +359,7 @@ public final class EeConverterCore implements EeStorage, IEnergyStorage {
     public int receiveEnergy(int maxReceive, boolean simulate) {
         if (maxReceive <= 0) return 0;
         // ⚠ 与"主动抽"共用同一个上限：输出闸门与输入闸门都要看 ✓
-        int cap = Math.min(ModConfig.converterOutputFePerTick(), ModConfig.converterInputFePerTick());
+        int cap = ModConfig.converterInputFePerTick();   // §571 闸门拆分：外部推进来只看输入闸门 ✓
         int accepted = Math.min(maxReceive, cap);
         return insertFe(accepted, simulate);
     }

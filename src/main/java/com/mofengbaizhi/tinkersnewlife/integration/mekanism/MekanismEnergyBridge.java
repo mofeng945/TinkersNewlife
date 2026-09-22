@@ -137,7 +137,7 @@ public final class MekanismEnergyBridge implements IStrictEnergyHandler {
         if (amount == null) return FloatingLong.ZERO;
         double joules = amount.doubleValue();
         if (!(joules > 0.0D)) return FloatingLong.ZERO;
-        int wantedFe = (int) Math.floor(joules * EnergyUnits.Fe.FE_PER_J);
+        int wantedFe = core.residualFloor(joules * EnergyUnits.Fe.FE_PER_J);   // §571 残差：小数不丢 ✓
         if (wantedFe <= 0) return FloatingLong.ZERO;                 // 不到 1 FE 的量：不收 ✓（留着别丢 ✓）
         // 上限：与"输入上限"同一套闸门 ✓（否则通用机械可以无视配置把池子灌满 ✗）
         int cap = Math.min(com.mofengbaizhi.tinkersnewlife.config.ModConfig.converterOutputFePerTick(),
@@ -157,7 +157,7 @@ public final class MekanismEnergyBridge implements IStrictEnergyHandler {
         if (amount == null) return FloatingLong.ZERO;
         double joules = amount.doubleValue();
         if (!(joules > 0.0D)) return FloatingLong.ZERO;
-        int wantedFe = (int) Math.floor(joules * EnergyUnits.Fe.FE_PER_J);
+        int wantedFe = core.residualFloor(joules * EnergyUnits.Fe.FE_PER_J);   // §571 残差：小数不丢 ✓
         if (wantedFe <= 0) return FloatingLong.ZERO;
         int gotFe = core.extractFe(wantedFe, action.simulate());
         if (gotFe <= 0) return FloatingLong.ZERO;
