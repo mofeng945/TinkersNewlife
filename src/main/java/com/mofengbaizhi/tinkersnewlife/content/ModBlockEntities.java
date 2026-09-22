@@ -56,33 +56,20 @@ public class ModBlockEntities {
 
     /**
      * 万用能量转化器：各种能量 ⇒ FE（单向 ✓ 见 {@code EnergyConverterBlockEntity} ✓）。
-     * <p>ticker 挂在方块上（{@code EnergyConverterBlock#getTicker}）✓ 只跑服务端 ✓。
-     * <h3>§559：装了 Create ⇒ 换成动能方块实体</h3>
-     * 见 {@link #CREATE_ENERGY_CONVERTER} ✓。
-     */
-    public static final RegistryObject<BlockEntityType<com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterBlockEntity>>
-            ENERGY_CONVERTER =
-            BLOCK_ENTITIES.register("energy_converter",
-                    () -> BlockEntityType.Builder.of(
-                                    com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterBlockEntity::new,
-                                    ModBlocks.ENERGY_CONVERTER.get())
-                            .build(null));
-
-    /**
-     * <b>转化器的"动能方块实体"版本</b>（§559）：<b>只有装了 Create 时才注册</b> ✓，
-     * 且与 {@link #ENERGY_CONVERTER} <b>同名</b>（二选一 ✓ 见 {@code ModBlocks} 的注释 ✓）。
-     * <p>⚠ 类型参数用 {@code KineticBlockEntity} 的超类 {@code BlockEntity}（＝ {@code <?>}）✓ ——
-     * 这样本文件**不必**写出 Create 的类型 ✓（真正的 Create 类型只在
-     * {@code CreateEnergyConverterBlockEntity} 里出现 ✓）。
+     * <h3>§559：装了 Create ⇒ 换成动能方块实体；§561：**注册只允许一次** ✗</h3>
+     * ⚠⚠ <b>§561 崩溃教训（与 {@code ModBlocks} 那处同一个错 ✗）</b>：§559 我在这里也写了<b>两条</b>
+     * {@code BLOCK_ENTITIES.register("energy_converter", …)} ✗ ⇒ 装了 Create 的实例上两条都执行 ✗
+     * ⇒ {@code Duplicate registration energy_converter} ✗（崩在方块那一条 ⇒ 当时还没走到这里 ✓
+     * 但这是**同一个 bug**，必须一起修 ✓）。
+     * <p>⇒ 现在<b>只有一条</b> register ✓，选哪一支收进
+     * {@link com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterModBridges#createBlockEntityType()} ✓
+     * （那个类只 import Forge / 原版 ✓ 第一句就 {@code ModList.isLoaded("create")} ✓）。
+     * <p>⚠ 这里**不能**用 {@code createTickerHelper}（那要求 {@code BlockEntityType<T>} 的泛型对上 ✗）；
+     * ticker 已经挂在**方块/方块实体自己**身上（普通支在 {@code EnergyConverterBlock#getTicker} ✓、
+     * Create 支在 {@code KineticBlockEntity#tick} 的覆写里 ✓）⇒ 本注册只需要类型本身 ✓。
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public static final RegistryObject<BlockEntityType<?>> CREATE_ENERGY_CONVERTER =
-            com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterModBridges.hasCreate()
-                    ? BLOCK_ENTITIES.register("energy_converter",
-                            () -> BlockEntityType.Builder.of(
-                                            com.mofengbaizhi.tinkersnewlife.content.block
-                                                    .CreateEnergyConverterBlockEntity::new,
-                                            ModBlocks.CREATE_ENERGY_CONVERTER.get())
-                                    .build(null))
-                    : null;
+    public static final RegistryObject<BlockEntityType<?>> ENERGY_CONVERTER =
+            BLOCK_ENTITIES.register("energy_converter",
+                    com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterModBridges::createBlockEntityType);
 }

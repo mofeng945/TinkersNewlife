@@ -64,7 +64,9 @@ public class CreateEnergyConverterBlockEntity extends KineticBlockEntity impleme
     private final LazyOptional<IEnergyStorage> feHolder = LazyOptional.of(() -> core);
 
     public CreateEnergyConverterBlockEntity(BlockPos pos, BlockState state) {
-        super(com.mofengbaizhi.tinkersnewlife.content.ModBlockEntities.CREATE_ENERGY_CONVERTER.get(), pos, state);
+        // §561：现在**只有一个** BE 类型常量 ✓（选哪一支收在
+        // EnergyConverterModBridges#createBlockEntityType 里 ✓）
+        super(com.mofengbaizhi.tinkersnewlife.content.ModBlockEntities.ENERGY_CONVERTER.get(), pos, state);
         // §559：把"读自己的转速"接给核心 ⇒ 核心那边就不必认识 Create 的类 ✓
         this.core.setRpmSource(this::getSpeed);
     }

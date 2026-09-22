@@ -547,7 +547,9 @@ public class ModItems {
     public static final RegistryObject<Item> ENERGY_CONVERTER =
             ITEMS.register("energy_converter",
                     () -> new com.mofengbaizhi.tinkersnewlife.content.item.EnergyConverterItem(
-                            // §559：装了 Create 时方块是"动能方块"版本 ⇒ 必须用 energyConverterBlock() ✓
-                            //（直接用 ModBlocks.ENERGY_CONVERTER 会在装了 Create 时拿到"没注册"的那个 ✗）
-                            ModBlocks.energyConverterBlock().get()));
+                            // §561：现在**只有一个**转化器方块常量 ✓（选哪一支的判断收在
+                            // EnergyConverterModBridges#createBlock 里 ✓）⇒ 直接用它即可 ✓
+                            //（§559 那时有"普通/Create 两个常量 + energyConverterBlock() 二选一"✗
+                            //  那套写法已经被 §561 的 duplicate-registration 崩溃证明是错的 ✗ 已删 ✓）
+                            ModBlocks.ENERGY_CONVERTER.get()));
 }

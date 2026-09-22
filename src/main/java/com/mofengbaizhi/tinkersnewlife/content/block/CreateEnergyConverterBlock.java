@@ -97,7 +97,7 @@ public class CreateEnergyConverterBlock extends KineticBlock {
     //
     // ⇒ 于是"方块实体谁来建 / ticker 谁去挂"必须用**其它**办法：
     //   ① 建方块实体：`BlockEntityType.Builder.of(factory, block)` 里的 factory 是我们自己给的 ✓
-    //      （见 `ModBlockEntities.CREATE_ENERGY_CONVERTER` 与下面的 `createBlockEntity` ✓）——
+    //      （见 `ModBlockEntities.ENERGY_CONVERTER` 与下面的 `createBlockEntity` ✓）——
     //      ⚠ 注意：原版只有 {@code BaseEntityBlock} 才会自动调 {@code newBlockEntity} ✗，
     //        KineticBlock 不会 ⇒ 必须由 Builder 那一侧的工厂负责 ✓（Forge 的 Builder 就是这样工作的 ✓）；
     //   ② ticker：覆写**方块实体自己的** {@code KineticBlockEntity#tick()}

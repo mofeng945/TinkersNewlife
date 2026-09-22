@@ -52,9 +52,63 @@ public final class EnergyConverterModBridges {
         return IntegrationLoader.isLoaded(IntegrationLoader.AE2);
     }
 
-    /** 机械动力在场吗（由 {@code ModBlocks} / {@code ModBlockEntities} 用它决定注册哪一支 ✓） */
+    /** 机械动力在场吗（由"注册"那一步用它决定注册哪一支 ✓） */
     public static boolean hasCreate() {
         return IntegrationLoader.isLoaded(IntegrationLoader.CREATE);
+    }
+
+    // ============================================================
+    //  §561 修：**注册只能有一条** ✗ —— 把"选哪一支"的判断收在这里 ✓
+    //
+    //  ⚠⚠ 崩溃教训（必须记住 ✗）：§559 我写成了"两条并列的 register(...)"✗ ——
+    //    `BLOCKS.register("energy_converter", 普通块)`                         ← 一条
+    //    `hasCreate() ? BLOCKS.register("energy_converter", 动能块) : null`    ← 又一条
+    //  ⇒ **装了 Create 的实例上两条都会执行** ✗ ⇒ `DeferredRegister` 立刻抛
+    //    `IllegalArgumentException: Duplicate registration energy_converter` ✗
+    //  ⇒ FML 模组加载阶段直接崩、整个实例进不去 ✗✗。
+    //
+    //  ⇒ 正确做法 = **`register(...)` 只调一次** ✓，
+    //    "选哪种方块 / 哪种方块实体类型"由本类这两个工厂方法决定 ✓：
+    //      · 本类**只 import Forge / 原版** ✓（Create 的类型只以"方法体里的字节码引用"形式出现 ✓）；
+    //      · 每次调用**第一步就问 `hasCreate()`** ⇒ 没装 Create 时 JVM 根本不会去解析
+    //        `CreateEnergyConverterBlock` / `CreateEnergyConverterBlockEntity` ✓。
+    //
+    //  ⚠⚠ 为什么**不能**把 `ModList.isLoaded(...) ? new CreateXxx() : new Xxx()`
+    //    直接写在 `ModBlocks` 里 ✗：那样 `ModBlocks`（一个**每次启动都必须加载**的类 ✓）
+    //    的常量池里就会出现 `CreateEnergyConverterBlock` ✗ ⇒ 没装 Create 的玩家一初始化
+    //    `ModBlocks` 就 `NoClassDefFoundError` ✗✗ —— 这正是本节"独立类 + isLoaded"那套隔离存在的理由 ✓。
+    //    **一句话：把可选模组的类名挡在"只有它自己会被加载的那个类"里面** ✓。
+    // ============================================================
+
+    /**
+     * 造出<b>该注册的转化器方块</b>（装了 Create ⇒ 动能方块 ✓ 否则普通方块 ✓）。
+     * <p>⚠ 调用方必须是"**只注册一次**"的那种写法 ✓ 见上面的教训 ✓。
+     */
+    public static net.minecraft.world.level.block.Block createBlock() {
+        if (hasCreate()) {
+            return new CreateEnergyConverterBlock();
+        }
+        return new EnergyConverterBlock();
+    }
+
+    /**
+     * 造出<b>该注册的转化器方块实体类型</b>（装了 Create ⇒ 动能方块实体 ✓ 否则普通 ✓）。
+     * <p>⚠ 返回类型刻意用 <b>{@code BlockEntityType<?>}</b> 而不是带泛型的类型 ✗ ——
+     * 这样 `ModBlockEntities` 那边**不需要**写出任何具体 BE 类型 ✓（也不必写 Create 的类型 ✓）。
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public static net.minecraft.world.level.block.entity.BlockEntityType<?> createBlockEntityType() {
+        if (hasCreate()) {
+            return net.minecraft.world.level.block.entity.BlockEntityType.Builder.of(
+                            com.mofengbaizhi.tinkersnewlife.content.block
+                                    .CreateEnergyConverterBlockEntity::new,
+                            com.mofengbaizhi.tinkersnewlife.content.ModBlocks.ENERGY_CONVERTER.get())
+                    .build(null);
+        }
+        return net.minecraft.world.level.block.entity.BlockEntityType.Builder.of(
+                        com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterBlockEntity::new,
+                        com.mofengbaizhi.tinkersnewlife.content.ModBlocks.ENERGY_CONVERTER.get())
+                .build(null);
     }
 
     /**

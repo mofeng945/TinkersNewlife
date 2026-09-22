@@ -73,12 +73,25 @@ public class EnergyConverterBlock extends BaseEntityBlock {
         return new EnergyConverterBlockEntity(pos, state);
     }
 
-    /** 服务端每 tick 驱动（收 + 转 + 推 ✓）；客户端不挂 ticker ✗ */
+    /**
+     * 服务端每 tick 驱动（收 + 转 + 推 ✓）；客户端不挂 ticker ✗。
+     *
+     * <p>⚠ §561：<b>不能再用 {@code createTickerHelper}</b> ✗ ——
+     * 那个助手要求"两个 {@code BlockEntityType} 的泛型完全对上"✓，
+     * 而 §561 之后 {@code ModBlockEntities.ENERGY_CONVERTER} 的类型被刻意写成了
+     * {@code BlockEntityType<?>} ✓（因为它装着"普通 / 动能"两支，选哪支收在中立分派类里 ✓）
+     * ⇒ javac 直接报"无法将 createTickerHelper 应用到给定类型" ✗。
+     * <p>⇒ 自己写一个 <b>先判类型</b> 的 ticker ✓（与 {@code CreateEnergyConverterBlock#getTicker}
+     * 那一套逐字同款 ✓）：只有真的拿到普通那一支的方块实体才跑 ✓ 否则什么都不做 ✓。
+     */
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         if (level.isClientSide) return null;
-        return createTickerHelper(type, ModBlockEntities.ENERGY_CONVERTER.get(),
-                EnergyConverterBlockEntity::serverTick);
+        return (lvl, pos, st, be) -> {
+            if (be instanceof EnergyConverterBlockEntity plain) {
+                EnergyConverterBlockEntity.serverTick(lvl, pos, st, plain);
+            }
+        };
     }
 }
