@@ -41,7 +41,34 @@ import javax.annotation.Nullable;
  * 行为逻辑（tick/capability/存档）全在 {@link CreateEnergyConverterBlockEntity} 与
  * 共享的 {@link EeConverterCore} 里 ✓ ⇒ 没有两份会各自漂移的实现 ✗。
  */
-public class CreateEnergyConverterBlock extends KineticBlock {
+public class CreateEnergyConverterBlock extends KineticBlock
+        implements net.minecraft.world.level.block.EntityBlock {   // §568 关键修复：原来没有 EntityBlock ⇒ 方块没有方块实体 ✗
+
+    /**
+     * §568 <b>必须自己提供方块实体</b> ✗ —— 这是"Mek 线缆/AE 线缆都接不上、抽取器也推不进来"的**共同根因** ✓：
+     * 装了 Create 时生效的是本类（动能壳 ✓），而 {@code KineticBlock} 的父类是 {@code Block} ✗（**不是** {@code BaseEntityBlock} ✗）
+     * ⇒ 原版只在 {@code BaseEntityBlock} 里自动调 {@code newBlockEntity} ✗ ⇒ 本方块**压根没有方块实体** ✗
+     * ⇒ 所有 capability（本模组 EE / Forge FE / Mekanism / AE2）都没人问得到 ✗。
+     * <p>⚠ 与 Create 的关系：{@code KineticBlock} 提供 {@code IRotate}（传动杆能接 ✓），
+     * 但"造方块实体 + 每 tick 驱动"得我们自己补 ✓。
+     */
+    @Override
+    public net.minecraft.world.level.block.entity.BlockEntity newBlockEntity(
+            net.minecraft.core.BlockPos pos, net.minecraft.world.level.block.state.BlockState state) {
+        return new CreateEnergyConverterBlockEntity(pos, state);
+    }
+
+    /** §568 每 tick 驱动（客户端不挂 ✓；BE 覆写的 {@code tick()} 里会先 {@code super.tick()} ⇒ Create 动能网络照常 ✓） */
+    @Override
+    public <T extends net.minecraft.world.level.block.entity.BlockEntity>
+    net.minecraft.world.level.block.entity.BlockEntityTicker<T> getTicker(
+            net.minecraft.world.level.Level level, net.minecraft.world.level.block.state.BlockState state,
+            net.minecraft.world.level.block.entity.BlockEntityType<T> type) {
+        if (level.isClientSide) return null;
+        return (lvl, pos, st, be) -> {
+            if (be instanceof CreateEnergyConverterBlockEntity c) c.tick();
+        };
+    }
 
     public CreateEnergyConverterBlock() {
         super(net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()
