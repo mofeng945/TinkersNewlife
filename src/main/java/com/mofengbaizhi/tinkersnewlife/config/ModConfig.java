@@ -38,23 +38,81 @@ public final class ModConfig {
     //     rate = pedestal_charge_max_per_second × (light_cap − light) / light_cap
     //     light = level.getMaxLocalRawBrightness(台座上方那一格)   // 0~15，方块光+天光综合，与原版刷怪判定同一个量
     // ⇒ 亮度 0 = 满速、亮度 ≥ light_cap = 不充 ✓。
-    /** 默认值：台座「亮度 0」时的满速充能（EE/秒）。5.0 = 100 EE/分钟 ⇒ 一颗 1000 EE 的水晶 ≈ 3.3 分钟 */
-    public static final double PEDESTAL_DEFAULT_CHARGE_MAX_PER_SECOND = 5.0D;
+    /** 默认值：台座「亮度 0」时的满速充能（EE/秒）。§545 用户要求从 5.0 降到 0.5（= 30 EE/分钟 ⇒ 一颗 1000 EE 的水晶 ≈ 33 分钟） */
+    public static final double PEDESTAL_DEFAULT_CHARGE_MAX_PER_SECOND = 0.5D;
     /** 默认值：亮度达到这个值就完全不充（15 = 原版亮度上限 ⇒ "亮到顶不充"） */
     public static final int PEDESTAL_DEFAULT_LIGHT_CAP = 15;   // §528 用户要求改回 15：亮度 ≥15（火把旁/白天/照明良好的基地）⇒ **完全不充** ✓
-    /** 默认值：台座使用的环境能量来源 id（可插拔，见 {@code AmbientEnergySources}） */
-    public static final String PEDESTAL_DEFAULT_SOURCE = "light_level";
+    /**
+     * 默认值：启用的环境能量来源清单（§545 起支持多条并行 ✓）。
+     * <p>{@code "*"} = <b>全部</b>注册在册的来源都启用（= 用户口径的"四条并行叠加"✓ 默认值 ✓）；
+     * 也可以写逗号分隔的清单，例如 {@code "light_level,plant"} 只留两条 ✓。
+     * <p>⚠ 老配置里写的是单条 id（如 {@code "light_level"}）⇒ 新语义下就是"只启用那一条" ✓ 正好是它原来的行为 ✓ 不会突变 ✗。
+     */
+    public static final String PEDESTAL_DEFAULT_SOURCE = "*";
+
+    /** §545 ② 植物：默认球半径（格） */
+    public static final int PEDESTAL_DEFAULT_PLANT_RADIUS = 5;
+    /** §545 ② 植物：默认"1 点凋灵度值多少 EE"（0.5 ⇒ 每株 0.5 EE/秒 ✓ 用户数值 ✓） */
+    public static final double PEDESTAL_DEFAULT_PLANT_EE_PER_POINT = 0.5D;
+    /** §545 ③ 匠魂燃料：默认球半径（格） */
+    public static final int PEDESTAL_DEFAULT_FUEL_RADIUS = 5;
+    /** §545 ③ 匠魂燃料：默认"一个物品份值多少 EE"（用户数值 ✓） */
+    public static final double PEDESTAL_DEFAULT_FUEL_EE_PER_ITEM = 0.5D;
+    /** §545 ③ 匠魂燃料：默认"一个物品份按多少 tick 折算"（10 = TCon 熔炼 recipe 的最小 `time` 档位 ✓） */
+    public static final int PEDESTAL_DEFAULT_FUEL_TICKS_PER_ITEM = 10;
+    /** §545 ④ 生物死亡：默认球半径（格） */
+    public static final int PEDESTAL_DEFAULT_SOUL_RADIUS = 5;
+    /** §545 ④ 生物死亡：默认"每点最大生命值多少 EE"（0.025 ⇒ 20 血 = 0.5 EE ✓ 用户数值 = maxHealth / 40 ✓） */
+    public static final double PEDESTAL_DEFAULT_SOUL_EE_PER_HP = 0.025D;
+    /** §545 ⑤ 玩家汲取：默认球半径（格） */
+    public static final int PEDESTAL_DEFAULT_PLAYER_RADIUS = 5;
+    /** §545 ⑤ 玩家汲取：默认"每名玩家每秒多少 EE"（用户数值 ✓） */
+    public static final double PEDESTAL_DEFAULT_PLAYER_EE_PER_SECOND = 0.5D;
 
     /** 台座在亮度 0 时的满速充能（EE/秒；越小越慢） */
     public static final ConfigValue<Double> PEDESTAL_CHARGE_MAX_PER_SECOND;
-    /** 亮度达到该值就完全不充（默认 15；调大到 16+ ⇒ 亮处也慢充，如 16 时亮度 15 仍有 5×(16−15)/16 ≈ 0.31 EE/秒） */
+    /** 亮度达到该值就完全不充（默认 15；调大到 16+ ⇒ 亮处也慢充，如 16 时亮度 15 仍有 0.5×(16−15)/16 ≈ 0.031 EE/秒） */
     public static final ConfigValue<Integer> PEDESTAL_LIGHT_CAP;
-    /** 台座的环境能量来源 id（可插拔；默认 "light_level" = 亮度越低越快 ✓ 未知 id 会退回它 ✓） */
+    /**
+     * <b>启用的环境能量来源清单</b>（§545 起是"多条并行"✓）。
+     * <p>{@code "*"}（默认）= 全部启用；也可写逗号分隔的 id 清单（{@code "light_level,plant"} ✓）；
+     * 未知 id 只 WARN 一次并忽略 ✓ 不会让台座罢工 ✓。
+     */
     public static final ConfigValue<String> PEDESTAL_SOURCE;
     /** 充能时放冷色粒子（密度随速率 ✓ 只在**真的充进去**时放 ✓） */
     public static final ConfigValue<Boolean> PEDESTAL_PARTICLES;
     /** 充能时放轻微音效（紫水晶风铃 ✓ 每 2 秒一次 ✓） */
     public static final ConfigValue<Boolean> PEDESTAL_SOUND;
+
+    // ---- §545 四条新来源：每源"开关 + 数值"（不设总上限 ✓ 直接相加 ✓）----
+    /** ① 亮度来源总开关（id {@code light_level}） */
+    public static final ConfigValue<Boolean> PEDESTAL_LIGHT_ENABLED;
+    /** ② 植物来源总开关（id {@code plant}） */
+    public static final ConfigValue<Boolean> PEDESTAL_PLANT_ENABLED;
+    /** ② 植物：扫描球半径（格） */
+    public static final ConfigValue<Integer> PEDESTAL_PLANT_RADIUS;
+    /** ② 植物：1 点凋灵度值多少 EE（0.5 ⇒ 每株 0.5 EE/秒 ✓） */
+    public static final ConfigValue<Double> PEDESTAL_PLANT_EE_PER_POINT;
+    /** ③ 匠魂燃料来源总开关（id {@code tcon_fuel}） */
+    public static final ConfigValue<Boolean> PEDESTAL_FUEL_ENABLED;
+    /** ③ 匠魂燃料：扫描球半径（格） */
+    public static final ConfigValue<Integer> PEDESTAL_FUEL_RADIUS;
+    /** ③ 匠魂燃料：一个物品份值多少 EE */
+    public static final ConfigValue<Double> PEDESTAL_FUEL_EE_PER_ITEM;
+    /** ③ 匠魂燃料：一个物品份按多少 tick 折算（TCon 熔炼配方 `time` 的基准档） */
+    public static final ConfigValue<Integer> PEDESTAL_FUEL_TICKS_PER_ITEM;
+    /** ④ 生物死亡来源总开关（id {@code soul_death}） */
+    public static final ConfigValue<Boolean> PEDESTAL_SOUL_ENABLED;
+    /** ④ 生物死亡：判定球半径（格） */
+    public static final ConfigValue<Integer> PEDESTAL_SOUL_RADIUS;
+    /** ④ 生物死亡：每点最大生命值多少 EE（0.025 ⇒ 20 血 = 0.5 EE） */
+    public static final ConfigValue<Double> PEDESTAL_SOUL_EE_PER_HP;
+    /** ⑤ 玩家汲取来源总开关（id {@code demigod_player}） */
+    public static final ConfigValue<Boolean> PEDESTAL_PLAYER_ENABLED;
+    /** ⑤ 玩家汲取：判定球半径（格） */
+    public static final ConfigValue<Integer> PEDESTAL_PLAYER_RADIUS;
+    /** ⑤ 玩家汲取：每名玩家每秒多少 EE（多人叠加 ✓） */
+    public static final ConfigValue<Double> PEDESTAL_PLAYER_EE_PER_SECOND;
 
     // ==================== 双向认知阻碍面具 ====================
     /**
@@ -239,46 +297,96 @@ public final class ModConfig {
         CURSE_CORE_ENABLED = b.define("allow_curse_core_craft_and_use", true);
         b.pop();
 
-        // 古老者水晶 · 魔力台座（充能规律：亮度越低越快）
+        // 古老者水晶 · 魔力台座（§545 起：五条来源并行叠加，其中默认开四条 · 亮度默认降到 0.5）
         b.push("elder_crystal").comment(
                 "Elder Crystal - the Mana Pedestal, the (only) way to charge a crystal.",
                 "",
-                "CHARGING RULE: THE DARKER, THE FASTER.",
+                "FIVE AMBIENT SOURCES, ALL ADDING UP IN PARALLEL. There is NO global cap:",
+                "whatever the sources give per second is what you get, and every enabled source is",
+                "simply summed. Each source has its own on/off switch and its own numbers.",
                 "",
-                "  rate = pedestal_charge_max_per_second * (pedestal_light_cap - light) / pedestal_light_cap",
+                "  light_level    (default on)  THE DARKER, THE FASTER:",
+                "      rate = pedestal_charge_max_per_second * (pedestal_light_cap - light) / pedestal_light_cap",
+                "      light = level.getMaxLocalRawBrightness(the block ABOVE the pedestal), 0..15 = combined",
+                "              block light + sky light, exactly the value vanilla uses for mob spawning.",
+                "              There is deliberately NO 'must be night' and NO 'must see the sky' check.",
+                "      light 0 -> full speed; light >= pedestal_light_cap -> 0",
+                "  plant          (default on)  sphere r=5; +1 wither point per plant per second, 1 point =",
+                "      plant_ee_per_point EE (0.5) => 0.5 EE/s per plant. Cap: grass 5, flower 20, sapling 30",
+                "      points, and a plant that reaches its cap VANISHES. Crops count as flowers, wither",
+                "      roses are excluded. Wither points are in-memory only (lost on restart).",
+                "  tcon_fuel      (default on)  sphere r=5; every Tinker fluid container is simulated once",
+                "      per second using Tinker's OWN fuel registry (MeltingFuelLookup): the burn rate is",
+                "      temperature/4 mB per tick, and the fuel burned yields",
+                "      (burned/amount) * (duration/fuel_ticks_per_item) item-equivalents at",
+                "      fuel_ee_per_item EE each. Lava: 25 EE/s per tank. Solid fuel (coal in a heater)",
+                "      is NOT supported.",
+                "  soul_death     (default on)  sphere r=5; ANY death (players included) banks",
+                "      soul_ee_per_hp * maxHealth EE (0.025 => 20 HP = 0.5 EE) and the pedestal pays the",
+                "      bank out on its next one-second settle.",
+                "  demigod_player (default on)  sphere r=5; every player inside gives player_ee_per_second",
+                "      EE (no cost at all, players stack).",
                 "",
-                "  light = level.getMaxLocalRawBrightness(the block ABOVE the pedestal), 0..15 =",
-                "          combined block light + sky light, i.e. exactly the value vanilla uses for mob",
-                "          spawning. There is deliberately NO 'must be night' and NO 'must see the sky'",
-                "          check: darkness alone covers both (a moonlit surface night is dark, and a pitch",
-                "          black cave at noon is dark too, so both charge at full speed).",
-                "",
-                "  light 0                      -> full speed",
-                "  light >= pedestal_light_cap  -> no charging at all",
-                "",
-                "pedestal_charge_max_per_second = EE per second at light 0 (default 5.0 = 100 EE per",
-                "                                 minute, so a full 1000 EE crystal takes about 3.3 minutes;",
-                "                                 a 4000 EE crystal block takes about 13.3 minutes).",
-                "pedestal_light_cap             = light level at which charging stops (default 15 = the vanilla",
-                "                                 maximum; raise it above 15 if you want a slow trickle even in",
-                "                                 bright light - e.g. 16 leaves ~0.31 EE/s at light 15).",
-                "pedestal_source                = which ambient energy source the pedestal pulls from.",
-                "                                 \"light_level\" (default) is the darkness rule above; unknown ids",
-                "                                 fall back to it. The interface lives in",
-                "                                 content/energy/AmbientEnergySource (pluggable: the future",
-                "                                 energy-conversion system hooks in there, not in the block).",
-                "pedestal_particles             = cold-coloured particles while it actually charges",
-                "                                 (density scales with the rate: the faster, the denser).",
-                "pedestal_sound                 = a soft amethyst chime while it actually charges (every 2 s).",
+                "pedestal_source = comma-separated list of source ids to enable, or \"*\" (default) for ALL of",
+                "      them. Unknown ids are ignored with a single warning. OLD CONFIGS: a single id such as",
+                "      \"light_level\" now means 'enable only that source', which is exactly what it used to do.",
+                "      Available ids: light_level, plant, tcon_fuel, soul_death, demigod_player.",
+                "pedestal_charge_max_per_second = light-level source: EE per second at light 0",
+                "      (default 0.5 = 30 EE per minute, so a full 1000 EE crystal takes about 33 minutes).",
+                "pedestal_light_cap = light level at which the light-level source stops (default 15 = the",
+                "      vanilla maximum; raise it above 15 for a slow trickle in bright light - e.g. 16 leaves",
+                "      ~0.031 EE/s at light 15).",
+                "light_enabled / plant_enabled / fuel_enabled / soul_enabled / player_enabled = per-source",
+                "      master switches (the source must ALSO be listed in pedestal_source).",
+                "plant_radius / fuel_radius / soul_radius / player_radius = sphere radius in blocks",
+                "      (all default 5).",
+                "plant_ee_per_point = EE per wither point (0.5).",
+                "fuel_ee_per_item = EE per item-equivalent (0.5); fuel_ticks_per_item = how many ticks one",
+                "      item-equivalent is assumed to take (10; Tinker's melting recipes use 9-10 ticks at the",
+                "      low end, so this is the 'cheap recipe' baseline - raise it to slow fuel charging down).",
+                "soul_ee_per_hp = EE per point of max health (0.025 => maxHealth/40).",
+                "player_ee_per_second = EE per player per second (0.5).",
+                "pedestal_particles / pedestal_sound = cold particles / a soft amethyst chime while it",
+                "      actually charges (particle density scales with the total rate).",
                 "",
                 "Caps are per target: a crystal item holds 1000 EE, a crystal block 4000 EE. When everything",
-                "in reach is full the pedestal simply stops (nothing is consumed or generated).");
+                "in reach is full the pedestal simply stops: no source is queried, so no fuel is burned and no",
+                "plant is withered while there is nothing to fill.");
         PEDESTAL_CHARGE_MAX_PER_SECOND = b.defineInRange("pedestal_charge_max_per_second",
                 PEDESTAL_DEFAULT_CHARGE_MAX_PER_SECOND, 0.0D, 10000.0D);
         PEDESTAL_LIGHT_CAP = b.defineInRange("pedestal_light_cap", PEDESTAL_DEFAULT_LIGHT_CAP, 1, 30);
         PEDESTAL_SOURCE = b.define("pedestal_source", PEDESTAL_DEFAULT_SOURCE);
         PEDESTAL_PARTICLES = b.define("pedestal_particles", true);
         PEDESTAL_SOUND = b.define("pedestal_sound", true);
+
+        // ① 亮度
+        PEDESTAL_LIGHT_ENABLED = b.define("light_enabled", true);
+
+        // ② 植物（凋灵度）
+        PEDESTAL_PLANT_ENABLED = b.define("plant_enabled", true);
+        PEDESTAL_PLANT_RADIUS = b.defineInRange("plant_radius", PEDESTAL_DEFAULT_PLANT_RADIUS, 0, 32);
+        PEDESTAL_PLANT_EE_PER_POINT = b.defineInRange("plant_ee_per_point",
+                PEDESTAL_DEFAULT_PLANT_EE_PER_POINT, 0.0D, 1000.0D);
+
+        // ③ 匠魂燃料
+        PEDESTAL_FUEL_ENABLED = b.define("fuel_enabled", true);
+        PEDESTAL_FUEL_RADIUS = b.defineInRange("fuel_radius", PEDESTAL_DEFAULT_FUEL_RADIUS, 0, 32);
+        PEDESTAL_FUEL_EE_PER_ITEM = b.defineInRange("fuel_ee_per_item",
+                PEDESTAL_DEFAULT_FUEL_EE_PER_ITEM, 0.0D, 1000.0D);
+        PEDESTAL_FUEL_TICKS_PER_ITEM = b.defineInRange("fuel_ticks_per_item",
+                PEDESTAL_DEFAULT_FUEL_TICKS_PER_ITEM, 1, 10000);
+
+        // ④ 生物死亡（灵魂）
+        PEDESTAL_SOUL_ENABLED = b.define("soul_enabled", true);
+        PEDESTAL_SOUL_RADIUS = b.defineInRange("soul_radius", PEDESTAL_DEFAULT_SOUL_RADIUS, 0, 32);
+        PEDESTAL_SOUL_EE_PER_HP = b.defineInRange("soul_ee_per_hp",
+                PEDESTAL_DEFAULT_SOUL_EE_PER_HP, 0.0D, 1000.0D);
+
+        // ⑤ 玩家汲取（半神之力）
+        PEDESTAL_PLAYER_ENABLED = b.define("player_enabled", true);
+        PEDESTAL_PLAYER_RADIUS = b.defineInRange("player_radius", PEDESTAL_DEFAULT_PLAYER_RADIUS, 0, 32);
+        PEDESTAL_PLAYER_EE_PER_SECOND = b.defineInRange("player_ee_per_second",
+                PEDESTAL_DEFAULT_PLAYER_EE_PER_SECOND, 0.0D, 1000.0D);
         b.pop();
 
         // 双向认知阻碍面具（头饰）
@@ -653,7 +761,11 @@ public final class ModConfig {
         }
     }
 
-    /** 台座使用的环境能量来源 id（配置没就绪 ⇒ {@link #PEDESTAL_DEFAULT_SOURCE}） */
+    /**
+     * 启用的环境能量来源清单（配置没就绪 ⇒ {@link #PEDESTAL_DEFAULT_SOURCE} = {@code "*"} 全部启用 ✓）。
+     * <p>§545 起是"清单"语义 ✓（{@code "*"} / 逗号分隔 id ✓）；解析在
+     * {@code AmbientEnergySources}（带缓存 ✓ 配置重载会作废 ✓）。
+     */
     public static String pedestalSourceId() {
         try {
             String id = PEDESTAL_SOURCE.get();
@@ -661,6 +773,103 @@ public final class ModConfig {
         } catch (Throwable ignored) {
             return PEDESTAL_DEFAULT_SOURCE;
         }
+    }
+
+    /**
+     * 某条来源的<b>总开关</b>（§545：每源一个 ✓）。
+     * <p>⚠ 配置还没就绪时一律回 {@code true}（= 默认全开 ✓ 与 {@code define(..., true)} 的默认值一致 ✓）。
+     */
+    public static boolean energySourceEnabled(String sourceId) {
+        if (sourceId == null) return false;
+        switch (sourceId) {
+            case "light_level":
+                return flag(PEDESTAL_LIGHT_ENABLED, true);
+            case "plant":
+                return flag(PEDESTAL_PLANT_ENABLED, true);
+            case "tcon_fuel":
+                return flag(PEDESTAL_FUEL_ENABLED, true);
+            case "soul_death":
+                return flag(PEDESTAL_SOUL_ENABLED, true);
+            case "demigod_player":
+                return flag(PEDESTAL_PLAYER_ENABLED, true);
+            default:
+                // 附属模组自己注册的来源没有我们的开关 ⇒ 只要它在清单里就算启用 ✓（不会被我们误关 ✗）
+                return true;
+        }
+    }
+
+    private static boolean flag(ConfigValue<Boolean> value, boolean fallback) {
+        try {
+            return value.get();
+        } catch (Throwable ignored) {
+            return fallback;
+        }
+    }
+
+    private static int intOr(ConfigValue<Integer> value, int fallback) {
+        try {
+            return value.get();
+        } catch (Throwable ignored) {
+            return fallback;
+        }
+    }
+
+    private static double doubleOr(ConfigValue<Double> value, double fallback) {
+        try {
+            return value.get();
+        } catch (Throwable ignored) {
+            return fallback;
+        }
+    }
+
+    /** §545 ② 植物：扫描球半径（格；配置没就绪 ⇒ {@value #PEDESTAL_DEFAULT_PLANT_RADIUS}） */
+    public static int plantRadius() {
+        return Math.max(0, intOr(PEDESTAL_PLANT_RADIUS, PEDESTAL_DEFAULT_PLANT_RADIUS));
+    }
+
+    /** §545 ② 植物：1 点凋灵度值多少 EE（配置没就绪 ⇒ {@value #PEDESTAL_DEFAULT_PLANT_EE_PER_POINT}） */
+    public static double plantEePerPoint() {
+        return Math.max(0.0D, doubleOr(PEDESTAL_PLANT_EE_PER_POINT, PEDESTAL_DEFAULT_PLANT_EE_PER_POINT));
+    }
+
+    /** §545 ③ 匠魂燃料：扫描球半径（格） */
+    public static int fuelRadius() {
+        return Math.max(0, intOr(PEDESTAL_FUEL_RADIUS, PEDESTAL_DEFAULT_FUEL_RADIUS));
+    }
+
+    /** §545 ③ 匠魂燃料：一个物品份值多少 EE */
+    public static double fuelEePerItem() {
+        return Math.max(0.0D, doubleOr(PEDESTAL_FUEL_EE_PER_ITEM, PEDESTAL_DEFAULT_FUEL_EE_PER_ITEM));
+    }
+
+    /** §545 ③ 匠魂燃料：一个物品份按多少 tick 折算（≥1） */
+    public static int fuelTicksPerItem() {
+        return Math.max(1, intOr(PEDESTAL_FUEL_TICKS_PER_ITEM, PEDESTAL_DEFAULT_FUEL_TICKS_PER_ITEM));
+    }
+
+    /** §545 ④ 生物死亡：判定球半径（格） */
+    public static int soulRadius() {
+        return Math.max(0, intOr(PEDESTAL_SOUL_RADIUS, PEDESTAL_DEFAULT_SOUL_RADIUS));
+    }
+
+    /** §545 ④ 生物死亡：每点最大生命值多少 EE（0.025 ⇒ 20 血 = 0.5 EE） */
+    public static double soulEePerHp() {
+        return Math.max(0.0D, doubleOr(PEDESTAL_SOUL_EE_PER_HP, PEDESTAL_DEFAULT_SOUL_EE_PER_HP));
+    }
+
+    /** §545 ④ 生物死亡：来源总开关（配置没就绪 ⇒ true） */
+    public static boolean soulEnabled() {
+        return flag(PEDESTAL_SOUL_ENABLED, true);
+    }
+
+    /** §545 ⑤ 玩家汲取：判定球半径（格） */
+    public static int playerRadius() {
+        return Math.max(0, intOr(PEDESTAL_PLAYER_RADIUS, PEDESTAL_DEFAULT_PLAYER_RADIUS));
+    }
+
+    /** §545 ⑤ 玩家汲取：每名玩家每秒多少 EE */
+    public static double playerEePerSecond() {
+        return Math.max(0.0D, doubleOr(PEDESTAL_PLAYER_EE_PER_SECOND, PEDESTAL_DEFAULT_PLAYER_EE_PER_SECOND));
     }
 
     /** 充能时是否放冷色粒子（配置没就绪 ⇒ true） */

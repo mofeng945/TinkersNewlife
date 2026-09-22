@@ -110,6 +110,11 @@ public class TinkersNewlife {
                 net.minecraftforge.fml.config.ModConfig.Type.COMMON,
                 com.mofengbaizhi.tinkersnewlife.config.ModConfig.SPEC,
                 "mofengbaizhi/tinkersnewlife-common.toml");
+        // §545：魔力台座的"启用来源清单"会被解析成缓存 ⇒ 配置（重新）加载时要把缓存作废掉 ✓
+        // （否则玩家在游戏里改 pedestal_source / 各源开关后，要到重启才生效 ✗）
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(
+                (net.minecraftforge.fml.event.config.ModConfigEvent event) ->
+                        com.mofengbaizhi.tinkersnewlife.content.energy.AmbientEnergySources.onConfigReload());
         LOGGER.info("初始化 TinkersNewlife 模组...");
         // 注册自定义槽位类型：领域槽（domain）与术式槽（technique），供咒力核心等装备使用
         slimeknights.tconstruct.library.tools.SlotType.init();

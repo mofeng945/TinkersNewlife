@@ -12,17 +12,22 @@
     {
       "type": "patchouli:text",
       "title": "充能规律：越暗越快",
-      "text": "$(bold)亮度越低，充能速度越快。$()$(br2)公式（就这一条）：$(br2)$(bold)速率 = 满速 × (亮度上限 − 台座上方那格的亮度) ÷ 亮度上限$()$(br2)$(li)$(bold)亮度 = 方块光 + 天光$()综合后的那一个 0~15 的数（与原版刷怪判定同一个量）$(li)$(bold)亮度 0$() ⇒ 满速：默认 $(bold)5 EE/秒$()（= 100 EE/分钟 ⇒ 一颗 1000 EE 的水晶约 $(bold)3.3 分钟$()）$(li)$(bold)亮度 ≥ 15$() ⇒ $(bold)完全不充$()（默认参数）$(li)例：亮度 12 ⇒ 1.0 EE/秒；亮度 14 ⇒ 0.33 EE/秒$(br2)$(bold)推论$()（不用记额外规则）：夜晚露天很暗 ⇒ 充得快；白天露天不充；$(bold)白天在漆黑的洞里照样满速充$()；$(bold)没有$()「必须夜晚 / 必须露天」这类额外条件。$(br2)$(italic)注意：水晶方块$(bold)自己会发光$()（等级 7）⇒ 把它紧贴台座摆会稍微拖慢充能。$()"
+      "text": "$(bold)亮度越低，充能速度越快。$()$(br2)公式（就这一条）：$(br2)$(bold)速率 = 满速 × (亮度上限 − 台座上方那格的亮度) ÷ 亮度上限$()$(br2)$(li)$(bold)亮度 = 方块光 + 天光$()综合后的那一个 0~15 的数（与原版刷怪判定同一个量）$(li)$(bold)亮度 0$() ⇒ 满速：默认 $(bold)0.5 EE/秒$()（= 30 EE/分钟 ⇒ 一颗 1000 EE 的水晶约 $(bold)33 分钟$()）$(li)$(bold)亮度 ≥ 15$() ⇒ $(bold)完全不充$()（默认参数）$(li)例：亮度 12 ⇒ 0.1 EE/秒；亮度 14 ⇒ 0.033 EE/秒$(br2)$(bold)推论$()（不用记额外规则）：夜晚露天很暗 ⇒ 充得快；白天露天不充；$(bold)白天在漆黑的洞里照样满速充$()；$(bold)没有$()「必须夜晚 / 必须露天」这类额外条件。$(br2)$(italic)注意：水晶方块$(bold)自己会发光$()（等级 7）⇒ 把它紧贴台座摆会稍微拖慢充能。$()$(br2)$(italic)本条只是五条来源之一 —— 另外四条见下一页。$()"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "五源并行：每秒拿到的 = 各源之和",
+      "text": "$(bold)台座每秒把「所有启用的来源」各自给的那一份 EE 全部加起来$()灌进水晶 —— 四条并行、互不干涉、$(bold)不设总上限$()。$(br2)$(li)$(bold)亮度$()（默认上限 $(bold)0.5 EE/秒$()）：越暗越快，见上一页 $(li)$(bold)植物$()：球半径 5 格；每秒给范围内$(bold)每株$()各 +1 点凋灵度，$(bold)1 点 = 0.5 EE$() ⇒ 每株 0.5 EE/秒。上限：$(bold)草 5 / 花 20 / 树苗 30$() 点 ⇒ 攒满那一秒该植物$(bold)消失$()（累计 草 2.5 / 花 10 / 树苗 15 EE）。$(bold)作物按花档$()（上限 20）；$(bold)凋零玫瑰排除$()；凋灵度存$(bold)内存$()（重启清零）$(li)$(bold)匠魂燃料$()：球半径 5 格内的匠魂流体容器，$(bold)每秒对每个容器模拟烧一次$() —— 按匠魂自己的燃料表（岩浆/炽血…）算这一秒能烧多少 ⇒ $(bold)每物品 0.5 EE$()，并$(bold)真的扣掉燃料$()$(li)$(bold)灵魂死亡$()：球半径 5 格内$(bold)任何$()生物死亡（$(bold)玩家也算$()）⇒ $(bold)EE = 最大生命 ÷ 40$()（20 血 = 0.5 EE；凋灵 300 血 = 7.5 EE）$(li)$(bold)半神之力$()：球半径 5 格内$(bold)每名玩家$() 0.5 EE/秒，$(bold)多人叠加$()、$(bold)无代价$()（玩家自己也感觉不到）$(br2)$(italic)来源清单在配置 $(bold)pedestal_source$() 里（默认 $(bold)*$() = 全部启用；也可写 $(italic)light_level,plant$() 这种逗号清单）。$()"
     },
     {
       "type": "patchouli:text",
       "title": "配置项（config）",
-      "text": "配置文件 $(italic)config/mofengbaizhi/tinkersnewlife-common.toml$() 的 $(bold)[elder_crystal]$() 段：$(br2)$(li)$(bold)pedestal_charge_max_per_second$()：亮度 0 时的满速（默认 $(bold)5.0$() EE/秒）$(li)$(bold)pedestal_light_cap$()：亮度到达该值就完全不充（默认 $(bold)15$()；调到 16 以上 ⇒ 亮处也慢充，例如 16 时亮度 15 仍有约 0.31 EE/秒）$(li)$(bold)pedestal_source$()：用哪个环境能量来源（默认 $(bold)light_level$() = 越暗越快；写错会安静地退回它）$(li)$(bold)pedestal_particles$() / $(bold)pedestal_sound$()：充能时的冷色粒子 / 轻微风铃$(br2)台座上的水晶满了就停：水晶物品上限 $(bold)1000$()、水晶方块 $(bold)4000$()。"
+      "text": "配置文件 $(italic)config/mofengbaizhi/tinkersnewlife-common.toml$() 的 $(bold)[elder_crystal]$() 段（$(bold)每源一个开关 + 数值$()）：$(br2)$(li)$(bold)pedestal_source$()：启用哪些来源（默认 $(bold)*$() = 全部；或逗号清单；$(italic)旧配置里写单条 id 也照旧只启用那一条$()）$(li)$(bold)light_enabled$() / $(bold)pedestal_charge_max_per_second$()（$(bold)0.5$()）/ $(bold)pedestal_light_cap$()（$(bold)15$()）$(li)$(bold)plant_enabled$() / $(bold)plant_radius$()（$(bold)5$()）/ $(bold)plant_ee_per_point$()（$(bold)0.5$()）$(li)$(bold)fuel_enabled$() / $(bold)fuel_radius$()（$(bold)5$()）/ $(bold)fuel_ee_per_item$()（$(bold)0.5$()）/ $(bold)fuel_ticks_per_item$()（$(bold)10$()）$(li)$(bold)soul_enabled$() / $(bold)soul_radius$()（$(bold)5$()）/ $(bold)soul_ee_per_hp$()（$(bold)0.025$() = 20 血 0.5 EE）$(li)$(bold)player_enabled$() / $(bold)player_radius$()（$(bold)5$()）/ $(bold)player_ee_per_second$()（$(bold)0.5$()）$(li)$(bold)pedestal_particles$() / $(bold)pedestal_sound$()：充能时的冷色粒子 / 轻微风铃$(br2)台座上的水晶满了就停：水晶物品上限 $(bold)1000$()、水晶方块 $(bold)4000$() —— 而且$(bold)满了就不再问来源$() ⇒ 不白烧燃料、不白杀植物。"
     },
     {
       "type": "patchouli:text",
       "title": "以后会有别的能量来源",
-      "text": "$(bold)能量转化系统$()（把别的 mod 的魔力/能量换算成 EE）$(bold)本轮没做$() —— 但接口已经留好了：$(br2)$(li)来源是一段$(bold)可插拔的逻辑$()，接口叫 $(italic)AmbientEnergySource$()（每秒给出「这一格能产多少 EE」）$(li)默认实现 $(italic)LightLevelEnergySource$() 就是上面那条「越暗越快」$(li)台座方块/方块实体$(bold)完全不认识$()光照、夜晚、天气 —— 它们每秒只问一次「现在用哪个来源」$(br2)⇒ 以后接别的能量来源时，写一个新实现、在 $(italic)AmbientEnergySources$() 里注册一行、把配置里的 $(bold)pedestal_source$() 指过去即可，$(bold)不用动方块$()。$(br2)$(italic)跨体系换算（魔力 / 灵魂 / 咒力 ↔ EE）一律经 $(bold)EnergyUnits$() 这张唯一换算表。$()"
+      "text": "$(bold)能量转化系统$()（把别的 mod 的魔力/能量换算成 EE）$(bold)本轮还是没做$() —— 但接口从「选一条」升级成了「$(bold)多条并行$()」：$(br2)$(li)来源是一段$(bold)可插拔的逻辑$()，接口叫 $(italic)AmbientEnergySource$()（每秒给出「这一格能产多少 EE」，并区分「只问速率」与「真结算」）$(li)注册表 $(italic)AmbientEnergySources$() 把登记在册的每条来源$(bold)逐个调用、全部相加$()（不设总上限）$(li)台座方块/方块实体$(bold)完全不认识$()光照、植物、流体、灵魂 —— 它每秒只问注册表一句「总共多少」$(br2)⇒ 以后接别的能量来源时，写一个新实现、在 $(italic)AmbientEnergySources$() 里注册一行、把配置 $(bold)pedestal_source$() 加上它的 id 即可，$(bold)不用动方块$()。$(br2)$(italic)跨体系换算（魔力 / 灵魂 / 咒力 ↔ EE）一律经 $(bold)EnergyUnits$() 这张唯一换算表。$()"
     },
     {
       "type": "patchouli:crafting",
