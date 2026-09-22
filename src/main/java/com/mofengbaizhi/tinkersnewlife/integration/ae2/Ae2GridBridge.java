@@ -124,6 +124,8 @@ public final class Ae2GridBridge implements IInWorldGridNodeHost, IGridNodeListe
     @Nullable
     public static <T> LazyOptional<T> capability(EeConverterCore core, Capability<T> cap, @Nullable Direction side) {
         if (cap != Capabilities.IN_WORLD_GRID_NODE_HOST) return null;
+        // §586 六面角色：AE 只在**左面 + 底面（万用）**暴露 ✓（原来六面全开 ✗）
+        if (!com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterFaces.allowsAe2(core.hostState(), side)) return null;
         return bridgeOf(core).holder.cast();
     }
 
