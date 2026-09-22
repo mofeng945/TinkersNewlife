@@ -532,4 +532,20 @@ public class ModItems {
             ITEMS.register("elder_mana_pedestal",
                     () -> new com.mofengbaizhi.tinkersnewlife.content.item.ElderManaPedestalItem(
                             ModBlocks.ELDER_MANA_PEDESTAL.get()));
+
+    // ============================================================
+    //  §557 EE 网络（抽取方块 + 万用能量转化器）
+    // ============================================================
+
+    /** EE 抽取方块（BlockItem；tooltip 只写"抽谁/推给谁 + 实时速率"✓ 见 EeExtractorItem） */
+    public static final RegistryObject<Item> EE_EXTRACTOR =
+            ITEMS.register("ee_extractor",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.EeExtractorItem(
+                            ModBlocks.EE_EXTRACTOR.get()));
+
+    /** 万用能量转化器（BlockItem；tooltip 只写"输入/输出/单向 + 实时速率"✓ 见 EnergyConverterItem） */
+    public static final RegistryObject<Item> ENERGY_CONVERTER =
+            ITEMS.register("energy_converter",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.EnergyConverterItem(
+                            ModBlocks.ENERGY_CONVERTER.get()));
 }

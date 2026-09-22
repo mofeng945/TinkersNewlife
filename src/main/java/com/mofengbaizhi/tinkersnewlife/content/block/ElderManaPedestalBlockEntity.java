@@ -3,6 +3,8 @@ package com.mofengbaizhi.tinkersnewlife.content.block;
 import com.mofengbaizhi.tinkersnewlife.config.ModConfig;
 import com.mofengbaizhi.tinkersnewlife.content.ModBlockEntities;
 import com.mofengbaizhi.tinkersnewlife.content.energy.AmbientEnergySources;
+import com.mofengbaizhi.tinkersnewlife.content.energy.EeCapabilityBridge;
+import com.mofengbaizhi.tinkersnewlife.content.energy.EeStorage;
 import com.mofengbaizhi.tinkersnewlife.content.energy.ElderCrystalStorage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -21,7 +23,10 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.util.LazyOptional;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
@@ -63,13 +68,16 @@ import javax.annotation.Nullable;
  * （原来写成 {@code if (!taken.isEmpty()) sync()} ⇒ 那条分支本身没错，但它把"清空"的同步绑在了
  * 返回值上；现在改成无条件，语义更直白 ✓）。
  */
-public class ElderManaPedestalBlockEntity extends BlockEntity {
+public class ElderManaPedestalBlockEntity extends BlockEntity implements EeStorage {
 
     /** 台座上那颗水晶的存档键（物品栈整包存 ✓ 含它自己的 {@code EE} ✓） */
     public static final String KEY_CRYSTAL = "Crystal";
 
     /** §553 缓存（EE）的存档键 */
     public static final String KEY_CACHE = "Cache";
+
+    /** §557 "外部送来、还没灌进水晶"的暂存（EE）的存档键 */
+    public static final String KEY_BUFFER = "EeBuffer";
 
     /**
      * 紧邻水晶方块的喂养顺序（**固定顺序** ⇒ 玩家可预期 ✓ 也免得每 tick 遍历 6 个方向再排序 ✗）。
@@ -115,6 +123,21 @@ public class ElderManaPedestalBlockEntity extends BlockEntity {
 
     /** 每 tick 从缓存里放出的上限（25 ⇒ 1000 EE 约 2 秒 ✓ 看得见但不拖沓 ✓） */
     private static final int CACHE_FLUSH_PER_TICK = 25;
+
+    /**
+     * §557 <b>「外来 EE」暂存</b>：别的方块（抽取方块 / 转化器）通过 {@link EeStorage#insertEe}
+     * 送进来的 EE 先落在这里 ✓，由 {@link #tick} 按 §553 那条"有地方就放出"的同一套逻辑
+     * 灌给水晶 / 水晶方块 ✓。
+     *
+     * <p>为什么不直接写进 {@link #cache} ✗：{@code cache} 的语义是"<b>这台座自己产出的</b>、
+     * 只是暂时没地方灌的 EE" ✓，与"外面送来的"混在一起后，台座满时"到底是谁在积压"就说不清了 ✗。     * 分开两个字段 ⇒ 出口那一段（{@code hasSpaceForEe()} ⇒ {@code distribute()}）可以<b>共用</b> ✓
+     * 不必写第二套灌注逻辑 ✓。
+     *
+     * <p>上限同样是 <b>一颗水晶</b>（{@link #CACHE_CAP}）✓ 满了就拒收（{@code insertEe} 如实返回 0）✓
+     * —— 这样上游（抽取方块）自己会停，不会出现"偷偷吞掉别人的电" ✗。
+     * <p>持久化到 NBT ✓（走远/重启不丢 ✓ 与 cache 同一口径 ✓）。
+     */
+    private double eeBuffer = 0.0D;
 
     /** 每 tick ++（粒子/音效节拍用 ✓） */
     private int ticks = 0;
@@ -327,7 +350,73 @@ public class ElderManaPedestalBlockEntity extends BlockEntity {
                 charging = true;
             }
         }
+        // §557 外来 EE（抽取方块 / 转化器送进来的）走**同一条**出口：有地方灌就放出去 ✓
+        //      ⇒ 与"台座自己产的"共用 distribute()，不存在第二套灌注逻辑 ✓
+        //      ⚠ 与 cache 的区别只有一处：这里送出的是**别人的**电，所以**不**参与 settle() 的停车判定 ✗
+        //        （台座满时上游会通过 insertEe 的返回值自己停 ✓ 见 eeBuffer 的注释）。
+        if (eeBuffer >= 1.0D && hasSpaceForEe()) {
+            int amount = (int) Math.min(Math.floor(eeBuffer), (double) CACHE_FLUSH_PER_TICK);
+            if (amount > 0) {
+                int accepted = distribute(amount);
+                eeBuffer -= accepted;
+                if (accepted < amount) eeBuffer = 0.0D;   // 与 cache 同口径：装不下就不囤 ✓（上游会继续送 ✓）
+                charging = true;
+            }
+        }
         if (charging) showCharging(level, pos);
+    }
+
+    // ============================================================
+    //  §557 EeStorage：让"抽取方块 / 转化器"这类外部方块能读/取台座的 EE
+    //  ⚠ 只**新增**入口 ✓ 台座原有的水晶交互（放/取/充能）一行都没动 ✗
+    // ============================================================
+
+    /**
+     * 台座对外暴露的 EE = <b>§553 的缓存 + §557 的外来暂存</b>。
+     * <p>不包含"台座上方那颗水晶物品里的 EE" ✗ —— 那件东西属于玩家（挖掉台座会原样掉出来 ✓
+     * 见 {@code ElderManaPedestalBlock#getDrops}），让抽取方块从台座里把玩家放的水晶抽干，
+     * 是这次需求里没有的语义 ✗（要抽水晶里的电就直接把<b>水晶方块</b>摆在抽取方块旁边 ✓ 那条路是通的 ✓）。
+     */
+    @Override
+    public int getEe() {
+        return (int) Math.floor(cache + eeBuffer);
+    }
+
+    /** 台座能暂存的上限 = <b>一颗水晶</b>（{@link #CACHE_CAP}；cache 与外来暂存各算一份 ⇒ ×2 ✓） */
+    @Override
+    public int getCapacity() {
+        return (int) (CACHE_CAP * 2);
+    }
+
+    @Override
+    public int insertEe(int amount, boolean simulate) {
+        if (amount <= 0) return 0;
+        double room = CACHE_CAP - eeBuffer;
+        if (room <= 0.0D) return 0;
+        int accepted = (int) Math.min(Math.floor(room), (double) amount);
+        if (accepted <= 0) return 0;
+        if (!simulate) {
+            eeBuffer += accepted;
+            setChanged();
+        }
+        return accepted;
+    }
+
+    @Override
+    public int extractEe(int amount, boolean simulate) {
+        if (amount <= 0) return 0;
+        // ⚠ 先抽"外来暂存"、再抽"自己的缓存" ✓ —— 反过来会让台座自己攒的那份先被搬走 ✗
+        int fromBuffer = (int) Math.min(Math.floor(eeBuffer), (double) amount);
+        int left = amount - fromBuffer;
+        int fromCache = left <= 0 ? 0 : (int) Math.min(Math.floor(cache), (double) left);
+        int taken = fromBuffer + fromCache;
+        if (taken <= 0) return 0;
+        if (!simulate) {
+            eeBuffer -= fromBuffer;
+            cache -= fromCache;
+            setChanged();
+        }
+        return taken;
     }
 
     /**
@@ -452,6 +541,27 @@ public class ElderManaPedestalBlockEntity extends BlockEntity {
     }
 
     // ============================================================
+    //  §557 Forge 能量能力（只读面 ✓ 让别的模组能"看到"台座缓存里有多少电）
+    //  ⚠ 只**新增**这一个 capability ✗ 台座原有的水晶交互（放/取/充能）一行都没动 ✗
+    // ============================================================
+
+    /** 只读 FE 视图（{@code 1 FE = 8 EE} 折算 ✓ 不能抽 ✓ 见 {@code EeCapabilityBridge}） */
+    private final LazyOptional<net.minecraftforge.energy.IEnergyStorage> feHolder =
+            LazyOptional.of(() -> EeCapabilityBridge.readOnly(this, this::sync));
+
+    @Nonnull
+    @Override
+    public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
+        return EeCapabilityBridge.energyOrSuper(cap, side, feHolder, super.getCapability(cap, side));
+    }
+
+    @Override
+    public void invalidateCaps() {
+        super.invalidateCaps();
+        feHolder.invalidate();
+    }
+
+    // ============================================================
     //  同步 / 存档
     // ============================================================
 
@@ -482,6 +592,7 @@ public class ElderManaPedestalBlockEntity extends BlockEntity {
         super.saveAdditional(tag);
         if (!crystal.isEmpty()) tag.put(KEY_CRYSTAL, crystal.save(new CompoundTag()));
         if (cache > 0.0D) tag.putDouble(KEY_CACHE, cache);       // §553 缓存持久化 ✓
+        if (eeBuffer > 0.0D) tag.putDouble(KEY_BUFFER, eeBuffer); // §557 外来 EE 暂存也持久化 ✓
     }
 
     @Override
@@ -491,6 +602,7 @@ public class ElderManaPedestalBlockEntity extends BlockEntity {
         //   而 setCrystal 会 sendBlockUpdated ⇒ 客户端无谓发包/递归 ✗
         crystal = tag.contains(KEY_CRYSTAL) ? ItemStack.of(tag.getCompound(KEY_CRYSTAL)) : ItemStack.EMPTY;
         cache = tag.contains(KEY_CACHE) ? tag.getDouble(KEY_CACHE) : 0.0D;   // §553 读回缓存 ✓
+        eeBuffer = tag.contains(KEY_BUFFER) ? tag.getDouble(KEY_BUFFER) : 0.0D;  // §557 读回外来暂存 ✓
         if (!crystal.isEmpty()) crystal.setCount(1);
     }
 

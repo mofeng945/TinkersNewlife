@@ -37,4 +37,32 @@ public class ModBlockEntities {
                                     com.mofengbaizhi.tinkersnewlife.content.block.ElderManaPedestalBlockEntity::new,
                                     ModBlocks.ELDER_MANA_PEDESTAL.get())
                             .build(null));
+
+    // ============================================================
+    //  §557 EE 网络（抽取方块 + 万用能量转化器）
+    // ============================================================
+
+    /**
+     * EE 抽取方块：抽相邻 EE → 自己的缓冲 → 推给相邻 EE 容器（见 {@code EeExtractorBlockEntity} ✓）。
+     * <p>ticker 挂在方块上（{@code EeExtractorBlock#getTicker}）✓ 只跑服务端 ✓。
+     */
+    public static final RegistryObject<BlockEntityType<com.mofengbaizhi.tinkersnewlife.content.block.EeExtractorBlockEntity>>
+            EE_EXTRACTOR =
+            BLOCK_ENTITIES.register("ee_extractor",
+                    () -> BlockEntityType.Builder.of(
+                                    com.mofengbaizhi.tinkersnewlife.content.block.EeExtractorBlockEntity::new,
+                                    ModBlocks.EE_EXTRACTOR.get())
+                            .build(null));
+
+    /**
+     * 万用能量转化器：各种能量 ⇒ FE（单向 ✓ 见 {@code EnergyConverterBlockEntity} ✓）。
+     * <p>ticker 挂在方块上（{@code EnergyConverterBlock#getTicker}）✓ 只跑服务端 ✓。
+     */
+    public static final RegistryObject<BlockEntityType<com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterBlockEntity>>
+            ENERGY_CONVERTER =
+            BLOCK_ENTITIES.register("energy_converter",
+                    () -> BlockEntityType.Builder.of(
+                                    com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterBlockEntity::new,
+                                    ModBlocks.ENERGY_CONVERTER.get())
+                            .build(null));
 }

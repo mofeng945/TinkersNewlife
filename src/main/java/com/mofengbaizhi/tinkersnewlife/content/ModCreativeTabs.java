@@ -229,6 +229,9 @@ public class ModCreativeTabs {
                                 output.accept(ModItems.ELDER_CRYSTAL_BLOCK.get());
                                 // ----- 魔力台座（§523：水晶唯一的充电方式 —— 亮度越低充得越快）-----
                                 output.accept(ModItems.ELDER_MANA_PEDESTAL.get());
+                                // ----- §557 EE 网络：抽取方块（抽 EE 推给邻居）+ 万用能量转化器（各种能量 ⇒ FE）-----
+                                output.accept(ModItems.EE_EXTRACTOR.get());
+                                output.accept(ModItems.ENERGY_CONVERTER.get());
                             })
                             .build()
             );

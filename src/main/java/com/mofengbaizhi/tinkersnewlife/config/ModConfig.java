@@ -114,6 +114,56 @@ public final class ModConfig {
     /** ⑤ 玩家汲取：每名玩家每秒多少 EE（多人叠加 ✓） */
     public static final ConfigValue<Double> PEDESTAL_PLAYER_EE_PER_SECOND;
 
+    // ==================== §557 EE 网络（抽取方块 + 万用能量转化器） ====================
+    // 默认值同样只写在 EE_NET_DEFAULT_* 常量里一处 ✓（不会与 defineInRange 的默认值漂移 ✗）
+
+    /** §557 抽取方块：抽的速率（EE/tick） */
+    public static final int EE_NET_DEFAULT_EXTRACTOR_PULL = 256;
+    /** §557 抽取方块：推的速率（EE/tick） */
+    public static final int EE_NET_DEFAULT_EXTRACTOR_PUSH = 256;
+    /**
+     * §557 抽取方块：内部缓冲上限（EE）。
+     * <p>4000 = <b>一块古老者水晶方块</b>（{@code ElderCrystalStorage.BLOCK_CAPACITY} ✓）
+     * —— 恰好"整块装得下"✓ 也是"下游塞满时最多积压多少"✓。
+     */
+    public static final int EE_NET_DEFAULT_EXTRACTOR_BUFFER = 4000;
+
+    /** §557 转化器：FE 池上限 */
+    public static final int EE_NET_DEFAULT_CONVERTER_BUFFER_FE = 32000;
+    /** §557 转化器：对外吞吐闸门（FE/t；收与推都不能超过它 ✓） */
+    public static final int EE_NET_DEFAULT_CONVERTER_OUTPUT_FE = 64;
+    /** §557 转化器：直接 Forge Energy 输入这一条的上限（FE/t） */
+    public static final int EE_NET_DEFAULT_CONVERTER_INPUT_FE = 64;
+    /**
+     * §557 转化器：EE 输入这一条的上限（EE/t）。
+     * <p>512 EE/t ÷ 8（{@code 1 FE = 8 EE}）= <b>64 FE/t</b> ✓ 与 {@code output_fe_per_tick} 同档 ✓
+     * 也就是说"三条输入路各自都够把吞吐闸门打满"，但闸门仍然只有一个 ✓ 不会 3 倍 ✓。
+     */
+    public static final int EE_NET_DEFAULT_CONVERTER_INPUT_EE = 512;
+
+    /** §557 抽取方块：抽的速率（EE/tick） */
+    public static final ConfigValue<Integer> EE_EXTRACTOR_PULL_PER_TICK;
+    /** §557 抽取方块：推的速率（EE/tick） */
+    public static final ConfigValue<Integer> EE_EXTRACTOR_PUSH_PER_TICK;
+    /** §557 抽取方块：缓冲上限（EE） */
+    public static final ConfigValue<Integer> EE_EXTRACTOR_BUFFER;
+    /** §557 转化器：FE 池上限 */
+    public static final ConfigValue<Integer> CONVERTER_BUFFER_FE;
+    /** §557 转化器：对外吞吐闸门（FE/t） */
+    public static final ConfigValue<Integer> CONVERTER_OUTPUT_FE_PER_TICK;
+    /** §557 转化器：直接 Forge Energy 输入上限（FE/t） */
+    public static final ConfigValue<Integer> CONVERTER_INPUT_FE_PER_TICK;
+    /** §557 转化器：EE 输入上限（EE/t） */
+    public static final ConfigValue<Integer> CONVERTER_INPUT_EE_PER_TICK;
+    /** §557 转化器：通用机械（J）这一路是否启用 */
+    public static final ConfigValue<Boolean> CONVERTER_MEKANISM_ENABLED;
+    /** §557 转化器：Create 转速（RPM）这一路是否启用 */
+    public static final ConfigValue<Boolean> CONVERTER_CREATE_ENABLED;
+    /** §557 转化器：工业时代（EU）这一路是否启用 */
+    public static final ConfigValue<Boolean> CONVERTER_IC2_ENABLED;
+    /** §557 转化器：应用能源（AE）这一路是否启用 */
+    public static final ConfigValue<Boolean> CONVERTER_AE2_ENABLED;
+
     // ==================== 双向认知阻碍面具 ====================
     /**
      * 佩戴认知阻碍面具的玩家是否从小地图雷达上隐藏（默认开）。
@@ -387,6 +437,66 @@ public final class ModConfig {
         PEDESTAL_PLAYER_RADIUS = b.defineInRange("player_radius", PEDESTAL_DEFAULT_PLAYER_RADIUS, 0, 32);
         PEDESTAL_PLAYER_EE_PER_SECOND = b.defineInRange("player_ee_per_second",
                 PEDESTAL_DEFAULT_PLAYER_EE_PER_SECOND, 0.0D, 1000.0D);
+        b.pop();
+
+        // §557 EE 网络：EE 抽取方块 + 万用能量转化器
+        b.push("ee_network").comment(
+                "EE network: the EE Extractor and the Universal Energy Converter.",
+                "",
+                "ALL EXTERNAL ENERGY RATES ARE THE USER'S, HARD-CODED AND FIXED:",
+                "    1 FE = 8 EE            (so 1 EE = 0.125 FE)",
+                "    1 EU = 4 FE            (IC2)",
+                "    1 AE = 2 FE            (AE2)",
+                "    10 J = 4 FE            (Mekanism; 1 J = 0.4 FE)",
+                "    FE/t = (45 * RPM) / 64 (Create; 1 RPM = 0.703125 FE/t)",
+                "    RF = Tesla = uI = FF = FE  -- they are all aliases of FE at 1:1, so they need no",
+                "    adapter at all: anything exposing ForgeCapabilities.ENERGY goes down the FE path.",
+                "",
+                "EE EXTRACTOR (tinkersnewlife:ee_extractor): pulls EE out of the EE containers next to it",
+                "  (the Mana Pedestal's own cache, Elder Crystal Blocks, other extractors) into its own",
+                "  buffer, then PUSHES that EE to the EE containers next to it. Direction order is fixed:",
+                "  up, down, north, south, west, east. It never pushes back into a neighbour it just pulled",
+                "  from in the same tick (that would just be a no-op loop).",
+                "  extractor_pull_ee_per_tick  (default 256) EE pulled per tick, summed over ALL neighbours.",
+                "  extractor_push_ee_per_tick  (default 256) EE pushed per tick, summed over ALL neighbours.",
+                "  extractor_buffer_ee         (default 4000 = one crystal block) internal buffer. When the",
+                "      buffer is full the extractor simply stops pulling, so nothing is ever destroyed.",
+                "",
+                "UNIVERSAL ENERGY CONVERTER (tinkersnewlife:energy_converter): ONE-WAY, everything -> FE.",
+                "  Input A: EE pushed in by neighbours (the same EeStorage interface) - converted at 1 FE = 8 EE.",
+                "  Input B: Forge Energy pulled from neighbours (ForgeCapabilities.ENERGY) - 1:1.",
+                "  Input C: the four optional mods, all reached by REFLECTION ONLY (no compile-time deps):",
+                "      Mekanism (J) - verified against Mekanism-1.20.1-10.4.16.80.jar (IStrictEnergyHandler);",
+                "      Create (RPM) - reads KineticBlockEntity#getSpeed() from neighbours;",
+                "      IC2 (EU) and AE2 (AE) - NOT wired up: neither mod is in this pack and both need their",
+                "      own network join/unjoin events, which pure reflection cannot provide (see memo S557).",
+                "  Output: FE pushed to neighbours via IEnergyStorage#receiveEnergy (never extracted back).",
+                "  converter_output_fe_per_tick (default 64) THE HARD THROUGHPUT GATE: no matter how many input",
+                "      paths are connected, this block never moves more than 64 FE per tick in total.",
+                "  converter_input_fe_per_tick (default 64) cap on the direct Forge Energy path.",
+                "  converter_input_ee_per_tick (default 512 = 64 FE worth) cap on the EE path.",
+                "  converter_buffer_fe          (default 32000) FE pool inside the converter.",
+                "  mekanism_energy_enabled / create_rotation_enabled / ic2_eu_enabled / ae2_energy_enabled",
+                "      (all default true) per-family master switches; a family that could not be resolved at",
+                "      startup is skipped quietly and reported once in the log.");
+        EE_EXTRACTOR_PULL_PER_TICK = b.defineInRange("extractor_pull_ee_per_tick",
+                EE_NET_DEFAULT_EXTRACTOR_PULL, 0, 1_000_000);
+        EE_EXTRACTOR_PUSH_PER_TICK = b.defineInRange("extractor_push_ee_per_tick",
+                EE_NET_DEFAULT_EXTRACTOR_PUSH, 0, 1_000_000);
+        EE_EXTRACTOR_BUFFER = b.defineInRange("extractor_buffer_ee",
+                EE_NET_DEFAULT_EXTRACTOR_BUFFER, 1, 100_000_000);
+        CONVERTER_BUFFER_FE = b.defineInRange("converter_buffer_fe",
+                EE_NET_DEFAULT_CONVERTER_BUFFER_FE, 1, 2_000_000_000);
+        CONVERTER_OUTPUT_FE_PER_TICK = b.defineInRange("converter_output_fe_per_tick",
+                EE_NET_DEFAULT_CONVERTER_OUTPUT_FE, 0, 1_000_000);
+        CONVERTER_INPUT_FE_PER_TICK = b.defineInRange("converter_input_fe_per_tick",
+                EE_NET_DEFAULT_CONVERTER_INPUT_FE, 0, 1_000_000);
+        CONVERTER_INPUT_EE_PER_TICK = b.defineInRange("converter_input_ee_per_tick",
+                EE_NET_DEFAULT_CONVERTER_INPUT_EE, 0, 100_000_000);
+        CONVERTER_MEKANISM_ENABLED = b.define("mekanism_energy_enabled", true);
+        CONVERTER_CREATE_ENABLED = b.define("create_rotation_enabled", true);
+        CONVERTER_IC2_ENABLED = b.define("ic2_eu_enabled", true);
+        CONVERTER_AE2_ENABLED = b.define("ae2_energy_enabled", true);
         b.pop();
 
         // 双向认知阻碍面具（头饰）
@@ -870,6 +980,64 @@ public final class ModConfig {
     /** §545 ⑤ 玩家汲取：每名玩家每秒多少 EE */
     public static double playerEePerSecond() {
         return Math.max(0.0D, doubleOr(PEDESTAL_PLAYER_EE_PER_SECOND, PEDESTAL_DEFAULT_PLAYER_EE_PER_SECOND));
+    }
+
+    // ==================== §557 EE 网络（取值助手） ====================
+    // 与上面那批同一口径：配置没就绪（注册前 / 客户端早期）时一律回默认常量 ✓ 全 try/catch ✓
+
+    /** §557 抽取方块：每 tick 抽的上限（EE；跨邻居合计 ✓） */
+    public static int eeExtractorPullPerTick() {
+        return Math.max(0, intOr(EE_EXTRACTOR_PULL_PER_TICK, EE_NET_DEFAULT_EXTRACTOR_PULL));
+    }
+
+    /** §557 抽取方块：每 tick 推的上限（EE；跨邻居合计 ✓） */
+    public static int eeExtractorPushPerTick() {
+        return Math.max(0, intOr(EE_EXTRACTOR_PUSH_PER_TICK, EE_NET_DEFAULT_EXTRACTOR_PUSH));
+    }
+
+    /** §557 抽取方块：缓冲上限（EE；≥1 ✓ 0 会让 insertEe 永远拒收 ✗） */
+    public static int eeExtractorBuffer() {
+        return Math.max(1, intOr(EE_EXTRACTOR_BUFFER, EE_NET_DEFAULT_EXTRACTOR_BUFFER));
+    }
+
+    /** §557 转化器：FE 池上限（≥1 ✓） */
+    public static int converterBufferFe() {
+        return Math.max(1, intOr(CONVERTER_BUFFER_FE, EE_NET_DEFAULT_CONVERTER_BUFFER_FE));
+    }
+
+    /** §557 转化器：对外吞吐闸门（FE/t；收与推都受它约束 ✓） */
+    public static int converterOutputFePerTick() {
+        return Math.max(0, intOr(CONVERTER_OUTPUT_FE_PER_TICK, EE_NET_DEFAULT_CONVERTER_OUTPUT_FE));
+    }
+
+    /** §557 转化器：直接 Forge Energy 输入上限（FE/t） */
+    public static int converterInputFePerTick() {
+        return Math.max(0, intOr(CONVERTER_INPUT_FE_PER_TICK, EE_NET_DEFAULT_CONVERTER_INPUT_FE));
+    }
+
+    /** §557 转化器：EE 输入上限（EE/t） */
+    public static int converterInputEePerTick() {
+        return Math.max(0, intOr(CONVERTER_INPUT_EE_PER_TICK, EE_NET_DEFAULT_CONVERTER_INPUT_EE));
+    }
+
+    /** §557 转化器：通用机械（J）这一路的开关（配置没就绪 ⇒ true） */
+    public static boolean converterMekanismEnabled() {
+        return flag(CONVERTER_MEKANISM_ENABLED, true);
+    }
+
+    /** §557 转化器：Create 转速（RPM）这一路的开关（配置没就绪 ⇒ true） */
+    public static boolean converterCreateEnabled() {
+        return flag(CONVERTER_CREATE_ENABLED, true);
+    }
+
+    /** §557 转化器：工业时代（EU）这一路的开关（配置没就绪 ⇒ true） */
+    public static boolean converterIc2Enabled() {
+        return flag(CONVERTER_IC2_ENABLED, true);
+    }
+
+    /** §557 转化器：应用能源（AE）这一路的开关（配置没就绪 ⇒ true） */
+    public static boolean converterAe2Enabled() {
+        return flag(CONVERTER_AE2_ENABLED, true);
     }
 
     /** 充能时是否放冷色粒子（配置没就绪 ⇒ true） */

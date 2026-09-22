@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " A ",
+    "OEO",
+    " Q "
+  ],
+  "key": {
+    "A": { "item": "minecraft:amethyst_shard" },
+    "O": { "item": "minecraft:obsidian" },
+    "E": { "item": "tinkersnewlife:elder_crystal" },
+    "Q": { "item": "minecraft:quartz" }
+  },
+  "result": {
+    "item": "tinkersnewlife:ee_extractor",
+    "count": 1
+  }
+}

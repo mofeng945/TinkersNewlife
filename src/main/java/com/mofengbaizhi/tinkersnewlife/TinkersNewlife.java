@@ -152,6 +152,10 @@ public class TinkersNewlife {
         // 公共代码不直接引用任何联动类型，各联动类只在对应模组在场时被加载。
         IntegrationLoader.init(modEventBus);
 
+        // §557：把"别家模组能量 → FE"四路适配器的探测结论打一行日志 ✓
+        //（四路里三条可能"安静地不工作" ✗ ⇒ 让日志自己说清哪条接上了、哪条为什么没有 ✓）
+        com.mofengbaizhi.tinkersnewlife.content.energy.EnergyInputs.probeAll();
+
 
         // 强制加载 ModCurios 类，确保其事件订阅生效（特别是槽位注册）
         ModCurios.class.getName();

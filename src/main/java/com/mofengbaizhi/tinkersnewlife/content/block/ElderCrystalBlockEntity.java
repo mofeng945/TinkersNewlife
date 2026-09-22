@@ -1,6 +1,7 @@
 package com.mofengbaizhi.tinkersnewlife.content.block;
 
 import com.mofengbaizhi.tinkersnewlife.content.ModBlockEntities;
+import com.mofengbaizhi.tinkersnewlife.content.energy.EeStorage;
 import com.mofengbaizhi.tinkersnewlife.content.energy.ElderCrystalStorage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -25,7 +26,7 @@ import net.minecraft.world.level.block.state.BlockState;
  * </ul>
  * 将来做台座时，只要对着这两个方法写调用方即可 ✓ 不用再动方块/方块实体本体。
  */
-public class ElderCrystalBlockEntity extends BlockEntity {
+public class ElderCrystalBlockEntity extends BlockEntity implements EeStorage {
 
     /** 当前存储的 EE（0 ~ {@link ElderCrystalStorage#BLOCK_CAPACITY}） */
     private int ee = 0;
@@ -108,6 +109,33 @@ public class ElderCrystalBlockEntity extends BlockEntity {
         if (next == ee) return;
         ee = next;
         setChanged();
+    }
+
+    // ============================================================
+    //  §557 EeStorage：让"抽取方块 / 转化器"按统一接口读/取水晶方块里的 EE
+    //  ⚠ 只**加实现** ✓ 上面 §519 留的 absorb/getEe/getCapacity 一个都没改 ✗
+    //     （{@code getEe()} / {@code getCapacity()} 在查询接口那一段里<b>已经</b>有了 ✓
+    //      它们的签名正好与接口一致 ⇒ 本来就已经满足 {@code EeStorage} ✓ 不用重复定义 ✗）
+    // ============================================================
+
+    /** 存进去 = §519 的 {@link #absorb(int)} ✓（simulate 只算不写 ✓） */
+    @Override
+    public int insertEe(int amount, boolean simulate) {
+        if (amount <= 0) return 0;
+        int accept = Math.min(amount, getSpace());
+        if (accept <= 0) return 0;
+        if (!simulate) setEe(ee + accept);
+        return accept;
+    }
+
+    /** 取出来（simulate 只算不写 ✓ 不够就有多少给多少 ✓） */
+    @Override
+    public int extractEe(int amount, boolean simulate) {
+        if (amount <= 0) return 0;
+        int take = Math.min(amount, ee);
+        if (take <= 0) return 0;
+        if (!simulate) setEe(ee - take);
+        return take;
     }
 
     // ============================================================

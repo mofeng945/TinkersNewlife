@@ -27,6 +27,11 @@ package com.mofengbaizhi.tinkersnewlife.content.energy;
  *   <li>术式 / 领域 / 拟造的咒力价格（{@code CURSE_PER_TICK}、{@code ConstructTechnique} 的造价）：
  *       它们是"要花多少咒力"的设计数值，不是跨体系汇率 ✗。</li>
  * </ul>
+ *
+ * <h2>§557 新增：EE ⇄ 外部能量（FE / J / EU / AE / RPM）</h2>
+ * 见 {@link #FE_PER_EE_FACTOR} 与 {@link Fe} 那一节 ✓ ——
+ * <b>换算常量全部集中在本类</b> ✓，"万用能量转化器"与以后的任何使用者都从这里取 ✓
+ * 绝不在方块代码里写魔法数字 ✗。
  */
 public final class EnergyUnits {
 
@@ -134,5 +139,108 @@ public final class EnergyUnits {
     private static String trim(double v) {
         if (v == Math.floor(v)) return String.valueOf((long) v);
         return String.format(java.util.Locale.ROOT, "%.2f", v);
+    }
+
+    // ============================================================
+    //  §557 EE ⇄ 外部能量（用户给定口径 2026-09-22 ✓ 一个字都不许改 ✗）
+    //
+    //    1 FE = 8 EE              ⇒ 1 EE = 0.125 FE
+    //    1 EU = 4 FE              （工业时代 IC2 的 EU）
+    //    1 AE = 2 FE              （应用能源 AE 的 AE）
+    //    10 J = 4 FE              ⇒ 1 J = 0.4 FE（通用机械 Mekanism 的 J）
+    //    FE/t = (45 × RPM) / 64   ⇒ 1 RPM = 0.703125 FE/t（Create 转速）
+    //    RF = Tesla = μI = FF = FE（都是 FE 的别名，1:1 ✓ 不需要适配器 ✗）
+    // ============================================================
+
+    /**
+     * <b>1 FE 折多少 EE</b> —— 用户口径：{@code 1 FE = 8 EE} ✓。
+     * <p>反方向 {@link #EE_PER_FE} 由它除法推出 ✓（不手写 0.125 ✗ 免得两处漂移）。
+     */
+    public static final double FE_PER_EE_FACTOR = 8.0D;
+
+    /** 1 EE = 多少 FE（= 1/8 = 0.125 ✓） */
+    public static final double EE_PER_FE = 1.0D / FE_PER_EE_FACTOR;
+
+    /** 把 EE 换成一整点 FE（<b>向下取整</b> ✓ 不够 8 EE 就换不出 1 FE ✓ 余数留在容器里不丢 ✗） */
+    public static int eeToFe(double ee) {
+        if (!(ee > 0.0D)) return 0;
+        return (int) Math.floor(ee * EE_PER_FE);
+    }
+
+    /** 把 {@code fe} 点 FE 折成 EE（= ×8 ✓ 整数运算 ✓） */
+    public static int feToEe(int fe) {
+        return fe <= 0 ? 0 : fe * (int) FE_PER_EE_FACTOR;
+    }
+
+    /**
+     * <b>外部能量 → FE 的换算常量与助手</b>（§557 用户给定，逐条对着上面那张表 ✓）。
+     *
+     * <p>⚠ <b>RF / Tesla / μI / FF 不在这里</b> ✗ —— 它们就是 FE 的别名（1:1 ✓ 用户已确认 ✓）
+     * ⇒ 任何暴露 {@code ForgeCapabilities.ENERGY} 的方块（RF 系、Tesla 系…）<b>走的就是 FE 那一路</b> ✓
+     * 不需要也不会做单独的适配器 ✓。
+     */
+    public static final class Fe {
+
+        private Fe() {
+        }
+
+        /** 1 EU 折多少 FE（用户口径 4 ✓；未来若 IC2 真接上了，这里改一个数就够 ✓） */
+        public static final double FE_PER_EU = 4.0D;
+
+        /** 1 AE 折多少 FE（用户口径 2 ✓） */
+        public static final double FE_PER_AE = 2.0D;
+
+        /** 每 10 J 折多少 FE（用户口径 4 ⇒ {@link #FE_PER_J} = 0.4 ✓） */
+        public static final double JOULES_PER_UNIT = 10.0D;
+        /** 10 J 对应的 FE（用户口径 4 ✓） */
+        public static final double FE_PER_10_J = 4.0D;
+
+        /** 1 J 折多少 FE（= 4/10 = 0.4 ✓ 由上面两个常量推出 ✓ 不手写 ✗） */
+        public static final double FE_PER_J = FE_PER_10_J / JOULES_PER_UNIT;
+
+        /** Create：分子（用户口径 45 ✓） */
+        public static final double RPM_TO_FE_NUMERATOR = 45.0D;
+        /** Create：分母（用户口径 64 ✓） */
+        public static final double RPM_TO_FE_DENOMINATOR = 64.0D;
+
+        /**
+         * {@code FE/t = (45 × RPM) / 64} ✓ 用户口径。
+         * <p>⇒ 1 RPM = 45/64 = <b>0.703125 FE/t</b> ✓。
+         */
+        public static double rpmToFePerTick(double rpm) {
+            if (!(rpm > 0.0D)) return 0.0D;
+            return (RPM_TO_FE_NUMERATOR * rpm) / RPM_TO_FE_DENOMINATOR;
+        }
+
+        /** 1 RPM 折多少 FE/t（= 45/64 = 0.703125 ✓） */
+        public static double fePerRpm() {
+            return RPM_TO_FE_NUMERATOR / RPM_TO_FE_DENOMINATOR;
+        }
+
+        /** J → FE（按 1 J = 0.4 FE ✓） */
+        public static double joulesToFe(double joules) {
+            if (!(joules > 0.0D)) return 0.0D;
+            return joules * FE_PER_J;
+        }
+
+        /** EU → FE（按 1 EU = 4 FE ✓） */
+        public static double euToFe(double eu) {
+            if (!(eu > 0.0D)) return 0.0D;
+            return eu * FE_PER_EU;
+        }
+
+        /** AE → FE（按 1 AE = 2 FE ✓） */
+        public static double aeToFe(double ae) {
+            if (!(ae > 0.0D)) return 0.0D;
+            return ae * FE_PER_AE;
+        }
+
+        /** 一句写清 §557 的汇率（tooltip / 手册 / 日志共用 ✓） */
+        public static String describeRate() {
+            return "1 FE = " + trim(FE_PER_EE_FACTOR) + " EE; 1 EU = " + trim(FE_PER_EU) + " FE; 1 AE = "
+                    + trim(FE_PER_AE) + " FE; " + trim(JOULES_PER_UNIT) + " J = " + trim(FE_PER_10_J)
+                    + " FE; FE/t = (" + trim(RPM_TO_FE_NUMERATOR) + " x RPM) / "
+                    + trim(RPM_TO_FE_DENOMINATOR);
+        }
     }
 }

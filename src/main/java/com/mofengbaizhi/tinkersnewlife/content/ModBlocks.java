@@ -143,6 +143,28 @@ public class ModBlocks {
     public static final RegistryObject<Block> ELDER_MANA_PEDESTAL = BLOCKS.register("elder_mana_pedestal",
             com.mofengbaizhi.tinkersnewlife.content.block.ElderManaPedestalBlock::new);
 
+    // ============================================================
+    //  §557 EE 网络：抽取方块 + 万用能量转化器
+    // ============================================================
+
+    /**
+     * <b>EE 抽取方块</b>（§557）：把相邻方块（台座缓存 / 水晶方块 / 别的 EE 容器）里的 EE
+     * 抽进自己的缓冲，再<b>主动推</b>给相邻的 EE 容器 ✓（push 模式 ✓）。
+     * <p>方块实体在 {@code content/block/EeExtractorBlockEntity}；
+     * 接口是 {@code content/energy/EeStorage} ✓ 速率/缓冲全在 {@code [ee_network]} 配置段 ✓。
+     */
+    public static final RegistryObject<Block> EE_EXTRACTOR = BLOCKS.register("ee_extractor",
+            com.mofengbaizhi.tinkersnewlife.content.block.EeExtractorBlock::new);
+
+    /**
+     * <b>万用能量转化器</b>（§557）：<b>单向</b>把各种能量折成 <b>FE</b> 推给相邻方块 ✓。
+     * <p>输入：相邻 EE（{@code EeStorage} ✓）+ 相邻 Forge Energy（含 RF/Tesla/μI/FF 这些 1:1 别名 ✓）
+     * + 四家模组的能量（通用机械 J / Create RPM / IC2 EU / AE2 AE ✓ 反射软依赖 ✓）。
+     * <p><b>不做</b> FE ⇒ EE 的反向 ✗（用户口径明确单向 ✓）。
+     */
+    public static final RegistryObject<Block> ENERGY_CONVERTER = BLOCKS.register("energy_converter",
+            com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterBlock::new);
+
     /** 金属储存块的统一属性（对齐原版铁块：5.0 硬度 / 6.0 抗爆 / 需要正确工具 / 金属音效） */
     private static RegistryObject<Block> metalBlock(String name, MapColor color) {
         return BLOCKS.register(name, () -> new Block(BlockBehaviour.Properties.of()
