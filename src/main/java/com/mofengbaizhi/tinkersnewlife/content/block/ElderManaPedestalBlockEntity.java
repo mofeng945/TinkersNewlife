@@ -461,6 +461,19 @@ public class ElderManaPedestalBlockEntity extends BlockEntity {
         if (level != null && !level.isClientSide) {
             BlockState state = getBlockState();
             level.sendBlockUpdated(worldPosition, state, state, Block.UPDATE_ALL);
+            // §556 双保险（用户实测：HUD 数值一直不刷新 ✗ ⇒ 说明上面那条路没把 BE 数据送到客户端 ✗）：
+            //     直接给附近玩家发一次"方块实体数据包" ✓ —— 这是原版就有、且不依赖区块标记的可靠路径 ✓
+            if (level instanceof net.minecraft.server.level.ServerLevel sl) {
+                var pkt = getUpdatePacket();
+                if (pkt != null) {
+                    for (net.minecraft.server.level.ServerPlayer sp : sl.players()) {
+                        if (sp.distanceToSqr(worldPosition.getX() + 0.5D, worldPosition.getY() + 0.5D,
+                                worldPosition.getZ() + 0.5D) < 64.0D * 64.0D) {
+                            sp.connection.send(pkt);
+                        }
+                    }
+                }
+            }
         }
     }
 

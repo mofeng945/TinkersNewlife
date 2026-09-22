@@ -74,13 +74,17 @@ public final class PedestalChargeHud {
                 if (level.getBlockEntity(pedestal) instanceof ElderManaPedestalBlockEntity be) {
                     ItemStack crystal = be.getCrystal();
                     if (crystal.isEmpty()) return;                       // 空的 ⇒ 不显示（用户口径：显示**充能进度** ✓）
-                    int ee = ElderCrystalStorage.getCrystalEe(crystal);
-                    int cap = ElderCrystalStorage.CRYSTAL_CAPACITY;
+                    // §556 按**手里那件是什么**显示（水晶物品 1000 / 水晶方块 4000 ✓ 原来写死水晶 ✗）
+                    boolean isBlockItem = crystal.is(com.mofengbaizhi.tinkersnewlife.content.ModItems.ELDER_CRYSTAL_BLOCK.get());
+                    int ee = isBlockItem ? ElderCrystalStorage.getBlockItemEe(crystal)
+                                         : ElderCrystalStorage.getCrystalEe(crystal);
+                    int cap = isBlockItem ? ElderCrystalStorage.BLOCK_CAPACITY
+                                          : ElderCrystalStorage.CRYSTAL_CAPACITY;
                     int pct = cap <= 0 ? 0 : (int) Math.round(ee * 100.0D / cap);
 
                     int cx = mc.getWindow().getGuiScaledWidth() / 2;
                     int cy = mc.getWindow().getGuiScaledHeight() / 2;
-                    String line1 = "§b古老者水晶  §f" + ee + " §7/ " + cap + " EE";
+                    String line1 = (isBlockItem ? "§b古老者水晶方块  §f" : "§b古老者水晶  §f") + ee + " §7/ " + cap + " EE";
                     String line2 = "§7充能进度  §a" + pct + "%";
                     event.getGuiGraphics().drawString(mc.font, line1, cx + 12, cy + 10, 0xFFFFFFFF);
                     event.getGuiGraphics().drawString(mc.font, line2, cx + 12, cy + 21, 0xFFFFFFFF);
