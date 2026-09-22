@@ -138,49 +138,47 @@ public final class ElderCrystalStorage {
     // ============================================================
 
     /**
-     * <b>背包 + 副手 + 饰品</b>里所有水晶的 EE 之和 —— 供"寒冷反噬"用 ✓（用户口径：背包/副手/饰品都算）。
-     *
+     * <b>主手 + 副手 + 饰品</b>里所有水晶的 EE 之和 —— 供"寒冷反噬"用 ✓
+     * <p>§520 用户口径：「放在<B>背包</B>里不会触发寒冷了」⇒ **背包不再计入** ✗（主手/副手/饰品照旧算 ✓）。
      * <p>⚠ 只统计"存了电"的水晶 ⇒ 空水晶贡献 0 ✓（空水晶完全不冷 ✓）。
      */
     public static int totalCarriedEe(Player player) {
         if (player == null) return 0;
         int total = 0;
-        // 主背包（含快捷栏，36 格）
-        for (ItemStack stack : player.getInventory().items) {
-            if (isCrystal(stack)) total += eeOf(stack);
-        }
-        // 副手
+        if (isCrystal(player.getMainHandItem())) total += eeOf(player.getMainHandItem());
         if (isCrystal(player.getOffhandItem())) total += eeOf(player.getOffhandItem());
-        // 饰品（curios 任意槽）
         total += curiosEe(player);
         return total;
     }
 
     /**
-     * <b>副手 + 饰品</b>里所有水晶的 EE 之和 —— 供"为施法供能"用 ✓
-     * （用户口径：放副手/饰品时才为施法供能 ⇒ <b>不看背包</b> ✗）。
+     * <b>主手 + 副手</b>里所有水晶的 EE 之和 —— 供"为施法供能"用 ✓
+     * <p>§520 用户口径：「水晶拿在<B>主手或副手</B>才能供能」⇒ **背包与饰品都不供能** ✗（背包里连寒冷都不触发 ✓）。
      */
     public static int suppliedEe(Player player) {
         if (player == null) return 0;
         int total = 0;
+        if (isCrystal(player.getMainHandItem())) total += eeOf(player.getMainHandItem());
         if (isCrystal(player.getOffhandItem())) total += eeOf(player.getOffhandItem());
-        total += curiosEe(player);
         return total;
     }
 
     /**
-     * 从"副手 → 饰品"里抽 {@code amount} 点 EE。
+     * 从"**主手 → 副手**"里抽 {@code amount} 点 EE（§520 起不再抽饰品 ✗）。
      *
      * @return 实际抽出的量（不足则有多少抽多少 ✓）
      */
     public static int drainSuppliedEe(Player player, int amount) {
         if (player == null || amount <= 0) return 0;
         int need = amount;
-        // ① 副手
-        ItemStack off = player.getOffhandItem();
-        if (isCrystal(off)) need -= takeFrom(off, need);
-        // ② 饰品
-        if (need > 0) need -= drainCurios(player, need);
+        // ① 主手
+        ItemStack main = player.getMainHandItem();
+        if (isCrystal(main)) need -= takeFrom(main, need);
+        // ② 副手
+        if (need > 0) {
+            ItemStack off = player.getOffhandItem();
+            if (isCrystal(off)) need -= takeFrom(off, need);
+        }
         return amount - Math.max(0, need);
     }
 

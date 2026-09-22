@@ -21,8 +21,8 @@ import net.minecraftforge.fml.common.Mod;
  * <ol>
  *   <li>只在玩家<b>拿着施法物品</b>（铁魔法 / 本模组法杖，见 {@link AllPathsOneTrait#holdingCastItem}）
  *       或<b>正在读条</b>（{@code MagicData#isCasting()}）时工作 ✓ —— 这就是"为施法供能"的语义边界 ✓；</li>
- *   <li>法力 <b>不满</b>时，从<b>副手 + 饰品</b>的水晶里抽 EE 补进法力 ✓；
- *       <b>背包里的水晶不参与</b> ✗（用户口径：放副手/饰品才供能 ✓）；</li>
+ *   <li>法力 <b>不满</b>时，从<b>主手 + 副手</b>的水晶里抽 EE 补进法力 ✓；
+ *       <b>饰品与背包里的水晶都不参与</b> ✗（§520 用户口径：「拿在主手或副手才能供能」✓）；</li>
  *   <li>每 tick 最多抽 {@link #MAX_EE_PER_TICK} 点 EE（防止一瞬间抽干 ✗ 也给玩家反应时间 ✓）。</li>
  * </ol>
  *
