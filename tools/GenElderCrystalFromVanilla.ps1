@@ -184,3 +184,75 @@ if ($vein -ne $null) {
   }
   $vein.Dispose()
 }
+# ---------------- 5) pedestal REBUILT in the new style, THEN sculk veins ----------------
+# (user: "先把底图按新风格生成，再上幽匿脉络")
+# base style = vanilla deepslate greys + our recoloured amethyst as purple inlay  => same family as block/ore.
+$deep = ReadJarPng "assets/minecraft/textures/block/deepslate.png"
+$amy  = ReadJarPng "assets/minecraft/textures/block/amethyst_block.png"
+$amyRec = New-Object System.Drawing.Bitmap(16, 16, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+for ($y = 0; $y -lt 16; $y++) {
+  for ($x = 0; $x -lt 16; $x++) {
+    $p = $amy.GetPixel($x, $y)
+    $l = (0.299 * $p.R + 0.587 * $p.G + 0.114 * $p.B) / 255.0
+    $rgb = Ramp $l
+    $amyRec.SetPixel($x, $y, [System.Drawing.Color]::FromArgb(255, $rgb[0], $rgb[1], $rgb[2]))
+  }
+}
+
+function SetPxLocal($bmp, [int]$x, [int]$y, $rgb) {
+  if ($x -lt 0 -or $y -lt 0 -or $x -ge 16 -or $y -ge 16) { return }
+  $bmp.SetPixel($x, $y, [System.Drawing.Color]::FromArgb(255, $rgb[0], $rgb[1], $rgb[2]))
+}
+
+function BlendPx($dst, [int]$x, [int]$y, $src, [double]$k) {
+  if ($x -lt 0 -or $y -lt 0 -or $x -ge 16 -or $y -ge 16) { return }
+  $b = $dst.GetPixel($x, $y)
+  $r = [int]($src.R * $k + $b.R * (1 - $k))
+  $g2 = [int]($src.G * $k + $b.G * (1 - $k))
+  $b2 = [int]($src.B * $k + $b.B * (1 - $k))
+  $dst.SetPixel($x, $y, [System.Drawing.Color]::FromArgb(255, $r, $g2, $b2))
+}
+
+# --- side: deepslate body + a purple crystal band (inlay) ---
+$side = New-Object System.Drawing.Bitmap(16, 16, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+for ($y = 0; $y -lt 16; $y++) {
+  for ($x = 0; $x -lt 16; $x++) { $side.SetPixel($x, $y, $deep.GetPixel($x, $y)) }
+}
+for ($y = 6; $y -le 9; $y++) {
+  for ($x = 2; $x -le 13; $x++) { BlendPx $side $x $y ($amyRec.GetPixel($x, $y)) 0.62 }
+}
+# thin dark edges top/bottom so it reads as a machined block
+for ($x = 0; $x -lt 16; $x++) { SetPxLocal $side $x 0 $RAMP[0][1..3]; SetPxLocal $side $x 15 $RAMP[0][1..3] }
+
+# --- top: full crystal face + dark frame ---
+$top = New-Object System.Drawing.Bitmap(16, 16, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+for ($y = 0; $y -lt 16; $y++) {
+  for ($x = 0; $x -lt 16; $x++) { $top.SetPixel($x, $y, $amyRec.GetPixel($x, $y)) }
+}
+for ($i = 2; $i -le 13; $i++) {
+  SetPxLocal $top $i 2 $RAMP[0][1..3]; SetPxLocal $top $i 13 $RAMP[0][1..3]
+  SetPxLocal $top 2 $i $RAMP[0][1..3]; SetPxLocal $top 13 $i $RAMP[0][1..3]
+}
+
+# --- now the sculk veins (same subtle rule: brighter strands only, 40% alpha) ---
+# NOTE: STEP 4 disposed its $vein => re-read it here (reusing a disposed Bitmap throws ArgumentException!)
+$vein = ReadJarPng $veinPath
+function AddVeins($bmp) {
+  for ($y = 0; $y -lt 16; $y++) {
+    for ($x = 0; $x -lt 16; $x++) {
+      $v = $vein.GetPixel($x, $y)
+      if ($v.A -lt 8 -or $v.G -lt 45) { continue }
+      $b = $bmp.GetPixel($x, $y)
+      $a = [int]($v.A * 0.40)
+      $r = [int](($v.R * $a + $b.R * (255 - $a)) / 255)
+      $g3 = [int](($v.G * $a + $b.G * (255 - $a)) / 255)
+      $b3 = [int](($v.B * $a + $b.B * (255 - $a)) / 255)
+      $bmp.SetPixel($x, $y, [System.Drawing.Color]::FromArgb(255, $r, $g3, $b3))
+    }
+  }
+  return $bmp
+}
+
+SavePng (AddVeins $side) (Join-Path $blockDir "elder_mana_pedestal_side.png") "pedestal side (new base + sculk)"
+SavePng (AddVeins $top)  (Join-Path $blockDir "elder_mana_pedestal_top.png")  "pedestal top (new base + sculk)"
+$deep.Dispose(); $amy.Dispose(); $amyRec.Dispose()
