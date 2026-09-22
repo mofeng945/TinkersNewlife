@@ -34,6 +34,15 @@ public final class EeStorages {
             Direction.UP, Direction.DOWN, Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST
     };
 
+    /**
+     * §587 <b>这格是不是"万用能量转化器"</b>（靠它独有的 {@code converter_facing} 属性判定 ✓ 不引用方块实体类型 ✓）。
+     * <p>用于：EE 只在转化器的**顶面 + 底面**进出 ✓（用户六面口径 ✓）。
+     */
+    public static boolean isConverter(Level level, BlockPos pos) {
+        return level != null && level.getBlockState(pos)
+                .hasProperty(com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterBlock.FACING);
+    }
+
     /** 邻格的 EE 容器（不是 EE 容器 ⇒ null ✓；未加载/客户端也安全 ✓） */
     @Nullable
     public static EeStorage at(Level level, BlockPos pos) {
@@ -67,6 +76,10 @@ public final class EeStorages {
         int left = totalLimit;
         int moved = 0;
         for (Direction d : NEIGHBOURS) {
+            // §587 邻居是转化器 ⇒ EE 只在它的顶面/底面进出 ✓（方向要取反 ✓ 从邻居视角看）
+            if (isConverter(level, pos.relative(d))
+                    && !com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterFaces.allowsEe(
+                            level.getBlockState(pos.relative(d)), d.getOpposite())) continue;
             if (left <= 0) break;
             BlockPos at = pos.relative(d);
             BlockEntity be = level.getBlockEntity(at);
@@ -109,6 +122,10 @@ public final class EeStorages {
         int left = Math.min(totalLimit, source.getEe());
         int moved = 0;
         for (Direction d : NEIGHBOURS) {
+            // §587 邻居是转化器 ⇒ EE 只在它的顶面/底面进出 ✓（方向要取反 ✓ 从邻居视角看）
+            if (isConverter(level, pos.relative(d))
+                    && !com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterFaces.allowsEe(
+                            level.getBlockState(pos.relative(d)), d.getOpposite())) continue;
             if (left <= 0) break;
             BlockPos at = pos.relative(d);
             BlockEntity be = level.getBlockEntity(at);
@@ -134,6 +151,10 @@ public final class EeStorages {
         List<EeStorage> found = new ArrayList<>(NEIGHBOURS.length);
         if (level == null) return found;
         for (Direction d : NEIGHBOURS) {
+            // §587 邻居是转化器 ⇒ EE 只在它的顶面/底面进出 ✓（方向要取反 ✓ 从邻居视角看）
+            if (isConverter(level, pos.relative(d))
+                    && !com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterFaces.allowsEe(
+                            level.getBlockState(pos.relative(d)), d.getOpposite())) continue;
             EeStorage s = at(level, pos.relative(d));
             if (s != null) found.add(s);
         }
