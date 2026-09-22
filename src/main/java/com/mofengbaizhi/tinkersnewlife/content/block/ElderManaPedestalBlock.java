@@ -75,6 +75,27 @@ import java.util.List;
  */
 public class ElderManaPedestalBlock extends BaseEntityBlock {
 
+    /**
+     * §527 **碰撞/轮廓形状 = 模型三段的并集**（用户口径：「让台座碰撞箱贴合它的模型」✓）。
+     * <p>模型（`models/block/elder_mana_pedestal.json`）就是这三段 ⇒ 这里逐段照抄 ✓：
+     * 底座 16×16×3、立柱 x5~11 × y3~11、台面 x3~13 × y11~13。
+     * <p>⇒ 玩家可以**站在台面上**、也能**贴着立柱走**（不再是一整格实心方块 ✗）；
+     * 覆写 `getShape` 就同时管**轮廓（选中框）**与**碰撞**（原版 `getCollisionShape` 默认取它 ✓）。
+     */
+    private static final net.minecraft.world.phys.shapes.VoxelShape SHAPE = net.minecraft.world.phys.shapes.Shapes.or(
+            net.minecraft.world.phys.shapes.Shapes.box(0.0D, 0.0D, 0.0D, 1.0D, 3.0D / 16.0D, 1.0D),
+            net.minecraft.world.phys.shapes.Shapes.box(5.0D / 16.0D, 3.0D / 16.0D, 5.0D / 16.0D,
+                    11.0D / 16.0D, 11.0D / 16.0D, 11.0D / 16.0D),
+            net.minecraft.world.phys.shapes.Shapes.box(3.0D / 16.0D, 11.0D / 16.0D, 3.0D / 16.0D,
+                    13.0D / 16.0D, 13.0D / 16.0D, 13.0D / 16.0D));
+
+    @Override
+    public net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState state,
+            net.minecraft.world.level.BlockGetter level, BlockPos pos,
+            net.minecraft.world.phys.shapes.CollisionContext context) {
+        return SHAPE;
+    }
+
     public ElderManaPedestalBlock() {
         super(BlockBehaviour.Properties.of()
                 .strength(3.0F, 6.0F)
