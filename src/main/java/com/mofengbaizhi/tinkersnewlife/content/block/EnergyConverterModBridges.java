@@ -38,10 +38,6 @@ import javax.annotation.Nullable;
  * （§557 试过、已在 557.5③④ 写明原因 ✓）。所以这一节是用户<b>明确授权</b>的破例 ✓。
  */
 public final class EnergyConverterModBridges {
-
-    /** §567 能力查询探测计数（只打前 30 次 ✓） */
-    private static int CAP_PROBE = 0;
-
     private EnergyConverterModBridges() {
     }
 
@@ -123,11 +119,6 @@ public final class EnergyConverterModBridges {
      */
     @Nullable
     public static <T> LazyOptional<T> capability(EeConverterCore core, Capability<T> cap, @Nullable Direction side) {
-        // §567 入口探测：任何 capability 查询都记一次 ⇒ 判"Mek 到底来没来问、用哪个 cap" ✗
-        if (CAP_PROBE < 30) {
-            CAP_PROBE++;
-            TinkersNewlife.LOGGER.info("[能力探测] cap 查询 第{}次 name={} side={}", CAP_PROBE, cap.getName(), side);
-        }
         // ⚠ 顺序：先问"在不在场"，再进 try —— 这样"不在场"这条路上一个可选模组的类都不会被解析 ✓
         if (hasMekanism()) {
             try {

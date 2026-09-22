@@ -324,13 +324,14 @@ public class ElderManaPedestalBlockEntity extends BlockEntity implements EeStora
         //      ⚠ 来源的副作用（扣燃料/涨凋灵度/灵魂账）**仍只在 settle() 里每秒发生一次** ✓
         //        所以绝不会被算快 20 倍 ✗。
         if (lastRate > 0.0D) {
+            // §569 关键修复：**先把这一 tick 的产量记进 pool** —— 原来只在"有地方灌"那一支里加 ✗ ⇒ 没水晶时 pool 永远是 0 ⇒ 缓存永远不涨 ✗
+            pool += lastRate / SETTLE_INTERVAL;
             if (!hasSpaceForEe()) {
-                // §553 没地方灌 ⇒ **不丢**，收进缓存（上限 = 一颗水晶 ✓ 满了就真的停 ✗）
+                // 没地方灌 ⇒ **不丢**，整池收进缓存（上限 = 一颗水晶 ✓ 满了就真的停 ✗）
                 cache = Math.min(CACHE_CAP, cache + pool);
                 pool = 0.0D;
                 charging = cache < CACHE_CAP;
             } else {
-                pool += lastRate / SETTLE_INTERVAL;
                 if (pool >= 1.0D) {
                     int amount = (int) Math.floor(pool);
                     pool -= amount;
