@@ -2,34 +2,42 @@ package com.mofengbaizhi.tinkersnewlife.content.menu;
 
 import com.mofengbaizhi.tinkersnewlife.content.block.EeExtractorBlockEntity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.ItemStackHandler;
+import net.minecraftforge.items.IItemHandlerModifiable;
 
 import javax.annotation.Nonnull;
 
 /**
- * <b>EE 抽取方块那一个槽位的 {@code IItemHandler} 视图</b>（§558）。
+ * <b>EE 抽取方块那一个槽位的 {@code IItemHandler} 视图</b>（§558 建 · §562 修）。
  *
  * <h2>为什么要它</h2>
  * 本仓库既有的容器一律用 {@code SlotItemHandler}（见 {@code SilentGloveContainer} ✓），
- * 而 {@code SlotItemHandler} 只认 {@link IItemHandler} ✗ —— 我们的"槽位"其实是
+ * 而 {@code SlotItemHandler} 只认 {@link IItemHandlerModifiable} ✗ —— 我们的"槽位"其实是
  * {@link EeExtractorBlockEntity} 上的一个 {@code ItemStack} 字段（<b>直接存进 BE 的 NBT</b> ✓ 用户要求 ✓）。
  *
- * <p>两条路可选，这里选第一条 ✓：
- * <ol>
- *   <li><b>包一层 handler</b>（本类 ✓）—— BE 仍然是"物品的唯一真相"✓ 菜单只是它的一个视图 ✓
- *       与"台座上的水晶"那张做法同源 ✓；</li>
- *   <li>在 BE 里挂一个 {@code ItemStackHandler} 字段 ✗ —— 那样 NBT 键名会变成
- *       {@code Items/Size/...} 这种 handler 的内部格式 ✓ 与 §557 已有的 {@code EeBuffer} 风格不一致 ✗，
- *       而且以后要读"槽位里那颗水晶现在多少 EE"还得再从 handler 里绕一圈 ✗。</li>
- * </ol>
+ * <h2>⚠⚠ §562 崩溃教训（必须记住 ✗）</h2>
+ * 第一版我只写了 {@code implements IItemHandler} ✗ ⇒ **一碰槽位就崩客户端** ✗：
+ * <pre>
+ * java.lang.ClassCastException: EeExtractorSlotHandler cannot be cast to IItemHandlerModifiable
+ *     at net.minecraftforge.items.SlotItemHandler.m_5852_(SlotItemHandler.java:47)  ← set() 内部强转
+ *     at ...EeExtractorMenu.m_7648_(EeExtractorMenu.java:160)                       ← clicked()
+ * </pre>
+ * <b>原因</b>：Forge 的 {@code SlotItemHandler#set} 内部是<b>无条件强转</b> ✗：
+ * <pre>
+ * public void set(ItemStack stack) { ((IItemHandlerModifiable) this.handler).setStackInSlot(slot, stack); }
+ * </pre>
+ * —— 它**不看**你实现了哪个接口 ✗ ⇒ 只要走到"放入 / 取出 / Shift 快速移动 / 数字键交换 / 丢弃键"
+ * 这些会调 {@code Slot#set} 的路径，就一定 {@code ClassCastException} ✗。
  *
- * <h2>⚠ 写入时用 {@link #sync()}（我们自己的那一条）</h2>
- * 本类就是给 {@code EeExtractorBlockEntity} 写的专用适配器 ✓ 所以直接调它的 {@code setSlotItem}
- * （内部：复制 + 限量 1 + {@code setChanged} + 直发数据包 ✓）✓
- * —— 不绕 {@link ItemStackHandler} 的 {@code onContentsChanged}（那需要匿名子类 ✓ 代码更长且没有额外好处 ✗）。
+ * <p>⇒ <b>凡是喂给 {@code SlotItemHandler} 的 handler，必须是 {@code IItemHandlerModifiable}</b> ✓
+ * （{@code ItemStackHandler} 就是它的实现 ✓ —— 所以仓库里另外两处
+ * {@code StorageManager.BigStackHandler} / {@code SilentGloveHandler} 天生没问题 ✓；
+ * <b>§562 审计下来只有本节这一处是手写的、漏了</b> ✗）。
+ *
+ * <p>⚠ 三个写入口（{@link #setStackInSlot} / {@link #insertItem} / {@link #extractItem}）现在
+ * <b>全部只走</b> {@link EeExtractorBlockEntity#setSlotItem} 一个出口 ✓
+ * ⇒ "槽位永远 ≤1 件 + 一定标脏 + 一定同步客户端"这三条规则只有一份实现 ✗。
  */
-public final class EeExtractorSlotHandler implements IItemHandler {
+public final class EeExtractorSlotHandler implements IItemHandlerModifiable {
 
     private final EeExtractorBlockEntity be;
 
@@ -46,6 +54,21 @@ public final class EeExtractorSlotHandler implements IItemHandler {
     @Override
     public ItemStack getStackInSlot(int slot) {
         return slot == EeExtractorBlockEntity.SLOT_INDEX ? be.getSlotItem() : ItemStack.EMPTY;
+    }
+
+    /**
+     * <b>§562 补上的那一个方法</b> ✓ —— {@code SlotItemHandler#set} 内部强转之后调的就是它 ✓。
+     * <p>⚠ 必须容忍<b>空栈</b> ✓（"取出来"的时候 Forge 就是拿 {@code ItemStack.EMPTY} 来写的 ✓，
+     * {@code EeExtractorBlockEntity#setSlotItem} 已经把空栈规范成 {@code EMPTY} ✓）。
+     * <p>⚠ 这里**不**套 {@link #insertItem} 那套"只收一件 + 校验能不能放"✗ ——
+     * Forge 调它是为了"把这一格<b>变成</b>这个栈"（可能是空 ✓ 也可能是从光标上放下的东西 ✓），
+     * <b>是否允许放</b>由菜单那一侧 {@code SlotItemHandler#mayPlace} 先行把关 ✓
+     * （{@code mayPlace} 与 {@link #isItemValid} 用的是同一份判断 ✓）⇒ 这里如实写回即可 ✓。
+     */
+    @Override
+    public void setStackInSlot(int slot, @Nonnull ItemStack stack) {
+        if (slot != EeExtractorBlockEntity.SLOT_INDEX) return;
+        be.setSlotItem(stack);
     }
 
     @Nonnull
@@ -84,7 +107,11 @@ public final class EeExtractorSlotHandler implements IItemHandler {
         return 1;                                                  // 一格一件 ✓
     }
 
-    /** 只收<b>有能量的</b>古老者水晶 / 古老者水晶方块 ✓（用户 §558 口径："有能量的"✓） */
+    /**
+     * 只收<b>有能量的</b>古老者水晶 / 古老者水晶方块 ✓（用户 §558 口径："有能量的"✓）。
+     * <p>⚠ 这只管 {@code insertItem} 那条路 ✓；从光标<b>手动</b>放进来走的是
+     * {@link #setStackInSlot} ✓，那边由菜单的 {@code mayPlace} 把关 ✓（同一份判断 ✓）。
+     */
     @Override
     public boolean isItemValid(int slot, @Nonnull ItemStack stack) {
         if (slot != EeExtractorBlockEntity.SLOT_INDEX) return false;
