@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " A ",
+    "ASA",
+    "DDD"
+  ],
+  "key": {
+    "A": { "item": "minecraft:amethyst_shard" },
+    "S": { "item": "minecraft:amethyst_block" },
+    "D": { "item": "minecraft:deepslate" }
+  },
+  "result": {
+    "item": "tinkersnewlife:elder_mana_pedestal",
+    "count": 1
+  }
+}

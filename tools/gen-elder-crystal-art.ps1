@@ -1,17 +1,19 @@
-﻿# 生成「古老者水晶」三张**占位**贴图（16×16 像素风，程序生成、可复跑）。
+﻿# 生成「古老者水晶」系列**占位**贴图（16×16 像素风，程序生成、可复跑）。
 #
 # ⚠ 铁律：本脚本**只新建**文件，绝不覆盖用户手绘的既有贴图 ✗
 #   输出路径（全部是**新文件名**）：
 #     assets\tinkersnewlife\textures\item\elder_crystal.png            （物品：浅蓝紫棱柱）
 #     assets\tinkersnewlife\textures\block\elder_crystal_block.png     （方块：同色块）
 #     assets\tinkersnewlife\textures\block\elder_crystal_ore.png       （矿石：深板岩底 + 水晶簇）
+#     assets\tinkersnewlife\textures\block\elder_mana_pedestal_side.png（§523 台座：侧面石柱纹）
+#     assets\tinkersnewlife\textures\block\elder_mana_pedestal_top.png （§523 台座：顶面水晶插槽）
 #
 # 复跑命令：
 #   powershell -ExecutionPolicy Bypass -File tools\gen-elder-crystal-art.ps1
 #   （加 -Check 只做校验不写盘：确认输出像素/颜色数量与预期一致 ✓）
 #
-# 说明：矿石底色用**固定种子**的确定性噪声 ⇒ 每次复跑得到**同一张**图 ✓（不会"随机漂移" ✗）。
-#       所有坐标/色号都写在本文件里，改风格只改这里的调色板与掩码即可 ✓。
+# 说明：矿石底色用**固定种子**的确定性噪声，台座两张图用**确定性算式** ⇒ 每次复跑得到**同一张**图 ✓
+#       （不会"随机漂移" ✗）✓ 所有坐标/色号都写在本文件里，改风格只改这里的调色板与掩码即可 ✓。
 
 param(
     # 只校验（不写盘）：把三张图算出来，报告像素统计后退出
@@ -51,6 +53,13 @@ $PALETTE = @{
     'x' = Parse-Color '55555C'   # 深板岩·中
     't' = Parse-Color '6A6A72'   # 深板岩·亮（噪点）
     'e' = Parse-Color '2A2A30'   # 簇周围压暗
+    # ---- §523 魔力台座：紫灰石材（与水晶体同色系，比深板岩更冷更紫）----
+    # ⚠ 键名与**已有键**大小写不敏感地重复 = 直接语法报错（PowerShell 哈希键大小写不敏感 ✗）：
+    #   水晶的 'D' 已经占了 d/D ⇒ 台座这里用 'q' 当"石面亮"，避开 ✗（实测踩过 ✓）
+    'b' = Parse-Color '2E2A3A'   # 台座·最暗（棱/边）
+    'c' = Parse-Color '46405C'   # 台座·石面
+    'q' = Parse-Color '5E5678'   # 台座·石面亮
+    'f' = Parse-Color '8A80A8'   # 台座·竖向高光
 }
 
 # ============================================================
@@ -163,6 +172,48 @@ function New-OreMask {
 }
 
 # ============================================================
+#  掩码：魔力台座（§523）—— 侧面（石柱纹）+ 顶面（水晶插槽）
+#  ⚠ 两张都是**新文件名**：textures\block\elder_mana_pedestal_side.png / _top.png
+#     （绝不覆盖用户手绘的既有贴图 ✗）
+#  ⚠ 全部用**确定性算式**（不用 Get-Random）⇒ 复跑得到同一张图 ✓
+# ============================================================
+function New-PedestalMasks {
+    $side = @()
+    $top = @()
+    for ($y = 0; $y -lt 16; $y++) {
+        $sLine = ''
+        $tLine = ''
+        for ($x = 0; $x -lt 16; $x++) {
+            # ---------- 侧面：石柱纹 ----------
+            $s = 'c'
+            if ((($x * 3 + $y * 5) % 7) -eq 0) { $s = 'q' }        # 石纹（确定性 ✓）
+            if ($x -eq 5) { $s = 'f' }                              # 一道竖向高光（柱子感 ✓）
+            if ($x -eq 0 -or $x -eq 15) { $s = 'b' }                # 左右棱（暗）
+            if ($y -eq 0 -or $y -eq 15) { $s = 'b' }                # 上下沿（暗）
+            # 中段一圈水晶嵌线（"台座中心的冷星纹"✓ 与水晶同色系 ✓）
+            if ($y -eq 7 -and $x -ge 3 -and $x -le 12) { $s = 'M' }
+            if ($y -eq 8 -and $x -ge 3 -and $x -le 12) { if ($x % 2 -eq 0) { $s = 'L' } else { $s = 'W' } }
+            $sLine += $s
+
+            # ---------- 顶面：紫灰石台 + 中心水晶插槽 ----------
+            $t = 'c'
+            if ((($x * 5 + $y * 3) % 11) -eq 0) { $t = 'q' }                              # 石纹（确定性 ✓）
+            if ($x -eq 0 -or $y -eq 0 -or $x -eq 15 -or $y -eq 15) { $t = 'b' }           # 外框
+            if ($x -eq 4 -or $x -eq 11 -or $y -eq 4 -or $y -eq 11) { $t = 'q' }           # 台面刻线
+            if ($x -ge 4 -and $x -le 11 -and $y -ge 4 -and $y -le 11) { $t = 'q' }        # 插槽倒角
+            if ($x -ge 5 -and $x -le 10 -and $y -ge 5 -and $y -le 10) { $t = 'M' }        # 插槽环
+            if ($x -ge 6 -and $x -le 9  -and $y -ge 6 -and $y -le 9 ) { $t = 'D' }        # 槽底
+            if ($x -ge 7 -and $x -le 8  -and $y -ge 7 -and $y -le 8 ) { $t = 'H' }        # 冷光核心
+            if ($x -eq 6 -and $y -eq 6) { $t = 'W' }                                      # 一颗反光
+            $tLine += $t
+        }
+        $side += $sLine
+        $top += $tLine
+    }
+    return @{ side = $side; top = $top }
+}
+
+# ============================================================
 #  画图
 # ============================================================
 function Assert-Mask([string[]]$mask, [string]$name) {
@@ -203,15 +254,21 @@ function Draw-Mask([string[]]$mask, [string]$outPath) {
 }
 
 $oreMask = New-OreMask
+$pedestal = New-PedestalMasks
 
 Assert-Mask $CRYSTAL_ITEM 'elder_crystal'
 Assert-Mask $CRYSTAL_BLOCK 'elder_crystal_block'
 Assert-Mask $oreMask 'elder_crystal_ore'
+Assert-Mask $pedestal.side 'elder_mana_pedestal_side'
+Assert-Mask $pedestal.top  'elder_mana_pedestal_top'
 
 Write-Host '古老者水晶占位贴图（16×16 程序生成）：'
 Draw-Mask $CRYSTAL_ITEM  (Join-Path $texRoot 'item\elder_crystal.png')
 Draw-Mask $CRYSTAL_BLOCK (Join-Path $texRoot 'block\elder_crystal_block.png')
 Draw-Mask $oreMask       (Join-Path $texRoot 'block\elder_crystal_ore.png')
+Write-Host '魔力台座占位贴图（§523，16×16 程序生成）：'
+Draw-Mask $pedestal.side (Join-Path $texRoot 'block\elder_mana_pedestal_side.png')
+Draw-Mask $pedestal.top  (Join-Path $texRoot 'block\elder_mana_pedestal_top.png')
 
 if ($Check) {
     Write-Host '（-Check：未写盘 ✓）'

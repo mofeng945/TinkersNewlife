@@ -134,6 +134,15 @@ public class ModBlocks {
     public static final RegistryObject<Block> ELDER_CRYSTAL_BLOCK = BLOCKS.register("elder_crystal_block",
             com.mofengbaizhi.tinkersnewlife.content.block.ElderCrystalBlock::new);
 
+    /**
+     * <b>魔力台座</b>（§523）：把古老者水晶放上去就自动吸收环境能量充能
+     * （规律 = <b>亮度越低越快</b> ✓ 见 {@code content/energy/LightLevelEnergySource}）。
+     * <p>方块本体 + 方块实体在 {@code content/block/ElderManaPedestalBlock(Entity)}；
+     * 贴图/模型/配方/战利品表/手册条目与它配套 ✓。
+     */
+    public static final RegistryObject<Block> ELDER_MANA_PEDESTAL = BLOCKS.register("elder_mana_pedestal",
+            com.mofengbaizhi.tinkersnewlife.content.block.ElderManaPedestalBlock::new);
+
     /** 金属储存块的统一属性（对齐原版铁块：5.0 硬度 / 6.0 抗爆 / 需要正确工具 / 金属音效） */
     private static RegistryObject<Block> metalBlock(String name, MapColor color) {
         return BLOCKS.register(name, () -> new Block(BlockBehaviour.Properties.of()

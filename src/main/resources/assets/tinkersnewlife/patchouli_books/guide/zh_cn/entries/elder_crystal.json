@@ -20,7 +20,7 @@
     {
       "type": "patchouli:spotlight",
       "item": "tinkersnewlife:elder_crystal_block",
-      "text": "$(bold)古老者水晶方块$()：容量 $(bold)4000 EE$()（= 4 颗水晶）。$(br2)$(li)$(bold)挖掉掉自己$()，里面的 EE $(bold)一起带走$()（原版方块物品的通用机制：掉落物带 $(italic)BlockEntityTag$()，再放下自动还原）$(li)放下去就是一块会发微光的方块$(li)$(bold)本轮只留接口$()：方块实体已经有「存入（absorb）」和「查询」两个入口，$(bold)魔力台座 / 能量转化系统$()留到后续版本再接 —— 现在还没有任何机器能给它充电"
+      "text": "$(bold)古老者水晶方块$()：容量 $(bold)4000 EE$()（= 4 颗水晶）。$(br2)$(li)$(bold)挖掉掉自己$()，里面的 EE $(bold)一起带走$()（原版方块物品的通用机制：掉落物带 $(italic)BlockEntityTag$()，再放下自动还原）$(li)放下去就是一块会发微光的方块$(li)$(bold)怎么充电$()：水晶$(bold)不会$()自己充 —— 必须放在$(l:elder_mana_pedestal)魔力台座$()上（台座也会给紧邻的水晶方块充能）✓"
     },
     {
       "type": "patchouli:text",

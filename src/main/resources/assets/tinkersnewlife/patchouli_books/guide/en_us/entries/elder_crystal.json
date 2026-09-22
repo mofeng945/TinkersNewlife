@@ -20,7 +20,7 @@
     {
       "type": "patchouli:spotlight",
       "item": "tinkersnewlife:elder_crystal_block",
-      "text": "$(bold)Elder Crystal Block$(): capacity $(bold)4000 EE$() (= 4 crystals).$(br2)$(li)Breaking it drops the block itself, and the stored EE $(bold)comes with it$() (vanilla block-item mechanism: the drop carries $(italic)BlockEntityTag$(), which is restored on placing)$(li)Placed, it is a faintly glowing block$(li)$(bold)This release only exposes the interfaces$(): the block entity already has $(italic)absorb$() and $(italic)query$() entries - the mana pedestal / energy conversion system is planned for a later release, so nothing can charge it yet"
+      "text": "$(bold)Elder Crystal Block$(): capacity $(bold)4000 EE$() (= 4 crystals).$(br2)$(li)Breaking it drops the block itself, and the stored EE $(bold)comes with it$() (vanilla block-item mechanism: the drop carries $(italic)BlockEntityTag$(), which is restored on placing)$(li)Placed, it is a faintly glowing block$(li)$(bold)How to charge it$(): crystals do $(bold)not$() charge by themselves - put one on the $(l:elder_mana_pedestal)Mana Pedestal$() (the pedestal charges adjacent crystal blocks too)"
     },
     {
       "type": "patchouli:text",

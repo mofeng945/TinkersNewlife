@@ -522,4 +522,14 @@ public class ModItems {
     public static final RegistryObject<Item> ELDER_CRYSTAL_ORE =
             ITEMS.register("elder_crystal_ore",
                     () -> new BlockItem(ModBlocks.ELDER_CRYSTAL_ORE.get(), new Item.Properties()));
+
+    // ============================================================
+    //  魔力台座（§523）：水晶唯一的充电方式
+    // ============================================================
+
+    /** 魔力台座（BlockItem；tooltip 里的速率/阈值直接读 ModConfig ✓ 见 ElderManaPedestalItem） */
+    public static final RegistryObject<Item> ELDER_MANA_PEDESTAL =
+            ITEMS.register("elder_mana_pedestal",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.ElderManaPedestalItem(
+                            ModBlocks.ELDER_MANA_PEDESTAL.get()));
 }

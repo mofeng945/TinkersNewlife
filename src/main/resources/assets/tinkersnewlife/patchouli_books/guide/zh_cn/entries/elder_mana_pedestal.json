@@ -1,0 +1,33 @@
+{
+  "name": "魔力台座",
+  "category": "tinkersnewlife:energy",
+  "icon": "tinkersnewlife:elder_mana_pedestal",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:elder_mana_pedestal",
+      "text": "$(bold)魔力台座$()：古老者水晶$(bold)唯一的充电方式$()。$(br2)$(li)手持$(bold)古老者水晶$()右击台座 ⇒ 放上去 ✓$(li)$(bold)空手右击$()或$(bold)潜行右击$() ⇒ 连里面的 EE 一起取回 ✓ $(italic)（手里拿着别的东西普通右击＝什么都不做，不会手滑把水晶顶下来）$()$(li)台座$(bold)上方/下方/四邻$()的$(bold)古老者水晶方块$()也会一起充能（容量 4000，优先充台座上那颗水晶）$(br2)$(italic)合成：4 紫水晶碎片 + 1 紫水晶块 + 3 深板岩（见下一页）。$()"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "充能规律：越暗越快",
+      "text": "$(bold)亮度越低，充能速度越快。$()$(br2)公式（就这一条）：$(br2)$(bold)速率 = 满速 × (亮度上限 − 台座上方那格的亮度) ÷ 亮度上限$()$(br2)$(li)$(bold)亮度 = 方块光 + 天光$()综合后的那一个 0~15 的数（与原版刷怪判定同一个量）$(li)$(bold)亮度 0$() ⇒ 满速：默认 $(bold)5 EE/秒$()（= 100 EE/分钟 ⇒ 一颗 1000 EE 的水晶约 $(bold)3.3 分钟$()）$(li)$(bold)亮度 ≥ 15$() ⇒ $(bold)完全不充$()（默认参数）$(li)例：亮度 12 ⇒ 1.0 EE/秒；亮度 14 ⇒ 0.33 EE/秒$(br2)$(bold)推论$()（不用记额外规则）：夜晚露天很暗 ⇒ 充得快；白天露天不充；$(bold)白天在漆黑的洞里照样满速充$()；$(bold)没有$()「必须夜晚 / 必须露天」这类额外条件。$(br2)$(italic)注意：水晶方块$(bold)自己会发光$()（等级 7）⇒ 把它紧贴台座摆会稍微拖慢充能。$()"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "配置项（config）",
+      "text": "配置文件 $(italic)config/mofengbaizhi/tinkersnewlife-common.toml$() 的 $(bold)[elder_crystal]$() 段：$(br2)$(li)$(bold)pedestal_charge_max_per_second$()：亮度 0 时的满速（默认 $(bold)5.0$() EE/秒）$(li)$(bold)pedestal_light_cap$()：亮度到达该值就完全不充（默认 $(bold)15$()；调到 16 以上 ⇒ 亮处也慢充，例如 16 时亮度 15 仍有约 0.31 EE/秒）$(li)$(bold)pedestal_source$()：用哪个环境能量来源（默认 $(bold)light_level$() = 越暗越快；写错会安静地退回它）$(li)$(bold)pedestal_particles$() / $(bold)pedestal_sound$()：充能时的冷色粒子 / 轻微风铃$(br2)台座上的水晶满了就停：水晶物品上限 $(bold)1000$()、水晶方块 $(bold)4000$()。"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "以后会有别的能量来源",
+      "text": "$(bold)能量转化系统$()（把别的 mod 的魔力/能量换算成 EE）$(bold)本轮没做$() —— 但接口已经留好了：$(br2)$(li)来源是一段$(bold)可插拔的逻辑$()，接口叫 $(italic)AmbientEnergySource$()（每秒给出「这一格能产多少 EE」）$(li)默认实现 $(italic)LightLevelEnergySource$() 就是上面那条「越暗越快」$(li)台座方块/方块实体$(bold)完全不认识$()光照、夜晚、天气 —— 它们每秒只问一次「现在用哪个来源」$(br2)⇒ 以后接别的能量来源时，写一个新实现、在 $(italic)AmbientEnergySources$() 里注册一行、把配置里的 $(bold)pedestal_source$() 指过去即可，$(bold)不用动方块$()。$(br2)$(italic)跨体系换算（魔力 / 灵魂 / 咒力 ↔ EE）一律经 $(bold)EnergyUnits$() 这张唯一换算表。$()"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "tinkersnewlife:elder_mana_pedestal",
+      "text": "$(bold)配方$()：$(br2)上排中：紫水晶碎片$(br)中排：紫水晶碎片 + 紫水晶块 + 紫水晶碎片$(br)下排：深板岩 ×3"
+    }
+  ]
+}

@@ -104,6 +104,10 @@ public class ClientEventHandler {
         event.registerBlockEntityRenderer(
                 com.mofengbaizhi.tinkersnewlife.content.ModBlockEntities.CURSE_VAULT.get(),
                 com.mofengbaizhi.tinkersnewlife.client.renderer.CurseVaultRenderer::new);
+        // 魔力台座（§523）：浮在台面上的那颗水晶（台座本体是普通方块模型，水晶走 BER）
+        event.registerBlockEntityRenderer(
+                com.mofengbaizhi.tinkersnewlife.content.ModBlockEntities.ELDER_MANA_PEDESTAL.get(),
+                com.mofengbaizhi.tinkersnewlife.client.renderer.ElderManaPedestalRenderer::new);
         event.registerEntityRenderer(ModEntities.DREADSTEEL_SLASH.get(), DreadsteelSlashRenderer::new);
         event.registerEntityRenderer(ModEntities.FLYING_SWORD.get(), FlyingSwordRenderer::new);
         event.registerEntityRenderer(ModEntities.FLYING_SWORD_FOOT.get(), FlyingSwordFootRenderer::new);

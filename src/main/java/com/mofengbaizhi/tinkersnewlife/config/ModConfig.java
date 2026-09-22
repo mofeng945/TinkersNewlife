@@ -12,6 +12,7 @@ import java.util.Map;
  * <ul>
  *   <li>elder_events：各「获得古神物品的事件」开关（Yog-Sothoth 钥匙 / 黄王 / 拉莱耶呼唤 / 奈亚渴望）</li>
  *   <li>curse_core：咒力核心「可制作可使用」总开关（默认开启）</li>
+ *   <li>elder_crystal：古老者水晶 · <b>魔力台座</b>的充能规律（亮度越低越快）、可插拔来源、粒子/音效</li>
  *   <li>techniques / domains：各术式与领域公式的缩放系数（默认 1.0，关闭相关事件后仍保留原生）</li>
  * </ul>
  */
@@ -27,6 +28,33 @@ public final class ModConfig {
 
     // ==================== 咒力核心 ====================
     public static final ConfigValue<Boolean> CURSE_CORE_ENABLED;
+
+    // ==================== 古老者水晶 · 魔力台座（充能） ====================
+    // 用户口径（2026-09-21）：「亮度越低，充能速度越快」——
+    // 于是**没有**"必须夜晚 / 必须露天 / 必须能看到天空"这类额外条件 ✓
+    // （夜里露天本来就暗、白天在漆黑洞穴里也照样能充 ✓，亮度这一个量已经把两者覆盖了 ✓）。
+    //
+    // 公式（唯一一处实现在 content/energy/LightLevelEnergySource）：
+    //     rate = pedestal_charge_max_per_second × (light_cap − light) / light_cap
+    //     light = level.getMaxLocalRawBrightness(台座上方那一格)   // 0~15，方块光+天光综合，与原版刷怪判定同一个量
+    // ⇒ 亮度 0 = 满速、亮度 ≥ light_cap = 不充 ✓。
+    /** 默认值：台座「亮度 0」时的满速充能（EE/秒）。5.0 = 100 EE/分钟 ⇒ 一颗 1000 EE 的水晶 ≈ 3.3 分钟 */
+    public static final double PEDESTAL_DEFAULT_CHARGE_MAX_PER_SECOND = 5.0D;
+    /** 默认值：亮度达到这个值就完全不充（15 = 原版亮度上限 ⇒ "亮到顶不充"） */
+    public static final int PEDESTAL_DEFAULT_LIGHT_CAP = 15;
+    /** 默认值：台座使用的环境能量来源 id（可插拔，见 {@code AmbientEnergySources}） */
+    public static final String PEDESTAL_DEFAULT_SOURCE = "light_level";
+
+    /** 台座在亮度 0 时的满速充能（EE/秒；越小越慢） */
+    public static final ConfigValue<Double> PEDESTAL_CHARGE_MAX_PER_SECOND;
+    /** 亮度达到该值就完全不充（默认 15；调大到 16+ ⇒ 亮处也慢充，如 16 时亮度 15 仍有 5×(16−15)/16 ≈ 0.31 EE/秒） */
+    public static final ConfigValue<Integer> PEDESTAL_LIGHT_CAP;
+    /** 台座的环境能量来源 id（可插拔；默认 "light_level" = 亮度越低越快 ✓ 未知 id 会退回它 ✓） */
+    public static final ConfigValue<String> PEDESTAL_SOURCE;
+    /** 充能时放冷色粒子（密度随速率 ✓ 只在**真的充进去**时放 ✓） */
+    public static final ConfigValue<Boolean> PEDESTAL_PARTICLES;
+    /** 充能时放轻微音效（紫水晶风铃 ✓ 每 2 秒一次 ✓） */
+    public static final ConfigValue<Boolean> PEDESTAL_SOUND;
 
     // ==================== 双向认知阻碍面具 ====================
     /**
@@ -209,6 +237,48 @@ public final class ModConfig {
         // 咒力核心
         b.push("curse_core").comment("Curse Core: allow crafting (ritual) and using (equipping/techniques). Default on.");
         CURSE_CORE_ENABLED = b.define("allow_curse_core_craft_and_use", true);
+        b.pop();
+
+        // 古老者水晶 · 魔力台座（充能规律：亮度越低越快）
+        b.push("elder_crystal").comment(
+                "Elder Crystal - the Mana Pedestal, the (only) way to charge a crystal.",
+                "",
+                "CHARGING RULE: THE DARKER, THE FASTER.",
+                "",
+                "  rate = pedestal_charge_max_per_second * (pedestal_light_cap - light) / pedestal_light_cap",
+                "",
+                "  light = level.getMaxLocalRawBrightness(the block ABOVE the pedestal), 0..15 =",
+                "          combined block light + sky light, i.e. exactly the value vanilla uses for mob",
+                "          spawning. There is deliberately NO 'must be night' and NO 'must see the sky'",
+                "          check: darkness alone covers both (a moonlit surface night is dark, and a pitch",
+                "          black cave at noon is dark too, so both charge at full speed).",
+                "",
+                "  light 0                      -> full speed",
+                "  light >= pedestal_light_cap  -> no charging at all",
+                "",
+                "pedestal_charge_max_per_second = EE per second at light 0 (default 5.0 = 100 EE per",
+                "                                 minute, so a full 1000 EE crystal takes about 3.3 minutes;",
+                "                                 a 4000 EE crystal block takes about 13.3 minutes).",
+                "pedestal_light_cap             = light level at which charging stops (default 15 = the vanilla",
+                "                                 maximum; raise it above 15 if you want a slow trickle even in",
+                "                                 bright light - e.g. 16 leaves ~0.31 EE/s at light 15).",
+                "pedestal_source                = which ambient energy source the pedestal pulls from.",
+                "                                 \"light_level\" (default) is the darkness rule above; unknown ids",
+                "                                 fall back to it. The interface lives in",
+                "                                 content/energy/AmbientEnergySource (pluggable: the future",
+                "                                 energy-conversion system hooks in there, not in the block).",
+                "pedestal_particles             = cold-coloured particles while it actually charges",
+                "                                 (density scales with the rate: the faster, the denser).",
+                "pedestal_sound                 = a soft amethyst chime while it actually charges (every 2 s).",
+                "",
+                "Caps are per target: a crystal item holds 1000 EE, a crystal block 4000 EE. When everything",
+                "in reach is full the pedestal simply stops (nothing is consumed or generated).");
+        PEDESTAL_CHARGE_MAX_PER_SECOND = b.defineInRange("pedestal_charge_max_per_second",
+                PEDESTAL_DEFAULT_CHARGE_MAX_PER_SECOND, 0.0D, 10000.0D);
+        PEDESTAL_LIGHT_CAP = b.defineInRange("pedestal_light_cap", PEDESTAL_DEFAULT_LIGHT_CAP, 1, 30);
+        PEDESTAL_SOURCE = b.define("pedestal_source", PEDESTAL_DEFAULT_SOURCE);
+        PEDESTAL_PARTICLES = b.define("pedestal_particles", true);
+        PEDESTAL_SOUND = b.define("pedestal_sound", true);
         b.pop();
 
         // 双向认知阻碍面具（头饰）
@@ -559,6 +629,56 @@ public final class ModConfig {
     public static double domainCost(String id) {
         ConfigValue<Double>[] arr = DOMAIN_SCALES.get(id);
         return arr == null ? 1.0 : arr[2].get();
+    }
+
+    // ==================== 古老者水晶 · 魔力台座（取值助手） ====================
+    // 全部带 try/catch：配置还没就绪（注册前/客户端早期）时一律走上面的默认常量 ✓
+    // ⚠ 这些默认值只写在 PEDESTAL_DEFAULT_* 常量里一处 ⇒ 不会与 defineInRange 的默认值漂移 ✗
+
+    /** 台座亮度 0 时的满速充能（EE/秒；配置没就绪 ⇒ {@link #PEDESTAL_DEFAULT_CHARGE_MAX_PER_SECOND}） */
+    public static double pedestalChargeMaxPerSecond() {
+        try {
+            return Math.max(0.0D, PEDESTAL_CHARGE_MAX_PER_SECOND.get());
+        } catch (Throwable ignored) {
+            return PEDESTAL_DEFAULT_CHARGE_MAX_PER_SECOND;
+        }
+    }
+
+    /** 台座完全不充的亮度阈值（配置没就绪 ⇒ {@link #PEDESTAL_DEFAULT_LIGHT_CAP}） */
+    public static int pedestalLightCap() {
+        try {
+            return Math.max(1, PEDESTAL_LIGHT_CAP.get());
+        } catch (Throwable ignored) {
+            return PEDESTAL_DEFAULT_LIGHT_CAP;
+        }
+    }
+
+    /** 台座使用的环境能量来源 id（配置没就绪 ⇒ {@link #PEDESTAL_DEFAULT_SOURCE}） */
+    public static String pedestalSourceId() {
+        try {
+            String id = PEDESTAL_SOURCE.get();
+            return id == null || id.isBlank() ? PEDESTAL_DEFAULT_SOURCE : id;
+        } catch (Throwable ignored) {
+            return PEDESTAL_DEFAULT_SOURCE;
+        }
+    }
+
+    /** 充能时是否放冷色粒子（配置没就绪 ⇒ true） */
+    public static boolean pedestalParticles() {
+        try {
+            return PEDESTAL_PARTICLES.get();
+        } catch (Throwable ignored) {
+            return true;
+        }
+    }
+
+    /** 充能时是否放音效（配置没就绪 ⇒ true） */
+    public static boolean pedestalSound() {
+        try {
+            return PEDESTAL_SOUND.get();
+        } catch (Throwable ignored) {
+            return true;
+        }
     }
 
     /**

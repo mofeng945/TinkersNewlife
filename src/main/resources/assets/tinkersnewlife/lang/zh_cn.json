@@ -1276,5 +1276,9 @@
   "block.tinkersnewlife.elder_crystal_block.rate": "换算：1 EE = 1 法力 = 4 灵魂 = 2 咒力",
   "block.tinkersnewlife.elder_crystal_block.hint": "挖掉会连同里面的 EE 一起带走（4 个水晶 = 1 个方块，EE 求和不丢）",
   "block.tinkersnewlife.elder_crystal_ore": "古老者水晶矿石",
-  "block.tinkersnewlife.elder_crystal_ore.desc": "只在深暗之域（deep_dark）生成（Y -64 ~ -1）；采掘得古老者水晶（自带 500 EE，时运加成，精准采集掉原矿）"
+  "block.tinkersnewlife.elder_crystal_ore.desc": "只在深暗之域（deep_dark）生成（Y -64 ~ -1）；采掘得古老者水晶（自带 500 EE，时运加成，精准采集掉原矿）",
+  "block.tinkersnewlife.elder_mana_pedestal": "魔力台座",
+  "block.tinkersnewlife.elder_mana_pedestal.rate": "满速充能（亮度 0）：%s EE/秒",
+  "block.tinkersnewlife.elder_mana_pedestal.rule": "亮度越低充得越快；亮度 ≥ %s 时完全不充（越暗越快，白天在漆黑的洞里也一样充）",
+  "block.tinkersnewlife.elder_mana_pedestal.usage": "手持古老者水晶右击放上去；空手右击（或潜行右击）取回；上方/下方/四邻的水晶方块也会一起充能"
 }

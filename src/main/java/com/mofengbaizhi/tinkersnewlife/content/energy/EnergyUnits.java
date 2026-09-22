@@ -5,9 +5,9 @@ package com.mofengbaizhi.tinkersnewlife.content.energy;
  *
  * <h2>基准单位：1 EE（晶能 / Elder Energy）</h2>
  * <pre>
- *   1 EE = 1 点 Iron's Spellbooks 魔力（法力）
- *        = 4 点 Goety（诡厄巫法）灵魂能量
- *        = 2 点本模组咒力
+ *   1 EE = 10 点 Iron's Spellbooks 魔力（法力）   ← §524 起 ×10
+ *        = 40 点 Goety（诡厄巫法）灵魂能量
+ *        = 20 点本模组咒力
  * </pre>
  * 也就是说：<b>法力是 1:1 的基准</b>，灵魂是它的 4 倍、咒力是它的 2 倍。
  *
@@ -36,14 +36,19 @@ public final class EnergyUnits {
     //  基准常量（改这里 = 全局改口径 ✓）
     // ============================================================
 
-    /** 1 EE 折合多少 Iron's 魔力（法力）—— 用户口径：1:1 */
-    public static final double MANA_PER_EE = 1.0D;
+    /**
+     * 1 EE 折合多少 Iron's 魔力（法力）。
+     * <p>§524 用户口径：「让 EE 的转化倍率变成现在的 10 倍」⇒ 三个基准常量**同时 ×10** ✓
+     * （三者同乘 ⇒ **三系之间的相对汇率不变** ✓：灵魂:法力 仍 4:1、咒力:法力 仍 2:1 ✓
+     *  只是"1 EE"变值钱了 10 倍 ⇒ 一颗 1000 EE 的水晶现在等于 **10,000 魔力** ✓）。
+     */
+    public static final double MANA_PER_EE = 10.0D;
 
     /** 1 EE 折合多少 Goety 灵魂能量 —— 用户口径：1:4 */
-    public static final double SOULS_PER_EE = 4.0D;
+    public static final double SOULS_PER_EE = 40.0D;   // §524 ×10（相对汇率不变 ✓）
 
     /** 1 EE 折合多少本模组咒力 —— 用户口径：1:2 */
-    public static final double CURSE_PER_EE = 2.0D;
+    public static final double CURSE_PER_EE = 20.0D;  // §524 ×10（相对汇率不变 ✓）
 
     // ---- 反方向（由上面三个基准推出 ✓ 不再手写数字 ✗）----
 

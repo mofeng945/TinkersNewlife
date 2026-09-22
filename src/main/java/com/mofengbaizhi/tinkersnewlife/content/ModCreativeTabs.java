@@ -227,6 +227,8 @@ public class ModCreativeTabs {
                                 // ----- 古老者水晶（§519 P1：EE 容器；放副手/饰品可为施法供能）-----
                                 output.accept(ModItems.ELDER_CRYSTAL.get());
                                 output.accept(ModItems.ELDER_CRYSTAL_BLOCK.get());
+                                // ----- 魔力台座（§523：水晶唯一的充电方式 —— 亮度越低充得越快）-----
+                                output.accept(ModItems.ELDER_MANA_PEDESTAL.get());
                             })
                             .build()
             );
