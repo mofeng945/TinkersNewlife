@@ -60,6 +60,8 @@ import javax.annotation.Nullable;
 public final class MekanismEnergyBridge implements IStrictEnergyHandler {
 
     /** 每个方块实体一个（WeakHashMap ⇒ 方块被拆后不会把 BE 一起吊住 ✓） */
+    private static int PROBE = 0;   // §564 探测计数
+
     private static final java.util.Map<EeConverterCore, MekanismEnergyBridge> CACHE =
             new java.util.WeakHashMap<>();
 
@@ -78,6 +80,13 @@ public final class MekanismEnergyBridge implements IStrictEnergyHandler {
     @Nullable
     public static <T> LazyOptional<T> capability(EeConverterCore core, Capability<T> cap, @Nullable Direction side) {
         if (cap != Capabilities.STRICT_ENERGY) return null;
+        // §564 一次性探测（只打前 5 次 ✓）：确认"通用机械到底有没有来问过我们" ✗
+        if (PROBE < 5) {
+            PROBE++;
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
+                    "[EE 探测] Mekanism 正在查询我们的 STRICT_ENERGY 能力（第 {} 次，side={}，core={}）",
+                    PROBE, side, System.identityHashCode(core));
+        }
         MekanismEnergyBridge bridge;
         synchronized (CACHE) {
             bridge = CACHE.computeIfAbsent(core, MekanismEnergyBridge::new);
