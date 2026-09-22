@@ -2,13 +2,14 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    " A ",
-    "ASA",
+    " E ",
+    "CXC",
     "DDD"
   ],
   "key": {
-    "A": { "item": "minecraft:amethyst_shard" },
-    "S": { "item": "minecraft:amethyst_block" },
+    "E": { "item": "minecraft:echo_shard" },
+    "X": { "item": "tinkersnewlife:elder_crystal" },
+    "C": { "item": "tinkersnewlife:rlyeh_call" },
     "D": { "item": "minecraft:deepslate" }
   },
   "result": {
