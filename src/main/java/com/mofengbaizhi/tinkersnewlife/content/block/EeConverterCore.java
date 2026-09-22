@@ -240,7 +240,7 @@ public final class EeConverterCore implements EeStorage, IEnergyStorage {
         int left = budget;
         for (Direction d : EeStorages.NEIGHBOURS) {
             // §578 六面角色：FE 只在**背面出口 + 底面万用**上取/送 ✓（原来六面都抽都推 ✗）
-            if (!EnergyConverterFaces.allowsFe(hostState(), d)) continue;
+            if (!EnergyConverterFaces.allowsFeOut(hostState(), d)) continue;   // §580 主动推只从**背面** ✓
             if (left <= 0) break;
             BlockPos at = pos.relative(d);
             BlockEntity be = level.getBlockEntity(at);
@@ -270,7 +270,7 @@ public final class EeConverterCore implements EeStorage, IEnergyStorage {
         int left = Math.min(budget, feBuffer);
         for (Direction d : EeStorages.NEIGHBOURS) {
             // §578 六面角色：FE 只在**背面出口 + 底面万用**上取/送 ✓（原来六面都抽都推 ✗）
-            if (!EnergyConverterFaces.allowsFe(hostState(), d)) continue;
+            if (!EnergyConverterFaces.allowsFeOut(hostState(), d)) continue;   // §580 主动推只从**背面** ✓
             if (left <= 0) break;
             BlockPos at = pos.relative(d);
             BlockEntity be = level.getBlockEntity(at);
@@ -363,6 +363,25 @@ public final class EeConverterCore implements EeStorage, IEnergyStorage {
     // ============================================================
     //  IEnergyStorage（对外就是"FE 池"本身 ✓）
     // ============================================================
+    /** §580 **只收不放**的 FE 面（右面线缆口 / 底面万用口 ✓） */
+    public final net.minecraftforge.energy.IEnergyStorage feInput = new net.minecraftforge.energy.IEnergyStorage() {
+        @Override public int receiveEnergy(int max, boolean sim) { return EeConverterCore.this.receiveEnergy(max, sim); }
+        @Override public int extractEnergy(int max, boolean sim) { return 0; }
+        @Override public int getEnergyStored() { return feBuffer; }
+        @Override public int getMaxEnergyStored() { return EeConverterCore.this.getMaxEnergyStored(); }
+        @Override public boolean canExtract() { return false; }
+        @Override public boolean canReceive() { return true; }
+    };
+
+    /** §580 **只放不收**的 FE 面（**背面 = 唯一输出口** ✓） */
+    public final net.minecraftforge.energy.IEnergyStorage feOutput = new net.minecraftforge.energy.IEnergyStorage() {
+        @Override public int receiveEnergy(int max, boolean sim) { return 0; }
+        @Override public int extractEnergy(int max, boolean sim) { return EeConverterCore.this.extractFe(max, sim); }
+        @Override public int getEnergyStored() { return feBuffer; }
+        @Override public int getMaxEnergyStored() { return EeConverterCore.this.getMaxEnergyStored(); }
+        @Override public boolean canExtract() { return true; }
+        @Override public boolean canReceive() { return false; }
+    };
 
     @Override
     public int receiveEnergy(int maxReceive, boolean simulate) {

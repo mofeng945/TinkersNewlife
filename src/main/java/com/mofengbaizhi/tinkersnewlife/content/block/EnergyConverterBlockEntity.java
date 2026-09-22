@@ -83,7 +83,16 @@ public class EnergyConverterBlockEntity extends BlockEntity implements Converter
     public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
         LazyOptional<T> modBoost = EnergyConverterModBridges.capability(core, cap, side);
         if (modBoost != null) return modBoost;
-        if (cap == ForgeCapabilities.ENERGY) return feHolder.cast();
+        if (cap == ForgeCapabilities.ENERGY) {                                    // §580 六面角色（FE 单向）
+            net.minecraft.world.level.block.state.BlockState st = getBlockState();
+            if (com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterFaces.isBack(st, side)) {
+                return LazyOptional.of(() -> (IEnergyStorage) core.feOutput).cast();      // 背面 = 唯一输出（只放不收 ✓）
+            }
+            if (com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterFaces.allowsFeIn(st, side)) {
+                return LazyOptional.of(() -> (IEnergyStorage) core.feInput).cast();       // 右/底 = 输入（只收不放 ✓）
+            }
+            return LazyOptional.empty();                                                 // 其余面不暴露 FE ✗
+        }
         return super.getCapability(cap, side);
     }
 

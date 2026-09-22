@@ -37,16 +37,20 @@ public final class EnergyConverterFaces {
     public static boolean isTop(BlockState s, Direction side) { return side == Direction.UP; }
     public static boolean isBottom(BlockState s, Direction side) { return side == Direction.DOWN; }
 
-    /** FE（Forge Energy）面：**背面出口 + 底面万用** ✓（§578 起：其它面不再暴露/不抽不推 ✓） */
-    public static boolean allowsFe(BlockState s, Direction side) {
-        return side == null || isBack(s, side) || isBottom(s, side);
+    /** §580 FE 输出面：**只有背面**（用户口径：背面是唯一"接出"口 ✓） */
+    public static boolean allowsFeOut(BlockState s, Direction side) {
+        return side == null || isBack(s, side);
     }
 
-    /** 通用机械（J）面：**右面 + 底面** ✓ */
-    public static boolean allowsMekanism(BlockState s, Direction side) {
+    /** §580 FE 输入面：**右面（线缆输入口）+ 底面（万用输入口）** ✓ */
+    public static boolean allowsFeIn(BlockState s, Direction side) {
         return side == null || isRight(s, side) || isBottom(s, side);
     }
 
+    /** /** 通用机械（J 或 FE）线缆：**右面 + 底面**（背面是输出口 ✗ 不收 ✓） */
+    public static boolean allowsMekanism(BlockState s, Direction side) {
+        return side == null || isRight(s, side) || isBottom(s, side);
+    }
     /** AE2 面：**左面 + 底面** ✓（§578 暂未接线缆侧的门 ✗ 见备忘录） */
     public static boolean allowsAe2(BlockState s, Direction side) {
         return side == null || isLeft(s, side) || isBottom(s, side);
