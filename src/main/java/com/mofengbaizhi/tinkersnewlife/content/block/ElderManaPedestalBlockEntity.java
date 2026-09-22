@@ -68,6 +68,9 @@ public class ElderManaPedestalBlockEntity extends BlockEntity {
     /** 台座上那颗水晶的存档键（物品栈整包存 ✓ 含它自己的 {@code EE} ✓） */
     public static final String KEY_CRYSTAL = "Crystal";
 
+    /** §553 缓存（EE）的存档键 */
+    public static final String KEY_CACHE = "Cache";
+
     /**
      * 紧邻水晶方块的喂养顺序（**固定顺序** ⇒ 玩家可预期 ✓ 也免得每 tick 遍历 6 个方向再排序 ✗）。
      * <p>上/下优先于四邻：贴在台座正上方或正下方的那块"离水晶最近" ✓。
@@ -98,6 +101,20 @@ public class ElderManaPedestalBlockEntity extends BlockEntity {
 
     /** 蓄水池：够 1.0 才写进水晶（支持小数速率 ✓ 不丢小数 ✓ 见类注释）；**不存档** ✓（重启后从 0 重新攒，最多丢不到 1 EE ✓ 无害） */
     private double pool = 0.0D;
+
+    /**
+     * §553 <b>缓存</b>：没地方灌（没水晶 / 水晶满了）时把产出的 EE 先攒在这里 ✓
+     * <p>上限 = <b>一颗水晶的量</b> {@link ElderCrystalStorage#CRYSTAL_CAPACITY}（1000 EE ✓ 用户口径）；
+     * 放上水晶后每 tick 放出 {@link #CACHE_FLUSH_PER_TICK} ⇒ 满缓存约 2 秒灌完 ✓。
+     * <p>持久化到 NBT ✓（走远/重启不丢 ✓）。
+     */
+    private double cache = 0.0D;
+
+    /** 缓存上限 = 一颗水晶 = 1000 EE ✓（与水晶容量同一个常量 ✓ 不写裸数字 ✗） */
+    private static final double CACHE_CAP = ElderCrystalStorage.CRYSTAL_CAPACITY;
+
+    /** 每 tick 从缓存里放出的上限（25 ⇒ 1000 EE 约 2 秒 ✓ 看得见但不拖沓 ✓） */
+    private static final int CACHE_FLUSH_PER_TICK = 25;
 
     /** 每 tick ++（粒子/音效节拍用 ✓） */
     private int ticks = 0;
@@ -247,9 +264,10 @@ public class ElderManaPedestalBlockEntity extends BlockEntity {
         //        所以绝不会被算快 20 倍 ✗。
         if (lastRate > 0.0D) {
             if (!hasSpaceForEe()) {
+                // §553 没地方灌 ⇒ **不丢**，收进缓存（上限 = 一颗水晶 ✓ 满了就真的停 ✗）
+                cache = Math.min(CACHE_CAP, cache + pool);
                 pool = 0.0D;
-                lastRate = 0.0D;
-                charging = false;
+                charging = cache < CACHE_CAP;
             } else {
                 pool += lastRate / SETTLE_INTERVAL;
                 if (pool >= 1.0D) {
@@ -259,6 +277,16 @@ public class ElderManaPedestalBlockEntity extends BlockEntity {
                     if (accepted < amount) pool = 0.0D;
                 }
                 charging = true;      // 有来源在产 ⇒ 粒子照演（原先是"这一秒灌进去了才演" ✗ 均摊后大多数 tick 都不到 1 点 ✗）
+            }
+        }
+        // §553 有地方灌 + 缓存里有货 ⇒ 每 tick 放出一批（不满 1 点就等下一 tick ✓）
+        if (cache >= 1.0D && hasSpaceForEe()) {
+            int amount = (int) Math.min(Math.floor(cache), (double) CACHE_FLUSH_PER_TICK);
+            if (amount > 0) {
+                int accepted = distribute(amount);
+                cache -= accepted;
+                if (accepted < amount) cache = 0.0D;   // 装不下 ⇒ 剩下的不囤（与"满了就停"一致 ✓）
+                charging = true;
             }
         }
         if (charging) showCharging(level, pos);
@@ -287,8 +315,8 @@ public class ElderManaPedestalBlockEntity extends BlockEntity {
     private void settle(ServerLevel level, BlockPos pos) {
         // ① 先看"有没有地方可灌" —— 满了就整车停：**不**问来源、**不**扣燃料、**不**涨凋灵度 ✓
         //    （一箭三雕：不浪费玩家的燃料 ✓ 不白杀植物 ✓ 也省掉最贵的两次范围扫描 ✓）
-        if (!hasSpaceForEe()) {
-            pool = 0.0D;
+        if (cache >= CACHE_CAP) {
+            // §553 缓存满了 ⇒ 整车停：不问来源、不扣燃料、不涨凋灵度 ✓（缓存留着 ✓ 不清 ✗）
             lastRate = 0.0D;
             charging = false;
             return;
@@ -401,6 +429,7 @@ public class ElderManaPedestalBlockEntity extends BlockEntity {
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         if (!crystal.isEmpty()) tag.put(KEY_CRYSTAL, crystal.save(new CompoundTag()));
+        if (cache > 0.0D) tag.putDouble(KEY_CACHE, cache);       // §553 缓存持久化 ✓
     }
 
     @Override
@@ -409,6 +438,7 @@ public class ElderManaPedestalBlockEntity extends BlockEntity {
         // ⚠ 这里**直接**赋值、不走 setCrystal：load 在客户端也会被调用（见 handleUpdateTag），
         //   而 setCrystal 会 sendBlockUpdated ⇒ 客户端无谓发包/递归 ✗
         crystal = tag.contains(KEY_CRYSTAL) ? ItemStack.of(tag.getCompound(KEY_CRYSTAL)) : ItemStack.EMPTY;
+        cache = tag.contains(KEY_CACHE) ? tag.getDouble(KEY_CACHE) : 0.0D;   // §553 读回缓存 ✓
         if (!crystal.isEmpty()) crystal.setCount(1);
     }
 
