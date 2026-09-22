@@ -76,9 +76,20 @@ public class CreateEnergyConverterBlock extends KineticBlock
      */
     @Override
     public BlockState getStateForPlacement(net.minecraft.world.item.context.BlockPlaceContext ctx) {
-        return defaultBlockState().setValue(
-                net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING,
-                ctx.getHorizontalDirection().getOpposite());
+        // §573 修：**不能**拿 BlockStateProperties.HORIZONTAL_FACING 去 setValue ✗ ——
+        //   父类 HorizontalKineticBlock 自带的是**它自己的** facing 属性实例 ✗ ⇒ 用我们的实例会抛
+        //   "Cannot set property … as it does not exist in Block{…}" ✗（实测崩过一次 ✓）。
+        //   ⇒ 改成"从方块自己的状态里**按名字找** facing" ✓ ⇒ 父类用哪个实例都对 ✓ 没有也不崩 ✓。
+        BlockState state = defaultBlockState();
+        net.minecraft.core.Direction want = ctx.getHorizontalDirection().getOpposite();
+        for (net.minecraft.world.level.block.state.properties.Property<?> p : state.getProperties()) {
+            if (p instanceof net.minecraft.world.level.block.state.properties.DirectionProperty dp
+                    && p.getName().equals("facing")
+                    && dp.getPossibleValues().contains(want)) {
+                return state.setValue(dp, want);
+            }
+        }
+        return state;   // 父类没有水平 facing ⇒ 原样放下 ✓（不崩 ✓）
     }
 
     public CreateEnergyConverterBlock() {
