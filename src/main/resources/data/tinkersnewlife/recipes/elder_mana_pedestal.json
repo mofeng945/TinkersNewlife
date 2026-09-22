@@ -2,14 +2,14 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    " E ",
-    "CXC",
+    " S ",
+    "CRC",
     "DDD"
   ],
   "key": {
-    "E": { "item": "minecraft:echo_shard" },
-    "X": { "item": "tinkersnewlife:elder_crystal" },
-    "C": { "item": "tinkersnewlife:rlyeh_call" },
+    "S": { "item": "minecraft:echo_shard" },
+    "C": { "item": "tinkersnewlife:elder_crystal" },
+    "R": { "item": "tinkersnewlife:rlyeh_call" },
     "D": { "item": "minecraft:deepslate" }
   },
   "result": {
