@@ -553,7 +553,7 @@ public class ElderManaPedestalBlockEntity extends BlockEntity implements EeStora
     @Nonnull
     @Override
     public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
-        return EeCapabilityBridge.energyOrSuper(cap, side, feHolder, super.getCapability(cap, side));
+        return super.getCapability(cap, side)   /* §570 摘掉台座只读 FE 面（只走本模组 EE ✓） */;
     }
 
     @Override
