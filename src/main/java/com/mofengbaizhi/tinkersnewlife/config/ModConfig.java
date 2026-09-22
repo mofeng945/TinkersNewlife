@@ -41,7 +41,7 @@ public final class ModConfig {
     /** 默认值：台座「亮度 0」时的满速充能（EE/秒）。5.0 = 100 EE/分钟 ⇒ 一颗 1000 EE 的水晶 ≈ 3.3 分钟 */
     public static final double PEDESTAL_DEFAULT_CHARGE_MAX_PER_SECOND = 5.0D;
     /** 默认值：亮度达到这个值就完全不充（15 = 原版亮度上限 ⇒ "亮到顶不充"） */
-    public static final int PEDESTAL_DEFAULT_LIGHT_CAP = 15;
+    public static final int PEDESTAL_DEFAULT_LIGHT_CAP = 16;   // §526 从 15 改 16：亮度 15（火把/白天/照明良好的基地）也必须能慢充，否则"放上去完全没反应" ✗
     /** 默认值：台座使用的环境能量来源 id（可插拔，见 {@code AmbientEnergySources}） */
     public static final String PEDESTAL_DEFAULT_SOURCE = "light_level";
 

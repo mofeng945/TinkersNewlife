@@ -324,7 +324,9 @@ public class ElderManaPedestalBlockEntity extends BlockEntity {
     @Override
     public CompoundTag getUpdateTag() {
         CompoundTag tag = super.getUpdateTag();
-        if (!crystal.isEmpty()) tag.put(KEY_CRYSTAL, crystal.save(new CompoundTag()));
+        // §526 无论空不空都写这个键 ⇒ 客户端 load() 一定会把『已取下』读成空栈 ✓
+        //      （原来只在非空时写：虽然 load() 的 else 分支也会置空 ✓，但显式写更不容易被后人改坏 ✓）
+        tag.put(KEY_CRYSTAL, crystal.isEmpty() ? new CompoundTag() : crystal.save(new CompoundTag()));
         return tag;
     }
 
