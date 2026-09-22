@@ -1,5 +1,8 @@
 {
   "variants": {
-    "": { "model": "tinkersnewlife:block/energy_converter" }
+    "facing=north": { "model": "tinkersnewlife:block/energy_converter" },
+    "facing=east":  { "model": "tinkersnewlife:block/energy_converter", "y": 90 },
+    "facing=south": { "model": "tinkersnewlife:block/energy_converter", "y": 180 },
+    "facing=west":  { "model": "tinkersnewlife:block/energy_converter", "y": 270 }
   }
 }

@@ -70,6 +70,17 @@ public class CreateEnergyConverterBlock extends KineticBlock
         };
     }
 
+    /**
+     * §572 放置朝向：父类 {@code HorizontalKineticBlock} **已经自带** {@code HORIZONTAL_FACING} ✓
+     * ⇒ 这里只覆写"放下去朝哪" ✓（**绝不能**再声明一个同名属性 ✗ 会撞车 ✓）。
+     */
+    @Override
+    public BlockState getStateForPlacement(net.minecraft.world.item.context.BlockPlaceContext ctx) {
+        return defaultBlockState().setValue(
+                net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING,
+                ctx.getHorizontalDirection().getOpposite());
+    }
+
     public CreateEnergyConverterBlock() {
         super(net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()
                 .strength(3.5F, 6.0F)

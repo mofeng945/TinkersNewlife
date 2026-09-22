@@ -54,6 +54,23 @@ public class EnergyConverterBlock extends BaseEntityBlock {
         return SHAPE;
     }
 
+    /** §572 水平朝向（= 正面指向 ✓）：正面接传动杆/输出口等六面角色的基准 ✓ */
+    public static final net.minecraft.world.level.block.state.properties.DirectionProperty FACING =
+            net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING;
+
+    @Override
+    protected void createBlockStateDefinition(
+            net.minecraft.world.level.block.state.StateDefinition.Builder<net.minecraft.world.level.block.Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
+        builder.add(FACING);
+    }
+
+    /** 放置时正面朝向玩家（与原版熔炉同一套写法 ✓） */
+    @Override
+    public BlockState getStateForPlacement(net.minecraft.world.item.context.BlockPlaceContext ctx) {
+        return defaultBlockState().setValue(FACING, ctx.getHorizontalDirection().getOpposite());
+    }
+
     public EnergyConverterBlock() {
         super(BlockBehaviour.Properties.of()
                 .strength(3.5F, 6.0F)
