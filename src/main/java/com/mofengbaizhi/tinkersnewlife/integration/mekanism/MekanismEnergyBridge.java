@@ -79,8 +79,9 @@ public final class MekanismEnergyBridge implements IStrictEnergyHandler {
     @Nullable
     public static <T> LazyOptional<T> capability(EeConverterCore core, Capability<T> cap, @Nullable Direction side) {
         if (cap != Capabilities.STRICT_ENERGY) return null;
-        // §578 六面角色：通用机械只在**右面 + 底面**暴露（原来六面全开 ✗）
+        // §578/§582 六面角色：通用机械只在**右面（热量线缆）+ 底面（万用）**暴露 ✓
         if (!com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterFaces.allowsMekanism(core.hostState(), side)) return null;
+        if (cap == Capabilities.HEAT_HANDLER) return heatHolder.cast();   // §582 右面 = 热导线缆（热量 ⇒ FE ✓）
         MekanismEnergyBridge bridge;
         synchronized (CACHE) {
             bridge = CACHE.computeIfAbsent(core, MekanismEnergyBridge::new);
@@ -154,6 +155,57 @@ public final class MekanismEnergyBridge implements IStrictEnergyHandler {
 
     /** ⚠ 我们<b>不</b>让通用机械从转化器里把电抽走 ✗（它是输出端 ✓ 与 FE 面的 {@code canExtract=false} 同一口径 ✓） */
     @Override
+    // ============================================================
+    //  §582 右面 = 通用机械**热导线缆（热量）** ⇒ 把转化器做成"热沉" ✓
+    // ============================================================
+
+    /** 汇率：**1 热量(J) = 0.4 FE**（= 用户表里 `10 J = 4 FE` ✓ 同一个口径 ✓） */
+    private static final double FE_PER_HEAT = 0.4D;
+
+    /** 热沉自己的热容（J/K）：给小值 ⇒ 不会变成"热量仓库" ✗ */
+    private static final double SINK_CAPACITY = 64.0D;
+    /** 热阻（Mek 的"逆传导"✓ 越小越容易导热）：给中等值 ⇒ 流量温和 ✓ */
+    private static final double SINK_INVERSE_CONDUCTION = 5.0D;
+
+    /** 热面的句柄（懒加载 ✓ 与能量句柄同一套路 ✓） */
+    private final LazyOptional<mekanism.api.heat.IHeatHandler> heatHolder =
+            LazyOptional.of(() -> new HeatSink(core));
+
+    /**
+     * §582 <b>热沉</b>：温度就报 Mek 的环境温度（300K ✓ 相对热源"冷" ✓ ⇒ 热会自己导进来 ✓）。
+     * <p>⚠ <b>绝不囤积</b> ✗：{@link #handleHeat} 只接受"**这一 tick 立刻能换成 FE**"的那部分热量 ✓
+     * （预算 = `converter_input_fe_per_tick` ÷ 0.4 ✓，再受 FE 池剩余空间夹一次 ✓）
+     * ⇒ 多出来的热**留在 Mek 网络里** ✓ 我们这边一个热量都不存 ✓ **不会爆表** ✓✓。
+     * <p>也**绝不反向放热**（负数一律返回 0 ✓）⇒ 不可能把网络搞乱 ✗。
+     */
+    private static final class HeatSink implements mekanism.api.heat.IHeatHandler {
+        private final EeConverterCore core;
+
+        HeatSink(EeConverterCore core) { this.core = core; }
+
+        @Override public int getHeatCapacitorCount() { return 1; }
+        @Override public double getHeatCapacity(int capacitor) { return SINK_CAPACITY; }
+        @Override public double getInverseConduction(int capacitor) { return SINK_INVERSE_CONDUCTION; }
+        @Override public double getTemperature(int capacitor) { return mekanism.api.heat.HeatAPI.AMBIENT_TEMP; }
+        @Override public double getTotalHeatCapacity() { return SINK_CAPACITY; }
+        @Override public double getTotalInverseConduction() { return SINK_INVERSE_CONDUCTION; }
+        @Override public double getTotalTemperature() { return mekanism.api.heat.HeatAPI.AMBIENT_TEMP; }
+
+        @Override
+        public double handleHeat(int capacitor, double transfer) {
+            if (!(transfer > 0.0D)) return 0.0D;                       // 不放热 ✗（负数一律拒绝 ✓）
+            int feRoom = Math.max(0, core.getMaxEnergyStored() - core.getEnergyStored());
+            if (feRoom <= 0) return 0.0D;                              // FE 池满 ⇒ 不收热 ✓
+            int feBudget = Math.min(feRoom, ModConfig.converterInputFePerTick());
+            if (feBudget <= 0) return 0.0D;
+            double heatBudget = feBudget / FE_PER_HEAT;                 // 这一 tick 最多接受多少热量 ✓
+            double accepted = Math.min(transfer, heatBudget);
+            if (!(accepted > 0.0D)) return 0.0D;
+            int fe = core.residualFloor(accepted * FE_PER_HEAT);        // §571 残差：小数不丢 ✓
+            if (fe > 0) core.insertFe(fe, false);
+            return accepted;
+        }
+    }
     public FloatingLong extractEnergy(int container, FloatingLong amount, Action action) {
         // §563 通用机械线缆"主动拉"走这条（原来恒 ZERO ✗ ⇒ 一根 J 都拉不出去 ✗）
         if (amount == null) return FloatingLong.ZERO;
