@@ -241,6 +241,26 @@ public class ElderManaPedestalBlockEntity extends BlockEntity {
             settleTicks = 0;
             settle(level, pos);
         }
+        // §552 均摊：把"这一秒拿到的总量"分成 SETTLE_INTERVAL 份，每 tick 灌一份 ✓
+        //      ⇒ 观感是**平滑地一点点涨**（原先是每秒一次性灌一波 ✗）；
+        //      ⚠ 来源的副作用（扣燃料/涨凋灵度/灵魂账）**仍只在 settle() 里每秒发生一次** ✓
+        //        所以绝不会被算快 20 倍 ✗。
+        if (lastRate > 0.0D) {
+            if (!hasSpaceForEe()) {
+                pool = 0.0D;
+                lastRate = 0.0D;
+                charging = false;
+            } else {
+                pool += lastRate / SETTLE_INTERVAL;
+                if (pool >= 1.0D) {
+                    int amount = (int) Math.floor(pool);
+                    pool -= amount;
+                    int accepted = distribute(amount);
+                    if (accepted < amount) pool = 0.0D;
+                }
+                charging = true;      // 有来源在产 ⇒ 粒子照演（原先是"这一秒灌进去了才演" ✗ 均摊后大多数 tick 都不到 1 点 ✗）
+            }
+        }
         if (charging) showCharging(level, pos);
     }
 
@@ -262,7 +282,7 @@ public class ElderManaPedestalBlockEntity extends BlockEntity {
      *       就会连着 {@code pool} 一起被清掉 ✗（例如台座旁刚好亮到 {@code light_level} 不产 EE、
      *       但刚死了一只怪 ✓ 那笔账就没了 ✓）。现在两种来源分开判 ✓。</li>
      * </ol>
-     * <p>⚠ 高速率（远大于 1 EE/秒）时这里会一次灌进好几点 ✓（{@code floor(pool)} ✓ 不浪费 ✓）。
+     * <p>§552 起：这里**只**问来源、**只**记速率（{@code lastRate}）；真正的"灌进水晶"由 {@code tick()} 每 tick 均摊 1/20 ✓（高速率下仍是每 tick 灌整数点 ✓ 不浪费 ✓）。
      */
     private void settle(ServerLevel level, BlockPos pos) {
         // ① 先看"有没有地方可灌" —— 满了就整车停：**不**问来源、**不**扣燃料、**不**涨凋灵度 ✓
@@ -293,20 +313,9 @@ public class ElderManaPedestalBlockEntity extends BlockEntity {
             return;
         }
 
-        pool += gained;
-        if (pool < 1.0D) {          // 还没攒够 1 点 EE ⇒ 这一秒什么都不做 ✓（不是"没在充"⇒ 也不演 ✗）
-            charging = false;
-            return;
-        }
-
-        int amount = (int) Math.floor(pool);
-        pool -= amount;
-        int accepted = distribute(amount);
-        if (accepted < amount) {
-            // 装不下的部分直接丢掉（说明附近全满了 ⇒ 台座"满了就停"✓ 不囤积 ✓）
-            pool = 0.0D;
-        }
-        charging = accepted > 0;
+        // §552 不再"这一秒一次灌完" ✗ ⇒ 只把总量记进 lastRate ✓，真正的灌入交给 tick() 每 tick 均摊 1/20 ✓
+        //      （蓄水池 pool 的语义不变：不足 1 点就一直攒着 ✓ 不浪费 ✓）
+        charging = true;
     }
 
     /**
