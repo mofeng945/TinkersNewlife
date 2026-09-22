@@ -7,6 +7,7 @@ import com.mofengbaizhi.tinkersnewlife.content.item.CurseCoreItem;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
+import com.mofengbaizhi.tinkersnewlife.content.energy.EnergyUnits;
 import net.minecraft.world.item.ItemStack;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
@@ -270,7 +271,8 @@ public final class CursePowerHelper {
         if (amount <= 0) return true;
         if (isCurseInfinite(player)) return true;
         if (getTotalCurse(player) >= amount) return true;
-        // ⭐ 万法有道：咒力不够时，**灵魂（1 咒力 = 3 灵魂）与法力（1 咒力 = 0.75 法力）也算可用** ✓
+        // ⭐ 万法有道：咒力不够时，**灵魂（1 咒力 = 2 灵魂）与法力（1 咒力 = 0.5 法力）也算可用** ✓
+        //   （汇率唯一来源 = EnergyUnits ✓ 见 AllPathsOneTrait.canCoverCurse ✓）
         //   仅在该玩家穿着带此特性的巫师甲时成立 ✓；内部全程 try/catch（fail-safe ✓ 出错=False ✓）
         return com.mofengbaizhi.tinkersnewlife.content.modifier.AllPathsOneTrait.canCoverCurse(player, amount);
     }
@@ -389,8 +391,9 @@ public final class CursePowerHelper {
 
     /**
      * 支付咒力（领域消耗与术式消耗共用）：
-     * 优先消耗背包中的结界碎片（1 碎片 = 25 咒力）→ 咒力核心池 → **封呪瓶** →
-     * 差额按 1:3 由诡厄巫法灵魂能量兜底。
+     * 优先消耗背包中的结界碎片（1 碎片 = 25 咒力）→ 咒力核心池 → **封呪瓶** → **呪蔵**
+     * → 差额由诡厄巫法灵魂能量兜底：<b>1 咒力 = 2 灵魂</b>（{@link EnergyUnits#SOULS_PER_CURSE} ✓
+     * 旧口径是 1:3 ✗ 已按「1 EE = 4 灵魂 = 2 咒力」的全模组统一公式改掉 ✓）。
      * 返回 0 = 咒力/碎片支付，1 = 灵魂能量兜底支付，-1 = 全部不足。
      */
     public static int payCurseWithSoulFallback(Player player, double cost) {
@@ -410,7 +413,8 @@ public final class CursePowerHelper {
         double deficit = spendCurseShared(player, cost);
         if (deficit <= 0) return 0;
         // 3) 灵魂能量兜底（神灵金盔甲"灵魂折扣"：每级 -5% 灵魂消耗）
-        int soulsNeeded = (int) Math.ceil(deficit * 3.0);
+        //    ⭐ 汇率一律走 EnergyUnits（1 咒力 = 2 灵魂 ✓）—— 以前这里是字面量 * 3.0 ✗
+        int soulsNeeded = (int) Math.ceil(EnergyUnits.curseToSouls(deficit));
         int discount = soulDiscountLevel(player);
         if (discount > 0) {
             soulsNeeded = Math.max(1, (int) Math.ceil(soulsNeeded * (1.0 - 0.05 * discount)));
@@ -424,8 +428,8 @@ public final class CursePowerHelper {
         //   —— 免得出现"灵魂扣了、法力却没付成"的半付状态 ✗（§379）
         if (!com.mofengbaizhi.tinkersnewlife.content.modifier.AllPathsOneTrait.active(player)) return -1;
         double soulsLeft = soulsNeeded - Math.max(0, souls);
-        int manaNeeded = (int) Math.ceil(
-                soulsLeft / com.mofengbaizhi.tinkersnewlife.content.modifier.AllPathsOneTrait.SOULS_PER_MANA);
+        // 汇率走 EnergyUnits（1 灵魂 = 0.25 法力 ✓）—— 以前借道 AllPathsOneTrait.SOULS_PER_MANA（值相同 ✓ 但入口分散 ✗）
+        int manaNeeded = (int) Math.ceil(EnergyUnits.soulsToMana(soulsLeft));
         int manaHave = com.mofengbaizhi.tinkersnewlife.content.modifier.AllPathsOneTrait.realManaOf(player);
         if (manaHave < manaNeeded) return -1;                        // 干跑：法力也不够 ⇒ 一点不扣 ✓
         if (souls > 0

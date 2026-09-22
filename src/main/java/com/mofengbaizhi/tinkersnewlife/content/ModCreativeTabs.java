@@ -73,6 +73,7 @@ public class ModCreativeTabs {
 
                                 // ----- 矿石 -----
                                 output.accept(ModItems.GHELOTH_ORE.get());
+                                output.accept(ModItems.ELDER_CRYSTAL_ORE.get());   // §519 古老者水晶矿石（只在深暗之域）
 
                                 // ----- 墨默刷怪蛋（位于所有旧日材料之后、匠魂部件之前） -----
                                 output.accept(ModItems.MOMO_SPAWN_EGG.get());
@@ -222,6 +223,10 @@ public class ModCreativeTabs {
                                 // ----- 封呪瓶（咒力容器饰品）+ 其专属流体「咒力残秽」的桶 -----
                                 output.accept(ModItems.CURSE_BOTTLE.get());
                                 output.accept(ModItems.CURSE_VAULT.get());
+
+                                // ----- 古老者水晶（§519 P1：EE 容器；放副手/饰品可为施法供能）-----
+                                output.accept(ModItems.ELDER_CRYSTAL.get());
+                                output.accept(ModItems.ELDER_CRYSTAL_BLOCK.get());
                             })
                             .build()
             );

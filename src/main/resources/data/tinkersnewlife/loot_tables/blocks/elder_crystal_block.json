@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "tinkersnewlife:elder_crystal_block",
+          "functions": [
+            {
+              "function": "minecraft:copy_nbt",
+              "source": "block_entity",
+              "ops": [
+                {
+                  "op": "replace",
+                  "source": "EE",
+                  "target": "BlockEntityTag.EE"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

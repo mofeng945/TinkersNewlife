@@ -1,0 +1,6 @@
+{
+  "type": "forge:add_features",
+  "biomes": "minecraft:deep_dark",
+  "features": "tinkersnewlife:elder_crystal_ore",
+  "step": "underground_ores"
+}

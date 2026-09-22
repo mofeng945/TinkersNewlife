@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.content.modifier;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
+import com.mofengbaizhi.tinkersnewlife.content.energy.EnergyUnits;
 import com.mofengbaizhi.tinkersnewlife.integration.irons_spellbooks.IronSpellsSpellAccess;
 import com.mofengbaizhi.tinkersnewlife.util.SoulEnergyBridge;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
@@ -34,13 +35,13 @@ import java.util.List;
  *   <li><b>本模组咒力</b>不够 ⇒ 先吃<b>灵魂</b>（既有 ✓），再吃<b>法力</b> ✓。</li>
  * </ul>
  *
- * <h2>汇率（都换算到"灵魂"这一个公共单位上 ✓ 全局自洽 ✓）</h2>
+ * <h2>汇率（⭐ 唯一来源：{@link EnergyUnits} —— 本类不再自带数字 ✗）</h2>
  * <table border="1">
  *   <tr><th>换算</th><th>比率</th></tr>
- *   <tr><td>1 法力 = 4 灵魂</td><td>用户定案 ✓</td></tr>
- *   <tr><td>1 咒力 = 3 灵魂</td><td>沿用既有「咒力不足由灵魂兜底」的 1:3（
- *       {@link CursePowerHelper#payCurseWithSoulFallback}）✓</td></tr>
- *   <tr><td>⇒ 1 咒力 = 0.75 法力</td><td>由上两行推出 ✓</td></tr>
+ *   <tr><td>1 EE = 1 法力 = 4 灵魂 = 2 咒力</td><td>用户 2026-09-21 拍板（全模组统一 ✓）</td></tr>
+ *   <tr><td>⇒ 1 法力 = 4 灵魂</td><td>{@link EnergyUnits#SOULS_PER_MANA}</td></tr>
+ *   <tr><td>⇒ 1 咒力 = 2 灵魂</td><td>{@link EnergyUnits#SOULS_PER_CURSE}（<b>旧口径是 3</b> ✗ 已按新公式改成 2 ✓）</td></tr>
+ *   <tr><td>⇒ 1 咒力 = 0.5 法力</td><td>{@link EnergyUnits#MANA_PER_CURSE}（<b>旧口径是 0.75</b> ✗）</td></tr>
  * </table>
  *
  * <h2>⚠ 三条安全铁律（上一版翻车后定的 ✓ 见备忘录 §379 / §380）</h2>
@@ -72,11 +73,20 @@ public class AllPathsOneTrait extends Modifier implements TooltipModifierHook {
     public static final ModifierId ID =
             new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "all_paths_one"));
 
-    /** 1 法力 = 4 灵魂（用户口径 ✓） */
-    public static final double SOULS_PER_MANA = 4.0D;
+    /**
+     * 1 法力 = 4 灵魂。
+     * <p>⭐ 现在<b>只是 {@link EnergyUnits} 的别名</b>（值没变：4 ✓）—— 保留常量名是为了不动调用方 ✓，
+     * 但数字来源统一到换算表了 ⇒ 以后改汇率只改 {@code EnergyUnits} 一处 ✓。
+     */
+    public static final double SOULS_PER_MANA = EnergyUnits.SOULS_PER_MANA;
 
-    /** 1 咒力 = 3 灵魂（既有口径 ✓） */
-    public static final double SOULS_PER_CURSE = 3.0D;
+    /**
+     * 1 咒力 = 2 灵魂。
+     * <p>⭐ 旧值是 <b>3.0</b>（历史遗留的"咒力不足由灵魂兜底 1:3"）✗ ——
+     * 用户 2026-09-21 定案全模组统一为 {@code 1 EE = 4 灵魂 = 2 咒力} ⇒ 现在是
+     * {@link EnergyUnits#SOULS_PER_CURSE} = <b>2.0</b> ✓（同时 {@code CursePowerHelper} 的兜底也一起改了 ✓）。
+     */
+    public static final double SOULS_PER_CURSE = EnergyUnits.SOULS_PER_CURSE;
 
     /** 报给铁魔法"能垫多少法力"的上限 ✓（防止"咒力无限"换算成天文数字把别的逻辑噎住 ✗） */
     public static final float POOL_CAP = 10000.0F;
@@ -130,19 +140,19 @@ public class AllPathsOneTrait extends Modifier implements TooltipModifierHook {
     }
 
     // ============================================================
-    //  汇率
+    //  汇率（⭐ 一律转调 EnergyUnits —— 这里不写任何数字 ✗）
     // ============================================================
 
     public static double curseAsSouls(double curse) {
-        return curse * SOULS_PER_CURSE;
+        return EnergyUnits.curseToSouls(curse);
     }
 
     public static double curseAsMana(double curse) {
-        return curseAsSouls(curse) / SOULS_PER_MANA;
+        return EnergyUnits.curseToMana(curse);
     }
 
     public static double manaAsSouls(double mana) {
-        return mana * SOULS_PER_MANA;
+        return EnergyUnits.manaToSouls(mana);
     }
 
     // ============================================================
@@ -191,7 +201,7 @@ public class AllPathsOneTrait extends Modifier implements TooltipModifierHook {
     public static float manaPool(@Nullable Player player) {
         try {
             if (player == null) return 0.0F;
-            double pool = curseAsMana(curseOf(player)) + soulsOf(player) / SOULS_PER_MANA;
+            double pool = curseAsMana(curseOf(player)) + EnergyUnits.soulsToMana(soulsOf(player));
             return (float) Math.max(0.0D, Math.min(POOL_CAP, pool));
         } catch (Throwable ignored) {
             return 0.0F;   // fail-safe ✓
@@ -204,7 +214,7 @@ public class AllPathsOneTrait extends Modifier implements TooltipModifierHook {
             if (!active(player)) return false;
             double souls = soulsOf(player);
             double mana = Math.max(0, realManaOf(player));
-            return curseOf(player) + souls / SOULS_PER_CURSE + manaAsSouls(mana) / SOULS_PER_CURSE >= amount;
+            return curseOf(player) + EnergyUnits.soulsToCurse(souls) + EnergyUnits.manaToCurse(mana) >= amount;
         } catch (Throwable ignored) {
             return false;
         }
@@ -235,7 +245,7 @@ public class AllPathsOneTrait extends Modifier implements TooltipModifierHook {
             if (player == null || missing <= 0) return 0;
             int remaining = missing;
 
-            // ① 咒力（1 咒力 = 0.75 法力）
+            // ① 咒力（1 咒力 = 0.5 法力 ⇒ EnergyUnits.MANA_PER_CURSE ✓ 不再写 0.75 ✗）
             double curseNeed = Math.min(curseOf(player), remaining / curseAsMana(1.0D));
             if (curseNeed > 0.0D) {
                 double left = CursePowerHelper.spendCurseShared(player, curseNeed);
@@ -245,10 +255,10 @@ public class AllPathsOneTrait extends Modifier implements TooltipModifierHook {
             if (remaining <= 0) return missing;
 
             // ② 灵魂（1 法力 = 4 灵魂）—— 先确认够再扣 ✓（免得半路失败却已扣掉一部分 ✗）
-            int soulsNeed = (int) Math.ceil(remaining * SOULS_PER_MANA);
+            int soulsNeed = EnergyUnits.ceilEeToSouls(remaining);
             int useSouls = Math.min(soulsNeed, soulsOf(player));
             if (useSouls > 0 && SoulEnergyBridge.decreaseSouls(player, useSouls)) {
-                remaining -= (int) Math.floor(useSouls / SOULS_PER_MANA);
+                remaining -= (int) Math.floor(EnergyUnits.soulsToMana(useSouls));
             }
             return missing - Math.max(0, remaining);
         } catch (Throwable ignored) {
@@ -266,8 +276,8 @@ public class AllPathsOneTrait extends Modifier implements TooltipModifierHook {
             if (player == null || missing <= 0) return 0;
             int remaining = missing;
 
-            // ① 咒力（1 咒力 = 3 灵魂）
-            double curseNeed = Math.min(curseOf(player), remaining / SOULS_PER_CURSE);
+            // ① 咒力（1 咒力 = 2 灵魂 ⇒ EnergyUnits.SOULS_PER_CURSE ✓ 旧口径是 3 ✗）
+            double curseNeed = Math.min(curseOf(player), EnergyUnits.soulsToCurse(remaining));
             if (curseNeed > 0.0D) {
                 double left = CursePowerHelper.spendCurseShared(player, curseNeed);
                 double used = curseNeed - Math.max(0.0D, left);
@@ -275,12 +285,12 @@ public class AllPathsOneTrait extends Modifier implements TooltipModifierHook {
             }
             if (remaining <= 0) return missing;
 
-            // ② 法力（1 法力 = 4 灵魂）
-            int manaNeed = (int) Math.ceil(remaining / SOULS_PER_MANA);
+            // ② 法力（1 法力 = 4 灵魂）—— 先算"要几点法力"，不够就一点不动 ✓
+            int manaNeed = (int) Math.ceil(EnergyUnits.soulsToMana(remaining));
             int manaHave = Math.max(0, realManaOf(player));
             if (manaHave >= manaNeed && manaNeed > 0) {
                 writeManaRaw(player, manaHave - manaNeed);
-                remaining -= manaNeed * (int) SOULS_PER_MANA;
+                remaining -= (int) Math.floor(EnergyUnits.manaToSouls(manaNeed));
             }
             return missing - Math.max(0, remaining);
         } catch (Throwable ignored) {

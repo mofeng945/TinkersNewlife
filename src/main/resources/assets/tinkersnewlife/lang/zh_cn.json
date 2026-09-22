@@ -559,7 +559,7 @@
   "recipe.tconstruct.extract_modifier.skills": "剥离技巧",
   "message.tinkersnewlife.burnout.entered": "§c术式熔断！%s 秒内无法展开领域或使用术式",
   "message.tinkersnewlife.burnout.active": "§c术式熔断中，剩余 %s 秒",
-  "message.tinkersnewlife.soul_fallback": "§d咒力耗尽，开始消耗灵魂能量！（1 咒力 = 3 灵魂能量）",
+  "message.tinkersnewlife.soul_fallback": "§d咒力耗尽，开始消耗灵魂能量！（1 咒力 = 2 灵魂能量）",
       "message.tinkersnewlife.clash.loser_lock": "§4领域被天逆鉾刺穿——对抗失败！所有领域对抗结束前无法展开领域或使用术式",
     "message.tinkersnewlife.clash.loser_unlock": "§7所有领域对抗已结束，你重新可以使用领域与术式",
     "message.tinkersnewlife.clash.locked_domain": "§4对抗失败锁定中：所有领域对抗结束前无法展开领域",
@@ -1061,9 +1061,9 @@
   "trait.tinkersnewlife.mana_surge.line": "魔力涌动 ×%s：法力 +%s · 法术强度 +%s%% · 法术伤害 +%s%%",
   "modifier.tinkersnewlife.mana_surge.description": "巫师套装默认特性：每件提供法力上限 +125、法术强度 +5%、法术伤害 +7%，按件叠加；每件还自带 1 格法术容器，可用奥术铁砧把卷轴里的法术刻进盔甲。",
   "modifier.tinkersnewlife.mana_shield.description": "巫师套装默认特性：每件使受到的魔法伤害降低 10%（多件链乘）；每件生命上限 +2；只要穿着一件，自身的增益与减益持续时间都减半（不叠加）。只削魔法——物理、虚空、穿透与火焰等一律全额。",
-  "modifier.tinkersnewlife.all_paths_one.description": "巫师套装默认特性：法力、咒力、灵魂三系资源互相垫付——法力不够时先吃咒力再吃灵魂；灵魂不够时先吃咒力再吃法力；咒力不够时先吃灵魂再吃法力。汇率：1 法力 = 4 灵魂，1 咒力 = 3 灵魂。",
+  "modifier.tinkersnewlife.all_paths_one.description": "巫师套装默认特性：法力、咒力、灵魂三系资源互相垫付——法力不够时先吃咒力再吃灵魂；灵魂不够时先吃咒力再吃法力；咒力不够时先吃灵魂再吃法力。汇率（全模组统一）：1 晶能(EE) = 1 法力 = 4 灵魂 = 2 咒力。",
   "modifier.tinkersnewlife.all_paths_one": "万法有道",
-  "modifier.tinkersnewlife.all_paths_one.tip": "§d万法有道：法力 1 = 灵魂 4 · 咒力 1 = 灵魂 3 —— 三系互相垫付",
+  "modifier.tinkersnewlife.all_paths_one.tip": "§d万法有道：法力 1 = 灵魂 4 · 咒力 1 = 灵魂 2 —— 三系互相垫付",
   "modifier.tinkersnewlife.all_paths_one.flavor": "万法殊途同归；法力、咒力与灵魂，本是一物。",
   "trait.tinkersnewlife.all_paths_one": "万法有道",
   "message.tinkersnewlife.mana_fallback": "§b万法有道：法力垫付",
@@ -1265,5 +1265,16 @@
   "gui.tinkersnewlife.quantum_vault.deposit_all": "存入全部",
   "gui.tinkersnewlife.quantum_vault.page": "第 %s / %s 页",
   "gui.tinkersnewlife.quantum_vault.total": "已存 %s / %s",
-  "pattern.tinkersnewlife.wizard_armor": "巫师套装"
+  "pattern.tinkersnewlife.wizard_armor": "巫师套装",
+
+  "item.tinkersnewlife.elder_crystal": "古老者水晶",
+  "item.tinkersnewlife.elder_crystal.power": "已存 EE：%s / %s",
+  "item.tinkersnewlife.elder_crystal.rate": "换算：1 EE = 1 法力 = 4 灵魂 = 2 咒力",
+  "item.tinkersnewlife.elder_crystal.hint": "放副手/饰品：手持施法物品时自动为法力供能（背包里不供能）；身上带着有电的水晶会持续受冻（空水晶完全不冷）",
+  "block.tinkersnewlife.elder_crystal_block": "古老者水晶方块",
+  "block.tinkersnewlife.elder_crystal_block.power": "已存 EE：%s / %s",
+  "block.tinkersnewlife.elder_crystal_block.rate": "换算：1 EE = 1 法力 = 4 灵魂 = 2 咒力",
+  "block.tinkersnewlife.elder_crystal_block.hint": "挖掉会连同里面的 EE 一起带走（4 个水晶 = 1 个方块，EE 求和不丢）",
+  "block.tinkersnewlife.elder_crystal_ore": "古老者水晶矿石",
+  "block.tinkersnewlife.elder_crystal_ore.desc": "只在深暗之域（deep_dark）生成（Y -64 ~ -1）；采掘得古老者水晶（自带 500 EE，时运加成，精准采集掉原矿）"
 }

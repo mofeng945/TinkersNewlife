@@ -63,6 +63,7 @@ public final class IronSpellsSpellAccess {
     private static Method mCastSpell;       // castSpell(Level,int,ServerPlayer,CastSource,boolean)
     private static Method mCastComplete;    // onServerCastComplete(Level,int,LivingEntity,MagicData,boolean)
     private static Method mMagicDataGet;    // static LivingEntity -> MagicData
+    private static Method mIsCasting;       // MagicData -> boolean（isCasting：在不在读条）
     private static Method mContainerCreate; // static create(int,boolean,boolean)
     private static Method mContainerAdd;    // addSpell(AbstractSpell,int,boolean,ItemStack)
     private static Method mContainerSave;   // save(ItemStack)
@@ -188,6 +189,8 @@ public final class IronSpellsSpellAccess {
                     break;
                 }
             }
+            // MagicData#isCasting()：古老者水晶判断"是否在读条"用（javap 核对过签名 ✓）
+            mIsCasting = find(cMagicData, "isCasting");
             // 施法来源：优先 **SCROLL** —— 反汇编 CastSource#consumesMana() 可知：
             //   只有 SPELLBOOK（以及开配置时的 SWORD）消耗法力，SCROLL/MOB/COMMAND/NONE 都不消耗 ✓
             //   （respectsCooldown() 同样是 SPELLBOOK/SWORD 才为真 → 赠送施法也不会吃 ISS 自身冷却 ✓）。
@@ -417,6 +420,66 @@ public final class IronSpellsSpellAccess {
         } catch (Throwable t) {
             return null;
         }
+    }
+
+    /**
+     * 该生物此刻是否<b>正在读条任意法术</b>（{@code MagicData.isCasting()} ✓ 反射核对过签名 ✓）。
+     * <p>用途：「古老者水晶」判断"是否处在施法场景"（读条中也算 ✓ 见 {@code ElderCrystalManaFeeder}）。
+     * <p>⚠ 与 {@link #isCastingSpell} 的区别：那个要指定法术 id，这个只问"在不在读条" ✓。
+     */
+    public static boolean isCastingAny(LivingEntity entity) {
+        init();
+        if (!ready || entity == null || mIsCasting == null) return false;
+        try {
+            Object md = magicDataOf(entity);
+            return md != null && Boolean.TRUE.equals(mIsCasting.invoke(md));
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    // ============================================================
+    //  法力上限（MAX_MANA 属性）—— ⭐ "取到就缓存、取不到下次再来"
+    // ============================================================
+
+    private static net.minecraft.world.entity.ai.attributes.Attribute maxManaAttr;
+    private static boolean maxManaResolved;
+
+    /**
+     * 该生物的法力上限（读不到返回 -1）。
+     *
+     * <p>上限 = 铁魔法属性 {@code AttributeRegistry.MAX_MANA} 的当前值
+     * （javap 核对过：{@code public static final RegistryObject<Attribute> MAX_MANA} ✓）。
+     *
+     * <p>⚠ 为什么这里<b>不</b>直接用 {@link #attribute(String)}：那个会把"取不到"也写进缓存
+     * （{@code SPELL_POWERS.put(fieldName, Boolean.FALSE)} ✗）—— 而本类在<b>模组构造期</b>就可能被事件类加载，
+     * 那时属性注册表还没填好 ⇒ 一次失败就<b>永久 null</b> ✗（{@code WizardArmorSetHandler} 的注释里记过同一个坑）。
+     * 所以这里单独走"成功才缓存"的解析 ✓（与本模组其它属性解析同一套做法 ✓）。
+     */
+    public static int maxManaOf(LivingEntity entity) {
+        if (entity == null) return -1;
+        net.minecraft.world.entity.ai.attributes.Attribute attr = resolveMaxMana();
+        if (attr == null) return -1;
+        net.minecraft.world.entity.ai.attributes.AttributeInstance inst = entity.getAttribute(attr);
+        return inst == null ? -1 : (int) Math.floor(inst.getValue());
+    }
+
+    private static net.minecraft.world.entity.ai.attributes.Attribute resolveMaxMana() {
+        if (maxManaResolved) return maxManaAttr;
+        try {
+            Class<?> reg = Class.forName("io.redspace.ironsspellbooks.api.registry.AttributeRegistry");
+            Object holder = reg.getField("MAX_MANA").get(null);
+            if (holder != null) {
+                Object attr = holder.getClass().getMethod("get").invoke(holder);
+                if (attr instanceof net.minecraft.world.entity.ai.attributes.Attribute a) {
+                    maxManaAttr = a;
+                    maxManaResolved = true;   // ⭐ 只有成功才缓存 ✓
+                }
+            }
+        } catch (Throwable ignored) {
+            // 没就绪 / 没装铁魔法 ⇒ 保持 null，下次再试 ✓
+        }
+        return maxManaAttr;
     }
 
     // ============================================================

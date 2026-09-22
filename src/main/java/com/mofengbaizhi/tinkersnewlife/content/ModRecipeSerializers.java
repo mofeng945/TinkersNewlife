@@ -6,6 +6,7 @@ import com.mofengbaizhi.tinkersnewlife.content.recipe.CrystalModifierRecipe;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.GenericToolMeltingRecipe;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.TagModifierSalvage;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.CurseCraftRecipe;
+import com.mofengbaizhi.tinkersnewlife.content.recipe.ElderCrystalMergeRecipe;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -57,4 +58,30 @@ public class ModRecipeSerializers {
     public static final RegistryObject<RecipeSerializer<TagModifierSalvage>> TAG_MODIFIER_SALVAGE =
             RECIPE_SERIALIZERS.register("modifier_salvage",
                     () -> LoadableRecipeSerializer.of(TagModifierSalvage.LOADER));
+
+    // ============================================================
+    //  古老者水晶合并（§519 P1）：4 水晶 → 1 水晶方块，EE 求和保 NBT ✓
+    // ============================================================
+
+    /**
+     * 我们的配方类型标识 {@code tinkersnewlife:elder_crystal_merge}。
+     *
+     * <p>⚠ <b>真正的合成走的是 {@code minecraft:crafting}</b> ——
+     * {@link com.mofengbaizhi.tinkersnewlife.content.recipe.ElderCrystalMergeRecipe}
+     * 继承 {@code CustomRecipe}，{@code getType()} 返回 {@code RecipeType.CRAFTING}
+     * （否则工作台按 {@code RecipeType.CRAFTING} 查表时根本找不到它 ✗）。
+     * 这个类型留给"按类型认出我们的合并配方"的用途 ✓（注册本身无副作用 ✓）。
+     */
+    public static final RegistryObject<RecipeType<ElderCrystalMergeRecipe>> ELDER_CRYSTAL_MERGE_TYPE =
+            RECIPE_TYPES.register("elder_crystal_merge", () -> new RecipeType<>() {
+                @Override
+                public String toString() {
+                    return TinkersNewlife.MOD_ID + ":elder_crystal_merge";
+                }
+            });
+
+    /** 合并配方的序列化器（data/<ns>/recipes/*.json 里的 {@code "type"} 就是它 ✓） */
+    public static final RegistryObject<RecipeSerializer<ElderCrystalMergeRecipe>> ELDER_CRYSTAL_MERGE =
+            RECIPE_SERIALIZERS.register("elder_crystal_merge",
+                    ElderCrystalMergeRecipe.Serializer::new);
 }

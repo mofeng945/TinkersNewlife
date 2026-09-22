@@ -496,4 +496,30 @@ public class ModItems {
     public static final RegistryObject<Item> ORIGIN_ALLOY_BLOCK =
             ITEMS.register("origin_alloy_storage_block",
                     () -> new BlockItem(ModBlocks.ORIGIN_ALLOY_BLOCK.get(), new Item.Properties()));
+
+    // ============================================================
+    //  古老者水晶（§519 P1）
+    //  矿石本体在 ModBlocks.ELDER_CRYSTAL_ORE，这里只登记它的 BlockItem；
+    //  水晶物品/水晶方块物品都是自定义 Item（NBT 存 EE ✓ 见 content/energy/ElderCrystalStorage）
+    // ============================================================
+
+    /**
+     * 古老者水晶：以 NBT 存 EE（容量 1000），放副手/饰品可为施法供能，身上带着会受寒冷反噬。
+     * <p>矿石采掘产出（1 个 / 时运加成），自带 500 EE（见战利品表的 {@code set_nbt} ✓）。
+     */
+    public static final RegistryObject<Item> ELDER_CRYSTAL =
+            ITEMS.register("elder_crystal",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.ElderCrystalItem());
+
+    /** 古老者水晶方块（BlockItem；容量 4000 EE，EE 存在 BlockEntityTag.EE ✓ 挖掉带走 ✓） */
+    public static final RegistryObject<Item> ELDER_CRYSTAL_BLOCK =
+            ITEMS.register("elder_crystal_block",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.ElderCrystalBlockItem(
+                            (com.mofengbaizhi.tinkersnewlife.content.block.ElderCrystalBlock)
+                                    ModBlocks.ELDER_CRYSTAL_BLOCK.get()));
+
+    /** 古老者水晶矿石（BlockItem） */
+    public static final RegistryObject<Item> ELDER_CRYSTAL_ORE =
+            ITEMS.register("elder_crystal_ore",
+                    () -> new BlockItem(ModBlocks.ELDER_CRYSTAL_ORE.get(), new Item.Properties()));
 }

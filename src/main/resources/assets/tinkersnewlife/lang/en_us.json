@@ -463,9 +463,9 @@
   "item.tinkersnewlife.cognitive_mask": "Two-way Cognitive Obstruction Mask",
   "modifier.tinkersnewlife.mana_surge.description": "Default Wizard Set trait: each piece grants +125 max mana, +5% spell power and +7% spell damage, stacking per piece; each piece also carries one spell slot, so scroll spells can be inscribed onto the armor at an Arcane Anvil.",
   "modifier.tinkersnewlife.mana_shield.description": "Default Wizard Set trait: each piece reduces magic damage taken by 10% (chained across pieces) and grants +2 max health; while wearing at least one piece, all buffs and debuffs on you last half as long (does not stack). Magic only - physical, void, piercing, fire and the rest are untouched.",
-  "modifier.tinkersnewlife.all_paths_one.description": "Default Wizard Set trait: mana, curse and souls cover each other - a mana shortfall eats curse then souls, a soul shortfall eats curse then mana, and a curse shortfall eats souls then mana. Rates: 1 mana = 4 souls, 1 curse = 3 souls.",
+  "modifier.tinkersnewlife.all_paths_one.description": "Default Wizard Set trait: mana, curse and souls cover each other - a mana shortfall eats curse then souls, a soul shortfall eats curse then mana, and a curse shortfall eats souls then mana. Rates (mod-wide): 1 EE = 1 mana = 4 souls = 2 curse.",
   "modifier.tinkersnewlife.all_paths_one": "All Paths Are One",
-  "modifier.tinkersnewlife.all_paths_one.tip": "§d1 mana = 4 souls, 1 curse = 3 souls - the three pools cover each other",
+  "modifier.tinkersnewlife.all_paths_one.tip": "§d1 mana = 4 souls, 1 curse = 2 souls - the three pools cover each other",
   "modifier.tinkersnewlife.all_paths_one.flavor": "All paths lead to the same place; mana, curse and soul are one substance.",
   "trait.tinkersnewlife.all_paths_one": "All Paths Are One",
   "message.tinkersnewlife.mana_fallback": "§bAll Paths Are One: mana paid",
@@ -936,7 +936,7 @@
   "message.tinkersnewlife.ritual.no_xp": "§cThe ritual needs %s experience levels",
   "message.tinkersnewlife.sealed.active": "§cSealed, %s seconds left",
   "message.tinkersnewlife.sealed.entered": "§cYou are sealed by the Ladder! No techniques or domains for %s seconds",
-  "message.tinkersnewlife.soul_fallback": "§dCurse energy exhausted - burning soul energy instead! (1 curse = 3 soul energy)",
+  "message.tinkersnewlife.soul_fallback": "§dCurse energy exhausted - burning soul energy instead! (1 curse = 2 soul energy)",
   "message.tinkersnewlife.spirit.captured": "§d%s has been taken into the Cursed Spirit's maw",
   "message.tinkersnewlife.spirit.invalid": "§cThat individual's data cannot be released",
   "message.tinkersnewlife.spirit.lost": "§c%s died in battle; its record has faded from the Cursed Spirit's maw",
@@ -1266,5 +1266,16 @@
   "word.tinkersnewlife.yog": "Yog-Sothoth",
   "word.tinkersnewlife.yog.desc": "Target: Yog-Sothoth - Unnameable honorific only; grants continuous experience after chanting",
   "word.tinkersnewlife.zako": "Small Fry",
-  "pattern.tinkersnewlife.wizard_armor": "Wizard Armor"
+  "pattern.tinkersnewlife.wizard_armor": "Wizard Armor",
+
+  "item.tinkersnewlife.elder_crystal": "Elder Crystal",
+  "item.tinkersnewlife.elder_crystal.power": "Stored EE: %s / %s",
+  "item.tinkersnewlife.elder_crystal.rate": "Rate: 1 EE = 1 mana = 4 souls = 2 curse",
+  "item.tinkersnewlife.elder_crystal.hint": "In the offhand or a curio slot it feeds your mana while you hold a casting item (the inventory does not); carrying charged crystals chills you over time (empty crystals are not cold at all)",
+  "block.tinkersnewlife.elder_crystal_block": "Elder Crystal Block",
+  "block.tinkersnewlife.elder_crystal_block.power": "Stored EE: %s / %s",
+  "block.tinkersnewlife.elder_crystal_block.rate": "Rate: 1 EE = 1 mana = 4 souls = 2 curse",
+  "block.tinkersnewlife.elder_crystal_block.hint": "Breaking it returns the block with all of its EE (4 crystals = 1 block, EE is summed and never lost)",
+  "block.tinkersnewlife.elder_crystal_ore": "Elder Crystal Ore",
+  "block.tinkersnewlife.elder_crystal_ore.desc": "Generates only in the Deep Dark (Y -64 to -1); mining yields an Elder Crystal (comes with 500 EE, Fortune increases the count, Silk Touch drops the ore itself)"
 }

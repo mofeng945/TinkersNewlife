@@ -11,7 +11,7 @@
     {
       "type": "patchouli:spotlight",
       "item": "tinkersnewlife:curse_bottle",
-      "text": "With a bottle the $(bold)spending order$() becomes:$(br)$(li)the curse core (temporary storage)$(li)the bottle$(li)the $(l:vault)Curse Vault$() (placed block container)$(li)and only then Goety soul energy (1 curse = 3 soul)$(br2)So the bottle is both a spare battery and the stash least likely to be lost."
+      "text": "With a bottle the $(bold)spending order$() becomes:$(br)$(li)the curse core (temporary storage)$(li)the bottle$(li)the $(l:vault)Curse Vault$() (placed block container)$(li)and only then Goety soul energy (1 curse = 2 soul)$(br2)So the bottle is both a spare battery and the stash least likely to be lost."
     },
     {
       "type": "patchouli:text",

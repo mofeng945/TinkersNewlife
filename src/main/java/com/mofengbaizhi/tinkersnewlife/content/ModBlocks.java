@@ -108,6 +108,32 @@ public class ModBlocks {
     public static final RegistryObject<Block> ORIGIN_ALLOY_BLOCK =
             metalBlock("origin_alloy_storage_block", MapColor.COLOR_PURPLE);
 
+    // ============================================================
+    //  古老者水晶（§519 P1）
+    // ============================================================
+
+    /**
+     * 古老者水晶矿石：<b>只在 {@code minecraft:deep_dark} 生成</b>
+     * （见 {@code worldgen/configured_feature} + {@code placed_feature} + {@code forge/biome_modifier}）✓
+     * <p>数值：深板岩底（硬度 4.5 / 抗爆 3.0 / 深板岩音效 ✓ 与原版深板岩矿石同档），
+     * <b>需要铁镐</b>（{@code minecraft:needs_iron_tool} ✓ 深板岩档），
+     * 采掘掉<b>水晶</b>（时运影响数量、精准采集掉原矿 ✓ 见 loot_tables/blocks/elder_crystal_ore.json）。
+     */
+    public static final RegistryObject<Block> ELDER_CRYSTAL_ORE = BLOCKS.register("elder_crystal_ore",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.5F, 3.0F)
+                    .sound(SoundType.DEEPSLATE)
+                    .requiresCorrectToolForDrops()
+                    .mapColor(MapColor.DEEPSLATE)
+            ));
+
+    /**
+     * 古老者水晶方块：容量 4000 EE 的水晶方块（= 4 个水晶）。
+     * <p>挖掉掉自己、EE 一起带走 ✓（原版 BlockEntityTag 机制 ✓ 见 {@link com.mofengbaizhi.tinkersnewlife.content.block.ElderCrystalBlock}）。
+     */
+    public static final RegistryObject<Block> ELDER_CRYSTAL_BLOCK = BLOCKS.register("elder_crystal_block",
+            com.mofengbaizhi.tinkersnewlife.content.block.ElderCrystalBlock::new);
+
     /** 金属储存块的统一属性（对齐原版铁块：5.0 硬度 / 6.0 抗爆 / 需要正确工具 / 金属音效） */
     private static RegistryObject<Block> metalBlock(String name, MapColor color) {
         return BLOCKS.register(name, () -> new Block(BlockBehaviour.Properties.of()

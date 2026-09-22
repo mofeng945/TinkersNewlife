@@ -17,7 +17,7 @@ import slimeknights.tconstruct.library.modifiers.ModifierId;
  * 术式基类：所有术式（解、……）的公共骨架
  * <p>
  * 模板方法 {@link #tryUse(ServerPlayer)} 统一处理：
- * 术式熔断拦截 → 咒力消耗（不足时诡厄巫法灵魂能量 1:3 兜底）→ 视线索敌 →
+ * 术式熔断拦截 → 咒力消耗（不足时诡厄巫法灵魂能量 <b>1 咒力 = 2 灵魂</b> 兜底 ✓ §519 统一）→ 视线索敌 →
  * 调用子类 {@link #onCast}。子类只需实现具体效果，并可复用：
  * <ul>
  *   <li>{@link #computeBaseDamage}：共享成长伤害基底 (1+(输出+亲和/10)/10) × (当前攻击伤害+输出×5)</li>
@@ -121,7 +121,8 @@ public abstract class BaseTechnique {
         return Math.max(1, (int) Math.ceil(cost));
     }
 
-    /** 支付咒力；创造模式免费；不足时差额按 1:3 由诡厄巫法灵魂能量兜底 */
+    /** 支付咒力；创造模式免费；不足时差额按 <b>1 咒力 = 2 灵魂</b>（{@code EnergyUnits.SOULS_PER_CURSE} ✓
+     *  §519 前是 1:3 ✗）由诡厄巫法灵魂能量兜底 */
     protected boolean payCost(ServerPlayer player) {
         if (CursePowerHelper.isCurseInfinite(player)) return true;
         return CursePowerHelper.payCurseWithSoulFallback(player, getCost(player)) >= 0;

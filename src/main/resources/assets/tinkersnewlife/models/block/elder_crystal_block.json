@@ -1,0 +1,6 @@
+{
+  "parent": "block/cube_all",
+  "textures": {
+    "all": "tinkersnewlife:block/elder_crystal_block"
+  }
+}
