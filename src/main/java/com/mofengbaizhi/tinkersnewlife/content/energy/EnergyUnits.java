@@ -187,7 +187,14 @@ public final class EnergyUnits {
         /** 1 EU 折多少 FE（用户口径 4 ✓；未来若 IC2 真接上了，这里改一个数就够 ✓） */
         public static final double FE_PER_EU = 4.0D;
 
-        /** 1 AE 折多少 FE（用户口径 2 ✓） */
+        /**
+         * <b>1 AE 折多少 FE</b>（用户口径 <b>2</b> ✓ 即 {@code 1 AE = 2 FE} ✓ {@code 1 FE = 0.5 AE} ✓）。
+         * <p>⚠ §560 专门核对过方向 ✗：从"FE 缺口"反推"要抽多少 AE"时必须是
+         * <b>除以</b>本常量（{@code wantFe / FE_PER_AE} = {@code wantFe / 2} ✓），
+         * 换算回来才是 <b>乘以</b>本常量（{@code gotAe * FE_PER_AE} ✓）；
+         * 反过来写（×2 / ÷2）会让 AE 那条路的功率差 <b>4 倍</b> ✗
+         * ⇒ 两个方向都收成了下面的一对助手方法 ✓ 别在调用处手写乘除 ✗。
+         */
         public static final double FE_PER_AE = 2.0D;
 
         /** 每 10 J 折多少 FE（用户口径 4 ⇒ {@link #FE_PER_J} = 0.4 ✓） */
@@ -233,6 +240,16 @@ public final class EnergyUnits {
         public static double aeToFe(double ae) {
             if (!(ae > 0.0D)) return 0.0D;
             return ae * FE_PER_AE;
+        }
+
+        /**
+         * <b>FE → AE</b>（{@link #aeToFe} 的逆运算 ✓ 用户口径 {@code 1 AE = 2 FE} ⇒ 1 FE = 0.5 AE ✓）。
+         * <p>⚠ 这就是 §560 盯的那个方向 ✓：<b>"想要 N FE 就得抽 N/2 个 AE"</b> ✓
+         * （例：想补 64 FE ⇒ 抽 32 AE ⇒ {@link #aeToFe}(32) = 64 FE ✓ 首尾自洽 ✓）。
+         */
+        public static double feToAe(double fe) {
+            if (!(fe > 0.0D)) return 0.0D;
+            return fe / FE_PER_AE;
         }
 
         /** 一句写清 §557 的汇率（tooltip / 手册 / 日志共用 ✓） */

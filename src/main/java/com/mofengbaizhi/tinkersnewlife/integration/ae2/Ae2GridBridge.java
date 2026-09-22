@@ -72,15 +72,24 @@ import javax.annotation.Nullable;
  * {@code IInWorldGridNodeHost} ✓）就等价 ✓ —— 方块实体那边**一个 AE2 类型都不出现** ✓
  * （它只经过 {@code EnergyConverterModBridges} 这个中立分派点 ✓）。
  *
- * <h2>单位与汇率</h2>
- * AE2 的能量叫 "AE"，用户口径 {@code 1 AE = 2 FE} ✓。但 AE2 <b>自己</b>的能量是有量纲的
- * （内部单位），官方提供 {@code PowerMultiplier.CONFIG} 做"配置单位 ↔ 内部单位"换算 ✓
- * ⇒ 本桥按"<b>FE 需求量</b> → 除以 2 得到"AE" → 再经 {@code PowerMultiplier.CONFIG.divide}
- * 换算成 AE2 内部单位"去请求 ✓（与 AE2 自己的机器同一套口径 ✓）。
- * <p>⚠ <b>诚实项</b>：这一条把"用户口径的 AE"与"AE2 内部单位"叠在一起了 ——
- * 用户给的 1 AE = 2 FE 更像是"AE 记数"的粗略口径 ✓ 我的做法是
- * "先按 2 AE = 1 FE 算需求，再让 AE2 的倍率把它折成内部单位" ✓
- * 这样 AE2 那边看到的是一个**如实**的能量请求（不会因为我们乱设倍率而抽多/抽少 ✓）。
+ * <h2>单位与汇率（§560 逐行核对过方向 ✓）</h2>
+ * AE2 的能量叫 "AE"，<b>用户口径 {@code 1 AE = 2 FE}</b> ✓（所以 {@code 1 FE = 0.5 AE} ✓、
+ * 常量 {@code EnergyUnits.Fe.FE_PER_AE = 2.0} ✓）。
+ *
+ * <p>⚠ <b>"界面上的 AE 数字"与"AE2 内部能量单位"<u>不是一回事</u></b> ✗ —— 后者是有量纲的
+ * 内部单位，官方用 {@code PowerMultiplier.CONFIG} 在两个记数之间换算 ✓。本桥的走法（一进一出）：
+ * <pre>
+ *   要电时：FE 缺口 ÷ FE_PER_AE  = "要多少 AE"        （64 FE ⇒ 32 AE ✓）
+ *           "要多少 AE" ÷ multiplier = 内部单位        ← PowerMultiplier.CONFIG.divide(...) ✓
+ *   回来时：内部单位 × multiplier = "实际抽到多少 AE"   ← PowerMultiplier.CONFIG.multiply(...) ✓
+ *           "实际 AE" × FE_PER_AE = 到手 FE            （32 AE ⇒ 64 FE ✓）
+ * </pre>
+ * 中间的 {@code divide} 与 {@code multiply} **正好互逆** ✓ ⇒ 到手的 FE 只由
+ * {@link com.mofengbaizhi.tinkersnewlife.content.energy.EnergyUnits.Fe#FE_PER_AE} 决定 ✓ 自洽 ✓
+ * （也就是说：换掉 {@code PowerMultiplier} 那一档只会改变"我们向 AE2 要多少个内部单位"✓
+ *  <b>不会</b>改变"1 AE 换几 FE"✗ —— 后者永远由用户口径那一个常量说了算 ✓）。
+ * <p>⚠ 所以本桥**不需要**"先按 2 AE = 1 FE 算"这种说法 ✗（那是 §559 汇报里的<u>措辞错误</u> ✗
+ * 代码一直是 {@code ÷ FE_PER_AE} = 正确方向 ✓ 见备忘录 §560 ✓）。
  *
  * <h2>隔离（没装 AE2 的玩家为什么不会崩）</h2>
  * <b>本类是唯一 import {@code appeng.*} 的地方</b> ✓ 而且只在
@@ -177,9 +186,18 @@ public final class Ae2GridBridge implements IInWorldGridNodeHost, IGridNodeListe
         int wantFe = Math.min(outputCap, room);
         if (wantFe <= 0) return;
 
-        // ② 用户口径：1 AE = 2 FE ⇒ 要 wantFe FE 就得取 wantFe / 2 "AE" ✓
-        double wantAeUnits = wantFe / EnergyUnits.Fe.FE_PER_AE;
-        // ③ "AE" → AE2 内部单位（与 AE2 自己的机器同一套倍率 ✓）
+        // ② 用户口径：**1 AE = 2 FE**（所以 1 FE = 0.5 AE）—— 常量 EnergyUnits.Fe.FE_PER_AE = 2.0 ✓
+        //    ⇒ 要 wantFe 点 FE，就得抽 wantFe / 2 个 "AE" ✓
+        //      例：想补 64 FE ⇒ 抽 32 AE ⇒ 折回来正好 2 × 32 = 64 FE ✓（§560 已逐行核对方向 ✓）
+        //    ⚠ 方向别写反 ✗：这里必须是 **÷ FE_PER_AE**（= ÷2）✗ 不是 ×2 ✗
+        //      （×2 会让 AE 那条路的实际功率变成正确的 1/4 ✗ —— §560 就是来钉死这一点的 ✓）
+        double wantAeUnits = EnergyUnits.Fe.feToAe(wantFe);
+        // ③ "界面上的 AE 数字" → **AE2 内部能量单位**（这两个不是一回事 ✗ 见类注释"单位与汇率"✓）
+        //    AE2 自己的 `PowerMultiplier` 语义（javap 核实 ✓）：
+        //      `multiply(internal)` = internal × multiplier ⇒ **内部单位 → 界面数字** ✓
+        //      `divide(display)`    = display ÷ multiplier   ⇒ **界面数字 → 内部单位** ✓
+        //    ⇒ 去"要"的时候用 divide（本行 ✓）、回来"数"的时候用 multiply（下面第 ⑤ 步 ✓）
+        //      —— 一进一出正好抵消 ✓ 所以到我们手上的 FE 只由 `FE_PER_AE` 决定 ✓ 自洽 ✓
         double internal = PowerMultiplier.CONFIG.divide(wantAeUnits);
         if (!(internal > 0.0D)) return;
 
@@ -189,9 +207,12 @@ public final class Ae2GridBridge implements IInWorldGridNodeHost, IGridNodeListe
         double gotInternal = energy.extractAEPower(canGetInternal, Actionable.MODULATE, PowerMultiplier.CONFIG);
         if (!(gotInternal > 0.0D)) return;
 
-        // ⑤ 内部单位 → "AE" → FE（**向下取整**：只收整 FE ✓ 少收的零头不补 ⇒ 不凭空发电 ✗）
+        // ⑤ 内部单位 → "界面 AE 数字" → FE ✓（**向下取整**：只收整 FE ✓ 少收的零头不补 ⇒ 不凭空发电 ✗）
+        //    ⚠ 方向核对（§560）：`multiply` 是"内部 → 界面"✓ 与第 ③ 步的 `divide` 正好互逆 ✓
+        //      ⇒ 抽到 N AE ⇒ 这里 `gotAeUnits ≈ N` ⇒ `gotFe = floor(N × 2)` ✓
+        //        完全符合用户口径 `1 AE = 2 FE` ✓（例：抽 16 AE ⇒ 得 32 FE ✓）
         double gotAeUnits = PowerMultiplier.CONFIG.multiply(gotInternal);
-        int gotFe = (int) Math.floor(gotAeUnits * EnergyUnits.Fe.FE_PER_AE);
+        int gotFe = (int) Math.floor(EnergyUnits.Fe.aeToFe(gotAeUnits));
         if (gotFe <= 0) return;
         int accepted = core.insertFe(Math.min(gotFe, wantFe), false);
         if (accepted <= 0) return;
