@@ -52,6 +52,10 @@ public final class IntegrationLoader {
     public static final String TCONSTRUCT = "tconstruct";
     /** 月光库（部分整合包前置） */
     public static final String MOONLIGHT = "moonlight";
+    /** 通用机械（Mekanism）—— §559 起万用能量转化器要暴露它的 STRICT_ENERGY 能力（让线缆能往里推 J） */
+    public static final String MEKANISM = "mekanism";
+    /** 机械动力（Create）—— §559 起万用能量转化器要变成它的动能方块（传动杆能接上） */
+    public static final String CREATE = "create";
 
     /** 环境探测日志用的关注清单（顺序即日志顺序） */
     private static final String[] WATCHED = {

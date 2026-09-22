@@ -183,6 +183,41 @@ dependencies {
     // libs/ 下放安装用 jar（SRG 名，经 fg.deobf 转开发映射）；运行时由玩家自装玉本体。
     // 玉的插件是**被玉扫描 @WailaPlugin 后加载**的，未装玉时 integration/jade/ 下的类根本不会被加载。
     compileOnly fg.deobf("blank:Jade-1.20.1-Forge:11.13.3")
+    // ============================================================
+    //  §559 三家可选模组的 compileOnly（**只编译期** ✓ 绝不打进 jar ✗ 绝不 implementation ✗）
+    //  libs/ 下放的是**安装用的原版 jar**（文件名末尾是版本号 ⇒ flatDir 的 name:version 就能解析 ✓）
+    //  与上面 Jade / Patchouli 完全同一套写法 ✓ 来源 = 整合包 mods 目录里的原 jar ✓
+    //  ⚠ 运行时纪律（否则没装那家的玩家会 NoClassDefFoundError 崩游戏 ✗）：
+    //     ① 所有引用这些包的代码都在**独立类**里（integration/mekanism|ae2|create 下的 *Bridge/Kinetic* ✓）；
+    //     ② 主代码（方块实体等）**只在 ModList.isLoaded(...) 之后**才碰那些类 ✓
+    //        ⇒ 没装那家时那些类根本不会被 JVM 加载 ✓。
+    //  ⚠ libs/ 在 .gitignore 里（本仓库既有口径：本地开发 jar 不进仓库 ✓）
+    //     ⇒ 换机器要重新把这三个 jar 放回 libs/ 才能编译 ✓（备忘录 §559 写清了坐标与出处 ✓）。
+    // ============================================================
+    compileOnly fg.deobf("blank:Mekanism-1.20.1:10.4.16.80")
+    compileOnly fg.deobf("blank:appliedenergistics2-forge:15.4.10")
+    // ⚠ Create 的**两个前置**（Ponder / Flywheel）也必须编译期可见 ✗ ——
+    //   `KineticBlockEntity` 的继承链是
+    //   KineticBlockEntity → SmartBlockEntity → net.createmod.ponder.api.VirtualBlockEntity
+    //   ⇒ 少了 Ponder，javac 直接报"无法访问 VirtualBlockEntity / 找不到它的类文件" ✗
+    //   ✅ **用户提醒后核实到了：这两个前置根本不用单独下载** —— Create 6.0.8 的 jar 里
+    //      用 Forge 的 **jar-in-jar** 自带它们（`META-INF/jarjar/` 下）：
+    //        · `Ponder-Forge-1.20.1-1.0.91.jar`（783841 字节）
+    //        · `flywheel-forge-1.20.1-1.0.5.jar`（868892 字节）
+    //        · 另外还有 `Registrate-MC1.20-1.3.3.jar` / `mixinextras-forge-0.4.1.jar`
+    //      ⇒ 直接从 Create 的 jar 里**原样抽出来**放进 libs/ ✓
+    //        （等于"用 Create 自己认的那一份"，版本一定对 ✓）。
+    //   ⚠ 踩坑（已记在备忘录 §559）：我一开始试图从官方 maven（maven.createmod.net）拉，
+    //      结果 Create 的 pom 指向的 flywheel `1.0.0-beta-177` 在那边**已撤**（404）✗、
+    //      直接写 maven 坐标时 ForgeGradle 的"映射后"那一份也解析不出来 ✗
+    //      ⇒ 才改成现在这套 flatDir（与仓库既有的 Jade / Patchouli / Goety 同一套写法 ✓）。
+    //   ⚠ Create 本体也从 libs/ 走（flatDir **没有 pom** ⇒ 不存在传递依赖被拖进来 ✗）
+    //     所以这里**不需要**任何 exclude / resolutionStrategy ✓（试过、已删 ✓）。
+    compileOnly fg.deobf("blank:create-1.20.1:6.0.8")
+    compileOnly fg.deobf("blank:Ponder-Forge-1.20.1:1.0.91")
+    compileOnly fg.deobf("blank:flywheel-forge-1.20.1:1.0.5")
+    // ⚠ 运行时的 ponder / flywheel 由 Create 自己的 jar-in-jar 提供 ⇒ **不需要**单独装进实例 ✓
+    //   （所以这里**没有** runtimeOnly：Forge 会在加载 Create 时把它内嵌的那两个 jar 挂上 ✓）
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html

@@ -57,6 +57,8 @@ public class ModBlockEntities {
     /**
      * 万用能量转化器：各种能量 ⇒ FE（单向 ✓ 见 {@code EnergyConverterBlockEntity} ✓）。
      * <p>ticker 挂在方块上（{@code EnergyConverterBlock#getTicker}）✓ 只跑服务端 ✓。
+     * <h3>§559：装了 Create ⇒ 换成动能方块实体</h3>
+     * 见 {@link #CREATE_ENERGY_CONVERTER} ✓。
      */
     public static final RegistryObject<BlockEntityType<com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterBlockEntity>>
             ENERGY_CONVERTER =
@@ -65,4 +67,22 @@ public class ModBlockEntities {
                                     com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterBlockEntity::new,
                                     ModBlocks.ENERGY_CONVERTER.get())
                             .build(null));
+
+    /**
+     * <b>转化器的"动能方块实体"版本</b>（§559）：<b>只有装了 Create 时才注册</b> ✓，
+     * 且与 {@link #ENERGY_CONVERTER} <b>同名</b>（二选一 ✓ 见 {@code ModBlocks} 的注释 ✓）。
+     * <p>⚠ 类型参数用 {@code KineticBlockEntity} 的超类 {@code BlockEntity}（＝ {@code <?>}）✓ ——
+     * 这样本文件**不必**写出 Create 的类型 ✓（真正的 Create 类型只在
+     * {@code CreateEnergyConverterBlockEntity} 里出现 ✓）。
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public static final RegistryObject<BlockEntityType<?>> CREATE_ENERGY_CONVERTER =
+            com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterModBridges.hasCreate()
+                    ? BLOCK_ENTITIES.register("energy_converter",
+                            () -> BlockEntityType.Builder.of(
+                                            com.mofengbaizhi.tinkersnewlife.content.block
+                                                    .CreateEnergyConverterBlockEntity::new,
+                                            ModBlocks.CREATE_ENERGY_CONVERTER.get())
+                                    .build(null))
+                    : null;
 }

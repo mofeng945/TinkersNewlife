@@ -7,7 +7,12 @@
     {
       "type": "patchouli:spotlight",
       "item": "tinkersnewlife:energy_converter",
-      "text": "$(bold)万用能量转化器$()：把各种能量换成 $(bold)FE$()。$(br2)$(bold)单向$() —— 只往 FE 走，$(bold)不会$()把 FE 变回 EE。$(br2)$(bold)它能收：$()$(li)相邻方块$(bold)推来的 EE$()（比如 EE 抽取方块）$(li)相邻的 $(bold)Forge Energy$()（RF / Tesla 等 1:1 的别名都走这一路）$(li)$(bold)通用机械（J）$() / $(bold)机械动力（RPM）$() / $(bold)应用能源（AE）$() 这几家的能量$(br2)$(bold)它给出：$()相邻方块能收到 FE。$(br2)$(italic)不管接了几路输入，对外功率的$(bold)总闸门$()只有一个。$()"
+      "text": "$(bold)万用能量转化器$()：把各种能量换成 $(bold)FE$()。$(br2)$(bold)单向$() —— 只往 FE 走，$(bold)不会$()把 FE 变回 EE。$(br2)$(bold)它能收：$()$(li)相邻方块$(bold)推来的 EE$()（比如 EE 抽取方块）$(li)相邻的 $(bold)Forge Energy$()（RF / Tesla 等 1:1 的别名都走这一路）$(li)$(bold)通用机械的线缆$()（J）—— $(bold)把线缆接到它任意一面$()即可$(li)$(bold)应用能源的线缆$()（AE）—— 同上，线缆接上就会与它$(bold)建网格连接$()$(li)$(bold)机械动力的传动杆$()（RPM）—— $(bold)传动杆从任意一面接上$()，它就跟着转$(br2)$(bold)它给出：$()相邻方块能收到 FE。$(br2)$(italic)不管接了几路输入，对外功率的$(bold)总闸门$()只有一个。$()"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "三种接线怎么接",
+      "text": "$(bold)通用机械$()：把它的$(bold)线缆/管道$()怼到转化器的任意一面。线缆会自己认这台机器，$(bold)把 J 推进来$()换 FE。$(br2)$(bold)应用能源$()：同样把$(bold)线缆$()接上 —— 转化器会以一个$(bold)不占频道$()的节点$(bold)加入你的 AE 网络$()，然后$(bold)直接从网络里取电$()。$(br2)$(bold)机械动力$()：把$(bold)传动杆$()（或齿轮箱）接到任意一面 —— 它像别的动能机器一样$(bold)被带着转$()，转速越高出电越多（$(italic)FE/t = (45 × RPM) ÷ 64$()）。$(br2)$(italic)⚠ 机械动力的传动杆接上后它$(bold)读转速$()、$(bold)不消耗转速$()，所以同一根轴可以带很多台（这是有意的取舍）。$()"
     },
     {
       "type": "patchouli:text",

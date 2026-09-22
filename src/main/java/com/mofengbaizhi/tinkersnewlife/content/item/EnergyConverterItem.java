@@ -37,6 +37,9 @@ public class EnergyConverterItem extends BlockItem {
                 .withStyle(ChatFormatting.AQUA));
         tooltip.add(Component.translatable("block.tinkersnewlife.energy_converter.tip.oneway")
                 .withStyle(ChatFormatting.GRAY));
+        // §559：三种"真正接上"的接线（通用机械线缆 / 应用能源线缆 / 机械动力传动杆 ✓）
+        tooltip.add(Component.translatable("block.tinkersnewlife.energy_converter.tip.lines")
+                .withStyle(ChatFormatting.DARK_AQUA));
         tooltip.add(Component.translatable("block.tinkersnewlife.energy_converter.tip.rate",
                         ModConfig.converterOutputFePerTick())
                 .withStyle(ChatFormatting.GRAY));

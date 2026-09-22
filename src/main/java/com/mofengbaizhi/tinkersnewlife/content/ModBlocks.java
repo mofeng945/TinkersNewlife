@@ -159,11 +159,42 @@ public class ModBlocks {
     /**
      * <b>万用能量转化器</b>（§557）：<b>单向</b>把各种能量折成 <b>FE</b> 推给相邻方块 ✓。
      * <p>输入：相邻 EE（{@code EeStorage} ✓）+ 相邻 Forge Energy（含 RF/Tesla/μI/FF 这些 1:1 别名 ✓）
-     * + 四家模组的能量（通用机械 J / Create RPM / IC2 EU / AE2 AE ✓ 反射软依赖 ✓）。
+     * + 四家模组的能量（通用机械 J / Create RPM / IC2 EU / AE2 AE ✓）。
      * <p><b>不做</b> FE ⇒ EE 的反向 ✗（用户口径明确单向 ✓）。
+     *
+     * <h3>§559：装了机械动力（Create）时换成动能方块</h3>
+     * Create 的传动杆只认 {@code KineticBlock} / {@code KineticBlockEntity} 那一套 ✗ ⇒
+     * 装了 Create 时这里注册的是 {@link com.mofengbaizhi.tinkersnewlife.content.block.CreateEnergyConverterBlock}
+     * （{@code extends KineticBlock} ✓）✓ 没装时还是普通方块 ✓。
+     * <p>⚠ 判定走 {@code EnergyConverterModBridges.hasCreate()}（= {@code ModList.isLoaded("create")} ✓）——
+     * 这是<b>注册时机</b>的事（必须在类被加载前决定 ✗），所以只能用 ModList ✓
+     * 而 Create 相关的<b>类</b>只会在"装了"的那条分支里被 {@code ::new} 摸到 ✓ ⇒
+     * 没装的玩家不会 {@code NoClassDefFoundError} ✓。
      */
     public static final RegistryObject<Block> ENERGY_CONVERTER = BLOCKS.register("energy_converter",
             com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterBlock::new);
+
+    /**
+     * <b>万用能量转化器的"动能方块"版本</b>（§559）：<b>只有装了 Create 时才注册</b> ✓。
+     * <p>⚠ 用的是**同一个注册名**（{@code tinkersnewlife:energy_converter}）—— 与
+     * {@link #ENERGY_CONVERTER} 二选一 ✓ 不会撞名 ✗（没装 Create 时这一行根本不执行 ✓）。
+     * <p>为什么必须"同一个名字"：方块 id 是存档/配方/掉落表/手册共用的 ✓
+     * 换个名字就会变成"装了 Create 之后旧存档里的转化器全变成空气" ✗✗。
+     */
+    public static final RegistryObject<Block> CREATE_ENERGY_CONVERTER =
+            com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterModBridges.hasCreate()
+                    ? BLOCKS.register("energy_converter",
+                            com.mofengbaizhi.tinkersnewlife.content.block.CreateEnergyConverterBlock::new)
+                    : null;
+
+    /**
+     * 当前<b>实际</b>用的转化器方块（装了 Create ⇒ 动能方块；否则普通方块 ✓）。
+     * <p>⚠ 所有"要拿转化器方块本体"的地方（方块实体注册、菜单/配方之外的引用 ✓）都必须用这个 ✗
+     * 而不是直接用 {@link #ENERGY_CONVERTER}（那一个在装了 Create 时是<b>没注册</b>的 ✗）。
+     */
+    public static RegistryObject<Block> energyConverterBlock() {
+        return CREATE_ENERGY_CONVERTER != null ? CREATE_ENERGY_CONVERTER : ENERGY_CONVERTER;
+    }
 
     /** 金属储存块的统一属性（对齐原版铁块：5.0 硬度 / 6.0 抗爆 / 需要正确工具 / 金属音效） */
     private static RegistryObject<Block> metalBlock(String name, MapColor color) {

@@ -1294,5 +1294,7 @@
   "block.tinkersnewlife.energy_converter.tip.out": "全部折成 FE 推给相邻方块",
   "block.tinkersnewlife.energy_converter.tip.oneway": "单向：只进不出（不会把 FE 变回 EE）",
   "block.tinkersnewlife.energy_converter.tip.rate": "对外吞吐上限：%s FE/t",
-  "block.tinkersnewlife.energy_converter.tip.buffer": "FE 池上限：%s FE"
+  "block.tinkersnewlife.energy_converter.tip.buffer": "FE 池上限：%s FE",
+  "block.tinkersnewlife.energy_converter.tip.lines": "接线：通用机械的线缆（J）、应用能源的线缆（AE）、机械动力的传动杆（RPM）都能直接接上",
+  "block.tinkersnewlife.energy_converter.tip.rpm": "机械动力：传动杆接上就跟着转，按转速换算 FE/t"
 }

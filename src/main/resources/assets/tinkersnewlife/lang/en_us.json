@@ -1295,5 +1295,7 @@
   "block.tinkersnewlife.energy_converter.tip.out": "Converts all of it to FE and pushes it to adjacent blocks",
   "block.tinkersnewlife.energy_converter.tip.oneway": "One-way only: nothing ever turns FE back into EE",
   "block.tinkersnewlife.energy_converter.tip.rate": "Output throughput cap: %s FE/t",
-  "block.tinkersnewlife.energy_converter.tip.buffer": "FE pool: %s FE"
+  "block.tinkersnewlife.energy_converter.tip.buffer": "FE pool: %s FE",
+  "block.tinkersnewlife.energy_converter.tip.lines": "Hookup: Mekanism cables (J), AE2 cables (AE) and Create shafts (RPM) all connect directly",
+  "block.tinkersnewlife.energy_converter.tip.rpm": "Create: a shaft on any side drives it; the speed is converted to FE/t"
 }
