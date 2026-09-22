@@ -54,9 +54,14 @@ public class EnergyConverterBlock extends BaseEntityBlock {
         return SHAPE;
     }
 
-    /** §572 水平朝向（= 正面指向 ✓）：正面接传动杆/输出口等六面角色的基准 ✓ */
+    /**
+     * §574 水平朝向（= 正面指向 ✓）。**用自定义名 `converter_facing`** ✗ 而不是 vanilla 的 `facing` ✓：
+     * 动能壳的父类自带一个**同名不同实例**的 `facing` ✗ ⇒ 两边混用会崩（§573 实测 ✓）
+     * ⇒ 我们两个壳**统一用这一个自有属性** ✓ blockstate 的键也就确定了 ✓（紫黑块问题一并消掉 ✓）。
+     */
     public static final net.minecraft.world.level.block.state.properties.DirectionProperty FACING =
-            net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING;
+            net.minecraft.world.level.block.state.properties.DirectionProperty.create(
+                    "converter_facing", net.minecraft.core.Direction.Plane.HORIZONTAL);
 
     @Override
     protected void createBlockStateDefinition(

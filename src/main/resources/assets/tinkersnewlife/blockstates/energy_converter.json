@@ -1,8 +1,8 @@
 {
   "variants": {
-    "facing=north": { "model": "tinkersnewlife:block/energy_converter" },
-    "facing=east":  { "model": "tinkersnewlife:block/energy_converter", "y": 90 },
-    "facing=south": { "model": "tinkersnewlife:block/energy_converter", "y": 180 },
-    "facing=west":  { "model": "tinkersnewlife:block/energy_converter", "y": 270 }
+    "converter_facing=north": { "model": "tinkersnewlife:block/energy_converter" },
+    "converter_facing=east":  { "model": "tinkersnewlife:block/energy_converter", "y": 90 },
+    "converter_facing=south": { "model": "tinkersnewlife:block/energy_converter", "y": 180 },
+    "converter_facing=west":  { "model": "tinkersnewlife:block/energy_converter", "y": 270 }
   }
 }
