@@ -194,7 +194,7 @@ public final class EeConverterCore implements EeStorage, IEnergyStorage {
     }
 
     /** 从 FE 池里取 */
-    private int extractFe(int amount, boolean simulate) {
+    public int extractFe(int amount, boolean simulate) {
         if (amount <= 0) return 0;
         int take = Math.min(feBuffer, amount);
         if (take <= 0) return 0;
@@ -342,7 +342,7 @@ public final class EeConverterCore implements EeStorage, IEnergyStorage {
     /** 外人<b>不能</b>从转化器里把电抽回去 ✗（它是"输出端"✓ 抽走就等于把产物拿走了 —— 那由我们推 ✓） */
     @Override
     public int extractEnergy(int maxExtract, boolean simulate) {
-        return 0;
+        return extractFe(maxExtract, simulate);   // §563 允许被拉（Mek 线缆主动拉 ✓）
     }
 
     @Override
@@ -357,7 +357,7 @@ public final class EeConverterCore implements EeStorage, IEnergyStorage {
 
     @Override
     public boolean canExtract() {
-        return false;
+        return true;      // §563
     }
 
     @Override

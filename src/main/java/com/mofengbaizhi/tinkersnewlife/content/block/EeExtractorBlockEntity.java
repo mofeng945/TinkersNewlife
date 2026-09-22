@@ -348,7 +348,7 @@ public class EeExtractorBlockEntity extends BlockEntity implements EeStorage, Me
     @Nonnull
     @Override
     public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
-        return EeCapabilityBridge.energyOrSuper(cap, side, feHolder, super.getCapability(cap, side));
+        return super.getCapability(cap, side)   /* §563 摘掉只读 FE 面 ⇒ 准星不再显示 FE ✓ */;
     }
 
     @Override

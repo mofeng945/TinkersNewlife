@@ -39,7 +39,12 @@ public final class EeStorages {
     public static EeStorage at(Level level, BlockPos pos) {
         if (level == null) return null;
         BlockEntity be = level.getBlockEntity(pos);
-        return be instanceof EeStorage storage ? storage : null;
+        if (be instanceof EeStorage storage) return storage;
+        // §563 转化器的 BE 本身不是 EeStorage（只有内部 core 是 ✗）⇒ 中立兜底 ✓
+        if (be instanceof com.mofengbaizhi.tinkersnewlife.content.block.ConverterCoreHolder holder) {
+            return holder.converterCore();
+        }
+        return null;
     }
 
     /**
@@ -65,7 +70,7 @@ public final class EeStorages {
             if (left <= 0) break;
             BlockPos at = pos.relative(d);
             BlockEntity be = level.getBlockEntity(at);
-            if (!(be instanceof EeStorage src) || src == baseSink) continue;
+            EeStorage src = at(level, at);   /* §563 统一走查找 ✓ */ if (src == null || src == baseSink) continue;
             if (src.isEmpty()) continue;
             EeStorage sink = sinkFor == null ? baseSink : sinkFor.apply(at, baseSink);
             if (sink == null) continue;
@@ -107,7 +112,7 @@ public final class EeStorages {
             if (left <= 0) break;
             BlockPos at = pos.relative(d);
             BlockEntity be = level.getBlockEntity(at);
-            if (!(be instanceof EeStorage dst) || dst == source) continue;
+            EeStorage dst = at(level, at);   /* §563 同上 ✓ */ if (dst == null || dst == source) continue;
             if (skip != null && skip.test(be)) continue;   // §557 防空转：刚抽过的那些不还回去 ✓
             if (dst.getSpace() <= 0) continue;
             int want = Math.min(left, source.extractEe(left, true));

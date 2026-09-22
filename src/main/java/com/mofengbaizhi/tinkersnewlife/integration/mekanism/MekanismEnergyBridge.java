@@ -152,6 +152,15 @@ public final class MekanismEnergyBridge implements IStrictEnergyHandler {
     /** ⚠ 我们<b>不</b>让通用机械从转化器里把电抽走 ✗（它是输出端 ✓ 与 FE 面的 {@code canExtract=false} 同一口径 ✓） */
     @Override
     public FloatingLong extractEnergy(int container, FloatingLong amount, Action action) {
-        return FloatingLong.ZERO;
+        // §563 通用机械线缆"主动拉"走这条（原来恒 ZERO ✗ ⇒ 一根 J 都拉不出去 ✗）
+        if (amount == null) return FloatingLong.ZERO;
+        double joules = amount.doubleValue();
+        if (!(joules > 0.0D)) return FloatingLong.ZERO;
+        int wantedFe = (int) Math.floor(joules * EnergyUnits.Fe.FE_PER_J);
+        if (wantedFe <= 0) return FloatingLong.ZERO;
+        int gotFe = core.extractFe(wantedFe, action.simulate());
+        if (gotFe <= 0) return FloatingLong.ZERO;
+        return FloatingLong.create(gotFe / EnergyUnits.Fe.FE_PER_J);
+
     }
 }
