@@ -74,7 +74,10 @@ public class ElderManaPedestalRenderer implements BlockEntityRenderer<ElderManaP
         // 以方块中心为轴、悬到台面之上 ✓
         poseStack.translate(0.5F, BASE_HEIGHT + bob, 0.5F);
         poseStack.mulPose(Axis.YP.rotationDegrees(time * SPIN_DEGREES_PER_TICK));
-        poseStack.scale(SCALE, SCALE, SCALE);
+        // §555 水晶方块（3D 方块模型）比水晶物品大得多 ⇒ 单独缩到 0.45 ✓ 悬浮观感一致 ✓
+        float scale = crystal.is(com.mofengbaizhi.tinkersnewlife.content.ModItems.ELDER_CRYSTAL_BLOCK.get())
+                ? SCALE * 0.64F : SCALE;
+        poseStack.scale(scale, scale, scale);
 
         Minecraft.getInstance().getItemRenderer().renderStatic(
                 crystal,

@@ -172,7 +172,8 @@ public class ElderManaPedestalBlock extends BaseEntityBlock {
 
     /** 手里拿着的是古老者水晶**物品**吗（水晶方块物品不放台座 ✗ —— 方块直接摆在地上也能被充能 ✓） */
     private static boolean isElderCrystal(ItemStack stack) {
-        return !stack.isEmpty() && stack.getItem() == ModItems.ELDER_CRYSTAL.get();
+        return !stack.isEmpty() && (stack.getItem() == ModItems.ELDER_CRYSTAL.get()
+                || stack.getItem() == ModItems.ELDER_CRYSTAL_BLOCK.get());   // §555 水晶方块也能悬浮放上去 ✓（容量 4000 ✓）
     }
 
     // ============================================================

@@ -153,6 +153,44 @@ public class ElderManaPedestalBlockEntity extends BlockEntity {
     // ============================================================
 
     /** 台座上的水晶（可能为空栈 ✓ 直接读不要改它 —— 要改请走 {@link #setCrystal} ✓） */
+    /**
+     * §555 台座上那件**是不是我们收的水晶**（水晶物品 ✓ 或水晶方块物品 ✓）。
+     * <p>两种都用同一套"台座上悬浮一件"的表现 ✓ 区别只在容量：水晶 **1000**、水晶方块 **4000** ✓。
+     */
+    public static boolean heldCrystal(ItemStack stack) {
+        return !stack.isEmpty() && (stack.is(com.mofengbaizhi.tinkersnewlife.content.ModItems.ELDER_CRYSTAL.get())
+                || stack.is(com.mofengbaizhi.tinkersnewlife.content.ModItems.ELDER_CRYSTAL_BLOCK.get()));
+    }
+
+    /** §555 台座上那件的**剩余容量**（不是水晶 ⇒ 0 ✓） */
+    private int heldSpace() {
+        return heldCap(crystal) - heldEe(crystal);
+    }
+
+    /** §555 那件的容量（方块物品 4000 / 其余按水晶 1000 ✓） */
+    private static int heldCap(ItemStack s) {
+        return s.is(com.mofengbaizhi.tinkersnewlife.content.ModItems.ELDER_CRYSTAL_BLOCK.get())
+                ? ElderCrystalStorage.BLOCK_CAPACITY : ElderCrystalStorage.CRYSTAL_CAPACITY;
+    }
+
+    /** §555 那件里已存的 EE（按类型读 ✓） */
+    private static int heldEe(ItemStack s) {
+        return s.is(com.mofengbaizhi.tinkersnewlife.content.ModItems.ELDER_CRYSTAL_BLOCK.get())
+                ? ElderCrystalStorage.getBlockItemEe(s) : ElderCrystalStorage.getCrystalEe(s);
+    }
+
+    /** §555 往台座上那件里加 EE（按类型写 ✓）；返回实际加进去多少 ✓ */
+    private int addHeld(int amount) {
+        if (amount <= 0 || crystal.isEmpty()) return 0;
+        if (crystal.is(com.mofengbaizhi.tinkersnewlife.content.ModItems.ELDER_CRYSTAL_BLOCK.get())) {
+            int cur = ElderCrystalStorage.getBlockItemEe(crystal);
+            int add = Math.min(Math.max(0, ElderCrystalStorage.BLOCK_CAPACITY - cur), amount);
+            if (add > 0) ElderCrystalStorage.setBlockItemEe(crystal, cur + add);
+            return add;
+        }
+        return ElderCrystalStorage.addCrystalEe(crystal, amount);
+    }
+
     public ItemStack getCrystal() {
         return crystal;
     }
@@ -163,7 +201,7 @@ public class ElderManaPedestalBlockEntity extends BlockEntity {
 
     /** 台座是否还有地方可充（台座上的水晶没满 **或** 至少有一块紧邻的水晶方块没满 ✓） */
     public boolean hasSpaceForEe() {
-        if (!crystal.isEmpty() && ElderCrystalStorage.eeOf(crystal) < ElderCrystalStorage.capacityOf(crystal)) {
+        if (!crystal.isEmpty() && heldSpace() > 0) {     // §555 类型感知：水晶物品 1000 / 水晶方块 4000 都算 ✓
             return true;
         }
         if (level == null) return false;
@@ -354,13 +392,14 @@ public class ElderManaPedestalBlockEntity extends BlockEntity {
     private int distribute(int amount) {
         int left = amount;
 
-        // ① 台座上的水晶物品优先
-        if (left > 0 && !crystal.isEmpty() && ElderCrystalStorage.isCrystal(crystal)) {
-            int added = ElderCrystalStorage.addCrystalEe(crystal, left);
+        // ① 台座上的那件优先（§555：**水晶物品和水晶方块都收** ✓）
+        if (left > 0 && !crystal.isEmpty()) {
+            int added = addHeld(left);
             if (added > 0) {
                 left -= added;
-                setChanged();       // 物品栈存在方块实体里 ⇒ 必须标脏才写进存档 ✓
-            }
+                setChanged();                        // 物品栈存在方块实体里 ⇒ 必须标脏才写进存档 ✓
+                if (ticks % 2 == 0) sync();          // §555 **每 2 tick 同步一次** ⇒ 客户端 HUD 的进度实时变化 ✓
+            }                                        //      （原来只在"放/取"时同步 ✗ ⇒ HUD 一直显示旧值 ✗）
         }
 
         // ② 紧邻的水晶方块（上/下/四邻，固定顺序 ✓ 走 §519 留好的 absorb 接口 ✓）
