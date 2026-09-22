@@ -117,14 +117,14 @@ public final class ModConfig {
     // ==================== §557 EE 网络（抽取方块 + 万用能量转化器） ====================
     // 默认值同样只写在 EE_NET_DEFAULT_* 常量里一处 ✓（不会与 defineInRange 的默认值漂移 ✗）
 
-    /** §557 抽取方块：抽的速率（EE/tick） */
+    /** §557 抽取方块：抽的速率（EE/tick）—— ⚠ §558 起语义 = "每 tick 从**槽位里那件**抽多少" ✓ 键名不变 ✓ */
     public static final int EE_NET_DEFAULT_EXTRACTOR_PULL = 256;
     /** §557 抽取方块：推的速率（EE/tick） */
     public static final int EE_NET_DEFAULT_EXTRACTOR_PUSH = 256;
     /**
-     * §557 抽取方块：内部缓冲上限（EE）。
-     * <p>4000 = <b>一块古老者水晶方块</b>（{@code ElderCrystalStorage.BLOCK_CAPACITY} ✓）
-     * —— 恰好"整块装得下"✓ 也是"下游塞满时最多积压多少"✓。
+     * §557 抽取方块：<b>内部缓存</b>上限（EE）—— ⚠ §558 起语义是"内部缓存"（原来叫"缓冲"✓ 键名不变 ✓）。
+     * <p>4000 = <b>一块古老者水晶方块</b>（{@code ElderCrystalStorage.BLOCK_CAPACITY} ✓ 用户 §558 口径 ✓）
+     * —— 恰好"整块装得下"✓ 满了就不再从槽位里抽 ✓（物品里的 EE 原地不动 ✓ 一点不丢 ✗）。
      */
     public static final int EE_NET_DEFAULT_EXTRACTOR_BUFFER = 4000;
 
@@ -452,24 +452,20 @@ public final class ModConfig {
                 "    RF = Tesla = uI = FF = FE  -- they are all aliases of FE at 1:1, so they need no",
                 "    adapter at all: anything exposing ForgeCapabilities.ENERGY goes down the FE path.",
                 "",
-                "EE EXTRACTOR (tinkersnewlife:ee_extractor): pulls EE out of the EE containers next to it",
-                "  (the Mana Pedestal's own cache, Elder Crystal Blocks, other extractors) into its own",
-                "  buffer, then PUSHES that EE to the EE containers next to it. Direction order is fixed:",
-                "  up, down, north, south, west, east. It never pushes back into a neighbour it just pulled",
-                "  from in the same tick (that would just be a no-op loop).",
-                "  extractor_pull_ee_per_tick  (default 256) EE pulled per tick, summed over ALL neighbours.",
-                "  extractor_push_ee_per_tick  (default 256) EE pushed per tick, summed over ALL neighbours.",
-                "  extractor_buffer_ee         (default 4000 = one crystal block) internal buffer. When the",
-                "      buffer is full the extractor simply stops pulling, so nothing is ever destroyed.",
+                "EE EXTRACTOR (tinkersnewlife:ee_extractor): right-click it to open a GUI with ONE slot.",
+                "  Put a CHARGED Elder Crystal or Elder Crystal Block in that slot: every tick the block pulls",
+                "  EE out of that item into its own cache, and PUSHES the cache to the EE containers next to it.",
+                "  Direction order is fixed: up, down, north, south, west, east.",
+                "  extractor_pull_ee_per_tick  (default 256) EE pulled from THE ITEM IN THE SLOT each tick.",
+                "  extractor_push_ee_per_tick  (default 256) EE pushed to neighbours each tick.",
+                "  extractor_buffer_ee         (default 4000 = one crystal block) internal cache. When the cache",
+                "      is full the extractor simply stops pulling, so the EE in the item is never destroyed.",
                 "",
                 "UNIVERSAL ENERGY CONVERTER (tinkersnewlife:energy_converter): ONE-WAY, everything -> FE.",
                 "  Input A: EE pushed in by neighbours (the same EeStorage interface) - converted at 1 FE = 8 EE.",
                 "  Input B: Forge Energy pulled from neighbours (ForgeCapabilities.ENERGY) - 1:1.",
-                "  Input C: the four optional mods, all reached by REFLECTION ONLY (no compile-time deps):",
-                "      Mekanism (J) - verified against Mekanism-1.20.1-10.4.16.80.jar (IStrictEnergyHandler);",
-                "      Create (RPM) - reads KineticBlockEntity#getSpeed() from neighbours;",
-                "      IC2 (EU) and AE2 (AE) - NOT wired up: neither mod is in this pack and both need their",
-                "      own network join/unjoin events, which pure reflection cannot provide (see memo S557).",
+                "  Input C: the four optional mods. See memo S557 for the current state of each one; a family",
+                "      that is not hooked up yet is skipped quietly and reported once in the startup log.",
                 "  Output: FE pushed to neighbours via IEnergyStorage#receiveEnergy (never extracted back).",
                 "  converter_output_fe_per_tick (default 64) THE HARD THROUGHPUT GATE: no matter how many input",
                 "      paths are connected, this block never moves more than 64 FE per tick in total.",

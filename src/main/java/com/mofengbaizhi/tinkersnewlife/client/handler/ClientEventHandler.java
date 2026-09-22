@@ -66,6 +66,9 @@ public class ClientEventHandler {
         MenuScreens.register(ModMenus.QUANTUM_VAULT.get(), com.mofengbaizhi.tinkersnewlife.client.screen.QuantumVaultScreen::new);
             // ✅ 注册噤默手套 GUI
             MenuScreens.register(ModMenus.SILENT_GLOVE_CONTAINER.get(), SilentGloveScreen::new);
+            // ✅ §558 注册 EE 抽取方块的 GUI（右键方块打开 ✓）
+            MenuScreens.register(ModMenus.EE_EXTRACTOR.get(),
+                    com.mofengbaizhi.tinkersnewlife.client.screen.EeExtractorScreen::new);
             // ⭐ 血液方块：透明纹理必须走 cutout 渲染层（默认 solid 层不做 alpha 测试，
             // 透明像素的 RGB 会被原样画出 → 看起来是纯黑背景）
             net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(

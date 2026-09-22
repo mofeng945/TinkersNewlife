@@ -1,0 +1,28 @@
+{
+  "name": "Universal Energy Converter",
+  "category": "tinkersnewlife:energy",
+  "icon": "tinkersnewlife:energy_converter",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:energy_converter",
+      "text": "$(bold)Universal Energy Converter$(): turns all kinds of energy into $(bold)FE$().$(br2)$(bold)One-way only$() - it only goes towards FE and $(bold)never$() turns FE back into EE.$(br2)$(bold)What it accepts:$()$(li)EE $(bold)pushed in by neighbours$() (for example by the EE Extractor)$(li)$(bold)Forge Energy$() from neighbours (RF / Tesla and friends are 1:1 aliases and use this same path)$(li)Energy from $(bold)Mekanism (J)$() / $(bold)Create (RPM)$() / $(bold)Applied Energistics (AE)$()$(br2)$(bold)What it gives:$()adjacent blocks receive FE.$(br2)$(italic)No matter how many inputs are connected, there is exactly $(bold)one throughput gate$() for the output.$()"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Conversion table",
+      "text": "$(bold)1 FE = 8 EE$() (so 1 EE = 0.125 FE)$(br2)$(li)$(bold)1 EU = 4 FE$() (IC2)$(li)$(bold)1 AE = 2 FE$() (AE2)$(li)$(bold)10 J = 4 FE$() (Mekanism, i.e. 1 J = 0.4 FE)$(li)$(bold)FE/t = (45 x RPM) / 64$() (Create, i.e. 1 RPM = 0.703125 FE/t)$(li)$(bold)RF = Tesla = uI = FF = FE$(): they are all aliases of FE at 1:1$(br2)$(italic)The whole table lives in one place in code ($(bold)EnergyUnits.Fe$()); no block hard-codes a number.$()"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Config",
+      "text": "In $(italic)config/mofengbaizhi/tinkersnewlife-common.toml$(), section $(bold)[ee_network]$():$(br2)$(li)$(bold)converter_output_fe_per_tick$() (default $(bold)64$()): the $(bold)throughput gate$() - neither input nor output ever exceeds it$(li)$(bold)converter_input_fe_per_tick$() (default $(bold)64$()): cap for the Forge Energy path$(li)$(bold)converter_input_ee_per_tick$() (default $(bold)512$() = 64 FE worth): cap for the EE path$(li)$(bold)converter_buffer_fe$() (default $(bold)32000$()): the internal FE pool$(li)$(bold)mekanism_energy_enabled$() / $(bold)create_rotation_enabled$() / $(bold)ae2_energy_enabled$() / $(bold)ic2_eu_enabled$(): per-family switches$(br2)$(italic)When a family is missing (or cannot be hooked up), that path is skipped quietly and the startup log says why.$()"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "tinkersnewlife:energy_converter",
+      "text": "$(bold)Crafting$():$(br2)top middle: copper block$(br)second row: amethyst shard + redstone block + amethyst shard$(br)third row middle: gold ingot$(br)bottom row: iron ingot + gold ingot + iron ingot"
+    }
+  ]
+}

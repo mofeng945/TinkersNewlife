@@ -1,0 +1,28 @@
+{
+  "name": "EE Extractor",
+  "category": "tinkersnewlife:energy",
+  "icon": "tinkersnewlife:ee_extractor",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:ee_extractor",
+      "text": "$(bold)EE Extractor$(): pours a crystal you are holding \"into\" the machine next to it.$(br2)$(li)$(bold)Right-click$() to open it - there is exactly $(bold)one slot$() inside$(li)The slot only accepts a $(bold)charged Elder Crystal / Elder Crystal Block$() (an empty crystal will not go in)$(li)Every tick it $(bold)pulls EE out of that item into its internal cache$(), and the cache is then $(bold)pushed to the EE containers next to it$() (crystal blocks / the Mana Pedestal / the Universal Energy Converter)$(br2)$(italic)In other words: no need to lay crystals all over the floor - drop one in, put a converter beside it, and the power walks out on its own.$()"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Cache and rates",
+      "text": "$(li)Internal cache cap = $(bold)one Elder Crystal Block worth$() ($(bold)4000 EE$()) - it holds exactly one whole block$(li)It pulls from the slot at $(bold)256 EE/t$() by default, and pushes to neighbours at $(bold)256 EE/t$() as well$(li)When the cache is $(bold)full it stops pulling$(): the EE inside the item $(bold)stays where it is$() and nothing is ever lost$(br2)$(bold)Push order$() is fixed: up, down, north, south, west, east.$(br2)$(italic)Breaking the block drops the item in the slot $(bold)with whatever EE is left in it$() - it never eats your crystal.$()"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Config",
+      "text": "In $(italic)config/mofengbaizhi/tinkersnewlife-common.toml$(), section $(bold)[ee_network]$():$(br2)$(li)$(bold)extractor_pull_ee_per_tick$() (default $(bold)256$()): how much EE is pulled from $(bold)the item in the slot$() each tick$(li)$(bold)extractor_push_ee_per_tick$() (default $(bold)256$()): how much EE is pushed to neighbours each tick$(li)$(bold)extractor_buffer_ee$() (default $(bold)4000$()): the internal cache cap$(br2)$(italic)These key names have not changed since the first version, so any config you already edited stays valid.$()"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "tinkersnewlife:ee_extractor",
+      "text": "$(bold)Crafting$():$(br2)top middle: amethyst shard$(br)middle row: obsidian + Elder Crystal + obsidian$(br)bottom middle: quartz"
+    }
+  ]
+}

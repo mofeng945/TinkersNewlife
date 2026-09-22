@@ -1,0 +1,28 @@
+{
+  "name": "万用能量转化器",
+  "category": "tinkersnewlife:energy",
+  "icon": "tinkersnewlife:energy_converter",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:energy_converter",
+      "text": "$(bold)万用能量转化器$()：把各种能量换成 $(bold)FE$()。$(br2)$(bold)单向$() —— 只往 FE 走，$(bold)不会$()把 FE 变回 EE。$(br2)$(bold)它能收：$()$(li)相邻方块$(bold)推来的 EE$()（比如 EE 抽取方块）$(li)相邻的 $(bold)Forge Energy$()（RF / Tesla 等 1:1 的别名都走这一路）$(li)$(bold)通用机械（J）$() / $(bold)机械动力（RPM）$() / $(bold)应用能源（AE）$() 这几家的能量$(br2)$(bold)它给出：$()相邻方块能收到 FE。$(br2)$(italic)不管接了几路输入，对外功率的$(bold)总闸门$()只有一个。$()"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "换算表",
+      "text": "$(bold)1 FE = 8 EE$()（所以 1 EE = 0.125 FE）$(br2)$(li)$(bold)1 EU = 4 FE$()（工业时代）$(li)$(bold)1 AE = 2 FE$()（应用能源）$(li)$(bold)10 J = 4 FE$()（通用机械，即 1 J = 0.4 FE）$(li)$(bold)FE/t = (45 × RPM) ÷ 64$()（机械动力，即 1 RPM = 0.703125 FE/t）$(li)$(bold)RF = Tesla = μI = FF = FE$()：都是 FE 的别名，1:1$(br2)$(italic)整张表在代码里只有一处（$(bold)EnergyUnits.Fe$()），不在方块里写数字。$()"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "配置项（config）",
+      "text": "配置文件 $(italic)config/mofengbaizhi/tinkersnewlife-common.toml$() 的 $(bold)[ee_network]$() 段：$(br2)$(li)$(bold)converter_output_fe_per_tick$()（默认 $(bold)64$()）：$(bold)总闸门$() —— 收与推都不会超过它$(li)$(bold)converter_input_fe_per_tick$()（默认 $(bold)64$()）：Forge Energy 那一路的上限$(li)$(bold)converter_input_ee_per_tick$()（默认 $(bold)512$() = 64 FE 的量）：EE 那一路的上限$(li)$(bold)converter_buffer_fe$()（默认 $(bold)32000$()）：内部 FE 池$(li)$(bold)mekanism_energy_enabled$() / $(bold)create_rotation_enabled$() / $(bold)ae2_energy_enabled$() / $(bold)ic2_eu_enabled$()：四家各自的开关$(br2)$(italic)某一家没装（或接不上）时，它那一路会被$(bold)安静跳过$()，启动日志里会写清原因。$()"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "tinkersnewlife:energy_converter",
+      "text": "$(bold)配方$()：$(br2)上排中：铜块$(br)第二排：紫水晶碎片 + 红石块 + 紫水晶碎片$(br)第三排中：金锭$(br)下排：铁锭 + 金锭 + 铁锭"
+    }
+  ]
+}

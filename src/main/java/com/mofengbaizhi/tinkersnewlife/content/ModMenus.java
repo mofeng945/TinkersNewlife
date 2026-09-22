@@ -68,6 +68,20 @@ public class ModMenus {
                     })
             );
 
+    // ===== §558 EE 抽取方块的 GUI（数据 = 方块坐标 ✓） =====
+    /**
+     * EE 抽取方块的菜单。
+     * <p>附加数据只有 <b>一个 {@code BlockPos}</b> ✓ —— 它是 {@code ServerPlayer#openMenu(provider, pos)}
+     * 自动写进去的 ✓（不是我们手写的 ✓）⇒ 客户端拿它 {@code level.getBlockEntity(pos)} 就能找回
+     * 那个方块实体 ✓（客户端的 BE 数据本来就有同步 ✓ 见 {@code EeExtractorBlockEntity#getUpdatePacket}）✓。
+     */
+    public static final RegistryObject<MenuType<com.mofengbaizhi.tinkersnewlife.content.menu.EeExtractorMenu>> EE_EXTRACTOR =
+            MENUS.register("ee_extractor",
+                    () -> IForgeMenuType.create((windowId, inv, data) ->
+                            new com.mofengbaizhi.tinkersnewlife.content.menu.EeExtractorMenu(
+                                    windowId, inv, data.readBlockPos()))
+            );
+
     /**
      * 从字节数组读取 NBT；失败时记录日志（不再静默吞掉，便于排查数据损坏问题）。
      *

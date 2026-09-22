@@ -1,0 +1,28 @@
+{
+  "name": "EE 抽取方块",
+  "category": "tinkersnewlife:energy",
+  "icon": "tinkersnewlife:ee_extractor",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:ee_extractor",
+      "text": "$(bold)EE 抽取方块$()：把手里的水晶「$(bold)倒进$()」旁边的机器。$(br2)$(li)$(bold)右键$()打开它 —— 里面只有$(bold)一个槽位$()$(li)槽位只收$(bold)有能量的古老者水晶 / 古老者水晶方块$()（空水晶放不进去）$(li)它每 tick 从那件里$(bold)抽 EE 进内部缓存$()，缓存再$(bold)主动推给相邻$()的 EE 容器（水晶方块 / 魔力台座 / 万用能量转化器）$(br2)$(italic)也就是说：不用把水晶摆一地，塞进它、旁边接上转化器，电就一路走出去。$()"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "缓存与速率",
+      "text": "$(li)内部缓存上限 = $(bold)一个古老者水晶方块的量$()（$(bold)4000 EE$()）—— 恰好整块装得下$(li)从槽位抽的速度默认 $(bold)256 EE/t$()；推给邻居也是 $(bold)256 EE/t$()$(li)缓存$(bold)满了就不抽$()：物品里的 EE $(bold)原地不动$()，一点不丢$(br2)$(bold)相邻推的顺序$()固定：上 → 下 → 北 → 南 → 西 → 东。$(br2)$(italic)拆掉方块时，槽位里那件$(bold)连它剩下的 EE$()一起掉出来 —— 不会吞掉你的水晶。$()"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "配置项（config）",
+      "text": "配置文件 $(italic)config/mofengbaizhi/tinkersnewlife-common.toml$() 的 $(bold)[ee_network]$() 段：$(br2)$(li)$(bold)extractor_pull_ee_per_tick$()（默认 $(bold)256$()）：每 tick 从$(bold)槽位里那件$()抽多少 EE$(li)$(bold)extractor_push_ee_per_tick$()（默认 $(bold)256$()）：每 tick 往相邻推多少 EE$(li)$(bold)extractor_buffer_ee$()（默认 $(bold)4000$()）：内部缓存上限$(br2)$(italic)键名从第一版起就没变过 ⇒ 你以前改过的配置仍然有效。$()"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "tinkersnewlife:ee_extractor",
+      "text": "$(bold)配方$()：$(br2)上排中：紫水晶碎片$(br)中排：黑曜石 + 古老者水晶 + 黑曜石$(br)下排中：石英"
+    }
+  ]
+}
