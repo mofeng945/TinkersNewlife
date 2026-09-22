@@ -1291,11 +1291,11 @@
   "container.tinkersnewlife.ee_extractor": "EE Extractor",
   "gui.tinkersnewlife.ee_extractor.cache": "Cached EE: %s / %s",
   "block.tinkersnewlife.energy_converter": "Universal Energy Converter",
-  "block.tinkersnewlife.energy_converter.tip.in": "Takes EE pushed in by neighbours, Forge Energy from neighbours (RF/Tesla and friends are 1:1 aliases), and the energy of mods such as Mekanism or Create",
-  "block.tinkersnewlife.energy_converter.tip.out": "Converts all of it to FE and pushes it to adjacent blocks",
+  "block.tinkersnewlife.energy_converter.tip.in": "Inputs: EE from an extractor on the top, AE cables on the left, Mekanism heat conductors on the right, and a universal input on the bottom (EE / FE / Mekanism joules / AE)",
+  "block.tinkersnewlife.energy_converter.tip.out": "Output: FE leaves through the back face only (back is output-only)",
   "block.tinkersnewlife.energy_converter.tip.oneway": "One-way only: nothing ever turns FE back into EE",
   "block.tinkersnewlife.energy_converter.tip.rate": "Output throughput cap: %s FE/t",
   "block.tinkersnewlife.energy_converter.tip.buffer": "FE pool: %s FE",
-  "block.tinkersnewlife.energy_converter.tip.lines": "Hookup: Mekanism cables (J), AE2 cables (AE) and Create shafts (RPM) all connect directly",
-  "block.tinkersnewlife.energy_converter.tip.rpm": "Create: a shaft on any side drives it; the speed is converted to FE/t"
+  "block.tinkersnewlife.energy_converter.tip.lines": "Faces: front = shaft, left = AE, right = heat, top = extractor, back = FE out, bottom = universal input",
+  "block.tinkersnewlife.energy_converter.tip.rpm": "Create: only the front face takes a shaft; faster speed means more FE/t (other faces will not drive it)"
 }

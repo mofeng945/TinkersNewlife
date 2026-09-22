@@ -1290,11 +1290,11 @@
   "container.tinkersnewlife.ee_extractor": "EE 抽取方块",
   "gui.tinkersnewlife.ee_extractor.cache": "缓存 EE：%s / %s",
   "block.tinkersnewlife.energy_converter": "万用能量转化器",
-  "block.tinkersnewlife.energy_converter.tip.in": "收相邻推来的 EE、相邻的 Forge Energy（含 RF/Tesla 等 1:1 别名），以及通用机械/Create 等模组的能量",
-  "block.tinkersnewlife.energy_converter.tip.out": "全部折成 FE 推给相邻方块",
+  "block.tinkersnewlife.energy_converter.tip.in": "输入：顶面接抽取器的 EE、左面接应用能源线缆、右面接通用机械的热导线缆（热量）、底面万能输入（EE / FE / 通用机械焦耳 / AE 都收）",
+  "block.tinkersnewlife.energy_converter.tip.out": "输出：只从背面出 FE（背面只出不进）",
   "block.tinkersnewlife.energy_converter.tip.oneway": "单向：只进不出（不会把 FE 变回 EE）",
   "block.tinkersnewlife.energy_converter.tip.rate": "对外吞吐上限：%s FE/t",
   "block.tinkersnewlife.energy_converter.tip.buffer": "FE 池上限：%s FE",
-  "block.tinkersnewlife.energy_converter.tip.lines": "接线：通用机械的线缆（J）、应用能源的线缆（AE）、机械动力的传动杆（RPM）都能直接接上",
-  "block.tinkersnewlife.energy_converter.tip.rpm": "机械动力：传动杆接上就跟着转，按转速换算 FE/t"
+  "block.tinkersnewlife.energy_converter.tip.lines": "六面分工：正面=传动杆，左面=AE，右面=热导，顶面=抽取器，背面=FE 出口，底面=万能输入",
+  "block.tinkersnewlife.energy_converter.tip.rpm": "传动杆只能接正面；转速越快产 FE 越快（其它面接不上也不产能量）"
 }
