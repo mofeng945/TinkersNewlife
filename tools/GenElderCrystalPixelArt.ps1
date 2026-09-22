@@ -11,7 +11,7 @@
 # Usage:
 #   powershell -ExecutionPolicy Bypass -File tools\GenElderCrystalPixelArt.ps1
 #   powershell -ExecutionPolicy Bypass -File tools\GenElderCrystalPixelArt.ps1 -DryRun
-param([switch]$DryRun)
+param([switch]$DryRun, [switch]$Force)
 
 Add-Type -AssemblyName System.Drawing
 
@@ -57,6 +57,8 @@ function New-Bitmap([int]$w, [int]$h) {
 
 function Save-Png($bmp, [string]$path, [string]$label) {
   if ($DryRun) { "DRY  $label -> $path"; $bmp.Dispose(); return }
+  # GUARD (added later): never clobber hand-painted art unless -Force is passed explicitly.
+  if ((Test-Path $path) -and -not $Force) { "SKIP (exists, use -Force to overwrite) $label -> $path"; $bmp.Dispose(); return }
   $bmp.Save($path, [System.Drawing.Imaging.ImageFormat]::Png)
   $bmp.Dispose()
   "WROTE $label -> $path"
