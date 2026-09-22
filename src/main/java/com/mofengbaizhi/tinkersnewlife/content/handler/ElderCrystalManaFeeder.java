@@ -56,6 +56,15 @@ public final class ElderCrystalManaFeeder {
      */
     public static final int MAX_COVER_EE_PER_TICK = 200;
 
+    /**
+     * §544 <b>预充</b>每 tick 上限 —— "花之前先把池子用 EE 顶满"用多少 EE。
+     * <p>为什么需要预充：§543 的补偿发生在<b>扣款之后</b> ⇒ 单次消耗超过当前池子时，判定在扣款前就失败 ✗
+     * （那一刻 EE 来不及垫）。预充把这一步提前 ⇒ 单次大额消耗也能由 EE 付 ✓。
+     * <p>只在"<b>正在花能量的场景</b>"预充（手持施法物品 / 正在读条 ✓）⇒ 站着不动时不会白烧 EE ✓
+     * （也就不会像 §519 那样把"自然回蓝"的观感抹掉 ✗ —— 那正是 §542 修过的坑 ✓）。
+     */
+    public static final int MAX_PRE_EE_PER_TICK = 200;
+
     /** 上一 tick 观察到的三个池子读数（按玩家 UUID ✓ 下线时清掉 ✗ 不残留） */
     private static final Map<UUID, double[]> LAST = new HashMap<>();
 
@@ -75,6 +84,34 @@ public final class ElderCrystalManaFeeder {
 
             // 只有"手里真的拿着有电的水晶"才付款 ✓（§520：主手/副手 ✓ 背包/饰品不算 ✓）
             if (ElderCrystalStorage.suppliedEe(player) <= 0) return;
+
+            // ===== §544 预充（花之前就顶满 ⇒ 单次大额消耗也能由 EE 付 ✓）=====
+            if (spending(player)) {
+                int pre = MAX_PRE_EE_PER_TICK;
+                // 法力
+                if (mana >= 0) {
+                    int maxMana = IronSpellsSpellAccess.maxManaOf(player);
+                    if (maxMana > 0) {
+                        pre = cover(player, pre, maxMana - mana, EnergyUnits.MANA_PER_EE,
+                                gained -> { if (gained > 0) IronSpellsSpellAccess.addMana(player, (float) gained); });
+                    }
+                }
+                // 咒力
+                double maxCurse = CursePowerHelper.getMaxCurse(player);
+                if (maxCurse > 0) {
+                    pre = cover(player, pre, maxCurse - curse, EnergyUnits.CURSE_PER_EE,
+                            gained -> { if (gained > 0) CursePowerHelper.addCurse(player, gained); });
+                }
+                // 灵魂能量
+                int maxSouls = SoulEnergyBridge.getMaxSouls(player);
+                if (maxSouls > 0) {
+                    int need = maxSouls - (int) souls;
+                    int wantEe = (int) Math.ceil(Math.max(0, need) / EnergyUnits.SOULS_PER_EE);
+                    int drained = ElderCrystalStorage.drainSuppliedEe(player, Math.min(pre, Math.max(0, wantEe)));
+                    int gained = (int) Math.floor(drained * EnergyUnits.SOULS_PER_EE);
+                    if (gained > 0) SoulEnergyBridge.addSouls(player, gained);
+                }
+            }
 
             int budget = MAX_COVER_EE_PER_TICK;
 
@@ -101,6 +138,15 @@ public final class ElderCrystalManaFeeder {
         } catch (Throwable ignored) {
             // fail-safe：可选内容出错绝不影响玩家 tick ✓
         }
+    }
+
+    /**
+     * §544 **"正在花能量"的场景判定**：手持施法物品（铁魔法书/本模组法杖等）或正在读条 ✓。
+     * <p>预充只在这种时候发生 ⇒ 站着不动时不会持续烧 EE ✓（保住"自然回蓝可感知"这件事 ✗ 别再像 §519 那样 ✗）。
+     */
+    private static boolean spending(ServerPlayer player) {
+        return com.mofengbaizhi.tinkersnewlife.content.modifier.AllPathsOneTrait.holdingCastItem(player)
+                || IronSpellsSpellAccess.isCastingAny(player);
     }
 
     /** 小工具：按"缺口 ÷ 汇率"抽 EE，并把换算后的资源加回去（法力/咒力共用 ✓） */
