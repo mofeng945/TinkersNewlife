@@ -10,7 +10,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)Exchange rates$() (mod-wide, single source of truth = $(bold)EnergyUnits$() in code):$(li)$(bold)1 EE = 1 mana = 4 souls = 2 curse$()$(li)=> $(bold)1 curse = 2 souls$() (used to be 3 - changed with the new formula)$(li)=> $(bold)1 curse = 0.5 mana$()$(br2)$(bold)Example$(): you have 20 mana and the spell costs 60, so 40 mana worth of curse is consumed (= 80 curse); if curse runs out too, souls keep paying (40 mana = 160 souls)."
+      "text": "$(bold)Exchange rates$() (mod-wide, single source of truth = $(bold)EnergyUnits$() in code):$(li)$(bold)1 EE = 10 mana = 40 souls = 20 curse$()$(li)=> $(bold)1 curse = 2 souls$() (used to be 3 - changed with the new formula)$(li)=> $(bold)1 curse = 0.5 mana$()$(br2)$(bold)Example$(): you have 20 mana and the spell costs 60, so 40 mana worth of curse is consumed (= 80 curse); if curse runs out too, souls keep paying (40 mana = 160 souls)."
     },
     {
       "type": "patchouli:text",

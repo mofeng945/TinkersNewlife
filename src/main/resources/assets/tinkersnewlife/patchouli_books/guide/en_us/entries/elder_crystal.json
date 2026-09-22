@@ -6,12 +6,12 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(bold)EE (Elder Energy)$() is the single shared energy unit of this mod.$(br2)Everything in the pack - this mod's curse energy, Iron's Spellbooks mana and Goety soul energy - uses $(bold)one formula only$():$(br2)$(bold)1 EE = 1 mana = 4 souls = 2 curse$()$(br2)=> 1 soul = 0.25 EE, 1 curse = 0.5 EE.$(br2)$(italic)It lives in exactly one place in code ($(bold)EnergyUnits$()): the curse-to-soul fallback and the Wizard Set trait $(l:trait_all_paths_one)All Paths Are One$() both derive from it.$()"
+      "text": "$(bold)EE (Elder Energy)$() is the single shared energy unit of this mod.$(br2)Everything in the pack - this mod's curse energy, Iron's Spellbooks mana and Goety soul energy - uses $(bold)one formula only$():$(br2)$(bold)1 EE = 10 mana = 40 souls = 20 curse$()$(br2)=> 1 soul = 0.025 EE, 1 curse = 0.05 EE.$(br2)$(italic)It lives in exactly one place in code ($(bold)EnergyUnits$()): the curse-to-soul fallback and the Wizard Set trait $(l:trait_all_paths_one)All Paths Are One$() both derive from it.$()"
     },
     {
       "type": "patchouli:spotlight",
       "item": "tinkersnewlife:elder_crystal",
-      "text": "$(bold)Elder Crystal$(): capacity $(bold)1000 EE$(), stored in the item's NBT (the durability bar shows how full it is).$(br2)$(li)Put it in your $(bold)offhand or a curio slot$(): while you $(bold)hold a casting item$() (or are mid-cast) and your mana is not full, it feeds mana automatically ($(bold)1 EE = 1 mana$(), at most 20 EE per tick)$(li)Crystals in your $(bold)inventory do not feed$() (offhand/curios only)$(li)Carrying $(bold)charged$() crystals chills you - see the next page"
+      "text": "$(bold)Elder Crystal$(): capacity $(bold)1000 EE$(), stored in the item's NBT (the durability bar shows how full it is).$(br2)$(li)Hold it in your $(bold)main hand or offhand$(): while you $(bold)hold a casting item$() (or are mid-cast) and your mana is not full, it feeds mana automatically ($(bold)1 EE = 1 mana$(), at most 20 EE per tick)$(li)Crystals in your $(bold)inventory or a curio slot do not feed$() (hands only)$(li)Carrying $(bold)charged$() crystals chills you - see the next page"
     },
     {
       "type": "patchouli:text",
@@ -25,7 +25,7 @@
     {
       "type": "patchouli:text",
       "title": "Recipe: 4 crystals -> 1 block",
-      "text": "Put $(bold)exactly 4 Elder Crystals$() in a $(bold)crafting table$() (any arrangement; a single slot holding 4 works too) to craft one Elder Crystal Block.$(br2)The output stores the $(bold)sum$() of the four crystals' EE, and $(bold)nothing is lost$(): a crystal holds 1000 and the block holds 4000 = 4 x 1000, so it always fits.$(br2)$(italic)This uses this mod's $(bold)custom merge recipe$() - ordinary recipes throw away the NBT on the ingredients, so a vanilla shapeless recipe would not do.$()"
+      "text": "Put $(bold)exactly 4 Elder Crystals$() in a $(bold)crafting table$() (any arrangement; a single slot holding 4 works too) to craft one Elder Crystal Block.$(br2)The output stores the $(bold)sum$() of the four crystals' EE, and $(bold)nothing is lost$(): a crystal holds 1000 and the block holds 4000 = 4 x 1000, so it always fits.$(br2)$(italic)This uses this mod's $(bold)custom merge recipe$() - ordinary recipes throw away the NBT on the ingredients, so a vanilla shapeless recipe would not do.$(br2)$(bold)It works backwards too$(): put $(bold)1 block$() in a crafting table to get $(bold)4 crystals$() back, with the block EE $(bold)split evenly$() (remainder to the first ones) - nothing lost.$()"
     },
     {
       "type": "patchouli:spotlight",
