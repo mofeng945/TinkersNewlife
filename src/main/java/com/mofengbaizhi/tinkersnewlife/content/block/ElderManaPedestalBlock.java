@@ -1,5 +1,6 @@
 package com.mofengbaizhi.tinkersnewlife.content.block;
 
+import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModBlockEntities;
 import com.mofengbaizhi.tinkersnewlife.content.ModItems;
 import net.minecraft.core.BlockPos;
@@ -20,6 +21,10 @@ import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -29,22 +34,34 @@ import java.util.List;
  * <b>魔力台座</b>：把古老者水晶放上去，它就会<b>吸收周围环境能量给水晶充能</b> ✓
  * （用户口径：水晶<b>不会</b>自动充能 ⇒ "必须放在魔力台座上吸收周围能量才充电" ✓）。
  *
- * <h2>怎么用（一句话版）</h2>
+ * <h2>怎么用（§525 定稿规则）</h2>
  * <ul>
- *   <li><b>放</b>：手持 {@code tinkersnewlife:elder_crystal} 右击台座（台座必须空着 ✓ 一次只放一个 ✓）；</li>
- *   <li><b>取</b>：<b>空手右击</b> 或 <b>潜行右击</b>（潜行时手里拿什么都能取 ✓）⇒ 连同里面的 EE 一起拿回来 ✓；</li>
+ *   <li><b>取</b>：台座上有水晶时 <b>右键就取</b> —— <b>不用空手、不用潜行、手里拿什么都不影响</b> ✓
+ *       （台座被占用时"放"本来就不合法 ⇒ 这一下右键只可能是"取" ⇒ 不需要任何前置条件 ✓）；</li>
+ *   <li><b>放</b>：台座空着 + 手里拿着 {@code tinkersnewlife:elder_crystal} + 右键 ⇒ 放上去 <b>1 个</b>
+ *       （一次只放一个 ✓ 剩下的留在手里 ✓）；</li>
+ *   <li>台座上已经有水晶、手里又拿着水晶 ⇒ 右键 = <b>取回</b>（不交换、不叠加 ✗ 免得手滑丢电；
+ *       想换一颗就"先取下来、再放上去" ✓）；</li>
+ *   <li>其它情况（台座空着 + 手里不是水晶 / 空手 / 手里是水晶方块）⇒ <b>什么都不做</b>（{@code PASS} ✓）；</li>
  *   <li>台座 <b>上方/下方/四邻</b> 的<b>古老者水晶方块</b>也会被一起充能 ✓（容量 4000 ✓）；</li>
  *   <li>充能规律 = <b>亮度越低越快</b>（默认满速 5 EE/秒；公式在 {@code content/energy/LightLevelEnergySource}）✓。</li>
  * </ul>
  *
- * <h2>为什么取回判定是"空手 或 潜行"</h2>
- * 目标是<b>绝不误触</b>又<b>不用记快捷键</b> ✓：
- * <ul>
- *   <li>手里拿着别的东西（方块/食物/法杖…）普通右击 ⇒ <b>什么都不做</b>（{@code PASS}）⇒ 不会因为
- *       "想放个方块"把台座上的水晶顶下来 ✗；</li>
- *   <li>想取回时：手空着最自然（谁都会先空手去摸一下 ✓）；带着东西时按潜行也一定取回 ✓；</li>
- *   <li>台座上已经有水晶、手里又拿着水晶 ⇒ 普通右击<b>不动</b>（不交换、不叠加 ✗ 免得手滑丢电 ✓）。</li>
- * </ul>
+ * <h2>⚠ 为什么必须挂 {@code RightClickBlock} 事件（§525 查出的真因）</h2>
+ * 原版 {@code ServerPlayerGameMode#useItemOn} 在调用 {@code Block#use} 之前有<b>一道潜行门</b>
+ * （1.20.1-47.4.22 源码 347~351 行，客户端 {@code MultiPlayerGameMode#performUseItemOn} 318~326 行同款）：
+ * <pre>
+ * boolean flag  = !主手.isEmpty() || !副手.isEmpty();
+ * boolean flag1 = player.isSecondaryUseActive() &amp;&amp; flag;        // 潜行 且 任一只手拿着东西
+ * if (event.getUseBlock() == ALLOW || (... &amp;&amp; !flag1)) { blockstate.use(...); }   // 否则连 use 都不会调用 ✗
+ * </pre>
+ * ⇒ §523 写进 tooltip 与手册的"<b>潜行右击取回</b>"<b>从来没有生效过</b> ✗：潜行时只要手里拿着东西
+ * （放完水晶剩下的那一叠 / 镐子 / 火把…），台座的 {@code use} <b>根本不被调用</b>
+ * ⇒ 玩家看到的就是"<b>取不下、也放不上去、悬浮水晶一直挂着</b>"✗。
+ * <p>修法 = 本类末尾的 {@link InteractionGate}：监听 {@code PlayerInteractEvent.RightClickBlock}
+ * （<b>在原版那道门之前</b>触发，两端都触发 ✓），只对本方块 {@code setUseBlock(ALLOW)}
+ * ⇒ 潜行与非潜行<b>行为完全一致</b> ✓。同一套做法在本仓库已有一处先例并写过同样的原因：
+ * {@code content/block/CurseVaultInteractionHandler}（呪蔵）✓。
  *
  * <h2>挖掉台座：水晶不会丢</h2>
  * 走 {@link #getDrops} 把台座上的水晶（连它 NBT 里的 EE）追加进掉落物 ✓
@@ -101,12 +118,14 @@ public class ElderManaPedestalBlock extends BaseEntityBlock {
         if (!(level.getBlockEntity(pos) instanceof ElderManaPedestalBlockEntity pedestal)) {
             return InteractionResult.PASS;   // 方块实体没就绪（理论上不会）⇒ 不硬来 ✗
         }
-        ItemStack held = player.getItemInHand(hand);
 
-        // ① 取回：空手右击，或潜行右击（手里拿什么都能取 ✓）
-        if (pedestal.hasCrystal() && (held.isEmpty() || player.isShiftKeyDown())) {
+        // ① 取回：台座上有水晶 ⇒ 这一个右键就是"取"（手里拿什么、有没有潜行都不影响 ✓ 见类注释 §525）
+        if (pedestal.hasCrystal()) {
             if (!level.isClientSide) {
+                // takeCrystal 内部：**先**把方块实体的栈无条件清成 EMPTY、**再**同步（顺序不能反 ✓）
+                // ⇒ 客户端 BER 立刻不再画那颗水晶 ✓（见 ElderManaPedestalBlockEntity#takeCrystal）
                 ItemStack taken = pedestal.takeCrystal();
+                // "清空"在这一行之前**已经做完**了 ⇒ 下面这段是"交还给玩家"，成败都不影响台座已经空了 ✓
                 if (!taken.isEmpty() && !player.getInventory().add(taken)) {
                     player.drop(taken, false);   // 背包满 ⇒ 掉在脚下，绝不凭空消失 ✗
                 }
@@ -114,8 +133,9 @@ public class ElderManaPedestalBlock extends BaseEntityBlock {
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
 
-        // ② 放上去：台座空着 + 手里正好拿着水晶（一次只放一个 ✓ 剩下的留在手里 ✓）
-        if (!pedestal.hasCrystal() && isElderCrystal(held)) {
+        // ② 放上去：能走到这里 ⇒ 台座一定是空的 ✓；手里正好拿着水晶 ⇒ 放 1 个（剩下的留在手里 ✓）
+        ItemStack held = player.getItemInHand(hand);
+        if (isElderCrystal(held)) {
             if (!level.isClientSide) {
                 ItemStack one = held.copy();
                 one.setCount(1);
@@ -125,7 +145,7 @@ public class ElderManaPedestalBlock extends BaseEntityBlock {
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
 
-        // 其它情况（台座上有水晶而手里拿着别的东西 等）⇒ 什么都不做 ✓
+        // ③ 台座空着、手里又不是古老者水晶（空手 / 别的物品 / 水晶方块）⇒ 什么都不做 ✓
         return InteractionResult.PASS;
     }
 
@@ -153,5 +173,48 @@ public class ElderManaPedestalBlock extends BaseEntityBlock {
             drops.add(pedestal.getCrystal().copy());
         }
         return drops;
+    }
+
+    // ============================================================
+    //  潜行门旁路（§525）：台座的交互不该被原版的"潜行 + 手里有东西"挡掉
+    // ============================================================
+
+    /**
+     * 只做一件事：右键点的是<b>本方块</b>时，把 {@code UseBlock} 置成 {@code ALLOW}。
+     *
+     * <h2>为什么需要它</h2>
+     * 见类注释：原版 {@code ServerPlayerGameMode#useItemOn}（客户端 {@code performUseItemOn} 同款）
+     * 在调用 {@code Block#use} 前有一道门 —— <b>潜行且任一只手拿着东西</b>时直接跳过 {@code use}
+     * ⇒ §523 承诺的"潜行右击取回"从未生效 ✗（表现：取不下 / 放不上去 / 悬浮水晶不消失）。
+     * {@code setUseBlock(ALLOW)} 是 Forge 给这条路留的正规开关（原版那一行就是
+     * {@code event.getUseBlock() == ALLOW || (... && !flag1)} ✓）⇒ 潜行与非潜行<b>完全一致</b> ✓。
+     *
+     * <h2>为什么用 ALLOW 而不是在这里自己放/取</h2>
+     * 放/取逻辑只保留 {@link #use} <b>一份</b> ✓（ALLOW 只是"把原版那道门拆掉"，剩下交给原版流程
+     * ⇒ 客户端预测、挥手动画、发包数量与"不潜行时"逐字一致 ✓ 不会出现两端各做一半 ✗）。
+     *
+     * <h2>边界</h2>
+     * <ul>
+     *   <li>被别人 {@code DENY} 了（保护类模组禁止交互）⇒ <b>不抢</b>，直接放行 ✓；</li>
+     *   <li>两端都会触发本事件（客户端在 {@code performUseItemOn} 里也发一次 ✓）
+     *       ⇒ 两边都拿到 ALLOW，客户端预测与服务端结算口径一致 ✓；</li>
+     *   <li>只认本方块 ⇒ 对台座以外的一切右键<b>零影响</b> ✓（不碰玩家的手持物品、不碰潜行语义）。</li>
+     * </ul>
+     * <p>同一套做法在本仓库已有一处先例并写过同样的原因：{@code content/block/CurseVaultInteractionHandler} ✓。
+     */
+    @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+    public static final class InteractionGate {
+
+        private InteractionGate() {
+        }
+
+        @SubscribeEvent
+        public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+            if (event.getUseBlock() == Event.Result.DENY) return;   // 别人明确禁止 ⇒ 不抢 ✗
+            if (!(event.getLevel().getBlockState(event.getPos()).getBlock() instanceof ElderManaPedestalBlock)) {
+                return;                                             // 不是台座 ⇒ 一点不碰 ✓
+            }
+            event.setUseBlock(Event.Result.ALLOW);                  // 拆掉潜行门 ⇒ 潜行 = 非潜行 ✓
+        }
     }
 }

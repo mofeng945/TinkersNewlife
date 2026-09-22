@@ -7,7 +7,7 @@
     {
       "type": "patchouli:spotlight",
       "item": "tinkersnewlife:elder_mana_pedestal",
-      "text": "$(bold)Mana Pedestal$(): the $(bold)only$() way to charge an Elder Crystal.$(br2)$(li)Right-click the pedestal while holding an $(bold)Elder Crystal$() to place it$(li)$(bold)Right-click empty-handed$() or $(bold)sneak-right-click$() to take it back, EE included $(italic)(right-clicking with anything else does nothing, so you cannot knock the crystal off by accident)$()$(li)Elder Crystal $(bold)blocks above / below / beside$() the pedestal are charged as well (4000 EE each; the crystal on the pedestal is filled first)$(br2)$(italic)Crafting: 4 amethyst shards + 1 amethyst block + 3 deepslate (next page).$()"
+      "text": "$(bold)Mana Pedestal$(): the $(bold)only$() way to charge an Elder Crystal.$(br2)$(li)Right-click the pedestal while holding an $(bold)Elder Crystal$() to place it$(li)Whenever the pedestal holds one, $(bold)right-click takes it back$() (EE included) - $(bold)no empty hand and no sneaking needed$(), whatever you happen to be holding$(li)$(italic)If the pedestal is empty and you are not holding a crystal, the click does nothing at all; and while the pedestal is occupied, placing a second crystal is impossible anyway, so that right-click can only mean \"take\" - hence no precondition is needed$()$(li)Elder Crystal $(bold)blocks above / below / beside$() the pedestal are charged as well (4000 EE each; the crystal on the pedestal is filled first)$(br2)$(italic)Crafting: 4 amethyst shards + 1 amethyst block + 3 deepslate (next page).$()"
     },
     {
       "type": "patchouli:text",

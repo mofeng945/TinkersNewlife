@@ -59,6 +59,10 @@ import javax.annotation.Nullable;
  * {@link #getUpdatePacket()}（{@code Level#sendBlockUpdated} 内部会取它，默认实现返回 null ⇒ 不发包 ✗）；
  * 区块加载时走 {@link #getUpdateTag()} ✓。粒子/音效是服务端 {@code sendParticles/playSound} 下发的 ✓
  * 所以这里不需要第二个网络通道 ✓。
+ * <p>§525 补记：<b>"取走/清空"与"放上去"走的是同一条路</b>（{@link #sync()}）——区别只有一条：
+ * 取走时<b>无条件</b>发（见 {@link #takeCrystal()}），因为"变成空"也必须让客户端知道 ✓
+ * （原来写成 {@code if (!taken.isEmpty()) sync()} ⇒ 那条分支本身没错，但它把"清空"的同步绑在了
+ * 返回值上；现在改成无条件，语义更直白 ✓）。
  */
 public class ElderManaPedestalBlockEntity extends BlockEntity {
 
@@ -148,11 +152,26 @@ public class ElderManaPedestalBlockEntity extends BlockEntity {
         sync();
     }
 
-    /** 把台座上的水晶取下来（返回空栈 = 本来就没有 ✓） */
+    /**
+     * 把台座上的水晶取下来（返回空栈 = 本来就没有 ✓）；<b>返回的那个栈从此归调用方所有</b> ✓
+     * （调用方负责塞进背包 / 掉在地上 —— 见 {@code ElderManaPedestalBlock#use}）。
+     *
+     * <p>⚠ §525 两条纪律，缺一条就会重现"悬浮水晶不消失 / 取不下 / 放不上去"✗：
+     * <ol>
+     *   <li><b>先清字段、再 {@link #sync()}（顺序不能反 ✓）</b>——反了就会把"台座上还有水晶"那一版
+     *       发出去 ⇒ 客户端 BER 照旧接着画 ✗；</li>
+     *   <li><b>无条件 sync</b>（哪怕本来就没有水晶）——"空了"这件事必须一定到达客户端 ✓：
+     *       {@link #getUpdateTag()} 在水晶为空时<b>不写</b> {@code Crystal} 键，
+     *       客户端 {@link #load(CompoundTag)} 读到"没这个键"就把字段置成 {@code EMPTY} ✓
+     *       （⇒ 与"台座被拆/区块重载"走的是同一条数据路 ✓ 不会出现两条口径）；</li>
+     *   <li>清空**不依赖**"交给玩家"是否成功 ✓ —— 那是 {@code use} 里清空<b>之后</b>才做的事，
+     *       成败都不影响台座已经空了 ✓（清空放前面 ⇒ 不可能出现"玩家拿到一份、台座上还留一份"的复制 ✗）。</li>
+     * </ol>
+     */
     public ItemStack takeCrystal() {
         ItemStack taken = crystal;
         crystal = ItemStack.EMPTY;
-        if (!taken.isEmpty()) sync();
+        sync();
         return taken;
     }
 

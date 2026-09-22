@@ -1281,5 +1281,5 @@
   "block.tinkersnewlife.elder_mana_pedestal": "Mana Pedestal",
   "block.tinkersnewlife.elder_mana_pedestal.rate": "Full-speed charging (light 0): %s EE/s",
   "block.tinkersnewlife.elder_mana_pedestal.rule": "The darker, the faster; no charging at light >= %s (pitch black caves charge at full speed even at noon)",
-  "block.tinkersnewlife.elder_mana_pedestal.usage": "Right-click with an Elder Crystal to place it; right-click empty-handed (or sneak) to take it back; crystal blocks above/below/beside it are charged as well"
+  "block.tinkersnewlife.elder_mana_pedestal.usage": "Right-click with an Elder Crystal to place it; right-click to take it back whenever one is on the pedestal (no empty hand, no sneaking needed); crystal blocks above/below/beside it are charged as well"
 }
