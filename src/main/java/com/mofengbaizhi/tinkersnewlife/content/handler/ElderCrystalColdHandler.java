@@ -64,6 +64,13 @@ public final class ElderCrystalColdHandler {
      */
     public static final double FROZEN_PER_TICK_AT_FULL = 2.0D;
 
+    /**
+     * §533 **"碰到就算"的外扩量（格）**：贴着方块站时，生物判定框的边界正好<b>等于</b>方块边界，
+     * 而 {@code BlockPos.containing} 是向下取整 ⇒ 那一列会被排除掉 ✗（表现就是"贴着也不冷"✗）。
+     * 外扩 0.1 格即可把"面接触/擦边"覆盖进来 ✓ 又不会把**隔一格**的方块算进来 ✗。
+     */
+    private static final double TOUCH_EPSILON = 0.1D;
+
     /** 抵消原版"不在细雪里每 tick −2"的衰减（见类注释 ✓ 别删 ✗ 删了满水晶就冻不上） */
     private static final int DECAY_COMPENSATION = 2;
 
@@ -133,7 +140,8 @@ public final class ElderCrystalColdHandler {
         // ① 脚下那格（站台上）
         total += blockEeAt(living, feet.below(), seen);
         // ② 判定框覆盖到的格子（贴侧面 / 嵌进去）
-        var box = living.getBoundingBox();
+        // §533 外扩 TOUCH_EPSILON ⇒ "贴着/碰到方块"也算 ✓（原来只算"确实嵌进方块那一列"✗）
+        var box = living.getBoundingBox().inflate(TOUCH_EPSILON);
         for (BlockPos pos : BlockPos.betweenClosed(
                 BlockPos.containing(box.minX, box.minY, box.minZ),
                 BlockPos.containing(box.maxX, box.maxY, box.maxZ))) {
