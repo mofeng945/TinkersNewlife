@@ -75,7 +75,12 @@ public final class ElderCrystalManaFeeder {
 
             // ⑤ 真写回去（写的是"真实法力" ✓ 与万法有道同一口径：不虚报 ✗）
             //    EE→法力 一律经 EnergyUnits ✓（当前 1:1，但改了汇率这里自动跟着走 ✓）
-            IronSpellsSpellAccess.setMana(player, mana + (int) Math.floor(EnergyUnits.eeToMana(drained)));
+            // ⑤ **走官方加法**（§542）：不要再 getMana+setMana 硬写 ✗ —— 那会打断铁魔法自己的回蓝记账
+            //    （用户报：拿着水晶时法力不再自然回复 ✗）。官方 addMana 不在（老版本/反射失败）才退回旧写法 ✓
+            float gain = (float) EnergyUnits.eeToMana(drained);
+            if (!IronSpellsSpellAccess.addMana(player, gain)) {
+                IronSpellsSpellAccess.setMana(player, mana + (int) Math.floor(gain));
+            }
         } catch (Throwable ignored) {
             // fail-safe：可选内容出错绝不影响玩家 tick ✓
         }

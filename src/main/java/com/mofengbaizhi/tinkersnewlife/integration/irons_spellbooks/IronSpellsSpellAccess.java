@@ -389,6 +389,27 @@ public final class IronSpellsSpellAccess {
     }
 
     /** 写玩家法力（float 版；失败静默） */
+    /**
+     * §542 **走铁魔法官方的 `MagicData#addMana(float)` 加法路径**。
+     * <p>用户报：「手中拿着古老者水晶时，铁魔法的法力不再自动回复」。
+     * 我们原来是 `getMana()` 读 → 自己加 → `setMana()` 写回 ⇒ **每 tick 硬写一次法力值** ✗
+     * —— 铁魔法自身的回蓝/状态记账很可能因此被打断。改成官方加法 ⇒ 与它的自然回蓝共存 ✓。
+     *
+     * @return 是否真的调到了官方方法（false ⇒ 调用方应退回旧写法或放弃本次供能 ✓）
+     */
+    public static boolean addMana(LivingEntity entity, float amount) {
+        if (amount <= 0.0F || !available()) return false;
+        try {
+            Object md = magicDataOf(entity);
+            if (md == null) return false;
+            Method m = find(md.getClass(), "addMana", float.class);
+            if (m == null) return false;
+            m.invoke(md, amount);
+            return true;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
     public static void setMana(LivingEntity entity, int mana) {
         Object md = magicDataOf(entity);
         if (md == null || mana < 0) return;
