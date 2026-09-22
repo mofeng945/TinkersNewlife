@@ -79,6 +79,8 @@ public final class MekanismEnergyBridge implements IStrictEnergyHandler {
     @Nullable
     public static <T> LazyOptional<T> capability(EeConverterCore core, Capability<T> cap, @Nullable Direction side) {
         if (cap != Capabilities.STRICT_ENERGY) return null;
+        // §578 六面角色：通用机械只在**右面 + 底面**暴露（原来六面全开 ✗）
+        if (!com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterFaces.allowsMekanism(core.hostState(), side)) return null;
         MekanismEnergyBridge bridge;
         synchronized (CACHE) {
             bridge = CACHE.computeIfAbsent(core, MekanismEnergyBridge::new);

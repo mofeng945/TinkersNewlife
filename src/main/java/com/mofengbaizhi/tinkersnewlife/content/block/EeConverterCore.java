@@ -201,6 +201,15 @@ public final class EeConverterCore implements EeStorage, IEnergyStorage {
         return withResidual(fe);
     }
 
+    /** §578 宿主方块的状态（给六面角色判定用 ✓ 桥与核心都靠它 ✓ 可能为 null ⇒ 判定里已容忍 ✓） */
+    public net.minecraft.world.level.block.state.BlockState hostState() {
+        try {
+            return host.getBlockState();
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
     /** 往 FE 池里放（返回实际接受的 ✓ 满了就拒收 ✓；§559 起对"外部桥"可见 ✓） */
     public int insertFe(int amount, boolean simulate) {
         if (amount <= 0) return 0;
@@ -230,6 +239,8 @@ public final class EeConverterCore implements EeStorage, IEnergyStorage {
     private void pullForgeEnergy(Level level, BlockPos pos, int budget) {
         int left = budget;
         for (Direction d : EeStorages.NEIGHBOURS) {
+            // §578 六面角色：FE 只在**背面出口 + 底面万用**上取/送 ✓（原来六面都抽都推 ✗）
+            if (!EnergyConverterFaces.allowsFe(hostState(), d)) continue;
             if (left <= 0) break;
             BlockPos at = pos.relative(d);
             BlockEntity be = level.getBlockEntity(at);
@@ -258,6 +269,8 @@ public final class EeConverterCore implements EeStorage, IEnergyStorage {
     private void pushForgeEnergy(Level level, BlockPos pos, int budget) {
         int left = Math.min(budget, feBuffer);
         for (Direction d : EeStorages.NEIGHBOURS) {
+            // §578 六面角色：FE 只在**背面出口 + 底面万用**上取/送 ✓（原来六面都抽都推 ✗）
+            if (!EnergyConverterFaces.allowsFe(hostState(), d)) continue;
             if (left <= 0) break;
             BlockPos at = pos.relative(d);
             BlockEntity be = level.getBlockEntity(at);
