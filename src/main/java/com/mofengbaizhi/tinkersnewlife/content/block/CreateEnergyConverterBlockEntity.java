@@ -68,7 +68,18 @@ public class CreateEnergyConverterBlockEntity extends KineticBlockEntity impleme
         // EnergyConverterModBridges#createBlockEntityType 里 ✓）
         super(com.mofengbaizhi.tinkersnewlife.content.ModBlockEntities.ENERGY_CONVERTER.get(), pos, state);
         // §559：把"读自己的转速"接给核心 ⇒ 核心那边就不必认识 Create 的类 ✓
-        this.core.setRpmSource(this::getSpeed);
+        this.// §576 只认"正面贴着动能方块"的转速 ✗ —— 不再依赖 Create 的 hasShaftTowards（实测"哪面都能驱动" ✗）
+        core.setRpmSource(() -> {
+            net.minecraft.world.level.block.state.BlockState st = getBlockState();
+            net.minecraft.core.Direction front =
+                    st.getValue(com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterBlock.FACING);
+            if (getLevel() == null) return 0.0F;
+            if (!(getLevel().getBlockEntity(getBlockPos().relative(front))
+                    instanceof com.simibubi.create.content.kinetics.base.KineticBlockEntity)) {
+                return 0.0F;   // 正面没有动能方块（传动杆/机器）⇒ 视为"没接杆" ✓
+            }
+            return getSpeed();
+        });
     }
 
     @Override
