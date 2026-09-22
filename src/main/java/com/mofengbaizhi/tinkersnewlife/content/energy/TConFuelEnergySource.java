@@ -61,7 +61,7 @@ import slimeknights.tconstruct.library.recipe.fuel.MeltingFuelLookup;
  * 所以这里取一个<b>固定基准</b> {@code fuel_ticks_per_item}（默认 <b>10</b> tick/物品 ——
  * TCon 3.11.2.166 的 806 个熔炼配方里 {@code "time"} <b>最小就是 9~10 tick</b>，10 是常见档位 ✓）：
  * <pre>
- *     这一秒烧掉的燃料(mB) = temperature × 20 / 4 = temperature / 2（§547 起；原 temperature × 5 ✗）
+ *     这一秒烧掉的燃料(mB) = temperature × 20 / 4 = temperature / 40（§549 起；历史：temperature*5 → /2 → /40 ✓）
  *     能烧物品数            = (这一秒烧掉的燃料 / 一批燃料量) × (duration / ticks_per_item)
  *     产出 EE               = 能烧物品数 × fuel_ee_per_item（默认 0.5）
  * </pre>
@@ -191,7 +191,7 @@ public final class TConFuelEnergySource implements AmbientEnergySource {
             if (perBatch <= 0 || temperature <= 0 || duration <= 0) return 0.0D;
 
             // 每 4 tick 扣一次 temperature ⇒ 每秒（20 tick）扣 temperature × 5 ✓（见类注释的源码出处 ✓）
-            int want = temperature / 2;   // §547 用户：燃料充能削到十分之一（原 temperature*5 = 每秒 5000 mB，恰好比 TCon 口径快 10 倍 ✗）
+            int want = temperature / 40;   // §549 用户：燃料消耗太快 ⇒ 改成匠魂自己的"一桶(1000 mB)烧 40 秒"口径（原 /2 = 500 mB/秒 ✗ 快 20 倍）   // §547 用户：燃料充能削到十分之一（原 temperature*5 = 每秒 5000 mB，恰好比 TCon 口径快 10 倍 ✗）
             if (want <= 0) return 0.0D;
 
             // 先 SIMULATE 问"到底能抽多少"（能力实现说了算 ✓ 也会把"只读的显示代理"挡掉 ✓）
