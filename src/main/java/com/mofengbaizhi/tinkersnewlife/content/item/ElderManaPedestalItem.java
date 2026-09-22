@@ -39,9 +39,6 @@ public class ElderManaPedestalItem extends BlockItem {
         tooltip.add(Component.translatable("block.tinkersnewlife.elder_mana_pedestal.rule",
                         ModConfig.pedestalLightCap())
                 .withStyle(ChatFormatting.GRAY));
-        // ③ 用法（放 / 取 / 也充方块）
-        tooltip.add(Component.translatable("block.tinkersnewlife.elder_mana_pedestal.usage")
-                .withStyle(ChatFormatting.DARK_AQUA));
     }
 
     /** 去掉多余的小数尾巴（5.0 ⇒ "5"、0.25 ⇒ "0.25" ✓ 纯显示，不参与任何计算 ✓） */

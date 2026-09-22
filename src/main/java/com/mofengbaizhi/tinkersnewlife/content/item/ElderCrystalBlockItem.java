@@ -56,9 +56,5 @@ public class ElderCrystalBlockItem extends BlockItem {
         tooltip.add(Component.translatable("block.tinkersnewlife.elder_crystal_block.power",
                         ee, ElderCrystalStorage.BLOCK_CAPACITY)
                 .withStyle(ChatFormatting.AQUA));
-        tooltip.add(Component.translatable("block.tinkersnewlife.elder_crystal_block.rate")
-                .withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.translatable("block.tinkersnewlife.elder_crystal_block.hint")
-                .withStyle(ChatFormatting.DARK_AQUA));
     }
 }

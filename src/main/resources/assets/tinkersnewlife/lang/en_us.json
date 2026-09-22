@@ -1277,7 +1277,7 @@
   "block.tinkersnewlife.elder_crystal_block.rate": "Rate: 1 EE = 1 mana = 4 souls = 2 curse",
   "block.tinkersnewlife.elder_crystal_block.hint": "Breaking it returns the block with all of its EE (4 crystals = 1 block, EE is summed and never lost)",
   "block.tinkersnewlife.elder_crystal_ore": "Elder Crystal Ore",
-  "block.tinkersnewlife.elder_crystal_ore.desc": "Generates only in the Deep Dark (Y -64 to -1); mining yields an Elder Crystal (comes with 500 EE, Fortune increases the count, Silk Touch drops the ore itself)",
+  "block.tinkersnewlife.elder_crystal_ore.desc": "Only generates in the Deep Dark (Y -64 ~ -1)",
   "block.tinkersnewlife.elder_mana_pedestal": "Mana Pedestal",
   "block.tinkersnewlife.elder_mana_pedestal.rate": "Full-speed charging (light 0): %s EE/s",
   "block.tinkersnewlife.elder_mana_pedestal.rule": "The darker, the faster; no charging at light >= %s (pitch black caves charge at full speed even at noon)",

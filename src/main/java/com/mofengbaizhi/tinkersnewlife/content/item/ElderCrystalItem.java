@@ -88,9 +88,5 @@ public class ElderCrystalItem extends Item implements ICurioItem {
         tooltip.add(Component.translatable("item.tinkersnewlife.elder_crystal.power",
                         ee, ElderCrystalStorage.CRYSTAL_CAPACITY)
                 .withStyle(ChatFormatting.AQUA));
-        tooltip.add(Component.translatable("item.tinkersnewlife.elder_crystal.rate")
-                .withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.translatable("item.tinkersnewlife.elder_crystal.hint")
-                .withStyle(ChatFormatting.DARK_AQUA));
     }
 }
