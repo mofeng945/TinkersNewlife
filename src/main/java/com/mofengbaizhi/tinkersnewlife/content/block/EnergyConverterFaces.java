@@ -47,7 +47,12 @@ public final class EnergyConverterFaces {
         return side == null || isRight(s, side) || isBottom(s, side);
     }
 
-    /** /** 通用机械（J 或 FE）线缆：**右面 + 底面**（背面是输出口 ✗ 不收 ✓） */
+    /**
+     * §581 用户订正：**右面接的是通用机械的"热导线缆"（Thermodynamic Conductor ⇒ 走「热量」✗ 不是焦耳 ✗）**
+     * ⇒ 右面应当作为**热量输入口**处理（`HEAT_HANDLER` 能力 ✓ 待实现 ✗ 见备忘录 §581）；
+     * 底面 = 万用输入口（Mek 的**焦耳/通用线缆**、FE、AE、EE 都从这里进 ✓ 见下面各门 ✓）。
+     * <p>⚠ 目前为了不阻塞测试，右面**暂时**仍与底面一样放行通用机械的**焦耳**能力 ✗（等热量那套做好再收窄 ✓）。
+     */
     public static boolean allowsMekanism(BlockState s, Direction side) {
         return side == null || isRight(s, side) || isBottom(s, side);
     }
