@@ -7,6 +7,7 @@ import com.mofengbaizhi.tinkersnewlife.content.recipe.GenericToolMeltingRecipe;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.TagModifierSalvage;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.CurseCraftRecipe;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.ElderCrystalMergeRecipe;
+import com.mofengbaizhi.tinkersnewlife.content.recipe.ElderCrystalSplitRecipe;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -84,4 +85,13 @@ public class ModRecipeSerializers {
     public static final RegistryObject<RecipeSerializer<ElderCrystalMergeRecipe>> ELDER_CRYSTAL_MERGE =
             RECIPE_SERIALIZERS.register("elder_crystal_merge",
                     ElderCrystalMergeRecipe.Serializer::new);
+
+    // ============================================================
+    //  古老者水晶拆分（§532）：1 方块 → 4 水晶，EE 平分不丢 ✓（与合并配方互逆 ✓）
+    // ============================================================
+
+    /** 拆分配方的序列化器（data/<ns>/recipes/*.json 里的 {@code "type"} 就是它 ✓） */
+    public static final RegistryObject<RecipeSerializer<ElderCrystalSplitRecipe>> ELDER_CRYSTAL_SPLIT =
+            RECIPE_SERIALIZERS.register("elder_crystal_split",
+                    ElderCrystalSplitRecipe.Serializer::new);
 }
