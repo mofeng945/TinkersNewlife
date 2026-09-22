@@ -151,18 +151,14 @@ public final class EeConverterCore implements EeStorage, IEnergyStorage {
 
         // ①-C 四家模组适配器（J / RPM / EU / AE ⇒ 都折成 FE ✓）
         //      额度用"这一 tick 剩下的吞吐" ⇒ 多条路同时接上也不会串出超过 outputCap 的功率 ✗
-        int adapterBudget = ModConfig.converterInputFePerTick();   // §571 同上 ✓ 输入不再被输出闸门夹 ✗
-        if (adapterBudget > 0) {
-            for (EnergyInputAdapter adapter : EnergyInputs.all()) {
-                if (adapterBudget <= 0) break;
-                int got = adapter.drainFe(ctx, adapterBudget, false);
-                if (got <= 0) continue;
-                int accepted = insertFe(got, false);
-                adapterBudget -= accepted;
-            }
-        }
-
-        // ①-D §559 可选模组的"真正接上"那两路（Mekanism = 收它推来的 J ✓ AE2 = 从网格取电 ✓）
+        // §577 **停用 §557 的"反射版适配器"** ✗ —— 真因就是它 ✓：
+        //   用户实测「侧面接上传动杆照样产出 FE」✗ ⇒ 因为那套里有 **Create(RPM) 适配器**，
+        //   它读的是"**相邻**动能方块的转速"✗，**完全不管方向**✗ ⇒ 任何一面有杆都被算成输入 ✓。
+        //   §559 起：Mek(J) 走 `STRICT_ENERGY` capability ✓、AE 走网格节点 ✓、
+        //   Create(RPM) 走"本方块自己就是动能方块"（且**正面把关** ✓ §575/§576 ✓）⇒ 这套适配器**全部多余** ✗。
+        //   ⚠ 适配器类（`EnergyInputs` / `Ae2EnergyAdapter` 等）暂留为死代码 ✓ 下次清理 ✗（本次只断调用 ✓ 零编译风险 ✓）。
+        //
+        //   （原代码：遍历 `EnergyInputs.all()` 逐个 `drainFe(...)` 并 `insertFe(...)` ✓）        // ①-D §559 可选模组的"真正接上"那两路（Mekanism = 收它推来的 J ✓ AE2 = 从网格取电 ✓）
         //      ⚠ 都藏在 EnergyConverterModBridges 后面 ⇒ 没装那家时连它们的类都不会被加载 ✓
         EnergyConverterModBridges.tick(host);
 
