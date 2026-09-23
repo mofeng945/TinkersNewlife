@@ -73,20 +73,25 @@ public final class EeStorages {
     public static int pullAround(Level level, BlockPos pos, EeStorage baseSink, int totalLimit,
                                  BiFunction<BlockPos, EeStorage, EeStorage> sinkFor) {
         if (level == null || baseSink == null || totalLimit <= 0) return 0;
+        // §599 性能：把"我自己是不是转化器 / 我自己的状态"提到循环外 ✓
+        //   （原来这两句在 6 个方向上各查一遍 ✗ = 12 次区块查询/tick/方块 ✗）
+        final boolean selfIsConverter = isConverter(level, pos);
+        final net.minecraft.world.level.block.state.BlockState selfState =
+                selfIsConverter ? level.getBlockState(pos) : null;
         int left = totalLimit;
         int moved = 0;
         for (Direction d : NEIGHBOURS) {
             // §591 **我自己是转化器 ⇒ 只能用我自己的顶面/底面** ✗ —— 用户实测「抽取器放侧面，EE 还是被推进/抽进去了」✗
     //   根因：§587 只挡住了"别人往转化器里推"✗，没挡"**转化器主动从相邻容器抽**"✗
     //   （转化器每 tick 会 `pullAround` ✓ 六个面都抽 ✗）⇒ 这里按**我自己**的面角色再挡一道 ✓。
-    if (isConverter(level, pos)
-            && !com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterFaces.allowsEe(level.getBlockState(pos), d)) continue;    // §587 邻居是转化器 ⇒ EE 只在它的顶面/底面进出 ✓（方向要取反 ✓ 从邻居视角看）
-            if (isConverter(level, pos.relative(d))
-                    && !com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterFaces.allowsEe(
-                            level.getBlockState(pos.relative(d)), d.getOpposite())) continue;
+    if (selfIsConverter
+            && !com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterFaces.allowsEe(selfState, d)) continue;    // §587 邻居是转化器 ⇒ EE 只在它的顶面/底面进出 ✓（方向要取反 ✓ 从邻居视角看）
             if (left <= 0) break;
             BlockPos at = pos.relative(d);
-            BlockEntity be = level.getBlockEntity(at);
+            // §599 性能：这一格的状态**只查一次** ✓（原来"判邻居是不是转化器"和"取状态喂给 allowsEe"各查一次 ✗）
+            final net.minecraft.world.level.block.state.BlockState nState = level.getBlockState(at);
+            if (nState.hasProperty(com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterBlock.FACING)
+                    && !com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterFaces.allowsEe(nState, d.getOpposite())) continue;
             EeStorage src = at(level, at);   /* §563 统一走查找 ✓ */ if (src == null || src == baseSink) continue;
             if (src.isEmpty()) continue;
             EeStorage sink = sinkFor == null ? baseSink : sinkFor.apply(at, baseSink);
@@ -123,20 +128,24 @@ public final class EeStorages {
     public static int pushAround(Level level, BlockPos pos, EeStorage source, int totalLimit,
                                  @Nullable Predicate<BlockEntity> skip) {
         if (level == null || source == null || totalLimit <= 0) return 0;
+        // §599 性能：同 pullAround ✓（自我判定提到循环外 ✓）
+        final boolean selfIsConverter = isConverter(level, pos);
+        final net.minecraft.world.level.block.state.BlockState selfState =
+                selfIsConverter ? level.getBlockState(pos) : null;
         int left = Math.min(totalLimit, source.getEe());
         int moved = 0;
         for (Direction d : NEIGHBOURS) {
             // §591 **我自己是转化器 ⇒ 只能用我自己的顶面/底面** ✗ —— 用户实测「抽取器放侧面，EE 还是被推进/抽进去了」✗
     //   根因：§587 只挡住了"别人往转化器里推"✗，没挡"**转化器主动从相邻容器抽**"✗
     //   （转化器每 tick 会 `pullAround` ✓ 六个面都抽 ✗）⇒ 这里按**我自己**的面角色再挡一道 ✓。
-    if (isConverter(level, pos)
-            && !com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterFaces.allowsEe(level.getBlockState(pos), d)) continue;    // §587 邻居是转化器 ⇒ EE 只在它的顶面/底面进出 ✓（方向要取反 ✓ 从邻居视角看）
-            if (isConverter(level, pos.relative(d))
-                    && !com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterFaces.allowsEe(
-                            level.getBlockState(pos.relative(d)), d.getOpposite())) continue;
+    if (selfIsConverter
+            && !com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterFaces.allowsEe(selfState, d)) continue;    // §587 邻居是转化器 ⇒ EE 只在它的顶面/底面进出 ✓（方向要取反 ✓ 从邻居视角看）
             if (left <= 0) break;
             BlockPos at = pos.relative(d);
-            BlockEntity be = level.getBlockEntity(at);
+            final net.minecraft.world.level.block.state.BlockState nState = level.getBlockState(at);   // §599 只查一次 ✓
+            if (nState.hasProperty(com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterBlock.FACING)
+                    && !com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterFaces.allowsEe(nState, d.getOpposite())) continue;
+            BlockEntity be = level.getBlockEntity(at);   // §599 这个 `be` 是给下面的 skip 用的 ✓（必需 ✓）
             EeStorage dst = at(level, at);   /* §563 同上 ✓ */ if (dst == null || dst == source) continue;
             if (skip != null && skip.test(be)) continue;   // §557 防空转：刚抽过的那些不还回去 ✓
             if (dst.getSpace() <= 0) continue;
@@ -158,16 +167,21 @@ public final class EeStorages {
     public static List<EeStorage> neighbours(Level level, BlockPos pos) {
         List<EeStorage> found = new ArrayList<>(NEIGHBOURS.length);
         if (level == null) return found;
+        // §599 性能：自我判定提到循环外 ✓
+        final boolean selfIsConverter = isConverter(level, pos);
+        final net.minecraft.world.level.block.state.BlockState selfState =
+                selfIsConverter ? level.getBlockState(pos) : null;
         for (Direction d : NEIGHBOURS) {
             // §591 **我自己是转化器 ⇒ 只能用我自己的顶面/底面** ✗ —— 用户实测「抽取器放侧面，EE 还是被推进/抽进去了」✗
     //   根因：§587 只挡住了"别人往转化器里推"✗，没挡"**转化器主动从相邻容器抽**"✗
     //   （转化器每 tick 会 `pullAround` ✓ 六个面都抽 ✗）⇒ 这里按**我自己**的面角色再挡一道 ✓。
-    if (isConverter(level, pos)
-            && !com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterFaces.allowsEe(level.getBlockState(pos), d)) continue;    // §587 邻居是转化器 ⇒ EE 只在它的顶面/底面进出 ✓（方向要取反 ✓ 从邻居视角看）
-            if (isConverter(level, pos.relative(d))
-                    && !com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterFaces.allowsEe(
-                            level.getBlockState(pos.relative(d)), d.getOpposite())) continue;
-            EeStorage s = at(level, pos.relative(d));
+    if (selfIsConverter
+            && !com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterFaces.allowsEe(selfState, d)) continue;    // §587 邻居是转化器 ⇒ EE 只在它的顶面/底面进出 ✓（方向要取反 ✓ 从邻居视角看）
+            BlockPos at = pos.relative(d);
+            final net.minecraft.world.level.block.state.BlockState nState = level.getBlockState(at);   // §599 只查一次 ✓
+            if (nState.hasProperty(com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterBlock.FACING)
+                    && !com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterFaces.allowsEe(nState, d.getOpposite())) continue;
+            EeStorage s = at(level, at);
             if (s != null) found.add(s);
         }
         return found;

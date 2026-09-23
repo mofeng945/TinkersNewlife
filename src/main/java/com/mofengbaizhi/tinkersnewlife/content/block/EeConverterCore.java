@@ -229,10 +229,14 @@ public final class EeConverterCore implements EeStorage, IEnergyStorage {
 
     /** 从相邻方块"抽" Forge Energy（我们要多少、它给多少，取小 ✓） */
     private void pullForgeEnergy(Level level, BlockPos pos, int budget) {
+        // §599 性能：宿主状态**只查一次** ✓（原来每方向都 hostState() 查一遍 ✗ = 6 次区块查询/tick ✗）
+        final net.minecraft.world.level.block.state.BlockState self = hostState();
         int left = budget;
         for (Direction d : EeStorages.NEIGHBOURS) {
-            // §578 六面角色：FE 只在**背面出口 + 底面万用**上取/送 ✓（原来六面都抽都推 ✗）
-            if (!EnergyConverterFaces.allowsFeOut(hostState(), d)) continue;   // §580 主动推只从**背面** ✓
+            // §599 修一处真错 ✗：**取** FE 用"输入面"判定 ✓ —— 这里原来错用了 `allowsFeOut`（背面 ✗）
+            //   ⇒ 后果 ① 底面的 FE 永远不会被"主动抽"（只能等别人推 ✓）；② **会从自己的输出面（背面）倒吸** ✗
+            //   （我们正把 FE 推给背面那台机器，它又可能被我们再吸回来 ✗）。用户口径：底面 = 万用输入 ✓。
+            if (!EnergyConverterFaces.allowsFeIn(self, d)) continue;
             if (left <= 0) break;
             BlockPos at = pos.relative(d);
             BlockEntity be = level.getBlockEntity(at);
@@ -259,10 +263,12 @@ public final class EeConverterCore implements EeStorage, IEnergyStorage {
 
     /** 把 FE 池里的电"推"给相邻方块的 {@code IEnergyStorage}（push 模式 ✓ 固定方向顺序 ✓） */
     private void pushForgeEnergy(Level level, BlockPos pos, int budget) {
+        // §599 性能：宿主状态只查一次 ✓（原来每方向都查 ✗）
+        final net.minecraft.world.level.block.state.BlockState self = hostState();
         int left = Math.min(budget, feBuffer);
         for (Direction d : EeStorages.NEIGHBOURS) {
-            // §578 六面角色：FE 只在**背面出口 + 底面万用**上取/送 ✓（原来六面都抽都推 ✗）
-            if (!EnergyConverterFaces.allowsFeOut(hostState(), d)) continue;   // §580 主动推只从**背面** ✓
+            // §578 六面角色：FE 只从**背面**送出 ✓（推送这一侧用"输出面"判定是对的 ✓）
+            if (!EnergyConverterFaces.allowsFeOut(self, d)) continue;
             if (left <= 0) break;
             BlockPos at = pos.relative(d);
             BlockEntity be = level.getBlockEntity(at);

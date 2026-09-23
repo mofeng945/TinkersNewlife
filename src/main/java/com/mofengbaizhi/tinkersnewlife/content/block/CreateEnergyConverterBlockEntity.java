@@ -62,11 +62,12 @@ public class CreateEnergyConverterBlockEntity extends KineticBlockEntity impleme
      * （总应力 = 影响 × 转速 ✓ ⇒ 转得越快、吃得越多 ✓ 一根轴喂多台就得多出力 ✓）。
      * <p>API 由 javap 实核 ✓：{@code KineticBlockEntity#calculateStressApplied():float} ✓
      * （基类默认从 {@code BlockStressValues} 取 ✓ 我们没在那边登记 ⇒ 必须自己覆写 ✓ 否则恒 0 = 白嫖动力 ✗）。
-     * <p>取值：**4.0**（与机械压力机同量级 ✓ 想调只改这一个数 ✓）。
+     * <p>取值：§598 起是**配置键** {@code converter_stress_impact}（默认 **4.0** ✓ 与机械压力机同量级 ✓
+     * 0 = 白嫖动力 ✗ 别设 0 ✓）。
      */
     @Override
     public float calculateStressApplied() {
-        return 4.0F;
+        return (float) com.mofengbaizhi.tinkersnewlife.config.ModConfig.converterStressImpact();
     }
 
     /** 共享核心（状态 + 逻辑 ✓ 宿主就是本对象 ✓） */

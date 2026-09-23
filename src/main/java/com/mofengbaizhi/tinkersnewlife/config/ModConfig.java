@@ -141,6 +141,28 @@ public final class ModConfig {
      */
     public static final int EE_NET_DEFAULT_CONVERTER_INPUT_EE = 512;
 
+    // ---- §598 三个"防爆表"旋钮（用户口径：数值要可调 ✓ 但默认必须与 §583/§595 实测口径一致 ✓）----
+
+    /**
+     * §598 转化器：通用机械（Mekanism）<b>热量 → FE 的汇率</b>（FE / 热量）。
+     * <p>0.4 = 用户口径 {@code 10 J = 4 FE} ✓（也是 {@code EnergyUnits.Fe.FE_PER_J} ✓ 两处口径必须一致 ✓）。
+     * <p>设为 <b>0</b> ⇒ 热导线缆送进来的热一点不收 ✓（等于单独关掉"热量"这一路 ✓，不影响它的 J 那一路 ✓）。
+     */
+    public static final double EE_NET_DEFAULT_CONVERTER_FE_PER_HEAT = 0.4D;
+
+    /**
+     * §598 转化器：<b>Create 应力消耗</b>（SU；{@code KineticBlockEntity#calculateStressApplied} 的返回值 ✓）。
+     * <p>4.0 = §595 定的"小额固定值" ✓ —— 传动杆接上就得吃应力 ✓ 不然就是白嫖动力 ✗。
+     */
+    public static final double EE_NET_DEFAULT_CONVERTER_STRESS_IMPACT = 4.0D;
+
+    /**
+     * §598 转化器：<b>热量槽容量</b>（Mekanism 的 heat capacity，J/K ✓）。
+     * <p>⚠ 我们<b>绝不囤热</b> ✗（{@code handleHeat} 只吃"这一 tick 立刻能换成 FE"的那部分 ✓）
+     * ⇒ 这个值只影响"通用机械允许多快地往我们这里导热"✓，**不**是热量仓库 ✓。
+     */
+    public static final double EE_NET_DEFAULT_CONVERTER_HEAT_SINK_CAPACITY = 64.0D;
+
     /** §557 抽取方块：抽的速率（EE/tick） */
     public static final ConfigValue<Integer> EE_EXTRACTOR_PULL_PER_TICK;
     /** §557 抽取方块：推的速率（EE/tick） */
@@ -155,6 +177,12 @@ public final class ModConfig {
     public static final ConfigValue<Integer> CONVERTER_INPUT_FE_PER_TICK;
     /** §557 转化器：EE 输入上限（EE/t） */
     public static final ConfigValue<Integer> CONVERTER_INPUT_EE_PER_TICK;
+    /** §598 转化器：热量汇率（FE / 热量；0 = 不收热 ✓） */
+    public static final ConfigValue<Double> CONVERTER_FE_PER_HEAT;
+    /** §598 转化器：Create 应力消耗（SU） */
+    public static final ConfigValue<Double> CONVERTER_STRESS_IMPACT;
+    /** §598 转化器：热量槽容量（Mekanism heat capacity，J/K） */
+    public static final ConfigValue<Double> CONVERTER_HEAT_SINK_CAPACITY;
 
     // ==================== 双向认知阻碍面具 ====================
     /**
@@ -456,17 +484,26 @@ public final class ModConfig {
                 "UNIVERSAL ENERGY CONVERTER (tinkersnewlife:energy_converter): ONE-WAY, everything -> FE.",
                 "  Input A: EE pushed in by neighbours (the same EeStorage interface) - converted at 1 EE = 1000 FE.",
                 "  Input B: Forge Energy pulled from neighbours (ForgeCapabilities.ENERGY) - 1:1.",
-                "  Input C: the four optional mods. See memo S557 for the current state of each one; a family",
-                "      that is not hooked up yet is skipped quietly and reported once in the startup log.",
+                "  Input C: the three optional mods, each through its OWN real mechanism (memo S598):",
+                "      Mekanism  -> STRICT_ENERGY capability (its cables push J in) + HEAT_HANDLER on the",
+                "                  RIGHT face (its heat conduits push heat in; 1 heat = converter_fe_per_heat FE).",
+                "      AE2       -> the grid node takes AE out of the network (LEFT face; rate follows AE2's own",
+                "                  PowerUnits.FE.conversionRatio, official default 1 AE = 2 FE).",
+                "      Create    -> this block IS a kinetic block, so a shaft on the FRONT face drives it",
+                "                  (FE/t = 45 * RPM / 64) and it eats converter_stress_impact SU of stress.",
+                "      There are no per-family on/off switches any more: a family works exactly when that mod",
+                "      is installed (memo S598 explains why those four switches were deleted).",
                 "  Output: FE pushed to neighbours via IEnergyStorage#receiveEnergy (never extracted back).",
                 "  converter_output_fe_per_tick (default 64) THE HARD THROUGHPUT GATE: no matter how many input",
                 "      paths are connected, this block never moves more than 64 FE per tick in total.",
                 "  converter_input_fe_per_tick (default 64) cap on the direct Forge Energy path.",
                 "  converter_input_ee_per_tick (default 512) cap on the EE path; since 1 EE = 1000 FE the FE gates are the real limit.",
                 "  converter_buffer_fe          (default 32000) FE pool inside the converter.",
-                "  mekanism_energy_enabled / create_rotation_enabled / ic2_eu_enabled / ae2_energy_enabled",
-                "      (all default true) per-family master switches; a family that could not be resolved at",
-                "      startup is skipped quietly and reported once in the log.");
+                "  converter_fe_per_heat        (default 0.4) FE per unit of Mekanism heat; 0 = take no heat at all.",
+                "  converter_stress_impact      (default 4) SU of Create stress this block applies; 0 = free power.",
+                "  converter_heat_sink_capacity (default 64) Mekanism heat capacity (J/K) of our heat sink.",
+                "      NOTE: we never STORE heat - handleHeat only accepts what it can turn into FE this tick,");
+
         EE_EXTRACTOR_PULL_PER_TICK = b.defineInRange("extractor_pull_ee_per_tick",
                 EE_NET_DEFAULT_EXTRACTOR_PULL, 0, 1_000_000);
         EE_EXTRACTOR_PUSH_PER_TICK = b.defineInRange("extractor_push_ee_per_tick",
@@ -481,6 +518,12 @@ public final class ModConfig {
                 EE_NET_DEFAULT_CONVERTER_INPUT_FE, 0, 1_000_000);
         CONVERTER_INPUT_EE_PER_TICK = b.defineInRange("converter_input_ee_per_tick",
                 EE_NET_DEFAULT_CONVERTER_INPUT_EE, 0, 100_000_000);
+        CONVERTER_FE_PER_HEAT = b.defineInRange("converter_fe_per_heat",
+                EE_NET_DEFAULT_CONVERTER_FE_PER_HEAT, 0.0D, 1000.0D);
+        CONVERTER_STRESS_IMPACT = b.defineInRange("converter_stress_impact",
+                EE_NET_DEFAULT_CONVERTER_STRESS_IMPACT, 0.0D, 1024.0D);
+        CONVERTER_HEAT_SINK_CAPACITY = b.defineInRange("converter_heat_sink_capacity",
+                EE_NET_DEFAULT_CONVERTER_HEAT_SINK_CAPACITY, 1.0D, 1_000_000.0D);
         // §598：§557 留下的 `mekanism_energy_enabled` / `create_rotation_enabled` / `ic2_eu_enabled` /
         //       `ae2_energy_enabled` 四个键**已删** ✗ —— 它们从 §577 起就没人读了 ✓（唯一读者是那套已删的
         //       反射适配器 ✓），而 §592 那次"转速整条路被一个不生效的键静默关掉"就是这类键惹的祸 ✗。
@@ -1006,6 +1049,25 @@ public final class ModConfig {
     /** §557 转化器：EE 输入上限（EE/t） */
     public static int converterInputEePerTick() {
         return Math.max(0, intOr(CONVERTER_INPUT_EE_PER_TICK, EE_NET_DEFAULT_CONVERTER_INPUT_EE));
+    }
+
+    /**
+     * §598 转化器：热量汇率（FE / 热量）。
+     * <p>⚠ <b>0 = 明确关掉"热量"这一路</b> ✓（{@code MekanismEnergyBridge.HeatSink} 会一点热都不收 ✓）
+     * —— 别写成"返回 0 却还去做除法" ✗ 那样会得到 Infinity ⇒ 一次收进无限热 ✗（防爆表红线 ✓）。
+     */
+    public static double converterFePerHeat() {
+        return Math.max(0.0D, doubleOr(CONVERTER_FE_PER_HEAT, EE_NET_DEFAULT_CONVERTER_FE_PER_HEAT));
+    }
+
+    /** §598 转化器：Create 应力消耗（SU；0 = 白嫖动力 ✗ 建议保持 ≥1 ✓） */
+    public static double converterStressImpact() {
+        return Math.max(0.0D, doubleOr(CONVERTER_STRESS_IMPACT, EE_NET_DEFAULT_CONVERTER_STRESS_IMPACT));
+    }
+
+    /** §598 转化器：热量槽容量（J/K ✓ ≥1 ⇒ 别给 0 ✗ 通用机械那边会算不动 ✓） */
+    public static double converterHeatSinkCapacity() {
+        return Math.max(1.0D, doubleOr(CONVERTER_HEAT_SINK_CAPACITY, EE_NET_DEFAULT_CONVERTER_HEAT_SINK_CAPACITY));
     }
 
     // §598：原 §557 的四个"这一路是否启用"开关（converterMekanismEnabled / converterCreateEnabled /

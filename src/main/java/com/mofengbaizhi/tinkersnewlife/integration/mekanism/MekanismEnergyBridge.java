@@ -158,12 +158,20 @@ public final class MekanismEnergyBridge implements IStrictEnergyHandler {
     //  §585 右面 = 通用机械**热导线缆（热量 ⇒ FE）**（签名由 javap 实核 ✓）
     // ============================================================
 
-    /** 汇率：**1 热量(J) = 0.4 FE**（§583 按 `maxEnergyPerSteam = 10` + 用户 `10 J = 4 FE` 推导 ✓） */
-    private static final double FE_PER_HEAT = 0.4D;
-    /** 热沉热容（J/K）：给小值 ⇒ 不当"热量仓库" ✗ */
-    private static final double SINK_CAPACITY = 64.0D;
-    /** 逆热导（Mek 口径：越小越容易导热 ✓）给中等值 ⇒ 流量温和 ✓ */
+    /**
+     * §598 汇率：**1 热量(J) = {@code converter_fe_per_heat} FE**（默认 0.4 ✓
+     * 由 §583 `maxEnergyPerSteam = 10` + 用户 `10 J = 4 FE` 推导 ✓）—— 现在是配置键 ✓ 用户可压 ✓。
+     */
+    private static double fePerHeat() {
+        return com.mofengbaizhi.tinkersnewlife.config.ModConfig.converterFePerHeat();
+    }
+    /** §598 热沉热容（J/K）：现在是配置键 ✓ 默认 64 ⇒ 不当"热量仓库" ✗ */
+    private static double sinkCapacity() {
+        return com.mofengbaizhi.tinkersnewlife.config.ModConfig.converterHeatSinkCapacity();
+    }
+    /** 逆热导（Mek 口径：越小越容易导热 ✓）给中等值 ⇒ 流量温和 ✓（暂不做配置键 ✓） */
     private static final double SINK_INVERSE_CONDUCTION = 5.0D;
+
 
     /** 热面句柄（每个 core 一个桥 ✓ 由静态 {@code capability(...)} 通过局部变量访问 ✓） */
     private final LazyOptional<mekanism.api.heat.IHeatHandler> heatHolder;   // §585b 在构造器里赋值 ✓（空白 final 不能在字段初始化式里被读 ✗）
@@ -182,20 +190,22 @@ public final class MekanismEnergyBridge implements IStrictEnergyHandler {
         @Override public int getHeatCapacitorCount() { return 1; }
         @Override public double getTemperature(int capacitor) { return mekanism.api.heat.HeatAPI.AMBIENT_TEMP; }
         @Override public double getInverseConduction(int capacitor) { return SINK_INVERSE_CONDUCTION; }
-        @Override public double getHeatCapacity(int capacitor) { return SINK_CAPACITY; }
+        @Override public double getHeatCapacity(int capacitor) { return sinkCapacity(); }
 
         /** ⚠ javap 实核：这个方法是 **void**（不是 double ✗）—— 收下多少由"我们限制自己"决定 ✓ */
         @Override
         public void handleHeat(int capacitor, double transfer) {
             if (!(transfer > 0.0D)) return;                                  // 不放热 ✗
+            double rate = fePerHeat();                                       // §598 配置键（默认 0.4 ✓）
+            if (!(rate > 0.0D)) return;                                      // §598 汇率 0 = 明确关掉热路 ✓（也防掉 ÷0 ⇒ Infinity ✗）
             int feRoom = Math.max(0, core.getMaxEnergyStored() - core.getEnergyStored());
             if (feRoom <= 0) return;                                         // FE 池满 ⇒ 不收热 ✓
             int feBudget = Math.min(feRoom, com.mofengbaizhi.tinkersnewlife.config.ModConfig.converterInputFePerTick());
             if (feBudget <= 0) return;
-            double heatBudget = feBudget / FE_PER_HEAT;                       // 这一 tick 最多吃多少热 ✓
+            double heatBudget = feBudget / rate;                             // 这一 tick 最多吃多少热 ✓
             double accepted = Math.min(transfer, heatBudget);
             if (!(accepted > 0.0D)) return;
-            int fe = core.residualFloor(accepted * FE_PER_HEAT);              // §571 残差：小数不丢 ✓
+            int fe = core.residualFloor(accepted * rate);                    // §571 残差：小数不丢 ✓
             if (fe > 0) core.insertFe(fe, false);
         }
     }
