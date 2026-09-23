@@ -52,8 +52,8 @@ import javax.annotation.Nullable;
  * （{@code floor(joules × 0.4)} ✓ 少收的那点 J 留在通用机械那边 ✓ 不会凭空产生 FE ✗）。
  *
  * <h2>隔离（没装通用机械的玩家为什么不会崩）</h2>
- * <b>本类是唯一 import {@code mekanism.*} 的地方</b>（除了反射版的 {@code MekanismEnergyAdapter} ✓
- * 那个只 {@code Class.forName} ✓）✓ 而且本类<b>只</b>从
+ * <b>本类是唯一 import {@code mekanism.*} 的地方</b>（§598 起名副其实 ✓ ——
+ * 那个"反射版"的 {@code MekanismEnergyAdapter} 已整体删除 ✗）✓ 而且本类<b>只</b>从
  * {@code EnergyConverterModBridges} 的 {@code isLoaded("mekanism")} 分支里被实例化/调用 ✓
  * ⇒ 没装通用机械时 JVM 永远不会加载本类 ✓（{@code NoClassDefFoundError} 也就无从发生 ✓）。
  */

@@ -22,7 +22,7 @@ import javax.annotation.Nullable;
  * Create 的传动杆只对**相邻的动能方块**建立连接 ✗ —— 判定方式是"那格的方块实体是不是
  * {@code KineticBlockEntity}"（外加方块要实现 {@code IRotate} ✓ 见
  * {@link CreateEnergyConverterBlock}）✓。
- * §557 那种"只读相邻转速"的做法（{@code CreateRotationAdapter} ✗）**不会**让传动杆真的接过来 ✓
+ * §557 那种"只读相邻转速"的做法（那个适配器类已随 §598 整体删除 ✗）**不会**让传动杆真的接过来 ✓
  * ⇒ 必须让本方块<b>自己就是动能方块</b> ✓ —— 这正是用户口径「传动杆要能接上」的意思 ✓。
  *
  * <h2>核到的真实类名 / 方法名（出处：{@code libs/create-1.20.1-6.0.8.jar}，逐个 javap ✓）</h2>

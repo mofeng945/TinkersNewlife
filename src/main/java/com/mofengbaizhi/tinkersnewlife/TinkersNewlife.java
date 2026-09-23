@@ -152,9 +152,13 @@ public class TinkersNewlife {
         // 公共代码不直接引用任何联动类型，各联动类只在对应模组在场时被加载。
         IntegrationLoader.init(modEventBus);
 
-        // §557：把"别家模组能量 → FE"四路适配器的探测结论打一行日志 ✓
-        //（四路里三条可能"安静地不工作" ✗ ⇒ 让日志自己说清哪条接上了、哪条为什么没有 ✓）
-        com.mofengbaizhi.tinkersnewlife.content.energy.EnergyInputs.probeAll();
+        // §598：万用能量转化器三路联动的"哪家在场"打一行日志 ✓
+        //（§557 那套反射适配器 + 它的 probeAll 日志已整体删除 ✗ —— 那行日志里写死的"AE2 未接上"是过期结论 ✗，
+        //  现在只剩"模组在不在场"这一个开关 ✓，日志每次启动按实际 ModList 现算 ✓）
+        LOGGER.info("[§598] 万用能量转化器联动：Mekanism={} / AE2={} / Create={}",
+                IntegrationLoader.isLoaded(IntegrationLoader.MEKANISM),
+                IntegrationLoader.isLoaded(IntegrationLoader.AE2),
+                IntegrationLoader.isLoaded(IntegrationLoader.CREATE));
 
 
         // 强制加载 ModCurios 类，确保其事件订阅生效（特别是槽位注册）

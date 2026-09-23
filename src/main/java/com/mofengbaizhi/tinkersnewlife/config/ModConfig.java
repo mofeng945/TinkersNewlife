@@ -155,14 +155,6 @@ public final class ModConfig {
     public static final ConfigValue<Integer> CONVERTER_INPUT_FE_PER_TICK;
     /** §557 转化器：EE 输入上限（EE/t） */
     public static final ConfigValue<Integer> CONVERTER_INPUT_EE_PER_TICK;
-    /** §557 转化器：通用机械（J）这一路是否启用 */
-    public static final ConfigValue<Boolean> CONVERTER_MEKANISM_ENABLED;
-    /** §557 转化器：Create 转速（RPM）这一路是否启用 */
-    public static final ConfigValue<Boolean> CONVERTER_CREATE_ENABLED;
-    /** §557 转化器：工业时代（EU）这一路是否启用 */
-    public static final ConfigValue<Boolean> CONVERTER_IC2_ENABLED;
-    /** §557 转化器：应用能源（AE）这一路是否启用 */
-    public static final ConfigValue<Boolean> CONVERTER_AE2_ENABLED;
 
     // ==================== 双向认知阻碍面具 ====================
     /**
@@ -489,10 +481,10 @@ public final class ModConfig {
                 EE_NET_DEFAULT_CONVERTER_INPUT_FE, 0, 1_000_000);
         CONVERTER_INPUT_EE_PER_TICK = b.defineInRange("converter_input_ee_per_tick",
                 EE_NET_DEFAULT_CONVERTER_INPUT_EE, 0, 100_000_000);
-        CONVERTER_MEKANISM_ENABLED = b.define("mekanism_energy_enabled", true);
-        CONVERTER_CREATE_ENABLED = b.define("create_rotation_enabled", true);
-        CONVERTER_IC2_ENABLED = b.define("ic2_eu_enabled", true);
-        CONVERTER_AE2_ENABLED = b.define("ae2_energy_enabled", true);
+        // §598：§557 留下的 `mekanism_energy_enabled` / `create_rotation_enabled` / `ic2_eu_enabled` /
+        //       `ae2_energy_enabled` 四个键**已删** ✗ —— 它们从 §577 起就没人读了 ✓（唯一读者是那套已删的
+        //       反射适配器 ✓），而 §592 那次"转速整条路被一个不生效的键静默关掉"就是这类键惹的祸 ✗。
+        //       现在"哪家能接"只由**模组在不在场**决定 ✓（`IntegrationLoader.isLoaded` ✓）。
         b.pop();
 
         // 双向认知阻碍面具（头饰）
@@ -1016,25 +1008,9 @@ public final class ModConfig {
         return Math.max(0, intOr(CONVERTER_INPUT_EE_PER_TICK, EE_NET_DEFAULT_CONVERTER_INPUT_EE));
     }
 
-    /** §557 转化器：通用机械（J）这一路的开关（配置没就绪 ⇒ true） */
-    public static boolean converterMekanismEnabled() {
-        return flag(CONVERTER_MEKANISM_ENABLED, true);
-    }
-
-    /** §557 转化器：Create 转速（RPM）这一路的开关（配置没就绪 ⇒ true） */
-    public static boolean converterCreateEnabled() {
-        return flag(CONVERTER_CREATE_ENABLED, true);
-    }
-
-    /** §557 转化器：工业时代（EU）这一路的开关（配置没就绪 ⇒ true） */
-    public static boolean converterIc2Enabled() {
-        return flag(CONVERTER_IC2_ENABLED, true);
-    }
-
-    /** §557 转化器：应用能源（AE）这一路的开关（配置没就绪 ⇒ true） */
-    public static boolean converterAe2Enabled() {
-        return flag(CONVERTER_AE2_ENABLED, true);
-    }
+    // §598：原 §557 的四个"这一路是否启用"开关（converterMekanismEnabled / converterCreateEnabled /
+    //       converterIc2Enabled / converterAe2Enabled）**已整体删除** ✗ —— 它们唯一的使用者是那套
+    //       已删的反射适配器 ✓，留着只会让人以为"关掉键就能断某一路"✗（实际从 §577 起就没读过 ✓）。
 
     /** 充能时是否放冷色粒子（配置没就绪 ⇒ true） */
     public static boolean pedestalParticles() {
