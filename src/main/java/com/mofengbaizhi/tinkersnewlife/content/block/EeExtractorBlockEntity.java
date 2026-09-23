@@ -111,6 +111,11 @@ public class EeExtractorBlockEntity extends BlockEntity implements EeStorage, Me
                 ModConfig.eeExtractorPushPerTick(), null);
 
         if (pulled > 0 || pushed > 0) setChanged();
+
+        // ③ §605 把真值写进 GUI 数据数组 ✓（**每 tick 都写** ✓ 原版只在"值变了"时才发包 ✓
+        //    ⇒ 界面上的"缓存 EE"才会连续地涨 ✓ 而不是只在放/取那一刻跳一下 ✗（用户实测 bug ✓））
+        guiData.set(DATA_EE, getEe());
+        guiData.set(DATA_CAPACITY, getCapacity());
     }
 
     // ============================================================
@@ -220,70 +225,39 @@ public class EeExtractorBlockEntity extends BlockEntity implements EeStorage, Me
     }
 
     // ============================================================
-    //  §558 菜单数据槽（ContainerData / DataAccess）
+    //  §605 菜单数据（ContainerData）：让 GUI 里的"缓存 EE"真正逐 tick 变化
     // ============================================================
 
+    /** 数据槽个数（菜单与服务端两边**必须一致** ✓） */
+    public static final int DATA_COUNT = 2;
+    /** 下标 0 = 缓存 EE（EE ✓ 就是个 int，不拆位 ✗） */
+    public static final int DATA_EE = 0;
+    /** 下标 1 = 缓存上限（EE ✓） */
+    public static final int DATA_CAPACITY = 1;
+
     /**
-     * 菜单数据槽：<b>[0] = 缓存 EE 的高 16 位、[1] = 低 16 位、[2] = 上限的高 16 位、[3] = 低 16 位</b> ✓。
+     * 给菜单订阅的数据数组（原版标准写法：{@code AbstractContainerMenu#addDataSlots(ContainerData)} ✓）。
      *
-     * <p>⚠ 为什么要<u>自己拆高低 16 位</u>（而不是直接 {@code addDataSlots(ContainerData)}）✗：
-     * 原版 {@code AbstractContainerMenu#addDataSlots(ContainerData)} 会把每个值塞进 {@code DataSlot}，
-     * 而 {@code DataSlot} 内部是 <b>short</b> ⇒ 超过 32767 会溢出 ✗。
-     * 我们的量级（0~4000 ✓）本来用不到高 16 位，但拆开写是"以后把上限调到 10 万也不出错"的保险 ✓
-     * 而且这样菜单那边拿到的是<b>它自己持有的 DataSlot 实例</b>（不必去翻原版那个 protected map ✓）。
-     *
-     * <p>⚠ 这两个 {@code DataSlot} 是<b>一个方块实体一份</b> ✓：菜单构造时把它们注册进
-     * {@code AbstractContainerMenu#addSlot(DataSlot)}（ID 从 0 开始 ✓）⇒ 原版每 tick 比对、
-     * 只把变化过的推给<b>正在看这个菜单</b>的玩家 ✓（不用我们写包 ✓ 也不与 §556 的"直发 BE 包"重复 ✓）。
+     * <h2>⚠⚠ §605 用户实测 bug：「缓存 EE」只有在<a>取出水晶</a>时才变 ✗</h2>
+     * 上一版是 4 个**手写的** {@code DataSlot}（自己拆高低 16 位 ✗），它有两个错 ✗：
+     * <ol>
+     *   <li><b>前提错</b> ✗：我在 §558 的注释里写"原版 {@code DataSlot} 内部是 short ⇒ 超过 32767 会溢出"✗。
+     *       1.20.1 实测（javap 核过 ✓）：{@code ClientboundContainerSetDataPacket} 带的是
+     *       <b>{@code containerId / id / value} 三个 int</b> ✓、{@code DataSlot} 里存的也是 int ✓
+     *       ⇒ <b>根本不存在 short 截断</b> ✗ ⇒ 拆位纯属多余 ✓（我记错了 ✗ 从 1.12 那代沿下来的印象 ✗）。</li>
+     *   <li><b>同步链断在客户端</b> ✗✗：那 4 个槽的 {@code set(int)} 是<b>空实现</b> ✗、{@code get()} 又去读
+     *       <b>客户端自己那个 BE</b> 的缓存 ✗ ⇒ 客户端数字只在"方块实体被整体同步"时才更新 ✓
+     *       = 也就是 {@code setSlotItem} 那次 ✓ ⇒ 用户看到的"**只有放/取时才变**"✗ 完全对上 ✓。</li>
+     * </ol>
+     * 现在按原版标准来 ✓：服务端每 tick 把真值写进这个数组（见 {@link #tick} ✓），
+     * 客户端由原版同步器写<b>同一份数组</b> ✓，两边读的都是它 ✓ ⇒ 界面数字会连续地涨 ✓。
      */
-    private final net.minecraft.world.inventory.DataSlot[] dataSlots = new net.minecraft.world.inventory.DataSlot[] {
-            new net.minecraft.world.inventory.DataSlot() {
-                @Override
-                public int get() {
-                    return (getEe() >>> 16) & 0xFFFF;
-                }
+    private final net.minecraft.world.inventory.SimpleContainerData guiData =
+            new net.minecraft.world.inventory.SimpleContainerData(DATA_COUNT);
 
-                @Override
-                public void set(int value) {
-                    // 客户端侧原版会往这里写回同步值 ✓ 我们不靠它存东西（真值在服务端 BE 里 ✓）
-                    // ⇒ 空实现是安全的：它只影响"客户端那份镜像"✓
-                }
-            },
-            new net.minecraft.world.inventory.DataSlot() {
-                @Override
-                public int get() {
-                    return getEe() & 0xFFFF;
-                }
-
-                @Override
-                public void set(int value) {
-                }
-            },
-            new net.minecraft.world.inventory.DataSlot() {
-                @Override
-                public int get() {
-                    return (getCapacity() >>> 16) & 0xFFFF;
-                }
-
-                @Override
-                public void set(int value) {
-                }
-            },
-            new net.minecraft.world.inventory.DataSlot() {
-                @Override
-                public int get() {
-                    return getCapacity() & 0xFFFF;
-                }
-
-                @Override
-                public void set(int value) {
-                }
-            }
-    };
-
-    /** <b>这个方块实体的那 4 个数据槽本体</b>（菜单要把它们 {@code addSlot} 注册进去才生效 ✓） */
-    public net.minecraft.world.inventory.DataSlot[] dataSlots() {
-        return dataSlots;
+    /** 菜单要拿去 {@code addDataSlots} 的那份数据 ✓ */
+    public net.minecraft.world.inventory.ContainerData containerData() {
+        return guiData;
     }
 
     // ============================================================

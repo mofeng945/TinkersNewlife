@@ -17,17 +17,22 @@ import javax.annotation.Nonnull;
  *
  * <h2>布局（与屏幕 {@code EeExtractorScreen} 用的是同一组常量 ✓ 别再两处各写一份 ✗）</h2>
  * <pre>
- *   y+0  .. 17   标题栏
- *   y+33         抽取槽（1 格，坐标 80,33 居中）
- *   y+64         信息行（"缓存 EE：x / 4000" —— 屏幕上画，不是槽位）
+ *   y+21         标题条下沿（§604 起标题条高 21 ✓ 仿量子背包 ✓）
+ *   y+36         提示行（"放有电的水晶" ✓ 屏幕画 ✓）
+ *   y+61         信息行（"缓存 EE：x / 4000" ✓ 屏幕画 ✓）
+ *   y+71         分隔线
+ *   y+73         "物品栏"标签
  *   y+84  .. 138 玩家背包 3×9
  *   y+142 .. 160 快捷栏
  *   imageHeight = 166
  * </pre>
  *
- * <h2>数据同步（§558 选的那一种：原版 {@code DataSlot}／菜单数据槽 ✓）</h2>
- * {@code addDataSlot(be.dataSlots())} ⇒ 原版每 tick 把变化过的值推给<b>正在看这个菜单</b>的玩家 ✓
+ * <h2>数据同步（§605 改：原版标准 {@code ContainerData} ✓）</h2>
+ * {@code addDataSlots(be.containerData())} ⇒ 服务端每 tick 把真值写进那份数据 ✓ 原版只把**变化过**的推给
+ * "正在看这个菜单"的玩家 ✓ 客户端由同步器写**同一份数组** ✓ 屏幕 {@link #cachedEe()} 读它 ✓
  * （不用我们自己写包 ✓ 也不与 §556 的"直发 BE 包"重复 ✓ —— 那个管的是"没开 GUI 时"✓）。
+ * <p>⚠ 上一版用的是 4 个手写 {@code DataSlot}（还自己拆高低 16 位 ✗）⇒ 客户端的 {@code set(int)} 是空实现 ✗
+ * ⇒ 界面数字**只在放/取水晶时才变** ✗（用户实测 ✓ 见 §605 ✓）。
  *
  * <h2>槽位规则</h2>
  * <ul>
@@ -68,22 +73,24 @@ public class EeExtractorMenu extends AbstractContainerMenu {
 
     private final ContainerLevelAccess access;
 
+    /** §605 GUI 数据（缓存 EE / 缓存上限）✓ 由原版同步器推到客户端 ✓ 屏幕读的就是它 ✓ */
+    private final net.minecraft.world.inventory.ContainerData data;
+
     private EeExtractorMenu(int containerId, Inventory playerInventory,
                             @javax.annotation.Nullable EeExtractorBlockEntity be,
                             ContainerLevelAccess access) {
         super(ModMenus.EE_EXTRACTOR.get(), containerId);
         this.be = be;
         this.access = access;
+        // §605 GUI 数据：走原版标准 ContainerData（服务端 = BE 那份，客户端 = 同一份对象，
+        //   由原版同步器写 ✓）⇒ 屏幕读它就能逐 tick 看到缓存变化 ✓。
+        // ⚠ 客户端 BE 还没同步到时（刚打开界面那一两 tick）用一份等长的空数组兜底 ✓
+        //   —— 必须**等长** ✗ 否则数据槽下标会错位 ✓。
+        this.data = be != null
+                ? be.containerData()
+                : new net.minecraft.world.inventory.SimpleContainerData(EeExtractorBlockEntity.DATA_COUNT);
+        this.addDataSlots(this.data);
         initSlots(playerInventory);
-        if (be != null) {
-            // §558 同步：把这个 BE 的 4 个数据槽注册进菜单（ID 从 0 开始 ⇒ getEe 高/低、上限 高/低 ✓）
-            // 原版每 tick 只把变化过的推给"正在看这个菜单"的玩家 ✓ 不需要我们自己发包 ✓
-            // ⚠ 必须走 addDataSlot(DataSlot) 这个方法名 —— 我第一版写的 addSlot(dataSlot)
-            //   编译直接报"DataSlot 无法转换为 Slot" ✗（两者是不同的类 ✗ 只是名字像 ✓）
-            for (net.minecraft.world.inventory.DataSlot slot : be.dataSlots()) {
-                this.addDataSlot(slot);
-            }
-        }
     }
 
     /** 服务端构造（由 {@code EeExtractorBlockEntity#createMenu} 调 ✓） */
@@ -190,30 +197,18 @@ public class EeExtractorMenu extends AbstractContainerMenu {
         if (!player.getInventory().add(left)) player.drop(left, false);
     }
 
-    /** 给屏幕读"缓存 EE"用的（走数据槽 ✓ 客户端也能读到 ✓ BE 未到时回 0 ✓） */
-    public int cachedEe() {
-        return combine(0);
-    }
-
-    /** 给屏幕读"缓存上限"用的（BE 未到时回配置里的值 ✓） */
-    public int cacheCapacity() {
-        int v = combine(1);
-        return v > 0 ? v : com.mofengbaizhi.tinkersnewlife.config.ModConfig.eeExtractorBuffer();
-    }
-
     /**
-     * 把第 {@code which} 个值的两个 16 位片拼回一个 int（见 BE 的 {@code dataSlots} 注释 ✓）。
-     * <p>直接从 {@link #blockEntity()} 那 4 个 {@code DataSlot} 读 ✓ —— 它们在客户端由原版
-     * 同步器写入 ✓ 所以客户端读到的就是服务端的真实值 ✓；BE 未到时（客户端区块还没到）
-     * 回 0 ✓（界面最多显示一瞬间的 0 ✓ 不崩 ✗）。
+     * 给屏幕读"缓存 EE"用的（§605：走 {@link net.minecraft.world.inventory.ContainerData} ✓
+     * 客户端读的是**原版同步器写进来的那份数组** ✓ 所以能逐 tick 变化 ✓）。
      */
-    private int combine(int which) {
-        if (this.be == null) return 0;
-        net.minecraft.world.inventory.DataSlot[] slots = this.be.dataSlots();
-        if (slots.length < 4) return 0;
-        int hi = slots[which * 2].get() & 0xFFFF;
-        int lo = slots[which * 2 + 1].get() & 0xFFFF;
-        return (hi << 16) | lo;
+    public int cachedEe() {
+        return this.data.get(EeExtractorBlockEntity.DATA_EE);
+    }
+
+    /** 给屏幕读"缓存上限"用的（数组还没被填过 ⇒ 回配置里的值 ✓ 显示不会空 ✗） */
+    public int cacheCapacity() {
+        int v = this.data.get(EeExtractorBlockEntity.DATA_CAPACITY);
+        return v > 0 ? v : com.mofengbaizhi.tinkersnewlife.config.ModConfig.eeExtractorBuffer();
     }
 
     /** 本菜单对应的方块实体（客户端可能是 null ✓ 调用方要判空 ✓） */
