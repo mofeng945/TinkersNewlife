@@ -110,7 +110,7 @@ public final class Ae2GridBridge implements IInWorldGridNodeHost, IGridNodeListe
             if (ratio > 0.0D && !Double.isNaN(ratio) && !Double.isInfinite(ratio)) return ratio;
         } catch (Throwable ignored) {
         }
-        return EnergyUnits.Fe.FE_PER_AE;
+        return fePerAe();
     }
 
 
