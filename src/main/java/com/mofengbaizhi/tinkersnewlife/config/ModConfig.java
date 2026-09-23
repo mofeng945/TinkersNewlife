@@ -136,7 +136,7 @@ public final class ModConfig {
     public static final int EE_NET_DEFAULT_CONVERTER_INPUT_FE = 64;
     /**
      * §557 转化器：EE 输入这一条的上限（EE/t）。
-     * <p>512 EE/t ÷ 8（{@code 1 FE = 8 EE}）= <b>64 FE/t</b> ✓ 与 {@code output_fe_per_tick} 同档 ✓
+     * <p>⚠ §589 起 {@code 1 EE = 1000 FE} ⇒ EE 路额度（512 EE/t）远大于产量 ✓ ⇒ **真正限速的是 FE 闸门** ✓（EE 额度留作保险 ✓）
      * 也就是说"三条输入路各自都够把吞吐闸门打满"，但闸门仍然只有一个 ✓ 不会 3 倍 ✓。
      */
     public static final int EE_NET_DEFAULT_CONVERTER_INPUT_EE = 512;
@@ -444,7 +444,7 @@ public final class ModConfig {
                 "EE network: the EE Extractor and the Universal Energy Converter.",
                 "",
                 "ALL EXTERNAL ENERGY RATES ARE THE USER'S, HARD-CODED AND FIXED:",
-                "    1 FE = 8 EE            (so 1 EE = 0.125 FE)",
+                "    1 EE = 1000 FE         (so 1 FE = 0.001 EE)   // §589",
                 "    1 EU = 4 FE            (IC2)",
                 "    1 AE = 2 FE            (AE2)",
                 "    10 J = 4 FE            (Mekanism; 1 J = 0.4 FE)",
@@ -462,7 +462,7 @@ public final class ModConfig {
                 "      is full the extractor simply stops pulling, so the EE in the item is never destroyed.",
                 "",
                 "UNIVERSAL ENERGY CONVERTER (tinkersnewlife:energy_converter): ONE-WAY, everything -> FE.",
-                "  Input A: EE pushed in by neighbours (the same EeStorage interface) - converted at 1 FE = 8 EE.",
+                "  Input A: EE pushed in by neighbours (the same EeStorage interface) - converted at 1 EE = 1000 FE.",
                 "  Input B: Forge Energy pulled from neighbours (ForgeCapabilities.ENERGY) - 1:1.",
                 "  Input C: the four optional mods. See memo S557 for the current state of each one; a family",
                 "      that is not hooked up yet is skipped quietly and reported once in the startup log.",
@@ -470,7 +470,7 @@ public final class ModConfig {
                 "  converter_output_fe_per_tick (default 64) THE HARD THROUGHPUT GATE: no matter how many input",
                 "      paths are connected, this block never moves more than 64 FE per tick in total.",
                 "  converter_input_fe_per_tick (default 64) cap on the direct Forge Energy path.",
-                "  converter_input_ee_per_tick (default 512 = 64 FE worth) cap on the EE path.",
+                "  converter_input_ee_per_tick (default 512) cap on the EE path; since 1 EE = 1000 FE the FE gates are the real limit.",
                 "  converter_buffer_fe          (default 32000) FE pool inside the converter.",
                 "  mekanism_energy_enabled / create_rotation_enabled / ic2_eu_enabled / ae2_energy_enabled",
                 "      (all default true) per-family master switches; a family that could not be resolved at",

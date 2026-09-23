@@ -153,23 +153,30 @@ public final class EnergyUnits {
     // ============================================================
 
     /**
-     * <b>1 FE 折多少 EE</b> —— 用户口径：{@code 1 FE = 8 EE} ✓。
-     * <p>反方向 {@link #EE_PER_FE} 由它除法推出 ✓（不手写 0.125 ✗ 免得两处漂移）。
+     * <b>1 EE 折多少 FE</b> —— **用户口径（§589）：{@code 1 EE = 1000 FE}** ✓（原先 {@code 1 FE = 8 EE} ✗ 已作废 ✓）。
+ * <p>⚠ 量级提醒：EE 现在是"高浓度货币" ✓ —— 1 EE 就够把 FE 池（默认 32000）填进去 1/32 ✓
+ * ⇒ **真正的限速永远是 FE 闸门**（{@code converter_input/output_fe_per_tick} ✓）✗ 不是 EE 额度 ✓。
+     * <p>反方向 {@link #EE_PER_FE} 由它除法推出 ✓（不手写 0.001 ✗ 免得两处漂移）。
      */
-    public static final double FE_PER_EE_FACTOR = 8.0D;
+    /** **1 EE = 1000 FE**（用户口径 §589 ✓） */
+    public static final double FE_PER_EE = 1000.0D;
 
-    /** 1 EE = 多少 FE（= 1/8 = 0.125 ✓） */
-    public static final double EE_PER_FE = 1.0D / FE_PER_EE_FACTOR;
+    /** 1 FE = 0.001 EE（除法推出 ✓ 不手写 ✗） */
+    public static final double EE_PER_FE = 1.0D / FE_PER_EE;
+
+    /** @deprecated 旧名（原含义是"1 FE 折多少 EE"✗）⇒ 一律改用 {@link #EE_PER_FE} ✓ */
+    @Deprecated
+    public static final double FE_PER_EE_FACTOR = EE_PER_FE;
 
     /** 把 EE 换成一整点 FE（<b>向下取整</b> ✓ 不够 8 EE 就换不出 1 FE ✓ 余数留在容器里不丢 ✗） */
     public static int eeToFe(double ee) {
         if (!(ee > 0.0D)) return 0;
-        return (int) Math.floor(ee * EE_PER_FE);
+        return (int) Math.floor(ee * FE_PER_EE);   // §589 1 EE = 1000 FE ✓
     }
 
     /** 把 {@code fe} 点 FE 折成 EE（= ×8 ✓ 整数运算 ✓） */
     public static int feToEe(int fe) {
-        return fe <= 0 ? 0 : fe * (int) FE_PER_EE_FACTOR;
+        return fe <= 0 ? 0 : (int) Math.floor(fe * EE_PER_FE);   // §589 ✓
     }
 
     /**
@@ -254,7 +261,7 @@ public final class EnergyUnits {
 
         /** 一句写清 §557 的汇率（tooltip / 手册 / 日志共用 ✓） */
         public static String describeRate() {
-            return "1 FE = " + trim(FE_PER_EE_FACTOR) + " EE; 1 EU = " + trim(FE_PER_EU) + " FE; 1 AE = "
+            return "1 EE = " + trim(FE_PER_EE) + " FE; 1 EU = " + trim(FE_PER_EU) + " FE; 1 AE = "
                     + trim(FE_PER_AE) + " FE; " + trim(JOULES_PER_UNIT) + " J = " + trim(FE_PER_10_J)
                     + " FE; FE/t = (" + trim(RPM_TO_FE_NUMERATOR) + " x RPM) / "
                     + trim(RPM_TO_FE_DENOMINATOR);

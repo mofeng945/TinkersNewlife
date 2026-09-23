@@ -320,7 +320,7 @@ public final class EeConverterCore implements EeStorage, IEnergyStorage {
         return 4000;
     }
 
-    /** 收 EE：立刻按 {@code 1 FE = 8 EE} 折成 FE 进池子 ✓ 不满 1 FE 的余数留在 {@link #eeInput} ✓ */
+    /** 收 EE：立刻按 {@code 1 EE = 1000 FE}（§589）折成 FE 进池子 ✓ 不满 1 FE 的余数留在 {@link #eeInput} ✓ */
     @Override
     public int insertEe(int amount, boolean simulate) {
         if (amount <= 0) return 0;
@@ -328,7 +328,7 @@ public final class EeConverterCore implements EeStorage, IEnergyStorage {
         if (eeBudget <= 0) return 0;
         // 额度 = 「本 tick 的 EE 总额度 − 本 tick 已经用掉的」与「FE 池剩下的空间折成 EE」两者取小 ✓
         int roomByTick = Math.max(0, eeBudget - eeThisTick);
-        int roomByPool = (getMaxEnergyStored() - feBuffer) * (int) EnergyUnits.FE_PER_EE_FACTOR;
+        int roomByPool = (int) Math.floor((getMaxEnergyStored() - feBuffer) * EnergyUnits.EE_PER_FE);   // §589 必须浮点 ✓（(int)0.001=0 会堵死 EE 路 ✗）
         int take = Math.min(amount, Math.min(roomByTick, roomByPool));
         if (take <= 0) return 0;
         if (simulate) return take;                        // 只报数、不改状态 ✓
