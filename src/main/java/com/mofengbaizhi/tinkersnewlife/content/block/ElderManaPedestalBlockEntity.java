@@ -539,7 +539,7 @@ public class ElderManaPedestalBlockEntity extends BlockEntity implements EeStora
                 // END_ROD / SNOWFLAKE 交替 ⇒ 白蓝色的"冷星/霜"观感 ✓
                 ParticleOptions particle = (ticks % (period * 2) == 0) ? ParticleTypes.END_ROD : ParticleTypes.SNOWFLAKE;
                 level.sendParticles(particle,
-                        pos.getX() + 0.5D, pos.getY() + 1.1D, pos.getZ() + 0.5D,
+                        pos.getX() + 0.5D, pos.getY() + 1.5D, pos.getZ() + 0.5D,   // §607d 与悬浮高度 1.5 对齐 ✓（原来是 1.1 ✗）
                         1,                                    // 颗数
                         0.22D, 0.12D, 0.22D,                   // 散布
                         0.01D);                               // 速度（几乎不动 ⇒ 像悬浮的星尘 ✓）

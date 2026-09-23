@@ -23,7 +23,7 @@ import net.minecraftforge.fml.common.Mod;
  * <b>准星对准悬浮水晶时，在准星下方显示充能进度</b>（用户口径 §554 ✓）。
  *
  * <h2>为什么不能直接用原版准星</h2>
- * 悬浮水晶是 **BER 画在台座上方 1.1 格处**的 ✗（见 {@code ElderManaPedestalRenderer}），
+ * 悬浮水晶是 **BER 画在台座上方 1.5 格处**（= 上方那格的正中心 ✓ §607d）的 ✗（见 {@code ElderManaPedestalRenderer}），
  * 它<b>不在任何方块的选中形状里</b> ✗ ⇒ 原版射线只会穿过它打到后面的方块 ✗。
  * 所以这里<b>自己沿视线走一条射线</b>（每 0.2 格采一次、最远 6 格 ✓），
  * 对沿途每一步检查"这格或它下面一格是不是魔力台座" ✓，是的话就把
@@ -46,8 +46,12 @@ public final class PedestalChargeHud {
     /** 射线步长（格）——0.2 ⇒ 6 格只要 30 步 ✓ 够密不会漏 ✓ */
     private static final double STEP = 0.2D;
 
-    /** 悬浮水晶的小盒子（方块局部坐标 ✓ 与渲染高度 1.1 对齐 ✓） */
-    private static final AABB CRYSTAL_BOX = new AABB(0.15D, 0.75D, 0.15D, 0.85D, 1.45D, 0.85D);
+    /**
+     * 悬浮水晶的小盒子（方块局部坐标 ✓）—— §607d 起渲染高度是 **1.5**（上方那格的正中心 ✓）
+     * ⇒ 这个盒子整体**上移 0.4**（原来是 0.75..1.45 对齐 1.1 ✓ 现在 1.15..1.85 对齐 1.5 ✓ 尺寸没变 ✓）。
+     * <p>⚠ 不改它就会出现"准星明明指着水晶却不出 HUD"✗（命中盒还在旧高度 ✓）。
+     */
+    private static final AABB CRYSTAL_BOX = new AABB(0.15D, 1.15D, 0.15D, 0.85D, 1.85D, 0.85D);
 
     @SubscribeEvent
     public static void onOverlay(RenderGuiOverlayEvent.Post event) {

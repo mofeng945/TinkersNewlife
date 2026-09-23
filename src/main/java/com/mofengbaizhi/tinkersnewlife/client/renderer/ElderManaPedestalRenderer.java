@@ -29,7 +29,7 @@ import net.minecraft.world.level.Level;
  *
  * <h2>画法与观感</h2>
  * <ul>
- *   <li>高度 = 台面之上一点（{@link #BASE_HEIGHT} = 1.1 格），再叠一点正弦上下浮动 ✓；</li>
+ *   <li>高度 = <b>上方那格空方块的正中心</b>（{@link #BASE_HEIGHT} = 1.5 格 ✓ 用户口径「悬浮物整体调高一点到空方块正中心」✓），再叠一点正弦上下浮动 ✓；</li>
  *   <li>绕 Y 轴匀速自转（{@value #SPIN_DEGREES_PER_TICK} 度/tick ⇒ 约 5 秒一圈 ✓ 慢到看得清、不晃眼 ✓）；</li>
  *   <li>{@link LightTexture#FULL_BRIGHT} 画：水晶本身是发光的 ✓ 不该被环境光照暗 ✓
  *       （与 {@code CurseVaultRenderer} 画能量团同一口径 ✓）；</li>
@@ -42,8 +42,14 @@ import net.minecraft.world.level.Level;
  */
 public class ElderManaPedestalRenderer implements BlockEntityRenderer<ElderManaPedestalBlockEntity> {
 
-    /** 悬浮高度（格）：台面模型顶在 13/16 ≈ 0.81 格 ⇒ 1.1 刚好悬在台面之上一点 ✓ */
-    private static final float BASE_HEIGHT = 1.1F;
+    /**
+     * §607d 悬浮高度（格）：**台座正上方那格（空方块）的正中心 = 1.5** ✓。
+     * <p>⚠ 原来是 1.1（"刚好离台面一点点" ✗）—— 用户口径：「悬浮物整体调高一点到空方块正中心」✓
+     * ⇒ 1.5 正好是那一格 y 方向的中心（那格从 1.0 到 2.0 ✓）✓。
+     * <p>⚠ 这个数**不是只有这里用** ✗：`PedestalChargeHud.CRYSTAL_BOX`（准星命中盒 ✓）与
+     * `ElderManaPedestalBlockEntity#showCharging` 的粒子高度（+1.5D ✓）都跟着它走 ✓ 三处必须一致 ✓。
+     */
+    private static final float BASE_HEIGHT = 1.5F;
 
     /** 自转速度（度/tick）：1.2 ⇒ 约 5 秒一圈 ✓ */
     private static final float SPIN_DEGREES_PER_TICK = 1.2F;
