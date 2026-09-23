@@ -3,7 +3,6 @@ package com.mofengbaizhi.tinkersnewlife.content.block;
 import com.mofengbaizhi.tinkersnewlife.config.ModConfig;
 import com.mofengbaizhi.tinkersnewlife.content.ModBlockEntities;
 import com.mofengbaizhi.tinkersnewlife.content.energy.AmbientEnergySources;
-import com.mofengbaizhi.tinkersnewlife.content.energy.EeCapabilityBridge;
 import com.mofengbaizhi.tinkersnewlife.content.energy.EeStorage;
 import com.mofengbaizhi.tinkersnewlife.content.energy.ElderCrystalStorage;
 import net.minecraft.core.BlockPos;
@@ -250,6 +249,7 @@ public class ElderManaPedestalBlockEntity extends BlockEntity implements EeStora
         ItemStack next = (stack == null || stack.isEmpty()) ? ItemStack.EMPTY : stack.copy();
         if (!next.isEmpty()) next.setCount(1);   // 台座上永远只有一个 ✓
         crystal = next;
+        setChanged();      // §601 补：原来只 sync 不标脏 ✗ ⇒ 放上去就存档退出会丢那一颗（自动化更是每件都要存 ✓）
         sync();
     }
 
@@ -272,6 +272,7 @@ public class ElderManaPedestalBlockEntity extends BlockEntity implements EeStora
     public ItemStack takeCrystal() {
         ItemStack taken = crystal;
         crystal = ItemStack.EMPTY;
+        setChanged();      // §601 补：同上（"变空"也必须写进存档 ✓）
         sync();
         return taken;
     }
@@ -550,24 +551,39 @@ public class ElderManaPedestalBlockEntity extends BlockEntity implements EeStora
     }
 
     // ============================================================
-    //  §557 Forge 能量能力（只读面 ✓ 让别的模组能"看到"台座缓存里有多少电）
-    //  ⚠ 只**新增**这一个 capability ✗ 台座原有的水晶交互（放/取/充能）一行都没动 ✗
+    //  §601 自动化：把"台上那一件水晶"暴露成标准物品容器
+    //  ⚠ 只**新增**这一个 capability ✗ 台座原有的水晶交互（右键放/取、充能、吸收方块）一行都没动 ✗
     // ============================================================
 
-    /** 只读 FE 视图（{@code 1 FE = 8 EE} 折算 ✓ 不能抽 ✓ 见 {@code EeCapabilityBridge}） */
-    private final LazyOptional<net.minecraftforge.energy.IEnergyStorage> feHolder =
-            LazyOptional.of(() -> EeCapabilityBridge.readOnly(this, this::sync));
+    /**
+     * 物品容器视图（六面都通 ✓）：漏斗 / 管道 / 其它模组可以直接<b>塞水晶</b>、也可以<b>取走</b> ✓。
+     * <p>⚠ 非 final（{@link #reviveCaps()} 要重建 ✓ Forge 的标准写法 ✓）。
+     */
+    private LazyOptional<net.minecraftforge.items.IItemHandler> itemHolder =
+            LazyOptional.of(() -> new com.mofengbaizhi.tinkersnewlife.content.menu.ElderManaPedestalItemHandler(this));
 
     @Nonnull
     @Override
     public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
-        return super.getCapability(cap, side)   /* §570 摘掉台座只读 FE 面（只走本模组 EE ✓） */;
+        // §601 物品容器：**六面都给**（自动化要的就是"随便哪面都能接"✓）
+        if (cap == net.minecraftforge.common.capabilities.ForgeCapabilities.ITEM_HANDLER) {
+            return itemHolder.cast();
+        }
+        return super.getCapability(cap, side);   /* §570 摘掉台座只读 FE 面（只走本模组 EE ✓） */
     }
 
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
-        feHolder.invalidate();
+        itemHolder.invalidate();
+    }
+
+    /** §601 区块重载会走这里（invalidate 之后必须重建 ⇒ 否则重载后自动化就"看不见"容器了 ✗） */
+    @Override
+    public void reviveCaps() {
+        super.reviveCaps();
+        itemHolder = LazyOptional.of(
+                () -> new com.mofengbaizhi.tinkersnewlife.content.menu.ElderManaPedestalItemHandler(this));
     }
 
     // ============================================================

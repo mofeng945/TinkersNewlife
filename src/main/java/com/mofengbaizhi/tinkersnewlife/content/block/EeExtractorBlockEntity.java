@@ -2,7 +2,6 @@ package com.mofengbaizhi.tinkersnewlife.content.block;
 
 import com.mofengbaizhi.tinkersnewlife.config.ModConfig;
 import com.mofengbaizhi.tinkersnewlife.content.ModBlockEntities;
-import com.mofengbaizhi.tinkersnewlife.content.energy.EeCapabilityBridge;
 import com.mofengbaizhi.tinkersnewlife.content.energy.EeStorage;
 import com.mofengbaizhi.tinkersnewlife.content.energy.EeStorages;
 import com.mofengbaizhi.tinkersnewlife.content.energy.ElderCrystalStorage;
@@ -338,23 +337,39 @@ public class EeExtractorBlockEntity extends BlockEntity implements EeStorage, Me
     // ============================================================
 
     /**
-     * 只读的 FE 视图（{@code 1 FE = 8 EE} 折算 ✓）。
-     * <p>⚠ <b>不能抽</b>（见 {@link EeCapabilityBridge} 的类注释 ✓）：外模组想拿这里的电，
-     * 请走本模组的 EE 接口（水晶方块 / 万用能量转化器 ✓）。
+     * §601 自动化：把"槽位那一件"暴露成<b>标准物品容器</b>（六面都通 ✓）
+     * —— 漏斗 / 管道 / 其它模组可以直接<b>塞有电的水晶</b>、再<b>取走被抽干的</b> ✓。
+     *
+     * <p>复用 GUI 那一个 {@link com.mofengbaizhi.tinkersnewlife.content.menu.EeExtractorSlotHandler} ✓
+     * ⇒ "只收有电的 / 一格一件 / 放进必标脏 + 同步"这些规则**只有一份实现** ✗ 不会两边走偏 ✓。
+     *
+     * <p>⚠ 非 final（{@link #reviveCaps()} 要重建 ✓）。
      */
-    private final LazyOptional<net.minecraftforge.energy.IEnergyStorage> feHolder =
-            LazyOptional.of(() -> EeCapabilityBridge.readOnly(this, this::setChanged));
+    private LazyOptional<net.minecraftforge.items.IItemHandler> itemHolder =
+            LazyOptional.of(() -> new com.mofengbaizhi.tinkersnewlife.content.menu.EeExtractorSlotHandler(this));
 
     @Nonnull
     @Override
     public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
-        return super.getCapability(cap, side)   /* §563 摘掉只读 FE 面 ⇒ 准星不再显示 FE ✓ */;
+        // §601 物品容器：六面都给（自动化用 ✓）
+        if (cap == net.minecraftforge.common.capabilities.ForgeCapabilities.ITEM_HANDLER) {
+            return itemHolder.cast();
+        }
+        return super.getCapability(cap, side);   /* §563 摘掉只读 FE 面 ⇒ 准星不再显示 FE ✓ */
     }
 
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
-        feHolder.invalidate();
+        itemHolder.invalidate();
+    }
+
+    /** §601 区块重载会走这里（invalidate 之后必须重建 ✓） */
+    @Override
+    public void reviveCaps() {
+        super.reviveCaps();
+        itemHolder = LazyOptional.of(
+                () -> new com.mofengbaizhi.tinkersnewlife.content.menu.EeExtractorSlotHandler(this));
     }
 
     // ============================================================
