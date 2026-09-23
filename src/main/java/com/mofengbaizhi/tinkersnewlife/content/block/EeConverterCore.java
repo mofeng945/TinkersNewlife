@@ -65,6 +65,7 @@ public final class EeConverterCore implements EeStorage, IEnergyStorage {
      * ⇒ 本类**不需要**认识任何 Create 的类 ✓（没装 Create 的玩家加载本类时不会碰到可选模组的类型 ✓）。
      */
     @Nullable
+    private static int RPM_PROBE = 0;   // §592 探测计数
     private java.util.function.DoubleSupplier rpmSource;
 
     /** FE 池（≤ {@link ModConfig#converterBufferFe()} ✓ 持久化 ✓） */
@@ -164,8 +165,10 @@ public final class EeConverterCore implements EeStorage, IEnergyStorage {
 
         // ①-E §559 机械动力（Create）：本方块就是动能方块 ⇒ 直接读自己的转速 ✓
         //      ⚠ "读转速、不扣转速"的取舍与 §557 一致 ✓（Create 里没有"消耗转速"这个概念 ✓）
-        if (ctx.rpmEnabled()) {
+        if (rpmSource != null) {   // §592 只看"有没有转速源"✗ 不再问已停用的 §557 适配器（否则转速整条路被关掉 ✗）
             double rpm = rpm();
+            // §592 一次性探测（前 5 次 ✓）：确认"转速源在不在、读到多少"✗
+            if (RPM_PROBE < 5) { RPM_PROBE++; com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[转速探测] 第{}次 rpm={} 闸门输入={} 池={}/{}", RPM_PROBE, rpm, com.mofengbaizhi.tinkersnewlife.config.ModConfig.converterInputFePerTick(), feBuffer, getMaxEnergyStored()); }
             if (rpm > 0.0D) {
                 int fromRpm = withResidual(EnergyUnits.Fe.rpmToFePerTick(rpm));   // §571 残差：低转速不再恒 0 ✓
                 int room = Math.max(0, getMaxEnergyStored() - feBuffer);
