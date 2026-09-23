@@ -24,7 +24,7 @@ import java.util.function.Consumer;
  *
  * <p>⚠ 路线 B 的已知代价（步骤文档也写了）：**匠魂的"按材质自动上色"不会自动生效** ✗ ——
  * 所以这里直接给一张由脚本生成的贴图（{@code textures/armor/wizard_armor/robe.png} ✓，
- * 见 {@code tools/gen-wizard-armor-texture.ps1} ✓）；将来若要"每材料一色"，
+ * 见 {@code tools/gen-wizard-armor-materials.ps1} ✓）；将来若要"每材料一色"，
  * 在这个方法里按物品材料换贴图路径即可 ✓（已留好单一入口 ✓）。
  *
  * <p>客户端类只在这个方法体里出现 ⇒ 服务端不会加载它们 ✓（Forge 的标准写法 ✓）。

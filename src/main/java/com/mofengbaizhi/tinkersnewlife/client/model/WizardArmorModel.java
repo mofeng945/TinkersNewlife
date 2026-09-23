@@ -70,7 +70,7 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
     private final ModelPart[] hatLace;     // 槽2 法袍系带
 
     // 法袍（用户 2026-09-18 第三份模型 ✓）：主体挂 body、袖子挂 left_arm / right_arm ✓
-    // 槽映射同帽子：plating → 槽0、maille → 槽1、lace → 槽2 ✓（换算见 tools\convert-robe-model.ps1 ✓）
+    // 槽映射同帽子：plating → 槽0、maille → 槽1、lace → 槽2 ✓（换算见 tools\archive\models\convert-robe-model.ps1 ✓）
     private final ModelPart[] robePlating;   // 槽0 镶板（袍身 + 前後裙摆）
     private final ModelPart[] robeMaille;    // 槽1 锁链基底（内衬）
     private final ModelPart[] robeLace;      // 槽2 法袍系带（腰带）
@@ -91,7 +91,7 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
     public WizardArmorModel(ModelPart root) {
         super(root);
         ModelPart head = root.getChild("head");
-        // ⚠ 下面三行由 tools\import-hat-blockbench.ps1 生成/替换（标记之间勿手改 ✓）
+        // ⚠ 下面三行由 tools\archive\wizard-armor\import-hat-blockbench.ps1 生成/替换（标记之间勿手改 ✓）
         // <<< HAT_PARTS (generated) >>>
         this.hatPlating = new ModelPart[]{ head.getChild("plating_2"), head.getChild("plating_3"), head.getChild("plating_4"), head.getChild("plating_5"), head.getChild("plating_6") };
         this.hatMaille = new ModelPart[]{ head.getChild("maille_0"), head.getChild("maille_1") };
@@ -110,7 +110,7 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
         this.sleeveRPlating = new ModelPart[]{ armR.getChild("right_arm_plating_8") };
         this.sleeveRMaille = new ModelPart[]{ armR.getChild("right_arm_maille_10") };
         this.sleeveRLace = new ModelPart[]{ armR.getChild("right_arm_lace_9") };
-        // 法袍护腿（用户 2026-09-19 第四份模型 ✓ 3 块 × 两条腿 ✓ 换算见 tools\convert-leggings-model.ps1 ✓）
+        // 法袍护腿（用户 2026-09-19 第四份模型 ✓ 3 块 × 两条腿 ✓ 换算见 tools\archive\models\convert-leggings-model.ps1 ✓）
         ModelPart legR = root.getChild("right_leg");
         ModelPart legL = root.getChild("left_leg");
         this.legRPlating = new ModelPart[]{ legR.getChild("right_leg_plating_1") };
@@ -149,7 +149,7 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
 
     /**
      * 法袍专用：**直接把"骨骼局部坐标"加进模型** ✓
-     * （换算、缩放、居中都在 {@code tools\convert-robe-model.ps1} 里算好了 ✓：
+     * （换算、缩放、居中都在 {@code tools\archive\models\convert-robe-model.ps1} 里算好了 ✓：
      * body 缩放 1.0 / 袖子 1.12 并按手臂居中 ✓；局部空间 y 向下，body 局部 0 = 颈肩 ✓）
      */
     private static void addLocalBox(PartDefinition parent, String name,
@@ -166,7 +166,7 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
         PartDefinition head = root.getChild("head");
 
         // 法帽：用户原型（2026-09-18 第二次导出，13 个立方体）坐标原样，UV 重新分配到 128x128
-        // ⚠ 下面这段由 tools\import-hat-blockbench.ps1 生成/替换（标记之间勿手改 ✓）
+        // ⚠ 下面这段由 tools\archive\wizard-armor\import-hat-blockbench.ps1 生成/替换（标记之间勿手改 ✓）
         // <<< HAT_ADD_BOX (generated) >>>
         addBox(head, "maille_0", -4.5F, 11.28685F, -4.5F, 20.5F, 11.61888F, 20.5F, 0, 0);
         addBox(head, "maille_1", 3F, 5.44922F, 14.64844F, 13F, 11.44922F, 14.74844F, 62, 37);
@@ -183,7 +183,7 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
         addBox(head, "lace_12", 14.40547F, 12.64453F, 1.4F, 14.60547F, 14.14453F, 14.6F, 66, 22);
         // <<< /HAT_ADD_BOX >>>
 
-        // 法袍：用户第三份模型（11 个方块）—— 由 tools\convert-robe-model.ps1 换算好的**局部坐标** ✓
+        // 法袍：用户第三份模型（11 个方块）—— 由 tools\archive\models\convert-robe-model.ps1 换算好的**局部坐标** ✓
         PartDefinition bodyPart = root.getChild("body");
         PartDefinition armLPart = root.getChild("left_arm");
         PartDefinition armRPart = root.getChild("right_arm");
@@ -204,7 +204,7 @@ public class WizardArmorModel extends HumanoidModel<LivingEntity> {
         addLocalBox(armRPart, "right_arm_maille_10", -3.32889F, -1.99836F, -2.31875F, 4.704F, 2.625F, 4.704F, 62, 58);
         addLocalBox(armRPart, "right_arm_lace_9", -3.4654F, 7.63446F, -2.464F, 4.928F, 1.5F, 4.928F, 103, 63);
 
-        // 法袍护腿：用户第四份模型（3 块 × 两条腿 ✓）—— 由 tools\convert-leggings-model.ps1 算好的**腿骨局部坐标** ✓
+        // 法袍护腿：用户第四份模型（3 块 × 两条腿 ✓）—— 由 tools\archive\models\convert-leggings-model.ps1 算好的**腿骨局部坐标** ✓
         //   ⚠ 全部落在袍摆轮廓内（x ±4.535 / z −2.289~2.411 / 底 ≤ 世界 y 20.196 ✓ 用户要求 ✓）；
         //     链甲内衬那块被**截短**到袍摆底边（原高 5.53 → 1.73 ✓ 压扁的是重复方格纹 ✓ 看不出来 ✓）。
         //   左腿的贴图由 import 的 -SymPairs 从右腿反射生成 ✓（几何本身左右对称 ✓ 都相对腿骨居中 ✓）。
