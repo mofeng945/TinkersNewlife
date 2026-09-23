@@ -93,6 +93,14 @@ public class ElderManaPedestalBlockEntity extends BlockEntity implements EeStora
     /** 音效节拍（tick）：40 = 每 2 秒一声（很轻，不吵闹 ✓） */
     private static final int SOUND_INTERVAL = 40;
 
+    /**
+     * §600 充能时的同步节拍（tick）：<b>4 = 5 Hz</b>。
+     * <p>原来（§555）是 2（10 Hz ✗）——那一版是为了"HUD 进度实时变化"✓，代价是**每 2 tick 就发一个
+     * 方块实体更新包** ✗（包里含台座上那件水晶的 NBT ✓）⇒ 10 台座同时充能 ≈ 十几~几十 KB/s ✗。
+     * 5 Hz 的观感依然是"连续在涨"✓（比原版熔炉那种 1 Hz 顺滑得多 ✓）而包量**减半** ✓。
+     */
+    private static final int SYNC_INTERVAL = 4;
+
     /** 满速时每这么多 tick 放一颗粒子（越慢越稀 ⇒ 密度 ∝ 速率 ✓） */
     private static final int PARTICLE_PERIOD_AT_FULL_RATE = 2;
 
@@ -488,7 +496,7 @@ public class ElderManaPedestalBlockEntity extends BlockEntity implements EeStora
             if (added > 0) {
                 left -= added;
                 setChanged();                        // 物品栈存在方块实体里 ⇒ 必须标脏才写进存档 ✓
-                if (ticks % 2 == 0) sync();          // §555 **每 2 tick 同步一次** ⇒ 客户端 HUD 的进度实时变化 ✓
+                if (ticks % SYNC_INTERVAL == 0) sync();   // §600 **每 4 tick（5 Hz）同步一次** ⇒ HUD 依旧连续在涨 ✓ 包量减半 ✓
             }                                        //      （原来只在"放/取"时同步 ✗ ⇒ HUD 一直显示旧值 ✗）
         }
 

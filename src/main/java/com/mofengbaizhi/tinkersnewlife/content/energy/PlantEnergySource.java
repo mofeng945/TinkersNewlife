@@ -16,7 +16,10 @@ import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.block.state.properties.Property;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -62,7 +65,16 @@ import java.util.concurrent.ConcurrentHashMap;
  *       （异常情况：玩家满世界种草 ✗）就<b>整桶丢掉</b> ✓ —— 凋灵度本来就是"内存态、丢了无所谓" ✓
  *       绝不让它变成内存泄漏 ✗；</li>
  *   <li>扫描只有 {@code 11×11×11} 的立方体里做一次球判 ⇒ 约 500 格方块状态查询 / 秒 / 台座 ✓
- *       （只在<b>台座还能装得下 EE</b> 时才跑 ✓ 见台座 {@code settle()} ✓）。</li>
+ *       （只在<b>台座还能装得下 EE</b> 时才跑 ✓ 见台座 {@code settle()} ✓）；</li>
+ *   <li><b>§600 大半径节流</b>：{@code plant_radius ≤ 8}（含默认 5 ✓）⇒ <b>K=1</b>，行为和以前<b>一字不差</b> ✓；
+ *       半径再往上 ⇒ K = {@code ceil(球内格数 / 2000)}（r=16⇒每 9 秒整扫 ✓ r=24⇒每 29 秒 ✓ r=32（配置上限）⇒每 69 秒 ✓）
+ *       —— 也就是说<b>每次整扫的工作量恒定在约 2000 格</b> ✓（球内格数：r=5⇒515 ✓ r=16⇒17077 ✓ r=32⇒137065 ✓）。
+ *       <p><b>节流怎么做到"不改变产出"</b>：整球扫那一秒负责<b>发现</b>（并记下这些位置 ✓）；
+ *       其余秒只<b>核对上次记下的那些位置</b>（1 次查询/株 ✗ 而不是上万次 ✗）。
+ *       ⇒ 每株植物<b>仍然每秒 +1 点凋灵度</b> ✓ 上限与寿命<b>一秒没差</b> ✓ 每秒产出<b>一秒没差</b> ✓，
+ *       只有"新种下的植物"最多迟 K-1 秒才被认出来 ✗（这是节流唯一的行为差异 ✓ 用户已点头 ✓）。
+ *       ⚠ 刻意**不**用"每秒都返回上次那份数值"的偷懒写法 ✗ —— 那样植物只老 1/K、寿命变 K 倍 ⇒
+ *       <b>凭空多出 K 倍能量</b> ✗✗（这才是真"爆表"✓）；也不按 K 倍一次性发放 ✗（数值会一阵一阵地冲 ✗）。</li>
  * </ul>
  *
  * <p>{@code simulate == true}（查速率 / tooltip）<b>绝不</b>涨凋灵度、<b>绝不</b>删方块 ✓
@@ -78,6 +90,62 @@ public final class PlantEnergySource implements AmbientEnergySource {
 
     /** 凋灵度：<b>维度 → 方块位置 → 已攒点数</b> ✓（内存态、不持久化 ✓ 玩家确认可接受 ✓） */
     private static final Map<ResourceKey<Level>, Map<BlockPos, Integer>> WITHERS = new ConcurrentHashMap<>();
+
+    /**
+     * §600 每个台座的"上次整球扫到哪些植物"（维度 → 台座位置 → 记账 ✓）。
+     * <p>只在 {@code plant_radius > 8}（需要节流 ✓）时才会被写；默认半径下这份表**始终是空的** ✓ 零开销 ✓。
+     */
+    private static final Map<ResourceKey<Level>, Map<BlockPos, PedestalScan>> SCANS = new ConcurrentHashMap<>();
+
+    /** §600 这份记账最多留多少个台座（超了整桶丢 ✓ 防内存泄漏 ✓） */
+    private static final int MAX_SCAN_PEDESTALS = 4096;
+
+    /** §600 台座多久没来结算就丢掉它的记账（tick；1200 = 1 分钟 ✓） */
+    private static final long SCAN_STALE_TICKS = 1200L;
+
+    /** §600 上次清理记账的时刻（tick）—— 不让"清理"本身变成每秒的负担 ✓ */
+    private static long lastScanPrune = 0L;
+
+    /** §600 一个台座的扫描记账（内容很少 ✓） */
+    private static final class PedestalScan {
+        /** 上次整球扫到的植物位置（用 {@link BlockPos} 的**值相等** ✓） */
+        final Set<BlockPos> plants = new HashSet<>();
+        /** 上次整球扫的时刻（tick） */
+        long lastFullScan = Long.MIN_VALUE;
+        /** 是否整球扫过一次（首次必须扫 ✓） */
+        boolean everScanned = false;
+        /** 最后一次被结算的时刻（清理用 ✓） */
+        long lastTouch = 0L;
+    }
+
+    /**
+     * §600 整球扫的周期（秒 = tick/20 ✓）：
+     * <ul>
+     *   <li>{@code 半径 ≤ 8}（含默认 5 ✓）⇒ <b>1</b>（每秒全扫 ✓ 老行为一字不差 ✓）；</li>
+     *   <li>更大半径 ⇒ <b>按"球内格数"反推</b>：{@code K = ceil(球内格数 / 2000)} ✓
+     *       （球内整数格数 ≈ {@code (4/3)πr³} ✓）⇒ 每次整扫的工作量稳定在 ~2000 格 ✓。</li>
+     * </ul>
+     * <p>实测球内格数（本地算的 ✓）：r=5 ⇒ <b>515</b> 格、r=8 ⇒ 2109、r=12 ⇒ 7153、r=16 ⇒ <b>17077</b>、
+     * r=24 ⇒ 57777、r=32 ⇒ <b>137065</b>（配置上限就是 32 ✓）⇒ 对应 K = 1 / 1 / 4 / 9 / 29 / <b>69</b> ✓。
+     */
+    private static int scanPeriod(int radius) {
+        if (radius <= 8) return 1;
+        double cells = 4.1887902047863905D * radius * radius * radius;   // (4/3)π·r³ ✓ 够用的近似 ✓
+        int k = (int) Math.ceil(cells / 2000.0D);
+        return Math.max(2, Math.min(120, k));
+    }
+
+    /** §600 偶尔清一次记账（被拆掉的台座不会永远占位 ✓；清理本身最多每分钟一次 ✓） */
+    private static void pruneScans(Map<BlockPos, PedestalScan> perDim, long now) {
+        if (now - lastScanPrune < SCAN_STALE_TICKS) return;
+        lastScanPrune = now;
+        perDim.entrySet().removeIf(e -> now - e.getValue().lastTouch > SCAN_STALE_TICKS);
+        if (perDim.size() > MAX_SCAN_PEDESTALS) {
+            perDim.clear();
+            TinkersNewlife.LOGGER.warn("[魔力台座] 植物扫描记账超过 {} 个台座 ⇒ 已整桶清空（下一秒重扫即恢复 ✓）",
+                    MAX_SCAN_PEDESTALS);
+        }
+    }
 
     /** {@code half} 属性只需查一次（每个方块状态都有一份同名属性对象 ✓）缓存在这里 ✓ */
     private static Property<DoubleBlockHalf> halfProperty = null;
@@ -111,27 +179,75 @@ public final class PlantEnergySource implements AmbientEnergySource {
         pruneIfHuge(dimension);
         int found = 0;
 
-        // 球半径判定：整数平方比较 ⇒ 不用 sqrt、不产生浮点误差 ✓
-        int r2 = radius * radius;
-        for (int dx = -radius; dx <= radius; dx++) {
-            for (int dy = -radius; dy <= radius; dy++) {
-                int dx2dy2 = dx * dx + dy * dy;
-                if (dx2dy2 > r2) continue;                     // 这一整条 y 都不在球里 ⇒ 连 dz 都不用试 ✓
-                int maxDz = (int) Math.floor(Math.sqrt(r2 - dx2dy2));
-                for (int dz = -maxDz; dz <= maxDz; dz++) {
-                    BlockPos at = pos.offset(dx, dy, dz);
-                    BlockState state = server.getBlockState(at);
-                    int cap = plantCap(state);
-                    if (cap <= 0) continue;
-                    if (isUpperHalfOfDoublePlant(state)) continue;   // 双高层只算下半 ✓
-                    found++;
-                    if (!simulate) {
-                        // 攒满 ⇒ 这一株消失（掉落物不掉 ✗：它是"被榨干"不是"被挖掉"✓）
-                        if (tickWither(server, withers, at.immutable(), cap)) {
-                            server.destroyBlock(at, false);
+        // ── §600 节流：period == 1 ⇒ 每秒整球扫（老行为 ✓ 默认半径走的就是这条 ✓）────────────
+        final long now = server.getGameTime();
+        final int period = scanPeriod(radius);
+        Map<BlockPos, PedestalScan> perDim = null;
+        PedestalScan cache = null;
+        boolean fullScan = true;
+        if (period > 1) {
+            perDim = SCANS.computeIfAbsent(dimension, k -> new ConcurrentHashMap<>());
+            pruneScans(perDim, now);
+            cache = perDim.computeIfAbsent(pos, k -> new PedestalScan());
+            cache.lastTouch = now;
+            fullScan = !cache.everScanned || (now - cache.lastFullScan) >= period;
+        }
+
+        if (!fullScan) {
+            // ── 非整扫的那几秒：只核对"上次扫到的那些位置"（1 次查询/株 ✓ 这才是节流的意义 ✓）
+            //    ⚠ 该老化照样老化（每秒 +1 点 ✓）⇒ 植物寿命与每秒产出**不变** ✓
+            Iterator<BlockPos> it = cache.plants.iterator();
+            while (it.hasNext()) {
+                BlockPos p = it.next();
+                if (p.distSqr(pos) > (double) radius * radius) {
+                    it.remove();                                       // 半径被调小 / 位置漂了 ⇒ 不再算 ✓
+                    continue;
+                }
+                BlockState state = server.getBlockState(p);
+                int cap = plantCap(state);
+                if (cap <= 0 || isUpperHalfOfDoublePlant(state)) {
+                    it.remove();                                       // 植物没了 / 变成上半 ⇒ 从记账里去掉 ✓
+                    continue;
+                }
+                found++;
+                if (!simulate && tickWither(server, withers, p, cap)) {
+                    server.destroyBlock(p, false);
+                    it.remove();                                       // 榨干消失 ⇒ 也去掉 ✓
+                }
+            }
+        } else {
+            // ── 整球扫：发现植物（顺带老化 ✓）
+            // 球半径判定：整数平方比较 ⇒ 不用 sqrt、不产生浮点误差 ✓
+            int r2 = radius * radius;
+            for (int dx = -radius; dx <= radius; dx++) {
+                for (int dy = -radius; dy <= radius; dy++) {
+                    int dx2dy2 = dx * dx + dy * dy;
+                    if (dx2dy2 > r2) continue;                     // 这一整条 y 都不在球里 ⇒ 连 dz 都不用试 ✓
+                    int maxDz = (int) Math.floor(Math.sqrt(r2 - dx2dy2));
+                    for (int dz = -maxDz; dz <= maxDz; dz++) {
+                        BlockPos at = pos.offset(dx, dy, dz);
+                        BlockState state = server.getBlockState(at);
+                        int cap = plantCap(state);
+                        if (cap <= 0) continue;
+                        if (isUpperHalfOfDoublePlant(state)) continue;   // 双高层只算下半 ✓
+                        found++;
+                        if (!simulate) {
+                            // 攒满 ⇒ 这一株消失（掉落物不掉 ✗：它是"被榨干"不是"被挖掉"✓）
+                            BlockPos key = at.immutable();
+                            if (tickWither(server, withers, key, cap)) {
+                                server.destroyBlock(at, false);
+                            } else if (cache != null) {
+                                cache.plants.add(key);                     // §600 记账（只在需要节流时 ✓）
+                            }
+                        } else if (cache != null) {
+                            cache.plants.add(at.immutable());
                         }
                     }
                 }
+            }
+            if (cache != null) {
+                cache.everScanned = true;
+                cache.lastFullScan = now;
             }
         }
 
