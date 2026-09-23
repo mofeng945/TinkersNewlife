@@ -76,7 +76,11 @@ public final class EeStorages {
         int left = totalLimit;
         int moved = 0;
         for (Direction d : NEIGHBOURS) {
-            // §587 邻居是转化器 ⇒ EE 只在它的顶面/底面进出 ✓（方向要取反 ✓ 从邻居视角看）
+            // §591 **我自己是转化器 ⇒ 只能用我自己的顶面/底面** ✗ —— 用户实测「抽取器放侧面，EE 还是被推进/抽进去了」✗
+    //   根因：§587 只挡住了"别人往转化器里推"✗，没挡"**转化器主动从相邻容器抽**"✗
+    //   （转化器每 tick 会 `pullAround` ✓ 六个面都抽 ✗）⇒ 这里按**我自己**的面角色再挡一道 ✓。
+    if (isConverter(level, pos)
+            && !com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterFaces.allowsEe(level.getBlockState(pos), d)) continue;    // §587 邻居是转化器 ⇒ EE 只在它的顶面/底面进出 ✓（方向要取反 ✓ 从邻居视角看）
             if (isConverter(level, pos.relative(d))
                     && !com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterFaces.allowsEe(
                             level.getBlockState(pos.relative(d)), d.getOpposite())) continue;
@@ -122,7 +126,11 @@ public final class EeStorages {
         int left = Math.min(totalLimit, source.getEe());
         int moved = 0;
         for (Direction d : NEIGHBOURS) {
-            // §587 邻居是转化器 ⇒ EE 只在它的顶面/底面进出 ✓（方向要取反 ✓ 从邻居视角看）
+            // §591 **我自己是转化器 ⇒ 只能用我自己的顶面/底面** ✗ —— 用户实测「抽取器放侧面，EE 还是被推进/抽进去了」✗
+    //   根因：§587 只挡住了"别人往转化器里推"✗，没挡"**转化器主动从相邻容器抽**"✗
+    //   （转化器每 tick 会 `pullAround` ✓ 六个面都抽 ✗）⇒ 这里按**我自己**的面角色再挡一道 ✓。
+    if (isConverter(level, pos)
+            && !com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterFaces.allowsEe(level.getBlockState(pos), d)) continue;    // §587 邻居是转化器 ⇒ EE 只在它的顶面/底面进出 ✓（方向要取反 ✓ 从邻居视角看）
             if (isConverter(level, pos.relative(d))
                     && !com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterFaces.allowsEe(
                             level.getBlockState(pos.relative(d)), d.getOpposite())) continue;
@@ -151,7 +159,11 @@ public final class EeStorages {
         List<EeStorage> found = new ArrayList<>(NEIGHBOURS.length);
         if (level == null) return found;
         for (Direction d : NEIGHBOURS) {
-            // §587 邻居是转化器 ⇒ EE 只在它的顶面/底面进出 ✓（方向要取反 ✓ 从邻居视角看）
+            // §591 **我自己是转化器 ⇒ 只能用我自己的顶面/底面** ✗ —— 用户实测「抽取器放侧面，EE 还是被推进/抽进去了」✗
+    //   根因：§587 只挡住了"别人往转化器里推"✗，没挡"**转化器主动从相邻容器抽**"✗
+    //   （转化器每 tick 会 `pullAround` ✓ 六个面都抽 ✗）⇒ 这里按**我自己**的面角色再挡一道 ✓。
+    if (isConverter(level, pos)
+            && !com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterFaces.allowsEe(level.getBlockState(pos), d)) continue;    // §587 邻居是转化器 ⇒ EE 只在它的顶面/底面进出 ✓（方向要取反 ✓ 从邻居视角看）
             if (isConverter(level, pos.relative(d))
                     && !com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterFaces.allowsEe(
                             level.getBlockState(pos.relative(d)), d.getOpposite())) continue;
