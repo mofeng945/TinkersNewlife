@@ -56,6 +56,14 @@ public class EeExtractorScreen extends AbstractContainerScreen<EeExtractorMenu> 
     /** 分隔线左右留白（与生成脚本一致：x=7 .. W-7 ✓） */
     private static final int SEP_MARGIN = 7;
 
+    /**
+     * 标题颜色（§603）—— 标题条是<b>深色</b>（0x404040 ✓ 见生成脚本的 {@code $C_TITLE} ✓）
+     * ⇒ 标题文字必须用<b>浅色</b> ✗ 不然就是"同色隐形" ✓（原版用深灰是因为它的标题区是浅色 ✓ 别照抄 ✗）。
+     */
+    private static final int TITLE_COLOR = 0xFFE0E0E0;
+    /** 亮面上的文字颜色（物品栏标签 / 信息行 ✓ 这两行底下是 0xC6C6C6 亮面 ✓ 深灰看得见 ✓） */
+    private static final int LABEL_COLOR = 0x404040;
+
     public EeExtractorScreen(EeExtractorMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
         this.imageWidth = W;
@@ -102,13 +110,16 @@ public class EeExtractorScreen extends AbstractContainerScreen<EeExtractorMenu> 
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 0x404040, false);
+        // §603 ⚠ 标题必须用**浅色** ✗ —— 原来用 0x404040，而生成贴图的标题条底色恰好也是 0x404040 ✗
+        //   ⇒ 字是画上去了、但**和底色一模一样 = 隐形** ✗（用户截图实锤：标题栏一片空 ✓）。
+        //   物品栏标签与信息行仍在**亮面**（0xC6C6C6）上 ✓ 所以那两行继续用深灰 0x404040 ✓ 看得见 ✓。
+        graphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, TITLE_COLOR, false);
         graphics.drawString(this.font, this.playerInventoryTitle,
-                this.inventoryLabelX, this.inventoryLabelY, 0x404040, false);
+                this.inventoryLabelX, this.inventoryLabelY, LABEL_COLOR, false);
 
         // 信息行：缓存 EE（每帧现读数据槽 ✓ 所以会随抽能实时涨 ✓）
         Component info = Component.translatable("gui.tinkersnewlife.ee_extractor.cache",
                 this.menu.cachedEe(), this.menu.cacheCapacity());
-        graphics.drawString(this.font, info, EeExtractorMenu.INV_X, EeExtractorMenu.INFO_Y, 0x404040, false);
+        graphics.drawString(this.font, info, EeExtractorMenu.INV_X, EeExtractorMenu.INFO_Y, LABEL_COLOR, false);
     }
 }
