@@ -57,6 +57,18 @@ import javax.annotation.Nullable;
  */
 public class CreateEnergyConverterBlockEntity extends KineticBlockEntity implements ConverterCoreHolder {
 
+    /**
+     * §595 <b>应力影响</b>（Create 口径 ✓）：本方块靠传动杆驱动 ⇒ 像机器一样**吃应力** ✓
+     * （总应力 = 影响 × 转速 ✓ ⇒ 转得越快、吃得越多 ✓ 一根轴喂多台就得多出力 ✓）。
+     * <p>API 由 javap 实核 ✓：{@code KineticBlockEntity#calculateStressApplied():float} ✓
+     * （基类默认从 {@code BlockStressValues} 取 ✓ 我们没在那边登记 ⇒ 必须自己覆写 ✓ 否则恒 0 = 白嫖动力 ✗）。
+     * <p>取值：**4.0**（与机械压力机同量级 ✓ 想调只改这一个数 ✓）。
+     */
+    @Override
+    public float calculateStressApplied() {
+        return 4.0F;
+    }
+
     /** 共享核心（状态 + 逻辑 ✓ 宿主就是本对象 ✓） */
     private final EeConverterCore core = new EeConverterCore(this);
 
