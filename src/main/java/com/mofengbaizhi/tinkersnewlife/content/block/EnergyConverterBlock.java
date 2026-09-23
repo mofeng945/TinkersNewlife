@@ -21,38 +21,14 @@ import javax.annotation.Nullable;
  * <ul>
  *   <li>行为全在 {@link EnergyConverterBlockEntity} ✓（本类只管形状 / 注册 / ticker ✓）；</li>
  *   <li><b>没有右键交互</b> ✓（单向、插上就转 ✓ 用户口径里没有界面需求 ✗）；</li>
- *   <li>形状 = 模型那几段的并集（§527 的口径 ✓ 见 {@link #SHAPE}）。</li>
+ *   <li>形状 = <b>整格 1×1×1</b>（§608 起是纯方块 ✓ 不再自定义形状 ✓）。
  * </ul>
  */
 public class EnergyConverterBlock extends BaseEntityBlock {
 
-    /**
-     * 碰撞/轮廓 = {@code models/block/energy_converter.json} 那几段的并集 ✓（照 §527 台座的写法 ✓）：
-     * 底台 1~15 × y0~2、机体 3~13 × y2~12、四个角柱 1 格见方 × y0~13、天线 7~9 × y13~16。
-     */
-    private static final net.minecraft.world.phys.shapes.VoxelShape SHAPE =
-            net.minecraft.world.phys.shapes.Shapes.or(
-                    net.minecraft.world.phys.shapes.Shapes.box(1.0D / 16.0D, 0.0D, 1.0D / 16.0D,
-                            15.0D / 16.0D, 2.0D / 16.0D, 15.0D / 16.0D),
-                    net.minecraft.world.phys.shapes.Shapes.box(3.0D / 16.0D, 2.0D / 16.0D, 3.0D / 16.0D,
-                            13.0D / 16.0D, 12.0D / 16.0D, 13.0D / 16.0D),
-                    net.minecraft.world.phys.shapes.Shapes.box(1.0D / 16.0D, 0.0D, 1.0D / 16.0D,
-                            2.0D / 16.0D, 13.0D / 16.0D, 2.0D / 16.0D),
-                    net.minecraft.world.phys.shapes.Shapes.box(14.0D / 16.0D, 0.0D, 1.0D / 16.0D,
-                            15.0D / 16.0D, 13.0D / 16.0D, 2.0D / 16.0D),
-                    net.minecraft.world.phys.shapes.Shapes.box(1.0D / 16.0D, 0.0D, 14.0D / 16.0D,
-                            2.0D / 16.0D, 13.0D / 16.0D, 15.0D / 16.0D),
-                    net.minecraft.world.phys.shapes.Shapes.box(14.0D / 16.0D, 0.0D, 14.0D / 16.0D,
-                            15.0D / 16.0D, 13.0D / 16.0D, 15.0D / 16.0D),
-                    net.minecraft.world.phys.shapes.Shapes.box(7.0D / 16.0D, 13.0D / 16.0D, 7.0D / 16.0D,
-                            9.0D / 16.0D, 16.0D / 16.0D, 9.0D / 16.0D));
-
-    @Override
-    public net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState state,
-            net.minecraft.world.level.BlockGetter level, BlockPos pos,
-            net.minecraft.world.phys.shapes.CollisionContext context) {
-        return SHAPE;
-    }
+    // §608 用户口径「把转化器变成纯方块」⇒ 本类**不再自定义形状/轮廓** ✓
+    //   默认 getShape 就是整格 1×1×1 ⇒ 碰撞箱与选中框都跟普通方块一致 ✓
+    //   （原来那套"底座 + 机身 + 顶杆"的多段形状跟着旧模型一起退休 ✓ 旧模型文件仍留在仓库里 ✓ 只是没人引用了 ✓）
 
     /**
      * §574 水平朝向（= 正面指向 ✓）。**用自定义名 `converter_facing`** ✗ 而不是 vanilla 的 `facing` ✓：

@@ -1,0 +1,26 @@
+{
+  "parent": "block/block",
+  "textures": {
+    "particle": "tinkersnewlife:block/energy_converter_face_front",
+    "front":  "tinkersnewlife:block/energy_converter_face_front",
+    "back":   "tinkersnewlife:block/energy_converter_face_back",
+    "left":   "tinkersnewlife:block/energy_converter_face_left",
+    "right":  "tinkersnewlife:block/energy_converter_face_right",
+    "top":    "tinkersnewlife:block/energy_converter_face_top",
+    "bottom": "tinkersnewlife:block/energy_converter_face_bottom"
+  },
+  "elements": [
+    {
+      "from": [0, 0, 0],
+      "to": [16, 16, 16],
+      "faces": {
+        "north": { "texture": "#front",  "cullface": "north" },
+        "south": { "texture": "#back",   "cullface": "south" },
+        "west":  { "texture": "#left",   "cullface": "west"  },
+        "east":  { "texture": "#right",  "cullface": "east"  },
+        "up":    { "texture": "#top",    "cullface": "up"    },
+        "down":  { "texture": "#bottom", "cullface": "down"  }
+      }
+    }
+  ]
+}
