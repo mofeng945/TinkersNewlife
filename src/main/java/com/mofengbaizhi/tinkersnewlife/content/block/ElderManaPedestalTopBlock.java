@@ -39,8 +39,9 @@ import javax.annotation.Nullable;
  *   <li>{@code getLightBlock = 0} + {@code propagatesSkylightDown = true} ⇒ **不挡光** ✓
  *       —— 这一条是**必须的** ✗：台座充能速率是按"台座上方那格的亮度"算的 ✓
  *       若这格挡光就会把台座变暗 ⇒ **白送一个加速 buff** ✗（用户口径"别爆表" ✓ 详见备忘录 ✓）；</li>
- *   <li>{@code canBeReplaced = true} ⇒ 玩家/管道照样能**往这一格放东西** ✓（放了它就自动让位 ✓
- *       台座不会把玩家的东西顶掉 ✓ —— 只要那格不是空气，台座那边也不会再补回来 ✓）。</li>
+ *   <li>{@code canBeReplaced = false}（§607b 按用户实测反馈改的 ✓）⇒ 这一格**真的属于台座** ✓
+ *       <b>挡建造、也挡流体</b> ✓（想在那儿盖东西 ⇒ 先拆台座 ✓）；而漏斗/管道照样能用 ✓ ——
+ *       接法是"**上面一格朝下接**"或"**用管道从侧面接进这一格**" ✓，不是把方块放进这一格 ✗。</li>
  * </ul>
  *
  * <h2>生命周期</h2>
@@ -59,7 +60,12 @@ public class ElderManaPedestalTopBlock extends BaseEntityBlock {
                 .strength(-1.0F, 3_600_000.0F)
                 .noCollission()          // 没有碰撞箱 ✓
                 .noOcclusion()           // 不遮挡 ✓（配合下面的 getLightBlock = 0 ✓）
-                .replaceable()           // 玩家/管道能往这一格放东西 ✓（放了它就让位 ✓）
+                // ⚠ §607b **刻意不给 replaceable** ✗ —— 用户实测反馈：「它上方那一格还是能放置方块啊」✓
+                //   你要的是"那格真的属于台座" ⇒ 所以它必须**挡住建造** ✓（跟门的上半扇同一个道理 ✓）：
+                //   想在这格盖东西 ⇒ **先把台座拆了** ✓（拆台座会带走这一格 ✓ 见 ElderManaPedestalBlock#onRemove ✓）。
+                //   ⚠ 代价（诚实记一笔 ✓）：① 漏斗/箱子**不能放进**这一格 ✗（但可以放在**它上面一格**朝下接 ✓、
+                //   或者用管道从**侧面**接进这一格 ✓ —— 这正是用户要的"接" ✓）；
+                //   ② 水/岩浆也不会流进这一格 ✗（以前是空气时可以 ✓ 属"两格高结构"的必然结果 ✓）。
                 .pushReaction(PushReaction.DESTROY)   // 活塞顶掉也没事：台座下一秒会补回来 ✓
                 // ⚠ 1.20.1 里 isViewBlocking / isSuffocating **不是可覆写的方法** ✗ 得从属性设 ✓
                 //   （原版玻璃就是这么写的 ✓ 光 .noOcclusion() 只管"不遮挡" ✗ 不管"挡不挡视线/闷不闷人" ✓）
@@ -93,10 +99,20 @@ public class ElderManaPedestalTopBlock extends BaseEntityBlock {
     }
 
     /** 不遮挡视线 ⇒ 不影响其它方块的渲染/剔除 ✓（⚠ 见上面属性里的注释：这条得从 Properties 设 ✓） */
-    /** 玩家/管道可以往这一格放东西 ✓（放了就把我们替换掉 ✓ 台座不会强行补回来 ✗） */
+    /**
+     * §607b <b>挡住建造</b> ✓ —— 用户实测反馈「它上方那一格还是能放置方块啊」✗ ⇒ 改掉那个"可被替换" ✓。
+     * <p>即：这一格**真的属于台座** ✓ 你不能往里面塞方块/箱子/漏斗 ✗（要盖就先拆台座 ✓）。
+     * <p>⚠ 漏斗/管道依然能用 ✓ —— 接法不是"放进这一格"✗ 而是：**上面一格朝下接** ✓ 或**用管道从侧面接进这一格** ✓。
+     */
     @Override
     public boolean canBeReplaced(BlockState state, net.minecraft.world.item.context.BlockPlaceContext ctx) {
-        return true;
+        return false;
+    }
+
+    /** 流体也不许流进来 ✓（这一格是台座的一部分 ⇒ 它不是空气 ✓） */
+    @Override
+    public boolean canBeReplaced(BlockState state, net.minecraft.world.level.material.Fluid fluid) {
+        return false;
     }
 
     /** 完全不渲染 ✓ */
