@@ -102,11 +102,26 @@ public class CreateEnergyConverterBlockEntity extends KineticBlockEntity impleme
      * 而且 Create 自己会在服务端每 tick 调它 ✓ ⇒ 我们只要覆写它、先调 {@code super.tick()}
      * 再跑转化器那一段就行 ✓ —— 比"自己挂 ticker"还省事 ✓ 也不用额外注册 ✓。
      */
+
+    private int syncTimer = 0;
+    private int lastSyncedFe = -1;
+
+    /** §593 每 10 tick 查一次 FE 池 ⇒ 变了就 `sendData()` ✓（Create 的 SyncedBlockEntity 那条路 ✓） */
+    void syncIfChanged() {
+        if (++syncTimer < 10) return;
+        syncTimer = 0;
+        int now = core.getEnergyStored();
+        if (now == lastSyncedFe) return;
+        lastSyncedFe = now;
+        if (level != null && !level.isClientSide) sendData();
+    }
+
     @Override
     public void tick() {
         super.tick();                                          // ① Create 的动能逻辑（转速传播/平滑 ✓）
         if (level instanceof net.minecraft.server.level.ServerLevel server) {
             core.tick(server, worldPosition);                  // ② 转化器本体（收 / 折 / 推 ✓）
+            syncIfChanged();   // §593 FE 池变化时同步给客户端 ✓（Create 的 sendData ✓）
         }
     }
 

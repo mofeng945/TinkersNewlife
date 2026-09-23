@@ -51,6 +51,21 @@ import javax.annotation.Nullable;
  */
 public class EnergyConverterBlockEntity extends BlockEntity implements ConverterCoreHolder {
 
+    /** §593 每 10 tick 查一次"FE 池变了吗" ⇒ 变了就发一次方块实体更新 ✓（客户端 HUD 才看得到实时值 ✓） */
+    private int syncTimer = 0;
+    private int lastSyncedFe = -1;
+
+    void syncIfChanged() {
+        if (++syncTimer < 10) return;
+        syncTimer = 0;
+        int now = core.getEnergyStored();
+        if (now == lastSyncedFe) return;
+        lastSyncedFe = now;
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+        }
+    }
+
     /** 共享核心（状态 + 逻辑 ✓ 见类注释） */
     private final EeConverterCore core = new EeConverterCore(this);
 
@@ -71,6 +86,7 @@ public class EnergyConverterBlockEntity extends BlockEntity implements Converter
     public static void serverTick(Level level, BlockPos pos, BlockState state, EnergyConverterBlockEntity be) {
         if (level instanceof net.minecraft.server.level.ServerLevel server) {
             be.core.tick(server, pos);
+            be.syncIfChanged();   // §593 FE 池变化时同步给客户端（HUD 要用 ✓）
         }
     }
 
