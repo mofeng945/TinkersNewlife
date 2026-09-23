@@ -17,7 +17,7 @@
     {
       "type": "patchouli:text",
       "title": "换算表",
-      "text": "$(bold)1 EE = 1000 FE$()（所以 1 FE = 0.001 EE；一颗水晶 1000 EE ≈ 100 万 FE）$(br2)$(li)$(bold)1 EU = 4 FE$()（工业时代）$(li)$(bold)1 AE = 2 FE$()（应用能源）$(li)$(bold)10 J = 4 FE$()（通用机械，即 1 J = 0.4 FE）$(li)$(bold)FE/t = (45 × RPM) ÷ 64$()（机械动力，即 1 RPM = 0.703125 FE/t）$(li)$(bold)RF = Tesla = μI = FF = FE$()：都是 FE 的别名，1:1$(br2)$(italic)整张表在代码里只有一处（$(bold)EnergyUnits.Fe$()），不在方块里写数字。$(br2)$(bold)热量$()（右面热导线缆）：$(bold)1 热量 = 0.4 FE$()（与 Mek 的锅炉链一致 ✓），且$(bold)只吃"这一 tick 能换掉"的量$()—— 不囤热、不会爆表。$(br2)$(bold)应力$()：转化器像别的机器一样$(bold)吃 Create 应力$()（默认 4.0）—— 接上杆后 Create 面板里能看到它的负载。$()"
+      "text": "$(bold)1 EE = 1000 FE$()（所以 1 FE = 0.001 EE；一颗水晶 1000 EE ≈ 100 万 FE）$(br2)$(li)$(bold)1 EU = 4 FE$()（工业时代）$(li)$(bold)1 AE = 2 FE$()（应用能源）$(li)$(bold)10 J = 4 FE$()（通用机械，即 1 J = 0.4 FE）$(li)$(bold)FE/t = (45 × RPM) ÷ 64$()（机械动力，即 1 RPM = 0.703125 FE/t）$(li)$(bold)RF = Tesla = μI = FF = FE$()：都是 FE 的别名，1:1$(br2)$(italic)整张表在代码里只有一处（$(bold)EnergyUnits.Fe$()），不在方块里写数字。$(br2)$(bold)热量$()（右面热导线缆）：$(bold)1 热量 = 0.4 FE$()（与 Mek 的锅炉链一致 ✓），且$(bold)只吃「这一 tick 能换掉」的量$()—— 不囤热、不会爆表。$(br2)$(bold)应力$()：转化器像别的机器一样$(bold)吃 Create 应力$()（默认 4.0）—— 接上杆后 Create 面板里能看到它的负载。$()"
     },
     {
       "type": "patchouli:text",
