@@ -7,7 +7,7 @@
     {
       "type": "patchouli:spotlight",
       "item": "tinkersnewlife:energy_converter",
-      "text": "$(bold)万用能量转化器$()：把各种能量换成 $(bold)FE$()。$(br2)$(bold)单向$() —— 只往 FE 走，$(bold)不会$()把 FE 变回 EE。$(br2)$(bold)它能收：$()$(li)相邻方块$(bold)推来的 EE$()（比如 EE 抽取方块）$(li)相邻的 $(bold)Forge Energy$()（RF / Tesla 等 1:1 的别名都走这一路）$(li)$(bold)通用机械的线缆$()（J）—— $(bold)把线缆接到它任意一面$()即可$(li)$(bold)应用能源的线缆$()（AE）—— 同上，线缆接上就会与它$(bold)建网格连接$()$(li)$(bold)机械动力的传动杆$()（RPM）—— $(bold)传动杆从任意一面接上$()，它就跟着转$(br2)$(bold)它给出：$()相邻方块能收到 FE。$(br2)$(italic)不管接了几路输入，对外功率的$(bold)总闸门$()只有一个。$()"
+      "text": "$(bold)万用能量转化器$()：把各种能量换成 $(bold)FE$()。$(br2)$(bold)单向$() —— 只往 FE 走，$(bold)不会$()把 FE 变回 EE。$(br2)$(bold)它能收：$()$(li)相邻方块$(bold)推来的 EE$()（比如 EE 抽取方块）$(li)相邻的 $(bold)Forge Energy$()（RF / Tesla 等 1:1 的别名都走这一路）$(li)$(bold)通用机械的线缆$() —— 焦耳走$(bold)底面$()；$(bold)右面是热导线缆$()（走热量 ⇒ 也产 FE）$(li)$(bold)应用能源的线缆$()（AE）—— 接到$(bold)左面$()就会与它$(bold)建网格连接$()$(li)$(bold)机械动力的传动杆$()（RPM）—— $(bold)只有正面能接传动杆$()（其它面接不上、也不产能量），转速越高出电越多$(br2)$(bold)它给出：$()相邻方块能收到 FE。$(br2)$(italic)不管接了几路输入，对外功率的$(bold)总闸门$()只有一个。$()"
     },
     {
       "type": "patchouli:text",
@@ -17,12 +17,12 @@
     {
       "type": "patchouli:text",
       "title": "换算表",
-      "text": "$(bold)1 FE = 8 EE$()（所以 1 EE = 0.125 FE）$(br2)$(li)$(bold)1 EU = 4 FE$()（工业时代）$(li)$(bold)1 AE = 2 FE$()（应用能源）$(li)$(bold)10 J = 4 FE$()（通用机械，即 1 J = 0.4 FE）$(li)$(bold)FE/t = (45 × RPM) ÷ 64$()（机械动力，即 1 RPM = 0.703125 FE/t）$(li)$(bold)RF = Tesla = μI = FF = FE$()：都是 FE 的别名，1:1$(br2)$(italic)整张表在代码里只有一处（$(bold)EnergyUnits.Fe$()），不在方块里写数字。$()"
+      "text": "$(bold)1 EE = 1000 FE$()（所以 1 FE = 0.001 EE；一颗水晶 1000 EE ≈ 100 万 FE）$(br2)$(li)$(bold)1 EU = 4 FE$()（工业时代）$(li)$(bold)1 AE = 2 FE$()（应用能源）$(li)$(bold)10 J = 4 FE$()（通用机械，即 1 J = 0.4 FE）$(li)$(bold)FE/t = (45 × RPM) ÷ 64$()（机械动力，即 1 RPM = 0.703125 FE/t）$(li)$(bold)RF = Tesla = μI = FF = FE$()：都是 FE 的别名，1:1$(br2)$(italic)整张表在代码里只有一处（$(bold)EnergyUnits.Fe$()），不在方块里写数字。$(br2)$(bold)热量$()（右面热导线缆）：$(bold)1 热量 = 0.4 FE$()（与 Mek 的锅炉链一致 ✓），且$(bold)只吃"这一 tick 能换掉"的量$()—— 不囤热、不会爆表。$(br2)$(bold)应力$()：转化器像别的机器一样$(bold)吃 Create 应力$()（默认 4.0）—— 接上杆后 Create 面板里能看到它的负载。$()"
     },
     {
       "type": "patchouli:text",
       "title": "配置项（config）",
-      "text": "配置文件 $(italic)config/mofengbaizhi/tinkersnewlife-common.toml$() 的 $(bold)[ee_network]$() 段：$(br2)$(li)$(bold)converter_output_fe_per_tick$()（默认 $(bold)64$()）：$(bold)总闸门$() —— 收与推都不会超过它$(li)$(bold)converter_input_fe_per_tick$()（默认 $(bold)64$()）：Forge Energy 那一路的上限$(li)$(bold)converter_input_ee_per_tick$()（默认 $(bold)512$() = 64 FE 的量）：EE 那一路的上限$(li)$(bold)converter_buffer_fe$()（默认 $(bold)32000$()）：内部 FE 池$(li)$(bold)mekanism_energy_enabled$() / $(bold)create_rotation_enabled$() / $(bold)ae2_energy_enabled$() / $(bold)ic2_eu_enabled$()：四家各自的开关$(br2)$(italic)某一家没装（或接不上）时，它那一路会被$(bold)安静跳过$()，启动日志里会写清原因。$()"
+      "text": "配置文件 $(italic)config/mofengbaizhi/tinkersnewlife-common.toml$() 的 $(bold)[ee_network]$() 段：$(br2)$(li)$(bold)converter_output_fe_per_tick$()（默认 $(bold)64$()）：$(bold)总闸门$() —— 收与推都不会超过它$(li)$(bold)converter_input_fe_per_tick$()（默认 $(bold)64$()）：Forge Energy 那一路的上限$(li)$(bold)converter_input_ee_per_tick$()（默认 $(bold)512$()）：EE 那一路的上限（新汇率下它远大于产量 ⇒ 真正限速的是 FE 闸门）$(li)$(bold)converter_buffer_fe$()（默认 $(bold)32000$()）：内部 FE 池$(li)$(bold)mekanism_energy_enabled$() / $(bold)create_rotation_enabled$() / $(bold)ae2_energy_enabled$() / $(bold)ic2_eu_enabled$()：四家各自的开关$(br2)$(italic)某一家没装（或接不上）时，它那一路会被$(bold)安静跳过$()，启动日志里会写清原因。$()"
     },
     {
       "type": "patchouli:crafting",
