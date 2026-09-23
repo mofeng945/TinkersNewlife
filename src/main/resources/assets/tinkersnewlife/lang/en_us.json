@@ -1294,6 +1294,7 @@
   "gui.tinkersnewlife.converter_hud.pool": "§fFE pool  §e%s §7/ %s",
   "gui.tinkersnewlife.converter_hud.flow": "§7Change  %s §7FE/s",
   "gui.tinkersnewlife.ee_extractor.cache": "Cached EE: %s / %s",
+  "gui.tinkersnewlife.ee_extractor.hint": "Put a charged crystal in",
   "block.tinkersnewlife.energy_converter": "Universal Energy Converter",
   "block.tinkersnewlife.energy_converter.tip.in": "Inputs: EE from an extractor on the top, AE cables on the left, Mekanism heat conductors on the right, and a universal input on the bottom (EE / FE / Mekanism joules / AE)",
   "block.tinkersnewlife.energy_converter.tip.out": "Output: FE leaves through the back face only (back is output-only)",

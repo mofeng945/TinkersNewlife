@@ -1293,6 +1293,7 @@
   "gui.tinkersnewlife.converter_hud.pool": "§fFE 池  §e%s §7/ %s",
   "gui.tinkersnewlife.converter_hud.flow": "§7变化  %s §7FE/秒",
   "gui.tinkersnewlife.ee_extractor.cache": "缓存 EE：%s / %s",
+  "gui.tinkersnewlife.ee_extractor.hint": "放有电的水晶",
   "block.tinkersnewlife.energy_converter": "万用能量转化器",
   "block.tinkersnewlife.energy_converter.tip.in": "输入：顶面接抽取器的 EE、左面接应用能源线缆、右面接通用机械的热导线缆（热量）、底面万能输入（EE / FE / 通用机械焦耳 / AE 都收）",
   "block.tinkersnewlife.energy_converter.tip.out": "输出：只从背面出 FE（背面只出不进）",
