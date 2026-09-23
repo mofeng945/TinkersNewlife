@@ -143,6 +143,17 @@ public class ModBlocks {
     public static final RegistryObject<Block> ELDER_MANA_PEDESTAL = BLOCKS.register("elder_mana_pedestal",
             com.mofengbaizhi.tinkersnewlife.content.block.ElderManaPedestalBlock::new);
 
+    /**
+     * §607 台座的<b>上段</b>（水晶悬浮的那一格 ✓）—— 把台座做成<b>两格高的结构</b> ✓。
+     * <p>⚠ <b>不渲染 / 无碰撞 / 不挡光 / 可被替换</b> ✓（用户口径："保持目前的模型和碰撞箱不变" ✓
+     * 详见 {@code ElderManaPedestalTopBlock} 类注释 ✓）。
+     * <p>它存在的唯一理由：<b>让漏斗 / 管道接在那一格上也能塞取</b> ✓ ——
+     * 空气格子没法挂能力（1.20.1 的容器查询是先取那格的方块实体 ✓ 也没有"按坐标挂能力"的 API ✗）。
+     * <p>⚠ <b>没有对应物品</b> ✗（玩家拿不到、也不进创造栏 ✓ 台座放下时自动补 ✓ 台座拆掉时自动走 ✓）。
+     */
+    public static final RegistryObject<Block> ELDER_MANA_PEDESTAL_TOP = BLOCKS.register("elder_mana_pedestal_top",
+            com.mofengbaizhi.tinkersnewlife.content.block.ElderManaPedestalTopBlock::new);
+
     // ============================================================
     //  §557 EE 网络：抽取方块 + 万用能量转化器
     // ============================================================

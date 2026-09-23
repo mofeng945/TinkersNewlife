@@ -335,6 +335,10 @@ public class ElderManaPedestalBlockEntity extends BlockEntity implements EeStora
     }
 
     private void tick(ServerLevel level, BlockPos pos) {
+        // §607 保证"上段"在（两格高结构的上面那格 ✓）—— **只补空气格** ✓
+        //   ⇒ 老存档里只有一格的台座、区块重载后，都会自动补上 ✓
+        //   ⇒ 玩家/管道往那一格放了东西时它不是空气 ⇒ 这里什么都不做 ✓ 绝不顶掉玩家的东西 ✗
+        ElderManaPedestalTopBlock.ensureTop(level, pos);
         ticks++;
         settleTicks++;
         if (settleTicks >= SETTLE_INTERVAL) {

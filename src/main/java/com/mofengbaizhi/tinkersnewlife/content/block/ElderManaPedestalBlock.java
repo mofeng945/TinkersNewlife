@@ -130,6 +130,32 @@ public class ElderManaPedestalBlock extends BaseEntityBlock {
     }
 
     // ============================================================
+    //  §607 两格高结构：放下时补"上段"，拆掉时带走它
+    //  ⚠ 这两件事**必须写在台座身上** ✗ —— 写到上段自己身上会**无限叠塔** ✗
+    //     （setBlock 放上段会触发它自己的 onPlace ✓ 见 ElderManaPedestalTopBlock 里的注释 ✓）
+    // ============================================================
+
+    /** 台座放下 ⇒ 上面那格若是空气就补上段 ✓（那格已经有东西 ⇒ 不动 ✗） */
+    @Override
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        super.onPlace(state, level, pos, oldState, isMoving);
+        if (level.isClientSide) return;
+        ElderManaPedestalTopBlock.ensureTop(level, pos);
+    }
+
+    /** 台座没了 ⇒ 上段跟着走 ✓（只删"确实是上段"的那一格 ✓ 玩家放的东西不动 ✗） */
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!state.is(newState.getBlock())) {
+            BlockPos above = pos.above();
+            if (level.getBlockState(above).getBlock() instanceof ElderManaPedestalTopBlock) {
+                level.removeBlock(above, false);
+            }
+        }
+        super.onRemove(state, level, pos, newState, isMoving);
+    }
+
+    // ============================================================
     //  放 / 取 水晶
     // ============================================================
 

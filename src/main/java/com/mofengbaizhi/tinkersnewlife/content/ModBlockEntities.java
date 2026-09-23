@@ -38,6 +38,15 @@ public class ModBlockEntities {
                                     ModBlocks.ELDER_MANA_PEDESTAL.get())
                             .build(null));
 
+    /** §607 台座**上段**的方块实体（只把物品能力转发给下方台座 ✓ 见 {@code ElderManaPedestalTopBlockEntity} ✓） */
+    public static final RegistryObject<BlockEntityType<com.mofengbaizhi.tinkersnewlife.content.block.ElderManaPedestalTopBlockEntity>>
+            ELDER_MANA_PEDESTAL_TOP =
+            BLOCK_ENTITIES.register("elder_mana_pedestal_top",
+                    () -> BlockEntityType.Builder.of(
+                                    com.mofengbaizhi.tinkersnewlife.content.block.ElderManaPedestalTopBlockEntity::new,
+                                    ModBlocks.ELDER_MANA_PEDESTAL_TOP.get())
+                            .build(null));
+
     // ============================================================
     //  §557 EE 网络（抽取方块 + 万用能量转化器）
     // ============================================================
