@@ -4,14 +4,18 @@ import com.mofengbaizhi.tinkersnewlife.content.storage.SilentGloveContainer;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
-import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 
+/**
+ * <b>寂静手套容器界面</b>。
+ * <p>⚠ §602 核查时删掉了一个死字段：原来这里声明过
+ * {@code TEXTURE = tinkersnewlife:textures/gui/silent_glove.png} ✗ —— 那个文件<b>根本不存在</b> ✗
+ * （`textures/gui/` 下只有 {@code ee_extractor.png} / {@code book_guide.png} 与两个子目录 ✓
+ * 那个 103 字节的 {@code silent_glove.png} 其实在 {@code textures/gui/modifiers/} 里 ✓ 是修饰符图标 ✓）。
+ * 它<b>从来没被 blit 过</b> ✓（本界面是用 {@code GuiGraphics#fill} 画的 ✓）⇒ 删掉零影响 ✓
+ * —— 但留着就是个陷阱：哪天有人"顺手用一下"，就会得到一个紫黑面板 ✗。
+ */
 public class SilentGloveScreen extends AbstractContainerScreen<SilentGloveContainer> {
-
-    private static final ResourceLocation TEXTURE =
-            new ResourceLocation(TinkersNewlife.MOD_ID, "textures/gui/silent_glove.png");
 
     public SilentGloveScreen(SilentGloveContainer container, Inventory playerInventory, Component title) {
         super(container, playerInventory, title);

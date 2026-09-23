@@ -49,8 +49,12 @@ public class EeExtractorMenu extends AbstractContainerMenu {
     /** 抽取槽的坐标（屏幕/菜单同源 ✓） */
     public static final int SLOT_X = 80;
     public static final int SLOT_Y = 33;
-    /** 信息行的 Y（屏幕上画"缓存 EE：x / 4000" ✓） */
-    public static final int INFO_Y = 64;
+    /**
+     * 信息行的 Y（屏幕上画"缓存 EE：x / 4000" ✓）。
+     * <p>§602 从 64 上移到 <b>61</b> ✓ —— 原来占 64..72 ✗，会顶到下面那条物品栏分隔线（现在是 y=71 ✓）✗；
+     * 现在占 61..69 ✓ 与分隔线之间留 1 px ✓ 与"物品栏"标签（73..81 ✓）也不再打架 ✓。
+     */
+    public static final int INFO_Y = 61;
     public static final int INV_X = 8;
     public static final int INV_Y = 84;
     public static final int HOTBAR_Y = 142;

@@ -22,12 +22,19 @@ import net.minecraft.world.entity.player.Inventory;
  *
  * <h2>贴图</h2>
  * 本仓库既有的三个界面（{@code SilentGloveScreen} / {@code BagScreen} / {@code QuantumVaultScreen}）
- * 都是<b>用 {@code GuiGraphics#fill} 画</b>的 ✓（它们的 {@code silent_glove.png} 只是个 103 字节的小图标，
- * 并不是 176×166 的面板 ✓）—— 好处是"贴图丢了界面也不会变成紫黑格"✓。
+ * 都是<b>用 {@code GuiGraphics#fill} 画</b>的 ✓（⚠ §602 更正：{@code textures/gui/silent_glove.png}
+ * <b>根本不存在</b> ✗ —— 当年那句"它是个 103 字节的小图标"是错的 ✓ 那个文件在 {@code textures/gui/modifiers/} 里 ✓）。
  * 本界面<b>两者都做</b> ✓：先 {@code blit} 我们自己生成的面板贴图
  * （{@code assets/tinkersnewlife/textures/gui/ee_extractor.png} ✓ 由
  * {@code tools/GenEeExtractorGui.ps1} 程序化生成 ✓ 是<b>新文件</b> ✓），
  * 再在<b>槽位与玩家背包格上画凹槽</b> ✓ ⇒ 就算那张贴图将来被删掉，界面也仍然可用 ✓（最坏只是没有底色 ✓）。
+ *
+ * <h2>§602 核查出来的一处排版缺陷（已修 ✓）</h2>
+ * 生成脚本把"物品栏分隔线"画在 <b>y=76</b> ✗，而"物品栏"标签是 {@code INV_Y - 11 = 73} 起、<b>9 px 高</b>（占 73..81）✗
+ * ⇒ <b>那条线正好从字中间穿过去</b> ✗。现在：信息行上移到 y=61（占 61..69）✓、把贴图那条盖掉 ✓、
+ * 在 <b>y=71</b> 自己画一条位置正确的 ✓（71 在信息行之下、标签之上 ✓）。
+ * ⚠ <b>不去改那张 PNG</b> ✗ —— 仓库铁律：{@code assets/**&#47;textures/**} 下的既有文件一律不覆盖 ✓，
+ * 所以修的是"画的时候" ✓。
  *
  * <h2>数值怎么来的</h2>
  * {@code 缓存 EE} 走菜单的数据槽（§558 选的那一种同步 ✓ 见 {@code EeExtractorMenu#cachedEe()}）✓
@@ -41,6 +48,13 @@ public class EeExtractorScreen extends AbstractContainerScreen<EeExtractorMenu> 
 
     private static final int W = EeExtractorMenu.IMAGE_WIDTH;
     private static final int H = EeExtractorMenu.IMAGE_HEIGHT;
+
+    /** 面板底色（与 {@code tools/GenEeExtractorGui.ps1} 的 {@code $C_FACE} 一致 ✓） */
+    private static final int PANEL_FACE = 0xFFC6C6C6;
+    /** 分隔线颜色（与生成脚本的 {@code $C_DARK} 一致 ✓） */
+    private static final int SEPARATOR = 0xFF555555;
+    /** 分隔线左右留白（与生成脚本一致：x=7 .. W-7 ✓） */
+    private static final int SEP_MARGIN = 7;
 
     public EeExtractorScreen(EeExtractorMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
@@ -66,6 +80,11 @@ public class EeExtractorScreen extends AbstractContainerScreen<EeExtractorMenu> 
 
         // ① 面板贴图（新文件 ✓ 不是任何既有贴图 ✓）—— 走标准 256×256 图集坐标 ✓
         graphics.blit(TEXTURE, x, y, 0, 0, W, H);
+
+        // ①-B §602 修排版：贴图那条分隔线在 y=76 ✗，会从"物品栏"标签（73..81）中间穿过 ✗
+        //     ⇒ ① 用底色把它盖掉 ✓ ② 在 y=71 自己画一条位置正确的 ✓（71 在信息行之下、标签之上 ✓）
+        graphics.fill(x + SEP_MARGIN, y + 76, x + W - SEP_MARGIN, y + 77, PANEL_FACE);
+        graphics.fill(x + SEP_MARGIN, y + 71, x + W - SEP_MARGIN, y + 72, SEPARATOR);
 
         // ② 槽位凹槽：自绘 ✓（贴图丢了也不会"看不出哪一格能放东西"✓ 与 QuantumVaultScreen 同一套画法 ✓）
         for (net.minecraft.world.inventory.Slot slot : this.menu.slots) {

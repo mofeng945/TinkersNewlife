@@ -1,11 +1,15 @@
 package com.mofengbaizhi.tinkersnewlife.client.hud;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import com.mofengbaizhi.tinkersnewlife.content.ModBlocks;
 import com.mofengbaizhi.tinkersnewlife.content.block.ConverterCoreHolder;
 import com.mofengbaizhi.tinkersnewlife.content.block.EeConverterCore;
 import com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterBlock;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
@@ -37,6 +41,8 @@ public final class EnergyConverterHud {
     private static int lastFe = -1;
     private static long lastMs = 0L;
     private static int perSecond = 0;
+    /** §602：上一次瞄到的是哪一格 —— 换了目标就必须把采样清零 ✗（否则会拿上一台的 FE 去算差值 ⇒ 头 500ms 显示一个荒唐数 ✓） */
+    private static BlockPos lastPos = null;
 
     @SubscribeEvent
     public static void onOverlay(RenderGuiOverlayEvent.Post event) {
@@ -48,19 +54,25 @@ public final class EnergyConverterHud {
             float partial = event.getPartialTick();
             Vec3 eye = mc.player.getEyePosition(partial);
             Vec3 look = mc.player.getViewVector(partial);
+            boolean found = false;
 
             for (double d = 0.0D; d <= REACH; d += STEP) {
                 BlockPos at = BlockPos.containing(eye.add(look.scale(d)));
                 BlockState state = mc.level.getBlockState(at);
                 if (!state.hasProperty(EnergyConverterBlock.FACING)) continue;          // 不是转化器 ⇒ 继续往后找 ✓
-                if (!(mc.level.getBlockEntity(at) instanceof ConverterCoreHolder holder)) return;
+                if (!(mc.level.getBlockEntity(at) instanceof ConverterCoreHolder holder)) break;
+                found = true;
                 EeConverterCore core = holder.converterCore();
                 int fe = core.getEnergyStored();
                 int max = core.getMaxEnergyStored();
 
                 long now = System.currentTimeMillis();
-                if (lastFe < 0) { lastFe = fe; lastMs = now; }
-                else if (now - lastMs >= SAMPLE_MS) {
+                if (!at.equals(lastPos)) {                 // §602 换了目标（或刚瞄上）⇒ 采样清零 ✓ 从"这一刻"重新算 ✓
+                    lastPos = at.immutable();
+                    lastFe = fe;
+                    lastMs = now;
+                    perSecond = 0;
+                } else if (now - lastMs >= SAMPLE_MS) {
                     perSecond = (int) Math.round((fe - lastFe) * 1000.0D / (double) (now - lastMs));
                     lastFe = fe;
                     lastMs = now;
@@ -68,16 +80,33 @@ public final class EnergyConverterHud {
 
                 int cx = mc.getWindow().getGuiScaledWidth() / 2;
                 int cy = mc.getWindow().getGuiScaledHeight() / 2;
-                event.getGuiGraphics().drawString(mc.font, "§b万用能量转化器", cx + 12, cy + 10, 0xFFFFFFFF);
-                event.getGuiGraphics().drawString(mc.font, "§fFE 池  §e" + fe + " §7/ " + max,
-                        cx + 12, cy + 21, 0xFFFFFFFF);
+                int screenW = mc.getWindow().getGuiScaledWidth();
+                // §602 文案全部走语言键 + 方块自己的本地化名 ✓（原来写死中文 ✗ 英文客户端会看到中文 ✓）
+                drawLine(event.getGuiGraphics(), mc.font, screenW,
+                        Component.literal("§b").append(ModBlocks.ENERGY_CONVERTER.get().getName()), cx + 12, cy + 10);
+                drawLine(event.getGuiGraphics(), mc.font, screenW,
+                        Component.translatable("gui.tinkersnewlife.converter_hud.pool", fe, max), cx + 12, cy + 21);
                 String flow = perSecond >= 0 ? ("§a+" + perSecond) : ("§c" + perSecond);
-                event.getGuiGraphics().drawString(mc.font, "§7变化  " + flow + " §7FE/秒",
-                        cx + 12, cy + 32, 0xFFFFFFFF);
-                return;
+                drawLine(event.getGuiGraphics(), mc.font, screenW,
+                        Component.translatable("gui.tinkersnewlife.converter_hud.flow", flow), cx + 12, cy + 32);
+                break;
+            }
+            if (!found) {                                  // §602 没瞄到 ⇒ 采样作废 ✓（免得离开一会儿再瞄回来算出一个跨越大段时间的怪值 ✗）
+                lastPos = null;
+                perSecond = 0;
             }
         } catch (Throwable ignored) {
             // fail-safe：HUD 出错绝不崩客户端 ✓
         }
+    }
+
+    /**
+     * §602 画一行 HUD 文本：靠右会超出屏幕 ⇒ <b>自动往左让</b> ✓
+     * （窄窗口 / 大 GUI 缩放下，原来那三行会跑出右边界被切掉 ✗）。
+     */
+    private static void drawLine(GuiGraphics graphics, Font font, int screenW, Component text, int x, int y) {
+        int width = font.width(text);
+        int clamped = Math.min(x, Math.max(4, screenW - 4 - width));
+        graphics.drawString(font, text, clamped, y, 0xFFFFFFFF);
     }
 }

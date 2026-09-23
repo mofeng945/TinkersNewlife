@@ -5,7 +5,10 @@ import com.mofengbaizhi.tinkersnewlife.content.ModBlocks;
 import com.mofengbaizhi.tinkersnewlife.content.block.ElderManaPedestalBlockEntity;
 import com.mofengbaizhi.tinkersnewlife.content.energy.ElderCrystalStorage;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -84,10 +87,16 @@ public final class PedestalChargeHud {
 
                     int cx = mc.getWindow().getGuiScaledWidth() / 2;
                     int cy = mc.getWindow().getGuiScaledHeight() / 2;
-                    String line1 = (isBlockItem ? "§b古老者水晶方块  §f" : "§b古老者水晶  §f") + ee + " §7/ " + cap + " EE";
-                    String line2 = "§7充能进度  §a" + pct + "%";
-                    event.getGuiGraphics().drawString(mc.font, line1, cx + 12, cy + 10, 0xFFFFFFFF);
-                    event.getGuiGraphics().drawString(mc.font, line2, cx + 12, cy + 21, 0xFFFFFFFF);
+                    int screenW = mc.getWindow().getGuiScaledWidth();
+                    // §602 文案全部走语言键 + 物品自己的本地化名 ✓
+                    //   （原来写死"古老者水晶 / 古老者水晶方块"与"充能进度"✗ ⇒ 英文客户端会看到中文 ✓）
+                    Component line1 = Component.translatable("gui.tinkersnewlife.pedestal_hud.crystal",
+                            crystal.getHoverName(), ee, cap);
+                    Component line2 = Component.translatable("gui.tinkersnewlife.pedestal_hud.progress", pct);
+                    drawLine(event.getGuiGraphics(), mc.font, screenW, line1, cx + 12, cy + 10);
+                    // ⚠ "%" 在 Java 这边拼 ✓ 不扔进语言键（否则得写 %% ✗ 少一层坑 ✓）
+                    drawLine(event.getGuiGraphics(), mc.font, screenW,
+                            Component.literal(line2.getString() + "%"), cx + 12, cy + 21);
                 }
                 return;   // 瞄到了台座（不管有没有水晶）就收工 ✓ 不继续往后穿 ✗
             }
@@ -98,5 +107,17 @@ public final class PedestalChargeHud {
 
     private static boolean isPedestal(Level level, BlockPos pos) {
         return level.getBlockState(pos).is(ModBlocks.ELDER_MANA_PEDESTAL.get());
+    }
+
+    /**
+     * §602 画一行 HUD 文本：靠右会超出屏幕 ⇒ <b>自动往左让</b> ✓
+     * （窄窗口 / 大 GUI 缩放下两行文字会被右边界切掉 ✗）。
+     */
+    private static void drawLine(net.minecraft.client.gui.GuiGraphics graphics,
+                                 net.minecraft.client.gui.Font font, int screenW,
+                                 Component text, int x, int y) {
+        int width = font.width(text);
+        int clamped = Math.min(x, Math.max(4, screenW - 4 - width));
+        graphics.drawString(font, text, clamped, y, 0xFFFFFFFF);
     }
 }
