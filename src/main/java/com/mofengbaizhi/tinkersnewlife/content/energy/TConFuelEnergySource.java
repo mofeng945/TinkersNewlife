@@ -200,8 +200,13 @@ public final class TConFuelEnergySource implements AmbientEnergySource {
             if (available <= 0) return 0.0D;
             handled = true;                                        // 是燃料罐（哪怕这一秒不够烧 ✓）
 
+            // §590 用户口径：**罐里剩多少就烧多少** ✗ —— 原来这里有一句
+            //   `if (used < want) return 0.0D;`（"不够烧满一秒就一点都不烧"✗）
+            //   ⇒ 罐底那点燃料（不足一秒的量 ✗）**永远抽不出来、一直残留在容器里** ✗
+            //   ⇒ 去掉这个闸门 ✓：能抽多少烧多少 ✓，EE 按**实际烧掉的量**折算 ✓（下面的公式本来就用 used ✓）
+            //   再配上 §571 的残差池 ⇒ 不足 1 EE 的小数也不会丢 ✓ 只是攒着 ✓ 绝不吞 ✗。
             int used = Math.min(want, available);
-            if (used < want) return 0.0D;                          // 不够烧满一秒 ⇒ 不烧、不给 EE ✓（不做小数赊账 ✗）
+            if (used <= 0) return 0.0D;
 
             if (!simulate) {
                 FluidStack drained = handler.drain(new FluidStack(fluid, used), FluidAction.EXECUTE);
