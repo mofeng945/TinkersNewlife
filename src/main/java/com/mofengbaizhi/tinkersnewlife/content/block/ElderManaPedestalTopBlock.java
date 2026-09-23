@@ -34,8 +34,10 @@ import javax.annotation.Nullable;
  * <ul>
  *   <li>{@link RenderShape#INVISIBLE} ⇒ **完全不渲染** ✓（模型文件只是个空壳 ✓ 见
  *       {@code models/block/elder_mana_pedestal_top.json} ✓）；</li>
- *   <li>{@code getShape}/{@code getCollisionShape} = {@link Shapes#empty()} ⇒ **没有碰撞箱、也没有选中框** ✓
- *       ⇒ 玩家走得过去 ✓ 准星/挖掘也**选不中**它 ✓（所以它不可能被手挖掉 ✓ 不会被 Jade 显示成怪东西 ✓）；</li>
+ *   <li><b>轮廓（选中框）= 整格</b>（§607c ✓）{@code getCollisionShape} = {@link Shapes#empty()} ⇒
+ *       <b>有方框、但没有碰撞箱</b> ✓ ⇒ 玩家走得过去 ✓ 站着也不会踩上去 ✓；
+ *       ⚠ 有轮廓是**必须的** ✗ —— 用户口径「整个空气我没法放置朝向啊」✓：没有轮廓就选不到"面"，
+ *       也就没法对着它朝下放漏斗 / 把管道接进来 ✓；</li>
  *   <li>{@code getLightBlock = 0} + {@code propagatesSkylightDown = true} ⇒ **不挡光** ✓
  *       —— 这一条是**必须的** ✗：台座充能速率是按"台座上方那格的亮度"算的 ✓
  *       若这格挡光就会把台座变暗 ⇒ **白送一个加速 buff** ✗（用户口径"别爆表" ✓ 详见备忘录 ✓）；</li>
@@ -56,7 +58,9 @@ public class ElderManaPedestalTopBlock extends BaseEntityBlock {
 
     public ElderManaPedestalTopBlock() {
         super(BlockBehaviour.Properties.of()
-                // ⚠ 不可破坏（反正也没有选中框 ⇒ 挖不到 ✓）；爆炸抗性给足 ⇒ 只有"台座被炸没"这种极端情况会牵连它 ✓
+                // ⚠ 硬度 -1 = 生存里**打不掉** ✓（§607c 起它有轮廓、能被准星选中 ⇒ 左键点得到 ✓ 但挖不动 ✓）
+                //   创造模式倒是能敲掉 ⇒ 也没关系：台座下一秒会补回来 ✓（见 ElderManaPedestalBlockEntity#tick ✓）
+                //   爆炸抗性给足 ⇒ 只有"台座被炸没"这种极端情况会牵连它 ✓
                 .strength(-1.0F, 3_600_000.0F)
                 .noCollission()          // 没有碰撞箱 ✓
                 .noOcclusion()           // 不遮挡 ✓（配合下面的 getLightBlock = 0 ✓）
@@ -75,15 +79,49 @@ public class ElderManaPedestalTopBlock extends BaseEntityBlock {
                 .mapColor(MapColor.NONE));
     }
 
-    /** 空形状 ⇒ 无碰撞 + 无选中框 ✓（准星穿过去打到后面的方块 ✓ 与用户口径一致 ✓） */
+    /**
+     * §607c <b>轮廓（选中框）= 整格</b> ✓ —— 用户口径：「好歹那一格要让我能指上去的时候显示边框吧？
+     * 整个空气我没法放置朝向啊」✓。
+     *
+     * <p>⚠ 关键区分：<b>轮廓（{@code getShape}）≠ 碰撞箱（{@code getCollisionShape}）</b> ✓
+     * —— 这里给整格轮廓 ⇒ 准星**能选中它** ✓ 于是：
+     * <ul>
+     *   <li>指着它能看到一个方框 ✓（知道"这格是台座的" ✓）；</li>
+     *   <li>能选到它的**六个面** ✓ ⇒ 对着它**朝下放漏斗**、或者把管道接进这一格都行 ✓
+     *       （这就是用户说的"放置朝向" ✓ —— 没有轮廓就只能是空气 ⇒ 没有面可选 ✗）；</li>
+     *   <li>碰撞箱仍然由 {@code noCollission()} 管着 ⇒ {@link #getCollisionShape} 依旧返回空 ✓
+     *       ⇒ **走路站着跟以前一模一样** ✓（用户上一轮明确要求"碰撞箱不变" ✓）。</li>
+     * </ul>
+     */
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return Shapes.empty();
+        return Shapes.block();
     }
 
+    /** 碰撞箱保持**空** ✓（轮廓给了整格 ⇒ 这一条必须显式写 ✗ 不然就会变成"踩着能站上去" ✗） */
     @Override
     public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return Shapes.empty();
+    }
+
+    /**
+     * §607c <b>右键转发给下面的台座</b> ✓ —— 因为现在准星会**先命中这一格**（不再是穿透过去 ✓），
+     * 所以"对着悬浮的水晶右键放/取水晶"这个习惯动作必须还能用 ✓。
+     * <p>做法：把这一下原样交给台座方块自己的 {@code use(...)} ✓（它那边已经有完整逻辑：
+     * 台上有水晶就取回 ✓ 空着而手里是水晶就放上 ✓ 其它情况 PASS ✓）⇒ 不需要在两边各写一份 ✗。
+     * <p>⚠ 手里拿的是普通方块时 ⇒ 台座那边返回 PASS ✓ 于是原版照常把方块放在**这一格的相邻位置** ✓
+     * （不是放进这一格 ✗ 见 {@link #canBeReplaced} ✓）。
+     */
+    @Override
+    public net.minecraft.world.InteractionResult use(BlockState state, Level level, BlockPos pos,
+            net.minecraft.world.entity.player.Player player, net.minecraft.world.InteractionHand hand,
+            net.minecraft.world.phys.BlockHitResult hit) {
+        BlockPos below = pos.below();
+        BlockState belowState = level.getBlockState(below);
+        if (belowState.getBlock() instanceof ElderManaPedestalBlock) {
+            return belowState.getBlock().use(belowState, level, below, player, hand, hit);
+        }
+        return net.minecraft.world.InteractionResult.PASS;
     }
 
     /** ⚠ 不挡天光 ✓（否则台座会凭空变暗 = 白送充能加速 ✗） */
