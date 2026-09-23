@@ -225,6 +225,19 @@ public class ElderManaPedestalBlockEntity extends BlockEntity implements EeStora
         return crystal;
     }
 
+    /**
+     * §606 台上的水晶**是不是已经充满了**（水晶物品 1000 / 水晶方块物品 4000 ✓）。
+     * <p>用途：<b>只给自动化做门控</b> ✗ —— 自动化（漏斗/管道）只有在它充满时才允许取走 ✓
+     * （见 {@code ElderManaPedestalItemHandler} 那个 gated 实例 ✓）。
+     * <p>⚠ <b>手动</b>那条路（右键 → {@link #takeCrystal()} ✓ 以及任何直接调它的地方 ✓）**不受此限制** ✓
+     * —— 你想随时把半充的水晶拿走都可以 ✓ 这条门控只影响"外人来搬" ✓。
+     */
+    public boolean heldCrystalFull() {
+        final ItemStack held = crystal;
+        if (held.isEmpty()) return false;
+        return heldEe(held) >= heldCap(held);
+    }
+
     public boolean hasCrystal() {
         return !crystal.isEmpty();
     }
@@ -560,7 +573,7 @@ public class ElderManaPedestalBlockEntity extends BlockEntity implements EeStora
      * <p>⚠ 非 final（{@link #reviveCaps()} 要重建 ✓ Forge 的标准写法 ✓）。
      */
     private LazyOptional<net.minecraftforge.items.IItemHandler> itemHolder =
-            LazyOptional.of(() -> new com.mofengbaizhi.tinkersnewlife.content.menu.ElderManaPedestalItemHandler(this));
+            LazyOptional.of(() -> new com.mofengbaizhi.tinkersnewlife.content.menu.ElderManaPedestalItemHandler(this, true));
 
     @Nonnull
     @Override
@@ -583,7 +596,7 @@ public class ElderManaPedestalBlockEntity extends BlockEntity implements EeStora
     public void reviveCaps() {
         super.reviveCaps();
         itemHolder = LazyOptional.of(
-                () -> new com.mofengbaizhi.tinkersnewlife.content.menu.ElderManaPedestalItemHandler(this));
+                () -> new com.mofengbaizhi.tinkersnewlife.content.menu.ElderManaPedestalItemHandler(this, true));
     }
 
     // ============================================================

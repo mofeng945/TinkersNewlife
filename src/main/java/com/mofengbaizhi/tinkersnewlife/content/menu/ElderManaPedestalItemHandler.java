@@ -36,8 +36,25 @@ public final class ElderManaPedestalItemHandler implements IItemHandlerModifiabl
 
     private final ElderManaPedestalBlockEntity be;
 
+    /**
+     * §606 这份 handler 是不是"给自动化用的"那一份 ✓。
+     * <ul>
+     *   <li>{@code false}（默认 ✓）：**不门控** —— 谁都能随时取走台上那件 ✓
+     *       （用户口径：手动/界面取得自由 ✓ 目前台座没有界面 ✓ 保留给将来 ✓）；</li>
+     *   <li>{@code true}：只有台上那颗**充满**时才让取走 ✓（{@link ElderManaPedestalBlockEntity#heldCrystalFull()} ✓）
+     *       —— 方块实体把<b>这一份</b>挂到 {@code ITEM_HANDLER} 能力上 ✓ ⇒ 漏斗/管道会**等它充满**再来搬 ✓
+     *       这样"台座 → 抽取器 → 台座"的闭环节奏才是对的 ✓（不然水晶会一路弹跳 ✗ 见 §606 用户提问 ✓）。</li>
+     * </ul>
+     */
+    private final boolean gateForAutomation;
+
     public ElderManaPedestalItemHandler(ElderManaPedestalBlockEntity be) {
+        this(be, false);
+    }
+
+    public ElderManaPedestalItemHandler(ElderManaPedestalBlockEntity be, boolean gateForAutomation) {
         this.be = be;
+        this.gateForAutomation = gateForAutomation;
     }
 
     @Override
@@ -81,6 +98,8 @@ public final class ElderManaPedestalItemHandler implements IItemHandlerModifiabl
     @Override
     public ItemStack extractItem(int slot, int amount, boolean simulate) {
         if (slot != SLOT || amount <= 0) return ItemStack.EMPTY;
+        // §606 自动化门控：只有**充满**才让搬走 ✓（手动那份 handler 不门控 ✓）
+        if (gateForAutomation && !be.heldCrystalFull()) return ItemStack.EMPTY;
         ItemStack cur = be.getCrystal();
         if (cur.isEmpty()) return ItemStack.EMPTY;
         ItemStack out = cur.copy();                                // ⚠ 拷贝 ⇒ 自动化那边改不到 BE 的字段 ✓

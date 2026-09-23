@@ -183,6 +183,26 @@ public class EeExtractorBlockEntity extends BlockEntity implements EeStorage, Me
         syncToClients();
     }
 
+    /**
+     * §606 <b>允许被"自动化"取走槽里那件吗？</b>（漏斗/管道 ✓ 只门控自动化 ✗ 手动与界面不受限 ✓）
+     *
+     * <p>规则（用户口径 ✓）：
+     * <ol>
+     *   <li>槽里那件**已经抽干了**（{@code heldEe <= 0} ✓）⇒ 放行 ✓ —— 这正是自动化想要的"空壳出料" ✓；</li>
+     *   <li>**或者**本方块缓存满了、抽不动了（{@code getEe() >= getCapacity()} ✓）⇒ <b>也放行</b> ✓
+     *       —— ⚠ 这一条是**防死锁**的关键 ✗：缓存满时 {@link #pullFromSlot} 压根不会再抽 ✓
+     *       若还死等"抽干"，那颗水晶就永远出不来 ✓ 整条自动化停摆 ✗；</li>
+     *   <li>其余情况（还没抽干、缓存也还有空间）⇒ <b>不给</b> ✗ 让抽取器先把电抽完 ✓。</li>
+     * </ol>
+     * <p>空槽 ⇒ 返回 true ✓（没东西可取，门控无所谓 ✓）。
+     */
+    public boolean canAutomationTakeSlot() {
+        final ItemStack cur = slot;
+        if (cur.isEmpty()) return true;
+        if (heldEe(cur) <= 0) return true;                 // 抽干了 ✓
+        return getEe() >= getCapacity();                   // 缓存满 ⇒ 抽不动了 ⇒ 放行（防死锁 ✓）
+    }
+
     /** 这一次抽能接受多少（{@link #pullFromSlot} 的"只算不改"版 ✓ 供菜单/GUI 参考 ✓） */
     public int previewPullThisTick() {
         if (slot.isEmpty()) return 0;
@@ -320,7 +340,7 @@ public class EeExtractorBlockEntity extends BlockEntity implements EeStorage, Me
      * <p>⚠ 非 final（{@link #reviveCaps()} 要重建 ✓）。
      */
     private LazyOptional<net.minecraftforge.items.IItemHandler> itemHolder =
-            LazyOptional.of(() -> new com.mofengbaizhi.tinkersnewlife.content.menu.EeExtractorSlotHandler(this));
+            LazyOptional.of(() -> new com.mofengbaizhi.tinkersnewlife.content.menu.EeExtractorSlotHandler(this, true));
 
     @Nonnull
     @Override
@@ -343,7 +363,7 @@ public class EeExtractorBlockEntity extends BlockEntity implements EeStorage, Me
     public void reviveCaps() {
         super.reviveCaps();
         itemHolder = LazyOptional.of(
-                () -> new com.mofengbaizhi.tinkersnewlife.content.menu.EeExtractorSlotHandler(this));
+                () -> new com.mofengbaizhi.tinkersnewlife.content.menu.EeExtractorSlotHandler(this, true));
     }
 
     // ============================================================

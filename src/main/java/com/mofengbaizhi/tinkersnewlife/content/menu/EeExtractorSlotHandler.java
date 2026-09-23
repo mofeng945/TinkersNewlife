@@ -41,8 +41,25 @@ public final class EeExtractorSlotHandler implements IItemHandlerModifiable {
 
     private final EeExtractorBlockEntity be;
 
+    /**
+     * §606 这份 handler 是不是"给自动化用的"那一份 ✓。
+     * <ul>
+     *   <li>{@code false}（默认 ✓ 界面/手动那一份）：**不门控** —— 你想随时把半抽干的水晶拿走都可以 ✓；</li>
+     *   <li>{@code true}（方块实体挂到 {@code ITEM_HANDLER} 能力上的那一份 ✓）：
+     *       只有槽里那件**已抽干**（或本方块缓存满了、抽不动了 ✓ 防死锁 ✗）时才让取走 ✓
+     *       —— 见 {@link EeExtractorBlockEntity#canAutomationTakeSlot()} ✓
+     *       ⇒ 漏斗/管道会**等它抽干**再来搬 ✓ 这样"台座 → 抽取器 → 台座"的闭环才是正确节奏 ✓。</li>
+     * </ul>
+     */
+    private final boolean gateForAutomation;
+
     public EeExtractorSlotHandler(EeExtractorBlockEntity be) {
+        this(be, false);
+    }
+
+    public EeExtractorSlotHandler(EeExtractorBlockEntity be, boolean gateForAutomation) {
         this.be = be;
+        this.gateForAutomation = gateForAutomation;
     }
 
     @Override
@@ -94,6 +111,8 @@ public final class EeExtractorSlotHandler implements IItemHandlerModifiable {
     @Override
     public ItemStack extractItem(int slot, int amount, boolean simulate) {
         if (slot != EeExtractorBlockEntity.SLOT_INDEX || amount <= 0) return ItemStack.EMPTY;
+        // §606 自动化门控：还没抽干（且缓存也还有空 ⇒ 抽得动）⇒ 先不给 ✗ 让抽取器把电抽完 ✓
+        if (gateForAutomation && !be.canAutomationTakeSlot()) return ItemStack.EMPTY;
         ItemStack cur = be.getSlotItem();
         if (cur.isEmpty()) return ItemStack.EMPTY;
         ItemStack out = cur.copy();
