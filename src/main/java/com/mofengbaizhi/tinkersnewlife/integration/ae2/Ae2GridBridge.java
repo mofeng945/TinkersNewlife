@@ -98,6 +98,22 @@ import javax.annotation.Nullable;
  */
 public final class Ae2GridBridge implements IInWorldGridNodeHost, IGridNodeListener<Ae2GridBridge> {
 
+    /**
+     * §596 <b>AE → FE 汇率：跟随 AE2 自己的设置</b> ✓ ——
+     * AE2 的 {@code PowerUnits.FE} 带一个**公开可配**的 {@code conversionRatio} ✓（javap 实核：`public double conversionRatio;` ✓）
+     * 官方默认 <b>2.0</b>（= 2 FE ↔ 1 AE ✓ 正是用户口径 ✓）⇒ 玩家在 AE2 设置里改了，我们**自动跟随** ✓（这才叫"原版逻辑"✓）。
+     * <p>兜底：读不到 / 非正数 ⇒ 退回 {@link EnergyUnits.Fe#FE_PER_AE}（2.0 ✓），绝不返回 0 ✗（否则完全不产电 ✓）。
+     */
+    private static double fePerAe() {
+        try {
+            double ratio = appeng.api.config.PowerUnits.FE.conversionRatio;
+            if (ratio > 0.0D && !Double.isNaN(ratio) && !Double.isInfinite(ratio)) return ratio;
+        } catch (Throwable ignored) {
+        }
+        return EnergyUnits.Fe.FE_PER_AE;
+    }
+
+
     /** 每个方块实体一个桥（WeakHashMap ⇒ 方块被拆后不会把 BE 一起吊住 ✓） */
     private static final Map<EeConverterCore, Ae2GridBridge> CACHE = new WeakHashMap<>();
 
