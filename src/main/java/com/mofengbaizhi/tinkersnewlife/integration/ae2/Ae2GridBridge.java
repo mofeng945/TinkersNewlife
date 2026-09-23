@@ -209,7 +209,7 @@ public final class Ae2GridBridge implements IInWorldGridNodeHost, IGridNodeListe
         //      例：想补 64 FE ⇒ 抽 32 AE ⇒ 折回来正好 2 × 32 = 64 FE ✓（§560 已逐行核对方向 ✓）
         //    ⚠ 方向别写反 ✗：这里必须是 **÷ FE_PER_AE**（= ÷2）✗ 不是 ×2 ✗
         //      （×2 会让 AE 那条路的实际功率变成正确的 1/4 ✗ —— §560 就是来钉死这一点的 ✓）
-        double wantAeUnits = EnergyUnits.Fe.feToAe(wantFe);
+        double wantAeUnits = fePerAe() > 0 ? (wantFe / fePerAe()) : 0.0D;   // §596c 与"给"的那侧同一个汇率 ✓
         // ③ "界面上的 AE 数字" → **AE2 内部能量单位**（这两个不是一回事 ✗ 见类注释"单位与汇率"✓）
         //    AE2 自己的 `PowerMultiplier` 语义（javap 核实 ✓）：
         //      `multiply(internal)` = internal × multiplier ⇒ **内部单位 → 界面数字** ✓
