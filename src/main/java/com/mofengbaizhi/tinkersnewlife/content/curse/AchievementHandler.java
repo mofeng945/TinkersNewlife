@@ -183,24 +183,37 @@ public final class AchievementHandler {
 
         // ---- "现持有某物"补发（⚠ 见 §628：inventory_changed 只在背包**变化**那一刻判定 ✗
         //      ⇒ 玩家"早就有"的东西永远不会触发 ✗ ⇒ 这里按持有状态兜底发一次 ✓） ----
+        // ⚠⚠ 物品引用**必须写在方法体里**（见 §629 那次启动崩溃 ✗）：
+        //    `ModItems.X.get()` 写进 `static final Item[]` 会在**类初始化**时求值 ✓ 那时注册表还没填 ✓
+        //    ⇒ `NullPointerException: Registry Object not present` ⇒ **模组加载失败、游戏启动即崩** ✗✗
         if (hasItem(player, ModItems.GUIDE_BOOK.get())) award(player, "root");
         if (hasItem(player, ModItems.GHELOTH_REMAINS.get())) award(player, "first_spark");
         if (hasItem(player, ModItems.ELDER_CRYSTAL.get())) award(player, "elder_crystal");
         if (hasItem(player, ModItems.YOG_SOTHOTH_GATE_KEY.get())) award(player, "gate_key");
-        if (hasAny(player, CURSED_TOOL_ITEMS)) award(player, "cursed_tool");
-        if (hasAll(player, MOMO_POOL_ITEMS)) award(player, "cursed_tools_full");
+        if (hasAny(player, cursedToolItems())) award(player, "cursed_tool");
+        if (hasAll(player, momoPoolItems())) award(player, "cursed_tools_full");
     }
 
-    /** 「持械之人」认这些（与 `advancements/achievements/cursed_tool.json` 的条件保持一致 ✓） */
-    private static final net.minecraft.world.item.Item[] CURSED_TOOL_ITEMS = {
-            ModItems.TIAN_NI_HUO.get(), ModItems.GOURD_JAIL.get(), ModItems.LIFE_LAMP_RING.get(),
-            ModItems.RING_OF_ONE_MIND.get(), ModItems.COGNITIVE_MASK.get(), ModItems.DURANDAL_SWORD.get(),
-            ModItems.YOU_YUN.get(), ModItems.PLANETARIUM.get()};
+    /**
+     * 「持械之人」认这些（与 `advancements/achievements/cursed_tool.json` 的条件保持一致 ✓）。
+     * <p>⚠ 每次调用现取 ✓ **不要**提成 `static final` 字段 ✗（§629 的启动崩溃就是这么来的 ✓）。
+     */
+    private static net.minecraft.world.item.Item[] cursedToolItems() {
+        return new net.minecraft.world.item.Item[]{
+                ModItems.TIAN_NI_HUO.get(), ModItems.GOURD_JAIL.get(), ModItems.LIFE_LAMP_RING.get(),
+                ModItems.RING_OF_ONE_MIND.get(), ModItems.COGNITIVE_MASK.get(), ModItems.DURANDAL_SWORD.get(),
+                ModItems.YOU_YUN.get(), ModItems.PLANETARIUM.get()};
+    }
 
-    /** 「咒具集全」认这六件（= 墨默咒具池 ✓ 与 §623 一致 ✓） */
-    private static final net.minecraft.world.item.Item[] MOMO_POOL_ITEMS = {
-            ModItems.TIAN_NI_HUO.get(), ModItems.YOU_YUN.get(), ModItems.GOURD_JAIL.get(),
-            ModItems.LIFE_LAMP_RING.get(), ModItems.RING_OF_ONE_MIND.get(), ModItems.COGNITIVE_MASK.get()};
+    /**
+     * 「咒具集全」认这六件（= 墨默咒具池 ✓ 与 §623 一致 ✓）。
+     * <p>同上：现取 ✓ 不提成静态字段 ✗。
+     */
+    private static net.minecraft.world.item.Item[] momoPoolItems() {
+        return new net.minecraft.world.item.Item[]{
+                ModItems.TIAN_NI_HUO.get(), ModItems.YOU_YUN.get(), ModItems.GOURD_JAIL.get(),
+                ModItems.LIFE_LAMP_RING.get(), ModItems.RING_OF_ONE_MIND.get(), ModItems.COGNITIVE_MASK.get()};
+    }
 
     /** 背包里有没有这件物品（⚠ 1.20.1 的 `Inventory` **没有** `has(Item)`/`countItem` ⇒ 自己遍历 ✓） */
     private static boolean hasItem(ServerPlayer player, net.minecraft.world.item.Item item) {

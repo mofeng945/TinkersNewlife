@@ -37,17 +37,6 @@ public final class PlanetariumHud {
     public static final int ICON_H = 16;
     public static final int TEXT_H = 10;
 
-    /**
-     * ⭐ 图标直接<b>渲染星象仪物品本身</b> ✓（用户口径：「HUD 直接用画好的物品材质不就行了，为什么还要自己再画一遍」✗）
-     * <p>物品模型是<b>两层</b>（`layer0` 底盘 + `layer1` 星象图 ✓ 见 `models/item/planetarium.json`）✓
-     * ⇒ 交给 {@link ItemRenderer} 画，HUD 就只有<b>一处</b>图标来源 ✓：
-     * <ul>
-     *   <li>连月相属性（`tinkersnewlife:planetarium` 谓词）也由渲染管线自己算 ✓ 这里不碰 ✓</li>
-     *   <li>以后你把底盘/星象图画成什么样，HUD <b>自动一样</b> ✓ 永远不会两边不一致 ✓（自己再画一遍就一定会 ✗）</li>
-     * </ul>
-     */
-    private static final ItemStack ICON = new ItemStack(ModItems.PLANETARIUM.get());
-
     private PlanetariumHud() {}
 
     // ============================================================
@@ -134,9 +123,13 @@ public final class PlanetariumHud {
      * 画那 16×16 的物品图标 —— <b>用原版的物品渲染管线</b> ✓ 不自己叠贴图 ✓。
      * <p>这样月相谓词（`tinkersnewlife:planetarium`）也由管线自己求值 ✓
      * ⇒ HUD 与物品栏/手上的图标<b>同源</b> ✓ 以后换素材无需改 HUD ✓。
+     * <p>⚠⚠ **物品栈必须在这里现造** ✗ —— 见 §629 那次启动崩溃：
+     * 把它提成 `private static final ItemStack ICON = new ItemStack(ModItems.PLANETARIUM.get())`
+     * 会在**类初始化**时去取注册对象 ✓ 那时注册表可能还没填 ⇒ `Registry Object not present` ⇒ 崩 ✗
+     * （本类当时没崩只是"加载时机碰巧晚" ✓ 属于运气 ✓ 同款写法一律按雷处理 ✗）。
      */
     private static void renderItemIcon(GuiGraphics graphics, int x, int y) {
-        graphics.renderItem(ICON, x, y);
+        graphics.renderItem(new ItemStack(ModItems.PLANETARIUM.get()), x, y);
     }
 
     /** 编辑模式的外框（拖动命中看得见 ✓ 用色与咒力条的编辑框一致 ✓ 一眼看出是同一套东西 ✓） */
