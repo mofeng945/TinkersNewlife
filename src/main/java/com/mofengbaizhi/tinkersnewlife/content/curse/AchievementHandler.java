@@ -91,14 +91,6 @@ public final class AchievementHandler {
         AWARDED.remove(player.getUUID() + "|" + path);
     }
 
-    /** 该玩家是否已完成模组的某个成就 */
-    private static boolean done(ServerPlayer player, String path) {
-        ServerAdvancementManager manager = player.server.getAdvancements();
-        Advancement holder = manager.getAdvancement(
-                new ResourceLocation(TinkersNewlife.MOD_ID, PREFIX + path));
-        return holder != null && player.getAdvancements().getOrStartProgress(holder).isDone();
-    }
-
     /** 模组某个（非成就目录下的）进度是否完成，例如 {@code techniques/sky_manipulation} */
     private static boolean doneRaw(ServerPlayer player, String path) {
         ServerAdvancementManager manager = player.server.getAdvancements();
@@ -196,7 +188,6 @@ public final class AchievementHandler {
         if (hasItem(player, ModItems.YOG_SOTHOTH_GATE_KEY.get())) award(player, "gate_key");
         if (hasAny(player, cursedToolItems())) award(player, "cursed_tool");
         if (hasAll(player, momoPoolItems())) award(player, "cursed_tools_full");
-        debugScan(player);
     }
 
     /** 我们的手册书 id（= 帕秋莉 `patchouli:book` NBT 的值 ✓ 与 `ModCreativeTabs` 写入的一致 ✓） */
@@ -224,34 +215,6 @@ public final class AchievementHandler {
             if (s.getItem() == ModItems.GUIDE_BOOK.get()) return true;
         }
         return false;
-    }
-
-    /** 诊断开关（用户实测"拿着书不给根成就"时打开 ✓ 定位完就关掉 ✗ 见 §630） */
-    private static final boolean DEBUG_SCAN = true;
-
-    /** 诊断：每 40 tick 打一行"扫到了什么 / root 有没有入手" ✓（只在开着 DEBUG_SCAN 时输出 ✓） */
-    private static void debugScan(ServerPlayer player) {
-        if (!DEBUG_SCAN) return;
-        var inv = player.getInventory();
-        boolean book = hasOurGuideBook(player);
-        boolean rootDone = done(player, "root");
-        StringBuilder found = new StringBuilder();
-        for (int i = 0; i < inv.getContainerSize(); i++) {
-            var s = inv.getItem(i);
-            if (s.isEmpty()) continue;
-            var id = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(s.getItem());
-            if (found.length() < 160) found.append(id == null ? "?" : id).append(' ');
-        }
-        TinkersNewlife.LOGGER.info("[成就诊断] 背包={} 格；有书={}；root 已完成={}；主手={}；副手={}；物品: {}",
-                inv.getContainerSize(), book, rootDone,
-                itemId(inv.getSelected()), itemId(player.getOffhandItem()), found);
-    }
-
-    /** 物品 id（拿不到就返回 "?" ✓ 诊断用） */
-    private static String itemId(net.minecraft.world.item.ItemStack s) {
-        if (s == null || s.isEmpty()) return "(空)";
-        var id = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(s.getItem());
-        return id == null ? "?" : id.toString();
     }
 
     /**
