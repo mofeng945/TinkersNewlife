@@ -358,16 +358,8 @@ public class FlyingSwordEntity extends Projectile {
         this.guidance.reset();   // 换目标 → 制导状态重置（从新目标的几何关系重新起算）
     }
 
-    /**
-     * 拖尾粒子 —— <b>已废弃</b>：现在由客户端的「流光拖尾」（{@code FlyingSwordTrailRenderer}，
-     * 动态条带 + 自定义流光着色器）承担，粒子会与光带叠在一起显得脏，故停用。
-     * 颜色逻辑（{@link #getTrailColor()} + 模式增益）已原样搬到流光拖尾里。
-     */
-    @Deprecated
-    private void spawnTrailParticles() {
-        // 保留方法体仅供查阅配色逻辑；不再调用
-    }
-
+    // 注：旧的「拖尾粒子」方法已删除（§611）——现在拖尾由客户端的「流光拖尾」
+    // FlyingSwordTrailRenderer（动态条带 + 自定义流光着色器）承担，那条粒子路径早在停用后就没人调用了。
     @Override
     public Packet<ClientGamePacketListener> getAddEntityPacket() {
         return NetworkHooks.getEntitySpawningPacket(this);

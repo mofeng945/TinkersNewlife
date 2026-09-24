@@ -29,7 +29,7 @@ package com.mofengbaizhi.tinkersnewlife.content.energy;
  * </ul>
  *
  * <h2>§557 新增：EE ⇄ 外部能量（FE / J / EU / AE / RPM）</h2>
- * 见 {@link #FE_PER_EE_FACTOR} 与 {@link Fe} 那一节 ✓ ——
+ * 见 {@link #EE_PER_FE} 与 {@link Fe} 那一节 ✓ ——
  * <b>换算常量全部集中在本类</b> ✓，"万用能量转化器"与以后的任何使用者都从这里取 ✓
  * 绝不在方块代码里写魔法数字 ✗。
  */
@@ -163,10 +163,6 @@ public final class EnergyUnits {
 
     /** 1 FE = 0.001 EE（除法推出 ✓ 不手写 ✗） */
     public static final double EE_PER_FE = 1.0D / FE_PER_EE;
-
-    /** @deprecated 旧名（原含义是"1 FE 折多少 EE"✗）⇒ 一律改用 {@link #EE_PER_FE} ✓ */
-    @Deprecated
-    public static final double FE_PER_EE_FACTOR = EE_PER_FE;
 
     /** 把 EE 换成一整点 FE（<b>向下取整</b> ✓ 不够 8 EE 就换不出 1 FE ✓ 余数留在容器里不丢 ✗） */
     public static int eeToFe(double ee) {

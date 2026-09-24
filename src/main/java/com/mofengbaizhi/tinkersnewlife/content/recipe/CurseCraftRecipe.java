@@ -12,7 +12,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
@@ -184,12 +183,6 @@ public class CurseCraftRecipe implements Recipe<net.minecraft.world.inventory.Cr
             for (Ingredient ingredient : recipe.materials) ingredient.toNetwork(buf);
             buf.writeDouble(recipe.curse);
         }
-    }
-
-    /** JEI / 记录用 */
-    @SuppressWarnings("unused")
-    private static CraftingBookCategory unusedCategoryPlaceholder() {
-        return CraftingBookCategory.MISC;
     }
 
     @Override

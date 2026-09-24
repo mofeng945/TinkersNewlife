@@ -345,7 +345,7 @@ public final class EeConverterCore implements EeStorage, IEnergyStorage {
         int fe = EnergyUnits.eeToFe(eeInput);
         if (fe > 0) {
             int really = insertFe(fe, false);
-            eeInput -= really * EnergyUnits.FE_PER_EE_FACTOR;
+            eeInput -= really * EnergyUnits.EE_PER_FE;   // §611：旧名 FE_PER_EE_FACTOR 已删（它其实就是 EE_PER_FE ✓）
             if (eeInput < 0.0D) eeInput = 0.0D;           // 防浮点负数 ✓
         }
         host.setChanged();

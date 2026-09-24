@@ -98,14 +98,6 @@ public final class CursedSpiritTechnique extends BaseTechnique {
     private static final float VORTEX_HP_FALLBACK = 20.0F;
 
     /**
-     * 漩涡伤害倍率的<b>旧常量</b>：上一轮（commit {@code babb8bf1}）曾把伤害写死成 160。
-     * <p>用户本轮要求改回"按咒灵血量上限动态变化" ⇒ 已不再参与计算，
-     * 仅保留该字段以免外部引用编译不过（如需彻底删除，先确认没有别处引用）。
-     */
-    @Deprecated
-    public static final float VORTEX_DAMAGE = 160.0F;
-
-    /**
      * 快照里"离线太久就拒载"的存档键（铁魔法 Boss 用它标记"上次存档时的世界时间"）。
      * 释放时会被消毒掉，见 {@link #sanitizeSnapshot}。
      */
