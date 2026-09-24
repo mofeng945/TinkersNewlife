@@ -21,7 +21,7 @@
       "conditions": {
         "items": [
           {
-            "nbt": "{patchouli\\u003abook:\"tinkersnewlife:guide\"}"
+            "nbt": "{\"patchouli:book\":\"tinkersnewlife:guide\"}"
           }
         ]
       }
