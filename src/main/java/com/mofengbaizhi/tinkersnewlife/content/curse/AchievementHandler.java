@@ -192,6 +192,27 @@ public final class AchievementHandler {
         if (hasItem(player, ModItems.YOG_SOTHOTH_GATE_KEY.get())) award(player, "gate_key");
         if (hasAny(player, cursedToolItems())) award(player, "cursed_tool");
         if (hasAll(player, momoPoolItems())) award(player, "cursed_tools_full");
+        debugScan(player);
+    }
+
+    /** 诊断开关（用户实测"拿着书不给根成就"时打开 ✓ 定位完就关掉 ✗ 见 §630） */
+    private static final boolean DEBUG_SCAN = true;
+
+    /** 诊断：每 40 tick 打一行"扫到了什么 / root 有没有入手" ✓（只在开着 DEBUG_SCAN 时输出 ✓） */
+    private static void debugScan(ServerPlayer player) {
+        if (!DEBUG_SCAN) return;
+        var inv = player.getInventory();
+        boolean book = hasItem(player, ModItems.GUIDE_BOOK.get());
+        boolean rootDone = done(player, "root");
+        StringBuilder found = new StringBuilder();
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            var s = inv.getItem(i);
+            if (s.isEmpty()) continue;
+            var id = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(s.getItem());
+            if (found.length() < 160) found.append(id == null ? "?" : id).append(' ');
+        }
+        TinkersNewlife.LOGGER.info("[成就诊断] 背包={} 格；有书={}；root 已完成={}；物品: {}",
+                inv.getContainerSize(), book, rootDone, found);
     }
 
     /**
