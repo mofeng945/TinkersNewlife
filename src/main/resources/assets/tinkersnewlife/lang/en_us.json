@@ -643,6 +643,7 @@
   "message.tinkersnewlife.wuxian.off": "§7Limitless: Infinity - released.",
   "message.tinkersnewlife.wuxian.on": "§dLimitless: Infinity - unfold!",
   "message.tinkersnewlife.wuxian.shield_break": "§cInfinity was broken! You take shield-break damage",
+  "message.tinkersnewlife.yuchuzi.charge_cancelled": "§7Charge cancelled: you switched to another hotbar slot (the original item was put back in that slot)",
   "message.tinkersnewlife.yuchuzi.mode_ba": "Ba",
   "message.tinkersnewlife.yuchuzi.mode_kai": "Kai",
   "message.tinkersnewlife.yuchuzi.mode_zao_kai": "Zao Kai",

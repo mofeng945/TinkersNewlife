@@ -333,6 +333,9 @@ public final class TechniqueHandler {
     public static void onPlayerTick(net.minecraftforge.event.TickEvent.PlayerTickEvent event) {
         if (event.phase != net.minecraftforge.event.TickEvent.Phase.END) return;
         if (!(event.player instanceof ServerPlayer player)) return;
+        // ⭐ 灶·开蓄力守护：**每 tick 都要查**（不能放进下面 10 tick 节流里 ✗）
+        //    换格（滚轮/数字键）时立刻取消蓄力并把原物品放回原格 ⇒ 根治"火焰箭永久残留" ✓ 见 §625
+        com.mofengbaizhi.tinkersnewlife.content.curse.technique.YuchuziTechnique.tickChargingGuards(player);
         if (player.tickCount % 10 != 0) return;
         String now = coreFingerprint(player);
         String prev = CORE_FINGERPRINT.put(player.getUUID(), now);

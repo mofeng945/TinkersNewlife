@@ -27,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *       灶·开 = 主手换火焰箭开始蓄力。</li>
  *   <li><b>C 松开</b>：灶·开蓄力中 → 恢复主手并朝当前朝向发射火焰箭（解/捌即时，无松开动作）。</li>
  *   <li><b>F（反转键）</b>：在 解 → 捌 → 灶·开 间轮换当前招式（切走灶·开时自动取消蓄力）。</li>
+ *   <li><b>蓄力中换格（滚轮 / 数字键）</b>：视为取消蓄力 ✓ 把原物品<b>放回原来那一格</b> ✓ 不发射、不扣费 ✓（见 {@link #tickChargingGuards} ✓ §625 修的 bug ✓）。</li>
  * </ul>
  * 伤害/消耗与原术式一致：解 ×1 / 捌 ×2 / 灶·开 ×10 基础咒力消耗。
  */
@@ -53,8 +54,18 @@ public final class YuchuziTechnique extends BaseTechnique {
     /** 「灶·开」火焰箭飞行速度（较慢，笔直） */
     private static final float ARROW_SPEED = 1.2F;
 
-    /** 灶·开蓄力中：玩家 UUID → 原主手物品 */
-    private static final Map<UUID, ItemStack> CHARGING = new ConcurrentHashMap<>();
+    /**
+     * 灶·开蓄力中：玩家 UUID → <b>原主手物品 + 它当时所在的热键栏格号</b>。
+     *
+     * <p>⚠ 为什么必须记格号（§625 修的一个真 bug）：蓄力是"把<b>那一格</b>换成火焰箭"，
+     * 而不是"绑在手上"的 ✗ ⇒ 玩家一滚轮切格，火焰箭就留在原格里、
+     * 而松手时只检查"当前主手是不是火焰箭" ⇒ <b>火焰箭永久残留</b> ✗（用户实测 ✓）。
+     * 记下格号之后：无论玩家切到哪一格，都能把原物品**放回原格**、把火焰箭收回 ✓。
+     */
+    private static final Map<UUID, Charge> CHARGING = new ConcurrentHashMap<>();
+
+    /** 一次灶·开蓄力的现场：原物品 + 它所在的背包格号（热键栏 0..8） */
+    private record Charge(ItemStack original, int slot) {}
 
     private YuchuziTechnique() {
         super(Modifiers.YUCHUZI.getId());
@@ -88,7 +99,9 @@ public final class YuchuziTechnique extends BaseTechnique {
         int mode = getMode(player);
         if (mode == MODE_ZAO_KAI) {
             if (CHARGING.containsKey(player.getUUID())) return; // 已在蓄力
-            CHARGING.put(player.getUUID(), player.getMainHandItem());
+            // 记下"原物品 + 当时选中的那一格"，蓄力结束/切格时都要按格号还原 ✓
+            CHARGING.put(player.getUUID(),
+                    new Charge(player.getMainHandItem(), player.getInventory().selected));
             player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ModItems.FLAME_ARROW_ITEM.get()));
             return;
         }
@@ -98,12 +111,9 @@ public final class YuchuziTechnique extends BaseTechnique {
     /** C 松开：灶·开蓄力中 → 恢复主手、扣咒力、发射火焰箭 */
     @Override
     public void onKeyRelease(ServerPlayer player) {
-        ItemStack original = CHARGING.remove(player.getUUID());
-        if (original == null) return;
-        // 仅当主手仍是火焰箭时才恢复（防止蓄力中玩家自行换走物品）
-        if (player.getMainHandItem().getItem() instanceof FlameArrowItem) {
-            player.setItemInHand(InteractionHand.MAIN_HAND, original);
-        }
+        Charge charge = CHARGING.remove(player.getUUID());
+        if (charge == null) return;
+        restoreAt(player, charge);
         // 松开发射时扣除（解 ×10），不足则取消
         if (!payCost(player)) {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_curse"), true);
@@ -130,12 +140,72 @@ public final class YuchuziTechnique extends BaseTechnique {
                 "message.tinkersnewlife.yuchuzi.switch", modeName(next)), true);
     }
 
-    /** 取消灶·开蓄力（登出/死亡/切招式/天逆鉾打断时）：恢复原主手物品 */
+    /** 取消灶·开蓄力（登出/死亡/切招式/天逆鉾打断/换格时）：把原主手物品放回原格 */
     public static void cancelCharge(ServerPlayer player) {
-        ItemStack original = CHARGING.remove(player.getUUID());
-        if (original == null) return;
-        if (player.getMainHandItem().getItem() instanceof FlameArrowItem) {
-            player.setItemInHand(InteractionHand.MAIN_HAND, original);
+        Charge charge = CHARGING.remove(player.getUUID());
+        if (charge == null) return;
+        restoreAt(player, charge);
+    }
+
+    /**
+     * 把 {@link Charge#original} 放回它原来那一格，并收走残留的火焰箭 ✓。
+     *
+     * <p>规则：
+     * <ul>
+     *   <li>那一格<b>仍是火焰箭</b> ⇒ 直接换回原物品 ✓（正常路径 ✓）；</li>
+     *   <li>那一格<b>已被玩家放上别的东西</b>（把火焰箭扔了/挪走了）⇒ <b>只收走残留的火焰箭，不覆盖玩家放的东西</b> ✗
+     *       然后尽量把原物品塞回背包 ✓（塞不下就掉在脚下 ✓ 总比凭空消失好 ✓）。</li>
+     * </ul>
+     */
+    private static void restoreAt(ServerPlayer player, Charge charge) {
+        var inv = player.getInventory();
+        int slot = Math.max(0, Math.min(inv.items.size() - 1, charge.slot()));
+        ItemStack there = inv.getItem(slot);
+        if (there.getItem() instanceof FlameArrowItem) {
+            inv.setItem(slot, charge.original());
+            return;
+        }
+        // 那一格已经不是火焰箭了：先把"别处的"残留火焰箭清掉（防止永久残留 ✓），再安置原物品
+        discardLeftoverArrows(player);
+        if (!charge.original().isEmpty() && !inv.add(charge.original())) {
+            player.drop(charge.original(), false);
+        }
+    }
+
+    /**
+     * 清掉玩家身上残留的火焰箭（只动<b>热键栏 0..8</b> ✓ —— 蓄力只会写那一格 ✓，
+     * 不碰主背包 ✗ 也不会误伤"恰好也叫这个名字"的东西 ✓ 其实整个模组就这一个来源 ✓）。
+     */
+    private static void discardLeftoverArrows(ServerPlayer player) {
+        var inv = player.getInventory();
+        for (int i = 0; i < 9; i++) {
+            ItemStack s = inv.getItem(i);
+            if (!s.isEmpty() && s.getItem() instanceof FlameArrowItem) {
+                inv.setItem(i, ItemStack.EMPTY);
+            }
+        }
+    }
+
+    /**
+     * 每 tick 守护：<b>蓄力期间一旦玩家换了格（滚轮/数字键）就立刻取消蓄力</b> ✓（§625 修的 bug ✓）。
+     *
+     * <p>为什么必须每 tick 查：蓄力是"占了某一格" ✗ 而玩家可以随时把选中格切走 ✓
+     * —— 只有每次都比对"当前选中格 == 蓄力格"才能及时收尾 ✓。
+     *
+     * <p>语义：换格 = 取消蓄力 ✓（与"切招式 / 天逆鉾打断 / 登出"同一个待遇 ✓ 不发射 ✓ 不扣费 ✓）；
+     * 原物品**回到原来那一格** ✓ ⇒ 不会再出现"火焰箭永久残留" ✗。
+     */
+    public static void tickChargingGuards(ServerPlayer player) {
+        if (CHARGING.isEmpty()) return;                       // 常态零开销 ✓
+        Charge charge = CHARGING.get(player.getUUID());
+        if (charge == null) return;
+        var inv = player.getInventory();
+        boolean switchedAway = inv.selected != charge.slot();
+        boolean slotNotArrow = !(inv.getItem(charge.slot()).getItem() instanceof FlameArrowItem);
+        if (switchedAway || slotNotArrow) {
+            cancelCharge(player);
+            player.displayClientMessage(
+                    Component.translatable("message.tinkersnewlife.yuchuzi.charge_cancelled"), true);
         }
     }
 
