@@ -1,0 +1,7 @@
+{
+    "parent": "minecraft:item/generated",
+    "textures": {
+        "layer0": "tinkersnewlife:item/planetarium/base",
+        "layer1": "tinkersnewlife:item/planetarium/star_1"
+    }
+}

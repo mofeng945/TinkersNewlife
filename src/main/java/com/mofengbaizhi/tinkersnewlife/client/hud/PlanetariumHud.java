@@ -1,12 +1,10 @@
 package com.mofengbaizhi.tinkersnewlife.client.hud;
 
-import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModItems;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -39,11 +37,16 @@ public final class PlanetariumHud {
     public static final int ICON_H = 16;
     public static final int TEXT_H = 10;
 
-    /** 月相图标所在目录（= 物品那 8 张 ✓） */
-    private static ResourceLocation moonTexture(int phase) {
-        int p = Math.floorMod(phase, 8);
-        return new ResourceLocation(TinkersNewlife.MOD_ID, "textures/item/planetarium/moon_" + p + ".png");
-    }
+    /**
+     * ⭐ 图标直接<b>渲染星象仪物品本身</b> ✓（用户口径：「HUD 直接用画好的物品材质不就行了，为什么还要自己再画一遍」✗）
+     * <p>物品模型是<b>两层</b>（`layer0` 底盘 + `layer1` 星象图 ✓ 见 `models/item/planetarium.json`）✓
+     * ⇒ 交给 {@link ItemRenderer} 画，HUD 就只有<b>一处</b>图标来源 ✓：
+     * <ul>
+     *   <li>连月相属性（`tinkersnewlife:planetarium` 谓词）也由渲染管线自己算 ✓ 这里不碰 ✓</li>
+     *   <li>以后你把底盘/星象图画成什么样，HUD <b>自动一样</b> ✓ 永远不会两边不一致 ✓（自己再画一遍就一定会 ✗）</li>
+     * </ul>
+     */
+    private static final ItemStack ICON = new ItemStack(ModItems.PLANETARIUM.get());
 
     private PlanetariumHud() {}
 
@@ -115,8 +118,8 @@ public final class PlanetariumHud {
         Level level = mc.level;
         int phase = level == null ? 0 : level.getMoonPhase();
 
-        // 第一行：月相小图标（16×16 ✓ 与物品图标同一张贴图 ✓）+「今日：<月相>」
-        graphics.blit(moonTexture(phase), x, y, 0.0F, 0.0F, 16, 16, 16, 16);
+        // 第一行：物品图标（**直接渲染星象仪物品** ✓ 两层与月相都由物品模型自己负责 ✓）+「今日：<月相>」
+        renderItemIcon(graphics, x, y);
         Component today = Component.translatable("hud.tinkersnewlife.moon.today",
                 com.mofengbaizhi.tinkersnewlife.content.item.PlanetariumItem.phaseName(phase));
         graphics.drawString(font, today, x + 18, y + 4, 0xE8E8FF);
@@ -124,6 +127,15 @@ public final class PlanetariumHud {
         // 第二行：游戏内时间
         Component time = Component.translatable("hud.tinkersnewlife.moon.time", clock(level));
         graphics.drawString(font, time, x + 18, y + ICON_H + 1, 0xA8A8C0);
+    }
+
+    /**
+     * 画那 16×16 的物品图标 —— <b>用原版的物品渲染管线</b> ✓ 不自己叠贴图 ✓。
+     * <p>这样月相谓词（`tinkersnewlife:planetarium`）也由管线自己求值 ✓
+     * ⇒ HUD 与物品栏/手上的图标<b>同源</b> ✓ 以后换素材无需改 HUD ✓。
+     */
+    private static void renderItemIcon(GuiGraphics graphics, int x, int y) {
+        graphics.renderItem(ICON, x, y);
     }
 
     /** 编辑模式的外框（拖动命中看得见 ✓ 用色与咒力条的编辑框一致 ✓ 一眼看出是同一套东西 ✓） */

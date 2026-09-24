@@ -69,3 +69,10 @@
 - `art-src\` —— 用户给的参考原图（`durandal_sword_256.png` / `ref_scroll.png` / `guide_book_original.png`），**只读素材，别改**
 - `backup\` —— 一次性备份（`wizard_robe_lace.png.bak`，§390 那次事故的保险）
 - `backup-block-textures\` —— `GenElderCrystalFromVanilla.ps1` 的自动备份 + `-Restore` 源
+
+## 八、星象仪（planetarium）材质工具（§617）
+
+| 文件 | 干什么 |
+| --- | --- |
+| `GenPlanetariumArt.java` | 画星象仪的**两层**材质：`base.png`（底盘，固定不变）+ `star_0..7.png`（星象图，随月相）。用法 `java tools/GenPlanetariumArt.java [--force]`（默认**已存在就跳过** ✓ 防覆盖手绘 ✓） |
+| `PreviewPlanetarium.java` | 离线预览：把 base 与 8 张星象图**逐张叠合**放大出图，用来验"两层咬不咬合、月相画序对不对"（不开游戏 ✓） |

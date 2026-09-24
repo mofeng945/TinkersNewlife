@@ -1,6 +1,0 @@
-{
-    "parent": "minecraft:item/generated",
-    "textures": {
-        "layer0": "tinkersnewlife:item/planetarium/moon_5"
-    }
-}
