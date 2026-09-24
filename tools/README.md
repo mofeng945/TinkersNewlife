@@ -1,4 +1,4 @@
-﻿# tools/ 工具索引
+# tools/ 工具索引
 
 > 每次清理后请同步本文件（清理记录见 `docs/开发备忘录.md` §609）。
 > 本目录里的 `.ps1` 大部分含中文，**必须 UTF-8 带 BOM**，否则本机 PowerShell 5.1 按 ANSI 读会语法报错。
@@ -74,7 +74,7 @@
 
 | 文件 | 干什么 |
 | --- | --- |
-| `GenPlanetariumArt.java` | 画星象仪的**两层**材质：`base.png`（底盘，固定不变）+ `star_0..7.png`（星象图，随月相）。用法 `java tools/GenPlanetariumArt.java [--force]`（默认**已存在就跳过** ✓ 防覆盖手绘 ✓） |
+| `GenPlanetariumArt.java` | 画星象仪的**两层**材质：`base.png`（底盘）+ `star_0..7.png`（星象图，随月相）。用法 `java tools/GenPlanetariumArt.java [--force] [--force-base]`。⚠⚠ **`base.png` 一旦存在，连 `--force` 都不会覆盖**（只有显式 `--force-base` 才动它）——用户 2026-09-25 明确要求"别改回去"；`star_*.png` 允许 `--force` 覆盖，但默认同样跳过 |
 | `PreviewPlanetarium.java` | 离线预览：把 base 与 8 张星象图**逐张叠合**放大出图，用来验"两层咬不咬合、月相画序对不对"（不开游戏 ✓） |
 ### 月相几何的**数值验收**（§618 靠它抓到"8 张图整体错位"）
 

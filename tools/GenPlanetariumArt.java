@@ -150,27 +150,33 @@ public final class GenPlanetariumArt {
     }
 
     public static void main(String[] args) throws Exception {
-        boolean force = false;
-        for (String a : args) if (a.equals("--force")) force = true;
+        boolean force = false, forceBase = false;
+        for (String a : args) {
+            if (a.equals("--force")) force = true;
+            if (a.equals("--force-base")) forceBase = true;
+        }
 
         File dir = new File("src/main/resources/assets/tinkersnewlife/textures/item/planetarium");
         if (!dir.isDirectory() && !dir.mkdirs()) throw new IllegalStateException("无法创建目录: " + dir);
 
+        // ⚠⚠ 底盘保护（用户 2026-09-25 明确要求：「我底盘是稍微改了大小的，你别改回去啊」）
+        //   ⇒ base.png 一旦存在，**连 --force 都不覆盖** ✓ 只有显式 `--force-base` 才动它 ✓
+        //   （星象图 star_*.png 允许 --force 覆盖 ✓ 那是随月相换的一层 ✓ 但**默认也仍然跳过** ✓）
         File base = new File(dir, "base.png");
-        if (base.exists() && !force) {
-            System.out.println("SKIP (exists, use --force) " + base.getPath());
+        if (base.exists() && !forceBase) {
+            System.out.println("KEEP base.png (hand-drawn / already exists) - use --force-base only if you really mean to redraw it");
         } else {
             ImageIO.write(drawBase(), "png", base);
-            System.out.println("wrote base.png   (base plate, never changes)");
+            System.out.println("wrote base.png   (base plate placeholder)");
         }
         for (int p = 0; p < 8; p++) {
             File f = new File(dir, "star_" + p + ".png");
             if (f.exists() && !force) {
-                System.out.println("SKIP (exists, use --force) " + f.getPath());
+                System.out.println("KEEP (exists) " + f.getName() + "   - use --force to overwrite this placeholder");
                 continue;
             }
             ImageIO.write(drawStar(p), "png", f);
-            System.out.println("wrote star_" + p + ".png   (star chart, moon phase " + p + ")");
+            System.out.println("wrote star_" + p + ".png   (star chart placeholder, moon phase " + p + ")");
         }
         System.out.println("done -> " + dir.getPath());
         System.out.println("NOTE: these 9 are placeholders - repaint them at the same paths, no JSON change needed.");
