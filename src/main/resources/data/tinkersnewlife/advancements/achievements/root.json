@@ -21,14 +21,6 @@
       "conditions": {
         "items": [
           {
-            "items": [
-              "tinkersnewlife:guide_book"
-            ]
-          },
-          {
-            "items": [
-              "patchouli:guide_book"
-            ],
             "nbt": "{patchouli:book:\"tinkersnewlife:guide\"}"
           }
         ]

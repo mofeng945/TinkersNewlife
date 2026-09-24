@@ -203,27 +203,27 @@ public final class AchievementHandler {
     private static final String OUR_BOOK_ID = TinkersNewlife.MOD_ID + ":guide";
 
     /**
-     * 背包里有没有**我们的编年史** —— 两种载体都算 ✓（见 §631）：
-     * 模组自己的 {@code tinkersnewlife:guide_book} ✓，
-     * 或帕秋莉的 {@code patchouli:guide_book} 且 NBT 指向我们的手册 ✓。
+     * 背包里有没有**我们的编年史** ✓。
+     *
+     * <p>⚠⚠ 判据是 <b>NBT 里的 {@code patchouli:book}</b>，<b>不是物品 id</b> ✗（§632 用户点出的关键 ✓）：
+     * 我们那本与帕秋莉那本其实是**同一个类**（`vazkii.patchouli.common.item.ItemModBook` ✓
+     * 见 `ModItems.GUIDE_BOOK` ✓）⇒ **"是哪本书"的身份全在 NBT 里** ✓ 物品 id 只是载体 ✓。
+     * <ul>
+     *   <li>只要 NBT {@code patchouli:book == "tinkersnewlife:guide"} ⇒ 就是我们的编年史 ✓
+     *       —— **谁当载体都算** ✓（创造栏那种"帕秋莉物品 + 我们的书 id" ✓ 一并认 ✓）；</li>
+     *   <li>再兜底认一眼**模组自己那件物品** ✓（万一它没写 NBT——那种书打不开、但仍算"拿到了"✓）。</li>
+     * </ul>
      */
     private static boolean hasOurGuideBook(ServerPlayer player) {
         var inv = player.getInventory();
         for (int i = 0; i < inv.getContainerSize(); i++) {
             var s = inv.getItem(i);
             if (s.isEmpty()) continue;
+            var tag = s.getTag();
+            if (tag != null && OUR_BOOK_ID.equals(tag.getString("patchouli:book"))) return true;
             if (s.getItem() == ModItems.GUIDE_BOOK.get()) return true;
-            if (isPatchouliBookFor(s)) return true;
         }
         return false;
-    }
-
-    /** 是不是"帕秋莉的书物品 + 指向本模组手册"（⚠ 比注册名 ✓ **不引帕秋莉类** ✗ 免得未装帕秋莉时崩 ✓） */
-    private static boolean isPatchouliBookFor(net.minecraft.world.item.ItemStack s) {
-        var id = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(s.getItem());
-        if (id == null || !"patchouli".equals(id.getNamespace()) || !"guide_book".equals(id.getPath())) return false;
-        var tag = s.getTag();
-        return tag != null && OUR_BOOK_ID.equals(tag.getString("patchouli:book"));
     }
 
     /** 诊断开关（用户实测"拿着书不给根成就"时打开 ✓ 定位完就关掉 ✗ 见 §630） */
