@@ -43,16 +43,17 @@ public final class GenPlanetariumArt {
     private static final double CX = 7.5, CY = 7.5;
 
     // 半径分界（都是"到中心的距离"）
-    private static final double R_STAR = 6.2;   // 星象图圆盘
-    private static final double R_INNER = 6.9;  // 底盘内环外沿
-    private static final double R_OUTER = 7.4;  // 底盘外圈外沿
-    private static final double R_RIM = 7.9;    // 底盘描边外沿
+    private static final double MOON_R = 5.6;   // 月盘半径（纯圆 ⇒ 左右对称 ✓）
+    private static final double R_STAR = 6.05;  // 星象图圆盘（略大于内环内沿 ⇒ 与底盘咬合不留缝）
+    private static final double R_INNER = 6.6;  // 底盘内环外沿
+    private static final double R_OUTER = 7.15; // 底盘外圈外沿
+    private static final double R_RIM = 7.7;    // 底盘描边外沿
 
     // 调色板
-    private static final int[] BASE_INNER_HI = {126, 116, 152}; // 内环受光（左上一侧）
-    private static final int[] BASE_INNER = {84, 77, 104};      // 内环背光
-    private static final int[] BASE_OUTER_HI = {64, 58, 82};    // 外圈受光
-    private static final int[] BASE_OUTER = {46, 42, 62};       // 外圈背光
+    private static final int[] BASE_INNER_HI = {96, 88, 116};   // 内环受光（左上一侧）
+    private static final int[] BASE_INNER = {70, 64, 90};     // 内环背光
+    private static final int[] BASE_OUTER_HI = {58, 53, 74};    // 外圈受光
+    private static final int[] BASE_OUTER = {44, 40, 58};       // 外圈背光
     private static final int[] BASE_RIM = {26, 23, 36};         // 描边（最深）
     private static final int[] SKY = {22, 19, 42};
     private static final int[] SKY_HI = {34, 30, 58};
@@ -121,20 +122,27 @@ public final class GenPlanetariumArt {
             if (dist(x, y) >= R_STAR - 0.6) continue;
             img.setRGB(x, y, argb((i % 3 == 0) ? STAR_DIM : STAR, 255));
         }
-        // 月亮（中心圆盘 + 月相明暗）
+        // 月亮（月盘 + 月相明暗）
+        // ⚠ 判据必须用"对称阈值式"（本文件第一版我拿椭圆级数凑，8 张图整体错位 ✗ 已修 ✓ 见 §618）：
+        //    受光比例 frac = (1 + cosθ) / 2        —— 官方口径 ✓
+        //    阈值 LT = 2·frac − 1                  —— k=0 满月 ⇒ +1 全亮 ✓ k=4 新月 ⇒ −1 全暗 ✓
+        //    归一化横坐标 u = dx / R               —— 亏相(k≤3) 取 u ≤ LT ；盈相(k≥5) 取 u ≥ −LT
+        double frac = (1.0 + cos) / 2.0;
+        double lt = 2.0 * frac - 1.0;
         for (int y = 0; y < H; y++) {
             for (int x = 0; x < W; x++) {
                 double dx = (x + 0.5) - CX, dy = (y + 0.5) - CY;
                 double r = Math.sqrt(dx * dx + dy * dy);
-                double a = Math.abs(dx) + Math.abs(dy) * 0.85;
-                if (r >= 5.4 || a >= 5.8) continue;              // 不在月盘内
-                double inner = dx * cos;
-                double outer = dx * dx + dx * cos + 0.25;
+                if (r > MOON_R) continue;                        // 不在月盘内（纯圆 ⇒ 左右对称 ✓）
+                double u = dx / MOON_R;
                 boolean lit;
-                if (inner >= 0) lit = (dx >= cos);
-                else lit = ((a * a) <= outer);
-                if (r >= 4.95) lit = false;                      // 靠近边缘压暗 ⇒ 轮廓清晰
-                int[] c = lit ? (dx < -2.4 ? MOON_MID : MOON_ON) : MOON_OFF;
+                if (phase == 0) lit = true;                      // 满月：整盘受光
+                else if (phase == 4) lit = false;                // 新月：整盘不受光
+                else if (phase <= 3) lit = (u <= lt);            // 亏相：左侧受光
+                else lit = (u >= -lt);                           // 盈相：右侧受光
+                // 球面感：月盘中心最亮、外圈压一档（按半径衰减 ✓）
+                // ⚠ 别按"dx < 某值"给左侧上灰调 ✗ —— 那会看着像"两个月盘叠着"（暗面全黑时尤其明显 ✓ 已改）
+                int[] c = lit ? (r <= 2.6 ? MOON_ON : MOON_MID) : MOON_OFF;
                 img.setRGB(x, y, argb(c, 255));
             }
         }

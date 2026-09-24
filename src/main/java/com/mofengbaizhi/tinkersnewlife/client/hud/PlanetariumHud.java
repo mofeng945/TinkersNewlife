@@ -119,7 +119,8 @@ public final class PlanetariumHud {
         int phase = level == null ? 0 : level.getMoonPhase();
 
         // 第一行：物品图标（**直接渲染星象仪物品** ✓ 两层与月相都由物品模型自己负责 ✓）+「今日：<月相>」
-        renderItemIcon(graphics, x, y);
+        // ⚠ 物品图标是 16×16、文字行高只有 10 ⇒ 图标往上挪 4 像素才与第一行文字视觉居中对齐 ✓
+        renderItemIcon(graphics, x, y - 4);
         Component today = Component.translatable("hud.tinkersnewlife.moon.today",
                 com.mofengbaizhi.tinkersnewlife.content.item.PlanetariumItem.phaseName(phase));
         graphics.drawString(font, today, x + 18, y + 4, 0xE8E8FF);

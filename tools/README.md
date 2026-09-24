@@ -76,3 +76,12 @@
 | --- | --- |
 | `GenPlanetariumArt.java` | 画星象仪的**两层**材质：`base.png`（底盘，固定不变）+ `star_0..7.png`（星象图，随月相）。用法 `java tools/GenPlanetariumArt.java [--force]`（默认**已存在就跳过** ✓ 防覆盖手绘 ✓） |
 | `PreviewPlanetarium.java` | 离线预览：把 base 与 8 张星象图**逐张叠合**放大出图，用来验"两层咬不咬合、月相画序对不对"（不开游戏 ✓） |
+### 月相几何的**数值验收**（§618 靠它抓到"8 张图整体错位"）
+
+| 文件 | 干什么 |
+| --- | --- |
+| `VerifyMoonGeometry.java` | 验证**判据**：逐相位打印"期望受光比例 / 实测 / 亮面朝向"，公式对不对先在这里证伪 |
+| `AnalyzeMoonPhases.java` | 验证**产物**：量已生成的 `star_*.png`（亮面像素数 + 亮面重心在哪侧）。⚠ 验收对象必须是真实 PNG，不能是公式自证 |
+| `DebugMoonMap.java` | 把相位打成字符画（`#`受光 / `.`暗面），一眼看明暗界线在哪 |
+
+用法都是 `java tools/<文件名>.java`（JDK 11+ 单文件运行）。
