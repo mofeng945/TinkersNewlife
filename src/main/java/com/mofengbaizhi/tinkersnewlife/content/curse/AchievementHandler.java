@@ -80,6 +80,16 @@ public final class AchievementHandler {
         }
     }
 
+    /**
+     * 忘掉"本进程已发过"的记录 ✓ —— 给调试指令用（`/tinkersnewlife achievement revoke` ✓）。
+     * <p>⚠ 必须清：否则撤销之后再满足条件时，{@link #award} 会被 {@link #AWARDED} 短路 ✗
+     * ⇒ **再也发不出来** ✗（测试"重新拿一次"就会卡住 ✓）。
+     * <p>只影响本进程的缓存 ✓ **不动**玩家的实际进度 ✓（那由指令那边负责 ✓）。
+     */
+    public static void forgetAwarded(ServerPlayer player, String path) {
+        AWARDED.remove(player.getUUID() + "|" + path);
+    }
+
     /** 该玩家是否已完成模组的某个成就 */
     private static boolean done(ServerPlayer player, String path) {
         ServerAdvancementManager manager = player.server.getAdvancements();
