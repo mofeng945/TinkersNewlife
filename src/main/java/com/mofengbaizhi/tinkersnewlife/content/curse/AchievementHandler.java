@@ -186,13 +186,44 @@ public final class AchievementHandler {
         // ⚠⚠ 物品引用**必须写在方法体里**（见 §629 那次启动崩溃 ✗）：
         //    `ModItems.X.get()` 写进 `static final Item[]` 会在**类初始化**时求值 ✓ 那时注册表还没填 ✓
         //    ⇒ `NullPointerException: Registry Object not present` ⇒ **模组加载失败、游戏启动即崩** ✗✗
-        if (hasItem(player, ModItems.GUIDE_BOOK.get())) award(player, "root");
+        // ⚠ 「呪术新生」要**两本都认**（§631）：
+        //   甲) `tinkersnewlife:guide_book` —— 模组自己那本（`/give` 或墨默赠书拿到 ✓）
+        //   乙) `patchouli:guide_book` 且 NBT `patchouli:book = "tinkersnewlife:guide"` —— **创造栏放的那本** ✓
+        //   （创造栏从头到尾只放了乙 ✓ 我原来只认甲 ✗ ⇒ 创造栏拿到的永远判不中 ✗）
+        if (hasOurGuideBook(player)) award(player, "root");
         if (hasItem(player, ModItems.GHELOTH_REMAINS.get())) award(player, "first_spark");
         if (hasItem(player, ModItems.ELDER_CRYSTAL.get())) award(player, "elder_crystal");
         if (hasItem(player, ModItems.YOG_SOTHOTH_GATE_KEY.get())) award(player, "gate_key");
         if (hasAny(player, cursedToolItems())) award(player, "cursed_tool");
         if (hasAll(player, momoPoolItems())) award(player, "cursed_tools_full");
         debugScan(player);
+    }
+
+    /** 我们的手册书 id（= 帕秋莉 `patchouli:book` NBT 的值 ✓ 与 `ModCreativeTabs` 写入的一致 ✓） */
+    private static final String OUR_BOOK_ID = TinkersNewlife.MOD_ID + ":guide";
+
+    /**
+     * 背包里有没有**我们的编年史** —— 两种载体都算 ✓（见 §631）：
+     * 模组自己的 {@code tinkersnewlife:guide_book} ✓，
+     * 或帕秋莉的 {@code patchouli:guide_book} 且 NBT 指向我们的手册 ✓。
+     */
+    private static boolean hasOurGuideBook(ServerPlayer player) {
+        var inv = player.getInventory();
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            var s = inv.getItem(i);
+            if (s.isEmpty()) continue;
+            if (s.getItem() == ModItems.GUIDE_BOOK.get()) return true;
+            if (isPatchouliBookFor(s)) return true;
+        }
+        return false;
+    }
+
+    /** 是不是"帕秋莉的书物品 + 指向本模组手册"（⚠ 比注册名 ✓ **不引帕秋莉类** ✗ 免得未装帕秋莉时崩 ✓） */
+    private static boolean isPatchouliBookFor(net.minecraft.world.item.ItemStack s) {
+        var id = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(s.getItem());
+        if (id == null || !"patchouli".equals(id.getNamespace()) || !"guide_book".equals(id.getPath())) return false;
+        var tag = s.getTag();
+        return tag != null && OUR_BOOK_ID.equals(tag.getString("patchouli:book"));
     }
 
     /** 诊断开关（用户实测"拿着书不给根成就"时打开 ✓ 定位完就关掉 ✗ 见 §630） */
@@ -202,7 +233,7 @@ public final class AchievementHandler {
     private static void debugScan(ServerPlayer player) {
         if (!DEBUG_SCAN) return;
         var inv = player.getInventory();
-        boolean book = hasItem(player, ModItems.GUIDE_BOOK.get());
+        boolean book = hasOurGuideBook(player);
         boolean rootDone = done(player, "root");
         StringBuilder found = new StringBuilder();
         for (int i = 0; i < inv.getContainerSize(); i++) {
@@ -211,8 +242,16 @@ public final class AchievementHandler {
             var id = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(s.getItem());
             if (found.length() < 160) found.append(id == null ? "?" : id).append(' ');
         }
-        TinkersNewlife.LOGGER.info("[成就诊断] 背包={} 格；有书={}；root 已完成={}；物品: {}",
-                inv.getContainerSize(), book, rootDone, found);
+        TinkersNewlife.LOGGER.info("[成就诊断] 背包={} 格；有书={}；root 已完成={}；主手={}；副手={}；物品: {}",
+                inv.getContainerSize(), book, rootDone,
+                itemId(inv.getSelected()), itemId(player.getOffhandItem()), found);
+    }
+
+    /** 物品 id（拿不到就返回 "?" ✓ 诊断用） */
+    private static String itemId(net.minecraft.world.item.ItemStack s) {
+        if (s == null || s.isEmpty()) return "(空)";
+        var id = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(s.getItem());
+        return id == null ? "?" : id.toString();
     }
 
     /**
