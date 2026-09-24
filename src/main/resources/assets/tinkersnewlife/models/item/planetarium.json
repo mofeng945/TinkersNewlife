@@ -1,0 +1,50 @@
+{
+    "parent": "minecraft:item/generated",
+    "textures": {
+        "layer0": "tinkersnewlife:item/planetarium/moon_0"
+    },
+    "overrides": [
+        {
+            "predicate": {
+                "tinkersnewlife:planetarium": 0.1
+            },
+            "model": "tinkersnewlife:item/planetarium_moon_1"
+        },
+        {
+            "predicate": {
+                "tinkersnewlife:planetarium": 0.2
+            },
+            "model": "tinkersnewlife:item/planetarium_moon_2"
+        },
+        {
+            "predicate": {
+                "tinkersnewlife:planetarium": 0.3
+            },
+            "model": "tinkersnewlife:item/planetarium_moon_3"
+        },
+        {
+            "predicate": {
+                "tinkersnewlife:planetarium": 0.4
+            },
+            "model": "tinkersnewlife:item/planetarium_moon_4"
+        },
+        {
+            "predicate": {
+                "tinkersnewlife:planetarium": 0.5
+            },
+            "model": "tinkersnewlife:item/planetarium_moon_5"
+        },
+        {
+            "predicate": {
+                "tinkersnewlife:planetarium": 0.6
+            },
+            "model": "tinkersnewlife:item/planetarium_moon_6"
+        },
+        {
+            "predicate": {
+                "tinkersnewlife:planetarium": 0.7
+            },
+            "model": "tinkersnewlife:item/planetarium_moon_7"
+        }
+    ]
+}

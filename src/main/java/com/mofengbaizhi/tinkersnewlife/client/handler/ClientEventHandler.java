@@ -62,6 +62,18 @@ public class ClientEventHandler {
                     (stack, level, entity, seed) -> com.mofengbaizhi.tinkersnewlife.content.handler
                             .ConscienceHandler.mirrorOf(stack, com.mofengbaizhi.tinkersnewlife.content.handler
                                     .ConscienceHandler.BAR_ZERO) / 100.0F);
+            // ⭐ 星象仪：物品图标**随当日月相变化** ✓（8 相 ⇒ 8 张图标 ✓）
+            //    与「心」同款机制：模型 `item/planetarium.json` 自带 7 条 `overrides` ✓ 这里只给谓词值 ✓
+            //    值 = (月相 + 1) / 10 ⇒ 0.1 … 0.8（月相 0..7）⇒ 正好落在 8 个档位上 ✓
+            //    ⚠ 月相在**客户端本地**就能算（世界时间 ✓）⇒ 零网络包、零 NBT ✓
+            net.minecraft.client.renderer.item.ItemProperties.register(
+                    com.mofengbaizhi.tinkersnewlife.content.ModItems.PLANETARIUM.get(),
+                    new net.minecraft.resources.ResourceLocation(
+                            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.MOD_ID, "planetarium"),
+                    (stack, level, entity, seed) -> {
+                        int phase = level == null ? 0 : level.getMoonPhase();
+                        return (Math.floorMod(phase, 8) + 1) / 10.0F;
+                    });
             MenuScreens.register(ModMenus.BAG_CONTAINER.get(), BagScreen::new);
         MenuScreens.register(ModMenus.QUANTUM_VAULT.get(), com.mofengbaizhi.tinkersnewlife.client.screen.QuantumVaultScreen::new);
             // ✅ 注册噤默手套 GUI

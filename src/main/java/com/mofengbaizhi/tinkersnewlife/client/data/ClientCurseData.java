@@ -101,5 +101,8 @@ public class ClientCurseData {
     public static void render(Gui gui, GuiGraphics graphics, float partialTick, int screenWidth, int screenHeight) {
         com.mofengbaizhi.tinkersnewlife.client.hud.CurseHudRenderer.render(
                 gui, graphics, partialTick, screenWidth, screenHeight);
+        // ⭐ 星象仪信息块：**独立于咒力条**（没戴咒力核心但只要戴了星象仪也要显示 ✓）
+        //    它自己会判断"戴没戴星象仪 / HUD 关了没 / F1 隐藏没" ✓ 这里直接调 ✓
+        com.mofengbaizhi.tinkersnewlife.client.hud.PlanetariumHud.render(graphics, partialTick);
     }
 }

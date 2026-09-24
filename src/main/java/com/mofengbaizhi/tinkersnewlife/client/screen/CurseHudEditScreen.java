@@ -19,7 +19,13 @@ public class CurseHudEditScreen extends Screen {
     private int hudY;
     private int hudW;
 
+    /** 星象仪信息块（可独立拖动 ✓ 用户口径 ✓） */
+    private int planetX;
+    private int planetY;
+
     private boolean dragging = false;
+    /** 正在拖哪一块：0 = 咒力条 / 1 = 星象仪 */
+    private int dragTarget = 0;
     private double grabOffsetX;
     private double grabOffsetY;
 
@@ -28,11 +34,17 @@ public class CurseHudEditScreen extends Screen {
         this.hudX = CurseHudConfig.x;
         this.hudY = CurseHudConfig.y;
         this.hudW = CurseHudConfig.width;
+        this.planetX = CurseHudConfig.planetariumX;
+        this.planetY = CurseHudConfig.planetariumY;
     }
 
     public int getEditX() { return hudX; }
     public int getEditY() { return hudY; }
     public int getEditWidth() { return hudW; }
+
+    /** 星象仪块在编辑界面里的实时位置（渲染器读它 ✓ 与咒力条同一套规矩 ✓） */
+    public int getPlanetariumX() { return planetX; }
+    public int getPlanetariumY() { return planetY; }
 
     @Override
     public boolean isPauseScreen() {
@@ -63,16 +75,31 @@ public class CurseHudEditScreen extends Screen {
         CurseHudRenderer.drawEditFrame(graphics, hudX, hudY, hudW, h);
         CurseHudRenderer.drawPreviewExtraLines(graphics, this.font, hudX, hudY);
 
+        // ⭐ 星象仪块：编辑界面里**永远预览**（哪怕没佩戴 ✓ 不然没法调位置 ✗）
+        com.mofengbaizhi.tinkersnewlife.client.hud.PlanetariumHud.drawBox(graphics, this.font, planetX, planetY);
+        com.mofengbaizhi.tinkersnewlife.client.hud.PlanetariumHud.drawEditFrame(graphics, planetX, planetY);
+
         super.render(graphics, mouseX, mouseY, partialTick);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0 && inside(mouseX, mouseY)) {
-            dragging = true;
-            grabOffsetX = mouseX - hudX;
-            grabOffsetY = mouseY - hudY;
-            return true;
+        if (button == 0) {
+            // 先判星象仪（它在下面、可能压在咒力条框外 ✓ 两块互不重叠时这里就是精确命中 ✓）
+            if (com.mofengbaizhi.tinkersnewlife.client.hud.PlanetariumHud.inside(planetX, planetY, mouseX, mouseY)) {
+                dragging = true;
+                dragTarget = 1;
+                grabOffsetX = mouseX - planetX;
+                grabOffsetY = mouseY - planetY;
+                return true;
+            }
+            if (inside(mouseX, mouseY)) {
+                dragging = true;
+                dragTarget = 0;
+                grabOffsetX = mouseX - hudX;
+                grabOffsetY = mouseY - hudY;
+                return true;
+            }
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }
@@ -80,8 +107,13 @@ public class CurseHudEditScreen extends Screen {
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
         if (dragging && button == 0) {
-            hudX = clampX((int) Math.round(mouseX - grabOffsetX));
-            hudY = clampY((int) Math.round(mouseY - grabOffsetY));
+            if (dragTarget == 1) {
+                planetX = clampX((int) Math.round(mouseX - grabOffsetX));
+                planetY = clampY((int) Math.round(mouseY - grabOffsetY));
+            } else {
+                hudX = clampX((int) Math.round(mouseX - grabOffsetX));
+                hudY = clampY((int) Math.round(mouseY - grabOffsetY));
+            }
             return true;
         }
         return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
@@ -105,6 +137,8 @@ public class CurseHudEditScreen extends Screen {
         CurseHudConfig.x = hudX;
         CurseHudConfig.y = hudY;
         CurseHudConfig.width = hudW;
+        CurseHudConfig.planetariumX = planetX;
+        CurseHudConfig.planetariumY = planetY;
         CurseHudConfig.save();
         super.onClose();
     }

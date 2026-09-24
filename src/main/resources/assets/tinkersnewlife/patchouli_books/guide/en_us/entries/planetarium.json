@@ -1,0 +1,28 @@
+{
+  "name": "Planetarium",
+  "category": "tinkersnewlife:tools",
+  "icon": "tinkersnewlife:planetarium",
+  "sortnum": 9,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:planetarium",
+      "text": "The $(bold)Planetarium$() is a $(bold)utility curio$(): wear it in the generic curio slot (the slot shown as Trinket in this pack). It does not use any of the curse core's slots.$(br2)It grants $(bold)no stat effects at all$() - its job is to $(bold)tell the time and the moon phase$()."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Icon follows the moon",
+      "text": "The item's $(bold)icon follows the current moon phase$(): there are $(bold)8$() phases and one icon each.$(br2)This applies $(bold)in the inventory, the hotbar, in hand, in the curio slot and on the ground$() - it uses the vanilla item model override mechanism rather than anything drawn by a specific screen.$(br2)$(bold)Phase order$() (matching the world's day count):$(li)Full Moon$(li)Waning Gibbous$(li)Third Quarter$(li)Waning Crescent$(li)New Moon$(li)Waxing Crescent$(li)First Quarter$(li)Waxing Gibbous"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "The curse HUD block",
+      "text": "With a planetarium equipped, an extra little block appears on the curse HUD (only while you wear it):$(br2)$(li)Line 1: a small moon icon plus $(bold)Today: <phase>$()$(li)Line 2: $(bold)Time: <hh:mm>$() ($(bold)in-game time$(): 06:00 sunrise / 12:00 noon / 18:00 sunset / 00:00 midnight)$(br2)That block is $(bold)dragged independently$(): press the $(bold)\"Edit Curse HUD\"$() key to open the layout screen, then drag this block on its own (the scroll wheel still resizes the curse bar). The position is written to the config when you close the screen."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "How to get one",
+      "text": "For now it can only be taken from the $(bold)creative inventory$() (same tab as the rest of the mod) and has $(bold)no survival recipe yet$().$(br2)If you want a survival path (say, built from Elder Crystals, relics or a ritual), just ask and it can be added."
+    }
+  ]
+}

@@ -47,6 +47,16 @@ public class ModItems {
             ITEMS.register("conscience", () -> new com.mofengbaizhi.tinkersnewlife.content.item.ConscienceItem(
                     new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.EPIC)));
 
+    /**
+     * 饰品·<b>星象仪</b>（{@code tinkersnewlife:planetarium}）—— 工具类饰品，装配于通用「饰品」槽（{@code charm}）。
+     * <p>物品图标随<b>当日月相</b>变化（8 相 ⇒ 8 张图标 ✓ 走物品属性 + 模型 overrides ✓ 与「心」同款机制 ✓）；
+     * 装配时在咒术 HUD 上额外显示一个<b>可独立拖动</b>的小块（今日月相 + 游戏内时间 ✓）。
+     * <p>没有任何数值效果（用户口径：纯装饰 + 信息 ✓）。
+     */
+    public static final RegistryObject<com.mofengbaizhi.tinkersnewlife.content.item.PlanetariumItem> PLANETARIUM =
+            ITEMS.register("planetarium", () -> new com.mofengbaizhi.tinkersnewlife.content.item.PlanetariumItem(
+                    new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.RARE)));
+
     public static final RegistryObject<Item> GHELOTH_REMAINS =
             ITEMS.register("gheloth_remains", () -> new Item(new Item.Properties()));
 
