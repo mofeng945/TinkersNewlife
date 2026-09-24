@@ -526,6 +526,7 @@ public class MomoMerchant extends PathfinderMob
         cursedTools.add(ModItems.LIFE_LAMP_RING.get());   // 命灯指轮（戒指槽饰品：打不死人）
         cursedTools.add(ModItems.RING_OF_ONE_MIND.get());   // 同心戒（成对产出：上架即"一栈两枚"）
         cursedTools.add(ModItems.COGNITIVE_MASK.get());     // 双向认知阻碍面具（头饰）
+        cursedTools.add(ModItems.PLANETARIUM.get());        // §623 星象仪（用户口径：算咒具 ✓ 装配于饰品槽、图标随月相变）
         Collections.shuffle(cursedTools, new java.util.Random(random.nextInt()));
         offers.add(new Offer(offerStack(cursedTools.get(0)), 10 + random.nextInt(11)));   // 10-20
         offers.add(new Offer(offerStack(cursedTools.get(1)), 10 + random.nextInt(11)));

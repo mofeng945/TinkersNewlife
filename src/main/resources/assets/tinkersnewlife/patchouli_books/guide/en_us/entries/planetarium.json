@@ -1,13 +1,13 @@
 {
   "name": "Planetarium",
-  "category": "tinkersnewlife:tools",
+  "category": "tinkersnewlife:cursed_tools",
   "icon": "tinkersnewlife:planetarium",
   "sortnum": 9,
   "pages": [
     {
       "type": "patchouli:spotlight",
       "item": "tinkersnewlife:planetarium",
-      "text": "The $(bold)Planetarium$() is a $(bold)utility curio$(): wear it in the generic curio slot (the slot shown as Trinket in this pack). It does not use any of the curse core's slots.$(br2)It grants $(bold)no stat effects at all$() - its job is to $(bold)tell the time and the moon phase$()."
+      "text": "The $(bold)Planetarium$() is a $(bold)cursed tool$() (a utility curio): wear it in the generic curio slot (the slot shown as Trinket in this pack). It does not use any of the curse core's slots.$(br2)It grants $(bold)no stat effects at all$() - its job is to $(bold)tell the time and the moon phase$().$(br2)How to get one: $(bold)craft it at a crafting table$(), or wait for $(bold)Momo$() to stock it (she counts it as a cursed tool and puts it on her daily shelf)."
     },
     {
       "type": "patchouli:text",

@@ -1,13 +1,13 @@
 {
   "name": "星象仪",
-  "category": "tinkersnewlife:tools",
+  "category": "tinkersnewlife:cursed_tools",
   "icon": "tinkersnewlife:planetarium",
   "sortnum": 9,
   "pages": [
     {
       "type": "patchouli:spotlight",
       "item": "tinkersnewlife:planetarium",
-      "text": "$(bold)星象仪$() 是一件$(bold)工具类饰品$()：装配在 curios 的$(bold)通用「饰品」槽$()（本整合包里就是显示为“饰品”的那个槽），不占用咒力核心的槽位。$(br2)它本身$(bold)不提供任何数值效果$()——它的用处是$(bold)报时与报月相$()。"
+      "text": "$(bold)星象仪$() 是一件$(bold)咒具$()（工具类饰品）：装配在 curios 的$(bold)通用「饰品」槽$()（本整合包里就是显示为“饰品”的那个槽），不占用咒力核心的槽位。$(br2)它本身$(bold)不提供任何数值效果$()——它的用处是$(bold)报时与报月相$()。$(br2)获取途径：$(bold)工作台合成$()，或者等$(bold)墨默$()上架（她也把它算作咒具，会放进每日货架）。"
     },
     {
       "type": "patchouli:text",
