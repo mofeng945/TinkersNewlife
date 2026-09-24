@@ -1,0 +1,57 @@
+{
+  "display": {
+    "icon": {
+      "item": "tinkersnewlife:cognitive_mask"
+    },
+    "title": {
+      "translate": "advancements.tinkersnewlife.cursed_tools_full.title"
+    },
+    "description": {
+      "translate": "advancements.tinkersnewlife.cursed_tools_full.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "parent": "tinkersnewlife:achievements/cursed_tool",
+  "criteria": {
+    "unlock": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "tinkersnewlife:tian_ni_huo"
+            ]
+          },
+          {
+            "items": [
+              "tinkersnewlife:you_yun"
+            ]
+          },
+          {
+            "items": [
+              "tinkersnewlife:gourd_jail"
+            ]
+          },
+          {
+            "items": [
+              "tinkersnewlife:life_lamp_ring"
+            ]
+          },
+          {
+            "items": [
+              "tinkersnewlife:ring_of_one_mind"
+            ]
+          },
+          {
+            "items": [
+              "tinkersnewlife:cognitive_mask"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

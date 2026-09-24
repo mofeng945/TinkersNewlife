@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "tinkersnewlife:curse_core"
+    },
+    "title": {
+      "translate": "advancements.tinkersnewlife.skill_all_three.title"
+    },
+    "description": {
+      "translate": "advancements.tinkersnewlife.skill_all_three.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "unlock": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "tinkersnewlife:achievements/first_domain"
+}

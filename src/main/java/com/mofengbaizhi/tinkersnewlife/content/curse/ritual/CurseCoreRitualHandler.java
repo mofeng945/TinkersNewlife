@@ -305,6 +305,8 @@ public class CurseCoreRitualHandler {
         ServerPlayer player = server.getPlayerList().getPlayer(data.playerId);
         if (player != null) {
             player.giveExperienceLevels(-XP_LEVELS);
+            // ⭐ 成就「以此身献予呪术」（§626）：仪式完成、核心即将交付 ⇒ 给发起仪式的玩家发成就
+            com.mofengbaizhi.tinkersnewlife.content.curse.AchievementHandler.onCurseCoreObtained(player);
         }
         // 生成咒力核心（对应材料 + 随机总量/输出 1-5 + 随机术式/领域，30% 额外术式槽），掉在矿石上方
         ItemStack core = generateCurseCore(level.random, data.material);

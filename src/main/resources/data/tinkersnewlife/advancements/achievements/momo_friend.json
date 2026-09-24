@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "tinkersnewlife:rlyeh_call"
+    },
+    "title": {
+      "translate": "advancements.tinkersnewlife.momo_friend.title"
+    },
+    "description": {
+      "translate": "advancements.tinkersnewlife.momo_friend.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "unlock": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "tinkersnewlife:achievements/momo_hired"
+}

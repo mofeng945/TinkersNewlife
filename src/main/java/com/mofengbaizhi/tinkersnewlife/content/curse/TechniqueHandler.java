@@ -336,6 +336,8 @@ public final class TechniqueHandler {
         // ⭐ 灶·开蓄力守护：**每 tick 都要查**（不能放进下面 10 tick 节流里 ✗）
         //    换格（滚轮/数字键）时立刻取消蓄力并把原物品放回原格 ⇒ 根治"火焰箭永久残留" ✓ 见 §625
         com.mofengbaizhi.tinkersnewlife.content.curse.technique.YuchuziTechnique.tickChargingGuards(player);
+        // ⭐ 成就的"状态量"自查（每 40 tick 自己节流 ✓ 见 §626）：善恶两极 / 好感 / 三技巧 / 全术式 / 全领域
+        com.mofengbaizhi.tinkersnewlife.content.curse.AchievementHandler.checkAchievements(player);
         if (player.tickCount % 10 != 0) return;
         String now = coreFingerprint(player);
         String prev = CORE_FINGERPRINT.put(player.getUUID(), now);

@@ -1,0 +1,30 @@
+{
+  "display": {
+    "icon": {
+      "item": "tinkersnewlife:rlyeh_call"
+    },
+    "title": {
+      "translate": "advancements.tinkersnewlife.momo_kill.title"
+    },
+    "description": {
+      "translate": "advancements.tinkersnewlife.momo_kill.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "kill": {
+      "trigger": "minecraft:player_killed_entity",
+      "conditions": {
+        "entity": [
+          {
+            "type": "tinkersnewlife:momo_merchant"
+          }
+        ]
+      }
+    }
+  },
+  "parent": "tinkersnewlife:achievements/momo_friend"
+}

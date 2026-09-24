@@ -46,6 +46,8 @@ public class PacketMomoHire {
                 case HIRED -> {
                     momo.playTradeSuccessSound();
                     player.displayClientMessage(Component.translatable("message.tinkersnewlife.momo.hired"), true);
+                    // ⭐ 成就「雇佣契约」（§626）：首次雇佣成功即发放（幂等 ✓）
+                    com.mofengbaizhi.tinkersnewlife.content.curse.AchievementHandler.onMomoHired(player);
                     // 实时刷新雇佣状态，防止重复上交
                     PacketMomoHireState.sendTo(player, momo);
                 }

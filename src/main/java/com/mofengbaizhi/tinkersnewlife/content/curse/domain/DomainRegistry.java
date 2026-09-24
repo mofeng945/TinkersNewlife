@@ -151,6 +151,8 @@ public final class DomainRegistry {
             domain.setDimension(player.serverLevel().dimension());
             DOMAINS.put(id, domain);
             domain.onOpen(player);
+            // ⭐ 成就「领域展开 / 无量空处 / 伏魔御厨子」（§626）：展开成功即判定（幂等 ✓）
+            com.mofengbaizhi.tinkersnewlife.content.curse.AchievementHandler.onDomainOpened(player, entry.getId());
             spawnVisual(player.serverLevel(), domain);
             domain.buildBarrier(player.serverLevel());
             // ⭐ 展开音效：base（底层轰鸣）+ open（展开爆音）<b>同时</b>播放，叠成一层

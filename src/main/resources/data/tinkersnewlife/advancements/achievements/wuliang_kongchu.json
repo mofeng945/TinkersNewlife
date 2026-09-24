@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "tinkersnewlife:wuliang_kongchu"
+    },
+    "title": {
+      "translate": "advancements.tinkersnewlife.wuliang_kongchu.title"
+    },
+    "description": {
+      "translate": "advancements.tinkersnewlife.wuliang_kongchu.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "unlock": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "tinkersnewlife:achievements/first_domain"
+}

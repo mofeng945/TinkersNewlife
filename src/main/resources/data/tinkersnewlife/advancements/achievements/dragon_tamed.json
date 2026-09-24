@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "tinkersnewlife:dragon_staff"
+    },
+    "title": {
+      "translate": "advancements.tinkersnewlife.dragon_tamed.title"
+    },
+    "description": {
+      "translate": "advancements.tinkersnewlife.dragon_tamed.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "unlock": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "tinkersnewlife:achievements/cursed_tools_full"
+}

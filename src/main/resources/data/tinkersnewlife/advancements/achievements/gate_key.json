@@ -1,0 +1,32 @@
+{
+  "display": {
+    "icon": {
+      "item": "tinkersnewlife:yog_sothoth_gate_key"
+    },
+    "title": {
+      "translate": "advancements.tinkersnewlife.gate_key.title"
+    },
+    "description": {
+      "translate": "advancements.tinkersnewlife.gate_key.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "unlock": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "tinkersnewlife:yog_sothoth_gate_key"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "parent": "tinkersnewlife:achievements/cursed_tool"
+}

@@ -110,6 +110,10 @@ public class BlackFlashHandler {
         if (CursePowerHelper.findEquippedCurseCore(player).isEmpty()) return;
         if (!CursePowerHelper.isCurseInfinite(player) && CursePowerHelper.getTotalCurse(player) <= 0.0D) return;
         if (player.getRandom().nextDouble() < totalChance) {
+            // ⭐ 成就「黑闪」（§626）：打出即发放 ✓（幂等 ✓ 不会重复弹提示 ✓）
+            if (player instanceof net.minecraft.server.level.ServerPlayer sp) {
+                com.mofengbaizhi.tinkersnewlife.content.curse.AchievementHandler.onBlackFlash(sp);
+            }
             float originalDamage = event.getAmount();
             float flashDamage = (float) Math.pow(originalDamage, 2.5);
 

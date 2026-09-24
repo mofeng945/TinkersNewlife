@@ -683,7 +683,12 @@ public class DragonStaffHandler {
             tamable.setOwnerUUID(player.getUUID());
             tamable.setOrderedToSit(false);
             trySetOwnerViaReflection(entity, player);
-            return tamable.isTame() && tamable.getOwnerUUID() != null;
+            boolean ok = tamable.isTame() && tamable.getOwnerUUID() != null;
+            // ⭐ 成就「驯龙者」（§626）：收服成功即发放（只对玩家发放 ✓ 仆从不算 ✗）
+            if (ok && player instanceof net.minecraft.server.level.ServerPlayer sp) {
+                com.mofengbaizhi.tinkersnewlife.content.curse.AchievementHandler.onDragonTamed(sp);
+            }
+            return ok;
         } catch (Exception e) {
             return false;
         }

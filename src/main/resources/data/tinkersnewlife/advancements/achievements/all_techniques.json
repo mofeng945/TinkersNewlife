@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "tinkersnewlife:curse_core"
+    },
+    "title": {
+      "translate": "advancements.tinkersnewlife.all_techniques.title"
+    },
+    "description": {
+      "translate": "advancements.tinkersnewlife.all_techniques.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "unlock": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "tinkersnewlife:achievements/black_flash"
+}

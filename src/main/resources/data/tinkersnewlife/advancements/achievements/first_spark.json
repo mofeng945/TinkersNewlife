@@ -1,0 +1,32 @@
+{
+  "display": {
+    "icon": {
+      "item": "tinkersnewlife:gheloth_remains"
+    },
+    "title": {
+      "translate": "advancements.tinkersnewlife.first_spark.title"
+    },
+    "description": {
+      "translate": "advancements.tinkersnewlife.first_spark.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "unlock": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "tinkersnewlife:gheloth_remains"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "parent": "tinkersnewlife:achievements/root"
+}

@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "tinkersnewlife:conscience"
+    },
+    "title": {
+      "translate": "advancements.tinkersnewlife.alignment_evil.title"
+    },
+    "description": {
+      "translate": "advancements.tinkersnewlife.alignment_evil.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "unlock": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "tinkersnewlife:achievements/root"
+}

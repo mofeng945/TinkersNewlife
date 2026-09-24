@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "tinkersnewlife:yuchuzi"
+    },
+    "title": {
+      "translate": "advancements.tinkersnewlife.fumo_yuchuzi.title"
+    },
+    "description": {
+      "translate": "advancements.tinkersnewlife.fumo_yuchuzi.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "unlock": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "tinkersnewlife:achievements/first_domain"
+}
