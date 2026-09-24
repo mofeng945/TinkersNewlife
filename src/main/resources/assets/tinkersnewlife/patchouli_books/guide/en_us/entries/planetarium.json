@@ -21,8 +21,14 @@
     },
     {
       "type": "patchouli:text",
-      "title": "How to get one",
-      "text": "For now it can only be taken from the $(bold)creative inventory$() (same tab as the rest of the mod) and has $(bold)no survival recipe yet$().$(br2)If you want a survival path (say, built from Elder Crystals, relics or a ritual), just ask and it can be added."
+      "title": "Recipe",
+      "text": "Lay it out on a $(bold)crafting table$() like this (the Yellow King's Remnant goes in the middle, the $(bold)clock above it and the Elder Crystal below$()):$(br2)$(li)$(bold)Middle of the top row$(): 1 x Clock$(li)$(bold)Left and right of the middle row$(): 1 x Amethyst Shard each$(li)$(bold)Dead centre$(): 1 x Yellow King's Remnant$(li)$(bold)Middle of the bottom row$(): 1 x Elder Crystal$(br2)In short: empty-clock-empty / amethyst-remnant-amethyst / empty-crystal-empty.$(br2)JEI shows the same recipe."
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:yellow_king_remnant",
+      "title": "Core: Yellow King's Remnant",
+      "text": "The $(bold)Yellow King's Remnant$() in the centre is the rarest piece here - the other three (clock, amethyst, Elder Crystal) are all obtained normally."
     }
   ]
 }

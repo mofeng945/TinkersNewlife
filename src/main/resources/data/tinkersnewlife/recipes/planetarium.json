@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " A ",
+    "CEC",
+    " S "
+  ],
+  "key": {
+    "A": { "item": "minecraft:clock" },
+    "C": { "item": "minecraft:amethyst_shard" },
+    "E": { "item": "tinkersnewlife:yellow_king_remnant" },
+    "S": { "item": "tinkersnewlife:elder_crystal" }
+  },
+  "result": {
+    "item": "tinkersnewlife:planetarium",
+    "count": 1
+  }
+}
