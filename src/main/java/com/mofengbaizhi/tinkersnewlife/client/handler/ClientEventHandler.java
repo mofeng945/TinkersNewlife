@@ -64,7 +64,11 @@ public class ClientEventHandler {
                                     .ConscienceHandler.BAR_ZERO) / 100.0F);
             // ⭐ 星象仪：物品图标**随当日月相变化** ✓（8 相 ⇒ 8 张图标 ✓）
             //    与「心」同款机制：模型 `item/planetarium.json` 自带 7 条 `overrides` ✓ 这里只给谓词值 ✓
-            //    值 = (月相 + 1) / 10 ⇒ 0.1 … 0.8（月相 0..7）⇒ 正好落在 8 个档位上 ✓
+            //    ⚠⚠ 谓词值 = **月相 / 10**（0.0 … 0.7）✓ **不是 (月相+1)/10** ✗
+            //        因为模型里那 7 条 override 的阈值就是 0.1…0.7 ✓ 而 **base 层（无 override 命中时）才指向 star_0** ✓
+            //        ⇒ 旧写法让月相 0（满月）算出 0.1 ⇒ **正好命中第一条 override** ⇒ 满月显示成 star_1 ✗
+            //          且 star_0 永远轮不到（谓词要 < 0.1 才落到 base 层 ✗ 0.1 到不了）⇒ 用户实测"满月图标从不出现"✓ 已修 ✓
+            //    ✅ 这样改**不用动任何模型文件** ✓ 0.0 走 base(star_0) ✓ 0.1..0.7 依次命中 star_1..star_7 ✓
             //    ⚠ 月相在**客户端本地**就能算（世界时间 ✓）⇒ 零网络包、零 NBT ✓
             net.minecraft.client.renderer.item.ItemProperties.register(
                     com.mofengbaizhi.tinkersnewlife.content.ModItems.PLANETARIUM.get(),
@@ -72,7 +76,7 @@ public class ClientEventHandler {
                             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.MOD_ID, "planetarium"),
                     (stack, level, entity, seed) -> {
                         int phase = level == null ? 0 : level.getMoonPhase();
-                        return (Math.floorMod(phase, 8) + 1) / 10.0F;
+                        return Math.floorMod(phase, 8) / 10.0F;
                     });
             MenuScreens.register(ModMenus.BAG_CONTAINER.get(), BagScreen::new);
         MenuScreens.register(ModMenus.QUANTUM_VAULT.get(), com.mofengbaizhi.tinkersnewlife.client.screen.QuantumVaultScreen::new);
