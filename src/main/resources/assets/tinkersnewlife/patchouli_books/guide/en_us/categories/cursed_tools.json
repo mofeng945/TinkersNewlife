@@ -1,6 +1,6 @@
 {
   "name": "Cursed Tools",
-  "description": "Vanilla weapons (not Tinkers' tools) driven by Cursed Energy: infinite durability, bonus damage against the undead, and each with its own signature ability.",
+  "description": "Cursed tools of every kind: the weapon line uses vanilla weapon logic (infinite durability, +6 damage against the undead, each with its own signature ability), while the curio line (the mask, the Life Lamp Ring, the Planetarium and so on) does not - each has its own use instead. All of them count as cursed tools and are confiscated by Fukuma Mizushi's verdict.",
   "icon": "tinkersnewlife:tian_ni_huo",
   "sortnum": 8
 }
