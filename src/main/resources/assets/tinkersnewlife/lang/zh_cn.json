@@ -175,6 +175,7 @@
   "gui.tinkersnewlife.quantum_vault.search": "搜索物品…",
   "gui.tinkersnewlife.quantum_vault.total": "已存 %s / %s",
   "gui.tinkersnewlife.wizard_armor": "巫师套装",
+  "gui.tinkersnewlife.wizard_armor.description": "一套经过尽心研究与改良魔法增幅套装，牺牲了防护能力为代价，加强了穿戴者在法术方面的造诣",
   "hud.tinkersnewlife.chant": "§d咏唱咒言：%s",
   "hud.tinkersnewlife.curse": "咒力: %s / %s",
   "hud.tinkersnewlife.curse.infinite_value": "咒力 ∞",

@@ -175,6 +175,7 @@
   "gui.tinkersnewlife.quantum_vault.search": "Search items...",
   "gui.tinkersnewlife.quantum_vault.total": "Stored %s / %s",
   "gui.tinkersnewlife.wizard_armor": "Wizard Armor",
+  "gui.tinkersnewlife.wizard_armor.description": "A magic-amplifying suit refined through careful research: it trades away some protection to deepen the wearer's mastery of spellcraft.",
   "hud.tinkersnewlife.chant": "§dChanting curse speech: %s",
   "hud.tinkersnewlife.curse": "Curse: %s / %s",
   "hud.tinkersnewlife.curse.infinite_value": "Curse ∞",
