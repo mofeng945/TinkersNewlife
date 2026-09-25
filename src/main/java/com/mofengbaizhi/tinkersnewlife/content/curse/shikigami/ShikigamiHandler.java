@@ -31,7 +31,16 @@ public final class ShikigamiHandler {
 
     private ShikigamiHandler() {}
 
-    /** 场上该玩家的所有存活式神实体 */
+    /** 场上该玩家的所有**已调伏**式神实体（用于"打断术式时清场"这种**只该动队友**的场景 ✓） */
+    public static List<net.minecraft.world.entity.Entity> findTamedFor(ServerPlayer player) {
+        List<net.minecraft.world.entity.Entity> out = new java.util.ArrayList<>();
+        for (net.minecraft.world.entity.Entity e : findActiveFor(player)) {
+            if (e instanceof ShikigamiMob sm && sm.isTamed()) out.add(e);
+        }
+        return out;
+    }
+
+    /** 场上该玩家的所有存活式神实体（含**未调伏**——主人死亡要全清 ✓） */
     public static List<net.minecraft.world.entity.Entity> findActiveFor(ServerPlayer player) {
         List<net.minecraft.world.entity.Entity> result = new java.util.ArrayList<>();
         for (net.minecraft.world.entity.Entity e : player.serverLevel().getEntitiesOfClass(
@@ -112,6 +121,7 @@ public final class ShikigamiHandler {
                 entity -> entity instanceof ShikigamiMob)) {
             if (e instanceof ShikigamiMob sm && sm.getState().ownerId != null
                     && sm.getState().ownerId.equals(player.getUUID())
+                    && sm.isTamed()
                     && sm.getShikigamiType() == type) {
                 alive.add(sm);
             }
@@ -327,8 +337,12 @@ public final class ShikigamiHandler {
         if (sm.getOwnerId() == null) return null;
         if (!(source.getEntity() instanceof ServerPlayer sp)) return null;
         if (!sm.getOwnerId().equals(sp.getUUID())) return null;
-        // 投射咒法·静止：攻击者被罚站（正常走 AttackEntityEvent，这里只做防御性排除）
+        // 投射咒法·静止：攻击者被罚站 ⇒ 攻击被取消是**对攻击者的惩罚**，不该被本兜底撤销 ✓
+        // ⚠ 罚站用的是**玩家持久键**（ProjectionTechnique.KEY_STUN_UNTIL），
+        //    不是 StunHandler 那个 ModEffects.STUN 效果 ⇒ 只判 StunHandler 会漏掉它，
+        //    结果兜底把罚站撤销 + 打出一条误导性的"[调伏战]…请反馈给作者" ✗（见备忘录 §639f）。
         if (com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.isStunned(sp)) return null;
+        if (com.mofengbaizhi.tinkersnewlife.content.curse.technique.ProjectionTechnique.isStunned(sp)) return null;
         // 伏诛赐死·亡灵有罪：攻击力归零是对攻击者的惩罚
         Long zeroUntil = com.mofengbaizhi.tinkersnewlife.content.curse.domain.ExecutionDomain
                 .ATK_ZERO_UNTIL.get(sp.getUUID());

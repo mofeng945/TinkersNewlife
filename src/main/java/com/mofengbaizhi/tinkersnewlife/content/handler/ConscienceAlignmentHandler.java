@@ -151,6 +151,13 @@ public final class ConscienceAlignmentHandler {
         }
 
         // ⑫ 已驯服的宠物 → ③ 铁傀儡 → ② 村民 → ① 普通动物 ✓（顺序即优先级 ✓）
+        // ⭐ 十影式神例外：式神是"原版生物子类"（魔虚罗 = IronGolem、玉犬 = Wolf(Animal)、
+        //    满象 = Pig…）⇒ 不拦的话，主人打死**未调伏魔虚罗**会被判成"铁傀儡死亡"、
+        //    打死未调伏玉犬/满象会被判成"动物死亡"，调伏战平白掉善恶 ✗。
+        //    式神不是真的铁傀儡/动物 ⇒ 直接不计 ✓（已调伏的才由上面 ⑫ 的宠物线走 ✓）。
+        if (dead instanceof com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiMob) {
+            return;
+        }
         int delta;
         if (dead instanceof TamableAnimal tamable && tamable.isTame()) {
             delta = PET_KILL;

@@ -147,6 +147,13 @@ public class FlyingSwordEntity extends Projectile {
     }
 
     private boolean isOwnedBy(LivingEntity target, LivingEntity owner) {
+        // ⭐ 走统一的同队判定：式神/傀儡/咒灵释放体/雇佣墨默/同心戒同伴都算"自己人"。
+        //    ⚠ 原来这里只看 TamableAnimal#getOwnerUUID()，而式神从没 setOwnerUUID ⇒ 恒 null
+        //    ⇒ 自家飞剑会把**自家已调伏式神**当敌人打 ✗（见备忘录 §639f）。
+        if (owner instanceof net.minecraft.server.level.ServerPlayer sp
+                && com.mofengbaizhi.tinkersnewlife.content.entity.PuppetUtil.isAllyOf(target, sp)) {
+            return true;
+        }
         if (target instanceof TamableAnimal tameable) {
             return owner.getUUID().equals(tameable.getOwnerUUID());
         }

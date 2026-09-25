@@ -488,6 +488,9 @@ public final class ShikigamiBehavior {
     /** 愈羊治疗：主人不满血先奶主人；主人满血则奶同主人受伤的式神（含自己） */
     private static void healAllies(Mob self, ShikigamiMob info, ServerPlayer owner) {
         ShikigamiState st = info.getState();
+        // ⭐ 未调伏（调伏战中）是敌人 ⇒ 不该一边打主人一边给主人回血 ✗
+        //    （愈羊的 behaveDeer 对未调伏也走这条路径，见备忘录 §639f）
+        if (!st.tamed) return;
         if (st.healCooldown > 0) return;
         double amount = 4.0 * ShikigamiType.statScale(owner) + st.damage * 0.3;
 

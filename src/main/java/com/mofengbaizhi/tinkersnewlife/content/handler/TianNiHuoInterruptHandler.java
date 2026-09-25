@@ -185,7 +185,10 @@ public final class TianNiHuoInterruptHandler {
             ProjectionTechnique.endStun(victim);
         }
         // 十影术式：场上式神全部击杀
-        List<Entity> shikigami = ShikigamiHandler.findActiveFor(victim);
+        // ⚠ 只清**已调伏**的（= 真正在替主人作战的队友）：
+        //    未调伏（调伏战中）的式神是**敌人**，把它 1e9 打死会直接走 die()→调伏成功，
+        //    等于"用天逆鉾白送调伏" ✗（见备忘录 §639f）。
+        List<Entity> shikigami = ShikigamiHandler.findTamedFor(victim);
         for (Entity e : shikigami) {
             if (e instanceof LivingEntity le && le.isAlive()) {
                 any = true;

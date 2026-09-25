@@ -86,6 +86,13 @@ public final class ConscienceCombatHandler {
     /** 是某个玩家的随从/仆从/宠物 ⇒ 返回主人 UUID ✓ 否则 null ✓ */
     public static UUID servantOwner(Entity e) {
         try {
+            // ⭐ 十影式神：**已调伏 + 同主人**才算随从（未调伏是敌人 ⇒ 击杀它会走 E25 的"杀别人随从"判断 ✗）。
+            //    ⚠ 必须放在 TamableAnimal/OwnableEntity 之前：式神从没 setOwnerUUID，
+            //    那两个分支对式神恒返回 null ⇒ 已调伏式神也会被判成"不是随从"，
+            //    连带 E25/G2/G6 这些"与随从相关"的善恶规则全部失效 ✗（见备忘录 §639f）。
+            if (e instanceof com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiMob sm) {
+                return sm.isTamed() ? sm.getOwnerId() : null;
+            }
             if (e instanceof TamableAnimal t && t.isTame()) return t.getOwnerUUID();
             if (e instanceof OwnableEntity o) return o.getOwnerUUID();
             UUID goety = reflectOwner(e, "com.Polarice3.Goety.api.entities.IOwned", "getTrueOwner");

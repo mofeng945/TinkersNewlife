@@ -75,6 +75,18 @@ public class DamageLimitEffect extends MobEffect {
             // 没有限伤效果则不做任何处理（数据由每 tick 的 onLivingTick 清理）
             if (!entity.hasEffect(ModEffects.DAMAGE_LIMIT.get())) return;
 
+            // ⭐ 例外：**主人打自己的未调伏式神**（十影调伏战）不受限伤约束。
+            //    魔虚罗（ShikigamiIronGolem）自带无限时长的本效果 ⇒ 没有这一条的话，
+            //    主人每 0.5 秒最多只能打掉 30 点、其余全额 setCanceled(true)（amount 不变 ✗）
+            //    ⇒ 表现就是"打它没伤害、而且日志里连一条 [调伏战] 都没有"（见备忘录 §639f）。
+            //    ⚠ 只对"主人的直接攻击"放行；式神自己的伤害不经过本方法 ✓。
+            if (entity instanceof com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiMob sm
+                    && !sm.isTamed()
+                    && event.getSource().getEntity() instanceof net.minecraft.server.level.ServerPlayer attacker
+                    && attacker.getUUID().equals(sm.getOwnerId())) {
+                return;
+            }
+
             DamageData data = DAMAGE_DATA.computeIfAbsent(entity.getUUID(), k -> new DamageData());
             if (entity.tickCount - data.cycleStartTick >= CYCLE_DURATION) {
                 // 事件先于 tick 管理器到达（新窗口首次伤害）：以当前血量为窗口起点
