@@ -1,7 +1,6 @@
 {
-  "type": "tinkersnewlife:charged_creeper_melting",
+  "type": "tconstruct:entity_melting",
   "damage": 2,
-  "charged_amount": 100,
   "entity": {
     "type": "minecraft:creeper"
   },
@@ -11,8 +10,11 @@
   },
   "conditions": [
     {
-      "type": "forge:mod_loaded",
-      "modid": "irons_spellbooks"
+      "type": "forge:not",
+      "value": {
+        "type": "forge:mod_loaded",
+        "modid": "irons_spellbooks"
+      }
     }
   ]
 }

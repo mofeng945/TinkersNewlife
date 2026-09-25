@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.compat.jei;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModItems;
 import com.mofengbaizhi.tinkersnewlife.content.ModRecipeSerializers;
+import com.mofengbaizhi.tinkersnewlife.content.handler.LightningRodConversionHandler;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.CurseCraftRecipe;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
@@ -15,6 +16,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.server.ServerLifecycleHooks;
 
 import java.util.List;
@@ -37,7 +41,9 @@ public class TinkersNewlifeJeiPlugin implements IModPlugin {
     @Override
     public void registerCategories(IRecipeCategoryRegistration registration) {
         registration.addRecipeCategories(
-                new CurseCraftJeiCategory(registration.getJeiHelpers().getGuiHelper()));
+                new CurseCraftJeiCategory(registration.getJeiHelpers().getGuiHelper()),
+                // ⭐ 避雷针雷击转化（烈焰血 → 液态闪电，5:4）
+                new LightningRodConversionJeiCategory(registration.getJeiHelpers().getGuiHelper()));
     }
 
     @Override
@@ -64,12 +70,26 @@ public class TinkersNewlifeJeiPlugin implements IModPlugin {
                 registration.addRecipes(CurseCraftJeiCategory.TYPE, recipes);
             }
         }
+
+        // ⭐ 避雷针雷击转化（烈焰血 → 液态闪电，5:4）：机制不是真配方 ⇒ 手工造一条展示 ✓
+        // ⚠ 输出流体是本模组的**铁魔法联动流体**（没装铁魔法就不注册 ✓）⇒ 查不到就整条不注册 ✓
+        Fluid blazingBlood = ForgeRegistries.FLUIDS.getValue(LightningRodConversionHandler.BLAZING_BLOOD);
+        Fluid liquidLightning = ForgeRegistries.FLUIDS.getValue(LightningRodConversionHandler.LIQUID_LIGHTNING);
+        if (blazingBlood != null && liquidLightning != null) {
+            registration.addRecipes(LightningRodConversionJeiCategory.TYPE, List.of(
+                    new LightningRodConversionJeiCategory.Conversion(blazingBlood, liquidLightning,
+                            LightningRodConversionJeiCategory.SHOW_INPUT_MB,
+                            LightningRodConversionJeiCategory.SHOW_OUTPUT_MB)));
+        }
     }
 
     @Override
     public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
         // 结构中心方块即催化剂：在 JEI 里右键格赫罗斯矿石就能看到这个分类
         registration.addRecipeCatalyst(new ItemStack(ModItems.GHELOTH_ORE.get()), CurseCraftJeiCategory.TYPE);
+        // ⭐ 避雷针就是"雷击转化"的催化剂 ⇒ 右键避雷针能翻到那个分类 ✓
+        registration.addRecipeCatalyst(new ItemStack(Items.LIGHTNING_ROD),
+                LightningRodConversionJeiCategory.TYPE);
     }
 
     private void registerInfo(IRecipeRegistration registration, Item item, String key) {
