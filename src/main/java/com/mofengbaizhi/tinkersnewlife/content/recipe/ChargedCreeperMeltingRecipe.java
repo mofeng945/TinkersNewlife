@@ -95,6 +95,16 @@ public class ChargedCreeperMeltingRecipe extends EntityMeltingRecipe {
         return super.getOutput(entity);
     }
 
+    /**
+     * 充能时每次命中的产出量（mB），即 JSON 里的 {@code charged_amount}。
+     *
+     * <p>⚠ 给 JEI 展示用（{@code ChargedCreeperMeltingJeiCategory}）—— 那边要把这个数画进界面，
+     * 而字段是 private ⇒ 必须留一个取值器 ✓（不在 JEI 里重复写死 100 ✗ 免得两处口径漂移 ✓）。
+     */
+    public int getChargedAmount() {
+        return chargedAmount;
+    }
+
     @Override
     public RecipeSerializer<?> getSerializer() {
         return ModRecipeSerializers.CHARGED_CREEPER_MELTING.get();

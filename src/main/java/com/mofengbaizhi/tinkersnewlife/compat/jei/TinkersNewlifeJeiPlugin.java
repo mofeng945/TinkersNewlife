@@ -4,6 +4,7 @@ import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModItems;
 import com.mofengbaizhi.tinkersnewlife.content.ModRecipeSerializers;
 import com.mofengbaizhi.tinkersnewlife.content.handler.LightningRodConversionHandler;
+import com.mofengbaizhi.tinkersnewlife.content.recipe.ChargedCreeperMeltingRecipe;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.CurseCraftRecipe;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
@@ -18,6 +19,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.material.Fluid;
+import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.server.ServerLifecycleHooks;
 
@@ -43,7 +45,9 @@ public class TinkersNewlifeJeiPlugin implements IModPlugin {
         registration.addRecipeCategories(
                 new CurseCraftJeiCategory(registration.getJeiHelpers().getGuiHelper()),
                 // ⭐ 避雷针雷击转化（烈焰血 → 液态闪电，5:4）
-                new LightningRodConversionJeiCategory(registration.getJeiHelpers().getGuiHelper()));
+                new LightningRodConversionJeiCategory(registration.getJeiHelpers().getGuiHelper()),
+                // ⭐ 闪电苦力怕 → 液态闪电（匠魂实体熔炼分类只显示无参产出 ⇒ 那条看不见 ⇒ 单独展示）
+                new ChargedCreeperMeltingJeiCategory(registration.getJeiHelpers().getGuiHelper()));
     }
 
     @Override
@@ -80,6 +84,30 @@ public class TinkersNewlifeJeiPlugin implements IModPlugin {
                     new LightningRodConversionJeiCategory.Conversion(blazingBlood, liquidLightning,
                             LightningRodConversionJeiCategory.SHOW_INPUT_MB,
                             LightningRodConversionJeiCategory.SHOW_OUTPUT_MB)));
+        }
+
+        // ⭐ 闪电苦力怕 → 液态闪电：匠魂自带的实体熔炼 JEI 分类读的是**无参** getOutput()，
+        //    而"充能"分支只在**带实体**的 getOutput(LivingEntity) 里 ⇒ 匠魂那边永远显示不出这条 ✗
+        //    ⇒ 这里单独展示一条 ✓
+        // ⚠ 三处"查不到就不注册"：没装铁魔法（输出流体不存在 ✓）/ 配方不在（本模组没启用 ✓）/
+        //    服务端还没起来（server == null ✓）—— 都不留空头配方 ✗
+        Fluid chargedLightning = ChargedCreeperMeltingJeiCategory.chargedFluid();
+        if (chargedLightning != null && server != null) {
+            var creeperMelting = server.getRecipeManager()
+                    .getAllRecipesFor(slimeknights.tconstruct.library.recipe.TinkerRecipeTypes.ENTITY_MELTING.get())
+                    .stream()
+                    .filter(ChargedCreeperMeltingRecipe.class::isInstance)
+                    .map(ChargedCreeperMeltingRecipe.class::cast)
+                    .findFirst()
+                    .orElse(null);
+            if (creeperMelting != null) {
+                // 普通苦力怕的产出**取自配方本身**（父类 public getOutput() ✓）⇒ 不写死数值 ✓
+                FluidStack normal = creeperMelting.getOutput();
+                registration.addRecipes(ChargedCreeperMeltingJeiCategory.TYPE, List.of(
+                        new ChargedCreeperMeltingJeiCategory.Conversion(
+                                chargedLightning, creeperMelting.getChargedAmount(),
+                                normal.getFluid(), normal.getAmount())));
+            }
         }
     }
 
