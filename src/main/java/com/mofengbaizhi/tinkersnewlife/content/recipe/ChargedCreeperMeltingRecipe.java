@@ -52,7 +52,13 @@ import slimeknights.tconstruct.library.recipe.entitymelting.EntityMeltingRecipe;
  * {@code tconstruct:creeper} **抢**（不可控 ✗）。
  * 所以本类对应的 JSON 写在 <b>{@code data/tconstruct/recipes/smeltery/entity_melting/creeper.json}</b>
  * （**同 ID 覆盖** ✓，包内先例：{@code tinkerscalibration} 就是这么覆盖匠魂烈焰人配方的 ✓）。
+ *
+ * <p>⚠⚠ <b>本类当前临时挂了"充能熔炼诊断"事件（{@code onLivingAttackDiag} / {@code onLivingTickDiag}）</b>
+ * —— 为定位用户报告"普通苦力怕能熔成玻璃、充能后就不掉血"而加 ✓ **定位完要整段删掉** ✗
+ * （连类上的 {@code @EventBusSubscriber} 注解一起删 ✓）。
  */
+@net.minecraftforge.fml.common.Mod.EventBusSubscriber(
+        modid = TinkersNewlife.MOD_ID, bus = net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus.FORGE)
 public class ChargedCreeperMeltingRecipe extends EntityMeltingRecipe {
 
     /** 充能时的产出流体（本模组铁魔法联动流体；没装铁魔法 ⇒ 查不到 ⇒ 退回原产出 ✓） */
@@ -83,7 +89,9 @@ public class ChargedCreeperMeltingRecipe extends EntityMeltingRecipe {
         this.chargedAmount = chargedAmount;
     }
 
-    /** 充能（{@code Creeper.isPowered()} ✓）且充能流体在场（装了铁魔法 ✓）⇒ 出液态闪电；否则原产出 ✓ */
+    /**
+     * 充能（{@code Creeper.isPowered()} ✓）且充能流体在场（装了铁魔法 ✓）⇒ 出液态闪电；否则原产出 ✓
+     */
     @Override
     public FluidStack getOutput(LivingEntity entity) {
         if (entity instanceof Creeper creeper && creeper.isPowered()) {
@@ -93,6 +101,56 @@ public class ChargedCreeperMeltingRecipe extends EntityMeltingRecipe {
             }
         }
         return super.getOutput(entity);
+    }
+
+    // ============================================================
+    //  ⚠⚠ 临时诊断（定位用户报告："普通苦力怕能熔成玻璃、充能后就不掉血" ⇒ 定位完**整段删除**）
+    // ============================================================
+
+    /**
+     * 苦力怕吃伤害前打一行：能区分两种完全不同的病因 ——
+     * <ul>
+     *   <li><b>日志一条都没有</b> ⇒ 匠魂的 {@code canMeltEntity} 就返回了 false（压根没发起攻击）
+     *       ⇒ 病在"进不去熔炼流程"（燃料/热/火免/防火效果/`invulnerable` 标记）；</li>
+     *   <li><b>日志有、且 powered=true</b> ⇒ 攻击确实发生了 ⇒ 病在"伤害被免疫掉"
+     *       ⇒ 看那几个布尔值（`fireImmune` / `invuln` / `fireRes`）是哪个为真。</li>
+     * </ul>
+     */
+    @net.minecraftforge.eventbus.api.SubscribeEvent
+    public static void onLivingAttackDiag(net.minecraftforge.event.entity.living.LivingAttackEvent event) {
+        if (!(event.getEntity() instanceof Creeper creeper)) return;
+        if (event.getEntity().level().isClientSide) return;
+        TinkersNewlife.LOGGER.info(
+                "[充能熔炼诊断] 受击 entity={} powered={} canceled={} src={} amount={} fireImmune={} invuln={} invulnTime={} fireRes={}",
+                net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(creeper.getType()),
+                creeper.isPowered(),
+                event.isCanceled(),
+                event.getSource().getMsgId(),
+                event.getAmount(),
+                creeper.fireImmune(),
+                creeper.isInvulnerable(),
+                creeper.invulnerableTime,
+                creeper.hasEffect(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE));
+    }
+
+    /** 苦力怕每 tick（只打前 200 tick，免得刷屏）：看它在炉子里到底有没有被扣血 */
+    @net.minecraftforge.eventbus.api.SubscribeEvent
+    public static void onLivingTickDiag(net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent event) {
+        if (!(event.getEntity() instanceof Creeper creeper)) return;
+        if (creeper.level().isClientSide) return;
+        if (creeper.tickCount > 200 || creeper.tickCount % 20 != 0) return;
+        // ⚠ 只在"有别的实体正在攻击它"时才打（＝基本只有炉内才会命中），
+        //   避免给全地图每只苦力怕刷屏 ✗
+        if (creeper.getLastHurtByMob() == null) return;
+        TinkersNewlife.LOGGER.info(
+                "[充能熔炼诊断] tick entity={} powered={} hp={}/{} invulnTime={} fireImmune={} fireRes={}",
+                net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(creeper.getType()),
+                creeper.isPowered(),
+                creeper.getHealth(),
+                creeper.getMaxHealth(),
+                creeper.invulnerableTime,
+                creeper.fireImmune(),
+                creeper.hasEffect(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE));
     }
 
     /**
