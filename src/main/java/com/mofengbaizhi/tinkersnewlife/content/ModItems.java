@@ -534,6 +534,21 @@ public class ModItems {
                     () -> new BlockItem(ModBlocks.ELDER_CRYSTAL_ORE.get(), new Item.Properties()));
 
     // ============================================================
+    //  §660 伟大白色空间
+    // ============================================================
+
+    /**
+     * <b>维度通行证</b>：一次性开门钥匙（只能堆叠 1 个，用后消耗）。
+     * <p>在主世界等维度右键方块 ⇒ 直接在方块上方开一扇通往伟大白色空间的永久门；
+     * 在伟大白色空间里右键方块 ⇒ 弹 GUI 选维度 + 填 xyz 再开门。
+     * <p>配方见 {@code data/tinkersnewlife/recipes/curse_craft/dimension_pass.json}
+     * （咒力合成仪式：古老者水晶为核心 + 4 种旧日材料，咒力 30000）。
+     */
+    public static final RegistryObject<Item> DIMENSION_PASS =
+            ITEMS.register("dimension_pass",
+                    () -> new DimensionPassItem());
+
+    // ============================================================
     //  魔力台座（§523）：水晶唯一的充电方式
     // ============================================================
 

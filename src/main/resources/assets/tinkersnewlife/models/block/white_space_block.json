@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "tinkersnewlife:block/white_space_block"
+  }
+}

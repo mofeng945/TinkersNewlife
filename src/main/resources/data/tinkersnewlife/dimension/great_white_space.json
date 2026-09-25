@@ -1,0 +1,22 @@
+{
+  "type": "tinkersnewlife:great_white_space",
+  "generator": {
+    "type": "minecraft:flat",
+    "settings": {
+      "biome": "minecraft:the_void",
+      "lakes": false,
+      "features": false,
+      "layers": [
+        {
+          "block": "minecraft:bedrock",
+          "height": 1
+        },
+        {
+          "block": "tinkersnewlife:white_space_block",
+          "height": 1
+        }
+      ],
+      "structure_overrides": []
+    }
+  }
+}

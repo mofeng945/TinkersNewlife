@@ -374,6 +374,16 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketSyncCursedChant::new,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketSyncCursedChant::handle);
 
+        // §660 伟大白色空间：C2S 确认开门 / S2C 打开「选维度 + 填坐标」界面
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.portal.PacketCreatePortal.class,
+                com.mofengbaizhi.tinkersnewlife.network.portal.PacketCreatePortal::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.portal.PacketCreatePortal::new,
+                com.mofengbaizhi.tinkersnewlife.network.portal.PacketCreatePortal::handle);
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.portal.PacketOpenDimensionPassScreen.class,
+                com.mofengbaizhi.tinkersnewlife.network.portal.PacketOpenDimensionPassScreen::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.portal.PacketOpenDimensionPassScreen::new,
+                com.mofengbaizhi.tinkersnewlife.network.portal.PacketOpenDimensionPassScreen::handle);
+
         // 实体属性（式神等生物实体）
         modEventBus.addListener(TinkersNewlife::onRegisterEntityAttributes);
 

@@ -81,4 +81,16 @@ public class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<?>> ENERGY_CONVERTER =
             BLOCK_ENTITIES.register("energy_converter",
                     com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterModBridges::createBlockEntityType);
+
+    /**
+     * §660 伟大白色空间传送门：只存「这扇门通向哪个维度的哪个坐标」（见
+     * {@code WhiteSpacePortalBlockEntity}）。没有 ticker —— 传送是被动的（玩家撞进来才触发）✓。
+     */
+    public static final RegistryObject<BlockEntityType<com.mofengbaizhi.tinkersnewlife.content.block.WhiteSpacePortalBlockEntity>>
+            WHITE_SPACE_PORTAL =
+            BLOCK_ENTITIES.register("white_space_portal",
+                    () -> BlockEntityType.Builder.of(
+                                    com.mofengbaizhi.tinkersnewlife.content.block.WhiteSpacePortalBlockEntity::new,
+                                    ModBlocks.WHITE_SPACE_PORTAL.get())
+                            .build(null));
 }

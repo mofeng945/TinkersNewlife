@@ -194,6 +194,32 @@ public class ModBlocks {
     public static final RegistryObject<Block> ENERGY_CONVERTER = BLOCKS.register("energy_converter",
             com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterModBridges::createBlock);
 
+    // ============================================================
+    //  §660 伟大白色空间
+    //  维度本体是数据文件（dimension_type/ + dimension/ 两个 json），这里只有它的两个方块。
+    // ============================================================
+
+    /**
+     * 伟大白色空间的<b>地面层</b>方块：{@code dimension/great_white_space.json} 里 flat layers 的第 2 层
+     * （{@code min_y = 0} ⇒ 铺在 y=1）。<b>不可破坏</b>（硬度 -1 / 抗爆 3600000，同基岩）；
+     * 硬度 -1 的方块活塞也推不动 ✓，所以不用额外写 pushReaction。
+     *
+     * <p>没有物品形态、也不进创造标签：放下去就挖不回来，给物品形态反而是个坑 ✓。
+     */
+    public static final RegistryObject<Block> WHITE_SPACE_BLOCK = BLOCKS.register("white_space_block",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.SNOW)
+                    .strength(-1.0f, 3600000.0f)
+                    .sound(SoundType.STONE)));
+
+    /**
+     * 伟大白色空间<b>传送门</b>：无碰撞、不挡视线、自发光 15；目的地存在
+     * {@link com.mofengbaizhi.tinkersnewlife.content.block.WhiteSpacePortalBlockEntity} 里 ⇒ 永久 ✓。
+     * <p>可挖（硬度 25）但<b>没有战利品表 ⇒ 挖掉什么都不掉</b>：开错位置的门能清掉，又刷不出东西 ✓。
+     */
+    public static final RegistryObject<Block> WHITE_SPACE_PORTAL = BLOCKS.register("white_space_portal",
+            com.mofengbaizhi.tinkersnewlife.content.block.WhiteSpacePortalBlock::new);
+
     /** 金属储存块的统一属性（对齐原版铁块：5.0 硬度 / 6.0 抗爆 / 需要正确工具 / 金属音效） */
     private static RegistryObject<Block> metalBlock(String name, MapColor color) {
         return BLOCKS.register(name, () -> new Block(BlockBehaviour.Properties.of()

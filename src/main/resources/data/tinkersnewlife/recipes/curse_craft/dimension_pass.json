@@ -1,0 +1,24 @@
+{
+  "type": "tinkersnewlife:curse_craft",
+  "core": {
+    "item": "tinkersnewlife:elder_crystal"
+  },
+  "result": {
+    "item": "tinkersnewlife:dimension_pass"
+  },
+  "materials": [
+    {
+      "item": "tinkersnewlife:rlyeh_call"
+    },
+    {
+      "item": "tinkersnewlife:nyarlathotep_desire"
+    },
+    {
+      "item": "tinkersnewlife:yellow_king_remnant"
+    },
+    {
+      "item": "tinkersnewlife:nicholas_blessing"
+    }
+  ],
+  "curse": 30000
+}

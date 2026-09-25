@@ -67,6 +67,7 @@ public class ModCreativeTabs {
                                 output.accept(ModItems.ECHO_OF_THE_VOID.get());
                                 output.accept(ModItems.ASTRAL_ANCHOR.get());
                                 output.accept(ModItems.NEXUS_OF_SPACETIME.get());
+                                output.accept(ModItems.DIMENSION_PASS.get());   // §660 维度通行证（一次性开门钥匙）
                                 output.accept(ModItems.YOG_SOTHOTH_GATE_KEY.get());
                                 output.accept(ModItems.NYARLATHOTEP_DESIRE.get());
                                 output.accept(ModItems.DURANDAL_SHARD.get());
