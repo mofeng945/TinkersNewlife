@@ -2,7 +2,7 @@
   "type": "tconstruct:alloy",
   "inputs": [
     {
-      "amount": 1000,
+      "amount": 100,
       "fluid": "tinkersnewlife:impure_ink_still"
     },
     {
