@@ -1,14 +1,24 @@
-﻿# tools/ 工具索引
+# tools/ 工具索引
 
 > 每次清理后请同步本文件（清理记录见 `docs/开发备忘录.md` §609）。
 > 本目录里的 `.ps1` 大部分含中文，**必须 UTF-8 带 BOM**，否则本机 PowerShell 5.1 按 ANSI 读会语法报错。
+>
+> ⚠⚠ **不要往中文 `.ps1` 里内联 here-string 脚本（尤其是 JS）**（§643 实测踩到）：
+> PS 5.1 把内联 here-string 写出去时，会把里面的**中文损坏成 `?`** ⇒ 生成的脚本语法错，
+> 报错里能看到中文已烂（形如 `" 琛岋紝鏀句笉杩?3x3 ...`）。
+> 正确做法：**脚本拆成独立文件**（`.js` 用 UTF-8 **无 BOM**，中文随便写），`.ps1` 侧只留
+> **纯 ASCII** 的调用一行（`check-json.ps1` 就是这么改的，实测「全 ASCII = True」）。
+>
+> ⚠ 改完 `.ps1` 记得复查 **前三字节 = `239,187,191`**（`edit` 类工具会丢 BOM），
+> 并用 `[System.Management.Automation.Language.Parser]::ParseFile()` 确认 5.1 能解析。
 
 ## 一、活着的工作流（常跑，别动）
 
 | 文件 | 干什么 | 什么时候跑 |
 | --- | --- | --- |
-| `check-json.ps1` | 资源 JSON 严格校验（node JSON.parse） | **每次改动后必跑**，要求 `bad 0` |
-| `deploy.ps1` | 构建产物装到两个测试实例（**检测到 MC 在跑就整体拒绝**） | 部署时 |
+| `check-json.ps1` | 资源 JSON 严格校验入口（**纯 ASCII 瘦壳**，实际校验在 `check-json-strict.js`） | **每次改动后必跑**，要求 `bad 0` |
+| `check-json-strict.js` | 真正的校验器。①JSON 语法（node `JSON.parse`）；②**有序合成必须放得进 3×3**（§643 抓到的"能量转换器合不出来"就是靠它） | 由上面的 `.ps1` 调用；也可 `node tools/check-json-strict.js src/main/resources` |
+| `deploy.ps1` | 构建产物装到实例（**默认只装测试包**；`-IncludeNL` 才写 `[NL]` 包。实例根多路径搜索，本机无 G 盘也能用；检测到 MC 在跑整体拒绝；拷贝后**校验字节数 + MD5**） | 部署时 |
 | `release.ps1` | 一条命令发版：构建 -> 部署 -> 上传 Modrinth | 发版时 |
 | `check-book-links.ps1` | 扫帕秋莉手册所有内链，报断链 | 改手册后 |
 | `check-book-pages.ps1` | 报"一页放不下"的手册文本页（Patchouli 156px 高） | 改手册后 |

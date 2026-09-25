@@ -2,10 +2,9 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    " C ",
-    "ARA",
-    " G ",
-    "IGI"
+    "IGI",
+    "ACA",
+    "GRG"
   ],
   "key": {
     "C": { "item": "minecraft:copper_block" },
