@@ -94,6 +94,19 @@ public class ChargedCreeperMeltingRecipe extends EntityMeltingRecipe {
      */
     @Override
     public FluidStack getOutput(LivingEntity entity) {
+        // ⚠⚠ 临时诊断（**这是唯一能回答"匠魂到底有没有把这只交给我们的配方"的位置** ✓）：
+        //   匠魂 `interactWithEntities` 里 `fluid = recipe.getOutput((LivingEntity) entity)` ——
+        //   只有在 `canMeltEntity` 通过、且**已经成功 hurt 之前**才会走到这里 ✓
+        //   ⇒ 打出来就能一刀切开两种病因（见备忘录 §649）：
+        //     ① **有这条日志** ⇒ 匠魂确实在处理它、配方也选中了我们 ⇒ 病在"伤害/产出"环节；
+        //     ② **没有这条日志** ⇒ `canMeltEntity` 就把它挡了 ⇒ 病在"进不去熔炼流程"。
+        if (!entity.level().isClientSide) {
+            TinkersNewlife.LOGGER.info(
+                    "[充能熔炼诊断] getOutput 被调用! powered={} hp={}/{} uuid={} pos={},{},{}",
+                    (entity instanceof Creeper c && c.isPowered()),
+                    entity.getHealth(), entity.getMaxHealth(), entity.getUUID(),
+                    entity.getBlockX(), entity.getBlockY(), entity.getBlockZ());
+        }
         if (entity instanceof Creeper creeper && creeper.isPowered()) {
             Fluid lightning = ForgeRegistries.FLUIDS.getValue(CHARGED_FLUID);
             if (lightning != null) {
@@ -120,12 +133,20 @@ public class ChargedCreeperMeltingRecipe extends EntityMeltingRecipe {
     public static void onLivingAttackDiag(net.minecraftforge.event.entity.living.LivingAttackEvent event) {
         if (!(event.getEntity() instanceof Creeper creeper)) return;
         if (event.getEntity().level().isClientSide) return;
+        // ⚠ 只在**匠魂的伤害源**上打 —— 否则闪电/法术会把它刷爆 ✗（上一版就是被刷爆了）
+        String src = event.getSource().getMsgId();
+        if (!src.startsWith("tconstruct.")) return;
         TinkersNewlife.LOGGER.info(
-                "[充能熔炼诊断] 受击 entity={} powered={} canceled={} src={} amount={} fireImmune={} invuln={} invulnTime={} fireRes={}",
+                "[充能熔炼诊断] 受击 entity={} powered={} hp={}/{} pos={},{},{} uuid={} "
+                        + "canceled={} src={} amount={} fireImmune={} invuln={} invulnTime={} fireRes={}",
                 net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(creeper.getType()),
                 creeper.isPowered(),
+                creeper.getHealth(),
+                creeper.getMaxHealth(),
+                creeper.getBlockX(), creeper.getBlockY(), creeper.getBlockZ(),
+                creeper.getUUID(),
                 event.isCanceled(),
-                event.getSource().getMsgId(),
+                src,
                 event.getAmount(),
                 creeper.fireImmune(),
                 creeper.isInvulnerable(),
