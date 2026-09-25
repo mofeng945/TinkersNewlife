@@ -133,42 +133,59 @@ public class ChargedCreeperMeltingRecipe extends EntityMeltingRecipe {
                 creeper.hasEffect(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE));
     }
 
-    /** 苦力怕每 tick（只打前 200 tick，免得刷屏）：看它在炉子里到底有没有被扣血 */
+    /** 苦力怕每 tick：**只打"附近有冶炼炉方块实体"的那些** ✓（含普通与充能 ⇒ 天然有对比组 ✓ 也不刷屏 ✓） */
     @net.minecraftforge.eventbus.api.SubscribeEvent
     public static void onLivingTickDiag(net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent event) {
         if (!(event.getEntity() instanceof Creeper creeper)) return;
         if (creeper.level().isClientSide) return;
         if (creeper.tickCount % 20 != 0) return;
-        // ⚠ 只打**充能的**（每次测试顶多一两只 ✓）⇒ 不再依赖"最近被谁打过"这个不可靠过滤器 ✗
-        //   （上一版正是靠它 ⇒ 可能把"炉内但没被任何人打过"的那只漏掉 ✗）
-        if (!creeper.isPowered()) return;
 
-        // ⭐ 把匠魂 canMeltEntity 的判据**逐条问一遍** —— 这才是能定位的关键 ✓
-        //   原版 isInvulnerableTo 的三条支路：isRemoved / invulnerable / (IS_FIRE && fireImmune)
-        //   ⇒ 用一个普通伤害源把 isRemoved 与 invulnerable 两条支路问出来，避免反射 ✓
-        var probe = creeper.damageSources().generic();
+        // ⭐ 这一版的关键：**不再是只看充能的**（上一版漏了对比组 ✗），而是
+        //   **把炉子方块实体与实体坐标一起打出来** —— 直接回答"它到底在不在炉子扫描范围里" ✓
+        String smeltery = "（拿不到服务端世界）";
+        if (creeper.level() instanceof net.minecraft.server.level.ServerLevel sl) {
+            var found = new StringBuilder();
+            for (int dx = -4; dx <= 4; dx++) {
+                for (int dy = -3; dy <= 3; dy++) {
+                    for (int dz = -4; dz <= 4; dz++) {
+                        var pos = creeper.blockPosition().offset(dx, dy, dz);
+                        var be = sl.getBlockEntity(pos);
+                        if (be == null) continue;
+                        String n = net.minecraftforge.registries.ForgeRegistries.BLOCK_ENTITY_TYPES
+                                .getKey(be.getType()).toString();
+                        if (n.contains("smeltery") || n.contains("foundry") || n.contains("melter")) {
+                            found.append(n).append('@').append(pos.getX()).append(',')
+                                 .append(pos.getY()).append(',').append(pos.getZ()).append(' ');
+                        }
+                    }
+                }
+            }
+            // ⚠ 只记录"附近真有冶炼炉"的苦力怕 ⇒ 既能拿到对比组（普通 vs 充能 ✓），又不会全图刷屏 ✓
+            if (found.length() == 0) return;
+            smeltery = found.toString();
+        }
+
         StringBuilder eff = new StringBuilder();
         for (var inst : creeper.getActiveEffects()) {
             var key = net.minecraftforge.registries.ForgeRegistries.MOB_EFFECTS.getKey(inst.getEffect());
             eff.append(key).append('x').append(inst.getAmplifier()).append(';');
         }
         TinkersNewlife.LOGGER.info(
-                "[充能熔炼诊断] tick entity={} powered={} hp={}/{} invulnTime={} "
-                        + "| 匠魂三条判据: isRemoved={} invulnerable={} fireImmune={} fireRes={} "
-                        + "| isInvulnerableTo(generic)={} "
-                        + "| effects=[{}] pos={},{},{}",
+                "[充能熔炼诊断] tick entity={} powered={} hp={}/{} invulnTime={} pos={},{},{} "
+                        + "| 判据: isRemoved={} invulnerable={} fireImmune={} fireRes={} "
+                        + "| effects=[{}] | 附近冶炼炉: {}",
                 net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(creeper.getType()),
                 creeper.isPowered(),
                 creeper.getHealth(),
                 creeper.getMaxHealth(),
                 creeper.invulnerableTime,
+                creeper.getBlockX(), creeper.getBlockY(), creeper.getBlockZ(),
                 creeper.isRemoved(),
                 creeper.isInvulnerable(),
                 creeper.fireImmune(),
                 creeper.hasEffect(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE),
-                creeper.isInvulnerableTo(probe),
                 eff.length() == 0 ? "（无）" : eff.toString(),
-                creeper.getBlockX(), creeper.getBlockY(), creeper.getBlockZ());
+                smeltery);
     }
 
     /**
