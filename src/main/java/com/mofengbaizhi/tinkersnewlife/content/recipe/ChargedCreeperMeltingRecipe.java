@@ -53,12 +53,21 @@ import slimeknights.tconstruct.library.recipe.entitymelting.EntityMeltingRecipe;
  * 所以本类对应的 JSON 写在 <b>{@code data/tconstruct/recipes/smeltery/entity_melting/creeper.json}</b>
  * （**同 ID 覆盖** ✓，包内先例：{@code tinkerscalibration} 就是这么覆盖匠魂烈焰人配方的 ✓）。
  *
- * <p>⚠⚠ <b>本类当前临时挂了"充能熔炼诊断"事件（{@code onLivingAttackDiag} / {@code onLivingTickDiag}）</b>
- * —— 为定位用户报告"普通苦力怕能熔成玻璃、充能后就不掉血"而加 ✓ **定位完要整段删掉** ✗
- * （连类上的 {@code @EventBusSubscriber} 注解一起删 ✓）。
+ * <h2>⚠⚠ 已知的外部冲突：<b>装了铁魔法时，充能苦力怕熔不出东西</b>（不是本模组的 bug ✓）</h2>
+ * 铁魔法（irons_spellbooks）的 {@code ServerConfigs.BETTER_CREEPER_THUNDERHIT}（**默认 true** ✓）会让
+ * <b>被雷劈过的苦力怕"被治疗 + 变成火焰免疫"</b> ✓，而它的实现方式是
+ * {@code ServerPlayerEvents} 里把"**目标充能 且 伤害带 `is_fire` 标签**"的 {@code LivingAttackEvent}
+ * <b>直接取消</b> ✗。而匠魂的 {@code tconstruct:smeltery_heat} <b>正好在 {@code minecraft:is_fire} 标签里</b> ✗
+ * ⇒ 冶炼炉对充能苦力怕的每一次伤害都被取消 ⇒ 匠魂的 {@code hurt} 返回 false ⇒
+ * <b>{@code tank.fill} 不执行 ⇒ 什么流体都不出</b> ✗（**熔融玻璃也出不来** ✓ 不只是液态闪电 ✓）。
+ * <ul>
+ *   <li>✅ 解决办法（用户侧，一行）：把存档里的
+ *       {@code saves/<世界>/serverconfig/irons_spellbooks-server.toml} 的
+ *       {@code betterCreeperThunderHit} 改成 {@code false} ✓（代价：失去"雷击治疗+火免"那个特性 ✓）；</li>
+ *   <li>⇒ 本模组**不去绕过**它 ✗（那是铁魔法的明确意图 ✓ 越权适配会带来更难查的副作用 ✗）；
+ *       本节只把机制记清楚，避免以后再花几轮去查同一个坑 ✓（见备忘录 §651/§652）。</li>
+ * </ul>
  */
-@net.minecraftforge.fml.common.Mod.EventBusSubscriber(
-        modid = TinkersNewlife.MOD_ID, bus = net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus.FORGE)
 public class ChargedCreeperMeltingRecipe extends EntityMeltingRecipe {
 
     /** 充能时的产出流体（本模组铁魔法联动流体；没装铁魔法 ⇒ 查不到 ⇒ 退回原产出 ✓） */
@@ -89,24 +98,9 @@ public class ChargedCreeperMeltingRecipe extends EntityMeltingRecipe {
         this.chargedAmount = chargedAmount;
     }
 
-    /**
-     * 充能（{@code Creeper.isPowered()} ✓）且充能流体在场（装了铁魔法 ✓）⇒ 出液态闪电；否则原产出 ✓
-     */
+    /** 充能（{@code Creeper.isPowered()} ✓）且充能流体在场（装了铁魔法 ✓）⇒ 出液态闪电；否则原产出 ✓ */
     @Override
     public FluidStack getOutput(LivingEntity entity) {
-        // ⚠⚠ 临时诊断（**这是唯一能回答"匠魂到底有没有把这只交给我们的配方"的位置** ✓）：
-        //   匠魂 `interactWithEntities` 里 `fluid = recipe.getOutput((LivingEntity) entity)` ——
-        //   只有在 `canMeltEntity` 通过、且**已经成功 hurt 之前**才会走到这里 ✓
-        //   ⇒ 打出来就能一刀切开两种病因（见备忘录 §649）：
-        //     ① **有这条日志** ⇒ 匠魂确实在处理它、配方也选中了我们 ⇒ 病在"伤害/产出"环节；
-        //     ② **没有这条日志** ⇒ `canMeltEntity` 就把它挡了 ⇒ 病在"进不去熔炼流程"。
-        if (!entity.level().isClientSide) {
-            TinkersNewlife.LOGGER.info(
-                    "[充能熔炼诊断] getOutput 被调用! powered={} hp={}/{} uuid={} pos={},{},{}",
-                    (entity instanceof Creeper c && c.isPowered()),
-                    entity.getHealth(), entity.getMaxHealth(), entity.getUUID(),
-                    entity.getBlockX(), entity.getBlockY(), entity.getBlockZ());
-        }
         if (entity instanceof Creeper creeper && creeper.isPowered()) {
             Fluid lightning = ForgeRegistries.FLUIDS.getValue(CHARGED_FLUID);
             if (lightning != null) {
@@ -114,107 +108,6 @@ public class ChargedCreeperMeltingRecipe extends EntityMeltingRecipe {
             }
         }
         return super.getOutput(entity);
-    }
-
-    // ============================================================
-    //  ⚠⚠ 临时诊断（定位用户报告："普通苦力怕能熔成玻璃、充能后就不掉血" ⇒ 定位完**整段删除**）
-    // ============================================================
-
-    /**
-     * 苦力怕吃伤害前打一行：能区分两种完全不同的病因 ——
-     * <ul>
-     *   <li><b>日志一条都没有</b> ⇒ 匠魂的 {@code canMeltEntity} 就返回了 false（压根没发起攻击）
-     *       ⇒ 病在"进不去熔炼流程"（燃料/热/火免/防火效果/`invulnerable` 标记）；</li>
-     *   <li><b>日志有、且 powered=true</b> ⇒ 攻击确实发生了 ⇒ 病在"伤害被免疫掉"
-     *       ⇒ 看那几个布尔值（`fireImmune` / `invuln` / `fireRes`）是哪个为真。</li>
-     * </ul>
-     */
-    // ⚠⚠ 关键修正（§650 的诊断失败根因）：`@SubscribeEvent` **默认 `receiveCanceled = false`** ✗
-    //   ⇒ 一旦有别的模组把 `LivingAttackEvent` 取消掉，**本方法根本不会被调用** ✗
-    //   ⇒ 表现就是"一条日志都没有"，而我会把它误读成"**没发起攻击**" ✗ —— 前几轮就是这么被带偏的 ✗。
-    //   ⭐ 现在显式 `receiveCanceled = true` + 最低优先级 ⇒ **取消与否都能看到** ✓
-    //   （已查明：莱特兰 `LHAttackListener.onAttack` 会 `event.setCanceled(true)` ⇒
-    //     匠魂 `hurt` 返回 false ⇒ `tank.fill` 不执行 ⇒ **不出流体** ✓ 这正是用户看到的"不熔炼" ✓）
-    @net.minecraftforge.eventbus.api.SubscribeEvent(
-            priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST,
-            receiveCanceled = true)
-    public static void onLivingAttackDiag(net.minecraftforge.event.entity.living.LivingAttackEvent event) {
-        if (!(event.getEntity() instanceof Creeper creeper)) return;
-        if (event.getEntity().level().isClientSide) return;
-        // ⚠ 只在**匠魂的伤害源**上打 —— 否则闪电/法术会把它刷爆 ✗（上一版就是被刷爆了）
-        String src = event.getSource().getMsgId();
-        if (!src.startsWith("tconstruct.")) return;
-        TinkersNewlife.LOGGER.info(
-                "[充能熔炼诊断] 受击 entity={} powered={} hp={}/{} pos={},{},{} uuid={} "
-                        + "canceled={} src={} amount={} fireImmune={} invuln={} invulnTime={} fireRes={}",
-                net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(creeper.getType()),
-                creeper.isPowered(),
-                creeper.getHealth(),
-                creeper.getMaxHealth(),
-                creeper.getBlockX(), creeper.getBlockY(), creeper.getBlockZ(),
-                creeper.getUUID(),
-                event.isCanceled(),
-                src,
-                event.getAmount(),
-                creeper.fireImmune(),
-                creeper.isInvulnerable(),
-                creeper.invulnerableTime,
-                creeper.hasEffect(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE));
-    }
-
-    /** 苦力怕每 tick：**只打"附近有冶炼炉方块实体"的那些** ✓（含普通与充能 ⇒ 天然有对比组 ✓ 也不刷屏 ✓） */
-    @net.minecraftforge.eventbus.api.SubscribeEvent
-    public static void onLivingTickDiag(net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent event) {
-        if (!(event.getEntity() instanceof Creeper creeper)) return;
-        if (creeper.level().isClientSide) return;
-        if (creeper.tickCount % 20 != 0) return;
-
-        // ⭐ 这一版的关键：**不再是只看充能的**（上一版漏了对比组 ✗），而是
-        //   **把炉子方块实体与实体坐标一起打出来** —— 直接回答"它到底在不在炉子扫描范围里" ✓
-        String smeltery = "（拿不到服务端世界）";
-        if (creeper.level() instanceof net.minecraft.server.level.ServerLevel sl) {
-            var found = new StringBuilder();
-            for (int dx = -4; dx <= 4; dx++) {
-                for (int dy = -3; dy <= 3; dy++) {
-                    for (int dz = -4; dz <= 4; dz++) {
-                        var pos = creeper.blockPosition().offset(dx, dy, dz);
-                        var be = sl.getBlockEntity(pos);
-                        if (be == null) continue;
-                        String n = net.minecraftforge.registries.ForgeRegistries.BLOCK_ENTITY_TYPES
-                                .getKey(be.getType()).toString();
-                        if (n.contains("smeltery") || n.contains("foundry") || n.contains("melter")) {
-                            found.append(n).append('@').append(pos.getX()).append(',')
-                                 .append(pos.getY()).append(',').append(pos.getZ()).append(' ');
-                        }
-                    }
-                }
-            }
-            // ⚠ 只记录"附近真有冶炼炉"的苦力怕 ⇒ 既能拿到对比组（普通 vs 充能 ✓），又不会全图刷屏 ✓
-            if (found.length() == 0) return;
-            smeltery = found.toString();
-        }
-
-        StringBuilder eff = new StringBuilder();
-        for (var inst : creeper.getActiveEffects()) {
-            var key = net.minecraftforge.registries.ForgeRegistries.MOB_EFFECTS.getKey(inst.getEffect());
-            eff.append(key).append('x').append(inst.getAmplifier()).append(';');
-        }
-        TinkersNewlife.LOGGER.info(
-                "[充能熔炼诊断] tick entity={} powered={} hp={}/{} invulnTime={} pos={},{},{} "
-                        + "| 判据: isRemoved={} invulnerable={} fireImmune={} fireRes={} "
-                        + "| effects=[{}] | 附近冶炼炉: {}",
-                net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(creeper.getType()),
-                creeper.isPowered(),
-                creeper.getHealth(),
-                creeper.getMaxHealth(),
-                creeper.invulnerableTime,
-                creeper.getBlockX(), creeper.getBlockY(), creeper.getBlockZ(),
-                creeper.isRemoved(),
-                creeper.isInvulnerable(),
-                creeper.fireImmune(),
-                creeper.hasEffect(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE),
-                eff.length() == 0 ? "（无）" : eff.toString(),
-                smeltery);
     }
 
     /**
