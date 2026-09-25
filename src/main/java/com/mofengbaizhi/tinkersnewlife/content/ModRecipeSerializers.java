@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.content;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.AutoMaterialMeltingRecipe;
+import com.mofengbaizhi.tinkersnewlife.content.recipe.ChargedCreeperMeltingRecipe;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.CrystalModifierRecipe;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.GenericToolMeltingRecipe;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.TagModifierSalvage;
@@ -54,6 +55,16 @@ public class ModRecipeSerializers {
     public static final RegistryObject<RecipeSerializer<GenericToolMeltingRecipe>> TOOL_MELTING =
             RECIPE_SERIALIZERS.register("tool_melting",
                     () -> LoadableRecipeSerializer.of(GenericToolMeltingRecipe.LOADER));
+
+    /**
+     * 实体熔炼「闪电苦力怕 → 液态闪电」（见 {@link ChargedCreeperMeltingRecipe}）。
+     *
+     * <p>对应的数据文件是 <b>{@code data/tconstruct/recipes/smeltery/entity_melting/creeper.json}</b>
+     * —— **同 ID 覆盖**匠魂自带那条（否则两条会抢，见类注释 ✓）；普通苦力怕仍是熔融玻璃 50 mB/damage 2 ✓。
+     */
+    public static final RegistryObject<RecipeSerializer<ChargedCreeperMeltingRecipe>> CHARGED_CREEPER_MELTING =
+            RECIPE_SERIALIZERS.register("charged_creeper_melting",
+                    () -> LoadableRecipeSerializer.of(ChargedCreeperMeltingRecipe.LOADER));
 
     /** 修饰符槽位返还（术式/领域通用，按 modifier tag 一步到位，见 TagModifierSalvage） */
     public static final RegistryObject<RecipeSerializer<TagModifierSalvage>> TAG_MODIFIER_SALVAGE =
