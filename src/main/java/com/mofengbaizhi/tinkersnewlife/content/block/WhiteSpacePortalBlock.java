@@ -95,11 +95,25 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
         ServerLevel target = server == null ? null : server.getLevel(destKey);
         if (target == null) return;
 
-        BlockPos dest = portal.getDestinationPos();
+        /*
+         * §661「传送门会自动记录相对落点，以便往返」：
+         * 落点上那扇门要是被拆了／被炸了，只要落点还是空地就按记录把门补回来并指回这里
+         * （见 WhiteSpaceDimensions.resolveLanding）⇒ 往返不会因为少了一扇门就断掉。
+         * 整段都被实体方块占住时返回 null ⇒ 宁可不传，也不把玩家塞进方块里 ✗。
+         */
+        BlockPos landing = WhiteSpaceDimensions.resolveLanding(
+                target, portal.getDestinationPos(), level.dimension(), pos);
+        if (landing == null) {
+            WhiteSpaceDimensions.armCooldown(player, 20);
+            player.displayClientMessage(
+                    Component.translatable("message.tinkersnewlife.white_space.landing_blocked"), true);
+            return;
+        }
+
         // 先上冷却：落地时人就在对面那扇门里，没冷却会立刻被送回来
         WhiteSpaceDimensions.armCooldown(player, WhiteSpaceDimensions.ARRIVE_COOLDOWN);
         try {
-            player.teleportTo(target, dest.getX() + 0.5D, dest.getY(), dest.getZ() + 0.5D,
+            player.teleportTo(target, landing.getX() + 0.5D, landing.getY(), landing.getZ() + 0.5D,
                     Set.of(), player.getYRot(), player.getXRot());
         } catch (Throwable t) {
             TinkersNewlife.LOGGER.warn("[伟大白色空间] 跨维度传送异常：{}", t.toString());

@@ -19,16 +19,18 @@ import net.minecraftforge.network.NetworkEvent;
 import java.util.function.Supplier;
 
 /**
- * <b>客户端 → 服务端</b>：GUI 确认后请求开门（§660）。
+ * <b>客户端 → 服务端</b>：GUI 确认后请求开门（§660／§661）。
  *
- * <p>服务端<s>不信任</s>客户端，逐项复核：
- * <ol>
- *   <li>发件人此刻确实<b>站在伟大白色空间里</b>；</li>
- *   <li>锚点（右键的那个方块）离他<b>不超过 8 格</b>（{@code MAX_REACH_SQR}）⇒ 不能隔空开门；</li>
- *   <li>他手里<b>真的还握着</b>维度通行证（主手或副手）⇒ 开了 GUI 之后把通行证丢掉的刷子无效；</li>
- *   <li>目标维度 id 能解析、且该维度此刻确实加载着；坐标落在该维度的建筑高度内
- *       （后两项在 {@link WhiteSpaceDimensions#linkFromWhiteSpace} 里校验）。</li>
- * </ol>
+ * <h2>模式由服务端判，不看客户端脸色</h2>
+ * 包体里虽然带着维度 id 与 y，但服务端只按<b>发件人此刻站在哪个维度</b>决定用哪个模式：
+ * <ul>
+ *   <li>站在伟大白色空间 ⇒ <b>自由模式</b>：用包里的维度 id ＋ x／y／z（并再验一次黑名单）；</li>
+ *   <li>站在别处（且非黑名单）⇒ <b>锁定模式</b>：<b>只取 x／z</b>，维度强制为伟大白色空间、
+ *       y 强制为 {@link WhiteSpaceDimensions#GROUND_Y} ⇒ 客户端把 y 填到天上也没用 ✓。</li>
+ * </ul>
+ *
+ * <p>另外逐项复核：锚点离玩家 ≤ 8 格（{@code MAX_REACH_SQR}，防隔空开门）、
+ * 手里<b>真的还握着</b>维度通行证（开了 GUI 之后丢掉的刷子无效）。
  * 全部通过才真正开门并<b>消耗一张通行证</b> ✓。
  */
 public class PacketCreatePortal {
@@ -68,8 +70,13 @@ public class PacketCreatePortal {
             ServerPlayer player = ctx.get().getSender();
             if (player == null) return;
 
-            ServerLevel whiteSpace = player.serverLevel();
-            if (!WhiteSpaceDimensions.isWhiteSpace(whiteSpace)) return;
+            ServerLevel from = player.serverLevel();
+            if (WhiteSpaceDimensions.isBlacklisted(from.dimension())) {
+                player.displayClientMessage(Component.translatable(
+                        "message.tinkersnewlife.white_space.blacklisted",
+                        WhiteSpaceDimensions.displayName(from.dimension())), true);
+                return;
+            }
 
             if (player.position().distanceToSqr(Vec3.atCenterOf(packet.anchor))
                     > WhiteSpaceDimensions.MAX_REACH_SQR) {
@@ -85,12 +92,19 @@ public class PacketCreatePortal {
                 return;
             }
 
-            ResourceLocation id = ResourceLocation.tryParse(packet.dimensionId);
-            if (id == null) return;
-            ResourceKey<Level> destination = ResourceKey.create(Registries.DIMENSION, id);
+            WhiteSpaceDimensions.PortalResult result;
+            if (WhiteSpaceDimensions.isWhiteSpace(from)) {
+                // 自由模式：选哪个维度就开去哪（黑名单由 linkFromWhiteSpace 再拦一道）
+                ResourceLocation id = ResourceLocation.tryParse(packet.dimensionId);
+                if (id == null) return;
+                ResourceKey<Level> destination = ResourceKey.create(Registries.DIMENSION, id);
+                result = WhiteSpaceDimensions.linkFromWhiteSpace(
+                        from, packet.anchor, destination, new BlockPos(packet.x, packet.y, packet.z));
+            } else {
+                // 锁定模式：只信 x/z；维度固定伟大白色空间、y 固定地面表层
+                result = WhiteSpaceDimensions.linkFromOutside(from, packet.anchor, packet.x, packet.z);
+            }
 
-            WhiteSpaceDimensions.PortalResult result = WhiteSpaceDimensions.linkFromWhiteSpace(
-                    whiteSpace, packet.anchor, destination, new BlockPos(packet.x, packet.y, packet.z));
             player.displayClientMessage(result.message(), true);
             if (result.ok()) {
                 WhiteSpaceDimensions.armCooldown(player, WhiteSpaceDimensions.CREATE_COOLDOWN);

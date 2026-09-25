@@ -109,6 +109,19 @@ public class WhiteSpacePortalBlockEntity extends BlockEntity {
         return tag;
     }
 
+    /**
+     * ⚠ <b>必须覆写</b>：默认实现返回 {@code null} ⇒ 方块被放置／目的地被改写时，
+     * 服务端<b>不会</b>把方块实体数据发给客户端 ✗（新放下的门要等下一次区块重发才有目的地）。
+     * <p>发出去的路径是 {@code ServerLevel#sendBlockUpdated} → {@code ChunkHolder#blockChanged}
+     * → {@code broadcastBlockEntityIfNeeded} → {@code getUpdatePacket()}（告示牌/旗帜都是这一套 ✓）；
+     * 客户端收到后走 Forge 的 {@code IForgeBlockEntity#onDataPacket} → {@link #handleUpdateTag} → {@link #load} ✓。
+     */
+    @Override
+    public net.minecraft.network.protocol.Packet<net.minecraft.network.protocol.game.ClientGamePacketListener>
+    getUpdatePacket() {
+        return net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket.create(this);
+    }
+
     @Override
     public void handleUpdateTag(CompoundTag tag) {
         load(tag);
