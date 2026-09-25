@@ -78,11 +78,22 @@ function Ramp-Color([int]$grey) {
 $entryStill = "assets/tconstruct/textures/fluid/$TconPath/still.png"
 $entryFlowing = "assets/tconstruct/textures/fluid/$TconPath/flowing.png"
 
+# ⭐ 包实例的盘符/路径会变（G: ↔ D:\tex ↔ C:\_G_backup_…），所以多根目录一起找；
+#    都找不到时还有最后一招：Gradle 反混淆缓存里那份匠魂 jar（本机一定有，编译要用）。
+$roots = @(
+    'G:\tex\.minecraft\versions',
+    'D:\tex\.minecraft\versions',
+    'E:\minecraft\.minecraft\versions',
+    (Join-Path $env:USERPROFILE '.gradle\caches\forge_gradle\deobf_dependencies')
+)
 $jars = @()
-$jars += (Get-ChildItem 'G:\tex\.minecraft\versions' -Directory -ErrorAction SilentlyContinue |
-    ForEach-Object { Get-ChildItem $_.FullName -Filter '*TConstruct*.jar' -ErrorAction SilentlyContinue })
-$jars += (Get-ChildItem 'G:\tex\.minecraft\versions' -Directory -ErrorAction SilentlyContinue |
-    ForEach-Object { Get-ChildItem $_.FullName -Recurse -Filter '*TConstruct*.jar' -ErrorAction SilentlyContinue })
+foreach ($r in $roots) {
+    if (-not (Test-Path $r)) { continue }
+    $jars += (Get-ChildItem $r -Directory -ErrorAction SilentlyContinue |
+        ForEach-Object { Get-ChildItem $_.FullName -Filter '*TConstruct*.jar' -ErrorAction SilentlyContinue })
+    $jars += (Get-ChildItem $r -Directory -ErrorAction SilentlyContinue |
+        ForEach-Object { Get-ChildItem $_.FullName -Recurse -Filter '*TConstruct*.jar' -ErrorAction SilentlyContinue })
+}
 $jars = $jars | Sort-Object FullName -Unique
 
 $cacheDir = Join-Path $root 'build\tcon-fluid'

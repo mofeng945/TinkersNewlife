@@ -1,0 +1,8 @@
+{
+  "still": "tinkersnewlife:block/impure_ink_still",
+  "flowing": "tinkersnewlife:block/impure_ink_flowing",
+  "color": "FFFFFFFF",
+  "fogColor": "FF0A0A18",
+  "fogStart": 0.35,
+  "fogEnd": 4.5
+}

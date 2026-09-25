@@ -1,0 +1,28 @@
+{
+  "type": "tconstruct:alloy",
+  "inputs": [
+    {
+      "amount": 1000,
+      "fluid": "tinkersnewlife:impure_ink_still"
+    },
+    {
+      "amount": 90,
+      "tag": "forge:molten_copper"
+    },
+    {
+      "amount": 90,
+      "fluid": "tinkersnewlife:liquid_arcane_still"
+    }
+  ],
+  "result": {
+    "fluid": "irons_spellbooks:common_ink",
+    "amount": 250
+  },
+  "temperature": 900,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "irons_spellbooks"
+    }
+  ]
+}

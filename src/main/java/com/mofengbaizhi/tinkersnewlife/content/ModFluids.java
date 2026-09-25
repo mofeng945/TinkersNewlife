@@ -61,6 +61,18 @@ public class ModFluids {
             1500, 2000, 300, 0xFFC0C0C0,
             FluidRegistrar.waterProps(MapColor.COLOR_LIGHT_GRAY));
 
+    /**
+     * 驳杂墨水（粗墨，铁魔法「普通墨水」的**粗料**）。
+     *
+     * <p>获取：冶炼炉里<b>熔炼鱿鱼</b>（实体熔炼 250 mB / 只）或<b>熔炼墨囊</b>（100 mB / 个）。
+     * 去向：与<b>熔融铜 + 液态奥术</b>合金 → {@code irons_spellbooks:common_ink}（普通墨水，250 mB）。
+     *
+     * <p>贴图：按项目口径取自匠魂本体 {@code molten/transparent} 改色（墨蓝紫）。
+     */
+    public static final FluidRegistrar.FluidEntry IMPURE_INK = entry("impure_ink",
+            1500, 2000, 300, 0xFF26264E,
+            FluidRegistrar.waterProps(MapColor.COLOR_BLACK));
+
     /** 熔融杜兰达尔（本模组凋灵掉落线） */
     public static final FluidRegistrar.FluidEntry MOLTEN_DURANDAL = entry("molten_durandal",
             2000, 10000, 1500, 0xFFFFD700,  // 金黄色

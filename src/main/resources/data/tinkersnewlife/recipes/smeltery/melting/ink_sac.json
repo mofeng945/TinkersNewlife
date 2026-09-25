@@ -1,0 +1,12 @@
+{
+  "type": "tconstruct:melting",
+  "ingredient": {
+    "item": "minecraft:ink_sac"
+  },
+  "result": {
+    "fluid": "tinkersnewlife:impure_ink_still",
+    "amount": 100
+  },
+  "temperature": 300,
+  "time": 20
+}

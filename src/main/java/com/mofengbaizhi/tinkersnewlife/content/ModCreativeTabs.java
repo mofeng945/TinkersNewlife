@@ -84,6 +84,7 @@ public class ModCreativeTabs {
                                 output.accept(ModFluids.MOLTEN_NICHOLAS_BLESSING.bucket.get());
                                 output.accept(ModFluids.HASTUR_MALICE.bucket.get());
                                 output.accept(ModFluids.ASHEN_INK.bucket.get());
+                                output.accept(ModFluids.IMPURE_INK.bucket.get());
                                 output.accept(ModFluids.MOLTEN_DURANDAL.bucket.get());
                                 output.accept(ModFluids.CURSE_RESIDUE.bucket.get());
                                 // 冰火传说组：熔融龙钢×3 + 龙血×3 + 悚怖×2
