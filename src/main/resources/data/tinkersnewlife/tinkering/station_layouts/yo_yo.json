@@ -7,21 +7,21 @@
   },
   "input_slots": [
     {
-      "translation_key": "slot.tinkersnewlife.yo_yo.bowstring",
-      "icon": "tconstruct:bowstring",
-      "filter": {
-        "item": "tconstruct:bowstring"
-      },
-      "x": 30,
-      "y": 20
-    },
-    {
       "translation_key": "slot.tinkersnewlife.yo_yo.wheel1",
       "icon": "tinkersnewlife:yo_yo_wheel",
       "filter": {
         "item": "tinkersnewlife:yo_yo_wheel"
       },
       "x": 6,
+      "y": 38
+    },
+    {
+      "translation_key": "slot.tinkersnewlife.yo_yo.wheel2",
+      "icon": "tinkersnewlife:yo_yo_wheel",
+      "filter": {
+        "item": "tinkersnewlife:yo_yo_wheel"
+      },
+      "x": 60,
       "y": 38
     },
     {
@@ -34,13 +34,13 @@
       "y": 38
     },
     {
-      "translation_key": "slot.tinkersnewlife.yo_yo.wheel2",
-      "icon": "tinkersnewlife:yo_yo_wheel",
+      "translation_key": "slot.tinkersnewlife.yo_yo.bowstring",
+      "icon": "tconstruct:bowstring",
       "filter": {
-        "item": "tinkersnewlife:yo_yo_wheel"
+        "item": "tconstruct:bowstring"
       },
-      "x": 60,
-      "y": 38
+      "x": 30,
+      "y": 20
     }
   ]
 }
