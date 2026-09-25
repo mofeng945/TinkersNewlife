@@ -1,6 +1,6 @@
 {
   "type": "tconstruct:part_builder",
-  "cost": 6,
+  "cost": 3,
   "pattern": "tinkersnewlife:yo_yo_wheel",
   "pattern_item": [
     {
