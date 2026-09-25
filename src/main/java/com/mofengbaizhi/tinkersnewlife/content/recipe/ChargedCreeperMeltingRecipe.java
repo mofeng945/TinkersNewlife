@@ -138,19 +138,37 @@ public class ChargedCreeperMeltingRecipe extends EntityMeltingRecipe {
     public static void onLivingTickDiag(net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent event) {
         if (!(event.getEntity() instanceof Creeper creeper)) return;
         if (creeper.level().isClientSide) return;
-        if (creeper.tickCount > 200 || creeper.tickCount % 20 != 0) return;
-        // ⚠ 只在"有别的实体正在攻击它"时才打（＝基本只有炉内才会命中），
-        //   避免给全地图每只苦力怕刷屏 ✗
-        if (creeper.getLastHurtByMob() == null) return;
+        if (creeper.tickCount % 20 != 0) return;
+        // ⚠ 只打**充能的**（每次测试顶多一两只 ✓）⇒ 不再依赖"最近被谁打过"这个不可靠过滤器 ✗
+        //   （上一版正是靠它 ⇒ 可能把"炉内但没被任何人打过"的那只漏掉 ✗）
+        if (!creeper.isPowered()) return;
+
+        // ⭐ 把匠魂 canMeltEntity 的判据**逐条问一遍** —— 这才是能定位的关键 ✓
+        //   原版 isInvulnerableTo 的三条支路：isRemoved / invulnerable / (IS_FIRE && fireImmune)
+        //   ⇒ 用一个普通伤害源把 isRemoved 与 invulnerable 两条支路问出来，避免反射 ✓
+        var probe = creeper.damageSources().generic();
+        StringBuilder eff = new StringBuilder();
+        for (var inst : creeper.getActiveEffects()) {
+            var key = net.minecraftforge.registries.ForgeRegistries.MOB_EFFECTS.getKey(inst.getEffect());
+            eff.append(key).append('x').append(inst.getAmplifier()).append(';');
+        }
         TinkersNewlife.LOGGER.info(
-                "[充能熔炼诊断] tick entity={} powered={} hp={}/{} invulnTime={} fireImmune={} fireRes={}",
+                "[充能熔炼诊断] tick entity={} powered={} hp={}/{} invulnTime={} "
+                        + "| 匠魂三条判据: isRemoved={} invulnerable={} fireImmune={} fireRes={} "
+                        + "| isInvulnerableTo(generic)={} "
+                        + "| effects=[{}] pos={},{},{}",
                 net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(creeper.getType()),
                 creeper.isPowered(),
                 creeper.getHealth(),
                 creeper.getMaxHealth(),
                 creeper.invulnerableTime,
+                creeper.isRemoved(),
+                creeper.isInvulnerable(),
                 creeper.fireImmune(),
-                creeper.hasEffect(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE));
+                creeper.hasEffect(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE),
+                creeper.isInvulnerableTo(probe),
+                eff.length() == 0 ? "（无）" : eff.toString(),
+                creeper.getBlockX(), creeper.getBlockY(), creeper.getBlockZ());
     }
 
     /**
