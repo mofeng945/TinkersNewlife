@@ -112,51 +112,29 @@ public final class WuWeiHandler {
         Entity killed = event.getEntity();
         if (!(killed instanceof Mob mob)) return;
         if (killed instanceof Player) return;
-        // 诊断：**Boss 级目标**（最大生命 ≥ 100）把整条记录链路逐道门打日志 ✓。
-        // 为什么需要它：Boss（诡厄巫法的使徒/亚波伦这类）的死亡常常"延后 / 变身 / 复活"，
-        // 只靠读代码无法确定卡在哪一道门 ✗ —— 实机一次击杀 + 一段日志就能定死 ✓。
-        final boolean bossLike = mob.getMaxHealth() >= 100.0F;
+        // ⚠ §658 起**删掉了整段诊断日志**（原来对"最大生命 ≥ 100 的目标"把记录链路**逐道门**打日志 ✗）：
+        //   它的用途（查"使徒/亚波伦那类死亡延后/变身/复活的 Boss 到底卡在哪一道门"）早已完成 ✓，
+        //   而整合包里血上限 ≥100 的怪**遍地都是**（莱特兰等模组全在加血 ✗）⇒ 一次会话刷屏 ✗。
+        //   按 §610i「不留诊断代码」⇒ **整段删除** ✓（不是加个开关 ✗）。
         // ⭐ 主动收回 ≠ 击杀（与咒灵操术"收回不删记录"同一口径 ✓）：
         //    收回走死亡链路，且死亡可能延后到标记窗口内才真正发生（见 CursedSpiritTechnique 的
         //    RECALLING 字段说明）—— 那种死亡不该被记成击杀形态 ✗，否则"放出→收回"会凭空多一条记录。
         if (com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
                 .isRecalling(killed)) {
-            if (bossLike) TinkersNewlife.LOGGER.info("[无为转变] 记录：{} 正在主动收回 → 不算击杀 ✓",
-                    mob.getName().getString());
             return;
         }
         Entity attacker = event.getSource().getEntity() != null
                 ? event.getSource().getEntity() : event.getSource().getDirectEntity();
         ServerPlayer killer = resolveKiller(attacker, mob);
-        if (killer == null) {
-            if (bossLike) TinkersNewlife.LOGGER.info(
-                    "[无为转变] 记录：{} 死亡时归属为空 ✗（伤害源={}）→ 没有记录就是卡在这一步",
-                    mob.getName().getString(), event.getSource().getMsgId());
-            return;
-        }
+        if (killer == null) return;
         // 仅咒力核心上装有「无为转变」修饰符的玩家才记录形态（未学会术式不写入）
-        if (!hasTechnique(killer)) {
-            if (bossLike) TinkersNewlife.LOGGER.info(
-                    "[无为转变] 记录：{} 归属={} ✓，但该玩家与其同心戒同伴的核心上都没有无为转变 → 不记 ✗",
-                    mob.getName().getString(), killer.getName().getString());
-            return;
-        }
+        if (!hasTechnique(killer)) return;
         String id = EntityType.getKey(killed.getType()).toString();
         List<String> records = getRecords(killer);
-        if (records.contains(id)) {
-            if (bossLike) TinkersNewlife.LOGGER.info("[无为转变] 记录：{} 已在 {} 的形态列表里 ✓（共 {} 条）",
-                    id, killer.getName().getString(), records.size());
-            return;
-        }
-        if (records.size() >= 200) {
-            if (bossLike) TinkersNewlife.LOGGER.info("[无为转变] 记录：{} 想记给 {}，但形态列表已满 200 ✗",
-                    id, killer.getName().getString());
-            return;
-        }
+        if (records.contains(id)) return;
+        if (records.size() >= 200) return;
         records.add(id);
         saveRecords(killer, records);
-        if (bossLike) TinkersNewlife.LOGGER.info("[无为转变] 记录：{} 已记入 {} 的形态列表 ✓（共 {} 条）—— 若界面里没有，见 WuWeiScreen 的搜索框/缓存",
-                id, killer.getName().getString(), records.size());
     }
 
     /**
@@ -1191,17 +1169,10 @@ public final class WuWeiHandler {
         boolean releasedSpirit = com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpiritTechnique
                 .ownerOfReleased(dropped) != null;
         boolean suppressed = isTransformedUnit(dropped) || recalling || releasedSpirit;
-        // ⭐ 诊断（只打 Boss 级 / 收回体，避免刷屏）：判断"收回体仍然掉物品"到底走不走本事件 ——
-        //    若收回时**完全没有**这行日志，说明那些物品不是本事件发的（是那个 mod 自己 spawn 的 ✗），
-        //    那就只能从"别让它在死亡链路里死"下手（改成静默移除）✓。
-        if (suppressed || dropped.getMaxHealth() >= 100.0F) {
-            TinkersNewlife.LOGGER.info("[收回掉落抑制] {}（{}，血量上限 {}）掉落 {} 件 → {}",
-                    dropped.getName().getString(),
-                    net.minecraft.world.entity.EntityType.getKey(dropped.getType()),
-                    dropped.getMaxHealth(), event.getDrops().size(),
-                    suppressed ? ("已取消 ✓（原因：" + (recalling ? "收回中" : (releasedSpirit ? "释放体" : "拟态体")) + "）")
-                            : "放行 ✗（它不是收回体：标记没落在它身上，或这就是别的实体）");
-        }
+        // ⚠ §658 起**删掉了一整段诊断日志**（原来对"所有血量上限 ≥100 的实体"都打一行 ✗）：
+        //   它的用途（判断"收回体仍掉物品到底走不走本事件"）早已完成 ✓，
+        //   而整合包里血上限 ≥100 的怪**遍地都是**（莱特兰等模组全在加血 ✗）⇒ 一次会话刷了 160 行 ✗。
+        //   按 §610i「不留诊断代码」⇒ **整段删除** ✓（不是加开关 ✗）。
         if (suppressed) {
             event.setCanceled(true);
         }
