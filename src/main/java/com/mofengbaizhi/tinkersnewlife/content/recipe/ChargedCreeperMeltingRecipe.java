@@ -129,7 +129,15 @@ public class ChargedCreeperMeltingRecipe extends EntityMeltingRecipe {
      *       ⇒ 看那几个布尔值（`fireImmune` / `invuln` / `fireRes`）是哪个为真。</li>
      * </ul>
      */
-    @net.minecraftforge.eventbus.api.SubscribeEvent
+    // ⚠⚠ 关键修正（§650 的诊断失败根因）：`@SubscribeEvent` **默认 `receiveCanceled = false`** ✗
+    //   ⇒ 一旦有别的模组把 `LivingAttackEvent` 取消掉，**本方法根本不会被调用** ✗
+    //   ⇒ 表现就是"一条日志都没有"，而我会把它误读成"**没发起攻击**" ✗ —— 前几轮就是这么被带偏的 ✗。
+    //   ⭐ 现在显式 `receiveCanceled = true` + 最低优先级 ⇒ **取消与否都能看到** ✓
+    //   （已查明：莱特兰 `LHAttackListener.onAttack` 会 `event.setCanceled(true)` ⇒
+    //     匠魂 `hurt` 返回 false ⇒ `tank.fill` 不执行 ⇒ **不出流体** ✓ 这正是用户看到的"不熔炼" ✓）
+    @net.minecraftforge.eventbus.api.SubscribeEvent(
+            priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST,
+            receiveCanceled = true)
     public static void onLivingAttackDiag(net.minecraftforge.event.entity.living.LivingAttackEvent event) {
         if (!(event.getEntity() instanceof Creeper creeper)) return;
         if (event.getEntity().level().isClientSide) return;
