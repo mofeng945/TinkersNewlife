@@ -35,14 +35,18 @@ $procs += Get-CimInstance Win32_Process -Filter "Name='java.exe'" -ErrorAction S
     Select-Object ProcessId, CommandLine
 $procs += Get-CimInstance Win32_Process -Filter "Name='javaw.exe'" -ErrorAction SilentlyContinue |
     Select-Object ProcessId, CommandLine
-$running = $procs | Where-Object {
-    $_.CommandLine -and $_.CommandLine -match 'net\.minecraft\.client\.main\.Main|minecraft|ModLauncher'
-}
-if ($running) {
-    Write-Host '拒绝部署：检测到 Minecraft/Forge 进程正在运行。'
-    $running | ForEach-Object { Write-Host ("  pid=" + $_.ProcessId) }
-    Write-Host '（覆盖运行中的 jar 会造成 NoClassDefFoundError 崩溃，请先关游戏）'
-    exit 2
+# ⚠ 判据改成"**按实例**判断"（§656）：
+#   原来是「**任何** Minecraft 在跑就整体拒绝」✗ —— 那只写测试包时会被
+#   **别的实例**（例如 [NL] 包）挡住 ✗，而覆盖那个实例并不受影响 ✓。
+#   现在：**只跳过"正在运行的那个实例"**，其余目标照写 ✓。
+function Get-RunningInstancePid([string]$instanceDir) {
+    foreach ($p in $procs) {
+        if ($p.CommandLine -and
+            $p.CommandLine.IndexOf($instanceDir, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) {
+            return $p.ProcessId
+        }
+    }
+    return $null
 }
 
 # 实例根：多候选搜索（按顺序取存在的；**冷备目录只用于"确认存在"，绝不写入**）
@@ -80,7 +84,18 @@ if ($targets.Count -eq 0) {
 
 $srcHash = (Get-FileHash -LiteralPath $jar.FullName -Algorithm MD5).Hash
 
+$skipped = 0
 foreach ($t in $targets) {
+    # ⚠ 只跳过"**正在运行的那个实例**"（它的 jar 正被 JVM 打开着，覆盖会崩 ✗）；
+    #   别的实例照写 ✓（例如只写测试包时，[NL] 包在跑不影响 ✓）。
+    $instanceDir = Split-Path -Parent $t
+    $pid2 = Get-RunningInstancePid $instanceDir
+    if ($pid2) {
+        Write-Host ("跳过（该实例正在运行，pid={0}）：{1}" -f $pid2, $t)
+        $skipped++
+        continue
+    }
+
     # ⚠ 版本号一变，jar 文件名就变了：必须先把旧版本的 tinkersnewlife-*.jar 删掉，
     #   否则 mods 里会同时存在两个版本 → Forge 报 "Duplicate mod" 直接加载失败。
     Get-ChildItem -LiteralPath $t -Filter 'tinkersnewlife-*.jar' -ErrorAction SilentlyContinue |
@@ -98,6 +113,10 @@ foreach ($t in $targets) {
         exit 3
     }
     Write-Host ("OK  {0} ({1} 字节 / MD5 {2})  {3}" -f $dest, $item.Length, $destHash, $item.LastWriteTime)
+}
+
+if ($skipped -gt 0) {
+    Write-Host ("⚠ 有 {0} 个目标被跳过（对应实例正在运行）⇒ 关掉那个实例后重跑本脚本即可补齐" -f $skipped)
 }
 
 Write-Host '部署完成'
