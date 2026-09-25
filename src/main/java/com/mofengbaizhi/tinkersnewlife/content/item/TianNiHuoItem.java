@@ -49,7 +49,11 @@ public class TianNiHuoItem extends CursedToolItem {
     @Override
     public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
         boolean result = super.hurtEnemy(stack, target, attacker);
-        if (target instanceof com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiMob) {
+        // ⚠ 只清除「**已调伏**」的式神：未调伏（调伏战中）是敌人，
+        //    discard() 不触发 die() ⇒ 调伏结算不会发生 ⇒ 用天逆鉾打调伏战等于白打 ✗。
+        //    未调伏的照常吃伤害，让它正常死掉走 {@code ShikigamiBehavior.onDeath} 调伏成功 ✓。
+        if (target instanceof com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiMob sm
+                && sm.isTamed()) {
             target.discard();
             if (!target.level().isClientSide) {
                 target.level().broadcastEntityEvent(target, (byte) 20); // 死亡粒子

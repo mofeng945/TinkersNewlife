@@ -624,6 +624,11 @@ public final class WuWeiHandler {
         if (target instanceof com.mofengbaizhi.tinkersnewlife.content.entity.MomoMerchant) return false;
         if (target instanceof TamableAnimal tame
                 && caster.getUUID().equals(tame.getOwnerUUID())) return false;
+        // ⭐ 十影式神：**已调伏 + 自己的**才算"自己人"，不打（口径同 §451）。
+        //    ⚠ 不能靠上面的 TamableAnimal 分支：式神从没 setOwnerUUID ⇒ tame.getOwnerUUID() 恒为 null
+        //    ⇒ 已调伏的式神会被自己的无为转变打掉 ✗。未调伏（调伏战中）是敌人，照常可转变 ✓。
+        if (target instanceof com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiMob sm
+                && sm.isTamed() && caster.getUUID().equals(sm.getOwnerId())) return false;
         EntityType<?> type = EntityType.byString(formId).orElse(null);
         if (type == null) return false;
 
@@ -736,6 +741,11 @@ public final class WuWeiHandler {
         }
         if (victim instanceof TamableAnimal tame
                 && player.getUUID().equals(tame.getOwnerUUID())) {
+            return false;
+        }
+        // ⭐ 同上（L625 那条）：式神没设 ownerUUID，必须单独判"已调伏 + 自己的"才不打 ✓
+        if (victim instanceof com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiMob sm
+                && sm.isTamed() && player.getUUID().equals(sm.getOwnerId())) {
             return false;
         }
         int output = CursePowerHelper.getCurseOutputLevel(player);

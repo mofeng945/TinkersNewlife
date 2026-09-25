@@ -76,10 +76,15 @@ public final class TianNiHuoInterruptHandler {
         if (!holding(player)) return;
         if (!(event.getTarget() instanceof LivingEntity target)) return;
 
-        if (target instanceof ShikigamiMob
+        // ⚠ 未调伏（调伏战中）的式神**不能**被"直接击杀"：killSummon 走 discard，
+        //    不触发 die() ⇒ 调伏结算不发生 ⇒ 天逆鉾一右键调伏战就废 ✗。
+        //    放行给原版近战，让它正常吃伤害、正常死掉 ⇒ 调伏成功 ✓。
+        boolean untamedShikigami = target instanceof ShikigamiMob sm && !sm.isTamed();
+        if (!untamedShikigami
+                && (target instanceof ShikigamiMob
                 || target instanceof PuppetIronGolem
                 || target instanceof PuppetSnowGolem
-                || target instanceof BlackBirdEntity) {
+                || target instanceof BlackBirdEntity)) {
             event.setCanceled(true);
             player.swing(InteractionHand.MAIN_HAND);
             killSummon(player, target);

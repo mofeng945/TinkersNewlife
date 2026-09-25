@@ -90,8 +90,11 @@ public class QianheYingyiDomain extends BaseDomain {
             }
             // ⭐ 用户口径：嵌合影翼庭 = 只锁移动（可转动/可切工具/可用工具 ✓）且**不锁自己的式神** ✓
                 // 只豁免**施术者自己的**式神（用户口径 ✓）：别人的式神照常被定住 ✓
+                // ⚠ 且只豁免「**已调伏**」的自己的式神：未调伏（调伏战中）是敌人，
+                //    主人必须能打死它 ⇒ 它不该因为带 ownerId 就被本领域豁免 ✓（与 §637 同口径 ✓）
                 if (!(e instanceof com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiMob sm)
-                        || sm.getOwnerId() == null || !sm.getOwnerId().equals(owner)) {
+                        || sm.getOwnerId() == null || !sm.getOwnerId().equals(owner)
+                        || !sm.isTamed()) {
                     com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.apply(e, 60, com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.Mode.MOVE_ONLY);
                 }
             if (e instanceof Mob mob) {

@@ -230,8 +230,19 @@ public final class LaevatainHandler {
         }
     }
 
-    /** 是否为 holder 的仆从（Goety IOwned.getTrueOwner()==holder 或 OwnableEntity.getOwner()==holder） */
+    /**
+     * 是否为 holder 的仆从（Goety IOwned.getTrueOwner()==holder 或 OwnableEntity.getOwner()==holder）。
+     *
+     * <p>⚠ <b>十影式神例外</b>：式神（`ShikigamiMob`，原版生物子类）的 `getOwner()` 返回召唤者，
+     * 但**未调伏**（调伏战中）的式神是<b>敌人</b>，不该吃到"仆从抗性光环"——
+     * 否则主人打它会额外多一层抗性、调伏战更难打（与 §637 同口径：只有已调伏才算队友）。
+     */
     private static boolean isOwnedBy(LivingEntity target, LivingEntity holder) {
+        // ⭐ 未调伏式神不算"自己的仆从"
+        if (target instanceof com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiMob sm
+                && !sm.isTamed()) {
+            return false;
+        }
         LivingEntity goetyOwner = GoetyBridge.getServantOwner(target);
         if (goetyOwner != null && goetyOwner == holder) return true;
         return target instanceof net.minecraft.world.entity.OwnableEntity oe && oe.getOwner() == holder;
