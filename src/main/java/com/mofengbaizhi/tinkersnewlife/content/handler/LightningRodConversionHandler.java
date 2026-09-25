@@ -39,10 +39,11 @@ import javax.annotation.Nullable;
  *       ⇒ 我们与"原版认为哪一格被劈中"完全一致 ✓（不用自己猜 ±1 格 ✓）。
  *       另外再兜一层：若落点方块**下面**那格才是避雷针（个别模组的闪电实体位置偏高），也认 ✓。</li>
  *   <li><b>容器 = 避雷针正下方那一格</b>（用户口径"容器上方放置避雷针" ✓）。</li>
- *   <li><b>只认"单流体容器"</b>：{@code IFluidHandler.getTanks() == 1} ✓
- *       —— 匠魂的储罐（seared/scorched tank）、Create 流体罐、大多数机器的罐子都满足 ✓。</li>
- *   <li><b>先抽干、再按 4/5 灌入</b>：输出恒小于输入（4/5 &lt; 1）⇒ 刚腾空的罐子一定装得下 ✓，
- *       不会出现"抽走了却灌不进去、白白丢流体" ✗（万一某罐子拒收，会打一条 WARN 说明丢了多少 ✓）。</li>
+ *   <li><b>只认"单流体容器"</b>：判据 = <b>容器里所有非空罐装的都只有烈焰血这一种流体</b> ✓
+ *       —— ⚠ <b>不是</b> {@code getTanks() == 1} ✗：匠魂储罐一装上流体就返回 2 ⇒ 会被误挡 ✗（§655 已修 ✓）。</li>
+ *   <li><b>先算产出、再抽干、再按 4/5 灌入</b>：输出恒小于输入（4/5 &lt; 1）⇒ 刚腾空的罐子一定装得下 ✓，
+ *       不会出现"抽走了却灌不进去、白白丢流体" ✗（万一某罐子拒收，会打一条 WARN 说明丢了多少 ✓）。
+ *       ⚠ 顺序很重要：**先算再抽**，否则"量太少算不出产出"时会把烈焰血白抽销毁 ✗（§655 已修 ✓）。</li>
  *   <li><b>没装铁魔法时什么都不做</b>：{@code liquid_lightning} 是本模组的<b>铁魔法联动流体</b>
  *       （没装铁魔法就不注册 ✓）⇒ 查不到输出流体就<b>提前 return</b> ✓
  *       —— 绝不能"先把烈焰血抽干再发现没流体" ✗。</li>
@@ -116,19 +117,59 @@ public final class LightningRodConversionHandler {
 
     /**
      * 对一个流体处理器尝试转化；真转化了就返回 true（调用方据此停止试其它面 ✓）。
-     * <p>过滤条件：<b>单流体容器</b>（{@code getTanks() == 1} ✓）+ 里面装的是<b>烈焰血</b> ✓。
+     *
+     * <h2>⚠⚠ 判据是"容器里<b>只装着烈焰血这一种流体</b>"，**不是** {@code getTanks() == 1} ✗</h2>
+     * 这里原本写成 {@code getTanks() == 1} ✗ —— 那是**错的** ✓，会让**匠魂自己的储罐**永远不转化 ✗：
+     * <pre>
+     * // SmelteryTank.java:92-95（反编译实测 ✓）
+     * public int getTanks() {
+     *   if (contained &lt; capacity) {
+     *     return fluids.size() + 1;      // ← 已经有流体时返回「已装种类数 + 1」
+     *   }
+     * }
+     * </pre>
+     * ⇒ 匠魂储罐（seared / scorched tank）**一装上烈焰血，{@code getTanks()} 就是 2** ✗
+     * （它给第二种流体预留一个空槽 ✓）⇒ 被旧判据挡掉 ✗
+     * —— 而 JEI 的说明里明明写着"匠魂储罐也算" ✗ ⇒ **实现与自己的说明矛盾** ✓ 已在 §655 修掉 ✓。
      */
     private static boolean tryConvert(@Nullable IFluidHandler handler, ServerLevel level, BlockPos tankPos,
                                       Fluid blazing, Fluid lightning) {
-        if (handler == null || handler.getTanks() != 1) return false;   // 只认单流体容器 ✓
-        FluidStack stored = handler.getFluidInTank(0);
-        if (stored.isEmpty() || !stored.getFluid().isSame(blazing)) return false;
+        if (handler == null) return false;
+        int tanks = handler.getTanks();
+        if (tanks <= 0) return false;
 
-        // 先抽干（EXECUTE）—— 抽多少以实际抽到的为准 ✓
-        FluidStack drained = handler.drain(stored.copy(), IFluidHandler.FluidAction.EXECUTE);
-        if (drained.isEmpty()) return false;
-        int out = scaled(drained.getAmount());
-        if (out <= 0) return false;
+        // ① 判据：**所有非空罐装的都必须是烈焰血**（混了别的流体 ⇒ 不算"单流体容器" ✓）
+        int total = 0;
+        boolean any = false;
+        for (int i = 0; i < tanks; i++) {
+            FluidStack fs = handler.getFluidInTank(i);
+            if (fs.isEmpty()) continue;
+            if (!fs.getFluid().isSame(blazing)) return false;
+            any = true;
+            total += fs.getAmount();
+        }
+        if (!any || total <= 0) return false;
+
+        // ② ⚠ **先算产出、再抽** ✗ —— 旧代码是"先抽干再算"，于是"量太少算不出产出"时
+        //    （例如正好 1 mB：1×4÷5 = 0）烈焰血**已经被抽走销毁、却什么都没产出** ✗（§655 一起修 ✓）
+        if (scaled(total) <= 0) return false;
+
+        // ③ 抽干（逐个非空罐抽；以**实际抽到**的量为准 ✓）
+        int drainedTotal = 0;
+        for (int i = 0; i < tanks; i++) {
+            FluidStack fs = handler.getFluidInTank(i);
+            if (fs.isEmpty()) continue;
+            FluidStack d = handler.drain(fs.copy(), IFluidHandler.FluidAction.EXECUTE);
+            drainedTotal += d.getAmount();
+        }
+        if (drainedTotal <= 0) return false;
+
+        int out = scaled(drainedTotal);
+        if (out <= 0) {
+            // 极少见：实际抽到的比预估少 ⇒ 把抽出来的**还回去**，绝不白抽 ✗
+            handler.fill(new FluidStack(blazing, drainedTotal), IFluidHandler.FluidAction.EXECUTE);
+            return false;
+        }
 
         int filled = handler.fill(new FluidStack(lightning, out), IFluidHandler.FluidAction.EXECUTE);
         if (filled < out) {
@@ -137,9 +178,9 @@ public final class LightningRodConversionHandler {
                     tankPos, out - filled, out);
         }
 
-        int lost = drained.getAmount() - out;                           // 5:4 里"消失"的那 1/5 ✓
+        int lost = drainedTotal - out;                                  // 5:4 里"消失"的那 1/5 ✓
         TinkersNewlife.LOGGER.info("[避雷针转化] {} 的烈焰血 {} mB → 液态闪电 {} mB（5:4，消失 {} mB）",
-                tankPos, drained.getAmount(), filled, lost);
+                tankPos, drainedTotal, filled, lost);
 
         // 雷击特效（原版闪电本身已有音效 ✓ 这里只补罐子上的一圈电火花 + 一声轻响 ✓）
         level.sendParticles(ParticleTypes.ELECTRIC_SPARK,
