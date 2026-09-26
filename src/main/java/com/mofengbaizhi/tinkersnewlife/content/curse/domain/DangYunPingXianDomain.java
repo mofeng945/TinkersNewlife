@@ -44,11 +44,13 @@ import java.util.UUID;
  *   <li>领域内持续维持一批<b>以施术者为主人的溺尸</b>（数量 = 6 + 半径/2，上限 24）：
  *       溺尸会<b>主动索敌并攻击领域内所有非施术者阵营目标</b>（游过去近战），
  *       死亡后自动补充；约 1/5 概率手持三叉戟。</li>
- *   <li>领域结束（手动/咒力耗尽/被破坏/死亡登出）一切回归原样：<b>本领域注的水</b>消失、溺尸全部消散。
- *       ⚠ <b>§690 用户口径</b>：「清除水逻辑<b>不要清除原本已有的水</b>」——
- *       首 tick 注水前会把「球体 ＋ 8 格外扩」内**原本就存在**的水/含水方块记下来
- *       （{@link #preExistingWater}），关闭清理时一律跳过 ✓
- *       ⇒ 领域旁边的池塘／玩家自己放的水／海面都<b>不会</b>被误清 ✗。</li>
+ *   <li>领域结束（手动/咒力耗尽/被破坏/死亡登出）一切回归原样：注的水消失、溺尸全部消散。
+ *       ⚠ <b>§700（用户提议，取代 §690 那套"保护既有水"的做法）</b>：
+ *       首 tick 注水前记下「球体 ＋ 8 格外扩」内**原本就是完整水源**的位置
+ *       （{@link #savedSources}）✓；关闭时<b>先把领域范围内所有水体清空</b> ✗，
+ *       再把那些水源<b>放回原位</b> ✓ —— 水流不还原，由原版流体自己重新流出 ✓。
+ *       ⇒ 既有水体的形态回到自然平衡 ✓，也不会再出现
+ *       「原本是 3 个水流，开关一次后变成 3 个水源」那种错位 ✗。</li>
  * </ul>
  */
 public class DangYunPingXianDomain extends BaseDomain {
@@ -74,18 +76,20 @@ public class DangYunPingXianDomain extends BaseDomain {
     private final Set<BlockPos> waterBlocks = new HashSet<>();
 
     /**
-     * <b>§690 用户口径</b>：「荡蕴平线的清除水逻辑<b>不要清除原本已有的水</b>」。
+     * <b>§700（用户提议）</b>：领域展开前记录的、<b>原本就是"完整水源"</b>的位置 ✓。
      *
-     * <p>首 tick 注水<b>之前</b>，先把「领域球体 ＋ 8 格外扩」范围内**原本就存在**的
-     * 水方块／气泡柱／含水方块（{@code WATERLOGGED=true}）记下来 ✓
-     * ⇒ 关闭时的 {@link #clearWater}／{@link #dryWaterlogged} 遇到它们<b>一律跳过</b> ✗。
-     *
-     * <p>⚠ 为什么要这么记：注水只往<b>空气</b>里灌 ✓（见 {@link #fillWater}），
-     * 但关闭清理是从记录点做 <b>BFS</b> 把"连通的水"一并删掉 ✗
-     * —— 领域旁边要是有个池塘、玩家自己放的水、或者一片海，就会被连着清空 ✗。
-     * 记下原有水体后，BFS 到它们边上就停 ✓（范围与清理 BFS 上限完全一致 ⇒ 不漏 ✓）。
+     * <p>关闭时的口径改为：<b>先把领域范围内所有水体清掉，再把这些水源放回原位</b> ✓。
+     * <ul>
+     *   <li>只记**水源**（{@code FluidState#isSource()}）＋ 气泡柱 ✓ —— 水流**不记** ✗：</li>
+     *   <li>理由（用户实测）：「原本那扩散的是 3 个<b>水流</b>，开启关闭后变成了 3 个<b>水源</b>」✗ ——
+     *       之前那套"把既有水整片保护起来、只清自己灌的"会留下**孤立的水流** ✗，
+     *       它的水位依据被我们改写 ⇒ 看起来就像"水流被扶正成水源" ✗。
+     *       改成"清空 + 还原水源"后，水流由原版流体自己重新流出来 ✓ ⇒ 形态回到自然平衡 ✓；</li>
+     *   <li>代价：若原本就有水流、且清空后地形不支持它再次流出，那段水流不会被复原 ✗
+     *       —— 这属于"回到自然平衡"，比留下错位的水流更合理 ✓。</li>
+     * </ul>
      */
-    private final Set<BlockPos> preExistingWater = new HashSet<>();
+    private final Set<BlockPos> savedSources = new HashSet<>();
 
     /**
      * <b>§694</b>：本领域球壳位置的<b>副本</b>。
@@ -159,8 +163,8 @@ public class DangYunPingXianDomain extends BaseDomain {
                 shellBackup.clear();
                 shellBackup.addAll(getBarrierPositions());
             }
-            // §690：必须先记「原本就有的水」，再注水 —— 顺序反了就记不到原貌了 ✗
-            recordPreExistingWater(level);
+            // §700：先记「原本就是完整水源」的位置（关闭时清空后再放回 ✓）
+            recordSavedSources(level);
             fillWater(level, true);
             spawnDrownedBatch(level, player, targetCount());
             TinkersNewlife.LOGGER.info("[荡蕴平线] 首 tick 注水 {} 块 溺尸 {} 只",
@@ -219,17 +223,18 @@ public class DangYunPingXianDomain extends BaseDomain {
              */
             java.util.List<BlockPos> temporary = restoreShellTemporarily(levelRef);
             try {
-                // ⭐ 注的水复原为空气：从每个记录的水源出发，把与之连通的水全部删掉
-                //（含扩散出的流动水），避免"关领域后残留水塘"。
+                // §700：**先把领域范围内的水体全部清掉** ✓（不再区分"自己的/原有的" ✓）
                 java.util.Set<BlockPos> cleared = clearWater(levelRef);
-                // ⭐ 含水方块（waterlogged）也要一起清：注水后原版流体会把台阶/楼梯/栅栏/珊瑚
-                // 这类"可含水"方块灌成含水状态，只删水方块的话它们会永远含着水。
+                // ⭐ 含水方块（waterlogged）也要一起清（清空之后再烘干 ✓）
                 dryWaterlogged(levelRef, cleared);
+                // §700：再把「原本就是完整水源」的位置放回去 ✓ —— 水流交给原版流体自己重新流出 ✓
+                restoreSources(levelRef);
             } finally {
                 removeTemporaryShell(levelRef, temporary);
             }
+            logSavedSourcesAfter(levelRef);   // §700：小场景对照诊断（放回水源后再看一次）
             waterBlocks.clear();
-            preExistingWater.clear();   // §690：本次领域用完了就丢掉，不留给下一次
+            savedSources.clear();   // §700：本次领域用完了就丢掉，不留给下一次
         }
         // 施术者水呼吸随效果自然过期即可
         clearResist();
@@ -277,16 +282,15 @@ public class DangYunPingXianDomain extends BaseDomain {
     }
 
     /**
-     * 从记录水源出发 BFS，清除所有连通的水方块（仅限领域附近的连通水域），返回被清掉的位置。
-     * <p>⚠ §690：**原本就存在的水一律跳过** ✗ —— 既不删、也不穿过它继续扩散
-     * （{@link #preExistingWater}，首 tick 注水前记好 ✓）。
+     * 从记录水源出发 BFS，清除领域范围内所有连通的水方块，返回被清掉的位置。
+     * <p>⚠ §700（用户提议）：这里**不再区分"自己的水/原有的水"** ✓ ——
+     * 领域范围内一律清空 ✗，随后由 {@link #restoreSources} 把原有**水源**放回原位 ✓
+     * （水流不还原，交给原版流体自己重新流出 ✓）。
      */
     private java.util.Set<BlockPos> clearWater(ServerLevel level) {
         java.util.ArrayDeque<net.minecraft.core.BlockPos> queue = new java.util.ArrayDeque<>();
         java.util.Set<net.minecraft.core.BlockPos> visited = new java.util.HashSet<>();
-        int skippedSeeds = 0;
         for (BlockPos pos : waterBlocks) {
-            if (preExistingWater.contains(pos)) { skippedSeeds++; continue; }   // §690：原本就是水 ⇒ 不动
             if (isWaterBody(level.getBlockState(pos))) {
                 queue.add(pos);
                 visited.add(pos);
@@ -296,16 +300,14 @@ public class DangYunPingXianDomain extends BaseDomain {
         while (!queue.isEmpty()) {
             BlockPos pos = queue.poll();
             /*
-             * ⚠ §694：这里用 <b>3</b>（UPDATE_NEIGHBORS | UPDATE_CLIENTS）而不是 2 ✗ ——
-             * flag 2 不触发邻居更新 ⇒ 流体系统不知道水位变了 ⇒ 周围的水会顺着回灌 ✗
-             * （配上 §694 的"临时立壳"，本次清理才真正留得住 ✓）。
+             * 用 3（UPDATE_NEIGHBORS | UPDATE_CLIENTS）而不是 2 ——
+             * flag 2 不触发邻居更新 ⇒ 流体系统不知道水位变了 ⇒ 周围的水会顺着回灌。
              */
             level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
             // 六向扩散：连通的水（含流动水/低处积水）一并清掉
             for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
                 BlockPos next = pos.relative(dir);
                 if (visited.contains(next)) continue;
-                if (preExistingWater.contains(next)) continue;  // §690：原本就是水 ⇒ 不穿越、不清 ✗
                 if (next.distSqr(BlockPos.containing(center)) > limitSq) continue;
                 if (isWaterBody(level.getBlockState(next))) {
                     visited.add(next);
@@ -317,25 +319,45 @@ public class DangYunPingXianDomain extends BaseDomain {
         //    把刚清掉的位置重新变回水/气泡柱 → 再扫一遍，保证注的水一滴不留。
         int leftover = 0;
         for (BlockPos pos : waterBlocks) {          // 记录水位（含被破坏后又被灌成气泡柱的）
-            if (preExistingWater.contains(pos)) continue;      // §690
             if (isWaterBody(level.getBlockState(pos))) {
                 level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
                 leftover++;
             }
         }
-        for (BlockPos pos : visited) {              // visited 里本来就没有受保护的格子 ✓
+        for (BlockPos pos : visited) {
             if (isWaterBody(level.getBlockState(pos))) {
                 level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
                 leftover++;
             }
         }
-        // §694 诊断：一次看清"自己灌了多少 / 多少被既有水保护跳过 / 实际清了存活多少"
-        TinkersNewlife.LOGGER.info("[荡蕴平线] 清理自身水源 {} 块（跳过既有水 {} 块）⇒ 实际清除 {} 块，复核残留 {} 块",
-                waterBlocks.size(), skippedSeeds, visited.size(), leftover);
+        // §700 诊断：一次看清"自己灌了多少 / 实际清了多少 / 复核残留多少"
+        TinkersNewlife.LOGGER.info("[荡蕴平线] 清理自身水源 {} 块 ⇒ 实际清除 {} 块，复核残留 {} 块",
+                waterBlocks.size(), visited.size(), leftover);
         if (leftover > 0) {
             TinkersNewlife.LOGGER.info("[荡蕴平线] 复核清除残留水体（含气泡柱）{} 块", leftover);
         }
         return visited;
+    }
+
+    /**
+     * <b>§700（用户提议）</b>：把「原本就是完整水源」的位置<b>放回原位</b> ✓。
+     *
+     * <p>清空完成后调用 ✓；只放**空气或水**的格子 ✓ —— 玩家在我们清空后立刻放了方块的地方绝不覆盖 ✗。
+     * 水流不还原 ✗（交给原版流体自己重新流出 ✓）。
+     */
+    private void restoreSources(ServerLevel level) {
+        if (savedSources.isEmpty()) return;
+        var water = Blocks.WATER.defaultBlockState();
+        int restored = 0;
+        for (BlockPos pos : savedSources) {
+            if (!level.isLoaded(pos)) continue;
+            var state = level.getBlockState(pos);
+            if (state.isAir() || isWaterBody(state)) {
+                level.setBlock(pos, water, 3);
+                restored++;
+            }
+        }
+        TinkersNewlife.LOGGER.info("[荡蕴平线] 放回原有水源 {} 块（共记录 {} 块）", restored, savedSources.size());
     }
 
     /**
@@ -349,30 +371,21 @@ public class DangYunPingXianDomain extends BaseDomain {
         return state.is(Blocks.WATER) || state.is(Blocks.BUBBLE_COLUMN);
     }
 
-    /** 该方块是不是「含水的方块」（台阶／楼梯／栅栏／珊瑚这类 {@code WATERLOGGED=true}） */
-    private static boolean isWaterlogged(net.minecraft.world.level.block.state.BlockState state) {
-        return state.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED)
-                && state.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED);
-    }
-
     /**
-     * <b>§690 用户口径</b>：「荡蕴平线的清除水逻辑<b>不要清除原本已有的水</b>」。
+     * <b>§700（用户提议）</b>：在注水之前扫一遍「领域球体 ＋ 8 格外扩」范围
+     * （与 {@link #clearWater} 里 BFS 的 {@code radius + 8} 上限完全一致 ✓），
+     * 把**原本就是"完整水源"**的位置记进 {@link #savedSources} ✓。
      *
-     * <p>在注水<b>之前</b>扫一遍「领域球体 ＋ 8 格外扩」范围（与 {@link #clearWater} 里 BFS 的
-     * {@code radius + 8} 上限<b>完全一致</b> ✓），把**原本就存在**的
-     * 水方块／气泡柱／含水方块记进 {@link #preExistingWater} ✓。
-     *
-     * <p>为什么这样刚好够：
+     * <p>关闭时的口径是「**清空范围内所有水体 ⇒ 再把这些水源放回原位**」✓：
      * <ul>
-     *   <li>注水只灌<b>空气</b> ✓ ⇒ 这些原有水体本来就不会被改写 ✓；</li>
-     *   <li>关闭清理的 BFS 视野被 {@code radius + 8} 卡住 ✓ ⇒ 只要"这一圈里的原有水"被标记，
-     *       BFS 走到它们边上就停 ✓ —— <b>圈外</b>（例如整片海、整条河）的水根本进不了视野 ✓，
-     *       不必也不该把整片水域都记下来 ✗；</li>
-     *   <li>⇒ 效果：**领域自己灌的水照旧清干净 ✓，原本就有的水一滴不动 ✓**。</li>
+     *   <li>只记**水源**（{@code FluidState#isSource()} ✓）＋ 气泡柱 ✓；<b>水流不记</b> ✗
+     *       —— 水流由原版流体在放回水源后自己重新流出 ✓；</li>
+     *   <li>含水方块（{@code WATERLOGGED}）也不必单独记：清空后它们会被烘干，
+     *       若原本就泡在水里，放回水源后原版流体会重新把水灌回去 ✓。</li>
      * </ul>
      */
-    private void recordPreExistingWater(ServerLevel level) {
-        preExistingWater.clear();
+    private void recordSavedSources(ServerLevel level) {
+        savedSources.clear();
         double limitSq = (radius + 8.0) * (radius + 8.0);
         BlockPos centerPos = BlockPos.containing(center);
         int r = (int) Math.ceil(radius + 8.0);
@@ -384,15 +397,34 @@ public class DangYunPingXianDomain extends BaseDomain {
                     if (pos.distSqr(centerPos) > limitSq) continue;
                     if (!level.isLoaded(pos)) continue;      // 未加载区块：读不到状态，跳过 ✓
                     var state = level.getBlockState(pos);
-                    if (isWaterBody(state) || isWaterlogged(state)) {
-                        preExistingWater.add(pos.immutable());
+                    // 气泡柱不是"水源流体" ⇒ 单独判一下 ✓
+                    if (state.is(Blocks.BUBBLE_COLUMN) || level.getFluidState(pos).isSource()) {
+                        savedSources.add(pos.immutable());
                     }
                 }
             }
         }
-        if (!preExistingWater.isEmpty()) {
-            TinkersNewlife.LOGGER.info("[荡蕴平线] 记录到既有水体 {} 块 ⇒ 关闭时不会清除它们",
-                    preExistingWater.size());
+        if (!savedSources.isEmpty()) {
+            TinkersNewlife.LOGGER.info("[荡蕴平线] 记录到原有水源 {} 块 ⇒ 关闭时清空后会放回原位",
+                    savedSources.size());
+            // §700 对照诊断（小场景才打 ✓）：清空前每格的水位，清空并放回后再打一次 ✓
+            if (savedSources.size() <= 12) {
+                for (BlockPos p : savedSources) {
+                    var fs = level.getFluidState(p);
+                    TinkersNewlife.LOGGER.info("[荡蕴平线]   放回前 水源 @({},{},{}) 源={} 水位={}",
+                            p.getX(), p.getY(), p.getZ(), fs.isSource(), fs.getAmount());
+                }
+            }
+        }
+    }
+
+    /** §700：小场景下把"原有水源"的水位再打一次（放回之后 ⇒ 与"放回前"对比即可看出有没有还原 ✓） */
+    private void logSavedSourcesAfter(ServerLevel level) {
+        if (savedSources.isEmpty() || savedSources.size() > 12) return;
+        for (BlockPos p : savedSources) {
+            var fs = level.getFluidState(p);
+            TinkersNewlife.LOGGER.info("[荡蕴平线]   放回后 水源 @({},{},{}) 源={} 水位={}",
+                    p.getX(), p.getY(), p.getZ(), fs.isSource(), fs.getAmount());
         }
     }
 
@@ -402,9 +434,10 @@ public class DangYunPingXianDomain extends BaseDomain {
      * 注水后原版流体会顺着扩散把台阶/楼梯/栅栏/珊瑚这类「可含水」方块灌成含水状态，
      * 而 {@link #clearWater} 只处理真正的 {@code minecraft:water} 方块，含水方块会残留。
      * 这里从「刚被清掉的水 + 当初记录的水位」出发，沿含水方块做 BFS（含水方块彼此也连通），
-     * 逐个把 {@code WATERLOGGED} 置回 false —— 只影响与领域水域连通的那些，
-     * 不会误伤领域外/原本就含水的方块。
-     * <p>⚠ §690：**原本就含水的方块**（{@link #preExistingWater}）一律跳过 ✗
+     * 逐个把 {@code WATERLOGGED} 置回 false ✓。
+     * <p>⚠ §700（用户提议）：**不再跳过"原本就含水的方块"** ✓ ——
+     * 清空后统一烘干 ✗；如果它原本就泡在水里，{@link #restoreSources} 放回水源后
+     * 原版流体会自己重新把水灌回去 ✓。
      * —— 否则领域旁边本来就泡在水里的台阶/珊瑚会被一起烘干 ✗。
      */
     private void dryWaterlogged(ServerLevel level, java.util.Set<BlockPos> cleared) {
@@ -412,7 +445,6 @@ public class DangYunPingXianDomain extends BaseDomain {
         java.util.Set<BlockPos> visited = new java.util.HashSet<>(cleared);
         queue.addAll(cleared);
         for (BlockPos pos : waterBlocks) {          // 水位可能已被玩家破坏 → 一并作为种子
-            if (preExistingWater.contains(pos)) continue;   // §690：原本就在水里的方块不动 ✗
             if (visited.add(pos)) queue.add(pos);
         }
         double limitSq = (radius + 8.0) * (radius + 8.0);
@@ -422,7 +454,6 @@ public class DangYunPingXianDomain extends BaseDomain {
             BlockPos pos = queue.poll();
             for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
                 BlockPos next = pos.relative(dir);
-                if (preExistingWater.contains(next)) continue;  // §690：原本就含水的方块不烘干 ✗
                 if (!visited.add(next)) continue;
                 if (next.distSqr(centerPos) > limitSq) continue;
                 var state = level.getBlockState(next);
@@ -462,6 +493,12 @@ public class DangYunPingXianDomain extends BaseDomain {
                         if (dx * dx + dy * dy + dz * dz > fillRadius * fillRadius) continue;
                         BlockPos pos = new BlockPos(x, y, z);
                         if (!level.getBlockState(pos).isAir()) continue;
+                        /*
+                         * §700（用户提议）：这里照旧把空气灌成**水源** ✓ ——
+                         * 但关闭时改成"**全部清空 + 把原有水源放回原位**" ✓
+                         * （见 {@link #restoreSources}）⇒ 不再需要在注水时避开既有水体 ✓，
+                         * 水流由原版流体自己重新流出 ✓。
+                         */
                         level.setBlock(pos, Blocks.WATER.defaultBlockState(), 2);
                         waterBlocks.add(pos);
                     }
