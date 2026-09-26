@@ -17,6 +17,8 @@ import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 防御槽强化「硬化皮肤」的生效端。
@@ -38,21 +40,22 @@ import net.minecraftforge.fml.common.Mod;
  * <p>⚠ 伤害类型按**注册表键**比对（{@code DamageSource#is(ResourceKey)} ✓），不按 {@code getMsgId()} ——
  * 血族把 {@code sun_damage} 的 {@code message_id} 定成了 {@code "sun"}（见其 damage_type json ✓），
  * 按 msgId 比对既不可靠也容易撞到别的模组 ✗。
+ *
+ * <p>⚠ 诊断口径（§706 教训 ✓）：装了强化却"没反应"时，在 **有强化但等级不够** 与 **真的免掉了**
+ * 两处分歧点各打一条 {@code LOGGER.debug} ✓（只进 {@code logs/debug.log} ✓）。
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class HardenedSkinHandler {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(HardenedSkinHandler.class);
     private static final String MODIFIER_ID = "hardened_skin";
     private static final String VAMPIRISM_MOD_ID = "vampirism";
 
-    /** 血的阳光伤害（一律免） */
-    private static final ResourceKey<DamageType> SUN_DAMAGE =
-            key("sun_damage");
+    /** 血族的阳光伤害（一律免） */
+    private static final ResourceKey<DamageType> SUN_DAMAGE = key("sun_damage");
     /** 血族"在火里/身上着火"那两种伤害（只在阳光下、且不在岩浆里时免） */
-    private static final ResourceKey<DamageType> VAMPIRE_IN_FIRE =
-            key("vampire_in_fire");
-    private static final ResourceKey<DamageType> VAMPIRE_ON_FIRE =
-            key("vampire_on_fire");
+    private static final ResourceKey<DamageType> VAMPIRE_IN_FIRE = key("vampire_in_fire");
+    private static final ResourceKey<DamageType> VAMPIRE_ON_FIRE = key("vampire_on_fire");
 
     private static ResourceKey<DamageType> key(String path) {
         return ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation(VAMPIRISM_MOD_ID, path));
@@ -69,18 +72,30 @@ public class HardenedSkinHandler {
             return;
         }
         DamageSource source = event.getSource();
-        if (!isProtected(entity)) {
+        boolean sunlightDamage = source.is(SUN_DAMAGE);
+        boolean sunlightFire = source.is(VAMPIRE_IN_FIRE) || source.is(VAMPIRE_ON_FIRE);
+        if (!sunlightDamage && !sunlightFire) {
+            return;   // 跟阳光无关的伤害：静默放行
+        }
+        if (!(entity instanceof Player player) || !ArmorModifierHelper.hasModifierOnArmor(player, MODIFIER_ID)) {
+            return;   // 没装这条强化：静默（否则每次阳光伤害都刷一条）
+        }
+        if (!ModList.get().isLoaded(VAMPIRISM_MOD_ID)) {
+            LOGGER.debug("[硬化皮肤] {} 装了这一条，但血族模组不在场 ⇒ 不免疫 {}", player.getName().getString(), source.getMsgId());
             return;
         }
-        boolean sunlightOnlyFire = source.is(VAMPIRE_IN_FIRE) || source.is(VAMPIRE_ON_FIRE);
-        if (!source.is(SUN_DAMAGE) && !sunlightOnlyFire) {
+        if (!VampireIntegration.isHighRankVampire(player)) {
+            LOGGER.debug("[硬化皮肤] {} 当前血族等级 = {}（本强化要求 ≥ {}）⇒ 不免疫 {}",
+                    player.getName().getString(), VampireIntegration.getVampireLevel(player),
+                    VampireIntegration.REQUIRED_LEVEL, source.getMsgId());
             return;
         }
-        if (sunlightOnlyFire && !isBurningInSunlight(entity)) {
-            return;   // 身上的火不是太阳点的（岩浆/营火…）⇒ 不免
+        if (sunlightFire && !isBurningInSunlight(entity)) {
+            return;   // 身上的火不是太阳点的（岩浆/营火…）⇒ 不免（这一条故意不刷日志 ✓ 岩浆里着火很常见）
         }
         event.setCanceled(true);
         entity.clearFire();
+        LOGGER.debug("[硬化皮肤] {} 免疫了 {}（阳光 ✓）", player.getName().getString(), source.getMsgId());
     }
 
     // ============================================================
@@ -96,10 +111,14 @@ public class HardenedSkinHandler {
         if (player.level().isClientSide || !player.isOnFire()) {
             return;
         }
+        if (!ArmorModifierHelper.hasModifierOnArmor(player, MODIFIER_ID)) {
+            return;
+        }
         if (!isProtected(player) || !isBurningInSunlight(player)) {
             return;
         }
         player.clearFire();
+        LOGGER.debug("[硬化皮肤] {} 在阳光下被点着了 ⇒ 已掐灭", player.getName().getString());
     }
 
     // ============================================================

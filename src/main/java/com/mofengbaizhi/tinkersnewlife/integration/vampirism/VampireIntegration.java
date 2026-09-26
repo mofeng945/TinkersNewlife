@@ -2,12 +2,9 @@ package com.mofengbaizhi.tinkersnewlife.integration.vampirism;
 
 import com.mofengbaizhi.tinkersnewlife.mixin.BloodStatsInvoker;
 import de.teamlapen.vampirism.api.VampirismAPI;
-import de.teamlapen.vampirism.api.entity.factions.IFaction;
 import de.teamlapen.vampirism.api.entity.factions.IFactionPlayerHandler;
-import de.teamlapen.vampirism.api.entity.factions.IPlayableFaction;
 import de.teamlapen.vampirism.api.entity.player.vampire.IBloodStats;
 import de.teamlapen.vampirism.api.entity.player.vampire.IVampirePlayer;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.fml.ModList;
 
@@ -19,17 +16,21 @@ import net.minecraftforge.fml.ModList;
  * 才允许被碰到 ✗。调用方（{@code content/modifier/events/} 下的事件处理器）必须先判 ModList，
  * 没装血族的环境里本类不会被 JVM 加载，也就不会有 NoClassDefFoundError ✓。
  *
- * <p>⚠ 血液值只能"走后门"写入：{@code BloodStats#addBlood(int, float)} 是**包级私有**的
- * （{@code IVampirePlayer#getBloodStats()} 返回的 {@code IBloodStats} 只有 getter ✗），
- * 所以本模组用 {@link BloodStatsInvoker} 这个 Mixin {@code @Invoker} 把它暴露出来 ✓
- * （不装血族时该 Mixin 静默不生效，{@code instanceof} 判失败 ⇒ 直接放弃写入，不崩 ✗）。
+ * <p>⚠ 等级判定的写法（2026-09-27 改 ✓，原因见备忘录 §706）：
+ * **不再按阵营 id 去 {@code factionRegistry().getFactionByID(...)} 查表** ✗ —— 改成读玩家自己的
+ * {@code IFactionPlayerHandler#getCurrentFactionPlayer()}，看它是不是 {@link IVampirePlayer}，
+ * 再取它自己的 {@code getLevel()} ✓。这样"是不是血族"与"几级"都直接来自玩家的 capability 数据，
+ * 少一层查表、少一个可能对不上的 id ✓。
+ *
+ * <p>⚠ 血液值只能"走后门"写入：{@code BloodStats#addBlood(int, float)} 是**包级私有**的 ✗
+ * （{@code IBloodStats} 只有 getter），所以用 {@link BloodStatsInvoker} 这个 Mixin {@code @Invoker}
+ * 把它暴露出来 ✓（debug.log 实测确认该 Mixin 会正常应用 ✓）；Mixin 若没生效，
+ * {@code instanceof} 判失败 ⇒ 直接放弃写入并打一条 debug 日志 ✓，不崩 ✗。
  */
 public final class VampireIntegration {
 
     /** 血族模组 id */
     public static final String MOD_ID = "vampirism";
-    /** 血族阵营 id（{@code vampirism:vampire}） */
-    private static final ResourceLocation VAMPIRE_FACTION_ID = new ResourceLocation(MOD_ID, "vampire");
     /** 本联动两条强化的生效门槛：**5 级以上的血族**（用户口径 ✓） */
     public static final int REQUIRED_LEVEL = 5;
 
@@ -42,35 +43,27 @@ public final class VampireIntegration {
     }
 
     /**
-     * 玩家是不是「5 级以上的血族」。
-     * <p>未装血族 / 不是血族阵营 / 等级不够 ⇒ 一律 false（不抛异常 ✓）。
+     * 玩家当前的血族等级：**不是血族 / 读不到 ⇒ -1** ✓。
+     * <p>实现要点：判定"是不是血族"用的是 {@code getCurrentFactionPlayer()} 的实际类型，
+     * 不查阵营注册表 ✓（猎人的能力是 {@code IHunterPlayer}，自然被判掉 ✓）。
      */
-    public static boolean isHighRankVampire(Player player) {
-        if (!isLoaded() || player == null) {
-            return false;
-        }
-        IFactionPlayerHandler handler = VampirismAPI.getFactionPlayerHandler(player).resolve().orElse(null);
-        if (handler == null) {
-            return false;
-        }
-        IFaction<?> faction = VampirismAPI.factionRegistry().getFactionByID(VAMPIRE_FACTION_ID);
-        if (!(faction instanceof IPlayableFaction<?> playable)) {
-            return false;
-        }
-        return handler.isInFaction(playable) && handler.getCurrentLevel(playable) >= REQUIRED_LEVEL;
-    }
-
-    /** 血族等级（不是血族 / 读不到 ⇒ -1） */
     public static int getVampireLevel(Player player) {
         if (!isLoaded() || player == null) {
             return -1;
         }
         IFactionPlayerHandler handler = VampirismAPI.getFactionPlayerHandler(player).resolve().orElse(null);
-        IFaction<?> faction = VampirismAPI.factionRegistry().getFactionByID(VAMPIRE_FACTION_ID);
-        if (handler == null || !(faction instanceof IPlayableFaction<?> playable) || !handler.isInFaction(playable)) {
+        if (handler == null) {
             return -1;
         }
-        return handler.getCurrentLevel(playable);
+        if (!(handler.getCurrentFactionPlayer().orElse(null) instanceof IVampirePlayer vampire)) {
+            return -1;
+        }
+        return vampire.getLevel();
+    }
+
+    /** 玩家是不是「5 级以上的血族」（未装血族 / 不是血族 / 等级不够 ⇒ false ✓） */
+    public static boolean isHighRankVampire(Player player) {
+        return getVampireLevel(player) >= REQUIRED_LEVEL;
     }
 
     /** 当前血液值（读不到 ⇒ -1） */
@@ -101,6 +94,11 @@ public final class VampireIntegration {
         }
         invoker.tinkersnewlife$addBlood(amount, saturationMultiplier);
         return true;
+    }
+
+    /** {@link BloodStatsInvoker} 是否真的挂上了（诊断用 ✓） */
+    public static boolean isBloodWriteAvailable(Player player) {
+        return bloodStats(player) instanceof BloodStatsInvoker;
     }
 
     /** 取 {@code IBloodStats}（没装血族 / 不是血族 ⇒ null） */
