@@ -99,10 +99,12 @@ public class PacketCreatePortal {
                 if (id == null) return;
                 ResourceKey<Level> destination = ResourceKey.create(Registries.DIMENSION, id);
                 result = WhiteSpaceDimensions.linkFromWhiteSpace(
-                        from, packet.anchor, destination, new BlockPos(packet.x, packet.y, packet.z));
+                        from, packet.anchor, destination, new BlockPos(packet.x, packet.y, packet.z),
+                        player.getDirection());
             } else {
                 // 锁定模式：只信 x/z；维度固定伟大白色空间、y 固定地面表层
-                result = WhiteSpaceDimensions.linkFromOutside(from, packet.anchor, packet.x, packet.z);
+                result = WhiteSpaceDimensions.linkFromOutside(
+                        from, packet.anchor, packet.x, packet.z, player.getDirection());
             }
 
             player.displayClientMessage(result.message(), true);

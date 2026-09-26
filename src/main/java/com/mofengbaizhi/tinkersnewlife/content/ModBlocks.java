@@ -215,7 +215,9 @@ public class ModBlocks {
     /**
      * 伟大白色空间<b>传送门</b>：无碰撞、不挡视线、自发光 15；目的地存在
      * {@link com.mofengbaizhi.tinkersnewlife.content.block.WhiteSpacePortalBlockEntity} 里 ⇒ 永久 ✓。
-     * <p>可挖（硬度 25）但<b>没有战利品表 ⇒ 挖掉什么都不掉</b>：开错位置的门能清掉，又刷不出东西 ✓。
+     * <p><b>§664 起硬度 -1</b>：正常方式<b>挖不动</b>（爆炸也炸不掉、活塞也推不动），
+     * 只有拿<b>天逆鉾右键</b>才能拆掉整扇门（并响一声玻璃碎）⇒ 开错位置的门仍然清得掉，
+     * 但不会被误挖、也不会被苦力怕炸没 ✓。
      */
     public static final RegistryObject<Block> WHITE_SPACE_PORTAL = BLOCKS.register("white_space_portal",
             com.mofengbaizhi.tinkersnewlife.content.block.WhiteSpacePortalBlock::new);

@@ -2,8 +2,10 @@ package com.mofengbaizhi.tinkersnewlife.content.portal;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModBlocks;
+import com.mofengbaizhi.tinkersnewlife.content.block.WhiteSpacePortalBlock;
 import com.mofengbaizhi.tinkersnewlife.content.block.WhiteSpacePortalBlockEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -14,7 +16,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -23,36 +27,38 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * <b>伟大白色空间</b>（§660／§661）的维度常量、「开门」逻辑、传送黑名单与维度解锁。
+ * <b>伟大白色空间</b>（§660／§661／§663）的维度常量、「开门」逻辑、传送黑名单与维度解锁。
  *
  * <h2>这个维度是什么</h2>
  * 连接相隔若干光年之地的奇异维度空间；古老者在地球上至少修过一座通往它的门。
  * 它只有 <b>2 层</b>：{@code y=0} 基岩层，{@code y=1} 一整层<b>不可破坏的白色方块</b>；
- * 天空<b>不随昼夜更替变化</b>，恒定一片白（维度类型 {@code fixed_time=6000} ＋ 客户端自定义
- * {@code DimensionSpecialEffects} 的白色雾色／{@code SkyType.NONE}）。
+ * 天空<b>不随昼夜更替变化</b>，恒定一片白。
  *
- * <h2>门（传送门）的模型：永远成对 ＋ 自动记录落点</h2>
- * 通行证开出来的永远是<b>成对</b>的两扇门，互相指向对方 —— 这是「永久存在且可自由往返」的唯一做法：
+ * <h2>门：<b>2 格高</b> ＋ 永远成对 ＋ 自动记录落点（§663／§661）</h2>
  * <ul>
- *   <li><b>在伟大白色空间之外的（非黑名单）维度</b>对着方块用通行证 ⇒ GUI 里维度<b>锁死</b>为
- *       伟大白色空间、<b>不能填 y</b>，只需（可选地）改 x／z；门开在<b>该方块上方</b>，
- *       目的地 ＝ 伟大白色空间里那个 xz、{@code y = }{@link #GROUND_Y} 的对应落点。
- *       x／z 的默认值就是<b>门自己的 xz</b> ⇒ 「相对落点」自动记录 ✓。</li>
- *   <li><b>在伟大白色空间里</b>用通行证 ⇒ GUI 里下拉选维度 ＋ 填 xyz；门开在<b>使用的方块上方</b>，
- *       目的地是选的那个坐标，同时在该坐标处也开一扇指回来的门 ✓。</li>
+ *   <li><b>2 格高</b>：一扇门＝<b>上下两格</b>同款方块（{@code HALF=lower/upper}），
+ *       两格各存一份相同的目的地 ⇒ 从哪一格走进去都能传送 ✓。
+ *       整扇门<b>同生共死</b>：{@link #removePortal} 拆一对；
+ *       玩家挖掉任意一格时由 {@code WhiteSpacePortalBlock#onRemove} 清掉另一格 ✓。</li>
+ *   <li><b>朝向</b>：开门时取玩家的水平朝向写进 {@code FACING} ⇒ 那片平面横在玩家面前 ✓。
+ *       自愈补门（{@link #resolveLanding}）时取"正在走进去的玩家"的朝向 ✓。</li>
+ *   <li><b>成对</b>：通行证开出来的永远是两扇互相指向对方的门 —— 这是「永久存在且可自由往返」的前提 ✓。
+ *       先建对面、失败回滚，绝不留单向门 ✓。</li>
+ *   <li><b>自动记录相对落点</b>：在伟大白色空间之外的维度用通行证时，GUI 里 x／z 的默认值
+ *       就是<b>门自己的 xz</b>（玩家不改就正对着这一列）✓。</li>
+ *   <li><b>自愈</b>：走进门时调 {@link #resolveLanding} —— 对面那扇门要是没了（被拆／被炸），
+ *       只要落点还是空地就<b>按记录自动补回来</b>并指回原地 ✓；整段被实体方块堵死则拒绝传送并提示 ✓。</li>
+ *   <li><b>§663 新口径：脚下没有落点就铺平台</b> —— {@link #ensurePlatform} 在传送前检查落点下方，
+ *       没有支撑就用一块 <b>3×3 黑曜石平台</b>接住玩家（只替换空气／可替换方块，绝不挖玩家盖的东西 ✓）。</li>
  * </ul>
- * 目的地与「对面落点」都存在 {@link WhiteSpacePortalBlockEntity} 里 ⇒ 存档后依然有效（永久 ✓）。
- * 走进门时会调 {@link #resolveLanding}：对面那扇门要是没了（被拆／被炸），只要落点还是空地就
- * <b>按记录自动补回来</b>并指回原地 ⇒ 「自动记录相对落点，以便往返」在门被拆掉之后依然成立 ✓。
  *
- * <h2>传送黑名单（用户口径）</h2>
- * <b>狱门疆维度</b>（{@code tinkersnewlife:gourd}）与<b>铁魔法口袋维度</b>（{@code irons_spellbooks:pocket_dimension}）
- * 双向禁止：既不能把门开到那里，也不能在里面用通行证开门。
- * 前者尤其重要 —— 否则被封印在狱门疆里的囚徒可以直接用通行证越狱 ✗（§659 的整套封印逻辑就废了）。
+ * <h2>传送黑名单（§661 用户口径）</h2>
+ * <b>狱门疆维度</b>（{@code tinkersnewlife:gourd}）与<b>铁魔法口袋维度</b>
+ * （{@code irons_spellbooks:pocket_dimension}）双向禁止：既不能把门开到那里，也不能在里面用通行证开门。
+ * 前者尤其重要 —— 否则被封印在狱门疆里的囚徒可以直接用通行证越狱 ✗。
  *
- * <h2>其他维度要「去过一次」才解锁</h2>
- * 只有玩家<b>到过</b>的维度才会出现在 GUI 的下拉列表里（记录写在玩家自己的持久化数据里，
- * 登录时记当前维度、每次跨维度时记目标维度 ⇒ 见 {@code WhiteSpaceUnlockHandler}）。
+ * <h2>其他维度要「去过一次」才解锁（§661）</h2>
+ * 只有玩家<b>到过</b>的维度才会出现在 GUI 的下拉列表里（记录写在玩家自己的持久化数据里）。
  * ⚠ 这是<b>服务端</b>过滤 ✓ 客户端改包也没用 ✓ 而且 C2S 那边还会再验一遍黑名单 ✓。
  */
 public final class WhiteSpaceDimensions {
@@ -70,7 +76,11 @@ public final class WhiteSpaceDimensions {
     /** 地面表层：站上去脚底所在的 y（门就开在这一层，也是「不能填 y」的那个固定值） */
     public static final int GROUND_Y = 2;
 
-    /** 同一根柱子上一连串门最多堆到这一层（映射点被占了就往上找空位） */
+    /**
+     * 白色空间里同一根柱子上最多把门堆到这一层。
+     * <p>⚠ 门是 2 格高的 ⇒ 下半在 {@code y}、上半在 {@code y+1}；世界高度是 {@code 0..15}
+     * ⇒ 下半最高只能到 14（上半正好落在 15）✓。
+     */
     private static final int MAX_LINK_Y = 14;
 
     /** {@link #resolveLanding} 自愈时最多往上找几格 */
@@ -95,15 +105,15 @@ public final class WhiteSpaceDimensions {
     //  传送黑名单
     // ============================================================
 
-    /** 狱门疆维度（{@code GourdJailHandler.GOURD_DIM} 的同一条 key ⇒ 不引那个类，免得跨包耦合） */
+    /** 狱门疆维度（与 {@code GourdJailHandler.GOURD_DIM} 是同一条 key；不直接引那个类，免得跨包耦合） */
     private static final ResourceKey<Level> GOURD_DIMENSION = ResourceKey.create(Registries.DIMENSION,
             new ResourceLocation(TinkersNewlife.MOD_ID, "gourd"));
 
     /**
      * 铁魔法（Iron's Spellbooks）的口袋维度。
-     * <p>id 是从它自己的 jar 里查实的：{@code data/irons_spellbooks/dimension/pocket_dimension.json}
+     * <p>id 从它自己的 jar 里查实：{@code data/irons_spellbooks/dimension/pocket_dimension.json}
      * ⇒ 维度 key 是 {@code pocket_dimension}（{@code pocket_dimension_type} 是它的<b>维度类型</b>，不是 key ✗）。
-     * 没装铁魔法时这条 key 永远不会被匹配上 ✓ 无需按模组判断 ✓。
+     * 没装铁魔法时这条 key 永远匹配不上 ✓ 无需按模组判断 ✓。
      */
     private static final ResourceKey<Level> IRONS_POCKET_DIMENSION = ResourceKey.create(Registries.DIMENSION,
             new ResourceLocation("irons_spellbooks", "pocket_dimension"));
@@ -207,12 +217,14 @@ public final class WhiteSpaceDimensions {
     /**
      * <b>在伟大白色空间之外的维度</b>用通行证（GUI 锁定模式：维度不可选、不能填 y）。
      *
-     * @param level 玩家当前所在维度（不能是黑名单维度）
-     * @param anchor 右键点到的那个方块（门开在它上方）
-     * @param destX 白色空间侧的落点 x（默认＝门自己的 x ⇒ 相对落点）
-     * @param destZ 白色空间侧的落点 z
+     * @param level  玩家当前所在维度（不能是黑名单维度）
+     * @param anchor 右键点到的那个方块（门开在它上方，占它上方两格）
+     * @param destX  白色空间侧的落点 x（默认＝门自己的 x ⇒ 相对落点）
+     * @param destZ  白色空间侧的落点 z
+     * @param facing 门的朝向（取玩家的水平朝向）
      */
-    public static PortalResult linkFromOutside(ServerLevel level, BlockPos anchor, int destX, int destZ) {
+    public static PortalResult linkFromOutside(ServerLevel level, BlockPos anchor, int destX, int destZ,
+                                              Direction facing) {
         if (isBlacklisted(level.dimension())) {
             return PortalResult.failure("message.tinkersnewlife.white_space.blacklisted",
                     displayName(level.dimension()));
@@ -230,7 +242,7 @@ public final class WhiteSpaceDimensions {
         // 白色空间那边先把地面补上（正常情况下 flat 生成器已经铺好了，这里只是兜底）
         ensureFloor(ws, remotePos);
 
-        PortalResult result = link(level, localPos, ws, remotePos);
+        PortalResult result = link(level, localPos, ws, remotePos, facing);
         if (result.ok()) {
             return PortalResult.success("message.tinkersnewlife.white_space.opened",
                     displayName(WHITE_SPACE), coords(remotePos));
@@ -242,15 +254,16 @@ public final class WhiteSpaceDimensions {
      * <b>在伟大白色空间里</b>用通行证（GUI 自由模式：下拉选维度 ＋ 填 xyz）。
      */
     public static PortalResult linkFromWhiteSpace(ServerLevel ws, BlockPos anchor,
-                                                 ResourceKey<Level> destDim, BlockPos destPos) {
+                                                 ResourceKey<Level> destDim, BlockPos destPos,
+                                                 Direction facing) {
         if (isBlacklisted(destDim)) {
             return PortalResult.failure("message.tinkersnewlife.white_space.blacklist_target",
                     displayName(destDim));
         }
         ServerLevel target = ws.getServer() == null ? null : ws.getServer().getLevel(destDim);
         if (target == null) return PortalResult.failure("message.tinkersnewlife.white_space.no_dimension");
-        // 目标 y 必须落在那个维度自己的建筑高度里，否则 setBlock 会抛异常 / 静默失败
-        if (destPos.getY() < target.getMinBuildHeight() || destPos.getY() >= target.getMaxBuildHeight()) {
+        // 目标是 2 格高的门 ⇒ 上下两格都得落在那条维度自己的建筑高度里
+        if (destPos.getY() < target.getMinBuildHeight() || destPos.getY() + 1 >= target.getMaxBuildHeight()) {
             return PortalResult.failure("message.tinkersnewlife.white_space.bad_coords");
         }
         if (Math.abs(destPos.getX()) > 30000000 || Math.abs(destPos.getZ()) > 30000000) {
@@ -258,7 +271,7 @@ public final class WhiteSpaceDimensions {
         }
 
         BlockPos localPos = anchor.above();
-        PortalResult result = link(ws, localPos, target, destPos);
+        PortalResult result = link(ws, localPos, target, destPos, facing);
         if (result.ok()) {
             return PortalResult.success("message.tinkersnewlife.white_space.opened",
                     displayName(destDim), coords(destPos));
@@ -267,71 +280,133 @@ public final class WhiteSpaceDimensions {
     }
 
     // ============================================================
-    //  开门底层
+    //  开门底层（一扇门 ＝ 上下两格）
     // ============================================================
 
     /**
-     * 建<b>一对</b>互通的门：{@code (aLevel, aPos)} ↔ {@code (bLevel, bPos)}。
+     * 建<b>一对</b>互通的门：{@code (aLevel, aPos)} ↔ {@code (bLevel, bPos)}，两边同朝 {@code facing}。
      * <p>先建 b 侧、再建 a 侧（a 侧是玩家眼前那扇）；a 侧失败就把刚建好的 b 侧撤掉，
      * 绝不留一扇只能去、回不来的单向门 ✓。
      */
-    private static PortalResult link(ServerLevel aLevel, BlockPos aPos, ServerLevel bLevel, BlockPos bPos) {
+    private static PortalResult link(ServerLevel aLevel, BlockPos aPos, ServerLevel bLevel, BlockPos bPos,
+                                     Direction facing) {
         if (aLevel == bLevel && aPos.equals(bPos)) {
             return PortalResult.failure("message.tinkersnewlife.white_space.blocked");
         }
-        if (!canHost(aLevel, aPos) || !canHost(bLevel, bPos)) {
+        if (!canOccupyPair(aLevel, aPos) || !canOccupyPair(bLevel, bPos)) {
             return PortalResult.failure("message.tinkersnewlife.white_space.blocked");
         }
 
-        boolean bExisted = bLevel.getBlockState(bPos).is(ModBlocks.WHITE_SPACE_PORTAL.get());
-        if (!placePortal(bLevel, bPos, aLevel.dimension(), aPos)) {
+        boolean bExisted = isOurLower(bLevel, bPos);
+        if (!placePortal(bLevel, bPos, aLevel.dimension(), aPos, facing)) {
             return PortalResult.failure("message.tinkersnewlife.white_space.blocked");
         }
-        if (!placePortal(aLevel, aPos, bLevel.dimension(), bPos)) {
-            if (!bExisted) bLevel.removeBlock(bPos, false);
+        if (!placePortal(aLevel, aPos, bLevel.dimension(), bPos, facing)) {
+            if (!bExisted) removePortal(bLevel, bPos);
             return PortalResult.failure("message.tinkersnewlife.white_space.blocked");
         }
         return PortalResult.success("message.tinkersnewlife.white_space.opened");
     }
 
-    /** 这个位置能不能承载一扇门（空气 / 可替换 / 已经是我们的门 ⇒ 只改目的地） */
-    private static boolean canHost(ServerLevel level, BlockPos pos) {
+    /** 这一格是不是"下半"那格的门 */
+    private static boolean isOurLower(ServerLevel level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        return state.is(ModBlocks.WHITE_SPACE_PORTAL.get())
+                && state.getValue(WhiteSpacePortalBlock.HALF) == DoubleBlockHalf.LOWER;
+    }
+
+    /** 单格能不能被门占用：空气／可替换／已经是我们的门（后者表示"只改目的地重新接线"） */
+    private static boolean canOccupy(ServerLevel level, BlockPos pos) {
         if (level.isOutsideBuildHeight(pos)) return false;
         BlockState state = level.getBlockState(pos);
         return state.isAir() || state.canBeReplaced()
                 || state.is(ModBlocks.WHITE_SPACE_PORTAL.get());
     }
 
+    /** 上下两格都能被门占用吗 */
+    private static boolean canOccupyPair(ServerLevel level, BlockPos lower) {
+        return canOccupy(level, lower) && canOccupy(level, lower.above());
+    }
+
+    /** 严格版：这一格是空地吗 */
+    private static boolean isFree(ServerLevel level, BlockPos pos) {
+        if (level.isOutsideBuildHeight(pos)) return false;
+        BlockState state = level.getBlockState(pos);
+        return state.isAir() || state.canBeReplaced();
+    }
+
+    /** 严格版：上下两格都是空地（新开一扇门时用，不去抢别人的门） */
+    private static boolean canPlacePair(ServerLevel level, BlockPos lower) {
+        return isFree(level, lower) && isFree(level, lower.above());
+    }
+
     /**
-     * 在 {@code pos} 放一扇门 / 把已有的门重新指向目的地。
+     * 在 {@code lower} 放一对 2 格高的门（下半 ＋ 上半），两格写入<b>同一份</b>目的地。
      *
-     * @return 该位置最终确实是一扇带方块实体的门
+     * @return 上下两格最终都是带目的地的一扇门
      */
-    private static boolean placePortal(ServerLevel level, BlockPos pos,
-                                       ResourceKey<Level> destDim, BlockPos destPos) {
-        BlockState portal = ModBlocks.WHITE_SPACE_PORTAL.get().defaultBlockState();
-        if (!level.getBlockState(pos).is(portal.getBlock())) {
-            // 3 = UPDATE_NEIGHBORS | UPDATE_CLIENTS：会把新方块与新方块实体一起发给客户端 ✓
-            level.setBlock(pos, portal, 3);
-        }
+    private static boolean placePortal(ServerLevel level, BlockPos lower,
+                                       ResourceKey<Level> destDim, BlockPos destPos, Direction facing) {
+        BlockPos upper = lower.above();
+        if (level.isOutsideBuildHeight(upper)) return false;
+        if (!canOccupyPair(level, lower)) return false;
+
+        BlockState lowerState = ModBlocks.WHITE_SPACE_PORTAL.get().defaultBlockState()
+                .setValue(WhiteSpacePortalBlock.HALF, DoubleBlockHalf.LOWER)
+                .setValue(WhiteSpacePortalBlock.FACING, facing);
+        BlockState upperState = lowerState.setValue(WhiteSpacePortalBlock.HALF, DoubleBlockHalf.UPPER);
+
+        // 3 = UPDATE_NEIGHBORS | UPDATE_CLIENTS：会把新方块与新方块实体一起发给客户端 ✓
+        level.setBlock(lower, lowerState, 3);
+        level.setBlock(upper, upperState, 3);
+
+        boolean ok = writeDestination(level, lower, lowerState, destDim, destPos);
+        ok &= writeDestination(level, upper, upperState, destDim, destPos);
+        return ok;
+    }
+
+    /**
+     * 把目的地写进这一格的方块实体并发给客户端。
+     * <p>⚠ 必须显式 {@code sendBlockUpdated}：方块实体数据只有在
+     * {@code ChunkHolder#broadcastBlockEntityIfNeeded} 里才会随 {@code getUpdatePacket()} 发出去
+     * （告示牌那一套），否则客户端那扇门没目的地 ⇒ §661 的指向提示是空的 ✗。
+     */
+    private static boolean writeDestination(ServerLevel level, BlockPos pos, BlockState state,
+                                           ResourceKey<Level> destDim, BlockPos destPos) {
         if (level.getBlockEntity(pos) instanceof WhiteSpacePortalBlockEntity be) {
             be.setDestination(destDim, destPos);
-            // ⚠ 必须显式 sendBlockUpdated：方块实体的数据只有在
-            //   ChunkHolder.broadcastBlockEntityIfNeeded 里才会随 getUpdatePacket() 发出去
-            //   （就是告示牌那一套），否则客户端那扇门没有目的地 ⇒ §661 的指向提示是空的 ✗
-            level.sendBlockUpdated(pos, portal, portal, 3);
+            level.sendBlockUpdated(pos, state, state, 3);
             return true;
         }
         return false;
     }
 
     /**
+     * 把一整扇门（上下两格）拆掉 —— 不留半扇。
+     * <p>§664 起由 {@code WhiteSpacePortalBlock#use}（天逆鉾右键）调用，所以是 public。
+     */
+    public static void removePortal(ServerLevel level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        BlockPos lower = pos;
+        if (state.is(ModBlocks.WHITE_SPACE_PORTAL.get())
+                && state.getValue(WhiteSpacePortalBlock.HALF) == DoubleBlockHalf.UPPER) {
+            lower = pos.below();
+        }
+        for (int dy = 0; dy <= 1; dy++) {
+            BlockPos p = lower.offset(0, dy, 0);
+            if (level.getBlockState(p).is(ModBlocks.WHITE_SPACE_PORTAL.get())) {
+                level.removeBlock(p, false);
+            }
+        }
+    }
+
+    /**
      * 白色空间里「相同 xz、地面表层」那个位置：
      * <ol>
-     *   <li>如果那根柱子上<b>已经有一扇正好指回同一个地方</b>的门 ⇒ 直接复用它（重复使用同一根柱子
-     *       不会越堆越高）✓；</li>
-     *   <li>否则顺着柱子往上找<b>第一个空格</b>（别人的门不抢 ✗ —— 抢了会把那扇门的回路改掉，
-     *       表现为"从 A 进去、从 B 出来"的不对称）；</li>
+     *   <li>那根柱子上<b>已经有一扇正好指回同一个地方</b>的门（认"下半"那格）⇒ 直接复用它，
+     *       重复使用同一根柱子不会越堆越高 ✓；</li>
+     *   <li>否则顺着柱子往上找<b>第一个能放下 2 格门的空位</b>（别人的门不抢 ✗ ——
+     *       抢了会把那扇门的回路改掉，表现为"从 A 进去、从 B 出来"的不对称）；</li>
      *   <li>到 {@link #MAX_LINK_Y} 还找不到 ⇒ null。</li>
      * </ol>
      */
@@ -343,14 +418,15 @@ public final class WhiteSpaceDimensions {
             BlockPos pos = new BlockPos(x, y, z);
             BlockState state = ws.getBlockState(pos);
             if (state.is(ModBlocks.WHITE_SPACE_PORTAL.get())) {
-                if (ws.getBlockEntity(pos) instanceof WhiteSpacePortalBlockEntity be
+                if (state.getValue(WhiteSpacePortalBlock.HALF) == DoubleBlockHalf.LOWER
+                        && ws.getBlockEntity(pos) instanceof WhiteSpacePortalBlockEntity be
                         && backDim.equals(be.getDestinationDimension())
                         && backPos.equals(be.getDestinationPos())) {
                     return pos;
                 }
                 continue;
             }
-            if (free == null && (state.isAir() || state.canBeReplaced())) {
+            if (free == null && canPlacePair(ws, pos)) {
                 free = pos;
             }
         }
@@ -368,49 +444,88 @@ public final class WhiteSpaceDimensions {
     }
 
     // ============================================================
-    //  落点自愈（「自动记录相对落点，以便往返」）
+    //  落点自愈 ＋ 落脚平台
     // ============================================================
 
     /**
      * 走进一扇门时先把<b>对面落点</b>落实：
      * <ol>
-     *   <li>记录的落点上还是我们的门 ⇒ 用它（顺手把它的目的地校正回我们这边，双向自愈 ✓）；</li>
+     *   <li>记录的落点上还是我们的门 ⇒ 用它，顺手把<b>上下两格</b>的目的地都校正回我们这边
+     *       （双向自愈 ✓）；</li>
      *   <li>记录的落点变成空地（对面那扇被拆了／被炸了）⇒ <b>按记录自动补一扇指回来的门</b> ✓
      *       —— 这就是"自动记录相对落点，以便往返"在门被破坏之后仍然成立的原因；</li>
      *   <li>往上最多 {@link #MAX_HEAL_UP} 格找空位（玩家在落点上盖了房子的话，别把人埋进墙里 ✓）；</li>
-     *   <li>整段都被实体方块占住 ⇒ 返回 {@code null}，门拒绝传送并提示（宁可不传，也不把玩家塞进方块里 ✗）。</li>
+     *   <li>整段都被实体方块占住 ⇒ 返回 {@code null}，门拒绝传送并提示
+     *       （宁可不传，也不把玩家塞进方块里 ✗）。</li>
      * </ol>
      *
      * @param target   目的地维度
      * @param recorded 记录下来的落点
      * @param backDim  我们这边（出发侧）的维度
      * @param backPos  我们这边（出发侧）那扇门的位置
-     * @return 实际可以落脚的坐标；null ＝ 落点被堵死
+     * @param facing   补门时用的朝向（取正在走进来的玩家的水平朝向）
+     * @return 实际可以落脚的坐标（门的下半那格）；null ＝ 落点被堵死
      */
     @Nullable
     public static BlockPos resolveLanding(ServerLevel target, BlockPos recorded,
-                                         ResourceKey<Level> backDim, BlockPos backPos) {
+                                         ResourceKey<Level> backDim, BlockPos backPos, Direction facing) {
         for (int dy = 0; dy <= MAX_HEAL_UP; dy++) {
             BlockPos pos = recorded.offset(0, dy, 0);
-            if (target.isOutsideBuildHeight(pos)) break;
+            if (target.isOutsideBuildHeight(pos) || target.isOutsideBuildHeight(pos.above())) break;
             BlockState state = target.getBlockState(pos);
 
             if (state.is(ModBlocks.WHITE_SPACE_PORTAL.get())) {
-                if (target.getBlockEntity(pos) instanceof WhiteSpacePortalBlockEntity be
-                        && (!backDim.equals(be.getDestinationDimension())
-                        || !backPos.equals(be.getDestinationPos()))) {
-                    be.setDestination(backDim, backPos);
-                    target.sendBlockUpdated(pos, state, state, 3);
+                // 只认"下半"那格；记录点若落到上半，就往下一格找它的下半
+                BlockPos lower = state.getValue(WhiteSpacePortalBlock.HALF) == DoubleBlockHalf.LOWER
+                        ? pos : pos.below();
+                BlockState lowerState = target.getBlockState(lower);
+                if (!lowerState.is(ModBlocks.WHITE_SPACE_PORTAL.get())
+                        || lowerState.getValue(WhiteSpacePortalBlock.HALF) != DoubleBlockHalf.LOWER) {
+                    continue;
                 }
-                return pos;
+                writeDestination(target, lower, lowerState, backDim, backPos);
+                BlockState upperState = target.getBlockState(lower.above());
+                if (upperState.is(ModBlocks.WHITE_SPACE_PORTAL.get())) {
+                    writeDestination(target, lower.above(), upperState, backDim, backPos);
+                }
+                return lower;
             }
 
-            if (state.isAir() || state.canBeReplaced()) {
+            if (canPlacePair(target, pos)) {
                 if (isWhiteSpace(target)) ensureFloor(target, pos);
-                if (placePortal(target, pos, backDim, backPos)) return pos;
+                if (placePortal(target, pos, backDim, backPos, facing)) return pos;
             }
         }
         return null;
+    }
+
+    /**
+     * <b>§663 用户口径</b>：「如果传送出来脚底下没有落点，自动生成一块 3×3 的黑曜石平台提供落脚」。
+     *
+     * <p>检查落点正下方那一格：
+     * <ul>
+     *   <li>已经有实体方块（不是空气、也不可替换）⇒ 有地方站，<b>什么都不做</b> ✓；</li>
+     *   <li>没有 ⇒ 以落点正下方为中心铺 <b>3×3 黑曜石</b>，让玩家一落地就有地方站 ✓。</li>
+     * </ul>
+     * ⚠ <b>只替换空气／可替换方块</b>（水、草、雪这类）⇒ <b>绝不会把玩家盖的建筑挖掉</b> ✓；
+     * 越界的高度直接跳过 ✓。
+     */
+    public static void ensurePlatform(ServerLevel level, BlockPos landing) {
+        BlockPos support = landing.below();
+        if (level.isOutsideBuildHeight(support)) return;
+        BlockState below = level.getBlockState(support);
+        if (!below.isAir() && !below.canBeReplaced()) return;   // 已经有落脚点 ⇒ 不动
+
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                BlockPos p = support.offset(dx, 0, dz);
+                if (level.isOutsideBuildHeight(p)) continue;
+                BlockState current = level.getBlockState(p);
+                if (current.isAir() || current.canBeReplaced()) {
+                    level.setBlock(p, Blocks.OBSIDIAN.defaultBlockState(), 3);
+                }
+            }
+        }
     }
 
     // ============================================================
