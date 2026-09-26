@@ -353,7 +353,10 @@ public final class WhiteSpaceDimensions {
 
         BlockState lowerState = ModBlocks.WHITE_SPACE_PORTAL.get().defaultBlockState()
                 .setValue(WhiteSpacePortalBlock.HALF, DoubleBlockHalf.LOWER)
-                .setValue(WhiteSpacePortalBlock.FACING, facing);
+                .setValue(WhiteSpacePortalBlock.FACING, facing)
+                // §666 用户口径：白色空间里的门用**黑色**贴图，别处用**白色**贴图
+                // （纯白背景上白门几乎看不见）—— 完全由"门放在哪个维度"决定 ✓
+                .setValue(WhiteSpacePortalBlock.DARK, isWhiteSpace(level));
         BlockState upperState = lowerState.setValue(WhiteSpacePortalBlock.HALF, DoubleBlockHalf.UPPER);
 
         // 3 = UPDATE_NEIGHBORS | UPDATE_CLIENTS：会把新方块与新方块实体一起发给客户端 ✓
@@ -366,13 +369,20 @@ public final class WhiteSpaceDimensions {
     }
 
     /**
-     * 把目的地写进这一格的方块实体并发给客户端。
+     * 把目的地写进这一格的方块实体并发给客户端，<b>顺手把黑白变体校正成"这个维度该有的样子"</b>。
      * <p>⚠ 必须显式 {@code sendBlockUpdated}：方块实体数据只有在
      * {@code ChunkHolder#broadcastBlockEntityIfNeeded} 里才会随 {@code getUpdatePacket()} 发出去
      * （告示牌那一套），否则客户端那扇门没目的地 ⇒ §661 的指向提示是空的 ✗。
+     * <p>§666：{@code dark} 只由维度决定 ⇒ 旧存档里颜色不对的门、或被 {@code /setblock} 放错维度的门，
+     * 下次被写一次目的地就会自己变对 ✓（同方块换状态不会重建方块实体 ✓）。
      */
     private static boolean writeDestination(ServerLevel level, BlockPos pos, BlockState state,
                                            ResourceKey<Level> destDim, BlockPos destPos) {
+        BlockState want = state.setValue(WhiteSpacePortalBlock.DARK, isWhiteSpace(level));
+        if (!want.equals(state)) {
+            level.setBlock(pos, want, 3);
+            state = want;
+        }
         if (level.getBlockEntity(pos) instanceof WhiteSpacePortalBlockEntity be) {
             be.setDestination(destDim, destPos);
             level.sendBlockUpdated(pos, state, state, 3);
@@ -529,8 +539,36 @@ public final class WhiteSpaceDimensions {
     }
 
     // ============================================================
-    //  传送冷却（存在实体自己的持久化数据里，跟着实体走、自动随实体释放）
+    //  传送执行 ＋ 冷却
     // ============================================================
+
+    /**
+     * 把一个实体（玩家或生物）跨维度送到目标坐标；返回是否成功。
+     *
+     * <p>这里对**任何**实体都用 Forge 的 {@code Entity#teleportTo(ServerLevel, ...)}：
+     * 目标维度不同时它会 {@code unRide()}、用 {@code getType().create(target)} 造一个新实体、
+     * {@code restoreFrom} 拷 NBT、再把旧的标记成 {@code CHANGED_DIMENSION}、最后
+     * {@code addDuringTeleport} ✓ —— 这正是 §666"生物也要能传送"要的东西 ✓。
+     *
+     * <p>⚠ <b>玩家侧与生物侧的返回值可靠性不一样</b>：
+     * {@code ServerPlayer#teleportTo} <b>恒返回 true</b>（即便 Forge 的
+     * {@code EntityTravelToDimensionEvent} 被别的模组取消，它也只是什么都不做）
+     * ⇒ 调用方对玩家还要复核 {@code serverLevel()}；生物侧 {@code Entity#teleportTo} 的返回值可靠 ✓。
+     *
+     * <p>顺带一条（§666 依赖它）：{@code restoreFrom} 走的是 {@code saveWithoutId} / {@code load}，
+     * 而 Forge 的持久化数据就存在 {@code ForgeData} 键里 ⇒ <b>传送前装好的冷却会被新实继承</b> ✓
+     * ⇒ 落地就在对面那扇门里也不会被立刻弹回来 ✓。
+     */
+    public static boolean teleportEntity(Entity entity, ServerLevel target, BlockPos landing) {
+        try {
+            return entity.teleportTo(target,
+                    landing.getX() + 0.5D, landing.getY(), landing.getZ() + 0.5D,
+                    Set.of(), entity.getYRot(), entity.getXRot());
+        } catch (Throwable t) {
+            TinkersNewlife.LOGGER.warn("[伟大白色空间] 跨维度传送异常：{}", t.toString());
+            return false;
+        }
+    }
 
     /** 让这个实体在接下来 {@code ticks} tick 内不被门传送 */
     public static void armCooldown(Entity entity, int ticks) {

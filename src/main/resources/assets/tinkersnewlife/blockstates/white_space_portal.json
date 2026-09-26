@@ -1,33 +1,63 @@
 {
   "variants": {
-    "facing=north,half=lower": {
+    "dark=false,facing=north,half=lower": {
       "model": "tinkersnewlife:block/white_space_portal_lower"
     },
-    "facing=north,half=upper": {
+    "dark=false,facing=north,half=upper": {
       "model": "tinkersnewlife:block/white_space_portal_upper"
     },
-    "facing=east,half=lower": {
+    "dark=false,facing=east,half=lower": {
       "model": "tinkersnewlife:block/white_space_portal_lower",
       "y": 90
     },
-    "facing=east,half=upper": {
+    "dark=false,facing=east,half=upper": {
       "model": "tinkersnewlife:block/white_space_portal_upper",
       "y": 90
     },
-    "facing=south,half=lower": {
+    "dark=false,facing=south,half=lower": {
       "model": "tinkersnewlife:block/white_space_portal_lower",
       "y": 180
     },
-    "facing=south,half=upper": {
+    "dark=false,facing=south,half=upper": {
       "model": "tinkersnewlife:block/white_space_portal_upper",
       "y": 180
     },
-    "facing=west,half=lower": {
+    "dark=false,facing=west,half=lower": {
       "model": "tinkersnewlife:block/white_space_portal_lower",
       "y": 270
     },
-    "facing=west,half=upper": {
+    "dark=false,facing=west,half=upper": {
       "model": "tinkersnewlife:block/white_space_portal_upper",
+      "y": 270
+    },
+    "dark=true,facing=north,half=lower": {
+      "model": "tinkersnewlife:block/white_space_portal_lower_dark"
+    },
+    "dark=true,facing=north,half=upper": {
+      "model": "tinkersnewlife:block/white_space_portal_upper_dark"
+    },
+    "dark=true,facing=east,half=lower": {
+      "model": "tinkersnewlife:block/white_space_portal_lower_dark",
+      "y": 90
+    },
+    "dark=true,facing=east,half=upper": {
+      "model": "tinkersnewlife:block/white_space_portal_upper_dark",
+      "y": 90
+    },
+    "dark=true,facing=south,half=lower": {
+      "model": "tinkersnewlife:block/white_space_portal_lower_dark",
+      "y": 180
+    },
+    "dark=true,facing=south,half=upper": {
+      "model": "tinkersnewlife:block/white_space_portal_upper_dark",
+      "y": 180
+    },
+    "dark=true,facing=west,half=lower": {
+      "model": "tinkersnewlife:block/white_space_portal_lower_dark",
+      "y": 270
+    },
+    "dark=true,facing=west,half=upper": {
+      "model": "tinkersnewlife:block/white_space_portal_upper_dark",
       "y": 270
     }
   }

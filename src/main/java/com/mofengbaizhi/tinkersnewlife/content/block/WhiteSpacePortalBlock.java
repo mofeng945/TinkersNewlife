@@ -1,6 +1,5 @@
 package com.mofengbaizhi.tinkersnewlife.content.block;
 
-import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModItems;
 import com.mofengbaizhi.tinkersnewlife.content.portal.WhiteSpaceDimensions;
 import net.minecraft.core.BlockPos;
@@ -17,6 +16,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
@@ -29,6 +29,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.material.MapColor;
@@ -36,7 +37,8 @@ import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.BlockHitResult;
 
 import javax.annotation.Nullable;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * <b>伟大白色空间传送门</b>（§660／§661／§663）。
@@ -67,13 +69,28 @@ import java.util.Set;
  *       因为拆不掉，所以也没有战利品表这件事本身就没意义了 ✓；</li>
  *   <li><b>拆一格＝整扇门消失</b>：{@link #onRemove} 会把另一半也清掉，不会留下半扇门 ✗
  *       （爆炸／活塞／指令也走这条路 ✓）；</li>
- *   <li><b>只传送玩家</b>，怪物／掉落物直接穿过；</li>
- *   <li><b>防乒乓</b>：冷却记在玩家持久化数据里（{@link WhiteSpaceDimensions#armCooldown}）。
- *       因为门有 2 格高，玩家碰撞箱常常<b>同时压住两格</b> ⇒ {@code entityInside} 一 tick 会被调两次 ——
- *       第一次就把冷却装上了，第二次直接被顶掉 ⇒ 不会传送两次 ✓；</li>
+ *   <li><b>§666 起：玩家与其它生物都会被传送</b>（用户口径「不要只能传送玩家，其他生物也应当可以被传送」）。
+ *       非生物实体（掉落物、船、箭这类）仍然直接穿过；生物连同它的乘客一起送过去 ✓；</li>
+ *   <li><b>防乒乓</b>：冷却记在实体自己的持久化数据里（{@link WhiteSpaceDimensions#armCooldown}）。
+ *       门有 2 格高，实体碰撞箱常常<b>同时压住两格</b> ⇒ {@code entityInside} 一 tick 会被调两次 ——
+ *       第一次就把冷却装上了，第二次直接被顶掉 ⇒ 不会传送两次 ✓。
+ *       ⚠ 跨维度传送对生物是"<b>新建一个实体并拷 NBT</b>"（{@code Entity#restoreFrom} 走
+ *       {@code saveWithoutId}/{@code load}）⇒ <b>ForgeData 会被继承</b>，
+ *       所以"传送前先装冷却"能跟着新实体过去，落地就在对面门里也不会被立刻弹回来 ✓；</li>
  *   <li><b>落点自愈</b>（§661）＋ <b>脚下没落脚点就铺 3×3 黑曜石平台</b>（§663 用户新口径，见
  *       {@link WhiteSpaceDimensions#resolveLanding} 与 {@code ensurePlatform}）。</li>
  * </ul>
+ *
+ * <h2>§666：为什么门有白／黑两副贴图</h2>
+ * 用户口径：「材质纹理建议在<b>其他维度为白色</b>，在<b>伟大白色空间</b>的传送门为<b>黑色</b>」——
+ * 因为白色空间里到处都是白的，白门几乎看不见 ✓。
+ * 实现方式是<b>方块状态属性 {@link #DARK}</b> ＋ 两套模型：
+ * {@code dark=false} 用 {@code white_space_portal_*_gate}（白），
+ * {@code dark=true} 用 {@code ..._gate_dark}（近黑＋淡银描边）。
+ * 这个值<b>由"门被放在哪个维度"决定</b>（{@link WhiteSpaceDimensions} 里
+ * {@code isWhiteSpace(level)}），每次写目的地时都会顺手校正一遍 ⇒
+ * 旧存档里颜色不对的门、或者被 {@code /setblock} 放错维度的门，下次被碰一下就会自己变对 ✓。
+ * 用状态属性而不是方块实体渲染器 ⇒ <b>不需要任何渲染代码</b> ✓。
  */
 public class WhiteSpacePortalBlock extends Block implements EntityBlock {
 
@@ -82,6 +99,12 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
 
     /** 门的朝向（那片平面的法线）；开门时按玩家水平朝向写入 */
     public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
+
+    /**
+     * §666 黑白变体：{@code false} ＝ 白门（白色空间之外用），{@code true} ＝ 黑门（伟大白色空间里用）。
+     * <p>由"门所在维度"自动决定，不是玩家选项 ✓（见 {@link WhiteSpaceDimensions#placePortal}）。
+     */
+    public static final BooleanProperty DARK = BooleanProperty.create("dark");
 
     public WhiteSpacePortalBlock() {
         super(BlockBehaviour.Properties.of()
@@ -99,12 +122,13 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
                 .pushReaction(PushReaction.BLOCK));
         registerDefaultState(stateDefinition.any()
                 .setValue(HALF, DoubleBlockHalf.LOWER)
-                .setValue(FACING, Direction.NORTH));
+                .setValue(FACING, Direction.NORTH)
+                .setValue(DARK, false));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(HALF, FACING);
+        builder.add(HALF, FACING, DARK);
     }
 
     /** 同一扇门的另一格 */
@@ -114,7 +138,7 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
 
     /**
      * 万一被别的途径（{@code /setblock} 之类）放置：只允许当作下半，且上方要放得下，
-     * 朝向取玩家朝向（与开门时同一条规则）。
+     * 朝向取玩家朝向；黑白按"放在哪个维度"决定（与开门时同一条规则）。
      */
     @Nullable
     @Override
@@ -123,7 +147,8 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
         if (!context.getLevel().getBlockState(pos.above()).canBeReplaced(context)) return null;
         return defaultBlockState()
                 .setValue(HALF, DoubleBlockHalf.LOWER)
-                .setValue(FACING, context.getHorizontalDirection());
+                .setValue(FACING, context.getHorizontalDirection())
+                .setValue(DARK, WhiteSpaceDimensions.isWhiteSpace(context.getLevel()));
     }
 
     @Nullable
@@ -201,48 +226,75 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
 
     @Override
     public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
-        if (level.isClientSide() || !(entity instanceof ServerPlayer player)) return;
-        if (WhiteSpaceDimensions.isOnCooldown(player)) return;
+        if (level.isClientSide()) return;
+        /*
+         * §666 用户口径：「不要只能传送玩家，其他生物也应当可以被传送」。
+         * ⇒ 生物（LivingEntity）全部可传；非生物实体（掉落物／船／箭…）依旧直接穿过 —— 用户说的是"生物" ✓。
+         */
+        if (!(entity instanceof LivingEntity)) return;
+        if (WhiteSpaceDimensions.isOnCooldown(entity)) return;
         if (!(level.getBlockEntity(pos) instanceof WhiteSpacePortalBlockEntity portal)) return;
         if (!portal.hasDestination()) return;
 
         ResourceKey<Level> destKey = portal.getDestinationDimension();
         if (destKey == null) return;
-        MinecraftServer server = player.getServer();
+        MinecraftServer server = entity.getServer();
         ServerLevel target = server == null ? null : server.getLevel(destKey);
         if (target == null) return;
 
         /*
          * §661「传送门会自动记录相对落点，以便往返」：
          * 落点上那扇门要是被拆了／被炸了，只要落点还是空地就按记录把门补回来并指回这里 ✓。
-         * §663：补出来的门朝向按"正在走进去的这个玩家"的朝向 ⇒ 落地时门也是横在面前的 ✓。
-         * 整段都被实体方块占住时返回 null ⇒ 宁可不传，也不把玩家塞进方块里 ✗。
+         * §663：补出来的门朝向按"正在走进去的这个实体"的朝向 ⇒ 落地时门也是横在面前的 ✓。
+         * 整段都被实体方块占住时返回 null ⇒ 宁可不传，也不把生物塞进方块里 ✗。
          */
         BlockPos landing = WhiteSpaceDimensions.resolveLanding(
-                target, portal.getDestinationPos(), level.dimension(), pos, player.getDirection());
+                target, portal.getDestinationPos(), level.dimension(), pos, entity.getDirection());
         if (landing == null) {
-            WhiteSpaceDimensions.armCooldown(player, 20);
-            player.displayClientMessage(
-                    Component.translatable("message.tinkersnewlife.white_space.landing_blocked"), true);
+            WhiteSpaceDimensions.armCooldown(entity, 20);
+            if (entity instanceof ServerPlayer player) {
+                player.displayClientMessage(
+                        Component.translatable("message.tinkersnewlife.white_space.landing_blocked"), true);
+            }
             return;
         }
 
         // §663 用户口径：传送出来脚底下没有落点 ⇒ 自动铺一块 3×3 黑曜石平台
         WhiteSpaceDimensions.ensurePlatform(target, landing);
 
-        // 先上冷却：落地时人就在对面那扇门里，没冷却会立刻被送回来
-        WhiteSpaceDimensions.armCooldown(player, WhiteSpaceDimensions.ARRIVE_COOLDOWN);
-        try {
-            player.teleportTo(target, landing.getX() + 0.5D, landing.getY(), landing.getZ() + 0.5D,
-                    Set.of(), player.getYRot(), player.getXRot());
-        } catch (Throwable t) {
-            TinkersNewlife.LOGGER.warn("[伟大白色空间] 跨维度传送异常：{}", t.toString());
+        /*
+         * 连同"这一串"一起送：跨维度传送内部会 unRide()，只送坐骑会把乘客留在原地
+         * （玩家骑着生物进门时尤其明显）✗ ⇒ 先把乘客放下来、再逐个送到同一个落点 ✓。
+         */
+        List<Entity> stack = new ArrayList<>(entity.getSelfAndPassengers().toList());
+        if (!entity.getPassengers().isEmpty()) entity.ejectPassengers();
+
+        boolean ok = false;
+        for (Entity member : stack) {
+            /*
+             * 先上冷却再传：生物的跨维度传送是"新建实体 + 拷 NBT"
+             * （Entity#restoreFrom → saveWithoutId / load）⇒ ForgeData 会被继承 ✓
+             * ⇒ 冷却跟着新实体过去，落地就在对面那扇门里也不会被立刻弹回来 ✓。
+             */
+            WhiteSpaceDimensions.armCooldown(member, WhiteSpaceDimensions.ARRIVE_COOLDOWN);
+            boolean memberOk = WhiteSpaceDimensions.teleportEntity(member, target, landing);
+            /*
+             * ⚠ 玩家侧 ServerPlayer#teleportTo 恒返回 true（被 Forge 的 EntityTravelToDimensionEvent
+             * 取消时也只是什么都不做）⇒ 必须再复核一次维度；生物侧 Entity#teleportTo 的返回值可靠 ✓。
+             */
+            if (member instanceof ServerPlayer player) {
+                memberOk = memberOk && player.serverLevel() == target;
+            }
+            if (member == entity) ok = memberOk;
         }
-        if (player.serverLevel() != target) {
+
+        if (!ok) {
             // 被别的模组拦了（Forge 的 EntityTravelToDimensionEvent 是可以被取消的）⇒ 1 秒后再试
-            WhiteSpaceDimensions.armCooldown(player, 20);
-            player.displayClientMessage(
-                    Component.translatable("message.tinkersnewlife.white_space.travel_blocked"), true);
+            WhiteSpaceDimensions.armCooldown(entity, 20);
+            if (entity instanceof ServerPlayer player) {
+                player.displayClientMessage(
+                        Component.translatable("message.tinkersnewlife.white_space.travel_blocked"), true);
+            }
         }
     }
 }

@@ -10,6 +10,10 @@
     },
     {
       "type": "patchouli:text",
+      "text": "A gate $(bold)changes colour with the dimension$(): one opened inside the Great White Space is $(bold)black$() (a near-black body with a pale silver rim - a white gate is nearly invisible on an all-white background), while one opened $(bold)anywhere else$() is $(bold)white$().$(br2)Both are the same gate - only the texture differs."
+    },
+    {
+      "type": "patchouli:text",
       "text": "$(bold)Getting there$(): right-click a block with a $(l:white_space_pass)Dimension Pass$() to open a $(bold)2-tall$() gate above it, then walk in.$(br2)Gates always come $(bold)in pairs$() - one on each side, pointing at each other - so you can always walk back the way you came."
     },
     {
@@ -18,7 +22,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)A few rules$(): $(li)gates $(bold)only teleport players$() - mobs and items pass straight through; $(li)if there is $(bold)no ground under your feet$() when you arrive, a $(bold)3x3 obsidian platform$() is placed for you; $(li)the landing point is $(bold)recorded automatically$() - if the far gate is broken, it is rebuilt on arrival."
+      "text": "$(bold)A few rules$(): $(li)gates teleport $(bold)players and other creatures$() (dropped items pass straight through, and a rider travels with its mount); $(li)if there is $(bold)no ground under your feet$() when you arrive, a $(bold)3x3 obsidian platform$() is placed for you; $(li)the landing point is $(bold)recorded automatically$() - if the far gate is broken, it is rebuilt on arrival."
     },
     {
       "type": "patchouli:text",
