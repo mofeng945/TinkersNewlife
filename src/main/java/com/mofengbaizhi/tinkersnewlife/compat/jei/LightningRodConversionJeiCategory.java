@@ -83,9 +83,16 @@ public class LightningRodConversionJeiCategory
 
     @Override
     public void setRecipe(IRecipeLayoutBuilder builder, Conversion recipe, IFocusGroup focuses) {
-        // 输入：烈焰血（匠魂本体流体 ✓）
-        builder.addSlot(RecipeIngredientRole.INPUT, 8, 22)
+        // §677 修（用户报告「JEI 里看不到液态闪电的配方」）：
+        //   JEI 的"**为这个物品**查配方"只认**物品** ✗ ⇒ 只画流体会让"悬停液态闪电的【桶】"
+        //   或"悬停烈焰血的【桶】"都查不到这条 ✗（两个桶都存在：tinkersnewlife:liquid_lightning_bucket ✓、
+        //   tconstruct:blazing_blood_bucket ✓）。
+        //   ⇒ 每个槽里**连桶一起放** ✓（桶能查到 ✓、流体也照样能查到 ✓）。
+
+        // 输入：烈焰血（匠魂本体流体 ✓）+ 它的桶
+        var inSlot = builder.addSlot(RecipeIngredientRole.INPUT, 8, 22)
                 .addFluidStack(recipe.input(), recipe.inputMb());
+        ChargedCreeperMeltingJeiCategory.addBucket(inSlot, recipe.input());
 
         // "原料"：避雷针（放在容器正上方）—— 详细说明挂在它的 tooltip 上 ✓
         builder.addSlot(RecipeIngredientRole.INPUT, 36, 22)
@@ -97,9 +104,10 @@ public class LightningRodConversionJeiCategory
                             .withStyle(ChatFormatting.GRAY));
                 });
 
-        // 输出：液态闪电（本模组铁魔法联动流体 ✓）
-        builder.addSlot(RecipeIngredientRole.OUTPUT, 96, 22)
+        // 输出：液态闪电（本模组铁魔法联动流体 ✓）+ 它的桶
+        var outSlot = builder.addSlot(RecipeIngredientRole.OUTPUT, 96, 22)
                 .addFluidStack(recipe.output(), recipe.outputMb());
+        ChargedCreeperMeltingJeiCategory.addBucket(outSlot, recipe.output());
     }
 
     @Override

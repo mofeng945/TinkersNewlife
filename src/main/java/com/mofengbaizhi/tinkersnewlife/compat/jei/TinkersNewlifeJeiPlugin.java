@@ -118,6 +118,26 @@ public class TinkersNewlifeJeiPlugin implements IModPlugin {
         // ⭐ 避雷针就是"雷击转化"的催化剂 ⇒ 右键避雷针能翻到那个分类 ✓
         registration.addRecipeCatalyst(new ItemStack(Items.LIGHTNING_ROD),
                 LightningRodConversionJeiCategory.TYPE);
+
+        // ⭐ §677：这两条机制的**现场都是冶炼炉**（烈焰血在储罐里被雷击转化 ✓ / 闪电苦力怕在冶炼炉里熔 ✓）
+        //   ⇒ 把「冶炼炉控制器」也当催化剂 ✓ ⇒ 在 JEI 里对着它翻页就能看到这两条 ✓。
+        //   ⚠ 原来"闪电苦力怕熔炼"**一个催化剂都没有** ✗ ⇒ 玩家基本翻不到它
+        //     （用户 §677 报告的「JEI 里看不到液态闪电的配方」就属于这一类发现性问题 ✓）。
+        //   按 id 取 + 取不到就跳过 ✓ ⇒ 不硬依赖匠魂那个方块存在 ✓。
+        ItemStack smelteryController = catalystStack("tconstruct:smeltery_controller");
+        if (smelteryController != null) {
+            registration.addRecipeCatalyst(smelteryController, LightningRodConversionJeiCategory.TYPE);
+            registration.addRecipeCatalyst(smelteryController, ChargedCreeperMeltingJeiCategory.TYPE);
+        }
+    }
+
+    /** 按 id 取一个催化剂物品；拿不到（模组不在／改了 id）返回 {@code null} ⇒ 调用方跳过 ✓ */
+    @javax.annotation.Nullable
+    private static ItemStack catalystStack(String id) {
+        ResourceLocation rl = ResourceLocation.tryParse(id);
+        if (rl == null) return null;
+        Item item = ForgeRegistries.ITEMS.getValue(rl);
+        return item == null || item == Items.AIR ? null : new ItemStack(item);
     }
 
     private void registerInfo(IRecipeRegistration registration, Item item, String key) {

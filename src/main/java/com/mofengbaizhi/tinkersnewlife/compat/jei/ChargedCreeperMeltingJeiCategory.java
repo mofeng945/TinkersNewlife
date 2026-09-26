@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.compat.jei;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
+import mezz.jei.api.gui.builder.IRecipeSlotBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.drawable.IDrawableStatic;
 import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
@@ -15,6 +16,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.material.Fluid;
@@ -121,11 +123,33 @@ public class ChargedCreeperMeltingJeiCategory
                 });
 
         // 输出：液态闪电（充能时每次命中的量 ✓）
-        builder.addSlot(RecipeIngredientRole.OUTPUT, 96, 22)
+        // §677 修（用户报告「JEI 里看不到液态闪电的配方」）：
+        //   JEI 的"**为这个物品**查配方"只认**物品** ✗ —— 只画流体会导致
+        //   "悬停液态闪电的【桶】"时查不到任何东西 ✗（桶确实存在：tinkersnewlife:liquid_lightning_bucket ✓）。
+        //   ⇒ 同一个槽里**连桶一起放进去** ✓：桶能查到 ✓、流体也照样能查到 ✓。
+        var outSlot = builder.addSlot(RecipeIngredientRole.OUTPUT, 96, 22)
                 .addFluidStack(recipe.output(), recipe.chargedAmount())
                 .addRichTooltipCallback((view, tooltip) -> tooltip.add(
                         Component.translatable("jei.tinkersnewlife.charged_creeper_melting.each",
                                 recipe.chargedAmount()).withStyle(ChatFormatting.GRAY)));
+        addBucket(outSlot, recipe.output());
+    }
+
+    /**
+     * 把流体的**桶**也加进同一个槽（§677）—— 让 JEI 的"按物品查配方"能命中 ✓。
+     *
+     * <p>桶取 {@code Fluid#getBucket()} ✓ —— 反编译核过：{@code ForgeFlowingFluid#getBucket()}
+     * 返回的就是 {@code props.bucket(...)} 绑的那个物品 ✓（仓库的 {@code FluidRegistrar} 正是这么绑的 ✓），
+     * 拿不到时返回 {@code Items.AIR} ⇒ 直接跳过 ✓ 不会画出个空桶 ✗。
+     * <p>⚠ 别用 {@code FluidType#getBucket(...)} ✗ —— 那个方法**要传 FluidStack**，
+     * 而且实现就是转手调 {@code stack.getFluid().getBucket()} ✓（我第一版少传参数、编译直接挂了 ✗）。
+     */
+    static void addBucket(IRecipeSlotBuilder slot, Fluid fluid) {
+        if (fluid == null) return;
+        Item bucket = fluid.getBucket();
+        if (bucket != null && bucket != Items.AIR) {
+            slot.addItemStack(new ItemStack(bucket));
+        }
     }
 
     @Override
