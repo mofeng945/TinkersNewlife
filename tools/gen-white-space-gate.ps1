@@ -105,10 +105,19 @@ function Save-Gate([string]$name, [bool]$dark) {
                     if ($a0 -gt 1.0) { $a0 = 1.0 } elseif ($a0 -lt 0.0) { $a0 = 0.0 }
                     $a = [int](255 * $a0 * (0.90 + 0.10 * $b))
                 } else {
-                    $r = [int](196 + 59 * $b - 4 * $n)
-                    $g = [int](228 + 27 * $b - 3 * $n)
+                    # LIGHT gate. Section 667 (user: "白门纹理也凝实一点，现在太透了有点看不清"):
+                    #   * alpha is now ~opaque all the way out (falls off only in the last 12%)
+                    #     instead of using the old 1-d*d ramp, which left the mid-ring nearly
+                    #     see-through and made the whole gate look washed out;
+                    #   * the body/rim range is widened a little so the swirl still reads
+                    #     (pale blue body, near-white rim) now that there is no background
+                    #     showing through to add contrast.
+                    $r = [int](186 + 69 * $b - 4 * $n)
+                    $g = [int](216 + 39 * $b - 3 * $n)
                     $bl = 255
-                    $a = [int](255 * $edge * (0.40 + 0.60 * $b))
+                    $a0 = (1.0 - $d) / 0.12
+                    if ($a0 -gt 1.0) { $a0 = 1.0 } elseif ($a0 -lt 0.0) { $a0 = 0.0 }
+                    $a = [int](255 * $a0 * (0.94 + 0.06 * $b))
                 }
                 $bmp.SetPixel($x, ($f * $FH + $y), (Col $a $r $g $bl))
             }
