@@ -1,7 +1,10 @@
 {
   "replace": false,
   "values": [
-    "#goety:physical",
+    {
+      "id": "#goety:physical",
+      "required": false
+    },
     "minecraft:player_attack",
     "minecraft:mob_attack",
     "minecraft:mob_attack_no_aggro",
@@ -9,12 +12,11 @@
     "minecraft:trident",
     "minecraft:thrown",
     "minecraft:mob_projectile",
-    "minecraft:spit",
     "minecraft:sting",
     "minecraft:fall",
     "minecraft:fly_into_wall",
     "minecraft:falling_anvil",
-    "minecraft:falling_stone",
+    "minecraft:falling_stalactite",
     "minecraft:falling_block",
     "minecraft:cactus",
     "minecraft:sweet_berry_bush",

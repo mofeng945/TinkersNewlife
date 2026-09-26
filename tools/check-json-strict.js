@@ -48,6 +48,27 @@ for (const kind of TAG_KINDS) {
   })(dir);
 }
 
+// ---- 原版伤害类型白名单（§672 新增校验要用）----
+// 判据：我们自己写的 damage_type 标签里，凡是 "minecraft:xxx" 条目，xxx 必须是真实存在的原版伤害类型。
+// 起因（§672）：data/tinkersnewlife/tags/damage_type/is_physical.json 里写了
+//   "minecraft:spit"（**没有**这个伤害类型）与 "minecraft:falling_stone"（也没有，原版只有
+//   falling_block / falling_anvil / falling_stalactite）⇒ **整个标签加载失败** ✗
+//   ⇒ ManaShieldTrait.isPhysicalDamage 恒为假 ⇒ 魔力护盾的物理判定整个失效 ✗。
+//   ⚠ 标签里只要有一个引用不存在，原版 TagLoader 就会**丢掉整个标签**（不是只忽略那一条）✗。
+// 白名单来源：反编译 1.20.1 的 net/minecraft/world/damagesource/DamageTypes.java ——
+//   里面 44 条 `ResourceKey<DamageType> X = ResourceKey.create(..., new ResourceLocation("id"))`
+//   逐个抄下来（本仓库锁 1.20.1 ⇒ 这张表不会随版本漂移 ✓）。
+const VANILLA_DAMAGE_TYPES = new Set([
+  "arrow", "bad_respawn_point", "cactus", "cramming", "dragon_breath", "drown", "dry_out",
+  "explosion", "fall", "falling_anvil", "falling_block", "falling_stalactite", "fireball",
+  "fireworks", "fly_into_wall", "freeze", "generic", "generic_kill", "hot_floor", "in_fire",
+  "in_wall", "indirect_magic", "lava", "lightning_bolt", "magic", "mob_attack",
+  "mob_attack_no_aggro", "mob_projectile", "on_fire", "out_of_world", "outside_border",
+  "player_attack", "player_explosion", "sonic_boom", "stalagmite", "starve", "sting",
+  "sweet_berry_bush", "thorns", "thrown", "trident", "unattributed_fireball", "wither",
+  "wither_skull"
+]);
+
 let files = [];
 (function walk(d) {
   for (const e of fs.readdirSync(d, { withFileTypes: true })) {
@@ -58,7 +79,7 @@ let files = [];
 })(root);
 
 let bad = 0, skipped = 0;
-let shaped = 0, oversized = 0, fluidBad = 0, tagMissing = 0;
+let shaped = 0, oversized = 0, fluidBad = 0, tagMissing = 0, dtBad = 0;
 
 for (const p of files) {
   const raw = fs.readFileSync(p, "utf8");
@@ -133,13 +154,30 @@ for (const p of files) {
       for (const k of Object.keys(node)) scanTag(node[k]);
     })(obj);
   }
+
+  // ---- 语义校验：我们自己的 damage_type 标签里，minecraft:xxx 必须是真实存在的原版伤害类型 ----
+  // 见文件开头 VANILLA_DAMAGE_TYPES 的说明（§672）。
+  // ⚠ 标签里只要有一条引用不存在，原版 TagLoader 会**丢掉整个标签** ⇒ 影响面远大于那一条 ✗。
+  if (rel.includes("/tags/damage_type/") && Array.isArray(obj.values)) {
+    for (const v of obj.values) {
+      const id = (typeof v === "string") ? v : (v && typeof v === "object" ? v.id : null);
+      if (typeof id !== "string" || !id.startsWith("minecraft:")) continue;
+      const name = id.substring("minecraft:".length);
+      if (!VANILLA_DAMAGE_TYPES.has(name)) {
+        dtBad++;
+        console.log("  BAD  " + rel + "  ->  \"minecraft:" + name +
+          "\" 不是 1.20.1 原版伤害类型（整个标签会因此加载失败 ⇒ 引用它的逻辑全部失效）");
+      }
+    }
+  }
 }
 
 console.log("checked " + files.length + ", bad " + bad + ", skipped(empty-key blockstates) " + skipped +
   "; crafting_shaped " + shaped + " (超过 3x3 的 " + oversized + " 个)" +
   "; 流体成分写成 name 的 " + fluidBad + " 个" +
-  "; 引用不存在的自家标签 " + tagMissing + " 个");
+  "; 引用不存在的自家标签 " + tagMissing + " 个" + 
+  "; 无效的原版伤害类型 " + dtBad + " 个");
 // ⚠ 退出码必须把 oversized / fluidBad / tagMissing 也算进去：它们虽然没让 JSON 解析失败，
 //   但确实都是"游戏里用不了"的真缺陷，必须挡住提交。
 //   （2026-09-25 自查发现：最初只判 bad > 0 ⇒ 反向测试时它报了 BAD 却仍然 exit 0 ✗）
-process.exit((bad > 0 || oversized > 0 || fluidBad > 0 || tagMissing > 0) ? 1 : 0);
+process.exit((bad > 0 || oversized > 0 || fluidBad > 0 || tagMissing > 0 || dtBad > 0) ? 1 : 0);
