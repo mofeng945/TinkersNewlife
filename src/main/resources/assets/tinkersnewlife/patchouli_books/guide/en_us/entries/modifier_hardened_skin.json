@@ -1,0 +1,16 @@
+{
+    "name": "Hardened Skin",
+    "category": "tinkersnewlife:traits",
+    "icon": "vampirism:cursed_earth",
+    "sortnum": 61,
+    "pages": [
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)Defense-slot modifier - Hardened Skin$(): we ought to walk beneath the blazing sun!(br2)Restriction: $(l)armor only$(); $(bold)no levels$(), costs $(bold)1 defense slot$().(br2)Requirement: the wearer must be a $(bold)vampire of level 5 or higher$() (Vampirism vampire faction level >= 5)."
+        },
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)Effect$(): sunlight no longer scorches you (Vampirism's $(italic)sun_damage$()) and standing in the sun no longer sets you on fire - so the ring of fire glow at the edges of your view never shows up either.(br2)Boundary: only while $(bold)genuinely exposed to the sun$() (daytime + sky visible above you + not raining on you); $(italic)lava and campfires still burn you$().(br2)Recipe: an $(bold)umbrella$() (this mod's tag tinkersnewlife:umbrellas - Vampirism's umbrella plus every colour of Vampires Need Umbrellas) + Broken Durendal Blade + Cursed Dirt."
+        }
+    ]
+}

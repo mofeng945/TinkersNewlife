@@ -1,0 +1,33 @@
+{
+  "type": "tconstruct:modifier",
+  "allow_crystal": true,
+  "inputs": [
+    {
+      "type": "forge:nbt",
+      "item": "vampirism:blood_bottle",
+      "nbt": "{Damage:0}"
+    },
+    {
+      "item": "vampirism:vampire_orchid"
+    },
+    {
+      "item": "vampirism:vampire_blood_bottle"
+    },
+    {
+      "tag": "tinkersnewlife:pure_blood_3plus"
+    }
+  ],
+  "result": "tinkersnewlife:aristocratic_dining",
+  "slots": {
+    "abilities": 1
+  },
+  "tools": {
+    "tag": "tconstruct:modifiable/armor"
+  },
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "vampirism"
+    }
+  ]
+}

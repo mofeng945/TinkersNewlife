@@ -110,7 +110,9 @@
     "biting_frost": "#a5cbca",
     "origin_magic": "#9a92e8",
     "chaos_flow": "#ff7ce0",
-    "order_origin": "#dcd8ff"
+    "order_origin": "#dcd8ff",
+    "aristocratic_dining": "#8e1b2f",
+    "hardened_skin": "#d8a75a"
   },
   "material.tinkersnewlife": {
     "mithril": "#c9d6e8",

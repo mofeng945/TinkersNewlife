@@ -12,7 +12,8 @@
     "EldritchLearningMixin",
     "ServerPlayerDeathMixin",
     "ManaShieldEffectMixin",
-    "AllPathsOneSoulMixin"
+    "AllPathsOneSoulMixin",
+    "BloodStatsInvoker"
   ],
   "client": [
     "EntityRenderDispatcherMixin",

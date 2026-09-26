@@ -218,6 +218,14 @@ dependencies {
     compileOnly fg.deobf("blank:flywheel-forge-1.20.1:1.0.5")
     // ⚠ 运行时的 ponder / flywheel 由 Create 自己的 jar-in-jar 提供 ⇒ **不需要**单独装进实例 ✓
     //   （所以这里**没有** runtimeOnly：Forge 会在加载 Create 时把它内嵌的那两个 jar 挂上 ✓）
+    // ⭐ 吸血鬼／血族传说（Vampirism）：仅编译期引用其 API（VampirismAPI / IFactionPlayerHandler /
+    //   IVampirePlayer / IBloodStats…）——「贵族餐饮」「硬化皮肤」两条联动的判定与加血都靠它 ✓。
+    //   libs/ 下放的是**整合包 mods 目录里的原 jar**（文件名末尾是版本号 ⇒ flatDir 的 name:version 能解析 ✓），
+    //   经 fg.deobf 转开发映射（与 Jade / Patchouli / Mekanism / AE2 同一套写法 ✓）。
+    //   ⚠ 运行时纪律：所有碰血族类的代码都在 integration/vampirism/ 下的**独立类**里，
+    //     事件处理器**先判 ModList.isLoaded("vampirism")** 才碰它 ⇒ 没装血族时那些类根本不会被加载 ✓。
+    //   ⚠ 血液值写入走 Mixin 的 @Invoker（BloodStats#addBlood 是包级私有 ✗，其公开 API 只有 getter）。
+    compileOnly fg.deobf("blank:Vampirism-1.20.1:1.10.16")
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html

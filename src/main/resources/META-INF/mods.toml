@@ -98,6 +98,15 @@ description='''一个匠魂附属，适用于Newlifestyle整合包''' #mandatory
     ordering="AFTER"
     side="BOTH"
 
+# 吸血鬼／血族传说（Vampirism）：贵族餐饮 / 硬化皮肤两条联动的对象。
+# 声明为可选依赖：未安装时这两条强化刷不出来（配方带 forge:mod_loaded 条件），模组本体照常加载。
+[[dependencies.tinkersnewlife]]
+    modId="vampirism"
+    mandatory=false
+    versionRange="[1.10.0,)"
+    ordering="AFTER"
+    side="BOTH"
+
 # Features are specific properties of the game environment, that you may want to declare you require. This example declares
 # that your mod requires GL version 3.2 or higher. Other features will be added. They are side aware so declaring this won't
 # stop your mod loading on the server for example.

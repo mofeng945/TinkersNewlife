@@ -478,4 +478,14 @@ public class Modifiers {
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.CursedAdrenalineModifier> CURSED_ADRENALINE =
         MODIFIERS.register("cursed_adrenaline",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.CursedAdrenalineModifier::new);
+
+    /** 血族联动·能力槽强化「贵族餐饮」（护甲 · 无等级 · 占 1 能力槽；5 级以上血族进食正常食物 → 按营养值加血液值） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.AristocraticDiningModifier> ARISTOCRATIC_DINING =
+        MODIFIERS.register("aristocratic_dining",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.AristocraticDiningModifier::new);
+
+    /** 血族联动·防御槽强化「硬化皮肤」（护甲 · 无等级 · 占 1 防御槽；5 级以上血族免疫阳光灼烧与阳光着火） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.HardenedSkinModifier> HARDENED_SKIN =
+        MODIFIERS.register("hardened_skin",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.HardenedSkinModifier::new);
 }

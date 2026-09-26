@@ -1,0 +1,16 @@
+{
+    "name": "贵族餐饮",
+    "category": "tinkersnewlife:traits",
+    "icon": "vampirism:blood_bottle",
+    "sortnum": 60,
+    "pages": [
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)能力槽强化·贵族餐饮$()：吾等应获品味食物之能！(br2)安装限制：$(l)只能装在护甲上$()；$(bold)无等级$()，消耗 $(bold)1 个能力槽$()。(br2)生效条件：穿戴者必须是 $(bold)5 级以上的血族$()（吸血鬼／血族传说 Vampirism 的吸血鬼阵营等级 ≥ 5；猎人不算）。"
+        },
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)效果$()：进食$(bold)普通食物$()时，除了照常回复饱食度，还会按食物的$(bold)营养值$()获得等量血液值——血液饱和度的算法与血族自己吃东西时一致。(br2)注意：血瓶／血药／纯净血液这些$(italic)没有食物属性$()的东西不参与；护甲损坏（tic_broken）时本强化不生效。(br2)配方：$(bold)满血瓶$()（damage 0 的血瓶） ＋ 吸血鬼兰花 ＋ 吸血鬼之血 ＋ $(bold)纯净度 ≥ 3 的纯洁之血$()。"
+        }
+    ]
+}

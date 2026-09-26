@@ -1,0 +1,16 @@
+{
+    "name": "Aristocratic Dining",
+    "category": "tinkersnewlife:traits",
+    "icon": "vampirism:blood_bottle",
+    "sortnum": 60,
+    "pages": [
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)Ability-slot modifier - Aristocratic Dining$(): we deserve the gift of tasting food!(br2)Restriction: $(l)armor only$(); $(bold)no levels$(), costs $(bold)1 ability slot$().(br2)Requirement: the wearer must be a $(bold)vampire of level 5 or higher$() (Vampirism vampire faction level >= 5; hunters do not count)."
+        },
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)Effect$(): when eating $(bold)normal food$(), you regain hunger as usual $(italic)and$() gain blood equal to the food's $(bold)nutrition value$() - the blood saturation uses the very same formula Vampirism uses for its own food.(br2)Notes: blood bottles / blood potions / pure blood have no food properties and do not count; a broken piece of armor (tic_broken) disables the modifier.(br2)Recipe: $(bold)a full blood bottle$() (blood bottle with damage 0) + Vampire Orchid + Vampire Blood Bottle + $(bold)Pure Blood of purity 3 or higher$()."
+        }
+    ]
+}
