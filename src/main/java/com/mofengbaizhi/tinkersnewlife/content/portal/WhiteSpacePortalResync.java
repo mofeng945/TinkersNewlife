@@ -37,7 +37,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * 「F3 还是 253、一直自由落体」，而服务端其实一切都对 ✓。
  *
  * <h2>做法</h2>
- * 只做一件事：落地后在<b>接下来 {@link #RESEND_TICKS} 个 tick 内，每 tick 重发一次位置包</b> ✓。
+ * 只做一件事：落地后在<b>接下来 {@link #RESEND_TICKS} 个 tick 内、每 {@link #RESEND_EVERY} tick 重发一次位置包</b>
+ * （<b>不是每 tick</b> —— 见 §686：每 tick 发会把人钉在原地 ✗），
+ * 并且<b>一旦玩家离开落点（说明客户端已同步）就立刻停</b> ✓。
  * <ul>
  *   <li>用的就是 vanilla 自己在"位置包没被确认"时用的那招
  *       （{@code ServerGamePacketListenerImpl#handleMovePlayer} 里 {@code awaitingPositionFromClient != null}
@@ -50,8 +52,23 @@ import java.util.concurrent.ConcurrentHashMap;
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID)
 public final class WhiteSpacePortalResync {
 
-    /** 落地后重发多少次（2 秒；客户端重建关卡通常几十毫秒内完成 ✓，冗余是安全的 ✓） */
+    /** 重置上限（tick）——2 秒；一旦客户端开始正常移动就提前结束 ✓ */
     private static final int RESEND_TICKS = 40;
+
+    /**
+     * 每隔几 tick 重说一次。
+     * <p>⚠ <b>§686 用户实测口径</b>：「从传送门传送过去时会将人物在原地锁住一瞬间」。
+     * 原先每 tick 都发一次位置包 ⇒ 每发一次都会把客户端<b>钉回落点</b> ✗，
+     * 人在那 2 秒里根本走不动 ✗。现在改成<b>稀疏下发</b>（每 {@link #RESEND_EVERY} tick 一次）：
+     * 客户端重建关卡那几百毫秒里依旧会被纠正回来 ✓，而间隔里它可以正常移动 ✓。
+     */
+    private static final int RESEND_EVERY = 4;
+
+    /**
+     * 服务端玩家离开落点超过这个距离（平方，约 0.1 格）⇒ 说明客户端已经同步并在正常走动
+     * ⇒ <b>立刻停止重申</b> ✓（绝不再把人钉在原地 ✗）。
+     */
+    private static final double MOVED_EPSILON_SQR = 0.01D;
 
     private WhiteSpacePortalResync() {
     }
@@ -104,8 +121,19 @@ public final class WhiteSpacePortalResync {
                 it.remove();            // 人已经不在目标维度了：绝不把他拽回来 ✗
                 continue;
             }
+            /*
+             * §686：人已经开始离开落点 ⇒ 客户端显然已经同步 ✓ ⇒ 立刻停，
+             * 否则会把"想往前走"的玩家一次次按回原地 ✗（那就是用户感觉到的"被锁住"）。
+             */
+            if (player.position().distanceToSqr(p.x(), p.y(), p.z()) > MOVED_EPSILON_SQR) {
+                it.remove();
+                continue;
+            }
+            int left = p.ticksLeft() - 1;
             entry.setValue(new Pending(p.dimension(), p.x(), p.y(), p.z(),
-                    p.yRot(), p.xRot(), p.ticksLeft() - 1));
+                    p.yRot(), p.xRot(), left));
+            // 稀疏下发：只每隔 RESEND_EVERY tick 说一次，给客户端留出正常移动的余地 ✓
+            if (left % RESEND_EVERY != 0) continue;
             /*
              * ⚠ 只发位置包（ServerGamePacketListenerImpl#teleport 的 5 参版本 ⇒ 绝对坐标 ✓），
              * 不碰维度、不碰背包、不碰进度 ✓ —— 等价于"把服务端的坐标再说一遍" ✓。

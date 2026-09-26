@@ -295,11 +295,11 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
         WhiteSpaceDimensions.ensurePlatform(target, landing);
 
         /*
-         * §678 诊断：把「门记录了什么／这次实际落哪」写进日志。
-         * 落点类问题只有这一行能一眼看出是"记录不对"还是"落地后被别的逻辑挪走"✓
-         * （每次进门一条 INFO，事件频率极低，不会刷日志 ✓）。
+         * §686 用户口径：「帮我关闭日志」⇒ 两条诊断行降级为 {@code debug} ✓。
+         * 默认日志级别（INFO）下**不再出现** ✓；将来真需要查落点问题时，
+         * 把日志级别调到 DEBUG 就能重新看到，不必再改代码 ✓。
          */
-        TinkersNewlife.LOGGER.info("[伟大白色空间] {} 从 {} {} 进门 → {} 记录 {} ⇒ 落点 {}",
+        TinkersNewlife.LOGGER.debug("[伟大白色空间] {} 从 {} {} 进门 → {} 记录 {} ⇒ 落点 {}",
                 entity.getName().getString(), level.dimension().location(),
                 WhiteSpaceDimensions.coords(pos), destKey.location(),
                 WhiteSpaceDimensions.coords(portal.getDestinationPos()),
@@ -346,9 +346,9 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
             }
         }
 
-        // §678 诊断：落地后的真实坐标（上面那条"落点"是意图，这条是结果 ⇒ 两者不一致就是被别的逻辑挪走了）
+        // §686：诊断行降级为 debug（默认级别下不再刷日志 ✓，排查时调级别即可恢复 ✓）
         if (entity instanceof ServerPlayer player) {
-            TinkersNewlife.LOGGER.info("[伟大白色空间] {} 落地结果：{} {}",
+            TinkersNewlife.LOGGER.debug("[伟大白色空间] {} 落地结果：{} {}",
                     player.getName().getString(), player.serverLevel().dimension().location(),
                     WhiteSpaceDimensions.coords(player.blockPosition()));
             /*
