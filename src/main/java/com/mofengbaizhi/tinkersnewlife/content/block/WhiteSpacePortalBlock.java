@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.content.block;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModItems;
 import com.mofengbaizhi.tinkersnewlife.content.portal.WhiteSpaceDimensions;
+import com.mofengbaizhi.tinkersnewlife.content.portal.WhiteSpacePortalResync;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -350,6 +351,14 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
             TinkersNewlife.LOGGER.info("[伟大白色空间] {} 落地结果：{} {}",
                     player.getName().getString(), player.serverLevel().dimension().location(),
                     WhiteSpaceDimensions.coords(player.blockPosition()));
+            /*
+             * §682：服务端坐标已经对了，但客户端重建关卡后会短暂停在"旧高度"往下掉
+             * （用户实测 F3 还是 253）⇒ 接下来 1 秒内每 tick 把落点重说一遍 ✓。
+             * ⚠ 只在真的传送成功（ok ✓）时安排；失败的人留在原地，不需要重申 ✓。
+             */
+            if (ok) {
+                WhiteSpacePortalResync.schedule(player, target, landing);
+            }
         }
     }
 }
