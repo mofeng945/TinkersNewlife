@@ -12,9 +12,9 @@
   "bed_works": true,
   "respawn_anchor_works": false,
   "has_raids": false,
-  "logical_height": 16,
+  "logical_height": 400,
   "min_y": 0,
-  "height": 16,
+  "height": 400,
   "infiniburn": "#minecraft:infiniburn_overworld",
   "effects": "tinkersnewlife:great_white_space"
 }

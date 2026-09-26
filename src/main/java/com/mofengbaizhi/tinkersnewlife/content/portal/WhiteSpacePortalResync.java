@@ -28,9 +28,12 @@ import java.util.concurrent.ConcurrentHashMap;
  *       <b>只拷 {@code xLast/yLast1/zLast}、朝向、onGround 这些"上一 tick 值"，不拷坐标</b> ✓；</li>
  *   <li>{@code resetPos()} —— 从"当前 Y"<b>向下</b>扫一个能站的位置：
  *       <pre>for (double d0 = getY(); d0 &gt; minBuildHeight &amp;&amp; d0 &lt; maxBuildHeight; ++d0)</pre>
- *       ⚠ 如果新建玩家的 Y 是 <b>目标维度高度之外</b>的值（伟大白色空间只有 <b>0..15</b>，
- *       而从 ATM 采矿维度来的玩家在 <b>253</b> 层），这个循环条件一开始就不成立
- *       ⇒ <b>循环体一次都不执行 ⇒ 客户端就停在那个人为的高度上</b> ✗。</li>
+ *       ⚠ 如果新建玩家的 Y 是 <b>目标维度高度之外</b>的值，这个循环一开始就不成立
+ *       ⇒ <b>循环体一次都不执行 ⇒ 客户端就停在那个人为的高度上</b> ✗。
+ *       <p>（§691 起伟大白色空间的高度已从 <b>0..15</b> 拓到 <b>0..399</b> ⇒
+ *       "停在旧高度（例如采矿维度的 253 层）"这类情况<b>落在世界内</b>了，
+ *       不再往虚空里无限下坠 ✓ —— 但"客户端自己爬起来"这件事仍然不能指望，
+ *       所以本类的重申依旧必要 ✓。）</li>
  * </ol>
  * 服务端随后发的 {@code ClientboundPlayerPositionPacket} 本该把它摆正 ✓，但实测
  * <b>客户端会短暂（甚至持续）停在旧高度往虚空里掉</b> ✗ ⇒ 用户看到的就是
