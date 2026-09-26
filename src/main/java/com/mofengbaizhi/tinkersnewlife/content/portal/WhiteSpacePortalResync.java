@@ -37,9 +37,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * 「F3 还是 253、一直自由落体」，而服务端其实一切都对 ✓。
  *
  * <h2>做法</h2>
- * 只做一件事：落地后在<b>接下来 {@link #RESEND_TICKS} 个 tick 内、每 {@link #RESEND_EVERY} tick 重发一次位置包</b>
- * （<b>不是每 tick</b> —— 见 §686：每 tick 发会把人钉在原地 ✗），
- * 并且<b>一旦玩家离开落点（说明客户端已同步）就立刻停</b> ✓。
+ * 只做一件事：落地后在<b>接下来 {@link #RESEND_TICKS} 个 tick 内，<b>每 tick</b> 重发一次位置包</b> ✓
+ * （<b>必须每 tick</b> —— 见 §688：稀疏发包会让位置不同步立刻回来 ✗），
+ * 发满窗口就结束，<b>不设早停</b> ✓。
  * <ul>
  *   <li>用的就是 vanilla 自己在"位置包没被确认"时用的那招
  *       （{@code ServerGamePacketListenerImpl#handleMovePlayer} 里 {@code awaitingPositionFromClient != null}
@@ -52,23 +52,25 @@ import java.util.concurrent.ConcurrentHashMap;
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID)
 public final class WhiteSpacePortalResync {
 
-    /** 重置上限（tick）——2 秒；一旦客户端开始正常移动就提前结束 ✓ */
+    /** 重申窗口（tick）——2 秒，覆盖客户端重建关卡（本整合包约 1~2 秒）✓ */
     private static final int RESEND_TICKS = 40;
 
     /**
-     * 每隔几 tick 重说一次。
-     * <p>⚠ <b>§686 用户实测口径</b>：「从传送门传送过去时会将人物在原地锁住一瞬间」。
-     * 原先每 tick 都发一次位置包 ⇒ 每发一次都会把客户端<b>钉回落点</b> ✗，
-     * 人在那 2 秒里根本走不动 ✗。现在改成<b>稀疏下发</b>（每 {@link #RESEND_EVERY} tick 一次）：
-     * 客户端重建关卡那几百毫秒里依旧会被纠正回来 ✓，而间隔里它可以正常移动 ✓。
+     * ⚠⚠ <b>§688 用户实测结论：必须<b>每 tick</b> 发，不能稀疏 ✗</b>
+     *
+     * <p>§686 我曾把它改成"每 4 tick 发一次"想减轻玩家被钉住的感觉 ✗ ——
+     * 用户实测立刻反馈：<b>「稀疏发包后，位置不同步问题又恢复了」</b> ✗✓
+     *
+     * <p>原因（复盘）：客户端重建关卡那 1~2 秒里，它的<b>下落物理每 tick 都会把位置覆盖掉</b> ✓，
+     * 只有<b>持续压回去</b>才能撑到它加载完 ✓。一旦留出空隙：
+     * <ul>
+     *   <li>空隙里服务端会接受客户端上报的下坠位置（`ServerGamePacketListenerImpl`
+     *       的 `moved wrongly` 分支会 `absMoveTo(客户端位置)` ✗）⇒ 服务端自己也开始往下漂 ✗；</li>
+     *   <li>于是"越同步越差"，重申等于白做 ✗。</li>
+     * </ul>
+     * ⇒ <b>本常量固定为 1（每 tick），不要再优化成稀疏发包</b> ✗。
      */
-    private static final int RESEND_EVERY = 4;
-
-    /**
-     * 服务端玩家离开落点超过这个距离（平方，约 0.1 格）⇒ 说明客户端已经同步并在正常走动
-     * ⇒ <b>立刻停止重申</b> ✓（绝不再把人钉在原地 ✗）。
-     */
-    private static final double MOVED_EPSILON_SQR = 0.01D;
+    private static final int RESEND_EVERY = 1;
 
     private WhiteSpacePortalResync() {
     }
@@ -122,17 +124,14 @@ public final class WhiteSpacePortalResync {
                 continue;
             }
             /*
-             * §686：人已经开始离开落点 ⇒ 客户端显然已经同步 ✓ ⇒ 立刻停，
-             * 否则会把"想往前走"的玩家一次次按回原地 ✗（那就是用户感觉到的"被锁住"）。
+             * ⚠ §688：**不要**在这里加"玩家离开落点就停止"之类的早停判据 ✗ ——
+             * §686 加过，结果被"服务端朝客户端下坠位置漂移"误触发，
+             * 直接把重申关掉 ⇒ 用户实测「位置不同步又恢复了」✗。
+             * 现在的口径很干脆：**窗口内每 tick 都发，发满 40 tick 就结束** ✓。
              */
-            if (player.position().distanceToSqr(p.x(), p.y(), p.z()) > MOVED_EPSILON_SQR) {
-                it.remove();
-                continue;
-            }
             int left = p.ticksLeft() - 1;
             entry.setValue(new Pending(p.dimension(), p.x(), p.y(), p.z(),
                     p.yRot(), p.xRot(), left));
-            // 稀疏下发：只每隔 RESEND_EVERY tick 说一次，给客户端留出正常移动的余地 ✓
             if (left % RESEND_EVERY != 0) continue;
             /*
              * ⚠ 只发位置包（ServerGamePacketListenerImpl#teleport 的 5 参版本 ⇒ 绝对坐标 ✓），
