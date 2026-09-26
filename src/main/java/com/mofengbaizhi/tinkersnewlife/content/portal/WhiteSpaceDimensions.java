@@ -89,8 +89,14 @@ public final class WhiteSpaceDimensions {
     /** 玩家使用通行证的最大「手长」（防作弊：C2S 包里的锚点必须离玩家这么近） */
     public static final double MAX_REACH_SQR = 64.0D;
 
-    /** 跨维度传送后玩家的冷却（tick）——4 秒，够走出门口 */
-    public static final int ARRIVE_COOLDOWN = 80;
+    /**
+     * 跨维度传送后的兜底冷却（tick）——1 秒。
+     * <p>⚠ §678 起<b>不再靠它防乒乓</b>：落点就是对面那扇门的下半格 ⇒ 人一落地就站在门里，
+     * 用计时器挡的结果是"4 秒后必定被弹回去"（用户实测的乒乓就是这个）。
+     * 真正的防线是 {@link #wasInsidePortalLastTick}（只在"从门外走进来"的那一刻传送），
+     * 这里只留 1 秒防止同一 tick 内的重复触发 ✓。
+     */
+    public static final int ARRIVE_COOLDOWN = 20;
 
     /** 刚开完门的玩家冷却（tick）——5 秒，免得开完门站在原地被自己的门吸走 */
     public static final int CREATE_COOLDOWN = 100;
@@ -100,6 +106,14 @@ public final class WhiteSpaceDimensions {
 
     /** 玩家持久化数据里存「去过的维度」的键（一个 CompoundTag，维度 id → true） */
     private static final String VISITED_KEY = "tinkersnewlife:visited_dimensions";
+
+    /**
+     * 实体持久化数据里存「最后一次还在门里的游戏刻」的键（§678 防乒乓的家底）。
+     * <p>⚠ 必须存在实体自己的 {@code ForgeData} 里：① 玩家跨维度传送是同一个对象 ⇒ 天然带过去 ✓；
+     * ② 生物的跨维度传送是"新建实体 + 拷 NBT"（{@code Entity#restoreFrom} ⇒ {@code saveWithoutId}/{@code load}），
+     * ForgeData 同样会被继承 ✓ ⇒ 落地就在对面门里也不会被立刻弹回来 ✓。
+     */
+    private static final String INSIDE_KEY = "tinkersnewlife:white_space_portal_inside";
 
     // ============================================================
     //  传送黑名单
@@ -577,5 +591,43 @@ public final class WhiteSpaceDimensions {
 
     public static boolean isOnCooldown(Entity entity) {
         return entity.level().getGameTime() < entity.getPersistentData().getLong(COOLDOWN_KEY);
+    }
+
+    // ============================================================
+    //  §678「只在走进门的那一下传送」——防两个维度之间乒乓
+    // ============================================================
+
+    /**
+     * 记下"这一 tick 这个实体还在门方块里"（每次 {@code entityInside} 都要调，且要在任何 return 之前）。
+     * <p>⚠ 用"最后一次在门里的游戏刻"来判断，而不是布尔标记：实体走出去以后不再收到
+     * {@code entityInside} ⇒ 这个值就停在那一刻 ⇒ 隔几 tick 再走进来会被判定为"新的一次进入" ✓。
+     */
+    public static void markInsidePortal(Entity entity) {
+        entity.getPersistentData().putLong(INSIDE_KEY, entity.level().getGameTime());
+    }
+
+    /**
+     * 上一个 tick 这个实体也在门里吗（§678 用户实测口径：<b>走进去才传送</b>）。
+     *
+     * <h2>为什么要这条</h2>
+     * 落点就是目标维度那扇门<b>下半格</b>的坐标 ⇒ <b>人一落地就站在门方块里</b> ✓
+     * （§661 用户口径「自动记录相对落点」的必然结果）。
+     * 旧实现只用一个落地冷却计时器挡着，冷却一到（80 tick ＝ 4 秒）人还在门里 ⇒
+     * <b>又被原路弹回出发维度那扇门口</b> ✗ —— 用户实测的"落点变成原本在对应维度的位置"
+     * 就是这个乒乓（日志里每 4~6 秒一个来回，间隔正好≈冷却）。
+     *
+     * <h2>现在的判定</h2>
+     * <ul>
+     *   <li>上一 tick 也在门里 ⇒ <b>这次不传送</b>（站着不动／刚落地待在门里都不会被弹走 ✓）；</li>
+     *   <li>上一 tick 不在（走出去过）⇒ 正常传送（回程、反复进出都照常 ✓）；</li>
+     *   <li>从没在门里过（{@code 0} ＝ 从未记过）⇒ 正常传送 ✓。
+     *       ⚠ 游戏刻为 0 的新存档理论上会误判一次，但那种世界连门都还没有，
+     *       且冷却兜底仍在 ⇒ 不处理 ✓。</li>
+     * </ul>
+     */
+    public static boolean wasInsidePortalLastTick(Entity entity) {
+        long now = entity.level().getGameTime();
+        long last = entity.getPersistentData().getLong(INSIDE_KEY);
+        return last != 0L && now - last <= 1L;
     }
 }

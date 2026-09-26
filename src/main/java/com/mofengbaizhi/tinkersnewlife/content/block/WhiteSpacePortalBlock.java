@@ -1,5 +1,6 @@
 package com.mofengbaizhi.tinkersnewlife.content.block;
 
+import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModItems;
 import com.mofengbaizhi.tinkersnewlife.content.portal.WhiteSpaceDimensions;
 import net.minecraft.core.BlockPos;
@@ -238,6 +239,22 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
          * ⇒ 生物（LivingEntity）全部可传；非生物实体（掉落物／船／箭…）依旧直接穿过 —— 用户说的是"生物" ✓。
          */
         if (!(entity instanceof LivingEntity)) return;
+
+        /*
+         * §678：先打卡（"这一 tick 人还在门里"），必须在所有 return 之前 ——
+         * 哪怕这次因为冷却／没目的地不传，也要如实记下 ✓。
+         */
+        WhiteSpaceDimensions.markInsidePortal(entity);
+
+        /*
+         * ⚠ §678 修的就是这里。落点坐标就是对面那扇门下半格 ⇒ **人一落地就站在门方块里**，
+         * 旧实现只靠一个 80 tick 的落地冷却挡着 ⇒ 冷却一到（实测就是 4 秒一次）
+         * 又把人原路弹回出发维度的门口 ⇒ **两个维度之间乒乓**（用户实测报的就是"落点变成
+         * 原本在对应维度的位置"）。现在改成"**只在从门外走进来的那一下**传送"：
+         * 上一 tick 也在门里就直接跳过 ⇒ 站着不动永远不会被弹回去 ✓，
+         * 走出去再走进来照常能传（回程 ✓）。
+         */
+        if (WhiteSpaceDimensions.wasInsidePortalLastTick(entity)) return;
         if (WhiteSpaceDimensions.isOnCooldown(entity)) return;
         if (!(level.getBlockEntity(pos) instanceof WhiteSpacePortalBlockEntity portal)) return;
         if (!portal.hasDestination()) return;
@@ -267,6 +284,17 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
 
         // §663 用户口径：传送出来脚底下没有落点 ⇒ 自动铺一块 3×3 黑曜石平台
         WhiteSpaceDimensions.ensurePlatform(target, landing);
+
+        /*
+         * §678 诊断：把「门记录了什么／这次实际落哪」写进日志。
+         * 落点类问题只有这一行能一眼看出是"记录不对"还是"落地后被别的逻辑挪走"✓
+         * （每次进门一条 INFO，事件频率极低，不会刷日志 ✓）。
+         */
+        TinkersNewlife.LOGGER.info("[伟大白色空间] {} 从 {} {} 进门 → {} 记录 {} ⇒ 落点 {}",
+                entity.getName().getString(), level.dimension().location(),
+                WhiteSpaceDimensions.coords(pos), destKey.location(),
+                WhiteSpaceDimensions.coords(portal.getDestinationPos()),
+                WhiteSpaceDimensions.coords(landing));
 
         /*
          * 连同"这一串"一起送：跨维度传送内部会 unRide()，只送坐骑会把乘客留在原地
@@ -301,6 +329,13 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
                 player.displayClientMessage(
                         Component.translatable("message.tinkersnewlife.white_space.travel_blocked"), true);
             }
+        }
+
+        // §678 诊断：落地后的真实坐标（上面那条"落点"是意图，这条是结果 ⇒ 两者不一致就是被别的逻辑挪走了）
+        if (entity instanceof ServerPlayer player) {
+            TinkersNewlife.LOGGER.info("[伟大白色空间] {} 落地结果：{} {}",
+                    player.getName().getString(), player.serverLevel().dimension().location(),
+                    WhiteSpaceDimensions.coords(player.blockPosition()));
         }
     }
 }
