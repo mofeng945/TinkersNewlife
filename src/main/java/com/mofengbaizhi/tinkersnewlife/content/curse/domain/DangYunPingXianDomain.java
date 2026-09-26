@@ -44,7 +44,11 @@ import java.util.UUID;
  *   <li>领域内持续维持一批<b>以施术者为主人的溺尸</b>（数量 = 6 + 半径/2，上限 24）：
  *       溺尸会<b>主动索敌并攻击领域内所有非施术者阵营目标</b>（游过去近战），
  *       死亡后自动补充；约 1/5 概率手持三叉戟。</li>
- *   <li>领域结束（手动/咒力耗尽/被破坏/死亡登出）一切回归原样：注的水消失、溺尸全部消散。</li>
+ *   <li>领域结束（手动/咒力耗尽/被破坏/死亡登出）一切回归原样：<b>本领域注的水</b>消失、溺尸全部消散。
+ *       ⚠ <b>§690 用户口径</b>：「清除水逻辑<b>不要清除原本已有的水</b>」——
+ *       首 tick 注水前会把「球体 ＋ 8 格外扩」内**原本就存在**的水/含水方块记下来
+ *       （{@link #preExistingWater}），关闭清理时一律跳过 ✓
+ *       ⇒ 领域旁边的池塘／玩家自己放的水／海面都<b>不会</b>被误清 ✗。</li>
  * </ul>
  */
 public class DangYunPingXianDomain extends BaseDomain {
@@ -68,6 +72,20 @@ public class DangYunPingXianDomain extends BaseDomain {
     private final double fillRadius;
     /** 被本领域灌成水的位置（结束时复原为空气） */
     private final Set<BlockPos> waterBlocks = new HashSet<>();
+
+    /**
+     * <b>§690 用户口径</b>：「荡蕴平线的清除水逻辑<b>不要清除原本已有的水</b>」。
+     *
+     * <p>首 tick 注水<b>之前</b>，先把「领域球体 ＋ 8 格外扩」范围内**原本就存在**的
+     * 水方块／气泡柱／含水方块（{@code WATERLOGGED=true}）记下来 ✓
+     * ⇒ 关闭时的 {@link #clearWater}／{@link #dryWaterlogged} 遇到它们<b>一律跳过</b> ✗。
+     *
+     * <p>⚠ 为什么要这么记：注水只往<b>空气</b>里灌 ✓（见 {@link #fillWater}），
+     * 但关闭清理是从记录点做 <b>BFS</b> 把"连通的水"一并删掉 ✗
+     * —— 领域旁边要是有个池塘、玩家自己放的水、或者一片海，就会被连着清空 ✗。
+     * 记下原有水体后，BFS 到它们边上就停 ✓（范围与清理 BFS 上限完全一致 ⇒ 不漏 ✓）。
+     */
+    private final Set<BlockPos> preExistingWater = new HashSet<>();
     /** 领域溺尸实体 id */
     private final List<Integer> drownedIds = new ArrayList<>();
     /** 服务端世界引用（关闭时可能拿不到 player） */
@@ -119,6 +137,8 @@ public class DangYunPingXianDomain extends BaseDomain {
         // ⭐ 首 tick：阻挡墙已建好，此时注水 + 召首批溺尸
         if (!initialized) {
             initialized = true;
+            // §690：必须先记「原本就有的水」，再注水 —— 顺序反了就记不到原貌了 ✗
+            recordPreExistingWater(level);
             fillWater(level, true);
             spawnDrownedBatch(level, player, targetCount());
             TinkersNewlife.LOGGER.info("[荡蕴平线] 首 tick 注水 {} 块 溺尸 {} 只",
@@ -172,16 +192,22 @@ public class DangYunPingXianDomain extends BaseDomain {
             // 这类"可含水"方块灌成含水状态，只删水方块的话它们会永远含着水。
             dryWaterlogged(levelRef, cleared);
             waterBlocks.clear();
+            preExistingWater.clear();   // §690：本次领域用完了就丢掉，不留给下一次
         }
         // 施术者水呼吸随效果自然过期即可
         clearResist();
     }
 
-    /** 从记录水源出发 BFS，清除所有连通的水方块（仅限领域附近的连通水域），返回被清掉的位置 */
+    /**
+     * 从记录水源出发 BFS，清除所有连通的水方块（仅限领域附近的连通水域），返回被清掉的位置。
+     * <p>⚠ §690：**原本就存在的水一律跳过** ✗ —— 既不删、也不穿过它继续扩散
+     * （{@link #preExistingWater}，首 tick 注水前记好 ✓）。
+     */
     private java.util.Set<BlockPos> clearWater(ServerLevel level) {
         java.util.ArrayDeque<net.minecraft.core.BlockPos> queue = new java.util.ArrayDeque<>();
         java.util.Set<net.minecraft.core.BlockPos> visited = new java.util.HashSet<>();
         for (BlockPos pos : waterBlocks) {
+            if (preExistingWater.contains(pos)) continue;      // §690：原本就是水 ⇒ 不动
             if (isWaterBody(level.getBlockState(pos))) {
                 queue.add(pos);
                 visited.add(pos);
@@ -195,6 +221,7 @@ public class DangYunPingXianDomain extends BaseDomain {
             for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
                 BlockPos next = pos.relative(dir);
                 if (visited.contains(next)) continue;
+                if (preExistingWater.contains(next)) continue;  // §690：原本就是水 ⇒ 不穿越、不清 ✗
                 if (next.distSqr(BlockPos.containing(center)) > limitSq) continue;
                 if (isWaterBody(level.getBlockState(next))) {
                     visited.add(next);
@@ -206,12 +233,13 @@ public class DangYunPingXianDomain extends BaseDomain {
         //    把刚清掉的位置重新变回水/气泡柱 → 再扫一遍，保证注的水一滴不留。
         int leftover = 0;
         for (BlockPos pos : waterBlocks) {          // 记录水位（含被破坏后又被灌成气泡柱的）
+            if (preExistingWater.contains(pos)) continue;      // §690
             if (isWaterBody(level.getBlockState(pos))) {
                 level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
                 leftover++;
             }
         }
-        for (BlockPos pos : visited) {
+        for (BlockPos pos : visited) {              // visited 里本来就没有受保护的格子 ✓
             if (isWaterBody(level.getBlockState(pos))) {
                 level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
                 leftover++;
@@ -234,6 +262,53 @@ public class DangYunPingXianDomain extends BaseDomain {
         return state.is(Blocks.WATER) || state.is(Blocks.BUBBLE_COLUMN);
     }
 
+    /** 该方块是不是「含水的方块」（台阶／楼梯／栅栏／珊瑚这类 {@code WATERLOGGED=true}） */
+    private static boolean isWaterlogged(net.minecraft.world.level.block.state.BlockState state) {
+        return state.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED)
+                && state.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED);
+    }
+
+    /**
+     * <b>§690 用户口径</b>：「荡蕴平线的清除水逻辑<b>不要清除原本已有的水</b>」。
+     *
+     * <p>在注水<b>之前</b>扫一遍「领域球体 ＋ 8 格外扩」范围（与 {@link #clearWater} 里 BFS 的
+     * {@code radius + 8} 上限<b>完全一致</b> ✓），把**原本就存在**的
+     * 水方块／气泡柱／含水方块记进 {@link #preExistingWater} ✓。
+     *
+     * <p>为什么这样刚好够：
+     * <ul>
+     *   <li>注水只灌<b>空气</b> ✓ ⇒ 这些原有水体本来就不会被改写 ✓；</li>
+     *   <li>关闭清理的 BFS 视野被 {@code radius + 8} 卡住 ✓ ⇒ 只要"这一圈里的原有水"被标记，
+     *       BFS 走到它们边上就停 ✓ —— <b>圈外</b>（例如整片海、整条河）的水根本进不了视野 ✓，
+     *       不必也不该把整片水域都记下来 ✗；</li>
+     *   <li>⇒ 效果：**领域自己灌的水照旧清干净 ✓，原本就有的水一滴不动 ✓**。</li>
+     * </ul>
+     */
+    private void recordPreExistingWater(ServerLevel level) {
+        preExistingWater.clear();
+        double limitSq = (radius + 8.0) * (radius + 8.0);
+        BlockPos centerPos = BlockPos.containing(center);
+        int r = (int) Math.ceil(radius + 8.0);
+        int cx = centerPos.getX(), cy = centerPos.getY(), cz = centerPos.getZ();
+        for (int y = cy - r; y <= cy + r; y++) {
+            for (int x = cx - r; x <= cx + r; x++) {
+                for (int z = cz - r; z <= cz + r; z++) {
+                    BlockPos pos = new BlockPos(x, y, z);
+                    if (pos.distSqr(centerPos) > limitSq) continue;
+                    if (!level.isLoaded(pos)) continue;      // 未加载区块：读不到状态，跳过 ✓
+                    var state = level.getBlockState(pos);
+                    if (isWaterBody(state) || isWaterlogged(state)) {
+                        preExistingWater.add(pos.immutable());
+                    }
+                }
+            }
+        }
+        if (!preExistingWater.isEmpty()) {
+            TinkersNewlife.LOGGER.info("[荡蕴平线] 记录到既有水体 {} 块 ⇒ 关闭时不会清除它们",
+                    preExistingWater.size());
+        }
+    }
+
     /**
      * 把「因本次注水而含水的方块」（{@code WATERLOGGED=true}）烘干。
      * <p>
@@ -242,12 +317,15 @@ public class DangYunPingXianDomain extends BaseDomain {
      * 这里从「刚被清掉的水 + 当初记录的水位」出发，沿含水方块做 BFS（含水方块彼此也连通），
      * 逐个把 {@code WATERLOGGED} 置回 false —— 只影响与领域水域连通的那些，
      * 不会误伤领域外/原本就含水的方块。
+     * <p>⚠ §690：**原本就含水的方块**（{@link #preExistingWater}）一律跳过 ✗
+     * —— 否则领域旁边本来就泡在水里的台阶/珊瑚会被一起烘干 ✗。
      */
     private void dryWaterlogged(ServerLevel level, java.util.Set<BlockPos> cleared) {
         java.util.ArrayDeque<BlockPos> queue = new java.util.ArrayDeque<>();
         java.util.Set<BlockPos> visited = new java.util.HashSet<>(cleared);
         queue.addAll(cleared);
         for (BlockPos pos : waterBlocks) {          // 水位可能已被玩家破坏 → 一并作为种子
+            if (preExistingWater.contains(pos)) continue;   // §690：原本就在水里的方块不动 ✗
             if (visited.add(pos)) queue.add(pos);
         }
         double limitSq = (radius + 8.0) * (radius + 8.0);
@@ -257,6 +335,7 @@ public class DangYunPingXianDomain extends BaseDomain {
             BlockPos pos = queue.poll();
             for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
                 BlockPos next = pos.relative(dir);
+                if (preExistingWater.contains(next)) continue;  // §690：原本就含水的方块不烘干 ✗
                 if (!visited.add(next)) continue;
                 if (next.distSqr(centerPos) > limitSq) continue;
                 var state = level.getBlockState(next);
