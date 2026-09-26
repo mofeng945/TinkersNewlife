@@ -5,7 +5,7 @@
   },
   "cast_consumed": true,
   "fluid": {
-    "name": "irons_spellbooks:blood",
+    "fluid": "irons_spellbooks:blood",
     "amount": 1000
   },
   "result": "irons_spellbooks:blood_rune",

@@ -1,7 +1,7 @@
 {
     "type":  "tconstruct:casting_basin",
     "fluid":  {
-                  "name":  "tinkersnewlife:molten_dragonsteel_lightning_still",
+                  "fluid":  "tinkersnewlife:molten_dragonsteel_lightning_still",
                   "amount":  810
               },
     "result":  {

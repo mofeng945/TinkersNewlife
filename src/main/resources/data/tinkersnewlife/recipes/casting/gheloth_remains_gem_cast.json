@@ -5,7 +5,7 @@
   },
   "cast_consumed": false,
   "fluid": {
-    "name": "tinkersnewlife:gheloth_blood_still",
+    "fluid": "tinkersnewlife:gheloth_blood_still",
     "amount": 15
   },
   "result": "tinkersnewlife:gheloth_remains",

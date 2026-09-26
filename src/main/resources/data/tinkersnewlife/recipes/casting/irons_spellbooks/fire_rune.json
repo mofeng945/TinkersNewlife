@@ -5,7 +5,7 @@
   },
   "cast_consumed": true,
   "fluid": {
-    "name": "tconstruct:blazing_blood",
+    "fluid": "tconstruct:blazing_blood",
     "amount": 1000
   },
   "result": "irons_spellbooks:fire_rune",

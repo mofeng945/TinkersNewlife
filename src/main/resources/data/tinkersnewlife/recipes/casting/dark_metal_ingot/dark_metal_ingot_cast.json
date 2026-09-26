@@ -5,7 +5,7 @@
              },
     "cast_consumed":  false,
     "fluid":  {
-                  "name":  "tinkersnewlife:molten_dark_metal_still",
+                  "fluid":  "tinkersnewlife:molten_dark_metal_still",
                   "amount":  90
               },
     "result":  "goety:dark_ingot",

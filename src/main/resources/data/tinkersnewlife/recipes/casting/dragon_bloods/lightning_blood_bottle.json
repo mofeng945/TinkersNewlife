@@ -5,7 +5,7 @@
              },
     "cast_consumed":  true,
     "fluid":  {
-                  "name":  "tinkersnewlife:lightning_blood_still",
+                  "fluid":  "tinkersnewlife:lightning_blood_still",
                   "amount":  250
               },
     "result":  {

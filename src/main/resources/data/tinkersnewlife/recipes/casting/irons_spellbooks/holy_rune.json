@@ -5,7 +5,7 @@
   },
   "cast_consumed": true,
   "fluid": {
-    "name": "tinkersnewlife:liquid_holy_light_still",
+    "fluid": "tinkersnewlife:liquid_holy_light_still",
     "amount": 1000
   },
   "result": "irons_spellbooks:holy_rune",

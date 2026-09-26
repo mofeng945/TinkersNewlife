@@ -24,6 +24,30 @@
 const fs = require("fs"), path = require("path");
 const root = process.argv[2];
 
+// ---- 我方自定义标签清单（§670 新增校验要用）----
+// 判据：凡是配方里写了 "tag": "tinkersnewlife:xxx"，就**必须**有一个对应的标签文件
+//   data/tinkersnewlife/tags/<kind>/xxx.json
+// 起因（§670）：smeltery/alloys/molten_dreadsteel_still.json 引用了
+//   tinkersnewlife:molten_dragonsteel，但那个标签**从来没建过** ⇒
+//   流体成分永远匹配不上 ⇒ 悚怖钢合金永远合不出来 ✗，
+//   而且日志里**没有任何报错**（标签不存在 ≠ 解析失败）✗ ⇒ 只能靠静态校验挡住。
+// ⚠ 只校验我们自己的命名空间：forge: / tconstruct: 等外部标签由别的模组提供，无法也不该在这里判定 ✓。
+const TAG_KINDS = ["fluids", "items", "blocks", "entity_types", "damage_type", "mob_effects", "biomes", "game_events"];
+const myTags = new Set();
+for (const kind of TAG_KINDS) {
+  const dir = path.join(root, "data", "tinkersnewlife", "tags", kind);
+  if (!fs.existsSync(dir)) continue;
+  (function walkTags(d) {
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const p = path.join(d, e.name);
+      if (e.isDirectory()) walkTags(p);
+      else if (e.name.endsWith(".json")) {
+        myTags.add(p.substring(dir.length + 1).replace(/\\/g, "/").replace(/\.json$/, ""));
+      }
+    }
+  })(dir);
+}
+
 let files = [];
 (function walk(d) {
   for (const e of fs.readdirSync(d, { withFileTypes: true })) {
@@ -34,7 +58,7 @@ let files = [];
 })(root);
 
 let bad = 0, skipped = 0;
-let shaped = 0, oversized = 0;
+let shaped = 0, oversized = 0, fluidBad = 0, tagMissing = 0;
 
 for (const p of files) {
   const raw = fs.readFileSync(p, "utf8");
@@ -64,11 +88,58 @@ for (const p of files) {
         " 行，放不进 3x3 工作台（原版会按 canCraftInDimensions(3,3) 过滤掉 ⇒ 永远合不出来）");
     }
   }
+  // ---- 语义校验：流体成分必须写 fluid / tag，不能写 name ----
+  // 2026-09-26 新增（§669）。起因：用户报「液态闪电的配方还是没加载成功」。
+  // TConstruct/Mantle 的流体成分对象只认 "fluid"（流体 id）或 "tag"（流体标签），
+  // 根本没有 "name" 这个字段 —— 写成 "name" ⇒ 配方解析失败、直接不加载 ✗。
+  // ⚠ 这种错的隐蔽性极高：**原版/TConstruct 的日志里不会报"解析失败"**，
+  //    只有装了 KubeJS 的整合包才会刷一条 "Falling back to vanilla" 的 WARN，
+  //    而那条 WARN 里也看不出是字段名写错了 ✗ ⇒ 必须靠这条静态校验挡住。
+  //
+  // 判据来源（不是猜）：TConstruct 自带 2950 个配方里
+  //    "fluid": { "name":  ... } 出现 0 次 ✗
+  //    "fluid": { "fluid": ... } 出现 24 次 ✓
+  //    "fluid": { "tag":   ... } 出现 642 次 ✓
+  // 识别方式：任何**同时带 amount 与 name、且不带 fluid / tag** 的对象
+  //   ⇒ 就是把 fluid 写成了 name（amount 是流体成分特有的字段，所以这个判据很稳）。
+  //   我们仓库里 modifiers/extract/*.json 的 "name": "domains" 是**另一个字段**
+  //   （词条名，没有冒号）⇒ 不会被这条规则误伤 ✓。
+  (function scanFluid(node) {
+    if (Array.isArray(node)) { for (const x of node) scanFluid(x); return; }
+    if (!node || typeof node !== "object") return;
+    if (node.amount !== undefined && node.name !== undefined
+      && node.fluid === undefined && node.tag === undefined) {
+      fluidBad++;
+      console.log("  BAD  " + rel + "  ->  流体成分写成了 \"name\": " + JSON.stringify(node.name) +
+        "（应写 \"fluid\" —— TConstruct 的流体成分只认 fluid/tag，写 name 的配方根本不会加载）");
+    }
+    for (const k of Object.keys(node)) scanFluid(node[k]);
+  })(obj);
+
+  // ---- 语义校验：引用自家标签时，标签必须真的存在 ----
+  // 见文件开头 myTags 的说明（§670）。只认我们自己命名空间的 tag。
+  if (rel.includes("/recipes/")) {
+    (function scanTag(node) {
+      if (Array.isArray(node)) { for (const x of node) scanTag(x); return; }
+      if (!node || typeof node !== "object") return;
+      const t = node.tag;
+      if (typeof t === "string" && t.startsWith("tinkersnewlife:")
+        && !myTags.has(t.substring("tinkersnewlife:".length))) {
+        tagMissing++;
+        console.log("  BAD  " + rel + "  ->  引用了不存在的自家标签 #" + t +
+          "（找不到 data/tinkersnewlife/tags/<类型>/" + t.substring("tinkersnewlife:".length) +
+          ".json ⇒ 这个成分永远匹配不上，配方等于废的，而且日志里不会报错）");
+      }
+      for (const k of Object.keys(node)) scanTag(node[k]);
+    })(obj);
+  }
 }
 
 console.log("checked " + files.length + ", bad " + bad + ", skipped(empty-key blockstates) " + skipped +
-  "; crafting_shaped " + shaped + " (超过 3x3 的 " + oversized + " 个)");
-// ⚠ 退出码必须把 oversized 也算进去：它虽然没让 JSON 解析失败，
-//   但确实是一个"游戏里合不出来"的真缺陷，必须挡住提交。
+  "; crafting_shaped " + shaped + " (超过 3x3 的 " + oversized + " 个)" +
+  "; 流体成分写成 name 的 " + fluidBad + " 个" +
+  "; 引用不存在的自家标签 " + tagMissing + " 个");
+// ⚠ 退出码必须把 oversized / fluidBad / tagMissing 也算进去：它们虽然没让 JSON 解析失败，
+//   但确实都是"游戏里用不了"的真缺陷，必须挡住提交。
 //   （2026-09-25 自查发现：最初只判 bad > 0 ⇒ 反向测试时它报了 BAD 却仍然 exit 0 ✗）
-process.exit((bad > 0 || oversized > 0) ? 1 : 0);
+process.exit((bad > 0 || oversized > 0 || fluidBad > 0 || tagMissing > 0) ? 1 : 0);

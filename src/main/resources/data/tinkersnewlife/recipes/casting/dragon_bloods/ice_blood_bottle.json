@@ -5,7 +5,7 @@
              },
     "cast_consumed":  true,
     "fluid":  {
-                  "name":  "tinkersnewlife:ice_blood_still",
+                  "fluid":  "tinkersnewlife:ice_blood_still",
                   "amount":  250
               },
     "result":  {

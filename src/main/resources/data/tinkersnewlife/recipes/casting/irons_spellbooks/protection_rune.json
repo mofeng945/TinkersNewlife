@@ -5,7 +5,7 @@
   },
   "cast_consumed": true,
   "fluid": {
-    "name": "tconstruct:ichor",
+    "fluid": "tconstruct:ichor",
     "amount": 1000
   },
   "result": "irons_spellbooks:protection_rune",

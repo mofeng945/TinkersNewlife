@@ -5,7 +5,7 @@
   },
   "cast_consumed": false,
   "fluid": {
-    "name": "tinkersnewlife:hastur_malice_still",
+    "fluid": "tinkersnewlife:hastur_malice_still",
     "amount": 5
   },
   "result": "tinkersnewlife:yellow_king_remnant",

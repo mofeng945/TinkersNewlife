@@ -5,7 +5,7 @@
              },
     "cast_consumed":  false,
     "fluid":  {
-                  "name":  "tinkersnewlife:molten_dragonsteel_lightning_still",
+                  "fluid":  "tinkersnewlife:molten_dragonsteel_lightning_still",
                   "amount":  90
               },
     "result":  "iceandfire:dragonsteel_lightning_ingot",

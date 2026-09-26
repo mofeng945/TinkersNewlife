@@ -5,7 +5,7 @@
   },
   "cast_consumed": false,
   "fluid": {
-    "name": "tinkersnewlife:molten_dread_still",
+    "fluid": "tinkersnewlife:molten_dread_still",
     "amount": 100
   },
   "result": "iceandfire:dread_shard",
