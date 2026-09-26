@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.content.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModEffects;
+import com.mofengbaizhi.tinkersnewlife.content.item.CognitiveMaskItem;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -393,6 +394,21 @@ public final class ConscienceThresholdHandler {
     private static void tickVillagerDiscount(ServerPlayer sp, int a) {
         try {
             if (!(sp.containerMenu instanceof MerchantMenu menu)) return;
+            /*
+             * §674 修：**村民定价也属于"第三方怎么看你"** ⇒ 按 §508 的口径，
+             * 戴着「双向认知阻碍面具」时对村民一律视为**中立** ✓
+             * （面具 javadoc 的原话就是「佩戴者的善恶值……都将对外视为 0（自己看不是 0）」✓）。
+             *
+             * <p>改之前这里读的是真值 ⇒ 戴面具的恶人照样被村民加价 ✗ ——
+             * 而仓库里 Momo 那边**早就**按面具算了（{@code MomoFavor.masking} ✓）
+             * ⇒ 两处口径不一致，本轮统一 ✓。
+             *
+             * <p>⚠ 为什么不调 {@code alignmentAsSeenBy(sp, 观察者)}：{@code MerchantMenu}
+             * **没有公开的 trader getter**（我核过它的 public 方法表：只有 getOffers / getTraderXp /
+             * getTraderLevel … ✓）⇒ 这里直接查面具，结果与 seen-by **完全一致**
+             * （戴面具 ⇒ 0、不戴 ⇒ 真值 ✓）。
+             */
+            if (CognitiveMaskItem.isWorn(sp)) a = 0;
             MerchantOffers offers = menu.getOffers();
 
             double factor = a >= DISCOUNT_AT ? PRICE_DOWN : (a <= MARKUP_AT ? PRICE_UP : 1.0D);

@@ -160,7 +160,11 @@ public class ExecutionDomain extends BaseDomain {
         if (t instanceof ServerPlayer targetPlayer && targetPlayer.isAlive()) {
             // ⭐ 用户口径：玩家审判**完全按善恶值**（不再看罪行分/击杀数 ✗）
             //   ⚠ 同时**删掉了原来 30~35 tick 那条"杀人数：%s"的 title** ✓（lang 键留着没删 ✓ 无副作用 ✓）
-            boolean guilty = ConscienceHandler.alignmentAsSeenBy(targetPlayer, null) < CONSCIENCE_GUILTY_ALIGNMENT;
+            // §674 修：观察者要传**施术者**（＝领域主人 ✓）而不是 null ✗ ——
+            //   `alignmentAsSeenBy` 的 javadoc 明确把「**处刑域**」列为应当传自己的第三方
+            //   （§508 用户口径：戴面具者对外一律视为 0 ✓）⇒ 传 null 等于绕过面具 ✗。
+            //   施术者自己被告时 observer==target ⇒ 自动退回真值 ✓（javadoc 也是这么定的 ✓），不用另判 ✓。
+            boolean guilty = ConscienceHandler.alignmentAsSeenBy(targetPlayer, player) < CONSCIENCE_GUILTY_ALIGNMENT;
             if (elapsed >= 0 && elapsed < 5) {
                 broadcastTitle(level, targetPlayer.getDisplayName());
             } else if (elapsed >= 60 && elapsed < 65) {
@@ -196,7 +200,9 @@ public class ExecutionDomain extends BaseDomain {
         if (living instanceof ServerPlayer p) {
             // ⭐ 用户口径：玩家审判**完全按善恶值** ✓ —— 低于 −20% 有罪 ✓ 其余无罪 ✓
             //   （不再看"罪行分 = 击杀村民+动物+玩家数" ✗ 那个阈值与算法保留在文件里但玩家审判已不用它 ✓）
-            guilty = ConscienceHandler.alignmentAsSeenBy(p, null) < CONSCIENCE_GUILTY_ALIGNMENT;
+            // §674 修：观察者传**裁决者（owner）自己**，同上 —— 戴面具的被告对处刑域一样视为 0 ✓；
+            //   若被告就是 owner 本人 ⇒ observer==target ⇒ 退回真值 ✓（自己看自己不是 0 ✓）。
+            guilty = ConscienceHandler.alignmentAsSeenBy(p, owner) < CONSCIENCE_GUILTY_ALIGNMENT;
             if (guilty) {
                 applyPlayerPenalty(owner, p);
             }
