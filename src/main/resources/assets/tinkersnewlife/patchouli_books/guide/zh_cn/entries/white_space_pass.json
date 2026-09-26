@@ -1,0 +1,33 @@
+{
+  "name": "维度通行证",
+  "category": "tinkersnewlife:white_space",
+  "icon": "tinkersnewlife:dimension_pass",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:dimension_pass",
+      "text": "$(bold)维度通行证$()$(br2)$(bold)一次性$()的开门钥匙：只能堆叠 1 个，在$(bold)确认开门成功时消耗$()（中途关掉界面不扣）。$(br2)它有两种用法：在$(bold)白色空间之外$()用、和在$(bold)白色空间之内$()用 —— 都会弹界面，只是界面不同。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)在白色空间之外$()：对着方块右键，弹出「前往伟大白色空间」界面。$(br2)这一版$(bold)不能选维度$()（锁死为白色空间）、$(bold)不能填 y$()；只能改 $(bold)x / z$()，默认就是你右键那个方块的 xz —— 也就是「$(bold)相对落点$()」。$(br2)确认后门开在方块上方，对面同时开一扇指回来的门。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)在白色空间之内$()：对着方块右键，弹出$(bold)自由模式$()界面。$(br2)$(li)$(bold)维度$()：下拉选择，只列你$(bold)去过$()、且不在黑名单里的维度；$(li)$(bold)坐标$()：x / y / z 三格都能填，默认是你当前所在坐标。$(br2)确认后门开在方块上方，通往你填的那个坐标。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)黑名单与解锁$()：$(li)$(bold)狱门疆维度$()与铁魔法的$(bold)口袋维度$()是传送黑名单：不能把门开过去，也不能在里面用通行证；$(li)其余维度要你$(bold)至少去过一次$()才会出现在下拉列表里（登录 / 跨维度 / 重生时自动记录）。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)配方$()：由$(l:curse_craft)咒力合成仪式$()造出（JEI 里是同一份）。$(br2)$(bold)核心位$()：1 × 古老者水晶$(br2)$(bold)材料位$()：拉莱耶的呼唤、奈亚的欲念、黄衣之王余风、尼古拉斯之赐 各 1$(br2)$(bold)咒力$()：30000 点（每 tick 吸 10 ⇒ 约 150 秒）"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)拆门$()：门挖不动，手持$(l:tool_tian_ni_huo)天逆鉾$()右键才能拆掉整扇门，并响一声玻璃碎。$(br2)$(bold)往返$()：门是$(bold)成对$()的，从对面那扇走回来即可；对面那扇要是被拆了，走进去时会按记录$(bold)自动补一扇$()。"
+    }
+  ]
+}

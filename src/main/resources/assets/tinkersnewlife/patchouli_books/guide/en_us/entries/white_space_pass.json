@@ -1,0 +1,33 @@
+{
+  "name": "Dimension Pass",
+  "category": "tinkersnewlife:white_space",
+  "icon": "tinkersnewlife:dimension_pass",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:dimension_pass",
+      "text": "$(bold)Dimension Pass$()$(br2)A $(bold)single-use$() key: one per stack, consumed only once a gate is $(bold)actually opened$() (closing the screen costs nothing).$(br2)It works in two places - outside the White Space and inside it. Both open a screen; the screens differ."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Outside the White Space$(): right-click a block for the $(bold)to the Great White Space$() screen.$(br2)Here the dimension is $(bold)locked$() and $(bold)y cannot be typed$(); only $(bold)x / z$() can change, and they default to the block you clicked - the $(bold)relative landing point$().$(br2)Confirm and the gate opens above that block, paired with one on the far side."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Inside the White Space$(): right-click a block for the $(bold)free mode$() screen.$(br2)$(li)$(bold)Dimension$(): a dropdown, only dimensions you have $(bold)visited$() and that are not blacklisted; $(li)$(bold)Coordinates$(): x / y / z all editable, defaulting to where you stand.$(br2)Confirm and the gate opens above the block, leading to those coordinates."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Blacklist and unlocking$(): $(li)the $(bold)Prison Realm$() and the Iron's Spellbooks $(bold)pocket dimension$() are blacklisted: you cannot open a gate into them, nor use the pass inside them; $(li)every other dimension must be $(bold)visited at least once$() before it appears in the dropdown."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Recipe$(): made by the $(l:curse_craft)curse-crafting ritual$() (the same recipe is in JEI).$(br2)$(bold)Core slot$(): 1 x Elder Crystal$(br2)$(bold)Material slots$(): 1 x The Call of R'lyeh, 1 x Nyarlathotep's Desire, 1 x Remnant of the King in Yellow, 1 x Nicholas's Blessing$(br2)$(bold)Curse$(): 30000 (10 per tick, so about $(bold)150 seconds$())"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Removing a gate$(): gates cannot be mined; right-click one with a $(l:tool_tian_ni_huo)Heavenly Reverse Spear$() to tear down the whole gate, with a glass-break sound.$(br2)$(bold)Round trips$(): gates come $(bold)in pairs$() - walk back through the other one. If the far gate is gone, it is $(bold)rebuilt$() on arrival."
+    }
+  ]
+}

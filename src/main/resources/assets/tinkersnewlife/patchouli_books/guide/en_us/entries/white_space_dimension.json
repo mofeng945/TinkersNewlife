@@ -1,0 +1,28 @@
+{
+  "name": "The White Space",
+  "category": "tinkersnewlife:white_space",
+  "icon": "tinkersnewlife:textures/block/white_space_block.png",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "The $(bold)Great White Space$() is a strange extradimensional space linking places light-years apart; the Elder Things built at least one gate to it on Earth.$(br2)It has only $(bold)two layers$(): bedrock at y=0, and one whole layer of $(bold)unbreakable white blocks$() at y=1. Its sky $(bold)never changes$() - always white."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Getting there$(): right-click a block with a $(l:white_space_pass)Dimension Pass$() to open a $(bold)2-tall$() gate above it, then walk in.$(br2)Gates always come $(bold)in pairs$() - one on each side, pointing at each other - so you can always walk back the way you came."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)This is a hub$(): inside the White Space, use the pass on a block again to get the $(bold)free mode$() screen - $(bold)pick a dimension$() and $(bold)type xyz$(), and a gate opens above the block you used.$(br2)The dropdown lists only $(bold)dimensions you have visited$()."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)A few rules$(): $(li)gates $(bold)only teleport players$() - mobs and items pass straight through; $(li)if there is $(bold)no ground under your feet$() when you arrive, a $(bold)3x3 obsidian platform$() is placed for you; $(li)the landing point is $(bold)recorded automatically$() - if the far gate is broken, it is rebuilt on arrival."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Removing a gate$(): gates are $(bold)unbreakable$() (hardness -1, like bedrock; blasts do nothing). Right-click one with a $(l:tool_tian_ni_huo)Heavenly Reverse Spear$() to tear down the whole gate, with a $(bold)glass break$() sound.$(br2)Blacklisted: the $(l:cursed_tool_gourd_jail)Prison Realm$() and the Iron's Spellbooks $(bold)pocket dimension$()."
+    }
+  ]
+}

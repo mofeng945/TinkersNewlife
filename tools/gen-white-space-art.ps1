@@ -1,10 +1,15 @@
-# Generate the three NEW placeholder textures for "The Great White Space" (section 660).
+# Generate the placeholder texture for "The Great White Space" floor block (section 660).
 #
 #   textures/block/white_space_block.png   16x16  near-white floor block
-#   textures/block/white_space_portal.png  16x16  pale glowing gate (translucent)
-#   textures/item/dimension_pass.png       16x16  ticket/card item
 #
-# These are brand-new files. NO existing hand-drawn texture is read or overwritten.
+# SECTION 665: this script used to also emit two more files; both are gone on purpose:
+#   * textures/block/white_space_portal.png -- the old solid-cube gate texture; the gate is
+#     now a 2-tall animated plane (tools/gen-white-space-gate.ps1) and the old file was
+#     deleted at the user's request.
+#   * textures/item/dimension_pass.png      -- the USER REDREW this one by hand. Running a
+#     generator over it would destroy the user's own art (AGENTS.md section 1 forbids that
+#     outright), so it must never be generated again.
+#
 # Everything is painted procedurally with System.Drawing, so the script is fully
 # self-contained (it does not need a vanilla jar to borrow a template from).
 #
@@ -80,69 +85,14 @@ for ($y = 0; $y -lt 16; $y++) {
 Save-Png $bmp 'white_space_block.png'
 
 # ============================================================
-#  2) white_space_portal : pale gate, translucent, bright core
+#  REMOVED (section 665) -- do NOT add these back:
+#
+#  * white_space_portal.png  -- the old solid-cube gate texture. The gate is now a
+#    2-block-tall animated plane (textures/block/white_space_portal_gate.png, built by
+#    tools/gen-white-space-gate.ps1) and the old file was deleted on the user's request.
+#  * dimension_pass.png      -- the user REDREW this item texture by hand (committed in
+#    section 665). Generating it here would silently overwrite the user's own art, which
+#    is the one thing AGENTS.md section 1 forbids outright. Never regenerate it.
 # ============================================================
-$bmp = New-Bmp 16 16
-for ($y = 0; $y -lt 16; $y++) {
-    for ($x = 0; $x -lt 16; $x++) {
-        $edge = ($x -eq 0 -or $y -eq 0 -or $x -eq 15 -or $y -eq 15)
-        if ($edge) {
-            $bmp.SetPixel($x, $y, (Col 255 127 212 255))
-            continue
-        }
-        $dx = $x - 7.5
-        $dy = $y - 7.5
-        $d = [Math]::Sqrt($dx * $dx + $dy * $dy) / 10.6
-        $t = Clamp01 (1.0 - $d)
-        $n = Noise $x $y 23
-        $r = 255 - [int][Math]::Round(46.0 * (1.0 - $t)) - [int][Math]::Round($n * 6.0)
-        $g = 255 - [int][Math]::Round(16.0 * (1.0 - $t)) - [int][Math]::Round($n * 5.0)
-        $b = 255
-        $a = 205 + [int][Math]::Round(50.0 * $t)
-        $bmp.SetPixel($x, $y, (Col $a $r $g $b))
-    }
-}
-Save-Png $bmp 'white_space_portal.png'
 
-# ============================================================
-#  3) dimension_pass : a card/ticket with a small gate glyph
-# ============================================================
-$script:outDir = $itemDir
-$bmp = New-Bmp 16 16
-for ($y = 0; $y -lt 16; $y++) {
-    for ($x = 0; $x -lt 16; $x++) {
-        $bmp.SetPixel($x, $y, (Col 0 0 0 0))
-    }
-}
-# card body: x 2..13, y 1..14
-for ($y = 1; $y -le 14; $y++) {
-    for ($x = 2; $x -le 13; $x++) {
-        $edge = ($x -eq 2 -or $x -eq 13 -or $y -eq 1 -or $y -eq 14)
-        if ($edge) {
-            $bmp.SetPixel($x, $y, (Col 255 92 134 184))
-        } else {
-            $n = Noise $x $y 41
-            $bmp.SetPixel($x, $y, (Col 255 (16 + [int][Math]::Round($n * 8.0)) (28 + [int][Math]::Round($n * 8.0)) (52 + [int][Math]::Round($n * 10.0))))
-        }
-    }
-}
-# gate glyph: x 5..10, y 4..11
-for ($y = 4; $y -le 11; $y++) {
-    for ($x = 5; $x -le 10; $x++) {
-        $edge = ($x -eq 5 -or $x -eq 10 -or $y -eq 4 -or $y -eq 11)
-        if ($edge) {
-            $bmp.SetPixel($x, $y, (Col 255 234 246 255))
-        } else {
-            $v = 232 - [int][Math]::Round(($y - 4) * 5.0)
-            $bmp.SetPixel($x, $y, (Col 255 143 $v 255))
-        }
-    }
-}
-# a warm spark in the top-right corner, and a punched hole on the left edge
-$bmp.SetPixel(11, 3, (Col 255 255 217 138))
-$bmp.SetPixel(11, 12, (Col 255 255 217 138))
-$bmp.SetPixel(3, 7, (Col 255 22 35 58))
-$bmp.SetPixel(3, 8, (Col 255 22 35 58))
-Save-Png $bmp 'dimension_pass.png'
-
-Write-Host 'done: 3 textures generated (all new files)'
+Write-Host 'done: white_space_block.png regenerated (portal + pass textures are NOT touched)'

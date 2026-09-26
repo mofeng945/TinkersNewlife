@@ -1,7 +1,7 @@
 {
   "render_type": "minecraft:translucent",
   "textures": {
-    "particle": "tinkersnewlife:block/white_space_portal",
+    "particle": "tinkersnewlife:block/white_space_block",
     "gate": "tinkersnewlife:block/white_space_portal_gate"
   },
   "elements": [

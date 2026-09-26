@@ -1,0 +1,28 @@
+{
+  "name": "白色空间",
+  "category": "tinkersnewlife:white_space",
+  "icon": "tinkersnewlife:textures/block/white_space_block.png",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)伟大白色空间$()是一片$(bold)奇异的外维度空间$()，把相隔若干光年之地连在一起 —— 古老者在地球上至少修过一座通往它的门。$(br2)它只有$(bold)两层$()：y=0 是基岩层，y=1 是$(bold)一整层不可破坏的白色方块$()。天空$(bold)不随昼夜更替$()，恒定一片白。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)怎么去$()：手持$(l:white_space_pass)维度通行证$()对着方块右键，在方块上方开出一扇$(bold)2 格高$()的门，走进去就到了。$(br2)门永远是$(bold)成对$()的：这边一扇、对面一扇，互相指向对方 —— 随时能原路走回来。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)这里是交通枢纽$()：在白色空间里对着方块再用一次通行证，会弹出$(bold)自由模式$()界面 —— $(bold)下拉选维度$()、$(bold)填 xyz$()，门就开在你右键的方块上方，通往那个坐标。$(br2)下拉里只列$(bold)你去过的维度$()；黑名单维度永不出现（见通行证那页）。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)几条规则$()：$(li)门$(bold)只传送玩家$()，怪物与掉落物直接穿过；$(li)落地时若$(bold)脚底下没有落脚点$()，会自动铺一块 $(bold)3×3 黑曜石平台$() 接住你；$(li)落点是$(bold)自动记录$()的 —— 对面那扇被拆了，走进去时会按记录自动补一扇回来。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)拆门$()：门$(bold)挖不动$()（硬度 -1，同基岩；爆炸也炸不掉）。手持$(l:tool_tian_ni_huo)天逆鉾$()右键即可拆掉整扇门，并响一声$(bold)玻璃破碎$()。$(br2)⚠ $(l:cursed_tool_gourd_jail)狱门疆维度$()与铁魔法的$(bold)口袋维度$()是$(bold)传送黑名单$()：既不能在里面用通行证，也不能把门开过去。"
+    }
+  ]
+}
