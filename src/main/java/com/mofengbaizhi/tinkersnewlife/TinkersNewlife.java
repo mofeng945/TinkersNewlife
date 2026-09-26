@@ -546,7 +546,7 @@ public class TinkersNewlife {
             //    否则同一次命中被乘两遍（数值爆炸）✗（见 util/DamagePipeline）
             if (com.mofengbaizhi.tinkersnewlife.util.DamagePipeline.skipNested()) {
                 if (wuxianVictim != null) {
-                    TinkersNewlife.LOGGER.info("[无下限·诊断] {} 受击但被 DamagePipeline.skipNested() 提前跳过"
+                    TinkersNewlife.LOGGER.debug("[无下限] {} 受击但被 DamagePipeline.skipNested() 提前跳过"
                             + " ⇒ 本次不格挡（伤害 {}）", wuxianVictim.getName().getString(), event.getAmount());
                 }
                 return;
@@ -589,38 +589,38 @@ public class TinkersNewlife {
                         INFINITY_BLOCKED.put(victim.getUUID(),
                                 (long) victim.serverLevel().getServer().getTickCount());
                     }
-                    TinkersNewlife.LOGGER.info("[无下限·诊断] {} 受击（{}）：{} → {}（阈值 {}，核心咒力 {}，总咒力 {}，已取消={}）",
+                    // §701：诊断已收工 ⇒ 降为 debug ✓（默认级别看不到，需要时调级别即可恢复 ✓）
+                    TinkersNewlife.LOGGER.debug("[无下限] {} 受击（{}）：{} → {}（阈值 {}，已取消={}）",
                             victim.getName().getString(), srcId, before, after,
                             com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangWuxianTechnique.getThreshold(victim),
-                            com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper.getCurse(victim),
-                            com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper.getTotalCurse(victim),
                             event.isCanceled());
                 } else {
-                    TinkersNewlife.LOGGER.info("[无下限·诊断] {} 受击（{}）：{} 被咒具穿透（ignoresInfinity）⇒ 不格挡",
+                    TinkersNewlife.LOGGER.debug("[无下限] {} 受击（{}）：{} 被咒具穿透（ignoresInfinity）⇒ 不格挡",
                             victim.getName().getString(), srcId, before);
                 }
             }
         }
 
         /**
-         * §696 诊断（临时）：<b>最低优先级</b>再读一次最终数值 ✓ ——
-         * 若我们抹成 0 之后还有人改回来，这里会显示非 0 ✓（用来找出"复活伤害"的那一环）。
+         * §696 诊断（已收工 ⇒ 降为 debug ✓）：<b>最低优先级</b>再读一次最终数值 ——
+         * 若我们抹成 0 之后还有别人改回来，这里会显示非 0 ✓（排查"复活伤害"时用 ✓）。
          */
         @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST, receiveCanceled = true)
         public static void onLivingHurtFinal(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
+            if (!TinkersNewlife.LOGGER.isDebugEnabled()) return;
             if (!(event.getEntity() instanceof net.minecraft.server.level.ServerPlayer v)) return;
             if (!com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangWuxianTechnique.isActive(v)) return;
-            TinkersNewlife.LOGGER.info("[无下限·诊断·最终] {} 受击（{}）：事件最终 amount = {}（canceled={}）",
+            TinkersNewlife.LOGGER.debug("[无下限] {} 受击（{}）：事件最终 amount = {}（canceled={}）",
                     v.getName().getString(),
                     event.getSource() == null ? "null" : event.getSource().getMsgId(),
                     event.getAmount(), event.isCanceled());
         }
 
         /**
-         * §696 诊断＋兜底（临时诊断、**兜底保留**）：
-         * {@code LivingDamageEvent} 是护甲/减伤之后、真正扣血之前的<b>最后一关</b> ✓，
+         * §696 <b>兜底（保留 ✓）</b>：{@code LivingDamageEvent} 是护甲/减伤之后、真正扣血之前的<b>最后一关</b> ✓，
          * 而且 Forge 的 {@code ForgeHooks.onLivingDamage} 在事件被取消时<b>直接返回 0</b> ✓
-         * ⇒ 在这一关再取消一次，比只在 {@code LivingHurtEvent} 改数值稳得多 ✓。
+         * ⇒ 在这一关再取消一次，比只在 {@code LivingHurtEvent} 改数值稳得多 ✓
+         * （用户实测：只改 amount 时，人被幻翼打死了 ✗）。
          *
          * <p>⚠ 只在"<b>上一关刚刚确认要把这一下完全挡掉</b>"时才取消 ✓（{@link #INFINITY_BLOCKED} ✓）——
          * 这样天逆鉾那种 {@code ignoresInfinity} 的穿透（上一关没进这个表 ✓）依旧打得进来 ✓。
@@ -638,13 +638,17 @@ public class TinkersNewlife {
                 blockedAt = null;
             }
             if (blockedAt == null) {
-                TinkersNewlife.LOGGER.info("[无下限·诊断·最终] {} 进入 LivingDamageEvent：amount = {}"
-                        + "（上一关**未**确认格挡 ⇒ 不动它，例如咒具穿透）", v.getName().getString(), event.getAmount());
+                if (TinkersNewlife.LOGGER.isDebugEnabled()) {
+                    TinkersNewlife.LOGGER.debug("[无下限] {} 进入 LivingDamageEvent：amount = {}"
+                            + "（上一关未确认格挡 ⇒ 不动它，例如咒具穿透）", v.getName().getString(), event.getAmount());
+                }
                 return;
             }
-            TinkersNewlife.LOGGER.info("[无下限·诊断·最终] {} 进入 LivingDamageEvent：amount = {}"
-                    + " ⇒ 上一关已确认格挡，这里再取消一次 ✓", v.getName().getString(), event.getAmount());
             event.setCanceled(true);
+            if (TinkersNewlife.LOGGER.isDebugEnabled()) {
+                TinkersNewlife.LOGGER.debug("[无下限] {} 进入 LivingDamageEvent：amount = {} ⇒ 已再取消一次 ✓",
+                        v.getName().getString(), event.getAmount());
+            }
         }
 
         /** 投射咒法：跳跃高度 ×2^层数（封顶 8 倍） */

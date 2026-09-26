@@ -264,7 +264,7 @@ public class DangYunPingXianDomain extends BaseDomain {
             }
         }
         if (!placed.isEmpty()) {
-            TinkersNewlife.LOGGER.info("[荡蕴平线] 清理前临时立回球壳 {} 格（挡住回灌）", placed.size());
+            TinkersNewlife.LOGGER.debug("[荡蕴平线] 清理前临时立回球壳 {} 格（挡住回灌）", placed.size());
         }
         return placed;
     }
@@ -331,10 +331,10 @@ public class DangYunPingXianDomain extends BaseDomain {
             }
         }
         // §700 诊断：一次看清"自己灌了多少 / 实际清了多少 / 复核残留多少"
-        TinkersNewlife.LOGGER.info("[荡蕴平线] 清理自身水源 {} 块 ⇒ 实际清除 {} 块，复核残留 {} 块",
+        TinkersNewlife.LOGGER.debug("[荡蕴平线] 清理自身水源 {} 块 ⇒ 实际清除 {} 块，复核残留 {} 块",
                 waterBlocks.size(), visited.size(), leftover);
         if (leftover > 0) {
-            TinkersNewlife.LOGGER.info("[荡蕴平线] 复核清除残留水体（含气泡柱）{} 块", leftover);
+            TinkersNewlife.LOGGER.debug("[荡蕴平线] 复核清除残留水体（含气泡柱）{} 块", leftover);
         }
         return visited;
     }
@@ -357,7 +357,7 @@ public class DangYunPingXianDomain extends BaseDomain {
                 restored++;
             }
         }
-        TinkersNewlife.LOGGER.info("[荡蕴平线] 放回原有水源 {} 块（共记录 {} 块）", restored, savedSources.size());
+        TinkersNewlife.LOGGER.debug("[荡蕴平线] 放回原有水源 {} 块（共记录 {} 块）", restored, savedSources.size());
     }
 
     /**
@@ -405,13 +405,13 @@ public class DangYunPingXianDomain extends BaseDomain {
             }
         }
         if (!savedSources.isEmpty()) {
-            TinkersNewlife.LOGGER.info("[荡蕴平线] 记录到原有水源 {} 块 ⇒ 关闭时清空后会放回原位",
+            TinkersNewlife.LOGGER.debug("[荡蕴平线] 记录到原有水源 {} 块 ⇒ 关闭时清空后会放回原位",
                     savedSources.size());
             // §700 对照诊断（小场景才打 ✓）：清空前每格的水位，清空并放回后再打一次 ✓
             if (savedSources.size() <= 12) {
                 for (BlockPos p : savedSources) {
                     var fs = level.getFluidState(p);
-                    TinkersNewlife.LOGGER.info("[荡蕴平线]   放回前 水源 @({},{},{}) 源={} 水位={}",
+                    TinkersNewlife.LOGGER.debug("[荡蕴平线]   放回前 水源 @({},{},{}) 源={} 水位={}",
                             p.getX(), p.getY(), p.getZ(), fs.isSource(), fs.getAmount());
                 }
             }
@@ -423,7 +423,7 @@ public class DangYunPingXianDomain extends BaseDomain {
         if (savedSources.isEmpty() || savedSources.size() > 12) return;
         for (BlockPos p : savedSources) {
             var fs = level.getFluidState(p);
-            TinkersNewlife.LOGGER.info("[荡蕴平线]   放回后 水源 @({},{},{}) 源={} 水位={}",
+            TinkersNewlife.LOGGER.debug("[荡蕴平线]   放回后 水源 @({},{},{}) 源={} 水位={}",
                     p.getX(), p.getY(), p.getZ(), fs.isSource(), fs.getAmount());
         }
     }
