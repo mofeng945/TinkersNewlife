@@ -421,6 +421,14 @@ public class TinkersNewlife {
     @Mod.EventBusSubscriber(modid = MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
     public static class ForgeEvents {
 
+        /**
+         * §696：刚刚在 {@code LivingHurtEvent} 里被无下限<b>完全格挡</b>的玩家（UUID → 当时游戏刻 ✓）。
+         * <p>用途：{@code LivingDamageEvent}（护甲之后、真正扣血之前的最后一关 ✓）据此再取消一次 ✓ ——
+         * 只认"上一关确认过该挡"的，所以 {@code ignoresInfinity} 的咒具穿透不受影响 ✓。
+         */
+        private static final java.util.Map<java.util.UUID, Long> INFINITY_BLOCKED =
+                new java.util.concurrent.ConcurrentHashMap<>();
+
         @SubscribeEvent
         public static void onServerStarting(ServerStartingEvent event) {
             Path worldSaveDir = event.getServer().getWorldPath(LevelResource.ROOT);
@@ -578,6 +586,8 @@ public class TinkersNewlife {
                      */
                     if (after <= 0.0F) {
                         event.setCanceled(true);
+                        INFINITY_BLOCKED.put(victim.getUUID(),
+                                (long) victim.serverLevel().getServer().getTickCount());
                     }
                     TinkersNewlife.LOGGER.info("[无下限·诊断] {} 受击（{}）：{} → {}（阈值 {}，核心咒力 {}，总咒力 {}，已取消={}）",
                             victim.getName().getString(), srcId, before, after,
@@ -607,15 +617,34 @@ public class TinkersNewlife {
         }
 
         /**
-         * §696 诊断（临时）：{@code LivingDamageEvent}（护甲之后的最后一关）到底有没有触发、数值多少 ✓ ——
-         * 若这里出现非 0，说明"格挡之后又被加了回来"；若这里根本不出现，说明伤害不走事件路径 ✗。
+         * §696 诊断＋兜底（临时诊断、**兜底保留**）：
+         * {@code LivingDamageEvent} 是护甲/减伤之后、真正扣血之前的<b>最后一关</b> ✓，
+         * 而且 Forge 的 {@code ForgeHooks.onLivingDamage} 在事件被取消时<b>直接返回 0</b> ✓
+         * ⇒ 在这一关再取消一次，比只在 {@code LivingHurtEvent} 改数值稳得多 ✓。
+         *
+         * <p>⚠ 只在"<b>上一关刚刚确认要把这一下完全挡掉</b>"时才取消 ✓（{@link #INFINITY_BLOCKED} ✓）——
+         * 这样天逆鉾那种 {@code ignoresInfinity} 的穿透（上一关没进这个表 ✓）依旧打得进来 ✓。
          */
         @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST, receiveCanceled = true)
         public static void onLivingDamageFinal(net.minecraftforge.event.entity.living.LivingDamageEvent event) {
             if (!(event.getEntity() instanceof net.minecraft.server.level.ServerPlayer v)) return;
             if (!com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangWuxianTechnique.isActive(v)) return;
-            TinkersNewlife.LOGGER.info("[无下限·诊断·最终] {} 进入 LivingDamageEvent：amount = {}（canceled={}）",
-                    v.getName().getString(), event.getAmount(), event.isCanceled());
+            var server = v.serverLevel().getServer();
+            long now = server == null ? 0L : server.getTickCount();
+            Long blockedAt = INFINITY_BLOCKED.get(v.getUUID());
+            // 顺手清理过期项（避免这个表长期增长 ✗）
+            if (blockedAt != null && now - blockedAt > 5L) {
+                INFINITY_BLOCKED.remove(v.getUUID());
+                blockedAt = null;
+            }
+            if (blockedAt == null) {
+                TinkersNewlife.LOGGER.info("[无下限·诊断·最终] {} 进入 LivingDamageEvent：amount = {}"
+                        + "（上一关**未**确认格挡 ⇒ 不动它，例如咒具穿透）", v.getName().getString(), event.getAmount());
+                return;
+            }
+            TinkersNewlife.LOGGER.info("[无下限·诊断·最终] {} 进入 LivingDamageEvent：amount = {}"
+                    + " ⇒ 上一关已确认格挡，这里再取消一次 ✓", v.getName().getString(), event.getAmount());
+            event.setCanceled(true);
         }
 
         /** 投射咒法：跳跃高度 ×2^层数（封顶 8 倍） */
