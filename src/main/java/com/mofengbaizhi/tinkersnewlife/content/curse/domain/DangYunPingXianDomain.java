@@ -246,7 +246,14 @@ public class DangYunPingXianDomain extends BaseDomain {
         var barrier = com.mofengbaizhi.tinkersnewlife.content.ModBlocks.DOMAIN_BARRIER.get();
         for (BlockPos pos : shellBackup) {
             if (!level.isLoaded(pos)) continue;
-            if (level.getBlockState(pos).isAir()) {
+            /*
+             * ⚠ §698 修正：**不能只在"是空气"时补** ✗ ——
+             * 球壳被拆掉之后，周围的水会先把壳位本身灌满 ✓ ⇒
+             * 只在空气处补 ⇒ 补出来的是**一张漏网** ✗（实测 2375~2649 格只是壳的一部分 ✓）。
+             * ⇒ 空气<b>和</b>水/气泡柱都要补成结界 ✓；实体方块不动（绝不覆盖别人的东西 ✗）。
+             */
+            var state = level.getBlockState(pos);
+            if (state.isAir() || isWaterBody(state)) {
                 level.setBlock(pos, barrier.defaultBlockState(), 2);
                 placed.add(pos);
             }
