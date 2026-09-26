@@ -4,11 +4,13 @@ import com.mofengbaizhi.tinkersnewlife.content.handler.ConscienceHandler;
 import com.mofengbaizhi.tinkersnewlife.content.handler.ConscienceThresholdHandler;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import top.theillusivec4.curios.api.SlotContext;
+import top.theillusivec4.curios.api.type.capability.ICurio;
 import top.theillusivec4.curios.api.type.capability.ICurioItem;
 
 import javax.annotation.Nullable;
@@ -55,6 +57,25 @@ public class ConscienceItem extends Item implements ICurioItem {
     @Override
     public boolean canUnequip(SlotContext slotContext, ItemStack stack) {
         return false;
+    }
+
+    /**
+     * <b>§676 用户口径：死亡时也<b>不掉落</b>这颗「心」</b> ——
+     * 「未开启死亡不掉落时，饰品栏里的心也会掉落 ⇒ 不要掉落这个」✓。
+     *
+     * <p>{@link ICurio.DropRule#ALWAYS_KEEP} ⇒ Curios 的死亡处理（{@code CuriosEventHandler}）
+     * 会把这件饰品<b>无条件保留</b>在槽里，**不受原版 {@code keepInventory} 开关影响** ✓
+     * （核过：Curios 5.14.1 的 {@code ICurioItem#getDropRule(SlotContext, DamageSource, int, boolean, ItemStack)}
+     * 就是为这个存在的，且 {@code CuriosEventHandler} 里确实引用了 {@code getDropRule} 与 {@code ALWAYS_KEEP} ✓）。
+     *
+     * <p>⚠ 顺带解决一个<b>重复</b>隐患：没有这条之前，死亡会把「心」掉在地上，
+     * 而 {@link ConscienceHandler} 每 20 tick 的兜底又会补一颗新的 ✗ ⇒ 地上掉一颗、身上又有一颗 ✗。
+     * 现在死亡不掉 ⇒ 身上那颗原样留着 ✓ 兜底也就不会被触发 ✓。
+     */
+    @Override
+    public ICurio.DropRule getDropRule(SlotContext slotContext, DamageSource source,
+                                       int lootingLevel, boolean recentlyHit, ItemStack stack) {
+        return ICurio.DropRule.ALWAYS_KEEP;
     }
 
     // ============================================================
