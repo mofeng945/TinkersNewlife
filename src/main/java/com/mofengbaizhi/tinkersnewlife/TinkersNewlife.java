@@ -526,9 +526,23 @@ public class TinkersNewlife {
         /** 投射咒法：伤害 ×2^层数（攻击者处于增益）；无下限·无限：低伤抵挡/溢出扣咒力 */
         @SubscribeEvent
         public static void onLivingHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
+            /*
+             * §695 定向诊断（临时）：只在「受伤者是开着无下限·无限的玩家」时才打日志 ✓ ——
+             * 目的是把用户报的「无下限挡不住伤害」定死：到底是没被调用、被 skipNested 早退、
+             * 被咒具穿透、还是 onPlayerDamaged 返回了非 0 ✓。定位完就撤 ✗。
+             */
+            var wuxianVictim = (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer v
+                    && com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangWuxianTechnique.isActive(v))
+                    ? v : null;
             // ⭐ 混沌之流改判成法术时会自己重发一次那一发 ⇒ 投射咒法 "×2^层" 不再对重发的那一发再乘一次 ✗
             //    否则同一次命中被乘两遍（数值爆炸）✗（见 util/DamagePipeline）
-            if (com.mofengbaizhi.tinkersnewlife.util.DamagePipeline.skipNested()) return;
+            if (com.mofengbaizhi.tinkersnewlife.util.DamagePipeline.skipNested()) {
+                if (wuxianVictim != null) {
+                    TinkersNewlife.LOGGER.info("[无下限·诊断] {} 受击但被 DamagePipeline.skipNested() 提前跳过"
+                            + " ⇒ 本次不格挡（伤害 {}）", wuxianVictim.getName().getString(), event.getAmount());
+                }
+                return;
+            }
             var src = event.getSource();
             if (src != null && src.getEntity() instanceof net.minecraft.server.level.ServerPlayer attacker
                     && com.mofengbaizhi.tinkersnewlife.content.curse.technique.ProjectionTechnique.hasBuff(attacker)) {
@@ -548,9 +562,20 @@ public class TinkersNewlife {
                         bypass = true;
                     }
                 }
+                float before = event.getAmount();
+                String srcId = src == null ? "null" : src.getMsgId();
                 if (!bypass) {
-                    event.setAmount(com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangWuxianTechnique
-                            .onPlayerDamaged(victim, event.getAmount()));
+                    float after = com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangWuxianTechnique
+                            .onPlayerDamaged(victim, before);
+                    event.setAmount(after);
+                    TinkersNewlife.LOGGER.info("[无下限·诊断] {} 受击（{}）：{} → {}（阈值 {}，核心咒力 {}，总咒力 {}）",
+                            victim.getName().getString(), srcId, before, after,
+                            com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangWuxianTechnique.getThreshold(victim),
+                            com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper.getCurse(victim),
+                            com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper.getTotalCurse(victim));
+                } else {
+                    TinkersNewlife.LOGGER.info("[无下限·诊断] {} 受击（{}）：{} 被咒具穿透（ignoresInfinity）⇒ 不格挡",
+                            victim.getName().getString(), srcId, before);
                 }
             }
         }
