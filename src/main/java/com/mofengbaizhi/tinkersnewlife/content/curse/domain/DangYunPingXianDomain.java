@@ -86,6 +86,22 @@ public class DangYunPingXianDomain extends BaseDomain {
      * 记下原有水体后，BFS 到它们边上就停 ✓（范围与清理 BFS 上限完全一致 ⇒ 不漏 ✓）。
      */
     private final Set<BlockPos> preExistingWater = new HashSet<>();
+
+    /**
+     * <b>§694</b>：本领域球壳位置的<b>副本</b>。
+     *
+     * <p>⚠ 为什么要自己存一份：`DomainRegistry.close` 的顺序是
+     * <b>先 {@code removeBarrier} ⇒ 再 {@code onClose}</b> ✗ ——
+     * 等 {@link #onClose} 去清"自己灌的水"时，<b>球壳已经没了</b> ⇒
+     * 周围的水（海/湖/河）<b>立刻回灌</b>进刚清空的格子 ⇒ <b>清完等于没清</b> ✗
+     * （用户实测：「现在会不管水流水源一律不删除水」✓）。
+     * 更糟的是下一轮把回灌进来的水当成"既有水"保护起来 ⇒ <b>永久锁死</b> ✗。
+     *
+     * <p>⇒ 做法：首 tick（球壳已建好 ✓）把壳的位置抄一份 ⇒ 关闭时<b>临时把壳立回来</b> ✓、
+     * 清完水<b>再把自己立的那几格收回</b> ✓。完全局部在本领域内，不改公共关闭流程 ✓。
+     */
+    private final List<BlockPos> shellBackup = new ArrayList<>();
+    private boolean shellCaptured = false;
     /** 领域溺尸实体 id */
     private final List<Integer> drownedIds = new ArrayList<>();
     /** 服务端世界引用（关闭时可能拿不到 player） */
@@ -137,6 +153,12 @@ public class DangYunPingXianDomain extends BaseDomain {
         // ⭐ 首 tick：阻挡墙已建好，此时注水 + 召首批溺尸
         if (!initialized) {
             initialized = true;
+            // §694：抄一份球壳位置（关领域时球壳已被拆掉，靠它临时立回来清水 ✓）
+            if (!shellCaptured) {
+                shellCaptured = true;
+                shellBackup.clear();
+                shellBackup.addAll(getBarrierPositions());
+            }
             // §690：必须先记「原本就有的水」，再注水 —— 顺序反了就记不到原貌了 ✗
             recordPreExistingWater(level);
             fillWater(level, true);
@@ -185,17 +207,66 @@ public class DangYunPingXianDomain extends BaseDomain {
                 if (e != null) e.discard();
             }
             drownedIds.clear();
-            // ⭐ 注的水复原为空气：从每个记录的水源出发，把与之连通的水全部删掉
-            //（含扩散出的流动水），避免"关领域后残留水塘"。
-            java.util.Set<BlockPos> cleared = clearWater(levelRef);
-            // ⭐ 含水方块（waterlogged）也要一起清：注水后原版流体会把台阶/楼梯/栅栏/珊瑚
-            // 这类"可含水"方块灌成含水状态，只删水方块的话它们会永远含着水。
-            dryWaterlogged(levelRef, cleared);
+            /*
+             * ⭐ §694 关键顺序修复：**清自己的水必须"趁壳在"** ✓
+             *
+             * DomainRegistry.close 是「先 removeBarrier ⇒ 再 onClose」✗ ——
+             * 壳没了，周围的水会立刻回灌进刚清空的格子 ⇒ 清完等于没清 ✗
+             * （用户实测「不管水流水源一律不删除水」✓）。
+             *
+             * ⇒ 这里用首 tick 抄下来的壳位置**临时把壳立回来** ✓，
+             * 清完（BFS + 烘干含水方块）**再把自己立的那几格收回** ✓。
+             */
+            java.util.List<BlockPos> temporary = restoreShellTemporarily(levelRef);
+            try {
+                // ⭐ 注的水复原为空气：从每个记录的水源出发，把与之连通的水全部删掉
+                //（含扩散出的流动水），避免"关领域后残留水塘"。
+                java.util.Set<BlockPos> cleared = clearWater(levelRef);
+                // ⭐ 含水方块（waterlogged）也要一起清：注水后原版流体会把台阶/楼梯/栅栏/珊瑚
+                // 这类"可含水"方块灌成含水状态，只删水方块的话它们会永远含着水。
+                dryWaterlogged(levelRef, cleared);
+            } finally {
+                removeTemporaryShell(levelRef, temporary);
+            }
             waterBlocks.clear();
             preExistingWater.clear();   // §690：本次领域用完了就丢掉，不留给下一次
         }
         // 施术者水呼吸随效果自然过期即可
         clearResist();
+    }
+
+    /**
+     * <b>§694</b>：按首 tick 抄下来的 {@link #shellBackup} <b>临时把球壳立回来</b>，
+     * 好让"周围的水"在清理期间进不来 ✓。返回<b>自己实际放下的那些格子</b>（收回时只拆这些 ✓ ——
+     * 绝不误拆别的领域/别人的结界 ✗）。
+     */
+    private List<BlockPos> restoreShellTemporarily(ServerLevel level) {
+        List<BlockPos> placed = new ArrayList<>();
+        if (shellBackup.isEmpty()) return placed;
+        var barrier = com.mofengbaizhi.tinkersnewlife.content.ModBlocks.DOMAIN_BARRIER.get();
+        for (BlockPos pos : shellBackup) {
+            if (!level.isLoaded(pos)) continue;
+            if (level.getBlockState(pos).isAir()) {
+                level.setBlock(pos, barrier.defaultBlockState(), 2);
+                placed.add(pos);
+            }
+        }
+        if (!placed.isEmpty()) {
+            TinkersNewlife.LOGGER.info("[荡蕴平线] 清理前临时立回球壳 {} 格（挡住回灌）", placed.size());
+        }
+        return placed;
+    }
+
+    /** <b>§694</b>：清完水后把刚才临时立起来的那几格收回 ✓（只拆 {@code placed} 里的 ✓） */
+    private void removeTemporaryShell(ServerLevel level, List<BlockPos> placed) {
+        if (placed.isEmpty()) return;
+        var barrier = com.mofengbaizhi.tinkersnewlife.content.ModBlocks.DOMAIN_BARRIER.get();
+        for (BlockPos pos : placed) {
+            if (!level.isLoaded(pos)) continue;
+            if (level.getBlockState(pos).is(barrier)) {
+                level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+            }
+        }
     }
 
     /**
@@ -206,8 +277,9 @@ public class DangYunPingXianDomain extends BaseDomain {
     private java.util.Set<BlockPos> clearWater(ServerLevel level) {
         java.util.ArrayDeque<net.minecraft.core.BlockPos> queue = new java.util.ArrayDeque<>();
         java.util.Set<net.minecraft.core.BlockPos> visited = new java.util.HashSet<>();
+        int skippedSeeds = 0;
         for (BlockPos pos : waterBlocks) {
-            if (preExistingWater.contains(pos)) continue;      // §690：原本就是水 ⇒ 不动
+            if (preExistingWater.contains(pos)) { skippedSeeds++; continue; }   // §690：原本就是水 ⇒ 不动
             if (isWaterBody(level.getBlockState(pos))) {
                 queue.add(pos);
                 visited.add(pos);
@@ -216,7 +288,12 @@ public class DangYunPingXianDomain extends BaseDomain {
         double limitSq = (radius + 8.0) * (radius + 8.0);
         while (!queue.isEmpty()) {
             BlockPos pos = queue.poll();
-            level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
+            /*
+             * ⚠ §694：这里用 <b>3</b>（UPDATE_NEIGHBORS | UPDATE_CLIENTS）而不是 2 ✗ ——
+             * flag 2 不触发邻居更新 ⇒ 流体系统不知道水位变了 ⇒ 周围的水会顺着回灌 ✗
+             * （配上 §694 的"临时立壳"，本次清理才真正留得住 ✓）。
+             */
+            level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
             // 六向扩散：连通的水（含流动水/低处积水）一并清掉
             for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
                 BlockPos next = pos.relative(dir);
@@ -235,16 +312,19 @@ public class DangYunPingXianDomain extends BaseDomain {
         for (BlockPos pos : waterBlocks) {          // 记录水位（含被破坏后又被灌成气泡柱的）
             if (preExistingWater.contains(pos)) continue;      // §690
             if (isWaterBody(level.getBlockState(pos))) {
-                level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
+                level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
                 leftover++;
             }
         }
         for (BlockPos pos : visited) {              // visited 里本来就没有受保护的格子 ✓
             if (isWaterBody(level.getBlockState(pos))) {
-                level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
+                level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
                 leftover++;
             }
         }
+        // §694 诊断：一次看清"自己灌了多少 / 多少被既有水保护跳过 / 实际清了存活多少"
+        TinkersNewlife.LOGGER.info("[荡蕴平线] 清理自身水源 {} 块（跳过既有水 {} 块）⇒ 实际清除 {} 块，复核残留 {} 块",
+                waterBlocks.size(), skippedSeeds, visited.size(), leftover);
         if (leftover > 0) {
             TinkersNewlife.LOGGER.info("[荡蕴平线] 复核清除残留水体（含气泡柱）{} 块", leftover);
         }
@@ -344,7 +424,7 @@ public class DangYunPingXianDomain extends BaseDomain {
                     continue;
                 }
                 level.setBlock(next, state.setValue(
-                        net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED, false), 2);
+                        net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED, false), 3);
                 dried++;
                 queue.add(next);   // 含水方块之间也连通：继续往深处找
             }
