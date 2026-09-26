@@ -69,6 +69,12 @@ import java.util.List;
  *       因为拆不掉，所以也没有战利品表这件事本身就没意义了 ✓；</li>
  *   <li><b>拆一格＝整扇门消失</b>：{@link #onRemove} 会把另一半也清掉，不会留下半扇门 ✗
  *       （爆炸／活塞／指令也走这条路 ✓）；</li>
+ *   <li><b>§668 起：选中轮廓在客户端被<b>完全隐藏</b></b>（用户口径「让选中框基本看不出来」）。
+ *       ⚠ 注意这里<b>没有</b>去改 {@code getShape} —— 因为准星拾取和轮廓用的是<b>同一个</b>形状
+ *       （{@code ClipContext.Block.OUTLINE} ⇒ {@code getShape}），改小它就会让天逆鉾右键一起变难点中 ✗。
+ *       实际做法是在客户端取消 {@code RenderHighlightEvent.Block}，见
+ *       {@code client/handler/WhiteSpacePortalOutlineHider}；
+ *       ⇒ {@code getShape} 依旧是整格 ⇒ <b>准星锁得住、右键敲得碎</b>，只是那条框不画了 ✓；</li>
  *   <li><b>§666 起：玩家与其它生物都会被传送</b>（用户口径「不要只能传送玩家，其他生物也应当可以被传送」）。
  *       非生物实体（掉落物、船、箭这类）仍然直接穿过；生物连同它的乘客一起送过去 ✓；</li>
  *   <li><b>防乒乓</b>：冷却记在实体自己的持久化数据里（{@link WhiteSpaceDimensions#armCooldown}）。
