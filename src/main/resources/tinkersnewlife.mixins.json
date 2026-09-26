@@ -13,7 +13,8 @@
     "ServerPlayerDeathMixin",
     "ManaShieldEffectMixin",
     "AllPathsOneSoulMixin",
-    "BloodStatsInvoker"
+    "BloodStatsInvoker",
+    "VampirismSunHelperMixin"
   ],
   "client": [
     "EntityRenderDispatcherMixin",
