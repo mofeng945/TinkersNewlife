@@ -210,14 +210,34 @@ public final class ConscienceThresholdHandler {
         }
     }
 
-    /** 满恶：生物与你为敌（动物逃跑 ✓ 怪物/中立打你 ✓）；满善：不再锁定你 ✓ */
+    /**
+     * 满恶：生物与你为敌（动物逃跑 ✓ 怪物/中立打你 ✓）；满善：不再锁定你 ✓
+     *
+     * <p>⚠ <b>§673 修（用户报告：「面具佩戴时 -50 恶意的玩家仍然会让被动生物乱跑」）</b>：
+     * 这里必须读<b>别人眼中的善恶值</b>，不能读真值 ✗。
+     * §508 早就定了口径 —— 戴「双向认知阻碍面具」者的善恶值<b>对所有第三方一律视为 0</b>
+     * （见 {@link ConscienceHandler#alignmentAsSeenBy}，用户原话在那儿 ✓）。
+     * 而本方法原来直接用上面传进来的真值 {@code a} ⇒ <b>面具被绕过</b> ✗：
+     * <ol>
+     *   <li>动物那边每秒被 {@code setLastHurtByMob} ⇒ 原版 {@code PanicGoal} 持续触发
+     *       ⇒ <b>一直乱跑</b> ✗（用户看到的正是这个）；</li>
+     *   <li>怪物/中立那边每秒 {@code setTarget(sp)} ⇒ 把
+     *       {@link CognitiveMaskHandler} 刚清掉的目标<b>又加回去</b> ✗ ——
+     *       两个处理器各干各的、互相打架，谁赢看执行顺序 ✗。</li>
+     * </ol>
+     * 现在改成<b>逐只 mob 问"它眼里的你"</b>：戴面具时对每只 mob 都是 0 ⇒ 两支都不进 ✓；
+     * <b>不戴面具时行为与以前完全一致</b> ✓（真值原样返回 ✓）。
+     */
     private static void tickMobAttitude(ServerPlayer sp, int a) {
         try {
             if (a > -FULL && a < FULL) return;
             List<Mob> mobs = sp.level().getEntitiesOfClass(Mob.class,
                     new AABB(sp.blockPosition()).inflate(MOB_RANGE));
             for (Mob mob : mobs) {
-                if (a >= FULL) {
+                // §673：观察者就是这只 mob 自己 ⇒ 戴面具时视为 0 ⇒ 跳过它 ✓（不戴面具 ⇒ 等于真值 ✓）
+                int seen = ConscienceHandler.alignmentAsSeenBy(sp, mob);
+                if (seen > -FULL && seen < FULL) continue;
+                if (seen >= FULL) {
                     // 满善：**不主动**攻击 ✓ 但**还手要放行** ✓（用户口径 ✓）
                     // ⇒ 只有"目标是你、且最近不是被你打的"才清 ✓（`getLastHurtByMob()==你` ⇒ 它在还手 ⇒ 留着 ✓）
                     if (mob.getTarget() == sp && mob.getLastHurtByMob() != sp) mob.setTarget(null);
