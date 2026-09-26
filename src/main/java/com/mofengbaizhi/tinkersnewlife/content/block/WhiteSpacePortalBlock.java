@@ -241,20 +241,28 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
         if (!(entity instanceof LivingEntity)) return;
 
         /*
-         * §678：先打卡（"这一 tick 人还在门里"），必须在所有 return 之前 ——
-         * 哪怕这次因为冷却／没目的地不传，也要如实记下 ✓。
+         * ⚠ §680 修的是**这里的顺序**（§678 第一版写成"先打卡再判断"⇒ `now - last == 0` 恒成立
+         * ⇒ 永远判定为"刚进来过" ⇒ **一次都传不了** ✗，用户实测「站门里传送不了」）。
+         * 正确顺序：**先读旧值判断，再打卡** ✓。
+         */
+        boolean wasInside = WhiteSpaceDimensions.wasInsidePortalLastTick(entity);
+
+        /*
+         * §678：打卡（"这一 tick 人还在门里"）必须在所有 return 之前 ——
+         * 哪怕这次因为冷却／没目的地不传，也要如实记下 ✓
+         * （这样"人一直站在门里"就一直是 `now - last <= 1` ⇒ 不会被反复传走 ✓）。
          */
         WhiteSpaceDimensions.markInsidePortal(entity);
 
         /*
-         * ⚠ §678 修的就是这里。落点坐标就是对面那扇门下半格 ⇒ **人一落地就站在门方块里**，
+         * ⚠ §678 的口径：只在"**从门外走进来的那一下**"传送。
+         * 落点坐标就是对面那扇门下半格 ⇒ **人一落地就站在门方块里**，
          * 旧实现只靠一个 80 tick 的落地冷却挡着 ⇒ 冷却一到（实测就是 4 秒一次）
-         * 又把人原路弹回出发维度的门口 ⇒ **两个维度之间乒乓**（用户实测报的就是"落点变成
-         * 原本在对应维度的位置"）。现在改成"**只在从门外走进来的那一下**传送"：
-         * 上一 tick 也在门里就直接跳过 ⇒ 站着不动永远不会被弹回去 ✓，
-         * 走出去再走进来照常能传（回程 ✓）。
+         * 又把人原路弹回出发维度的门口 ⇒ **两个维度之间乒乓**（用户实测报的"落点变成
+         * 原本在对应维度的位置"就是这个）。现在：上一 tick 也在门里就直接跳过 ⇒
+         * 站着不动永远不会被弹回去 ✓；走出去再走进来照常能传（回程 ✓）。
          */
-        if (WhiteSpaceDimensions.wasInsidePortalLastTick(entity)) return;
+        if (wasInside) return;
         if (WhiteSpaceDimensions.isOnCooldown(entity)) return;
         if (!(level.getBlockEntity(pos) instanceof WhiteSpacePortalBlockEntity portal)) return;
         if (!portal.hasDestination()) return;
@@ -323,7 +331,13 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
         }
 
         if (!ok) {
-            // 被别的模组拦了（Forge 的 EntityTravelToDimensionEvent 是可以被取消的）⇒ 1 秒后再试
+            /*
+             * 被别的模组拦了（Forge 的 EntityTravelToDimensionEvent 是可以被取消的）。
+             * ⚠ §680：这里**不做"自动重试"** —— 试过两版都不成立的写法：
+             * ① 只加冷却：人还站在门里 ⇒ `wasInside` 恒为真 ⇒ 冷却过了也不会再触发 ✗；
+             * ② 顺手清掉"在门里"的标记：下一 tick 打卡又会把它写回当前刻 ⇒ 同样无效 ✗。
+             * ⇒ 就让它**只提示一次**，想重试**走出去再走进来**即可（进入检测本来就是这么设计的 ✓）。
+             */
             WhiteSpaceDimensions.armCooldown(entity, 20);
             if (entity instanceof ServerPlayer player) {
                 player.displayClientMessage(
