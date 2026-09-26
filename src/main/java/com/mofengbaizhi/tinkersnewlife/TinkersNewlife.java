@@ -568,16 +568,54 @@ public class TinkersNewlife {
                     float after = com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangWuxianTechnique
                             .onPlayerDamaged(victim, before);
                     event.setAmount(after);
-                    TinkersNewlife.LOGGER.info("[无下限·诊断] {} 受击（{}）：{} → {}（阈值 {}，核心咒力 {}，总咒力 {}）",
+                    /*
+                     * §696：**光把 amount 抹成 0 不够** ✗ ——
+                     * 用户实测「近战/远程/爆炸都掉血」，而日志显示我们这边已经 `→ 0.0` ✓
+                     * ⇒ 说明后面还有人把 amount 改回来（或者伤害从别的路径落地）✗。
+                     * ⇒ 完全格挡时**同时取消事件** ✓：原版 `LivingEntity#hurt` 在
+                     *   `ForgeHooks.onLivingHurt` 之后有一句 `if (f <= 0.0F) return false;` ✓，
+                     *   而事件被取消同样会让这一下不落地 ✓ —— 双保险 ✓。
+                     */
+                    if (after <= 0.0F) {
+                        event.setCanceled(true);
+                    }
+                    TinkersNewlife.LOGGER.info("[无下限·诊断] {} 受击（{}）：{} → {}（阈值 {}，核心咒力 {}，总咒力 {}，已取消={}）",
                             victim.getName().getString(), srcId, before, after,
                             com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangWuxianTechnique.getThreshold(victim),
                             com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper.getCurse(victim),
-                            com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper.getTotalCurse(victim));
+                            com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper.getTotalCurse(victim),
+                            event.isCanceled());
                 } else {
                     TinkersNewlife.LOGGER.info("[无下限·诊断] {} 受击（{}）：{} 被咒具穿透（ignoresInfinity）⇒ 不格挡",
                             victim.getName().getString(), srcId, before);
                 }
             }
+        }
+
+        /**
+         * §696 诊断（临时）：<b>最低优先级</b>再读一次最终数值 ✓ ——
+         * 若我们抹成 0 之后还有人改回来，这里会显示非 0 ✓（用来找出"复活伤害"的那一环）。
+         */
+        @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST, receiveCanceled = true)
+        public static void onLivingHurtFinal(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
+            if (!(event.getEntity() instanceof net.minecraft.server.level.ServerPlayer v)) return;
+            if (!com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangWuxianTechnique.isActive(v)) return;
+            TinkersNewlife.LOGGER.info("[无下限·诊断·最终] {} 受击（{}）：事件最终 amount = {}（canceled={}）",
+                    v.getName().getString(),
+                    event.getSource() == null ? "null" : event.getSource().getMsgId(),
+                    event.getAmount(), event.isCanceled());
+        }
+
+        /**
+         * §696 诊断（临时）：{@code LivingDamageEvent}（护甲之后的最后一关）到底有没有触发、数值多少 ✓ ——
+         * 若这里出现非 0，说明"格挡之后又被加了回来"；若这里根本不出现，说明伤害不走事件路径 ✗。
+         */
+        @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST, receiveCanceled = true)
+        public static void onLivingDamageFinal(net.minecraftforge.event.entity.living.LivingDamageEvent event) {
+            if (!(event.getEntity() instanceof net.minecraft.server.level.ServerPlayer v)) return;
+            if (!com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangWuxianTechnique.isActive(v)) return;
+            TinkersNewlife.LOGGER.info("[无下限·诊断·最终] {} 进入 LivingDamageEvent：amount = {}（canceled={}）",
+                    v.getName().getString(), event.getAmount(), event.isCanceled());
         }
 
         /** 投射咒法：跳跃高度 ×2^层数（封顶 8 倍） */
