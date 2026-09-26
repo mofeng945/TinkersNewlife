@@ -73,9 +73,17 @@ public final class ConscienceHandler {
     /**
      * §508 **别人眼中的善恶值**（用户口径：「双向认知阻碍面具……佩戴者的善恶值……都将对外视为 0（自己看不是 0）」✓）。
      *
+     * <p>⚠⚠ <b>§675 用户口径：伏诛赐死（处刑域）是这条规则的例外，它不吃面具</b> ——
+     * 用户原话：「<b>伏诛赐死不要被面具骗过</b>」✓。
+     * ⇒ {@code ExecutionDomain} 判定"有没有罪"的两处（开庭 / 裁决）必须读<b>真值</b>：
+     * 直接调 {@link #getAlignment} ✓，<b>不要</b>调本方法 ✗ —— 否则戴面具的恶人会被判无罪 ✗。
+     * <p>（§674 我曾把处刑域也按"第三方"改成走本方法，被用户否掉 ✓；
+     * 这段注释就是<b>为了不让下一个人再把它改回去</b> ✗ —— 改之前先看这里 ✓。）
+     *
      * @param target   被观察的玩家
-     * @param observer 观察者：**自己 / 系统内部**传 {@code null} 或 {@code target} ⇒ 真实值 ✓；
-     *                 任何**第三方**（处刑域、指令、NPC、别的玩家…）传它自己 ⇒ 戴面具者一律视为 **0** ✓
+     * @param observer 观察者：<b>自己 / 系统内部</b>传 {@code null} 或 {@code target} ⇒ 真实值 ✓；
+     *                 任何<b>第三方</b>（指令、NPC、生物、别的玩家…）传它自己 ⇒ 戴面具者一律视为 <b>0</b> ✓
+     *                 （⚠ 处刑域<b>不在</b>这个名单里 ⇒ 见上面 §675 ✓）
      */
     public static int alignmentAsSeenBy(Player target, @org.jetbrains.annotations.Nullable net.minecraft.world.entity.Entity observer) {
         if (target == null) return 0;
