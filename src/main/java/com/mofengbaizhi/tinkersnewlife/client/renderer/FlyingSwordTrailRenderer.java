@@ -9,21 +9,15 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
-import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -35,7 +29,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 飞剑「影视级流光拖尾」：动态条带（Ribbon）+ 自写流光着色器，<b>不依赖任何第三方模组</b>。
+ * 飞剑「影视级流光拖尾」：动态条带（Ribbon）+ 顶点色流光，<b>不依赖任何第三方模组</b>、
+ * 也<b>不依赖自带核心着色器</b>（那样开了光影包会整条看不见，见下）。
  *
  * <h3>原理</h3>
  * <ol>
@@ -43,9 +38,27 @@ import java.util.Map;
  *       三重裁剪：最小步长（慢速不抖动）、最大点数、最大总长度、点最大存活 tick（悬停时拖尾自动收掉）。</li>
  *   <li><b>条带网格</b>：历史点向两侧扩展成顶点对，TRIANGLE_STRIP 提交；侧向量取
  *       {@code 方向 × (相机 − 点)}，即<b>面向相机的条带</b>——任何视角都有厚度，不会侧视消失。</li>
- *   <li><b>流光着色器</b>：U 沿拖尾 0→1，片元用多层正弦 {@code sin(u·f − t·s)} 叠加出流动光带
- *       （见 {@code flying_sword_trail.fsh}），时间由每帧写入的 {@code TrailTime} uniform 驱动。</li>
+ *   <li><b>流光</b>：多层正弦 {@code sin(t·f − time·s)} 原本写在自带着色器 {@code flying_sword_trail.fsh} 里，
+ *       现在改成<b>在 CPU 上算进每个顶点的颜色</b>（见 {@link #flowAt}）—— 原因见下面「为什么不再自带着色器」。</li>
  * </ol>
+ *
+ * <h3>为什么不再自带着色器（2026-09-27 修）</h3>
+ * 原先这里 {@code new ShaderInstance(rm, "tinkersnewlife:flying_sword_trail", POSITION_COLOR_TEX)}
+ * 自建核心着色器 + 自建渲染类型。**在原版 / 只有 Embeddium 的测试包里正常**，但在装了光影包的
+ * NL 整合包里**整条拖尾看不见**（日志里那条 {@code [飞剑] 流光拖尾已生效…本帧 32 顶点} 证明 CPU 侧
+ * 完全正常 ⇒ 问题在 GPU/光影侧）。查 Oculus 1.8.0（Iris）源码得结论：
+ * <ul>
+ *   <li>光影包只替换 <b>{@code GameRenderer} 上那些原版 shader getter</b> 返回的程序
+ *       （{@code net.irisshaders.iris.mixin.MixinGameRenderer} 把 40 多个 getter 全部 HEAD 注入，
+ *       例如 {@code getRendertypeEntityTranslucentEmissiveShader} → {@code ShaderKey.ENTITIES_EYES_TRANS}）；</li>
+ *   <li>模组自己 {@code new} 的 {@code ShaderInstance} <b>不经过 GameRenderer</b> ⇒ 光影包既不知道、
+ *       也不会替换它，几何就被画进了光影包自己的 gbuffer 流程之外 ⇒ 看不到 ✗；</li>
+ *   <li>反证：同包里「拔刀剑（重锋）」的光效正常显示，而它 <b>一个自带核心着色器都没有</b>，
+ *       {@code BladeRenderState} 全部用原版 {@code RenderStateShard} 着色器常量 + 原版顶点格式 ✓。</li>
+ * </ul>
+ * ⇒ 现在改用 <b>原版 emissive 着色器</b>（{@code GameRenderer::getRendertypeEntityTranslucentEmissiveShader}）
+ * + <b>原版实体顶点格式</b> {@code DefaultVertexFormat.NEW_ENTITY}，流光靠顶点色脉冲表达。
+ * 自带的 {@code assets/tinkersnewlife/shaders/core/flying_sword_trail.*} 已不再被使用（留档，未删）。
  *
  * <h3>为什么画在实体渲染器里（而不是 RenderLevelStageEvent）</h3>
  * 实体渲染时 poseStack 的坐标契约是确定的：调度器已经 {@code translate(x,y,z)}（相机相对+插值位置），
@@ -54,8 +67,8 @@ import java.util.Map;
  * 由原版在实体渲染结束时统一 endBatch。
  *
  * <h3>安全性</h3>
- * 全程 try/catch；着色器或渲染类型任何一步失败都只记一条 warn 并整段跳过（保留原版粒子），
- * 绝不影响正常游戏；资源重载时重建着色器。开关：配置 {@code flying_sword/enable_trail}。
+ * 全程 try/catch；渲染类型任何一步失败都只记一条 warn 并整段跳过（保留原版粒子），
+ * 绝不影响正常游戏。开关：配置 {@code flying_sword/enable_trail}。
  */
 public final class FlyingSwordTrailRenderer {
 
@@ -79,34 +92,14 @@ public final class FlyingSwordTrailRenderer {
 
     private static final Map<Integer, Trail> TRAILS = new HashMap<>();
 
-    private static ShaderInstance trailShader;
-    private static boolean shaderFailed = false;
     private static RenderType trailRenderType;
     private static boolean loggedOnce = false;
 
     private FlyingSwordTrailRenderer() {}
 
     // ============================================================
-    //  着色器 / 渲染类型
+    //  渲染类型（★ 只用原版着色器 + 原版顶点格式，光影包才认）
     // ============================================================
-
-    private static ShaderInstance shader() {
-        if (shaderFailed) return null;
-        if (trailShader == null) {
-            Minecraft mc = Minecraft.getInstance();
-            ResourceManager rm = mc.getResourceManager();
-            if (rm == null) return null;
-            try {
-                trailShader = new ShaderInstance(rm,
-                        TinkersNewlife.MOD_ID + ":flying_sword_trail",
-                        DefaultVertexFormat.POSITION_COLOR_TEX);
-            } catch (Throwable t) {
-                shaderFailed = true;
-                TinkersNewlife.LOGGER.warn("[飞剑] 流光着色器加载失败，拖尾已跳过（仅保留粒子）: {}", t.toString());
-            }
-        }
-        return trailShader;
-    }
 
     /** 自建渲染状态：原版 RenderStateShard 里那几个常量是 protected，外部包拿不到 */
     private static final RenderStateShard.TransparencyStateShard TRAIL_TRANSPARENCY =
@@ -132,16 +125,25 @@ public final class FlyingSwordTrailRenderer {
             try {
                 trailRenderType = RenderType.create(
                         "tinkersnewlife_flying_sword_trail",
-                        DefaultVertexFormat.POSITION_COLOR_TEX,
+                        // ⭐ 原版「实体」顶点格式：Position/Color/UV0/UV1(overlay)/UV2(lightmap)/Normal。
+                        //    必须用原版格式 —— 光影包会把原版着色器换成它的程序，而它的程序是按原版格式取属性的。
+                        DefaultVertexFormat.NEW_ENTITY,
                         VertexFormat.Mode.QUADS,          // 管状网格：每个圆截面分段一个四边形
                         8192, false, true,
                         RenderType.CompositeState.builder()
-                                .setShaderState(new RenderStateShard.ShaderStateShard(FlyingSwordTrailRenderer::shader))
+                                // ⭐ 关键：着色器必须是「原版 shader getter」提供的。
+                                //    光影包（Oculus/Iris）只在这些 getter 上做替换（MixinGameRenderer 里 40+ 个 HEAD 注入，
+                                //    本行对应的那个 → ShaderKey.ENTITIES_EYES_TRANS，即"自发光"程序）；
+                                //    自己 new ShaderInstance 的着色器它管不到 ⇒ 开了光影包拖尾整条看不见 ✗。
+                                .setShaderState(new RenderStateShard.ShaderStateShard(
+                                        GameRenderer::getRendertypeEntityTranslucentEmissiveShader))
                                 .setTextureState(new RenderStateShard.TextureStateShard(TRAIL_TEXTURE, false, false))
-                                .setTransparencyState(TRAIL_TRANSPARENCY)
+                                .setTransparencyState(TRAIL_TRANSPARENCY)      // 加色混合：比原版半透明更"发光"
                                 .setCullState(TRAIL_NO_CULL)
                                 .setWriteMaskState(TRAIL_COLOR_WRITE)
                                 .setDepthTestState(TRAIL_DEPTH_TEST)
+                                // 原版 emissive 着色器要 mix(overlayColor…) 用 overlay 贴图；UV1 写 NO_OVERLAY 即可无染色
+                                .setOverlayState(new RenderStateShard.OverlayStateShard(true))
                                 .createCompositeState(false));
             } catch (Throwable t) {
                 TinkersNewlife.LOGGER.warn("[飞剑] 拖尾渲染类型创建失败，拖尾已跳过: {}", t.toString());
@@ -151,25 +153,6 @@ public final class FlyingSwordTrailRenderer {
     }
 
     /** 资源重载后重建着色器 */
-    @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
-    public static final class ReloadHandler {
-        @SubscribeEvent
-        public static void onRegisterReloadListeners(RegisterClientReloadListenersEvent event) {
-            event.registerReloadListener(new SimplePreparableReloadListener<Void>() {
-                @Override
-                protected Void prepare(ResourceManager rm, ProfilerFiller profiler) {
-                    return null;
-                }
-
-                @Override
-                protected void apply(Void unused, ResourceManager rm, ProfilerFiller profiler) {
-                    trailShader = null;
-                    shaderFailed = false;
-                }
-            });
-        }
-    }
-
     // ============================================================
     //  由 FlyingSwordRenderer 每帧调用
     // ============================================================
@@ -219,21 +202,17 @@ public final class FlyingSwordTrailRenderer {
             if (trail.points.size() < 2) return;
 
             // ---- 2) 绘制条带 ----
-            ShaderInstance shader = shader();
-            if (shader == null) return;
             RenderType type = renderType();
             if (type == null) return;
 
-            try {
-                var uniform = shader.getUniform("TrailTime");
-                if (uniform != null) uniform.set((float) (Util.getMillis() / 1000.0));
-            } catch (Throwable ignored) { }
+            // 流光相位：客户端秒级时间（原来是写进着色器 uniform，现在直接算在顶点色上）
+            float time = (float) (System.currentTimeMillis() % 1_000_000L) / 1000.0f;
 
             Matrix4f matrix = new Matrix4f(poseStack.last().pose());   // 复制：后面剑身模型会继续改这个矩阵
             Vec3 cam = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
 
             VertexConsumer consumer = buffer.getBuffer(type);
-            int vertices = buildTube(consumer, matrix, trail, cam, origin);
+            int vertices = buildTube(consumer, matrix, trail, cam, origin, time);
 
             if (!loggedOnce && vertices > 0) {
                 loggedOnce = true;
@@ -279,9 +258,11 @@ public final class FlyingSwordTrailRenderer {
      * 不再是会随视角变薄变没的扁平条带。
      *
      * @param origin 实体本帧插值位置（世界坐标），用于把世界坐标换算成实体本地坐标
+     * @param time   流光相位（秒）
      * @return 提交的顶点数
      */
-    private static int buildTube(VertexConsumer consumer, Matrix4f matrix, Trail trail, Vec3 cam, Vec3 origin) {
+    private static int buildTube(VertexConsumer consumer, Matrix4f matrix, Trail trail, Vec3 cam, Vec3 origin,
+                                 float time) {
         List<Point> pts = new ArrayList<>(trail.points);   // 0 = 头（剑位置）→ 末尾 = 尾
         int n = pts.size();
         if (n < 2) return 0;
@@ -336,6 +317,14 @@ public final class FlyingSwordTrailRenderer {
             int g1c = (int) (Math.min(1.0f, trail.baseG + (trail.headG - trail.baseG) * k1) * 255.0f);
             int b1c = (int) (Math.min(1.0f, trail.baseB + (trail.headB - trail.baseB) * k1) * 255.0f);
 
+            // ⭐ 流光：原来在 flying_sword_trail.fsh 里按片元算，现在按顶点算（头/尾两档，四边形内线性插值）
+            float in0 = flowIntensity(t0, time);
+            float in1 = flowIntensity(t1, time);
+            r0c = flash(r0c, in0); g0c = flash(g0c, in0); b0c = flash(b0c, in0);
+            r1c = flash(r1c, in1); g1c = flash(g1c, in1); b1c = flash(b1c, in1);
+            alpha0 = (int) (alpha0 * (1.0f - t0 * 0.25f));
+            alpha1 = (int) (alpha1 * (1.0f - t1 * 0.25f));
+
             Vec3 c0 = center[i].subtract(origin);
             Vec3 c1 = center[i + 1].subtract(origin);
 
@@ -354,23 +343,49 @@ public final class FlyingSwordTrailRenderer {
                 float sh10 = shade(n10, center[i + 1], cam);
                 float sh11 = shade(n11, center[i + 1], cam);
 
-                emit(consumer, matrix, c0.add(n00.scale(r0)), r0c, g0c, b0c, (int) (alpha0 * sh00), t0);
-                emit(consumer, matrix, c0.add(n01.scale(r0)), r0c, g0c, b0c, (int) (alpha0 * sh01), t0);
-                emit(consumer, matrix, c1.add(n11.scale(r1)), r1c, g1c, b1c, (int) (alpha1 * sh11), t1);
-                emit(consumer, matrix, c1.add(n10.scale(r1)), r1c, g1c, b1c, (int) (alpha1 * sh10), t1);
+                emit(consumer, matrix, c0.add(n00.scale(r0)), n00, r0c, g0c, b0c, (int) (alpha0 * sh00), t0);
+                emit(consumer, matrix, c0.add(n01.scale(r0)), n01, r0c, g0c, b0c, (int) (alpha0 * sh01), t0);
+                emit(consumer, matrix, c1.add(n11.scale(r1)), n11, r1c, g1c, b1c, (int) (alpha1 * sh11), t1);
+                emit(consumer, matrix, c1.add(n10.scale(r1)), n10, r1c, g1c, b1c, (int) (alpha1 * sh10), t1);
                 emitted += 4;
             }
         }
         return emitted;
     }
 
-    private static void emit(VertexConsumer consumer, Matrix4f matrix, Vec3 local,
+    /**
+     * 顶点必须按 {@link DefaultVertexFormat#NEW_ENTITY} 的元素顺序写：
+     * Position → Color → UV0 → UV1(overlay) → UV2(lightmap) → Normal。
+     * UV0.x 仍是「沿拖尾的进度」（纹理按中线取），UV1 写 NO_OVERLAY、UV2 写全亮（自发光不需要光照）。
+     */
+    private static void emit(VertexConsumer consumer, Matrix4f matrix, Vec3 local, Vec3 normal,
                              int r, int g, int b, int a, float u) {
-        // V 固定取纹理中线：柔和横向衰减交给「圆柱侧影明暗」处理，避免圆管一侧发黑
         consumer.vertex(matrix, (float) local.x, (float) local.y, (float) local.z)
                 .color(r, g, b, Math.max(0, Math.min(255, a)))
                 .uv(u, 0.5f)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(LightTexture.FULL_BRIGHT)
+                .normal((float) normal.x, (float) normal.y, (float) normal.z)
                 .endVertex();
+    }
+
+    /**
+     * 复刻原 {@code flying_sword_trail.fsh} 的流光强度：
+     * 三层正弦 {@code sin(u·f − time·s)} 叠加后取 2.4 次幂收窄成"光带"，
+     * 再乘上 {@code 1.35 + flow·3.4·(0.45 + head)}（头部更亮）。
+     */
+    private static float flowIntensity(float t, float time) {
+        float f1 = (float) Math.sin(t * 9.0 - time * 6.0) * 0.5f + 0.5f;
+        float f2 = (float) Math.sin(t * 21.0 - time * 11.0) * 0.5f + 0.5f;
+        float f3 = (float) Math.sin(t * 44.0 - time * 19.0) * 0.5f + 0.5f;
+        float flow = f1 * 0.55f + f2 * 0.30f + f3 * 0.15f;
+        flow = (float) Math.pow(flow, 2.4);
+        return 1.35f + flow * 3.4f * (0.45f + (1.0f - t));
+    }
+
+    /** 顶点色乘流光强度并夹到 0-255（加色混合下重叠的四边形自己会叠亮） */
+    private static int flash(int channel, float intensity) {
+        return Math.max(0, Math.min(255, (int) (channel * intensity)));
     }
 
     /** 圆柱侧影明暗系数：法线与「指向相机」夹角越小越亮（保留 0.22 底光，避免后半圈全黑） */
