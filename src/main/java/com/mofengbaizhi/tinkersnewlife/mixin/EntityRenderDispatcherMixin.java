@@ -120,8 +120,12 @@ public abstract class EntityRenderDispatcherMixin {
             poseStack.popPose();
 
             if (tinkersnewlife$logged.add(player.getUUID())) {
-                TinkersNewlife.LOGGER.info("[WuWei] 伪装渲染替换成功：玩家={} 形态={}",
-                        player.getName().getString(), proxy.getType().getDescription().getString());
+                // 诊断：把"视线角 vs 原版身体角"一起打出来 —— 两者差值就是修复前模型朝向的偏差
+                TinkersNewlife.LOGGER.info("[WuWei] 伪装渲染替换成功：玩家={} 形态={} 视线角={}°（原版 yBodyRot={}°，差 {}°）",
+                        player.getName().getString(), proxy.getType().getDescription().getString(),
+                        String.format("%.1f", player.getYRot()),
+                        String.format("%.1f", player.yBodyRot),
+                        String.format("%.1f", net.minecraft.util.Mth.wrapDegrees(player.getYRot() - player.yBodyRot)));
             }
             // 取消原渲染：原版玩家模型与 YSM 模型都不再绘制
             ci.cancel();

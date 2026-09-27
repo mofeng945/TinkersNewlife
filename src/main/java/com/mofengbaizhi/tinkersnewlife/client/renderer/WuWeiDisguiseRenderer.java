@@ -30,6 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 代理不进世界不 tick，因此每帧渲染前需把真实玩家的动画状态反射同步给代理：
  *    - walkAnimation（speedOld/speed/position）：走路摆腿、闲置浮动
  *    - tickCount / 姿态旋转（yBodyRot/yHeadRot/xRot/yRot 及 *O 平滑值）
+ *      ※ 玩家形态的整体朝向取"视线角"（getYRot）而不是 yBodyRot，见 syncProxy 内注释
  *    - hurtTime/deathTime：受击闪白
  * 代理仅作为渲染参数，不参与攻击/受击/同步，避免替身崩溃与双身问题。
  */
@@ -171,10 +172,30 @@ public final class WuWeiDisguiseRenderer {
             proxy.xRotO = real.xRotO;
         }
         proxy.yRotO = real.yRotO;
-        proxy.yBodyRot = real.yBodyRot;
-        proxy.yBodyRotO = real.yBodyRotO;
-        proxy.yHeadRot = real.yHeadRot;
-        proxy.yHeadRotO = real.yHeadRotO;
+        // ⭐ 玩家形态：整体朝向直接对齐"玩家视线角"，不再照抄 yBodyRot。
+        //    原因（原版代码链路，已逐行核对）：
+        //      ① LivingEntityRenderer.render 里模型整体绕 f = rotLerp(partialTick, yBodyRotO, yBodyRot) 旋转，
+        //         头只吃相对角 netHeadYaw = yHeadRot - yBodyRot；
+        //      ② 玩家的 yBodyRot 由 LivingEntity.tickHeadTurn 维护 —— 原地不动时它**不主动跟随视线**，
+        //         只在差值超过 50° 时才被拉回"视线 ± 50°"；移动时则优先朝"移动方向"（侧移时＝侧移方向）。
+        //      ③ 于是伪装模型整体朝向会和玩家真正看的方向差最多 50°：人形形态还能靠"头转回视线"遮住，
+        //         而体型巨大的使徒、脖子只按 netHeadYaw/8 分摊的冰火龙（faceTarget）就非常明显了
+        //         （报告现象："渲染使徒/冰与火龙模型时面向方向与玩家实际视线方向不一致"）。
+        //    玩家的 getYRot() 就是鼠标视线角（LocalPlayer.turn 直接写它），所以取它；
+        //    头也一起取视线角 → netHeadYaw = 0，整只生物（含冰火龙的整条脖子链）正对视线。
+        //    ※ 傀儡/黑鸟这些"被操控单位"不在此分支：它们自己每 tick 就把 yBodyRot/yHeadRot 写成视线角
+        //      （PuppetIronGolem/BlackBirdEntity），走下面的常规分支即可，行为与之前完全一致。
+        if (real instanceof Player playerReal) {
+            proxy.yBodyRot = playerReal.getYRot();
+            proxy.yBodyRotO = playerReal.yRotO;
+            proxy.yHeadRot = playerReal.getYRot();
+            proxy.yHeadRotO = playerReal.yRotO;
+        } else {
+            proxy.yBodyRot = real.yBodyRot;
+            proxy.yBodyRotO = real.yBodyRotO;
+            proxy.yHeadRot = real.yHeadRot;
+            proxy.yHeadRotO = real.yHeadRotO;
+        }
         proxy.tickCount = real.tickCount;
         proxy.hurtTime = real.hurtTime;
         proxy.deathTime = real.deathTime;
