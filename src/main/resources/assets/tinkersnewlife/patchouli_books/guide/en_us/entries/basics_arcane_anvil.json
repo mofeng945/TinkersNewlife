@@ -1,0 +1,16 @@
+{
+    "name": "Tinkers' Items at the Arcane Anvil",
+    "category": "tinkersnewlife:basics",
+    "icon": "irons_spellbooks:arcane_anvil",
+    "sortnum": 4,
+    "pages": [
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)Tinkers' modifiable items can now take upgrade orbs at Iron's Spells 'n Spellbooks' Arcane Anvil$().(br2)How: this mod adds $(bold)tconstruct:modifiable$() (every modifiable Tinkers tool and piece of armor) to Iron's Spellbooks' $(bold)irons_spellbooks:upgrade_whitelist$() tag - so the anvil accepts$(li)left slot: a Tinkers item$(li)right slot: an upgrade orb$(br2)The output is a complete copy of the item plus the orb's attribute bonuses (fire spell power, max mana, melee damage, spell resistance, ...)."
+        },
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)Limits and removal$(): the number of orbs an item can hold is capped by Iron's Spellbooks' own $(bold)MAX_UPGRADES$() config (3 by default); to undo an upgrade, put a $(bold)Shriving Stone$() in the right slot and the item in the left slot at the same anvil (the orbs are refunded).$(br2)Tinkers' material traits and modifier upgrades $(italic)do not conflict$() with the orb bonuses - both apply at the same time."
+        }
+    ]
+}

@@ -1,0 +1,16 @@
+{
+    "name": "奥术铁砧上的匠魂物品",
+    "category": "tinkersnewlife:basics",
+    "icon": "irons_spellbooks:arcane_anvil",
+    "sortnum": 4,
+    "pages": [
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)匠魂的可改造物品现在也能在铁魔法的奥术铁砧上敲升级法球$()。(br2)做法：本模组把 $(bold)tconstruct:modifiable$()（全部可改造的匠魂工具与护甲 ✓）加进了铁魔法的 $(bold)irons_spellbooks:upgrade_whitelist$() 标签 ⇒ 奥术铁砧$(li)左格：匠魂物品$(li)右格：升级法球$(br2)产出 = 原物品的完整拷贝 ＋ 法球对应的属性加成（火焰法强、法力上限、近战伤害、法术抗性…）✓。"
+        },
+        {
+            "type": "patchouli:text",
+            "text": "$(bold)上限与移除$()：每件物品能吃到的法球总数受铁魔法自己配置里的 $(bold)MAX_UPGRADES$() 限制（默认 3）✓；不想要了，把$(bold)裂解石$()放在右格、物品放左格，在同一个砧上即可洗掉 ✓（会退还对应的法球）。$(br2)匠魂这边的材料特性、强化词条与铁魔法给的法球加成$(italic)互不干扰$()，可以同时存在 ✓。"
+        }
+    ]
+}
