@@ -1,6 +1,7 @@
 package com.mofengbaizhi.tinkersnewlife.content.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -21,6 +22,11 @@ import java.util.Set;
  *
  * <p><b>做法</b>：监听 {@link PlayerEvent.Clone}，把**属于我们的键**从旧玩家复制到新玩家 ✓
  * —— 用**前缀**而不是列举键名 ⇒ 以后新加的数据**自动覆盖** ✓ 不会再漏 ✗。
+ *
+ * <p>⚠ <b>唯一的例外</b>（§720）：<b>咒力核心池</b> {@code tinkersnewlife.curse_power}
+ * 是「封咒瓶 → 呪蔵 → 核心池」三层里的**垫底临时存储**，**死亡必须清零** ✓
+ * ⇒ 在 {@link #RESET_ON_DEATH} 里点名排除 ✓（封咒瓶/呪蔵里的那份分别写在物品 NBT 与 SavedData 里，
+ * 不经过本类 ⇒ 照旧保留 ✓）。**别把这条"例外"当成漏网之鱼再补回前缀搬运** ✗。
  *
  * <h2>⚠ §693 用户报的问题：「无下限挡不住伤害了」</h2>
  * <b>根因（已确证）</b>：这里原来<b>只认 {@code tn_} 一个前缀</b> ✗，
@@ -61,18 +67,39 @@ public final class PlayerDataPersistHandler {
             "tinkersnewlife_",  // 渲染/挂件类：tinkersnewlife_heart…
     };
 
-    /** 某个键将来若真的需要"死亡重置"，在这里点名排除 ✓（目前为空 ✓） */
-    private static final Set<String> EXCLUDED = Set.of();
+    /**
+     * ⭐ <b>死亡重生时不搬运（＝死亡即清零）的键</b> —— 目前只有**咒力核心池**一条 ✓。
+     *
+     * <p><b>为什么核心池要例外</b>（§720 用户报的问题）：咒力的存储分三层（见
+     * {@link CursePowerHelper#addCurse} 的注释与物品文案 ✓）——
+     * <ol>
+     *   <li><b>封咒瓶</b>：咒力写在**物品 NBT**（{@code CurseBottleHelper.KEY_POWER}）里，
+     *       文案明写「咒力优先存入瓶中，<b>死亡不丢</b>」✓ ⇒ 与本类无关，天然保留 ✓；</li>
+     *   <li><b>呪蔵</b>：咒力写在 {@code CurseVaultData}（SavedData，按玩家 UUID 绑定）里 ✓
+     *       ⇒ 同样不经过这里，天然保留 ✓；</li>
+     *   <li><b>咒力核心池</b>：{@code setCurse/addCurse} 的**垫底临时存储**（{@code tinkersnewlife.curse_power}）——
+     *       前两层满了才落到这里 ⇒ **死了就该清零** ✓。</li>
+     * </ol>
+     * 而本类原先按**前缀**无差别搬运（`tinkersnewlife.` 前缀覆盖了核心池 ✗）⇒ 核心池**永远不清零** ✗，
+     * 导致"没戴封咒瓶、也没有呪蔵的玩家死一次，咒力还在" ✗（用户实测报告 ✓）。
+     *
+     * <p>⚠ 只对 {@code isWasDeath()} 的 Clone 生效 ✓：换维度/其它原因触发的 Clone 不该吞掉核心池 ✓。
+     */
+    private static final Set<String> RESET_ON_DEATH = Set.of(
+            CursePowerHelper.KEY_CURSE          // "tinkersnewlife.curse_power"
+    );
 
     @SubscribeEvent
     public static void onClone(PlayerEvent.Clone event) {
         CompoundTag from = event.getOriginal().getPersistentData();
         if (from.isEmpty()) return;
         CompoundTag to = event.getEntity().getPersistentData();
+        boolean wasDeath = event.isWasDeath();
         // 复制一份键集合再遍历 ✓（别在遍历 NBT 的同时动它）
         for (String key : new ArrayList<>(from.getAllKeys())) {
-            if (EXCLUDED.contains(key)) continue;
             if (!isOurs(key)) continue;
+            // ⭐ 咒力核心池：死亡即清零（封咒瓶/呪蔵里的那份不在 persistentData 里，不受影响 ✓）
+            if (wasDeath && RESET_ON_DEATH.contains(key)) continue;
             to.put(key, from.get(key).copy());
         }
     }
