@@ -1,7 +1,7 @@
 {
     "name": "奥术铁砧上的匠魂物品",
     "category": "tinkersnewlife:basics",
-    "icon": "minecraft:anvil",
+    "icon": "irons_spellbooks:arcane_anvil",
     "sortnum": 4,
     "pages": [
         {

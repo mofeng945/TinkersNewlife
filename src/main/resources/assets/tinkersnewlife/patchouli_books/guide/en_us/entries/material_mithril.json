@@ -1,7 +1,7 @@
 {
     "name":  "Mithril",
     "category":  "tinkersnewlife:materials",
-    "icon":  "minecraft:iron_ingot",
+    "icon":  "irons_spellbooks:mithril_ingot",
     "sortnum":  24,
     "pages":  [
                   {

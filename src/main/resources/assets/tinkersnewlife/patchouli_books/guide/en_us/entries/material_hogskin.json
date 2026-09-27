@@ -1,7 +1,7 @@
 {
   "name": "Hogskin",
   "category": "tinkersnewlife:materials",
-  "icon": "minecraft:leather",
+  "icon": "irons_spellbooks:hogskin",
   "sortnum": 28,
   "pages": [
     {

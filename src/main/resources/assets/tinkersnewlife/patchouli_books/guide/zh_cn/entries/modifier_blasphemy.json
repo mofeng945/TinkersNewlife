@@ -1,7 +1,7 @@
 {
     "name": "渎神",
     "category": "tinkersnewlife:traits",
-    "icon": "minecraft:campfire",
+    "icon": "goety:nether_brick_brazier",
     "sortnum": 41,
     "pages": [
         {

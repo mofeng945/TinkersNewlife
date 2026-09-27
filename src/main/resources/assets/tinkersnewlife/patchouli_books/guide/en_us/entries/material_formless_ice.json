@@ -1,7 +1,7 @@
 {
     "name":  "Formless Ice",
     "category":  "tinkersnewlife:materials",
-    "icon":  "minecraft:blue_ice",
+    "icon":  "irons_spellbooks:permafrost_shard",
     "sortnum":  21,
     "pages":  [
                   {

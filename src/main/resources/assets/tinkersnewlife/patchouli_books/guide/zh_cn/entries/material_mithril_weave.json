@@ -1,7 +1,7 @@
 {
   "name": "秘银织物",
   "category": "tinkersnewlife:materials",
-  "icon": "minecraft:string",
+  "icon": "irons_spellbooks:mithril_weave",
   "sortnum": 27,
   "pages": [
     {

@@ -1,7 +1,7 @@
 {
   "name": "冰封骨头",
   "category": "tinkersnewlife:materials",
-  "icon": "minecraft:bone",
+  "icon": "irons_spellbooks:frozen_bone",
   "sortnum": 29,
   "pages": [
     {

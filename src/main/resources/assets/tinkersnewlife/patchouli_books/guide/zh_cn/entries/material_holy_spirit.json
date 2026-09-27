@@ -1,7 +1,7 @@
 {
     "name":  "圣灵",
     "category":  "tinkersnewlife:materials",
-    "icon":  "minecraft:amethyst_shard",
+    "icon":  "irons_spellbooks:arcane_ingot",
     "sortnum":  20,
     "pages":  [
                   {

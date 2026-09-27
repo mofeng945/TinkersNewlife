@@ -1,7 +1,7 @@
 {
   "name": "奥术布匹",
   "category": "tinkersnewlife:materials",
-  "icon": "minecraft:white_wool",
+  "icon": "irons_spellbooks:magic_cloth",
   "sortnum": 26,
   "pages": [
     {

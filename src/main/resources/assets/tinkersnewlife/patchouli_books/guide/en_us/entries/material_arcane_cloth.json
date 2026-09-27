@@ -1,7 +1,7 @@
 {
   "name": "Arcane Cloth",
   "category": "tinkersnewlife:materials",
-  "icon": "minecraft:white_wool",
+  "icon": "irons_spellbooks:magic_cloth",
   "sortnum": 26,
   "pages": [
     {

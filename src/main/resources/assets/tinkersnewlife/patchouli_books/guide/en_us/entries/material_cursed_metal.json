@@ -1,7 +1,7 @@
 {
   "name": "Cursed Metal",
   "category": "tinkersnewlife:materials",
-  "icon": "minecraft:echo_shard",
+  "icon": "goety:cursed_ingot",
   "sortnum": 7,
   "pages": [
     {

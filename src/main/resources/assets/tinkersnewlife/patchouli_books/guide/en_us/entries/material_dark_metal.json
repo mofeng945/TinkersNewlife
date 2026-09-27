@@ -1,7 +1,7 @@
 {
   "name": "Dark Metal",
   "category": "tinkersnewlife:materials",
-  "icon": "minecraft:netherite_scrap",
+  "icon": "goety:dark_ingot",
   "sortnum": 8,
   "pages": [
     {

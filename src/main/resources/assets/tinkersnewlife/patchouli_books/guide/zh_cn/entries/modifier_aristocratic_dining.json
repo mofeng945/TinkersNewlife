@@ -1,7 +1,7 @@
 {
     "name": "贵族餐饮",
     "category": "tinkersnewlife:traits",
-    "icon": "minecraft:cooked_beef",
+    "icon": "vampirism:blood_bottle",
     "sortnum": 60,
     "pages": [
         {
