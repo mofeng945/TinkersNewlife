@@ -181,6 +181,19 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (!level.isClientSide() && !state.is(newState.getBlock())) {
+            /*
+             * ⭐§721 诊断日志：门**不是**被天逆鉾拆、而是"这一格被换成了别的方块／被清成空气"时，
+             * 这里必须留下痕迹 ✗ —— 用户报「门自己消失」时之所以查不出是谁干的，就是因为原来这里全静默 ✗。
+             * 打出来的 `新方块=...` 就是最有价值的那条线索（谁把它替换掉的 ✓）。
+             */
+            TinkersNewlife.LOGGER.info("[白色空间传送门] 连锁清除：{} {} 半={} ⇒ 新方块={}{}",
+                    level.dimension().location(), pos, state.getValue(HALF),
+                    net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(newState.getBlock()),
+                    movedByPiston ? "（活塞推动）" : "");
+            if (level instanceof ServerLevel serverLevel) {
+                // 让"门没了"这件事当场能听见：主手天逆鉾那条路本来就会响，这条原来完全静默 ✗
+                serverLevel.playSound(null, pos, SoundEvents.GLASS_BREAK, SoundSource.BLOCKS, 0.8F, 0.9F);
+            }
             BlockPos other = otherHalf(state, pos);
             if (level.getBlockState(other).is(this)) {
                 level.removeBlock(other, false);
@@ -222,6 +235,9 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
                                  InteractionHand hand, BlockHitResult hit) {
         if (!player.getItemInHand(hand).is(ModItems.TIAN_NI_HUO.get())) return InteractionResult.PASS;
         if (!level.isClientSide() && level instanceof ServerLevel serverLevel) {
+            // ⭐§721 诊断日志：谁在哪儿把门拆了（用户报"门自己消失"时，这条能直接排除/指认右键路径 ✓）
+            TinkersNewlife.LOGGER.info("[白色空间传送门] 天逆鉾拆除：玩家={} {} {}（手={}）",
+                    player.getName().getString(), serverLevel.dimension().location(), pos, hand);
             WhiteSpaceDimensions.removePortal(serverLevel, pos);
             level.playSound(null, pos, SoundEvents.GLASS_BREAK, SoundSource.BLOCKS, 1.0F, 0.9F);
         }

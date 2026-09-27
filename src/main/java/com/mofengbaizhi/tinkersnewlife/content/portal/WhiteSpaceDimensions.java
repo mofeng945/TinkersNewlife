@@ -326,7 +326,13 @@ public final class WhiteSpaceDimensions {
             return PortalResult.failure("message.tinkersnewlife.white_space.blocked");
         }
         if (!placePortal(aLevel, aPos, bLevel.dimension(), bPos, facing)) {
-            if (!bExisted) removePortal(bLevel, bPos);
+            if (!bExisted) {
+                // ⭐§721 诊断日志：开门失败回滚会**撤掉刚建的那一侧** —— 把"门被回滚删掉"和
+                // "门被别的东西替换掉"分开记，免得下次又只能猜 ✗
+                TinkersNewlife.LOGGER.info("[白色空间传送门] 开门失败回滚：撤销远端门 {} {}",
+                        bLevel.dimension().location(), bPos);
+                removePortal(bLevel, bPos);
+            }
             return PortalResult.failure("message.tinkersnewlife.white_space.blocked");
         }
         return PortalResult.success("message.tinkersnewlife.white_space.opened");
