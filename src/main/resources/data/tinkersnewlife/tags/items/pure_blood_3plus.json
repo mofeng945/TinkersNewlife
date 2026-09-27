@@ -1,8 +1,17 @@
 {
   "replace": false,
   "values": [
-    "vampirism:pure_blood_2",
-    "vampirism:pure_blood_3",
-    "vampirism:pure_blood_4"
+    {
+      "id": "vampirism:pure_blood_2",
+      "required": false
+    },
+    {
+      "id": "vampirism:pure_blood_3",
+      "required": false
+    },
+    {
+      "id": "vampirism:pure_blood_4",
+      "required": false
+    }
   ]
 }

@@ -1,7 +1,7 @@
 {
     "name": "Tinkers' Items at the Arcane Anvil",
     "category": "tinkersnewlife:basics",
-    "icon": "irons_spellbooks:arcane_anvil",
+    "icon": "minecraft:anvil",
     "sortnum": 4,
     "pages": [
         {
@@ -12,5 +12,6 @@
             "type": "patchouli:text",
             "text": "$(bold)Limits and removal$(): the number of orbs an item can hold is capped by Iron's Spellbooks' own $(bold)MAX_UPGRADES$() config (3 by default); to undo an upgrade, put a $(bold)Shriving Stone$() in the right slot and the item in the left slot at the same anvil (the orbs are refunded).$(br2)Tinkers' material traits and modifier upgrades $(italic)do not conflict$() with the orb bonuses - both apply at the same time."
         }
-    ]
+    ],
+  "flag": "mod:irons_spellbooks"
 }

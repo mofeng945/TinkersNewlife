@@ -1,7 +1,13 @@
 {
   "replace": false,
   "values": [
-    "vampirism:umbrella",
-    "#curios:umbrella"
+    {
+      "id": "vampirism:umbrella",
+      "required": false
+    },
+    {
+      "id": "#curios:umbrella",
+      "required": false
+    }
   ]
 }

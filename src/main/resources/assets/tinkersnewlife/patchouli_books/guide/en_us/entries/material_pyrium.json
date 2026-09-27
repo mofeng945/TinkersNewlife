@@ -1,12 +1,12 @@
 {
     "name":  "Pyrium",
     "category":  "tinkersnewlife:materials",
-    "icon":  "irons_spellbooks:pyrium_ingot",
+    "icon":  "minecraft:blaze_powder",
     "sortnum":  22,
     "pages":  [
                   {
                       "type":  "patchouli:spotlight",
-                      "item":  "irons_spellbooks:pyrium_ingot",
+                      "item":  "minecraft:blaze_powder",
                       "text":  "$(bold)Obtaining$() (Iron's Spells crossover):$(li)Melt Iron's Spells $(bold)Pyrium Ingot$() ($(bold)irons_spellbooks:pyrium_ingot$()) into $(bold)Molten Pyrium$() - $(bold)90 mB per ingot$()$(li)Alloy $(bold)45 mB Cinder Ash + 45 mB Molten Gold$() in a smeltery (or scorched alloyer) for the same $(bold)90 mB Molten Pyrium$()$(li)$(bold)Cinder Ash$() comes from melting $(bold)Cinder Essence$() ($(bold)irons_spellbooks:cinder_essence$()), 45 mB each$(br2)One unit = $(bold)90 mB$()$(br2)Usable for: $(bold)tool head / handle / bow limb / grip$() and $(bold)all armor and shields$() (four platings + shield + maille)$(br2)Tier: $(bold)T3$()."
                   },
                   {

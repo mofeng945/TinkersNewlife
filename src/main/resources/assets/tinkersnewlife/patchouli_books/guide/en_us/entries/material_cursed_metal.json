@@ -1,12 +1,12 @@
 {
   "name": "Cursed Metal",
   "category": "tinkersnewlife:materials",
-  "icon": "goety:cursed_ingot",
+  "icon": "minecraft:echo_shard",
   "sortnum": 7,
   "pages": [
     {
       "type": "patchouli:spotlight",
-      "item": "goety:cursed_ingot",
+      "item": "minecraft:echo_shard",
       "text": "$(bold)How to obtain$():$(li)Cursed Metal Ingots come from Goety (the $(l:https://www.curseforge.com/minecraft/mc-mods/goety)Goety$() mod's $(bold)goety:cursed_ingot$())$(li)Throw Cursed Metal Ingots into the Smeltery to melt them into $(bold)Molten Cursed Metal$() (90 mB per ingot, temperature 900)$(li)At the Casting Table, pour $(bold)90 mB$() of Molten Cursed Metal (1 ingot) to make a Cursed Metal part$(br2)Tier: $(bold)T2$() (secondary material, iron mining level)."
     },
     {

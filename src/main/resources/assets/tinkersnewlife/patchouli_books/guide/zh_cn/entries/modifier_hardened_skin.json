@@ -1,7 +1,7 @@
 {
     "name": "硬化皮肤",
     "category": "tinkersnewlife:traits",
-    "icon": "vampirism:cursed_earth",
+    "icon": "minecraft:daylight_detector",
     "sortnum": 61,
     "pages": [
         {
@@ -12,5 +12,6 @@
             "type": "patchouli:text",
             "text": "$(bold)效果$()：不再受到$(bold)阳光灼烧$()（血族的 sun_damage），也不会因为暴露在太阳下而$(bold)着火$()——因此「视野边缘那圈火焰光晕」也不会再出现。(br2)边界：只在$(bold)真的暴露在阳光下$()时生效（白天 ＋ 头顶能看见天 ＋ 头顶没下雨）；$(italic)掉进岩浆、走进营火照旧会烧$()。(br2)配方：一把$(bold)阳伞$()（本模组标签 tinkersnewlife:umbrellas，含血族原版遮阳伞与「吸血鬼的阳伞」全部款式） ＋ 杜兰达尔破碎剑刃 ＋ 诅咒泥土。"
         }
-    ]
+    ],
+  "flag": "mod:vampirism"
 }

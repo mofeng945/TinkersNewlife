@@ -5,5 +5,12 @@
   },
   "material": "tinkersnewlife:mithril_weave",
   "needed": 1,
-  "value": 1
+  "value": 1,
+
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "irons_spellbooks"
+    }
+  ]
 }

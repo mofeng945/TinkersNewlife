@@ -1,7 +1,7 @@
 {
     "name": "奥术铁砧上的匠魂物品",
     "category": "tinkersnewlife:basics",
-    "icon": "irons_spellbooks:arcane_anvil",
+    "icon": "minecraft:anvil",
     "sortnum": 4,
     "pages": [
         {
@@ -12,5 +12,6 @@
             "type": "patchouli:text",
             "text": "$(bold)上限与移除$()：每件物品能吃到的法球总数受铁魔法自己配置里的 $(bold)MAX_UPGRADES$() 限制（默认 3）✓；不想要了，把$(bold)裂解石$()放在右格、物品放左格，在同一个砧上即可洗掉 ✓（会退还对应的法球）。$(br2)匠魂这边的材料特性、强化词条与铁魔法给的法球加成$(italic)互不干扰$()，可以同时存在 ✓。"
         }
-    ]
+    ],
+  "flag": "mod:irons_spellbooks"
 }

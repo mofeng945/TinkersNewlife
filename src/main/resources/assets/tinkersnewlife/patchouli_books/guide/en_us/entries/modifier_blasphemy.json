@@ -1,7 +1,7 @@
 {
     "name": "Blasphemy",
     "category": "tinkersnewlife:traits",
-    "icon": "goety:nether_brick_brazier",
+    "icon": "minecraft:campfire",
     "sortnum": 41,
     "pages": [
         {

@@ -1,12 +1,12 @@
 {
     "name":  "奥铁",
     "category":  "tinkersnewlife:materials",
-    "icon":  "irons_spellbooks:arcane_ingot",
+    "icon":  "minecraft:amethyst_shard",
     "sortnum":  23,
     "pages":  [
                   {
                       "type":  "patchouli:spotlight",
-                      "item":  "irons_spellbooks:arcane_ingot",
+                      "item":  "minecraft:amethyst_shard",
                       "text":  "$(bold)获取方式$()（铁魔法联动）：$(li)熔炼铁魔法的 $(bold)奥术锭$()（$(bold)irons_spellbooks:arcane_ingot$()）得到 $(bold)熔融奥铁$() —— $(bold)90 mB / 锭$()$(li)在冶炼炉（或焦褐合金炉）里用 $(bold)液态奥术 45 mB + 熔融铁 45 mB$() 合金，同样得到 $(bold)熔融奥铁 90 mB$()$(br2)一单位 = $(bold)90 mB$()$(br2)可用于：$(bold)顶端 / 手柄 / 弓臂 / 弓把$() 与 $(bold)盔甲盾牌$()（镶板四件 + 盾牌 + 锁链基底）$(br2)等级：$(bold)T2$()（与铁同级，数值略高）。$(br2)面板（对照铁）：顶端耐久 290 / 6.5 速度 / 2.25 攻击；手柄 +12% 耐久；弓臂 280 耐久 / 初速 +0.12；护甲板 2.25 / 5.5 / 4.5 / 2.25。"
                   },
                   {

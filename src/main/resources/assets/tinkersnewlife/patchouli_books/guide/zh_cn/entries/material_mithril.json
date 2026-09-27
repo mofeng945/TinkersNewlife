@@ -1,12 +1,12 @@
 {
     "name":  "秘银",
     "category":  "tinkersnewlife:materials",
-    "icon":  "irons_spellbooks:mithril_ingot",
+    "icon":  "minecraft:iron_ingot",
     "sortnum":  24,
     "pages":  [
                   {
                       "type":  "patchouli:spotlight",
-                      "item":  "irons_spellbooks:mithril_ingot",
+                      "item":  "minecraft:iron_ingot",
                       "text":  "$(bold)获取方式$()（铁魔法联动）：$(li)熔炼铁魔法的 $(bold)粗秘银$()（$(bold)irons_spellbooks:raw_mithril$()）—— $(bold)30 mB / 个$()$(li)熔炼 $(bold)秘银碎片$()（$(bold)irons_spellbooks:mithril_scrap$()）—— $(bold)20 mB / 个$()$(li)熔炼 $(bold)秘银锭$()（$(bold)irons_spellbooks:mithril_ingot$()）—— $(bold)90 mB / 锭$()$(br2)一单位 = $(bold)90 mB$()$(br2)可用于：$(bold)顶端 / 绑定结 / 手柄 / 弓臂 / 弓把$()$(br2)等级：$(bold)T3$()；顶端 $(bold)挖掘等级为下界合金$()（原矿本身也需要下界合金镐）。$(br2)面板：顶端 340 耐久 / $(bold)9.5 速度$() / 3.1 攻击；手柄 +8% 攻速；弓臂 $(bold)+0.20 精准$() / +0.12 拉弓；弓把 +0.15 精准。$(bold)特点：硬度高、精准轻便，但耐久偏低。$()"
                   },
                   {

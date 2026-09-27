@@ -1,12 +1,12 @@
 {
   "name": "Dark Metal",
   "category": "tinkersnewlife:materials",
-  "icon": "goety:dark_ingot",
+  "icon": "minecraft:netherite_scrap",
   "sortnum": 8,
   "pages": [
     {
       "type": "patchouli:spotlight",
-      "item": "goety:dark_ingot",
+      "item": "minecraft:netherite_scrap",
       "text": "$(bold)How to obtain$():$(li)Dark Metal Ingots come from Goety (the $(l:https://www.curseforge.com/minecraft/mc-mods/goety)Goety$() mod's $(bold)goety:dark_ingot$())$(li)Throw Dark Metal Ingots into the Smeltery to melt them into $(bold)Molten Dark Metal$() (90 mB per ingot, temperature 1000)$(li)At the Casting Table, pour $(bold)90 mB$() of Molten Dark Metal (1 ingot) to cast Dark Metal parts$(br2)Tier: $(bold)T2$() (secondary material, iron mining level; stats slightly above iron)."
     },
     {

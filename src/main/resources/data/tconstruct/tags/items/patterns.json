@@ -1,7 +1,10 @@
 {
   "replace": false,
   "values": [
-    "#iceandfire:dragon_skulls",
+    {
+      "id": "#iceandfire:dragon_skulls",
+      "required": false
+    },
     "minecraft:amethyst_shard"
   ]
 }
