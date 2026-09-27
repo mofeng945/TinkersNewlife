@@ -168,9 +168,17 @@ dependencies {
     implementation fg.deobf("maven.modrinth:Cg6Uc79H:SOJzuYxC")
     implementation fg.deobf("maven.modrinth:rxIIYO6c:kJ9LD194")
     // ⭐ JEI：完整 jar 仅运行时（完整产物为混淆名，不能用于编译）；
-    // 编译期使用 JEI 官方发布的 API 产物（libs/ 下，离线可用）
+    // ⚠⚠ §712 教训：**编译期必须用"整合包实际在跑的那个版本"** ✗ ——
+    //   NL 包跑的是 **15.21.0.144**，而我们原先按 15.48 的 API 编译：15.48 在
+    //   `IRecipeSlotBuilder` 上对 `addFluidStack(Fluid, long)` 做了**协变覆写** ⇒
+    //   字节码里记的是"子接口 + 返回子接口"那个方法 ⇒ 在 15.21 上运行直接
+    //   `NoSuchMethodError: IRecipeSlotBuilder IRecipeSlotBuilder.addFluidStack(Fluid, long)` ✗
+    //   ⇒ 连带 `TinkersNewlifeJeiPlugin#registerRecipes` 抛异常、**我们所有 JEI 类别整批没注册上** ✗
+    //   （表现就是"JEI 里查不到液态闪电的配方" ✗）。
+    //   ⇒ 现在按 **15.21** 编译（libs/ 下放整合包里那份原 jar ✓：方法记在父接口
+    //     `IIngredientAcceptor` 上，低版本向上兼容 ✓）；测试包跑的 15.48 同样能跑 ✓。
     runtimeOnly fg.deobf("maven.modrinth:u6dRKJwZ:4r3Kp7U7")
-    compileOnly files('libs/jei-1.20.1-common-api-15.48.0.179.jar', 'libs/jei-1.20.1-forge-api-15.48.0.179.jar')
+    compileOnly fg.deobf("blank:jei-1.20.1-forge:15.21.0.144")
     // ⭐ 帕秋莉：需要编译期引用 ItemModBook（自定义书物品），故 compileOnly + runtimeOnly
     compileOnly fg.deobf("blank:Patchouli-1.20.1:85-FORGE")
     runtimeOnly fg.deobf("blank:Patchouli-1.20.1:85-FORGE")
