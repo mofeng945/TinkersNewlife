@@ -21,7 +21,8 @@
     "ItemRendererMixin",
     "HumanoidArmorLayerMixin",
     "XaeroRadarMixin",
-    "JadeObjectNameMixin"
+    "JadeObjectNameMixin",
+    "MantleFluidShaderMixin"
   ],
   "injectors": {
     "defaultRequire": 0
