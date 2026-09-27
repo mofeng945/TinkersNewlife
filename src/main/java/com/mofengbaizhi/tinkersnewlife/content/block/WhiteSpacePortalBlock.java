@@ -67,7 +67,7 @@ import java.util.List;
  * <ul>
  *   <li><b>无碰撞、不挡视线、自发光 15</b>；
  *       <b>§664 起硬度 -1（正常方式挖不动、炸不掉、推不动）</b>，
- *       只能拿<b>天逆鉾右键</b>拆（见 {@link #use}，会响一声玻璃碎）；
+ *       只能拿<b>天逆鉾</b>拆（<b>§722 起：必须潜行</b>，见 {@link #use}，会响一声玻璃碎）；
  *       因为拆不掉，所以也没有战利品表这件事本身就没意义了 ✓；</li>
  *   <li><b>拆一格＝整扇门消失</b>：{@link #onRemove} 会把另一半也清掉，不会留下半扇门 ✗
  *       （爆炸／活塞／指令也走这条路 ✓）；</li>
@@ -219,13 +219,14 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
     /**
      * <b>§664 用户口径</b>：「让传送门方块用正常方式无法触及挖掘，只有使用**天逆鉾**右键时才会拆除
      * 并发出**玻璃破碎音效**」。
-     *
-     * <p>门本身硬度 -1（见构造器）⇒ 挖不动、炸不掉、推不动；这里给天逆鉾开一个"合法拆除"的口子：
+     * <p><b>§722 用户口径（加保险）</b>：「**蹲下右键才能碎门**」——
+     * 原来的判定只看"手里是不是天逆鉾 + 右键"✗，于是**任何一次持天逆鉾的右键**（例如想用武器自身的能力、
+     * 或战斗里手一抖）都会把整扇门拆掉 ✗；而 `Block#use` 会先于物品自身的能力执行 ⇒
+     * 那一下右键还会**挡掉武器能力** ✗。现在要求 {@code isSecondaryUseActive()}（＝潜行 ✓，
+     * 原版凡"潜行才生效"的方块交互都用它 ✓）：
      * <ul>
-     *   <li>手里的东西不是天逆鉾 ⇒ {@code PASS}（照常把右键让给别的逻辑，不拦 ✓）；</li>
-     *   <li>是天逆鉾 ⇒ 服务端把<b>整扇门（上下两格）一起拆掉</b>，并在门的位置播
-     *       {@link SoundEvents#GLASS_BREAK}（音量 1.0／音高 0.9，略低一点更像"碎了一整片"）✓；</li>
-     *   <li>天逆鉾本身<b>不消耗、不掉耐久</b>（用户没提，就不动它 ✓）。</li>
+     *   <li>潜行 + 天逆鉾右键 ⇒ 拆整扇门 + 玻璃碎音 ✓；</li>
+     *   <li>没潜行 ⇒ 直接 {@code PASS} ⇒ 交还给天逆鉾自己的右键能力 ✓（既不误删、也不挡能力 ✓）。</li>
      * </ul>
      * ⚠ 音效只在<b>服务端</b>播（{@code level.playSound(null, ...)}）⇒ 由服务端广播给附近所有玩家 ✓
      * 不会出现"自己听两遍"或"别人听不到"✗。
@@ -234,9 +235,15 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player,
                                  InteractionHand hand, BlockHitResult hit) {
         if (!player.getItemInHand(hand).is(ModItems.TIAN_NI_HUO.get())) return InteractionResult.PASS;
+        /*
+         * §722：必须**潜行**才拆（用户口径「蹲下右键才能碎门」）。
+         * 用原版自己的 isSecondaryUseActive()（服务端＝isShiftKeyDown ✓）—— 与"潜行才生效"的原版交互同源 ✓。
+         * 不潜行就交还给天逆鉾（PASS）⇒ 它的右键能力在门前照常可用 ✓，也不会误删门 ✓。
+         */
+        if (!player.isSecondaryUseActive()) return InteractionResult.PASS;
         if (!level.isClientSide() && level instanceof ServerLevel serverLevel) {
             // ⭐§721 诊断日志：谁在哪儿把门拆了（用户报"门自己消失"时，这条能直接排除/指认右键路径 ✓）
-            TinkersNewlife.LOGGER.info("[白色空间传送门] 天逆鉾拆除：玩家={} {} {}（手={}）",
+            TinkersNewlife.LOGGER.info("[白色空间传送门] 天逆鉾拆除（潜行）：玩家={} {} {}（手={}）",
                     player.getName().getString(), serverLevel.dimension().location(), pos, hand);
             WhiteSpaceDimensions.removePortal(serverLevel, pos);
             level.playSound(null, pos, SoundEvents.GLASS_BREAK, SoundSource.BLOCKS, 1.0F, 0.9F);

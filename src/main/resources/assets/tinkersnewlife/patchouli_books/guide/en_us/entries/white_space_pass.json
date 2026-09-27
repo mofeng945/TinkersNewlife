@@ -27,7 +27,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)Removing a gate$(): gates cannot be mined; right-click one with a $(l:tool_tian_ni_huo)Heavenly Reverse Spear$() to tear down the whole gate, with a glass-break sound.$(br2)$(bold)Round trips$(): gates come $(bold)in pairs$() - walk back through the other one. If the far gate is gone, it is $(bold)rebuilt$() on arrival."
+      "text": "$(bold)Removing a gate$(): gates cannot be mined; $(bold)sneak$() and right-click one with a $(l:tool_tian_ni_huo)Heavenly Reverse Spear$() to tear down the whole gate, with a glass-break sound.$(br2)$(bold)Round trips$(): gates come $(bold)in pairs$() - walk back through the other one. If the far gate is gone, it is $(bold)rebuilt$() on arrival."
     }
   ]
 }

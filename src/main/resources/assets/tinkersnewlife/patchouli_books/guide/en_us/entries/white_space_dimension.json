@@ -26,7 +26,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)Removing a gate$(): gates are $(bold)unbreakable$() (hardness -1, like bedrock; blasts do nothing). Right-click one with a $(l:tool_tian_ni_huo)Heavenly Reverse Spear$() to tear down the whole gate, with a $(bold)glass break$() sound.$(br2)Blacklisted: the $(l:cursed_tool_gourd_jail)Prison Realm$() and the Iron's Spellbooks $(bold)pocket dimension$()."
+      "text": "$(bold)Removing a gate$(): gates are $(bold)unbreakable$() (hardness -1, like bedrock; blasts do nothing). $(bold)Sneak$() and right-click one with a $(l:tool_tian_ni_huo)Heavenly Reverse Spear$() to tear down the whole gate, with a $(bold)glass break$() sound.$(br2)Blacklisted: the $(l:cursed_tool_gourd_jail)Prison Realm$() and the Iron's Spellbooks $(bold)pocket dimension$()."
     }
   ]
 }
