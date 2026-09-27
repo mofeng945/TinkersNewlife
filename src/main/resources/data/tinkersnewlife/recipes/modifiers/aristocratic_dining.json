@@ -3,9 +3,7 @@
   "allow_crystal": true,
   "inputs": [
     {
-      "type": "forge:nbt",
-      "item": "vampirism:blood_bottle",
-      "nbt": "{Damage:0}"
+      "item": "vampirism:blood_bottle"
     },
     {
       "item": "vampirism:vampire_orchid"
