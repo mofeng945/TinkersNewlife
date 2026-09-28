@@ -335,6 +335,12 @@ public final class WhiteSpaceDimensions {
             }
             return PortalResult.failure("message.tinkersnewlife.white_space.blocked");
         }
+        // ⭐§778 按用户要求**保留门的「开启」日志** ✓（与 §721 的"破碎/连锁清除"日志配对 ✓，
+        //   以后查"门什么时候建的、建在哪两侧"直接看这一行 ✓）
+        TinkersNewlife.LOGGER.info("[白色空间传送门] 门已建立：{} {} ↔ {} {}（朝向 {}，远端原本{}）",
+                aLevel.dimension().location(), aPos,
+                bLevel.dimension().location(), bPos,
+                facing, bExisted ? "已有一扇（本次重新接线）" : "没有（本次新建）");
         return PortalResult.success("message.tinkersnewlife.white_space.opened");
     }
 

@@ -73,10 +73,6 @@ public final class WatcherWillHandler {
         if (wearer.getRandom().nextDouble() >= chance) return;
 
         event.setCanceled(true);
-        // §750 诊断：守望意志闪避成功 ✓（只是确认这条没在疯狂触发 ✓）
-        com.mofengbaizhi.tinkersnewlife.util.VoidArmorDiag.log("dodge",
-                "守望意志：闪避成功 ✓ 玩家={} 等级={}",
-                wearer.getName().getString(), level);
         // 只是反馈：一团末影粒子（服务端发，附近玩家都能看到 ✓）
         if (wearer.level() instanceof ServerLevel serverLevel) {
             serverLevel.sendParticles(ParticleTypes.PORTAL,

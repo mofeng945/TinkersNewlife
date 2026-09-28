@@ -2,7 +2,6 @@ package com.mofengbaizhi.tinkersnewlife.mixin;
 
 import com.Polarice3.Goety.api.magic.ISpell;
 import com.mofengbaizhi.tinkersnewlife.content.modifier.events.VoidGraceHandler;
-import com.mofengbaizhi.tinkersnewlife.util.VoidArmorDiag;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
@@ -79,9 +78,6 @@ public class GoetyVoidSoulMixin {
                     && VoidGraceHandler.wears(caster)
                     && VoidGraceHandler.isVoidSpell(spell)) {
                 int halved = Math.max(1, (int) Math.round(base * VoidGraceHandler.VOID_SOUL_COST_FACTOR));
-                // §753 诊断：确证"这条注入真的被调用了" ✓（排查完 VoidArmorDiag.ENABLED=false 一起静音 ✓）
-                VoidArmorDiag.log("soul:halve", "🌀 虚空法术灵魂消耗减半 {} → {} ✓（法杖 {} / 施法者 {}）",
-                        base, halved, stack.getItem(), caster.getName().getString());
                 return halved;
             }
         } catch (Throwable ignored) {

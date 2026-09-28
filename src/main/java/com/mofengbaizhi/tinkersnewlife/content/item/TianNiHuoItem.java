@@ -68,22 +68,15 @@ public class TianNiHuoItem extends CursedToolItem {
      * ⇒ 客户端与服务端的 {@code flag1} 都变 false ✓ ⇒ 走 {@code Block#use} ✓ ⇒ 拆门恢复 ✓；
      * 对着**别的方块**仍返回 false ✓ ⇒ 拿天逆鉾潜行放方块等原版行为一点不变 ✓。
      *
-     * <p>⚠ 已知原版边角：若**副手也拿着**一个不 bypass 的物品 ✗，原版要求**双手都 bypass** ⇒ 那时仍拆不了 ✗
-     * （原版机制 ✓ 无法从我们这边绕过 ✓，记在备忘录 §772c 以免以后当 bug 查 ✗）。
+     * <p>⚠ 已知原版边角：若**副手也拿着**一个不 bypass 的物品 ✗，原版要求**双手都 bypass** ⇒ 那时方块那边仍进不去 ✗
+     * （原版机制 ✓，所以 §777 起**拆门也在物品侧做了一份** ✓，两边互补 ✓）。
      */
     @Override
     public boolean doesSneakBypassUse(ItemStack stack, net.minecraft.world.level.LevelReader level,
                                       net.minecraft.core.BlockPos pos, net.minecraft.world.entity.player.Player player) {
         try {
-            boolean isPortal = level.getBlockState(pos)
+            return level.getBlockState(pos)
                     .is(com.mofengbaizhi.tinkersnewlife.content.ModBlocks.WHITE_SPACE_PORTAL.get());
-            // §775 诊断：证明"放行"这个方法真的被原版问过（只在对门时记一行 ✓ 免得刷屏 ✓）
-            if (isPortal) {
-                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
-                        "[白色空间传送门·诊断] 原版询问潜行放行：玩家={} → 返回 true（是门）✓ {}",
-                        player.getName().getString(), pos);
-            }
-            return isPortal;
         } catch (Throwable ignored) {
             return false;
         }
@@ -109,21 +102,10 @@ public class TianNiHuoItem extends CursedToolItem {
         return result;
     }
 
-    /** 右键领域结界方块 → 破坏领域（对抗中双方同崩） */
+    /** 右键领域结界方块 → 破坏领域（对抗中双方同崩者）；§777 起也负责拆白色空间传送门 */
     @Override
     public InteractionResult useOn(UseOnContext context) {
         var level = context.getLevel();
-        // §775 诊断：物品自己的 useOn 有没有被调用（潜行时方块 use 会被跳过，若走这条路也能看出来 ✓）
-        try {
-            var p = context.getPlayer();
-            TinkersNewlife.LOGGER.info("[白色空间传送门·诊断] 天逆鉾 useOn() 被调用：侧={} 玩家={} 潜行={} 点击方块={} {}",
-                    level.isClientSide ? "客户端" : "服务端",
-                    p == null ? "?" : p.getName().getString(),
-                    p != null && p.isSecondaryUseActive(),
-                    level.getBlockState(context.getClickedPos()).getBlock(),
-                    context.getClickedPos());
-        } catch (Throwable ignored) {
-        }
         if (level.isClientSide) return InteractionResult.PASS;
         BlockState state = level.getBlockState(context.getClickedPos());
 
