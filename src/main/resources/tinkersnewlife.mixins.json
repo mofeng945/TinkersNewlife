@@ -14,7 +14,9 @@
     "ManaShieldEffectMixin",
     "AllPathsOneSoulMixin",
     "BloodStatsInvoker",
-    "VampirismSunHelperMixin"
+    "VampirismSunHelperMixin",
+    "GoetyCastSpeedMixin",
+    "GoetyVoidSoulMixin"
   ],
   "client": [
     "EntityRenderDispatcherMixin",

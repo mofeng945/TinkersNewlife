@@ -1,0 +1,15 @@
+{
+  "type": "tconstruct:material",
+  "ingredient": {
+    "item": "goety_ladder:void_metal"
+  },
+  "material": "tinkersnewlife:void_metal",
+  "needed": 1,
+  "value": 1,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "goety_ladder"
+    }
+  ]
+}

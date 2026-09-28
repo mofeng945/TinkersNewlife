@@ -1,0 +1,9 @@
+{
+  "condition": {
+    "type": "forge:mod_loaded",
+    "modid": "goety_ladder"
+  },
+  "craftable": true,
+  "hidden": false,
+  "tier": 4
+}

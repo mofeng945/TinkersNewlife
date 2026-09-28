@@ -1409,5 +1409,22 @@
   "word.tinkersnewlife.wuzu.desc": "对象·咒之祖巫：提升咒言作用强度",
   "word.tinkersnewlife.yog": "犹格索托斯",
   "word.tinkersnewlife.yog.desc": "对象·犹格索托斯：仅限不可名状敬称；咏唱后持续获得经验",
-  "word.tinkersnewlife.zako": "雑鱼"
+  "word.tinkersnewlife.zako": "雑鱼",
+  "material.tinkersnewlife.void_metal": "虚空金属",
+  "modifier.tinkersnewlife.void_touch": "虚空抚摸",
+  "modifier.tinkersnewlife.void_touch.description": "近战或远程命中时，给目标挂上「虚蚀」3 秒；目标已有虚蚀则等级 +1，最高 5 级。",
+  "modifier.tinkersnewlife.void_touch.flavor": "用身体触摸虚空的意志吧！",
+  "modifier.tinkersnewlife.void_touch.tip": "§5命中叠「虚蚀」3 秒；已有则 +1 级（最高 5 级）",
+  "modifier.tinkersnewlife.ender_power": "末影之力",
+  "modifier.tinkersnewlife.ender_power.description": "工具自带注入 3 级传送术与 3 级法术镣铐。",
+  "modifier.tinkersnewlife.ender_power.flavor": "末影维度意志正在注视着你……",
+  "modifier.tinkersnewlife.ender_power.tip": "§d自带注入：传送术 Lv3、法术镣铐 Lv3",
+  "modifier.tinkersnewlife.void_grace": "虚无恩宠",
+  "modifier.tinkersnewlife.void_grace.description": "免疫虚空块与液态虚空的伤害与负面效果；免疫虚空之蚀与缓慢；施放虚空法术的灵魂消耗减半；获得 20% 虚空系伤害抗性。",
+  "modifier.tinkersnewlife.void_grace.flavor": "此时此刻，有人将统御虚空。",
+  "modifier.tinkersnewlife.void_grace.tip": "§5免疫虚空块/液态虚空/虚空之蚀/缓慢；虚空法术灵魂减半；§5+20% 虚空系抗性",
+  "modifier.tinkersnewlife.watcher_will": "守望意志",
+  "modifier.tinkersnewlife.watcher_will.description": "每级 10% 概率闪避此次攻击；诡厄巫法与铁魔法的吟唱速度每级 +15%（多件可叠加）。",
+  "modifier.tinkersnewlife.watcher_will.flavor": "末影守望者理解了你的意志……",
+  "modifier.tinkersnewlife.watcher_will.tip": "§d每级：10% 闪避；吟唱速度 +15%（诡厄巫法 + 铁魔法）"
 }

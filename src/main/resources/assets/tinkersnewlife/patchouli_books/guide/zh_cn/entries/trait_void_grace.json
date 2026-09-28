@@ -1,0 +1,13 @@
+{
+    "name": "虚无恩宠",
+    "category":  "tinkersnewlife:traits",
+    "icon": "goety_ladder:void_metal",
+    "sortnum":  73,
+    "pages":  [
+                  {
+                      "text":  "$(bold)虚无恩宠$()（虚空金属盔甲自带 · $(bold)无等级$()）$(br2)效果：$(li)完全免疫 $(bold)虚空块$()（goety:void_block）与 $(bold)液态虚空$()（goety:void_fluid）带来的伤害与负面效果$(li)免疫 $(bold)虚空之蚀$()（goety:void_touched）与 $(bold)缓慢$()$(li)施放 $(bold)虚空法术$() 的灵魂能量消耗 $(bold)减半$()$(li)获得 $(bold)20%$() 虚空系伤害抗性$(br2)$(italic)此时此刻，有人将统御虚空。$()",
+                      "type":  "patchouli:text"
+                  }
+              ],
+    "flag":  "mod:goety_ladder"
+}

@@ -1,0 +1,13 @@
+{
+    "name": "Void Grace",
+    "category":  "tinkersnewlife:traits",
+    "icon": "goety_ladder:void_metal",
+    "sortnum":  73,
+    "pages":  [
+                  {
+                      "text":  "$(bold)Void Grace$() (built into void metal armour, $(bold)no levels$())$(br2)Effects:$(li)Full immunity to damage and debuffs from $(bold)Void Blocks$() (goety:void_block) and $(bold)Liquid Void$() (goety:void_fluid)$(li)Immunity to $(bold)Void-Touched$() (goety:void_touched) and $(bold)Slowness$()$(li)Void spells cost $(bold)half$() the soul energy$(li)$(bold)+20%$() void damage resistance$(br2)$(italic)Right now, someone will command the void.$()",
+                      "type":  "patchouli:text"
+                  }
+              ],
+    "flag":  "mod:goety_ladder"
+}

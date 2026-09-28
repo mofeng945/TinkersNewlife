@@ -488,4 +488,28 @@ public class Modifiers {
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.HardenedSkinModifier> HARDENED_SKIN =
         MODIFIERS.register("hardened_skin",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.HardenedSkinModifier::new);
+
+    // ============================================================
+    //  §723 虚空金属（诡厄巫法·阶梯 goety_ladder 联动）
+    // ============================================================
+
+    /** 工具特性·虚空抚摸（虚空金属工具自带 · 无等级：近战/远程命中叠「虚蚀」，已有则 +1 级，最高 5 级） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.VoidTouchModifier> VOID_TOUCH =
+        MODIFIERS.register("void_touch",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.VoidTouchModifier::new);
+
+    /** 工具特性·末影之力（虚空金属工具自带 · 无等级 · 铁魔法联动：注入 3 级传送术 + 3 级法术镣铐） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.EnderPowerModifier> ENDER_POWER =
+        MODIFIERS.register("ender_power",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.EnderPowerModifier::new);
+
+    /** 盔甲特性·虚无恩宠（虚空金属盔甲自带 · 无等级：免疫虚空块/液态虚空伤害与负面、免疫虚空之蚀与缓慢、虚空法术灵魂半耗、+20% 虚空抗性） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.VoidGraceModifier> VOID_GRACE =
+        MODIFIERS.register("void_grace",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.VoidGraceModifier::new);
+
+    /** 盔甲特性·守望意志（虚空金属盔甲自带 · **有等级** · 多件叠加：每级 10% 闪避 + 诡厄/铁魔法吟唱速度各 +15%） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.WatcherWillModifier> WATCHER_WILL =
+        MODIFIERS.register("watcher_will",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.WatcherWillModifier::new);
 }

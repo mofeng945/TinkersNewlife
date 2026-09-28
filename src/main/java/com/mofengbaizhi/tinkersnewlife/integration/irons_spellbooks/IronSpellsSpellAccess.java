@@ -582,6 +582,44 @@ public final class IronSpellsSpellAccess {
     }
 
     /**
+     * <b>一次刻入两个法术</b>（虚空金属「末影之力」用 ✓：3 级传送术 ＋ 3 级法术镣铐）。
+     *
+     * <p>为什么需要单独一个方法：{@link #ensureInscribed} 一次只加<b>一个</b>法术，而它开头就判
+     * "已是容器 ⇒ 直接返回 true" ✗ ⇒ 连调两次的话第二次什么都不做 ✗。这里在<b>同一个容器</b>里加两个 ✓。
+     * <p>仍然遵守同一口径：<b>仅当物品还没有法术容器时</b>写入 ✗（免得跟奥术铁砧上的编辑打架 ✓）。
+     */
+    public static boolean ensureInscribedPair(ItemStack stack, String spellIdA, String spellIdB,
+                                              int level, int slots) {
+        init();
+        if (!ready || stack == null || stack.isEmpty()) return false;
+        if (mContainerGet == null || mContainerCreate == null || mContainerAdd == null || mContainerSave == null) {
+            TinkersNewlife.LOGGER.warn("[末影之力] 容器方法缺失：get={} create={} addSpell={} save={}",
+                    mContainerGet != null, mContainerCreate != null, mContainerAdd != null, mContainerSave != null);
+            return false;
+        }
+        try {
+            if (mContainerGet.invoke(null, stack) != null) return true;   // 已是容器（可能已被铁砧编辑过）→ 不动
+            Object spellA = spellById(spellIdA);
+            Object spellB = spellById(spellIdB);
+            if (spellA == null || spellB == null) {
+                TinkersNewlife.LOGGER.warn("[末影之力] 法术找不到：{}={} {}={}",
+                        spellIdA, spellA != null, spellIdB, spellB != null);
+                return false;
+            }
+            Object container = mContainerCreate.invoke(null, Math.max(2, slots), true, false);
+            mContainerAdd.invoke(container, spellA, level, true, stack);
+            mContainerAdd.invoke(container, spellB, level, true, stack);
+            mContainerSave.invoke(container, stack);
+            TinkersNewlife.LOGGER.debug("[末影之力] 已向 {} 刻入 {} 与 {} 各 Lv{}",
+                    stack.getItem(), spellIdA, spellIdB, level);
+            return true;
+        } catch (Throwable t) {
+            TinkersNewlife.LOGGER.warn("[末影之力] 刻入 {} / {} 失败: {}", spellIdA, spellIdB, t.toString());
+            return false;
+        }
+    }
+
+    /**
      * 该法术是否属于<b>邪术</b>学派（{@code irons_spellbooks:eldritch}）—— 供「奥术始源」放开学习限制 ✓。
      */
     public static boolean isEldritch(Object spell) {

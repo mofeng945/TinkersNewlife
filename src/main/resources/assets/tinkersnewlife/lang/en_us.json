@@ -1410,5 +1410,22 @@
   "word.tinkersnewlife.wuzu.desc": "Target: Ancestor Witch of Curses - increases the strength of the curse speech",
   "word.tinkersnewlife.yog": "Yog-Sothoth",
   "word.tinkersnewlife.yog.desc": "Target: Yog-Sothoth - Unnameable honorific only; grants continuous experience after chanting",
-  "word.tinkersnewlife.zako": "Small Fry"
+  "word.tinkersnewlife.zako": "Small Fry",
+  "material.tinkersnewlife.void_metal": "Void Metal",
+  "modifier.tinkersnewlife.void_touch": "Void Touch",
+  "modifier.tinkersnewlife.void_touch.description": "Melee or ranged hits inflict Void Wane for 3 seconds; if the target already has it, the level goes +1, up to level 5.",
+  "modifier.tinkersnewlife.void_touch.flavor": "Touch the will of the void with your body!",
+  "modifier.tinkersnewlife.void_touch.tip": "§5Hits stack Void Wane for 3s; +1 level if already applied (max level 5)",
+  "modifier.tinkersnewlife.ender_power": "Ender Power",
+  "modifier.tinkersnewlife.ender_power.description": "The tool is imbued with Teleport Lv3 and Arcane Shackle Lv3.",
+  "modifier.tinkersnewlife.ender_power.flavor": "The will of the Ender dimension is watching you...",
+  "modifier.tinkersnewlife.ender_power.tip": "§dImbued: Teleport Lv3, Arcane Shackle Lv3",
+  "modifier.tinkersnewlife.void_grace": "Void Grace",
+  "modifier.tinkersnewlife.void_grace.description": "Immune to damage and debuffs from Void Blocks and Liquid Void; immune to Void-Touched and Slowness; void spells cost half the soul energy; +20% void damage resistance.",
+  "modifier.tinkersnewlife.void_grace.flavor": "Right now, someone will command the void.",
+  "modifier.tinkersnewlife.void_grace.tip": "§5Immune to void blocks/liquid void/Void-Touched/Slowness; void spells cost half souls; §5+20% void resistance",
+  "modifier.tinkersnewlife.watcher_will": "Watcher's Will",
+  "modifier.tinkersnewlife.watcher_will.description": "Each level gives a 10% dodge chance; +15% casting speed for Goety and Iron's Spellbooks per level (stacks across pieces).",
+  "modifier.tinkersnewlife.watcher_will.flavor": "The Ender Watcher understands your will...",
+  "modifier.tinkersnewlife.watcher_will.tip": "§dPer level: 10% dodge; +15% casting speed (Goety + Iron's Spellbooks)"
 }

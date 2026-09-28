@@ -1,0 +1,13 @@
+{
+    "name": "Ender Power",
+    "category":  "tinkersnewlife:traits",
+    "icon": "goety_ladder:void_metal",
+    "sortnum":  72,
+    "pages":  [
+                  {
+                      "text":  "$(bold)Ender Power$() (built into void metal tools, $(bold)no levels$(), Iron\u0027s Spellbooks crossover)$(br2)The tool is imbued with $(bold)Teleport Lv3$() (irons_spellbooks:teleport) and $(bold)Arcane Shackle Lv3$() (irons_spellbooks:arcane_shackle).$(br2)Note: it only writes when the item has $(bold)no$() spell container yet, so it never overwrites your edits at the Arcane Anvil.$(br2)$(italic)The will of the Ender dimension is watching you...$()",
+                      "type":  "patchouli:text"
+                  }
+              ],
+    "flag":  "mod:irons_spellbooks"
+}

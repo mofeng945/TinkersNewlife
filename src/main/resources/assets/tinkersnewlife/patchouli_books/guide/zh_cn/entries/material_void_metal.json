@@ -1,0 +1,22 @@
+{
+    "name":  "虚空金属",
+    "category":  "tinkersnewlife:materials",
+    "icon":  "goety_ladder:void_metal",
+    "sortnum":  31,
+    "pages":  [
+                  {
+                      "item":  "minecraft:echo_shard",
+                      "type":  "patchouli:spotlight",
+                      "text":  "$(bold)获取方式$()（诡厄巫法·阶梯联动）：在 $(bold)部件制作台$() 上用阶梯的 $(bold)虚空金属锭$()（$(bold)goety_ladder:void_metal$()）直接制作 —— 每 1 个锭做 1 份材料 ✓。$(br2)可用部位：$(bold)全部$()（头部 / 手柄 / 握把 / 肢体 / 绑定结 / 修复包 / 镶板四件 / 盾芯 / 锁链基底 ✓）$(br2)等级：$(bold)T4$()（与神灵金同级 ✓）$(br2)强度：$(bold)高于玛玉灵、低于神灵金$() ✓（头部 耐久 1550 / 挖掘 7.5 / 近战 7.0；镶板护甲 3.0 · 8.0 · 6.5 · 3.0，韧性 3.5）"
+                  },
+                  {
+                      "text":  "$(bold)工具自带特性$()：$(li)$(bold)虚空抚摸$()（无等级）：用虚空金属工具$(bold)近战或远程$()命中 ⇒ 目标获得 $(bold)虚蚀$() 3 秒；若目标已有虚蚀则等级 $(bold)+1$()，最高 $(bold)5 级$()$(li)$(bold)灵魂修复$()：手持或穿戴时消耗灵魂能量自行修复$(li)$(bold)末影之力$()（无等级·铁魔法联动）：工具自带注入 $(bold)3 级传送术$() 与 $(bold)3 级法术镣铐$()",
+                      "type":  "patchouli:text"
+                  },
+                  {
+                      "text":  "$(bold)盔甲自带特性$()：$(li)$(bold)虚无恩宠$()（无等级）：完全免疫 $(bold)虚空块$()（goety:void_block）与 $(bold)液态虚空$()（goety:void_fluid）造成的伤害与负面效果；免疫 $(bold)虚空之蚀$() 与 $(bold)缓慢$()；施放虚空法术的灵魂能量 $(bold)减半$()；获得 $(bold)+20%$() 虚空系伤害抗性$(li)$(bold)守望意志$()（$(bold)有等级 · 多件叠加$()）：每级 $(bold)10%$() 概率闪避此次攻击，且 $(bold)诡厄巫法$() 与 $(bold)铁魔法$() 的吟唱速度每级 $(bold)+15%$()$(br2)$(italic)末影守望者理解了你的意志。$()",
+                      "type":  "patchouli:text"
+                  }
+              ],
+    "flag":  "mod:goety_ladder"
+}

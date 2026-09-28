@@ -1,0 +1,12 @@
+{
+    "name": "虚空抚摸",
+    "category":  "tinkersnewlife:traits",
+    "icon": "goety_ladder:void_metal",
+    "sortnum":  71,
+    "pages":  [
+                  {
+                      "text":  "$(bold)虚空抚摸$()（虚空金属工具自带 · $(bold)无等级$()）$(br2)效果：用该工具$(bold)近战或远程$()命中时，目标获得 $(bold)虚蚀$()（goety_ladder:void_wane）持续 $(bold)3 秒$()；若目标身上$(bold)已有虚蚀$()，则这次让等级 $(bold)+1$()，最高 $(bold)5 级$()。$(br2)虚蚀每级：−20% 移速 / −4 点伤害 / 受到的 −10% 非虚空类伤害。$(br2)$(italic)用身体触摸虚空的意志吧！$()",
+                      "type":  "patchouli:text"
+                  }
+              ]
+}
