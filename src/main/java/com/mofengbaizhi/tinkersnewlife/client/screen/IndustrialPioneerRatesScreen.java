@@ -3,15 +3,19 @@ package com.mofengbaizhi.tinkersnewlife.client.screen;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.network.rate.PacketOpenPioneerRates;
 import com.mofengbaizhi.tinkersnewlife.network.rate.PacketRequestPioneerRates;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Fluid;
+import net.minecraftforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.ArrayList;
@@ -24,7 +28,7 @@ import java.util.Locale;
  * <h2>三个页签（用户口径「加上流体显示和能量显示」✓）</h2>
  * <pre>
  *   物品 ：[物品图标]  名称   目前总量（个）   产率（个/时）
- *   流体 ：[它的桶图标] 名称   目前总量（mB）   产率（mB/时）
+ *   流体 ：[流体材质]  名称   目前总量（mB）   产率（mB/时）
  *   能量 ：整维度一行：当前储能 X FE ／ 净产率 +Y FE/时
  * </pre>
  *
@@ -38,7 +42,9 @@ import java.util.Locale;
  *
  * <h2>⚠ 没有新增任何 GUI 贴图（守 §1 ✓）</h2>
  * 面板/行都是纯色 {@code graphics.fill} ✓；物品图标 `renderFakeItem` ✓；
- * 流体画的是**它自己的桶**图标（{@code Fluid#getBucket} ✓）✓。
+ * 流体画的是**它自己的材质**（§792 ✓ 用户口径「直接显示流体材质，不要显示桶」✓）——
+ * 取 {@code IClientFluidTypeExtensions#getStillTexture} 的静态帧 ＋ {@code getTintColor} 着色 ✓，
+ * 从方块图集里取 sprite 直接 blit ✓；**拿不到材质就不画** ✗（**不退回桶** ✗ 按用户口径 ✓）。
  */
 public class IndustrialPioneerRatesScreen extends AbstractRowListScreen<PacketOpenPioneerRates.Row> {
 
@@ -51,6 +57,11 @@ public class IndustrialPioneerRatesScreen extends AbstractRowListScreen<PacketOp
     private static final int NAME_X = 24;
     private static final int TOTAL_RIGHT_PAD = 96;
     private static final int RATE_RIGHT_PAD = 8;
+
+    /** §792 图标边长（物品/流体都是 16×16 ✓） */
+    private static final int ICON_SIZE = 16;
+    /** §792 流体图标下移 1 像素（和物品图标对齐 ✓） */
+    private static final int ICON_Y = 1;
 
     private final String dimensionKey;
     private int totalKinds;
@@ -233,15 +244,22 @@ public class IndustrialPioneerRatesScreen extends AbstractRowListScreen<PacketOp
             return;
         }
 
-        ItemStack icon = iconOf(row);
-        if (!icon.isEmpty()) {
-            graphics.renderFakeItem(icon, x + ICON_X, y + 1);
+        // §792 图标：物品用物品图标 ✓；**流体直接画流体材质** ✓（用户口径「不要显示桶」✗）
+        boolean hasIcon;
+        if (row.kind() == PacketOpenPioneerRates.KIND_FLUID) {
+            hasIcon = drawFluidIcon(graphics, row, x + ICON_X, y + ICON_Y);
+        } else {
+            ItemStack icon = iconOf(row);
+            hasIcon = !icon.isEmpty();
+            if (hasIcon) {
+                graphics.renderFakeItem(icon, x + ICON_X, y + ICON_Y);
+            }
         }
         Component name = displayName(row);
         String text = name == null ? row.id() : name.getString();
         String shown = font.plainSubstrByWidth(text, Math.max(8, w - TOTAL_RIGHT_PAD - NAME_X - 8));
         if (shown.length() < text.length()) shown = shown + "…";
-        graphics.drawString(font, shown, x + NAME_X, y + 6, icon.isEmpty() ? 0x9A9A9A : 0xFFFFFF);
+        graphics.drawString(font, shown, x + NAME_X, y + 6, hasIcon ? 0xFFFFFF : 0x9A9A9A);
 
         drawRight(graphics, Component.literal(formatAmount(row.total())),
                 x + w - TOTAL_RIGHT_PAD, y + 6, 0xC8C8E0);
@@ -276,15 +294,59 @@ public class IndustrialPioneerRatesScreen extends AbstractRowListScreen<PacketOp
     //  小工具：图标 / 名字 / 单位 / 数字格式
     // ============================================================
 
+    /**
+     * <b>§792 画流体材质</b>（用户口径：「流体显示直接显示流体材质，**不要显示桶**」✓）
+     *
+     * <p>做法（全是 Forge/原版公开 API ✓）：
+     * <ol>
+     *   <li>{@code IClientFluidTypeExtensions#of(fluid).getStillTexture(stack)} ⇒ 静止材质 id ✓</li>
+     *   <li>从<b>方块图集</b>（{@code InventoryMenu.BLOCK_ATLAS} ✓ 流体材质就注册在这里 ✓）取 sprite ✓</li>
+     *   <li>用 {@code getTintColor(stack)} 着色 ✓（水才是蓝的、岩浆才是橙的 ✓ 否则只有灰度底图 ✗）</li>
+     *   <li>{@code GuiGraphics#blit(x, y, 0, 16, 16, sprite)} ✓（1.20.1 原生就有这个重载 ✓ 源码实核 ✓）</li>
+     * </ol>
+     * ⚠ 拿不到材质/图集里没有这张图 ⇒ <b>直接不画</b> ✗（**不退回桶** ✗ —— 用户明确不要桶 ✓）；
+     * 全程 try/catch ✓ 画错也不许影响界面 ✓。
+     *
+     * @return 是否真的画上了（用来决定名字的颜色 ✓）
+     */
+    private static boolean drawFluidIcon(GuiGraphics graphics, PacketOpenPioneerRates.Row row, int x, int y) {
+        try {
+            ResourceLocation id = ResourceLocation.tryParse(row.id());
+            if (id == null) return false;
+            Fluid fluid = ForgeRegistries.FLUIDS.getValue(id);
+            if (fluid == null) return false;
+            net.minecraftforge.fluids.FluidStack probe = new net.minecraftforge.fluids.FluidStack(fluid, 1);
+            IClientFluidTypeExtensions ext = IClientFluidTypeExtensions.of(fluid);
+            if (ext == null) return false;
+            ResourceLocation still = ext.getStillTexture(probe);
+            if (still == null) return false;
+            TextureAtlasSprite sprite = Minecraft.getInstance()
+                    .getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(still);
+            if (sprite == null) return false;                       // ⚠ 不退回桶 ✓
+            int tint = ext.getTintColor(probe);
+            float alpha = ((tint >> 24) & 0xFF) / 255.0F;
+            float red = ((tint >> 16) & 0xFF) / 255.0F;
+            float green = ((tint >> 8) & 0xFF) / 255.0F;
+            float blue = (tint & 0xFF) / 255.0F;
+            RenderSystem.enableBlend();
+            try {
+                RenderSystem.setShaderColor(red, green, blue, alpha);
+                graphics.blit(x, y, 0, ICON_SIZE, ICON_SIZE, sprite);
+            } finally {
+                RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+                RenderSystem.disableBlend();
+            }
+            return true;
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    /** 物品页的图标 ✓（流体页**不用**它 ✗ —— 流体直接画材质 ✓ 见 {@link #drawFluidIcon} ✓） */
     private static ItemStack iconOf(PacketOpenPioneerRates.Row row) {
+        if (row.kind() != PacketOpenPioneerRates.KIND_ITEM) return ItemStack.EMPTY;
         ResourceLocation id = ResourceLocation.tryParse(row.id());
         if (id == null) return ItemStack.EMPTY;
-        if (row.kind() == PacketOpenPioneerRates.KIND_FLUID) {
-            Fluid fluid = ForgeRegistries.FLUIDS.getValue(id);
-            if (fluid == null) return ItemStack.EMPTY;
-            Item bucket = fluid.getBucket();                 // 画它的桶 ✓（流体本身没有"物品图标"✓）
-            return bucket == null ? ItemStack.EMPTY : new ItemStack(bucket);
-        }
         Item item = ForgeRegistries.ITEMS.getValue(id);
         return item == null ? ItemStack.EMPTY : new ItemStack(item);
     }
