@@ -876,7 +876,7 @@
   "modifier.tinkersnewlife.dark_metal_breaker.description": "Attacks weaken the enemy; killing an enemy with Resistance has a chance to drop an emerald.",
   "modifier.tinkersnewlife.dark_metal_breaker.flavor": "The curse will bring eternal sleep.",
   "modifier.tinkersnewlife.dark_metal_magic_resist": "Magic Resist",
-  "modifier.tinkersnewlife.dark_metal_magic_resist.description": "When taking magic damage, convert 5%×level + 1.5 points of magic damage into physical damage.",
+  "modifier.tinkersnewlife.dark_metal_magic_resist.description": "When taking magic damage, convert 5%×level + 1.5 points of magic damage into physical damage. Also grants immunity to Blindness and Darkness.",
   "modifier.tinkersnewlife.dark_metal_magic_resist.flavor": "Gloom-forged plate, deaf to sorcery.",
   "modifier.tinkersnewlife.divine_power": "Divine Power",
   "modifier.tinkersnewlife.divine_power.description": "Comes with inscribed Fire Wall, Angel Wings and Healing Circle, and grants its owner +180 max mana.",

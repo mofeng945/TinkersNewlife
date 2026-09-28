@@ -876,7 +876,7 @@
   "modifier.tinkersnewlife.dark_metal_breaker.description": "攻击会使敌人虚弱，同时击杀带有抗性提升的敌人时有概率掉落绿宝石",
   "modifier.tinkersnewlife.dark_metal_breaker.flavor": "诅咒终将带来永眠",
   "modifier.tinkersnewlife.dark_metal_magic_resist": "抗魔",
-  "modifier.tinkersnewlife.dark_metal_magic_resist.description": "受到魔法伤害时，将 5%×等级 + 1.5 点魔法伤害转化为物理伤害。",
+  "modifier.tinkersnewlife.dark_metal_magic_resist.description": "受到魔法伤害时，将 5%×等级 + 1.5 点魔法伤害转化为物理伤害；免疫失明与黑暗。",
   "modifier.tinkersnewlife.dark_metal_magic_resist.flavor": "晦暗之甲，诸法难侵。",
   "modifier.tinkersnewlife.divine_power": "神圣之力",
   "modifier.tinkersnewlife.divine_power.description": "自带注入法术火墙术，天使之翼和治愈之环，同时能够提高主人180点法力上限。",
