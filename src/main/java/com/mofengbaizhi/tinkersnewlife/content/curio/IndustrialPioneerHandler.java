@@ -104,6 +104,18 @@ public final class IndustrialPioneerHandler {
     private IndustrialPioneerHandler() {
     }
 
+    /**
+     * §745：装上"采样完成"回调 ✓ —— 某一维度刚采完一轮 ⇒ <b>立刻</b>把新数据推给
+     * "界面正开着、看的就是这个维度"的玩家 ✓
+     * （他们每 5 秒会请求一次 ✓ 服务端据此知道"还在看"✓ 见 {@code ContainerRateManager#watch} ✓）。
+     * <p>⇒ 用户体感：打开界面 ⇒ 催的那一轮采完 ⇒ 数字**自己**变新 ✓ 不用等到下一次轮询 ✓。
+     */
+    static {
+        ContainerRateManager.setSweepListener(level ->
+                ContainerRateManager.watchers(level).forEach(player ->
+                        IndustrialPioneerCertificateItem.sendRateReport(player, level.dimension(), false)));
+    }
+
     // ============================================================
     //  服务端 tick：每 20 tick 结算一次 ✓
     // ============================================================

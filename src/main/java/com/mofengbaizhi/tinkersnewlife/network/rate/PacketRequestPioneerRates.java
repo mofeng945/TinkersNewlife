@@ -51,6 +51,9 @@ public class PacketRequestPioneerRates {
             if (id == null) return;
             ResourceKey<Level> dimension = ResourceKey.create(Registries.DIMENSION, id);
             if (!holdsCertificateFor(player, dimension)) return;   // 验不过 ⇒ 丢弃 ✓
+            // §745：记一笔"他正在看这个维度" ✓（采样一跑完就主动推给他 ✓）
+            net.minecraft.server.level.ServerLevel level = player.server.getLevel(dimension);
+            if (level != null) com.mofengbaizhi.tinkersnewlife.content.rate.ContainerRateManager.watch(level, player);
             IndustrialPioneerCertificateItem.sendRateReport(player, dimension, false);   // 刷新不催采样 ✓
         });
         context.setPacketHandled(true);

@@ -9,6 +9,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
@@ -29,8 +30,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 import java.util.function.LongConsumer;
 import java.util.function.ObjLongConsumer;
 
@@ -94,6 +97,18 @@ public final class ContainerRateManager {
     private static final List<RateSourceProvider> PROVIDERS = new CopyOnWriteArrayList<>();
     private static final RateSourceProvider VANILLA = new VanillaContainerRateProvider();
 
+    /** 玩家附近的补扫半径（区块 ✓ 8 = 17×17 ✓ 与"构筑"那套同量级 ✓） */
+    private static final int PLAYER_CHUNK_RADIUS = 8;
+
+    /** 观察者超时（tick ✓）：界面 5 秒问一次 ⇒ 10 秒没动静就当关了 ✓ */
+    private static final long WATCH_TIMEOUT_TICKS = 200L;
+
+    /** §745：谁"正在看"这个维度的界面 ⇒ 维度 → (玩家 UUID → 最后一次请求的 tick) ✓ */
+    private static final Map<ResourceKey<Level>, Map<UUID, Long>> WATCHERS = new ConcurrentHashMap<>();
+
+    /** 一轮采样跑完后的回调（由 {@code IndustrialPioneerHandler} 装上 ⇒ 立刻把新数据推给正在看的人 ✓） */
+    private static volatile Consumer<ServerLevel> sweepListener;
+
     private static long lastLagLogTick = Long.MIN_VALUE;
 
     private ContainerRateManager() {
@@ -102,6 +117,33 @@ public final class ContainerRateManager {
     // ============================================================
     //  注册
     // ============================================================
+
+    /** §745：装"采样完成"回调 ✓（只装一次 ✓ 见 {@code IndustrialPioneerHandler} 的静态块 ✓） */
+    public static void setSweepListener(Consumer<ServerLevel> listener) {
+        sweepListener = listener;
+    }
+
+    /** §745：客户端来要数据 ⇒ 记一笔"他正在看这个维度"✓（界面每 5 秒要一次 ⇒ 这个标记会自然续期 ✓） */
+    public static void watch(ServerLevel level, ServerPlayer player) {
+        if (level == null || player == null) return;
+        long now = level.getServer() == null ? level.getGameTime() : level.getServer().getTickCount();
+        WATCHERS.computeIfAbsent(level.dimension(), key -> new ConcurrentHashMap<>())
+                .put(player.getUUID(), now);
+    }
+
+    /** §745：最近 {@link #WATCH_TIMEOUT_TICKS} 之内要过数据、且还在线的玩家 ✓（= 界面大概还开着 ✓） */
+    public static List<ServerPlayer> watchers(ServerLevel level) {
+        List<ServerPlayer> out = new ArrayList<>();
+        Map<UUID, Long> map = WATCHERS.get(level.dimension());
+        if (map == null || map.isEmpty() || level.getServer() == null) return out;
+        long now = level.getServer().getTickCount();
+        for (Map.Entry<UUID, Long> entry : map.entrySet()) {
+            if (now - entry.getValue() > WATCH_TIMEOUT_TICKS) continue;      // 早关界面了 ⇒ 丢掉 ✓
+            ServerPlayer player = level.getServer().getPlayerList().getPlayer(entry.getKey());
+            if (player != null) out.add(player);
+        }
+        return out;
+    }
 
     public static void registerProvider(RateSourceProvider provider) {
         if (provider == null) return;
@@ -136,7 +178,12 @@ public final class ContainerRateManager {
         NEXT_SWEEP.clear();
         BUDGETS.clear();
         LAST_STATS.clear();
-        LOADED_CHUNKS.clear();
+        WATCHERS.clear();
+        // ⚠ §745：这里**不能**清 LOADED_CHUNKS ✗ —— 出生点/生成器区块是在 ServerStartedEvent
+        //   **之前**就加载好的 ✗，清了它们就再也不会补发 ChunkEvent.Load ✗
+        //   ⇒ 玩家"站在出生点旁边放个箱子"永远扫不到 ✗（这正是用户实测报的"箱子没被统计"✓）。
+        //   留着不清理是**安全**的：坐标是复用的 ✓ 每次真取块都用 getChunkNow 复核 ✓
+        //   （没加载就返回 null ⇒ 自然跳过 ✓），换存档后旧键也不会造成误统计 ✓。
         VanillaContainerRateProvider.clearAll();
     }
 
@@ -288,6 +335,14 @@ public final class ContainerRateManager {
         }
         LAST_SNAPSHOT.put(dimension, sweep.now);
         SWEEPS.remove(dimension);
+        // §745：这一轮刚采完 ⇒ 立刻把新数据推给"正在看这个维度界面"的玩家 ✓
+        //   （不用等客户端下一次 5 秒轮询 ✓ 用户体感就是"开完界面数字自己就变新了"✓）
+        try {
+            Consumer<ServerLevel> listener = sweepListener;
+            if (listener != null) listener.accept(level);
+        } catch (Throwable t) {
+            TinkersNewlife.LOGGER.warn("[产率] 采样完成回调出错：{}", t.toString());
+        }
         NEXT_SWEEP.put(dimension, (level.getServer() == null ? level.getGameTime()
                 : level.getServer().getTickCount()) + INTERVAL_TICKS);
 
@@ -358,16 +413,45 @@ public final class ContainerRateManager {
         return new Sweep(sources);
     }
 
+    /**
+     * 这一轮要扫的区块 = <b>事件登记的已加载区块</b> ∪ <b>玩家附近的区块</b> ✓（§745 ✓）
+     *
+     * <p>为什么要并"玩家附近"：{@code ChunkEvent.Load} 这套登记**可能漏**（最典型的就是
+     * 出生点/生成器区块在服务器启动前就加载好了 ✗ ⇒ 那条 Load 事件发生在我们登记之前 ✓）。
+     * 漏掉的后果很直观：玩家"就站在自己刚放的箱子旁边"却统计不到 ✗。
+     * <p>⇒ 每轮都用玩家坐标按半径 {@link #PLAYER_CHUNK_RADIUS} 主动补一遍 ✓
+     * （`getChunkNow` 取不到就说明没加载 ✓ 跳过 ✓）—— 成本是每人 17×17 次哈希查找 ✓ 可忽略 ✓。
+     */
     private static List<LevelChunk> loadedChunks(ServerLevel level) {
+        Map<Long, LevelChunk> out = new HashMap<>();
         Set<Long> keys = LOADED_CHUNKS.get(level.dimension());
-        if (keys == null || keys.isEmpty()) return List.of();
-        List<LevelChunk> out = new ArrayList<>(keys.size());
-        for (Long key : keys) {
-            if (key == null) continue;
-            LevelChunk chunk = level.getChunkSource().getChunkNow(ChunkPos.getX(key), ChunkPos.getZ(key));
-            if (chunk != null) out.add(chunk);
+        if (keys != null) {
+            for (Long key : keys) {
+                if (key == null) continue;
+                LevelChunk chunk = chunkAt(level, ChunkPos.getX(key), ChunkPos.getZ(key));
+                if (chunk != null) out.put(key, chunk);
+            }
         }
-        return out;
+        int radius = PLAYER_CHUNK_RADIUS;
+        for (var player : level.players()) {
+            int cx = player.chunkPosition().x;
+            int cz = player.chunkPosition().z;
+            for (int dx = -radius; dx <= radius; dx++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    LevelChunk chunk = chunkAt(level, cx + dx, cz + dz);
+                    if (chunk != null) out.put(chunk.getPos().toLong(), chunk);
+                }
+            }
+        }
+        return new ArrayList<>(out.values());
+    }
+
+    private static LevelChunk chunkAt(ServerLevel level, int x, int z) {
+        try {
+            return level.getChunkSource().getChunkNow(x, z);
+        } catch (Throwable ignored) {
+            return null;
+        }
     }
 
     private static int loadedChunkCount(ServerLevel level) {

@@ -8,6 +8,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.energy.IEnergyStorage;
@@ -81,7 +82,16 @@ public final class VanillaContainerRateProvider implements RateSourceProvider {
                 if (entity == null || entity.isRemoved()) continue;
                 BlockPos pos = entry.getKey();
                 Cached cached = cache.get(pos);
+                // §745：新建缓存时判一次"是不是没人碰过的宝箱"✓；
+                //   已经记着的条目**每轮再判一次**（宝箱被打开后 LootTable 会被清掉 ✓ 要能及时"转正"✓）
+                if (cached != null && cached.entity() == entity && isUntouchedLootContainer(entity)) {
+                    continue;                   // 还是没开过的宝箱 ⇒ 这一轮仍然跳过 ✓
+                }
                 if (cached == null || cached.entity() != entity) {
+                    if (isUntouchedLootContainer(entity)) {
+                        cache.remove(pos);
+                        continue;               // 没人碰过的宝箱 ⇒ 不登记 ✓ 不统计 ✓
+                    }
                     IItemHandler items = itemHandlerOf(entity);
                     IFluidHandler fluids = fluidHandlerOf(entity);
                     IEnergyStorage energy = energyStorageOf(entity);
@@ -144,6 +154,29 @@ public final class VanillaContainerRateProvider implements RateSourceProvider {
         } catch (Throwable ignored) {
         }
         return null;
+    }
+
+    /**
+     * §745 <b>跳过"还没开过的战利品箱"</b> ✓（用户实测：原先把野外箱子里的东西也统计进来了 ✗）
+     *
+     * <p>判据：原版给结构宝箱写的是 {@code LootTable} 这个 NBT 标签 ✓
+     * （{@code RandomizableContainerBlockEntity#trySaveLootTable} 只在 {@code lootTable != null} 时写 ✓
+     *  参见 1.20.1 源码 ✓）。
+     * <ul>
+     *   <li><b>玩家自己放的箱子</b>没有这个标签 ✓ ⇒ 照常统计 ✓；</li>
+     *   <li>结构宝箱<b>第一次被打开</b>时会 {@code unpackLootTable()} 并把 {@code lootTable} 置空 ✓
+     *       ⇒ 之后它就"变成普通箱子"了 ✓（本方法每轮会**重新判定** ✓ 所以它会重新被统计 ✓）；</li>
+     *   <li>⚠ 也就是说：**已经被人开过的**宝箱算数 ✓（那时它已经在被使用了 ✓），只有"从没人碰过的"跳过 ✓。</li>
+     * </ul>
+     */
+    private static boolean isUntouchedLootContainer(BlockEntity entity) {
+        if (!(entity instanceof RandomizableContainerBlockEntity)) return false;
+        try {
+            net.minecraft.nbt.CompoundTag tag = entity.saveWithoutMetadata();
+            return tag != null && tag.contains(RandomizableContainerBlockEntity.LOOT_TABLE_TAG, 8);
+        } catch (Throwable ignored) {
+            return false;                       // 判定不了就当普通容器 ✓ 宁可统计也不漏掉玩家的箱子 ✓
+        }
     }
 
     /** 缓存条目 ✓ */
