@@ -85,7 +85,17 @@ public final class EnergyConverterModBridges {
      */
     public static net.minecraft.world.level.block.Block createBlock() {
         if (hasCreate()) {
-            return new CreateEnergyConverterBlock();
+            // §801 ⚠ 这里**不能**写 `new CreateEnergyConverterBlock()` 再当 Block 返回 ✗ ——
+            //   本类是每次启动都加载的类 ✗，那种写法会在字节码里留下"CreateEnergyConverterBlock <: Block"
+            //   的赋值校验点 ⇒ 没装 Create 时可能逼 JVM 加载它（连带 KineticBlock）⇒
+            //   `NoClassDefFoundError: com/simibubi/create/...` ⇒ 启动崩 ✗（= 用户报的"硬依赖机械动力"✗）。
+            //   ⇒ 改成调用它**自己类里**的隔离工厂 ✓（描述符只出现原版 Block ✓），并且包 try/catch ✓：
+            //     即使 Create 在但版本不兼容（继承链/方法签名对不上 ✓）也只退回普通支 ✓ 绝不崩 ✗。
+            try {
+                return com.mofengbaizhi.tinkersnewlife.content.block.CreateEnergyConverterBlock.createIsolated();
+            } catch (Throwable t) {
+                TinkersNewlife.LOGGER.warn("[机械动力] 转化器的动能支装载失败（已退回普通支 ✓）：{}", t.toString());
+            }
         }
         return new EnergyConverterBlock();
     }
@@ -98,11 +108,13 @@ public final class EnergyConverterModBridges {
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static net.minecraft.world.level.block.entity.BlockEntityType<?> createBlockEntityType() {
         if (hasCreate()) {
-            return net.minecraft.world.level.block.entity.BlockEntityType.Builder.of(
-                            com.mofengbaizhi.tinkersnewlife.content.block
-                                    .CreateEnergyConverterBlockEntity::new,
-                            com.mofengbaizhi.tinkersnewlife.content.ModBlocks.ENERGY_CONVERTER.get())
-                    .build(null);
+            // §801 同 createBlock()：改成调用对方类里的隔离工厂 ✓ ＋ try/catch 兜底 ✓
+            try {
+                return com.mofengbaizhi.tinkersnewlife.content.block
+                        .CreateEnergyConverterBlockEntity.createIsolatedType();
+            } catch (Throwable t) {
+                TinkersNewlife.LOGGER.warn("[机械动力] 转化器动能方块实体装载失败（已退回普通支 ✓）：{}", t.toString());
+            }
         }
         return net.minecraft.world.level.block.entity.BlockEntityType.Builder.of(
                         com.mofengbaizhi.tinkersnewlife.content.block.EnergyConverterBlockEntity::new,

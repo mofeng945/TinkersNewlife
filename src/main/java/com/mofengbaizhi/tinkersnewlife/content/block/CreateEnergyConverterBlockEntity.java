@@ -58,6 +58,21 @@ import javax.annotation.Nullable;
 public class CreateEnergyConverterBlockEntity extends KineticBlockEntity implements ConverterCoreHolder {
 
     /**
+     * §801 隔离工厂（理由同 {@code CreateEnergyConverterBlock#createIsolated} ✓）：
+     * 把 {@code BlockEntityType.Builder.of(本类::new, …)} 留在<b>本类</b>里 ✓ ——
+     * 调用方 {@code EnergyConverterModBridges} 只看到描述符
+     * {@code ()Lnet/minecraft/world/level/block/entity/BlockEntityType;} ✓，
+     * 里面**没有任何 Create 类型** ✓ ⇒ 没装 Create 时不会被解析 ✓。
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public static net.minecraft.world.level.block.entity.BlockEntityType<?> createIsolatedType() {
+        return net.minecraft.world.level.block.entity.BlockEntityType.Builder.of(
+                        CreateEnergyConverterBlockEntity::new,
+                        com.mofengbaizhi.tinkersnewlife.content.ModBlocks.ENERGY_CONVERTER.get())
+                .build(null);
+    }
+
+    /**
      * §595 <b>应力影响</b>（Create 口径 ✓）：本方块靠传动杆驱动 ⇒ 像机器一样**吃应力** ✓
      * （总应力 = 影响 × 转速 ✓ ⇒ 转得越快、吃得越多 ✓ 一根轴喂多台就得多出力 ✓）。
      * <p>API 由 javap 实核 ✓：{@code KineticBlockEntity#calculateStressApplied():float} ✓

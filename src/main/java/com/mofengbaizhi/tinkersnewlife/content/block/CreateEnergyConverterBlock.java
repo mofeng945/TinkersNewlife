@@ -52,6 +52,24 @@ public class CreateEnergyConverterBlock extends KineticBlock
      * <p>⚠ 与 Create 的关系：{@code KineticBlock} 提供 {@code IRotate}（传动杆能接 ✓），
      * 但"造方块实体 + 每 tick 驱动"得我们自己补 ✓。
      */
+    /**
+     * §801 隔离工厂：把 {@code new CreateEnergyConverterBlock()} 留在<b>本类自己的字节码</b>里 ✓。
+     *
+     * <p>为什么：调用方 {@code EnergyConverterModBridges} 是**每次启动都会加载**的类 ✗；
+     * 如果它自己写 {@code new CreateEnergyConverterBlock()} 再当成
+     * {@code net.minecraft.world.level.block.Block} 返回 ✗，它的字节码里就有
+     * "CreateEnergyConverterBlock &lt;: Block" 的赋值校验点 ✗ ⇒ 可能逼 JVM 去加载本类
+     * （连带解析 {@code KineticBlock}）⇒ 没装 Create 时报
+     * {@code NoClassDefFoundError: com/simibubi/create/...} ⇒ **启动崩** ✗
+     * （这正是用户报的"硬依赖机械动力"✗）。
+     *
+     * <p>改成这个工厂后，调用方只做一次 {@code invokestatic} ✓，描述符里**只有**
+     * {@code net/minecraft/world/level/block/Block} ✓ ⇒ 没装 Create 时这方法体根本不会被执行 ✓。
+     */
+    public static net.minecraft.world.level.block.Block createIsolated() {
+        return new CreateEnergyConverterBlock();
+    }
+
     @Override
     public net.minecraft.world.level.block.entity.BlockEntity newBlockEntity(
             net.minecraft.core.BlockPos pos, net.minecraft.world.level.block.state.BlockState state) {
