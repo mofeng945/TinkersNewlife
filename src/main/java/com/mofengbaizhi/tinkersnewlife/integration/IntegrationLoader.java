@@ -223,6 +223,29 @@ public final class IntegrationLoader {
         }
         // 铁魔法：纯反射软依赖（无编译依赖），此处只做一次反射装填
         com.mofengbaizhi.tinkersnewlife.util.IronSpellsReflector.init();
+
+        // ============================================================
+        //  §735 容器产率统计：只挂"来源提供方"（本轮只做方法接口 ✓ 不做展示 ✗）
+        //  普通容器不用挂（引擎自带 IItemHandler 那一层 ✓）；这里只处理"物品不在方块实体里"的两家 ✓
+        //  ⚠ 仍然守隔离铁律：本类绝不 import appeng.* / mekanism.* ✗，
+        //     只在"模组在场"的分支里 new 那个类 ⇒ 没装的玩家加载不到它 ✓
+        // ============================================================
+        if (shouldRegisterLinked(AE2)) {
+            try {
+                com.mofengbaizhi.tinkersnewlife.content.rate.ContainerRateManager.registerProvider(
+                        new com.mofengbaizhi.tinkersnewlife.integration.ae2.Ae2RateProvider());
+            } catch (Throwable t) {
+                LOGGER.error("[联动] AE2 产率来源挂载失败", t);
+            }
+        }
+        if (shouldRegisterLinked(MEKANISM)) {
+            try {
+                com.mofengbaizhi.tinkersnewlife.content.rate.ContainerRateManager.registerProvider(
+                        new com.mofengbaizhi.tinkersnewlife.integration.mekanism.MekanismQioRateProvider());
+            } catch (Throwable t) {
+                LOGGER.error("[联动] 通用机械 QIO 产率来源挂载失败", t);
+            }
+        }
     }
 
     /**
