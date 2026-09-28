@@ -119,8 +119,12 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
                         && result.getResult().consumesAction() && !sp.isUsingItem()) {
                     ModularStaffGoety.requestAdvance(sp);
                 }
-                // 【诊断】定位"蓄力放不出"用，确认后移除
-                TinkersNewlife.LOGGER.info("[魔杖·真法杖] use side={} 聚晶={} 法术={} 结果={}",
+                /*
+                 * §724：这条原是"定位蓄力放不出"的临时诊断 ✗，但一直留在了 INFO 级 ⇒ **每次右键施法都刷一行** ✗。
+                 * 按本模组的日志口径（§686 同款做法）降级为 debug ✓：默认级别下不再出现 ✓，
+                 * 真要排查时把日志级别调到 DEBUG 就能重新看到 ✓（不必再改代码 ✓）。
+                 */
+                TinkersNewlife.LOGGER.debug("[魔杖·真法杖] use side={} 聚晶={} 法术={} 结果={}",
                         level.isClientSide ? "客户端" : "服务端", focusName(stack), spellName(stack), result.getResult());
                 return result;
             }

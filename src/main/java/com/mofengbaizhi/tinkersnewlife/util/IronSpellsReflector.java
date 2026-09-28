@@ -56,7 +56,14 @@ public class IronSpellsReflector {
         //    常量在 IntegrationLoader 里（曾把它写成 ironsspellbooks → 判定恒 false → 法杖法术功能被静默停用）
         if (!com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.isIronSpells()) {
             ironSpellsPresent = false;
-            LOGGER.info("[TinkersNewlife] 未检测到铁魔法（modid {}），模块化魔杖的法术功能停用",
+            /*
+             * ⭐§724 用户口径：「没装铁魔法，法杖应当只能使用巫法功能，确保正确」——
+             * 原话术是"模块化魔杖的法术功能停用"✗，听起来像整根法杖废了 ✗；
+             * 实际上停用的只是**铁魔法施法**这一半，**诡厄巫法那一半照常**（GoetyStaffItem 在 Goety 模式下
+             * 直接委托 DarkWand.use，压根不碰铁魔法链路 ✓）。这里把话说清楚 ✓。
+             */
+            LOGGER.info("[TinkersNewlife] 未检测到铁魔法（modid {}）：模块化法杖的「铁魔法施法」停用，"
+                            + "「诡厄巫法（法杖）」功能不受影响 ✓",
                     com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.IRON_SPELLBOOKS);
             return;
         }

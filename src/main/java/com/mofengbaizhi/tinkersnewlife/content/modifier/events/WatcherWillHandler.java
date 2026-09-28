@@ -4,6 +4,7 @@ import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.modifier.WatcherWillModifier;
 import com.mofengbaizhi.tinkersnewlife.content.modifier.util.ArmorModifierHelper;
 import com.mofengbaizhi.tinkersnewlife.integration.irons_spellbooks.IronSpellsSpellAccess;
+import com.mofengbaizhi.tinkersnewlife.util.IronSpellsReflector;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
@@ -89,6 +90,16 @@ public final class WatcherWillHandler {
         if (!(event.getEntity() instanceof Player player)) return;
         if (player.level().isClientSide) return;
         if (player.tickCount % 10 != 0) return;
+
+        /*
+         * ⭐「无铁魔法不报错」的关键一步（§724）：**先做纯 ModList 判断**，确认铁魔法在场再碰它的访问层。
+         * 为什么不能只靠 IronSpellsSpellAccess 自己的保护 ✗：那个类的 init() 在失败时虽然只是
+         * `failed = true` + 返回 null（不会崩 ✓），但它**会 LOGGER.warn 一行**（还带堆栈）✗ ——
+         * 每 10 tick 调一次 ⇒ 没装铁魔法时每次进游戏都会刷一条"铁魔法法术访问层初始化失败" ✗。
+         * 换成 IronSpellsReflector.isIronSpellsAvailable()（内部就是 ModList 判断 ✓，无反射、无日志 ✓）
+         * ⇒ 没铁魔法时本方法**一行日志都不打**、直接返回 ✓。
+         */
+        if (!IronSpellsReflector.isIronSpellsAvailable()) return;
 
         Attribute castReduction = IronSpellsSpellAccess.attribute("CAST_TIME_REDUCTION");
         if (castReduction == null) return;                       // 没装铁魔法 ⇒ 跳过 ✓

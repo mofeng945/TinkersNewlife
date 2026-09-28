@@ -1420,6 +1420,7 @@
   "modifier.tinkersnewlife.ender_power.description": "The tool is imbued with Teleport Lv3 and Arcane Shackle Lv3.",
   "modifier.tinkersnewlife.ender_power.flavor": "The will of the Ender dimension is watching you...",
   "modifier.tinkersnewlife.ender_power.tip": "§dImbued: Teleport Lv3, Arcane Shackle Lv3",
+  "modifier.tinkersnewlife.ender_power.tip.missing": "§8Requires Iron's Spellbooks: inactive without it",
   "modifier.tinkersnewlife.void_grace": "Void Grace",
   "modifier.tinkersnewlife.void_grace.description": "Immune to damage and debuffs from Void Blocks and Liquid Void; immune to Void-Touched and Slowness; void spells cost half the soul energy; +20% void damage resistance.",
   "modifier.tinkersnewlife.void_grace.flavor": "Right now, someone will command the void.",
