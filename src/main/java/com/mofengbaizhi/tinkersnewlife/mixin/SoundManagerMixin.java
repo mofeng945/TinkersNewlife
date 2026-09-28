@@ -1,10 +1,10 @@
 package com.mofengbaizhi.tinkersnewlife.mixin;
 
+import com.mofengbaizhi.tinkersnewlife.util.SoundSniffer;
 import com.mofengbaizhi.tinkersnewlife.util.VoidArmorDiag;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.resources.sounds.TickableSoundInstance;
 import net.minecraft.client.sounds.SoundManager;
-import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -87,36 +87,26 @@ public class SoundManagerMixin {
      */
     @Inject(method = "m_120367_", at = @At("HEAD"), remap = false, require = 1)
     private void tinkersnewlife$sniffPlay(SoundInstance sound, CallbackInfo ci) {
-        sniff("play", sound);
+        SoundSniffer.sniff("play", sound);
     }
 
     /** 延迟音效入口 ✓（同样 {@code require = 1} ✓） */
     @Inject(method = "m_120369_", at = @At("HEAD"), remap = false, require = 1)
     private void tinkersnewlife$sniffPlayDelayed(SoundInstance sound, int delay, CallbackInfo ci) {
-        sniff("delayed", sound);
+        SoundSniffer.sniff("delayed", sound);
     }
 
     /** ⭐ 循环音走这里（不走 play ✗）—— 诡厄的 void_touched_loop 就是这一类 ✓（{@code require = 1} ✓） */
     @Inject(method = "m_120372_", at = @At("HEAD"), remap = false, require = 1)
     private void tinkersnewlife$sniffTicking(TickableSoundInstance sound, CallbackInfo ci) {
-        sniff("loop", sound);
+        SoundSniffer.sniff("loop", sound);
     }
 
     /**
-     * 统一的记录逻辑 ✓（全都记 ✓ 由 {@link VoidArmorDiag} 按 id 限流 ✓）。
-     * <p>⚠ §754：**异常不再静默吞掉** ✗ —— 会打一行 {@code 🐞 嗅探异常} ✓。
-     * （§753 就是被这个 {@code catch (Throwable ignored)} 挡住了视线 ✗：
-     * 万一真是处理函数自己抛异常，日志上看起来和"钩子没生效"一模一样 ✗。）
+     * 记录逻辑已抽到 {@link SoundSniffer}（§755 ✓ 与 {@code SoundEngineHookMixin} 共用 ✓）。
+     * <p>⚠ §754 实测教训：原来 id 与"音量／音调"写在**同一个 try** 里 ✗，
+     * 而个别 {@code SoundInstance} 取音量会抛 {@code NullPointerException} ✓
+     * ⇒ 异常一抛，**连 id 都没打出来** ✗ ⇒ 日志上看起来像"什么都没抓到" ✗✗。
+     * ⇒ 现在公共实现里**先拿 id、先打出来** ✓，音量／音调／循环标记各自单独 try ✓。
      */
-    private static void sniff(String from, SoundInstance sound) {
-        try {
-            if (!VoidArmorDiag.ENABLED || sound == null) return;
-            ResourceLocation id = sound.getLocation();
-            if (id == null) return;
-            VoidArmorDiag.log("sound:" + id, "🔊 播放音效 {} ✓（入口 {} / 音量 {} / 音调 {}）",
-                    id, from, sound.getVolume(), sound.getPitch());
-        } catch (Throwable t) {
-            VoidArmorDiag.log("sniff:error", "🐞 嗅探异常(SoundManager) {}", String.valueOf(t));
-        }
-    }
 }
