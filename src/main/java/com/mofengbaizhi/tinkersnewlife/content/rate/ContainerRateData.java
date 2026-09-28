@@ -60,15 +60,16 @@ public class ContainerRateData extends SavedData {
     /**
      * 推入一个 10 分钟区间的<b>净增量表</b> ✓（正数 = 净增 ✓ 负数 = 净减 ✓）。
      * <p>⚠ 表里没有的物品这一格要<b>清零</b> ✗（否则会把 6 个区间前的旧值当成新值 ✓）。
+     * <p>§736：形参改成 fastutil 的 {@code Object2LongMap} ✓（免装箱 ✓ 大基地下省一大截 GC ✓）。
      */
-    public void pushInterval(Map<Item, Long> delta) {
+    public void pushInterval(it.unimi.dsi.fastutil.objects.Object2LongMap<Item> delta) {
         cursor = (cursor + 1) % RING;
         filled = Math.min(RING, filled + 1);
         for (long[] slot : ring.values()) {
             slot[cursor] = 0L;
         }
-        for (Map.Entry<Item, Long> entry : delta.entrySet()) {
-            ring.computeIfAbsent(entry.getKey(), key -> new long[RING])[cursor] = entry.getValue();
+        for (it.unimi.dsi.fastutil.objects.Object2LongMap.Entry<Item> entry : delta.object2LongEntrySet()) {
+            ring.computeIfAbsent(entry.getKey(), key -> new long[RING])[cursor] = entry.getLongValue();
         }
         setDirty();
     }
