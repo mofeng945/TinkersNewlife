@@ -18,7 +18,8 @@
     "GoetyCastSpeedMixin",
     "GoetyVoidSoulMixin",
     "GoetyVoidTouchedMixin",
-    "GoetyWorldSoundMixin"
+    "GoetyWorldSoundMixin",
+    "EnigmaticNightVisionMixin"
   ],
   "client": [
     "EntityRenderDispatcherMixin",

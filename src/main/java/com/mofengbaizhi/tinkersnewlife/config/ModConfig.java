@@ -362,6 +362,16 @@ public final class ModConfig {
      */
     public static final ConfigValue<Boolean> NORMALIZE_ITEM_TAG;
 
+    // ==================== 神秘遗物饰品：不要吃掉夜视（§769） ====================
+    /**
+     * §769：神秘遗物的「海洋之石」/「寻宝护符」在 {@code curioTick} 里每 tick 调
+     * {@code removeNightVisionEffect(Player, int)}，把"等级不够高"（amplifier ≤ max-1）的夜视清掉 ✗；
+     * 血族给的夜视正好是 amplifier 0 ⇒ 两边的"清/补"拉锯 ⇒ 夜视一开一关 ✗。
+     *
+     * <p>开启本项＝拦掉那次移除 ✓（默认 <b>true</b> ✓ 用户要求 ✓）；关掉＝保留神秘遗物的原设计 ✓。
+     */
+    public static final ConfigValue<Boolean> ENIGMATIC_CURIO_KEEPS_NIGHT_VISION;
+
     public static final ForgeConfigSpec SPEC;
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -880,6 +890,16 @@ public final class ModConfig {
         NORMALIZE_ITEM_TAG = b.define("enabled", true);
         b.pop();
 
+        // §769 神秘遗物饰品不要吃掉夜视（用户要求 ✓）
+        b.push("enigmatic_curio_keeps_night_vision").comment(
+                "Enigmatic Legacy's Ocean Stone / Mining Charm removes low-level Night Vision on every curio tick,",
+                "which fights Vampirism's night vision (amplifier 0) and makes it flicker on and off.",
+                "",
+                "true  = cancel that removal, so night vision stays (default, user request).",
+                "false = keep Enigmatic Legacy's original behaviour.");
+        ENIGMATIC_CURIO_KEEPS_NIGHT_VISION = b.define("enabled", true);
+        b.pop();
+
         SPEC = b.build();
     }
 
@@ -1146,6 +1166,15 @@ public final class ModConfig {
             return Math.max(1, DOMAIN_FRAGMENT_DROP_DENOMINATOR.get());
         } catch (Throwable ignored) {
             return 1000;
+        }
+    }
+
+    /** §769 是否拦掉神秘遗物饰品对夜视的移除（配置没就绪 ⇒ true） */
+    public static boolean enigmaticCurioKeepsNightVision() {
+        try {
+            return ENIGMATIC_CURIO_KEEPS_NIGHT_VISION.get();
+        } catch (Throwable ignored) {
+            return true;
         }
     }
 
