@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.content.modifier;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import net.minecraft.resources.ResourceLocation;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
+import slimeknights.tconstruct.library.modifiers.impl.SingleLevelModifier;
 
 /**
  * 防御槽强化「硬化皮肤」——<b>护甲 · 无等级</b>，占 <b>1 个防御槽</b>（配方里写 {@code "defense": 1} ✓）。
@@ -13,7 +14,7 @@ import slimeknights.tconstruct.library.modifiers.ModifierId;
  *
  * <p>行为不在本类里，而在 {@code content/modifier/events/HardenedSkinHandler}。
  */
-public class HardenedSkinModifier extends LevelLessModifier {
+public class HardenedSkinModifier extends SingleLevelModifier {
 
     /** 强化 id */
     public static final ModifierId ID =

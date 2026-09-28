@@ -11,6 +11,7 @@ import slimeknights.tconstruct.library.modifiers.ModifierEntry;
 import slimeknights.tconstruct.library.modifiers.ModifierHooks;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
 import slimeknights.tconstruct.library.modifiers.hook.display.TooltipModifierHook;
+import slimeknights.tconstruct.library.modifiers.impl.SingleLevelModifier;
 import slimeknights.tconstruct.library.module.ModuleHookMap;
 import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
 
@@ -38,7 +39,7 @@ import java.util.List;
  * {@code .description} 里写着两个法术 ✗ —— 玩家会以为"坏了" ✗。这里实现 {@link TooltipModifierHook}：
  * <b>装了 ⇒ 正常提示；没装 ⇒ 明确告诉玩家需要铁魔法</b> ✓。
  */
-public class EnderPowerModifier extends LevelLessModifier implements TooltipModifierHook {
+public class EnderPowerModifier extends SingleLevelModifier implements TooltipModifierHook {
 
     /** 强化 id */
     public static final ModifierId ID =
