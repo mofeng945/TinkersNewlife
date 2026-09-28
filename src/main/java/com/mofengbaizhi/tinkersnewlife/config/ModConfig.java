@@ -347,18 +347,23 @@ public final class ModConfig {
     /** 各领域 modifier id → [radius, damage, cost] 缩放 */
     public static final Map<String, ConfigValue<Double>[]> DOMAIN_SCALES = new HashMap<>();
 
-    // ==================== 物品空标签归一化（§763） ====================
+    // ==================== 物品空标签归一化（§763 建 / §787 按原版纠正方向） ====================
     /**
-     * §763：把**没有 NBT 的物品**统一补成一个**空 CompoundTag `{}`**，让"同款但一个带 `{}`、一个没标签"的物品能堆叠。
+     * §787（原 §763）：把**空的 CompoundTag `{}` 剥成"无标签"**，让"同款但一个带 `{}`、一个没标签"的物品能堆叠。
      *
      * <p>背景（用户报 + 存档实证 ✓）：诡厄的「诅咒之笼」在走过
      * {@code CursedCageBlock#setPlacedBy}（里面用 {@code ItemStack#getOrCreateTag()} 读
      * {@code BlockEntityTag} ✗）之后会被留下一个**空标签** `{}` ✗，而没走过这条路的同款物品**根本没有标签** ✗；
-     * 原版 {@code ItemStack.isSameItemSameTags} 用 {@code Objects.equals} 比 NBT ⇒ {@code {}} 与 {@code null} 不相等 ✗
+     * 原版 {@code ItemStack.isSameItemSameTags} 用 {@code Objects.equals} 比**原始 tag** ⇒ {@code {}} 与 {@code null} 不相等 ✗
      * ⇒ 两叠永远合不到一起 ✗（AE2 也是按"物品+NBT+能力"分别建键 ✓ 所以它在 AE2 里也存成两格 ✓）。
      *
-     * <p><b>用户口径（2026-09-28）：通用修复，统一为 `{}`</b> ✓ —— 即"**给没标签的补一个空标签**"✓
-     * （不是把已有空标签抹掉 ✗）。
+     * <p><b>用户口径（2026-09-28 原话）：「原版是不是本来应该是无标签？如果是就按原版来」</b> ✓
+     * —— 已核反编译源码（`build/tmp-mcsrc/mcfull/.../ItemStack.java`）：
+     * {@code hasTag()}（L507）＝ {@code tag != null && !tag.isEmpty()} ✓（原版就认为 `{}` 等于没标签 ✓）、
+     * {@code isSameItemSameTags()}（L459-463）比的是原始 tag ✓、
+     * {@code removeTagKey()}（L539-547）／{@code resetHoverName()}（L603-605）**掏空就 `tag = null`** ✓
+     * ⇒ 原版语义里"什么都没有"就是 **null** ✓。
+     * ⇒ 所以**把 `{}` 剥掉**（回到原版状态 ✓），而不是给所有物品补 `{}` ✗（§763 的旧方向已纠正 ✗）。
      */
     public static final ConfigValue<Boolean> NORMALIZE_ITEM_TAG;
 
@@ -878,23 +883,26 @@ public final class ModConfig {
         }
         b.pop();
 
-        // §763 物品空标签归一化：把"没有 NBT"的物品补成空标签 {}，让"{} / 无标签"两种同款物品能堆叠 ✓
+        // §787（原 §763）物品空标签归一化：把**空标签 {} 剥掉**，回到原版"无标签"状态 ✓
+        // 用户口径（2026-09-28）：「原版是不是本来应该是无标签？如果是就按原版来」⇒ 源码实核 = 是 ✓
         // ⚠ 修（§763b）：这里原来**多写了一个 `b.pop()`** ✗ ⇒ 触发
         //    `IllegalArgumentException: Attempted to pop 1 elements when we only had: []` ✗
         //    ⇒ 整个模组加载失败（NL 包 crash-2026-09-28_17.36.52-fml.txt ✓）。
         //    上面那个 `b.pop();` 已经是"pop 掉 domains 外层"✓，本节只需 push 一次、pop 一次 ✓。
         b.push("item_tag_normalize").comment(
-                "Normalize items that have NO NBT by giving them an EMPTY CompoundTag ({}).",
+                "Strip EMPTY item tags ({}), i.e. restore the tag-less state vanilla gives a brand new item.",
                 "",
                 "Why: some mods call ItemStack#getOrCreateTag() just to READ a tag, which leaves an empty {}",
-                "behind on the item. Vanilla compares NBT with Objects.equals, so {} and \"no tag\" are NOT equal",
-                "and the two stacks can never merge (AE2 also keys items by item+NBT+caps, so it stores them",
-                "as two separate entries as well).",
+                "behind on the item. Vanilla compares the RAW tag with Objects.equals, so {} and \"no tag\" are NOT",
+                "equal and the two stacks can never merge (AE2 also keys items by item+NBT+caps, so it stores them",
+                "as two separate entries as well). Vanilla itself drops the tag (tag = null) whenever the compound",
+                "becomes empty (see ItemStack#removeTagKey / #resetHoverName), so null is the vanilla-canonical state.",
                 "",
-                "true  = give every tag-less item an empty {} (default, user request: 'unify to {}').",
+                "true  = strip empty {} tags (default, user request: 'follow vanilla, vanilla items carry no tag').",
                 "false = leave item NBT completely untouched.",
                 "",
                 "Scope: the player's own inventory (checked once per second), picked-up items and crafted items.",
+                "Non-empty tags, item capabilities, and stack merging are never touched.",
                 "Items already sitting inside AE2 storage keep their old key until they are taken out once.");
         NORMALIZE_ITEM_TAG = b.define("enabled", true);
         b.pop();
@@ -1209,7 +1217,7 @@ public final class ModConfig {
         }
     }
 
-    /** §763 是否做「空标签归一化」（配置没就绪 ⇒ true） */
+    /** §787 是否做「空标签归一化」（把空 `{}` 剥成无标签；配置没就绪 ⇒ true） */
     public static boolean normalizeItemTag() {
         try {
             return NORMALIZE_ITEM_TAG.get();
