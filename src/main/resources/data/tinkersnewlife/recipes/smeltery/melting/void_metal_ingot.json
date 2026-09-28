@@ -1,11 +1,14 @@
 {
-  "type": "tconstruct:material",
+  "type": "tconstruct:melting",
   "ingredient": {
     "item": "goety_ladder:void_metal"
   },
-  "material": "tinkersnewlife:void_metal",
-  "needed": 1,
-  "value": 1,
+  "result": {
+    "fluid": "tinkersnewlife:molten_void_metal_still",
+    "amount": 90
+  },
+  "temperature": 1200,
+  "time": 65,
   "conditions": [
     {
       "type": "forge:mod_loaded",

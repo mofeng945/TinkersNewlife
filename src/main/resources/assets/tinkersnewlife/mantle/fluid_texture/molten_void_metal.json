@@ -1,0 +1,8 @@
+{
+  "still": "tconstruct:fluid/molten/alloy/knightslime/still",
+  "flowing": "tconstruct:fluid/molten/alloy/knightslime/flowing",
+  "color": "FF8A6BE0",
+  "fogColor": "FF6A4BB5",
+  "fogStart": 0.5,
+  "fogEnd": 6.0
+}

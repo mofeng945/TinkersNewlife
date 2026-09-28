@@ -30,6 +30,8 @@ public final class IntegrationLoader {
     public static final String GOETY = "goety";
     /** 诡厄巫法：启示录 */
     public static final String GOETY_REVELATION = "goety_revelation";
+    /** 诡厄巫法：阶梯（§725 起：熔融虚空金属流体组的联动来源；材料「虚空金属」走熔融→浇筑） */
+    public static final String GOETY_LADDER = "goety_ladder";
     /** 冰火传说 */
     public static final String ICEANDFIRE = "iceandfire";
     /** 铁魔法（Iron's Spells 'n Spellbooks）——⚠ modid 是 <b>带下划线</b>的 {@code irons_spellbooks}
@@ -59,7 +61,7 @@ public final class IntegrationLoader {
 
     /** 环境探测日志用的关注清单（顺序即日志顺序） */
     private static final String[] WATCHED = {
-            GOETY, GOETY_REVELATION, ICEANDFIRE, IRON_SPELLBOOKS, TACZ, JEI, PATCHOULI, JADE, AE2
+            GOETY, GOETY_REVELATION, GOETY_LADDER, ICEANDFIRE, IRON_SPELLBOOKS, TACZ, JEI, PATCHOULI, JADE, AE2
     };
 
     private IntegrationLoader() {
@@ -129,6 +131,11 @@ public final class IntegrationLoader {
         return isLoaded(ICEANDFIRE);
     }
 
+    /** 诡厄巫法：阶梯在场（§725 熔融虚空金属流体组 / 材料「虚空金属」的门控） */
+    public static boolean isGoetyLadder() {
+        return isLoaded(GOETY_LADDER);
+    }
+
     public static boolean isIronSpells() {
         return isLoaded(IRON_SPELLBOOKS);
     }
@@ -194,6 +201,15 @@ public final class IntegrationLoader {
                 new com.mofengbaizhi.tinkersnewlife.integration.goety_revelation.GoetyRevelationIntegration().register(bus);
             } catch (Throwable t) {
                 LOGGER.error("[联动] 诡厄巫法·启示录模块初始化失败", t);
+            }
+        }
+        // 诡厄巫法：阶梯 —— §725 起只注册「熔融虚空金属」这一组流体（FluidType/静止/流动/方块/桶同生共死 ✓）；
+        // 材料「虚空金属」的定义/数值/特性/配方全部走 forge:mod_loaded += 熔融浇筑（不再有部件台直造 ✗）
+        if (shouldRegisterLinked(GOETY_LADDER)) {
+            try {
+                new com.mofengbaizhi.tinkersnewlife.integration.goety_ladder.GoetyLadderIntegration().register(bus);
+            } catch (Throwable t) {
+                LOGGER.error("[联动] 诡厄巫法·阶梯模块初始化失败", t);
             }
         }
 

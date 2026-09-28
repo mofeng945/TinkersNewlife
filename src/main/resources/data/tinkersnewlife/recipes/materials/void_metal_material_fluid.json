@@ -1,0 +1,15 @@
+{
+  "type": "tconstruct:material_fluid",
+  "fluid": {
+    "fluid": "tinkersnewlife:molten_void_metal_still",
+    "amount": 90
+  },
+  "temperature": 1200,
+  "output": "tinkersnewlife:void_metal",
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "goety_ladder"
+    }
+  ]
+}

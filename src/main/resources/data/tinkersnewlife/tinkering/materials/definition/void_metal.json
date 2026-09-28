@@ -3,7 +3,7 @@
     "type": "forge:mod_loaded",
     "modid": "goety_ladder"
   },
-  "craftable": true,
+  "craftable": false,
   "hidden": false,
   "tier": 4
 }
