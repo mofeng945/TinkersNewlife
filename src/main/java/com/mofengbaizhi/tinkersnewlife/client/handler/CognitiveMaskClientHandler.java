@@ -6,6 +6,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderNameTagEvent;
 import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -30,6 +31,28 @@ import net.minecraftforge.fml.common.Mod;
  * 黑鸟操术把相机切到了黑鸟身上（{@code PacketBlackBirdCamera}），于是"自己"的名牌就冒出来了 ✗。
  * 第三人称（F5）同理。
  * <p>所以现在一律 DENY：面具的语义就是"没有名字"，戴着自己也看不到 ✓。
+ *
+ * <h2>⭐ §796 为什么必须用 {@code EventPriority.LOWEST}（NL 包实测 ✗）</h2>
+ * 用户报：「NL 整合包带了认知阻碍面具**还是显示了名字**」✗ —— 查到两个硬事实：
+ * <ol>
+ *   <li><b>神秘遗物（EnigmaticLegacy 2.30.1）</b>的 {@code EnigmaticEventHandler#renderNameplate}
+ *       会对<b>本地玩家自己</b>的名牌设 {@code Result.ALLOW} ✗ ——
+ *       条件是"戴了它家的<b>徽章（INSIGNIA）</b>且那件饰品的 {@code tagDisplayEnabled} 为真（默认真）"✓
+ *       （字节码实核：{@code getEntity() == Minecraft.player} ⇒ 取 INSIGNIA curio ⇒ {@code setResult(ALLOW)} ✓；
+ *        它的注解是**默认优先级** {@code @SubscribeEvent} ✓ —— 同一次 javap -v 里那个 {@code LOWEST} 是
+ *        {@code renderCape} 的 ✓ 不是这个 ✓）；</li>
+ *   <li><b>Forge 事件总线不会"已经有人设过 result 就不再派发"</b> ✗ ——
+ *       eventbus <b>6.2.33</b> 的 {@code EventBus#post(Event, IEventBusInvokeDispatcher)} 字节码实核：
+ *       循环里只有"取监听器 ⇒ invoke"，<b>没有</b> {@code getResult()} 之类的短路判断 ✓
+ *       ⇒ <b>所有监听器都会跑，最后设的那个赢</b> ✓。</li>
+ * </ol>
+ * ⇒ 两条合起来就是：神秘遗物先把 result 设成 {@code ALLOW} ✗，我们若还在**默认优先级**跑，
+ * 就被后来的它盖掉 ✗（NL 包里就是这个现象 ✓）。
+ * <p>⇒ 本处理器改用 {@link EventPriority#LOWEST} ✓：<b>比默认优先级晚跑</b> ⇒
+ * 我们的 {@code DENY} 是最后一个写进去的 ✓ ⇒ 面具的意思就是"没有名字" ✓（徽章也压不过它 ✓）。
+ * <p>⚠ 同优先级内按注册顺序 ✗，所以这里不跟任何人抢 LOWEST：
+ * NL 包里另一个会设 {@code DENY} 的（终末图书馆）方向一致 ✓，给怪物画名牌的（L2Hostility 等）
+ * 不碰玩家 ✓ ⇒ 不会互相打架 ✓。
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, value = Dist.CLIENT,
         bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -37,7 +60,11 @@ public final class CognitiveMaskClientHandler {
 
     private CognitiveMaskClientHandler() {}
 
-    @SubscribeEvent
+    /**
+     * ⚠ §796：<b>必须是 {@code LOWEST}</b> ✗ —— 见类注释：Forge 总线"最后设的赢"，
+     * 而神秘遗物的徽章会用默认优先级设 {@code ALLOW} ⇒ 我们要比它晚 ✓。
+     */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onRenderNameTag(RenderNameTagEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
         // ⚠ 不排除自己：黑鸟操术 / 第三人称下相机不是自己，原版会画本地玩家的名牌 ✗
