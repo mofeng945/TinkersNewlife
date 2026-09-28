@@ -859,9 +859,11 @@ public final class ModConfig {
         }
         b.pop();
 
-        b.pop();
-
         // §763 物品空标签归一化：把"没有 NBT"的物品补成空标签 {}，让"{} / 无标签"两种同款物品能堆叠 ✓
+        // ⚠ 修（§763b）：这里原来**多写了一个 `b.pop()`** ✗ ⇒ 触发
+        //    `IllegalArgumentException: Attempted to pop 1 elements when we only had: []` ✗
+        //    ⇒ 整个模组加载失败（NL 包 crash-2026-09-28_17.36.52-fml.txt ✓）。
+        //    上面那个 `b.pop();` 已经是"pop 掉 domains 外层"✓，本节只需 push 一次、pop 一次 ✓。
         b.push("item_tag_normalize").comment(
                 "Normalize items that have NO NBT by giving them an EMPTY CompoundTag ({}).",
                 "",
