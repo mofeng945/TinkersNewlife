@@ -38,8 +38,9 @@ import net.minecraftforge.fml.common.Mod;
  *   <li><b>拾取时</b> ✓（{@link EntityItemPickupEvent}）；</li>
  *   <li><b>合成时</b> ✓（{@link PlayerEvent.ItemCraftedEvent}）。</li>
  * </ol>
- * 另外，背包检查那一趟若**确实补过标签**，会顺手把背包里**完全相同的堆**合并一次 ✓
- * （{@code ItemStack.isSameItemSameTags} ✓ 尊重最大堆叠数 ✓）—— 这样用户那两叠不用手动拖就能合上 ✓。
+ * ⚠ <b>§786：本类**只补标签，绝不替你归并**</b> ✗ —— 用户口径「**有时候散开放是故意为之**」✓。
+ * （§763 初版曾"补过标签就顺手合并一次" ✗，已按本条**删除** ✗；补完标签后那两叠**可以**手动合 ✓，
+ * 但要不要合、什么时候合，由玩家自己决定 ✓。）
  *
  * <h2>⚠ 边界（如实说明 ✓）</h2>
  * <ul>
@@ -60,7 +61,13 @@ public final class ItemTagNormalizer {
     private ItemTagNormalizer() {
     }
 
-    /** ① 玩家背包：每秒一次补 `{}`（真的补过才顺手合并一次 ✓） */
+    /**
+     * ① 玩家背包：每秒一次补 `{}` ✓
+     *
+     * <p>⚠ <b>§786 用户口径：只补标签，**绝不自动归并**</b> ✗ ——
+     * 「有时候散开放是故意为之」✓。所以这里**只把空标签补上** ✓，
+     * 合不合堆由玩家自己拖 ✓（补完标签后它们**可以**合并 ✓，但**不会**被我们替你合 ✗）。
+     */
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
@@ -69,15 +76,13 @@ public final class ItemTagNormalizer {
         if (!ModConfig.normalizeItemTag()) return;
         try {
             Inventory inv = player.getInventory();
-            boolean changed = false;
             for (int i = 0; i < inv.getContainerSize(); i++) {
                 ItemStack stack = inv.getItem(i);
                 if (stack == null || stack.isEmpty() || stack.hasTag()) continue;
                 stack.setTag(new CompoundTag());
                 inv.setItem(i, stack);
-                changed = true;
+                // ⚠ 这里**故意不做任何合并** ✗（§786 用户口径：散开放是刻意的 ✓）
             }
-            if (changed) mergeIdenticalStacks(inv);
         } catch (Throwable ignored) {
             // 归一化本身绝不许影响游戏 ✗
         }
@@ -108,35 +113,5 @@ public final class ItemTagNormalizer {
         if (stack != null && !stack.isEmpty() && !stack.hasTag()) {
             stack.setTag(new CompoundTag());
         }
-    }
-
-    /**
-     * 把背包里**完全相同**的堆合并一次 ✓（只在"这一趟确实补过标签"之后调用 ✓）。
-     * <p>用 {@code ItemStack.isSameItemSameTags} 判定 ✓、尊重最大堆叠数 ✓；被并空的槽写回 EMPTY ✓。
-     */
-    private static void mergeIdenticalStacks(Inventory inv) {
-        int size = inv.getContainerSize();
-        boolean touched = false;
-        for (int i = 0; i < size; i++) {
-            ItemStack a = inv.getItem(i);
-            if (a == null || a.isEmpty() || a.getCount() >= a.getMaxStackSize()) continue;
-            for (int j = i + 1; j < size; j++) {
-                ItemStack b = inv.getItem(j);
-                if (b == null || b.isEmpty() || !ItemStack.isSameItemSameTags(a, b)) continue;
-                int space = a.getMaxStackSize() - a.getCount();
-                if (space <= 0) break;
-                int move = Math.min(space, b.getCount());
-                a.grow(move);
-                b.shrink(move);
-                touched = true;
-                if (b.isEmpty()) {
-                    inv.setItem(j, ItemStack.EMPTY);
-                } else {
-                    inv.setItem(j, b);
-                }
-            }
-            inv.setItem(i, a);
-        }
-        if (touched) inv.setChanged();
     }
 }
