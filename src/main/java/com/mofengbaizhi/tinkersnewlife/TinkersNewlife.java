@@ -235,6 +235,11 @@ public class TinkersNewlife {
         registerPacket(PacketSwitchFlyingSwordMode.class, PacketSwitchFlyingSwordMode::toBytes, PacketSwitchFlyingSwordMode::new, PacketSwitchFlyingSwordMode::handle);
         registerPacket(PacketToggleDomain.class, PacketToggleDomain::toBytes, PacketToggleDomain::new, PacketToggleDomain::handle);
         registerPacket(PacketUseTechnique.class, PacketUseTechnique::toBytes, PacketUseTechnique::new, PacketUseTechnique::handle);
+        // §742 工业开拓之证：服务端把"绑定维度的物品产率"发过来并开屏（只读列表 ✓）
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.rate.PacketOpenPioneerRates.class,
+                com.mofengbaizhi.tinkersnewlife.network.rate.PacketOpenPioneerRates::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.rate.PacketOpenPioneerRates::new,
+                com.mofengbaizhi.tinkersnewlife.network.rate.PacketOpenPioneerRates::handle);
         // 墨默菜单三选项（自建显式包，不走容器按钮包）
         registerPacket(com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoMenuAction.class, com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoMenuAction::toBytes, com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoMenuAction::new, com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoMenuAction::handle);
         registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoSoldState.class,
