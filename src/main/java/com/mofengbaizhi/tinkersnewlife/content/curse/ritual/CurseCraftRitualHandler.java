@@ -404,7 +404,9 @@ public final class CurseCraftRitualHandler {
             }
             // 吸咒：核心池 → 封呪瓶 → 呪蔵（不动用灵魂能量，仪式只吃咒力）
             // ⭐ 同心戒共鸣：自己付不清时可由同伴的池子接上（共享咒力）
-            double remaining = CursePowerHelper.spendCurseShared(player, CurseCraftRecipe.CURSE_PER_TICK);
+            // §739：每 tick 的量改成"总需求 ÷ 实际时长"✓（时长已被夹在 5~20 秒 ✓）
+            //   ⇒ 总消耗仍是配方写的那个数 ✓ 只是"分几 tick 吸完"变了 ✓
+            double remaining = CursePowerHelper.spendCurseShared(player, ritual.recipe.cursePerTick());
             if (remaining > 0) {
                 abort(level, k);
                 continue;

@@ -78,12 +78,35 @@ public class CurseCraftRecipe implements Recipe<net.minecraft.world.inventory.Cr
         return result;
     }
 
-    /** 每 tick 吸收的咒力 */
+    /** 名义基准吸收速度（§739 起**只用来算"未夹紧的原始时长"** ✗ —— 真正的每 tick 吸收量见 {@link #cursePerTick()} ✓） */
     public static final double CURSE_PER_TICK = 10.0;
 
-    /** 需要的 tick 数 */
+    /** 仪式时长下限：<b>最快 5 秒</b>（100 tick ✓ 用户口径 ✓） */
+    public static final int MIN_DURATION_TICKS = 100;
+    /** 仪式时长上限：<b>最慢 20 秒</b>（400 tick ✓ 用户口径 ✓） */
+    public static final int MAX_DURATION_TICKS = 400;
+
+    /**
+     * 仪式时长（tick ✓）—— §739 起<b>夹在 5 ~ 20 秒之间</b> ✓
+     * <ul>
+     *   <li>原始时长 = {@code curse / CURSE_PER_TICK} ✓（名义基准 ✓）；</li>
+     *   <li>低于 {@link #MIN_DURATION_TICKS} ⇒ 抬到 100 tick（5 秒 ✓ 小配方不再"一点就完" ✓）；</li>
+     *   <li>高于 {@link #MAX_DURATION_TICKS} ⇒ 压到 400 tick（20 秒 ✓ 大配方不再罚站几分钟 ✓）。</li>
+     * </ul>
+     * ⚠ <b>总消耗不变</b> ✓：夹紧只改"分几 tick 吸完" ⇒ 每 tick 的量跟着变（见 {@link #cursePerTick()} ✓）。
+     */
     public int durationTicks() {
-        return (int) Math.ceil(curse / CURSE_PER_TICK);
+        int raw = (int) Math.ceil(curse / CURSE_PER_TICK);
+        return Math.max(MIN_DURATION_TICKS, Math.min(MAX_DURATION_TICKS, raw));
+    }
+
+    /**
+     * <b>每 tick 实际吸收的咒力</b> ✓ = 总需求 ÷ 实际时长 ✓
+     * ⇒ 无论时长怎么夹，<b>仪式总消耗永远等于 {@link #curse()}</b> ✓（不会少收也不会多收 ✓）。
+     */
+    public double cursePerTick() {
+        int ticks = durationTicks();
+        return (curse <= 0.0 || ticks <= 0) ? 0.0 : curse / ticks;
     }
 
     // ============================================================

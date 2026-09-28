@@ -104,12 +104,18 @@ public class CurseCraftJeiCategory implements IRecipeCategory<CurseCraftRecipe> 
                 0, 62, 0xFFAA55FF, false);
         graphics.drawString(font,
                 Component.translatable("jei.tinkersnewlife.curse_craft.per_tick",
-                        CursePowerHelper.formatAmount(CurseCraftRecipe.CURSE_PER_TICK)),
+                        // §739：这里显示的是"实际每 tick 吸收量"✓（= 总需求 ÷ 实际时长 ✓）
+                        //   —— 不能再写死 CURSE_PER_TICK ✗ 否则夹紧时长之后显示会对不上 ✓
+                        CursePowerHelper.formatAmount(recipe.cursePerTick())),
                 0, 72, 0xFF808080, false);
+        graphics.drawString(font,
+                Component.translatable("jei.tinkersnewlife.curse_craft.duration",
+                        String.format(java.util.Locale.ROOT, "%.1f", recipe.durationTicks() / 20.0)),
+                0, 82, 0xFF808080, false);
         graphics.drawString(font,
                 Component.translatable("jei.tinkersnewlife.curse_craft.materials",
                         recipe.materials().size(), CurseCraftRecipe.MAX_MATERIALS),
-                0, 82, 0xFF808080, false);
+                0, 92, 0xFF808080, false);
     }
 
     /** 供插件使用：避免直接引用 VanillaTypes 常量时 IDE 报警 */

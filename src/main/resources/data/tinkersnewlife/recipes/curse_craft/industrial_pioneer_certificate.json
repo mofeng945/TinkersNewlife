@@ -1,0 +1,44 @@
+{
+  "type": "tinkersnewlife:curse_craft",
+  "core": {
+    "item": "tinkersnewlife:dimension_pass"
+  },
+  "result": {
+    "item": "tinkersnewlife:industrial_pioneer_certificate"
+  },
+  "materials": [
+    [
+      {
+        "item": "minecraft:chest"
+      },
+      {
+        "item": "minecraft:trapped_chest"
+      },
+      {
+        "item": "minecraft:ender_chest"
+      },
+      {
+        "tag": "forge:chests"
+      },
+      {
+        "tag": "forge:chests/wooden"
+      }
+    ],
+    {
+      "item": "minecraft:comparator"
+    },
+    {
+      "item": "minecraft:observer"
+    },
+    {
+      "item": "tinkersnewlife:rlyeh_call"
+    },
+    {
+      "item": "minecraft:sculk_catalyst"
+    },
+    {
+      "item": "tinkersnewlife:nyarlathotep_desire"
+    }
+  ],
+  "curse": 25000
+}

@@ -465,6 +465,7 @@
   "jei.tinkersnewlife.curse_craft.curse": "咒力需求：%s",
   "jei.tinkersnewlife.curse_craft.materials": "材料：%s / 最多 %s 个位置",
   "jei.tinkersnewlife.curse_craft.per_tick": "仪式每 tick 吸收 %s 点咒力",
+  "jei.tinkersnewlife.curse_craft.duration": "仪式时长：约 %s 秒（5~20 秒之间）",
   "jei.tinkersnewlife.curse_craft.result_hint": "仪式完成后产物悬浮在矿石上方的灯笼处，右键取下",
   "jei.tinkersnewlife.lightning_rod_conversion": "避雷针转化：烈焰血 → 液态闪电",
   "jei.tinkersnewlife.lightning_rod_conversion.container": "§0只认§b单流体容器§0：匠魂储罐 / Create 流体罐 / 机器单罐都算",
