@@ -216,6 +216,7 @@ public class ModCreativeTabs {
                                 output.accept(ModItems.BOUNDARY_FRAGMENT.get());
                                 output.accept(ModItems.LIFE_LAMP_RING.get());   // 命灯指轮（戒指槽饰品）
                                 output.accept(ModItems.COGNITIVE_MASK.get());    // 双向认知阻碍面具（头饰）
+                                output.accept(ModItems.INDUSTRIAL_PIONEER_CERTIFICATE.get());   // 工业开拓之证（§738 charm 槽饰品）
                                 // 同心戒：成对产出 —— 创造栏直接给"一对"（两枚独立栈，共用同一成对印记）
                                 for (ItemStack twin :
                                         com.mofengbaizhi.tinkersnewlife.content.item.RingOfOneMindItem

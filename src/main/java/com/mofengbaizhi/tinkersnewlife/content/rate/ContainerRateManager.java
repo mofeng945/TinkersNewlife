@@ -194,9 +194,11 @@ public final class ContainerRateManager {
             if (next == null || now < next) return 0;
             sweep = startSweep(level);
             if (sweep.sources.isEmpty()) {
+                // §738 ⚠ 这里**故意不推区间** ✗ —— 该维度此刻一个来源都没有（区块全卸载 / 没人来过 ✓），
+                //   若照推一个"0 增量"的区间，就会把"最近 1 小时"慢慢填满 0 ✓
+                //   ⇒ 绑定了这个维度的「工业开拓之证」加成会凭空掉光 ✗（那不是用户要的口径 ✓）。
+                //   正确语义：**没观测到 = 没数据** ✓（时间轴留着空档 ✓ 旧数据不会被冲掉 ✓）。
                 NEXT_SWEEP.put(dimension, now + INTERVAL_TICKS);
-                ContainerRateData.get(level).pushInterval(Object2LongMaps.emptyMap(),
-                        Object2LongMaps.emptyMap(), 0L);                    // 空维度也推进一个区间 ✓
                 LAST_STATS.put(dimension, new SampleStats(0, 0, 0, 0, loadedChunkCount(level), 0, 0, 0L, 0L));
                 return 0;
             }

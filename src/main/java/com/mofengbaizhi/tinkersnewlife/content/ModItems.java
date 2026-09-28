@@ -357,6 +357,14 @@ public class ModItems {
      * （共用同一个成对印记 NBT）。两名玩家各戴一枚时，共享彼此的咒力与术式
      * （服务端解析见 {@code content.curse.TwinRingLink}）。
      */
+    /**
+     * 工业开拓之证（§738）：charm（护符）槽饰品。
+     * <p>蹲下右键 ⇒ <b>永久绑定当前维度</b> ✓；此后按<b>该维度</b>的物品 / 流体 / 能量产率
+     * 给佩戴者加最大生命 / 移动速度 / 空手攻击 ✓（见 {@code content/curio/IndustrialPioneerHandler}）。
+     */
+    public static final RegistryObject<Item> INDUSTRIAL_PIONEER_CERTIFICATE =
+            ITEMS.register("industrial_pioneer_certificate",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.IndustrialPioneerCertificateItem());
     public static final RegistryObject<Item> RING_OF_ONE_MIND =
             ITEMS.register("ring_of_one_mind",
                     () -> new com.mofengbaizhi.tinkersnewlife.content.item.RingOfOneMindItem());
