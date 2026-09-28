@@ -22,6 +22,7 @@
   ],
   "client": [
     "EntityRenderDispatcherMixin",
+    "EntityRendererNameTagMixin",
     "ItemRendererMixin",
     "HumanoidArmorLayerMixin",
     "XaeroRadarMixin",

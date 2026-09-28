@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.client.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.item.CognitiveMaskItem;
+import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderNameTagEvent;
@@ -63,13 +64,42 @@ public final class CognitiveMaskClientHandler {
     /**
      * ⚠ §796：<b>必须是 {@code LOWEST}</b> ✗ —— 见类注释：Forge 总线"最后设的赢"，
      * 而神秘遗物的徽章会用默认优先级设 {@code ALLOW} ⇒ 我们要比它晚 ✓。
+     *
+     * <p>§798 诊断：用户报"**没戴徽章**也还是看得到名字" ✓ ⇒ 请把这一行日志发回来 ✓ ——
+     * 它能一次分清三种情况 ✓：
+     * <ul>
+     *   <li>**没有这行日志** ⇒ 名牌压根不是走这条路画的 ✗（换条路查 ✓）；</li>
+     *   <li>有日志但 `戴面具=false` ⇒ 我们**没认出**你戴着面具 ✗（客户端 curios 查询那条路查 ✓）；</li>
+     *   <li>有日志且 `戴面具=true` ⇒ 我们确实设了 DENY ✓ ⇒ 那是**别人在我们之后**又画了一遍 ✗。</li>
+     * </ul>
      */
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onRenderNameTag(RenderNameTagEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
-        // ⚠ 不排除自己：黑鸟操术 / 第三人称下相机不是自己，原版会画本地玩家的名牌 ✗
-        if (CognitiveMaskItem.isWorn(player)) {
+        // ⚠ §796 不排除自己：黑鸟操术 / 第三人称下相机不是自己，原版会画本地玩家的名牌 ✗
+        boolean worn = CognitiveMaskItem.isWorn(player);
+        Event.Result before = event.getResult();
+        if (worn) {
             event.setResult(Event.Result.DENY);
+        }
+        logOnce(player, worn, before);
+    }
+
+    /** §798 诊断日志（每个玩家最多 2 秒一行 ✓ 只在客户端 ✓） */
+    private static final java.util.Map<java.util.UUID, Long> LAST_LOG = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private static void logOnce(Player player, boolean worn, Event.Result before) {
+        if (!worn) return;                     // §798 只在"确实戴着面具"时打 ✓ 免得刷屏 ✓
+        try {
+            long now = System.currentTimeMillis();
+            Long last = LAST_LOG.get(player.getUUID());
+            if (last != null && now - last < 5000L) return;
+            LAST_LOG.put(player.getUUID(), now);
+            boolean self = player == Minecraft.getInstance().player;
+            TinkersNewlife.LOGGER.info(
+                    "[面具] 名牌事件：实体={}（自己={}）戴面具={} 我来之前的result={} ⇒ 我设={}",
+                    player.getGameProfile().getName(), self, worn, before, worn ? "DENY" : "（不动）");
+        } catch (Throwable ignored) {
         }
     }
 }
