@@ -128,10 +128,18 @@ public class GoetyVoidTouchedMixin {
                     "➖ 效果【被移除】{} {} ✓ 目标={}{}", id, fromType, who(event),
                     isTouched(ins)
                             ? " ⭐⭐ 诡厄会播「取消音」✓（若每秒一行＝那个一直在响的声音就是它 ✓）" : "");
-            // §757：第一次见到"按类型移除" ⇒ 打一条调用栈，直接点名**是谁在批量清效果** ✓
+            // §757／§759：两种移除各打一次调用栈，**直接点名发起方** ✓
+            //   · 按类型（实例为 null ✗）＝ `removeEffect(MobEffect)`／`removeAllEffects()` 的类型那条 ✓
+            //   · 按实例（实例不为 null ✓）＝ `removeAllEffects()`／"治疗物品"那条 ✓
+            //   ⭐ §759 就是靠后者抓"到底是谁在反复清夜视" ✓（`keepMinecraft=true` ⇒ 连
+            //      `LivingEntity#removeAllEffects` 这一层也留着 ✓ 一眼看出走的是哪条路 ✓）
             if (ins == null) {
                 VoidArmorDiag.log("potion:remove:type-stack",
                         "🧭 「按类型移除效果」的**发起方**调用栈（首次出现）{}", VoidArmorDiag.shortStack(8));
+            } else {
+                VoidArmorDiag.log("potion:remove:inst-stack:" + id,
+                        "🧭 【按实例移除】{} 的**发起方**调用栈（同 id 每 5 秒一条 ✓ §759 靠它点名「是谁在反复清夜视」✓）{}",
+                        id, VoidArmorDiag.shortStack(10, true));
             }
         } catch (Throwable t) {
             VoidArmorDiag.log("sniff:error:potion", "🐞 嗅探异常(PotionEvents.Remove) {}", String.valueOf(t));

@@ -85,17 +85,29 @@ public final class VoidArmorDiag {
      * @return 形如 {@code " ⇐ 类#方法:行 ⇐ …"} 的字符串（取不到时返回提示串 ✓ 绝不抛异常 ✓）
      */
     public static String shortStack(int maxFrames) {
+        return shortStack(maxFrames, false);
+    }
+
+    /**
+     * 短调用栈（可保留原版帧）—— §759 用来区分"走的是哪条原版路径" ✓
+     * （例如 {@code LivingEntity#removeAllEffects} ✓ 还是 {@code LivingEntity#removeEffect(MobEffect)} ✓）
+     *
+     * @param maxFrames     最多保留几帧
+     * @param keepMinecraft true ＝ **保留** {@code net.minecraft.} 帧 ✓（排查"哪条原版 API"时用 ✓）
+     */
+    public static String shortStack(int maxFrames, boolean keepMinecraft) {
         try {
             StringBuilder sb = new StringBuilder();
             int kept = 0;
             for (StackTraceElement e : new Throwable().getStackTrace()) {
                 String cn = e.getClassName();
                 if (cn.startsWith("java.") || cn.startsWith("jdk.")
-                        || cn.startsWith("net.minecraft.") || cn.startsWith("net.minecraftforge.")
+                        || cn.startsWith("net.minecraftforge.")
                         || cn.startsWith("org.spongepowered") || cn.startsWith("com.mojang")
                         || cn.startsWith("cpw.mods")) {
                     continue;
                 }
+                if (!keepMinecraft && cn.startsWith("net.minecraft.")) continue;
                 sb.append(" ⇐ ").append(cn).append('#').append(e.getMethodName())
                         .append(':').append(e.getLineNumber());
                 if (++kept >= maxFrames) break;
