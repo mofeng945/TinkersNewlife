@@ -72,5 +72,8 @@ public final class VoidTouchHandler {
         @Nullable MobEffectInstance old = target.getEffect(wane);
         int amplifier = old == null ? 0 : Math.min(MAX_AMPLIFIER, old.getAmplifier() + 1);
         target.addEffect(new MobEffectInstance(wane, DURATION_TICKS, amplifier, false, true, true));
+        // §750 诊断：虚空抚摸挂上了「虚蚀」✓（若一直在打怪，这条会频繁出现 ✓ 正常 ✓）
+        com.mofengbaizhi.tinkersnewlife.util.VoidArmorDiag.log("wane",
+                "虚空抚摸：给 {} 挂上「虚蚀」等级 {} ✓", target.getName().getString(), amplifier + 1);
     }
 }

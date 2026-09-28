@@ -67,6 +67,10 @@ public final class VoidGraceHandler {
         if (!wears(wearer)) return;
         if (isImmuneEffect(event.getEffectInstance().getEffect())) {
             event.setResult(Event.Result.DENY);
+            // §750 诊断：免疫生效（拒绝施加）✓
+            com.mofengbaizhi.tinkersnewlife.util.VoidArmorDiag.log("deny",
+                    "虚无恩宠：拒绝施加 {} ✓（免疫生效）",
+                    event.getEffectInstance().getEffect().getDescriptionId());
         }
     }
 
@@ -86,9 +90,22 @@ public final class VoidGraceHandler {
         if (wearer.level().isClientSide) return;
         if (wearer.tickCount % 40 != 0) return;
         if (!wears(wearer)) return;
-        wearer.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
+        // §750 诊断：⭐ 这两条才是"声音来源"的头号嫌疑 —— 我们每清一次，
+        //   诡厄就会播一次 VOID_TOUCHED_DEACTIVATE ✓（它自带 activate/loop/deactivate 三个音效 ✓）
+        boolean hadSlowness = wearer.hasEffect(MobEffects.MOVEMENT_SLOWDOWN);
         MobEffect touched = GoetyLadderCompat.effect(GoetyLadderCompat.VOID_TOUCHED);
+        boolean hadTouched = touched != null && wearer.hasEffect(touched);
+        wearer.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
         if (touched != null) wearer.removeEffect(touched);
+        if (hadSlowness) {
+            com.mofengbaizhi.tinkersnewlife.util.VoidArmorDiag.log("clean:slow",
+                    "虚无恩宠：清掉了残留的「缓慢」✓ 玩家={}", wearer.getName().getString());
+        }
+        if (hadTouched) {
+            com.mofengbaizhi.tinkersnewlife.util.VoidArmorDiag.log("clean:touched",
+                    "虚无恩宠：清掉了残留的「虚空之蚀」✓ ⭐ 每清一次诡厄就播一次取消音 ⇒ 若这行每 2 秒出现一次，声音就是它 ✓ 玩家={}",
+                    wearer.getName().getString());
+        }
     }
 
     // ============================================================
@@ -105,10 +122,18 @@ public final class VoidGraceHandler {
         // 站在虚空块 / 液态虚空里 ⇒ 完全免疫（用户口径"完全免疫虚空块 & 液态虚空的伤害"✓）
         if (inVoidBlockOrFluid(wearer)) {
             event.setCanceled(true);
+            com.mofengbaizhi.tinkersnewlife.util.VoidArmorDiag.log("hurt:cancel",
+                    "虚无恩宠：取消了虚空块/液态虚空伤害 ✓ 玩家={} 伤害={} 来源={}",
+                    wearer.getName().getString(), event.getAmount(),
+                    event.getSource().getMsgId());
             return;
         }
         // 其余虚空系伤害 ⇒ 抗性 20%（不是免疫 ✓）
         event.setAmount(event.getAmount() * (1.0f - VOID_RESISTANCE));
+        com.mofengbaizhi.tinkersnewlife.util.VoidArmorDiag.log("hurt:resist",
+                "虚无恩宠：虚空系伤害 −20% ✓ 玩家={} 伤害={}→{} 来源={}",
+                wearer.getName().getString(), event.getAmount() / (1.0f - VOID_RESISTANCE),
+                event.getAmount(), event.getSource().getMsgId());
     }
 
     /** 脚下那一格或身体所在的那一格是不是虚空块/液态虚空 ✓（两个方块都查，覆盖"站在上面"与"泡在里面"✓） */
