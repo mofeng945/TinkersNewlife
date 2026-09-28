@@ -1,0 +1,17 @@
+{
+  "type": "tconstruct:casting_basin",
+  "fluid": {
+    "fluid": "tinkersnewlife:molten_void_metal_still",
+    "amount": 810
+  },
+  "result": {
+    "item": "goety_ladder:void_metal_block"
+  },
+  "cooling_time": 140,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "goety_ladder"
+    }
+  ]
+}
