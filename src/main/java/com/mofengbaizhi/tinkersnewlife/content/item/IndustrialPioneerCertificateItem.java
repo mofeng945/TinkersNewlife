@@ -54,9 +54,19 @@ public class IndustrialPioneerCertificateItem extends Item implements ICurioItem
         return "charm".equals(context.identifier());
     }
 
+    /**
+     * <b>右键不会自动戴上</b> ✓（用户口径：「像七咒之戒那样」✓）
+     * <p>原因有两层：
+     * <ol>
+     *   <li>本饰品的右键是<b>绑定维度</b>用的 ✓ ⇒ 不能让 Curios 顺手把它塞进饰品槽 ✗
+     *       （否则"想绑定"变成"戴上了"✓）；</li>
+     *   <li>与 {@code CurseCoreItem} / {@code SilentGloveItem} / {@code FlyingSwordItem}
+     *       同款口径 ✓ —— 那几件也都是 {@code canEquipFromUse = false} ✓（要戴就手动放进槽位 ✓）。</li>
+     * </ol>
+     */
     @Override
     public boolean canEquipFromUse(SlotContext context, ItemStack stack) {
-        return canEquip(context, stack);
+        return false;
     }
 
     // ============================================================
