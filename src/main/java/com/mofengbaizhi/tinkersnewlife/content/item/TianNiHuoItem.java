@@ -126,6 +126,36 @@ public class TianNiHuoItem extends CursedToolItem {
         }
         if (level.isClientSide) return InteractionResult.PASS;
         BlockState state = level.getBlockState(context.getClickedPos());
+
+        /*
+         * §777：**潜行 + 右键「白色空间传送门」⇒ 拆整扇门**（挪到这里做 ✓）。
+         *
+         * 为什么不在方块那边做 ✗（§776／§777 日志实证 ✓）：
+         * 原版在"潜行 + 手上物品不潜行放行"时会**整段跳过** `Block#use` ✗，而且判定要求**双手都放行** ✗：
+         *   boolean flag  = !main.doesSneakBypassUse(...) || !off.doesSneakBypassUse(...);
+         *   boolean flag1 = player.isSecondaryUseActive() && flag;
+         * NL 里玩家**副手拿着拔刀剑** ✗（`reforged_slashblade` ✓ 它的 bypass 是 false ✓）
+         * ⇒ 即使主手天逆鉾对门返回 true ✓，`flag1` 仍然为真 ✗ ⇒ `Block#use` 不被调用 ✗
+         * ⇒ 方块那边**永远等不到**这次右键 ✗（测试包能拆只是因为那边副手是空的 ✓）。
+         * <p>而**物品自己的 `useOn` 在潜行时照常被调用** ✓（§775 日志实证：客户端/服务端都进了 ✓）
+         * ⇒ 放在这里就与"副手拿什么"无关 ✓✓。
+         * <p>⚠ 两边各拆的逻辑不会重复执行 ✓：若方块那边的 `use` 这次真的被调用了 ✓，
+         * 它会先返回 SUCCESS ⇒ 原版**不会再调** `useOn` ✓；反之只有这里会执行 ✓。
+         */
+        if (context.getPlayer() != null && context.getPlayer().isSecondaryUseActive()
+                && state.is(com.mofengbaizhi.tinkersnewlife.content.ModBlocks.WHITE_SPACE_PORTAL.get())) {
+            if (!level.isClientSide && level instanceof ServerLevel serverLevel) {
+                TinkersNewlife.LOGGER.info("[白色空间传送门] 天逆鉾拆除（潜行·物品侧）：玩家={} {} {}（手={}）",
+                        context.getPlayer().getName().getString(), serverLevel.dimension().location(),
+                        context.getClickedPos(), context.getHand());
+                com.mofengbaizhi.tinkersnewlife.content.portal.WhiteSpaceDimensions
+                        .removePortal(serverLevel, context.getClickedPos());
+                level.playSound(null, context.getClickedPos(),
+                        net.minecraft.sounds.SoundEvents.GLASS_BREAK, net.minecraft.sounds.SoundSource.BLOCKS, 1.0F, 0.9F);
+            }
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
+
         Block barrier = com.mofengbaizhi.tinkersnewlife.content.ModBlocks.DOMAIN_BARRIER.get();
         if (!state.is(barrier)) return InteractionResult.PASS;
         if (context.getPlayer() instanceof ServerPlayer breaker) {
