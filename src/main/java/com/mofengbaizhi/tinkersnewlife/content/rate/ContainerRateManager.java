@@ -26,6 +26,8 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -77,9 +79,9 @@ public final class ContainerRateManager {
     /** 多维度错峰间隔 ✓ */
     private static final long DIM_STAGGER_TICKS = 200L;
 
-    /** 空来源哨兵 ✓（共享不可变空表 ✓ 差分里"两边都是它 ⇒ 跳过"快路径 ✓） */
-    private static final Sample EMPTY_SAMPLE =
-            new Sample(Object2LongMaps.emptyMap(), Object2LongMaps.emptyMap(), 0L);
+    /** 空来源哨兵用的空表 ✓（共享不可变 ✓；哨兵对象本身**每轮一个** ✓ 因为它要带本轮的轮号 ✓） */
+    private static final Object2LongMap<Item> EMPTY_ITEMS = Object2LongMaps.emptyMap();
+    private static final Object2LongMap<Fluid> EMPTY_FLUIDS = Object2LongMaps.emptyMap();
 
     /** 各维度已加载区块（{@code ChunkEvent} 维护 ✓） */
     private static final Map<ResourceKey<Level>, Set<Long>> LOADED_CHUNKS = new ConcurrentHashMap<>();
@@ -89,6 +91,26 @@ public final class ContainerRateManager {
 
     /** §749：上一次采样时"每个来源在哪个区块" ✓（用来分辨"区块卸载"与"方块被拆" ✓） */
     private static final Map<ResourceKey<Level>, Map<String, Long>> LAST_CHUNKS = new ConcurrentHashMap<>();
+
+    /**
+     * §788：每个维度"已经跑到第几轮" ✓ —— 快照里带上它是为了判断
+     * <b>"这个来源上上一轮还在不在"</b> ✓（中间断过 ⇒ 不能求差 ✗ 只能重新立基线 ✓）。
+     */
+    private static final Map<ResourceKey<Level>, Long> SWEEP_SEQ = new ConcurrentHashMap<>();
+
+    /**
+     * §788：<b>这个维度以前扫过的区块</b> ✓（<b>只在内存</b> ✓ 服务器一重启就清空 ✓）。
+     *
+     * <p>用途：分辨"**玩家在自家基地新放的箱子/新加的机器**"（区块以前扫过 ⇒
+     * 首次见到算一次流入 ✓）与"**新加载区块里的老容器**"（区块没扫过 ⇒ 首次见到只立基线 ✗
+     * 不刷假产率 ✓）。
+     * <p>⚠ 为什么"服务器一重启就清空"正是我们想要的 ✗：重启后第一轮把当时加载的区块全部记上 ✓
+     * ⇒ 那些区块里的老容器**只立基线** ✓ ⇒ 首次扫描的表是干净的 ✓（用户口径 ✓）。
+     */
+    private static final Map<ResourceKey<Level>, Set<Long>> SWEPT_CHUNKS = new ConcurrentHashMap<>();
+
+    /** §788：一条旧基线"连续多少轮没被观测到"就丢掉 ✓（24 轮 = 4 小时 ✓ 纯粹为了不让内存无限涨 ✓） */
+    private static final long BASELINE_TTL_SWEEPS = 24L;
 
     /** 正在进行的分帧采样 ✓ */
     private static final Map<ResourceKey<Level>, Sweep> SWEEPS = new ConcurrentHashMap<>();
@@ -183,6 +205,10 @@ public final class ContainerRateManager {
         LAST_STATS.clear();
         WATCHERS.clear();
         LAST_CHUNKS.clear();
+        // §788：轮号与"以前扫过的区块"也清空 ✓ —— 重启后第一轮 = 全部重新立基线 ✓
+        //   （这正是用户口径：**首次扫描只建基线**，不产出假产率 ✓）
+        SWEEP_SEQ.clear();
+        SWEPT_CHUNKS.clear();
         // ⚠ §745：这里**不能**清 LOADED_CHUNKS ✗ —— 出生点/生成器区块是在 ServerStartedEvent
         //   **之前**就加载好的 ✗，清了它们就再也不会补发 ChunkEvent.Load ✗
         //   ⇒ 玩家"站在出生点旁边放个箱子"永远扫不到 ✗（这正是用户实测报的"箱子没被统计"✓）。
@@ -249,8 +275,12 @@ public final class ContainerRateManager {
                 //   若照推一个"0 增量"的区间，就会把"最近 1 小时"慢慢填满 0 ✓
                 //   ⇒ 绑定了这个维度的「工业开拓之证」加成会凭空掉光 ✗（那不是用户要的口径 ✓）。
                 //   正确语义：**没观测到 = 没数据** ✓（时间轴留着空档 ✓ 旧数据不会被冲掉 ✓）。
+                // §788：但**区块照样记成"扫过"** ✓ —— 这些区块里现在没有来源 ✓，
+                //   以后玩家在里面放个箱子 ⇒ 那才算"真·新出现"✓（否则会被当成老容器只立基线 ✗）。
+                markSwept(dimension, sweep);
                 NEXT_SWEEP.put(dimension, now + INTERVAL_TICKS);
-                LAST_STATS.put(dimension, new SampleStats(0, 0, 0, 0, loadedChunkCount(level), 0, 0, 0L, 0L));
+                LAST_STATS.put(dimension, new SampleStats(0, 0, 0, 0, loadedChunkCount(level), 0, 0, 0L, 0L,
+                        0, 0, 0, 0));
                 return 0;
             }
             SWEEPS.put(dimension, sweep);
@@ -262,6 +292,13 @@ public final class ContainerRateManager {
         ResourceKey<Level> dimension = level.dimension();
         int budget = Math.min(available, BUDGETS.getOrDefault(dimension, TOTAL_SOURCE_BUDGET));
         if (budget <= 0) return 0;
+
+        // §788：这一轮的轮号 ✓ —— 只在这里取（"来源列表为空"那条早退路径**不占号** ✓
+        //   否则会凭空多出一个空档，让所有来源都被当成"中间断过"⇒ 白丢一个区间 ✗）
+        if (sweep.seq == 0L) {
+            sweep.seq = SWEEP_SEQ.merge(dimension, 1L, Long::sum);
+            sweep.emptySample = new Sample(EMPTY_ITEMS, EMPTY_FLUIDS, 0L, sweep.seq);
+        }
 
         long start = System.nanoTime();
         int used = 0;
@@ -285,11 +322,11 @@ public final class ContainerRateManager {
                 sweep.failed++;
                 continue;
             }
-            // ⑥ 空来源哨兵 ✓
+            // ⑥ 空来源哨兵 ✓（§788：哨兵也带本轮轮号 ✓ 否则"空箱子 → 放东西"会被当成断档 ✗）
             sweep.now.put(source.id(),
                     (items.isEmpty() && fluids.isEmpty() && energy[0] == 0L)
-                            ? EMPTY_SAMPLE
-                            : new Sample(items, fluids, energy[0]));
+                            ? sweep.emptySample
+                            : new Sample(items, fluids, energy[0], sweep.seq));
             // §749：顺手记下它所在的区块（来源"消失"时用来分辨是否只是区块卸载 ✓）
             try {
                 sweep.chunks.put(source.id(), source.chunkKey());
@@ -319,65 +356,102 @@ public final class ContainerRateManager {
     private static void finishSweep(ServerLevel level, Sweep sweep) {
         ResourceKey<Level> dimension = level.dimension();
         Map<String, Sample> previous = LAST_SNAPSHOT.get(dimension);
+        Map<String, Long> previousChunks = LAST_CHUNKS.get(dimension);
+        Set<Long> loaded = LOADED_CHUNKS.get(dimension);
+        Set<Long> sweptBefore = SWEPT_CHUNKS.computeIfAbsent(dimension, key -> new HashSet<>());
+        long seq = sweep.seq;
+
         int skipped = 0;
-        int newSources = 0;
+        int newInflow = 0;                       // 首见 ⇒ 算一次流入（区块以前扫过 ✓ = 真·新东西 ✓）
+        int newBaseline = 0;                     // 首见 ⇒ 只立基线（新加载区块里的老容器 ✓）
+        int rebased = 0;                         // 上一轮没观测到 ⇒ 重新立基线（不结算 ✓）
+        int dropped = 0;                         // 太久没观测到 ⇒ 丢掉旧基线（释放内存 ✓）
         int vanished = 0;
         Object2LongOpenHashMap<Item> deltaItems = new Object2LongOpenHashMap<>();
         Object2LongOpenHashMap<Fluid> deltaFluids = new Object2LongOpenHashMap<>();
         long netEnergy = 0L;
+        List<String> inflowIds = new ArrayList<>();     // 诊断：首见就按下流入结算的来源 ✓
+
+        // §788：基线**粘住** ✓（不再"这一轮没看到就忘掉"✗）——
+        //   否则区块一卸载，老容器就从记忆里消失 ✗ ⇒ 回来时被当成"新来源"⇒
+        //   **整块存量又被算一遍流入** ✗✗（NL 包日志实证：每轮 `新增 1 / 跳过 1 ⇒ 变动 800+ 种` ✗）
+        Map<String, Sample> baseline = previous == null ? new HashMap<>() : new HashMap<>(previous);
+        Map<String, Long> baselineChunks = previousChunks == null ? new HashMap<>() : new HashMap<>(previousChunks);
 
         if (previous != null) {
             for (Map.Entry<String, Sample> entry : sweep.now.entrySet()) {
-                Sample before = previous.get(entry.getKey());
+                String id = entry.getKey();
+                Sample after = entry.getValue();
+                Sample before = baseline.get(id);
                 if (before == null) {
-                    // §749 用户口径：「就直接结算增减，产率可以是负数」✓
-                    //   ⇒ **不再**"新来源只立基线" ✗：第一次见到的容器，里面的东西**算一次流入** ✓
-                    //     （否则"往新箱子里放一把剑"永远显示 0 ✗ —— 用户连着报过两次 ✓）
-                    Sample fresh = entry.getValue();
-                    for (Object2LongMap.Entry<Item> one : fresh.items().object2LongEntrySet()) {
-                        if (one.getLongValue() != 0L) deltaItems.addTo(one.getKey(), one.getLongValue());
+                    // §788③ **第一次**见到这个来源：
+                    //   · 它所在区块**以前扫过** ⇒ 说明这是"新出现的东西"✓
+                    //     （玩家在自家基地新放的箱子 / 新加的机器 ✓）⇒ **算一次流入** ✓（§748 用户口径 ✓）；
+                    //   · 区块是**这一轮才加载**的 ⇒ 里面多半是**世界本来就有的老容器** ✗
+                    //     ⇒ **只立基线** ✓（否则全世界的存量都会被算成"这一轮产出的"✗✗ ——
+                    //        用户实测："首次扫描"动辄 +20000 个/时 ✗）。
+                    Long chunkKey = sweep.chunks.get(id);
+                    if (chunkKey != null && chunkKey != Long.MIN_VALUE && sweptBefore.contains(chunkKey)) {
+                        inflow(after, deltaItems, deltaFluids);
+                        netEnergy += after.energy();
+                        newInflow++;
+                        if (inflowIds.size() < 5) inflowIds.add(id);
+                    } else {
+                        newBaseline++;
                     }
-                    for (Object2LongMap.Entry<Fluid> one : fresh.fluids().object2LongEntrySet()) {
-                        if (one.getLongValue() != 0L) deltaFluids.addTo(one.getKey(), one.getLongValue());
-                    }
-                    netEnergy += fresh.energy();
-                    newSources++;
                     continue;
                 }
-                Sample after = entry.getValue();
+                if (before.seq() != seq - 1L) {
+                    // §788② 中间断过（区块卸载 / 一时扫不到 ✗）⇒ 这段变化**没法归到"一个区间"里** ✗
+                    //   ⇒ 重新立基线、不结算 ✓（既不假暴涨 ✓ 也不假暴跌 ✓）
+                    rebased++;
+                    continue;
+                }
                 if (before == after) continue;                          // 两边都是空哨兵 ✓
                 diff(before.items(), after.items(), deltaItems);
                 diff(before.fluids(), after.fluids(), deltaFluids);
                 netEnergy += after.energy() - before.energy();
             }
             // §749 消失的来源：**能确认方块真没了 ⇒ 结算净减** ✓；只是区块卸载 ⇒ **不结算** ✓
-            Map<String, Long> previousChunks = LAST_CHUNKS.get(dimension);
-            Set<Long> loaded = LOADED_CHUNKS.get(dimension);
-            for (Map.Entry<String, Sample> entry : previous.entrySet()) {
+            for (Iterator<Map.Entry<String, Sample>> it = baseline.entrySet().iterator(); it.hasNext(); ) {
+                Map.Entry<String, Sample> entry = it.next();
                 String id = entry.getKey();
                 if (sweep.now.containsKey(id)) continue;
-                Long chunkKey = previousChunks == null ? null : previousChunks.get(id);
+                Sample gone = entry.getValue();
+                if (gone.seq() != seq - 1L) {
+                    // 上一轮它也不在观测集合里 ✓ ⇒ 这不算"刚被拆"✗
+                    //   基线**留着**（回来后按"断档重建"处理 ✓）；太久没见到才丢掉 ✓（防内存无限涨 ✓）
+                    if (seq - gone.seq() > BASELINE_TTL_SWEEPS) {
+                        it.remove();
+                        baselineChunks.remove(id);
+                        dropped++;
+                    } else {
+                        skipped++;
+                    }
+                    continue;
+                }
+                Long chunkKey = baselineChunks.get(id);
                 if (chunkKey == null || chunkKey == Long.MIN_VALUE
                         || loaded == null || !loaded.contains(chunkKey)
                         || !chunkStillLoaded(level, chunkKey)) {
                     skipped++;                        // 无法确认（多半是区块卸载 ✓）⇒ 不结算 ✓（防假暴跌 ✗）
                     continue;
                 }
-                // 区块还在、来源没了 ⇒ 方块确实被拆/被换 ⇒ 它原本的内容算**净减** ✓（产率可以为负 ✓）
-                Sample gone = entry.getValue();
-                for (Object2LongMap.Entry<Item> one : gone.items().object2LongEntrySet()) {
-                    if (one.getLongValue() != 0L) deltaItems.addTo(one.getKey(), -one.getLongValue());
-                }
-                for (Object2LongMap.Entry<Fluid> one : gone.fluids().object2LongEntrySet()) {
-                    if (one.getLongValue() != 0L) deltaFluids.addTo(one.getKey(), -one.getLongValue());
-                }
+                // 上一轮还在、这一轮没了、区块也还在 ⇒ 方块确实被拆/被换 ⇒ 它原本的内容算**净减** ✓
+                outflow(gone, deltaItems, deltaFluids);
                 netEnergy -= gone.energy();
                 vanished++;
+                it.remove();                          // 确认没了 ⇒ 基线也一起清掉 ✓
+                baselineChunks.remove(id);
             }
             ContainerRateData.get(level).pushInterval(deltaItems, deltaFluids, netEnergy);
         }
-        LAST_SNAPSHOT.put(dimension, sweep.now);
-        LAST_CHUNKS.put(dimension, sweep.chunks);
+        // 本轮观测到的（含空来源哨兵 ✓）覆盖进基线 ✓ ⇒ 下一轮才有东西可比 ✓
+        baseline.putAll(sweep.now);
+        baselineChunks.putAll(sweep.chunks);
+        LAST_SNAPSHOT.put(dimension, baseline);
+        LAST_CHUNKS.put(dimension, baselineChunks);
+        markSwept(dimension, sweep);                                       // ⚠ 判定之后才记 ✓
         SWEEPS.remove(dimension);
         // §745：这一轮刚采完 ⇒ 立刻把新数据推给"正在看这个维度界面"的玩家 ✓
         //   （不用等客户端下一次 5 秒轮询 ✓ 用户体感就是"开完界面数字自己就变新了"✓）
@@ -392,15 +466,90 @@ public final class ContainerRateManager {
 
         long busyMs = sweep.busyNanos / 1_000_000L;
         LAST_STATS.put(dimension, new SampleStats(sweep.sources.size(), sweep.now.size(), skipped, sweep.failed,
-                loadedChunkCount(level), deltaItems.size(), deltaFluids.size(), netEnergy, busyMs));
+                loadedChunkCount(level), deltaItems.size(), deltaFluids.size(), netEnergy, busyMs,
+                newInflow, newBaseline, rebased, dropped));
 
         TinkersNewlife.LOGGER.info(
-                "[产率] 维度 {} 采样完成：来源 {}（区块 {} / 失败 {} / 新增 {} / 结算消失 {} / 跳过 {}）"
+                "[产率] 维度 {} 采样完成：来源 {}（区块 {} / 失败 {} / 首见·算流入 {} / 首见·立基线 {}"
+                        + " / 断档重建 {} / 结算消失 {} / 跳过 {} / 淘汰旧基线 {}）"
                         + "⇒ 变动 物品 {} 种 / 流体 {} 种 / 能量 {} FE，累计 {} ms{}",
                 dimension.location(), sweep.sources.size(), loadedChunkCount(level), sweep.failed,
-                newSources, vanished, skipped,
+                newInflow, newBaseline, rebased, vanished, skipped, dropped,
                 deltaItems.size(), deltaFluids.size(), netEnergy, busyMs,
                 busyMs >= SWEEP_WARN_MS ? " ⚠ 偏慢" : "");
+        if (!inflowIds.isEmpty()) {
+            TinkersNewlife.LOGGER.info("[产率] 维度 {} 首见就按流入结算的来源（最多 5 条）：{}",
+                    dimension.location(), String.join(" / ", inflowIds));
+        }
+        logFluidContributors(dimension, sweep);
+    }
+
+    /** 把这个快照里的东西按**流入**（正）累加进 delta ✓ */
+    private static void inflow(Sample sample, Object2LongOpenHashMap<Item> deltaItems,
+                               Object2LongOpenHashMap<Fluid> deltaFluids) {
+        for (Object2LongMap.Entry<Item> one : sample.items().object2LongEntrySet()) {
+            if (one.getLongValue() != 0L) deltaItems.addTo(one.getKey(), one.getLongValue());
+        }
+        for (Object2LongMap.Entry<Fluid> one : sample.fluids().object2LongEntrySet()) {
+            if (one.getLongValue() != 0L) deltaFluids.addTo(one.getKey(), one.getLongValue());
+        }
+    }
+
+    /** 把这个快照里的东西按**流出**（负）累加进 delta ✓ */
+    private static void outflow(Sample sample, Object2LongOpenHashMap<Item> deltaItems,
+                                Object2LongOpenHashMap<Fluid> deltaFluids) {
+        for (Object2LongMap.Entry<Item> one : sample.items().object2LongEntrySet()) {
+            if (one.getLongValue() != 0L) deltaItems.addTo(one.getKey(), -one.getLongValue());
+        }
+        for (Object2LongMap.Entry<Fluid> one : sample.fluids().object2LongEntrySet()) {
+            if (one.getLongValue() != 0L) deltaFluids.addTo(one.getKey(), -one.getLongValue());
+        }
+    }
+
+    /**
+     * §788：把这一轮扫过的区块记成"已扫过" ✓ —— ⚠ <b>必须在判定之后调</b> ✓，
+     * 否则本轮首次见到的容器会被当成"以前扫过 ⇒ 算流入"✗。
+     */
+    private static void markSwept(ResourceKey<Level> dimension, Sweep sweep) {
+        try {
+            SWEPT_CHUNKS.computeIfAbsent(dimension, key -> new HashSet<>()).addAll(sweep.chunkKeys);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /**
+     * §788 诊断口子：<b>同一种流体被好几个来源上报</b> ⇒ 大概率是"同一个底层储罐被数了好几遍" ✗
+     * （典型：多方块储罐，结构里每个方块实体都把同一份库存报一遍 ✗）。
+     *
+     * <p>只打"来源 ≥ 2 且合计 ≥ 1000 mB"的，最多 3 种流体、每种最多 6 条 ✓（不至于刷屏 ✓）。
+     * 每条 = 来源 id（里面带方块坐标与方块实体类型 ✓）＋ 它报了多少 mB ✓。
+     */
+    private static void logFluidContributors(ResourceKey<Level> dimension, Sweep sweep) {
+        try {
+            Map<Fluid, List<String>> byFluid = new HashMap<>();
+            Map<Fluid, Long> totals = new HashMap<>();
+            for (Map.Entry<String, Sample> entry : sweep.now.entrySet()) {
+                for (Object2LongMap.Entry<Fluid> one : entry.getValue().fluids().object2LongEntrySet()) {
+                    long amount = one.getLongValue();
+                    if (amount <= 0L) continue;
+                    byFluid.computeIfAbsent(one.getKey(), key -> new ArrayList<>())
+                            .add(entry.getKey() + "=" + amount + "mB");
+                    totals.merge(one.getKey(), amount, Long::sum);
+                }
+            }
+            int logged = 0;
+            for (Map.Entry<Fluid, List<String>> entry : byFluid.entrySet()) {
+                List<String> list = entry.getValue();
+                if (list.size() < 2) continue;                       // 只有一个来源报 ⇒ 没嫌疑 ✓ 不打
+                if (totals.getOrDefault(entry.getKey(), 0L) < 1000L) continue;
+                if (logged++ >= 3) break;
+                List<String> show = list.size() > 6 ? list.subList(0, 6) : list;
+                TinkersNewlife.LOGGER.info("[产率] ⚠ 流体 {} 被 {} 个来源分别上报，合计 {} mB ⇒ {}",
+                        ForgeRegistries.FLUIDS.getKey(entry.getKey()), list.size(),
+                        totals.getOrDefault(entry.getKey(), 0L), String.join(" / ", show));
+            }
+        } catch (Throwable ignored) {
+        }
     }
 
     /** 把"这一格对上一格"的差累加进 delta ✓（并集都要看 ✓） */
@@ -456,7 +605,14 @@ public final class ContainerRateManager {
                 TinkersNewlife.LOGGER.warn("[产率] 来源提供方 {} 报错（已跳过）：{}", provider.modId(), t.toString());
             }
         }
-        return new Sweep(sources);
+        Sweep sweep = new Sweep(sources);
+        for (LevelChunk chunk : chunks) {                 // §788：记下"这一轮扫过哪些区块"✓
+            try {
+                sweep.chunkKeys.add(chunk.getPos().toLong());
+            } catch (Throwable ignored) {
+            }
+        }
+        return sweep;
     }
 
     /**
@@ -588,7 +744,11 @@ public final class ContainerRateManager {
         Map<String, Sample> snapshot = LAST_SNAPSHOT.get(level.dimension());
         Map<Item, Long> out = new HashMap<>();
         if (snapshot == null) return out;
+        long latest = SWEEP_SEQ.getOrDefault(level.dimension(), 0L);
         for (Sample sample : snapshot.values()) {
+            // §788 ⚠ 基线现在是"粘住"的（里面还留着区块已卸载的旧来源 ✗）
+            //   ⇒ 总量**只能算最近这一轮真的观测到的** ✓（否则会把卸载前的旧数一直算进去 ✗）
+            if (sample.seq() != latest) continue;
             for (Object2LongMap.Entry<Item> entry : sample.items().object2LongEntrySet()) {
                 long value = entry.getLongValue();
                 if (value != 0L) out.merge(entry.getKey(), value, Long::sum);
@@ -602,7 +762,9 @@ public final class ContainerRateManager {
         Map<String, Sample> snapshot = LAST_SNAPSHOT.get(level.dimension());
         Map<Fluid, Long> out = new HashMap<>();
         if (snapshot == null) return out;
+        long latest = SWEEP_SEQ.getOrDefault(level.dimension(), 0L);
         for (Sample sample : snapshot.values()) {
+            if (sample.seq() != latest) continue;
             for (Object2LongMap.Entry<Fluid> entry : sample.fluids().object2LongEntrySet()) {
                 long value = entry.getLongValue();
                 if (value != 0L) out.merge(entry.getKey(), value, Long::sum);
@@ -618,8 +780,10 @@ public final class ContainerRateManager {
     public static long energyNow(ServerLevel level) {
         Map<String, Sample> snapshot = LAST_SNAPSHOT.get(level.dimension());
         if (snapshot == null) return 0L;
+        long latest = SWEEP_SEQ.getOrDefault(level.dimension(), 0L);
         long sum = 0L;
         for (Sample sample : snapshot.values()) {
+            if (sample.seq() != latest) continue;             // §788 同上：只算最近一轮观测到的 ✓
             sum += sample.energy();
         }
         return sum;
@@ -656,13 +820,19 @@ public final class ContainerRateManager {
         return SWEEPS.containsKey(level.dimension());
     }
 
-    /** 一次采样的诊断快照 ✓（§737 起含流体与能量 ✓） */
+    /** 一次采样的诊断快照 ✓（§737 起含流体与能量 ✓；§788 起含"首见/断档/淘汰"四类计数 ✓） */
     public record SampleStats(int sources, int observed, int skipped, int failed, int chunks,
-                              int changedItems, int changedFluids, long netEnergy, long millis) {
+                              int changedItems, int changedFluids, long netEnergy, long millis,
+                              int newInflow, int newBaseline, int rebased, int dropped) {
     }
 
-    /** 一个来源的三类快照 ✓（只存非零项 ✓ 空来源共享 {@link #EMPTY_SAMPLE} ✓） */
-    private record Sample(Object2LongMap<Item> items, Object2LongMap<Fluid> fluids, long energy) {
+    /**
+     * 一个来源的三类快照 ✓（只存非零项 ✓）
+     *
+     * <p>§788：多带一个 {@code seq}（这是<b>第几轮</b>采的 ✓）—— 用来判断"上一轮它到底在不在" ✓：
+     * 只有<b>连续两轮</b>都被观测到的来源才允许求差 ✓（中间断过 ⇒ 只能重新立基线 ✓）。
+     */
+    private record Sample(Object2LongMap<Item> items, Object2LongMap<Fluid> fluids, long energy, long seq) {
     }
 
     /** 一轮分帧采样的进行态 ✓ */
@@ -671,6 +841,12 @@ public final class ContainerRateManager {
         final Map<String, Sample> now = new HashMap<>();
         /** 来源 id → 它所在区块 key ✓（§749 ✓） */
         final Map<String, Long> chunks = new HashMap<>();
+        /** §788：这一轮扫过的区块 ✓（用来更新"以前扫过的区块"✓） */
+        final Set<Long> chunkKeys = new HashSet<>();
+        /** §788：本轮轮号 ✓（第一次 {@code advance} 时取号 ✓ 空来源的早退路径不取 ✓） */
+        long seq;
+        /** §788：本轮的空来源哨兵 ✓（带本轮轮号 ✓ 这样"空箱子 → 放东西"能正常求差 ✓） */
+        Sample emptySample;
         int index;
         int failed;
         long busyNanos;

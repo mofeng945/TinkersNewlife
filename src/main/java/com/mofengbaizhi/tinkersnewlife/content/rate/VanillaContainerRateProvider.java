@@ -24,10 +24,13 @@ import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.LongConsumer;
 import java.util.function.ObjLongConsumer;
 
@@ -56,11 +59,18 @@ import java.util.function.ObjLongConsumer;
  *       ⇒ 刻意<b>不用</b> {@code WeakHashMap} ✗（来源对象持有方块实体 ⇒ 弱引用缓存会因"值强引用键"永不回收 ✗）；</li>
  *   <li>取能力顺序：<b>无面优先</b>，取不到才按六面试、<b>只认第一个</b> ✓（绝不六面各读一遍 ✗ 会数 6 倍 ✗）。</li>
  * </ol>
+ *
+ * <h2>§788 多方块去重（用户实测："我只有 12 桶却算出 216 桶"✓）</h2>
+ * 多方块结构（森罗酒馆酒桶 / 动态储罐一类）里**每个方块实体都会把同一份库存报一遍** ✗
+ * ⇒ 12 桶 × 结构 18 个方块 ＝ 216 桶 ✗。处理办法见 {@link #ownerOf}（把身份统一到"真正持有库存的方块实体"✓）。
  */
 public final class VanillaContainerRateProvider implements RateSourceProvider {
 
     /** 区块 key（{@code ChunkPos#toLong}）→ （坐标 → 缓存条目）✓ */
     private static final Map<Long, Map<BlockPos, Cached>> CHUNK_CACHE = new HashMap<>();
+
+    /** §788：能力对象（wrapper）的类 → 它字段里那些"直接存着方块实体"的字段 ✓（只解析一次 ✓） */
+    private static final Map<Class<?>, List<Field>> WRAPPED_BE_FIELDS = new ConcurrentHashMap<>();
 
     @Override
     public String modId() {
@@ -110,8 +120,13 @@ public final class VanillaContainerRateProvider implements RateSourceProvider {
                         cache.remove(pos);
                         continue;                              // 三个能力都没有 ⇒ 不是来源 ✓
                     }
+                    // §788：**多方块去重** ✓ —— 结构里每个方块实体的能力都指向**同一个**底层库存
+                    //   （实测：森罗酒馆的「酒桶」结构，18 个方块各自报同一罐酒 ⇒ 12 桶被数成 216 桶 ✗）
+                    //   ⇒ 把身份统一到"真正持有库存的那个方块实体"（owner ✓）：
+                    //     这些方块实体会算出**同一个 id** ✓ ⇒ 采样表里自然只剩一条 ✓（同内容覆盖 ✓）
                     cached = new Cached(entity, items, fluids, energy,
-                            new BlockEntityRateSource(level.dimension(), entity, items, fluids, energy));
+                            new BlockEntityRateSource(level.dimension(), entity, ownerOf(entity, items, fluids, energy),
+                                    items, fluids, energy));
                     cache.put(pos, cached);
                 }
                 // ② 保险丝：底层库存对象已经统计过 ⇒ 这一份跳过 ✓（模组连体容器也吃这条 ✓）
@@ -122,6 +137,59 @@ public final class VanillaContainerRateProvider implements RateSourceProvider {
             cache.keySet().retainAll(chunk.getBlockEntities().keySet());
         }
         return out;
+    }
+
+    /**
+     * §788 <b>多方块去重</b>：问出"这些能力背后真正持有库存的那个方块实体" ✓。
+     *
+     * <p>哪来的问题：多方块结构（酒桶 / 动态储罐 / 流体罐一类）里，<b>每一个方块实体都会把
+     * 同一份库存报一遍</b> ✗ —— 实测（NL 包、用户报"我只有 12 桶却算出 216 桶"✓）：
+     * 森罗酒馆酒桶结构里 18 个方块实体各自返回一个
+     * {@code DelegatingBarrelFluidHandler}，可它们**都包着同一个控制器的罐子** ✓
+     * ⇒ 按"每个方块实体一个来源"去数 ⇒ 12 × 18 ＝ 216 ✗。
+     *
+     * <p>判据（通用 ✓ 不写死模组）：能力对象<b>不是</b>方块实体自己、而它的字段里
+     * <b>直接存着一个方块实体引用</b>（字段声明类型就是 {@code BlockEntity} 的子类 ✓）
+     * ⇒ 那个方块实体才是库存的归属者 ✓。反射只做一次并**按类缓存** ✓，
+     * 拿不到就当"没有 owner"✓（退回原行为 ✓ 绝不因此少统计 ✓）。
+     */
+    private static BlockEntity ownerOf(BlockEntity self, @Nullable IItemHandler items,
+                                       @Nullable IFluidHandler fluids, @Nullable IEnergyStorage energy) {
+        BlockEntity owner = wrappedBlockEntity(items);
+        if (owner == null) owner = wrappedBlockEntity(fluids);
+        if (owner == null) owner = wrappedBlockEntity(energy);
+        return owner == null ? self : owner;
+    }
+
+    /** 能力对象的字段里直接存着的那个方块实体 ✓（没有 ⇒ null ✓）；结果按类缓存 ✓ */
+    @Nullable
+    private static BlockEntity wrappedBlockEntity(@Nullable Object handler) {
+        if (handler == null || handler instanceof BlockEntity) return null;
+        try {
+            List<Field> fields = WRAPPED_BE_FIELDS.computeIfAbsent(handler.getClass(), cls -> {
+                List<Field> found = new ArrayList<>();
+                try {
+                    for (Field field : cls.getDeclaredFields()) {
+                        if (Modifier.isStatic(field.getModifiers())) continue;
+                        if (!BlockEntity.class.isAssignableFrom(field.getType())) continue;
+                        try {
+                            field.setAccessible(true);
+                            found.add(field);
+                        } catch (Throwable ignored) {
+                            // 拿不到访问权就当没有这个字段 ✓
+                        }
+                    }
+                } catch (Throwable ignored) {
+                }
+                return found;
+            });
+            for (Field field : fields) {
+                Object value = field.get(handler);
+                if (value instanceof BlockEntity be && !be.isRemoved()) return be;
+            }
+        } catch (Throwable ignored) {
+        }
+        return null;
     }
 
     /**
@@ -242,6 +310,8 @@ public final class VanillaContainerRateProvider implements RateSourceProvider {
 
         private final ResourceKey<Level> dimension;
         private final BlockEntity entity;
+        /** §788：真正持有库存的那个方块实体 ✓（多方块结构里 = 控制器 ✓ 自己也可能是它 ✓） */
+        private final BlockEntity owner;
         @Nullable
         private final IItemHandler items;
         @Nullable
@@ -250,16 +320,20 @@ public final class VanillaContainerRateProvider implements RateSourceProvider {
         private final IEnergyStorage energy;
         private final String id;
 
-        BlockEntityRateSource(ResourceKey<Level> dimension, BlockEntity entity,
+        BlockEntityRateSource(ResourceKey<Level> dimension, BlockEntity entity, BlockEntity owner,
                               @Nullable IItemHandler items, @Nullable IFluidHandler fluids,
                               @Nullable IEnergyStorage energy) {
             this.dimension = dimension;
             this.entity = entity;
+            this.owner = owner;
             this.items = items;
             this.fluids = fluids;
             this.energy = energy;
-            ResourceLocation type = ForgeRegistries.BLOCK_ENTITY_TYPES.getKey(entity.getType());
-            this.id = "be:" + dimension.location() + "@" + entity.getBlockPos().asLong()
+            ResourceLocation type = ForgeRegistries.BLOCK_ENTITY_TYPES.getKey(owner.getType());
+            // ⚠ 身份用 **owner** 的坐标/类型 ✓：多方块结构里所有方块实体会算出同一个 id ✓
+            //   ⇒ 采样表里自然只剩一条 ✓（同内容覆盖 ✓）—— 既不会把 12 桶数成 216 桶 ✓，
+            //   也不会因为"这一轮先扫到的是哪一个方块"而在两轮之间换身份 ✗（那会刷假流入 ✗）
+            this.id = "be:" + dimension.location() + "@" + owner.getBlockPos().asLong()
                     + "#" + (type == null ? "unknown" : type.toString());
         }
 
@@ -324,15 +398,17 @@ public final class VanillaContainerRateProvider implements RateSourceProvider {
             energySink.accept(energyStored());
         }
 
-        /** §749：所在区块 key ✓（来源"消失"时用来分辨"区块卸载"还是"方块被拆" ✓） */
+        /** §749：所在区块 key ✓（来源"消失"时用来分辨"区块卸载"还是"方块被拆" ✓）
+         *  <p>§788：用 **owner** 的区块 ✓（多方块结构里所有方块实体都报同一个区块 ✓ 一致 ✓）。 */
         @Override
         public long chunkKey() {
-            return new net.minecraft.world.level.ChunkPos(entity.getBlockPos()).toLong();
+            return new net.minecraft.world.level.ChunkPos(owner.getBlockPos()).toLong();
         }
 
         @Override
         public String describe() {
-            return "容器 " + dimension.location() + " " + entity.getBlockPos().toShortString();
+            return "容器 " + dimension.location() + " " + owner.getBlockPos().toShortString()
+                    + (owner == entity ? "" : "（多方块部件 " + entity.getBlockPos().toShortString() + "）");
         }
     }
 }

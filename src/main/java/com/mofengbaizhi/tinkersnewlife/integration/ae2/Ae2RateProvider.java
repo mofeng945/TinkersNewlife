@@ -9,8 +9,8 @@ import appeng.api.stacks.KeyCounter;
 import com.mofengbaizhi.tinkersnewlife.content.rate.RateSource;
 import com.mofengbaizhi.tinkersnewlife.content.rate.RateSourceProvider;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
@@ -59,15 +59,18 @@ import java.util.function.ObjLongConsumer;
  * <ol>
  *   <li><b>只认磁盘</b> ✓：先用 {@code isCellHandled} 过滤 ✓ ⇒ 驱动器槽位里的其它东西（升级卡之类）不会被误当成库存 ✓；</li>
  *   <li><b>按磁盘身份去重</b> ✓：同一块磁盘在一次采样里只读一遍 ✓
- *       （身份 = 磁盘物品 id + 它自己 NBT 的哈希 + 主机坐标/槽位 ✓
- *        —— 哈希万一撞了也只是把两块盘合并成一条 ✓ 对"总量差"这个口径**数值仍然正确** ✓）。</li>
+ *       （身份 = 磁盘物品 id ＋ 主机坐标/槽位 ✓ —— §788 起**不再**掺 NBT 哈希 ✗，
+ *        原因见 {@link #cellKey} 的注释 ✓：磁盘内容就在它自己的 NBT 里 ✗）；</li>
  * </ol>
  *
  * <h2>已知偏差（写进备忘录 ✓）</h2>
  * <ul>
  *   <li><b>流体/气体磁盘</b>不算 ✗（本轮只做物品 ✓）；</li>
- *   <li>磁盘被拔走 / 挪到别的槽位 ⇒ 身份变了 ⇒ 按 §735 基线规则**只算"没观测到"** ✓
- *       ⇒ 那次搬动**不会**被算成净减 ✓（也不会算成产出 ✓）；</li>
+ *   <li>磁盘被拔走 / 挪到别的槽位 ⇒ 旧槽位身份消失、新槽位身份出现 ✓
+ *       ⇒ 旧的那份按"区块还在 ⇒ 净减"结算 ✓、新的那份按"首次见到"处理 ✓
+ *       （区块扫过 ⇒ 算流入 ✓ / 新加载区块 ⇒ 只立基线 ✓）—— 相当于一次"搬运"✓；</li>
+ *   <li><b>同型号盘换盘</b>（同一槽位插另一块同类元件）⇒ 身份不变 ⇒ 会被算成一次大幅增减 ✗
+ *       （人工操作、一次性 ✓ 如实写进备忘录 ✓）；</li>
  *   <li>磁盘本身的**物品**（那块磁盘）仍会被第一层（{@code IItemHandler}）数到 1 个 ✓ 无害 ✓。</li>
  * </ul>
  *
@@ -109,7 +112,7 @@ public final class Ae2RateProvider implements RateSourceProvider {
                     try {
                         StorageCell cell = StorageCells.getCellInventory(stack, null);   // 只读 ✓（不传 saveProvider ⇒ 不落盘 ✓）
                         if (cell == null) continue;
-                        byCell.put(key, new CellRateSource(cell, level.dimension(), key));
+                        byCell.put(key, new CellRateSource(cell, level.dimension(), key, entity.getBlockPos()));
                     } catch (Throwable ignored) {
                         // 某块磁盘读不了（损坏 / 版本不兼容 ✓）⇒ 跳过它 ✓ 不影响别的 ✓
                     }
@@ -119,11 +122,22 @@ public final class Ae2RateProvider implements RateSourceProvider {
         return new ArrayList<>(byCell.values());
     }
 
-    /** 磁盘身份 ✓：物品 id + 磁盘自身 NBT 的哈希（里面含它的存储 ID ✓）+ 主机坐标/槽位（便于排查 ✓） */
+    /**
+     * 磁盘身份 ✓：<b>物品 id ＋ 主机坐标 ＋ 槽位</b>（§788 改 ✓）
+     *
+     * <h2>⚠ 为什么**不能**再掺进 NBT 的哈希（§788 抓到的实锤 bug ✓）</h2>
+     * 本节原实现是「物品 id ＋ <b>磁盘自身 NBT 的哈希</b> ＋ 主机坐标/槽位」✗ —— 但
+     * <b>AE2 磁盘的内容就存在磁盘物品自己的 NBT 里</b> ✓ ⇒ <b>内容一变、哈希就变、身份就变</b> ✗
+     * ⇒ 统计引擎认不出"这还是同一块盘" ⇒ 把它当成<b>旧来源消失 ＋ 新来源出现</b> ✗
+     * ⇒ <b>整块盘的存量每一轮都被重新算成"流入"</b> ✗✗（NL 包日志实证：每轮
+     * {@code 新增 1 / 跳过 1 ⇒ 变动 物品 831~844 种} ✓ ⇒ 一片下界岩就刷出 +20360 个/时 ✗）。
+     * <p>⇒ 现在只用**位置身份**（哪台机器的哪个槽位 ✓）：内容变化 = 同一个来源的正常增减 ✓。
+     * <p>⚠ 代价（如实说 ✓）：把一块盘**换成另一块同型号的盘** ⇒ 身份不变 ⇒ 会被算成一次
+     * "取出＋放入"（大幅正/负）✗；换成不同型号 ⇒ 物品 id 变 ⇒ 按"消失＋新增"处理 ✓。
+     * 这是人工操作、一次性事件 ✓，比"每轮整块重算"好得多 ✓。
+     */
     private static String cellKey(ItemStack stack, BlockEntity entity, int slot) {
-        CompoundTag tag = stack.getTag();
         return "ae2:cell:" + ForgeRegistries.ITEMS.getKey(stack.getItem())
-                + ":" + (tag == null ? "-" : Integer.toHexString(tag.hashCode()))
                 + "@" + entity.getBlockPos().asLong() + "#" + slot;
     }
 
@@ -148,11 +162,14 @@ public final class Ae2RateProvider implements RateSourceProvider {
         private final StorageCell cell;
         private final ResourceKey<Level> dimension;
         private final String id;
+        /** 主机（驱动器）坐标 ⇒ 用来报"它在哪个区块"✓（§788 ✓） */
+        private final BlockPos hostPos;
 
-        CellRateSource(StorageCell cell, ResourceKey<Level> dimension, String id) {
+        CellRateSource(StorageCell cell, ResourceKey<Level> dimension, String id, BlockPos hostPos) {
             this.cell = cell;
             this.dimension = dimension;
             this.id = id;
+            this.hostPos = hostPos;
         }
 
         @Override
@@ -163,6 +180,15 @@ public final class Ae2RateProvider implements RateSourceProvider {
         @Override
         public ResourceKey<Level> dimension() {
             return dimension;
+        }
+
+        /**
+         * §788：报出主机所在区块 ✓ ⇒ 引擎才能分清"这块盘被拔了/机器被拆了"（结算净减 ✓）
+         * 与"只是区块卸载了"（不结算 ✓ 基线留着 ✓）。
+         */
+        @Override
+        public long chunkKey() {
+            return new net.minecraft.world.level.ChunkPos(hostPos).toLong();
         }
 
         @Override

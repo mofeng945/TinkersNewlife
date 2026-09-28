@@ -83,7 +83,7 @@ public final class MekanismQioRateProvider implements RateSourceProvider {
                     // 判定不了就当无效 ✓ 宁可少统计也不重复/报错 ✓
                     continue;
                 }
-                byFrequency.computeIfAbsent(frequency, f -> new QioRateSource(f, level.dimension()));
+                byFrequency.computeIfAbsent(frequency, f -> new QioRateSource(f, level.dimension(), entity.getBlockPos()));
             }
         }
         return new ArrayList<>(byFrequency.values());
@@ -95,10 +95,14 @@ public final class MekanismQioRateProvider implements RateSourceProvider {
         private final IQIOFrequency frequency;
         private final ResourceKey<Level> dimension;
         private final String id;
+        /** 发现它的那个 QIO 方块实体所在坐标 ⇒ 用来报"它在哪个区块"✓（§788 ✓） */
+        private final net.minecraft.core.BlockPos hostPos;
 
-        QioRateSource(IQIOFrequency frequency, ResourceKey<Level> dimension) {
+        QioRateSource(IQIOFrequency frequency, ResourceKey<Level> dimension,
+                      net.minecraft.core.BlockPos hostPos) {
             this.frequency = frequency;
             this.dimension = dimension;
+            this.hostPos = hostPos;
             // 频率自带 owner + name ✓ ⇒ 这个身份**跨重启也稳定** ✓（比 AE2 网格那份强 ✓）
             String owner;
             String name;
@@ -120,6 +124,15 @@ public final class MekanismQioRateProvider implements RateSourceProvider {
         @Override
         public ResourceKey<Level> dimension() {
             return dimension;
+        }
+
+        /**
+         * §788：报出"发现这个频率的那台 QIO 设备"所在区块 ✓ —— 引擎靠它分清
+         * "这台设备真被拆了"（结算净减 ✓）与"只是区块卸载/一时没扫到"（不结算 ✓ 基线留着 ✓）。
+         */
+        @Override
+        public long chunkKey() {
+            return new net.minecraft.world.level.ChunkPos(hostPos).toLong();
         }
 
         @Override
