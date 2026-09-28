@@ -234,6 +234,16 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player,
                                  InteractionHand hand, BlockHitResult hit) {
+        // §775 诊断：这个 use() 到底有没有被调用（客户端/服务端各记一行 ✓）
+        //   —— §773 给天逆鉾加了"潜行放行"后用户仍报"无法破门"✗，先确认是不是根本没进到这里 ✓
+        try {
+            TinkersNewlife.LOGGER.info("[白色空间传送门·诊断] use() 被调用：侧={} 玩家={} 手={} 潜行={} 手持={} {} {}",
+                    level.isClientSide() ? "客户端" : "服务端",
+                    player.getName().getString(), hand, player.isSecondaryUseActive(),
+                    player.getItemInHand(hand).getItem(),
+                    level.dimension().location(), pos);
+        } catch (Throwable ignored) {
+        }
         if (!player.getItemInHand(hand).is(ModItems.TIAN_NI_HUO.get())) return InteractionResult.PASS;
         /*
          * §722：必须**潜行**才拆（用户口径「蹲下右键才能碎门」）。

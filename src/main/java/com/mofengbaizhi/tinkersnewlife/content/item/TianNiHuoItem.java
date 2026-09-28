@@ -1,4 +1,5 @@
 package com.mofengbaizhi.tinkersnewlife.content.item;
+import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.curse.domain.DomainRegistry;
 
 import net.minecraft.network.chat.Component;
@@ -74,7 +75,15 @@ public class TianNiHuoItem extends CursedToolItem {
     public boolean doesSneakBypassUse(ItemStack stack, net.minecraft.world.level.LevelReader level,
                                       net.minecraft.core.BlockPos pos, net.minecraft.world.entity.player.Player player) {
         try {
-            return level.getBlockState(pos).is(com.mofengbaizhi.tinkersnewlife.content.ModBlocks.WHITE_SPACE_PORTAL.get());
+            boolean isPortal = level.getBlockState(pos)
+                    .is(com.mofengbaizhi.tinkersnewlife.content.ModBlocks.WHITE_SPACE_PORTAL.get());
+            // §775 诊断：证明"放行"这个方法真的被原版问过（只在对门时记一行 ✓ 免得刷屏 ✓）
+            if (isPortal) {
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
+                        "[白色空间传送门·诊断] 原版询问潜行放行：玩家={} → 返回 true（是门）✓ {}",
+                        player.getName().getString(), pos);
+            }
+            return isPortal;
         } catch (Throwable ignored) {
             return false;
         }
@@ -104,6 +113,17 @@ public class TianNiHuoItem extends CursedToolItem {
     @Override
     public InteractionResult useOn(UseOnContext context) {
         var level = context.getLevel();
+        // §775 诊断：物品自己的 useOn 有没有被调用（潜行时方块 use 会被跳过，若走这条路也能看出来 ✓）
+        try {
+            var p = context.getPlayer();
+            TinkersNewlife.LOGGER.info("[白色空间传送门·诊断] 天逆鉾 useOn() 被调用：侧={} 玩家={} 潜行={} 点击方块={} {}",
+                    level.isClientSide ? "客户端" : "服务端",
+                    p == null ? "?" : p.getName().getString(),
+                    p != null && p.isSecondaryUseActive(),
+                    level.getBlockState(context.getClickedPos()).getBlock(),
+                    context.getClickedPos());
+        } catch (Throwable ignored) {
+        }
         if (level.isClientSide) return InteractionResult.PASS;
         BlockState state = level.getBlockState(context.getClickedPos());
         Block barrier = com.mofengbaizhi.tinkersnewlife.content.ModBlocks.DOMAIN_BARRIER.get();
