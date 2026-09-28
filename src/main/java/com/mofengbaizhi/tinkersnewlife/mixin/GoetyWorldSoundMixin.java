@@ -40,7 +40,15 @@ public class GoetyWorldSoundMixin {
     @Unique
     private static final Set<String> tinkersnewlife$seenWorldSounds = ConcurrentHashMap.newKeySet();
 
-    @Inject(method = "<init>", at = @At("HEAD"), remap = false, require = 1)
+    /**
+     * ⚠ §760 修：原来写的是 {@code @At("HEAD")} ✗ —— Mixin 0.8.5 **不允许注入到构造器的 HEAD** ✗
+     * （日志实证：{@code InvalidInjectionException: @At("HEAD") selector Found @Inject targetting a constructor} ✓，
+     * 因为那一刻 {@code super()} 还没调用、字段也没初始化 ✓）。
+     * ⇒ 改成 {@code @At("RETURN")} ✓：构造体跑完再记 ✓ 声音 id 与**发起方调用栈**一样拿得到 ✓
+     * （调用栈里"谁在 new 这个包"那几帧照旧 ✓）。
+     * <p>⚠ 这条也再次证明 {@code require = 1} 的价值 ✓：失败是**响亮**的 ✓ 而不是像 §751 那样静默 ✗。
+     */
+    @Inject(method = "<init>", at = @At("RETURN"), remap = false, require = 1)
     private void tinkersnewlife$watchWorldSound(BlockPos pos, SoundEvent soundEvent, float volume, float pitch,
                                                 CallbackInfo ci) {
         try {
