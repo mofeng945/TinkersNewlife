@@ -417,6 +417,35 @@ public final class ContainerRateManager {
 
     // ---- 便利入口 / 诊断 ----
 
+    /**
+     * <b>目前总量</b>（§743 ✓）：把"最近一次采样"里该维度<b>所有来源</b>的每种物品总数加起来 ✓
+     * —— 也就是"这个维度现在一共有多少个这种东西" ✓（按 {@code Item} 归并 ✓ 忽略 NBT ✓）。
+     *
+     * <p>⚠ 三个如实说明（别当成实时读数 ✗）：
+     * <ul>
+     *   <li>它是<b>最近一次采样那一刻</b>的数 ✓（采样周期 10 分钟 ⇒ 最多旧 10 分钟 ✓）；</li>
+     *   <li>还没跑完第一轮采样 ⇒ <b>返回空表</b> ✓（不是"0 个" ✗ 调用方要分开处理 ✓）；</li>
+     *   <li>只包含<b>被观测到的来源</b> ✓（区块已卸载的容器不在内 ✓ 与产率同一个口径 ✓）。</li>
+     * </ul>
+     */
+    public static Map<Item, Long> totalNow(ServerLevel level) {
+        Map<String, Sample> snapshot = LAST_SNAPSHOT.get(level.dimension());
+        Map<Item, Long> out = new HashMap<>();
+        if (snapshot == null) return out;
+        for (Sample sample : snapshot.values()) {
+            for (Object2LongMap.Entry<Item> entry : sample.items().object2LongEntrySet()) {
+                long value = entry.getLongValue();
+                if (value != 0L) out.merge(entry.getKey(), value, Long::sum);
+            }
+        }
+        return out;
+    }
+
+    /** 这个维度是否已经完成过至少一轮采样 ✓（判断"有没有数据"而不是"数据是不是 0" ✓） */
+    public static boolean hasSnapshot(ServerLevel level) {
+        return LAST_SNAPSHOT.containsKey(level.dimension());
+    }
+
     public static Item itemById(String id) {
         ResourceLocation rl = ResourceLocation.tryParse(id);
         return rl == null ? null : ForgeRegistries.ITEMS.getValue(rl);

@@ -27,8 +27,11 @@ public class PacketOpenPioneerRates {
     /** 单次最多送多少行 ✓（大基地几千种物品时只送前 N ✓ 屏幕底下会写明 ✓） */
     public static final int MAX_ROWS = 500;
 
-    /** 一行 = 物品注册名 + 净产率（个/时 ✓） */
-    public record Row(String itemId, double perHour) {
+    /**
+     * 一行 = 物品注册名 ＋ <b>目前总量</b> ＋ <b>净产率（个/时）</b> ✓（§743 按用户口径加的总量列 ✓）
+     * <p>⚠ 总量是"最近一次采样那一刻"的数 ✓（不是实时 ✗ 见 {@code ContainerRateManager#totalNow} ✓）
+     */
+    public record Row(String itemId, long total, double perHour) {
     }
 
     private final String dimensionKey;
@@ -47,7 +50,7 @@ public class PacketOpenPioneerRates {
         int n = buf.readVarInt();
         List<Row> list = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
-            list.add(new Row(buf.readUtf(), buf.readDouble()));
+            list.add(new Row(buf.readUtf(), buf.readVarLong(), buf.readDouble()));
         }
         this.rows = list;
     }
@@ -58,6 +61,7 @@ public class PacketOpenPioneerRates {
         buf.writeVarInt(rows.size());
         for (Row row : rows) {
             buf.writeUtf(row.itemId());
+            buf.writeVarLong(row.total());
             buf.writeDouble(row.perHour());
         }
     }

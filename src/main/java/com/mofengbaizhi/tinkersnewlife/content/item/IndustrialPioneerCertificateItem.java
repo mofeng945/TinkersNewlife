@@ -26,8 +26,10 @@ import top.theillusivec4.curios.api.type.capability.ICurioItem;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * <b>工业开拓之证</b>（§738）—— 占用 {@code charm}（护符）槽的饰品 ✓
@@ -151,17 +153,29 @@ public class IndustrialPioneerCertificateItem extends Item implements ICurioItem
                             .withStyle(ChatFormatting.RED), false);
             return;
         }
-        Map<Item, Double> all = ContainerRateManager.netPerHourAll(level, IndustrialPioneerHandler.WINDOW);
-        List<Map.Entry<Item, Double>> sorted = new ArrayList<>(all.entrySet());
-        sorted.sort((a, b) -> Double.compare(b.getValue(), a.getValue()));
+        Map<Item, Double> rates = ContainerRateManager.netPerHourAll(level, IndustrialPioneerHandler.WINDOW);
+        Map<Item, Long> totals = ContainerRateManager.totalNow(level);
+
+        // §743 列 = 物品模型 / 名称 / 目前总量 / 产率 ✓
+        //   ⇒ 列表取"有产率的" ∪ "有存量的"（只站在仓库里、这小时没变化的也要能看到 ✓）
+        //   排序：产率从高到低 ✓ 产率相同的（含 0）按总量从多到少 ✓
+        Set<Item> kinds = new HashSet<>(rates.keySet());
+        kinds.addAll(totals.keySet());
+        List<Item> sorted = new ArrayList<>(kinds);
+        sorted.sort((a, b) -> {
+            int byRate = Double.compare(rates.getOrDefault(b, 0.0D), rates.getOrDefault(a, 0.0D));
+            return byRate != 0 ? byRate : Long.compare(totals.getOrDefault(b, 0L), totals.getOrDefault(a, 0L));
+        });
 
         int total = sorted.size();
         int shown = Math.min(total, PacketOpenPioneerRates.MAX_ROWS);
         List<PacketOpenPioneerRates.Row> rows = new ArrayList<>(shown);
         for (int i = 0; i < shown; i++) {
-            ResourceLocation id = ForgeRegistries.ITEMS.getKey(sorted.get(i).getKey());
+            Item item = sorted.get(i);
+            ResourceLocation id = ForgeRegistries.ITEMS.getKey(item);
             if (id == null) continue;
-            rows.add(new PacketOpenPioneerRates.Row(id.toString(), sorted.get(i).getValue()));
+            rows.add(new PacketOpenPioneerRates.Row(id.toString(), totals.getOrDefault(item, 0L),
+                    rates.getOrDefault(item, 0.0D)));
         }
         String dimensionKey = "dimension." + bound.location().getNamespace() + "." + bound.location().getPath();
         TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
