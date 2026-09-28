@@ -10,6 +10,12 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.chunk.LevelChunk;
+import java.util.Set;
+import java.util.IdentityHashMap;
+import java.util.Collections;
+import net.minecraft.world.level.block.state.properties.ChestType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.ChestBlock;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.energy.IEnergyStorage;
 import net.minecraftforge.fluids.FluidStack;
@@ -74,6 +80,10 @@ public final class VanillaContainerRateProvider implements RateSourceProvider {
     @Override
     public List<RateSource> sourcesFor(ServerLevel level, List<LevelChunk> loadedChunks) {
         List<RateSource> out = new ArrayList<>();
+        // §747 大箱子（连体箱子）**两半共用同一份库存** ⇒ 不分去重就会被数两遍 ✗
+        //   ① 结构性去重：只保留"坐标较小"的那一半 ✓（两半各自算出的 partner 都指向对方 ✓ 结果一致 ✓）；
+        //   ② 保险丝：同一份"底层容器对象"只登记一次 ✓（按**对象身份**比 ✓ 绝不会误合并两个内容相同的箱子 ✗）
+        Set<Object> seenInventories = Collections.newSetFromMap(new IdentityHashMap<>());
         for (LevelChunk chunk : loadedChunks) {
             long chunkKey = chunk.getPos().toLong();
             Map<BlockPos, Cached> cache = CHUNK_CACHE.computeIfAbsent(chunkKey, key -> new HashMap<>());
@@ -81,6 +91,7 @@ public final class VanillaContainerRateProvider implements RateSourceProvider {
                 BlockEntity entity = entry.getValue();
                 if (entity == null || entity.isRemoved()) continue;
                 BlockPos pos = entry.getKey();
+                if (isSecondHalfOfDoubleChest(entity)) continue;      // ① 连体箱子的"后一半" ⇒ 跳过 ✓
                 Cached cached = cache.get(pos);
                 // §745：新建缓存时判一次"是不是没人碰过的宝箱"✓；
                 //   已经记着的条目**每轮再判一次**（宝箱被打开后 LootTable 会被清掉 ✓ 要能及时"转正"✓）
@@ -103,11 +114,53 @@ public final class VanillaContainerRateProvider implements RateSourceProvider {
                             new BlockEntityRateSource(level.dimension(), entity, items, fluids, energy));
                     cache.put(pos, cached);
                 }
+                // ② 保险丝：底层库存对象已经统计过 ⇒ 这一份跳过 ✓（模组连体容器也吃这条 ✓）
+                Object inventoryId = inventoryIdentity(cached.items());
+                if (inventoryId != null && !seenInventories.add(inventoryId)) continue;
                 out.add(cached.source());
             }
             cache.keySet().retainAll(chunk.getBlockEntities().keySet());
         }
         return out;
+    }
+
+    /**
+     * §747 <b>是不是连体箱子的"后一半"</b>（用户实测：一个大箱子被数了两遍 ✓ 1 把剑显示 2 把 ✗）
+     *
+     * <p>判据全走原版公开 API ✓：方块是 {@link ChestBlock}（含陷阱箱与其子类 ✓）、
+     * 方块状态里有 {@link ChestBlock#TYPE} 且不是 {@code SINGLE}、
+     * 用 {@link ChestBlock#getConnectedDirection} 找到另一半 ✓
+     * ⇒ **只保留坐标较小的那一半** ✓（两半算出来的"较小者"是同一个 ✓ 所以只会跳掉一个 ✓）。
+     */
+    private static boolean isSecondHalfOfDoubleChest(BlockEntity entity) {
+        try {
+            BlockState state = entity.getBlockState();
+            if (!(state.getBlock() instanceof ChestBlock)) return false;
+            if (!state.hasProperty(ChestBlock.TYPE)) return false;
+            ChestType type = state.getValue(ChestBlock.TYPE);
+            if (type == ChestType.SINGLE) return false;
+            BlockPos partner = entity.getBlockPos().relative(ChestBlock.getConnectedDirection(state));
+            return entity.getBlockPos().asLong() > partner.asLong();
+        } catch (Throwable ignored) {
+            return false;                   // 判不出来就当普通容器 ✓ 宁可多读也不要漏掉玩家的箱子 ✓
+        }
+    }
+
+    /**
+     * 取"这份物品栏背后是哪个容器对象" ✓（尽量挖到最底层 ✓）：
+     * Forge 的 {@code InvWrapper} 会把原版 {@code Container} 包一层 ✓ ⇒ 挖出来按它的<b>身份</b>比 ✓。
+     * <p>⚠ 只在**同一个对象**时才认为重复 ✓（按身份 ✓ 不看内容 ✗）⇒ 两个内容一样的箱子不会被误合并 ✓。
+     */
+    @Nullable
+    private static Object inventoryIdentity(@Nullable IItemHandler handler) {
+        if (handler == null) return null;
+        try {
+            if (handler instanceof net.minecraftforge.items.wrapper.InvWrapper wrapper) {
+                return wrapper.getInv();
+            }
+        } catch (Throwable ignored) {
+        }
+        return handler;
     }
 
     // ============================================================
