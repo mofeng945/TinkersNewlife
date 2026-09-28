@@ -90,6 +90,13 @@ public final class VoidGraceHandler {
         if (wearer.level().isClientSide) return;
         if (wearer.tickCount % 40 != 0) return;
         if (!wears(wearer)) return;
+        // §754 诊断：⭐「心跳」—— 每 10 秒一行，用来**确证测试时这件护甲真的穿在身上** ✓
+        //   （§750／§751 连着两轮 0 条诊断，我连"用户到底穿没穿"都无法证伪 ✗ ⇒ 补上这个判据 ✓）
+        if (wearer.tickCount % 200 == 0) {
+            com.mofengbaizhi.tinkersnewlife.util.VoidArmorDiag.log("wearing",
+                    "🛡 虚无恩宠生效中 ✓（玩家={} · 虚空金属护甲确实穿在身上 ✓ · tickCount={}）",
+                    wearer.getName().getString(), wearer.tickCount);
+        }
         // §750 诊断：⭐ 这两条才是"声音来源"的头号嫌疑 —— 我们每清一次，
         //   诡厄就会播一次 VOID_TOUCHED_DEACTIVATE ✓（它自带 activate/loop/deactivate 三个音效 ✓）
         boolean hadSlowness = wearer.hasEffect(MobEffects.MOVEMENT_SLOWDOWN);

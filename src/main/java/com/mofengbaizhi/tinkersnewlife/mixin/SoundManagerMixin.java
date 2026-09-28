@@ -73,32 +73,41 @@ public class SoundManagerMixin {
     private static boolean tinkersnewlife$snifferArmed;
 
     /** ⭐ 铁证：{@code tick} 每 tick 必被调用 ⇒ 只要这行出现，就说明本 mixin 真的生效了 ✓ */
-    @Inject(method = "m_120389_", at = @At("HEAD"), remap = false)
+    @Inject(method = "m_120389_", at = @At("HEAD"), remap = false, require = 1)
     private void tinkersnewlife$probeArmed(boolean paused, CallbackInfo ci) {
         if (tinkersnewlife$snifferArmed) return;
         tinkersnewlife$snifferArmed = true;
         VoidArmorDiag.log("sniff:armed", "🔊 音效嗅探已装载 ✓（tick 命中 ⇒ mixin 生效 ✓ SRG 名写法正确 ✓）");
     }
 
-    /** 普通音效入口 ✓ */
-    @Inject(method = "m_120367_", at = @At("HEAD"), remap = false)
+    /**
+     * 普通音效入口 ✓
+     * <p>⚠ §754：加了 {@code require = 1} ✓ —— <b>"匹配不上"必须报错</b> ✗，
+     * 不能像 §751／§752 那样"静默什么都没发生而我还以为它在工作" ✗（那次教训够狠了 ✓）。
+     */
+    @Inject(method = "m_120367_", at = @At("HEAD"), remap = false, require = 1)
     private void tinkersnewlife$sniffPlay(SoundInstance sound, CallbackInfo ci) {
         sniff("play", sound);
     }
 
-    /** 延迟音效入口 ✓ */
-    @Inject(method = "m_120369_", at = @At("HEAD"), remap = false)
+    /** 延迟音效入口 ✓（同样 {@code require = 1} ✓） */
+    @Inject(method = "m_120369_", at = @At("HEAD"), remap = false, require = 1)
     private void tinkersnewlife$sniffPlayDelayed(SoundInstance sound, int delay, CallbackInfo ci) {
         sniff("delayed", sound);
     }
 
-    /** ⭐ 循环音走这里（不走 play ✗）—— 诡厄的 void_touched_loop 就是这一类 ✓ */
-    @Inject(method = "m_120372_", at = @At("HEAD"), remap = false)
+    /** ⭐ 循环音走这里（不走 play ✗）—— 诡厄的 void_touched_loop 就是这一类 ✓（{@code require = 1} ✓） */
+    @Inject(method = "m_120372_", at = @At("HEAD"), remap = false, require = 1)
     private void tinkersnewlife$sniffTicking(TickableSoundInstance sound, CallbackInfo ci) {
         sniff("loop", sound);
     }
 
-    /** 统一的记录逻辑 ✓（全都记 ✓ 由 {@link VoidArmorDiag} 按 id 限流 ✓） */
+    /**
+     * 统一的记录逻辑 ✓（全都记 ✓ 由 {@link VoidArmorDiag} 按 id 限流 ✓）。
+     * <p>⚠ §754：**异常不再静默吞掉** ✗ —— 会打一行 {@code 🐞 嗅探异常} ✓。
+     * （§753 就是被这个 {@code catch (Throwable ignored)} 挡住了视线 ✗：
+     * 万一真是处理函数自己抛异常，日志上看起来和"钩子没生效"一模一样 ✗。）
+     */
     private static void sniff(String from, SoundInstance sound) {
         try {
             if (!VoidArmorDiag.ENABLED || sound == null) return;
@@ -106,8 +115,8 @@ public class SoundManagerMixin {
             if (id == null) return;
             VoidArmorDiag.log("sound:" + id, "🔊 播放音效 {} ✓（入口 {} / 音量 {} / 音调 {}）",
                     id, from, sound.getVolume(), sound.getPitch());
-        } catch (Throwable ignored) {
-            // 嗅探本身绝不许影响游戏 ✗
+        } catch (Throwable t) {
+            VoidArmorDiag.log("sniff:error", "🐞 嗅探异常(SoundManager) {}", String.valueOf(t));
         }
     }
 }

@@ -16,7 +16,8 @@
     "BloodStatsInvoker",
     "VampirismSunHelperMixin",
     "GoetyCastSpeedMixin",
-    "GoetyVoidSoulMixin"
+    "GoetyVoidSoulMixin",
+    "GoetyVoidTouchedMixin"
   ],
   "client": [
     "EntityRenderDispatcherMixin",
@@ -25,7 +26,8 @@
     "XaeroRadarMixin",
     "JadeObjectNameMixin",
     "MantleFluidShaderMixin",
-    "SoundManagerMixin"
+    "SoundManagerMixin",
+    "SoundEngineHookMixin"
   ],
   "injectors": {
     "defaultRequire": 0
