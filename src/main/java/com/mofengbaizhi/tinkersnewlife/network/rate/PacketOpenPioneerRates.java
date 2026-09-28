@@ -67,9 +67,15 @@ public class PacketOpenPioneerRates {
     }
 
     public static void handle(PacketOpenPioneerRates packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                () -> () -> Minecraft.getInstance().setScreen(
-                        new IndustrialPioneerRatesScreen(packet.dimensionKey, packet.totalKinds, packet.rows))));
+        ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+            // §744：如果玩家**已经开着**同一维度的界面 ⇒ **原地更新** ✓
+            //   （不能再 new 一个屏 ✗ —— 那会把滚动位置、鼠标焦点全闪掉 ✓ 而且看着像"闪屏"✗）
+            if (IndustrialPioneerRatesScreen.applyUpdate(packet.dimensionKey, packet.totalKinds, packet.rows)) {
+                return;
+            }
+            Minecraft.getInstance().setScreen(
+                    new IndustrialPioneerRatesScreen(packet.dimensionKey, packet.totalKinds, packet.rows));
+        }));
         ctx.get().setPacketHandled(true);
     }
 }

@@ -327,6 +327,23 @@ public final class ContainerRateManager {
         }
     }
 
+    /**
+     * <b>催一次"分帧采样"</b>（§744 ✓）：把这一维度的下次采样时刻<b>提前到现在</b> ✓
+     * —— 真正的扫描仍然走 {@link #advance} 那套**每 tick 一个预算**的分帧机制 ✓
+     * ⇒ **不会**因为"玩家点了一下"就把几万来源挤进一个 tick ✗（那正是 §736 花力气消掉的尖峰 ✓）。
+     *
+     * <p>典型用途：玩家右键打开产率界面时 ✓ —— 界面先把"当前（可能旧）数据"画出来 ✓，
+     * 几秒后这次分帧采样跑完 ✓ 客户端下一次刷新就能看到**刚采的**数 ✓（用户口径"动态变化"✓）。
+     *
+     * <p>⚠ 已经在扫了就直接返回 ✓（不排队、不叠加 ✓）。
+     */
+    public static void forceSweep(ServerLevel level) {
+        ResourceKey<Level> dimension = level.dimension();
+        if (SWEEPS.containsKey(dimension)) return;
+        NEXT_SWEEP.put(dimension, level.getServer() == null ? level.getGameTime()
+                : level.getServer().getTickCount());
+    }
+
     private static Sweep startSweep(ServerLevel level) {
         List<LevelChunk> chunks = loadedChunks(level);
         List<RateSource> sources = new ArrayList<>(VANILLA.sourcesFor(level, chunks));

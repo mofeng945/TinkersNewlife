@@ -235,7 +235,11 @@ public class TinkersNewlife {
         registerPacket(PacketSwitchFlyingSwordMode.class, PacketSwitchFlyingSwordMode::toBytes, PacketSwitchFlyingSwordMode::new, PacketSwitchFlyingSwordMode::handle);
         registerPacket(PacketToggleDomain.class, PacketToggleDomain::toBytes, PacketToggleDomain::new, PacketToggleDomain::handle);
         registerPacket(PacketUseTechnique.class, PacketUseTechnique::toBytes, PacketUseTechnique::new, PacketUseTechnique::handle);
-        // §742 工业开拓之证：服务端把"绑定维度的物品产率"发过来并开屏（只读列表 ✓）
+        // §744 工业开拓之证：客户端"刷新产率界面"的请求（每 5 秒一次；服务端会复核玩家是否真带着绑定该维度的饰品 ✓）
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.rate.PacketRequestPioneerRates.class,
+                com.mofengbaizhi.tinkersnewlife.network.rate.PacketRequestPioneerRates::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.rate.PacketRequestPioneerRates::new,
+                com.mofengbaizhi.tinkersnewlife.network.rate.PacketRequestPioneerRates::handle);        // §742 工业开拓之证：服务端把"绑定维度的物品产率"发过来并开屏（只读列表 ✓）
         registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.rate.PacketOpenPioneerRates.class,
                 com.mofengbaizhi.tinkersnewlife.network.rate.PacketOpenPioneerRates::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.rate.PacketOpenPioneerRates::new,

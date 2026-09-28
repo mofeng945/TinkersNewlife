@@ -51,6 +51,9 @@ public class IndustrialPioneerCertificateItem extends Item implements ICurioItem
     /** 绑定的维度存在这个 NBT 键里（维度 id 字符串 ✓） */
     public static final String BOUND_DIMENSION = "tinkersnewlife:pioneer_dimension";
 
+    /** 只能进这个饰品槽（护符 ✓ 与 {@code IndustrialPioneerHandler.SLOT} 同一个值 ✓） */
+    public static final String CHARM_SLOT = "charm";
+
     public IndustrialPioneerCertificateItem() {
         super(new Properties().stacksTo(1));
     }
@@ -61,7 +64,7 @@ public class IndustrialPioneerCertificateItem extends Item implements ICurioItem
 
     @Override
     public boolean canEquip(SlotContext context, ItemStack stack) {
-        return "charm".equals(context.identifier());
+        return CHARM_SLOT.equals(context.identifier());
     }
 
     /**
@@ -95,7 +98,7 @@ public class IndustrialPioneerCertificateItem extends Item implements ICurioItem
                             Component.translatable("item.tinkersnewlife.industrial_pioneer_certificate.rates.nobind")
                                     .withStyle(ChatFormatting.GRAY), false);
                 } else {
-                    sendRateReport(serverPlayer, bound);
+                    sendRateReport(serverPlayer, bound, true);   // §744 打开即催一次 ✓
                 }
             }
             return InteractionResultHolder.success(stack);
@@ -145,7 +148,7 @@ public class IndustrialPioneerCertificateItem extends Item implements ICurioItem
      *       —— 流体/能量同一套接口也能做 ✓ 但这次没做 ✗ 需要就说 ✓）。</li>
      * </ul>
      */
-    public static void sendRateReport(ServerPlayer player, ResourceKey<Level> bound) {
+    public static void sendRateReport(ServerPlayer player, ResourceKey<Level> bound, boolean forceSample) {
         ServerLevel level = player.server.getLevel(bound);
         if (level == null) {
             player.displayClientMessage(
@@ -153,9 +156,15 @@ public class IndustrialPioneerCertificateItem extends Item implements ICurioItem
                             .withStyle(ChatFormatting.RED), false);
             return;
         }
+        // §744：**刚打开界面时**催一次分帧采样 ✓（接口里的"每次打开自动统计一次"✓）
+        //   之后客户端每 5 秒来要一次数据 ⇒ 那一轮跑完的**新数**自然就上屏了 ✓（"动态变化"✓）
+        //   ⚠ 刷新请求（forceSample=false）**不会**再催 ✗ —— 否则每 5 秒催一轮，
+        //     等于把 10 分钟的采样节奏废掉 ✗ 还会白白扫全维度 ✗
+        if (forceSample) {
+            ContainerRateManager.forceSweep(level);
+        }
         Map<Item, Double> rates = ContainerRateManager.netPerHourAll(level, IndustrialPioneerHandler.WINDOW);
         Map<Item, Long> totals = ContainerRateManager.totalNow(level);
-
         // §743 列 = 物品模型 / 名称 / 目前总量 / 产率 ✓
         //   ⇒ 列表取"有产率的" ∪ "有存量的"（只站在仓库里、这小时没变化的也要能看到 ✓）
         //   排序：产率从高到低 ✓ 产率相同的（含 0）按总量从多到少 ✓

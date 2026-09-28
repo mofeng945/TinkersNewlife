@@ -1,6 +1,9 @@
 package com.mofengbaizhi.tinkersnewlife.client.screen;
 
+import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.network.rate.PacketOpenPioneerRates;
+import com.mofengbaizhi.tinkersnewlife.network.rate.PacketRequestPioneerRates;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -45,7 +48,9 @@ public class IndustrialPioneerRatesScreen extends AbstractRowListScreen<PacketOp
     private static final int RATE_RIGHT_PAD = 8;
 
     private final String dimensionKey;
-    private final int totalKinds;
+    private int totalKinds;
+    /** §744 刷新计时（100 tick = 5 秒 ✓） */
+    private int refreshTicker;
 
     public IndustrialPioneerRatesScreen(String dimensionKey, int totalKinds,
                                         List<PacketOpenPioneerRates.Row> rows) {
@@ -54,6 +59,48 @@ public class IndustrialPioneerRatesScreen extends AbstractRowListScreen<PacketOp
                 rows, LIST_WIDTH, ROW_PITCH, ROW_FILL, 64, 40);
         this.dimensionKey = dimensionKey;
         this.totalKinds = totalKinds;
+    }
+
+    // ============================================================
+    //  §744：动态刷新（每 5 秒要一次最新数据 ✓）
+    // ============================================================
+
+    /**
+     * 打开期间每 <b>5 秒</b>向服务端要一次最新数据 ✓
+     * —— 服务端<b>不会</b>每次重扫 ✗（那会把 10 分钟的采样节奏废掉 ✗），
+     * 它只是把"最近一轮已经采好的数"发回来 ✓
+     * ⇒ 于是"打开时催的那一轮采样跑完"就会**自动上屏** ✓（用户口径「动态变化」✓）。
+     */
+    @Override
+    public void tick() {
+        super.tick();
+        if (++refreshTicker < 100) return;
+        refreshTicker = 0;
+        TinkersNewlife.CHANNEL.sendToServer(new PacketRequestPioneerRates(dimensionId()));
+    }
+
+    /** 界面上显示的维度 id（把语言键 {@code dimension.ns.path} 还原成 {@code ns:path} ✓） */
+    private String dimensionId() {
+        String prefix = "dimension.";
+        return dimensionKey.startsWith(prefix) ? dimensionKey.substring(prefix.length()) : dimensionKey;
+    }
+
+    /**
+     * 服务端推来新数据时<b>原地替换</b>当前界面 ✓（返回 true = 已更新，调用方不必再开新屏 ✓）
+     */
+    public static boolean applyUpdate(String dimensionKey, int totalKinds,
+                                      List<PacketOpenPioneerRates.Row> newRows) {
+        if (!(Minecraft.getInstance().screen instanceof IndustrialPioneerRatesScreen screen)) return false;
+        if (!screen.dimensionKey.equals(dimensionKey)) return false;
+        screen.replaceRows(totalKinds, newRows);
+        return true;
+    }
+
+    private void replaceRows(int totalKinds, List<PacketOpenPioneerRates.Row> newRows) {
+        this.totalKinds = totalKinds;
+        rows.clear();
+        rows.addAll(newRows);
+        refreshLayout();          // ★ 行数变了必须重算：否则滚动条与命中判定会错位 ✗
     }
 
     // ============================================================
