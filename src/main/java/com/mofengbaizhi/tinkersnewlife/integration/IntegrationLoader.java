@@ -57,8 +57,10 @@ public final class IntegrationLoader {
     /** 通用机械（Mekanism）—— §559 起万用能量转化器要暴露它的 STRICT_ENERGY 能力（让线缆能往里推 J） */
     public static final String MEKANISM = "mekanism";
 
-    /** §791 森罗酒馆（酒桶的罐子/物品栏不走 Forge 能力 ⇒ 单独做一层反射来源 ✓） */
+    /** §791／§793 森罗酒馆（酒类家族：酒桶/酒架/酒柜… 不走 Forge 能力 ⇒ 单独做一层反射来源 ✓） */
     public static final String KALEIDOSCOPE_TAVERN = "kaleidoscope_tavern";
+    /** §793 森罗酒馆·世界酒（它家的酒窖柜**有**能力 ✓，但也有不带能力的方块 ✓ ⇒ 一起兜住 ✓） */
+    public static final String KALEIDOSCOPE_WORLD_LIQUOR = "kaleidoscope_world_liquor";
     /** 机械动力（Create）—— §559 起万用能量转化器要变成它的动能方块（传动杆能接上） */
     public static final String CREATE = "create";
 
@@ -249,14 +251,15 @@ public final class IntegrationLoader {
                 LOGGER.error("[联动] 通用机械 QIO 产率来源挂载失败", t);
             }
         }
-        // §791 森罗酒馆「酒桶」：它的罐子/物品栏**没有注册 Forge 能力** ✗ ⇒ 通用那层看不见 ✗
-        //   ⇒ 用反射读它自己的 getFluid()/getIngredient()/getOutput() ✓（无编译期依赖 ✓）
-        if (shouldRegisterLinked(KALEIDOSCOPE_TAVERN)) {
+        // §791／§793 森罗酒馆系（酒桶/酒架/酒柜/陈列台…）：
+        //   这一家**几乎不给自己方块注册 Forge 能力** ✗（只有压榨槽有 ✓）
+        //   ⇒ 通用那层看不见它们 ✗ ⇒ 用反射读它们自己的公开 getter ✓（无编译期依赖 ✓）
+        if (shouldRegisterLinked(KALEIDOSCOPE_TAVERN) || shouldRegisterLinked(KALEIDOSCOPE_WORLD_LIQUOR)) {
             try {
                 com.mofengbaizhi.tinkersnewlife.content.rate.ContainerRateManager.registerProvider(
-                        new com.mofengbaizhi.tinkersnewlife.integration.kaleidoscope.KaleidoscopeBarrelRateProvider());
+                        new com.mofengbaizhi.tinkersnewlife.integration.kaleidoscope.KaleidoscopeRateProvider());
             } catch (Throwable t) {
-                LOGGER.error("[联动] 森罗酒馆酒桶产率来源挂载失败", t);
+                LOGGER.error("[联动] 森罗酒馆系产率来源挂载失败", t);
             }
         }
     }
