@@ -19,6 +19,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.registries.ForgeRegistries;
 import top.theillusivec4.curios.api.SlotContext;
@@ -50,6 +51,10 @@ public class IndustrialPioneerCertificateItem extends Item implements ICurioItem
 
     /** 绑定的维度存在这个 NBT 键里（维度 id 字符串 ✓） */
     public static final String BOUND_DIMENSION = "tinkersnewlife:pioneer_dimension";
+
+    /** §746：单次最多送几行物品 / 流体（能量只有 1 行 ✓）—— 合计不超过包上限 ✓ */
+    private static final int MAX_ITEM_ROWS = 400;
+    private static final int MAX_FLUID_ROWS = 100;
 
     /** 只能进这个饰品槽（护符 ✓ 与 {@code IndustrialPioneerHandler.SLOT} 同一个值 ✓） */
     public static final String CHARM_SLOT = "charm";
@@ -156,42 +161,69 @@ public class IndustrialPioneerCertificateItem extends Item implements ICurioItem
                             .withStyle(ChatFormatting.RED), false);
             return;
         }
-        // §744：**刚打开界面时**催一次分帧采样 ✓（接口里的"每次打开自动统计一次"✓）
+        // §744：**刚打开界面时**催一次分帧采样 ✓（"每次打开自动统计一次"✓）
         //   之后客户端每 5 秒来要一次数据 ⇒ 那一轮跑完的**新数**自然就上屏了 ✓（"动态变化"✓）
         //   ⚠ 刷新请求（forceSample=false）**不会**再催 ✗ —— 否则每 5 秒催一轮，
         //     等于把 10 分钟的采样节奏废掉 ✗ 还会白白扫全维度 ✗
         if (forceSample) {
             ContainerRateManager.forceSweep(level);
         }
-        Map<Item, Double> rates = ContainerRateManager.netPerHourAll(level, IndustrialPioneerHandler.WINDOW);
-        Map<Item, Long> totals = ContainerRateManager.totalNow(level);
-        // §743 列 = 物品模型 / 名称 / 目前总量 / 产率 ✓
-        //   ⇒ 列表取"有产率的" ∪ "有存量的"（只站在仓库里、这小时没变化的也要能看到 ✓）
-        //   排序：产率从高到低 ✓ 产率相同的（含 0）按总量从多到少 ✓
-        Set<Item> kinds = new HashSet<>(rates.keySet());
-        kinds.addAll(totals.keySet());
-        List<Item> sorted = new ArrayList<>(kinds);
-        sorted.sort((a, b) -> {
-            int byRate = Double.compare(rates.getOrDefault(b, 0.0D), rates.getOrDefault(a, 0.0D));
-            return byRate != 0 ? byRate : Long.compare(totals.getOrDefault(b, 0L), totals.getOrDefault(a, 0L));
-        });
 
-        int total = sorted.size();
-        int shown = Math.min(total, PacketOpenPioneerRates.MAX_ROWS);
-        List<PacketOpenPioneerRates.Row> rows = new ArrayList<>(shown);
-        for (int i = 0; i < shown; i++) {
-            Item item = sorted.get(i);
+        // §746：三类一起给（物品 / 流体 / 能量 ✓ 用户口径 ✓）
+        Map<Item, Double> itemRates = ContainerRateManager.netPerHourAll(level, IndustrialPioneerHandler.WINDOW);
+        Map<Item, Long> itemTotals = ContainerRateManager.totalNow(level);
+        Map<Fluid, Double> fluidRates = ContainerRateManager.fluidNetPerHourAll(level, IndustrialPioneerHandler.WINDOW);
+        Map<Fluid, Long> fluidTotals = ContainerRateManager.fluidTotalNow(level);
+        double energyRate = ContainerRateManager.energyNetPerHour(level, IndustrialPioneerHandler.WINDOW);
+        long energyStored = ContainerRateManager.energyNow(level);
+
+        List<PacketOpenPioneerRates.Row> rows = new ArrayList<>();
+
+        // ---- 物品（有产率的 ∪ 有存量的 ✓ 产率降序、同率按总量降序 ✓ 最多 400 条 ✓）----
+        Set<Item> itemKinds = new HashSet<>(itemRates.keySet());
+        itemKinds.addAll(itemTotals.keySet());
+        List<Item> sortedItems = new ArrayList<>(itemKinds);
+        sortedItems.sort((a, b) -> {
+            int byRate = Double.compare(itemRates.getOrDefault(b, 0.0D), itemRates.getOrDefault(a, 0.0D));
+            return byRate != 0 ? byRate : Long.compare(itemTotals.getOrDefault(b, 0L), itemTotals.getOrDefault(a, 0L));
+        });
+        int itemTotal = sortedItems.size();
+        int itemShown = Math.min(itemTotal, MAX_ITEM_ROWS);
+        for (int i = 0; i < itemShown; i++) {
+            Item item = sortedItems.get(i);
             ResourceLocation id = ForgeRegistries.ITEMS.getKey(item);
             if (id == null) continue;
-            rows.add(new PacketOpenPioneerRates.Row(id.toString(), totals.getOrDefault(item, 0L),
-                    rates.getOrDefault(item, 0.0D)));
+            rows.add(new PacketOpenPioneerRates.Row(PacketOpenPioneerRates.KIND_ITEM, id.toString(),
+                    itemTotals.getOrDefault(item, 0L), itemRates.getOrDefault(item, 0.0D)));
         }
+
+        // ---- 流体（同样口径 ✓ 最多 100 条 ✓）----
+        Set<Fluid> fluidKinds = new HashSet<>(fluidRates.keySet());
+        fluidKinds.addAll(fluidTotals.keySet());
+        List<Fluid> sortedFluids = new ArrayList<>(fluidKinds);
+        sortedFluids.sort((a, b) -> {
+            int byRate = Double.compare(fluidRates.getOrDefault(b, 0.0D), fluidRates.getOrDefault(a, 0.0D));
+            return byRate != 0 ? byRate : Long.compare(fluidTotals.getOrDefault(b, 0L), fluidTotals.getOrDefault(a, 0L));
+        });
+        int fluidTotal = sortedFluids.size();
+        int fluidShown = Math.min(fluidTotal, MAX_FLUID_ROWS);
+        for (int i = 0; i < fluidShown; i++) {
+            Fluid fluid = sortedFluids.get(i);
+            ResourceLocation id = ForgeRegistries.FLUIDS.getKey(fluid);
+            if (id == null) continue;
+            rows.add(new PacketOpenPioneerRates.Row(PacketOpenPioneerRates.KIND_FLUID, id.toString(),
+                    fluidTotals.getOrDefault(fluid, 0L), fluidRates.getOrDefault(fluid, 0.0D)));
+        }
+
+        // ---- 能量（整维度就一行 ✓ 当前储能 ＋ 净产率 ✓）----
+        rows.add(new PacketOpenPioneerRates.Row(PacketOpenPioneerRates.KIND_ENERGY, "", energyStored, energyRate));
+
         String dimensionKey = "dimension." + bound.location().getNamespace() + "." + bound.location().getPath();
+        // totalKinds = "物品种数 ＋ 流体种数" ✓（页脚据此判"有没有被截断" ✓ 能量只有 1 行不参与 ✓）
         TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-                new PacketOpenPioneerRates(dimensionKey, total, rows));
+                new PacketOpenPioneerRates(dimensionKey, itemTotal + fluidTotal, rows));
     }
 
-    // ============================================================
     //  提示文本
     // ============================================================
 

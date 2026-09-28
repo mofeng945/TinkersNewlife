@@ -542,6 +542,33 @@ public final class ContainerRateManager {
         return out;
     }
 
+    /** <b>流体目前总量</b>（mB ✓）：同 {@link #totalNow}，只是换成流体 ✓（§746 ✓） */
+    public static Map<Fluid, Long> fluidTotalNow(ServerLevel level) {
+        Map<String, Sample> snapshot = LAST_SNAPSHOT.get(level.dimension());
+        Map<Fluid, Long> out = new HashMap<>();
+        if (snapshot == null) return out;
+        for (Sample sample : snapshot.values()) {
+            for (Object2LongMap.Entry<Fluid> entry : sample.fluids().object2LongEntrySet()) {
+                long value = entry.getLongValue();
+                if (value != 0L) out.merge(entry.getKey(), value, Long::sum);
+            }
+        }
+        return out;
+    }
+
+    /**
+     * <b>当前储能</b>（FE ✓ §746）：把"最近一次采样"里该维度所有来源的 FE 加起来 ✓。
+     * <p>⚠ 与物品/流体同一个口径 ✓：是**最近一次采样那一刻**的数 ✓ 不是实时读数 ✗。
+     */
+    public static long energyNow(ServerLevel level) {
+        Map<String, Sample> snapshot = LAST_SNAPSHOT.get(level.dimension());
+        if (snapshot == null) return 0L;
+        long sum = 0L;
+        for (Sample sample : snapshot.values()) {
+            sum += sample.energy();
+        }
+        return sum;
+    }
     /** 这个维度是否已经完成过至少一轮采样 ✓（判断"有没有数据"而不是"数据是不是 0" ✓） */
     public static boolean hasSnapshot(ServerLevel level) {
         return LAST_SNAPSHOT.containsKey(level.dimension());
