@@ -45,6 +45,41 @@ public class TianNiHuoItem extends CursedToolItem {
         return true;
     }
 
+    /**
+     * <b>§773：潜行放行 —— 只对「白色空间传送门」返回 true</b> ✓
+     *
+     * <h2>为什么必须有它（§772 实证 ✗）</h2>
+     * 原版在**潜行且手上物品不"潜行放行"**时会**整段跳过**方块交互 ✗：
+     * <pre>
+     * // 客户端 MultiPlayerGameMode#useItemOn（服务端 ServerPlayerGameMode 同一条判定）
+     * boolean flag  = !main.doesSneakBypassUse(...) || !off.doesSneakBypassUse(...);
+     * boolean flag1 = player.isSecondaryUseActive() &amp;&amp; flag;
+     * if (... &amp;&amp; !flag1) blockstate.use(...);      // ← flag1 为真 ⇒ 不调用 ✗
+     * </pre>
+     * 而 §722 的拆门写的是"**必须潜行才拆**"（`WhiteSpacePortalBlock#use` 里的
+     * {@code if (!player.isSecondaryUseActive()) return PASS;} ✓）
+     * ⇒ 天逆鉾原来没有重写本方法（默认 {@code false} ✗）
+     * ⇒ **潜行时 {@code Block#use} 根本不会被调用** ✗ ⇒ 拆门代码永远进不去 ✗
+     * ⇒ 用户实测「天逆鉾破坏不了门了」✓（§772 记录 ✓）。
+     *
+     * <p>⇒ 这里只在"**对着我们自己的门**"时放行 ✓：
+     * 潜行 + 右键门 ⇒ 两手都算 bypass（副手空手时 Forge 恒为 true ✓）
+     * ⇒ 客户端与服务端的 {@code flag1} 都变 false ✓ ⇒ 走 {@code Block#use} ✓ ⇒ 拆门恢复 ✓；
+     * 对着**别的方块**仍返回 false ✓ ⇒ 拿天逆鉾潜行放方块等原版行为一点不变 ✓。
+     *
+     * <p>⚠ 已知原版边角：若**副手也拿着**一个不 bypass 的物品 ✗，原版要求**双手都 bypass** ⇒ 那时仍拆不了 ✗
+     * （原版机制 ✓ 无法从我们这边绕过 ✓，记在备忘录 §772c 以免以后当 bug 查 ✗）。
+     */
+    @Override
+    public boolean doesSneakBypassUse(ItemStack stack, net.minecraft.world.level.LevelReader level,
+                                      net.minecraft.core.BlockPos pos, net.minecraft.world.entity.player.Player player) {
+        try {
+            return level.getBlockState(pos).is(com.mofengbaizhi.tinkersnewlife.content.ModBlocks.WHITE_SPACE_PORTAL.get());
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
     /** 命中后：亡灵特攻（基类）+ 清除式神（中断式神召唤） */
     @Override
     public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
