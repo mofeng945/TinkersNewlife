@@ -3,7 +3,6 @@ package com.mofengbaizhi.tinkersnewlife.content.modifier;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import net.minecraft.resources.ResourceLocation;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
-import slimeknights.tconstruct.library.modifiers.impl.SingleLevelModifier;
 
 /**
  * 虚空金属工具特性·<b>虚空抚摸</b>（<b>无等级</b>）——「用身体触摸虚空的意志吧！」
@@ -15,7 +14,7 @@ import slimeknights.tconstruct.library.modifiers.impl.SingleLevelModifier;
  * （与本模组其它特性同一套分工：强化类只声明 id，事件处理器负责判定与生效 ✓）。
  * 近战/远程两条路都直接复用 {@code util/ToolHelper#getCombatToolWith} ✓（它连悠悠球、弹射武器都解析得到 ✓）。
  */
-public class VoidTouchModifier extends SingleLevelModifier {
+public class VoidTouchModifier extends LevelLessModifier {
 
     /** 强化 id */
     public static final ModifierId ID =

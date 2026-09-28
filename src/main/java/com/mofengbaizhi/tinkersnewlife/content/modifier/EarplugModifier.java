@@ -15,7 +15,6 @@ import slimeknights.tconstruct.library.modifiers.ModifierEntry;
 import slimeknights.tconstruct.library.modifiers.ModifierHooks;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
 import slimeknights.tconstruct.library.modifiers.hook.interaction.KeybindInteractModifierHook;
-import slimeknights.tconstruct.library.modifiers.impl.SingleLevelModifier;
 import slimeknights.tconstruct.library.module.ModuleHookMap;
 import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
@@ -23,7 +22,7 @@ import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 /**
  * 防御槽强化「闭耳塞听」：<b>只能装在头盔上</b>（材料标签 {@code tconstruct:modifiable/armor/helmets}）。
  * <p>
- * <b>无等级强化</b>（{@link SingleLevelModifier}：名字不带等级数字），<b>不占升级槽</b>，而是消耗
+ * <b>无等级强化</b>（{@link LevelLessModifier}：名字不带等级数字，§732 起连"多部件叠出来的 2 级"也不带 ✓），<b>不占升级槽</b>，而是消耗
  * <b>1 个防御槽</b>。
  * <p>
  * 按<b>匠魂的头盔交互键</b>（TCon「头盔交互」，默认 Z）开关耳塞：
@@ -39,7 +38,7 @@ import slimeknights.tconstruct.library.tools.nbt.ToolStack;
  * 所以"实现了钩子接口"还不够，必须在 {@link #registerHooks} 里显式登记
  * {@link ModifierHooks#ARMOR_INTERACT}——否则头盔交互键按下去<b>不会</b>调到本类（实测踩过）。
  */
-public class EarplugModifier extends SingleLevelModifier implements KeybindInteractModifierHook {
+public class EarplugModifier extends LevelLessModifier implements KeybindInteractModifierHook {
 
     /** 强化 id */
     public static final ModifierId ID =

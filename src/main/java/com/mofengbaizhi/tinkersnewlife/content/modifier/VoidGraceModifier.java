@@ -3,7 +3,6 @@ package com.mofengbaizhi.tinkersnewlife.content.modifier;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import net.minecraft.resources.ResourceLocation;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
-import slimeknights.tconstruct.library.modifiers.impl.SingleLevelModifier;
 
 /**
  * 虚空金属盔甲特性·<b>虚无恩宠</b>（<b>无等级</b>）——「此时此刻，有人将统御虚空」
@@ -20,7 +19,7 @@ import slimeknights.tconstruct.library.modifiers.impl.SingleLevelModifier;
  * <p>行为在 {@code content/modifier/events/VoidGraceHandler}（免疫与减伤）＋
  * {@code mixin/GoetyVoidSoulMixin}（灵魂减半，挂在诡厄 {@code ISpell#SoulCalculation} 上 ✓）。
  */
-public class VoidGraceModifier extends SingleLevelModifier {
+public class VoidGraceModifier extends LevelLessModifier {
 
     /** 强化 id */
     public static final ModifierId ID =
