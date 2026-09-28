@@ -100,6 +100,10 @@ public class GoetyVoidTouchedMixin {
             VoidArmorDiag.log("potion:added:" + id + ":" + who(event),
                     "➕ 效果【挂上了】{} ✓ 目标={} {}{}", id, who(event), extra,
                     isTouched(ins) ? " ⭐ 诡厄会播「激活音」✓（反复出现＝有东西在反复挂它）" : "");
+            // §761：**施加方**也点名 ✓（同 id 每 5 秒一条 ✓）——"夜视一开一关"要抓的正是这两侧 ✓
+            VoidArmorDiag.log("potion:add:stack:" + id,
+                    "🧭 【施加】{} 的**发起方**调用栈（同 id 每 5 秒一条 ✓）{}",
+                    id, VoidArmorDiag.shortStack(10, true));
         } catch (Throwable t) {
             VoidArmorDiag.log("sniff:error:potion", "🐞 嗅探异常(PotionEvents.Added) {}", String.valueOf(t));
         }
