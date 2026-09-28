@@ -221,7 +221,16 @@ public final class CursedEnergyReleaseTechnique extends BaseTechnique {
         dmg = com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper
                 .applyCurseCoreTraits(player, target, dmg);
         target.invulnerableTime = 0;
-        target.hurt(level.damageSources().mobAttack(player), (float) dmg);
+        // §785：先补一次击杀归属（这一发确实是这名玩家打的 ✓）—— 保证"最后一击"的归属不会因为
+        //   其它无主伤害（水晶爆炸这类 ✗）把 lastHurtByPlayer 的 100 tick 窗口耗掉而丢失 ✓
+        com.mofengbaizhi.tinkersnewlife.content.curse.KillAttribution.credit(target, player);
+        boolean landed = target.hurt(level.damageSources().mobAttack(player), (float) dmg);
+        // §785 诊断：如果这一发正好把目标打死 ⇒ 记一行（下次验"咒力外放打末影龙算不算击杀"直接看它 ✓）
+        if (landed && !target.isAlive()) {
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
+                    "[咒力外放] 这一发打死了 {} ✓（伤害 {}，攻击者={}，归属已补 ✓）",
+                    target.getName().getString(), dmg, player.getName().getString());
+        }
         com.mofengbaizhi.tinkersnewlife.content.curse.CurseCoreTraitHelper.afterCurseCoreHit(player, target, dmg);
         level.sendParticles(net.minecraft.core.particles.ParticleTypes.DAMAGE_INDICATOR,
                 target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(), 3, 0.2, 0.2, 0.2, 0);
