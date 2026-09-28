@@ -347,8 +347,22 @@ public final class ModConfig {
     /** 各领域 modifier id → [radius, damage, cost] 缩放 */
     public static final Map<String, ConfigValue<Double>[]> DOMAIN_SCALES = new HashMap<>();
 
-    public static final ForgeConfigSpec SPEC;
+    // ==================== 物品空标签归一化（§763） ====================
+    /**
+     * §763：把**没有 NBT 的物品**统一补成一个**空 CompoundTag `{}`**，让"同款但一个带 `{}`、一个没标签"的物品能堆叠。
+     *
+     * <p>背景（用户报 + 存档实证 ✓）：诡厄的「诅咒之笼」在走过
+     * {@code CursedCageBlock#setPlacedBy}（里面用 {@code ItemStack#getOrCreateTag()} 读
+     * {@code BlockEntityTag} ✗）之后会被留下一个**空标签** `{}` ✗，而没走过这条路的同款物品**根本没有标签** ✗；
+     * 原版 {@code ItemStack.isSameItemSameTags} 用 {@code Objects.equals} 比 NBT ⇒ {@code {}} 与 {@code null} 不相等 ✗
+     * ⇒ 两叠永远合不到一起 ✗（AE2 也是按"物品+NBT+能力"分别建键 ✓ 所以它在 AE2 里也存成两格 ✓）。
+     *
+     * <p><b>用户口径（2026-09-28）：通用修复，统一为 `{}`</b> ✓ —— 即"**给没标签的补一个空标签**"✓
+     * （不是把已有空标签抹掉 ✗）。
+     */
+    public static final ConfigValue<Boolean> NORMALIZE_ITEM_TAG;
 
+    public static final ForgeConfigSpec SPEC;
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
 
@@ -845,6 +859,25 @@ public final class ModConfig {
         }
         b.pop();
 
+        b.pop();
+
+        // §763 物品空标签归一化：把"没有 NBT"的物品补成空标签 {}，让"{} / 无标签"两种同款物品能堆叠 ✓
+        b.push("item_tag_normalize").comment(
+                "Normalize items that have NO NBT by giving them an EMPTY CompoundTag ({}).",
+                "",
+                "Why: some mods call ItemStack#getOrCreateTag() just to READ a tag, which leaves an empty {}",
+                "behind on the item. Vanilla compares NBT with Objects.equals, so {} and \"no tag\" are NOT equal",
+                "and the two stacks can never merge (AE2 also keys items by item+NBT+caps, so it stores them",
+                "as two separate entries as well).",
+                "",
+                "true  = give every tag-less item an empty {} (default, user request: 'unify to {}').",
+                "false = leave item NBT completely untouched.",
+                "",
+                "Scope: the player's own inventory (checked once per second), picked-up items and crafted items.",
+                "Items already sitting inside AE2 storage keep their old key until they are taken out once.");
+        NORMALIZE_ITEM_TAG = b.define("enabled", true);
+        b.pop();
+
         SPEC = b.build();
     }
 
@@ -1111,6 +1144,15 @@ public final class ModConfig {
             return Math.max(1, DOMAIN_FRAGMENT_DROP_DENOMINATOR.get());
         } catch (Throwable ignored) {
             return 1000;
+        }
+    }
+
+    /** §763 是否做「空标签归一化」（配置没就绪 ⇒ true） */
+    public static boolean normalizeItemTag() {
+        try {
+            return NORMALIZE_ITEM_TAG.get();
+        } catch (Throwable ignored) {
+            return true;
         }
     }
 }
