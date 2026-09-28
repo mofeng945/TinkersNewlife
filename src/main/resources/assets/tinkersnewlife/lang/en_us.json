@@ -1430,6 +1430,6 @@
   "modifier.tinkersnewlife.void_grace.tip": "§5Immune to void blocks/liquid void/Void-Touched/Slowness; void spells cost half souls; §5+20% void resistance",
   "modifier.tinkersnewlife.watcher_will": "Watcher's Will",
   "modifier.tinkersnewlife.watcher_will.description": "Each level gives a 10% dodge chance; +15% casting speed for Goety and Iron's Spellbooks per level (stacks across pieces).",
-  "modifier.tinkersnewlife.watcher_will.flavor": "The Ender Watcher understands your will...",
+  "modifier.tinkersnewlife.watcher_will.flavor": "The greatest feat, engraved upon the End!",
   "modifier.tinkersnewlife.watcher_will.tip": "§dPer level: 10% dodge; +15% casting speed (Goety + Iron's Spellbooks)"
 }

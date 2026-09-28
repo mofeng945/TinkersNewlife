@@ -5,7 +5,7 @@
     "sortnum":  74,
     "pages":  [
                   {
-                      "text":  "$(bold)Watcher\u0027s Will$() (built into void metal armour, $(bold)levelled$(), $(bold)stacks across pieces$())$(br2)Per level:$(li)$(bold)10%$() chance to dodge an incoming attack (sums the levels on all worn armour pieces, capped at 100%)$(li)$(bold)+15%$() casting speed for both $(bold)Goety$() and $(bold)Iron\u0027s Spellbooks$()$(br2)Note: Goety has no public casting-speed attribute, so this trait hooks its own $(bold)ModAttributes#getCastingSpeed$() (covers every Goety spell).$(br2)$(italic)The Ender Watcher understands your will...$()",
+                      "text":  "$(bold)Watcher\u0027s Will$() (built into void metal armour, $(bold)levelled$(), $(bold)stacks across pieces$())$(br2)Per level:$(li)$(bold)10%$() chance to dodge an incoming attack (sums the levels on all worn armour pieces, capped at 100%)$(li)$(bold)+15%$() casting speed for both $(bold)Goety$() and $(bold)Iron\u0027s Spellbooks$()$(br2)Note: Goety has no public casting-speed attribute, so this trait hooks its own $(bold)ModAttributes#getCastingSpeed$() (covers every Goety spell).$(br2)$(italic)The greatest feat, engraved upon the End!$()",
                       "type":  "patchouli:text"
                   }
               ],

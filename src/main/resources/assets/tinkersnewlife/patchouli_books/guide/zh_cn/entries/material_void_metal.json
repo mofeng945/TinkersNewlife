@@ -14,7 +14,7 @@
                       "type":  "patchouli:text"
                   },
                   {
-                      "text":  "$(bold)盔甲自带特性$()：$(li)$(bold)虚无恩宠$()（无等级）：完全免疫 $(bold)虚空块$()（goety:void_block）与 $(bold)液态虚空$()（goety:void_fluid）造成的伤害与负面效果；免疫 $(bold)虚空之蚀$() 与 $(bold)缓慢$()；施放虚空法术的灵魂能量 $(bold)减半$()；获得 $(bold)+20%$() 虚空系伤害抗性$(li)$(bold)守望意志$()（$(bold)有等级 · 多件叠加$()）：每级 $(bold)10%$() 概率闪避此次攻击，且 $(bold)诡厄巫法$() 与 $(bold)铁魔法$() 的吟唱速度每级 $(bold)+15%$()$(br2)$(italic)末影守望者理解了你的意志。$()",
+                      "text":  "$(bold)盔甲自带特性$()：$(li)$(bold)虚无恩宠$()（无等级）：完全免疫 $(bold)虚空块$()（goety:void_block）与 $(bold)液态虚空$()（goety:void_fluid）造成的伤害与负面效果；免疫 $(bold)虚空之蚀$() 与 $(bold)缓慢$()；施放虚空法术的灵魂能量 $(bold)减半$()；获得 $(bold)+20%$() 虚空系伤害抗性$(li)$(bold)守望意志$()（$(bold)有等级 · 多件叠加$()）：每级 $(bold)10%$() 概率闪避此次攻击，且 $(bold)诡厄巫法$() 与 $(bold)铁魔法$() 的吟唱速度每级 $(bold)+15%$()$(br2)$(italic)最强的战绩，铭刻于末地！$()",
                       "type":  "patchouli:text"
                   }
               ],

@@ -7,7 +7,7 @@ import slimeknights.tconstruct.library.modifiers.ModifierId;
 
 /**
  * 虚空金属盔甲特性·<b>守望意志</b>（<b>有等级</b>，<b>多件可叠加</b>）
- * ——「末影守望者理解了你的意志……」
+ * ——「最强的战绩，铭刻于末地！」（§726 按用户口径改的 flavor 文案 ✓）
  *
  * <p>规格（用户口径）：<b>每级</b>
  * <ol>
