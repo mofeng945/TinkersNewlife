@@ -18,7 +18,6 @@
     "GoetyCastSpeedMixin",
     "GoetyVoidSoulMixin",
     "GoetyVoidTouchedMixin",
-    "EffectRemoveStackMixin",
     "GoetyWorldSoundMixin"
   ],
   "client": [

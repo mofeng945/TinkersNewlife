@@ -38,6 +38,12 @@ public class DreadsteelArmorTrait extends Modifier {
     /** 名字用于在盔甲上查等级（与注册 id 一致） */
     private static final String MODIFIER_ID = "dreadsteel_armor";
 
+    /**
+     * §768：记录"上一次看到的本特性等级"的持久数据键 ✓
+     * <p>⚠ 用它区分"**曾经穿着、现在脱了**"（该清 ✓）与"**从来没穿过**"（**绝不该清** ✗）。
+     */
+    private static final String KEY_LAST_LEVEL = "tinkersnewlife:dreadsteel_last_level";
+
     /** 盔甲上该特性的总等级（损坏的部件不计入；≤0 ⇒ 没穿） */
     private static int getTotalLevel(LivingEntity wearer) {
         return ArmorModifierHelper.getTotalModifierLevelOnArmor(wearer, MODIFIER_ID);
@@ -82,12 +88,25 @@ public class DreadsteelArmorTrait extends Modifier {
             if (wearer.level().isClientSide) return;
 
             if (wearer.tickCount % PASSIVE_CHECK_INTERVAL == 0) {
-                if (getTotalLevel(wearer) <= 0) {
-                    // 卸下（或部件全部损坏）：移除本特性给予的效果
-                    dropEffect(wearer, MobEffects.NIGHT_VISION);
-                    dropEffect(wearer, MobEffects.FIRE_RESISTANCE);
-                    if (ModEffects.DAMAGE_LIMIT.get() != null) {
-                        dropEffect(wearer, ModEffects.DAMAGE_LIMIT.get());
+                int level = getTotalLevel(wearer);
+                net.minecraft.nbt.CompoundTag data = wearer.getPersistentData();
+                int lastLevel = data.getInt(KEY_LAST_LEVEL);
+
+                if (level <= 0) {
+                    // ⚠⚠ §768 修：**只有"曾经穿着、现在脱了"才清** ✗
+                    //   原来这里是无条件清 ✗ ⇒ **没穿过悚怖钢的人也会被我们清掉夜视** ✗✗：
+                    //   `isOurEffect` 的签名是"无限时长 + 无粒子 + 非环境" ✓，
+                    //   而**血族的夜视**正好也是这个签名 ✗（`VampireNightVisionEffectInstance`：
+                    //   `MobEffectInstance(NIGHT_VISION, -1, 0, false, false, false)` ✓ javap 实核 ✓）
+                    //   ⇒ 于是我们每 2 秒把血族的夜视删一次 ✗，血族每 2.5 秒再补回来 ✗
+                    //   ⇒ **血族夜视"开了关关了开"就是这条引起的** ✗✗（§767 完整调用栈实证 ✓）。
+                    if (lastLevel > 0) {
+                        // 卸下（或部件全部损坏）：移除**本特性曾经给予的**效果 ✓
+                        dropEffect(wearer, MobEffects.NIGHT_VISION);
+                        dropEffect(wearer, MobEffects.FIRE_RESISTANCE);
+                        if (ModEffects.DAMAGE_LIMIT.get() != null) {
+                            dropEffect(wearer, ModEffects.DAMAGE_LIMIT.get());
+                        }
                     }
                 } else {
                     // 穿着：缺失就补，无限时长（不会再自己过期）
@@ -96,6 +115,10 @@ public class DreadsteelArmorTrait extends Modifier {
                     if (ModEffects.DAMAGE_LIMIT.get() != null) {
                         keepEffect(wearer, ModEffects.DAMAGE_LIMIT.get());
                     }
+                }
+
+                if (level != lastLevel) {
+                    data.putInt(KEY_LAST_LEVEL, level);
                 }
             }
 
