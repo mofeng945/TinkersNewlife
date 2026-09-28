@@ -73,6 +73,21 @@ public interface RateSource {
         energy.accept(energyStored());
     }
 
+    /**
+     * <b>首次被观测到时，把里面的东西算作"流入"</b>吗？（§748 ✓ 默认 false ✓）
+     *
+     * <p>背景（用户实测）：往一个<b>刚放下的</b>箱子里塞一把剑 ⇒ 产率显示 0 ✗。
+     * 原因是 §735 的基线规则：<b>新来源第一次只立基线、不算变化</b> ✓
+     * —— 那条规则的初衷是"别让"往地下放一箱满满的"刷出巨量产出 ✗"，
+     * 但它把"玩家自己新做的箱子"也一并当成了基线 ✗ 于是人为放进的东西全都不算 ✗。
+     *
+     * <p>⇒ 只有<b>玩家亲手放下的</b>容器（{@code BlockEvent.EntityPlaceEvent} ✓）才返回 true ✓：
+     * 它里面此刻的东西算一次流入 ✓；而<b>世界生成的</b>箱子照旧只立基线 ✓
+     * （结构宝箱本来也被 §745 的 LootTable 规则挡了一层 ✓）。
+     */
+    default boolean countFirstObservationAsInflow() {
+        return false;
+    }
     /** 排查/日志用的一句话描述 ✓（**不展示给玩家** ✓ 本轮没有展示层 ✓） */
     String describe();
 }

@@ -110,8 +110,10 @@ public final class VanillaContainerRateProvider implements RateSourceProvider {
                         cache.remove(pos);
                         continue;                              // 三个能力都没有 ⇒ 不是来源 ✓
                     }
+                    // §748：玩家亲手放下的容器 ⇒ 首次观测算一次流入 ✓（问一次就消费掉这个标记 ✓）
+                    boolean firstInflow = ContainerRateManager.consumePlayerPlaced(level, pos);
                     cached = new Cached(entity, items, fluids, energy,
-                            new BlockEntityRateSource(level.dimension(), entity, items, fluids, energy));
+                            new BlockEntityRateSource(level.dimension(), entity, items, fluids, energy, firstInflow));
                     cache.put(pos, cached);
                 }
                 // ② 保险丝：底层库存对象已经统计过 ⇒ 这一份跳过 ✓（模组连体容器也吃这条 ✓）
@@ -250,14 +252,17 @@ public final class VanillaContainerRateProvider implements RateSourceProvider {
         private final IEnergyStorage energy;
         private final String id;
 
+        private final boolean firstInflow;
+
         BlockEntityRateSource(ResourceKey<Level> dimension, BlockEntity entity,
                               @Nullable IItemHandler items, @Nullable IFluidHandler fluids,
-                              @Nullable IEnergyStorage energy) {
+                              @Nullable IEnergyStorage energy, boolean firstInflow) {
             this.dimension = dimension;
             this.entity = entity;
             this.items = items;
             this.fluids = fluids;
             this.energy = energy;
+            this.firstInflow = firstInflow;
             ResourceLocation type = ForgeRegistries.BLOCK_ENTITY_TYPES.getKey(entity.getType());
             this.id = "be:" + dimension.location() + "@" + entity.getBlockPos().asLong()
                     + "#" + (type == null ? "unknown" : type.toString());
@@ -322,6 +327,12 @@ public final class VanillaContainerRateProvider implements RateSourceProvider {
             forEachStored(itemSink);
             forEachFluid(fluidSink);
             energySink.accept(energyStored());
+        }
+
+        /** §748：玩家亲手放下的容器 ⇒ 首次观测算流入 ✓（世界生成的照旧只立基线 ✓） */
+        @Override
+        public boolean countFirstObservationAsInflow() {
+            return firstInflow;
         }
 
         @Override

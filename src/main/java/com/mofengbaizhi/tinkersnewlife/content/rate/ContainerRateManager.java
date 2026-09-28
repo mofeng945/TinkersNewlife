@@ -79,7 +79,7 @@ public final class ContainerRateManager {
 
     /** 空来源哨兵 ✓（共享不可变空表 ✓ 差分里"两边都是它 ⇒ 跳过"快路径 ✓） */
     private static final Sample EMPTY_SAMPLE =
-            new Sample(Object2LongMaps.emptyMap(), Object2LongMaps.emptyMap(), 0L);
+            new Sample(Object2LongMaps.emptyMap(), Object2LongMaps.emptyMap(), 0L, false);
 
     /** 各维度已加载区块（{@code ChunkEvent} 维护 ✓） */
     private static final Map<ResourceKey<Level>, Set<Long>> LOADED_CHUNKS = new ConcurrentHashMap<>();
@@ -109,6 +109,38 @@ public final class ContainerRateManager {
     /** 一轮采样跑完后的回调（由 {@code IndustrialPioneerHandler} 装上 ⇒ 立刻把新数据推给正在看的人 ✓） */
     private static volatile Consumer<ServerLevel> sweepListener;
 
+    /** §748：玩家亲手放下的容器位置 ⇒ (维度 → (坐标 → 放下时的 tick)) ✓ 只在第一次被扫到时用一次 ✓ */
+    private static final Map<ResourceKey<Level>, Map<Long, Long>> PLAYER_PLACED = new ConcurrentHashMap<>();
+
+    /** §748：这个标记的有效期（tick ✓）—— 放了半天才被扫到，就别再当"新箱子"了 ✓ */
+    private static final long PLACED_MARK_TTL_TICKS = 24_000L;
+
+    /** §748：玩家放下方块 ⇒ 记一笔（**只对玩家**✓ 世界生成的不算 ✗） */
+    @SubscribeEvent
+    public static void onBlockPlaced(net.minecraftforge.event.level.BlockEvent.EntityPlaceEvent event) {
+        try {
+            if (!(event.getEntity() instanceof ServerPlayer player)) return;
+            if (!(event.getLevel() instanceof ServerLevel level)) return;
+            long now = level.getServer() == null ? level.getGameTime() : level.getServer().getTickCount();
+            PLAYER_PLACED.computeIfAbsent(level.dimension(), key -> new ConcurrentHashMap<>())
+                    .put(event.getPos().asLong(), now);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /**
+     * §748：这个位置是不是"玩家刚放下、还没被扫到过"的容器 ✓
+     * <p>⚠ **读一次就消费掉** ✓（{@code remove} ✓）—— 只在"第一次登记这个来源"时用一次 ✓
+     * 由 {@code VanillaContainerRateProvider} 在建来源时问 ✓ 之后不会再有第二次 ✓。
+     */
+    public static boolean consumePlayerPlaced(ServerLevel level, net.minecraft.core.BlockPos pos) {
+        Map<Long, Long> map = PLAYER_PLACED.get(level.dimension());
+        if (map == null) return false;
+        Long when = map.remove(pos.asLong());
+        if (when == null) return false;
+        long now = level.getServer() == null ? level.getGameTime() : level.getServer().getTickCount();
+        return now - when <= PLACED_MARK_TTL_TICKS;
+    }
     private static long lastLagLogTick = Long.MIN_VALUE;
 
     private ContainerRateManager() {
@@ -179,6 +211,7 @@ public final class ContainerRateManager {
         BUDGETS.clear();
         LAST_STATS.clear();
         WATCHERS.clear();
+        PLAYER_PLACED.clear();
         // ⚠ §745：这里**不能**清 LOADED_CHUNKS ✗ —— 出生点/生成器区块是在 ServerStartedEvent
         //   **之前**就加载好的 ✗，清了它们就再也不会补发 ChunkEvent.Load ✗
         //   ⇒ 玩家"站在出生点旁边放个箱子"永远扫不到 ✗（这正是用户实测报的"箱子没被统计"✓）。
@@ -282,10 +315,16 @@ public final class ContainerRateManager {
                 continue;
             }
             // ⑥ 空来源哨兵 ✓
+            // §748：问一下"这个来源是不是玩家刚放下、还该把首次观测算作流入"✓
+            boolean firstInflow = false;
+            try {
+                firstInflow = source.countFirstObservationAsInflow();
+            } catch (Throwable ignored) {
+            }
             sweep.now.put(source.id(),
-                    (items.isEmpty() && fluids.isEmpty() && energy[0] == 0L)
+                    (items.isEmpty() && fluids.isEmpty() && energy[0] == 0L && !firstInflow)
                             ? EMPTY_SAMPLE
-                            : new Sample(items, fluids, energy[0]));
+                            : new Sample(items, fluids, energy[0], firstInflow));
             used++;
         }
         long sliceNanos = System.nanoTime() - start;
@@ -319,7 +358,20 @@ public final class ContainerRateManager {
             for (Map.Entry<String, Sample> entry : sweep.now.entrySet()) {
                 Sample before = previous.get(entry.getKey());
                 if (before == null) {
-                    skipped++;                                          // 新来源 ⇒ 只立基线 ✓
+                    Sample fresh = entry.getValue();
+                    if (fresh.firstInflow()) {
+                        // §748：玩家亲手放下的容器 ⇒ 首次观测把里面的东西算作**流入** ✓
+                        //   （否则"往新箱子里放一把剑"永远显示 0 ✗ —— 用户实测的正是这条 ✓）
+                        for (Object2LongMap.Entry<Item> one : fresh.items().object2LongEntrySet()) {
+                            if (one.getLongValue() != 0L) deltaItems.addTo(one.getKey(), one.getLongValue());
+                        }
+                        for (Object2LongMap.Entry<Fluid> one : fresh.fluids().object2LongEntrySet()) {
+                            if (one.getLongValue() != 0L) deltaFluids.addTo(one.getKey(), one.getLongValue());
+                        }
+                        netEnergy += fresh.energy();
+                    } else {
+                        skipped++;                                      // 世界生成的容器 ⇒ 只立基线 ✓（防假尖峰 ✓）
+                    }
                     continue;
                 }
                 Sample after = entry.getValue();
@@ -607,7 +659,8 @@ public final class ContainerRateManager {
     }
 
     /** 一个来源的三类快照 ✓（只存非零项 ✓ 空来源共享 {@link #EMPTY_SAMPLE} ✓） */
-    private record Sample(Object2LongMap<Item> items, Object2LongMap<Fluid> fluids, long energy) {
+    private record Sample(Object2LongMap<Item> items, Object2LongMap<Fluid> fluids, long energy,
+                          boolean firstInflow) {
     }
 
     /** 一轮分帧采样的进行态 ✓ */
