@@ -5,7 +5,7 @@
     "sortnum":  72,
     "pages":  [
                   {
-                      "text":  "$(bold)末影之力$()（虚空金属工具自带 · $(bold)无等级$() · 铁魔法联动）$(br2)效果：工具$(bold)自带注入 3 级传送术$()（irons_spellbooks:teleport）与 $(bold)3 级法术镣铐$()（irons_spellbooks:arcane_shackle）。$(br2)⚠ 只在物品$(bold)还没有$()法术容器时写入 ⇒ 不会覆盖你在奥术铁砧上的编辑；容器被编辑过之后本特性不再插手。$(br2)$(italic)末影维度意志正在注视着你……$()",
+                      "text":  "$(bold)末影之力$()（虚空金属工具自带 · $(bold)无等级$() · 铁魔法联动）$(br2)效果：工具$(bold)自带注入 3 级传送术$()（irons_spellbooks:teleport）与 $(bold)3 级奥术镣铐$()（irons_spellbooks:arcane_shackle）。$(br2)⚠ 只在物品$(bold)还没有$()法术容器时写入 ⇒ 不会覆盖你在奥术铁砧上的编辑；容器被编辑过之后本特性不再插手。$(br2)$(italic)末影维度意志正在注视着你……$()",
                       "type":  "patchouli:text"
                   }
               ],

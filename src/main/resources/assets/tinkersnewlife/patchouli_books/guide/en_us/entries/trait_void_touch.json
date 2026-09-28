@@ -5,7 +5,7 @@
     "sortnum":  71,
     "pages":  [
                   {
-                      "text":  "$(bold)Void Touch$() (built into void metal tools, $(bold)no levels$())$(br2)Melee or ranged hits with the tool inflict $(bold)Void Wane$() (goety_ladder:void_wane) for $(bold)3 seconds$(); if the target already has it, the level goes $(bold)+1$(), up to $(bold)level 5$().$(br2)Each level of Void Wane: -20% movement speed, -4 damage, -10% non-void damage taken.$(br2)$(italic)Touch the will of the void with your body!$()",
+                      "text":  "$(bold)Void Touch$() (built into void metal tools, $(bold)no levels$())$(br2)Melee or ranged hits with the tool inflict $(bold)Void Wane$() (goety_ladder:void_wane) for $(bold)3 seconds$(); if the target already has it, the level goes $(bold)+1$(), up to $(bold)level 5$().$(br2)Each level of Void Wane: -20% movement speed, -4 damage, -10% non-void damage taken.$(br2)Not to be confused with Goety's $(bold)Void-Touched$() (goety:void_touched), a different effect that multiplies the next hit taken and is then consumed.$(br2)$(italic)Touch the will of the void with your body!$()",
                       "type":  "patchouli:text"
                   }
               ]

@@ -1419,9 +1419,9 @@
   "modifier.tinkersnewlife.void_touch.flavor": "用身体触摸虚空的意志吧！",
   "modifier.tinkersnewlife.void_touch.tip": "§5命中叠「虚蚀」3 秒；已有则 +1 级（最高 5 级）",
   "modifier.tinkersnewlife.ender_power": "末影之力",
-  "modifier.tinkersnewlife.ender_power.description": "工具自带注入 3 级传送术与 3 级法术镣铐。",
+  "modifier.tinkersnewlife.ender_power.description": "工具自带注入 3 级传送术与 3 级奥术镣铐。",
   "modifier.tinkersnewlife.ender_power.flavor": "末影维度意志正在注视着你……",
-  "modifier.tinkersnewlife.ender_power.tip": "§d自带注入：传送术 Lv3、法术镣铐 Lv3",
+  "modifier.tinkersnewlife.ender_power.tip": "§d自带注入：传送术 Lv3、奥术镣铐 Lv3",
   "modifier.tinkersnewlife.ender_power.tip.missing": "§8需要铁魔法（Iron's Spellbooks）：未安装时本条不生效",
   "modifier.tinkersnewlife.void_grace": "虚无恩宠",
   "modifier.tinkersnewlife.void_grace.description": "免疫虚空块与液态虚空的伤害与负面效果；免疫虚空之蚀与缓慢；施放虚空法术的灵魂消耗减半；获得 20% 虚空系伤害抗性。",
@@ -1430,5 +1430,9 @@
   "modifier.tinkersnewlife.watcher_will": "守望意志",
   "modifier.tinkersnewlife.watcher_will.description": "每级 10% 概率闪避此次攻击；诡厄巫法与铁魔法的吟唱速度每级 +15%（多件可叠加）。",
   "modifier.tinkersnewlife.watcher_will.flavor": "最强的战绩，铭刻于末地！",
-  "modifier.tinkersnewlife.watcher_will.tip": "§d每级：10% 闪避；吟唱速度 +15%（诡厄巫法 + 铁魔法）"
+  "modifier.tinkersnewlife.watcher_will.tip": "§d每级：10% 闪避；吟唱速度 +15%（诡厄巫法 + 铁魔法）",
+
+  "spell.irons_spellbooks.arcane_shackle": "奥术镣铐",
+  "entity.irons_spellbooks.arcane_shackle": "奥术镣铐",
+  "spell.irons_spellbooks.citadel_keeper": "远古骑士"
 }

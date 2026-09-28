@@ -14,7 +14,7 @@
                       "type":  "patchouli:text"
                   },
                   {
-                      "text":  "$(bold)Built-in armour traits$():$(li)$(bold)Void Grace$() (no levels): full immunity to damage and debuffs from $(bold)Void Blocks$() (goety:void_block) and $(bold)Liquid Void$() (goety:void_fluid); immunity to $(bold)Void-Touched$() and $(bold)Slowness$(); void spells cost $(bold)half$() the soul energy; $(bold)+20%$() void damage resistance.$(li)$(bold)Watcher\u0027s Will$() ($(bold)levelled, stacks across pieces$()): each level gives a $(bold)10%$() dodge chance and $(bold)+15%$() casting speed for both $(bold)Goety$() and $(bold)Iron\u0027s Spellbooks$().$(br2)$(italic)The greatest feat, engraved upon the End!$()",
+                      "text":  "$(bold)Built-in armour traits$():$(li)$(bold)Void Grace$() (no levels): full immunity to damage and debuffs from $(bold)Void Blocks$() (goety:void_block) and $(bold)Liquid Void$() (goety:void_fluid); immunity to $(bold)Void-Touched$() (the next hit taken is multiplied by level + 1, then consumed) and $(bold)Slowness$(); void spells cost $(bold)half$() the soul energy; $(bold)+20%$() void damage resistance.$(li)$(bold)Watcher\u0027s Will$() ($(bold)levelled, stacks across pieces$()): each level gives a $(bold)10%$() dodge chance and $(bold)+15%$() casting speed for both $(bold)Goety$() and $(bold)Iron\u0027s Spellbooks$().$(br2)$(italic)The greatest feat, engraved upon the End!$()",
                       "type":  "patchouli:text"
                   }
               ],

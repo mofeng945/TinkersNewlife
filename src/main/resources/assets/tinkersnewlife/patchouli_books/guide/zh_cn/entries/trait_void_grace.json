@@ -5,7 +5,7 @@
     "sortnum":  73,
     "pages":  [
                   {
-                      "text":  "$(bold)虚无恩宠$()（虚空金属盔甲自带 · $(bold)无等级$()）$(br2)效果：$(li)完全免疫 $(bold)虚空块$()（goety:void_block）与 $(bold)液态虚空$()（goety:void_fluid）带来的伤害与负面效果$(li)免疫 $(bold)虚空之蚀$()（goety:void_touched）与 $(bold)缓慢$()$(li)施放 $(bold)虚空法术$() 的灵魂能量消耗 $(bold)减半$()$(li)获得 $(bold)20%$() 虚空系伤害抗性$(br2)$(italic)此时此刻，有人将统御虚空。$()",
+                      "text":  "$(bold)虚无恩宠$()（虚空金属盔甲自带 · $(bold)无等级$()）$(br2)效果：$(li)完全免疫 $(bold)虚空块$()（goety:void_block）与 $(bold)液态虚空$()（goety:void_fluid）带来的伤害与负面效果$(li)免疫 $(bold)虚空之蚀$()（goety:void_touched；诡厄本体效果：受伤时按 $(bold)×(等级+1)$() 结算并立刻消耗）与 $(bold)缓慢$()$(li)施放 $(bold)虚空法术$() 的灵魂能量消耗 $(bold)减半$()$(li)获得 $(bold)20%$() 虚空系伤害抗性$(br2)$(italic)此时此刻，有人将统御虚空。$()",
                       "type":  "patchouli:text"
                   }
               ],
