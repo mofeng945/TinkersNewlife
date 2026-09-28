@@ -1,5 +1,5 @@
 {
-  "_comment": "巫师套装的图标底图登记：游戏内 /tconstruct generate_part_textures 会按这里的 path+stat_type 生成 <path>_<材料> 贴图（格式照匠魂本体 assets/tconstruct/tinkering/generator_part_textures.json）。套装现在是 3 部件（镶板 / 锁链基底 / 法袍系带）⇒ 每件只登记 body/trim/lace 三张 ✓。",
+  "_comment": "部件贴图生成登记：游戏内 /tconstruct generate_part_textures 会按这里的 path+stat_type 生成 <path>_<材料> 贴图（格式照匠魂本体 assets/tconstruct/tinkering/generator_part_textures.json）。§800：巫师套装（3 部件 ⇒ 每件 body/trim/lace 三张）+ **自研工具部件**（飞剑/战镰/法杖/龙杖/无声手套/悠悠球/咒力核心… 见 §355 之后被误删、现按 git 原文恢复）都登记在这里 ✓。",
   "parts": [
     { "path": "tinkersnewlife:armor/wizard/hat", "stat_type": "tconstruct:plating_helmet" },
     { "path": "tinkersnewlife:armor/wizard/robe", "stat_type": "tconstruct:plating_chestplate" },
@@ -16,6 +16,34 @@
     { "path": "tinkersnewlife:item/tool/armor/wizard/wizard_leggings_lace", "stat_type": "tconstruct:maille" },
     { "path": "tinkersnewlife:item/tool/armor/wizard/wizard_boots_body", "stat_type": "tconstruct:plating_boots" },
     { "path": "tinkersnewlife:item/tool/armor/wizard/wizard_boots_trim", "stat_type": "tconstruct:maille" },
-    { "path": "tinkersnewlife:item/tool/armor/wizard/wizard_boots_lace", "stat_type": "tconstruct:maille" }
+    { "path": "tinkersnewlife:item/tool/armor/wizard/wizard_boots_lace", "stat_type": "tconstruct:maille" },
+    { "path": "tinkersnewlife:item/tool/flying_sword/blade1", "stat_type": "tconstruct:head" },
+    { "path": "tinkersnewlife:item/tool/flying_sword/blade2", "stat_type": "tconstruct:head" },
+    { "path": "tinkersnewlife:item/tool/flying_sword/tough_handle1", "stat_type": "tconstruct:handle" },
+    { "path": "tinkersnewlife:item/tool/flying_sword/tough_handle2", "stat_type": "tconstruct:handle" },
+    { "path": "tinkersnewlife:item/tool/flying_sword/tool_handle", "stat_type": "tconstruct:handle" },
+    { "path": "tinkersnewlife:item/tool/war_scythe/head1", "stat_type": "tconstruct:head" },
+    { "path": "tinkersnewlife:item/tool/war_scythe/head2", "stat_type": "tconstruct:head" },
+    { "path": "tinkersnewlife:item/tool/war_scythe/binding", "stat_type": "tconstruct:binding" },
+    { "path": "tinkersnewlife:item/tool/war_scythe/handle1", "stat_type": "tconstruct:handle" },
+    { "path": "tinkersnewlife:item/tool/war_scythe/handle2", "stat_type": "tconstruct:handle" },
+    { "path": "tinkersnewlife:item/tool/modular_staff/head", "stat_type": "tconstruct:head" },
+    { "path": "tinkersnewlife:item/tool/modular_staff/binding", "stat_type": "tconstruct:binding" },
+    { "path": "tinkersnewlife:item/tool/modular_staff/handle1", "stat_type": "tconstruct:handle" },
+    { "path": "tinkersnewlife:item/tool/modular_staff/handle2", "stat_type": "tconstruct:handle" },
+    { "path": "tinkersnewlife:item/tool/dragon_staff/head", "stat_type": "tconstruct:head" },
+    { "path": "tinkersnewlife:item/tool/dragon_staff/handle", "stat_type": "tconstruct:handle" },
+    { "path": "tinkersnewlife:item/tool/dragon_staff/handle2", "stat_type": "tconstruct:handle" },
+    { "path": "tinkersnewlife:item/tool/silent_glove/silent_glove_core", "stat_type": "tconstruct:head" },
+    { "path": "tinkersnewlife:item/tool/silent_glove/silent_glove_binding", "stat_type": "tconstruct:handle" },
+    { "path": "tinkersnewlife:item/tool/yo_yo/wheel1", "stat_type": "tconstruct:head" },
+    { "path": "tinkersnewlife:item/tool/yo_yo/wheel2", "stat_type": "tconstruct:head" },
+    { "path": "tinkersnewlife:item/tool/yo_yo/spool", "stat_type": "tconstruct:handle" },
+    { "path": "tinkersnewlife:item/tool/yo_yo/bowstring", "stat_type": "tconstruct:bowstring" },
+    { "path": "tinkersnewlife:item/tool/parts/dragon_core", "stat_type": "tconstruct:head" },
+    { "path": "tinkersnewlife:item/tool/parts/spell_core", "stat_type": "tconstruct:head" },
+    { "path": "tinkersnewlife:item/tool/parts/curse_core_part", "stat_type": "tconstruct:head" },
+    { "path": "tinkersnewlife:item/tool/parts/yo_yo_wheel", "stat_type": "tconstruct:head" },
+    { "path": "tinkersnewlife:item/tool/parts/yo_yo_spool", "stat_type": "tconstruct:handle" }
   ]
 }
