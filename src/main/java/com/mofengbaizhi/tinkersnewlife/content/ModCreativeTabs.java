@@ -104,6 +104,9 @@ public class ModCreativeTabs {
                                 acceptItemIfPresent(output, "everburning_holy_fire_bucket");
                                 // 诡厄巫法·启示录组：熔融破碎之环（神灵金原料流体）
                                 acceptItemIfPresent(output, "molten_broken_ring_bucket");
+                                // 诡厄巫法·阶梯组：熔融虚空金属（§725 加的流体；虚空金属锭 1 锭 = 90 mB）
+                                // —— §730 用户问「流体加没加创造物品栏」时发现漏了，补上 ✓
+                                acceptItemIfPresent(output, "molten_void_metal_bucket");
         // 铁魔法（irons_spellbooks）联动流体桶：原初受火遗魂 / 熔融奥铁 / 神圣灵液 /
         // 灼热之冰 / 液态奥术 / 流体灰烬 / 熔融炽金（未安装铁魔法时这些物品不存在，自动跳过）
         acceptItemIfPresent(output, "primordial_fire_soul_bucket");
@@ -309,6 +312,7 @@ public class ModCreativeTabs {
         MATERIAL_SOURCE_MOD.put("dragonsteel_lightning", "iceandfire");
         MATERIAL_SOURCE_MOD.put("dreadsteel", "iceandfire");     // 悚怖碎片来自冰火
         MATERIAL_SOURCE_MOD.put("dragonbone", "iceandfire");     // 龙骨
+        MATERIAL_SOURCE_MOD.put("void_metal", "goety_ladder");   // §730 虚空金属（虚空金属锭来自阶梯 ✓）
     }
 
     /** 材料是否可用：原生材料恒可用；联动材料仅其来源 mod 已加载时可用 */
