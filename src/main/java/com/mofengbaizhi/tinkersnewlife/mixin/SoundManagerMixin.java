@@ -23,12 +23,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * </ul>
  * ⇒ 直接在 {@link SoundManager#play} 的 HEAD 插一脚 ✓ 把声音 id、音量、音调打到日志里 ✓。
  *
- * <h2>只记"可疑的"（不然满屏环境音 ✗）</h2>
- * 只记这三类：
+ * <h2>⚠ §752 起改成"全记"（前一版过滤太窄，测试时一条都没抓到 ✗）</h2>
  * <ul>
- *   <li>命名空间是 {@code goety} / {@code goety_ladder} / {@code tinkersnewlife} ✓；</li>
- *   <li>或者路径里含 {@code armor} / {@code void} / {@code soul} ✓（顺带能抓到
- *       "护甲被反复穿上"这类原版音效 ✓ —— 那也是一种可能 ✗）。</li>
+ *   <li><b>钩三个入口</b>：{@code play} ✓、{@code playDelayed} ✓、
+ *       <b>{@code queueTickingSound}</b> ✓✓ —— 最后这个是关键 ✗：
+ *       <b>循环音（loop）不走 {@code play}</b> ✗ 而是走 {@code queueTickingSound} ✓
+ *       （诡厄的 {@code void_touched_loop} 就是循环音 ✓ ⇒ 上一版**必然抓不到** ✗）；</li>
+ *   <li>不再按命名空间过滤 ✗ —— <b>所有音效都记</b> ✓（同一个 id 仍每 5 秒最多一行 ✓
+ *       所以短时间测试不会刷屏 ✓，读完我再自己筛 ✓）。</li>
  * </ul>
  * <p>同一个音效 id 最多每 5 秒一行 ✓（{@link VoidArmorDiag} 统一限流 ✓），
  * 所以"一直在响"的声音会**反复出现同一行** ✓ 一眼就能认出来 ✓。
@@ -38,22 +40,30 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class SoundManagerMixin {
 
     @Inject(method = "play", at = @At("HEAD"))
-    private void tinkersnewlife$sniffSound(SoundInstance sound, CallbackInfo ci) {
+    private void tinkersnewlife$sniffPlay(SoundInstance sound, CallbackInfo ci) {
+        sniff("play", sound);
+    }
+
+    @Inject(method = "playDelayed", at = @At("HEAD"))
+    private void tinkersnewlife$sniffPlayDelayed(SoundInstance sound, int delay, CallbackInfo ci) {
+        sniff("delayed", sound);
+    }
+
+    /** ⭐ 循环音走这里（不走 play ✗）—— 诡厄的 void_touched_loop 就是这一类 ✓ */
+    @Inject(method = "queueTickingSound", at = @At("HEAD"))
+    private void tinkersnewlife$sniffTicking(net.minecraft.client.resources.sounds.TickableSoundInstance sound,
+                                             CallbackInfo ci) {
+        sniff("loop", sound);
+    }
+
+    /** 统一的记录逻辑 ✓（§752 起**全都记** ✓ 由 {@link VoidArmorDiag} 按 id 限流 ✓） */
+    private static void sniff(String from, SoundInstance sound) {
         try {
             if (!VoidArmorDiag.ENABLED || sound == null) return;
             ResourceLocation id = sound.getLocation();
             if (id == null) return;
-            String namespace = id.getNamespace();
-            String path = id.getPath();
-            boolean interesting = "goety".equals(namespace)
-                    || "goety_ladder".equals(namespace)
-                    || "tinkersnewlife".equals(namespace)
-                    || path.contains("armor")
-                    || path.contains("void")
-                    || path.contains("soul");
-            if (!interesting) return;
-            VoidArmorDiag.log("sound:" + id, "🔊 播放音效 {} ✓（音量 {} / 音调 {}）",
-                    id, sound.getVolume(), sound.getPitch());
+            VoidArmorDiag.log("sound:" + id, "🔊 播放音效 {} ✓（入口 {} / 音量 {} / 音调 {}）",
+                    id, from, sound.getVolume(), sound.getPitch());
         } catch (Throwable ignored) {
             // 嗅探本身绝不许影响游戏 ✗
         }

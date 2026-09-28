@@ -34,7 +34,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public interface GoetyVoidSoulMixin {
 
     @Inject(method = "SoulCalculation", at = @At("RETURN"), cancellable = true, remap = false, require = 1)
-    private void tinkersnewlife$halveVoidSoulCost(LivingEntity caster,
+    // ⚠ §752：接口 mixin 的注入方法**必须是 public** ✗ —— 原来是 private ⇒ Mixin 直接拒绝加载 ✗
+    //   （日志实证：InvalidInterfaceMixinException: Interface mixin contains a non-public method ✗）
+    //   ⇒ 也就是说"虚空法术灵魂减半"这条从 §723 起**一直没生效** ✗，这次一并修好 ✓
+    // ⚠ Java 里接口方法不能"public + 带方法体" ✗ ⇒ 用 **default** ✓（default 方法本身就是 public ✓
+    //   正好满足 Mixin 对"接口 mixin 注入方法必须 public"的要求 ✓）
+    default void tinkersnewlife$halveVoidSoulCost(LivingEntity caster,
                                                  CallbackInfoReturnable<Integer> cir) {
         if (caster == null) return;
         if (!VoidGraceHandler.wears(caster)) return;
