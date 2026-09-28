@@ -324,6 +324,8 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         if (target.isAlive()) {
             target.invulnerableTime = 0;
             com.mofengbaizhi.tinkersnewlife.content.curse.CurseDeath.mark(target);
+            // §784：这一发是无主伤害（magic ✗）⇒ 先补击杀归属 ✓
+            com.mofengbaizhi.tinkersnewlife.content.curse.KillAttribution.credit(target, player);
             target.hurt(player.damageSources().magic(), 1.0E9F);
         }
         if (target.isAlive()) {

@@ -383,6 +383,8 @@ public final class CursedSpeechTechnique extends BaseTechnique {
                 target.invulnerableTime = 0;
                 float dmg = (float) amplifyTechniqueDamage(player, 9.0 * honorMul * power);
                 com.mofengbaizhi.tinkersnewlife.content.curse.CurseDeath.mark(target);
+                // §784：无主伤害（magic ✗）先补击杀归属 ⇒ 咒言杀死的目标也算施术者的击杀 ✓
+                com.mofengbaizhi.tinkersnewlife.content.curse.KillAttribution.credit(target, player);
                 target.hurt(level.damageSources().magic(), dmg);
                 float boom = Math.min(3.0F, 1.2F + 0.3F * (float) (honorMul * power));
                 level.explode(player, target.getX(), target.getY() + 0.5, target.getZ(),
@@ -393,6 +395,8 @@ public final class CursedSpeechTechnique extends BaseTechnique {
                 target.invulnerableTime = 0;
                 float dmg = (float) amplifyTechniqueDamage(player, 7.0 * honorMul * power);
                 com.mofengbaizhi.tinkersnewlife.content.curse.CurseDeath.mark(target);
+                // §784：无主伤害先补击杀归属 ✓
+                com.mofengbaizhi.tinkersnewlife.content.curse.KillAttribution.credit(target, player);
                 target.hurt(level.damageSources().magic(), dmg);
                 selfHeal[0] += dmg * 0.5;
                 level.sendParticles(ParticleTypes.SOUL, target.getX(), target.getY() + 1.0, target.getZ(),
@@ -412,6 +416,8 @@ public final class CursedSpeechTechnique extends BaseTechnique {
                 target.invulnerableTime = 0;
                 float dmg = (float) amplifyTechniqueDamage(player, 8.0 * honorMul * power);
                 com.mofengbaizhi.tinkersnewlife.content.curse.CurseDeath.mark(target);
+                // §784：无主伤害先补击杀归属 ✓
+                com.mofengbaizhi.tinkersnewlife.content.curse.KillAttribution.credit(target, player);
                 target.hurt(level.damageSources().magic(), dmg);
             }
             case CursedSpeechRegistry.FX_ATTACK -> {
@@ -571,6 +577,8 @@ public final class CursedSpeechTechnique extends BaseTechnique {
                 // 爆裂！
                 target.invulnerableTime = 0;
                 com.mofengbaizhi.tinkersnewlife.content.curse.CurseDeath.mark(target);
+                // §784：无主伤害先补击杀归属 ✓
+                com.mofengbaizhi.tinkersnewlife.content.curse.KillAttribution.credit(target, player);
                 target.hurt(level.damageSources().magic(), 60.0F);
                 level.explode(null, target.getX(), target.getY(), target.getZ(), 3.0F,
                         false, net.minecraft.world.level.Level.ExplosionInteraction.NONE);

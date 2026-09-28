@@ -91,6 +91,8 @@ public class TieGuanGaiWeiShanDomain extends BaseDomain {
             if (burnTick) {
                 e.invulnerableTime = 0;
                 com.mofengbaizhi.tinkersnewlife.content.curse.CurseDeath.mark(e);
+                // §784：无主伤害（magic ✗）先补击杀归属 ⇒ 被领域灼烧死的目标也算施术者的击杀 ✓
+                com.mofengbaizhi.tinkersnewlife.content.curse.KillAttribution.credit(e, player);
                 e.hurt(level.damageSources().magic(), burnDamage(player));
             }
         }

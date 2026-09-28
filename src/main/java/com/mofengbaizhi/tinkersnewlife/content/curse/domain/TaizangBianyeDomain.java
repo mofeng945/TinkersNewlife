@@ -102,6 +102,8 @@ public class TaizangBianyeDomain extends BaseDomain {
                     float dmg = (float) (1.5 + over * 0.35);
                     t.invulnerableTime = 0;
                     com.mofengbaizhi.tinkersnewlife.content.curse.CurseDeath.mark(t);
+                    // §784：无主伤害（magic ✗）先补击杀归属 ⇒ 被领域磨死的目标也算施术者的击杀 ✓
+                    com.mofengbaizhi.tinkersnewlife.content.curse.KillAttribution.credit(t, player);
                     t.hurt(level.damageSources().magic(), dmg);
                 }
             }

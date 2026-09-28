@@ -100,6 +100,40 @@ public final class KillAttribution {
         if (LAST_HIT.size() > MAX_ENTRIES) prune(now);
     }
 
+    /**
+     * <b>§784：给"即将打出的无主伤害"提前记上主人</b> ✓ —— 供领域直伤／咒言／反重力／雷电这类
+     * {@code damageSources().magic()} 的调用点使用 ✓。
+     *
+     * <h2>为什么需要它（用户实测：两次末影龙只算了 1 次 ✗）</h2>
+     * 那些路径**不带来源实体**✗ ⇒ 原版不会把玩家写进 {@code lastHurtByPlayer} ✗
+     * ⇒ 若目标**在此之前没有被玩家正常打过**（典型：被领域／咒言**直接磨死** ✗），
+     * {@link #onLivingHurt} 里的"回查最近一次主人"也就**查不到人** ✗ ⇒ 这一杀**不算任何人** ✗✗
+     * （存档实证：`minecraft:killed: minecraft:ender_dragon` 两次击杀只累计到 1 ✓）。
+     *
+     * <p>⇒ 在这些伤害**打出之前**调一次本方法 ✓：既写入记忆（供后续无主伤害回查 ✓），
+     * 也**立刻**把 {@code lastHurtByPlayer/Mob} 补到目标身上 ✓ ⇒ 死亡结算一定能认出玩家 ✓
+     * （战利品 `killed_by_player` ✓ 与成就 `player_killed_entity` ✓ 都会成立 ✓）。
+     *
+     * <p>⚠ 语义边界：**施术者确实造成了这次伤害**时才可以调 ✓（领域里被磨死的怪 ✓ 咒言命中的目标 ✓
+     * 都符合 ✓）；"静默移除／主动收回"这类**不算击杀**的死亡仍应走 {@link #forget} ✗。
+     *
+     * @param victim   即将受伤的目标
+     * @param attacker 造成伤害的一方（玩家本人 ✓ / 投射物主人 ✓ / 玩家拥有的生物 ✓）
+     */
+    public static void credit(@Nullable LivingEntity victim, @Nullable Entity attacker) {
+        if (victim == null || attacker == null) return;
+        if (victim.level().isClientSide) return;
+        try {
+            ServerPlayer owner = playerBehind(attacker);
+            if (owner == null) return;
+            remember(victim, owner);          // ① 写入记忆：后续无主伤害回查得到 ✓
+            victim.setLastHurtByPlayer(owner); // ② 立刻补归属：死亡结算立刻认得出 ✓
+            victim.setLastHurtByMob(owner);
+        } catch (Throwable ignored) {
+            // 补归属失败绝不影响伤害结算 ✗
+        }
+    }
+
     /** 回查"最后一击的主人"；没有 / 已过期 / 人已下线 → null ✓ */
     @Nullable
     public static ServerPlayer find(@Nullable LivingEntity victim) {
