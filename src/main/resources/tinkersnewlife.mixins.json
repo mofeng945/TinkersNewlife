@@ -24,7 +24,8 @@
     "HumanoidArmorLayerMixin",
     "XaeroRadarMixin",
     "JadeObjectNameMixin",
-    "MantleFluidShaderMixin"
+    "MantleFluidShaderMixin",
+    "SoundManagerMixin"
   ],
   "injectors": {
     "defaultRequire": 0
