@@ -372,6 +372,15 @@ public final class ModConfig {
      */
     public static final ConfigValue<Boolean> ENIGMATIC_CURIO_KEEPS_NIGHT_VISION;
 
+    // ==================== 暮色森林迷宫随机源线程安全（§779） ====================
+    /**
+     * §779：C2ME 的多线程世界生成会让**同一个 {@code TFMaze} 实例**被多个线程同时使用 ✗，
+     * 而它的 {@code rand} 是非线程安全的 {@code LegacyRandomSource} ⇒ 原版检测器直接崩 ✗
+     * （NL `crash-2026-09-28_19.49.42-server.txt` ✓）。
+     * <p>开启本项＝给该随机源套一层同步包装（序列不变 ✓ 竞态消失 ✓，默认 <b>true</b> ✓）。
+     */
+    public static final ConfigValue<Boolean> TWILIGHT_MAZE_THREAD_SAFE_RANDOM;
+
     public static final ForgeConfigSpec SPEC;
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -900,6 +909,19 @@ public final class ModConfig {
         ENIGMATIC_CURIO_KEEPS_NIGHT_VISION = b.define("enabled", true);
         b.pop();
 
+        // §779 暮色森林迷宫（TFMaze）随机源线程安全 —— 修 C2ME 多线程世界生成下的竞态崩溃
+        b.push("twilight_maze_thread_safe_random").comment(
+                "Wrap Twilight Forest's TFMaze random source in a synchronized wrapper.",
+                "",
+                "Why: C2ME's threaded world-gen can use the SAME TFMaze instance from several threads, while",
+                "TFMaze.rand is a plain (non thread-safe) LegacyRandomSource -> the vanilla ThreadingDetector",
+                "throws 'Accessing LegacyRandomSource from multiple threads' and crashes the game.",
+                "",
+                "true  = serialize access to that random source (RNG sequence unchanged, race removed; default).",
+                "false = leave Twilight Forest untouched (the C2ME crash can then happen again).");
+        TWILIGHT_MAZE_THREAD_SAFE_RANDOM = b.define("enabled", true);
+        b.pop();
+
         SPEC = b.build();
     }
 
@@ -1166,6 +1188,15 @@ public final class ModConfig {
             return Math.max(1, DOMAIN_FRAGMENT_DROP_DENOMINATOR.get());
         } catch (Throwable ignored) {
             return 1000;
+        }
+    }
+
+    /** §779 是否给暮色森林迷宫的随机源套同步包装（配置没就绪 ⇒ true） */
+    public static boolean twilightMazeThreadSafeRandom() {
+        try {
+            return TWILIGHT_MAZE_THREAD_SAFE_RANDOM.get();
+        } catch (Throwable ignored) {
+            return true;
         }
     }
 
