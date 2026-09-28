@@ -102,6 +102,15 @@ public final class VoidGraceHandler {
         boolean hadSlowness = wearer.hasEffect(MobEffects.MOVEMENT_SLOWDOWN);
         MobEffect touched = GoetyLadderCompat.effect(GoetyLadderCompat.VOID_TOUCHED);
         boolean hadTouched = touched != null && wearer.hasEffect(touched);
+        // §756 诊断：**每次兜底检查都留一行状态**（每 5 秒限流一行 ✓）
+        //   目的：把"我们这一侧到底看见没看见虚空之蚀"钉死 ✗
+        //   —— 若这里长期是「无 ✓」而诡厄那边还在每秒播取消音 ✗，就说明**清它的不是我们** ✓，方向立刻换 ✓
+        com.mofengbaizhi.tinkersnewlife.util.VoidArmorDiag.log("clean:state",
+                "虚无恩宠·兜底检查 ✓（虚空之蚀={} ／ 缓慢={} ／ 效果探测={}）玩家={}",
+                hadTouched ? "有 ⭐ 我们马上要清它" : "无",
+                hadSlowness ? "有" : "无",
+                touched == null ? "取不到（阶梯那边的效果没找到 ✗）" : "正常",
+                wearer.getName().getString());
         wearer.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
         if (touched != null) wearer.removeEffect(touched);
         if (hadSlowness) {
