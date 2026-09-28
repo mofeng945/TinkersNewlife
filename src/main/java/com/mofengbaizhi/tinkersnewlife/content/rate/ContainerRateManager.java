@@ -14,53 +14,46 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.LongConsumer;
 import java.util.function.ObjLongConsumer;
 
 /**
- * <b>容器产率统计引擎</b>（§735 建 · §736「全优化」✓）—— 只提供<b>方法接口</b> ✓（无命令/界面 ✗）。
+ * <b>容器产率统计引擎</b>（§735 建 · §736「全优化」✓ · §737 起<b>物品 / 流体 / 能量三种都统计</b> ✓）
+ * —— 只提供<b>方法接口</b> ✓（无命令/界面/导出 ✗）。
  *
- * <h2>口径（用户拍板 ✓ 一个字没改）</h2>
- * 整个维度的物品先按 {@code Item} 求和 ⇒ 与上一次比 ⇒ <b>净差 ÷ 统计时间</b> ✓；
- * 周期 <b>10 分钟</b>（{@link #INTERVAL_TICKS} ✓）✓；单位 <b>个/时</b> ✓；
- * 只对"两次都观测到"的来源求和（搬运抵消 ✓ / 卸载不产生假净减 ✓）。
+ * <h2>口径（用户拍板 ✓）</h2>
+ * 整个维度的量先按类型求和（物品按 {@code Item} ✓ 流体按 {@code Fluid} ✓ 能量就一个总数 ✓）
+ * ⇒ 与上一次采样比 ⇒ <b>净差 ÷ 统计时间</b> ✓；周期 <b>10 分钟</b> ✓；
+ * 单位：<b>个/时</b>、<b>mB/时</b>、<b>FE/时</b> ✓；只对"两次都观测到"的来源求和 ✓
+ * （搬运抵消 ✓ / 卸载不产生假净减 ✓）。
  *
- * <h2>§736 性能优化（用户口径「全优化」✓ 逐条对应）</h2>
- * <ol>
- *   <li><b>分帧采样（治"卡"的关键 ✓）</b>：一轮不再挤在一个 tick 里 ✗，而是每 tick 处理
- *       {@link #TOTAL_SOURCE_BUDGET} 个来源、分若干 tick 扫完 ✓ ⇒ 尖峰摊平 ✓
- *       （10 分钟的指标容得下几秒的扫描窗口 ✓）；</li>
- *   <li><b>自适应预算</b>：某一片耗时 &gt; {@link #SLICE_WARN_MS} ms ⇒ 预算减半 ✓（最低
- *       {@link #MIN_SOURCE_BUDGET} ✓）；很快又逐步加回来 ✓；</li>
- *   <li><b>安全阀</b>：服务器平均 tick 超过 {@link #LAG_SKIP_TICK_MS} ms ⇒ 本轮<b>不推进</b> ✓
- *       （绝不雪上加霜 ✓ 恢复后自动继续 ✓，日志最多 10 分钟一行 ✓）；</li>
- *   <li><b>多维度错峰</b>：各维度首次排期相差 {@link #DIM_STAGGER_TICKS} tick ✓，
- *       且所有维度<b>共享</b>每 tick 的总预算 ✓ ⇒ 不会几个维度挤同一 tick ✓；</li>
- *   <li><b>来源缓存</b>：见 {@link VanillaContainerRateProvider}（按区块缓存能力与来源对象 ✓）；</li>
- *   <li><b>空来源哨兵</b>：空容器直接放共享的 {@link #EMPTY} ✓ 不建 map ✓ 不参与差分 ✓；</li>
- *   <li><b>免装箱</b>：快照/差分全用 fastutil {@code Object2LongOpenHashMap} ✓（大基地省一大截 GC ✓）；</li>
- *   <li><b>AE2 走缓存库存</b>：见 {@code integration/ae2/Ae2RateProvider} ✓
- *       （用 AE2 自己维护的 cached inventory ✓ 不再每轮全量重算 ✓）。</li>
- * </ol>
+ * <h2>能量口径 ⚠ 必须说清</h2>
+ * 能量统计的是"<b>这一维度所有来源当前存着的 FE 之和</b>"的变化速率 ✓
+ * ⇒ 它衡量的是"有没有**攒下来**"✓，<b>不是发电机的输出功率</b> ✗
+ * （发电机发多少、机器就吃多少 ⇒ 净差 ≈ 0 ✓ 这是口径本身决定的 ✓ 与物品那套完全同源 ✓）。
  *
- * <h2>⚠ 不做的事（都想过了 ✗）</h2>
- * 降频（口径就是 10 分钟 ✗）、"只扫变化过的容器"（读之前无法知道 ✗）、
- * <b>丢到异步线程</b>（读世界状态必须主线程 ✗✗ 异步读容器会崩 ✓）。
- * <p>唯一仍可能拖慢单片的：**单个来源特别大**（例如 AE2 几十万条目的巨型网络 ✗）——
- * {@code forEachStored} 是原子的 ✗ 无法再切 ✓ 只能靠"安全阀 + 慢片日志"兜底 ✓。
+ * <h2>§736 性能优化（保留 ✓）</h2>
+ * ①分帧采样（每 tick {@link #TOTAL_SOURCE_BUDGET} 个来源 ✓ 共享预算 ✓）
+ * ②自适应预算 ③安全阀（平均 tick 偏高就暂停推进 ✓）④多维度错峰
+ * ⑤按区块缓存来源（能力只在首次解析 ✓）⑥空来源哨兵 ⑦fastutil 免装箱
+ * ⑧AE2 改为<b>按磁盘读</b>（不查网络 ✓ 见 {@code Ae2RateProvider} ✓）。
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class ContainerRateManager {
@@ -68,9 +61,9 @@ public final class ContainerRateManager {
     /** 采样周期：<b>10 分钟</b> ✓（20 tick/秒 × 600 秒 ✓ 用户口径 ✓） */
     public static final int INTERVAL_TICKS = 12_000;
 
-    /** 每 tick 处理的来源数上限（**所有维度共享** ✓ §736 第 4 条 ✓） */
+    /** 每 tick 处理的来源数上限（**所有维度共享** ✓） */
     private static final int TOTAL_SOURCE_BUDGET = 256;
-    /** 自适应预算下限（再慢也别降到 0 ✓ 否则永远扫不完 ✗） */
+    /** 自适应预算下限 */
     private static final int MIN_SOURCE_BUDGET = 16;
     /** 单片耗时超过它 ⇒ 下次预算减半 ✓ */
     private static final long SLICE_WARN_MS = 10L;
@@ -78,43 +71,38 @@ public final class ContainerRateManager {
     private static final double LAG_SKIP_TICK_MS = 100.0D;
     /** 一整轮超过它就打一行 warn ✓ */
     private static final long SWEEP_WARN_MS = 1_000L;
-    /** 多维度错峰间隔（每多一个维度往后推这么多 tick ✓） */
+    /** 多维度错峰间隔 ✓ */
     private static final long DIM_STAGGER_TICKS = 200L;
 
-    /** 空来源哨兵 ✓（共享的不可变空表 ✓ 不分配 ✓ 差分里做"两边都是它 ⇒ 跳过"的快路径 ✓） */
-    private static final Object2LongMap<Item> EMPTY = Object2LongMaps.emptyMap();
+    /** 空来源哨兵 ✓（共享不可变空表 ✓ 差分里"两边都是它 ⇒ 跳过"快路径 ✓） */
+    private static final Sample EMPTY_SAMPLE =
+            new Sample(Object2LongMaps.emptyMap(), Object2LongMaps.emptyMap(), 0L);
 
-    /** 各维度<b>已加载区块</b>（{@code ChunkEvent} 维护 ✓ —— MC 1.20.1 没有公开的"枚举已加载区块"接口 ✗） */
+    /** 各维度已加载区块（{@code ChunkEvent} 维护 ✓） */
     private static final Map<ResourceKey<Level>, Set<Long>> LOADED_CHUNKS = new ConcurrentHashMap<>();
 
-    /** 上一次采样：来源 id → (物品 → 数量) ✓（**只在内存** ✓ 不落盘 ✓） */
-    private static final Map<ResourceKey<Level>, Map<String, Object2LongMap<Item>>> LAST_SNAPSHOT =
-            new ConcurrentHashMap<>();
+    /** 上一次采样：来源 id → 三类快照 ✓（**只在内存** ✓ 不落盘 ✓） */
+    private static final Map<ResourceKey<Level>, Map<String, Sample>> LAST_SNAPSHOT = new ConcurrentHashMap<>();
 
-    /** 正在进行的采样（分帧 ✓） */
+    /** 正在进行的分帧采样 ✓ */
     private static final Map<ResourceKey<Level>, Sweep> SWEEPS = new ConcurrentHashMap<>();
-    /** 各维度下一次开始采样的 tick ✓ */
     private static final Map<ResourceKey<Level>, Long> NEXT_SWEEP = new ConcurrentHashMap<>();
-    /** 各维度当前预算 ✓ */
     private static final Map<ResourceKey<Level>, Integer> BUDGETS = new ConcurrentHashMap<>();
-    /** 各维度上次采样的诊断 ✓ */
     private static final Map<ResourceKey<Level>, SampleStats> LAST_STATS = new ConcurrentHashMap<>();
 
-    /** 来源提供方（原版容器恒在 ✓；AE2 / Mekanism 由 {@code IntegrationLoader} 按"模组在不在"挂进来 ✓） */
+    /** 来源提供方（原版容器恒在 ✓；AE2 / Mekanism 由 {@code IntegrationLoader} 挂 ✓） */
     private static final List<RateSourceProvider> PROVIDERS = new CopyOnWriteArrayList<>();
     private static final RateSourceProvider VANILLA = new VanillaContainerRateProvider();
 
-    /** 安全阀日志节流 ✓（别刷屏 ✗） */
     private static long lastLagLogTick = Long.MIN_VALUE;
 
     private ContainerRateManager() {
     }
 
     // ============================================================
-    //  注册（联动模组调这一个方法就够了 ✓）
+    //  注册
     // ============================================================
 
-    /** 注册一个来源提供方 ✓（由 {@code IntegrationLoader} 在"该模组已加载"的分支里调 ✓） */
     public static void registerProvider(RateSourceProvider provider) {
         if (provider == null) return;
         PROVIDERS.add(provider);
@@ -122,7 +110,7 @@ public final class ContainerRateManager {
     }
 
     // ============================================================
-    //  事件：区块登记 / 服务器启动 / 定时推进
+    //  事件
     // ============================================================
 
     @SubscribeEvent
@@ -138,13 +126,11 @@ public final class ContainerRateManager {
         long chunkKey = event.getChunk().getPos().toLong();
         Set<Long> set = LOADED_CHUNKS.get(level.dimension());
         if (set != null) set.remove(chunkKey);
-        // 该区块的来源缓存整张丢掉 ✓（缓存随生命周期存在 ⇒ 不需要弱引用也不会泄漏 ✓）
         VanillaContainerRateProvider.dropChunk(chunkKey);
     }
 
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
-        // 换存档/重启 ⇒ 基线快照作废 ✓（统计数据本身在 SavedData 里 ✓ 会保留 ✓）
         LAST_SNAPSHOT.clear();
         SWEEPS.clear();
         NEXT_SWEEP.clear();
@@ -161,23 +147,21 @@ public final class ContainerRateManager {
         if (server == null) return;
         long now = server.getTickCount();
 
-        // ③ 安全阀：服务器已经在卡 ⇒ 这一 tick 什么都不做 ✓（恢复后自动继续 ✓）
         double avgTick = 0.0D;
         try {
             avgTick = server.getAverageTickTime();
         } catch (Throwable ignored) {
         }
-        if (avgTick > LAG_SKIP_TICK_MS) {
+        if (avgTick > LAG_SKIP_TICK_MS) {                                   // ③ 安全阀 ✓
             if (now - lastLagLogTick > INTERVAL_TICKS) {
                 lastLagLogTick = now;
                 TinkersNewlife.LOGGER.info("[产率] 服务器平均 tick {} ms 偏高 ⇒ 本轮采样暂停推进（恢复后自动继续 ✓）",
-                        String.format(java.util.Locale.ROOT, "%.1f", avgTick));
+                        String.format(Locale.ROOT, "%.1f", avgTick));
             }
             return;
         }
 
-        // ④ 多维度错峰：首次给每个维度排一个错开的时刻 ✓
-        int index = 0;
+        int index = 0;                                                      // ④ 多维度错峰 ✓
         for (ServerLevel level : server.getAllLevels()) {
             try {
                 if (NEXT_SWEEP.get(level.dimension()) == null) {
@@ -188,8 +172,7 @@ public final class ContainerRateManager {
             index++;
         }
 
-        // ① 分帧推进：所有维度<b>共享</b>这一 tick 的总预算 ✓
-        int remaining = TOTAL_SOURCE_BUDGET;
+        int remaining = TOTAL_SOURCE_BUDGET;                               // ① 共享预算 ✓
         for (ServerLevel level : server.getAllLevels()) {
             if (remaining <= 0) break;
             try {
@@ -203,7 +186,6 @@ public final class ContainerRateManager {
         }
     }
 
-    /** 推进一个维度的采样；返回本 tick 用掉的预算 ✓ */
     private static int tickDimension(ServerLevel level, long now, int available) {
         ResourceKey<Level> dimension = level.dimension();
         Sweep sweep = SWEEPS.get(dimension);
@@ -213,8 +195,9 @@ public final class ContainerRateManager {
             sweep = startSweep(level);
             if (sweep.sources.isEmpty()) {
                 NEXT_SWEEP.put(dimension, now + INTERVAL_TICKS);
-                ContainerRateData.get(level).pushInterval(EMPTY);   // 空维度也推进一个区间 ✓（时间照样在走 ✓）
-                LAST_STATS.put(dimension, new SampleStats(0, 0, 0, 0, loadedChunkCount(level), 0, 0L));
+                ContainerRateData.get(level).pushInterval(Object2LongMaps.emptyMap(),
+                        Object2LongMaps.emptyMap(), 0L);                    // 空维度也推进一个区间 ✓
+                LAST_STATS.put(dimension, new SampleStats(0, 0, 0, 0, loadedChunkCount(level), 0, 0, 0L, 0L));
                 return 0;
             }
             SWEEPS.put(dimension, sweep);
@@ -222,7 +205,6 @@ public final class ContainerRateManager {
         return advance(level, sweep, available);
     }
 
-    /** 按预算扫一片 ✓ */
     private static int advance(ServerLevel level, Sweep sweep, int available) {
         ResourceKey<Level> dimension = level.dimension();
         int budget = Math.min(available, BUDGETS.getOrDefault(dimension, TOTAL_SOURCE_BUDGET));
@@ -232,26 +214,35 @@ public final class ContainerRateManager {
         int used = 0;
         while (used < budget && sweep.index < sweep.sources.size()) {
             RateSource source = sweep.sources.get(sweep.index++);
-            Object2LongOpenHashMap<Item> counts = new Object2LongOpenHashMap<>();
-            ObjLongConsumer<ItemStack> collector = (stack, count) -> {
+            Object2LongOpenHashMap<Item> items = new Object2LongOpenHashMap<>();
+            Object2LongOpenHashMap<Fluid> fluids = new Object2LongOpenHashMap<>();
+            long[] energy = new long[1];
+            ObjLongConsumer<ItemStack> itemSink = (stack, count) -> {
                 if (count <= 0L || stack == null || stack.isEmpty()) return;
-                counts.addTo(stack.getItem(), count);
+                items.addTo(stack.getItem(), count);
             };
+            ObjLongConsumer<FluidStack> fluidSink = (stack, amount) -> {
+                if (amount <= 0L || stack == null || stack.isEmpty()) return;
+                fluids.addTo(stack.getFluid(), amount);
+            };
+            LongConsumer energySink = value -> energy[0] += value;
             try {
-                source.forEachStored(collector);
+                source.forEachAll(itemSink, fluidSink, energySink);         // 一次报全三类 ✓
             } catch (Throwable t) {
                 sweep.failed++;
-                continue;                                   // 单个来源炸了不影响整体 ✓
+                continue;
             }
-            // ⑥ 空来源哨兵：不建 map ✓（大基地里空箱子很多 ✓）
-            sweep.now.put(source.id(), counts.isEmpty() ? EMPTY : counts);
+            // ⑥ 空来源哨兵 ✓
+            sweep.now.put(source.id(),
+                    (items.isEmpty() && fluids.isEmpty() && energy[0] == 0L)
+                            ? EMPTY_SAMPLE
+                            : new Sample(items, fluids, energy[0]));
             used++;
         }
         long sliceNanos = System.nanoTime() - start;
         sweep.busyNanos += sliceNanos;
 
-        // ② 自适应预算 ✓
-        long sliceMs = sliceNanos / 1_000_000L;
+        long sliceMs = sliceNanos / 1_000_000L;                            // ② 自适应预算 ✓
         if (sliceMs > SLICE_WARN_MS) {
             int next = Math.max(MIN_SOURCE_BUDGET, budget / 2);
             if (next != budget) {
@@ -267,56 +258,65 @@ public final class ContainerRateManager {
         return used;
     }
 
-    /** 一轮扫完：与上一次比 ⇒ 推入一个 10 分钟区间 ✓ */
     private static void finishSweep(ServerLevel level, Sweep sweep) {
         ResourceKey<Level> dimension = level.dimension();
-        Map<String, Object2LongMap<Item>> previous = LAST_SNAPSHOT.get(dimension);
+        Map<String, Sample> previous = LAST_SNAPSHOT.get(dimension);
         int skipped = 0;
-        Object2LongOpenHashMap<Item> delta = new Object2LongOpenHashMap<>();
+        Object2LongOpenHashMap<Item> deltaItems = new Object2LongOpenHashMap<>();
+        Object2LongOpenHashMap<Fluid> deltaFluids = new Object2LongOpenHashMap<>();
+        long netEnergy = 0L;
+
         if (previous != null) {
-            for (Map.Entry<String, Object2LongMap<Item>> entry : sweep.now.entrySet()) {
-                Object2LongMap<Item> before = previous.get(entry.getKey());
+            for (Map.Entry<String, Sample> entry : sweep.now.entrySet()) {
+                Sample before = previous.get(entry.getKey());
                 if (before == null) {
-                    skipped++;                              // 新来源 ⇒ 只立基线 ✓ 不算产出 ✓
+                    skipped++;                                          // 新来源 ⇒ 只立基线 ✓
                     continue;
                 }
-                Object2LongMap<Item> after = entry.getValue();
-                if (before == after) continue;              // 两边都是空哨兵 ⇒ 无变化 ✓ 快路径 ✓
-                for (Object2LongMap.Entry<Item> one : after.object2LongEntrySet()) {
-                    long d = one.getLongValue() - before.getLong(one.getKey());
-                    if (d != 0L) delta.addTo(one.getKey(), d);
-                }
-                for (Object2LongMap.Entry<Item> one : before.object2LongEntrySet()) {
-                    if (!after.containsKey(one.getKey())) delta.addTo(one.getKey(), -one.getLongValue());
-                }
+                Sample after = entry.getValue();
+                if (before == after) continue;                          // 两边都是空哨兵 ✓
+                diff(before.items(), after.items(), deltaItems);
+                diff(before.fluids(), after.fluids(), deltaFluids);
+                netEnergy += after.energy() - before.energy();
             }
             for (String id : previous.keySet()) {
-                if (!sweep.now.containsKey(id)) skipped++;  // 卸载/被拆 ⇒ 整条跳过 ✓（消失不算净减 ✓）
+                if (!sweep.now.containsKey(id)) skipped++;               // 卸载/被拆 ⇒ 整条跳过 ✓
             }
-            ContainerRateData.get(level).pushInterval(delta);   // 落一个 10 分钟区间 ✓
+            ContainerRateData.get(level).pushInterval(deltaItems, deltaFluids, netEnergy);
         }
         LAST_SNAPSHOT.put(dimension, sweep.now);
         SWEEPS.remove(dimension);
-
-        long now = level.getGameTime();
-        NEXT_SWEEP.put(dimension, level.getServer() == null ? now + INTERVAL_TICKS
-                : level.getServer().getTickCount() + INTERVAL_TICKS);
+        NEXT_SWEEP.put(dimension, (level.getServer() == null ? level.getGameTime()
+                : level.getServer().getTickCount()) + INTERVAL_TICKS);
 
         long busyMs = sweep.busyNanos / 1_000_000L;
-        LAST_STATS.put(dimension, new SampleStats(sweep.sources.size(), sweep.now.size(), skipped,
-                sweep.failed, loadedChunkCount(level), delta.size(), busyMs));
+        LAST_STATS.put(dimension, new SampleStats(sweep.sources.size(), sweep.now.size(), skipped, sweep.failed,
+                loadedChunkCount(level), deltaItems.size(), deltaFluids.size(), netEnergy, busyMs));
 
         TinkersNewlife.LOGGER.info(
-                "[产率] 维度 {} 采样完成：来源 {}（区块 {} / 失败 {} / 跳过 {}）⇒ 本次物品变动 {} 种，累计 {} ms{}",
+                "[产率] 维度 {} 采样完成：来源 {}（区块 {} / 失败 {} / 跳过 {}）⇒ 变动 物品 {} 种 / 流体 {} 种 / 能量 {} FE，累计 {} ms{}",
                 dimension.location(), sweep.sources.size(), loadedChunkCount(level), sweep.failed, skipped,
-                delta.size(), busyMs, busyMs >= SWEEP_WARN_MS ? " ⚠ 偏慢，考虑减少来源或延长时间隔" : "");
+                deltaItems.size(), deltaFluids.size(), netEnergy, busyMs,
+                busyMs >= SWEEP_WARN_MS ? " ⚠ 偏慢" : "");
+    }
+
+    /** 把"这一格对上一格"的差累加进 delta ✓（并集都要看 ✓） */
+    private static <T> void diff(Object2LongMap<T> before, Object2LongMap<T> after, Object2LongOpenHashMap<T> delta) {
+        if (before.isEmpty() && after.isEmpty()) return;
+        for (Object2LongMap.Entry<T> one : after.object2LongEntrySet()) {
+            long d = one.getLongValue() - before.getLong(one.getKey());
+            if (d != 0L) delta.addTo(one.getKey(), d);
+        }
+        for (Object2LongMap.Entry<T> one : before.object2LongEntrySet()) {
+            if (!after.containsKey(one.getKey())) delta.addTo(one.getKey(), -one.getLongValue());
+        }
     }
 
     // ============================================================
     //  采样入口
     // ============================================================
 
-    /** 手动催一次（<b>会一口气跑完</b> ✓ 别在服务器卡的时候调 ✓；分帧那套是自动的 ✓） */
+    /** 手动催一次（<b>会一口气跑完</b> ✓ 别在服务器卡的时候调 ✓） */
     public static void sample(ServerLevel level) {
         Sweep sweep = startSweep(level);
         int guard = 0;
@@ -357,65 +357,104 @@ public final class ContainerRateManager {
     }
 
     // ============================================================
-    //  对外方法接口（本轮交付物 ✓ 展示层以后再说 ✓）
+    //  对外方法接口（本轮交付物 ✓）
     // ============================================================
 
-    /** 净产率（<b>个/时</b> ✓）：最近 1 个 10 分钟区间 ✓ */
+    // ---- 物品（个/时 ✓）----
+
     public static double netPerHourRecent(ServerLevel level, Item item) {
         return ContainerRateData.get(level).netPerHour(item, 1);
     }
 
-    /** 净产率（<b>个/时</b> ✓）：最近 {@code intervals} 个区间（1 = 10 分钟，6 = 1 小时 ✓） */
     public static double netPerHour(ServerLevel level, Item item, int intervals) {
         return ContainerRateData.get(level).netPerHour(item, intervals);
     }
 
-    /** 最近一个区间的净增量（个 ✓） */
     public static long lastIntervalNet(ServerLevel level, Item item) {
         return ContainerRateData.get(level).lastIntervalNet(item);
     }
 
-    /** 全维度净产率快照（个/时 ✓） */
     public static Map<Item, Double> netPerHourAll(ServerLevel level, int intervals) {
         return ContainerRateData.get(level).netPerHourAll(intervals);
     }
 
-    /** 按注册名查物品（取不到返回 null ✓） */
+    // ---- 流体（mB/时 ✓）----
+
+    public static double fluidNetPerHourRecent(ServerLevel level, Fluid fluid) {
+        return ContainerRateData.get(level).netPerHour(fluid, 1);
+    }
+
+    public static double fluidNetPerHour(ServerLevel level, Fluid fluid, int intervals) {
+        return ContainerRateData.get(level).netPerHour(fluid, intervals);
+    }
+
+    public static long lastIntervalFluidNet(ServerLevel level, Fluid fluid) {
+        return ContainerRateData.get(level).lastIntervalNet(fluid);
+    }
+
+    public static Map<Fluid, Double> fluidNetPerHourAll(ServerLevel level, int intervals) {
+        return ContainerRateData.get(level).fluidNetPerHourAll(intervals);
+    }
+
+    // ---- 能量（FE/时 ✓）----
+
+    /** 能量净产率（FE/时 ✓）：最近 1 个区间 ✓ */
+    public static double energyNetPerHourRecent(ServerLevel level) {
+        return ContainerRateData.get(level).energyNetPerHour(1);
+    }
+
+    /** 能量净产率（FE/时 ✓）：最近 n 个区间 ✓ */
+    public static double energyNetPerHour(ServerLevel level, int intervals) {
+        return ContainerRateData.get(level).energyNetPerHour(intervals);
+    }
+
+    /** 最近一个区间的能量净增量（FE ✓） */
+    public static long lastIntervalEnergyNet(ServerLevel level) {
+        return ContainerRateData.get(level).lastIntervalEnergyNet();
+    }
+
+    // ---- 便利入口 / 诊断 ----
+
     public static Item itemById(String id) {
         ResourceLocation rl = ResourceLocation.tryParse(id);
         return rl == null ? null : ForgeRegistries.ITEMS.getValue(rl);
     }
 
-    /** 按路径取维度 key ✓ */
+    public static Fluid fluidById(String id) {
+        ResourceLocation rl = ResourceLocation.tryParse(id);
+        return rl == null ? null : ForgeRegistries.FLUIDS.getValue(rl);
+    }
+
     public static ResourceKey<Level> dimensionKey(String path) {
         ResourceLocation rl = ResourceLocation.tryParse(path);
         return rl == null ? null : ResourceKey.create(Registries.DIMENSION, rl);
     }
 
-    /** 上次采样的诊断 ✓（来源数 / 跳过 / 失败 / 变了多少种 / 本维度的纯工作耗时 ✓） */
     public static SampleStats lastStats(ServerLevel level) {
         return LAST_STATS.get(level.dimension());
     }
 
-    /** 已登记的来源提供方数量（含原版那个 ✓） */
     public static int providerCount() {
         return PROVIDERS.size() + 1;
     }
 
-    /** 这一维度现在是否正在分帧采样中 ✓（诊断用 ✓） */
     public static boolean sweeping(ServerLevel level) {
         return SWEEPS.containsKey(level.dimension());
     }
 
-    /** 一次采样的诊断快照 ✓ */
-    public record SampleStats(int sources, int observed, int skipped, int failed,
-                              int chunks, int changedItems, long millis) {
+    /** 一次采样的诊断快照 ✓（§737 起含流体与能量 ✓） */
+    public record SampleStats(int sources, int observed, int skipped, int failed, int chunks,
+                              int changedItems, int changedFluids, long netEnergy, long millis) {
+    }
+
+    /** 一个来源的三类快照 ✓（只存非零项 ✓ 空来源共享 {@link #EMPTY_SAMPLE} ✓） */
+    private record Sample(Object2LongMap<Item> items, Object2LongMap<Fluid> fluids, long energy) {
     }
 
     /** 一轮分帧采样的进行态 ✓ */
     private static final class Sweep {
         final List<RateSource> sources;
-        final Map<String, Object2LongMap<Item>> now = new HashMap<>();
+        final Map<String, Sample> now = new HashMap<>();
         int index;
         int failed;
         long busyNanos;

@@ -18,11 +18,17 @@ import java.util.Map;
 import java.util.function.ObjLongConsumer;
 
 /**
- * <b>通用机械（Mekanism）QIO 来源提供方</b>（§735）—— 一个 <b>QIO 频率 = 一个来源</b> ✓
+ * <b>通用机械（Mekanism）QIO 来源提供方</b>（§735 建 · §737 复核范围 ✓）—— 一个 <b>QIO 频率 = 一个来源</b> ✓
+ *
+ * <h2>范围（§737 明确 ✓）</h2>
+ * 本类<b>只报物品</b> ✓ —— Mekanism 的 {@code IQIOFrequency} 只提供
+ * {@code forAllStored(ObjLongConsumer<ItemStack>)} / {@code getStored(ItemStack)} 这两个<b>物品</b>口子 ✓
+ * ⇒ <b>QIO 里的化学品/气体不在本轮统计范围</b> ✗（用户口径只要求"能量或流体"✓ 且 Mekanism 的化学品
+ * 不是 Forge 流体 ✗）；Mekanism 的<b>普通流体箱</b>走第一层的 {@code IFluidHandler} ✓ 已覆盖 ✓。
  *
  * <h2>用户说的"mek 的磁盘"就是这一条 ✓</h2>
  * 通用机械的 <b>QIO 磁盘阵列 / QIO 仪表盘</b>把物品存在<b>频率</b>里 ✓，
- * 方块实体本身**不暴露物品栏** ✗ ⇒ 走不了 {@code IItemHandler} ✗（§735 第一层覆盖不到 ✓）。
+ * 方块实体本身**不暴露物品栏** ✗ ⇒ 走不了 {@code IItemHandler} ✗（第一层覆盖不到 ✓）。
  * <p>⚠ 普通通用机械箱柜/机器（不是 QIO）**能**走第一层 ✓ ⇒ 本类只管 QIO ✓ 不重复统计 ✓。
  *
  * <h2>核过的 API（出处：{@code libs/Mekanism-1.20.1-10.4.16.80.jar}，javap ✓）</h2>

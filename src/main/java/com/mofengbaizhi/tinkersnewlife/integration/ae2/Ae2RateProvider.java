@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.integration.ae2;
 
 import appeng.api.storage.StorageCells;
 import appeng.api.storage.cells.StorageCell;
+import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.KeyCounter;
@@ -17,6 +18,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -25,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.LongConsumer;
 import java.util.function.ObjLongConsumer;
 
 /**
@@ -165,15 +168,40 @@ public final class Ae2RateProvider implements RateSourceProvider {
         @Override
         public void forEachStored(ObjLongConsumer<ItemStack> consumer) {
             // 只读 ✓：这块磁盘**自己的**内容 ✓（不查网络 ✗ 所以不会带上主网/其它维度的东西 ✓）
+            forEachAll(consumer, (stack, amount) -> {
+            }, value -> {
+            });
+        }
+
+        @Override
+        public void forEachFluid(ObjLongConsumer<FluidStack> consumer) {
+            forEachAll((stack, amount) -> {
+            }, consumer, value -> {
+            });
+        }
+
+        /**
+         * 一次读全 ✓（§737）：磁盘里可能同时有<b>物品</b>与<b>流体</b>（流体磁盘 ✓）
+         * ⇒ 只调一次 {@code getAvailableStacks} 就分派完 ✓ 省掉第二次全量读取 ✓。
+         * <p>⚠ 能量**不在磁盘里** ✗ ⇒ 这里不报能量 ✓。
+         */
+        @Override
+        public void forEachAll(ObjLongConsumer<ItemStack> itemSink, ObjLongConsumer<FluidStack> fluidSink,
+                               LongConsumer energySink) {
             KeyCounter counter = new KeyCounter();
             cell.getAvailableStacks(counter);
             for (Object2LongMap.Entry<AEKey> entry : counter) {
                 AEKey key = entry.getKey();
                 long amount = entry.getLongValue();
-                if (amount <= 0L || !(key instanceof AEItemKey itemKey)) continue;   // 流体/气体磁盘跳过 ✓
-                ItemStack stack = itemKey.getReadOnlyStack();
-                if (stack.isEmpty()) continue;
-                consumer.accept(stack, amount);
+                if (amount <= 0L) continue;
+                if (key instanceof AEItemKey itemKey) {
+                    ItemStack stack = itemKey.getReadOnlyStack();
+                    if (!stack.isEmpty()) itemSink.accept(stack, amount);
+                } else if (key instanceof AEFluidKey fluidKey) {
+                    FluidStack stack = fluidKey.toStack(1);          // 只取"是哪种流体" ✓ 数量用 amount ✓
+                    if (!stack.isEmpty()) fluidSink.accept(stack, amount);
+                }
+                // 其它键（气体/能量等，来自附属模组）本轮不统计 ✗
             }
         }
 
