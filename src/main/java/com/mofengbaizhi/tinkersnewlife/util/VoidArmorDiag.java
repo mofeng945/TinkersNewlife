@@ -117,4 +117,30 @@ public final class VoidArmorDiag {
             return "（取调用栈失败：" + t.getClass().getSimpleName() + "）";
         }
     }
+
+    /**
+     * <b>完整调用栈</b>（§767）—— **什么都不跳过** ✓，专门用来抓"是谁在改字节码" ✗。
+     *
+     * <p>与 {@link #shortStack} 的区别：这里**保留** {@code net.minecraft.} / {@code net.minecraftforge.} /
+     * {@code org.spongepowered} / {@code cpw.mods} / {@code com.mojang} 全部帧 ✓
+     * ⇒ 既能看到 {@code handler$…}（Mixin 生成的处理器 ✓）
+     * 也能看到 ModLauncher 那几层（{@code TransformStore} / {@code CoreModBaseTransformer} ✓）
+     * ⇒ **直接改字节码**的模组（例如启动日志里写着 {@code Modified Util#getMillis()} 的那家 ✓）就会现形 ✓。
+     *
+     * @param maxFrames 最多保留几帧（建议 20~30 ✓ 太多会把日志撑爆 ✗）
+     */
+    public static String fullStack(int maxFrames) {
+        try {
+            StringBuilder sb = new StringBuilder();
+            int kept = 0;
+            for (StackTraceElement e : new Throwable().getStackTrace()) {
+                sb.append(" ⇐ ").append(e.getClassName()).append('#').append(e.getMethodName())
+                        .append(':').append(e.getLineNumber());
+                if (++kept >= maxFrames) break;
+            }
+            return sb.length() == 0 ? "（空栈 ✗）" : sb.toString();
+        } catch (Throwable t) {
+            return "（取调用栈失败：" + t.getClass().getSimpleName() + "）";
+        }
+    }
 }
