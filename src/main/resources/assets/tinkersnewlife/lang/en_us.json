@@ -336,7 +336,7 @@
   "item.tinkersnewlife.industrial_pioneer_certificate.rates.nodim": "§cThe bound dimension has no data right now",
   "screen.tinkersnewlife.pioneer_rates.title": "Industrial Pioneer's Certificate · %s",
   "screen.tinkersnewlife.pioneer_rates.window": "Window: last 1 hour · unit: items/hour",
-  "screen.tinkersnewlife.pioneer_rates.note": "Metric: whole-dimension net change (moves cancel out; consumption/withdrawal counts negative)",
+  "screen.tinkersnewlife.pioneer_rates.note": "Metric: whole-dimension net change (moves cancel out; withdrawal counts negative; first-seen containers count as inflow, removed ones as outflow)",
   "screen.tinkersnewlife.pioneer_rates.col_name": "Item",
   "screen.tinkersnewlife.pioneer_rates.col_total": "Stored",
   "screen.tinkersnewlife.pioneer_rates.col_rate": "Rate (items/h)",

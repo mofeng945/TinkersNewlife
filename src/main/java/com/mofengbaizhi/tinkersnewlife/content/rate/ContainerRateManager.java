@@ -79,13 +79,16 @@ public final class ContainerRateManager {
 
     /** 空来源哨兵 ✓（共享不可变空表 ✓ 差分里"两边都是它 ⇒ 跳过"快路径 ✓） */
     private static final Sample EMPTY_SAMPLE =
-            new Sample(Object2LongMaps.emptyMap(), Object2LongMaps.emptyMap(), 0L, false);
+            new Sample(Object2LongMaps.emptyMap(), Object2LongMaps.emptyMap(), 0L);
 
     /** 各维度已加载区块（{@code ChunkEvent} 维护 ✓） */
     private static final Map<ResourceKey<Level>, Set<Long>> LOADED_CHUNKS = new ConcurrentHashMap<>();
 
     /** 上一次采样：来源 id → 三类快照 ✓（**只在内存** ✓ 不落盘 ✓） */
     private static final Map<ResourceKey<Level>, Map<String, Sample>> LAST_SNAPSHOT = new ConcurrentHashMap<>();
+
+    /** §749：上一次采样时"每个来源在哪个区块" ✓（用来分辨"区块卸载"与"方块被拆" ✓） */
+    private static final Map<ResourceKey<Level>, Map<String, Long>> LAST_CHUNKS = new ConcurrentHashMap<>();
 
     /** 正在进行的分帧采样 ✓ */
     private static final Map<ResourceKey<Level>, Sweep> SWEEPS = new ConcurrentHashMap<>();
@@ -109,38 +112,6 @@ public final class ContainerRateManager {
     /** 一轮采样跑完后的回调（由 {@code IndustrialPioneerHandler} 装上 ⇒ 立刻把新数据推给正在看的人 ✓） */
     private static volatile Consumer<ServerLevel> sweepListener;
 
-    /** §748：玩家亲手放下的容器位置 ⇒ (维度 → (坐标 → 放下时的 tick)) ✓ 只在第一次被扫到时用一次 ✓ */
-    private static final Map<ResourceKey<Level>, Map<Long, Long>> PLAYER_PLACED = new ConcurrentHashMap<>();
-
-    /** §748：这个标记的有效期（tick ✓）—— 放了半天才被扫到，就别再当"新箱子"了 ✓ */
-    private static final long PLACED_MARK_TTL_TICKS = 24_000L;
-
-    /** §748：玩家放下方块 ⇒ 记一笔（**只对玩家**✓ 世界生成的不算 ✗） */
-    @SubscribeEvent
-    public static void onBlockPlaced(net.minecraftforge.event.level.BlockEvent.EntityPlaceEvent event) {
-        try {
-            if (!(event.getEntity() instanceof ServerPlayer player)) return;
-            if (!(event.getLevel() instanceof ServerLevel level)) return;
-            long now = level.getServer() == null ? level.getGameTime() : level.getServer().getTickCount();
-            PLAYER_PLACED.computeIfAbsent(level.dimension(), key -> new ConcurrentHashMap<>())
-                    .put(event.getPos().asLong(), now);
-        } catch (Throwable ignored) {
-        }
-    }
-
-    /**
-     * §748：这个位置是不是"玩家刚放下、还没被扫到过"的容器 ✓
-     * <p>⚠ **读一次就消费掉** ✓（{@code remove} ✓）—— 只在"第一次登记这个来源"时用一次 ✓
-     * 由 {@code VanillaContainerRateProvider} 在建来源时问 ✓ 之后不会再有第二次 ✓。
-     */
-    public static boolean consumePlayerPlaced(ServerLevel level, net.minecraft.core.BlockPos pos) {
-        Map<Long, Long> map = PLAYER_PLACED.get(level.dimension());
-        if (map == null) return false;
-        Long when = map.remove(pos.asLong());
-        if (when == null) return false;
-        long now = level.getServer() == null ? level.getGameTime() : level.getServer().getTickCount();
-        return now - when <= PLACED_MARK_TTL_TICKS;
-    }
     private static long lastLagLogTick = Long.MIN_VALUE;
 
     private ContainerRateManager() {
@@ -211,7 +182,7 @@ public final class ContainerRateManager {
         BUDGETS.clear();
         LAST_STATS.clear();
         WATCHERS.clear();
-        PLAYER_PLACED.clear();
+        LAST_CHUNKS.clear();
         // ⚠ §745：这里**不能**清 LOADED_CHUNKS ✗ —— 出生点/生成器区块是在 ServerStartedEvent
         //   **之前**就加载好的 ✗，清了它们就再也不会补发 ChunkEvent.Load ✗
         //   ⇒ 玩家"站在出生点旁边放个箱子"永远扫不到 ✗（这正是用户实测报的"箱子没被统计"✓）。
@@ -315,16 +286,15 @@ public final class ContainerRateManager {
                 continue;
             }
             // ⑥ 空来源哨兵 ✓
-            // §748：问一下"这个来源是不是玩家刚放下、还该把首次观测算作流入"✓
-            boolean firstInflow = false;
+            sweep.now.put(source.id(),
+                    (items.isEmpty() && fluids.isEmpty() && energy[0] == 0L)
+                            ? EMPTY_SAMPLE
+                            : new Sample(items, fluids, energy[0]));
+            // §749：顺手记下它所在的区块（来源"消失"时用来分辨是否只是区块卸载 ✓）
             try {
-                firstInflow = source.countFirstObservationAsInflow();
+                sweep.chunks.put(source.id(), source.chunkKey());
             } catch (Throwable ignored) {
             }
-            sweep.now.put(source.id(),
-                    (items.isEmpty() && fluids.isEmpty() && energy[0] == 0L && !firstInflow)
-                            ? EMPTY_SAMPLE
-                            : new Sample(items, fluids, energy[0], firstInflow));
             used++;
         }
         long sliceNanos = System.nanoTime() - start;
@@ -350,6 +320,8 @@ public final class ContainerRateManager {
         ResourceKey<Level> dimension = level.dimension();
         Map<String, Sample> previous = LAST_SNAPSHOT.get(dimension);
         int skipped = 0;
+        int newSources = 0;
+        int vanished = 0;
         Object2LongOpenHashMap<Item> deltaItems = new Object2LongOpenHashMap<>();
         Object2LongOpenHashMap<Fluid> deltaFluids = new Object2LongOpenHashMap<>();
         long netEnergy = 0L;
@@ -358,20 +330,18 @@ public final class ContainerRateManager {
             for (Map.Entry<String, Sample> entry : sweep.now.entrySet()) {
                 Sample before = previous.get(entry.getKey());
                 if (before == null) {
+                    // §749 用户口径：「就直接结算增减，产率可以是负数」✓
+                    //   ⇒ **不再**"新来源只立基线" ✗：第一次见到的容器，里面的东西**算一次流入** ✓
+                    //     （否则"往新箱子里放一把剑"永远显示 0 ✗ —— 用户连着报过两次 ✓）
                     Sample fresh = entry.getValue();
-                    if (fresh.firstInflow()) {
-                        // §748：玩家亲手放下的容器 ⇒ 首次观测把里面的东西算作**流入** ✓
-                        //   （否则"往新箱子里放一把剑"永远显示 0 ✗ —— 用户实测的正是这条 ✓）
-                        for (Object2LongMap.Entry<Item> one : fresh.items().object2LongEntrySet()) {
-                            if (one.getLongValue() != 0L) deltaItems.addTo(one.getKey(), one.getLongValue());
-                        }
-                        for (Object2LongMap.Entry<Fluid> one : fresh.fluids().object2LongEntrySet()) {
-                            if (one.getLongValue() != 0L) deltaFluids.addTo(one.getKey(), one.getLongValue());
-                        }
-                        netEnergy += fresh.energy();
-                    } else {
-                        skipped++;                                      // 世界生成的容器 ⇒ 只立基线 ✓（防假尖峰 ✓）
+                    for (Object2LongMap.Entry<Item> one : fresh.items().object2LongEntrySet()) {
+                        if (one.getLongValue() != 0L) deltaItems.addTo(one.getKey(), one.getLongValue());
                     }
+                    for (Object2LongMap.Entry<Fluid> one : fresh.fluids().object2LongEntrySet()) {
+                        if (one.getLongValue() != 0L) deltaFluids.addTo(one.getKey(), one.getLongValue());
+                    }
+                    netEnergy += fresh.energy();
+                    newSources++;
                     continue;
                 }
                 Sample after = entry.getValue();
@@ -380,12 +350,34 @@ public final class ContainerRateManager {
                 diff(before.fluids(), after.fluids(), deltaFluids);
                 netEnergy += after.energy() - before.energy();
             }
-            for (String id : previous.keySet()) {
-                if (!sweep.now.containsKey(id)) skipped++;               // 卸载/被拆 ⇒ 整条跳过 ✓
+            // §749 消失的来源：**能确认方块真没了 ⇒ 结算净减** ✓；只是区块卸载 ⇒ **不结算** ✓
+            Map<String, Long> previousChunks = LAST_CHUNKS.get(dimension);
+            Set<Long> loaded = LOADED_CHUNKS.get(dimension);
+            for (Map.Entry<String, Sample> entry : previous.entrySet()) {
+                String id = entry.getKey();
+                if (sweep.now.containsKey(id)) continue;
+                Long chunkKey = previousChunks == null ? null : previousChunks.get(id);
+                if (chunkKey == null || chunkKey == Long.MIN_VALUE
+                        || loaded == null || !loaded.contains(chunkKey)
+                        || !chunkStillLoaded(level, chunkKey)) {
+                    skipped++;                        // 无法确认（多半是区块卸载 ✓）⇒ 不结算 ✓（防假暴跌 ✗）
+                    continue;
+                }
+                // 区块还在、来源没了 ⇒ 方块确实被拆/被换 ⇒ 它原本的内容算**净减** ✓（产率可以为负 ✓）
+                Sample gone = entry.getValue();
+                for (Object2LongMap.Entry<Item> one : gone.items().object2LongEntrySet()) {
+                    if (one.getLongValue() != 0L) deltaItems.addTo(one.getKey(), -one.getLongValue());
+                }
+                for (Object2LongMap.Entry<Fluid> one : gone.fluids().object2LongEntrySet()) {
+                    if (one.getLongValue() != 0L) deltaFluids.addTo(one.getKey(), -one.getLongValue());
+                }
+                netEnergy -= gone.energy();
+                vanished++;
             }
             ContainerRateData.get(level).pushInterval(deltaItems, deltaFluids, netEnergy);
         }
         LAST_SNAPSHOT.put(dimension, sweep.now);
+        LAST_CHUNKS.put(dimension, sweep.chunks);
         SWEEPS.remove(dimension);
         // §745：这一轮刚采完 ⇒ 立刻把新数据推给"正在看这个维度界面"的玩家 ✓
         //   （不用等客户端下一次 5 秒轮询 ✓ 用户体感就是"开完界面数字自己就变新了"✓）
@@ -403,8 +395,10 @@ public final class ContainerRateManager {
                 loadedChunkCount(level), deltaItems.size(), deltaFluids.size(), netEnergy, busyMs));
 
         TinkersNewlife.LOGGER.info(
-                "[产率] 维度 {} 采样完成：来源 {}（区块 {} / 失败 {} / 跳过 {}）⇒ 变动 物品 {} 种 / 流体 {} 种 / 能量 {} FE，累计 {} ms{}",
-                dimension.location(), sweep.sources.size(), loadedChunkCount(level), sweep.failed, skipped,
+                "[产率] 维度 {} 采样完成：来源 {}（区块 {} / 失败 {} / 新增 {} / 结算消失 {} / 跳过 {}）"
+                        + "⇒ 变动 物品 {} 种 / 流体 {} 种 / 能量 {} FE，累计 {} ms{}",
+                dimension.location(), sweep.sources.size(), loadedChunkCount(level), sweep.failed,
+                newSources, vanished, skipped,
                 deltaItems.size(), deltaFluids.size(), netEnergy, busyMs,
                 busyMs >= SWEEP_WARN_MS ? " ⚠ 偏慢" : "");
     }
@@ -496,6 +490,15 @@ public final class ContainerRateManager {
             }
         }
         return new ArrayList<>(out.values());
+    }
+
+    /** §749：这个区块 key 对应的区块现在还加载着吗 ✓（用来确认"来源消失"不是卸载造成的 ✓） */
+    private static boolean chunkStillLoaded(ServerLevel level, long chunkKey) {
+        try {
+            return level.getChunkSource().hasChunk(ChunkPos.getX(chunkKey), ChunkPos.getZ(chunkKey));
+        } catch (Throwable ignored) {
+            return false;
+        }
     }
 
     private static LevelChunk chunkAt(ServerLevel level, int x, int z) {
@@ -659,14 +662,15 @@ public final class ContainerRateManager {
     }
 
     /** 一个来源的三类快照 ✓（只存非零项 ✓ 空来源共享 {@link #EMPTY_SAMPLE} ✓） */
-    private record Sample(Object2LongMap<Item> items, Object2LongMap<Fluid> fluids, long energy,
-                          boolean firstInflow) {
+    private record Sample(Object2LongMap<Item> items, Object2LongMap<Fluid> fluids, long energy) {
     }
 
     /** 一轮分帧采样的进行态 ✓ */
     private static final class Sweep {
         final List<RateSource> sources;
         final Map<String, Sample> now = new HashMap<>();
+        /** 来源 id → 它所在区块 key ✓（§749 ✓） */
+        final Map<String, Long> chunks = new HashMap<>();
         int index;
         int failed;
         long busyNanos;
