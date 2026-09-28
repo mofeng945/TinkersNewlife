@@ -6,6 +6,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Container;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -88,6 +89,18 @@ public final class KaleidoscopeRateProvider implements RateSourceProvider {
     /** 「能读库存的 getter」按类缓存 ✓（只解析一次 ✓） */
     private static final Map<Class<?>, List<Method>> GETTERS = new ConcurrentHashMap<>();
 
+    /**
+     * §794：{@code ItemStack} / {@code List} 型 getter 的<b>名字白名单词根</b>（小写包含匹配 ✓）。
+     *
+     * <p>为什么要白名单：这一家有一堆"名字长得像库存、其实是算出来的"getter ✗ ——
+     * {@code getDrops()}（掉落预览 ✗）、{@code getEffects()}（效果表 ✗）、
+     * {@code getStatus()/getColor()/getSeed()/getCookingProgress()}（纯状态 ✗）……
+     * 用词根卡住就<b>不会把"算出来的东西"当成库存</b> ✗✓。实测要覆盖的正是这些 ✓：
+     * {@code getItems / getInputs / getInput / getResult / getPotionStack / getRecord /
+     * getLeftItem / getRightItem / getItemLeft / getItemRight / getLidItem / getCurrentCutStack} ✓。
+     */
+    private static final List<String> STACK_TOKENS = List.of("item", "stack", "input", "record", "result");
+
     @Override
     public String modId() {
         return MOD_ID;
@@ -116,11 +129,20 @@ public final class KaleidoscopeRateProvider implements RateSourceProvider {
                     // ① 流体：已有 Forge 能力 ⇒ 交给通用那层 ✓
                     IFluidHandler fluids = hasCap(entity, ForgeCapabilities.FLUID_HANDLER)
                             ? null : firstFluid(values);
-                    // ② 物品（物品栏 ＋ 单个 ItemStack 字段）：同上 ✓
+                    // ② 物品（物品栏 / List<ItemStack> / 单个 ItemStack）：同上 ✓
                     List<Object> items = new ArrayList<>(2);
                     if (!hasCap(entity, ForgeCapabilities.ITEM_HANDLER)) {
                         for (Object value : values) {
-                            if (value instanceof IItemHandler || value instanceof ItemStack) items.add(value);
+                            if (value instanceof IItemHandler || value instanceof ItemStack
+                                    || value instanceof List) {
+                                items.add(value);
+                            }
+                        }
+                        // §794 兜底：一个 getter 都没给出物品 ⇒ 它自己若是原版 Container（锅/蒸笼/汤锅/
+                        //   切菜板/烤肉架/饮料块/血酒块… ✓）就直接按 Container 读 ✓
+                        //   ⚠ 只在"上面一条都没拿到"时才用 ✗ —— 否则同一份库存会被数两遍 ✗
+                        if (items.isEmpty() && entity instanceof Container container) {
+                            items.add(container);
                         }
                     }
                     if (fluids == null && items.isEmpty()) continue;
@@ -153,7 +175,9 @@ public final class KaleidoscopeRateProvider implements RateSourceProvider {
 
     /**
      * 这个类里"能读出库存"的公开无参 getter ✓（含继承 ✓ 按类缓存 ✓）：
-     * 返回 {@code IItemHandler}/{@code IFluidHandler} 的 ✓，或名字里带 {@code item} 的 {@code ItemStack} getter ✓。
+     * 返回 {@code IItemHandler}/{@code IFluidHandler} 的 ✓；
+     * 返回 {@code ItemStack} 或 {@code List}（{@code NonNullList<ItemStack>} 也算 ✓）
+     * 且**名字里带 {@link #STACK_TOKENS} 之一**的 ✓。
      */
     private static List<Method> gettersOf(Class<?> type) {
         return GETTERS.computeIfAbsent(type, cls -> {
@@ -166,10 +190,10 @@ public final class KaleidoscopeRateProvider implements RateSourceProvider {
                     Class<?> returns = method.getReturnType();
                     boolean handler = IItemHandler.class.isAssignableFrom(returns)
                             || IFluidHandler.class.isAssignableFrom(returns);
-                    // ⚠ 只认"名字里带 item 的 ItemStack getter" ✓ —— 不然会把图标/展示副本也算成库存 ✗
-                    boolean stack = ItemStack.class.isAssignableFrom(returns)
-                            && name.toLowerCase(Locale.ROOT).contains("item");
-                    if (!handler && !stack) continue;
+                    // ⚠ 名字白名单是为了**不把"算出来的东西"当库存** ✗（getDrops/getEffects/… ✓ 见 STACK_TOKENS ✓）
+                    boolean stackLike = (ItemStack.class.isAssignableFrom(returns)
+                            || List.class.isAssignableFrom(returns)) && hasStackToken(name);
+                    if (!handler && !stackLike) continue;
                     try {
                         method.setAccessible(true);
                     } catch (Throwable ignored) {
@@ -180,6 +204,15 @@ public final class KaleidoscopeRateProvider implements RateSourceProvider {
             }
             return found;
         });
+    }
+
+    /** 方法名里带白名单词根吗 ✓ */
+    private static boolean hasStackToken(String name) {
+        String lower = name.toLowerCase(Locale.ROOT);
+        for (String token : STACK_TOKENS) {
+            if (lower.contains(token)) return true;
+        }
+        return false;
     }
 
     @Nullable
@@ -259,6 +292,32 @@ public final class KaleidoscopeRateProvider implements RateSourceProvider {
                         if (stack.isEmpty()) continue;
                         consumer.accept(stack, stack.getCount());
                     } catch (Throwable ignored) {
+                    }
+                } else if (value instanceof List<?> list) {
+                    // §794 `getItems()/getInputs()` 这种返回 `NonNullList<ItemStack>` 的 ✓
+                    for (Object element : list) {
+                        try {
+                            if (element instanceof ItemStack stack && !stack.isEmpty()) {
+                                consumer.accept(stack, stack.getCount());
+                            }
+                        } catch (Throwable ignored) {
+                        }
+                    }
+                } else if (value instanceof Container container) {
+                    // §794 原版 Container 兜底（锅/蒸笼/汤锅/切菜板/烤肉架/饮料块/血酒块… ✓）
+                    int size;
+                    try {
+                        size = container.getContainerSize();
+                    } catch (Throwable ignored) {
+                        continue;
+                    }
+                    for (int slot = 0; slot < size; slot++) {
+                        try {
+                            ItemStack stack = container.getItem(slot);          // 只读 ✓
+                            if (stack == null || stack.isEmpty()) continue;
+                            consumer.accept(stack, stack.getCount());
+                        } catch (Throwable ignored) {
+                        }
                     }
                 }
             }
