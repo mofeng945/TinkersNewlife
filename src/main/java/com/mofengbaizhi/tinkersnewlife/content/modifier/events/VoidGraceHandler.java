@@ -81,7 +81,39 @@ public final class VoidGraceHandler {
         return touched != null && effect == touched;
     }
 
-    /** 兜底：每 40 tick 把已经挂在身上的这两种效果清掉（防止"施加时我们不在场"之类的边角 ✓） */
+    /**
+     * 兜底：每 40 tick 把**已经挂在身上的**这两种效果清掉（防止"施加时我们不在场"之类的边角 ✓）
+     *
+     * <h2>⚠⚠ §758：必须「先判断、再清」—— 这就是那个"一直在响的声音"的真凶 ✗</h2>
+     * Forge 1.20.1 的 {@code LivingEntity#removeEffect(MobEffect)}（源码实核 ✓ {@code mcfull}）：
+     * <pre>
+     * public boolean removeEffect(MobEffect effect) {
+     *     if (MinecraftForge.EVENT_BUS.post(new MobEffectEvent.Remove(this, effect))) return false;
+     *     //                        ↑ 按【类型】发事件（不带实例 ✓ 即日志里那堆「无效果实例 ✗」）
+     *     ...
+     * }
+     * </pre>
+     * ⇒ <b>事件是在"检查身上到底有没有这个效果"之前发的</b> ✗✗；而诡厄的
+     * {@code PotionEvents#PotionRemoveEvents}（javap 实核 ✓）里：
+     * <pre>
+     * if (event.getEffect() == GoetyEffects.VOID_TOUCHED.get() &amp;&amp; entity.level() instanceof ServerLevel)
+     *     ModNetwork.sentToTrackingEntityAndPlayer(entity,
+     *         new SPlayWorldSoundPacket(pos, ModSounds.VOID_TOUCHED_DEACTIVATE.get(), 1f, 1f));
+     * </pre>
+     * ⇒ <b>只要有人调 {@code removeEffect(虚空之蚀)}，哪怕身上根本没有它，诡厄也会响一声</b> ✗✗。
+     * 本节之前我们正是<b>无条件</b>调的 ✗ ⇒ 每 40 tick 凭空响一次 ✓
+     * （这也解释了为什么 §756／§757 的诊断一直是「虚空之蚀=无」却在响 ✓，以及为什么"免疫"看起来很干净 ✓）。
+     *
+     * <p><b>正确写法＝照抄阶梯「虚华长袍」</b> ✓（{@code VoidLightRobe#inventoryTick} javap 实核 ✓）：
+     * <pre>
+     * if (livingEntity.hasEffect(GoetyEffects.VOID_TOUCHED.get()))
+     *     livingEntity.removeEffect(GoetyEffects.VOID_TOUCHED.get());
+     * if (livingEntity.hasEffect(MobEffects.MOVEMENT_SLOWDOWN))
+     *     livingEntity.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
+     * </pre>
+     * ⇒ **先 {@code hasEffect} 再 {@code removeEffect}** ✓：身上没有 ⇒ 一次事件都不发 ⇒ **一声都不响** ✓✓；
+     * 真有 ⇒ 才清 ✓ 才响那一声（真实移除 ✓ 合情合理 ✓）。
+     */
     @SubscribeEvent
     public static void onTick(LivingEvent.LivingTickEvent event) {
         // ⚠ 这里不能用 `instanceof LivingEntity wearer`：LivingTickEvent#getEntity() 本来就返回 LivingEntity，
@@ -97,29 +129,28 @@ public final class VoidGraceHandler {
                     "🛡 虚无恩宠生效中 ✓（玩家={} · 虚空金属护甲确实穿在身上 ✓ · tickCount={}）",
                     wearer.getName().getString(), wearer.tickCount);
         }
-        // §750 诊断：⭐ 这两条才是"声音来源"的头号嫌疑 —— 我们每清一次，
-        //   诡厄就会播一次 VOID_TOUCHED_DEACTIVATE ✓（它自带 activate/loop/deactivate 三个音效 ✓）
         boolean hadSlowness = wearer.hasEffect(MobEffects.MOVEMENT_SLOWDOWN);
         MobEffect touched = GoetyLadderCompat.effect(GoetyLadderCompat.VOID_TOUCHED);
         boolean hadTouched = touched != null && wearer.hasEffect(touched);
         // §756 诊断：**每次兜底检查都留一行状态**（每 5 秒限流一行 ✓）
-        //   目的：把"我们这一侧到底看见没看见虚空之蚀"钉死 ✗
-        //   —— 若这里长期是「无 ✓」而诡厄那边还在每秒播取消音 ✗，就说明**清它的不是我们** ✓，方向立刻换 ✓
         com.mofengbaizhi.tinkersnewlife.util.VoidArmorDiag.log("clean:state",
                 "虚无恩宠·兜底检查 ✓（虚空之蚀={} ／ 缓慢={} ／ 效果探测={}）玩家={}",
-                hadTouched ? "有 ⭐ 我们马上要清它" : "无",
-                hadSlowness ? "有" : "无",
+                hadTouched ? "有 ⭐ 我们马上要清它" : "无（⇒ 一声都不会响 ✓）",
+                hadSlowness ? "有" : "无（⇒ 一声都不会响 ✓）",
                 touched == null ? "取不到（阶梯那边的效果没找到 ✗）" : "正常",
                 wearer.getName().getString());
-        wearer.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
-        if (touched != null) wearer.removeEffect(touched);
+        // ⭐⭐ §758 核心修复：**先判断再清** ✗ —— 照抄阶梯「虚华长袍」的写法 ✓
+        //   原来是无条件 removeEffect ✗ ⇒ Forge 会先发 MobEffectEvent.Remove(按类型) ✗ ⇒ 诡厄凭空播一次取消音 ✗
         if (hadSlowness) {
+            wearer.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
             com.mofengbaizhi.tinkersnewlife.util.VoidArmorDiag.log("clean:slow",
-                    "虚无恩宠：清掉了残留的「缓慢」✓ 玩家={}", wearer.getName().getString());
+                    "虚无恩宠：清掉了挂在身上的「缓慢」✓（真实移除 ⇒ 这一声是应该有的 ✓）玩家={}",
+                    wearer.getName().getString());
         }
         if (hadTouched) {
+            wearer.removeEffect(touched);
             com.mofengbaizhi.tinkersnewlife.util.VoidArmorDiag.log("clean:touched",
-                    "虚无恩宠：清掉了残留的「虚空之蚀」✓ ⭐ 每清一次诡厄就播一次取消音 ⇒ 若这行每 2 秒出现一次，声音就是它 ✓ 玩家={}",
+                    "虚无恩宠：清掉了挂在身上的「虚空之蚀」✓（真实移除 ⇒ 诡厄播一次取消音是应该的 ✓）玩家={}",
                     wearer.getName().getString());
         }
     }
