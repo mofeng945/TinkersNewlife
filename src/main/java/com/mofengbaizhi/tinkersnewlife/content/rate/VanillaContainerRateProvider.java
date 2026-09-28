@@ -1,5 +1,6 @@
 package com.mofengbaizhi.tinkersnewlife.content.rate;
 
+import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;
@@ -71,6 +72,29 @@ public final class VanillaContainerRateProvider implements RateSourceProvider {
 
     /** §788：能力对象（wrapper）的类 → 它字段里那些"直接存着方块实体"的字段 ✓（只解析一次 ✓） */
     private static final Map<Class<?>, List<Field>> WRAPPED_BE_FIELDS = new ConcurrentHashMap<>();
+
+    /** §790：已经警告过的"超堆叠数量"（来源 id ＋ 物品 ⇒ 只报一次 ✓ 不刷屏 ✓） */
+    private static final Set<String> OVERSIZE_LOGGED = ConcurrentHashMap.newKeySet();
+
+    /**
+     * §790 诊断：某来源的某个槽位报出**超过单堆上限**的数量 ✓ —— 只打一次 ✓。
+     *
+     * <p>用途：用户报「凭空冒出 **872 瓶**樱花血酒」✗ 而存档里**只有 47 瓶** ✓
+     * ⇒ 那个数只能是"方块自己算出来的虚拟数量"✗。这行日志会直接点名
+     * **是哪个方块实体、哪个槽位、报了多少、该物品上限多少** ✓，一眼定位 ✓。
+     */
+    private static void logOversized(ItemStack stack, int count, int slot) {
+        try {
+            String key = System.identityHashCode(stack) + ":" + count;      // 粗粒度去重 ✓
+            if (!OVERSIZE_LOGGED.add(key)) return;
+            if (OVERSIZE_LOGGED.size() > 512) OVERSIZE_LOGGED.clear();      // 防无限涨 ✓
+            TinkersNewlife.LOGGER.info(
+                    "[产率] ⚠ 某来源第 {} 槽报了 {} 个 {}（该物品单堆上限只有 {}）"
+                            + "⇒ 这是「方块自己算出来的虚拟/预测数量」，不是真实存量 ✓",
+                    slot, count, ForgeRegistries.ITEMS.getKey(stack.getItem()), stack.getMaxStackSize());
+        } catch (Throwable ignored) {
+        }
+    }
 
     @Override
     public String modId() {
@@ -359,7 +383,14 @@ public final class VanillaContainerRateProvider implements RateSourceProvider {
                     continue;
                 }
                 if (stack == null || stack.isEmpty()) continue;
-                consumer.accept(stack, stack.getCount());
+                int count = stack.getCount();
+                // §790 诊断：某个槽位报出**超过该物品单堆上限**的数量 ⇒
+                //   这是"方块在算虚拟数量"的典型特征 ✗（真实存量不可能一槽 872 个 ✗）。
+                //   用户报过「凭空冒出 872 瓶樱花血酒」✓ —— 这行日志就是为了点名是哪个方块实体在报 ✓。
+                if (count > 0 && count > stack.getMaxStackSize()) {
+                    logOversized(stack, count, slot);
+                }
+                consumer.accept(stack, count);
             }
         }
 
