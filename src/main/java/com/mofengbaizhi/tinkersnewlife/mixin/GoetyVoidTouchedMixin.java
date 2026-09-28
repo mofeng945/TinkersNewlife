@@ -110,11 +110,29 @@ public class GoetyVoidTouchedMixin {
     private static void tinkersnewlife$watchRemoved(MobEffectEvent.Remove event, CallbackInfo ci) {
         try {
             if (!VoidArmorDiag.ENABLED) return;
-            String id = effectId(event.getEffectInstance());
-            VoidArmorDiag.log("potion:removed:" + id + ":" + who(event),
-                    "➖ 效果【被移除】{} ✓ 目标={}{}", id, who(event),
-                    isTouched(event.getEffectInstance())
+            MobEffectInstance ins = event.getEffectInstance();
+            String id = effectId(ins);
+            String fromType = "";
+            // §757：⚠ "按类型移除"（removeAllEffects 那条路）**实例是 null** ✗ ——
+            //   这正是 §756 里那 205 条「（无效果实例 ✗）」的真相 ✓ ⇒ 这里补读 getEffect() ✓
+            if (ins == null) {
+                try {
+                    MobEffect onlyType = event.getEffect();
+                    fromType = "（按类型移除 → " + (onlyType == null ? "类型也取不到 ✗"
+                            : String.valueOf(BuiltInRegistries.MOB_EFFECT.getKey(onlyType))) + " ✓）";
+                } catch (Throwable t) {
+                    fromType = "（取类型抛异常：" + t.getClass().getSimpleName() + "）";
+                }
+            }
+            VoidArmorDiag.log("potion:removed:" + id + fromType + ":" + who(event),
+                    "➖ 效果【被移除】{} {} ✓ 目标={}{}", id, fromType, who(event),
+                    isTouched(ins)
                             ? " ⭐⭐ 诡厄会播「取消音」✓（若每秒一行＝那个一直在响的声音就是它 ✓）" : "");
+            // §757：第一次见到"按类型移除" ⇒ 打一条调用栈，直接点名**是谁在批量清效果** ✓
+            if (ins == null) {
+                VoidArmorDiag.log("potion:remove:type-stack",
+                        "🧭 「按类型移除效果」的**发起方**调用栈（首次出现）{}", VoidArmorDiag.shortStack(8));
+            }
         } catch (Throwable t) {
             VoidArmorDiag.log("sniff:error:potion", "🐞 嗅探异常(PotionEvents.Remove) {}", String.valueOf(t));
         }

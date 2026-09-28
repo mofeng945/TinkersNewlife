@@ -73,4 +73,36 @@ public final class VoidArmorDiag {
             // 诊断代码本身绝不许影响游戏 ✗
         }
     }
+
+    /**
+     * <b>短调用栈</b>（§757）—— 只留"可能与业务有关"的帧 ✓ 用来点名"到底是谁在干这件事" ✓。
+     *
+     * <p>跳过：{@code java.} / {@code jdk.} / {@code net.minecraft.} / {@code net.minecraftforge.} /
+     * {@code org.spongepowered} / {@code com.mojang} / {@code cpw.mods}（都是框架噪声 ✗）；
+     * 保留模组自己的帧（含我们自己的 ✓ 也含别的模组 ✓ —— 排查时正是要找它 ✓）。
+     *
+     * @param maxFrames 最多保留几帧
+     * @return 形如 {@code " ⇐ 类#方法:行 ⇐ …"} 的字符串（取不到时返回提示串 ✓ 绝不抛异常 ✓）
+     */
+    public static String shortStack(int maxFrames) {
+        try {
+            StringBuilder sb = new StringBuilder();
+            int kept = 0;
+            for (StackTraceElement e : new Throwable().getStackTrace()) {
+                String cn = e.getClassName();
+                if (cn.startsWith("java.") || cn.startsWith("jdk.")
+                        || cn.startsWith("net.minecraft.") || cn.startsWith("net.minecraftforge.")
+                        || cn.startsWith("org.spongepowered") || cn.startsWith("com.mojang")
+                        || cn.startsWith("cpw.mods")) {
+                    continue;
+                }
+                sb.append(" ⇐ ").append(cn).append('#').append(e.getMethodName())
+                        .append(':').append(e.getLineNumber());
+                if (++kept >= maxFrames) break;
+            }
+            return kept == 0 ? "（只有框架帧 ✗）" : sb.toString();
+        } catch (Throwable t) {
+            return "（取调用栈失败：" + t.getClass().getSimpleName() + "）";
+        }
+    }
 }
