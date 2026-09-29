@@ -254,22 +254,81 @@ public class ConstructedBlueprintItem extends Item {
         return target != null ? target.damageItem(stack, amount, entity, onBroken) : super.damageItem(stack, amount, entity, onBroken);
     }
 
+    // ============================================================
+    //  §829 拟造物：用**耐久条**显示「剩余存在时间」
+    // ============================================================
+
+    /**
+     * §829 用户口径：「**能不能让拟造物的剩余时间用耐久条的方法显示**」✓
+     *
+     * <p>原先这三个方法是把耐久条<b>转发给目标物品</b> ✗（所以只看得到目标自己的耐久 ✓
+     * 而拟造物的"还能存在多久"完全看不见 ✗）。现在改成：
+     * <b>只要带到期标记（{@code construct_temp_until}）就显示"剩余寿命条"</b> ✓ ——
+     * 满格 = 刚造出来 ✓ 越短越接近到期 ✓ 颜色沿用原版耐久条那套（绿 → 红 ✓）。
+     */
     @Override
     public boolean isBarVisible(ItemStack stack) {
-        Item target = targetItem(stack);
+        if (tempUntil(stack) > 0L) return true;              // 拟造物：始终显示寿命条 ✓
+        Item target = targetItem(stack);                     // 非拟造物：照旧转发 ✓
         return target != null && target.isBarVisible(stack);
     }
 
     @Override
     public int getBarWidth(ItemStack stack) {
+        if (tempUntil(stack) > 0L) {
+            return Math.max(0, Math.round(13.0F * remainingFraction(stack)));   // 13 = 原版满格 ✓
+        }
         Item target = targetItem(stack);
         return target != null ? target.getBarWidth(stack) : super.getBarWidth(stack);
     }
 
     @Override
     public int getBarColor(ItemStack stack) {
+        if (tempUntil(stack) > 0L) {
+            // 与原版耐久条**同一套算法**（Mth.hsvToRgb(f/3, 1, 1)）：f=1 绿 ✓ f→0 红 ✓
+            return net.minecraft.util.Mth.hsvToRgb(remainingFraction(stack) / 3.0F, 1.0F, 1.0F);
+        }
         Item target = targetItem(stack);
         return target != null ? target.getBarColor(stack) : super.getBarColor(stack);
+    }
+
+    /** §829 到期时刻（游戏时间 tick ✓ 没有到期标记 ⇒ 0 ✓） */
+    private static long tempUntil(ItemStack stack) {
+        try {
+            if (stack == null || !stack.hasTag()) return 0L;
+            return stack.getTag().getLong(
+                    com.mofengbaizhi.tinkersnewlife.content.curse.technique.ConstructTechnique.KEY_TEMP_UNTIL);
+        } catch (Throwable ignored) {
+            return 0L;
+        }
+    }
+
+    /**
+     * §829 剩余寿命比例（1 = 刚造出来 ✓ 0 = 已到期 ✓）。
+     *
+     * <p>分母用 {@link com.mofengbaizhi.tinkersnewlife.content.curse.technique.ConstructTechnique#TEMP_TICKS}
+     * —— 拟造物的总时长常量 ✓（"直接拟造的临时物品"与"拆掉拟造方块收回来的物品"两条路都用它 ✓）。
+     * <p>客户端时间拿不到（刚进世界/专服）⇒ 当作"满" ✓（宁可显示满格，也不要显示成 0 吓人 ✗）。
+     */
+    private static float remainingFraction(ItemStack stack) {
+        long until = tempUntil(stack);
+        if (until <= 0L) return 0.0F;
+        long now = currentGameTime();
+        if (now <= 0L) return 1.0F;
+        float f = (float) (until - now)
+                / (float) Math.max(1, com.mofengbaizhi.tinkersnewlife.content.curse.technique.ConstructTechnique.TEMP_TICKS);
+        return Math.max(0.0F, Math.min(1.0F, f));
+    }
+
+    /** §829 当前游戏时间（**只走客户端** ✓ 公共代码不直接引用 Minecraft ✗，防专服类加载 ✗） */
+    private static long currentGameTime() {
+        try {
+            return net.minecraftforge.fml.DistExecutor.unsafeCallWhenOn(
+                    net.minecraftforge.api.distmarker.Dist.CLIENT,
+                    () -> () -> com.mofengbaizhi.tinkersnewlife.client.ClientGameTime.now());
+        } catch (Throwable ignored) {
+            return 0L;
+        }
     }
 
     @Override
