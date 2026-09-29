@@ -40,6 +40,20 @@ public class ModEntities {
                             .build(TinkersNewlife.MOD_ID + ":dreadsteel_slash")
             );
 
+    /** 「兵士佩刀」的刀光（§810）：弧形面片 ＋ 弧光贴图 ⇒ 仿拔刀剑的斩击观感 ✓ 纯视觉 ✓ 不存档 ✓ */
+    public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.SoldierSlashEntity>> SOLDIER_SLASH =
+            ENTITIES.register("soldier_slash",
+                    () -> EntityType.Builder
+                            .<com.mofengbaizhi.tinkersnewlife.content.entity.SoldierSlashEntity>of(
+                                    com.mofengbaizhi.tinkersnewlife.content.entity.SoldierSlashEntity::new,
+                                    MobCategory.MISC)
+                            .sized(0.6f, 0.6f)
+                            .clientTrackingRange(10)
+                            .updateInterval(1)
+                            .noSave()
+                            .build(TinkersNewlife.MOD_ID + ":soldier_slash")
+            );
+
     public static final RegistryObject<EntityType<FlyingSwordEntity>> FLYING_SWORD =
         ENTITIES.register("flying_sword",
                 () -> EntityType.Builder.<FlyingSwordEntity>of(FlyingSwordEntity::new, MobCategory.MISC)

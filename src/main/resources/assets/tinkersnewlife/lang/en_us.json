@@ -1367,7 +1367,7 @@
   "tooltip.tinkersnewlife.silent_glove.desc": "Singularity storage: %d/%d",
   "tooltip.tinkersnewlife.silent_glove.use": "Right-click in the main hand to open the singularity storage",
   "tooltip.tinkersnewlife.tang_heng_dao.reach": "§bHeld: §f+1 block §7of entity interaction range",
-  "tooltip.tinkersnewlife.tang_heng_dao.saber": "§7Soldier's Saber: §fwithin 4 blocks, closer targets take extra damage §7(each stage = 50% of tool damage: 4b=0, 3b=1, 2b=2, 1b=3, melee=4)",
+  "tooltip.tinkersnewlife.tang_heng_dao.saber": "§7Soldier's Saber: §fthe closer you stand, the more extra stages you chain - each stage lands its own hit (50% of tool damage) and swings its own slash §7(4b=0, 3b=1, 2b=2, 1b=3, melee=4)",
   "tooltip.tinkersnewlife.war_scythe.reach": "§bHeld: §f+%d blocks §7of entity interaction range (reach creatures farther; does not affect block reach)",
   "tooltip.tinkersnewlife.war_scythe.fever": "§eFever: §f%d §7/ §f100",
   "tooltip.tinkersnewlife.war_scythe.ultimate": "§6✦ §eFever is full! Hold §6W+Shift+right-click §eto unleash the finisher",

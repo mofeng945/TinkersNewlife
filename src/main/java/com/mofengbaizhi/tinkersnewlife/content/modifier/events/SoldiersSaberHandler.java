@@ -1,66 +1,103 @@
 package com.mofengbaizhi.tinkersnewlife.content.modifier.events;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
-import net.minecraft.core.particles.ParticleTypes;
+import com.mofengbaizhi.tinkersnewlife.content.entity.SoldierSlashEntity;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import slimeknights.tconstruct.library.modifiers.ModifierId;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 import slimeknights.tconstruct.library.tools.stat.ToolStats;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 /**
- * 词条·<b>兵士佩刀</b>的实际逻辑（§808 · 唐横刀自带 · 无等级 ✓）。
+ * 词条·<b>兵士佩刀</b>的实际逻辑（§808／§809／§810 · 唐横刀自带 · 无等级 ✓）。
  *
  * <h2>效果（用户口径 ✓ 逐字实现）</h2>
  * <ol>
- *   <li><b>4 格内按目标距离追加伤害</b> ✓：4格 <b>0</b> 段 / 3格 <b>1</b> 段 / 2格 <b>2</b> 段 /
- *       1格 <b>3</b> 段 / 不到 1 格 <b>4</b> 段 ✓（4 格以外不加 ✓）；</li>
- *   <li><b>每段挥出一道灰色刀光</b> ✓：用原版 {@code ParticleTypes.SWEEP_ATTACK}（本来就是灰白弧光 ✓，
- *       <b>不需要任何新贴图</b> ✓ —— 与"先不给纹理"的口径一致 ✓），沿"攻击者眼睛 → 目标身体中心"
- *       按段数均分铺开 ✓（视觉上就是拔刀剑那种多道刀光 ✓）。</li>
+ *   <li><b>4 格内按距离"附加多段伤害"</b> ✓（用户原话：「<b>不是越近伤害越高，而是越近能附加多段伤害</b>」✓）：
+ *       4格 <b>0</b> 段 / 3格 <b>1</b> 段 / 2格 <b>2</b> 段 / 1格 <b>3</b> 段 / 不到 1 格 <b>4</b> 段 ✓；
+ *       每段 = <b>工具攻击面板 × 50%</b> ✓（用户口径 ✓），而且每段是<b>各自独立的一次伤害结算</b> ✓
+ *       ——<b>不是</b>把总加成塞进同一次伤害里 ✗（那是"越近伤害越高"✗ 正是用户否掉的口径 ✗）；</li>
+ *   <li><b>每段一道灰色刀光</b> ✓（用户原话：「<b>我要的是刀光光效，不是横扫粒子</b>」✓
+ *       ＋「<b>模仿拔刀剑刀光</b>」✓）⇒ 用 {@link SoldierSlashEntity}
+ *       （弧形面片 ＋ 弧光贴图 ＋ 顶点色，实现见 {@code SoldierSlashRenderer}）✓
+ *       <b>不用</b> {@code ParticleTypes.SWEEP_ATTACK} ✗。</li>
  * </ol>
  *
- * <h2>两个实现口径（如实说明 ✓）</h2>
+ * <h2>多段怎么结算（关键设计 ✓）</h2>
  * <ul>
- *   <li><b>用词条判断而不是硬认"唐横刀"</b> ✓：读 {@code ToolStack.getModifiers().getLevel(soldiers_saber)}
- *       ⇒ 以后任何工具挂上这个词条都能吃到 ✓（也正是"词条效果"该有的样子 ✓）；</li>
- *   <li><b>追加伤害并入同一次伤害事件</b>（{@code event.setAmount(原 + 段数 × 每段) }✓）而不是"多打几次" ✗：
- *       避免反复触发无敌帧/击杀归属等副作用 ✓；"多段"体现在<b>追加的数值与刀光道数</b>上 ✓。</li>
+ *   <li><b>不塞进同一次伤害</b> ✗：那样受击方只会掉一次血、只弹一个数字 ✗ 看不出"多段" ✗；</li>
+ *   <li><b>而是在接下来的若干 tick 里逐段补刀</b> ✓：主伤害先照常结算 ✓，随后每 {@link #STAGE_INTERVAL_TICKS}
+ *       tick 补一段 ✓（第 1 段在第 2 tick、第 2 段在第 4 tick…✓），每段各自
+ *       {@code victim.hurt(同一伤害源, 面板 × 50%)} ✓ ⇒ 会分别弹伤害数字 ✓ 每段一道刀光 ✓
+ *       正是"越近能附加多段伤害" ✓；</li>
+ *   <li><b>排程用 {@code ServerTickEvent}</b> ✓（本仓既有的每 tick 写法 ✓）而不是依赖不确定的调度 API ✓；
+ *       待结算列表在服务端主线程里读写 ✓ 无需加锁 ✓；</li>
+ *   <li>⚠ <b>破无敌帧</b>：原版受击后有 10 tick 无敌 ✗ ⇒ 补刀前把 {@code victim.invulnerableTime} 清零 ✓，
+ *       否则第 2 段之后全被吞掉 ✗（"多段"变"一段"✗）；</li>
+ *   <li>⚠ <b>防滚雪球</b>：补刀自己也会触发 {@code LivingHurtEvent} ⇒ 若不拦，会无限套娃 ✗✗。
+ *       用 {@link #resolvingStage} 标记"正在结算我们补的那一段" ✓（同一线程同步调用 ⇒ 普通 boolean 足够 ✓）。</li>
  * </ul>
  *
- * <h2>每段追加伤害（用户拍板 ✓）</h2>
- * 用户口径：**每段追加「工具伤害」的 <b>50%</b>** ✓ ⇒ {@link #BONUS_PER_STAGE_RATIO} = <b>0.5</b> ✓，
- * 追加量 = <b>工具攻击面板 × 0.5 × 段数</b> ✓（读匠魂面板 {@code ToolStats.ATTACK_DAMAGE} ✓
- * ⇒ 材料/强化改了面板，追加量跟着走 ✓ 不会"前期强后期废" ✓）。
- * 贴身 4 段 ⇒ <b>+200% 工具伤害</b> ✓；4 格处 0 段 ⇒ 不加 ✓。
+ * <h2>触发条件：认词条，不认这把刀 ✓</h2>
+ * 读 {@code ToolStack.getModifiers().getLevel(soldiers_saber)} ✓ ⇒ 以后别的工具挂上同一个词条也能吃 ✓
+ * （读不到工具数据 ⇒ 当作不带 ✓ 绝不抛错 ✗）。
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class SoldiersSaberHandler {
 
     /** 词条 id（与 {@code Modifiers.SOLDIERS_SABER} 一致 ✓） */
-    private static final slimeknights.tconstruct.library.modifiers.ModifierId SABER =
-            new slimeknights.tconstruct.library.modifiers.ModifierId(
-                    new ResourceLocation(TinkersNewlife.MOD_ID, "soldiers_saber"));
+    private static final ModifierId SABER =
+            new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "soldiers_saber"));
 
-    /** 每段追加伤害 = 工具攻击面板 × 该比例 ✓（用户口径 50% ✓ 要改只改这里 ✓） */
-    public static final float BONUS_PER_STAGE_RATIO = 0.5F;
+    /** 每段伤害 = 工具攻击面板 × 该比例 ✓（用户口径 50% ✓ 要改只改这里 ✓） */
+    public static final float DAMAGE_PER_STAGE_RATIO = 0.5F;
 
     /** 生效半径：4 格 ✓（用户口径"4格范围内"✓） */
     public static final double MAX_RANGE = 4.0D;
 
+    /** 相邻两段之间的间隔（tick ✓）：2 tick ⇒ 贴身 4 段约 8 tick 打完 ✓ 有"连续斩"的节奏 ✓ */
+    private static final int STAGE_INTERVAL_TICKS = 2;
+
+    /** 每道刀光的寿命（tick ✓） */
+    private static final int SLASH_LIFE_TICKS = 6;
+
+    /** 刀光颜色：灰色 ✓（用户口径"灰色刀光"✓ 0xRRGGBB ✓） */
+    private static final int SLASH_TINT = 0xC9CFD9;
+
+    /** 正在结算"我们补的那一段" ⇒ 它自己触发的受击事件不再触发本词条 ✓（同线程同步 ⇒ boolean 足够 ✓） */
+    private static boolean resolvingStage = false;
+
+    /** 待结算的一段伤害 ✓（全部在服务端主线程读写 ✓） */
+    private record PendingStage(long atTick, DamageSource source, LivingEntity victim,
+                                float damage, int index) {}
+
+    private static final List<PendingStage> PENDING = new ArrayList<>();
+
     private SoldiersSaberHandler() {
     }
 
+    // ============================================================
+    //  主伤害：只负责"排程"，不自己加伤害 ✓
+    // ============================================================
+
     @SubscribeEvent
     public static void onHurt(LivingHurtEvent event) {
+        if (resolvingStage) return;                    // 我们自己补的那一段 ⇒ 直接放行 ✓
+        if (event.isCanceled()) return;
         LivingEntity victim = event.getEntity();
-        if (victim == null || victim.level().isClientSide) return;
-        if (!(event.getSource().getEntity() instanceof LivingEntity attacker)) return;   // 只认"某个人打的"✓
+        if (!(event.getSource().getEntity() instanceof LivingEntity attacker)) return;
         if (attacker == victim) return;
 
         ItemStack held = attacker.getMainHandItem();
@@ -69,8 +106,60 @@ public final class SoldiersSaberHandler {
         int stages = stagesFor(attacker.distanceTo(victim));
         if (stages <= 0) return;
 
-        event.setAmount(event.getAmount() + bonusDamage(held, stages));
-        spawnSlashes(attacker, victim, stages);
+        float perStage = damagePerStage(held);
+        if (perStage <= 0.0F) return;
+
+        scheduleStages(event.getSource(), victim, perStage, stages);
+    }
+
+    /** 把 N 段依次排进后续 tick ✓（排不进去也绝不影响主伤害 ✓） */
+    private static void scheduleStages(DamageSource source, LivingEntity victim, float perStage, int stages) {
+        try {
+            if (!(victim.level() instanceof ServerLevel level)) return;
+            if (level.getServer() == null) return;
+            long now = level.getServer().getTickCount();
+            for (int i = 1; i <= stages; i++) {
+                PENDING.add(new PendingStage(now + (long) i * STAGE_INTERVAL_TICKS,
+                        source, victim, perStage, i));
+            }
+        } catch (Throwable ignored) {
+            // 排程失败 = 没有追加段 ✓ 主伤害照常 ✓
+        }
+    }
+
+    // ============================================================
+    //  逐段结算 + 每段一道刀光
+    // ============================================================
+
+    @SubscribeEvent
+    public static void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) return;
+        if (PENDING.isEmpty()) return;
+        long now = event.getServer().getTickCount();
+        Iterator<PendingStage> it = PENDING.iterator();
+        while (it.hasNext()) {
+            PendingStage stage = it.next();
+            if (stage.atTick() > now) continue;
+            it.remove();                                  // 先摘掉 ⇒ 即使结算里抛错也不会反复重试 ✓
+            resolveStage(stage);
+        }
+    }
+
+    private static void resolveStage(PendingStage stage) {
+        LivingEntity victim = stage.victim();
+        if (victim == null || !victim.isAlive() || victim.isRemoved()) return;   // 目标没了 ⇒ 后面几段自然作废 ✓
+        if (!(victim.level() instanceof ServerLevel level)) return;
+
+        victim.invulnerableTime = 0;                     // ⚠ 破无敌帧 ⇒ 每段都真的结算 ✓
+        resolvingStage = true;
+        try {
+            victim.hurt(stage.source(), stage.damage());
+        } catch (Throwable ignored) {
+            // 单段失败不影响后续段 ✓
+        } finally {
+            resolvingStage = false;
+        }
+        spawnSlash(level, victim, stage.index());
     }
 
     /**
@@ -85,11 +174,11 @@ public final class SoldiersSaberHandler {
         return 0;
     }
 
-    /** 每段追加伤害 = 工具攻击面板 × 50% × 段数 ✓（拿不到工具数据就当作 0 ✓ 绝不抛错 ✗） */
-    private static float bonusDamage(ItemStack stack, int stages) {
+    /** 每段伤害 = 工具攻击面板 × 50% ✓（拿不到工具数据就当作 0 ✓ 绝不抛错 ✗） */
+    private static float damagePerStage(ItemStack stack) {
         try {
             float panel = ToolStack.from(stack).getStats().get(ToolStats.ATTACK_DAMAGE);
-            return panel * BONUS_PER_STAGE_RATIO * stages;
+            return panel * DAMAGE_PER_STAGE_RATIO;
         } catch (Throwable t) {
             return 0.0F;
         }
@@ -104,17 +193,23 @@ public final class SoldiersSaberHandler {
         }
     }
 
-    /** 灰色刀光：每段一道 {@code SWEEP_ATTACK} ✓ 沿"眼睛 → 目标中心"均分 ✓ */
-    private static void spawnSlashes(LivingEntity attacker, LivingEntity victim, int stages) {
+    /**
+     * 灰色刀光 ✓：一道=一个 {@link SoldierSlashEntity}（弧形面片 ✓ 不是粒子 ✗）。
+     * <p>朝向/自转用 {@code index} 做确定性的错开 ＋ 一点随机 ⇒ 连续几段不会一模一样 ✓。
+     */
+    private static void spawnSlash(ServerLevel level, LivingEntity victim, int index) {
         try {
-            if (!(attacker.level() instanceof ServerLevel level)) return;
-            Vec3 from = attacker.getEyePosition();
-            Vec3 to = victim.position().add(0.0D, victim.getBbHeight() * 0.5D, 0.0D);
-            for (int i = 1; i <= stages; i++) {
-                Vec3 p = from.lerp(to, (double) i / (stages + 1));
-                level.sendParticles(ParticleTypes.SWEEP_ATTACK,
-                        p.x, p.y, p.z, 1, 0.12D, 0.12D, 0.12D, 0.0D);
-            }
+            Vec3 base = victim.position().add(0.0D, victim.getBbHeight() * 0.55D, 0.0D);
+            float yaw = level.random.nextFloat() * 360.0F;
+            float roll = ((index * 67) % 150) - 75 + level.random.nextFloat() * 24.0F - 12.0F;
+            float scale = 0.95F + level.random.nextFloat() * 0.28F;
+            Vec3 pos = base.add(
+                    (level.random.nextDouble() - 0.5D) * 0.5D,
+                    (level.random.nextDouble() - 0.5D) * 0.35D,
+                    (level.random.nextDouble() - 0.5D) * 0.5D);
+            SoldierSlashEntity slash = new SoldierSlashEntity(
+                    level, pos, yaw, roll, scale, SLASH_LIFE_TICKS, 0, SLASH_TINT);
+            level.addFreshEntity(slash);
         } catch (Throwable ignored) {
             // 光效失败不影响伤害 ✓
         }

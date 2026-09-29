@@ -1367,7 +1367,7 @@
   "tooltip.tinkersnewlife.silent_glove.desc": "空间奇点库:%d/%d",
   "tooltip.tinkersnewlife.silent_glove.use": "主手右键打开空间奇点库",
   "tooltip.tinkersnewlife.tang_heng_dao.reach": "§b手持：实体交互距离 §f+1 格 §7（够得到更远的生物）",
-  "tooltip.tinkersnewlife.tang_heng_dao.saber": "§7兵士佩刀：§f4 格内越近追加伤害越高 §7（每段 = 工具伤害的 50%：4格0段 / 3格1段 / 2格2段 / 1格3段 / 贴身4段）",
+  "tooltip.tinkersnewlife.tang_heng_dao.saber": "§7兵士佩刀：§f越近附加的段数越多，每段各自结算一次伤害（面板 50%）并挥出一道刀光 §7（4格0段 / 3格1段 / 2格2段 / 1格3段 / 贴身4段）",
   "tooltip.tinkersnewlife.war_scythe.reach": "§b手持：实体交互距离 §f+%d 格 §7（够得到更远的生物；不影响够方块的距离）",
   "tooltip.tinkersnewlife.war_scythe.fever": "§eFever: §f%d §7/ §f100",
   "tooltip.tinkersnewlife.war_scythe.ultimate": "§6✦ §eFever 已满！按住 §6W+Shift+右键 §e释放终极斩击",
