@@ -1,0 +1,15 @@
+{
+  "type": "tconstruct:material_melting",
+  "input": "tinkersnewlife:divine_gold",
+  "result": {
+    "fluid": "tinkersnewlife:molten_broken_ring_still",
+    "amount": 10
+  },
+  "temperature": 1200,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "goety_revelation"
+    }
+  ]
+}

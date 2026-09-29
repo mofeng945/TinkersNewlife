@@ -1,0 +1,15 @@
+{
+  "type": "tconstruct:material_melting",
+  "input": "tinkersnewlife:magic_gold",
+  "result": {
+    "fluid": "tinkersnewlife:magic_gold_essence_still",
+    "amount": 90
+  },
+  "temperature": 1800,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "irons_spellbooks"
+    }
+  ]
+}

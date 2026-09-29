@@ -1,0 +1,15 @@
+{
+  "type": "tconstruct:material_melting",
+  "input": "tinkersnewlife:cursed_metal",
+  "result": {
+    "fluid": "tinkersnewlife:molten_cursed_metal_still",
+    "amount": 90
+  },
+  "temperature": 900,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "goety"
+    }
+  ]
+}

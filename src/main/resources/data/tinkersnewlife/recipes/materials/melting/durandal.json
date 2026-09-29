@@ -1,0 +1,9 @@
+{
+  "type": "tconstruct:material_melting",
+  "input": "tinkersnewlife:durandal",
+  "result": {
+    "fluid": "tinkersnewlife:molten_durandal_still",
+    "amount": 90
+  },
+  "temperature": 1300
+}
