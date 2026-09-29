@@ -1,61 +1,11 @@
 {
-  "parent": "tconstruct:item/base/default",
+  "parent": "tconstruct:item/base/tall",
   "textures": {
     "blade1": "tinkersnewlife:item/tool/tang_heng_dao/blade1",
     "blade2": "tinkersnewlife:item/tool/tang_heng_dao/blade2",
     "plate": "tinkersnewlife:item/tool/tang_heng_dao/plate",
     "binding": "tinkersnewlife:item/tool/tang_heng_dao/binding",
     "handle": "tinkersnewlife:item/tool/tang_heng_dao/handle"
-  },
-  "display": {
-    "thirdperson_righthand": {
-      "rotation": [
-        -167.91,
-        -72.06,
-        -164.12
-      ],
-      "translation": [
-        0,
-        6,
-        3.25
-      ],
-      "scale": [
-        1,
-        1.66,
-        1
-      ]
-    },
-    "thirdperson_lefthand": {
-      "rotation": [
-        -161.06,
-        87.34,
-        165.1
-      ],
-      "translation": [
-        0,
-        7.5,
-        4.5
-      ],
-      "scale": [
-        0.97,
-        1.63,
-        1.07
-      ]
-    },
-    "firstperson_righthand": {
-      "rotation": [
-        0,
-        -90,
-        0
-      ]
-    },
-    "firstperson_lefthand": {
-      "rotation": [
-        0,
-        90,
-        0
-      ]
-    }
   },
   "loader": "tconstruct:tool",
   "parts": [
