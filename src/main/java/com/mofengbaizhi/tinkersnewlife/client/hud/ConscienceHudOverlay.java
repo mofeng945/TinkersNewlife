@@ -73,6 +73,8 @@ public final class ConscienceHudOverlay {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         if (player == null || mc.options.hideGui) return;
+        // §818 玩家自己关了「心」的 HUD（在咒术 HUD 调整界面里）⇒ 直接不画 ✓
+        if (!CurseHudConfig.isConscienceHudEnabled()) return;
 
         int alignment = readAlignment(player);
         if (alignment == NO_HEART) return;                 // 没拿到「心」⇒ 不画 ✓（不同步时宁可空着 ✗）

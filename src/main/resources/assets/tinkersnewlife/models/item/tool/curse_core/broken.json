@@ -1,6 +1,6 @@
 {
   "loader": "tconstruct:tool",
-  "parent": "tconstruct:item/base/default",
+  "parent": "forge:item/default-tool",
   "textures": {
     "head": "tinkersnewlife:item/tool/parts/curse_core_part_broken"
   },

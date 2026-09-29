@@ -1,6 +1,6 @@
 {
   "loader": "tconstruct:tool",
-  "parent": "tconstruct:item/base/default",
+  "parent": "forge:item/default-tool",
   "textures": {
     "wheel1": "tinkersnewlife:item/tool/yo_yo/wheel1",
     "wheel2": "tinkersnewlife:item/tool/yo_yo/wheel2",

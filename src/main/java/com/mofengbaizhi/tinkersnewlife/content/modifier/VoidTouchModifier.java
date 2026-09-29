@@ -20,4 +20,16 @@ public class VoidTouchModifier extends SingleLevelModifier {
     /** 强化 id */
     public static final ModifierId ID =
             new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "void_touch"));
+
+    /**
+     * <b>无等级</b> ✓（用户口径 §818）——不论匠魂给的 level 是几，名字后面都<b>不拼罗马数字</b> ✓。
+     * <p>为什么要显式写：材料特性是<b>按部件累加</b>的（{@code ModifierEntry#merge} = level + level ✓）
+     * ⇒ 一件"镶板 + 锁链基底"都是该材料的盔甲会让 level 变成 2 ✗，于是退回基类的
+     * {@code ModifierLevelDisplay.DEFAULT} 拼出「某特性 II」✗（匠魂官方方案 {@code NO_LEVELS} 可解 ✓）。
+     */
+    @Override
+    public net.minecraft.network.chat.Component getDisplayName(int level) {
+        return slimeknights.tconstruct.library.modifiers.util.ModifierLevelDisplay.NO_LEVELS
+                .nameForLevel(this, level);
+    }
 }

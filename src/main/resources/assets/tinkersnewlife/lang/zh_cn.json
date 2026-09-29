@@ -1449,5 +1449,7 @@
   "spell.irons_spellbooks.citadel_keeper": "远古骑士",
   "key.tinkersnewlife.hint.technique": "术式键",
   "key.tinkersnewlife.hint.reverse": "反转键",
-  "key.tinkersnewlife.hint.form": "形态选择键"
+  "key.tinkersnewlife.hint.form": "形态选择键",
+  "screen.tinkersnewlife.curse_hud.conscience_on": "心的 HUD：§a显示§r（点击隐藏）",
+  "screen.tinkersnewlife.curse_hud.conscience_off": "心的 HUD：§c隐藏§r（点击显示）"
 }

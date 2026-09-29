@@ -64,9 +64,21 @@ public final class ConscienceHandler {
     //  善恶值读写
     // ============================================================
 
-    /** 当前善恶值（−50 恶 ~ +50 善 ✓ 初始 0 ✓） */
+    /**
+     * §818 <b>善恶系统总开关</b>（配置 {@code conscience.enabled} ✓ 默认开 ✓）。
+     * <p>读配置失败一律<b>当作开启</b> ✓（保守 ✓ 不要因为读配置出错就把系统静默关掉 ✗）。
+     */
+    public static boolean isEnabled() {
+        try {
+            return com.mofengbaizhi.tinkersnewlife.config.ModConfig.CONSCIENCE_ENABLED.get();
+        } catch (Throwable t) {
+            return true;
+        }
+    }
+
+    /** 当前善恶值（−50 恶 ~ +50 善 ✓ 初始 0 ✓）；§818 系统关掉时一律按 <b>0</b> ✓ */
     public static int getAlignment(Player player) {
-        if (player == null) return 0;
+        if (player == null || !isEnabled()) return 0;
         return player.getPersistentData().getInt(KEY_ALIGNMENT);
     }
 
@@ -95,6 +107,7 @@ public final class ConscienceHandler {
     /** 直接设值（会夹在 −50~+50 ✓）—— 第二期的 12 条增减规则都走这里 ✓ */
     public static void setAlignment(Player player, int value) {
         if (player == null) return;
+        if (!isEnabled()) return;              // §818 系统关掉 ⇒ 不记分 ✓（所有规则自然失效 ✓）
         int clamped = Math.max(ALIGNMENT_MIN, Math.min(ALIGNMENT_MAX, value));
         if (clamped == getAlignment(player)) return;
         player.getPersistentData().putInt(KEY_ALIGNMENT, clamped);
@@ -171,6 +184,17 @@ public final class ConscienceHandler {
     /** 保证「心」在槽里（不在就补一个 ✓）并把善恶值镜像写进去 ✓ */
     public static void ensure(ServerPlayer player) {
         clearForeignHearts(player);          // 先清掉混在别人槽里的「心」✗（历史存档会残留 ✓）
+        if (!isEnabled()) {
+            // §818 关掉善恶系统 ⇒ **不佩戴「心」** ✓（槽里已经有的话也收掉 ✓ —— 用户口径）
+            ItemStack slot = getHeartStack(player);
+            if (slot != null && slot.getItem() instanceof ConscienceItem) {
+                setHeartStack(player, ItemStack.EMPTY);
+            }
+            // 顺便把当年加上去的属性修饰符按"善恶 0"对齐回去 ✓ 不留残留 ✗
+            ConscienceAlignmentHandler.refreshMaxHealth(player);
+            ConscienceAlignmentHandler.refreshAttackDamage(player);
+            return;
+        }
         int alignment = getAlignment(player);
         ConscienceAlignmentHandler.refreshMaxHealth(player);   // 最大生命 ×(1+善恶%) 兜底对齐 ✓（登录/重生/换维度 ✓）
         ConscienceAlignmentHandler.refreshAttackDamage(player); // 攻击伤害独立乘区 ×(1−善恶%) 同上 ✓

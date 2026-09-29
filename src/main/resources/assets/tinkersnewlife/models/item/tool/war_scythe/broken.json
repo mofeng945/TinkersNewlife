@@ -1,7 +1,7 @@
 {
 	"format_version": "1.21.11",
 	"credit": "Made with Blockbench",
-	"parent": "tconstruct:item/base/default",
+	"parent": "tconstruct:item/base/tall",
 	"textures": {
 		"head1": "tinkersnewlife:item/tool/war_scythe/head1_broken",
 		"head2": "tinkersnewlife:item/tool/war_scythe/head2_broken",

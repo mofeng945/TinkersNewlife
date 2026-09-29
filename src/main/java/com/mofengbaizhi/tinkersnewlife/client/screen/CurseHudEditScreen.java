@@ -36,6 +36,28 @@ public class CurseHudEditScreen extends Screen {
         this.hudW = CurseHudConfig.width;
         this.planetX = CurseHudConfig.planetariumX;
         this.planetY = CurseHudConfig.planetariumY;
+        this.conscienceHud = CurseHudConfig.conscienceHud;
+    }
+
+    /** §818 「心」的 HUD 显示开关（本界面里自由开关 ✓ 关闭界面时写进配置 ✓） */
+    private boolean conscienceHud;
+
+    @Override
+    protected void init() {
+        super.init();
+        this.addRenderableWidget(net.minecraft.client.gui.components.Button
+                .builder(conscienceLabel(), btn -> {
+                    conscienceHud = !conscienceHud;
+                    btn.setMessage(conscienceLabel());
+                })
+                .bounds(this.width / 2 - 110, 54, 220, 20)
+                .build());
+    }
+
+    private Component conscienceLabel() {
+        return Component.translatable(conscienceHud
+                ? "screen.tinkersnewlife.curse_hud.conscience_on"
+                : "screen.tinkersnewlife.curse_hud.conscience_off");
     }
 
     public int getEditX() { return hudX; }
@@ -139,6 +161,7 @@ public class CurseHudEditScreen extends Screen {
         CurseHudConfig.width = hudW;
         CurseHudConfig.planetariumX = planetX;
         CurseHudConfig.planetariumY = planetY;
+        CurseHudConfig.conscienceHud = conscienceHud;   // §818 心的 HUD 开关 ✓
         CurseHudConfig.save();
         super.onClose();
     }

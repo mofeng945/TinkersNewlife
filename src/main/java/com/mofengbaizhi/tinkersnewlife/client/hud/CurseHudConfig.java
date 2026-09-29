@@ -36,6 +36,12 @@ public final class CurseHudConfig {
     public static int planetariumX = 6;
     public static int planetariumY = 46;
 
+    /**
+     * §818 <b>「心」的 HUD 显示开关</b>（用户口径：在 HUD 调整界面里自由开关 ✓ 默认开 ✓）。
+     * <p>与 {@link #enabled}（咒力条）各管各的 ✓ —— 关掉这个只影响那颗心的图标 ✓。
+     */
+    public static boolean conscienceHud = true;
+
     private static boolean loaded = false;
 
     private CurseHudConfig() {}
@@ -57,6 +63,7 @@ public final class CurseHudConfig {
             if (o.has("width")) width = o.get("width").getAsInt();
             if (o.has("planetarium_x")) planetariumX = o.get("planetarium_x").getAsInt();
             if (o.has("planetarium_y")) planetariumY = o.get("planetarium_y").getAsInt();
+            if (o.has("conscience_hud")) conscienceHud = o.get("conscience_hud").getAsBoolean();
         } catch (Throwable t) {
             TinkersNewlife.LOGGER.warn("[咒术HUD] 读取 curse_hud.json 失败，使用默认位置: {}", t.toString());
         }
@@ -71,6 +78,7 @@ public final class CurseHudConfig {
             o.addProperty("width", width);
             o.addProperty("planetarium_x", planetariumX);
             o.addProperty("planetarium_y", planetariumY);
+            o.addProperty("conscience_hud", conscienceHud);
             Files.createDirectories(PATH.getParent());
             Files.writeString(PATH, GSON.toJson(o), StandardCharsets.UTF_8);
         } catch (Throwable t) {
@@ -96,6 +104,12 @@ public final class CurseHudConfig {
     public static int getWidth() {
         ensureLoaded();
         return width;
+    }
+
+    /** §818 「心」的 HUD 是否显示（默认开 ✓ 在咒术 HUD 调整界面里开关 ✓） */
+    public static boolean isConscienceHudEnabled() {
+        ensureLoaded();
+        return conscienceHud;
     }
 
     /** 星象仪信息块的位置（独立拖动 ✓） */

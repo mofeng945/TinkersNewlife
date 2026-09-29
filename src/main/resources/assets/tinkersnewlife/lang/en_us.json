@@ -1447,5 +1447,7 @@
   "modifier.tinkersnewlife.watcher_will.flavor": "The greatest feat, engraved upon the End!",
   "key.tinkersnewlife.hint.technique": "the technique key",
   "key.tinkersnewlife.hint.reverse": "the reverse key",
-  "key.tinkersnewlife.hint.form": "the form-selection key"
+  "key.tinkersnewlife.hint.form": "the form-selection key",
+  "screen.tinkersnewlife.curse_hud.conscience_on": "Heart HUD: ON (click to hide)",
+  "screen.tinkersnewlife.curse_hud.conscience_off": "Heart HUD: OFF (click to show)"
 }

@@ -26,6 +26,16 @@ public final class ModConfig {
     public static final ConfigValue<Boolean> RLYEH_CALL;
     public static final ConfigValue<Boolean> NYARLATHOTEP_DESIRE;
 
+    // ==================== 善恶系统（「心」） ====================
+    /**
+     * §818 <b>善恶系统总开关</b>（用户口径：默认启用 ✓ 关闭后"进游戏不会佩戴心"✓）。
+     * <p>关闭时的行为：登录/换维度/重生都<b>不再自动补「心」</b>✓（槽里已有的那枚也会被收掉 ✓），
+     * 并且善恶值一律<b>按 0 处理</b>✓（{@code getAlignment} 返回 0 ✓ {@code setAlignment} 直接忽略 ✓）
+     * ⇒ 所有基于善恶的规则/阈值/属性加成都自动失效 ✓ 不残留 ✓。
+     * <p>⚠ 玩家已存的善恶值<b>不删</b>✓ ⇒ 重新打开开关就恢复原有进度 ✓。
+     */
+    public static final ConfigValue<Boolean> CONSCIENCE_ENABLED;
+
     // ==================== 咒力核心 ====================
     public static final ConfigValue<Boolean> CURSE_CORE_ENABLED;
 
@@ -389,6 +399,16 @@ public final class ModConfig {
     public static final ForgeConfigSpec SPEC;
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
+
+        // ⭐ §818 善恶系统（「心」）—— 刻意放在**最前面** ⇒ 生成的 toml 顶部就是它 ✓（用户要求"配置文件顶部"✓）
+        b.push("conscience").comment(
+                "Conscience (the Heart item) system. Default: on.",
+                "OFF => you never get a Heart equipped (an existing one is removed) and your alignment",
+                "is always treated as 0, so no good/evil rules, thresholds or attribute changes apply.",
+                "Your stored alignment is NOT deleted, so turning it back on restores your progress.");
+        CONSCIENCE_ENABLED = b.comment("Enable the conscience (Heart) system")
+                .define("enabled", true);
+        b.pop();
 
         // 古神事件
         b.push("elder_events").comment(

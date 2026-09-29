@@ -1,6 +1,6 @@
 {
   "loader": "tconstruct:tool",
-  "parent": "tconstruct:item/base/default",
+  "parent": "forge:item/default-tool",
   "textures": {
     "silent_glove_core": "tinkersnewlife:item/tool/silent_glove/silent_glove_core_broken",
     "silent_glove_binding": "tinkersnewlife:item/tool/silent_glove/silent_glove_binding_broken"
