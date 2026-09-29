@@ -74,15 +74,17 @@ public final class SpearCombatHandler {
     /** 同一目标两次被戳的最小间隔 ✓（原版 contactCooldownTicks ＝ 10 ✓） */
     public static final int CONTACT_COOLDOWN_TICKS = 10;
 
-    /** 下马窗：2.5 秒（原版 dismountTime×20 ✓）/ 攻击者速度门槛 8.0 ✓ */
+    /** 下马窗：2.5 秒（原版 dismountTime×20 ✓）
+     *  ⚠ §840 门槛**从原版 8.0 降到 6.0** ✗：原版那套数值是给"骑马冲锋"设计的，
+     *  徒步玩家冲刺（≈5.6）连"击退"都够不到 ⇒ 用户实测"冲上去没伤害" ✓ ⇒ 按用户口径下调 ✓ */
     public static final int DISMOUNT_WINDOW = 50;
-    public static final float DISMOUNT_MIN_SPEED = 8.0F;
-    /** 击退窗：6.75 秒 ✓ / 攻击者速度门槛 5.1 ✓ */
+    public static final float DISMOUNT_MIN_SPEED = 6.0F;
+    /** 击退窗：6.75 秒 ✓ ⚠ 门槛 5.1 → **2.0**（原版只有骑马够得到 ✗ 徒步冲刺 5.6 也勉强 ✓） */
     public static final int KNOCKBACK_WINDOW = 135;
-    public static final float KNOCKBACK_MIN_SPEED = 5.1F;
-    /** 伤害窗：11.25 秒 ✓ / **相对**速度门槛 4.6 ✓ */
+    public static final float KNOCKBACK_MIN_SPEED = 2.0F;
+    /** 伤害窗：11.25 秒 ✓ ⚠ 相对速度门槛 4.6 → **2.0**（原版走路 2~2.6 打不动 ✗ 徒步冲刺 5.6 ✓） */
     public static final int DAMAGE_WINDOW = 225;
-    public static final float DAMAGE_MIN_RELATIVE_SPEED = 4.6F;
+    public static final float DAMAGE_MIN_RELATIVE_SPEED = 2.0F;
 
     /** 冲锋伤害倍率 ✓（原版 damageMultiplier ✓ 铁 = 0.95 ✓） */
     public static final float DAMAGE_MULTIPLIER = 0.95F;
@@ -146,14 +148,10 @@ public final class SpearCombatHandler {
         double attackerSpeed = look.dot(motionOf(player));
         List<LivingEntity> hits = targetsAlong(player, look, CHARGE_MIN_RANGE);
 
-        // 🔎 §839 诊断：按住时每 20 tick 打一行（每次冲锋最多 40 行 ✓）——
-        //    用户反馈"右键冲刺没伤害"时，凭这几行就能看出是"射线没扫到人"还是"速度不够"✓
-        diagnose(player, ticksUsed, attackerSpeed, look, hits);
-
         boolean affected = false;
+        int landedCount = 0;
         for (LivingEntity target : hits) {
             if (wasRecentlyStabbed(player, target)) continue;
-            rememberStabbed(player, stabbed, target);
 
             double targetSpeed = look.dot(motionOf(target));
             double relativeSpeed = Math.max(0.0D, attackerSpeed - targetSpeed);
@@ -164,19 +162,25 @@ public final class SpearCombatHandler {
                     && attackerSpeed >= KNOCKBACK_MIN_SPEED * ACTION_FACTOR;
             boolean damage = ticksUsed <= DAMAGE_WINDOW
                     && relativeSpeed >= DAMAGE_MIN_RELATIVE_SPEED * ACTION_FACTOR;
+            // ⚠ §840：只有**真生效**才记冷却 ✓ —— 原版是"扫到就记"✗，
+            //   那会导致"速度不够的那一瞬间把目标锁 10 tick"✗ ⇒ 一直冲也打不出来 ✗
             if (!dismount && !knockback && !damage) continue;
+
+            rememberStabbed(player, stabbed, target);
 
             // 原版：伤害 = 攻击力（基值） + floor(相对速度 × 倍率) ✓ 加法 ✓
             float dealt = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE)
                     + (float) Mth.floor(relativeSpeed * DAMAGE_MULTIPLIER);
             boolean landed = stab(player, stack, target, dealt, damage, knockback, dismount, look);
-            if (landed && damage) {
-                TinkersNewlife.LOGGER.info("[长矛·冲锋] 命中 {} 伤害 {}（相对速度 {} 阶段窗 t={}）",
+            if (landed) landedCount++;
+            if (landed) {
+                TinkersNewlife.LOGGER.info("[长矛·冲锋] 命中 {} 伤害 {}（相对速度 {} t={}）",
                         target.getName().getString(), String.format("%.1f", dealt),
                         String.format("%.2f", relativeSpeed), ticksUsed);
             }
             affected |= landed;
         }
+        diagnose(player, ticksUsed, attackerSpeed, hits, landedCount);
 
         if (affected && player.level() instanceof ServerLevel server) {
             // 原版：命中后广播实体事件 2 ＝ 暴击粒子 ✓
@@ -185,35 +189,25 @@ public final class SpearCombatHandler {
     }
 
     // ============================================================
-    //  🔎 §839 诊断日志（只在按住冲锋时打 ✓ 有上限 ✓ 方便"到底哪一步没满足"一目了然）
+    //  🔎 §840 诊断：**直接显示在玩家动作栏上**（用户不用翻日志 ✓）
+    //     每次冲锋最多显示 15 行，松手即停 ✓ 修好之后我会撤掉 ✗
     // ============================================================
 
     private static final Map<UUID, Integer> DIAG_LINES = new ConcurrentHashMap<>();
 
     private static void diagnose(ServerPlayer player, int ticksUsed, double attackerSpeed,
-                                Vec3 look, List<LivingEntity> hits) {
+                                List<LivingEntity> hits, int landed) {
         if (ticksUsed % 20 != 0) return;
         int used = DIAG_LINES.getOrDefault(player.getUUID(), 0);
-        if (used >= 40) return;                       // 上限 ✓ 别把日志刷爆 ✓
+        if (used >= 15) return;
         DIAG_LINES.put(player.getUUID(), used + 1);
 
-        TinkersNewlife.LOGGER.info(
-                "[长矛·冲锋] t={} 视线速度={}（伤害门槛 {} 击退 {} 下马 {}）射线扫到 {} 个目标",
-                ticksUsed, String.format("%.2f", attackerSpeed),
-                DAMAGE_MIN_RELATIVE_SPEED, KNOCKBACK_MIN_SPEED, DISMOUNT_MIN_SPEED, hits.size());
-        for (LivingEntity target : hits) {
-            double targetSpeed = look.dot(motionOf(target));
-            double relativeSpeed = Math.max(0.0D, attackerSpeed - targetSpeed);
-            double distance = target.getBoundingBox().getCenter().distanceTo(player.getEyePosition());
-            TinkersNewlife.LOGGER.info(
-                    "[长矛·冲锋]   · {} 距离 {} 相对速度 {} ⇒ 伤害{} 击退{} 下马{} 冷却中{}",
-                    target.getName().getString(), String.format("%.2f", distance),
-                    String.format("%.2f", relativeSpeed),
-                    relativeSpeed >= DAMAGE_MIN_RELATIVE_SPEED,
-                    attackerSpeed >= KNOCKBACK_MIN_SPEED,
-                    attackerSpeed >= DISMOUNT_MIN_SPEED,
-                    wasRecentlyStabbed(player, target));
-        }
+        String text = String.format("§b[长矛·冲锋] §ft=%d §7速度§f%.1f §7扫到§f%d §7命中§f%d",
+                ticksUsed, attackerSpeed, hits.size(), landed);
+        player.displayClientMessage(net.minecraft.network.chat.Component.literal(text), true);
+        TinkersNewlife.LOGGER.info("[长矛·冲锋] t={} 视线速度={} 射线目标={} 命中={} (门槛 伤害{} 击退{} 下马{})",
+                ticksUsed, String.format("%.2f", attackerSpeed), hits.size(), landed,
+                DAMAGE_MIN_RELATIVE_SPEED, KNOCKBACK_MIN_SPEED, DISMOUNT_MIN_SPEED);
     }
 
     // ============================================================
