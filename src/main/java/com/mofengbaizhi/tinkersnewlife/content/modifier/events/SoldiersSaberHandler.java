@@ -11,6 +11,7 @@ import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
+import slimeknights.tconstruct.library.tools.stat.ToolStats;
 
 /**
  * 词条·<b>兵士佩刀</b>的实际逻辑（§808 · 唐横刀自带 · 无等级 ✓）。
@@ -32,10 +33,11 @@ import slimeknights.tconstruct.library.tools.nbt.ToolStack;
  *       避免反复触发无敌帧/击杀归属等副作用 ✓；"多段"体现在<b>追加的数值与刀光道数</b>上 ✓。</li>
  * </ul>
  *
- * <h2>⚠ 每段追加伤害（需要用户拍板的一个数 ✓）</h2>
- * 用户口径只说了"追加 N 段"，<b>没给每段多少伤害</b> ✗ ⇒ 这里先定 {@link #BONUS_PER_STAGE} = <b>1.0 点</b>
- * （贴身 4 段 ⇒ +4 点 ⇒ 唐横刀本身很轻（基础 3、×1.2）✓ 所以近距离显著更强 ✓）。
- * <b>要改就改这一个常量</b> ✓（也可以改成"按工具伤害的百分比"✓ 说一声我改 ✓）。
+ * <h2>每段追加伤害（用户拍板 ✓）</h2>
+ * 用户口径：**每段追加「工具伤害」的 <b>50%</b>** ✓ ⇒ {@link #BONUS_PER_STAGE_RATIO} = <b>0.5</b> ✓，
+ * 追加量 = <b>工具攻击面板 × 0.5 × 段数</b> ✓（读匠魂面板 {@code ToolStats.ATTACK_DAMAGE} ✓
+ * ⇒ 材料/强化改了面板，追加量跟着走 ✓ 不会"前期强后期废" ✓）。
+ * 贴身 4 段 ⇒ <b>+200% 工具伤害</b> ✓；4 格处 0 段 ⇒ 不加 ✓。
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class SoldiersSaberHandler {
@@ -45,8 +47,8 @@ public final class SoldiersSaberHandler {
             new slimeknights.tconstruct.library.modifiers.ModifierId(
                     new ResourceLocation(TinkersNewlife.MOD_ID, "soldiers_saber"));
 
-    /** ⚠ 每段追加伤害（点数）—— 用户尚未给数值，先定 1.0 ✓ 改这里即可 */
-    public static final double BONUS_PER_STAGE = 1.0D;
+    /** 每段追加伤害 = 工具攻击面板 × 该比例 ✓（用户口径 50% ✓ 要改只改这里 ✓） */
+    public static final float BONUS_PER_STAGE_RATIO = 0.5F;
 
     /** 生效半径：4 格 ✓（用户口径"4格范围内"✓） */
     public static final double MAX_RANGE = 4.0D;
@@ -67,7 +69,7 @@ public final class SoldiersSaberHandler {
         int stages = stagesFor(attacker.distanceTo(victim));
         if (stages <= 0) return;
 
-        event.setAmount(event.getAmount() + (float) (stages * BONUS_PER_STAGE));
+        event.setAmount(event.getAmount() + bonusDamage(held, stages));
         spawnSlashes(attacker, victim, stages);
     }
 
@@ -81,6 +83,16 @@ public final class SoldiersSaberHandler {
         if (distance < 3.0D) return 2;
         if (distance < MAX_RANGE) return 1;
         return 0;
+    }
+
+    /** 每段追加伤害 = 工具攻击面板 × 50% × 段数 ✓（拿不到工具数据就当作 0 ✓ 绝不抛错 ✗） */
+    private static float bonusDamage(ItemStack stack, int stages) {
+        try {
+            float panel = ToolStack.from(stack).getStats().get(ToolStats.ATTACK_DAMAGE);
+            return panel * BONUS_PER_STAGE_RATIO * stages;
+        } catch (Throwable t) {
+            return 0.0F;
+        }
     }
 
     /** 手上这把工具带不带「兵士佩刀」✓（拿不到工具数据就当作不带 ✓ 绝不抛错 ✗） */
