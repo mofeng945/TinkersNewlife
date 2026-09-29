@@ -175,21 +175,29 @@ public final class SpearCombatHandler {
         if (!(stack.getItem() instanceof SpearItem)) return;
         if (!(event.getTarget() instanceof LivingEntity clicked)) return;
 
-        // 原版 minimum_attack_charge = 1.0 ⇒ 没蓄满力这一刀根本不出去 ✓
-        if (player.getAttackStrengthScale(0.5F) < 1.0F) {
-            event.setCanceled(true);
-            return;
-        }
-
-        // 原版 AttackRange 的最小距离 ⇒ 贴太近打不到 ✓
-        double minRange = player.isCreative() ? MIN_RANGE_CREATIVE : MIN_RANGE;
-        if (player.getEyePosition().distanceTo(clicked.getBoundingBox().getCenter()) < minRange) {
-            event.setCanceled(true);
-            return;
-        }
-
-        // 点中的目标交给原版那一次攻击 ✓（附魔/暴击/横扫都原样走 ✓）；
-        // 射程内**其它**目标按原版 PiercingWeapon 的口径补一遍 ✓（点中的那个不重复打 ✓）
+        /*
+         * ⭐⭐§838 用户实测：「**戳过去没伤害**」✗ 根因就在下面那两条 cancel ✗（现已删除 ✓）：
+         *
+         * 【原版真相（反编译 1.21.11 ✓）】原版长矛的"戳刺"是**一个新动作**：
+         *   ServerboundPlayerActionPacket.Action.**STAB** ⇒ 服务端直接
+         *   {@code piercingWeapon.attack(player, MAINHAND)} ⇒ **纯射线多目标** ✓
+         *   —— 它**完全不看你点中的是谁** ✗，而是沿视线从最小距离到最大距离把所有目标戳一遍 ✓；
+         *   所以"点中的那个"在原版里也**不是**走普通单体攻击 ✗。
+         *
+         * 【1.20.1 的现实】没有 STAB 这个动作 ✗ ⇒ 我们能拿到的最接近入口是
+         *   {@code AttackEntityEvent}（左键点在某个生物身上时才触发 ✓）。
+         *   若在这里 {@code setCanceled(true)} ⇒ **这一下彻底没了** ✗✗
+         *   （§837 那版正是在"没蓄满力"与"贴身 <2 格"两种情况下取消它 ✗ ⇒ 用户连点/贴身时一点伤害都没有 ✗）。
+         *
+         * 【本版口径（可用优先 ✓ 偏离如实记录 ✓）】
+         *   ① **不再取消任何攻击** ✓ —— 点中的那个目标照常吃原版单体攻击 ✓
+         *      （附魔/锋利/暴击/横扫全部原样生效 ✓；1.20.1 本身就会按"蓄力程度"缩放伤害 ✓
+         *       没必要再自己卡一层 ✗）；
+         *   ② 另外沿视线把射程内**其它**目标也戳一遍 ✓（＝原版 PiercingWeapon 的多目标 ✓ 点中的那个不重复打 ✓）；
+         *   ③ ⚠ **没有照抄**"贴身（<2.0 格）打不到" ✗ —— 原版靠的就是 STAB 射线的起点 ✓ 而我们这条
+         *      射线只负责**额外**目标 ✓；贴身的那个由原版单体攻击结算 ⇒ **照样有伤害** ✓
+         *      （用户实测口径优先 ✓ 想要严格的"贴身无伤"说一声 ✓ 一条常量就能切回来 ✓）。
+         */
         if (!(player instanceof ServerPlayer serverPlayer)) return;
         Map<UUID, Long> stabbed = RECENT_STABBED.computeIfAbsent(player.getUUID(), k -> new ConcurrentHashMap<>());
         rememberStabbed(serverPlayer, stabbed, clicked);
