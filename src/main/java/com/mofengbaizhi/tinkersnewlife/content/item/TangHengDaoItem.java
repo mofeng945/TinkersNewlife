@@ -3,19 +3,14 @@ package com.mofengbaizhi.tinkersnewlife.content.item;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.level.Level;
 import slimeknights.tconstruct.library.tools.definition.ToolDefinition;
 import slimeknights.tconstruct.library.tools.item.ModifiableItem;
 
-import javax.annotation.Nullable;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -28,16 +23,22 @@ import java.util.UUID;
  *
  * <h2>面板（用户口径 ✓）</h2>
  * 基础：耐久 <b>80</b> / 伤害 <b>3</b> / 攻速 <b>2.8</b> / 挖掘 <b>0</b> ✓；
- * 倍率：耐久 ×<b>1.1</b> / 攻击 ×<b>1.2</b> / 攻速 ×<b>1.2</b> / 挖掘 ×<b>0.1</b> ✓
+ * 倍率：耐久 ×<b>1.1</b> / 攻击 ×<b>0.8</b> / 攻速 ×<b>1.2</b> / 挖掘 ×<b>0.1</b> ✓
  * （都写在 tool_definition 的 {@code base_stats} 与 {@code multiply_stats} 里 ✓ 本类不重复 ✓）。
  *
  * <h2>自带词条「兵士佩刀」（无等级 ✓）</h2>
  * <ul>
  *   <li><b>实体交互距离 +1 格</b> ✓ —— 用 Forge 的 {@code forge:entity_reach}（够生物 ✓ 不是够方块 ✗）
  *       ⚠ 属性名必须写对：本仓 §807 就踩过 {@code forge:reach_distance} 不存在导致"静默不生效" ✗；</li>
- *   <li>4 格内按距离追加伤害 ＋ 灰色刀光 ✓ —— 在 {@code SoldiersSaberHandler} 里按"手上工具带不带该词条"触发 ✓
- *       （用词条判断而不是硬认这把刀 ⇒ 以后别的工具挂同一个词条也能吃 ✓）。</li>
+ *   <li>4 格内越近**附加的段数**越多，每段各自结算一次伤害 ＋ 一道灰色刀光 ✓
+ *       —— 实现在 {@code SoldiersSaberHandler} ✓（用词条判断而不是硬认这把刀 ⇒ 别的工具挂同一词条也能吃 ✓）。</li>
  * </ul>
+ *
+ * <h2>⚠ 本类<b>故意不写</b> {@code appendHoverText}（§812 用户口径）</h2>
+ * 用户口径：「<b>以后我没说一律不加工具提示</b>」✓ —— 原先这里加过两行
+ * （"手持：实体交互距离 +1 格" ＋ "兵士佩刀：越近附加的段数越多…"）✗ 已按要求**删除** ✓：
+ * 词条本身的信息由匠魂自己的特性显示承担 ✓（{@code modifier.tinkersnewlife.soldiers_saber} ＋
+ * {@code .description} ✓ 那两行跟它重复 ✗）。
  */
 public class TangHengDaoItem extends ModifiableItem {
 
@@ -62,13 +63,5 @@ public class TangHengDaoItem extends ModifiableItem {
                             REACH_BONUS, AttributeModifier.Operation.ADDITION));
         }
         return map;
-    }
-
-    @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level level,
-                                List<Component> tooltip, TooltipFlag flag) {
-        super.appendHoverText(stack, level, tooltip, flag);
-        tooltip.add(Component.translatable("tooltip.tinkersnewlife.tang_heng_dao.reach", (int) REACH_BONUS));
-        tooltip.add(Component.translatable("tooltip.tinkersnewlife.tang_heng_dao.saber"));
     }
 }
