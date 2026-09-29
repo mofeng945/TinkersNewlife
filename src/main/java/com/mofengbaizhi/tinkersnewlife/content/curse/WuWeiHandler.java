@@ -544,7 +544,10 @@ public final class WuWeiHandler {
         }
         String formId = getSelected(player);
         if (formId.isEmpty()) {
-            player.displayClientMessage(Component.translatable("message.tinkersnewlife.wu_wei.need_select"), true);
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.wu_wei.need_select",
+                    com.mofengbaizhi.tinkersnewlife.util.KeyHintHelper.hint(
+                            com.mofengbaizhi.tinkersnewlife.util.KeyHintHelper.FORM,
+                            "key.tinkersnewlife.open_wu_wei")), true);
             return;
         }
         EntityType<?> type = EntityType.byString(formId).orElse(null);
@@ -695,7 +698,10 @@ public final class WuWeiHandler {
         String formId = getSelected(player);
         if (formId.isEmpty()) {
             setReversal(player, false);
-            player.displayClientMessage(Component.translatable("message.tinkersnewlife.wu_wei.need_select_p"), true);
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.wu_wei.need_select_p",
+                    com.mofengbaizhi.tinkersnewlife.util.KeyHintHelper.hint(
+                            com.mofengbaizhi.tinkersnewlife.util.KeyHintHelper.FORM,
+                            "key.tinkersnewlife.open_wu_wei")), true);
             return true;
         }
         EntityType<?> type = EntityType.byString(formId).orElse(null);

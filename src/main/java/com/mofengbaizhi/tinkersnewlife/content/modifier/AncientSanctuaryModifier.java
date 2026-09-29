@@ -7,22 +7,15 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import slimeknights.mantle.client.TooltipKey;
 import slimeknights.tconstruct.library.modifiers.Modifier;
 import slimeknights.tconstruct.library.modifiers.ModifierEntry;
 import slimeknights.tconstruct.library.modifiers.ModifierHooks;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
 import slimeknights.tconstruct.library.modifiers.hook.armor.ModifyDamageModifierHook;
-import slimeknights.tconstruct.library.modifiers.hook.display.TooltipModifierHook;
 import slimeknights.tconstruct.library.module.ModuleHookMap;
 import slimeknights.tconstruct.library.tools.context.EquipmentContext;
 import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
-
-import javax.annotation.Nullable;
-import java.util.List;
 
 /**
  * 铁魔法联动特性·<b>远古庇护</b>（材料「炽金」盔甲自带，<b>无等级</b>，盔甲特性）：
@@ -33,7 +26,7 @@ import java.util.List;
  *       因为用户只把"可叠加"写在减伤上 ✓）。属性维持见 {@code content.modifier.events.PyriumHandler}。</li>
  * </ul>
  */
-public class AncientSanctuaryModifier extends Modifier implements ModifyDamageModifierHook, TooltipModifierHook {
+public class AncientSanctuaryModifier extends Modifier implements ModifyDamageModifierHook {
 
     public static final ModifierId ID =
             new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "ancient_sanctuary"));
@@ -51,7 +44,7 @@ public class AncientSanctuaryModifier extends Modifier implements ModifyDamageMo
     @Override
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         super.registerHooks(hookBuilder);
-        hookBuilder.addHook(this, ModifierHooks.MODIFY_DAMAGE, ModifierHooks.TOOLTIP);
+        hookBuilder.addHook(this, ModifierHooks.MODIFY_DAMAGE);
     }
 
     @Override
@@ -62,13 +55,6 @@ public class AncientSanctuaryModifier extends Modifier implements ModifyDamageMo
             amount *= (float) Math.pow(DAMAGE_TAKEN_MULTIPLIER, modifier.getLevel());
         }
         return amount;
-    }
-
-    @Override
-    public void addTooltip(IToolStackView tool, ModifierEntry modifier,
-                           @Nullable Player player, List<Component> tooltip,
-                           TooltipKey tooltipKey, TooltipFlag tooltipFlag) {
-        tooltip.add(Component.translatable("modifier.tinkersnewlife.ancient_sanctuary.tip"));
     }
 
     /** 该物品是否带远古庇护 */

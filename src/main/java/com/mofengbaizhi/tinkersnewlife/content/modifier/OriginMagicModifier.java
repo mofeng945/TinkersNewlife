@@ -2,22 +2,13 @@ package com.mofengbaizhi.tinkersnewlife.content.modifier;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import slimeknights.mantle.client.TooltipKey;
 import slimeknights.tconstruct.library.modifiers.Modifier;
-import slimeknights.tconstruct.library.modifiers.ModifierEntry;
-import slimeknights.tconstruct.library.modifiers.ModifierHooks;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
-import slimeknights.tconstruct.library.modifiers.hook.display.TooltipModifierHook;
 import slimeknights.tconstruct.library.module.ModuleHookMap;
-import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,7 +25,7 @@ import java.util.List;
  *
  * <p><b>只有等级最高的单件生效</b> ✓（不叠加），见 {@link #bestLevel(LivingEntity)}。
  */
-public class OriginMagicModifier extends Modifier implements TooltipModifierHook {
+public class OriginMagicModifier extends Modifier {
 
     public static final ModifierId ID =
             new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "origin_magic"));
@@ -52,15 +43,6 @@ public class OriginMagicModifier extends Modifier implements TooltipModifierHook
     @Override
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         super.registerHooks(hookBuilder);
-        hookBuilder.addHook(this, ModifierHooks.TOOLTIP);
-    }
-
-    @Override
-    public void addTooltip(IToolStackView tool, ModifierEntry modifier,
-                           @Nullable Player player, List<Component> tooltip,
-                           TooltipKey tooltipKey, TooltipFlag tooltipFlag) {
-        tooltip.add(Component.translatable("modifier.tinkersnewlife.origin_magic.tip",
-                String.valueOf(SPELL_LEVEL_PER_LEVEL * clampLevel(modifier.getLevel()))));
     }
 
     // ============================================================

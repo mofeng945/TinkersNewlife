@@ -40,7 +40,13 @@ public class PacketWuWeiSelect {
             WuWeiHandler.setSelected(player, formId);
             if (!formId.isEmpty()) {
                 player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
-                        "message.tinkersnewlife.wu_wei.selected"), true);
+                        "message.tinkersnewlife.wu_wei.selected",
+                        com.mofengbaizhi.tinkersnewlife.util.KeyHintHelper.hint(
+                                com.mofengbaizhi.tinkersnewlife.util.KeyHintHelper.TECHNIQUE,
+                                "key.tinkersnewlife.use_technique"),
+                        com.mofengbaizhi.tinkersnewlife.util.KeyHintHelper.hint(
+                                com.mofengbaizhi.tinkersnewlife.util.KeyHintHelper.REVERSE,
+                                "key.tinkersnewlife.reverse_technique")), true);
             }
         });
         ctx.get().setPacketHandled(true);

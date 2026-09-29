@@ -2,28 +2,20 @@ package com.mofengbaizhi.tinkersnewlife.content.modifier;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.TooltipFlag;
-import slimeknights.mantle.client.TooltipKey;
 import slimeknights.tconstruct.library.modifiers.Modifier;
 import slimeknights.tconstruct.library.modifiers.ModifierEntry;
 import slimeknights.tconstruct.library.modifiers.ModifierHooks;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
 import slimeknights.tconstruct.library.modifiers.hook.armor.ModifyDamageModifierHook;
-import slimeknights.tconstruct.library.modifiers.hook.display.TooltipModifierHook;
 import slimeknights.tconstruct.library.module.ModuleHookMap;
 import slimeknights.tconstruct.library.tools.context.EquipmentContext;
 import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
-
-import javax.annotation.Nullable;
-import java.util.List;
 
 /**
  * 铁魔法联动特性·<b>导魔</b>（材料「奥铁」盔甲自带，<b>有等级</b>）：
@@ -42,7 +34,7 @@ import java.util.List;
  *       与 {@code goety.*}（诡厄巫法法术，其类型名多样，标签只覆盖一部分 ✓）。</li>
  * </ol>
  */
-public class MagicConductionModifier extends Modifier implements ModifyDamageModifierHook, TooltipModifierHook {
+public class MagicConductionModifier extends Modifier implements ModifyDamageModifierHook {
 
     public static final ModifierId ID =
             new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "magic_conduction"));
@@ -63,7 +55,7 @@ public class MagicConductionModifier extends Modifier implements ModifyDamageMod
     @Override
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         super.registerHooks(hookBuilder);
-        hookBuilder.addHook(this, ModifierHooks.MODIFY_DAMAGE, ModifierHooks.TOOLTIP);
+        hookBuilder.addHook(this, ModifierHooks.MODIFY_DAMAGE);
     }
 
     @Override
@@ -73,14 +65,6 @@ public class MagicConductionModifier extends Modifier implements ModifyDamageMod
         if (amount <= 0.0F || !isMagicDamage(source)) return amount;
         float reduction = REDUCTION_PER_STEP * (modifier.getLevel() + 1);
         return amount * Math.max(0.0F, 1.0F - reduction);
-    }
-
-    @Override
-    public void addTooltip(IToolStackView tool, ModifierEntry modifier,
-                           @Nullable Player player, List<Component> tooltip,
-                           TooltipKey tooltipKey, TooltipFlag tooltipFlag) {
-        tooltip.add(Component.translatable("modifier.tinkersnewlife.magic_conduction.tip",
-                String.format("%.0f", REDUCTION_PER_STEP * (modifier.getLevel() + 1) * 100)));
     }
 
     /** 这次伤害是否属于"魔法伤害"（判定顺序见类注释） */

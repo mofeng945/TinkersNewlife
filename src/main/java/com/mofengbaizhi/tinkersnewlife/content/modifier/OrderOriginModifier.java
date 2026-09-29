@@ -5,20 +5,10 @@ import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import slimeknights.mantle.client.TooltipKey;
 import slimeknights.tconstruct.library.modifiers.Modifier;
-import slimeknights.tconstruct.library.modifiers.ModifierEntry;
-import slimeknights.tconstruct.library.modifiers.ModifierHooks;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
-import slimeknights.tconstruct.library.modifiers.hook.display.TooltipModifierHook;
 import slimeknights.tconstruct.library.module.ModuleHookMap;
-import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
-
-import javax.annotation.Nullable;
-import java.util.List;
 
 /**
  * 铁魔法联动特性·<b>秩序之初</b>（材料「源钻合金」盔甲自带，<b>无等级</b>）：
@@ -32,7 +22,7 @@ import java.util.List;
  * <b>"直接改血"（绕过伤害事件直接写血量）不拦</b> ✗ —— 那需要 mixin 到 {@code LivingEntity#setHealth}，
  * 会和死亡流程、治疗效果、{@code /kill} 等纠缠，风险远大于收益 ✓。
  */
-public class OrderOriginModifier extends Modifier implements TooltipModifierHook {
+public class OrderOriginModifier extends Modifier {
 
     public static final ModifierId ID =
             new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "order_origin"));
@@ -46,14 +36,6 @@ public class OrderOriginModifier extends Modifier implements TooltipModifierHook
     @Override
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         super.registerHooks(hookBuilder);
-        hookBuilder.addHook(this, ModifierHooks.TOOLTIP);
-    }
-
-    @Override
-    public void addTooltip(IToolStackView tool, ModifierEntry modifier,
-                           @Nullable Player player, List<Component> tooltip,
-                           TooltipKey tooltipKey, TooltipFlag tooltipFlag) {
-        tooltip.add(Component.translatable("modifier.tinkersnewlife.order_origin.tip"));
     }
 
     /** 该物品是否带秩序之初 */

@@ -5,20 +5,10 @@ import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import slimeknights.mantle.client.TooltipKey;
 import slimeknights.tconstruct.library.modifiers.Modifier;
-import slimeknights.tconstruct.library.modifiers.ModifierEntry;
-import slimeknights.tconstruct.library.modifiers.ModifierHooks;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
-import slimeknights.tconstruct.library.modifiers.hook.display.TooltipModifierHook;
 import slimeknights.tconstruct.library.module.ModuleHookMap;
-import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
-
-import javax.annotation.Nullable;
-import java.util.List;
 
 /**
  * 铁魔法联动特性·<b>提洛斯炼狱</b>（材料「圣灵」自带，<b>无等级</b>）：
@@ -31,7 +21,7 @@ import java.util.List;
  *
  * <p>结算在 {@code content.modifier.events.TilosPurgatoryHandler}。
  */
-public class TilosPurgatoryModifier extends Modifier implements TooltipModifierHook {
+public class TilosPurgatoryModifier extends Modifier {
 
     public static final ModifierId ID =
             new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "tilos_purgatory"));
@@ -60,14 +50,6 @@ public class TilosPurgatoryModifier extends Modifier implements TooltipModifierH
     @Override
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         super.registerHooks(hookBuilder);
-        hookBuilder.addHook(this, ModifierHooks.TOOLTIP);
-    }
-
-    @Override
-    public void addTooltip(IToolStackView tool, ModifierEntry modifier,
-                           @Nullable Player player, List<Component> tooltip,
-                           TooltipKey tooltipKey, TooltipFlag tooltipFlag) {
-        tooltip.add(Component.translatable("modifier.tinkersnewlife.tilos_purgatory.tip"));
     }
 
     // ============================================================

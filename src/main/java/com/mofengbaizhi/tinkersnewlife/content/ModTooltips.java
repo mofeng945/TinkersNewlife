@@ -39,6 +39,10 @@ public class ModTooltips {
     public static void onItemTooltip(ItemTooltipEvent event) {
         ItemStack stack = event.getItemStack();
 
+        // ⭐ §813：先把提示里的"通用词"（术式键 / 反转键 / 形态选择键）替换成**当前实际按键** ✓
+        //    （用户口径：改了快捷键，提示也跟着变 ✓）
+        applyKeyHints(event.getToolTip());
+
         // ⭐ 咒力核心：只额外提示当前总咒力亲和与咒力值（其余机制见帕秋莉手册/JEI）
         if (stack.getItem() instanceof CurseCoreItem) {
             Player player = event.getEntity();
@@ -83,7 +87,11 @@ public class ModTooltips {
                 "tooltip.tinkersnewlife.flying_sword.mode.normal" :
                 "tooltip.tinkersnewlife.flying_sword.mode.chase";
             event.getToolTip().add(Component.translatable(modeKey).withStyle(ChatFormatting.GOLD));
-            event.getToolTip().add(Component.translatable("tooltip.tinkersnewlife.flying_sword.switch_hint")
+            // ⭐ §813：键位提示**实时读当前按键**（用户口径：改了快捷键，提示也跟着变 ✓）
+            //    —— 原来写死"按 R 键"，而实际绑定早就改成 Z 了 ✗（KeyBindings 里 Z 才是飞剑切换 ✓）
+            event.getToolTip().add(Component.translatable("tooltip.tinkersnewlife.flying_sword.switch_hint",
+                    com.mofengbaizhi.tinkersnewlife.client.input.KeyBindings.SWITCH_FLYING_SWORD_MODE.get()
+                            .getTranslatedKeyMessage())
                 .withStyle(ChatFormatting.GRAY));
             return;
         }
@@ -102,5 +110,52 @@ public class ModTooltips {
         if (hasKey(descKey)) {
             event.getToolTip().add(Component.translatable(descKey).withStyle(ChatFormatting.GRAY));
         }
+    }
+
+    // ============================================================
+    //  §813 键位提示：把"通用词"换成当前实际按键（用户口径 ✓）
+    // ============================================================
+
+    /**
+     * 把物品提示里出现的"通用词"（术式键 / 反转键 / 形态选择键）替换成<b>当前绑定的按键</b> ✓。
+     *
+     * <p>为什么要在提示这一层做：术式那类长描述是<b>匠魂自己</b>从 {@code modifier.<id>.description}
+     * 渲染的 ✓ 我们没法给它传参数 ✗；而同一份文本在<b>匠魂自己的界面</b>里也会显示 ⇒
+     * 语言文件里塞占位符会在那边露出来 ✗。所以：
+     * <ul>
+     *   <li>语言文件里写<b>通用词</b>（＝按键设置里那个名字 ✓ 任何界面都不失效 ✓）；</li>
+     *   <li>只在<b>物品提示</b>这一层把通用词换成玩家真正绑定的键 ✓ ⇒ 改键后立刻跟着变 ✓。</li>
+     * </ul>
+     */
+    private static void applyKeyHints(java.util.List<Component> tooltip) {
+        try {
+            for (int i = 0; i < tooltip.size(); i++) {
+                Component line = tooltip.get(i);
+                String text = line.getString();
+                if (text.isEmpty()) continue;
+                String replaced = swap(text, "key.tinkersnewlife.hint.technique",
+                        com.mofengbaizhi.tinkersnewlife.util.KeyHintHelper.TECHNIQUE);
+                replaced = swap(replaced, "key.tinkersnewlife.hint.reverse",
+                        com.mofengbaizhi.tinkersnewlife.util.KeyHintHelper.REVERSE);
+                replaced = swap(replaced, "key.tinkersnewlife.hint.form",
+                        com.mofengbaizhi.tinkersnewlife.util.KeyHintHelper.FORM);
+                if (!replaced.equals(text)) {
+                    // 保留本行原有样式（描述是灰字 ✓）
+                    tooltip.set(i, Component.literal(replaced).withStyle(line.getStyle()));
+                }
+            }
+        } catch (Throwable ignored) {
+            // 替换失败就保留通用词 ✓ 绝不影响提示显示 ✓
+        }
+    }
+
+    /** 把某个"通用词"（按当前语言取 ✓）换成该键位当前绑定的名字 ✓ */
+    private static String swap(String text, String wordKey, String keyId) {
+        String word = I18n.get(wordKey);
+        if (word == null || word.isEmpty() || word.equals(wordKey) || !text.contains(word)) {
+            return text;
+        }
+        String live = com.mofengbaizhi.tinkersnewlife.util.KeyHintHelper.display(keyId);
+        return (live == null || live.isEmpty()) ? text : text.replace(word, live);
     }
 }

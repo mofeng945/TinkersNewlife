@@ -10,18 +10,14 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import slimeknights.mantle.client.TooltipKey;
 import slimeknights.tconstruct.library.modifiers.Modifier;
 import slimeknights.tconstruct.library.modifiers.ModifierEntry;
 import slimeknights.tconstruct.library.modifiers.ModifierHooks;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
-import slimeknights.tconstruct.library.modifiers.hook.display.TooltipModifierHook;
 import slimeknights.tconstruct.library.modifiers.hook.interaction.InventoryTickModifierHook;
 import slimeknights.tconstruct.library.module.ModuleHookMap;
 import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +54,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 所以 2 tick 足够覆盖 ✓；读条法术的效果发生在之后的 tick ✗ —— 那种情况恢复成"只放大不还原"（范围/伤害照旧 ✓，
  * 状态时长会是 ×3 而不是 ×2，属可接受偏差 ✓）。
  */
-public class SuperTierMagicModifier extends Modifier implements TooltipModifierHook, InventoryTickModifierHook {
+public class SuperTierMagicModifier extends Modifier implements InventoryTickModifierHook {
 
     public static final ModifierId ID =
             new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "super_tier_magic"));
@@ -85,14 +81,7 @@ public class SuperTierMagicModifier extends Modifier implements TooltipModifierH
     @Override
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         super.registerHooks(hookBuilder);
-        hookBuilder.addHook(this, ModifierHooks.TOOLTIP, ModifierHooks.INVENTORY_TICK);
-    }
-
-    @Override
-    public void addTooltip(IToolStackView tool, ModifierEntry modifier,
-                           @Nullable Player player, List<Component> tooltip,
-                           TooltipKey tooltipKey, TooltipFlag tooltipFlag) {
-        tooltip.add(Component.translatable("modifier.tinkersnewlife.super_tier_magic.tip"));
+        hookBuilder.addHook(this, ModifierHooks.INVENTORY_TICK);
     }
 
     @Override

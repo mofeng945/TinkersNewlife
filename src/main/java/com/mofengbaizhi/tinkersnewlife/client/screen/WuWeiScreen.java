@@ -144,7 +144,14 @@ public class WuWeiScreen extends AbstractRowListScreen<String> {
     @Override
     protected void drawHeader(GuiGraphics graphics, int mouseX, int mouseY) {
         drawCentered(graphics, Component.translatable("screen.tinkersnewlife.wu_wei.title"), 8, 0xFFFFFF);
-        drawCentered(graphics, Component.translatable("screen.tinkersnewlife.wu_wei.hint"), 20, 0xAAAAAA);
+        // §813：这里的按键**实时读当前绑定** ✓（用户口径：改了快捷键，提示也跟着变 ✓）
+        drawCentered(graphics, Component.translatable("screen.tinkersnewlife.wu_wei.hint",
+                com.mofengbaizhi.tinkersnewlife.util.KeyHintHelper.hint(
+                        com.mofengbaizhi.tinkersnewlife.util.KeyHintHelper.TECHNIQUE,
+                        "key.tinkersnewlife.use_technique"),
+                com.mofengbaizhi.tinkersnewlife.util.KeyHintHelper.hint(
+                        com.mofengbaizhi.tinkersnewlife.util.KeyHintHelper.REVERSE,
+                        "key.tinkersnewlife.reverse_technique")), 20, 0xAAAAAA);
         // 右上角：命中数 / 总数
         String count = rows.size() + " / " + allForms.size();
         graphics.drawString(font, count, startX + listWidth - font.width(count), 8, 0x9A9A9A, false);

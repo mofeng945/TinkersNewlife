@@ -12,18 +12,11 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import slimeknights.mantle.client.TooltipKey;
 import slimeknights.tconstruct.library.modifiers.Modifier;
-import slimeknights.tconstruct.library.modifiers.ModifierEntry;
-import slimeknights.tconstruct.library.modifiers.ModifierHooks;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
-import slimeknights.tconstruct.library.modifiers.hook.display.TooltipModifierHook;
 import slimeknights.tconstruct.library.module.ModuleHookMap;
-import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
 
 import javax.annotation.Nullable;
-import java.util.List;
 
 /**
  * 巫师套装特性·<b>万法有道</b>（<b>无等级</b> ✓ 任意一件即生效 ✓）—— 内建在四件巫师套上。
@@ -68,7 +61,7 @@ import java.util.List;
  *       且<b>只在穿着本特性时</b>生效 ✓。</li>
  * </ol>
  */
-public class AllPathsOneTrait extends Modifier implements TooltipModifierHook {
+public class AllPathsOneTrait extends Modifier {
 
     public static final ModifierId ID =
             new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "all_paths_one"));
@@ -105,14 +98,6 @@ public class AllPathsOneTrait extends Modifier implements TooltipModifierHook {
     @Override
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         super.registerHooks(hookBuilder);
-        hookBuilder.addHook(this, ModifierHooks.TOOLTIP);
-    }
-
-    @Override
-    public void addTooltip(IToolStackView tool, ModifierEntry modifier,
-                           @Nullable Player player, List<Component> tooltip,
-                           TooltipKey tooltipKey, TooltipFlag tooltipFlag) {
-        tooltip.add(Component.translatable("modifier.tinkersnewlife.all_paths_one.tip"));
     }
 
     // ============================================================

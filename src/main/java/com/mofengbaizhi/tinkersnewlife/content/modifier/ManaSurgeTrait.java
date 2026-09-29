@@ -6,21 +6,16 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import slimeknights.mantle.client.TooltipKey;
 import slimeknights.tconstruct.library.modifiers.Modifier;
 import slimeknights.tconstruct.library.modifiers.ModifierEntry;
 import slimeknights.tconstruct.library.modifiers.ModifierHooks;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
-import slimeknights.tconstruct.library.modifiers.hook.display.TooltipModifierHook;
 import slimeknights.tconstruct.library.modifiers.hook.interaction.InventoryTickModifierHook;
 import slimeknights.tconstruct.library.module.ModuleHookMap;
 import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
 
 import javax.annotation.Nullable;
-import java.util.List;
 
 /**
  * 巫师套装特性·<b>魔力涌动</b>（<b>无等级</b> ✓ 按件叠加 ✓）—— 内建在四件巫师套上
@@ -35,7 +30,7 @@ import java.util.List;
  * <p>属性的维持在 {@code WizardArmorSetHandler}（每秒重算 ✓ 脱件即移除 ✓）——
  * 与「刻印」{@link InscriptionModifier} 用的是同一套做法 ✓，但各用各的修饰符 UUID ✓ 彼此叠加 ✓。
  */
-public class ManaSurgeTrait extends Modifier implements TooltipModifierHook, InventoryTickModifierHook {
+public class ManaSurgeTrait extends Modifier implements InventoryTickModifierHook {
 
     public static final ModifierId ID =
             new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "mana_surge"));
@@ -57,7 +52,7 @@ public class ManaSurgeTrait extends Modifier implements TooltipModifierHook, Inv
     @Override
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         super.registerHooks(hookBuilder);
-        hookBuilder.addHook(this, ModifierHooks.TOOLTIP, ModifierHooks.INVENTORY_TICK);
+        hookBuilder.addHook(this, ModifierHooks.INVENTORY_TICK);
     }
 
     /**
@@ -73,17 +68,6 @@ public class ManaSurgeTrait extends Modifier implements TooltipModifierHook, Inv
         if (world.isClientSide) return;
         if (holder.tickCount % 20 != 0) return;
         com.mofengbaizhi.tinkersnewlife.util.IronSpellsReflector.ensureSpellContainer(stack, SPELL_SLOTS);
-    }
-
-    @Override
-    public void addTooltip(IToolStackView tool, ModifierEntry modifier,
-                           @Nullable Player player, List<Component> tooltip,
-                           TooltipKey tooltipKey, TooltipFlag tooltipFlag) {
-        int pieces = countWorn(player);
-        tooltip.add(Component.translatable("modifier.tinkersnewlife.mana_surge.tip",
-                pieces, pieces * MANA_PER_PIECE,
-                Math.round(pieces * SPELL_POWER_PER_PIECE * 100),
-                Math.round(pieces * SPELL_DAMAGE_PER_PIECE * 100)));
     }
 
     // ============================================================

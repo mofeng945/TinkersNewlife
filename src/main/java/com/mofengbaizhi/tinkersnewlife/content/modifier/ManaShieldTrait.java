@@ -12,22 +12,17 @@ import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import slimeknights.mantle.client.TooltipKey;
 import slimeknights.tconstruct.library.modifiers.Modifier;
 import slimeknights.tconstruct.library.modifiers.ModifierEntry;
 import slimeknights.tconstruct.library.modifiers.ModifierHooks;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
 import slimeknights.tconstruct.library.modifiers.hook.armor.ModifyDamageModifierHook;
-import slimeknights.tconstruct.library.modifiers.hook.display.TooltipModifierHook;
 import slimeknights.tconstruct.library.module.ModuleHookMap;
 import slimeknights.tconstruct.library.tools.context.EquipmentContext;
 import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
 
 import javax.annotation.Nullable;
-import java.util.List;
 
 /**
  * 巫师套装特性·<b>魔力护盾</b>（<b>无等级</b> ✓ 按件叠加 ✓）—— 内建在四件巫师套上
@@ -63,7 +58,7 @@ import java.util.List;
  * 减时长的注入点在 {@code mixin.ManaShieldEffectMixin}（{@code MobEffectInstance.duration}
  * 是 private 且无 setter ✗）。
  */
-public class ManaShieldTrait extends Modifier implements TooltipModifierHook, ModifyDamageModifierHook {
+public class ManaShieldTrait extends Modifier implements ModifyDamageModifierHook {
 
     public static final ModifierId ID =
             new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "mana_shield"));
@@ -134,7 +129,7 @@ public class ManaShieldTrait extends Modifier implements TooltipModifierHook, Mo
     @Override
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         super.registerHooks(hookBuilder);
-        hookBuilder.addHook(this, ModifierHooks.MODIFY_DAMAGE, ModifierHooks.TOOLTIP);
+        hookBuilder.addHook(this, ModifierHooks.MODIFY_DAMAGE);
     }
 
     // ============================================================
@@ -251,17 +246,6 @@ public class ManaShieldTrait extends Modifier implements TooltipModifierHook, Mo
     // ============================================================
     //  提示（动态 ✓ 只一行 ✓ 用户要求"别一大串静态描述" ✓）
     // ============================================================
-
-    @Override
-    public void addTooltip(IToolStackView tool, ModifierEntry modifier,
-                           @Nullable Player player, List<Component> tooltip,
-                           TooltipKey tooltipKey, TooltipFlag tooltipFlag) {
-        int pieces = countWorn(player);
-        // 链乘后的**实际**总减伤 ✓（4 件 ≈ 34% 而不是 40% ✓ 免得提示和手感对不上 ✗）
-        int percent = (int) Math.round((1.0D - Math.pow(1.0D - REDUCTION_PER_PIECE, pieces)) * 100.0D);
-        tooltip.add(Component.translatable("modifier.tinkersnewlife.mana_shield.tip",
-                pieces, percent, pieces * HEALTH_PER_PIECE));
-    }
 
     // ============================================================
     //  查询工具（结算器用 ✓ 与「刻印」「魔力涌动」同款 ✓）

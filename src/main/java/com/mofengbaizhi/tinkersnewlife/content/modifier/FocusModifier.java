@@ -2,23 +2,12 @@ package com.mofengbaizhi.tinkersnewlife.content.modifier;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import slimeknights.mantle.client.TooltipKey;
 import slimeknights.tconstruct.library.modifiers.Modifier;
-import slimeknights.tconstruct.library.modifiers.ModifierEntry;
-import slimeknights.tconstruct.library.modifiers.ModifierHooks;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
-import slimeknights.tconstruct.library.modifiers.hook.display.TooltipModifierHook;
 import slimeknights.tconstruct.library.module.ModuleHookMap;
-import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
-
-import javax.annotation.Nullable;
-import java.util.List;
 
 /**
  * 铁魔法联动特性·<b>专注</b>（材料「秘银」工具自带，<b>有等级</b>）：
@@ -28,7 +17,7 @@ import java.util.List;
  *   <li>每级 <b>+5% 吟唱速度</b> —— 走铁魔法 {@code CAST_TIME_REDUCTION}（法术吟唱缩减）属性 ✓。</li>
  * </ul>
  */
-public class FocusModifier extends Modifier implements TooltipModifierHook {
+public class FocusModifier extends Modifier {
 
     public static final ModifierId ID = new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "focus"));
 
@@ -44,15 +33,6 @@ public class FocusModifier extends Modifier implements TooltipModifierHook {
     @Override
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         super.registerHooks(hookBuilder);
-        hookBuilder.addHook(this, ModifierHooks.TOOLTIP);
-    }
-
-    @Override
-    public void addTooltip(IToolStackView tool, ModifierEntry modifier,
-                           @Nullable Player player, List<Component> tooltip,
-                           TooltipKey tooltipKey, TooltipFlag tooltipFlag) {
-        tooltip.add(Component.translatable("modifier.tinkersnewlife.focus.tip",
-                String.format("%.0f", CAST_SPEED_PER_LEVEL * modifier.getLevel() * 100)));
     }
 
     /** 该物品上的专注等级（没有则 0） */

@@ -41,7 +41,10 @@ public final class WuWeiTechnique extends BaseTechnique {
         }
         // 未选形态：提示按 P 打开选择界面
         if (!WuWeiHandler.hasSelection(player)) {
-            player.displayClientMessage(Component.translatable("message.tinkersnewlife.wu_wei.need_select_p"), true);
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.wu_wei.need_select_p",
+                    com.mofengbaizhi.tinkersnewlife.util.KeyHintHelper.hint(
+                            com.mofengbaizhi.tinkersnewlife.util.KeyHintHelper.FORM,
+                            "key.tinkersnewlife.open_wu_wei")), true);
             return;
         }
         // 已选形态：顺转（自己变）
@@ -58,7 +61,10 @@ public final class WuWeiTechnique extends BaseTechnique {
         }
         // 未选形态：提示按 P 选择
         if (!WuWeiHandler.hasSelection(player)) {
-            player.displayClientMessage(Component.translatable("message.tinkersnewlife.wu_wei.need_select_p"), true);
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.wu_wei.need_select_p",
+                    com.mofengbaizhi.tinkersnewlife.util.KeyHintHelper.hint(
+                            com.mofengbaizhi.tinkersnewlife.util.KeyHintHelper.FORM,
+                            "key.tinkersnewlife.open_wu_wei")), true);
             return;
         }
         // 开关转变外放（自身变形中亦可开启：下一次攻击把目标变形成所选生物）

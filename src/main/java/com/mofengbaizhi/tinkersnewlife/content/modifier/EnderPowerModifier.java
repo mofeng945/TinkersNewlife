@@ -1,22 +1,11 @@
 package com.mofengbaizhi.tinkersnewlife.content.modifier;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
-import com.mofengbaizhi.tinkersnewlife.util.IronSpellsReflector;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.TooltipFlag;
-import slimeknights.mantle.client.TooltipKey;
-import slimeknights.tconstruct.library.modifiers.ModifierEntry;
-import slimeknights.tconstruct.library.modifiers.ModifierHooks;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
 import slimeknights.tconstruct.library.modifiers.hook.display.TooltipModifierHook;
 import slimeknights.tconstruct.library.modifiers.impl.SingleLevelModifier;
 import slimeknights.tconstruct.library.module.ModuleHookMap;
-import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
-
-import javax.annotation.Nullable;
-import java.util.List;
 
 /**
  * 虚空金属工具特性·<b>末影之力</b>（<b>无等级</b>，<b>铁魔法联动</b>）
@@ -39,7 +28,7 @@ import java.util.List;
  * {@code .description} 里写着两个法术 ✗ —— 玩家会以为"坏了" ✗。这里实现 {@link TooltipModifierHook}：
  * <b>装了 ⇒ 正常提示；没装 ⇒ 明确告诉玩家需要铁魔法</b> ✓。
  */
-public class EnderPowerModifier extends SingleLevelModifier implements TooltipModifierHook {
+public class EnderPowerModifier extends SingleLevelModifier {
 
     /** 强化 id */
     public static final ModifierId ID =
@@ -57,16 +46,6 @@ public class EnderPowerModifier extends SingleLevelModifier implements TooltipMo
     @Override
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         super.registerHooks(hookBuilder);
-        hookBuilder.addHook(this, ModifierHooks.TOOLTIP);
-    }
-
-    @Override
-    public void addTooltip(IToolStackView tool, ModifierEntry modifier,
-                           @Nullable Player player, List<Component> tooltip,
-                           TooltipKey tooltipKey, TooltipFlag tooltipFlag) {
-        tooltip.add(Component.translatable(IronSpellsReflector.isIronSpellsAvailable()
-                ? "modifier.tinkersnewlife.ender_power.tip"
-                : "modifier.tinkersnewlife.ender_power.tip.missing"));
     }
 
     /** 该物品是否带本强化（工具/盔甲通用，损坏时不算 ✓） */

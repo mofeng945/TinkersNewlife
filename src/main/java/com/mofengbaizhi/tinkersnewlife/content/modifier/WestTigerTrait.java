@@ -1,20 +1,8 @@
 package com.mofengbaizhi.tinkersnewlife.content.modifier;
 
-import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import slimeknights.mantle.client.TooltipKey;
 import slimeknights.tconstruct.library.modifiers.Modifier;
-import slimeknights.tconstruct.library.modifiers.ModifierEntry;
-import slimeknights.tconstruct.library.modifiers.ModifierHooks;
-import slimeknights.tconstruct.library.modifiers.hook.display.TooltipModifierHook;
 import slimeknights.tconstruct.library.module.ModuleHookMap;
-import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
-
-import javax.annotation.Nullable;
-import java.util.List;
 
 /**
  * 西中之虎特性
@@ -23,7 +11,7 @@ import java.util.List;
  * （玩家当前攻击力 ÷ 10000）。实际概率加成由 BlackFlashHandler 处理，
  * 本类仅作注册标记与工具提示。
  */
-public class WestTigerTrait extends Modifier implements TooltipModifierHook {
+public class WestTigerTrait extends Modifier {
 
     /** 西中之虎：黑闪基础触发概率额外加成（按攻击力/10000，非等级）→ 显示名不带等级 */
     @Override
@@ -34,13 +22,6 @@ public class WestTigerTrait extends Modifier implements TooltipModifierHook {
     @Override
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         super.registerHooks(hookBuilder);
-        hookBuilder.addHook(this, ModifierHooks.TOOLTIP);
     }
 
-    @Override
-    public void addTooltip(IToolStackView tool, ModifierEntry modifier,
-                           @Nullable Player player, List<Component> tooltip,
-                           TooltipKey tooltipKey, TooltipFlag tooltipFlag) {
-        tooltip.add(Component.translatable("modifier.tinkersnewlife.west_tiger.description"));
-    }
 }

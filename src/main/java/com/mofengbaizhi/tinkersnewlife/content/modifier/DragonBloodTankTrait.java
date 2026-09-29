@@ -3,28 +3,20 @@ package com.mofengbaizhi.tinkersnewlife.content.modifier;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.registries.ForgeRegistries;
-import slimeknights.mantle.client.TooltipKey;
 import slimeknights.tconstruct.library.modifiers.Modifier;
-import slimeknights.tconstruct.library.modifiers.ModifierEntry;
-import slimeknights.tconstruct.library.modifiers.ModifierHooks;
 import slimeknights.tconstruct.library.modifiers.ModifierId;
-import slimeknights.tconstruct.library.modifiers.hook.display.TooltipModifierHook;
 import slimeknights.tconstruct.library.module.ModuleHookMap;
 import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
 import slimeknights.tconstruct.library.tools.nbt.ModDataNBT;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
 import javax.annotation.Nullable;
-import java.util.List;
 
-public class DragonBloodTankTrait extends Modifier implements TooltipModifierHook {
+public class DragonBloodTankTrait extends Modifier {
 
     public static final ModifierId MODIFIER_ID = new ModifierId(TinkersNewlife.MOD_ID, "dragon_blood_tank");
     public static final int CAPACITY_PER_LEVEL = 5000;
@@ -41,45 +33,6 @@ public class DragonBloodTankTrait extends Modifier implements TooltipModifierHoo
     @Override
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         super.registerHooks(hookBuilder);
-        hookBuilder.addHook(this, ModifierHooks.TOOLTIP);
-    }
-
-    @Override
-    public void addTooltip(IToolStackView tool, ModifierEntry modifier,
-                           @Nullable Player player, List<Component> tooltip,
-                           TooltipKey tooltipKey, TooltipFlag tooltipFlag) {
-        int level = modifier.getLevel();
-        int capacity = level * CAPACITY_PER_LEVEL;
-
-        DragonBloodTankData data = getTankData(tool, capacity);
-        if (data == null) {
-            data = new DragonBloodTankData(capacity);
-        }
-
-        tooltip.add(Component.translatable("modifier.tinkersnewlife.dragon_blood_tank.capacity",
-                data.getTotalFilled(), capacity));
-
-        if (tooltipKey == TooltipKey.SHIFT) {
-            if (data.getFireAmount() > 0) {
-                tooltip.add(Component.translatable("modifier.tinkersnewlife.dragon_blood_tank.fire",
-                        data.getFireAmount()));
-            }
-            if (data.getIceAmount() > 0) {
-                tooltip.add(Component.translatable("modifier.tinkersnewlife.dragon_blood_tank.ice",
-                        data.getIceAmount()));
-            }
-            if (data.getLightningAmount() > 0) {
-                tooltip.add(Component.translatable("modifier.tinkersnewlife.dragon_blood_tank.lightning",
-                        data.getLightningAmount()));
-            }
-            int remaining = capacity - data.getTotalFilled();
-            if (remaining > 0) {
-                tooltip.add(Component.translatable("modifier.tinkersnewlife.dragon_blood_tank.remaining",
-                        remaining));
-            }
-        } else if (data.getTotalFilled() > 0) {
-            tooltip.add(Component.translatable("modifier.tinkersnewlife.dragon_blood_tank.shift_hint"));
-        }
     }
 
     @Nullable

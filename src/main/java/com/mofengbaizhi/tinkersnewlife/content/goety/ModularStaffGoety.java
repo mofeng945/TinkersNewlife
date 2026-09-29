@@ -254,7 +254,10 @@ public final class ModularStaffGoety {
         int count = 0;
         for (ItemStack s : foci) if (!s.isEmpty()) count++;
         if (count == 0) {
-            player.displayClientMessage(Component.translatable("message.tinkersnewlife.staff.no_focus"), true);
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.staff.no_focus",
+                    com.mofengbaizhi.tinkersnewlife.util.KeyHintHelper.hint(
+                            com.mofengbaizhi.tinkersnewlife.util.KeyHintHelper.STAFF_POUCH,
+                            "key.tinkersnewlife.staff_pouch")), true);
             return;
         }
         int idx = getFocusIndex(staff);

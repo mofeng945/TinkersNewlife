@@ -129,7 +129,10 @@ public final class CursedSpeechTechnique extends BaseTechnique {
             if (id == null || id.isEmpty() || !CursedSpeechRegistry.exists(id)
                     || !CursedSpeechState.knows(player, id)) {
                 player.displayClientMessage(Component.translatable(
-                        "message.tinkersnewlife.cursed_speech.missing_part"), true);
+                        "message.tinkersnewlife.cursed_speech.missing_part",
+                        com.mofengbaizhi.tinkersnewlife.util.KeyHintHelper.hint(
+                                com.mofengbaizhi.tinkersnewlife.util.KeyHintHelper.REVERSE,
+                                "key.tinkersnewlife.reverse_technique")), true);
                 return;
             }
         }

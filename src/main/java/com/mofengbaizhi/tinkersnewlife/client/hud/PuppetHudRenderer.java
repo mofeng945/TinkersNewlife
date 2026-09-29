@@ -65,8 +65,11 @@ public class PuppetHudRenderer {
                 (int) Math.ceil(puppet.getHealth()) + " / " + (int) puppet.getMaxHealth());
         graphics.drawString(font, hpText, barX + BAR_W + 5, barY - 1, 0xFFFFFF);
 
-        // 操作提示（血条下方居中）
-        Component hint = Component.translatable("hud.tinkersnewlife.puppet.hint");
+        // 操作提示（血条下方居中）· §813：按键实时读当前绑定 ✓
+        Component hint = Component.translatable("hud.tinkersnewlife.puppet.hint",
+                com.mofengbaizhi.tinkersnewlife.util.KeyHintHelper.hint(
+                        com.mofengbaizhi.tinkersnewlife.util.KeyHintHelper.TECHNIQUE,
+                        "key.tinkersnewlife.use_technique"));
         graphics.drawString(font, hint, barX + (BAR_W - font.width(hint)) / 2, barY + BAR_H + 4, 0x9A9A9A);
     }
 }
