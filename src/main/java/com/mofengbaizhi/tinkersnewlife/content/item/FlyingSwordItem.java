@@ -117,9 +117,15 @@ public class FlyingSwordItem extends ModifiableItem implements ICurioItem {
                 float mainDamage = tool.getStats().get(ToolStats.ATTACK_DAMAGE);
                 float projectileDamage = mainDamage * 0.6f;
 
-                ItemStack randomSword = createRandomFlyingSword();
+                // ⭐§830 用户口径：「**修一下飞剑攻击实体的颜色**……**还是跟着实际物品走**」✓
+                //   原来这里传的是 {@link #createRandomFlyingSword()} —— 一把**随机材料拼出来的"假飞剑"** ✗
+                //   （它从**全整合包** tier ≥ 3 的材料里随机抽 5 个 ✓ 与玩家手里那把毫无关系 ✗）；
+                //   而抽到的材料若在这把剑的部件上**没有对应贴图**，匠魂会退回"按材料颜色生成"的外观 ✗
+                //   ⇒ 飞出去的就是**一片红 / 杂色** ✗（用户实测的正是这个 ✓）。
+                //   ⇒ 现在直接用手上这把的真实外观 ✓（材料、贴图、强化带来的外观全都跟着走 ✓）。
+                ItemStack flyingLook = stack.copy();
 
-                FlyingSwordEntity sword = new FlyingSwordEntity(level, player, projectileDamage, randomSword);
+                FlyingSwordEntity sword = new FlyingSwordEntity(level, player, projectileDamage, flyingLook);
                 sword.setChaseMode(isChaseMode);
                 sword.setLaunchDirection(player.getLookAngle());
                 if (isChaseMode) {
@@ -156,6 +162,11 @@ public class FlyingSwordItem extends ModifiableItem implements ICurioItem {
         return InteractionResultHolder.success(stack);
     }
 
+    /**
+     * ⚠ §830 起**不再被使用** ✗（飞出去的那把改成"手上这把的真实外观" ✓ 见 {@code use} 里的 {@code flyingLook}）。
+     * <p>保留它是因为"每次射出不同外观"这个玩法本身没坏 ✓ —— 想恢复的话把 {@code use} 里那行换回来即可 ✓。
+     */
+    @SuppressWarnings("unused")
     private ItemStack createRandomFlyingSword() {
         List<IMaterial> available = new ArrayList<>();
         for (IMaterial mat : MaterialRegistry.getInstance().getAllMaterials()) {
