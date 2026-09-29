@@ -252,6 +252,13 @@ public class ModItems {
                     () -> new SilentGloveItem(new Item.Properties().stacksTo(1))
             );
 
+    /** 唐横刀（§808 赞助武器·国风直刀；自带无等级词条「兵士佩刀」） */
+    public static final RegistryObject<com.mofengbaizhi.tinkersnewlife.content.item.TangHengDaoItem> TANG_HENG_DAO =
+            ITEMS.register("tang_heng_dao",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.TangHengDaoItem(
+                            new Item.Properties().stacksTo(1))
+            );
+
     public static final RegistryObject<WarScytheItem> WAR_SCYTHE =
         ITEMS.register("war_scythe",
                 () -> new WarScytheItem(

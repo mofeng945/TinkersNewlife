@@ -1,0 +1,21 @@
+{
+  "name": "Tang Hengdao",
+  "category": "tinkersnewlife:tools",
+  "icon": "tinkersnewlife:tang_heng_dao",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:tang_heng_dao",
+      "text": "$(bold)Tang Hengdao$()$(br2)Obtained by building it at the $(bold)Tinkers' Crafting Station$(): Small Blade + Broad Blade + Large Plate + Tough Binding + Tough Handle.$(br2)A weapon steeped in classical Chinese style, famed for its $(bold)slender blade$() and $(bold)nimble technique$()."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Soldier's Saber$() (level-less):$(li)$(bold)+1 block$() of entity interaction range while held$(li)Within 4 blocks it adds $(bold)damage by distance$(): 4b = 0, 3b = 1, 2b = 2, 1b = 3, point-blank = 4 stages$(li)Each stage swings a $(bold)grey slash$() (SlashBlade-like)$(br2)Damage per stage is set by the `tang_heng_dao_bonus_per_stage` config."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Sponsor Weapon$()$(br2)This weapon was commissioned by a sponsor. Thank you for the support!"
+    }
+  ]
+}

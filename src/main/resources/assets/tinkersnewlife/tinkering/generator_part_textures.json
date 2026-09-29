@@ -44,6 +44,11 @@
     { "path": "tinkersnewlife:item/tool/parts/spell_core", "stat_type": "tconstruct:head" },
     { "path": "tinkersnewlife:item/tool/parts/curse_core_part", "stat_type": "tconstruct:head" },
     { "path": "tinkersnewlife:item/tool/parts/yo_yo_wheel", "stat_type": "tconstruct:head" },
-    { "path": "tinkersnewlife:item/tool/parts/yo_yo_spool", "stat_type": "tconstruct:handle" }
+    { "path": "tinkersnewlife:item/tool/parts/yo_yo_spool", "stat_type": "tconstruct:handle" },
+    { "path": "tinkersnewlife:item/tool/tang_heng_dao/blade1", "stat_type": "tconstruct:head" },
+    { "path": "tinkersnewlife:item/tool/tang_heng_dao/blade2", "stat_type": "tconstruct:head" },
+    { "path": "tinkersnewlife:item/tool/tang_heng_dao/plate", "stat_type": "tconstruct:head" },
+    { "path": "tinkersnewlife:item/tool/tang_heng_dao/binding", "stat_type": "tconstruct:binding" },
+    { "path": "tinkersnewlife:item/tool/tang_heng_dao/handle", "stat_type": "tconstruct:handle" }
   ]
 }

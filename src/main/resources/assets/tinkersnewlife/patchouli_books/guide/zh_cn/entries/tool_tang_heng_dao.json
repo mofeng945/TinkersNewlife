@@ -1,0 +1,21 @@
+{
+  "name": "唐横刀",
+  "category": "tinkersnewlife:tools",
+  "icon": "tinkersnewlife:tang_heng_dao",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:tang_heng_dao",
+      "text": "$(bold)唐横刀$()$(br2)获取：通过$(bold)匠魂工匠站$()打造——小型剑刃 + 宽刃 + 大板 + 坚韧套环 + 坚韧手柄。$(br2)特点：国风气息浓郁的武器，以其$(bold)修长的刀身$()与$(bold)灵活的使用技巧$()著称。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)兵士佩刀$()（无等级）：$(li)手持时$(bold)实体交互距离 +1 格$()$(li)4 格内按目标距离$(bold)追加伤害$()：4格 0 段 / 3格 1 段 / 2格 2 段 / 1格 3 段 / 贴身 4 段$(li)追加时挥出$(bold)灰色刀光$()（每段一道，类似拔刀剑）$(br2)每段追加伤害由配置 `tang_heng_dao_bonus_per_stage` 决定。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)赞助武器$()$(br2)这把武器由赞助者定制，感谢支持 ✓"
+    }
+  ]
+}

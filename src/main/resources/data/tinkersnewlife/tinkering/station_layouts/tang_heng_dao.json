@@ -1,0 +1,55 @@
+{
+  "translation_key": "item_group.tinkersnewlife.tang_heng_dao",
+  "sortIndex": 6,
+  "icon": {
+    "item": "tinkersnewlife:tang_heng_dao",
+    "nbt": "{Damage:0,tic_broken:0b,tic_display:1b,tic_materials:[\"tconstruct:ui_render#head\",\"tconstruct:ui_render#head\",\"tconstruct:ui_render#extra\",\"tconstruct:ui_render#extra\",\"tconstruct:ui_render#handle\"]}"
+  },
+  "input_slots": [
+    {
+      "translation_key": "slot.tinkersnewlife.tang_heng_dao.blade1",
+      "icon": "tconstruct:small_blade",
+      "filter": {
+        "item": "tconstruct:small_blade"
+      },
+      "x": 35,
+      "y": 18
+    },
+    {
+      "translation_key": "slot.tinkersnewlife.tang_heng_dao.blade2",
+      "icon": "tconstruct:broad_blade",
+      "filter": {
+        "item": "tconstruct:broad_blade"
+      },
+      "x": 56,
+      "y": 26
+    },
+    {
+      "translation_key": "slot.tinkersnewlife.tang_heng_dao.plate",
+      "icon": "tconstruct:large_plate",
+      "filter": {
+        "item": "tconstruct:large_plate"
+      },
+      "x": 44,
+      "y": 44
+    },
+    {
+      "translation_key": "slot.tinkersnewlife.tang_heng_dao.binding",
+      "icon": "tconstruct:tough_binding",
+      "filter": {
+        "item": "tconstruct:tough_binding"
+      },
+      "x": 30,
+      "y": 60
+    },
+    {
+      "translation_key": "slot.tinkersnewlife.tang_heng_dao.handle",
+      "icon": "tconstruct:tough_handle",
+      "filter": {
+        "item": "tconstruct:tough_handle"
+      },
+      "x": 14,
+      "y": 66
+    }
+  ]
+}

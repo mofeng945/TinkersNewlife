@@ -304,6 +304,11 @@ public class Modifiers {
         MODIFIERS.register("dark_metal_magic_resist",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.DarkMetalMagicResistModifier::new);
 
+    /** 词条·兵士佩刀（无等级·唐横刀自带：实体范围 +1 格，4 格内按距离加成挥出灰色斩击） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.SoldiersSaberModifier> SOLDIERS_SABER =
+        MODIFIERS.register("soldiers_saber",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.SoldiersSaberModifier::new);
+
     /** 强化·噬魂（1 级占 1 升级槽，2/3 级无槽；每级 +25% 灵魂获取，一级后额外 +1，最高 3 级） */
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.SoulEaterModifier> SOUL_EATER =
         MODIFIERS.register("soul_eater",

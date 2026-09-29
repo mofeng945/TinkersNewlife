@@ -71,6 +71,7 @@ public final class BrokenToolModels {
     static {
         // 匠魂工具（ModifiableItem / ModifiableArmorItem，模型走 tconstruct:tool 加载器）
         tool("war_scythe");
+        tool("tang_heng_dao");     // §808 唐横刀
         tool("flying_sword");
         tool("modular_staff");
         tool("dragon_staff");
