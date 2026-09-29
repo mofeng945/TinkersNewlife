@@ -258,6 +258,7 @@ public class DangYunPingXianDomain extends BaseDomain {
              * ⇒ 空气<b>和</b>水/气泡柱都要补成结界 ✓；实体方块不动（绝不覆盖别人的东西 ✗）。
              */
             var state = level.getBlockState(pos);
+            if (level.getBlockEntity(pos) != null) continue;        // §825：有方块实体 ⇒ 绝不覆盖 ✓
             if (state.isAir() || isWaterBody(state)) {
                 level.setBlock(pos, barrier.defaultBlockState(), 2);
                 placed.add(pos);
@@ -492,6 +493,10 @@ public class DangYunPingXianDomain extends BaseDomain {
                         double dz = z + 0.5 - center.z;
                         if (dx * dx + dy * dy + dz * dz > fillRadius * fillRadius) continue;
                         BlockPos pos = new BlockPos(x, y, z);
+                        // ⭐§825 绝不碰"有方块实体的方块" ✓ —— 用户实测：开本领域后，白空间传送门那一格
+                        //   变成了 minecraft:water ✗ ⇒ 门走 onRemove 被"连锁清除"、整扇没了 ✗。
+                        //   门/箱子/机器/储罐一律不灌 ✓（哪怕它看起来是"空的"✗）。
+                        if (level.getBlockEntity(pos) != null) continue;
                         if (!level.getBlockState(pos).isAir()) continue;
                         /*
                          * §700（用户提议）：这里照旧把空气灌成**水源** ✓ ——
@@ -514,6 +519,7 @@ public class DangYunPingXianDomain extends BaseDomain {
                     it.remove(); // 已不在注水半径内（防御性清理）
                     continue;
                 }
+                if (level.getBlockEntity(pos) != null) continue;   // §825 同上：有方块实体就绝不碰 ✓
                 if (level.getBlockState(pos).isAir()) {
                     level.setBlock(pos, Blocks.WATER.defaultBlockState(), 2);
                 }

@@ -178,6 +178,20 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
      * 破坏/掉落流程，也就不会递归 ✓ —— 第二格进 {@code onRemove} 时第一格已经是空气，
      * {@code getBlockState(other).is(this)} 直接不成立 ✓。
      */
+    /**
+     * <b>§825 第二道保险：本方块不允许被流体替换</b> ✓。
+     *
+     * <p>为什么写：用户实测「开荡蕴平线（水域领域）之后我的传送门没了」✗ —— 日志里那一格
+     * 变成了 {@code minecraft:water} ✓（领域会把自己球体内灌满水 ✓）。虽然原版 {@code Block} 默认
+     * 就是"不可替换"，但**只要有任何一方绕过判定直接 {@code setBlock}**，门就会当场消失 ✗
+     * ⇒ 这里显式声明一次（既防流体扩散，也给读代码的人一个明确契约 ✓），
+     * 与之配套的是领域那边的"**绝不动有方块实体的方块**"守卫 ✓。
+     */
+    @Override
+    public boolean canBeReplaced(BlockState state, net.minecraft.world.level.material.Fluid fluid) {
+        return false;
+    }
+
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (!level.isClientSide() && !state.is(newState.getBlock())) {
