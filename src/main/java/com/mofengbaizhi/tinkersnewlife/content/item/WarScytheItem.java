@@ -5,7 +5,6 @@ import com.google.common.collect.Multimap;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -81,11 +80,17 @@ public class WarScytheItem extends ModifiableItem {
     public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlot slot, ItemStack stack) {
         Multimap<Attribute, AttributeModifier> map = ArrayListMultimap.create(super.getAttributeModifiers(slot, stack));
         if (slot == EquipmentSlot.MAINHAND) {
-            Attribute reachAttr = BuiltInRegistries.ATTRIBUTE.get(new ResourceLocation("forge", "reach_distance"));
-            if (reachAttr != null) {
-                map.put(reachAttr, new AttributeModifier(REACH_MODIFIER_UUID,
-                        "War Scythe Reach", reachBonus, AttributeModifier.Operation.ADDITION));
-            }
+            // §806 **实体交互距离 +reachBonus 格**（用户口径：「能攻击到更远处的生物」✓
+            //   —— 刻意用"实体"那个属性，**不是**"方块"那个 ✗）。
+            //
+            // ⚠ 原来这里查的是 `forge:reach_distance` ✗ —— Forge 1.20.1 里**没有**这个属性名 ✗
+            //   （正确的是 `forge:entity_reach` 与 `forge:block_reach` ✓ 两者都是 Forge 注册在
+            //    玩家身上的属性 ✓ 见 Forge 的 Player.java.patch ✓）
+            //   ⇒ `if (reachAttr != null)` 永远是 false ✗ ⇒ **这条加成从写下来那天起就没生效过** ✗
+            //   （用户实测："战镰够不到更远的生物"✓ 现修 ✓）。
+            map.put(net.minecraftforge.common.ForgeMod.ENTITY_REACH.get(),
+                    new AttributeModifier(REACH_MODIFIER_UUID,
+                            "War Scythe Entity Reach", reachBonus, AttributeModifier.Operation.ADDITION));
             int fever = getFever(stack);
             if (fever > 0) {
                 float speedBonus = fever * speedPerFever;
@@ -185,6 +190,7 @@ public class WarScytheItem extends ModifiableItem {
     public void appendHoverText(ItemStack stack, @Nullable Level level,
                                 List<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, level, tooltip, flag);
+        tooltip.add(Component.translatable("tooltip.tinkersnewlife.war_scythe.reach", (int) reachBonus));
         int fever = getFever(stack);
         tooltip.add(Component.translatable("tooltip.tinkersnewlife.war_scythe.fever", fever, 100));
         if (fever == 100) {

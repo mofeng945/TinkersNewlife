@@ -97,6 +97,12 @@ The sword is now rendered in the world render stage (so it is visible even with 
 Model's player renderer), is visible in first person and under your feet, and its trail has a
 shader-pack-safe fallback.
 
+### War Scythe: Its Extra Reach Works Now
+The war scythe was always meant to reach farther, but it looked up an attribute name that does not
+exist in Forge 1.20.1 (`forge:reach_distance`), so the bonus silently never applied. It now uses
+**`forge:entity_reach`**: while held in the main hand you can attack — and interact with — creatures
+**2 blocks farther**. Block reach (breaking/placing) is deliberately left untouched.
+
 ### Quantum Vault, Up to Tier 6
 A searchable, paged count-based storage UI with six tiers.
 

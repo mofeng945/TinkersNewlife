@@ -1353,6 +1353,7 @@
   "tooltip.tinkersnewlife.silent_glove.curios": "+%d戒指槽位",
   "tooltip.tinkersnewlife.silent_glove.desc": "空间奇点库:%d/%d",
   "tooltip.tinkersnewlife.silent_glove.use": "主手右键打开空间奇点库",
+  "tooltip.tinkersnewlife.war_scythe.reach": "§b手持：实体交互距离 §f+%d 格 §7（够得到更远的生物；不影响够方块的距离）",
   "tooltip.tinkersnewlife.war_scythe.fever": "§eFever: §f%d §7/ §f100",
   "tooltip.tinkersnewlife.war_scythe.ultimate": "§6✦ §eFever 已满！按住 §6W+Shift+右键 §e释放终极斩击",
   "trait.tinkersnewlife.mana_surge.line": "魔力涌动 ×%s：法力 +%s · 法术强度 +%s%% · 法术伤害 +%s%%",

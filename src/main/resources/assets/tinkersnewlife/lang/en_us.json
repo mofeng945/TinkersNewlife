@@ -1353,6 +1353,7 @@
   "tooltip.tinkersnewlife.silent_glove.curios": "+%d ring slots",
   "tooltip.tinkersnewlife.silent_glove.desc": "Singularity storage: %d/%d",
   "tooltip.tinkersnewlife.silent_glove.use": "Right-click in the main hand to open the singularity storage",
+  "tooltip.tinkersnewlife.war_scythe.reach": "§bHeld: §f+%d blocks §7of entity interaction range (reach creatures farther; does not affect block reach)",
   "tooltip.tinkersnewlife.war_scythe.fever": "§eFever: §f%d §7/ §f100",
   "tooltip.tinkersnewlife.war_scythe.ultimate": "§6✦ §eFever is full! Hold §6W+Shift+right-click §eto unleash the finisher",
   "trait.tinkersnewlife.mana_surge.line": "Mana Surge x%s: mana +%s · spell power +%s%% · spell damage +%s%%",
