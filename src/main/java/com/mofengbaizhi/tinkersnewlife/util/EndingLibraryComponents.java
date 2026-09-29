@@ -38,6 +38,15 @@ import net.minecraftforge.fml.ModList;
  *   <li>{@code ComponentChanges.CODEC} ＝ {@code dispatchedMap(组件id → 组件codec)} ✓
  *       ⇒ {@code Component: { "minecraft:use_effects": { can_sprint: 1b, speed_multiplier: 1.0f } }} ✓。</li>
  * </ul>
+ * <h2>⚠ §837 实测补充（重要 ✓）</h2>
+ * 用户实测"**还是减速**" ✗ —— 反编译他们的 `ItemStackMixin` 后找到原因 ✓：
+ * 他们的组件管理器是**缓存**的 ✗（`endingLibrary$getComponentManagerIfPresent()` 直接返回缓存字段 ✓
+ * 默认是一张**空表** ✓），只有那份 ItemStack 的 NBT 真的被解析过（`ItemStack(CompoundTag)` 构造 /
+ * `setTag` ✓）才会带上组件 ✓；而 TConstruct 的工具**每 tick 都在写自己的 `tic_*` NBT** ✓
+ * ⇒ 我们塞进根键 `Component` 的组件在客户端那份栈上很容易缺席（或被 `setTag` 重建冲掉 ✗）。
+ * ⇒ 因此"不减速"这件事**已经改由我们自己的客户端混入**兜底 ✓
+ * （{@code mixin/SpearChargeSlowdownMixin} ✓ 纯客户端 ✓ 不依赖任何数据同步 ✓）。
+ * 本类保留 ✓：它符合原版语义、终焉图书馆在场时是"双保险" ✓、不在场时 no-op ✓。
  */
 public final class EndingLibraryComponents {
 

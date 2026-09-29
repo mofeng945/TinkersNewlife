@@ -27,7 +27,8 @@
     "HumanoidArmorLayerMixin",
     "XaeroRadarMixin",
     "JadeObjectNameMixin",
-    "MantleFluidShaderMixin"
+    "MantleFluidShaderMixin",
+    "SpearChargeSlowdownMixin"
   ],
   "injectors": {
     "defaultRequire": 0
