@@ -259,6 +259,13 @@ public class ModItems {
                             new Item.Properties().stacksTo(1))
             );
 
+    /** 长矛（§835 移植 MC 1.21.11《Mounts of Mayhem》原版长矛；右键长按＝冲锋） */
+    public static final RegistryObject<com.mofengbaizhi.tinkersnewlife.content.item.SpearItem> SPEAR =
+            ITEMS.register("spear",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.SpearItem(
+                            new Item.Properties().stacksTo(1))
+            );
+
     public static final RegistryObject<WarScytheItem> WAR_SCYTHE =
         ITEMS.register("war_scythe",
                 () -> new WarScytheItem(

@@ -183,6 +183,7 @@ public class ModCreativeTabs {
 
                                 addAllToolVariants(output, WarScytheItem.WAR_SCYTHE_DEFINITION, ModItems.WAR_SCYTHE.get());
         addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.TangHengDaoItem.TANG_HENG_DAO_DEFINITION, com.mofengbaizhi.tinkersnewlife.content.ModItems.TANG_HENG_DAO.get());   // §808 唐横刀
+        addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.SpearItem.SPEAR_DEFINITION, com.mofengbaizhi.tinkersnewlife.content.ModItems.SPEAR.get());   // §835 长矛
 
                                 if (anyLoaded("irons_spellbooks", "goety")) {
                                     addAllToolVariants(output, ModularStaffItem.MODULAR_STAFF_DEFINITION, ModItems.MODULAR_STAFF.get());

@@ -1,0 +1,37 @@
+{
+  "translation_key": "item_group.tinkersnewlife.spear",
+  "sortIndex": 7,
+  "icon": {
+    "item": "tinkersnewlife:spear",
+    "nbt": "{Damage:0,tic_broken:0b,tic_display:1b,tic_materials:[\"tconstruct:ui_render#head\",\"tconstruct:ui_render#handle\",\"tconstruct:ui_render#handle\"]}"
+  },
+  "input_slots": [
+    {
+      "translation_key": "slot.tinkersnewlife.spear.head",
+      "icon": "tconstruct:broad_blade",
+      "filter": {
+        "item": "tconstruct:broad_blade"
+      },
+      "x": 50,
+      "y": 22
+    },
+    {
+      "translation_key": "slot.tinkersnewlife.spear.handle1",
+      "icon": "tconstruct:tough_handle",
+      "filter": {
+        "item": "tconstruct:tough_handle"
+      },
+      "x": 30,
+      "y": 44
+    },
+    {
+      "translation_key": "slot.tinkersnewlife.spear.handle2",
+      "icon": "tconstruct:tough_handle",
+      "filter": {
+        "item": "tconstruct:tough_handle"
+      },
+      "x": 12,
+      "y": 62
+    }
+  ]
+}

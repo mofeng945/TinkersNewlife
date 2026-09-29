@@ -1,0 +1,23 @@
+{
+  "parent": "tconstruct:item/base/tall",
+  "textures": {
+    "handle1": "tinkersnewlife:item/tool/spear/handle1_broken",
+    "handle2": "tinkersnewlife:item/tool/spear/handle2_broken",
+    "head": "tinkersnewlife:item/tool/spear/head_broken"
+  },
+  "loader": "tconstruct:tool",
+  "parts": [
+    {
+      "name": "handle1",
+      "index": 1
+    },
+    {
+      "name": "handle2",
+      "index": 2
+    },
+    {
+      "name": "head",
+      "index": 0
+    }
+  ]
+}

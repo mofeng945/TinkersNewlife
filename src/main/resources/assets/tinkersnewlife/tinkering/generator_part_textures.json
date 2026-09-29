@@ -49,6 +49,9 @@
     { "path": "tinkersnewlife:item/tool/tang_heng_dao/blade2", "stat_type": "tconstruct:head" },
     { "path": "tinkersnewlife:item/tool/tang_heng_dao/plate", "stat_type": "tconstruct:head" },
     { "path": "tinkersnewlife:item/tool/tang_heng_dao/binding", "stat_type": "tconstruct:binding" },
-    { "path": "tinkersnewlife:item/tool/tang_heng_dao/handle", "stat_type": "tconstruct:handle" }
+    { "path": "tinkersnewlife:item/tool/tang_heng_dao/handle", "stat_type": "tconstruct:handle" },
+    { "path": "tinkersnewlife:item/tool/spear/head", "stat_type": "tconstruct:head" },
+    { "path": "tinkersnewlife:item/tool/spear/handle1", "stat_type": "tconstruct:handle" },
+    { "path": "tinkersnewlife:item/tool/spear/handle2", "stat_type": "tconstruct:handle" }
   ]
 }
