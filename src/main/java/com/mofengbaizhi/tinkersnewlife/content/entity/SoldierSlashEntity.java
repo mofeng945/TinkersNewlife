@@ -12,7 +12,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * 「兵士佩刀」的<b>刀光</b>（§810）—— 仿拔刀剑那种<b>弧形斩击面片</b>的载体实体 ✓。
+ * 「兵士佩刀」的<b>刀光</b>（§810／§811）—— 仿拔刀剑那种<b>弧形斩击面片</b>的载体实体 ✓。
  *
  * <h2>为什么做成实体而不是粒子</h2>
  * 用户口径：<b>「我要的是刀光光效，不是横扫粒子」</b> ✓ ⇒ {@code ParticleTypes.SWEEP_ATTACK}（原版横扫弧）
@@ -20,17 +20,25 @@ import net.minecraft.world.phys.Vec3;
  * {@code FlyingSwordTrailRenderer}（自己组网格 ＋ 顶点色 ＋ <b>原版 shader getter</b> ✓ 见该类注释里
  * "自带着色器在装了光影包的整合包里整条看不见 ✗"的教训 ✓）⇒ 这里沿用同一套思路 ✓：
  * <ul>
- *   <li><b>服务端</b>只做一件事 ✓：在目标身上生成这个实体（带朝向/自转/大小/寿命/颜色 ✓）；</li>
- *   <li><b>客户端</b>{@code SoldierSlashRenderer} 用 {@code TRIANGLE_STRIP} 之外的 QUADS 拼一条
- *       <b>两端收尖的弧带</b> ✓ ＋ 弧光贴图 {@code textures/entity/soldier_slash.png} ✓（**新文件** ✓）
- *       ＋ 顶点色染成灰色 ✓ ⇒ 就是"刀光" ✓。</li>
+ *   <li><b>服务端</b>只做一件事 ✓：在目标身上生成这个实体（带自转/大小/镜像/寿命/颜色 ✓）；</li>
+ *   <li><b>客户端</b>{@code SoldierSlashRenderer} 拼一条<b>两端收尖的弧带</b> ✓ ＋ 弧光贴图
+ *       {@code textures/entity/soldier_slash.png} ✓（**新文件** ✓）＋ 顶点色染成灰色 ✓ ⇒ 就是"刀光" ✓。</li>
  * </ul>
+ *
+ * <h2>§811 修正：朝向不再随机（用户反馈"刀光重叠"✗）</h2>
+ * 原来给每道刀光随机一个 {@code yaw} ✗ ⇒ 弧面会**侧对镜头**、退化成一条细线 ✗，
+ * 几道叠在一起就糊成一团 ✗（就是用户说的"重叠" ✗）。
+ * 现在：<b>朝向由客户端按相机算</b>（弧面永远正对镜头 ✓ 见 {@code SoldierSlashRenderer}），
+ * 实体只负责带<b>平面内自转 {@code ROLL}</b> ✓ ＋ {@code MIRROR}（左右镜像 ✓）
+ * ⇒ 每一段的倾角/方向都不一样 ✓ 一眼能看出是"连续几刀" ✓。
  *
  * <h2>字段（都走 {@link SynchedEntityData} ⇒ 客户端自己就能画 ✓ 不需要额外网络包 ✓）</h2>
  * <ul>
  *   <li>{@code LIFE}：寿命（tick ✓ 到点自己 {@code discard()} ✓ 只做视觉 ⇒ 不需要存档 ✓）；</li>
- *   <li>{@code DELAY}：延迟出现（tick ✓）—— 多段时让刀光<b>一段一段依次亮</b> ✓；</li>
- *   <li>{@code SCALE} / {@code ROLL}：弧的大小与自转角度 ✓（每次斩击角度不同 ⇒ 不呆板 ✓）；</li>
+ *   <li>{@code DELAY}：延迟出现（tick ✓）；</li>
+ *   <li>{@code SCALE}：弧的大小 ✓（每段不同 ⇒ 叠在一起也分得清 ✓）；</li>
+ *   <li>{@code ROLL}：<b>平面内自转</b> ✓——正对镜头后，这个角就是玩家看到的"这一刀的角度" ✓；</li>
+ *   <li>{@code MIRROR}：左右镜像 ✓（奇数段镜像 ⇒ 与偶数段"从另一侧切进来" ✓ 更不像同一刀 ✓）；</li>
  *   <li>{@code TINT}：0xRRGGBB 顶点色 ✓（唐横刀是灰色 {@code 0xC9CFD9} ✓ 以后别的武器想换色也能用 ✓）。</li>
  * </ul>
  *
@@ -49,6 +57,8 @@ public class SoldierSlashEntity extends Entity {
             SynchedEntityData.defineId(SoldierSlashEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Integer> SLASH_TINT =
             SynchedEntityData.defineId(SoldierSlashEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> SLASH_MIRROR =
+            SynchedEntityData.defineId(SoldierSlashEntity.class, EntityDataSerializers.BOOLEAN);
 
     public SoldierSlashEntity(EntityType<? extends SoldierSlashEntity> entityType, Level level) {
         super(entityType, level);
@@ -61,19 +71,16 @@ public class SoldierSlashEntity extends Entity {
      *
      * @param level      所在世界 ✓
      * @param pos        世界坐标（一般放目标身体中心 ✓）
-     * @param yaw        弧面朝向（左右 ✓）
-     * @param roll       弧面自转（决定这一刀是横劈/斜劈/竖劈 ✓）
+     * @param roll       平面内自转（正对镜头后 = 玩家看到的这一刀角度 ✓）
      * @param scale      大小倍率 ✓
-     * @param lifeTicks  寿命（tick ✓ 一般 6 ✓）
-     * @param startDelay 延迟出现（tick ✓ 多段依次亮 ✓）
+     * @param lifeTicks  寿命（tick ✓ 一般 5 ✓）
+     * @param startDelay 延迟出现（tick ✓）
      * @param tint       0xRRGGBB 顶点色 ✓（灰色 = 0xC9CFD9 ✓）
      */
-    public SoldierSlashEntity(Level level, Vec3 pos, float yaw, float roll, float scale,
+    public SoldierSlashEntity(Level level, Vec3 pos, float roll, float scale,
                               int lifeTicks, int startDelay, int tint) {
         this(ModEntities.SOLDIER_SLASH.get(), level);
         this.setPos(pos.x, pos.y, pos.z);
-        this.setYRot(yaw);
-        this.yRotO = yaw;
         this.setLifeTicks(lifeTicks);
         this.setStartDelay(startDelay);
         this.setSlashScale(scale);
@@ -83,11 +90,12 @@ public class SoldierSlashEntity extends Entity {
 
     @Override
     protected void defineSynchedData() {
-        this.getEntityData().define(LIFE_TICKS, 6);
+        this.getEntityData().define(LIFE_TICKS, 5);
         this.getEntityData().define(START_DELAY, 0);
         this.getEntityData().define(SLASH_SCALE, 1.0F);
         this.getEntityData().define(SLASH_ROLL, 0.0F);
         this.getEntityData().define(SLASH_TINT, 0xC9CFD9);
+        this.getEntityData().define(SLASH_MIRROR, false);
     }
 
     // ==================== 字段读写 ====================
@@ -101,6 +109,8 @@ public class SoldierSlashEntity extends Entity {
     public float getSlashRoll() { return this.getEntityData().get(SLASH_ROLL); }
     public void setSlashTint(int v) { this.getEntityData().set(SLASH_TINT, v); }
     public int getSlashTint() { return this.getEntityData().get(SLASH_TINT); }
+    public void setMirrored(boolean v) { this.getEntityData().set(SLASH_MIRROR, v); }
+    public boolean isMirrored() { return this.getEntityData().get(SLASH_MIRROR); }
 
     @Override
     public void tick() {
@@ -145,6 +155,7 @@ public class SoldierSlashEntity extends Entity {
         this.setSlashScale(tag.getFloat("scale"));
         this.setSlashRoll(tag.getFloat("roll"));
         this.setSlashTint(tag.getInt("tint"));
+        this.setMirrored(tag.getBoolean("mirror"));
     }
 
     @Override
@@ -154,5 +165,6 @@ public class SoldierSlashEntity extends Entity {
         tag.putFloat("scale", this.getSlashScale());
         tag.putFloat("roll", this.getSlashRoll());
         tag.putInt("tint", this.getSlashTint());
+        tag.putBoolean("mirror", this.isMirrored());
     }
 }

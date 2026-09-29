@@ -70,11 +70,21 @@ public final class SoldiersSaberHandler {
     /** 相邻两段之间的间隔（tick ✓）：2 tick ⇒ 贴身 4 段约 8 tick 打完 ✓ 有"连续斩"的节奏 ✓ */
     private static final int STAGE_INTERVAL_TICKS = 2;
 
-    /** 每道刀光的寿命（tick ✓） */
-    private static final int SLASH_LIFE_TICKS = 6;
+    /** 每道刀光的寿命（tick ✓）：5 tick 够看清又不会几道长时间糊在一起 ✓ */
+    private static final int SLASH_LIFE_TICKS = 5;
 
     /** 刀光颜色：灰色 ✓（用户口径"灰色刀光"✓ 0xRRGGBB ✓） */
     private static final int SLASH_TINT = 0xC9CFD9;
+
+    /**
+     * §811 每一段刀光的<b>平面内角度</b>（度 ✓ 用户口径：「每一段角度应该不太一样」✓）。
+     * <p>⭐ 正对镜头后这个角就是玩家**看到的**那一刀的角度 ⇒ 这里给 4 段安排 4 个明显错开、
+     * 且左右交替的倾角 ✓（-62° / +28° / -26° / +66°）⇒ 叠在一起也不会被看成"同一刀" ✓。
+     */
+    private static final float[] STAGE_ROLL = { -62.0F, 28.0F, -26.0F, 66.0F };
+
+    /** 每一段刀光的大小 ✓（略有差别 ⇒ 即使角度接近也分得清 ✓） */
+    private static final float[] STAGE_SCALE = { 1.16F, 0.98F, 1.30F, 1.04F };
 
     /** 正在结算"我们补的那一段" ⇒ 它自己触发的受击事件不再触发本词条 ✓（同线程同步 ⇒ boolean 足够 ✓） */
     private static boolean resolvingStage = false;
@@ -194,21 +204,38 @@ public final class SoldiersSaberHandler {
     }
 
     /**
-     * 灰色刀光 ✓：一道=一个 {@link SoldierSlashEntity}（弧形面片 ✓ 不是粒子 ✗）。
-     * <p>朝向/自转用 {@code index} 做确定性的错开 ＋ 一点随机 ⇒ 连续几段不会一模一样 ✓。
+     * 灰色刀光 ✓：一道 = 一个 {@link SoldierSlashEntity}（弧形面片 ✓ 不是粒子 ✗）。
+     *
+     * <p>§811（用户口径「附加刀光别给我重叠了，每一段角度应该不太一样」✓）—— 每一段都把三样东西错开 ✓：
+     * <ol>
+     *   <li><b>角度</b>：取 {@link #STAGE_ROLL} 里预先排好的倾角 ✓（互不相同、左右交替 ✓）
+     *       ＋ 只加一点点随机抖动（±4° ✓ 免得机械 ✓）；</li>
+     *   <li><b>大小</b>：取 {@link #STAGE_SCALE} ✓（1.30 / 0.98 / 1.16 / 1.04 各不相同 ✓）；</li>
+     *   <li><b>落点</b>：沿黄金角（137.5°）在小圆上错开 ✓ ＋ 高度递增 ✓
+     *       ⇒ 几道刀光不会钉在同一个点上 ✗。</li>
+     * </ol>
+     * 奇数段还额外<b>左右镜像</b> ✓ ⇒ 与偶数段"从另一侧切进来" ✓ 更不像同一刀 ✓。
+     * （朝向本身由客户端按相机算 ✓ 见 {@code SoldierSlashRenderer#applyBillboard} ✓，
+     *   服务端<b>不再</b>给随机 yaw ✗ —— 随机 yaw 会让弧面侧对镜头、退化成细线并糊在一起 ✗，正是"重叠"的根因 ✗。）
      */
     private static void spawnSlash(ServerLevel level, LivingEntity victim, int index) {
         try {
+            int i = Math.max(1, index);
+            float roll = STAGE_ROLL[(i - 1) % STAGE_ROLL.length]
+                    + (level.random.nextFloat() * 8.0F - 4.0F);              // 一点点抖动 ✓
+            float scale = STAGE_SCALE[(i - 1) % STAGE_SCALE.length];
+
+            // 落点错开：黄金角小圆 ＋ 高度递增 ⇒ 不重叠 ✓
+            double offsetAngle = Math.toRadians(i * 137.5D);
             Vec3 base = victim.position().add(0.0D, victim.getBbHeight() * 0.55D, 0.0D);
-            float yaw = level.random.nextFloat() * 360.0F;
-            float roll = ((index * 67) % 150) - 75 + level.random.nextFloat() * 24.0F - 12.0F;
-            float scale = 0.95F + level.random.nextFloat() * 0.28F;
             Vec3 pos = base.add(
-                    (level.random.nextDouble() - 0.5D) * 0.5D,
-                    (level.random.nextDouble() - 0.5D) * 0.35D,
-                    (level.random.nextDouble() - 0.5D) * 0.5D);
+                    Math.cos(offsetAngle) * 0.22D,
+                    -0.10D + i * 0.07D,
+                    Math.sin(offsetAngle) * 0.22D);
+
             SoldierSlashEntity slash = new SoldierSlashEntity(
-                    level, pos, yaw, roll, scale, SLASH_LIFE_TICKS, 0, SLASH_TINT);
+                    level, pos, roll, scale, SLASH_LIFE_TICKS, 0, SLASH_TINT);
+            slash.setMirrored(i % 2 == 1);
             level.addFreshEntity(slash);
         } catch (Throwable ignored) {
             // 光效失败不影响伤害 ✓
