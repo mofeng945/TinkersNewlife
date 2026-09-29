@@ -98,6 +98,26 @@ public final class ToolHelper {
         if (source.getDirectEntity() instanceof YoYoEntity yoYo) {
             return getValidTool(yoYo.getReturnStack());
         }
+        /*
+         * ⭐⭐§832 用户实测：「**流血效果会自动触发一次手中武器的特性，导致出现超级大数字**」✗
+         *
+         * 根因就在下面原来那一行 ✗ —— 它是**无条件兜底**：
+         *   `return getValidTool(player.getMainHandItem());`
+         * ⇒ **任何**伤害源（流血 / 中毒 / 凋零 / 着火 / 环境 / 别的模组的效果伤害…）只要
+         *   不在上面两条弹射路径里，就一律被当成"主手武器的命中" ✗ ⇒
+         *   本模组所有挂在命中上的特性（悚怖钢的衰弱/失明/凋零、破法、人屠、真穿、兵士佩刀分段…）
+         *   被 DoT **每跳触发一次** ✗ ⇒ 数字被反复放大 ＝ 用户看到的"超级大数字" ✓。
+         *
+         * 修法（最小且通用 ✓ 不动任何具体特性 ✗）：只认"**玩家本体直接打出来**"的伤害 ✓ ——
+         * 原版近战/横扫的 {@code directEntity} **就是玩家自己** ✓；
+         * 而**效果/持续伤害**（流血那类）的 {@code directEntity} 是 **null** ✗，别的实体打的也不是玩家 ✗
+         * ⇒ 这两种一律返回 null ＝"这次不算武器命中" ✓ ⇒ 特性不再被 DoT 触发 ✓。
+         * ⚠ 口径变化（如实说明 ✓）：模组/法术那种"以玩家为来源、但没有直接实体"的伤害，
+         *   从此**不会**再触发武器特性 ✓（本模组的术式本来就走自己的 {@code applyCurseCoreTraits} ✓ 不受影响 ✓）。
+         */
+        if (source.getDirectEntity() != player) {
+            return null;
+        }
         return getValidTool(player.getMainHandItem());
     }
 
