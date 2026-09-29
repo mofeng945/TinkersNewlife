@@ -52,6 +52,13 @@ public class DreadsteelSlashEntity extends Projectile {
     private static final EntityDataAccessor<Integer> WITHER_DURATION =
             SynchedEntityData.defineId(DreadsteelSlashEntity.class, EntityDataSerializers.INT);
 
+    /** §826 刀光颜色：用本模组「悚怖钢」自己的配色 ✓（`assets/tinkersnewlife/mantle/colors.json` 里的 dreadsteel ✓ 改这一个常量即可） */
+    private static final int SLASH_TINT = 0xFF55FF;
+    /** 每道弧光的寿命（tick ✓ 与唐横刀一致） */
+    private static final int ARC_LIFE_TICKS = 5;
+    /** 每几 tick 挥出一道弧光 ✓（2 ⇒ 剑气飞过时留下一串 ✓ 不糊） */
+    private static final int ARC_INTERVAL_TICKS = 2;
+
     private int life = 0;
     private int maxLife = 120;
     private final Set<UUID> hitEntities = new HashSet<>();
@@ -127,11 +134,17 @@ public class DreadsteelSlashEntity extends Projectile {
     public void tick() {
         super.tick();
         if (this.level().isClientSide) {
-            spawnParticles();
+            // §826 用户口径：刀光改成唐横刀那种**弧面** ✓ ⇒ 不再在客户端喷横扫粒子 ✗
+            //   （弧光由**服务端**生成实体 ⇒ 天然同步给所有玩家 ✓）
             return;
         }
         life++;
         if (life > maxLife) { this.discard(); return; }
+
+        // §826 沿飞行轨迹挥出刀光 ✓（用户口径：改成唐横刀那种弧光样式 ✓）
+        if (life % ARC_INTERVAL_TICKS == 0) {
+            spawnSlashArc();
+        }
 
         Vec3 motion = this.getDeltaMovement();
         Vec3 currentPos = this.position();
@@ -165,33 +178,27 @@ public class DreadsteelSlashEntity extends Projectile {
         if (motion.length() < 0.01) this.discard();
     }
 
-    private void spawnParticles() {
-        Vec3 pos = this.position();
-        Vec3 motion = this.getDeltaMovement();
-        float width = this.getSlashWidth();
-        for (int i = 0; i < 15; i++) {
-            double dx = (this.random.nextDouble() - 0.5) * width * 2.0;
-            double dy = (this.random.nextDouble() - 0.5) * width * 1.2;
-            double dz = (this.random.nextDouble() - 0.5) * width * 2.0;
-            this.level().addParticle(ParticleTypes.SWEEP_ATTACK,
-                    pos.x + dx, pos.y + dy, pos.z + dz,
-                    motion.x * 0.05, motion.y * 0.05, motion.z * 0.05);
-        }
-        for (int i = 0; i < 8; i++) {
-            double dx = (this.random.nextDouble() - 0.5) * width * 1.2;
-            double dy = (this.random.nextDouble() - 0.5) * width * 0.8;
-            double dz = (this.random.nextDouble() - 0.5) * width * 1.2;
-            this.level().addParticle(ParticleTypes.DRAGON_BREATH,
-                    pos.x + dx, pos.y + dy, pos.z + dz,
-                    motion.x * 0.15, motion.y * 0.15, motion.z * 0.15);
-        }
-        for (int i = 0; i < 4; i++) {
-            double dx = (this.random.nextDouble() - 0.5) * width * 0.8;
-            double dy = (this.random.nextDouble() - 0.5) * width * 0.5;
-            double dz = (this.random.nextDouble() - 0.5) * width * 0.8;
-            this.level().addParticle(ParticleTypes.FLAME,
-                    pos.x + dx, pos.y + dy, pos.z + dz,
-                    motion.x * 0.05, motion.y * 0.05, motion.z * 0.05);
+    /**
+     * §826 <b>挥出一道悚怖钢刀光</b> ✓ —— 用户口径：「**把悚怖钢的剑气实体的横扫粒子也改成唐刀光效的样式**」✓
+     *
+     * <p>实现：直接复用唐横刀那套 {@link SoldierSlashEntity}（弧形面片 ＋ 弧光贴图 ＋ 加色混合 ✓
+     * 见 {@code SoldierSlashRenderer}）⇒ 剑气飞过时沿轨迹留下一串**弧光** ✓，
+     * 原来的 {@code SWEEP_ATTACK} / {@code DRAGON_BREATH} / {@code FLAME} 粒子已全部删除 ✗。
+     *
+     * <p>⚠ 只在**服务端**生成（弧光是同步实体 ⇒ 别的玩家也看得见 ✓）；客户端分支已直接 return ✓。
+     */
+    private void spawnSlashArc() {
+        try {
+            float width = Math.max(0.8F, this.getSlashWidth());
+            SoldierSlashEntity arc = new SoldierSlashEntity(
+                    this.level(), this.position(),
+                    this.random.nextFloat() * 360.0F,        // 自转：每道角度都不同 ✓
+                    width * 1.1F,                            // 大小随剑气宽度走 ✓
+                    ARC_LIFE_TICKS, 0, SLASH_TINT);
+            arc.setMirrored(this.random.nextBoolean());      // 左右镜像 ⇒ 更像连续斩击 ✓
+            this.level().addFreshEntity(arc);
+        } catch (Throwable ignored) {
+            // 光效失败绝不影响剑气本身 ✓
         }
     }
 
