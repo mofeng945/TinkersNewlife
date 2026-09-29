@@ -33,7 +33,10 @@ public class ModEffects {
             EFFECTS.register("anti_heal", () -> new AntiHealEffect());
 
     public static final RegistryObject<UnnameableEffect> UNNAMEABLE =
-            EFFECTS.register("unnameable", () -> new UnnameableEffect(MobEffectCategory.HARMFUL, 0x4A0E4E));
+            // §823 用户口径：不可名状改成**中性**效果 ✓ ——
+            //   它不是"可以被净化/免疫/减半"的普通负面状态，而是一种"世界本身不对劲"的状态 ✗
+            //   （同时它也因此不再被本模组「魔力护盾」的"增益时长减半"之外的任何减益逻辑盯上 ✓）。
+            EFFECTS.register("unnameable", () -> new UnnameableEffect(MobEffectCategory.NEUTRAL, 0x4A0E4E));
 
     public static final RegistryObject<CharmEffect> CHARM =
             EFFECTS.register("charm", () -> new CharmEffect(MobEffectCategory.HARMFUL, 0xFF69B4));

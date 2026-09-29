@@ -29,7 +29,13 @@ import javax.annotation.Nullable;
  * （走工具定义的 {@code tconstruct:traits} 模块 ✓ 与材料无关 ✓）。
  *
  * <p>每 1 件：<b>魔法伤害 −10%</b>（多件链乘 ✓）、<b>生命上限 +2</b>（可叠加 ✓）；
- * 只要穿着<b>任意一件</b>：自身身上<b>一切增益与减益的持续时间减半</b>（<b>不可叠加</b> ✓ 用户口径 ✓）。
+ * 只要穿着<b>任意一件</b>：自身身上的<b>增益（正面）效果持续时间减半</b>（<b>不可叠加</b> ✓）。
+     *
+     * <h2>§823 用户口径变更：不再砍负面效果</h2>
+     * 原来写的是"<b>一切增益与减益</b>都减半" ✗ —— 用户实测反馈：连吸血鬼的「渴血」和本模组自己的
+     * 「不可名状」都被砍半 ✗，而「渴血」周期被砍短之后会出现"<b>上一下、结束、视角(FOV)来回收缩</b>"的抖动 ✗
+     * （§823 原话）⇒ 现改为<b>只减增益</b> ✓：负面（HARMFUL）与中性（NEUTRAL）效果<b>原样不动</b> ✓。
+     * 判据用原版公开的 {@code MobEffect#isBeneficial()} ✓（= 类别为 BENEFICIAL ✓）。
  *
  * <h2>只削魔法（用户最终口径 ✓）</h2>
  * 判定直接复用「导魔」的 {@link MagicConductionModifier#isMagicDamage} ✓，
@@ -233,6 +239,8 @@ public class ManaShieldTrait extends Modifier implements ModifyDamageModifierHoo
         if (entity.level().isClientSide) return instance;
         if (instance.isInfiniteDuration()) return instance;     // 无限时长不动 ✓（还是无限 ✓）
         if (countWorn(entity) <= 0) return instance;            // 没穿 ⇒ 原样 ✓
+        // §823：**只减增益** ✓ —— 负面/中性效果一律原样 ✓（否则会把「渴血」这种周期效果砍出抖动 ✗）
+        if (!instance.getEffect().isBeneficial()) return instance;
         if (alreadyHalved(instance)) return instance;           // 已经减半过 ⇒ 不再减 ✓
         int duration = instance.getDuration();
         if (duration <= 1) return instance;
