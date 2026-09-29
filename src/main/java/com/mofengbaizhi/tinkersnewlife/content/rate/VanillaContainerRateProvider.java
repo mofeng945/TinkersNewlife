@@ -118,6 +118,9 @@ public final class VanillaContainerRateProvider implements RateSourceProvider {
         //   ① 结构性去重：只保留"坐标较小"的那一半 ✓（两半各自算出的 partner 都指向对方 ✓ 结果一致 ✓）；
         //   ② 保险丝：同一份"底层容器对象"只登记一次 ✓（按**对象身份**比 ✓ 绝不会误合并两个内容相同的箱子 ✗）
         Set<Object> seenInventories = Collections.newSetFromMap(new IdentityHashMap<>());
+        // §822 流体侧的同类保险丝 ✓（实测：CGT 的多方块酒桶里，每个部件的能力都指向**同一个**储罐 ✗
+        //   ⇒ 只按"每个方块实体一个来源"数 ⇒ 一罐酒被数好几遍 ✗）⇒ 按底层储罐**对象身份**去重 ✓
+        Set<Object> seenFluids = Collections.newSetFromMap(new IdentityHashMap<>());
         for (LevelChunk chunk : loadedChunks) {
             long chunkKey = chunk.getPos().toLong();
             Map<BlockPos, Cached> cache = CHUNK_CACHE.computeIfAbsent(chunkKey, key -> new HashMap<>());
@@ -150,12 +153,14 @@ public final class VanillaContainerRateProvider implements RateSourceProvider {
                     //     这些方块实体会算出**同一个 id** ✓ ⇒ 采样表里自然只剩一条 ✓（同内容覆盖 ✓）
                     cached = new Cached(entity, items, fluids, energy,
                             new BlockEntityRateSource(level.dimension(), entity, ownerOf(entity, items, fluids, energy),
-                                    items, fluids, energy));
+                                    structureOwnerPos(entity), items, fluids, energy));
                     cache.put(pos, cached);
                 }
                 // ② 保险丝：底层库存对象已经统计过 ⇒ 这一份跳过 ✓（模组连体容器也吃这条 ✓）
                 Object inventoryId = inventoryIdentity(cached.items());
                 if (inventoryId != null && !seenInventories.add(inventoryId)) continue;
+                Object fluidId = fluidIdentity(cached.fluids());
+                if (fluidId != null && !seenFluids.add(fluidId)) continue;
                 out.add(cached.source());
             }
             cache.keySet().retainAll(chunk.getBlockEntities().keySet());
@@ -324,6 +329,105 @@ public final class VanillaContainerRateProvider implements RateSourceProvider {
         }
     }
 
+    /**
+     * §822 <b>结构归属（读模组自己写在 NBT 里的"控制器坐标"）</b> ✓
+     *
+     * <p>用户报（NL 包）：<b>「酒桶的流体又重复计数了」</b> ✗。实测根因（本机 NL 存档 135 个酒桶方块实体）：
+     * {@code creategearsandtavern}（CGT，机械动力×酒馆）把酒桶做成了<b>多方块</b> ——
+     * 每个部件都是 {@code kaleidoscope_tavern:barrel} ✓，NBT 里带
+     * {@code cgt_controller_pos}（<b>同一个控制器坐标</b> ✓）与 {@code cgt_proxy_part}（控制器 = 0 / 部件 = 1 ✓）。
+     * 而 {@link #ownerOf} 只认"能力对象里直接存着的方块实体" ✗ ⇒ 每个部件都算成**独立来源** ✗，
+     * 可它们报的却是**控制器那一个罐子** ✗ ⇒ 同一罐酒被数 N 遍 ✗（§788 修过一次，CGT 改成多方块后又回来了 ✗）。
+     *
+     * <p>判据（<b>只信模组自己声明的东西</b> ✓ 不做内容/坐标猜测 ✗）：
+     * 方块实体自己的 NBT 里有<b>名字含 {@code controller/master/core/main/owner} 的 long 型字段</b>
+     * ⇒ 那就是它声明的"归属坐标" ✓（{@code BlockPos.asLong()} ✓）。
+     * 校验：解出来的坐标必须落在 **±64 格**内 ✓（防脏数据 ✓ 拿不准就当没有 ✓ 退回原行为 ✓）。
+     *
+     * @return 结构归属坐标 ✓；没有 ⇒ {@code null} ✓（退回"每个方块实体自己" ✓ 绝不因此少统计 ✓）
+     */
+    @Nullable
+    private static BlockPos structureOwnerPos(BlockEntity entity) {
+        try {
+            net.minecraft.nbt.CompoundTag tag = entity.saveWithoutMetadata();
+            if (tag == null) return null;
+            BlockPos self = entity.getBlockPos();
+            for (String key : tag.getAllKeys()) {
+                if (!CONTROLLER_KEY.matcher(key).find()) continue;
+                if (tag.getTagType(key) != 4) continue;              // 4 = long ✓（BlockPos.asLong ✓）
+                long raw = tag.getLong(key);
+                BlockPos pos = BlockPos.of(raw);
+                if (pos.equals(self)) return null;                   // 自己就是控制器 ⇒ 不需要额外归属 ✓
+                if (Math.abs(pos.getX() - self.getX()) > 64
+                        || Math.abs(pos.getY() - self.getY()) > 64
+                        || Math.abs(pos.getZ() - self.getZ()) > 64) continue;   // 离谱 ⇒ 不认 ✓
+                return pos;
+            }
+        } catch (Throwable ignored) {
+        }
+        return null;
+    }
+
+    /** "控制器坐标"风格的 NBT 键名 ✓（只做**归属合并**用 ✓ 认不出来就退回原行为 ✓） */
+    private static final java.util.regex.Pattern CONTROLLER_KEY =
+            java.util.regex.Pattern.compile("(?i).*(controller|master|core|main|owner).*");
+
+    /**
+     * §822 <b>流体侧保险丝</b>：取"这份流体库存背后真正的储罐对象" ✓（对称于 {@link #inventoryIdentity} ✓）。
+     * <p>顺序：① 它自己就是 {@code FluidTank} ⇒ 用它 ✓；
+     * ② 它有一个返回 {@code IFluidHandler}/{@code FluidTank} 的 <b>无参 getter</b>（名字含 tank/handler/fluid ✓
+     *    例如 CGT 的 {@code BarrelFluidHandler#tank()} ✓）或同类型的字段 ⇒ 用**那个对象** ✓（按类缓存 ✓）；
+     * ③ 都没有 ⇒ 用它自己 ✓。
+     * <p>⚠ 只在<b>同一个对象</b>时才认为重复 ✓（不看内容 ✗）⇒ 两个装了同样酒的桶绝不会被合并 ✓。
+     */
+    @Nullable
+    private static Object fluidIdentity(@Nullable IFluidHandler handler) {
+        if (handler == null) return null;
+        try {
+            if (handler instanceof net.minecraftforge.fluids.capability.templates.FluidTank) return handler;
+        } catch (Throwable ignored) {
+        }
+        Object inner = wrappedFluidHandler(handler);
+        return inner != null ? inner : handler;
+    }
+
+    /** 能力对象里"真正的储罐" ✓（无参 getter 或字段 ✓；按类缓存 ✓ 拿不到 ⇒ null ✓） */
+    @Nullable
+    private static Object wrappedFluidHandler(Object handler) {
+        try {
+            List<java.lang.reflect.Method> getters = FLUID_GETTERS.computeIfAbsent(handler.getClass(), cls -> {
+                List<java.lang.reflect.Method> found = new ArrayList<>();
+                try {
+                    for (java.lang.reflect.Method m : cls.getMethods()) {
+                        if (m.getParameterCount() != 0) continue;
+                        if (m.getDeclaringClass() == Object.class) continue;
+                        String n = m.getName().toLowerCase(java.util.Locale.ROOT);
+                        if (!(n.contains("tank") || n.contains("handler") || n.contains("fluid"))) continue;
+                        Class<?> r = m.getReturnType();
+                        if (IFluidHandler.class.isAssignableFrom(r)
+                                || net.minecraftforge.fluids.capability.templates.FluidTank.class.isAssignableFrom(r)) {
+                            found.add(m);
+                        }
+                    }
+                } catch (Throwable ignored) {
+                }
+                return found;
+            });
+            for (java.lang.reflect.Method m : getters) {
+                try {
+                    Object v = m.invoke(handler);
+                    if (v instanceof IFluidHandler && v != handler) return v;
+                } catch (Throwable ignored) {
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return null;
+    }
+
+    /** {@link #wrappedFluidHandler} 的按类缓存 ✓ */
+    private static final Map<Class<?>, List<java.lang.reflect.Method>> FLUID_GETTERS = new ConcurrentHashMap<>();
+
     /** 缓存条目 ✓ */
     private record Cached(BlockEntity entity, IItemHandler items, IFluidHandler fluids,
                           IEnergyStorage energy, RateSource source) {
@@ -336,6 +440,8 @@ public final class VanillaContainerRateProvider implements RateSourceProvider {
         private final BlockEntity entity;
         /** §788：真正持有库存的那个方块实体 ✓（多方块结构里 = 控制器 ✓ 自己也可能是它 ✓） */
         private final BlockEntity owner;
+        /** §822：身份坐标 —— 优先用"模组自己在 NBT 里声明的结构归属坐标" ✓ 否则用 owner 的坐标 ✓ */
+        private final BlockPos ownerPos;
         @Nullable
         private final IItemHandler items;
         @Nullable
@@ -345,11 +451,13 @@ public final class VanillaContainerRateProvider implements RateSourceProvider {
         private final String id;
 
         BlockEntityRateSource(ResourceKey<Level> dimension, BlockEntity entity, BlockEntity owner,
+                              @Nullable BlockPos declaredOwnerPos,
                               @Nullable IItemHandler items, @Nullable IFluidHandler fluids,
                               @Nullable IEnergyStorage energy) {
             this.dimension = dimension;
             this.entity = entity;
             this.owner = owner;
+            this.ownerPos = declaredOwnerPos != null ? declaredOwnerPos : owner.getBlockPos();
             this.items = items;
             this.fluids = fluids;
             this.energy = energy;
@@ -357,7 +465,7 @@ public final class VanillaContainerRateProvider implements RateSourceProvider {
             // ⚠ 身份用 **owner** 的坐标/类型 ✓：多方块结构里所有方块实体会算出同一个 id ✓
             //   ⇒ 采样表里自然只剩一条 ✓（同内容覆盖 ✓）—— 既不会把 12 桶数成 216 桶 ✓，
             //   也不会因为"这一轮先扫到的是哪一个方块"而在两轮之间换身份 ✗（那会刷假流入 ✗）
-            this.id = "be:" + dimension.location() + "@" + owner.getBlockPos().asLong()
+            this.id = "be:" + dimension.location() + "@" + ownerPos.asLong()
                     + "#" + (type == null ? "unknown" : type.toString());
         }
 
@@ -433,13 +541,14 @@ public final class VanillaContainerRateProvider implements RateSourceProvider {
          *  <p>§788：用 **owner** 的区块 ✓（多方块结构里所有方块实体都报同一个区块 ✓ 一致 ✓）。 */
         @Override
         public long chunkKey() {
-            return new net.minecraft.world.level.ChunkPos(owner.getBlockPos()).toLong();
+            return new net.minecraft.world.level.ChunkPos(ownerPos).toLong();
         }
 
         @Override
         public String describe() {
-            return "容器 " + dimension.location() + " " + owner.getBlockPos().toShortString()
-                    + (owner == entity ? "" : "（多方块部件 " + entity.getBlockPos().toShortString() + "）");
+            return "容器 " + dimension.location() + " " + ownerPos.toShortString()
+                    + (ownerPos.equals(entity.getBlockPos()) ? ""
+                            : "（多方块部件 " + entity.getBlockPos().toShortString() + "）");
         }
     }
 }
