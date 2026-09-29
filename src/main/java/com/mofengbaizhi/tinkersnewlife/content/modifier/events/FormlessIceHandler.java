@@ -73,6 +73,8 @@ public final class FormlessIceHandler {
         //    否则 追加量 = 同一次命中 × 0.1×(1+级) 会被算两遍 ⇒ 总伤害被抬成 (1 + 2×追加比) ✗
         //    （见 util/DamagePipeline：追加伤害只应针对"这一次命中"算一次 ✓）
         if (com.mofengbaizhi.tinkersnewlife.util.DamagePipeline.skipNested()) return;
+        // ⭐§833 匠魂二次伤害（流血等）不算"命中"⇒ 否则每一跳流血都会再追加一发冰霜伤害 ✗
+        if (com.mofengbaizhi.tinkersnewlife.util.ToolHelper.isTinkersSecondaryDamage(event.getSource())) return;
         LivingEntity target = event.getEntity();
         if (target.level().isClientSide) return;
         DamageSource source = event.getSource();

@@ -23,6 +23,8 @@ public class FeverHandler {
 
     @SubscribeEvent
     public static void onLivingHurt(LivingHurtEvent event) {
+        // ⭐§833 匠魂二次伤害（流血等）不算"攻击命中"⇒ 不积攒大招条（来源见 ToolHelper#isTinkersSecondaryDamage）
+        if (com.mofengbaizhi.tinkersnewlife.util.ToolHelper.isTinkersSecondaryDamage(event.getSource())) return;
         if (!(event.getSource().getEntity() instanceof Player player)) return;
         // 大招期间不积攒 Fever（按玩家隔离）
         if (WarScytheItem.isPerformingUltimate(player.getUUID())) {

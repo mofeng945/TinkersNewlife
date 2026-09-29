@@ -609,6 +609,8 @@ public class DragonStaffHandler {
         // ⭐ 混沌之流改判成法术时会自己重发一次那一发 ⇒ 龙杖"每龙 +攻击"不再对它再加一遍 ✗
         //    否则同一次命中被加两遍 ✗（见 util/DamagePipeline）
         if (com.mofengbaizhi.tinkersnewlife.util.DamagePipeline.skipNested()) return;
+        // ⭐§833 匠魂二次伤害（流血等）不算攻击命中 ⇒ "每龙 +攻击"不再被每一跳流血重复加一遍 ✗
+        if (com.mofengbaizhi.tinkersnewlife.util.ToolHelper.isTinkersSecondaryDamage(event.getSource())) return;
         if (!(event.getSource().getEntity() instanceof Player player)) return;
         ToolStack tool = getTool(player);
         if (tool == null) return;

@@ -68,6 +68,8 @@ public final class PyriumHandler {
         //    否则 追加量 = 同一次命中 × 0.1×(级+1) 会被算两遍 ⇒ 总伤害被抬成 (1 + 2×追加比) ✗
         //    ⚠ 顺带：防的是"点燃概率"也被掷两次（5%×级 掷两次 ⇒ 实际点燃率被抬高 ✗）（见 util/DamagePipeline）
         if (com.mofengbaizhi.tinkersnewlife.util.DamagePipeline.skipNested()) return;
+        // ⭐§833 匠魂二次伤害（流血等）不算"命中"⇒ 否则每一跳流血都会再追加一发炽焰伤害＋多掷一次点燃 ✗
+        if (com.mofengbaizhi.tinkersnewlife.util.ToolHelper.isTinkersSecondaryDamage(event.getSource())) return;
         LivingEntity target = event.getEntity();
         if (target.level().isClientSide) return;
         DamageSource source = event.getSource();

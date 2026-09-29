@@ -337,7 +337,9 @@ public class ExecutionDomain extends BaseDomain {
                 }
                 ATK_ZERO_UNTIL.remove(attacker.getUUID());
             }
-            // 处刑人之剑
+            // 处刑人之剑：⭐§833 匠魂二次伤害（流血等）不算"挥剑命中"✗ ——
+            // 否则每一跳流血都会：① 再乘 200% ② 扣 1 点剑耐久 ③ 对被告直接执行处决 ✗✗
+            if (com.mofengbaizhi.tinkersnewlife.util.ToolHelper.isTinkersSecondaryDamage(event.getSource())) return;
             if (!(event.getSource().getEntity() instanceof ServerPlayer p)) return;
             LivingEntity victim = event.getEntity();
             ItemStack held = p.getMainHandItem();

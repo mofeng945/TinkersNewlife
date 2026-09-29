@@ -110,6 +110,8 @@ public final class LaevatainHandler {
      */
     private static ItemStack resolveLaevatainWeapon(DamageSource source) {
         if (source == null) return ItemStack.EMPTY;
+        // ⭐§833 匠魂二次伤害（流血/穿刺…）会把玩家挂在伤害源上 ⇒ 不能被当成"带着莱万汀砍了一刀" ✗
+        if (com.mofengbaizhi.tinkersnewlife.util.ToolHelper.isTinkersSecondaryDamage(source)) return ItemStack.EMPTY;
         try {
             net.minecraft.world.entity.Entity direct = source.getDirectEntity();
             // 悠悠球命中

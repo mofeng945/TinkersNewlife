@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.util;
 
 import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
 import com.mofengbaizhi.tinkersnewlife.content.entity.YoYoEntity;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -99,26 +100,70 @@ public final class ToolHelper {
             return getValidTool(yoYo.getReturnStack());
         }
         /*
-         * ⭐⭐§832 用户实测：「**流血效果会自动触发一次手中武器的特性，导致出现超级大数字**」✗
+         * ⭐⭐§832／§833 用户实测：「**流血效果会自动触发一次手中武器的特性，导致出现超级大数字**」✗
+         * （§833 更正：流血**是匠魂本体的** {@code tconstruct:bleeding} ✓）
          *
-         * 根因就在下面原来那一行 ✗ —— 它是**无条件兜底**：
+         * 根因是下面原来那一行**无条件兜底** ✗：
          *   `return getValidTool(player.getMainHandItem());`
-         * ⇒ **任何**伤害源（流血 / 中毒 / 凋零 / 着火 / 环境 / 别的模组的效果伤害…）只要
-         *   不在上面两条弹射路径里，就一律被当成"主手武器的命中" ✗ ⇒
-         *   本模组所有挂在命中上的特性（悚怖钢的衰弱/失明/凋零、破法、人屠、真穿、兵士佩刀分段…）
-         *   被 DoT **每跳触发一次** ✗ ⇒ 数字被反复放大 ＝ 用户看到的"超级大数字" ✓。
+         * ⇒ 任何走到这里的伤害都被当成"主手武器的命中" ✗ ⇒ 本模组所有挂在命中上的特性
+         *   （悚怖钢的衰弱/失明/凋零+刀光、龙钢三系、破法、人屠、真穿、兵士佩刀分段…）
+         *   被**每一次二次伤害**各触发一次 ✗ ⇒ 数字被反复放大 ＝ 用户看到的"超级大数字" ✓。
          *
-         * 修法（最小且通用 ✓ 不动任何具体特性 ✗）：只认"**玩家本体直接打出来**"的伤害 ✓ ——
-         * 原版近战/横扫的 {@code directEntity} **就是玩家自己** ✓；
-         * 而**效果/持续伤害**（流血那类）的 {@code directEntity} 是 **null** ✗，别的实体打的也不是玩家 ✗
-         * ⇒ 这两种一律返回 null ＝"这次不算武器命中" ✓ ⇒ 特性不再被 DoT 触发 ✓。
-         * ⚠ 口径变化（如实说明 ✓）：模组/法术那种"以玩家为来源、但没有直接实体"的伤害，
-         *   从此**不会**再触发武器特性 ✓（本模组的术式本来就走自己的 {@code applyCurseCoreTraits} ✓ 不受影响 ✓）。
+         * ── §833 关键更正（血的事实 ✓ 从匠魂 jar 反编译实读 ✓）────────────────────────
+         * 匠魂的流血**不是**"没有来源实体"的效果伤害 ✗ —— 它**把玩家挂在伤害源上** ✓：
+         *   {@code BleedingEffect.applyEffectTick}: {@code Entity credit = entity.getKillCredit();}
+         *   ⇒ {@code TinkerDamageTypes.source(ra, BLEEDING, credit)}
+         *   ⇒ {@code source(ra,key,e)} 内部就是 {@code source(ra,key,e,e)}
+         *   ⇒ {@code new DamageSource(holder, e, e)}
+         * ⇒ 流血的 {@code getEntity()} **和** {@code getDirectEntity()} **都是"最后打它的那个玩家"** ✗✗
+         * ⇒ 所以**只查 directEntity 是不够的** ✗（§832 那版就漏了这一点 ✓ 这次补上 ✓）。
+         *   ⚠ 匠魂所有"二次伤害"都是这个形状：{@code tconstruct:bleeding}／{@code piercing}／{@code spiny}／
+         *   {@code entangled}／{@code shock}／{@code self_destruct}／{@code knightmetal}／
+         *   {@code fluid_*_melee}／{@code smeltery_*}／{@code explosion_melee}… ✓
+         *   （对照证据 ✓：匠魂自己的 {@code TinkerTags.DamageTypes.MODIFIER_WHITELIST} 只收
+         *    {@code minecraft:mob_attack} / {@code mob_attack_no_aggro} ＋暮色森林几个 ✗ 一个 {@code tconstruct:} 都没有 ✓
+         *    ⇒ **匠魂自己也不把 {@code tconstruct:} 命名空间的伤害当成"可触发工具特性的攻击"** ✓ 同口径 ✓）
+         *
+         * ── 两道闸门（合起来＝"这次真的是玩家用主手武器本体打出来的吗" ✓）──────────────
+         * ① {@code getDirectEntity() != player} ⇒ 不是玩家本体直接造成 ⇒ 不算 ✗
+         *    （挡掉：无来源实体的中毒/凋零/饥饿、召唤物爆炸、别模组的间接伤害… ✓
+         *      它们原本会被算成"玩家主手命中" ✗）
+         * ② {@link #isTinkersSecondaryDamage} ⇒ 匠魂本体自己的二次伤害（含流血）⇒ 不算 ✗
+         *    ⚠ 只对**近战这一条路**生效 ✗：弹射物（弓/弩/标枪/匠魂投掷工具 ✓）在 §94 就已经
+         *      转给 {@link #getCombatTool(Projectile, Player)} 了 ✓ 那一层**不做**此排除 ✓
+         *      （真·弹射命中确实该吃武器特性 ✓）。
+         * ⚠ 口径变化（如实说明 ✓）：以玩家为来源但**没有直接实体**的伤害、以及匠魂的二次伤害，
+         *   从此**不会**再触发"武器上的"命中特性 ✓（本模组术式走自己的 {@code applyCurseCoreTraits} ✓ 不受影响 ✓；
+         *   唐横刀分段的补刀**复用同一次伤害源** ✓ 是 {@code player_attack} ✓ 照旧触发 ✓）。
          */
         if (source.getDirectEntity() != player) {
             return null;
         }
+        if (isTinkersSecondaryDamage(source)) {
+            return null;
+        }
         return getValidTool(player.getMainHandItem());
+    }
+
+    /**
+     * ⭐⭐§833：这次伤害是不是<b>匠魂本体的"二次伤害"</b>（流血 / 穿刺 / 尖刺 / 缠绕 / 电击 / 流体效果 / 熔炉…）。
+     *
+     * <p>判法用<b>伤害类型命名空间</b> ✓：匠魂自己那一整套伤害类型**全部**放在 {@code tconstruct:} 下
+     * （{@code bleeding}／{@code piercing}／{@code spiny}／{@code entangled}／{@code shock}／{@code self_destruct}／
+     * {@code knightmetal}／{@code fluid_*_melee}／{@code smeltery_*}／{@code explosion_melee}… ✓），
+     * 而它**真正的本体近战**用的是原版的 {@code minecraft:player_attack} ✓（不是自定义类型 ✓）。
+     * ⇒ 凡 {@code tconstruct:} 命名空间 ⇒ 一律是"攻击带出来的二次效果" ⇒ 不算武器命中 ✓。
+     *
+     * <p>这么做还有个好处：匠魂以后**新增**二次伤害类型，这里**自动**跟着排掉 ✓ 不用维护名单 ✓。
+     * ⚠ 不依赖任何匠魂类 ✗（只看命名空间字符串 ✓）⇒ 即使匠魂那边类名/字段变了也不会崩 ✓。
+     *
+     * @param source 伤害源
+     * @return true ＝ 匠魂二次伤害，不该触发武器命中特性
+     */
+    public static boolean isTinkersSecondaryDamage(DamageSource source) {
+        ResourceLocation id = source.typeHolder().unwrapKey()
+                .map(key -> key.location()).orElse(null);
+        return id != null && "tconstruct".equals(id.getNamespace());
     }
 
     /**

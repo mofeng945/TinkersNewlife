@@ -96,6 +96,8 @@ public final class MagicGoldHandler {
 
     @SubscribeEvent
     public static void onAttack(LivingHurtEvent event) {
+        // ⭐§833 匠魂二次伤害（流血等）不算"攻击命中"⇒ 不该被每一跳流血骗出一发回响法术 ✗
+        if (com.mofengbaizhi.tinkersnewlife.util.ToolHelper.isTinkersSecondaryDamage(event.getSource())) return;
         if (!(event.getSource().getEntity() instanceof ServerPlayer attacker)) return;
         if (attacker == event.getEntity()) return;               // 自伤不触发
         if (event.getAmount() <= 0.0F) return;

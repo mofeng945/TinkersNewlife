@@ -170,6 +170,9 @@ public final class ConscienceCombatHandler {
     @SubscribeEvent
     public static void onHurt(LivingHurtEvent event) {
         try {
+            // ⭐§833 匠魂二次伤害（流血/中毒那类持续跳伤）不算"被打了多少次" ✗
+            //   否则每一跳流血都会给连击 +1 ⇒ 良知值（G11）被流血刷爆 ✗
+            if (com.mofengbaizhi.tinkersnewlife.util.ToolHelper.isTinkersSecondaryDamage(event.getSource())) return;
             // 玩家被生物打 ⇒ 记录 + 连击 ++
             if (event.getEntity() instanceof ServerPlayer victim
                     && event.getSource().getEntity() instanceof LivingEntity attacker

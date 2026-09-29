@@ -149,6 +149,8 @@ public final class LightningManipulationTechnique extends BaseTechnique {
             // ⭐ 混沌之流改判成法术时会自己重发一次那一发 ⇒ 幻兽琥珀 "+bonus" 不再对它再加一遍 ✗
             //    否则同一次命中被加两遍，而且会多刷一轮粒子 ✗（见 util/DamagePipeline）
             if (com.mofengbaizhi.tinkersnewlife.util.DamagePipeline.skipNested()) return;
+            // ⭐§833 匠魂二次伤害（流血等）不算"造成伤害"⇒ 否则每一跳流血都白送一发幻兽琥珀 ✗
+            if (com.mofengbaizhi.tinkersnewlife.util.ToolHelper.isTinkersSecondaryDamage(event.getSource())) return;
             if (event.getEntity().level().isClientSide) return;
             if (event.getAmount() <= 0) return;
             if (!(event.getSource().getEntity() instanceof ServerPlayer attacker)) return;

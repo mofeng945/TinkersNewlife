@@ -106,6 +106,9 @@ public final class SoldiersSaberHandler {
     public static void onHurt(LivingHurtEvent event) {
         if (resolvingStage) return;                    // 我们自己补的那一段 ⇒ 直接放行 ✓
         if (event.isCanceled()) return;
+        // ⭐§833 匠魂的流血/穿刺这类"二次伤害"也会把玩家挂在伤害源上 ⇒ 若不拦，
+        //    每一跳流血都会再排一次 N 段（用户实测的"超级大数字"就是这个 ✗）
+        if (com.mofengbaizhi.tinkersnewlife.util.ToolHelper.isTinkersSecondaryDamage(event.getSource())) return;
         LivingEntity victim = event.getEntity();
         if (!(event.getSource().getEntity() instanceof LivingEntity attacker)) return;
         if (attacker == victim) return;
