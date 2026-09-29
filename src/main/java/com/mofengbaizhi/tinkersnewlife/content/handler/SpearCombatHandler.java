@@ -100,6 +100,15 @@ public final class SpearCombatHandler {
     /** 一次结算最多处理多少目标（原版没上限 ✓ 我们加一道保险 ✗ 防极端卡顿 ✓） */
     private static final int MAX_TARGETS = 16;
 
+    /**
+     * ⭐ §839 冲锋射线的**起点距离** —— 原版用 {@code effectiveMinRange}（2.0 ✓ 即"贴身打不到"），
+     * 但那是**戳刺**那条动作的口径 ✓；用户实测「右键冲刺撞上去没伤害」✗ 时，
+     * 2.0 的起点意味着"等你撞到人时他早就在 2 格以内了" ⇒ **永远扫不到** ✗
+     * ⇒ 冲锋这条**单独**把起点收到 {@code 0.5} ✓（＝冲刺撞上去必须能生效 ✓ 用户口径优先 ✓
+     * 戳刺那条仍然保持原版的 2.0 ✓ 见 {@link #MIN_RANGE}）。
+     */
+    private static final double CHARGE_MIN_RANGE = 0.5D;
+
     /** 玩家 → （目标 → 最后一次被戳的游戏刻）✓ 等价于原版的 {@code recentKineticEnemies} ✓ */
     private static final Map<UUID, Map<UUID, Long>> RECENT_STABBED = new ConcurrentHashMap<>();
 
@@ -115,6 +124,7 @@ public final class SpearCombatHandler {
 
     public static void stopCharge(ServerPlayer player) {
         RECENT_STABBED.remove(player.getUUID());
+        DIAG_LINES.remove(player.getUUID());     // 每次冲锋的诊断计数也清掉 ✓
     }
 
     /**
@@ -134,9 +144,14 @@ public final class SpearCombatHandler {
 
         Vec3 look = player.getLookAngle();
         double attackerSpeed = look.dot(motionOf(player));
+        List<LivingEntity> hits = targetsAlong(player, look, CHARGE_MIN_RANGE);
+
+        // 🔎 §839 诊断：按住时每 20 tick 打一行（每次冲锋最多 40 行 ✓）——
+        //    用户反馈"右键冲刺没伤害"时，凭这几行就能看出是"射线没扫到人"还是"速度不够"✓
+        diagnose(player, ticksUsed, attackerSpeed, look, hits);
 
         boolean affected = false;
-        for (LivingEntity target : targetsAlong(player, look)) {
+        for (LivingEntity target : hits) {
             if (wasRecentlyStabbed(player, target)) continue;
             rememberStabbed(player, stabbed, target);
 
@@ -154,12 +169,50 @@ public final class SpearCombatHandler {
             // 原版：伤害 = 攻击力（基值） + floor(相对速度 × 倍率) ✓ 加法 ✓
             float dealt = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE)
                     + (float) Mth.floor(relativeSpeed * DAMAGE_MULTIPLIER);
-            affected |= stab(player, stack, target, dealt, damage, knockback, dismount, look);
+            boolean landed = stab(player, stack, target, dealt, damage, knockback, dismount, look);
+            if (landed && damage) {
+                TinkersNewlife.LOGGER.info("[长矛·冲锋] 命中 {} 伤害 {}（相对速度 {} 阶段窗 t={}）",
+                        target.getName().getString(), String.format("%.1f", dealt),
+                        String.format("%.2f", relativeSpeed), ticksUsed);
+            }
+            affected |= landed;
         }
 
         if (affected && player.level() instanceof ServerLevel server) {
             // 原版：命中后广播实体事件 2 ＝ 暴击粒子 ✓
             server.broadcastEntityEvent(player, (byte) 2);
+        }
+    }
+
+    // ============================================================
+    //  🔎 §839 诊断日志（只在按住冲锋时打 ✓ 有上限 ✓ 方便"到底哪一步没满足"一目了然）
+    // ============================================================
+
+    private static final Map<UUID, Integer> DIAG_LINES = new ConcurrentHashMap<>();
+
+    private static void diagnose(ServerPlayer player, int ticksUsed, double attackerSpeed,
+                                Vec3 look, List<LivingEntity> hits) {
+        if (ticksUsed % 20 != 0) return;
+        int used = DIAG_LINES.getOrDefault(player.getUUID(), 0);
+        if (used >= 40) return;                       // 上限 ✓ 别把日志刷爆 ✓
+        DIAG_LINES.put(player.getUUID(), used + 1);
+
+        TinkersNewlife.LOGGER.info(
+                "[长矛·冲锋] t={} 视线速度={}（伤害门槛 {} 击退 {} 下马 {}）射线扫到 {} 个目标",
+                ticksUsed, String.format("%.2f", attackerSpeed),
+                DAMAGE_MIN_RELATIVE_SPEED, KNOCKBACK_MIN_SPEED, DISMOUNT_MIN_SPEED, hits.size());
+        for (LivingEntity target : hits) {
+            double targetSpeed = look.dot(motionOf(target));
+            double relativeSpeed = Math.max(0.0D, attackerSpeed - targetSpeed);
+            double distance = target.getBoundingBox().getCenter().distanceTo(player.getEyePosition());
+            TinkersNewlife.LOGGER.info(
+                    "[长矛·冲锋]   · {} 距离 {} 相对速度 {} ⇒ 伤害{} 击退{} 下马{} 冷却中{}",
+                    target.getName().getString(), String.format("%.2f", distance),
+                    String.format("%.2f", relativeSpeed),
+                    relativeSpeed >= DAMAGE_MIN_RELATIVE_SPEED,
+                    attackerSpeed >= KNOCKBACK_MIN_SPEED,
+                    attackerSpeed >= DISMOUNT_MIN_SPEED,
+                    wasRecentlyStabbed(player, target));
         }
     }
 
@@ -205,7 +258,7 @@ public final class SpearCombatHandler {
         float damage = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE);
         Vec3 look = player.getLookAngle();
         boolean extra = false;
-        for (LivingEntity target : targetsAlong(player, look)) {
+        for (LivingEntity target : targetsAlong(player, look, MIN_RANGE)) {
             if (target == clicked) continue;
             if (wasRecentlyStabbed(serverPlayer, target)) continue;
             rememberStabbed(serverPlayer, stabbed, target);
@@ -218,9 +271,12 @@ public final class SpearCombatHandler {
     //  射程查询（原版 ProjectileUtil#getHitEntitiesAlong 的等价实现）
     // ============================================================
 
-    /** 沿视线取射程内的目标 ✓（起点＝最小距离 ✓ 终点＝最大距离 ＋ 前向速度 ✓ 方块挡则截断 ✓） */
-    private static List<LivingEntity> targetsAlong(Player player, Vec3 look) {
-        double minRange = player.isCreative() ? MIN_RANGE_CREATIVE : MIN_RANGE;
+    /**
+     * 沿视线取射程内的目标 ✓（起点＝传入的最小距离 ✓ 终点＝最大距离 ＋ 前向速度 ✓ 方块挡则截断 ✓）。
+     *
+     * @param minRange 射线起点距离 ✓ —— 戳刺用原版 2.0 ✓、冲锋用 {@link #CHARGE_MIN_RANGE} 0.5 ✓（§839 ✓）
+     */
+    private static List<LivingEntity> targetsAlong(Player player, Vec3 look, double minRange) {
         double maxRange = player.isCreative() ? MAX_RANGE_CREATIVE : MAX_RANGE;
 
         Vec3 eye = player.getEyePosition();
