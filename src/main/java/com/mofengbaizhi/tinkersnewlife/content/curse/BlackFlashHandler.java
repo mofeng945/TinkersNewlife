@@ -38,7 +38,13 @@ public class BlackFlashHandler {
             new ResourceLocation(TinkersNewlife.MOD_ID, "west_tiger")
     );
 
-    private static final double BASE_CHANCE = 0.1;
+    /**
+     * 黑闪基础概率（**分数**，不是百分数 ✓）：掷骰是 {@code nextDouble() < totalChance} ✓，
+     * 所以 0.005 ＝ <b>0.5%</b> ✓。
+     * <p>⭐ 用户口径（2026-09-29）：「黑闪概率调低到 0.5%」✓ ——
+     * 原来是 <b>0.1 ＝ 10%</b> ✗（用户当时以为是 5% ✓ 实际比那还高一倍 ✓ 已如实说明 ✓）。
+     */
+    private static final double BASE_CHANCE = 0.005;
     private static final double PROBABILITY_BOOST = 0.1;
     private static final int BUFF_DURATION_TICKS = 60 * 20;
     private static final double BUFF_MULTIPLIER = 1.2;

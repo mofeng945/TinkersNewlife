@@ -6,7 +6,8 @@ import slimeknights.tconstruct.library.modifiers.Modifier;
  * 黑闪强化（Black Flash）
  * <p>
  * 效果说明：
- * - 每次攻击有 0.01% 基础概率触发黑闪
+ * - 每次攻击有 <b>0.5%</b> 基础概率触发黑闪（{@code BlackFlashHandler.BASE_CHANCE = 0.005} ✓
+ *   原来是 0.1 ＝ 10% ✗，2026-09-29 按用户口径调低 ✓；这里原来写的 0.01% 是**过期注释** ✗ 已更正 ✓）
  * - 黑闪伤害 = 原伤害的 2.5 次方
  * - 触发后 60 秒内，黑闪概率提升 10%（可叠加）
  * - 触发后 60 秒内，玩家速度、攻击伤害、跳跃高度变为 120%
