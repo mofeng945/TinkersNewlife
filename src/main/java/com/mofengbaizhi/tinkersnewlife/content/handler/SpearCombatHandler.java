@@ -114,6 +114,20 @@ public final class SpearCombatHandler {
     /** 玩家 → （目标 → 最后一次被戳的游戏刻）✓ 等价于原版的 {@code recentKineticEnemies} ✓ */
     private static final Map<UUID, Map<UUID, Long>> RECENT_STABBED = new ConcurrentHashMap<>();
 
+    /**
+     * ⭐⭐§841 玩家 → 上一 tick 的位置 ✓ —— <b>用来算玩家速度</b> ✓。
+     *
+     * <h3>为什么不能用 {@code player.getDeltaMovement()}</h3>
+     * 用户实测诊断行显示「速度 0.几」✗，据此查证 ✓：
+     * <b>1.20.1 的服务端压根不维护玩家的 {@code deltaMovement}</b> ✗ ——
+     * {@code ServerGamePacketListenerImpl}（处理移动包的地方）里 {@code setDeltaMovement} 出现次数
+     * <b>＝ 0</b> ✓（源码实读 ✓）⇒ 服务端读到的玩家速度是"物理残留"，走起来也几乎是 0 ✗
+     * ⇒ 依它判定的冲锋门槛**永远过不去** ✗（这就是"右键冲刺没伤害"的根因 ✓）。
+     * <p>⇒ 本版改为<b>自己记上一 tick 的位置，用位移差当速度</b> ✓
+     * （服务端权威 ✓ 骑马时玩家的世界位移也自然包含坐骑速度 ✓ 比原版那套还稳 ✓）。
+     */
+    private static final Map<UUID, Vec3> LAST_POS = new ConcurrentHashMap<>();
+
     private SpearCombatHandler() {}
 
     // ============================================================
@@ -126,7 +140,16 @@ public final class SpearCombatHandler {
 
     public static void stopCharge(ServerPlayer player) {
         RECENT_STABBED.remove(player.getUUID());
+        LAST_POS.remove(player.getUUID());       // 速度跟踪也要清 ✓
         DIAG_LINES.remove(player.getUUID());     // 每次冲锋的诊断计数也清掉 ✓
+    }
+
+    /** 玩家这一 tick 的位移（格/tick ✓）—— 服务端权威 ✓ 见 {@link #LAST_POS} 的说明 ✓ */
+    private static Vec3 playerVelocity(ServerPlayer player) {
+        Vec3 now = player.position();
+        Vec3 last = LAST_POS.put(player.getUUID(), now);
+        if (last == null) return Vec3.ZERO;
+        return now.subtract(last);
     }
 
     /**
@@ -145,8 +168,9 @@ public final class SpearCombatHandler {
         if (ticksUsed > DAMAGE_WINDOW) return;          // 伤害窗也过了 ⇒ 力竭：等松手重来 ✓
 
         Vec3 look = player.getLookAngle();
-        double attackerSpeed = look.dot(motionOf(player));
-        List<LivingEntity> hits = targetsAlong(player, look, CHARGE_MIN_RANGE);
+        Vec3 velocity = playerVelocity(player);                 // ⭐ §841 自己跟踪的位移 ✓（服务端玩家的 deltaMovement 是 0 ✗）
+        double attackerSpeed = look.dot(velocity.scale(SPEED_SCALE));
+        List<LivingEntity> hits = targetsAlong(player, look, CHARGE_MIN_RANGE, velocity);
 
         boolean affected = false;
         int landedCount = 0;
@@ -252,7 +276,7 @@ public final class SpearCombatHandler {
         float damage = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE);
         Vec3 look = player.getLookAngle();
         boolean extra = false;
-        for (LivingEntity target : targetsAlong(player, look, MIN_RANGE)) {
+        for (LivingEntity target : targetsAlong(player, look, MIN_RANGE, Vec3.ZERO)) {
             if (target == clicked) continue;
             if (wasRecentlyStabbed(serverPlayer, target)) continue;
             rememberStabbed(serverPlayer, stabbed, target);
@@ -269,13 +293,15 @@ public final class SpearCombatHandler {
      * 沿视线取射程内的目标 ✓（起点＝传入的最小距离 ✓ 终点＝最大距离 ＋ 前向速度 ✓ 方块挡则截断 ✓）。
      *
      * @param minRange 射线起点距离 ✓ —— 戳刺用原版 2.0 ✓、冲锋用 {@link #CHARGE_MIN_RANGE} 0.5 ✓（§839 ✓）
+     * @param velocity 攻击者这一 tick 的位移 ✓（自己跟踪的 ✓ 见 {@link #LAST_POS} ✓）
      */
-    private static List<LivingEntity> targetsAlong(Player player, Vec3 look, double minRange) {
+    private static List<LivingEntity> targetsAlong(Player player, Vec3 look, double minRange, Vec3 velocity) {
         double maxRange = player.isCreative() ? MAX_RANGE_CREATIVE : MAX_RANGE;
 
         Vec3 eye = player.getEyePosition();
         Vec3 from = eye.add(look.scale(minRange));
-        double forward = Math.max(0.0D, player.getDeltaMovement().dot(look));   // 原版 getKnownMovement().dot(look) ✓
+        // ⭐ §841 用自己跟踪的位移 ✓（服务端玩家的 getDeltaMovement() 恒约 0 ✗）
+        double forward = Math.max(0.0D, velocity.dot(look));
         Vec3 to = eye.add(look.scale(maxRange + forward));
 
         // 方块遮挡：原版用 Block.COLLIDER ✓ 撞到就把终点收到撞点 ✓
