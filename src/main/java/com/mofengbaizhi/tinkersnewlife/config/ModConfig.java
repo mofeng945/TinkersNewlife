@@ -39,6 +39,12 @@ public final class ModConfig {
     // ==================== 咒力核心 ====================
     public static final ConfigValue<Boolean> CURSE_CORE_ENABLED;
 
+    // ==================== Boss 战（§864 用户口径） ====================
+    public static final ConfigValue<Boolean> BOSS_FIGHT_ENABLED;
+    public static final ConfigValue<Boolean> BOSS_FIGHT_ROLLS_EQUAL_PARTICIPANTS;
+    public static final ConfigValue<Boolean> BOSS_FIGHT_GRANT_ADVANCEMENTS;
+    public static final ConfigValue<Integer> BOSS_FIGHT_MAX_ROLLS;
+
     // ==================== 古老者水晶 · 魔力台座（充能） ====================
     // 用户口径（2026-09-21）：「亮度越低，充能速度越快」——
     // 于是**没有**"必须夜晚 / 必须露天 / 必须能看到天空"这类额外条件 ✓
@@ -950,6 +956,33 @@ public final class ModConfig {
         TWILIGHT_MAZE_THREAD_SAFE_RANDOM = b.define("enabled", true);
         b.pop();
 
+        // §864 Boss 战：参与者检测 → 每个参与者各 roll 一次奖励 + 击杀成就广播给所有参与者（用户口径 ✓）
+        b.push("boss_fight").comment(
+                "Boss fight support (user request, 2026-09-30):",
+                "  * detect how many players took part in a boss fight;",
+                "  * at settlement, roll the boss loot table once per participant (total rolls == participants,",
+                "    the vanilla roll counts as one, so we add N-1 extra rolls; the extra loot drops on the ground);",
+                "  * the kill-the-boss advancement is also granted/broadcast to every participant.",
+                "",
+                "Bosses are detected with the 'forge:bosses' entity type tag (Goety, Cataclysm, Ice and Fire, ...",
+                "all register their bosses there; verified Goety does).",
+                "'Participated' = damaged the boss (pets/projectiles count for their owner) OR was damaged by the boss.");
+        BOSS_FIGHT_ENABLED = b.define("enabled", true);
+        BOSS_FIGHT_ROLLS_EQUAL_PARTICIPANTS = b.comment(
+                "true  = total loot rolls equal the number of participants (default, user request).",
+                "false = keep vanilla behaviour (one roll).")
+                .define("rolls_equal_participants", true);
+        BOSS_FIGHT_GRANT_ADVANCEMENTS = b.comment(
+                "true  = also fire the vanilla 'player_killed_entity' advancement trigger for every participant,",
+                "        so kill-the-boss advancements (Goety's kill_a_apostle, vanilla kill_dragon, ...) go to all of them.",
+                "false = only the actual killer gets them (vanilla behaviour).")
+                .define("grant_advancements_to_all", true);
+        BOSS_FIGHT_MAX_ROLLS = b.comment(
+                "Safety cap on the number of extra rolls for a single boss death (0 = unlimited, default).",
+                "Example: 6 if you never want more than 6 rolls from one boss.")
+                .define("max_extra_rolls", 0);
+        b.pop();
+
         SPEC = b.build();
     }
 
@@ -1243,6 +1276,44 @@ public final class ModConfig {
             return NORMALIZE_ITEM_TAG.get();
         } catch (Throwable ignored) {
             return true;
+        }
+    }
+
+    // ==================== Boss 战取值助手（§864） ====================
+
+    /** Boss 战支持总开关（配置没就绪 ⇒ true） */
+    public static boolean bossFightEnabled() {
+        try {
+            return BOSS_FIGHT_ENABLED.get();
+        } catch (Throwable ignored) {
+            return true;
+        }
+    }
+
+    /** 掉落总次数 = 参与人数（配置没就绪 ⇒ true） */
+    public static boolean bossFightRollsEqualParticipants() {
+        try {
+            return BOSS_FIGHT_ROLLS_EQUAL_PARTICIPANTS.get();
+        } catch (Throwable ignored) {
+            return true;
+        }
+    }
+
+    /** 击杀成就广播给所有参与者（配置没就绪 ⇒ true） */
+    public static boolean bossFightGrantAdvancements() {
+        try {
+            return BOSS_FIGHT_GRANT_ADVANCEMENTS.get();
+        } catch (Throwable ignored) {
+            return true;
+        }
+    }
+
+    /** 单次 boss 死亡的额外 roll 上限（0 = 不限 ⇒ 返回 0 ✓） */
+    public static int bossFightMaxExtraRolls() {
+        try {
+            return Math.max(0, BOSS_FIGHT_MAX_ROLLS.get());
+        } catch (Throwable ignored) {
+            return 0;
         }
     }
 }
