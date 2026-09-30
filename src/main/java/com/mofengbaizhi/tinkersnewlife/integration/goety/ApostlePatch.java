@@ -226,7 +226,7 @@ public final class ApostlePatch {
 
                 // ── #10（回血部分）：主世界二阶段自回血（比下界慢 ✓）──
                 if (!nether && apostle.isSecondPhase() && now % 20L == 0L) {
-                    overworldRegen(apostle);
+                    overworldRegen(apostle, now);
                 }
 
                 for (Player player : level.getEntitiesOfClass(Player.class, apostle.getBoundingBox().inflate(6.0D))) {
@@ -412,7 +412,7 @@ public final class ApostlePatch {
      * <p>⇒ 改用 {@code setHealth} 直接写血 ✓（是否无视禁疗可配 ✓ 默认无视 ✓；配成 false 就还是尊重诡厄口径 ✓）。
      * <p>速率：每 **1 秒**回 `最大生命 × overworld_regen_percent`（默认 1% ✓ 下限 1 点 ✓ 满血不动 ✓）。
      */
-    private static void overworldRegen(Apostle apostle) {
+    private static void overworldRegen(Apostle apostle, long now) {
         double percent;
         boolean ignoreSmite;
         try {
@@ -424,13 +424,23 @@ public final class ApostlePatch {
         }
         if (percent <= 0.0D) return;
         float max = apostle.getMaxHealth();
-        if (apostle.getHealth() >= max) return;
+        float before = apostle.getHealth();
+        if (before >= max) return;
         float amount = (float) Math.max(1.0D, max * percent);
         if (!ignoreSmite) {
             apostle.heal(amount);                                       // 尊重诡厄"亡灵杀手禁疗" ✓
-            return;
+        } else {
+            apostle.setHealth(Math.min(max, before + amount));           // 绕过覆写 ✓
         }
-        apostle.setHealth(Math.min(max, apostle.getHealth() + amount));  // 绕过覆写 ✓
+        // ⚠ 临时诊断（§861 ✓ 每 5 秒最多一行 ✓ 确认没问题后可删 ✗）
+        if (now % 100L == 0L && apostle.getHealth() > before) {
+            LOGGER.info("[使徒补丁] 主世界二段自回血 ⇒ {} → {} / {}（每秒 {}{}）",
+                    String.format(java.util.Locale.ROOT, "%.1f", before),
+                    String.format(java.util.Locale.ROOT, "%.1f", apostle.getHealth()),
+                    String.format(java.util.Locale.ROOT, "%.1f", max),
+                    String.format(java.util.Locale.ROOT, "%.1f", amount),
+                    ignoreSmite ? "，无视亡灵杀手禁疗 ✓" : "，尊重禁疗 ✓");
+        }
     }
 
     /**
