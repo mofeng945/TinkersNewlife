@@ -173,4 +173,131 @@ public final class ApostlePatch {
         player.push(push.x, 0.6D, push.z);
         player.hurtMarked = true;
     }
+
+    // ============================================================
+    //  组二 / 组三 / #12（§854 一口气做完：全部走事件 + 我方状态表，不混入诡厄内部）
+    // ============================================================
+
+    /** 使徒 → 玩家 → 已在 2 格内待了多少 tick（#5） */
+    private static final Map<UUID, Map<UUID, Integer>> CLOSE_TICKS = new ConcurrentHashMap<>();
+    /** 使徒 → 玩家 → 鞘翅锁定累计 tick（#8） */
+    private static final Map<UUID, Map<UUID, Integer>> ELYTRA_LOCK = new ConcurrentHashMap<>();
+    /** 使徒 → 上次爆燃陷阱时刻（#9） */
+    private static final Map<UUID, Long> TRAP_COOLDOWN = new ConcurrentHashMap<>();
+    /** 已刷过袭击的使徒（#12 一次性） */
+    private static final java.util.Set<UUID> RAID_DONE = ConcurrentHashMap.newKeySet();
+
+    private static final double CLOSE_RANGE = 2.0D;
+    private static final int CLOSE_LIMIT_TICKS = 100;        // 5 秒
+    private static final int ELYTRA_LOCK_TICKS = 100;        // 5 秒锁定
+    private static final int TRAP_COOLDOWN_TICKS = 300;      // 15 秒
+    private static final double ELYTRA_DETECT_RANGE = 24.0D;
+    private static final int RAID_WAVE_SIZE = 5;             // #12 一波 5 只（原版掠夺者）
+
+    /** 组二/组三/#12 主循环（每 tick，仅服务端） */
+    @SubscribeEvent
+    public static void onServerTickGroup23(TickEvent.ServerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || !enabled()) return;
+        MinecraftServer server = event.getServer();
+        if (server == null) return;
+        long now = server.getTickCount();
+
+        for (ServerLevel level : server.getAllLevels()) {
+            for (Entity entity : level.getAllEntities()) {
+                if (!(entity instanceof Apostle apostle) || !apostle.isAlive()) continue;
+                boolean nether = level.dimension() == net.minecraft.world.level.Level.NETHER;
+
+                // ── #10（回血部分）：主世界二阶段自回血，比下界慢 ──
+                if (!nether && apostle.isSecondPhase() && now % 100L == 0L) {
+                    apostle.heal(4.0F);                      // 每 5 秒 4 点（慢速版）
+                }
+
+                for (Player player : level.getEntitiesOfClass(Player.class, apostle.getBoundingBox().inflate(6.0D))) {
+                    if (player.isCreative() || player.isSpectator()) continue;
+
+                    // ── #5：近身 2 格超 5 秒 ⇒ 咆哮并把玩家推开 ──
+                    Map<UUID, Integer> close = CLOSE_TICKS.computeIfAbsent(apostle.getUUID(), k -> new ConcurrentHashMap<>());
+                    if (player.distanceTo(apostle) <= CLOSE_RANGE) {
+                        int t = close.merge(player.getUUID(), 1, Integer::sum);
+                        if (t >= CLOSE_LIMIT_TICKS) {
+                            close.put(player.getUUID(), 0);
+                            level.playSound(null, apostle.blockPosition(),
+                                    net.minecraft.sounds.SoundEvents.RAVAGER_ROAR,
+                                    net.minecraft.sounds.SoundSource.HOSTILE, 1.4F, 0.9F);
+                            roarPush(apostle, player, 2.2D);
+                            level.sendParticles(net.minecraft.core.particles.ParticleTypes.CLOUD,
+                                    apostle.getX(), apostle.getY() + 1.0D, apostle.getZ(), 30, 1.0D, 0.6D, 1.0D, 0.1D);
+                        }
+                    } else {
+                        close.remove(player.getUUID());
+                    }
+
+                    // ── #8：鞘翅飞行 ⇒ 5 秒锁定（大量黄色粒子）⇒ 拽向地面 ＋ 撞击动能伤害 ──
+                    if (player.isFallFlying() && player.distanceTo(apostle) <= ELYTRA_DETECT_RANGE) {
+                        Map<UUID, Integer> lock = ELYTRA_LOCK.computeIfAbsent(apostle.getUUID(), k -> new ConcurrentHashMap<>());
+                        int t = lock.merge(player.getUUID(), 1, Integer::sum);
+                        level.sendParticles(new net.minecraft.core.particles.DustParticleOptions(
+                                        new org.joml.Vector3f(1.0F, 0.9F, 0.2F), 1.2F),
+                                player.getX(), player.getY() + 0.5D, player.getZ(), 12, 0.4D, 0.4D, 0.4D, 0.02D);
+                        if (t >= ELYTRA_LOCK_TICKS) {
+                            lock.remove(player.getUUID());
+                            net.minecraft.world.phys.Vec3 v = player.getDeltaMovement();
+                            player.setDeltaMovement(v.x * 0.2D, -2.2D, v.z * 0.2D);
+                            player.hurtMarked = true;
+                            float kinetic = (float) Math.max(6.0D, Math.abs(v.y) * 20.0D);
+                            player.hurt(player.damageSources().flyIntoWall(), kinetic);
+                            player.displayClientMessage(net.minecraft.network.chat.Component
+                                    .literal("§c使徒之力将你拽向地面！"), true);
+                        }
+                    }
+                }
+
+                // ── #9：二阶段 5 格内随机爆燃陷阱（15 秒冷却）──
+                Long nextTrap = TRAP_COOLDOWN.get(apostle.getUUID());
+                if (apostle.isSecondPhase() && (nextTrap == null || now >= nextTrap)) {
+                    TRAP_COOLDOWN.put(apostle.getUUID(), now + TRAP_COOLDOWN_TICKS);
+                    net.minecraft.core.BlockPos pos = apostle.blockPosition().offset(
+                            apostle.getRandom().nextInt(11) - 5, 0, apostle.getRandom().nextInt(11) - 5);
+                    com.Polarice3.Goety.common.entities.util.FireBlastTrap trap =
+                            new com.Polarice3.Goety.common.entities.util.FireBlastTrap(level, pos.getX() + 0.5D,
+                                    pos.getY(), pos.getZ() + 0.5D);
+                    trap.setOwner(apostle);
+                    level.addFreshEntity(trap);
+                }
+
+                // ── #12：主世界 10% 血 ⇒ 所在区块刷一波袭击（掠夺者，不消失）──
+                if (!nether && !RAID_DONE.contains(apostle.getUUID())
+                        && apostle.getHealth() <= apostle.getMaxHealth() * 0.10F) {
+                    RAID_DONE.add(apostle.getUUID());
+                    spawnRaidWave(level, apostle);
+                }
+            }
+        }
+    }
+
+    /** #12：在使徒所在区块刷一波掠夺者（原版掠夺者/卫道士，持久化 ⇒ 使徒死了也不消失） */
+    private static void spawnRaidWave(ServerLevel level, Apostle apostle) {
+        int spawned = 0;
+        for (int i = 0; i < RAID_WAVE_SIZE * 6 && spawned < RAID_WAVE_SIZE; i++) {
+            int x = apostle.getBlockX() + apostle.getRandom().nextInt(33) - 16;
+            int z = apostle.getBlockZ() + apostle.getRandom().nextInt(33) - 16;
+            net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(x,
+                    level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z);
+            net.minecraft.world.entity.Mob raider = (spawned % 3 == 2)
+                    ? net.minecraft.world.entity.EntityType.VINDICATOR.create(level)
+                    : net.minecraft.world.entity.EntityType.PILLAGER.create(level);
+            if (raider == null) continue;
+            raider.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D,
+                    apostle.getRandom().nextFloat() * 360.0F, 0.0F);
+            raider.setPersistenceRequired();
+            raider.getPersistentData().putUUID("tinkersnewlife.apostle_master", apostle.getUUID());
+            level.addFreshEntity(raider);
+            spawned++;
+        }
+        if (spawned > 0) {
+            level.playSound(null, apostle.blockPosition(), net.minecraft.sounds.SoundEvents.RAID_HORN.value(),
+                    net.minecraft.sounds.SoundSource.HOSTILE, 2.0F, 1.0F);
+        }
+    }
+
 }
