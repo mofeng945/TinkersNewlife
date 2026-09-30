@@ -103,7 +103,9 @@ public class SpearItem extends ModifiableItem {
     @Override
     public UseAnim getUseAnimation(ItemStack stack) {
         UseAnim ability = super.getUseAnimation(stack);
-        return ability != UseAnim.NONE ? ability : UseAnim.SPEAR;
+        // §844：返回 NONE ＝ 关掉 1.20.1 那套"三叉戟端举"（用户：「太丑了」✗），
+        //       改由我们自己的客户端动画画（照原版 SpearAnimations 的数学 ✓）。
+        return ability != UseAnim.NONE ? ability : UseAnim.NONE;
     }
 
     @Override
