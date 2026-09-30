@@ -275,29 +275,124 @@ public final class ApostlePatch {
         }
     }
 
-    /** #12：在使徒所在区块刷一波掠夺者（原版掠夺者/卫道士，持久化 ⇒ 使徒死了也不消失） */
+    /** #12：把使徒所在区块刷出来的袭击者**全部认使徒为主人**（诡厄仆从 ✓）（§856） */
     private static void spawnRaidWave(ServerLevel level, Apostle apostle) {
         int spawned = 0;
-        for (int i = 0; i < RAID_WAVE_SIZE * 6 && spawned < RAID_WAVE_SIZE; i++) {
+        int servants = 0;
+        for (int i = 0; i < RAID_WAVE_SIZE * 8 && spawned < RAID_WAVE_SIZE; i++) {
             int x = apostle.getBlockX() + apostle.getRandom().nextInt(33) - 16;
             int z = apostle.getBlockZ() + apostle.getRandom().nextInt(33) - 16;
             net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(x,
                     level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z);
-            net.minecraft.world.entity.Mob raider = (spawned % 3 == 2)
-                    ? net.minecraft.world.entity.EntityType.VINDICATOR.create(level)
-                    : net.minecraft.world.entity.EntityType.PILLAGER.create(level);
+
+            // 优先刷**诡厄自己的仆从掠夺者**（只有它们能认使徒为主人 ✓）；一个都取不到才退回原版掠夺者 ✓
+            net.minecraft.world.entity.Mob raider = createGoetyServant(level, spawned);
+            if (raider != null) {
+                servants++;
+                setServantOwner(raider, apostle);      // ⭐ 必须先认主：诡厄的 finalizeSpawn 会按"有没有主人"给装备 ✓
+            } else {
+                raider = (spawned % 3 == 2)
+                        ? net.minecraft.world.entity.EntityType.VINDICATOR.create(level)
+                        : net.minecraft.world.entity.EntityType.PILLAGER.create(level);
+            }
             if (raider == null) continue;
             raider.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D,
                     apostle.getRandom().nextFloat() * 360.0F, 0.0F);
-            raider.setPersistenceRequired();
-            raider.getPersistentData().putUUID("tinkersnewlife.apostle_master", apostle.getUUID());
+            try {
+                // 走一遍 finalizeSpawn ⇒ 掠夺者才有弩／武器 ✓（用 EVENT 类型：不触发诡厄的召唤粒子／寿命那套 ✓）
+                raider.finalizeSpawn(level, level.getCurrentDifficultyAt(pos),
+                        net.minecraft.world.entity.MobSpawnType.EVENT, null, null);
+            } catch (Throwable ignored) {
+            }
+            raider.getPersistentData().putUUID(KEY_MASTER, apostle.getUUID());
             level.addFreshEntity(raider);
             spawned++;
         }
         if (spawned > 0) {
             level.playSound(null, apostle.blockPosition(), net.minecraft.sounds.SoundEvents.RAID_HORN.value(),
                     net.minecraft.sounds.SoundSource.HOSTILE, 2.0F, 1.0F);
+            LOGGER.info("[使徒补丁] #12 使徒剩 {}% 血 ⇒ 刷了 {} 只袭击者（诡厄仆从 {} 只 ✓ 全部认使徒为主人 ✓）",
+                    (int) (apostle.getHealth() / apostle.getMaxHealth() * 100.0F), spawned, servants);
         }
     }
+
+    // ============================================================
+    //  #12 认主（§856）
+    // ============================================================
+
+    /** 我们自己打在袭击者身上的"主人是谁"标记 ✓（便于排查／其它模组读 ✓） */
+    private static final String KEY_MASTER = "tinkersnewlife.apostle_master";
+
+    /**
+     * 刷哪种袭击者 ✓ —— **写死诡厄自己的仆从掠夺者注册名** ✓（名单取自诡厄 {@code goety:raider_servants}
+     * 标签 ✓ 已逐个核对 2.5.54.5 里都存在 ✓）；用 <b>注册名</b>取类型 ✓ 不引用具体类 ✗ ⇒ 跨版本安全 ✓。
+     */
+    private static final net.minecraft.resources.ResourceLocation[] RAID_SERVANT_IDS =
+            new net.minecraft.resources.ResourceLocation[]{
+                    new net.minecraft.resources.ResourceLocation("goety", "pillager_servant"),
+                    new net.minecraft.resources.ResourceLocation("goety", "vindicator_servant"),
+                    new net.minecraft.resources.ResourceLocation("goety", "mountaineer_servant"),
+                    new net.minecraft.resources.ResourceLocation("goety", "crusher_servant"),
+                    new net.minecraft.resources.ResourceLocation("goety", "piker_servant"),
+                    new net.minecraft.resources.ResourceLocation("goety", "evoker_servant"),
+                    new net.minecraft.resources.ResourceLocation("goety", "witch_servant"),
+                    new net.minecraft.resources.ResourceLocation("goety", "ravager"),
+            };
+
+    private static boolean servantMissingLogged = false;
+
+    /** 按注册名取一个诡厄仆从类型 ✓（一次一个 ✓ 取不到就换下一个 ✓ 全取不到 ⇒ null ⇒ 调用方退回原版 ✓） */
+    private static net.minecraft.world.entity.EntityType<?> goetyServantType(int index) {
+        int n = RAID_SERVANT_IDS.length;
+        for (int i = 0; i < n; i++) {
+            net.minecraft.resources.ResourceLocation id = RAID_SERVANT_IDS[(index + i) % n];
+            try {
+                net.minecraft.world.entity.EntityType<?> type =
+                        net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getValue(id);
+                if (type != null) return type;
+            } catch (Throwable ignored) {
+            }
+        }
+        if (!servantMissingLogged) {
+            servantMissingLogged = true;
+            LOGGER.warn("[使徒补丁] #12 没找到诡厄仆从掠夺者 ⇒ 本次退回原版掠夺者 ✓");
+        }
+        return null;
+    }
+
+    private static net.minecraft.world.entity.Mob createGoetyServant(ServerLevel level, int index) {
+        try {
+            net.minecraft.world.entity.EntityType<?> type = goetyServantType(index);
+            if (type == null) return null;
+            Entity entity = type.create(level);
+            return (entity instanceof net.minecraft.world.entity.Mob mob) ? mob : null;
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    /** 认主 ✓ —— 走诡厄 {@code IOwned#setTrueOwner} ✓（反射 ⇒ 不写死签名 ✓ 版本无关 ✓） */
+    private static void setServantOwner(Entity servant, LivingEntity master) {
+        try {
+            if (!(servant instanceof com.Polarice3.Goety.api.entities.IOwned owned)) return;
+            for (String name : new String[]{"setTrueOwner", "setOwner", "setMaster"}) {
+                try {
+                    owned.getClass().getMethod(name, LivingEntity.class).invoke(owned, master);
+                    return;
+                } catch (NoSuchMethodException ignored) {
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /*
+     * ⚠ 已知行为，且**用户明确表示接受**（§856 用户原话：「算了，自杀就自杀吧」）：
+     * 诡厄 {@code IOwned#ownedByServantTick()} 里有
+     * {@code if (主人类型 ∈ goety:bosses / summon_kill && 主人已移除或濒死) mob.kill();}
+     * （反编译 {@code IOwned.java:308-310} ✓），而**使徒同时挂在 {@code forge:bosses} 与
+     * {@code goety:bosses} 两个标签里** ✓ ⇒ 使徒一死，认它为主的袭击者会**跟着一起没** ✓。
+     * ⇒ 因此**不做**"主人死后解除归属让袭击者留下"那一套 ✗（早先的 #12 需求按用户本条口径作废 ✓）。
+     */
 
 }
