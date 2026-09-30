@@ -76,6 +76,8 @@ public final class SpearCombatHandler {
     //      · 不再有"低于门槛就 0 伤害"的开关式判定 ✗
     //    现在的口径 ✓：**伤害 = 面板攻击力 × 速度系数** ✓
     //      速度系数 = max(0.1, 相对速度 / 6)（0.1 ＝ 用户指定的**最低 0.1 倍** ✓）
+    //      ⚠ §843 补充：**相对速度 ≤ 0（站着不动 / 互相远离）⇒ 完全没伤害** ✓（不是 0.1 倍 ✗）
+    //         —— 0.1 倍只兜"**确实在接近但很慢**"的那一段 ✓
     //      ⇒ 相对速度 0 ⇒ 0.1 倍 ✓；冲刺(≈5.6) ⇒ ≈0.93 倍 ✓；骑马(≈12) ⇒ ≈2 倍 ✓ 越快越高 ✓
     // ============================================================
 
@@ -218,7 +220,10 @@ public final class SpearCombatHandler {
 
             Vec3 targetVelocity = velocityOf(target);
             double closing = velocity.subtract(targetVelocity).dot(direction) * SPEED_SCALE;   // ×20 ⇒ 与原版同量级 ✓
-            if (closing < 0.0D) closing = 0.0D;                                                // 正在互相远离 ⇒ 0 ✓
+            // ⭐⭐§843 用户口径：「**站着不动就应该是 0**」✓
+            //   ⇒ 相对速度 ≤ 0（没在接近 / 互相远离）**完全不打** ✗（不是"最低 0.1 倍"✗）；
+            //   0.1 倍那个下限只用于"**确实在接近但很慢**"的那一段 ✓（见下面 factor ✓）。
+            if (closing <= 0.0D) continue;
             if (closing > bestClosing) bestClosing = closing;
 
             rememberStabbed(player, stabbed, target);        // 只在真打出去时才记 10 tick 冷却 ✓（§840 ✓）
