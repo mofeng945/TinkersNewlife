@@ -129,6 +129,11 @@ public final class BossFightHandler {
     private static Class<?> tfLootBuffer;
     private static java.lang.reflect.Method tfGetItemStacks;
     private static java.lang.reflect.Method tfBossChestLocation;
+    /** §866：暮色自己的成就触发器（`twilightforest.advancements.TFAdvancements` ✓） */
+    private static Object tfHurtBossTriggerObj;
+    private static java.lang.reflect.Method tfHurtBossTrigger;
+    private static Object tfKillAllPhantomsTriggerObj;
+    private static java.lang.reflect.Method tfKillAllPhantomsTrigger;
 
     private static void resolveTwilight() {
         if (tfResolved) return;
@@ -145,6 +150,26 @@ public final class BossFightHandler {
             tfBossChestLocation = util.getMethod("bossChestLocation", net.minecraft.world.entity.Mob.class);
         } catch (Throwable ignored) {
             tfBossChestLocation = null;
+        }
+        // §866：暮色的 boss 进度成就不用原版触发器 ✗ 而是它自己的 `hurt_boss`（只发给 hurtBy ✗）
+        //   与 `kill_all_phantoms`（只发给最后一击的玩家 ✗）⇒ 把这两个也反射拿到 ✓ 由我们镜像给所有参与者 ✓
+        try {
+            Class<?> adv = Class.forName("twilightforest.advancements.TFAdvancements");
+            tfHurtBossTriggerObj = adv.getField("HURT_BOSS").get(null);
+            tfHurtBossTrigger = tfHurtBossTriggerObj.getClass()
+                    .getMethod("trigger", ServerPlayer.class, Entity.class);
+        } catch (Throwable ignored) {
+            tfHurtBossTriggerObj = null;
+            tfHurtBossTrigger = null;
+        }
+        try {
+            Class<?> adv = Class.forName("twilightforest.advancements.TFAdvancements");
+            tfKillAllPhantomsTriggerObj = adv.getField("KILL_ALL_PHANTOMS").get(null);
+            tfKillAllPhantomsTrigger = tfKillAllPhantomsTriggerObj.getClass()
+                    .getMethod("trigger", ServerPlayer.class);
+        } catch (Throwable ignored) {
+            tfKillAllPhantomsTriggerObj = null;
+            tfKillAllPhantomsTrigger = null;
         }
     }
 
@@ -267,6 +292,8 @@ public final class BossFightHandler {
                 LOGGER.info("[Boss战] {} 被击杀 ⇒ 已给 {} 名参与者重放击杀成就触发器 ✓",
                         boss.getName().getString(), granted);
             }
+            // §866：暮色那 7 个 boss 进度成就用它**自己的**触发器 ⇒ 也给所有参与者镜像一份 ✓
+            mirrorTwilightAdvancements(server, boss, fight.players);
         }
 
         // ② §865 暮色那种"塞箱子"的 boss ⇒ 排一个"下一 tick 补 roll"的任务 ✓
@@ -378,6 +405,75 @@ public final class BossFightHandler {
             if (in == null || in.isEmpty()) return i;
         }
         return -1;
+    }
+
+    // ============================================================
+    //  §866 暮色自己的成就触发器 ⇒ 镜像给所有参与者
+    // ============================================================
+
+    /*
+     * 用户口径：「**我想让成就也达成**」✓
+     *
+     * 为什么 §864 那套（重放原版 `player_killed_entity` ✓）对暮色的 boss 进度成就**没用** ✗：
+     *   * 暮色那 7 个 boss 进度成就（progress_lich / progress_hydra / progress_glacier / progress_knights … ✓）
+     *     用的是它**自己的**触发器 `twilightforest:hurt_boss` ✓（`Naga.java:583-585` ✓）——
+     *     而且它在自己的 `die()` 里**只对 `this.hurtBy`（打过它的人）**逐个发 ✗
+     *     ⇒ **"只挨打没还手"的参与者拿不到** ✗（正是用户要补的那部分 ✓）；
+     *   * `progress_knights` 还要**第二个条件** `twilightforest:kill_all_phantoms` ✓，
+     *     而那个触发器暮色**只发给最后一击的玩家** ✗（`KnightPhantom.java:298-302` ✓）。
+     *
+     * ⇒ 这里把两个触发器都反射拿到 ✓，在 boss 死亡时**对每个参与者各补一次** ✓：
+     *   ① `HURT_BOSS.trigger(玩家, boss)` ✓ —— 覆盖 7 个 boss 进度成就所需的那一条 ✓；
+     *   ② `KILL_ALL_PHANTOMS.trigger(玩家)` ✓ —— **只在"这是最后一具幻影骑士"时**补 ✓
+     *      （判据照暮色自己的条件 ✓：附近 64 格内同类实体已空 ✓ `KnightPhantom.java:291-302` ✓）
+     *      ⇒ 既能让参与者达成 `progress_knights` ✓ 又不会在战斗还没打完时就提前发 ✗。
+     *
+     * ⚠ 没装暮色 ⇒ 这些反射对象全是 null ⇒ 整段静默跳过 ✓（`@Mod.EventBusSubscriber` 全程 try/catch ✓）。
+     */
+
+    private static void mirrorTwilightAdvancements(MinecraftServer server, LivingEntity boss,
+                                                   Set<UUID> players) {
+        resolveTwilight();
+        if (tfHurtBossTrigger == null && tfKillAllPhantomsTrigger == null) return;
+        boolean finalKnight = tfKillAllPhantomsTrigger != null && isFinalPhantomKnight(boss);
+        int mirrored = 0;
+        for (UUID id : players) {
+            ServerPlayer player = server.getPlayerList().getPlayer(id);
+            if (player == null) continue;
+            try {
+                if (tfHurtBossTrigger != null) {
+                    tfHurtBossTrigger.invoke(tfHurtBossTriggerObj, player, boss);
+                }
+                if (finalKnight) {
+                    tfKillAllPhantomsTrigger.invoke(tfKillAllPhantomsTriggerObj, player);
+                }
+                mirrored++;
+            } catch (Throwable ignored) {
+            }
+        }
+        if (mirrored > 0) {
+            LOGGER.info("[Boss战] {} ⇒ 已给 {} 名参与者镜像暮色成就触发器（hurt_boss{}）✓",
+                    boss.getName().getString(), mirrored,
+                    finalKnight ? " ＋ kill_all_phantoms" : "");
+        }
+    }
+
+    /** 这是不是"最后一具幻影骑士"✓（判据照暮色自己 `KnightPhantom.java:291-302` ✓） */
+    private static boolean isFinalPhantomKnight(LivingEntity boss) {
+        String className;
+        try {
+            className = boss.getClass().getName();
+        } catch (Throwable ignored) {
+            return false;
+        }
+        if (!className.contains("KnightPhantom")) return false;
+        try {
+            return boss.level().getEntitiesOfClass(LivingEntity.class,
+                    boss.getBoundingBox().inflate(64.0D),
+                    e -> e != boss && e.getClass().getName().equals(className)).isEmpty();
+        } catch (Throwable ignored) {
+            return false;
+        }
     }
 
     /**
