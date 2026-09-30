@@ -157,7 +157,7 @@ public final class ApostlePatch {
         }
     }
 
-    /** 供将来组二/组三使用：把一个玩家增益全清掉（#3 狱云 ✓ 预留 ✓） */
+    /** 把一个玩家增益全清掉（#5 咆哮不用它 ✗；**#3 狱云** 用它 ✓ §857） */
     static void clearBeneficialEffects(LivingEntity target) {
         for (MobEffectInstance inst : target.getActiveEffects().stream().toList()) {
             if (inst.getEffect().isBeneficial()) target.removeEffect(inst.getEffect());
@@ -265,12 +265,90 @@ public final class ApostlePatch {
                     level.addFreshEntity(trap);
                 }
 
-                // ── #12：主世界 10% 血 ⇒ 所在区块刷一波袭击（掠夺者，不消失）──
+                // ── #12：主世界 10% 血 ⇒ 所在区块刷一波袭击（**诡厄仆从掠夺者** ✓ 全部认使徒为主人 ✓）──
                 if (!nether && !RAID_DONE.contains(apostle.getUUID())
                         && apostle.getHealth() <= apostle.getMaxHealth() * 0.10F) {
                     RAID_DONE.add(apostle.getUUID());
                     spawnRaidWave(level, apostle);
                 }
+
+                // ── #3：狱云范围内的玩家 ⇒ 清掉所有增益 ──
+                purgeBuffsInHellClouds(level, apostle);
+
+                // ── #6：黑曜石柱召唤的猪灵蛮兵 ⇒ 全身下界合金甲 ＋ 下界合金斧 ──
+                if (now % 20L == 0L) equipMonolithBrutes(level, apostle);
+            }
+        }
+    }
+
+    // ============================================================
+    //  #3 狱云清增益（§857）
+    // ============================================================
+
+    /**
+     * 狱云（{@code HellCloud}）半径内的玩家 ⇒ **清掉所有增益** ✓。
+     * <p>不走 Mixin ✓：云本身是实体 ✓ ⇒ 直接按半径找玩家 ✓ 用现成的
+     * {@link #clearBeneficialEffects} ✓（诡厄自己的 {@code HellCloud#hurtEntities} 只加
+     * {@code BURN_HEX} 减益 ✗ 不清增益 ✓ ⇒ 这是纯加码 ✓）。
+     */
+    private static void purgeBuffsInHellClouds(ServerLevel level, Apostle apostle) {
+        java.util.List<com.Polarice3.Goety.common.entities.projectiles.HellCloud> clouds;
+        try {
+            clouds = level.getEntitiesOfClass(com.Polarice3.Goety.common.entities.projectiles.HellCloud.class,
+                    apostle.getBoundingBox().inflate(64.0D),
+                    cloud -> cloud.isAlive());
+        } catch (Throwable t) {
+            return;
+        }
+        for (com.Polarice3.Goety.common.entities.projectiles.HellCloud cloud : clouds) {
+            double radius = cloud.getRadius() + 0.5D;
+            for (Player player : level.getEntitiesOfClass(Player.class, cloud.getBoundingBox().inflate(radius))) {
+                if (player.isCreative() || player.isSpectator()) continue;
+                clearBeneficialEffects(player);
+            }
+        }
+    }
+
+    // ============================================================
+    //  #6 黑曜石柱猪灵蛮兵 ⇒ 下界合金（§857）
+    // ============================================================
+
+    /**
+     * 黑曜石柱召唤出来的猪灵蛮兵 ⇒ **全身下界合金甲 ＋ 下界合金斧** ✓。
+     * <p>证据（反编译 {@code AbstractObsidianMonolith.java:501-507} ✓）：柱子刷的是
+     * {@code ZPiglinServant} ✓，**二阶段有 25% 概率**换成
+     * {@code ZPiglinBruteServant}（猪灵蛮兵 ✓）＋ {@code setTrueOwner(使徒)} ✓。
+     * <p>不走 Mixin ✓：每 20 tick 扫一遍"主人是使徒的蛮兵"✓ 装备不对就补上 ✓
+     * ⇒ 被 {@code finalizeSpawn} 冲掉也会自愈 ✓（只认**主人是使徒**这一种 ⇒ 不误伤别处的蛮兵 ✓）。
+     */
+    private static void equipMonolithBrutes(ServerLevel level, Apostle apostle) {
+        java.util.List<com.Polarice3.Goety.common.entities.neutral.ZPiglinBruteServant> brutes;
+        try {
+            brutes = level.getEntitiesOfClass(com.Polarice3.Goety.common.entities.neutral.ZPiglinBruteServant.class,
+                    apostle.getBoundingBox().inflate(96.0D),
+                    brute -> brute.isAlive() && brute.getTrueOwner() == apostle);
+        } catch (Throwable t) {
+            return;
+        }
+        for (com.Polarice3.Goety.common.entities.neutral.ZPiglinBruteServant brute : brutes) {
+            net.minecraft.world.entity.EquipmentSlot head = net.minecraft.world.entity.EquipmentSlot.HEAD;
+            net.minecraft.world.entity.EquipmentSlot chest = net.minecraft.world.entity.EquipmentSlot.CHEST;
+            net.minecraft.world.entity.EquipmentSlot legs = net.minecraft.world.entity.EquipmentSlot.LEGS;
+            net.minecraft.world.entity.EquipmentSlot feet = net.minecraft.world.entity.EquipmentSlot.FEET;
+            net.minecraft.world.entity.EquipmentSlot hand = net.minecraft.world.entity.EquipmentSlot.MAINHAND;
+            boolean done = brute.getItemBySlot(hand).is(net.minecraft.world.item.Items.NETHERITE_AXE)
+                    && brute.getItemBySlot(head).is(net.minecraft.world.item.Items.NETHERITE_HELMET)
+                    && brute.getItemBySlot(chest).is(net.minecraft.world.item.Items.NETHERITE_CHESTPLATE)
+                    && brute.getItemBySlot(legs).is(net.minecraft.world.item.Items.NETHERITE_LEGGINGS)
+                    && brute.getItemBySlot(feet).is(net.minecraft.world.item.Items.NETHERITE_BOOTS);
+            if (done) continue;                                  // 已经换好 ⇒ 不折腾 ✓
+            brute.setItemSlot(hand, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.NETHERITE_AXE));
+            brute.setItemSlot(head, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.NETHERITE_HELMET));
+            brute.setItemSlot(chest, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.NETHERITE_CHESTPLATE));
+            brute.setItemSlot(legs, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.NETHERITE_LEGGINGS));
+            brute.setItemSlot(feet, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.NETHERITE_BOOTS));
+            for (net.minecraft.world.entity.EquipmentSlot slot : net.minecraft.world.entity.EquipmentSlot.values()) {
+                brute.setDropChance(slot, 0.0F);                 // 不给你捡 ✓（与诡厄自己口径一致 ✓）
             }
         }
     }
