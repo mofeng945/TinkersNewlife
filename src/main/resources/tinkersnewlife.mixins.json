@@ -28,7 +28,8 @@
     "XaeroRadarMixin",
     "JadeObjectNameMixin",
     "MantleFluidShaderMixin",
-    "SpearChargeSlowdownMixin"
+    "SpearChargeSlowdownMixin",
+    "SpearThirdPersonPoseMixin"
   ],
   "injectors": {
     "defaultRequire": 0
