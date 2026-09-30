@@ -67,6 +67,7 @@ public final class ApostlePatch {
     public static final ForgeConfigSpec.BooleanValue ENABLED;
     public static final ForgeConfigSpec.DoubleValue TELEPORT_DAMAGE_REDUCTION;
     public static final ForgeConfigSpec.BooleanValue ARROW_AS_MAGIC;
+    public static final ForgeConfigSpec.DoubleValue DUAL_TITLE_CHANCE;
 
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -76,6 +77,11 @@ public final class ApostlePatch {
                 .comment("瞬移后 2 秒内的减伤比例（0.6 = 减伤 60%）")
                 .defineInRange("teleport_damage_reduction", 0.6D, 0.0D, 1.0D);
         ARROW_AS_MAGIC = b.comment("使徒射出的箭造成魔法伤害（默认 true）").define("arrow_as_magic", true);
+        DUAL_TITLE_CHANCE = b
+                .comment("使徒生成时额外获得【第二个头衔】的概率（0.1 = 10% ⇒ 双头衔使徒）",
+                        "第二头衔一定会真正生效：若与主头衔同属'箭矢附着'类（会互相覆盖同一个字段），",
+                        "则改抽【不灭重生／可怖之物／荣耀之名】这三个不会冲突的头衔之一。")
+                .defineInRange("dual_title_chance", 0.10D, 0.0D, 1.0D);
         b.pop();
         SPEC = b.build();
     }
@@ -280,7 +286,102 @@ public final class ApostlePatch {
                     equipMonolithBrutes(level, apostle);
                     topUpMonoliths(level, apostle, now);          // ── #10：柱子同屏上限 4 → 6 ──
                 }
+
+                // ── 双头衔（§859）：第二头衔的持续效果每 tick 兜一次 ──
+                keepSecondTitle(apostle);
             }
+        }
+    }
+
+    // ============================================================
+    //  双头衔使徒（§859，用户口径：生成时 10% ✓ 可配 ✓）
+    // ============================================================
+
+    /** 第二头衔存在我们自己的 NBT 里 ✓（诡厄只有一个 `titleNumber` 字段 ✗ 装不下两个 ✓） */
+    private static final String KEY_SECOND_TITLE = "tinkersnewlife.apostle_second_title";
+    /** 诡厄使徒头衔总数（`title.goety.0` ~ `title.goety.11` ✓ 已核语言文件 ✓） */
+    private static final int APOSTLE_TITLE_COUNT = 12;
+    /** 与主头衔**不冲突**的三个：不灭重生(0)／可怖之物(9)／荣耀之名(10) ✓ */
+    private static final int[] NON_ARROW_TITLES = new int[]{0, 9, 10};
+
+    /** 诡厄起名时用的就是 `title.goety.<n>` ✓ 我们照抄同一个键 ✓（`getString()` 两边走同一份 Language ✓ 口径一致 ✓） */
+    private static String titleText(int index) {
+        return net.minecraft.network.chat.Component.translatable("title.goety." + index).getString();
+    }
+
+    /**
+     * 是不是"箭矢附着"类头衔（1~8、11 ✓）—— 这类头衔全都写**同一个** `arrowEffect`／`fireArrows` 字段 ✗
+     * ⇒ 两个这类头衔一起给只会剩最后一个 ✓（`Apostle#TitleEffect` 就是 `switch` 里直接赋值 ✓ 已核反编译 `Apostle.java:736-791` ✓）。
+     */
+    private static boolean isArrowTitle(int index) {
+        return (index >= 1 && index <= 8) || index == 11;
+    }
+
+    /**
+     * 使徒**生成的那一刻**掷一次：{@link #DUAL_TITLE_CHANCE}（默认 10% ✓）⇒ 变成**双头衔使徒** ✓。
+     * <p>做法（**不碰诡厄内部** ✓）：
+     * <ol>
+     *   <li>只在**新生成**时掷 ✓（读档进来的按 {@code EntityJoinLevelEvent#loadedFromDisk()} 跳过 ✗ 不重掷 ✓）；
+     *   <li>只对"诡厄自己起过名"的使徒生效 ✓（自定名使徒没有头衔 ⇒ 不硬塞 ✗）；
+     *   <li>抽第二头衔 ✓；若与主头衔同属箭矢类 ⇒ 改抽 {@link #NON_ARROW_TITLES} ✓
+     *       ⇒ **保证两个头衔都真生效** ✓（否则第二个纯摆设 ✗）；
+     *   <li>写进我们的 NBT ✓（重登不丢 ✓ 也不会重掷 ✓）＋ 调一次诡厄自己的
+     *       {@code Apostle#TitleEffect(第二头衔)} ✓；
+     *   <li>名字追加第二头衔 ✓（头衔文本**自带前导空格** ✓ ⇒ 出来就是「麻风 毒蝎之尾 荣耀之名」✓）。
+     * </ol>
+     */
+    @SubscribeEvent
+    public static void onApostleSpawn(net.minecraftforge.event.entity.EntityJoinLevelEvent event) {
+        if (!enabled()) return;
+        if (event.getLevel().isClientSide() || event.loadedFromDisk()) return;
+        if (!(event.getEntity() instanceof Apostle apostle)) return;
+        net.minecraft.nbt.CompoundTag data = apostle.getPersistentData();
+        if (data.contains(KEY_SECOND_TITLE)) return;                    // 已经掷过 ⇒ 不重掷 ✓
+        double chance;
+        try {
+            chance = DUAL_TITLE_CHANCE.get();
+        } catch (Throwable ignored) {
+            chance = 0.10D;
+        }
+        if (chance <= 0.0D || apostle.getRandom().nextDouble() >= chance) return;
+
+        int primary = apostle.getTitleNumber();
+        net.minecraft.network.chat.Component custom = apostle.getCustomName();
+        if (custom == null) return;
+        // 诡厄自己拼的名字必然以"主头衔"结尾 ✓ ⇒ 不是这种名字就不插手 ✗
+        if (!custom.getString().endsWith(titleText(primary))) return;
+
+        int second = apostle.getRandom().nextInt(APOSTLE_TITLE_COUNT);
+        if (second == primary) second = (second + 1) % APOSTLE_TITLE_COUNT;
+        if (isArrowTitle(primary) && isArrowTitle(second)) {
+            int pick = apostle.getRandom().nextInt(NON_ARROW_TITLES.length);
+            second = NON_ARROW_TITLES[pick];
+            if (second == primary) second = NON_ARROW_TITLES[(pick + 1) % NON_ARROW_TITLES.length];
+        }
+        data.putInt(KEY_SECOND_TITLE, second);
+        try {
+            apostle.TitleEffect(second);
+        } catch (Throwable ignored) {
+        }
+        apostle.setCustomName(net.minecraft.network.chat.Component
+                .literal(custom.getString() + titleText(second)).withStyle(custom.getStyle()));
+        LOGGER.info("[使徒补丁] 双头衔使徒 ⇒「{}」＋「{}」（命中概率 {}%）",
+                custom.getString().trim(), titleText(second).trim(), (int) (chance * 100.0D));
+    }
+
+    /**
+     * 第二头衔的**持续维护** ✓（每 tick 一次 ✓ 只对双头衔使徒做事 ✓ 开销可忽略 ✓）。
+     * <p>为什么需要：诡厄自己的 {@code addTitleEffect()}`（每 tick 补 9／10 那两个状态 ✓）**只看主头衔** ✗
+     * ⇒ 第二头衔是 0／9／10 时得我们自己兜 ✓（{@code TitleEffect} 本身幂等 ✓ 赋值 ＋ 挂 5 tick 状态 ✓）。
+     */
+    private static void keepSecondTitle(Apostle apostle) {
+        net.minecraft.nbt.CompoundTag data = apostle.getPersistentData();
+        if (!data.contains(KEY_SECOND_TITLE)) return;
+        int second = data.getInt(KEY_SECOND_TITLE);
+        if (isArrowTitle(apostle.getTitleNumber()) && isArrowTitle(second)) return;   // 主头衔优先 ✓
+        try {
+            apostle.TitleEffect(second);
+        } catch (Throwable ignored) {
         }
     }
 
