@@ -38,6 +38,9 @@ public final class GoetyIntegration implements Integration {
         //    熔融诅咒金属、熔融黑暗金属、不洁之血、永燃圣火
         GoetyFluids.register(bus);
 
+        // 3) 使徒改造补丁（§853：默认开启，配置 tinkersnewlife-apostle.toml）
+        ApostlePatch.register();
+
         // 2) 本模组在诡厄侧没有其它需要单独注册的注册表对象：
         //  · 魔杖真形态（GoetyStaffItem）与普通形态共用同一物品 id "tinkersnewlife:modular_staff"，
         //    注册点必须留在公共侧（ModItems），只有"构造哪一类"的分叉走 IntegrationLoader.createModularStaff；
