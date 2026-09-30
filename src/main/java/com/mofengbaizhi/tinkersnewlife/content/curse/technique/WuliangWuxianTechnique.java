@@ -94,6 +94,25 @@ public final class WuliangWuxianTechnique extends BaseTechnique {
      */
     public static float onPlayerDamaged(ServerPlayer player, float amount) {
         if (!isActive(player)) return amount;
+        /*
+         * ⭐⭐§862 用户实测口径：「**没咒力了无下限还在挡伤害**」✗
+         *
+         * 根因（已实锤 ✓）：下面 `amount <= threshold` 那一支是**无条件**完全格挡、**零消耗** ✗
+         *   ⇒ 咒力见底后，所有"不高于阈值"的小伤害照样白挡 ✓
+         *   （debug 日志实锤：`[无下限] … 受击（goety.hellfire）：9.0 → 0.0（阈值 12.0，已取消=true）`
+         *     `受击（fall）：2.0 → 0.0` / `（magic）：6.0 → 0.0` —— 全都 ≤ 阈值 ⇒ 一点咒力没花 ✗）。
+         *
+         * ⇒ 补一刀前置判定：**连 1 点咒力都付不起 ⇒ 一个字都不挡** ✓（伤害原样吃下去 ✓）
+         *   ＋ 自动关闭 ＋ 提示 ✓。
+         * ⚠ 口径仍用 {@link CursePowerHelper#canPayCurse} ✓：它算的是
+         *   "核心池 ＋ 佩戴的封呪瓶 ＋ 绑定的呪蔵 ＋ 同心戒共鸣 ＋ 万法有道垫付（灵魂/法力）" ✓
+         *   ⇒ 只要还有任何一处可供咒力，就**不会**误伤（照旧抵挡 ✓）。
+         */
+        if (!CursePowerHelper.canPayCurse(player, 1.0)) {
+            deactivate(player);
+            player.displayClientMessage(Component.translatable("message.tinkersnewlife.wuxian.no_curse"), true);
+            return amount; // ← 挡不住：伤害照常落地 ✓
+        }
         double threshold = getThreshold(player);
         if (amount <= threshold) {
             return 0.0F; // 不高于阈值：完全无效，零消耗

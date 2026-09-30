@@ -244,6 +244,51 @@ public final class SpearCombatHandler {
     }
 
     // ============================================================
+    //  ⭐ §862：命中扣耐久（用户口径：「让长矛冲刺戳中人了也消耗耐久」✓）
+    // ============================================================
+
+    /** 玩家 → 这一 tick 已经扣过耐久的"目标标记" ✓（防同一发被重发时重复扣 ✗） */
+    private static final Map<UUID, String> DURABILITY_CHARGED = new ConcurrentHashMap<>();
+
+    /**
+     * <b>长矛真命中就扣 1 点耐久</b> ✓。
+     *
+     * <p>为什么原实现一点耐久都不掉（用户实测 ✓ 已查证 ✓）：
+     * {@link #stab} 里调的是 {@code stack.hurtEnemy(...)} ✗ —— 反编译实查，
+     * <b>{@code Item#hurtEnemy} 基类直接 {@code return false}、什么都不做</b>
+     * （`Item.java:193-195` ✓），而匠魂的 {@code ModifiableItem} <b>没有</b>覆写它 ✗
+     * ⇒ 对任何匠魂工具（含本长矛）那都是**空操作** ✗
+     * （匠魂自己的 {@code ToolAttackUtil.java:353} 也是这么调的 ✗ ⇒ 连普通攻击同样不掉 ✓）。
+     *
+     * <p>⇒ 统一改走**匠魂官方扣耐久**入口：
+     * {@code ToolDamageUtil.damage(ToolStack.from(武器), 1, 受击者, 武器)}
+     * （我们自己的悠悠球 `YoYoEntity:263`、飞剑 `FlyingSwordItem` 也是这么扣的 ✓）。
+     * <ul>
+     *   <li>挂在 {@code LivingHurtEvent} ⇒ 一次就覆盖**全部**命中路径 ✓：
+     *       冲刺戳中 ✓、左键点中的那个 ✓、射线额外戳中的 ✓（三条都是 {@code playerAttack} 源 ✓）；</li>
+     *   <li>只在**真造成伤害**时扣 ✓（{@code amount > 0} ✓、伤害被免疫/无敌帧挡掉时事件不会到这一层 ✓）；</li>
+     *   <li>同一 tick 内"玩家 → 同一目标"只扣一次 ✓（别的模组重发同一发时不会重复扣 ✗）；</li>
+     *   <li>坚固／不毁／{@code onDamageTool} 钩子／创造模式自动不消耗 ⇒ 全部交给匠魂内部判定 ✓；</li>
+     *   <li>工具被这一下打坏 ⇒ 匠魂自己会写 {@code tic_broken} ✓（本模组的破损模型接线照旧 ✓）。</li>
+     * </ul>
+     */
+    @SubscribeEvent
+    public static void onSpearHitDurability(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
+        if (event.getEntity().level().isClientSide) return;
+        if (event.getAmount() <= 0.0F) return;
+        if (!(event.getSource().getDirectEntity() instanceof ServerPlayer player)) return;
+        net.minecraft.world.entity.LivingEntity victim = event.getEntity();
+        if (victim == player) return;
+        ItemStack stack = player.getMainHandItem();
+        if (!(stack.getItem() instanceof SpearItem)) return;
+        if (slimeknights.tconstruct.library.tools.helper.ToolDamageUtil.isBroken(stack)) return;
+        String token = player.level().getGameTime() + "|" + victim.getUUID();
+        if (token.equals(DURABILITY_CHARGED.put(player.getUUID(), token))) return;   // 这一 tick 已扣过 ✓
+        slimeknights.tconstruct.library.tools.helper.ToolDamageUtil.damage(
+                slimeknights.tconstruct.library.tools.nbt.ToolStack.from(stack), 1, victim, stack);
+    }
+
+    // ============================================================
     //  戳刺（左键）：贴身打不到 ✓ ＋ 射程内其它目标也一并戳到 ✓
     // ============================================================
 
