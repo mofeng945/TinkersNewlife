@@ -103,9 +103,12 @@ public class SpearItem extends ModifiableItem {
     @Override
     public UseAnim getUseAnimation(ItemStack stack) {
         UseAnim ability = super.getUseAnimation(stack);
-        // §844：返回 NONE ＝ 关掉 1.20.1 那套"三叉戟端举"（用户：「太丑了」✗），
-        //       改由我们自己的客户端动画画（照原版 SpearAnimations 的数学 ✓）。
-        return ability != UseAnim.NONE ? ability : UseAnim.NONE;
+        // ⚠ §845：**先恢复成 SPEAR** ✓ —— §844 改成 NONE 后用户实测「蓄力手持看不到了」✗：
+        //   1.20.1 的 Forge 钩子 RenderHandEvent 在**所有手部变换之前**触发 ✗
+        //   ⇒ 那套"接在原版持矛基准之上"的动画数学加在了错误坐标系 ⇒ 物品被推出视野 ✗。
+        //   正解（下一步）：Forge `IClientItemExtensions#applyForgeHandTransform` 返回 true
+        //   （整个原版使用动画分支会被跳过 ✓）或矩阵补偿 V⁻¹∘D ✓。
+        return ability != UseAnim.NONE ? ability : UseAnim.SPEAR;
     }
 
     @Override
