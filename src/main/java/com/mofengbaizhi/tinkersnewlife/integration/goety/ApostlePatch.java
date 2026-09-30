@@ -68,6 +68,8 @@ public final class ApostlePatch {
     public static final ForgeConfigSpec.DoubleValue TELEPORT_DAMAGE_REDUCTION;
     public static final ForgeConfigSpec.BooleanValue ARROW_AS_MAGIC;
     public static final ForgeConfigSpec.DoubleValue DUAL_TITLE_CHANCE;
+    public static final ForgeConfigSpec.DoubleValue OVERWORLD_REGEN_PERCENT;
+    public static final ForgeConfigSpec.BooleanValue OVERWORLD_REGEN_IGNORES_SMITE;
 
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -82,6 +84,15 @@ public final class ApostlePatch {
                         "第二头衔一定会真正生效：若与主头衔同属'箭矢附着'类（会互相覆盖同一个字段），",
                         "则改抽【不灭重生／可怖之物／荣耀之名】这三个不会冲突的头衔之一。")
                 .defineInRange("dual_title_chance", 0.10D, 0.0D, 1.0D);
+        OVERWORLD_REGEN_PERCENT = b
+                .comment("主世界二阶段自回血速率：每秒回复【最大生命】的百分比（0.01 = 每秒 1%）",
+                        "0 = 关闭自回血。例：使徒 300 血 ⇒ 默认每秒回 3 点。")
+                .defineInRange("overworld_regen_percent", 0.01D, 0.0D, 1.0D);
+        OVERWORLD_REGEN_IGNORES_SMITE = b
+                .comment("自回血是否无视诡厄的『亡灵杀手禁疗』（默认 true）",
+                        "诡厄把 Apostle#heal 覆写成『被亡灵杀手打中后 1~5 秒内不回血』；",
+                        "你的武器带亡灵杀手时，尊重它 ⇒ 自回血等于没有（§860 实测）。默认无视。")
+                .define("overworld_regen_ignores_smite", true);
         b.pop();
         SPEC = b.build();
     }
@@ -213,9 +224,9 @@ public final class ApostlePatch {
                 if (!(entity instanceof Apostle apostle) || !apostle.isAlive()) continue;
                 boolean nether = level.dimension() == net.minecraft.world.level.Level.NETHER;
 
-                // ── #10（回血部分）：主世界二阶段自回血，比下界慢 ──
-                if (!nether && apostle.isSecondPhase() && now % 100L == 0L) {
-                    apostle.heal(4.0F);                      // 每 5 秒 4 点（慢速版）
+                // ── #10（回血部分）：主世界二阶段自回血（比下界慢 ✓）──
+                if (!nether && apostle.isSecondPhase() && now % 20L == 0L) {
+                    overworldRegen(apostle);
                 }
 
                 for (Player player : level.getEntitiesOfClass(Player.class, apostle.getBoundingBox().inflate(6.0D))) {
@@ -299,6 +310,8 @@ public final class ApostlePatch {
 
     /** 第二头衔存在我们自己的 NBT 里 ✓（诡厄只有一个 `titleNumber` 字段 ✗ 装不下两个 ✓） */
     private static final String KEY_SECOND_TITLE = "tinkersnewlife.apostle_second_title";
+    /** "这只使徒已经掷过双头衔骰子"标记 ✓（保证**一辈子只掷一次** ✓ 与 `loadedFromDisk` 无关 ✓） */
+    private static final String KEY_TITLE_ROLLED = "tinkersnewlife.apostle_title_rolled";
     /** 诡厄使徒头衔总数（`title.goety.0` ~ `title.goety.11` ✓ 已核语言文件 ✓） */
     private static final int APOSTLE_TITLE_COUNT = 12;
     /** 与主头衔**不冲突**的三个：不灭重生(0)／可怖之物(9)／荣耀之名(10) ✓ */
@@ -321,35 +334,51 @@ public final class ApostlePatch {
      * 使徒**生成的那一刻**掷一次：{@link #DUAL_TITLE_CHANCE}（默认 10% ✓）⇒ 变成**双头衔使徒** ✓。
      * <p>做法（**不碰诡厄内部** ✓）：
      * <ol>
-     *   <li>只在**新生成**时掷 ✓（读档进来的按 {@code EntityJoinLevelEvent#loadedFromDisk()} 跳过 ✗ 不重掷 ✓）；
-     *   <li>只对"诡厄自己起过名"的使徒生效 ✓（自定名使徒没有头衔 ⇒ 不硬塞 ✗）；
+     *   <li>⚠ <b>不再用 `loadedFromDisk()` 当开关</b> ✗（§860：实测 17 只使徒 0 命中，且那 17 只是现场刷的还是读档进来的
+     *       用日志分不出来 ✗）⇒ 改成我们自己的**一次性标记** {@link #KEY_TITLE_ROLLED} ✓
+     *       ⇒ 每只使徒**一辈子只掷一次** ✓ 与它是怎么进世界的无关 ✓；</li>
+     *   <li>只对"名字以主头衔结尾"的使徒生效 ✓（= 诡厄自己拼的名 ✓；玩家用命名牌改过名的 ⇒ 不硬塞 ✓）；
+     *       名字**还没设**（罕见）⇒ 直接返回且**不落标记** ✓，留到下次装载再判 ✓；</li>
      *   <li>抽第二头衔 ✓；若与主头衔同属箭矢类 ⇒ 改抽 {@link #NON_ARROW_TITLES} ✓
-     *       ⇒ **保证两个头衔都真生效** ✓（否则第二个纯摆设 ✗）；
+     *       ⇒ **保证两个头衔都真生效** ✓（否则第二个纯摆设 ✗）；</li>
      *   <li>写进我们的 NBT ✓（重登不丢 ✓ 也不会重掷 ✓）＋ 调一次诡厄自己的
-     *       {@code Apostle#TitleEffect(第二头衔)} ✓；
-     *   <li>名字追加第二头衔 ✓（头衔文本**自带前导空格** ✓ ⇒ 出来就是「麻风 毒蝎之尾 荣耀之名」✓）。
+     *       {@code Apostle#TitleEffect(第二头衔)} ✓；</li>
+     *   <li>名字追加第二头衔 ✓（头衔文本**自带前导空格** ✓ ⇒ 出来就是「麻风 毒蝎之尾 荣耀之名」✓）。</li>
      * </ol>
+     * <p>⚠ 每次判定都会打一行 INFO 日志 ✓（命中／未命中／跳过 + 掷点 ✓）—— 这是 §860 为了能把"到底掷没掷"看死 ✓；
+     * 确认没问题后可以删掉这几行 ✗（对性能无影响 ✓ 使徒不会刷满屏 ✓）。
      */
     @SubscribeEvent
     public static void onApostleSpawn(net.minecraftforge.event.entity.EntityJoinLevelEvent event) {
         if (!enabled()) return;
-        if (event.getLevel().isClientSide() || event.loadedFromDisk()) return;
+        if (event.getLevel().isClientSide()) return;
         if (!(event.getEntity() instanceof Apostle apostle)) return;
         net.minecraft.nbt.CompoundTag data = apostle.getPersistentData();
-        if (data.contains(KEY_SECOND_TITLE)) return;                    // 已经掷过 ⇒ 不重掷 ✓
+        if (data.contains(KEY_TITLE_ROLLED)) return;                    // 这只使徒已经掷过 ⇒ 不重掷 ✓
         double chance;
         try {
             chance = DUAL_TITLE_CHANCE.get();
         } catch (Throwable ignored) {
             chance = 0.10D;
         }
-        if (chance <= 0.0D || apostle.getRandom().nextDouble() >= chance) return;
+        if (chance <= 0.0D) return;                                     // 关了就不落标记 ⇒ 以后开了还能生效 ✓
 
         int primary = apostle.getTitleNumber();
         net.minecraft.network.chat.Component custom = apostle.getCustomName();
-        if (custom == null) return;
-        // 诡厄自己拼的名字必然以"主头衔"结尾 ✓ ⇒ 不是这种名字就不插手 ✗
-        if (!custom.getString().endsWith(titleText(primary))) return;
+        if (custom == null) return;                                     // 名字还没设 ⇒ 不落标记，下次再判 ✓
+        data.putBoolean(KEY_TITLE_ROLLED, true);                        // ⇒ 从此这只使徒只掷这一次 ✓
+        if (!custom.getString().endsWith(titleText(primary))) {          // 玩家改过名 ⇒ 不给头衔 ✓ 也不再判 ✓
+            LOGGER.info("[使徒补丁] 双头衔判定 ⇒ 跳过（不是诡厄原生名：「{}」）", custom.getString());
+            return;
+        }
+
+        double roll = apostle.getRandom().nextDouble();
+        if (roll >= chance) {
+            LOGGER.info("[使徒补丁] 双头衔判定 ⇒ 未命中（掷 {}/{}，主头衔「{}」）",
+                    String.format(java.util.Locale.ROOT, "%.3f", roll),
+                    String.format(java.util.Locale.ROOT, "%.3f", chance), titleText(primary).trim());
+            return;
+        }
 
         int second = apostle.getRandom().nextInt(APOSTLE_TITLE_COUNT);
         if (second == primary) second = (second + 1) % APOSTLE_TITLE_COUNT;
@@ -365,8 +394,43 @@ public final class ApostlePatch {
         }
         apostle.setCustomName(net.minecraft.network.chat.Component
                 .literal(custom.getString() + titleText(second)).withStyle(custom.getStyle()));
-        LOGGER.info("[使徒补丁] 双头衔使徒 ⇒「{}」＋「{}」（命中概率 {}%）",
-                custom.getString().trim(), titleText(second).trim(), (int) (chance * 100.0D));
+        LOGGER.info("[使徒补丁] 双头衔使徒 ✓ ⇒「{}」＋「{}」（命中率 {}%，掷 {}/{}）",
+                custom.getString().trim(), titleText(second).trim(), (int) (chance * 100.0D),
+                String.format(java.util.Locale.ROOT, "%.3f", roll),
+                String.format(java.util.Locale.ROOT, "%.3f", chance));
+    }
+
+    /**
+     * 主世界二阶段**自回血** ✓ —— ⚠ 必须绕开诡厄自己的"禁疗"，否则根本回不上 ✗（§860 实测根因）：
+     * <pre>
+     * // Apostle.java:1046-1050（反编译实查 ✓）
+     * public void heal(float amount) { if (!this.isSmited()) super.heal(amount); }
+     * </pre>
+     * 而 {@code isSmited()} = {@code antiRegen > 0} ✓，{@code antiRegen} 在**被带「亡灵杀手」附魔的武器打中**时
+     * 会被置 1~5 秒（`Apostle.java:986-990` ✓）⇒ 只要打使徒的武器带亡灵杀手，
+     * 任何 {@code heal()} 都**永远被吞** ✗（旧实现 `heal(4.0F)` 就是这么一次都没生效的 ✗）。
+     * <p>⇒ 改用 {@code setHealth} 直接写血 ✓（是否无视禁疗可配 ✓ 默认无视 ✓；配成 false 就还是尊重诡厄口径 ✓）。
+     * <p>速率：每 **1 秒**回 `最大生命 × overworld_regen_percent`（默认 1% ✓ 下限 1 点 ✓ 满血不动 ✓）。
+     */
+    private static void overworldRegen(Apostle apostle) {
+        double percent;
+        boolean ignoreSmite;
+        try {
+            percent = OVERWORLD_REGEN_PERCENT.get();
+            ignoreSmite = OVERWORLD_REGEN_IGNORES_SMITE.get();
+        } catch (Throwable ignored) {
+            percent = 0.01D;
+            ignoreSmite = true;
+        }
+        if (percent <= 0.0D) return;
+        float max = apostle.getMaxHealth();
+        if (apostle.getHealth() >= max) return;
+        float amount = (float) Math.max(1.0D, max * percent);
+        if (!ignoreSmite) {
+            apostle.heal(amount);                                       // 尊重诡厄"亡灵杀手禁疗" ✓
+            return;
+        }
+        apostle.setHealth(Math.min(max, apostle.getHealth() + amount));  // 绕过覆写 ✓
     }
 
     /**
