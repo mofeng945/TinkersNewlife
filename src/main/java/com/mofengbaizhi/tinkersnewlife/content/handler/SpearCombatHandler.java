@@ -8,7 +8,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -146,7 +145,6 @@ public final class SpearCombatHandler {
     public static void stopCharge(ServerPlayer player) {
         RECENT_STABBED.remove(player.getUUID());
         LAST_POS.remove(player.getUUID());       // 速度跟踪也要清 ✓
-        DIAG_LINES.remove(player.getUUID());     // 每次冲锋的诊断计数也清掉 ✓
     }
 
     /** 玩家这一 tick 的位移（格/tick ✓）—— 服务端权威 ✓ 见 {@link #LAST_POS} 的说明 ✓ */
@@ -236,41 +234,13 @@ public final class SpearCombatHandler {
             boolean landed = stab(player, stack, target, dealt, true, true, dismount, look,
                     closing * KNOCKBACK_PER_SPEED);
             if (landed) landedCount++;
-            if (landed) {
-                TinkersNewlife.LOGGER.info("[长矛·冲锋] 命中 {} 伤害 {}（相对速度 {} ⇒ {} 倍面板）",
-                        target.getName().getString(), String.format("%.1f", dealt),
-                        String.format("%.2f", closing), String.format("%.2f", factor));
-            }
             affected |= landed;
         }
-        diagnose(player, ticksUsed, velocity.dot(look) * SPEED_SCALE, bestClosing, hits, landedCount);
 
         if (affected && player.level() instanceof ServerLevel server) {
             // 原版：命中后广播实体事件 2 ＝ 暴击粒子 ✓
             server.broadcastEntityEvent(player, (byte) 2);
         }
-    }
-
-    // ============================================================
-    //  🔎 §840 诊断：**直接显示在玩家动作栏上**（用户不用翻日志 ✓）
-    //     每次冲锋最多显示 15 行，松手即停 ✓ 修好之后我会撤掉 ✗
-    // ============================================================
-
-    private static final Map<UUID, Integer> DIAG_LINES = new ConcurrentHashMap<>();
-
-    private static void diagnose(ServerPlayer player, int ticksUsed, double attackerSpeed,
-                                double closing, List<LivingEntity> hits, int landed) {
-        if (ticksUsed % 20 != 0) return;
-        int used = DIAG_LINES.getOrDefault(player.getUUID(), 0);
-        if (used >= 15) return;
-        DIAG_LINES.put(player.getUUID(), used + 1);
-
-        String text = String.format("§b[长矛·冲锋] §ft=%d §7速度§f%.1f §7相对§f%.1f §7扫到§f%d §7命中§f%d",
-                ticksUsed, attackerSpeed, closing, hits.size(), landed);
-        player.displayClientMessage(net.minecraft.network.chat.Component.literal(text), true);
-        TinkersNewlife.LOGGER.info("[长矛·冲锋] t={} 速度={} 相对速度={} 射线目标={} 命中={}",
-                ticksUsed, String.format("%.2f", attackerSpeed), String.format("%.2f", closing),
-                hits.size(), landed);
     }
 
     // ============================================================
