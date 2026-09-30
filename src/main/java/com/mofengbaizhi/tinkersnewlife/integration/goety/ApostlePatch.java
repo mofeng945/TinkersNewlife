@@ -276,8 +276,96 @@ public final class ApostlePatch {
                 purgeBuffsInHellClouds(level, apostle);
 
                 // ── #6：黑曜石柱召唤的猪灵蛮兵 ⇒ 全身下界合金甲 ＋ 下界合金斧 ──
-                if (now % 20L == 0L) equipMonolithBrutes(level, apostle);
+                if (now % 20L == 0L) {
+                    equipMonolithBrutes(level, apostle);
+                    topUpMonoliths(level, apostle, now);          // ── #10：柱子同屏上限 4 → 6 ──
+                }
             }
+        }
+    }
+
+    // ============================================================
+    //  #1 二阶段射箭顺带爆燃陷阱（§858 用户口径：30% 几率 ✓）
+    // ============================================================
+
+    /** 二阶段每次射箭 ⇒ 这个几率顺带在目标脚下放一发爆燃陷阱 ✓ */
+    private static final double ARROW_TRAP_CHANCE = 0.30D;
+
+    /**
+     * 使徒的箭出手时 ⇒ **二阶段有 30% 几率**同时在目标脚下甩一发爆燃陷阱 ✓（= 用户口径的"射箭同时施法" ✓）。
+     * <p>为什么这么实现：诡厄的"射箭"（`ApostleBowGoal` ✓）与"施法"（`CastingSpellGoal` 等 ✓）是两套争控制位的
+     * Goal ✗ ⇒ 真·同时只能改写它的 AI ✗（风险最高 ✗）；用户选了"事件层替代" ✓ ⇒
+     * 用**公开构造** `FireBlastTrap(level,x,y,z)` ＋ `setOwner(使徒)` ✓（我们在 #9 已在用同一个 ✓）⇒ 不混入内部 ✓。
+     */
+    @SubscribeEvent
+    public static void onArrowSpawn(net.minecraftforge.event.entity.EntityJoinLevelEvent event) {
+        if (!enabled()) return;
+        if (event.getLevel().isClientSide()) return;
+        if (!(event.getEntity() instanceof DeathArrow arrow)) return;
+        if (!(arrow.getOwner() instanceof Apostle apostle) || !apostle.isSecondPhase()) return;
+        if (apostle.getRandom().nextDouble() >= ARROW_TRAP_CHANCE) return;
+        LivingEntity target = apostle.getTarget();
+        if (target == null) return;
+        try {
+            com.Polarice3.Goety.common.entities.util.FireBlastTrap trap =
+                    new com.Polarice3.Goety.common.entities.util.FireBlastTrap(
+                            (ServerLevel) event.getLevel(), target.getX(), target.getY() + 0.25D, target.getZ());
+            trap.setOwner(apostle);
+            trap.setAreaOfEffect(1.5F);                            // 与诡厄非下界口径一致 ✓
+            event.getLevel().addFreshEntity(trap);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    // ============================================================
+    //  #10 柱子同屏上限 4 → 6（§858 用户口径 ✓ 两个维度都生效 ✓）
+    // ============================================================
+
+    /** 诡厄原版上限是 4（`MonolithSpellGoal.canUse` 里 `j < 4` ✓ 已核反编译 ✓）⇒ 按用户口径提到 6 ✓ */
+    private static final int MONOLITH_CAP = 6;
+    /** 补位间隔（tick ✓ 5 秒补一根 ✓） */
+    private static final int MONOLITH_TOPUP_TICKS = 100;
+    /** 使徒 → 下次可补位的时刻 ✓ */
+    private static final Map<UUID, Long> MONOLITH_TOPUP_AT = new ConcurrentHashMap<>();
+
+    /**
+     * 柱子同屏上限 4 → 6 ✓（用户口径 ✓ **主世界与下界都生效** ✓）。
+     * <p>不走 Mixin ✓：诡厄那套 `MonolithSpellGoal` 只在 `j < 4` 时才施法 ✗；
+     * 我们**照它自己的写法**（`Apostle.java:2198-2207` ✓ 已核反编译 ✓）在二阶段补位到 6 ✓：
+     * 随机 12~24 格偏移 ✓ `BlockFinder.SummonRadiusSight` 找落点 ✓ `setTrueOwner` ＋ `finalizeSpawn` ＋ 入世界 ✓。
+     * <p>只补**二阶段 且 有攻击目标**的使徒 ✓ 每 5 秒最多一根 ✓ ⇒ 不会一口气铺满 ✓ 也不会空场刷柱 ✓。
+     */
+    private static void topUpMonoliths(ServerLevel level, Apostle apostle, long now) {
+        if (!apostle.isSecondPhase() || apostle.getTarget() == null) return;
+        java.util.List<com.Polarice3.Goety.common.entities.neutral.AbstractObsidianMonolith> alive;
+        try {
+            alive = level.getEntitiesOfClass(com.Polarice3.Goety.common.entities.neutral.AbstractObsidianMonolith.class,
+                    apostle.getBoundingBox().inflate(64.0D),
+                    monolith -> monolith.isAlive() && monolith.getTrueOwner() == apostle);
+        } catch (Throwable t) {
+            return;
+        }
+        if (alive.size() >= MONOLITH_CAP) return;
+        Long next = MONOLITH_TOPUP_AT.get(apostle.getUUID());
+        if (next != null && now < next) return;
+        MONOLITH_TOPUP_AT.put(apostle.getUUID(), now + MONOLITH_TOPUP_TICKS);
+        try {
+            int k = (12 + apostle.getRandom().nextInt(12)) * (apostle.getRandom().nextBoolean() ? -1 : 1);
+            int l = (12 + apostle.getRandom().nextInt(12)) * (apostle.getRandom().nextBoolean() ? -1 : 1);
+            net.minecraft.core.BlockPos.MutableBlockPos around =
+                    apostle.blockPosition().offset(k, 0, l).mutable();
+            com.Polarice3.Goety.common.entities.hostile.servants.ObsidianMonolith monolith =
+                    new com.Polarice3.Goety.common.entities.hostile.servants.ObsidianMonolith(
+                            com.Polarice3.Goety.common.entities.ModEntityType.OBSIDIAN_MONOLITH.get(), level);
+            net.minecraft.core.BlockPos pos = com.Polarice3.Goety.utils.BlockFinder
+                    .SummonRadiusSight(around, apostle, monolith, level, 5);
+            monolith.moveTo(pos, 0.0F, 0.0F);
+            monolith.setTrueOwner(apostle);
+            monolith.finalizeSpawn(level, level.getCurrentDifficultyAt(around),
+                    net.minecraft.world.entity.MobSpawnType.MOB_SUMMONED, null, null);
+            level.addFreshEntity(monolith);
+            LOGGER.info("[使徒补丁] #10 柱子补位 ⇒ 同屏 {} → {}", alive.size(), alive.size() + 1);
+        } catch (Throwable ignored) {
         }
     }
 
