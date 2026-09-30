@@ -69,29 +69,32 @@ public final class SpearCombatHandler {
     //      dismount 2.5s 门槛 8.0 ｜ knockback 6.75s 门槛 5.1 ｜ damage 11.25s 门槛(相对) 4.6
     // ============================================================
 
-    /** 前摇：这段时间内冲锋一点效果都没有 ✓（原版 delayTicks ＝ delay×20 ✓） */
+    // ============================================================
+    //  §842 用户口径：**伤害由"与目标的相对速度"决定，越快越高** ＋ **最低 0.1 倍** ✓
+    //    因此原版那套"时间窗 + 速度门槛"（§836 那版照抄的 4.6/5.1/8.0 ✗）**全部撤掉** ✗：
+    //      · 不再有伤害窗/击退窗的"过期失效" ✗
+    //      · 不再有"低于门槛就 0 伤害"的开关式判定 ✗
+    //    现在的口径 ✓：**伤害 = 面板攻击力 × 速度系数** ✓
+    //      速度系数 = max(0.1, 相对速度 / 6)（0.1 ＝ 用户指定的**最低 0.1 倍** ✓）
+    //      ⇒ 相对速度 0 ⇒ 0.1 倍 ✓；冲刺(≈5.6) ⇒ ≈0.93 倍 ✓；骑马(≈12) ⇒ ≈2 倍 ✓ 越快越高 ✓
+    // ============================================================
+
+    /** 前摇：这段时间内冲锋一点效果都没有 ✓（原版 delayTicks ＝ delay×20 ✓ 0.6 秒 ✓） */
     public static final int DELAY_TICKS = 12;
     /** 同一目标两次被戳的最小间隔 ✓（原版 contactCooldownTicks ＝ 10 ✓） */
     public static final int CONTACT_COOLDOWN_TICKS = 10;
 
-    /** 下马窗：2.5 秒（原版 dismountTime×20 ✓）
-     *  ⚠ §840 门槛**从原版 8.0 降到 6.0** ✗：原版那套数值是给"骑马冲锋"设计的，
-     *  徒步玩家冲刺（≈5.6）连"击退"都够不到 ⇒ 用户实测"冲上去没伤害" ✓ ⇒ 按用户口径下调 ✓ */
-    public static final int DISMOUNT_WINDOW = 50;
+    /** 下马门槛（相对速度 ✓ 单位同原版"×20"⇒ 6.0 ≈ 0.3 格/tick ✓）：够快才把骑手挑下来 ✓ */
     public static final float DISMOUNT_MIN_SPEED = 6.0F;
-    /** 击退窗：6.75 秒 ✓ ⚠ 门槛 5.1 → **2.0**（原版只有骑马够得到 ✗ 徒步冲刺 5.6 也勉强 ✓） */
-    public static final int KNOCKBACK_WINDOW = 135;
-    public static final float KNOCKBACK_MIN_SPEED = 2.0F;
-    /** 伤害窗：11.25 秒 ✓ ⚠ 相对速度门槛 4.6 → **2.0**（原版走路 2~2.6 打不动 ✗ 徒步冲刺 5.6 ✓） */
-    public static final int DAMAGE_WINDOW = 225;
-    public static final float DAMAGE_MIN_RELATIVE_SPEED = 2.0F;
 
-    /** 冲锋伤害倍率 ✓（原版 damageMultiplier ✓ 铁 = 0.95 ✓） */
-    public static final float DAMAGE_MULTIPLIER = 0.95F;
+    /** ⭐ **最低伤害倍率 0.1**（用户口径 ✓）：无论相对速度多慢，冲锋至少有 0.1 倍面板伤害 ✓ */
+    public static final float MIN_DAMAGE_FACTOR = 0.1F;
+    /** 速度系数斜率：相对速度每 +1（×20 单位）⇒ 多 1/6 倍面板 ✓（冲刺 5.6 ⇒ ≈0.93 倍 ✓ 骑马 12 ⇒ ≈2 倍 ✓） */
+    public static final float DAMAGE_FACTOR_PER_SPEED = 1.0F / 6.0F;
     /** 原版：速度口径 ×20 ✓（块/tick → "每秒" 量级 ✓） */
     public static final double SPEED_SCALE = 20.0D;
-    /** 原版给玩家的判定系数 1.0 ✓（怪物 0.2 ✓ 我们只服务玩家 ✓） */
-    public static final double ACTION_FACTOR = 1.0D;
+    /** 击退强度随相对速度递增 ✓（越快撞得越狠 ✓） */
+    public static final double KNOCKBACK_PER_SPEED = 0.10D;
 
     /** 原版 {@code AttackRange(2.0, 4.5, 2.0, 6.5, 0.125, 0.5)} ✓ */
     public static final double MIN_RANGE = 2.0D;
@@ -153,6 +156,28 @@ public final class SpearCombatHandler {
     }
 
     /**
+     * 任意实体的这一 tick 位移（格/tick ✓）—— §842 相对速度要用 ✓。
+     *
+     * <p>⚠ 分两种情况（§841 查证的现实 ✓）：
+     * <ul>
+     *   <li><b>玩家</b>（含 PvP 里的目标玩家）：服务端 {@code deltaMovement} **恒约 0** ✗
+     *       ⇒ 一律用我们自己的位置跟踪 ✓（{@link #LAST_POS} ✓）；</li>
+     *   <li><b>其它生物</b>：服务端是**真的在模拟**它们 ✓ ⇒ {@code getDeltaMovement()} 有效 ✓
+     *       （乘客取根载具 ✓ 照原版 {@code getMotion} 的口径 ✓）。</li>
+     * </ul>
+     */
+    private static Vec3 velocityOf(net.minecraft.world.entity.Entity entity) {
+        if (entity instanceof ServerPlayer serverPlayer) {
+            Vec3 now = serverPlayer.position();
+            Vec3 last = LAST_POS.put(serverPlayer.getUUID(), now);
+            return last == null ? Vec3.ZERO : now.subtract(last);
+        }
+        net.minecraft.world.entity.Entity source = entity;
+        if (source.isPassenger()) source = source.getRootVehicle();
+        return source.getDeltaMovement();
+    }
+
+    /**
      * 冲锋每 tick 的结算（由 {@code SpearItem#onUseTick} 调用 ✓ 只在服务端 ✓）。
      *
      * @param ticksRemaining 使用剩余刻（原版同一口径 ✓）
@@ -165,46 +190,55 @@ public final class SpearCombatHandler {
         if (ticksUsed < DELAY_TICKS) return;            // 前摇内：什么都不做 ✓
         ticksUsed -= DELAY_TICKS;
 
-        if (ticksUsed > DAMAGE_WINDOW) return;          // 伤害窗也过了 ⇒ 力竭：等松手重来 ✓
-
         Vec3 look = player.getLookAngle();
         Vec3 velocity = playerVelocity(player);                 // ⭐ §841 自己跟踪的位移 ✓（服务端玩家的 deltaMovement 是 0 ✗）
-        double attackerSpeed = look.dot(velocity.scale(SPEED_SCALE));
         List<LivingEntity> hits = targetsAlong(player, look, CHARGE_MIN_RANGE, velocity);
 
         boolean affected = false;
         int landedCount = 0;
+        double bestClosing = 0.0D;
         for (LivingEntity target : hits) {
             if (wasRecentlyStabbed(player, target)) continue;
 
-            double targetSpeed = look.dot(motionOf(target));
-            double relativeSpeed = Math.max(0.0D, attackerSpeed - targetSpeed);
+            /*
+             * ⭐⭐§842 **用户口径**：「**伤害应当随着目标与持有者的相对速度决定，相对速度越快伤害越高**」✓
+             *
+             * ⇒ 不再是"过门槛才有伤害"的开关式判定 ✗（§836~§841 那套 `relativeSpeed >= 2.0` ✗
+             *   会变成"慢一点就一点伤害都没有"✗），改成**连续**的：
+             *   ① 相对速度 = **（我的位移 − 目标的位移）在"我→目标"方向上的投影** ✓
+             *      （＝双方"正在接近"的速度 ✓ 迎面撞上最大 ✓ 同向追赶最小 ✓ 原版也是这个量 ✓）；
+             *   ② 伤害 = **攻击力 ＋ 相对速度 × 倍率** ✓ —— 越快越高 ✓ 慢也有基础伤害 ✓（不再是 0 ✗）；
+             *   ③ 击退强度也随相对速度递增 ✓；下马只在够快时触发 ✓；
+             *   ④ **不再有时间窗衰减** ✗（原版那三个"时间窗"是它自己的设计 ✓，与用户口径冲突 ⇒ 去掉 ✓）。
+             */
+            Vec3 toTarget = target.getBoundingBox().getCenter().subtract(player.getEyePosition());
+            double distance = toTarget.length();
+            if (distance < 1.0E-4D) continue;
+            Vec3 direction = toTarget.scale(1.0D / distance);
 
-            boolean dismount = ticksUsed <= DISMOUNT_WINDOW
-                    && attackerSpeed >= DISMOUNT_MIN_SPEED * ACTION_FACTOR;
-            boolean knockback = ticksUsed <= KNOCKBACK_WINDOW
-                    && attackerSpeed >= KNOCKBACK_MIN_SPEED * ACTION_FACTOR;
-            boolean damage = ticksUsed <= DAMAGE_WINDOW
-                    && relativeSpeed >= DAMAGE_MIN_RELATIVE_SPEED * ACTION_FACTOR;
-            // ⚠ §840：只有**真生效**才记冷却 ✓ —— 原版是"扫到就记"✗，
-            //   那会导致"速度不够的那一瞬间把目标锁 10 tick"✗ ⇒ 一直冲也打不出来 ✗
-            if (!dismount && !knockback && !damage) continue;
+            Vec3 targetVelocity = velocityOf(target);
+            double closing = velocity.subtract(targetVelocity).dot(direction) * SPEED_SCALE;   // ×20 ⇒ 与原版同量级 ✓
+            if (closing < 0.0D) closing = 0.0D;                                                // 正在互相远离 ⇒ 0 ✓
+            if (closing > bestClosing) bestClosing = closing;
 
-            rememberStabbed(player, stabbed, target);
+            rememberStabbed(player, stabbed, target);        // 只在真打出去时才记 10 tick 冷却 ✓（§840 ✓）
 
-            // 原版：伤害 = 攻击力（基值） + floor(相对速度 × 倍率) ✓ 加法 ✓
-            float dealt = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE)
-                    + (float) Mth.floor(relativeSpeed * DAMAGE_MULTIPLIER);
-            boolean landed = stab(player, stack, target, dealt, damage, knockback, dismount, look);
+            // ⭐ §842：伤害 = **面板攻击力 × 速度系数** ✓ 速度系数下限 **0.1 倍**（用户口径 ✓）越快越高 ✓
+            float base = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE);
+            float factor = Math.max(MIN_DAMAGE_FACTOR, (float) (closing * DAMAGE_FACTOR_PER_SPEED));
+            float dealt = base * factor;
+            boolean dismount = closing >= DISMOUNT_MIN_SPEED;                                 // 够快才把人挑下马 ✓
+            boolean landed = stab(player, stack, target, dealt, true, true, dismount, look,
+                    closing * KNOCKBACK_PER_SPEED);
             if (landed) landedCount++;
             if (landed) {
-                TinkersNewlife.LOGGER.info("[长矛·冲锋] 命中 {} 伤害 {}（相对速度 {} t={}）",
+                TinkersNewlife.LOGGER.info("[长矛·冲锋] 命中 {} 伤害 {}（相对速度 {} ⇒ {} 倍面板）",
                         target.getName().getString(), String.format("%.1f", dealt),
-                        String.format("%.2f", relativeSpeed), ticksUsed);
+                        String.format("%.2f", closing), String.format("%.2f", factor));
             }
             affected |= landed;
         }
-        diagnose(player, ticksUsed, attackerSpeed, hits, landedCount);
+        diagnose(player, ticksUsed, velocity.dot(look) * SPEED_SCALE, bestClosing, hits, landedCount);
 
         if (affected && player.level() instanceof ServerLevel server) {
             // 原版：命中后广播实体事件 2 ＝ 暴击粒子 ✓
@@ -220,18 +254,18 @@ public final class SpearCombatHandler {
     private static final Map<UUID, Integer> DIAG_LINES = new ConcurrentHashMap<>();
 
     private static void diagnose(ServerPlayer player, int ticksUsed, double attackerSpeed,
-                                List<LivingEntity> hits, int landed) {
+                                double closing, List<LivingEntity> hits, int landed) {
         if (ticksUsed % 20 != 0) return;
         int used = DIAG_LINES.getOrDefault(player.getUUID(), 0);
         if (used >= 15) return;
         DIAG_LINES.put(player.getUUID(), used + 1);
 
-        String text = String.format("§b[长矛·冲锋] §ft=%d §7速度§f%.1f §7扫到§f%d §7命中§f%d",
-                ticksUsed, attackerSpeed, hits.size(), landed);
+        String text = String.format("§b[长矛·冲锋] §ft=%d §7速度§f%.1f §7相对§f%.1f §7扫到§f%d §7命中§f%d",
+                ticksUsed, attackerSpeed, closing, hits.size(), landed);
         player.displayClientMessage(net.minecraft.network.chat.Component.literal(text), true);
-        TinkersNewlife.LOGGER.info("[长矛·冲锋] t={} 视线速度={} 射线目标={} 命中={} (门槛 伤害{} 击退{} 下马{})",
-                ticksUsed, String.format("%.2f", attackerSpeed), hits.size(), landed,
-                DAMAGE_MIN_RELATIVE_SPEED, KNOCKBACK_MIN_SPEED, DISMOUNT_MIN_SPEED);
+        TinkersNewlife.LOGGER.info("[长矛·冲锋] t={} 速度={} 相对速度={} 射线目标={} 命中={}",
+                ticksUsed, String.format("%.2f", attackerSpeed), String.format("%.2f", closing),
+                hits.size(), landed);
     }
 
     // ============================================================
@@ -280,7 +314,7 @@ public final class SpearCombatHandler {
             if (target == clicked) continue;
             if (wasRecentlyStabbed(serverPlayer, target)) continue;
             rememberStabbed(serverPlayer, stabbed, target);
-            extra |= stab(serverPlayer, stack, target, damage, true, true, false, look);
+            extra |= stab(serverPlayer, stack, target, damage, true, true, false, look, 0.0D);
         }
         if (extra) serverPlayer.level().broadcastEntityEvent(serverPlayer, (byte) 2);
     }
@@ -334,22 +368,16 @@ public final class SpearCombatHandler {
         return true;
     }
 
-    /** 原版 {@code KineticWeapon#getMotion}：非玩家的乘客取根载具 ⇒ 骑马冲锋按马的速度算 ✓ */
-    private static Vec3 motionOf(Entity entity) {
-        Entity source = entity;
-        if (!(source instanceof Player) && source.isPassenger()) {
-            source = source.getRootVehicle();
-        }
-        return source.getDeltaMovement().scale(SPEED_SCALE);
-    }
-
     // ============================================================
     //  结算（原版 LivingEntity#stabAttack 的等价实现）
     // ============================================================
 
+    /**
+     * @param knockbackStrength 击退强度 ✓ —— §842：冲锋按**相对速度**给（越快撞得越狠 ✓）；戳刺用原版基础值 ✓
+     */
     private static boolean stab(ServerPlayer player, ItemStack stack, LivingEntity target,
                                 float damage, boolean dealsDamage, boolean dealsKnockback,
-                                boolean dismounts, Vec3 look) {
+                                boolean dismounts, Vec3 look, double knockbackStrength) {
         boolean affected = dealsKnockback;
         boolean dealtDamage = false;
         if (dealsDamage) {
@@ -358,7 +386,7 @@ public final class SpearCombatHandler {
         }
         if (dealsKnockback) {
             // 原版 causeExtraKnockback(0.4 + 击退属性) ⇒ 在原有动量**之上**沿视线推 ✓
-            double strength = 0.4D + player.getAttributeValue(Attributes.ATTACK_KNOCKBACK);
+            double strength = 0.4D + player.getAttributeValue(Attributes.ATTACK_KNOCKBACK) + knockbackStrength;
             Vec3 push = new Vec3(look.x, 0.0D, look.z).normalize().scale(strength);
             target.push(push.x, 0.1D, push.z);
             target.hurtMarked = true;
