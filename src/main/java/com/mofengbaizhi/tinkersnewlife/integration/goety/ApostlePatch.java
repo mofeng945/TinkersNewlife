@@ -70,6 +70,7 @@ public final class ApostlePatch {
     public static final ForgeConfigSpec.DoubleValue DUAL_TITLE_CHANCE;
     public static final ForgeConfigSpec.DoubleValue OVERWORLD_REGEN_PERCENT;
     public static final ForgeConfigSpec.BooleanValue OVERWORLD_REGEN_IGNORES_SMITE;
+    public static final ForgeConfigSpec.DoubleValue APOSTLE_DAMAGE_MULTIPLIER;
 
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -93,6 +94,11 @@ public final class ApostlePatch {
                         "诡厄把 Apostle#heal 覆写成『被亡灵杀手打中后 1~5 秒内不回血』；",
                         "你的武器带亡灵杀手时，尊重它 ⇒ 自回血等于没有（§860 实测）。默认无视。")
                 .define("overworld_regen_ignores_smite", true);
+        APOSTLE_DAMAGE_MULTIPLIER = b
+                .comment("使徒造成的伤害倍率（默认 1.5 = 上调 50%）",
+                        "涵盖使徒的全部伤害来源：近战、箭、法术、狱云、爆燃陷阱等（都按这个倍率乘一次）。",
+                        "改成 1.0 = 关闭；改 2.0 = 翻倍。")
+                .defineInRange("damage_multiplier", 1.5D, 0.0D, 100.0D);
         b.pop();
         SPEC = b.build();
     }
@@ -116,6 +122,34 @@ public final class ApostlePatch {
         } catch (Throwable ignored) {
             return true;                                  // 配置还没加载时按"默认开启"走 ✓
         }
+    }
+
+    // ============================================================
+    //  §863 使徒伤害倍率（用户口径：上调 1.5 倍 ✓ 可配 ✓）
+    // ============================================================
+
+    /** 正在"同额度重发"箭伤（#11 改魔法伤害那一下 ✓）⇒ 重发的那一发**不再乘一次倍率** ✗ */
+    private static boolean REHITTING = false;
+
+    /**
+     * 这一下是不是**使徒造成的** ✓ —— 三种都算：
+     * <ol>
+     *   <li>直接由使徒本体打出（近战 ⇒ {@code getEntity()} 就是它 ✓）；</li>
+     *   <li>投射物／法术由使徒发射（{@code getDirectEntity()} 是它 ✓）；</li>
+     *   <li>带主人的实体（诡厄的 {@code HellCloud}／{@code FireBlastTrap}／{@code DeathArrow} 等
+     *       ⇒ {@link net.minecraft.world.entity.OwnableEntity#getOwner()} 是它 ✓）。</li>
+     * </ol>
+     */
+    private static boolean isFromApostle(net.minecraft.world.damagesource.DamageSource src) {
+        if (src == null) return false;
+        if (src.getEntity() instanceof Apostle || src.getDirectEntity() instanceof Apostle) return true;
+        for (Entity e : new Entity[]{src.getEntity(), src.getDirectEntity()}) {
+            if (e instanceof net.minecraft.world.entity.OwnableEntity owned
+                    && owned.getOwner() instanceof Apostle) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // ============================================================
@@ -149,17 +183,38 @@ public final class ApostlePatch {
     @SubscribeEvent
     public static void onLivingHurt(LivingHurtEvent event) {
         if (!enabled()) return;
+        LivingEntity victim = event.getEntity();
+        net.minecraft.world.damagesource.DamageSource src = event.getSource();
 
-        // ── #11：使徒的箭 ⇒ 改成魔法伤害（同额度重发 ✓）──────────────────────
+        // ── §863：使徒造成的伤害 ×倍率（用户口径默认 1.5 倍 ✓ 可配 ✓）──────────
+        //   ⚠ REHITTING 守卫：下面 #11 会把箭伤"同额度重发"成魔法伤害 ⇒ 重发那一发**不再乘一次** ✗
+        //     （否则一次命中被乘两遍 ⇒ 1.5×1.5 = 2.25 ✗）
+        if (!REHITTING && event.getAmount() > 0.0F && !(victim instanceof Apostle)) {
+            double mult;
+            try {
+                mult = APOSTLE_DAMAGE_MULTIPLIER.get();
+            } catch (Throwable ignored) {
+                mult = 1.5D;
+            }
+            if (mult != 1.0D && isFromApostle(src)) {
+                event.setAmount((float) (event.getAmount() * mult));
+            }
+        }
+
+        // ── #11：使徒的箭 ⇒ 改成魔法伤害（同额度重发 ✓ 不再二次乘倍率 ✓）──────────────────────
         if (ARROW_AS_MAGIC.get()
                 && event.getSource().getDirectEntity() instanceof DeathArrow arrow
                 && arrow.getOwner() instanceof Apostle apostle) {
-            LivingEntity victim = event.getEntity();
             float amount = event.getAmount();
             if (amount > 0.0F && !victim.level().isClientSide) {
                 event.setCanceled(true);
                 victim.invulnerableTime = 0;
-                victim.hurt(victim.damageSources().indirectMagic(apostle, apostle), amount);
+                REHITTING = true;
+                try {
+                    victim.hurt(victim.damageSources().indirectMagic(apostle, apostle), amount);
+                } finally {
+                    REHITTING = false;
+                }
             }
             return;
         }
