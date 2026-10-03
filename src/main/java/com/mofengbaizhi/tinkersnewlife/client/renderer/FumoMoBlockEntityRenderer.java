@@ -32,7 +32,7 @@ public class FumoMoBlockEntityRenderer implements BlockEntityRenderer<FumoMoBloc
     private final PlayerModel<?> model;
 
     public FumoMoBlockEntityRenderer(BlockEntityRendererProvider.Context ctx) {
-        this.model = tnl$buildModel();   // §887 自建网格（帽子层加厚 ✓）
+        this.model = buildDollModel();   // §887 自建网格（帽子层加厚 ✓）
     }
 
     /**
@@ -41,8 +41,10 @@ public class FumoMoBlockEntityRenderer implements BlockEntityRenderer<FumoMoBloc
      * <p>做法：拿 {@code PlayerModel.createMesh(...)} 的网格 ⇒ 在**烘焙之前**
      * 用 {@code PartDefinition#addOrReplaceChild} 把 {@code hat} 换成**外扩 0.6px** 的版本 ✓
      * ⇒ 再自己 {@code bakeRoot()} ✓。UV 仍是标准帽子层（32,0 起 ✓）⇒ 不会错位 ✓。
+     * <p>§901：改成 <b>public</b> —— 头顶那条路（原版头盔槽 / Curios）也用它建**同一只**玩偶 ✓
+     * ⇒ "玩偶长什么样"从此只有一处定义 ✓（别再手搓第二份模型 ✗ 用户点出来的 ✓）。
      */
-    private static PlayerModel<?> tnl$buildModel() {
+    public static PlayerModel<?> buildDollModel() {
         net.minecraft.client.model.geom.builders.MeshDefinition mesh =
                 PlayerModel.createMesh(net.minecraft.client.model.geom.builders.CubeDeformation.NONE, false);
         try {
@@ -72,12 +74,14 @@ public class FumoMoBlockEntityRenderer implements BlockEntityRenderer<FumoMoBloc
     }
 
     /**
-     * <b>玩偶姿势的唯一实现</b>（§881 用户口径：「物品栏显示和方块显示统一」✓）——
-     * 方块渲染器与<b>物品栏渲染器</b>都调这一个方法 ✓ ⇒ 两边长得一模一样 ✓，
-     * 以后调姿势只改这里一处 ✓。
+     * <b>玩偶"长什么样"的唯一实现</b>（§881 用户口径：「物品栏显示和方块显示统一」✓，§901 再扩到头顶 ✓）——
+     * 方块渲染器、物品栏渲染器、<b>头顶（Curios ＋ 原版头盔槽）</b> 全都调这一个方法 ✓，
+     * 以后调玩偶形象只改这里一处 ✓。
+     * <p>⚠ 本方法只管<b>摆姿势</b>（头身比 / 坐姿 / 外层可见），<b>不管"摆在哪"</b> ——
+     * 方块那条路的"摆在哪"在 {@link #renderDoll} 里（0.5 缩放 ＋ y 翻转 ＋ 落到方块上 ✓），
+     * 头顶那条路的"摆在哪"在 {@link FumoMoHeadRender} 里（落到玩家头顶 ✓）。
      */
-    public static void renderDoll(PlayerModel<?> model, PoseStack pose, MultiBufferSource buffer, int light, int overlay) {
-        pose.pushPose();
+    public static void poseDoll(PlayerModel<?> model) {
         // ⓿ §883：把第二层（帽子/夹克/左右袖/左右裤）显式设为可见 + 不跳过绘制
         //    实测：她皮肤里帽子层有 178 个不透明像素（确实画了帽子），但游戏里看不到
         //    ⇒ 只能是这些「外层部件」被置成了不可见（原版有若干状态会藏帽子）
@@ -88,17 +92,7 @@ public class FumoMoBlockEntityRenderer implements BlockEntityRenderer<FumoMoBloc
             part.skipDraw = false;
         }
 
-        // ① 幼年体比例 ✓
-        pose.scale(0.5F, 0.5F, 0.5F);
-        // ② ⚠ 实体模型的**标准翻转**（§882 修的 bug）：MC 的实体模型是 **Y 轴向下**的（root 在 y=24＝脚下 ✓），
-        //    原版 LivingEntityRenderer 靠 `scale(-1,-1,1) + translate(0,-1.501,0)` 把它翻成"站在地面上" ✓
-        //    —— 我 §880 漏了这一步 ⇒ 玩偶是**倒着**的 ✗（用户实测 ✓）。
-        pose.scale(-1.0F, -1.0F, 1.0F);
-        pose.translate(0.0D, -1.501D, 0.0D);
-        // ③ 坐姿微调（注意：这一步之后 y 仍是"模型空间"的向下 ✓ 减 y = 抬高 ✓）
-        pose.translate(0.0D, -0.06D, 0.0D);
-
-        // ④ §884 头身比：照「玩偶」把**头放大**（娃娃感的关键 ✓）
+        // ① §884 头身比：照「玩偶」把**头放大**（娃娃感的关键 ✓）
         //    数值集中在这里，想调只管改这几个 ✓
         final float HEAD_SCALE = 1.40F;   // 头放大倍数（1.0 = 原版比例）
         final float LIMB_SCALE = 0.92F;   // 四肢略收细 ⇒ 显得头更大 ✓
@@ -112,24 +106,42 @@ public class FumoMoBlockEntityRenderer implements BlockEntityRenderer<FumoMoBloc
             limb.zScale = LIMB_SCALE;
         }
 
-        // ④ 双腿前伸（坐在地上 ✓）
+        // ② 双腿前伸（坐姿 ✓）
         model.rightLeg.xRot = -1.5F;
         model.leftLeg.xRot = -1.5F;
         model.rightLeg.yRot = 0.06F;
         model.leftLeg.yRot = -0.06F;
-        // ⑤ ⚠ 腿部**外层**（裤子）是**独立部件**，不跟着腿转 ✗ ⇒ 必须手动同步 ✓（§882 用户实测 ✓）
+        // ③ ⚠ 腿部**外层**（裤子）是**独立部件**，不跟着腿转 ✗ ⇒ 必须手动同步 ✓（§882 用户实测 ✓）
         syncLeg(model.rightLeg, model.rightPants);
         syncLeg(model.leftLeg, model.leftPants);
-        // ⑥ 手自然垂在前侧 ✓（袖子若是独立部件也一并同步 ✓）
+        // ④ 手自然垂在前侧 ✓（袖子若是独立部件也一并同步 ✓）
         model.rightArm.xRot = 0.18F;
         model.leftArm.xRot = 0.18F;
         model.rightArm.zRot = 0.08F;
         model.leftArm.zRot = -0.08F;
         syncArm(model.rightArm, model.rightSleeve);
         syncArm(model.leftArm, model.leftSleeve);
-        // ⑦ 头略微抬起（看着你 ✓）；帽子是头的子部件 ⇒ 自动跟随 ✓
+        // ⑤ 头略微抬起（看着你 ✓）；帽子是头的子部件 ⇒ 自动跟随 ✓
         model.head.xRot = -0.12F;
+    }
 
+    /**
+     * <b>方块里的玩偶</b>：把玩偶摆到方块上 —— "摆在哪"＝ 0.5 缩放 ＋ 实体模型那套 y 翻转 ＋
+     * {@code translate(0,-1.501,0)}（让它"坐"在方块上 ✓）＋ 1px 下沉 ✓；姿势交给 {@link #poseDoll} ✓。
+     */
+    public static void renderDoll(PlayerModel<?> model, PoseStack pose, MultiBufferSource buffer, int light, int overlay) {
+        pose.pushPose();
+        // ① 幼年体比例 ✓
+        pose.scale(0.5F, 0.5F, 0.5F);
+        // ② ⚠ 实体模型的**标准翻转**（§882 修的 bug）：MC 的实体模型是 **Y 轴向下**的（root 在 y=24＝脚下 ✓），
+        //    原版 LivingEntityRenderer 靠 `scale(-1,-1,1) + translate(0,-1.501,0)` 把它翻成"站在地面上" ✓
+        //    —— 我 §880 漏了这一步 ⇒ 玩偶是**倒着**的 ✗（用户实测 ✓）。
+        pose.scale(-1.0F, -1.0F, 1.0F);
+        pose.translate(0.0D, -1.501D, 0.0D);
+        // ③ 坐姿微调（注意：这一步之后 y 仍是"模型空间"的向下 ✓ 减 y = 抬高 ✓）
+        pose.translate(0.0D, -0.06D, 0.0D);
+
+        poseDoll(model);
         tnl$logOnce(model);
         model.renderToBuffer(pose, buffer.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)),
                 light, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);

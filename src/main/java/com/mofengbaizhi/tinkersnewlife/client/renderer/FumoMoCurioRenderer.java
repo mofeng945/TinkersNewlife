@@ -13,8 +13,8 @@ import top.theillusivec4.curios.api.client.ICurioRenderer;
 /**
  * <b>戴在头上的 fufu（Curios 头部饰品栏）</b>（§894 起，§898 修真根因，§899 抽出共用代码）——
  * 结构照诡厄本体的 {@code PlushieCurioRenderer}（**只学结构** ✓ 不抄任何资源 ✓ 那几个玩偶是 ARR ✗）：
- * 取玩家的头 ⇒ {@code head.translateAndRotate(pose)} ⇒ 画我们自己的
- * {@link com.mofengbaizhi.tinkersnewlife.client.model.FumoMoHeadModel}（只含 fufu 的空壳人形 ✓）。
+ * 取玩家的头 ⇒ {@code head.translateAndRotate(pose)} ⇒ 画玩偶 ✓
+ * （玩偶本体就是方块/物品栏那一只 `PlayerModel` ✓ 见 {@link FumoMoHeadRender}）。
  * <p>真正的绘制在 {@link FumoMoHeadRender}（与原版头盔槽那条路**共用** ✓）。
  * <p>⚠ {@code CuriosLayer} 自身**不做任何 PoseStack 变换**（已反汇编确认 ✓）⇒ 我们拿到的就是实体模型根空间 ✓。
  */
