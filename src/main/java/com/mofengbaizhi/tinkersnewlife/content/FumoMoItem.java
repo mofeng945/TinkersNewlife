@@ -27,6 +27,9 @@ public class FumoMoItem extends BlockItem implements ICurioItem {
      * 这一件就能**放进原版头盔槽** ✓（和南瓜/骷髅头同一机制 ✓）；
      * curios 头部槽则靠物品标签 {@code curios:head}（见 {@code data/curios/tags/items/head.json} ✓）。
      */
+    /** §892 探针：只打一次，用来判断护甲渲染路径到底有没有被调用 */
+    private static volatile boolean tnl$armorLogged = false;
+
     @Override
     public net.minecraft.world.entity.EquipmentSlot getEquipmentSlot(net.minecraft.world.item.ItemStack stack) {
         return net.minecraft.world.entity.EquipmentSlot.HEAD;
@@ -48,6 +51,11 @@ public class FumoMoItem extends BlockItem implements ICurioItem {
                     net.minecraft.world.item.ItemStack stack,
                     net.minecraft.world.entity.EquipmentSlot slot,
                     net.minecraft.client.model.HumanoidModel<?> original) {
+                if (!tnl$armorLogged) {
+                    tnl$armorLogged = true;
+                    org.slf4j.LoggerFactory.getLogger("TinkersNewlife/FumoMo")
+                            .info("[fufu] 护甲模型被调用 slot={}（说明头盔格那条渲染路确实走了 ✓）", slot);
+                }
                 return com.mofengbaizhi.tinkersnewlife.client.model.FumoMoHeadModelHolder.get();
             }
         });
