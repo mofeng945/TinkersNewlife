@@ -52,25 +52,57 @@ public class FumoMoBlockEntityRenderer implements BlockEntityRenderer<FumoMoBloc
      */
     public static void renderDoll(PlayerModel<?> model, PoseStack pose, MultiBufferSource buffer, int light, int overlay) {
         pose.pushPose();
-        pose.scale(0.5F, 0.5F, 0.5F);                       // 幼年体比例 ✓
-        pose.translate(0.0D, 0.55D, -0.25D);                // 坐姿：整体略抬起、略前移 ✓
+        // ① 幼年体比例 ✓
+        pose.scale(0.5F, 0.5F, 0.5F);
+        // ② ⚠ 实体模型的**标准翻转**（§882 修的 bug）：MC 的实体模型是 **Y 轴向下**的（root 在 y=24＝脚下 ✓），
+        //    原版 LivingEntityRenderer 靠 `scale(-1,-1,1) + translate(0,-1.501,0)` 把它翻成"站在地面上" ✓
+        //    —— 我 §880 漏了这一步 ⇒ 玩偶是**倒着**的 ✗（用户实测 ✓）。
+        pose.scale(-1.0F, -1.0F, 1.0F);
+        pose.translate(0.0D, -1.501D, 0.0D);
+        // ③ 坐姿微调（注意：这一步之后 y 仍是"模型空间"的向下 ✓ 减 y = 抬高 ✓）
+        pose.translate(0.0D, -0.06D, 0.0D);
 
-        // 双腿前伸（坐在地上 ✓）：默认腿朝下 ⇒ 转到 ≈86° 朝前 ✓
+        // ④ 双腿前伸（坐在地上 ✓）
         model.rightLeg.xRot = -1.5F;
         model.leftLeg.xRot = -1.5F;
         model.rightLeg.yRot = 0.06F;
         model.leftLeg.yRot = -0.06F;
-        // 手自然垂在前侧 ✓
+        // ⑤ ⚠ 腿部**外层**（裤子）是**独立部件**，不跟着腿转 ✗ ⇒ 必须手动同步 ✓（§882 用户实测 ✓）
+        syncLeg(model.rightLeg, model.rightPants);
+        syncLeg(model.leftLeg, model.leftPants);
+        // ⑥ 手自然垂在前侧 ✓（袖子若是独立部件也一并同步 ✓）
         model.rightArm.xRot = 0.18F;
         model.leftArm.xRot = 0.18F;
         model.rightArm.zRot = 0.08F;
         model.leftArm.zRot = -0.08F;
-        // 头略微抬起（看着你 ✓）
+        syncArm(model.rightArm, model.rightSleeve);
+        syncArm(model.leftArm, model.leftSleeve);
+        // ⑦ 头略微抬起（看着你 ✓）；帽子是头的子部件 ⇒ 自动跟随 ✓
         model.head.xRot = -0.12F;
 
         model.renderToBuffer(pose, buffer.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)),
                 light, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
         pose.popPose();
+    }
+
+    /** 把腿的角度同步给"裤子"外层 ✓（外层是独立部件 ✓ 不同步就会留在原位 ✗） */
+    private static void syncLeg(net.minecraft.client.model.geom.ModelPart leg, net.minecraft.client.model.geom.ModelPart pants) {
+        try {
+            pants.xRot = leg.xRot;
+            pants.yRot = leg.yRot;
+            pants.zRot = leg.zRot;
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** 把手臂的角度同步给"袖子"外层 ✓ */
+    private static void syncArm(net.minecraft.client.model.geom.ModelPart arm, net.minecraft.client.model.geom.ModelPart sleeve) {
+        try {
+            sleeve.xRot = arm.xRot;
+            sleeve.yRot = arm.yRot;
+            sleeve.zRot = arm.zRot;
+        } catch (Throwable ignored) {
+        }
     }
 
     /** 给物品栏渲染器用：自己按需烘焙一个玩家模型 ✓（只在客户端 ✓） */
