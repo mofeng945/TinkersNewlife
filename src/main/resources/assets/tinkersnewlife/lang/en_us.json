@@ -1456,5 +1456,8 @@
   "key.tinkersnewlife.hint.reverse": "the reverse key",
   "key.tinkersnewlife.hint.form": "the form-selection key",
   "screen.tinkersnewlife.curse_hud.conscience_on": "Heart HUD: ON (click to hide)",
-  "screen.tinkersnewlife.curse_hud.conscience_off": "Heart HUD: OFF (click to show)"
+  "screen.tinkersnewlife.curse_hud.conscience_off": "Heart HUD: OFF (click to show)",
+  "block.tinkersnewlife.fumo_mo": "Mofeng Baizhi fufu",
+  "subtitles.tinkersnewlife.fumo_mo_touch": "fufu: head pat",
+  "itemGroup.tinkersnewlife.fumo_mo": "Mofeng Baizhi fufu"
 }

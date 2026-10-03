@@ -49,5 +49,15 @@
     "sounds": [
       "tinkersnewlife:domain/open"
     ]
+  },
+  "block.fumo_mo_touch": {
+    "category": "neutral",
+    "subtitle": "subtitles.tinkersnewlife.fumo_mo_touch",
+    "sounds": [
+      {
+        "name": "tinkersnewlife:block/fumo_mo_touch",
+        "stream": false
+      }
+    ]
   }
 }

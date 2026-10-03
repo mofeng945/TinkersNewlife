@@ -1,0 +1,532 @@
+{
+  "credit": "墨封白织fufu（用户 Blockbench 思路的具名多部件模型 ✓ §876）",
+  "ambientocclusion": false,
+  "texture_size": [
+    32,
+    32
+  ],
+  "textures": {
+    "all": "tinkersnewlife:block/fumo_mo",
+    "particle": "tinkersnewlife:block/fumo_mo"
+  },
+  "elements": [
+    {
+      "name": "LegRight",
+      "from": [
+        6.0,
+        0.0,
+        6.5
+      ],
+      "to": [
+        8.0,
+        3.0,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            20,
+            28,
+            22,
+            31
+          ],
+          "texture": "#all"
+        },
+        "east": {
+          "uv": [
+            20,
+            28,
+            22,
+            31
+          ],
+          "texture": "#all"
+        },
+        "south": {
+          "uv": [
+            20,
+            28,
+            22,
+            31
+          ],
+          "texture": "#all"
+        },
+        "west": {
+          "uv": [
+            20,
+            28,
+            22,
+            31
+          ],
+          "texture": "#all"
+        },
+        "up": {
+          "uv": [
+            20,
+            28,
+            22,
+            31
+          ],
+          "texture": "#all"
+        },
+        "down": {
+          "uv": [
+            20,
+            28,
+            22,
+            31
+          ],
+          "texture": "#all"
+        }
+      }
+    },
+    {
+      "name": "LegLeft",
+      "from": [
+        8.0,
+        0.0,
+        6.5
+      ],
+      "to": [
+        10.0,
+        3.0,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            20,
+            28,
+            22,
+            31
+          ],
+          "texture": "#all"
+        },
+        "east": {
+          "uv": [
+            20,
+            28,
+            22,
+            31
+          ],
+          "texture": "#all"
+        },
+        "south": {
+          "uv": [
+            20,
+            28,
+            22,
+            31
+          ],
+          "texture": "#all"
+        },
+        "west": {
+          "uv": [
+            20,
+            28,
+            22,
+            31
+          ],
+          "texture": "#all"
+        },
+        "up": {
+          "uv": [
+            20,
+            28,
+            22,
+            31
+          ],
+          "texture": "#all"
+        },
+        "down": {
+          "uv": [
+            20,
+            28,
+            22,
+            31
+          ],
+          "texture": "#all"
+        }
+      }
+    },
+    {
+      "name": "Body",
+      "from": [
+        5.5,
+        3.0,
+        6.0
+      ],
+      "to": [
+        10.5,
+        8.0,
+        10.0
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            10,
+            16,
+            22,
+            28
+          ],
+          "texture": "#all"
+        },
+        "east": {
+          "uv": [
+            10,
+            16,
+            22,
+            28
+          ],
+          "texture": "#all"
+        },
+        "south": {
+          "uv": [
+            10,
+            16,
+            22,
+            28
+          ],
+          "texture": "#all"
+        },
+        "west": {
+          "uv": [
+            10,
+            16,
+            22,
+            28
+          ],
+          "texture": "#all"
+        },
+        "up": {
+          "uv": [
+            10,
+            16,
+            22,
+            28
+          ],
+          "texture": "#all"
+        },
+        "down": {
+          "uv": [
+            10,
+            16,
+            22,
+            28
+          ],
+          "texture": "#all"
+        }
+      }
+    },
+    {
+      "name": "ArmRight",
+      "from": [
+        4.0,
+        3.5,
+        6.5
+      ],
+      "to": [
+        5.5,
+        8.0,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            10,
+            22,
+            16,
+            28
+          ],
+          "texture": "#all"
+        },
+        "east": {
+          "uv": [
+            10,
+            22,
+            16,
+            28
+          ],
+          "texture": "#all"
+        },
+        "south": {
+          "uv": [
+            10,
+            22,
+            16,
+            28
+          ],
+          "texture": "#all"
+        },
+        "west": {
+          "uv": [
+            10,
+            22,
+            16,
+            28
+          ],
+          "texture": "#all"
+        },
+        "up": {
+          "uv": [
+            10,
+            22,
+            16,
+            28
+          ],
+          "texture": "#all"
+        },
+        "down": {
+          "uv": [
+            10,
+            22,
+            16,
+            28
+          ],
+          "texture": "#all"
+        }
+      }
+    },
+    {
+      "name": "ArmLeft",
+      "from": [
+        10.5,
+        3.5,
+        6.5
+      ],
+      "to": [
+        12.0,
+        8.0,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            10,
+            22,
+            16,
+            28
+          ],
+          "texture": "#all"
+        },
+        "east": {
+          "uv": [
+            10,
+            22,
+            16,
+            28
+          ],
+          "texture": "#all"
+        },
+        "south": {
+          "uv": [
+            10,
+            22,
+            16,
+            28
+          ],
+          "texture": "#all"
+        },
+        "west": {
+          "uv": [
+            10,
+            22,
+            16,
+            28
+          ],
+          "texture": "#all"
+        },
+        "up": {
+          "uv": [
+            10,
+            22,
+            16,
+            28
+          ],
+          "texture": "#all"
+        },
+        "down": {
+          "uv": [
+            10,
+            22,
+            16,
+            28
+          ],
+          "texture": "#all"
+        }
+      }
+    },
+    {
+      "name": "Head",
+      "from": [
+        4.0,
+        8.0,
+        5.5
+      ],
+      "to": [
+        12.0,
+        16.0,
+        13.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8,
+            0,
+            24,
+            16
+          ],
+          "texture": "#all"
+        },
+        "east": {
+          "uv": [
+            8,
+            0,
+            24,
+            16
+          ],
+          "texture": "#all"
+        },
+        "south": {
+          "uv": [
+            8,
+            0,
+            24,
+            16
+          ],
+          "texture": "#all"
+        },
+        "west": {
+          "uv": [
+            8,
+            0,
+            24,
+            16
+          ],
+          "texture": "#all"
+        },
+        "up": {
+          "uv": [
+            8,
+            0,
+            24,
+            16
+          ],
+          "texture": "#all"
+        },
+        "down": {
+          "uv": [
+            8,
+            0,
+            24,
+            16
+          ],
+          "texture": "#all"
+        }
+      }
+    }
+  ],
+  "display": {
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "translation": [
+        0,
+        2,
+        0
+      ],
+      "scale": [
+        0.72,
+        0.72,
+        0.72
+      ]
+    },
+    "ground": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0,
+        3,
+        0
+      ],
+      "scale": [
+        0.25,
+        0.25,
+        0.25
+      ]
+    },
+    "fixed": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "translation": [
+        0,
+        2.5,
+        0
+      ],
+      "scale": [
+        0.375,
+        0.375,
+        0.375
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        45,
+        0
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.4,
+        0.4,
+        0.4
+      ]
+    },
+    "head": {
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ]
+    }
+  }
+}

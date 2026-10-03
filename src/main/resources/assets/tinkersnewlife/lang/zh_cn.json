@@ -1458,5 +1458,8 @@
   "key.tinkersnewlife.hint.reverse": "反转键",
   "key.tinkersnewlife.hint.form": "形态选择键",
   "screen.tinkersnewlife.curse_hud.conscience_on": "心的 HUD：§a显示§r（点击隐藏）",
-  "screen.tinkersnewlife.curse_hud.conscience_off": "心的 HUD：§c隐藏§r（点击显示）"
+  "screen.tinkersnewlife.curse_hud.conscience_off": "心的 HUD：§c隐藏§r（点击显示）",
+  "block.tinkersnewlife.fumo_mo": "墨封白织fufu",
+  "subtitles.tinkersnewlife.fumo_mo_touch": "fufu：摸摸头～",
+  "itemGroup.tinkersnewlife.fumo_mo": "墨封白织 fufu"
 }
