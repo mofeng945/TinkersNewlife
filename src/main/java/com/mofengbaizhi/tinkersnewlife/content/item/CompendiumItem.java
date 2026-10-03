@@ -1,5 +1,6 @@
 package com.mofengbaizhi.tinkersnewlife.content.item;
 
+import com.google.common.collect.Multimap;
 import com.mojang.logging.LogUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -8,6 +9,11 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -115,6 +121,72 @@ public class CompendiumItem extends Item {
         list.add(entry);
         compendium.getOrCreateTag().put(KEY_BOOKS, list);
         return true;
+    }
+
+    /** 已吞噬记录里的**物品**（造一个 ItemStack ✓；没有记物品 id 的旧记录跳过 ✗） */
+    private static java.util.List<ItemStack> absorbedStacks(ItemStack compendium) {
+        ListTag list = absorbedList(compendium);
+        java.util.List<ItemStack> out = new java.util.ArrayList<>(list.size());
+        for (int i = 0; i < list.size(); i++) {
+            CompoundTag entry = list.getCompound(i);
+            if (!entry.contains(KEY_ITEM, Tag.TAG_STRING)) continue;
+            ResourceLocation id = ResourceLocation.tryParse(entry.getString(KEY_ITEM));
+            if (id == null) continue;
+            Item item = ForgeRegistries.ITEMS.getValue(id);
+            if (item == null) continue;
+            out.add(new ItemStack(item));
+        }
+        return out;
+    }
+
+    /**
+     * §910j <b>攻击属性继承</b>（用户口径：「让启示之证 / 倒转之启 / 无止之言的攻击效果和伤害效果也起作用」✓）——
+     * 把"已吞噬的书里**最强的那件武器**"的整套属性修饰符借过来 ✓（伤害 / 攻速 / 击退 … ✓ 都是从物品本身取的 ✓
+     * 不硬编码任何数值 ✓）。
+     *
+     * <p>口径说明：<b>取最强的一件，不是把多件叠起来</b> ✗ ——
+     * 一是叠加会把伤害直接堆到失衡 ✗；二是原版基础攻击力用的是**固定 UUID** ✓
+     * 两件一起给会互相覆盖 / 报错 ✗。想改成"叠加"或"只看某一件"都只需改这一段 ✓。
+     */
+    @Override
+    public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlot slot, ItemStack stack) {
+        if (slot == EquipmentSlot.MAINHAND) {
+            Multimap<Attribute, AttributeModifier> best = null;
+            double bestDamage = 0.0D;
+            for (ItemStack fake : absorbedStacks(stack)) {
+                Multimap<Attribute, AttributeModifier> mods = fake.getAttributeModifiers(slot);
+                if (mods.isEmpty()) continue;
+                double damage = 0.0D;
+                for (var e : mods.entries()) {
+                    if (e.getKey() == Attributes.ATTACK_DAMAGE) damage += e.getValue().getAmount();
+                }
+                if (best == null || damage > bestDamage) {
+                    best = mods;
+                    bestDamage = damage;
+                }
+            }
+            if (best != null) return best;
+        }
+        return super.getAttributeModifiers(slot, stack);
+    }
+
+    /**
+     * §910j <b>命中效果继承</b>：对每一本已吞噬的书都跑一遍它自己的 {@code hurtEnemy} ✓。
+     * <p>⚠ 1.20.1 的 {@code Item} **没有** {@code postHurtEnemy} ✗（已核对源码：只有
+     * {@code hurtEnemy(ItemStack, LivingEntity, LivingEntity)} ✓，`Player#attack` 也只调这一处 ✓）
+     * ⇒ 命中后那一半本来就在各模组自己的 {@code hurtEnemy} 里 ✓ 无需额外转发 ✓。
+     */
+    @Override
+    public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+        boolean any = false;
+        for (ItemStack fake : absorbedStacks(stack)) {
+            try {
+                any |= fake.getItem().hurtEnemy(fake, target, attacker);
+            } catch (Throwable t) {
+                LOG.warn("[百宝书] 命中效果 {} 出错（已跳过）：{}", fake.getItem(), t.toString());
+            }
+        }
+        return any || super.hurtEnemy(stack, target, attacker);
     }
 
     @Override
