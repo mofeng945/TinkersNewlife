@@ -28,6 +28,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
@@ -62,6 +63,8 @@ public final class FumoMoDoll {
             DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, TinkersNewlife.MOD_ID);
     public static final DeferredRegister<CreativeModeTab> TABS =
             DeferredRegister.create(Registries.CREATIVE_MODE_TAB, TinkersNewlife.MOD_ID);
+    public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES =
+            DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, TinkersNewlife.MOD_ID);
 
     /** 抚摸音效（用户的 duck_toy.ogg 收进来的那份 ✓） */
     public static final RegistryObject<SoundEvent> TOUCH_SOUND = SOUNDS.register("block.fumo_mo_touch",
@@ -69,6 +72,10 @@ public final class FumoMoDoll {
                     new ResourceLocation(TinkersNewlife.MOD_ID, "block.fumo_mo_touch")));
 
     public static final RegistryObject<Block> FUMO_MO = BLOCKS.register("fumo_mo", FumoMoBlock::new);
+    /** 玩偶方块实体（§880：世界里的玩偶走"玩家模型渲染" ✓ 不再用方块模型 ✓） */
+    public static final RegistryObject<BlockEntityType<FumoMoBlockEntity>> FUMO_MO_BE =
+            BLOCK_ENTITIES.register("fumo_mo",
+                    () -> BlockEntityType.Builder.of(FumoMoBlockEntity::new, FUMO_MO.get()).build(null));
     public static final RegistryObject<Item> FUMO_MO_ITEM = ITEMS.register("fumo_mo",
             () -> new BlockItem(FUMO_MO.get(), new Item.Properties()));
 
@@ -86,6 +93,7 @@ public final class FumoMoDoll {
         ITEMS.register(bus);
         SOUNDS.register(bus);
         TABS.register(bus);
+        BLOCK_ENTITIES.register(bus);
     }
 
     private FumoMoDoll() {}
@@ -97,12 +105,23 @@ public final class FumoMoDoll {
     private static final VoxelShape SHAPE = Shapes.box(0.25D, 0.0D, 0.3125D, 0.75D, 0.875D, 0.6875D);
 
     /** 玩偶方块：右键＝摸头 ✓ */
-    public static class FumoMoBlock extends Block {
+    public static class FumoMoBlock extends Block implements net.minecraft.world.level.block.EntityBlock {
         public FumoMoBlock() {
             super(BlockBehaviour.Properties.copy(net.minecraft.world.level.block.Blocks.WHITE_WOOL)
                     .noOcclusion()                 // 不是实心块 ⇒ 不挡光、能贴在一起 ✓
                     .instabreak()                  // 空手一下就掉 ✓
                     .sound(SoundType.WOOL));
+        }
+
+        @Override
+        public net.minecraft.world.level.block.entity.BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+            return new FumoMoBlockEntity(pos, state);
+        }
+
+        /** 世界里不画方块模型 ✓（改由玩家模型渲染器画 ✓）——GUI/手持仍用 item 模型 ✓ */
+        @Override
+        public net.minecraft.world.level.block.RenderShape getRenderShape(BlockState state) {
+            return net.minecraft.world.level.block.RenderShape.INVISIBLE;
         }
 
         @Override
