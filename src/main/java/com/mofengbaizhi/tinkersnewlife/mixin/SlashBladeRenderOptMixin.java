@@ -106,7 +106,7 @@ public class SlashBladeRenderOptMixin {
             crowd = ModConfig.slashbladeLuminousCrowd();
         } catch (Throwable ignored) {
         }
-        LOGGER.info("[拔刀剑优化] 近 5 秒：剑类型缓存 命中 {} / 未命中 {}；发光层 跳过 {} / 保留 {}（开关 {}，阈值 {}）",
+        LOGGER.debug("[拔刀剑优化] 近 5 秒：剑类型缓存 命中 {} / 未命中 {}；发光层 跳过 {} / 保留 {}（开关 {}，阈值 {}）",
                 hit, miss, skip, keep, on ? "开" : "关", crowd);
     }
 
@@ -131,7 +131,7 @@ public class SlashBladeRenderOptMixin {
             if (!ModConfig.slashbladeRenderOpt()) return SwordType.from(stack);
             if (!tnl$provedTypeCache) {
                 tnl$provedTypeCache = true;
-                LOGGER.info("[拔刀剑优化] ✓ mixin 生效：SwordType.from 已接管（缓存启用）");
+                LOGGER.debug("[拔刀剑优化] ✓ mixin 生效：SwordType.from 已接管（缓存启用）");
             }
             if (tnl$swordTypes.size() > 512) tnl$swordTypes.clear();      // 兜底：别无限涨 ✗
             tnl$report();
@@ -169,7 +169,7 @@ public class SlashBladeRenderOptMixin {
         }
         if (!tnl$provedLuminous) {
             tnl$provedLuminous = true;
-            LOGGER.info("[拔刀剑优化] ✓ mixin 生效：发光层调用已接管（阈值 {}，开关 {}）",
+            LOGGER.debug("[拔刀剑优化] ✓ mixin 生效：发光层调用已接管（阈值 {}，开关 {}）",
                     crowd, on ? "开" : "关");
         }
         tnl$report();
