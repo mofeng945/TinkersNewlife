@@ -241,6 +241,11 @@ public class ModCreativeTabs {
                                 // ----- §557 EE 网络：抽取方块（抽 EE 推给邻居）+ 万用能量转化器（各种能量 ⇒ FE）-----
                                 output.accept(ModItems.EE_EXTRACTOR.get());
                                 output.accept(ModItems.ENERGY_CONVERTER.get());
+
+                                // ----- §905 墨封白织 fufu（玩偶方块 + 可戴在头上 ✓）-----
+                                // 用户口径：「把我的娃娃合并到匠魂新生创造物品栏最后一个」✓
+                                // ⇒ 放在**本栏最后一项** ✓，并撤掉它原先单独那一页创造栏 ✓（见 FumoMoDoll ✓）
+                                output.accept(FumoMoDoll.FUMO_MO_ITEM.get());
                             })
                             .build()
             );

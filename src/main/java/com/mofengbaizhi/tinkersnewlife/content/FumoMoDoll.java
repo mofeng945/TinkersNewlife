@@ -61,8 +61,6 @@ public final class FumoMoDoll {
             DeferredRegister.create(ForgeRegistries.ITEMS, TinkersNewlife.MOD_ID);
     public static final DeferredRegister<SoundEvent> SOUNDS =
             DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, TinkersNewlife.MOD_ID);
-    public static final DeferredRegister<CreativeModeTab> TABS =
-            DeferredRegister.create(Registries.CREATIVE_MODE_TAB, TinkersNewlife.MOD_ID);
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES =
             DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, TinkersNewlife.MOD_ID);
 
@@ -79,20 +77,12 @@ public final class FumoMoDoll {
     public static final RegistryObject<Item> FUMO_MO_ITEM = ITEMS.register("fumo_mo",
             () -> new FumoMoItem(FUMO_MO.get(), new Item.Properties()));
 
-    /** 单独一页创造栏（图标就是 fufu 自己 ✓） */
-    public static final RegistryObject<CreativeModeTab> TAB = TABS.register("fumo_mo",
-            () -> CreativeModeTab.builder()
-                    .title(Component.translatable("itemGroup.tinkersnewlife.fumo_mo"))
-                    .icon(() -> new ItemStack(FUMO_MO_ITEM.get()))
-                    .displayItems((params, output) -> output.accept(FUMO_MO_ITEM.get()))
-                    .build());
-
     static {
         IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
         BLOCKS.register(bus);
         ITEMS.register(bus);
         SOUNDS.register(bus);
-        TABS.register(bus);
+        // §905：原先这里还注册了一页"fumo_mo"独立创造栏 ⇒ 已并入主创造栏（ModCreativeTabs ✓）后撤掉 ✓
         BLOCK_ENTITIES.register(bus);
     }
 
