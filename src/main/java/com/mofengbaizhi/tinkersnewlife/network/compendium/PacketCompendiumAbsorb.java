@@ -139,6 +139,15 @@ public class PacketCompendiumAbsorb {
                 return;
             }
 
+            // §910k 七咒门禁：带七咒限制的书（ICursed）只有"承受七咒之人"才吞得下 ✓
+            //   条件与原文见 CompendiumItem#canAbsorb ✓（反射查 ✓ 没装神秘遗物时自动不拦 ✓）
+            if (!CompendiumItem.canAbsorb(player, book)) {
+                LOG.info("[百宝书] ✗ {} 带七咒限制，而玩家不是受咒者 ⇒ 拒绝吞噬", packet.itemId);
+                player.displayClientMessage(
+                        Component.translatable("message.tinkersnewlife.compendium.cursed_only"), true);
+                return;
+            }
+
             String displayName = book.getHoverName().getString();
             boolean first = true;
             int total = -1;   // 来源 3 时由客户端自己记，服务端不报总数 ✓

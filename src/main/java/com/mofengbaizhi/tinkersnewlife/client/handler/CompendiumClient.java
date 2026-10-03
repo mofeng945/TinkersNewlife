@@ -177,6 +177,15 @@ public final class CompendiumClient {
             return;
         }
 
+        // §910k 七咒门禁（客户端先拦一道 ✓ 只为给提示 ✓ 服务端仍会再校验 ✓ 不信任客户端 ✓）
+        if (!CompendiumItem.canAbsorb(player, hovered)) {
+            LOG.info("[百宝书] 七咒限制：{} 需要受咒者，当前不满足 ⇒ 拦下", hovered.getDescriptionId());
+            player.displayClientMessage(
+                    Component.translatable("message.tinkersnewlife.compendium.cursed_only"), true);
+            event.setCanceled(true);     // 拦掉原版那一手（免得把百宝书"放一个"进去 ✗）
+            return;
+        }
+
         int source;
         if (carried && player.isCreative()) {
             // §910d 创造模式：光标那叠服务端看不见 ✗ ⇒ 本地登记 ✓ ＋ 让服务端只吃掉这本书 ✓

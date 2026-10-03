@@ -1473,5 +1473,6 @@
   "message.tinkersnewlife.compendium.wake": "唤醒已吞噬之书的效果（%s 本有反应）",
   "message.tinkersnewlife.compendium.wake_none": "这些书没有可直接触发的效果（内容请在查阅界面里翻）",
   "screen.tinkersnewlife.compendium.footer": "潜行右键手持百宝书：唤醒已吞噬之书的效果",
-  "message.tinkersnewlife.compendium.goety_research": "已从《黑暗秘典》习得禁忌知识：诡厄的灵魂能量能力已解锁"
+  "message.tinkersnewlife.compendium.goety_research": "已从《黑暗秘典》习得禁忌知识：诡厄的灵魂能量能力已解锁",
+  "message.tinkersnewlife.compendium.cursed_only": "承受七咒之人，才能吞噬这本书"
 }

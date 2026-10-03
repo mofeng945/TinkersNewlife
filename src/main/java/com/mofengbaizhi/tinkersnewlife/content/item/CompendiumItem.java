@@ -123,6 +123,63 @@ public class CompendiumItem extends Item {
         return true;
     }
 
+    /**
+     * §910k <b>七咒门禁</b>：神秘遗物里"带七咒限制"的物品都实现它的标记接口
+     * {@code com.aizistral.enigmaticlegacy.api.items.ICursed}（**空接口** ✓ 零方法 ✓），
+     * 而那条限制的原文是「<b>承受七咒之人，才能使用该物品</b>」✓
+     * ⇒ 判定 = {@code SuperpositionHandler.isTheCursedOne(player)} ✓。
+     *
+     * <p>用户口径：「**限定为有七咒限制的书在未满足条件情况下不能吞噬**」✓
+     * ⇒ 带限制的书，**不是受咒者就吞不了** ✓（客户端先拦一道给提示 ✓ 服务端再校验一次 ✓）。
+     *
+     * <p>⚠ 为什么用**反射**：本模组对神秘遗物没有（也不该有）任何依赖 ✗
+     * ⇒ 直接引用它的类会给"没装神秘遗物"的整合包埋 NoClassDefFoundError 的雷 ✗（§801 的坑 ✓）。
+     * 没装神秘遗物时这两个判定一律返回 false ⇒ 门禁自动失效 ✓ 不会误拦 ✓。
+     */
+    private static boolean implementsCursed(Class<?> cls) {
+        while (cls != null && cls != Object.class) {
+            for (Class<?> itf : cls.getInterfaces()) {
+                if ("com.aizistral.enigmaticlegacy.api.items.ICursed".equals(itf.getName())) return true;
+                if (implementsCursed(itf)) return true;
+            }
+            cls = cls.getSuperclass();
+        }
+        return false;
+    }
+
+    /** 这件物品是不是"带七咒限制"的书（= 神秘遗物的 {@code ICursed} ✓ 含父类/接口继承 ✓） */
+    public static boolean isCursedItem(ItemStack stack) {
+        if (stack.isEmpty()) return false;
+        if (!net.minecraftforge.fml.ModList.get().isLoaded("enigmaticlegacy")) return false;
+        try {
+            return implementsCursed(stack.getItem().getClass());
+        } catch (Throwable t) {
+            LOG.warn("[百宝书] 判断七咒限制失败（按「无限制」处理）：{}", t.toString());
+            return false;
+        }
+    }
+
+    /**
+     * 玩家是不是"承受七咒之人" ✓（反射调 {@code SuperpositionHandler.isTheCursedOne(Player)} ✓）。
+     * <p>⚠ 查不到时**按"不是"处理**（fail-closed ✓）—— 宁可挡住，也不让带限制的书被绕过 ✓。
+     */
+    public static boolean isTheCursedOne(Player player) {
+        if (!net.minecraftforge.fml.ModList.get().isLoaded("enigmaticlegacy")) return false;
+        try {
+            Class<?> helper = Class.forName("com.aizistral.enigmaticlegacy.handlers.SuperpositionHandler");
+            Object result = helper.getMethod("isTheCursedOne", Player.class).invoke(null, player);
+            return result instanceof Boolean b && b;
+        } catch (Throwable t) {
+            LOG.warn("[百宝书] 查询是否受七咒失败（按「未受咒」处理 ⇒ 挡下带限制的书）：{}", t.toString());
+            return false;
+        }
+    }
+
+    /** §910k 这本书能不能被吞：**没限制**的随便吞 ✓；**带七咒限制**的只有受咒者能吞 ✓ */
+    public static boolean canAbsorb(Player player, ItemStack book) {
+        return !isCursedItem(book) || isTheCursedOne(player);
+    }
+
     /** 已吞噬记录里的**物品**（造一个 ItemStack ✓；没有记物品 id 的旧记录跳过 ✗） */
     private static java.util.List<ItemStack> absorbedStacks(ItemStack compendium) {
         ListTag list = absorbedList(compendium);
