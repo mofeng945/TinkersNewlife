@@ -39,6 +39,12 @@ public final class ModConfig {
     // ==================== 咒力核心 ====================
     public static final ConfigValue<Boolean> CURSE_CORE_ENABLED;
 
+    // ==================== 拔刀剑物品栏渲染优化（§871） ====================
+    /** 总开关：拔刀剑物品栏渲染优化（用户口径 C：缓存 ＋ 拥挤时跳发光层 ✓ 默认开 ✓） */
+    public static final ConfigValue<Boolean> SLASHBLADE_RENDER_OPT;
+    /** 同屏超过多少把拔刀剑就不再画"发光层"（省掉每把刀的第二遍几何 ✓ 默认 6 ✓ 0 = 永不跳 ✗） */
+    public static final ConfigValue<Integer> SLASHBLADE_LUMINOUS_CROWD;
+
     // ==================== Boss 战（§864 用户口径） ====================
     public static final ConfigValue<Boolean> BOSS_FIGHT_ENABLED;
     public static final ConfigValue<Boolean> BOSS_FIGHT_ROLLS_EQUAL_PARTICIPANTS;
@@ -983,6 +989,22 @@ public final class ModConfig {
                 .define("max_extra_rolls", 0);
         b.pop();
 
+        // §871 拔刀剑渲染优化（客户端侧 mixin 读这里 ✓）
+        b.push("slashblade_render_opt").comment(
+                "SlashBlade (Resharped) inventory rendering optimisation.",
+                "",
+                "Why: its BEWLR redraws every blade TWICE per frame (base pass + luminous pass) and re-parses",
+                "the stack state on every single call, so an inventory full of blades tanks the FPS.",
+                "",
+                "enabled       = enable the optimisation (default true).",
+                "luminous_crowd= when more than this many blades are being rendered at once, skip the",
+                "                second (luminous) pass. 0 = never skip. Default 6.")
+                .push("enabled");
+        SLASHBLADE_RENDER_OPT = b.define("enabled", true);
+        SLASHBLADE_LUMINOUS_CROWD = b.defineInRange("luminous_crowd", 6, 0, 512);
+        b.pop();
+        b.pop();
+
         SPEC = b.build();
     }
 
@@ -1267,6 +1289,24 @@ public final class ModConfig {
             return ENIGMATIC_CURIO_KEEPS_NIGHT_VISION.get();
         } catch (Throwable ignored) {
             return true;
+        }
+    }
+
+    /** §871 拔刀剑渲染优化总开关（配置没就绪 ⇒ true） */
+    public static boolean slashbladeRenderOpt() {
+        try {
+            return SLASHBLADE_RENDER_OPT.get();
+        } catch (Throwable ignored) {
+            return true;
+        }
+    }
+
+    /** §871 同屏多少把刀以上就不再画发光层（配置没就绪 ⇒ 6；0 = 永不跳） */
+    public static int slashbladeLuminousCrowd() {
+        try {
+            return Math.max(0, SLASHBLADE_LUMINOUS_CROWD.get());
+        } catch (Throwable ignored) {
+            return 6;
         }
     }
 

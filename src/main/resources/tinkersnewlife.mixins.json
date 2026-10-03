@@ -29,7 +29,8 @@
     "JadeObjectNameMixin",
     "MantleFluidShaderMixin",
     "SpearChargeSlowdownMixin",
-    "SpearThirdPersonPoseMixin"
+    "SpearThirdPersonPoseMixin",
+    "SlashBladeRenderOptMixin"
   ],
   "injectors": {
     "defaultRequire": 0
