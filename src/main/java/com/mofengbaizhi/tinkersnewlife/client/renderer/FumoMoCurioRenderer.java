@@ -54,8 +54,11 @@ public class FumoMoCurioRenderer implements ICurioRenderer {
         model.head.zRot = 0.0F;
         pose.pushPose();
         headed.getHead().translateAndRotate(pose);
-        pose.scale(1.875F, -1.875F, -1.875F);
-        pose.translate(-0.5D, 0.255D, -0.5D);
+        // §897 ⚠ 诡厄那个 `scale(1.875, -1.875, -1.875)` 是给**方块模型**（0~1 格空间、y 向上）用的 ✗；
+        //   我们这份模型本身就是**玩家模型尺度**（像素/16、y 向下、和它挂在同一套骨架里 ✓）
+        //   ⇒ 直接画就行 ✓，再乘 1.875 会把部件炸得四散（用户截图那一堆 ✗）。
+        //   想调大小：改下面这个 scale ✓（1.0 = 与玩家头同尺度）
+        pose.scale(0.85F, 0.85F, 0.85F);
         model.renderToBuffer(pose, buffer.getBuffer(RenderType.entityCutoutNoCull(FumoMoBlockEntityRenderer.TEXTURE)),
                 light, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
         pose.popPose();
