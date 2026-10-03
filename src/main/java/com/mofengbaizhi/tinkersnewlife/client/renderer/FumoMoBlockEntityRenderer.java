@@ -52,6 +52,16 @@ public class FumoMoBlockEntityRenderer implements BlockEntityRenderer<FumoMoBloc
      */
     public static void renderDoll(PlayerModel<?> model, PoseStack pose, MultiBufferSource buffer, int light, int overlay) {
         pose.pushPose();
+        // ⓿ §883：把第二层（帽子/夹克/左右袖/左右裤）显式设为可见 + 不跳过绘制
+        //    实测：她皮肤里帽子层有 178 个不透明像素（确实画了帽子），但游戏里看不到
+        //    ⇒ 只能是这些「外层部件」被置成了不可见（原版有若干状态会藏帽子）
+        //    ⇒ 这里每个外层部件都显式设一遍，幂等、无害。
+        for (net.minecraft.client.model.geom.ModelPart part : new net.minecraft.client.model.geom.ModelPart[]{
+                model.hat, model.jacket, model.leftSleeve, model.rightSleeve, model.leftPants, model.rightPants}) {
+            part.visible = true;
+            part.skipDraw = false;
+        }
+
         // ① 幼年体比例 ✓
         pose.scale(0.5F, 0.5F, 0.5F);
         // ② ⚠ 实体模型的**标准翻转**（§882 修的 bug）：MC 的实体模型是 **Y 轴向下**的（root 在 y=24＝脚下 ✓），
