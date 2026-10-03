@@ -242,6 +242,9 @@ public class ModCreativeTabs {
                                 output.accept(ModItems.EE_EXTRACTOR.get());
                                 output.accept(ModItems.ENERGY_CONVERTER.get());
 
+                                // ----- §910 帕秋莉的百宝书（吞噬帕秋莉书 ⇒ 一本里查阅全部 ✓）-----
+                                output.accept(ModItems.PATCHOULI_COMPENDIUM.get());
+
                                 // ----- §905 墨封白织 fufu（玩偶方块 + 可戴在头上 ✓）-----
                                 // 用户口径：「把我的娃娃合并到匠魂新生创造物品栏最后一个」✓
                                 // ⇒ 放在**本栏最后一项** ✓，并撤掉它原先单独那一页创造栏 ✓（见 FumoMoDoll ✓）

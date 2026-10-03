@@ -213,6 +213,13 @@ public final class AchievementHandler {
             var tag = s.getTag();
             if (tag != null && OUR_BOOK_ID.equals(tag.getString("patchouli:book"))) return true;
             if (s.getItem() == ModItems.GUIDE_BOOK.get()) return true;
+            // §910 百宝书**吞掉了**编年史 ⇒ 同样算"拿到了" ✓
+            //   （用户口径"百宝书获得书本原本有的所有效果"落到本模组自己的判定上 ✓）
+            if (s.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.CompendiumItem
+                    && com.mofengbaizhi.tinkersnewlife.content.item.CompendiumItem
+                            .hasAbsorbed(s, OUR_BOOK_ID)) {
+                return true;
+            }
         }
         return false;
     }

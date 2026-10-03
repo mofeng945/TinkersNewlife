@@ -1462,5 +1462,11 @@
   "block.tinkersnewlife.fumo_mo": "墨封白织fufu",
   "subtitles.tinkersnewlife.fumo_mo_touch": "fufu：摸摸头～",
   "itemGroup.tinkersnewlife.fumo_mo": "墨封白织 fufu",
-  "message.tinkersnewlife.fumo_gift": "墨默对你的好感到了 30 —— 她送了你一只『墨封白织fufu』！"
+  "message.tinkersnewlife.fumo_gift": "墨默对你的好感到了 30 —— 她送了你一只『墨封白织fufu』！",
+  "item.tinkersnewlife.patchouli_compendium": "帕秋莉的百宝书",
+  "screen.tinkersnewlife.compendium.title": "帕秋莉的百宝书",
+  "screen.tinkersnewlife.compendium.hint": "已收录 %s 本书 · 点一条即可翻阅",
+  "screen.tinkersnewlife.compendium.empty": "还没有吞噬任何帕秋莉的书",
+  "message.tinkersnewlife.compendium.absorbed": "已吞噬《%s》",
+  "message.tinkersnewlife.compendium.already": "《%s》已经收录过了"
 }

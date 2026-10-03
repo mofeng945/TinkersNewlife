@@ -1460,5 +1460,11 @@
   "block.tinkersnewlife.fumo_mo": "Mofeng Baizhi fufu",
   "subtitles.tinkersnewlife.fumo_mo_touch": "fufu: head pat",
   "itemGroup.tinkersnewlife.fumo_mo": "Mofeng Baizhi fufu",
-  "message.tinkersnewlife.fumo_gift": "Momo likes you enough (30) - she gave you a Mofeng Baizhi fufu!"
+  "message.tinkersnewlife.fumo_gift": "Momo likes you enough (30) - she gave you a Mofeng Baizhi fufu!",
+  "item.tinkersnewlife.patchouli_compendium": "Patchouli's Compendium",
+  "screen.tinkersnewlife.compendium.title": "Patchouli's Compendium",
+  "screen.tinkersnewlife.compendium.hint": "%s book(s) absorbed - click one to read",
+  "screen.tinkersnewlife.compendium.empty": "No Patchouli books absorbed yet",
+  "message.tinkersnewlife.compendium.absorbed": "Absorbed \"%s\"",
+  "message.tinkersnewlife.compendium.already": "\"%s\" is already in the compendium"
 }

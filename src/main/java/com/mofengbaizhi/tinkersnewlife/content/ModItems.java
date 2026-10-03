@@ -399,6 +399,20 @@ public class ModItems {
     public static final RegistryObject<Item> GUIDE_BOOK =
             ITEMS.register("guide_book", () -> new vazkii.patchouli.common.item.ItemModBook());
 
+    /**
+     * §910 <b>帕秋莉的百宝书</b>（用户口径 ✓）：吞噬帕秋莉的书（判据 = NBT {@code patchouli:book} ✓
+     * 本仓既有口径 ✓ 任何模组的帕秋莉书都认 ✓）⇒ 之后一本里查阅全部 ✓。
+     * <ul>
+     *   <li>物品栏里**手拖着**它右键一本书 ⇒ 吞噬（客户端识别手势 + 发包，服务端校验后写 NBT ✓）；</li>
+     *   <li>手持**右键** ⇒ 打开自己的界面，按书归类列出已吞噬的书 ✓，点一条直接翻那本 ✓。</li>
+     * </ul>
+     * {@code stacksTo(1)}：它自己带状态（吞噬清单）✓ 不能叠 ✗。
+     */
+    public static final RegistryObject<Item> PATCHOULI_COMPENDIUM =
+            ITEMS.register("patchouli_compendium",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.CompendiumItem(
+                            new Item.Properties().stacksTo(1)));
+
     /** 结界碎片：领域被破坏时 1/1000 概率掉落（[domains] fragment_drop_denominator）；消耗咒力时优先消耗（1 碎片 = 25 咒力） */
     public static final RegistryObject<Item> BOUNDARY_FRAGMENT =
             ITEMS.register("boundary_fragment", () -> new Item(new Item.Properties().stacksTo(60)));

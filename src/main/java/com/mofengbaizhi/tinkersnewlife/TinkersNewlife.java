@@ -246,6 +246,11 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.rate.PacketOpenPioneerRates::handle);
         // 墨默菜单三选项（自建显式包，不走容器按钮包）
         registerPacket(com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoMenuAction.class, com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoMenuAction::toBytes, com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoMenuAction::new, com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoMenuAction::handle);
+        // §910 百宝书吞噬一本书（客户端识别【拖着百宝书 + 右键帕秋莉书】的手势后发过来 ✓ 服务端校验后写 NBT ✓）
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.compendium.PacketCompendiumAbsorb.class,
+                com.mofengbaizhi.tinkersnewlife.network.compendium.PacketCompendiumAbsorb::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.compendium.PacketCompendiumAbsorb::new,
+                com.mofengbaizhi.tinkersnewlife.network.compendium.PacketCompendiumAbsorb::handle);
         registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoSoldState.class,
                 com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoSoldState::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoSoldState::new,
