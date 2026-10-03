@@ -46,6 +46,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @Mixin(targets = "mods.flammpfeil.slashblade.client.renderer.SlashBladeTEISR", remap = false)
 public class SlashBladeRenderOptMixin {
 
+    /** §872 诊断日志（用户口径 ✓ 生效与否必须能看出来 ✓） */
+    @Unique
+    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger("TinkersNewlife/SlashBladeOpt");
+
     /** 栈实例 → 剑类型集合（缓存 ✓ 容量上限兜底 ✓） */
     @Unique
     private static final Map<ItemStack, EnumSet<SwordType>> tnl$swordTypes = new ConcurrentHashMap<>();
@@ -57,6 +61,49 @@ public class SlashBladeRenderOptMixin {
 
     @Unique
     private static volatile long tnl$windowStart = System.nanoTime();
+
+    // ── §872 诊断（用户口径：不许静默失效 ⇒ 生效／没生效一眼看出来 ✓）──
+    /** 两个 redirect 是否都被调用过（＝ mixin 真的 apply 了 ✓） */
+    @Unique
+    private static volatile boolean tnl$provedTypeCache = false;
+    @Unique
+    private static volatile boolean tnl$provedLuminous = false;
+    @Unique
+    private static final java.util.concurrent.atomic.AtomicLong tnl$cacheHit =
+            new java.util.concurrent.atomic.AtomicLong();
+    @Unique
+    private static final java.util.concurrent.atomic.AtomicLong tnl$cacheMiss =
+            new java.util.concurrent.atomic.AtomicLong();
+    @Unique
+    private static final java.util.concurrent.atomic.AtomicLong tnl$lumSkipped =
+            new java.util.concurrent.atomic.AtomicLong();
+    @Unique
+    private static final java.util.concurrent.atomic.AtomicLong tnl$lumKept =
+            new java.util.concurrent.atomic.AtomicLong();
+    @Unique
+    private static volatile long tnl$lastReport = System.nanoTime();
+
+    /** §872：每 5 秒打一行汇总（只在真有渲染时打 ✓ 平时不刷屏 ✓） */
+    @Unique
+    private static void tnl$report() {
+        long now = System.nanoTime();
+        if (now - tnl$lastReport < 5_000_000_000L) return;
+        tnl$lastReport = now;
+        long hit = tnl$cacheHit.getAndSet(0);
+        long miss = tnl$cacheMiss.getAndSet(0);
+        long skip = tnl$lumSkipped.getAndSet(0);
+        long keep = tnl$lumKept.getAndSet(0);
+        if (hit + miss + skip + keep == 0) return;            // 这 5 秒没渲染刀 ⇒ 不刷屏 ✓
+        int crowd = -1;
+        boolean on = true;
+        try {
+            on = ModConfig.slashbladeRenderOpt();
+            crowd = ModConfig.slashbladeLuminousCrowd();
+        } catch (Throwable ignored) {
+        }
+        LOGGER.info("[拔刀剑优化] 近 5 秒：剑类型缓存 命中 {} / 未命中 {}；发光层 跳过 {} / 保留 {}（开关 {}，阈值 {}）",
+                hit, miss, skip, keep, on ? "开" : "关", crowd);
+    }
 
     /** 把一个栈算进的"本窗口渲染次数"＋1，并返回当前窗口计数（跨窗口自动归零 ✓） */
     @Unique
@@ -77,11 +124,19 @@ public class SlashBladeRenderOptMixin {
     private static EnumSet<SwordType> tnl$swordTypes(ItemStack stack) {
         try {
             if (!ModConfig.slashbladeRenderOpt()) return SwordType.from(stack);
+            if (!tnl$provedTypeCache) {
+                tnl$provedTypeCache = true;
+                LOGGER.info("[拔刀剑优化] ✓ mixin 生效：SwordType.from 已接管（缓存启用）");
+            }
             if (tnl$swordTypes.size() > 512) tnl$swordTypes.clear();      // 兜底：别无限涨 ✗
+            tnl$report();
             EnumSet<SwordType> cached = tnl$swordTypes.get(stack);
             if (cached == null) {
+                tnl$cacheMiss.incrementAndGet();
                 cached = SwordType.from(stack);
                 if (cached != null) tnl$swordTypes.put(stack, cached);
+            } else {
+                tnl$cacheHit.incrementAndGet();
             }
             return cached == null ? SwordType.from(stack) : cached.clone();
         } catch (Throwable ignored) {
@@ -107,9 +162,17 @@ public class SlashBladeRenderOptMixin {
             crowd = ModConfig.slashbladeLuminousCrowd();
         } catch (Throwable ignored) {
         }
+        if (!tnl$provedLuminous) {
+            tnl$provedLuminous = true;
+            LOGGER.info("[拔刀剑优化] ✓ mixin 生效：发光层调用已接管（阈值 {}，开关 {}）",
+                    crowd, on ? "开" : "关");
+        }
+        tnl$report();
         if (on && crowd > 0 && tnl$tickWindow() > crowd) {
+            tnl$lumSkipped.incrementAndGet();
             return;                                          // 拥挤 ⇒ 这一遍发光层省了 ✓
         }
+        tnl$lumKept.incrementAndGet();
         BladeRenderState.renderOverridedLuminous(stack, model, target, texture, pose, buffer, light);
     }
 }
