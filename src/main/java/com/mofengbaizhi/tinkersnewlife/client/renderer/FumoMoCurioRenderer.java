@@ -26,6 +26,9 @@ import top.theillusivec4.curios.api.client.ICurioRenderer;
  */
 public class FumoMoCurioRenderer implements ICurioRenderer {
 
+    /** §895 探针：只打一次，确认 Curios 到底有没有来调渲染器 */
+    private static volatile boolean tnl$probeLogged = false;
+
     @Override
     public <T extends LivingEntity, M extends EntityModel<T>> void render(ItemStack stack, SlotContext slotContext,
                                                                          PoseStack pose,
@@ -34,6 +37,13 @@ public class FumoMoCurioRenderer implements ICurioRenderer {
                                                                          float limbSwing, float limbSwingAmount,
                                                                          float partialTicks, float ageInTicks,
                                                                          float netHeadYaw, float headPitch) {
+        if (!tnl$probeLogged) {
+            tnl$probeLogged = true;
+            org.slf4j.LoggerFactory.getLogger("TinkersNewlife/FumoMo").info(
+                    "[fufu] Curios 渲染器被调用 ✓ 物品={} 玩家模型={} 是不是 HeadedModel={} 槽位={}",
+                    stack.getItem(), renderLayerParent.getModel().getClass().getSimpleName(),
+                    renderLayerParent.getModel() instanceof HeadedModel, slotContext.identifier());
+        }
         if (stack.isEmpty()) return;
         if (!(renderLayerParent.getModel() instanceof HeadedModel headed)) return;
         com.mofengbaizhi.tinkersnewlife.client.model.FumoMoHeadModel model =
