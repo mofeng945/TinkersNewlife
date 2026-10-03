@@ -32,7 +32,33 @@ public class FumoMoBlockEntityRenderer implements BlockEntityRenderer<FumoMoBloc
     private final PlayerModel<?> model;
 
     public FumoMoBlockEntityRenderer(BlockEntityRendererProvider.Context ctx) {
-        this.model = new PlayerModel<>(ctx.bakeLayer(ModelLayers.PLAYER), false);   // false = 非细手臂 ✓
+        this.model = tnl$buildModel();   // §887 自建网格（帽子层加厚 ✓）
+    }
+
+    /**
+     * §887：<b>自己建玩家模型</b> —— 原版帽子层只外扩 0.25px（0.015 格），
+     * 玩偶整体 0.5 倍缩放后只剩 ≈0.008 格 ⇒ **亚像素、看不见** ✗（这就是"外层不在"的真因 ✓）。
+     * <p>做法：拿 {@code PlayerModel.createMesh(...)} 的网格 ⇒ 在**烘焙之前**
+     * 用 {@code PartDefinition#addOrReplaceChild} 把 {@code hat} 换成**外扩 0.6px** 的版本 ✓
+     * ⇒ 再自己 {@code bakeRoot()} ✓。UV 仍是标准帽子层（32,0 起 ✓）⇒ 不会错位 ✓。
+     */
+    private static PlayerModel<?> tnl$buildModel() {
+        net.minecraft.client.model.geom.builders.MeshDefinition mesh =
+                PlayerModel.createMesh(net.minecraft.client.model.geom.builders.CubeDeformation.NONE, false);
+        try {
+            net.minecraft.client.model.geom.builders.PartDefinition head = mesh.getRoot().getChild("head");
+            head.addOrReplaceChild("hat",
+                    net.minecraft.client.model.geom.builders.CubeListBuilder.create()
+                            .texOffs(32, 0)
+                            .addBox(-4.0F, -8.0F, -4.0F, 8, 8, 8,
+                                    new net.minecraft.client.model.geom.builders.CubeDeformation(0.6F)),
+                    net.minecraft.client.model.geom.PartPose.ZERO);
+        } catch (Throwable t) {
+            org.slf4j.LoggerFactory.getLogger("TinkersNewlife/FumoMo")
+                    .warn("[fufu] 帽子层加厚失败（用原版厚度继续）：{}", t.toString());
+        }
+        return new PlayerModel<>(net.minecraft.client.model.geom.builders.LayerDefinition
+                .create(mesh, 64, 64).bakeRoot(), false);
     }
 
     @Override
