@@ -33,9 +33,12 @@ public class FumoMoItemRenderer extends BlockEntityWithoutLevelRenderer {
                              MultiBufferSource buffer, int light, int overlay) {
         if (model == null) model = FumoMoBlockEntityRenderer.newModel();
         pose.pushPose();
-        // GUI/手持里也稍微转个角度，看得见脸 ✓（世界坐标那套不变 ✓）
+        // §888 用户口径：「物品栏渲染直接继承方块渲染」✓ —— 就是说**同一个 renderDoll()** ✓
+        //   （姿势/比例/帽子层全部与放下的方块一致 ✓），这里只多叠一个**观察角度** ✓：
         pose.translate(0.5D, 0.0D, 0.5D);
-        pose.mulPose(Axis.YP.rotationDegrees(180.0F));
+        pose.mulPose(Axis.YP.rotationDegrees(180.0F));   // 与方块同一朝向 ✓
+        pose.mulPose(Axis.YP.rotationDegrees(35.0F));    // ← 转个角度：露出侧脸，不再正对镜头 ✓
+        pose.mulPose(Axis.XP.rotationDegrees(-10.0F));   // ← 略微俯视 ⇒ 看得见头顶/帽子 ✓
         FumoMoBlockEntityRenderer.renderDoll(model, pose, buffer, light, overlay);
         pose.popPose();
     }
