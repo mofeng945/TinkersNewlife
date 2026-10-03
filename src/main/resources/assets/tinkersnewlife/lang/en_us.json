@@ -1466,5 +1466,6 @@
   "screen.tinkersnewlife.compendium.hint": "%s book(s) absorbed - click one to read",
   "screen.tinkersnewlife.compendium.empty": "No Patchouli books absorbed yet",
   "message.tinkersnewlife.compendium.absorbed": "Absorbed \"%s\"",
-  "message.tinkersnewlife.compendium.already": "\"%s\" is already in the compendium"
+  "message.tinkersnewlife.compendium.already": "\"%s\" is already in the compendium",
+  "message.tinkersnewlife.compendium.not_patchouli": "This item carries no Patchouli book id, so the compendium cannot absorb it"
 }

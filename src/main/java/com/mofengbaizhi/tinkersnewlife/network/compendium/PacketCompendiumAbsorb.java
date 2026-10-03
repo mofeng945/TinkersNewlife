@@ -3,42 +3,39 @@ package com.mofengbaizhi.tinkersnewlife.network.compendium;
 import com.mofengbaizhi.tinkersnewlife.content.item.CompendiumItem;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
 /**
- * 客户端 → 服务端：<b>百宝书吞噬一本书</b>（§910 / §910c / §910d）。
+ * 客户端 → 服务端：<b>百宝书吞噬一本书</b>（§910 / §910c / §910d / §910e）。
  *
- * <h3>踩过的两个坑（都有实测日志 ✓）</h3>
+ * <h3>三处坑（全是实测日志逼出来的 ✓）</h3>
  * <ol>
- *   <li><b>§910c 别传槽位下标</b> ✗：创造模式 {@code CreativeModeInventoryScreen} 的客户端菜单
- *       与服务端 {@code InventoryMenu} **编号对不上**（日志：客户端槽 49 / 服务端只有 46 个槽 ✗）
- *       ⇒ 现在传**书 id**，服务端自己在"当前菜单 → 玩家背包"里找那本书 ✓。</li>
- *   <li><b>§910d 创造模式下"光标上那叠"服务端看不见</b> ✗：创造模式放/取走的是
+ *   <li><b>§910c 不能传槽位下标</b> ✗：创造模式客户端菜单与服务端 {@code InventoryMenu}
+ *       **编号对不上**（日志：客户端槽 49 / 服务端 46 个槽 ✗）⇒ 改传**书 id**；</li>
+ *   <li><b>§910d 创造模式"光标那叠"服务端看不见</b> ✗：创造模式放/取走的是
  *       {@code ServerboundSetCreativeModeSlotPacket}（按背包绝对槽号直接写 ✓），
- *       **从不把光标内容同步给服务端** ⇒ 服务端 {@code menu.getCarried()} 永远是空气
- *       （日志：`来源 0 上没找到百宝书（拿到的=block.minecraft.air）` ✓）。
- *       ⇒ 光标上那叠改由**客户端本地登记** ✓（{@link #SOURCE_CLIENT_LOCAL} ✓），
- *       只请服务端"把那本书吃掉" ✓。</li>
+ *       **从不同步光标内容** ⇒ 服务端读到的 carried 永远是空气 ✗
+ *       ⇒ 创造 + 光标改为**客户端本地登记**（{@link #SOURCE_CLIENT_LOCAL} ✓）＋ 服务端只消费书 ✓；</li>
+ *   <li><b>§910e 不能再靠 {@code patchouli:book} 找那本书</b> ✗：有些帕秋莉书
+ *       （例：神秘遗物「启示之证」= {@code ItemBase} ＋ **私有 BOOK_ID** ✓）
+ *       物品上**根本没有这个 NBT** ✗ ⇒ 服务端改成按**物品 id** 匹配那本书 ✓
+ *       （书 id 由客户端解析好带过来 ✓ 见 {@code CompendiumClient#resolveBookId} ✓）。</li>
  * </ol>
  *
  * <h3>来源（{@code source}）</h3>
- * <ul>
- *   <li>{@link #SOURCE_CARRIED}（0）：百宝书在光标上 —— **生存模式** ✓ 服务端看得见 ✓ 权威写入 ✓；</li>
- *   <li>{@link #SOURCE_MAIN_HAND}（1）：主手 ✓；</li>
- *   <li>{@link #SOURCE_INVENTORY}（2）：背包里 ✓；</li>
- *   <li>{@link #SOURCE_CLIENT_LOCAL}（3）：**创造模式光标** ✓ 客户端已自行登记 ⇒
- *       服务端**只消费那本书** ✓（找不到百宝书也不算错 ✓）。</li>
- * </ul>
- * <p>⚠ 服务端校验（源 0/1/2）：找到百宝书 ⇒ 找到那本书 ⇒ 才扣书 + 写 NBT + 提示 ✓；
- * 源 3：只要求"确实有那本书" ✓（就是删掉玩家自己一本书 ✓ 害不到别人 ✓）。
+ * 0 = 光标（生存 ✓ 服务端权威写入）；1 = 主手；2 = 背包；
+ * 3 = {@link #SOURCE_CLIENT_LOCAL} 创造模式光标（客户端已本地登记 ⇒ 服务端只消费那本书 ✓）。
  */
 public class PacketCompendiumAbsorb {
 
@@ -50,23 +47,32 @@ public class PacketCompendiumAbsorb {
     /** §910d 创造模式光标：客户端已本地登记 ✓ 服务端只把书吃掉 ✓ */
     public static final int SOURCE_CLIENT_LOCAL = 3;
 
-    /** 被吞噬那本书的帕秋莉书 id（{@code patchouli:book} 的值 ✓） */
+    /** 那本书的帕秋莉书 id（客户端解析 ✓ 存进百宝书 NBT ✓ 也是以后开界面的钥匙 ✓） */
     private final String bookId;
+    /** 那本书的**物品 id**（服务端凭它定位"要吃掉哪一格" ✓ §910e ✓） */
+    private final String itemId;
     private final int source;
 
-    public PacketCompendiumAbsorb(String bookId, int source) {
+    public PacketCompendiumAbsorb(String bookId, String itemId, int source) {
         this.bookId = bookId;
+        this.itemId = itemId;
         this.source = source;
     }
 
     public PacketCompendiumAbsorb(FriendlyByteBuf buf) {
         this.bookId = buf.readUtf();
+        this.itemId = buf.readUtf();
         this.source = buf.readVarInt();
     }
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeUtf(this.bookId);
+        buf.writeUtf(this.itemId);
         buf.writeVarInt(this.source);
+    }
+
+    private static boolean matchesItem(ItemStack stack, @Nullable ResourceLocation want) {
+        return want != null && want.equals(ForgeRegistries.ITEMS.getKey(stack.getItem()));
     }
 
     public static void handle(PacketCompendiumAbsorb packet, Supplier<NetworkEvent.Context> ctx) {
@@ -74,15 +80,16 @@ public class PacketCompendiumAbsorb {
             ServerPlayer player = ctx.get().getSender();
             if (player == null) return;
 
-            LOG.info("[百宝书] 收到吞噬请求：书id={} 来源={}（0光标/1主手/2背包/3创造光标·客户端已登记）",
-                    packet.bookId, packet.source);
+            LOG.info("[百宝书] 收到吞噬请求：书id={} 物品={} 来源={}（0光标/1主手/2背包/3创造光标·客户端已登记）",
+                    packet.bookId, packet.itemId, packet.source);
 
-            // ① 先找那本书（当前菜单 → 玩家背包 ✓ 覆盖箱子等容器 ✓）
+            // ① 先找那本书（当前菜单 → 玩家背包 ✓ §910e 按物品 id 找 ✓ 覆盖没有 NBT 的帕秋莉书 ✓）
+            ResourceLocation wantItem = ResourceLocation.tryParse(packet.itemId);
             AbstractContainerMenu menu = player.containerMenu;
             ItemStack book = ItemStack.EMPTY;
             Slot foundSlot = null;
             for (Slot slot : menu.slots) {
-                if (slot.hasItem() && packet.bookId.equals(CompendiumItem.bookIdOf(slot.getItem()))) {
+                if (slot.hasItem() && matchesItem(slot.getItem(), wantItem)) {
                     book = slot.getItem();
                     foundSlot = slot;
                     break;
@@ -92,23 +99,23 @@ public class PacketCompendiumAbsorb {
                 var inv = player.getInventory();
                 for (int i = 0; i < inv.getContainerSize(); i++) {
                     ItemStack s = inv.getItem(i);
-                    if (!s.isEmpty() && packet.bookId.equals(CompendiumItem.bookIdOf(s))) {
+                    if (!s.isEmpty() && matchesItem(s, wantItem)) {
                         book = s;
                         break;
                     }
                 }
             }
             if (book.isEmpty()) {
-                LOG.info("[百宝书] ✗ 菜单与背包里都没有书 id={} 的那本书，放弃", packet.bookId);
+                LOG.info("[百宝书] ✗ 菜单与背包里都没有物品 {} 的那本书，放弃", packet.itemId);
                 return;
             }
 
             String displayName = book.getHoverName().getString();
             boolean first = true;
-            int total = -1;   // 来源 3 时客户端自己记的，服务端这边不报总数 ✓
+            int total = -1;   // 来源 3 时由客户端自己记，服务端不报总数 ✓
 
             if (packet.source == SOURCE_CLIENT_LOCAL) {
-                // ③' 创造模式光标：客户端已经自己登记好了 ✓ 服务端只负责把书吃掉 ✓
+                // 创造模式光标：客户端已经自己登记好了 ✓ 服务端只负责把书吃掉 ✓
                 LOG.info("[百宝书] 来源 3（创造光标）⇒ 只消费这本书 ✓（登记已在客户端完成 ✓）");
             } else {
                 // ② 找到百宝书（光标 / 主手 / 背包 ✓）
@@ -136,8 +143,8 @@ public class PacketCompendiumAbsorb {
             }
             menu.broadcastChanges();
 
-            LOG.info("[百宝书] ✓ 已吞噬书 id={}（显示名={}）第一次={} 服务端侧总数={}",
-                    packet.bookId, displayName, first, total);
+            LOG.info("[百宝书] ✓ 已吞噬书 id={}（物品={} 显示名={}）第一次={} 服务端侧总数={}",
+                    packet.bookId, packet.itemId, displayName, first, total);
 
             player.displayClientMessage(Component.translatable(first
                             ? "message.tinkersnewlife.compendium.absorbed"

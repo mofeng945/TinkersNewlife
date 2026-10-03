@@ -7,32 +7,25 @@ import com.mofengbaizhi.tinkersnewlife.network.compendium.PacketCompendiumAbsorb
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * <b>帕秋莉的百宝书 —— 客户端部分</b>（§910 / §910d）：开界面 ＋ 物品栏里的"吞噬"手势 ✓。
+ * <b>帕秋莉的百宝书 —— 客户端部分</b>（§910 / §910d / §910e）：开界面 ＋ 物品栏里的"吞噬"手势 ✓。
  *
  * <p>挂的是 <b>Forge 总线</b>（注解里不写 bus ⇒ 默认 FORGE ✓）＋ {@code Dist.CLIENT} ✓
  * ⇒ 专服加载不到这里 ✓ 不会 NoClassDefFoundError ✗。
- *
  * <p>事件链已核对（反汇编 Forge jar ✓）：{@code MouseHandler#onPress} →
  * {@code ForgeHooksClient.onScreenMouseClickedPre} ⇒ 正是 {@code ScreenEvent.MouseButtonPressed.Pre} ✓。
- *
- * <h3>§910d 创造模式的处理（实测逼出来的 ✓）</h3>
- * 创造模式里**光标上拖着的那叠只在客户端存在** ✗（服务端只认按背包槽号直接写的
- * {@code ServerboundSetCreativeModeSlotPacket} ✓）⇒ 服务端看到的 carried 永远是空气 ✓
- * （日志：`来源 0 上没找到百宝书（拿到的=block.minecraft.air）` ✓）。
- * <p>因此：**创造模式 + 东西在光标上**时 ⇒ 客户端**本地登记**到那叠 ✓
- * （之后把它放进背包时，整叠会带着我们写的 NBT 一起同步上去 ✓），
- * 同时发 {@code SOURCE_CLIENT_LOCAL} 让服务端**只把那本书吃掉** ✓。
- * 生存模式的 carried 是服务端看得见的 ✓ ⇒ 仍然走服务端权威写入 ✓。
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, value = Dist.CLIENT)
 public final class CompendiumClient {
@@ -44,6 +37,57 @@ public final class CompendiumClient {
     /** 手持右键 ⇒ 打开"查阅"界面 ✓（由 {@code CompendiumItem#use} 经 DistExecutor 调过来 ✓） */
     public static void openScreen(ItemStack stack) {
         Minecraft.getInstance().setScreen(new CompendiumScreen(stack));
+    }
+
+    /**
+     * §910e <b>把"这本书的帕秋莉书 id"推出来</b>（三条规则 ✓ 越靠前越权威 ✓）：
+     * <ol>
+     *   <li>NBT {@code patchouli:book} —— 最权威 ✓（本仓既有口径 ✓ 创造栏那本走这条 ✓）；</li>
+     *   <li>物品是帕秋莉的 {@code ItemModBook} ⇒ 直接问它（{@code Book.id} 是公共字段 ✓）；</li>
+     *   <li><b>通用兜底</b>（§910e 新加 ✓）：帕秋莉约定书数据在
+     *       {@code data/<命名空间>/patchouli_books/<路径>/book.json} ✓，
+     *       而<u>物品 id 的路径通常就等于书的路径</u> ——
+     *       例：物品 {@code enigmaticlegacy:the_acknowledgment}
+     *       ⇔ {@code data/enigmaticlegacy/patchouli_books/the_acknowledgment/book.json} ✓
+     *       ⇒ 探一下这个资源在不在，在就认 ✓
+     *       （神秘遗物「启示之证」就是这样一本书：物品类里藏着自己的私有 BOOK_ID，
+     *        物品上**没有** NBT ✗ —— 用户实测点出来的 ✓）。</li>
+     * </ol>
+     * ⚠ 本方法会用到 {@code Minecraft}（客户端类 ✓）⇒ 只能放在客户端类里 ✓
+     * （公共代码里那份 {@link CompendiumItem#bookIdOf} 仍然只认 NBT ✓ 服务端用 ✓）。
+     *
+     * @return 推出来的书 id ✓；推不出来返回 {@code null}（⇒ 这本书吞不了 ✓）
+     */
+    private static String resolveBookId(ItemStack stack) {
+        // ① NBT `patchouli:book`
+        String fromTag = CompendiumItem.bookIdOf(stack);
+        if (fromTag != null) return fromTag;
+
+        // ② 帕秋莉的 ItemModBook ⇒ 问它自己
+        try {
+            if (stack.getItem() instanceof vazkii.patchouli.common.item.ItemModBook) {
+                vazkii.patchouli.common.book.Book book =
+                        vazkii.patchouli.common.item.ItemModBook.getBook(stack);
+                if (book != null && book.id != null) return book.id.toString();
+            }
+        } catch (Throwable t) {
+            LOG.info("[百宝书] 规则②问帕秋莉失败：{}", t.toString());
+        }
+
+        // ③ 通用兜底：`data/<ns>/patchouli_books/<物品路径>/book.json` 存在就算
+        try {
+            ResourceLocation itemId = ForgeRegistries.ITEMS.getKey(stack.getItem());
+            if (itemId != null) {
+                ResourceLocation probe = new ResourceLocation(itemId.getNamespace(),
+                        "patchouli_books/" + itemId.getPath() + "/book.json");
+                if (Minecraft.getInstance().getResourceManager().getResource(probe).isPresent()) {
+                    return itemId.toString();
+                }
+            }
+        } catch (Throwable t) {
+            LOG.info("[百宝书] 规则③探资源失败：{}", t.toString());
+        }
+        return null;
     }
 
     /**
@@ -64,21 +108,28 @@ public final class CompendiumClient {
         if (slot == null || !slot.hasItem()) return;
 
         ItemStack hovered = slot.getItem();
-        String bookId = CompendiumItem.bookIdOf(hovered);
         ItemStack carriedStack = screen.getMenu().getCarried();
         boolean carried = carriedStack.getItem() instanceof CompendiumItem;
         boolean inHand = player.getMainHandItem().getItem() instanceof CompendiumItem;
         boolean inBag = !carried && !inHand && CompendiumItem.findInInventory(player) != null;
+        String bookId = (carried || inHand || inBag) ? resolveBookId(hovered) : null;
 
         // 探针：只要"这次右键跟百宝书有关"就打一行 ✓（无关就一声不响 ✓ 不刷屏 ✓）
         if (carried || inHand || inBag) {
-            LOG.info("[百宝书] 右键：界面={} 槽位={} 槽内={} 读出书id={} 光标={} 主手={} 背包={} 创造={}",
+            LOG.info("[百宝书] 右键：界面={} 槽位={} 槽内={} 解析书id={} 光标={} 主手={} 背包={} 创造={}",
                     screen.getClass().getSimpleName(), slot.index, hovered.getDescriptionId(),
                     bookId, carried, inHand, inBag, player.isCreative());
         }
 
-        if (bookId == null) return;                                       // 不是帕秋莉书 ⇒ 完全不插手 ✓
         if (!carried && !inHand && !inBag) return;                        // 手上/包里没百宝书 ⇒ 不插手 ✓
+        if (bookId == null) {
+            // §910e 不认得的书：只在"正拖着百宝书"时提示一句 ✓（免得右键泥土也刷屏 ✗）
+            if (carried) {
+                player.displayClientMessage(
+                        Component.translatable("message.tinkersnewlife.compendium.not_patchouli"), true);
+            }
+            return;
+        }
 
         int source;
         if (carried && player.isCreative()) {
@@ -95,8 +146,10 @@ public final class CompendiumClient {
             source = PacketCompendiumAbsorb.SOURCE_INVENTORY;
         }
 
-        TinkersNewlife.CHANNEL.sendToServer(new PacketCompendiumAbsorb(bookId, source));
-        LOG.info("[百宝书] 已发包：书id={} 来源={}", bookId, source);
+        ResourceLocation itemId = ForgeRegistries.ITEMS.getKey(hovered.getItem());
+        TinkersNewlife.CHANNEL.sendToServer(new PacketCompendiumAbsorb(bookId,
+                itemId == null ? "" : itemId.toString(), source));
+        LOG.info("[百宝书] 已发包：书id={} 物品={} 来源={}", bookId, itemId, source);
         event.setCanceled(true);                                          // 拦掉原版的"放一个" ✗
     }
 }
