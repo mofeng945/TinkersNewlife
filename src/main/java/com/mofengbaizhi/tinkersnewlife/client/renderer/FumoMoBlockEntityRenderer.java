@@ -104,9 +104,30 @@ public class FumoMoBlockEntityRenderer implements BlockEntityRenderer<FumoMoBloc
         // ⑦ 头略微抬起（看着你 ✓）；帽子是头的子部件 ⇒ 自动跟随 ✓
         model.head.xRot = -0.12F;
 
+        tnl$logOnce(model);
         model.renderToBuffer(pose, buffer.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)),
                 light, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
         pose.popPose();
+    }
+
+    /** §885 诊断：只打一次，把"第二层部件"的真实状态说出来（可见性/是否跳过绘制/子部件数） */
+    private static boolean tnl$logged = false;
+
+    private static void tnl$logOnce(PlayerModel<?> model) {
+        if (tnl$logged) return;
+        tnl$logged = true;
+        try {
+            org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger("TinkersNewlife/FumoMo");
+            log.info("[fufu] 模型诊断：PlayerModel 类={} hat: visible={} skipDraw={} | jacket visible={} "
+                            + "| 左右袖 visible={}/{} | 左右裤 visible={}/{}",
+                    model.getClass().getName(),
+                    model.hat.visible, model.hat.skipDraw, model.jacket.visible,
+                    model.leftSleeve.visible, model.rightSleeve.visible,
+                    model.leftPants.visible, model.rightPants.visible);
+        } catch (Throwable t) {
+            org.slf4j.LoggerFactory.getLogger("TinkersNewlife/FumoMo")
+                    .warn("[fufu] 模型诊断失败：{}", t.toString());
+        }
     }
 
     /** 把腿的角度同步给"裤子"外层 ✓（外层是独立部件 ✓ 不同步就会留在原位 ✗） */
