@@ -44,10 +44,11 @@ public final class FumoMoHeadRender {
     /**
      * 把玩偶"落到"玩家头顶用的偏移量（单位：**格** ✓，在 {@link #DOLL_SCALE} 缩放**之前**作用 ⇒ 不受缩放影响 ✓）。
      * <p>推导：要求最低点落在玩家头顶（−0.5 格）再下沉 1px ⇒ `HEAD_DROP + 0.5 × 0.94 ≈ −0.44`
-     * ⇒ 算得 ≈ −0.89 ✓；§903 再按用户口径**整体上调 2px**（2/16 = 0.125 格 ✓）⇒ **−1.015** ✓。
+     * ⇒ 算得 ≈ −0.89 ✓；§903 再按用户口径**整体上调 2px**（2/16 = 0.125 格 ✓）⇒ −1.015；
+     * §904 又下调 **0.5px**（0.5/16 = 0.03125 格 ✓）⇒ **−0.98375** ✓。
      * <p>⚠ 想再调：**改这个数就是改格数** ✓（1px = 0.0625 格；负得越多 ⇒ 越高 ✓）。
      */
-    public static final double HEAD_DROP = -1.015D;
+    public static final double HEAD_DROP = -0.98375D;
 
     /** §898 姿态探针：只打一次，把真实矩阵记进日志（以后再出问题就不用猜了 ✓） */
     private static volatile boolean tnl$poseLogged = false;
