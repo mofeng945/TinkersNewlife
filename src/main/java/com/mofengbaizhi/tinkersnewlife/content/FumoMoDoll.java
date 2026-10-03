@@ -98,10 +98,15 @@ public final class FumoMoDoll {
     /** 每个玩家上一次摸头的时间（毫秒 ✓ 防连点刷音效 ✓） */
     private static final Map<UUID, Long> LAST_TOUCH = new ConcurrentHashMap<>();
 
-    /** 玩偶的碰撞箱：只占中间一小块（四周能走过去 ✓ 与玩偶大致对得上 ✓）——朝向南北时用这个 ✓ */
-    private static final VoxelShape SHAPE_Z = Shapes.box(0.25D, 0.0D, 0.3125D, 0.75D, 0.875D, 0.6875D);
+    /**
+     * 玩偶的碰撞箱：只占中间一小块（四周还能贴着走过去 ✓）——朝向南北时用这个 ✓。
+     * <p>§907 高度从 0.875 提到 **1.0**：玩偶放大到约 0.98 格高之后，
+     * 头顶会超原来的箱子 ⇒ 右键"摸头"点不到 ✗（{@code use()} 要求命中碰撞箱 ✓）⇒ 跟着长高 ✓。
+     * x/z 保持原来的小一圈 ✓（不影响点头顶 ✓，也保留"能贴着走过去"的手感 ✓）。
+     */
+    private static final VoxelShape SHAPE_Z = Shapes.box(0.25D, 0.0D, 0.3125D, 0.75D, 1.0D, 0.6875D);
     /** §906 朝向东西时把 x/z 对调（玩偶本身比较"扁" ✓ 碰撞箱跟着转 ✓） */
-    private static final VoxelShape SHAPE_X = Shapes.box(0.3125D, 0.0D, 0.25D, 0.6875D, 0.875D, 0.75D);
+    private static final VoxelShape SHAPE_X = Shapes.box(0.3125D, 0.0D, 0.25D, 0.6875D, 1.0D, 0.75D);
 
     /** 玩偶方块：右键＝摸头 ✓ */
     public static class FumoMoBlock extends Block implements net.minecraft.world.level.block.EntityBlock {

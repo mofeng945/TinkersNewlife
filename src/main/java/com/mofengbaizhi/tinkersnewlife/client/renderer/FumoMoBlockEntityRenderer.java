@@ -85,6 +85,18 @@ public class FumoMoBlockEntityRenderer implements BlockEntityRenderer<FumoMoBloc
      */
     public static final double GROUND_SINK = 0.19D;
 
+    /**
+     * §907 <b>世界里的整体放大倍数</b>（用户口径：「维持这个比例，让方块模型放大一点**填满整个方块**」✓）。
+     * <p>算一下实际大小：净缩放 = 我们自己那 0.5 × **幼年体分支**的 0.5（身体件）= **0.25**
+     * （{@code PlayerModel} 没人赋 {@code young} ⇒ 默认 true ⇒ 走 {@code AgeableListModel} 的幼年体分支 ✓，
+     * 已核对 1.20.1 源码 ✓；{@code PlayerModel} 还重写了 {@code bodyParts()} 把裤子/袖子/夹克也拉进那一支 ✓）
+     * ⇒ 玩偶只有 **≈0.49 格高 × 0.20 格宽**（在一格方块里显得很小 ✗）。
+     * <p>乘 <b>2.0</b> ⇒ ≈**0.98 格高 × 0.40 格宽** ⇒ 高度基本填满一个方块 ✓，比例完全不变 ✓。
+     * <p>⚠ 这个倍数**只作用于世界（方块）那条路** ✓ —— 物品栏/手持有自己的 zoom（用户调过 ✓）✗ 不动它 ✓。
+     * 想再大/再小就改这一个数 ✓（1.0 = §907 之前的大小 ✓）。
+     */
+    public static final float WORLD_SCALE = 2.0F;
+
     @Override
     public void render(FumoMoBlockEntity be, float partialTick, PoseStack pose, MultiBufferSource buffer,
                        int light, int overlay) {
@@ -97,6 +109,9 @@ public class FumoMoBlockEntityRenderer implements BlockEntityRenderer<FumoMoBloc
                 ? be.getBlockState().getValue(FumoMoDoll.FumoMoBlock.FACING)
                 : Direction.SOUTH;
         pose.mulPose(Axis.YP.rotationDegrees(180.0F - facing.toYRot()));
+        // §907 放大：放在 GROUND_SINK **之前** ⇒ 那个下沉量会被一起按比例放大 ✓
+        //   （几何整体的悬空量也随之放大 ⇒ 下沉量同样放大 ⇒ 玩偶最低点仍然贴着方块底面 ✓ 正好 ✓）
+        pose.scale(WORLD_SCALE, WORLD_SCALE, WORLD_SCALE);
         pose.translate(0.0D, -GROUND_SINK, 0.0D);           // §902 坐到地面上 ✓（悬空 0.17 格 ⇒ 补 0.19 ✓）
         renderDoll(model, pose, buffer, light, overlay);
         pose.popPose();
