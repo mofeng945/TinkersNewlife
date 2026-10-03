@@ -42,6 +42,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * </ul>
  * <p>拥挤判定用"最近 50 ms 的渲染次数"✓（拿不到稳定的每帧钩子 ✗ 用时间窗更稳 ✓ 代价是判定略糙 ✓ 如实记录 ✓）。
  * <p>⚠ 全程 try/catch ＋ 配置读不到就用默认值 ✓；**只影响客户端画面** ✓ 不影响服务器 ✓。
+ * <p>⚠⚠ §874 <b>踩过的坑</b>：两个 {@code @Redirect} <b>处理器不能是 static</b> ✗ ——
+ * 目标 {@code renderIcon(...)} 是**实例方法** ✓，处理器写成 static 会让 Mixin 直接
+ * {@code InvalidInjectionException: 'static' modifier of handler method does not match target} ✗
+ * 而<b>静默失效</b>（`defaultRequire: 0` ⇒ 只打 WARN 不崩 ✓ 但也一点作用都没有 ✗）；
+ * 现在两个处理器都是**实例方法** ✓（{@code tnl$report()} 仍是 static ✓ 它不碰实例状态 ✓）。
  */
 @Mixin(targets = "mods.flammpfeil.slashblade.client.renderer.SlashBladeTEISR", remap = false)
 public class SlashBladeRenderOptMixin {
@@ -121,7 +126,7 @@ public class SlashBladeRenderOptMixin {
               at = @At(value = "INVOKE",
                       target = "Lmods/flammpfeil/slashblade/item/SwordType;from(Lnet/minecraft/world/item/ItemStack;)Ljava/util/EnumSet;"),
               remap = false)
-    private static EnumSet<SwordType> tnl$swordTypes(ItemStack stack) {
+    private EnumSet<SwordType> tnl$swordTypes(ItemStack stack) {
         try {
             if (!ModConfig.slashbladeRenderOpt()) return SwordType.from(stack);
             if (!tnl$provedTypeCache) {
@@ -152,9 +157,9 @@ public class SlashBladeRenderOptMixin {
               at = @At(value = "INVOKE",
                       target = "Lmods/flammpfeil/slashblade/client/renderer/util/BladeRenderState;renderOverridedLuminous(Lnet/minecraft/world/item/ItemStack;Lmods/flammpfeil/slashblade/client/renderer/model/obj/WavefrontObject;Ljava/lang/String;Lnet/minecraft/resources/ResourceLocation;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V"),
               remap = false)
-    private static void tnl$maybeSkipLuminous(ItemStack stack, WavefrontObject model, String target,
-                                             ResourceLocation texture, PoseStack pose,
-                                             MultiBufferSource buffer, int light) {
+    private void tnl$maybeSkipLuminous(ItemStack stack, WavefrontObject model, String target,
+                                      ResourceLocation texture, PoseStack pose,
+                                      MultiBufferSource buffer, int light) {
         int crowd = 6;
         boolean on = true;
         try {
