@@ -81,6 +81,13 @@ public class CompendiumScreen extends AbstractRowListScreen<CompoundTag> {
     }
 
     @Override
+    protected void drawFooter(GuiGraphics graphics, int mouseX, int mouseY) {
+        graphics.drawCenteredString(this.font,
+                Component.translatable("screen.tinkersnewlife.compendium.footer"),
+                this.width / 2, this.height - 24, 0x808080);
+    }
+
+    @Override
     protected void onRowClick(int index, CompoundTag row) {
         ResourceLocation id = ResourceLocation.tryParse(row.getString(CompendiumItem.KEY_ID));
         Minecraft.getInstance().setScreen(null);        // 先关掉自己 ✓ 免得两界面叠着 ✗

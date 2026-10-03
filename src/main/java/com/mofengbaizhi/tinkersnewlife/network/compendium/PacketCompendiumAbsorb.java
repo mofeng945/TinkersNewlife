@@ -129,7 +129,7 @@ public class PacketCompendiumAbsorb {
                             packet.source, compendium == null ? "null" : compendium.getDescriptionId());
                     return;
                 }
-                first = CompendiumItem.absorb(compendium, packet.bookId, displayName);
+                first = CompendiumItem.absorb(compendium, packet.bookId, displayName, packet.itemId);
                 total = CompendiumItem.absorbedCount(compendium);
                 if (packet.source == SOURCE_CARRIED) menu.setCarried(compendium);
             }

@@ -1467,5 +1467,8 @@
   "screen.tinkersnewlife.compendium.empty": "No Patchouli books absorbed yet",
   "message.tinkersnewlife.compendium.absorbed": "Absorbed \"%s\"",
   "message.tinkersnewlife.compendium.already": "\"%s\" is already in the compendium",
-  "message.tinkersnewlife.compendium.not_patchouli": "This item carries no Patchouli book id, so the compendium cannot absorb it"
+  "message.tinkersnewlife.compendium.not_patchouli": "This item carries no Patchouli book id, so the compendium cannot absorb it",
+  "message.tinkersnewlife.compendium.wake": "Woke absorbed books (%s responded)",
+  "message.tinkersnewlife.compendium.wake_none": "These books have no directly usable effect (read them in the compendium screen)",
+  "screen.tinkersnewlife.compendium.footer": "Sneak + right-click the compendium: wake the absorbed books"
 }

@@ -32,6 +32,17 @@ public final class CompendiumClient {
 
     private static final Logger LOG = LoggerFactory.getLogger("TinkersNewlife/Compendium");
 
+    /**
+     * §910g <b>已知"书 id ≠ 物品 id"的对应表</b>（推不出来的那几件，只能硬记 ✓）。
+     * <p>「倒转之启」`enigmaticlegacy:the_twist`：反编译确认它的类
+     * {@code TheTwist extends TheAcknowledgment} ✓ ⇒ **书 id 继承自父类 = `enigmaticlegacy:the_acknowledgment`** ✓
+     * （两条 lore 也印证："与启示之证的用途几乎一样…只不过被包裹在不同的封面" ✓）。
+     * <p>⚠ 加新条目时请**先在帕秋莉书表里验证**（本方法只接受书表里真实存在的 id ✓）免得写错 ✗。
+     */
+    private static final java.util.Map<String, String> KNOWN_BOOK_IDS = java.util.Map.of(
+            "enigmaticlegacy:the_twist", "enigmaticlegacy:the_acknowledgment"
+    );
+
     private CompendiumClient() {}
 
     /** 手持右键 ⇒ 打开"查阅"界面 ✓（由 {@code CompendiumItem#use} 经 DistExecutor 调过来 ✓） */
@@ -72,6 +83,23 @@ public final class CompendiumClient {
             }
         } catch (Throwable t) {
             LOG.info("[百宝书] 规则②问帕秋莉失败：{}", t.toString());
+        }
+
+        // ②' §910g 已知映射（书 id ≠ 物品 id 的那几件 ✓ 必须先在书表里验证过 ✓）
+        try {
+            ResourceLocation rawId = ForgeRegistries.ITEMS.getKey(stack.getItem());
+            if (rawId != null && KNOWN_BOOK_IDS.containsKey(rawId.toString())) {
+                ResourceLocation mapped = ResourceLocation.tryParse(KNOWN_BOOK_IDS.get(rawId.toString()));
+                if (mapped != null
+                        && vazkii.patchouli.common.book.BookRegistry.INSTANCE.books.containsKey(mapped)) {
+                    LOG.info("[百宝书] 规则②'：已知映射 {} → {} ✓", rawId, mapped);
+                    return mapped.toString();
+                }
+                LOG.info("[百宝书] 规则②'：映射 {} → {} 但书表里没有这本，忽略 ✗",
+                        rawId, KNOWN_BOOK_IDS.get(rawId.toString()));
+            }
+        } catch (Throwable t) {
+            LOG.info("[百宝书] 规则②'失败：{}", t.toString());
         }
 
         // ③ 通用兜底：**拿物品 id 当候选书 id，问帕秋莉"到底有没有这本书"** ✓
@@ -152,7 +180,9 @@ public final class CompendiumClient {
         int source;
         if (carried && player.isCreative()) {
             // §910d 创造模式：光标那叠服务端看不见 ✗ ⇒ 本地登记 ✓ ＋ 让服务端只吃掉这本书 ✓
-            boolean first = CompendiumItem.absorb(carriedStack, bookId, hovered.getHoverName().getString());
+            ResourceLocation hoveredItem = ForgeRegistries.ITEMS.getKey(hovered.getItem());
+            boolean first = CompendiumItem.absorb(carriedStack, bookId, hovered.getHoverName().getString(),
+                    hoveredItem == null ? "" : hoveredItem.toString());
             LOG.info("[百宝书] 创造模式光标：本地登记完成（第一次={}）现在共 {} 本 ⇒ 请服务端消费该书",
                     first, CompendiumItem.absorbedCount(carriedStack));
             source = PacketCompendiumAbsorb.SOURCE_CLIENT_LOCAL;
