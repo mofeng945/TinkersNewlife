@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.content;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -12,15 +13,21 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -91,16 +98,51 @@ public final class FumoMoDoll {
     /** 每个玩家上一次摸头的时间（毫秒 ✓ 防连点刷音效 ✓） */
     private static final Map<UUID, Long> LAST_TOUCH = new ConcurrentHashMap<>();
 
-    /** 玩偶的碰撞箱：只占中间一小块（四周能走过去 ✓ 与方块模型大致对得上 ✓） */
-    private static final VoxelShape SHAPE = Shapes.box(0.25D, 0.0D, 0.3125D, 0.75D, 0.875D, 0.6875D);
+    /** 玩偶的碰撞箱：只占中间一小块（四周能走过去 ✓ 与玩偶大致对得上 ✓）——朝向南北时用这个 ✓ */
+    private static final VoxelShape SHAPE_Z = Shapes.box(0.25D, 0.0D, 0.3125D, 0.75D, 0.875D, 0.6875D);
+    /** §906 朝向东西时把 x/z 对调（玩偶本身比较"扁" ✓ 碰撞箱跟着转 ✓） */
+    private static final VoxelShape SHAPE_X = Shapes.box(0.3125D, 0.0D, 0.25D, 0.6875D, 0.875D, 0.75D);
 
     /** 玩偶方块：右键＝摸头 ✓ */
     public static class FumoMoBlock extends Block implements net.minecraft.world.level.block.EntityBlock {
+
+        /**
+         * §906 <b>朝向</b>：玩偶**有正面**（脸朝向的那一面 ✓）⇒ 放置时像箱子一样定朝向 ✓，
+         * 渲染器按这个值转（否则永远只朝一个方向 ✗ 用户实测 ✓）。
+         * <p>口径：{@code FACING} = <b>玩偶正面指向的方向</b>；
+         * 放置时取「玩家水平朝向的**反方向**」⇒ 放下来时**正面对着玩家** ✓（与 §880 起的行为一致 ✓）。
+         */
+        public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+
         public FumoMoBlock() {
             super(BlockBehaviour.Properties.copy(net.minecraft.world.level.block.Blocks.WHITE_WOOL)
                     .noOcclusion()                 // 不是实心块 ⇒ 不挡光、能贴在一起 ✓
                     .instabreak()                  // 空手一下就掉 ✓
                     .sound(SoundType.WOOL));
+            this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
+        }
+
+        @Override
+        protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+            builder.add(FACING);
+        }
+
+        /** 放置时定朝向：正面对着玩家 ✓ */
+        @Override
+        public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+            return this.defaultBlockState()
+                    .setValue(FACING, ctx.getHorizontalDirection().getOpposite());
+        }
+
+        /** 结构方块旋转/镜像时朝向跟着转 ✓ */
+        @Override
+        public BlockState rotate(BlockState state, Rotation rotation) {
+            return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+        }
+
+        @Override
+        public BlockState mirror(BlockState state, Mirror mirror) {
+            return state.setValue(FACING, mirror.mirror(state.getValue(FACING)));
         }
 
         @Override
@@ -114,14 +156,19 @@ public final class FumoMoDoll {
             return net.minecraft.world.level.block.RenderShape.INVISIBLE;
         }
 
+        /** §906 朝向东西时用"转过 90°"的那个碰撞箱 ✓ */
+        private static VoxelShape shapeFor(BlockState state) {
+            return state.getValue(FACING).getAxis() == Direction.Axis.X ? SHAPE_X : SHAPE_Z;
+        }
+
         @Override
         public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext ctx) {
-            return SHAPE;
+            return shapeFor(state);
         }
 
         @Override
         public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext ctx) {
-            return SHAPE;
+            return shapeFor(state);
         }
 
         @Override

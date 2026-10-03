@@ -2,9 +2,11 @@ package com.mofengbaizhi.tinkersnewlife.client.renderer;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.FumoMoBlockEntity;
+import com.mofengbaizhi.tinkersnewlife.content.FumoMoDoll;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.model.PlayerModel;
+import net.minecraft.core.Direction;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -88,7 +90,13 @@ public class FumoMoBlockEntityRenderer implements BlockEntityRenderer<FumoMoBloc
                        int light, int overlay) {
         pose.pushPose();
         pose.translate(0.5D, 0.0D, 0.5D);
-        pose.mulPose(Axis.YP.rotationDegrees(180.0F));      // 面朝玩家（方块正面 = -Z ✓）
+        // §906 按放置朝向转：玩家模型（以及这只玩偶）的**正面 = −Z** ✓
+        //   ⇒ 要让正面指向 facing，yaw = 180 − facing.toYRot()
+        //   （facing=south（toYRot=0）⇒ 仍然 180°，与 §880 起的写法一致 ✓ 不会突变 ✓）
+        Direction facing = be.getBlockState().hasProperty(FumoMoDoll.FumoMoBlock.FACING)
+                ? be.getBlockState().getValue(FumoMoDoll.FumoMoBlock.FACING)
+                : Direction.SOUTH;
+        pose.mulPose(Axis.YP.rotationDegrees(180.0F - facing.toYRot()));
         pose.translate(0.0D, -GROUND_SINK, 0.0D);           // §902 坐到地面上 ✓（悬空 0.17 格 ⇒ 补 0.19 ✓）
         renderDoll(model, pose, buffer, light, overlay);
         pose.popPose();

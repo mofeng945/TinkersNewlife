@@ -1,7 +1,8 @@
 {
   "variants": {
-    "": {
-      "model": "tinkersnewlife:block/fumo_mo"
-    }
+    "facing=north": { "model": "tinkersnewlife:block/fumo_mo" },
+    "facing=south": { "model": "tinkersnewlife:block/fumo_mo" },
+    "facing=west":  { "model": "tinkersnewlife:block/fumo_mo" },
+    "facing=east":  { "model": "tinkersnewlife:block/fumo_mo" }
   }
 }
