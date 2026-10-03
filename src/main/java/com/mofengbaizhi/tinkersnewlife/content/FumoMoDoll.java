@@ -77,7 +77,7 @@ public final class FumoMoDoll {
             BLOCK_ENTITIES.register("fumo_mo",
                     () -> BlockEntityType.Builder.of(FumoMoBlockEntity::new, FUMO_MO.get()).build(null));
     public static final RegistryObject<Item> FUMO_MO_ITEM = ITEMS.register("fumo_mo",
-            () -> new BlockItem(FUMO_MO.get(), new Item.Properties()));
+            () -> new FumoMoItem(FUMO_MO.get(), new Item.Properties()));
 
     /** 单独一页创造栏（图标就是 fufu 自己 ✓） */
     public static final RegistryObject<CreativeModeTab> TAB = TABS.register("fumo_mo",

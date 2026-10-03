@@ -41,6 +41,17 @@ public class FumoMoBlockEntityRenderer implements BlockEntityRenderer<FumoMoBloc
         pose.pushPose();
         pose.translate(0.5D, 0.0D, 0.5D);
         pose.mulPose(Axis.YP.rotationDegrees(180.0F));      // 面朝玩家（方块正面 = -Z ✓）
+        renderDoll(model, pose, buffer, light, overlay);
+        pose.popPose();
+    }
+
+    /**
+     * <b>玩偶姿势的唯一实现</b>（§881 用户口径：「物品栏显示和方块显示统一」✓）——
+     * 方块渲染器与<b>物品栏渲染器</b>都调这一个方法 ✓ ⇒ 两边长得一模一样 ✓，
+     * 以后调姿势只改这里一处 ✓。
+     */
+    public static void renderDoll(PlayerModel<?> model, PoseStack pose, MultiBufferSource buffer, int light, int overlay) {
+        pose.pushPose();
         pose.scale(0.5F, 0.5F, 0.5F);                       // 幼年体比例 ✓
         pose.translate(0.0D, 0.55D, -0.25D);                // 坐姿：整体略抬起、略前移 ✓
 
@@ -60,5 +71,11 @@ public class FumoMoBlockEntityRenderer implements BlockEntityRenderer<FumoMoBloc
         model.renderToBuffer(pose, buffer.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)),
                 light, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
         pose.popPose();
+    }
+
+    /** 给物品栏渲染器用：自己按需烘焙一个玩家模型 ✓（只在客户端 ✓） */
+    public static PlayerModel<?> newModel() {
+        return new PlayerModel<>(net.minecraft.client.Minecraft.getInstance().getEntityModels()
+                .bakeLayer(ModelLayers.PLAYER), false);
     }
 }
