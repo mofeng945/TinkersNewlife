@@ -35,6 +35,19 @@ public class FumoMoItem extends BlockItem implements ICurioItem {
         return net.minecraft.world.entity.EquipmentSlot.HEAD;
     }
 
+    /**
+     * §896：**护甲渲染必须给贴图** —— Forge 的护甲层通过 {@code IForgeItem#getArmorTexture}
+     * 取贴图（返回的是**路径字符串** ✓ 不是 ResourceLocation ✗）；不给就绑到缺失贴图 ⇒
+     * 模型画了也看不见 ✗（这就是之前"头顶空着"的真因 ✓）。
+     */
+    @Override
+    public String getArmorTexture(net.minecraft.world.item.ItemStack stack,
+                                  net.minecraft.world.entity.Entity entity,
+                                  net.minecraft.world.entity.EquipmentSlot slot,
+                                  String type) {
+        return "tinkersnewlife:textures/entity/momo_common.png";
+    }
+
     @Override
     public void initializeClient(java.util.function.Consumer<
             net.minecraftforge.client.extensions.common.IClientItemExtensions> consumer) {
@@ -58,6 +71,7 @@ public class FumoMoItem extends BlockItem implements ICurioItem {
                 }
                 return com.mofengbaizhi.tinkersnewlife.client.model.FumoMoHeadModelHolder.get();
             }
+
         });
     }
 }
