@@ -2,14 +2,20 @@ package com.mofengbaizhi.tinkersnewlife.content;
 
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import top.theillusivec4.curios.api.type.capability.ICurioItem;
 
 /**
- * fufu 的方块物品（§881）：只为了挂**自定义物品渲染器**——
- * Forge 1.20.1（47.4.22）没有 {@code RegisterClientExtensionsEvent} ✗，
- * 官方入口是 {@link Item#initializeClient} ✓：它**只在客户端被调用** ✓
- * ⇒ 服务端永远不会执行到 body 里的客户端类型 ✓（本仓 §801 那条"公共代码别碰客户端类"的规矩不冲突 ✓）。
+ * fufu 的方块物品（§881／§889）：
+ * <ul>
+ *   <li>挂**自定义物品渲染器**（Forge 1.20.1 没有 {@code RegisterClientExtensionsEvent} ✗ ⇒ 用官方
+ *       {@link Item#initializeClient} ✓ 它只在客户端被调用 ✓）；</li>
+ *   <li>实现 {@link ICurioItem} ⇒ **能戴在头上** ✓（Curios 的 {@code head} 槽 ✓ 与本仓「双向认知阻碍面具」
+ *       同一套做法 ✓）。</li>
+ * </ul>
+ * <p>📌 待办：头部**渲染**（Curios 的 {@code ICurioRenderer}）—— 功能上"能戴"这一步已经通了 ✓，
+ * 画面里挂在头上的那一半下一步接 ✓（要照 Curios 5.x 的渲染器签名来 ✓）。
  */
-public class FumoMoItem extends BlockItem {
+public class FumoMoItem extends BlockItem implements ICurioItem {
 
     public FumoMoItem(net.minecraft.world.level.block.Block block, Item.Properties props) {
         super(block, props);

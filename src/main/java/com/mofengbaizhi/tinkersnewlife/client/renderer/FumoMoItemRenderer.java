@@ -39,6 +39,13 @@ public class FumoMoItemRenderer extends BlockEntityWithoutLevelRenderer {
         pose.mulPose(Axis.YP.rotationDegrees(180.0F));   // 与方块同一朝向 ✓
         pose.mulPose(Axis.YP.rotationDegrees(35.0F));    // ← 转个角度：露出侧脸，不再正对镜头 ✓
         pose.mulPose(Axis.XP.rotationDegrees(-10.0F));   // ← 略微俯视 ⇒ 看得见头顶/帽子 ✓
+        // §889 用户口径：「现在太小有点看不清」⇒ 按显示场合放大 ✓（方块那边不动 ✓）
+        float zoom = switch (ctx) {
+            case GUI, FIXED -> 1.95F;                    // 背包/展示框：铺满格子 ✓
+            case GROUND -> 1.60F;
+            default -> 1.45F;                            // 手持：别挡住视野 ✓
+        };
+        pose.scale(zoom, zoom, zoom);
         FumoMoBlockEntityRenderer.renderDoll(model, pose, buffer, light, overlay);
         pose.popPose();
     }
