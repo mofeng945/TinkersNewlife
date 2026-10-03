@@ -1,0 +1,9 @@
+{
+  "type": "tconstruct:material",
+  "ingredient": {
+    "item": "tinkersnewlife:gheloth_remains"
+  },
+  "value": 1,
+  "needed": 1,
+  "material": "tinkersnewlife:gheloth_remains"
+}

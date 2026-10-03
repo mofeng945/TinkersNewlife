@@ -1,0 +1,15 @@
+{
+  "type": "tconstruct:material",
+  "ingredient": {
+    "item": "irons_spellbooks:pyrium_ingot"
+  },
+  "value": 1,
+  "needed": 1,
+  "material": "tinkersnewlife:pyrium",
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "irons_spellbooks"
+    }
+  ]
+}

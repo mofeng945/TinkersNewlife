@@ -1,0 +1,9 @@
+{
+  "type": "tconstruct:material",
+  "ingredient": {
+    "item": "tinkersnewlife:nicholas_blessing"
+  },
+  "value": 1,
+  "needed": 1,
+  "material": "tinkersnewlife:nicholas_blessing"
+}
