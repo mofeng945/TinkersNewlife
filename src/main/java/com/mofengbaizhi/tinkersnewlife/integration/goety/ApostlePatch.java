@@ -72,6 +72,21 @@ public final class ApostlePatch {
     public static final ForgeConfigSpec.BooleanValue OVERWORLD_REGEN_IGNORES_SMITE;
     public static final ForgeConfigSpec.DoubleValue APOSTLE_DAMAGE_MULTIPLIER;
 
+    // ── §869：使徒各项加强的独立开关（用户口径：加强都要能在配置里开关 ✓）──
+    public static final ForgeConfigSpec.BooleanValue HELL_CLOUD_PURGE;
+    public static final ForgeConfigSpec.BooleanValue NETHERITE_PIGLIN_BRUTE;
+    public static final ForgeConfigSpec.BooleanValue ELYTRA_DRAG_DOWN;
+    public static final ForgeConfigSpec.BooleanValue FIRE_BLAST_TRAP;
+    public static final ForgeConfigSpec.BooleanValue ARROW_FIRE_BLAST_TRAP;
+    public static final ForgeConfigSpec.BooleanValue MONOLITH_CAP_SIX;
+    public static final ForgeConfigSpec.IntValue MONOLITH_TOPUP_SECONDS;
+    public static final ForgeConfigSpec.BooleanValue MONOLITH_LIFESPAN;
+    public static final ForgeConfigSpec.DoubleValue MONOLITH_LIFESPAN_HP_PER_SECOND;
+    public static final ForgeConfigSpec.BooleanValue WALL_TELEPORT;
+    public static final ForgeConfigSpec.BooleanValue ARROW_RAIN;
+    public static final ForgeConfigSpec.IntValue ARROW_RAIN_COOLDOWN_SECONDS;
+    public static final ForgeConfigSpec.BooleanValue RAID_WAVE;
+
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
         b.comment("诡厄巫法·使徒改造补丁（§853）").push("apostle");
@@ -99,6 +114,30 @@ public final class ApostlePatch {
                         "涵盖使徒的全部伤害来源：近战、箭、法术、狱云、爆燃陷阱等（都按这个倍率乘一次）。",
                         "改成 1.0 = 关闭；改 2.0 = 翻倍。")
                 .defineInRange("damage_multiplier", 1.5D, 0.0D, 100.0D);
+        HELL_CLOUD_PURGE = b.comment("狱云清掉玩家所有增益（#3，默认 true）").define("hell_cloud_purge", true);
+        NETHERITE_PIGLIN_BRUTE = b.comment("黑曜石柱召唤的猪灵蛮兵给全身下界合金甲＋下界合金斧（#6，默认 true）")
+                .define("netherite_piglin_brute", true);
+        ELYTRA_DRAG_DOWN = b.comment("玩家鞘翅飞行 5 秒后把其拽向地面并造成撞击伤害（#8，默认 true）")
+                .define("elytra_drag_down", true);
+        FIRE_BLAST_TRAP = b.comment("使徒二阶段在身边 5 格随机丢爆燃陷阱（#9，默认 true）")
+                .define("fire_blast_trap", true);
+        ARROW_FIRE_BLAST_TRAP = b.comment("使徒二阶段射箭时 30% 概率在目标脚下补一发爆燃陷阱（#1，默认 true）")
+                .define("arrow_fire_blast_trap", true);
+        MONOLITH_CAP_SIX = b.comment("黑曜石柱同屏上限从 4 提到 6（#10，默认 true）").define("monolith_cap_six", true);
+        MONOLITH_TOPUP_SECONDS = b.comment("柱子补位间隔（秒）：每多少秒最多补一根柱子",
+                        "§869 用户口径：召唤速度减慢一倍 ⇒ 默认 10 秒（原来是 5 秒）。")
+                .defineInRange("monolith_topup_seconds", 10, 1, 600);
+        MONOLITH_LIFESPAN = b.comment("黑曜石柱有生命周期：血量随时间流逝（§869 用户口径，默认 true）")
+                .define("monolith_lifespan", true);
+        MONOLITH_LIFESPAN_HP_PER_SECOND = b.comment("柱子每秒流逝多少血量（默认 2 点／秒）")
+                .defineInRange("monolith_lifespan_hp_per_second", 2.0D, 0.0D, 1000.0D);
+        WALL_TELEPORT = b.comment("使徒与玩家隔墙时瞬移到玩家身后；身后没位置就瞬移到玩家所在位置（§869，默认 true）")
+                .define("wall_teleport", true);
+        ARROW_RAIN = b.comment("给使徒的法术组加上『箭雨』（诡厄箭雨聚晶的效果，默认 true）")
+                .define("arrow_rain", true);
+        ARROW_RAIN_COOLDOWN_SECONDS = b.comment("箭雨冷却（秒，默认 20）")
+                .defineInRange("arrow_rain_cooldown_seconds", 20, 1, 600);
+        RAID_WAVE = b.comment("主世界 10% 血刷一波认使徒为主的袭击者（#12，默认 true）").define("raid_wave", true);
         b.pop();
         SPEC = b.build();
     }
@@ -114,6 +153,15 @@ public final class ApostlePatch {
         }
         MinecraftForge.EVENT_BUS.register(ApostlePatch.class);
         LOGGER.info("[使徒补丁] 已启用（默认开启 ✓ 配置 tinkersnewlife-apostle.toml ✓）：瞬移后 2s 减伤 60% ✓ 射箭改魔法伤害 ✓");
+    }
+
+    /** §869：读布尔配置（读不到 ⇒ 用默认值 ✓ 与 enabled() 一个口径 ✓） */
+    private static boolean flag(ForgeConfigSpec.BooleanValue value, boolean fallback) {
+        try {
+            return value.get();
+        } catch (Throwable ignored) {
+            return fallback;
+        }
     }
 
     private static boolean enabled() {
@@ -284,6 +332,17 @@ public final class ApostlePatch {
                     overworldRegen(apostle, now);
                 }
 
+                // ── §869 柱子生命周期：血量随时间流逝（每秒 2 点 ✓ 可配 ✓）+ 隔墙瞬移 + 箭雨 ──
+                if (now % 20L == 0L) {
+                    drainMonoliths(level, apostle);
+                }
+                if (now % 10L == 0L) {
+                    wallTeleportBehind(level, apostle, now);
+                }
+                if (now % 20L == 0L) {
+                    castArrowRain(level, apostle, now);
+                }
+
                 for (Player player : level.getEntitiesOfClass(Player.class, apostle.getBoundingBox().inflate(6.0D))) {
                     if (player.isCreative() || player.isSpectator()) continue;
 
@@ -305,7 +364,8 @@ public final class ApostlePatch {
                     }
 
                     // ── #8：鞘翅飞行 ⇒ 5 秒锁定（大量黄色粒子）⇒ 拽向地面 ＋ 撞击动能伤害 ──
-                    if (player.isFallFlying() && player.distanceTo(apostle) <= ELYTRA_DETECT_RANGE) {
+                    if (flag(ELYTRA_DRAG_DOWN, true) && player.isFallFlying()
+                            && player.distanceTo(apostle) <= ELYTRA_DETECT_RANGE) {
                         Map<UUID, Integer> lock = ELYTRA_LOCK.computeIfAbsent(apostle.getUUID(), k -> new ConcurrentHashMap<>());
                         int t = lock.merge(player.getUUID(), 1, Integer::sum);
                         level.sendParticles(new net.minecraft.core.particles.DustParticleOptions(
@@ -326,7 +386,7 @@ public final class ApostlePatch {
 
                 // ── #9：二阶段 5 格内随机爆燃陷阱（15 秒冷却）──
                 Long nextTrap = TRAP_COOLDOWN.get(apostle.getUUID());
-                if (apostle.isSecondPhase() && (nextTrap == null || now >= nextTrap)) {
+                if (flag(FIRE_BLAST_TRAP, true) && apostle.isSecondPhase() && (nextTrap == null || now >= nextTrap)) {
                     TRAP_COOLDOWN.put(apostle.getUUID(), now + TRAP_COOLDOWN_TICKS);
                     net.minecraft.core.BlockPos pos = apostle.blockPosition().offset(
                             apostle.getRandom().nextInt(11) - 5, 0, apostle.getRandom().nextInt(11) - 5);
@@ -338,19 +398,19 @@ public final class ApostlePatch {
                 }
 
                 // ── #12：主世界 10% 血 ⇒ 所在区块刷一波袭击（**诡厄仆从掠夺者** ✓ 全部认使徒为主人 ✓）──
-                if (!nether && !RAID_DONE.contains(apostle.getUUID())
+                if (flag(RAID_WAVE, true) && !nether && !RAID_DONE.contains(apostle.getUUID())
                         && apostle.getHealth() <= apostle.getMaxHealth() * 0.10F) {
                     RAID_DONE.add(apostle.getUUID());
                     spawnRaidWave(level, apostle);
                 }
 
                 // ── #3：狱云范围内的玩家 ⇒ 清掉所有增益 ──
-                purgeBuffsInHellClouds(level, apostle);
+                if (flag(HELL_CLOUD_PURGE, true)) purgeBuffsInHellClouds(level, apostle);
 
                 // ── #6：黑曜石柱召唤的猪灵蛮兵 ⇒ 全身下界合金甲 ＋ 下界合金斧 ──
                 if (now % 20L == 0L) {
-                    equipMonolithBrutes(level, apostle);
-                    topUpMonoliths(level, apostle, now);          // ── #10：柱子同屏上限 4 → 6 ──
+                    if (flag(NETHERITE_PIGLIN_BRUTE, true)) equipMonolithBrutes(level, apostle);
+                    if (flag(MONOLITH_CAP_SIX, true)) topUpMonoliths(level, apostle, now);   // ── #10：柱子上限 4 → 6 ──
                 }
 
                 // ── 双头衔（§859）：第二头衔的持续效果每 tick 兜一次 ──
@@ -533,6 +593,7 @@ public final class ApostlePatch {
         if (event.getLevel().isClientSide()) return;
         if (!(event.getEntity() instanceof DeathArrow arrow)) return;
         if (!(arrow.getOwner() instanceof Apostle apostle) || !apostle.isSecondPhase()) return;
+        if (!flag(ARROW_FIRE_BLAST_TRAP, true)) return;      // §869 开关（#1 射箭顺带施法 ✓ 已实现 ✓）
         if (apostle.getRandom().nextDouble() >= ARROW_TRAP_CHANCE) return;
         LivingEntity target = apostle.getTarget();
         if (target == null) return;
@@ -553,8 +614,14 @@ public final class ApostlePatch {
 
     /** 诡厄原版上限是 4（`MonolithSpellGoal.canUse` 里 `j < 4` ✓ 已核反编译 ✓）⇒ 按用户口径提到 6 ✓ */
     private static final int MONOLITH_CAP = 6;
-    /** 补位间隔（tick ✓ 5 秒补一根 ✓） */
-    private static final int MONOLITH_TOPUP_TICKS = 100;
+    /** 补位间隔（tick ✓ §869 用户口径：召唤速度**减慢一倍** ⇒ 默认 10 秒＝200 tick ✓ 可在配置里改 ✓） */
+    private static int monolithTopUpTicks() {
+        try {
+            return Math.max(1, MONOLITH_TOPUP_SECONDS.get()) * 20;
+        } catch (Throwable ignored) {
+            return 200;
+        }
+    }
     /** 使徒 → 下次可补位的时刻 ✓ */
     private static final Map<UUID, Long> MONOLITH_TOPUP_AT = new ConcurrentHashMap<>();
 
@@ -578,7 +645,7 @@ public final class ApostlePatch {
         if (alive.size() >= MONOLITH_CAP) return;
         Long next = MONOLITH_TOPUP_AT.get(apostle.getUUID());
         if (next != null && now < next) return;
-        MONOLITH_TOPUP_AT.put(apostle.getUUID(), now + MONOLITH_TOPUP_TICKS);
+        MONOLITH_TOPUP_AT.put(apostle.getUUID(), now + monolithTopUpTicks());
         try {
             int k = (12 + apostle.getRandom().nextInt(12)) * (apostle.getRandom().nextBoolean() ? -1 : 1);
             int l = (12 + apostle.getRandom().nextInt(12)) * (apostle.getRandom().nextBoolean() ? -1 : 1);
@@ -790,5 +857,125 @@ public final class ApostlePatch {
      * {@code goety:bosses} 两个标签里** ✓ ⇒ 使徒一死，认它为主的袭击者会**跟着一起没** ✓。
      * ⇒ 因此**不做**"主人死后解除归属让袭击者留下"那一套 ✗（早先的 #12 需求按用户本条口径作废 ✓）。
      */
+
+    // ============================================================
+    //  §869 新增：柱子生命周期 / 隔墙瞬移 / 箭雨
+    // ============================================================
+
+    /** 箭雨冷却表 ✓（使徒 → 下次可放箭雨的游戏刻 ✓） */
+    private static final Map<UUID, Long> ARROW_RAIN_AT = new ConcurrentHashMap<>();
+
+    /**
+     * <b>黑曜石柱的生命周期</b> ✓（§869 用户口径）：血量随时间流逝，**每秒 2 点** ✓（可配 ✓）。
+     * <p>流到 0 ⇒ 柱子自己死掉 ✓（用 {@code kill()} ⇒ 走正常死亡流程 ✓ 掉落/粒子照旧 ✓）。
+     * <p>只动"主人是使徒"的柱子 ✓（别的模组/玩家放的不管 ✗）。
+     */
+    private static void drainMonoliths(ServerLevel level, Apostle apostle) {
+        if (!flag(MONOLITH_LIFESPAN, true)) return;
+        double perSecond;
+        try {
+            perSecond = MONOLITH_LIFESPAN_HP_PER_SECOND.get();
+        } catch (Throwable ignored) {
+            perSecond = 2.0D;
+        }
+        if (perSecond <= 0.0D) return;
+        java.util.List<com.Polarice3.Goety.common.entities.neutral.AbstractObsidianMonolith> list;
+        try {
+            list = level.getEntitiesOfClass(com.Polarice3.Goety.common.entities.neutral.AbstractObsidianMonolith.class,
+                    apostle.getBoundingBox().inflate(96.0D),
+                    m -> m.isAlive() && m.getTrueOwner() == apostle);
+        } catch (Throwable ignored) {
+            return;
+        }
+        for (com.Polarice3.Goety.common.entities.neutral.AbstractObsidianMonolith monolith : list) {
+            float left = monolith.getHealth() - (float) perSecond;
+            if (left <= 0.0F) {
+                monolith.kill();                                  // 寿命到 ⇒ 柱子自行崩解 ✓
+                level.sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE,
+                        monolith.getX(), monolith.getY() + 1.0D, monolith.getZ(), 25, 0.4D, 0.6D, 0.4D, 0.02D);
+            } else {
+                monolith.setHealth(left);
+            }
+        }
+    }
+
+    /**
+     * <b>隔墙瞬移</b> ✓（§869 用户口径）：使徒与玩家之间**没有视线**（隔着墙）时，
+     * 尝试瞬移到**玩家身后**（沿玩家面朝的**反方向** 1.5 格 ✓）；
+     * 身后没有落脚位置 ⇒ 直接瞬移到**玩家所在位置** ✓。
+     * <p>只对"使徒当前的攻击目标且是玩家"生效 ✓ 10 tick 检查一次 ✓ 不碰任何诡厄内部状态 ✓。
+     */
+    private static void wallTeleportBehind(ServerLevel level, Apostle apostle, long now) {
+        if (!flag(WALL_TELEPORT, true)) return;
+        LivingEntity target = apostle.getTarget();
+        if (!(target instanceof net.minecraft.server.level.ServerPlayer player)) return;
+        if (player.isCreative() || player.isSpectator()) return;
+        double dist = apostle.distanceTo(player);
+        if (dist > 48.0D || dist < 2.0D) return;
+        try {
+            if (apostle.hasLineOfSight(player)) return;           // 看得见 ⇒ 不瞬移 ✓（只有隔墙才用这招 ✓）
+        } catch (Throwable ignored) {
+            return;
+        }
+        net.minecraft.world.phys.Vec3 behind = player.position().subtract(player.getLookAngle().scale(1.5D));
+        net.minecraft.world.phys.Vec3 dest = canStandAt(level, apostle, behind) ? behind : player.position();
+        try {
+            level.sendParticles(net.minecraft.core.particles.ParticleTypes.PORTAL,
+                    apostle.getX(), apostle.getY() + 1.0D, apostle.getZ(), 30, 0.3D, 0.6D, 0.3D, 0.3D);
+            apostle.teleportTo(dest.x, dest.y, dest.z);
+            apostle.hurtMarked = true;
+            level.sendParticles(net.minecraft.core.particles.ParticleTypes.PORTAL,
+                    dest.x, dest.y + 1.0D, dest.z, 30, 0.3D, 0.6D, 0.3D, 0.3D);
+            level.playSound(null, apostle.blockPosition(), net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT,
+                    net.minecraft.sounds.SoundSource.HOSTILE, 1.0F, 0.8F);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** 这个位置站得下吗 ✓（把使徒的碰撞箱搬过去问一次"有没有碰撞" ✓ 再要求脚下不是空的 ✓） */
+    private static boolean canStandAt(ServerLevel level, LivingEntity entity, net.minecraft.world.phys.Vec3 pos) {
+        try {
+            net.minecraft.world.phys.AABB box = entity.getBoundingBox()
+                    .move(pos.x - entity.getX(), pos.y - entity.getY(), pos.z - entity.getZ());
+            if (!level.noCollision(entity, box)) return false;
+            net.minecraft.core.BlockPos below = net.minecraft.core.BlockPos.containing(pos.x, pos.y - 0.1D, pos.z);
+            net.minecraft.world.level.block.state.BlockState state = level.getBlockState(below);
+            return !state.getCollisionShape(level, below).isEmpty() || !state.getFluidState().isEmpty();
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    /**
+     * <b>箭雨</b> ✓（§869 用户口径）：给使徒的法术组加上诡厄「箭雨聚晶」的效果 ✓ ——
+     * 直接**公开构造** {@code ArrowRainTrap(level, x, y, z)} ＋ {@code setOwner(使徒)} ✓
+     * （已核反编译：它的构造就是这三参 ✓ `ArrowRainTrap.java:51-54` ✓，与 #9 的爆燃陷阱同一套写法 ✓）。
+     * <p>一轮：在**当前目标脚下**放一处箭雨 ✓；冷却默认 20 秒 ✓ 可配 ✓；只对"有目标且在 32 格内"的使徒放 ✓。
+     */
+    private static void castArrowRain(ServerLevel level, Apostle apostle, long now) {
+        if (!flag(ARROW_RAIN, true)) return;
+        LivingEntity target = apostle.getTarget();
+        if (target == null || apostle.distanceTo(target) > 32.0D) return;
+        Long next = ARROW_RAIN_AT.get(apostle.getUUID());
+        if (next != null && now < next) return;
+        int cooldownSeconds;
+        try {
+            cooldownSeconds = ARROW_RAIN_COOLDOWN_SECONDS.get();
+        } catch (Throwable ignored) {
+            cooldownSeconds = 20;
+        }
+        ARROW_RAIN_AT.put(apostle.getUUID(), now + Math.max(1, cooldownSeconds) * 20L);
+        try {
+            com.Polarice3.Goety.common.entities.util.ArrowRainTrap rain =
+                    new com.Polarice3.Goety.common.entities.util.ArrowRainTrap(
+                            level, target.getX(), target.getY(), target.getZ());
+            rain.setOwner(apostle);
+            level.addFreshEntity(rain);
+            LOGGER.info("[使徒补丁] 使徒释放【箭雨】⇒ 目标 {}（冷却 {} 秒 ✓）",
+                    target.getName().getString(), cooldownSeconds);
+        } catch (Throwable t) {
+            LOGGER.warn("[使徒补丁] 箭雨释放失败：{}", t.toString());
+        }
+    }
 
 }
