@@ -40,6 +40,16 @@ public class FumoMoItem extends BlockItem implements ICurioItem {
             public net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer getCustomRenderer() {
                 return com.mofengbaizhi.tinkersnewlife.client.renderer.FumoMoItemRenderer.INSTANCE;
             }
+
+            /** §891：**戴在头上能看见** —— Forge 的自定义护甲模型入口 ✓（只含 fufu ✓ 挂在 head 下 ✓） */
+            @Override
+            public net.minecraft.client.model.HumanoidModel<?> getHumanoidArmorModel(
+                    net.minecraft.world.entity.LivingEntity entity,
+                    net.minecraft.world.item.ItemStack stack,
+                    net.minecraft.world.entity.EquipmentSlot slot,
+                    net.minecraft.client.model.HumanoidModel<?> original) {
+                return com.mofengbaizhi.tinkersnewlife.client.model.FumoMoHeadModelHolder.get();
+            }
         });
     }
 }
