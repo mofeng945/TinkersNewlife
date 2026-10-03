@@ -63,12 +63,33 @@ public class FumoMoBlockEntityRenderer implements BlockEntityRenderer<FumoMoBloc
                 .create(mesh, 64, 64).bakeRoot(), false);
     }
 
+    /**
+     * §902 <b>贴地补偿</b>：方块里的玩偶会**悬空**（用户实测「放在地上是飘起来的」✓），
+     * 原因是两件事叠在一起：
+     * <ol>
+     *   <li><b>玩偶是坐姿</b>（两条腿前伸 ✗）⇒ 它的最低点不是"脚底 1.5 格"那处，
+     *       而是**裤子外层的下缘**：腿箱局部 y∈[0,12]、z∈[−2.25,2.25]（外层 +0.25 膨胀 ✓）
+     *       绕 xRot=−1.5 转过来之后 y′ ≈ 0.0707y + 0.997z ⇒ 最高 ≈ 3.09px
+     *       ⇒ 最低点 ≈ (12+3.09)/16 ≈ <b>0.943 格</b>（腿本体因为 ×0.92 只到 0.913 格 ✓ 比裤子高 ✗）；</li>
+     *   <li><b>幼年体分支</b>：{@code PlayerModel} 从没人给它赋 {@code young} ⇒ 用的是
+     *       {@code EntityModel.young} 的默认值 <b>true</b>（已核对 1.20.1 源码 ✓）
+     *       ⇒ 身体那些部件先被 {@code scale(1/2) + translate(0, 24/16 格, 0)} 抬了一截 ✓。</li>
+     * </ol>
+     * 两件事合起来 ⇒ 玩偶净悬空约 <b>0.17 格</b>（≈2.7px，肉眼看得出来 ✗）。
+     * <p>修法：本方法所在的空间是**世界方块空间**（y 向上、单位=格 ✓，BER 没有翻转 ✓）
+     * ⇒ 直接 `translate(0, -值, 0)` 就是"往下挪这么多格" ✓（放在 {@link #renderDoll} 之前 ⇒ 不受它 0.5 缩放影响 ✓）。
+     * 取 <b>0.19 格</b>：比算出来的 0.17 略多一点点 ⇒ 留一丁点下沉（≈0.3px，看不出来 ✓），
+     * 免得还留一条缝 ✗。想微调就改这一个数 ✓。
+     */
+    public static final double GROUND_SINK = 0.19D;
+
     @Override
     public void render(FumoMoBlockEntity be, float partialTick, PoseStack pose, MultiBufferSource buffer,
                        int light, int overlay) {
         pose.pushPose();
         pose.translate(0.5D, 0.0D, 0.5D);
         pose.mulPose(Axis.YP.rotationDegrees(180.0F));      // 面朝玩家（方块正面 = -Z ✓）
+        pose.translate(0.0D, -GROUND_SINK, 0.0D);           // §902 坐到地面上 ✓（悬空 0.17 格 ⇒ 补 0.19 ✓）
         renderDoll(model, pose, buffer, light, overlay);
         pose.popPose();
     }
@@ -156,9 +177,10 @@ public class FumoMoBlockEntityRenderer implements BlockEntityRenderer<FumoMoBloc
         tnl$logged = true;
         try {
             org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger("TinkersNewlife/FumoMo");
-            log.info("[fufu] 模型诊断：PlayerModel 类={} hat: visible={} skipDraw={} | jacket visible={} "
+            log.info("[fufu] 模型诊断：PlayerModel 类={} young={}（true ⇒ 走幼年体分支 ✓ §902）"
+                            + " hat: visible={} skipDraw={} | jacket visible={} "
                             + "| 左右袖 visible={}/{} | 左右裤 visible={}/{}",
-                    model.getClass().getName(),
+                    model.getClass().getName(), model.young,
                     model.hat.visible, model.hat.skipDraw, model.jacket.visible,
                     model.leftSleeve.visible, model.rightSleeve.visible,
                     model.leftPants.visible, model.rightPants.visible);
