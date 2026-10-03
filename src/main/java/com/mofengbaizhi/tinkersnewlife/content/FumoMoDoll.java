@@ -155,6 +155,22 @@ public final class FumoMoDoll {
             return new FumoMoBlockEntity(pos, state);
         }
 
+        /**
+         * §908 每 tick 推进挤压动画（客户端也要跑 ✓ 动画本来就是纯客户端的 ✓；
+         * 服务器跑着只会推一个没人看的计数器 ✓ 无害 ✓ —— 诡厄也是这么做的 ✓）。
+         */
+        @Override
+        public <T extends net.minecraft.world.level.block.entity.BlockEntity>
+        net.minecraft.world.level.block.entity.BlockEntityTicker<T> getTicker(
+                Level level, BlockState state,
+                net.minecraft.world.level.block.entity.BlockEntityType<T> type) {
+            return (lvl, pos, st, be) -> {
+                if (be instanceof FumoMoBlockEntity fumo) {
+                    FumoMoBlockEntity.tick(lvl, pos, st, fumo);
+                }
+            };
+        }
+
         /** 世界里不画方块模型 ✓（改由玩家模型渲染器画 ✓）——GUI/手持仍用 item 模型 ✓ */
         @Override
         public net.minecraft.world.level.block.RenderShape getRenderShape(BlockState state) {
@@ -182,6 +198,11 @@ public final class FumoMoDoll {
             // 只认"摸头"：命中点在碰撞箱上半部（≈ 脑袋那一块 ✓）
             boolean head = hit.getLocation().y - pos.getY() >= 0.5D;
             if (!head) return InteractionResult.PASS;
+            // §908 挤压动画：**两端都触发** ✓（与诡厄 PlushieBlock#use 完全同构 ✓）
+            //   客户端 ⇒ 本地放挤压动画 ✓；服务器 ⇒ 往下走、播音效 ✓
+            if (level.getBlockEntity(pos) instanceof FumoMoBlockEntity fumo) {
+                fumo.startAnimating();
+            }
             if (level.isClientSide) return InteractionResult.SUCCESS;
             long now = System.currentTimeMillis();
             Long last = LAST_TOUCH.get(player.getUUID());

@@ -7,6 +7,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -109,6 +110,15 @@ public class FumoMoBlockEntityRenderer implements BlockEntityRenderer<FumoMoBloc
                 ? be.getBlockState().getValue(FumoMoDoll.FumoMoBlock.FACING)
                 : Direction.SOUTH;
         pose.mulPose(Axis.YP.rotationDegrees(180.0F - facing.toYRot()));
+        // §908 抚摸挤压：横向鼓 = sqrt(1 / yScale)（有体积感 ✓ 照诡厄玩偶的算法 ✓）
+        //   在 translate(0.5,0,0.5) 之后 ⇒ 缩放是**以方块底面中心为原点**的 ✓
+        //   ⇒ 压扁时玩偶是"往地面坐下去"，不会浮起来 ✓
+        float anim = be.getAnimation(partialTick);
+        if (anim > 0.0F) {
+            float yScale = tnl$squashY(anim);
+            float bulge = Mth.sqrt(1.0F / yScale);
+            pose.scale(bulge, yScale, bulge);
+        }
         // §907 放大：放在 GROUND_SINK **之前** ⇒ 那个下沉量会被一起按比例放大 ✓
         //   （几何整体的悬空量也随之放大 ⇒ 下沉量同样放大 ⇒ 玩偶最低点仍然贴着方块底面 ✓ 正好 ✓）
         pose.scale(WORLD_SCALE, WORLD_SCALE, WORLD_SCALE);
@@ -190,6 +200,47 @@ public class FumoMoBlockEntityRenderer implements BlockEntityRenderer<FumoMoBloc
         model.renderToBuffer(pose, buffer.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)),
                 light, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
         pose.popPose();
+    }
+
+    /**
+     * §908 <b>挤压曲线</b>（纵向缩放倍数）——节奏照诡厄巫法玩偶的 {@code PlushieModel#setupAnim} ✓：
+     * <ul>
+     *   <li>前 {@link FumoMoBlockEntity#PRESS_TICKS}（4）tick：用 <b>easeOutBack</b> 从 1.0 压到 <b>0.75</b>
+     *       ⇒ 末端带一点过冲，像"捏下去" ✓（诡厄用的就是 OUT_BACK ✓）；</li>
+     *   <li>之后到 12 tick：用 <b>easeOutElastic</b> 从 0.75 弹回 1.0
+     *       ⇒ 回弹时抖两下 ✓（诡厄用 OUT_ELASTIC ✓）。</li>
+     * </ul>
+     * 横向倍数由调用处取 {@code sqrt(1 / yScale)} ✓（诡厄的算法 ✓ 压扁就鼓出来 ✓）。
+     * <p>⚠ 缓动公式是通用数学公式（easeOutBack / easeOutElastic，公开的经典曲线 ✓），
+     * 不是抄诡厄的代码 ✗ —— 只是把"用哪条曲线、压到多少、多少 tick"这套**节奏**照过来 ✓。
+     */
+    private static float tnl$squashY(float anim) {
+        if (anim <= 0.0F) {
+            return 1.0F;
+        }
+        if (anim < FumoMoBlockEntity.PRESS_TICKS) {
+            float u = anim / FumoMoBlockEntity.PRESS_TICKS;
+            return 1.0F - 0.25F * tnl$easeOutBack(u);
+        }
+        float v = Mth.clamp((anim - FumoMoBlockEntity.PRESS_TICKS)
+                / (float) (FumoMoBlockEntity.MAX_ANIMATION_TICKS - FumoMoBlockEntity.PRESS_TICKS), 0.0F, 1.0F);
+        return 0.75F + 0.25F * tnl$easeOutElastic(v);
+    }
+
+    /** 经典 easeOutBack（c1 = 1.70158 ✓ 通用公式 ✓） */
+    private static float tnl$easeOutBack(float x) {
+        float c1 = 1.70158F;
+        float c3 = c1 + 1.0F;
+        float p = x - 1.0F;
+        return 1.0F + c3 * p * p * p + c1 * p * p;
+    }
+
+    /** 经典 easeOutElastic（通用公式 ✓） */
+    private static float tnl$easeOutElastic(float x) {
+        if (x <= 0.0F) return 0.0F;
+        if (x >= 1.0F) return 1.0F;
+        double c4 = 2.0D * Math.PI / 3.0D;
+        return (float) (Math.pow(2.0D, -10.0D * x) * Math.sin((x * 10.0D - 0.75D) * c4) + 1.0D);
     }
 
     /** §885 诊断：只打一次，把"第二层部件"的真实状态说出来（可见性/是否跳过绘制/子部件数） */
