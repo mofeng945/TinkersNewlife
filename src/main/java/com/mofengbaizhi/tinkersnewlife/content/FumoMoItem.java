@@ -21,6 +21,17 @@ public class FumoMoItem extends BlockItem implements ICurioItem {
         super(block, props);
     }
 
+    /**
+     * §890 用户口径：「应该能够戴在头上**和**头部饰品栏上」——
+     * Forge 的 {@code IForgeItem#getEquipmentSlot} 返回 {@code HEAD} ⇒
+     * 这一件就能**放进原版头盔槽** ✓（和南瓜/骷髅头同一机制 ✓）；
+     * curios 头部槽则靠物品标签 {@code curios:head}（见 {@code data/curios/tags/items/head.json} ✓）。
+     */
+    @Override
+    public net.minecraft.world.entity.EquipmentSlot getEquipmentSlot(net.minecraft.world.item.ItemStack stack) {
+        return net.minecraft.world.entity.EquipmentSlot.HEAD;
+    }
+
     @Override
     public void initializeClient(java.util.function.Consumer<
             net.minecraftforge.client.extensions.common.IClientItemExtensions> consumer) {
