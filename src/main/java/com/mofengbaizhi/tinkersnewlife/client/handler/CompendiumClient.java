@@ -74,10 +74,28 @@ public final class CompendiumClient {
             LOG.info("[百宝书] 规则②问帕秋莉失败：{}", t.toString());
         }
 
-        // ③ 通用兜底：`data/<ns>/patchouli_books/<物品路径>/book.json` 存在就算
+        // ③ 通用兜底：**拿物品 id 当候选书 id，问帕秋莉"到底有没有这本书"** ✓
+        //    （帕秋莉约定：书 id = `patchouli_books/<路径>` 那层目录 ⇒ 与物品 id **常常同名** ✓
+        //      实测证据：神秘遗物「启示之证」的字节码里同时有 "enigmaticlegacy" 与 "the_acknowledgment"
+        //      ⇒ 它的私有 BOOK_ID = `enigmaticlegacy:the_acknowledgment` = **物品 id 本身** ✓
+        //      其 book.json 的 model 也正是这个 ✓）
+        //    ⚠ §910f：上一版只"探资源 `data/<ns>/patchouli_books/<路径>/book.json`" ⇒ 客户端**没命中** ✗
+        //      （日志：`解析书id=null` 且无异常 ⇒ 是资源没找到，客户端资源管理器不一定含 mod 的 data/ ✗）
+        //      ⇒ 改成**直接问帕秋莉的书表** ✓（`BookRegistry.INSTANCE.books` 已核对是 public Map ✓）
         try {
             ResourceLocation itemId = ForgeRegistries.ITEMS.getKey(stack.getItem());
             if (itemId != null) {
+                var books = vazkii.patchouli.common.book.BookRegistry.INSTANCE.books;
+                boolean hitExact = books.containsKey(itemId);
+                LOG.info("[百宝书] 规则③：候选书id={} 帕秋莉已加载书数={} 同名命中={}",
+                        itemId, books.size(), hitExact);
+                // 3a 候选 = 物品 id（绝大多数情况 ✓）
+                if (hitExact) return itemId.toString();
+                // 3b 备选：同名不同命名空间（书挂在别的前缀下也能认 ✓）
+                for (ResourceLocation id : books.keySet()) {
+                    if (id.getPath().equals(itemId.getPath())) return id.toString();
+                }
+                // 3c 最后再探一次资源（留给"书数据路径 = 物品路径"但注册表还没加载好的极端情况 ✓）
                 ResourceLocation probe = new ResourceLocation(itemId.getNamespace(),
                         "patchouli_books/" + itemId.getPath() + "/book.json");
                 if (Minecraft.getInstance().getResourceManager().getResource(probe).isPresent()) {
@@ -85,7 +103,7 @@ public final class CompendiumClient {
                 }
             }
         } catch (Throwable t) {
-            LOG.info("[百宝书] 规则③探资源失败：{}", t.toString());
+            LOG.info("[百宝书] 规则③失败：{}", t.toString());
         }
         return null;
     }
