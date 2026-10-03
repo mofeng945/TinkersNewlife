@@ -93,6 +93,23 @@ public class CompendiumItem extends Item {
         return true;
     }
 
+    /**
+     * 在玩家背包里找一叠百宝书（**不含光标上拖着的那叠** ✓ 那叠让调用方自己看 `getCarried()` ✓）。
+     * <p>§910b 加的兜底：用户报"拖动右键没法吞书" ⇒ 除了"拖着/主手"，**背包里有**也认 ✓
+     * （三种来源在包里用 {@code source} 区分 ✓ 服务端再各自校验 ✓）。
+     *
+     * @return 找到的那叠（就是背包里的**真身** ✓ 改它即生效 ✓）；找不到返回 {@code null} ✓
+     */
+    @Nullable
+    public static ItemStack findInInventory(Player player) {
+        var inv = player.getInventory();
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            ItemStack stack = inv.getItem(i);
+            if (!stack.isEmpty() && stack.getItem() instanceof CompendiumItem) return stack;
+        }
+        return null;
+    }
+
     /** 手持右键 ⇒ 打开"查阅"界面 ✓（纯客户端 ✓ 数据就在手上这叠的 NBT 里 ⇒ 不用发包 ✓） */
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
