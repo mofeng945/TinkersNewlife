@@ -43,23 +43,23 @@ public class FumoMoHeadModel extends HumanoidModel<LivingEntity> {
         // 头壳（标准头部 8x8x8 ⇒ UV 8,8 起）
         head.addOrReplaceChild("fufu_head",
                 CubeListBuilder.create().texOffs(8, 8).addBox(-4.0F, -8.0F, -4.0F, 8, 8, 8),
-                PartPose.offset(0.0F, -9.0F, 0.0F));
+                PartPose.offset(0.0F, -30.0F, 0.0F));
         // 帽子壳（标准帽子层 32,0 起 ✓ 外扩 0.6px ⇒ 看得见 ✓）
         head.addOrReplaceChild("fufu_hat",
                 CubeListBuilder.create().texOffs(32, 0)
                         .addBox(-4.0F, -8.0F, -4.0F, 8, 8, 8, new CubeDeformation(0.6F)),
-                PartPose.offset(0.0F, -9.0F, 0.0F));
+                PartPose.offset(0.0F, -30.0F, 0.0F));
         // 身体（标准躯干 20,20 起）
         head.addOrReplaceChild("fufu_body",
                 CubeListBuilder.create().texOffs(20, 20).addBox(-4.0F, -12.0F, -2.0F, 8, 6, 4),
-                PartPose.offset(0.0F, -4.5F, 0.0F));
+                PartPose.offset(0.0F, -25.5F, 0.0F));
         // 两条前伸的腿（标准右腿 4,20 起）
         head.addOrReplaceChild("fufu_leg_r",
                 CubeListBuilder.create().texOffs(4, 20).addBox(-2.0F, -1.5F, -8.0F, 3, 3, 8),
-                PartPose.offset(-1.5F, -3.5F, 1.0F));
+                PartPose.offset(-1.5F, -24.5F, 1.0F));
         head.addOrReplaceChild("fufu_leg_l",
                 CubeListBuilder.create().texOffs(4, 20).addBox(-1.0F, -1.5F, -8.0F, 3, 3, 8),
-                PartPose.offset(1.5F, -3.5F, 1.0F));
+                PartPose.offset(1.5F, -24.5F, 1.0F));
         return LayerDefinition.create(mesh, 64, 64);
     }
 }
