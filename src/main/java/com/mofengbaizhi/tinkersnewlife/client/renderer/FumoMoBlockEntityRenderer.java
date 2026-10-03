@@ -72,6 +72,20 @@ public class FumoMoBlockEntityRenderer implements BlockEntityRenderer<FumoMoBloc
         // ③ 坐姿微调（注意：这一步之后 y 仍是"模型空间"的向下 ✓ 减 y = 抬高 ✓）
         pose.translate(0.0D, -0.06D, 0.0D);
 
+        // ④ §884 头身比：照「玩偶」把**头放大**（娃娃感的关键 ✓）
+        //    数值集中在这里，想调只管改这几个 ✓
+        final float HEAD_SCALE = 1.40F;   // 头放大倍数（1.0 = 原版比例）
+        final float LIMB_SCALE = 0.92F;   // 四肢略收细 ⇒ 显得头更大 ✓
+        model.head.xScale = HEAD_SCALE;
+        model.head.yScale = HEAD_SCALE;
+        model.head.zScale = HEAD_SCALE;
+        for (net.minecraft.client.model.geom.ModelPart limb : new net.minecraft.client.model.geom.ModelPart[]{
+                model.rightArm, model.leftArm, model.rightLeg, model.leftLeg}) {
+            limb.xScale = LIMB_SCALE;
+            limb.yScale = LIMB_SCALE;
+            limb.zScale = LIMB_SCALE;
+        }
+
         // ④ 双腿前伸（坐在地上 ✓）
         model.rightLeg.xRot = -1.5F;
         model.leftLeg.xRot = -1.5F;
