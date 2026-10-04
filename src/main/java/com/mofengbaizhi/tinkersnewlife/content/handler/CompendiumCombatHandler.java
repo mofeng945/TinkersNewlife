@@ -3,7 +3,6 @@ package com.mofengbaizhi.tinkersnewlife.content.handler;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.item.CompendiumItem;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
@@ -100,23 +99,26 @@ public final class CompendiumCombatHandler {
         ItemStack held = player.getMainHandItem();
         boolean isCompendium = held.getItem() instanceof CompendiumItem;
         boolean exemptHeld = isCompendium && hasExemptItem(held);
-        boolean isMonster = event.getEntity() instanceof Monster;
         boolean cursed = isCompendium && CompendiumItem.isTheCursedOne(player);
 
+        // §910p ⚠ 它**没有**目标类型判定（反编译偏移 1870~1957 ✓）：
+        //   只要"攻击者受七咒" ＋ "手持的不是那三件豁免物品" ⇒ 就乘减伤 ✓
+        //   —— `monsterDamageDebuff` 只是个**误导性的配置名** ✗，实际对**任何目标**生效 ✓。
+        //   我一开始按名字加了 `Monster` 判断 ⇒ 日志里 `目标是怪物=false` ⇒ 永远不补 ✗（用户实测 ✓）。
         if (isCompendium && !tnl$logged) {
             tnl$logged = true;
-            LOG.info("[百宝书] §910o 条件检查：主手百宝书={} 吞过豁免物品={} 目标是怪物={} 是受七咒之人={} ⇒ {}",
-                    true, exemptHeld, isMonster, cursed,
-                    (exemptHeld && isMonster && cursed) ? "补回" : "不补（看前面哪项=false ✗）");
+            LOG.info("[百宝书] §910p 条件检查：主手百宝书={} 吞过豁免物品={} 是受七咒之人={} ⇒ {}",
+                    true, exemptHeld, cursed,
+                    (exemptHeld && cursed) ? "补回" : "不补（看前面哪项=false ✗）");
         }
 
-        if (!exemptHeld || !isMonster || !cursed) return;
+        if (!exemptHeld || !cursed) return;
 
         float applied = readCurseFactor();
         float factor = applied > 0.0F && applied < 1.0F ? applied : 1.0F / FALLBACK_FACTOR;
         float before = event.getAmount();
         event.setAmount(before / factor);                                 // 除掉它减掉的那一份 ⇒ 还原 ✓
-        LOG.info("[百宝书] §910o 七咒减伤豁免生效：{} → {}（神秘遗物的系数={}；兜底={}）",
+        LOG.info("[百宝书] §910p 七咒减伤豁免生效：{} → {}（神秘遗物的系数={}；兜底={}）",
                 before, event.getAmount(), applied, FALLBACK_FACTOR);
     }
 }
