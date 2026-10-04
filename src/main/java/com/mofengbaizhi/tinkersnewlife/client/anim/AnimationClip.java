@@ -279,6 +279,35 @@ public final class AnimationClip {
             new ResourceLocation("tinkersnewlife", "tnl_anim/spear_first_person.json"),
     };
 
+    /** §988 弹弓的备选动画文件 ✓（名字随意 ✓ 找不到就扫 tnl_anim 里带 slingshot 的 json ✓） */
+    public static final ResourceLocation[] SLINGSHOT_CANDIDATES = {
+            new ResourceLocation("tinkersnewlife", "tnl_anim/slingshot_firstperson.animation.json"),
+            new ResourceLocation("tinkersnewlife", "tnl_anim/slingshot_first_person.animation.json"),
+            new ResourceLocation("tinkersnewlife", "tnl_anim/slingshot_first_person.json"),
+    };
+
+    private static AnimationClip slingshotCache;
+    private static boolean slingshotTried;
+
+    /**
+     * 取"弹弓第一人称"动画 ✓（§988 拉弓颤抖：蓄力时 {@code item} 骨骼高频小幅抖动 ✓）。
+     *
+     * <p>与长矛同一套：备选名 → 扫 {@code tnl_anim/} 下名字带 {@code slingshot} 的 json ✓
+     * ⇒ 用户在 Blockbench 里导出成什么名字都能生效 ✓。
+     *
+     * @return 一个都没读到 ⇒ {@code null} ✓（调用方：不插手，保持原样 ✓）
+     */
+    public static AnimationClip slingshotFirstPerson() {
+        if (!slingshotTried) {
+            slingshotTried = true;
+            for (ResourceLocation id : SLINGSHOT_CANDIDATES) {
+                slingshotCache = load(id);
+                if (slingshotCache != null) return slingshotCache;
+            }
+            slingshotCache = scanFor("slingshot");
+        }
+        return slingshotCache;
+    }
     private static AnimationClip spearCache;
     private static boolean spearTried;
 
@@ -314,12 +343,17 @@ public final class AnimationClip {
 
     /** 兜底：扫 {@code tnl_anim/} 里所有名字带 {@code spear} 的 json ✓（不改名也能生效 ✓） */
     private static AnimationClip scanForSpear() {
+        return scanFor("spear");
+    }
+
+    /** §988 泛化版：扫 tnl_anim 里所有名字带关键字的 json ✓ */
+    private static AnimationClip scanFor(String keyword) {
         try {
             Map<ResourceLocation, Resource> found = Minecraft.getInstance().getResourceManager()
                     .listResources("tnl_anim", rl -> rl.getPath().endsWith(".json"));
             return found.keySet().stream()
                     .filter(rl -> "tinkersnewlife".equals(rl.getNamespace()))
-                    .filter(rl -> rl.getPath().toLowerCase(java.util.Locale.ROOT).contains("spear"))
+                    .filter(rl -> rl.getPath().toLowerCase(java.util.Locale.ROOT).contains(keyword))
                     .sorted(java.util.Comparator
                             .comparing((ResourceLocation rl) -> !rl.getPath().endsWith(".animation.json"))
                             .thenComparing(ResourceLocation::getPath))
@@ -336,6 +370,8 @@ public final class AnimationClip {
     public static void clearCache() {
         spearTried = false;
         spearCache = null;
+        slingshotTried = false;
+        slingshotCache = null;
     }
 
     /**
