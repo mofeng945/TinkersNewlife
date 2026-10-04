@@ -90,6 +90,7 @@ public class ModCreativeTabs {
                                 output.accept(ModFluids.CURSE_RESIDUE.bucket.get());
                                 // 冰火传说组：熔融龙钢×3 + 龙血×3 + 悚怖×2
                                 acceptItemIfPresent(output, "molten_dragonsteel_fire_bucket");
+        acceptItemIfPresent(output, "molten_neptunium_bucket");   // §976 海王金属（水产联动，材料门控 aquaculture）
                                 acceptItemIfPresent(output, "molten_dragonsteel_ice_bucket");
                                 acceptItemIfPresent(output, "molten_dragonsteel_lightning_bucket");
                                 acceptItemIfPresent(output, "fire_blood_bucket");
