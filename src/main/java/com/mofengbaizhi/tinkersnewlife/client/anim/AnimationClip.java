@@ -21,7 +21,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
- * <b>数据驱动的关键帧动画（§914 / §915）</b>—— 让"长矛姿势"这类东西**写在 JSON 里**，
+ * <b>数据驱动的关键帧动画（§914 / §915 / §916）</b>—— 让"长矛姿势"这类东西**写在 JSON 里**，
  * 而不是写死在 Java 里 ✓（用户口径：「**如果我想自己写动画文件呢，怎么搞**」✓
  * ＋「**这动画文件能用 blockbench 修改吗**」✓）。
  *
@@ -51,15 +51,15 @@ import java.util.TreeSet;
  *   "format_version": "1.8.0",
  *   "animations": {
  *     "animation.spear.first_person": {
- *       "animation_length": 1.0,      // ★ 单位是**秒**（本类自动 ×20 换成 tick ✓）
+ *       "animation_length": 0.75,     // ★ 单位是**秒**（本类自动 ×20 换成 tick ✓）
  *       "loop": false,
  *       "bones": {
  *         "item": {                    // 组名必须叫 item ✓（= 手/物品）
- *           "rotation": { "0.0": [0,0,0], "0.6": [-90,0,0] },
- *           "position": { "0.0": [0,0,0], "0.6": [1,-1,-5] },   // ⚠ 单位是 1/16 格 ✓ 自动换算 ✓
+ *           "rotation": { "0.0": [0,0,0], "0.25": [62.5,0,0] },
+ *           "position": { "0.0": [0,0,0], "0.5": [0, 0.85, -1.92] },   // 单位 1/16 格 ✓ 自动换算 ✓
  *           "scale":    { "0.0": 1.0 }
  *         },
- *         "arm":  { "rotation": { "0.6": [-70,0,0] } }          // 组名必须叫 arm ✓（= 第三人称手臂）
+ *         "arm":  { "rotation": { "0.25": [-37.5,0,0] } }              // 组名必须叫 arm ✓（第三人称手臂）
  *       }
  *     }
  *   }
@@ -67,16 +67,21 @@ import java.util.TreeSet;
  * </pre>
  * ⇒ <b>Blockbench 工作流</b>：新建 <i>Bedrock Entity</i> 工程 → 建两个组（空组也行 ✓）
  * 名字分别叫 <code>item</code> / <code>arm</code> → 在动画时间轴摆关键帧 → 导出动画
- * → 存成 <code>assets/tinkersnewlife/animations/spear_first_person.json</code> ✓ → 游戏内 <b>F3+T</b> ✓。
+ * → 丢进 <code>assets/tinkersnewlife/animations/</code> ✓ → 游戏内 <b>F3+T</b> ✓（不用重编译 ✓）。
+ * <b>Blockbench 默认导出名 {@code *.animation.json} 的那份优先</b> ✓（见 {@link #SPEAR_FIRST_PERSON_BB} ✓）。
  *
  * <p>已处理的基岩细节 ✓：时间键是**秒**（×20 ✓）、`position` 是 **1/16 格**（×{@link #BEDROCK_POS_SCALE} ✓）、
  * 关键帧可以是**数组** / **单个数字**（缩放 ✓）/ **`{"post":…}`、`{"pre":…}`** 对象 ✓、
- * 某条通道缺某个时间点 ⇒ **取它前面最近的一帧**（保持 ✓ 而不是掉回 0 ✓）、
+ * 第一条关键帧**之前** = 该通道默认值（位移/旋转 0 ✓ 缩放 1 ✓ 基岩就是这么回事 ✓）、
+ * 某条通道**缺某个时间点** ⇒ 取它前面最近的一帧（保持 ✓ 而不是掉回 0 ✓）、
  * `animation_length` 缺失 ⇒ 用最大关键帧时间 ✓、`loop: true` ⇒ 时间取模循环 ✓。
+ *
+ * <p>若 1/16 的换算不对（实机看着位移大/小 16 倍 ✗）⇒ 在文件里加一个覆盖键即可 ✓（不用重编译 ✓）：
+ * <pre>{ "_tnl_position_scale": 1.0 }   // 放在 animations 里面那条动画上，或放在根上都认</pre>
  *
  * <p>⚠ 已知限制（诚实说 ✓）：<b>Molang 表达式（`math.*` / `query.*`）无法求值</b> ✗
  * ⇒ 关键帧里请填**数字** ✓；Blockbench 的 <i>smooth/catmullrom</i> 缓动本类**按线性近似** ✗
- * （要精确缓动就在中间多加关键帧 ✓）。
+ * （基岩官方文档也只支持线性 ✓；要精确缓动就在中间多加关键帧 ✓）。
  *
  * <p>⚠ 加载失败（文件缺失/写错）⇒ 返回 {@code null} ✓ 调用方**回退内置姿势** ✓ 不会崩 ✓
  * ⇒ 你可以放心改文件 ✓ 最坏就是回到默认样子 ✓。
@@ -104,13 +109,13 @@ public final class AnimationClip {
 
     // ── 缓存（每帧都读文件太浪费 ✓ 但改完文件要能生效 ✓）──────────────────────────
 
-    /** 长矛第一人称动画的文件位置 ✓ */
-    public static final ResourceLocation SPEAR_FIRST_PERSON =
-            new ResourceLocation("tinkersnewlife", "animations/spear_first_person.json");
-
-    /** Blockbench 默认导出名是 "xxx.animation.json" ✓ 也认一下 ✓（两个都在时以前一个为准 ✓） */
+    /** Blockbench 默认导出名 ✓ —— ★ 这一份**优先** ✓（用户导出的东西应当直接生效 ✓） */
     public static final ResourceLocation SPEAR_FIRST_PERSON_BB =
             new ResourceLocation("tinkersnewlife", "animations/spear_first_person.animation.json");
+
+    /** 本模组手写的极简格式 ✓ —— 上一条不存在时用它 ✓（兜底默认姿势 ✓） */
+    public static final ResourceLocation SPEAR_FIRST_PERSON =
+            new ResourceLocation("tinkersnewlife", "animations/spear_first_person.json");
 
     private static AnimationClip spearCache;
     private static boolean spearTried;
@@ -118,13 +123,13 @@ public final class AnimationClip {
     /**
      * 取"长矛第一人称"动画 ✓。
      *
-     * @return 文件不存在/写坏了 ⇒ {@code null} ✓（调用方回退到内置姿势 ✓）
+     * @return 两个文件都没有/都写坏了 ⇒ {@code null} ✓（调用方回退到内置姿势 ✓）
      */
     public static AnimationClip spearFirstPerson() {
         if (!spearTried) {
             spearTried = true;
-            spearCache = load(SPEAR_FIRST_PERSON);
-            if (spearCache == null) spearCache = load(SPEAR_FIRST_PERSON_BB);
+            spearCache = load(SPEAR_FIRST_PERSON_BB);      // ★ Blockbench 导出优先 ✓
+            if (spearCache == null) spearCache = load(SPEAR_FIRST_PERSON);
         }
         return spearCache;
     }
@@ -188,20 +193,27 @@ public final class AnimationClip {
     /**
      * 基岩动画里 {@code position} 的单位换算 ✓。
      *
-     * <p>基岩动画的位移量是**模型单位 = 1/16 格** ✓（几何里也是这套单位 ✓）
-     * ⇒ 换成方块要 <b>÷16</b> ✓。
-     * ⚠ 若实机发现位移**大了 16 倍 / 小了 16 倍** ✗ ⇒ 把这一个常量改成 {@code 1.0F} 或 {@code 16.0F} 即可 ✓。
+     * <p>基岩动画的位移量是**模型单位 = 1/16 格** ✓（和几何里那套单位一致 ✓）⇒ 换成方块要 <b>÷16</b> ✓。
+     * ⚠ 若实机发现位移**大了/小了 16 倍** ✗ ⇒ 不用重编译 ✓，在动画 json 里写
+     * <code>"_tnl_position_scale": 1.0</code> 覆盖即可 ✓。
      */
     public static final float BEDROCK_POS_SCALE = 1.0F / 16.0F;
 
     /** 基岩动画的时间单位是**秒** ✓；游戏 tick 是 1/20 秒 ✓ */
     public static final float SECONDS_TO_TICKS = 20.0F;
 
+    /** 覆盖位移换算的键名 ✓（写在动画对象上或根对象上都认 ✓ 用户不用重编译就能试 ✓） */
+    public static final String POS_SCALE_KEY = "_tnl_position_scale";
+
     private static AnimationClip fromBedrock(JsonObject root, ResourceLocation id) {
         JsonObject anims = root.getAsJsonObject("animations");
         if (anims == null || anims.size() == 0) return null;
         JsonObject anim = pickBedrockAnimation(anims, id);
         if (anim == null) return null;
+
+        float posScale = BEDROCK_POS_SCALE;
+        if (anim.has(POS_SCALE_KEY)) posScale = anim.get(POS_SCALE_KEY).getAsFloat();
+        else if (root.has(POS_SCALE_KEY)) posScale = root.get(POS_SCALE_KEY).getAsFloat();
 
         float length = 20.0F;
         if (anim.has("animation_length")) {
@@ -213,8 +225,8 @@ public final class AnimationClip {
         List<Key> arm = new ArrayList<>();
         JsonObject bones = anim.getAsJsonObject("bones");
         if (bones != null) {
-            if (bones.has("item")) item = bedrockTrack(bones.getAsJsonObject("item"));
-            if (bones.has("arm")) arm = bedrockTrack(bones.getAsJsonObject("arm"));
+            if (bones.has("item")) item = bedrockTrack(bones.getAsJsonObject("item"), posScale);
+            if (bones.has("arm")) arm = bedrockTrack(bones.getAsJsonObject("arm"), posScale);
         }
         // animation_length 缺失 ⇒ 用最大关键帧时间兜底 ✓
         if (!anim.has("animation_length")) {
@@ -243,11 +255,11 @@ public final class AnimationClip {
     }
 
     /** 把一个基岩"组"（bone）的三条通道合成关键帧列表 ✓ */
-    private static List<Key> bedrockTrack(JsonObject bone) {
+    private static List<Key> bedrockTrack(JsonObject bone, float posScale) {
         TreeMap<Float, float[]> move = new TreeMap<>();
         TreeMap<Float, float[]> rot = new TreeMap<>();
         TreeMap<Float, float[]> scale = new TreeMap<>();
-        readBoneChannel(bone.get("position"), move, BEDROCK_POS_SCALE);
+        readBoneChannel(bone.get("position"), move, posScale);
         readBoneChannel(bone.get("rotation"), rot, 1.0F);
         readBoneChannel(bone.get("scale"), scale, 1.0F);
 
@@ -300,12 +312,19 @@ public final class AnimationClip {
         return null;
     }
 
-    /** 某条通道在 t 时刻的值：**取前面最近的一帧**（保持 ✓ 而不是掉回 0 ✓） */
+    /**
+     * 某条通道在 t 时刻的值 ✓。
+     *
+     * <p>⚠ §916 修的 bug ✗→✓：<b>第一条关键帧之前必须是"通道默认值"</b>（位移/旋转 0 ✓ 缩放 1 ✓），
+     * ✗ **不是**第一条关键帧的值 ✓。
+     * 原来写的是 {@code floorEntry==null ⇒ firstEntry()} ✗ ⇒ 像
+     * {@code "position": {"0.5": [...]}} 这种"位移只在 0.5s 打了一帧"的写法 ✓
+     * 会让物品**从第 0 tick 起就一直待在终点位置** ✗（用户 Blockbench 导出那份正是这种写法 ✓）。
+     */
     private static float[] holdAt(TreeMap<Float, float[]> ch, float t, float[] fallback) {
         if (ch.isEmpty()) return fallback;
         Map.Entry<Float, float[]> e = ch.floorEntry(t);
-        if (e == null) e = ch.firstEntry();
-        return e.getValue();
+        return e == null ? fallback : e.getValue();     // ★ 首帧之前 ⇒ 默认值 ✓
     }
 
     // ── 采样与播放 ────────────────────────────────────────────────────────
