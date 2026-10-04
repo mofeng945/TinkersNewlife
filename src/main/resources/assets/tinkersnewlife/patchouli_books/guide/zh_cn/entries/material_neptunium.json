@@ -1,0 +1,18 @@
+{
+  "name": "海王金属",
+  "category": "tinkersnewlife:materials",
+  "icon": "aquaculture:neptunium_ingot",
+  "sortnum": 40,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "aquaculture:neptunium_ingot",
+      "text": "$(bold)获取方式$()：$(li)海王锭来自水产养殖2 的 $(bold)aquaculture:neptunium_ingot$()$(li)丢入冶炼炉熔成 $(bold)熔融海王金属$()（90 mB/锭，温度 1000）；海王粒 10 mB、海王块 810 mB，工具与盔甲也能熔（按剩余耐久折算产量）$(li)浇筑台配锭/粒铸模、浇筑盆可把熔融海王金属浇回 $(bold)锭 / 粒 / 块$()（也有沙子铸模的一次性版本）$(li)工匠砧修复用 $(bold)海王金属修复套件$()（浇筑所得）$(br2)等级：$(bold)T3$()（三级材料，挖掘等级钻石）。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)自带特性$()：$(li)$(bold)海王之力$()（无等级）：水中或雨中——无视挖掘速度惩罚、攻速 +50%、伤害 +60%；盔甲上——水下呼吸、水中视野清晰、水中或雨中速度 +20% 且受伤 -30%；钓竿上——海之眷顾 II ＋ 饵钓 I；远程武器——射出的弹丸在水中不受阻力衰减$(br2)面板：顶端耐久 720 / 钻石挖掘 / 7.0 速度 / 1.5 攻击；弓臂耐久 720 / 拉弓 -0.25 / 初速 +0.15 / 精确 -0.1；弓把近战 1.5 / 精确 0.1；盔甲 308~504 耐久 / 护甲 2~6 / 韧性 2.0。"
+    }
+  ],
+  "flag": "mod:aquaculture"
+}

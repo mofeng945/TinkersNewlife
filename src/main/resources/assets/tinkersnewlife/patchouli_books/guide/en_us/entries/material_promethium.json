@@ -1,0 +1,18 @@
+{
+  "name": "Promethium",
+  "category": "tinkersnewlife:materials",
+  "icon": "lavafishing:promethium_ingot",
+  "sortnum": 41,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "lavafishing:promethium_ingot",
+      "text": "$(bold)How to obtain$():$(li)Promethium Ingots come from Lava Fishing ($(bold)lavafishing:promethium_ingot$())$(li)Sources: lava fishing treasure gives $(bold)Promethium Nuggets$(), and the Prometheus' Bounty chest gives $(bold)1-4 Promethium Ingots plus the full Promethium armor set$()$(li)Throw them into the Smeltery to melt into $(bold)Molten Promethium$() (90 mB per ingot, temperature 1250); nuggets give 10 mB and blocks 810 mB, armor scales with remaining durability, the slingshot gives 270 mB and a bullet 10 mB$(li)At the Casting Table with an ingot or nugget cast, or a Casting Basin, you can pour Molten Promethium back into $(bold)ingots / nuggets / blocks$() (single-use sand casts work as well)$(li)Anvil repairs use the $(bold)Promethium Repair Kit$() (made by casting)$(br2)Tier: $(bold)T4$() (netherite mining level)."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Innate traits$():$(li)$(bold)Heat Lover$() (no levels): on armor - 25% fire damage reduction per piece, clear vision under lava, slow healing and speed while hot, and you can walk on lava; on tools - +60% damage and faster mining while on fire or in lava; on ranged weapons - projectiles set targets on fire$(br2)Stats: head 1400 durability / netherite mining / 8.5 speed / 3.0 attack; bow limb 1400 durability / draw -0.2 / velocity +0.2 / accuracy -0.05; bow grip melee 3.0; armor 420-650 durability / 2-7 armor / 3.0 toughness."
+    }
+  ],
+  "flag": "mod:lavafishing"
+}

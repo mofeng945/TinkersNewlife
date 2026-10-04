@@ -1,0 +1,18 @@
+{
+  "name": "Neptunium",
+  "category": "tinkersnewlife:materials",
+  "icon": "aquaculture:neptunium_ingot",
+  "sortnum": 40,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "aquaculture:neptunium_ingot",
+      "text": "$(bold)How to obtain$():$(li)Neptunium Ingots come from Aquaculture 2 ($(bold)aquaculture:neptunium_ingot$())$(li)Throw them into the Smeltery to melt into $(bold)Molten Neptunium$() (90 mB per ingot, temperature 1000); nuggets give 10 mB and blocks 810 mB, and its tools and armor can be melted too (output scales with remaining durability)$(li)At the Casting Table with an ingot or nugget cast, or a Casting Basin, you can pour Molten Neptunium back into $(bold)ingots / nuggets / blocks$() (single-use sand casts work as well)$(li)Anvil repairs use the $(bold)Neptunium Repair Kit$() (made by casting)$(br2)Tier: $(bold)T3$() (diamond mining level)."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Innate traits$():$(li)$(bold)Power of the Sea King$() (no levels): in water or rain - no mining speed penalty, +50% attack speed, +60% damage; on armor - water breathing, clearer underwater vision, +20% speed and -30% damage taken in water or rain; on fishing rods - Luck of the Sea II + Lure I; on ranged weapons - projectiles ignore water drag$(br2)Stats: head 720 durability / diamond mining / 7.0 speed / 1.5 attack; bow limb 720 durability / draw -0.25 / velocity +0.15 / accuracy -0.1; bow grip melee 1.5 / accuracy 0.1; armor 308-504 durability / 2-6 armor / 2.0 toughness."
+    }
+  ],
+  "flag": "mod:aquaculture"
+}

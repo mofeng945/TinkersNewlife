@@ -1,0 +1,18 @@
+{
+  "name": "钷",
+  "category": "tinkersnewlife:materials",
+  "icon": "lavafishing:promethium_ingot",
+  "sortnum": 41,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "lavafishing:promethium_ingot",
+      "text": "$(bold)获取方式$()：$(li)钷锭来自熔岩钓鱼的 $(bold)lavafishing:promethium_ingot$()$(li)来源：熔岩钓鱼的宝藏战利品出 $(bold)钷粒$()、「普罗米修斯的恩惠」宝箱出 $(bold)钷锭 1~4 个与整套钷盔甲$()$(li)丢入冶炼炉熔成 $(bold)熔融钷$()（90 mB/锭，温度 1250）；钷粒 10 mB、钷块 810 mB，盔甲按剩余耐久折算、弹弓 270 mB、弹丸 10 mB$(li)浇筑台配锭/粒铸模、浇筑盆可浇回 $(bold)锭 / 粒 / 块$()（也有沙子铸模的一次性版本）$(li)工匠砧修复用 $(bold)钷修复套件$()（浇筑所得）$(br2)等级：$(bold)T4$()（四级材料，挖掘等级下界合金）。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)自带特性$()：$(li)$(bold)喜热$()（无等级）：盔甲——每件火焰伤害 -25%、熔岩下视野清晰、炎热时缓慢回血与加速、可踏岩浆而行；工具——着火或熔岩中伤害 +60% 且挖掘更快；远程——射出的弹射物点燃目标$(br2)面板：顶端耐久 1400 / 下界合金挖掘 / 8.5 速度 / 3.0 攻击；弓臂耐久 1400 / 拉弓 -0.2 / 初速 +0.2 / 精确 -0.05；弓把近战 3.0 / 精确 0；盔甲 420~650 耐久 / 护甲 2~7 / 韧性 3.0。"
+    }
+  ],
+  "flag": "mod:lavafishing"
+}
