@@ -1,1 +1,3 @@
-{ "replace": false, "values": [ "tinkersnewlife:dragon_staff", "tinkersnewlife:war_scythe", "tinkersnewlife:modular_staff", "tinkersnewlife:flying_sword", "tinkersnewlife:durandal_sword", "tinkersnewlife:yo_yo", "tinkersnewlife:tang_heng_dao", "tinkersnewlife:spear", "tinkersnewlife:rapier" ] }
+{ "replace": false, "values": [ "tinkersnewlife:dragon_staff", "tinkersnewlife:war_scythe", "tinkersnewlife:modular_staff", "tinkersnewlife:flying_sword", "tinkersnewlife:durandal_sword", "tinkersnewlife:yo_yo", "tinkersnewlife:tang_heng_dao", "tinkersnewlife:spear", "tinkersnewlife:rapier",
+    "tinkersnewlife:slingshot"
+] }

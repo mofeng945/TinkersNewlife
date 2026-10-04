@@ -434,6 +434,8 @@
   "item.tinkersnewlife.spear": "Spear",
   "item.tinkersnewlife.spear.description": "A Tinkers' take on the modern vanilla spear: it outreaches other weapons, cannot hit point-blank, and holding right-click charges a couched lance that can unhorse riders.",
     "item.tinkersnewlife.rapier": "Rapier",
+    "item.tinkersnewlife.slingshot": "Slingshot",
+    "death.attack.tinkersnewlife.kinetic": "%1$s was smashed",
     "item.tinkersnewlife.rapier.description": "A port of the Tinkers' Construct 2 rapier: lower damage but a faster swing, and its strikes ignore the target's armor. Right-click to backstep; offhand shields cannot be used while held.",
   "item.tinkersnewlife.wizard_armor_boots": "Wizard Boots",
   "item.tinkersnewlife.wizard_armor_chestplate": "Wizard Robe",

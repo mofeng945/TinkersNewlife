@@ -1,0 +1,29 @@
+{
+  "_comment": "§983 弹弓模型。沿用匠魂弓的几何（parent = tconstruct:item/base/bow）+ 部件贴图索引 0/1/2 = 弓臂/弓臂/弓弦；grip 用匠魂长弓的静态握把贴图占位（我们没有握把部件）。当前三行部件贴图是【占位】（从匠魂长弓抽的），用户画好专用图后只改这三行即可。",
+  "loader": "tconstruct:tool",
+  "parent": "tconstruct:item/base/bow",
+  "textures": {
+    "limb_bottom": "tinkersnewlife:item/tool/slingshot/limb1",
+    "limb_top": "tinkersnewlife:item/tool/slingshot/limb2",
+    "grip": "tconstruct:item/tool/longbow/grip",
+    "bowstring": "tinkersnewlife:item/tool/slingshot/bowstring"
+  },
+  "parts": [
+    { "name": "limb_bottom", "index": 0 },
+    { "name": "limb_top", "index": 1 },
+    { "name": "bowstring", "index": 2 }
+  ],
+  "ammo": {
+    "key": "tconstruct:drawback_ammo",
+    "flip": true,
+    "left": true,
+    "small_offset": [ -3.0, -4.0 ],
+    "large_offset": [ -2.0, -2.0 ]
+  },
+  "overrides": [
+    {
+      "predicate": { "tconstruct:broken": 1 },
+      "model": "tinkersnewlife:item/tool/slingshot/broken"
+    }
+  ]
+}

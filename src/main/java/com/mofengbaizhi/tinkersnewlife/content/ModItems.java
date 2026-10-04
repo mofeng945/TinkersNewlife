@@ -266,6 +266,13 @@ public class ModItems {
                             new Item.Properties().stacksTo(1))
             );
 
+    /** 弹弓（§983）：远程武器，部件 = 两个弓臂 + 一个弓弦；右键拉弓，射背包里的石头/圆石 */
+    public static final RegistryObject<com.mofengbaizhi.tinkersnewlife.content.item.SlingshotItem> SLINGSHOT =
+            ITEMS.register("slingshot",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.SlingshotItem(
+                            new Item.Properties().stacksTo(1))
+            );
+
     /** 西洋剑（§943 移植**匠魂2**的 Rapier：低伤高攻速 ＋ 穿甲 ＋ 右键后跳 ＋ 持有时禁副手盾牌） */
     public static final RegistryObject<com.mofengbaizhi.tinkersnewlife.content.item.RapierItem> RAPIER =
             ITEMS.register("rapier",

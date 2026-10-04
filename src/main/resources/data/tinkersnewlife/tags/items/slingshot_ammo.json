@@ -1,0 +1,13 @@
+{
+  "_comment": "§983 弹弓弹药：任何石头/圆石。用 Forge 通用标签兜住所有变体，另加几个原版兜底项（万一整合包没提供 forge 标签也能用）。",
+  "replace": false,
+  "values": [
+    "#forge:stone",
+    "#forge:cobblestone",
+    "minecraft:stone",
+    "minecraft:cobblestone",
+    "minecraft:cobbled_deepslate",
+    "minecraft:blackstone",
+    "minecraft:stone_bricks"
+  ]
+}

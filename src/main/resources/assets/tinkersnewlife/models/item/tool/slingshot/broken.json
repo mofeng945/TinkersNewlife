@@ -1,0 +1,16 @@
+{
+  "_comment": "§983 弹弓·破损态模型：结构与 models/item/slingshot.json 一致，只是三张部件贴图换成 _broken 版（由 tools/GenBrokenTextures.ps1 生成）。grip 仍用匠魂长弓的静态握把占位（我们没有握把部件）。",
+  "loader": "tconstruct:tool",
+  "parent": "tconstruct:item/base/bow",
+  "textures": {
+    "limb_bottom": "tinkersnewlife:item/tool/slingshot/limb1_broken",
+    "limb_top": "tinkersnewlife:item/tool/slingshot/limb2_broken",
+    "grip": "tconstruct:item/tool/longbow/grip",
+    "bowstring": "tinkersnewlife:item/tool/slingshot/bowstring_broken"
+  },
+  "parts": [
+    { "name": "limb_bottom", "index": 0 },
+    { "name": "limb_top", "index": 1 },
+    { "name": "bowstring", "index": 2 }
+  ]
+}

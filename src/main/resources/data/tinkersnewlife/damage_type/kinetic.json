@@ -1,0 +1,6 @@
+{
+  "_comment": "§983 弹弓·动能坠落专用伤害类型。它被加进 #minecraft:bypasses_invulnerability ⇒ 创造模式玩家也会被打到（用户点名要求）。",
+  "message_id": "tinkersnewlife.kinetic",
+  "exhaustion": 0.0,
+  "scaling": "never"
+}

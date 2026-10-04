@@ -1,0 +1,47 @@
+{
+  "_comment": "§983 弹弓：部件 = 两个弓臂 + 一个弓弦（用户口径 ✓）。数值口径照匠魂本体 longbow.json ✓（parts=bow_limb/bow_limb/bowstring；面板伤害 = 蓄力 × Velocity，见 SlingshotItem）。",
+  "modules": [
+    {
+      "type": "tconstruct:part_stats",
+      "parts": [
+        "tconstruct:bow_limb",
+        "tconstruct:bow_limb",
+        "tconstruct:bowstring"
+      ],
+      "primary_part": 0
+    },
+    {
+      "type": "tconstruct:default_materials",
+      "materials": [
+        { "type": "tconstruct:random", "tier": 1 },
+        { "type": "tconstruct:random", "tier": 1 },
+        { "type": "tconstruct:random", "tier": 1 }
+      ]
+    },
+    {
+      "type": "tconstruct:base_stats",
+      "stats": {
+        "tconstruct:attack_damage": 0.0,
+        "tconstruct:attack_speed": 1.0,
+        "tconstruct:durability": 120.0
+      }
+    },
+    {
+      "type": "tconstruct:multiply_stats",
+      "multipliers": {
+        "tconstruct:durability": 1.25
+      }
+    },
+    {
+      "type": "tconstruct:modifier_slots",
+      "slots": {
+        "abilities": 1,
+        "upgrades": 3
+      }
+    },
+    {
+      "type": "tconstruct:fixed_material_name",
+      "index": 0
+    }
+  ]
+}

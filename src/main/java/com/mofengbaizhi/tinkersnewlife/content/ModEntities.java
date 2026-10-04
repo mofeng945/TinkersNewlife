@@ -18,6 +18,7 @@ import com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiRabbit;
 import com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiSheep;
 import com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiSilverfish;
 import com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiWolf;
+import com.mofengbaizhi.tinkersnewlife.content.entity.StoneShotEntity;
 import com.mofengbaizhi.tinkersnewlife.content.entity.YoYoEntity;
 
 import net.minecraft.world.entity.EntityType;
@@ -29,6 +30,16 @@ import net.minecraftforge.registries.RegistryObject;
 public class ModEntities {
     public static final DeferredRegister<EntityType<?>> ENTITIES =
             DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, TinkersNewlife.MOD_ID);
+
+    /** 弹弓的石弹（§983）：投掷物实体，渲染复用原版 ThrownItemRenderer（画成飞出去的石头） */
+    public static final RegistryObject<EntityType<StoneShotEntity>> STONE_SHOT =
+            ENTITIES.register("stone_shot",
+                    () -> EntityType.Builder.<StoneShotEntity>of(StoneShotEntity::new, MobCategory.MISC)
+                            .sized(0.25f, 0.25f)
+                            .clientTrackingRange(4)
+                            .updateInterval(10)
+                            .build(TinkersNewlife.MOD_ID + ":stone_shot")
+            );
 
     public static final RegistryObject<EntityType<DreadsteelSlashEntity>> DREADSTEEL_SLASH =
             ENTITIES.register("dreadsteel_slash",

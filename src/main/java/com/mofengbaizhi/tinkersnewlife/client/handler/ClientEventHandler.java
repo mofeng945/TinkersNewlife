@@ -134,6 +134,9 @@ public class ClientEventHandler {
         event.registerEntityRenderer(ModEntities.FLYING_SWORD.get(), FlyingSwordRenderer::new);
         event.registerEntityRenderer(ModEntities.FLYING_SWORD_FOOT.get(), FlyingSwordFootRenderer::new);
         event.registerEntityRenderer(ModEntities.YO_YO.get(), YoYoRenderer::new);
+        // 弹弓的石弹（§983）：复用原版「投掷物画成物品」渲染器
+        event.registerEntityRenderer(ModEntities.STONE_SHOT.get(),
+                context -> new net.minecraft.client.renderer.entity.ThrownItemRenderer<com.mofengbaizhi.tinkersnewlife.content.entity.StoneShotEntity>(context, 1.0F, false));
         event.registerEntityRenderer(ModEntities.DOMAIN_VISUAL.get(), DomainVisualRenderer::new);
         // 咒力核心仪式·信标光柱（原版 BeaconRenderer 画真正的信标光束）
         event.registerEntityRenderer(ModEntities.RITUAL_BEAM.get(),

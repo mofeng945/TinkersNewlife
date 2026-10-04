@@ -434,6 +434,8 @@
   "item.tinkersnewlife.spear": "长矛",
   "item.tinkersnewlife.spear.description": "照高版本原版长矛打的匠魂长兵：够得更远、贴身反而打不中，按住右键冲锋能把骑手挑下马。",
     "item.tinkersnewlife.rapier": "西洋剑",
+    "item.tinkersnewlife.slingshot": "弹弓",
+    "death.attack.tinkersnewlife.kinetic": "%1$s 被砸中了",
     "item.tinkersnewlife.rapier.description": "移植自匠魂2的刺剑：伤害偏低但攻速更快，攻击无视目标护甲；右键后跳闪避，手持时副手盾牌无法使用。",
   "item.tinkersnewlife.wizard_armor_boots": "巫师靴子",
   "item.tinkersnewlife.wizard_armor_chestplate": "巫师法袍",
