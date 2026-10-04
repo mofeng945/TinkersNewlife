@@ -50,6 +50,9 @@ public class CompendiumItem extends Item {
 
     private static final Logger LOG = LogUtils.getLogger();
 
+    /** §910l 诊断只打一次 ✓ */
+    private static boolean tnl$logged = false;
+
     /** 吞噬记录所在键：{@code AbsorbedBooks} = ListTag，每项 {@code {id, name, item}} ✓ */
     public static final String KEY_BOOKS = "AbsorbedBooks";
     /** 帕秋莉书 id（开界面用 ✓） */
@@ -186,8 +189,14 @@ public class CompendiumItem extends Item {
         java.util.List<ItemStack> out = new java.util.ArrayList<>(list.size());
         for (int i = 0; i < list.size(); i++) {
             CompoundTag entry = list.getCompound(i);
-            if (!entry.contains(KEY_ITEM, Tag.TAG_STRING)) continue;
-            ResourceLocation id = ResourceLocation.tryParse(entry.getString(KEY_ITEM));
+            // §910l 兼容 §910g **之前**吞下的记录（那时没存物品 id ✗）：
+            //   回退拿**书 id** 当物品 id 试一把 ✓ —— 对"书 id == 物品 id"的那些
+            //   （启示之证 `enigmaticlegacy:the_acknowledgment` / 倒转之启 `enigmaticlegacy:the_twist` ✓）
+            //   完全够用 ✓；而 Patchouli `guide_book` 那类（书 id ≠ 物品 id ✗）本就没什么命中效果 ✓ 拿不到也不亏 ✓。
+            String raw = entry.contains(KEY_ITEM, Tag.TAG_STRING) && !entry.getString(KEY_ITEM).isEmpty()
+                    ? entry.getString(KEY_ITEM)
+                    : entry.getString(KEY_ID);
+            ResourceLocation id = ResourceLocation.tryParse(raw);
             if (id == null) continue;
             Item item = ForgeRegistries.ITEMS.getValue(id);
             if (item == null) continue;
@@ -236,6 +245,33 @@ public class CompendiumItem extends Item {
     @Override
     public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
         boolean any = false;
+        // §910l 一次性诊断：把"到底借到了哪些书 / 谁的伤害最高"打出来 ✓（用户报"没加伤害"时一眼定位 ✓）
+        if (!tnl$logged && !attacker.level().isClientSide) {
+            tnl$logged = true;
+            java.util.List<ItemStack> all = absorbedStacks(stack);
+            LOG.info("[百宝书] 命中诊断：已吞噬 {} 件可复现物品 ⇒ {}", all.size(),
+                    all.stream().map(s -> s.getItem().toString()).toList());
+            for (ItemStack fake : all) {
+                double dmg = 0.0D;
+                for (var e : fake.getAttributeModifiers(EquipmentSlot.MAINHAND).entries()) {
+                    if (e.getKey() == Attributes.ATTACK_DAMAGE) dmg += e.getValue().getAmount();
+                }
+                int fire = net.minecraft.world.item.enchantment.EnchantmentHelper
+                        .getItemEnchantmentLevel(net.minecraft.world.item.enchantment.Enchantments.FIRE_ASPECT, fake);
+                LOG.info("[百宝书]    {}：攻击力 +{} 火焰附加 {} 级", fake.getItem(), dmg, fire);
+            }
+        }
+        // §910l 附魔驱动的命中效果（最典型的就是**火焰附加**）：原版是 `Player#attack` 按
+        //   **手持物品的附魔**点的火 ✓ 我们的百宝书自己没有附魔 ✗ ⇒ 这里替它把火点上 ✓
+        //   （只要那本书本身带火焰附加 ✓ 就继承 ✓）
+        for (ItemStack fake : absorbedStacks(stack)) {
+            int fire = net.minecraft.world.item.enchantment.EnchantmentHelper
+                    .getItemEnchantmentLevel(net.minecraft.world.item.enchantment.Enchantments.FIRE_ASPECT, fake);
+            if (fire > 0) {
+                target.setSecondsOnFire(fire * 4);
+                any = true;
+            }
+        }
         for (ItemStack fake : absorbedStacks(stack)) {
             try {
                 any |= fake.getItem().hurtEnemy(fake, target, attacker);
