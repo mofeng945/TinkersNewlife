@@ -110,6 +110,8 @@ public class ModCreativeTabs {
                                 // 水产养殖2组：熔融海王金属（§978 起整组门控 aquaculture —— 未装水产时流体/FluidType/方块/桶
                                 // 全都不注册，故这里也按注册名取，取不到即跳过）
                                 acceptItemIfPresent(output, "molten_neptunium_bucket");
+                                // 熔岩钓鱼组：熔融钷（§980 起整组门控 lavafishing，同样按注册名取、取不到即跳过）
+                                acceptItemIfPresent(output, "molten_promethium_bucket");
         // 铁魔法（irons_spellbooks）联动流体桶：原初受火遗魂 / 熔融奥铁 / 神圣灵液 /
         // 灼热之冰 / 液态奥术 / 流体灰烬 / 熔融炽金（未安装铁魔法时这些物品不存在，自动跳过）
         acceptItemIfPresent(output, "primordial_fire_soul_bucket");

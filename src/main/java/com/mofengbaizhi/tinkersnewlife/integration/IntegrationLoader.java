@@ -36,6 +36,8 @@ public final class IntegrationLoader {
     public static final String ICEANDFIRE = "iceandfire";
     /** 水产养殖2（Aquaculture 2）—— §978 起「熔融海王金属」流体组随它同生共死 */
     public static final String AQUACULTURE = "aquaculture";
+    /** 熔岩钓鱼（Lava Fishing）—— §980 起「熔融钷」流体组随它同生共死 */
+    public static final String LAVAFISHING = "lavafishing";
     /** 铁魔法（Iron's Spells 'n Spellbooks）——⚠ modid 是 <b>带下划线</b>的 {@code irons_spellbooks}
      *  （Java 包名 {@code io.redspace.ironsspellbooks} 没有下划线，极易写错；写错的后果是联动判定恒为 false、
      *  模块化魔杖的法术功能被静默停用） */
@@ -68,7 +70,7 @@ public final class IntegrationLoader {
 
     /** 环境探测日志用的关注清单（顺序即日志顺序） */
     private static final String[] WATCHED = {
-            GOETY, GOETY_REVELATION, GOETY_LADDER, ICEANDFIRE, AQUACULTURE, IRON_SPELLBOOKS, TACZ, JEI, PATCHOULI, JADE, AE2
+            GOETY, GOETY_REVELATION, GOETY_LADDER, ICEANDFIRE, AQUACULTURE, LAVAFISHING, IRON_SPELLBOOKS, TACZ, JEI, PATCHOULI, JADE, AE2
     };
 
     private IntegrationLoader() {
@@ -183,8 +185,8 @@ public final class IntegrationLoader {
         for (String id : WATCHED) detected.put(id, isLoaded(id));
         LOGGER.info("[联动] 环境探测：{}", detected);
         warnAboutMisspelledIds();
-        LOGGER.info("[联动] 联动内容（流体整组）注册决策：goety = {}；iceandfire = {}；goety_revelation = {}；aquaculture = {}",
-                linkDecision(GOETY), linkDecision(ICEANDFIRE), linkDecision(GOETY_REVELATION), linkDecision(AQUACULTURE));
+        LOGGER.info("[联动] 联动内容（流体整组）注册决策：goety = {}；iceandfire = {}；goety_revelation = {}；aquaculture = {}；lavafishing = {}",
+                linkDecision(GOETY), linkDecision(ICEANDFIRE), linkDecision(GOETY_REVELATION), linkDecision(AQUACULTURE), linkDecision(LAVAFISHING));
 
         // ---- 逐模组分派：调用点位于 shouldRegisterLinked 分支内，未安装时联动类不会被加载 ----
         // ⭐ 联动内容（流体整组）是否注册 = 模组在场 **或** 匠魂 force_integration_materials 打开
@@ -227,6 +229,16 @@ public final class IntegrationLoader {
                 new com.mofengbaizhi.tinkersnewlife.integration.aquaculture.AquacultureIntegration().register(bus);
             } catch (Throwable t) {
                 LOGGER.error("[联动] 水产养殖2模块初始化失败", t);
+            }
+        }
+        // 熔岩钓鱼（§980）：流体组走标准联动注册 —— 熔融钷（FluidType/静止/流动/方块/桶同生共死 ✓）；
+        // 材料「钷」/特性「喜热」/熔炼回流配方全部走 forge:mod_loaded lavafishing ✓；
+        // 「岩浆行走」直接挂它自己的 lavafishing:lava_walker 效果（按注册名取 ✓ 不引它的类 ✓）
+        if (shouldRegisterLinked(LAVAFISHING)) {
+            try {
+                new com.mofengbaizhi.tinkersnewlife.integration.lavafishing.LavafishingIntegration().register(bus);
+            } catch (Throwable t) {
+                LOGGER.error("[联动] 熔岩钓鱼模块初始化失败", t);
             }
         }
         // 铁魔法：流体组走标准联动注册（模组在场才注册）；法术/属性读写仍走反射装填

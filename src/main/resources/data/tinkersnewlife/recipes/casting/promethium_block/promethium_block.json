@@ -1,0 +1,17 @@
+{
+  "type": "tconstruct:casting_basin",
+  "fluid": {
+    "fluid": "tinkersnewlife:molten_promethium_still",
+    "amount": 810
+  },
+  "result": {
+    "item": "lavafishing:promethium_block"
+  },
+  "cooling_time": 180,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "lavafishing"
+    }
+  ]
+}

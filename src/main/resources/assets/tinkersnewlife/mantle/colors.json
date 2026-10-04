@@ -21,6 +21,7 @@
   "soldiers_saber": "#a9b4c2",
     "rapier_armor_piercing": "#d8e8ff",
     "sea_kings_power": "#31A988",
+    "heat_lover": "#CF7654",
     "flying_sword": "#55ffff",
     "west_tiger": "#ffaa00",
     "dragonsteel_lightning_armor": "#ffff55",
@@ -124,6 +125,7 @@
   "material.tinkersnewlife": {
     "mithril": "#c9d6e8",
     "neptunium": "#31A988",
+    "promethium": "#CF7654",
     "arcane_iron": "#888ccc",
     "pyrium": "#ffae3c",
     "holy_spirit": "#ffeead",

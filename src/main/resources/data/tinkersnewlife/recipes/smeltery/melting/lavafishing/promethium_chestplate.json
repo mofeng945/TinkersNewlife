@@ -1,0 +1,19 @@
+{
+  "type": "tconstruct:damagable_melting",
+  "ingredient": {
+    "item": "lavafishing:promethium_chestplate"
+  },
+  "result": {
+    "fluid": "tinkersnewlife:molten_promethium_still",
+    "amount": 720,
+    "unit_size": 10
+  },
+  "temperature": 1250,
+  "time": 170,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "lavafishing"
+    }
+  ]
+}

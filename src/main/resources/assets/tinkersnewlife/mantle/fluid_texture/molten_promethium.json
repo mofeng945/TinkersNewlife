@@ -1,0 +1,8 @@
+{
+  "still": "tinkersnewlife:block/molten_promethium_still",
+  "flowing": "tinkersnewlife:block/molten_promethium_flowing",
+  "color": "FFFFFFFF",
+  "fogColor": "FF83402A",
+  "fogStart": 0.35,
+  "fogEnd": 4.5
+}

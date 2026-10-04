@@ -319,6 +319,11 @@ public class Modifiers {
         MODIFIERS.register("sea_kings_power",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.SeaKingsPowerModifier::new);
 
+    /** 词条·喜热（无等级·钷自带：盔甲 1:1 照熔岩钓鱼原模组 —— 每件 25% 火伤减免/熔岩下视野/炎热回血/炎热加速/岩浆行走；工具与远程面我方设计，见 §980） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.HeatLoverModifier> HEAT_LOVER =
+        MODIFIERS.register("heat_lover",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.HeatLoverModifier::new);
+
     /** 强化·噬魂（1 级占 1 升级槽，2/3 级无槽；每级 +25% 灵魂获取，一级后额外 +1，最高 3 级） */
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.SoulEaterModifier> SOUL_EATER =
         MODIFIERS.register("soul_eater",

@@ -1,0 +1,19 @@
+{
+  "type": "tconstruct:casting_table",
+  "cast": {
+    "tag": "tconstruct:casts/multi_use/ingot"
+  },
+  "cast_consumed": false,
+  "fluid": {
+    "fluid": "tinkersnewlife:molten_promethium_still",
+    "amount": 90
+  },
+  "result": "lavafishing:promethium_ingot",
+  "cooling_time": 60,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "lavafishing"
+    }
+  ]
+}

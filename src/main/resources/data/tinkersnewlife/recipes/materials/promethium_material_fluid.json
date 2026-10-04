@@ -1,0 +1,15 @@
+{
+  "type": "tconstruct:material_fluid",
+  "fluid": {
+    "fluid": "tinkersnewlife:molten_promethium_still",
+    "amount": 90
+  },
+  "temperature": 1250,
+  "output": "tinkersnewlife:promethium",
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "lavafishing"
+    }
+  ]
+}

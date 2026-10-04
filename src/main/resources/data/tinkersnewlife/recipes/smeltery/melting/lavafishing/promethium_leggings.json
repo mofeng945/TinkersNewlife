@@ -1,0 +1,19 @@
+{
+  "type": "tconstruct:damagable_melting",
+  "ingredient": {
+    "item": "lavafishing:promethium_leggings"
+  },
+  "result": {
+    "fluid": "tinkersnewlife:molten_promethium_still",
+    "amount": 630,
+    "unit_size": 10
+  },
+  "temperature": 1250,
+  "time": 159,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "lavafishing"
+    }
+  ]
+}
