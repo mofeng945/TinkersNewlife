@@ -162,8 +162,25 @@ public final class AnimationClip {
          */
         final float[] pivot;
 
+        /**
+         * <b>屏幕偏移（§925）</b>—— 单位<b>格</b> ✓ 在**手部/视野空间**里平移整个物品 ✓
+         * （X 右 ✓ Y 上 ✓ **Z 朝向玩家** ✓ ⇒ "往屏幕里面推" = <b>Z 取负</b> ✓）。
+         *
+         * <p>为什么单独开这个：物品最终位置 = 原版手位移 H ＋ 显示变换 D（我们的长矛带
+         * {@code translation [1.13, 3.2, 1.13]} ＋ {@code scale 1.35} ✗ 会把它顶到屏幕右边 ✗）
+         * ＋ 动画位移 ✓ —— 用户口径「**能不能让它再往屏幕里面多戳一些，现在只有一个尖尖在右屏幕边缘**」✓
+         * ⇒ 与其让他回 Blockbench 重导（那三个数改起来不直观 ✓），不如给个**屏幕空间**的微调旋钮 ✓。
+         *
+         * <p>覆盖键：{@code "_tnl_offset": [x, y, z]}（格 ✓）或 {@code _tnl_offset_x/y/z} ✓；
+         * 默认 {@code [0,0,0]} ✓ ⇒ 不填就是原样 ✓（两种格式一致 ✓）。
+         */
+        final float[] offset;
+
+        /** <b>整体缩放（§925）</b>—— 想让矛"看着更远/更小"就填 &lt;1 ✓（{@code "_tnl_scale": 0.8} ✓）默认 1 ✓ */
+        final float scale;
+
         private Space(boolean rx, boolean ry, boolean rz, boolean px, boolean py, boolean pz,
-                      boolean ms, float[] pivot) {
+                      boolean ms, float[] pivot, float[] offset, float scale) {
             this.flipRotX = rx;
             this.flipRotY = ry;
             this.flipRotZ = rz;
@@ -172,9 +189,11 @@ public final class AnimationClip {
             this.flipPosZ = pz;
             this.modelSpace = ms;
             this.pivot = pivot;
+            this.offset = offset;
+            this.scale = scale;
         }
 
-        /** 基岩默认：共轭开 ✓ ＋ X/Z 旋转取反 ✓ ＋ Y 位移取反 ✓ ＋ 绕贴图中心 ✓ */
+        /** 基岩默认：共轭开 ✓ ＋ X/Z 旋转取反 ✓ ＋ Y 位移取反 ✓ ＋ 绕贴图中心 ✓ ＋ 无屏幕偏移/缩放 ✓ */
         static Space bedrock(JsonObject anim, JsonObject root) {
             return new Space(
                     flag(anim, root, "_tnl_flip_rot_x", true),
@@ -184,12 +203,15 @@ public final class AnimationClip {
                     flag(anim, root, "_tnl_flip_pos_y", true),
                     flag(anim, root, "_tnl_flip_pos_z", false),
                     flag(anim, root, "_tnl_model_space", true),
-                    pivot(anim, root));
+                    vec3(anim, root, "_tnl_pivot", 0.5F, 0.5F, 0.5F),
+                    vec3(anim, root, "_tnl_offset", 0.0F, 0.0F, 0.0F),
+                    num(anim, root, "_tnl_scale", 1.0F));
         }
 
-        /** 极简格式默认：全不翻 ✓ 不共轭 ✓ 不补枢轴 ✓（保持 §914 手调行为 ✓） */
+        /** 极简格式默认：全不翻 ✓ 不共轭 ✓ 不补枢轴 ✓ 不偏移/缩放 ✓（保持 §914 手调行为 ✓） */
         static Space nativeSpace() {
-            return new Space(false, false, false, false, false, false, false, new float[]{0.0F, 0.0F, 0.0F});
+            return new Space(false, false, false, false, false, false, false,
+                    new float[]{0.0F, 0.0F, 0.0F}, new float[]{0.0F, 0.0F, 0.0F}, 1.0F);
         }
 
         private static boolean flag(JsonObject anim, JsonObject root, String key, boolean def) {
@@ -198,21 +220,31 @@ public final class AnimationClip {
             return def;
         }
 
-        private static float[] pivot(JsonObject anim, JsonObject root) {
+        private static float num(JsonObject anim, JsonObject root, String key, float def) {
+            if (anim != null && anim.has(key)) return anim.get(key).getAsFloat();
+            if (root != null && root.has(key)) return root.get(key).getAsFloat();
+            return def;
+        }
+
+        /**
+         * 读一个三分量向量 ✓：优先 {@code key}（数组 ✓），其次 {@code key_x / key_y / key_z}（单轴 ✓），
+         * 都没写就返回默认值 ✓。枢轴（{@code _tnl_pivot}）与屏幕偏移（{@code _tnl_offset}）都用它 ✓。
+         */
+        private static float[] vec3(JsonObject anim, JsonObject root, String key, float dx, float dy, float dz) {
             for (JsonObject o : new JsonObject[]{anim, root}) {
                 if (o == null) continue;
-                if (o.has("_tnl_pivot")) {
-                    JsonArray a = o.getAsJsonArray("_tnl_pivot");
+                if (o.has(key)) {
+                    JsonArray a = o.getAsJsonArray(key);
                     return new float[]{a.get(0).getAsFloat(), a.get(1).getAsFloat(), a.get(2).getAsFloat()};
                 }
-                if (o.has("_tnl_pivot_x") || o.has("_tnl_pivot_y") || o.has("_tnl_pivot_z")) {
+                if (o.has(key + "_x") || o.has(key + "_y") || o.has(key + "_z")) {
                     return new float[]{
-                            o.has("_tnl_pivot_x") ? o.get("_tnl_pivot_x").getAsFloat() : 0.5F,
-                            o.has("_tnl_pivot_y") ? o.get("_tnl_pivot_y").getAsFloat() : 0.5F,
-                            o.has("_tnl_pivot_z") ? o.get("_tnl_pivot_z").getAsFloat() : 0.5F};
+                            o.has(key + "_x") ? o.get(key + "_x").getAsFloat() : dx,
+                            o.has(key + "_y") ? o.get(key + "_y").getAsFloat() : dy,
+                            o.has(key + "_z") ? o.get(key + "_z").getAsFloat() : dz};
                 }
             }
-            return new float[]{0.5F, 0.5F, 0.5F};
+            return new float[]{dx, dy, dz};
         }
     }
 
@@ -533,6 +565,15 @@ public final class AnimationClip {
      *        传 {@code null} ⇒ 退化成"直接作用于手部空间" ✓（§914 老行为 ✓）
      */
     public void applyItem(PoseStack pose, float time, HumanoidArm arm, Matrix4f displayTransform) {
+        // §925 屏幕偏移/缩放 ✓：在**手部/视野空间**里整体调整 ✓
+        //   （X 右 ✓ Y 上 ✓ Z 朝玩家 ⇒ "往屏幕里面推" = Z 取负 ✓；scale < 1 = 看着更远/更小 ✓）
+        if (space.scale != 1.0F) {
+            pose.scale(space.scale, space.scale, space.scale);
+        }
+        float[] off = space.offset;
+        if (off[0] != 0.0F || off[1] != 0.0F || off[2] != 0.0F) {
+            pose.translate((double) off[0], (double) off[1], (double) off[2]);
+        }
         PoseStack local = new PoseStack();
         applyLocal(local, wrap(time), arm);
         Matrix4f r = new Matrix4f(local.last().pose());
