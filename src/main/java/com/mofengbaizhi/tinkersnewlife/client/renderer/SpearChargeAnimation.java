@@ -40,8 +40,19 @@ public final class SpearChargeAnimation {
     //   RAISE_END ~ THRUST_END  刺出（矛往前送 ✓ 新增 thrust 项 ✓）
     //   > THRUST_END     保持刺出（按住不放就一直端着 ✓ —— 原版那套 42~237 的 sway/lower 全不用了 ✗）
     // 松手后的"收回"由 §911 的短冷却驱动（retractProgress ✓ 见下面两个入口 ✓）
-    public static final float RAISE_END = 8.0F;      // 蓄力结束
-    public static final float THRUST_END = 16.0F;    // 刺出结束（之后保持 ✓）
+    public static final float RAISE_END = 8.0F;      // 蓄力结束（把矛端起来 ✓）
+    public static final float ATTACK_END = 12.0F;    // 刺出结束（8~12 这 4 tick 就是"一戳" ✓ 之后保持 ✓）
+
+    /** 兼容旧名（收回那套用的仍是这个"时间轴末端"✓） */
+    public static final float THRUST_END = ATTACK_END;
+
+    // §912 刺出的参数 —— **移植自诡厄遗物** `SpearPose.applyFirstPersonAttack` ✓
+    //   （反编译取的三段进度窗与量级 ✓ 见备忘录 §911/§912 ✓）
+    //   ⚠ 方向/幅度不对就改这几个数 ✓（这类朝向只能实机定 ✗）
+    private static final float ATTACK_FORWARD = 0.65F;   // 往前送多远（-Z ✓）
+    private static final float ATTACK_SIDE = 0.10F;      // 往持矛那侧偏多少（按左右手取符号 ✓）
+    private static final float ATTACK_DOWN = 0.075F;     // 下压多少
+    private static final float ATTACK_PITCH = -70.0F;    // 绕 XP 转多少度 ✓
 
     private SpearChargeAnimation() {}
 
@@ -114,8 +125,8 @@ public final class SpearChargeAnimation {
             float raiseProgressStart = progress(raiseProgress, 0.0F, 0.5F);
             float raiseProgressMiddle = progress(raiseProgress, 0.5F, 0.8F);
             float raiseProgressEnd = progress(raiseProgress, 0.8F, 1.0F);
-            // §911：刺出进度（新增 ✓）；原版那三段 sway/lower/raiseBack 不再参与（置 0 ✓）
-            float thrustProgress = Ease.outCubic(progress(time, RAISE_END, THRUST_END));
+            // §912：刺出进度（0→1 ✓ 就 8~12 这 4 tick ✓；之后保持 1 ✓ 收回时随有效时间回落 ✓）
+            float thrustProgress = progress(time, RAISE_END, ATTACK_END);
             float swayProgress = 0.0F;
             float lowerProgress = 0.0F;
             float raiseBackProgress = 0.0F;
@@ -159,9 +170,10 @@ public final class SpearChargeAnimation {
         poseStack.rotateAround(Axis.YN.rotationDegrees((float) invert * (-90.0F * progress(p.raiseProgress(), 0.5F, 0.55F)
                         + 90.0F * p.swayProgress() + 2.0F * p.swayScaleSlow())),
                 (float) invert * 0.15F, 0.0F, 0.0F);
-        // §911 刺出：往前送（第一人称里 -Z 是"前"✓）＋ 一点点下压 ✓
-        poseStack.translate(0.0D, (double) (p.thrustProgress() * 0.02F), (double) (p.thrustProgress() * -0.28F));
-        poseStack.rotateAround(Axis.XP.rotationDegrees(12.0F * p.thrustProgress()), 0.0F, 0.1F, 0.0F);
+        // §912 刺出：**移植诡厄遗物 `applyFirstPersonAttack`** ✓（替换 §911 那个偏弱的位移 ✗）
+        if (p.thrustProgress() > 0.0F) {
+            firstPersonAttack(poseStack, invert, p.thrustProgress());
+        }
         poseStack.translate(0.0F, -hitFeedbackAmount(ticksSinceHitFeedback), 0.0F);
     }
 
@@ -193,8 +205,11 @@ public final class SpearChargeAnimation {
                     + 0.6F * p.swayScaleSlow() * p.swayIntensity());
             armRotZ[0] = zRot;
         }
-        // §911 刺出：手臂再往前压一点（第三人称就是"把矛捅出去"那下 ✓）
-        xRot += (float) Math.PI / 180.0F * (-18.0F * UseParams.at(timeHeld).thrustProgress());
+        // §912 刺出：**移植诡厄遗物 `applyThirdPersonStab`** ✓（替换 §911 那 -18° ✗）
+        float attack = UseParams.at(timeHeld).thrustProgress();
+        if (attack > 0.0F) {
+            xRot += thirdPersonStab(attack);
+        }
         armRotX[0] = xRot;
         armRotY[0] = yRot;
     }
@@ -203,6 +218,43 @@ public final class SpearChargeAnimation {
     public static boolean holdingSpear(LivingEntity entity) {
         return entity != null
                 && entity.getMainHandItem().getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.SpearItem;
+    }
+
+    /**
+     * <b>第一人称"刺出"</b>（§912 移植自诡厄遗物 {@code SpearPose.applyFirstPersonAttack} ✓）。
+     *
+     * <p>它的结构（反编译读出来的 ✓）：三段进度窗
+     * {@code progress(t,0,0.05)}→{@code inOutSine} ✓、{@code progress(t,0.05,0.2)}→{@code outBack} ✓、
+     * {@code progress(t,0.4,1.0)}→{@code inOutExpo} ✓ —— 也就是"**先猛地捅出去（带一点过冲 ✓），
+     * 再缓缓收回身前**"✓；位移量级 {@code 0.65f}(前) / {@code 0.1f}(侧) / {@code -0.075f}(下) ✓、
+     * 旋转 {@code XP -70.0f} ✓，左右手按 {@code invert} 取符号 ✓。
+     *
+     * <p>⚠ 精确表达式是从字节码片段**重建**的 ✓（那几段汇编拼不出完整括号 ✗）⇒ 方向/幅度不对就改
+     * 类顶部那几个 {@code ATTACK_*} 常量 ✓，不用动这里 ✓。
+     */
+    private static void firstPersonAttack(PoseStack poseStack, int invert, float t) {
+        float push = Ease.outBack(progress(t, 0.05F, 0.20F));       // 主推力（带过冲 ✓）
+        float settle = Ease.inOutExpo(progress(t, 0.40F, 1.0F));    // 末端回收 ✓
+        float side = Ease.inOutSine(progress(t, 0.0F, 0.05F));      // 起手那一下的侧偏 ✓
+
+        poseStack.translate(
+                (double) ((float) invert * (side * ATTACK_SIDE - push * ATTACK_SIDE * 0.5F)),
+                (double) (-push * ATTACK_DOWN - settle * ATTACK_DOWN),
+                (double) (-push * ATTACK_FORWARD + settle * ATTACK_FORWARD * 0.35F));
+        poseStack.mulPose(Axis.XP.rotationDegrees(ATTACK_PITCH * push));
+    }
+
+    /**
+     * <b>第三人称"刺出"</b>（§912 移植自 {@code SpearPose.applyThirdPersonStab} ✓）——
+     * 它直接改手臂的 {@code xRot} ✓（同一套进度窗，量级 {@code 90f / 120f / 30f} ✓）。
+     * <p>⚠ 同样是从字节码片段重建 ✓ ⇒ 幅度不对就改 {@link #STAB_DEG} ✓。
+     */
+    private static final float STAB_DEG = -55.0F;
+
+    private static float thirdPersonStab(float attackProgress) {
+        float push = Ease.inQuad(progress(attackProgress, 0.05F, 0.20F));
+        float settle = Ease.inOutExpo(progress(attackProgress, 0.40F, 1.0F));
+        return (float) Math.PI / 180.0F * (STAB_DEG * push - STAB_DEG * 0.4F * settle);
     }
 
     /** 这个生物手上"正在使用"的是不是我们的长矛 ✓ */
