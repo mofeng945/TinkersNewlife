@@ -1,5 +1,6 @@
-﻿{
+{
   "format_version": "1.12.0",
+  "_comment": "§922：贴图必须**以原点为中心**（origin [-8,-8,0]）—— 游戏是在『贴图中心』旋转物品的（ItemRenderer: 显示变换 → translate(-0.5,-0.5,-0.5)），骨头 pivot 在原点 ⇒ 两者才会重合。旧版写成 [-8,0,0]（画在原点上方）会让旋转中心差半个方块。",
   "minecraft:geometry": [
     {
       "description": {
@@ -8,14 +9,14 @@
         "texture_height": 16,
         "visible_bounds_width": 4,
         "visible_bounds_height": 4,
-        "visible_bounds_offset": [0, 2, 0]
+        "visible_bounds_offset": [0, 0, 0]
       },
       "bones": [
         {
           "name": "item",
           "pivot": [0, 0, 0],
           "cubes": [
-            { "origin": [-8, 0, 0], "size": [16, 16, 0], "uv": [0, 0] }
+            { "origin": [-8, -8, 0], "size": [16, 16, 0], "uv": [0, 0] }
           ]
         }
       ]

@@ -15,7 +15,7 @@
 | 文件 | 说明 |
 |---|---|
 | `spear_composed.png` | **合成图**：`handle1` + `handle2` + `head`（head 按 `offset [-1, 1]` 偏移）叠出来的长矛本体 ✓ 动画时用它当贴图 |
-| `spear_firstperson.geo.json` | **基岩几何**：一根骨头 `item` ＋ 一张 16×16 平面，枢轴在模型原点 ⇒ **Blockbench 直接导入** |
+| `spear_firstperson.geo.json` | **基岩几何**：骨头 `item` ＋ 一张 16×16 平面，**贴图以原点为中心** ＋ 枢轴在原点（§922 修正 ✗ 旧版画在原点上方 ✗）⇒ **Blockbench 直接导入** |
 | `spear_flat_java.json` | 等价的 Java 平面模型（3 层，带 per-face UV）⇒ 想在 "Java Block/Item" 格式里看 / 对 UV 时用 |
 | `textures/` | 三张原始贴图（`head` / `handle1` / `handle2`，都是 16×16） |
 | `原文件/` | 模型链条原文件：我们的 `models/item/spear.json`、工具定义、以及 TC 的 `base/tall`、`broad_blade`、`tough_handle` |
@@ -61,3 +61,27 @@
 
 - 合成图的**层叠顺序**（handle1 → handle2 → head）是按我们模型里 `parts` 的顺序定的，TC 内部若有额外 z 分层，实际观感可能有 1 像素级差别（未实机逐像素比对）
 - `head` 的 `offset [-1, 1]` 方向（左/下）是按 TC 的 `broad_blade.json` 字面值套的，未实机确证
+
+## §922 修正：**旋转中心＝贴图中心**（旧版那份几何请重新导入）
+
+**症状**（用户实测）：「蓄力时矛在向后转然后往天上戳」✗ —— **不是动画方向写错了**，
+是我给的那份 `.geo.json` 把贴图画在了原点**上方**（`origin [-8, 0, 0]`）✗。
+
+**证据**（`ItemRenderer` 源码）：
+```java
+handleCameraTransforms(poseStack, model, context, leftHand);   // 112：先乘显示变换 [0,-90,55]
+poseStack.translate(-0.5F, -0.5F, -0.5F);                      // 113：再把 0~16 的几何居中
+```
+⇒ 显示变换的旋转中心 = **贴图中心** = Java 模型空间的 `(0.5, 0.5, 0.5)` 格（8/16 格）✓
+而枢轴在原点 ⇒ 差了**半个方块** ⇒ 32.5° 一转就被放大成"往后甩 + 往天上戳" ✗。
+
+**两边都改了**：
+1. 这份几何：`origin` 改成 `[-8, -8, 0]` ⇒ 贴图**以原点为中心** ⇒ Blockbench 里骨头 `item` 的枢轴
+   ＝ 游戏里的旋转中心 ✓ ⇒ 你在 Blockbench 里转多少，游戏里就转多少 ✓
+   ⚠ **请在 Blockbench 里重新导入一次这份 `.geo.json`**（旧的那份枢轴错位 ✗）
+2. 加载器：按 `(0.5, 0.5, 0.5)` 格做**枢轴补偿** ✓（`_tnl_pivot: [x,y,z]`，单位格 ✓
+   想让它绕别处转就改这个值 ✓ 填 `0` = 绕原点 ✓ 改完 F3+T 生效 ✓）
+
+⚠ 匠魂工具走的是**自定义渲染器（BEWLR）**，它的模型空间未必完全等于原版那套 ⇒
+若发现旋转中心还是不对，用 `_tnl_pivot` 调（比如 `[0,0,0]`）✓ 未实机确证 ✗。
+

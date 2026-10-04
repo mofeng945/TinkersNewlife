@@ -146,7 +146,24 @@ public final class AnimationClip {
         final boolean flipPosZ;
         final boolean modelSpace;
 
-        private Space(boolean rx, boolean ry, boolean rz, boolean px, boolean py, boolean pz, boolean ms) {
+        /**
+         * <b>枢轴补偿（§922）</b>—— 单位<b>格</b> ✓ 旋转/缩放绕这个点做 ✓。
+         *
+         * <p>为什么需要它：游戏画物品时是
+         * {@code 显示变换 → translate(-0.5,-0.5,-0.5) → 0~16 的几何} ✓
+         * （我扒过 {@code ItemRenderer} 第 112–113 行 ✓）⇒ 显示变换的旋转中心
+         * ＝<b>贴图中心</b>＝ Java 模型空间的 {@code (0.5, 0.5, 0.5)} 格 ✓（8/16 ✓）。
+         * 而 Blockbench 里骨头枢轴在原点 ✓ ⇒ 不补这一下，就会变成"绕贴图边缘甩" ✗
+         * （用户实测："矛在向后转然后往天上戳" ✓ 就是这个 ✗）。
+         *
+         * <p>⚠ 匠魂工具走的是**自定义渲染器（BEWLR）** ✓ 它的模型空间未必等于原版那套 ✗
+         * ⇒ 这个值做成可覆盖 ✓：`"_tnl_pivot": [0.5, 0.5, 0.5]`（改 F3+T 生效 ✓）
+         * 或 `_tnl_pivot_x/y/z` 单独覆盖 ✓；填 `0` 即"绕原点转" ✓。
+         */
+        final float[] pivot;
+
+        private Space(boolean rx, boolean ry, boolean rz, boolean px, boolean py, boolean pz,
+                      boolean ms, float[] pivot) {
             this.flipRotX = rx;
             this.flipRotY = ry;
             this.flipRotZ = rz;
@@ -154,9 +171,10 @@ public final class AnimationClip {
             this.flipPosY = py;
             this.flipPosZ = pz;
             this.modelSpace = ms;
+            this.pivot = pivot;
         }
 
-        /** 基岩默认：共轭开 ✓ ＋ X/Z 旋转取反 ✓ ＋ Y 位移取反 ✓ */
+        /** 基岩默认：共轭开 ✓ ＋ X/Z 旋转取反 ✓ ＋ Y 位移取反 ✓ ＋ 绕贴图中心 ✓ */
         static Space bedrock(JsonObject anim, JsonObject root) {
             return new Space(
                     flag(anim, root, "_tnl_flip_rot_x", true),
@@ -165,18 +183,36 @@ public final class AnimationClip {
                     flag(anim, root, "_tnl_flip_pos_x", false),
                     flag(anim, root, "_tnl_flip_pos_y", true),
                     flag(anim, root, "_tnl_flip_pos_z", false),
-                    flag(anim, root, "_tnl_model_space", true));
+                    flag(anim, root, "_tnl_model_space", true),
+                    pivot(anim, root));
         }
 
-        /** 极简格式默认：全不翻 ✓ 不共轭 ✓（保持 §914 手调行为 ✓） */
+        /** 极简格式默认：全不翻 ✓ 不共轭 ✓ 不补枢轴 ✓（保持 §914 手调行为 ✓） */
         static Space nativeSpace() {
-            return new Space(false, false, false, false, false, false, false);
+            return new Space(false, false, false, false, false, false, false, new float[]{0.0F, 0.0F, 0.0F});
         }
 
         private static boolean flag(JsonObject anim, JsonObject root, String key, boolean def) {
             if (anim != null && anim.has(key)) return anim.get(key).getAsBoolean();
             if (root != null && root.has(key)) return root.get(key).getAsBoolean();
             return def;
+        }
+
+        private static float[] pivot(JsonObject anim, JsonObject root) {
+            for (JsonObject o : new JsonObject[]{anim, root}) {
+                if (o == null) continue;
+                if (o.has("_tnl_pivot")) {
+                    JsonArray a = o.getAsJsonArray("_tnl_pivot");
+                    return new float[]{a.get(0).getAsFloat(), a.get(1).getAsFloat(), a.get(2).getAsFloat()};
+                }
+                if (o.has("_tnl_pivot_x") || o.has("_tnl_pivot_y") || o.has("_tnl_pivot_z")) {
+                    return new float[]{
+                            o.has("_tnl_pivot_x") ? o.get("_tnl_pivot_x").getAsFloat() : 0.5F,
+                            o.has("_tnl_pivot_y") ? o.get("_tnl_pivot_y").getAsFloat() : 0.5F,
+                            o.has("_tnl_pivot_z") ? o.get("_tnl_pivot_z").getAsFloat() : 0.5F};
+                }
+            }
+            return new float[]{0.5F, 0.5F, 0.5F};
         }
     }
 
@@ -513,6 +549,11 @@ public final class AnimationClip {
             float mz = move[2] * (space.flipPosZ ? -1.0F : 1.0F);
             pose.translate((double) ((float) invert * mx), (double) my, (double) mz);
         }
+        // §922 枢轴补偿：旋转/缩放绕**贴图中心** ✓（= Java 模型空间的 (0.5,0.5,0.5) 格 ✓）
+        //   位移在上面已经加过 ✓ 不受枢轴影响 ✓（骨头位移本来就在父空间 ✓ 和 Blockbench 语义一致 ✓）
+        float[] c = space.pivot;
+        boolean pivot = c[0] != 0.0F || c[1] != 0.0F || c[2] != 0.0F;
+        if (pivot) pose.translate((double) c[0], (double) c[1], (double) c[2]);
         if (rot != null) {
             float rx = rot[0] * (space.flipRotX ? -1.0F : 1.0F);
             float ry = rot[1] * (space.flipRotY ? -1.0F : 1.0F);
@@ -524,6 +565,7 @@ public final class AnimationClip {
         if (scale != null && (scale[0] != 1.0F || scale[1] != 1.0F || scale[2] != 1.0F)) {
             pose.scale(scale[0], scale[1], scale[2]);
         }
+        if (pivot) pose.translate((double) -c[0], (double) -c[1], (double) -c[2]);
     }
 
     /** 取这一帧的**手臂**三轴旋转（弧度 ✓ 第三人称写回 {@code ModelPart} 用 ✓）；没写 arm 轨道返回 null ✓ */
