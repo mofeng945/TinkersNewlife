@@ -68,26 +68,50 @@ public final class SpearFirstPersonHandler {
         com.mofengbaizhi.tinkersnewlife.client.anim.AnimationClip clip =
                 com.mofengbaizhi.tinkersnewlife.client.anim.AnimationClip.spearFirstPerson();
         if (clip != null) {
-            // §918：把动画**共轭到物品模型空间**去 ✓（传 M ✓）⇒ 和 Blockbench 里看到的才是一回事 ✓
-            clip.applyItem(event.getPoseStack(), effective, arm, firstPersonDisplayTransform(stack, player, arm));
+            // §918/§921：把动画**共轭到物品模型空间**去 ✓
+            //   ★ M = H · D ✓（H = 原版手位移 ✓ D = 物品第一人称显示变换 ✓）
+            //   —— 少了 H 就会像 §913/§845 那样"物品飞出去/看不见" ✗（事件在手位移**之前**触发 ✗）
+            clip.applyItem(event.getPoseStack(), effective, arm,
+                    baseTransform(stack, player, arm, event.getEquipProgress()));
             return;
         }
 
+        // §921：**回退姿势也先补上原版手位移 H** ✓ —— 事件在手位移之前触发 ✗，
+        //   不补的话就会重现 §845 那次"蓄力时手持看不到了"✗（物品被留在相机原点附近 ✗）。
+        applyArmOffset(event.getPoseStack(), arm, event.getEquipProgress());
         SpearChargeAnimation.firstPersonSimple(event.getPoseStack(), arm, charge, attack);
     }
 
+    /** 原版 {@code ItemInHandRenderer#applyItemArmTransform} ✓（= §921 里的 {@code H} ✓） */
+    private static void applyArmOffset(com.mojang.blaze3d.vertex.PoseStack pose,
+                                       net.minecraft.world.entity.HumanoidArm arm, float equipProgress) {
+        int k = arm == net.minecraft.world.entity.HumanoidArm.RIGHT ? 1 : -1;
+        pose.translate((double) ((float) k * 0.56F), (double) (-0.52F + equipProgress * -0.6F), -0.72D);
+    }
+
     /**
-     * 取"这个物品在第一人称下、**动画之后**会被乘上去的那个显示变换矩阵" ✓（§918 的 {@code M} ✓）。
+     * 取"从 {@link RenderHandEvent} 那个空间 → 物品模型空间"的变换矩阵 ✓
+     * ＝ <b>{@code H · D}</b> ✓（§921 修正：以前只乘了 {@code D} ✗ 少了手位移 ✗）。
      *
-     * <p>为什么需要它：{@link RenderHandEvent} 给的 PoseStack 是**手部空间** ✓，
-     * 物品自己的 {@code firstperson_righthand} 变换（像 {@code [0,-90,25]}+缩放 ✓）是**之后**才乘的 ✓
-     * ⇒ 想在"物品模型自己的坐标系"里做动画 ✗ 必须把它按 {@code M·R·M⁻¹} 共轭过去 ✓
-     * （否则同一组数字会得到完全不同的姿势 ✓ —— 用户实测"和我做出来的完全不一样" ✓ 见 §918 ✓）。
+     * <p>两个来源（都在 Forge 补丁后的 {@code ItemInHandRenderer} 里 ✓ 我扒源码逐行对过 ✓）：
+     * <ol>
+     *   <li><b>H</b> = {@code applyItemArmTransform} ✓：
+     *       {@code translate(k*0.56F, -0.52F + equipProgress*-0.6F, -0.72F)} ✓
+     *       （§921 把 {@code UseAnim} 压成 {@code NONE} 后，原版只剩这一层 ✓ 三叉戟那套没了 ✓）；</li>
+     *   <li><b>D</b> = 物品自己的 {@code firstperson_righthand} 显示变换 ✓
+     *       （我们的长矛是 {@code rotation [0,-90,55]} / {@code scale 1.35} ✓ 见 §919 ✓）。</li>
+     * </ol>
+     * 有了它，动画按 {@code M·R·M⁻¹} 共轭后才真正作用在**物品模型自己的坐标系**里 ✓
+     * ⇒ 和 Blockbench 预览一致 ✓（这才是"我做的动画说了算" ✓）。
      *
-     * @return 取不到返回 {@code null} ✓（调用方退化成手部空间 ✓ 不会崩 ✓）
+     * <p>⚠ 触发点在 {@code renderHandsWithItems} 第 316 行 ✓ 也就是**早于**
+     * {@code renderArmWithItem}（317 行 ✓ 里面才做 H/S/D ✗）⇒ 这里必须自己把它们补进矩阵 ✓。
      */
-    private static org.joml.Matrix4f firstPersonDisplayTransform(ItemStack stack, LocalPlayer player,
-                                                                 net.minecraft.world.entity.HumanoidArm arm) {
+    private static org.joml.Matrix4f baseTransform(ItemStack stack, LocalPlayer player,
+                                                   net.minecraft.world.entity.HumanoidArm arm, float equipProgress) {
+        com.mojang.blaze3d.vertex.PoseStack tmp = new com.mojang.blaze3d.vertex.PoseStack();
+        int k = arm == net.minecraft.world.entity.HumanoidArm.RIGHT ? 1 : -1;
+        tmp.translate((double) ((float) k * 0.56F), (double) (-0.52F + equipProgress * -0.6F), -0.72D);   // H ✓
         try {
             net.minecraft.client.resources.model.BakedModel model =
                     Minecraft.getInstance().getItemRenderer().getModel(stack, player.level(), player, 0);
@@ -97,11 +121,10 @@ public final class SpearFirstPersonHandler {
                             : net.minecraft.world.item.ItemDisplayContext.FIRST_PERSON_LEFT_HAND;
             net.minecraft.client.renderer.block.model.ItemTransform transform =
                     model.getTransforms().getTransform(type);
-            com.mojang.blaze3d.vertex.PoseStack tmp = new com.mojang.blaze3d.vertex.PoseStack();
-            transform.apply(arm == net.minecraft.world.entity.HumanoidArm.LEFT, tmp);
-            return new org.joml.Matrix4f(tmp.last().pose());
-        } catch (Throwable t) {
-            return null;
+            transform.apply(arm == net.minecraft.world.entity.HumanoidArm.LEFT, tmp);                    // D ✓
+        } catch (Throwable ignored) {
+            // D 取不到也没关系 ✓ 至少 H 是对的 ✓（不会崩 ✓）
         }
+        return new org.joml.Matrix4f(tmp.last().pose());
     }
 }

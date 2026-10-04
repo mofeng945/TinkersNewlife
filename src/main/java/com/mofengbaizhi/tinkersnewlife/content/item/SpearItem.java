@@ -106,12 +106,21 @@ public class SpearItem extends ModifiableItem {
     @Override
     public UseAnim getUseAnimation(ItemStack stack) {
         UseAnim ability = super.getUseAnimation(stack);
-        // ⚠ §845：**先恢复成 SPEAR** ✓ —— §844 改成 NONE 后用户实测「蓄力手持看不到了」✗：
-        //   1.20.1 的 Forge 钩子 RenderHandEvent 在**所有手部变换之前**触发 ✗
-        //   ⇒ 那套"接在原版持矛基准之上"的动画数学加在了错误坐标系 ⇒ 物品被推出视野 ✗。
-        //   正解（下一步）：Forge `IClientItemExtensions#applyForgeHandTransform` 返回 true
-        //   （整个原版使用动画分支会被跳过 ✓）或矩阵补偿 V⁻¹∘D ✓。
-        return ability != UseAnim.NONE ? ability : UseAnim.SPEAR;
+        // ⭐ §921：**不再用 SPEAR** ✗ —— 用户实测「**蓄力还套了一层三叉戟举起来的动画**」✓ 完全确证 ✓：
+        //   1.20.1 把 SPEAR 直接映射成**三叉戟**那两套姿势 ✗
+        //     · 第一人称：{@code ItemInHandRenderer#renderArmWithItem} 的 {@code case SPEAR}
+        //       （X −55° / Y k·35.3° / Z k·−9.785° / 再 Y k·−45° ＋ 位移(±−0.5, 0.7, 0.1) ＋ 蓄力抖动/前推/拉伸 ✗）
+        //       ⇒ 会和我们的动画**叠一层** ✗（也会把矛摆成"横在眼前" ✗ 就是 §911 那个观感 ✗）；
+        //     · 第三人称：{@code ArmPose.THROW_TRIDENT}（预备投掷 ✗ 矛尖朝后 ✗ §848 就是在补这个 ✗）。
+        //   ⚠ §845 曾改成 NONE 但用户反馈「蓄力手持看不到了」✗ —— 那次失败的**真因是坐标系** ✗：
+        //   当时动画加在 {@code RenderHandEvent} 给出的空间里 ✗ 而那个事件是在
+        //   {@code ItemInHandRenderer#renderHandsWithItems} **第 316 行**触发的 ✗ 比
+        //   {@code applyItemArmTransform}（手位移）**还早** ✗ ⇒ 手位移还没乘上 ✗ 物品自然飞出视野 ✗。
+        //   ⇒ §918/§921 已按 {@code (H·D)} 共轭 ✓（H = 手位移 ✓ D = 物品显示变换 ✓）⇒ NONE 现在可行 ✓。
+        //   ⚠ 第三人称不受影响 ✓：{@link com.mofengbaizhi.tinkersnewlife.mixin.SpearThirdPersonPoseMixin}
+        //   是**绝对赋值**手臂三个旋转 ✓（不依赖原版基准 ✓）。
+        //   匠魂"使用中"词条若给的是别的动画（BOW/EAT…）依旧让位 ✓ —— 只压 SPEAR ✓。
+        return ability == UseAnim.SPEAR ? UseAnim.NONE : ability;
     }
 
     @Override
