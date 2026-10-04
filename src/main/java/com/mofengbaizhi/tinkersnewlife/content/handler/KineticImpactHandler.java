@@ -1,10 +1,12 @@
 package com.mofengbaizhi.tinkersnewlife.content.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
@@ -12,6 +14,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -20,31 +23,32 @@ import net.minecraftforge.fml.common.Mod;
 import javax.annotation.Nullable;
 
 /**
- * <b>弹弓 · 动能坠落</b>（§983 起，§984 修）：石弹命中**正在滞空**的目标后，强制把它拉向地面，
- * 并在它**撞到地面/落水/攀爬物**的那一刻结算一笔**动能伤害**（用户口径）。
+ * <b>弹弓 · 动能坠落</b>（§983 起；§984 修飞行生物；§986 加<b>虚空保护</b>）。
  *
- * <h2>⚠ §984 修的两个坑（用户实测"打幻翼没反应"）</h2>
+ * <h2>做什么</h2>
+ * 石弹命中**正在滞空**的目标后强制把它拉向地面，撞到地面/落水/攀爬物时结算一笔动能伤害 ✓。
+ *
+ * <h2>⚠ §986：下方是虚空怎么办（用户提出）</h2>
+ * 我们的下坠是**强制位移** ⇒ 如果正下方**没有可落地的方块**（末地外圈、主岛边缘、深渊），
+ * 硬拉会把目标直接送进虚空 ✗ —— 末影龙这类 Boss 会因 {@code out_of_world} 死掉：
+ * 战利品落入虚空 ✗、正常死亡流程/末地传送门生成也可能被打断 ✗。
+ *
+ * <p>对策（三层，逐层兜底 ✓）：
  * <ol>
- *   <li><b>"滞空"判定不该看 {@code getOnPos()}</b> ✗ —— §983 我用
- *       {@code 离地高度 = getY() - getOnPos().getY() > 0.6}，而飞行生物（幻翼等）的
- *       {@code getOnPos()} 常常就返回它**脚下那一格**（支撑方块位置为空时回退到 {@code blockPosition()}）
- *       ⇒ 差值只剩小数部分（约 0.3）⇒ **判成"不滞空"** ⇒ 整条下坠逻辑根本没跑 ✗。
- *       ⇒ 现在只判 {@code !onGround && !isInWater && !onClimbable && !isPassenger} ✓（离地就是滞空 ✓）。</li>
- *   <li><b>只拉一次对 AI 飞行生物无效</b> ✗ —— 幻翼是 {@code FlyingMob}，它的 AI **每 tick 都会
- *       {@code setDeltaMovement} 朝目标飞** ⇒ §983 那一发 {@code -1.6} 下一 tick 就被覆盖 ✗。
- *       ⇒ 现在改成标记期间**每 tick 持续施加**：重设向下速度 ✓ ＋（非玩家）**直接 {@code move()} 下移一步**
- *       ✓ —— 直接位移绕开"飞行 AI 覆盖速度"这条路 ⇒ 真·强制下坠 ✓。</li>
+ *   <li><b>落地探测</b>：命中瞬间从目标脚下向下扫 {@value #GROUND_SCAN_DEPTH} 格，
+ *       找"能站住的东西"（有碰撞的方块 **或** 任何流体 ✓ 水面也算落地 ✓）；
+ *       扫不到 ⇒ 判定为<b>虚空下方</b> ✓（把结果记进持久数据，之后每 tick 不再重复扫 ✗ 省性能 ✓）。</li>
+ *   <li><b>虚空下方只"短促一拽"</b>：仍然给下坠手感 ✓ 但最多 {@value #VOID_PULL_LIMIT} 格 ⇒
+ *       到量就**停手并立刻结算动能伤害** ✓ ⇒ 渲染上是"被砸了一下"，但**绝不把人送进虚空** ✓。</li>
+ *   <li><b>世界底兜底</b>：任何情况下都不让目标被拉到 {@code level.getMinBuildHeight()} 及以下 ✓
+ *       （到底就停手结算 ✓ 双保险 ✓）。</li>
  * </ol>
+ * ⚠ 由此末影龙**不需要**单独豁免 ✓：它悬在主岛上方时脚下有方块 ⇒ 照常砸下去 ✓；
+ * 飞到虚空之上时 ⇒ 只吃一击"滞空冲击"伤害、不会被送走 ✓。想彻底不打龙也可以另说 ✓。
  *
- * <h2>⭐ 对创造玩家也生效</h2>
- * 用的是本模组自己的伤害类型 {@code tinkersnewlife:kinetic}（数据包里带
- * {@code #minecraft:bypasses_invulnerability} ✓）⇒ 原版 {@code Player#isInvulnerableTo} 的
- * "创造模式无敌"那一支被绕过 ✓；另外**创造飞行会被强制关掉** ✓，否则飞行逻辑推不动 ✗。
- *
- * <h2>伤害怎么算</h2>
- * 命中时记下"这一发的动能"（＝弹弓面板投射物伤害），下坠过程中**自己累计下落格数**
- * （飞行生物不会自己累计 {@code fallDistance} ✗ ⇒ 不能靠它 ✓），落地时
- * {@code 动能伤害 = 这一发的动能 + 自己累计的下落 × 0.5}（上限 60）✓。
+ * <h2>对创造玩家也生效</h2>
+ * 伤害类型 {@code tinkersnewlife:kinetic} 带 {@code #minecraft:bypasses_invulnerability} ✓
+ * ⇒ 创造模式的无敌挡不住 ✓；创造飞行会被强制关掉（否则推不动 ✗）。
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class KineticImpactHandler {
@@ -55,45 +59,55 @@ public final class KineticImpactHandler {
     private static final ResourceKey<DamageType> KINETIC_KEY = ResourceKey.create(
             Registries.DAMAGE_TYPE, new ResourceLocation(TinkersNewlife.MOD_ID, "kinetic"));
 
-    /** 每秒下坠速度（格/tick ✓ 1.4 ≈ 28 格/秒，肉眼能看清是"被拽下来"而不是瞬移 ✓） */
+    /** 下坠速度（格/tick ✓ 1.4 ≈ 28 格/秒 ✓ 看得清是被拽下来 ✓） */
     private static final double PULL_SPEED = 1.4D;
-    /** 非玩家额外"直接下移"的步长（绕开飞行 AI ✓ 0.5 + 上面的速度 ≈ 每 tick 1.9 格 ✓） */
+    /** 非玩家额外"直接下移"的步长（绕开飞行 AI ✓） */
     private static final double PULL_STEP = 0.5D;
     /** 水平速度衰减（拉住目标，别让它横着飘走 ✓） */
     private static final double HORIZONTAL_DAMP = 0.3D;
-    /** 标记存活上限（tick ✓ 10 秒还没落地就作废：从世界高度摔下来也够了 ✓） */
+    /** 标记存活上限（tick ✓ 10 秒 ✓） */
     private static final int MAX_TICKS = 200;
-    /** 单次动能伤害上限（防止极端数字 ✓） */
+    /** 单次动能伤害上限 ✓ */
     private static final float MAX_KINETIC_DAMAGE = 60.0F;
     /** 每格下落折算的额外动能 ✓ */
     private static final float FALL_DAMAGE_PER_BLOCK = 0.5F;
+    /** §986 落地探测深度（格 ✓ 直下方 48 格内都没有能站住的东西 ⇒ 按虚空处理 ✓） */
+    private static final int GROUND_SCAN_DEPTH = 48;
+    /** §986 虚空下方时最多下坠的格数（到量就停手结算 ✓） */
+    private static final double VOID_PULL_LIMIT = 6.0D;
 
     /** 持久数据键（打在被打中的实体身上 ✓ 随实体存档 ✓） */
     private static final String TAG_DAMAGE = "tnl_kinetic_damage";
     private static final String TAG_UNTIL = "tnl_kinetic_until";
     private static final String TAG_FALL = "tnl_kinetic_fall";
+    private static final String TAG_VOID = "tnl_kinetic_void";
 
-    /**
-     * 给一个**正在滞空**的目标挂上"强制下坠"（由 {@code StoneShotEntity#onHitEntity} 调用）。
-     *
-     * <p>⚠ 这里只做**第一下**（命中瞬间的手感 ✓）；后续每 tick 的持续施力在
-     * {@link #onLivingTick} 里 —— 因为 AI 飞行生物会立刻覆盖速度 ✗。
-     */
+    // ============================================================
+    //  入口：命中时挂上"强制下坠"
+    // ============================================================
+
+    /** 由 {@code StoneShotEntity#onHitEntity} 调用：命中瞬间的第一下 ＋ 打标记 ✓ */
     public static void pullDown(LivingEntity target, float impactDamage) {
         if (target == null || target.level().isClientSide) return;
 
         target.setDeltaMovement(target.getDeltaMovement().x * HORIZONTAL_DAMP, -PULL_SPEED,
                 target.getDeltaMovement().z * HORIZONTAL_DAMP);
         target.hasImpulse = true;
-        target.hurtMarked = true;      // 服务端速度 ⇒ 客户端（少了这一行客户端看不到下坠 ✗）
+        target.hurtMarked = true;      // 服务端速度 ⇒ 客户端
         disableCreativeFlight(target);
 
+        // §986：先探一次"脚下有没有地方落" ✓（只探这一次 ✓ 结果记进持久数据 ✓）
+        boolean voidBelow = !hasLandingBelow(target.level(), target);
+        target.getPersistentData().putBoolean(TAG_VOID, voidBelow);
         target.getPersistentData().putFloat(TAG_DAMAGE, Math.max(0.0F, impactDamage));
         target.getPersistentData().putLong(TAG_UNTIL, target.level().getGameTime() + MAX_TICKS);
         target.getPersistentData().putDouble(TAG_FALL, 0.0D);
     }
 
-    /** 每 tick：还在空中的被拉目标 ⇒ **继续施力**；已经砸到东西 ⇒ 结算动能伤害 ✓ */
+    // ============================================================
+    //  每 tick：继续施力 / 到点结算
+    // ============================================================
+
     @SubscribeEvent
     public static void onLivingTick(LivingEvent.LivingTickEvent event) {
         LivingEntity entity = event.getEntity();
@@ -102,26 +116,38 @@ public final class KineticImpactHandler {
 
         boolean landed = entity.onGround() || entity.isInWater() || entity.onClimbable() || entity.isPassenger();
         boolean expired = entity.level().getGameTime() > entity.getPersistentData().getLong(TAG_UNTIL);
-        if (!landed && !expired) {
+        double pulled = entity.getPersistentData().getDouble(TAG_FALL);
+        boolean voidBelow = entity.getPersistentData().getBoolean(TAG_VOID);
+        // §986：虚空下方 ⇒ 拉够 VOID_PULL_LIMIT 格就停手（并不再继续往下送 ✓）
+        boolean voidStop = voidBelow && pulled >= VOID_PULL_LIMIT;
+        // §986：世界底兜底 ⇒ 已经贴到世界最低高度也停手 ✓
+        boolean atWorldBottom = entity.getY() <= entity.level().getMinBuildHeight() + 1.0D;
+
+        if (!landed && !expired && !voidStop && !atWorldBottom) {
             keepPulling(entity);
             return;
         }
 
+        settle(entity, landed || voidStop || atWorldBottom);
+    }
+
+    /** 结算（并清标记）：{@code dealDamage=false} 表示只清标记（超时作废 ✓） */
+    private static void settle(LivingEntity entity, boolean dealDamage) {
         float impact = entity.getPersistentData().getFloat(TAG_DAMAGE);
         double pulled = entity.getPersistentData().getDouble(TAG_FALL);
         entity.getPersistentData().remove(TAG_DAMAGE);
         entity.getPersistentData().remove(TAG_UNTIL);
         entity.getPersistentData().remove(TAG_FALL);
-        if (!landed) return;   // 超时 ⇒ 只清标记，不结算 ✓
+        entity.getPersistentData().remove(TAG_VOID);
+        if (!dealDamage) return;
 
         float damage = Math.min(MAX_KINETIC_DAMAGE, impact + (float) pulled * FALL_DAMAGE_PER_BLOCK);
         if (damage <= 0.0F) return;
-        // 清无敌帧：否则"落地摔伤"刚打过的无敌帧会把这一笔吃掉 ✗
-        entity.invulnerableTime = 0;
+        entity.invulnerableTime = 0;   // 否则落地摔伤的无敌帧会把这一笔吃掉 ✗
         entity.hurt(kineticSource(entity.level()), damage);
     }
 
-    /** 持续施力：重设向下速度 ✓ ＋（非玩家）直接下移一步 ✓ ＋ 自己累计下落格数 ✓ */
+    /** 持续施力：重设向下速度 ＋（非玩家）直接下移一步 ＋ 自己累计下落格数 ✓ */
     private static void keepPulling(LivingEntity entity) {
         entity.setDeltaMovement(entity.getDeltaMovement().x * HORIZONTAL_DAMP, -PULL_SPEED,
                 entity.getDeltaMovement().z * HORIZONTAL_DAMP);
@@ -129,14 +155,13 @@ public final class KineticImpactHandler {
         entity.hurtMarked = true;
         disableCreativeFlight(entity);
 
-        // ⭐ 非玩家：直接位移 —— 幻翼/恶魂这类 FlyingMob 的 AI 每 tick 重设速度，
-        //    光靠 setDeltaMovement 顶不住 ✗；直接 move() 才能真的把它按下去 ✓
         if (!(entity instanceof Player)) {
+            // ⭐ 非玩家：直接位移 —— 幻翼/恶魂这类 FlyingMob 的 AI 每 tick 重设速度，光靠速度顶不住 ✗
             entity.move(MoverType.SELF, new Vec3(0.0D, -PULL_STEP, 0.0D));
             entity.getPersistentData().putDouble(TAG_FALL,
                     entity.getPersistentData().getDouble(TAG_FALL) + PULL_SPEED + PULL_STEP);
         } else {
-            // 玩家：不动位置（会跟客户端打架 ✗）⇒ 只靠速度，让客户端自己往下落 ✓
+            // 玩家：不动位置（会跟客户端打架 ✗）⇒ 只靠速度 ✓
             entity.getPersistentData().putDouble(TAG_FALL,
                     entity.getPersistentData().getDouble(TAG_FALL) + PULL_SPEED);
         }
@@ -149,6 +174,37 @@ public final class KineticImpactHandler {
             player.onUpdateAbilities();
         }
     }
+
+    // ============================================================
+    //  §986 落地探测：脚下有没有"能站住的东西"
+    // ============================================================
+
+    /**
+     * 从目标脚下向下扫 {@value #GROUND_SCAN_DEPTH} 格，找有没有"能落上去的东西"。
+     *
+     * <p>判据：方块有碰撞（{@code blocksMotion} ✓）**或**该位置有流体（水面/岩浆面也算落地 ✓）；
+     * 扫到世界最低高度为止都没找到 ⇒ 视为<b>虚空下方</b> ✓。
+     */
+    private static boolean hasLandingBelow(Level level, LivingEntity entity) {
+        int startY = Mth.floor(entity.getY()) - 1;
+        int minY = level.getMinBuildHeight();
+        int endY = Math.max(minY, startY - GROUND_SCAN_DEPTH);
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        int x = Mth.floor(entity.getX());
+        int z = Mth.floor(entity.getZ());
+        for (int y = startY; y >= endY; y--) {
+            pos.set(x, y, z);
+            BlockState state = level.getBlockState(pos);
+            if (state.blocksMotion() || !state.getFluidState().isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // ============================================================
+    //  伤害源
+    // ============================================================
 
     /** 动能伤害源（带 {@code bypasses_invulnerability} 标签 ⇒ 创造玩家也吃 ✓） */
     public static DamageSource kineticSource(Level level) {
