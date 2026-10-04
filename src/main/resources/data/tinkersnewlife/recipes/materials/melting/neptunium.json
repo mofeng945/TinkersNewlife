@@ -1,0 +1,15 @@
+{
+  "type": "tconstruct:material_melting",
+  "input": "tinkersnewlife:neptunium",
+  "result": {
+    "fluid": "tinkersnewlife:molten_neptunium_still",
+    "amount": 90
+  },
+  "temperature": 1500,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "aquaculture"
+    }
+  ]
+}

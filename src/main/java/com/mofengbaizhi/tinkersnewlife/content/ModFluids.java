@@ -76,7 +76,13 @@ public class ModFluids {
     /** 熔融杜兰达尔（本模组凋灵掉落线） */
     public static final FluidRegistrar.FluidEntry MOLTEN_DURANDAL = entry("molten_durandal",
             2000, 10000, 1500, 0xFFFFD700,  // 金黄色
+
             FluidRegistrar.lavaProps(MapColor.COLOR_ORANGE));
+
+    /** 熔融海王金属（§965 水产养殖2 联动：熔炼 aquaculture:neptunium_ingot 得到） */
+    public static final FluidRegistrar.FluidEntry MOLTEN_NEPTUNIUM = entry("molten_neptunium",
+            2000, 10000, 1500, 0xFF4FD2C2,  // 海绿
+            FluidRegistrar.lavaProps(MapColor.COLOR_CYAN));
 
     /**
      * 咒力残秽（古代咒术残卷熔炼所得，1 份残卷 = 1 mb）：
