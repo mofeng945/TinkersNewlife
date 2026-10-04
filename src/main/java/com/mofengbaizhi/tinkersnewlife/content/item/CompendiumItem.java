@@ -207,6 +207,24 @@ public class CompendiumItem extends Item {
         return !isCursedItem(book) || isTheCursedOne(player);
     }
 
+    /**
+     * 已吞噬记录里的**物品 id**（与 {@code absorbedStacks} 同一套口径 ✓：
+     * 有 {@code item} 就用它 ✓；老记录缺这个字段时**回退拿书 id** 顶 ✓）。
+     * <p>§910n 用来判断"百宝书吞没吞过某件自带豁免的物品" ✓（例如倒转之启 ✓）。
+     */
+    public static java.util.List<String> absorbedItemIds(ItemStack compendium) {
+        ListTag list = absorbedList(compendium);
+        java.util.List<String> out = new java.util.ArrayList<>(list.size());
+        for (int i = 0; i < list.size(); i++) {
+            CompoundTag entry = list.getCompound(i);
+            String raw = entry.contains(KEY_ITEM, Tag.TAG_STRING) && !entry.getString(KEY_ITEM).isEmpty()
+                    ? entry.getString(KEY_ITEM)
+                    : entry.getString(KEY_ID);
+            if (!raw.isEmpty()) out.add(raw);
+        }
+        return out;
+    }
+
     /** 已吞噬记录里的**物品**（造一个 ItemStack ✓；没有记物品 id 的旧记录跳过 ✗） */
     private static java.util.List<ItemStack> absorbedStacks(ItemStack compendium) {
         ListTag list = absorbedList(compendium);
