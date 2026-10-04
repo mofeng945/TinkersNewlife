@@ -115,12 +115,36 @@ public class CompendiumItem extends Item {
 
     /** 记一条（同一本书**只记一次** ✓）；返回"是不是第一次"✓ */
     public static boolean absorb(ItemStack compendium, String bookId, String displayName, String itemId) {
-        if (hasAbsorbed(compendium, bookId)) return false;
+        String wantItem = itemId == null ? "" : itemId;
         ListTag list = absorbedList(compendium).copy();   // ⚠ 必须 copy：直接改原 tag 里的 list 有时不生效 ✓
+
+        // §910m **同一本书再吞一次 ⇒ 刷新那条记录**（不新增 ✓）：
+        //   老记录（§910g 之前吞的）没有 `item` 字段 ✗ ⇒ 属性/效果转发只能拿书 id 猜 ✗
+        //   —— 而「倒转之启」的书 id 恰好是 `enigmaticlegacy:the_acknowledgment`（§910g 映射 ✓）
+        //   猜出来就变成**启示之证**（3.5 伤害 ✗ 用户实测 ✓）⇒ 再吞一本真·倒转之启即可修正 ✓。
+        for (int i = 0; i < list.size(); i++) {
+            CompoundTag e = list.getCompound(i);
+            if (!bookId.equals(e.getString(KEY_ID))) continue;
+            boolean changed = false;
+            if (!wantItem.isEmpty() && !wantItem.equals(e.getString(KEY_ITEM))) {
+                e.putString(KEY_ITEM, wantItem);
+                changed = true;
+            }
+            if (displayName != null && !displayName.isEmpty() && !displayName.equals(e.getString(KEY_NAME))) {
+                e.putString(KEY_NAME, displayName);
+                changed = true;
+            }
+            if (changed) {
+                compendium.getOrCreateTag().put(KEY_BOOKS, list);
+                LOG.info("[百宝书] 已刷新记录 {} ⇒ 物品={}（旧记录缺物品 id 时靠这一步修好 ✓）", bookId, wantItem);
+            }
+            return false;
+        }
+
         CompoundTag entry = new CompoundTag();
         entry.putString(KEY_ID, bookId);
         entry.putString(KEY_NAME, displayName);
-        entry.putString(KEY_ITEM, itemId == null ? "" : itemId);   // §910g 唤醒要用 ✓
+        entry.putString(KEY_ITEM, wantItem);   // §910g 唤醒/借属性要用 ✓
         list.add(entry);
         compendium.getOrCreateTag().put(KEY_BOOKS, list);
         return true;
@@ -251,6 +275,12 @@ public class CompendiumItem extends Item {
             java.util.List<ItemStack> all = absorbedStacks(stack);
             LOG.info("[百宝书] 命中诊断：已吞噬 {} 件可复现物品 ⇒ {}", all.size(),
                     all.stream().map(s -> s.getItem().toString()).toList());
+            // §910m 顺带把**实体身上实时的攻击力**与**蓄力系数**打出来 ✓
+            //   —— 用户报"打出来只有 2.7"时，靠这两项就能区分是"属性没生效"还是"没蓄满力" ✓
+            double live = attacker.getAttributeValue(Attributes.ATTACK_DAMAGE);
+            float strength = attacker instanceof Player p ? p.getAttackStrengthScale(0.5F) : 1.0F;
+            LOG.info("[百宝书]   实体实时攻击力={} 蓄力系数={}（<1 就是没蓄满 ⇒ 伤害按原版打折 ✓）",
+                    live, strength);
             for (ItemStack fake : all) {
                 double dmg = 0.0D;
                 for (var e : fake.getAttributeModifiers(EquipmentSlot.MAINHAND).entries()) {
