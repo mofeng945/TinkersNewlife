@@ -825,7 +825,7 @@
   "modifier.tinkersnewlife.soldiers_saber": "兵士佩刀",
   "modifier.tinkersnewlife.soldiers_saber.description": "手持时实体交互距离 +1 格；4 格内越近附加的段数越多：4格 0 段、3格 1 段、2格 2 段、1格 3 段、贴身 4 段（每段 = 工具攻击面板的 50%，各自独立结算并挥出一道刀光）。",
   "modifier.tinkersnewlife.soldiers_saber.flavor": "刀在咫尺，气在千里。",
-    "modifier.tinkersnewlife.rapier_armor_piercing": "穿甲",
+    "modifier.tinkersnewlife.rapier_armor_piercing": "西洋剑",
     "modifier.tinkersnewlife.rapier_armor_piercing.description": "攻击无视目标护甲造成的减伤（只穿护甲，抗性提升与保护附魔照旧生效）；右键后跳闪避并获得短暂无敌，手持时副手盾牌无法使用。",
     "modifier.tinkersnewlife.rapier_armor_piercing.flavor": "一寸长，一寸强。",
   "modifier.tinkersnewlife.chaos_butterfly": "乱蝶",

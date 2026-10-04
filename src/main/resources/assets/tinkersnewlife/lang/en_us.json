@@ -825,7 +825,7 @@
   "modifier.tinkersnewlife.soldiers_saber": "Soldier's Saber",
   "modifier.tinkersnewlife.soldiers_saber.description": "While held: +1 block of entity interaction range. Within 4 blocks, the closer the target, the more extra stages land: 4b = 0, 3b = 1, 2b = 2, 1b = 3, melee = 4. Each stage deals 50% of the tool's attack panel as its own separate hit and swings its own slash.",
   "modifier.tinkersnewlife.soldiers_saber.flavor": "The blade is a handspan away; the intent reaches a thousand li.",
-    "modifier.tinkersnewlife.rapier_armor_piercing": "Armor Piercing",
+    "modifier.tinkersnewlife.rapier_armor_piercing": "Rapier",
     "modifier.tinkersnewlife.rapier_armor_piercing.description": "Strikes ignore the damage reduction from the target's armor (armor only - Resistance and Protection still apply). Right-click to backstep with brief invulnerability; offhand shields cannot be used while held.",
     "modifier.tinkersnewlife.rapier_armor_piercing.flavor": "One inch longer, one inch stronger.",
   "modifier.tinkersnewlife.chaos_butterfly": "Chaos Butterfly",
