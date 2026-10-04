@@ -1,0 +1,24 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"animation.tinkersnewlife.spear_firstperson.new": {
+			"animation_length": 0.7917,
+			"bones": {
+				"item": {
+					"rotation": {
+						"0.0": [0, 0, 0],
+						"0.25": [0, 0, 32.5]
+					},
+					"position": {
+						"0.0": [0, 0, 0],
+						"0.5": [4, -1, 0]
+					},
+					"scale": {
+						"0.0": [1, 1, 1],
+						"0.5": [1, 1, 1]
+					}
+				}
+			}
+		}
+	}
+}

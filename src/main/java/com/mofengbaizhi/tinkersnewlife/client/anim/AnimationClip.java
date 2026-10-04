@@ -194,13 +194,18 @@ public final class AnimationClip {
 
     // ── 缓存（每帧都读文件太浪费 ✓ 但改完文件要能生效 ✓）──────────────────────────
 
-    /** Blockbench 默认导出名 ✓ —— ★ 这一份**优先** ✓（用户导出的东西应当直接生效 ✓） */
-    public static final ResourceLocation SPEAR_FIRST_PERSON_BB =
-            new ResourceLocation("tinkersnewlife", "tnl_anim/spear_first_person.animation.json");
-
-    /** 本模组手写的极简格式 ✓ —— 上一条不存在时用它 ✓（兜底默认姿势 ✓） */
-    public static final ResourceLocation SPEAR_FIRST_PERSON =
-            new ResourceLocation("tinkersnewlife", "tnl_anim/spear_first_person.json");
+    /**
+     * 备选文件名 ✓ —— **按顺序命中就用** ✓（§920 起改成"不再挑文件名" ✓
+     * 你 Blockbench 导出叫什么名字都行 ✓，随便改 ✓）。
+     *
+     * <p>Blockbench 默认导出名是「工程名 + `.animation.json`」✓，工程名跟着导入的几何走 ✓
+     * ⇒ 用户那份几何叫 `spear_firstperson` ⇒ 导出来就是 {@code spear_firstperson.animation.json} ✓。
+     */
+    public static final ResourceLocation[] SPEAR_CANDIDATES = {
+            new ResourceLocation("tinkersnewlife", "tnl_anim/spear_firstperson.animation.json"),
+            new ResourceLocation("tinkersnewlife", "tnl_anim/spear_first_person.animation.json"),
+            new ResourceLocation("tinkersnewlife", "tnl_anim/spear_first_person.json"),
+    };
 
     private static AnimationClip spearCache;
     private static boolean spearTried;
@@ -208,15 +213,41 @@ public final class AnimationClip {
     /**
      * 取"长矛第一人称"动画 ✓。
      *
-     * @return 两个文件都没有/都写坏了 ⇒ {@code null} ✓（调用方回退到内置姿势 ✓）
+     * <p>查找顺序：上面那串备选名 → 还找不到就**扫 `tnl_anim/` 下所有带 spear 的 json** ✓
+     * （优先 `.animation.json` ✓ 再按名字排序 ✓）⇒ 用户丢什么名字进来都能生效 ✓。
+     *
+     * @return 一个都没读到 ⇒ {@code null} ✓（调用方回退到内置姿势 ✓）
      */
     public static AnimationClip spearFirstPerson() {
         if (!spearTried) {
             spearTried = true;
-            spearCache = load(SPEAR_FIRST_PERSON_BB);      // ★ Blockbench 导出优先 ✓
-            if (spearCache == null) spearCache = load(SPEAR_FIRST_PERSON);
+            for (ResourceLocation id : SPEAR_CANDIDATES) {
+                spearCache = load(id);
+                if (spearCache != null) return spearCache;
+            }
+            spearCache = scanForSpear();
         }
         return spearCache;
+    }
+
+    /** 兜底：扫 {@code tnl_anim/} 里所有名字带 {@code spear} 的 json ✓（不改名也能生效 ✓） */
+    private static AnimationClip scanForSpear() {
+        try {
+            Map<ResourceLocation, Resource> found = Minecraft.getInstance().getResourceManager()
+                    .listResources("tnl_anim", rl -> rl.getPath().endsWith(".json"));
+            return found.keySet().stream()
+                    .filter(rl -> "tinkersnewlife".equals(rl.getNamespace()))
+                    .filter(rl -> rl.getPath().toLowerCase(java.util.Locale.ROOT).contains("spear"))
+                    .sorted(java.util.Comparator
+                            .comparing((ResourceLocation rl) -> !rl.getPath().endsWith(".animation.json"))
+                            .thenComparing(ResourceLocation::getPath))
+                    .map(AnimationClip::load)
+                    .filter(java.util.Objects::nonNull)
+                    .findFirst()
+                    .orElse(null);
+        } catch (Throwable t) {
+            return null;
+        }
     }
 
     /** 资源包重载（含游戏内 **F3+T**）后清缓存 ✓ ⇒ 改文件即时生效 ✓ 见 {@code WizardArmorCacheReloadHandler} ✓ */
