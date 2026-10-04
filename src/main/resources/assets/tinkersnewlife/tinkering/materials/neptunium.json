@@ -1,0 +1,39 @@
+{
+  "_comment": "§974 海王金属（水产养殖2 联动）：颜色取自水产海王锭贴图实提 #31A988（§972）✓；7 档灰阶调色板按该色生成 ✓；结构照本仓 durandal.json / origin_alloy.json ✓（不是猜的 ✗）。⚠ 没有这个文件 ⇒ 该材料生成不了部件贴图 ✗ —— 这是 §971 之后又一处我漏掉的。",
+  "color": "FF31A988",
+  "fallbacks": [
+    "metal"
+  ],
+  "generator": {
+    "supported_stats": [
+      "tconstruct:head",
+      "tconstruct:handle",
+      "tconstruct:binding",
+      "tconstruct:repair_kit",
+      "tconstruct:limb",
+      "tconstruct:grip",
+      "tconstruct:arrow_head",
+      "tconstruct:arrow_shaft",
+      "tconstruct:maille",
+      "tconstruct:armor_maille",
+      "tconstruct:plating_helmet",
+      "tconstruct:plating_chestplate",
+      "tconstruct:plating_leggings",
+      "tconstruct:plating_boots",
+      "tconstruct:plating_shield"
+    ],
+    "transformer": {
+      "type": "tconstruct:grey_to_sprite",
+      "palette": [
+        { "color": "FF0F3329", "grey": 0 },
+        { "color": "FF174E3F", "grey": 63 },
+        { "color": "FF1F6C57", "grey": 102 },
+        { "color": "FF2A9175", "grey": 140 },
+        { "color": "FF34B390", "grey": 178 },
+        { "color": "FF3ED5AB", "grey": 216 },
+        { "color": "FF47F3C4", "grey": 255 }
+      ]
+    }
+  },
+  "luminosity": 5
+}
