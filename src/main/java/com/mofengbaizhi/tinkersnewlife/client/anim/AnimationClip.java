@@ -7,6 +7,7 @@ import com.google.gson.JsonParser;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
+import org.joml.Matrix4f;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.util.Mth;
@@ -101,12 +102,90 @@ public final class AnimationClip {
     private final List<Key> item;
     private final List<Key> arm;
     private final boolean loop;
+    private final Space space;
 
-    private AnimationClip(float length, List<Key> item, List<Key> arm, boolean loop) {
+    /**
+     * <b>空间换算配置（§918）</b>—— 解决"Blockbench 里好好的、进游戏完全不对" ✗。
+     *
+     * <p>两件事要分开看：
+     * <ol>
+     *   <li><b>模型空间 ⇄ 手部空间</b>：{@code RenderHandEvent} 给的 PoseStack 是**手部空间** ✓，
+     *       物品自己的 {@code firstperson_righthand} 显示变换（像 {@code [0,-90,25]}+缩放 ✓）
+     *       是在**之后**才乘上去的 ✓ ⇒ 直接把手部空间当模型空间用 ✗ **必然错** ✗。
+     *       本类改成按 <code>M·R·M⁻¹</code> **共轭** ✓（{@code M} = 该物品第一人称显示变换 ✓）
+     *       ⇒ 动画就作用在**模型自己的坐标系**里 ✓，和 Blockbench 预览一致 ✓；
+     *   </li>
+     *   <li><b>基岩空间 ⇄ Java 物品模型空间</b>：基岩 **+Y 朝上** ✗，Java 方块/物品模型 **+Y 朝下** ✗
+     *       ⇒ 位移 Y ✓ 与旋转 X/Z ✓ 都要取反 ✓（绕 Y 的旋转不受影响 ✓）。
+     *   </li>
+     * </ol>
+     *
+     * <p>⚠ 上面第 2 条是按两边坐标约定推的 ✓ **未实机确证** ✗ ⇒ 每一项都能在 json 里单独覆盖 ✓
+     * （改完 F3+T ✓ 不用重编译 ✓）：
+     * <pre>
+     * {
+     *   "_tnl_model_space": true,      // 是否按 M·R·M⁻¹ 共轭（默认 true ✓）
+     *   "_tnl_flip_rot_x": true,       // 旋转 X 取反（默认 true ✓ 基岩 Y 朝上导致）
+     *   "_tnl_flip_rot_y": false,      // 旋转 Y 取反
+     *   "_tnl_flip_rot_z": true,       // 旋转 Z 取反（默认 true ✓）
+     *   "_tnl_flip_pos_x": false,      // 位移 X 取反
+     *   "_tnl_flip_pos_y": true,       // 位移 Y 取反（默认 true ✓）
+     *   "_tnl_flip_pos_z": false       // 位移 Z 取反
+     * }
+     * </pre>
+     * 写在 {@code animations} 里那条动画上 ✓ 或根对象上都认 ✓。
+     * 极简格式（格式 A）默认**一项都不翻** ✓ ⇒ §914 手调的那套行为完全不变 ✓。
+     */
+    public static final class Space {
+
+        final boolean flipRotX;
+        final boolean flipRotY;
+        final boolean flipRotZ;
+        final boolean flipPosX;
+        final boolean flipPosY;
+        final boolean flipPosZ;
+        final boolean modelSpace;
+
+        private Space(boolean rx, boolean ry, boolean rz, boolean px, boolean py, boolean pz, boolean ms) {
+            this.flipRotX = rx;
+            this.flipRotY = ry;
+            this.flipRotZ = rz;
+            this.flipPosX = px;
+            this.flipPosY = py;
+            this.flipPosZ = pz;
+            this.modelSpace = ms;
+        }
+
+        /** 基岩默认：共轭开 ✓ ＋ X/Z 旋转取反 ✓ ＋ Y 位移取反 ✓ */
+        static Space bedrock(JsonObject anim, JsonObject root) {
+            return new Space(
+                    flag(anim, root, "_tnl_flip_rot_x", true),
+                    flag(anim, root, "_tnl_flip_rot_y", false),
+                    flag(anim, root, "_tnl_flip_rot_z", true),
+                    flag(anim, root, "_tnl_flip_pos_x", false),
+                    flag(anim, root, "_tnl_flip_pos_y", true),
+                    flag(anim, root, "_tnl_flip_pos_z", false),
+                    flag(anim, root, "_tnl_model_space", true));
+        }
+
+        /** 极简格式默认：全不翻 ✓ 不共轭 ✓（保持 §914 手调行为 ✓） */
+        static Space nativeSpace() {
+            return new Space(false, false, false, false, false, false, false);
+        }
+
+        private static boolean flag(JsonObject anim, JsonObject root, String key, boolean def) {
+            if (anim != null && anim.has(key)) return anim.get(key).getAsBoolean();
+            if (root != null && root.has(key)) return root.get(key).getAsBoolean();
+            return def;
+        }
+    }
+
+    private AnimationClip(float length, List<Key> item, List<Key> arm, boolean loop, Space space) {
         this.length = length;
         this.item = item;
         this.arm = arm;
         this.loop = loop;
+        this.space = space;
     }
 
     public float length() {
@@ -161,7 +240,7 @@ public final class AnimationClip {
                 if (root.has("animations")) return fromBedrock(root, id);   // ★ 基岩 / Blockbench ✓
                 float length = root.has("length") ? root.get("length").getAsFloat() : 20.0F;
                 return new AnimationClip(length, readTrack(root.getAsJsonArray("item")),
-                        readTrack(root.getAsJsonArray("arm")), false);
+                        readTrack(root.getAsJsonArray("arm")), false, Space.nativeSpace());
             }
         } catch (Throwable t) {
             org.slf4j.LoggerFactory.getLogger("TinkersNewlife/Anim")
@@ -245,7 +324,7 @@ public final class AnimationClip {
                     .warn("[动画] {} 是基岩格式但没找到 item/arm 组（组名必须叫 item / arm）", id);
             return null;
         }
-        return new AnimationClip(length, item, arm, loop);
+        return new AnimationClip(length, item, arm, loop, Space.bedrock(anim, root));
     }
 
     /** 一个文件里可能有多条动画 ✓（Blockbench 一个工程能存好几条 ✓）⇒ 按文件名挑 ✓ 挑不到就用第一条 ✓ */
@@ -375,20 +454,41 @@ public final class AnimationClip {
      * @param pose  当前手部的姿态栈 ✓（像 {@code RenderHandEvent#getPoseStack()} ✓）
      * @param time  时间（tick ✓ 可以是小数 ✓；收回就传递减的时间 ✓）
      * @param arm   哪只手 ✓（左右手的侧向位移/旋转取反 ✓）
+     * @param displayTransform 该物品**第一人称显示变换**矩阵 ✓（{@code M} ✓，见 {@link Space} ✓）；
+     *        传 {@code null} ⇒ 退化成"直接作用于手部空间" ✓（§914 老行为 ✓）
      */
-    public void applyItem(PoseStack pose, float time, HumanoidArm arm) {
+    public void applyItem(PoseStack pose, float time, HumanoidArm arm, Matrix4f displayTransform) {
+        PoseStack local = new PoseStack();
+        applyLocal(local, wrap(time), arm);
+        Matrix4f r = new Matrix4f(local.last().pose());
+        if (space.modelSpace && displayTransform != null) {
+            // §918：P = M · R · M⁻¹ ⇒ 动画作用在**物品模型自己的坐标系**里 ✓（和 Blockbench 预览一致 ✓）
+            Matrix4f p = new Matrix4f(displayTransform).mul(r).mul(new Matrix4f(displayTransform).invert());
+            pose.last().pose().mul(p);
+        } else {
+            pose.last().pose().mul(r);
+        }
+    }
+
+    /** 在"动画自己的空间"里算出这一帧的矩阵 ✓（含各轴取反 ✓ 见 {@link Space} ✓） */
+    private void applyLocal(PoseStack pose, float t, HumanoidArm arm) {
         int invert = arm == HumanoidArm.RIGHT ? 1 : -1;
-        float t = wrap(time);
         float[] move = sample(item, t, 0);
         float[] rot = sample(item, t, 1);
         float[] scale = sample(item, t, 2);
         if (move != null) {
-            pose.translate((double) ((float) invert * move[0]), (double) move[1], (double) move[2]);
+            float mx = move[0] * (space.flipPosX ? -1.0F : 1.0F);
+            float my = move[1] * (space.flipPosY ? -1.0F : 1.0F);
+            float mz = move[2] * (space.flipPosZ ? -1.0F : 1.0F);
+            pose.translate((double) ((float) invert * mx), (double) my, (double) mz);
         }
         if (rot != null) {
-            if (rot[2] != 0.0F) pose.mulPose(Axis.ZP.rotationDegrees((float) invert * rot[2]));
-            if (rot[1] != 0.0F) pose.mulPose(Axis.YP.rotationDegrees((float) invert * rot[1]));
-            if (rot[0] != 0.0F) pose.mulPose(Axis.XP.rotationDegrees(rot[0]));
+            float rx = rot[0] * (space.flipRotX ? -1.0F : 1.0F);
+            float ry = rot[1] * (space.flipRotY ? -1.0F : 1.0F);
+            float rz = rot[2] * (space.flipRotZ ? -1.0F : 1.0F);
+            if (rz != 0.0F) pose.mulPose(Axis.ZP.rotationDegrees((float) invert * rz));
+            if (ry != 0.0F) pose.mulPose(Axis.YP.rotationDegrees((float) invert * ry));
+            if (rx != 0.0F) pose.mulPose(Axis.XP.rotationDegrees(rx));
         }
         if (scale != null && (scale[0] != 1.0F || scale[1] != 1.0F || scale[2] != 1.0F)) {
             pose.scale(scale[0], scale[1], scale[2]);

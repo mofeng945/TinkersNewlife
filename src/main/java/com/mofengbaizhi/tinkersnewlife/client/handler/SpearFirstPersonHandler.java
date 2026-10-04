@@ -68,10 +68,40 @@ public final class SpearFirstPersonHandler {
         com.mofengbaizhi.tinkersnewlife.client.anim.AnimationClip clip =
                 com.mofengbaizhi.tinkersnewlife.client.anim.AnimationClip.spearFirstPerson();
         if (clip != null) {
-            clip.applyItem(event.getPoseStack(), effective, arm);
+            // §918：把动画**共轭到物品模型空间**去 ✓（传 M ✓）⇒ 和 Blockbench 里看到的才是一回事 ✓
+            clip.applyItem(event.getPoseStack(), effective, arm, firstPersonDisplayTransform(stack, player, arm));
             return;
         }
 
         SpearChargeAnimation.firstPersonSimple(event.getPoseStack(), arm, charge, attack);
+    }
+
+    /**
+     * 取"这个物品在第一人称下、**动画之后**会被乘上去的那个显示变换矩阵" ✓（§918 的 {@code M} ✓）。
+     *
+     * <p>为什么需要它：{@link RenderHandEvent} 给的 PoseStack 是**手部空间** ✓，
+     * 物品自己的 {@code firstperson_righthand} 变换（像 {@code [0,-90,25]}+缩放 ✓）是**之后**才乘的 ✓
+     * ⇒ 想在"物品模型自己的坐标系"里做动画 ✗ 必须把它按 {@code M·R·M⁻¹} 共轭过去 ✓
+     * （否则同一组数字会得到完全不同的姿势 ✓ —— 用户实测"和我做出来的完全不一样" ✓ 见 §918 ✓）。
+     *
+     * @return 取不到返回 {@code null} ✓（调用方退化成手部空间 ✓ 不会崩 ✓）
+     */
+    private static org.joml.Matrix4f firstPersonDisplayTransform(ItemStack stack, LocalPlayer player,
+                                                                 net.minecraft.world.entity.HumanoidArm arm) {
+        try {
+            net.minecraft.client.resources.model.BakedModel model =
+                    Minecraft.getInstance().getItemRenderer().getModel(stack, player.level(), player, 0);
+            net.minecraft.world.item.ItemDisplayContext type =
+                    arm == net.minecraft.world.entity.HumanoidArm.RIGHT
+                            ? net.minecraft.world.item.ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
+                            : net.minecraft.world.item.ItemDisplayContext.FIRST_PERSON_LEFT_HAND;
+            net.minecraft.client.renderer.block.model.ItemTransform transform =
+                    model.getTransforms().getTransform(type);
+            com.mojang.blaze3d.vertex.PoseStack tmp = new com.mojang.blaze3d.vertex.PoseStack();
+            transform.apply(arm == net.minecraft.world.entity.HumanoidArm.LEFT, tmp);
+            return new org.joml.Matrix4f(tmp.last().pose());
+        } catch (Throwable t) {
+            return null;
+        }
     }
 }
