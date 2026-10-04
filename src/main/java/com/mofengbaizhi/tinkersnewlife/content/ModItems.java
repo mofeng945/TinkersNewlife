@@ -266,6 +266,13 @@ public class ModItems {
                             new Item.Properties().stacksTo(1))
             );
 
+    /** 西洋剑（§943 移植**匠魂2**的 Rapier：低伤高攻速 ＋ 穿甲 ＋ 右键后跳 ＋ 持有时禁副手盾牌） */
+    public static final RegistryObject<com.mofengbaizhi.tinkersnewlife.content.item.RapierItem> RAPIER =
+            ITEMS.register("rapier",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.RapierItem(
+                            new Item.Properties().stacksTo(1))
+            );
+
     public static final RegistryObject<WarScytheItem> WAR_SCYTHE =
         ITEMS.register("war_scythe",
                 () -> new WarScytheItem(
