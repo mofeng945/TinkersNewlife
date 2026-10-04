@@ -220,6 +220,54 @@ public final class SpearChargeAnimation {
                 && entity.getMainHandItem().getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.SpearItem;
     }
 
+    // ============================================================
+    //  §913 第一人称：**保守限幅**姿势（先保证看得见 ✓）
+    //    背景（用户实测两轮）：§912 把"原版横举姿势"与"移植来的刺出姿势"叠加之后，
+    //    矛被甩出画面 ⇒ 「**完全看不见第一人称了**」✗。
+    //    ⇒ 第一人称不再用那套叠加 ✗，改成下面这组**每一项都限幅**的简单姿势 ✓
+    //       （第三人称仍然用原版那套 ✓ 那边没出问题 ✓）
+    //    ⚠ 只有两个旋钮需要实机定：FORWARD_YAW(朝向 ✓ 反了就取反) 与 ATTACK_FORWARD(前送 ✓)
+    // ============================================================
+
+    /** 举起来时的侧偏（格 ✓ 很小 ✓ 保证不挡住视线也不出画面 ✓） */
+    private static final float FP_SIDE = 0.06F;
+    /** 举起来时往下压多少（格 ✓） */
+    private static final float FP_DOWN = 0.05F;
+    /** 举起/刺出时往前送多少（格 ✓ 限幅 ✓ 这是"看得见"的关键 ✓） */
+    private static final float FP_FORWARD = 0.30F;
+    /** 绕 Y 的朝向修正（度 ✓）：把"横在眼前、矛尖朝左"转成"矛尖朝前"✓ 反了改成 +90 ✓ */
+    public static final float FP_FORWARD_YAW = -90.0F;
+    /** 刺出时绕 XP 的附加抬/压（度 ✓ 小值 ✓） */
+    private static final float FP_ATTACK_PITCH = -18.0F;
+
+    /**
+     * 第一人称的姿势（§913 ✓ 取代原来那套叠加 ✗）。
+     *
+     * @param charge 蓄力进度 0~1 ✓（= 举起进度 ✓）
+     * @param attack 刺出进度 0~1 ✓（= 那一戳 ✓ 之后保持 1 ✓）
+     * @param retract 收回进度 0~1 ✓（松手后从 1 走到 0 ✓）
+     */
+    public static void firstPersonSimple(PoseStack poseStack, HumanoidArm arm,
+                                         float charge, float attack) {
+        int invert = arm == HumanoidArm.RIGHT ? 1 : -1;
+        float c = Mth.clamp(charge, 0.0F, 1.0F);
+        float a = Mth.clamp(attack, 0.0F, 1.0F);
+
+        // 侧偏 + 下压 + 前送（都限幅 ✓ 前送只到 FP_FORWARD ✓ 绝不会把矛送出画面 ✓）
+        poseStack.translate((double) ((float) invert * FP_SIDE * c),
+                (double) (-FP_DOWN * c),
+                (double) (-FP_FORWARD * Math.max(c, a)));
+        // 朝向：横着的矛转成朝前 ✓（只在举起/刺出时转 ✓ 平时不动 ✓）
+        if (c > 0.0F) {
+            poseStack.mulPose(Axis.YP.rotationDegrees(FP_FORWARD_YAW * c));
+        }
+        // 刺出：往前再送一小段 + 一点点角度 ✓（叠加在上面那个限幅之内 ✓）
+        if (a > 0.0F) {
+            poseStack.translate(0.0D, 0.0D, (double) (-FP_FORWARD * 0.5F * Ease.outCubic(a)));
+            poseStack.mulPose(Axis.XP.rotationDegrees(FP_ATTACK_PITCH * a));
+        }
+    }
+
     /**
      * <b>第一人称"刺出"</b>（§912 移植自诡厄遗物 {@code SpearPose.applyFirstPersonAttack} ✓）。
      *

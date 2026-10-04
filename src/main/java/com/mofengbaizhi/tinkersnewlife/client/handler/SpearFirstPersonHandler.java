@@ -50,7 +50,18 @@ public final class SpearFirstPersonHandler {
         net.minecraft.world.entity.HumanoidArm arm = event.getHand() == net.minecraft.world.InteractionHand.MAIN_HAND
                 ? player.getMainArm()
                 : player.getMainArm().getOpposite();
-        SpearChargeAnimation.firstPersonUse(0.0F, event.getPoseStack(),
-                using ? player.getTicksUsingItem() : 0.0F, retract, arm);
+
+        // §913 **保守限幅**姿势（先保证看得见 ✓）
+        //   蓄力进度：0 → 1 用 RAISE_END tick ✓；刺出进度：RAISE_END → ATTACK_END ✓
+        float held = using ? player.getTicksUsingItem() : 0.0F;
+        // 收回（松手后 ✓）：有效时间从刺出末端倒着走 ✓ ⇒ 两个进度一起回落 ✓ 姿势自然 unwind ✓
+        float effective = using ? held
+                : SpearChargeAnimation.ATTACK_END * (1.0F - net.minecraft.util.Mth.clamp(retract, 0.0F, 1.0F));
+        float charge = net.minecraft.util.Mth.clamp(effective / SpearChargeAnimation.RAISE_END, 0.0F, 1.0F);
+        float attack = net.minecraft.util.Mth.clamp(
+                (effective - SpearChargeAnimation.RAISE_END)
+                        / (SpearChargeAnimation.ATTACK_END - SpearChargeAnimation.RAISE_END), 0.0F, 1.0F);
+
+        SpearChargeAnimation.firstPersonSimple(event.getPoseStack(), arm, charge, attack);
     }
 }
