@@ -314,6 +314,11 @@ public class Modifiers {
         MODIFIERS.register("rapier_armor_piercing",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.RapierArmorPiercingModifier::new);
 
+    /** 词条·海王之力（无等级·海王金属自带：水中/雨中强化工具与盔甲、钓鱼竿附魔、弹射物无视水阻，见 §960） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.SeaKingsPowerModifier> SEA_KINGS_POWER =
+        MODIFIERS.register("sea_kings_power",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.SeaKingsPowerModifier::new);
+
     /** 强化·噬魂（1 级占 1 升级槽，2/3 级无槽；每级 +25% 灵魂获取，一级后额外 +1，最高 3 级） */
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.SoulEaterModifier> SOUL_EATER =
         MODIFIERS.register("soul_eater",
