@@ -71,6 +71,9 @@ public class SpearItem extends ModifiableItem {
     /** 长按才能冲锋 ⇒ 基础使用时长给满 ✓；匠魂自己有"使用中"词条时让位 ✓（字节码实读：无词条时 super 返回 0 ✓） */
     private static final int CHARGE_USE_TICKS = 72000;
 
+    /** §911 松手后的"收回"时长（tick）—— 客户端拿它当收回动画的进度源 ✓（8 tick = 0.4 秒 ✓） */
+    public static final int RETRACT_TICKS = 8;
+
     public SpearItem(Properties properties) {
         super(properties, SPEAR_DEFINITION);
     }
@@ -139,6 +142,11 @@ public class SpearItem extends ModifiableItem {
     @Override
     public void releaseUsing(ItemStack stack, Level level, LivingEntity living, int timeLeft) {
         if (living instanceof ServerPlayer player) SpearCombatHandler.stopCharge(player);
+        // §911 松手 ⇒ 给一个**短冷却**当"收回"动画的时基 ✓
+        //   （客户端读 ItemCooldowns 的百分比来驱动姿势 unwind ✓ 无需额外的客户端状态 ✓）
+        if (living instanceof net.minecraft.world.entity.player.Player p) {
+            p.getCooldowns().addCooldown(this, RETRACT_TICKS);
+        }
         super.releaseUsing(stack, level, living, timeLeft);
     }
 

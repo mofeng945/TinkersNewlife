@@ -35,13 +35,13 @@ public final class SpearChargeAnimation {
     //          finishRaisingBack = delay + damageMax    (12 + 225 = 237)  start = −5
     // ============================================================
 
-    public static final float RAISE_END = 12.0F;
-    public static final float SWAY_START = 42.0F;
-    public static final float SWAY_END = 62.0F;
-    public static final float LOWER_START = 107.0F;
-    public static final float LOWER_END = 147.0F;
-    public static final float RAISE_BACK_START = 232.0F;
-    public static final float RAISE_BACK_END = 237.0F;
+    // §911 用户口径：「**右键蓄力并刺出，松手收回**」✓ ⇒ 时间轴按这个重排（单位 tick ✓）：
+    //   0 ~ RAISE_END    蓄力（把矛端起来 ✓）
+    //   RAISE_END ~ THRUST_END  刺出（矛往前送 ✓ 新增 thrust 项 ✓）
+    //   > THRUST_END     保持刺出（按住不放就一直端着 ✓ —— 原版那套 42~237 的 sway/lower 全不用了 ✗）
+    // 松手后的"收回"由 §911 的短冷却驱动（retractProgress ✓ 见下面两个入口 ✓）
+    public static final float RAISE_END = 8.0F;      // 蓄力结束
+    public static final float THRUST_END = 16.0F;    // 刺出结束（之后保持 ✓）
 
     private SpearChargeAnimation() {}
 
@@ -107,21 +107,24 @@ public final class SpearChargeAnimation {
     private record UseParams(float raiseProgress, float raiseProgressStart, float raiseProgressMiddle,
                              float raiseProgressEnd, float swayProgress, float lowerProgress,
                              float raiseBackProgress, float swayIntensity,
-                             float swayScaleSlow, float swayScaleFast) {
+                             float swayScaleSlow, float swayScaleFast, float thrustProgress) {
 
         static UseParams at(float time) {
             float raiseProgress = progress(time, 0.0F, RAISE_END);
             float raiseProgressStart = progress(raiseProgress, 0.0F, 0.5F);
             float raiseProgressMiddle = progress(raiseProgress, 0.5F, 0.8F);
             float raiseProgressEnd = progress(raiseProgress, 0.8F, 1.0F);
-            float swayProgress = progress(time, SWAY_START, LOWER_START);
-            float lowerProgress = Ease.outCubic(Ease.inOutElastic(progress(time - 20.0F, LOWER_START, LOWER_END)));
-            float raiseBackProgress = progress(time, RAISE_BACK_START, RAISE_BACK_END);
-            float swayIntensity = 2.0F * Ease.outCirc(swayProgress) - 2.0F * Ease.inCirc(raiseBackProgress);
-            float swayScaleSlow = Mth.sin(time * 19.0F * ((float) Math.PI / 180.0F)) * swayIntensity;
-            float swayScaleFast = Mth.sin(time * 31.0F * ((float) Math.PI / 180.0F)) * swayIntensity;
+            // §911：刺出进度（新增 ✓）；原版那三段 sway/lower/raiseBack 不再参与（置 0 ✓）
+            float thrustProgress = Ease.outCubic(progress(time, RAISE_END, THRUST_END));
+            float swayProgress = 0.0F;
+            float lowerProgress = 0.0F;
+            float raiseBackProgress = 0.0F;
+            float swayIntensity = 0.0F;
+            float swayScaleSlow = 0.0F;
+            float swayScaleFast = 0.0F;
             return new UseParams(raiseProgress, raiseProgressStart, raiseProgressMiddle, raiseProgressEnd,
-                    swayProgress, lowerProgress, raiseBackProgress, swayIntensity, swayScaleSlow, swayScaleFast);
+                    swayProgress, lowerProgress, raiseBackProgress, swayIntensity, swayScaleSlow, swayScaleFast,
+                    thrustProgress);
         }
     }
 
@@ -136,8 +139,12 @@ public final class SpearChargeAnimation {
     // ============================================================
 
     public static void firstPersonUse(float ticksSinceHitFeedback, PoseStack poseStack, float timeHeld,
-                                      HumanoidArm arm) {
-        UseParams p = UseParams.at(timeHeld);
+                                      float retractProgress, HumanoidArm arm) {
+        // §911 收回（松手后 ✓）：把"有效时间"从刺出末端往 0 倒着走 ✓ ⇒ 姿势自然 unwind 回静止 ✓
+        //   （不用再写一套反向公式 ✓ 也不引入任何客户端状态 ✓）
+        float t = timeHeld > 0.0F ? timeHeld
+                : THRUST_END * (1.0F - Mth.clamp(retractProgress, 0.0F, 1.0F));
+        UseParams p = UseParams.at(t);
         int invert = arm == HumanoidArm.RIGHT ? 1 : -1;
 
         poseStack.translate(
@@ -152,6 +159,9 @@ public final class SpearChargeAnimation {
         poseStack.rotateAround(Axis.YN.rotationDegrees((float) invert * (-90.0F * progress(p.raiseProgress(), 0.5F, 0.55F)
                         + 90.0F * p.swayProgress() + 2.0F * p.swayScaleSlow())),
                 (float) invert * 0.15F, 0.0F, 0.0F);
+        // §911 刺出：往前送（第一人称里 -Z 是"前"✓）＋ 一点点下压 ✓
+        poseStack.translate(0.0D, (double) (p.thrustProgress() * 0.02F), (double) (p.thrustProgress() * -0.28F));
+        poseStack.rotateAround(Axis.XP.rotationDegrees(12.0F * p.thrustProgress()), 0.0F, 0.1F, 0.0F);
         poseStack.translate(0.0F, -hitFeedbackAmount(ticksSinceHitFeedback), 0.0F);
     }
 
@@ -165,7 +175,10 @@ public final class SpearChargeAnimation {
      * @param armRotX 手臂 xRot（弧度 ✓ 用 float[] 传出，调用方写回模型 ✓）
      */
     public static void thirdPersonArm(float[] armRotX, float[] armRotY, float[] armRotZ,
-                                      boolean rightArm, float headRotX, float headRotY, float timeHeld) {
+                                      boolean rightArm, float headRotX, float headRotY,
+                                      float timeHeld, float retractProgress) {
+        // §911 收回同样用"有效时间倒着走"这一招 ✓
+        if (timeHeld <= 0.0F) timeHeld = THRUST_END * (1.0F - Mth.clamp(retractProgress, 0.0F, 1.0F));
         int invert = rightArm ? 1 : -1;
         float yRot = -0.1F * (float) invert + headRotY;
         float xRot = -1.5707964F + headRotX + 0.8F;
@@ -180,8 +193,16 @@ public final class SpearChargeAnimation {
                     + 0.6F * p.swayScaleSlow() * p.swayIntensity());
             armRotZ[0] = zRot;
         }
+        // §911 刺出：手臂再往前压一点（第三人称就是"把矛捅出去"那下 ✓）
+        xRot += (float) Math.PI / 180.0F * (-18.0F * UseParams.at(timeHeld).thrustProgress());
         armRotX[0] = xRot;
         armRotY[0] = yRot;
+    }
+
+    /** §911 手里拿着长矛（不管在不在使用中 ✓ 收回阶段也用它 ✓） */
+    public static boolean holdingSpear(LivingEntity entity) {
+        return entity != null
+                && entity.getMainHandItem().getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.SpearItem;
     }
 
     /** 这个生物手上"正在使用"的是不是我们的长矛 ✓ */

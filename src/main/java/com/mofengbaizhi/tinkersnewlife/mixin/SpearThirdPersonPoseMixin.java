@@ -53,7 +53,11 @@ public abstract class SpearThirdPersonPoseMixin {
 
     /** 共用：正在蓄力 ⇒ 把主手那条手臂摆成"端矛"的样子 ✓（原版 thirdPersonHandUse ✓） */
     private void tinkersnewlife$applySpearPose(LivingEntity entity) {
-        if (entity == null || !SpearChargeAnimation.usingSpear(entity)) return;
+        // §911：使用中 ✓ 或"刚松手正在收回"（主手仍拿着长矛且冷却在跑 ✓）都摆这个姿势 ✓
+        boolean using = SpearChargeAnimation.usingSpear(entity);
+        if (!using && !SpearChargeAnimation.holdingSpear(entity)) return;
+        if (!using && !(entity instanceof net.minecraft.world.entity.player.Player p
+                && p.getCooldowns().isOnCooldown(entity.getMainHandItem().getItem()))) return;
 
         HumanoidModel<?> self = (HumanoidModel<?>) (Object) this;
         boolean rightArm = entity.getMainArm() == HumanoidArm.RIGHT;
@@ -62,8 +66,14 @@ public abstract class SpearThirdPersonPoseMixin {
         float[] xRot = new float[1];
         float[] yRot = new float[1];
         float[] zRot = new float[1];
+        // §911 收回进度 = 冷却百分比（松手那一刻是 1 ✓ 冷却走完是 0 ✓）
+        float retract = 0.0F;
+        if (!SpearChargeAnimation.usingSpear(entity)
+                && entity instanceof net.minecraft.world.entity.player.Player p) {
+            retract = p.getCooldowns().getCooldownPercent(entity.getMainHandItem().getItem(), 0.0F);
+        }
         SpearChargeAnimation.thirdPersonArm(xRot, yRot, zRot, rightArm,
-                self.head.xRot, self.head.yRot, entity.getTicksUsingItem());
+                self.head.xRot, self.head.yRot, entity.getTicksUsingItem(), retract);
 
         ModelPart arm = invert == 1 ? self.rightArm : self.leftArm;
         arm.xRot = xRot[0];
