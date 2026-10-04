@@ -1,5 +1,5 @@
 {
-  "_comment": "§938 【物品栏专用模型】—— 靠 ContextModel(applyTransform 按场景切) 在 GUI/FIXED/GROUND 时用它，手持/掉落等仍走 item/spear.json。现在三行 texture 和 spear.json 完全一样，所以外观暂时不变；以后换贴图只改这三行（新 PNG 建议放 textures/item/tool/spear/gui/ 下）。",
+  "_comment": "§939 【手持那一套 —— 可选文件】默认（item/spear.json）是「物品栏贴图」；只有想给「手持」单独一套贴图时才需要这个文件（没有它 ⇒ 手持也用默认 ✓）。现在三行 texture 和 spear.json 一样，所以外观暂时不变；要换就改这三行（新 PNG 建议放 textures/item/tool/spear/held/ 下）。生效场景：第一人称两只手 + 第三人称两只手。",
   "parent": "tconstruct:item/base/tall",
   "textures": {
     "handle1": "tinkersnewlife:item/tool/spear/handle1",

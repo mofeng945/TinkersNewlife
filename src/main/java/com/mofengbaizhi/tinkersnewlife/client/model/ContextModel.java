@@ -12,67 +12,72 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import javax.annotation.Nullable;
 
 /**
- * <b>按显示场景切换模型</b>（§938）—— "物品栏用一套、手持用另一套"的通用壳子 ✓
- * （照匠魂 `UniqueGuiModel` / `ToolModel$BakedToolModel` 的做法 ✓ 见备忘录 §937 ✓）。
+ * <b>按显示场景切换模型</b>（§938 建壳 ✓ §939 改成"默认＝物品栏、手持可选"）——
+ * 照匠魂 `UniqueGuiModel` / `ToolModel$BakedToolModel` 的做法 ✓（机制见备忘录 §937 ✓）。
+ *
+ * <h2>口径（§939，用户口径）</h2>
+ * 「**我想让默认是物品栏贴图，只有某些情况下需要额外写手持贴图**」✓
+ * <ul>
+ *   <li><b>默认（{@code item/spear.json}）＝ 物品栏那一套</b> ✓ ——
+ *       {@code GUI} / {@code FIXED}（展示框）/ {@code GROUND}（掉落）/ {@code HEAD} / 其它一切场景都用它 ✓；</li>
+ *   <li><b>手持</b>（{@code FIRST_PERSON_RIGHT/LEFT_HAND} ✓ {@code THIRD_PERSON_RIGHT/LEFT_HAND}）⇒
+ *       **如果有** {@code item/spear_held.json} 就用它 ✓，**没有**就沿用默认 ✓
+ *       ⇒ 换句话说：**只有想要"手持另一套贴图"时才需要写那个文件** ✓。</li>
+ * </ul>
  *
  * <h2>原理</h2>
  * Forge 在 {@code BakedModel} 上加了钩子
  * {@code applyTransform(ItemDisplayContext ctx, PoseStack pose, boolean leftHand)} ✓
  * —— **模型可以按场景返回不同的 `BakedModel`** ✓ 这就是匠魂"物品栏和手持不一样"的支点 ✓。
- * 本类把原模型包一层：物品栏（{@code GUI} / {@code FIXED} / {@code GROUND}）返回 {@code guiModel} ✓
- * 其余场景（第一/第三人称、掉落、头顶…）原样返回 ✓。
  *
  * <h2>为什么要额外包 `getOverrides`</h2>
  * ⚠ 匠魂工具是**按物品栈用 overrides 解析**出模型的（{@code ToolModel$MaterialOverrideHandler} ✓）
  * ⇒ 只在最外层包一层会被"解析出来的新模型"绕过去 ✗
- * ⇒ 这里把 `ItemOverrides` 也包一层 ✓，**解析结果重新包回来** ✓ 保证任何栈、任何材质都还走本类 ✓。
- *
- * <h2>怎么换贴图</h2>
- * {@code assets/tinkersnewlife/models/item/spear_gui.json} 就是"物品栏那一套" ✓
- * —— 它现在引用**同一批**贴图 ✓（所以外观暂时不变 ✓）；以后把它的三行 texture 改到新图即可 ✓
- * （新增的 PNG 建议放 {@code textures/item/tool/spear/gui/} ✓）。
+ * ⇒ 这里把 `ItemOverrides` 也包一层 ✓，**解析结果重新包回来** ✓。
  */
 public class ContextModel extends BakedModelWrapper<BakedModel> {
 
-    /** 物品栏那一套 ✓（GUI / 展示框 FIXED / 掉落物 GROUND ✓ 都算"图标类"场景 ✓） */
-    private final BakedModel guiModel;
+    /** 手持那一套 ✓；没提供时构造方会传默认模型进来（= 等于不切换 ✓） */
+    private final BakedModel heldModel;
 
-    public ContextModel(BakedModel base, BakedModel guiModel) {
+    public ContextModel(BakedModel base, BakedModel heldModel) {
         super(base);
-        this.guiModel = guiModel != null ? guiModel : base;
+        this.heldModel = heldModel != null ? heldModel : base;
     }
 
-    private static boolean iconContext(ItemDisplayContext ctx) {
-        return ctx == ItemDisplayContext.GUI
-                || ctx == ItemDisplayContext.FIXED
-                || ctx == ItemDisplayContext.GROUND;
+    /** 只有这四个"拿在手里"的场景才可能换 ✓ 其它（物品栏/展示框/掉落/头顶…）一律用默认 ✓ */
+    private static boolean heldContext(ItemDisplayContext ctx) {
+        return ctx == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
+                || ctx == ItemDisplayContext.FIRST_PERSON_LEFT_HAND
+                || ctx == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND
+                || ctx == ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
     }
 
     @Override
     public BakedModel applyTransform(ItemDisplayContext ctx, PoseStack pose, boolean leftHand) {
-        BakedModel chosen = iconContext(ctx) ? this.guiModel : this.originalModel;
+        BakedModel chosen = heldContext(ctx) ? this.heldModel : this.originalModel;
         // 交给被选中的模型自己走它的显示变换 ✓（匠魂自己的 BakedToolModel 也会在这儿再切 small/大 ✓）
         return chosen.applyTransform(ctx, pose, leftHand);
     }
 
     @Override
     public ItemOverrides getOverrides() {
-        return new WrappedOverrides(this.originalModel, this.guiModel);
+        return new WrappedOverrides(this.originalModel, this.heldModel);
     }
 
     /** 把 overrides 的**解析结果**重新包回 {@link ContextModel} ✓（否则匠魂按栈解析出来的模型会绕过我们 ✗） */
     private static final class WrappedOverrides extends ItemOverrides {
 
         private final BakedModel base;
-        private final BakedModel gui;
+        private final BakedModel held;
         private final ItemOverrides baseOverrides;
-        private final ItemOverrides guiOverrides;
+        private final ItemOverrides heldOverrides;
 
-        WrappedOverrides(BakedModel base, BakedModel gui) {
+        WrappedOverrides(BakedModel base, BakedModel held) {
             this.base = base;
-            this.gui = gui;
+            this.held = held;
             this.baseOverrides = base.getOverrides();
-            this.guiOverrides = gui.getOverrides();
+            this.heldOverrides = held.getOverrides();
         }
 
         @Override
@@ -80,9 +85,9 @@ public class ContextModel extends BakedModelWrapper<BakedModel> {
                                   @Nullable LivingEntity entity, int seed) {
             BakedModel resolvedBase = this.baseOverrides == null
                     ? this.base : this.baseOverrides.resolve(this.base, stack, level, entity, seed);
-            BakedModel resolvedGui = this.guiOverrides == null
-                    ? this.gui : this.guiOverrides.resolve(this.gui, stack, level, entity, seed);
-            return new ContextModel(resolvedBase, resolvedGui);
+            BakedModel resolvedHeld = this.heldOverrides == null
+                    ? this.held : this.heldOverrides.resolve(this.held, stack, level, entity, seed);
+            return new ContextModel(resolvedBase, resolvedHeld);
         }
     }
 }
