@@ -95,7 +95,56 @@ public abstract class SpearThirdPersonItemMixin {
                 : SpearChargeAnimation.ATTACK_END * (1.0F - Mth.clamp(retract, 0.0F, 1.0F));
         HumanoidArm arm = ctx == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND
                 ? HumanoidArm.RIGHT : HumanoidArm.LEFT;
+        // ★ §935：先让"蓄力时的显示变换"**精确等于** §931/§932 那套 ✓（替换 ✓ 不是叠加 ✗）
+        tinkersnewlife$applyChargeTransform(pose, stack, entity, ctx);
+        // 再允许动画文件额外叠一点（`item_third` ✓ 没写/全 0 就等于没叠 ✓）
         clip.applyItemThird(pose, effective, arm, tinkersnewlife$displayTransform(stack, entity, ctx));
+    }
+
+    // ── §935 蓄力时"想要"的第三人称显示变换 ────────────────────────────────────
+    //   来源：§931/§932（用户认可过的朝向/位置 ✓）——
+    //   `rotation [-90,-90,55]`（X 从 0 改成 −90 ⇒ 平面贴图的矛尖转出平面指向前方 ✓）
+    //   `translation [0,-2.0,-3.5]`（原来继承的是 [0,4.0,0.5] ✓ 下移 0.375 格 ＋ 前推 0.25 格 ✓）
+    //   `scale 0.85`（= `forge:item/default-tool` 第三人的值 ✓ 别丢 ✗）
+    private static final float[] CHARGE_ROTATION = {-90.0F, -90.0F, 55.0F};
+    /** ⚠ 单位与 json 里的 `translation` 一致（1/16 格 ✓）—— 这里手动 /16 换成方块 ✓ */
+    private static final float[] CHARGE_TRANSLATION = {0.0F, -2.0F, -3.5F};
+    private static final float CHARGE_SCALE = 0.85F;
+
+    /**
+     * 把 {@code pose} 乘上 {@code E = M_new · M_old⁻¹} ✓
+     * ⇒ 之后 {@code ItemRenderer} 再乘原版显示变换 {@code M_old} 时，净效果就是 {@code M_new} ✓
+     * ⇒ **精确替换**成蓄力时想要的那份 ✓（用户口径：不要"又叠一层" ✗）。
+     *
+     * <p>⚠ `M_old` 用 `ItemTransform#apply` 取 ✓（与游戏同一套数学 ✓ 含 Forge 的 `rightRotation` ✓
+     * 以及左手镜像 ✓）；`M_new` 用手写常量构造 ✓（左手镜像同样交给 `apply(leftHand,…)` ✓
+     * ⇒ 传**右手**的值即可 ✓ 镜像后正好等于 json 里左手那份 `[-90,90,-55]` ✓）。
+     */
+    private static void tinkersnewlife$applyChargeTransform(PoseStack pose, ItemStack stack, LivingEntity entity,
+                                                            ItemDisplayContext ctx) {
+        try {
+            boolean leftHand = ctx == ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
+            BakedModel model = Minecraft.getInstance().getItemRenderer()
+                    .getModel(stack, entity.level(), entity, 0);
+            ItemTransform oldTransform = model.getTransforms().getTransform(ctx);
+
+            PoseStack oldStack = new PoseStack();
+            oldTransform.apply(leftHand, oldStack);
+
+            PoseStack newStack = new PoseStack();
+            new ItemTransform(
+                    new org.joml.Vector3f(CHARGE_ROTATION[0], CHARGE_ROTATION[1], CHARGE_ROTATION[2]),
+                    new org.joml.Vector3f(CHARGE_TRANSLATION[0] / 16.0F,
+                            CHARGE_TRANSLATION[1] / 16.0F, CHARGE_TRANSLATION[2] / 16.0F),
+                    new org.joml.Vector3f(CHARGE_SCALE, CHARGE_SCALE, CHARGE_SCALE),
+                    new org.joml.Vector3f(0.0F, 0.0F, 0.0F)).apply(leftHand, newStack);
+
+            Matrix4f delta = new Matrix4f(newStack.last().pose())
+                    .mul(new Matrix4f(oldStack.last().pose()).invert());
+            pose.last().pose().mul(delta);
+        } catch (Throwable ignored) {
+            // 取不到就什么都不做 ✓（退化成原版 + item_third ✓ 不崩 ✓）
+        }
     }
 
     /** 取该物品第三人称的显示变换矩阵 ✓（{@code M} ✓；取不到返回 null ⇒ 退化成"直接加法" ✓ 不崩 ✓） */
