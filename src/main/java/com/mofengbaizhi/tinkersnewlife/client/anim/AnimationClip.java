@@ -247,7 +247,15 @@ public final class AnimationClip {
     private static boolean spearTried;
 
     /**
-     * 取"长矛第一人称"动画 ✓。
+     * 取"长矛动画"✓ —— 第一人称读 {@code item} 轨道 ✓ 第三人称读 {@code arm} 轨道 ✓
+     * （**同一个文件** ✓ 你在 Blockbench 里把两条骨骼都做进一条动画就行 ✓ 见 §923 ✓）。
+     */
+    public static AnimationClip spearAnimation() {
+        return spearFirstPerson();
+    }
+
+    /**
+     * 取"长矛第一人称"动画 ✓（= {@link #spearAnimation()} ✓ 名字保留是历史原因 ✓）。
      *
      * <p>查找顺序：上面那串备选名 → 还找不到就**扫 `tnl_anim/` 下所有带 spear 的 json** ✓
      * （优先 `.animation.json` ✓ 再按名字排序 ✓）⇒ 用户丢什么名字进来都能生效 ✓。

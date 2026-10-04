@@ -63,19 +63,41 @@ public abstract class SpearThirdPersonPoseMixin {
         boolean rightArm = entity.getMainArm() == HumanoidArm.RIGHT;
         int invert = rightArm ? 1 : -1;
 
-        float[] xRot = new float[1];
-        float[] yRot = new float[1];
-        float[] zRot = new float[1];
         // §911 收回进度 = 冷却百分比（松手那一刻是 1 ✓ 冷却走完是 0 ✓）
         float retract = 0.0F;
         if (!SpearChargeAnimation.usingSpear(entity)
                 && entity instanceof net.minecraft.world.entity.player.Player p) {
             retract = p.getCooldowns().getCooldownPercent(entity.getMainHandItem().getItem(), 0.0F);
         }
+
+        // ★ §923：**优先播动画文件里的 `arm` 轨道** ✓
+        //   （用户口径：「**第三人称重画动画**」✓ —— 他在 Blockbench 里把手臂骨骼命名为 `arm` ✓
+        //    导出的同一个 json 里带上 arm 的 rotation ✓ 这里就按**有效时间**取那一帧 ✓
+        //    有效时间 = 蓄力时用已蓄 tick ✓ 松手后倒着走 ✓ 和第一人称同一套口径 ✓）
+        ModelPart arm0 = invert == 1 ? self.rightArm : self.leftArm;
+        com.mofengbaizhi.tinkersnewlife.client.anim.AnimationClip clip =
+                com.mofengbaizhi.tinkersnewlife.client.anim.AnimationClip.spearAnimation();
+        if (clip != null) {
+            float effective = SpearChargeAnimation.usingSpear(entity)
+                    ? entity.getTicksUsingItem()
+                    : SpearChargeAnimation.ATTACK_END
+                        * (1.0F - net.minecraft.util.Mth.clamp(retract, 0.0F, 1.0F));
+            float[] rot = clip.armRot(effective);
+            if (rot != null) {
+                arm0.xRot = rot[0];
+                arm0.yRot = rot[1];
+                arm0.zRot = rot[2];
+                return;      // ✓ 文件里给了 arm 就用它 ✓ 不再叠硬编码那套 ✗
+            }
+        }
+
+        float[] xRot = new float[1];
+        float[] yRot = new float[1];
+        float[] zRot = new float[1];
         SpearChargeAnimation.thirdPersonArm(xRot, yRot, zRot, rightArm,
                 self.head.xRot, self.head.yRot, entity.getTicksUsingItem(), retract);
 
-        ModelPart arm = invert == 1 ? self.rightArm : self.leftArm;
+        ModelPart arm = arm0;
         arm.xRot = xRot[0];
         arm.yRot = yRot[0];
         arm.zRot = zRot[0];
