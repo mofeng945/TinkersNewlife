@@ -144,6 +144,11 @@ public class PacketCompendiumAbsorb {
             }
 
             // ③ 扣掉这本书 ✓
+            //   §910s 先把它**原样写进玩家身上的书袋**（用户方案 A ✓ 为了"泛用"：
+            //   所有已与「古旧书袋」集成的 mod 都查那条玩家 capability ✓）
+            //   ⚠ 只写不读 ✓ 本模组不提供任何"打开书袋 / 取回书"的入口 ✓
+            com.mofengbaizhi.tinkersnewlife.content.handler.CompendiumAntiqueBagBridge
+                    .deposit(player, book);
             book.shrink(1);
             if (foundSlot != null) {
                 foundSlot.setChanged();
