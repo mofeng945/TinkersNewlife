@@ -81,7 +81,7 @@ public class ModFluids {
 
     /** 熔融海王金属（§965 水产养殖2 联动：熔炼 aquaculture:neptunium_ingot 得到） */
     public static final FluidRegistrar.FluidEntry MOLTEN_NEPTUNIUM = entry("molten_neptunium",
-            2000, 10000, 1500, 0xFF4FD2C2,  // 海绿
+            2000, 10000, 1500, 0xFF31A988,  // 取自水产海王锭贴图实提 #31A988 ✓ 与材料/特性色统一
             FluidRegistrar.lavaProps(MapColor.COLOR_CYAN));
 
     /**
