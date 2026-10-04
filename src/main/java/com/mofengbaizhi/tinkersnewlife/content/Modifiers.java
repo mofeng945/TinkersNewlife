@@ -309,6 +309,11 @@ public class Modifiers {
         MODIFIERS.register("soldiers_saber",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.SoldiersSaberModifier::new);
 
+    /** 词条·穿甲（无等级·西洋剑自带：攻击无视护甲 + 右键后跳 + 手持时副手盾牌无法使用，见 §948-§950） */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.RapierArmorPiercingModifier> RAPIER_ARMOR_PIERCING =
+        MODIFIERS.register("rapier_armor_piercing",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.RapierArmorPiercingModifier::new);
+
     /** 强化·噬魂（1 级占 1 升级槽，2/3 级无槽；每级 +25% 灵魂获取，一级后额外 +1，最高 3 级） */
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.SoulEaterModifier> SOUL_EATER =
         MODIFIERS.register("soul_eater",
