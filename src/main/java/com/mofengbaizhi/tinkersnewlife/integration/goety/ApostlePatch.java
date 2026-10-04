@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * </ol>
  *
  * <h2>配置（**默认开启** ✓ 用户口径 ✓）</h2>
- * 本补丁自带一份 COMMON 配置 {@code tinkersnewlife-apostle.toml} ✓：
+ * 本补丁自带一份 COMMON 配置 {@code mofengbaizhi/tinkersnewlife-apostle.toml} ✓：
  * {@code enabled}（总开关 ✓）、{@code teleport_damage_reduction}（默认 0.6 ✓）、
  * {@code arrow_as_magic}（默认 true ✓）。
  *
@@ -147,12 +147,12 @@ public final class ApostlePatch {
     /** 由 {@link GoetyIntegration#register} 调用 ✓ */
     public static void register() {
         try {
-            ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, SPEC, "tinkersnewlife-apostle.toml");
+            ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, SPEC, "mofengbaizhi/tinkersnewlife-apostle.toml");
         } catch (Throwable t) {
             LOGGER.warn("[使徒补丁] 配置注册失败（用默认值继续）: {}", t.toString());
         }
         MinecraftForge.EVENT_BUS.register(ApostlePatch.class);
-        LOGGER.info("[使徒补丁] 已启用（默认开启 ✓ 配置 tinkersnewlife-apostle.toml ✓）：瞬移后 2s 减伤 60% ✓ 射箭改魔法伤害 ✓");
+        LOGGER.info("[使徒补丁] 已启用（默认开启 ✓ 配置 config/mofengbaizhi/tinkersnewlife-apostle.toml ✓）：瞬移后 2s 减伤 60% ✓ 射箭改魔法伤害 ✓");
     }
 
     /** §869：读布尔配置（读不到 ⇒ 用默认值 ✓ 与 enabled() 一个口径 ✓） */
