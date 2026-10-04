@@ -88,9 +88,11 @@ public class ModCreativeTabs {
                                 output.accept(ModFluids.IMPURE_INK.bucket.get());
                                 output.accept(ModFluids.MOLTEN_DURANDAL.bucket.get());
                                 output.accept(ModFluids.CURSE_RESIDUE.bucket.get());
+                                // §977 熔融海王金属：我方「原生」流体（ModFluids 里无 mod 门控、桶常驻）⇒ 走原生字段惯例
+                                //      可熔炼来源（aquaculture:neptunium_ingot）与材料本身由 forge:mod_loaded aquaculture 门控
+                                output.accept(ModFluids.MOLTEN_NEPTUNIUM.bucket.get());
                                 // 冰火传说组：熔融龙钢×3 + 龙血×3 + 悚怖×2
                                 acceptItemIfPresent(output, "molten_dragonsteel_fire_bucket");
-        acceptItemIfPresent(output, "molten_neptunium_bucket");   // §976 海王金属（水产联动，材料门控 aquaculture）
                                 acceptItemIfPresent(output, "molten_dragonsteel_ice_bucket");
                                 acceptItemIfPresent(output, "molten_dragonsteel_lightning_bucket");
                                 acceptItemIfPresent(output, "fire_blood_bucket");
