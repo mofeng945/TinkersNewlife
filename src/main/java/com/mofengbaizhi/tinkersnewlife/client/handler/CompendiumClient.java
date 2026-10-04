@@ -39,45 +39,6 @@ public final class CompendiumClient {
      * （两条 lore 也印证："与启示之证的用途几乎一样…只不过被包裹在不同的封面" ✓）。
      * <p>⚠ 加新条目时请**先在帕秋莉书表里验证**（本方法只接受书表里真实存在的 id ✓）免得写错 ✗。
      */
-    /**
-     * §910q <b>"效果型知识道具"白名单</b>（不是帕秋莉书 ✗ 但也是"能吞进来的知识" ✓）——
-     * 它们的界面没有 ✓，吞进来后靠**潜行右键唤醒**（= 把那一本「用一下」✓）继承效果 ✓。
-     * <ul>
-     *   <li><b>神秘遗物</b>：野猎指南 {@code hunter_guidebook} / 兽友指南 {@code animal_guidebook} ✓
-     *       —— ⚠ 这两件的**被动**（"放物品栏里"那种）写在神秘遗物自己的事件里 ✗ 继承不到 ✗；
-     *       但它们 item 自己的 {@code use()} 部分能靠唤醒转调 ✓。</li>
-     *   <li><b>诡厄巫法</b>：三本会调 {@code SEHelper} 的魔典（怨恨/亲善/坚守 ✓）
-     *       ＋ 发研究（= 回魂等能力的解锁条件 ✓）的那批卷轴 ✓ ⇒ 唤醒 = 用一遍 ✓。</li>
-     * </ul>
-     */
-    private static final java.util.Set<String> EFFECT_KNOWLEDGE_IDS = java.util.Set.of(
-            // 神秘遗物
-            "enigmaticlegacy:hunter_guidebook",     // 野猎指南
-            "enigmaticlegacy:animal_guidebook",     // 兽友指南
-            // 诡厄巫法：三本魔典
-            "goety:grimoire_of_grudges",            // 怨恨之书
-            "goety:grimoire_of_goodwill",           // 亲善之书
-            "goety:grimoire_of_grounding",          // 坚守之书
-            // 诡厄巫法：研究卷轴（用一下 = 解锁研究 ⇒ 回魂之类能力 ✓）
-            "goety:dark_scroll", "goety:ravaging_scroll", "goety:warred_scroll",
-            "goety:buried_scroll", "goety:haunting_scroll", "goety:front_scroll",
-            "goety:mistral_scroll", "goety:floral_scroll", "goety:bygone_scroll",
-            "goety:terminus_scroll", "goety:forbidden_scroll"
-    );
-
-    /**
-     * §910q 新模组「诡厄遗物」({@code goeticlegacy}) 的启发式：命名空间命中 ＋ 类名像"书/卷/颂/典" ✓
-     * ⇒ 以后它新增同类物品不用再来改代码 ✓（被动型效果仍然继承不到 ✗ 见 {@link #EFFECT_KNOWLEDGE_IDS} 的说明）。
-     */
-    private static boolean looksLikeGoeticLegacyKnowledge(net.minecraft.world.item.Item item) {
-        net.minecraft.resources.ResourceLocation id =
-                net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(item);
-        if (id == null || !"goeticlegacy".equals(id.getNamespace())) return false;
-        String cls = item.getClass().getSimpleName().toLowerCase(java.util.Locale.ROOT);
-        return cls.contains("book") || cls.contains("scroll") || cls.contains("ode")
-                || cls.contains("codex") || cls.contains("tome") || cls.contains("page");
-    }
-
     private static final java.util.Map<String, String> KNOWN_BOOK_IDS = java.util.Map.of(
             "enigmaticlegacy:the_twist", "enigmaticlegacy:the_acknowledgment"
     );
@@ -139,21 +100,6 @@ public final class CompendiumClient {
             }
         } catch (Throwable t) {
             LOG.info("[百宝书] 规则②'失败：{}", t.toString());
-        }
-
-        // ②'' §910q "效果型知识道具"：按白名单 / 新模组的类名启发式收下 ✓
-        //   书 id 用合成形式 `effect:<物品id>` ✓（界面里点它只会提示"请潜行右键唤醒" ✓）
-        try {
-            ResourceLocation rawItem = ForgeRegistries.ITEMS.getKey(stack.getItem());
-            if (rawItem != null) {
-                if (EFFECT_KNOWLEDGE_IDS.contains(rawItem.toString())
-                        || looksLikeGoeticLegacyKnowledge(stack.getItem())) {
-                    LOG.info("[百宝书] 规则②''：{} 属效果型知识道具 ⇒ 收下 ✓", rawItem);
-                    return "effect:" + rawItem;
-                }
-            }
-        } catch (Throwable t) {
-            LOG.info("[百宝书] 规则②''跳过（{}）", t.toString());
         }
 
         // ③ 通用兜底：**拿物品 id 当候选书 id，问帕秋莉"到底有没有这本书"** ✓

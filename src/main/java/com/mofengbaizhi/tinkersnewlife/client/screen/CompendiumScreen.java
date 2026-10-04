@@ -95,13 +95,6 @@ public class CompendiumScreen extends AbstractRowListScreen<CompoundTag> {
     }
 
     @Override
-    protected void drawFooter(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawCenteredString(this.font,
-                Component.translatable("screen.tinkersnewlife.compendium.footer"),
-                this.width / 2, this.height - 24, 0x808080);
-    }
-
-    @Override
     protected void onRowClick(int index, CompoundTag row) {
         String rawId = row.getString(CompendiumItem.KEY_ID);
         // §910q 效果型知识条目（没有帕秋莉界面 ✓）⇒ 提示用"潜行右键唤醒" ✓

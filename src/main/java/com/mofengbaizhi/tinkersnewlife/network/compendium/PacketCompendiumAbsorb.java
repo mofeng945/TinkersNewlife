@@ -143,11 +143,8 @@ public class PacketCompendiumAbsorb {
                 if (packet.source == SOURCE_CARRIED) menu.setCarried(compendium);
             }
 
-            // ③ 扣掉这本书 ✓
-            //   §910t 用户改选**方案 B** ✓ ⇒ **不再**往「古旧书袋」里写 ✗
-            //   （那条路会让玩家在书袋界面里看见/取出 ✗）；改成我们自己的公开查询入口
-            //   `CompendiumContents` ✓（只读 ✓ 取不出来 ✓ 别的 mod 愿意集成就能调 ✓）。
-            book.shrink(1);
+            // ③ §910v **不吞噬**：书原样留着 ✓（用户口径：「**也不吞噬了**」✓）
+            //   只把它的帕秋莉书 id 记进百宝书 ✓ —— 百宝书从此只当"万能书"用 ✓。
             if (foundSlot != null) {
                 foundSlot.setChanged();
             } else {
@@ -155,7 +152,7 @@ public class PacketCompendiumAbsorb {
             }
             menu.broadcastChanges();
 
-            LOG.info("[百宝书] ✓ 已吞噬书 id={}（物品={} 显示名={}）第一次={} 服务端侧总数={}",
+            LOG.info("[百宝书] ✓ 已收录书 id={}（物品={} 显示名={}）第一次={} 服务端侧总数={}",
                     packet.bookId, packet.itemId, displayName, first, total);
 
             player.displayClientMessage(Component.translatable(first

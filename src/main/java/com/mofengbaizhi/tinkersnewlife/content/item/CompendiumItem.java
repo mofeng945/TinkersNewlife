@@ -34,8 +34,8 @@ import javax.annotation.Nullable;
  *       （客户端检测手势 ⇒ 发包 ⇒ 服务端校验后写 NBT ✓）；</li>
  *   <li><b>查阅</b>：手持百宝书**右键** ⇒ 打开自己的界面，**按书归类**列出已吞噬的书 ✓，
  *       点某一条就直接打开那本帕秋莉书 ✓；</li>
- *   <li><b>唤醒（§910g 新加）</b>：**潜行右键** ⇒ 依次调用每本已吞噬之书**自己的 {@code use(...)}** ✓
- *       ⇒ "效果写在物品自己的 use 里"的书就能被继承 ✓（详见 {@link #wakeAbsorbedBooks} 的说明与限制 ✓）。</li>
+ *   <li>⚠ <b>§910v 起不再继承任何效果</b> ✗（用户口径：「**不继承效果了…只当万能百宝书用就好**」✓）
+ *       —— 它只做"记录 + 查阅"，书本身**不消耗** ✓。</li>
  * </ul>
  *
  * <p>⚠ <b>判据是 NBT 里的 {@code patchouli:book}，不是物品 id</b> ✓ —— 与 §632 / §910 本仓既有口径一致：
@@ -225,128 +225,11 @@ public class CompendiumItem extends Item {
         return out;
     }
 
-    /** 已吞噬记录里的**物品**（造一个 ItemStack ✓；没有记物品 id 的旧记录跳过 ✗） */
-    private static java.util.List<ItemStack> absorbedStacks(ItemStack compendium) {
-        ListTag list = absorbedList(compendium);
-        java.util.List<ItemStack> out = new java.util.ArrayList<>(list.size());
-        for (int i = 0; i < list.size(); i++) {
-            CompoundTag entry = list.getCompound(i);
-            // §910l 兼容 §910g **之前**吞下的记录（那时没存物品 id ✗）：
-            //   回退拿**书 id** 当物品 id 试一把 ✓ —— 对"书 id == 物品 id"的那些
-            //   （启示之证 `enigmaticlegacy:the_acknowledgment` / 倒转之启 `enigmaticlegacy:the_twist` ✓）
-            //   完全够用 ✓；而 Patchouli `guide_book` 那类（书 id ≠ 物品 id ✗）本就没什么命中效果 ✓ 拿不到也不亏 ✓。
-            String raw = entry.contains(KEY_ITEM, Tag.TAG_STRING) && !entry.getString(KEY_ITEM).isEmpty()
-                    ? entry.getString(KEY_ITEM)
-                    : entry.getString(KEY_ID);
-            ResourceLocation id = ResourceLocation.tryParse(raw);
-            if (id == null) continue;
-            Item item = ForgeRegistries.ITEMS.getValue(id);
-            if (item == null) continue;
-            out.add(new ItemStack(item));
-        }
-        return out;
-    }
-
-    /**
-     * §910j <b>攻击属性继承</b>（用户口径：「让启示之证 / 倒转之启 / 无止之言的攻击效果和伤害效果也起作用」✓）——
-     * 把"已吞噬的书里**最强的那件武器**"的整套属性修饰符借过来 ✓（伤害 / 攻速 / 击退 … ✓ 都是从物品本身取的 ✓
-     * 不硬编码任何数值 ✓）。
-     *
-     * <p>口径说明：<b>取最强的一件，不是把多件叠起来</b> ✗ ——
-     * 一是叠加会把伤害直接堆到失衡 ✗；二是原版基础攻击力用的是**固定 UUID** ✓
-     * 两件一起给会互相覆盖 / 报错 ✗。想改成"叠加"或"只看某一件"都只需改这一段 ✓。
-     */
-    @Override
-    public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlot slot, ItemStack stack) {
-        if (slot == EquipmentSlot.MAINHAND) {
-            Multimap<Attribute, AttributeModifier> best = null;
-            double bestDamage = 0.0D;
-            for (ItemStack fake : absorbedStacks(stack)) {
-                Multimap<Attribute, AttributeModifier> mods = fake.getAttributeModifiers(slot);
-                if (mods.isEmpty()) continue;
-                double damage = 0.0D;
-                for (var e : mods.entries()) {
-                    if (e.getKey() == Attributes.ATTACK_DAMAGE) damage += e.getValue().getAmount();
-                }
-                if (best == null || damage > bestDamage) {
-                    best = mods;
-                    bestDamage = damage;
-                }
-            }
-            if (best != null) return best;
-        }
-        return super.getAttributeModifiers(slot, stack);
-    }
-
-    /**
-     * §910j <b>命中效果继承</b>：对每一本已吞噬的书都跑一遍它自己的 {@code hurtEnemy} ✓。
-     * <p>⚠ 1.20.1 的 {@code Item} **没有** {@code postHurtEnemy} ✗（已核对源码：只有
-     * {@code hurtEnemy(ItemStack, LivingEntity, LivingEntity)} ✓，`Player#attack` 也只调这一处 ✓）
-     * ⇒ 命中后那一半本来就在各模组自己的 {@code hurtEnemy} 里 ✓ 无需额外转发 ✓。
-     */
-    @Override
-    public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        boolean any = false;
-        // §910l 一次性诊断：把"到底借到了哪些书 / 谁的伤害最高"打出来 ✓（用户报"没加伤害"时一眼定位 ✓）
-        if (!tnl$logged && !attacker.level().isClientSide) {
-            tnl$logged = true;
-            java.util.List<ItemStack> all = absorbedStacks(stack);
-            LOG.info("[百宝书] 命中诊断：已吞噬 {} 件可复现物品 ⇒ {}", all.size(),
-                    all.stream().map(s -> s.getItem().toString()).toList());
-            // §910m 顺带把**实体身上实时的攻击力**与**蓄力系数**打出来 ✓
-            //   —— 用户报"打出来只有 2.7"时，靠这两项就能区分是"属性没生效"还是"没蓄满力" ✓
-            double live = attacker.getAttributeValue(Attributes.ATTACK_DAMAGE);
-            float strength = attacker instanceof Player p ? p.getAttackStrengthScale(0.5F) : 1.0F;
-            LOG.info("[百宝书]   实体实时攻击力={} 蓄力系数={}（<1 就是没蓄满 ⇒ 伤害按原版打折 ✓）",
-                    live, strength);
-            for (ItemStack fake : all) {
-                double dmg = 0.0D;
-                for (var e : fake.getAttributeModifiers(EquipmentSlot.MAINHAND).entries()) {
-                    if (e.getKey() == Attributes.ATTACK_DAMAGE) dmg += e.getValue().getAmount();
-                }
-                int fire = net.minecraft.world.item.enchantment.EnchantmentHelper
-                        .getItemEnchantmentLevel(net.minecraft.world.item.enchantment.Enchantments.FIRE_ASPECT, fake);
-                LOG.info("[百宝书]    {}：攻击力 +{} 火焰附加 {} 级", fake.getItem(), dmg, fire);
-            }
-        }
-        // §910l 附魔驱动的命中效果（最典型的就是**火焰附加**）：原版是 `Player#attack` 按
-        //   **手持物品的附魔**点的火 ✓ 我们的百宝书自己没有附魔 ✗ ⇒ 这里替它把火点上 ✓
-        //   （只要那本书本身带火焰附加 ✓ 就继承 ✓）
-        for (ItemStack fake : absorbedStacks(stack)) {
-            int fire = net.minecraft.world.item.enchantment.EnchantmentHelper
-                    .getItemEnchantmentLevel(net.minecraft.world.item.enchantment.Enchantments.FIRE_ASPECT, fake);
-            if (fire > 0) {
-                target.setSecondsOnFire(fire * 4);
-                any = true;
-            }
-        }
-        for (ItemStack fake : absorbedStacks(stack)) {
-            try {
-                any |= fake.getItem().hurtEnemy(fake, target, attacker);
-            } catch (Throwable t) {
-                LOG.warn("[百宝书] 命中效果 {} 出错（已跳过）：{}", fake.getItem(), t.toString());
-            }
-        }
-        return any || super.hurtEnemy(stack, target, attacker);
-    }
-
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
 
-        // ① §910g **潜行右键 = 唤醒已吞噬之书的效果**（服务端执行 ✓ 客户端只回成功 ✓ 免得开一堆界面 ✗）
-        if (player.isShiftKeyDown()) {
-            if (!level.isClientSide) {
-                int woken = wakeAbsorbedBooks(level, player, stack);
-                player.displayClientMessage(Component.translatable(woken > 0
-                                ? "message.tinkersnewlife.compendium.wake"
-                                : "message.tinkersnewlife.compendium.wake_none",
-                        woken), true);
-            }
-            return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
-        }
-
-        // ② 普通右键 = 打开"查阅"界面（纯客户端 ✓ 数据就在手上这叠的 NBT 里 ⇒ 不用发包 ✓）
+        // 普通右键 = 打开"查阅"界面（纯客户端 ✓ 数据就在手上这叠的 NBT 里 ⇒ 不用发包 ✓）
         if (level.isClientSide) {
             // ⚠ 客户端类**不能**在公共代码里直接引用（§801/§813 的坑 ✗）⇒ 走 DistExecutor 甩过去 ✓
             DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->

@@ -1467,13 +1467,13 @@
   "screen.tinkersnewlife.compendium.title": "帕秋莉的百宝书",
   "screen.tinkersnewlife.compendium.hint": "已收录 %s 本书 · 点一条即可翻阅",
   "screen.tinkersnewlife.compendium.empty": "还没有吞噬任何帕秋莉的书",
-  "message.tinkersnewlife.compendium.absorbed": "已吞噬《%s》",
+  "message.tinkersnewlife.compendium.absorbed": "已收录《%s》（书不会消失 ✓）",
   "message.tinkersnewlife.compendium.already": "《%s》已经收录过了",
   "message.tinkersnewlife.compendium.not_patchouli": "这本书里没有帕秋莉的书 id，百宝书吞不了它",
   "message.tinkersnewlife.compendium.wake": "唤醒已吞噬之书的效果（%s 本有反应）",
   "message.tinkersnewlife.compendium.wake_none": "这些书没有可直接触发的效果（内容请在查阅界面里翻）",
-  "screen.tinkersnewlife.compendium.footer": "潜行右键手持百宝书：唤醒已吞噬之书的效果",
+  "screen.tinkersnewlife.compendium.footer": "右键一本帕秋莉书即可收录（书不会消失）",
   "message.tinkersnewlife.compendium.goety_research": "已从《黑暗秘典》习得禁忌知识：诡厄的灵魂能量能力已解锁",
-  "message.tinkersnewlife.compendium.cursed_only": "承受七咒之人，才能吞噬这本书",
+  "message.tinkersnewlife.compendium.cursed_only": "承受七咒之人，才能收录这本书",
   "message.tinkersnewlife.compendium.effect_entry": "这件是「效果型知识」：潜行右键手持百宝书即可唤醒它的效果"
 }

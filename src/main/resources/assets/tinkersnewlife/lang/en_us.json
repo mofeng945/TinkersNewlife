@@ -1465,13 +1465,13 @@
   "screen.tinkersnewlife.compendium.title": "Patchouli's Compendium",
   "screen.tinkersnewlife.compendium.hint": "%s book(s) absorbed - click one to read",
   "screen.tinkersnewlife.compendium.empty": "No Patchouli books absorbed yet",
-  "message.tinkersnewlife.compendium.absorbed": "Absorbed \"%s\"",
+  "message.tinkersnewlife.compendium.absorbed": "Recorded \"%s\" (the book stays)",
   "message.tinkersnewlife.compendium.already": "\"%s\" is already in the compendium",
   "message.tinkersnewlife.compendium.not_patchouli": "This item carries no Patchouli book id, so the compendium cannot absorb it",
   "message.tinkersnewlife.compendium.wake": "Woke absorbed books (%s responded)",
   "message.tinkersnewlife.compendium.wake_none": "These books have no directly usable effect (read them in the compendium screen)",
-  "screen.tinkersnewlife.compendium.footer": "Sneak + right-click the compendium: wake the absorbed books",
+  "screen.tinkersnewlife.compendium.footer": "Right-click a Patchouli book to record it (the book stays)",
   "message.tinkersnewlife.compendium.goety_research": "Forbidden knowledge learned from The Black Book: Goety soul energy unlocked",
-  "message.tinkersnewlife.compendium.cursed_only": "Only those who bear the Seven Curses may absorb this book",
+  "message.tinkersnewlife.compendium.cursed_only": "Only those who bear the Seven Curses may record this book",
   "message.tinkersnewlife.compendium.effect_entry": "Effect-only entry: sneak + right-click the compendium to wake it"
 }
