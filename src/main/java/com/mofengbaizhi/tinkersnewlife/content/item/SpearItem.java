@@ -71,8 +71,18 @@ public class SpearItem extends ModifiableItem {
     /** 长按才能冲锋 ⇒ 基础使用时长给满 ✓；匠魂自己有"使用中"词条时让位 ✓（字节码实读：无词条时 super 返回 0 ✓） */
     private static final int CHARGE_USE_TICKS = 72000;
 
-    /** §911 松手后的"收回"时长（tick）—— 客户端拿它当收回动画的进度源 ✓（8 tick = 0.4 秒 ✓） */
-    public static final int RETRACT_TICKS = 8;
+    /**
+     * §911 松手后的"收回"时长（tick）—— 客户端拿它当收回动画的进度源 ✓（8 tick = 0.4 秒 ✓）。
+     *
+     * <p>★ §936：用户口径「**把矛结束蓄力后的冷却调高一倍**」⇒ 由 **8 改成 16**（0.8 秒 ✓）。
+     *
+     * <p>⚠ 这个数**同时**是"松手后的冷却"和"收回动画的时基" ✓（客户端读
+     * {@code ItemCooldowns} 的百分比驱动姿势 unwind ✓ 见 {@code SpearFirstPersonHandler} /
+     * {@code SpearThirdPersonPoseMixin} / {@code SpearThirdPersonItemMixin} ✓）
+     * ⇒ 调大 ⇒ **冷却变长 ＋ 收回动画也按比例变慢** ✓（要"冷却长但收回快"就得把它拆成两个量 ✓
+     * 目前用户没要求 ✓ 保持一个 ✓）。
+     */
+    public static final int RETRACT_TICKS = 16;
 
     public SpearItem(Properties properties) {
         super(properties, SPEAR_DEFINITION);
