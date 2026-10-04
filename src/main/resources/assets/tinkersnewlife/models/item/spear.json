@@ -21,15 +21,15 @@
     }
   ],
   "display": {
-    "_comment_third": "§931 第三人称：让矛尖指向前方（原来只能朝上）。值 = 继承 forge:item/default-tool 的第三个人称显示变换，只把 X 从 0 改成 -90（在贴图平面外俯仰）。方向反了就把两个 -90 改成 +90。",
+    "_comment_third": "§931/§932 第三人称：rotation 的 X=-90 让矛尖转出贴图平面指向前方；translation 管位置（单位 1/16 格）——§932 把它从继承来的 [0,4.0,0.5] 改成 [0,-2.0,-3.5]：Y 减 = 往下挪（原来飘在胳膊上），Z 减 = 往前戳。方向反了就把对应那个数改成相反的符号。",
     "thirdperson_righthand": {
       "rotation": [-90, -90, 55],
-      "translation": [0, 4.0, 0.5],
+      "translation": [0, -2.0, -3.5],
       "scale": [0.85, 0.85, 0.85]
     },
     "thirdperson_lefthand": {
       "rotation": [-90, 90, -55],
-      "translation": [0, 4.0, 0.5],
+      "translation": [0, -2.0, -3.5],
       "scale": [0.85, 0.85, 0.85]
     },
     "firstperson_righthand": {
