@@ -1,0 +1,24 @@
+{
+  "_comment": "§945 西洋剑模型。parts 的 index 对应 tool_definitions/rapier.json 的部件顺序：0=剑刃(small_blade) 1=手柄(tool_handle) 2=十字柄(tough_handle)。当前三行 texture 指向的是【占位贴图】（从长矛那几张复制来的），等用户画好 rapier 专用贴图后只改这三行即可。",
+  "parent": "tconstruct:item/base/tall",
+  "textures": {
+    "blade": "tinkersnewlife:item/tool/rapier/blade_broken",
+    "handle": "tinkersnewlife:item/tool/rapier/handle_broken",
+    "guard": "tinkersnewlife:item/tool/rapier/guard_broken"
+  },
+  "loader": "tconstruct:tool",
+  "parts": [
+    {
+      "name": "blade",
+      "index": 0
+    },
+    {
+      "name": "handle",
+      "index": 1
+    },
+    {
+      "name": "guard",
+      "index": 2
+    }
+  ]
+}

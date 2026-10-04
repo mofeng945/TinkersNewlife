@@ -1,0 +1,60 @@
+{
+  "_comment": "§939 【手持那一套 —— 可选文件】默认（item/spear.json）是「物品栏贴图」；只有想给「手持」单独一套贴图时才需要这个文件（没有它 ⇒ 手持也用默认 ✓）。现在三行 texture 和 spear.json 一样，所以外观暂时不变；要换就改这三行（新 PNG 建议放 textures/item/tool/spear/held/ 下）。生效场景：第一人称两只手 + 第三人称两只手。",
+  "parent": "tconstruct:item/base/tall",
+  "textures": {
+    "handle1": "tinkersnewlife:item/tool/spear/handle1_broken",
+    "handle2": "tinkersnewlife:item/tool/spear/handle2_broken",
+    "head": "tinkersnewlife:item/tool/spear/head_broken"
+  },
+  "loader": "tconstruct:tool",
+  "parts": [
+    {
+      "name": "handle1",
+      "index": 1
+    },
+    {
+      "name": "handle2",
+      "index": 2
+    },
+    {
+      "name": "head",
+      "index": 0
+    }
+  ],
+  "display": {
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        -90,
+        55
+      ],
+      "translation": [
+        1.13,
+        3.2,
+        1.13
+      ],
+      "scale": [
+        1.35,
+        1.35,
+        1.35
+      ]
+    },
+    "firstperson_lefthand": {
+      "rotation": [
+        0,
+        90,
+        -55
+      ],
+      "translation": [
+        1.13,
+        3.2,
+        1.13
+      ],
+      "scale": [
+        1.35,
+        1.35,
+        1.35
+      ]
+    }
+  }
+}
