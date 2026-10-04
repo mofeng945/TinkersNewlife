@@ -74,7 +74,17 @@ public abstract class SpearThirdPersonPoseMixin {
         //   （用户口径：「**第三人称重画动画**」✓ —— 他在 Blockbench 里把手臂骨骼命名为 `arm` ✓
         //    导出的同一个 json 里带上 arm 的 rotation ✓ 这里就按**有效时间**取那一帧 ✓
         //    有效时间 = 蓄力时用已蓄 tick ✓ 松手后倒着走 ✓ 和第一人称同一套口径 ✓）
-        ModelPart arm0 = invert == 1 ? self.rightArm : self.leftArm;
+        // ★ §928 修正：动画文件里的 `arm` 是**增量** ✓ 叠在下面那套「端矛」基准姿势上 ✓
+        //   ⚠ §927 我错误地让它**整个替换**基准 ✗ ⇒ 用户实测「**你怎么侧向旋转了，我是说手向前伸
+        //     然后矛尖指向前方**」✗ —— 因为第一人称那条是 Z 轴**侧滚** ✗，而第三人称要的是
+        //     **手臂前伸＋矛尖朝前**的基准姿势 ✓（= §912 从原版 1.21.11 搬来的 `thirdPersonArm` ✓）。
+        //   ⇒ 基准**永远**由 `thirdPersonArm` 给 ✓，文件里的 arm 只作为**增量**相加 ✓（没给就是纯基准 ✓）。
+        float[] xRot = new float[1];
+        float[] yRot = new float[1];
+        float[] zRot = new float[1];
+        SpearChargeAnimation.thirdPersonArm(xRot, yRot, zRot, rightArm,
+                self.head.xRot, self.head.yRot, entity.getTicksUsingItem(), retract);
+
         com.mofengbaizhi.tinkersnewlife.client.anim.AnimationClip clip =
                 com.mofengbaizhi.tinkersnewlife.client.anim.AnimationClip.spearAnimation();
         if (clip != null) {
@@ -82,23 +92,15 @@ public abstract class SpearThirdPersonPoseMixin {
                     ? entity.getTicksUsingItem()
                     : SpearChargeAnimation.ATTACK_END
                         * (1.0F - net.minecraft.util.Mth.clamp(retract, 0.0F, 1.0F));
-            float[] rot = clip.armRot(effective);
-            if (rot != null) {
-                arm0.xRot = rot[0];
-                // 左右手镜像：Y/Z 取反 ✓（左手那侧模型是镜像的 ✓ 和原版手臂一个道理 ✓）
-                arm0.yRot = invert == 1 ? rot[1] : -rot[1];
-                arm0.zRot = invert == 1 ? rot[2] : -rot[2];
-                return;      // ✓ 文件里给了 arm 就用它 ✓ 不再叠硬编码那套 ✗
+            float[] d = clip.armRot(effective);
+            if (d != null) {
+                xRot[0] += d[0];
+                yRot[0] += (invert == 1 ? d[1] : -d[1]);   // 左手镜像 ✓
+                zRot[0] += (invert == 1 ? d[2] : -d[2]);
             }
         }
 
-        float[] xRot = new float[1];
-        float[] yRot = new float[1];
-        float[] zRot = new float[1];
-        SpearChargeAnimation.thirdPersonArm(xRot, yRot, zRot, rightArm,
-                self.head.xRot, self.head.yRot, entity.getTicksUsingItem(), retract);
-
-        ModelPart arm = arm0;
+        ModelPart arm = invert == 1 ? self.rightArm : self.leftArm;
         arm.xRot = xRot[0];
         arm.yRot = yRot[0];
         arm.zRot = zRot[0];
