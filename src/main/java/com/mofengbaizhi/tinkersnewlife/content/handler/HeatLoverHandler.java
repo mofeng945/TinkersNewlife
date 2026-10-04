@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.content.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.effect.MobEffect;
@@ -11,6 +12,8 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -36,7 +39,7 @@ import slimeknights.tconstruct.library.tools.nbt.ToolStack;
  * </ul>
  *
  * <p>判定口径与「海王之力」一致 ✓：**工具**看主手 ✓；**盔甲**看四个盔甲槽 ✓；
- * "炎热"＝{@code isInLava() || isOnFire()} ✓。
+ * "炎热"＝{@code isInLava() || isOnFire()} **并上**原模组那两条方块判定（脚下/按速度预测处是岩浆 ✓ 见 {@link #isHot}）✓。
  *
  * <p>⚠ 客户端那一半（熔岩下视野清晰）在 {@code client/handler/HeatLoverClientHandler} ✓
  * （公共类不许引客户端渲染类 ✓ 见本仓 §801 那条反向同理 ✓）。
@@ -88,9 +91,22 @@ public final class HeatLoverHandler {
         return count;
     }
 
-    /** "炎热"＝泡在熔岩里或身上着火 ✓ */
+    /**
+     * "炎热" ✓ —— **并集口径**（用户 2026-10-04 选定 ✓）：
+     * <ol>
+     *   <li>我方：泡在岩浆流体里（{@code isInLava()} ＝ Forge 的 {@code LAVA_TYPE} 流体高度 &gt; 0 ✓）或身上着火 ✓；</li>
+     *   <li>原模组（{@code ItemPromethiumArmor$Companion#onLivingTick} 字节码实读 ✓）：脚下方块是岩浆
+     *     （{@code getOnPos()} ✓）或**按当前速度预测 1.5 倍位移处**是岩浆 ✓ —— 后者是它让玩家"提前一拍"
+     *     拿到岩浆行走效果的机制 ✓。</li>
+     * </ol>
+     * 两边取并集 ⇒ 判定更宽松、体验更顺 ✓（用户取舍 ✓）。
+     */
     public static boolean isHot(LivingEntity entity) {
-        return entity.isInLava() || entity.isOnFire();
+        if (entity.isInLava() || entity.isOnFire()) return true;
+        Level level = entity.level();
+        if (level.getBlockState(entity.getOnPos()).is(Blocks.LAVA)) return true;
+        BlockPos ahead = BlockPos.containing(entity.position().add(entity.getDeltaMovement().scale(1.5D)));
+        return level.getBlockState(ahead).is(Blocks.LAVA);
     }
 
     /** 盔甲四件的被动：岩浆行走 ✓ 炎热时加速 ✓ 炎热时缓慢回血 ✓ */
