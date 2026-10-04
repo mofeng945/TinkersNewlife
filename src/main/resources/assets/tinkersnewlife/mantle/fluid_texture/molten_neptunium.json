@@ -1,0 +1,8 @@
+{
+  "still": "tinkersnewlife:block/molten_neptunium_still",
+  "flowing": "tinkersnewlife:block/molten_neptunium_flowing",
+  "color": "FFFFFFFF",
+  "fogColor": "FF1F6C57",
+  "fogStart": 0.35,
+  "fogEnd": 4.5
+}
