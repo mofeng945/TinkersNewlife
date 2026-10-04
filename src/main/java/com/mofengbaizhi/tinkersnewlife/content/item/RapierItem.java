@@ -2,6 +2,8 @@ package com.mofengbaizhi.tinkersnewlife.content.item;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import slimeknights.tconstruct.library.tools.definition.ToolDefinition;
 import slimeknights.tconstruct.library.tools.item.ModifiableItem;
 
@@ -37,5 +39,54 @@ public class RapierItem extends ModifiableItem {
 
     public RapierItem(Properties properties) {
         super(properties, RAPIER_DEFINITION);
+    }
+
+    // ============================================================
+    //  §949 阶段 3：右键后跳（匠魂2 原版特征之一 ✓）
+    //    "右击可以进行一次后跳以躲避伤害" ✓
+    // ============================================================
+
+    /** 后退冲量（初速度 ✓ 实机调 ✓ 0.85 大致是"一步半"的距离感 ✓） */
+    private static final double BACKSTEP_IMPULSE = 0.85D;
+    /** 附带的一点点上抬 ✓（0 = 纯水平 ✓ 0.12 能跳过一格边角 ✓） */
+    private static final double BACKSTEP_LIFT = 0.12D;
+    /** 后跳给的短暂无敌帧 ✓（tick ✓ 原版受击无敌是 20 ✓ 这里取一半 = 0.5 秒 ✓ 够躲一下 ✓） */
+    private static final int BACKSTEP_INVULNERABLE_TICKS = 10;
+    /** 后跳冷却 ✓（tick ✓ 1 秒 ✓ 防止无限刷无敌 ✓） */
+    public static final int BACKSTEP_COOLDOWN_TICKS = 20;
+
+    /**
+     * 右键 = **后跳**（朝视线**反方向**弹开 ✓）。
+     *
+     * <p>三件事一起做 ✓：<b>冲量</b>（{@code push} 反方向 ＋ 轻微上抬 ✓）、
+     * <b>短无敌</b>（{@code invulnerableTime} ✓）、<b>冷却</b>（{@code ItemCooldowns} ✓）。
+     *
+     * <p>⚠ 细节口径：
+     * <ul>
+     *   <li><b>潜行右键不动手</b> ✓（留给别的交互/放置 ✓ 否则潜行时没法用副手/方块 ✓）；</li>
+     *   <li><b>只在服务端</b>做冲量与冷却 ✓（`level.isClientSide` 挡掉 ✓）—— 但**两端都返回 success** ✓
+     *       ⇒ 客户端会正常播"使用"动作且**吃掉这次右键** ✓（这正是阶段 4"副手盾牌用不了"的一半 ✓）；</li>
+     *   <li>{@code hurtMarked = true} ✓ 把速度同步给客户端 ✓（不然本地看不到位移 ✓）；</li>
+     *   <li>不想"右键变挥砍"所以**不调** {@code swing} ✗。</li>
+     * </ul>
+     */
+    @Override
+    public net.minecraft.world.InteractionResultHolder<ItemStack> use(
+            net.minecraft.world.level.Level level, Player player, net.minecraft.world.InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (hand != net.minecraft.world.InteractionHand.MAIN_HAND) {
+            return net.minecraft.world.InteractionResultHolder.pass(stack);
+        }
+        if (player.isShiftKeyDown() || player.getCooldowns().isOnCooldown(this)) {
+            return net.minecraft.world.InteractionResultHolder.pass(stack);
+        }
+        if (!level.isClientSide) {
+            net.minecraft.world.phys.Vec3 look = player.getLookAngle();
+            player.push(-look.x * BACKSTEP_IMPULSE, BACKSTEP_LIFT, -look.z * BACKSTEP_IMPULSE);
+            player.hurtMarked = true;
+            player.invulnerableTime = Math.max(player.invulnerableTime, BACKSTEP_INVULNERABLE_TICKS);
+            player.getCooldowns().addCooldown(this, BACKSTEP_COOLDOWN_TICKS);
+        }
+        return net.minecraft.world.InteractionResultHolder.success(stack);
     }
 }
