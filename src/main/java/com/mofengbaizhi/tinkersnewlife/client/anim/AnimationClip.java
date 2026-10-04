@@ -67,7 +67,13 @@ import java.util.TreeSet;
  * </pre>
  * ⇒ <b>Blockbench 工作流</b>：新建 <i>Bedrock Entity</i> 工程 → 建两个组（空组也行 ✓）
  * 名字分别叫 <code>item</code> / <code>arm</code> → 在动画时间轴摆关键帧 → 导出动画
- * → 丢进 <code>assets/tinkersnewlife/animations/</code> ✓ → 游戏内 <b>F3+T</b> ✓（不用重编译 ✓）。
+ * → 丢进 <code>assets/tinkersnewlife/tnl_anim/</code> ✓ → 游戏内 <b>F3+T</b> ✓（不用重编译 ✓）。
+ *
+ * <p>⚠⚠ <b>目录名不能叫 {@code animations/}</b> ✗（§917 真崩过一次 ✗）：那个路径是 **GeckoLib 的保留目录** ✓，
+ * 整合包里只要装了 GeckoLib，它就会把所有 {@code assets/<任意命名空间>/animations/*.json}
+ * 当成**它自己的**动画格式去读 ✓ ⇒ 遇到我们这种"没有 {@code animations} 字段"的文件
+ * 直接抛 <code>JsonSyntaxException: Missing animations</code> ✗ ⇒ **启动阶段整局崩掉** ✗。
+ * 所以本模组一律用 {@code tnl_anim/} ✓。
  * <b>Blockbench 默认导出名 {@code *.animation.json} 的那份优先</b> ✓（见 {@link #SPEAR_FIRST_PERSON_BB} ✓）。
  *
  * <p>已处理的基岩细节 ✓：时间键是**秒**（×20 ✓）、`position` 是 **1/16 格**（×{@link #BEDROCK_POS_SCALE} ✓）、
@@ -111,11 +117,11 @@ public final class AnimationClip {
 
     /** Blockbench 默认导出名 ✓ —— ★ 这一份**优先** ✓（用户导出的东西应当直接生效 ✓） */
     public static final ResourceLocation SPEAR_FIRST_PERSON_BB =
-            new ResourceLocation("tinkersnewlife", "animations/spear_first_person.animation.json");
+            new ResourceLocation("tinkersnewlife", "tnl_anim/spear_first_person.animation.json");
 
     /** 本模组手写的极简格式 ✓ —— 上一条不存在时用它 ✓（兜底默认姿势 ✓） */
     public static final ResourceLocation SPEAR_FIRST_PERSON =
-            new ResourceLocation("tinkersnewlife", "animations/spear_first_person.json");
+            new ResourceLocation("tinkersnewlife", "tnl_anim/spear_first_person.json");
 
     private static AnimationClip spearCache;
     private static boolean spearTried;
@@ -143,7 +149,7 @@ public final class AnimationClip {
     /**
      * 从资源里读一条动画 ✓（自动判别 {@link AnimationClip 格式 A} / 基岩格式 B ✓）。
      *
-     * @param id 例如 {@code tinkersnewlife:animations/spear_first_person.json} ✓
+     * @param id 例如 {@code tinkersnewlife:tnl_anim/spear_first_person.json} ✓
      * @return 读不到返回 {@code null} ✓（调用方回退 ✓）
      */
     public static AnimationClip load(ResourceLocation id) {
