@@ -1,0 +1,16 @@
+{
+  "_comment": "§985 弹弓·第 2 档拉弓态（占位贴图：从匠魂长弓抽的）。蓄力阈值见 models/item/slingshot.json 的 overrides；贴图是灰阶底图，进游戏用 /tconstruct generate_part_textures 按材料上色。",
+  "loader": "tconstruct:tool",
+  "parent": "tconstruct:item/base/bow",
+  "textures": {
+    "limb_bottom": "tinkersnewlife:item/tool/slingshot/limb1_2",
+    "limb_top": "tinkersnewlife:item/tool/slingshot/limb2_2",
+    "grip": "tconstruct:item/tool/longbow/grip",
+    "bowstring": "tinkersnewlife:item/tool/slingshot/bowstring_2"
+  },
+  "parts": [
+    { "name": "limb_bottom", "index": 0 },
+    { "name": "limb_top", "index": 1 },
+    { "name": "bowstring", "index": 2 }
+  ]
+}

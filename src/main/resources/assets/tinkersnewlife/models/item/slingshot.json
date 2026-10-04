@@ -22,6 +22,18 @@
   },
   "overrides": [
     {
+      "predicate": { "tconstruct:charging": 1, "tconstruct:charge": 0.05 },
+      "model": "tinkersnewlife:item/tool/slingshot/pulling_1"
+    },
+    {
+      "predicate": { "tconstruct:charging": 1, "tconstruct:charge": 0.6 },
+      "model": "tinkersnewlife:item/tool/slingshot/pulling_2"
+    },
+    {
+      "predicate": { "tconstruct:charging": 1, "tconstruct:charge": 1.0 },
+      "model": "tinkersnewlife:item/tool/slingshot/pulling_3"
+    },
+    {
       "predicate": { "tconstruct:broken": 1 },
       "model": "tinkersnewlife:item/tool/slingshot/broken"
     }
