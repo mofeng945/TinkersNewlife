@@ -4,7 +4,7 @@
 		"animation.tinkersnewlife.spear_firstperson.new": {
 			"animation_length": 0.7917,
 			"_comment": "§925 屏幕微调（这几行是我加的，Blockbench 重导会掉，掉了告诉我或照抄回来）：x 负=往左 / y 正=往上 / z 负=往屏幕里面推；_tnl_scale 小于 1 = 更远更小。改完 F3+T 生效，不用重编译。",
-			"_tnl_offset": [-0.35, -0.05, -0.25],
+			"_tnl_offset": [-0.35, -0.05, -0.5],
 			"_tnl_scale": 1.0,
 			"bones": {
 				"item": {
