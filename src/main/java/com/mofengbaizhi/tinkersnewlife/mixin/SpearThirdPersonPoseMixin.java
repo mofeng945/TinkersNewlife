@@ -85,8 +85,9 @@ public abstract class SpearThirdPersonPoseMixin {
             float[] rot = clip.armRot(effective);
             if (rot != null) {
                 arm0.xRot = rot[0];
-                arm0.yRot = rot[1];
-                arm0.zRot = rot[2];
+                // 左右手镜像：Y/Z 取反 ✓（左手那侧模型是镜像的 ✓ 和原版手臂一个道理 ✓）
+                arm0.yRot = invert == 1 ? rot[1] : -rot[1];
+                arm0.zRot = invert == 1 ? rot[2] : -rot[2];
                 return;      // ✓ 文件里给了 arm 就用它 ✓ 不再叠硬编码那套 ✗
             }
         }

@@ -617,11 +617,20 @@ public final class AnimationClip {
         if (pivot) pose.translate((double) -c[0], (double) -c[1], (double) -c[2]);
     }
 
-    /** 取这一帧的**手臂**三轴旋转（弧度 ✓ 第三人称写回 {@code ModelPart} 用 ✓）；没写 arm 轨道返回 null ✓ */
+    /**
+     * 取这一帧的**手臂**三轴旋转（弧度 ✓ 第三人称写回 {@code ModelPart} 用 ✓）；没写 arm 轨道返回 null ✓。
+     *
+     * <p>§927：这里也走 {@link Space} 那套**轴向取反** ✓ —— 手臂在 Java **实体模型**空间里 ✓
+     * 和物品模型一样是 **+Y 朝下** ✗（基岩 +Y 朝上 ✓）⇒ 换算规则相同 ✓。
+     * ⚠ 枢轴/屏幕偏移**不适用**于手臂 ✓（`ModelPart` 自己绕骨头枢轴转 ✓）。
+     */
     public float[] armRot(float time) {
         float[] rot = sample(arm, wrap(time), 1);
         if (rot == null) return null;
         float d = (float) Math.PI / 180.0F;
-        return new float[]{rot[0] * d, rot[1] * d, rot[2] * d};
+        float rx = rot[0] * (space.flipRotX ? -1.0F : 1.0F);
+        float ry = rot[1] * (space.flipRotY ? -1.0F : 1.0F);
+        float rz = rot[2] * (space.flipRotZ ? -1.0F : 1.0F);
+        return new float[]{rx * d, ry * d, rz * d};
     }
 }
