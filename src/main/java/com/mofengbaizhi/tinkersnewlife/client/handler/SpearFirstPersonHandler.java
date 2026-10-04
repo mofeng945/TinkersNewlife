@@ -62,6 +62,16 @@ public final class SpearFirstPersonHandler {
                 (effective - SpearChargeAnimation.RAISE_END)
                         / (SpearChargeAnimation.ATTACK_END - SpearChargeAnimation.RAISE_END), 0.0F, 1.0F);
 
+        // §914 ★ **优先播动画文件** ✓：assets/tinkersnewlife/animations/spear_first_person.json ✓
+        //   文件缺失/写坏 ⇒ 自动回退到下面 §913 的内置姿势 ✓（改文件改坏了不会崩 ✓ 最坏回到默认 ✓）。
+        //   ⚠ 收回时时间**倒着走** ✓ ⇒ 同一条时间轴就能表达"刺出→收回" ✓ 不用写第二条 ✓。
+        com.mofengbaizhi.tinkersnewlife.client.anim.AnimationClip clip =
+                com.mofengbaizhi.tinkersnewlife.client.anim.AnimationClip.spearFirstPerson();
+        if (clip != null) {
+            clip.applyItem(event.getPoseStack(), effective, arm);
+            return;
+        }
+
         SpearChargeAnimation.firstPersonSimple(event.getPoseStack(), arm, charge, attack);
     }
 }

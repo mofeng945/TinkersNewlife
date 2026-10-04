@@ -38,6 +38,8 @@ public final class WizardArmorCacheReloadHandler {
             @Override
             protected void apply(Void unused, ResourceManager manager, ProfilerFiller profiler) {
                 WizardArmorTextures.clearCache();
+                // §914：动画文件（animations/*.json）也一起清缓存 ✓ ⇒ 游戏内 F3+T 就能看到改后的姿势 ✓
+                com.mofengbaizhi.tinkersnewlife.client.anim.AnimationClip.clearCache();
             }
         });
     }
