@@ -268,15 +268,27 @@ public final class SpearCombatHandler {
      *       冲刺戳中 ✓、左键点中的那个 ✓、射线额外戳中的 ✓（三条都是 {@code playerAttack} 源 ✓）；</li>
      *   <li>只在**真造成伤害**时扣 ✓（{@code amount > 0} ✓、伤害被免疫/无敌帧挡掉时事件不会到这一层 ✓）；</li>
      *   <li>同一 tick 内"玩家 → 同一目标"只扣一次 ✓（别的模组重发同一发时不会重复扣 ✗）；</li>
-     *   <li>坚固／不毁／{@code onDamageTool} 钩子／创造模式自动不消耗 ⇒ 全部交给匠魂内部判定 ✓；</li>
+     *   <li>坚固／不毁／{@code onDamageTool} 钩子 ⇒ 交给匠魂内部判定 ✓；</li>
      *   <li>工具被这一下打坏 ⇒ 匠魂自己会写 {@code tic_broken} ✓（本模组的破损模型接线照旧 ✓）。</li>
      * </ul>
+     *
+     * <p>⚠⚠ <b>§942 修正</b>：上面那条"**创造模式自动不消耗 ⇒ 交给匠魂内部判定**"是**错的** ✗
+     * —— 用户实测「**创造模式为什么也扣了**」✓ 已查证：
+     * 扫 {@code ToolDamageUtil.class} 字节码 ⇒ 它只认 {@code isUnbreakable} ✓、
+     * {@code onDamageTool} 钩子 ✓、{@code ItemDurabilityTrigger} 进度 ✓，
+     * **完全没有 {@code instabuild} / {@code isCreative} 这类判断** ✗。
+     * <p>原版工具在创造模式不掉耐久，是因为判断在**更上游**
+     * （{@code ItemStack#hurtAndBreak} 里的 instabuild 检查 ✓；创造模式破坏方块根本不走 {@code mineBlock} ✓）
+     * —— 而我们是**主动**在这个事件里扣 ✗ ⇒ 那层判断够不着 ✗ ⇒ **必须自己补** ✓（见下面那句 guard ✓）。
      */
     @SubscribeEvent
     public static void onSpearHitDurability(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
         if (event.getEntity().level().isClientSide) return;
         if (event.getAmount() <= 0.0F) return;
         if (!(event.getSource().getDirectEntity() instanceof ServerPlayer player)) return;
+        // §942：创造/旁观**不消耗耐久** ✓（对齐原版 hurtAndBreak 的 instabuild 语义 ✓
+        //   —— 匠魂的 ToolDamageUtil 自己不管这个 ✗ 见上面注释 ✓）
+        if (player.isCreative() || player.isSpectator()) return;
         net.minecraft.world.entity.LivingEntity victim = event.getEntity();
         if (victim == player) return;
         ItemStack stack = player.getMainHandItem();
