@@ -8,8 +8,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
 import net.minecraft.tags.TagKey;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -74,26 +72,6 @@ public class SlingshotItem extends ModifiableBowItem {
         super(properties, SLINGSHOT_DEFINITION);
     }
 
-    // ============================================================
-    //  §988 物品栏图标：左下角那颗"石头"
-    //    匠魂工具的 ammo 模型块只在 tconstruct:drawback_ammo 里有**物品**时才画东西 ✓
-    //    ⇒ 常态塞一颗圆石进去 ⇒ 图标（以及手里）左下角就一直能看到石头 ✓；
-    //    拉弓时匠魂会用真正要射的那颗覆盖它 ✓（于是图标/手上显示的就是"当前弹药" ✓）。
-    // ============================================================
-
-    @Override
-    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
-        super.inventoryTick(stack, level, entity, slot, selected);
-        try {
-            ToolStack tool = ToolStack.from(stack);
-            ModDataNBT data = tool.getPersistentData();
-            if (!data.contains(KEY_DRAWBACK_AMMO, CompoundTag.TAG_COMPOUND)) {
-                data.put(KEY_DRAWBACK_AMMO, new ItemStack(Items.COBBLESTONE).save(new CompoundTag()));
-            }
-        } catch (Throwable ignored) {
-            // 任何异常都不该影响工具本身 ✓
-        }
-    }
     // ============================================================
     //  弹药口径
     // ============================================================

@@ -1,5 +1,5 @@
 {
-  "_comment": "§983 弹弓模型。沿用匠魂弓的几何（parent = tconstruct:item/base/bow）+ 部件贴图索引 0/1/2 = 弓臂/弓臂/弓弦；grip 用匠魂长弓的静态握把贴图占位（我们没有握把部件）。当前三行部件贴图是【占位】（从匠魂长弓抽的），用户画好专用图后只改这三行即可。",
+  "_comment": "§983 弹弓模型。沿用匠魂弓的几何（parent = tconstruct:item/base/bow）+ 部件贴图索引 0/1/2 = 弓臂/弓臂/弓弦；grip 用匠魂长弓的静态握把贴图占位（我们没有握把部件）。§991：撤掉 ammo 块（手上的石头渲染太大 ⇒ 用户决定不再渲染石头）。",
   "loader": "tconstruct:tool",
   "parent": "tconstruct:item/base/bow",
   "textures": {
@@ -13,13 +13,6 @@
     { "name": "limb_top", "index": 1 },
     { "name": "bowstring", "index": 2 }
   ],
-  "ammo": {
-    "_comment": "§989 修正：非 large 模型必须用 offset（匠魂 ToolModel 源码：isLarge 才读 small_offset/large_offset，否则 getVec2(ammo, offset) 是必填）。原来照长弓那段抄了 small/large ⇒ JsonSyntaxException ⇒ 整个模型加载失败 ⇒ 紫黑块。",
-    "key": "tconstruct:drawback_ammo",
-    "flip": true,
-    "left": true,
-    "offset": [ -3.0, -4.0 ]
-  },
   "overrides": [
     {
       "predicate": { "tconstruct:broken": 1 },
