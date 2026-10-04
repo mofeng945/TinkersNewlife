@@ -1,0 +1,35 @@
+{
+  "_comment": "§915 基岩/Blockbench 动画格式的样板（本文件不会被加载，纯粹给你对照/复制用）。要用它：把内容拷进 spear_first_person.json（覆盖我手写那份），游戏内 F3+T 即生效 —— 加载器按内容自动识别格式。",
+  "_comment_bones": "组名必须叫 item（手/物品）和 arm（第三人称手臂）；rotation 单位=度，position 单位=1/16 格（自动换算），时间键单位=秒（自动×20 变 tick）。",
+  "_comment_bb": "Blockbench 路线：新建 Bedrock Entity 工程 -> 建两个组 item / arm（空组也能做动画）-> 动画时间轴摆关键帧 -> 导出动画。关键帧只能填数字，别用 math.* 这类 Molang 表达式（加载器不会求值）。",
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.tinkersnewlife.spear_first_person": {
+      "animation_length": 1.0,
+      "loop": false,
+      "bones": {
+        "item": {
+          "rotation": {
+            "0.0": [-8, 0, 0],
+            "0.2": [-14, -45, 0],
+            "0.4": [-18, -90, 0],
+            "0.6": [-26, -90, 0]
+          },
+          "position": {
+            "0.0": [0, 0, 0],
+            "0.2": [0.48, 0.48, -2.4],
+            "0.4": [0.96, 0.8, -4.8],
+            "0.6": [0.96, 0.8, -7.36]
+          }
+        },
+        "arm": {
+          "rotation": {
+            "0.0": [-10, 0, 0],
+            "0.4": [-52, 0, 0],
+            "0.6": [-70, 0, 0]
+          }
+        }
+      }
+    }
+  }
+}
