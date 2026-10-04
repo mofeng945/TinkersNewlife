@@ -1,0 +1,17 @@
+{
+  "type": "tconstruct:casting_basin",
+  "fluid": {
+    "fluid": "tinkersnewlife:molten_neptunium_still",
+    "amount": 810
+  },
+  "result": {
+    "item": "aquaculture:neptunium_block"
+  },
+  "cooling_time": 180,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "aquaculture"
+    }
+  ]
+}

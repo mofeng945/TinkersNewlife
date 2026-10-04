@@ -1,0 +1,19 @@
+{
+  "type": "tconstruct:damagable_melting",
+  "ingredient": {
+    "item": "aquaculture:neptunium_bow"
+  },
+  "result": {
+    "fluid": "tinkersnewlife:molten_neptunium_still",
+    "amount": 270,
+    "unit_size": 10
+  },
+  "temperature": 1000,
+  "time": 104,
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "aquaculture"
+    }
+  ]
+}
