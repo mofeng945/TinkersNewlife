@@ -64,10 +64,24 @@ public class CompendiumScreen extends AbstractRowListScreen<CompoundTag> {
     protected void drawRow(GuiGraphics graphics, CompoundTag row, int index, int x, int y, int w, int h,
                            boolean hover, double mouseX, double mouseY) {
         graphics.fill(x, y, x + w, y + h, hover ? 0x66FFFFFF : 0x33000000);
-        ItemStack icon = bookIcon(row.getString(CompendiumItem.KEY_ID));
+        // 图标优先用**记录里的物品 id**（§910q：效果型条目没有帕秋莉书 id ⇒ 只能靠它 ✓）
+        ItemStack icon = itemIcon(row.getString(CompendiumItem.KEY_ITEM));
+        if (icon.isEmpty()) icon = bookIcon(row.getString(CompendiumItem.KEY_ID));
         graphics.renderItem(icon.isEmpty() ? new ItemStack(Items.BOOK) : icon, x + 3, y + 3);
         graphics.drawString(this.font, row.getString(CompendiumItem.KEY_NAME), x + 24, y + 4, 0xFFFFFF);
         graphics.drawString(this.font, row.getString(CompendiumItem.KEY_ID), x + 24, y + 14, 0x8A8A8A);
+    }
+
+    /** 按**物品 id**取图标（§910q ✓） */
+    private static ItemStack itemIcon(String itemId) {
+        try {
+            ResourceLocation id = ResourceLocation.tryParse(itemId);
+            if (id == null) return ItemStack.EMPTY;
+            net.minecraft.world.item.Item item = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(id);
+            return item == null ? ItemStack.EMPTY : new ItemStack(item);
+        } catch (Throwable t) {
+            return ItemStack.EMPTY;
+        }
     }
 
     /** 那本书的物品图标（帕秋莉按书 id 现给 ✓ 给不出就空栈 ⇒ 调用处用原版书兜底 ✓） */
@@ -89,7 +103,17 @@ public class CompendiumScreen extends AbstractRowListScreen<CompoundTag> {
 
     @Override
     protected void onRowClick(int index, CompoundTag row) {
-        ResourceLocation id = ResourceLocation.tryParse(row.getString(CompendiumItem.KEY_ID));
+        String rawId = row.getString(CompendiumItem.KEY_ID);
+        // §910q 效果型知识条目（没有帕秋莉界面 ✓）⇒ 提示用"潜行右键唤醒" ✓
+        if (rawId.startsWith("effect:")) {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player != null) {
+                mc.player.displayClientMessage(
+                        Component.translatable("message.tinkersnewlife.compendium.effect_entry"), true);
+            }
+            return;
+        }
+        ResourceLocation id = ResourceLocation.tryParse(rawId);
         Minecraft.getInstance().setScreen(null);        // 先关掉自己 ✓ 免得两界面叠着 ✗
         if (id != null) {
             PatchouliAPI.get().openBookGUI(id);         // 直接打开那本帕秋莉书 ✓

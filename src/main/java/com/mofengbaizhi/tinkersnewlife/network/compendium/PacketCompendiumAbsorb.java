@@ -71,35 +71,6 @@ public class PacketCompendiumAbsorb {
         buf.writeVarInt(this.source);
     }
 
-    /**
-     * §910i 授予诡厄的「禁忌知识」研究（{@code ResearchList.FORBIDDEN} ✓）。
-     *
-     * <p>为什么用**反射**：本模组对 Goety 只有 compileOnly（`libs/goety-*.jar` ✓）⇒
-     * 直接写类名会给"没装诡厄"的整合包埋 NoClassDefFoundError 的雷 ✗（§801 的坑 ✓）
-     * ⇒ 反射 + {@code isLoaded("goety")} 守卫 ✓ 装没装都安全 ✓。
-     * <p>⚠ **会改玩家在诡厄里的进度**（研究是诡厄的进度数据 ✓）—— 仅在用户明确要求
-     * "吞噬黑暗秘典就该有回魂能力"之后才做 ✓；要撤销：删掉调用处那段即可 ✓
-     * （或游戏内用诡厄自己的 `/goety` 命令增删研究 ✓）。
-     */
-    private static void grantGoetyForbidden(ServerPlayer player) {
-        if (!net.minecraftforge.fml.ModList.get().isLoaded("goety")) return;
-        try {
-            Class<?> seHelper = Class.forName("com.Polarice3.Goety.utils.SEHelper");
-            Class<?> researchList = Class.forName("com.Polarice3.Goety.common.research.ResearchList");
-            Class<?> researchCls = Class.forName("com.Polarice3.Goety.common.research.Research");
-            Object forbidden = researchList.getField("FORBIDDEN").get(null);
-            java.lang.reflect.Method add = seHelper.getMethod("addResearch",
-                    net.minecraft.world.entity.player.Player.class, researchCls);
-            Object result = add.invoke(null, player, forbidden);
-            LOG.info("[百宝书] §910i 已授予诡厄研究 FORBIDDEN（返回={}）", result);
-
-            player.displayClientMessage(
-                    Component.translatable("message.tinkersnewlife.compendium.goety_research"), true);
-        } catch (Throwable t) {
-            LOG.warn("[百宝书] §910i 授予诡厄研究失败（跳过）：{}", t.toString());
-        }
-    }
-
     private static boolean matchesItem(ItemStack stack, @Nullable ResourceLocation want) {
         return want != null && want.equals(ForgeRegistries.ITEMS.getKey(stack.getItem()));
     }
@@ -170,17 +141,6 @@ public class PacketCompendiumAbsorb {
                 first = CompendiumItem.absorb(compendium, packet.bookId, displayName, packet.itemId);
                 total = CompendiumItem.absorbedCount(compendium);
                 if (packet.source == SOURCE_CARRIED) menu.setCarried(compendium);
-            }
-
-            // ③' §910i 诡厄「黑暗秘典」：回魂相关能力在诡厄里是**研究(research)**解锁的 ✓
-            //   已核对：诡厄里**没有**"背包里放着就回魂"的判定 ✗
-            //   （全 jar 扫描：没有任何类读 `patchouli:book` ✓；SoulEnergyEvents#onPlayerTick 也不扫背包 ✓）；
-            //   研究是**卷轴**（ForbiddenScroll 等）的 use() 发的 ✓，
-            //   而 onPlayerTick 里 `hasResearch(FORBIDDEN) ⇒ 自动补 BURIED` ✓
-            //   ⇒ 用户口径是"吞了这本书就该有那个能力" ✓ ⇒ 这里直接授予 **FORBIDDEN** ✓
-            //   ⚠ 这会改玩家在诡厄里的进度 ✓ —— 是用户明确要求后才做的 ✓ 不想要删掉本段即可 ✓
-            if ("goety:black_book".equals(packet.bookId)) {
-                grantGoetyForbidden(player);
             }
 
             // ③ 扣掉这本书 ✓
