@@ -52,13 +52,13 @@ public final class SeaKingsPowerHandler {
     private static final UUID MOVE_SPEED_UUID = UUID.fromString("2c8d6b40-1f9a-4e73-9d55-8b1e7a4c3f60");
 
     /** 这一件是不是"带海王之力的匠魂工具" ✓（{@code ToolHelper} 会挡掉损坏态 ✓） */
-    private static boolean hasTrait(ItemStack stack) {
+    public static boolean hasTrait(ItemStack stack) {
         ToolStack tool = ToolHelper.getToolStack(stack);
         return tool != null && tool.getModifiers().getLevel(SEA_KINGS_POWER) > 0;
     }
 
     /** 主手 ✓ 或四件盔甲任意一件 ✓ */
-    private static boolean wearsOrHolds(Player player) {
+    public static boolean wearsOrHolds(Player player) {
         if (hasTrait(player.getMainHandItem())) return true;
         for (EquipmentSlot slot : new EquipmentSlot[]{
                 EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET}) {

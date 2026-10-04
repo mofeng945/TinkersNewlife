@@ -7,6 +7,11 @@ import slimeknights.tconstruct.library.modifiers.hook.combat.MeleeDamageModifier
 import slimeknights.tconstruct.library.module.ModuleHookMap;
 import slimeknights.tconstruct.library.tools.context.ToolAttackContext;
 import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
+import slimeknights.tconstruct.library.modifiers.hook.ranged.ProjectileLaunchModifierHook;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.projectile.AbstractArrow;
+import slimeknights.tconstruct.library.tools.nbt.ModDataNBT;
 
 /**
  * 词条·<b>海王之力</b>（§960 规格 · 无等级 ✓ · 水产养殖2 联动材料「海王金属」自带 ✓）。
@@ -22,7 +27,7 @@ import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
  *
  * <p>本类照 {@link SoldiersSaberModifier} 的先例：注册标记 ＋ 少量钩子 ✓ 复杂逻辑放 handler ✓。
  */
-public class SeaKingsPowerModifier extends BaseCombatModifier implements MeleeDamageModifierHook {
+public class SeaKingsPowerModifier extends BaseCombatModifier implements MeleeDamageModifierHook, ProjectileLaunchModifierHook {
 
     /** 水中/雨中时的近战伤害倍率加成（用户口径 +60% ✓） */
     private static final float WATER_DAMAGE_BONUS = 0.6F;
@@ -34,6 +39,7 @@ public class SeaKingsPowerModifier extends BaseCombatModifier implements MeleeDa
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         super.registerHooks(hookBuilder);
         hookBuilder.addHook(this, ModifierHooks.MELEE_DAMAGE);
+        hookBuilder.addHook(this, ModifierHooks.PROJECTILE_LAUNCH);
     }
 
     /** 水中或雨中 ⇒ 近战伤害 +60% ✓（判据用原版 isInWaterOrRain ✓） */
@@ -44,5 +50,20 @@ public class SeaKingsPowerModifier extends BaseCombatModifier implements MeleeDa
                 context == null ? null : context.getAttacker();
         if (attacker == null || !attacker.isInWaterOrRain()) return damage;
         return damage * (1.0F + WATER_DAMAGE_BONUS);
+    }
+
+    /**
+     * 远程：有海王之力的武器射出的弹射物 ⇒ <b>打上标记</b> ✓
+     * （随后由 {@code AbstractArrowSeaKingsMixin} 让它在水中不减速 ✓）。
+     *
+     * <p>⚠ 参数表以**编译器报错**为准 ✓（7 参数重载才是抽象的那个 ✓ —— 我原先照反编译猜的 8 参数版本 ✗
+     * 被 javac 直接指出 "does not override abstract method onProjectileLaunch(IToolStackView,ModifierEntry,
+     * LivingEntity,Projectile,AbstractArrow,ModDataNBT,boolean)" ✓）。
+     */
+    @Override
+    public void onProjectileLaunch(IToolStackView tool, ModifierEntry modifier, LivingEntity shooter,
+                                   Projectile projectile, AbstractArrow arrow, ModDataNBT persistentData,
+                                   boolean primary) {
+        if (arrow != null) arrow.getPersistentData().putBoolean("tnl_sea_kings", true);
     }
 }
