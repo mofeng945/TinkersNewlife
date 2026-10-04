@@ -1,3 +1,7 @@
 {
-  "parent": "minecraft:item/book"
+  "_comment": "§940 用户手绘贴图（桌面 texture.png）⇒ 走 item/generated + layer0 指向自家贴图（原来只继承 minecraft:item/book）。",
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "tinkersnewlife:item/patchouli_compendium"
+  }
 }
