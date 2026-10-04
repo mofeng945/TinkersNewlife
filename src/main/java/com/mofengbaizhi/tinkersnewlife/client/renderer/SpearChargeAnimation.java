@@ -182,6 +182,14 @@ public final class SpearChargeAnimation {
     // ============================================================
 
     /**
+     * §930 第三人称「**矛尖前转**」的额外幅度（度 ✓）—— 越大矛尖越往前压 ✓。
+     *
+     * <p>用户口径：「**我是说你把第三人称的矛尖前转幅度再写大一点就好，没必要写配置文件**」✓
+     * ⇒ 撤掉 §929 那套 config 覆盖文件 ✗，直接把这一个数调大 ✓（实机看着不对就报"再大/小一点"✓）。
+     */
+    private static final float THIRD_PERSON_FORWARD_DEG = 40.0F;
+
+    /**
      * 让手臂摆成"端矛"的样子 ✓（原版还叠了 sway/raise 的细微抖动 ✓ 我们保留同一套公式 ✓）。
      *
      * @param armRotX 手臂 xRot（弧度 ✓ 用 float[] 传出，调用方写回模型 ✓）
@@ -196,6 +204,10 @@ public final class SpearChargeAnimation {
         float xRot = -1.5707964F + headRotX + 0.8F;
         yRot = (float) Math.PI / 180.0F * Mth.clamp(57.295776F * yRot, -60.0F, 60.0F);
         xRot = (float) Math.PI / 180.0F * Mth.clamp(57.295776F * xRot, -120.0F, 30.0F);
+        // ★ §930：把矛尖再往**前**压 ✓（用户口径：「**把第三人称的矛尖前转幅度再写大一点**」✓）
+        //   ⚠ 放在 clamp **之后** ✓ —— 否则会被上面 −120° 的上限吃掉 ✗（那样写多大都没用 ✗）。
+        //   负值 = 手臂再往前抬/往前压（实体模型里 xRot 负 = 往身前抬 ✓）⇒ 矛尖跟着往前 ✓。
+        xRot -= (float) Math.PI / 180.0F * THIRD_PERSON_FORWARD_DEG;
         if (timeHeld > 0.0F) {
             UseParams p = UseParams.at(timeHeld);
             yRot += (float) (-invert) * p.swayScaleFast() * ((float) Math.PI / 180.0F) * p.swayIntensity();

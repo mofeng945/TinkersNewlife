@@ -297,11 +297,8 @@ public final class AnimationClip {
     public static AnimationClip spearFirstPerson() {
         if (!spearTried) {
             spearTried = true;
-            // ★ §929：**优先读游戏目录里那份**（config/tinkersnewlife/spear_animation.json ✓）
-            //   —— 用户可以自己改、游戏内 F3+T 生效 ✓ 不用等我 build + deploy ✓
-            //   ⚠ 那份存在时会**压住** jar 里的 ✓；调好后删掉它（或把数值告诉我，我写回 jar ✓）。
-            spearCache = loadFromConfigDir();
-            if (spearCache != null) return spearCache;
+            // ⚠ §930：§929 那套「config/tinkersnewlife/spear_animation.json 外部覆盖」**已撤掉** ✗
+            //   （用户口径：「**没必要写配置文件**」✓）⇒ 回到只读 jar 里的资源 ✓ 保持单一来源 ✓。
             for (ResourceLocation id : SPEAR_CANDIDATES) {
                 spearCache = load(id);
                 if (spearCache != null) return spearCache;
@@ -309,32 +306,6 @@ public final class AnimationClip {
             spearCache = scanForSpear();
         }
         return spearCache;
-    }
-
-    /** §929：外部覆盖文件路径（游戏目录下的 `config/tinkersnewlife/spear_animation.json` ✓） */
-    public static java.nio.file.Path configFilePath() {
-        return net.minecraftforge.fml.loading.FMLPaths.CONFIGDIR.get()
-                .resolve("tinkersnewlife").resolve("spear_animation.json");
-    }
-
-    private static AnimationClip loadFromConfigDir() {
-        try {
-            java.nio.file.Path p = configFilePath();
-            if (!java.nio.file.Files.isRegularFile(p)) return null;
-            try (Reader reader = java.nio.file.Files.newBufferedReader(p, java.nio.charset.StandardCharsets.UTF_8)) {
-                JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
-                if (root.has("animations")) {
-                    return fromBedrock(root, new ResourceLocation("tinkersnewlife", "spear_animation.json"));
-                }
-                float length = root.has("length") ? root.get("length").getAsFloat() : 20.0F;
-                return new AnimationClip(length, readTrack(root.getAsJsonArray("item")),
-                        readTrack(root.getAsJsonArray("arm")), false, Space.nativeSpace());
-            }
-        } catch (Throwable t) {
-            org.slf4j.LoggerFactory.getLogger("TinkersNewlife/Anim")
-                    .warn("[动画] 读 config 覆盖文件失败（改用 jar 里那份）：{}", t.toString());
-            return null;
-        }
     }
 
     /** 兜底：扫 {@code tnl_anim/} 里所有名字带 {@code spear} 的 json ✓（不改名也能生效 ✓） */
