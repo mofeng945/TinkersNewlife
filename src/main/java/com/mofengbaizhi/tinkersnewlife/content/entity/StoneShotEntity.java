@@ -2,9 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.content.entity;
 
 import com.mofengbaizhi.tinkersnewlife.content.ModEntities;
 import com.mofengbaizhi.tinkersnewlife.content.handler.KineticImpactHandler;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -38,8 +36,6 @@ public class StoneShotEntity extends AbstractArrow implements ItemSupplier {
     private ItemStack ammo = ItemStack.EMPTY;
     /** 这一发的"基础动能"（由弹弓的面板伤害决定 ✓） */
     private float impactDamage = 2.0F;
-    /** 滞空目标被拉下来的判定阈值：离地高度小于它就不算"正在滞空"（避免贴地目标也被拉 ✗） */
-    private static final double AIRBORNE_MIN_HEIGHT = 0.6D;
 
     private static final String TAG_AMMO = "Ammo";
     private static final String TAG_IMPACT = "ImpactDamage";
@@ -92,8 +88,11 @@ public class StoneShotEntity extends AbstractArrow implements ItemSupplier {
         // 先判"命中那一刻"是否滞空 —— 原版结算会推动目标，之后再判就不准了 ✓
         boolean airborne = false;
         if (target instanceof LivingEntity living) {
-            airborne = !living.onGround() && !living.isInWater() && !living.onClimbable()
-                    && living.getY() - living.getOnPos().getY() > AIRBORNE_MIN_HEIGHT;
+            // ⚠ §984：**不要**用 getOnPos() 去判"离地高度" —— 飞行生物（幻翼等）的 getOnPos()
+            //    常常就返回它脚下那一格，差值只剩小数部分（≈0.3）⇒ 会被误判成"没滞空" ✗
+            //    （用户实测"打幻翼没反应"正是这个原因 ✓）。离地就按滞空处理 ✓。
+            airborne = !living.onGround() && !living.isInWater() && !living.onClimbable() && !living.isPassenger()
+                    && living.isAlive();
         }
         // ① 普通命中：原版箭矢结算（速度 × 基础伤害 ✓ 创造玩家免疫这一层 ✓ 符合预期 ✓）
         super.onHitEntity(result);
@@ -102,12 +101,4 @@ public class StoneShotEntity extends AbstractArrow implements ItemSupplier {
             KineticImpactHandler.pullDown(living, this.impactDamage);
         }
     }
-
-    /** 本实体用的伤害类型 id（数据包侧 {@code data/tinkersnewlife/damage_type/kinetic.json} ✓） */
-    public static final ResourceLocation KINETIC_ID =
-            new ResourceLocation("tinkersnewlife", "kinetic");
-
-    /** 供外部（如命中时的粒子上报）取用的注册表键（保留给后续扩展 ✓ 当前只有 handler 在用 ✓） */
-    public static final net.minecraft.resources.ResourceKey<net.minecraft.world.damagesource.DamageType> KINETIC_KEY =
-            net.minecraft.resources.ResourceKey.create(Registries.DAMAGE_TYPE, KINETIC_ID);
 }
