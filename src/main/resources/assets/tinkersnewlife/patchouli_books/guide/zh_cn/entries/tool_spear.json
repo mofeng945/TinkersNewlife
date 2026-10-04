@@ -1,0 +1,17 @@
+{
+  "name": "长矛",
+  "category": "tinkersnewlife:tools",
+  "icon": "tinkersnewlife:spear",
+  "sortnum": 9,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:spear",
+      "text": "$(bold)长矛$()$(br2)获取：在$(bold)匠魂工匠站$()打造——$(bold)矛头 + 两个手柄$()。$(br2)用法：$(li)$(bold)右键长按$()蓄力：矛尖抬起、瞄准$(li)松开$(bold)刺出$()：命中造成伤害并附带冲锋位移$(li)蓄力结束后有一段$(bold)收回冷却$()，期间不能再蓄力$(br2)长矛带完整的$(bold)第一人称与第三人称动作$()（抬起、刺出、收回）。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)战斗要点$()$(br2)位移加伤害的组合技：蓄满再放，能在刺中目标的同时把自己推进一段距离，适合$(bold)贴脸起手$()或$(bold)脱离战场$()。$(br2)蓄力越满，突进越远、伤害越高；被贴住时也可以先刺退再拉开。"
+    }
+  ]
+}

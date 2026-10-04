@@ -1,0 +1,17 @@
+{
+  "name": "Spear",
+  "category": "tinkersnewlife:tools",
+  "icon": "tinkersnewlife:spear",
+  "sortnum": 9,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:spear",
+      "text": "$(bold)Spear$()$(br2)How to obtain: build it at the $(bold)Tinker Station$() - $(bold)spear head + two handles$().$(br2)Usage:$(li)$(bold)Hold right-click$() to charge: the tip rises and aims$(li)Release to $(bold)thrust$(): deals damage with a charging lunge$(li)After the charge ends there is a short $(bold)retract cooldown$() before you can charge again$(br2)The spear has full $(bold)first- and third-person animations$() (raise -> thrust -> retract)."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Combat notes$()$(br2)A dash-plus-damage combo: a full charge lets you stab and propel yourself forward at the same time - good for $(bold)engaging$() or $(bold)disengaging$().$(br2)The fuller the charge, the farther the lunge and the higher the damage."
+    }
+  ]
+}

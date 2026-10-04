@@ -1,0 +1,17 @@
+{
+  "name": "西洋剑",
+  "category": "tinkersnewlife:tools",
+  "icon": "tinkersnewlife:rapier",
+  "sortnum": 10,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:rapier",
+      "text": "$(bold)西洋剑$()（移植自匠魂2）$(br2)获取：在$(bold)匠魂工匠站$()打造——$(bold)剑刃 + 手柄 + 十字柄$()。$(br2)特点：$(li)$(bold)攻击低但攻速极快$()（面板攻速 2.5）$(li)$(bold)无视目标护甲$()造成伤害（自带「西洋剑」特性）$(li)$(bold)右键后跳$()：朝视线反方向弹开，并给 0.5 秒无敌帧躲伤害（1 秒冷却）$(li)手持时$(bold)副手盾牌无法使用$()"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)什么时候用$()$(br2)它的强项是$(bold)打高护甲目标$()（重甲怪、穿甲抗性高的 Boss）—— 护甲对它无效，输出几乎不打折。$(br2)后跳既是位移也是保命：被围住时朝空地右键，能一边脱身一边吃掉那 0.5 秒无敌帧。"
+    }
+  ]
+}

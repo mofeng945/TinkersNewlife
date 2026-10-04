@@ -1,0 +1,17 @@
+{
+  "name": "Rapier",
+  "category": "tinkersnewlife:tools",
+  "icon": "tinkersnewlife:rapier",
+  "sortnum": 10,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:rapier",
+      "text": "$(bold)Rapier$() (ported from Tinkers' Construct 2)$(br2)How to obtain: build it at the $(bold)Tinker Station$() - $(bold)blade + tool handle + tough handle$().$(br2)Traits:$(li)$(bold)Low damage, very high attack speed$() (attack speed 2.5)$(li)$(bold)Ignores the target's armor$() (the Rapier trait shown on the tool)$(li)$(bold)Right-click to backstep$(): launch backwards away from where you look, with 0.5 s of invulnerability (1 s cooldown)$(li)While held, your $(bold)offhand shield cannot be used$()"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)When to use it$()$(br2)Its strength is $(bold)armored targets$() - heavy mobs and bosses with damage reduction: armor does nothing against it, so your damage barely drops.$(br2)The backstep doubles as an escape: when surrounded, right-click towards open ground to slip out while eating the invulnerability window."
+    }
+  ]
+}
