@@ -14,11 +14,11 @@
     { "name": "bowstring", "index": 2 }
   ],
   "ammo": {
+    "_comment": "§989 修正：非 large 模型必须用 offset（匠魂 ToolModel 源码：isLarge 才读 small_offset/large_offset，否则 getVec2(ammo, offset) 是必填）。原来照长弓那段抄了 small/large ⇒ JsonSyntaxException ⇒ 整个模型加载失败 ⇒ 紫黑块。",
     "key": "tconstruct:drawback_ammo",
     "flip": true,
     "left": true,
-    "small_offset": [ -3.0, -4.0 ],
-    "large_offset": [ -2.0, -2.0 ]
+    "offset": [ -3.0, -4.0 ]
   },
   "overrides": [
     {
