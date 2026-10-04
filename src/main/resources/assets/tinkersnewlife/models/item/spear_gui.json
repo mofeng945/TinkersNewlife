@@ -1,0 +1,60 @@
+{
+  "_comment": "§938 【物品栏专用模型】—— 靠 ContextModel(applyTransform 按场景切) 在 GUI/FIXED/GROUND 时用它，手持/掉落等仍走 item/spear.json。现在三行 texture 和 spear.json 完全一样，所以外观暂时不变；以后换贴图只改这三行（新 PNG 建议放 textures/item/tool/spear/gui/ 下）。",
+  "parent": "tconstruct:item/base/tall",
+  "textures": {
+    "handle1": "tinkersnewlife:item/tool/spear/handle1",
+    "handle2": "tinkersnewlife:item/tool/spear/handle2",
+    "head": "tinkersnewlife:item/tool/spear/head"
+  },
+  "loader": "tconstruct:tool",
+  "parts": [
+    {
+      "name": "handle1",
+      "index": 1
+    },
+    {
+      "name": "handle2",
+      "index": 2
+    },
+    {
+      "name": "head",
+      "index": 0
+    }
+  ],
+  "display": {
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        -90,
+        55
+      ],
+      "translation": [
+        1.13,
+        3.2,
+        1.13
+      ],
+      "scale": [
+        1.35,
+        1.35,
+        1.35
+      ]
+    },
+    "firstperson_lefthand": {
+      "rotation": [
+        0,
+        90,
+        -55
+      ],
+      "translation": [
+        1.13,
+        3.2,
+        1.13
+      ],
+      "scale": [
+        1.35,
+        1.35,
+        1.35
+      ]
+    }
+  }
+}
