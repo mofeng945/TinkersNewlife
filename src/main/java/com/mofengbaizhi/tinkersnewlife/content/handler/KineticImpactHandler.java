@@ -62,6 +62,12 @@ public final class KineticImpactHandler {
     private static final double PULL_SPEED = 1.4D;
     /** 非玩家额外"直接下移"步长（绕开飞行 AI ✓） */
     private static final double PULL_STEP = 0.5D;
+    /** §992 加码后的**最大下坠速度**（格/tick ✓ 3.0 = 60 格/秒 ⇒ Boss 的爬升 AI 也追不回来 ✓） */
+    private static final double PULL_SPEED_MAX = 3.0D;
+    /** §992 加码后的**最大直接位移**（格/tick ✓ 2.0 ✓ 总位移 ≈5 格/tick ✓） */
+    private static final double PULL_STEP_MAX = 2.0D;
+    /** §992 加码到满所需的 tick 数（40 tick = 2 秒 ✓ 开头仍是"被拽"的手感，之后越来越猛 ✓） */
+    private static final int RAMP_TICKS = 40;
 
     // ---- 虚空下方时：只温和地拽一阵 ----
     /** 温和下拽速度（格/tick ✓ 0.5 ≈ 10 格/秒 ✓） */
@@ -184,10 +190,24 @@ public final class KineticImpactHandler {
         entity.getPersistentData().remove(TAG_GROUND);
     }
 
-    /** 持续施力（{@code hasLand} 决定用力道大小 ✓）＋ 累计下坠格数与 tick 数 ✓ */
+    /**
+     * 持续施力（{@code hasLand} 决定用力道大小 ✓）＋ 累计下坠格数与 tick 数 ✓。
+     *
+     * <p>§992 ⭐ <b>力度随时间递增</b>：凋灵 / 末影龙这类 Boss 的 AI **每 tick 都主动爬升/维持高度** ✗，
+     * 固定 0.5 格/tick 的直接位移会被它们"升回来" ⇒ 实测"拽不太动" ✗
+     * ⇒ 现在按已拽 tick 数**线性加码**（速度 1.4 → {@value #PULL_SPEED_MAX}；
+     * 位移 0.5 → {@value #PULL_STEP_MAX}）✓ ⇒ 几秒后每 tick 位移 2 格以上（≈40+ 格/秒 ✓）AI 追不回来 ✓。
+     */
     private static void keepPulling(LivingEntity entity, boolean hasLand) {
-        double speed = hasLand ? PULL_SPEED : VOID_PULL_SPEED;
-        double step = hasLand ? PULL_STEP : VOID_PULL_STEP;
+        int ticks = entity.getPersistentData().getInt(TAG_TICKS);
+        // ⭐ 加码曲线：每 tick 涨一点，封顶见常量 ✓（虚空分支保持温和，避免把人送进虚空 ✗）
+        double ramp = Math.min(1.0D, ticks / (double) RAMP_TICKS);
+        double speed = hasLand
+                ? PULL_SPEED + (PULL_SPEED_MAX - PULL_SPEED) * ramp
+                : VOID_PULL_SPEED;
+        double step = hasLand
+                ? PULL_STEP + (PULL_STEP_MAX - PULL_STEP) * ramp
+                : VOID_PULL_STEP;
 
         entity.setDeltaMovement(entity.getDeltaMovement().x * HORIZONTAL_DAMP, -speed,
                 entity.getDeltaMovement().z * HORIZONTAL_DAMP);
