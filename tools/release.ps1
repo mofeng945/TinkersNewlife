@@ -37,6 +37,11 @@ if (-not $m.Success) { Write-Host '错误: gradle.properties 里找不到 mod_ve
 $version = $m.Groups[1].Value.Trim()
 Write-Host ("当前版本: " + $version) -ForegroundColor Green
 $changelog = Join-Path $repo "CHANGELOG-$version-en.md"
+# §995 兜底：也认 docs/ 下的同名文件（历史上 §867 起曾放在 docs/ ⇒ 那时上传的更新说明是空的 ✗）
+if (-not (Test-Path $changelog)) {
+    $alt = Join-Path $repo "docs/CHANGELOG-$version-en.md"
+    if (Test-Path $alt) { $changelog = $alt }
+}
 if (Test-Path $changelog) {
     Write-Host ("更新说明: CHANGELOG-$version-en.md（" + (Get-Item $changelog).Length + " 字节）")
 } else {
