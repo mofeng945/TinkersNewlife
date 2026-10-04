@@ -21,6 +21,17 @@
     }
   ],
   "display": {
+    "_comment_third": "§931 第三人称：让矛尖指向前方（原来只能朝上）。值 = 继承 forge:item/default-tool 的第三个人称显示变换，只把 X 从 0 改成 -90（在贴图平面外俯仰）。方向反了就把两个 -90 改成 +90。",
+    "thirdperson_righthand": {
+      "rotation": [-90, -90, 55],
+      "translation": [0, 4.0, 0.5],
+      "scale": [0.85, 0.85, 0.85]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [-90, 90, -55],
+      "translation": [0, 4.0, 0.5],
+      "scale": [0.85, 0.85, 0.85]
+    },
     "firstperson_righthand": {
       "rotation": [
         0,
