@@ -88,9 +88,6 @@ public class ModCreativeTabs {
                                 output.accept(ModFluids.IMPURE_INK.bucket.get());
                                 output.accept(ModFluids.MOLTEN_DURANDAL.bucket.get());
                                 output.accept(ModFluids.CURSE_RESIDUE.bucket.get());
-                                // §977 熔融海王金属：我方「原生」流体（ModFluids 里无 mod 门控、桶常驻）⇒ 走原生字段惯例
-                                //      可熔炼来源（aquaculture:neptunium_ingot）与材料本身由 forge:mod_loaded aquaculture 门控
-                                output.accept(ModFluids.MOLTEN_NEPTUNIUM.bucket.get());
                                 // 冰火传说组：熔融龙钢×3 + 龙血×3 + 悚怖×2
                                 acceptItemIfPresent(output, "molten_dragonsteel_fire_bucket");
                                 acceptItemIfPresent(output, "molten_dragonsteel_ice_bucket");
@@ -110,6 +107,9 @@ public class ModCreativeTabs {
                                 // 诡厄巫法·阶梯组：熔融虚空金属（§725 加的流体；虚空金属锭 1 锭 = 90 mB）
                                 // —— §730 用户问「流体加没加创造物品栏」时发现漏了，补上 ✓
                                 acceptItemIfPresent(output, "molten_void_metal_bucket");
+                                // 水产养殖2组：熔融海王金属（§978 起整组门控 aquaculture —— 未装水产时流体/FluidType/方块/桶
+                                // 全都不注册，故这里也按注册名取，取不到即跳过）
+                                acceptItemIfPresent(output, "molten_neptunium_bucket");
         // 铁魔法（irons_spellbooks）联动流体桶：原初受火遗魂 / 熔融奥铁 / 神圣灵液 /
         // 灼热之冰 / 液态奥术 / 流体灰烬 / 熔融炽金（未安装铁魔法时这些物品不存在，自动跳过）
         acceptItemIfPresent(output, "primordial_fire_soul_bucket");

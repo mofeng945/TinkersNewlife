@@ -5,5 +5,11 @@
     "amount": 90
   },
   "temperature": 1300,
-  "output": "tinkersnewlife:neptunium"
+  "output": "tinkersnewlife:neptunium",
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "aquaculture"
+    }
+  ]
 }

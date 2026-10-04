@@ -16,7 +16,7 @@ import net.minecraftforge.registries.DeferredRegister;
  * 它们按"联动注册标准写法"放在 {@code integration/<modid>/} 里，与对应模组同生共死
  * （模组不在场 → 流体/FluidType/液体方块/桶整组不注册）。见
  * {@code integration.iceandfire.IceAndFireFluids} / {@code integration.goety.GoetyFluids} /
- * {@code integration.goety_revelation.GoetyRevelationFluids}。
+ * {@code integration.goety_revelation.GoetyRevelationFluids} / {@code integration.aquaculture.AquacultureFluids}。
  */
 public class ModFluids {
 
@@ -78,11 +78,6 @@ public class ModFluids {
             2000, 10000, 1500, 0xFFFFD700,  // 金黄色
 
             FluidRegistrar.lavaProps(MapColor.COLOR_ORANGE));
-
-    /** 熔融海王金属（§965 水产养殖2 联动：熔炼 aquaculture:neptunium_ingot 得到） */
-    public static final FluidRegistrar.FluidEntry MOLTEN_NEPTUNIUM = entry("molten_neptunium",
-            2000, 10000, 1500, 0xFF31A988,  // 取自水产海王锭贴图实提 #31A988 ✓ 与材料/特性色统一
-            FluidRegistrar.lavaProps(MapColor.COLOR_CYAN));
 
     /**
      * 咒力残秽（古代咒术残卷熔炼所得，1 份残卷 = 1 mb）：
