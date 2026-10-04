@@ -5,7 +5,7 @@ import com.mofengbaizhi.tinkersnewlife.content.item.CompendiumItem;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModList;
@@ -16,29 +16,33 @@ import org.slf4j.LoggerFactory;
 import java.util.Set;
 
 /**
- * <b>帕秋莉的百宝书 —— 继承"无视七咒减伤"</b>（§910n）。
+ * <b>帕秋莉的百宝书 —— 继承"无视七咒减伤"</b>（§910n / §910o）。
  *
  * <p>用户口径：「**按理来说应当能无视七咒的伤害减半**」＋「**我是说启示之证和倒转之启他们的效果本来就带着**」✓
- * —— 用户是对的 ✓，而且我把证据挖出来了。
  *
  * <h3>神秘遗物自己的规则（反编译 {@code EnigmaticEventHandler#onLivingHurt}，偏移 1880~1957 ✓）</h3>
  * <pre>
  *   Item held = attacker.getMainHandItem().getItem();
- *   boolean exempt = held == EnigmaticItems.THE_TWIST          // 倒转之启
- *                 || held == EnigmaticItems.THE_INFINITUM      // 无止之言
- *                 || held == EnigmaticItems.ELDRITCH_PAN;      // 邪术平底锅
+ *   boolean exempt = held == THE_TWIST || held == THE_INFINITUM || held == ELDRITCH_PAN;
  *   if (!exempt) event.setAmount(amount * CursedRing.monsterDamageDebuff.getValue().asModifierInverted());
  * </pre>
- * ⇒ **这三件是它自己显式豁免的** ✓（注意：启示之证 {@code THE_ACKNOWLEDGMENT} **不在**名单里 ✗）。
+ * ⇒ 这三件是它自己显式豁免的 ✓（**启示之证不在名单里** ✗）。
  *
- * <h3>这里的做法：照抄它的规则，但把"拿着某件物品"换成"百宝书吞过某件物品"</h3>
+ * <h3>§910o 为什么从 LivingHurtEvent 改到 LivingDamageEvent</h3>
+ * 用户实测"没生效" ✗，而日志给出关键线索：满蓄力下实时攻击力 **5.31**（= 9.0 × ≈0.59 ✓）
+ * ⇒ **它的减伤确实生效了** ✓，但本处理器那行日志没出现 ✗ ⇒ 说明补回**没走到** ✓。
+ * 最可能的原因是**事件顺序**：两边的优先级若是同级，先后就取决于**注册顺序** ✗ 不可靠 ✗。
+ * {@link LivingDamageEvent} 在**所有** {@code LivingHurtEvent} 处理完之后才触发 ✓
+ * ⇒ 在这里补回**必定在它减伤之后** ✓（减伤是乘法 ⇒ 与护甲减免可交换 ✓ 补回比例不变 ✓）。
+ *
+ * <h3>做法</h3>
  * <ul>
- *   <li>挂在 {@link EventPriority#LOWEST} ✓ ⇒ 跑在神秘遗物**之后** ✓，
- *       此时 {@code getAmount()} 已是被减过的值 ✓ ⇒ 除掉那个系数即还原 ✓；</li>
- *   <li>系数**直接读它自己的配置**（反射：{@code CursedRing.monsterDamageDebuff → getValue() →
- *       asModifierInverted()} ✓ 三个调用名全部来自上面那段字节码 ✓）——**不猜、不写死** ✓；</li>
- *   <li>反射失败时退回 {@link #FALLBACK_FACTOR}（2.0 = 常见的一半 ✓）并打日志 ✓；</li>
- *   <li>条件：玩家主手是百宝书 ✓ ＋ 百宝书**吞过上面三件之一** ✓ ＋ 玩家是受七咒之人 ✓ ＋ 目标是怪物 ✓。</li>
+ *   <li>系数**直接读它自己的配置**（反射 {@code CursedRing.monsterDamageDebuff → getValue() →
+ *       asModifierInverted()} ✓ 调用名全部来自上面那段字节码 ✓）—— 不猜、不写死 ✓；
+ *       读不到时退回 {@link #FALLBACK_FACTOR}（2.0 ✓）并打日志 ✓；</li>
+ *   <li>条件：主手是百宝书 ✓ ＋ 百宝书**吞过那三件豁免物品之一** ✓ ＋ 玩家是受七咒之人 ✓ ＋ 目标是怪物 ✓；</li>
+ *   <li>**条件检查也打日志**（§910o ✓）：只打一次，把四个条件的真假列出来 ✓
+ *       ⇒ 万一还不生效，一眼能看出卡在哪个条件 ✓（不再"没生效却无线索" ✗）。</li>
  * </ul>
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID)
@@ -64,7 +68,7 @@ public final class CompendiumCombatHandler {
     /**
      * 反射读神秘遗物第四重咒的实际系数（它减伤时乘的那个数 ✓）。
      *
-     * @return 它乘的系数（例如 0.5 ✓）；读不到返回 {@code -1}
+     * @return 它乘的系数（例如 0.59 ✓）；读不到返回 {@code -1}
      */
     private static float readCurseFactor() {
         if (!ModList.get().isLoaded("enigmaticlegacy")) return -1.0F;
@@ -89,24 +93,30 @@ public final class CompendiumCombatHandler {
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void onLivingHurt(LivingHurtEvent event) {
+    public static void onLivingDamage(LivingDamageEvent event) {
         if (event.getEntity().level().isClientSide) return;
         if (!(event.getSource().getEntity() instanceof ServerPlayer player)) return;
 
         ItemStack held = player.getMainHandItem();
-        if (!(held.getItem() instanceof CompendiumItem)) return;
-        if (!hasExemptItem(held)) return;                                 // 没吞过那三件 ⇒ 不插手 ✓
-        if (!(event.getEntity() instanceof Monster)) return;              // "对怪物的伤害" ✓
-        if (!CompendiumItem.isTheCursedOne(player)) return;               // 没受七咒 ⇒ 本来就没减 ✓
+        boolean isCompendium = held.getItem() instanceof CompendiumItem;
+        boolean exemptHeld = isCompendium && hasExemptItem(held);
+        boolean isMonster = event.getEntity() instanceof Monster;
+        boolean cursed = isCompendium && CompendiumItem.isTheCursedOne(player);
+
+        if (isCompendium && !tnl$logged) {
+            tnl$logged = true;
+            LOG.info("[百宝书] §910o 条件检查：主手百宝书={} 吞过豁免物品={} 目标是怪物={} 是受七咒之人={} ⇒ {}",
+                    true, exemptHeld, isMonster, cursed,
+                    (exemptHeld && isMonster && cursed) ? "补回" : "不补（看前面哪项=false ✗）");
+        }
+
+        if (!exemptHeld || !isMonster || !cursed) return;
 
         float applied = readCurseFactor();
         float factor = applied > 0.0F && applied < 1.0F ? applied : 1.0F / FALLBACK_FACTOR;
         float before = event.getAmount();
         event.setAmount(before / factor);                                 // 除掉它减掉的那一份 ⇒ 还原 ✓
-        if (!tnl$logged) {
-            tnl$logged = true;
-            LOG.info("[百宝书] §910n 七咒减伤豁免生效：{} → {}（神秘遗物的系数={}；兜底={}）",
-                    before, event.getAmount(), applied, FALLBACK_FACTOR);
-        }
+        LOG.info("[百宝书] §910o 七咒减伤豁免生效：{} → {}（神秘遗物的系数={}；兜底={}）",
+                before, event.getAmount(), applied, FALLBACK_FACTOR);
     }
 }
