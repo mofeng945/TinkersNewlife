@@ -101,6 +101,8 @@ public final class AnimationClip {
     private final float length;
     private final List<Key> item;
     private final List<Key> arm;
+    /** §934：**第三人称**的物品轨道 ✓（骨骼名 `item_third` ✓ 和第一人称的 `item` 分开 ✓） */
+    private final List<Key> itemThird;
     private final boolean loop;
     private final Space space;
 
@@ -248,10 +250,12 @@ public final class AnimationClip {
         }
     }
 
-    private AnimationClip(float length, List<Key> item, List<Key> arm, boolean loop, Space space) {
+    private AnimationClip(float length, List<Key> item, List<Key> arm, List<Key> itemThird,
+                          boolean loop, Space space) {
         this.length = length;
         this.item = item;
         this.arm = arm;
+        this.itemThird = itemThird;
         this.loop = loop;
         this.space = space;
     }
@@ -349,7 +353,8 @@ public final class AnimationClip {
                 if (root.has("animations")) return fromBedrock(root, id);   // ★ 基岩 / Blockbench ✓
                 float length = root.has("length") ? root.get("length").getAsFloat() : 20.0F;
                 return new AnimationClip(length, readTrack(root.getAsJsonArray("item")),
-                        readTrack(root.getAsJsonArray("arm")), false, Space.nativeSpace());
+                        readTrack(root.getAsJsonArray("arm")),
+                        readTrack(root.getAsJsonArray("item_third")), false, Space.nativeSpace());
             }
         } catch (Throwable t) {
             org.slf4j.LoggerFactory.getLogger("TinkersNewlife/Anim")
@@ -417,23 +422,26 @@ public final class AnimationClip {
 
         List<Key> item = new ArrayList<>();
         List<Key> arm = new ArrayList<>();
+        List<Key> itemThird = new ArrayList<>();
         JsonObject bones = anim.getAsJsonObject("bones");
         if (bones != null) {
             if (bones.has("item")) item = bedrockTrack(bones.getAsJsonObject("item"), posScale);
             if (bones.has("arm")) arm = bedrockTrack(bones.getAsJsonObject("arm"), posScale);
+            if (bones.has("item_third")) itemThird = bedrockTrack(bones.getAsJsonObject("item_third"), posScale);
         }
         // animation_length 缺失 ⇒ 用最大关键帧时间兜底 ✓
         if (!anim.has("animation_length")) {
             for (Key k : item) length = Math.max(length, k.time());
             for (Key k : arm) length = Math.max(length, k.time());
+            for (Key k : itemThird) length = Math.max(length, k.time());
         }
         // 一条轨道都没有 ⇒ 当读失败 ✓（免得"文件在但没效果"让人困惑 ✓ 日志里会有一行 warn ✓）
-        if (item.isEmpty() && arm.isEmpty()) {
+        if (item.isEmpty() && arm.isEmpty() && itemThird.isEmpty()) {
             org.slf4j.LoggerFactory.getLogger("TinkersNewlife/Anim")
-                    .warn("[动画] {} 是基岩格式但没找到 item/arm 组（组名必须叫 item / arm）", id);
+                    .warn("[动画] {} 是基岩格式但没找到 item/arm/item_third 组（组名必须叫这几个）", id);
             return null;
         }
-        return new AnimationClip(length, item, arm, loop, Space.bedrock(anim, root));
+        return new AnimationClip(length, item, arm, itemThird, loop, Space.bedrock(anim, root));
     }
 
     /** 一个文件里可能有多条动画 ✓（Blockbench 一个工程能存好几条 ✓）⇒ 按文件名挑 ✓ 挑不到就用第一条 ✓ */
@@ -557,6 +565,36 @@ public final class AnimationClip {
         return m < 0.0F ? m + length : m;
     }
 
+    /** §934：文件里有没有写第三人称物品轨道（`item_third` ✓）；没写 ⇒ 调用方**什么都不做** ✓（待机/原版 ✓） */
+    public boolean hasItemThird() {
+        return !itemThird.isEmpty();
+    }
+
+    /**
+     * §934：把这一帧套到**第三人称手里的物品**上 ✓。
+     *
+     * <p>口径与 {@link #applyItem} 完全一致 ✓（同一套轴向取反 ✓ 同一套枢轴补偿 ✓
+     * 同样的 {@code M·R·M⁻¹} 共轭 ✓），只有两点不同：
+     * <ul>
+     *   <li>用的是 {@code item_third} 轨道 ✓（骨骼名固定 ✓ 和第一人称的 `item` 分开 ✓）；</li>
+     *   <li>**不吃** `_tnl_offset` / `_tnl_scale` ✓ —— 那两个是**第一人称屏幕空间**的微调旋钮 ✗
+     *       （第三人称不在屏幕上"摆位置" ✓）。</li>
+     * </ul>
+     *
+     * @param displayTransform 该物品**第三人称**显示变换矩阵 ✓（{#link Space} 里的 {@code M} ✓）
+     */
+    public void applyItemThird(PoseStack pose, float time, HumanoidArm arm, Matrix4f displayTransform) {
+        PoseStack local = new PoseStack();
+        applyLocal(local, itemThird, wrap(time), arm);
+        Matrix4f r = new Matrix4f(local.last().pose());
+        if (space.modelSpace && displayTransform != null) {
+            Matrix4f p = new Matrix4f(displayTransform).mul(r).mul(new Matrix4f(displayTransform).invert());
+            pose.last().pose().mul(p);
+        } else {
+            pose.last().pose().mul(r);
+        }
+    }
+
     /**
      * 把这一帧套到**物品/手**的 PoseStack 上 ✓。
      *
@@ -577,7 +615,7 @@ public final class AnimationClip {
             pose.translate((double) off[0], (double) off[1], (double) off[2]);
         }
         PoseStack local = new PoseStack();
-        applyLocal(local, wrap(time), arm);
+        applyLocal(local, item, wrap(time), arm);
         Matrix4f r = new Matrix4f(local.last().pose());
         if (space.modelSpace && displayTransform != null) {
             // §918：P = M · R · M⁻¹ ⇒ 动画作用在**物品模型自己的坐标系**里 ✓（和 Blockbench 预览一致 ✓）
@@ -589,11 +627,11 @@ public final class AnimationClip {
     }
 
     /** 在"动画自己的空间"里算出这一帧的矩阵 ✓（含各轴取反 ✓ 见 {@link Space} ✓） */
-    private void applyLocal(PoseStack pose, float t, HumanoidArm arm) {
+    private void applyLocal(PoseStack pose, List<Key> track, float t, HumanoidArm arm) {
         int invert = arm == HumanoidArm.RIGHT ? 1 : -1;
-        float[] move = sample(item, t, 0);
-        float[] rot = sample(item, t, 1);
-        float[] scale = sample(item, t, 2);
+        float[] move = sample(track, t, 0);
+        float[] rot = sample(track, t, 1);
+        float[] scale = sample(track, t, 2);
         if (move != null) {
             float mx = move[0] * (space.flipPosX ? -1.0F : 1.0F);
             float my = move[1] * (space.flipPosY ? -1.0F : 1.0F);

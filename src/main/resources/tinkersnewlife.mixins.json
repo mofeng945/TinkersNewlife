@@ -30,6 +30,7 @@
     "MantleFluidShaderMixin",
     "SpearChargeSlowdownMixin",
     "SpearThirdPersonPoseMixin",
+    "SpearThirdPersonItemMixin",
     "SlashBladeRenderOptMixin"
   ],
   "injectors": {
