@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * <b>鞭子格挡 / 完美格挡</b>（§1058～§1064）—— 用户口径（2026-10-05）：
+ * <b>鞭子格挡 / 完美格挡</b>（§1058～§1066）—— 用户口径（2026-10-05）：
  * <blockquote>
  * 「<b>右键改为收回没有收回的鞭身并开启格挡，如果在开启格挡前后1s内受到攻击，判定为完美格挡并挥鞭将所有伤害反射出去，
  * 自身不受任何伤害。否则格挡时受到的伤害只会被减免40%</b>」
@@ -37,10 +37,13 @@ import java.util.UUID;
  * <blockquote>
  * 「<b>格挡动画是举盾动画，不是举三叉戟动画</b>」＋「<b>格挡一次伤害会正常消耗耐久，挥鞭也会</b>」
  * </blockquote>
+ * <blockquote>
+ * 「<b>给右键格挡技能增加类似西洋剑后跳的冷却，触发完美格挡后冷却2s，否则松手后冷却1s</b>」
+ * </blockquote>
  *
  * <h2>实现要点</h2>
  * <ol>
- *   <li><b>格挡状态</b> ＝ "正举着鞭子"（{@link Player#isUsingItem()} ＋ 手持鞭 ＋ 未被松手锁挡住 ✓）——
+ *   <li><b>格挡状态</b> ＝ "正举着鞭子"（{@link Player#isUsingItem()} ＋ 手持鞭 ＋ 未被松手锁/冷却挡住 ✓）——
  *       <b>姿势用 {@code UseAnim.BLOCK}（举盾 ✓ 用户口径 §1060 ✓）</b>；
  *       但原版 {@code LivingEntity#isBlocking()} **只看使用动画** ✗ ⇒ 会被当成盾牌**全额免伤** ✗
  *       ⇒ 由 {@link #onShieldBlock} **取消原版那次盾牌结算** ✓，伤害与耐久都改由本类接管 ✓。</li>
@@ -54,13 +57,16 @@ import java.util.UUID;
  *   <li><b>普通格挡</b> ⇒ 只减免 {@link #BLOCK_REDUCTION}（40% ✓）⇒ 玩家只吃 60% ✓。</li>
  *   <li><b>§1059 完美格挡后必须松手</b> ✓：完美格挡一旦生效就 {@link #endGuard} ⇒
  *       <b>立刻解除 use 效果</b> ✓ ＋ 上"松手锁" ✓；锁住期间每次 use 尝试都会续锁
- *       （{@link #noteBlockAttempt} ✓）⇒ <b>一直按住右键是举不起盾的</b> ✓；
- *       松开后 8 tick（0.4 秒）锁过期 ✓ ⇒ 再按即可重新举盾 ✓。</li>
- *   <li><b>§1061 耐久消耗</b> ✓：每次格挡（普通 ✓ 与完美 ✓）按<b>盾牌口径</b>扣耐久 ✓ ——
- *       {@code 1 + floor(受到的伤害)} ✓（{@link #consumeDurability} ✓）；
- *       挥鞭（左键抽击 ✓）在 {@code WhipItem#onEntitySwing} 里每次扣 1 ✓。</li>
+ *       （{@link #noteBlockAttempt} ✓）⇒ <b>一直按住右键是举不起盾的</b> ✓。</li>
+ *   <li><b>§1061 耐久消耗</b> ✓：每次格挡（普通 ✓ 与完美 ✓）按<b>盾牌口径</b>扣耐久 ✓
+ *       （{@code 1 + floor(受到的伤害)} ✓）；挥鞭每次扣 1 ✓。</li>
  *   <li><b>§1064 鞭痕</b> ✓：反射（＝被鞭子抽中 ✓）时给攻击者叠一层"鞭痕" ✓
  *       （{@link ModEffects#applyWhipWeaken} ✓，每层 −10% 速度与攻击 ✓ 最多 8 层 ✓）。</li>
+ *   <li><b>§1066 冷却</b> ✓（用户口径 ✓，做法照西洋剑后跳 {@code RapierItem#BACKSTEP_COOLDOWN_TICKS} ✓）：
+ *       用原版 {@code ItemCooldowns} ✓ ⇒ <b>HUD 上会显示冷却扫过</b> ✓、冷却期间客户端也不会再发 use ✓、
+ *       本类再自查一次（{@link #canStartBlock} ✓）防绕过 ✓：
+ *       <b>完美格挡 ⇒ {@link #PERFECT_COOLDOWN_TICKS}（2 秒）</b> ✓；
+ *       <b>其它情况 ⇒ 松手时 {@link #RELEASE_COOLDOWN_TICKS}（1 秒）</b> ✓。</li>
  * </ol>
  *
  * <p>⚠ 与 §696 的"无下限完全格挡"等既有机制共存 ✓：本类只在**手持鞭子且正在举着**时介入 ✓，
@@ -71,9 +77,16 @@ public final class WhipBlockHandler {
 
     /** 完美格挡窗口（tick ✓）：<b>0.5 秒</b> ✓（用户口径：「挨打前时间窗改为 0.5s」✓） */
     public static final int PERFECT_WINDOW_TICKS = 10;
+    /** §1066 <b>完美格挡后的冷却</b>（tick ✓）：<b>2 秒</b> ✓（用户口径 ✓） */
+    public static final int PERFECT_COOLDOWN_TICKS = 40;
+    /** §1066 <b>其它情况松手后的冷却</b>（tick ✓）：<b>1 秒</b> ✓（用户口径 ✓） */
+    public static final int RELEASE_COOLDOWN_TICKS = 20;
     /**
      * §1059 完美格挡后"<b>必须松手才能重置</b>"的锁时长（tick ✓，0.4 秒 ✓）——
      * 锁住期间每次 use 尝试都会把锁续上 ✓ ⇒ 只要还按着右键，锁永不过期 ✓（必须松手 ✓）。
+     * <p>（§1066 之后这条与冷却并行 ✓：锁负责"必须松手" ✓，冷却负责"多久能再举" ✓。
+     * 完美格挡的 2 秒冷却在内部 {@code stopUsingItem} 触发的 {@code releaseUsing} 里**不会被 1 秒覆盖** ✓，
+     * 靠 {@link #LAST_PERFECT_TICK} 区分 ✓。）
      */
     public static final int RESET_HOLD_TICKS = 8;
     /** 普通格挡的减伤比例 ✓：40% ⇒ 只吃 60% ✓ */
@@ -86,8 +99,23 @@ public final class WhipBlockHandler {
     private static final Map<UUID, RecentHit> RECENT_HITS = new HashMap<>();
     /** 玩家 uuid → 松手锁到期 tick ✓ */
     private static final Map<UUID, Integer> NEEDS_RELEASE = new HashMap<>();
+    /** 玩家 uuid → 最近一次"触发完美格挡"的 tick ✓（用来避免内部收势把 2 秒冷却覆盖成 1 秒 ✗） */
+    private static final Map<UUID, Integer> LAST_PERFECT_TICK = new HashMap<>();
 
     private WhipBlockHandler() {
+    }
+
+    // ==================== 冷却（§1066，做法照西洋剑后跳 ✓） ====================
+
+    /** 给鞭子上冷却 ✓（原版 {@code ItemCooldowns} ⇒ HUD 会显示扫过 ✓，客户端冷却期内不会再发 use ✓） */
+    private static void applyCooldown(Player player, int ticks) {
+        player.getCooldowns().addCooldown(ModItems.WHIP.get(), ticks);
+    }
+
+    /** 是否刚触发过完美格挡 ✓（用于跳过紧接着那次"松手"的 1 秒冷却 ✓） */
+    private static boolean justPerfect(Player player) {
+        Integer at = LAST_PERFECT_TICK.get(player.getUUID());
+        return at != null && player.tickCount - at <= 5;
     }
 
     // ==================== 松手锁（§1059） ====================
@@ -98,9 +126,13 @@ public final class WhipBlockHandler {
         return until != null && player.tickCount < until;
     }
 
-    /** 能否开始举盾 ✓（完美格挡后必须先松手 ✓） */
+    /** 能否开始举盾 ✓（完美格挡后必须先松手 ✓；冷却期内一律不行 ✓） */
     public static boolean canStartBlock(Player player) {
-        return !isLocked(player);
+        if (isLocked(player)) {
+            return false;
+        }
+        // §1066 冷却自查（客户端本来就不会在冷却期发 use ✓，这里是防绕过 ✓）
+        return !player.getCooldowns().isOnCooldown(ModItems.WHIP.get());
     }
 
     /** 锁住期间的 use 尝试 ⇒ 续锁 ✓（保证"按住不放"永远举不起盾 ✓，必须松手 ✓） */
@@ -153,7 +185,9 @@ public final class WhipBlockHandler {
                 // 完美格挡 ⇒ 自身不受任何伤害 ✓ ＋ 全额反射 ✓ ＋ §1059 解除 use（必须松手重置 ✓）
                 event.setCanceled(true);
                 reflect(player, event.getSource(), incoming);
+                LAST_PERFECT_TICK.put(player.getUUID(), player.tickCount);
                 endGuard(player);
+                applyCooldown(player, PERFECT_COOLDOWN_TICKS);   // §1066 完美格挡 ⇒ 冷却 2 秒 ✓
             } else {
                 // 普通格挡 ⇒ 只减免 40% ✓
                 event.setAmount(incoming * (1.0F - BLOCK_REDUCTION));
@@ -192,7 +226,7 @@ public final class WhipBlockHandler {
      * 右键按下（开启格挡）时调用 ✓ —— "挨打后 {@link #PERFECT_WINDOW_TICKS} tick 内举盾"也算完美格挡 ✓。
      *
      * @return {@code true} ＝ 这次按右键触发了"退款型完美格挡" ✓ ⇒ 调用方<b>不要</b>再举盾 ✓
-     *         （已经 {@link #endGuard} 上锁 ✓，必须松手重置 ✓）
+     *         （已经 {@link #endGuard} 上锁 ✓ 并上了 2 秒冷却 ✓）
      */
     public static boolean onBlockStarted(Player player) {
         RecentHit hit = RECENT_HITS.remove(player.getUUID());
@@ -212,13 +246,23 @@ public final class WhipBlockHandler {
         WhipLashEntity.startLashNow(player);                 // 挥鞭（视觉 ✓）
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.SHIELD_BLOCK, SoundSource.PLAYERS, 1.4F, 0.55F);
+        LAST_PERFECT_TICK.put(player.getUUID(), player.tickCount);
         endGuard(player);                                    // §1059 解除 use ＋ 必须松手重置 ✓
+        applyCooldown(player, PERFECT_COOLDOWN_TICKS);       // §1066 完美格挡 ⇒ 冷却 2 秒 ✓
         return true;
     }
 
-    /** 松开右键（正常结束格挡）时调用 ✓ —— 顺手清掉"最近受击"记录 ✓ */
+    /**
+     * 松开右键（正常结束格挡）时调用 ✓ —— 顺手清掉"最近受击"记录 ✓，
+     * 并按 §1066 上 <b>1 秒</b>冷却 ✓（用户口径：「否则松手后冷却1s」✓）。
+     * <p>⚠ 完美格挡时内部也会 {@code stopUsingItem()} ⇒ 也会走到这里 ✗ ——
+     * 那种情况下 {@link #justPerfect} 为真 ✓ ⇒ <b>不覆盖</b>那 2 秒 ✓。
+     */
     public static void onBlockEnded(Player player) {
         RECENT_HITS.remove(player.getUUID());
+        if (!justPerfect(player)) {
+            applyCooldown(player, RELEASE_COOLDOWN_TICKS);
+        }
     }
 
     // ==================== 内部 ====================

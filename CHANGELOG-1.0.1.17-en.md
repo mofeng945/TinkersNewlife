@@ -170,3 +170,12 @@ by the lash, and by the whip counter-attack from a perfect block. Icons and name
 * Nothing had to be removed from the mining tags - the whip was never in `tconstruct:modifiable/harvest`
   (nor `small`, `aoe` or `interactable/left`). It only carries the weapon tags (durability, weapon,
   multipart, bonus_slots, interactable/right, melee/primary, melee/weapon).
+## Changed (2026-10-05, thirteenth pass - version unchanged)
+
+* The guard now has a cooldown, in the same style as the rapier's backstep: **2 seconds after a perfect
+  block**, and **1 second when you release** the button any other way. It uses the vanilla item cooldown,
+  so the sweep shows on the HUD and the client will not even start a new guard while it runs (the server
+  checks it as well).
+* Detail worth knowing: a perfect block ends the guard internally, which fires the same release callback -
+  without care that would have overwritten the 2 second cooldown with the 1 second one. A short window
+  check now keeps the longer cooldown intact.
