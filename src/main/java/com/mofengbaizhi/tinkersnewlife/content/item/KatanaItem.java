@@ -1,5 +1,6 @@
 package com.mofengbaizhi.tinkersnewlife.content.item;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import net.minecraft.core.BlockPos;
@@ -15,6 +16,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.SlotAccess;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ClickAction;
 import net.minecraft.world.inventory.Slot;
@@ -30,6 +32,7 @@ import static slimeknights.tconstruct.library.tools.item.IModifiable.DEFER_OFFHA
 import static slimeknights.tconstruct.library.tools.item.IModifiable.INDESTRUCTIBLE_ENTITY;
 import static slimeknights.tconstruct.library.tools.item.IModifiable.RARITY;
 import mods.flammpfeil.slashblade.item.ItemSlashBlade;import net.minecraft.world.item.TooltipFlag;
+import mods.flammpfeil.slashblade.item.SwordType;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.item.enchantment.Enchantment;
@@ -63,6 +66,8 @@ import slimeknights.tconstruct.library.tools.definition.module.mining.MiningSpee
 import slimeknights.tconstruct.library.tools.helper.ModifierUtil;
 import slimeknights.tconstruct.library.tools.helper.ToolBuildHandler;
 import slimeknights.tconstruct.library.tools.helper.ToolDamageUtil;
+import slimeknights.tconstruct.library.tools.nbt.StatsNBT;
+import slimeknights.tconstruct.library.tools.stat.ToolStats;
 import slimeknights.tconstruct.library.tools.helper.ToolHarvestLogic;
 import slimeknights.tconstruct.library.tools.helper.TooltipUtil;
 import slimeknights.tconstruct.library.tools.nbt.IModDataView;
@@ -71,9 +76,11 @@ import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 import slimeknights.tconstruct.tools.TinkerToolActions;
 
 import javax.annotation.Nullable;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
@@ -315,15 +322,49 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
     return AttributesModifierHook.getHeldAttributeModifiers(tool, slot);
   }
 
+  /** 原版"基础攻击力"修正的固定 UUID（= 被 protected 挡住、跨包写不了的 {@code Item.BASE_ATTACK_DAMAGE_UUID} ✓） */
+  private static final UUID VANILLA_BASE_ATTACK_DAMAGE = UUID.fromString("CB3F55D3-645C-4F38-A497-9C13A33DB5CF");
+
   @Override
   public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlot slot, ItemStack stack) {
     CompoundTag nbt = stack.getTag();
     if (nbt == null || slot.getType() != Type.HAND) {
       return ImmutableMultimap.of();
     }
-    // §1013：**不再并入本体那份属性**。本体那份是"剑基础值 + 精炼/魂魄加成 + 触及距离"，
-    // 而基础值已经由匠魂面板给出 ✓ ⇒ 并进来就会把攻击力算两遍 ✗（§1011 那一版有这个隐患 ✓ 已撤）。
-    return getAttributeModifiers(ToolStack.from(stack), slot);
+    // §1024 **照抄 TiCEX** ✓：以匠魂面板为底 ✓，再**自己设置 ATTACK_DAMAGE**
+    //   = 面板攻击力 ＋ 精炼加成 − 1 ✓（并处理"刀坏了"的情形 ✓）。
+    //   ★ 这条很关键 ✗：拔刀剑的伤害计算读的就是 ATTACK_DAMAGE 属性
+    //     （§1020 的 KatanaAttackManagerMixin 里就是 `getAttributeValue(ATTACK_DAMAGE)` ✓）
+    //     ⇒ 属性偏 0 就表现为"打了没伤害" ✗（实测症状「打不到怪」✓）。
+    Multimap<Attribute, AttributeModifier> toolMultimap =
+            ArrayListMultimap.create(getAttributeModifiers(ToolStack.from(stack), slot));
+    if (slot == EquipmentSlot.MAINHAND) {
+      stack.getCapability(ItemSlashBlade.BLADESTATE).ifPresent(bladeState -> {
+        StatsNBT stats = ToolStack.from(stack).getStats();
+        EnumSet<SwordType> swordType = SwordType.from(stack);
+
+        float baseAttackModifier = stats.get(ToolStats.ATTACK_DAMAGE);
+        int refine = bladeState.getRefine();
+
+        float attackAmplifier;
+        if (bladeState.isBroken()) {
+          attackAmplifier = -0.5F - baseAttackModifier;
+        } else {
+          float refineFactor = swordType.contains(SwordType.FIERCEREDGE) ? 0.1F : 0.05F;
+          attackAmplifier = (1.0F - (1.0F / (1.0F + (refineFactor * refine)))) * baseAttackModifier;
+        }
+
+        AttributeModifier attack = new AttributeModifier(
+                VANILLA_BASE_ATTACK_DAMAGE,
+                "Weapon modifier",
+                (double) baseAttackModifier + attackAmplifier - 1F,
+                AttributeModifier.Operation.ADDITION
+        );
+        toolMultimap.remove(Attributes.ATTACK_DAMAGE, attack);
+        toolMultimap.put(Attributes.ATTACK_DAMAGE, attack);
+      });
+    }
+    return ImmutableMultimap.copyOf(toolMultimap);
   }
 
   @Override
