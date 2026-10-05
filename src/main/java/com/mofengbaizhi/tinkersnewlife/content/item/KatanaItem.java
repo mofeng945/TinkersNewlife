@@ -299,27 +299,45 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
 
   /* Attacking */
 
+  /**
+   * §1033 复刻本体的「开闸门」握手 ✓（根因见 §1033 备忘）。
+   *
+   * <p>本体 {@code AttackManager.lambda$doMeleeAttack$3} 的写法是
+   * {@code setOnClick(true) → AttackHelper.attack(...) → setOnClick(false)} ✓，
+   * 而 {@code onLeftClickEntity} 的闸门是 {@code filter(state -> !state.onClick())} ✓：
+   * **闸门开 ⇒ 不否决**（伤害走本体结算 ✓）；**闸门关 ⇒ 否决** ✓（挡掉斩击特效每 tick 的重复进入 ✓）。
+   *
+   * <p>实测：这条"开闸门"的路径（客户端真·左键驱动的 {@code doMeleeAttack}）**对这把刀从未启动** ✗
+   * （521 次调用全是重复进入、本体一律返回 true ⇒ 零伤害 ✗、且只有第一段 ✗）
+   * ⇒ 用同样语义自己补一次：真·左键挥动时记"待结算一次" ✓，第一次命中时临时开闸门让本体放行 ✓。
+   */
+  private static final String PENDING_CLICK_KEY = "tnl_katana_pending_click";
+
   @Override
   public boolean onLeftClickEntity(ItemStack stack, Player player, Entity target) {
-    // §1020 **完全按 TiCEX 走通的那条路** ✓：本方法就写成"调本体并原样传递它的返回值" ✓
-    //   —— TiCEX 的 ModifiableSlashBladeItem 正是这样写的 ✓：
-    //     `return stack.getCount() > 1 || this.onEntityInteractLeftClick(...) || super.onLeftClickEntity(stack, player, target);`
-    //
-    // 为什么这次能成立（前五轮为什么不行 ✗ 都记在 §1011–§1019 ✓）：
-    //   · 本体的返回语义有两层含义 ✓：闸门放行时"否决原版那一击"（伤害由本体自己的 AttackManager 结算 ✓），
-    //     闸门挡掉时"照常打" ✓ —— 而这套判定依赖 `_onClick` 开关与本体攻击管线 ✓；
-    //   · 我们此前**没有本体的攻击管线**（伤害无处可来 ✗）⇒ 要么否决＝打不到 ✗、要么不否决＝每刻重复命中 ✗；
-    //   · §1020 补上了三个 mixin ✓（`KatanaAttackHelperMixin`/`KatanaAttackManagerMixin`/`KatanaItemSlashBladeMixin` ✓）
-    //     ⇒ 本体的攻击管线**会把伤害按匠魂数值结算** ✓ ⇒ 于是"否决原版那一击"不再意味着没伤害 ✓
-    //     ⇒ 可以放心照抄本体/TiCEX 的写法 ✓，连段、技能、击退手感全部回到原版机制 ✓。
-    //
-    // 匠魂那边要的"击中类修饰符"由 §1020 的两个 mixin 在**本体的伤害结算里**调用 ✓
-    //   （比在这里再调一次 TC 的 leftClickEntity 更贴合原版流程 ✓，也避免重复结算 ✗）。
-    // §1025 临时调试 ✓：把本体对这把刀的判定打出来（状态在不在 ✓ 本体返回什么 ✓）
-    boolean result = super.onLeftClickEntity(stack, player, target);
+    boolean pendingClick = player.getPersistentData().getBoolean(PENDING_CLICK_KEY);
+    boolean result;
+    if (pendingClick) {
+      player.getPersistentData().putBoolean(PENDING_CLICK_KEY, false);
+      mods.flammpfeil.slashblade.capability.slashblade.ISlashBladeState bladeState =
+              stack.getCapability(ItemSlashBlade.BLADESTATE).orElse(null);
+      if (bladeState != null) {
+        bladeState.setOnClick(true);      // ★ 开闸门：让本体的 filter 放行（不否决）⇒ 伤害照常结算 ✓
+      }
+      try {
+        result = super.onLeftClickEntity(stack, player, target);
+      } finally {
+        if (bladeState != null) {
+          bladeState.setOnClick(false);   // 关回去 ✓
+        }
+      }
+    } else {
+      // 斩击特效每 tick 的重复进入：保持本体原生语义（否决 ✓，否则会变成贴脸自动连击 ✗）
+      result = super.onLeftClickEntity(stack, player, target);
+    }
     com.mofengbaizhi.tinkersnewlife.integration.slashblade.KatanaDebug.log(
             "onLeftClickEntity 被调用 ✓ 状态存在=" + stack.getCapability(ItemSlashBlade.BLADESTATE).isPresent()
-                    + " 本体返回=" + result + " 目标=" + target.getType());
+                    + " 待结算=" + pendingClick + " 本体返回=" + result + " 目标=" + target.getType());
     return result;
   }
 
@@ -347,9 +365,12 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
     return AttributesModifierHook.getHeldAttributeModifiers(tool, slot);
   }
 
-  /** §1025 临时调试探针 ✓：左键挥动（不论打没打到）都会走这里 ✓ —— 用来判断"这把刀是否被当成武器在用" ✓。 */
+  /** §1025 调试探针 ✓ ＋ §1033：真·左键挥动时标记"待结算一次" ✓（复刻本体的开闸门时机 ✓）。 */
   @Override
   public boolean onEntitySwing(ItemStack stack, LivingEntity entity) {
+    if (entity instanceof Player player) {
+      player.getPersistentData().putBoolean(PENDING_CLICK_KEY, true);
+    }
     com.mofengbaizhi.tinkersnewlife.integration.slashblade.KatanaDebug.log(
             "onEntitySwing 挥动 ✓ 状态存在=" + stack.getCapability(ItemSlashBlade.BLADESTATE).isPresent()
                     + " 攻击力属性=" + entity.getAttributeValue(Attributes.ATTACK_DAMAGE));
