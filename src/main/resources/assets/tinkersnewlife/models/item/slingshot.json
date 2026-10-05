@@ -1,5 +1,5 @@
 {
-  "_comment": "§1037 弹弓模型。沿用匠魂弓的几何（parent = tconstruct:item/base/bow）。parts 里的 index = tool_definitions/slingshot.json 的部件下标：0=弓臂 1=工具手柄 2=弓弦（本体 longbow 模型同此规则 ✓）。§1037 只有一份弓臂 ⇒ 未列入 parts 的 limb_top 保持静态贴图 limb2（外观仍是完整的弓 ✓），材质只显示在下半弓臂上；手柄借用匠魂长弓的静态握把贴图当底图（我们没有握把专用贴图 ⇒ 材质贴图缺失时自动回退到它 ✓）。§991：撤掉 ammo 块（手上的石头渲染太大 ⇒ 用户决定不再渲染石头）。",
+  "_comment": "§1040 弹弓模型。parent = tconstruct:item/base/bow（本体长弓同一套几何：limb_bottom / limb_top / grip / bowstring）。parts 里的 index = tool_definitions/slingshot.json 的部件下标：0=弓臂(bow_limb) 1=工具手柄(tool_handle) 2=弓弦(bowstring)。⚠ §1037 教训：**parts 里没列出来的几何件不会被渲染**（我当时把 limb_top 留在外面想让它用静态贴图，结果右弓臂直接不画了 ✗）。§1040 修法：limb_top 也挂 index 0（两片弓臂共用那一份弓臂材质，各自用 limb1/limb2 作为底图 ⇒ 两条臂都画得出来 ✓）。grip 挂 index 1（工具手柄 ✓）。§991：撤掉 ammo 块（手上的石头渲染太大 ⇒ 用户决定不再渲染石头）。",
   "loader": "tconstruct:tool",
   "parent": "tconstruct:item/base/bow",
   "textures": {
@@ -10,6 +10,7 @@
   },
   "parts": [
     { "name": "limb_bottom", "index": 0 },
+    { "name": "limb_top", "index": 0 },
     { "name": "grip", "index": 1 },
     { "name": "bowstring", "index": 2 }
   ],
