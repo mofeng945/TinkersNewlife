@@ -1,1 +1,10 @@
-{ "replace": false, "values": [ "tinkersnewlife:dragon_staff", "tinkersnewlife:war_scythe", "tinkersnewlife:tang_heng_dao", "tinkersnewlife:spear", "tinkersnewlife:rapier", "tinkersnewlife:katana" ] }
+{
+  "replace": false,
+  "values": [
+    "tinkersnewlife:dragon_staff",
+    "tinkersnewlife:war_scythe",
+    "tinkersnewlife:tang_heng_dao",
+    "tinkersnewlife:spear",
+    "tinkersnewlife:rapier"
+  ]
+}

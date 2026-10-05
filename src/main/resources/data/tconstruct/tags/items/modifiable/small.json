@@ -1,1 +1,7 @@
-{ "replace": false, "values": [ "tinkersnewlife:rapier", "tinkersnewlife:yo_yo", "tinkersnewlife:katana" ] }
+{
+  "replace": false,
+  "values": [
+    "tinkersnewlife:rapier",
+    "tinkersnewlife:yo_yo"
+  ]
+}
