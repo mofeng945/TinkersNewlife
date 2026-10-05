@@ -301,6 +301,32 @@ public class ModItems {
                     () -> new com.mofengbaizhi.tinkersnewlife.content.item.KatanaItem(
                             new Item.Properties().stacksTo(1))
             );
+
+    // ---- §1030 拔刀剑：照 TiCEX 搬过来的两件内容物 ----
+
+    /**
+     * 拔刀剑「催化」部件（= TiCEX 的 {@code CATALYST_SLASHBLADE} ✓）：
+     * 统计类型是 {@link com.mofengbaizhi.tinkersnewlife.integration.slashblade.CatalystMaterialStatsType}
+     * 的 {@code catalyst_slashblade} ✓（**没有数值** ✓ 与 TiCEX 一致 ✓）。
+     * <p>用途：作为「拵」特性的装裱/配方输入 ✓（简化版配方见
+     * {@code data/tinkersnewlife/recipes/tools/modifiers/koshirae.json} ✓）。
+     */
+    public static final RegistryObject<ToolPartItem> CATALYST_SLASHBLADE =
+            ITEMS.register("catalyst_slashblade",
+                    () -> new ToolPartItem(new Item.Properties(),
+                            com.mofengbaizhi.tinkersnewlife.integration.slashblade.CatalystMaterialStatsType
+                                    .getOrMakeType("catalyst_slashblade").getId()
+                    ));
+
+    /**
+     * 「魂魄」核心（= TiCEX 的 {@code KONPAKU_CORE} ✓）。
+     * <p>⚠ 与 TiCEX 的差异（如实记录 ✓）：TiCEX 用的是它自家的 {@code ItemReconstCore} ✗ ——
+     * 那个类**会往 tooltip 里塞一行"某某特性"** ✗（本仓铁律 §812：新加的 tooltip 一律不许 ✗）
+     * ⇒ 这里退化成**普通物品** ✓（功能上只差那行提示 ✓，本仓口径下反而更正确 ✓）。
+     */
+    public static final RegistryObject<Item> KONPAKU_CORE =
+            ITEMS.register("konpaku_core", () -> new Item(new Item.Properties()));
+
     /** 弹弓（§983）：远程武器，部件 = 两个弓臂 + 一个弓弦；右键拉弓，射背包里的石头/圆石 */
     public static final RegistryObject<com.mofengbaizhi.tinkersnewlife.content.item.SlingshotItem> SLINGSHOT =
             ITEMS.register("slingshot",

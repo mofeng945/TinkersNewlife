@@ -208,6 +208,10 @@ public class ClientEventHandler {
         // 十划咒法·弱点实体：手绘金色光点
         event.registerEntityRenderer(ModEntities.WEAK_POINT.get(),
                 com.mofengbaizhi.tinkersnewlife.client.renderer.WeakPointRenderer::new);
+        // §1030 掉在地上的拔刀剑（照 TiCEX）：用我们自己的掉落刀渲染器 ✓
+        //   （它会把"匠魂材料"压进渲染上下文 ⇒ 地上的刀也按材料换刀身贴图 ✓）
+        event.registerEntityRenderer(ModEntities.KATANA_ITEM_ENTITY.get(),
+                com.mofengbaizhi.tinkersnewlife.client.slashblade.SBToolBladeItemRenderer::new);
     }
 
     // ========== Forge 事件（按键等） ==========

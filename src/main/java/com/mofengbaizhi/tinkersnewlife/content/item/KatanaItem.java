@@ -211,6 +211,28 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
     return IndestructibleItemEntity.createFrom(world, original, stack);
   }
 
+  /**
+   * §1030 1:1 照抄 TiCEX {@code ModifiableSlashBladeItem#onEntityItemUpdate} ✓：
+   * 掉落的刀第一 tick 就把普通掉落物**换成我们自己的 {@link com.mofengbaizhi.tinkersnewlife.content.entity.KatanaItemEntity}** ✓
+   * （本体只会换它自家的 {@code BladeItemEntity} ✗ ⇒ 用我们自己的类型才能挂我们自己的渲染器 ✓）。
+   */
+  @Override
+  public boolean onEntityItemUpdate(ItemStack stack, net.minecraft.world.entity.item.ItemEntity entity) {
+    if (!(entity instanceof com.mofengbaizhi.tinkersnewlife.content.entity.KatanaItemEntity)) {
+      Level world = entity.level();
+      com.mofengbaizhi.tinkersnewlife.content.entity.KatanaItemEntity e =
+              new com.mofengbaizhi.tinkersnewlife.content.entity.KatanaItemEntity(
+                      com.mofengbaizhi.tinkersnewlife.content.ModEntities.KATANA_ITEM_ENTITY.get(),
+                      world
+              );
+      e.restoreFrom(entity);
+      e.init();
+      entity.discard();
+      world.addFreshEntity(e);
+    }
+    return false;
+  }
+
 
   /* Damage/Durability */
 
@@ -648,12 +670,15 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
 
   @Override
   public void initializeClient(Consumer<IClientItemExtensions> consumer) {
-    // 渲染委托给 SlashBlade 本体：ItemSlashBlade 自带一个客户端扩展，其 getCustomRenderer()
-    // 返回 SlashBladeTEISR（用 BLADESTATE 里的 model/texture 画刀身，缺省是
-    // slashblade:model/blade.obj + slashblade:model/blade.png）。
-    // 移植 ModifiableItem 时这里被换成了匠魂的 ModifiableItemClientExtension（画工具模型），
-    // 会让拔刀剑在手里/物品栏里都不是刀的样子，因此改回基类实现。
-    super.initializeClient(consumer);
+    // §1030 **1:1 照抄 TiCEX** `ModifiableSlashBladeItem#initializeClient`：
+    //   给它自己的 IClientItemExtensions ⇒ getCustomRenderer() 返回它自己的 SBToolISTER
+    //   （那个渲染器把"匠魂材料"翻译成刀身贴图/颜色，并负责发光层 ✓）。
+    // ⚠ 本仓铁律（§801/§813）：**公共代码不得直接引用客户端类** ✗ ⇒
+    //   照本仓既有做法经 DistExecutor 甩给**客户端专用类** ✓（只有客户端才会加载那个类 ✓ 专服不会 ✗）。
+    //   行为与 TiCEX 完全一致 ✓（TiCEX 是直接把匿名类写在这儿 ✗ —— 它不在乎专服 ✗）。
+    net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(
+        net.minecraftforge.api.distmarker.Dist.CLIENT,
+        () -> () -> com.mofengbaizhi.tinkersnewlife.client.slashblade.KatanaClientItemExtensions.attach(consumer));
   }
 
 

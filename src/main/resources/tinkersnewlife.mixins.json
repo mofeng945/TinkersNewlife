@@ -39,7 +39,11 @@
     "SpearThirdPersonItemMixin",
     "EnchantmentHelperSeaKingsMixin",
     "AbstractArrowSeaKingsMixin",
-    "SlashBladeRenderOptMixin"
+    "SlashBladeRenderOptMixin",
+    "KatanaSlashBladeTEISRMixin",
+    "KatanaBladeRenderStateMixin",
+    "KatanaFaceMixin",
+    "KatanaLayerMainBladeMixin"
   ],
   "injectors": {
     "defaultRequire": 0

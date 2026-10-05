@@ -137,6 +137,11 @@ public class TinkersNewlife {
 
         Modifiers.MODIFIERS.register(modEventBus);
 
+        // §1030 拔刀剑（照 TiCEX 1:1）：把三个自定义修饰符钩子注册进匠魂的钩子注册器 ✓ ——
+        //   **必须早于修饰符被反序列化**（否则修饰符构造时 getHook(...) 拿到 null ✗）
+        //   ⇒ 就放在这里：修饰符注册事件要等所有模组构造完才发 ✓ 一定更晚 ✓。
+        com.mofengbaizhi.tinkersnewlife.integration.slashblade.hook.KatanaModifierHooks.register();
+
         ModCreativeTabs.CREATIVE_MODE_TABS.register(modEventBus);
 
         ModEntities.ENTITIES.register(modEventBus);
@@ -406,6 +411,9 @@ public class TinkersNewlife {
         // 实体属性（式神等生物实体）
         modEventBus.addListener(TinkersNewlife::onRegisterEntityAttributes);
 
+        // §1030 拔刀剑：通用初始化阶段注册"催化"材料统计类型（照 TiCEX：它也在 FMLCommonSetupEvent 里注册 ✓）
+        modEventBus.addListener(TinkersNewlife::onCommonSetup);
+
         MinecraftForge.EVENT_BUS.register(this);
         LOGGER.info("TinkersNewlife 模组初始化完成");
     }
@@ -414,10 +422,28 @@ public class TinkersNewlife {
         return new ResourceLocation(MOD_ID, path);
     }
 
+    /**
+     * §1030 通用初始化（照 TiCEX）：把拔刀剑的「催化」材料统计类型注册进匠魂材料注册表 ✓。
+     *
+     * <p>为什么必须在这里：{@code getOrMakeType(...)} 只是造对象并缓存 ✓，
+     * 真正 {@code MaterialRegistry.getInstance().registerStatType(...)} 必须等注册表可用 ✓ ——
+     * TiCEX 也是放在 {@code FMLCommonSetupEvent} 里 ✓ 完全同款 ✓。
+     * <p>⚠ 整段 try/catch ✓：拔刀剑相关的东西出问题**绝不能**拖垮整个模组的启动 ✗。
+     */
+    public static void onCommonSetup(net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent event) {
+        event.enqueueWork(() -> {
+            try {
+                com.mofengbaizhi.tinkersnewlife.integration.slashblade.CatalystMaterialStatsType.RegisterStats();
+                LOGGER.info("[拔刀剑] 催化材料统计类型已注册");
+            } catch (Throwable t) {
+                LOGGER.warn("[拔刀剑] 催化材料统计类型注册失败（已跳过）：{}", t.toString());
+            }
+        });
+    }
+
     /** 注册生物实体属性（式神等） */
     @SubscribeEvent
-    public static void onRegisterEntityAttributes(net.minecraftforge.event.entity.EntityAttributeCreationEvent event) {
-        event.put(ModEntities.SHIKIGAMI_WOLF.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiWolf.createAttributes().build());
+    public static void onRegisterEntityAttributes(net.minecraftforge.event.entity.EntityAttributeCreationEvent event) {        event.put(ModEntities.SHIKIGAMI_WOLF.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiWolf.createAttributes().build());
         event.put(ModEntities.SHIKIGAMI_PHANTOM.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiPhantom.createAttributes().build());
         event.put(ModEntities.SHIKIGAMI_SILVERFISH.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiSilverfish.createAttributes().build());
         event.put(ModEntities.SHIKIGAMI_FROG.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ShikigamiFrog.createAttributes().build());

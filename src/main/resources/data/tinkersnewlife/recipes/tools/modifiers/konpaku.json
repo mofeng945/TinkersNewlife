@@ -1,0 +1,22 @@
+{
+  "type": "tconstruct:modifier",
+  "allow_crystal": true,
+  "inputs": [
+    {
+      "item": "tinkersnewlife:konpaku_core"
+    },
+    {
+      "item": "minecraft:enchanted_book"
+    }
+  ],
+  "result": "tinkersnewlife:konpaku",
+  "tools": {
+    "tag": "tinkersnewlife:seram/slashblade"
+  },
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "slashblade"
+    }
+  ]
+}

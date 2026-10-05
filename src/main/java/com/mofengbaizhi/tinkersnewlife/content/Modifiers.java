@@ -532,4 +532,48 @@ public class Modifiers {
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.WatcherWillModifier> WATCHER_WILL =
         MODIFIERS.register("watcher_will",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.WatcherWillModifier::new);
+
+    // ============================================================
+    //  §1030 拔刀剑（SlashBlade：重锋）联动 —— 照 TiCEX 1:1 搬过来的四个修饰符
+    //  ⚠ 前三个（koshirae / hidden_proud / konpaku）与 TiCEX 一样**只在拔刀剑在场时注册** ✓
+    //     （TiCEX 把它们注册在它自己的 slashblade 模块里 ✓）；
+    //     `enchantment_supplier` 无条件注册 ✓（它只碰匠魂与原版附魔 API ✓ 不碰拔刀剑 ✓）。
+    // ============================================================
+
+    /**
+     * 内部修饰符「附魔供给」（= TiCEX 的 {@code ENCHANTMENT_SUPPLIER_MODIFIER} ✓）：
+     * 拔刀剑把附魔写在物品 NBT 的 {@code Enchantments} 里，匠魂工具本身不认 ⇒ 由它翻译给匠魂管线 ✓。
+     * <p>**隐藏**（{@code shouldDisplay} 恒 false ✓）；由「魂魄」特性自动挂到刀上 ✓。
+     */
+    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.katana.ModifierEnchantmentSupplier> ENCHANTMENT_SUPPLIER =
+        MODIFIERS.register("enchantment_supplier",
+                com.mofengbaizhi.tinkersnewlife.content.modifier.katana.ModifierEnchantmentSupplier::new);
+
+    /** 拔刀剑特性「拵」（无等级 · 不占槽）：把装裱输入物的刀状态（耀魂/击杀/精炼）取较大值并进本刀 */
+    public static StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.katana.ModifierKoshirae> KOSHIRAE = null;
+
+    /** 拔刀剑特性「隐耀魂」（无等级 · 不占槽）：按概率把输入物附魔贴到刀上 + 加耀魂 + 抬精炼 */
+    public static StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.katana.ModifierHiddenProud> HIDDEN_PROUD = null;
+
+    /** 拔刀剑特性「魂魄」（无等级 · 占 1 升级槽）：把附魔书的附魔贴到刀上，并自动挂「附魔供给」 */
+    public static StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.katana.ModifierKonpaku> KONPAKU = null;
+
+    static {
+        // ⚠ 注册时机：本静态块在类的静态初始化里执行 ✓ 而静态初始化由 {@code Modifiers.MODIFIERS} 的首次访问触发 ✓
+        //   （主类构造器里那句 `Modifiers.MODIFIERS.register(modEventBus)` ✓）—— 早于修饰符注册表事件 ✓ 安全 ✓。
+        try {
+            if (com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.isLoaded(
+                    com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.SLASHBLADE)) {
+                KOSHIRAE = MODIFIERS.register("koshirae",
+                        com.mofengbaizhi.tinkersnewlife.content.modifier.katana.ModifierKoshirae::new);
+                HIDDEN_PROUD = MODIFIERS.register("hidden_proud",
+                        com.mofengbaizhi.tinkersnewlife.content.modifier.katana.ModifierHiddenProud::new);
+                KONPAKU = MODIFIERS.register("konpaku",
+                        com.mofengbaizhi.tinkersnewlife.content.modifier.katana.ModifierKonpaku::new);
+            }
+        } catch (Throwable t) {
+            // 拔刀剑不在场/版本对不上时：静默降级（这三个特性不存在 ✓），绝不影响其它修饰符注册 ✗
+            TinkersNewlife.LOGGER.warn("[拔刀剑] 三个拔刀剑特性注册失败（已跳过）：{}", t.toString());
+        }
+    }
 }

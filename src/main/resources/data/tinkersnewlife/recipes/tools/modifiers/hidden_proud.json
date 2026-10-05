@@ -1,0 +1,19 @@
+{
+  "type": "tconstruct:modifier",
+  "allow_crystal": true,
+  "inputs": [
+    {
+      "tag": "slashblade:proudsouls"
+    }
+  ],
+  "result": "tinkersnewlife:hidden_proud",
+  "tools": {
+    "tag": "tinkersnewlife:seram/slashblade"
+  },
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "slashblade"
+    }
+  ]
+}
