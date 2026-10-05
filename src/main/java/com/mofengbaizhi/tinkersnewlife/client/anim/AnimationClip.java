@@ -286,31 +286,6 @@ public final class AnimationClip {
             new ResourceLocation("tinkersnewlife", "tnl_anim/slingshot_first_person.json"),
     };
 
-    /** §1002 拔刀剑的备选动画文件（名字随意 ✓ 找不到就扫 tnl_anim 里带 katana 的 json ✓） */
-    public static final ResourceLocation[] KATANA_CANDIDATES = {
-            new ResourceLocation("tinkersnewlife", "tnl_anim/katana_firstperson.animation.json"),
-            new ResourceLocation("tinkersnewlife", "tnl_anim/katana_first_person.animation.json"),
-            new ResourceLocation("tinkersnewlife", "tnl_anim/katana_first_person.json"),
-    };
-
-    private static AnimationClip katanaCache;
-    private static boolean katanaTried;
-
-    /**
-     * 取"拔刀剑第一人称"动画 ✓（§1002 居合蓄力：{@code item} 骨骼把刀抬起/后引 ✓，
-     * 抖动用代码在手空间叠一个小角度 ✓ 见 {@code KatanaFirstPersonHandler} ✓）。
-     */
-    public static AnimationClip katanaFirstPerson() {
-        if (!katanaTried) {
-            katanaTried = true;
-            for (ResourceLocation id : KATANA_CANDIDATES) {
-                katanaCache = load(id);
-                if (katanaCache != null) return katanaCache;
-            }
-            katanaCache = scanFor("katana");
-        }
-        return katanaCache;
-    }
     private static AnimationClip slingshotCache;
     private static boolean slingshotTried;
 
@@ -397,8 +372,6 @@ public final class AnimationClip {
         spearCache = null;
         slingshotTried = false;
         slingshotCache = null;
-        katanaTried = false;
-        katanaCache = null;
     }
 
     /**
