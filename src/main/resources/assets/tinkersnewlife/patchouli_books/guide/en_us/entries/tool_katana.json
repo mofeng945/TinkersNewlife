@@ -11,7 +11,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)SlashBlade integration$()$(br2)With SlashBlade: Resharped installed, this tool hooks into it: the blade state (proud soul, kill count, refine, combo sequence and special arts) is carried on the blade.$(br2)Current progress: the tool and its parts are usable; $(bold)drawing, Iai, combos and special arts$() are still being implemented."
+      "text": "$(bold)Iai slash$()$(br2)$(li)$(bold)Hold right-click$() to charge, release to cut: a $(bold)frontal arc slash$() that hits everything in range and pushes you forward$(li)A $(bold)full charge$() (about 1 second) means more damage, more range and a longer lunge$(li)Too short a charge does nothing; there is a 1-2 second cooldown afterwards$(br2)$(bold)SlashBlade integration$()$(br2)With SlashBlade: Resharped installed, this tool hooks into it: the blade state (proud soul, kill count, refine, combo and special arts) lives on the blade. Current progress: $(bold)combos and special arts$() are still being implemented."
     }
   ]
 }
