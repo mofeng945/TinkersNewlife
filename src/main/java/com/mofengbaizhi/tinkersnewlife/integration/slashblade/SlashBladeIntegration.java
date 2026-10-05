@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.integration.slashblade;
 
 import com.mofengbaizhi.tinkersnewlife.integration.Integration;
 import net.minecraftforge.eventbus.api.IEventBus;
+import slimeknights.tconstruct.library.tools.capability.ToolCapabilityProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +34,11 @@ public final class SlashBladeIntegration implements Integration {
 
     @Override
     public void register(IEventBus bus) {
-        SlashBladeProbe.enable();
-        LOGGER.info("[联动] 拔刀剑在场：已装 §997 探针（西洋剑临时挂上 BLADESTATE ⇒ 看日志能否证明它认外来物品）");
+        // §1007：把"刀状态"注册成匠魂工具的一项能力
+        //   —— 我们的 KatanaItem 移植自 ModifiableItem，其 initCapabilities 返回匠魂的 ToolCapabilityProvider
+        //      ⇒ ItemSlashBlade 自带的刀状态被顶掉了，所以要从匠魂这边把状态再补回去（照 TiCEX 的做法）
+        //   —— 效果：拔刀剑的"耐久/损坏"= 匠魂工具的面板耐久（ToolBladeStateCapability 只覆盖那三处）
+        ToolCapabilityProvider.register((stack, tool) -> new SBItemCapabilityProvider(stack, tool));
+        LOGGER.info("[联动] 拔刀剑：刀状态已接到匠魂工具上（拔刀剑的耐久 = 匠魂工具面板耐久）");
     }
 }
