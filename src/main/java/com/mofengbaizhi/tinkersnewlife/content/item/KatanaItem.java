@@ -1,5 +1,6 @@
 package com.mofengbaizhi.tinkersnewlife.content.item;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import net.minecraft.core.BlockPos;
@@ -74,6 +75,7 @@ import javax.annotation.Nullable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
@@ -190,13 +192,20 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
 
   @Override
   public boolean hasCustomEntity(ItemStack stack) {
-    return IndestructibleItemEntity.hasCustomEntity(stack);
+    // §1011：拔刀剑本体**恒返回 true** ✓（掉落的刀走 BladeItemEntity，靠 onEntityItemUpdate 换实体 ✓），
+    // 而匠魂那份只在"不可摧毁工具"时为 true ⇒ 取并集 ✓，否则掉在地上的拔刀剑不是刀的样子 ✗。
+    return super.hasCustomEntity(stack) || IndestructibleItemEntity.hasCustomEntity(stack);
   }
 
   @Nullable
   @Override
   public Entity createEntity(Level world, Entity original, ItemStack stack) {
-    return IndestructibleItemEntity.createFrom(world, original, stack);
+    // §1011：只有匠魂"不可摧毁工具"才由我们接管掉落实体 ✓；其余交回基类（= 拔刀剑依赖的默认行为 ✓），
+    // 否则会把 SlashBlade 换 BladeItemEntity 的流程顶掉 ✗。
+    if (IndestructibleItemEntity.hasCustomEntity(stack)) {
+      return IndestructibleItemEntity.createFrom(world, original, stack);
+    }
+    return super.createEntity(world, original, stack);
   }
 
 
@@ -267,7 +276,11 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
 
   @Override
   public boolean onLeftClickEntity(ItemStack stack, Player player, Entity target) {
-    return stack.getCount() > 1 || EntityInteractionModifierHook.leftClickEntity(stack, player, target);
+    // ⚠ §1011：**必须先让拔刀剑本体跑**。ItemSlashBlade#onLeftClickEntity 会取刀状态执行攻击/连段登记 ✓，
+    // 并且在"刀状态存在"时**返回 true = 取消原版单击**（改由拔刀剑自己的攻击结算 ✓）。
+    // 移植 ModifiableItem 时这句 super 丢了 ✗ ⇒ 连段 / 特殊技 / 击杀计数整条链路都不会触发 ✗。
+    boolean slashBlade = super.onLeftClickEntity(stack, player, target);
+    return slashBlade || stack.getCount() > 1 || EntityInteractionModifierHook.leftClickEntity(stack, player, target);
   }
 
   @Override
@@ -275,13 +288,34 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
     return AttributesModifierHook.getHeldAttributeModifiers(tool, slot);
   }
 
+  /** 原版剑"基础攻击力"修正的固定 UUID（= {@code Item.BASE_ATTACK_DAMAGE_UUID}，protected ⇒ 只能写字面量 ✓） */
+  private static final UUID VANILLA_BASE_ATTACK_DAMAGE = UUID.fromString("CB3F55D3-645C-4F38-A497-9C13A33DB5CF");
+  /** 原版剑"基础攻速"修正的固定 UUID（= {@code Item.BASE_ATTACK_SPEED_UUID} ✓） */
+  private static final UUID VANILLA_BASE_ATTACK_SPEED = UUID.fromString("FA233E1C-4180-4865-B01B-BCCE9785ACA3");
+
   @Override
   public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlot slot, ItemStack stack) {
     CompoundTag nbt = stack.getTag();
     if (nbt == null || slot.getType() != Type.HAND) {
       return ImmutableMultimap.of();
     }
-    return getAttributeModifiers(ToolStack.from(stack), slot);
+    Multimap<Attribute, AttributeModifier> tool = getAttributeModifiers(ToolStack.from(stack), slot);
+    // §1011：并入拔刀剑本体那侧由"刀状态"给出的加成 ✓（精炼/魂魄给攻击力、以及玩家触及距离 ✓）。
+    // 只丢掉它从 SwordItem 抄来的**基础攻击/攻速**（那两个 UUID 是原版固定值 ✓）——
+    // 基础面板由匠魂工具数值给出 ✓，不丢就会重复计一次 ✗。
+    Multimap<Attribute, AttributeModifier> blade = super.getAttributeModifiers(slot, stack);
+    if (blade.isEmpty()) {
+      return tool;
+    }
+    Multimap<Attribute, AttributeModifier> merged = ArrayListMultimap.create(tool);
+    for (Map.Entry<Attribute, AttributeModifier> entry : blade.entries()) {
+      AttributeModifier modifier = entry.getValue();
+      if (VANILLA_BASE_ATTACK_DAMAGE.equals(modifier.getId()) || VANILLA_BASE_ATTACK_SPEED.equals(modifier.getId())) {
+        continue;
+      }
+      merged.put(entry.getKey(), modifier);
+    }
+    return merged;
   }
 
   @Override
