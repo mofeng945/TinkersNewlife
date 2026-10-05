@@ -81,9 +81,13 @@ public class WhipItem extends ModifiableItem {
     }
 
     /**
-     * 挥动时长倍率 ✓ —— 由<b>攻速属性</b>决定 ✓：
-     * 基准间隔 {@link #REFERENCE_PERIOD_TICKS} ⇒ 1.0 ✓（起手 3 ＋ 抽击 4 ✓ 与参照 {@code ArmMotor} 一致 ✓）；
-     * 攻速越高 ⇒ 周期越短 ⇒ 倍率越小 ⇒ 抽得越快越脆 ✓；越慢 ⇒ 倍率越大 ⇒ 抡得越重越慢 ✓。
+     * ⚠ §1055：<b>不要再拿它去拉长驱动 tick</b> ✗ —— §1054 我就是这么干的 ✗，
+     * 结果攻速偏慢的鞭子抽击段被拉到 5~10 tick ✗ ⇒ 手在同一段弧上变慢 ✗ ⇒
+     * 用户实测「<b>鞭子挥不远了</b>」✗。
+     * <p>正确做法（参照 {@code ArmMotor} 的原公式 ✓）：攻速只决定
+     * <b>冷却</b>（{@link #attackPeriodTicks} ✓）与"快攻速 ⇒ 更短的起手/抽击" ✓，
+     * 而<b>抽击段永远封顶 4 tick</b> ✓ ⇒ 手始终够快、鞭子始终甩得远 ✓。
+     * <p>这个方法只保留"基准倍率"的语义（1.0 ＝ 本鞭基础攻速 ✓），供以后做手感微调参考 ✓。
      */
     public static double swingTimeScale(Player player) {
         return Mth.clamp(attackPeriodTicks(player) / (double) REFERENCE_PERIOD_TICKS, 0.5D, 2.5D);

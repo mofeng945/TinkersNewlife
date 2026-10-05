@@ -251,12 +251,15 @@ public class WhipLashEntity extends Entity {
             drive.progressFrom = 0.0D;
             drive.progressTo = 0.0D;
         } else {
-            // §1054 用户口径：挥动速度由【攻速属性】决定 ✓
-            // 基准（本鞭基础攻速 1.6）⇒ 起手 3 ＋ 抽击 4 ✓（与参照 ArmMotor 完全一致 ✓）；
-            // 攻速越高 ⇒ 倍率越小 ⇒ 抽得越快越脆 ✓；越慢 ⇒ 抡得越重越慢 ✓。
-            double timeScale = WhipItem.swingTimeScale(owner);
-            windupTicks = Mth.clamp((int) Math.round(3.0D * timeScale), 1, 8);
-            strokeTicks = Mth.clamp((int) Math.round(4.0D * timeScale), 1, 10);
+            // §1055 攻速决定"挥动速度"的方式 = 参照的原公式 ✓（⚠ §1054 我改错了方向 ✗）：
+            //   攻速<b>快</b> ⇒ 周期短 ⇒ 起手/抽击更短 ⇒ 抽得又快又脆 ✓；
+            //   攻速<b>慢</b> ⇒ 周期长，但<b>抽击段被硬封在 4 tick</b> ✓ ⇒ 手依旧很快、鞭子照样甩得远 ✓
+            //   ⇒ 慢攻速只体现在<b>冷却更长</b>（每秒能抽的次数更少 ✓）。
+            // ⚠ 关键教训：驱动 tick 数一旦被拉长 ✗，手在同一段弧上就更慢 ✗ ⇒ 绳子甩不出去 ✗
+            //   （用户原话：「这样改了之后鞭子挥不远了」✓ 就是这个原因 ✓）。
+            int period = WhipItem.attackPeriodTicks(owner);
+            windupTicks = Mth.clamp(Math.min(3, Math.max(1, period - 2)), 1, 3);
+            strokeTicks = Mth.clamp(Math.max(1, period - windupTicks - 1), 1, 4);
             int total = windupTicks + strokeTicks;
             int driveTick = this.tickCount - 1;
             boolean driving = driveTick >= 0 && driveTick < total;

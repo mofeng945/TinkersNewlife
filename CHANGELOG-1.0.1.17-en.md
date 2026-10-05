@@ -56,3 +56,20 @@ already hit by that lash (`base / 2^prior`, zero after 30), with the whip crack 
   whip's base attack speed of 1.6), clamped to 0.5x - 2.5x. At the base attack speed that is exactly the
   reference's 3 + 4 tick lash; faster whips snap in about 4 ticks, slower ones wind up for up to 14.
 * The slam shockwave damage uses the same panel scaling.
+## Fixed (2026-10-05, third pass - version unchanged)
+
+### The whip reaches full length again
+
+The previous pass tried to express "swing speed follows attack speed" by stretching the drive itself:
+`round(3 * scale)` windup and `round(4 * scale)` stroke ticks with `scale = attackPeriodTicks / 13`.
+That was the wrong axis. The drive is what throws the rope, and a slower drive means a slower hand over
+the same 1.1 block arc - so a whip whose attack speed is below the base (attack speed is decided by the
+materials you build it from) ended up winding up for 5 to 10 ticks and no longer flung the rope out.
+
+The reference's own formula is back, and it already gives you attack-speed scaling without hurting reach:
+`windup = clamp(min(3, period - 2), 1, 3)` and `stroke = clamp(period - windup - 1, 1, 4)`. A fast whip
+gets a shorter windup and stroke (snappier), while the stroke is **capped at 4 ticks** so the hand always
+stays fast and the rope always flies. A slow whip keeps the same fast lash and simply has a longer
+cooldown - fewer lashes per second.
+
+The attack-damage scaling of the damage stays as it is.
