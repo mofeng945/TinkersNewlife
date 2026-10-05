@@ -1,11 +1,11 @@
 {
-  "_comment": "§983 弹弓：部件 = 两个弓臂 + 一个弓弦（用户口径 ✓）。数值口径照匠魂本体 longbow.json ✓（parts=bow_limb/bow_limb/bowstring；面板伤害 = 蓄力 × Velocity，见 SlingshotItem）。",
+  "_comment": "§1037 弹弓：部件 = 一个工具手柄(tool_handle) + 一个弓臂(bow_limb) + 一个弓弦(bowstring)（用户口径 ✓）。三个部件全部复用匠魂本体标准部件 ⇒ 不需要任何新的部件配方/模具/图案（本体 javelin 就是 tool_handle+bow_limb ✓，fishing_rod 就是 bow_limb+bowstring ✓，可作先例）。远程属性（velocity / projectile_damage / draw_speed）由【弓臂】材料提供 ⇒ 保留一份弓臂即可继续当远程武器 ✓。数值口径照匠魂本体 longbow.json ✓（面板伤害 = 蓄力 × Velocity，见 SlingshotItem）。parts 的下标与 station_layouts 的 input_slots 按下标一一对齐（本体 hand_axe / fishing_rod / javelin 均如此 ✓）。",
   "modules": [
     {
       "type": "tconstruct:part_stats",
       "parts": [
         "tconstruct:bow_limb",
-        "tconstruct:bow_limb",
+        "tconstruct:tool_handle",
         "tconstruct:bowstring"
       ],
       "primary_part": 0

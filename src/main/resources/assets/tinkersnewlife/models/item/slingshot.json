@@ -1,5 +1,5 @@
 {
-  "_comment": "§983 弹弓模型。沿用匠魂弓的几何（parent = tconstruct:item/base/bow）+ 部件贴图索引 0/1/2 = 弓臂/弓臂/弓弦；grip 用匠魂长弓的静态握把贴图占位（我们没有握把部件）。§991：撤掉 ammo 块（手上的石头渲染太大 ⇒ 用户决定不再渲染石头）。",
+  "_comment": "§1037 弹弓模型。沿用匠魂弓的几何（parent = tconstruct:item/base/bow）。parts 里的 index = tool_definitions/slingshot.json 的部件下标：0=弓臂 1=工具手柄 2=弓弦（本体 longbow 模型同此规则 ✓）。§1037 只有一份弓臂 ⇒ 未列入 parts 的 limb_top 保持静态贴图 limb2（外观仍是完整的弓 ✓），材质只显示在下半弓臂上；手柄借用匠魂长弓的静态握把贴图当底图（我们没有握把专用贴图 ⇒ 材质贴图缺失时自动回退到它 ✓）。§991：撤掉 ammo 块（手上的石头渲染太大 ⇒ 用户决定不再渲染石头）。",
   "loader": "tconstruct:tool",
   "parent": "tconstruct:item/base/bow",
   "textures": {
@@ -10,7 +10,7 @@
   },
   "parts": [
     { "name": "limb_bottom", "index": 0 },
-    { "name": "limb_top", "index": 1 },
+    { "name": "grip", "index": 1 },
     { "name": "bowstring", "index": 2 }
   ],
   "overrides": [
