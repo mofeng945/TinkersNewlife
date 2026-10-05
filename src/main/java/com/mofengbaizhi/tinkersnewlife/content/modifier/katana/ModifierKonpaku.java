@@ -25,7 +25,10 @@ import slimeknights.tconstruct.library.tools.nbt.ToolStack;
  * （{@code Modifiers.ENCHANTMENT_SUPPLIER} ✓ = TiCEX 的 {@code ENCHANTMENT_SUPPLIER_MODIFIER} ✓，
  * 本轮一并搬了 ✓ 见 {@link ModifierEnchantmentSupplier} ✓）。
  *
- * <p>⚠ 触发入口（TiCEX 的装裱配方流程 ✗）本轮未搬 ✓。
+ * <p>★ §1032 起触发入口已经接通 ✓：配方 {@code data/tinkersnewlife/recipes/tools/modifiers/konpaku.json}
+ * 的类型是 {@code tinkersnewlife:embossment_modifier} ✓（{@code inputs = konpaku_core} ＋
+ * {@code emboss_inputs = 附魔书} ✓）⇒ 在<b>修补台/工匠砧</b>里放上刀 ＋ 魂魄核心 ＋ 附魔书时 ✓
+ * {@link #applyItem} 会被 {@code EmbossmentModifierRecipe#getValidatedResult} 直接调用 ✓。
  */
 public class ModifierKonpaku extends NoLevelsModifier implements EmbossmentModifierHook {
 

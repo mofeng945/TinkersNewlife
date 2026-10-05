@@ -1,11 +1,9 @@
 {
-  "type": "tconstruct:modifier",
-  "allow_crystal": true,
-  "inputs": [
-    {
-      "item": "tinkersnewlife:catalyst_slashblade"
-    }
-  ],
+  "_comment": "§1032 照 TiCEX 1:1：拵（koshirae）走装裱（embossment）配方 —— 装裱输入是被浇铸过一把刀的 tinkersnewlife:catalyst_slashblade（其 NBT 的 embossed.tag.bladeState 就是那把刀的存档）。在修补台/工匠砧里放上刀 + 该催化部件即会触发 ModifierKoshirae#applyItem。",
+  "type": "tinkersnewlife:single_embossment_modifier",
+  "emboss_input": {
+    "item": "tinkersnewlife:catalyst_slashblade"
+  },
   "result": "tinkersnewlife:koshirae",
   "tools": {
     "tag": "tinkersnewlife:seram/slashblade"

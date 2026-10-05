@@ -4,7 +4,11 @@ import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.AutoMaterialMeltingRecipe;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.ChargedCreeperMeltingRecipe;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.CrystalModifierRecipe;
+import com.mofengbaizhi.tinkersnewlife.content.recipe.EmbossmentBuildingRecipe;
+import com.mofengbaizhi.tinkersnewlife.content.recipe.EmbossmentCastingRecipe;
+import com.mofengbaizhi.tinkersnewlife.content.recipe.EmbossmentModifierRecipe;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.GenericToolMeltingRecipe;
+import com.mofengbaizhi.tinkersnewlife.content.recipe.SingleEmbossmentModifierRecipe;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.TagModifierSalvage;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.CurseCraftRecipe;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.ElderCrystalMergeRecipe;
@@ -16,6 +20,8 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import slimeknights.mantle.recipe.helper.LoadableRecipeSerializer;
+import slimeknights.mantle.recipe.helper.TypeAwareRecipeSerializer;
+import slimeknights.tconstruct.library.recipe.TinkerRecipeTypes;
 
 /**
  * 自定义配方序列化器注册
@@ -105,4 +111,35 @@ public class ModRecipeSerializers {
     public static final RegistryObject<RecipeSerializer<ElderCrystalSplitRecipe>> ELDER_CRYSTAL_SPLIT =
             RECIPE_SERIALIZERS.register("elder_crystal_split",
                     ElderCrystalSplitRecipe.Serializer::new);
+
+    // ============================================================
+    //  §1032 装裱（embossment）配方体系 —— 照 TiCEX 1:1 搬过来（4 个序列化器 ✓）
+    //
+    //  ⚠ TiCEX 也是**只注册序列化器**、不为它们注册 RecipeType ✓ ——
+    //    因为这几个配方类都继承匠魂自己的基类 ✓，{@code getType()} 由基类给出：
+    //      · EmbossmentModifierRecipe / SingleEmbossmentModifierRecipe / EmbossmentBuildingRecipe
+    //        ⇒ {@code tconstruct:tinker_station}（修补台/工匠砧 ✓ 那条 {@code @Override matches} 走的就是它 ✓）；
+    //      · EmbossmentCastingRecipe ⇒ {@code tconstruct:casting_table}（浇铸台 ✓）。
+    //    （这正是"用匠魂的修饰符工作台装上修饰符时 applyItem 会被调用"的机制所在 ✓。）
+    // ============================================================
+
+    /** 装裱修饰符配方（普通材料 ＋ 装裱输入；本仓「魂魄」用它 ✓） */
+    public static final RegistryObject<RecipeSerializer<EmbossmentModifierRecipe>> EMBOSSMENT_MODIFIER =
+            RECIPE_SERIALIZERS.register("embossment_modifier",
+                    () -> LoadableRecipeSerializer.of(EmbossmentModifierRecipe.LOADER));
+
+    /** 单输入装裱修饰符配方（只有装裱输入；本仓「拵」「隐耀魂」用它 ✓） */
+    public static final RegistryObject<RecipeSerializer<SingleEmbossmentModifierRecipe>> SINGLE_MODIFIER_EMBOSSMENT =
+            RECIPE_SERIALIZERS.register("single_embossment_modifier",
+                    () -> LoadableRecipeSerializer.of(SingleEmbossmentModifierRecipe.LOADER));
+
+    /** 装裱浇铸配方（把一把真刀当铸模浇进部件，结果的 {@code embossed} 标签就是那把刀的存档 ✓） */
+    public static final RegistryObject<TypeAwareRecipeSerializer<EmbossmentCastingRecipe>> CASTING_EMBOSSMENT =
+            RECIPE_SERIALIZERS.register("embossment_casting",
+                    () -> LoadableRecipeSerializer.of(EmbossmentCastingRecipe.LOADER, TinkerRecipeTypes.CASTING_TABLE));
+
+    /** 装裱建刀配方（建刀时把 {@code embossed} 输入的属性/存档并进新刀 ✓；本仓暂未在数据里使用 ✓） */
+    public static final RegistryObject<RecipeSerializer<EmbossmentBuildingRecipe>> BUILDING_EMBOSSMENT =
+            RECIPE_SERIALIZERS.register("embossment_building",
+                    () -> LoadableRecipeSerializer.of(EmbossmentBuildingRecipe.LOADER));
 }

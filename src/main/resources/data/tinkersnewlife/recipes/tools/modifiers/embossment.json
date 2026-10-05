@@ -1,0 +1,33 @@
+{
+  "_comment": "§1032 「装裱」（embossment）：照 TiCEX 的 embossment.json 1:1，只把 tools 换成我们的拔刀剑标签（本仓的装裱能力只挂给拔刀剑）。装裱输入 #tconstruct:parts 里的部件会被 ModifierEmbossment#applyItem 读取材料，把该材料在该统计类型下的全部特性贴到刀上。",
+  "type": "tinkersnewlife:embossment_modifier",
+  "inputs": [
+    {
+      "item": "tconstruct:earth_slime_crystal"
+    },
+    {
+      "item": "tconstruct:sky_slime_crystal"
+    },
+    {
+      "item": "tconstruct:ichor_slime_crystal"
+    },
+    {
+      "item": "tconstruct:ender_slime_crystal"
+    }
+  ],
+  "emboss_inputs": [
+    {
+      "tag": "tconstruct:parts"
+    }
+  ],
+  "result": "tinkersnewlife:embossment",
+  "tools": {
+    "tag": "tinkersnewlife:seram/slashblade"
+  },
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "slashblade"
+    }
+  ]
+}

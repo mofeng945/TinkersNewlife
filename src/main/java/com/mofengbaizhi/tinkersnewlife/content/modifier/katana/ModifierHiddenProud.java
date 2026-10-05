@@ -29,7 +29,10 @@ import slimeknights.tconstruct.library.module.ModuleHookMap.Builder;
  * 抬精炼上限（至少 10，上限 200 以内每点还 +1 最大耐久 ✓），并把输入物 NBT 里的
  * {@code SpecialAttackType}／{@code SpecialEffectType} 搬到刀上 ✓。
  *
- * <p>⚠ 与 {@link ModifierKoshirae} 同样：触发入口（TiCEX 的装裱配方流程 ✗）本轮未搬 ✓。
+ * <p>★ §1032 起触发入口已经接通 ✓：配方 {@code data/tinkersnewlife/recipes/tools/modifiers/hidden_proud.json}
+ * 的类型是 {@code tinkersnewlife:single_embossment_modifier} ✓ ⇒ 在<b>修补台/工匠砧</b>里
+ * 放上刀 ＋ 耀魂（{@code #slashblade:proudsouls}）时 ✓
+ * {@link #applyItem} 会被 {@code SingleEmbossmentModifierRecipe#getValidatedResult} 直接调用 ✓。
  */
 public class ModifierHiddenProud extends NoLevelsModifier implements EmbossmentModifierHook {
 

@@ -558,6 +558,15 @@ public class Modifiers {
     /** 拔刀剑特性「魂魄」（无等级 · 占 1 升级槽）：把附魔书的附魔贴到刀上，并自动挂「附魔供给」 */
     public static StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.katana.ModifierKonpaku> KONPAKU = null;
 
+    /**
+     * 「装裱」（= TiCEX 的 {@code EMBOSSMENT_MODIFIER} ✓）：
+     * 把<b>工具部件</b>的材料特性贴到刀上 ✓（消费者是
+     * {@link com.mofengbaizhi.tinkersnewlife.integration.slashblade.EmbossmentMaterialCapability} ✓）。
+     * <p>⚠ TiCEX 把它注册在通用模块（面向所有耐久工具）✗；本仓的装裱能力只挂给拔刀剑
+     * ⇒ 这里也**只在拔刀剑在场时注册** ✓（差异见备忘录 §1032 ✓）。
+     */
+    public static StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.katana.ModifierEmbossment> EMBOSSMENT = null;
+
     static {
         // ⚠ 注册时机：本静态块在类的静态初始化里执行 ✓ 而静态初始化由 {@code Modifiers.MODIFIERS} 的首次访问触发 ✓
         //   （主类构造器里那句 `Modifiers.MODIFIERS.register(modEventBus)` ✓）—— 早于修饰符注册表事件 ✓ 安全 ✓。
@@ -570,10 +579,12 @@ public class Modifiers {
                         com.mofengbaizhi.tinkersnewlife.content.modifier.katana.ModifierHiddenProud::new);
                 KONPAKU = MODIFIERS.register("konpaku",
                         com.mofengbaizhi.tinkersnewlife.content.modifier.katana.ModifierKonpaku::new);
+                EMBOSSMENT = MODIFIERS.register("embossment",
+                        com.mofengbaizhi.tinkersnewlife.content.modifier.katana.ModifierEmbossment::new);
             }
         } catch (Throwable t) {
-            // 拔刀剑不在场/版本对不上时：静默降级（这三个特性不存在 ✓），绝不影响其它修饰符注册 ✗
-            TinkersNewlife.LOGGER.warn("[拔刀剑] 三个拔刀剑特性注册失败（已跳过）：{}", t.toString());
+            // 拔刀剑不在场/版本对不上时：静默降级（这几个特性不存在 ✓），绝不影响其它修饰符注册 ✗
+            TinkersNewlife.LOGGER.warn("[拔刀剑] 拔刀剑特性注册失败（已跳过）：{}", t.toString());
         }
     }
 }

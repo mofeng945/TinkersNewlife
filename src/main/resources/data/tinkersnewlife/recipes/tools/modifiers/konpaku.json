@@ -1,15 +1,20 @@
 {
-  "type": "tconstruct:modifier",
-  "allow_crystal": true,
+  "_comment": "§1032 照 TiCEX 1:1：魂魄（konpaku）走「普通输入 + 装裱输入」配方 —— inputs 是魂魄核心（消耗），emboss_inputs 是附魔书（匹配到的槽会触发 ModifierKonpaku#applyItem）。占 1 个升级槽（与 TiCEX 一致）。",
+  "type": "tinkersnewlife:embossment_modifier",
   "inputs": [
     {
       "item": "tinkersnewlife:konpaku_core"
-    },
+    }
+  ],
+  "emboss_inputs": [
     {
       "item": "minecraft:enchanted_book"
     }
   ],
   "result": "tinkersnewlife:konpaku",
+  "slots": {
+    "upgrades": 1
+  },
   "tools": {
     "tag": "tinkersnewlife:seram/slashblade"
   },
