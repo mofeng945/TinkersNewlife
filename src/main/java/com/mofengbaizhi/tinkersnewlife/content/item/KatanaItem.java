@@ -272,42 +272,23 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
 
   /* Attacking */
 
-  /** §1018：记录"该玩家上一次推进连段"的游戏刻（防止斩击特效每 tick 调用把连段/剑技刷爆 ✗） */
-  private static final String COMBO_TICK_KEY = "tnl_katana_combo_tick";
-  /** §1018：两次连段推进之间的最小间隔（刻）——人手点击的间隔远大于它 ✓ */
-  private static final int COMBO_MIN_INTERVAL = 4;
-
   @Override
   public boolean onLeftClickEntity(ItemStack stack, Player player, Entity target) {
-    // §1018 实测定论：本方法有**两条**调用路径，而且**签名上分不开** ✗：
-    //   ① 真·左键        ：Player.attack → ForgeHooks.onPlayerAttackTarget → 本方法（一次一下 ✓）
-    //   ② 拔刀剑斩击特效 ：EntitySlashEffect.tick → AttackManager.areaAttack → AttackHelper.attack
-    //                      → onPlayerAttackTarget → 本方法（**目标在范围内就每 tick 一次** ✗，见 §1014 崩溃栈 ✓）
-    // 前四轮（§1011/§1013/§1015/§1016/§1017）的教训 ✓：
-    //   · 返回 true（否决）⇒ ② 被打断 ✓ 但**伤害也没了** ✗（本刀没有别的伤害来源 ✗）⇒"打不到人" ✓；
-    //   · 返回 false      ⇒ 伤害有了 ✓ 但 ② 每 tick 重复命中 ✗ ⇒"砍到人自动连击、跑远才停" ✓。
-    // ⇒ 只能把两件事**拆开** ✓：
-    //   · **伤害**交给匠魂钩子 ✓（它自带"取消原版单击"的语义 ✓，会跑匠魂的击中类修饰符 ✓，
-    //     且有原版无敌帧兜着 ⇒ 不会每 tick 重复结算 ✓）；
-    //   · **连段推进**只在"看起来像真·左键"时做 ✓ —— 用**限速**近似：同一玩家每 COMBO_MIN_INTERVAL 刻
-    //     最多推进一次 ✓（斩击特效是每刻一次 ⇒ 被限速挡掉 ✓；人手点击间隔远大于 4 刻 ⇒ 正常推进 ✓）。
-    long now = player.level().getGameTime();
-    CompoundTag data = player.getPersistentData();
-    if (now - data.getLong(COMBO_TICK_KEY) >= COMBO_MIN_INTERVAL) {
-      data.putLong(COMBO_TICK_KEY, now);
-      // §1019：**不能靠 super 来推进连段** ✗ —— 本体那句的内部是：
-      //     BLADESTATE.filter(state -> !state.onClick()).ifPresent(state -> { …; state.progressCombo(player); })
-      //   `_onClick` 这个开关由 AttackManager 开合（它在范围攻击前会清掉 ✓），
-      //   而**我们这把刀没有任何地方去开它** ✗ ⇒ 我调 super 时那个 filter 永远把它挡掉 ⇒ super 空跑 ✗
-      //   ⇒ 实测症状"没推进连击进度 / 一直第一段" ✓。
-      // ⇒ 直接照本体内部那一句，**自己调 progressCombo** ✓（同一个状态对象、同一个方法 ✓），并保留限速 ✓。
-      stack.getCapability(ItemSlashBlade.BLADESTATE).ifPresent(state -> state.progressCombo(player));
-    }
-    // 目标还在无敌帧里 ⇒ 不再重复结算，但仍否决原版那一下 ✓（避免与匠魂结算重复 ✗）
-    if (target instanceof LivingEntity living && living.invulnerableTime > 0) {
-      return true;
-    }
-    return EntityInteractionModifierHook.leftClickEntity(stack, player, target);
+    // §1020 **完全按 TiCEX 走通的那条路** ✓：本方法就写成"调本体并原样传递它的返回值" ✓
+    //   —— TiCEX 的 ModifiableSlashBladeItem 正是这样写的 ✓：
+    //     `return stack.getCount() > 1 || this.onEntityInteractLeftClick(...) || super.onLeftClickEntity(stack, player, target);`
+    //
+    // 为什么这次能成立（前五轮为什么不行 ✗ 都记在 §1011–§1019 ✓）：
+    //   · 本体的返回语义有两层含义 ✓：闸门放行时"否决原版那一击"（伤害由本体自己的 AttackManager 结算 ✓），
+    //     闸门挡掉时"照常打" ✓ —— 而这套判定依赖 `_onClick` 开关与本体攻击管线 ✓；
+    //   · 我们此前**没有本体的攻击管线**（伤害无处可来 ✗）⇒ 要么否决＝打不到 ✗、要么不否决＝每刻重复命中 ✗；
+    //   · §1020 补上了三个 mixin ✓（`KatanaAttackHelperMixin`/`KatanaAttackManagerMixin`/`KatanaItemSlashBladeMixin` ✓）
+    //     ⇒ 本体的攻击管线**会把伤害按匠魂数值结算** ✓ ⇒ 于是"否决原版那一击"不再意味着没伤害 ✓
+    //     ⇒ 可以放心照抄本体/TiCEX 的写法 ✓，连段、技能、击退手感全部回到原版机制 ✓。
+    //
+    // 匠魂那边要的"击中类修饰符"由 §1020 的两个 mixin 在**本体的伤害结算里**调用 ✓
+    //   （比在这里再调一次 TC 的 leftClickEntity 更贴合原版流程 ✓，也避免重复结算 ✗）。
+    return super.onLeftClickEntity(stack, player, target);
   }
 
   @Override

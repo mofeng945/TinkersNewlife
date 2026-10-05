@@ -18,7 +18,10 @@
     "GoetyCastSpeedMixin",
     "GoetyVoidSoulMixin",
     "EnigmaticNightVisionMixin",
-    "TwilightMazeRandomMixin"
+    "TwilightMazeRandomMixin",
+    "KatanaAttackHelperMixin",
+    "KatanaAttackManagerMixin",
+    "KatanaItemSlashBladeMixin"
   ],
   "client": [
     "EntityRenderDispatcherMixin",
