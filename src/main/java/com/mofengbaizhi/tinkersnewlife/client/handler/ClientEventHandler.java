@@ -129,6 +129,8 @@ public class ClientEventHandler {
                 com.mofengbaizhi.tinkersnewlife.client.renderer.ElderManaPedestalRenderer::new);
         event.registerEntityRenderer(ModEntities.DREADSTEEL_SLASH.get(), DreadsteelSlashRenderer::new);
         // 「兵士佩刀」刀光（§810）：弧形面片 ＋ 弧光贴图（仿拔刀剑）✓ 不是横扫粒子 ✗
+        event.registerEntityRenderer(ModEntities.WHIP_LASH.get(),
+                com.mofengbaizhi.tinkersnewlife.client.renderer.WhipLashRenderer::new);
         event.registerEntityRenderer(ModEntities.SOLDIER_SLASH.get(),
                 com.mofengbaizhi.tinkersnewlife.client.renderer.SoldierSlashRenderer::new);
         event.registerEntityRenderer(ModEntities.FLYING_SWORD.get(), FlyingSwordRenderer::new);

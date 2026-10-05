@@ -1,0 +1,21 @@
+{
+  "_comment": "§1047 鞭子物品模型：借本体钓鱼竿的几何（parent = tconstruct:item/base/rod ⇒ 件名 rod/string/hook ✓），映射三个部件：rod←坚韧手柄(0) ✓、hook←大板(1) ✓、string←弓弦(2) ✓。⚠ 挥动时的鞭身由 client/renderer/WhipLashRenderer 另外画 ✓（这里只管物品图标/手持的静态部分 ✓）。",
+  "loader": "tconstruct:tool",
+  "parent": "tconstruct:item/base/rod",
+  "textures": {
+    "rod": "tinkersnewlife:item/tool/whip/handle",
+    "hook": "tinkersnewlife:item/tool/whip/plate",
+    "string": "tinkersnewlife:item/tool/whip/bowstring"
+  },
+  "parts": [
+    { "name": "rod", "index": 0 },
+    { "name": "hook", "index": 1 },
+    { "name": "string", "index": 2 }
+  ],
+  "overrides": [
+    {
+      "predicate": { "tconstruct:broken": 1 },
+      "model": "tinkersnewlife:item/tool/whip/broken"
+    }
+  ]
+}

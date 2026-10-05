@@ -1,0 +1,17 @@
+{
+    "name":  "Whip",
+    "category":  "tinkersnewlife:tools",
+    "icon":  "tinkersnewlife:whip",
+    "sortnum":  8,
+    "pages":  [
+                  {
+                      "type":  "patchouli:spotlight",
+                      "item":  "tinkersnewlife:slingshot",
+                      "text":  "Left click to lash: the lash is a real simulated rope and only sections sweeping through a target fast enough deal damage - faster hurts more, each target is hit once per lash with halved follow-up damage. Hold right click for 2 seconds and release to slam the ground for a shockwave. Parts: tough handle + large plate + bowstring, all standard Tinkers parts you can already pattern and cast."
+                  },
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "Left click to lash: the lash is a real simulated rope and only sections sweeping through a target fast enough deal damage - faster hurts more, each target is hit once per lash with halved follow-up damage. Hold right click for 2 seconds and release to slam the ground for a shockwave. Parts: tough handle + large plate + bowstring, all standard Tinkers parts you can already pattern and cast."
+                  }
+              ]
+}

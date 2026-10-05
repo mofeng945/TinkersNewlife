@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "tinkersnewlife:slingshot"
+    "tinkersnewlife:slingshot",
+    "tinkersnewlife:whip"
   ]
 }

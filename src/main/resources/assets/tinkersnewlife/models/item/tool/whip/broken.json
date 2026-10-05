@@ -1,0 +1,15 @@
+{
+  "_comment": "§1047 鞭子·破损态：结构与 models/item/whip.json 一致，只是三张贴图换成 _broken ✓（由本仓库的破损贴图生成脚本统一样式 ✓）。",
+  "loader": "tconstruct:tool",
+  "parent": "tconstruct:item/base/rod",
+  "textures": {
+    "rod": "tinkersnewlife:item/tool/whip/handle_broken",
+    "hook": "tinkersnewlife:item/tool/whip/plate_broken",
+    "string": "tinkersnewlife:item/tool/whip/bowstring_broken"
+  },
+  "parts": [
+    { "name": "rod", "index": 0 },
+    { "name": "hook", "index": 1 },
+    { "name": "string", "index": 2 }
+  ]
+}

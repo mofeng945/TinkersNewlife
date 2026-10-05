@@ -32,6 +32,20 @@ public class ModEntities {
             DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, TinkersNewlife.MOD_ID);
 
     /** 弹弓的石弹（§983）：投掷物实体，渲染复用原版 ThrownItemRenderer（画成飞出去的石头） */
+    /** §1047 鞭击（纯逻辑/视觉实体 ✓ noSave ⇒ 不留悬挂特效 ✓） */
+    public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.WhipLashEntity>> WHIP_LASH =
+            ENTITIES.register("whip_lash",
+                    () -> EntityType.Builder
+                            .<com.mofengbaizhi.tinkersnewlife.content.entity.WhipLashEntity>of(
+                                    com.mofengbaizhi.tinkersnewlife.content.entity.WhipLashEntity::new,
+                                    MobCategory.MISC)
+                            .sized(0.5f, 0.5f)
+                            .clientTrackingRange(12)
+                            .updateInterval(1)
+                            .noSave()
+                            .build(TinkersNewlife.MOD_ID + ":whip_lash")
+            );
+
     public static final RegistryObject<EntityType<StoneShotEntity>> STONE_SHOT =
             ENTITIES.register("stone_shot",
                     () -> EntityType.Builder.<StoneShotEntity>of(StoneShotEntity::new, MobCategory.MISC)
@@ -40,6 +54,9 @@ public class ModEntities {
                             .updateInterval(10)
                             .build(TinkersNewlife.MOD_ID + ":stone_shot")
             );
+
+
+
 
     public static final RegistryObject<EntityType<DreadsteelSlashEntity>> DREADSTEEL_SLASH =
             ENTITIES.register("dreadsteel_slash",
