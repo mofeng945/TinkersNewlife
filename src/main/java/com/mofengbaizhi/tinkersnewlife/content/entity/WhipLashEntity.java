@@ -75,6 +75,8 @@ public class WhipLashEntity extends Entity {
     private static final double SHOCKWAVE_KNOCKBACK = 0.9D;
     /** 一根鞭同时只有一个活动实体（蓄力段要能被松手打断 ✓） */
     private static final Map<UUID, WhipLashEntity> ACTIVE_CHARGES = new HashMap<>();
+    /** 每个玩家"上次开始抽击"的 tick ✓ —— 挥击包与命中包可能同 tick 都来 ✓ 只允许甩一次 ✓ */
+    private static final Map<UUID, Integer> LAST_LASH_TICK = new HashMap<>();
 
     private final WhipPhysics physics = new WhipPhysics();
     private final WhipPhysics.Drive drive = new WhipPhysics.Drive();
@@ -92,8 +94,14 @@ public class WhipLashEntity extends Entity {
 
     // ==================== 生成入口（服务端调用 ✓） ====================
 
-    /** 左键：一次抽击 ✓ */
+    /** 左键：一次抽击 ✓（同一玩家同一时刻只甩一次 ✓ 见 {@link #LAST_LASH_TICK}） */
     public static void startLash(Player player) {
+        int now = player.tickCount;
+        Integer last = LAST_LASH_TICK.get(player.getUUID());
+        if (last != null && now - last < 2) {
+            return;
+        }
+        LAST_LASH_TICK.put(player.getUUID(), now);
         WhipLashEntity lash = new WhipLashEntity(player.level(), player, PHASE_LASH);
         player.level().addFreshEntity(lash);
     }
@@ -243,9 +251,12 @@ public class WhipLashEntity extends Entity {
             drive.progressFrom = 0.0D;
             drive.progressTo = 0.0D;
         } else {
-            int period = WhipItem.attackPeriodTicks(owner);
-            windupTicks = Mth.clamp(Math.min(3, Math.max(1, period - 2)), 1, 3);
-            strokeTicks = Mth.clamp(Math.max(1, period - windupTicks - 1), 1, 4);
+            // §1054 用户口径：挥动速度由【攻速属性】决定 ✓
+            // 基准（本鞭基础攻速 1.6）⇒ 起手 3 ＋ 抽击 4 ✓（与参照 ArmMotor 完全一致 ✓）；
+            // 攻速越高 ⇒ 倍率越小 ⇒ 抽得越快越脆 ✓；越慢 ⇒ 抡得越重越慢 ✓。
+            double timeScale = WhipItem.swingTimeScale(owner);
+            windupTicks = Mth.clamp((int) Math.round(3.0D * timeScale), 1, 8);
+            strokeTicks = Mth.clamp((int) Math.round(4.0D * timeScale), 1, 10);
             int total = windupTicks + strokeTicks;
             int driveTick = this.tickCount - 1;
             boolean driving = driveTick >= 0 && driveTick < total;
@@ -315,9 +326,11 @@ public class WhipLashEntity extends Entity {
         if (targets.isEmpty()) {
             return;
         }
+        // §1054 用户口径：伤害由【攻击力属性】决定 ✓（基准面板 3.5 ⇒ 与原参照口径一致 ✓）
+        float panel = WhipItem.attackPanel(owner.getMainHandItem());
         for (int seg = 0; seg < WhipPhysics.SEGMENTS; seg++) {
             double speed = physics.segmentSpeed(seg);
-            float base = WhipItem.damageForSpeed(speed);
+            float base = WhipItem.damageForSpeed(speed, panel);
             if (base <= 0.0F) {
                 continue;
             }
@@ -364,7 +377,7 @@ public class WhipLashEntity extends Entity {
         }
         shockwaveTriggered = true;
 
-        float base = WhipItem.damageForSpeed(tipSpeed);
+        float base = WhipItem.damageForSpeed(tipSpeed, WhipItem.attackPanel(owner.getMainHandItem()));
         List<LivingEntity> targets = this.level().getEntitiesOfClass(LivingEntity.class,
                 new AABB(impact, impact).inflate(SHOCKWAVE_RADIUS), e -> isValidTarget(owner, e));
         for (LivingEntity target : targets) {

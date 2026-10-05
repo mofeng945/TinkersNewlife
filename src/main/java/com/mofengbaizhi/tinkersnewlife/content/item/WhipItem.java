@@ -4,6 +4,7 @@ import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.entity.WhipLashEntity;
 import com.mofengbaizhi.tinkersnewlife.content.entity.WhipPhysics;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.LivingEntity;
@@ -15,6 +16,7 @@ import slimeknights.tconstruct.library.tools.definition.ToolDefinition;
 import slimeknights.tconstruct.library.tools.helper.ToolDamageUtil;
 import slimeknights.tconstruct.library.tools.item.ModifiableItem;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
+import slimeknights.tconstruct.library.tools.stat.ToolStats;
 
 /**
  * <b>鞭子</b>（§1053）—— 匠魂工具 ✓，部件 ＝ <b>坚韧手柄 ＋ 大板 ＋ 弓弦</b>（用户口径 ✓，
@@ -42,6 +44,12 @@ public class WhipItem extends ModifiableItem {
     /** 攻击间隔下限 ✓（照它的 {@code MIN_ATTACK_PERIOD_TICKS = 1} ✓） */
     private static final int MIN_ATTACK_PERIOD_TICKS = 1;
 
+    // ============ §1054 用户口径：挥动伤害与速度由匠魂的「攻击力 / 攻速」属性决定 ✓ ============
+    /** 基准攻击面板 ＝ 本鞭定义里的基础攻击力 ✓（{@code tool_definitions/whip.json} 的 3.5 ✓） */
+    public static final float REFERENCE_PANEL = 3.5F;
+    /** 基准攻击间隔（tick ✓）：本鞭基础攻速 1.6 ⇒ ⌈20 / 1.6⌉ ＝ 13 ✓（起手 3 ＋ 抽击 4 的基准 ✓） */
+    public static final int REFERENCE_PERIOD_TICKS = 13;
+
     public WhipItem(Properties properties) {
         super(properties, WHIP_DEFINITION);
     }
@@ -51,10 +59,34 @@ public class WhipItem extends ModifiableItem {
         return Math.max(MIN_ATTACK_PERIOD_TICKS, (int) Math.ceil(player.getCurrentItemAttackStrengthDelay()));
     }
 
-    /** 速度 ⇒ 伤害（照它 ✓）：{@code floor(速度/10) × 0.2} ✓ */
-    public static float damageForSpeed(double speedBlocksPerSecond) {
-        double speed = Math.max(0.0D, speedBlocksPerSecond);
-        return (float) (Math.floor(speed / 10.0D) * DAMAGE_PER_TEN_BLOCKS_PER_SECOND);
+    /**
+     * 速度 ⇒ 伤害 ✓：{@code floor(速度/10) × 0.2 × (面板 / 基准面板)} ✓
+     * <p>⚠ 用户口径（2026-10-05）：「<b>根据鞭子的攻击和攻速属性来决定鞭子的挥动伤害和速度</b>」✓
+     * ⇒ 面板 ＝ 基准 3.5 时与参照口径完全一致 ✓；面板越高越疼 ✓（匠魂材料／改装都能影响 ✓）。
+     */
+    public static float damageForSpeed(double speedBlocksPerSecond, float panel) {
+        double steps = Math.floor(Math.max(0.0D, speedBlocksPerSecond) / 10.0D);
+        double panelScale = Mth.clamp(panel / REFERENCE_PANEL, 0.1D, 8.0D);
+        return (float) (steps * DAMAGE_PER_TEN_BLOCKS_PER_SECOND * panelScale);
+    }
+
+    /** 攻击面板（匠魂 {@code attack_damage} 属性 ✓）—— 读不到（创造栏/未组装 ✓）就退回基准 ✓ */
+    public static float attackPanel(ItemStack stack) {
+        try {
+            float panel = ToolStack.from(stack).getStats().get(ToolStats.ATTACK_DAMAGE);
+            return panel > 0.0F ? panel : REFERENCE_PANEL;
+        } catch (Throwable ignored) {
+            return REFERENCE_PANEL;
+        }
+    }
+
+    /**
+     * 挥动时长倍率 ✓ —— 由<b>攻速属性</b>决定 ✓：
+     * 基准间隔 {@link #REFERENCE_PERIOD_TICKS} ⇒ 1.0 ✓（起手 3 ＋ 抽击 4 ✓ 与参照 {@code ArmMotor} 一致 ✓）；
+     * 攻速越高 ⇒ 周期越短 ⇒ 倍率越小 ⇒ 抽得越快越脆 ✓；越慢 ⇒ 倍率越大 ⇒ 抡得越重越慢 ✓。
+     */
+    public static double swingTimeScale(Player player) {
+        return Mth.clamp(attackPeriodTicks(player) / (double) REFERENCE_PERIOD_TICKS, 0.5D, 2.5D);
     }
 
     // ==================== 右键：蓄力 → 砸地 ====================
@@ -118,6 +150,23 @@ public class WhipItem extends ModifiableItem {
             ToolDamageUtil.damageAnimated(ToolStack.from(stack), 1, player, player.getUsedItemHand());
         }
         return false;                             // 不取消这次挥击本身 ✓
+    }
+
+    /**
+     * ⚠ 用户口径（2026-10-05）：「<b>让鞭子左键近战攻击伤害彻底取消</b>」✓
+     * ⇒ 返回 {@code true} ＝ <b>取消这次近战命中</b> ✗ —— 鞭子的伤害只由鞭身逐段扫掠给 ✓
+     * （见 {@code WhipLashEntity#tickLashDamage} ✓）。
+     * <p>挥击动作本身照旧发生 ✓（挥击包与命中包是两条路 ✓）⇒ {@link #onEntitySwing} 仍会触发抽击 ✓。
+     */
+    @Override
+    public boolean onLeftClickEntity(ItemStack stack, Player player, net.minecraft.world.entity.Entity entity) {
+        // 打实体时挥击包**不一定**会来 ✓ ⇒ 这里补一次抽击 ✓（冷却没好就不甩 ✓）
+        if (!player.level().isClientSide
+                && !isBroken(stack)
+                && player.getAttackStrengthScale(0.0F) >= 0.9F) {
+            WhipLashEntity.startLash(player);
+        }
+        return true;                              // ⚠ 无论如何都取消这次近战伤害 ✓
     }
 
     // ==================== 工具数据 ====================

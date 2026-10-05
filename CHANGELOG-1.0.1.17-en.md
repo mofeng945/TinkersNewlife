@@ -41,3 +41,18 @@ already hit by that lash (`base / 2^prior`, zero after 30), with the whip crack 
   the contact loop are this mod's own.
 * Known simplifications: block collision is per-point depenetration (the reference uses swept capsules
   per segment), the idle coil flourish is not implemented, and the arm is not posed by a renderer mixin.
+## Tweaked (2026-10-05, second pass - version unchanged)
+
+* **Left click no longer deals a direct melee hit at all.** Hitting something with the whip is purely the
+  simulated lash now: `onLeftClickEntity` cancels the vanilla melee damage, and the damage only comes
+  from rope sections sweeping through a target fast enough. Attacking an entity still starts a lash (the
+  swing packet does not always arrive for entity hits), and a per-tick gate makes sure one swing can only
+  ever start one lash.
+* **The lash damage now scales with the tool's attack damage.** The reference formula
+  `floor(speed / 10) * 0.2` is multiplied by `panel / 3.5` (3.5 being this whip's base attack damage), so
+  a stronger whip cracks harder and a weaker one less. At the base panel nothing changes.
+* **The lash speed now scales with the tool's attack speed.** The windup and stroke lengths are
+  `round(3 * scale)` and `round(4 * scale)` where `scale = attackPeriodTicks / 13` (13 ticks being this
+  whip's base attack speed of 1.6), clamped to 0.5x - 2.5x. At the base attack speed that is exactly the
+  reference's 3 + 4 tick lash; faster whips snap in about 4 ticks, slower ones wind up for up to 14.
+* The slam shockwave damage uses the same panel scaling.
