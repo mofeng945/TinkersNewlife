@@ -181,7 +181,8 @@ public class WhipLashEntity extends Entity {
         Vec3 hand = handPos(owner, horizontal);
 
         physics.markTickStart();
-        physics.tick(this.level(), owner.getEyePosition(), aim, progress,
+        // §1052 关键：把手部基点（它的 handBase ✓）也传进去 —— 根部要钉在"被抡圆的那只手"上 ✓
+        physics.tick(this.level(), owner.getEyePosition(), hand, aim, rightOf(horizontal), progress,
                 isSwingSignPositive() ? 1.0D : -1.0D, slam);
 
         if (!this.level().isClientSide) {
