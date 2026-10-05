@@ -6,7 +6,7 @@
     "pages":  [
                   {
                       "type":  "patchouli:spotlight",
-                      "item":  "tinkersnewlife:slingshot",
+                      "item":  "tinkersnewlife:whip",
                       "text":  "Right click retracts the whip and raises it to block. Taking a hit within 0.5 seconds of raising the guard (or pressing right click within 0.5 seconds of being hit) is a perfect block: the whip snaps out and throws the whole damage back at the attacker while you take none - but the guard then drops and you must release right click before you can raise it again. Any other blocked hit is only reduced by 40%."
                   },
                   {

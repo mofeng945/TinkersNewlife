@@ -1,0 +1,23 @@
+{
+  "type": "tconstruct:modifier",
+  "allow_crystal": true,
+  "inputs": [
+    {
+      "item": "minecraft:dragon_breath"
+    },
+    {
+      "item": "minecraft:golden_apple"
+    },
+    {
+      "item": "tinkersnewlife:nicholas_blessing"
+    }
+  ],
+  "level": 1,
+  "result": "tinkersnewlife:supervisor",
+  "slots": {
+    "abilities": 1
+  },
+  "tools": {
+    "tag": "tinkersnewlife:modifiable/whip"
+  }
+}

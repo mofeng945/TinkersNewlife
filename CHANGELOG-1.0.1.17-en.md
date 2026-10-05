@@ -190,3 +190,20 @@ by the lash, and by the whip counter-attack from a perfect block. Icons and name
   from your new part art (60 percent darker, two cracked pixels mid-span, a small chip off each end).
   Only pixels that already exist are touched, so the silhouette never gains stray pixels. The broken model
   points back at them.
+## Added (2026-10-05, fifteenth pass - version unchanged)
+
+### Supervisor, a whip-only modifier
+
+The whip can now be given **Supervisor** (Dragon's Breath + Golden Apple + Nicholas' Blessing). Only the
+whip can take it - the recipe is limited to a tag that contains nothing but the whip.
+
+With it the lash deals no damage at all and does managing instead:
+
+* Lashing anything that is yours (any mob whose owner is you - pets, mounts and the like - plus Goety
+  servants, your ring-of-one-mind partner, and their pets as well) stacks **Strength and Speed** on it,
+  one level per lash up to **level V**, lasting 20 seconds and refreshed by every lash.
+* Lashing a **villager** has a 5 percent chance to restock it on the spot, for **half** the usual amount,
+  at most **3 times per villager per day** (counted on the villager itself and independent of the vanilla
+  two-restocks-a-day rule).
+* No whip marks are applied while Supervisor is on - the point is to improve those targets, not weaken
+  them.

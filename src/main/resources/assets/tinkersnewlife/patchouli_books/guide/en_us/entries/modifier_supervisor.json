@@ -1,0 +1,12 @@
+{
+  "name": "Supervisor",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:nicholas_blessing",
+  "sortnum": 42,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "A modifier that fits the whip and nothing else. With it, the whip deals no lash damage at all and does your managing instead: lashing your own pets, servants or your ring-of-one-mind partner stacks Strength and Speed on them, one level per lash up to level V, lasting 20 seconds and refreshed by every lash; lashing a villager has a 5 percent chance to restock it immediately, for half the usual amount, at most 3 times per villager per day. Recipe: Dragon's Breath + Golden Apple + Nicholas' Blessing."
+    }
+  ]
+}

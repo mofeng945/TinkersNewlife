@@ -1,0 +1,12 @@
+{
+  "name": "监工",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:nicholas_blessing",
+  "sortnum": 42,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "只能装在鞭子上的强化。装上之后，鞭子的抽击不再造成任何伤害，改为替你管人：抽打自家宠物、随从或同心戒同伴时，为其叠加力量与速度，每抽一次升一级、最高 V 级，效果持续 20 秒并随每次抽打刷新；抽打村民时有 5% 的概率让它立刻补货，但补货量只有正常的一半，每名村民每天最多触发 3 次。配方：龙息 + 金苹果 + 尼古拉斯之赐。"
+    }
+  ]
+}

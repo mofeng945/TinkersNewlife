@@ -9,6 +9,16 @@ public class Modifiers {
     public static final ModifierDeferredRegister MODIFIERS =
             ModifierDeferredRegister.create(TinkersNewlife.MOD_ID);
 
+    /**
+     * <b>监工</b>（§1068 ✓ 用户口径：「写一个新强化：监工，只能被附加在鞭子上」✓）——
+     * 标记类 ✓，逻辑在 {@code content.handler.SupervisorHandler} ✓；
+     * 「只能装鞭子」由配方 {@code recipes/modifiers/supervisor.json} 的
+     * {@code tools.tag = tinkersnewlife:modifiable/whip} 限定 ✓（该标签里只有本鞭子 ✓）。
+     * <p>配方（用户口径 ✓）：<b>龙息 ＋ 金苹果 ＋ 尼古拉斯之赐</b> ✓。
+     */
+    public static final StaticModifier<SupervisorModifier> SUPERVISOR =
+            MODIFIERS.register("supervisor", SupervisorModifier::new);
+
     public static final StaticModifier<CosmicOrderVoiceTrait> COSMIC_ORDER_VOICE =
             MODIFIERS.register("cosmic_order_voice", CosmicOrderVoiceTrait::new);
 

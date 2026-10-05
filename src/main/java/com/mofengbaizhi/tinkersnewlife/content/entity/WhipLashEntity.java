@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.content.entity;
 
 import com.mofengbaizhi.tinkersnewlife.content.ModEffects;
 import com.mofengbaizhi.tinkersnewlife.content.ModEntities;
+import com.mofengbaizhi.tinkersnewlife.content.handler.SupervisorHandler;
 import com.mofengbaizhi.tinkersnewlife.content.item.WhipItem;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -429,14 +430,26 @@ public class WhipLashEntity extends Entity {
                 if (contact == null) {
                     continue;
                 }
-                float damage = (float) (base / Math.pow(2.0D, contactedTargets.size()));
                 contactedTargets.add(target.getUUID());
-                if (hurt(owner, target, contact, damage)) {
-                    // §1064 用户口径：被鞭子抽中 ⇒ 叠一层"鞭痕"（每层 −10% 速度与攻击 ✓ 最多 8 层 ＝ −80% ✓）
-                    ModEffects.applyWhipWeaken(target);
+                if (SupervisorHandler.hasSupervisor(owner)) {
+                    // §1068 监工（用户口径 ✓）：抽击伤害【降为 0】✓ 改为"管理" ——
+                    //   抽自己人（宠物／仆从／同心戒同伴）⇒ 力量 ＋ 速度 逐次叠到 5 级 ✓；
+                    //   抽村民 ⇒ 5% 概率半量补货 ✓（每村民每天最多 3 次 ✓）。
+                    //   ⚠ 这里【完全不造成伤害】✓ 也【不叠 §1064 鞭痕】✗ ——
+                    //   打的都是自家牲口 ✓ 再给它们减速减攻就荒唐了 ✗。
+                    SupervisorHandler.onWhipTouch(owner, target);
                     this.level().playSound(null, contact.x, contact.y, contact.z,
-                            SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 0.85F,
-                            0.96F + this.random.nextFloat() * 0.08F);
+                            SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 0.45F,
+                            1.32F + this.random.nextFloat() * 0.08F);
+                } else {
+                    float damage = (float) (base / Math.pow(2.0D, contactedTargets.size()));
+                    if (hurt(owner, target, contact, damage)) {
+                        // §1064 用户口径：被鞭子抽中 ⇒ 叠一层"鞭痕"（每层 −10% 速度与攻击 ✓ 最多 8 层 ＝ −80% ✓）
+                        ModEffects.applyWhipWeaken(target);
+                        this.level().playSound(null, contact.x, contact.y, contact.z,
+                                SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 0.85F,
+                                0.96F + this.random.nextFloat() * 0.08F);
+                    }
                 }
             }
         }
