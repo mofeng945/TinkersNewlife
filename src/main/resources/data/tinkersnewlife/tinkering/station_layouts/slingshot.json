@@ -1,0 +1,37 @@
+{
+  "translation_key": "item_group.tinkersnewlife.slingshot",
+  "sortIndex": 10,
+  "icon": {
+    "item": "tinkersnewlife:slingshot",
+    "nbt": "{Damage:0,tic_broken:0b,tic_display:1b,tic_materials:[\"tconstruct:ui_render#head\",\"tconstruct:ui_render#handle\",\"tconstruct:ui_render#extra\",\"tconstruct:ui_render#large\",\"tconstruct:ui_render#extra_large\"]}"
+  },
+  "input_slots": [
+    {
+      "translation_key": "slot.tinkersnewlife.slingshot.limb1",
+      "icon": "tconstruct:bow_limb",
+      "filter": {
+        "item": "tconstruct:bow_limb"
+      },
+      "x": 20,
+      "y": 55
+    },
+    {
+      "translation_key": "slot.tinkersnewlife.slingshot.limb2",
+      "icon": "tconstruct:bow_limb",
+      "filter": {
+        "item": "tconstruct:bow_limb"
+      },
+      "x": 45,
+      "y": 30
+    },
+    {
+      "translation_key": "slot.tinkersnewlife.slingshot.bowstring",
+      "icon": "tconstruct:bowstring",
+      "filter": {
+        "item": "tconstruct:bowstring"
+      },
+      "x": 45,
+      "y": 55
+    }
+  ]
+}
