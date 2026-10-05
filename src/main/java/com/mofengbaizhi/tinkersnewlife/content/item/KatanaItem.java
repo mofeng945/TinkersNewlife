@@ -272,31 +272,37 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
 
   /* Attacking */
 
+  /** §1018：记录"该玩家上一次推进连段"的游戏刻（防止斩击特效每 tick 调用把连段/剑技刷爆 ✗） */
+  private static final String COMBO_TICK_KEY = "tnl_katana_combo_tick";
+  /** §1018：两次连段推进之间的最小间隔（刻）——人手点击的间隔远大于它 ✓ */
+  private static final int COMBO_MIN_INTERVAL = 4;
+
   @Override
   public boolean onLeftClickEntity(ItemStack stack, Player player, Entity target) {
-    // §1017 实测修正：**完全照抄本体行为** —— 调 super ✓ 并把它的返回值**原样传出去** ✓（也就是"否决" ✓）。
-    //
-    // 【为什么要否决（返回 true）】＝ 这是打断"贴脸自动连击 + 每 tick 推进连段"的开关 ✗。
-    //   本方法的调用方有两条 ✗：
-    //     ① 真·左键：`Player.attack → ForgeHooks.onPlayerAttackTarget → 本方法` ✓（一次一下 ✓）；
-    //     ② 拔刀剑斩击特效：`EntitySlashEffect.tick → AttackManager.areaAttack → AttackHelper.attack
-    //        → ForgeHooks.onPlayerAttackTarget → 本方法` ✓ —— **只要目标还在范围内就每 tick 来一次** ✗
-    //        （§1014 的崩溃栈就是这条 ✓）。
-    //   本体返回 true ⇒ `onPlayerAttackTarget` 返回 false ⇒ `AttackHelper.attack` 开头直接 `return` ✓
-    //   ⇒ ② 这条"重复进入"被打断 ✓ ⇒ 一次挥砍只结算一次 ✓、连段只被真·左键推进 ✓
-    //   ⇒ §1016 实测的"砍到人就自动连击、跑远才停" ✗ 消失 ✓。
-    //   （§1015/§1016 返回 false ⇒ ② 每 tick 都能进来 ⇒ 目标在范围内就一直挨打 ✗ ＋ 我们每 tick 替它
-    //     `progressCombo` ✗ —— 两个症状都来自这里 ✓。）
-    //
-    // 【为什么现在否决不会再"砍不到人"】✓：§1011 那版照抄过否决 ✗，但当时**刀定义还不存在**
-    //   （`data/tinkersnewlife/slashblade/named_blades/katana.json` 是 §1013 才补的 ✓）
-    //   ⇒ 拔刀剑自己的伤害路径根本没跑 ⇒ 否决＝什么都不发生 ✗。
-    //   现在刀定义在位、本体管线已实测跑通 ✓（§1015-3 的崩溃链为证 ✓）⇒ 否决之后由**本体自己**结算伤害 ✓，
-    //   与它的原生刀行为完全一致 ✓（原生刀同样是"否决 + 自己结算" ✓）。
-    //
-    // 【为什么不调匠魂的 EntityInteractionModifierHook.leftClickEntity】✗：本体不调它 ✓；
-    //   调了会多结算一次伤害 ✗，而且它的返回值同样是"否决"，会让返回语义重复一层 ✗。
-    return super.onLeftClickEntity(stack, player, target);
+    // §1018 实测定论：本方法有**两条**调用路径，而且**签名上分不开** ✗：
+    //   ① 真·左键        ：Player.attack → ForgeHooks.onPlayerAttackTarget → 本方法（一次一下 ✓）
+    //   ② 拔刀剑斩击特效 ：EntitySlashEffect.tick → AttackManager.areaAttack → AttackHelper.attack
+    //                      → onPlayerAttackTarget → 本方法（**目标在范围内就每 tick 一次** ✗，见 §1014 崩溃栈 ✓）
+    // 前四轮（§1011/§1013/§1015/§1016/§1017）的教训 ✓：
+    //   · 返回 true（否决）⇒ ② 被打断 ✓ 但**伤害也没了** ✗（本刀没有别的伤害来源 ✗）⇒"打不到人" ✓；
+    //   · 返回 false      ⇒ 伤害有了 ✓ 但 ② 每 tick 重复命中 ✗ ⇒"砍到人自动连击、跑远才停" ✓。
+    // ⇒ 只能把两件事**拆开** ✓：
+    //   · **伤害**交给匠魂钩子 ✓（它自带"取消原版单击"的语义 ✓，会跑匠魂的击中类修饰符 ✓，
+    //     且有原版无敌帧兜着 ⇒ 不会每 tick 重复结算 ✓）；
+    //   · **连段推进**只在"看起来像真·左键"时做 ✓ —— 用**限速**近似：同一玩家每 COMBO_MIN_INTERVAL 刻
+    //     最多推进一次 ✓（斩击特效是每刻一次 ⇒ 被限速挡掉 ✓；人手点击间隔远大于 4 刻 ⇒ 正常推进 ✓）。
+    long now = player.level().getGameTime();
+    CompoundTag data = player.getPersistentData();
+    if (now - data.getLong(COMBO_TICK_KEY) >= COMBO_MIN_INTERVAL) {
+      data.putLong(COMBO_TICK_KEY, now);
+      // 只取侧效：清/置 L_CLICK 输入指令 + progressCombo ✓；返回值忽略 ✗（否决不在这里做 ✓）
+      super.onLeftClickEntity(stack, player, target);
+    }
+    // 目标还在无敌帧里 ⇒ 不再重复结算，但仍否决原版那一下 ✓（避免与匠魂结算重复 ✗）
+    if (target instanceof LivingEntity living && living.invulnerableTime > 0) {
+      return true;
+    }
+    return EntityInteractionModifierHook.leftClickEntity(stack, player, target);
   }
 
   @Override
