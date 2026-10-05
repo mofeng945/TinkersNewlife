@@ -122,7 +122,7 @@ public final class SoldiersSaberHandler {
         float perStage = damagePerStage(held);
         if (perStage <= 0.0F) return;
 
-            scheduleStages(event.getSource(), victim, perStage, stages, attacker.position());
+        scheduleStages(event.getSource(), victim, perStage, stages, attacker.position());
     }
 
     /** 把 N 段依次排进后续 tick ✓（排不进去也绝不影响主伤害 ✓） */
