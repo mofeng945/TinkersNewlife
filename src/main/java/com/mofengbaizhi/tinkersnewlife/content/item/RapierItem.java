@@ -40,6 +40,17 @@ public class RapierItem extends ModifiableItem {
     public RapierItem(Properties properties) {
         super(properties, RAPIER_DEFINITION);
     }
+    // ============================================================
+    //  §997 探针（临时 ✗）：给西洋剑挂上拔刀剑的刀状态，用来验证「深度挂接(B)」是否可行 ✓
+    //    验证完：删掉本方法 + integration/slashblade 整个包即可 ✓
+    //    拔刀剑不在场时返回 null ✓（零影响 ✓ 类加载也不会解析它的类型 ✓）
+    // ============================================================
+
+    @Override
+    public net.minecraftforge.common.capabilities.ICapabilityProvider initCapabilities(
+            ItemStack stack, net.minecraft.nbt.CompoundTag nbt) {
+        return com.mofengbaizhi.tinkersnewlife.integration.slashblade.SlashBladeProbe.initCapabilities(stack, nbt);
+    }
 
     // ============================================================
     //  §949 阶段 3：右键后跳（匠魂2 原版特征之一 ✓）
