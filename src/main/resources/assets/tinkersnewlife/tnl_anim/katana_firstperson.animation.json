@@ -1,0 +1,40 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"animation.tinkersnewlife.katana_charge": {
+			"animation_length": 1.0,
+			"loop": false,
+			"_comment": "§1002 拔刀剑·居合蓄力：item 骨骼在 0→0.5s 内把刀抬起并向后引（蓄力姿势），0.5s 之后保持住（代码按蓄力时长夹住采样时间 ✓ 不会循环）；抖动由 KatanaFirstPersonHandler 在手空间叠一个小角度。_tnl_offset：x 负=往左 / y 正=往上 / z 负=往屏幕里；_tnl_scale 小于 1 = 更远更小。改完 F3+T 生效，不用重编译。",
+			"_tnl_offset": [0, 0, 0],
+			"_tnl_scale": 1.0,
+			"bones": {
+				"item": {
+					"rotation": {
+						"0.0": [0, 0, 0],
+						"0.25": [-8, -6, -18],
+						"0.5": [-14, -10, -30],
+						"1.0": [-14, -10, -30]
+					},
+					"position": {
+						"0.0": [0, 0, 0],
+						"0.25": [0, 1.0, 1.5],
+						"0.5": [0, 2.0, 3.0],
+						"1.0": [0, 2.0, 3.0]
+					}
+				},
+				"arm": {
+					"rotation": {
+						"0.0": [0, 0, 0],
+						"0.5": [0, 0, 0]
+					}
+				},
+				"item_third": {
+					"rotation": {
+						"0.0": [0, 0, 0],
+						"0.5": [0, 0, 0]
+					}
+				}
+			}
+		}
+	}
+}
