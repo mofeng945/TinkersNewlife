@@ -77,15 +77,18 @@ public final class SoldiersSaberHandler {
     private static final int SLASH_TINT = 0xC9CFD9;
 
     /**
-     * §1043 每一段刀光的<b>角度抖动</b>（±该值 度 ✓）。
-     * <p>⚠ 朝向本身<b>不再</b>由服务端决定 ✗：渲染器会按施法者位置把弧带的<b>圆心精确对准玩家</b> ✓
-     * （用户口径：「我是想让你把圆心对着玩家」✓ 见 {@code SoldierSlashRenderer#aimRollAtCaster} ✓）。
-     * 这里只加一点点抖动 ✓ ⇒ 4 段既都朝玩家、又不会像同一刀 ✓；
-     * 段与段的区分主要靠<b>镜像</b>（{@code setMirrored} ✓）、<b>大小</b>（{@link #STAGE_SCALE} ✓）
-     * 与<b>落点</b>（黄金角小圆 ✓）✓。
-     * <p>这个值只在"渲染器算不出朝玩家方向"时当兜底角度用 ✓。
+     * §1045 每一段刀光的<b>平面自转角</b>（度 ✓）—— 绕「圆心 → 锚点」轴旋转<b>整张弧面</b> ✓
+     * ⇒ 4 段刀光的平面互相岔开 ✓（用户口径：
+     * 「<b>现在所有的刀光都堆在同一条线上，可以旋转一些角度来岔开它们</b>」✓）。
+     * <p>⚠ 可见度 {@code |m·d| = sin(TILT_DEG)}（见 {@code SoldierSlashRenderer}）<b>与该角无关</b> ✓
+     * ⇒ 岔开到任何角度都不会让某一段退化成细线 ✓。
+     * <p>四个值互不相同、左右交替 ✓，再配合 {@link #STAGE_SCALE} 的大小差 ✓、
+     * {@code setMirrored} 的镜像 ✓、黄金角落点偏移 ✓ ⇒ 一眼就是"连续几刀" ✓。
      */
-    private static final float SLASH_ROLL_JITTER = 4.0F;
+    private static final float[] STAGE_ROLL = { -62.0F, 28.0F, -26.0F, 66.0F };
+
+    /** 每段自转角的随机抖动（度 ✓）⇒ 免得四刀机械地等分 ✓ */
+    private static final float SLASH_ROLL_JITTER = 5.0F;
 
     /** 每一段刀光的大小 ✓（略有差别 ⇒ 即使角度接近也分得清 ✓） */
     private static final float[] STAGE_SCALE = { 1.16F, 0.98F, 1.30F, 1.04F };
@@ -216,7 +219,8 @@ public final class SoldiersSaberHandler {
      *
      * <p>§811（用户口径「附加刀光别给我重叠了，每一段角度应该不太一样」✓）—— 每一段都把三样东西错开 ✓：
      * <ol>
-     *   <li><b>角度</b>：§1043 起**朝向由渲染器对准施法者** ✓（圆心朝玩家 ✓），这里只加 {@link #SLASH_ROLL_JITTER} 抖动 ✓
+     *   <li><b>角度</b>：§1045 取 {@link #STAGE_ROLL} 里排好的自转角 ✓（互不相同、左右交替 ✓）+ 小抖动 ✓
+     *       ⇒ 每段刀光的<b>平面互相岔开</b> ✓（不会叠成一条线 ✓）
      *       ＋ 只加一点点随机抖动（±4° ✓ 免得机械 ✓）；</li>
      *   <li><b>大小</b>：取 {@link #STAGE_SCALE} ✓（1.30 / 0.98 / 1.16 / 1.04 各不相同 ✓）；</li>
      *   <li><b>落点</b>：沿黄金角（137.5°）在小圆上错开 ✓ ＋ 高度递增 ✓
@@ -229,7 +233,8 @@ public final class SoldiersSaberHandler {
     private static void spawnSlash(ServerLevel level, LivingEntity victim, int index, Vec3 casterPos) {
         try {
             int i = Math.max(1, index);
-            float roll = (level.random.nextFloat() * 2.0F - 1.0F) * SLASH_ROLL_JITTER;    // §1043 只留抖动 ✓
+            float roll = STAGE_ROLL[(i - 1) % STAGE_ROLL.length]
+                    + (level.random.nextFloat() * 2.0F - 1.0F) * SLASH_ROLL_JITTER;      // §1045 平面岔开 ✓
             float scale = STAGE_SCALE[(i - 1) % STAGE_SCALE.length];
 
             // 落点错开：黄金角小圆 ＋ 高度递增 ⇒ 不重叠 ✓

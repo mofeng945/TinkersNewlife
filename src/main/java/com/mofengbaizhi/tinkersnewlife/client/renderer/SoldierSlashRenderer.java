@@ -40,6 +40,7 @@ import org.joml.Matrix4f;
  *   圆心 C    = 施法者位置（玩家身上 ✓）
  *   半径 r    = clamp(|锚点 - C|, MIN_RADIUS, MAX_RADIUS)   // 锚点 = 剑气所在位置（目标身上 ✓）
  *   跨中方向 u = 「C → 锚点」方向 d 绕"世界上方"侧倾 TILT_DEG 度 ✓   ← 就是用户说的"侧一点点角度" ✓
+ *   平面自转   = 服务端的 ROLL 绕 d 轴旋转整张平面 ✓                 ← §1045 多段刀光"岔开"用 ✓
  *   平面内另一轴 v = d × u
  *   弧带点    = C + r·(cos θ·u + sin θ·v)，θ ∈ ±ARC_SPAN/2        // 一条平面圆弧 ✓
  * </pre>
@@ -100,8 +101,12 @@ public class SoldierSlashRenderer extends EntityRenderer<SoldierSlashEntity> {
      * ⇒ 超远时把半径截到该值 ✓（此时圆心落在玩家与剑气之间 ✓ 仍在玩家那一侧 ✓）。
      */
     private static final double MAX_RADIUS = 4.0D;
-    /** §1044 服务端给的角度只当"平面内摆动"用 ✓ 并限幅 ⇒ 不至于把弧带甩出锚点 ✗ */
-    private static final float SPAN_SHIFT_LIMIT = 30.0F;
+    /**
+     * §1045 服务端给的 ROLL 是<b>整张平面绕「圆心→锚点」轴的旋转角</b>（度 ✓）——
+     * 多段刀光靠它把平面岔开 ✓（用户口径：「<b>所有的刀光都堆在同一条线上，可以旋转一些角度来岔开它们</b>」✓）。
+     * <p>⚠ 关键性质：可见度 {@code |m·d| = sin(TILT_DEG)} <b>与该旋转角无关</b> ✓
+     * ⇒ 平面转到任何角度都一样看得见 ✓（不会因为"岔开"而让某段退化成细线 ✗）。
+     */
 
     private static RenderType slashRenderType;
 
@@ -146,7 +151,6 @@ public class SoldierSlashRenderer extends EntityRenderer<SoldierSlashEntity> {
 
             VertexConsumer consumer = buffer.getBuffer(type);
             float halfSpan = ARC_SPAN * 0.5F;
-            float spanShift = Mth.clamp(entity.getSlashRoll(), -SPAN_SHIFT_LIMIT, SPAN_SHIFT_LIMIT);
 
             float rad = frame.radius;
             float halfWidthBase = rad * HALF_WIDTH_RATIO * scale;
@@ -155,8 +159,8 @@ public class SoldierSlashRenderer extends EntityRenderer<SoldierSlashEntity> {
                 float u0 = (float) i / SEGMENTS;
                 float u1 = (float) (i + 1) / SEGMENTS;
 
-                float ang0 = (float) Math.toRadians(-halfSpan + ARC_SPAN * u0 + spanShift);
-                float ang1 = (float) Math.toRadians(-halfSpan + ARC_SPAN * u1 + spanShift);
+                float ang0 = (float) Math.toRadians(-halfSpan + ARC_SPAN * u0);
+                float ang1 = (float) Math.toRadians(-halfSpan + ARC_SPAN * u1);
 
                 float cos0 = Mth.cos(ang0), sin0 = Mth.sin(ang0);
                 float cos1 = Mth.cos(ang1), sin1 = Mth.sin(ang1);
@@ -233,6 +237,12 @@ public class SoldierSlashRenderer extends EntityRenderer<SoldierSlashEntity> {
                     perp = new Vec3(0.0D, 0.0D, 1.0D).subtract(d.scale(d.z));
                 }
                 perp = perp.normalize();
+
+                // §1045 先把"侧倾基准方向"绕 d 轴自转 ROLL 度 ⇒ 每段刀光的平面互相岔开 ✓
+                //（可见度 |m·d| = sin(TILT) 与该角无关 ⇒ 怎么转都不会退化成细线 ✓）
+                double rollRad = Math.toRadians(entity.getSlashRoll());
+                double rc = Math.cos(rollRad), rs = Math.sin(rollRad);
+                perp = perp.scale(rc).add(d.cross(perp).scale(rs)).normalize();
 
                 // 跨中方向：从 d 侧倾 TILT_DEG 度 ⇒ |m·d| = sin(TILT) > 0 ⇒ 不会退化成细线 ✓
                 double tilt = Math.toRadians(TILT_DEG);
