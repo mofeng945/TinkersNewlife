@@ -1,11 +1,11 @@
 {
-  "_comment": "§1063 鞭子·破损态：结构与 models/item/whip.json 一致 ✓，三张贴图【指回正常贴图】✓ —— 用户在 §1062 删掉了 handle_broken / plate_broken / bowstring_broken ✓，为避免破损时显示紫黑『缺失贴图』✗，这里改为复用正常贴图（用户选的方案 A ✓）。耐久耗尽的提示由耐久条与工具提示承担 ✓。",
+  "_comment": "§1067 鞭子·破损态：结构与 models/item/whip.json 一致 ✓，三张贴图用 _broken ✓ —— 用户在 §1067 要求『顺手把破损贴图给我生成了』✓，我已按其新画的三张原图【派生】出 handle_broken / plate_broken / bowstring_broken ✓（做法：整体压暗到 60%、中段两像素加深当裂纹、两端各崩 1~2 个像素当日缺口；⚠ 只改原图【已存在】的像素 ✓ 绝不新增轮廓外的点 ✗ —— 第一版我就是无视轮廓直接画裂纹 ✗，结果破损图比原图多出一圈悬空黑点 ✗，已重做 ✓）。若用户以后重画原图 ✗ 记得同步重生成这三张 ✓。",
   "loader": "tconstruct:tool",
   "parent": "tconstruct:item/base/rod",
   "textures": {
-    "rod": "tinkersnewlife:item/tool/whip/handle",
-    "hook": "tinkersnewlife:item/tool/whip/plate",
-    "string": "tinkersnewlife:item/tool/whip/bowstring"
+    "rod": "tinkersnewlife:item/tool/whip/handle_broken",
+    "hook": "tinkersnewlife:item/tool/whip/plate_broken",
+    "string": "tinkersnewlife:item/tool/whip/bowstring_broken"
   },
   "parts": [
     { "name": "rod", "index": 0 },

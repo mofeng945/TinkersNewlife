@@ -179,3 +179,14 @@ by the lash, and by the whip counter-attack from a perfect block. Icons and name
 * Detail worth knowing: a perfect block ends the guard internally, which fires the same release callback -
   without care that would have overwritten the 2 second cooldown with the 1 second one. A short window
   check now keeps the longer cooldown intact.
+## Added (2026-10-05, fourteenth pass - version unchanged)
+
+* First person now raises the whip toward your view while you block, instead of only the third person
+  shield pose. It hooks the hand render event, restores the vanilla hand translation first (that event
+  fires before it, and skipping it is what makes held items fly off screen), then pulls the whip toward
+  the centre of the screen, up and forward, with a slight tilt. It eases in over a quarter of a second and
+  eases back out over the first quarter of the cooldown.
+* Broken-state textures exist again: `handle_broken`, `plate_broken` and `bowstring_broken` are derived
+  from your new part art (60 percent darker, two cracked pixels mid-span, a small chip off each end).
+  Only pixels that already exist are touched, so the silhouette never gains stray pixels. The broken model
+  points back at them.
