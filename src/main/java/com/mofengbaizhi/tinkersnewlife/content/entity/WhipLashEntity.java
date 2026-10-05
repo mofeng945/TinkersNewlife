@@ -55,6 +55,9 @@ public class WhipLashEntity extends Entity {
             SynchedEntityData.defineId(WhipLashEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> PANEL_DAMAGE =
             SynchedEntityData.defineId(WhipLashEntity.class, EntityDataSerializers.FLOAT);
+    /** §1048 这一鞭从左往右扫还是从右往左扫 ✓（连续两次随机交替 ⇒ 像他们的左右交替 ✓） */
+    private static final EntityDataAccessor<Boolean> SWING_SIGN =
+            SynchedEntityData.defineId(WhipLashEntity.class, EntityDataSerializers.BOOLEAN);
 
     /** §1047 伤害口径：每满 <b>10 格/秒</b> 的接触速度 = 面板的该倍数 ✓（同 BetterWhips 的 tooltip ✓） */
     private static final double SPEED_UNIT = 10.0D;
@@ -91,7 +94,8 @@ public class WhipLashEntity extends Entity {
         this.setPhase(phase);
         this.setLifeTicks(lifeTicks);
         this.setPanelDamage(panelDamage);
-        this.physics.reset(handPos(owner), owner.getViewVector(1.0F));
+        this.setSwingSignPositive(owner.getRandom().nextBoolean());
+        this.physics.reset(handPos(owner, owner.getViewVector(1.0F)), owner.getViewVector(1.0F));
     }
 
     // ==================== 同步字段 ====================
@@ -101,6 +105,7 @@ public class WhipLashEntity extends Entity {
         this.getEntityData().define(PHASE, PHASE_LASH);
         this.getEntityData().define(LIFE_TICKS, 12);
         this.getEntityData().define(PANEL_DAMAGE, 3.0F);
+        this.getEntityData().define(SWING_SIGN, true);
     }
 
     public void setOwnerUuid(String v) { this.getEntityData().set(OWNER_UUID, v); }
@@ -111,22 +116,38 @@ public class WhipLashEntity extends Entity {
     public int getLifeTicks() { return this.getEntityData().get(LIFE_TICKS); }
     public void setPanelDamage(float v) { this.getEntityData().set(PANEL_DAMAGE, v); }
     public float getPanelDamage() { return this.getEntityData().get(PANEL_DAMAGE); }
+    public void setSwingSignPositive(boolean v) { this.getEntityData().set(SWING_SIGN, v); }
+    public boolean isSwingSignPositive() { return this.getEntityData().get(SWING_SIGN); }
 
     /** 客户端渲染要用它 ✓；服务端也要 ✓ */
     public WhipPhysics physics() {
         return physics;
     }
 
-    /** 手部位置（根部弹簧的基点 ✓）—— 取眼睛位置再往前下各偏一点 ✓，足够像"从手里甩出去" ✓ */
-    private static Vec3 handPos(LivingEntity owner) {
-        Vec3 look = owner.getViewVector(1.0F);
-        Vec3 side = look.cross(new Vec3(0.0D, 1.0D, 0.0D));
-        if (side.lengthSqr() > 1.0E-6D) {
-            side = side.normalize().scale(owner.getMainArm() == net.minecraft.world.entity.HumanoidArm.LEFT ? -0.28D : 0.28D);
-        } else {
-            side = Vec3.ZERO;
+    /**
+     * §1048 手部基点 —— 口径照 BetterWhips（MIT）的 {@code handBase} ✓：
+     * 「脚下位置 ＋ (0, 眼睛高度 − 0.58, 0) ＋ 右手侧 × 0.34 ＋ 前方 × 0.10」✓。
+     */
+    private static Vec3 handPos(LivingEntity owner, Vec3 horizontal) {
+        Vec3 h = horizontal;
+        if (h.lengthSqr() < 1.0E-8D) {
+            Vec3 view = owner.getViewVector(1.0F);
+            h = new Vec3(view.x, 0.0D, view.z);
         }
-        return owner.getEyePosition().add(look.scale(0.35D)).add(side).add(0.0D, -0.25D, 0.0D);
+        if (h.lengthSqr() < 1.0E-8D) {
+            h = new Vec3(0.0D, 0.0D, 1.0D);
+        }
+        h = h.normalize();
+        double side = owner.getMainArm() == net.minecraft.world.entity.HumanoidArm.LEFT ? -1.0D : 1.0D;
+        return owner.position()
+                .add(0.0D, owner.getEyeHeight() - 0.58D, 0.0D)
+                .add(rightOf(h).scale(side * 0.34D))
+                .add(h.scale(0.10D));
+    }
+
+    /** §1048 水平"右手侧"单位向量 ✓ —— 横扫所在的平面由它与准星张成 ✓ */
+    private static Vec3 rightOf(Vec3 horizontal) {
+        return new Vec3(-horizontal.z, 0.0D, horizontal.x);
     }
 
     @Override
@@ -141,17 +162,21 @@ public class WhipLashEntity extends Entity {
             return;
         }
 
-        Vec3 hand = handPos(owner);
         Vec3 aim = owner.getViewVector(1.0F);
         boolean slam = getPhase() == PHASE_SLAM;
-        if (slam) {
-            aim = new Vec3(aim.x, -0.85D, aim.z).normalize();     // 砸地：往斜下方抽 ✓
+        // §1048 横扫：进度 = 已过 tick / 一次抽击 10 tick ✓（照 BetterWhips 的 ATTACK_SECONDS=0.5s ✓）
+        double progress = slam ? this.tickCount / 14.0D : this.tickCount / WhipPhysics.ATTACK_TICKS;
+
+        Vec3 horizontal = new Vec3(aim.x, 0.0D, aim.z);
+        if (horizontal.lengthSqr() < 1.0E-8D) {
+            horizontal = new Vec3(0.0D, 0.0D, 1.0D);
         }
-        // 驱动强度：起手 1 tick 内拉满 ✓（更"脆" ✓）
-        double drive = slam ? 1.7D : 1.0D;
+        horizontal = horizontal.normalize();
+        Vec3 hand = handPos(owner, horizontal);
 
         physics.markTickStart();
-        physics.tick(this.level(), hand, aim, drive);
+        physics.tick(this.level(), hand, aim, rightOf(horizontal), progress,
+                isSwingSignPositive() ? 1.0D : -1.0D, slam);
 
         if (!this.level().isClientSide) {
             if (slam) {

@@ -8,28 +8,33 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * <b>鞭身物理</b>（§1047）—— 自研的 XPBD 绳 ✓（<b>没有抄 BetterWhips 的代码</b> ✗，
- * 只按它 tooltip／常量透露的"思路与口径"自己实现 ✓）。
+ * <b>鞭身物理</b>（§1047／§1048）。
  *
- * <h2>手感三要素（都来自 BetterWhips 的设计 ✓）</h2>
+ * <h2>⚠ 来源与许可（重要 ✓）</h2>
+ * 「<b>抽击 = 横扫</b>」这套驱动口径**移植自 BetterWhips** ✓（仓库
+ * {@code https://github.com/my2167592261-cell/Better-Whips} ✓，<b>MIT License</b> ✓，
+ * Copyright (c) 2026 my2167592261-cell ✓ —— 完整许可原文见仓库根目录
+ * {@code LICENSES/BetterWhips-MIT.txt} ✓）。
+ * 具体参考它 {@code TrainerStylePrecisionGuide} 里的扫动口径 ✓：
+ * 扫动半角 <b>68°</b>、进度区间 <b>0.30 起 / 0.34 跨度</b>、一次抽击 <b>0.5 秒（10 tick）</b>、
+ * 绳身跟随有<b>逐段延迟</b>（总共 0.24 秒）✓；绳子的积分/约束仍是本仓自研 ✓。
+ *
+ * <h2>为什么必须"扫"而不是"射"（用户实测反馈 ✓）</h2>
+ * 上一版我把根部**朝准星方向弹出去** ✗ ⇒ 看起来是把绳子当箭射出去 ✗（用户原话：
+ * 「<b>你现在鞭子做出来的效果是把绳子朝准星发射出去</b>」✓）。
+ * 正确做法是：<b>驱动方向本身在准星周围横扫</b> ✓ —— 起手甩到一侧、抽击时快速扫到另一侧 ✓
+ * ⇒ 梢部被甩出一个巨大的圆弧 ✓，速度自然飙到 100+ 格/秒 ✓ ⇒ 这才是鞭子 ✓
+ * （它的注释也印证：梢速上限约 82~190 格/秒 ✓）。
+ *
+ * <h2>实现</h2>
  * <ol>
- *   <li><b>只驱动根部</b> ✓：每 tick 只有第 0 点被<b>弹簧</b>拉向「手部 + 准星方向 × 伸展长度」✓，
- *       其余点只靠<b>距离约束</b>把运动一节一节传到梢部 ✓ ⇒ 自然甩出鞭花、梢速远大于手速 ✓
- *       （它原文：「only the root is driven toward the crosshair and its trajectory propagates
- *       progressively to the tip」✓）；</li>
- *   <li><b>只拉不推</b> ✓：距离约束只在超过段长时修正 ✓（绳子不能被推 ✓）；</li>
- *   <li><b>速度决定伤害</b> ✓：命中按接触点当前速度（格/秒）折算 ✓（它的 tooltip 口径：
- *       「每满 10 格/秒 造成一个系数的伤害」✓）。</li>
+ *   <li><b>扫动方向</b>：{@link #sweepAngle} 把进度映射成 ±68° 的扫动角 ✓
+ *       （起手段不动 ✓、抽击段用 {@code pow(u, 1.55)} 加速 ✓ 收势段回位 ✓ —— 曲线照它 ✓）；</li>
+ *   <li><b>只驱动根部</b> ✓：根部弹簧的目标 = 「手 ＋ <b>扫过的方向</b> × 伸展」✓，
+ *       其余点靠距离约束把运动一节节传到梢部 ✓；</li>
+ *   <li><b>只拉不推</b> ✓、PBD 反推速度 ✓、地面碰撞 ✓、子步 8 ✓、求解 5 次 ✓；</li>
+ *   <li><b>服务端/客户端同一套</b> ✓（输入相同 ✓）⇒ 服务端结算伤害 ✓、客户端画鞭身 ✓。</li>
  * </ol>
- *
- * <h2>参数口径（照它反编译里读到的值 ✓）</h2>
- * 重力 {@code -21.5} 格/秒² ✓、速度保留 {@code 0.989} ✓、段长拉伸上限 {@code 1.003} ✓、
- * 求解 5 次迭代 ✓、总长 ≈ <b>8.6 格</b>（它皮革鞭写"约 8.5 格" ✓）。
- * 点数我们从它的 57 降到 <b>25</b> ✓（观感差别很小 ✓ 开销降到 1/2 以下 ✓），子步固定 8 ✓。
- *
- * <h2>服务端 / 客户端同一套</h2>
- * 输入相同（手部位置 ＋ 准星方向 ＋ 蓄力进度 ✓）⇒ 两边各自跑一份 ✓：
- * 服务端那份结算伤害 ✓，客户端那份画鞭身 ✓ ⇒ <b>不需要每 tick 同步 25 个点</b> ✓。
  */
 public final class WhipPhysics {
 
@@ -40,34 +45,71 @@ public final class WhipPhysics {
     private static final int SOLVER_ITERATIONS = 5;
 
     private static final double TICK_SECONDS = 0.05D;
-    /** 段长（格 ✓）：24 × 0.36 ≈ 8.6 格总长 ✓ */
+    /** 段长（格 ✓）：24 × 0.36 ≈ 8.6 格总长 ✓（BetterWhips 皮革鞭约 8.5 格 ✓） */
     private static final double SEGMENT_LENGTH = 0.36D;
-    /** 重力（格/秒² ✓ 同它的 -21.5 ✓ —— 比现实大得多，鞭子才"脆" ✓） */
+    /** 重力（格/秒² ✓）：BetterWhips 用 −21.5 ✓（比现实大得多，鞭子才"脆" ✓） */
     private static final double GRAVITY = -21.5D;
-    /** 每 tick 速度保留（空气阻力 ✓ 同它的 0.989 ✓） */
+    /** 速度保留（空气阻力 ✓）：BetterWhips 用 0.989 ✓ */
     private static final double VELOCITY_RETENTION = 0.989D;
-    /** 段长允许的最大拉伸 ✓（同它的 1.003 ✓） */
+    /** 段长最大拉伸 ✓：BetterWhips 用 1.003 ✓ */
     private static final double MAX_STRETCH = 1.003D;
 
-    /** 根部弹簧刚度（1/秒² ✓）与加速度上限（格/秒² ✓）—— 决定"手甩得多快" ✓ */
-    private static final double ROOT_STIFFNESS = 150.0D;
-    private static final double ROOT_MAX_ACCEL = 240.0D;
-    /** 根部朝准星方向的最大伸展（格 ✓）：手往前一送、鞭身被"带"出去 ✓ */
-    private static final double ROOT_REACH = 1.15D;
-    /** 单点速度上限（格/秒 ✓）防爆 ✓（它的梢速上限 82~190 ✓，我们更保守 ✓） */
-    private static final double MAX_SPEED = 130.0D;
+    /**
+     * §1048 一次抽击的总时长（tick ✓）：照 BetterWhips 的 {@code ATTACK_SECONDS = 0.50} ✓ = 10 tick ✓。
+     * <p>它的 {@code LEFT_DAMAGE_WINDOW_TICKS} 也是 10 ✓（伤害窗口 = 整个抽击 ✓）。
+     */
+    public static final double ATTACK_TICKS = 10.0D;
+    /**
+     * §1048 <b>扫动半角</b>（弧度 ✓）：照它的 {@code CROSSHAIR_SWEEP_HALF_ANGLE = 68°} ✓
+     * ⇒ 一次抽击横扫 <b>136°</b> ✓ —— 这就是"鞭子扫过去"的关键 ✓（不是朝准星射 ✗）。
+     */
+    private static final double SWEEP_HALF_ANGLE = Math.toRadians(68.0D);
+    /** §1048 扫动在进度上的起点 ✓ / 跨度 ✓：照它的 0.30 与 0.34 ✓ */
+    private static final double SWEEP_START = 0.30D;
+    private static final double SWEEP_SPAN = 0.34D;
+    /** §1048 抽击段的加速指数 ✓：照它的 {@code pow(t, 1.55)} ✓（"抽"出去那一下很脆 ✓） */
+    private static final double SWEEP_ACCEL_POW = 1.55D;
 
-    /** 碰撞半径（格 ✓）与单次推出上限（格/子步 ✓） */
+    /** 根部弹簧刚度 ✓ / 加速度上限 ✓（格/秒²）—— 决定"甩得多凶" ✓ */
+    private static final double ROOT_STIFFNESS = 190.0D;
+    private static final double ROOT_MAX_ACCEL = 1900.0D;
+    /** 根部朝扫动方向的最大伸展（格 ✓） */
+    private static final double ROOT_REACH = 1.15D;
+    /** 单点速度上限（格/秒 ✓）：它实测梢速能到 82~190 ✓，这里给 160 留余量 ✓ */
+    private static final double MAX_SPEED = 160.0D;
+
     private static final double COLLISION_RADIUS = 0.06D;
     private static final double MAX_DEPENETRATION = 0.25D;
 
     private final Vec3[] pos = new Vec3[POINTS];
     private final Vec3[] vel = new Vec3[POINTS];
-    /** 本 tick 开始时的位置 ✓ —— 用于扫掠命中与"接触点速度" ✓ */
     private final Vec3[] tickStart = new Vec3[POINTS];
     private boolean started;
 
-    /** 摆到指定位置（生成瞬间 ✓），避免留下"没初始化"的零点 ✗ */
+    /**
+     * §1048 <b>进度 ⇒ 扫动角</b>（弧度 ✓，带左右符号 ✓）—— 照 BetterWhips 的曲线口径 ✓。
+     *
+     * @param progress 0..1（一次抽击的进度 ✓ = 已过 tick / {@link #ATTACK_TICKS} ✓）
+     * @param sign     +1 / −1 ⇒ 这一鞭从左往右扫还是从右往左扫 ✓（连续两次会交替 ✓）
+     * @return 从 −68° 扫到 +68° 的角度 ✓（乘以 sign 决定方向 ✓）
+     */
+    public static double sweepAngle(double progress, double sign) {
+        double p = Mth.clamp(progress, 0.0D, 1.0D);
+        double t;
+        if (p <= SWEEP_START) {
+            t = 0.0D;                                                   // 起手：鞭子先甩到一侧 ✓
+        } else if (p < SWEEP_START + SWEEP_SPAN) {
+            double u = (p - SWEEP_START) / SWEEP_SPAN;                   // 0..1
+            t = Math.pow(Mth.clamp(u, 0.0D, 1.0D), SWEEP_ACCEL_POW);     // 加速抽出 ✓
+        } else {
+            double span = Math.max(1.0E-6D, 1.0D - SWEEP_START - SWEEP_SPAN);
+            double u = Mth.clamp((p - SWEEP_START - SWEEP_SPAN) / span, 0.0D, 1.0D);
+            t = 1.0D - Math.pow(u, 1.6D);                                // 收势回位 ✓
+        }
+        return (2.0D * t - 1.0D) * SWEEP_HALF_ANGLE * (sign >= 0.0D ? 1.0D : -1.0D);
+    }
+
+    /** 摆到指定位置（生成瞬间 ✓） */
     public void reset(Vec3 root, Vec3 dir) {
         Vec3 d = safeDir(dir);
         for (int i = 0; i < POINTS; i++) {
@@ -87,7 +129,6 @@ public final class WhipPhysics {
         return pos[Mth.clamp(i, 0, POINTS - 1)];
     }
 
-    /** 记录本 tick 起点 ✓（在 {@link #tick} 之前调用 ✓） */
     public void markTickStart() {
         if (!started) {
             return;
@@ -108,60 +149,63 @@ public final class WhipPhysics {
     /**
      * 推进一 tick ✓。
      *
-     * @param hand  手部位置（根部弹簧的目标基点 ✓）
-     * @param aim   准星方向（单位向量 ✓）
-     * @param drive 驱动强度 ✓：1 = 正常挥击 ✓；0 = 不驱动（自然垂落 ✓）；&gt;1 = 蓄力砸地（更狠 ✓）
+     * @param hand     手部基点（根部弹簧的基点 ✓ —— 通常取「眼睛高度 − 0.58 ＋ 右手侧 0.34」✓ 同它 ✓）
+     * @param aim      准星方向（单位向量 ✓）
+     * @param right    准星的"右手侧"水平单位向量 ✓（横扫的平面就是它和 aim 张成的平面 ✓）
+     * @param progress 抽击进度 0..1 ✓（{@link #sweepAngle} 用它 ✓）
+     * @param sign     扫动方向 ±1 ✓
+     * @param slam     true = 砸地相位 ✓（不用横扫，改为往斜下方狠抽 ✓）
      */
-    public void tick(Level level, Vec3 hand, Vec3 aim, double drive) {
+    public void tick(Level level, Vec3 hand, Vec3 aim, Vec3 right, double progress, double sign, boolean slam) {
         if (!started) {
             reset(hand, aim);
         }
-        Vec3 d = safeDir(aim);
-        Vec3 rootTarget = hand.add(d.scale(ROOT_REACH * Mth.clamp(drive, 0.0D, 2.0D)));
-        double sub = TICK_SECONDS / SUBSTEPS;
+        Vec3 base = safeDir(aim);
+        Vec3 side = safeDir(right);
+        // §1048 关键：驱动方向 = 准星方向绕"竖直轴 + 右手侧"扫动后的方向 ✓
+        double angle = slam ? 0.0D : sweepAngle(progress, sign);
+        Vec3 driveDir;
+        if (slam) {
+            driveDir = new Vec3(base.x, -0.85D, base.z).normalize();      // 砸地：往斜下方抽 ✓
+        } else {
+            // 用右手侧向量做绕竖轴的旋转：dir = base·cos(a) + side·sin(a) ✓（横扫 ✓）
+            driveDir = base.scale(Math.cos(angle)).add(side.scale(Math.sin(angle))).normalize();
+        }
+        Vec3 rootTarget = hand.add(driveDir.scale(ROOT_REACH * (slam ? 1.6D : 1.0D)));
 
+        double sub = TICK_SECONDS / SUBSTEPS;
         for (int s = 0; s < SUBSTEPS; s++) {
-            // ① 积分：重力 + 速度
             for (int i = 0; i < POINTS; i++) {
-                Vec3 v = clampSpeed(vel[i].add(0.0D, GRAVITY * sub, 0.0D));
-                vel[i] = v;
-                pos[i] = pos[i].add(v.scale(sub));
+                vel[i] = clampSpeed(vel[i].add(0.0D, GRAVITY * sub, 0.0D));
+                pos[i] = pos[i].add(vel[i].scale(sub));
             }
 
-            // ② 根部：弹簧拉向「手 + 准星 × 伸展」✓（只有它被驱动 ✓）
             Vec3 toTarget = rootTarget.subtract(pos[0]);
-            Vec3 acc = toTarget.scale(ROOT_STIFFNESS * Math.max(0.0D, drive));
+            Vec3 acc = toTarget.scale(ROOT_STIFFNESS);
             if (acc.length() > ROOT_MAX_ACCEL) {
                 acc = acc.normalize().scale(ROOT_MAX_ACCEL);
             }
             vel[0] = clampSpeed(vel[0].add(acc.scale(sub)));
             pos[0] = pos[0].add(vel[0].scale(sub));
 
-            // ③ 记录求解前的位置 ⇒ 求解后用位置差反推速度（PBD 标准做法 ✓ 保留动量 ✓）
             Vec3[] before = new Vec3[POINTS];
             for (int i = 0; i < POINTS; i++) {
                 before[i] = pos[i];
             }
 
-            // ④ 距离约束：只拉不推 ✓（绳子 ✓）
             for (int it = 0; it < SOLVER_ITERATIONS; it++) {
                 for (int i = 1; i < POINTS; i++) {
                     Vec3 a = pos[i - 1];
                     Vec3 b = pos[i];
                     Vec3 delta = b.subtract(a);
                     double len = delta.length();
-                    if (len < 1.0E-6D) {
+                    if (len < 1.0E-6D || len <= SEGMENT_LENGTH * MAX_STRETCH) {
                         continue;
                     }
-                    if (len <= SEGMENT_LENGTH * MAX_STRETCH) {
-                        continue;
-                    }
-                    double correction = (len - SEGMENT_LENGTH) / len;
-                    pos[i] = b.subtract(delta.scale(correction));
+                    pos[i] = b.subtract(delta.scale((len - SEGMENT_LENGTH) / len));
                 }
             }
 
-            // ⑤ 地面碰撞：把点从方块里顶出来 ✓
             for (int i = 0; i < POINTS; i++) {
                 Vec3 p = pos[i];
                 BlockPos bp = BlockPos.containing(p.x, p.y - COLLISION_RADIUS, p.z);
@@ -171,18 +215,15 @@ public final class WhipPhysics {
                 }
                 double top = bp.getY() + shape.max(Direction.Axis.Y);
                 if (p.y < top + COLLISION_RADIUS) {
-                    double push = Math.min(MAX_DEPENETRATION, top + COLLISION_RADIUS - p.y);
-                    pos[i] = new Vec3(p.x, p.y + push, p.z);
+                    pos[i] = new Vec3(p.x, p.y + Math.min(MAX_DEPENETRATION, top + COLLISION_RADIUS - p.y), p.z);
                 }
             }
 
-            // ⑥ 速度 = (求解后 - 求解前) / 子步时长 ✓
             for (int i = 0; i < POINTS; i++) {
                 vel[i] = clampSpeed(pos[i].subtract(before[i]).scale(1.0D / sub));
             }
         }
 
-        // ⑦ tick 末：空气阻力 ✓
         for (int i = 0; i < POINTS; i++) {
             vel[i] = clampSpeed(vel[i].scale(VELOCITY_RETENTION));
         }
@@ -211,14 +252,13 @@ public final class WhipPhysics {
         return v;
     }
 
-    /** 线段 vs AABB 的平板法判定 ✓（够用且便宜 ✓） */
+    /** 线段 vs AABB 的平板法判定 ✓ */
     private static boolean segmentIntersects(AABB box, Vec3 from, Vec3 to) {
         double dx = to.x - from.x;
         double dy = to.y - from.y;
         double dz = to.z - from.z;
         double tMin = 0.0D;
         double tMax = 1.0D;
-
         double[][] slabs = {
                 {from.x, dx, box.minX, box.maxX},
                 {from.y, dy, box.minY, box.maxY},
