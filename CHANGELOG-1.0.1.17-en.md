@@ -116,3 +116,13 @@ and negates damage entirely - which would make the 40 percent rule dead code. Th
 
 The old charge/slam code is kept in the entity and physics (it is simply no longer triggered by right
 click) so it can be wired to another input later if you want it back.
+## Changed (2026-10-05, seventh pass - version unchanged)
+
+* The perfect block window is now **0.5 seconds** instead of 1, in both directions: a hit within half a
+  second of raising the guard, or pressing right click within half a second of being hit.
+* A perfect block now **drops the guard immediately** (`stopUsingItem`), and you must **release right
+  click before you can raise it again**. While the button is held the client keeps retrying the use
+  (every 4 ticks, faster than the 8 tick lock), so holding it simply keeps the guard down; releasing it
+  lets the lock expire after 0.4 seconds so the next press blocks again.
+* While the lock is up you are not counted as blocking at all, so a spent guard cannot give you the
+  40 percent reduction either.

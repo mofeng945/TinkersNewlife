@@ -120,13 +120,25 @@ public class WhipItem extends ModifiableItem {
         if (isBroken(stack)) {
             return InteractionResultHolder.fail(stack);
         }
+        boolean startGuard = true;
         if (!level.isClientSide) {
+            // §1059 完美格挡后必须松手 ✓：锁住期间**每次**尝试都续锁（见 WhipBlockHandler.noteBlockAttempt ✓）
+            // ⇒ 一直按住右键是举不起盾的 ✓，必须松开 ✓
+            if (!WhipBlockHandler.canStartBlock(player)) {
+                WhipBlockHandler.noteBlockAttempt(player);
+                return InteractionResultHolder.pass(stack);
+            }
             // §1058 用户口径：右键 ＝ ① 收回没收回的鞭身 ✓ ② 开启格挡 ✓
             WhipLashEntity.retract(player);
-            // ③ "开启格挡【前】1 秒内挨过打"也算完美格挡 ✓（把那一次退回来并全额反射 ✓）
-            WhipBlockHandler.onBlockStarted(player);
+            // ③ "挨打后 0.5 秒内举盾"也算完美格挡 ✓（把那一次退回来并全额反射 ✓）
+            //    这条一旦成立 ⇒ 内部已解除 use 并上锁 ✓ ⇒ 本次不再举盾 ✓（必须松手重置 ✓）
+            if (WhipBlockHandler.onBlockStarted(player)) {
+                startGuard = false;
+            }
         }
-        player.startUsingItem(hand);              // 开启格挡 ✓（按住右键持续 ✓）
+        if (startGuard) {
+            player.startUsingItem(hand);          // 开启格挡 ✓（按住右键持续 ✓）
+        }
         return InteractionResultHolder.consume(stack);
     }
 

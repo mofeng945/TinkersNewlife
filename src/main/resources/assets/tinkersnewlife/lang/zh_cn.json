@@ -1352,7 +1352,7 @@
   "slot.tinkersnewlife.slingshot.bowstring": "弓弦",
   "item.tinkersnewlife.whip": "鞭子",
   "item_group.tinkersnewlife.whip": "鞭子",
-  "item_group.tinkersnewlife.whip.description": "右键收回鞭身并举械格挡：开启格挡前后 1 秒内挨打算作完美格挡，挥鞭把所有伤害全额反射给攻击者、自身不受任何伤害；其它时候格挡只减免 40% 的伤害。",
+  "item_group.tinkersnewlife.whip.description": "右键收回鞭身并举械格挡：举盾 0.5 秒内挨打（或挨打后 0.5 秒内按右键）算作完美格挡 —— 挥鞭把所有伤害全额反射给攻击者、自身不受任何伤害，但随即自动收势，必须松开右键再按才能重新举盾；其它时候格挡只减免 40% 的伤害。",
   "slot.tinkersnewlife.whip.handle": "坚韧手柄",
   "slot.tinkersnewlife.whip.plate": "大板",
   "slot.tinkersnewlife.whip.bowstring": "弓弦",  "slot.tinkersnewlife.tang_heng_dao.blade2": "宽刃",
