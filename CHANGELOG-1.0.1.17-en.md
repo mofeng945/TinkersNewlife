@@ -126,3 +126,11 @@ click) so it can be wired to another input later if you want it back.
   lets the lock expire after 0.4 seconds so the next press blocks again.
 * While the lock is up you are not counted as blocking at all, so a spent guard cannot give you the
   40 percent reduction either.
+## Changed (2026-10-05, eighth pass - version unchanged)
+
+* The guard now shows the **shield** pose instead of the spear pose. The whip uses `UseAnim.BLOCK`
+  again, and because vanilla treats any BLOCK animation as a shield (full damage negation, which would
+  make the 40 percent rule dead code) the whip's handler now **cancels the vanilla shield settlement**
+  through `ShieldBlockEvent` - so the shield neither negates the hit nor loses durability, and the
+  damage goes on to be settled by the whip's own rules (60 percent on a normal block, nothing at all on
+  a perfect block).

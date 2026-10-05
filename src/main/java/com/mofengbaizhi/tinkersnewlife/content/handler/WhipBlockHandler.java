@@ -12,6 +12,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.entity.living.ShieldBlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -151,6 +152,25 @@ public final class WhipBlockHandler {
         if (event.getAmount() > 0.0F) {
             RECENT_HITS.put(player.getUUID(),
                     new RecentHit(player.tickCount, event.getAmount(), attackerId(event.getSource())));
+        }
+    }
+
+    /**
+     * §1060 <b>取消原版那一次盾牌结算</b> ✓ —— 用户口径：「格挡动画是举盾动画」✓
+     * ⇒ 鞭子改用 {@code UseAnim.BLOCK}（举盾姿势 ✓），
+     * 但原版 {@code LivingEntity#isBlocking()} **只看使用动画** ✗ ⇒ 从正面来的攻击会被原版**全额免伤** ✗，
+     * "普通格挡只减 40%" 就永远不生效 ✗。
+     * <p>⇒ 在 {@link ShieldBlockEvent} 里把它**取消** ✓：原版不做全免、也不扣盾牌耐久 ✓，
+     * 伤害继续按 {@link LivingHurtEvent} 里已经改好的数值结算 ✓
+     * （普通格挡 ＝ 60% ✓；完美格挡那次则在 {@code LivingHurtEvent} 里已被取消 ✓ 根本到不了这里 ✓）。
+     */
+    @SubscribeEvent
+    public static void onShieldBlock(ShieldBlockEvent event) {
+        if (!(event.getEntity() instanceof Player player) || player.level().isClientSide) {
+            return;
+        }
+        if (isWhipBlocking(player)) {
+            event.setCanceled(true);
         }
     }
 

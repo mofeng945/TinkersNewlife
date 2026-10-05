@@ -103,10 +103,12 @@ public class WhipItem extends ModifiableItem {
 
     @Override
     public UseAnim getUseAnimation(ItemStack stack) {
-        // ⚠ §1058 故意**不用** {@code UseAnim.BLOCK} ✗：原版 {@code LivingEntity#isBlocking()} 只看使用动画 ✗
-        //   ⇒ 用 BLOCK 会被原版当成盾牌**全额免伤** ✗，而用户要的是"普通格挡只减 40% ✓、完美格挡才全免 ✓"
-        //   ⇒ 改用 SPEAR（举械防御的姿势 ✓），伤害结算全部交给 WhipBlockHandler ✓
-        return UseAnim.SPEAR;
+        // §1060 用户口径：「格挡动画是举盾动画，不是举三叉戟动画」✓ ⇒ 用 UseAnim.BLOCK（举盾姿势 ✓）。
+        // ⚠ 但原版 LivingEntity#isBlocking() **只看使用动画** ✗ ⇒ 用 BLOCK 会被原版当成盾牌**全额免伤** ✗，
+        //   那样"普通格挡只减 40%"就永远不生效 ✗。
+        //   ⇒ 解法：仍然用 BLOCK 姿势 ✓，但在 WhipBlockHandler#onShieldBlock 里
+        //     **取消原版那一次盾牌结算**（ShieldBlockEvent ✓）⇒ 伤害交回 LivingHurtEvent 由我们接管 ✓。
+        return UseAnim.BLOCK;
     }
 
     @Override
