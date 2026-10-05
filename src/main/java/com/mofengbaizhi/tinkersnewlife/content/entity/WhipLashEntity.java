@@ -101,7 +101,7 @@ public class WhipLashEntity extends Entity {
             flat = new Vec3(0.0D, 0.0D, 1.0D);
         }
         flat = flat.normalize();
-        this.physics.reset(handPos(owner, flat), view, rightOf(flat));
+        this.physics.reset(owner.getEyePosition(), view);
     }
 
     // ==================== 同步字段 ====================
@@ -181,7 +181,7 @@ public class WhipLashEntity extends Entity {
         Vec3 hand = handPos(owner, horizontal);
 
         physics.markTickStart();
-        physics.tick(this.level(), hand, aim, rightOf(horizontal), progress,
+        physics.tick(this.level(), owner.getEyePosition(), aim, progress,
                 isSwingSignPositive() ? 1.0D : -1.0D, slam);
 
         if (!this.level().isClientSide) {
