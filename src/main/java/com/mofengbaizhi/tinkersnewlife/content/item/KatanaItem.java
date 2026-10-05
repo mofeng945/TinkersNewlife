@@ -327,6 +327,15 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
     return AttributesModifierHook.getHeldAttributeModifiers(tool, slot);
   }
 
+  /** §1025 临时调试探针 ✓：左键挥动（不论打没打到）都会走这里 ✓ —— 用来判断"这把刀是否被当成武器在用" ✓。 */
+  @Override
+  public boolean onEntitySwing(ItemStack stack, LivingEntity entity) {
+    com.mofengbaizhi.tinkersnewlife.integration.slashblade.KatanaDebug.log(
+            "onEntitySwing 挥动 ✓ 状态存在=" + stack.getCapability(ItemSlashBlade.BLADESTATE).isPresent()
+                    + " 攻击力属性=" + entity.getAttributeValue(Attributes.ATTACK_DAMAGE));
+    return super.onEntitySwing(stack, entity);
+  }
+
   /** 原版"基础攻击力"修正的固定 UUID（= 被 protected 挡住、跨包写不了的 {@code Item.BASE_ATTACK_DAMAGE_UUID} ✓） */
   private static final UUID VANILLA_BASE_ATTACK_DAMAGE = UUID.fromString("CB3F55D3-645C-4F38-A497-9C13A33DB5CF");
 

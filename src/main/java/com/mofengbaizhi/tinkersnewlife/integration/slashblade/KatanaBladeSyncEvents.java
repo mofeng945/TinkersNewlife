@@ -98,7 +98,10 @@ public final class KatanaBladeSyncEvents {
     public static void syncState(ServerPlayer player) {
         ItemStack mainHandStack = player.getMainHandItem();
         if (mainHandStack.getItem() instanceof IModifiable) {
-            KatanaDebug.log("syncState 触发（我方匠魂物品）✓ 状态存在=" + mainHandStack.getCapability(ItemSlashBlade.BLADESTATE).isPresent());
+            KatanaDebug.log("syncState 触发 ✓ 物品=" + net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(mainHandStack.getItem())
+                    + " 状态存在=" + mainHandStack.getCapability(ItemSlashBlade.BLADESTATE).isPresent()
+                    + " 攻击力属性=" + player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE)
+                    + " 攻速属性=" + player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_SPEED));
             mainHandStack.getCapability(ItemSlashBlade.BLADESTATE).ifPresent(state -> {
                 CompoundTag nbt = state.serializeNBT();
                 mainHandStack.getOrCreateTag().put("bladeState", nbt.copy());
