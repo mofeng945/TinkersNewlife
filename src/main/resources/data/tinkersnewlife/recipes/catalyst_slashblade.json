@@ -1,5 +1,4 @@
 {
-  "_comment": "§1032 照 TiCEX 1:1：拔刀剑催化部件只能由「装裱浇铸」产出 —— 在浇铸台上把一把真刀当铸模（cast_consumed=true ⇒ 刀被消耗），倒任意材料流体（item_cost 1）。结果部件 NBT 里的 embossed = 那把被牺牲的刀的完整存档；ModifierKoshirae（拵）就是靠它继承耀魂/击杀数/精炼。原简化版（2 耀魂 + 2 铁锭的无序合成）已按 1:1 口径撤掉，原文见备忘录 §1032。",
   "type": "tinkersnewlife:embossment_casting",
   "cast": {
     "tag": "tinkersnewlife:slashblade"

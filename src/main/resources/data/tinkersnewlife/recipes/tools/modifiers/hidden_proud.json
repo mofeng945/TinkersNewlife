@@ -1,5 +1,4 @@
 {
-  "_comment": "§1032 照 TiCEX 1:1：隐耀魂（hidden_proud）走装裱（embossment）配方 —— 装裱输入是任意耀魂（#slashblade:proudsouls）。在修补台/工匠砧里放上刀 + 耀魂即会触发 ModifierHiddenProud#applyItem。",
   "type": "tinkersnewlife:single_embossment_modifier",
   "emboss_input": {
     "tag": "slashblade:proudsouls"
