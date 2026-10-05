@@ -60,6 +60,9 @@ public abstract class KatanaAttackHelperMixin {
             for (ModifierEntry entry : tool.getModifiers()) {
                 damageAmount = entry.getHook(ModifierHooks.MELEE_DAMAGE).getMeleeDamage(tool, entry, context, (float) originalDamage, (float) damageAmount);
             }
+            // §1025 临时调试 ✓：本体那一击的伤害有没有经过我们（匠魂数值）
+            com.mofengbaizhi.tinkersnewlife.integration.slashblade.KatanaDebug.log(
+                    "AttackHelper.calculateTotalDamage 经手 ✓ 本体伤害=" + originalDamage + " → 匠魂后=" + damageAmount);
         }
 
         return damageAmount;

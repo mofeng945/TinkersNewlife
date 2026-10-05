@@ -295,7 +295,12 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
     //
     // 匠魂那边要的"击中类修饰符"由 §1020 的两个 mixin 在**本体的伤害结算里**调用 ✓
     //   （比在这里再调一次 TC 的 leftClickEntity 更贴合原版流程 ✓，也避免重复结算 ✗）。
-    return super.onLeftClickEntity(stack, player, target);
+    // §1025 临时调试 ✓：把本体对这把刀的判定打出来（状态在不在 ✓ 本体返回什么 ✓）
+    boolean result = super.onLeftClickEntity(stack, player, target);
+    com.mofengbaizhi.tinkersnewlife.integration.slashblade.KatanaDebug.log(
+            "onLeftClickEntity 被调用 ✓ 状态存在=" + stack.getCapability(ItemSlashBlade.BLADESTATE).isPresent()
+                    + " 本体返回=" + result + " 目标=" + target.getType());
+    return result;
   }
 
   /*

@@ -53,6 +53,9 @@ public class KatanaAttackManagerMixin {
         if (attacker instanceof LivingEntity livingAttacker) {
             ItemStack mainHandStack = livingAttacker.getMainHandItem();
             if (mainHandStack.getItem() instanceof IModifiable) {
+                // §1025 临时调试 ✓：本体的范围/技能结算有没有走到我们这里
+                com.mofengbaizhi.tinkersnewlife.integration.slashblade.KatanaDebug.log(
+                        "AttackManager.doAttackWith 命中匠魂物品 ✓ 目标=" + target.getType() + " 传入伤害=" + amount);
                 ToolStack tool = ToolStack.from(mainHandStack);
                 ToolAttackContext context = ToolAttackContext.attacker(livingAttacker)
                         .hand(InteractionHand.MAIN_HAND)

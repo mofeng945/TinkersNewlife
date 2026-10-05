@@ -98,6 +98,7 @@ public final class KatanaBladeSyncEvents {
     public static void syncState(ServerPlayer player) {
         ItemStack mainHandStack = player.getMainHandItem();
         if (mainHandStack.getItem() instanceof IModifiable) {
+            KatanaDebug.log("syncState 触发（我方匠魂物品）✓ 状态存在=" + mainHandStack.getCapability(ItemSlashBlade.BLADESTATE).isPresent());
             mainHandStack.getCapability(ItemSlashBlade.BLADESTATE).ifPresent(state -> {
                 CompoundTag nbt = state.serializeNBT();
                 mainHandStack.getOrCreateTag().put("bladeState", nbt.copy());
