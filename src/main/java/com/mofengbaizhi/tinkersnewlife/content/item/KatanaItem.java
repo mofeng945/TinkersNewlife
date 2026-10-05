@@ -105,7 +105,7 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
     return this.toolDefinition;
   }
   public KatanaItem(Properties properties) {
-    super(net.minecraft.world.item.Tiers.NETHERITE, 3, -2.4F, properties);
+    super(net.minecraft.world.item.Tiers.NETHERITE, 1, 1, properties);
     this.toolDefinition = KATANA_DEFINITION;
     this.maxStackSize = 1;   // 工具不可堆叠（原来由匠魂构造设置，移植后要自己给）
   }
@@ -199,7 +199,7 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
   public boolean hasCustomEntity(ItemStack stack) {
     // §1011：拔刀剑本体**恒返回 true** ✓（掉落的刀走 BladeItemEntity，靠 onEntityItemUpdate 换实体 ✓），
     // 而匠魂那份只在"不可摧毁工具"时为 true ⇒ 取并集 ✓，否则掉在地上的拔刀剑不是刀的样子 ✗。
-    return super.hasCustomEntity(stack) || IndestructibleItemEntity.hasCustomEntity(stack);
+    return true;   // §1028 1:1 照抄 TiCEX：恒 true（掉落交给 onEntityItemUpdate 换实体）
   }
 
   @Nullable
@@ -207,10 +207,8 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
   public Entity createEntity(Level world, Entity original, ItemStack stack) {
     // §1011：只有匠魂"不可摧毁工具"才由我们接管掉落实体 ✓；其余交回基类（= 拔刀剑依赖的默认行为 ✓），
     // 否则会把 SlashBlade 换 BladeItemEntity 的流程顶掉 ✗。
-    if (IndestructibleItemEntity.hasCustomEntity(stack)) {
-      return IndestructibleItemEntity.createFrom(world, original, stack);
-    }
-    return super.createEntity(world, original, stack);
+    // §1028 1:1 照抄 TiCEX：恒用不可摧毁的掉落实体（它再由 onEntityItemUpdate 换成自己的实体）
+    return IndestructibleItemEntity.createFrom(world, original, stack);
   }
 
 
@@ -376,6 +374,16 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
         );
         toolMultimap.remove(Attributes.ATTACK_DAMAGE, attack);
         toolMultimap.put(Attributes.ATTACK_DAMAGE, attack);
+        // §1028 1:1 照抄 TiCEX：再加"触及距离"（数值取自本体 ReachModifier：BladeReach=2.5 / BrokendReach=1.25）
+        toolMultimap.put(
+                net.minecraftforge.common.ForgeMod.ENTITY_REACH.get(),
+                new AttributeModifier(
+                        UUID.fromString("2D988C13-595B-4E58-B254-39BB6FA077FE"),
+                        "Reach amplifer",
+                        bladeState.isBroken() ? 1.25D : 2.5D,
+                        AttributeModifier.Operation.ADDITION
+                )
+        );
       });
     }
     return ImmutableMultimap.copyOf(toolMultimap);
