@@ -190,11 +190,14 @@ public class DreadsteelSlashEntity extends Projectile {
     private void spawnSlashArc() {
         try {
             float width = Math.max(0.8F, this.getSlashWidth());
+            // §1042 把主人位置一并带上 ⇒ 弧面凹向玩家、凸面朝外 ✓（拿不到主人就传 null，渲染退回"朝观察者"✓）
+            Entity arcCaster = this.getOwner();
             SoldierSlashEntity arc = new SoldierSlashEntity(
                     this.level(), this.position(),
                     this.random.nextFloat() * 360.0F,        // 自转：每道角度都不同 ✓
                     width * 1.1F,                            // 大小随剑气宽度走 ✓
-                    ARC_LIFE_TICKS, 0, SLASH_TINT);
+                    ARC_LIFE_TICKS, 0, SLASH_TINT,
+                    arcCaster == null ? null : arcCaster.position());
             arc.setMirrored(this.random.nextBoolean());      // 左右镜像 ⇒ 更像连续斩击 ✓
             this.level().addFreshEntity(arc);
         } catch (Throwable ignored) {

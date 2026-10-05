@@ -91,7 +91,7 @@ public final class SoldiersSaberHandler {
 
     /** 待结算的一段伤害 ✓（全部在服务端主线程读写 ✓） */
     private record PendingStage(long atTick, DamageSource source, LivingEntity victim,
-                                float damage, int index) {}
+                                float damage, int index, Vec3 casterPos) {}
 
     private static final List<PendingStage> PENDING = new ArrayList<>();
 
@@ -122,18 +122,19 @@ public final class SoldiersSaberHandler {
         float perStage = damagePerStage(held);
         if (perStage <= 0.0F) return;
 
-        scheduleStages(event.getSource(), victim, perStage, stages);
+            scheduleStages(event.getSource(), victim, perStage, stages, attacker.position());
     }
 
     /** 把 N 段依次排进后续 tick ✓（排不进去也绝不影响主伤害 ✓） */
-    private static void scheduleStages(DamageSource source, LivingEntity victim, float perStage, int stages) {
+    private static void scheduleStages(DamageSource source, LivingEntity victim, float perStage, int stages,
+                                       Vec3 casterPos) {
         try {
             if (!(victim.level() instanceof ServerLevel level)) return;
             if (level.getServer() == null) return;
             long now = level.getServer().getTickCount();
             for (int i = 1; i <= stages; i++) {
                 PENDING.add(new PendingStage(now + (long) i * STAGE_INTERVAL_TICKS,
-                        source, victim, perStage, i));
+                        source, victim, perStage, i, casterPos));
             }
         } catch (Throwable ignored) {
             // 排程失败 = 没有追加段 ✓ 主伤害照常 ✓
@@ -172,7 +173,7 @@ public final class SoldiersSaberHandler {
         } finally {
             resolvingStage = false;
         }
-        spawnSlash(level, victim, stage.index());
+        spawnSlash(level, victim, stage.index(), stage.casterPos());
     }
 
     /**
@@ -221,7 +222,7 @@ public final class SoldiersSaberHandler {
      * （朝向本身由客户端按相机算 ✓ 见 {@code SoldierSlashRenderer#applyBillboard} ✓，
      *   服务端<b>不再</b>给随机 yaw ✗ —— 随机 yaw 会让弧面侧对镜头、退化成细线并糊在一起 ✗，正是"重叠"的根因 ✗。）
      */
-    private static void spawnSlash(ServerLevel level, LivingEntity victim, int index) {
+    private static void spawnSlash(ServerLevel level, LivingEntity victim, int index, Vec3 casterPos) {
         try {
             int i = Math.max(1, index);
             float roll = STAGE_ROLL[(i - 1) % STAGE_ROLL.length]
@@ -236,8 +237,9 @@ public final class SoldiersSaberHandler {
                     -0.10D + i * 0.07D,
                     Math.sin(offsetAngle) * 0.22D);
 
+            // §1042 带上施法者位置 ⇒ 弧面凹向玩家、凸面朝外 ✓
             SoldierSlashEntity slash = new SoldierSlashEntity(
-                    level, pos, roll, scale, SLASH_LIFE_TICKS, 0, SLASH_TINT);
+                    level, pos, roll, scale, SLASH_LIFE_TICKS, 0, SLASH_TINT, casterPos);
             slash.setMirrored(i % 2 == 1);
             level.addFreshEntity(slash);
         } catch (Throwable ignored) {

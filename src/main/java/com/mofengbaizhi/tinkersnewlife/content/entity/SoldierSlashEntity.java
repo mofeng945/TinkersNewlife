@@ -60,6 +60,22 @@ public class SoldierSlashEntity extends Entity {
     private static final EntityDataAccessor<Boolean> SLASH_MIRROR =
             SynchedEntityData.defineId(SoldierSlashEntity.class, EntityDataSerializers.BOOLEAN);
 
+    /**
+     * §1042 <b>施法者位置</b>（世界坐标 ＋ 是否已设置）—— 用户口径：
+     * 「<b>剑气弧面应当凹面自玩家方向，凸面远离玩家</b>」✓。
+     * <p>渲染时用它把弧带沿"朝玩家"方向弯成<b>球冠</b> ⇒ 凹面朝玩家 ✓ 凸面朝外 ✓
+     * （几何与前后距离对照见 {@code SoldierSlashRenderer} 的 §1042 说明 ✓）。
+     * <p>没设置时渲染退回"朝观察者" ✓ —— 施法者自己看时两者一致 ✓。
+     */
+    private static final EntityDataAccessor<Float> CASTER_X =
+            SynchedEntityData.defineId(SoldierSlashEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> CASTER_Y =
+            SynchedEntityData.defineId(SoldierSlashEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> CASTER_Z =
+            SynchedEntityData.defineId(SoldierSlashEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Boolean> CASTER_SET =
+            SynchedEntityData.defineId(SoldierSlashEntity.class, EntityDataSerializers.BOOLEAN);
+
     public SoldierSlashEntity(EntityType<? extends SoldierSlashEntity> entityType, Level level) {
         super(entityType, level);
         this.noPhysics = true;
@@ -76,11 +92,13 @@ public class SoldierSlashEntity extends Entity {
      * @param lifeTicks  寿命（tick ✓ 一般 5 ✓）
      * @param startDelay 延迟出现（tick ✓）
      * @param tint       0xRRGGBB 顶点色 ✓（灰色 = 0xC9CFD9 ✓）
+     * @param casterPos  §1042 施法者位置 ✓（渲染据此把弧面弯成"凹面朝玩家"✓；传 null 则退回"朝观察者"✓）
      */
     public SoldierSlashEntity(Level level, Vec3 pos, float roll, float scale,
-                              int lifeTicks, int startDelay, int tint) {
+                              int lifeTicks, int startDelay, int tint, Vec3 casterPos) {
         this(ModEntities.SOLDIER_SLASH.get(), level);
         this.setPos(pos.x, pos.y, pos.z);
+        this.setCasterPos(casterPos);
         this.setLifeTicks(lifeTicks);
         this.setStartDelay(startDelay);
         this.setSlashScale(scale);
@@ -96,6 +114,10 @@ public class SoldierSlashEntity extends Entity {
         this.getEntityData().define(SLASH_ROLL, 0.0F);
         this.getEntityData().define(SLASH_TINT, 0xC9CFD9);
         this.getEntityData().define(SLASH_MIRROR, false);
+        this.getEntityData().define(CASTER_X, 0.0F);
+        this.getEntityData().define(CASTER_Y, 0.0F);
+        this.getEntityData().define(CASTER_Z, 0.0F);
+        this.getEntityData().define(CASTER_SET, false);
     }
 
     // ==================== 字段读写 ====================
@@ -111,6 +133,26 @@ public class SoldierSlashEntity extends Entity {
     public int getSlashTint() { return this.getEntityData().get(SLASH_TINT); }
     public void setMirrored(boolean v) { this.getEntityData().set(SLASH_MIRROR, v); }
     public boolean isMirrored() { return this.getEntityData().get(SLASH_MIRROR); }
+
+    /** §1042 记录施法者位置 ⇒ 客户端渲染时把弧带朝玩家弯（凹面朝玩家 ✓）；传 null = 未设置 ✓ */
+    public void setCasterPos(Vec3 pos) {
+        if (pos == null) {
+            this.getEntityData().set(CASTER_SET, false);
+            return;
+        }
+        this.getEntityData().set(CASTER_X, (float) pos.x);
+        this.getEntityData().set(CASTER_Y, (float) pos.y);
+        this.getEntityData().set(CASTER_Z, (float) pos.z);
+        this.getEntityData().set(CASTER_SET, true);
+    }
+
+    /** §1042 施法者位置 ✓（未设置时返回 null ⇒ 渲染退回"朝观察者"✓） */
+    public Vec3 getCasterPos() {
+        if (!this.getEntityData().get(CASTER_SET)) return null;
+        return new Vec3(this.getEntityData().get(CASTER_X),
+                this.getEntityData().get(CASTER_Y),
+                this.getEntityData().get(CASTER_Z));
+    }
 
     @Override
     public void tick() {
@@ -156,6 +198,9 @@ public class SoldierSlashEntity extends Entity {
         this.setSlashRoll(tag.getFloat("roll"));
         this.setSlashTint(tag.getInt("tint"));
         this.setMirrored(tag.getBoolean("mirror"));
+        if (tag.getBoolean("casterSet")) {
+            this.setCasterPos(new Vec3(tag.getFloat("casterX"), tag.getFloat("casterY"), tag.getFloat("casterZ")));
+        }
     }
 
     @Override
@@ -166,5 +211,12 @@ public class SoldierSlashEntity extends Entity {
         tag.putFloat("roll", this.getSlashRoll());
         tag.putInt("tint", this.getSlashTint());
         tag.putBoolean("mirror", this.isMirrored());
+        Vec3 caster = this.getCasterPos();
+        tag.putBoolean("casterSet", caster != null);
+        if (caster != null) {
+            tag.putFloat("casterX", (float) caster.x);
+            tag.putFloat("casterY", (float) caster.y);
+            tag.putFloat("casterZ", (float) caster.z);
+        }
     }
 }
