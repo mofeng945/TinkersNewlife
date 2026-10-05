@@ -11,7 +11,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)Iai slash$()$(br2)$(li)$(bold)Hold right-click$() to charge, release to cut: a $(bold)frontal arc slash$() that hits everything in range and pushes you forward$(li)A $(bold)full charge$() (about 1 second) means more damage, more range and a longer lunge$(li)Too short a charge does nothing; there is a 1-2 second cooldown afterwards$(br2)$(bold)SlashBlade integration$()$(br2)With SlashBlade: Resharped installed, this tool hooks into it: the blade state (proud soul, kill count, refine, combo and special arts) lives on the blade. Current progress: $(bold)combos and special arts$() are still being implemented."
+      "text": "$(bold)SlashBlade integration$()$(br2)With SlashBlade: Resharped installed, this tool $(bold)is itself a SlashBlade$(): swings, charges, combos, special arts and sheathing are all handled by SlashBlade itself, so use it the way SlashBlade is used.$(br2)$(li)The blade state ($(bold)proud soul, kill count, refine, combo$()) lives on the blade$(li)Durability bar, breakage and repair follow the $(bold)Tinkers$() rules - the tool durability is the blade durability$(li)Rendering is delegated to SlashBlade, currently its $(bold)base blade model$()$(br2)$(bold)Materials$() still come from Tinkers: the $(bold)blade$() sets the main stats, while the sheath and the handle add their own material bonuses."
     }
   ]
 }

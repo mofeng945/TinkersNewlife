@@ -42,7 +42,6 @@ import net.minecraftforge.common.ToolAction;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import slimeknights.mantle.client.SafeClientAccess;
 import slimeknights.tconstruct.common.TinkerTags;
-import slimeknights.tconstruct.library.client.item.ModifiableItemClientExtension;
 import slimeknights.tconstruct.library.modifiers.ModifierEntry;
 import slimeknights.tconstruct.library.modifiers.ModifierHooks;
 import slimeknights.tconstruct.library.modifiers.hook.behavior.AttributesModifierHook;
@@ -528,7 +527,12 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
 
   @Override
   public void initializeClient(Consumer<IClientItemExtensions> consumer) {
-    consumer.accept(ModifiableItemClientExtension.INSTANCE);
+    // 渲染委托给 SlashBlade 本体：ItemSlashBlade 自带一个客户端扩展，其 getCustomRenderer()
+    // 返回 SlashBladeTEISR（用 BLADESTATE 里的 model/texture 画刀身，缺省是
+    // slashblade:model/blade.obj + slashblade:model/blade.png）。
+    // 移植 ModifiableItem 时这里被换成了匠魂的 ModifiableItemClientExtension（画工具模型），
+    // 会让拔刀剑在手里/物品栏里都不是刀的样子，因此改回基类实现。
+    super.initializeClient(consumer);
   }
 
 
