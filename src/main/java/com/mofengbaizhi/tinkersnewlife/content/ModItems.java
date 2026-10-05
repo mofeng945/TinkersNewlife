@@ -295,6 +295,12 @@ public class ModItems {
                             new Item.Properties().stacksTo(1))
             );
 
+    /** §999 匠魂拔刀剑（部件：刀鞘 ＋ 刀身 ＋ 坚韧手柄）—— 阶段 1 骨架，手感见 §996 的 P3 */
+    public static final RegistryObject<com.mofengbaizhi.tinkersnewlife.content.item.KatanaItem> KATANA =
+            ITEMS.register("katana",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.KatanaItem(
+                            new Item.Properties().stacksTo(1))
+            );
     /** 弹弓（§983）：远程武器，部件 = 两个弓臂 + 一个弓弦；右键拉弓，射背包里的石头/圆石 */
     public static final RegistryObject<com.mofengbaizhi.tinkersnewlife.content.item.SlingshotItem> SLINGSHOT =
             ITEMS.register("slingshot",

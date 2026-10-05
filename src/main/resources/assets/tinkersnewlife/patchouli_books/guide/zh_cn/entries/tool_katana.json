@@ -1,0 +1,17 @@
+{
+  "name": "拔刀剑",
+  "category": "tinkersnewlife:tools",
+  "icon": "tinkersnewlife:katana",
+  "sortnum": 11,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:katana",
+      "text": "$(bold)拔刀剑$()$(br2)获取：在$(bold)匠魂工匠站$()打造——$(bold)刀鞘 + 刀身 + 坚韧手柄$()。$(br2)其中刀鞘与刀身是本模组新增的部件：可以在部件台用对应图案制作，也可以用熔融金属浇筑（金铸模可重复使用，沙铸模与红沙铸模一次性）。$(br2)面板：以刀身为主材料，攻击 4.0、攻速 1.6、耐久 200 打底。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)联动（SlashBlade）$()$(br2)装有拔刀剑（重锋）时，本工具会与它对接：拔刀剑的刀状态（魂魄、击杀数、精炼、连段与特殊技）会挂在拔刀剑上。$(br2)⚠ 当前进度：工具本体与部件已经可以用，$(bold)拔刀/居合/连段/特殊技$()正在实现中。"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "SlashBlade",
+  "category": "tinkersnewlife:tools",
+  "icon": "tinkersnewlife:katana",
+  "sortnum": 11,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:katana",
+      "text": "$(bold)SlashBlade$()$(br2)How to obtain: build it at the $(bold)Tinker Station$() - $(bold)sheath + blade + tough handle$().$(br2)The sheath and the blade are new parts added by this mod: make them at the Part Builder with their patterns, or cast them from molten metal (the gold cast is reusable, the sand and red sand casts are single use).$(br2)Stats: the blade is the primary part - 4.0 attack, 1.6 attack speed, 200 base durability."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)SlashBlade integration$()$(br2)With SlashBlade: Resharped installed, this tool hooks into it: the blade state (proud soul, kill count, refine, combo sequence and special arts) is carried on the blade.$(br2)Current progress: the tool and its parts are usable; $(bold)drawing, Iai, combos and special arts$() are still being implemented."
+    }
+  ]
+}

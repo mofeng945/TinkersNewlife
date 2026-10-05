@@ -191,6 +191,7 @@ public class ModCreativeTabs {
         addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.SpearItem.SPEAR_DEFINITION, com.mofengbaizhi.tinkersnewlife.content.ModItems.SPEAR.get());   // §835 长矛
         addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.RapierItem.RAPIER_DEFINITION, com.mofengbaizhi.tinkersnewlife.content.ModItems.RAPIER.get());   // §943 西洋剑（移植匠魂2）
         addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.SlingshotItem.SLINGSHOT_DEFINITION, ModItems.SLINGSHOT.get());   // §983 弹弓
+        addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.KatanaItem.KATANA_DEFINITION, ModItems.KATANA.get());   // §999 拔刀剑
 
                                 if (anyLoaded("irons_spellbooks", "goety")) {
                                     addAllToolVariants(output, ModularStaffItem.MODULAR_STAFF_DEFINITION, ModItems.MODULAR_STAFF.get());

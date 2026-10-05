@@ -445,6 +445,7 @@
     "item.tinkersnewlife.sheath_red_sand_cast": "Sheath Red Sand Cast",
     "pattern.tinkersnewlife.sheath": "Sheath",
     "item.tinkersnewlife.slingshot": "Slingshot",
+    "item.tinkersnewlife.katana": "SlashBlade",
     "death.attack.tinkersnewlife.kinetic": "%1$s was smashed",
     "item.tinkersnewlife.rapier.description": "A port of the Tinkers' Construct 2 rapier: lower damage but a faster swing, and its strikes ignore the target's armor. Right-click to backstep; offhand shields cannot be used while held.",
   "item.tinkersnewlife.wizard_armor_boots": "Wizard Boots",
