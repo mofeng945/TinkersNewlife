@@ -2,7 +2,6 @@ package com.mofengbaizhi.tinkersnewlife.content.item;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
-import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -275,49 +274,22 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
 
   @Override
   public boolean onLeftClickEntity(ItemStack stack, Player player, Entity target) {
-    // §1013 实测修正：让本体跑（它会登记 L_CLICK、推进连段 ✓），但**绝不把它返回的 true 传出去** ✗。
-    // 原因：在本体里 onLeftClickEntity **只做连段登记、不结算伤害** ✓，而返回 true 在 Forge 里表示
-    // "取消原版单击、这一下由物品自己结算" ✗ ⇒ 传出去就变成"左键挥了但砍不到人" ✗（实测症状）。
+    // ⚠ §1015 实测修正：这里必须**始终返回 false（不否决）** ✓，并且**不替拔刀剑推进连段** ✓。
     //
-    // §1014 崩溃兜底 ✓：整条"物品攻击"链（本体登记 + 匠魂攻击）都包在 try/catch 里 —— 实测发现
-    // 事件链里只要**任何一个 LivingAttackEvent 监听器抛异常** ✗，异常就会一路冒泡到服务端 tick
-    // 直接把游戏打崩 ✗；而本整合包还叠加了 log4j 的类加载器约束冲突 ✗ ⇒ **连 Forge 想记录这个异常都会失败** ✗
-    // ⇒ 日志里根本看不到原始异常 ✗。这里兜住并**自己用带 throwable 的形式记下来** ✓：
-    // 游戏不崩 ✓，而且下次能从日志里看清真凶在哪个模组 ✓。（VirtualMachineError 照旧往外抛 ✓）
-    try {
-      super.onLeftClickEntity(stack, player, target);
-    } catch (Throwable t) {
-      reportAttackFailure("SlashBlade.onLeftClickEntity", t);
-    }
-    boolean toolHook = false;
-    try {
-      toolHook = stack.getCount() > 1 || EntityInteractionModifierHook.leftClickEntity(stack, player, target);
-    } catch (Throwable t) {
-      reportAttackFailure("TConstruct.EntityInteractionModifierHook.leftClickEntity", t);
-    }
-    return toolHook;
-  }
-
-  /**
-   * 攻击链异常的兜底记录（§1014）。
-   *
-   * <p>为什么需要它：实测中"玩家用本刀打试验假人"会在 {@code ForgeHooks.onLivingAttack} 的事件分发里
-   * 抛出异常 ✗，而本整合包的 EventBus 记录异常时又撞上 log4j 类加载器冲突 ✗ ⇒ 直接崩游戏且看不到原因 ✗。
-   * 兜住以后：游戏不崩 ✓、真凶（哪个模组的监听器）会被我们自己的 logger 完整打出来 ✓。
-   *
-   * @param where 出错的位置描述（写进日志便于定位 ✓）
-   * @param t     捕获到的异常/错误 ✓
-   */
-  private static void reportAttackFailure(String where, Throwable t) {
-    if (t instanceof VirtualMachineError) {
-      // 内存溢出/栈溢出这类虚拟机级错误不该被吞 ✗
-      throw (VirtualMachineError) t;
-    }
-    try {
-      TinkersNewlife.LOGGER.error("[拔刀剑] 攻击链在 " + where + " 处抛出异常，已兜住以免游戏崩溃：", t);
-    } catch (Throwable ignored) {
-      // 连日志都写不出去（本包 log4j 有冲突 ✗）就算了，绝不能再抛 ✗
-    }
+    // 依据（Forge 源码 + 字节码，均已在日志/反编译中核对 ✓）：
+    //   ForgeHooks.onPlayerAttackTarget(...) → `return stack.isEmpty() || !item.onLeftClickEntity(...);` ✓
+    //   SlashBlade AttackHelper.attack(...)  → `if (!onPlayerAttackTarget(...)) return;` ✗
+    // ⇒ 我们只要返回 true（"取消原版单击"✗），**拔刀剑自己的斩击/剑技结算会被整个跳过** ✗
+    //   —— §1011 那版"砍不到人"就是这么造成的 ✓。
+    //
+    // 另：**不要在这里调 super** ✗。本体的 onLeftClickEntity 内部会 `progressCombo` ✓，
+    //   而连段本来由拔刀剑自己的客户端输入管线驱动 ✓ ⇒ 我们再推一次就等于**每次攻击推进两次** ✗
+    //   ⇒ 连段状态机卡在第一段 ⇒ 实测症状"一直无冷却使用第一段剑技" ✓。
+    //
+    // 也**不再调**匠魂的 EntityInteractionModifierHook.leftClickEntity ✗：
+    //   它会自行结算一次伤害 ✗ 并且返回 true ⇒ 又变成"否决"✗。
+    //   本刀的伤害来自匠魂面板（属性 ✓）＋ 拔刀剑自己的结算 ✓ —— 两边各一次即可 ✓。
+    return false;
   }
 
   @Override
