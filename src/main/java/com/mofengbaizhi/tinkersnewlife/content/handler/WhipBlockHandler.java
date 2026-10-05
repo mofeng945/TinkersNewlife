@@ -3,9 +3,11 @@ package com.mofengbaizhi.tinkersnewlife.content.handler;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModItems;
 import com.mofengbaizhi.tinkersnewlife.content.entity.WhipLashEntity;
+import com.mofengbaizhi.tinkersnewlife.content.item.WhipItem;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -15,13 +17,15 @@ import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.living.ShieldBlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import slimeknights.tconstruct.library.tools.helper.ToolDamageUtil;
+import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 /**
- * <b>鞭子格挡 / 完美格挡</b>（§1058／§1059）—— 用户口径（2026-10-05）：
+ * <b>鞭子格挡 / 完美格挡</b>（§1058～§1061）—— 用户口径（2026-10-05）：
  * <blockquote>
  * 「<b>右键改为收回没有收回的鞭身并开启格挡，如果在开启格挡前后1s内受到攻击，判定为完美格挡并挥鞭将所有伤害反射出去，
  * 自身不受任何伤害。否则格挡时受到的伤害只会被减免40%</b>」
@@ -29,26 +33,32 @@ import java.util.UUID;
  * <blockquote>
  * 「<b>挨打前时间窗改为0.5s，然后右键是长按的，完美格挡后解除use效果，玩家需要松开右键来重置</b>」
  * </blockquote>
+ * <blockquote>
+ * 「<b>格挡动画是举盾动画，不是举三叉戟动画</b>」＋「<b>格挡一次伤害会正常消耗耐久，挥鞭也会</b>」
+ * </blockquote>
  *
  * <h2>实现要点</h2>
  * <ol>
  *   <li><b>格挡状态</b> ＝ "正举着鞭子"（{@link Player#isUsingItem()} ＋ 手持鞭 ＋ 未被松手锁挡住 ✓）——
- *       ⚠ <b>故意不用 {@code UseAnim.BLOCK}</b> ✗：原版 {@code LivingEntity#isBlocking()} **只看使用动画** ✗
- *       ⇒ 任何用 BLOCK 动画的物品都会被原版当成盾牌**全额免伤** ✗，那样"只减 40%"就永远不生效 ✗。
- *       所以鞭子用 {@code UseAnim.SPEAR}（举械防御的姿势 ✓），伤害结算**全部由本类接管** ✓。</li>
+ *       <b>姿势用 {@code UseAnim.BLOCK}（举盾 ✓ 用户口径 §1060 ✓）</b>；
+ *       但原版 {@code LivingEntity#isBlocking()} **只看使用动画** ✗ ⇒ 会被当成盾牌**全额免伤** ✗
+ *       ⇒ 由 {@link #onShieldBlock} **取消原版那次盾牌结算** ✓，伤害与耐久都改由本类接管 ✓。</li>
  *   <li><b>完美格挡窗口</b> ＝ {@link #PERFECT_WINDOW_TICKS} ＝ <b>0.5 秒</b> ✓：
  *       <ul>
- *         <li><b>举盾之后（挨打前）0.5 秒内</b>挨打 ⇒ 在 {@link LivingHurtEvent} 里<b>取消该次伤害</b> ✓
+ *         <li><b>举盾之后（挨打前）0.5 秒内</b>挨打 ⇒ {@link LivingHurtEvent} 里<b>取消该次伤害</b> ✓
  *             ＋ {@link #reflect} 把<b>全额</b>打回攻击者 ✓ ＋ 挥一鞭（视觉 ✓）；</li>
  *         <li><b>挨打之后 0.5 秒内</b>按下右键 ⇒ {@link #onBlockStarted} 把<b>那一次</b>的伤害<b>退回来</b>（回血 ✓）
  *             ＋ 同样反射 ✓。</li>
  *       </ul></li>
  *   <li><b>普通格挡</b> ⇒ 只减免 {@link #BLOCK_REDUCTION}（40% ✓）⇒ 玩家只吃 60% ✓。</li>
- *   <li><b>§1059 完美格挡后必须松手</b> ✓：完美格挡一旦生效就
- *       {@link #endGuard} ⇒ <b>立刻解除 use 效果</b> ✓ ＋ 上"松手锁" ✓；
- *       锁住期间**每次** use 尝试都会续锁（{@link #noteBlockAttempt} ✓）⇒
- *       <b>一直按住右键是举不起盾的</b> ✓（客户端重试间隔 4 tick &lt; {@link #RESET_HOLD_TICKS} ＝ 8 ✓）；
- *       松开右键后不再有 use 尝试 ⇒ 8 tick（0.4 秒）后锁过期 ✓ ⇒ 再按即可重新举盾 ✓。</li>
+ *   <li><b>§1059 完美格挡后必须松手</b> ✓：完美格挡一旦生效就 {@link #endGuard} ⇒
+ *       <b>立刻解除 use 效果</b> ✓ ＋ 上"松手锁" ✓；锁住期间每次 use 尝试都会续锁
+ *       （{@link #noteBlockAttempt} ✓）⇒ <b>一直按住右键是举不起盾的</b> ✓；
+ *       松开后 8 tick（0.4 秒）锁过期 ✓ ⇒ 再按即可重新举盾 ✓。</li>
+ *   <li><b>§1061 耐久消耗</b> ✓（用户口径：「格挡一次伤害会正常消耗耐久，挥鞭也会」✓）：
+ *       每次格挡（普通 ✓ 与完美 ✓）按<b>盾牌口径</b>扣耐久 ✓ ——
+ *       {@code 1 + floor(受到的伤害)} ✓（{@link #consumeDurability} ✓）；
+ *       挥鞭（左键抽击 ✓）在 {@code WhipItem#onEntitySwing} 里每次扣 1 ✓（原有逻辑 ✓）。</li>
  * </ol>
  *
  * <p>⚠ 与 §696 的"无下限完全格挡"等既有机制共存 ✓：本类只在**手持鞭子且正在举着**时介入 ✓，
@@ -135,14 +145,16 @@ public final class WhipBlockHandler {
             return;
         }
         if (isWhipBlocking(player)) {
+            float incoming = event.getAmount();
+            consumeDurability(player, incoming);          // §1061 挡一次就按盾牌口径扣耐久 ✓
             if (blockElapsedTicks(player) <= PERFECT_WINDOW_TICKS) {
                 // 完美格挡 ⇒ 自身不受任何伤害 ✓ ＋ 全额反射 ✓ ＋ §1059 解除 use（必须松手重置 ✓）
                 event.setCanceled(true);
-                reflect(player, event.getSource(), event.getAmount());
+                reflect(player, event.getSource(), incoming);
                 endGuard(player);
             } else {
                 // 普通格挡 ⇒ 只减免 40% ✓
-                event.setAmount(event.getAmount() * (1.0F - BLOCK_REDUCTION));
+                event.setAmount(incoming * (1.0F - BLOCK_REDUCTION));
                 player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                         SoundEvents.SHIELD_BLOCK, SoundSource.PLAYERS, 0.7F, 1.35F);
             }
@@ -157,12 +169,12 @@ public final class WhipBlockHandler {
 
     /**
      * §1060 <b>取消原版那一次盾牌结算</b> ✓ —— 用户口径：「格挡动画是举盾动画」✓
-     * ⇒ 鞭子改用 {@code UseAnim.BLOCK}（举盾姿势 ✓），
+     * ⇒ 鞭子用 {@code UseAnim.BLOCK}（举盾姿势 ✓），
      * 但原版 {@code LivingEntity#isBlocking()} **只看使用动画** ✗ ⇒ 从正面来的攻击会被原版**全额免伤** ✗，
      * "普通格挡只减 40%" 就永远不生效 ✗。
-     * <p>⇒ 在 {@link ShieldBlockEvent} 里把它**取消** ✓：原版不做全免、也不扣盾牌耐久 ✓，
-     * 伤害继续按 {@link LivingHurtEvent} 里已经改好的数值结算 ✓
-     * （普通格挡 ＝ 60% ✓；完美格挡那次则在 {@code LivingHurtEvent} 里已被取消 ✓ 根本到不了这里 ✓）。
+     * <p>⇒ 在 {@link ShieldBlockEvent} 里把它**取消** ✓：原版不做全免 ✓（耐久也改由
+     * {@link #consumeDurability} 按盾牌口径自己扣 ✓），伤害继续按 {@link LivingHurtEvent} 里改好的数值结算 ✓
+     * （完美格挡那次已在 {@code LivingHurtEvent} 里被取消 ✓ 根本到不了这里 ✓）。
      */
     @SubscribeEvent
     public static void onShieldBlock(ShieldBlockEvent event) {
@@ -185,6 +197,7 @@ public final class WhipBlockHandler {
         if (hit == null || player.tickCount - hit.tick() > PERFECT_WINDOW_TICKS) {
             return false;
         }
+        consumeDurability(player, hit.amount());             // §1061 这次格挡同样扣耐久 ✓
         // 把那一次的伤害退回来 ✓（"自身不受任何伤害" ✓）
         player.heal(hit.amount());
         LivingEntity attacker = resolve(player, hit.attacker());
@@ -205,6 +218,28 @@ public final class WhipBlockHandler {
     }
 
     // ==================== 内部 ====================
+
+    /**
+     * §1061 <b>格挡消耗耐久</b> ✓（用户口径：「格挡一次伤害会正常消耗耐久」✓）——
+     * 照<b>盾牌口径</b>：{@code 1 + floor(受到的伤害)} ✓（原版 {@code hurtCurrentlyUsedShield} 就是这么算的 ✓）。
+     * <p>为什么自己扣 ✗：我们为了不让原版**全额免伤** ✗ 把整段盾牌结算取消了 ✓，
+     * 那一份耐久也就一起没了 ✗ ⇒ 由这里补回来 ✓。
+     */
+    private static void consumeDurability(Player player, float blockedAmount) {
+        ItemStack stack = player.getUseItem();
+        if (stack.isEmpty()) {
+            stack = player.getMainHandItem();
+        }
+        if (stack.isEmpty() || !(stack.getItem() instanceof WhipItem)) {
+            return;
+        }
+        int amount = 1 + Mth.floor(Math.max(0.0F, blockedAmount));
+        try {
+            ToolDamageUtil.damageAnimated(ToolStack.from(stack), amount, player, player.getUsedItemHand());
+        } catch (Throwable ignored) {
+            // 工具数据读不到（创造栏里还没材料等 ✓）就算了 ✓
+        }
+    }
 
     /** 挥鞭并把<b>全额伤害</b>打回攻击者 ✓（用户口径：「挥鞭将所有伤害反射出去」✓） */
     private static void reflect(Player player, DamageSource source, float amount) {

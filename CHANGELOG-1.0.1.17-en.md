@@ -134,3 +134,12 @@ click) so it can be wired to another input later if you want it back.
   through `ShieldBlockEvent` - so the shield neither negates the hit nor loses durability, and the
   damage goes on to be settled by the whip's own rules (60 percent on a normal block, nothing at all on
   a perfect block).
+## Changed (2026-10-05, ninth pass - version unchanged)
+
+* Blocking a hit now consumes durability again, using the shield formula (`1 + floor(damage)`), on both a
+  perfect block and a normal one. Cancelling the vanilla shield settlement (which is what lets the guard
+  use the shield pose without vanilla negating everything) also removed vanilla's durability cost, so the
+  whip now pays it itself through Tinkers' own tool damage path - the tool damage animation and the
+  broken state behave as usual.
+* Swinging the whip already cost 1 durability per lash and is unchanged; the counter-attack from a
+  perfect block does not charge a second time, since it is part of the same block.
