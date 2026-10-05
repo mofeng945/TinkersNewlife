@@ -2,7 +2,10 @@ package com.mofengbaizhi.tinkersnewlife.content.entity;
 
 import com.mofengbaizhi.tinkersnewlife.content.ModEntities;
 import com.mofengbaizhi.tinkersnewlife.content.handler.KineticImpactHandler;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -11,7 +14,12 @@ import net.minecraft.world.entity.projectile.ItemSupplier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * <b>石弹</b>（§983 弹弓专用弹射物）。
@@ -28,17 +36,24 @@ import net.minecraft.world.phys.EntityHitResult;
  *       ＋ 打标记：等它**撞到地面/落水/攀爬物**时结算**动能伤害** ✓
  *       —— 该伤害用本模组自己的 {@code tinkersnewlife:kinetic} 源（带
  *       {@code #minecraft:bypasses_invulnerability} 标签 ✓）⇒ **创造模式玩家也会被打到** ✓（用户点名要求 ✓）。</li>
+ *   <li><b>落地</b>（§1038 用户口径「石子射出去落地时产生石头破碎粒子然后消失」）⇒ 撞到方块就按弹药材质
+ *       喷一次**方块破坏粒子**（圆石弹喷圆石碎粒 ✓），然后**直接消失** ⇒ 不再插在地上等人捡 ✓。</li>
  * </ol>
  */
 public class StoneShotEntity extends AbstractArrow implements ItemSupplier {
 
-    /** 弹药（射出去的到底哪块石头 —— 用于渲染、落地后拾取） */
+    /** 弹药（射出去的到底哪块石头 —— 用于渲染、命中结算、以及落地碎掉的粒子材质） */
     private ItemStack ammo = ItemStack.EMPTY;
     /** 这一发的"基础动能"（由弹弓的面板伤害决定 ✓） */
     private float impactDamage = 2.0F;
 
     private static final String TAG_AMMO = "Ammo";
     private static final String TAG_IMPACT = "ImpactDamage";
+
+    /** §1038 落地碎裂的粒子数量 / 扩散半径 / 初速度（口径照原版"挖掉方块"那套粒子 ✓） */
+    private static final int SHATTER_PARTICLES = 24;
+    private static final double SHATTER_SPREAD = 0.15D;
+    private static final double SHATTER_SPEED = 0.12D;
 
     public StoneShotEntity(EntityType<? extends StoneShotEntity> type, Level level) {
         super(type, level);
@@ -100,5 +115,46 @@ public class StoneShotEntity extends AbstractArrow implements ItemSupplier {
         if (airborne && target instanceof LivingEntity living && !this.level().isClientSide) {
             KineticImpactHandler.pullDown(living, this.impactDamage);
         }
+    }
+
+    /**
+     * §1038：撞到方块（= 落地）⇒ 喷破碎粒子 ＋ 消失。
+     *
+     * <p>只在服务端做一次 ✓（粒子经 {@code ServerLevel.sendParticles} 广播给所有客户端 ✓，
+     * 两边都喷会变成双份 ✗）。
+     */
+    @Override
+    protected void onHitBlock(BlockHitResult result) {
+        super.onHitBlock(result);
+        if (this.level().isClientSide) {
+            return;
+        }
+        this.shatterOnGround(result);
+    }
+
+    /** 按弹药对应的方块喷一次"方块破坏"粒子，然后直接移除实体（不再插地可捡 ✓） */
+    private void shatterOnGround(BlockHitResult result) {
+        if (this.level() instanceof ServerLevel server) {
+            Vec3 at = result.getLocation();
+            server.sendParticles(
+                    new BlockParticleOption(ParticleTypes.BLOCK, this.ammoBlockState()),
+                    at.x, at.y, at.z,
+                    SHATTER_PARTICLES, SHATTER_SPREAD, SHATTER_SPREAD, SHATTER_SPREAD, SHATTER_SPEED);
+        }
+        this.discard();
+    }
+
+    /**
+     * 弹药对应的方块状态 —— 圆石弹喷圆石碎粒、石头喷石头碎粒 ✓；
+     * 万一弹药不是方块物品（理论上不会：弹药标签里全是石头类 ✓）就退回圆石 ✓。
+     */
+    private BlockState ammoBlockState() {
+        if (!this.ammo.isEmpty()) {
+            Block block = Block.byItem(this.ammo.getItem());
+            if (block != Blocks.AIR) {
+                return block.defaultBlockState();
+            }
+        }
+        return Blocks.COBBLESTONE.defaultBlockState();
     }
 }

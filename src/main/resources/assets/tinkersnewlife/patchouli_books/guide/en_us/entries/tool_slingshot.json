@@ -7,7 +7,7 @@
     {
       "type": "patchouli:spotlight",
       "item": "tinkersnewlife:slingshot",
-      "text": "$(bold)Slingshot$()$(br2)How to obtain: build it at the $(bold)Tinker Station$() - $(bold)one tool handle + one bow limb + one bowstring$().$(br2)Ammo: $(bold)any stone or cobblestone in your inventory$() (all modded stone variants included; the tag is $(bold)tinkersnewlife:slingshot_ammo$(), so more stones can be added to it).$(br2)Usage:$(li)$(bold)Hold right-click$() to draw - the slingshot $(bold)trembles$(), more the longer you hold$(li)Release to fire a stone; a fuller draw flies faster and farther$(li)The stone really flies and can be picked up after it lands"
+      "text": "$(bold)Slingshot$()$(br2)How to obtain: build it at the $(bold)Tinker Station$() - $(bold)one tool handle + one bow limb + one bowstring$().$(br2)Ammo: $(bold)any stone or cobblestone in your inventory$() (all modded stone variants included; the tag is $(bold)tinkersnewlife:slingshot_ammo$(), so more stones can be added to it).$(br2)Usage:$(li)$(bold)Hold right-click$() to draw - the slingshot $(bold)trembles$(), more the longer you hold$(li)Release to fire a stone; a fuller draw flies faster and farther$(li)The stone really flies; it shatters into stone particles the moment it lands"
     },
     {
       "type": "patchouli:text",

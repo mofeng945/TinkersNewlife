@@ -7,7 +7,7 @@
     {
       "type": "patchouli:spotlight",
       "item": "tinkersnewlife:slingshot",
-      "text": "$(bold)弹弓$()$(br2)获取：在$(bold)匠魂工匠站$()打造——$(bold)一个工具手柄 + 一个弓臂 + 一个弓弦$()。$(br2)弹药：$(bold)背包里任何石头或圆石$()（含各模组的石头变体，标签 $(bold)tinkersnewlife:slingshot_ammo$()；想加别的石头往标签里塞即可）。$(br2)用法：$(li)$(bold)右键长按$()拉弓，此时弓身会$(bold)颤抖$()，越拉越抖$(li)松开射出石弹，蓄力越满越快越远$(li)石弹真的会飞，落地后可以捡回来"
+      "text": "$(bold)弹弓$()$(br2)获取：在$(bold)匠魂工匠站$()打造——$(bold)一个工具手柄 + 一个弓臂 + 一个弓弦$()。$(br2)弹药：$(bold)背包里任何石头或圆石$()（含各模组的石头变体，标签 $(bold)tinkersnewlife:slingshot_ammo$()；想加别的石头往标签里塞即可）。$(br2)用法：$(li)$(bold)右键长按$()拉弓，此时弓身会$(bold)颤抖$()，越拉越抖$(li)松开射出石弹，蓄力越满越快越远$(li)石弹真的会飞，落地时会碎成石头碎粒并消失"
     },
     {
       "type": "patchouli:text",
