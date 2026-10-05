@@ -239,6 +239,18 @@ dependencies {
     //   libs/ 下放安装用的原 jar（文件名末尾是版本号 ⇒ flatDir 的 name:version 可解析 ✓）；
     //   同样在 .gitignore 里 ✓ 换机器要重新放回 libs/ 才能编译 ✓。
     compileOnly fg.deobf("blank:SlashBladeResharped-1.20.1:1.9.65")
+
+    // §1020 拔刀剑整合（照抄 TiCEX）：它的 mixin 用了 **MixinExtras** 的
+    //   `@ModifyExpressionValue` / `@Local` / `@Share` ✓ —— 运行期 Forge **自带** MixinExtras ✓
+    //   （崩溃栈里能看到 `mixinextras$bridge$...` ✓），但**编译期**得有一份 API 才能编译 ✓
+    //   ⇒ 按本仓惯例（见上面 Create 那一段 ✓）从 ForgeGradle 的 mavenizer 缓存里取出
+    //     `mixinextras-forge-0.5.4.jar` 原样放进 libs/ ✓，这里只做 compileOnly ✓
+    //     （libs/*.jar 在 .gitignore 里 ✓ 换机器要重新放回 libs/ 才能编译 ✓）。
+    //   ⚠ 坑：`mixinextras-forge-*.jar` **本身只是 jar-in-jar 包装** ✗ ——
+    //     真正的类在它内部的 `META-INF/jars/MixinExtras-0.5.4.jar` ✓，
+    //     直接拿外层 jar 当依赖会报"程序包 com.llamalad7.mixinextras.injector 不存在" ✗
+    //     ⇒ 已把内层那份抽出来放到 libs/MixinExtras-0.5.4.jar ✓（89 个 injector/sugar 类 ✓）。
+    compileOnly files("libs/MixinExtras-0.5.4.jar")
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html

@@ -1,5 +1,9 @@
 package com.mofengbaizhi.tinkersnewlife.mixin;
 
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.sugar.Local;
+import com.llamalad7.mixinextras.sugar.Share;
+import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import mods.flammpfeil.slashblade.util.AttackHelper;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
@@ -7,7 +11,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import slimeknights.tconstruct.library.modifiers.ModifierEntry;
 import slimeknights.tconstruct.library.modifiers.ModifierHooks;
 import slimeknights.tconstruct.library.tools.context.ToolAttackContext;
@@ -15,62 +20,98 @@ import slimeknights.tconstruct.library.tools.item.IModifiable;
 import slimeknights.tconstruct.library.tools.nbt.ToolStack;
 
 /**
- * <b>§1020 拔刀剑 × 匠魂：把匠魂的"近战伤害"修饰符注入拔刀剑自己的结算里</b>
- * （照 <b>TiCEX</b> 的 {@code PlayerAttackHelperMixin} 移植 ✓）。
+ * <b>§1020 拔刀剑 × 匠魂：把匠魂的近战修饰符注入本体 {@code AttackHelper#attack}</b>
+ * —— <b>逐行照抄 TiCEX</b> 的 {@code moffy.ticex.mixin.slashblade.PlayerAttackHelperMixin}
+ * （源码取自 <a href="https://github.com/mofumofumoffy/ticex">github.com/mofumofumoffy/ticex</a> 的 `1.20.1` 分支 ✓）。
  *
- * <p>为什么需要它：本刀的伤害最终由**拔刀剑自己的** {@code AttackHelper#attack} 结算 ✓
- * （真·左键 → AttackManager → AttackHelper ✓）。这样"原版机制"（否决语义、连段、技能、
- * 击退与手感）都归本体 ✓，但匠魂的"近战伤害"类修饰符（锋利/强化等 ✓）就没人过问了 ✗
- * ⇒ 在这里拦一次：把本体算出的伤害再交给匠魂的 {@code MELEE_DAMAGE} 钩子过一遍 ✓。
+ * <p>只改了两处：包名/类名 ✓、把它的 {@code moffy.ticex.mixin.CriticalAccessor}
+ * 换成我们自己的 {@link KatanaCriticalAccessor} ✓（访问器本体逐字相同 ✓）。
+ * 其余注入点、`@Local`/`@Share` 的用法与循环体都与原版一致 ✓。
  *
- * <p>为什么用 {@code @Redirect} 而不是 MixinExtras 的 {@code @ModifyExpressionValue} ✗：
- * 本仓的 mixin 一直只用**原生注解**（且 refmap 是手写的 ✓，见 build.gradle ✓），
- * 不引入额外依赖更稳 ✓ —— 效果等价：拦下 {@code calculateTotalDamage} 这一次调用，
- * 先取本体的原值 ✓，再串一遍匠魂修饰符 ✓，把结果还回去 ✓。
- *
- * <p>⚠ 目标类来自拔刀剑（`compileOnly` 依赖 ✓）。mixin 配置里 {@code required:false} ＋
- * {@code defaultRequire:0} ✓ ⇒ 拔刀剑不在场时本 mixin 静默不生效 ✓，不会影响别的整合包 ✓。
+ * <p>⚠ 拔刀剑不在场时本 mixin 静默不生效 ✓（`required:false` ＋ `defaultRequire:0` ✓）。
  */
 @Mixin(value = AttackHelper.class, remap = false)
-public class KatanaAttackHelperMixin {
+public abstract class KatanaAttackHelperMixin {
 
-    /**
-     * 拦下 {@code AttackHelper#calculateTotalDamage(...)} 的调用 ✓。
-     *
-     * @param attacker   攻击者（本体传入 ✓）
-     * @param target     被打的目标 ✓
-     * @param damage     本体传入的基础伤害系数 ✓
-     * @param isCritical 本体判定的暴击 ✓
-     * @return 过完匠魂"近战伤害"修饰符之后的伤害 ✓（非匠魂物品则原样返回 ✓）
-     */
-    @Redirect(
-            method = "attack",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lmods/flammpfeil/slashblade/util/AttackHelper;calculateTotalDamage(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/Entity;FZ)D"),
-            remap = false)
-    private static double tnl$applyMeleeDamage(LivingEntity attacker, Entity target, float damage, boolean isCritical) {
-        // 先取本体自己算出来的伤害 ✓（这里调的是原方法 ✓，不会递归回本 mixin ✓）
-        double original = AttackHelper.calculateTotalDamage(attacker, target, damage, isCritical);
-
-        ItemStack stack = attacker.getMainHandItem();
-        if (!(stack.getItem() instanceof IModifiable)) {
-            return original;
-        }
-
-        ToolStack tool = ToolStack.from(stack);
+    @Inject(method = "attack", at = @At(value = "INVOKE", target = "Lmods/flammpfeil/slashblade/util/AttackHelper;calculateTotalDamage(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/Entity;FZ)D"))
+    private static void setContext(LivingEntity attacker, Entity target, float comboRatio, CallbackInfo ci,
+                                   @Local boolean isCritical,
+                                   @Share(value = "context") LocalRef<ToolAttackContext> contextRef) {
         ToolAttackContext context = ToolAttackContext.attacker(attacker)
                 .hand(InteractionHand.MAIN_HAND)
                 .target(target)
-                .cooldown(1.0F)
+                .cooldown(1)
                 .build();
+        ((KatanaCriticalAccessor) context).setCriticalModifier(isCritical ? 1.5F : 1.0F);
+        contextRef.set(context);
+    }
 
-        double result = original;
-        for (ModifierEntry entry : tool.getModifiers()) {
-            // getMeleeDamage(tool, entry, context, originalDamage, currentDamage) ✓ —— 与 TiCEX 的调用完全一致 ✓
-            result = entry.getHook(ModifierHooks.MELEE_DAMAGE)
-                    .getMeleeDamage(tool, entry, context, (float) original, (float) result);
+    @ModifyExpressionValue(method = "attack", at = @At(value = "INVOKE", target = "Lmods/flammpfeil/slashblade/util/AttackHelper;calculateTotalDamage(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/Entity;FZ)D"))
+    private static double applyAttackDamage(double damageAmount,
+                                            @Local(argsOnly = true) LivingEntity attacker,
+                                            @Share(value = "context") LocalRef<ToolAttackContext> contextRef) {
+        ToolAttackContext context = contextRef.get();
+        ItemStack stack = attacker.getItemInHand(context.getHand());
+        if (stack.getItem() instanceof IModifiable) {
+            ToolStack tool = ToolStack.from(stack);
+
+            double originalDamage = damageAmount;
+
+            for (ModifierEntry entry : tool.getModifiers()) {
+                damageAmount = entry.getHook(ModifierHooks.MELEE_DAMAGE).getMeleeDamage(tool, entry, context, (float) originalDamage, (float) damageAmount);
+            }
         }
-        return result;
+
+        return damageAmount;
+    }
+
+    @ModifyExpressionValue(method = "attack", at = @At(value = "INVOKE", target = "Lmods/flammpfeil/slashblade/util/AttackHelper;calculateKnockback(Lnet/minecraft/world/entity/LivingEntity;)F"))
+    private static float applyKnockback(float knockback,
+                                        @Local double baseDamage,
+                                        @Local(argsOnly = true) LivingEntity attacker,
+                                        @Share(value = "context") LocalRef<ToolAttackContext> contextRef) {
+        ToolAttackContext context = contextRef.get();
+        ItemStack stack = attacker.getItemInHand(context.getHand());
+        if (stack.getItem() instanceof IModifiable) {
+            ToolStack tool = ToolStack.from(stack);
+
+            float originalKnockback = knockback;
+            for (ModifierEntry entry : tool.getModifiers()) {
+                knockback = entry.getHook(ModifierHooks.MELEE_HIT).beforeMeleeHit(tool, entry, context, (float) baseDamage, originalKnockback, knockback);
+            }
+        }
+
+        return knockback;
+    }
+
+    @Inject(method = "attack", at = @At(value = "INVOKE", target = "Lmods/flammpfeil/slashblade/util/AttackHelper;handlePostAttackEffects(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/Entity;Lmods/flammpfeil/slashblade/util/AttackHelper$FireAspectResult;)V", shift = At.Shift.AFTER))
+    private static void applyAttackSuccess(LivingEntity attacker, Entity target, float comboRatio, CallbackInfo ci,
+                                           @Local double baseDamage,
+                                           @Share(value = "context") LocalRef<ToolAttackContext> contextRef) {
+        ToolAttackContext context = contextRef.get();
+        ItemStack stack = attacker.getItemInHand(context.getHand());
+        if (stack.getItem() instanceof IModifiable) {
+            ToolStack tool = ToolStack.from(stack);
+
+            for (ModifierEntry entry : tool.getModifiers()) {
+                entry.getHook(ModifierHooks.MELEE_HIT).afterMeleeHit(tool, entry, context, (float) baseDamage);
+            }
+        }
+    }
+
+    @Inject(method = "attack", at = @At(value = "INVOKE", target = "Lmods/flammpfeil/slashblade/util/AttackHelper;handleFailedAttack(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/Entity;Lmods/flammpfeil/slashblade/util/AttackHelper$FireAspectResult;)V", shift = At.Shift.AFTER))
+    private static void applyAttackFailed(LivingEntity attacker, Entity target, float comboRatio, CallbackInfo ci,
+                                          @Local double baseDamage,
+                                          @Share(value = "context") LocalRef<ToolAttackContext> contextRef) {
+        ToolAttackContext context = contextRef.get();
+        ItemStack stack = attacker.getItemInHand(context.getHand());
+
+        if (stack.getItem() instanceof IModifiable) {
+            ToolStack tool = ToolStack.from(stack);
+
+            for (ModifierEntry entry : tool.getModifiers()) {
+                entry.getHook(ModifierHooks.MELEE_HIT).failedMeleeHit(tool, entry, context, (float) baseDamage);
+            }
+        }
     }
 }

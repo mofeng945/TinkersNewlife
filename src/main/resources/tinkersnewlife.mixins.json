@@ -21,7 +21,8 @@
     "TwilightMazeRandomMixin",
     "KatanaAttackHelperMixin",
     "KatanaAttackManagerMixin",
-    "KatanaItemSlashBladeMixin"
+    "KatanaItemSlashBladeMixin",
+    "KatanaCriticalAccessor"
   ],
   "client": [
     "EntityRenderDispatcherMixin",
