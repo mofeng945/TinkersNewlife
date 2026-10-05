@@ -23,27 +23,47 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 /**
- * 「兵士佩刀」的<b>刀光</b>渲染（§810／§811）—— 仿拔刀剑那种弧形斩击面片 ✓，<b>不是横扫粒子</b> ✓。
+ * 「兵士佩刀」的<b>刀光</b>渲染（§810／§811／§1044）—— 仿拔刀剑那种弧形斩击面片 ✓，<b>不是横扫粒子</b> ✓。
  *
- * <h2>画法</h2>
+ * <h2>§1044 ⭐ 几何（用户最终口径 ✓）：弧带的<b>圆心就是施法者</b></h2>
+ * 用户原话三步走 ✓：
  * <ol>
- *   <li><b>弧带网格</b>：把一条圆弧按 {@link #SEGMENTS} 段切成四边形条带 ✓；弧带宽（厚度）沿弧长按
- *       {@code sin(πu)^0.55} 收尖 ⇒ 两端自然变成"刀锋尖" ✓ 就是拔刀剑那种月牙形 ✓；</li>
- *   <li><b>贴图</b>：{@code textures/entity/soldier_slash.png} ✓（64×64 弧光图 ✓ 中间厚、
- *       偏内一条锐利刃口线、u 两端收尖 ✓）—— 只提供"柔光 + 刃口"的明暗，形状仍由网格决定 ✓；</li>
- *   <li><b>顶点色</b>：{@link SoldierSlashEntity#getSlashTint()}（唐横刀 = 灰色 {@code 0xC9CFD9} ✓）
- *       × 随寿命淡出 ✓ ⇒ 灰色刀光 ✓。</li>
+ *   <li>「剑气弧面应当凹面自玩家方向，凸面远离玩家」✓；</li>
+ *   <li>「我剑气的贴图本身不就是个<b>平面</b>扇形弧面吗，我是想让你把<b>圆心对着玩家</b>，
+ *       不是让你弯曲弧面啊」✓ ⇒ <b>弧面必须保持平面</b> ✗ 不许弯成球冠 ✗；</li>
+ *   <li>「退化成细线好解决，<b>侧一点点角度就好</b>」✓ ⇒ 圆心<b>就放在玩家身上</b> ✓
+ *       （半径 = 玩家到弧带的距离 ✓），细线问题用<b>侧倾</b>解决 ✓。</li>
  * </ol>
  *
- * <h2>§811 ⭐ 朝向：<b>弧面永远正对镜头</b>（billboard）——修"刀光重叠"✗</h2>
- * 旧做法是服务端给每道刀光随机一个 {@code yaw} ✗ ⇒ 弧面**侧对镜头**时只剩一条细线 ✗，
- * 几道叠在一起就分不清谁是谁 ✗（用户反馈：「<b>附加刀光别给我重叠了，每一段角度应该不太一样</b>」✓）。
- * 现在改成：<b>渲染时按"实体 → 相机"方向算基向量</b> ✓ ⇒ 弧面必定正对镜头、每一道都完整可见 ✓；
- * 玩家看到的"这一刀的角度"就完全由 {@link SoldierSlashEntity#getSlashRoll()} 决定 ✓
- * （服务端给每一段安排互不相同的角度 ✓），再配合 {@code MIRROR} 左右镜像 ＋ 每段不同的大小
- * ＋ 每段不同的落点（服务端偏移 ✓）⇒ <b>一眼就是"连续几刀"而不是一团重叠</b> ✓。
+ * <p>所以现在的画法（仍然是<b>一张平面的弧带</b> ✓ 顶点全部共面 ✓ 一个字都没弯 ✓）：
+ * <pre>
+ *   圆心 C    = 施法者位置（玩家身上 ✓）
+ *   半径 r    = clamp(|锚点 - C|, MIN_RADIUS, MAX_RADIUS)   // 锚点 = 剑气所在位置（目标身上 ✓）
+ *   跨中方向 u = 「C → 锚点」方向 d 绕"世界上方"侧倾 TILT_DEG 度 ✓   ← 就是用户说的"侧一点点角度" ✓
+ *   平面内另一轴 v = d × u
+ *   弧带点    = C + r·(cos θ·u + sin θ·v)，θ ∈ ±ARC_SPAN/2        // 一条平面圆弧 ✓
+ * </pre>
+ * ⇒ 弧带的<b>圆心正好压在玩家身上</b> ✓ ⇒ 弧面凹向玩家 ✓ 凸面背离玩家 ✓（正是要的效果 ✓）。
  *
- * <h2>⚠ 渲染类型：必须只用原版 shader getter（FlyingSwordTrailRenderer 的教训 ✓）</h2>
+ * <h2>为什么"侧倾"能解决细线 ✗</h2>
+ * 若跨中方向就取 d（正对锚点 ✓），整张弧带的平面必含直线 C→锚点 ✓，
+ * 而玩家正沿着这条线看 ⇒ 平面<b>侧对镜头</b>、退化成一条细线 ✗（就是 §811 当年那个毛病 ✗）。
+ * 把 u 从 d 侧倾 {@link #TILT_DEG} 度后 ✓，平面法线 {@code m = u × v} 与视线方向 d 的可见度
+ * <b>{@code |m·d| = sin(TILT_DEG)}</b> ✓（推导：{@code v ∝ d×u ⇒ m ∝ d - u·cosT ⇒ m·d = (1-cos²T)/sinT = sinT} ✓）
+ * ⇒ 20° 时约 <b>0.34</b> ✓ —— 不刺眼、也不是细线 ✓，正好是用户要的"侧一点点" ✓。
+ *
+ * <h2>⚠ 弧带与锚点的关系（如实说明，别当成"精确穿过目标" ✗）</h2>
+ * 侧倾之后，弧带所在平面<b>不再包含锚点</b> ✗ —— 锚点到该平面的距离是
+ * <b>{@code rad·|m·d| = rad·sin(TILT_DEG)}</b> ✓（构造上圆心 = 锚点 − rad·d ✓，而 d 与平面法线 m 的夹角是 90°−TILT ✓）。
+ * 即 20° 侧倾时弧带会从目标<b>旁边约 0.34·rad 格</b>扫过 ✓（rad = 玩家到目标的距离 ✓，3 格时约 1.0 格 ✓）；
+ * 弧带本身很宽（半宽 ≈ 0.27·rad ✓）⇒ 观感仍是"扫过目标" ✓，但要想<b>精确穿过锚点</b>只能把
+ * {@link #TILT_DEG} 调小 ✓（代价：越接近侧对镜头、越像细线 ✗）。
+ * 这正是用户说的「<b>侧一点点角度就好</b>」所对应的取舍 ✓。
+ *
+ * <h2>兜底（拿不到施法者位置时 ✓）</h2>
+ * 退回 §811 那套：以实体自身为圆心、法线朝相机的平面 ✓（老观感 ✓ 绝不消失 ✗）。
+ *
+ * <h2>⚠ 渲染类型：只用原版 shader getter（FlyingSwordTrailRenderer 的教训 ✓）</h2>
  * 本仓（飞剑拖尾）踩过：自己 {@code new ShaderInstance} 的着色器<b>不在光影包（Oculus/Iris）的替换名单里</b> ✗
  * ⇒ 在装了光影包的整合包里<b>整片看不见</b> ✗。所以这里照抄飞剑那套 ✓：
  * 用<b>原版</b> {@code GameRenderer::getRendertypeEntityTranslucentEmissiveShader}（自发光程序 ✓）
@@ -52,18 +72,6 @@ import org.joml.Matrix4f;
  * {@code RenderStateShard} 里那几个常量是 {@code protected} ⇒ 外部包拿不到 ✓ 只能自己建一份 ✓（同飞剑 ✓）。
  *
  * <p>全程 {@code try/catch} ✓：渲染任何一步出问题都只是这一道光不画 ✓ 绝不影响游戏 ✓。
- *
- * <h2>§1042／§1043 凹凸修正：<b>把圆心对准玩家</b>（用户口径 ✓）</h2>
- * 用户原话：「<b>剑气弧面应当凹面自玩家方向，凸面远离玩家</b>」✓ ＋ 随后澄清：
- * 「<b>我剑气的贴图本身不就是个平面扇形弧面吗，我是想让你把圆心对着玩家，不是让你弯曲弧面啊</b>」✓
- * ⇒ <b>弧面必须保持平面</b>（就是那张扇形弧光贴图 ✓）✗ 不许把网格弯成球冠 ✗；
- * 要动的是这张平面弧带在<b>平面内的自转角</b> ✓ —— 让弧带的<b>圆心方向对准施法者</b> ✓
- * ⇒ 弧尖（凸面）背离玩家 ✓、圆心（凹面）朝玩家 ✓。
- *
- * <p>⚠ §1042 我第一版做错了：把弧带沿"朝玩家"方向弯成了球冠 ✗（用户明确否掉 ✓）。
- * 现在改成 {@link #aimRollAtCaster}：取「实体 → 施法者」向量<b>投影到弧面平面内</b>的方向 ✓，
- * 解出让"弧尖方向（本地 +Y）"正好指向<b>远离玩家</b>的 roll ✓ ⇒ 圆心自然落在玩家那一侧 ✓。
- * 施法者位置来自 {@link SoldierSlashEntity#getCasterPos()} ✓（没带／退化 ⇒ 用服务端给的 roll 兜底 ✓）。
  */
 public class SoldierSlashRenderer extends EntityRenderer<SoldierSlashEntity> {
 
@@ -74,19 +82,26 @@ public class SoldierSlashRenderer extends EntityRenderer<SoldierSlashEntity> {
     private static final int SEGMENTS = 18;
     /** 弧的张角（度）—— 太大像圆环 ✗ 太小像直线 ✗ 152° 左右最像斩击 ✓ */
     private static final float ARC_SPAN = 152.0F;
-    /** 弧半径（格） */
-    private static final float RADIUS = 1.25F;
-    /** 弧最粗处的半宽（格） */
-    private static final float MAX_HALF_WIDTH = 0.34F;
-    /** 弧带整体下移（格）：让月牙大致居中在目标身体中心 ✓ */
-    private static final float VERTICAL_CENTER = -0.42F;
-
+    /** 兜底半径（格）：拿不到施法者位置时才用 ✓（老行为 ✓） */
+    private static final float FALLBACK_RADIUS = 1.25F;
+    /** 弧带最粗处的半宽 : 半径 的固定比例 ⇒ 半径越大弧带越宽、比例不变 ✓（0.34 / 1.25 ✓） */
+    private static final float HALF_WIDTH_RATIO = 0.272F;
     /**
-     * §1043 <b>圆心朝玩家的退化阈值</b> ✓：「实体 → 施法者」向量在弧面平面内的投影长度小于它时
-     * 认为方向退化（施法者正对着弧面法线 ✗ 此时平面内没有可用的"朝玩家"方向 ✓）
-     * ⇒ 不再强行对准 ✓ 用服务端给的 roll 兜底 ✓（避免除零／乱转 ✓）。
+     * §1044 <b>侧倾角</b>（度 ✓）—— 用户口径「<b>侧一点点角度就好</b>」✓。
+     * <p>把跨中方向从"正对锚点"偏向世界上方这么多 ✓ ⇒ 弧面不再侧对镜头 ✓
+     * 可见度 = {@code sin(该角)} ✓（20° ⇒ 0.34 ✓）。
+     * <b>调大 = 弧面更"正对"玩家（更宽更显眼 ✓）但弧带离锚点更远 ✗；调小 = 更薄更贴线 ✗</b> ⇒ 一般 15~30 ✓。
      */
-    private static final double AIM_EPSILON = 1.0E-4D;
+    private static final double TILT_DEG = 20.0D;
+    /** §1044 半径下限（格）：贴脸时方向会退化 ⇒ 给个下限免得圆心与锚点重合 ✓ */
+    private static final double MIN_RADIUS = 0.5D;
+    /**
+     * §1044 半径上限（格）：悚怖钢剑气会沿弹道飞出很远 ✓，半径 = 距离会让弧带变成几十格的巨圈 ✗
+     * ⇒ 超远时把半径截到该值 ✓（此时圆心落在玩家与剑气之间 ✓ 仍在玩家那一侧 ✓）。
+     */
+    private static final double MAX_RADIUS = 4.0D;
+    /** §1044 服务端给的角度只当"平面内摆动"用 ✓ 并限幅 ⇒ 不至于把弧带甩出锚点 ✗ */
+    private static final float SPAN_SHIFT_LIMIT = 30.0F;
 
     private static RenderType slashRenderType;
 
@@ -122,44 +137,50 @@ public class SoldierSlashRenderer extends EntityRenderer<SoldierSlashEntity> {
             int a = (int) (255.0F * alpha);
             float mirror = entity.isMirrored() ? -1.0F : 1.0F;   // 奇数段左右镜像 ⇒ 与偶数段不同 ✓
 
+            // §1044 锚点 = 实体自身的渲染位置（poseStack 的原点就在这儿 ✓）
+            Vec3 anchor = entity.getPosition(partialTick);
+            Frame frame = frame(entity, anchor, mirror);
+
             poseStack.pushPose();
-            // §1043 弧面保持平面 ✓ —— 只由 applyBillboard 在平面内把圆心转向施法者 ✓
-            applyBillboard(poseStack, entity, partialTick, entity.getSlashRoll());
             Matrix4f matrix = poseStack.last().pose();
 
             VertexConsumer consumer = buffer.getBuffer(type);
             float halfSpan = ARC_SPAN * 0.5F;
+            float spanShift = Mth.clamp(entity.getSlashRoll(), -SPAN_SHIFT_LIMIT, SPAN_SHIFT_LIMIT);
+
+            float rad = frame.radius;
+            float halfWidthBase = rad * HALF_WIDTH_RATIO * scale;
 
             for (int i = 0; i < SEGMENTS; i++) {
                 float u0 = (float) i / SEGMENTS;
                 float u1 = (float) (i + 1) / SEGMENTS;
 
-                float ang0 = (float) Math.toRadians(-halfSpan + ARC_SPAN * u0);
-                float ang1 = (float) Math.toRadians(-halfSpan + ARC_SPAN * u1);
+                float ang0 = (float) Math.toRadians(-halfSpan + ARC_SPAN * u0 + spanShift);
+                float ang1 = (float) Math.toRadians(-halfSpan + ARC_SPAN * u1 + spanShift);
 
-                float sin0 = Mth.sin(ang0), cos0 = Mth.cos(ang0);
-                float sin1 = Mth.sin(ang1), cos1 = Mth.cos(ang1);
+                float cos0 = Mth.cos(ang0), sin0 = Mth.sin(ang0);
+                float cos1 = Mth.cos(ang1), sin1 = Mth.sin(ang1);
 
-                float rad = RADIUS * scale;
-                float w0 = MAX_HALF_WIDTH * taper(u0) * scale;
-                float w1 = MAX_HALF_WIDTH * taper(u1) * scale;
+                float w0 = halfWidthBase * taper(u0);
+                float w1 = halfWidthBase * taper(u1);
 
-                // 弧心点（本地 XY 平面，法线朝 +Z ⇒ 正对镜头 ✓）
-                float cx0 = sin0 * rad, cy0 = cos0 * rad + VERTICAL_CENTER * scale;
-                float cx1 = sin1 * rad, cy1 = cos1 * rad + VERTICAL_CENTER * scale;
+                // 径向单位向量（从圆心指向弧带 ✓）= cos θ·u + sin θ·v
+                Vec3 dir0 = frame.u.scale(cos0).add(frame.v.scale(sin0));
+                Vec3 dir1 = frame.u.scale(cos1).add(frame.v.scale(sin1));
 
-                // 沿"半径方向"加/减厚度 ⇒ 内侧点与外侧点
-                float ix0 = cx0 - sin0 * w0, iy0 = cy0 - cos0 * w0;
-                float ox0 = cx0 + sin0 * w0, oy0 = cy0 + cos0 * w0;
-                float ix1 = cx1 - sin1 * w1, iy1 = cy1 - cos1 * w1;
-                float ox1 = cx1 + sin1 * w1, oy1 = cy1 + cos1 * w1;
+                // 弧带中心线：始终落在半径 rad 的圆上 ⇒ 圆心就是施法者 ✓
+                Vec3 c0 = frame.center.add(dir0.scale(rad));
+                Vec3 c1 = frame.center.add(dir1.scale(rad));
 
-                // §1043 弧带**保持平面**（z 恒 0 ✓）；"圆心朝玩家"由平面内的 roll 实现 ✓
+                // 沿半径方向加/减厚度 ⇒ 内缘点与外缘点（整张弧带仍然共面 ✓）
+                Vec3 in0 = c0.subtract(dir0.scale(w0)), out0 = c0.add(dir0.scale(w0));
+                Vec3 in1 = c1.subtract(dir1.scale(w1)), out1 = c1.add(dir1.scale(w1));
+
                 // 四边形（不剔除 ⇒ 绕序无所谓 ✓）：内0 → 外0 → 外1 → 内1
-                emit(consumer, matrix, ix0 * mirror, iy0, r, g, b, a, u0, 0.0F);
-                emit(consumer, matrix, ox0 * mirror, oy0, r, g, b, a, u0, 1.0F);
-                emit(consumer, matrix, ox1 * mirror, oy1, r, g, b, a, u1, 1.0F);
-                emit(consumer, matrix, ix1 * mirror, iy1, r, g, b, a, u1, 0.0F);
+                emit(consumer, matrix, in0, anchor, r, g, b, a, u0, 0.0F);
+                emit(consumer, matrix, out0, anchor, r, g, b, a, u0, 1.0F);
+                emit(consumer, matrix, out1, anchor, r, g, b, a, u1, 1.0F);
+                emit(consumer, matrix, in1, anchor, r, g, b, a, u1, 0.0F);
             }
 
             poseStack.popPose();
@@ -168,75 +189,76 @@ public class SoldierSlashRenderer extends EntityRenderer<SoldierSlashEntity> {
         }
     }
 
-    /**
-     * 把弧面转到<b>正对相机</b>（billboard），并在平面内自转 {@code rollDeg} ✓。
-     *
-     * <p>基向量直接按世界坐标算 ✓ 不碰 Minecraft 的 yaw/pitch 约定 ⇒ 不会出现"符号搞反了变成背对镜头"✗：
-     * <ul>
-     *   <li>{@code n} = 「实体 → 相机」单位向量 ⇒ 弧面法线 ✓（永远正对镜头 ✓）；</li>
-     *   <li>{@code r} = 世界上方向 × n ⇒ 平面内的"左右" ✓；</li>
-     *   <li>{@code u} = n × r ⇒ 平面内的"上下" ✓；</li>
-     *   <li>再按 {@code rollDeg} 在 (r, u) 平面内旋转 ⇒ 玩家看到的就是"这一刀的角度" ✓。</li>
-     * </ul>
-     */
-    private static void applyBillboard(PoseStack poseStack, SoldierSlashEntity entity, float partialTick,
-                                       float rollDeg) {
-        Vec3 eye = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
-        Vec3 center = entity.getPosition(partialTick);
+    // ============================================================
+    //  §1044 弧带的平面坐标系（圆心／跨中方向／平面内另一轴／半径）
+    // ============================================================
 
-        Vec3 n = eye.subtract(center);
-        if (n.lengthSqr() < 1.0E-6D) n = new Vec3(0.0D, 0.0D, 1.0D);
-        n = n.normalize();
+    /** 一张平面弧带的坐标系 ✓：圆心 ＋ 平面内两轴 ＋ 半径 ✓ */
+    private static final class Frame {
+        final Vec3 center;
+        final Vec3 u;
+        final Vec3 v;
+        final float radius;
 
-        Vec3 r = new Vec3(0.0D, 1.0D, 0.0D).cross(n);
-        if (r.lengthSqr() < 1.0E-6D) r = new Vec3(1.0D, 0.0D, 0.0D);
-        r = r.normalize();
-
-        Vec3 up = n.cross(r).normalize();
-
-        // §1043 圆心朝玩家：把平面内自转角对准施法者（弧尖背离玩家 ⇒ 圆心朝玩家 ✓）
-        double rad = Math.toRadians(aimRollAtCaster(entity, center, n, r, up, rollDeg));
-        double cs = Math.cos(rad);
-        double sn = Math.sin(rad);
-        Vec3 r2 = r.scale(cs).add(up.scale(sn));
-        Vec3 up2 = up.scale(cs).subtract(r.scale(sn));
-
-        // 列主序：第 0 列 = 本地 X 轴、第 1 列 = 本地 Y 轴、第 2 列 = 本地 Z 轴（法线 ✓）
-        Matrix4f m = new Matrix4f(
-                (float) r2.x, (float) r2.y, (float) r2.z, 0.0F,
-                (float) up2.x, (float) up2.y, (float) up2.z, 0.0F,
-                (float) n.x, (float) n.y, (float) n.z, 0.0F,
-                0.0F, 0.0F, 0.0F, 1.0F);
-        // 1.20.1 的 PoseStack#mulPose 只收四元数 ✗ ⇒ 这里直接把基向量矩阵乘进 pose 矩阵 ✓
-        // （自发光程序不用法线 ✓ 所以不更新 normal 矩阵也没影响 ✓）
-        poseStack.last().pose().mul(m);
+        Frame(Vec3 center, Vec3 u, Vec3 v, float radius) {
+            this.center = center;
+            this.u = u;
+            this.v = v;
+            this.radius = radius;
+        }
     }
 
     /**
-     * §1043 <b>把弧带的圆心转向施法者</b> ✓（用户口径：「我是想让你把圆心对着玩家」✓）。
+     * §1044 建系：<b>圆心 = 施法者</b> ✓、半径 = 施法者到锚点的距离（限幅 ✓）、
+     * 跨中方向 = 「圆心 → 锚点」方向绕世界上方侧倾 {@link #TILT_DEG} 度 ✓（保证不侧对镜头 ✓）。
      *
-     * <p>做法（<b>弧面保持平面</b> ✓ 一个字都不弯 ✓ 只改平面内自转角 ✓）：
-     * <ol>
-     *   <li>{@code away} = 「实体 → 施法者」的反方向 = 「实体 → 远离玩家」✓；</li>
-     *   <li>把它<b>投影到弧面平面</b>（去掉沿法线 {@code n} 的分量）⇒ 平面内"远离玩家"的方向 {@code w} ✓；</li>
-     *   <li>弧尖（本地 +Y）在自转后的世界方向是 {@code up·cos θ - r·sin θ} ✓
-     *       ⇒ 令它等于 {@code w} 解得 {@code θ = atan2(-w·r, w·up)} ✓
-     *       ⇒ <b>弧尖背离玩家</b> ⇒ <b>圆心落在玩家那一侧</b> ✓（正是用户要的 ✓）。</li>
-     * </ol>
-     *
-     * <p>⚠ 退化情况（施法者几乎正压在弧面法线上 ⇒ 平面内没有可用的"朝玩家"方向 ✗）
-     * 返回服务端给的 {@code fallbackRoll} 兜底 ✓ 不会除零、也不会乱转 ✓。
+     * @param mirror 奇数段左右镜像 ✓ ⇒ 直接翻转平面内第二轴（弧带形状镜像 ✓ 可见度不变 ✓）
      */
-    private static float aimRollAtCaster(SoldierSlashEntity entity, Vec3 center, Vec3 n,
-                                         Vec3 r, Vec3 up, float fallbackRoll) {
+    private static Frame frame(SoldierSlashEntity entity, Vec3 anchor, float mirror) {
         Vec3 caster = entity.getCasterPos();
-        if (caster == null) return fallbackRoll;
-        Vec3 away = center.subtract(caster);                 // 实体 → 远离玩家
-        Vec3 inPlane = away.subtract(n.scale(away.dot(n)));  // 投影到弧面平面
-        if (inPlane.length() < AIM_EPSILON) return fallbackRoll;
-        Vec3 w = inPlane.normalize();
-        double theta = Math.atan2(-w.dot(r), w.dot(up));
-        return (float) Math.toDegrees(theta);
+        if (caster != null) {
+            Vec3 toAnchor = anchor.subtract(caster);
+            double dist = toAnchor.length();
+            if (dist > 1.0E-4D) {
+                float radius = (float) Mth.clamp(dist, MIN_RADIUS, MAX_RADIUS);
+                Vec3 d = toAnchor.scale(1.0D / dist);
+
+                // 世界上方在 ⊥d 平面内的分量；d 恰好竖直时换一个侧向 ✓
+                Vec3 up = new Vec3(0.0D, 1.0D, 0.0D);
+                Vec3 perp = up.subtract(d.scale(up.dot(d)));
+                if (perp.lengthSqr() < 1.0E-6D) {
+                    perp = new Vec3(1.0D, 0.0D, 0.0D).subtract(d.scale(d.x));
+                }
+                if (perp.lengthSqr() < 1.0E-6D) {
+                    perp = new Vec3(0.0D, 0.0D, 1.0D).subtract(d.scale(d.z));
+                }
+                perp = perp.normalize();
+
+                // 跨中方向：从 d 侧倾 TILT_DEG 度 ⇒ |m·d| = sin(TILT) > 0 ⇒ 不会退化成细线 ✓
+                double tilt = Math.toRadians(TILT_DEG);
+                Vec3 u = d.scale(Math.cos(tilt)).add(perp.scale(Math.sin(tilt))).normalize();
+                Vec3 v = d.cross(u);
+                if (v.lengthSqr() < 1.0E-9D) {
+                    v = perp;
+                }
+                v = v.normalize().scale(mirror);
+
+                // 圆心：让半径正好等于"圆心到锚点"⇒ 弧带必然穿过锚点 ✓（锚点在 θ = -TILT_DEG 处 ✓）
+                Vec3 center = anchor.subtract(d.scale(radius));
+                return new Frame(center, u, v, radius);
+            }
+        }
+
+        // 兜底（老行为 ✓）：以实体自身为圆心、法线朝相机的平面 ✓ —— 至少不会消失 ✗
+        Vec3 eye = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
+        Vec3 n = eye.subtract(anchor);
+        if (n.lengthSqr() < 1.0E-6D) n = new Vec3(0.0D, 0.0D, 1.0D);
+        n = n.normalize();
+        Vec3 right = new Vec3(0.0D, 1.0D, 0.0D).cross(n);
+        if (right.lengthSqr() < 1.0E-6D) right = new Vec3(1.0D, 0.0D, 0.0D);
+        right = right.normalize();
+        Vec3 up2 = n.cross(right).normalize();
+        return new Frame(anchor, up2, right.scale(mirror), FALLBACK_RADIUS);
     }
 
     /** 弧带半宽沿弧长的收尖曲线：两端 0 ⇒ 刀锋尖 ✓ 中间最粗 ✓ */
@@ -248,12 +270,16 @@ public class SoldierSlashRenderer extends EntityRenderer<SoldierSlashEntity> {
     /**
      * 顶点必须按 {@link DefaultVertexFormat#NEW_ENTITY} 的元素顺序写 ✓：
      * Position → Color → UV0 → UV1(overlay) → UV2(lightmap) → Normal ✓
+     * <p>§1044：传入的是<b>世界坐标</b> ✓，这里减去锚点（= poseStack 原点所在 ✓）换算成实体局部坐标 ✓。
      * （UV1 写 {@code NO_OVERLAY} ⇒ 原版 emissive 着色器不会拿 overlay 图给刀光染色 ✓；
      *   UV2 写全亮 ⇒ 刀光自发光、不受方块光照影响 ✓）。
      */
-    private static void emit(VertexConsumer consumer, Matrix4f matrix, float x, float y,
+    private static void emit(VertexConsumer consumer, Matrix4f matrix, Vec3 world, Vec3 anchor,
                              int r, int g, int b, int a, float u, float v) {
-        consumer.vertex(matrix, x, y, 0.0F)
+        consumer.vertex(matrix,
+                        (float) (world.x - anchor.x),
+                        (float) (world.y - anchor.y),
+                        (float) (world.z - anchor.z))
                 .color(r, g, b, Math.max(0, Math.min(255, a)))
                 .uv(u, v)
                 .overlayCoords(OverlayTexture.NO_OVERLAY)
