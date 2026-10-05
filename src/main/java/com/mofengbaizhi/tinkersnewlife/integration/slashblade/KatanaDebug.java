@@ -18,8 +18,13 @@ import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
  */
 public final class KatanaDebug {
 
-    /** 总开关 ✓：排查期间为 true ✓（改回 false 即可静默 ✓）。 */
-    public static final boolean ON = true;
+    /**
+     * 总开关 ✓：排查期间为 true ✓（改回 false 即可静默 ✓）。
+     *
+     * <p>§1034（拔刀剑整体搁置）：已改回 {@code false} ✓ —— 类与全部埋点**保留** ✗ 不删 ✓，
+     * 后续要接着排查时把这里改回 {@code true} 即可 ✓（恢复清单见备忘录 §1034）。
+     */
+    public static final boolean ON = false;
 
     private KatanaDebug() {
     }

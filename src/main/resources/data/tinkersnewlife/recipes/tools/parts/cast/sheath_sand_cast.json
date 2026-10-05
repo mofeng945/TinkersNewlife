@@ -1,7 +1,14 @@
 {
   "type": "tconstruct:table_casting_material",
-  "cast": { "tag": "tinkersnewlife:casts/single_use/sheath" },
+  "cast": {
+    "tag": "tinkersnewlife:casts/single_use/sheath"
+  },
   "cast_consumed": true,
   "item_cost": 3,
-  "result": "tinkersnewlife:sheath"
+  "result": "tinkersnewlife:sheath",
+  "conditions": [
+    {
+      "type": "forge:false"
+    }
+  ]
 }

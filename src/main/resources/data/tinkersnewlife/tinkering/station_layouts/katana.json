@@ -33,5 +33,10 @@
       "x": 30,
       "y": 44
     }
+  ],
+  "conditions": [
+    {
+      "type": "forge:false"
+    }
   ]
 }

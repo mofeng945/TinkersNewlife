@@ -7,8 +7,12 @@
     " A "
   ],
   "key": {
-    "A": { "item": "slashblade:proudsoul_tiny" },
-    "E": { "item": "minecraft:ender_pearl" }
+    "A": {
+      "item": "slashblade:proudsoul_tiny"
+    },
+    "E": {
+      "item": "minecraft:ender_pearl"
+    }
   },
   "result": {
     "item": "tinkersnewlife:konpaku_core",
@@ -18,6 +22,9 @@
     {
       "type": "forge:mod_loaded",
       "modid": "slashblade"
+    },
+    {
+      "type": "forge:false"
     }
   ]
 }

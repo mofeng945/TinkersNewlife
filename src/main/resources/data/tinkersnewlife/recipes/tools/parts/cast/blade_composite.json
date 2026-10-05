@@ -1,5 +1,10 @@
 {
   "type": "tconstruct:table_casting_composite",
   "item_cost": 4,
-  "result": "tinkersnewlife:blade"
+  "result": "tinkersnewlife:blade",
+  "conditions": [
+    {
+      "type": "forge:false"
+    }
+  ]
 }

@@ -10,6 +10,9 @@
     {
       "type": "forge:mod_loaded",
       "modid": "slashblade"
+    },
+    {
+      "type": "forge:false"
     }
   ]
 }

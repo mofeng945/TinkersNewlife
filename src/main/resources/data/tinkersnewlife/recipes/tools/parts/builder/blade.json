@@ -3,8 +3,19 @@
   "cost": 4,
   "pattern": "tinkersnewlife:blade",
   "pattern_item": [
-    { "tag": "tconstruct:patterns/default" },
-    { "item": "tinkersnewlife:blade_cast" }
+    {
+      "tag": "tconstruct:patterns/default"
+    },
+    {
+      "item": "tinkersnewlife:blade_cast"
+    }
   ],
-  "result": { "item": "tinkersnewlife:blade" }
+  "result": {
+    "item": "tinkersnewlife:blade"
+  },
+  "conditions": [
+    {
+      "type": "forge:false"
+    }
+  ]
 }

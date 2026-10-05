@@ -1,6 +1,16 @@
 {
   "type": "tconstruct:item_part_builder",
   "pattern": "tinkersnewlife:sheath",
-  "pattern_item": { "tag": "forge:sand/colorless" },
-  "result": { "count": 4, "item": "tinkersnewlife:sheath_sand_cast" }
+  "pattern_item": {
+    "tag": "forge:sand/colorless"
+  },
+  "result": {
+    "count": 4,
+    "item": "tinkersnewlife:sheath_sand_cast"
+  },
+  "conditions": [
+    {
+      "type": "forge:false"
+    }
+  ]
 }

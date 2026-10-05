@@ -1,6 +1,16 @@
 {
   "type": "tconstruct:molding_table",
-  "material": { "tag": "tconstruct:casts/red_sand" },
-  "pattern": { "type": "tconstruct:material", "item": "tinkersnewlife:blade" },
-  "result": "tinkersnewlife:blade_red_sand_cast"
+  "material": {
+    "tag": "tconstruct:casts/red_sand"
+  },
+  "pattern": {
+    "type": "tconstruct:material",
+    "item": "tinkersnewlife:blade"
+  },
+  "result": "tinkersnewlife:blade_red_sand_cast",
+  "conditions": [
+    {
+      "type": "forge:false"
+    }
+  ]
 }

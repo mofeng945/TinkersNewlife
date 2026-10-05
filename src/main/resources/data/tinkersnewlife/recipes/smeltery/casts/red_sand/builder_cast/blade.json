@@ -1,6 +1,13 @@
 {
   "type": "tconstruct:item_part_builder",
   "pattern": "tinkersnewlife:blade",
-  "pattern_item": { "tag": "tconstruct:casts/red_sand" },
-  "result": "tinkersnewlife:blade_red_sand_cast"
+  "pattern_item": {
+    "tag": "tconstruct:casts/red_sand"
+  },
+  "result": "tinkersnewlife:blade_red_sand_cast",
+  "conditions": [
+    {
+      "type": "forge:false"
+    }
+  ]
 }
