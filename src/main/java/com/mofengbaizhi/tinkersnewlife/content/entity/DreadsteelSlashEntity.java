@@ -194,7 +194,7 @@ public class DreadsteelSlashEntity extends Projectile {
             Entity arcCaster = this.getOwner();
             SoldierSlashEntity arc = new SoldierSlashEntity(
                     this.level(), this.position(),
-                    this.random.nextFloat() * 360.0F,        // 自转：每道角度都不同 ✓
+                    (this.random.nextFloat() * 2.0F - 1.0F) * 4.0F,   // §1043 只留抖动；朝向由渲染器对准玩家 ✓
                     width * 1.1F,                            // 大小随剑气宽度走 ✓
                     ARC_LIFE_TICKS, 0, SLASH_TINT,
                     arcCaster == null ? null : arcCaster.position());

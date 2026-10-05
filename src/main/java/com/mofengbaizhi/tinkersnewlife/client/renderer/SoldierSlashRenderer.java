@@ -53,13 +53,17 @@ import org.joml.Matrix4f;
  *
  * <p>全程 {@code try/catch} ✓：渲染任何一步出问题都只是这一道光不画 ✓ 绝不影响游戏 ✓。
  *
- * <h2>§1042 凹凸修正（用户口径：「剑气弧面应当凹面自玩家方向，凸面远离玩家」✓）</h2>
- * 旧做法是<b>平</b>面弧带 ✗ ⇒ 两端点距玩家 {@code sqrt(R² + (rad·sin76°)²)} <b>大于</b>中间到玩家的距离 ✗
- * （R=3 / rad=1.25 时是 3.24 > 3 ✗）⇒ <b>凸面朝玩家</b> ✗，正好反了 ✗（用户实测确认 ✓）。
- * 现在把弧带沿"朝玩家"方向弯成<b>球冠</b>：两端比中间<b>更靠近玩家</b> {@code rad·(1-cos θ)} 格 ✓
- * ⇒ 同一组数字下端点距离变成 <b>2.38 < 3</b> ✓ ⇒ <b>凹面朝玩家、凸面远离玩家</b> ✓。
- * 施法者位置取自 {@link SoldierSlashEntity#getCasterPos()} ✓（没带 ⇒ 退回"朝观察者"✓ 对施法者本人同样正确 ✓）；
- * 贴身时会限深 {@link #CONCAVE_MIN_RATIO} ⇒ 弧面不会糊到镜头上 ✗。
+ * <h2>§1042／§1043 凹凸修正：<b>把圆心对准玩家</b>（用户口径 ✓）</h2>
+ * 用户原话：「<b>剑气弧面应当凹面自玩家方向，凸面远离玩家</b>」✓ ＋ 随后澄清：
+ * 「<b>我剑气的贴图本身不就是个平面扇形弧面吗，我是想让你把圆心对着玩家，不是让你弯曲弧面啊</b>」✓
+ * ⇒ <b>弧面必须保持平面</b>（就是那张扇形弧光贴图 ✓）✗ 不许把网格弯成球冠 ✗；
+ * 要动的是这张平面弧带在<b>平面内的自转角</b> ✓ —— 让弧带的<b>圆心方向对准施法者</b> ✓
+ * ⇒ 弧尖（凸面）背离玩家 ✓、圆心（凹面）朝玩家 ✓。
+ *
+ * <p>⚠ §1042 我第一版做错了：把弧带沿"朝玩家"方向弯成了球冠 ✗（用户明确否掉 ✓）。
+ * 现在改成 {@link #aimRollAtCaster}：取「实体 → 施法者」向量<b>投影到弧面平面内</b>的方向 ✓，
+ * 解出让"弧尖方向（本地 +Y）"正好指向<b>远离玩家</b>的 roll ✓ ⇒ 圆心自然落在玩家那一侧 ✓。
+ * 施法者位置来自 {@link SoldierSlashEntity#getCasterPos()} ✓（没带／退化 ⇒ 用服务端给的 roll 兜底 ✓）。
  */
 public class SoldierSlashRenderer extends EntityRenderer<SoldierSlashEntity> {
 
@@ -78,15 +82,11 @@ public class SoldierSlashRenderer extends EntityRenderer<SoldierSlashEntity> {
     private static final float VERTICAL_CENTER = -0.42F;
 
     /**
-     * §1042 <b>凹面朝玩家</b>的球冠深度系数 ✓（1.0 = 精确球冠：曲率半径就是 {@link #RADIUS}·scale ✓
-     * ⇒ 几何自洽 ✓；调小 ⇒ 更平、凹感变弱 ✓）。
+     * §1043 <b>圆心朝玩家的退化阈值</b> ✓：「实体 → 施法者」向量在弧面平面内的投影长度小于它时
+     * 认为方向退化（施法者正对着弧面法线 ✗ 此时平面内没有可用的"朝玩家"方向 ✓）
+     * ⇒ 不再强行对准 ✓ 用服务端给的 roll 兜底 ✓（避免除零／乱转 ✓）。
      */
-    private static final float CONCAVE_DEPTH = 1.0F;
-    /**
-     * §1042 贴身限深：两端点到玩家的距离不得小于"中间到玩家距离"的该比例 ✓
-     * ⇒ 贴脸时弧面不会盖满镜头 ✗（只在 R 很小时生效 ✓）。
-     */
-    private static final float CONCAVE_MIN_RATIO = 0.5F;
+    private static final double AIM_EPSILON = 1.0E-4D;
 
     private static RenderType slashRenderType;
 
@@ -123,12 +123,9 @@ public class SoldierSlashRenderer extends EntityRenderer<SoldierSlashEntity> {
             float mirror = entity.isMirrored() ? -1.0F : 1.0F;   // 奇数段左右镜像 ⇒ 与偶数段不同 ✓
 
             poseStack.pushPose();
-            // §1042 applyBillboard 回传"本地 +Z（朝镜头）"⇒ 用它算"朝玩家"的深度分量 ✓
-            Vec3 normal = applyBillboard(poseStack, entity, partialTick, entity.getSlashRoll());
+            // §1043 弧面保持平面 ✓ —— 只由 applyBillboard 在平面内把圆心转向施法者 ✓
+            applyBillboard(poseStack, entity, partialTick, entity.getSlashRoll());
             Matrix4f matrix = poseStack.last().pose();
-            Vec3 center = entity.getPosition(partialTick);
-            float concave = concaveFactor(entity, center, normal);          // §1042 -1..1
-            float maxDepth = concaveMaxDepth(entity, center);               // §1042 贴身限深
 
             VertexConsumer consumer = buffer.getBuffer(type);
             float halfSpan = ARC_SPAN * 0.5F;
@@ -157,15 +154,12 @@ public class SoldierSlashRenderer extends EntityRenderer<SoldierSlashEntity> {
                 float ix1 = cx1 - sin1 * w1, iy1 = cy1 - cos1 * w1;
                 float ox1 = cx1 + sin1 * w1, oy1 = cy1 + cos1 * w1;
 
-                // §1042 球冠深度：两端比中间更"朝玩家" ⇒ 弧面凹向玩家、凸面朝外 ✓
-                float z0 = concaveDepth(rad, cos0, concave, maxDepth);
-                float z1 = concaveDepth(rad, cos1, concave, maxDepth);
-
+                // §1043 弧带**保持平面**（z 恒 0 ✓）；"圆心朝玩家"由平面内的 roll 实现 ✓
                 // 四边形（不剔除 ⇒ 绕序无所谓 ✓）：内0 → 外0 → 外1 → 内1
-                emit(consumer, matrix, ix0 * mirror, iy0, z0, r, g, b, a, u0, 0.0F);
-                emit(consumer, matrix, ox0 * mirror, oy0, z0, r, g, b, a, u0, 1.0F);
-                emit(consumer, matrix, ox1 * mirror, oy1, z1, r, g, b, a, u1, 1.0F);
-                emit(consumer, matrix, ix1 * mirror, iy1, z1, r, g, b, a, u1, 0.0F);
+                emit(consumer, matrix, ix0 * mirror, iy0, r, g, b, a, u0, 0.0F);
+                emit(consumer, matrix, ox0 * mirror, oy0, r, g, b, a, u0, 1.0F);
+                emit(consumer, matrix, ox1 * mirror, oy1, r, g, b, a, u1, 1.0F);
+                emit(consumer, matrix, ix1 * mirror, iy1, r, g, b, a, u1, 0.0F);
             }
 
             poseStack.popPose();
@@ -185,7 +179,7 @@ public class SoldierSlashRenderer extends EntityRenderer<SoldierSlashEntity> {
      *   <li>再按 {@code rollDeg} 在 (r, u) 平面内旋转 ⇒ 玩家看到的就是"这一刀的角度" ✓。</li>
      * </ul>
      */
-    private static Vec3 applyBillboard(PoseStack poseStack, SoldierSlashEntity entity, float partialTick,
+    private static void applyBillboard(PoseStack poseStack, SoldierSlashEntity entity, float partialTick,
                                        float rollDeg) {
         Vec3 eye = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
         Vec3 center = entity.getPosition(partialTick);
@@ -200,7 +194,8 @@ public class SoldierSlashRenderer extends EntityRenderer<SoldierSlashEntity> {
 
         Vec3 up = n.cross(r).normalize();
 
-        double rad = Math.toRadians(rollDeg);
+        // §1043 圆心朝玩家：把平面内自转角对准施法者（弧尖背离玩家 ⇒ 圆心朝玩家 ✓）
+        double rad = Math.toRadians(aimRollAtCaster(entity, center, n, r, up, rollDeg));
         double cs = Math.cos(rad);
         double sn = Math.sin(rad);
         Vec3 r2 = r.scale(cs).add(up.scale(sn));
@@ -215,46 +210,33 @@ public class SoldierSlashRenderer extends EntityRenderer<SoldierSlashEntity> {
         // 1.20.1 的 PoseStack#mulPose 只收四元数 ✗ ⇒ 这里直接把基向量矩阵乘进 pose 矩阵 ✓
         // （自发光程序不用法线 ✓ 所以不更新 normal 矩阵也没影响 ✓）
         poseStack.last().pose().mul(m);
-        return n;                       // §1042 本地 +Z（朝镜头方向）⇒ 供球冠深度用 ✓
     }
 
     /**
-     * §1042 <b>"朝玩家"在弧面法线方向上的分量</b>（-1..1 ✓）。
-     * <ul>
-     *   <li>实体带了施法者位置 ⇒ 取「实体 → 施法者」单位向量与法线的点积 ✓
-     *       （施法者在镜头这侧为正 ⇒ 球冠朝玩家弯 ✓；在对面为负 ⇒ 朝反方向弯 ✓
-     *        ⇒ <b>旁观者从别的角度看到的凹凸也是对的</b> ✓）；</li>
-     *   <li>没带（老数据／异常）⇒ 返回 1.0 = 朝观察者 ✓（施法者自己看时与"朝玩家"完全一致 ✓）。</li>
-     * </ul>
+     * §1043 <b>把弧带的圆心转向施法者</b> ✓（用户口径：「我是想让你把圆心对着玩家」✓）。
+     *
+     * <p>做法（<b>弧面保持平面</b> ✓ 一个字都不弯 ✓ 只改平面内自转角 ✓）：
+     * <ol>
+     *   <li>{@code away} = 「实体 → 施法者」的反方向 = 「实体 → 远离玩家」✓；</li>
+     *   <li>把它<b>投影到弧面平面</b>（去掉沿法线 {@code n} 的分量）⇒ 平面内"远离玩家"的方向 {@code w} ✓；</li>
+     *   <li>弧尖（本地 +Y）在自转后的世界方向是 {@code up·cos θ - r·sin θ} ✓
+     *       ⇒ 令它等于 {@code w} 解得 {@code θ = atan2(-w·r, w·up)} ✓
+     *       ⇒ <b>弧尖背离玩家</b> ⇒ <b>圆心落在玩家那一侧</b> ✓（正是用户要的 ✓）。</li>
+     * </ol>
+     *
+     * <p>⚠ 退化情况（施法者几乎正压在弧面法线上 ⇒ 平面内没有可用的"朝玩家"方向 ✗）
+     * 返回服务端给的 {@code fallbackRoll} 兜底 ✓ 不会除零、也不会乱转 ✓。
      */
-    private static float concaveFactor(SoldierSlashEntity entity, Vec3 center, Vec3 normal) {
+    private static float aimRollAtCaster(SoldierSlashEntity entity, Vec3 center, Vec3 n,
+                                         Vec3 r, Vec3 up, float fallbackRoll) {
         Vec3 caster = entity.getCasterPos();
-        if (caster == null) return 1.0F;
-        Vec3 back = caster.subtract(center);
-        if (back.lengthSqr() < 1.0E-6D) return 1.0F;
-        return (float) back.normalize().dot(normal);
-    }
-
-    /** §1042 单点球冠深度：中间 0 ✓、两端最大 {@code rad·(1-cos θ)} ✓；朝玩家为正（本地 +Z = 朝镜头 ✓） */
-    private static float concaveDepth(float rad, float cosTheta, float concave, float maxDepth) {
-        float depth = rad * (1.0F - cosTheta) * concave * CONCAVE_DEPTH;
-        if (depth > maxDepth) return maxDepth;
-        if (depth < -maxDepth) return -maxDepth;
-        return depth;
-    }
-
-    /**
-     * §1042 贴身限深：两端点与玩家的距离不许小于"弧心点到玩家距离"的 {@link #CONCAVE_MIN_RATIO} ✓
-     * <p>球冠两端朝玩家偏移量最大为 {@code rad·(1-cos76°)·|concave| ≈ 0.76·rad} ✓
-     * ⇒ 允许的深度上限 = {@code (1-ratio)·R} ✓（R = 弧心点到玩家的距离 ✓）。
-     * 拿不到施法者位置 ⇒ 返回一个很大的值 = 不限深 ✓。
-     */
-    private static float concaveMaxDepth(SoldierSlashEntity entity, Vec3 center) {
-        Vec3 caster = entity.getCasterPos();
-        if (caster == null) return 64.0F;
-        double r = caster.distanceTo(center);
-        if (r <= 0.001D) return 64.0F;
-        return (float) (r * (1.0D - CONCAVE_MIN_RATIO));
+        if (caster == null) return fallbackRoll;
+        Vec3 away = center.subtract(caster);                 // 实体 → 远离玩家
+        Vec3 inPlane = away.subtract(n.scale(away.dot(n)));  // 投影到弧面平面
+        if (inPlane.length() < AIM_EPSILON) return fallbackRoll;
+        Vec3 w = inPlane.normalize();
+        double theta = Math.atan2(-w.dot(r), w.dot(up));
+        return (float) Math.toDegrees(theta);
     }
 
     /** 弧带半宽沿弧长的收尖曲线：两端 0 ⇒ 刀锋尖 ✓ 中间最粗 ✓ */
@@ -269,9 +251,9 @@ public class SoldierSlashRenderer extends EntityRenderer<SoldierSlashEntity> {
      * （UV1 写 {@code NO_OVERLAY} ⇒ 原版 emissive 着色器不会拿 overlay 图给刀光染色 ✓；
      *   UV2 写全亮 ⇒ 刀光自发光、不受方块光照影响 ✓）。
      */
-    private static void emit(VertexConsumer consumer, Matrix4f matrix, float x, float y, float z,
+    private static void emit(VertexConsumer consumer, Matrix4f matrix, float x, float y,
                              int r, int g, int b, int a, float u, float v) {
-        consumer.vertex(matrix, x, y, z)
+        consumer.vertex(matrix, x, y, 0.0F)
                 .color(r, g, b, Math.max(0, Math.min(255, a)))
                 .uv(u, v)
                 .overlayCoords(OverlayTexture.NO_OVERLAY)

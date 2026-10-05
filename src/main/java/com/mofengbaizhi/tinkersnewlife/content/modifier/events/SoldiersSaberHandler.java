@@ -77,11 +77,15 @@ public final class SoldiersSaberHandler {
     private static final int SLASH_TINT = 0xC9CFD9;
 
     /**
-     * §811 每一段刀光的<b>平面内角度</b>（度 ✓ 用户口径：「每一段角度应该不太一样」✓）。
-     * <p>⭐ 正对镜头后这个角就是玩家**看到的**那一刀的角度 ⇒ 这里给 4 段安排 4 个明显错开、
-     * 且左右交替的倾角 ✓（-62° / +28° / -26° / +66°）⇒ 叠在一起也不会被看成"同一刀" ✓。
+     * §1043 每一段刀光的<b>角度抖动</b>（±该值 度 ✓）。
+     * <p>⚠ 朝向本身<b>不再</b>由服务端决定 ✗：渲染器会按施法者位置把弧带的<b>圆心精确对准玩家</b> ✓
+     * （用户口径：「我是想让你把圆心对着玩家」✓ 见 {@code SoldierSlashRenderer#aimRollAtCaster} ✓）。
+     * 这里只加一点点抖动 ✓ ⇒ 4 段既都朝玩家、又不会像同一刀 ✓；
+     * 段与段的区分主要靠<b>镜像</b>（{@code setMirrored} ✓）、<b>大小</b>（{@link #STAGE_SCALE} ✓）
+     * 与<b>落点</b>（黄金角小圆 ✓）✓。
+     * <p>这个值只在"渲染器算不出朝玩家方向"时当兜底角度用 ✓。
      */
-    private static final float[] STAGE_ROLL = { -62.0F, 28.0F, -26.0F, 66.0F };
+    private static final float SLASH_ROLL_JITTER = 4.0F;
 
     /** 每一段刀光的大小 ✓（略有差别 ⇒ 即使角度接近也分得清 ✓） */
     private static final float[] STAGE_SCALE = { 1.16F, 0.98F, 1.30F, 1.04F };
@@ -225,8 +229,7 @@ public final class SoldiersSaberHandler {
     private static void spawnSlash(ServerLevel level, LivingEntity victim, int index, Vec3 casterPos) {
         try {
             int i = Math.max(1, index);
-            float roll = STAGE_ROLL[(i - 1) % STAGE_ROLL.length]
-                    + (level.random.nextFloat() * 8.0F - 4.0F);              // 一点点抖动 ✓
+            float roll = (level.random.nextFloat() * 2.0F - 1.0F) * SLASH_ROLL_JITTER;    // §1043 只留抖动 ✓
             float scale = STAGE_SCALE[(i - 1) % STAGE_SCALE.length];
 
             // 落点错开：黄金角小圆 ＋ 高度递增 ⇒ 不重叠 ✓
