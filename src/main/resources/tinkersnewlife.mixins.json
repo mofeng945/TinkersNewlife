@@ -20,7 +20,6 @@
     "EnigmaticNightVisionMixin",
     "TwilightMazeRandomMixin"
   ],
-  "_comment_katana_mixins_disabled": "§1034 拔刀剑整体搁置（可逆隐藏）：以下 6 个 mixin 已从数组移除（类文件全部保留 ✗ 未删）。恢复＝把下列条目按原顺序放回上面的 mixins 数组即可：KatanaAttackHelperMixin, KatanaAttackManagerMixin, KatanaItemSlashBladeMixin, KatanaSummonedSwordMixin, KatanaInputCommandEventMixin, KatanaCriticalAccessor。它们全部只服务拔刀剑，移除后本模组对 SlashBlade 通用行为零影响。",
   "client": [
     "EntityRenderDispatcherMixin",
     "EntityRendererNameTagMixin",
@@ -36,7 +35,6 @@
     "AbstractArrowSeaKingsMixin",
     "SlashBladeRenderOptMixin"
   ],
-  "_comment_katana_client_mixins_disabled": "§1034 拔刀剑整体搁置（可逆隐藏）：以下 4 个客户端 mixin 已从数组移除（类文件全部保留 ✗ 未删）。恢复＝把下列条目按原顺序放回上面的 client 数组即可：KatanaSlashBladeTEISRMixin, KatanaBladeRenderStateMixin, KatanaFaceMixin, KatanaLayerMainBladeMixin。注：SlashBladeRenderOptMixin 保留 ✓（它是拔刀剑本体的通用渲染优化，与拔刀剑这件工具无关，且受 config slashblade_render_opt 控制）。",
   "injectors": {
     "defaultRequire": 0
   }

@@ -58,11 +58,6 @@
     { "path": "tinkersnewlife:item/tool/rapier/guard", "stat_type": "tconstruct:handle" },
     { "path": "tinkersnewlife:item/tool/slingshot/limb1", "stat_type": "tconstruct:bow_limb" },
     { "path": "tinkersnewlife:item/tool/slingshot/limb2", "stat_type": "tconstruct:bow_limb" },
-    { "path": "tinkersnewlife:item/tool/slingshot/bowstring", "stat_type": "tconstruct:bowstring" },
-    { "path": "tinkersnewlife:item/tool/katana/sheath", "stat_type": "tconstruct:head" },
-    { "path": "tinkersnewlife:item/tool/katana/blade", "stat_type": "tconstruct:head" },
-    { "path": "tinkersnewlife:item/tool/katana/handle", "stat_type": "tconstruct:handle" },
-    { "path": "tinkersnewlife:item/tool/parts/blade", "stat_type": "tconstruct:head" },
-    { "path": "tinkersnewlife:item/tool/parts/sheath", "stat_type": "tconstruct:head" }
+    { "path": "tinkersnewlife:item/tool/slingshot/bowstring", "stat_type": "tconstruct:bowstring" }
 ]
 }
