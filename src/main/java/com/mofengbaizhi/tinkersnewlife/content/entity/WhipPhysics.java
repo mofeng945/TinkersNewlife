@@ -73,11 +73,15 @@ public final class WhipPhysics {
     private static final double COIL_MAX_PULL_PER_SUBSTEP = 0.105D;
     private static final double COIL_VELOCITY_DAMPING = 0.50D;
 
-    /** 手部锚点抡圆时的半径（格 ✓）—— 决定"手甩得有多开" ✓ */
-    private static final double SWING_HAND_RADIUS = 0.95D;
-    /** 根部弹簧刚度 ✓ / 加速度上限 ✓（格/秒²） */
-    private static final double ROOT_STIFFNESS = 220.0D;
-    private static final double ROOT_MAX_ACCEL = 2200.0D;
+    /**
+     * §1050 手部锚点抡圆时的半径（格 ✓）—— 决定"手甩得有多开" ✓。
+     * <p>§1049 用 0.95 时用户反馈「<b>绳子没有完全甩出去</b>」✗：手划的弧太短 ⇒
+     * 8.6 格的鞭来不及整条甩开 ✗ ⇒ 调到 1.25 ✓。
+     */
+    private static final double SWING_HAND_RADIUS = 1.25D;
+    /** 根部弹簧刚度 ✓ / 加速度上限 ✓（格/秒²）—— 手抡起来时根部要被"拽着走"✓ */
+    private static final double ROOT_STIFFNESS = 320.0D;
+    private static final double ROOT_MAX_ACCEL = 3200.0D;
     /** 单点速度上限（格/秒 ✓）：它实测梢速 82~190 ✓ */
     private static final double MAX_SPEED = 170.0D;
 
@@ -90,7 +94,8 @@ public final class WhipPhysics {
     private boolean started;
 
     /**
-     * §1049 <b>盘绕权重</b>：起手时 1（盘在手里 ✓）→ 抽击瞬间快速松到 0（甩开 ✓）→ 收势再盘回 1 ✓。
+     * §1049 <b>盘绕权重</b>（⚠ §1050 起<b>已停用</b> ✗ —— 抽击期间不再盘绕 ✓，
+     * 保留此处是为了以后做"闲置 5 秒后慢慢盘起来"的花活时能直接用 ✓）。
      */
     public static double coilWeight(double progress, boolean slam) {
         if (slam) {
@@ -110,10 +115,23 @@ public final class WhipPhysics {
         return u * u;                                      // 收势：盘回去 ✓
     }
 
-    /** 摆到指定位置：<b>沿螺旋盘好</b> ✓（不再是"一条伸直的鞭" ✗） */
+    /**
+     * §1050 静止姿态：<b>一条完全伸展开的鞭，从手里往下、往后垂着</b> ✓。
+     *
+     * <p>⚠ §1049 我把它盘成了 8 圈螺旋 ✗ ⇒ 用户实测「<b>绳子没有完全甩出去</b>」✗ ——
+     * 原因很清楚：抽击只有 3~4 tick（0.15~0.2 秒）✗，**根本来不及把 8.6 格的卷展开** ✗。
+     * 真实鞭子握在手里本来就是**垂着／拖着**的 ✓；
+     * BetterWhips 的 {@code COIL_*} 是"<b>闲置 100 tick（5 秒）之后</b>才慢慢盘起来"的花活 ✓
+     * （{@code COIL_IDLE_DELAY_TICKS = 100}／{@code COIL_DURATION_TICKS = 36} ✓），
+     * **不是**抽击的前置动作 ✗ —— 这一点我上一轮理解错了 ✓。
+     */
     public void reset(Vec3 hand, Vec3 axis, Vec3 side) {
+        Vec3 back = safeDir(axis).scale(-1.0D);
         for (int i = 0; i < POINTS; i++) {
-            Vec3 p = coilTarget(i, hand, axis, side);
+            double t = i;
+            Vec3 p = hand
+                    .add(new Vec3(0.0D, -SEGMENT_LENGTH * t * 0.92D, 0.0D))
+                    .add(back.scale(SEGMENT_LENGTH * t * 0.38D));
             pos[i] = p;
             tickStart[i] = p;
             vel[i] = Vec3.ZERO;
@@ -162,7 +180,6 @@ public final class WhipPhysics {
             reset(hand, axis, side);
         }
 
-        double coil = coilWeight(progress, slam);
         Vec3 anchor = slam
                 ? hand.add(new Vec3(axis.x, -0.85D, axis.z).normalize().scale(1.6D))
                 : swingHand(hand, axis, side, progress, sign);
@@ -183,19 +200,6 @@ public final class WhipPhysics {
             vel[0] = clampSpeed(vel[0].add(acc.scale(sub)));
             pos[0] = pos[0].add(vel[0].scale(sub));
 
-            // ② 盘绕：把每个点朝"手心里那卷螺旋"拉 ✓（照它的 COIL_* 口径 ✓）
-            if (coil > 1.0E-6D) {
-                for (int i = 1; i < POINTS; i++) {
-                    Vec3 target = coilTarget(i, hand, axis, side);
-                    Vec3 pull = target.subtract(pos[i]);
-                    double maxPull = COIL_MAX_PULL_PER_SUBSTEP * coil;
-                    if (pull.length() > maxPull) {
-                        pull = pull.normalize().scale(maxPull);
-                    }
-                    pos[i] = pos[i].add(pull.scale(COIL_PULL_GAIN / Math.max(1.0E-6D, COIL_MAX_PULL_PER_SUBSTEP)));
-                    vel[i] = vel[i].scale(Mth.lerp(coil, 1.0D, COIL_VELOCITY_DAMPING));
-                }
-            }
 
             Vec3[] before = new Vec3[POINTS];
             for (int i = 0; i < POINTS; i++) {
@@ -272,7 +276,7 @@ public final class WhipPhysics {
                 .add(right.scale(Math.sin(yaw) * r));
     }
 
-    /** §1049 第 i 个点"盘在手里"时应该在的位置 ✓（绕手的一卷螺旋 ✓） */
+    /** §1049 第 i 个点"盘在手里"时应该在的位置 ✓（⚠ §1050 起同样已停用 ✓ 见上 ✓） */
     private static Vec3 coilTarget(int i, Vec3 hand, Vec3 axis, Vec3 side) {
         double t = (double) i / (POINTS - 1);
         double ang = t * COIL_TURNS * Math.PI * 2.0D;
