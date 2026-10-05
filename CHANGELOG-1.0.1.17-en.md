@@ -73,3 +73,24 @@ stays fast and the rope always flies. A slow whip keeps the same fast lash and s
 cooldown - fewer lashes per second.
 
 The attack-damage scaling of the damage stays as it is.
+## Changed (2026-10-05, fifth pass - version unchanged)
+
+### The drive is fixed at 3 + 4 ticks, the attack speed only sets the cooldown, and the reach is longer
+
+The drive is the 7 ticks in which the hand is scripted through its arc; it is the force that throws the
+rope. Making it longer slows the hand down over the same arc (less reach and less damage) and making it
+too short means the wave has not reached the tip before the hand stops. The reference never hit either
+case because its whip has a fixed attack speed, so its 3 + 4 tick drive was always the same. This whip's
+attack speed varies with the materials, so the drive is now simply fixed at the reference's 3 + 4 ticks
+and the attack speed only decides how often you may lash:
+
+* `startLash` keeps a per-player next-allowed tick of `now + attackPeriodTicks` and resets the attack
+  strength ticker, so the whip cooldown and the vanilla attack indicator agree.
+* Reach increased: rope rest lengths are scaled by 1.20 (total ~10.2 blocks instead of 8.49), the hand
+  arc is bigger (forward 0.86 -> 1.20, vertical 0.68 -> 0.85, lateral 0.16 -> 0.22), the guide pulls
+  harder (640 -> 820, tip gain 1.18 -> 1.25), the rope flies free for 32 ticks instead of 25, and the
+  left-click damage window is 14 ticks instead of 10.
+
+Also included here (built earlier but not yet shipped): the lash timeline now runs off an internal age
+counter that only advances once the owner is resolved, so the client no longer swallows the opening
+ticks of a lash.

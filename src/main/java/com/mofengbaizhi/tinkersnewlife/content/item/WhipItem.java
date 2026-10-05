@@ -145,10 +145,7 @@ public class WhipItem extends ModifiableItem {
         if (isBroken(stack)) {
             return false;
         }
-        // 攻击冷却没好就不甩 ✓（攻速由匠魂的 attack_speed 面板决定 ✓，与 attackPeriodTicks 同源 ✓）
-        if (player.getAttackStrengthScale(0.0F) < 0.9F) {
-            return false;
-        }
+        // §1057 冷却 ＝ 攻速（attackPeriodTicks）✓ —— startLash 内部判断冷却并重置攻击冷却 ✓
         WhipLashEntity.startLash(player);
         if (!player.getAbilities().instabuild) {
             ToolDamageUtil.damageAnimated(ToolStack.from(stack), 1, player, player.getUsedItemHand());
@@ -164,10 +161,8 @@ public class WhipItem extends ModifiableItem {
      */
     @Override
     public boolean onLeftClickEntity(ItemStack stack, Player player, net.minecraft.world.entity.Entity entity) {
-        // 打实体时挥击包**不一定**会来 ✓ ⇒ 这里补一次抽击 ✓（冷却没好就不甩 ✓）
-        if (!player.level().isClientSide
-                && !isBroken(stack)
-                && player.getAttackStrengthScale(0.0F) >= 0.9F) {
+        // 打实体时挥击包**不一定**会来 ✓ ⇒ 这里补一次抽击 ✓（冷却判断在 startLash 里 ✓）
+        if (!player.level().isClientSide && !isBroken(stack)) {
             WhipLashEntity.startLash(player);
         }
         return true;                              // ⚠ 无论如何都取消这次近战伤害 ✓

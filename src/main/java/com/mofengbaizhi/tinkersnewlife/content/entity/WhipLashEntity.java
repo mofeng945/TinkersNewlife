@@ -63,9 +63,9 @@ public class WhipLashEntity extends Entity {
             SynchedEntityData.defineId(WhipLashEntity.class, EntityDataSerializers.INT);
 
     /** 左键：伤害窗口 = 起手段之后 10 tick ✓（照它的 {@code LEFT_DAMAGE_WINDOW_TICKS} ✓） */
-    private static final int LEFT_DAMAGE_WINDOW_TICKS = 10;
+    private static final int LEFT_DAMAGE_WINDOW_TICKS = 14;
     /** 抽击驱动结束后，绳子还要自由飞这么多 tick ✓ 让波传完 ✓（照它实体活 32 tick 的量级 ✓） */
-    private static final int LASH_FREE_FLIGHT_TICKS = 25;
+    private static final int LASH_FREE_FLIGHT_TICKS = 32;
     /** 砸地：松手后的钟摆段 tick 数 ✓（照它的 {@code RIGHT_SLAM_TICKS = 14} ✓） */
     private static final int RIGHT_SLAM_TICKS = 14;
     /** 砸地结束后绳子自由飞多久 ✓ */
@@ -75,16 +75,38 @@ public class WhipLashEntity extends Entity {
     private static final double SHOCKWAVE_KNOCKBACK = 0.9D;
     /** 一根鞭同时只有一个活动实体（蓄力段要能被松手打断 ✓） */
     private static final Map<UUID, WhipLashEntity> ACTIVE_CHARGES = new HashMap<>();
-    /** 每个玩家"上次开始抽击"的 tick ✓ —— 挥击包与命中包可能同 tick 都来 ✓ 只允许甩一次 ✓ */
-    private static final Map<UUID, Integer> LAST_LASH_TICK = new HashMap<>();
+    /**
+     * §1057 每个玩家"<b>下一次允许抽击</b>"的 tick ✓ ——
+     * 间隔 ＝ {@link WhipItem#attackPeriodTicks} ✓ ⇒ <b>攻速属性只决定每秒能抽几次</b> ✓
+     * （用户口径：「<b>攻速只影响冷却</b>」✓ —— 不影响力度/射程 ✓，驱动长度恒为 3＋4 ✓）；
+     * 同时兼作"挥击包与命中包同 tick 都来、只甩一次"的闸门 ✓。
+     */
+    private static final Map<UUID, Integer> NEXT_LASH_TICK = new HashMap<>();
 
     private final WhipPhysics physics = new WhipPhysics();
     private final WhipPhysics.Drive drive = new WhipPhysics.Drive();
     /** 本鞭已结算过的目标 ⇒ 伤害按 2^prior 递减 ✓（照它的 {@code WhipMultiHitDamage} ✓） */
     private final Set<UUID> contactedTargets = new HashSet<>();
     private boolean shockwaveTriggered;
-    private int windupTicks = 3;
-    private int strokeTicks = 4;
+    /**
+     * §1057 驱动长度<b>固定</b> ✓（照参照的 {@code ArmMotor}：起手 3 ＋ 抽击 4 ＝ 7 tick ✓）
+     * —— <b>与攻速无关</b> ✓。
+     * <p>用户口径（2026-10-05）：「<b>让攻速只影响冷却速度吧，别影响力度了</b>」✓
+     * ⇒ 手永远以同样的速度划完同样的弧 ⇒ 射程与力度恒定 ✓；
+     * 攻速只通过 {@link WhipItem#attackPeriodTicks}（冷却）决定"每秒能抽几次" ✓。
+     */
+    private static final int WINDUP_TICKS = 3;
+    private static final int STROKE_TICKS = 4;
+    private int windupTicks = WINDUP_TICKS;
+    private int strokeTicks = STROKE_TICKS;
+    /**
+     * §1056 <b>本实体"真正开始模拟"的年龄</b> ✓ —— 只在 owner 解析成功后才 +1 ✓。
+     * <p>⚠ 为什么不能用 {@code tickCount} ✗：客户端实体要靠**同步过来的 owner uuid** 才能模拟 ✓，
+     * uuid 还没到的前 1~2 tick 我原来直接 {@code return} ✗（不模拟，但 {@code tickCount} 照样在涨 ✗）
+     * ⇒ <b>短驱动会被整段吃掉</b> ✗：攻速快的鞭子驱动只有 2 tick ✗ ⇒ 客户端一帧都没画 ⇒
+     * 用户实测「<b>攻速快的甩不出去，攻速慢的还能甩 5 格</b>」✓（慢的 7 tick、吃掉 1~2 tick 还剩 5 ✓）。
+     */
+    private int age;
 
     public WhipLashEntity(EntityType<? extends WhipLashEntity> type, Level level) {
         super(type, level);
@@ -94,14 +116,20 @@ public class WhipLashEntity extends Entity {
 
     // ==================== 生成入口（服务端调用 ✓） ====================
 
-    /** 左键：一次抽击 ✓（同一玩家同一时刻只甩一次 ✓ 见 {@link #LAST_LASH_TICK}） */
+    /** 冷却是否已好 ✓ —— 攻速越快 ⇒ 间隔越短 ⇒ 抽得越频繁 ✓（与力度/射程无关 ✓） */
+    public static boolean isLashReady(Player player) {
+        Integer next = NEXT_LASH_TICK.get(player.getUUID());
+        return next == null || player.tickCount >= next;
+    }
+
+    /** 左键：一次抽击 ✓（<b>冷却</b>按攻速算 ✓；抽击动作本身恒为 3＋4 tick ✓） */
     public static void startLash(Player player) {
-        int now = player.tickCount;
-        Integer last = LAST_LASH_TICK.get(player.getUUID());
-        if (last != null && now - last < 2) {
+        if (!isLashReady(player)) {
             return;
         }
-        LAST_LASH_TICK.put(player.getUUID(), now);
+        NEXT_LASH_TICK.put(player.getUUID(), player.tickCount + WhipItem.attackPeriodTicks(player));
+        // 照参照 beginPrecisionNow ✓：重置攻击冷却 ⇒ 准星上的攻击指示器与鞭子冷却同步 ✓
+        player.resetAttackStrengthTicker();
         WhipLashEntity lash = new WhipLashEntity(player.level(), player, PHASE_LASH);
         player.level().addFreshEntity(lash);
     }
@@ -202,8 +230,11 @@ public class WhipLashEntity extends Entity {
                 forgetCharge();
                 this.discard();
             }
+            // ⚠ 客户端这里**不能**推进 age ✓ ⇒ 时间轴会等 owner 就绪之后才开始 ✓
+            // 否则攻速快的短驱动会在客户端被整段吃掉 ✗（§1056 的 bug ✓）
             return;
         }
+        this.age++;
 
         Vec3 aim = owner.getViewVector(1.0F);
         Vec3 forward = new Vec3(aim.x, 0.0D, aim.z);
@@ -257,11 +288,12 @@ public class WhipLashEntity extends Entity {
             //   ⇒ 慢攻速只体现在<b>冷却更长</b>（每秒能抽的次数更少 ✓）。
             // ⚠ 关键教训：驱动 tick 数一旦被拉长 ✗，手在同一段弧上就更慢 ✗ ⇒ 绳子甩不出去 ✗
             //   （用户原话：「这样改了之后鞭子挥不远了」✓ 就是这个原因 ✓）。
-            int period = WhipItem.attackPeriodTicks(owner);
-            windupTicks = Mth.clamp(Math.min(3, Math.max(1, period - 2)), 1, 3);
-            strokeTicks = Mth.clamp(Math.max(1, period - windupTicks - 1), 1, 4);
+            // §1057 攻速**只**影响冷却 ✓ —— 驱动长度恒定 ✓
+            //（手始终以同样速度划完同样的 1.1 格弧 ✓ ⇒ 射程/力度不再随攻速变化 ✓）
+            windupTicks = WINDUP_TICKS;
+            strokeTicks = STROKE_TICKS;
             int total = windupTicks + strokeTicks;
-            int driveTick = this.tickCount - 1;
+            int driveTick = this.age - 1;
             boolean driving = driveTick >= 0 && driveTick < total;
             double progressFrom;
             double progressTo;
@@ -319,8 +351,7 @@ public class WhipLashEntity extends Entity {
 
     /** 左键：逐段扫掠结算 ✓（照它的 damageForSpeed ＋ 减半 ✓） */
     private void tickLashDamage(Player owner) {
-        int age = this.tickCount;
-        if (age <= windupTicks || age > windupTicks + LEFT_DAMAGE_WINDOW_TICKS) {
+        if (this.age <= windupTicks || this.age > windupTicks + LEFT_DAMAGE_WINDOW_TICKS) {
             return;
         }
         AABB search = owner.getBoundingBox().inflate(WhipPhysics.totalLength() + 2.0D);
@@ -443,7 +474,7 @@ public class WhipLashEntity extends Entity {
             }
             return;
         }
-        if (this.tickCount > windupTicks + strokeTicks + LASH_FREE_FLIGHT_TICKS) {
+        if (this.age > windupTicks + strokeTicks + LASH_FREE_FLIGHT_TICKS || this.tickCount > 400) {
             this.discard();
         }
     }

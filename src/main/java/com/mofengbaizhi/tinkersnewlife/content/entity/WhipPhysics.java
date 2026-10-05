@@ -99,11 +99,12 @@ public final class WhipPhysics {
 
     // 导引（TrainerStylePrecisionGuide ✓）
     private static final double FOLLOW_TOTAL_DELAY_SECONDS = 0.24D;
-    private static final double FOLLOW_POSITION_ACCEL = 640.0D;
+    // §1057 用户口径「加长攻击范围」✓：导引把各点往球面目标上拉得更狠 ⇒ 绳子展得更开、抽得更远 ✓
+    private static final double FOLLOW_POSITION_ACCEL = 820.0D;
     private static final double FOLLOW_VELOCITY_ACCEL = 28.0D;
     private static final double FOLLOW_RADIAL_ACCEL = 430.0D;
     private static final double FOLLOW_MAX_ACCEL = 4400.0D;
-    private static final double FOLLOW_TIP_GAIN = 1.18D;
+    private static final double FOLLOW_TIP_GAIN = 1.25D;
     private static final double CROSSHAIR_SOURCE_PROGRESS = 0.30D;
     private static final double CROSSHAIR_SWEEP_HALF_SPAN_PROGRESS = 0.34D;
     private static final double CROSSHAIR_SWEEP_HALF_ANGLE_RADIANS = Math.toRadians(68.0D);
@@ -368,19 +369,19 @@ public final class WhipPhysics {
         double lateralOffset;
         if (raw < 0.30D) {
             double t = smoothstep(raw / 0.30D);
-            forwardOffset = Mth.lerp(t, 0.0D, 0.08D);
-            verticalOffset = Mth.lerp(t, 0.0D, 0.68D);
-            lateralOffset = Mth.lerp(t, 0.0D, s * 0.16D);
+            forwardOffset = Mth.lerp(t, 0.0D, 0.10D);
+            verticalOffset = Mth.lerp(t, 0.0D, 0.85D);
+            lateralOffset = Mth.lerp(t, 0.0D, s * 0.22D);
         } else if (raw < 0.72D) {
             double t = Math.pow(Mth.clamp((raw - 0.30D) / 0.42D, 0.0D, 1.0D), 1.55D);
-            forwardOffset = Mth.lerp(t, 0.08D, 0.86D);
-            verticalOffset = Mth.lerp(t, 0.68D, -0.08D);
-            lateralOffset = Mth.lerp(t, s * 0.16D, -s * 0.10D);
+            forwardOffset = Mth.lerp(t, 0.10D, 1.20D);
+            verticalOffset = Mth.lerp(t, 0.85D, -0.12D);
+            lateralOffset = Mth.lerp(t, s * 0.22D, -s * 0.14D);
         } else {
             double t = smoothstep((raw - 0.72D) / 0.28D);
-            forwardOffset = Mth.lerp(t, 0.86D, 0.20D);
-            verticalOffset = Mth.lerp(t, -0.08D, 0.0D);
-            lateralOffset = Mth.lerp(t, -s * 0.10D, 0.0D);
+            forwardOffset = Mth.lerp(t, 1.20D, 0.28D);
+            verticalOffset = Mth.lerp(t, -0.12D, 0.0D);
+            lateralOffset = Mth.lerp(t, -s * 0.14D, 0.0D);
         }
         return base.add(aim.scale(forwardOffset))
                 .add(0.0D, verticalOffset, 0.0D)
@@ -889,10 +890,16 @@ public final class WhipPhysics {
 
     // ==================== 工具 ====================
 
+    /**
+     * §1057 <b>攻击范围倍率</b> ✓ —— 绳长直接乘它 ⇒ 抽得更远 ✓
+     * （参照原值 1.0 ⇒ 总长 8.49 格 ✓；用户口径「<b>加长攻击范围</b>」✓ ⇒ 现为 1.20 ⇒ 约 <b>10.2 格</b> ✓）。
+     */
+    public static final double REACH_SCALE = 1.20D;
+
     public static double[] buildRestLengths() {
         double[] result = new double[SEGMENTS];
         for (int i = 0; i < SEGMENTS; i++) {
-            result[i] = Math.abs(AUTHORED_PIVOT_Z[i + 1] - AUTHORED_PIVOT_Z[i]) / 16.0D;
+            result[i] = Math.abs(AUTHORED_PIVOT_Z[i + 1] - AUTHORED_PIVOT_Z[i]) / 16.0D * REACH_SCALE;
         }
         return result;
     }
