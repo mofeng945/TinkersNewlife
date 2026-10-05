@@ -295,8 +295,13 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
     CompoundTag data = player.getPersistentData();
     if (now - data.getLong(COMBO_TICK_KEY) >= COMBO_MIN_INTERVAL) {
       data.putLong(COMBO_TICK_KEY, now);
-      // 只取侧效：清/置 L_CLICK 输入指令 + progressCombo ✓；返回值忽略 ✗（否决不在这里做 ✓）
-      super.onLeftClickEntity(stack, player, target);
+      // §1019：**不能靠 super 来推进连段** ✗ —— 本体那句的内部是：
+      //     BLADESTATE.filter(state -> !state.onClick()).ifPresent(state -> { …; state.progressCombo(player); })
+      //   `_onClick` 这个开关由 AttackManager 开合（它在范围攻击前会清掉 ✓），
+      //   而**我们这把刀没有任何地方去开它** ✗ ⇒ 我调 super 时那个 filter 永远把它挡掉 ⇒ super 空跑 ✗
+      //   ⇒ 实测症状"没推进连击进度 / 一直第一段" ✓。
+      // ⇒ 直接照本体内部那一句，**自己调 progressCombo** ✓（同一个状态对象、同一个方法 ✓），并保留限速 ✓。
+      stack.getCapability(ItemSlashBlade.BLADESTATE).ifPresent(state -> state.progressCombo(player));
     }
     // 目标还在无敌帧里 ⇒ 不再重复结算，但仍否决原版那一下 ✓（避免与匠魂结算重复 ✗）
     if (target instanceof LivingEntity living && living.invulnerableTime > 0) {

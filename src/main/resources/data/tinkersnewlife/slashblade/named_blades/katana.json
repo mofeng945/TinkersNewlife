@@ -4,7 +4,8 @@
   "properties": {
     "attack_base": 4.0,
     "max_damage": 200,
-    "slash_art": "slashblade:judgement_cut"
+    "slash_art": "slashblade:judgement_cut",
+    "root_combo": "slashblade:combo_a1"
   },
   "render": {
     "model": "slashblade:model/blade.obj",
