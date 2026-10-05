@@ -1,9 +1,0 @@
-{
-  "_comment": "§1032 照 TiCEX 的 ticex:slashblade 标签 1:1：可以被「装裱浇铸」当铸模牺牲掉的拔刀剑。required:false ⇒ 即使那把刀不在场也不会让标签加载报错。",
-  "values": [
-    {
-      "id": "slashblade:slashblade",
-      "required": false
-    }
-  ]
-}
