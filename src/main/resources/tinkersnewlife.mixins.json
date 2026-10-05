@@ -22,6 +22,8 @@
     "KatanaAttackHelperMixin",
     "KatanaAttackManagerMixin",
     "KatanaItemSlashBladeMixin",
+    "KatanaSummonedSwordMixin",
+    "KatanaInputCommandEventMixin",
     "KatanaCriticalAccessor"
   ],
   "client": [

@@ -321,6 +321,11 @@ public class TinkersNewlife {
         registerClientPacket(PacketSyncCurse.class, PacketSyncCurse::toBytes, PacketSyncCurse::new, PacketSyncCurse::handle);
         registerClientPacket(PacketOpenShikigamiScreen.class, PacketOpenShikigamiScreen::toBytes, PacketOpenShikigamiScreen::new, PacketOpenShikigamiScreen::handle);
         registerClientPacket(PacketBlackBirdCamera.class, PacketBlackBirdCamera::toBytes, PacketBlackBirdCamera::new, PacketBlackBirdCamera::handle);
+        // §1022 拔刀剑：刀状态同步（照 TiCEX 的 StateSyncPacket ✓）—— 只在拔刀剑在场时才会被发出 ✓
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.slashblade.PacketSlashBladeStateSync.class,
+                com.mofengbaizhi.tinkersnewlife.network.slashblade.PacketSlashBladeStateSync::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.slashblade.PacketSlashBladeStateSync::new,
+                com.mofengbaizhi.tinkersnewlife.network.slashblade.PacketSlashBladeStateSync::handle);
         registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenWuWeiScreen.class,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenWuWeiScreen::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenWuWeiScreen::new,
