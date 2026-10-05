@@ -95,7 +95,13 @@ public class WhipLashEntity extends Entity {
         this.setLifeTicks(lifeTicks);
         this.setPanelDamage(panelDamage);
         this.setSwingSignPositive(owner.getRandom().nextBoolean());
-        this.physics.reset(handPos(owner, owner.getViewVector(1.0F)), owner.getViewVector(1.0F));
+        Vec3 view = owner.getViewVector(1.0F);
+        Vec3 flat = new Vec3(view.x, 0.0D, view.z);
+        if (flat.lengthSqr() < 1.0E-8D) {
+            flat = new Vec3(0.0D, 0.0D, 1.0D);
+        }
+        flat = flat.normalize();
+        this.physics.reset(handPos(owner, flat), view, rightOf(flat));
     }
 
     // ==================== 同步字段 ====================

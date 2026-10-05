@@ -53,9 +53,9 @@ public class WhipItem extends ModifiableItem {
     private static final int MIN_FLICK_TICKS = 5;
 
     /** 挥击寿命（tick ✓）：12 tick ≈ 0.6 秒 ✓ 够甩完一趟 ✓ */
-    private static final int LASH_LIFE_TICKS = 12;
+    private static final int LASH_LIFE_TICKS = 18;
     /** 砸地寿命（tick ✓）：比挥击长一点 ✓ 让冲击波与收势都看得见 ✓ */
-    private static final int SLAM_LIFE_TICKS = 24;
+    private static final int SLAM_LIFE_TICKS = 26;
     /** 面板读不到时的兜底伤害 ✓ */
     private static final float FALLBACK_PANEL = 3.0F;
 
