@@ -1,6 +1,7 @@
 package com.mofengbaizhi.tinkersnewlife.content.entity;
 
 import com.mofengbaizhi.tinkersnewlife.content.ModEntities;
+import com.mofengbaizhi.tinkersnewlife.content.item.WhipItem;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -9,6 +10,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -18,143 +20,169 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
- * <b>鞭击</b>（§1047）—— 一次挥鞭／一次砸地的载体 ✓（纯逻辑 + 视觉 ✓ 不移动、不碰撞、不存档 ✓）。
+ * <b>鞭击</b>（§1053）—— 一次"左键抽击"或"右键蓄力→砸地"的载体 ✓
+ * （纯逻辑 ＋ 视觉 ✓ 不移动、不碰撞、不存档 ✓）。
  *
- * <h2>为什么做成实体</h2>
- * 鞭身是一条 25 点的绳 ✓，要画给<b>所有人</b>看 ✓、还要在<b>服务端</b>逐段扫掠判定 ✓ ——
- * 做成实体最省事 ✓（同 {@code SoldierSlashEntity} 的思路 ✓）：
+ * <h2>时间轴完全照参照模组 BetterWhips 的 {@code ArmMotor}（MIT ✓）</h2>
  * <ul>
- *   <li><b>服务端</b>：跑 {@link WhipPhysics} ✓ ⇒ 逐段扫掠 ✓ ⇒ 按"接触点速度"结算伤害 ✓
- *       （多目标衰减 100% → 50% → 25% → 再减半 ✓ 同 BetterWhips 的 tooltip 口径 ✓）；</li>
- *   <li><b>客户端</b>：跑<b>同一套</b>物理（输入相同 ✓）⇒ 只负责把绳画出来 ✓
- *       ⇒ <b>不需要每 tick 同步 25 个点</b> ✓（只同步主人 uuid／相位／驱动／寿命这几个标量 ✓）。</li>
- * </ul>
- *
- * <h2>两种相位</h2>
- * <ul>
- *   <li>{@link #PHASE_LASH}：左键挥击 ✓ —— 根部被弹簧朝准星方向甩出去 ✓ ⇒ 梢部自然加速 ✓；</li>
- *   <li>{@link #PHASE_SLAM}：右键蓄力 2 秒后松手 ✓ —— 驱动更狠 ✓，并在 {@link #SLAM_IMPACT_TICK}
- *       tick 时对周围敌人来一次<b>冲击波</b>（AoE 伤害 ＋ 强击退 ＋ 粒子）✓。</li>
+ *   <li><b>左键 PRECISION</b> ✓：{@code windup = clamp(min(3, period−2),1,3)} ✓、
+ *       {@code stroke = clamp(period−windup−1,1,4)} ✓（{@code period = ceil(攻击冷却)} ✓）
+ *       ⇒ 进度 0→0.30 落在起手段 ✓、0.30→1.0 落在抽击段 ✓；
+ *       <b>驱动一结束（{@code driveTick ≥ windup+stroke}）根部立刻回到手上</b> ✓
+ *       ⇒ 此后绳子<b>自由飞</b> ✓（这是"甩出去"的关键 ✓，也是它注释里 82~190 格/秒的来源 ✓）；</li>
+ *   <li><b>伤害窗口</b>：{@code ageTicks > windup && ≤ windup + 10} ✓ ⇒ <b>飞行段照样打人</b> ✓；</li>
+ *   <li><b>右键蓄力</b> ✓：最长 {@link WhipPhysics#RIGHT_CHARGE_TICKS} tick 绕手自转 ✓
+ *       （离心力把绳子甩成一张盘 ✓）⇒ 松手后 {@code 14} tick 钟摆式下抽 ✓，
+ *       梢部碰到方块或实体即触发<b>冲击波</b> ✓；</li>
+ *   <li><b>伤害口径</b>（照它 ✓）：{@code floor(段速度/10) × 0.2} ✓，
+ *       并按本鞭已命中目标数<b>逐次减半</b> ✓（{@code base / 2^prior} ✓）。</li>
  * </ul>
  */
 public class WhipLashEntity extends Entity {
 
     public static final int PHASE_LASH = 0;
-    public static final int PHASE_SLAM = 1;
+    public static final int PHASE_CHARGE = 1;
+    public static final int PHASE_RELEASE = 2;
 
     private static final EntityDataAccessor<String> OWNER_UUID =
             SynchedEntityData.defineId(WhipLashEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Integer> PHASE =
             SynchedEntityData.defineId(WhipLashEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Integer> LIFE_TICKS =
-            SynchedEntityData.defineId(WhipLashEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Float> PANEL_DAMAGE =
-            SynchedEntityData.defineId(WhipLashEntity.class, EntityDataSerializers.FLOAT);
-    /** §1048 这一鞭从左往右扫还是从右往左扫 ✓（连续两次随机交替 ⇒ 像他们的左右交替 ✓） */
     private static final EntityDataAccessor<Boolean> SWING_SIGN =
             SynchedEntityData.defineId(WhipLashEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> RELEASE_TICK =
+            SynchedEntityData.defineId(WhipLashEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> CHARGE_TICKS =
+            SynchedEntityData.defineId(WhipLashEntity.class, EntityDataSerializers.INT);
 
-    /** §1047 伤害口径：每满 <b>10 格/秒</b> 的接触速度 = 面板的该倍数 ✓（同 BetterWhips 的 tooltip ✓） */
-    private static final double SPEED_UNIT = 10.0D;
-    /** 一次接触的伤害上限（面板倍数 ✓）⇒ 再快也不会一刀秒 ✓ */
-    private static final double MAX_DAMAGE_MULTIPLIER = 3.0D;
-    /** 触发伤害的最低接触速度（格/秒 ✓）⇒ 轻轻蹭到不算 ✓ */
-    private static final double MIN_HIT_SPEED = 6.0D;
-    /** 击退强度 ✓（BetterWhips 皮革鞭偏轻 ✓ 链条 0.1 / 重型 0.6 ✓ 我们取中间 ✓） */
-    private static final double KNOCKBACK = 0.35D;
-    /** 砸地冲击波：半径 ✓ / 伤害倍数 ✓ / 击退 ✓ */
-    private static final double SLAM_RADIUS = 3.5D;
-    private static final double SLAM_DAMAGE_MULTIPLIER = 1.5D;
-    private static final double SLAM_KNOCKBACK = 0.9D;
-    /** 砸地的"落地"tick ✓（蓄力松手后第几 tick 打出冲击波 ✓） */
-    private static final int SLAM_IMPACT_TICK = 6;
+    /** 左键：伤害窗口 = 起手段之后 10 tick ✓（照它的 {@code LEFT_DAMAGE_WINDOW_TICKS} ✓） */
+    private static final int LEFT_DAMAGE_WINDOW_TICKS = 10;
+    /** 抽击驱动结束后，绳子还要自由飞这么多 tick ✓ 让波传完 ✓（照它实体活 32 tick 的量级 ✓） */
+    private static final int LASH_FREE_FLIGHT_TICKS = 25;
+    /** 砸地：松手后的钟摆段 tick 数 ✓（照它的 {@code RIGHT_SLAM_TICKS = 14} ✓） */
+    private static final int RIGHT_SLAM_TICKS = 14;
+    /** 砸地结束后绳子自由飞多久 ✓ */
+    private static final int SLAM_FREE_FLIGHT_TICKS = 18;
+    /** 砸地冲击波半径（格 ✓）与击退 ✓ */
+    private static final double SHOCKWAVE_RADIUS = 3.5D;
+    private static final double SHOCKWAVE_KNOCKBACK = 0.9D;
+    /** 一根鞭同时只有一个活动实体（蓄力段要能被松手打断 ✓） */
+    private static final Map<UUID, WhipLashEntity> ACTIVE_CHARGES = new HashMap<>();
 
     private final WhipPhysics physics = new WhipPhysics();
-    /** 这一鞭已经打过的目标 ⇒ 每个目标每鞭只结算一次 ✓ 并按命中顺序衰减 ✓ */
-    private final Map<UUID, Integer> hitOrder = new HashMap<>();
-    private int nextFalloffIndex;
-    private boolean slamDone;
+    private final WhipPhysics.Drive drive = new WhipPhysics.Drive();
+    /** 本鞭已结算过的目标 ⇒ 伤害按 2^prior 递减 ✓（照它的 {@code WhipMultiHitDamage} ✓） */
+    private final Set<UUID> contactedTargets = new HashSet<>();
+    private boolean shockwaveTriggered;
+    private int windupTicks = 3;
+    private int strokeTicks = 4;
 
     public WhipLashEntity(EntityType<? extends WhipLashEntity> type, Level level) {
         super(type, level);
-        this.noPhysics = true;          // 纯逻辑/视觉 ✓ 不参与碰撞 ✓
+        this.noPhysics = true;
         this.noCulling = true;
     }
 
-    /** 生成一次鞭击 ✓（服务端调用 ✓） */
-    public WhipLashEntity(Level level, Player owner, int phase, int lifeTicks, float panelDamage) {
+    // ==================== 生成入口（服务端调用 ✓） ====================
+
+    /** 左键：一次抽击 ✓ */
+    public static void startLash(Player player) {
+        WhipLashEntity lash = new WhipLashEntity(player.level(), player, PHASE_LASH);
+        player.level().addFreshEntity(lash);
+    }
+
+    /** 右键按下：开始蓄力自转 ✓（同一玩家只保留一个 ✓） */
+    public static void startCharge(Player player) {
+        WhipLashEntity old = ACTIVE_CHARGES.remove(player.getUUID());
+        if (old != null && old.isAlive()) {
+            old.discard();
+        }
+        WhipLashEntity lash = new WhipLashEntity(player.level(), player, PHASE_CHARGE);
+        player.level().addFreshEntity(lash);
+        ACTIVE_CHARGES.put(player.getUUID(), lash);
+    }
+
+    /** 右键松手：切换到"砸地"释放段 ✓（没在蓄力就什么都不做 ✓） */
+    public static void releaseCharge(Player player) {
+        WhipLashEntity lash = ACTIVE_CHARGES.remove(player.getUUID());
+        if (lash == null || !lash.isAlive()) {
+            return;
+        }
+        lash.setPhase(PHASE_RELEASE);
+        lash.setReleaseTick(0);
+    }
+
+    public static void cancelCharge(Player player) {
+        WhipLashEntity lash = ACTIVE_CHARGES.remove(player.getUUID());
+        if (lash != null && lash.isAlive()) {
+            lash.discard();
+        }
+    }
+
+    private WhipLashEntity(Level level, Player owner, int phase) {
         this(ModEntities.WHIP_LASH.get(), level);
         this.setPos(owner.getX(), owner.getY(), owner.getZ());
         this.setOwnerUuid(owner.getUUID().toString());
         this.setPhase(phase);
-        this.setLifeTicks(lifeTicks);
-        this.setPanelDamage(panelDamage);
         this.setSwingSignPositive(owner.getRandom().nextBoolean());
-        Vec3 view = owner.getViewVector(1.0F);
-        Vec3 flat = new Vec3(view.x, 0.0D, view.z);
-        if (flat.lengthSqr() < 1.0E-8D) {
-            flat = new Vec3(0.0D, 0.0D, 1.0D);
-        }
-        flat = flat.normalize();
-        this.physics.reset(owner.getEyePosition(), view);
+        this.setReleaseTick(-1);
+        this.setChargeTicks(0);
+        Vec3 aim = owner.getViewVector(1.0F);
+        Vec3 forward = new Vec3(aim.x, 0.0D, aim.z);
+        forward = forward.lengthSqr() < 1.0E-8D ? new Vec3(0.0D, 0.0D, 1.0D) : forward.normalize();
+        this.physics.reset(WhipPhysics.handBase(owner.position(), owner.getEyeHeight(),
+                side(owner), forward), aim);
     }
 
     // ==================== 同步字段 ====================
+
     @Override
     protected void defineSynchedData() {
         this.getEntityData().define(OWNER_UUID, "");
         this.getEntityData().define(PHASE, PHASE_LASH);
-        this.getEntityData().define(LIFE_TICKS, 12);
-        this.getEntityData().define(PANEL_DAMAGE, 3.0F);
         this.getEntityData().define(SWING_SIGN, true);
+        this.getEntityData().define(RELEASE_TICK, -1);
+        this.getEntityData().define(CHARGE_TICKS, 0);
     }
 
-    public void setOwnerUuid(String v) { this.getEntityData().set(OWNER_UUID, v); }
     public String getOwnerUuid() { return this.getEntityData().get(OWNER_UUID); }
-    public void setPhase(int v) { this.getEntityData().set(PHASE, v); }
+    public void setOwnerUuid(String v) { this.getEntityData().set(OWNER_UUID, v); }
     public int getPhase() { return this.getEntityData().get(PHASE); }
-    public void setLifeTicks(int v) { this.getEntityData().set(LIFE_TICKS, v); }
-    public int getLifeTicks() { return this.getEntityData().get(LIFE_TICKS); }
-    public void setPanelDamage(float v) { this.getEntityData().set(PANEL_DAMAGE, v); }
-    public float getPanelDamage() { return this.getEntityData().get(PANEL_DAMAGE); }
-    public void setSwingSignPositive(boolean v) { this.getEntityData().set(SWING_SIGN, v); }
+    public void setPhase(int v) { this.getEntityData().set(PHASE, v); }
     public boolean isSwingSignPositive() { return this.getEntityData().get(SWING_SIGN); }
+    public void setSwingSignPositive(boolean v) { this.getEntityData().set(SWING_SIGN, v); }
+    public int getReleaseTick() { return this.getEntityData().get(RELEASE_TICK); }
+    public void setReleaseTick(int v) { this.getEntityData().set(RELEASE_TICK, v); }
+    public int getChargeTicks() { return this.getEntityData().get(CHARGE_TICKS); }
+    public void setChargeTicks(int v) { this.getEntityData().set(CHARGE_TICKS, v); }
 
-    /** 客户端渲染要用它 ✓；服务端也要 ✓ */
     public WhipPhysics physics() {
         return physics;
     }
 
-    /**
-     * §1048 手部基点 —— 口径照 BetterWhips（MIT）的 {@code handBase} ✓：
-     * 「脚下位置 ＋ (0, 眼睛高度 − 0.58, 0) ＋ 右手侧 × 0.34 ＋ 前方 × 0.10」✓。
-     */
-    private static Vec3 handPos(LivingEntity owner, Vec3 horizontal) {
-        Vec3 h = horizontal;
-        if (h.lengthSqr() < 1.0E-8D) {
-            Vec3 view = owner.getViewVector(1.0F);
-            h = new Vec3(view.x, 0.0D, view.z);
-        }
-        if (h.lengthSqr() < 1.0E-8D) {
-            h = new Vec3(0.0D, 0.0D, 1.0D);
-        }
-        h = h.normalize();
-        double side = owner.getMainArm() == net.minecraft.world.entity.HumanoidArm.LEFT ? -1.0D : 1.0D;
-        return owner.position()
-                .add(0.0D, owner.getEyeHeight() - 0.58D, 0.0D)
-                .add(rightOf(h).scale(side * 0.34D))
-                .add(h.scale(0.10D));
+    private static double side(LivingEntity owner) {
+        return owner.getMainArm() == net.minecraft.world.entity.HumanoidArm.LEFT ? -1.0D : 1.0D;
     }
 
-    /** §1048 水平"右手侧"单位向量 ✓ —— 横扫所在的平面由它与准星张成 ✓ */
-    private static Vec3 rightOf(Vec3 horizontal) {
-        return new Vec3(-horizontal.z, 0.0D, horizontal.x);
+    /** 它的 {@code fallbackAnchor}：眼位 ＋ 前方×0.22 ＋ 右手侧×side×0.34 ＋ 下 0.52 ✓ */
+    private static Vec3 fallbackAnchor(Player owner, Vec3 forward, double side) {
+        Vec3 horizontal = new Vec3(forward.x, 0.0D, forward.z);
+        horizontal = horizontal.lengthSqr() < 1.0E-8D ? new Vec3(0.0D, 0.0D, 1.0D) : horizontal.normalize();
+        Vec3 right = new Vec3(-horizontal.z, 0.0D, horizontal.x);
+        return owner.getEyePosition()
+                .add(horizontal.scale(0.22D))
+                .add(right.scale(side * 0.34D))
+                .add(0.0D, -0.52D, 0.0D);
     }
+
+    // ==================== 主循环 ====================
 
     @Override
     public void tick() {
@@ -163,45 +191,220 @@ public class WhipLashEntity extends Entity {
         Player owner = resolveOwner();
         if (owner == null || !owner.isAlive()) {
             if (!this.level().isClientSide) {
+                forgetCharge();
                 this.discard();
             }
             return;
         }
 
         Vec3 aim = owner.getViewVector(1.0F);
-        boolean slam = getPhase() == PHASE_SLAM;
-        // §1048 横扫：进度 = 已过 tick / 一次抽击 10 tick ✓（照 BetterWhips 的 ATTACK_SECONDS=0.5s ✓）
-        double progress = slam ? this.tickCount / 14.0D : this.tickCount / WhipPhysics.ATTACK_TICKS;
+        Vec3 forward = new Vec3(aim.x, 0.0D, aim.z);
+        forward = forward.lengthSqr() < 1.0E-8D ? new Vec3(0.0D, 0.0D, 1.0D) : forward.normalize();
+        Vec3 right = new Vec3(-forward.z, 0.0D, forward.x);
+        double side = side(owner);
+        Vec3 base = WhipPhysics.handBase(owner.position(), owner.getEyeHeight(), side, forward);
 
-        Vec3 horizontal = new Vec3(aim.x, 0.0D, aim.z);
-        if (horizontal.lengthSqr() < 1.0E-8D) {
-            horizontal = new Vec3(0.0D, 0.0D, 1.0D);
+        int phase = getPhase();
+        boolean server = !this.level().isClientSide;
+
+        if (phase == PHASE_CHARGE) {
+            int charge = Math.min(getChargeTicks() + 1, WhipPhysics.RIGHT_CHARGE_TICKS);
+            if (server) {
+                setChargeTicks(charge);
+            }
+            Vec3 restAnchor = fallbackAnchor(owner, forward, side);
+            Vec3 center = WhipPhysics.chargedSpinCenter(base, forward);
+            Vec3 anchor = WhipPhysics.chargedSpinHandAnchor(restAnchor, center, forward, right, side, charge);
+            drive.mode = WhipPhysics.MODE_CHARGE;
+            drive.center = center;
+            drive.forward = forward;
+            drive.right = right;
+            drive.side = side;
+            drive.chargeTicks = charge;
+            drive.rootFrom = anchor;
+            drive.rootTo = anchor;
+            drive.progressFrom = 0.0D;
+            drive.progressTo = 0.0D;
+        } else if (phase == PHASE_RELEASE) {
+            int release = Math.max(0, getReleaseTick());
+            if (server) {
+                setReleaseTick(release + 1);
+            }
+            double from = Mth.clamp(release / (double) RIGHT_SLAM_TICKS, 0.0D, 1.0D);
+            double to = Mth.clamp((release + 1.0D) / RIGHT_SLAM_TICKS, 0.0D, 1.0D);
+            drive.mode = WhipPhysics.MODE_RELEASE;
+            drive.center = WhipPhysics.chargedSpinCenter(base, forward);
+            drive.forward = forward;
+            drive.right = right;
+            drive.side = side;
+            drive.releaseProgress = to;
+            drive.rootFrom = WhipPhysics.chargedReleaseHandAnchor(base, forward, from);
+            drive.rootTo = WhipPhysics.chargedReleaseHandAnchor(base, forward, to);
+            drive.progressFrom = 0.0D;
+            drive.progressTo = 0.0D;
+        } else {
+            int period = WhipItem.attackPeriodTicks(owner);
+            windupTicks = Mth.clamp(Math.min(3, Math.max(1, period - 2)), 1, 3);
+            strokeTicks = Mth.clamp(Math.max(1, period - windupTicks - 1), 1, 4);
+            int total = windupTicks + strokeTicks;
+            int driveTick = this.tickCount - 1;
+            boolean driving = driveTick >= 0 && driveTick < total;
+            double progressFrom;
+            double progressTo;
+            if (driveTick < 0) {
+                progressFrom = 0.0D;
+                progressTo = 0.0D;
+            } else if (driveTick < windupTicks) {
+                progressFrom = WhipPhysics.PRECISION_RELEASE_RAW
+                        * Mth.clamp(driveTick / (double) windupTicks, 0.0D, 1.0D);
+                progressTo = WhipPhysics.PRECISION_RELEASE_RAW
+                        * Mth.clamp((driveTick + 1.0D) / windupTicks, 0.0D, 1.0D);
+            } else {
+                double lashTick = driveTick - windupTicks;
+                progressFrom = Mth.lerp(Mth.clamp(lashTick / (double) strokeTicks, 0.0D, 1.0D),
+                        WhipPhysics.PRECISION_RELEASE_RAW, 1.0D);
+                progressTo = Mth.lerp(Mth.clamp((lashTick + 1.0D) / strokeTicks, 0.0D, 1.0D),
+                        WhipPhysics.PRECISION_RELEASE_RAW, 1.0D);
+            }
+            drive.mode = WhipPhysics.MODE_LASH;
+            drive.eye = owner.getEyePosition();
+            drive.aim = aim.lengthSqr() < 1.0E-8D ? new Vec3(0.0D, 0.0D, 1.0D) : aim.normalize();
+            drive.forward = forward;
+            drive.right = right;
+            drive.side = side;
+            drive.swingSign = isSwingSignPositive() ? 1.0D : -1.0D;
+            if (driving) {
+                drive.rootFrom = driveTick <= 0 ? base
+                        : WhipPhysics.precisionHandAnchor(base, drive.aim, right, progressFrom, drive.swingSign);
+                drive.rootTo = WhipPhysics.precisionHandAnchor(base, drive.aim, right, progressTo, drive.swingSign);
+                drive.progressFrom = progressFrom;
+                drive.progressTo = progressTo;
+            } else {
+                // 驱动结束 ⇒ 根部回到手上 ✓ 绳子自由飞 ✓（导引同时关闭：进度归 0 ✓）
+                drive.rootFrom = base;
+                drive.rootTo = base;
+                drive.progressFrom = 0.0D;
+                drive.progressTo = 0.0D;
+            }
         }
-        horizontal = horizontal.normalize();
-        Vec3 hand = handPos(owner, horizontal);
 
         physics.markTickStart();
-        // §1052 关键：把手部基点（它的 handBase ✓）也传进去 —— 根部要钉在"被抡圆的那只手"上 ✓
-        physics.tick(this.level(), owner.getEyePosition(), hand, aim, rightOf(horizontal), progress,
-                isSwingSignPositive() ? 1.0D : -1.0D, slam);
+        physics.step(this.level(), drive);
 
-        if (!this.level().isClientSide) {
-            if (slam) {
-                tickSlam(owner);
-            } else {
-                tickLash(owner);
+        if (server) {
+            if (phase == PHASE_RELEASE) {
+                tickShockwave(owner);
+            } else if (phase == PHASE_LASH) {
+                tickLashDamage(owner);
             }
+            tickLifetime(phase);
         } else {
-            tickClientFx(owner);
-        }
-
-        if (this.tickCount > getLifeTicks() + 4) {
-            this.discard();
+            tickClientFx();
         }
     }
 
-    /** 客户端：梢部拖一点粒子 ✓（成本很低、观感提升明显 ✓） */
-    private void tickClientFx(Player owner) {
+    /** 左键：逐段扫掠结算 ✓（照它的 damageForSpeed ＋ 减半 ✓） */
+    private void tickLashDamage(Player owner) {
+        int age = this.tickCount;
+        if (age <= windupTicks || age > windupTicks + LEFT_DAMAGE_WINDOW_TICKS) {
+            return;
+        }
+        AABB search = owner.getBoundingBox().inflate(WhipPhysics.totalLength() + 2.0D);
+        List<LivingEntity> targets = this.level().getEntitiesOfClass(LivingEntity.class, search,
+                e -> isValidTarget(owner, e));
+        if (targets.isEmpty()) {
+            return;
+        }
+        for (int seg = 0; seg < WhipPhysics.SEGMENTS; seg++) {
+            double speed = physics.segmentSpeed(seg);
+            float base = WhipItem.damageForSpeed(speed);
+            if (base <= 0.0F) {
+                continue;
+            }
+            for (LivingEntity target : targets) {
+                if (contactedTargets.contains(target.getUUID())) {
+                    continue;
+                }
+                Vec3 contact = physics.segmentContact(seg, target.getBoundingBox());
+                if (contact == null) {
+                    continue;
+                }
+                float damage = (float) (base / Math.pow(2.0D, contactedTargets.size()));
+                contactedTargets.add(target.getUUID());
+                if (hurt(owner, target, contact, damage)) {
+                    this.level().playSound(null, contact.x, contact.y, contact.z,
+                            SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 0.85F,
+                            0.96F + this.random.nextFloat() * 0.08F);
+                }
+            }
+        }
+    }
+
+    /** 砸地：梢部触到方块或实体 ⇒ 冲击波 ✓（照它 tipBlockContact / tipLivingHit ⇒ shockwave ✓） */
+    private void tickShockwave(Player owner) {
+        if (shockwaveTriggered || getReleaseTick() > RIGHT_SLAM_TICKS) {
+            return;
+        }
+        Vec3 tip = physics.point(WhipPhysics.POINTS - 1);
+        net.minecraft.core.BlockPos bp = net.minecraft.core.BlockPos.containing(tip);
+        boolean hitBlock = !this.level().getBlockState(bp).getCollisionShape(this.level(), bp).isEmpty();
+        double tipSpeed = physics.speed(WhipPhysics.POINTS - 1);
+        Vec3 impact = null;
+        if (hitBlock) {
+            impact = tip;
+        } else {
+            List<LivingEntity> nearby = this.level().getEntitiesOfClass(LivingEntity.class,
+                    new AABB(tip, tip).inflate(0.6D), e -> isValidTarget(owner, e));
+            if (!nearby.isEmpty()) {
+                impact = nearby.get(0).position();
+            }
+        }
+        if (impact == null) {
+            return;
+        }
+        shockwaveTriggered = true;
+
+        float base = WhipItem.damageForSpeed(tipSpeed);
+        List<LivingEntity> targets = this.level().getEntitiesOfClass(LivingEntity.class,
+                new AABB(impact, impact).inflate(SHOCKWAVE_RADIUS), e -> isValidTarget(owner, e));
+        for (LivingEntity target : targets) {
+            Vec3 push = target.position().subtract(impact);
+            Vec3 dir = push.lengthSqr() < 1.0E-6D ? owner.getViewVector(1.0F) : push.normalize();
+            hurt(owner, target, target.position().add(0.0D, target.getBbHeight() * 0.5D, 0.0D), base);
+            target.push(dir.x * SHOCKWAVE_KNOCKBACK, 0.55D * SHOCKWAVE_KNOCKBACK, dir.z * SHOCKWAVE_KNOCKBACK);
+            target.hurtMarked = true;
+        }
+
+        if (this.level() instanceof ServerLevel server) {
+            for (int i = 0; i < 48; i++) {
+                double a = this.random.nextDouble() * Math.PI * 2.0D;
+                double r = this.random.nextDouble() * SHOCKWAVE_RADIUS;
+                server.sendParticles(ParticleTypes.CLOUD,
+                        impact.x + Math.cos(a) * r, impact.y + 0.1D, impact.z + Math.sin(a) * r,
+                        1, 0.0D, 0.06D, 0.0D, 0.02D);
+            }
+            server.playSound(null, impact.x, impact.y, impact.z,
+                    SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.0F, 0.7F);
+        }
+    }
+
+    private boolean hurt(Player owner, LivingEntity target, Vec3 at, float amount) {
+        if (amount <= 0.0F) {
+            return false;
+        }
+        boolean damaged = target.hurt(this.damageSources().playerAttack(owner), amount);
+        if (!damaged) {
+            return false;
+        }
+        target.invulnerableTime = 0;
+        if (this.level() instanceof ServerLevel server) {
+            server.sendParticles(ParticleTypes.CRIT, at.x, at.y, at.z, 6, 0.14D, 0.14D, 0.14D, 0.1D);
+        }
+        return true;
+    }
+
+    /** 客户端：梢部拖粒子 ✓ */
+    private void tickClientFx() {
         if (this.tickCount % 2 != 0) {
             return;
         }
@@ -209,93 +412,37 @@ public class WhipLashEntity extends Entity {
         this.level().addParticle(ParticleTypes.CRIT, tip.x, tip.y, tip.z, 0.0D, 0.0D, 0.0D);
     }
 
-    /** 服务端：逐段扫掠 → 按接触点速度结算 ✓ */
-    private void tickLash(Player owner) {
-        AABB search = owner.getBoundingBox().inflate(11.0D);
-        List<LivingEntity> targets = this.level().getEntitiesOfClass(LivingEntity.class, search,
-                e -> isValidTarget(owner, e));
-        if (targets.isEmpty()) {
+    /** 生命周期 ✓（左键：起手＋抽击＋自由飞 ✓；砸地：钟摆＋自由飞 ✓；蓄力：松手或超时 ✓） */
+    private void tickLifetime(int phase) {
+        if (phase == PHASE_CHARGE) {
+            if (getChargeTicks() >= WhipPhysics.RIGHT_CHARGE_TICKS + 40) {
+                forgetCharge();
+                this.discard();
+            }
             return;
         }
-        for (int seg = 0; seg < WhipPhysics.POINTS - 1; seg++) {
-            double speed = physics.speed(seg);
-            if (speed < MIN_HIT_SPEED) {
-                continue;
+        if (phase == PHASE_RELEASE) {
+            if (getReleaseTick() > RIGHT_SLAM_TICKS + SLAM_FREE_FLIGHT_TICKS) {
+                this.discard();
             }
-            for (LivingEntity target : targets) {
-                if (hitOrder.containsKey(target.getUUID())) {
-                    continue;                                  // 每鞭每目标一次 ✓
-                }
-                if (!physics.segmentHits(seg, target.getBoundingBox())) {
-                    continue;
-                }
-                damage(owner, target, speed, 1.0D, KNOCKBACK);
+            return;
+        }
+        if (this.tickCount > windupTicks + strokeTicks + LASH_FREE_FLIGHT_TICKS) {
+            this.discard();
+        }
+    }
+
+    private void forgetCharge() {
+        String uuid = getOwnerUuid();
+        if (!uuid.isEmpty()) {
+            try {
+                ACTIVE_CHARGES.remove(UUID.fromString(uuid));
+            } catch (Throwable ignored) {
+                // uuid 不合法就算了 ✓
             }
         }
     }
 
-    /** 服务端：砸地 ⇒ 一次冲击波 ✓（只打一次 ✓） */
-    private void tickSlam(Player owner) {
-        if (slamDone || this.tickCount < SLAM_IMPACT_TICK) {
-            return;
-        }
-        slamDone = true;
-
-        Vec3 center = owner.position();
-        List<LivingEntity> targets = this.level().getEntitiesOfClass(LivingEntity.class,
-                new AABB(center, center).inflate(SLAM_RADIUS),
-                e -> isValidTarget(owner, e));
-        for (LivingEntity target : targets) {
-            damage(owner, target, 0.0D, SLAM_DAMAGE_MULTIPLIER, SLAM_KNOCKBACK);
-            Vec3 push = target.position().subtract(center);
-            Vec3 dir = push.lengthSqr() < 1.0E-6D ? owner.getViewVector(1.0F) : push.normalize();
-            target.push(dir.x * SLAM_KNOCKBACK, 0.55D * SLAM_KNOCKBACK, dir.z * SLAM_KNOCKBACK);
-            target.hurtMarked = true;
-        }
-
-        if (this.level() instanceof ServerLevel server) {
-            for (int i = 0; i < 40; i++) {
-                double a = this.random.nextDouble() * Math.PI * 2.0D;
-                double r = this.random.nextDouble() * SLAM_RADIUS;
-                server.sendParticles(ParticleTypes.CLOUD,
-                        center.x + Math.cos(a) * r, center.y + 0.1D, center.z + Math.sin(a) * r,
-                        1, 0.0D, 0.05D, 0.0D, 0.02D);
-            }
-            server.playSound(null, center.x, center.y, center.z,
-                    SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.0F, 0.7F);
-        }
-    }
-
-    /** 结算一次命中 ✓：伤害 = 面板 × (速度/10 或给定倍数) ✓，并按命中顺序衰减 100/50/25/… ✓ */
-    private void damage(Player owner, LivingEntity target, double speed, double multiplier, double knockback) {
-        hitOrder.put(target.getUUID(), nextFalloffIndex);
-        double falloff = Math.pow(0.5D, nextFalloffIndex);
-        nextFalloffIndex++;
-
-        double speedMultiplier = speed <= 0.0D ? multiplier : Math.min(MAX_DAMAGE_MULTIPLIER, speed / SPEED_UNIT);
-        float amount = (float) Math.max(0.5D, getPanelDamage() * speedMultiplier * multiplier * falloff);
-
-        boolean hurt = target.hurt(this.damageSources().playerAttack(owner), amount);
-        if (!hurt) {
-            return;
-        }
-        target.invulnerableTime = 0;                        // 一鞭多段不被无敌帧吞掉 ✓
-
-        Vec3 push = target.position().subtract(owner.position());
-        Vec3 dir = push.lengthSqr() < 1.0E-6D ? owner.getViewVector(1.0F) : push.normalize();
-        target.push(dir.x * knockback, 0.12D * knockback, dir.z * knockback);
-        target.hurtMarked = true;
-
-        if (this.level() instanceof ServerLevel server) {
-            Vec3 at = target.position().add(0.0D, target.getBbHeight() * 0.5D, 0.0D);
-            server.sendParticles(ParticleTypes.CRIT, at.x, at.y, at.z, 6, 0.15D, 0.15D, 0.15D, 0.1D);
-            server.playSound(null, at.x, at.y, at.z,
-                    SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 0.9F,
-                    1.1F + this.random.nextFloat() * 0.2F);
-        }
-    }
-
-    /** 能不能打：不是主人 ✓ 不是同伴（同队玩家／主人的宠物 ✓）✓ 活着 ✓ */
     private boolean isValidTarget(Player owner, LivingEntity candidate) {
         if (candidate == owner || !candidate.isAlive() || candidate.isSpectator()) {
             return false;
@@ -312,22 +459,22 @@ public class WhipLashEntity extends Entity {
     private Player resolveOwner() {
         try {
             UUID uuid = UUID.fromString(getOwnerUuid());
-            Player p = this.level().getPlayerByUUID(uuid);
-            return p;
+            return this.level().getPlayerByUUID(uuid);
         } catch (Throwable ignored) {
             return null;
         }
     }
 
     // ==================== 杂项 ====================
+
     @Override
     public AABB getBoundingBoxForCulling() {
-        return super.getBoundingBoxForCulling().inflate(10.0D);
+        return super.getBoundingBoxForCulling().inflate(WhipPhysics.totalLength() + 2.0D);
     }
 
     @Override
     public boolean shouldRenderAtSqrDistance(double distanceSqr) {
-        return distanceSqr < 192.0D * 192.0D;
+        return distanceSqr < 256.0D * 256.0D;
     }
 
     @Override

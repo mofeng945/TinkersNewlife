@@ -2,37 +2,42 @@
 
 ## Changed
 
-### The slingshot is now built from one tool handle, one bow limb and one bowstring
+### The whip is now a faithful port of the reference implementation
 
-The three parts are all standard Tinkers parts, so **nothing new has to be crafted or patterned**:
-the part builder patterns and casts you already have are enough. (Tinkers' own javelin is made from
-a tool handle plus a bow limb, and its fishing rod from a bow limb plus a bowstring - the slingshot
-now sits in the same family.)
+The whole lash pipeline was read out of the reference mod (Better Whips, MIT, my2167592261-cell) before
+any code was written this time, and the whip was rewritten against it. Previous attempts failed because
+they drove an invented model instead of the real one.
 
-The Tinker Station layout was re-arranged into a diagonal, matching the requested order:
+**What the whip actually is:** a 57 point rope whose root is pinned to a hand that really swings.
 
-```
-  a          a = bowstring   (22, 32)
-     b       b = bow limb    (34, 44)
-        c    c = tool handle (46, 56)
-```
+* **Rope**: 57 points / 56 segments, segment lengths taken from the reference's authored model
+  (0.19 -> 0.44 blocks, total ~8.49 blocks), per-segment collider radii 0.059 -> 0.018 (tip knob 0.0388).
+* **Mass taper**: `0.065 + 0.935 * (1 - taper)^2` - the tip is 1/15 of the root, which is why a whip tip
+  cracks.
+* **Per-particle speed caps**: `82 + 108 * taper^1.65` blocks per second (root 82, tip 190).
+* **Constraints**: XPBD length (compliance 3e-8) plus bend/anti-fold (1.6e-7), maximum stretch 1.003,
+  a stiff handle zone (first 20 segments at 3.4x, with continuity checkpoints) and self collision (0.055).
+* **Adaptive sub steps**: 6 / 8 / 12 / 18 / 24 chosen from the maximum particle speed.
 
-Slot labels were renamed accordingly (`bow limb`, `tool handle`, `bowstring`) in both English and
-Chinese, and the guide book entry plus the group description now describe the new recipe.
+**Left click** runs the reference's arm timeline exactly: `windup = clamp(min(3, period-2),1,3)` and
+`stroke = clamp(period-windup-1,1,4)` (period is the weapon's attack cooldown), so the progress goes
+0 -> 0.30 during the windup and 0.30 -> 1.0 during the stroke, with `pow(t, 1.55)` acceleration on the
+stroke. The arm anchor is `precisionHandAnchor`: it raises 0.68 blocks, then drives 0.86 forward,
+0.08 below and 0.10 across. **When the drive ends the root returns to the hand and the rope flies free**
+for another 25 ticks - that flying section is what throws the whip, and the damage window
+(`windup+1 .. windup+10`) covers it.
 
-## Does it still work as a ranged weapon?
+**Right click** charges for up to 60 ticks with the reference's spin (centrifugal plus tangential forces,
+hand orbit radius 0.18, tip visual scale up to 10x), then releases into a 14 tick pendulum slam with the
+reference's release forces. When the tip touches a block or an entity, a shockwave is released.
 
-Yes. Firing is implemented in code, not in the parts: the item is a modifiable bow that draws while
-you hold right-click and spawns its own stone projectile entity on release, using the tool's
-`velocity` / `projectile damage` stats - and those stats come from the **bow limb** material, which
-the recipe still contains. Replacing the second bow limb with a tool handle therefore keeps the
-slingshot a fully working ranged weapon; the handle contributes durability and attack-speed style
-stats instead.
+**Damage** follows the reference exactly: `floor(sectionSpeed / 10) * 0.2`, halved for every target
+already hit by that lash (`base / 2^prior`, zero after 30), with the whip crack sound.
 
-Two side effects worth knowing:
+## Notes
 
-* With **one** bow limb instead of two, the bow stats contributed by materials are roughly halved,
-  so a slingshot fires somewhat slower/weaker than the previous two-limb version at equal materials.
-* Slingshots built **before** this update stored their materials against the old part order, so an
-  old tool is re-interpreted with the new parts. Rebuild it (or give yourself a new one) if its
-  stats look odd.
+* Ported from Better Whips (MIT) - see `LICENSES/BetterWhips-MIT.txt`. The rope, the anchors, the three
+  drives, the constraint family and the damage formula are ports; the entity, the item, the renderer and
+  the contact loop are this mod's own.
+* Known simplifications: block collision is per-point depenetration (the reference uses swept capsules
+  per segment), the idle coil flourish is not implemented, and the arm is not posed by a renderer mixin.

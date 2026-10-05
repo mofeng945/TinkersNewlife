@@ -19,7 +19,7 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 /**
- * <b>鞭身渲染</b>（§1047）—— 把 {@link WhipPhysics} 那 25 个点连成一条<b>正对镜头</b>的带状面片 ✓。
+ * <b>鞭身渲染</b>（§1047／§1053）—— 把 {@link WhipPhysics} 那 <b>57 个点</b>连成一条<b>正对镜头</b>的带状面片 ✓。
  *
  * <h2>画法</h2>
  * 每两个相邻点构成一节四边形 ✓；宽度从<b>根部最粗</b>收到<b>梢部最细</b> ✓
@@ -36,9 +36,11 @@ public class WhipLashRenderer extends EntityRenderer<WhipLashEntity> {
     private static final ResourceLocation TEXTURE =
             new ResourceLocation(TinkersNewlife.MOD_ID, "textures/entity/whip_lash.png");
 
-    /** 根部（手这一端）半宽 ✓ 与梢部半宽 ✓（格）—— 决定"鞭子有多粗" ✓ */
-    private static final float ROOT_HALF_WIDTH = 0.075F;
-    private static final float TIP_HALF_WIDTH = 0.013F;
+    /**
+     * 半宽 ＝ <b>照参照模组的逐段碰撞半径收放</b> ✓（0.059 → 0.018，梢端 0.0388 ✓）
+     * 再乘一个可读性系数 ✓（纯视觉 ✓ 与物理半径解耦 ✓）。
+     */
+    private static final float HALF_WIDTH_SCALE = 1.35F;
     /** 顶点色（偏米白的皮革色 ✓ 贴图只提供明暗 ✓） */
     private static final int TINT = 0xE6DCC8;
 
@@ -93,8 +95,8 @@ public class WhipLashRenderer extends EntityRenderer<WhipLashEntity> {
 
                 float f0 = (float) i / segments;
                 float f1 = (float) (i + 1) / segments;
-                float w0 = ROOT_HALF_WIDTH + (TIP_HALF_WIDTH - ROOT_HALF_WIDTH) * f0;
-                float w1 = ROOT_HALF_WIDTH + (TIP_HALF_WIDTH - ROOT_HALF_WIDTH) * f1;
+                float w0 = (float) (WhipPhysics.segmentRadius(i) * HALF_WIDTH_SCALE);
+                float w1 = (float) (WhipPhysics.segmentRadius(i + 1) * HALF_WIDTH_SCALE);
 
                 Vec3 a0 = a.add(side.scale(w0));
                 Vec3 a1 = a.subtract(side.scale(w0));
