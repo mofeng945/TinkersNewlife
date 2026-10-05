@@ -274,21 +274,24 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
 
   @Override
   public boolean onLeftClickEntity(ItemStack stack, Player player, Entity target) {
-    // ⚠ §1015 实测修正：这里必须**始终返回 false（不否决）** ✓，并且**不替拔刀剑推进连段** ✓。
+    // §1016 实测修正：**必须调本体** ✓ **但必须返回 false** ✓ —— 两件事各管一头，缺一不可。
     //
-    // 依据（Forge 源码 + 字节码，均已在日志/反编译中核对 ✓）：
-    //   ForgeHooks.onPlayerAttackTarget(...) → `return stack.isEmpty() || !item.onLeftClickEntity(...);` ✓
-    //   SlashBlade AttackHelper.attack(...)  → `if (!onPlayerAttackTarget(...)) return;` ✗
-    // ⇒ 我们只要返回 true（"取消原版单击"✗），**拔刀剑自己的斩击/剑技结算会被整个跳过** ✗
-    //   —— §1011 那版"砍不到人"就是这么造成的 ✓。
+    // ① 为什么要调 super（连段唯一的推进器 ✗）：
+    //    本体内部会先清/置玩家的 `L_CLICK` 输入指令、再调 `ISlashBladeState#progressCombo(player)` ✓。
+    //    全整合包扫描（class 常量池 + 字节码）证实：**写 L_CLICK / R_CLICK 的只有 ItemSlashBlade 自己** ✓，
+    //    客户端只发"移动/输入位掩码"（`network/MoveCommandMessage` ✓，其校验只要求手里那把**有 BLADESTATE** ✓）。
+    //    ⇒ §1015 把这句 super 删掉之后，**再没有任何地方推进连段** ✗ ⇒ 实测症状"剑技永远只有第一段" ✗。
     //
-    // 另：**不要在这里调 super** ✗。本体的 onLeftClickEntity 内部会 `progressCombo` ✓，
-    //   而连段本来由拔刀剑自己的客户端输入管线驱动 ✓ ⇒ 我们再推一次就等于**每次攻击推进两次** ✗
-    //   ⇒ 连段状态机卡在第一段 ⇒ 实测症状"一直无冷却使用第一段剑技" ✓。
+    // ② 为什么返回值必须是 false（否则拔刀剑整个不打 ✗）：
+    //    Forge：`onPlayerAttackTarget(...) = stack.isEmpty() || !item.onLeftClickEntity(...)` ✓（**取反** ✓）；
+    //    SlashBlade：`AttackHelper.attack(...)` 开头 `if (!onPlayerAttackTarget(...)) return;` ✓（**被否决就中止** ✓）
+    //    ⇒ 返回 true ＝ 让拔刀剑"这次别打" ✗ ⇒ §1011 的"砍不到人" ✓。
     //
-    // 也**不再调**匠魂的 EntityInteractionModifierHook.leftClickEntity ✗：
-    //   它会自行结算一次伤害 ✗ 并且返回 true ⇒ 又变成"否决"✗。
-    //   本刀的伤害来自匠魂面板（属性 ✓）＋ 拔刀剑自己的结算 ✓ —— 两边各一次即可 ✓。
+    // ③ 为什么**不调**匠魂的 EntityInteractionModifierHook.leftClickEntity ✗：
+    //    它会自行结算一次伤害 ✗ **并返回 true** ⇒ 又变成"否决"✗（§1013 那版正是这样：
+    //    连段被推进了 ✓ 但拔刀剑的结算被否决 ✗ ⇒ 剑技表现错乱 ✓）。
+    //    本刀伤害 = 匠魂面板属性 ✓ ＋ 拔刀剑自己的结算 ✓。
+    super.onLeftClickEntity(stack, player, target);
     return false;
   }
 
