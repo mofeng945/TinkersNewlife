@@ -140,7 +140,6 @@ public class TinkersNewlife {
         // §1030 拔刀剑（照 TiCEX 1:1）：把三个自定义修饰符钩子注册进匠魂的钩子注册器 ✓ ——
         //   **必须早于修饰符被反序列化**（否则修饰符构造时 getHook(...) 拿到 null ✗）
         //   ⇒ 就放在这里：修饰符注册事件要等所有模组构造完才发 ✓ 一定更晚 ✓。
-// [SS1036 katana-removed] com.mofengbaizhi.tinkersnewlife.integration.slashblade.hook.KatanaModifierHooks.register();
 
         ModCreativeTabs.CREATIVE_MODE_TABS.register(modEventBus);
 
@@ -326,11 +325,6 @@ public class TinkersNewlife {
         registerClientPacket(PacketSyncCurse.class, PacketSyncCurse::toBytes, PacketSyncCurse::new, PacketSyncCurse::handle);
         registerClientPacket(PacketOpenShikigamiScreen.class, PacketOpenShikigamiScreen::toBytes, PacketOpenShikigamiScreen::new, PacketOpenShikigamiScreen::handle);
         registerClientPacket(PacketBlackBirdCamera.class, PacketBlackBirdCamera::toBytes, PacketBlackBirdCamera::new, PacketBlackBirdCamera::handle);
-// [SS1036 katana-removed] // §1022 拔刀剑：刀状态同步（照 TiCEX 的 StateSyncPacket ✓）—— 只在拔刀剑在场时才会被发出 ✓
-// [SS1036 katana-removed] registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.slashblade.PacketSlashBladeStateSync.class,
-// [SS1036 katana-removed] com.mofengbaizhi.tinkersnewlife.network.slashblade.PacketSlashBladeStateSync::toBytes,
-// [SS1036 katana-removed] com.mofengbaizhi.tinkersnewlife.network.slashblade.PacketSlashBladeStateSync::new,
-// [SS1036 katana-removed] com.mofengbaizhi.tinkersnewlife.network.slashblade.PacketSlashBladeStateSync::handle);
         registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenWuWeiScreen.class,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenWuWeiScreen::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketOpenWuWeiScreen::new,
@@ -433,7 +427,6 @@ public class TinkersNewlife {
     public static void onCommonSetup(net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
             try {
-// [SS1036 katana-removed] com.mofengbaizhi.tinkersnewlife.integration.slashblade.CatalystMaterialStatsType.RegisterStats();
                 LOGGER.info("[拔刀剑] 催化材料统计类型已注册");
             } catch (Throwable t) {
                 LOGGER.warn("[拔刀剑] 催化材料统计类型注册失败（已跳过）：{}", t.toString());

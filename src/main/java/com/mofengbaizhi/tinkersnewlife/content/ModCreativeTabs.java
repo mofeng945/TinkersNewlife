@@ -191,13 +191,6 @@ public class ModCreativeTabs {
         addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.SpearItem.SPEAR_DEFINITION, com.mofengbaizhi.tinkersnewlife.content.ModItems.SPEAR.get());   // §835 长矛
         addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.RapierItem.RAPIER_DEFINITION, com.mofengbaizhi.tinkersnewlife.content.ModItems.RAPIER.get());   // §943 西洋剑（移植匠魂2）
         addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.SlingshotItem.SLINGSHOT_DEFINITION, ModItems.SLINGSHOT.get());   // §983 弹弓
-// [SS1036 katana-removed] // ✗ §1034 拔刀剑整体搁置（可逆隐藏）：这一行**已注释掉** ✗ ——
-// [SS1036 katana-removed] //   不注释的话，创造物品栏里会出现拔刀剑本体（以及 addAllToolVariants 给它的各材料变体）✗。
-// [SS1036 katana-removed] //   恢复：把下面这行取消注释即可 ✓（代码与 KATANA_DEFINITION 全部保留 ✗ 未删）。
-// [SS1036 katana-removed] //   注：刀身/刀鞘部件（blade/sheath）、三种铸模、catalyst_slashblade、konpaku_core
-// [SS1036 katana-removed] //   本来**就没有**进创造栏（本类只在 §157–§179 加了溜溜球/袍带等部件，从未加拔刀剑部件）
-// [SS1036 katana-removed] //   ⇒ 对它们无需改动 ✓（详见备忘录 §1034）。
-// [SS1036 katana-removed] // addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.KatanaItem.KATANA_DEFINITION, ModItems.KATANA.get());   // §999 拔刀剑
 
                                 if (anyLoaded("irons_spellbooks", "goety")) {
                                     addAllToolVariants(output, ModularStaffItem.MODULAR_STAFF_DEFINITION, ModItems.MODULAR_STAFF.get());

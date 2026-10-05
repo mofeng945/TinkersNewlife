@@ -123,35 +123,9 @@ public class ModItems {
     public static final RegistryObject<Item> DRAGON_CORE_RED_SAND_CAST =
             ITEMS.register("dragon_core_red_sand_cast", () -> new Item(new Item.Properties().stacksTo(1)));
 
-// [SS1036 katana-removed] /** §998 拔刀剑·刀身部件（头部统计 ✓ 用户口径"两个部件都用 head"） */
-// [SS1036 katana-removed] public static final RegistryObject<ToolPartItem> KATANA_BLADE =
-// [SS1036 katana-removed] ITEMS.register("blade",
-// [SS1036 katana-removed] () -> new ToolPartItem(new Item.Properties(),
-// [SS1036 katana-removed] new MaterialStatsId(new ResourceLocation("tconstruct", "head"))
-// [SS1036 katana-removed] ));
 
-// [SS1036 katana-removed] /** §998 拔刀剑·刀身铸模（金铸模 / 沙铸模 / 红沙铸模） */
-// [SS1036 katana-removed] public static final RegistryObject<Item> BLADE_CAST =
-// [SS1036 katana-removed] ITEMS.register("blade_cast", () -> new Item(new Item.Properties().stacksTo(1)));
-// [SS1036 katana-removed] public static final RegistryObject<Item> BLADE_SAND_CAST =
-// [SS1036 katana-removed] ITEMS.register("blade_sand_cast", () -> new Item(new Item.Properties().stacksTo(1)));
-// [SS1036 katana-removed] public static final RegistryObject<Item> BLADE_RED_SAND_CAST =
-// [SS1036 katana-removed] ITEMS.register("blade_red_sand_cast", () -> new Item(new Item.Properties().stacksTo(1)));
 
-// [SS1036 katana-removed] /** §998 拔刀剑·刀鞘部件（头部统计 ✓） */
-// [SS1036 katana-removed] public static final RegistryObject<ToolPartItem> KATANA_SHEATH =
-// [SS1036 katana-removed] ITEMS.register("sheath",
-// [SS1036 katana-removed] () -> new ToolPartItem(new Item.Properties(),
-// [SS1036 katana-removed] new MaterialStatsId(new ResourceLocation("tconstruct", "head"))
-// [SS1036 katana-removed] ));
 
-// [SS1036 katana-removed] /** §998 拔刀剑·刀鞘铸模（金铸模 / 沙铸模 / 红沙铸模） */
-// [SS1036 katana-removed] public static final RegistryObject<Item> SHEATH_CAST =
-// [SS1036 katana-removed] ITEMS.register("sheath_cast", () -> new Item(new Item.Properties().stacksTo(1)));
-// [SS1036 katana-removed] public static final RegistryObject<Item> SHEATH_SAND_CAST =
-// [SS1036 katana-removed] ITEMS.register("sheath_sand_cast", () -> new Item(new Item.Properties().stacksTo(1)));
-// [SS1036 katana-removed] public static final RegistryObject<Item> SHEATH_RED_SAND_CAST =
-// [SS1036 katana-removed] ITEMS.register("sheath_red_sand_cast", () -> new Item(new Item.Properties().stacksTo(1)));
     /** 噤默手套·核心部件（头部统计） */
     public static final RegistryObject<ToolPartItem> SILENT_GLOVE_CORE =
             ITEMS.register("silent_glove_core",
@@ -295,37 +269,9 @@ public class ModItems {
                             new Item.Properties().stacksTo(1))
             );
 
-// [SS1036 katana-removed] /** §999 匠魂拔刀剑（部件：刀鞘 ＋ 刀身 ＋ 坚韧手柄）—— 阶段 1 骨架，手感见 §996 的 P3 */
-// [SS1036 katana-removed] public static final RegistryObject<com.mofengbaizhi.tinkersnewlife.content.item.KatanaItem> KATANA =
-// [SS1036 katana-removed] ITEMS.register("katana",
-// [SS1036 katana-removed] () -> new com.mofengbaizhi.tinkersnewlife.content.item.KatanaItem(
-// [SS1036 katana-removed] new Item.Properties().stacksTo(1))
-// [SS1036 katana-removed] );
 
-// [SS1036 katana-removed] // ---- §1030 拔刀剑：照 TiCEX 搬过来的两件内容物 ----
 
-// [SS1036 katana-removed] /**
-// [SS1036 katana-removed] * 拔刀剑「催化」部件（= TiCEX 的 {@code CATALYST_SLASHBLADE} ✓）：
-// [SS1036 katana-removed] * 统计类型是 {@link com.mofengbaizhi.tinkersnewlife.integration.slashblade.CatalystMaterialStatsType}
-// [SS1036 katana-removed] * 的 {@code catalyst_slashblade} ✓（**没有数值** ✓ 与 TiCEX 一致 ✓）。
-// [SS1036 katana-removed] * <p>用途：作为「拵」特性的装裱/配方输入 ✓（简化版配方见
-// [SS1036 katana-removed] * {@code data/tinkersnewlife/recipes/tools/modifiers/koshirae.json} ✓）。
-// [SS1036 katana-removed] */
-// [SS1036 katana-removed] public static final RegistryObject<ToolPartItem> CATALYST_SLASHBLADE =
-// [SS1036 katana-removed] ITEMS.register("catalyst_slashblade",
-// [SS1036 katana-removed] () -> new ToolPartItem(new Item.Properties(),
-// [SS1036 katana-removed] com.mofengbaizhi.tinkersnewlife.integration.slashblade.CatalystMaterialStatsType
-// [SS1036 katana-removed] .getOrMakeType("catalyst_slashblade").getId()
-// [SS1036 katana-removed] ));
 
-// [SS1036 katana-removed] /**
-// [SS1036 katana-removed] * 「魂魄」核心（= TiCEX 的 {@code KONPAKU_CORE} ✓）。
-// [SS1036 katana-removed] * <p>⚠ 与 TiCEX 的差异（如实记录 ✓）：TiCEX 用的是它自家的 {@code ItemReconstCore} ✗ ——
-// [SS1036 katana-removed] * 那个类**会往 tooltip 里塞一行"某某特性"** ✗（本仓铁律 §812：新加的 tooltip 一律不许 ✗）
-// [SS1036 katana-removed] * ⇒ 这里退化成**普通物品** ✓（功能上只差那行提示 ✓，本仓口径下反而更正确 ✓）。
-// [SS1036 katana-removed] */
-// [SS1036 katana-removed] public static final RegistryObject<Item> KONPAKU_CORE =
-// [SS1036 katana-removed] ITEMS.register("konpaku_core", () -> new Item(new Item.Properties()));
 
     /** 弹弓（§983）：远程武器，部件 = 两个弓臂 + 一个弓弦；右键拉弓，射背包里的石头/圆石 */
     public static final RegistryObject<com.mofengbaizhi.tinkersnewlife.content.item.SlingshotItem> SLINGSHOT =

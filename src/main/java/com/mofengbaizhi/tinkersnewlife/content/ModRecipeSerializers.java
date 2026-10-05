@@ -4,11 +4,7 @@ import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.AutoMaterialMeltingRecipe;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.ChargedCreeperMeltingRecipe;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.CrystalModifierRecipe;
-// [SS1036 katana-removed] import com.mofengbaizhi.tinkersnewlife.content.recipe.EmbossmentBuildingRecipe;
-// [SS1036 katana-removed] import com.mofengbaizhi.tinkersnewlife.content.recipe.EmbossmentCastingRecipe;
-// [SS1036 katana-removed] import com.mofengbaizhi.tinkersnewlife.content.recipe.EmbossmentModifierRecipe;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.GenericToolMeltingRecipe;
-// [SS1036 katana-removed] import com.mofengbaizhi.tinkersnewlife.content.recipe.SingleEmbossmentModifierRecipe;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.TagModifierSalvage;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.CurseCraftRecipe;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.ElderCrystalMergeRecipe;
@@ -112,34 +108,8 @@ public class ModRecipeSerializers {
             RECIPE_SERIALIZERS.register("elder_crystal_split",
                     ElderCrystalSplitRecipe.Serializer::new);
 
-// [SS1036 katana-removed] // ============================================================
-// [SS1036 katana-removed] //  §1032 装裱（embossment）配方体系 —— 照 TiCEX 1:1 搬过来（4 个序列化器 ✓）
-// [SS1036 katana-removed] //
-// [SS1036 katana-removed] //  ⚠ TiCEX 也是**只注册序列化器**、不为它们注册 RecipeType ✓ ——
-// [SS1036 katana-removed] //    因为这几个配方类都继承匠魂自己的基类 ✓，{@code getType()} 由基类给出：
-// [SS1036 katana-removed] //      · EmbossmentModifierRecipe / SingleEmbossmentModifierRecipe / EmbossmentBuildingRecipe
-// [SS1036 katana-removed] //        ⇒ {@code tconstruct:tinker_station}（修补台/工匠砧 ✓ 那条 {@code @Override matches} 走的就是它 ✓）；
-// [SS1036 katana-removed] //      · EmbossmentCastingRecipe ⇒ {@code tconstruct:casting_table}（浇铸台 ✓）。
-// [SS1036 katana-removed] //    （这正是"用匠魂的修饰符工作台装上修饰符时 applyItem 会被调用"的机制所在 ✓。）
-// [SS1036 katana-removed] // ============================================================
 
-// [SS1036 katana-removed] /** 装裱修饰符配方（普通材料 ＋ 装裱输入；本仓「魂魄」用它 ✓） */
-// [SS1036 katana-removed] public static final RegistryObject<RecipeSerializer<EmbossmentModifierRecipe>> EMBOSSMENT_MODIFIER =
-// [SS1036 katana-removed] RECIPE_SERIALIZERS.register("embossment_modifier",
-// [SS1036 katana-removed] () -> LoadableRecipeSerializer.of(EmbossmentModifierRecipe.LOADER));
 
-// [SS1036 katana-removed] /** 单输入装裱修饰符配方（只有装裱输入；本仓「拵」「隐耀魂」用它 ✓） */
-// [SS1036 katana-removed] public static final RegistryObject<RecipeSerializer<SingleEmbossmentModifierRecipe>> SINGLE_MODIFIER_EMBOSSMENT =
-// [SS1036 katana-removed] RECIPE_SERIALIZERS.register("single_embossment_modifier",
-// [SS1036 katana-removed] () -> LoadableRecipeSerializer.of(SingleEmbossmentModifierRecipe.LOADER));
 
-// [SS1036 katana-removed] /** 装裱浇铸配方（把一把真刀当铸模浇进部件，结果的 {@code embossed} 标签就是那把刀的存档 ✓） */
-// [SS1036 katana-removed] public static final RegistryObject<TypeAwareRecipeSerializer<EmbossmentCastingRecipe>> CASTING_EMBOSSMENT =
-// [SS1036 katana-removed] RECIPE_SERIALIZERS.register("embossment_casting",
-// [SS1036 katana-removed] () -> LoadableRecipeSerializer.of(EmbossmentCastingRecipe.LOADER, TinkerRecipeTypes.CASTING_TABLE));
 
-// [SS1036 katana-removed] /** 装裱建刀配方（建刀时把 {@code embossed} 输入的属性/存档并进新刀 ✓；本仓暂未在数据里使用 ✓） */
-// [SS1036 katana-removed] public static final RegistryObject<RecipeSerializer<EmbossmentBuildingRecipe>> BUILDING_EMBOSSMENT =
-// [SS1036 katana-removed] RECIPE_SERIALIZERS.register("embossment_building",
-// [SS1036 katana-removed] () -> LoadableRecipeSerializer.of(EmbossmentBuildingRecipe.LOADER));
 }
