@@ -1,0 +1,6 @@
+{
+  "type": "tconstruct:molding_table",
+  "material": { "tag": "tconstruct:casts/red_sand" },
+  "pattern": { "type": "tconstruct:material", "item": "tinkersnewlife:sheath" },
+  "result": "tinkersnewlife:sheath_red_sand_cast"
+}

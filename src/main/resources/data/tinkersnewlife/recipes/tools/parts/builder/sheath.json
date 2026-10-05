@@ -1,0 +1,10 @@
+{
+  "type": "tconstruct:part_builder",
+  "cost": 3,
+  "pattern": "tinkersnewlife:sheath",
+  "pattern_item": [
+    { "tag": "tconstruct:patterns/default" },
+    { "item": "tinkersnewlife:sheath_cast" }
+  ],
+  "result": { "item": "tinkersnewlife:sheath" }
+}

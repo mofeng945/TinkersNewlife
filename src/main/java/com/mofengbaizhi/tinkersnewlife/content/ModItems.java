@@ -123,6 +123,35 @@ public class ModItems {
     public static final RegistryObject<Item> DRAGON_CORE_RED_SAND_CAST =
             ITEMS.register("dragon_core_red_sand_cast", () -> new Item(new Item.Properties().stacksTo(1)));
 
+    /** §998 拔刀剑·刀身部件（头部统计 ✓ 用户口径"两个部件都用 head"） */
+    public static final RegistryObject<ToolPartItem> KATANA_BLADE =
+            ITEMS.register("blade",
+                    () -> new ToolPartItem(new Item.Properties(),
+                            new MaterialStatsId(new ResourceLocation("tconstruct", "head"))
+                    ));
+
+    /** §998 拔刀剑·刀身铸模（金铸模 / 沙铸模 / 红沙铸模） */
+    public static final RegistryObject<Item> BLADE_CAST =
+            ITEMS.register("blade_cast", () -> new Item(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> BLADE_SAND_CAST =
+            ITEMS.register("blade_sand_cast", () -> new Item(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> BLADE_RED_SAND_CAST =
+            ITEMS.register("blade_red_sand_cast", () -> new Item(new Item.Properties().stacksTo(1)));
+
+    /** §998 拔刀剑·刀鞘部件（头部统计 ✓） */
+    public static final RegistryObject<ToolPartItem> KATANA_SHEATH =
+            ITEMS.register("sheath",
+                    () -> new ToolPartItem(new Item.Properties(),
+                            new MaterialStatsId(new ResourceLocation("tconstruct", "head"))
+                    ));
+
+    /** §998 拔刀剑·刀鞘铸模（金铸模 / 沙铸模 / 红沙铸模） */
+    public static final RegistryObject<Item> SHEATH_CAST =
+            ITEMS.register("sheath_cast", () -> new Item(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> SHEATH_SAND_CAST =
+            ITEMS.register("sheath_sand_cast", () -> new Item(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> SHEATH_RED_SAND_CAST =
+            ITEMS.register("sheath_red_sand_cast", () -> new Item(new Item.Properties().stacksTo(1)));
     /** 噤默手套·核心部件（头部统计） */
     public static final RegistryObject<ToolPartItem> SILENT_GLOVE_CORE =
             ITEMS.register("silent_glove_core",

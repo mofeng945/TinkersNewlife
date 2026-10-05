@@ -1,0 +1,6 @@
+{
+  "type": "tconstruct:table_casting_material",
+  "cast": { "tag": "tinkersnewlife:casts/multi_use/sheath" },
+  "item_cost": 3,
+  "result": "tinkersnewlife:sheath"
+}

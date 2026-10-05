@@ -1,0 +1,6 @@
+{
+  "type": "tconstruct:molding_table",
+  "material": { "tag": "tconstruct:casts/sand" },
+  "pattern": { "type": "tconstruct:material", "item": "tinkersnewlife:blade" },
+  "result": "tinkersnewlife:blade_sand_cast"
+}

@@ -1,0 +1,6 @@
+{
+  "type": "tconstruct:item_part_builder",
+  "pattern": "tinkersnewlife:sheath",
+  "pattern_item": { "tag": "tconstruct:casts/sand" },
+  "result": "tinkersnewlife:sheath_sand_cast"
+}

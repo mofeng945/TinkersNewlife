@@ -1,0 +1,6 @@
+{
+  "type": "tconstruct:item_part_builder",
+  "pattern": "tinkersnewlife:blade",
+  "pattern_item": { "tag": "forge:sand/red" },
+  "result": { "count": 4, "item": "tinkersnewlife:blade_red_sand_cast" }
+}
