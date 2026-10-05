@@ -308,20 +308,20 @@ public class ModEntities {
                         .noSummon()
                         .build(TinkersNewlife.MOD_ID + ":weak_point"));
 
-    /**
-     * §1030 掉在地上的拔刀剑（= TiCEX 的 {@code SLASHBLADE_TOOL_ITEM_ENTITY} ✓ 逐字照它的
-     * {@code EntityType.Builder} 参数 ✓：0.5×0.5 / 追踪 10 / 更新周期 20 / 不接收速度更新 ✓）。
-     * <p>换实体的入口在 {@code KatanaItem#onEntityItemUpdate} ✓；渲染在客户端
-     * {@code EntityRenderersEvent.RegisterRenderers} 里注册 {@code SBToolBladeItemRenderer} ✓。
-     */
-    public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.KatanaItemEntity>> KATANA_ITEM_ENTITY =
-        ENTITIES.register("katana_item",
-                () -> EntityType.Builder
-                        .<com.mofengbaizhi.tinkersnewlife.content.entity.KatanaItemEntity>of(
-                                com.mofengbaizhi.tinkersnewlife.content.entity.KatanaItemEntity::new, MobCategory.MISC)
-                        .sized(0.5F, 0.5F)
-                        .setTrackingRange(10)
-                        .setUpdateInterval(20)
-                        .setShouldReceiveVelocityUpdates(false)
-                        .build(TinkersNewlife.MOD_ID + ":katana_item"));
+// [SS1036 katana-removed] /**
+// [SS1036 katana-removed] * §1030 掉在地上的拔刀剑（= TiCEX 的 {@code SLASHBLADE_TOOL_ITEM_ENTITY} ✓ 逐字照它的
+// [SS1036 katana-removed] * {@code EntityType.Builder} 参数 ✓：0.5×0.5 / 追踪 10 / 更新周期 20 / 不接收速度更新 ✓）。
+// [SS1036 katana-removed] * <p>换实体的入口在 {@code KatanaItem#onEntityItemUpdate} ✓；渲染在客户端
+// [SS1036 katana-removed] * {@code EntityRenderersEvent.RegisterRenderers} 里注册 {@code SBToolBladeItemRenderer} ✓。
+// [SS1036 katana-removed] */
+// [SS1036 katana-removed] public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.KatanaItemEntity>> KATANA_ITEM_ENTITY =
+// [SS1036 katana-removed] ENTITIES.register("katana_item",
+// [SS1036 katana-removed] () -> EntityType.Builder
+// [SS1036 katana-removed] .<com.mofengbaizhi.tinkersnewlife.content.entity.KatanaItemEntity>of(
+// [SS1036 katana-removed] com.mofengbaizhi.tinkersnewlife.content.entity.KatanaItemEntity::new, MobCategory.MISC)
+// [SS1036 katana-removed] .sized(0.5F, 0.5F)
+// [SS1036 katana-removed] .setTrackingRange(10)
+// [SS1036 katana-removed] .setUpdateInterval(20)
+// [SS1036 katana-removed] .setShouldReceiveVelocityUpdates(false)
+// [SS1036 katana-removed] .build(TinkersNewlife.MOD_ID + ":katana_item"));
 }
