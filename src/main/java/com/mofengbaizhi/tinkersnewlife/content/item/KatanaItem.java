@@ -274,25 +274,29 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
 
   @Override
   public boolean onLeftClickEntity(ItemStack stack, Player player, Entity target) {
-    // §1016 实测修正：**必须调本体** ✓ **但必须返回 false** ✓ —— 两件事各管一头，缺一不可。
+    // §1017 实测修正：**完全照抄本体行为** —— 调 super ✓ 并把它的返回值**原样传出去** ✓（也就是"否决" ✓）。
     //
-    // ① 为什么要调 super（连段唯一的推进器 ✗）：
-    //    本体内部会先清/置玩家的 `L_CLICK` 输入指令、再调 `ISlashBladeState#progressCombo(player)` ✓。
-    //    全整合包扫描（class 常量池 + 字节码）证实：**写 L_CLICK / R_CLICK 的只有 ItemSlashBlade 自己** ✓，
-    //    客户端只发"移动/输入位掩码"（`network/MoveCommandMessage` ✓，其校验只要求手里那把**有 BLADESTATE** ✓）。
-    //    ⇒ §1015 把这句 super 删掉之后，**再没有任何地方推进连段** ✗ ⇒ 实测症状"剑技永远只有第一段" ✗。
+    // 【为什么要否决（返回 true）】＝ 这是打断"贴脸自动连击 + 每 tick 推进连段"的开关 ✗。
+    //   本方法的调用方有两条 ✗：
+    //     ① 真·左键：`Player.attack → ForgeHooks.onPlayerAttackTarget → 本方法` ✓（一次一下 ✓）；
+    //     ② 拔刀剑斩击特效：`EntitySlashEffect.tick → AttackManager.areaAttack → AttackHelper.attack
+    //        → ForgeHooks.onPlayerAttackTarget → 本方法` ✓ —— **只要目标还在范围内就每 tick 来一次** ✗
+    //        （§1014 的崩溃栈就是这条 ✓）。
+    //   本体返回 true ⇒ `onPlayerAttackTarget` 返回 false ⇒ `AttackHelper.attack` 开头直接 `return` ✓
+    //   ⇒ ② 这条"重复进入"被打断 ✓ ⇒ 一次挥砍只结算一次 ✓、连段只被真·左键推进 ✓
+    //   ⇒ §1016 实测的"砍到人就自动连击、跑远才停" ✗ 消失 ✓。
+    //   （§1015/§1016 返回 false ⇒ ② 每 tick 都能进来 ⇒ 目标在范围内就一直挨打 ✗ ＋ 我们每 tick 替它
+    //     `progressCombo` ✗ —— 两个症状都来自这里 ✓。）
     //
-    // ② 为什么返回值必须是 false（否则拔刀剑整个不打 ✗）：
-    //    Forge：`onPlayerAttackTarget(...) = stack.isEmpty() || !item.onLeftClickEntity(...)` ✓（**取反** ✓）；
-    //    SlashBlade：`AttackHelper.attack(...)` 开头 `if (!onPlayerAttackTarget(...)) return;` ✓（**被否决就中止** ✓）
-    //    ⇒ 返回 true ＝ 让拔刀剑"这次别打" ✗ ⇒ §1011 的"砍不到人" ✓。
+    // 【为什么现在否决不会再"砍不到人"】✓：§1011 那版照抄过否决 ✗，但当时**刀定义还不存在**
+    //   （`data/tinkersnewlife/slashblade/named_blades/katana.json` 是 §1013 才补的 ✓）
+    //   ⇒ 拔刀剑自己的伤害路径根本没跑 ⇒ 否决＝什么都不发生 ✗。
+    //   现在刀定义在位、本体管线已实测跑通 ✓（§1015-3 的崩溃链为证 ✓）⇒ 否决之后由**本体自己**结算伤害 ✓，
+    //   与它的原生刀行为完全一致 ✓（原生刀同样是"否决 + 自己结算" ✓）。
     //
-    // ③ 为什么**不调**匠魂的 EntityInteractionModifierHook.leftClickEntity ✗：
-    //    它会自行结算一次伤害 ✗ **并返回 true** ⇒ 又变成"否决"✗（§1013 那版正是这样：
-    //    连段被推进了 ✓ 但拔刀剑的结算被否决 ✗ ⇒ 剑技表现错乱 ✓）。
-    //    本刀伤害 = 匠魂面板属性 ✓ ＋ 拔刀剑自己的结算 ✓。
-    super.onLeftClickEntity(stack, player, target);
-    return false;
+    // 【为什么不调匠魂的 EntityInteractionModifierHook.leftClickEntity】✗：本体不调它 ✓；
+    //   调了会多结算一次伤害 ✗，而且它的返回值同样是"否决"，会让返回语义重复一层 ✗。
+    return super.onLeftClickEntity(stack, player, target);
   }
 
   @Override
