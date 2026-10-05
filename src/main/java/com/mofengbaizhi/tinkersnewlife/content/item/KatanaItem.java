@@ -1,6 +1,5 @@
 package com.mofengbaizhi.tinkersnewlife.content.item;
 
-import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import net.minecraft.core.BlockPos;
@@ -75,7 +74,6 @@ import javax.annotation.Nullable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
@@ -276,11 +274,11 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
 
   @Override
   public boolean onLeftClickEntity(ItemStack stack, Player player, Entity target) {
-    // ⚠ §1011：**必须先让拔刀剑本体跑**。ItemSlashBlade#onLeftClickEntity 会取刀状态执行攻击/连段登记 ✓，
-    // 并且在"刀状态存在"时**返回 true = 取消原版单击**（改由拔刀剑自己的攻击结算 ✓）。
-    // 移植 ModifiableItem 时这句 super 丢了 ✗ ⇒ 连段 / 特殊技 / 击杀计数整条链路都不会触发 ✗。
-    boolean slashBlade = super.onLeftClickEntity(stack, player, target);
-    return slashBlade || stack.getCount() > 1 || EntityInteractionModifierHook.leftClickEntity(stack, player, target);
+    // §1013 实测修正：让本体跑（它会登记 L_CLICK、推进连段 ✓），但**绝不把它返回的 true 传出去** ✗。
+    // 原因：在本体里 onLeftClickEntity **只做连段登记、不结算伤害** ✓，而返回 true 在 Forge 里表示
+    // "取消原版单击、这一下由物品自己结算" ✗ ⇒ 传出去就变成"左键挥了但砍不到人" ✗（实测症状）。
+    super.onLeftClickEntity(stack, player, target);
+    return stack.getCount() > 1 || EntityInteractionModifierHook.leftClickEntity(stack, player, target);
   }
 
   @Override
@@ -288,34 +286,15 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
     return AttributesModifierHook.getHeldAttributeModifiers(tool, slot);
   }
 
-  /** 原版剑"基础攻击力"修正的固定 UUID（= {@code Item.BASE_ATTACK_DAMAGE_UUID}，protected ⇒ 只能写字面量 ✓） */
-  private static final UUID VANILLA_BASE_ATTACK_DAMAGE = UUID.fromString("CB3F55D3-645C-4F38-A497-9C13A33DB5CF");
-  /** 原版剑"基础攻速"修正的固定 UUID（= {@code Item.BASE_ATTACK_SPEED_UUID} ✓） */
-  private static final UUID VANILLA_BASE_ATTACK_SPEED = UUID.fromString("FA233E1C-4180-4865-B01B-BCCE9785ACA3");
-
   @Override
   public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlot slot, ItemStack stack) {
     CompoundTag nbt = stack.getTag();
     if (nbt == null || slot.getType() != Type.HAND) {
       return ImmutableMultimap.of();
     }
-    Multimap<Attribute, AttributeModifier> tool = getAttributeModifiers(ToolStack.from(stack), slot);
-    // §1011：并入拔刀剑本体那侧由"刀状态"给出的加成 ✓（精炼/魂魄给攻击力、以及玩家触及距离 ✓）。
-    // 只丢掉它从 SwordItem 抄来的**基础攻击/攻速**（那两个 UUID 是原版固定值 ✓）——
-    // 基础面板由匠魂工具数值给出 ✓，不丢就会重复计一次 ✗。
-    Multimap<Attribute, AttributeModifier> blade = super.getAttributeModifiers(slot, stack);
-    if (blade.isEmpty()) {
-      return tool;
-    }
-    Multimap<Attribute, AttributeModifier> merged = ArrayListMultimap.create(tool);
-    for (Map.Entry<Attribute, AttributeModifier> entry : blade.entries()) {
-      AttributeModifier modifier = entry.getValue();
-      if (VANILLA_BASE_ATTACK_DAMAGE.equals(modifier.getId()) || VANILLA_BASE_ATTACK_SPEED.equals(modifier.getId())) {
-        continue;
-      }
-      merged.put(entry.getKey(), modifier);
-    }
-    return merged;
+    // §1013：**不再并入本体那份属性**。本体那份是"剑基础值 + 精炼/魂魄加成 + 触及距离"，
+    // 而基础值已经由匠魂面板给出 ✓ ⇒ 并进来就会把攻击力算两遍 ✗（§1011 那一版有这个隐患 ✓ 已撤）。
+    return getAttributeModifiers(ToolStack.from(stack), slot);
   }
 
   @Override
@@ -333,7 +312,9 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
 
   @Override
   public boolean mineBlock(ItemStack stack, Level worldIn, BlockState state, BlockPos pos, LivingEntity entityLiving) {
-    return ToolHarvestLogic.mineBlock(stack, worldIn, state, pos, entityLiving);
+    // §1013：本体在这里做"破坏方块时的刀效果/耐久" ✓，两边都要跑 ✓
+    boolean slashBlade = super.mineBlock(stack, worldIn, state, pos, entityLiving);
+    return ToolHarvestLogic.mineBlock(stack, worldIn, state, pos, entityLiving) || slashBlade;
   }
 
   @Override
@@ -351,6 +332,8 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
 
   @Override
   public void inventoryTick(ItemStack stack, Level worldIn, Entity entityIn, int itemSlot, boolean isSelected) {
+    // §1013：本体在这里维护"蓄力/连段/损坏"等逐帧状态 ✓（被顶掉会导致连段与蓄力不成立 ✗）
+    super.inventoryTick(stack, worldIn, entityIn, itemSlot, isSelected);
     InventoryTickModifierHook.heldInventoryTick(stack, worldIn, entityIn, itemSlot, isSelected);
   }
 
@@ -433,6 +416,13 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
   @Override
   public InteractionResultHolder<ItemStack> use(Level worldIn, Player playerIn, InteractionHand hand) {
     ItemStack stack = playerIn.getItemInHand(hand);
+    // ⚠ §1013：**必须先问拔刀剑本体**。ItemSlashBlade#use 会登记 R_CLICK 输入指令、推进连段 ✓，
+    // 需要时还会 player.startUsingItem(hand) 进入"使用中"状态 —— **蓄力→释放斩这条线全靠它** ✓。
+    // 移植匠魂时把这句 super 丢了 ✗ ⇒ 右键完全没反应 ✗（实测症状）。
+    InteractionResultHolder<ItemStack> slashBlade = super.use(worldIn, playerIn, hand);
+    if (slashBlade.getResult().consumesAction()) {
+      return slashBlade;
+    }
     if (stack.getCount() > 1) {
       return InteractionResultHolder.pass(stack);
     }
@@ -445,11 +435,14 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
         }
       }
     }
-    return InteractionResultHolder.pass(stack);
+    // 本体没接受这次右键时它会返回 FAIL ✓ —— 直接照它的结论走（不再回 pass 去干扰它 ✓）
+    return slashBlade;
   }
 
   @Override
   public void onUseTick(Level pLevel, LivingEntity entityLiving, ItemStack stack, int timeLeft) {
+    // §1013：本体负责"蓄力期间"的逐帧逻辑 ✓（§1011 之前被我们顶掉了 ✗）
+    super.onUseTick(pLevel, entityLiving, stack, timeLeft);
     ToolStack tool = ToolStack.from(stack);
     ModifierEntry activeModifier = GeneralInteractionModifierHook.getActiveModifier(tool);
     // new hook gets called on all actively in use modifiers
@@ -487,6 +480,8 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
 
   @Override
   public void releaseUsing(ItemStack stack, Level worldIn, LivingEntity entityLiving, int timeLeft) {
+    // §1013：**松开右键 = 拔刀剑的蓄力释放（释放斩/特殊技）** ✓ 全在本体里，必须先让它跑 ✓
+    super.releaseUsing(stack, worldIn, entityLiving, timeLeft);
     ToolStack tool = ToolStack.from(stack);
     ModifierEntry activeModifier = GeneralInteractionModifierHook.getActiveModifier(tool);
     GeneralInteractionModifierHook hook = activeModifier.getHook(ModifierHooks.GENERAL_INTERACT);

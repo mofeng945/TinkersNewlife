@@ -1,0 +1,13 @@
+{
+  "name": "tinkersnewlife:katana",
+  "item": "tinkersnewlife:katana",
+  "properties": {
+    "attack_base": 4.0,
+    "max_damage": 200,
+    "slash_art": "slashblade:judgement_cut"
+  },
+  "render": {
+    "model": "slashblade:model/blade.obj",
+    "texture": "slashblade:model/blade.png"
+  }
+}
