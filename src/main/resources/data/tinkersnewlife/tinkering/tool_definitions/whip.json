@@ -1,5 +1,6 @@
 {
   "_comment": "§1047 鞭子：部件 = 坚韧手柄(tough_handle) + 大板(large_plate) + 弓弦(bowstring)（用户口径 ✓）。三个都是本体标准部件 ⇒ 不需要任何新配方/模具/图案 ✓（同弹弓的路子 ✓）。伤害主要来自鞭身速度（见 WhipPhysics/WhipLashEntity 的 §1047）✓，这里只给基础面板与耐久 ✓。",
+  "_comment_1065": "§1065 用户口径：『把鞭子的挖掘标签和挖掘速度删掉和设置为0』✓。① 全仓核对：鞭子【本来就不在】任何挖掘标签里（tconstruct:modifiable/harvest 只有 dragon_staff/war_scythe/tang_heng_dao/spear/rapier ✓；small、aoe、interactable/left 也没有它 ✓）⇒ 【没有挖掘标签可删】✓。② 挖掘速度置 0：base_stats 与 multiply_stats 两处都写 0 ✓（base 那层定基线 ✓，multiply 那层是把大板部件按材料加出来的采掘速度乘掉 ✓ —— 只改 base 压不住部件贡献 ✗）。③ 我一度还加了 tconstruct:harvest_tier，后经核对发现【本仓 11 个工具定义里没有任何一个用过它】✗（全部只用 mining_speed ✓），无法在此环境验证该属性名是否合法 ⇒ 按用户口径（只说「挖掘速度」）撤回 ✗，避免无效属性名带来加载警告 ✗。",
   "modules": [
     {
       "type": "tconstruct:part_stats",
@@ -23,13 +24,15 @@
       "stats": {
         "tconstruct:durability": 220.0,
         "tconstruct:attack_damage": 3.5,
-        "tconstruct:attack_speed": 1.6
+        "tconstruct:attack_speed": 1.6,
+        "tconstruct:mining_speed": 0.0
       }
     },
     {
       "type": "tconstruct:multiply_stats",
       "multipliers": {
-        "tconstruct:durability": 1.5
+        "tconstruct:durability": 1.5,
+        "tconstruct:mining_speed": 0.0
       }
     },
     {

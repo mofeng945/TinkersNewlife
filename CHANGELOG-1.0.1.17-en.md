@@ -162,3 +162,11 @@ It is a real status effect (`tinkersnewlife:whip_weaken`) built on attribute mod
 AI mobs, players and summons alike and is visible both in the HUD and through `/attribute`. It is applied
 by the lash, and by the whip counter-attack from a perfect block. Icons and names are in the usual places
 (new 16x16 icon and `effect.tinkersnewlife.whip_weaken` in both languages).
+## Changed (2026-10-05, twelfth pass - version unchanged)
+
+* The whip has no mining speed at all now: `tconstruct:mining_speed` is 0 in the tool definition both as a
+  base value and as a 0 multiplier, so the mining speed the large plate would otherwise contribute from
+  its material is multiplied away as well. It cannot mine.
+* Nothing had to be removed from the mining tags - the whip was never in `tconstruct:modifiable/harvest`
+  (nor `small`, `aoe` or `interactable/left`). It only carries the weapon tags (durability, weapon,
+  multipart, bonus_slots, interactable/right, melee/primary, melee/weapon).
