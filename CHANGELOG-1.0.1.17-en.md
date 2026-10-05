@@ -143,3 +143,9 @@ click) so it can be wired to another input later if you want it back.
   broken state behave as usual.
 * Swinging the whip already cost 1 durability per lash and is unchanged; the counter-attack from a
   perfect block does not charge a second time, since it is part of the same block.
+## Fixed (2026-10-05, tenth pass - version unchanged)
+
+* The broken-state model no longer points at the removed `_broken` part textures (the hand-drawn part art
+  replaced them and the broken variants were deleted). It reuses the normal part textures instead, so a
+  whip at zero durability shows the whip rather than missing textures. The durability bar and the tool
+  state still tell you it is broken.
