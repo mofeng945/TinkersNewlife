@@ -1,5 +1,6 @@
 package com.mofengbaizhi.tinkersnewlife.content.entity;
 
+import com.mofengbaizhi.tinkersnewlife.content.ModEffects;
 import com.mofengbaizhi.tinkersnewlife.content.ModEntities;
 import com.mofengbaizhi.tinkersnewlife.content.item.WhipItem;
 import net.minecraft.core.particles.ParticleTypes;
@@ -431,6 +432,8 @@ public class WhipLashEntity extends Entity {
                 float damage = (float) (base / Math.pow(2.0D, contactedTargets.size()));
                 contactedTargets.add(target.getUUID());
                 if (hurt(owner, target, contact, damage)) {
+                    // §1064 用户口径：被鞭子抽中 ⇒ 叠一层"鞭痕"（每层 −10% 速度与攻击 ✓ 最多 8 层 ＝ −80% ✓）
+                    ModEffects.applyWhipWeaken(target);
                     this.level().playSound(null, contact.x, contact.y, contact.z,
                             SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 0.85F,
                             0.96F + this.random.nextFloat() * 0.08F);

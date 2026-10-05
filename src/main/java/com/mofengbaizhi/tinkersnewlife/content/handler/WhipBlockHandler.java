@@ -1,6 +1,7 @@
 package com.mofengbaizhi.tinkersnewlife.content.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import com.mofengbaizhi.tinkersnewlife.content.ModEffects;
 import com.mofengbaizhi.tinkersnewlife.content.ModItems;
 import com.mofengbaizhi.tinkersnewlife.content.entity.WhipLashEntity;
 import com.mofengbaizhi.tinkersnewlife.content.item.WhipItem;
@@ -25,7 +26,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * <b>鞭子格挡 / 完美格挡</b>（§1058～§1061）—— 用户口径（2026-10-05）：
+ * <b>鞭子格挡 / 完美格挡</b>（§1058～§1064）—— 用户口径（2026-10-05）：
  * <blockquote>
  * 「<b>右键改为收回没有收回的鞭身并开启格挡，如果在开启格挡前后1s内受到攻击，判定为完美格挡并挥鞭将所有伤害反射出去，
  * 自身不受任何伤害。否则格挡时受到的伤害只会被减免40%</b>」
@@ -55,10 +56,11 @@ import java.util.UUID;
  *       <b>立刻解除 use 效果</b> ✓ ＋ 上"松手锁" ✓；锁住期间每次 use 尝试都会续锁
  *       （{@link #noteBlockAttempt} ✓）⇒ <b>一直按住右键是举不起盾的</b> ✓；
  *       松开后 8 tick（0.4 秒）锁过期 ✓ ⇒ 再按即可重新举盾 ✓。</li>
- *   <li><b>§1061 耐久消耗</b> ✓（用户口径：「格挡一次伤害会正常消耗耐久，挥鞭也会」✓）：
- *       每次格挡（普通 ✓ 与完美 ✓）按<b>盾牌口径</b>扣耐久 ✓ ——
+ *   <li><b>§1061 耐久消耗</b> ✓：每次格挡（普通 ✓ 与完美 ✓）按<b>盾牌口径</b>扣耐久 ✓ ——
  *       {@code 1 + floor(受到的伤害)} ✓（{@link #consumeDurability} ✓）；
- *       挥鞭（左键抽击 ✓）在 {@code WhipItem#onEntitySwing} 里每次扣 1 ✓（原有逻辑 ✓）。</li>
+ *       挥鞭（左键抽击 ✓）在 {@code WhipItem#onEntitySwing} 里每次扣 1 ✓。</li>
+ *   <li><b>§1064 鞭痕</b> ✓：反射（＝被鞭子抽中 ✓）时给攻击者叠一层"鞭痕" ✓
+ *       （{@link ModEffects#applyWhipWeaken} ✓，每层 −10% 速度与攻击 ✓ 最多 8 层 ✓）。</li>
  * </ol>
  *
  * <p>⚠ 与 §696 的"无下限完全格挡"等既有机制共存 ✓：本类只在**手持鞭子且正在举着**时介入 ✓，
@@ -203,7 +205,9 @@ public final class WhipBlockHandler {
         LivingEntity attacker = resolve(player, hit.attacker());
         if (attacker != null && attacker.isAlive()) {
             attacker.invulnerableTime = 0;
-            attacker.hurt(player.damageSources().playerAttack(player), hit.amount());
+            if (attacker.hurt(player.damageSources().playerAttack(player), hit.amount())) {
+                ModEffects.applyWhipWeaken(attacker);        // §1064 被鞭子抽中 ⇒ 叠一层鞭痕 ✓
+            }
         }
         WhipLashEntity.startLashNow(player);                 // 挥鞭（视觉 ✓）
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -222,8 +226,6 @@ public final class WhipBlockHandler {
     /**
      * §1061 <b>格挡消耗耐久</b> ✓（用户口径：「格挡一次伤害会正常消耗耐久」✓）——
      * 照<b>盾牌口径</b>：{@code 1 + floor(受到的伤害)} ✓（原版 {@code hurtCurrentlyUsedShield} 就是这么算的 ✓）。
-     * <p>为什么自己扣 ✗：我们为了不让原版**全额免伤** ✗ 把整段盾牌结算取消了 ✓，
-     * 那一份耐久也就一起没了 ✗ ⇒ 由这里补回来 ✓。
      */
     private static void consumeDurability(Player player, float blockedAmount) {
         ItemStack stack = player.getUseItem();
@@ -247,7 +249,9 @@ public final class WhipBlockHandler {
         LivingEntity attacker = resolve(player, attackerId(source));
         if (attacker != null && attacker != player && attacker.isAlive()) {
             attacker.invulnerableTime = 0;
-            attacker.hurt(player.damageSources().playerAttack(player), amount);
+            if (attacker.hurt(player.damageSources().playerAttack(player), amount)) {
+                ModEffects.applyWhipWeaken(attacker);        // §1064 被鞭子抽中 ⇒ 叠一层鞭痕 ✓
+            }
         }
         player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.SHIELD_BLOCK, SoundSource.PLAYERS, 1.4F, 0.55F);

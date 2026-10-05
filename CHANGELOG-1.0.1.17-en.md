@@ -149,3 +149,16 @@ click) so it can be wired to another input later if you want it back.
   replaced them and the broken variants were deleted). It reuses the normal part textures instead, so a
   whip at zero durability shows the whip rather than missing textures. The durability bar and the tool
   state still tell you it is broken.
+## Added (2026-10-05, eleventh pass - version unchanged)
+
+### Whip marks: every lash makes the target weaker
+
+Each time the whip connects with a creature it gains a stack of **Whip Weaken**: -10 percent movement
+speed and -10 percent attack damage per stack, up to **8 stacks (-80 percent)**. The effect lasts 10
+seconds and is refreshed by every new hit, so a target that keeps being lashed gets slower and hits
+softer, and one you leave alone recovers.
+
+It is a real status effect (`tinkersnewlife:whip_weaken`) built on attribute modifiers, so it applies to
+AI mobs, players and summons alike and is visible both in the HUD and through `/attribute`. It is applied
+by the lash, and by the whip counter-attack from a perfect block. Icons and names are in the usual places
+(new 16x16 icon and `effect.tinkersnewlife.whip_weaken` in both languages).

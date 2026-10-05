@@ -9,8 +9,11 @@ import com.mofengbaizhi.tinkersnewlife.content.effect.CharmEffect;
 import com.mofengbaizhi.tinkersnewlife.content.effect.SeedParasiteEffect;
 import com.mofengbaizhi.tinkersnewlife.content.effect.StunEffect;
 import com.mofengbaizhi.tinkersnewlife.content.effect.AntiHealEffect;
+import com.mofengbaizhi.tinkersnewlife.content.effect.WhipWeakenEffect;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
@@ -48,4 +51,32 @@ public class ModEffects {
     /** 咒种寄生（草木操术·咒种）：攻击 -40%，咒力总量/输出 -1 级、亲和 -60 */
     public static final RegistryObject<SeedParasiteEffect> SEED_PARASITE =
             EFFECTS.register("seed_parasite", () -> new SeedParasiteEffect(MobEffectCategory.HARMFUL, 0x3CB371));
+
+    /**
+     * 鞭痕（§1064 鞭子专属）✓ —— 用户口径：
+     * 「被鞭子抽中的敌人会随着被抽中的次数逐渐降低速度和攻击伤害，最高降低80%，也就是被抽8次，每次降低10%」✓
+     * <p>每层 −10% 移动速度与攻击伤害 ✓（{@link WhipWeakenEffect} ✓ 属性修改器实现 ✓），最多
+     * {@link WhipWeakenEffect#MAX_STACKS} 层 ✓；颜色取皮革棕 ✓。
+     */
+    public static final RegistryObject<WhipWeakenEffect> WHIP_WEAKEN =
+            EFFECTS.register("whip_weaken", () -> new WhipWeakenEffect(MobEffectCategory.HARMFUL, 0x8B5A2B));
+
+    /**
+     * §1064 <b>鞭子抽中时叠加"鞭痕"</b> ✓ ——
+     * 每命中一次 ＋1 层 ✓（layer ＝ amplifier ＋ 1 ✓），到 {@link WhipWeakenEffect#MAX_STACKS} 层封顶 ✓
+     * （＝ <b>−80%</b> ✓）；每次命中都把时长刷新为 {@link WhipWeakenEffect#DURATION_TICKS} ✓。
+     *
+     * <p>调用点：① 鞭身逐段扫掠命中（{@code WhipLashEntity#tickLashDamage} ✓）；
+     * ② 完美格挡的挥鞭反射（{@code WhipBlockHandler} ✓）—— 都是"被鞭子抽中" ✓。
+     */
+    public static void applyWhipWeaken(LivingEntity target) {
+        if (target == null || target.level().isClientSide) {
+            return;
+        }
+        MobEffectInstance current = target.getEffect(WHIP_WEAKEN.get());
+        int layer = current == null ? 0 : Math.min(current.getAmplifier() + 1, WhipWeakenEffect.MAX_STACKS - 1);
+        // visible=false（不要每一下都冒粒子 ✓）、showIcon=true（界面上看得见层数 ✓）
+        target.addEffect(new MobEffectInstance(
+                WHIP_WEAKEN.get(), WhipWeakenEffect.DURATION_TICKS, layer, false, false, true));
+    }
 }
