@@ -291,6 +291,25 @@ public class KatanaItem extends ItemSlashBlade implements IModifiableDisplay {
     return super.onLeftClickEntity(stack, player, target);
   }
 
+  /*
+   * §1023 **NBT 同步（找到了与 TiCEX 的决定性差异 ✗→✓）**：
+   *   TiCEX 的 ModifiableSlashBladeItem 覆写了下面这两个方法 ✓，我们此前**没覆写** ✗
+   *   ⇒ 于是继承了拔刀剑本体的实现 ✗ —— 而本体的 `readShareTag` **只从 share tag 里读 `bladeState`** ✗，
+   *     **不会把整份 NBT 写回物品** ✗ ⇒ 客户端那把刀拿不到匠魂工具数据、刀状态也不完整 ✗
+   *   ⇒ 客户端算不出连段/蓄力 ⇒ 实测症状「只有第一段」＋「打不到怪」✓✓（已由 §1020 的方法级 diff 定位 ✓）。
+   *   这里逐字照抄 TiCEX ✓：getShareTag 交回**整份** NBT ✓、readShareTag **整份**写回 ✓。
+   */
+
+  @Override
+  public CompoundTag getShareTag(ItemStack stack) {
+    return stack.getOrCreateTag();
+  }
+
+  @Override
+  public void readShareTag(ItemStack stack, CompoundTag nbt) {
+    stack.setTag(nbt);
+  }
+
   @Override
   public Multimap<Attribute,AttributeModifier> getAttributeModifiers(IToolStackView tool, EquipmentSlot slot) {
     return AttributesModifierHook.getHeldAttributeModifiers(tool, slot);
