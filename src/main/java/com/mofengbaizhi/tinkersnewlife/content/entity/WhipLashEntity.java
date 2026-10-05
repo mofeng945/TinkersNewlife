@@ -50,6 +50,8 @@ public class WhipLashEntity extends Entity {
     public static final int PHASE_LASH = 0;
     public static final int PHASE_CHARGE = 1;
     public static final int PHASE_RELEASE = 2;
+    /** §1058 收回段 ✓：右键"收回没有收回的鞭身" ✓ —— 绳子被拉回手心后散场 ✓ */
+    public static final int PHASE_RETRACT = 3;
 
     private static final EntityDataAccessor<String> OWNER_UUID =
             SynchedEntityData.defineId(WhipLashEntity.class, EntityDataSerializers.STRING);
@@ -61,6 +63,9 @@ public class WhipLashEntity extends Entity {
             SynchedEntityData.defineId(WhipLashEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> CHARGE_TICKS =
             SynchedEntityData.defineId(WhipLashEntity.class, EntityDataSerializers.INT);
+    /** §1058 收回段已经走了多少 tick ✓ */
+    private static final EntityDataAccessor<Integer> RETRACT_TICK =
+            SynchedEntityData.defineId(WhipLashEntity.class, EntityDataSerializers.INT);
 
     /** 左键：伤害窗口 = 起手段之后 10 tick ✓（照它的 {@code LEFT_DAMAGE_WINDOW_TICKS} ✓） */
     private static final int LEFT_DAMAGE_WINDOW_TICKS = 14;
@@ -70,6 +75,10 @@ public class WhipLashEntity extends Entity {
     private static final int RIGHT_SLAM_TICKS = 14;
     /** 砸地结束后绳子自由飞多久 ✓ */
     private static final int SLAM_FREE_FLIGHT_TICKS = 18;
+    /** §1058 收回段持续多少 tick ✓（鞭身回到手里就散场 ✓） */
+    private static final int RETRACT_TICKS = 8;
+    /** §1058 每个玩家"当前那一条鞭" ✓ —— 右键要能找到它才能把鞭身收回来 ✓ */
+    private static final Map<UUID, WhipLashEntity> ACTIVE_LASHES = new HashMap<>();
     /** 砸地冲击波半径（格 ✓）与击退 ✓ */
     private static final double SHOCKWAVE_RADIUS = 3.5D;
     private static final double SHOCKWAVE_KNOCKBACK = 0.9D;
@@ -130,8 +139,34 @@ public class WhipLashEntity extends Entity {
         NEXT_LASH_TICK.put(player.getUUID(), player.tickCount + WhipItem.attackPeriodTicks(player));
         // 照参照 beginPrecisionNow ✓：重置攻击冷却 ⇒ 准星上的攻击指示器与鞭子冷却同步 ✓
         player.resetAttackStrengthTicker();
-        WhipLashEntity lash = new WhipLashEntity(player.level(), player, PHASE_LASH);
+        spawn(player, PHASE_LASH);
+    }
+
+    /** §1058 <b>不受抽击冷却限制</b>地挥一鞭 ✓ —— 完美格挡/反射时用 ✓（视觉与判定都要立刻出现 ✓） */
+    public static void startLashNow(Player player) {
+        spawn(player, PHASE_LASH);
+    }
+
+    private static void spawn(Player player, int phase) {
+        WhipLashEntity lash = new WhipLashEntity(player.level(), player, phase);
         player.level().addFreshEntity(lash);
+        if (phase == PHASE_LASH) {
+            ACTIVE_LASHES.put(player.getUUID(), lash);
+        }
+    }
+
+    /**
+     * §1058 用户口径：右键「<b>收回没有收回的鞭身</b>」✓ ——
+     * 把玩家当前那条还在飞／还在抽的鞭切成<b>收回段</b> ✓，绳身会被拉回手心 ✓（{@code MODE_RETRACT} ✓）。
+     */
+    public static void retract(Player player) {
+        WhipLashEntity lash = ACTIVE_LASHES.get(player.getUUID());
+        if (lash == null || !lash.isAlive()) {
+            ACTIVE_LASHES.remove(player.getUUID());
+            return;
+        }
+        lash.setPhase(PHASE_RETRACT);
+        lash.setRetractTick(0);
     }
 
     /** 右键按下：开始蓄力自转 ✓（同一玩家只保留一个 ✓） */
@@ -186,6 +221,7 @@ public class WhipLashEntity extends Entity {
         this.getEntityData().define(SWING_SIGN, true);
         this.getEntityData().define(RELEASE_TICK, -1);
         this.getEntityData().define(CHARGE_TICKS, 0);
+        this.getEntityData().define(RETRACT_TICK, -1);
     }
 
     public String getOwnerUuid() { return this.getEntityData().get(OWNER_UUID); }
@@ -198,6 +234,8 @@ public class WhipLashEntity extends Entity {
     public void setReleaseTick(int v) { this.getEntityData().set(RELEASE_TICK, v); }
     public int getChargeTicks() { return this.getEntityData().get(CHARGE_TICKS); }
     public void setChargeTicks(int v) { this.getEntityData().set(CHARGE_TICKS, v); }
+    public int getRetractTick() { return this.getEntityData().get(RETRACT_TICK); }
+    public void setRetractTick(int v) { this.getEntityData().set(RETRACT_TICK, v); }
 
     public WhipPhysics physics() {
         return physics;
@@ -279,6 +317,20 @@ public class WhipLashEntity extends Entity {
             drive.releaseProgress = to;
             drive.rootFrom = WhipPhysics.chargedReleaseHandAnchor(base, forward, from);
             drive.rootTo = WhipPhysics.chargedReleaseHandAnchor(base, forward, to);
+            drive.progressFrom = 0.0D;
+            drive.progressTo = 0.0D;
+        } else if (phase == PHASE_RETRACT) {
+            // §1058 收回：根部回到手上 ✓ 且每个点被拉向手心 ✓（WhipPhysics.MODE_RETRACT ✓）
+            int retract = Math.max(0, getRetractTick());
+            if (server) {
+                setRetractTick(retract + 1);
+            }
+            drive.mode = WhipPhysics.MODE_RETRACT;
+            drive.aim = aim.lengthSqr() < 1.0E-8D ? new Vec3(0.0D, 0.0D, 1.0D) : aim.normalize();
+            drive.forward = forward;
+            drive.right = right;
+            drive.rootFrom = base;
+            drive.rootTo = base;
             drive.progressFrom = 0.0D;
             drive.progressTo = 0.0D;
         } else {
@@ -470,6 +522,12 @@ public class WhipLashEntity extends Entity {
         }
         if (phase == PHASE_RELEASE) {
             if (getReleaseTick() > RIGHT_SLAM_TICKS + SLAM_FREE_FLIGHT_TICKS) {
+                this.discard();
+            }
+            return;
+        }
+        if (phase == PHASE_RETRACT) {
+            if (getRetractTick() > RETRACT_TICKS) {
                 this.discard();
             }
             return;

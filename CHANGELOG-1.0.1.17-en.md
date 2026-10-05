@@ -94,3 +94,25 @@ and the attack speed only decides how often you may lash:
 Also included here (built earlier but not yet shipped): the lash timeline now runs off an internal age
 counter that only advances once the owner is resolved, so the client no longer swallows the opening
 ticks of a lash.
+## Changed (2026-10-05, sixth pass - version unchanged)
+
+### Right click now retracts the whip and raises a guard
+
+Right click no longer charges a slam. It retracts the whip body if a lash is still out - the rope is
+pulled back into your hand over about eight ticks and then the lash entity retires - and it starts
+blocking for as long as you hold the button.
+
+Blocking works on two windows:
+
+* **Perfect block** - a hit landing within one second after you raise the guard (or within one second
+  *before* you raised it, which is refunded on the spot) cancels the damage completely, snaps the whip
+  out, and throws the entire damage back at the attacker.
+* **Normal block** - any other hit you block is only reduced by 40 percent.
+
+Implementation note: the guard deliberately does **not** use `UseAnim.BLOCK`. Vanilla's
+`LivingEntity#isBlocking()` only looks at the use animation, so any BLOCK item is treated as a shield
+and negates damage entirely - which would make the 40 percent rule dead code. The whip uses
+`UseAnim.SPEAR` (a raised-weapon guard pose) and the whip's own `WhipBlockHandler` owns the damage maths.
+
+The old charge/slam code is kept in the entity and physics (it is simply no longer triggered by right
+click) so it can be wired to another input later if you want it back.

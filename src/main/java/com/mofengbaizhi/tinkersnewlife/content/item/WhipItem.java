@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.content.item;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.entity.WhipLashEntity;
 import com.mofengbaizhi.tinkersnewlife.content.entity.WhipPhysics;
+import com.mofengbaizhi.tinkersnewlife.content.handler.WhipBlockHandler;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
@@ -97,12 +98,15 @@ public class WhipItem extends ModifiableItem {
 
     @Override
     public int getUseDuration(ItemStack stack) {
-        return WhipPhysics.RIGHT_CHARGE_TICKS;
+        return 72000;                             // §1058 格挡：一直举着 ✓ 松手才结束 ✓
     }
 
     @Override
     public UseAnim getUseAnimation(ItemStack stack) {
-        return UseAnim.BOW;                       // 起手姿势先借用"拉弓"✓（想换只改这一行 ✓）
+        // ⚠ §1058 故意**不用** {@code UseAnim.BLOCK} ✗：原版 {@code LivingEntity#isBlocking()} 只看使用动画 ✗
+        //   ⇒ 用 BLOCK 会被原版当成盾牌**全额免伤** ✗，而用户要的是"普通格挡只减 40% ✓、完美格挡才全免 ✓"
+        //   ⇒ 改用 SPEAR（举械防御的姿势 ✓），伤害结算全部交给 WhipBlockHandler ✓
+        return UseAnim.SPEAR;
     }
 
     @Override
@@ -117,9 +121,12 @@ public class WhipItem extends ModifiableItem {
             return InteractionResultHolder.fail(stack);
         }
         if (!level.isClientSide) {
-            WhipLashEntity.startCharge(player);
+            // §1058 用户口径：右键 ＝ ① 收回没收回的鞭身 ✓ ② 开启格挡 ✓
+            WhipLashEntity.retract(player);
+            // ③ "开启格挡【前】1 秒内挨过打"也算完美格挡 ✓（把那一次退回来并全额反射 ✓）
+            WhipBlockHandler.onBlockStarted(player);
         }
-        player.startUsingItem(hand);
+        player.startUsingItem(hand);              // 开启格挡 ✓（按住右键持续 ✓）
         return InteractionResultHolder.consume(stack);
     }
 
@@ -128,7 +135,9 @@ public class WhipItem extends ModifiableItem {
         if (!(living instanceof Player player) || level.isClientSide) {
             return;
         }
-        WhipLashEntity.releaseCharge(player);
+        // §1058 右键已改为格挡 ⇒ 松手就是结束格挡 ✓
+        //（原来的"蓄力 → 砸地"不再由右键触发 ✓，实体里的蓄力/释放段与物理里的受力代码都保留 ✓ 以后想用随时可接回 ✓）
+        WhipBlockHandler.onBlockEnded(player);
     }
 
     // ==================== 左键：抽击 ====================

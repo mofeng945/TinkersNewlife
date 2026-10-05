@@ -126,6 +126,10 @@ public final class WhipPhysics {
     public static final int MODE_LASH = 0;
     public static final int MODE_CHARGE = 1;
     public static final int MODE_RELEASE = 2;
+    /** §1058 收回模式 ✓：把绳身拉回手心 ✓（右键"收回没有收回的鞭身" ✓） */
+    public static final int MODE_RETRACT = 3;
+    /** 收回时每个子步往手心拉的强度 ✓（0.22 ⇒ 几 tick 内收成一团 ✓） */
+    private static final double RETRACT_PULL = 0.22D;
 
     // ==================== 状态 ====================
 
@@ -283,6 +287,8 @@ public final class WhipPhysics {
                 applyChargeForces(d, dt, dtSqr);
             } else if (d.mode == MODE_RELEASE) {
                 applyReleaseForces(d, dt, dtSqr);
+            } else if (d.mode == MODE_RETRACT) {
+                applyRetract(d);
             } else if (progress >= PRECISION_RELEASE_RAW) {
                 applyGuide(d, progress, dt, dtSqr);
             }
@@ -612,6 +618,14 @@ public final class WhipPhysics {
                 acceleration = acceleration.scale(FOLLOW_MAX_ACCEL / accelLength);
             }
             pos[i] = pos[i].add(acceleration.scale(dtSqr));
+        }
+    }
+
+    /** §1058 收回 ✓：把每个点朝手心收拢 ⇒ 绳身被卷回手里 ✓（右键"收回没收回的鞭身" ✓） */
+    private void applyRetract(Drive d) {
+        for (int i = 1; i < POINTS; i++) {
+            Vec3 target = d.rootTo.add(d.aim.scale(0.06D * i / POINTS));
+            pos[i] = pos[i].lerp(target, RETRACT_PULL);
         }
     }
 

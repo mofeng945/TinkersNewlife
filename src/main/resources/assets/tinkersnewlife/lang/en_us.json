@@ -1351,7 +1351,7 @@
   "slot.tinkersnewlife.slingshot.bowstring": "Bowstring",
   "item.tinkersnewlife.whip": "Whip",
   "item_group.tinkersnewlife.whip": "Whip",
-  "item_group.tinkersnewlife.whip.description": "Whip: a tough handle, a large plate and a bowstring. Left click to lash - the lash is a real simulated rope, and only sections that sweep through a target fast enough deal damage (faster hurts more; each target in one lash is hit once, with halved follow-up damage). Hold right click for 2 seconds and release to slam the ground for a shockwave.",
+  "item_group.tinkersnewlife.whip.description": "Right click retracts the whip and raises it to block. A hit within one second before or after you start blocking counts as a perfect block: the whip snaps out and throws the whole damage back at the attacker while you take none. Any other hit you block is only reduced by 40%.",
   "slot.tinkersnewlife.whip.handle": "Tough Handle",
   "slot.tinkersnewlife.whip.plate": "Large Plate",
   "slot.tinkersnewlife.whip.bowstring": "Bowstring",  "slot.tinkersnewlife.tang_heng_dao.blade2": "Broad Blade",

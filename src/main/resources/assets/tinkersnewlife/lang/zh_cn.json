@@ -1352,7 +1352,7 @@
   "slot.tinkersnewlife.slingshot.bowstring": "弓弦",
   "item.tinkersnewlife.whip": "鞭子",
   "item_group.tinkersnewlife.whip": "鞭子",
-  "item_group.tinkersnewlife.whip.description": "鞭子：坚韧手柄＋大板＋弓弦。左键甩鞭，鞭身会像真绳子一样甩出去，只有快速扫过的鞭段才造成伤害（越快越疼、同一鞭里每个目标只吃一次、依次减半）；右键长按 2 秒松手砸地，放出一道冲击波。",
+  "item_group.tinkersnewlife.whip.description": "右键收回鞭身并举械格挡：开启格挡前后 1 秒内挨打算作完美格挡，挥鞭把所有伤害全额反射给攻击者、自身不受任何伤害；其它时候格挡只减免 40% 的伤害。",
   "slot.tinkersnewlife.whip.handle": "坚韧手柄",
   "slot.tinkersnewlife.whip.plate": "大板",
   "slot.tinkersnewlife.whip.bowstring": "弓弦",  "slot.tinkersnewlife.tang_heng_dao.blade2": "宽刃",
