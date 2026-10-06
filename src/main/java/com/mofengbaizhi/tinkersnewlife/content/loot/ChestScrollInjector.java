@@ -38,15 +38,11 @@ public final class ChestScrollInjector {
     @SubscribeEvent
     public static void onLootTableLoad(LootTableLoadEvent event) {
         ResourceLocation id = event.getName();
-        // §1107 用户口径：「古代咒术残卷**只匹配 chest 前缀**战利品表，现在**钓鱼也能钓上来**」✓
-        //   ⇒ 除了箱子表，再认原版的**钓鱼子表**：{@code gameplay/fishing/fish}（普通鱼）、
-        //     {@code /junk}（垃圾）、{@code /treasure}（宝藏）✓ —— 这三张正是"一次抛竿"最终会掷到的那张 ✓
-        //     ⚠ 故意**不**匹配父表 {@code gameplay/fishing} 本身 ✗：父表只负责"掷到哪张子表" ✓
-        //       若连它一起匹配 ⇒ 同一次抛竿会**多算一次**概率（掷两次）✗。
-        String path = id == null ? "" : id.getPath();
-        boolean chestLike = path.startsWith("chests/");
-        boolean fishingLike = path.startsWith("gameplay/fishing/");   // fish / junk / treasure ✓
-        if (!chestLike && !fishingLike) {
+        // §1110 用户澄清：「**我是让钓鱼别出**」✓ —— 即 §1107 我把这句理解反了 ✗
+        //   （原文"只匹配 chest 前缀战利品表，现在钓鱼也能钓上来，修复"＝
+        //    **"现在钓鱼也能钓上来" 是要修掉的 bug** ✗，不是需求 ✓）
+        // ⇒ 恢复成**只认箱子类**战利品表 ✓：钓鱼（`gameplay/fishing*`）**一律不注入**残卷 ✗。
+        if (id == null || !id.getPath().startsWith("chests/")) {
             return;
         }
         try {
