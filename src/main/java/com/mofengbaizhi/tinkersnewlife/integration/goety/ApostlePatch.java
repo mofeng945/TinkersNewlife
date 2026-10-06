@@ -98,7 +98,9 @@ public final class ApostlePatch {
         DUAL_TITLE_CHANCE = b
                 .comment("使徒生成时额外获得【第二个头衔】的概率（0.1 = 10% ⇒ 双头衔使徒）",
                         "第二头衔一定会真正生效：若与主头衔同属'箭矢附着'类（会互相覆盖同一个字段），",
-                        "则改抽【不灭重生／可怖之物／荣耀之名】这三个不会冲突的头衔之一。")
+                        "则改抽【不灭重生／可怖之物／荣耀之名】这三个不会冲突的头衔之一。",
+                        "§1073 双头衔使徒现在还会：血量 ×2、造成的伤害在上述 damage_multiplier 之上再 ×1.5、",
+                        "死亡时战利品表额外 roll 一次（等于 roll 两次）。")
                 .defineInRange("dual_title_chance", 0.10D, 0.0D, 1.0D);
         OVERWORLD_REGEN_PERCENT = b
                 .comment("主世界二阶段自回血速率：每秒回复【最大生命】的百分比（0.01 = 每秒 1%）",
@@ -112,7 +114,8 @@ public final class ApostlePatch {
         APOSTLE_DAMAGE_MULTIPLIER = b
                 .comment("使徒造成的伤害倍率（默认 1.5 = 上调 50%）",
                         "涵盖使徒的全部伤害来源：近战、箭、法术、狱云、爆燃陷阱等（都按这个倍率乘一次）。",
-                        "改成 1.0 = 关闭；改 2.0 = 翻倍。")
+                        "改成 1.0 = 关闭；改 2.0 = 翻倍。",
+                        "§1073 双头衔使徒在此倍率之上**再 ×1.5** ⇒ 默认 1.5 时合计 2.25。")
                 .defineInRange("damage_multiplier", 1.5D, 0.0D, 100.0D);
         HELL_CLOUD_PURGE = b.comment("狱云清掉玩家所有增益（#3，默认 true）").define("hell_cloud_purge", true);
         NETHERITE_PIGLIN_BRUTE = b.comment("黑曜石柱召唤的猪灵蛮兵给全身下界合金甲＋下界合金斧（#6，默认 true）")
@@ -201,6 +204,68 @@ public final class ApostlePatch {
     }
 
     // ============================================================
+    //  §1073 双头衔使徒：血量翻倍 ＋ 伤害再加 1.5 倍 ＋ 战利品 roll 两次
+    // ============================================================
+
+    /** 这一下是谁打的使徒 ✓（近战本体 ✓／投射物发射者 ✓／带主人的诡厄实体 ✓）；没有就 null ✓ */
+    private static Apostle apostleOf(net.minecraft.world.damagesource.DamageSource src) {
+        if (src == null) return null;
+        if (src.getEntity() instanceof Apostle a) return a;
+        if (src.getDirectEntity() instanceof Apostle a) return a;
+        for (Entity e : new Entity[]{src.getEntity(), src.getDirectEntity()}) {
+            if (e instanceof net.minecraft.world.entity.OwnableEntity owned && owned.getOwner() instanceof Apostle a) {
+                return a;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 是不是**双头衔使徒** ✓ —— 只看我们自己的 NBT 键 {@link #KEY_SECOND_TITLE} ✓
+     * （诡厄自身只有一个 {@code titleNumber} ✗ 表达不了"两个头衔" ✓ 所以以我们的键为准 ✓）。
+     */
+    private static boolean isDualTitle(Apostle apostle) {
+        if (apostle == null) return false;
+        try {
+            return apostle.getPersistentData().contains(KEY_SECOND_TITLE);
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    /**
+     * §1073 <b>双头衔的强化</b> ✓（用户口径：「**血量翻倍，伤害在我加强的 1.5 倍基础上再 ×1.5**」✓）：
+     * <ol>
+     *   <li><b>血量 ×2</b> ✓：直接把 {@code MAX_HEALTH} 的**基础值**翻倍 ✓ 再回满 ✓
+     *       （⚠ 只做一次 ✓ 用 {@link #KEY_DUAL_HEALTH_DONE} 标记 ✓ —— 基础值会存盘 ✗，
+     *        不设标记的话每次读档都会再 ×2 ⇒ ×4 ✗）；</li>
+     *   <li><b>伤害再加 ×1.5</b> ✓：在 {@link #onLivingHurt} 里对"双头衔打出的伤害"额外乘
+     *       {@link #DUAL_DAMAGE_EXTRA} ✓ ⇒ 配置默认 1.5 时合计 <b>2.25</b> ✓（若你把配置改成别的值 ✓ 就跟着变 ✓ 始终是"配置值 ×1.5" ✓）。</li>
+     * </ol>
+     */
+    private static void applyDualTitleBuffs(Apostle apostle) {
+        if (apostle == null || apostle.level().isClientSide) return;
+        net.minecraft.nbt.CompoundTag data = apostle.getPersistentData();
+        if (data.getBoolean(KEY_DUAL_HEALTH_DONE)) return;
+        try {
+            var attr = apostle.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+            if (attr != null) {
+                double base = attr.getBaseValue();
+                attr.setBaseValue(base * DUAL_HEALTH_MULTIPLIER);          // ×2 ✓
+                float max = apostle.getMaxHealth();
+                apostle.setHealth(max);                                    // 生成/读档时直接满血 ✓
+                data.putBoolean(KEY_DUAL_HEALTH_DONE, true);                // 只做一次 ✓
+                LOGGER.info("[使徒补丁] §1073 双头衔使徒 ⇒ 血量 {} → {}（×{}）✓",
+                        String.format(java.util.Locale.ROOT, "%.1f", base),
+                        String.format(java.util.Locale.ROOT, "%.1f", max),
+                        String.format(java.util.Locale.ROOT, "%.1f", DUAL_HEALTH_MULTIPLIER));
+            }
+        } catch (Throwable ignored) {
+            // fail-safe ✓
+        }
+    }
+
+    // ============================================================
     //  #2 瞬移检测（每 10 tick 扫一次 ✓ 不混入诡厄内部 ✓）
     // ============================================================
 
@@ -244,8 +309,14 @@ public final class ApostlePatch {
             } catch (Throwable ignored) {
                 mult = 1.5D;
             }
-            if (mult != 1.0D && isFromApostle(src)) {
-                event.setAmount((float) (event.getAmount() * mult));
+            if (isFromApostle(src)) {
+                // §1073 双头衔使徒：在**配置倍率之上**再 ×1.5 ✓
+                //   （用户口径：「伤害在我加强的 1.5 倍基础上再 ×1.5」✓ ⇒ 配置默认 1.5 时合计 **2.25** ✓；
+                //    若你把配置改成别的值 ✓ 它就始终是"配置值 ×1.5" ✓ 不会写死 ✗）
+                double total = mult * (isDualTitle(apostleOf(src)) ? DUAL_DAMAGE_EXTRA : 1.0D);
+                if (total != 1.0D) {
+                    event.setAmount((float) (event.getAmount() * total));
+                }
             }
         }
 
@@ -425,6 +496,15 @@ public final class ApostlePatch {
 
     /** 第二头衔存在我们自己的 NBT 里 ✓（诡厄只有一个 `titleNumber` 字段 ✗ 装不下两个 ✓） */
     private static final String KEY_SECOND_TITLE = "tinkersnewlife.apostle_second_title";
+    /**
+     * §1073 <b>双头衔的"血量已翻倍"标记</b> ✓ —— 防读档重复施加 ✗
+     * （{@code MAX_HEALTH} 的基础值会随 NBT 存盘 ✓，不设标记的话每次读档都会再 ×2 ⇒ 变成 ×4 ✗）。
+     */
+    private static final String KEY_DUAL_HEALTH_DONE = "tinkersnewlife.apostle_dual_health_done";
+    /** §1073 双头衔血量倍率 ✓（用户口径：「血量翻倍」✓） */
+    private static final double DUAL_HEALTH_MULTIPLIER = 2.0D;
+    /** §1073 双头衔在"我的 1.5 倍加强"之上**再乘**的倍率 ✓（1.5 × 1.5 ＝ 2.25 ✓ 用户口径 ✓） */
+    private static final double DUAL_DAMAGE_EXTRA = 1.5D;
     /** "这只使徒已经掷过双头衔骰子"标记 ✓（保证**一辈子只掷一次** ✓ 与 `loadedFromDisk` 无关 ✓） */
     private static final String KEY_TITLE_ROLLED = "tinkersnewlife.apostle_title_rolled";
     /** 诡厄使徒头衔总数（`title.goety.0` ~ `title.goety.11` ✓ 已核语言文件 ✓） */
@@ -469,6 +549,11 @@ public final class ApostlePatch {
         if (event.getLevel().isClientSide()) return;
         if (!(event.getEntity() instanceof Apostle apostle)) return;
         net.minecraft.nbt.CompoundTag data = apostle.getPersistentData();
+        // §1073 已经是双头衔的（**含读档进来的** ✓）⇒ 先把血量翻倍补齐 ✓（幂等 ✓ 有标记 ✓）就返回 ✓ 不重掷 ✓
+        if (data.contains(KEY_SECOND_TITLE)) {
+            applyDualTitleBuffs(apostle);
+            return;
+        }
         if (data.contains(KEY_TITLE_ROLLED)) return;                    // 这只使徒已经掷过 ⇒ 不重掷 ✓
         double chance;
         try {
@@ -503,6 +588,7 @@ public final class ApostlePatch {
             if (second == primary) second = NON_ARROW_TITLES[(pick + 1) % NON_ARROW_TITLES.length];
         }
         data.putInt(KEY_SECOND_TITLE, second);
+        applyDualTitleBuffs(apostle);                                   // §1073 血量 ×2 ✓（伤害 ×1.5 在受击侧 ✓）
         try {
             apostle.TitleEffect(second);
         } catch (Throwable ignored) {
@@ -513,6 +599,54 @@ public final class ApostlePatch {
                 custom.getString().trim(), titleText(second).trim(), (int) (chance * 100.0D),
                 String.format(java.util.Locale.ROOT, "%.3f", roll),
                 String.format(java.util.Locale.ROOT, "%.3f", chance));
+    }
+
+    /**
+     * §1073 双头衔使徒**额外 roll 一次战利品** ✓（用户口径：「**掉落物品时 roll 两次战利品**」✓）。
+     * <p>做法 ✓：拿实体自己的战利品表（{@code LivingEntity#getLootTable()} ✓）**再掷一次** ✓，
+     * 把结果包成物品实体塞进 {@link net.minecraftforge.event.entity.living.LivingDropsEvent#getDrops()} ✓
+     * —— 塞进事件而不是直接丢到世界里 ✓，这样其它模组的掉落修正／统计仍看得到 ✓。
+     * <p>⚠ 只对**双头衔**使徒生效 ✓（以我们自己的 {@link #KEY_SECOND_TITLE} 为准 ✓）；
+     * 任何异常一律吞掉 ✓（fail-safe ✓ 绝不影响正常掉落 ✓）。
+     */
+    @SubscribeEvent
+    public static void onLivingDrops(net.minecraftforge.event.entity.living.LivingDropsEvent event) {
+        if (!enabled()) return;
+        if (!(event.getEntity() instanceof Apostle apostle)) return;
+        if (!isDualTitle(apostle)) return;
+        if (!(apostle.level() instanceof ServerLevel level)) return;
+        try {
+            net.minecraft.resources.ResourceLocation tableId = apostle.getLootTable();
+            if (tableId == null) return;
+            net.minecraft.world.level.storage.loot.LootTable table =
+                    level.getServer().getLootData().getLootTable(tableId);
+            if (table == null) return;
+            // ⚠ 1.20.1 的 API：先建 LootParams（Builder 吃 ServerLevel ✓），再拿它去 getRandomItems ✓
+            //   （首次写成 new LootContext.Builder(level) 编译报"找不到合适的构造器" ✗ 已按报错改正 ✓）
+            net.minecraft.world.level.storage.loot.LootParams params =
+                    new net.minecraft.world.level.storage.loot.LootParams.Builder(level)
+                            .withParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.THIS_ENTITY, apostle)
+                            .withParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.ORIGIN, apostle.position())
+                            .withParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.DAMAGE_SOURCE, event.getSource())
+                            .withOptionalParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.KILLER_ENTITY, event.getSource().getEntity())
+                            .withOptionalParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.DIRECT_KILLER_ENTITY, event.getSource().getDirectEntity())
+                            .withOptionalParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.LAST_DAMAGE_PLAYER,
+                                    event.getSource().getEntity() instanceof Player p ? p : null)
+                            .withLuck(event.getSource().getEntity() instanceof Player killerP ? killerP.getLuck() : 0.0F)
+                            .create(net.minecraft.world.level.storage.loot.parameters.LootContextParamSets.ENTITY);
+            int added = 0;
+            for (net.minecraft.world.item.ItemStack stack : table.getRandomItems(params)) {
+                if (stack.isEmpty()) continue;
+                net.minecraft.world.entity.item.ItemEntity item = new net.minecraft.world.entity.item.ItemEntity(
+                        level, apostle.getX(), apostle.getY() + 0.5D, apostle.getZ(), stack);
+                item.setDefaultPickUpDelay();
+                event.getDrops().add(item);
+                added++;
+            }
+            LOGGER.info("[使徒补丁] §1073 双头衔使徒 ⇒ 额外 roll 一次战利品 ✓（表 {}，追加 {} 项）", tableId, added);
+        } catch (Throwable ignored) {
+            // fail-safe ✓
+        }
     }
 
     /**
