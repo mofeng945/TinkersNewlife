@@ -504,6 +504,17 @@ public abstract class BaseDomain {
     /** 友好合并的同伴领域主人（未合并 = null） */
     public UUID getMergedAlly() { return mergedAlly; }
 
+    /**
+     * §1114 同伴领域的**球心**（合并时缓存 ✓ 未合并 = null ✓）。
+     * <p>为什么需要公开它：荡蕴平线这类"往场地里灌东西"的领域，**清理范围必须覆盖合并后的整片不规则领域** ✗ ——
+     * 用户实测：合并期间水会流进同伴那一侧 ✗，而清理的 BFS 上限原来写死"自己半径 + 8" ✗
+     * ⇒ 同伴那侧多出来的水**清不掉** ✓。
+     */
+    public Vec3 getMergedAllyCenter() { return allyCenter; }
+
+    /** §1114 同伴领域的**半径**（未合并 = 0 ✓） */
+    public double getMergedAllyRadius() { return allyRadius; }
+
     /** 建立友好合并（记录同伴球体；"拆掉互相嵌入的那部分墙"由 DomainRegistry 做） */
     public void setMergedAlly(UUID ownerId, Vec3 center, double radius) {
         this.mergedAlly = ownerId;

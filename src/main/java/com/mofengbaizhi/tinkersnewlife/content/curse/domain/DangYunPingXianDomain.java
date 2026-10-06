@@ -112,6 +112,19 @@ public class DangYunPingXianDomain extends BaseDomain {
     private ServerLevel levelRef;
     /** 是否已完成首 tick 注水/召溺尸（须等阻挡墙建好，见 onOpen javadoc） */
     private boolean initialized = false;
+    /**
+     * §1114 <b>合并状态下的清理半径</b>（0 = 未合并 ✓）。
+     *
+     * <p>用户实测：他与同心戒同伴各自展开领域（他=荡蕴平线 ✓ 同伴=御厨子 ✓）⇒ 两者**友好合并**成一片不规则领域 ✓
+     * 并**灌满了水** ✓；他**提前关闭**领域后 —— 「**球壳内的水被正常清理 ✓，但合并时多填充的水没有被清理**」✗。
+     *
+     * <p>根因 ✓：{@link #clearWater} 的 BFS 上限原来写死 {@code radius + 8} ✗，
+     * 而合并后水会**流进同伴那侧的球** ✓ ⇒ 超出上限 ⇒ 那部分水永远清不到 ✗。
+     *
+     * <p>⚠ 必须**在合并还在的时候**把这个半径记下来 ✗：{@code onClose} 时合并标记可能已被
+     * {@code DomainRegistry} 清掉（{@code clearMergedAlly()} 会把同伴球心/半径一起置空 ✗）⇒ 那时再问就问不到了 ✓。
+     */
+    private double mergedReach = 0.0;
 
     private DangYunPingXianDomain(UUID owner, Vec3 center, int radius) {
         super(owner, center, radius, radius * 45.0);
@@ -154,6 +167,15 @@ public class DangYunPingXianDomain extends BaseDomain {
     public void onTick(ServerPlayer player, long now) {
         if (levelRef == null) levelRef = player.serverLevel();
         ServerLevel level = levelRef;
+        // §1114 每 tick 记住"合并后的清理半径" ✓（合并期间水会流进同伴那侧 ✗ ⇒ 清理范围必须跟着放大 ✓）
+        //   ⚠ 必须趁合并还在时记 ✗：onClose 时合并标记可能已被清掉、同伴球心会被置空 ✓
+        try {
+            mergedReach = (isMerged() && getMergedAllyCenter() != null)
+                    ? center.distanceTo(getMergedAllyCenter()) + getMergedAllyRadius() + 8.0
+                    : 0.0;
+        } catch (Throwable ignored) {
+            mergedReach = 0.0;
+        }
         // ⭐ 首 tick：阻挡墙已建好，此时注水 + 召首批溺尸
         if (!initialized) {
             initialized = true;
@@ -297,7 +319,10 @@ public class DangYunPingXianDomain extends BaseDomain {
                 visited.add(pos);
             }
         }
-        double limitSq = (radius + 8.0) * (radius + 8.0);
+        // §1114 上限从"自己半径 + 8"改成"**自己半径 与 合并半径 取大** + 8" ✓ ——
+        //   合并期间水会流进同伴那侧 ⇒ 只按自己半径清 ⇒ 那部分水会留在世界里 ✗（用户实测 ✓）。
+        double reach = Math.max(radius + 8.0, mergedReach);
+        double limitSq = reach * reach;
         while (!queue.isEmpty()) {
             BlockPos pos = queue.poll();
             /*
