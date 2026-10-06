@@ -334,7 +334,7 @@ public class Modifiers {
         MODIFIERS.register("heat_lover",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.HeatLoverModifier::new);
 
-    /** 强化·噬魂（1 级占 1 升级槽，2/3 级无槽；每级 +25% 灵魂获取，一级后额外 +1，最高 3 级） */
+    /** 强化·噬魂（1 级占 1 升级槽，2/3 级无槽；§1070 起按<b>诡厄本体噬魂附魔</b>口径：<b>击杀时灵魂获取 ×(等级+1)</b>，最高 3 级 ⇒ ×4） */
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.SoulEaterModifier> SOUL_EATER =
         MODIFIERS.register("soul_eater",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.SoulEaterModifier::new);
