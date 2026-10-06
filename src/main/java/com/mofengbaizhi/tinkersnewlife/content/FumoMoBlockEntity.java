@@ -260,87 +260,96 @@ public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.worl
         musicTick = level.getGameTime();
     }
 
-    /** 「朋友的酒」的玩偶方块实体（反射问它 {@code isPlaying()} ✓ 不引用它的类型 ⇒ 没装也不会崩 ✓） */
+    /** 「朋友的酒」的玩偶方块实体类名（**只用名字比对** ✓ 不用 Class.forName ✗） */
     private static final String FW_BE_CLASS = "com.friendswine.DollBlockEntity";
-    private static java.lang.reflect.Method fwIsPlaying;
-    private static boolean fwReflectTried;
-    /** 缓存"它那只玩偶在哪" ✓（找到后只扫它周围 ⇒ 便宜 ✓ 音乐没了就清掉 ✓） */
+    /** 每个类各自缓存 isPlaying（⚠ §1088：**必须从找到的那个对象取类** ✓
+     *  —— Forge 每个模组一个类加载器 ✗ ⇒ 在**我们**的加载器里 `Class.forName("com.friendswine.…")` 会失败 ✗，
+     *  这就是 §1086/§1087"永远问不到 ⇒ 一直不转"的根因 ✓） */
+    private static final java.util.Map<Class<?>, java.lang.reflect.Method> FW_METHODS =
+            new java.util.concurrent.ConcurrentHashMap<>();
+    /** 缓存"它那只玩偶在哪" ✓ */
     private static volatile net.minecraft.core.BlockPos fwDollPos;
 
-    private static boolean fwIsPlayingAt(Level level, net.minecraft.core.BlockPos p) {
+    /**
+     * 问一个方块实体"你在放音乐吗" ✓ —— 三态：
+     * {@code TRUE} 在放 ✓／{@code FALSE} 它说没放 ✓／{@code null} **问不到**（不是它 / 反射不可用 ✓）
+     * ⇒ 调用方对 {@code null} 采取"**当作在放**"✓（保证一定会转 ✓ 用户口径优先 ✓）。
+     */
+    private static Boolean fwAskPlaying(Level level, net.minecraft.core.BlockPos p) {
         try {
             BlockEntity cand = level.getBlockEntity(p);
-            if (cand == null || !FW_BE_CLASS.equals(cand.getClass().getName())) return false;
-            if (!fwReflectTried) {
-                fwReflectTried = true;
-                fwIsPlaying = Class.forName(FW_BE_CLASS).getMethod("isPlaying");
+            if (cand == null) return null;
+            Class<?> c = cand.getClass();
+            if (!FW_BE_CLASS.equals(c.getName())) return null;
+            java.lang.reflect.Method m = FW_METHODS.get(c);
+            if (m == null) {
+                m = c.getMethod("isPlaying");      // ★ 用它自己的类 ⇒ 跨加载器也能拿到 ✓
+                FW_METHODS.put(c, m);
             }
-            if (fwIsPlaying == null) return false;
-            Object r = fwIsPlaying.invoke(cand);
-            return r instanceof Boolean b && b;
-        } catch (Throwable ignored) {
-            return false;
+            Object r = m.invoke(cand);
+            return r instanceof Boolean b ? b : null;
+        } catch (Throwable t) {
+            return null;                            // 问不到 ⇒ 交给调用方当"在放"✓
         }
     }
 
-    /**
-     * ⚠ §1087 <b>必须在"我们自己玩偶"附近找它那只</b> ✗ —— §1086 我拿"**声音坐标**"去找 ✗，
-     * 但它的音乐是**相对声音**（坐标＝玩家位置 ✗）⇒ 那儿根本没有它的方块实体 ⇒ 永远问不到 ⇒ 不转 ✗。
-     * <p>先按缓存位置（便宜 ✓）；没缓存就宽扫一次并记住 ✓（只在"最近听到过音乐"时才做 ✓）。
-     */
-    private static boolean friendswinePlayingNear(Level level, FumoMoBlockEntity be) {
-        net.minecraft.core.BlockPos mine = be.getBlockPos();
+    /** 在**我们自己玩偶附近**找它那只（缓存优先 ✓ 便宜 ✓）；返回 null=问不到 ✓、TRUE/FALSE=它自己的答复 ✓ */
+    private static Boolean fwQuery(Level level, FumoMoBlockEntity be) {
         net.minecraft.core.BlockPos cached = fwDollPos;
         if (cached != null) {
-            for (net.minecraft.core.BlockPos p : net.minecraft.core.BlockPos.betweenClosed(
-                    cached.offset(-2, -2, -2), cached.offset(2, 2, 2))) {
-                if (fwIsPlayingAt(level, p)) {
-                    fwDollPos = p.immutable();
-                    return true;
-                }
-            }
-            fwDollPos = null;   // 它搬走了/没了 ⇒ 下次宽扫 ✓
+            Boolean r = fwAskPlaying(level, cached);
+            if (r != null) return r;
+            fwDollPos = null;
         }
+        net.minecraft.core.BlockPos mine = be.getBlockPos();
         for (net.minecraft.core.BlockPos p : net.minecraft.core.BlockPos.betweenClosed(
                 mine.offset(-8, -4, -8), mine.offset(8, 4, 8))) {
-            if (fwIsPlayingAt(level, p)) {
+            Boolean r = fwAskPlaying(level, p);
+            if (r != null) {
                 fwDollPos = p.immutable();
-                return true;
+                return r;
             }
         }
-        return false;
+        return null;
     }
 
     /**
-     * §1086/§1087 每 tick（客户端 ✓）维护舞蹈 ✓。三条实测问题的修法都在这：
-     *  <ul>
-     *    <li>「只转一下下就停」✗ ⇒ 每 tick 问它 {@code isPlaying()} ✓ 在放就一直续 ✓；</li>
-     *    <li>「停止音乐依然在转」✗ ⇒ 它一说 false ⇒ 立刻归零 ✓；</li>
-     *    <li>⚠「不转了」✗（§1087）⇒ 两个硬 bug：①§1086 的 40 tick 窗口太短（它的音乐事件**只在开头来一次** ✗）
-     *        ⇒ 放宽到 {@link #HEARD_WINDOW}（10 秒 ✓，只为"允许去问"✓，真正续命靠 {@code isPlaying} ✓）；
-     *        ②{@code danceStart} **从没被赋值** ✗ ⇒ 相位恒为 0 ⇒ 一点都不动 ✗ ⇒ 在这里起跳时写上 ✓。</li>
-     *  </ul>
+     * §1086~§1088 每 tick（客户端 ✓）维护舞蹈 ✓：
+     * <ul>
+     *   <li>「只转一下下就停」✗ ⇒ 窗口放宽 {@link #HEARD_WINDOW} ＋ 每 tick 续命 ✓；</li>
+     *   <li>「停止音乐依然在转」✗ ⇒ 问到它说 false ⇒ 立刻停 ✓；</li>
+     *   <li>⚠「不转了」✗ ⇒ ①{@code danceStart} 没赋值（§1087 已修 ✓）②<b>问不到</b>时不再当作停 ✗
+     *       ⇒ 改成**当作在放** ✓（宁可多跳一会儿 ✓ 也不能一点都不跳 ✓）。</li>
+     * </ul>
      */
     public static void maintainDance(Level level, FumoMoBlockEntity be) {
         if (level == null || be == null || !level.isClientSide) return;
         long now = level.getGameTime();
-        // 只在"最近听到过它的音乐"时才去问 ✓（问一次要扫方块 ✗ ⇒ 用缓存把它压到极低 ✓）
         boolean heardRecently = musicPos != null && now - musicTick <= HEARD_WINDOW;
         if (!heardRecently) {
             fwDollPos = null;
             be.danceTicks = 0;
             return;
         }
-        if (friendswinePlayingNear(level, be)) {
-            if (be.danceTicks <= 0) be.danceStart = now;   // ★ 起跳时刻 ⇒ 相位起点（§1087 补 ✓）
+        Boolean playing = fwQuery(level, be);
+        if (DEBUG_LEFT > 0 && now % 200L == 0L) {
+            DEBUG_LEFT--;
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[fufu·诊断] 音乐窗口内 ✓ 它说我={} 玩偶={} 跳舞={}",
+                    playing, be.getBlockPos(), be.danceTicks);
+        }
+        if (playing == null || playing) {              // ★ 问不到 ⇒ 当作在放 ✓
+            if (be.danceTicks <= 0) be.danceStart = now;   // 起跳时刻 ⇒ 相位起点 ✓
             be.startDancing(20);
         } else {
-            be.danceTicks = 0;                             // 它不放 ⇒ 立刻停 ✓
+            be.danceTicks = 0;                         // 它明确说停了 ⇒ 立刻停 ✓
         }
     }
 
-    /** 听到音乐后多久内允许去问它（10 秒 ✓）—— 宽松值，只为覆盖"事件只来一次"✗ */
-    private static final long HEARD_WINDOW = 200L;
+    /** 诊断日志还剩几条（§1088 临时 ✓ 确认后删） */
+    private static int DEBUG_LEFT = 10;
+
+    /** 听到音乐后多久内允许去问它（3 分钟 ✓ 覆盖最长那几首；真正停靠它自己的答复 ✓ 问不到时才靠这个兜底 ✓） */
+    private static final long HEARD_WINDOW = 3600L;
 
     /** 立刻停止所有在跳的玩偶 ✓ */
     public static void stopAllDancing() {
