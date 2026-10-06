@@ -119,27 +119,54 @@ public final class FumoMoDoll {
          */
         public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 
+        /**
+         * §1076 <b>8 向放置</b>（用户口径：「让我的 fufu 可以 8 向放置」✓）——
+         * 在 {@link #FACING}（4 向 ✓）之上再加一档**相对偏移** ✓：
+         * {@code 0 = 不偏}✓、{@code 2 = +45°}✓、{@code 14 = −45°}✓（16 档属性 ⇒ 每档 22.5° ✓，
+         * 我们只用其中三档 ⇒ 与四个基本方向组合正好 **8 向** ✓）。
+         *
+         * <p>⚠ <b>为什么不直接把 FACING 换成 16 档属性</b> ✓：老存档里已放好的 fufu 只带 {@code facing=…} ✗
+         * —— 1.20.1 解析方块状态时属性名对不上会让**整条调色板项作废**（玩偶直接消失 ✗）。
+         * 新增属性则默认 {@code rotation=0} ✓ ⇒ 旧存档外观**一模一样** ✓（渲染公式退化成原来那条 ✓）。
+         */
+        public static final net.minecraft.world.level.block.state.properties.IntegerProperty ROTATION =
+                BlockStateProperties.ROTATION_16;
+
         public FumoMoBlock() {
             super(BlockBehaviour.Properties.copy(net.minecraft.world.level.block.Blocks.WHITE_WOOL)
                     .noOcclusion()                 // 不是实心块 ⇒ 不挡光、能贴在一起 ✓
                     .instabreak()                  // 空手一下就掉 ✓
                     .sound(SoundType.WOOL));
-            this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
+            this.registerDefaultState(this.stateDefinition.any()
+                    .setValue(FACING, Direction.NORTH)
+                    .setValue(ROTATION, 0));
         }
 
         @Override
         protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-            builder.add(FACING);
+            builder.add(FACING, ROTATION);
         }
 
-        /** 放置时定朝向：正面对着玩家 ✓ */
+        /**
+         * 放置时定朝向：正面对着玩家 ✓，并**吸附到 45° 的整数倍** ⇒ 支持斜向（8 向 ✓）。
+         * <p>拆成两半：{@link #FACING} 记**最近的四个基本方向** ✓（碰撞箱还靠它判轴 ✓），
+         * {@link #ROTATION} 记**相对它的 ±45°／0 偏移** ✓ ⇒ 两者相加就是最终朝向 ✓。
+         */
         @Override
         public BlockState getStateForPlacement(BlockPlaceContext ctx) {
-            return this.defaultBlockState()
-                    .setValue(FACING, ctx.getHorizontalDirection().getOpposite());
+            // 玩偶正面 = 玩家视线的反方向（放下来正面对着玩家 ✓，与 §880 起一致 ✓）
+            float yaw = (float) ((ctx.getRotation() + 180.0F) % 360.0F);
+            int eight = Math.round(yaw / 45.0F) & 7;               // 8 向：每档 45° ✓
+            float snapped = eight * 45.0F;
+            Direction facing = Direction.fromYRot(snapped);         // 最近的基本方向 ✓（可能 null ✗）
+            if (facing == null || facing.getAxis() == Direction.Axis.Y) facing = Direction.SOUTH;
+            // 偏移归一化到 (−180,180] ⇒ 必为 −45 / 0 / +45 ✓ ⇒ 折算成 22.5° 档：14 / 0 / 2 ✓
+            int diff = ((Math.round(snapped) - Math.round(facing.toYRot()) + 180) % 360 + 360) % 360 - 180;
+            int rotation = diff == 0 ? 0 : (diff > 0 ? 2 : 14);
+            return this.defaultBlockState().setValue(FACING, facing).setValue(ROTATION, rotation);
         }
 
-        /** 结构方块旋转/镜像时朝向跟着转 ✓ */
+        /** 结构方块旋转/镜像时朝向跟着转 ✓（ROTATION 是"相对 FACING 的偏移" ⇒ 整体转 90° 时它不变 ✓） */
         @Override
         public BlockState rotate(BlockState state, Rotation rotation) {
             return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
@@ -147,7 +174,9 @@ public final class FumoMoDoll {
 
         @Override
         public BlockState mirror(BlockState state, Mirror mirror) {
-            return state.setValue(FACING, mirror.mirror(state.getValue(FACING)));
+            int off = state.getValue(ROTATION);
+            if (off == 2) off = 14; else if (off == 14) off = 2;    // 镜像 ⇒ ±45° 偏移取反 ✓
+            return state.setValue(FACING, mirror.mirror(state.getValue(FACING))).setValue(ROTATION, off);
         }
 
         @Override

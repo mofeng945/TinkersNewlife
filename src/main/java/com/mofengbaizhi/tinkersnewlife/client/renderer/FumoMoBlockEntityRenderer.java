@@ -109,7 +109,13 @@ public class FumoMoBlockEntityRenderer implements BlockEntityRenderer<FumoMoBloc
         Direction facing = be.getBlockState().hasProperty(FumoMoDoll.FumoMoBlock.FACING)
                 ? be.getBlockState().getValue(FumoMoDoll.FumoMoBlock.FACING)
                 : Direction.SOUTH;
-        pose.mulPose(Axis.YP.rotationDegrees(180.0F - facing.toYRot()));
+        // §1076 8 向：在 FACING 之上再叠 ROTATION 的 22.5° 档偏移 ✓（只用 0 / 2 / 14 ⇒ 0 / +45° / −45° ✓）
+        //   ⚠ 符号取自上面既有的那条公式：yaw 越大 ⇒ 姿态角越小（`180 − toYRot` ✓）⇒ 偏移走【减】✓
+        //     （若实机看下来斜向是"反的"✗，把这里一个减号改成加号即可 ✓）
+        int eightOffset = be.getBlockState().hasProperty(FumoMoDoll.FumoMoBlock.ROTATION)
+                ? be.getBlockState().getValue(FumoMoDoll.FumoMoBlock.ROTATION)
+                : 0;
+        pose.mulPose(Axis.YP.rotationDegrees(180.0F - facing.toYRot() - eightOffset * 22.5F));
         // §908 抚摸挤压：横向鼓 = sqrt(1 / yScale)（有体积感 ✓ 照诡厄玩偶的算法 ✓）
         //   在 translate(0.5,0,0.5) 之后 ⇒ 缩放是**以方块底面中心为原点**的 ✓
         //   ⇒ 压扁时玩偶是"往地面坐下去"，不会浮起来 ✓

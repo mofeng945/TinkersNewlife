@@ -153,3 +153,9 @@ entity id against the mod's own language file, and can be re-run with more mod i
   that the previous pass would have made farmable: the set goes from 454 to **415** (Twilight Forest 69 -> 51,
   Vampirism 47 -> 29, Iron's Spells 30 -> 28, Lavafishing 18 -> 17). Trophies, music discs, saddles and
   materials such as leather, scales, bones and ectoplasm are deliberately kept - they are not equipment.
+## Changed (2026-10-06, eighteenth pass - version unchanged)
+
+* The Fumo doll can be placed in **8 directions** now - the four cardinals plus the four diagonals. It keeps
+  its old `facing` property untouched (so dolls already standing in an existing world look exactly the same)
+  and gains a new rotation property that carries a 0 or +/-45 degree offset; placement snaps to the nearest
+  45 degrees, and the renderer adds that offset on top of the existing facing rotation.

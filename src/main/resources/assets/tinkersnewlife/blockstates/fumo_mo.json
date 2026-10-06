@@ -1,8 +1,6 @@
 {
+  "_comment": "§1076 fufu 支持 8 向放置 ⇒ 方块状态多了 rotation 属性（ROTATION_16 ✓ 只用 0/2/14 三档 ✓）。所有状态都指向同一个模型 ✓（世界里由 FumoMoBlockEntityRenderer 画 ✓，方块本身 RenderShape.INVISIBLE ✓）⇒ 直接用空键 '' 覆盖全部状态 ✓，不必逐个列 4×16 个变体 ✗。",
   "variants": {
-    "facing=north": { "model": "tinkersnewlife:block/fumo_mo" },
-    "facing=south": { "model": "tinkersnewlife:block/fumo_mo" },
-    "facing=west":  { "model": "tinkersnewlife:block/fumo_mo" },
-    "facing=east":  { "model": "tinkersnewlife:block/fumo_mo" }
+    "": { "model": "tinkersnewlife:block/fumo_mo" }
   }
 }
