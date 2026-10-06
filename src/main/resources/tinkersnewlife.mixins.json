@@ -36,7 +36,8 @@
     "SlashBladeRenderOptMixin",
     "GuiSmelteryTankSearchMixin",
     "HeatingStructureScreenSearchMixin",
-    "ScreenSearchInputMixin"
+    "ScreenSearchInputMixin",
+    "KeyboardHandlerCharMixin"
   ],
   "injectors": {
     "defaultRequire": 0
