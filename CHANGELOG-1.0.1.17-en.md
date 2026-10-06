@@ -159,3 +159,11 @@ entity id against the mod's own language file, and can be re-run with more mod i
   its old `facing` property untouched (so dolls already standing in an existing world look exactly the same)
   and gains a new rotation property that carries a 0 or +/-45 degree offset; placement snaps to the nearest
   45 degrees, and the renderer adds that offset on top of the existing facing rotation.
+## Fixed (2026-10-06, nineteenth pass - version unchanged)
+
+* Switching focuses with Goety's own radial wheel no longer makes the equipped focus vanish. The staff
+  already implemented `IWand` and exposed the native `SoulUsingItemHandler` focus slot, but this mod also
+  kept its own focus pouch in player data and periodically mirrored that pouch's slot back onto the staff -
+  so the moment the wheel swapped a focus in, the mirror wrote the old one back over it. That mirror is now
+  disabled and the staff's own slot is the single source of truth. (Removing the leftover pouch, its custom
+  screen, keybinds and packets is the next step.)

@@ -449,39 +449,28 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
     // ================= 服务端：聚晶镜像 =================
 
     /**
-     * 服务端：把玩家"装备中聚晶"（聚晶包 idx 指向的聚晶）镜像写入魔杖自带槽。
-     * 巫法模式 → 写聚晶；铁魔法模式 → 清空（避免诡厄当前聚晶 HUD 在铁魔法模式误显示）。
-     * 内容相同则跳过；写入后把槽内栈原位替换为副本以强制广播（客户端拿到新 "cap"）。
+     * §1077 <b>已停用</b> ✓（用户口径：「<b>直接取消自研聚晶包，走本体的法杖 API</b>」✓）。
      *
-     * @return 是否实际发生了写入
+     * <p>原作用 ✗：服务端把"聚晶包（玩家持久数据）里的**装备位**"**镜像写入**魔杖本体聚晶槽 ✓，
+     * 并且 {@code ModularStaffGoety} 那边还有一条**周期校正**在不停调用它 ✓。
+     *
+     * <p>⚠ <b>这就是用户实测"聚晶直接消失"的根源</b> ✓：诡厄自己的**聚晶轮盘**在服务端走
+     * {@code CSwapFocusPacket.swapFocus} ✓ —— 它把聚晶在**本体槽**（{@code SoulUsingItemHandler} ✓）
+     * 与**聚晶包**（{@code FocusBagItemHandler} ✓）之间**对调** ✓；
+     * 而这条镜像／周期校正紧接着又按"我们玩家数据里的装备位"把本体槽写回去 ✗
+     * ⇒ 刚换进来的聚晶**当场被顶掉** ✓（从玩家视角就是"聚晶没了"✗）。
+     *
+     * <p>现在 ✓：<b>法杖本体槽是唯一权威</b> ✓ —— {@code IWand} ＋ {@code SoulUsingItemHandler}
+     * 本来就已接好 ✓（见 {@link #initCapabilities} ✓），诡厄的轮盘、当前聚晶 HUD（{@code CurrentFocusGui}）
+     * 与冷却全部原生可用 ✓。
+     *
+     * <p>⚠ 自研聚晶包、自绘界面与那两条网络包会**在下一步整体删除** ✓
+     *（先把它停成空壳 ✓，避免一次改太大反而把魔杖弄坏 ✗）。
+     *
+     * @return 恒为 {@code false}（＝没有发生写入 ✓）
      */
     public static boolean mirrorEquippedFocus(ServerPlayer player, ItemStack staff) {
-        if (player == null || staff == null || staff.isEmpty()) return false;
-        if (!(staff.getItem() instanceof GoetyStaffItem)) return false;
-        // ⚠ 蓄力/吟唱进行中绝不替换手持栈：LivingEntity.updatingUsingItem 每 tick 校验
-        // getItemInHand == useItem，换栈对象会 stopUsingItem() 打断施法；等施法结束的下个窗口再校正
-        if (player.isUsingItem()) return false;
-        ItemStack focus = ModularStaffGoety.equippedFocusOf(player, staff);
-        try {
-            SoulUsingItemHandler handler = SoulUsingItemHandler.get(staff);
-            ItemStack current = handler.getSlot();
-            if (ItemStack.isSameItemSameTags(current, focus)) return false;
-            handler.extractItem();
-            if (!focus.isEmpty()) {
-                handler.insertItem(focus.copy());
-            }
-            // 直接落盘到魔杖 tag：即使尚未广播/客户端未同步，存档也不丢聚晶
-            staff.getOrCreateTag().put("cap", handler.serializeNBT());
-            // 【诊断】镜像发生写替换时记录（确认后移除）
-            TinkersNewlife.LOGGER.info("[魔杖·真法杖] 聚晶镜像写入 聚晶={} 使用中={}", focusName(staff), player.isUsingItem());
-            // 槽内换入副本，确保服务端广播检测到栈变化（原栈 tag 已被原地修改，但广播比较依赖对象/内容差异，
-            // 稳妥起见替换为新对象再放回原槽）
-            replaceInInventory(player, staff);
-            return true;
-        } catch (Throwable t) {
-            TinkersNewlife.LOGGER.warn("[魔杖·真法杖] 聚晶镜像写入失败：", t);
-            return false;
-        }
+        return false;
     }
 
     /** 把魔杖栈换回玩家背包原槽（主手/副手），触发容器广播 */
