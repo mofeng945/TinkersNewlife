@@ -1,0 +1,13 @@
+{
+  "type": "tconstruct:severing",
+  "entity": {
+    "type": "goety:ender_keeper"
+  },
+  "result": { "item": "goety:void_echo", "count": 3 },
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "goety"
+    }
+  ]
+}

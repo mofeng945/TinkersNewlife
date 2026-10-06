@@ -1,0 +1,13 @@
+{
+  "type": "tconstruct:severing",
+  "entity": {
+    "type": "goety:brood_mother"
+  },
+  "result": { "item": "goety:spider_nest", "count": 1 },
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "goety"
+    }
+  ]
+}

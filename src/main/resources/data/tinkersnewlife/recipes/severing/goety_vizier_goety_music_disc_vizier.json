@@ -1,0 +1,13 @@
+{
+  "type": "tconstruct:severing",
+  "entity": {
+    "type": "goety:vizier"
+  },
+  "result": { "item": "goety:music_disc_vizier", "count": 1 },
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "goety"
+    }
+  ]
+}

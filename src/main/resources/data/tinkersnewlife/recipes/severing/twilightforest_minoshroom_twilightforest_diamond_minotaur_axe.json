@@ -1,0 +1,13 @@
+{
+  "type": "tconstruct:severing",
+  "entity": {
+    "type": "twilightforest:minoshroom"
+  },
+  "result": { "item": "twilightforest:diamond_minotaur_axe", "count": 1 },
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "twilightforest"
+    }
+  ]
+}

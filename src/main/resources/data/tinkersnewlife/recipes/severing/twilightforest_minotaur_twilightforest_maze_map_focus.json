@@ -1,0 +1,13 @@
+{
+  "type": "tconstruct:severing",
+  "entity": {
+    "type": "twilightforest:minotaur"
+  },
+  "result": { "item": "twilightforest:maze_map_focus", "count": 1 },
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "twilightforest"
+    }
+  ]
+}

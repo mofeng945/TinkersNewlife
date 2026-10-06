@@ -1,0 +1,13 @@
+{
+  "type": "tconstruct:severing",
+  "entity": {
+    "type": "aquaculture:capitaine"
+  },
+  "result": { "item": "aquaculture:capitaine", "count": 1 },
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "aquaculture"
+    }
+  ]
+}

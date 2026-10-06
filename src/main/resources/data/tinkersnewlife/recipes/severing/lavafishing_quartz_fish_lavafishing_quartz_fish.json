@@ -1,0 +1,13 @@
+{
+  "type": "tconstruct:severing",
+  "entity": {
+    "type": "lavafishing:quartz_fish"
+  },
+  "result": { "item": "lavafishing:quartz_fish", "count": 1 },
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "lavafishing"
+    }
+  ]
+}

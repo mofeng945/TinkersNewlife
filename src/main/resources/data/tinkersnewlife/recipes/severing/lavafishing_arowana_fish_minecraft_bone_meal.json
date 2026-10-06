@@ -1,0 +1,13 @@
+{
+  "type": "tconstruct:severing",
+  "entity": {
+    "type": "lavafishing:arowana_fish"
+  },
+  "result": { "item": "minecraft:bone_meal", "count": 1 },
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "lavafishing"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "type": "tconstruct:severing",
+  "entity": {
+    "type": "lavafishing:yeti_crab"
+  },
+  "result": { "item": "lavafishing:yeti_crab", "count": 1 },
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "lavafishing"
+    }
+  ]
+}

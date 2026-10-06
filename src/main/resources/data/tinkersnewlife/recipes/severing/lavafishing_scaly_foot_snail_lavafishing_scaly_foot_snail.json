@@ -1,0 +1,13 @@
+{
+  "type": "tconstruct:severing",
+  "entity": {
+    "type": "lavafishing:scaly_foot_snail"
+  },
+  "result": { "item": "lavafishing:scaly_foot_snail", "count": 1 },
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "lavafishing"
+    }
+  ]
+}

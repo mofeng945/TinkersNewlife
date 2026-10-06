@@ -1,0 +1,13 @@
+{
+  "type": "tconstruct:severing",
+  "entity": {
+    "type": "vampirism:advanced_hunter_imob"
+  },
+  "result": { "item": "vampirism:vampire_blood_bottle", "count": 1 },
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "vampirism"
+    }
+  ]
+}

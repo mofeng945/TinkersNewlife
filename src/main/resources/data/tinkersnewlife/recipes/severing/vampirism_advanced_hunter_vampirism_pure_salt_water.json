@@ -1,0 +1,13 @@
+{
+  "type": "tconstruct:severing",
+  "entity": {
+    "type": "vampirism:advanced_hunter"
+  },
+  "result": { "item": "vampirism:pure_salt_water", "count": 2 },
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "vampirism"
+    }
+  ]
+}

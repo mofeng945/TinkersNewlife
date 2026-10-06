@@ -1,0 +1,13 @@
+{
+  "type": "tconstruct:severing",
+  "entity": {
+    "type": "vampirism:advanced_hunter"
+  },
+  "result": { "item": "vampirism:holy_water_bottle_ultimate", "count": 1 },
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "vampirism"
+    }
+  ]
+}
