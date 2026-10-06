@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.content;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -195,6 +196,17 @@ public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.worl
     /** §1086 舞蹈开始的世界时间 ✓（相位从"音乐开始"算 ✓ 才对得上它自己的 rotationStartTick ✓） */
     private long danceStart = -1L;
 
+    /**
+     * §1096 <b>跳舞范围＝16 格</b>（用户口径：「周围16格范围内的所有fumo」✓）
+     * —— <b>两条来源统一用这一个口径</b> ✓：
+     * ①原版唱片机在放我们的唱片 ✓ ②「朋友的酒」的音乐 ✓。
+     * <p>判定一律用 {@code distSqr}（省一次开方 ✓）⇒ 比较 {@link #DANCE_RANGE_SQR} ✓；
+     * 恰好 16 格（＝256）算"在范围内" ✓（判的是 {@code >} ✗）。
+     */
+    public static final double DANCE_RANGE = 16.0D;
+    /** {@link #DANCE_RANGE} 的平方（＝256 ✓ 判定用 ✓ 别开方 ✓） */
+    private static final double DANCE_RANGE_SQR = DANCE_RANGE * DANCE_RANGE;
+
     public void startDancing(int ticks) {
         // ⚠ §1089 <b>这里绝不能碰 {@code danceStart}</b> ✗✗ ——
         //   §1086 我在这里写了"danceTicks<=0 ⇒ danceStart=-1（相位归零）"✗，
@@ -264,6 +276,97 @@ public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.worl
         if (level == null) return;
         musicPos = net.minecraft.core.BlockPos.containing(x, y, z);
         musicTick = level.getGameTime();
+    }
+
+    // ============================================================
+    //  §1096 原版唱片机在放「我们的唱片」⇒ 跳舞（**完全不依赖「朋友的酒」** ✓）
+    // ============================================================
+
+    /**
+     * 我们的唱片是从<b>哪台唱片机</b>放出来的 ✓＋那一格属于哪个维度 ✓。
+     * <p>由客户端声音事件写（{@code FumoMoDanceHandler} ✓）；这里只读 ✓ ⇒ {@code volatile} ✓。
+     * <p>⚠ 维度也要记：唱片机在 A 维度、玩偶在 B 维度时 {@code BlockPos} 会"撞上"B 维度同坐标的方块 ✗。
+     */
+    private static volatile BlockPos discPos;
+    private static volatile ResourceKey<Level> discDim;
+    /** 听到唱片开始的客户端 tick ✓（配曲长兜底判"放完了" ✓） */
+    private static volatile long discStartTick = Long.MIN_VALUE;
+
+    /**
+     * <b>曲长兜底</b>：我们的唱片本身有多长（tick ✓ 由 ogg 末页 granule 算出来 ✓
+     * 见 {@code ModItems#MUSIC_DISC_DOLL_MUSIC_LENGTH_TICKS} ✓）。
+     * <p>⚠ 为什么不直接问唱片机"还在放吗"就完事 ✗——<b>原版不给客户端同步唱片机的播放状态</b> ✗：
+     * {@code JukeboxBlockEntity} 既没有 {@code getUpdatePacket}、{@code setItem} 也不
+     * {@code sendBlockUpdated} ⇒ 客户端那只方块实体里的"唱片物品／IsPlaying"是**区块加载那一刻的快照**
+     * ✗（插入唱片时它多半还是空的 ✗、原曲放完了它可能还停在 true ✗）⇒ <b>它的"没在放"不能信</b> ✗
+     * （信了就是"插了唱片也不跳"✗）。
+     * <p>⇒ 真正靠得住的三件事：①声音事件给的位置 ✓ ②那格方块状态 {@code HAS_RECORD}
+     * （方块状态是同步的 ✓ 唱片被取走／唱片机被拆 ⇒ 立刻为假 ✓）③这个曲长 ✓。
+     */
+    private static final int DISC_END_PAD_TICKS = 20;
+
+    /** §1096 声音事件告诉我们"我们的唱片从这儿放了" ✓ */
+    public static void noteDiscSource(Level level, double x, double y, double z) {
+        if (level == null) return;
+        discPos = BlockPos.containing(x, y, z);
+        discDim = level.dimension();
+        discStartTick = level.getGameTime();
+    }
+
+    /** §1096 同一格唱片机改放**别的**唱片 ⇒ 把"我们的唱片在放"立刻作废 ✓（否则会跟着别人的曲子跳 ✗） */
+    public static void clearDiscSourceAt(double x, double y, double z) {
+        BlockPos p = discPos;
+        if (p != null && p.equals(BlockPos.containing(x, y, z))) {
+            discPos = null;
+            discDim = null;
+            discStartTick = Long.MIN_VALUE;
+        }
+    }
+
+    /**
+     * §1096 ①「原版唱片机正在放<b>我们的</b>唱片、且离这只玩偶 ≤ {@link #DANCE_RANGE} 格」⇒ {@code true}
+     * （调用方据此续命跳舞 ✓ 见 {@link #maintainDance} ✓）。任何异常都吞掉 ⇒ 最多"不跳" ✓ 绝不崩 ✗。
+     *
+     * <p>判定链（全部只用客户端拿得到的东西 ✓）：
+     * <ol>
+     *   <li><b>位置</b>：{@link #discPos}（声音事件给的 ✓）不是这台玩偶所在维度 ⇒ 不算 ✓；</li>
+     *   <li><b>距离</b>：{@code distSqr > 16²} ⇒ 不算 ✓（用户口径 16 格 ✓）；</li>
+     *   <li><b>方块状态</b>：那格还得是<b>装着唱片的唱片机</b>（{@code JukeboxBlock.HAS_RECORD} ✓）
+     *       —— 唱片被取走／唱片机被拆 ⇒ 立刻为假 ⇒ <b>玩偶立刻停</b> ✓；</li>
+     *   <li><b>曲长</b>：超过 ogg 真实时长＋{@link #DISC_END_PAD_TICKS} ⇒ 认定"放完了"⇒ 停 ✓
+     *       （＝原版唱片机自己的停机线口径 ✓ {@code length + 20} ✓）；</li>
+     *   <li><b>{@code JukeboxBlockEntity#isRecordPlaying()} 佐证</b> ✓（用户点名要问它 ✓）——
+     *       ⚠ 只采信它**明确说"正在放别的唱片"**那一种情况 ✗（⇒ 立刻停 ✓）；
+     *       它说"没在放"时**不能当停** ✗（客户端数据本来就不新鲜 ✗ 见 {@link #DISC_END_PAD_TICKS} 上面的说明 ✓）。</li>
+     * </ol>
+     */
+    private static boolean discPlayingNear(Level level, FumoMoBlockEntity be, long now) {
+        try {
+            BlockPos p = discPos;
+            if (p == null) return false;
+            if (discDim != null && !discDim.equals(level.dimension())) return false;
+            if (be.getBlockPos().distSqr(p) > DANCE_RANGE_SQR) return false;      // ← 16 格口径 ✓
+            BlockState st = level.getBlockState(p);
+            if (!(st.getBlock() instanceof net.minecraft.world.level.block.JukeboxBlock)
+                    || !st.getValue(net.minecraft.world.level.block.JukeboxBlock.HAS_RECORD)) {
+                clearDiscSourceAt(p.getX() + 0.5D, p.getY() + 0.5D, p.getZ() + 0.5D);
+                return false;                                                     // 唱片没了/机器没了 ⇒ 立刻停 ✓
+            }
+            if (now - discStartTick > (long) ModItems.MUSIC_DISC_DOLL_MUSIC_LENGTH_TICKS + DISC_END_PAD_TICKS) {
+                return false;                                                     // 曲子放完了 ⇒ 停 ✓
+            }
+            // ⑤ 唱片机方块实体佐证 ✓（只采信"它明确在放别的唱片"⇒ 停 ✗ 见方法注释 ✓）
+            BlockEntity jb = level.getBlockEntity(p);
+            if (jb instanceof net.minecraft.world.level.block.entity.JukeboxBlockEntity jukebox
+                    && jukebox.isRecordPlaying()
+                    && !jukebox.getFirstItem().isEmpty()
+                    && !jukebox.getFirstItem().is(ModItems.MUSIC_DISC_DOLL_MUSIC.get())) {
+                return false;
+            }
+            return true;
+        } catch (Throwable t) {
+            return false;                                                         // fail-safe：不跳 ✓ 不崩 ✗
+        }
     }
 
     /** 「朋友的酒」的玩偶方块实体类名（**只用名字比对** ✓ 不用 Class.forName ✗） */
@@ -344,10 +447,25 @@ public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.worl
      *   <li>⚠「不转了」✗ ⇒ ①{@code danceStart} 没赋值（§1087 已修 ✓）②<b>问不到</b>时不再当作停 ✗
      *       ⇒ 改成**当作在放** ✓（宁可多跳一会儿 ✓ 也不能一点都不跳 ✓）。</li>
      * </ul>
+     *
+     * <p>§1096 加一条<b>前置</b>分支 ✓：<b>①原版唱片机在放我们的唱片</b> ⇒ 跳 ✓
+     * （{@link #discPlayingNear} ✓ 距离 16 格 ✓）。它<b>命中就直接 return</b> ✓ ⇒
+     * 下面那条「朋友的酒」分支不会把它清掉 ✓ —— <b>没装朋友的酒时也照跳</b> ✓
+     *（用户口径：「无朋友的酒模组情况下」✓）。
+     * <p>而"我们的唱片停了"（唱片被取走／机器被拆／曲子放完 ✓）⇒ ①不命中 ⇒
+     * 落回②这条 ✓（没装那模组时 {@link #fwQuery} 找不到它那只 ⇒ 说"没在放" ⇒
+     * {@code danceTicks = 0} ⇒ <b>立刻停</b> ✓ 正是用户要的 ✓）。
      */
     public static void maintainDance(Level level, FumoMoBlockEntity be) {
         if (level == null || be == null || !level.isClientSide) return;
         long now = level.getGameTime();
+        // ── §1096 ①原版唱片机 + 我们的唱片 ⇒ 跳舞 ✓（**不依赖朋友的酒** ✓ 16 格 ✓）
+        if (discPlayingNear(level, be, now)) {
+            if (be.danceTicks <= 0) be.danceStart = now;   // 起跳时刻 ⇒ 相位起点 ✓
+            be.startDancing(20);
+            return;
+        }
+        // ── ②§1083~§1090 原来的「朋友的酒」分支 ✓（逻辑一字未改 ✓ 只把距离口径写死成 16 格 ✓）
         boolean heardRecently = musicPos != null && now - musicTick <= HEARD_WINDOW;
         if (!heardRecently) {
             fwDollPos = null;
@@ -361,6 +479,12 @@ public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.worl
                     playing, be.getBlockPos(), be.danceTicks);
         }
         if (playing == null || playing) {              // ★ 问不到 ⇒ 当作在放 ✓
+            // §1096 距离口径统一 16 格 ✓：locate 到它那只了 ⇒ 就用它那只的位置量 ✓
+            //   （下面那条邻近扫描箱是 ±8 ⇒ 最远约 12 格 ⇒ 天然满足 ✓ 这句是把口径写死、免得以后被人放大 ✗）
+            if (fwDollPos != null && be.getBlockPos().distSqr(fwDollPos) > DANCE_RANGE_SQR) {
+                be.danceTicks = 0;
+                return;
+            }
             if (be.danceTicks <= 0) be.danceStart = now;   // 起跳时刻 ⇒ 相位起点 ✓
             be.startDancing(20);
         } else {

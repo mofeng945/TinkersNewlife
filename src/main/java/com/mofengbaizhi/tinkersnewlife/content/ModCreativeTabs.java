@@ -253,6 +253,9 @@ public class ModCreativeTabs {
                                 // ----- §910 帕秋莉的百宝书（吞噬帕秋莉书 ⇒ 一本里查阅全部 ✓）-----
                                 output.accept(ModItems.PATCHOULI_COMPENDIUM.get());
 
+                                // ----- §1096 唱片「墨封白织的唱片」（放进原版唱片机 ⇒ 16 格内的 fufu 一起跳舞 ✓）-----
+                                output.accept(ModItems.MUSIC_DISC_DOLL_MUSIC.get());
+
                                 // §1081：全部 fufu 已从这里**移出** ✓ ⇒ 本栏（匠魂新生）不再出现任何 fufu ✓，
                                 // 它们单独占一页创造栏（见下面的 FUMO_TAB ✓）。
                                 // 本栏其它物品的先后顺序**一格没动** ✓（原 §905/§1079 的"整组排最后"随之作废 ✓）。

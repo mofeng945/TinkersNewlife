@@ -40,6 +40,26 @@ public class ModSounds {
     /** 领域展开·展开爆音：assets/tinkersnewlife/sounds/domain/open.ogg（与 base 同时播放 → 叠加） */
     public static final RegistryObject<SoundEvent> DOMAIN_OPEN = reg("domain.open", 64.0F);
 
+    // ===== §1096 唱片「墨封白织的唱片」=====
+    /**
+     * 唱片音效 id：{@code tinkersnewlife:music_doll} ✓
+     *
+     * <p>⚠ 这个 id 有<b>三个地方必须同名</b> ✓：
+     * <ul>
+     *   <li>{@code assets/tinkersnewlife/sounds.json} 里的键 {@code "music_doll"} ✓
+     *       （键＝事件 id，值里的 {@code tinkersnewlife:music/doll_music} 才是 ogg 的路径 ✓）；</li>
+     *   <li>这里注册的 {@link SoundEvent} ✓（{@code RecordItem} 拿它去放 ✓）；</li>
+     *   <li>客户端 {@code FumoMoDanceHandler} 判"这是我们的唱片"就用它 ✓。</li>
+     * </ul>
+     * <p>用 16 格的默认传播距离（{@link #reg(String)}）就够 ✓ —— 原版唱片机放音时自己会传
+     * {@code volume=4.0F} ⇒ 实际可听范围约 64 格 ✓（跳舞范围另有 16 格硬判 ✓ 见 FumoMoBlockEntity ✓）。
+     */
+    public static final RegistryObject<SoundEvent> MUSIC_DOLL = reg("music_doll");
+
+    /** {@link #MUSIC_DOLL} 的 id（客户端判定用 ✓ 注册前就能拿到 ✓） */
+    public static final ResourceLocation MUSIC_DOLL_ID =
+            new ResourceLocation(TinkersNewlife.MOD_ID, "music_doll");
+
     private static RegistryObject<SoundEvent> reg(String name) {
         return SOUNDS.register(name,
                 () -> SoundEvent.createVariableRangeEvent(new ResourceLocation(TinkersNewlife.MOD_ID, name)));

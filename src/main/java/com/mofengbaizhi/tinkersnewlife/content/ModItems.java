@@ -644,4 +644,48 @@ public class ModItems {
                             //（§559 那时有"普通/Create 两个常量 + energyConverterBlock() 二选一"✗
                             //  那套写法已经被 §561 的 duplicate-registration 崩溃证明是错的 ✗ 已删 ✓）
                             ModBlocks.ENERGY_CONVERTER.get()));
+
+    // ============================================================
+    //  §1096 唱片「墨封白织的唱片」（桌面的 doll_music.ogg ✓）
+    // ============================================================
+
+    /**
+     * 唱片音轨长度（tick ✓）—— <b>不是瞎估的</b> ✓：
+     * ogg 末页 granule position = {@code 2482560}，采样率 {@code 44100 Hz}（单声道 ✓）
+     * ⇒ 时长 {@code 2482560 / 44100 = 56.294 秒} ⇒ {@code 56.294 × 20 = 1125.9 ≈ 1126 tick} ✓。
+     * <p>原版唱片机就是靠这个值决定什么时候停（{@code tickCount >= recordStartedTick + length + 20} ✓
+     * 见 {@code JukeboxBlockEntity#shouldRecordStopPlaying} ✓）—— 给大了会"音乐放完了还在转"✗，
+     * 给小了会提前停 ✗ ⇒ 所以用解析出来的真实时长 ✓。
+     */
+    public static final int MUSIC_DISC_DOLL_MUSIC_LENGTH_TICKS = 1126;
+
+    /**
+     * <b>墨封白织的唱片</b>（{@code tinkersnewlife:music_disc_doll_music}）✓
+     * —— 音频 {@code assets/tinkersnewlife/sounds/music/doll_music.ogg}（用户提供的桌面文件逐字节复制 ✓），
+     * 声音事件 {@code tinkersnewlife:music_doll}（见 {@link ModSounds#MUSIC_DOLL} ✓）。
+     *
+     * <h2>1.20.1 的构造器签名（以反编译源码 + 编译器为准 ✓）</h2>
+     * 原版那个是 {@code RecordItem(int, SoundEvent, Item.Properties, int)} ✗ 已 {@code @Deprecated}，
+     * 且它在构造期就把 {@code SoundEvent} 塞进 {@code BY_NAME} 映射 ⇒ 注册顺序/时机一不对就崩 ✗；
+     * <b>Forge 版</b>收的是 {@code Supplier<SoundEvent>} ✓
+     *   {@code RecordItem(int comparatorValue, Supplier<SoundEvent> soundSupplier, Item.Properties builder, int lengthInTicks)} ✓
+     * —— 这里传 {@code RegistryObject<SoundEvent>}（它本身就是 {@code Supplier} ✓）⇒ 延迟取值 ✓ 安全 ✓。
+     * <p>⚠ 第 4 个参数在 <b>Forge 版里就是 tick</b> ✓（原版那个废弃构造器自己会 {@code ×20}，两者口径不同 ✗
+     * 千万别照原版写法再乘一次 20 ✗）。
+     *
+     * <h2>比较器强度</h2>
+     * 取 <b>9</b> ✓（原版唱片在 1~15 之间按"长短/稀有度"排，9 属于中上 ✓ 纯装饰性数值 ✓）。
+     *
+     * <h2>⚠ 必须进 {@code minecraft:music_discs} 物品标签</h2>
+     * 原版唱片机塞唱片时会查这个标签 ✗ 不在里面就**塞不进去**（而且 {@code RecordItem#useOn}
+     * 照样把你手里的唱片 {@code shrink(1)} 吃掉 ✗ ⇒ 唱片直接消失 ✗）
+     * ⇒ 已加 {@code data/minecraft/tags/items/music_discs.json}（{@code replace:false} ✓ 不动原版 ✓）。
+     */
+    public static final RegistryObject<Item> MUSIC_DISC_DOLL_MUSIC =
+            ITEMS.register("music_disc_doll_music",
+                    () -> new net.minecraft.world.item.RecordItem(
+                            9,                                        // 比较器强度（1~15 ✓）
+                            ModSounds.MUSIC_DOLL,                     // Forge 版：Supplier<SoundEvent> ✓
+                            new Item.Properties().stacksTo(1).rarity(Rarity.RARE),
+                            MUSIC_DISC_DOLL_MUSIC_LENGTH_TICKS));
 }

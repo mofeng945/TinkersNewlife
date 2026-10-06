@@ -59,5 +59,14 @@
         "stream": false
       }
     ]
+  },
+  "music_doll": {
+    "subtitle": "subtitles.tinkersnewlife.music_doll",
+    "sounds": [
+      {
+        "name": "tinkersnewlife:music/doll_music",
+        "stream": true
+      }
+    ]
   }
 }
