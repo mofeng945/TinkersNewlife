@@ -12,5 +12,5 @@
   "items": ["tinkersnewlife:music_disc_doll_music"],
   "min_count": 1,
   "max_count": 1,
-  "chance": 0.002
+  "chance": 0.2
 }

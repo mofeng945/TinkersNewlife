@@ -94,6 +94,6 @@ and Soul Eater putting Soul Hunger on you.
 
 * **Fumo dolls can be cut into each other** on a stonecutter: any doll in, any other of the ten out.
   (When you add a new skin later, remember to add its own stonecutting recipe as well - skins are scanned at runtime.)
-* The disc **"朋友的酒🍺DJ版"** can now be found in **End City treasure chests** (rate handled as **0.2%**, roughly one in 500 chests).
+* The disc **"朋友的酒🍺DJ版"** can now be found in **End City treasure chests** (**20%** chance).
 * **Fixed: Ancient Cursed Scrolls** could only appear in **chest-type** loot tables; they can now be **fished up** as well
   (the three vanilla fishing sub-tables - fish, junk and treasure - each count once per cast, never twice).
