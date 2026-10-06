@@ -1,11 +1,13 @@
 package com.mofengbaizhi.tinkersnewlife.mixin;
 
 import com.mofengbaizhi.tinkersnewlife.client.search.FluidSearch;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraftforge.fluids.FluidStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import slimeknights.tconstruct.smeltery.block.entity.tank.SmelteryTank;
 
@@ -136,6 +138,11 @@ public abstract class GuiSmelteryTankSearchMixin {
                 FluidSearch.diag("过滤 查询='" + FluidSearch.getQuery() + "' 流体数=" + fluids.size()
                         + " 高度数组=" + heights.length + " 置零=" + zeroed);
             }
+            // §1117l ⚠ 关键：**字段也要一起改** ✗！
+            //   匠魂 `calcLiquidHeights(boolean)` 内部是 `this.liquidHeights = calcLiquidHeights(...); return this.liquidHeights;` ✓
+            //   —— 只改**返回值**的话，凡是**直接读字段**的路径（高亮 ✓ tooltip ✓ 别的渲染 ✓）仍会拿到**未过滤**的数组 ✗
+            //   ⇒ 用户实测「筛掉一个我没看到筛掉」✗ 就是这么来的 ✓
+            this.liquidHeights = out;
             cir.setReturnValue(out);
         } catch (Throwable ignored) {
             // 兜底：过滤器失效而已 ✓ 界面照常 ✓
@@ -145,4 +152,24 @@ public abstract class GuiSmelteryTankSearchMixin {
     /** 临时诊断计数（定位完删 ✗） */
     private static final java.util.concurrent.atomic.AtomicInteger TNL$FILTER_DIAG =
             new java.util.concurrent.atomic.AtomicInteger();
+
+    /**
+     * §1117l <b>绘制端探针</b> ✓ —— 用户反馈「筛掉一个我没看到筛掉」✗：
+     * 过滤端日志说 `置零=1` ✓ 却看不到变化 ✗ ⇒ 必须确认"**真正画的时候**拿到的是哪份数组" ✓。
+     * <p>记 `渲染 高度=[a, b, c]` ✓ —— 若这里有 0 ⇒ 画的就是过滤后的（那问题在别处 ✓）；
+     * 若这里没有 0 ⇒ **绘制走的不是我改的数组** ✗ ⇒ 改从 `renderFluids` 里重定向那次调用 ✓。
+     */
+    @Inject(method = "renderFluids(Lcom/mojang/blaze3d/vertex/PoseStack;)V",
+            at = @At("HEAD"), require = 1, remap = false)
+    private void tnl$probeRender(PoseStack matrices, CallbackInfo ci) {
+        try {
+            if (!FluidSearch.isActive()) return;
+            if (TNL$FILTER_DIAG.incrementAndGet() % 200 != 1) return;
+            int[] h = this.liquidHeights;
+            FluidSearch.diag("渲染 字段高度=" + (h == null ? "null" : java.util.Arrays.toString(h))
+                    + " 流体数=" + this.tank.getFluids().size()
+                    + " contained=" + this.tank.getContained());
+        } catch (Throwable ignored) {
+        }
+    }
 }
