@@ -118,15 +118,22 @@ public final class FluidSearch {
     // ============================================================
     private static final java.util.concurrent.atomic.AtomicInteger DIAG_COUNT =
             new java.util.concurrent.atomic.AtomicInteger();
+    /**
+     * §1117k <b>诊断按内容去重</b> ✗（血泪 ✓）：`HeatingStructureScreen` 的 `m_181908_` 是**每 tick 都调**的方法 ✗
+     * ⇒ 之前"界面打开 ⇒ 自动聚焦=true"那条消息**每秒刷 20 条** ✗ ⇒ **把 20 条的额度全部吃光** ✗
+     * ⇒ 真正需要的"过滤 …"那几行**一条都没留下** ✗ ⇒ 白测一轮 ✓。
+     * <p>⇒ 现在同一条消息只记一次 ✓（`DIAG_SEEN` ✓），且上限提到 60 条 **不同**消息 ✓。
+     */
+    private static final java.util.Set<String> DIAG_SEEN =
+            java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     /**
-     * 临时诊断 ✓ —— 用户两次报"无法输入"✗，而 mixin 都已确认应用成功 ✓ ⇒
-     * 只能让运行时把"点击是否命中、是否聚焦、按键是否进来"写进日志 ✓，别再盲猜 ✗。
-     * <p>⚠ 上限 20 条 ✓（每条都带 `[搜索诊断]` 前缀 ✓ 方便 grep ✓），定位完这一段会删掉 ✗。
+     * 临时诊断 ✓ —— 用户多次报"无效"✗，而 mixin 应用情况只能靠运行时自述 ✓。
+     * <p>⚠ 同一条消息**只记一次** ✓（去重 ✓ 见 {@link #DIAG_SEEN} ✓）；上限 60 条不同消息 ✓。
      */
     public static void diag(String msg) {
-        if (DIAG_COUNT.incrementAndGet() > 20) return;
         try {
+            if (msg == null || DIAG_SEEN.size() >= 60 || !DIAG_SEEN.add(msg)) return;
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[搜索诊断] {}", msg);
         } catch (Throwable ignored) {
         }

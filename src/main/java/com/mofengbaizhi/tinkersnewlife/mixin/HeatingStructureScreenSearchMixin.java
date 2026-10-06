@@ -39,8 +39,13 @@ public abstract class HeatingStructureScreenSearchMixin {
     @Inject(method = "m_181908_", at = @At("TAIL"), require = 1, remap = false)
     private void tnl$onInit(CallbackInfo ci) {
         try {
+            boolean changed = !FluidSearch.isFocused();
             FluidSearch.setFocused(true);
-            FluidSearch.diag("界面打开 ⇒ 自动聚焦=true（查询='" + FluidSearch.getQuery() + "'）");
+            // §1117k ⚠ 只在"状态真的变了"时记 ✓ —— 本方法每 tick 都被调用 ✗，
+            //   之前无条件记日志 ⇒ 每秒刷 20 条 ⇒ 把诊断额度吃光 ✗（见 FluidSearch#DIAG_SEEN 注释 ✓）
+            if (changed) {
+                FluidSearch.diag("界面打开/刷新 ⇒ 自动聚焦=true（查询='" + FluidSearch.getQuery() + "'）");
+            }
         } catch (Throwable ignored) {
         }
     }

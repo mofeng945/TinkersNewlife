@@ -34,8 +34,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(targets = "net.minecraft.client.KeyboardHandler")
 public abstract class KeyboardHandlerCharMixin {
 
-    /** 中文/输入法字符 ⇒ 追加进搜索查询 ✓ */
-    @Inject(method = "m_90907_", at = @At("HEAD"), cancellable = true, require = 1, remap = false)
+    /**
+     * 中文/输入法字符 ⇒ 追加进搜索查询 ✓。
+     * <p>⚠ §1117k <b>必须写完整描述符</b> ✗：上一版只写了方法名 `m_90907_` ⇒
+     * 日志实证 {@code Critical injection failure: @Inject annotation on tnl$searchCharTyped could not find any targets} ✗
+     * ⇒ 现在补上参数描述符（**与 class 常量池里读到的一模一样** ✓）：
+     * {@code (Lnet/minecraft/client/gui/components/events/GuiEventListener;II)V} ✓
+     * —— 因为运行时那个类里可能还有**同名重载** ✓ ⇒ 只给名字匹配不上 ✓。
+     */
+    @Inject(method = "m_90907_(Lnet/minecraft/client/gui/components/events/GuiEventListener;II)V",
+            at = @At("HEAD"), cancellable = true, require = 1, remap = false)
     private static void tnl$searchCharTyped(GuiEventListener listener, int codePoint, int modifiers, CallbackInfo ci) {
         try {
             if (!FluidSearch.isFocused()) return;
