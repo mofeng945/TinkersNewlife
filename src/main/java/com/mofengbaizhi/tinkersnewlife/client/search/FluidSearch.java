@@ -55,13 +55,30 @@ public final class FluidSearch {
     private static volatile int boxY = 2;
     private static volatile int boxW = 106;
     private static volatile int boxH = 14;
+    /**
+     * §1117e <b>画框那一刻的姿态平移量</b> ✓（就是 GUI 左上角 ✓ 由 `GuiGraphics.pose().last().pose()` 的 m30/m31 取 ✓）。
+     *
+     * <p>⚠ 为什么不用 {@code getGuiLeft()/getGuiTop()} ✗：用户实测（日志 ✓）
+     * 「点击 mouse=(203,9) 框=(8,-5,106x14) 命中=false」⇒ 那套换算**没有生效** ✗
+     * （要么方法没被调用到、要么那俩方法给的不是这个值 ✗）。
+     * ⇒ 改成**直接读绘制姿态的平移** ✓ —— 那是**画框时真实使用**的平移 ✓ ⇒ 与眼睛看到的框位置**必然一致** ✓✓。
+     */
+    private static volatile float boxTx = 0F;
+    private static volatile float boxTy = 0F;
 
-    public static void setBoxRect(int x, int y, int w, int h) {
+    public static void setBoxRect(int x, int y, int w, int h, float tx, float ty) {
         boxX = x;
         boxY = y;
         boxW = w;
         boxH = h;
+        boxTx = tx;
+        boxTy = ty;
     }
+
+    /** 画框时的姿态平移（GUI 左上角 ✓） */
+    public static float boxTx() { return boxTx; }
+
+    public static float boxTy() { return boxTy; }
 
     public static int boxX() { return boxX; }
 

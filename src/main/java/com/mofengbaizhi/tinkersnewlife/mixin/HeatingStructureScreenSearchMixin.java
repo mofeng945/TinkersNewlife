@@ -46,15 +46,12 @@ public abstract class HeatingStructureScreenSearchMixin {
      * ⇒ **不用 shadow 原版字段** ✓ 见上面坑 ①）。
      */
     @Unique private boolean tnl$insideBox(double mx, double my) {
-        int x = FluidSearch.boxX();
-        int y = FluidSearch.boxY();
+        // ⚠ §1117e 用"画框时的姿态平移量"换算到屏幕绝对坐标 ✓（不再用 getGuiLeft/getGuiTop ✗
+        //   —— 用户实测那套没生效 ✓ 见 FluidSearch#boxTx 注释 ✓）
+        int x = FluidSearch.boxX() + Math.round(FluidSearch.boxTx());
+        int y = FluidSearch.boxY() + Math.round(FluidSearch.boxTy());
         int w = FluidSearch.boxW();
         int h = FluidSearch.boxH();
-        if (net.minecraft.client.Minecraft.getInstance().screen
-                instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> sc) {
-            x += sc.getGuiLeft();
-            y += sc.getGuiTop();
-        }
         return mx >= x && mx < x + w && my >= y && my < y + h;
     }
 

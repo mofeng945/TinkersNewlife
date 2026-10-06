@@ -74,7 +74,11 @@ public abstract class GuiSmelteryTankSearchMixin {
             int by = this.y - 21;
             int bw = Math.max(60, this.width);
             int bh = 14;
-            FluidSearch.setBoxRect(bx, by, bw, bh);
+            // ⚠ §1117e 关键：把**画框时的姿态平移量**一起记下来 ✓
+            //   本方法被界面调用时，姿态已经被平移到 GUI 左上角 ✓（证据：框确实画在面板边上 ✓）
+            //   ⇒ 从这里取 m30/m31 ⇒ 命中判定用的就是"眼睛看到的那个位置" ✓ 必然一致 ✓✓
+            org.joml.Matrix4f tnl$pose = graphics.pose().last().pose();
+            FluidSearch.setBoxRect(bx, by, bw, bh, tnl$pose.m30(), tnl$pose.m31());
             graphics.fill(bx, by, bx + bw, by + bh, 0xC0101010);
             int border = 0xFF505050;
             graphics.fill(bx, by, bx + bw, by + 1, border);
