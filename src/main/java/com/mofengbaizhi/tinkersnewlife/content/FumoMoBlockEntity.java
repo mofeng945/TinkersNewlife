@@ -299,24 +299,41 @@ public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.worl
         }
     }
 
-    /** 在**我们自己玩偶附近**找它那只（缓存优先 ✓ 便宜 ✓）；返回 null=问不到 ✓、TRUE/FALSE=它自己的答复 ✓ */
+    /**
+     * 在**我们自己玩偶附近**找它那只 ✓（缓存优先 ⇒ 便宜 ✓）。
+     *
+     * <p>返回 ✓：{@code TRUE}=它在放 ✓／{@code FALSE}=它明确说没放 或 **附近根本没有它的玩偶** ✓／
+     * {@code null}=**有它那只但问不到**（反射失败 ✓ ⇒ 调用方当作在放 ✓）。
+     *
+     * <p>⚠ §1090 修（用户实测：「有玩偶没放音乐时不转 ✓、放音乐转 ✓、**打掉玩偶（音乐停）还在转** ✗」）：
+     * 原来"问不到"一律返回 {@code null} ✗ ⇒ 它那只被砸掉/搬走后 ✗ 我们会一直当作"在放" ⇒
+     * 在 3 分钟窗口内**继续转** ✗ ⇒ 现在改成"**没找到它那只 ⇒ 就是没在放** ⇒ 立刻停" ✓。
+     */
     private static Boolean fwQuery(Level level, FumoMoBlockEntity be) {
         net.minecraft.core.BlockPos cached = fwDollPos;
         if (cached != null) {
-            Boolean r = fwAskPlaying(level, cached);
-            if (r != null) return r;
+            if (FW_BE_CLASS.equals(level.getBlockEntity(cached) == null
+                    ? "" : level.getBlockEntity(cached).getClass().getName())) {
+                Boolean r = fwAskPlaying(level, cached);
+                if (r != null) return r;
+            }
             fwDollPos = null;
         }
+        boolean sawTheirs = false;
         net.minecraft.core.BlockPos mine = be.getBlockPos();
         for (net.minecraft.core.BlockPos p : net.minecraft.core.BlockPos.betweenClosed(
                 mine.offset(-8, -4, -8), mine.offset(8, 4, 8))) {
+            BlockEntity cand = level.getBlockEntity(p);
+            if (cand == null || !FW_BE_CLASS.equals(cand.getClass().getName())) continue;
+            sawTheirs = true;
             Boolean r = fwAskPlaying(level, p);
             if (r != null) {
                 fwDollPos = p.immutable();
                 return r;
             }
         }
-        return null;
+        // 有它那只但反射不了 ⇒ 当作在放 ✓；附近压根没有它那只 ⇒ 它的音乐不可能在放 ⇒ 停 ✓
+        return sawTheirs ? Boolean.TRUE : Boolean.FALSE;
     }
 
     /**
