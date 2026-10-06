@@ -102,10 +102,18 @@ public final class FumoMoDoll {
      */
     public static Item itemForSkin(String skin) {
         if (skin != null && !skin.isEmpty()) {
+            // §1113 双保险：①按 FumoMoBaseItem.skin() ✓ ②再按**注册名** fumo_<皮肤> 兜一道 ✓
+            //   （任一条命中就返回 ✓ —— 单靠 skin() 万一取不到就会静默退回默认皮肤 ✗ 正是用户那个 bug ✗）
+            String wantPath = "fumo_" + skin;
             for (RegistryObject<Item> ro : FUMO_ITEMS) {
                 try {
                     Item it = ro.get();
                     if (it instanceof FumoMoBaseItem base && skin.equals(base.skin())) {
+                        return it;
+                    }
+                    net.minecraft.resources.ResourceLocation id =
+                            net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(it);
+                    if (id != null && wantPath.equals(id.getPath())) {
                         return it;
                     }
                 } catch (Throwable ignored) {
@@ -279,10 +287,34 @@ public final class FumoMoDoll {
         }
 
         /**
-         * §1082 <b>挖掉玩偶 ⇒ 掉回"带这只皮肤"的那一只</b> ✓。
-         * <p>⚠ 原本没有任何战利品表、也没覆写掉落 ✗ ⇒ 挖掉**什么都不掉**（用户没提但确实是 bug ✗）。
-         * <p>皮肤从战利品上下文里的方块实体取 ✓（原版破坏流程会把 {@code BLOCK_ENTITY} 放进参数 ✓）；
-         * 取不到 ⇒ 默认皮肤 ✓ 绝不抛异常 ✓。
+         * §1113 <b>挖掉玩偶 ⇒ 掉回"带这只皮肤"的那一只</b> ✓。
+         *
+         * <p>⚠ §1082 那条路（走 {@code getDrops} ＋ 从战利品上下文里捞 {@code BLOCK_ENTITY} ✗）**不可靠** ✗：
+         * 用户实测「**切石机切成别的 fufu，放下再挖掉，掉的是初始形态**」✗ ——
+         * 说明那条路上没拿到方块实体（或抛了异常被兜底 ✗）⇒ 退回默认皮肤 ✗。
+         *
+         * <p>⇒ 改成覆写 {@link #playerDestroy} ✓：原版**玩家破坏方块必然走这里** ✓，
+         * 而且它**直接带着** level / pos / 方块实体 ✓（不用绕战利品参数 ✗）：
+         * <ul>
+         *   <li><b>不调用 super</b> ✗ —— super 会走 {@code dropResources} ⇒ 又调 {@link #getDrops}
+         *       ⇒ 变成**掉两份**（一份对、一份默认 ✗）；</li>
+         *   <li>本方块本来就没有战利品表 ✓ ⇒ 自己 {@code popResource} 一份即可 ✓
+         *       （行为与原版"掉落本体"一致 ✓ 不受时运影响 ✓ 本来也不该受 ✓）。</li>
+         *   <li>⚠ 创造模式拆方块原版**不走**这里 ✓ ⇒ 不会掉落 ✓（用中键选取拿皮肤那只 ✓ 见 {@link #getCloneItemStack}）；</li>
+         * </ul>
+         */
+        @Override
+        public void playerDestroy(Level level, net.minecraft.world.entity.player.Player player, BlockPos pos,
+                                  BlockState state,
+                                  net.minecraft.world.level.block.entity.BlockEntity be, ItemStack tool) {
+            if (level.isClientSide) return;
+            String skin = be instanceof FumoMoBlockEntity fumo ? fumo.getSkin() : FumoMoSkins.DEFAULT_SKIN;
+            net.minecraft.world.level.block.Block.popResource(level, pos, new ItemStack(itemForSkin(skin)));
+        }
+
+        /**
+         * §1113 <b>兜底</b>：**非玩家破坏**（爆炸 / 活塞 / 别的模组 ✓）走这条 ⇒ 仍尽量按皮肤给 ✓。
+         * <p>这条路上拿不到方块实体是正常的 ✓ ⇒ 那时退回默认皮肤 ✓ 不报错 ✓。
          */
         @Override
         public List<ItemStack> getDrops(BlockState state,
