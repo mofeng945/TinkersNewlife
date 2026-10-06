@@ -89,6 +89,31 @@ public final class FluidSearch {
     public static int boxH() { return boxH; }
 
     // ============================================================
+    //  §1117m ★ 真正的 EditBox（照抄仓库既有搜索框的做法 ✓）
+    // ============================================================
+    /**
+     * ⚠ §1117m <b>换成 MC 原生的 `EditBox`</b> ✓ —— 用户一句话点醒 ✓：
+     * 「**我构筑术式不是也写过搜索框吗，为什么不能模仿**」✓
+     * ⇒ 仓库里 `ConstructSelectScreen` / `WuWeiScreen` / `QuantumVaultScreen` / `DimensionPassScreen`
+     * **全都是 `new EditBox(font, x, y, w, h, …)` ＋ `setResponder(…)`** ✓ ——
+     * `EditBox` **自己**处理按键 ✓ 字符 ✓ 光标 ✓ 退格 ✓ **以及输入法中文** ✓✓
+     * ⇒ 我前面手搓"按键码翻译 + charTyped 注入"8 轮**全是绕远路** ✗（中文注定进不来 ✓）。
+     *
+     * <p>由 `HeatingStructureScreenSearchMixin` 创建并塞进界面的 `children()` ✓（`Screen#children()` 是公开方法 ✓
+     * 所以**不需要** shadow 原版的 `addRenderableWidget` ✗ —— 那正是 §1117 把 mixin 搞丢的坑 ✓）；
+     * 由 `GuiSmelteryTankSearchMixin` 每帧摆好位置并 `render` ✓。
+     */
+    private static volatile net.minecraft.client.gui.components.EditBox editBox;
+
+    public static void setEditBox(net.minecraft.client.gui.components.EditBox box) {
+        editBox = box;
+    }
+
+    public static net.minecraft.client.gui.components.EditBox getEditBox() {
+        return editBox;
+    }
+
+    // ============================================================
     //  §1117c 搜索框聚焦状态（跨 mixin 共享 ✓）
     // ============================================================
     /**

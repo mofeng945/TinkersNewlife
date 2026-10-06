@@ -66,32 +66,21 @@ public abstract class GuiSmelteryTankSearchMixin {
     private void tnl$highlightMatches(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY,
                                       org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
         try {
-            // ── §1117 搜索框**在这里画** ✓ ────────────────────────────────────────────────
-            //   为什么不在 screen 的 mixin 里画 ✗：那边要定位就得 shadow **原版**的 leftPos/topPos ✗
-            //   （运行期是混淆名 ⇒ InvalidMixinException ⇒ 整个 mixin 被丢掉 ✗ 见 §1117）；
-            //   而本类手上**同时**有 `GuiGraphics`（renderHighlight 的参数 ✓）与流体列坐标 x/y/width ✓
-            //   ⇒ 顺便把矩形写进 FluidSearch 的静态字段 ✓ 供 screen 那边做命中判定 ✓。
+            // ── §1117m 搜索框：改用 MC 原生的 `EditBox`（照抄仓库既有做法 ✓ 见类注释 ✓）──────
+            //   位置：贴在匠魂那条流体列**正上方** ✓（用户口径「应该偏上一点」✓ 已从 -15 调到 -21 ✓）
             int bx = this.x;
-            // §1117b 用户实测「位置不太合适，应该偏上一点」✓ ⇒ 从"列上方 15px"改成"列上方 21px"（可到面板外 ✓ 悬浮在框顶 ✓）
             int by = this.y - 21;
             int bw = Math.max(60, this.width);
             int bh = 14;
-            // ⚠ §1117e 关键：把**画框时的姿态平移量**一起记下来 ✓
-            //   本方法被界面调用时，姿态已经被平移到 GUI 左上角 ✓（证据：框确实画在面板边上 ✓）
-            //   ⇒ 从这里取 m30/m31 ⇒ 命中判定用的就是"眼睛看到的那个位置" ✓ 必然一致 ✓✓
-            org.joml.Matrix4f tnl$pose = graphics.pose().last().pose();
-            FluidSearch.setBoxRect(bx, by, bw, bh, tnl$pose.m30(), tnl$pose.m31());
-            graphics.fill(bx, by, bx + bw, by + bh, 0xC0101010);
-            int border = 0xFF505050;
-            graphics.fill(bx, by, bx + bw, by + 1, border);
-            graphics.fill(bx, by + bh - 1, bx + bw, by + bh, border);
-            graphics.fill(bx, by, bx + 1, by + bh, border);
-            graphics.fill(bx + bw - 1, by, bx + bw, by + bh, border);
-            String q = FluidSearch.getQuery();
-            // §1117c 用户口径：「**搜索提示只保留搜索两个字就好**」✓ ⇒ 空框里只写「搜索」✓
-            graphics.drawString(net.minecraft.client.Minecraft.getInstance().font,
-                    q.isEmpty() ? "搜索" : q,
-                    bx + 4, by + 3, q.isEmpty() ? 0xFF707070 : 0xFFFFFFFF, false);
+            FluidSearch.setBoxRect(bx, by, bw, bh, 0F, 0F);
+            net.minecraft.client.gui.components.EditBox box = FluidSearch.getEditBox();
+            if (box != null) {
+                // ⚠ 本方法在**已被平移**的姿态里被调用 ✓ ⇒ EditBox 的 x/y 直接用面板内相对坐标即可 ✓
+                box.setX(bx);
+                box.setY(by);
+                box.setWidth(bw);
+                box.render(graphics, 0, 0, 0F);      // 输入框（含光标/中文/退格）由 MC 自己画 ✓
+            }
             // ── 命中项描边 ──────────────────────────────────────────────────────────
             if (!FluidSearch.isActive()) return;
             int[] heights = this.liquidHeights;
