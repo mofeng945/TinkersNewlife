@@ -34,7 +34,8 @@
     "EnchantmentHelperSeaKingsMixin",
     "AbstractArrowSeaKingsMixin",
     "SlashBladeRenderOptMixin",
-    "GuiSmelteryTankSearchMixin"
+    "GuiSmelteryTankSearchMixin",
+    "HeatingStructureScreenSearchMixin"
   ],
   "injectors": {
     "defaultRequire": 0
