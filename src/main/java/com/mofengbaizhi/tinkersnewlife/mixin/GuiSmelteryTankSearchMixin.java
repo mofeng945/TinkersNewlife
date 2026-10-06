@@ -66,21 +66,24 @@ public abstract class GuiSmelteryTankSearchMixin {
     private void tnl$highlightMatches(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY,
                                       org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
         try {
-            // ── §1117m 搜索框：改用 MC 原生的 `EditBox`（照抄仓库既有做法 ✓ 见类注释 ✓）──────
-            //   位置：贴在匠魂那条流体列**正上方** ✓（用户口径「应该偏上一点」✓ 已从 -15 调到 -21 ✓）
+            // ── §1117n 搜索框：**回退成自绘** ✓（§1117m 的 EditBox 在匠魂界面里拿不到派发 ✗ ⇒ 空壳 ✗）──
+            //   位置：贴在匠魂那条流体列**正上方** ✓（用户口径「应该偏上一点」✓ 由 -15 调到 -21 ✓）
             int bx = this.x;
             int by = this.y - 21;
             int bw = Math.max(60, this.width);
             int bh = 14;
             FluidSearch.setBoxRect(bx, by, bw, bh, 0F, 0F);
-            net.minecraft.client.gui.components.EditBox box = FluidSearch.getEditBox();
-            if (box != null) {
-                // ⚠ 本方法在**已被平移**的姿态里被调用 ✓ ⇒ EditBox 的 x/y 直接用面板内相对坐标即可 ✓
-                box.setX(bx);
-                box.setY(by);
-                box.setWidth(bw);
-                box.render(graphics, 0, 0, 0F);      // 输入框（含光标/中文/退格）由 MC 自己画 ✓
-            }
+            graphics.fill(bx, by, bx + bw, by + bh, 0xC0101010);
+            int border = FluidSearch.isFocused() ? 0xFF7FD4FF : 0xFF505050;   // 聚焦时亮蓝 ✓
+            graphics.fill(bx, by, bx + bw, by + 1, border);
+            graphics.fill(bx, by + bh - 1, bx + bw, by + bh, border);
+            graphics.fill(bx, by, bx + 1, by + bh, border);
+            graphics.fill(bx + bw - 1, by, bx + bw, by + bh, border);
+            String q = FluidSearch.getQuery();
+            // §1117c 用户口径：「搜索提示只保留搜索两个字就好」✓ 空查询时只显示「搜索」✓
+            graphics.drawString(net.minecraft.client.Minecraft.getInstance().font,
+                    q.isEmpty() ? "搜索" : q,
+                    bx + 4, by + 3, q.isEmpty() ? 0xFF707070 : 0xFFFFFFFF, false);
             // ── 命中项描边 ──────────────────────────────────────────────────────────
             if (!FluidSearch.isActive()) return;
             int[] heights = this.liquidHeights;

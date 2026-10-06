@@ -35,7 +35,8 @@
     "AbstractArrowSeaKingsMixin",
     "SlashBladeRenderOptMixin",
     "GuiSmelteryTankSearchMixin",
-    "HeatingStructureScreenSearchMixin"
+    "HeatingStructureScreenSearchMixin",
+    "ScreenKeyInputMixin"
   ],
   "injectors": {
     "defaultRequire": 0
