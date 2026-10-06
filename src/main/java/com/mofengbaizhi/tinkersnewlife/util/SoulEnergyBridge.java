@@ -177,6 +177,41 @@ public final class SoulEnergyBridge {
         }
     }
 
+    /**
+     * <b>§1072 修复旧版遗留的"异常状态"</b> ✓：玩家处于**非 SEActive**（图腾/无祭坛）模式，
+     * 能力值却 > 0 ✗ —— 这正是旧版"反射直接写能力值"造出来的状态 ✗，
+     * 会被诡厄 {@code SoulEnergyEvents} 每 tick 挂灵魂饥饿 ✗ 并每 5 tick 抽走 1 点 ✗。
+     *
+     * <p>做法 ✓：把这份滞留灵魂**搬进灵魂图腾** ✓，再把能力值**清零** ✓ ⇒ 状态回到诡厄认可的不变量上 ✓，
+     * 灵魂饥饿**立即停止** ✓ 且灵魂不丢 ✓。
+     * <ul>
+     *   <li>没有图腾可搬 ⇒ **什么都不做** ✓（让诡厄继续慢慢抽干 ✓，好过我们凭空抹掉玩家的灵魂 ✗）；</li>
+     *   <li>{@code getSEActive} 没绑上 ⇒ **也什么都不做** ✓（不能确认模式就绝不乱清 ✗）；</li>
+     *   <li>已经正常（SEActive ✓ 或能力值 ≤ 0 ✓）⇒ 第 3 行就返回 ✓ 每 tick 只是一次反射读 ✓ 开销可忽略 ✓。</li>
+     * </ul>
+     */
+    public static void repairStuckCapability(Player player) {
+        if (player == null || player.level().isClientSide) return;
+        resolve();
+        if (getSESoulsMethod == null || setSESoulsMethod == null) return;
+        if (getSEActiveMethod == null) return;                 // 不能确认模式 ⇒ 不动 ✓
+        if (isSEActive(player)) return;                        // 正牌 SEActive ⇒ 能力值本就该有值 ✓
+        try {
+            int stuck = (Integer) getSESoulsMethod.invoke(null, player);
+            if (stuck <= 0) return;
+            ItemStack totem = findTotem(player);
+            if (totem.isEmpty() || totemCurrentSoulsMethod == null || totemSetSoulsMethod == null) {
+                return;                                        // 没图腾可搬 ⇒ 交给诡厄自己抽干 ✓
+            }
+            int have = (Integer) totemCurrentSoulsMethod.invoke(null, totem);
+            totemSetSoulsMethod.invoke(null, totem, have + stuck);   // ① 搬进图腾 ✓
+            setSESoulsMethod.invoke(null, player, 0);                // ② 能力清零 ✓（恢复不变量 ✓）
+            TinkersNewlife.LOGGER.info(
+                    "[TinkersNewlife] §1072 已把滞留的 {} 点灵魂从能力搬回灵魂图腾（修复旧版造成的灵魂饥饿）", stuck);
+        } catch (Throwable ignored) {
+        }
+    }
+
     /** 消耗灵魂能量：优先扣能力，不足部分由图腾兜底；amount<=0 视为成功；总量不足/未安装返回 false */
     public static boolean decreaseSouls(Player player, int amount) {        resolve();
         if (amount <= 0) return true;

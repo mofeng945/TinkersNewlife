@@ -100,6 +100,11 @@ public class SoulEaterHandler {
 
         int cur = SoulEnergyBridge.getSouls(sp);
         Integer prev = LAST_SOULS.put(sp.getUUID(), cur);
+
+        // §1072 顺手修一次"旧版遗留的异常状态"（非 SEActive 却能力值 > 0 ⇒ 诡厄会每 tick 挂灵魂饥饿 ✗）：
+        //   有图腾就把滞留灵魂搬进图腾并清零能力 ✓；没有就什么都不做 ✓；修好后再调用只是一次反射读 ✓。
+        SoulEnergyBridge.repairStuckCapability(sp);
+
         if (prev == null) return;                       // 首次基线
         int delta = cur - prev;
         if (delta <= 0) return;                         // 仅有增量（获得灵魂）才增幅
