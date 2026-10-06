@@ -96,4 +96,7 @@ and Soul Eater putting Soul Hunger on you.
   (When you add a new skin later, remember to add its own stonecutting recipe as well - skins are scanned at runtime.)
 * The disc **"朋友的酒🍺DJ版"** can now be found in **End City treasure chests** (**20%** chance).
 * **Fixed: Ancient Cursed Scrolls** could only appear in **chest-type** loot tables; they can now be **fished up** as well
-  (the three vanilla fishing sub-tables - fish, junk and treasure - each count once per cast, never twice).
+  (the three vanilla fishing sub-tables - fish, junk and treasure - each count once per cast, never twice).* **A new Fumo row in Momo's trade screen**: once your favour with Momo reaches **30**, the trade screen gains a
+  final row - **1 Gheloth Remains** for **1 Mofeng Baizhi fufu**. Below 30 favour the row is **not shown at all**,
+  and normal trades never shift to the wrong offer. The existing "first time you reach 30 favour, one fufu is
+  gifted" behaviour is **kept**.

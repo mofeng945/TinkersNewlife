@@ -32,7 +32,13 @@ public class MomoTradeScreen extends Screen {
     public String employer;
     private final List<Row> rows = new ArrayList<>();
 
-    private record Row(ItemStack result, ItemStack currency, int price, int base) {}
+    /**
+     * 一行的数据 ✓。
+     * <p>⚠ §1109 多了一个 {@code slot} ＝ **这份报价在服务器列表里的真实下标** ✓ ——
+     * fumo 那一行会在好感 &lt;30 时**不画出来** ✓ 此时"第几行"≠"第几号报价" ✗
+     * ⇒ 点击必须发 {@code slot} 而不是行号 ✓（否则会买到另一样东西 ✗）。
+     */
+    private record Row(ItemStack result, ItemStack currency, int price, int base, int slot) {}
 
     private int left() {
         return Math.max(12, (Math.max(PANEL_W + 8, this.width - MomoArt.portraitWidth(this.width, this.height) - 24)
@@ -57,9 +63,18 @@ public class MomoTradeScreen extends Screen {
             for (int i = 0; i < offers.size(); i++) {
                 MomoMerchant.Offer offer = offers.get(i);
                 if (offer.result().isEmpty()) continue;
+                // §1109 fumo 交易栏：好感 <30 ⇒ **完全不显示这一行** ✓（用户口径 ✓）
+                //   ⚠ 行里记**真实槽位 i** ✓ 点击发 r.slot() ✓ ⇒ 隐藏一行也不会错位 ✓
+                boolean fumoOffer = offer.result().is(
+                        com.mofengbaizhi.tinkersnewlife.content.FumoMoDoll.FUMO_MO_ITEM.get());
+                if (fumoOffer && favor < 30) continue;
                 // 显示折后价（与服务端 buyFrom 同一算法 ✓）
                 int shown = Math.max(1, (int) Math.ceil(offer.price() * MomoFavor.priceFactor(favor)));
-                rows.add(new Row(offer.result().copy(), new ItemStack(MomoMerchant.currencyForSlot(i)), shown, offer.price()));
+                // ⚠ fumo 那一行固定收「格赫罗斯残骸」✓（与服务端 buyFrom 的货币口径一致 ✓）
+                net.minecraft.world.item.Item curr = fumoOffer
+                        ? com.mofengbaizhi.tinkersnewlife.content.ModItems.GHELOTH_REMAINS.get()
+                        : MomoMerchant.currencyForSlot(i);
+                rows.add(new Row(offer.result().copy(), new ItemStack(curr), shown, offer.price(), i));
             }
         }
     }
@@ -182,9 +197,11 @@ public class MomoTradeScreen extends Screen {
             }
             for (int i = 0; i < rows.size(); i++) {
                 int ry = rowY(i);
-                if (i < sold.length && sold[i] >= MomoMerchant.MAX_PER_DAY) continue;   // 缺货行点不动
+                Row r = rows.get(i);                                             // §1109 用**真实槽位**判缺货 ✓
+                if (r.slot() < sold.length && sold[r.slot()] >= MomoMerchant.MAX_PER_DAY) continue;   // 缺货行点不动
                 if (hovering(rowX(), ry, rowW(), ROW_H - 2, mouseX, mouseY)) {
-                    TinkersNewlife.CHANNEL.sendToServer(new PacketMomoBuy(momoId, i));
+                    // §1109 发**真实槽位**而不是行号 ✓（fumo 行在好感 <30 时被隐藏 ⇒ 行号 ≠ 槽位 ✗）
+                    TinkersNewlife.CHANNEL.sendToServer(new PacketMomoBuy(momoId, r.slot()));
                     return true;
                 }
             }

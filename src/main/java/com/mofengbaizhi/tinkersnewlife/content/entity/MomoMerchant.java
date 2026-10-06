@@ -560,6 +560,15 @@ public class MomoMerchant extends PathfinderMob
         // §502 只给 **1 个**（虚空回响 / 星界之锚 / 其它旧日遗物都一样 ✓ 原来 `getMaxStackSize()` = 一组 64 太多了 ✗）
         offers.add(new Offer(new ItemStack(relics.get(0)), 5 + random.nextInt(9)));   // 5-13
         offers.add(new Offer(new ItemStack(relics.get(1)), 5 + random.nextInt(9)));
+
+        // §1109 用户口径：「**30 级好感后额外解锁 fumo 交易栏，1 个格赫罗斯残骸可以换一个墨封白织 fufu**」✓
+        //   ⚠ 一律**追加在最后**（绝不插到最前面 ✗）—— 服务器与客户端共用同一份列表 ✓
+        //     追加能保证"两边槽位一定一致"✓；"按人解锁"改由 **服务端成交校验**（好感 <30 ⇒ 拒绝 ✓）
+        //     ＋ **客户端不画这一行**（好感 <30 ⇒ 见 MomoTradeScreen ✓）共同实现 ✓。
+        //   ⚠ 客户端隐藏行时**绝不能拿行号当槽位** ✗（隐藏一行就会错位买到别的东西 ✗）
+        //     ⇒ `MomoTradeScreen.Row` 里额外记了**真实 slot** ✓。
+        offers.add(new Offer(new ItemStack(
+                com.mofengbaizhi.tinkersnewlife.content.FumoMoDoll.FUMO_MO_ITEM.get()), 1));
     }
 
     // ==== 每日限购（用户口径：每件每天最多 2 次，买满即缺货，次日刷新补货） ====
@@ -718,8 +727,17 @@ public class MomoMerchant extends PathfinderMob
         ensureOffers();
         if (slot < 0 || slot >= offers.size()) return BuyResult.NO_OFFER;
         Offer offer = offers.get(slot);
+        // §1109 fumo 交易栏：**只有好感 ≥30 的人能买** ✓（按人解锁 ✓ 别人就算发这个包也买不到 ✓ 以服务端为准 ✓）
+        boolean fumoOffer = offer.result().is(
+                com.mofengbaizhi.tinkersnewlife.content.FumoMoDoll.FUMO_MO_ITEM.get());
+        if (fumoOffer
+                && com.mofengbaizhi.tinkersnewlife.content.handler.MomoFavor.get(buyer) < 30) {
+            return BuyResult.NO_OFFER;
+        }
         if (soldOf(slot) >= MAX_PER_DAY) return BuyResult.NO_OFFER;   // 今天的 2 次买满了 ⇒ 缺货
-        Item currency = currencyForSlot(slot);
+        // ⚠ §1109 fumo 那一栏**固定收「格赫罗斯残骸」** ✓ —— 不能走 currencyForSlot ✗
+        //   （那个按"槽位 ≥4 ⇒ 矿石"判 ✓ 而 fumo 是追加在最后一位的 ⇒ 会被判成矿石 ✗ 与用户口径不符 ✗）
+        Item currency = fumoOffer ? ModItems.GHELOTH_REMAINS.get() : currencyForSlot(slot);
         int cost = Math.max(1, (int) Math.ceil(offer.price() * com.mofengbaizhi.tinkersnewlife.content.handler.MomoFavor.priceFactor(com.mofengbaizhi.tinkersnewlife.content.handler.MomoFavor.favorAsSeenByMomo(buyer))));   // §509 面具 ⇒ 她认不出你 ⇒ 按 0 好感（中立价 ✓）
         if (countItem(buyer, currency) < cost) return BuyResult.INSUFFICIENT;
         consumeItem(buyer, currency, cost);   // 按好感度定价后的实际花费（与上面那道 check 用同一个 cost）
