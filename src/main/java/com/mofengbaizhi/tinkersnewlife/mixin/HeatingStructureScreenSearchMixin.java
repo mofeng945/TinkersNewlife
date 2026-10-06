@@ -57,12 +57,26 @@ public abstract class HeatingStructureScreenSearchMixin {
     /**
      * 搜索框区域 ✓ —— **坐标不由本类算** ✗：由 `GuiSmelteryTankSearchMixin` 每帧写进
      * {@link FluidSearch#setBoxRect} ✓（那边同时持有流体列坐标与 `GuiGraphics` ✓ 见 §1117 ✓）。
+     *
+     * <p>⚠ §1117b <b>必须做"面板内 → 屏幕绝对"的换算</b> ✗ —— 用户实测「点击无法输入文字」✓：
+     * 匠魂那套模块的坐标是**面板内相对坐标** ✓（渲染前整体 `translate(leftPos, topPos)` ✓），
+     * 而 {@code mouseClicked} 给的 {@code mouseX/mouseY} 是**屏幕绝对坐标** ✗
+     * ⇒ 不换算就永远判成"点在框外" ⇒ **点不聚焦 ⇒ 打不出字** ✓✓（现象完全对上 ✓）。
+     *
+     * <p>换算用原版**公开方法** {@code getGuiLeft()/getGuiTop()} ✓ ——
+     * 编译期它们是**官方名** ✓（和咱们平时写 `Mth.lerp` 一样 ✓），运行期由 Forge 重映射 ✓
+     * ⇒ **完全不需要 shadow 原版字段** ✓（而 shadow 原版字段正是上次把整个 mixin 搞丢的坑 ✗ 见 §1117 ✓）。
      */
     @Unique private boolean tnl$insideBox(double mx, double my) {
         int x = FluidSearch.boxX();
         int y = FluidSearch.boxY();
         int w = FluidSearch.boxW();
         int h = FluidSearch.boxH();
+        if (net.minecraft.client.Minecraft.getInstance().screen
+                instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> sc) {
+            x += sc.getGuiLeft();
+            y += sc.getGuiTop();
+        }
         return mx >= x && mx < x + w && my >= y && my < y + h;
     }
 

@@ -70,7 +70,8 @@ public abstract class GuiSmelteryTankSearchMixin {
             //   而本类手上**同时**有 `GuiGraphics`（renderHighlight 的参数 ✓）与流体列坐标 x/y/width ✓
             //   ⇒ 顺便把矩形写进 FluidSearch 的静态字段 ✓ 供 screen 那边做命中判定 ✓。
             int bx = this.x;
-            int by = Math.max(2, this.y - 15);
+            // §1117b 用户实测「位置不太合适，应该偏上一点」✓ ⇒ 从"列上方 15px"改成"列上方 21px"（可到面板外 ✓ 悬浮在框顶 ✓）
+            int by = this.y - 21;
             int bw = Math.max(60, this.width);
             int bh = 14;
             FluidSearch.setBoxRect(bx, by, bw, bh);
