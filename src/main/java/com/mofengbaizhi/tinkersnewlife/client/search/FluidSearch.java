@@ -71,6 +71,30 @@ public final class FluidSearch {
 
     public static int boxH() { return boxH; }
 
+    // ============================================================
+    //  §1117c 搜索框聚焦状态（跨 mixin 共享 ✓）
+    // ============================================================
+    /**
+     * 搜索框是否聚焦 ✓ —— 由 {@code HeatingStructureScreenSearchMixin}（init/点击 ✓）维护 ✓，
+     * 由 {@code ScreenSearchInputMixin}（挂在 **`Screen`** 层 ✓）读取 ✓。
+     *
+     * <p>⚠ 为什么输入要挂 `Screen` ✗：用户实测 + 日志实证 ✓
+     * —— `keyPressed`/`charTyped` **不是** `HeatingStructureScreen` 自己声明的方法 ✗（声明在 `Screen` ✓）
+     * ⇒ 在目标类里注入会 {@code could not find any targets} ✗ ⇒ `require = 1` ⇒ **整个 mixin 被丢弃** ✗
+     * ⇒ "框能画、但完全打不进字" ✓（正是当时的现场 ✓）。
+     */
+    private static volatile boolean focused;
+
+    public static boolean isFocused() { return focused; }
+
+    public static void setFocused(boolean f) { focused = f; }
+
+    /** 当前打开的界面是不是"加热结构界面"（熔炼炉/熔铸炉 ✓ 两者同一个类 ✓） */
+    public static boolean isHeatingStructureScreen(Object screen) {
+        return screen != null && "slimeknights.tconstruct.smeltery.client.screen.HeatingStructureScreen"
+                .equals(screen.getClass().getName());
+    }
+
     /** 一条词：{@code exclude} ＝ 前置 `-` ✓；{@code kind} 决定匹配哪一列 ✓ */
     private record Term(boolean exclude, Kind kind, String text) {
     }

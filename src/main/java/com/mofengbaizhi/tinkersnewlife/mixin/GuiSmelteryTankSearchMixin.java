@@ -82,8 +82,9 @@ public abstract class GuiSmelteryTankSearchMixin {
             graphics.fill(bx, by, bx + 1, by + bh, border);
             graphics.fill(bx + bw - 1, by, bx + bw, by + bh, border);
             String q = FluidSearch.getQuery();
+            // §1117c 用户口径：「**搜索提示只保留搜索两个字就好**」✓ ⇒ 空框里只写「搜索」✓
             graphics.drawString(net.minecraft.client.Minecraft.getInstance().font,
-                    q.isEmpty() ? "搜索流体：@模组 #标签 空格=AND |=OR -排除" : q,
+                    q.isEmpty() ? "搜索" : q,
                     bx + 4, by + 3, q.isEmpty() ? 0xFF707070 : 0xFFFFFFFF, false);
             // ── 命中项描边 ──────────────────────────────────────────────────────────
             if (!FluidSearch.isActive()) return;
