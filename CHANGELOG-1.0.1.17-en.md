@@ -239,3 +239,10 @@ entity id against the mod's own language file, and can be re-run with more mod i
 * Also fixed while checking that path: breaking a placed doll used to drop **nothing** (the block had no
   loot table and no drop override). It now drops the doll **with its own skin**, and creative pick-block
   returns the same skin.
+## Added (2026-10-06, twenty-fifth pass - version unchanged)
+
+* Your Fumo dolls now dance along with music played by the **Friends' Wine** mod (`friendswine`): while its
+  music is playing, any of your dolls within 16 blocks spins (about one turn every 9 seconds) and does a
+  jelly squash, then settles back within about a second of the music stopping. It is done by listening to
+  Forge's per-tick client sound events and checking the sound's namespace, so nothing in that mod is touched
+  and it stays a soft dependency - packs without it are unaffected.

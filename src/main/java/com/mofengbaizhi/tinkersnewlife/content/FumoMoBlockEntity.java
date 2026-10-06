@@ -161,10 +161,71 @@ public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.worl
             be.oAnimationTickCount = 0;
             be.animationTickCount = 0;
         }
+        // §1083 跳舞倒计时（纯客户端视觉 ✓ 音乐每 tick 会把它续上 ✓ 停了就归零 ✓）
+        if (be.danceTicks > 0) {
+            be.danceTicks--;
+        }
     }
 
     /** 渲染用：0 → 12 的平滑进度（两个 tick 计数之间 lerp ✓ 照诡厄的 {@code getAnimation} ✓） */
     public float getAnimation(float partialTick) {
         return Mth.lerp(partialTick, this.oAnimationTickCount, this.animationTickCount);
+    }
+
+    // ============================================================
+    //  §1083 跟随「朋友的酒」({@code friendswine}) 的音乐跳舞（纯客户端视觉 ✓）
+    // ============================================================
+
+    /** 剩余跳舞 tick ✓（>0 就转＋挤压 ✓ 只活在内存里 ✗ 不进 NBT、不发包 ✓）
+     *  —— 与 §908 抚摸挤压同一路子 ✓ 音乐停 ⇒ 自动回正 ✓ */
+    private int danceTicks;
+
+    /** 音乐在放 ⇒ 续命 ✓（取较大者 ⇒ 每 tick 都被续上 ✓ 不会越续越短 ✓） */
+    public void startDancing(int ticks) {
+        if (ticks > this.danceTicks) this.danceTicks = ticks;
+    }
+
+    public boolean isDancing() {
+        return this.danceTicks > 0;
+    }
+
+    /** 舞蹈相位 ＝ 世界时间（连续 ✓ 与"还剩多少 tick"无关 ✓）；拿不到世界 ⇒ 0 ✓ */
+    public static float dancePhase(Level level, float partialTick) {
+        return level == null ? 0.0F : (level.getGameTime() + partialTick);
+    }
+
+    /**
+     * 客户端**渲染过的**玩偶名册 ✓（{@code WeakHashMap} ⇒ 区块/方块卸载不会泄漏 ✓）。
+     * <p>为什么需要它 ✓：声音事件 {@code PlaySoundSourceEvent} 是**每 tick 每条声音**都触发 ✓
+     * ⇒ 那里**绝不能满世界扫方块** ✗（一 tick 几万次查询 ✗）；只在这份几十条的名册里挑"离音乐够近"的 ✓。
+     */
+    private static final java.util.Map<FumoMoBlockEntity, Long> RENDERED = new java.util.WeakHashMap<>();
+
+    /** 渲染器每帧登记一次 ✓（顺手清掉很久没渲染的 ✓ 名单上限几十条 ⇒ 开销可忽略 ✓） */
+    public static void trackRendered(FumoMoBlockEntity be, Level level) {
+        if (be == null || level == null) return;
+        if (RENDERED.size() > 128) {
+            long now = level.getGameTime();
+            RENDERED.entrySet().removeIf(e -> now - e.getValue() > 200L);
+        }
+        RENDERED.put(be, level.getGameTime());
+    }
+
+    /** 声音在某处响起 ✓ ⇒ 把 {@code range} 格内、最近还在渲染的那些玩偶点着 ✓（与 §1082 一样全程不抛异常 ✓） */
+    public static void markDancingNear(Level level, double x, double y, double z, double range, int ticks) {
+        if (level == null) return;
+        long now = level.getGameTime();
+        double r2 = range * range;
+        for (java.util.Map.Entry<FumoMoBlockEntity, Long> e : RENDERED.entrySet()) {
+            FumoMoBlockEntity be = e.getKey();
+            if (be == null || be.isRemoved() || be.getLevel() != level) continue;
+            if (now - e.getValue() > 200L) continue;
+            double dx = be.getBlockPos().getX() + 0.5D - x;
+            double dy = be.getBlockPos().getY() + 0.5D - y;
+            double dz = be.getBlockPos().getZ() + 0.5D - z;
+            if (dx * dx + dy * dy + dz * dz <= r2) {
+                be.startDancing(ticks);
+            }
+        }
     }
 }

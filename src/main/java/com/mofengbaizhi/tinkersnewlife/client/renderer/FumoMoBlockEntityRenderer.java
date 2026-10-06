@@ -116,10 +116,25 @@ public class FumoMoBlockEntityRenderer implements BlockEntityRenderer<FumoMoBloc
                 ? be.getBlockState().getValue(FumoMoDoll.FumoMoBlock.ROTATION)
                 : 0;
         pose.mulPose(Axis.YP.rotationDegrees(180.0F - facing.toYRot() - eightOffset * 22.5F));
+        // ── §1083 跟着「朋友的酒」的音乐一起转／挤压（用户口径 ✓）────────────────────
+        //   渲染过就登记一下 ✓（声音事件靠这份名单找"附近有哪些我们的玩偶" ✓ 见 FumoMoDanceHandler ✓）
+        FumoMoBlockEntity.trackRendered(be, be.getLevel());
+        if (be.isDancing()) {
+            // ① 转动 ✓：2°/tick ⇒ 约 9 秒一圈 ✓；用世界时间算 ⇒ 角度连续 ✓ 音乐停 ⇒ 立刻停转 ✓
+            pose.mulPose(Axis.YP.rotationDegrees(
+                    FumoMoBlockEntity.dancePhase(be.getLevel(), partialTick) * 2.0F));
+        }
         // §908 抚摸挤压：横向鼓 = sqrt(1 / yScale)（有体积感 ✓ 照诡厄玩偶的算法 ✓）
         //   在 translate(0.5,0,0.5) 之后 ⇒ 缩放是**以方块底面中心为原点**的 ✓
         //   ⇒ 压扁时玩偶是"往地面坐下去"，不会浮起来 ✓
         float anim = be.getAnimation(partialTick);
+        if (be.isDancing()) {
+            // ② 果冻脉冲 ✓：借下面这条既有的挤压路径（anim ＝ 0~12 的"假装还在抚摸"进度 ✓）
+            //   ⇒ 不动缩放代码本身 ✓ 与真的抚摸取较大者 ✓ 不会打架 ✓
+            float pulse = (Mth.sin(FumoMoBlockEntity.dancePhase(be.getLevel(), partialTick) * 0.35F)
+                    * 0.5F + 0.5F) * 4.0F;
+            if (pulse > anim) anim = pulse;
+        }
         if (anim > 0.0F) {
             float yScale = tnl$squashY(anim);
             float bulge = Mth.sqrt(1.0F / yScale);
