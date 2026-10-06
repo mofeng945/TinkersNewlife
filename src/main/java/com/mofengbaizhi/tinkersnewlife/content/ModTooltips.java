@@ -98,6 +98,14 @@ public class ModTooltips {
 
         String path = regName.getPath();
 
+        // ⚠ §1099 <b>唱片不要在这里再补一行</b> ✗——原版 {@code RecordItem#appendHoverText} **自己**就会加
+        //   同一个键 {@code item.<id>.desc}（唱片那行"作者 - 曲目"灰字 ✓）
+        //   ⇒ 我们再补一遍 ⇒ **两行一模一样** ✗（用户实测截图 ✓）。
+        //   ⇒ 唱片一律交给原版 ✓（它的行本来就来自同一个键 ✓ 文案不用改 ✓）。
+        if (stack.getItem() instanceof net.minecraft.world.item.RecordItem) {
+            return;
+        }
+
         // 尝试 item 前缀
         String descKey = "item." + TinkersNewlife.MOD_ID + "." + path + ".desc";
         if (hasKey(descKey)) {
