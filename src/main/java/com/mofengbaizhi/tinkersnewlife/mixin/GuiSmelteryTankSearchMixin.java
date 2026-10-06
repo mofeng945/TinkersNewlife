@@ -124,14 +124,25 @@ public abstract class GuiSmelteryTankSearchMixin {
             java.util.List<FluidStack> fluids = this.tank.getFluids();
             int n = Math.min(heights.length, fluids.size());
             int[] out = heights.clone();
+            int zeroed = 0;
             for (int i = 0; i < n; i++) {
                 if (!FluidSearch.matches(fluids.get(i))) {
                     out[i] = 0;     // ★ 置 0：不画、也不占位置 ✓ 索引不变 ✓
+                    zeroed++;
                 }
+            }
+            // §1117j 临时诊断 ✓：确认"过滤到底有没有跑、跑了之后置零了几个"（每 40 次记一条 ✓ 免得刷屏 ✗）
+            if (refresh && TNL$FILTER_DIAG.incrementAndGet() % 40 == 1) {
+                FluidSearch.diag("过滤 查询='" + FluidSearch.getQuery() + "' 流体数=" + fluids.size()
+                        + " 高度数组=" + heights.length + " 置零=" + zeroed);
             }
             cir.setReturnValue(out);
         } catch (Throwable ignored) {
             // 兜底：过滤器失效而已 ✓ 界面照常 ✓
         }
     }
+
+    /** 临时诊断计数（定位完删 ✗） */
+    private static final java.util.concurrent.atomic.AtomicInteger TNL$FILTER_DIAG =
+            new java.util.concurrent.atomic.AtomicInteger();
 }
