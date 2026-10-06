@@ -311,9 +311,18 @@ public class FumoMoBlockEntityRenderer implements BlockEntityRenderer<FumoMoBloc
         }
     }
 
-    /** 给物品栏渲染器用：自己按需烘焙一个玩家模型 ✓（只在客户端 ✓） */
+    /**
+     * 给物品栏渲染器用：自己按需烘焙一个玩家模型 ✓（只在客户端 ✓）。
+     *
+     * <p>⚠ §1093 修（用户口径：「**现在fufu的手持物品渲染没有渲染外层头发之类的**」✗）：
+     * 这里原先直接 {@code bakeLayer(ModelLayers.PLAYER)} ✗ ＝ <b>原版</b>玩家模型
+     * ⇒ 帽子层（外层头发/外套 ✓）只外扩 <b>0.25px</b> ✓，玩偶整体 0.5 倍缩放后只剩 ≈0.008 格
+     * ⇒ <b>亚像素、看不见</b> ✗ —— 正是 §887 当年在**方块**那条路上修掉的同一个坑 ✗，
+     * 而**物品**那条路漏了 ✗（所以只有手持/背包看不到外层 ✓ 用户一眼看出来 ✓）。
+     * <p>⇒ 改为复用 {@link #buildDollModel()}（帽子层外扩 <b>0.6px</b> ✓）
+     * ⇒ 物品栏／手持、方块、头顶<b>三处同一个模型</b> ✓（即 §901「玩偶长什么样只有一处定义」✓）。
+     */
     public static PlayerModel<?> newModel() {
-        return new PlayerModel<>(net.minecraft.client.Minecraft.getInstance().getEntityModels()
-                .bakeLayer(ModelLayers.PLAYER), false);
+        return buildDollModel();
     }
 }
