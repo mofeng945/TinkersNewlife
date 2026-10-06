@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.mixin;
 
 import com.mofengbaizhi.tinkersnewlife.client.search.FluidSearch;
 import net.minecraft.client.gui.GuiGraphics;
+import slimeknights.tconstruct.smeltery.client.screen.module.GuiSmelteryTank;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -36,35 +37,33 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(targets = "slimeknights.tconstruct.smeltery.client.screen.HeatingStructureScreen")
 public abstract class HeatingStructureScreenSearchMixin {
 
-    /** 原版屏幕的 GUI 左上角（`AbstractContainerScreen` 的字段 ✓ 可 shadow ✓） */
-    @Shadow @org.spongepowered.asm.mixin.Final protected int leftPos;
-    @Shadow @org.spongepowered.asm.mixin.Final protected int topPos;
-    /** 原版屏幕的宽度（同一个类 ✓） */
-    @Shadow @org.spongepowered.asm.mixin.Final protected int imageWidth;
-    /** 字体（`Screen#font` ✓） */
-    @Shadow protected net.minecraft.client.gui.Font font;
+    /**
+     * ⚠ §1116 修（用户实测"没有出现搜索框"✗）：**这里绝不能 shadow 原版屏幕的字段** ✗！
+     *
+     * <p>第一版我写了 `@Shadow leftPos / topPos / imageWidth / font` ✗ —— 那些是**原版**里的成员 ✓
+     * ⇒ 运行时是**混淆名（SRG）** ✗ ⇒ Mixin 按 `leftPos` 找不到 ⇒ 抛
+     * {@code InvalidMixinException: @Shadow field leftPos was not located} ✗ ⇒ **整个 mixin 被丢弃** ✓
+     * （只是 WARN 级 ✗ ⇒ 既没崩、也没有搜索框 ✓ —— 正是用户的现场 ✓）。
+     *
+     * <p>⇒ 改成**只 shadow 匠魂自己的成员** ✓（模组字段名不混淆 ✓ 名字就是源码里那个 ✓）：
+     * 坐标从 {@link GuiSmelteryTank#getX()} 等公开方法拿 ✓，字体直接用 {@code Minecraft.getInstance().font} ✓。
+     */
+    @Shadow
+    private GuiSmelteryTank tank;
 
     /** 搜索框是否聚焦（**按屏幕实例** ✓ 不是全局静态 ✗） */
     @Unique private boolean tnl$searchFocused;
 
-    /** 搜索框区域（每帧按当前布局算 ✓ 布局会随分辨率变 ✓） */
-    @Unique private int tnl$searchX() {
-        return this.leftPos + 6;
-    }
-
-    @Unique private int tnl$searchY() {
-        return this.topPos + 6;
-    }
-
-    @Unique private int tnl$searchW() {
-        return Math.max(60, this.imageWidth - 12);
-    }
-
+    /**
+     * 搜索框区域 ✓ —— **坐标不由本类算** ✗：由 `GuiSmelteryTankSearchMixin` 每帧写进
+     * {@link FluidSearch#setBoxRect} ✓（那边同时持有流体列坐标与 `GuiGraphics` ✓ 见 §1117 ✓）。
+     */
     @Unique private boolean tnl$insideBox(double mx, double my) {
-        int x = tnl$searchX();
-        int y = tnl$searchY();
-        int w = tnl$searchW();
-        return mx >= x && mx < x + w && my >= y && my < y + 14;
+        int x = FluidSearch.boxX();
+        int y = FluidSearch.boxY();
+        int w = FluidSearch.boxW();
+        int h = FluidSearch.boxH();
+        return mx >= x && mx < x + w && my >= y && my < y + h;
     }
 
     /** init：每次打开界面都从"未聚焦"开始 ✓（查询文本保留 ✓ 方便反复看 ✓） */
@@ -76,33 +75,15 @@ public abstract class HeatingStructureScreenSearchMixin {
         }
     }
 
-    /** renderBg：画搜索框（自绘 ✓） */
-    @Inject(method = "m_7286_(Lnet/minecraft/client/gui/GuiGraphics;FII)V", at = @At("TAIL"), require = 1, remap = false)
-    private void tnl$drawSearchBox(GuiGraphics graphics, float partialTicks, int mouseX, int mouseY, CallbackInfo ci) {
-        try {
-            int x = tnl$searchX();
-            int y = tnl$searchY();
-            int w = tnl$searchW();
-            int h = 14;
-            // 底板 + 边框（聚焦时高亮边框 ✓ 一眼看出"正在输入"）
-            graphics.fill(x, y, x + w, y + h, this.tnl$searchFocused ? 0xE0202020 : 0xC0101010);
-            int border = this.tnl$searchFocused ? 0xFF7FD4FF : 0xFF505050;
-            graphics.fill(x, y, x + w, y + 1, border);
-            graphics.fill(x, y + h - 1, x + w, y + h, border);
-            graphics.fill(x, y, x + 1, y + h, border);
-            graphics.fill(x + w - 1, y, x + w, y + h, border);
-            String q = FluidSearch.getQuery();
-            if (q.isEmpty()) {
-                // 空查询 ⇒ 画灰色用法提示 ✓（用户口径里那几种语法都提示出来 ✓）
-                graphics.drawString(this.font, "搜索流体：@模组  #标签  空格=AND  | =OR  -排除  支持拼音",
-                        x + 4, y + 3, 0xFF707070, false);
-            } else {
-                graphics.drawString(this.font, q + (this.tnl$searchFocused && (System.currentTimeMillis() / 500L) % 2L == 0L ? "_" : ""),
-                        x + 4, y + 3, 0xFFFFFFFF, false);
-            }
-        } catch (Throwable ignored) {
-        }
-    }
+    /**
+     * §1117 ⚠ <b>画搜索框的活已搬到 `GuiSmelteryTankSearchMixin`</b> ✗ —— 本类**只负责输入** ✓。
+     *
+     * <p>原因 ✓：在 screen 这边定位就得 shadow **原版**的 `leftPos/topPos/imageWidth` ✗
+     * （运行期是混淆名 ⇒ {@code InvalidMixinException} ⇒ **整个 mixin 被丢弃** ✗ 见 §1117 日志 ✓），
+     * 而流体列的 `x/y/width` 又是**匠魂自己的私有字段** ✗（**跨类** shadow 不到 ✗）。
+     * ⇒ 让"本来就持有流体列坐标＋`GuiGraphics`"的那个 mixin 去画 ✓，并把矩形记进
+     * {@link FluidSearch#setBoxRect} ✓ 供本类判定命中 ✓。
+     */
 
     /** keyPressed：聚焦时吃键 ✓（退格删字 / 回车·Esc 失焦 / 其它吞掉免得触发匠魂快捷键 ✗） */
     @Inject(method = "m_7933_(III)Z", at = @At("HEAD"), cancellable = true, require = 1, remap = false)

@@ -64,6 +64,27 @@ public abstract class GuiSmelteryTankSearchMixin {
     private void tnl$highlightMatches(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY,
                                       org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
         try {
+            // ── §1117 搜索框**在这里画** ✓ ────────────────────────────────────────────────
+            //   为什么不在 screen 的 mixin 里画 ✗：那边要定位就得 shadow **原版**的 leftPos/topPos ✗
+            //   （运行期是混淆名 ⇒ InvalidMixinException ⇒ 整个 mixin 被丢掉 ✗ 见 §1117）；
+            //   而本类手上**同时**有 `GuiGraphics`（renderHighlight 的参数 ✓）与流体列坐标 x/y/width ✓
+            //   ⇒ 顺便把矩形写进 FluidSearch 的静态字段 ✓ 供 screen 那边做命中判定 ✓。
+            int bx = this.x;
+            int by = Math.max(2, this.y - 15);
+            int bw = Math.max(60, this.width);
+            int bh = 14;
+            FluidSearch.setBoxRect(bx, by, bw, bh);
+            graphics.fill(bx, by, bx + bw, by + bh, 0xC0101010);
+            int border = 0xFF505050;
+            graphics.fill(bx, by, bx + bw, by + 1, border);
+            graphics.fill(bx, by + bh - 1, bx + bw, by + bh, border);
+            graphics.fill(bx, by, bx + 1, by + bh, border);
+            graphics.fill(bx + bw - 1, by, bx + bw, by + bh, border);
+            String q = FluidSearch.getQuery();
+            graphics.drawString(net.minecraft.client.Minecraft.getInstance().font,
+                    q.isEmpty() ? "搜索流体：@模组 #标签 空格=AND |=OR -排除" : q,
+                    bx + 4, by + 3, q.isEmpty() ? 0xFF707070 : 0xFFFFFFFF, false);
+            // ── 命中项描边 ──────────────────────────────────────────────────────────
             if (!FluidSearch.isActive()) return;
             int[] heights = this.liquidHeights;
             if (heights == null || heights.length == 0) return;

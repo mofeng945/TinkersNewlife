@@ -41,6 +41,36 @@ public final class FluidSearch {
     /** 解析后的 OR 组（每组是一串 AND 词 ✓ 带排除标记 ✓）——查询一变就重算 ✓ */
     private static volatile List<Group> groups = List.of();
 
+    // ============================================================
+    //  §1117 搜索框的屏幕矩形
+    // ============================================================
+    /**
+     * 由 {@code GuiSmelteryTankSearchMixin} **每帧写入** ✓（那个 mixin 手上同时有 `GuiGraphics` 与流体列坐标 x/y/width ✓），
+     * 供 {@code HeatingStructureScreenSearchMixin} 做"点击/按键是否命中搜索框"的判定 ✓。
+     * <p>⚠ 为什么不直接在 screen mixin 里算坐标 ✗：那需要 shadow **原版**的 `leftPos/topPos` ✗（运行期是混淆名 ✗
+     * ⇒ 会抛 {@code InvalidMixinException} 把整个 mixin 丢掉 ✗ 见 §1117 ✓），
+     * 而流体列的 `x/y/width` 是**匠魂自己的私有字段** ✗（**跨类**也 shadow 不到 ✗）⇒ 只能由持有它的那个 mixin 写出来 ✓。
+     */
+    private static volatile int boxX = 8;
+    private static volatile int boxY = 2;
+    private static volatile int boxW = 106;
+    private static volatile int boxH = 14;
+
+    public static void setBoxRect(int x, int y, int w, int h) {
+        boxX = x;
+        boxY = y;
+        boxW = w;
+        boxH = h;
+    }
+
+    public static int boxX() { return boxX; }
+
+    public static int boxY() { return boxY; }
+
+    public static int boxW() { return boxW; }
+
+    public static int boxH() { return boxH; }
+
     /** 一条词：{@code exclude} ＝ 前置 `-` ✓；{@code kind} 决定匹配哪一列 ✓ */
     private record Term(boolean exclude, Kind kind, String text) {
     }
