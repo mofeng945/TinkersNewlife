@@ -230,3 +230,12 @@ entity id against the mod's own language file, and can be re-run with more mod i
 * The main "Tinkers' New Life" tab no longer contains any Fumo doll - the group was removed from the end
   of that tab without changing the order of any other entry. The old `itemGroup.tinkersnewlife.fumo_mo`
   language key is kept untouched.
+## Fixed (2026-10-06, twenty-fourth pass - version unchanged)
+
+* A placed Fumo doll now shows **its own skin's name** instead of always "Mofeng Baizhi fufu". Every skin
+  shares one block, whose display name came from the block's own translation key; the block entity now
+  implements `Nameable` and reports the same `item.tinkersnewlife.fumo_<skin>` key the item uses, so Jade
+  and similar overlays read the right name.
+* Also fixed while checking that path: breaking a placed doll used to drop **nothing** (the block had no
+  loot table and no drop override). It now drops the doll **with its own skin**, and creative pick-block
+  returns the same skin.

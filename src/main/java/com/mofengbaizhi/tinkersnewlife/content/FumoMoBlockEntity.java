@@ -24,7 +24,7 @@ import net.minecraft.world.level.block.state.BlockState;
  *   <li><b>老存档/字段缺失/名字不认</b> ⇒ 一律回退内置默认皮肤 ✓ <b>不崩</b> ✓。</li>
  * </ul>
  */
-public class FumoMoBlockEntity extends BlockEntity {
+public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.world.Nameable {
 
     /** 挤压动画总时长（tick）——与诡厄玩偶同为 <b>12 tick = 0.6 秒</b> ✓ */
     public static final int MAX_ANIMATION_TICKS = 12;
@@ -71,6 +71,32 @@ public class FumoMoBlockEntity extends BlockEntity {
         super.load(tag);
         // 老存档没有这个键 ⇒ 直接用默认皮肤 ✓（§1079 的"旧数据回退"就靠这一句 ✓）
         this.skin = tag.contains(TAG_SKIN) ? tag.getString(TAG_SKIN) : FumoMoSkins.DEFAULT_SKIN;
+    }
+
+    /**
+     * §1082 <b>地上的玩偶按自己的皮肤显示名字</b> ✓（用户报告：放下「跃金fufu」却显示「墨封白织fufu」✗）。
+     *
+     * <p>根因 ✓：所有皮肤**共用同一个方块** {@code tinkersnewlife:fumo_mo} ✗ ⇒
+     * 显示名原本取自**方块**语言键 {@code block.tinkersnewlife.fumo_mo}（＝墨封白织fufu ✗），
+     * 与"这只玩偶是哪个皮肤"无关 ✗。
+     *
+     * <p>修法 ✓：让方块实体实现 {@link net.minecraft.world.Nameable} ✓ ——
+     * Jade／WAILA 这类"看着方块报名字"的 HUD 对有名字的方块实体就是走这条 ✓
+     * ⇒ 名字直接复用**物品**的键体系 {@code item.tinkersnewlife.fumo_<皮肤>} ✓
+     * （与 {@code FumoMoBaseItem#getDescriptionId} 完全一致 ✓ 皮肤改了名这里也跟着 ✓ 不会两套 ✗）。
+     *
+     * <p>⚠ 缺键兜底 ✓：皮肤被删/名字不认识 ⇒ {@link #getSkin()} 已回退默认皮肤 ✓；
+     * 连默认键都没有（按理不会 ✗）时原版会把键名原样显示出来 ✓ —— 不会崩 ✓ 也不会显示成错误的皮肤 ✓。
+     */
+    @Override
+    public net.minecraft.network.chat.Component getName() {
+        return net.minecraft.network.chat.Component.translatable("item.tinkersnewlife.fumo_" + getSkin());
+    }
+
+    /** 没有"自定义名"（铁砧改名之类）⇒ 用默认实现返回 false ✓；{@code getDisplayName()} 会转调 {@link #getName()} ✓ */
+    @Override
+    public boolean hasCustomName() {
+        return false;
     }
 
     @Override

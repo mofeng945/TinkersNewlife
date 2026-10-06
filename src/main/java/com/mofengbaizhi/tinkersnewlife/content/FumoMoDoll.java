@@ -96,6 +96,26 @@ public final class FumoMoDoll {
      */
     public static final List<RegistryObject<Item>> FUMO_ITEMS = buildSkinItems();
 
+    /**
+     * §1082 由<b>皮肤名</b>找到那只物品 ✓（找不到/为空 ⇒ 默认那只 ✓ 绝不返回 null ✗）。
+     * <p>用途：挖掉/选取地上的玩偶时给回**它自己的皮肤** ✓（见 {@code FumoMoBlock#getDrops}/{@code getCloneItemStack} ✓）。
+     */
+    public static Item itemForSkin(String skin) {
+        if (skin != null && !skin.isEmpty()) {
+            for (RegistryObject<Item> ro : FUMO_ITEMS) {
+                try {
+                    Item it = ro.get();
+                    if (it instanceof FumoMoBaseItem base && skin.equals(base.skin())) {
+                        return it;
+                    }
+                } catch (Throwable ignored) {
+                    // 取不到就继续找 ✓
+                }
+            }
+        }
+        return FUMO_MO_ITEM.get();
+    }
+
     private static List<RegistryObject<Item>> buildSkinItems() {
         List<RegistryObject<Item>> items = new java.util.ArrayList<>();
         items.add(FUMO_MO_ITEM);                                   // 内置默认皮肤（永远第一个 ✓）
@@ -256,6 +276,39 @@ public final class FumoMoDoll {
             } catch (Throwable t) {
                 TinkersNewlife.LOGGER.warn("[fufu] 放置时写皮肤失败（该玩偶会用默认皮肤）：{}", t.toString());
             }
+        }
+
+        /**
+         * §1082 <b>挖掉玩偶 ⇒ 掉回"带这只皮肤"的那一只</b> ✓。
+         * <p>⚠ 原本没有任何战利品表、也没覆写掉落 ✗ ⇒ 挖掉**什么都不掉**（用户没提但确实是 bug ✗）。
+         * <p>皮肤从战利品上下文里的方块实体取 ✓（原版破坏流程会把 {@code BLOCK_ENTITY} 放进参数 ✓）；
+         * 取不到 ⇒ 默认皮肤 ✓ 绝不抛异常 ✓。
+         */
+        @Override
+        public List<ItemStack> getDrops(BlockState state,
+                                        net.minecraft.world.level.storage.loot.LootParams.Builder builder) {
+            try {
+                net.minecraft.world.level.storage.loot.LootParams params =
+                        builder.create(net.minecraft.world.level.storage.loot.parameters.LootContextParamSets.BLOCK);
+                net.minecraft.world.level.block.entity.BlockEntity be =
+                        params.getOptionalParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.BLOCK_ENTITY);
+                String skin = be instanceof FumoMoBlockEntity fumo ? fumo.getSkin() : FumoMoSkins.DEFAULT_SKIN;
+                return List.of(new ItemStack(itemForSkin(skin)));
+            } catch (Throwable t) {
+                return List.of(new ItemStack(FUMO_MO_ITEM.get()));
+            }
+        }
+
+        /** §1082 中键选取（创造）也给带皮肤的那一只 ✓ */
+        @Override
+        public ItemStack getCloneItemStack(net.minecraft.world.level.BlockGetter level, BlockPos pos, BlockState state) {
+            try {
+                if (level.getBlockEntity(pos) instanceof FumoMoBlockEntity fumo) {
+                    return new ItemStack(itemForSkin(fumo.getSkin()));
+                }
+            } catch (Throwable ignored) {
+            }
+            return new ItemStack(FUMO_MO_ITEM.get());
         }
 
         /**
