@@ -59,6 +59,12 @@ public final class ConscienceHandler {
     private static final String KEY_ALIGNMENT = "tn_conscience";        // 权威：玩家持久数据 ✓
     private static final String KEY_EVER_EQUIPPED = "tn_conscience_ever";
     private static final String KEY_MIRROR = "tn_alignment";            // 镜像：物品 NBT ✓
+    /** §1112 玩家「开始算天数」的那一游戏日 ✓（上限成长从这天起算 ✓） */
+    private static final String KEY_START_DAY = "tn_conscience_start_day";
+    /** §1112 每过一个游戏日，上下限各涨的百分点 ✓（1 点 ＝ 1% ✓） */
+    public static final int CAP_PER_DAY = 2;
+    /** §1112 上下限的封顶 ＝ 50 ✓（用户口径：涨到 50% 为止 ✓） */
+    public static final int CAP_MAX = ALIGNMENT_MAX;
 
     // ============================================================
     //  善恶值读写
@@ -76,10 +82,43 @@ public final class ConscienceHandler {
         }
     }
 
-    /** 当前善恶值（−50 恶 ~ +50 善 ✓ 初始 0 ✓）；§818 系统关掉时一律按 <b>0</b> ✓ */
+    /**
+     * §1112 <b>这名玩家当前的善恶上下限</b>（用户口径：「**初始善恶值上下限为 0，每过一游戏日加 2% 上下限，
+     * 直到 50% 为止**」✓）。
+     *
+     * <p>口径说明 ✓：「每过一游戏日」按**玩家自己**算 ✓（不是世界天数 ✗）——
+     * 否则老世界里的新玩家一进来就顶满 50 ✗ 与"**初始**为 0"矛盾 ✗。
+     * 起算日存在玩家持久数据 {@code tn_conscience_start_day} ✓（第一次被问到就写入 ✓）。
+     *
+     * <p>⚠ <b>老存档兼容</b>（这次最容易伤到老玩家的一点 ✓）：第一次初始化起算日时，
+     * 若该玩家**已经有**善恶值 ⇒ 把起算日**回填**成「当前日 − ⌈|值| ÷ 2⌉」✓
+     * ⇒ 他的上限**立刻 ≥ 自己现有的值** ✓ ⇒ **绝不会**因为新规则被削掉已有进度 ✓。
+     */
+    public static int capOf(Player player) {
+        if (player == null || player.level() == null) return CAP_MAX;
+        try {
+            long day = player.level().getDayTime() / 24000L;
+            net.minecraft.nbt.CompoundTag data = player.getPersistentData();
+            if (!data.contains(KEY_START_DAY)) {
+                int cur = Math.abs(data.getInt(KEY_ALIGNMENT));
+                long back = (cur + CAP_PER_DAY - 1L) / CAP_PER_DAY;      // ⌈|值| / 2⌉ ✓
+                data.putLong(KEY_START_DAY, day - back);
+            }
+            long days = Math.max(0L, day - data.getLong(KEY_START_DAY));
+            return (int) Math.min((long) CAP_MAX, days * CAP_PER_DAY);
+        } catch (Throwable t) {
+            return CAP_MAX;        // 任何异常 ⇒ 退回原口径 ✓ 不把玩家锁死在 0 ✗
+        }
+    }
+
+    /** 当前善恶值（上限随天数成长 ✓ −50 恶 ~ +50 善 ✓ 初始 0 ✓）；§818 系统关掉时一律按 <b>0</b> ✓ */
     public static int getAlignment(Player player) {
         if (player == null || !isEnabled()) return 0;
-        return player.getPersistentData().getInt(KEY_ALIGNMENT);
+        int raw = player.getPersistentData().getInt(KEY_ALIGNMENT);
+        // §1112 上限随天数成长 ⇒ 读出来的值也按**当前上限**夹一次 ✓
+        //   （老存档里超过新上限的会被压到新上限 ⇒ 伤害/生命/阈值效果一并收窄 ✓ 口径一致 ✓）
+        int cap = capOf(player);
+        return Math.max(-cap, Math.min(cap, raw));
     }
 
     /**
@@ -104,11 +143,13 @@ public final class ConscienceHandler {
         return getAlignment(target);
     }
 
-    /** 直接设值（会夹在 −50~+50 ✓）—— 第二期的 12 条增减规则都走这里 ✓ */
+    /** 直接设值（会夹在**当前上下限**内 ✓ —— §1112 起上下限随天数成长 ✓）—— 12 条增减规则都走这里 ✓ */
     public static void setAlignment(Player player, int value) {
         if (player == null) return;
         if (!isEnabled()) return;              // §818 系统关掉 ⇒ 不记分 ✓（所有规则自然失效 ✓）
-        int clamped = Math.max(ALIGNMENT_MIN, Math.min(ALIGNMENT_MAX, value));
+        // §1112 ⚠ 不能再写死 ±50 ✗ —— 上限由 capOf 给（初始 0 ✓ 每游戏日 +2 ✓ 封顶 50 ✓）
+        int cap = capOf(player);
+        int clamped = Math.max(-cap, Math.min(cap, value));
         if (clamped == getAlignment(player)) return;
         player.getPersistentData().putInt(KEY_ALIGNMENT, clamped);
         // 一变就同步最大生命修饰符 ✓（第二期口径：最大生命 ×(1 + 善恶%) ✓）
