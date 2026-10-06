@@ -102,3 +102,8 @@ and Soul Eater putting Soul Hunger on you.
   gifted" behaviour is **kept**.
 
 * **Ancient Cursed Scrolls are now three times rarer in chests** (about 40% before, about **13%** now).
+* **A search box for the smeltery / foundry fluid list**: no more hunting one bar at a time. It matches
+  **Chinese names, registry names, `@mod`, `#tag`** and the JEI syntax (**space = AND, `|` = OR, `-` = exclude**);
+  **matching fluid bars get an amber outline** and the rest are hidden, and **clicking a bar still picks that
+  exact fluid** (no index shift). When **Just Enough Characters** is installed it also matches **pinyin**
+  (full pinyin and initials); without that mod there is **no pinyin search**.
