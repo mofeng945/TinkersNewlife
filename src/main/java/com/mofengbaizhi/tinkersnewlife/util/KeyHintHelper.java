@@ -32,8 +32,6 @@ public final class KeyHintHelper {
     public static final String REVERSE = "reverse";
     public static final String SWITCH_TECHNIQUE = "switch_technique";
     public static final String FORM = "form";
-    public static final String STAFF_POUCH = "staff_pouch";
-    public static final String STAFF_CYCLE = "staff_cycle";
     public static final String FLY_SWITCH = "fly_switch";
     public static final String DOMAIN = "domain";
     public static final String DRAGON_STAFF = "dragon_staff";

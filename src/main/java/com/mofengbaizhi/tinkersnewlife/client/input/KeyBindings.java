@@ -29,7 +29,7 @@ public class KeyBindings {
     // ✅ 飞剑模式切换按键（Z 键）
     public static final Lazy<KeyMapping> SWITCH_FLYING_SWORD_MODE = Lazy.of(() -> new KeyMapping(
             "key.tinkersnewlife.switch_flying_sword_mode",
-            GLFW.GLFW_KEY_Z,   // Z 键（R 键留给模块化魔杖的聚晶循环）
+            GLFW.GLFW_KEY_Z,
             KEY_CATEGORY
     ));
 
@@ -68,20 +68,6 @@ public class KeyBindings {
             KEY_CATEGORY
     ));
 
-    // ✅ 模块化魔杖·巫法：J 开聚晶包
-    public static final Lazy<KeyMapping> STAFF_POUCH = Lazy.of(() -> new KeyMapping(
-            "key.tinkersnewlife.staff_pouch",
-            GLFW.GLFW_KEY_J,
-            KEY_CATEGORY
-    ));
-
-    // ✅ 模块化魔杖·巫法：R 循环装备聚晶（可在设置改键）
-    public static final Lazy<KeyMapping> STAFF_CYCLE = Lazy.of(() -> new KeyMapping(
-            "key.tinkersnewlife.staff_cycle",
-            GLFW.GLFW_KEY_R,
-            KEY_CATEGORY
-    ));
-
     // ✅ 咒术 HUD 位置调整（F6）：打开拖动界面，拖动咒力进度条改位置、滚轮调宽度
     public static final Lazy<KeyMapping> EDIT_CURSE_HUD = Lazy.of(() -> new KeyMapping(
             "key.tinkersnewlife.edit_curse_hud",
@@ -100,7 +86,5 @@ public class KeyBindings {
         event.register(SWITCH_TECHNIQUE.get()); // 确保注册
         event.register(REVERSE_TECHNIQUE.get()); // 确保注册
         event.register(OPEN_WU_WEI.get()); // 确保注册
-        event.register(STAFF_POUCH.get());
-        event.register(STAFF_CYCLE.get());
     }
 }

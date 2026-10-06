@@ -335,16 +335,6 @@ public final class IntegrationLoader {
         }
     }
 
-    /** 把"装备中聚晶"镜像写入真法杖本体槽 */
-    public static void mirrorEquippedFocus(ServerPlayer player, ItemStack staff) {
-        if (!isGoety()) return;
-        try {
-            com.mofengbaizhi.tinkersnewlife.integration.goety.GoetyIntegration.mirrorEquippedFocus(player, staff);
-        } catch (Throwable t) {
-            LOGGER.warn("[联动] 聚晶镜像写入失败", t);
-        }
-    }
-
     /** 按真法杖强度刷新持有者诡厄 Spell 属性 */
     public static void refreshSpellAttrs(ServerPlayer player, ItemStack staff) {
         if (!isGoety()) return;

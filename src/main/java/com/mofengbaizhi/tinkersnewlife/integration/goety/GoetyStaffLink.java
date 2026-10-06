@@ -32,10 +32,6 @@ final class GoetyStaffLink {
         return stack != null && !stack.isEmpty() && stack.getItem() instanceof GoetyStaffItem;
     }
 
-    static void mirrorEquippedFocus(ServerPlayer player, ItemStack staff) {
-        GoetyStaffItem.mirrorEquippedFocus(player, staff);
-    }
-
     static void refreshSpellAttrs(ServerPlayer player, ItemStack staff) {
         GoetyStaffItem.refreshSpellAttrs(player, staff);
     }

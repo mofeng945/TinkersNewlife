@@ -167,3 +167,16 @@ entity id against the mod's own language file, and can be re-run with more mod i
   so the moment the wheel swapped a focus in, the mirror wrote the old one back over it. That mirror is now
   disabled and the staff's own slot is the single source of truth. (Removing the leftover pouch, its custom
   screen, keybinds and packets is the next step.)
+
+## Changed (2026-10-06, twentieth pass - version unchanged)
+
+* The self-made focus pouch is gone. The modular staff no longer keeps foci in player data
+  (`staff_focus_idx` / `tnl_staff_pouch`), and the custom focus-pouch screen (`StaffGoetyScreen`),
+  its J/R keybinds, both network packets (`PacketStaffGoetyAction` / `PacketStaffGoetySync`) and the
+  whole mirror chain (`GoetyStaffItem.mirrorEquippedFocus` -> `GoetyStaffLink` -> `GoetyIntegration`
+  -> `IntegrationLoader`) have been deleted - including the periodic correction that used to write the
+  pouch's equipped slot back onto the staff, which is what made a focus picked with Goety's own radial
+  menu vanish. Foci now live **only** in the staff's native slot (Goety's `SoulUsingItemHandler`) and
+  are managed by Goety's own focus radial menu / focus bag; casting, mode switching and the radial menu
+  are unchanged. Side effect: the self-made long-press auto-cast was removed too, because it advanced
+  through the deleted pouch and had no data source or toggle channel left.

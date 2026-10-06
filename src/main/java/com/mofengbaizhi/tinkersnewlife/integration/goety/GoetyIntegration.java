@@ -64,11 +64,6 @@ public final class GoetyIntegration implements Integration {
         return GoetyStaffLink.isStaff(stack);
     }
 
-    /** 把"装备中聚晶"镜像写入真法杖本体槽 */
-    public static void mirrorEquippedFocus(ServerPlayer player, ItemStack staff) {
-        GoetyStaffLink.mirrorEquippedFocus(player, staff);
-    }
-
     /** 按真法杖强度刷新持有者诡厄 Spell 属性 */
     public static void refreshSpellAttrs(ServerPlayer player, ItemStack staff) {
         GoetyStaffLink.refreshSpellAttrs(player, staff);

@@ -27,8 +27,6 @@ public final class KeyHintClient {
             case "reverse" -> mapping = KeyBindings.REVERSE_TECHNIQUE.get();
             case "switch_technique" -> mapping = KeyBindings.SWITCH_TECHNIQUE.get();
             case "form" -> mapping = KeyBindings.OPEN_WU_WEI.get();
-            case "staff_pouch" -> mapping = KeyBindings.STAFF_POUCH.get();
-            case "staff_cycle" -> mapping = KeyBindings.STAFF_CYCLE.get();
             case "fly_switch" -> mapping = KeyBindings.SWITCH_FLYING_SWORD_MODE.get();
             case "domain" -> mapping = KeyBindings.TOGGLE_DOMAIN.get();
             case "dragon_staff" -> mapping = KeyBindings.DRAGON_STAFF_USE.get();

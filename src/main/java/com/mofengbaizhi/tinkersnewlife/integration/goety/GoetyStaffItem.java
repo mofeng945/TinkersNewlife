@@ -44,9 +44,10 @@ import javax.annotation.Nullable;
  *       （灵魂消耗、长吟唱蓄力、冷却、粒子/音效）逐字节一致，客户端与服务端都走同一条原生路径，
  *       不再需要"换手拿真法杖"的桥接。</li>
  *   <li><b>聚晶存储</b>：{@link #initCapabilities} 在匠魂工具能力之外挂上诡厄的
- *       {@link SoulUsingItemHandler}（真法杖同款 1 格聚晶槽，{@code IWand.getFocus} 硬性要求该类型），
- *       装备中的聚晶由服务端 {@link #mirrorEquippedFocus} 写入并随物品栈同步，诡厄的
- *       当前聚晶 HUD / 冷却图标（CurrentFocusGui）无需任何自定义代码即可原生显示。</li>
+ *       {@link SoulUsingItemHandler}（真法杖同款 1 格聚晶槽，{@code IWand.getFocus} 硬性要求该类型）。
+ *       §1078：<b>聚晶只存法杖本体槽</b> —— 由诡厄本体的聚晶轮盘/聚晶包管理，
+ *       本模组不自研聚晶包、不做任何镜像写入；诡厄的当前聚晶 HUD / 冷却图标（CurrentFocusGui）
+ *       无需任何自定义代码即可原生显示。</li>
  * </ul>
  *
  * <p>⚠ <b>严禁在本模组内 new 任何 Item/Block 实例</b>：Item 构造器会把自身登记为 ITEMS 注册表的
@@ -110,15 +111,10 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
             // 完整原生施法（含 startUsingItem 长吟唱），双端一致
             DarkWand wand = goetyWand();
             if (wand != null) {
-                // ⭐ 连招切聚晶后立即施法时，"Cast Time" tag 可能还是上一个聚晶的值
+                // ⭐ 用轮盘/聚晶包换过聚晶后立即施法时，"Cast Time" tag 可能还是上一个聚晶的值
                 // （inventoryTick 每 tick 才按当前聚晶刷新）→ 先按当前聚晶同步，避免新咏唱继承旧时长
                 syncCastTags(stack, player, wand);
                 InteractionResultHolder<ItemStack> result = wand.use(level, player, hand);
-                // 【连发】瞬时法术已放完（消耗动作且未进入引导）→ 请求切下一个聚晶
-                if (!level.isClientSide && player instanceof ServerPlayer sp
-                        && result.getResult().consumesAction() && !sp.isUsingItem()) {
-                    ModularStaffGoety.requestAdvance(sp);
-                }
                 /*
                  * §724：这条原是"定位蓄力放不出"的临时诊断 ✗，但一直留在了 INFO 级 ⇒ **每次右键施法都刷一行** ✗。
                  * 按本模组的日志口径（§686 同款做法）降级为 debug ✓：默认级别下不再出现 ✓，
@@ -202,10 +198,6 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
             TinkersNewlife.LOGGER.info("[魔杖·真法杖] 松手释放 side={} 剩余={}/{} 法术={}",
                     level.isClientSide ? "客户端" : "服务端", timeLeft, stack.getUseDuration(), spellName(stack));
             wand.releaseUsing(stack, level, entity, timeLeft);
-            // 【连发】引导结束（松手释放）→ 请求切下一个聚晶
-            if (!level.isClientSide && entity instanceof ServerPlayer sp) {
-                ModularStaffGoety.requestAdvance(sp);
-            }
         } else {
             super.releaseUsing(stack, level, entity, timeLeft);
         }
@@ -266,10 +258,6 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
             TinkersNewlife.LOGGER.info("[魔杖·真法杖] 满蓄释放 side={} 法术={}",
                     level.isClientSide ? "客户端" : "服务端", spellName(stack));
             ItemStack result = wand.finishUsingItem(stack, level, entity);
-            // 【连发】咏唱走完（满蓄释放）→ 请求切下一个聚晶
-            if (!level.isClientSide && entity instanceof ServerPlayer sp) {
-                ModularStaffGoety.requestAdvance(sp);
-            }
             return result;
         }
         return super.finishUsingItem(stack, level, entity);
@@ -443,49 +431,6 @@ public class GoetyStaffItem extends ModularStaffItem implements IWand {
                 return holder.cast();
             }
             return tinkerCaps.getCapability(cap, side);
-        }
-    }
-
-    // ================= 服务端：聚晶镜像 =================
-
-    /**
-     * §1077 <b>已停用</b> ✓（用户口径：「<b>直接取消自研聚晶包，走本体的法杖 API</b>」✓）。
-     *
-     * <p>原作用 ✗：服务端把"聚晶包（玩家持久数据）里的**装备位**"**镜像写入**魔杖本体聚晶槽 ✓，
-     * 并且 {@code ModularStaffGoety} 那边还有一条**周期校正**在不停调用它 ✓。
-     *
-     * <p>⚠ <b>这就是用户实测"聚晶直接消失"的根源</b> ✓：诡厄自己的**聚晶轮盘**在服务端走
-     * {@code CSwapFocusPacket.swapFocus} ✓ —— 它把聚晶在**本体槽**（{@code SoulUsingItemHandler} ✓）
-     * 与**聚晶包**（{@code FocusBagItemHandler} ✓）之间**对调** ✓；
-     * 而这条镜像／周期校正紧接着又按"我们玩家数据里的装备位"把本体槽写回去 ✗
-     * ⇒ 刚换进来的聚晶**当场被顶掉** ✓（从玩家视角就是"聚晶没了"✗）。
-     *
-     * <p>现在 ✓：<b>法杖本体槽是唯一权威</b> ✓ —— {@code IWand} ＋ {@code SoulUsingItemHandler}
-     * 本来就已接好 ✓（见 {@link #initCapabilities} ✓），诡厄的轮盘、当前聚晶 HUD（{@code CurrentFocusGui}）
-     * 与冷却全部原生可用 ✓。
-     *
-     * <p>⚠ 自研聚晶包、自绘界面与那两条网络包会**在下一步整体删除** ✓
-     *（先把它停成空壳 ✓，避免一次改太大反而把魔杖弄坏 ✗）。
-     *
-     * @return 恒为 {@code false}（＝没有发生写入 ✓）
-     */
-    public static boolean mirrorEquippedFocus(ServerPlayer player, ItemStack staff) {
-        return false;
-    }
-
-    /** 把魔杖栈换回玩家背包原槽（主手/副手），触发容器广播 */
-    private static void replaceInInventory(ServerPlayer player, ItemStack staff) {
-        try {
-            InteractionHand hand = null;
-            if (player.getMainHandItem() == staff) {
-                hand = InteractionHand.MAIN_HAND;
-            } else if (player.getOffhandItem() == staff) {
-                hand = InteractionHand.OFF_HAND;
-            }
-            if (hand != null) {
-                player.setItemInHand(hand, staff.copy());
-            }
-        } catch (Throwable ignored) {
         }
     }
 
