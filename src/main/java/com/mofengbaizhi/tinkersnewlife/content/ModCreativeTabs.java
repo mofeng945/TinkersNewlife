@@ -253,11 +253,46 @@ public class ModCreativeTabs {
                                 // ----- §910 帕秋莉的百宝书（吞噬帕秋莉书 ⇒ 一本里查阅全部 ✓）-----
                                 output.accept(ModItems.PATCHOULI_COMPENDIUM.get());
 
-                                // ----- §905 墨封白织 fufu（玩偶方块 + 可戴在头上 ✓）-----
-                                // 用户口径：「把我的娃娃合并到匠魂新生创造物品栏最后一个」✓
-                                // ⇒ 放在**本栏最后** ✓，并撤掉它原先单独那一页创造栏 ✓（见 FumoMoDoll ✓）
-                                // §1079：现在有好几只（每个皮肤一个物品 ✓）⇒ 整组都排在最后 ✓：
-                                // 内置默认皮肤在最前（它原来就是最后一项 ✓ 相对位置不变 ✓），皮肤按名字排序跟在后面 ✓。
+                                // §1081：全部 fufu 已从这里**移出** ✓ ⇒ 本栏（匠魂新生）不再出现任何 fufu ✓，
+                                // 它们单独占一页创造栏（见下面的 FUMO_TAB ✓）。
+                                // 本栏其它物品的先后顺序**一格没动** ✓（原 §905/§1079 的"整组排最后"随之作废 ✓）。
+                            })
+                            .build()
+            );
+
+    /**
+     * §1081 <b>fufu 独立创造栏</b>（用户口径：「把所有的fumo单开一个创造标签页叫匠魂新生·fumo」✓）——
+     * 注册 id {@code tinkersnewlife:fumo} ⇒ 标题键 {@code itemGroup.tinkersnewlife.fumo} ✓
+     * （zh「匠魂新生·fumo」/ en "Tinkers' New Life · fumo" ✓）。
+     *
+     * <p>图标＝**第一只 fufu**（{@link FumoMoDoll#FUMO_ITEMS} 的头部＝内置默认皮肤 ✓）；
+     * 列表为空 / 取不到物品时退回 {@link ItemStack#EMPTY} ✓ —— 图标供给器是在界面打开时跑的，
+     * 抛异常会连累整个创造界面 ✗，所以这里兜到死 ✓。
+     *
+     * <p>内容＝ {@link FumoMoDoll#FUMO_ITEMS} **全部**（默认皮肤在前 + 扫描到的皮肤按名字排序 ✓），
+     * 沿用原来那段"取不到 / AIR 就跳过 + 单个失败不影响整栏"的防御写法 ✓。
+     *
+     * <p>⚠ <b>排序位置</b>：Forge 1.20.1 的创造栏顺序＝注册顺序 ⇒ 本栏排在「匠魂新生」**之后** ✓
+     * （这一项没法在本模组侧定制 ✗，只能靠注册先后决定 ✓）。
+     */
+    public static final RegistryObject<CreativeModeTab> FUMO_TAB =
+            CREATIVE_MODE_TABS.register("fumo",
+                    () -> CreativeModeTab.builder()
+                            .title(Component.translatable("itemGroup.tinkersnewlife.fumo"))
+                            .icon(() -> {
+                                try {
+                                    for (RegistryObject<Item> fumo : FumoMoDoll.FUMO_ITEMS) {
+                                        Item fumoItem = fumo.get();
+                                        if (fumoItem != null && fumoItem != net.minecraft.world.item.Items.AIR) {
+                                            return new ItemStack(fumoItem);
+                                        }
+                                    }
+                                } catch (Throwable t) {
+                                    TinkersNewlife.LOGGER.warn("[创造栏] fufu 栏图标取用失败，改用空图标：{}", t.toString());
+                                }
+                                return ItemStack.EMPTY;   // 一只 fufu 都没有 ⇒ 空图标 ✓（绝不返回 null ✗）
+                            })
+                            .displayItems((parameters, output) -> {
                                 for (RegistryObject<Item> fumo : FumoMoDoll.FUMO_ITEMS) {
                                     try {
                                         Item fumoItem = fumo.get();

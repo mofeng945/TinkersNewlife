@@ -220,3 +220,13 @@ entity id against the mod's own language file, and can be re-run with more mod i
   slot now carries the skin you dropped on your desktop: it is shipped as `textures/fumo/yuejin.png`
   (copied byte-for-byte, 64x64, no resampling) and registers as `tinkersnewlife:fumo_yuejin`,
   display name "Yuejin fufu" ("跃金fufu"). The placeholder sample skin from the previous pass is gone.
+
+## Added (2026-10-06, twenty-third pass - version unchanged)
+
+* All Fumo dolls now live in their own creative tab, **"Tinkers' New Life · fumo"**
+  (`tinkersnewlife:fumo`, translation key `itemGroup.tinkersnewlife.fumo`). Its icon is the first doll
+  (`fumo_mo`), with `ItemStack.EMPTY` as a safe fallback if no doll item is available, and its item list
+  is exactly `FumoMoDoll.FUMO_ITEMS` (default skin first, scanned skins sorted after it).
+* The main "Tinkers' New Life" tab no longer contains any Fumo doll - the group was removed from the end
+  of that tab without changing the order of any other entry. The old `itemGroup.tinkersnewlife.fumo_mo`
+  language key is kept untouched.
