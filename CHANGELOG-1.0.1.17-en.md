@@ -246,3 +246,14 @@ entity id against the mod's own language file, and can be re-run with more mod i
   jelly squash, then settles back within about a second of the music stopping. It is done by listening to
   Forge's per-tick client sound events and checking the sound's namespace, so nothing in that mod is touched
   and it stays a soft dependency - packs without it are unaffected.
+## Changed (2026-10-06, twenty-sixth pass - version unchanged)
+
+* The Fumo dance now uses the Friends' Wine mod's own animation maths, read from its code: the same
+  0.91667-second cycle for both the spin and the two jelly squashes per cycle, the same 50% compression
+  and width defaults, and the phase counted from the moment the music started - so the speed matches that
+  mod's doll instead of the slower rhythm this mod used before.
+* Dancing now follows the music **exactly**: every tick the doll asks that mod's doll whether it is still
+  playing (via its own `isPlaying`), so the music stopping stops the dance within about a second instead of
+  the previous two-minute grace period.
+* Jade now shows the right skin name for a placed doll (the mod injects into Jade's object-name provider,
+  since Jade ignores its own `Nameable` support here).

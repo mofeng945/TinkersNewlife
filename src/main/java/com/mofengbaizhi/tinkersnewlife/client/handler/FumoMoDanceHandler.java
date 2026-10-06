@@ -77,8 +77,9 @@ public final class FumoMoDanceHandler {
             if (id == null || !MUSIC_NAMESPACE.equals(id.getNamespace())) return;
             Minecraft mc = Minecraft.getInstance();
             if (mc == null || mc.level == null) return;
-            FumoMoBlockEntity.markDancingNear(mc.level,
-                    sound.getX(), sound.getY(), sound.getZ(), RANGE, DANCE_REFRESH_TICKS);
+            // §1086 只记"音乐从哪儿放的" ✓ —— 真正"在不在放"由方块实体每 tick 反射问它自己的
+            //   DollBlockEntity#isPlaying() 决定 ✓（用户实测：这样音乐停就真的停 ✓ 见 maintainDance ✓）
+            FumoMoBlockEntity.noteMusicSource(mc.level, sound.getX(), sound.getY(), sound.getZ());
         } catch (Throwable ignored) {
             // fail-safe：联动失败最多是"玩偶不跳" ✓ 绝不影响音乐播放 ✓
         }

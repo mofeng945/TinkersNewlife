@@ -171,7 +171,10 @@ public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.worl
             be.oAnimationTickCount = 0;
             be.animationTickCount = 0;
         }
-        // §1083 跳舞倒计时（纯客户端视觉 ✓ 音乐每 tick 会把它续上 ✓ 停了就归零 ✓）
+        // §1086 先问「朋友的酒」还在不在放 ⇒ 在放就续命、停了就立刻归零 ✓
+        //   （用户实测两条：①只转一下就停 ②停了还在转 ⇒ 都靠这里修 ✓）
+        maintainDance(level, be);
+        // 跳舞倒计时（纯客户端视觉 ✓ 音乐每 tick 会把它续上 ✓ 停了就归零 ✓）
         if (be.danceTicks > 0) {
             be.danceTicks--;
         }
@@ -187,12 +190,13 @@ public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.worl
     // ============================================================
 
     /** 剩余跳舞 tick ✓（>0 就转＋挤压 ✓ 只活在内存里 ✗ 不进 NBT、不发包 ✓）
-     *  —— 与 §908 抚摸挤压同一路子 ✓ 音乐停 ⇒ 自动回正 ✓
-     *  <p>⚠ §1085 加 {@code volatile} ✓：写入可能来自**声音线程**（声音事件 ✗）⇒ 渲染线程要立刻看得到 ✓ */
+     *  <p>⚠ 写入可能来自声音线程 ⇒ {@code volatile} ✓ */
     private volatile int danceTicks;
+    /** §1086 舞蹈开始的世界时间 ✓（相位从"音乐开始"算 ✓ 才对得上它自己的 rotationStartTick ✓） */
+    private long danceStart = -1L;
 
-    /** 音乐在放 ⇒ 续命 ✓（取较大者 ⇒ 每 tick 都被续上 ✓ 不会越续越短 ✓） */
     public void startDancing(int ticks) {
+        if (this.danceTicks <= 0) this.danceStart = -1L;   // 重新起跳 ⇒ 相位归零 ✓
         if (ticks > this.danceTicks) this.danceTicks = ticks;
     }
 
@@ -200,42 +204,116 @@ public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.worl
         return this.danceTicks > 0;
     }
 
-    /** 舞蹈相位 ＝ 世界时间（连续 ✓ 与"还剩多少 tick"无关 ✓）；拿不到世界 ⇒ 0 ✓ */
-    public static float dancePhase(Level level, float partialTick) {
-        return level == null ? 0.0F : (level.getGameTime() + partialTick);
+    /** §1086 舞蹈已进行的秒数 ✓（用"起跳时刻"算 ✓ 与它的 rotationSeconds 同一个起点 ✓）；没在世界里 ⇒ 0 ✓ */
+    public static double danceSeconds(Level level, FumoMoBlockEntity be, float partialTick) {
+        if (level == null || be == null || be.danceStart < 0L) return 0.0D;
+        return Math.max(0.0D, level.getGameTime() - be.danceStart + partialTick) / 20.0D;
+    }
+
+    // ── §1086 照抄「朋友的酒」的 JellyAnimation（周期 0.91667 秒 ＝ 一圈转完 ＝ 挤两下 ✓）──
+    /** 与它的 {@code TIMES} 完全一致 ✓ */
+    private static final double[] FW_TIMES = {0.0D, 0.25D, 0.45833D, 0.70833D, 0.91667D};
+    /** 与它的 {@code VALUES} 完全一致 ✓ */
+    private static final double[] FW_VALUES = {0.0D, 1.0D, 0.0D, 1.0D, 0.0D};
+    /** 它的 {@code phase(seconds)} ✓ */
+    private static double fwPhase(double seconds) {
+        return Math.max(0.0D, seconds) % 0.91667D;
+    }
+    /** 它的 {@code angle(seconds)} ✓（⇒ 每 0.91667 秒整一圈 ⇒ 约 5.5°/tick ✓） */
+    public static float fwAngle(double seconds) {
+        return (float) (-360.0D * fwPhase(seconds) / 0.91667D);
+    }
+    /** 它的 {@code squash(seconds)} ✓（关键帧之间用 smoothstep ✓） */
+    public static float fwSquash(double seconds) {
+        double t0 = fwPhase(seconds);
+        int i = 0;
+        while (i < FW_TIMES.length - 2 && t0 > FW_TIMES[i + 1]) i++;
+        double t = (t0 - FW_TIMES[i]) / (FW_TIMES[i + 1] - FW_TIMES[i]);
+        return (float) (FW_VALUES[i] + (FW_VALUES[i + 1] - FW_VALUES[i]) * t * t * (3.0D - 2.0D * t));
     }
 
     /**
-     * 客户端**渲染过的**玩偶名册 ✓（{@code WeakHashMap} ⇒ 区块/方块卸载不会泄漏 ✓）。
-     * <p>为什么需要它 ✓：声音事件 {@code PlaySoundSourceEvent} 是**每 tick 每条声音**都触发 ✓
-     * ⇒ 那里**绝不能满世界扫方块** ✗（一 tick 几万次查询 ✗）；只在这份几十条的名册里挑"离音乐够近"的 ✓。
+     * 客户端**渲染过的**玩偶名册 ✓（{@code WeakHashMap} ⇒ 不泄漏 ✓）。
+     * <p>⚠ 声音事件可能来自**声音线程** ⇒ 全部访问都要 {@code synchronized} ✓（§1085 的竞态教训 ✓）。
      */
     private static final java.util.Map<FumoMoBlockEntity, Long> RENDERED = new java.util.WeakHashMap<>();
 
-    /** 渲染器每帧登记一次 ✓（顺手清掉很久没渲染的 ✓ 名单上限几十条 ⇒ 开销可忽略 ✓） */
+    /** 渲染器每帧登记 ✓ */
     public static void trackRendered(FumoMoBlockEntity be, Level level) {
         if (be == null || level == null) return;
-        if (RENDERED.size() > 128) {
-            long now = level.getGameTime();
-            RENDERED.entrySet().removeIf(e -> now - e.getValue() > 200L);
+        synchronized (RENDERED) {
+            if (RENDERED.size() > 128) {
+                long now = level.getGameTime();
+                RENDERED.entrySet().removeIf(e -> now - e.getValue() > 200L);
+            }
+            RENDERED.put(be, level.getGameTime());
         }
-        RENDERED.put(be, level.getGameTime());
     }
 
-    /** 声音在某处响起 ✓ ⇒ 把 {@code range} 格内、最近还在渲染的那些玩偶点着 ✓（与 §1082 一样全程不抛异常 ✓） */
-    public static void markDancingNear(Level level, double x, double y, double z, double range, int ticks) {
+    /** §1086 记住"朋友酒的音乐从哪儿放的" ✓（声音事件里记 ✓ 每 tick 靠它去找它那只玩偶 ✓） */
+    private static volatile net.minecraft.core.BlockPos musicPos;
+    private static volatile long musicTick = Long.MIN_VALUE;
+
+    public static void noteMusicSource(Level level, double x, double y, double z) {
         if (level == null) return;
+        musicPos = net.minecraft.core.BlockPos.containing(x, y, z);
+        musicTick = level.getGameTime();
+    }
+
+    /** 「朋友的酒」的玩偶方块实体（反射问它 {@code isPlaying()} ✓ 不引用它的类型 ⇒ 没装也不会崩 ✓） */
+    private static final String FW_BE_CLASS = "com.friendswine.DollBlockEntity";
+    private static java.lang.reflect.Method fwIsPlaying;
+    private static boolean fwReflectTried;
+
+    private static boolean friendswinePlaying(Level level, net.minecraft.core.BlockPos src) {
+        try {
+            if (!fwReflectTried) {
+                fwReflectTried = true;
+                fwIsPlaying = Class.forName(FW_BE_CLASS).getMethod("isPlaying");
+            }
+            if (fwIsPlaying == null) return false;
+            for (net.minecraft.core.BlockPos p : net.minecraft.core.BlockPos.betweenClosed(
+                    src.offset(-3, -2, -3), src.offset(3, 2, 3))) {
+                BlockEntity cand = level.getBlockEntity(p);
+                if (cand != null && FW_BE_CLASS.equals(cand.getClass().getName())) {
+                    Object r = fwIsPlaying.invoke(cand);
+                    if (r instanceof Boolean b && b) return true;
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return false;
+    }
+
+    /** 音乐离玩偶多近才一起跳（格 ✓ 与 §1083 一致 ✓） */
+    private static final double DANCE_RANGE = 16.0D;
+
+    /**
+     * §1086 每 tick（客户端 ✓）维护舞蹈 ✓ —— 用户实测两条都在这修掉：
+     * ①「只转一下下就停」✗ ⇒ 不再靠"听到声音撑 2 分钟"，而是**每 tick 问它自己 {@code isPlaying()}** ✓ 在放就一直续 ✓；
+     * ②「停止音乐依然在转」✗ ⇒ 它一说 {@code false} ⇒ 立刻归零 ✓（留 20 tick 宽限避免抖动 ✓）。
+     */
+    public static void maintainDance(Level level, FumoMoBlockEntity be) {
+        if (level == null || be == null || !level.isClientSide) return;
         long now = level.getGameTime();
-        double r2 = range * range;
-        for (java.util.Map.Entry<FumoMoBlockEntity, Long> e : RENDERED.entrySet()) {
-            FumoMoBlockEntity be = e.getKey();
-            if (be == null || be.isRemoved() || be.getLevel() != level) continue;
-            if (now - e.getValue() > 200L) continue;
-            double dx = be.getBlockPos().getX() + 0.5D - x;
-            double dy = be.getBlockPos().getY() + 0.5D - y;
-            double dz = be.getBlockPos().getZ() + 0.5D - z;
-            if (dx * dx + dy * dy + dz * dz <= r2) {
-                be.startDancing(ticks);
+        net.minecraft.core.BlockPos src = musicPos;
+        if (src == null || now - musicTick > 40L
+                || be.getBlockPos().distSqr(src) > DANCE_RANGE * DANCE_RANGE) {
+            be.danceTicks = 0;
+            return;
+        }
+        if (friendswinePlaying(level, src)) {
+            be.startDancing(20);
+        } else if (now - musicTick > 20L) {
+            be.danceTicks = 0;
+        }
+    }
+
+    /** 立刻停止所有在跳的玩偶 ✓ */
+    public static void stopAllDancing() {
+        synchronized (RENDERED) {
+            for (FumoMoBlockEntity be : RENDERED.keySet()) {
+                if (be != null) be.danceTicks = 0;
             }
         }
     }

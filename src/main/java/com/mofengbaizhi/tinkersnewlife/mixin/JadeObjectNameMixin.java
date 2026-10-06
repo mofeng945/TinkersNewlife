@@ -33,4 +33,26 @@ public abstract class JadeObjectNameMixin {
             cir.setReturnValue(Component.translatable("message.tinkersnewlife.cognitive_mask.hidden_name"));
         }
     }
+
+    /**
+     * §1086 <b>方块名</b>：我们的 fumo 玩偶按"**自己那身皮肤**"显示 ✓（用户实测：放下跃金fufu，玉里仍显示墨封白织fufu ✗）。
+     *
+     * <p>根因 ✓：{@code ObjectNameProvider#appendServerData} 只在
+     * {@code JadeCommonConfig.shouldShowCustomName(be) && nameable.hasCustomName()} 时才写 {@code givenName} ✗
+     * —— 我们的方块实体虽然实现了 {@code Nameable}（§1082 ✓，`hasCustomName` 也已改 true ✓），
+     * 但仍**不在**玉那份"允许显示自定义名"的名单里 ✗ ⇒ 名字退回方块默认键 ✗。
+     * ⇒ 干脆在**客户端**这一层：认出是我们的玩偶就**换掉那一行**再取消原逻辑 ✓
+     *（照本类既有的"只改玉里那一行、别处一律不动"的口径 ✓）。
+     */
+    @Inject(method = "appendTooltip", at = @At("HEAD"), cancellable = true, remap = false)
+    private void tinkersnewlife$fumoBlockName(snownee.jade.api.ITooltip tooltip,
+                                              snownee.jade.api.BlockAccessor accessor,
+                                              snownee.jade.api.config.IPluginConfig config,
+                                              org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+        if (accessor == null) return;
+        if (!(accessor.getBlockEntity() instanceof com.mofengbaizhi.tinkersnewlife.content.FumoMoBlockEntity fumo)) return;
+        tooltip.clear();
+        tooltip.add(Component.translatable("item.tinkersnewlife.fumo_" + fumo.getSkin()));
+        ci.cancel();
+    }
 }
