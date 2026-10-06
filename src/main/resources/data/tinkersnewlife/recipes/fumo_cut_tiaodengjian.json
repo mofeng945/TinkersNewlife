@@ -1,0 +1,6 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": { "tag": "tinkersnewlife:fumo" },
+  "result": "tinkersnewlife:fumo_tiaodengjian",
+  "count": 1
+}

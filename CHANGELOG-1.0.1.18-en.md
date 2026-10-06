@@ -87,3 +87,13 @@ and Soul Eater putting Soul Hunger on you.
 * To add a skin: put `<name>.png` into `assets/tinkersnewlife/textures/fumo/` and add
   `item.tinkersnewlife.fumo_<name>` to both `zh_cn.json` and `en_us.json`, then restart.
   **Export as PNG** - JPG has no alpha channel and shows a solid background.
+
+---
+
+## Added later the same day
+
+* **Fumo dolls can be cut into each other** on a stonecutter: any doll in, any other of the ten out.
+  (When you add a new skin later, remember to add its own stonecutting recipe as well - skins are scanned at runtime.)
+* The disc **"朋友的酒🍺DJ版"** can now be found in **End City treasure chests** (rate handled as **0.2%**, roughly one in 500 chests).
+* **Fixed: Ancient Cursed Scrolls** could only appear in **chest-type** loot tables; they can now be **fished up** as well
+  (the three vanilla fishing sub-tables - fish, junk and treasure - each count once per cast, never twice).
