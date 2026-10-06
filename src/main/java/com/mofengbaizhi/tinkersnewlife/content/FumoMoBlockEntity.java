@@ -196,7 +196,13 @@ public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.worl
     private long danceStart = -1L;
 
     public void startDancing(int ticks) {
-        if (this.danceTicks <= 0) this.danceStart = -1L;   // 重新起跳 ⇒ 相位归零 ✓
+        // ⚠ §1089 <b>这里绝不能碰 {@code danceStart}</b> ✗✗ ——
+        //   §1086 我在这里写了"danceTicks<=0 ⇒ danceStart=-1（相位归零）"✗，
+        //   而调用方 {@link #maintainDance} 的顺序是「**先**写 danceStart=now ✓ → **再**调本方法」✓
+        //   ⇒ 那句会把刚刚写好的起跳时刻**覆盖成 −1** ✗ ⇒ {@link #danceSeconds} 恒 0
+        //   ⇒ {@code fwAngle(0)=0}、{@code fwSquash(0)=0} ⇒ **状态在跳、画面完全不动** ✗
+        //   ——用户三次实测「不转」的最终原因就是它 ✓（§1087 修的赋值被它当场抹掉 ✗）。
+        //   ⇒ 相位起点**只由调用方**在真正起跳那一刻写 ✓（见 maintainDance ✓）。
         if (ticks > this.danceTicks) this.danceTicks = ticks;
     }
 
