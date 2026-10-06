@@ -62,6 +62,20 @@ function Get-MaxCount($functions) {
     return $max
 }
 
+# §1075 用户口径「别掉 boss 装备」⇒ 装备一律不进肢解配方 ✓
+#   过滤的是【可穿戴/可挥舞的装备】：盔甲件 ✓、武器 ✓、工具 ✓、弓弩 ✓、饰品 ✓
+#   保留的（**不是装备** ✓）：奖杯 ✓、唱片 ✓、鞍 ✓、皮革/鳞片/骨头/肉这类材料 ✓
+$gearPattern = '(^|_)(helmet|helm|chestplate|leggings|boots|cap|hat|hood|robe|armor|armour|' +
+    'sword|axe|pickaxe|shovel|hoe|dagger|spear|blade|scythe|glaive|rapier|katana|hammer|mace|club|knife|' +
+    'bow|crossbow|trident|shield|staff|scepter|sceptre|wand|' +
+    'ring|amulet|necklace|belt|cloak|bracelet|earring|talisman)($|_)'
+
+function Test-Gear([string]$id) {
+    if (-not $id) { return $false }
+    $path = ($id -split ':')[-1]                     # 只看物品名 ✓ 不看命名空间 ✓
+    return ($path -match $gearPattern)
+}
+
 function Get-ItemOutputs($entries) {
     $found = New-Object System.Collections.Generic.List[object]
     foreach ($e in @($entries)) {
@@ -69,7 +83,7 @@ function Get-ItemOutputs($entries) {
         $t = [string]$e.type
         if ($t -eq 'minecraft:item' -or $t -eq 'item') {
             $name = [string]$e.name
-            if ($name -and $name -ne 'minecraft:air') {
+            if ($name -and $name -ne 'minecraft:air' -and -not (Test-Gear $name)) {
                 $found.Add([pscustomobject]@{ Kind = 'item'; Name = $name; Count = (Get-MaxCount $e.functions) })
             }
         } elseif ($t -eq 'minecraft:tag' -or $t -eq 'tag') {
