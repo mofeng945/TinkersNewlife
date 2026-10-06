@@ -93,10 +93,20 @@ public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.worl
         return net.minecraft.network.chat.Component.translatable("item.tinkersnewlife.fumo_" + getSkin());
     }
 
-    /** 没有"自定义名"（铁砧改名之类）⇒ 用默认实现返回 false ✓；{@code getDisplayName()} 会转调 {@link #getName()} ✓ */
+    /**
+     * ⚠ §1085 <b>这里必须返回 {@code true}</b> ✓ —— 用户实测："放下跃金fufu，玉(Jade)里仍显示墨封白织fufu" ✗。
+     *
+     * <p>原因 ✓：玉判断"要不要用**方块实体自己**的名字"时看的是这个标志 ✗ ——
+     * §1082 我按"没在铁砧改名"的语义写了 {@code false} ✗ ⇒ 玉直接退回**方块默认名**
+     * {@code block.tinkersnewlife.fumo_mo}（墨封白织fufu ✗）⇒ 皮肤渲染对了、名字却没跟着 ✓。
+     * 改成 {@code true} ⇒ 玉走 {@code getDisplayName()} ⇒ 也就是 {@link #getName()}（＝皮肤那只的名字 ✓）。
+     *
+     * <p>⚠ 副作用检查过 ✓：原版只有"容器类"用它决定要不要显示自定义名 ✓；
+     * 我们的方块自己不绘制任何名字 ✗（世界里由渲染器画玩偶 ✓），所以除了玉那一行之外没有别的可见变化 ✓。
+     */
     @Override
     public boolean hasCustomName() {
-        return false;
+        return true;
     }
 
     @Override
@@ -177,8 +187,9 @@ public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.worl
     // ============================================================
 
     /** 剩余跳舞 tick ✓（>0 就转＋挤压 ✓ 只活在内存里 ✗ 不进 NBT、不发包 ✓）
-     *  —— 与 §908 抚摸挤压同一路子 ✓ 音乐停 ⇒ 自动回正 ✓ */
-    private int danceTicks;
+     *  —— 与 §908 抚摸挤压同一路子 ✓ 音乐停 ⇒ 自动回正 ✓
+     *  <p>⚠ §1085 加 {@code volatile} ✓：写入可能来自**声音线程**（声音事件 ✗）⇒ 渲染线程要立刻看得到 ✓ */
+    private volatile int danceTicks;
 
     /** 音乐在放 ⇒ 续命 ✓（取较大者 ⇒ 每 tick 都被续上 ✓ 不会越续越短 ✓） */
     public void startDancing(int ticks) {

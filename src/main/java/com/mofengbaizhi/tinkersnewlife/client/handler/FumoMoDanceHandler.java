@@ -44,10 +44,17 @@ public final class FumoMoDanceHandler {
     /** 音乐离玩偶多近才一起跳（格 ✓） */
     private static final double RANGE = 16.0D;
     /**
-     * 每听到一次音乐，给玩偶续多久（tick ✓）——
-     * 声音事件**每 tick 都来** ✓ ⇒ 25 只是留点余量 ✓（音乐停 ⇒ 至多 1.25 秒后就回正 ✓）。
+     * 每听到一次音乐，给玩偶续多久（tick ✓）。
+     *
+     * <p>⚠ <b>为什么是 2 分钟这么长</b> ✗——用户实测（§1085）：「联动玩偶只转了一下下就不转了」✓
+     * ⇒ 说明 {@code friendswine} 的音乐**并不是每 tick 都发这两个声音事件** ✗
+     * （我原先按"每 tick 都发"设计 ⇒ 1.25 秒窗口 ⇒ 转一下就停 ✗）。
+     * ⇒ 改成**一次听到就续 2 分钟**（2400 tick ✓，盖得住它最长那几首 ✓），
+     * 期间再听到（换曲/重放 ✓）继续往后延 ✓；音乐停了至多 2 分钟后自动回正 ✓。
+     * <p>想更准地"跟着曲子起停"得去读它 {@code DollMusicSound} 的内部字段 ✗（版本一变就崩 ✗）
+     * —— 除非你要求 ✓，否则不走那条 ✓。
      */
-    public static final int DANCE_REFRESH_TICKS = 25;
+    public static final int DANCE_REFRESH_TICKS = 2400;
 
     private FumoMoDanceHandler() {
     }
