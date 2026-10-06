@@ -100,3 +100,5 @@ and Soul Eater putting Soul Hunger on you.
   final row - **1 Gheloth Remains** for **1 Mofeng Baizhi fufu**. Below 30 favour the row is **not shown at all**,
   and normal trades never shift to the wrong offer. The existing "first time you reach 30 favour, one fufu is
   gifted" behaviour is **kept**.
+
+* **Ancient Cursed Scrolls are now three times rarer in chests** (about 40% before, about **13%** now).

@@ -24,7 +24,8 @@ import java.util.List;
 
 /**
  * 只给"箱子类"战利品表（id 路径以 chests/ 开头，任意命名空间）注入古代咒术残卷，
- * 概率约 40%（rolls=1，残卷权重 2 / 空权重 3）；怪物掉落、方块掉落不受影响。
+ * 概率见下（§1111 起为 <b>2/15 ≈ 13.3%</b> ＝ 原 40% 的**三分之一** ✓，rolls=1）；
+ * 怪物掉落、方块掉落、**钓鱼**（§1110 用户澄清 ✓）均不受影响。
  * <p>
  * 实现不依赖任何字段名/布局：运行时 LootTable 的 pools 是可变 List（Forge 运行时布局，
  * 与 mojmap 源码中的数组不同），直接按"字段运行时类型"找到该 List 后原地追加一个残卷
@@ -52,7 +53,7 @@ public final class ChestScrollInjector {
                     .add(LootItem.lootTableItem(ModItems.ANCIENT_CURSED_SCROLL.get())
                             .setWeight(2)
                             .apply(() -> new RollScrollFunction()))
-                    .add(EmptyLootItem.emptyItem().setWeight(3))
+                    .add(EmptyLootItem.emptyItem().setWeight(13))   // §1111 用户口径：出率降为原来的三分之一 ✓
                     .build();
 
             if (!appendToPoolsList(table, scrollPool)) {
