@@ -91,8 +91,28 @@ public final class FluidSearch {
 
     /** 当前打开的界面是不是"加热结构界面"（熔炼炉/熔铸炉 ✓ 两者同一个类 ✓） */
     public static boolean isHeatingStructureScreen(Object screen) {
-        return screen != null && "slimeknights.tconstruct.smeltery.client.screen.HeatingStructureScreen"
-                .equals(screen.getClass().getName());
+        if (screen == null) return false;
+        // §1117d 放宽：用 contains 而不是 equals ✓ —— 万一匠魂那边有子类/包装类也不会误判 ✗
+        return screen.getClass().getName().contains("HeatingStructureScreen");
+    }
+
+    // ============================================================
+    //  §1117d 临时诊断（最多 20 条 ✓ 定位完就删 ✗）
+    // ============================================================
+    private static final java.util.concurrent.atomic.AtomicInteger DIAG_COUNT =
+            new java.util.concurrent.atomic.AtomicInteger();
+
+    /**
+     * 临时诊断 ✓ —— 用户两次报"无法输入"✗，而 mixin 都已确认应用成功 ✓ ⇒
+     * 只能让运行时把"点击是否命中、是否聚焦、按键是否进来"写进日志 ✓，别再盲猜 ✗。
+     * <p>⚠ 上限 20 条 ✓（每条都带 `[搜索诊断]` 前缀 ✓ 方便 grep ✓），定位完这一段会删掉 ✗。
+     */
+    public static void diag(String msg) {
+        if (DIAG_COUNT.incrementAndGet() > 20) return;
+        try {
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[搜索诊断] {}", msg);
+        } catch (Throwable ignored) {
+        }
     }
 
     /** 一条词：{@code exclude} ＝ 前置 `-` ✓；{@code kind} 决定匹配哪一列 ✓ */

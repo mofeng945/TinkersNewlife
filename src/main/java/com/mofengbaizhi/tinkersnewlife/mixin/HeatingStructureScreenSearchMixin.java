@@ -64,6 +64,10 @@ public abstract class HeatingStructureScreenSearchMixin {
         try {
             boolean inside = tnl$insideBox(mouseX, mouseY);
             FluidSearch.setFocused(inside);
+            // §1117d 临时诊断 ✓：把"鼠标点在哪、框在哪、有没有命中"写进日志 ✓（定位完删 ✗）
+            FluidSearch.diag("点击 mouse=(" + (int) mouseX + "," + (int) mouseY + ") 框=("
+                    + FluidSearch.boxX() + "," + FluidSearch.boxY() + "," + FluidSearch.boxW() + "x"
+                    + FluidSearch.boxH() + ") 命中=" + inside + " ⇒ 聚焦=" + FluidSearch.isFocused());
             if (inside) {
                 cir.setReturnValue(true);
             }

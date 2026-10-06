@@ -40,6 +40,12 @@ public abstract class ScreenSearchInputMixin {
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
     private void tnl$searchKey(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
         try {
+            // §1117d 临时诊断 ✓（每 8 次只记一条 ✓ 免得刷屏 ✗）—— 用来确认"按键到底有没有进到这里"✓
+            if (keyCode % 8 == 0) {
+                FluidSearch.diag("keyPressed key=" + keyCode + " 界面=" + this.getClass().getSimpleName()
+                        + " 是加热结构界面=" + FluidSearch.isHeatingStructureScreen(this)
+                        + " 聚焦=" + FluidSearch.isFocused());
+            }
             if (!FluidSearch.isFocused() || !FluidSearch.isHeatingStructureScreen(this)) return;
             if (keyCode == GLFW.GLFW_KEY_BACKSPACE) {
                 String q = FluidSearch.getQuery();
@@ -58,6 +64,9 @@ public abstract class ScreenSearchInputMixin {
     @Inject(method = "charTyped", at = @At("HEAD"), cancellable = true)
     private void tnl$searchChar(char codePoint, int modifiers, CallbackInfoReturnable<Boolean> cir) {
         try {
+            FluidSearch.diag("charTyped '" + codePoint + "' 界面=" + this.getClass().getSimpleName()
+                    + " 是加热结构界面=" + FluidSearch.isHeatingStructureScreen(this)
+                    + " 聚焦=" + FluidSearch.isFocused());
             if (!FluidSearch.isFocused() || !FluidSearch.isHeatingStructureScreen(this)) return;
             if (codePoint < ' ' || codePoint == 127) return;   // 控制字符交给原版 ✓
             String q = FluidSearch.getQuery();
