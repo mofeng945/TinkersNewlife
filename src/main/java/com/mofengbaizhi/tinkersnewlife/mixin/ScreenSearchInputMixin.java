@@ -9,31 +9,30 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * §1117c/f <b>流体搜索框的键盘输入</b>（用户口径：「点击无法输入文字」✗ → 本类就是修它的 ✓）。
+ * §1117h <b>流体搜索框的键盘输入</b>（用户口径：「点击无法输入文字」✗）。
  *
- * <h2>为什么挂在 {@link Screen} 而不是加热结构界面 ✗（日志实证 ✓）</h2>
- * 早先我把 `keyPressed`/`charTyped` 注入写在目标 `HeatingStructureScreen` 上 ✗ ⇒ 启动日志：
- * <pre>
- * InvalidInjectionException: Critical injection failure:
- *   @Inject annotation on tnl$onKey could not find any targets matching …
- * </pre>
- * ⇒ 因为这两个方法**不是 `HeatingStructureScreen` 自己声明的** ✗（声明在 `Screen` ✓）
- * —— Mixin 的 `@Inject` 只匹配**目标类自己声明**的方法 ✗ ⇒ 表现就是"框能画、字打不进" ✓。
+ * <h2>三轮实证得到的结论（都写死在这里 ✓ 别再重走 ✗）</h2>
+ * <ol>
+ *   <li><b>不能挂在 `HeatingStructureScreen`</b> ✗：`keyPressed`/`charTyped` 不是它自己声明的 ⇒
+ *       {@code could not find any targets} ⇒ `require=1` ⇒ 整包被丢 ✗；</li>
+ *   <li>⚠ <b>不能只写"官方名"</b> ✗：{@code method = "keyPressed"}（默认 remap ⇒ 走 refmap）在**本仓**映射不到 ✗
+ *       ⇒ 日志实证：{@code Critical injection failure: @Inject annotation on tnl$searchKey could not find any targets} ✗
+ *       （本仓既有 mixin 大量用 `remap = false` + SRG 名 ✓ 就是这个原因 ✓）；</li>
+ *   <li>⚠ <b>`Screen` 上没有 `(char,int)` 方法</b> ✗（直接从 SRG jar 反编译确认 ✓）
+ *       ⇒ 所以 {@code charTyped} 这条路**放弃** ✗，字符改用 <b>按键码自己翻译</b> ✓。</li>
+ * </ol>
  *
- * <h2>⚠ §1117g 的关键修正：这两处注入**必须写 `require = 1`** ✗</h2>
- * 用户第 5 次报"依旧无法输入"时，日志里**一条 `charTyped`/`keyPressed` 记录都没有** ✗ ——
- * 而本仓 mixin 配置是 `"injectors": { "defaultRequire": 0 }` ✓
- * ⇒ **没写 `require` 的注入，匹配不上就静默跳过** ✗（既没日志、也没效果 ✗）
- * ⇒ 于是"框在、键入无反应、日志干净"✓ 完全对上 ✓。
- * <p>⇒ 现在两处都 `require = 1` ✓：**匹配不上就让启动日志直说** ✗（`Mixin apply failed …` ✓）——
- * 宁可响亮失败 ✗ 也不要静默无效 ✗。
- *
- * <h2>输入规则（配套"打开界面即自动聚焦" ✓）</h2>
+ * <h2>现在怎么工作 ✓</h2>
+ * 注入 {@code m_7933_(III)Z}（＝ {@code keyPressed} ✓ **SRG jar 已确认它就在 `Screen` 里** ✓，`remap = false` ✓）：
  * <ul>
- *   <li>退格 ⇒ 删字 ✓；回车/Esc ⇒ 取消聚焦 ✓；</li>
- *   <li>⚠ **其它按键一律不吃** ✗ ⇒ `E` 关界面、匠魂快捷键照旧可用 ✓；</li>
- *   <li>聚焦时 `charTyped` 的字符追加进查询 ✓（含中文输入法提交的汉字 ✓）。</li>
+ *   <li><b>退格</b> ⇒ 删一个字 ✓；<b>回车 / Esc</b> ⇒ 取消聚焦 ✓（Esc 不 cancel ✓ 让原版照常关界面 ✓）；</li>
+ *   <li><b>字母 / 数字</b> ⇒ 直接进查询 ✓（查询本身按小写比对 ✓ 所以大小写无所谓 ✓）；</li>
+ *   <li><b>语法符号</b> ⇒ 按 Shift 状态翻译：`@ # - | : . / , _ ` 等 ✓
+ *       ⇒ 打 `iron` / `@tconstruct` / `#molten` / `铁|铜` / `-水` 都够用 ✓；</li>
+ *   <li>⚠ **其它按键一律放行** ✗ ⇒ `E` 关界面、匠魂快捷键不受影响 ✓。</li>
  * </ul>
+ * <p>⚠ 中文输入法直接输入汉字暂时拿不到（`charTyped` 那条路在 `Screen` 上不存在 ✗）——
+ * 但**拼音可用**（装了「通用拼音搜索」时 ✓）⇒ 日常检索不受影响 ✓。
  */
 @Mixin(Screen.class)
 public abstract class ScreenSearchInputMixin {
@@ -42,50 +41,77 @@ public abstract class ScreenSearchInputMixin {
     private static final java.util.concurrent.atomic.AtomicInteger TNL$DIAG =
             new java.util.concurrent.atomic.AtomicInteger();
 
-    /** 退格删字 ✓；回车/Esc 取消聚焦 ✓；**其它按键一律放行** ✗ */
-    @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true, require = 1)
+    @Inject(method = "m_7933_(III)Z", at = @At("HEAD"), cancellable = true, require = 1, remap = false)
     private void tnl$searchKey(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
         try {
-            // §1117g 无条件记前若干条 ✓ —— 用来判定"这个注入到底有没有生效"✓
             if (TNL$DIAG.incrementAndGet() <= 20) {
                 FluidSearch.diag("keyPressed 到达 key=" + keyCode + " 界面=" + this.getClass().getSimpleName()
                         + " 是加热结构界面=" + FluidSearch.isHeatingStructureScreen(this)
                         + " 聚焦=" + FluidSearch.isFocused());
             }
             if (!FluidSearch.isFocused() || !FluidSearch.isHeatingStructureScreen(this)) return;
+
             if (keyCode == GLFW.GLFW_KEY_BACKSPACE) {
                 String q = FluidSearch.getQuery();
-                if (!q.isEmpty()) {
-                    FluidSearch.setQuery(q.substring(0, q.length() - 1));
-                    FluidSearch.diag("退格 ⇒ 查询='" + FluidSearch.getQuery() + "'");
-                }
-                cir.setReturnValue(true);           // 只吃退格 ✓
-            } else if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER
-                    || keyCode == GLFW.GLFW_KEY_ESCAPE) {
-                FluidSearch.setFocused(false);      // 取消聚焦 ⇒ 之后按键全部放行 ✓
-                FluidSearch.diag("退出输入（回车/Esc）⇒ 聚焦=false");
-                // ⚠ 这里**不 cancel** ✗ ⇒ 让原版照常处理（Esc 该关界面就关 ✓）
+                if (!q.isEmpty()) FluidSearch.setQuery(q.substring(0, q.length() - 1));
+                cir.setReturnValue(true);
+                return;
             }
+            if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER
+                    || keyCode == GLFW.GLFW_KEY_ESCAPE) {
+                FluidSearch.setFocused(false);      // 取消聚焦 ⇒ 之后按键全部放行 ✓（不 cancel ✗）
+                return;
+            }
+            char c = tnl$keyToChar(keyCode, modifiers);
+            if (c != 0) {
+                String q = FluidSearch.getQuery();
+                if (q.length() < 64) FluidSearch.setQuery(q + c);
+                cir.setReturnValue(true);           // 只吃"我们翻译得出的字符" ✓
+            }
+            // 其余按键：什么都不做 ⇒ 放行 ✓
         } catch (Throwable ignored) {
         }
     }
 
-    /** 输入字符：追加到查询里 ✓（含中文输入法提交上来的汉字 ✓） */
-    @Inject(method = "charTyped", at = @At("HEAD"), cancellable = true, require = 1)
-    private void tnl$searchChar(char codePoint, int modifiers, CallbackInfoReturnable<Boolean> cir) {
-        try {
-            FluidSearch.diag("charTyped 到达 '" + codePoint + "' 界面=" + this.getClass().getSimpleName()
-                    + " 是加热结构界面=" + FluidSearch.isHeatingStructureScreen(this)
-                    + " 聚焦=" + FluidSearch.isFocused());
-            if (!FluidSearch.isFocused() || !FluidSearch.isHeatingStructureScreen(this)) return;
-            if (codePoint < ' ' || codePoint == 127) return;   // 控制字符交给原版 ✓
-            String q = FluidSearch.getQuery();
-            if (q.length() < 64) {
-                FluidSearch.setQuery(q + codePoint);
-                FluidSearch.diag("输入 '" + codePoint + "' ⇒ 查询='" + FluidSearch.getQuery() + "'");
+    /**
+     * 按键码 → 字符 ✓（**替代不可用的 `charTyped`** ✗ 见类注释 ③）。
+     * <p>只翻译"检索真正需要"的字符 ✓：字母、数字、以及语法符号 `@ # - | : . / , _ ` ✓。
+     */
+    private static char tnl$keyToChar(int keyCode, int modifiers) {
+        boolean shift = (modifiers & GLFW.GLFW_MOD_SHIFT) != 0;
+        if (keyCode >= GLFW.GLFW_KEY_A && keyCode <= GLFW.GLFW_KEY_Z) {
+            return (char) ('a' + (keyCode - GLFW.GLFW_KEY_A));      // 统一按小写入查询 ✓
+        }
+        if (keyCode >= GLFW.GLFW_KEY_0 && keyCode <= GLFW.GLFW_KEY_9) {
+            if (shift) {
+                if (keyCode == GLFW.GLFW_KEY_2) return '@';         // Shift+2 ⇒ @（模组前缀 ✓）
+                if (keyCode == GLFW.GLFW_KEY_3) return '#';         // Shift+3 ⇒ #（标签前缀 ✓）
+                return 0;
             }
-            cir.setReturnValue(true);
-        } catch (Throwable ignored) {
+            return (char) ('0' + (keyCode - GLFW.GLFW_KEY_0));
+        }
+        switch (keyCode) {
+            case GLFW.GLFW_KEY_MINUS:
+                return shift ? '_' : '-';                            // -排除 / _ 下划线 ✓
+            case GLFW.GLFW_KEY_BACKSLASH:
+                return shift ? '|' : '\\';                            // | OR ✓
+            case GLFW.GLFW_KEY_SEMICOLON:
+                return shift ? ':' : ';';                             // namespace:path ✓
+            case GLFW.GLFW_KEY_PERIOD:
+                return '.';
+            case GLFW.GLFW_KEY_SLASH:
+                return '/';
+            case GLFW.GLFW_KEY_COMMA:
+                return ',';
+            case GLFW.GLFW_KEY_SPACE:
+                return ' ';                                          // 空格 = AND ✓
+            case GLFW.GLFW_KEY_KP_0: case GLFW.GLFW_KEY_KP_1: case GLFW.GLFW_KEY_KP_2:
+            case GLFW.GLFW_KEY_KP_3: case GLFW.GLFW_KEY_KP_4: case GLFW.GLFW_KEY_KP_5:
+            case GLFW.GLFW_KEY_KP_6: case GLFW.GLFW_KEY_KP_7: case GLFW.GLFW_KEY_KP_8:
+            case GLFW.GLFW_KEY_KP_9:
+                return (char) ('0' + (keyCode - GLFW.GLFW_KEY_KP_0));
+            default:
+                return 0;
         }
     }
 }
