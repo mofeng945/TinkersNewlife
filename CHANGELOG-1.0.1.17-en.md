@@ -213,3 +213,10 @@ entity id against the mod's own language file, and can be re-run with more mod i
   identical display transforms). All fumo items are still last in the creative tab, and a custom Curios
   slot predicate (`tinkersnewlife:fumo_skin`, added to the `curios/slots/head.json` validators) lets
   every skin - including future ones - be worn in the Curios head slot.
+
+## Changed (2026-10-06, twenty-second pass - version unchanged)
+
+* The two Fumo dolls are named. The default one stays `fumo_mo` ("Mofeng Baizhi fufu"), and the second
+  slot now carries the skin you dropped on your desktop: it is shipped as `textures/fumo/yuejin.png`
+  (copied byte-for-byte, 64x64, no resampling) and registers as `tinkersnewlife:fumo_yuejin`,
+  display name "Yuejin fufu" ("跃金fufu"). The placeholder sample skin from the previous pass is gone.
