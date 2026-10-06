@@ -60,9 +60,16 @@ import java.util.UUID;
  *       出现在头盔等装备上 ✓ 见备忘 132）⇒ 这里沿用"主/副手 ＋ 盔甲槽"全查 ✓，是本仓有意的放宽 ✓。</li>
  * </ul>
  *
- * <p>⚠ 与「灵魂饥饿」（{@code goety:soul_hunger} —— 本体那个"移速 −5% / 攻击 −4 / 挖掘 −10%"的削弱 ✗）
- * <b>没有任何关系</b> ✓：本模组全仓（Java ＋ 资源）<b>从不施加该效果</b> ✓
- * （grep 全仓搜过 ✓；本体 jar 里除效果注册表外也没有任何类引用它 ✓）。
+ * <p>⚠ <b>关于「灵魂饥饿」（§1071 更正 ✓）</b>：本类**从不主动施加** {@code goety:soul_hunger} ✓，
+ * 但**旧实现确实会间接招来它** ✗ —— 补发灵魂时走的是"反射直接写 SEActive 能力值" ✗，
+ * 而诡厄 {@code SoulEnergyEvents} 有一条状态规则 ✗：
+ * <pre>
+ * if (!getSEActive() &amp;&amp; getSoulEnergy() &gt; 0) { 每 tick 挂灵魂饥饿 ✗ ＋ 每 5 tick 抽 1 点灵魂 ✗ }
+ * </pre>
+ * ⇒ 在**图腾模式**（未开阿卡祭坛）的玩家身上写能力值 ⇒ 触发该规则 ✗
+ * （用户症状：拿噬魂杀怪 ⇒ 自己上灵魂饥饿 ✗、翻倍时有时无 ✗）。
+ * ⇒ §1071 已把加灵魂改走诡厄自己的入口 {@code SEHelper.increaseSouls} ✓（见 {@code SoulEnergyBridge#addSouls} ✓），
+ * 从此不再触发那条规则 ✓。
  *
  * <h2>「人屠」</h2>
  * {@code butcher}（灵魂获取 ×2 ✓）是<b>我们自己的</b>强化 ✓，本轮未改 ✗：仍是"本 tick 自然增量再补一份" ✓，

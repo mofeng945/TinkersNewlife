@@ -31,6 +31,10 @@ public final class SoulEnergyBridge {
     private static Method totemCurrentSoulsMethod;
     private static Method totemSetSoulsMethod;
     private static Method totemMaximumSoulsMethod;
+    /** §1071 诡厄自己的"加灵魂"入口 ✓（按玩家模式分流 ✓ 走它的事件与钳制 ✓）——**必须优先用它** ✓ */
+    private static Method increaseSoulsMethod;
+    /** §1071 玩家是否处于 SEActive（阿卡祭坛）模式 ✓ —— 直接写能力值前必须先问这一句 ✓ */
+    private static Method getSEActiveMethod;
     private static boolean resolved = false;
 
     private SoulEnergyBridge() {}
@@ -55,7 +59,19 @@ public final class SoulEnergyBridge {
             } catch (Throwable ignored) {
                 totemMaximumSoulsMethod = null;
             }
-            TinkersNewlife.LOGGER.info("[TinkersNewlife] 诡厄巫法灵魂能量桥接成功 (SEHelper 能力 + 灵魂图腾 ITotem)");
+            // §1071：诡厄自己的加灵魂入口（increaseSouls）与"是否 SEActive"判定 —— 都尽量绑上 ✓
+            try {
+                increaseSoulsMethod = helper.getMethod("increaseSouls", Player.class, int.class);
+            } catch (Throwable ignored) {
+                increaseSoulsMethod = null;
+            }
+            try {
+                getSEActiveMethod = helper.getMethod("getSEActive", Player.class);
+            } catch (Throwable ignored) {
+                getSEActiveMethod = null;
+            }
+            TinkersNewlife.LOGGER.info("[TinkersNewlife] 诡厄巫法灵魂能量桥接成功 (SEHelper 能力 + 灵魂图腾 ITotem)；increaseSouls={} getSEActive={}",
+                    increaseSoulsMethod != null, getSEActiveMethod != null);
         } catch (Throwable t) {
             getSESoulsMethod = setSESoulsMethod = findTotemMethod =
                     totemCurrentSoulsMethod = totemSetSoulsMethod = null;
@@ -96,20 +112,51 @@ public final class SoulEnergyBridge {
     }
 
     /**
-     * 增加灵魂能量：优先加玩家能力（SEActive），否则加灵魂图腾。amount<=0 忽略；未安装/异常安全无副作用。
-     * 用于「噬魂」等灵魂获取增幅强化补发灵魂。
+     * 增加灵魂能量。
+     *
+     * <p><b>§1071 关键修正（用户实测 bug ✓）</b>：<b>必须优先走诡厄自己的入口
+     * {@code SEHelper.increaseSouls(player, amount)}</b> ✓ —— 它按玩家的存储模式正确分流 ✓、
+     * 触发它自己的 {@code ChangeSoulEnergyEvent.Gain} ✓、并按自己的规则钳制 ✓。
+     *
+     * <p>⚠ 旧实现是"反射直接写能力值"（{@code setSESouls(cur + amount)}）✗，踩中了诡厄的一条状态规则 ✗：
+     * <pre>
+     * // com.Polarice3.Goety.common.events.SoulEnergyEvents:202（每 tick）
+     * if (!soulEnergy.getSEActive() &amp;&amp; soulEnergy.getSoulEnergy() &gt; 0 &amp;&amp; !world.isClientSide) {
+     *     player.addEffect(new MobEffectInstance(GoetyEffects.SOUL_HUNGER.get(), 60));   // ← 灵魂饥饿
+     *     if (player.tickCount % 5 == 0) SEHelper.decreaseSESouls(player, 1);            // ← 每 5 tick 抽 1 点
+     * }
+     * </pre>
+     * ⇒ 在"**非 SEActive 模式**（用灵魂图腾 / 没开阿卡祭坛）"的玩家身上直接写能力值 ✗ ⇒
+     * 诡厄看到"没开 SEActive 却灵魂值 &gt; 0" ⇒ 判定为异常 ⇒ **每 tick 挂灵魂饥饿 ✗ 并每 5 tick 抽走 1 点灵魂** ✗
+     * （用户症状：拿噬魂武器杀怪 ⇒ 自己上灵魂饥饿 ✗；翻倍时有时无 ✗ —— 刚补发的灵魂马上被抽掉 ✓）。
+     *
+     * <p>兜底顺序（仅在 {@code increaseSouls} 绑不上时才走 ✗）：① 仅当玩家**确实**处于 SEActive 模式时才直接写能力值 ✓；
+     * ② 否则写灵魂图腾（图腾内的数值不会触发上面那条规则 ✓）。
      */
     public static void addSouls(Player player, int amount) {
         if (amount <= 0 || player == null) return;
         resolve();
+
+        // ① 首选：诡厄自己的入口 ✓（模式分流 ✓ 事件 ✓ 钳制 ✓）
+        if (increaseSoulsMethod != null) {
+            try {
+                increaseSoulsMethod.invoke(null, player, amount);
+                return;
+            } catch (Throwable ignored) {
+            }
+        }
+
+        // ② 兜底：只有在 SEActive 模式下才允许直接写能力值 ✓（否则会触发灵魂饥饿 ✗ 见上面的类注释）
         try {
-            if (getSESoulsMethod != null && setSESoulsMethod != null) {
+            if (getSESoulsMethod != null && setSESoulsMethod != null && isSEActive(player)) {
                 int cur = (Integer) getSESoulsMethod.invoke(null, player);
                 setSESoulsMethod.invoke(null, player, cur + amount);
                 return;
             }
         } catch (Throwable ignored) {
         }
+
+        // ③ 再兜底：写灵魂图腾 ✓（图腾模式 ✓）
         try {
             ItemStack totem = findTotem(player);
             if (!totem.isEmpty() && totemCurrentSoulsMethod != null && totemSetSoulsMethod != null) {
@@ -117,6 +164,16 @@ public final class SoulEnergyBridge {
                 totemSetSoulsMethod.invoke(null, totem, have + amount);
             }
         } catch (Throwable ignored) {
+        }
+    }
+
+    /** 玩家是否处于 SEActive（阿卡祭坛）模式 ✓；读不到时**保守返回 false** ✓（宁可走图腾路径 ✓ 也不触发灵魂饥饿 ✗） */
+    private static boolean isSEActive(Player player) {
+        if (getSEActiveMethod == null) return false;
+        try {
+            return (Boolean) getSEActiveMethod.invoke(null, player);
+        } catch (Throwable ignored) {
+            return false;
         }
     }
 
