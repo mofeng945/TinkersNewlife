@@ -61,6 +61,17 @@ public final class FumoMoHeadRender {
      * @param headed 佩戴者的模型（玩家模型即可 ✓ 只要实现了 {@link HeadedModel}）
      */
     public static void render(PoseStack pose, MultiBufferSource buffer, int light, HeadedModel headed) {
+        render(pose, buffer, light, headed, FumoMoBlockEntityRenderer.TEXTURE);
+    }
+
+    /**
+     * §1079 带贴图的版本：<b>头顶也跟着皮肤走</b> ✓（原版头盔槽那条路取头盔格物品的皮肤 ✓、
+     * Curios 那条路取饰品栈的皮肤 ✓）⇒ 戴哪个皮肤的 fufu，头顶就是哪个 ✓。
+     *
+     * @param texture 这只 fufu 的皮肤贴图（拿不到就传默认那张 ✓）
+     */
+    public static void render(PoseStack pose, MultiBufferSource buffer, int light, HeadedModel headed,
+                              net.minecraft.resources.ResourceLocation texture) {
         PlayerModel<?> doll = FumoMoHeadModelHolder.get();
         // ★ §898 关键：young 必须是 false，否则走幼年体分支（×0.75 ＋ 下移 16px）⇒ 被塞进躯干里 ✗
         doll.young = false;
@@ -79,7 +90,7 @@ public final class FumoMoHeadRender {
                     String.format("%.3f", m.m03()), String.format("%.3f", m.m13()), String.format("%.3f", m.m23()),
                     doll.young);
         }
-        VertexConsumer vc = buffer.getBuffer(RenderType.entityCutoutNoCull(FumoMoBlockEntityRenderer.TEXTURE));
+        VertexConsumer vc = buffer.getBuffer(RenderType.entityCutoutNoCull(texture));
         doll.renderToBuffer(pose, vc, light, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
         pose.popPose();
     }

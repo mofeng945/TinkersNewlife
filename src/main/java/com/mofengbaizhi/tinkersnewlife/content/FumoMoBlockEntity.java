@@ -1,17 +1,28 @@
 package com.mofengbaizhi.tinkersnewlife.content;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * 墨封白织fufu 的方块实体（§880）：本身不存数据 ✓ 只是给"玩家模型渲染器"当载体 ✓。
+ * 墨封白织fufu 的方块实体（§880）：一开始不存数据 ✓ 只是给"玩家模型渲染器"当载体 ✓。
  *
  * <p>§908 起多了一件事：<b>抚摸时的挤压动画</b> ——
  * 结构照诡厄巫法的玩偶（{@code PlushieBlockEntity}，已反编译核对 ✓ **只学结构** ✓）：
  * 只存两个 tick 计数 ＋ 一个开关 ✓，渲染器拿 {@link #getAnimation(float)} 去压扁 ✓。
+ *
+ * <p>§1079 又多了<b>皮肤</b>：全部 fumo 皮肤**共用同一个方块** ✓ ⇒ 「这只玩偶是哪个皮肤」
+ * 只能存在方块实体里 ✓（放置时由 {@code FumoMoBlock#setPlacedBy} 从物品带过来 ✓）。
+ * <ul>
+ *   <li>存 NBT 键 {@code Skin} ✓（{@link #saveAdditional}/{@link #load} ✓）；</li>
+ *   <li>发给客户端：区块加载走 {@link #getUpdateTag()}、放下的那一刻走 {@link #getUpdatePacket()}
+ *       （服务端 {@code sendBlockUpdated} 会把它发出去 ✓）；</li>
+ *   <li><b>老存档/字段缺失/名字不认</b> ⇒ 一律回退内置默认皮肤 ✓ <b>不崩</b> ✓。</li>
+ * </ul>
  */
 public class FumoMoBlockEntity extends BlockEntity {
 
@@ -21,14 +32,71 @@ public class FumoMoBlockEntity extends BlockEntity {
     /** 压到最扁用几个 tick（之后都是弹回 ✓ 诡厄也是 4 ✓） */
     public static final int PRESS_TICKS = 4;
 
+    /** §1079 皮肤存在 NBT 的这个键里（老存档没这个键 ⇒ 默认皮肤 ✓） */
+    public static final String TAG_SKIN = "Skin";
+
     /** 当前 tick 计数 / 上一 tick 的计数（渲染时 lerp 用 ✓ 照诡厄的写法 ✓） */
     private int animationTickCount;
     private int oAnimationTickCount;
     /** 正在播放挤压 ✓ */
     private boolean animating;
 
+    /** §1079 这只玩偶的皮肤名（默认＝内置默认皮肤 ✓） */
+    private String skin = FumoMoSkins.DEFAULT_SKIN;
+
     public FumoMoBlockEntity(BlockPos pos, BlockState state) {
         super(FumoMoDoll.FUMO_MO_BE.get(), pos, state);
+    }
+
+    // ============================================================
+    //  §1079 皮肤
+    // ============================================================
+
+    /** 渲染/同步用：这只玩偶的皮肤名 ✓（为空或不认的一律回默认 ✓ 绝不抛异常 ✓） */
+    public String getSkin() {
+        String s = this.skin;
+        if (s == null || s.isEmpty()) return FumoMoSkins.DEFAULT_SKIN;
+        if (!FumoMoSkins.isKnown(s)) return FumoMoSkins.DEFAULT_SKIN;   // 皮肤被删掉/名字不认识 ⇒ 默认 ✓
+        return s;
+    }
+
+    /** 放置时由方块从物品带过来 ✓（顺手标脏 ⇒ 存档里记得住 ✓） */
+    public void setSkin(String skin) {
+        this.skin = (skin == null || skin.isEmpty()) ? FumoMoSkins.DEFAULT_SKIN : skin;
+        this.setChanged();
+    }
+
+    @Override
+    public void load(CompoundTag tag) {
+        super.load(tag);
+        // 老存档没有这个键 ⇒ 直接用默认皮肤 ✓（§1079 的"旧数据回退"就靠这一句 ✓）
+        this.skin = tag.contains(TAG_SKIN) ? tag.getString(TAG_SKIN) : FumoMoSkins.DEFAULT_SKIN;
+    }
+
+    @Override
+    protected void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
+        tag.putString(TAG_SKIN, this.skin == null ? FumoMoSkins.DEFAULT_SKIN : this.skin);
+    }
+
+    /**
+     * 区块（重新）发给客户端时带上皮肤 ✓ —— 老存档第一次进游戏/走远再回来，
+     * 玩偶也能立刻是它自己的皮肤 ✓（不认的名字会在 {@link #getSkin()} 那里回退默认 ✓）。
+     */
+    @Override
+    public CompoundTag getUpdateTag() {
+        return this.saveWithoutMetadata();
+    }
+
+    /**
+     * 放下玩偶的那一刻把皮肤推给周围客户端 ✓
+     * （服务端 {@code FumoMoBlock#setPlacedBy} 里会调 {@code sendBlockUpdated} ⇒
+     * 原版 {@code ChunkHolder} 的广播逻辑会取这个方法发出的包 ✓）。
+     * <p>反序列化那一半用 Forge 的默认实现（{@code IForgeBlockEntity#onDataPacket} ⇒ 调 {@link #load} ✓）。
+     */
+    @Override
+    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 
     /**

@@ -46,7 +46,12 @@ public class FumoMoItemRenderer extends BlockEntityWithoutLevelRenderer {
             default -> 1.45F;                            // 手持：别挡住视野 ✓
         };
         pose.scale(zoom, zoom, zoom);
-        FumoMoBlockEntityRenderer.renderDoll(model, pose, buffer, light, overlay);
+        // §1079 贴图按"这一栈物品的皮肤"选 ✓（不是 fumo ⇒ 用原来那张默认贴图 ✓ 行为零变化 ✓）
+        net.minecraft.resources.ResourceLocation texture =
+                stack.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.FumoMoBaseItem fumo
+                        ? fumo.texture()
+                        : FumoMoBlockEntityRenderer.TEXTURE;
+        FumoMoBlockEntityRenderer.renderDoll(model, pose, buffer, light, overlay, texture);
         pose.popPose();
     }
 }

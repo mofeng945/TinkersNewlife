@@ -85,6 +85,23 @@ public class ModCurios {
         //  · 为了让"一个 charm 提供者都没装"时封呪瓶依然戴得上，这里补一个 size 1 的 charm 槽；
         //    但只要有任何提供者在场就**不注册** —— Curios 对同名槽位是"后来者覆盖 size"
         //    （SlotType.Builder#apply），无条件注册会把别人设好的槽位大小改掉。
+        // ⭐§1079 fufu 皮肤：**所有** fumo 物品（含以后新加的皮肤 ✓）都要能戴进头部饰品槽 ——
+        //    Curios 的 head 槽校验器（data/tinkersnewlife/curios/slots/head.json ✓ 的 validators）
+        //    现在是 ["curios:tag", "tinkersnewlife:fumo_skin"] ✓：
+        //      · curios:tag ⇒ 照旧走物品标签（data/curios/tags/items/head.json ✓ fumo_mo 还在里面 ✓）；
+        //      · tinkersnewlife:fumo_skin ⇒ 就是这里注册的**自定义 curio 谓词**（认整个 FumoMoBaseItem 基类 ✓）。
+        //    ⇒ 以后加皮肤只要丢 PNG ＋ 加一条翻译键 ✓，**不用**再改标签/槽位数据 ✓。
+        //    ⚠ registerCurioPredicate 必须早于任何一次槽位校验 ⇒ 放在 IMC 阶段（构造之后、进游戏之前 ✓）。
+        try {
+            CuriosApi.registerCurioPredicate(
+                    new net.minecraft.resources.ResourceLocation(TinkersNewlife.MOD_ID, "fumo_skin"),
+                    slotResult -> slotResult.stack().getItem()
+                            instanceof com.mofengbaizhi.tinkersnewlife.content.FumoMoBaseItem);
+        } catch (Throwable t) {
+            // 谓词没注册上 ⇒ 新皮肤只是"戴不进 curios 头部槽"（原版头盔槽仍可戴 ✓），绝不因此崩启动 ✗
+            TinkersNewlife.LOGGER.warn("[fufu] curios 皮肤谓词注册失败（新皮肤可能戴不进饰品头部槽）：{}", t.toString());
+        }
+
         if (!anyCharmSlotProvider()) {
             InterModComms.sendTo(CuriosApi.MODID, SlotTypeMessage.REGISTER_TYPE,
                     () -> new SlotTypeMessage.Builder("charm")

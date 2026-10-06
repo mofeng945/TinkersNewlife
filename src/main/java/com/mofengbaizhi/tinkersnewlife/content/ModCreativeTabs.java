@@ -190,7 +190,7 @@ public class ModCreativeTabs {
         addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.TangHengDaoItem.TANG_HENG_DAO_DEFINITION, com.mofengbaizhi.tinkersnewlife.content.ModItems.TANG_HENG_DAO.get());   // §808 唐横刀
         addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.SpearItem.SPEAR_DEFINITION, com.mofengbaizhi.tinkersnewlife.content.ModItems.SPEAR.get());   // §835 长矛
         addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.RapierItem.RAPIER_DEFINITION, com.mofengbaizhi.tinkersnewlife.content.ModItems.RAPIER.get());   // §943 西洋剑（移植匠魂2）
-        addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.SlingshotItem.SLINGSHOT_DEFINITION, ModItems.SLINGSHOT.get());
+        addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.SlingshotItem.SLINGSHOT_DEFINITION, ModItems.SLINGSHOT.get());
         addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.WhipItem.WHIP_DEFINITION, ModItems.WHIP.get());   // §1047 鞭子
 
                                 if (anyLoaded("irons_spellbooks", "goety")) {
@@ -255,8 +255,20 @@ public class ModCreativeTabs {
 
                                 // ----- §905 墨封白织 fufu（玩偶方块 + 可戴在头上 ✓）-----
                                 // 用户口径：「把我的娃娃合并到匠魂新生创造物品栏最后一个」✓
-                                // ⇒ 放在**本栏最后一项** ✓，并撤掉它原先单独那一页创造栏 ✓（见 FumoMoDoll ✓）
-                                output.accept(FumoMoDoll.FUMO_MO_ITEM.get());
+                                // ⇒ 放在**本栏最后** ✓，并撤掉它原先单独那一页创造栏 ✓（见 FumoMoDoll ✓）
+                                // §1079：现在有好几只（每个皮肤一个物品 ✓）⇒ 整组都排在最后 ✓：
+                                // 内置默认皮肤在最前（它原来就是最后一项 ✓ 相对位置不变 ✓），皮肤按名字排序跟在后面 ✓。
+                                for (RegistryObject<Item> fumo : FumoMoDoll.FUMO_ITEMS) {
+                                    try {
+                                        Item fumoItem = fumo.get();
+                                        if (fumoItem != null && fumoItem != net.minecraft.world.item.Items.AIR) {
+                                            output.accept(fumoItem);
+                                        }
+                                    } catch (Throwable t) {
+                                        // 单个皮肤出问题只跳过它 ⇒ 绝不让整个创造栏构建失败 ✗
+                                        TinkersNewlife.LOGGER.warn("[创造栏] fufu 皮肤物品加入失败，已跳过：{}", t.toString());
+                                    }
+                                }
                             })
                             .build()
             );

@@ -129,7 +129,9 @@ public class FumoMoBlockEntityRenderer implements BlockEntityRenderer<FumoMoBloc
         //   （几何整体的悬空量也随之放大 ⇒ 下沉量同样放大 ⇒ 玩偶最低点仍然贴着方块底面 ✓ 正好 ✓）
         pose.scale(WORLD_SCALE, WORLD_SCALE, WORLD_SCALE);
         pose.translate(0.0D, -GROUND_SINK, 0.0D);           // §902 坐到地面上 ✓（悬空 0.17 格 ⇒ 补 0.19 ✓）
-        renderDoll(model, pose, buffer, light, overlay);
+        // §1079 贴图按"这只玩偶的皮肤"选 ✓（老存档/缺字段 ⇒ getSkin() 回退内置默认皮肤 ✓ 不崩 ✓）
+        renderDoll(model, pose, buffer, light, overlay,
+                com.mofengbaizhi.tinkersnewlife.content.FumoMoSkins.texture(be.getSkin()));
         pose.popPose();
     }
 
@@ -188,8 +190,11 @@ public class FumoMoBlockEntityRenderer implements BlockEntityRenderer<FumoMoBloc
     /**
      * <b>方块里的玩偶</b>：把玩偶摆到方块上 —— "摆在哪"＝ 0.5 缩放 ＋ 实体模型那套 y 翻转 ＋
      * {@code translate(0,-1.501,0)}（让它"坐"在方块上 ✓）＋ 1px 下沉 ✓；姿势交给 {@link #poseDoll} ✓。
+     * <p>§1079 多了 {@code texture} 参数：贴图由调用方按皮肤给 ✓（世界/物品栏/头顶三条路各自取 ✓）。
+     * 下面那个 4 参重载保留原样 ⇒ 老调用点行为完全不变 ✓。
      */
-    public static void renderDoll(PlayerModel<?> model, PoseStack pose, MultiBufferSource buffer, int light, int overlay) {
+    public static void renderDoll(PlayerModel<?> model, PoseStack pose, MultiBufferSource buffer, int light, int overlay,
+                                  ResourceLocation texture) {
         pose.pushPose();
         // ① 幼年体比例 ✓
         pose.scale(0.5F, 0.5F, 0.5F);
@@ -203,9 +208,14 @@ public class FumoMoBlockEntityRenderer implements BlockEntityRenderer<FumoMoBloc
 
         poseDoll(model);
         tnl$logOnce(model);
-        model.renderToBuffer(pose, buffer.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)),
+        model.renderToBuffer(pose, buffer.getBuffer(RenderType.entityCutoutNoCull(texture)),
                 light, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
         pose.popPose();
+    }
+
+    /** §880 起的老入口（＝默认皮肤贴图 ✓）—— 保留它 ⇒ 老调用点一个都不用改 ✓ */
+    public static void renderDoll(PlayerModel<?> model, PoseStack pose, MultiBufferSource buffer, int light, int overlay) {
+        renderDoll(model, pose, buffer, light, overlay, TEXTURE);
     }
 
     /**

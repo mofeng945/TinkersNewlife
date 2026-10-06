@@ -40,6 +40,11 @@ public class FumoMoCurioRenderer implements ICurioRenderer {
         }
         if (stack.isEmpty()) return;
         if (!(renderLayerParent.getModel() instanceof HeadedModel headed)) return;
-        FumoMoHeadRender.render(pose, buffer, light, headed);
+        // §1079 头顶跟着皮肤走 ✓（饰品栈是哪只 fufu，就画哪张皮肤 ✓；不是 fufu 时用默认贴图 ✓ 不崩 ✓）
+        net.minecraft.resources.ResourceLocation texture =
+                stack.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.FumoMoBaseItem fumo
+                        ? fumo.texture()
+                        : FumoMoBlockEntityRenderer.TEXTURE;
+        FumoMoHeadRender.render(pose, buffer, light, headed, texture);
     }
 }

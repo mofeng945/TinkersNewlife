@@ -40,6 +40,7 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -81,8 +82,52 @@ public final class FumoMoDoll {
     public static final RegistryObject<BlockEntityType<FumoMoBlockEntity>> FUMO_MO_BE =
             BLOCK_ENTITIES.register("fumo_mo",
                     () -> BlockEntityType.Builder.of(FumoMoBlockEntity::new, FUMO_MO.get()).build(null));
-    public static final RegistryObject<Item> FUMO_MO_ITEM = ITEMS.register("fumo_mo",
+    /** 内置默认皮肤的那只（{@code tinkersnewlife:fumo_mo} ✓ 行为/贴图/名字零变化 ✓） */
+    public static final RegistryObject<Item> FUMO_MO_ITEM = ITEMS.register(
+            FumoMoSkins.itemPath(FumoMoSkins.DEFAULT_SKIN),
             () -> new FumoMoItem(FUMO_MO.get(), new Item.Properties()));
+
+    /**
+     * §1079 <b>全部 fufu 物品</b>（默认皮肤在最前 ✓、扫描到的皮肤按名字排序在后 ✓）——
+     * 创造栏、Curios 渲染器注册、物品模型注入都只遍历这一份 ✓。
+     * <p>⚠ 这一行就是"**模组构造期自动遍历皮肤目录**"的入口 ✓（静态初始化 ⇒ {@link #init()} 一调就跑 ✓，
+     * 一定早于 Forge 的 {@code RegisterEvent} ✓）；扫描本身在 {@link FumoMoSkins} 里，
+     * 全是 try/catch ＋ 兜底 ⇒ 扫不到就只剩默认皮肤 ✓ 不会崩 ✓。
+     */
+    public static final List<RegistryObject<Item>> FUMO_ITEMS = buildSkinItems();
+
+    private static List<RegistryObject<Item>> buildSkinItems() {
+        List<RegistryObject<Item>> items = new java.util.ArrayList<>();
+        items.add(FUMO_MO_ITEM);                                   // 内置默认皮肤（永远第一个 ✓）
+        List<String> skins;
+        try {
+            skins = FumoMoSkins.scanned();                         // ★ 运行时扫描（jar / 开发环境两种形态 ✓）
+        } catch (Throwable t) {
+            // 连扫描都炸了也只是一只额外的皮肤都没有 ⇒ 保留默认皮肤 ✓ 绝不崩启动 ✗
+            TinkersNewlife.LOGGER.warn("[fufu] 皮肤扫描整体失败 ⇒ 只注册内置默认皮肤：{}", t.toString());
+            skins = List.of();
+        }
+        for (String skin : skins) {                                // 名字已排序 ⇒ 注册顺序稳定 ✓
+            try {
+                items.add(ITEMS.register(FumoMoSkins.itemPath(skin),
+                        () -> new FumoMoBaseItem(FUMO_MO.get(), new Item.Properties(), skin)));
+            } catch (Throwable t) {
+                // 单个皮肤出问题（id 不合法/重名…）只跳过它 ✓ 绝不让启动崩 ✗
+                TinkersNewlife.LOGGER.warn("[fufu] 皮肤 {} 注册失败，已跳过（不影响启动）: {}", skin, t.toString());
+            }
+        }
+        return List.copyOf(items);
+    }
+
+    /**
+     * §1079 <b>强制在模组构造期初始化本类</b> ——
+     * 目的只有一个：让 {@link #FUMO_ITEMS} 的皮肤扫描 ＋ 上面那几个 {@code DeferredRegister}
+     * 的登记都发生在 Forge 发 {@code RegisterEvent} **之前** ✓
+     * （本来靠 {@code @Mod.EventBusSubscriber} 的类加载也在这之前 ✓，这里显式来一遍是保险 ＋ 让时序可读 ✓）。
+     */
+    public static void init() {
+        // 方法体故意为空：调用它就是让 JVM 初始化本类 ✓
+    }
 
     static {
         IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -182,6 +227,35 @@ public final class FumoMoDoll {
         @Override
         public net.minecraft.world.level.block.entity.BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
             return new FumoMoBlockEntity(pos, state);
+        }
+
+        /**
+         * §1079 <b>放下时把"我是哪个皮肤"带进方块实体</b> ✓ ——
+         * 全部皮肤**共用同一个方块**（{@code tinkersnewlife:fumo_mo} ✓ 老存档零影响 ✓），
+         * 皮肤只存在方块实体里 ✓ ⇒ 物品 → 方块实体这一步必须在这里做 ✓。
+         *
+         * <p>用官方的 {@code Block#setPlacedBy}（{@code BlockItem#place} 内部会调 ✓，
+         * 位置就是它真正落下的那个格子 ✓）⇒ 不需要自己猜坐标 ✓。
+         *
+         * <p>写完立刻 {@code sendBlockUpdated} ⇒ 服务端会把方块实体数据
+         * （{@link FumoMoBlockEntity#getUpdatePacket()} ✓）发给周围客户端 ✓；
+         * 不这么做的话，客户端只会看到默认皮肤的玩偶 ✗（区块重新加载时另有
+         * {@link FumoMoBlockEntity#getUpdateTag()} 兜底 ✓）。
+         * <p>整段 try/catch：皮肤写不进去最多退回默认皮肤 ✓ 绝不能让放方块崩 ✗。
+         */
+        @Override
+        public void setPlacedBy(Level level, BlockPos pos, BlockState state,
+                                net.minecraft.world.entity.LivingEntity placer, ItemStack stack) {
+            super.setPlacedBy(level, pos, state, placer, stack);
+            try {
+                if (stack.getItem() instanceof FumoMoBaseItem fumo
+                        && level.getBlockEntity(pos) instanceof FumoMoBlockEntity be) {
+                    be.setSkin(fumo.skin());
+                    level.sendBlockUpdated(pos, state, state, 3);
+                }
+            } catch (Throwable t) {
+                TinkersNewlife.LOGGER.warn("[fufu] 放置时写皮肤失败（该玩偶会用默认皮肤）：{}", t.toString());
+            }
         }
 
         /**

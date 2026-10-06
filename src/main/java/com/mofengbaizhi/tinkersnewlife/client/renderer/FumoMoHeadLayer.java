@@ -32,8 +32,11 @@ public class FumoMoHeadLayer<T extends LivingEntity, M extends EntityModel<T>> e
                        float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks,
                        float netHeadYaw, float headPitch) {
         // 只有"原版头盔槽里放着 fufu"才画 ✓（饰品栏那条路由 FumoMoCurioRenderer 负责 ✓）
-        if (!entity.getItemBySlot(EquipmentSlot.HEAD).is(FumoMoDoll.FUMO_MO_ITEM.get())) return;
+        // §1079：不再只认 fumo_mo 那一件 ✗ ⇒ 认整个基类 ✓（**每个皮肤**都是一只 fufu ✓），
+        //   并把这一栈物品的皮肤贴图传下去 ✓（戴哪个皮肤，头顶就是哪个 ✓ 缺省回默认 ✓）。
+        net.minecraft.world.item.ItemStack head = entity.getItemBySlot(EquipmentSlot.HEAD);
+        if (!(head.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.FumoMoBaseItem fumo)) return;
         if (!(this.getParentModel() instanceof HeadedModel headed)) return;
-        FumoMoHeadRender.render(pose, buffer, light, headed);
+        FumoMoHeadRender.render(pose, buffer, light, headed, fumo.texture());
     }
 }

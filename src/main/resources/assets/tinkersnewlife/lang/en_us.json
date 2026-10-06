@@ -1500,6 +1500,8 @@
   "screen.tinkersnewlife.curse_hud.conscience_on": "Heart HUD: ON (click to hide)",
   "screen.tinkersnewlife.curse_hud.conscience_off": "Heart HUD: OFF (click to show)",
   "block.tinkersnewlife.fumo_mo": "Mofeng Baizhi fufu",
+  "item.tinkersnewlife.fumo_mo": "Mofeng Baizhi fufu",
+  "item.tinkersnewlife.fumo_example": "Mofeng Baizhi fufu (example skin)",
   "subtitles.tinkersnewlife.fumo_mo_touch": "fufu: head pat",
   "itemGroup.tinkersnewlife.fumo_mo": "Mofeng Baizhi fufu",
   "message.tinkersnewlife.fumo_gift": "Momo likes you enough (30) - she gave you a Mofeng Baizhi fufu!",

@@ -122,6 +122,11 @@ public class TinkersNewlife {
         slimeknights.tconstruct.library.tools.SlotType.getOrCreate("technique");
         slimeknights.tconstruct.library.tools.SlotType.getOrCreate("skill");
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+        // §1079 fufu 皮肤：**构造期**就初始化 FumoMoDoll —— 它的静态初始化会
+        //   ①扫描 assets/tinkersnewlife/textures/fumo/ 下的全部皮肤（jar / 开发环境两种形态 ✓）；
+        //   ②把每个皮肤登记成一个物品（fumo_<皮肤名>）＋ 把 DeferredRegister 挂上事件总线。
+        //   两者都必须在 Forge 发 RegisterEvent **之前**完成 ✓（早于下面所有 .register(modEventBus) ✓）。
+        FumoMoDoll.init();
         // 注册各类内容
         ModItems.ITEMS.register(modEventBus);
         ModBlocks.BLOCKS.register(modEventBus);

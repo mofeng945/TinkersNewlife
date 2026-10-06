@@ -180,3 +180,36 @@ entity id against the mod's own language file, and can be re-run with more mod i
   are managed by Goety's own focus radial menu / focus bag; casting, mode switching and the radial menu
   are unchanged. Side effect: the self-made long-press auto-cast was removed too, because it advanced
   through the deleted pouch and had no data source or toggle channel left.
+
+## Added (2026-10-06, twenty-first pass - version unchanged)
+
+* fufu (the Fumo plushie) is now **one item per skin**, on top of a new base class. `FumoMoBaseItem`
+  holds everything the old `FumoMoItem` did (custom BEWLR item renderer via `initializeClient`,
+  `ICurioItem`, `EquipmentSlot.HEAD`, per-skin `getArmorTexture`), and `FumoMoItem` is now a thin
+  subclass pinned to the built-in default skin - so the existing `tinkersnewlife:fumo_mo` item keeps its
+  behaviour, its texture (still `textures/entity/momo_common.png`), its displayed name and its
+  creative-tab position.
+* New skin folder `assets/tinkersnewlife/textures/fumo/`: every `<name>.png` (64x64 player-skin layout)
+  becomes item `tinkersnewlife:fumo_<name>`. A sample skin (`fumo/example.png`, a copy of the existing
+  64x64 skin - **no existing texture or model was touched**) ships with it, so
+  `tinkersnewlife:fumo_example` exists out of the box.
+* **Runtime auto-discovery during mod construction**: `FumoMoDoll.FUMO_ITEMS` calls
+  `FumoMoSkins.scanned()`, which lists that folder through three independent, fully try/catch-guarded
+  routes (Forge `ModList -> IModFile#findResource` then `Files.list`; the same mod file's physical path
+  as either a directory or a `ZipFile`; plus a code-source fallback), so both the packaged jar and the
+  dev folder layout work. Names are lower-cased and sanitised, only `.png` is accepted, results are
+  sorted (stable registration order), `mo` is excluded (built-in default), and a missing folder or any
+  exception only downgrades to the single built-in skin - it can never crash startup.
+* Item names come from translation keys only: `getDescriptionId()` returns
+  `item.tinkersnewlife.fumo_<skin>` (`fumo_mo` and `fumo_example` added to `lang/zh_cn.json` and
+  `lang/en_us.json`). Adding a skin later = drop in a PNG + add one translation key of the same name.
+* Placed plushies remember their skin: `FumoMoBlockEntity` stores it in NBT (`Skin`), is filled from the
+  item in `Block#setPlacedBy`, syncs to clients through `getUpdateTag`/`getUpdatePacket`, and falls back
+  to the default skin for old saves or unknown names. The same per-skin texture is used by the block
+  entity renderer, the GUI/hand item renderer, and both head paths (vanilla helmet slot + Curios head
+  slot).
+* Runtime-discovered items have no model JSON, so `FumoMoRenderers` injects their `#inventory` model in
+  `ModelEvent.ModifyBakingResult`, pointing each skin item at `fumo_mo#inventory` (`builtin/entity`,
+  identical display transforms). All fumo items are still last in the creative tab, and a custom Curios
+  slot predicate (`tinkersnewlife:fumo_skin`, added to the `curios/slots/head.json` validators) lets
+  every skin - including future ones - be worn in the Curios head slot.
