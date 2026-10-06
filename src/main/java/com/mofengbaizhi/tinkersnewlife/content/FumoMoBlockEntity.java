@@ -264,50 +264,83 @@ public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.worl
     private static final String FW_BE_CLASS = "com.friendswine.DollBlockEntity";
     private static java.lang.reflect.Method fwIsPlaying;
     private static boolean fwReflectTried;
+    /** 缓存"它那只玩偶在哪" ✓（找到后只扫它周围 ⇒ 便宜 ✓ 音乐没了就清掉 ✓） */
+    private static volatile net.minecraft.core.BlockPos fwDollPos;
 
-    private static boolean friendswinePlaying(Level level, net.minecraft.core.BlockPos src) {
+    private static boolean fwIsPlayingAt(Level level, net.minecraft.core.BlockPos p) {
         try {
+            BlockEntity cand = level.getBlockEntity(p);
+            if (cand == null || !FW_BE_CLASS.equals(cand.getClass().getName())) return false;
             if (!fwReflectTried) {
                 fwReflectTried = true;
                 fwIsPlaying = Class.forName(FW_BE_CLASS).getMethod("isPlaying");
             }
             if (fwIsPlaying == null) return false;
+            Object r = fwIsPlaying.invoke(cand);
+            return r instanceof Boolean b && b;
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    /**
+     * ⚠ §1087 <b>必须在"我们自己玩偶"附近找它那只</b> ✗ —— §1086 我拿"**声音坐标**"去找 ✗，
+     * 但它的音乐是**相对声音**（坐标＝玩家位置 ✗）⇒ 那儿根本没有它的方块实体 ⇒ 永远问不到 ⇒ 不转 ✗。
+     * <p>先按缓存位置（便宜 ✓）；没缓存就宽扫一次并记住 ✓（只在"最近听到过音乐"时才做 ✓）。
+     */
+    private static boolean friendswinePlayingNear(Level level, FumoMoBlockEntity be) {
+        net.minecraft.core.BlockPos mine = be.getBlockPos();
+        net.minecraft.core.BlockPos cached = fwDollPos;
+        if (cached != null) {
             for (net.minecraft.core.BlockPos p : net.minecraft.core.BlockPos.betweenClosed(
-                    src.offset(-3, -2, -3), src.offset(3, 2, 3))) {
-                BlockEntity cand = level.getBlockEntity(p);
-                if (cand != null && FW_BE_CLASS.equals(cand.getClass().getName())) {
-                    Object r = fwIsPlaying.invoke(cand);
-                    if (r instanceof Boolean b && b) return true;
+                    cached.offset(-2, -2, -2), cached.offset(2, 2, 2))) {
+                if (fwIsPlayingAt(level, p)) {
+                    fwDollPos = p.immutable();
+                    return true;
                 }
             }
-        } catch (Throwable ignored) {
+            fwDollPos = null;   // 它搬走了/没了 ⇒ 下次宽扫 ✓
+        }
+        for (net.minecraft.core.BlockPos p : net.minecraft.core.BlockPos.betweenClosed(
+                mine.offset(-8, -4, -8), mine.offset(8, 4, 8))) {
+            if (fwIsPlayingAt(level, p)) {
+                fwDollPos = p.immutable();
+                return true;
+            }
         }
         return false;
     }
 
-    /** 音乐离玩偶多近才一起跳（格 ✓ 与 §1083 一致 ✓） */
-    private static final double DANCE_RANGE = 16.0D;
-
     /**
-     * §1086 每 tick（客户端 ✓）维护舞蹈 ✓ —— 用户实测两条都在这修掉：
-     * ①「只转一下下就停」✗ ⇒ 不再靠"听到声音撑 2 分钟"，而是**每 tick 问它自己 {@code isPlaying()}** ✓ 在放就一直续 ✓；
-     * ②「停止音乐依然在转」✗ ⇒ 它一说 {@code false} ⇒ 立刻归零 ✓（留 20 tick 宽限避免抖动 ✓）。
+     * §1086/§1087 每 tick（客户端 ✓）维护舞蹈 ✓。三条实测问题的修法都在这：
+     *  <ul>
+     *    <li>「只转一下下就停」✗ ⇒ 每 tick 问它 {@code isPlaying()} ✓ 在放就一直续 ✓；</li>
+     *    <li>「停止音乐依然在转」✗ ⇒ 它一说 false ⇒ 立刻归零 ✓；</li>
+     *    <li>⚠「不转了」✗（§1087）⇒ 两个硬 bug：①§1086 的 40 tick 窗口太短（它的音乐事件**只在开头来一次** ✗）
+     *        ⇒ 放宽到 {@link #HEARD_WINDOW}（10 秒 ✓，只为"允许去问"✓，真正续命靠 {@code isPlaying} ✓）；
+     *        ②{@code danceStart} **从没被赋值** ✗ ⇒ 相位恒为 0 ⇒ 一点都不动 ✗ ⇒ 在这里起跳时写上 ✓。</li>
+     *  </ul>
      */
     public static void maintainDance(Level level, FumoMoBlockEntity be) {
         if (level == null || be == null || !level.isClientSide) return;
         long now = level.getGameTime();
-        net.minecraft.core.BlockPos src = musicPos;
-        if (src == null || now - musicTick > 40L
-                || be.getBlockPos().distSqr(src) > DANCE_RANGE * DANCE_RANGE) {
+        // 只在"最近听到过它的音乐"时才去问 ✓（问一次要扫方块 ✗ ⇒ 用缓存把它压到极低 ✓）
+        boolean heardRecently = musicPos != null && now - musicTick <= HEARD_WINDOW;
+        if (!heardRecently) {
+            fwDollPos = null;
             be.danceTicks = 0;
             return;
         }
-        if (friendswinePlaying(level, src)) {
+        if (friendswinePlayingNear(level, be)) {
+            if (be.danceTicks <= 0) be.danceStart = now;   // ★ 起跳时刻 ⇒ 相位起点（§1087 补 ✓）
             be.startDancing(20);
-        } else if (now - musicTick > 20L) {
-            be.danceTicks = 0;
+        } else {
+            be.danceTicks = 0;                             // 它不放 ⇒ 立刻停 ✓
         }
     }
+
+    /** 听到音乐后多久内允许去问它（10 秒 ✓）—— 宽松值，只为覆盖"事件只来一次"✗ */
+    private static final long HEARD_WINDOW = 200L;
 
     /** 立刻停止所有在跳的玩偶 ✓ */
     public static void stopAllDancing() {
