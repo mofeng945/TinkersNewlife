@@ -33,7 +33,8 @@
     "SpearThirdPersonItemMixin",
     "EnchantmentHelperSeaKingsMixin",
     "AbstractArrowSeaKingsMixin",
-    "SlashBladeRenderOptMixin"
+    "SlashBladeRenderOptMixin",
+    "GuiSmelteryTankSearchMixin"
   ],
   "injectors": {
     "defaultRequire": 0
