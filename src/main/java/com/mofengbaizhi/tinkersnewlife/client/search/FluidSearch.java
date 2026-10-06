@@ -200,52 +200,26 @@ public final class FluidSearch {
         }
     }
 
-    /** 尽力解析通用拼音搜索的搜索器 ✓（找不到就保持 null ✓） */
+    /**
+     * 解析通用拼音搜索的拼音引擎 ✓（**签名已反编译实测** ✓ 不是猜的 ✗）：
+     * <pre>
+     * me.towdium.pinin.PinIn
+     *   public PinIn()                                  // ⭐ 无参构造器 ✓
+     *   public boolean contains(String s1, String s2)    // ⭐ s1（流体名）里是否"拼音包含" s2（查询）✓
+     * </pre>
+     * ⇒ 直接 `new PinIn()` ＋ `contains(流体名, 查询)` ✓，比原来那套"猜静态工厂"可靠得多 ✓。
+     * <p>⚙ 仍全程 try/catch ✓：没装该模组 ⇒ `Class.forName` 抛异常 ⇒ 保持 null ⇒ **没有拼音** ✓（用户口径 ✓）。
+     */
     private static void resolvePinyin() {
         try {
-            Class<?> cached = Class.forName("me.towdium.pinin.searchers.CachedSearcher");
-            // PinIn 的惯例：Searcher 由静态工厂/构造器拿到；这里按"静态工厂 → 构造器"的顺序尽力试 ✓
-            for (String factory : new String[]{"get", "of", "create", "instance"}) {
-                try {
-                    java.lang.reflect.Method fm = cached.getMethod(factory, String.class);
-                    Object inst = fm.invoke(null, "");
-                    java.lang.reflect.Method cm = findContains(cached);
-                    if (inst != null && cm != null) {
-                        pinyinSearcher = inst;
-                        pinyinContains = cm;
-                        return;
-                    }
-                } catch (Throwable ignored) {
-                }
-            }
-            java.lang.reflect.Method cm = findContains(cached);
-            if (cm != null) {
-                try {
-                    java.lang.reflect.Constructor<?> ctor = cached.getConstructor(String.class);
-                    pinyinSearcher = ctor.newInstance("");
-                    pinyinContains = cm;
-                } catch (Throwable ignored) {
-                }
-            }
+            Class<?> pinin = Class.forName("me.towdium.pinin.PinIn");
+            Object ctx = pinin.getConstructor().newInstance();
+            java.lang.reflect.Method contains = pinin.getMethod("contains", String.class, String.class);
+            pinyinSearcher = ctx;
+            pinyinContains = contains;
         } catch (Throwable ignored) {
             // 没装（或签名变了）⇒ 保持 null ⇒ 无拼音 ✓
         }
-    }
-
-    /** 在类及其父类里找"判定能否匹配"的方法 ✓（名字尽力匹配 ✓ 参数两个 String ✓） */
-    private static java.lang.reflect.Method findContains(Class<?> c) {
-        for (Class<?> cur = c; cur != null; cur = cur.getSuperclass()) {
-            for (java.lang.reflect.Method m : cur.getMethods()) {
-                if (!(m.getReturnType() == boolean.class || m.getReturnType() == Boolean.class)) continue;
-                Class<?>[] ps = m.getParameterTypes();
-                if (ps.length != 2 || ps[0] != String.class || ps[1] != String.class) continue;
-                String n = m.getName().toLowerCase(Locale.ROOT);
-                if (n.contains("contain") || n.contains("match") || n.contains("test") || n.contains("search")) {
-                    return m;
-                }
-            }
-        }
-        return null;
     }
 
     // ============================================================

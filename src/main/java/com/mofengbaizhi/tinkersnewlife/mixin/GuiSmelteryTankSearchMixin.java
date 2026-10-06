@@ -41,6 +41,49 @@ public abstract class GuiSmelteryTankSearchMixin {
     @Shadow
     private SmelteryTank<?> tank;
 
+    /** 匠魂缓存的"每格流体高度"（过滤后我们就是改这份 ✓ 高亮也读它 ✓） */
+    @Shadow
+    private int[] liquidHeights;
+
+    /** 流体条那一列的布局（匠魂自己的字段 ✓ 高亮要用同一套坐标 ✓） */
+    @Shadow @org.spongepowered.asm.mixin.Final private int x;
+    @Shadow @org.spongepowered.asm.mixin.Final private int y;
+    @Shadow @org.spongepowered.asm.mixin.Final private int width;
+
+    /**
+     * §1116 <b>命中项描边高亮</b>（用户口径：「并将符合的流体高亮出来」✓）。
+     *
+     * <p>挂点选在 {@code renderHighlight(GuiGraphics, int, int)} ✓ —— 它是**每帧都会被界面调用**的方法 ✓
+     * 而且**自带 {@code GuiGraphics}** ✓（`renderFluids` 只有 `PoseStack` ✗ 画不了高亮 ✗）。
+     *
+     * <p>坐标算法与匠魂 `renderFluids` **逐行一致** ✓（包括它那句 `bottom = y + width` 的写法 ✓ —— 那是匠魂自己的布局 ✓
+     * 照抄才对得上 ✓）；高度为 0 的格子 = 被过滤掉的 ✓ ⇒ **有高度=命中** ✓ 只给它们描边 ✓。
+     * <p>未搜索时直接返回 ✓ ⇒ **平时一根描边都不会出现** ✓（老观感零变化 ✓）。
+     */
+    @Inject(method = "renderHighlight(Lnet/minecraft/client/gui/GuiGraphics;II)V", at = @At("HEAD"), require = 1, remap = false)
+    private void tnl$highlightMatches(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY,
+                                      org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+        try {
+            if (!FluidSearch.isActive()) return;
+            int[] heights = this.liquidHeights;
+            if (heights == null || heights.length == 0) return;
+            int bottom = this.y + this.width;          // ⚠ 与匠魂 renderFluids 完全一致（它写的就是 + width ✓）
+            for (int i = 0; i < heights.length; i++) {
+                int h = heights[i];
+                if (h > 0) {                            // >0 ⇒ 命中（0 = 被我们过滤掉 ✓）
+                    int top = bottom - h;
+                    // 1px 琥珀色描边（四边各一条 fill ✓）
+                    graphics.fill(this.x, top, this.x + this.width, top + 1, 0xFFFFD24A);
+                    graphics.fill(this.x, top + h - 1, this.x + this.width, top + h, 0xFFFFD24A);
+                    graphics.fill(this.x, top, this.x + 1, top + h, 0xFFFFD24A);
+                    graphics.fill(this.x + this.width - 1, top, this.x + this.width, top + h, 0xFFFFD24A);
+                }
+                bottom -= h;
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
     /**
      * 在 {@code calcLiquidHeights(boolean)} **返回处**改数组 ✓（描述符 `(Z)[I` ✓ 私有方法也能注入 ✓）。
      * <p>只改"高度"✓ **不删条目** ✓ ⇒ 数组长度与索引都不变 ✓。
