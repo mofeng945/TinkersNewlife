@@ -188,12 +188,19 @@ public final class FluidSearch {
      * 临时诊断 ✓ —— 用户多次报"无效"✗，而 mixin 应用情况只能靠运行时自述 ✓。
      * <p>⚠ 同一条消息**只记一次** ✓（去重 ✓ 见 {@link #DIAG_SEEN} ✓）；上限 60 条不同消息 ✓。
      */
+    /**
+     * §1117t <b>诊断已关闭</b> ✓（用户口径：「**成功了，可以关日志了**」✓）。
+     *
+     * <p>全部诊断输出都走这一个入口 ✓（`FluidSearch` 自身 ✓ ＋ 三个 mixin 的探针 ✓：
+     * `keyPressed 到达` ✓ `过滤 查询=…` ✓ `渲染 字段高度=…` ✓ `字符(IME/键盘)` ✓ `拼音自检` ✓）
+     * ⇒ 把它变成**空实现** ⇒ **一条日志都不会再打** ✓✓（`[搜索诊断]` 前缀彻底静默 ✓）。
+     *
+     * <p>⚠ 调用点暂时保留 ✗（无副作用 ✓ 便于将来再排查 ✓）；真要彻底清干净时，
+     * 连调用点与 {@code DIAG_SEEN} 一起删即可 ✓ —— 那是纯体力活 ✓ 不影响功能 ✓。
+     */
+    @SuppressWarnings("unused")
     public static void diag(String msg) {
-        try {
-            if (msg == null || DIAG_SEEN.size() >= 60 || !DIAG_SEEN.add(msg)) return;
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[搜索诊断] {}", msg);
-        } catch (Throwable ignored) {
-        }
+        // 诊断已关闭 ✓ 什么都不做 ✓（原来这里写 TinkersNewlife.LOGGER.info）
     }
 
     /** 一条词：{@code exclude} ＝ 前置 `-` ✓；{@code kind} 决定匹配哪一列 ✓ */
