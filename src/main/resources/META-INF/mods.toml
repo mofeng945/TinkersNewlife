@@ -101,8 +101,19 @@ description='''一个匠魂附属，适用于Newlifestyle整合包''' #mandatory
     ordering="AFTER"
     side="BOTH"
 
-# ⭐ 帕秋莉手册：手册内容为纯数据（data/tinkersnewlife/patchouli_books），
-# 模组本体不引用任何帕秋莉类，完全不依赖它也能运行。
+# ⭐ 帕秋莉手册：手册内容为纯数据（data/tinkersnewlife/patchouli_books）✓。
+#
+# ⚠⚠ §1118q 修正一句**过期注释** ✗ —— 这里原写「模组本体不引用任何帕秋莉类，完全不依赖它也能运行」✗，
+#   用户实测点出「**好像硬依赖帕秋莉了**」✓（说得对 ✓）。当时的真实情况是：
+#   ① `ModItems.GUIDE_BOOK` 无条件 `new vazkii.patchouli.common.item.ItemModBook()` ✗
+#      ⇒ 没装帕秋莉时该 supplier 一执行就 NoClassDefFoundError ⇒ **整个模组加载失败** ✗；
+#   ② `CompendiumScreen` 有两处直接调 `PatchouliAPI` ✗（其中 `openBookGUI` 那处还不带 try ✗）；
+#   ③ `CompendiumItem` 的 `instanceof ItemModBook` ✗（instanceof 也要解析类 ✓）。
+#   ⇒ 「声明层面可选 ⇒ 运行层面可选」两件事**必须都做到** ✓ —— 只写 mandatory=false 是不够的 ✗。
+#   现已全部加 `IntegrationLoader.isPatchouli()` 闸门 ✓ 并用**分支短路**挡住类加载 ✓：
+#   GUIDE_BOOK 未装帕秋莉时退回**普通物品** ✓（NBT 补写/成就判定照旧 ✓），
+#   百宝书界面按书 id 取图标与"点击翻书"在缺帕秋莉时静默跳过 ✓。
+#   ⇒ 现在**没装帕秋莉也能正常加载运行** ✓（手册内容自然看不到 ✓）。
 # 安装帕秋莉后自动加载手册，可用命令 /patchouli open tinkersnewlife:guide 打开。
 [[dependencies.tinkersnewlife]]
     modId="patchouli"

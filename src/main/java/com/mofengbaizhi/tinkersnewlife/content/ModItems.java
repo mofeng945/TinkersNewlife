@@ -426,9 +426,26 @@ public class ModItems {
     public static final RegistryObject<Item> FLAME_ARROW_ITEM =
             ITEMS.register("flame_arrow_item", FlameArrowItem::new);
 
-    /** 新生神秘学编年史（帕秋莉手册书物品）：材质完全由本模组控制（guide_book.json 模型 + item 纹理） */
+    /**
+     * 新生神秘学编年史（帕秋莉手册书物品）：材质完全由本模组控制（guide_book.json 模型 + item 纹理）
+     *
+     * <p>⚠⚠ <b>§1118q 这里以前是【真·硬依赖帕秋莉】</b> ✗ —— 用户口径：「**好像硬依赖帕秋莉了**」✓（说得对 ✓）。
+     * 原代码无条件 {@code () -> new vazkii.patchouli.common.item.ItemModBook()} ✗：
+     * 没装帕秋莉时这条 supplier 一执行就 {@code NoClassDefFoundError} ✗
+     * ⇒ <b>整个模组加载失败</b> ✗（{@code mods.toml} 里写着 {@code mandatory=false} 也救不了 ✗ ——
+     * 那是"声明层面"的可选 ✓，而这是"运行层面"的真类引用 ✗，两者都做到才叫真可选 ✓）。
+     *
+     * <p>⇒ 修法：<b>装了就用手册书 ✓ 没装就退回一个普通物品</b> ✓
+     * （NBT 补写 {@code GuideBookFixHandler} ✓ 与成就判定 {@code AchievementHandler} ✓ 照旧可用 ✓）。
+     * ⚠ 关键点 ✗：类引用写在<b>三元表达式的分支里</b> ✓ ⇒ JVM <b>按需解析</b> ✓
+     * ⇒ 帕秋莉不在场时那条分支永不执行 ⇒ 该类<b>永远不会被加载</b> ✓
+     * （这正是本仓 {@code integration/**} 一直强调的"用 isLoaded 闸门 ＋ 分支挡住类加载" ✓）。
+     */
     public static final RegistryObject<Item> GUIDE_BOOK =
-            ITEMS.register("guide_book", () -> new vazkii.patchouli.common.item.ItemModBook());
+            ITEMS.register("guide_book", () -> com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader
+                    .isPatchouli()
+                    ? new vazkii.patchouli.common.item.ItemModBook()
+                    : new Item(new Item.Properties().stacksTo(1)));
 
     /**
      * §910 <b>帕秋莉的百宝书</b>（用户口径 ✓）：吞噬帕秋莉的书（判据 = NBT {@code patchouli:book} ✓

@@ -86,6 +86,10 @@ public class CompendiumScreen extends AbstractRowListScreen<CompoundTag> {
 
     /** 那本书的物品图标（帕秋莉按书 id 现给 ✓ 给不出就空栈 ⇒ 调用处用原版书兜底 ✓） */
     private static ItemStack bookIcon(String bookId) {
+        // §1118q 帕秋莉是**可选**依赖 ⇒ 不在场时不许碰 PatchouliAPI ✗（光解析那个类就会炸 ✓）
+        if (!com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.isPatchouli()) {
+            return ItemStack.EMPTY;
+        }
         try {
             ResourceLocation id = ResourceLocation.tryParse(bookId);
             return id == null ? ItemStack.EMPTY : PatchouliAPI.get().getBookStack(id);
@@ -108,7 +112,8 @@ public class CompendiumScreen extends AbstractRowListScreen<CompoundTag> {
         }
         ResourceLocation id = ResourceLocation.tryParse(rawId);
         Minecraft.getInstance().setScreen(null);        // 先关掉自己 ✓ 免得两界面叠着 ✗
-        if (id != null) {
+        // §1118q 帕秋莉不在场 ⇒ 没有什么可打开的 ✓（这一处原先**不在 try 里** ✗ 会直接炸 ✓）
+        if (id != null && com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.isPatchouli()) {
             PatchouliAPI.get().openBookGUI(id);         // 直接打开那本帕秋莉书 ✓
         }
     }

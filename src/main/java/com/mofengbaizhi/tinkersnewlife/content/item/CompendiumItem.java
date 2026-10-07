@@ -266,7 +266,12 @@ public class CompendiumItem extends Item {
             Item item = ForgeRegistries.ITEMS.getValue(itemId);
             if (item == null) continue;
             // 帕秋莉书本体的 use 是"开界面" ⇒ 跳过 ✓（查阅走界面 ✓）
-            if (item instanceof vazkii.patchouli.common.item.ItemModBook) continue;
+            // ⚠ §1118q 帕秋莉是**可选**依赖 ⇒ 不在场时不能碰这个类 ✗
+            //   （`instanceof` 同样要解析类 ✓ ⇒ 没装帕秋莉时这条循环第一次就会 NoClassDefFoundError ✗）
+            if (com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.isPatchouli()
+                    && item instanceof vazkii.patchouli.common.item.ItemModBook) {
+                continue;
+            }
             try {
                 ItemStack fake = new ItemStack(item);
                 InteractionResultHolder<ItemStack> result = fake.use(level, player, InteractionHand.MAIN_HAND);
