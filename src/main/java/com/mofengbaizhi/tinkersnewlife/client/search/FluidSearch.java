@@ -113,6 +113,38 @@ public final class FluidSearch {
         return editBox;
     }
 
+    /**
+     * §1117r <b>拼音自检</b> ✓ —— 用户要求「**接下来尝试攻克中文搜索**」✓ 的第一步 ✓：
+     * 中文名的检索靠"**打拼音命中汉字**"✓（「通用拼音搜索」的 `me.towdium.pinin.PinIn` ✓）。
+     * <p>⚠ 但这条链**从来没被实测过** ✗（我只确认过 `PinIn` 有无参构造器与 `contains(String,String)` ✓）：
+     * `new PinIn()` 是否**自带词典** ✗ / `contains` 的语义是否为"文本里拼音包含查询" ✗ —— 都不确定 ✓
+     * ⇒ 界面打开时跑一次自检 ✓ 把结果写进日志 ✓，一眼定性 ✓。
+     */
+    public static void selfTestPinyin() {
+        try {
+            if (!pinyinResolved) {
+                synchronized (FluidSearch.class) {
+                    if (!pinyinResolved) {
+                        resolvePinyin();
+                        pinyinResolved = true;
+                    }
+                }
+            }
+            if (pinyinContains == null || pinyinSearcher == null) {
+                diag("拼音自检 ✗ 拿不到 me.towdium.pinin.PinIn（未装「通用拼音搜索」⇒ 按用户口径就是没有拼音 ✓）");
+                return;
+            }
+            Object rt = pinyinContains.invoke(pinyinSearcher, "熔融铁", "rt");
+            Object rongtie = pinyinContains.invoke(pinyinSearcher, "熔融铁", "rongtie");
+            Object rr = pinyinContains.invoke(pinyinSearcher, "熔融铁", "rr");
+            Object miss = pinyinContains.invoke(pinyinSearcher, "熔融铁", "zzz");
+            diag("拼音自检 ✓ PinIn 可用：contains(熔融铁,rt)=" + rt + " (rongtie)=" + rongtie
+                    + " (rr)=" + rr + " (zzz)=" + miss);
+        } catch (Throwable t) {
+            diag("拼音自检 ✗ 异常：" + t);
+        }
+    }
+
     // ============================================================
     //  §1117c 搜索框聚焦状态（跨 mixin 共享 ✓）
     // ============================================================

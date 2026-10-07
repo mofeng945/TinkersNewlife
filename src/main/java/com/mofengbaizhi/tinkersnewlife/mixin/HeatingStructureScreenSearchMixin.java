@@ -34,6 +34,8 @@ public abstract class HeatingStructureScreenSearchMixin {
     private void tnl$keepFocus(CallbackInfo ci) {
         try {
             FluidSearch.setFocused(true);
+            // §1117r 打开界面时跑一次拼音自检 ✓（诊断去重 ⇒ 只记一次 ✓）
+            FluidSearch.selfTestPinyin();
         } catch (Throwable ignored) {
         }
     }
