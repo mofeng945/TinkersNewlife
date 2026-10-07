@@ -12,6 +12,14 @@ import slimeknights.tconstruct.library.tools.nbt.IToolContext;
 import slimeknights.tconstruct.library.tools.stat.FloatToolStat;
 import slimeknights.tconstruct.library.tools.stat.ModifierStatsBuilder;
 import slimeknights.tconstruct.library.tools.stat.ToolStats;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.TooltipFlag;
+import slimeknights.mantle.client.TooltipKey;
+import slimeknights.tconstruct.library.modifiers.hook.display.TooltipModifierHook;
+import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
+import javax.annotation.Nullable;
+import java.util.List;
 
 /**
  * ⭐ §1118y <b>超越维度</b>（盔甲特性 ✓ 有等级 ✓）—— 材料「恶念星灵」护甲侧主特性 ✓。
@@ -38,7 +46,7 @@ import slimeknights.tconstruct.library.tools.stat.ToolStats;
  * <p>全类型减伤（DR ✓）**不在这里做** ✗ —— 它不是"工具统计" ✓ 而是**伤害结算** ✓
  * ⇒ 走 {@code LivingHurtEvent} ✓（见处理器 ✓），DR 值同样存在护甲自己的持久化数据里 ✓。
  */
-public class BeyondDimensionTrait extends BaseCombatModifier implements ToolStatsModifierHook {
+public class BeyondDimensionTrait extends BaseCombatModifier implements ToolStatsModifierHook, TooltipModifierHook {
 
     /** 成长值键前缀 ✓（⚠ 与灵性以太**分开** ✓ 免得两套混用 ✓） */
     public static final String KEY_PREFIX = "tn_dim_growth_";
@@ -72,6 +80,8 @@ public class BeyondDimensionTrait extends BaseCombatModifier implements ToolStat
     protected void registerHooks(ModuleHookMap.Builder hookBuilder) {
         super.registerHooks(hookBuilder);
         hookBuilder.addHook(this, ModifierHooks.TOOL_STATS);
+        // ⭐ §1118y 工具提示：按住 Shift 时逐行列出成长量与全类型减伤（用户口径 ✓「属性名：+xx%」✓）
+        hookBuilder.addHook(this, ModifierHooks.TOOLTIP);
     }
 
     @Override
@@ -129,5 +139,45 @@ public class BeyondDimensionTrait extends BaseCombatModifier implements ToolStat
             return ToolStats.ARMOR;
         }
         return ToolStats.ARMOR_TOUGHNESS;
+    }
+    /**
+     * ⭐ <b>按住 Shift 显示成长量</b> ✓（用户口径 ✓ 格式：「**属性名：+xx%**」逐行 ✓）。
+     * <p>属性名复用匠魂自己的键 ✓（`tool_stat.tconstruct.*` ✓ 自带冒号 ✓）；
+     * ⭐ **全类型减伤**匠魂没有 ✓ ⇒ 用我们自己的键 ✓
+     * `modifier.tinkersnewlife.transcendent_dimension.damage_reduction` ✓。
+     */
+    @Override
+    public void addTooltip(IToolStackView tool, ModifierEntry modifier,
+                           @Nullable Player player, List<Component> tooltip,
+                           TooltipKey tooltipKey, TooltipFlag tooltipFlag) {
+        if (tooltipKey != TooltipKey.SHIFT) {
+            return;   // ⚠ 只在按住 Shift 时显示 ✓
+        }
+        try {
+            IModDataView data = tool.getPersistentData();
+            if (data == null) {
+                return;
+            }
+            line(tooltip, "tool_stat.tconstruct.durability", growthOf(data, KEYS[0])
+                    * 100.0F, tool.getStats().get(ToolStats.DURABILITY) > 0F);
+            line(tooltip, "tool_stat.tconstruct.armor", growthOf(data, KEYS[1])
+                    * 100.0F, tool.getStats().get(ToolStats.ARMOR) > 0F);
+            line(tooltip, "tool_stat.tconstruct.armor_toughness", growthOf(data, KEYS[2])
+                    * 100.0F, tool.getStats().get(ToolStats.ARMOR_TOUGHNESS) > 0F);
+            // ⭐ 护甲减伤之后的那一次全类型减伤 ✓（用户口径 ✓ 上限 80% ✓）
+            line(tooltip, "modifier.tinkersnewlife.transcendent_dimension.damage_reduction",
+                    data.getFloat(drKey()) * 100.0F, true);
+        } catch (Throwable ignored) {
+            // 提示出错绝不能影响物品显示 ✓
+        }
+    }
+
+    /** 加一行「属性名：+xx%」✓（`applicable` 为假 ⇒ 这件护甲没这项 ✓ 不显示 ✗） */
+    private static void line(List<Component> tooltip, String key, float percent, boolean applicable) {
+        if (!applicable) {
+            return;
+        }
+        tooltip.add(Component.translatable(key)
+                .append(Component.literal(String.format("+%.1f%%", percent))));
     }
 }

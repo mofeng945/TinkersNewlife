@@ -11,6 +11,14 @@ import slimeknights.tconstruct.library.modifiers.hook.build.ToolStatsModifierHoo
 import slimeknights.tconstruct.library.tools.nbt.IToolContext;
 import slimeknights.tconstruct.library.tools.stat.ModifierStatsBuilder;
 import slimeknights.tconstruct.library.tools.stat.ToolStats;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.TooltipFlag;
+import slimeknights.mantle.client.TooltipKey;
+import slimeknights.tconstruct.library.modifiers.hook.display.TooltipModifierHook;
+import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
+import javax.annotation.Nullable;
+import java.util.List;
 
 /**
  * ⭐ §1118y <b>灵性以太</b>（工具特性 ✓ 有等级 ✓）—— 材料「恶念星灵」工具侧的主特性 ✓。
@@ -41,7 +49,7 @@ import slimeknights.tconstruct.library.tools.stat.ToolStats;
  * 耐久/伤害/攻速/挖掘/拉弓/初速/精准 ✓ **没有"范围"** ✗ ⇒ 范围走 Forge 属性
  * （`forge:block_reach` / `forge:entity_reach` ✓），见 {@code content/handler/SpiritualEtherHandler} ✓。
  */
-public class EtherSpiritTrait extends BaseCombatModifier implements ToolStatsModifierHook {
+public class EtherSpiritTrait extends BaseCombatModifier implements ToolStatsModifierHook, TooltipModifierHook {
 
     /** 成长值在工具持久化数据里的键前缀 ✓（后面接属性名 ✓） */
     public static final String KEY_PREFIX = "tn_ether_growth_";
@@ -70,6 +78,8 @@ public class EtherSpiritTrait extends BaseCombatModifier implements ToolStatsMod
         super.registerHooks(hookBuilder);
         // ⚠ 只挂"工具统计"这一个钩子 ✓ —— 击杀成长与范围走 Forge 事件（见 SpiritualEtherHandler ✓）
         hookBuilder.addHook(this, ModifierHooks.TOOL_STATS);
+        // ⭐ §1118y 工具提示：按住 Shift 时逐行列出各属性的成长量（用户口径 ✓「属性名：+xx%」✓）
+        hookBuilder.addHook(this, ModifierHooks.TOOLTIP);
     }
 
     @Override
@@ -109,5 +119,52 @@ public class EtherSpiritTrait extends BaseCombatModifier implements ToolStatsMod
     /** 某一项还能不能长 ✓（未达 1000% ✓） */
     public static boolean canGrow(IModDataView data, String key) {
         return getGrowth(data, key) < MAX_GROWTH;
+    }
+    /**
+     * ⭐ <b>按住 Shift 显示各属性的成长量</b> ✓（用户口径 ✓ 格式：「**属性名：+xx%**」逐行 ✓）。
+     * <p>属性名**直接复用匠魂自己的键** ✓（`tool_stat.tconstruct.*` ✓ 它们**自带冒号** ✓ 与我方格式正好接上 ✓
+     * ⇒ 不自己造名字 ✓ 也不会和匠魂说法不一致 ✓）；
+     * ⚠ 只列**这件工具真正拥有**的属性 ✓（与成长逻辑同一判据 ✓）⇒ 近战工具不会列出精准度 ✗。
+     */
+    @Override
+    public void addTooltip(IToolStackView tool, ModifierEntry modifier,
+                           @Nullable Player player, List<Component> tooltip,
+                           TooltipKey tooltipKey, TooltipFlag tooltipFlag) {
+        if (tooltipKey != TooltipKey.SHIFT) {
+            return;   // ⚠ 只在按住 Shift 时显示 ✓（用户口径 ✓）
+        }
+        try {
+            IModDataView data = tool.getPersistentData();
+            if (data == null) {
+                return;
+            }
+            addLine(tooltip, "tool_stat.tconstruct.durability", KEYS[0], data,
+                    tool.getStats().get(ToolStats.DURABILITY) > 0F);
+            addLine(tooltip, "tool_stat.tconstruct.attack_damage", KEYS[1], data,
+                    tool.getStats().get(ToolStats.ATTACK_DAMAGE) > 0F);
+            addLine(tooltip, "tool_stat.tconstruct.attack_speed", KEYS[2], data,
+                    tool.getStats().get(ToolStats.ATTACK_SPEED) > 0F);
+            addLine(tooltip, "tool_stat.tconstruct.mining_speed", KEYS[3], data,
+                    tool.getStats().get(ToolStats.MINING_SPEED) > 0F);
+            addLine(tooltip, "tool_stat.tconstruct.accuracy", KEYS[4], data,
+                    tool.getStats().get(ToolStats.ACCURACY) > 0F);
+            addLine(tooltip, "tool_stat.tconstruct.velocity", KEYS[5], data,
+                    tool.getStats().get(ToolStats.VELOCITY) > 0F);
+            addLine(tooltip, "tool_stat.tconstruct.draw_speed", KEYS[6], data,
+                    tool.getStats().get(ToolStats.DRAW_SPEED) > 0F);
+        } catch (Throwable ignored) {
+            // 提示出错绝不能影响物品显示 ✓
+        }
+    }
+
+    /** 加一行「属性名：+xx%」✓（`applicable` 为假 ⇒ 这件工具没这项 ✓ 不显示 ✗） */
+    private static void addLine(List<Component> tooltip, String statKey, String growthKey,
+                                IModDataView data, boolean applicable) {
+        if (!applicable) {
+            return;
+        }
+        float growth = getGrowth(data, growthKey);
+        tooltip.add(Component.translatable(statKey)
+                .append(Component.literal(String.format("+%.1f%%", growth * 100.0F))));
     }
 }
