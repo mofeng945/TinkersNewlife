@@ -142,6 +142,9 @@ public final class SevenCursesWaiverHandler {
                 player.clearFire();
                 player.setRemainingFireTicks(0);
             }
+            // ③ 盔甲效力：把七咒之戒加在 ARMOR / ARMOR_TOUGHNESS 上的减益修饰符摘掉 ✓
+            //（⚠ 必须**定期**摘 ✗ —— 戒指重新戴上/Curios 刷新时它会被重新加上 ✓）
+            stripRingArmorDebuff(player);
         } catch (Throwable ignored) {
             // 同上 ✓
         }
@@ -204,6 +207,75 @@ public final class SevenCursesWaiverHandler {
             event.setResult((Player.BedSleepingProblem) null);   // ⚠ 置空 ⇒ 可睡 ✓
         } catch (Throwable ignored) {
             // 同上 ✓
+        }
+    }
+
+    // ---------------------------------------------------------------- ③ 盔甲效力降低（按 UUID 摘属性修饰符）
+
+    /**
+     * ③「盔甲效力降低 30%」✓ —— ⭐ **反编译实证**：它是挂在**七咒之戒的 Curios 属性**上的 ✓
+     * （{@code CursedRing#getAttributeModifiers} ✓）：
+     * <pre>
+     * Attributes.ARMOR           ← AttributeModifier(UUID "457d0ac3-69e4-482f-b636-22e0802da6bd", …)
+     * Attributes.ARMOR_TOUGHNESS ← AttributeModifier(UUID "95e70d83-3d50-4241-a835-996e1ef039bb", …)
+     * </pre>
+     * ⇒ ⭐ 所以**按这两个固定 UUID 直接摘掉**即可 ✓（它每次戴上戒指会重新加 ✓ 所以**定期摘**就行 ✓）
+     * —— ⚠ 这是"撤掉对方的属性修饰符"而不是"改数值"✗ ⇒ 与它配置里写 30% 还是别的数**无关** ✓ 恒等于"没有这条诅咒" ✓。
+     */
+    private static final java.util.UUID RING_ARMOR_UUID =
+            java.util.UUID.fromString("457d0ac3-69e4-482f-b636-22e0802da6bd");
+    private static final java.util.UUID RING_TOUGHNESS_UUID =
+            java.util.UUID.fromString("95e70d83-3d50-4241-a835-996e1ef039bb");
+
+    /** 摘掉七咒之戒加在护甲/韧性上的减益修饰符 ✓（幂等 ✓ 摘不到也无害 ✓） */
+    public static void stripRingArmorDebuff(ServerPlayer player) {
+        try {
+            var armor = player.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR);
+            if (armor != null) {
+                armor.removeModifier(RING_ARMOR_UUID);
+            }
+            var toughness = player.getAttribute(
+                    net.minecraft.world.entity.ai.attributes.Attributes.ARMOR_TOUGHNESS);
+            if (toughness != null) {
+                toughness.removeModifier(RING_TOUGHNESS_UUID);
+            }
+        } catch (Throwable ignored) {
+            // 同上 ✓
+        }
+    }
+
+    // ---------------------------------------------------------------- ② 中立生物激怒
+
+    /**
+     * ②「中立生物会主动攻击你」✓ —— ⭐ **反编译实证**：实现在 {@code CursedRing#curioTick} 里 ✓
+     * （每 tick 按 {@code neutralAngerRange}／{@code neutralXRayRange} 扫范围内的生物 ✓
+     * 然后 `neutral.setTarget(player)` ✓ / `PiglinAi.setAngerTarget` ✓；
+     * 末影人另有 `endermenRandomportRange` 的随机传送 ✓）。
+     *
+     * <p>⇒ 对治 ✓：**在每只生物自己 tick 的开头**（`LivingEvent.LivingTickEvent` ✓ 早于它的 AI 决策 ✓）
+     * 检查"它当前的目标是不是一个合格的受咒豁免者" ⇒ 是就把目标**清掉** ✓
+     * （`Mob#setTarget(null)` ✓ ＋ 中立生物的 `setPersistentAngerTarget(null)` ＋ `setRemainingPersistentAngerTime(0)` ✓）。
+     * ⚠ 只清"目标正好是合格玩家"的那些 ✓ ⇒ 不打搅正常战斗 ✓ 也几乎不吃性能 ✓（每只生物 O(1) ✓）。
+     */
+    @SubscribeEvent
+    public static void onLivingTick(net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent event) {
+        try {
+            if (!(event.getEntity() instanceof net.minecraft.world.entity.Mob mob)) {
+                return;
+            }
+            if (mob.level().isClientSide) {
+                return;
+            }
+            net.minecraft.world.entity.LivingEntity target = mob.getTarget();
+            if (target instanceof Player player && qualifies(player)) {
+                mob.setTarget(null);
+                if (mob instanceof net.minecraft.world.entity.NeutralMob neutral) {
+                    neutral.setPersistentAngerTarget(null);
+                    neutral.setRemainingPersistentAngerTime(0);
+                }
+            }
+        } catch (Throwable ignored) {
+            // 绝不干扰生物 AI ✓
         }
     }
 }
