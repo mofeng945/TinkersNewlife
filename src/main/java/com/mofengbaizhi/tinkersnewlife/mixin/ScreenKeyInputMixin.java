@@ -59,12 +59,10 @@ public abstract class ScreenKeyInputMixin {
                 FluidSearch.setFocused(false);
                 return;
             }
-            char c = tnl$keyToChar(keyCode, modifiers);
-            if (c != 0) {
-                String q = FluidSearch.getQuery();
-                if (q.length() < 64) FluidSearch.setQuery(q + c);
-                cir.setReturnValue(true);
-            }
+            // ⚠ §1117s **字符不再在这里翻译** ✗ —— 改由 `KeyboardHandlerImeMixin`
+            //   （`m_90889_` ＝ charTyped ✓）统一收字符 ✓（含输入法汉字 ✓）。
+            //   ⇒ 若这里也翻译一遍，同一个字母会**进两次** ✗（所以整段删掉 ✓）；
+            //   ⇒ 本类现在只负责**退格 / 回车 / Esc** 三个"非字符按键" ✓。
         } catch (Throwable ignored) {
         }
     }
