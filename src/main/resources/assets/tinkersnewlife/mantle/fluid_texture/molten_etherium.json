@@ -1,0 +1,8 @@
+{
+  "still": "tinkersnewlife:block/molten_etherium_still",
+  "flowing": "tinkersnewlife:block/molten_etherium_flowing",
+  "color": "FFFFFFFF",
+  "fogColor": "FFABFFFF",
+  "fogStart": 0.5,
+  "fogEnd": 6.0
+}

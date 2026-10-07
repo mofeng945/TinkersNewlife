@@ -5,7 +5,8 @@
     { "fluid": "tinkersnewlife:liquid_evil_still", "amount": 250 },
     { "fluid": "goety:void", "amount": 1000 },
     { "fluid": "tinkersnewlife:watcher_ectoplasm_still", "amount": 10 },
-    { "fluid": "tinkersnewlife:flowing_stardust_still", "amount": 250 }
+    { "fluid": "tinkersnewlife:flowing_stardust_still", "amount": 250 },
+    { "fluid": "tinkersnewlife:molten_etherium_still", "amount": 90 }
   ],
   "result": { "fluid": "tinkersnewlife:molten_sinister_glow_still", "amount": 360 },
   "temperature": 2000,

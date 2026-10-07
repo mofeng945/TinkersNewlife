@@ -1,0 +1,11 @@
+{
+  "type": "tconstruct:melting",
+  "ingredient": { "item": "enigmaticlegacy:etherium_leggings" },
+  "result": { "fluid": "tinkersnewlife:molten_etherium_still", "amount": 630 },
+  "temperature": 1950,
+  "time": 60,
+  "conditions": [
+    { "type": "forge:mod_loaded", "modid": "goety" },
+    { "type": "forge:mod_loaded", "modid": "enigmaticlegacy" }
+  ]
+}

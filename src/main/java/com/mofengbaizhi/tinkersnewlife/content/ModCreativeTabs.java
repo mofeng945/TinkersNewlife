@@ -272,6 +272,8 @@ public class ModCreativeTabs {
                                 acceptItemIfPresent(output, "liquid_evil_bucket");
                                 acceptItemIfPresent(output, "watcher_ectoplasm_bucket");
                                 acceptItemIfPresent(output, "flowing_stardust_bucket");
+                                // ⭐ §1118w 熔融以太（合金的第六种原料 ✓ 同条件注册 ✓ 取不到即跳过 ✓）
+                                acceptItemIfPresent(output, "molten_etherium_bucket");
                                 // ----- 冰火传说组：熔融龙钢×3 + 龙血×3 + 悚怖×2 -----
                                 acceptItemIfPresent(output, "molten_dragonsteel_fire_bucket");
                                 acceptItemIfPresent(output, "molten_dragonsteel_ice_bucket");

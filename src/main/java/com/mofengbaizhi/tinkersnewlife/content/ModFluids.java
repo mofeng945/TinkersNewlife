@@ -76,6 +76,21 @@ public class ModFluids {
                     2000, 10000, 2000, 0xFF7157FA,
                     FluidRegistrar.lavaProps(MapColor.COLOR_PURPLE));
 
+    /**
+     * ⭐ §1118w <b>熔融以太</b>（用户口径 ✓）：「合金配方里面少写了个 **90mb 熔融以太** ✓；
+     * **1 以太锭 ＝ 90mb 熔融以太（1950 度）**」✓ ⇒ 温度 **1950** ✓（用户给的数 ✓）。
+     *
+     * <p>用途 ✓：① 邪灵辉质的合金需要它 90mb ✓（已补进合金的 inputs ✓）；
+     * ② 以太装备（护甲 4 件 ＋ 工具 5 件 ✓ 见 {@code smeltery/melting/etherium_*} ✓）都能熔成它 ✓；
+     * ③ 它能浇回**以太锭** ✓（`casting/etherium_ingot/**` ✓）。
+     * <p>颜色 ✓：按用户口径「从来源物取色」✓ —— 取 `enigmaticlegacy:etherium_ingot` 的
+     * **#ABFFFF**（淡青白 ✓ 实测主色 ✓），底图仍是**匠魂默认熔融材质** ✓。
+     */
+    public static final FluidRegistrar.FluidEntry MOLTEN_ETHERIUM =
+            LINKED_REGISTRAR.entry("molten_etherium",
+                    2000, 10000, 1950, 0xFFABFFFF,
+                    FluidRegistrar.lavaProps(MapColor.COLOR_LIGHT_BLUE));
+
     // ============================================================
     //  §1118u 合金链的 4 种"精质/星质"流体（用户口径 ✓ 全部同条件 ✓）
     // ============================================================
