@@ -72,15 +72,10 @@ public abstract class ScreenKeyInputMixin {
     /** 按键码 → 字符 ✓（替代不可用的 `charTyped` ✗ 见类注释 ✓） */
     private static char tnl$keyToChar(int keyCode, int modifiers) {
         boolean shift = (modifiers & GLFW.GLFW_MOD_SHIFT) != 0;
-        // ⚠⚠ §1117o 关键修复（日志实证 ✓）：**绝不能把 W/A/S/D 当搜索输入** ✗！
-        //   现象 ✓：用户实测「过滤没任何效果」✗，而日志里 `keyPressed 到达 key=87/65/68`＝W/A/D ✓
-        //   ⇒ 走路按键被当成搜索字符 ⇒ 查询里全是 `wad…` ⇒ 这些字母**几乎所有流体名/id 都含** ✗
-        //   ⇒ `matches` 全放行 ⇒ 画面**一点变化都没有** ✓✓（完全对上用户现象 ✓）。
-        //   ⇒ 直接把这四个键排除 ✓（代价：查询里打不出 w/a/s/d ✗ 但检索主要靠汉字/拼音/id 片段 ✓ 可接受 ✓）。
-        if (keyCode == GLFW.GLFW_KEY_W || keyCode == GLFW.GLFW_KEY_A
-                || keyCode == GLFW.GLFW_KEY_S || keyCode == GLFW.GLFW_KEY_D) {
-            return 0;      // 放行 ⇒ 交给原版走路/快捷键 ✓
-        }
+        // ⚠ §1117p 用户口径（§1117o 之后纠正 ✓）：「**别禁用 wasd 啊，万一有流体有这个呢**」✗
+        //   ⇒ **恢复 W/A/S/D 作为输入** ✓（确实可能有流体名/id 含这四个字母 ✓）
+        //   ⇒ 走路键污染查询的问题改由**用户自己**按下回车/Esc 取消聚焦来解决 ✓
+        //     （取消聚焦后所有按键都放行 ✓ 该走走该跳跳 ✓；要搜索时再打开界面 ✓ 会自动聚焦 ✓）。
         if (keyCode >= GLFW.GLFW_KEY_A && keyCode <= GLFW.GLFW_KEY_Z) {
             return (char) ('a' + (keyCode - GLFW.GLFW_KEY_A));      // 查询按小写比对 ✓ 大小写无所谓 ✓
         }

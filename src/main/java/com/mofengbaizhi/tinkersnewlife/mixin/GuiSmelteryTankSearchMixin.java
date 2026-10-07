@@ -146,6 +146,40 @@ public abstract class GuiSmelteryTankSearchMixin {
             new java.util.concurrent.atomic.AtomicInteger();
 
     /**
+     * ⭐ §1117p <b>真正让"流体条"消失的修复</b> ✓（用户口径：「筛选了，但流体条的绘制没有任何变化，
+     * 只有鼠标放上去高亮的显示变了」✗）。
+     *
+     * <h2>为什么"把高度置 0"看不到效果 ✗</h2>
+     * 我原来只把不匹配项的**高度置 0** ✓，指望匠魂不画 ✓ —— 但日志 + 用户观察表明 ✗：
+     * **高亮变了**（高亮读的是 `liquidHeights` 字段 ✓ 已过滤 ✓）而**条没变** ✗
+     * ⇒ 说明 `GuiUtil.renderTiledFluid(...)` 拿到 **height = 0 照样把流体画满了** ✗（Mantle 那个实现的问题 ✓）。
+     *
+     * <h2>修法：直接跳过那次绘制调用 ✓</h2>
+     * 用 `@Redirect` 拦下 `renderFluids` 里对
+     * `GuiUtil.renderTiledFluid(...)` 的调用 ✓：**不匹配的流体直接 return 不画** ✓，
+     * 匹配的照原样转发 ✓ ⇒ 与"高度/高亮/命中判定"用**同一个** `FluidSearch.matches` ✓ 保证三者一致 ✓。
+     * <p>描述符**实测取自 class 常量池** ✓（不是猜的 ✗）：
+     * {@code (Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/gui/screens/inventory/AbstractContainerScreen;Lnet/minecraftforge/fluids/FluidStack;IIIII)V}
+     */
+    @org.spongepowered.asm.mixin.injection.Redirect(
+            method = "renderFluids(Lcom/mojang/blaze3d/vertex/PoseStack;)V",
+            at = @At(value = "INVOKE",
+                    target = "Lslimeknights/tconstruct/library/client/GuiUtil;renderTiledFluid(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/gui/screens/inventory/AbstractContainerScreen;Lnet/minecraftforge/fluids/FluidStack;IIIII)V",
+                    remap = false),
+            require = 1, remap = false)
+    private void tnl$skipNonMatchingFluid(PoseStack pose,
+                                          net.minecraft.client.gui.screens.inventory.AbstractContainerScreen parent,
+                                          FluidStack fluid, int fx, int fy, int fw, int fh, int extra) {
+        try {
+            if (FluidSearch.isActive() && !FluidSearch.matches(fluid)) {
+                return;                     // ★ 直接不画 ⇒ 画面上那一根就消失了 ✓
+            }
+        } catch (Throwable ignored) {
+        }
+        slimeknights.tconstruct.library.client.GuiUtil.renderTiledFluid(pose, parent, fluid, fx, fy, fw, fh, extra);
+    }
+
+    /**
      * §1117l <b>绘制端探针</b> ✓ —— 用户反馈「筛掉一个我没看到筛掉」✗：
      * 过滤端日志说 `置零=1` ✓ 却看不到变化 ✗ ⇒ 必须确认"**真正画的时候**拿到的是哪份数组" ✓。
      * <p>记 `渲染 高度=[a, b, c]` ✓ —— 若这里有 0 ⇒ 画的就是过滤后的（那问题在别处 ✓）；
