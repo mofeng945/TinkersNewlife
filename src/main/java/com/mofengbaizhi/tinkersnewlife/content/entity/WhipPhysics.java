@@ -88,6 +88,19 @@ public final class WhipPhysics {
     private static final double LENGTH_COMPLIANCE = 3.0E-8D;
     private static final double BEND_COMPLIANCE = 1.6E-7D;
     private static final double TICK_VELOCITY_RETENTION = 0.984D;   // §1118e 0.989 ⇒ 0.984：少一点"飘"，抽完更快收住 ✓
+    /**
+     * §1118f <b>抽击结束后的"刹车"速度保留率</b> ✓ —— 用户口径：
+     * 「鞭子甩出抽击后**大部分动能会过冲从而转到玩家身后**去，造成不太舒服的体验」✗
+     *
+     * <p>机制 ✓：驱动段一结束，实体就把 `progressFrom/To` 归 0 ✓、`root` 归手 ✓（`WhipLashEntity:437-443` ✓）
+     * ⇒ **导引关闭** ✗ ⇒ 绳子带着**满速的鞭梢动量**进入自由飞行（32 tick ✗ ＝ 1.6 秒 ✓）
+     * ⇒ 锚点在手 ＋ 重力 ⇒ 鞭子**甩过身侧绕到背后** ✗✓（正是用户描述的现象 ✓）。
+     *
+     * <p>⇒ 抽击一结束就改用这个更狠的保留率 ✓：每 tick 掉约 12% 动能 ⇒ 约 0.3 秒内余势耗掉大半 ✓
+     * ⇒ 鞭梢**停在身前/自然垂下** ✓ 而不是绕圈 ✗。
+     * <p>⚠ 0.88 是"明显能刹住但还留一点余韵"的取值 ✓；若还想更粘/更利落 ⇒ 往下调（0.84~0.86 ✓）。
+     */
+    private static final double POST_LASH_VELOCITY_RETENTION = 0.88D;
     private static final double GRAVITY = -21.5D;
     private static final double SELF_COLLISION_DISTANCE = 0.055D;
     private static final double CONTACT_SKIN = 0.0125D;
@@ -105,7 +118,7 @@ public final class WhipPhysics {
     private static final double FOLLOW_VELOCITY_ACCEL = 28.0D;
     private static final double FOLLOW_RADIAL_ACCEL = 560.0D;       // §1118e 430 ⇒ 560：展绳更快 ✓
     private static final double FOLLOW_MAX_ACCEL = 4400.0D;
-    private static final double FOLLOW_TIP_GAIN = 1.50D;            // §1118e 1.25 ⇒ 1.50：鞭梢更有劲 ✓
+    private static final double FOLLOW_TIP_GAIN = 1.35D;            // §1118e 1.25 ⇒ 1.50；§1118f 回调到 1.35（1.50 会加剧"过冲甩到身后" ✗）
     private static final double CROSSHAIR_SOURCE_PROGRESS = 0.30D;
     private static final double CROSSHAIR_SWEEP_HALF_SPAN_PROGRESS = 0.34D;
     private static final double CROSSHAIR_SWEEP_HALF_ANGLE_RADIANS = Math.toRadians(68.0D);
@@ -274,7 +287,13 @@ public final class WhipPhysics {
         int substeps = chooseAdaptiveSubsteps();
         double dt = TICK_SECONDS / substeps;
         double dtSqr = dt * dt;
-        double retention = Math.pow(TICK_VELOCITY_RETENTION, 1.0D / substeps);
+        // ⭐ §1118f 抽击结束后立刻"刹车" ✓ —— 用户口径：「抽击后大部分动能过冲 ⇒ 转到玩家身后」✗
+        //   判据：LASH 模式且本 tick 进度归 0 ⇒ 就是"驱动段已结束"那一 tick 起 ✓
+        //   （实体在驱动结束后把 progressFrom/To 设成 0 ✓ 见 WhipLashEntity:437-443 ✓）
+        boolean postLash = d.mode == MODE_LASH && d.progressTo <= 0.0D;
+        double retention = Math.pow(
+                postLash ? POST_LASH_VELOCITY_RETENTION : TICK_VELOCITY_RETENTION,
+                1.0D / substeps);
         double surfaceRetention = Math.pow(SURFACE_TANGENT_RETENTION_PER_TICK, 1.0D / substeps);
 
         for (int s = 0; s < substeps; s++) {
