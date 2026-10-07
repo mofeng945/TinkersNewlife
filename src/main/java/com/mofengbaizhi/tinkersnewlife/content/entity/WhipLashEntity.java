@@ -608,6 +608,19 @@ public class WhipLashEntity extends Entity {
                             1.32F + this.random.nextFloat() * 0.08F);
                 } else {
                     float damage = (float) (base / Math.pow(2.0D, contactedTargets.size()));
+                    // ⭐ §1118j 新效果（用户口径 ✓）：
+                    //   「当实体身上有**鞭痕效果**时，下一次被鞭子抽中的伤害将提升**每级 10%**」✓
+                    //   口径：**不消耗**鞭痕 ✗ —— 同一鞭紧接着会再叠一层（§1064 ✓），若这里消费掉
+                    //   就与"每次命中 +1 层"互相抵消 ⇒ 层数永远长不起来 ✗（会破坏鞭痕本身 ✓）。
+                    //   ⇒ 现实现 ＝ 只要目标带着鞭痕，这一鞭就按层数加成 ✓（8 层 ＝ ×1.8 ✓ 越抽越疼 ✓）。
+                    net.minecraft.world.effect.MobEffectInstance whipMark =
+                            target.getEffect(ModEffects.WHIP_WEAKEN.get());
+                    if (whipMark != null) {
+                        int markLevel = Math.min(whipMark.getAmplifier() + 1,
+                                com.mofengbaizhi.tinkersnewlife.content.effect.WhipWeakenEffect.MAX_STACKS);
+                        damage *= 1.0F + (float) com.mofengbaizhi.tinkersnewlife.content.effect
+                                .WhipWeakenEffect.BONUS_PER_STACK * markLevel;
+                    }
                     if (hurt(owner, target, contact, damage)) {
                         // §1064 用户口径：被鞭子抽中 ⇒ 叠一层"鞭痕"（每层 −10% 速度与攻击 ✓ 最多 8 层 ＝ −80% ✓）
                         ModEffects.applyWhipWeaken(target);

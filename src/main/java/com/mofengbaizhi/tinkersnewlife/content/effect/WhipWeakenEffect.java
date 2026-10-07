@@ -40,6 +40,18 @@ public class WhipWeakenEffect extends MobEffect {
     public static final int MAX_STACKS = 8;
     /** 每层降低 10% ✓（用户口径 ✓） */
     public static final double REDUCTION_PER_STACK = 0.10D;
+
+    /**
+     * ⭐ §1118j <b>鞭痕"加成"：每一层让**下一次**被鞭子抽中时的伤害 +10%</b> ✓ —— 用户口径：
+     * 「当实体身上有**鞭痕效果**时，下一次被鞭子抽中的伤害将提升**每级 10%**」✓
+     *
+     * <p>⚠ 刻意与 {@link #REDUCTION_PER_STACK} **分成两个常量** ✓（虽然现在数值相同 ✓）：
+     * 一个管"减益"✓ 一个管"加成"✓ —— 以后你想单独调哪个都不会牵动另一个 ✓。
+     * <p>⚠ 口径说明（实现选择 ✓）：**不消耗**鞭痕 ✗ —— 因为同一鞭紧接着就会再叠一层（§1064 ✓），
+     * 若这里消费掉 ⇒ 与"每次命中 +1 层"互相抵消 ⇒ 层数永远长不起来 ✗（会破坏鞭痕本身 ✓）。
+     * ⇒ 现实现 ＝ "只要目标带着鞭痕，这一鞭就按层数加成" ✓（8 层 ⇒ ×1.8 ✓ 连击越抽越疼 ✓）。
+     */
+    public static final double BONUS_PER_STACK = 0.10D;
     /** 每次抽中给的时长（tick ✓）：10 秒 ✓，被抽中即刷新 ✓ */
     public static final int DURATION_TICKS = 200;
 
