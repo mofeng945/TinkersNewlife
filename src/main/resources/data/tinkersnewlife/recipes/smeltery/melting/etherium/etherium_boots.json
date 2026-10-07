@@ -1,7 +1,8 @@
 {
-  "type": "tconstruct:melting",
+  "type": "tconstruct:damagable_melting",
   "ingredient": { "item": "enigmaticlegacy:etherium_boots" },
-  "result": { "fluid": "tinkersnewlife:molten_etherium_still", "amount": 360 },
+  "result": { "fluid": "tinkersnewlife:molten_etherium_still", "amount": 360,
+      "unit_size": 10 },
   "temperature": 1950,
   "time": 60,
   "conditions": [

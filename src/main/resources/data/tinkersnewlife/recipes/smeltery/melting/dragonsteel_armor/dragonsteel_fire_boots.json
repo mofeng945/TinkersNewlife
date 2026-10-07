@@ -1,11 +1,12 @@
 {
-    "type":  "tconstruct:melting",
+    "type": "tconstruct:damagable_melting",
     "ingredient":  {
                        "item":  "iceandfire:dragonsteel_fire_boots"
                    },
     "result":  {
                    "fluid":  "tinkersnewlife:molten_dragonsteel_fire_still",
-                   "amount":  360
+                   "amount":  360,
+      "unit_size": 10
                },
     "temperature":  1200,
     "time":  130,

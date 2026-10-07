@@ -1,11 +1,12 @@
 {
-    "type":  "tconstruct:melting",
+    "type": "tconstruct:damagable_melting",
     "ingredient":  {
                        "item":  "iceandfire:dragonsteel_fire_shovel"
                    },
     "result":  {
                    "fluid":  "tinkersnewlife:molten_dragonsteel_fire_still",
-                   "amount":  90
+                   "amount":  90,
+      "unit_size": 10
                },
     "temperature":  1200,
     "time":  60,

@@ -1,11 +1,12 @@
 {
-    "type":  "tconstruct:melting",
+    "type": "tconstruct:damagable_melting",
     "ingredient":  {
                        "item":  "iceandfire:dragonsteel_lightning_leggings"
                    },
     "result":  {
                    "fluid":  "tinkersnewlife:molten_dragonsteel_lightning_still",
-                   "amount":  630
+                   "amount":  630,
+      "unit_size": 10
                },
     "temperature":  1200,
     "time":  180,
