@@ -89,73 +89,16 @@ public final class FluidSearch {
     public static int boxH() { return boxH; }
 
     // ============================================================
-    //  §1117m ★ 真正的 EditBox（照抄仓库既有搜索框的做法 ✓）
-    // ============================================================
-    /**
-     * ⚠ §1117m <b>换成 MC 原生的 `EditBox`</b> ✓ —— 用户一句话点醒 ✓：
-     * 「**我构筑术式不是也写过搜索框吗，为什么不能模仿**」✓
-     * ⇒ 仓库里 `ConstructSelectScreen` / `WuWeiScreen` / `QuantumVaultScreen` / `DimensionPassScreen`
-     * **全都是 `new EditBox(font, x, y, w, h, …)` ＋ `setResponder(…)`** ✓ ——
-     * `EditBox` **自己**处理按键 ✓ 字符 ✓ 光标 ✓ 退格 ✓ **以及输入法中文** ✓✓
-     * ⇒ 我前面手搓"按键码翻译 + charTyped 注入"8 轮**全是绕远路** ✗（中文注定进不来 ✓）。
-     *
-     * <p>由 `HeatingStructureScreenSearchMixin` 创建并塞进界面的 `children()` ✓（`Screen#children()` 是公开方法 ✓
-     * 所以**不需要** shadow 原版的 `addRenderableWidget` ✗ —— 那正是 §1117 把 mixin 搞丢的坑 ✓）；
-     * 由 `GuiSmelteryTankSearchMixin` 每帧摆好位置并 `render` ✓。
-     */
-    private static volatile net.minecraft.client.gui.components.EditBox editBox;
-
-    public static void setEditBox(net.minecraft.client.gui.components.EditBox box) {
-        editBox = box;
-    }
-
-    public static net.minecraft.client.gui.components.EditBox getEditBox() {
-        return editBox;
-    }
-
-    /**
-     * §1117r <b>拼音自检</b> ✓ —— 用户要求「**接下来尝试攻克中文搜索**」✓ 的第一步 ✓：
-     * 中文名的检索靠"**打拼音命中汉字**"✓（「通用拼音搜索」的 `me.towdium.pinin.PinIn` ✓）。
-     * <p>⚠ 但这条链**从来没被实测过** ✗（我只确认过 `PinIn` 有无参构造器与 `contains(String,String)` ✓）：
-     * `new PinIn()` 是否**自带词典** ✗ / `contains` 的语义是否为"文本里拼音包含查询" ✗ —— 都不确定 ✓
-     * ⇒ 界面打开时跑一次自检 ✓ 把结果写进日志 ✓，一眼定性 ✓。
-     */
-    public static void selfTestPinyin() {
-        try {
-            if (!pinyinResolved) {
-                synchronized (FluidSearch.class) {
-                    if (!pinyinResolved) {
-                        resolvePinyin();
-                        pinyinResolved = true;
-                    }
-                }
-            }
-            if (pinyinContains == null || pinyinSearcher == null) {
-                diag("拼音自检 ✗ 拿不到 me.towdium.pinin.PinIn（未装「通用拼音搜索」⇒ 按用户口径就是没有拼音 ✓）");
-                return;
-            }
-            Object rt = pinyinContains.invoke(pinyinSearcher, "熔融铁", "rt");
-            Object rongtie = pinyinContains.invoke(pinyinSearcher, "熔融铁", "rongtie");
-            Object rr = pinyinContains.invoke(pinyinSearcher, "熔融铁", "rr");
-            Object miss = pinyinContains.invoke(pinyinSearcher, "熔融铁", "zzz");
-            diag("拼音自检 ✓ PinIn 可用：contains(熔融铁,rt)=" + rt + " (rongtie)=" + rongtie
-                    + " (rr)=" + rr + " (zzz)=" + miss);
-        } catch (Throwable t) {
-            diag("拼音自检 ✗ 异常：" + t);
-        }
-    }
-
-    // ============================================================
     //  §1117c 搜索框聚焦状态（跨 mixin 共享 ✓）
     // ============================================================
     /**
-     * 搜索框是否聚焦 ✓ —— 由 {@code HeatingStructureScreenSearchMixin}（init/点击 ✓）维护 ✓，
-     * 由 {@code ScreenSearchInputMixin}（挂在 **`Screen`** 层 ✓）读取 ✓。
+     * 搜索框是否聚焦 ✓ —— 由 {@code HeatingStructureScreenSearchMixin} 维护 ✓（打开界面即聚焦 ✓），
+     * 由 {@link ScreenKeyInputMixin}（退格/回车/Esc ✓）与
+     * {@code KeyboardHandlerImeMixin}（**所有真实字符** 含输入法汉字 ✓）读取 ✓。
      *
-     * <p>⚠ 为什么输入要挂 `Screen` ✗：用户实测 + 日志实证 ✓
-     * —— `keyPressed`/`charTyped` **不是** `HeatingStructureScreen` 自己声明的方法 ✗（声明在 `Screen` ✓）
+     * <p>⚠ 血泪教训（写死 ✓）：`keyPressed`/`charTyped` **不是** `HeatingStructureScreen` 自己声明的方法 ✗
      * ⇒ 在目标类里注入会 {@code could not find any targets} ✗ ⇒ `require = 1` ⇒ **整个 mixin 被丢弃** ✗
-     * ⇒ "框能画、但完全打不进字" ✓（正是当时的现场 ✓）。
+     * ⇒ 表现为"框能画、字打不进" ✓；而字符的**真身**在 `KeyboardHandler#charTyped`（`m_90889_` ✓）。
      */
     private static volatile boolean focused;
 
@@ -166,41 +109,8 @@ public final class FluidSearch {
     /** 当前打开的界面是不是"加热结构界面"（熔炼炉/熔铸炉 ✓ 两者同一个类 ✓） */
     public static boolean isHeatingStructureScreen(Object screen) {
         if (screen == null) return false;
-        // §1117d 放宽：用 contains 而不是 equals ✓ —— 万一匠魂那边有子类/包装类也不会误判 ✗
+        // 用 contains 而不是 equals ✓ —— 万一匠魂那边有子类/包装类也不会误判 ✗
         return screen.getClass().getName().contains("HeatingStructureScreen");
-    }
-
-    // ============================================================
-    //  §1117d 临时诊断（最多 20 条 ✓ 定位完就删 ✗）
-    // ============================================================
-    private static final java.util.concurrent.atomic.AtomicInteger DIAG_COUNT =
-            new java.util.concurrent.atomic.AtomicInteger();
-    /**
-     * §1117k <b>诊断按内容去重</b> ✗（血泪 ✓）：`HeatingStructureScreen` 的 `m_181908_` 是**每 tick 都调**的方法 ✗
-     * ⇒ 之前"界面打开 ⇒ 自动聚焦=true"那条消息**每秒刷 20 条** ✗ ⇒ **把 20 条的额度全部吃光** ✗
-     * ⇒ 真正需要的"过滤 …"那几行**一条都没留下** ✗ ⇒ 白测一轮 ✓。
-     * <p>⇒ 现在同一条消息只记一次 ✓（`DIAG_SEEN` ✓），且上限提到 60 条 **不同**消息 ✓。
-     */
-    private static final java.util.Set<String> DIAG_SEEN =
-            java.util.concurrent.ConcurrentHashMap.newKeySet();
-
-    /**
-     * 临时诊断 ✓ —— 用户多次报"无效"✗，而 mixin 应用情况只能靠运行时自述 ✓。
-     * <p>⚠ 同一条消息**只记一次** ✓（去重 ✓ 见 {@link #DIAG_SEEN} ✓）；上限 60 条不同消息 ✓。
-     */
-    /**
-     * §1117t <b>诊断已关闭</b> ✓（用户口径：「**成功了，可以关日志了**」✓）。
-     *
-     * <p>全部诊断输出都走这一个入口 ✓（`FluidSearch` 自身 ✓ ＋ 三个 mixin 的探针 ✓：
-     * `keyPressed 到达` ✓ `过滤 查询=…` ✓ `渲染 字段高度=…` ✓ `字符(IME/键盘)` ✓ `拼音自检` ✓）
-     * ⇒ 把它变成**空实现** ⇒ **一条日志都不会再打** ✓✓（`[搜索诊断]` 前缀彻底静默 ✓）。
-     *
-     * <p>⚠ 调用点暂时保留 ✗（无副作用 ✓ 便于将来再排查 ✓）；真要彻底清干净时，
-     * 连调用点与 {@code DIAG_SEEN} 一起删即可 ✓ —— 那是纯体力活 ✓ 不影响功能 ✓。
-     */
-    @SuppressWarnings("unused")
-    public static void diag(String msg) {
-        // 诊断已关闭 ✓ 什么都不做 ✓（原来这里写 TinkersNewlife.LOGGER.info）
     }
 
     /** 一条词：{@code exclude} ＝ 前置 `-` ✓；{@code kind} 决定匹配哪一列 ✓ */
@@ -230,8 +140,6 @@ public final class FluidSearch {
         if (q.equals(query)) return;
         query = q;
         groups = parse(q);
-        // §1117o 每次查询变化都记一条 ✓（用户口径「过滤没任何效果」✗ ⇒ 必须看清"查询里到底进了什么"✓）
-        diag("查询变化 ⇒ '" + q + "'");
     }
 
     public static String getQuery() {
@@ -327,63 +235,17 @@ public final class FluidSearch {
     // ============================================================
     //  拼音：**只接**「通用拼音搜索」(`jecharacters`) ✓
     // ============================================================
-
-    /** 反射句柄（一次性解析 ✓ 失败就永久 false ✓ 不反复抛异常拖慢界面 ✓） */
-    private static volatile boolean pinyinResolved = false;
-    private static volatile Object pinyinSearcher = null;
-    private static volatile java.lang.reflect.Method pinyinContains = null;
-
     /**
-     * ⚠ 用户口径：「**不加通用拼音搜索就不要有拼音搜索能力**」✓ ——
-     * 这里**只**尝试用 `me.towdium.pinin`（通用拼音搜索 / Just Enough Characters 的拼音库 ✓）；
-     * 没装 ⇒ 直接返回 false ✓（**故意不做自带拼音表** ✗）。
+     * §1118b <b>拼音改成复用共享工具</b> ✓ —— 原来这里有一份自己的反射实现 ✗，
+     * 现在全项目统一走 {@link PinyinHelper} ✓（它内部就是
+     * {@code me.towdium.pinin.PinIn} 的 {@code new PinIn()} ＋ {@code contains(String,String)} ✓
+     * —— 签名已实测确认 ✓ 见 §1117h/§1117r ✓）。
      *
-     * <p>⚠ 实现注意：那几个类**不是给第三方用的公开 API** ✗（它是用 ASM 改 JEI 搜索的 ✓）
-     * ⇒ 全程 `try/catch` ✓，探测失败只影响"拼音不好用"✓ **绝不影响搜索框本身** ✓。
-     * <p>⚠ **待办**（下个会话第一步 ✓）：`me.towdium.pinin.searchers.Searcher` 的**构造方式与查询方法名**
-     * 还没反编译确认 ✗ —— 现在这段写法是"尽力而为"✓，拿不到句柄就静默降级 ✓（见 §1115f ✓）。
+     * <p>⚠ 用户口径照旧 ✓：「**不加通用拼音搜索就不要有拼音搜索能力**」✓ ——
+     * 没装 ⇒ {@link PinyinHelper#matches} 直接返回 false ✓（**故意不做自带拼音表** ✗）。
      */
     private static boolean pinyinMatches(String name, String s) {
-        if (name.isEmpty() || s.isEmpty()) return false;
-        try {
-            if (!pinyinResolved) {
-                synchronized (FluidSearch.class) {
-                    if (!pinyinResolved) {
-                        resolvePinyin();
-                        pinyinResolved = true;
-                    }
-                }
-            }
-            java.lang.reflect.Method m = pinyinContains;
-            Object searcher = pinyinSearcher;
-            if (m == null || searcher == null) return false;
-            Object r = m.invoke(searcher, name, s);
-            return r instanceof Boolean b && b;
-        } catch (Throwable ignored) {
-            return false;
-        }
-    }
-
-    /**
-     * 解析通用拼音搜索的拼音引擎 ✓（**签名已反编译实测** ✓ 不是猜的 ✗）：
-     * <pre>
-     * me.towdium.pinin.PinIn
-     *   public PinIn()                                  // ⭐ 无参构造器 ✓
-     *   public boolean contains(String s1, String s2)    // ⭐ s1（流体名）里是否"拼音包含" s2（查询）✓
-     * </pre>
-     * ⇒ 直接 `new PinIn()` ＋ `contains(流体名, 查询)` ✓，比原来那套"猜静态工厂"可靠得多 ✓。
-     * <p>⚙ 仍全程 try/catch ✓：没装该模组 ⇒ `Class.forName` 抛异常 ⇒ 保持 null ⇒ **没有拼音** ✓（用户口径 ✓）。
-     */
-    private static void resolvePinyin() {
-        try {
-            Class<?> pinin = Class.forName("me.towdium.pinin.PinIn");
-            Object ctx = pinin.getConstructor().newInstance();
-            java.lang.reflect.Method contains = pinin.getMethod("contains", String.class, String.class);
-            pinyinSearcher = ctx;
-            pinyinContains = contains;
-        } catch (Throwable ignored) {
-            // 没装（或签名变了）⇒ 保持 null ⇒ 无拼音 ✓
-        }
+        return PinyinHelper.matches(name, s);
     }
 
     // ============================================================

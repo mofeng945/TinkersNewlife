@@ -161,7 +161,11 @@ public class IndustrialPioneerRatesScreen extends AbstractRowListScreen<PacketOp
         if (row.kind() == PacketOpenPioneerRates.KIND_ENERGY) return true;
         if (row.id().toLowerCase(Locale.ROOT).contains(query)) return true;
         Component name = displayName(row);
-        return name != null && name.getString().toLowerCase(Locale.ROOT).contains(query);
+        if (name == null) return false;
+        String nm = name.getString();
+        // §1118b 拼音：装了「通用拼音搜索」时 ✓（全限定名调用 ⇒ 免 import ✓）
+        return nm.toLowerCase(Locale.ROOT).contains(query)
+                || com.mofengbaizhi.tinkersnewlife.client.search.PinyinHelper.matches(nm, query);
     }
 
     // ============================================================

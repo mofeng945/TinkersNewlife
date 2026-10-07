@@ -123,17 +123,10 @@ public abstract class GuiSmelteryTankSearchMixin {
             java.util.List<FluidStack> fluids = this.tank.getFluids();
             int n = Math.min(heights.length, fluids.size());
             int[] out = heights.clone();
-            int zeroed = 0;
             for (int i = 0; i < n; i++) {
                 if (!FluidSearch.matches(fluids.get(i))) {
                     out[i] = 0;     // ★ 置 0：不画、也不占位置 ✓ 索引不变 ✓
-                    zeroed++;
                 }
-            }
-            // §1117j 临时诊断 ✓：确认"过滤到底有没有跑、跑了之后置零了几个"（每 40 次记一条 ✓ 免得刷屏 ✗）
-            if (refresh && TNL$FILTER_DIAG.incrementAndGet() % 40 == 1) {
-                FluidSearch.diag("过滤 查询='" + FluidSearch.getQuery() + "' 流体数=" + fluids.size()
-                        + " 高度数组=" + heights.length + " 置零=" + zeroed);
             }
             // §1117l ⚠ 关键：**字段也要一起改** ✗！
             //   匠魂 `calcLiquidHeights(boolean)` 内部是 `this.liquidHeights = calcLiquidHeights(...); return this.liquidHeights;` ✓
@@ -145,10 +138,6 @@ public abstract class GuiSmelteryTankSearchMixin {
             // 兜底：过滤器失效而已 ✓ 界面照常 ✓
         }
     }
-
-    /** 临时诊断计数（定位完删 ✗） */
-    private static final java.util.concurrent.atomic.AtomicInteger TNL$FILTER_DIAG =
-            new java.util.concurrent.atomic.AtomicInteger();
 
     /**
      * ⭐ §1117p <b>真正让"流体条"消失的修复</b> ✓（用户口径：「筛选了，但流体条的绘制没有任何变化，
@@ -214,25 +203,5 @@ public abstract class GuiSmelteryTankSearchMixin {
             if (fluids.get(i).equals(target)) return i;
         }
         return -1;
-    }
-
-    /**
-     * §1117l <b>绘制端探针</b> ✓ —— 用户反馈「筛掉一个我没看到筛掉」✗：
-     * 过滤端日志说 `置零=1` ✓ 却看不到变化 ✗ ⇒ 必须确认"**真正画的时候**拿到的是哪份数组" ✓。
-     * <p>记 `渲染 高度=[a, b, c]` ✓ —— 若这里有 0 ⇒ 画的就是过滤后的（那问题在别处 ✓）；
-     * 若这里没有 0 ⇒ **绘制走的不是我改的数组** ✗ ⇒ 改从 `renderFluids` 里重定向那次调用 ✓。
-     */
-    @Inject(method = "renderFluids(Lcom/mojang/blaze3d/vertex/PoseStack;)V",
-            at = @At("HEAD"), require = 1, remap = false)
-    private void tnl$probeRender(PoseStack matrices, CallbackInfo ci) {
-        try {
-            if (!FluidSearch.isActive()) return;
-            if (TNL$FILTER_DIAG.incrementAndGet() % 200 != 1) return;
-            int[] h = this.liquidHeights;
-            FluidSearch.diag("渲染 字段高度=" + (h == null ? "null" : java.util.Arrays.toString(h))
-                    + " 流体数=" + this.tank.getFluids().size()
-                    + " contained=" + this.tank.getContained());
-        } catch (Throwable ignored) {
-        }
     }
 }

@@ -151,7 +151,10 @@ public class QuantumVaultScreen extends AbstractContainerScreen<QuantumVaultMenu
         List<PacketVaultSync.Entry> out = new ArrayList<>();
         String q = this.search == null ? "" : this.search.getValue().trim().toLowerCase(Locale.ROOT);
         for (PacketVaultSync.Entry e : snapshot) {
-            if (q.isEmpty() || e.stack().getHoverName().getString().toLowerCase(Locale.ROOT).contains(q)) {
+            String nm = e.stack().getHoverName().getString();
+            // §1118b 拼音：装了「通用拼音搜索」时 ✓（全限定名调用 ⇒ 免 import ✓）
+            if (q.isEmpty() || nm.toLowerCase(Locale.ROOT).contains(q)
+                    || com.mofengbaizhi.tinkersnewlife.client.search.PinyinHelper.matches(nm, q)) {
                 out.add(e);
             }
         }

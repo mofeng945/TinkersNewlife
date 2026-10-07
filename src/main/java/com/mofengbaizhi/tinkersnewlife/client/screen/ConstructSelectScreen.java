@@ -65,15 +65,74 @@ public class ConstructSelectScreen extends Screen {
     private int scrollRow = 0;
 
     // ---- 候选缓存 ----
-    /** 一条候选：物品 + 检索用的小写串（注册名 / 模组 / 本地化名 / 英文名） */
-    private record Entry(Item item, String id, String mod, String name, String enName) {}
+    /**
+     * §1118c 一条候选 ✓ —— ⚠ 「本地化名 / 英文名」改成**懒加载** ✗。
+     *
+     * <p>原来是在 `collectIndex()` 里一次性算完 ✗：对**每个**候选调 `getHoverName().getString()`（本地化查找 ✗）
+     * ＋ 同步解析**所有模组**的 `en_us.json` ✗ ⇒ **首次打开界面必卡** ✓（用户口径 ✓）。
+     * ⇒ 现在打开界面只做"取物品 ＋ 排序"（毫秒级 ✓）；名字推迟到**真正要过滤**时才算 ✓，
+     * 并由 {@code warmUp()} 在界面打开后**每帧补一批** ✓（等玩家打完第一个字基本已热好 ✓）。
+     */
+    private static final class Entry {
+        final Item item;
+        final String id;
+        final String mod;
+        private String name;      // 懒加载（小写 ✓ null ＝ 还没算 ✓）
+        private String enName;    // 懒加载（小写 ✓ null ＝ 还没算 ✓）
+
+        Entry(Item item, String id, String mod) {
+            this.item = item;
+            this.id = id;
+            this.mod = mod;
+        }
+
+        Item item() { return item; }
+
+        /** 本地化名（小写 ✓ 只算一次 ✓） */
+        String name() {
+            if (name == null) {
+                String s;
+                try {
+                    s = new ItemStack(item).getHoverName().getString().toLowerCase(Locale.ROOT);
+                } catch (Throwable t) {
+                    s = "";
+                }
+                name = s;
+            }
+            return name;
+        }
+
+        /**
+         * 英文名（小写 ✓ 只算一次 ✓）—— ⚠ 首次调用会触发 `ensureEnglishNames()` ✓，
+         * 而那个解析**已经挪到后台线程** ✓（见该类注释 ✓）⇒ 若还没加载完 ⇒ 先返回空串 ✓（英文搜索暂时不命中 ✓）。
+         */
+        String enName() {
+            if (enName == null) {
+                String s = "";
+                try {
+                    ensureEnglishNames();
+                    if (EN_NAMES != null) {
+                        s = EN_NAMES.getOrDefault(item.getDescriptionId(), "");
+                    }
+                } catch (Throwable t) {
+                    s = "";
+                }
+                enName = s;
+            }
+            return enName;
+        }
+    }
 
     private static List<Entry> index;
     private static Object cachedRecipeManager;
     private static int cachedRecipeCount = -1;
 
-    /** descriptionId → 英文名（小写），来自所有 lang/en_us.json，只加载一次 */
-    private static Map<String, String> EN_NAMES;
+    /**
+     * descriptionId → 英文名（小写），来自所有 lang/en_us.json。
+     * <p>§1118c ⚠ 改成 {@code volatile} ＋ **后台线程加载** ✓：解析几百个 lang 文件是首开卡顿的主因 ✗
+     * ⇒ 加载完成后一次性赋值 ✓；期间读到 null 的调用方按"没有英文名"处理 ✓。
+     */
+    private static volatile Map<String, String> EN_NAMES;
 
     private final List<Entry> shown = new ArrayList<>();
 
@@ -96,7 +155,9 @@ public class ConstructSelectScreen extends Screen {
         cachedRecipeCount = count;
         if (level == null) return index;
 
-        ensureEnglishNames();
+        // §1118c ⚠ 这里**不再**同步解析所有模组的 lang 文件 ✗（那是首开大顿的主因 ✓）
+        //   ⇒ 改成打开界面后由 warmUp() 在后台线程慢慢解析 ✓（见 ensureEnglishNames() ✓）
+        startEnglishNameLoad();
         var map = ConstructTechnique.constructibleMap(level.getRecipeManager(), level.registryAccess());
         List<Item> items = new ArrayList<>(map.keySet());
         items.sort((a, b) -> {
@@ -107,37 +168,90 @@ public class ConstructSelectScreen extends Screen {
         for (Item item : items) {
             ResourceLocation key = ForgeRegistries.ITEMS.getKey(item);
             if (key == null) continue;
-            ItemStack probe = new ItemStack(item);
-            String name = probe.getHoverName().getString().toLowerCase(Locale.ROOT);
-            String en = EN_NAMES.getOrDefault(probe.getDescriptionId(), "");
-            index.add(new Entry(item, key.toString().toLowerCase(Locale.ROOT), key.getNamespace().toLowerCase(Locale.ROOT),
-                    name, en));
+            // §1118c ⚠ 名字**不再在这里算** ✗（`getHoverName().getString()` 每条都是一次本地化查找 ✓）
+            //   ⇒ Entry 内部懒加载 ✓ 只做最便宜的 id / 模组 ✓
+            index.add(new Entry(item, key.toString().toLowerCase(Locale.ROOT),
+                    key.getNamespace().toLowerCase(Locale.ROOT)));
         }
         return index;
     }
 
-    /** 读取所有命名空间的 en_us.json（只看物品相关的 key），供中文环境下用英文搜索 */
-    private static void ensureEnglishNames() {
-        if (EN_NAMES != null) return;
-        EN_NAMES = new HashMap<>();
+    // ============================================================
+    //  §1118c 首开卡顿优化：英文名后台加载 ＋ 名字分帧暖机
+    // ============================================================
+
+    /** 暖机游标（每帧推进 ✓ 0 ＝ 还没开始 ✓） */
+    private static int warmCursor = 0;
+    /** 英文名是否已经在后台加载（避免重复起线程 ✓） */
+    private static volatile boolean enLoading = false;
+
+    /**
+     * §1118c 打开界面后**每帧**预热一批候选的名字 ✓。
+     * <p>⚠ 目的 ✓：让"打开瞬间"只付"取物品 ＋ 排序"的钱（毫秒级 ✓），
+     * 而把成百上千次本地化查找**摊到几帧里** ✓ ⇒ 玩家打字时基本已经热好 ✓。
+     */
+    private static void warmUp() {
+        List<Entry> all = index;
+        if (all == null || warmCursor >= all.size()) return;
+        int budget = 256;
+        while (budget-- > 0 && warmCursor < all.size()) {
+            Entry e = all.get(warmCursor++);
+            e.name();          // 本地化名：轻 ✓ 直接算 ✓
+            // ⚠ 英文名不在这里算 ✗ —— 它的首次调用要触发"解析所有 lang 文件" ✓
+            //   那件事已经交给后台线程 ✓（见 startEnglishNameLoad ✓）
+        }
+    }
+
+    /**
+     * §1118c 在**主线程**抓取 `ResourceManager`，然后把"解析所有模组 en_us.json"扔到**后台守护线程** ✓。
+     *
+     * <p>⚠ 为什么必须后台 ✗：那一步要遍历并 JSON 解析**几百个** lang 文件 ✓ —— 放在 `init()` 里就是秒级卡顿 ✓
+     * （用户报的"首次开启界面加载卡顿"✓）。而 `ResourceManager` 本身**先从主线程取好**再传进去 ✓，
+     * 避免在工作线程里碰 `Minecraft` 单例 ✗（那才是线程不安全的部分 ✓）。
+     * <p>⚠ 加载完之前 `EN_NAMES` 为空 ⇒ 英文名匹配暂时不命中 ✓（中文名 / 注册名 / 拼音不受影响 ✓）。
+     */
+    private static void startEnglishNameLoad() {
+        if (EN_NAMES != null || enLoading) return;
+        var rm = Minecraft.getInstance().getResourceManager();
+        if (rm == null) return;
+        enLoading = true;
+        Thread t = new Thread(() -> ensureEnglishNames(rm), "tinkersnewlife-construct-lang");
+        t.setDaemon(true);
+        t.start();
+    }
+
+    /**
+     * 读取所有命名空间的 en_us.json（只看物品相关的 key），供中文环境下用英文搜索。
+     * <p>§1118c ⚠ <b>本方法可能运行在后台线程</b> ✗ ⇒ ①只用传进来的 `ResourceManager` ✓（绝不碰 `Minecraft` 单例 ✗）；
+     * ②结果**先在局部 Map 里拼好**，最后**一次性**赋给 `EN_NAMES` ✓（volatile ✓ ⇒ 读到就是完整的 ✓）。
+     */
+    private static void ensureEnglishNames(net.minecraft.server.packs.resources.ResourceManager rm) {
+        if (EN_NAMES != null || rm == null) return;
+        Map<String, String> map = new HashMap<>();
         try {
-            var rm = Minecraft.getInstance().getResourceManager();
             var found = rm.listResources("lang", p -> p.getPath().endsWith("en_us.json"));
             for (var res : found.values()) {
                 try (Reader reader = res.openAsReader()) {
                     JsonObject obj = JsonParser.parseReader(reader).getAsJsonObject();
                     for (var e : obj.entrySet()) {
                         if (e.getValue().isJsonPrimitive()) {
-                            EN_NAMES.put(e.getKey(), e.getValue().getAsString().toLowerCase(Locale.ROOT));
+                            map.put(e.getKey(), e.getValue().getAsString().toLowerCase(Locale.ROOT));
                         }
                     }
                 } catch (Throwable ignored) {
                 }
             }
-            TinkersNewlife.LOGGER.debug("[构筑] 英文名缓存已建立：{} 条", EN_NAMES.size());
+            EN_NAMES = map;                       // ★ 一次性发布 ✓
+            TinkersNewlife.LOGGER.debug("[构筑] 英文名缓存已建立：{} 条", map.size());
         } catch (Throwable t) {
             TinkersNewlife.LOGGER.warn("[构筑] 读取英文名失败，英文搜索将退化为按注册名匹配: {}", t.toString());
         }
+    }
+
+    /** 兼容旧调用点（若已加载则立刻返回 ✓ 未加载则由 {@link #startEnglishNameLoad()} 负责 ✓） */
+    private static void ensureEnglishNames() {
+        if (EN_NAMES != null) return;
+        startEnglishNameLoad();
     }
 
     // ============================================================
@@ -207,9 +321,13 @@ public class ConstructSelectScreen extends Screen {
             return e.item.builtInRegistryHolder().tags()
                     .anyMatch(t -> t.location().toString().toLowerCase(Locale.ROOT).contains(tagText));
         }
-        // 普通文本：本地化名 / 英文名 / 注册名 / 模组名
-        return e.name.contains(token) || e.enName.contains(token)
-                || e.id.contains(token) || e.mod.contains(token);
+        // 普通文本：本地化名 / 英文名 / 注册名 / 模组名 ＋ **§1118b 拼音**（装了「通用拼音搜索」时 ✓）
+        // ⚠ §1118c 名字改成 `name()` / `enName()` 懒加载 ✓（打开界面时不再逐条本地化查找 ✓）
+        String name = e.name();
+        // ⚠ 用全限定名调用 ⇒ 本文件不必再加 import ✓
+        return name.contains(token) || e.enName().contains(token)
+                || e.id.contains(token) || e.mod.contains(token)
+                || com.mofengbaizhi.tinkersnewlife.client.search.PinyinHelper.matches(name, token);
     }
 
     private int totalRows() {
@@ -266,6 +384,10 @@ public class ConstructSelectScreen extends Screen {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         // 背景 + 面板 + 控件（搜索框）由原版流程绘制
         super.render(graphics, mouseX, mouseY, partialTick);
+
+        // §1118c 暖机：每帧补一批候选的本地化名 ✓
+        //   ⇒ 打开瞬间只付"取物品＋排序"的钱（毫秒级 ✓），几百次本地化查找摊到多帧 ✓
+        warmUp();
 
         // 物品图标（只画可见行）+ 悬停高亮
         int firstIndex = scrollRow * COLS;

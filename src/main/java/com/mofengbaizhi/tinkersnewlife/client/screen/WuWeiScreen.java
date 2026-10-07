@@ -114,7 +114,9 @@ public class WuWeiScreen extends AbstractRowListScreen<String> {
             ResourceLocation key = type == null ? null : ForgeRegistries.ENTITY_TYPES.getKey(type);
             return key != null && key.getNamespace().toLowerCase(Locale.ROOT).contains(m);
         }
-        return searchKey(id).contains(token);
+        // §1118b 拼音：装了「通用拼音搜索」时 ✓ 打 rongtie / rt 也能命中中文名 ✓（用全限定名 ⇒ 免 import ✓）
+        return searchKey(id).contains(token)
+                || com.mofengbaizhi.tinkersnewlife.client.search.PinyinHelper.matches(searchKey(id), token);
     }
 
     /** 搜索串：本地化名 + 英文名 + 注册名（都小写），只在首次需要时拼一次 */
