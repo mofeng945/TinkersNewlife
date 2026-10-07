@@ -89,6 +89,21 @@ public class WhipLashEntity extends Entity {
     private static final int BOWSTRING_PART_INDEX = 2;
 
     /**
+     * ⭐ §1118g <b>复用鞭身时的"重挥代次"</b> ✓ —— 用户口径：
+     * 「**上一条鞭子未消失时不要创建新鞭子，而是驱动未消失的鞭子继续挥鞭**」✓
+     *
+     * <p>⚠ 为什么需要它 ✗：时间轴 {@code age} 是**本地字段** ✓（客户端只在 owner 就绪后才推进 ✓ 见 {@code tick()} ✓），
+     * 而"重新驱动"是**服务端**决定的 ✓ ⇒ 必须让客户端也把 {@code age} 归零 ✗，否则两边时间轴错位 ✗
+     * （客户端会以为驱动早就结束了 ⇒ 看不见这次挥鞭 ✓）。
+     * ⇒ 做法：服务端 {@code +1} ✓，客户端发现值变了就归零 ✓（一次挥鞭只发一个字段更新 ✓ 很便宜 ✓）。
+     */
+    private static final EntityDataAccessor<Integer> LASH_GEN =
+            SynchedEntityData.defineId(WhipLashEntity.class, EntityDataSerializers.INT);
+
+    /** 客户端上次见到的代次 ✓（用来发现"服务端又驱动了一次"✓） */
+    private int seenLashGen = 0;
+
+    /**
      * 左键：伤害窗口 ＝ **起手段之后多少 tick 还能命中** ✓。
      *
      * <p>⚠ §1118e <b>用户口径「手感很差」的**结构性原因**就在这里</b> ✗：
@@ -178,12 +193,45 @@ public class WhipLashEntity extends Entity {
     }
 
     private static void spawn(Player player, int phase) {
+        if (phase == PHASE_LASH) {
+            // ⭐ §1118g 用户口径：「**上一条鞭子未消失时不要创建新鞭子，而是驱动未消失的鞭子继续挥鞭**」✓
+            //   ⇒ 有还活着的鞭身就**不新建** ✗：直接把它再驱动一次 ✓
+            //   ⚠ 关键好处：`physics.reset(...)` 只在**私有构造函数**里 ✓（见下面 ✓）
+            //     ⇒ 复用实体时**绳形与动量全都保留** ✓ ⇒ 它是"从当前位置再被甩一次" ✓ 正是要的效果 ✓
+            //   ⚠ 已失效的旧记录要顺手清掉 ✗（它可能被 tickLifetime 自行 discard 了 ✓）
+            WhipLashEntity existing = ACTIVE_LASHES.get(player.getUUID());
+            if (existing != null) {
+                if (existing.isAlive() && !existing.isRemoved()) {
+                    existing.setBowstringVariant(bowstringVariantOf(player));   // 中途换过弓弦材料也跟着更新 ✓
+                    existing.restartLash();
+                    return;
+                }
+                ACTIVE_LASHES.remove(player.getUUID());
+            }
+        }
         WhipLashEntity lash = new WhipLashEntity(player.level(), player, phase);
         // §1118d 把"弓弦部件的材料色来源"同步给鞭身 ✓（渲染器据此给整条鞭身上色 ✓ 用户口径 ✓）
         lash.setBowstringVariant(bowstringVariantOf(player));
         player.level().addFreshEntity(lash);
         if (phase == PHASE_LASH) {
             ACTIVE_LASHES.put(player.getUUID(), lash);
+        }
+    }
+
+    /**
+     * ⭐ §1118g <b>复用未消失的鞭身：再挥一次</b> ✓（用户口径 ✓）。
+     *
+     * <p>只做两件事 ✓：①时间轴 {@code age} 归零（重新走起手＋抽击 ✓）；
+     * ②清掉本轮命中记录（允许这一鞭重新打人 ✓）。
+     * <p>⚠ 刻意**不碰**物理 ✗：绳形/动量保留 ⇒ 表现为"鞭子还在空中，又被甩了一鞭" ✓✓
+     * （若这里 reset 物理 ⇒ 鞭子会瞬间跳回手上 ✗ 那是另一个观感 ✗）。
+     * <p>⚠ 服务端还要把代次 +1 ✓ 通知客户端一起归零 ✓（见 {@link #LASH_GEN} ✓）。
+     */
+    public void restartLash() {
+        this.age = 0;
+        this.contactedTargets.clear();
+        if (!this.level().isClientSide) {
+            this.setLashGen(this.getLashGen() + 1);
         }
     }
 
@@ -283,10 +331,14 @@ public class WhipLashEntity extends Entity {
         this.getEntityData().define(CHARGE_TICKS, 0);
         this.getEntityData().define(RETRACT_TICK, -1);
         this.getEntityData().define(BOWSTRING_VARIANT, "");
+        this.getEntityData().define(LASH_GEN, 0);
     }
 
     public String getOwnerUuid() { return this.getEntityData().get(OWNER_UUID); }
     public void setOwnerUuid(String v) { this.getEntityData().set(OWNER_UUID, v); }
+    /** §1118g 重挥代次（服务端 +1 ⇒ 客户端把时间轴归零 ✓） */
+    public int getLashGen() { return this.getEntityData().get(LASH_GEN); }
+    public void setLashGen(int v) { this.getEntityData().set(LASH_GEN, v); }
     /** §1118d 弓弦材质 id（空串 ＝ 拿不到 ⇒ 渲染器用默认色 ✓） */
     public String getBowstringVariant() { return this.getEntityData().get(BOWSTRING_VARIANT); }
     public void setBowstringVariant(String v) {
@@ -337,6 +389,12 @@ public class WhipLashEntity extends Entity {
             // ⚠ 客户端这里**不能**推进 age ✓ ⇒ 时间轴会等 owner 就绪之后才开始 ✓
             // 否则攻速快的短驱动会在客户端被整段吃掉 ✗（§1056 的 bug ✓）
             return;
+        }
+        // §1118g 复用鞭身：服务端又驱动了一次（代次变化）⇒ 客户端时间轴与命中记录一起归零 ✓ 两边对齐 ✓
+        if (this.seenLashGen != getLashGen()) {
+            this.seenLashGen = getLashGen();
+            this.age = 0;
+            this.contactedTargets.clear();
         }
         this.age++;
 
