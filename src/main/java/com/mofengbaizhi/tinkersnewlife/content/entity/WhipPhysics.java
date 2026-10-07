@@ -103,6 +103,21 @@ public final class WhipPhysics {
     private static final double POST_LASH_VELOCITY_RETENTION = 0.88D;
     private static final double GRAVITY = -21.5D;
     private static final double SELF_COLLISION_DISTANCE = 0.055D;
+    /**
+     * ⭐ §1118i <b>鞭身"画出来的半宽"倍率</b> ✓ —— 必须与 {@code WhipLashRenderer} 用的值**完全一致** ✗。
+     *
+     * <p>用户口径 ✓：「鞭子落地上会**沉地里面**」✗
+     * <p>根因 ✓：物理碰撞半径用的是裸 {@link #SEGMENT_RADIUS} ✓，
+     * 而渲染半宽是 {@code SEGMENT_RADIUS × 1.35} ✗（`WhipLashRenderer:116-117` ✓）
+     * ⇒ **画出来的鞭身比物理体宽 35%** ✗ ⇒ 躺在地上时圆心停在离地一个 radius 处 ✓，
+     * 布面却比它宽 ⇒ **下半截切进地面** ✓✓（布面还是正对镜头的公告板 ✓ 俯视时扎得更深 ✓）。
+     *
+     * <p>⇒ 修法：**物理碰撞半径按这个倍率放宽** ✓ ⇒ 圆心会被抬到让"画的边缘正好贴地"的高度 ✓
+     * （⚠ 副作用：绳子离墙也会多留 35% 余量 ✓ 无害 ✓）。
+     */
+    public static final double RENDER_HALF_WIDTH_SCALE = 1.35D;
+
+    /** 接触皮肤（判定用的额外余量 ✓ §1118i 起"贴地抬升"主要交给 {@link #RENDER_HALF_WIDTH_SCALE} ✓） */
     private static final double CONTACT_SKIN = 0.0125D;
     private static final int DEPENETRATION_PASSES = 8;
     private static final double DEPENETRATION_EPSILON = 1.0E-4D;
@@ -826,7 +841,11 @@ public final class WhipPhysics {
         for (int pass = 0; pass < DEPENETRATION_PASSES; pass++) {
             boolean moved = false;
             for (int i = 1; i < POINTS; i++) {
-                double radius = SEGMENT_RADIUS[Math.min(i, SEGMENT_RADIUS.length - 1)];
+                // ⭐ §1118i 用户口径：「鞭子落地上会**沉地里面**」✗
+                //   根因：这里原来用**裸** SEGMENT_RADIUS ✗，而渲染半宽是 radius × 1.35 ✗
+                //   ⇒ 画出来的鞭身比物理体宽 35% ⇒ 躺下时布面下半截切进地面 ✓
+                //   ⇒ 现在按同一个倍率放宽 ⇒ 圆心被抬到"画的边缘正好贴地"✓（与 WhipLashRenderer 同一个常量源 ✓）
+                double radius = SEGMENT_RADIUS[Math.min(i, SEGMENT_RADIUS.length - 1)] * RENDER_HALF_WIDTH_SCALE;
                 Vec3 p = pos[i];
                 BlockPos center = BlockPos.containing(p);
                 for (int dx = -1; dx <= 1; dx++) {

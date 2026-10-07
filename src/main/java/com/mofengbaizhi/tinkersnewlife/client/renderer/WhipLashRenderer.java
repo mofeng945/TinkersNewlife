@@ -40,7 +40,12 @@ public class WhipLashRenderer extends EntityRenderer<WhipLashEntity> {
      * 半宽 ＝ <b>照参照模组的逐段碰撞半径收放</b> ✓（0.059 → 0.018，梢端 0.0388 ✓）
      * 再乘一个可读性系数 ✓（纯视觉 ✓ 与物理半径解耦 ✓）。
      */
-    private static final float HALF_WIDTH_SCALE = 1.35F;
+    /**
+     * 半宽倍率 ✓ —— ⚠ §1118i 起**必须与物理侧共用同一个常量** ✗：
+     * 物理的接触半径也乘它（`WhipPhysics#depenetrateFromBlocks` ✓）
+     * ⇒ 两边一旦不一致，就会出现"鞭子沉进地面/浮在地上"✗（用户报过"沉地里面"✓）。
+     */
+    private static final float HALF_WIDTH_SCALE = (float) WhipPhysics.RENDER_HALF_WIDTH_SCALE;
     /** 顶点色（偏米白的皮革色 ✓ 贴图只提供明暗 ✓） */
     private static final int TINT = 0xE6DCC8;
 
