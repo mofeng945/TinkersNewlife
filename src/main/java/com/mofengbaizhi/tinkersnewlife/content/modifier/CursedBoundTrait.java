@@ -29,4 +29,16 @@ import com.mofengbaizhi.tinkersnewlife.content.modifier.base.BaseCombatModifier;
  * </ul>
  */
 public class CursedBoundTrait extends BaseCombatModifier {
+
+    /**
+     * ⭐ <b>不显示等级</b> ✓（用户口径 ✓「通用特性-七咒所缚（**无等级**）」✓）。
+     * <p>⚠ 为什么需要它 ✗：材料特性是**按部件叠加**的 ✓（一个三部件工具会把同一特性带成 III 级 ✗
+     * —— 用户实测截图里「延展 III / 灵性以太 III」就是这么来的 ✓）。
+     * 覆写 {@code getDisplayName(int)} 返回**不带等级**的名字 ✓ 面板上就不会出现罗马数字 ✓
+     * （匠魂默认是 {@code ModifierLevelDisplay.DEFAULT.nameForLevel(...)} ✓）。
+     */
+    @Override
+    public net.minecraft.network.chat.Component getDisplayName(int level) {
+        return getDisplayName();   // ⚠ 不带等级 ✓
+    }
 }
