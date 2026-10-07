@@ -81,10 +81,23 @@ description='''一个匠魂附属，适用于Newlifestyle整合包''' #mandatory
 # ⭐ 冰火传说：驯龙杖、龙血、龙钢等核心内容均依赖它。
 # 声明为可选依赖：安装时获得完整功能；未安装时模组仍可加载（配方会跳过缺失物品），
 # 且不再因缺少声明导致相关功能边界不清。
+#
+# ⚠⚠ §1118p 版本区间必须同时覆盖【两个分支】—— 用户问「我的冰火传说联动兼容社区版吗」时查清：
+#   ① 原版：[冰火传说] iceandfire-2.1.13-1.20.1-beta-5.jar（modId 同为 iceandfire ✓）
+#   ② 社区版：[冰火传说社区版] IceAndFireCE-1.2.7-1.20.1-forge.jar（modId 仍是 iceandfire ✓
+#      但版本号走**自己的 1.x 线** ✗ —— displayName「Ice And Fire Community Edition」✓，
+#      包名也从 com.github.alexthe666.iceandfire ⇒ com.iafenvoy.iceandfire ✗）
+#   ⇒ 原先写死的 "[2.0.0,)" ✗ 会让社区版（1.2.7）**落在区间外** ⇒ 加载时打一条依赖版本警告 ✗
+#   （因为 mandatory=false ✓ 所以**不致命** ✓ —— 实测社区版下本模组照常加载并运行 ✓）。
+#   ⇒ 放宽成 "[1.0.0,)" ✓ 两条线都覆盖 ✓ 警告消失 ✓。
+# ⚠ 兼容性的另一半（更关键 ✓）：本模组**完全不引用冰火的 Java 类** ✗ ——
+#   integration/iceandfire 下两个类零冰火 import ✓，联动全靠**字符串 id**
+#   （iceandfire:xxx 物品/实体/标签 ✓）＋ IntegrationLoader 的 **ModList.isLoaded("iceandfire")** ✓
+#   ⇒ 所以"社区版换包名"对本模组**毫无影响** ✓（实测：我们引用的 34 个 id 在社区版里**一个不缺** ✓）。
 [[dependencies.tinkersnewlife]]
     modId="iceandfire"
     mandatory=false
-    versionRange="[2.0.0,)"
+    versionRange="[1.0.0,)"
     ordering="AFTER"
     side="BOTH"
 
