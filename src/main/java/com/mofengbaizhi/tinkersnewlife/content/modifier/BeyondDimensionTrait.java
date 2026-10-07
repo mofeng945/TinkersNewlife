@@ -141,10 +141,8 @@ public class BeyondDimensionTrait extends BaseCombatModifier implements ToolStat
         return ToolStats.ARMOR_TOUGHNESS;
     }
     /**
-     * ⭐ <b>按住 Shift 显示成长量</b> ✓（用户口径 ✓ 格式：「**属性名：+xx%**」逐行 ✓）。
-     * <p>属性名复用匠魂自己的键 ✓（`tool_stat.tconstruct.*` ✓ 自带冒号 ✓）；
-     * ⭐ **全类型减伤**匠魂没有 ✓ ⇒ 用我们自己的键 ✓
-     * `modifier.tinkersnewlife.transcendent_dimension.damage_reduction` ✓。
+     * ⭐ <b>按住 Shift 时把成长量追加到匠魂原有那一行后面</b> ✓（用户口径 ✓ 与工具侧同一套 ✓）；
+     * ⭐ **全类型减伤**匠魂没有对应行 ✗ ⇒ 它**单开一行** ✓（那是新信息 ✓ 不算冗余 ✓）。
      */
     @Override
     public void addTooltip(IToolStackView tool, ModifierEntry modifier,
@@ -158,26 +156,42 @@ public class BeyondDimensionTrait extends BaseCombatModifier implements ToolStat
             if (data == null) {
                 return;
             }
-            line(tooltip, "tool_stat.tconstruct.durability", growthOf(data, KEYS[0])
-                    * 100.0F, tool.getStats().get(ToolStats.DURABILITY) > 0F);
-            line(tooltip, "tool_stat.tconstruct.armor", growthOf(data, KEYS[1])
-                    * 100.0F, tool.getStats().get(ToolStats.ARMOR) > 0F);
-            line(tooltip, "tool_stat.tconstruct.armor_toughness", growthOf(data, KEYS[2])
-                    * 100.0F, tool.getStats().get(ToolStats.ARMOR_TOUGHNESS) > 0F);
-            // ⭐ 护甲减伤之后的那一次全类型减伤 ✓（用户口径 ✓ 上限 80% ✓）
-            line(tooltip, "modifier.tinkersnewlife.transcendent_dimension.damage_reduction",
-                    data.getFloat(drKey()) * 100.0F, true);
+            appendGrowth(tooltip, "tool_stat.tconstruct.durability", growthOf(data, KEYS[0]));
+            appendGrowth(tooltip, "tool_stat.tconstruct.armor", growthOf(data, KEYS[1]));
+            appendGrowth(tooltip, "tool_stat.tconstruct.armor_toughness", growthOf(data, KEYS[2]));
+            // ⭐ 护甲减伤之后的那一次全类型减伤 ✓（用户口径 ✓ 上限 80% ✓）—— 匠魂没有这一行 ✓ 故单开 ✓
+            String drName = stripFormatting(Component
+                    .translatable("modifier.tinkersnewlife.transcendent_dimension.damage_reduction").getString());
+            if (!drName.isEmpty()) {
+                tooltip.add(Component.translatable("modifier.tinkersnewlife.transcendent_dimension.damage_reduction")
+                        .append(Component.literal(String.format("%.1f%%", data.getFloat(drKey()) * 100.0F))
+                                .withStyle(net.minecraft.ChatFormatting.GREEN)));
+            }
         } catch (Throwable ignored) {
             // 提示出错绝不能影响物品显示 ✓
         }
     }
 
-    /** 加一行「属性名：+xx%」✓（`applicable` 为假 ⇒ 这件护甲没这项 ✓ 不显示 ✗） */
-    private static void line(List<Component> tooltip, String key, float percent, boolean applicable) {
-        if (!applicable) {
+    /** 追加到匠魂已经显示的那一行后面 ✓（找不到 ⇒ 什么都不做 ✗） */
+    private static void appendGrowth(List<Component> tooltip, String statKey, float growth) {
+        String name = stripFormatting(Component.translatable(statKey).getString());
+        if (name.isEmpty()) {
             return;
         }
-        tooltip.add(Component.translatable(key)
-                .append(Component.literal(String.format("+%.1f%%", percent))));
+        for (int i = 0; i < tooltip.size(); i++) {
+            String line = stripFormatting(tooltip.get(i).getString());
+            if (!line.startsWith(name)) {
+                continue;
+            }
+            tooltip.set(i, tooltip.get(i).copy().append(Component
+                    .literal(String.format("    +%.1f%%", growth * 100.0F))
+                    .withStyle(net.minecraft.ChatFormatting.GREEN)));
+            return;
+        }
+    }
+
+    /** 去掉 § 颜色代码再比对 ✓ */
+    private static String stripFormatting(String text) {
+        return text == null ? "" : text.replaceAll("§.", "").trim();
     }
 }

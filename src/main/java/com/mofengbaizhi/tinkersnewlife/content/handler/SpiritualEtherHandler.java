@@ -118,6 +118,11 @@ public final class SpiritualEtherHandler {
         }
         // 只挑"这件工具真正拥有"的属性 ✓（近战不会长到精准度上 ✗）
         List<String> candidates = new ArrayList<>(7);
+        // ⚠⚠ 远程三项**不能只看 > 0** ✗ —— 匠魂给所有工具都填了默认值 ✓
+        // ⇒ 近战剑的"拉弓速度"也 > 0 ✗（⚠ 这就是用户报的"近战武器为什么加拉弓速度"✗）
+        // ⇒ 只有**非采集型工具**（弓弩这类 MINING_SPEED ≤ 0 ✓）才把远程三项列为可成长
+        // ⚠ 如实说明：这是**我定的判据** ✓ 不是匠魂官方接口 ✗（匠魂没有公开"这工具有没有该属性"的方法）
+        boolean rangedTool = tool.getStats().get(ToolStats.MINING_SPEED) <= 0F;
         if (tool.getStats().get(ToolStats.DURABILITY) > 0F && EtherSpiritTrait.canGrow(data, EtherSpiritTrait.KEYS[0])) {
             candidates.add(EtherSpiritTrait.KEYS[0]);
         }
@@ -130,13 +135,13 @@ public final class SpiritualEtherHandler {
         if (tool.getStats().get(ToolStats.MINING_SPEED) > 0F && EtherSpiritTrait.canGrow(data, EtherSpiritTrait.KEYS[3])) {
             candidates.add(EtherSpiritTrait.KEYS[3]);
         }
-        if (tool.getStats().get(ToolStats.ACCURACY) > 0F && EtherSpiritTrait.canGrow(data, EtherSpiritTrait.KEYS[4])) {
+        if (rangedTool && tool.getStats().get(ToolStats.ACCURACY) > 0F && EtherSpiritTrait.canGrow(data, EtherSpiritTrait.KEYS[4])) {
             candidates.add(EtherSpiritTrait.KEYS[4]);
         }
-        if (tool.getStats().get(ToolStats.VELOCITY) > 0F && EtherSpiritTrait.canGrow(data, EtherSpiritTrait.KEYS[5])) {
+        if (rangedTool && tool.getStats().get(ToolStats.VELOCITY) > 0F && EtherSpiritTrait.canGrow(data, EtherSpiritTrait.KEYS[5])) {
             candidates.add(EtherSpiritTrait.KEYS[5]);
         }
-        if (tool.getStats().get(ToolStats.DRAW_SPEED) > 0F && EtherSpiritTrait.canGrow(data, EtherSpiritTrait.KEYS[6])) {
+        if (rangedTool && tool.getStats().get(ToolStats.DRAW_SPEED) > 0F && EtherSpiritTrait.canGrow(data, EtherSpiritTrait.KEYS[6])) {
             candidates.add(EtherSpiritTrait.KEYS[6]);
         }
         if (candidates.isEmpty()) {

@@ -121,50 +121,61 @@ public class EtherSpiritTrait extends BaseCombatModifier implements ToolStatsMod
         return getGrowth(data, key) < MAX_GROWTH;
     }
     /**
-     * ⭐ <b>按住 Shift 显示各属性的成长量</b> ✓（用户口径 ✓ 格式：「**属性名：+xx%**」逐行 ✓）。
-     * <p>属性名**直接复用匠魂自己的键** ✓（`tool_stat.tconstruct.*` ✓ 它们**自带冒号** ✓ 与我方格式正好接上 ✓
-     * ⇒ 不自己造名字 ✓ 也不会和匠魂说法不一致 ✓）；
-     * ⚠ 只列**这件工具真正拥有**的属性 ✓（与成长逻辑同一判据 ✓）⇒ 近战工具不会列出精准度 ✗。
+     * ⭐ <b>按住 Shift 时，把各属性的成长量**追加到匠魂原有那一行后面**</b> ✓（用户口径 ✓
+     * 「直接追加到上面原有的属性数字空几格后面」✓ 格式「属性名：+xx%」✓）。
+     *
+     * <p>⭐⭐ <b>不新增行</b> ✗ —— 而是**找到匠魂已经显示的那一行**（按 {@code tool_stat.tconstruct.*} 的名字匹配 ✓）
+     * 在后面接上成长量 ✓。⚠ 这样做有个**白捡的好处** ✓：匠魂**只显示这件工具真正拥有的属性**
+     * （近战剑不显示「拉弓速度」✗）⇒ ⭐ **我们自然也就不会给近战追加拉弓速度** ✓
+     * （之前我另起一行 ✗ 才闹出"近战武器也有拉弓速度" ✗）。
      */
     @Override
     public void addTooltip(IToolStackView tool, ModifierEntry modifier,
                            @Nullable Player player, List<Component> tooltip,
                            TooltipKey tooltipKey, TooltipFlag tooltipFlag) {
         if (tooltipKey != TooltipKey.SHIFT) {
-            return;   // ⚠ 只在按住 Shift 时显示 ✓（用户口径 ✓）
+            return;   // ⚠ 只在按住 Shift 时显示 ✓
         }
         try {
             IModDataView data = tool.getPersistentData();
             if (data == null) {
                 return;
             }
-            addLine(tooltip, "tool_stat.tconstruct.durability", KEYS[0], data,
-                    tool.getStats().get(ToolStats.DURABILITY) > 0F);
-            addLine(tooltip, "tool_stat.tconstruct.attack_damage", KEYS[1], data,
-                    tool.getStats().get(ToolStats.ATTACK_DAMAGE) > 0F);
-            addLine(tooltip, "tool_stat.tconstruct.attack_speed", KEYS[2], data,
-                    tool.getStats().get(ToolStats.ATTACK_SPEED) > 0F);
-            addLine(tooltip, "tool_stat.tconstruct.mining_speed", KEYS[3], data,
-                    tool.getStats().get(ToolStats.MINING_SPEED) > 0F);
-            addLine(tooltip, "tool_stat.tconstruct.accuracy", KEYS[4], data,
-                    tool.getStats().get(ToolStats.ACCURACY) > 0F);
-            addLine(tooltip, "tool_stat.tconstruct.velocity", KEYS[5], data,
-                    tool.getStats().get(ToolStats.VELOCITY) > 0F);
-            addLine(tooltip, "tool_stat.tconstruct.draw_speed", KEYS[6], data,
-                    tool.getStats().get(ToolStats.DRAW_SPEED) > 0F);
+            appendGrowth(tooltip, "tool_stat.tconstruct.durability", getGrowth(data, KEYS[0]));
+            appendGrowth(tooltip, "tool_stat.tconstruct.attack_damage", getGrowth(data, KEYS[1]));
+            appendGrowth(tooltip, "tool_stat.tconstruct.attack_speed", getGrowth(data, KEYS[2]));
+            appendGrowth(tooltip, "tool_stat.tconstruct.mining_speed", getGrowth(data, KEYS[3]));
+            appendGrowth(tooltip, "tool_stat.tconstruct.accuracy", getGrowth(data, KEYS[4]));
+            appendGrowth(tooltip, "tool_stat.tconstruct.velocity", getGrowth(data, KEYS[5]));
+            appendGrowth(tooltip, "tool_stat.tconstruct.draw_speed", getGrowth(data, KEYS[6]));
         } catch (Throwable ignored) {
             // 提示出错绝不能影响物品显示 ✓
         }
     }
 
-    /** 加一行「属性名：+xx%」✓（`applicable` 为假 ⇒ 这件工具没这项 ✓ 不显示 ✗） */
-    private static void addLine(List<Component> tooltip, String statKey, String growthKey,
-                                IModDataView data, boolean applicable) {
-        if (!applicable) {
+    /**
+     * 把成长量追加到"匠魂已经显示的那一行"后面 ✓（空四格 ＋ 绿色 ✓）。
+     * <p>⚠ 找不到那一行 ⇒ **什么都不做** ✗（说明这件工具本来就没这项 ✓ 比如近战没有拉弓速度 ✓）。
+     */
+    private static void appendGrowth(List<Component> tooltip, String statKey, float growth) {
+        String name = stripFormatting(Component.translatable(statKey).getString());
+        if (name.isEmpty()) {
             return;
         }
-        float growth = getGrowth(data, growthKey);
-        tooltip.add(Component.translatable(statKey)
-                .append(Component.literal(String.format("+%.1f%%", growth * 100.0F))));
+        for (int i = 0; i < tooltip.size(); i++) {
+            String line = stripFormatting(tooltip.get(i).getString());
+            if (!line.startsWith(name)) {
+                continue;
+            }
+            tooltip.set(i, tooltip.get(i).copy().append(Component
+                    .literal(String.format("    +%.1f%%", growth * 100.0F))
+                    .withStyle(net.minecraft.ChatFormatting.GREEN)));
+            return;
+        }
+    }
+
+    /** 去掉 § 颜色代码再比对 ✓（否则名字里带色码就匹配不上 ✗） */
+    private static String stripFormatting(String text) {
+        return text == null ? "" : text.replaceAll("§.", "").trim();
     }
 }
