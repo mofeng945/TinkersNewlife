@@ -65,3 +65,4 @@ mobrenderer.txt
 .tmp_tacz/
 # 数据生成器（runData）输出
 run-data/
+tools/_tmp_*

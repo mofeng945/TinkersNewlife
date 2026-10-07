@@ -5,19 +5,23 @@
   "perStat": {
     "tconstruct:head": [
       { "level": 1, "name": "tinkersnewlife:seven_curses_bound" },
-      { "level": 1, "name": "tconstruct:expanded" }
+      { "level": 1, "name": "tconstruct:expanded" },
+      { "level": 1, "name": "tinkersnewlife:spiritual_ether" }
     ],
     "tconstruct:handle": [
       { "level": 1, "name": "tinkersnewlife:seven_curses_bound" },
-      { "level": 1, "name": "tconstruct:expanded" }
+      { "level": 1, "name": "tconstruct:expanded" },
+      { "level": 1, "name": "tinkersnewlife:spiritual_ether" }
     ],
     "tconstruct:limb": [
       { "level": 1, "name": "tinkersnewlife:seven_curses_bound" },
-      { "level": 1, "name": "tconstruct:expanded" }
+      { "level": 1, "name": "tconstruct:expanded" },
+      { "level": 1, "name": "tinkersnewlife:spiritual_ether" }
     ],
     "tconstruct:grip": [
       { "level": 1, "name": "tinkersnewlife:seven_curses_bound" },
-      { "level": 1, "name": "tconstruct:expanded" }
+      { "level": 1, "name": "tconstruct:expanded" },
+      { "level": 1, "name": "tinkersnewlife:spiritual_ether" }
     ],
     "tconstruct:plating_helmet": [ { "level": 1, "name": "tinkersnewlife:seven_curses_bound" } ],
     "tconstruct:plating_chestplate": [ { "level": 1, "name": "tinkersnewlife:seven_curses_bound" } ],

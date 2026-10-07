@@ -45,6 +45,19 @@ public class Modifiers {
     public static final StaticModifier<CursedBoundTrait> SEVEN_CURSES_BOUND =
             MODIFIERS.register("seven_curses_bound", CursedBoundTrait::new);
 
+    /**
+     * ⭐ §1118y <b>灵性以太</b>（工具特性 ✓ 有等级 ✓）—— 材料「恶念星灵」工具侧主特性 ✓。
+     * ⚠ 类名是 {@link EtherSpiritTrait} ✓（同样因为写文件工具拒绝重建我删过的同名路径 ✓）；
+     * 注册 id 仍是 {@code spiritual_ether} ✓。
+     * <p>用户口径 ✓：每级 **＋0.5** 方块/实体范围 ✓；每次击杀随机增长一项属性 ✓
+     * 单次长幅 **0.1%×等级 ~ 1.5%×等级** ✓ 每项上限 **1000%** ✓；
+     * 攻击时每级 **1%** 概率挂 5s 虚空之蚀/霜冻/迟缓或脚下 3×3 冰之火 ✓。
+     * <p>实现 ✓：成长值存工具持久化数据 ✓ 由 {@link EtherSpiritTrait#addToolStats} 乘进统计 ✓；
+     * 击杀成长与范围在 {@code content.handler.SpiritualEtherHandler} ✓。
+     */
+    public static final StaticModifier<EtherSpiritTrait> SPIRITUAL_ETHER =
+            MODIFIERS.register("spiritual_ether", EtherSpiritTrait::new);
+
     public static final StaticModifier<DragonsteelIceTrait> DRAGONSTEEL_ICE =
             MODIFIERS.register("dragonsteel_ice", DragonsteelIceTrait::new);
 
