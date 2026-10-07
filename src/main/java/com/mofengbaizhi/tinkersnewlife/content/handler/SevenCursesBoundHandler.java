@@ -21,7 +21,7 @@ import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
  * ⭐ §1118y <b>七咒所缚</b>的拦截器（用户口径 ✓）。
  *
  * <h2>规矩（用户原文 ✓）</h2>
- * 「只有承受**七咒**时间为**在世界上时间 90% 以上**的人才可以使用它」✓；
+ * 「只有承受**七咒**时间为**在世界上时间 99% 以上**的人才可以使用它」✓；
  * 「不满足条件的人**手持、装备或装配进饰品时**会自动将工具**丢回背包**，
  * 如果背包中没有空位会**自动将其扔在地上**」✓。
  *
@@ -54,8 +54,8 @@ public final class SevenCursesBoundHandler {
     private static final String KEY_TOTAL = "tn_cursed_bound_total";
     private static final String KEY_CURSED = "tn_cursed_bound_cursed";
 
-    /** 合格阈值 ✓：受七咒时间 ÷ 在线时间 ≥ 90% ✓（用户口径 ✓） */
-    private static final int RATIO_PERCENT = 90;
+    /** 合格阈值 ✓：受七咒时间 ÷ 在线时间 ≥ 99% ✓（用户口径 ✓） */
+    private static final int RATIO_PERCENT = 99;
 
     /** 检查节流 ✓（每 20 tick ＝ 1 秒一次 ✓） */
     private static final int CHECK_INTERVAL = 20;
@@ -89,7 +89,7 @@ public final class SevenCursesBoundHandler {
     }
 
     /**
-     * 是否合格 ✓：受七咒 tick 占在线 tick 的 **90% 以上** ✓（用户口径 ✓）。
+     * 是否合格 ✓：受七咒 tick 占在线 tick 的 **99% 以上** ✓（用户口径 ✓）。
      * <p>⚠ 用整数比较 ✗：{@code cursed / total >= 0.9} ⇔ {@code cursed * 100 >= total * 90} ✓。
      */
     public static boolean isQualified(long totalTicks, long cursedTicks) {

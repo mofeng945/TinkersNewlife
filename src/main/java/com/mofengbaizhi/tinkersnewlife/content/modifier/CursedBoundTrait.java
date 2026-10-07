@@ -12,7 +12,7 @@ import com.mofengbaizhi.tinkersnewlife.content.modifier.base.BaseCombatModifier;
  * <h2>用户口径（原文 ✓）</h2>
  * <ul>
  *   <li>flavor ✓：「半神？」</li>
- *   <li>description ✓：「只有承受**七咒**时间为**在世界上时间 90% 以上**的人才可以使用它」；</li>
+ *   <li>description ✓：「只有承受**七咒**时间为**在世界上时间 99% 以上**的人才可以使用它」；</li>
  *   <li>「不满足条件的人手持、装备或装配进饰品时会自动将工具**丢回背包**，
  *       如果背包中没有空位会**自动将其扔在地上**」✓。</li>
  * </ul>
