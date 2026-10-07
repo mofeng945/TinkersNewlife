@@ -1,0 +1,53 @@
+{
+  "type": "goety:ritual",
+  "ritual_type": "goety:craft",
+  "activation_item": {
+    "item": "enigmaticlegacy:etherium_ingot"
+  },
+  "craftType": "master_forge",
+  "soulCost": 100,
+  "duration": 20,
+  "ingredients": [
+    {
+      "item": "goety:ectoplasm"
+    },
+    {
+      "item": "goety:ectoplasm"
+    },
+    {
+      "item": "goety:void_echo"
+    },
+    {
+      "item": "enigmaticlegacy:earth_heart"
+    },
+    {
+      "item": "enigmaticlegacy:evil_essence"
+    },
+    {
+      "item": "enigmaticlegacy:evil_essence"
+    },
+    {
+      "item": "enigmaticlegacy:astral_dust"
+    },
+    {
+      "item": "enigmaticlegacy:astral_dust"
+    }
+  ],
+  "result": {
+    "item": "tinkersnewlife:sinister_glow_ingot"
+  },
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "goety"
+    },
+    {
+      "type": "forge:mod_loaded",
+      "modid": "goety_revelation"
+    },
+    {
+      "type": "forge:mod_loaded",
+      "modid": "enigmaticlegacy"
+    }
+  ]
+}
