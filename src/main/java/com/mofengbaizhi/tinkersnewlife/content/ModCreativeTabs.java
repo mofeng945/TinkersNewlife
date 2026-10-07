@@ -79,60 +79,11 @@ public class ModCreativeTabs {
                                 // ----- 墨默刷怪蛋（位于所有旧日材料之后、匠魂部件之前） -----
                                 output.accept(ModItems.MOMO_SPAWN_EGG.get());
 
-                                // ----- 所有流体桶 -----
-                                // 原生流体：直接取字段；联动流体桶：按注册名取（联动模组不在场 → 那一组流体/桶根本没注册 → 取不到即跳过）
-                                output.accept(ModFluids.GHELOTH_BLOOD.bucket.get());
-                                output.accept(ModFluids.MOLTEN_NICHOLAS_BLESSING.bucket.get());
-                                output.accept(ModFluids.HASTUR_MALICE.bucket.get());
-                                output.accept(ModFluids.ASHEN_INK.bucket.get());
-                                output.accept(ModFluids.IMPURE_INK.bucket.get());
-                                output.accept(ModFluids.MOLTEN_DURANDAL.bucket.get());
-                                output.accept(ModFluids.CURSE_RESIDUE.bucket.get());
-                                // 冰火传说组：熔融龙钢×3 + 龙血×3 + 悚怖×2
-                                acceptItemIfPresent(output, "molten_dragonsteel_fire_bucket");
-                                acceptItemIfPresent(output, "molten_dragonsteel_ice_bucket");
-                                acceptItemIfPresent(output, "molten_dragonsteel_lightning_bucket");
-                                acceptItemIfPresent(output, "fire_blood_bucket");
-                                acceptItemIfPresent(output, "ice_blood_bucket");
-                                acceptItemIfPresent(output, "lightning_blood_bucket");
-                                acceptItemIfPresent(output, "molten_dread_bucket");
-                                acceptItemIfPresent(output, "molten_dreadsteel_bucket");
-                                // 诡厄巫法组：熔融诅咒金属 + 熔融黑暗金属 + 不洁之血 + 永燃圣火
-                                acceptItemIfPresent(output, "molten_cursed_metal_bucket");
-                                acceptItemIfPresent(output, "molten_dark_metal_bucket");
-                                acceptItemIfPresent(output, "unholy_blood_bucket");
-                                acceptItemIfPresent(output, "everburning_holy_fire_bucket");
-                                // 诡厄巫法·启示录组：熔融破碎之环（神灵金原料流体）
-                                acceptItemIfPresent(output, "molten_broken_ring_bucket");
-                                // 诡厄巫法·阶梯组：熔融虚空金属（§725 加的流体；虚空金属锭 1 锭 = 90 mB）
-                                // —— §730 用户问「流体加没加创造物品栏」时发现漏了，补上 ✓
-                                acceptItemIfPresent(output, "molten_void_metal_bucket");
-                                // 水产养殖2组：熔融海王金属（§978 起整组门控 aquaculture —— 未装水产时流体/FluidType/方块/桶
-                                // 全都不注册，故这里也按注册名取，取不到即跳过）
-                                acceptItemIfPresent(output, "molten_neptunium_bucket");
-                                // 熔岩钓鱼组：熔融钷（§980 起整组门控 lavafishing，同样按注册名取、取不到即跳过）
-                                acceptItemIfPresent(output, "molten_promethium_bucket");
-        // 铁魔法（irons_spellbooks）联动流体桶：原初受火遗魂 / 熔融奥铁 / 神圣灵液 /
-        // 灼热之冰 / 液态奥术 / 流体灰烬 / 熔融炽金（未安装铁魔法时这些物品不存在，自动跳过）
-        acceptItemIfPresent(output, "primordial_fire_soul_bucket");
-        acceptItemIfPresent(output, "molten_arcane_ingot_bucket");
-        acceptItemIfPresent(output, "holy_spirit_bucket");
-        acceptItemIfPresent(output, "scorching_ice_bucket");
-        acceptItemIfPresent(output, "liquid_arcane_bucket");
-        acceptItemIfPresent(output, "cinder_ash_bucket");
-        acceptItemIfPresent(output, "molten_pyrium_bucket");
-        acceptItemIfPresent(output, "molten_mithril_bucket");
-        acceptItemIfPresent(output, "magic_gold_essence_bucket");
-        acceptItemIfPresent(output, "origin_polymer_bucket");
-        // 液态闪电（雷电瓶的流体形态，来源与去向都只有雷电瓶）
-        acceptItemIfPresent(output, "liquid_lightning_bucket");
-        // 液态圣光（熔炼铁魔法神圣珍珠所得，用于浇神圣符文）
-        acceptItemIfPresent(output, "liquid_holy_light_bucket");
-        // ⭐ §1118r 邪灵辉锭（诡厄巫法＋神秘遗物**同时在场**才条件注册 ✓）：
-        //   这里用 acceptItemIfPresent ⇒ 未注册时 IntegrationLoader.item(...) 返回 null ⇒ **自动跳过** ✓
-        acceptItemIfPresent(output, "sinister_glow_ingot");
-        // §1118t 邪灵辉质桶（同样条件注册 ✓ 没注册时自动跳过 ✓）
-        acceptItemIfPresent(output, "molten_sinister_glow_bucket");
+                                // ----- ⭐ §1118v 所有流体桶已**移入独立标签页**「流体桶」✓（见 BUCKETS_TAB ✓）-----
+                                // ----- 三个联动合金锭/粒/块（铁魔法不在场时拿不到流体 ⇒ 只在它加载时显示 ✓）-----
+                                // ⭐ §1118r 邪灵辉锭（诡厄巫法＋神秘遗物**同时在场**才条件注册 ✓）：
+                                //   用 acceptItemIfPresent ⇒ 未注册时返回 null ⇒ **自动跳过** ✓
+                                acceptItemIfPresent(output, "sinister_glow_ingot");
         // 纯合金流体的"物品形态"（浇铸回环的另一半）：物品本身常驻注册，但铁魔法不在场时拿不到流体，
         // 所以在创造栏里只在铁魔法加载时显示 ✓
         if (anyLoaded("irons_spellbooks")) {
@@ -148,81 +99,12 @@ public class ModCreativeTabs {
             acceptItemIfPresent(output, "origin_alloy_storage_block");
         }
 
-                                // ----- 铸模（联动工具的铸模仅在对应 mod 加载时显示） -----
-                                if (anyLoaded("iceandfire")) {
-                                    output.accept(ModItems.DRAGON_CORE_CAST.get());
-                                    output.accept(ModItems.DRAGON_CORE_SAND_CAST.get());
-                                    output.accept(ModItems.DRAGON_CORE_RED_SAND_CAST.get());
-                                }
-                                if (anyLoaded("irons_spellbooks", "goety")) {
-                                    output.accept(ModItems.SPELL_CORE_CAST.get());
-                                    output.accept(ModItems.SPELL_CORE_SAND_CAST.get());
-                                    output.accept(ModItems.SPELL_CORE_RED_SAND_CAST.get());
-                                }
-                                output.accept(ModItems.YO_YO_WHEEL_CAST.get());
-                                output.accept(ModItems.YO_YO_WHEEL_SAND_CAST.get());
-                                output.accept(ModItems.YO_YO_WHEEL_RED_SAND_CAST.get());
-                                output.accept(ModItems.YO_YO_SPOOL_CAST.get());
-                                output.accept(ModItems.YO_YO_SPOOL_SAND_CAST.get());
-                                output.accept(ModItems.YO_YO_SPOOL_RED_SAND_CAST.get());
-                                // 部件材质变体（联动工具的部件同样受来源 mod 门控）
-                                if (anyLoaded("iceandfire")) {
-                                    addAllPartVariants(output, ModItems.DRAGON_CORE.get());
-                                }
-                                if (anyLoaded("irons_spellbooks", "goety")) {
-                                    addAllPartVariants(output, ModItems.SPELL_CORE.get());
-                                }
-                                addAllPartVariants(output, ModItems.YO_YO_WHEEL.get());
-                                addAllPartVariants(output, ModItems.YO_YO_SPOOL.get());
-                                // 巫师套装的两个专属部件（盔甲统计 ⇒ 只带护甲特性 ✓）
+                                // ----- ⭐ §1118v 铸模与部件已**移入独立标签页**「部件与铸模」✓（见 PARTS_TAB ✓）-----
+                                // ----- 巫师套装的两个专属部件（盔甲统计 ⇒ 只带护甲特性 ✓）-----
                                 output.accept(ModItems.CONSCIENCE.get());
                                 output.accept(ModItems.PLANETARIUM.get());   // 星象仪：工具类饰品（图标随当日月相变 ✓）
-            addAllPartVariants(output, ModItems.ROBE_LACE.get());
-                                // 法袍系带的铸模（与其它部件一致：金铸模 / 沙铸模 / 红沙铸模 ✓，无模组门控 ✓）
-                                output.accept(ModItems.ROBE_LACE_CAST.get());
-                                output.accept(ModItems.ROBE_LACE_SAND_CAST.get());
-                                output.accept(ModItems.ROBE_LACE_RED_SAND_CAST.get());
-                                output.accept(ModItems.MAGIC_CLOTH.get());   // 魔法布料是普通物品 ✓（不再是部件）
-                                // ⭐ 咒力核心部件已从创造物品栏移除（易与成品咒力核心混淆，需用核心请取成品变体）
 
-                                if (anyLoaded("iceandfire")) {
-                                    addAllToolVariants(output, DRAGON_STAFF_DEFINITION, ModItems.DRAGON_STAFF.get());
-                                }
-
-                                addAllToolVariants(output, SILENT_GLOVE_DEFINITION, ModItems.SILENT_GLOVE.get());
-
-                                addAllToolVariants(output, WarScytheItem.WAR_SCYTHE_DEFINITION, ModItems.WAR_SCYTHE.get());
-        addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.TangHengDaoItem.TANG_HENG_DAO_DEFINITION, com.mofengbaizhi.tinkersnewlife.content.ModItems.TANG_HENG_DAO.get());   // §808 唐横刀
-        addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.SpearItem.SPEAR_DEFINITION, com.mofengbaizhi.tinkersnewlife.content.ModItems.SPEAR.get());   // §835 长矛
-        addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.RapierItem.RAPIER_DEFINITION, com.mofengbaizhi.tinkersnewlife.content.ModItems.RAPIER.get());   // §943 西洋剑（移植匠魂2）
-        addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.SlingshotItem.SLINGSHOT_DEFINITION, ModItems.SLINGSHOT.get());
-        addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.WhipItem.WHIP_DEFINITION, ModItems.WHIP.get());   // §1047 鞭子
-
-                                if (anyLoaded("irons_spellbooks", "goety")) {
-                                    addAllToolVariants(output, ModularStaffItem.MODULAR_STAFF_DEFINITION, ModItems.MODULAR_STAFF.get());
-                                }
-
-                                addAllToolVariants(output, FlyingSwordItem.FLYING_SWORD_DEFINITION, ModItems.FLYING_SWORD.get());
-
-                                addAllToolVariants(output, YoYoItem.YO_YO_DEFINITION, ModItems.YO_YO.get());
-
-                                // ----- 巫师套装（四件套 · 部件式：部位镶板 + 锁链基底×2 + 坚韧套环 + 大板）-----
-                                addAllToolVariants(output,
-                                        ModItems.WIZARD_ARMOR.getArmorDefinition(net.minecraft.world.item.ArmorItem.Type.HELMET),
-                                        ModItems.WIZARD_HELMET.get());
-                                addAllToolVariants(output,
-                                        ModItems.WIZARD_ARMOR.getArmorDefinition(net.minecraft.world.item.ArmorItem.Type.CHESTPLATE),
-                                        ModItems.WIZARD_CHESTPLATE.get());
-                                addAllToolVariants(output,
-                                        ModItems.WIZARD_ARMOR.getArmorDefinition(net.minecraft.world.item.ArmorItem.Type.LEGGINGS),
-                                        ModItems.WIZARD_LEGGINGS.get());
-                                addAllToolVariants(output,
-                                        ModItems.WIZARD_ARMOR.getArmorDefinition(net.minecraft.world.item.ArmorItem.Type.BOOTS),
-                                        ModItems.WIZARD_BOOTS.get());
-
-                                addAllToolVariants(output, CurseCoreItem.CURSE_CORE_DEFINITION, ModItems.CURSE_CORE.get());
-
-                                output.accept(ModItems.DURANDAL_SWORD.get());
+                                // ----- ⭐ §1118v 成品工具已**移入独立标签页**「成品工具」✓（见 TOOLS_TAB ✓）-----
 
                                 // ----- 咒具 -----
                                 output.accept(ModItems.TIAN_NI_HUO.get());
@@ -264,6 +146,159 @@ public class ModCreativeTabs {
                                 // §1081：全部 fufu 已从这里**移出** ✓ ⇒ 本栏（匠魂新生）不再出现任何 fufu ✓，
                                 // 它们单独占一页创造栏（见下面的 FUMO_TAB ✓）。
                                 // 本栏其它物品的先后顺序**一格没动** ✓（原 §905/§1079 的"整组排最后"随之作废 ✓）。
+                            })
+                            .build()
+            );
+
+    /**
+     * ⭐ §1118v <b>「部件与铸模」独立创造栏</b>（用户口径 ✓）：
+     * 「整理一下我的创造标签页：**部件和铸模一个标签栏** ✓ 成品工具一个标签栏 ✓ 流体桶一个标签栏 ✓
+     * 其他物品一个标签栏 ✓ 并且尽量让他们**挨在一起**（包括 fumo）」✓
+     *
+     * <p>⚠ 排序靠**注册顺序** ✓（Forge 1.20.1 如此 ✓ 见 {@link #FUMO_TAB} 的注释 ✓）
+     * ⇒ 本栏注册在「匠魂新生」之后 ✓ ⇒ 四栏 ＋ fumo 自然是**连着的** ✓。
+     */
+    public static final RegistryObject<CreativeModeTab> PARTS_TAB =
+            CREATIVE_MODE_TABS.register("parts",
+                    () -> CreativeModeTab.builder()
+                            .title(Component.translatable("itemGroup.tinkersnewlife.parts"))
+                            .icon(() -> new ItemStack(ModItems.ROBE_LACE.get()))
+                            .displayItems((parameters, output) -> {
+                                // ----- 铸模（联动工具的铸模仅在对应 mod 加载时显示）-----
+                                if (anyLoaded("iceandfire")) {
+                                    output.accept(ModItems.DRAGON_CORE_CAST.get());
+                                    output.accept(ModItems.DRAGON_CORE_SAND_CAST.get());
+                                    output.accept(ModItems.DRAGON_CORE_RED_SAND_CAST.get());
+                                }
+                                if (anyLoaded("irons_spellbooks", "goety")) {
+                                    output.accept(ModItems.SPELL_CORE_CAST.get());
+                                    output.accept(ModItems.SPELL_CORE_SAND_CAST.get());
+                                    output.accept(ModItems.SPELL_CORE_RED_SAND_CAST.get());
+                                }
+                                output.accept(ModItems.YO_YO_WHEEL_CAST.get());
+                                output.accept(ModItems.YO_YO_WHEEL_SAND_CAST.get());
+                                output.accept(ModItems.YO_YO_WHEEL_RED_SAND_CAST.get());
+                                output.accept(ModItems.YO_YO_SPOOL_CAST.get());
+                                output.accept(ModItems.YO_YO_SPOOL_SAND_CAST.get());
+                                output.accept(ModItems.YO_YO_SPOOL_RED_SAND_CAST.get());
+                                output.accept(ModItems.ROBE_LACE_CAST.get());
+                                output.accept(ModItems.ROBE_LACE_SAND_CAST.get());
+                                output.accept(ModItems.ROBE_LACE_RED_SAND_CAST.get());
+                                // ----- 部件（材质变体；联动工具的部件同样受来源 mod 门控）-----
+                                if (anyLoaded("iceandfire")) {
+                                    addAllPartVariants(output, ModItems.DRAGON_CORE.get());
+                                }
+                                if (anyLoaded("irons_spellbooks", "goety")) {
+                                    addAllPartVariants(output, ModItems.SPELL_CORE.get());
+                                }
+                                addAllPartVariants(output, ModItems.YO_YO_WHEEL.get());
+                                addAllPartVariants(output, ModItems.YO_YO_SPOOL.get());
+                                addAllPartVariants(output, ModItems.ROBE_LACE.get());
+                                output.accept(ModItems.MAGIC_CLOTH.get());   // 魔法布料是普通物品 ✓（不再是部件）
+                                // ⚠ 咒力核心部件仍**不列出**（易与成品混淆 ✓ 与主栏口径一致 ✓）
+                            })
+                            .build()
+            );
+
+    /**
+     * ⭐ §1118v <b>「成品工具」独立创造栏</b>（用户口径 ✓）—— 全部匠魂成品工具/护甲/咒具武器 ✓
+     * （原样照搬主栏那批 {@code addAllToolVariants} ✓ 一件不多一件不少 ✓）。
+     */
+    public static final RegistryObject<CreativeModeTab> TOOLS_TAB =
+            CREATIVE_MODE_TABS.register("tools",
+                    () -> CreativeModeTab.builder()
+                            .title(Component.translatable("itemGroup.tinkersnewlife.tools"))
+                            .icon(() -> new ItemStack(ModItems.WAR_SCYTHE.get()))
+                            .displayItems((parameters, output) -> {
+                                if (anyLoaded("iceandfire")) {
+                                    addAllToolVariants(output, DRAGON_STAFF_DEFINITION, ModItems.DRAGON_STAFF.get());
+                                }
+                                addAllToolVariants(output, SILENT_GLOVE_DEFINITION, ModItems.SILENT_GLOVE.get());
+                                addAllToolVariants(output, WarScytheItem.WAR_SCYTHE_DEFINITION, ModItems.WAR_SCYTHE.get());
+                                addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.TangHengDaoItem.TANG_HENG_DAO_DEFINITION, com.mofengbaizhi.tinkersnewlife.content.ModItems.TANG_HENG_DAO.get());   // §808 唐横刀
+                                addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.SpearItem.SPEAR_DEFINITION, com.mofengbaizhi.tinkersnewlife.content.ModItems.SPEAR.get());   // §835 长矛
+                                addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.RapierItem.RAPIER_DEFINITION, com.mofengbaizhi.tinkersnewlife.content.ModItems.RAPIER.get());   // §943 西洋剑
+                                addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.SlingshotItem.SLINGSHOT_DEFINITION, ModItems.SLINGSHOT.get());
+                                addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.WhipItem.WHIP_DEFINITION, ModItems.WHIP.get());   // §1047 鞭子
+                                if (anyLoaded("irons_spellbooks", "goety")) {
+                                    addAllToolVariants(output, ModularStaffItem.MODULAR_STAFF_DEFINITION, ModItems.MODULAR_STAFF.get());
+                                }
+                                addAllToolVariants(output, FlyingSwordItem.FLYING_SWORD_DEFINITION, ModItems.FLYING_SWORD.get());
+                                addAllToolVariants(output, YoYoItem.YO_YO_DEFINITION, ModItems.YO_YO.get());
+                                // ----- 巫师套装（四件套 · 部件式）-----
+                                addAllToolVariants(output,
+                                        ModItems.WIZARD_ARMOR.getArmorDefinition(net.minecraft.world.item.ArmorItem.Type.HELMET),
+                                        ModItems.WIZARD_HELMET.get());
+                                addAllToolVariants(output,
+                                        ModItems.WIZARD_ARMOR.getArmorDefinition(net.minecraft.world.item.ArmorItem.Type.CHESTPLATE),
+                                        ModItems.WIZARD_CHESTPLATE.get());
+                                addAllToolVariants(output,
+                                        ModItems.WIZARD_ARMOR.getArmorDefinition(net.minecraft.world.item.ArmorItem.Type.LEGGINGS),
+                                        ModItems.WIZARD_LEGGINGS.get());
+                                addAllToolVariants(output,
+                                        ModItems.WIZARD_ARMOR.getArmorDefinition(net.minecraft.world.item.ArmorItem.Type.BOOTS),
+                                        ModItems.WIZARD_BOOTS.get());
+                                addAllToolVariants(output, CurseCoreItem.CURSE_CORE_DEFINITION, ModItems.CURSE_CORE.get());
+                                output.accept(ModItems.DURANDAL_SWORD.get());
+                            })
+                            .build()
+            );
+
+    /**
+     * ⭐ §1118v <b>「流体桶」独立创造栏</b>（用户口径 ✓）—— 本模组与各联动模组的**全部流体桶** ✓
+     * （原生流体直接取字段 ✓ 联动流体按注册名取、缺模组自动跳过 ✓ 与主栏原口径一致 ✓）。
+     */
+    public static final RegistryObject<CreativeModeTab> BUCKETS_TAB =
+            CREATIVE_MODE_TABS.register("buckets",
+                    () -> CreativeModeTab.builder()
+                            .title(Component.translatable("itemGroup.tinkersnewlife.buckets"))
+                            .icon(() -> new ItemStack(ModFluids.GHELOTH_BLOOD.bucket.get()))
+                            .displayItems((parameters, output) -> {
+                                // ----- 本模组原生流体 -----
+                                output.accept(ModFluids.GHELOTH_BLOOD.bucket.get());
+                                output.accept(ModFluids.MOLTEN_NICHOLAS_BLESSING.bucket.get());
+                                output.accept(ModFluids.HASTUR_MALICE.bucket.get());
+                                output.accept(ModFluids.ASHEN_INK.bucket.get());
+                                output.accept(ModFluids.IMPURE_INK.bucket.get());
+                                output.accept(ModFluids.MOLTEN_DURANDAL.bucket.get());
+                                output.accept(ModFluids.CURSE_RESIDUE.bucket.get());
+                                // ----- ⭐ §1118t/u 邪灵辉质与它的合金链四种原料（同条件注册 ✓ 取不到即跳过 ✓）-----
+                                acceptItemIfPresent(output, "molten_sinister_glow_bucket");
+                                acceptItemIfPresent(output, "liquid_ectoplasm_bucket");
+                                acceptItemIfPresent(output, "liquid_evil_bucket");
+                                acceptItemIfPresent(output, "watcher_ectoplasm_bucket");
+                                acceptItemIfPresent(output, "flowing_stardust_bucket");
+                                // ----- 冰火传说组：熔融龙钢×3 + 龙血×3 + 悚怖×2 -----
+                                acceptItemIfPresent(output, "molten_dragonsteel_fire_bucket");
+                                acceptItemIfPresent(output, "molten_dragonsteel_ice_bucket");
+                                acceptItemIfPresent(output, "molten_dragonsteel_lightning_bucket");
+                                acceptItemIfPresent(output, "fire_blood_bucket");
+                                acceptItemIfPresent(output, "ice_blood_bucket");
+                                acceptItemIfPresent(output, "lightning_blood_bucket");
+                                acceptItemIfPresent(output, "molten_dread_bucket");
+                                acceptItemIfPresent(output, "molten_dreadsteel_bucket");
+                                // ----- 诡厄巫法组 / 启示录组 / 阶梯组 / 水产组 / 熔岩钓鱼组 -----
+                                acceptItemIfPresent(output, "molten_cursed_metal_bucket");
+                                acceptItemIfPresent(output, "molten_dark_metal_bucket");
+                                acceptItemIfPresent(output, "unholy_blood_bucket");
+                                acceptItemIfPresent(output, "everburning_holy_fire_bucket");
+                                acceptItemIfPresent(output, "molten_broken_ring_bucket");
+                                acceptItemIfPresent(output, "molten_void_metal_bucket");
+                                acceptItemIfPresent(output, "molten_neptunium_bucket");
+                                acceptItemIfPresent(output, "molten_promethium_bucket");
+                                // ----- 铁魔法联动 -----
+                                acceptItemIfPresent(output, "primordial_fire_soul_bucket");
+                                acceptItemIfPresent(output, "molten_arcane_ingot_bucket");
+                                acceptItemIfPresent(output, "holy_spirit_bucket");
+                                acceptItemIfPresent(output, "scorching_ice_bucket");
+                                acceptItemIfPresent(output, "liquid_arcane_bucket");
+                                acceptItemIfPresent(output, "cinder_ash_bucket");
+                                acceptItemIfPresent(output, "molten_pyrium_bucket");
+                                acceptItemIfPresent(output, "molten_mithril_bucket");
+                                acceptItemIfPresent(output, "magic_gold_essence_bucket");
+                                acceptItemIfPresent(output, "origin_polymer_bucket");
+                                acceptItemIfPresent(output, "liquid_lightning_bucket");
+                                acceptItemIfPresent(output, "liquid_holy_light_bucket");
                             })
                             .build()
             );
