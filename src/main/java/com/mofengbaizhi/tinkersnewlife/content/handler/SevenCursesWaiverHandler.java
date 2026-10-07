@@ -145,6 +145,9 @@ public final class SevenCursesWaiverHandler {
             // ③ 盔甲效力：把七咒之戒加在 ARMOR / ARMOR_TOUGHNESS 上的减益修饰符摘掉 ✓
             //（⚠ 必须**定期**摘 ✗ —— 戒指重新戴上/Curios 刷新时它会被重新加上 ✓）
             stripRingArmorDebuff(player);
+            // ⑥ 灵魂破裂：碎片归零 ＋ 摘掉那层最大生命减益 ✓
+            //（⚠ 也要定期做 ✗ —— 它在"死亡 + 重新进服（updatePlayerSoulMap）"时会重新算 ✓）
+            clearSoulFragments(player);
         } catch (Throwable ignored) {
             // 同上 ✓
         }
@@ -285,19 +288,31 @@ public final class SevenCursesWaiverHandler {
     private static final String SOUL_CRYSTAL = "enigmaticlegacy:soul_crystal";
 
     /**
-     * ⑥「每次死亡都会使你的灵魂破裂」✓ —— ⭐ **反编译实证**：实现在 {@code EnigmaticEventHandler} 里 ✓
-     * （约 2235~2253 行 ✓）：死亡掉落时若 {@code SuperpositionHandler.canDropSoulCrystal(player, hadCursedRing)}
-     * ⇒ 用 {@code SOUL_CRYSTAL.createCrystalFrom(player)} 把**掉落物打包成灵魂水晶** ✓
-     * 生成一个 `PermanentItemEntity` **撕下来丢在地上** ✓ 并记进 {@code SoulArchive} ✓
-     * 且 `droppedSoulCrystal.setOwnerId(player.getUUID())` ✓（⭐ 留了 owner ⇒ 正好能用来判定是谁的水晶 ✓）。
+     * ⑥「每次死亡都会使你的灵魂破裂」✓ —— ⭐ **反编译实证**（`SoulCrystal` ✓）：
+     * <pre>
+     * public ItemStack createCrystalFrom(Player player) {
+     *     int lostFragments = getLostCrystals(player);
+     *     setLostCrystals(player, lostFragments + 1);   // ← ⭐ 每死一次 +1 ＝"破裂一格"
+     *     return new ItemStack(this);
+     * }
+     * // 读/写：SuperpositionHandler.setPersistentInteger(player, "enigmaticlegacy.lostsoulfragments", n)
+     * //        ⇒ player.getPersistentData() → "PlayerPersisted" → 该键（IntTag）
+     * // 后果  ：updatePlayerSoulMap 按碎片数给 Attributes.MAX_HEALTH 挂
+     * //        AttributeModifier(UUID "66a2aa2d-7e3c-4af4-882f-bd2b2ded8e7b", "Lost Soul Health Modifier")
+     * // 找回  ：SoulCrystal.retrieveSoulFromCrystal ⇒ 碎片 −1（所以水晶只是"找回那一格"的凭证）
+     * </pre>
+     * ⚠ 而**物品掉落根本没被它碰** ✓ —— `EnigmaticEventHandler` 里灵魂水晶那一支
+     * （约 2246~2254 行 ✓）**没有** `event.getDrops().clear()` ✗（会清空的是"护身符储物水晶"那一支 ✓ 见下 ✓）。
      *
-     * <p>⚠ 配置里的 {@code MaxSoulCrystalLoss}（默认 9 ✓）、{@code SoulCrystalsMode} ✓ 与
-     * {@code lostsoulfragments}（`SoulCrystal` ✓ 存在玩家持久数据里的"丢失水晶数" ✓，
-     * 每丢一块就给 `MAX_HEALTH` 挂一层 `Lost Soul` 减益 ✓ `SoulCrystal:146` ✓）都是同一套机制 ✓。
+     * <p>⭐⭐ <b>对治（照用户口径 ✓「直接不生成水晶，物品全走正常死亡逻辑」✓）</b>：
+     * ① **不让灵魂水晶生成** ✓（取消它 ✓ **不给任何东西** ✗）；
+     * ② 把碎片数**归零** ✓（`PlayerPersisted.enigmaticlegacy.lostsoulfragments` ✓ 纯**原版 NBT** ✓ 不 import 它的类 ✓）；
+     * ③ 把那层 `Lost Soul` 的 **`MAX_HEALTH` 减益按固定 UUID 摘掉** ✓
+     * ⇒ **灵魂永不破裂** ✓ 而物品**本来就照常爆在地上** ✓（本来就没被搬到水晶里 ✓）。
      *
-     * <p>⭐⭐ <b>对治</b>：合格者的水晶**不让它落地** ✗ —— 拦截它生成 ✓ 并把**水晶物品本身**直接塞回他的背包 ✓
-     * （⚠ **绝不销毁** ✗ —— 水晶里装着死亡掉落的全部物品 ✓ 销毁就等于把玩家东西吞了 ✗✗）；
-     * 塞不进去就丢在**他脚下** ✓（照仓库 {@code CurseVaultInteractionHandler} 的"绝不凭空消失"口径 ✓）。
+     * <p>⚠ **刻意不管**「护身符储物水晶」那一支 ✓（约 2234~2245 行 ✓：需要**佩戴谜团护身符** ✓
+     * 才会把掉落物抄进水晶并 `getDrops().clear()` ✓ 还会 `drainPlayerXP` 吸走经验 ✓）
+     * —— ⚠ 那是**护身符自己的功能** ✗ 不是七咒条目 ✓ ⇒ 不在本次豁免范围 ✓（要一并去掉说一声 ✓）。
      */
     @SubscribeEvent
     public static void onSoulCrystalJoin(net.minecraftforge.event.entity.EntityJoinLevelEvent event) {
@@ -315,9 +330,7 @@ public final class SevenCursesWaiverHandler {
             if (!SOUL_CRYSTAL.equals(id)) {
                 return;
             }
-            // ⚠ `ItemEntity#getOwner()` 返回的是 `Entity` ✗ 不是 UUID ✓（EL 那边是 setOwnerId(UUID) ✓
-            // ⇒ 服务端这里会被解析回玩家实体 ✓）；
-            // ⚠ `ItemStack` 本类没 import ✗ ⇒ 用全限定名 ✓（免得为一个类型改文件头 ✓）
+            // ⚠ `ItemEntity#getOwner()` 返回的是 `Entity` ✗ 不是 UUID ✓（EL 那边 setOwnerId(UUID) ✓ 服务端解析回玩家 ✓）
             net.minecraft.world.entity.Entity ownerEntity = item.getOwner();
             if (!(ownerEntity instanceof net.minecraft.server.level.ServerPlayer player)) {
                 return;
@@ -325,14 +338,39 @@ public final class SevenCursesWaiverHandler {
             if (!qualifies(player)) {
                 return;
             }
-            // ⭐ 取消它落地 ✓ 把水晶直接还给他 ✓
+            // ① 不让它生成 ✓（⚠ 不给玩家任何东西 ✗ —— 物品本就走正常掉落 ✓）
             event.setCanceled(true);
-            net.minecraft.world.item.ItemStack crystal = item.getItem().copy();
-            if (!player.getInventory().add(crystal)) {
-                player.drop(crystal, false);   // ⚠ 背包满 ⇒ 丢脚下 ✓ 不凭空消失 ✗
+            // ② 碎片归零 ✓ ＋ ③ 摘掉那层最大生命减益 ✓
+            clearSoulFragments(player);
+        } catch (Throwable ignored) {
+            // 出问题就让它照原样走 ✓（绝不吞东西 ✗）
+        }
+    }
+
+    /** 灵魂碎片键 ✓（EL 存在 `player.getPersistentData()` 下的 `PlayerPersisted` 里 ✓ 纯原版 NBT ✓） */
+    private static final String PERSISTED_ROOT = "PlayerPersisted";
+    private static final String LOST_SOUL_KEY = "enigmaticlegacy.lostsoulfragments";
+    /** `Lost Soul Health Modifier` 的固定 UUID ✓（`SoulCrystal:146` ✓） */
+    private static final java.util.UUID LOST_SOUL_HEALTH_UUID =
+            java.util.UUID.fromString("66a2aa2d-7e3c-4af4-882f-bd2b2ded8e7b");
+
+    /** 把"灵魂破裂"整个抹掉 ✓：碎片归零 ＋ 摘掉最大生命减益 ✓（幂等 ✓） */
+    public static void clearSoulFragments(ServerPlayer player) {
+        try {
+            var data = player.getPersistentData();
+            if (data.contains(PERSISTED_ROOT)) {
+                net.minecraft.nbt.CompoundTag persisted = data.getCompound(PERSISTED_ROOT);
+                if (persisted.contains(LOST_SOUL_KEY)) {
+                    persisted.putInt(LOST_SOUL_KEY, 0);
+                }
+            }
+            var health = player.getAttribute(
+                    net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+            if (health != null) {
+                health.removeModifier(LOST_SOUL_HEALTH_UUID);
             }
         } catch (Throwable ignored) {
-            // 绝不吞玩家东西 ✓（出问题就让它照原样掉 ✓）
+            // 同上 ✓
         }
     }
 }
