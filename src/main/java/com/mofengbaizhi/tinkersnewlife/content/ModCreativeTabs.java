@@ -208,7 +208,7 @@ public class ModCreativeTabs {
             CREATIVE_MODE_TABS.register("tools",
                     () -> CreativeModeTab.builder()
                             .title(Component.translatable("itemGroup.tinkersnewlife.tools"))
-                            .icon(() -> new ItemStack(ModItems.WAR_SCYTHE.get()))
+                            .icon(() -> new ItemStack(ModItems.DURANDAL_SWORD.get()))
                             .displayItems((parameters, output) -> {
                                 if (anyLoaded("iceandfire")) {
                                     addAllToolVariants(output, DRAGON_STAFF_DEFINITION, ModItems.DRAGON_STAFF.get());
