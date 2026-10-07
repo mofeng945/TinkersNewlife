@@ -49,7 +49,10 @@ public final class EnigmaticPlaytimeBridge {
         try {
             // ⚠ 照仓库里已验证的写法（ExecutionDomain:375）✓ 中间不要多一层类型变量 ✗（会推断失败 ✓）
             return player.getStats().getValue(Stats.CUSTOM.get(id));
-        } catch (Throwable ignored) {
+        } catch (Throwable thrown) {
+            // ⚠ 读失败一定要**留痕** ✗ —— 否则"到底读没读到"从游戏里完全看不出来 ✓
+            org.slf4j.LoggerFactory.getLogger("tinkersnewlife/playtime")
+                    .warn("[七咒所缚] 读取神秘遗物统计 {} 失败 ⇒ 视为不合格（会拦截）", id, thrown);
             return -1L;
         }
     }
@@ -86,7 +89,10 @@ public final class EnigmaticPlaytimeBridge {
         long with = withCurses(player);
         long without = withoutCurses(player);
         if (with < 0L || without < 0L) {
-            return true;   // ⚠ 读不到 ⇒ **放行** ✓（宁可不管 ✗ 也不误收玩家装备 ✗）
+            // ⚠⚠ 读不到 ⇒ **视为不合格**（＝拦截）✗ —— ⭐ 用户实测反馈："没戴七咒之戒也没把工具丢出去" ✓
+            // 根因就是这里原先是"读不到 ⇒ 放行"✗ ⇒ 只要统计读失败 ⇒ 永远不拦截 ✗。
+            // ⚠ 安全前提：调用方**先判 isLoaded(ENIGMATIC_LEGACY)** ✓ ⇒ 没装该模组时根本不会走到这里 ✓
+            return false;
         }
         long total = with + without;
         if (total <= 0L) {
