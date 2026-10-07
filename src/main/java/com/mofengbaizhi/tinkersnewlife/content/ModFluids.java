@@ -65,12 +65,15 @@ public class ModFluids {
 
     /**
      * 熔融的**邪灵辉锭** ✓ ⇒ 流体名「**邪灵辉质**」✓（id ＝ {@code tinkersnewlife:molten_sinister_glow} ✓）。
-     * <p>数值照本仓熔融金属的口径 ✓（密度 2000 ✓ 黏度 10000 ✓ 温度 1300 ✓，
-     * 与 {@code MOLTEN_DRAGONSTEEL_*} 同档 ✓）；颜色取锭的紫色主体 {@code FF7157FA} ✓。
+     * <p>数值照本仓熔融金属的口径 ✓（密度 2000 ✓ 黏度 10000 ✓）；
+     * ⚠ <b>温度按用户口径 ＝ 2000</b> ✓（用户原话：「补上融化和浇筑配方，**温度2000**」✓）——
+     * 且**熔化配方的 `temperature` 也一并写成 2000** ✓（两边一致 ✓ 免得出现
+     * "流体自身 1300 而配方却要 2000"这种自相矛盾 ✗ 那是我第一版留下的 ✗）；
+     * 颜色取锭的紫色主体 {@code FF7157FA} ✓。
      */
     public static final FluidRegistrar.FluidEntry MOLTEN_SINISTER_GLOW =
             LINKED_REGISTRAR.entry("molten_sinister_glow",
-                    2000, 10000, 1300, 0xFF7157FA,
+                    2000, 10000, 2000, 0xFF7157FA,
                     FluidRegistrar.lavaProps(MapColor.COLOR_PURPLE));
 
     // ============================================================
