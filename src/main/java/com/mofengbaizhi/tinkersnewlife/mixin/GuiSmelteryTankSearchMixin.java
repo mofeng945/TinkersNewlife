@@ -88,10 +88,15 @@ public abstract class GuiSmelteryTankSearchMixin {
             if (!FluidSearch.isActive()) return;
             int[] heights = this.liquidHeights;
             if (heights == null || heights.length == 0) return;
-            int bottom = this.y + this.width;          // ⚠ 与匠魂 renderFluids 完全一致（它写的就是 + width ✓）
-            for (int i = 0; i < heights.length; i++) {
+            java.util.List<FluidStack> fluids = this.tank.getFluids();
+            // §1117q ⚠ 高亮坐标必须与"重新排布后"的绘制位置一致 ✗
+            //   （用户口径：筛选后留一大段空档 ⇒ 要求**重新绘制一次所有流体** ✓）
+            //   ⇒ 同样只把**匹配的**条从底部紧凑往上堆 ✓（被筛掉的不占位置 ✓）
+            int bottom = this.y + this.width;          // ⚠ 与匠魂 renderFluids 同一基准（它写的就是 + width ✓）
+            for (int i = 0; i < heights.length && i < fluids.size(); i++) {
+                if (!FluidSearch.matches(fluids.get(i))) continue;     // 被筛掉的不占位置 ✓
                 int h = heights[i];
-                if (h > 0) {                            // >0 ⇒ 命中（0 = 被我们过滤掉 ✓）
+                if (h > 0) {                            // >0 ⇒ 命中 ✓
                     int top = bottom - h;
                     // 1px 琥珀色描边（四边各一条 fill ✓）
                     graphics.fill(this.x, top, this.x + this.width, top + 1, 0xFFFFD24A);
@@ -170,13 +175,45 @@ public abstract class GuiSmelteryTankSearchMixin {
     private void tnl$skipNonMatchingFluid(PoseStack pose,
                                           net.minecraft.client.gui.screens.inventory.AbstractContainerScreen parent,
                                           FluidStack fluid, int fx, int fy, int fw, int fh, int extra) {
+        int ny = fy;
         try {
-            if (FluidSearch.isActive() && !FluidSearch.matches(fluid)) {
-                return;                     // ★ 直接不画 ⇒ 画面上那一根就消失了 ✓
+            if (FluidSearch.isActive() && this.liquidHeights != null) {
+                java.util.List<FluidStack> fluids = this.tank.getFluids();
+                int idx = indexOfFluid(fluids, fluid);
+                if (idx >= 0 && !FluidSearch.matches(fluid)) {
+                    return;                     // ★ 不匹配 ⇒ 完全不画 ✓（画面上那一根消失 ✓）
+                }
+                if (idx >= 0) {
+                    // ⭐ §1117q 用户口径：「**筛选出来长这样（留一大段空档），你应该重新绘制一次所有流体**」✓
+                    //   ⇒ 匠魂是用**原始高度**一路累加算出每根的位置 ✗（被我跳过的那些仍占位置 ⇒ 出现空档 ✗）
+                    //   ⇒ 这里**自己重算 y**：只把"匹配的"条一条条**从底部紧凑往上堆** ✓✓
+                    int bottom = this.y + this.width;         // 与匠魂 renderFluids 同一套基准 ✓
+                    int[] h = this.liquidHeights;
+                    for (int i = 0; i < h.length && i < fluids.size(); i++) {
+                        if (!FluidSearch.matches(fluids.get(i))) continue;   // 被筛掉的不占位置 ✓
+                        int top = bottom - h[i];
+                        if (i == idx) {
+                            ny = top;
+                            break;
+                        }
+                        bottom -= h[i];
+                    }
+                }
             }
         } catch (Throwable ignored) {
         }
-        slimeknights.tconstruct.library.client.GuiUtil.renderTiledFluid(pose, parent, fluid, fx, fy, fw, fh, extra);
+        slimeknights.tconstruct.library.client.GuiUtil.renderTiledFluid(pose, parent, fluid, fx, ny, fw, fh, extra);
+    }
+
+    /** 在流体表里找这个 FluidStack 的下标 ✓（先按**同一实例**比 ✓ 再按 equals 兜底 ✓） */
+    private static int indexOfFluid(java.util.List<FluidStack> fluids, FluidStack target) {
+        for (int i = 0; i < fluids.size(); i++) {
+            if (fluids.get(i) == target) return i;
+        }
+        for (int i = 0; i < fluids.size(); i++) {
+            if (fluids.get(i).equals(target)) return i;
+        }
+        return -1;
     }
 
     /**
