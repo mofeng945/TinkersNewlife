@@ -13,6 +13,11 @@
       { "level": 1, "name": "tconstruct:expanded" },
       { "level": 1, "name": "tinkersnewlife:spiritual_ether" }
     ],
+    "tconstruct:binding": [
+      { "level": 1, "name": "tinkersnewlife:seven_curses_bound" },
+      { "level": 1, "name": "tconstruct:expanded" },
+      { "level": 1, "name": "tinkersnewlife:spiritual_ether" }
+    ],
     "tconstruct:limb": [
       { "level": 1, "name": "tinkersnewlife:seven_curses_bound" },
       { "level": 1, "name": "tconstruct:expanded" },
@@ -22,6 +27,14 @@
       { "level": 1, "name": "tinkersnewlife:seven_curses_bound" },
       { "level": 1, "name": "tconstruct:expanded" },
       { "level": 1, "name": "tinkersnewlife:spiritual_ether" }
+    ],
+    "tconstruct:maille": [
+      { "level": 1, "name": "tinkersnewlife:seven_curses_bound" },
+      { "level": 1, "name": "tinkersnewlife:transcendent_dimension" }
+    ],
+    "tconstruct:plating_shield": [
+      { "level": 1, "name": "tinkersnewlife:seven_curses_bound" },
+      { "level": 1, "name": "tinkersnewlife:transcendent_dimension" }
     ],
     "tconstruct:plating_helmet": [
       { "level": 1, "name": "tinkersnewlife:seven_curses_bound" },

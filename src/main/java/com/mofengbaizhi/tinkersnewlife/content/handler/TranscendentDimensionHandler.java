@@ -179,4 +179,106 @@ public final class TranscendentDimensionHandler {
         }
         return total;
     }
+
+    // ------------------------------------------------------------------ 三防（用户口径 ✓）
+
+    /** 这件物品是不是带"超越维度"的护甲 ✓ */
+    public static boolean isOurArmor(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
+        try {
+            return ToolHelper.getActiveModifierLevel(ToolStack.from(stack), ID) > 0;
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    /**
+     * ⭐ <b>不被岩浆 / 仙人掌等销毁</b> ✓（用户口径 ✓）。
+     * <p>做法 ✓：它掉成掉落物时把**掉落物实体设为无敌** ✓（`setInvulnerable` ✓）——
+     * 岩浆烧毁与仙人掌销毁都是"对掉落物实体造成伤害" ✓ ⇒ 无敌即免疫 ✓；
+     * ⚠ 不影响玩家捡起 ✓（拾取走的是另一条路 ✓）。
+     */
+    @SubscribeEvent
+    public static void onEntityJoin(net.minecraftforge.event.entity.EntityJoinLevelEvent event) {
+        try {
+            if (event.getLevel().isClientSide) {
+                return;
+            }
+            if (event.getEntity() instanceof net.minecraft.world.entity.item.ItemEntity item
+                    && isOurArmor(item.getItem())) {
+                item.setInvulnerable(true);
+            }
+        } catch (Throwable ignored) {
+            // 同上 ✓
+        }
+    }
+
+    /**
+     * ⭐ <b>死亡时不随掉落</b> ✓（用户口径 ✓「如果你死掉时没有开启死亡不掉落，你的这件盔甲并不会随死亡掉落」✓）。
+     * <p>两步 ✓：① `LivingDropsEvent` 里把我们的护甲**从掉落物列表里摘掉** ✓；
+     * ② `PlayerEvent.Clone`（死亡重生时 ✓）把它**放回新身体**的对应护甲槽 ✓
+     * —— ⚠ 只做 ① 的话装备会**凭空消失** ✗，必须有 ② 才叫"不掉落" ✓。
+     * <p>⚠ 开了死亡不掉落（`keepInventory` ✓）时原版本来就不会掉 ✓ ⇒ 这时**什么都不做** ✗（免得重复发放 ✗）。
+     */
+    @SubscribeEvent
+    public static void onDrops(net.minecraftforge.event.entity.living.LivingDropsEvent event) {
+        try {
+            if (!(event.getEntity() instanceof ServerPlayer player)) {
+                return;
+            }
+            if (player.level().getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_KEEPINVENTORY)) {
+                return;   // 本来就不掉 ✓
+            }
+            event.getDrops().removeIf(drop -> isOurArmor(drop.getItem()));
+        } catch (Throwable ignored) {
+            // 同上 ✓
+        }
+    }
+
+    @SubscribeEvent
+    public static void onClone(net.minecraftforge.event.entity.player.PlayerEvent.Clone event) {
+        try {
+            if (!event.isWasDeath()) {
+                return;
+            }
+            ServerPlayer oldPlayer = (ServerPlayer) event.getOriginal();
+            ServerPlayer newPlayer = (ServerPlayer) event.getEntity();
+            if (oldPlayer.level().getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_KEEPINVENTORY)) {
+                return;   // 原版已经保留了 ✓
+            }
+            var oldArmor = oldPlayer.getInventory().armor;
+            var newArmor = newPlayer.getInventory().armor;
+            for (int i = 0; i < oldArmor.size() && i < newArmor.size(); i++) {
+                if (isOurArmor(oldArmor.get(i))) {
+                    newArmor.set(i, oldArmor.get(i).copy());
+                }
+            }
+        } catch (Throwable ignored) {
+            // 同上 ✓
+        }
+    }
+
+    /**
+     * ⭐ <b>无法被其他生物穿戴</b> ✓（用户口径 ✓）。
+     * <p>做法 ✓：监听护甲变化 ✓ ⇒ 变更者是**非玩家**生物且新护甲带"超越维度" ⇒ **立刻换回原物** ✓
+     * （⚠ 不是"清空" ✗ —— 换回才能保证它不消失 ✗）。
+     */
+    @SubscribeEvent
+    public static void onEquipmentChange(net.minecraftforge.event.entity.living.LivingEquipmentChangeEvent event) {
+        try {
+            if (event.getEntity().level().isClientSide) {
+                return;
+            }
+            if (event.getEntity() instanceof Player) {
+                return;   // 玩家当然可以穿 ✓
+            }
+            if (isOurArmor(event.getTo())) {
+                event.getEntity().setItemSlot(event.getSlot(), event.getFrom());
+            }
+        } catch (Throwable ignored) {
+            // 同上 ✓
+        }
+    }
 }
