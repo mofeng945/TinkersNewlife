@@ -28,7 +28,9 @@ import slimeknights.tconstruct.library.tools.stat.ToolStats;
  *   <li><b>左键</b>：触发一次抽击 ✓（{@link WhipLashEntity#startLash} ✓）；
  *       伤害不由近战直接给 ✗，而是由鞭身<b>逐段扫掠</b>按段速度折算 ✓
  *       （{@code floor(速度/10) × 0.2} ✓，并按已命中目标数逐次减半 ✓）；</li>
- *   <li><b>右键</b>：长按蓄力（上限 {@link WhipPhysics#RIGHT_CHARGE_TICKS} tick ＝ 3 秒 ✓）
+ *   <li><b>右键</b>：<b>收回鞭身 ＋ 举械格挡</b> ✓（§1058 用户口径 ✓）—— 按住右键持续格挡 ✓，
+ *       举盾 0.5 秒内挨打（或挨打后 0.5 秒内按右键）算<b>完美格挡</b> ✓；
+ *       ⚠ §1118k：原来这里写的是"长按蓄力 → 松手砸地"✗ —— 那套已随右键改格挡删除 ✓（死代码 ✓）；</li>
  *       ⇒ 绳子绕手自转甩成一张盘 ✓；松手 ⇒ 14 tick 钟摆式下抽 ＋ 落地<b>冲击波</b> ✓；</li>
  *   <li><b>攻击间隔</b>：照它的 {@code attackPeriodTicks} ＝ {@code ceil(攻击冷却)} ✓
  *       ⇒ 起手段／抽击段的 tick 数是<b>跟着攻速属性走</b>的 ✓（攻速越高抽得越快 ✓）。</li>

@@ -29,9 +29,10 @@ import java.util.Map;
  *       ＋ <b>手柄刚性区</b>（前 20 段 ×3.4 ✓、连续性检查点 ✓）＋ 自碰撞（0.055 ✓）；</li>
  *   <li><b>自适应子步</b>：按最大速度取 6/8/12/18/24 ✓，攻击中至少 12 ✓；</li>
  *   <li><b>驱动</b>：{@code predict()} 是 Verlet 且<b>根部硬钉在锚点</b> ✓
- *       （{@code pos += (pos−prev)·retention ＋ (0, −21.5·dt², 0)} ✓、保留 0.989 ✓）；</li>
- *   <li><b>三种驱动</b>：左键手臂弧（见 {@link #precisionHandAnchor} ✓）、右键蓄力自转
- *       （{@link #applyChargeForces} ✓）、松手钟摆下抽（{@link #applyReleaseForces} ✓）；</li>
+ *       （{@code pos += (pos−prev)·retention ＋ (0, −21.5·dt², 0)} ✓、保留 0.989 ✓）；
+ *   <li><b>抽击驱动</b>：左键手臂弧（见 {@link #precisionHandAnchor} ✓）＋ {@link #applyGuide} ✓；
+ *       ⚠ §1118k 删掉了原「右键蓄力自转 / 松手钟摆砸地」两套力场 ✗
+ *       —— 右键自 §1058 起改成「收回 ＋ 格挡」⇒ 那两套**零调用点** ✓；</li>
  *   <li><b>附加导引</b>（{@link #applyGuide} ✓）：只在 {@code progress ≥ 0.30} 时施加 ✓。</li>
  * </ol>
  *
@@ -144,18 +145,12 @@ public final class WhipPhysics {
     /** 参照里 {@code PRECISION_RELEASE_RAW}：导引从进度 0.30 起生效 ✓ */
     public static final double PRECISION_RELEASE_RAW = 0.30D;
 
-    // 蓄力自转（照它 ✓）
-    private static final double CHARGE_SPIN_SIGN = 1.0D;
-    private static final double CHARGE_CENTRIFUGAL_SCALE = 0.12D;
-    private static final double CHARGE_MAX_RADIAL_ACCEL = 150.0D;
-    private static final double CHARGE_MAX_TANGENTIAL_ACCEL = 90.0D;
-    public static final int RIGHT_CHARGE_TICKS = 60;
-    private static final double RIGHT_SPIN_TURNS_AT_FULL_CHARGE = 4.0D;
+    // ⚠ §1118k 这里原本还有"蓄力自转"那一组常量（CHARGE_SPIN_SIGN ✓ CHARGE_CENTRIFUGAL_SCALE ✓
+    //   CHARGE_MAX_RADIAL_ACCEL ✓ CHARGE_MAX_TANGENTIAL_ACCEL ✓ RIGHT_CHARGE_TICKS ✓
+    //   RIGHT_SPIN_TURNS_AT_FULL_CHARGE ✓）—— 随右键改格挡（§1058 ✓）一起删除 ✓
 
     /** 驱动模式 ✓ */
     public static final int MODE_LASH = 0;
-    public static final int MODE_CHARGE = 1;
-    public static final int MODE_RELEASE = 2;
     /** §1058 收回模式 ✓：把绳身拉回手心 ✓（右键"收回没有收回的鞭身" ✓） */
     public static final int MODE_RETRACT = 3;
     /** 收回时每个子步往手心拉的强度 ✓（0.22 ⇒ 几 tick 内收成一团 ✓） */
@@ -183,17 +178,13 @@ public final class WhipPhysics {
         public Vec3 rootTo = Vec3.ZERO;
         public Vec3 eye = Vec3.ZERO;
         public Vec3 aim = new Vec3(0.0D, 0.0D, 1.0D);
-        public Vec3 forward = new Vec3(0.0D, 0.0D, 1.0D);
-        public Vec3 right = new Vec3(1.0D, 0.0D, 0.0D);
-        public Vec3 center = Vec3.ZERO;
-        public double side = 1.0D;
         /** 左键进度（跨子步插值用 from→to ✓） */
         public double progressFrom;
         public double progressTo;
         /** 这一鞭扫向 +1 / −1 ✓ */
         public double swingSign = 1.0D;
-        public double chargeTicks;
-        public double releaseProgress;
+        // ⚠ §1118k 删掉了 forward / right / center / side / chargeTicks / releaseProgress
+        //   —— 它们只服务于已删的"蓄力自转 + 松手钟摆"✗ ⇒ 现在驱动输入只剩上面这些 ✓
     }
 
     // ==================== 静止摆位 ====================
@@ -319,11 +310,9 @@ public final class WhipPhysics {
             System.arraycopy(pos, 0, before, 0, POINTS);
             predict(root, retention, dt, dtSqr);
 
-            if (d.mode == MODE_CHARGE) {
-                applyChargeForces(d, dt, dtSqr);
-            } else if (d.mode == MODE_RELEASE) {
-                applyReleaseForces(d, dt, dtSqr);
-            } else if (d.mode == MODE_RETRACT) {
+            // ⚠ §1118k 删掉了 MODE_CHARGE（蓄力自转）与 MODE_RELEASE（松手砸地）两条分支 ✗
+            //   —— 右键已改成「收回 ＋ 格挡」（§1058 ✓）⇒ 那两种模式不可达 ✓
+            if (d.mode == MODE_RETRACT) {
                 applyRetract(d);
             } else if (progress >= PRECISION_RELEASE_RAW) {
                 applyGuide(d, progress, dt, dtSqr);
@@ -433,166 +422,10 @@ public final class WhipPhysics {
                 .add(right.scale(lateralOffset));
     }
 
-    // ==================== 右键：蓄力自转 + 松手钟摆（照它 ✓） ====================
-
-    /** 自转中心 ✓（它的 {@code chargedSpinCenter}：handBase ＋ 前方×0.32 ＋ 上 0.68 ✓） */
-    public static Vec3 chargedSpinCenter(Vec3 base, Vec3 forward) {
-        Vec3 horizontal = new Vec3(forward.x, 0.0D, forward.z);
-        horizontal = horizontal.lengthSqr() < 1.0E-10D ? new Vec3(0.0D, 0.0D, 1.0D) : horizontal.normalize();
-        return base.add(horizontal.scale(0.32D)).add(0.0D, 0.68D, 0.0D);
-    }
-
-    /** 蓄力时手绕着小圈自转 ✓（它的 {@code chargedSpinHandAnchor}：半径 0.18 ✓） */
-    public static Vec3 chargedSpinHandAnchor(Vec3 restAnchor, Vec3 center, Vec3 forward, Vec3 right,
-                                             double side, double chargeTicks) {
-        double charge = Mth.clamp(chargeTicks / RIGHT_CHARGE_TICKS, 0.0D, 1.0D);
-        double lift = smoothstep(Math.min(1.0D, charge / 0.12D));
-        double theta = CHARGE_SPIN_SIGN * rightSpinTurns(chargeTicks) * Math.PI * 2.0D;
-        double radius = 0.18D * smoothstep(Math.min(1.0D, charge / 0.18D));
-        Vec3 orbit = center
-                .add(forward.scale(Math.cos(theta) * radius))
-                .add(right.scale(Math.sin(theta) * radius * side));
-        return restAnchor.lerp(orbit, lift);
-    }
-
-    /** 松手后钟摆式下抽 ✓（它的 {@code chargedReleaseHandAnchor}：半径 0.72 ✓、θ 由 π/2 → −0.36 ✓） */
-    public static Vec3 chargedReleaseHandAnchor(Vec3 base, Vec3 forward, double releaseProgress) {
-        Vec3 horizontal = new Vec3(forward.x, 0.0D, forward.z);
-        horizontal = horizontal.lengthSqr() < 1.0E-10D ? new Vec3(0.0D, 0.0D, 1.0D) : horizontal.normalize();
-        double t = smoothstep(releaseProgress);
-        double theta = Mth.lerp(t, Math.PI * 0.5D, -0.36D);
-        double radius = 0.72D;
-        Vec3 center = base.add(horizontal.scale(0.34D)).add(0.0D, 0.05D, 0.0D);
-        return center
-                .add(horizontal.scale(Math.cos(theta) * radius))
-                .add(0.0D, Math.sin(theta) * radius, 0.0D);
-    }
-
-    private static double rightChargeProgress(double chargeTicks) {
-        return Mth.clamp(chargeTicks / RIGHT_CHARGE_TICKS, 0.0D, 1.0D);
-    }
-
-    /** 转数 ✓（照它：蓄力段 t² 增长 ✓，满了之后按 2×满转/蓄力时长 匀速 ✓） */
-    private static double rightSpinTurns(double chargeTicks) {
-        double ticks = Math.max(0.0D, chargeTicks);
-        if (ticks <= RIGHT_CHARGE_TICKS) {
-            double t = ticks / RIGHT_CHARGE_TICKS;
-            return RIGHT_SPIN_TURNS_AT_FULL_CHARGE * t * t;
-        }
-        return RIGHT_SPIN_TURNS_AT_FULL_CHARGE
-                + (ticks - RIGHT_CHARGE_TICKS) * (2.0D * RIGHT_SPIN_TURNS_AT_FULL_CHARGE / RIGHT_CHARGE_TICKS);
-    }
-
-    /** 角速度（弧度/秒 ✓） */
-    private static double rightSpinOmega(double chargeTicks) {
-        double ticks = Math.max(0.0D, chargeTicks);
-        double turnsPerTick = ticks < RIGHT_CHARGE_TICKS
-                ? 2.0D * RIGHT_SPIN_TURNS_AT_FULL_CHARGE * ticks / (RIGHT_CHARGE_TICKS * (double) RIGHT_CHARGE_TICKS)
-                : 2.0D * RIGHT_SPIN_TURNS_AT_FULL_CHARGE / RIGHT_CHARGE_TICKS;
-        return turnsPerTick * 20.0D * Math.PI * 2.0D;
-    }
-
-    /** 离心 ＋ 切向把绳子甩成一张圆盘 ✓（照它的 {@code applyChargeForces} ✓） */
-    private void applyChargeForces(Drive d, double dt, double dtSqr) {
-        Vec3 forward = new Vec3(d.forward.x, 0.0D, d.forward.z);
-        forward = forward.lengthSqr() < 1.0E-10D ? new Vec3(0.0D, 0.0D, 1.0D) : forward.normalize();
-        Vec3 right = new Vec3(-forward.z, 0.0D, forward.x);
-        double charge = rightChargeProgress(d.chargeTicks);
-        double omega = rightSpinOmega(d.chargeTicks);
-        double envelope = smoothstep(charge);
-
-        for (int i = 1; i < POINTS; i++) {
-            Vec3 radial = new Vec3(pos[i].x - d.center.x, 0.0D, pos[i].z - d.center.z);
-            double radius = radial.length();
-            if (radius < 1.0E-5D) {
-                continue;
-            }
-            Vec3 radialDir = radial.scale(1.0D / radius);
-            double f = radialDir.dot(forward);
-            double r = radialDir.dot(right);
-            Vec3 tangentDir = forward.scale(-r).add(right.scale(f)).scale(CHARGE_SPIN_SIGN * d.side);
-            tangentDir = tangentDir.lengthSqr() > 1.0E-10D ? tangentDir.normalize() : Vec3.ZERO;
-
-            double taper = i / (double) (POINTS - 1);
-            double weight = Math.pow(taper, 1.30D) * envelope;
-            double radialAccel = Math.min(CHARGE_MAX_RADIAL_ACCEL,
-                    omega * omega * radius * CHARGE_CENTRIFUGAL_SCALE) * weight;
-            Vec3 velocity = pos[i].subtract(previous[i]);
-            double tangentSpeed = velocity.dot(tangentDir) / dt;
-            double desiredSpeed = omega * radius;
-            double tangentAccel = Mth.clamp((desiredSpeed - tangentSpeed) * 8.0D,
-                    -CHARGE_MAX_TANGENTIAL_ACCEL, CHARGE_MAX_TANGENTIAL_ACCEL) * weight;
-            Vec3 acceleration = radialDir.scale(radialAccel).add(tangentDir.scale(tangentAccel));
-            pos[i] = pos[i].add(acceleration.scale(dtSqr));
-        }
-    }
-
-    /** 松手把绳子沿"竖直钟摆平面"抽下去 ✓（照它的 {@code applyReleaseForces} ✓） */
-    private void applyReleaseForces(Drive d, double dt, double dtSqr) {
-        Vec3 forward = new Vec3(d.forward.x, 0.0D, d.forward.z);
-        forward = forward.lengthSqr() < 1.0E-10D ? new Vec3(0.0D, 0.0D, 1.0D) : forward.normalize();
-        Vec3 up = new Vec3(0.0D, 1.0D, 0.0D);
-        Vec3 right = new Vec3(-forward.z, 0.0D, forward.x);
-        double release = smoothstep(d.releaseProgress);
-        double planeBlend = smoothstep(Mth.clamp(d.releaseProgress / 0.30D, 0.0D, 1.0D));
-
-        double pendulumAngle = release * Math.PI * 0.82D;
-        Vec3 verticalRadialDir = up.scale(Math.cos(pendulumAngle))
-                .add(forward.scale(Math.sin(pendulumAngle))).normalize();
-        Vec3 verticalTangentDir = forward.scale(Math.cos(pendulumAngle))
-                .add(up.scale(-Math.sin(pendulumAngle))).normalize();
-
-        double accumulatedLength = 0.0D;
-        for (int i = 1; i < POINTS; i++) {
-            accumulatedLength += REST_LENGTHS[i - 1];
-            double taper = i / (double) (POINTS - 1);
-            double weight = Math.pow(taper, 1.22D);
-
-            Vec3 relative = pos[i].subtract(d.center);
-            double worldRadius = relative.length();
-            if (worldRadius < 1.0E-6D) {
-                continue;
-            }
-            Vec3 currentRadialDir = relative.scale(1.0D / worldRadius);
-            Vec3 radialDir = currentRadialDir.lerp(verticalRadialDir, planeBlend);
-            radialDir = radialDir.lengthSqr() < 1.0E-10D ? verticalRadialDir : radialDir.normalize();
-
-            double targetRadius = Mth.clamp(worldRadius, accumulatedLength * 0.72D, accumulatedLength);
-            Vec3 targetPoint = d.center.add(radialDir.scale(targetRadius));
-            Vec3 pathError = targetPoint.subtract(pos[i]);
-            double lateralOffset = relative.dot(right);
-
-            Vec3 stepVelocity = pos[i].subtract(previous[i]);
-            double stepSpeed = stepVelocity.length();
-            double speedPerSecond = stepSpeed / Math.max(1.0E-6D, dt);
-            Vec3 tangentDir = verticalTangentDir;
-            if (stepSpeed > 1.0E-8D) {
-                Vec3 currentVelocityDir = stepVelocity.scale(1.0D / stepSpeed);
-                tangentDir = currentVelocityDir.lerp(verticalTangentDir, planeBlend);
-                tangentDir = tangentDir.lengthSqr() < 1.0E-10D ? verticalTangentDir : tangentDir.normalize();
-
-                double steer = Mth.clamp((0.52D * planeBlend) * weight + 0.10D * taper * planeBlend, 0.0D, 0.78D);
-                Vec3 guided = stepVelocity.lerp(tangentDir.scale(stepSpeed), steer);
-                double guidedLength = guided.length();
-                if (guidedLength > 1.0E-8D) {
-                    guided = guided.scale(stepSpeed / guidedLength);
-                    previous[i] = pos[i].subtract(guided);
-                }
-            }
-
-            double centripetalAccel = Math.min(1450.0D, speedPerSecond * speedPerSecond / Math.max(0.25D, targetRadius));
-            Vec3 acceleration = radialDir.scale(-centripetalAccel * weight)
-                    .add(tangentDir.scale((80.0D + 560.0D * release) * weight * planeBlend))
-                    .add(pathError.scale(360.0D * weight * planeBlend))
-                    .add(right.scale(-lateralOffset * 980.0D * weight * planeBlend))
-                    .add(up.scale(-GRAVITY * weight * planeBlend));
-            double accelLength = acceleration.length();
-            if (accelLength > 1800.0D) {
-                acceleration = acceleration.scale(1800.0D / accelLength);
-            }
-            pos[i] = pos[i].add(acceleration.scale(dtSqr));
-        }
-    }
+    // ⚠ §1118k 这里原本是「右键：蓄力自转 ＋ 松手钟摆」整段（chargedSpinCenter ✓ chargedSpinHandAnchor ✓
+    //   chargedReleaseHandAnchor ✓ rightChargeProgress ✓ rightSpinTurns ✓ rightSpinOmega ✓
+    //   applyChargeForces ✓ applyReleaseForces ✓）—— 自 §1058 起右键已改成「收回 ＋ 格挡」✗
+    //   ⇒ 这些方法**零调用点** ✗ ⇒ 已整套删除 ✓（用户口径：「我不是把右键改成格挡了吗，砸地的代码还留着？」✓）
 
     // ==================== 附加导引（照 TrainerStylePrecisionGuide ✓） ====================
 

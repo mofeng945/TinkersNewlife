@@ -29,7 +29,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * <b>鞭击</b>（§1053）—— 一次"左键抽击"或"右键蓄力→砸地"的载体 ✓
+ * <b>鞭击</b>（§1053）—— 一次"<b>左键抽击</b>"的载体 ✓
  * （纯逻辑 ＋ 视觉 ✓ 不移动、不碰撞、不存档 ✓）。
  *
  * <h2>时间轴完全照参照模组 BetterWhips 的 {@code ArmMotor}（MIT ✓）</h2>
@@ -40,18 +40,17 @@ import java.util.UUID;
  *       <b>驱动一结束（{@code driveTick ≥ windup+stroke}）根部立刻回到手上</b> ✓
  *       ⇒ 此后绳子<b>自由飞</b> ✓（这是"甩出去"的关键 ✓，也是它注释里 82~190 格/秒的来源 ✓）；</li>
  *   <li><b>伤害窗口</b>：{@code ageTicks > windup && ≤ windup + 10} ✓ ⇒ <b>飞行段照样打人</b> ✓；</li>
- *   <li><b>右键蓄力</b> ✓：最长 {@link WhipPhysics#RIGHT_CHARGE_TICKS} tick 绕手自转 ✓
- *       （离心力把绳子甩成一张盘 ✓）⇒ 松手后 {@code 14} tick 钟摆式下抽 ✓，
- *       梢部碰到方块或实体即触发<b>冲击波</b> ✓；</li>
  *   <li><b>伤害口径</b>（照它 ✓）：{@code floor(段速度/10) × 0.2} ✓，
  *       并按本鞭已命中目标数<b>逐次减半</b> ✓（{@code base / 2^prior} ✓）。</li>
  * </ul>
+ *
+ * <p>⚠ <b>§1118k 已删除</b> ✗：原「<b>右键蓄力 → 松手砸地</b>」那一整套（绕手自转 ✓ 钟摆下抽 ✓ 冲击波 ✓）。
+ * 原因 ✓：自 §1058 起**右键已改成**「收回鞭身 ＋ 举械格挡」（见 {@code WhipItem#use} ✓）
+ * ⇒ 那套逻辑**零调用点** ✗（用户口径：「我不是把右键改成格挡了吗，砸地的代码还留着？」✓）。
  */
 public class WhipLashEntity extends Entity {
 
     public static final int PHASE_LASH = 0;
-    public static final int PHASE_CHARGE = 1;
-    public static final int PHASE_RELEASE = 2;
     /** §1058 收回段 ✓：右键"收回没有收回的鞭身" ✓ —— 绳子被拉回手心后散场 ✓ */
     public static final int PHASE_RETRACT = 3;
 
@@ -61,10 +60,6 @@ public class WhipLashEntity extends Entity {
             SynchedEntityData.defineId(WhipLashEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> SWING_SIGN =
             SynchedEntityData.defineId(WhipLashEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Integer> RELEASE_TICK =
-            SynchedEntityData.defineId(WhipLashEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Integer> CHARGE_TICKS =
-            SynchedEntityData.defineId(WhipLashEntity.class, EntityDataSerializers.INT);
     /** §1058 收回段已经走了多少 tick ✓ */
     private static final EntityDataAccessor<Integer> RETRACT_TICK =
             SynchedEntityData.defineId(WhipLashEntity.class, EntityDataSerializers.INT);
@@ -116,19 +111,10 @@ public class WhipLashEntity extends Entity {
     private static final int LEFT_DAMAGE_WINDOW_TICKS = 8;
     /** 抽击驱动结束后，绳子还要自由飞这么多 tick ✓ 让波传完 ✓（照它实体活 32 tick 的量级 ✓） */
     private static final int LASH_FREE_FLIGHT_TICKS = 32;
-    /** 砸地：松手后的钟摆段 tick 数 ✓（照它的 {@code RIGHT_SLAM_TICKS = 14} ✓） */
-    private static final int RIGHT_SLAM_TICKS = 14;
-    /** 砸地结束后绳子自由飞多久 ✓ */
-    private static final int SLAM_FREE_FLIGHT_TICKS = 18;
     /** §1058 收回段持续多少 tick ✓（鞭身回到手里就散场 ✓） */
     private static final int RETRACT_TICKS = 8;
     /** §1058 每个玩家"当前那一条鞭" ✓ —— 右键要能找到它才能把鞭身收回来 ✓ */
     private static final Map<UUID, WhipLashEntity> ACTIVE_LASHES = new HashMap<>();
-    /** 砸地冲击波半径（格 ✓）与击退 ✓ */
-    private static final double SHOCKWAVE_RADIUS = 3.5D;
-    private static final double SHOCKWAVE_KNOCKBACK = 0.9D;
-    /** 一根鞭同时只有一个活动实体（蓄力段要能被松手打断 ✓） */
-    private static final Map<UUID, WhipLashEntity> ACTIVE_CHARGES = new HashMap<>();
     /**
      * §1057 每个玩家"<b>下一次允许抽击</b>"的 tick ✓ ——
      * 间隔 ＝ {@link WhipItem#attackPeriodTicks} ✓ ⇒ <b>攻速属性只决定每秒能抽几次</b> ✓
@@ -141,7 +127,6 @@ public class WhipLashEntity extends Entity {
     private final WhipPhysics.Drive drive = new WhipPhysics.Drive();
     /** 本鞭已结算过的目标 ⇒ 伤害按 2^prior 递减 ✓（照它的 {@code WhipMultiHitDamage} ✓） */
     private final Set<UUID> contactedTargets = new HashSet<>();
-    private boolean shockwaveTriggered;
     /**
      * §1057 驱动长度<b>固定</b> ✓（照参照的 {@code ArmMotor}：起手 3 ＋ 抽击 4 ＝ 7 tick ✓）
      * —— <b>与攻速无关</b> ✓。
@@ -320,33 +305,9 @@ public class WhipLashEntity extends Entity {
         lash.setRetractTick(0);
     }
 
-    /** 右键按下：开始蓄力自转 ✓（同一玩家只保留一个 ✓） */
-    public static void startCharge(Player player) {
-        WhipLashEntity old = ACTIVE_CHARGES.remove(player.getUUID());
-        if (old != null && old.isAlive()) {
-            old.discard();
-        }
-        WhipLashEntity lash = new WhipLashEntity(player.level(), player, PHASE_CHARGE);
-        player.level().addFreshEntity(lash);
-        ACTIVE_CHARGES.put(player.getUUID(), lash);
-    }
-
-    /** 右键松手：切换到"砸地"释放段 ✓（没在蓄力就什么都不做 ✓） */
-    public static void releaseCharge(Player player) {
-        WhipLashEntity lash = ACTIVE_CHARGES.remove(player.getUUID());
-        if (lash == null || !lash.isAlive()) {
-            return;
-        }
-        lash.setPhase(PHASE_RELEASE);
-        lash.setReleaseTick(0);
-    }
-
-    public static void cancelCharge(Player player) {
-        WhipLashEntity lash = ACTIVE_CHARGES.remove(player.getUUID());
-        if (lash != null && lash.isAlive()) {
-            lash.discard();
-        }
-    }
+    // ⚠ §1118k 这里原本有 startCharge / releaseCharge / cancelCharge（右键蓄力 → 松手砸地 ✓）
+    //   —— 自 §1058 起右键已改成「收回鞭身 ＋ 举械格挡」（见 WhipItem#use ✓）⇒ 那三个方法**零调用点** ✗
+    //   ⇒ 整套蓄力/砸地已在 §1118k 删除 ✓（用户口径：「我不是把右键改成格挡了吗，砸地的代码还留着？」✓）
 
     private WhipLashEntity(Level level, Player owner, int phase) {
         this(ModEntities.WHIP_LASH.get(), level);
@@ -354,8 +315,6 @@ public class WhipLashEntity extends Entity {
         this.setOwnerUuid(owner.getUUID().toString());
         this.setPhase(phase);
         this.setSwingSignPositive(owner.getRandom().nextBoolean());
-        this.setReleaseTick(-1);
-        this.setChargeTicks(0);
         Vec3 aim = owner.getViewVector(1.0F);
         Vec3 forward = new Vec3(aim.x, 0.0D, aim.z);
         forward = forward.lengthSqr() < 1.0E-8D ? new Vec3(0.0D, 0.0D, 1.0D) : forward.normalize();
@@ -370,8 +329,6 @@ public class WhipLashEntity extends Entity {
         this.getEntityData().define(OWNER_UUID, "");
         this.getEntityData().define(PHASE, PHASE_LASH);
         this.getEntityData().define(SWING_SIGN, true);
-        this.getEntityData().define(RELEASE_TICK, -1);
-        this.getEntityData().define(CHARGE_TICKS, 0);
         this.getEntityData().define(RETRACT_TICK, -1);
         this.getEntityData().define(BOWSTRING_VARIANT, "");
         this.getEntityData().define(LASH_GEN, 0);
@@ -391,10 +348,6 @@ public class WhipLashEntity extends Entity {
     public void setPhase(int v) { this.getEntityData().set(PHASE, v); }
     public boolean isSwingSignPositive() { return this.getEntityData().get(SWING_SIGN); }
     public void setSwingSignPositive(boolean v) { this.getEntityData().set(SWING_SIGN, v); }
-    public int getReleaseTick() { return this.getEntityData().get(RELEASE_TICK); }
-    public void setReleaseTick(int v) { this.getEntityData().set(RELEASE_TICK, v); }
-    public int getChargeTicks() { return this.getEntityData().get(CHARGE_TICKS); }
-    public void setChargeTicks(int v) { this.getEntityData().set(CHARGE_TICKS, v); }
     public int getRetractTick() { return this.getEntityData().get(RETRACT_TICK); }
     public void setRetractTick(int v) { this.getEntityData().set(RETRACT_TICK, v); }
 
@@ -406,17 +359,6 @@ public class WhipLashEntity extends Entity {
         return owner.getMainArm() == net.minecraft.world.entity.HumanoidArm.LEFT ? -1.0D : 1.0D;
     }
 
-    /** 它的 {@code fallbackAnchor}：眼位 ＋ 前方×0.22 ＋ 右手侧×side×0.34 ＋ 下 0.52 ✓ */
-    private static Vec3 fallbackAnchor(Player owner, Vec3 forward, double side) {
-        Vec3 horizontal = new Vec3(forward.x, 0.0D, forward.z);
-        horizontal = horizontal.lengthSqr() < 1.0E-8D ? new Vec3(0.0D, 0.0D, 1.0D) : horizontal.normalize();
-        Vec3 right = new Vec3(-horizontal.z, 0.0D, horizontal.x);
-        return owner.getEyePosition()
-                .add(horizontal.scale(0.22D))
-                .add(right.scale(side * 0.34D))
-                .add(0.0D, -0.52D, 0.0D);
-    }
-
     // ==================== 主循环 ====================
 
     @Override
@@ -426,7 +368,6 @@ public class WhipLashEntity extends Entity {
         Player owner = resolveOwner();
         if (owner == null || !owner.isAlive()) {
             if (!this.level().isClientSide) {
-                forgetCharge();
                 this.discard();
             }
             // ⚠ 客户端这里**不能**推进 age ✓ ⇒ 时间轴会等 owner 就绪之后才开始 ✓
@@ -451,42 +392,9 @@ public class WhipLashEntity extends Entity {
         int phase = getPhase();
         boolean server = !this.level().isClientSide;
 
-        if (phase == PHASE_CHARGE) {
-            int charge = Math.min(getChargeTicks() + 1, WhipPhysics.RIGHT_CHARGE_TICKS);
-            if (server) {
-                setChargeTicks(charge);
-            }
-            Vec3 restAnchor = fallbackAnchor(owner, forward, side);
-            Vec3 center = WhipPhysics.chargedSpinCenter(base, forward);
-            Vec3 anchor = WhipPhysics.chargedSpinHandAnchor(restAnchor, center, forward, right, side, charge);
-            drive.mode = WhipPhysics.MODE_CHARGE;
-            drive.center = center;
-            drive.forward = forward;
-            drive.right = right;
-            drive.side = side;
-            drive.chargeTicks = charge;
-            drive.rootFrom = anchor;
-            drive.rootTo = anchor;
-            drive.progressFrom = 0.0D;
-            drive.progressTo = 0.0D;
-        } else if (phase == PHASE_RELEASE) {
-            int release = Math.max(0, getReleaseTick());
-            if (server) {
-                setReleaseTick(release + 1);
-            }
-            double from = Mth.clamp(release / (double) RIGHT_SLAM_TICKS, 0.0D, 1.0D);
-            double to = Mth.clamp((release + 1.0D) / RIGHT_SLAM_TICKS, 0.0D, 1.0D);
-            drive.mode = WhipPhysics.MODE_RELEASE;
-            drive.center = WhipPhysics.chargedSpinCenter(base, forward);
-            drive.forward = forward;
-            drive.right = right;
-            drive.side = side;
-            drive.releaseProgress = to;
-            drive.rootFrom = WhipPhysics.chargedReleaseHandAnchor(base, forward, from);
-            drive.rootTo = WhipPhysics.chargedReleaseHandAnchor(base, forward, to);
-            drive.progressFrom = 0.0D;
-            drive.progressTo = 0.0D;
-        } else if (phase == PHASE_RETRACT) {
+        // ⚠ §1118k 这里原本还有 PHASE_CHARGE（绕手自转）与 PHASE_RELEASE（松手砸地）两个分支 ✓
+        //   自 §1058 起右键已改成「收回 ＋ 格挡」⇒ 那两段**不可达** ✗ ⇒ 已随蓄力/砸地整套删除 ✓
+        if (phase == PHASE_RETRACT) {
             // §1058 收回：根部回到手上 ✓ 且每个点被拉向手心 ✓（WhipPhysics.MODE_RETRACT ✓）
             int retract = Math.max(0, getRetractTick());
             if (server) {
@@ -494,8 +402,6 @@ public class WhipLashEntity extends Entity {
             }
             drive.mode = WhipPhysics.MODE_RETRACT;
             drive.aim = aim.lengthSqr() < 1.0E-8D ? new Vec3(0.0D, 0.0D, 1.0D) : aim.normalize();
-            drive.forward = forward;
-            drive.right = right;
             drive.rootFrom = base;
             drive.rootTo = base;
             drive.progressFrom = 0.0D;
@@ -534,9 +440,7 @@ public class WhipLashEntity extends Entity {
             drive.mode = WhipPhysics.MODE_LASH;
             drive.eye = owner.getEyePosition();
             drive.aim = aim.lengthSqr() < 1.0E-8D ? new Vec3(0.0D, 0.0D, 1.0D) : aim.normalize();
-            drive.forward = forward;
-            drive.right = right;
-            drive.side = side;
+            // ⚠ §1118k：drive.forward / right / side 已随蓄力/砸地删除 ✗（只剩抽击真正用到的字段 ✓）
             drive.swingSign = isSwingSignPositive() ? 1.0D : -1.0D;
             if (driving) {
                 drive.rootFrom = driveTick <= 0 ? base
@@ -557,9 +461,7 @@ public class WhipLashEntity extends Entity {
         physics.step(this.level(), drive);
 
         if (server) {
-            if (phase == PHASE_RELEASE) {
-                tickShockwave(owner);
-            } else if (phase == PHASE_LASH) {
+            if (phase == PHASE_LASH) {
                 tickLashDamage(owner);
             }
             tickLifetime(phase);
@@ -633,54 +535,6 @@ public class WhipLashEntity extends Entity {
         }
     }
 
-    /** 砸地：梢部触到方块或实体 ⇒ 冲击波 ✓（照它 tipBlockContact / tipLivingHit ⇒ shockwave ✓） */
-    private void tickShockwave(Player owner) {
-        if (shockwaveTriggered || getReleaseTick() > RIGHT_SLAM_TICKS) {
-            return;
-        }
-        Vec3 tip = physics.point(WhipPhysics.POINTS - 1);
-        net.minecraft.core.BlockPos bp = net.minecraft.core.BlockPos.containing(tip);
-        boolean hitBlock = !this.level().getBlockState(bp).getCollisionShape(this.level(), bp).isEmpty();
-        double tipSpeed = physics.speed(WhipPhysics.POINTS - 1);
-        Vec3 impact = null;
-        if (hitBlock) {
-            impact = tip;
-        } else {
-            List<LivingEntity> nearby = this.level().getEntitiesOfClass(LivingEntity.class,
-                    new AABB(tip, tip).inflate(0.6D), e -> isValidTarget(owner, e));
-            if (!nearby.isEmpty()) {
-                impact = nearby.get(0).position();
-            }
-        }
-        if (impact == null) {
-            return;
-        }
-        shockwaveTriggered = true;
-
-        float base = WhipItem.damageForSpeed(tipSpeed, WhipItem.attackPanel(owner.getMainHandItem()));
-        List<LivingEntity> targets = this.level().getEntitiesOfClass(LivingEntity.class,
-                new AABB(impact, impact).inflate(SHOCKWAVE_RADIUS), e -> isValidTarget(owner, e));
-        for (LivingEntity target : targets) {
-            Vec3 push = target.position().subtract(impact);
-            Vec3 dir = push.lengthSqr() < 1.0E-6D ? owner.getViewVector(1.0F) : push.normalize();
-            hurt(owner, target, target.position().add(0.0D, target.getBbHeight() * 0.5D, 0.0D), base);
-            target.push(dir.x * SHOCKWAVE_KNOCKBACK, 0.55D * SHOCKWAVE_KNOCKBACK, dir.z * SHOCKWAVE_KNOCKBACK);
-            target.hurtMarked = true;
-        }
-
-        if (this.level() instanceof ServerLevel server) {
-            for (int i = 0; i < 48; i++) {
-                double a = this.random.nextDouble() * Math.PI * 2.0D;
-                double r = this.random.nextDouble() * SHOCKWAVE_RADIUS;
-                server.sendParticles(ParticleTypes.CLOUD,
-                        impact.x + Math.cos(a) * r, impact.y + 0.1D, impact.z + Math.sin(a) * r,
-                        1, 0.0D, 0.06D, 0.0D, 0.02D);
-            }
-            server.playSound(null, impact.x, impact.y, impact.z,
-                    SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.0F, 0.7F);
-        }
-    }
-
     private boolean hurt(Player owner, LivingEntity target, Vec3 at, float amount) {
         if (amount <= 0.0F) {
             return false;
@@ -707,19 +561,6 @@ public class WhipLashEntity extends Entity {
 
     /** 生命周期 ✓（左键：起手＋抽击＋自由飞 ✓；砸地：钟摆＋自由飞 ✓；蓄力：松手或超时 ✓） */
     private void tickLifetime(int phase) {
-        if (phase == PHASE_CHARGE) {
-            if (getChargeTicks() >= WhipPhysics.RIGHT_CHARGE_TICKS + 40) {
-                forgetCharge();
-                this.discard();
-            }
-            return;
-        }
-        if (phase == PHASE_RELEASE) {
-            if (getReleaseTick() > RIGHT_SLAM_TICKS + SLAM_FREE_FLIGHT_TICKS) {
-                this.discard();
-            }
-            return;
-        }
         if (phase == PHASE_RETRACT) {
             if (getRetractTick() > RETRACT_TICKS) {
                 this.discard();
@@ -728,17 +569,6 @@ public class WhipLashEntity extends Entity {
         }
         if (this.age > windupTicks + strokeTicks + LASH_FREE_FLIGHT_TICKS || this.tickCount > 400) {
             this.discard();
-        }
-    }
-
-    private void forgetCharge() {
-        String uuid = getOwnerUuid();
-        if (!uuid.isEmpty()) {
-            try {
-                ACTIVE_CHARGES.remove(UUID.fromString(uuid));
-            } catch (Throwable ignored) {
-                // uuid 不合法就算了 ✓
-            }
         }
     }
 
