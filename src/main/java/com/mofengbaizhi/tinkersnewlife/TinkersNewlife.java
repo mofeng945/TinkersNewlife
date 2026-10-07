@@ -129,6 +129,14 @@ public class TinkersNewlife {
         FumoMoDoll.init();
         // 注册各类内容
         ModItems.ITEMS.register(modEventBus);
+        // ⭐ §1118r 联动物品「邪灵辉锭」：**只在诡厄巫法 ＋ 神秘遗物同时在场时**才把条件表挂到总线 ✓
+        //   ⚠ 不能塞进 ModItems.ITEMS ✗（那张表无条件挂 ⇒ 一定会注册 ✓ ⇒ 做不到"条件注册" ✗）
+        //   ⚠ 必须在 Forge 发 RegisterEvent **之前**挂 ✓（这里正是 ✓）
+        if (IntegrationLoader.isLoaded(IntegrationLoader.GOETY)
+                && IntegrationLoader.isLoaded(IntegrationLoader.ENIGMATIC_LEGACY)) {
+            ModItems.LINKED_ITEMS.register(modEventBus);
+            LOGGER.info("[联动] 诡厄巫法＋神秘遗物同时在场 ⇒ 已有条件注册：邪灵辉锭（sinister_glow_ingot）✓");
+        }
         ModBlocks.BLOCKS.register(modEventBus);
         ModBlockEntities.BLOCK_ENTITIES.register(modEventBus);
 

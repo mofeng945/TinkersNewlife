@@ -68,9 +68,18 @@ public final class IntegrationLoader {
     /** 机械动力（Create）—— §559 起万用能量转化器要变成它的动能方块（传动杆能接上） */
     public static final String CREATE = "create";
 
+    /**
+     * ⭐ §1118r <b>神秘遗物（Enigmatic Legacy）</b> ✓ —— 用户口径：「同时加载**诡厄巫法**和**神秘遗物**时
+     * 才会注册的联动物品」✓（那个物品是「**邪灵辉锭**」✓ 见 {@code ModItems#SINISTER_GLOW_INGOT} ✓）。
+     * <p>⚠ 本仓此前**没有**这个常量 ✗（散落处用的是 {@code ModList.get().isLoaded("enigmaticlegacy")} 字面量 ✓，
+     * 例如 {@code CompendiumItem} ✓）⇒ 现在统一收进这里 ✓ 与 §559 那几家同一套口径 ✓。
+     */
+    public static final String ENIGMATIC_LEGACY = "enigmaticlegacy";
+
     /** 环境探测日志用的关注清单（顺序即日志顺序） */
     private static final String[] WATCHED = {
-            GOETY, GOETY_REVELATION, GOETY_LADDER, ICEANDFIRE, AQUACULTURE, LAVAFISHING, IRON_SPELLBOOKS, TACZ, JEI, PATCHOULI, JADE, AE2
+            GOETY, GOETY_REVELATION, GOETY_LADDER, ICEANDFIRE, AQUACULTURE, LAVAFISHING, IRON_SPELLBOOKS, TACZ, JEI, PATCHOULI, JADE, AE2,
+            ENIGMATIC_LEGACY
     };
 
     private IntegrationLoader() {

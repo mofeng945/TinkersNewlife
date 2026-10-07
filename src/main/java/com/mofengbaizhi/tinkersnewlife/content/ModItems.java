@@ -26,6 +26,43 @@ public class ModItems {
             DeferredRegister.create(ForgeRegistries.ITEMS, TinkersNewlife.MOD_ID);
 
     // ============================================================
+    //  ⭐ §1118r 联动物品的**条件注册表**（只在指定模组组合同时在场时才挂上总线 ✓）
+    // ============================================================
+
+    /**
+     * ⭐ §1118r <b>邪灵辉锭</b>（用户口径 ✓）：「创建一个新的锭类物品，是**同时加载诡厄巫法和神秘遗物时
+     * 才会注册**的联动物品，名字叫**邪灵辉锭**」✓
+     *
+     * <h2>为什么必须另开一张表 ✗（而不是塞进 {@link #ITEMS} ✓）</h2>
+     * {@code ModItems.ITEMS} 是**无条件**挂到事件总线的 ✓ ⇒ 它里面的每个 supplier 都**一定**会被执行 ✗
+     * ⇒ 做不到"两个模组不同时在场就不注册" ✓（{@code DeferredRegister} **本身不支持条件** ✗）。
+     * ⇒ 做法 ✓：另开 {@link #LINKED_ITEMS} ✓，由 {@code TinkersNewlife} 在**判定通过后**才
+     * {@code .register(modEventBus)} ✓ ⇒ 判定不通过时它**从未挂上总线** ✓
+     * ⇒ 里面的 {@link RegistryObject} 永远是 empty ✓（`get()` 返回 null ✓ 不抛异常 ✓）。
+     *
+     * <h2>⚠ 使用约定（很重要 ✗）</h2>
+     * 任何引用它的地方**必须先判 {@code isPresent()}** ✓ —— 本仓创造栏已有现成安全写法
+     * {@code ModCreativeTabs#acceptItemIfPresent(output, "sinister_glow_ingot")} ✓
+     * （内部走 {@code IntegrationLoader.item(...)} ✓ 未注册时返回 null 自动跳过 ✓）。
+     */
+    public static final DeferredRegister<Item> LINKED_ITEMS =
+            DeferredRegister.create(ForgeRegistries.ITEMS, TinkersNewlife.MOD_ID);
+
+    /**
+     * <b>邪灵辉锭</b> ✓ —— 诡厄巫法（{@code goety}）＋ 神秘遗物（{@code enigmaticlegacy}）**同时在场**
+     * 才会存在的联动物品 ✓（纯材料锭 ✓ 暂无配方 ✓）。
+     *
+     * <p>id ＝ {@code tinkersnewlife:sinister_glow_ingot} ✓
+     * （{@code sinister} 对「邪」✓ {@code glow} 对「辉」✓ {@code ingot} 对「锭」✓ ——
+     * 与诡厄巫法（goety ＝ 诡厄 ✓）的调性一致 ✓）。
+     * <p>贴图是**5 帧竖排动画条** ✓ ＋ {@code .png.mcmeta} 里 {@code frametime: 4} ✓
+     * ⇒ 5 × 4 ＝ <b>20 tick ＝ 1 秒**一个循环**</b> ✓（用户口径 ✓）。
+     */
+    public static final RegistryObject<Item> SINISTER_GLOW_INGOT =
+            LINKED_ITEMS.register("sinister_glow_ingot",
+                    () -> new Item(new Item.Properties()));
+
+    // ============================================================
     //  基础材料
     // ============================================================
 
