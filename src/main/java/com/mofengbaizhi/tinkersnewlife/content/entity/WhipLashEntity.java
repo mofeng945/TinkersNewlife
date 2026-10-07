@@ -69,6 +69,25 @@ public class WhipLashEntity extends Entity {
     private static final EntityDataAccessor<Integer> RETRACT_TICK =
             SynchedEntityData.defineId(WhipLashEntity.class, EntityDataSerializers.INT);
 
+    /**
+     * ⭐ §1118d <b>弓弦部件的材质 VariantId</b> ✓ —— 用户口径：
+     * 「长鞭抽击时的鞭身实体应当为**鞭子弓弦部件的材料色**」✓
+     *
+     * <p>做法照 {@code YoYoEntity.BOWSTRING_VARIANT} ✓（本仓既有的同一需求 ✓）：
+     * 刷出鞭身时把弓弦材质 id **同步**给实体 ✓ ⇒ 由 {@code WhipLashRenderer} 在客户端解析成颜色 ✓
+     * （那边走 {@code MaterialTooltipCache.getColor} ✓；{@code WizardArmorColors} 也证明这条链可用 ✓）。
+     * <p>⚠ 空串 ＝ 拿不到 ✓（无弓弦部件／未知材料／模组没装 ✓）⇒ 渲染器退回原来的皮革米白 ✓。
+     */
+    private static final EntityDataAccessor<String> BOWSTRING_VARIANT =
+            SynchedEntityData.defineId(WhipLashEntity.class, EntityDataSerializers.STRING);
+
+    /**
+     * 弓弦部件在长鞭定义里的下标 ✓ ＝ <b>2</b> ✓
+     * （{@code data/tinkersnewlife/tinkering/tool_definitions/whip.json} 的
+     * {@code parts = [tconstruct:tough_handle, tconstruct:large_plate, tconstruct:bowstring]} ✓）
+     */
+    private static final int BOWSTRING_PART_INDEX = 2;
+
     /** 左键：伤害窗口 = 起手段之后 10 tick ✓（照它的 {@code LEFT_DAMAGE_WINDOW_TICKS} ✓） */
     private static final int LEFT_DAMAGE_WINDOW_TICKS = 14;
     /** 抽击驱动结束后，绳子还要自由飞这么多 tick ✓ 让波传完 ✓（照它实体活 32 tick 的量级 ✓） */
@@ -151,10 +170,40 @@ public class WhipLashEntity extends Entity {
 
     private static void spawn(Player player, int phase) {
         WhipLashEntity lash = new WhipLashEntity(player.level(), player, phase);
+        // §1118d 把"弓弦部件的材料色来源"同步给鞭身 ✓（渲染器据此给整条鞭身上色 ✓ 用户口径 ✓）
+        lash.setBowstringVariant(bowstringVariantOf(player));
         player.level().addFreshEntity(lash);
         if (phase == PHASE_LASH) {
             ACTIVE_LASHES.put(player.getUUID(), lash);
         }
+    }
+
+    /**
+     * §1118d 取玩家手里那把长鞭的**弓弦部件**材质 VariantId ✓
+     * （空串 ＝ 拿不到 ✓ 渲染器会用默认的皮革米白 ✓）。
+     * <p>⚠ 完全照 {@code YoYoItem#getBowstringVariantId} 的写法 ✓（同一套匠魂 API ✓ 已在本仓跑通 ✓）：
+     * {@code ToolStack.from(stack).getMaterials().get(2)} ⇒ {@code variant.getVariant().toString()} ✓。
+     */
+    private static String bowstringVariantOf(Player player) {
+        try {
+            for (net.minecraft.world.InteractionHand hand : net.minecraft.world.InteractionHand.values()) {
+                net.minecraft.world.item.ItemStack stack = player.getItemInHand(hand);
+                if (stack.isEmpty() || !(stack.getItem() instanceof WhipItem)) continue;
+                slimeknights.tconstruct.library.tools.nbt.ToolStack tool =
+                        slimeknights.tconstruct.library.tools.nbt.ToolStack.from(stack);
+                if (tool == null) continue;
+                slimeknights.tconstruct.library.tools.nbt.MaterialNBT materials = tool.getMaterials();
+                if (materials == null || materials.size() <= BOWSTRING_PART_INDEX) return "";
+                slimeknights.tconstruct.library.materials.definition.MaterialVariant variant =
+                        materials.get(BOWSTRING_PART_INDEX);
+                if (variant == null || variant.isUnknown()) return "";
+                slimeknights.tconstruct.library.materials.definition.MaterialVariantId id = variant.getVariant();
+                return id == null ? "" : id.toString();
+            }
+        } catch (Throwable ignored) {
+            // 匠魂没加载 / 结构不符 ⇒ 空串 ⇒ 默认色 ✓ 绝不影响鞭子本身 ✓
+        }
+        return "";
     }
 
     /**
@@ -224,10 +273,16 @@ public class WhipLashEntity extends Entity {
         this.getEntityData().define(RELEASE_TICK, -1);
         this.getEntityData().define(CHARGE_TICKS, 0);
         this.getEntityData().define(RETRACT_TICK, -1);
+        this.getEntityData().define(BOWSTRING_VARIANT, "");
     }
 
     public String getOwnerUuid() { return this.getEntityData().get(OWNER_UUID); }
     public void setOwnerUuid(String v) { this.getEntityData().set(OWNER_UUID, v); }
+    /** §1118d 弓弦材质 id（空串 ＝ 拿不到 ⇒ 渲染器用默认色 ✓） */
+    public String getBowstringVariant() { return this.getEntityData().get(BOWSTRING_VARIANT); }
+    public void setBowstringVariant(String v) {
+        this.getEntityData().set(BOWSTRING_VARIANT, v == null ? "" : v);
+    }
     public int getPhase() { return this.getEntityData().get(PHASE); }
     public void setPhase(int v) { this.getEntityData().set(PHASE, v); }
     public boolean isSwingSignPositive() { return this.getEntityData().get(SWING_SIGN); }

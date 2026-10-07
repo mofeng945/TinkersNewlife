@@ -71,9 +71,27 @@ public class WhipLashRenderer extends EntityRenderer<WhipLashEntity> {
             Vec3 anchor = entity.getPosition(partialTick);
             Vec3 cam = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
 
-            int r = (TINT >> 16) & 0xFF;
-            int g = (TINT >> 8) & 0xFF;
-            int b = TINT & 0xFF;
+            // ⭐ §1118d 鞭身颜色 ＝ 鞭子**弓弦部件**的材料色 ✓（用户口径 ✓）
+            //   ⚠ 完全照本仓 YoYoRenderer#getBowstringColor 的写法 ✓（同一套匠魂 API ✓ 已跑通 ✓）：
+            //     `MaterialTooltipCache.getColor(MaterialVariantId.parse(variant))`
+            //   ⚠ 拿不到（无弓弦 / 未知材料 / 匠魂未加载）⇒ **退回原来的皮革米白 TINT** ✓ 绝不影响渲染 ✓
+            int rgb = TINT;
+            try {
+                String variant = entity.getBowstringVariant();
+                if (variant != null && !variant.isEmpty()) {
+                    net.minecraft.network.chat.TextColor c =
+                            slimeknights.tconstruct.library.client.materials.MaterialTooltipCache
+                                    .getColor(slimeknights.tconstruct.library.materials.definition.MaterialVariantId
+                                            .parse(variant));
+                    if (c != null) {
+                        rgb = c.getValue();
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
+            int r = (rgb >> 16) & 0xFF;
+            int g = (rgb >> 8) & 0xFF;
+            int b = rgb & 0xFF;
             int segments = WhipPhysics.POINTS - 1;
 
             poseStack.pushPose();
