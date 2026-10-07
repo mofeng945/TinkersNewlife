@@ -57,8 +57,29 @@ public class DragonsteelHandler {
     private static final int LIGHTNING_DISARM_BASE = 60;
     private static final int ICE_LIFETIME = 100;
 
+    /**
+     * ⭐ §1118m <b>递归闸门</b> ✓ —— 用户实测：「**我锁定问题是龙炎特性，以前也出这样的问题**」✓
+     *
+     * <h2>根因（读代码确证 ✓）</h2>
+     * 龙炎爆炸是**手动结算**的 ✓（`applyFireEffect` 里 `living.hurt(explosionSource, …)` ✓），
+     * 而那个爆炸伤害源是 `level.damageSources().explosion(new Explosion(level, attacker, …))` ✓
+     * ⇒ **`source.getEntity()` 仍然是攻击者** ✗ ⇒ `hurt` 会**再发一次 `LivingAttackEvent`** ✗
+     * ⇒ {@link #onLivingAttack} 又用同一把龙钢武器取到 tool ✗ ⇒ **又炸一次** ✗
+     * ⇒ **连环爆炸 / 递归** ⇒ `StackOverflowError` ✗ ⇒ 事件处理器抛异常
+     * ⇒ Forge `EventBus.handleException` 记录它时撞上本整合包的 **log4j 类加载冲突** ✗
+     * ⇒ **整个服务端 tick 崩掉** ✓（与备忘录 §1014 / §1015 记的是**同一个坑** ✓ 也是用户说"以前也出过"的原因 ✓）。
+     *
+     * <h2>修法</h2>
+     * 在"我们自己的龙钢效果结算"期间把本标志置真 ✓ ⇒ 期间到达的攻击事件**一律忽略** ✓
+     * （`try/finally` 保证复位 ✓）。⚠ 注意：爆炸**该伤的敌人照旧伤** ✓ ——
+     * 我们只是不再让"我们自己造成的伤害"**反过来再触发自己的词条** ✓✓。
+     */
+    private static boolean applyingDragonsteel = false;
+
     @SubscribeEvent
     public static void onLivingAttack(LivingAttackEvent event) {
+        // §1118m 正在结算我们自己的龙钢效果 ⇒ 忽略这次攻击（否则龙炎爆炸会无限自我触发 ✗）
+        if (applyingDragonsteel) return;
         if (!(event.getSource().getEntity() instanceof LivingEntity attacker)) return;
         if (attacker.level().isClientSide) return;
         LivingEntity target = event.getEntity();
@@ -99,9 +120,17 @@ public class DragonsteelHandler {
         int iceLevel = (hasDragonbone && baseIceLevel > 0) ? baseIceLevel + 1 : baseIceLevel;
         int lightningLevel = (hasDragonbone && baseLightningLevel > 0) ? baseLightningLevel + 1 : baseLightningLevel;
 
-        if (fireLevel > 0) applyFireEffect(level, attacker, target, fireLevel);
-        if (iceLevel > 0) applyIceEffect(level, attacker, target, iceLevel);
-        if (lightningLevel > 0) applyLightningEffect(level, attacker, target, lightningLevel);
+        // ⭐ §1118m 递归闸门：整个"施加效果"过程置真 ✓ ⇒ 期间由我们造成的伤害（爆炸/闪电 ✓）
+        //   再触发 LivingAttackEvent 时会被 onLivingAttack 直接忽略 ✓ 不再连环自我触发 ✓
+        boolean prevGuard = applyingDragonsteel;
+        applyingDragonsteel = true;
+        try {
+            if (fireLevel > 0) applyFireEffect(level, attacker, target, fireLevel);
+            if (iceLevel > 0) applyIceEffect(level, attacker, target, iceLevel);
+            if (lightningLevel > 0) applyLightningEffect(level, attacker, target, lightningLevel);
+        } finally {
+            applyingDragonsteel = prevGuard;
+        }
     }
 
     // ===== 效果实现（爆炸/闪电均不伤持有者自己） =====
