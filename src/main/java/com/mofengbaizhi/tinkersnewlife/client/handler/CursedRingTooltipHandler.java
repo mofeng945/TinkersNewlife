@@ -22,22 +22,19 @@ import java.util.List;
 /**
  * 七咒之戒的提示改写（客户端 ✓）。
  *
- * <h2>① 命灯指轮（原有 ✓）</h2>
- * 戴着命灯指轮看七咒之戒时，**第一诅咒**（{@code tooltip.enigmaticlegacy.cursedRing4}）会被划掉、变灰 ✓
- * 并在后面补一句绿色文案 ✓（`item.tinkersnewlife.life_lamp_ring.blessing` ✓）。
+ * <h2>⭐ 优先级（用户口径 ✓「**应该比命灯的优先级高**」✓）</h2>
+ * <ol>
+ *   <li><b>先判「超越维度全免」</b> ✓：全身总等级 **≥ 4** ⇒ ⭐ **整个提示都由我们接管** ✓
+ *       （七行**全部**划掉 ＋ 追加粉色 ✓，**包括第一行** ✓）⇒ 直接结束 ✗ 不再走命灯那条 ✓；</li>
+ *   <li>否则再判 **命灯指轮** ✓（原有行为 ✓）：戴着命灯时只改写**第一诅咒**那一行 ✓
+ *       （划掉 ＋ 绿色祝福 `item.tinkersnewlife.life_lamp_ring.blessing` ✓）。</li>
+ * </ol>
+ * ⚠ 两者**互斥** ✓ —— 我上一版让命灯先跑、我这边跳过第一行 ✗ ⇒ 用户指出**顺序反了** ✗ ⇒ 现已对调 ✓。
  *
- * <h2>② ⭐ 超越维度 ≥4 ⇒ 七咒全免的提示（用户口径 ✓）</h2>
- * 「全身盔甲的总超越维度等级 **≥ 4** ⇒ 七咒之戒所有诅咒效果被免除 ✓ 且提示被划掉 ＋ 追加粉色文本」✓。
- *
- * <h2>⚠⚠ 本次修的 bug（用户实测 ✓「带上指环之后修改的工具提示被覆盖了」✓）</h2>
- * 原先①那段结尾有个 {@code return;} ✗ ⇒ ⚠ **只要玩家同时戴着命灯指轮** ✗ ⇒
- * ⭐ **② 那段"七行全免"就完全不跑** ✗（用户截图第一行显示的是命灯的绿色祝福 ✓ 正是证据 ✓）。
- * ⇒ 现在改成**两条路都跑** ✓（⚠ 第一行若已被命灯改写 ⇒ ② 不再重复处理它 ✗ 免得叠加两层 ✗）。
- * <p>⚠ 并把 EL 的 {@code _alt} 变体键（{@code cursedRing4_alt} ✓ 戴戒指时可能用另一版文案 ✓）
- * 一并纳入匹配 ✓，免得"戴上之后文案变了 ⇒ 匹配不上 ⇒ 粉色不出现" ✗。
- *
- * <p>⚠ <b>临时诊断</b>：下面会打印七咒之戒提示的**每一行原文**与匹配结果 ✓
- * ⇒ 一次复现就能拿到全部证据 ✓（查清后删 ✗）。
+ * <h2>⚠ 之前的两处教训（都记在备忘录 ✓）</h2>
+ * ① 命灯分支结尾曾有个 {@code return;} ✗ ⇒ 同时戴命灯时"七行全免"**完全不跑** ✗；
+ * ② EL 戴着戒指时第一诅咒可能改用 {@code cursedRing4_alt} 文案 ✓ ⇒ 匹配必须**同时登记 `_alt` 变体** ✓，
+ *    且含 {@code %1$s} 的行（护甲效力/对怪伤害 ✓）要按**参数前的前缀**比对 ✗ 不能整句比 ✓。
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, value = Dist.CLIENT,
         bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -50,19 +47,16 @@ public final class CursedRingTooltipHandler {
     private static final String CURSED_RING = "enigmaticlegacy:cursed_ring";
     /** EL 第一诅咒那一行的 lang 键（命灯指轮用 ✓） */
     private static final String FIRST_CURSE_KEY = "tooltip.enigmaticlegacy.cursedRing4";
+    /** 命灯指轮的绿色祝福文案键 ✓ */
+    private static final String LAMP_BLESSING_KEY = "item.tinkersnewlife.life_lamp_ring.blessing";
 
     /** 本模组"超越维度"特性 id ✓ */
     private static final ModifierId DIMENSION_ID =
             new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, BeyondDimensionTrait.ID));
 
-    /** ⚠ 临时诊断开关 ✓（查清就删 ✗） */
-    private static final boolean DEBUG_LINES = true;
-    private static long lastDebugTick = 0L;
-
     /**
      * ⭐ 七咒七行 ↔ 免除后的粉色文本（用户给的对照 ✓ 逐条对应 ✓）。
-     * <p>{@code {EL 的键, 我们的替换键}} ✓；⚠ 同时登记 EL 的 {@code _alt} 变体 ✓
-     * （它在"戴着戒指"时可能换成另一版文案 ✓ 例如 {@code cursedRing4_alt} ✓）。
+     * <p>{@code {EL 的键, EL 的 _alt 变体（可为 null）, 我们的替换键}} ✓
      */
     private static final String[][] WAIVE_LINES = {
             {"tooltip.enigmaticlegacy.cursedRing4", "tooltip.enigmaticlegacy.cursedRing4_alt",
@@ -88,60 +82,42 @@ public final class CursedRingTooltipHandler {
         if (!isCursedRing(event.getItemStack())) return;
 
         List<Component> lines = event.getToolTip();
-        boolean lifeLampRewrote = false;
 
-        // ---- ① 命灯指轮：改写"第一诅咒"那行（原有行为 ✓）----
-        if (LifeLampRingItem.isWorn(player)) {
-            // 「心」恶意 ≥20% ⇒ 命灯指轮的七咒解除已被阻塞 ⇒ 这里也不改写提示
-            if (com.mofengbaizhi.tinkersnewlife.content.handler.ConscienceHandler.mirrorAlignment(player)
-                    > com.mofengbaizhi.tinkersnewlife.content.handler.ConscienceThresholdHandler.LAMP_AT) {
-                for (int i = 0; i < lines.size(); i++) {
-                    if (!strip(lines.get(i).getString()).equals(strip(Component.translatable(FIRST_CURSE_KEY).getString())))
-                        continue;
-                    MutableComponent struck = Component.literal(strip(lines.get(i).getString()))
-                            .withStyle(s -> s.applyFormat(ChatFormatting.DARK_GRAY).withStrikethrough(true));
-                    MutableComponent blessing = Component.translatable("item.tinkersnewlife.life_lamp_ring.blessing")
-                            .withStyle(s -> s.applyFormat(ChatFormatting.GREEN).withStrikethrough(false));
-                    lines.set(i, struck.append(blessing));
-                    lifeLampRewrote = true;
-                    break;
-                }
-            }
-            // ⚠⚠ 这里**不能 return** ✗ —— 原先就是它导致"同时戴命灯时七行全免完全不生效" ✗
-        }
-
-        // ---- ② ⭐ 超越维度 ≥4：七咒全划掉 ＋ 追加粉色 ✓ ----
-        int total = totalDimensionLevel(player);
-        if (DEBUG_LINES && player.level().getGameTime() - lastDebugTick > 40L) {
-            lastDebugTick = player.level().getGameTime();
+        // ---- ① ⭐ 最高优先：超越维度全免（≥4）⇒ 七行全按我们的来 ✓ ----
+        if (totalDimensionLevel(player) >= BeyondDimensionTrait.WAIVER_TOTAL_LEVEL) {
             for (int i = 0; i < lines.size(); i++) {
-                TinkersNewlife.LOGGER.info("[七咒提示诊断] 第{}行 = [{}]", i, strip(lines.get(i).getString()));
-            }
-            TinkersNewlife.LOGGER.info("[七咒提示诊断] 超越维度总等级={} 戴命灯={} 命灯已改写={}",
-                    total, LifeLampRingItem.isWorn(player), lifeLampRewrote);
-        }
-        if (total < BeyondDimensionTrait.WAIVER_TOTAL_LEVEL) return;
-
-        for (int i = 0; i < lines.size(); i++) {
-            String text = strip(lines.get(i).getString());
-            if (text.isEmpty()) continue;
-            // ⚠ 第一行若已被命灯改写 ⇒ 跳过 ✗（否则会在祝福后面再叠一层 ✗）
-            if (lifeLampRewrote && i < lines.size()
-                    && strip(lines.get(i).getString()).contains(strip(Component
-                    .translatable("item.tinkersnewlife.life_lamp_ring.blessing").getString()))) {
-                continue;
-            }
-            for (String[] pair : WAIVE_LINES) {
-                String replacementKey = pair[2];
-                if (matches(text, pair[0]) || (pair[1] != null && matches(text, pair[1]))) {
-                    MutableComponent struck = Component.literal(text)
-                            .withStyle(s -> s.applyFormat(ChatFormatting.DARK_GRAY).withStrikethrough(true));
-                    MutableComponent replaced = Component.translatable(replacementKey)
-                            .withStyle(s -> s.applyFormat(ChatFormatting.LIGHT_PURPLE).withStrikethrough(false));
-                    lines.set(i, struck.append(replaced));
-                    break;
+                String text = strip(lines.get(i).getString());
+                if (text.isEmpty()) continue;
+                for (String[] pair : WAIVE_LINES) {
+                    if (matches(text, pair[0]) || (pair[1] != null && matches(text, pair[1]))) {
+                        MutableComponent struck = Component.literal(text)
+                                .withStyle(s -> s.applyFormat(ChatFormatting.DARK_GRAY).withStrikethrough(true));
+                        MutableComponent replaced = Component.translatable(pair[2])
+                                .withStyle(s -> s.applyFormat(ChatFormatting.LIGHT_PURPLE).withStrikethrough(false));
+                        lines.set(i, struck.append(replaced));
+                        break;
+                    }
                 }
             }
+            return;   // ⭐ 全免已接管 ⇒ 不再走命灯那条 ✓
+        }
+
+        // ---- ② 其次：命灯指轮（原有行为 ✓ 只在没达到全免时生效 ✓）----
+        if (!LifeLampRingItem.isWorn(player)) return;
+        // 「心」恶意 ≥20% ⇒ 命灯指轮的七咒解除已被阻塞 ⇒ 这里也不改写提示
+        if (com.mofengbaizhi.tinkersnewlife.content.handler.ConscienceHandler.mirrorAlignment(player)
+                <= com.mofengbaizhi.tinkersnewlife.content.handler.ConscienceThresholdHandler.LAMP_AT) {
+            return;
+        }
+        String expected = strip(Component.translatable(FIRST_CURSE_KEY).getString());
+        for (int i = 0; i < lines.size(); i++) {
+            if (!strip(lines.get(i).getString()).equals(expected)) continue;
+            MutableComponent struck = Component.literal(strip(lines.get(i).getString()))
+                    .withStyle(s -> s.applyFormat(ChatFormatting.DARK_GRAY).withStrikethrough(true));
+            MutableComponent blessing = Component.translatable(LAMP_BLESSING_KEY)
+                    .withStyle(s -> s.applyFormat(ChatFormatting.GREEN).withStrikethrough(false));
+            lines.set(i, struck.append(blessing));
+            return;
         }
     }
 
