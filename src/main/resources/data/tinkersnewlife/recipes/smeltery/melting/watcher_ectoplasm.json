@@ -1,0 +1,14 @@
+{
+  "type": "tconstruct:melting",
+  "ingredient": { "item": "goety:void_echo" },
+  "byproducts": [
+    { "fluid": "tinkersnewlife:watcher_ectoplasm_still", "amount": 10 }
+  ],
+  "result": { "fluid": "goety:void", "amount": 250 },
+  "temperature": 1000,
+  "time": 60,
+  "conditions": [
+    { "type": "forge:mod_loaded", "modid": "goety" },
+    { "type": "forge:mod_loaded", "modid": "enigmaticlegacy" }
+  ]
+}

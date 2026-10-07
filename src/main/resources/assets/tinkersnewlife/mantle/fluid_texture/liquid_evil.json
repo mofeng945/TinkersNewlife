@@ -1,0 +1,8 @@
+{
+  "still": "tinkersnewlife:block/liquid_evil_still",
+  "flowing": "tinkersnewlife:block/liquid_evil_flowing",
+  "color": "FFFFFFFF",
+  "fogColor": "FF220069",
+  "fogStart": 0.5,
+  "fogEnd": 6.0
+}

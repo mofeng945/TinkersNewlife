@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "tinkersnewlife:watcher_ectoplasm_still",
+      "required": false
+    }
+  ]
+}

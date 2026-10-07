@@ -1,0 +1,8 @@
+{
+  "still": "tinkersnewlife:block/watcher_ectoplasm_still",
+  "flowing": "tinkersnewlife:block/watcher_ectoplasm_flowing",
+  "color": "FFFFFFFF",
+  "fogColor": "FF1C0030",
+  "fogStart": 0.5,
+  "fogEnd": 6.0
+}

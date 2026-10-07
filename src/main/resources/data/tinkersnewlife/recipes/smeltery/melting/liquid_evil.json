@@ -1,0 +1,11 @@
+{
+  "type": "tconstruct:melting",
+  "ingredient": { "item": "enigmaticlegacy:evil_essence" },
+  "result": { "fluid": "tinkersnewlife:liquid_evil_still", "amount": 125 },
+  "temperature": 1000,
+  "time": 40,
+  "conditions": [
+    { "type": "forge:mod_loaded", "modid": "goety" },
+    { "type": "forge:mod_loaded", "modid": "enigmaticlegacy" }
+  ]
+}

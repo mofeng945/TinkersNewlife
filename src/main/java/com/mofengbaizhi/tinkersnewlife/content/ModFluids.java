@@ -77,6 +77,46 @@ public class ModFluids {
                     FluidRegistrar.lavaProps(MapColor.COLOR_PURPLE));
 
     // ============================================================
+    //  §1118u 合金链的 4 种"精质/星质"流体（用户口径 ✓ 全部同条件 ✓）
+    // ============================================================
+
+    /**
+     * 四个合金原料流体 ✓ —— 用户口径：
+     * 「1 灵质 ＝ 125mb **液态灵质** ✓；1 邪恶精髓 ＝ 125mb **流体邪恶** ✓；
+     *   1 虚空回响 ＝ 250mb **液态虚空**（诡厄本体流体 ✓ 副产物 10mb **守望灵质** ✓）；
+     *   1 星尘 ＝ 125mb **流动星空** ✓；
+     *   250 液态灵质 ＋ 250 流体邪恶 ＋ 1000 液态虚空 ＋ 10 守望灵质 ＋ 250 流动星空 ＝ **360mb 邪灵辉质**」✓
+     *
+     * <p>⚠ 温度口径 ✓：这四种自身温度取 **1000** ✓（它们由"精质"熔出 ✓ 属中温 ✓），
+     * 而合金产物 {@link #MOLTEN_SINISTER_GLOW} 仍是 **2000** ✓（用户给的数 ✓）——
+     * 合金配方 `temperature` 也写 2000 ✓（≥ 各原料 ✓ 逻辑自洽 ✓）。
+     * <p>⚠ 颜色 ✓：四个都按用户口径「**从来源物上取色**」✓ ——
+     * 液态灵质取 `goety:ectoplasm` 的 **#399AD6** ✓、流体邪恶取 `enigmaticlegacy:evil_essence` 的 **#220069** ✓、
+     * 守望灵质取 `goety:void_echo` 的 **#1C0030** ✓（它就是虚空回响的副产物 ✓）、
+     * 流动星空取 `enigmaticlegacy:astral_dust` 的 **#9F37CA** ✓；
+     * 贴图一律是"**换色匠魂默认熔融材质**" ✓（生成器 `tools/fluid_texture_tint.py` 同族脚本 ✓）。
+     */
+    public static final FluidRegistrar.FluidEntry LIQUID_ECTOPLASM =
+            LINKED_REGISTRAR.entry("liquid_ectoplasm",
+                    1500, 6000, 1000, 0xFF399AD6,
+                    FluidRegistrar.waterProps(MapColor.COLOR_LIGHT_BLUE));
+
+    public static final FluidRegistrar.FluidEntry LIQUID_EVIL =
+            LINKED_REGISTRAR.entry("liquid_evil",
+                    1600, 7000, 1000, 0xFF220069,
+                    FluidRegistrar.waterProps(MapColor.COLOR_PURPLE));
+
+    public static final FluidRegistrar.FluidEntry WATCHER_ECTOPLASM =
+            LINKED_REGISTRAR.entry("watcher_ectoplasm",
+                    1500, 6000, 1000, 0xFF1C0030,
+                    FluidRegistrar.waterProps(MapColor.COLOR_BLACK));
+
+    public static final FluidRegistrar.FluidEntry FLOWING_STARDUST =
+            LINKED_REGISTRAR.entry("flowing_stardust",
+                    1200, 4000, 1000, 0xFF9F37CA,
+                    FluidRegistrar.waterProps(MapColor.COLOR_MAGENTA));
+
+    // ============================================================
     // 原生流体
     // ============================================================
 

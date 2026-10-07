@@ -1,0 +1,8 @@
+{
+  "still": "tinkersnewlife:block/liquid_ectoplasm_still",
+  "flowing": "tinkersnewlife:block/liquid_ectoplasm_flowing",
+  "color": "FFFFFFFF",
+  "fogColor": "FF399AD6",
+  "fogStart": 0.5,
+  "fogEnd": 6.0
+}

@@ -1,0 +1,8 @@
+{
+  "still": "tinkersnewlife:block/flowing_stardust_still",
+  "flowing": "tinkersnewlife:block/flowing_stardust_flowing",
+  "color": "FFFFFFFF",
+  "fogColor": "FF9F37CA",
+  "fogStart": 0.5,
+  "fogEnd": 6.0
+}
