@@ -1,13 +1,13 @@
 package com.mofengbaizhi.tinkersnewlife.content.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader;
+import com.mofengbaizhi.tinkersnewlife.integration.enigmaticlegacy.EnigmaticPlaytimeBridge;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -25,18 +25,24 @@ import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
  * 「不满足条件的人**手持、装备或装配进饰品时**会自动将工具**丢回背包**，
  * 如果背包中没有空位会**自动将其扔在地上**」✓。
  *
- * <h2>判定数据（持久化 ✓ 照仓库口径 {@code player.getPersistentData()} ✓）</h2>
- * <ul>
- *   <li>{@link #KEY_TOTAL} ✓：玩家**在线总 tick**（每个 tick ＋1 ✓）；</li>
- *   <li>{@link #KEY_CURSED} ✓：其中**受七咒的 tick**（身上带七咒之戒时 ＋1 ✓）。</li>
- * </ul>
- * ⇒ 合格条件 ✓：{@code cursed * 100 >= total * 90} ✓（**整数运算** ✓ 免得浮点误差 ✗）。
+ * <h2>⚠⚠ 判定数据已改为**神秘遗物原生**（用户口径 ✓「尽量用原版」✓）</h2>
+ * 先前我自己用 {@code getPersistentData()} 记"在线 tick / 受七咒 tick" ✗ —— ⚠ 那是**第二套账** ✗
+ * （和本体各算一套 ✓ 可能对不上 ✓；而且我按"**背包里带着**戒指"算 ✗，本体按"**佩戴**"算 ✗ ⇒ 口径也不一致 ✗）。
+ * 现改为读**原版统计**里神秘遗物同步过来的那两个数 ✓（**反编译实证** ✓ 它自己就用 `Stats.CUSTOM` 写这两个统计 ✓）：
+ * <pre>
+ * enigmaticlegacy:play_time_with_seven_curses      // 戴着七咒之戒的时长
+ * enigmaticlegacy:play_time_without_seven_curses   // 没戴的时长
+ * </pre>
+ * ⇒ 占比 ＝ {@code with / (with + without)} ✓ 与"受七咒时间 ÷ 在世界上时间"逐字对应 ✓
+ * （本体还把这两个数同步进**原版统计** ✓ 见 {@code PlayerPlaytimeCounter} ✓）。
  *
- * <p>「受七咒」的判据 ✓＝身上带神秘遗物的**七咒之戒** ✓（id {@link #CURSED_RING} ✓，
- * 与 {@code client/handler/CursedRingTooltipHandler} 的判定一致 ✓）：主背包 ✓ 护甲槽 ✓ 副手 ✓ 饰品 ✓ 都算 ✓。
+ * <p>⚠ 跨模组类型一律经 {@code integration/enigmaticlegacy/EnigmaticPlaytimeBridge} 访问 ✓
+ * （仓库铁律：只有 {@code integration/<modid>/} 才能 import 别模组类型 ✓）
+ * ⇒ 本类只调桥 ✓ 且**先判 {@code isLoaded}** ✓ ⇒ 没装神秘遗物时桥类根本不会被加载 ✓ 不会炸 ✗。
  *
- * ⚠ <b>只做"塞回背包/丢地上"</b> ✓ 不做别的 ✗ —— 这是用户口径里唯一要求的动作 ✓。
- * <p>⚠ 每 {@link #CHECK_INTERVAL} tick 才真正检查一次 ✓（每 tick 扫背包太浪费 ✗）。
+ * <p>⚠ <b>取不到数据 ⇒ 放行（不管）</b> ✗ —— 宁可漏管 ✓ 也**绝不**因为读不到就误收玩家装备 ✗。
+ *
+ * <p>⚠ 每 {@link #CHECK_INTERVAL} tick 才检查一次 ✓（每 tick 扫背包太浪费 ✗）。
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class SevenCursesBoundHandler {
@@ -44,17 +50,12 @@ public final class SevenCursesBoundHandler {
     private SevenCursesBoundHandler() {
     }
 
-    /** 本模组"七咒所缚"特性的注册 id ✓（与 {@code Modifiers} 里注册的一致 ✓） */
+    /** 本模组"七咒所缚"特性的注册 id ✓（与 {@code Modifiers} 里一致 ✓） */
     private static final ModifierId TRAIT_ID =
             new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "seven_curses_bound"));
 
-    /** 神秘遗物·七咒之戒 ✓（与 CursedRingTooltipHandler 同口径 ✓） */
-    private static final String CURSED_RING = "enigmaticlegacy:cursed_ring";
-
-    private static final String KEY_TOTAL = "tn_cursed_bound_total";
-    private static final String KEY_CURSED = "tn_cursed_bound_cursed";
-
-    /** 合格阈值 ✓：受七咒时间 ÷ 在线时间 ≥ 99% ✓（用户口径 ✓） */
+    /** 合格阈值 ✓：受七咒时间 ÷ 在世界上时间 ≥ **99%** ✓（用户口径 ✓；
+     * ⚠ 神秘遗物自己那个 {@code worthyOnesOnly} 用的是 **99.5%** ✓ 我们按用户给的 99 ✓） */
     private static final int RATIO_PERCENT = 99;
 
     /** 检查节流 ✓（每 20 tick ＝ 1 秒一次 ✓） */
@@ -68,81 +69,20 @@ public final class SevenCursesBoundHandler {
         if (!(event.player instanceof ServerPlayer player)) {
             return;
         }
+        // ⚠ 没装神秘遗物 ⇒ 无"七咒"可言 ⇒ 不管 ✓（该特性本就以它为前提 ✓）
+        if (!IntegrationLoader.isLoaded(IntegrationLoader.ENIGMATIC_LEGACY)) {
+            return;
+        }
+        if (player.tickCount % CHECK_INTERVAL != 0) {
+            return;
+        }
         try {
-            CompoundTag data = player.getPersistentData();
-            long total = data.getLong(KEY_TOTAL) + 1L;
-            boolean cursed = carriesCursedRing(player);
-            long cursedTicks = data.getLong(KEY_CURSED) + (cursed ? 1L : 0L);
-            data.putLong(KEY_TOTAL, total);
-            data.putLong(KEY_CURSED, cursedTicks);
-
-            if (player.tickCount % CHECK_INTERVAL != 0) {
-                return;
-            }
-            if (isQualified(total, cursedTicks)) {
+            if (EnigmaticPlaytimeBridge.meetsRatio(player, RATIO_PERCENT)) {
                 return;
             }
             ejectBoundItems(player);
         } catch (Throwable ignored) {
             // 任何意外都不该把玩家 tick 打崩 ✓
-        }
-    }
-
-    /**
-     * 是否合格 ✓：受七咒 tick 占在线 tick 的 **99% 以上** ✓（用户口径 ✓）。
-     * <p>⚠ 用整数比较 ✗：{@code cursed / total >= 0.9} ⇔ {@code cursed * 100 >= total * 90} ✓。
-     */
-    public static boolean isQualified(long totalTicks, long cursedTicks) {
-        if (totalTicks <= 0L) {
-            return false;
-        }
-        return cursedTicks * 100L >= totalTicks * (long) RATIO_PERCENT;
-    }
-
-    /** 玩家身上（背包/护甲/副手/饰品 ✓）是否带着七咒之戒 ✓ */
-    private static boolean carriesCursedRing(Player player) {
-        Inventory inv = player.getInventory();
-        for (ItemStack stack : inv.items) {
-            if (isCursedRing(stack)) {
-                return true;
-            }
-        }
-        for (ItemStack stack : inv.armor) {
-            if (isCursedRing(stack)) {
-                return true;
-            }
-        }
-        for (ItemStack stack : inv.offhand) {
-            if (isCursedRing(stack)) {
-                return true;
-            }
-        }
-        try {
-            var resolved = CuriosApi.getCuriosInventory(player).resolve();
-            if (resolved.isPresent()) {
-                for (ICurioStacksHandler handler : resolved.get().getCurios().values()) {
-                    IItemHandlerModifiable stacks = handler.getStacks();
-                    for (int i = 0; i < stacks.getSlots(); i++) {
-                        if (isCursedRing(stacks.getStackInSlot(i))) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        } catch (Throwable ignored) {
-            // 没装 Curios / API 变动 ⇒ 只按背包判定 ✓
-        }
-        return false;
-    }
-
-    private static boolean isCursedRing(ItemStack stack) {
-        if (stack == null || stack.isEmpty()) {
-            return false;
-        }
-        try {
-            return stack.getItem().builtInRegistryHolder().key().location().toString().equals(CURSED_RING);
-        } catch (Throwable ignored) {
-            return false;
         }
     }
 
@@ -214,7 +154,7 @@ public final class SevenCursesBoundHandler {
                 }
             }
         } catch (Throwable ignored) {
-            // 同上 ✓ 拿不到饰品就只处理背包侧 ✓
+            // 拿不到饰品就只处理背包侧 ✓
         }
     }
 
