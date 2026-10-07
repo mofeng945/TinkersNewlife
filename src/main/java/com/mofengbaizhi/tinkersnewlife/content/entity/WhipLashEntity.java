@@ -539,7 +539,26 @@ public class WhipLashEntity extends Entity {
         if (amount <= 0.0F) {
             return false;
         }
-        boolean damaged = target.hurt(this.damageSources().playerAttack(owner), amount);
+        // ⚠ §1118l 防御（**不是我们的 bug ✗**，但必须兜住 ✓）：
+        //   用户实测崩溃 ✓ `crash-2026-10-07_13.06.22-server.txt`：
+        //     ReportedException: Ticking entity
+        //       Caused by: LinkageError: loader constraint violation（log4j 的 MessageSupplier ✗）
+        //                  at EventBus.handleException ← Forge 在记录"某个事件处理器抛的异常"时炸的
+        //                  at ForgeHooks.onLivingAttack ← 攻击事件链
+        //                  at TargetDummyEntity.m_6469_ ← 「试验假人」
+        //                  at WhipLashEntity.hurt ← 我们只是**发起攻击的入口** ✓
+        //   ⇒ 根因是**别的模组的 LivingAttackEvent 处理器抛异常** ✗ ＋ 整合包里 **log4j 类加载冲突** ✗
+        //     （异常被 LinkageError 顶掉 ⇒ 服务端 tick 直接崩 ✗）。
+        //   ⇒ 我们这边兜一层 ✓：伤害调用**任何** Throwable（含 LinkageError ✓）都只记一条日志、
+        //     当作"这次没打中"处理 ✓ ⇒ **不再把游戏拖崩** ✓（代价：那一下不结算伤害 ✓ 明显好过崩 ✗）。
+        boolean damaged;
+        try {
+            damaged = target.hurt(this.damageSources().playerAttack(owner), amount);
+        } catch (Throwable t) {
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                    "[鞭子] 结算伤害时被外部异常打断（已在 §1118l 兜住 ✓ 不再崩游戏 ✗）：{}", t.toString());
+            return false;
+        }
         if (!damaged) {
             return false;
         }
