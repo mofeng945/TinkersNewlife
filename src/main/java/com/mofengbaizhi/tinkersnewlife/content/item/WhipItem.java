@@ -4,6 +4,7 @@ import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.entity.WhipLashEntity;
 import com.mofengbaizhi.tinkersnewlife.content.entity.WhipPhysics;
 import com.mofengbaizhi.tinkersnewlife.content.handler.WhipBlockHandler;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
@@ -12,7 +13,10 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
+import slimeknights.tconstruct.library.modifiers.ModifierId;
 import slimeknights.tconstruct.library.tools.definition.ToolDefinition;
 import slimeknights.tconstruct.library.tools.helper.ToolDamageUtil;
 import slimeknights.tconstruct.library.tools.item.ModifiableItem;
@@ -31,10 +35,12 @@ import slimeknights.tconstruct.library.tools.stat.ToolStats;
  *   <li><b>右键</b>：<b>收回鞭身 ＋ 举械格挡</b> ✓（§1058 用户口径 ✓）—— 按住右键持续格挡 ✓，
  *       举盾 0.5 秒内挨打（或挨打后 0.5 秒内按右键）算<b>完美格挡</b> ✓；
  *       ⚠ §1118k：原来这里写的是"长按蓄力 → 松手砸地"✗ —— 那套已随右键改格挡删除 ✓（死代码 ✓）；</li>
- *       ⇒ 绳子绕手自转甩成一张盘 ✓；松手 ⇒ 14 tick 钟摆式下抽 ＋ 落地<b>冲击波</b> ✓；</li>
  *   <li><b>攻击间隔</b>：照它的 {@code attackPeriodTicks} ＝ {@code ceil(攻击冷却)} ✓
  *       ⇒ 起手段／抽击段的 tick 数是<b>跟着攻速属性走</b>的 ✓（攻速越高抽得越快 ✓）。</li>
  * </ul>
+ *
+ * <p>⭐ §1118o：抽击现在还会吃<b>弓弦系</b>的远程加成 ✓（匠魂 {@code power 力量}／{@code punch 冲击} ＋
+ * 原版 <b>力量</b>／<b>冲击</b>／<b>火矢</b> ✓）—— 见本类里 {@code rangedDamageMultiplier} 那一组 ✓。
  */
 public class WhipItem extends ModifiableItem {
 
@@ -96,7 +102,102 @@ public class WhipItem extends ModifiableItem {
         return Mth.clamp(attackPeriodTicks(player) / (double) REFERENCE_PERIOD_TICKS, 0.5D, 2.5D);
     }
 
-    // ==================== 右键：蓄力 → 砸地 ====================
+    // ==================== §1118o 远程加成：抽击也吃"弓弦系"远程效果 ====================
+
+    /**
+     * ⭐ §1118o <b>用户口径</b>：「弓弦可以附加远程特性，但是我鞭子抽打吃不到原版的远程效果，能优化吗」✓
+     *
+     * <h2>为什么以前吃不到（两层原因 ✓ 都查清了）</h2>
+     * <ol>
+     *   <li><b>装不上</b> ✗：匠魂的远程词条要求工具在 {@code tconstruct:modifiable/ranged} 标签里 ✓，
+     *       而长鞭原先只挂了 melee/weapon 等 7 个标签 ✗（见 {@code data/tconstruct/tags/items/modifiable/**} ✓）
+     *       ⇒ 已补 {@code .../modifiable/ranged.json} ✓ 把长鞭纳入 ✓；</li>
+     *   <li><b>装上也不生效</b> ✗：那些词条的效果走 {@code ProjectileLaunchModifierHook} /
+     *       {@code ProjectileHitModifierHook}（<b>弹射物专属</b> ✗）⇒ 抽击根本不经过它们 ✗
+     *       ⇒ 由本组方法在<b>抽击结算</b>里补等效效果 ✓。</li>
+     * </ol>
+     *
+     * <h2>映射口径（明确列出 ✓ 便于你调 ✓）</h2>
+     * <table border="1">
+     *   <tr><th>来源</th><th>效果</th></tr>
+     *   <tr><td>匠魂 {@code tconstruct:power}（力量 ✓ 每级）</td><td>抽击伤害 <b>+10%</b> ✓</td></tr>
+     *   <tr><td>原版 <b>力量</b>（Power ✓ 每级）</td><td>抽击伤害 <b>+25%</b> ✓（照原版箭的加成比例 ✓）</td></tr>
+     *   <tr><td>匠魂 {@code tconstruct:punch}（冲击 ✓ 每级）</td><td>击退 <b>+0.4 格</b> ✓</td></tr>
+     *   <tr><td>原版 <b>冲击</b>（Punch ✓ 每级）</td><td>击退 <b>+0.5 格</b> ✓</td></tr>
+     *   <tr><td>原版 <b>火矢</b>（Flame ✓ 任意级）</td><td>点燃目标 <b>5 秒</b> ✓（照原版 ✓）</td></tr>
+     * </table>
+     * <p>⚠ <b>刻意不映射</b> ✗（弹射物专属、对鞭子无意义 ✓ 不硬凑 ✓）：
+     * 匠魂 {@code trueshot 神射} ✓ {@code quick_charge 快速装填} ✓ {@code drawback 回拉} ✓
+     * {@code impaling 穿刺} ✓ {@code spike} ✓ {@code multishot 多重射击} ✓ 以及裸弓/箭袋/水晶那几类 ✓；
+     * 原版 <b>无限</b> ✓ <b>多重射击</b> ✓ <b>穿透</b> ✓ <b>快速装填</b> ✓（无弹药概念 ✓）。
+     */
+    private static final double TCONSTRUCT_POWER_DAMAGE_PER_LEVEL = 0.10D;
+    private static final double VANILLA_POWER_DAMAGE_PER_LEVEL = 0.25D;
+    private static final double TCONSTRUCT_PUNCH_KNOCKBACK_PER_LEVEL = 0.4D;
+    private static final double VANILLA_PUNCH_KNOCKBACK_PER_LEVEL = 0.5D;
+    /** 原版火矢的点燃秒数 ✓（与 {@code FlameEnchantment} 一致 ✓） */
+    private static final int VANILLA_FLAME_IGNITE_SECONDS = 5;
+
+    private static final ModifierId TCONSTRUCT_POWER =
+            new ModifierId(new ResourceLocation("tconstruct", "power"));
+    private static final ModifierId TCONSTRUCT_PUNCH =
+            new ModifierId(new ResourceLocation("tconstruct", "punch"));
+
+    /** 匠魂词条等级（破损即失效 ✓ 复用本仓统一口径 ✓；拿不到就 0 ✓ 绝不影响基础伤害 ✓） */
+    private static int tconstructLevel(ItemStack stack, ModifierId id) {
+        try {
+            return ToolHelper.getActiveModifierLevel(ToolStack.from(stack), id);
+        } catch (Throwable ignored) {
+            return 0;
+        }
+    }
+
+    /** 原版附魔等级（拿不到就 0 ✓） */
+    private static int enchantLevel(ItemStack stack, Enchantment enchantment) {
+        try {
+            return net.minecraft.world.item.enchantment.EnchantmentHelper
+                    .getItemEnchantmentLevel(enchantment, stack);
+        } catch (Throwable ignored) {
+            return 0;
+        }
+    }
+
+    /**
+     * 抽击伤害倍率 ✓ —— 匠魂「力量」＋ 原版「力量」。
+     * <p>⚠ 只在<b>命中结算</b>时乘 ✓（不参与 {@link #damageForSpeed} 的"速度→伤害"口径 ✗
+     * ⇒ 保证"面板/速度"那套用户口径不变 ✓）。
+     */
+    public static float rangedDamageMultiplier(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return 1.0F;
+        }
+        double bonus = 0.0D;
+        bonus += TCONSTRUCT_POWER_DAMAGE_PER_LEVEL * tconstructLevel(stack, TCONSTRUCT_POWER);
+        bonus += VANILLA_POWER_DAMAGE_PER_LEVEL
+                * enchantLevel(stack, Enchantments.POWER_ARROWS);
+        return (float) (1.0D + bonus);
+    }
+
+    /** 抽击击退加成（格 ✓）—— 匠魂「冲击」＋ 原版「冲击」 */
+    public static double rangedKnockback(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return 0.0D;
+        }
+        return TCONSTRUCT_PUNCH_KNOCKBACK_PER_LEVEL * tconstructLevel(stack, TCONSTRUCT_PUNCH)
+                + VANILLA_PUNCH_KNOCKBACK_PER_LEVEL
+                * enchantLevel(stack, Enchantments.PUNCH_ARROWS);
+    }
+
+    /** 抽击点燃秒数 ✓ —— 只有原版「火矢」有这一项（匠魂的 fiery 近战本来就生效 ✓ 不重复 ✓） */
+    public static int rangedIgniteSeconds(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return 0;
+        }
+        // ⚠ 1.20.1 的映射名是 FLAMING_ARROWS ✓（不是 FLAME ✗ —— 编译报错后改的 ✓）
+        return enchantLevel(stack, Enchantments.FLAMING_ARROWS) > 0 ? VANILLA_FLAME_IGNITE_SECONDS : 0;
+    }
+
+    // ==================== 右键：收回鞭身 / 举械格挡（§1058 ✓） ====================
 
     @Override
     public int getUseDuration(ItemStack stack) {

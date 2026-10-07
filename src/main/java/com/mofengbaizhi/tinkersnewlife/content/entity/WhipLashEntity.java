@@ -523,9 +523,29 @@ public class WhipLashEntity extends Entity {
                         damage *= 1.0F + (float) com.mofengbaizhi.tinkersnewlife.content.effect
                                 .WhipWeakenEffect.BONUS_PER_STACK * markLevel;
                     }
+                    // ⭐ §1118o 弓弦系远程加成（匠魂 tconstruct:power/punch ＋ 原版 力量/冲击/火矢 ✓）
+                    //   用户口径：「弓弦可以附加远程特性，但是我鞭子抽打吃不到原版的远程效果」✓
+                    //   ⚠ 这些词条/附魔的原有实现只作用于弹射物（ProjectileHook ✗）⇒ 抽击得自己补等效效果 ✓
+                    net.minecraft.world.item.ItemStack whipStack = owner.getMainHandItem();
+                    damage *= WhipItem.rangedDamageMultiplier(whipStack);
                     if (hurt(owner, target, contact, damage)) {
                         // §1064 用户口径：被鞭子抽中 ⇒ 叠一层"鞭痕"（每层 −10% 速度与攻击 ✓ 最多 8 层 ＝ −80% ✓）
                         ModEffects.applyWhipWeaken(target);
+                        // §1118o 冲击（原版 Punch ✓ / 匠魂 punch ✓）：沿"我 → 目标"方向把目标推出去 ✓
+                        double whipKnockback = WhipItem.rangedKnockback(whipStack);
+                        if (whipKnockback > 0.0D) {
+                            Vec3 pushDir = target.position().subtract(owner.position());
+                            pushDir = pushDir.lengthSqr() < 1.0E-6D
+                                    ? owner.getViewVector(1.0F) : pushDir.normalize();
+                            target.push(pushDir.x * whipKnockback, 0.18D * whipKnockback,
+                                    pushDir.z * whipKnockback);
+                            target.hurtMarked = true;
+                        }
+                        // §1118o 火矢（原版 Flame ✓）：点燃 5 秒 ✓（匠魂 fiery 近战本来就生效 ✓ 不重复 ✓）
+                        int whipIgnite = WhipItem.rangedIgniteSeconds(whipStack);
+                        if (whipIgnite > 0) {
+                            target.setSecondsOnFire(whipIgnite);
+                        }
                         this.level().playSound(null, contact.x, contact.y, contact.z,
                                 SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 0.85F,
                                 0.96F + this.random.nextFloat() * 0.08F);
