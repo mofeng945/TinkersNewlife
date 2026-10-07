@@ -34,7 +34,8 @@
     }
   ],
   "result": {
-    "item": "tinkersnewlife:sinister_glow_ingot"
+    "item": "tinkersnewlife:sinister_glow_ingot",
+    "count": 4
   },
   "conditions": [
     {
