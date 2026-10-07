@@ -1,0 +1,12 @@
+{
+  "type": "tconstruct:casting_table",
+  "cast": { "tag": "tconstruct:casts/single_use/gem" },
+  "cast_consumed": true,
+  "fluid": { "fluid": "tinkersnewlife:liquid_ectoplasm_still", "amount": 125 },
+  "result": "goety:ectoplasm",
+  "cooling_time": 60,
+  "conditions": [
+    { "type": "forge:mod_loaded", "modid": "goety" },
+    { "type": "forge:mod_loaded", "modid": "enigmaticlegacy" }
+  ]
+}
