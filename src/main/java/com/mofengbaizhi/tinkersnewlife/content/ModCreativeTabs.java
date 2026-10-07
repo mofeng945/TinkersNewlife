@@ -46,6 +46,7 @@ public class ModCreativeTabs {
                     () -> CreativeModeTab.builder()
                             .title(Component.translatable("itemGroup.tinkersnewlife"))
                             .icon(() -> new ItemStack(ModItems.GHELOTH_REMAINS.get()))
+                            .withTabsBefore(new ResourceLocation(TinkersNewlife.MOD_ID, "parts"))
                             .displayItems((parameters, output) -> {
                                 // ⭐ 已安装帕秋莉时，创造物品栏首位显示本模组手册
                                 // （纯注册表操作 + NBT 指定书 id，不引用任何帕秋莉类，未安装则跳过）
@@ -163,6 +164,7 @@ public class ModCreativeTabs {
                     () -> CreativeModeTab.builder()
                             .title(Component.translatable("itemGroup.tinkersnewlife.parts"))
                             .icon(() -> new ItemStack(ModItems.ROBE_LACE.get()))
+                            .withTabsBefore(new ResourceLocation(TinkersNewlife.MOD_ID, "tools"))
                             .displayItems((parameters, output) -> {
                                 // ----- 铸模（联动工具的铸模仅在对应 mod 加载时显示）-----
                                 if (anyLoaded("iceandfire")) {
@@ -209,6 +211,7 @@ public class ModCreativeTabs {
                     () -> CreativeModeTab.builder()
                             .title(Component.translatable("itemGroup.tinkersnewlife.tools"))
                             .icon(() -> new ItemStack(ModItems.DURANDAL_SWORD.get()))
+                            .withTabsBefore(new ResourceLocation(TinkersNewlife.MOD_ID, "buckets"))
                             .displayItems((parameters, output) -> {
                                 if (anyLoaded("iceandfire")) {
                                     addAllToolVariants(output, DRAGON_STAFF_DEFINITION, ModItems.DRAGON_STAFF.get());
@@ -253,6 +256,7 @@ public class ModCreativeTabs {
                     () -> CreativeModeTab.builder()
                             .title(Component.translatable("itemGroup.tinkersnewlife.buckets"))
                             .icon(() -> new ItemStack(ModFluids.GHELOTH_BLOOD.bucket.get()))
+                            .withTabsBefore(new ResourceLocation(TinkersNewlife.MOD_ID, "fumo"))
                             .displayItems((parameters, output) -> {
                                 // ----- 本模组原生流体 -----
                                 output.accept(ModFluids.GHELOTH_BLOOD.bucket.get());
