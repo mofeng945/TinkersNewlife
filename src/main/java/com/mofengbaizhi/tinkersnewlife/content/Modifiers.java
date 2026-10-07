@@ -34,6 +34,17 @@ public class Modifiers {
     public static final StaticModifier<DragonsteelFireTrait> DRAGONSTEEL_FIRE =
             MODIFIERS.register("dragonsteel_fire", DragonsteelFireTrait::new);
 
+    /**
+     * ⭐ §1118y <b>七咒所缚</b>（通用特性 ✓ 无等级 ✓）—— 材料「恶念星灵」的默认通用特性 ✓。
+     * 标记类 ✓，逻辑在 {@code content.handler.SevenCursesBoundHandler} ✓
+     * （⚠ 类名是 {@link CursedBoundTrait} ✓ 因为写文件工具拒绝重建我删过的同名路径 ✓；注册 id 仍是
+     * {@code seven_curses_bound} ✓ 与语言键/材料 JSON 一致 ✓）。
+     * <p>用户口径 ✓：只允许「**受七咒时间 ≥ 在世界上时间 90%**」者使用 ✓；
+     * 不合格者手持/装备/装入饰品时 ⇒ **弹回背包** ✓ 背包满 ⇒ **丢地上** ✓。
+     */
+    public static final StaticModifier<CursedBoundTrait> SEVEN_CURSES_BOUND =
+            MODIFIERS.register("seven_curses_bound", CursedBoundTrait::new);
+
     public static final StaticModifier<DragonsteelIceTrait> DRAGONSTEEL_ICE =
             MODIFIERS.register("dragonsteel_ice", DragonsteelIceTrait::new);
 

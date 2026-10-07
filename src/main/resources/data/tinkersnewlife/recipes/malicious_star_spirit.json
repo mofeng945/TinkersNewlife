@@ -1,0 +1,13 @@
+{
+  "type": "tconstruct:material",
+  "ingredient": {
+    "item": "tinkersnewlife:sinister_glow_ingot"
+  },
+  "value": 1,
+  "needed": 1,
+  "material": "tinkersnewlife:malicious_star_spirit",
+  "conditions": [
+    { "type": "forge:mod_loaded", "modid": "goety" },
+    { "type": "forge:mod_loaded", "modid": "enigmaticlegacy" }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "type": "tconstruct:material_fluid",
+  "fluid": { "fluid": "tinkersnewlife:molten_sinister_glow_still", "amount": 90 },
+  "temperature": 2000,
+  "output": "tinkersnewlife:malicious_star_spirit",
+  "conditions": [
+    { "type": "forge:mod_loaded", "modid": "goety" },
+    { "type": "forge:mod_loaded", "modid": "enigmaticlegacy" }
+  ]
+}
