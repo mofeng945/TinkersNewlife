@@ -172,4 +172,49 @@ public final class SevenCursesBoundHandler {
         // ⚠ 背包满 ⇒ 扔在地上 ✓ 绝不凭空消失 ✗（用户口径 ✓）
         player.drop(stack, false);
     }
+    /**
+     * ⚠ <b>临时诊断</b>（查清"无止之言用不了"就删 ✗）：
+     * 右键 {@code enigmaticlegacy:the_infinitum} 时打印**我方读到的真实数据** ✓ ——
+     * ① 神秘遗物那两条统计的原值 ✓；② 我算出的比例 ✓；
+     * ③ 戒指**到底在不在饰品栏**（用与 EL 同一个 Curios API ✓ `findEquippedCurio` ✓）。
+     * ⇒ 目的是**用数据判定**"是比例没到 ✗ 还是没检测到戴着 ✗"，而不是继续猜 ✓。
+     */
+    @SubscribeEvent
+    public static void onRightClickItem(net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickItem event) {
+        try {
+            if (event.getEntity().level().isClientSide) {
+                return;
+            }
+            ItemStack held = event.getItemStack();
+            if (held.isEmpty()) {
+                return;
+            }
+            String id = held.getItem().builtInRegistryHolder().key().location().toString();
+            if (!"enigmaticlegacy:the_infinitum".equals(id)) {
+                return;
+            }
+            if (!(event.getEntity() instanceof ServerPlayer player)) {
+                return;
+            }
+            long with = EnigmaticPlaytimeBridge.withCurses(player);
+            long without = EnigmaticPlaytimeBridge.withoutCurses(player);
+            boolean wearing = false;
+            try {
+                var curio = net.minecraftforge.registries.ForgeRegistries.ITEMS
+                        .getValue(new ResourceLocation("enigmaticlegacy", "cursed_ring"));
+                if (curio != null) {
+                    wearing = top.theillusivec4.curios.api.CuriosApi.getCuriosHelper()
+                            .findEquippedCurio(curio, player).isPresent();
+                }
+            } catch (Throwable ignored) {
+                // Curios 不可用 ⇒ 保持 false ✓
+            }
+            TinkersNewlife.LOGGER.info(
+                    "[七咒诊断] 右键无止之言：受咒tick={} 未受咒tick={} 比例={} 戴着七咒之戒={} 我判合格={}",
+                    with, without, EnigmaticPlaytimeBridge.curseRatio(player), wearing,
+                    EnigmaticPlaytimeBridge.meetsRatio(player, RATIO_PERCENT));
+        } catch (Throwable ignored) {
+            // 诊断绝不干扰游戏 ✓
+        }
+    }
 }
