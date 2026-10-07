@@ -221,6 +221,13 @@ public final class TranscendentDimensionHandler {
      * ② `PlayerEvent.Clone`（死亡重生时 ✓）把它**放回新身体**的对应护甲槽 ✓
      * —— ⚠ 只做 ① 的话装备会**凭空消失** ✗，必须有 ② 才叫"不掉落" ✓。
      * <p>⚠ 开了死亡不掉落（`keepInventory` ✓）时原版本来就不会掉 ✓ ⇒ 这时**什么都不做** ✗（免得重复发放 ✗）。
+     *
+     * <h2>⚠ 与"本来就不能掉的东西"的关系（用户口径 ✓）</h2>
+     * 用户点名 ✓：「**其他模组写的绑定物 / 原版的绑定诅咒 / 匠魂世界绑定**」这类 ✓
+     * —— ⭐ 它们**根本不会出现在 {@code LivingDropsEvent} 的清单里** ✓（原版绑定诅咒与各模组的灵魂绑定
+     * 都在**掉落之前**各自挡掉了 ✓）⇒ ⚠ 我们**不碰**它们 ✗ 也不会干扰它们 ✓。
+     * ⚠ 唯一要照顾的例外 ✓：若我们的盔甲上**真的**有**原版消失诅咒**（`Curse of Vanishing` ✓）
+     * ⇒ ⭐ 那就**尊重它**：**不保**（让它照原版消失 ✓）✓ —— 见 {@link #isKeptArmor} ✓。
      */
     @SubscribeEvent
     public static void onDrops(net.minecraftforge.event.entity.living.LivingDropsEvent event) {
@@ -231,7 +238,7 @@ public final class TranscendentDimensionHandler {
             if (player.level().getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_KEEPINVENTORY)) {
                 return;   // 本来就不掉 ✓
             }
-            event.getDrops().removeIf(drop -> isOurArmor(drop.getItem()));
+            event.getDrops().removeIf(drop -> isKeptArmor(drop.getItem()));
         } catch (Throwable ignored) {
             // 同上 ✓
         }
@@ -251,12 +258,33 @@ public final class TranscendentDimensionHandler {
             var oldArmor = oldPlayer.getInventory().armor;
             var newArmor = newPlayer.getInventory().armor;
             for (int i = 0; i < oldArmor.size() && i < newArmor.size(); i++) {
-                if (isOurArmor(oldArmor.get(i))) {
+                if (!isKeptArmor(oldArmor.get(i))) {
+                    continue;
+                }
+                // ⚠ 只填**空着**的槽 ✗ ⇒ 免得与"别处已经把它还回来"重复发放 ✗
+                //（例如匠魂的"世界绑定"自己也会在 Clone 时把东西还回来 ✓；两处都塞就会变成两件 ✗）
+                if (newArmor.get(i).isEmpty()) {
                     newArmor.set(i, oldArmor.get(i).copy());
                 }
             }
         } catch (Throwable ignored) {
             // 同上 ✓
+        }
+    }
+
+    /**
+     * 这件护甲**该不该替玩家保住** ✓ ＝ 带"超越维度" ✓ **且** 没有原版消失诅咒 ✓。
+     * <p>⚠ 为什么要排除消失诅咒 ✗：用户口径是"不能掉落的物品"照旧不掉 ✓
+     * ⇒ 而**消失诅咒**的语义正好相反（**该消失** ✓）⇒ ⭐ 那就尊重原版 ✓ 不保 ✗。
+     */
+    public static boolean isKeptArmor(ItemStack stack) {
+        if (!isOurArmor(stack)) {
+            return false;
+        }
+        try {
+            return stack.getEnchantmentLevel(net.minecraft.world.item.enchantment.Enchantments.VANISHING_CURSE) <= 0;
+        } catch (Throwable ignored) {
+            return true;
         }
     }
 
