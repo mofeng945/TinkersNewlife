@@ -203,7 +203,7 @@ public class WhipLashEntity extends Entity {
             if (existing != null) {
                 if (existing.isAlive() && !existing.isRemoved()) {
                     existing.setBowstringVariant(bowstringVariantOf(player));   // 中途换过弓弦材料也跟着更新 ✓
-                    existing.restartLash();
+                    existing.restartLash(player);                              // §1118h 顺带按当前所在侧决定方向 ✓
                     return;
                 }
                 ACTIVE_LASHES.remove(player.getUUID());
@@ -227,11 +227,54 @@ public class WhipLashEntity extends Entity {
      * （若这里 reset 物理 ⇒ 鞭子会瞬间跳回手上 ✗ 那是另一个观感 ✗）。
      * <p>⚠ 服务端还要把代次 +1 ✓ 通知客户端一起归零 ✓（见 {@link #LASH_GEN} ✓）。
      */
-    public void restartLash() {
+    public void restartLash(Player owner) {
+        // ⭐ §1118h 每一鞭都按"鞭子当前在左还是在右"重新决定方向 ✓（用户口径 ✓）
+        updateSwingSignFromSide(owner);
         this.age = 0;
         this.contactedTargets.clear();
         if (!this.level().isClientSide) {
             this.setLashGen(this.getLashGen() + 1);
+        }
+    }
+
+    /**
+     * ⭐ §1118h <b>按"鞭子当前在哪一侧"决定这一鞭往哪边挥</b> ✓ —— 用户口径：
+     * 「鞭子不应只朝一个方向挥动：当它驱动时**在左侧应该向右挥动，在右侧则向左挥动**」✓
+     *
+     * <p>⚠ 为什么必须重算 ✗：`swingSign` 原来是在**私有构造函数**里随机定的 ✓（`:313` ✓）
+     * —— 以前每鞭都是**新实体**（所以方向会变 ✓），而 §1118g 改成**复用同一条鞭身**之后 ✗
+     * ⇒ 方向就**永远固定**了 ✗✓（正是用户看到的"只朝一个方向挥"✓）。
+     *
+     * <p>判据 ✓：取绳身各点相对玩家"右方向"的**平均横向偏移 `lat`** ✓（用整条绳，比只看梢端稳 ✓）。
+     * <ul>
+     *   <li>`lat &lt; 0` ⇒ 鞭子在**左**侧 ⇒ 这一鞭要**向右**挥 ✓；（`lat &gt; 0` 反之 ✓）</li>
+     *   <li>⚠ 为什么乘 `side` ✗：手弧的横向偏移是 `side · sign · 0.16` ✓
+     *       （见 {@code WhipPhysics#precisionHandAnchor} 的注释 ✓ —— "侧 0→side·sign·0.16" ✓）
+     *       ⇒ 要让**起手落在鞭子当前那一侧、再横扫到另一侧** ✓，就得让 `sign(lat · side)` 决定 sign ✓
+     *       ⇒ 否则左手持鞭时会**反着挥**（越挥越远 ✗）。</li>
+     * </ul>
+     */
+    private void updateSwingSignFromSide(Player owner) {
+        try {
+            if (owner == null || physics == null || !physics.isStarted()) return;
+            Vec3 aim = owner.getViewVector(1.0F);
+            Vec3 forward = new Vec3(aim.x, 0.0D, aim.z);
+            forward = forward.lengthSqr() < 1.0E-8D ? new Vec3(0.0D, 0.0D, 1.0D) : forward.normalize();
+            Vec3 right = new Vec3(-forward.z, 0.0D, forward.x);
+            Vec3 eye = owner.getEyePosition();
+            double lat = 0.0D;
+            int n = 0;
+            for (int i = 1; i < WhipPhysics.POINTS; i++) {
+                Vec3 p = physics.point(i);
+                if (p == null) continue;
+                lat += p.subtract(eye).dot(right);
+                n++;
+            }
+            if (n == 0) return;
+            lat /= n;
+            this.setSwingSignPositive(lat * side(owner) >= 0.0D);
+        } catch (Throwable ignored) {
+            // 拿不到就沿用原方向 ✓ 绝不影响挥鞭本身 ✓
         }
     }
 
