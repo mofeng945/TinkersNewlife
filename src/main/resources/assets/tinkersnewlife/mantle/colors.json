@@ -4,6 +4,9 @@
     "mana_surge": "#55ffff",
     "mana_shield": "#7fb2ff",
     "all_paths_one": "#c9a0ff",
+      "seven_curses_bound": "#5a3a8f",
+      "spiritual_ether": "#abffff",
+      "transcendent_dimension": "#c58cff",
     "focus": "#c9d6e8",
     "spell_break": "#e4edf8",
     "magic_conduction": "#888ccc",
@@ -151,6 +154,7 @@
     "hogskin": "#bb7765",
     "frozen_bone": "#abbfc1",
     "origin_alloy": "#9a92e8",
+      "malicious_star_spirit": "#7157fa",
     "void_metal": "#6a4bb5"
   }
 }
