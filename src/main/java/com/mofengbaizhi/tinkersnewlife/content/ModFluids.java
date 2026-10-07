@@ -38,6 +38,42 @@ public class ModFluids {
     }
 
     // ============================================================
+    //  ⭐ §1118t 条件流体（只在指定模组组合同时在场时才挂总线 ✓）
+    // ============================================================
+
+    /**
+     * ⭐ §1118t <b>邪灵辉质</b>（用户口径 ✓）：「给**邪灵辉锭**写流体，名字叫**邪灵辉质**，
+     * 材质从锭上取多个色，然后选一个匠魂流体材质上色」✓
+     *
+     * <h2>为什么另开一张注册器 ✗</h2>
+     * 它的用途就是"熔融邪灵辉锭"✓，而那个**物品本身是条件注册**的 ✓（§1118r：
+     * 只在 {@code goety ＋ enigmaticlegacy} 同时在场时存在 ✓）⇒ 流体必须**跟着同一个条件** ✓
+     * 否则会出现"流体在、能熔的锭不在"的半残状态 ✗。
+     * ⇒ 做法与 §1118r 完全一致 ✓：另开 {@link #LINKED_REGISTRAR} ✓，
+     * 由 {@code TinkersNewlife} 在**判定通过后**才 {@code .register(modEventBus)} ✓
+     * ⇒ 不通过时这套表**从未挂上总线** ✓（对应的 `_bucket` / 流体方块都不存在 ✓）。
+     *
+     * <h2>贴图（我按用户口径生成的 ✓ 见 {@code tools/fluid_texture_tint.py} ✓）</h2>
+     * ① 先对 {@code textures/item/sinister_glow_ingot.png}（用户的 5 帧锭 ✓）做**调色板量化取色** ✓
+     * （实测主色：深靛 {@code #2D2467} ✓ 紫 {@code #7157FA} ✓ 青 {@code #7EFFFF} ✓
+     * 粉紫 {@code #EBA1FF} ✓ 蓝 {@code #3FAAD8} ✓ 等 ✓）；
+     * ② 再拿**匠魂风格的熔融流体底图**（{@code molten_dragonsteel_still/flowing} ✓ 16×160 / 32×320 各 10 帧 ✓）
+     * **去色成亮度**后按"深靛 → 紫 → 青"重新上色 ✓（紫为主体 ✓ 青只留最亮尖端 ✓ 与锭一致 ✓）；
+     * ③ ⚠ **绝不覆盖任何既有贴图** ✗ —— 只**新增**两张 ✓；脚本也会先检查目标不存在 ✓。
+     */
+    public static final FluidRegistrar LINKED_REGISTRAR = new FluidRegistrar(TinkersNewlife.MOD_ID);
+
+    /**
+     * 熔融的**邪灵辉锭** ✓ ⇒ 流体名「**邪灵辉质**」✓（id ＝ {@code tinkersnewlife:molten_sinister_glow} ✓）。
+     * <p>数值照本仓熔融金属的口径 ✓（密度 2000 ✓ 黏度 10000 ✓ 温度 1300 ✓，
+     * 与 {@code MOLTEN_DRAGONSTEEL_*} 同档 ✓）；颜色取锭的紫色主体 {@code FF7157FA} ✓。
+     */
+    public static final FluidRegistrar.FluidEntry MOLTEN_SINISTER_GLOW =
+            LINKED_REGISTRAR.entry("molten_sinister_glow",
+                    2000, 10000, 1300, 0xFF7157FA,
+                    FluidRegistrar.lavaProps(MapColor.COLOR_PURPLE));
+
+    // ============================================================
     // 原生流体
     // ============================================================
 

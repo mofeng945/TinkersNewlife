@@ -131,6 +131,8 @@ public class ModCreativeTabs {
         // ⭐ §1118r 邪灵辉锭（诡厄巫法＋神秘遗物**同时在场**才条件注册 ✓）：
         //   这里用 acceptItemIfPresent ⇒ 未注册时 IntegrationLoader.item(...) 返回 null ⇒ **自动跳过** ✓
         acceptItemIfPresent(output, "sinister_glow_ingot");
+        // §1118t 邪灵辉质桶（同样条件注册 ✓ 没注册时自动跳过 ✓）
+        acceptItemIfPresent(output, "molten_sinister_glow_bucket");
         // 纯合金流体的"物品形态"（浇铸回环的另一半）：物品本身常驻注册，但铁魔法不在场时拿不到流体，
         // 所以在创造栏里只在铁魔法加载时显示 ✓
         if (anyLoaded("irons_spellbooks")) {

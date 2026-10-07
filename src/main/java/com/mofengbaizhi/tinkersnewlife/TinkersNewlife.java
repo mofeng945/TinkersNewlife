@@ -135,7 +135,10 @@ public class TinkersNewlife {
         if (IntegrationLoader.isLoaded(IntegrationLoader.GOETY)
                 && IntegrationLoader.isLoaded(IntegrationLoader.ENIGMATIC_LEGACY)) {
             ModItems.LINKED_ITEMS.register(modEventBus);
-            LOGGER.info("[联动] 诡厄巫法＋神秘遗物同时在场 ⇒ 已有条件注册：邪灵辉锭（sinister_glow_ingot）✓");
+            // §1118t 邪灵辉质：流体的条件与物品**完全一致** ✓（熔的就是那个锭 ✓ 不能半残 ✗）
+            ModFluids.LINKED_REGISTRAR.register(modEventBus);
+            LOGGER.info("[联动] 诡厄巫法＋神秘遗物同时在场 ⇒ 已有条件注册：邪灵辉锭（sinister_glow_ingot）"
+                    + " ＋ 邪灵辉质（molten_sinister_glow）✓");
         }
         ModBlocks.BLOCKS.register(modEventBus);
         ModBlockEntities.BLOCK_ENTITIES.register(modEventBus);

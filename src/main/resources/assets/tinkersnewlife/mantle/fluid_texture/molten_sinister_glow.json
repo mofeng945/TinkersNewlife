@@ -1,0 +1,8 @@
+{
+  "still": "tinkersnewlife:block/molten_sinister_glow_still",
+  "flowing": "tinkersnewlife:block/molten_sinister_glow_flowing",
+  "color": "FFFFFFFF",
+  "fogColor": "FF7157FA",
+  "fogStart": 0.5,
+  "fogEnd": 6.0
+}
