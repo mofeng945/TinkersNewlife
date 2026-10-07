@@ -278,4 +278,61 @@ public final class SevenCursesWaiverHandler {
             // 绝不干扰生物 AI ✓
         }
     }
+
+    // ---------------------------------------------------------------- ⑥ 灵魂破裂（灵魂水晶被撕下来）
+
+    /** 神秘遗物的灵魂水晶（⚠ 按**注册名**判定 ✓ 不 import 它的类 ✓） */
+    private static final String SOUL_CRYSTAL = "enigmaticlegacy:soul_crystal";
+
+    /**
+     * ⑥「每次死亡都会使你的灵魂破裂」✓ —— ⭐ **反编译实证**：实现在 {@code EnigmaticEventHandler} 里 ✓
+     * （约 2235~2253 行 ✓）：死亡掉落时若 {@code SuperpositionHandler.canDropSoulCrystal(player, hadCursedRing)}
+     * ⇒ 用 {@code SOUL_CRYSTAL.createCrystalFrom(player)} 把**掉落物打包成灵魂水晶** ✓
+     * 生成一个 `PermanentItemEntity` **撕下来丢在地上** ✓ 并记进 {@code SoulArchive} ✓
+     * 且 `droppedSoulCrystal.setOwnerId(player.getUUID())` ✓（⭐ 留了 owner ⇒ 正好能用来判定是谁的水晶 ✓）。
+     *
+     * <p>⚠ 配置里的 {@code MaxSoulCrystalLoss}（默认 9 ✓）、{@code SoulCrystalsMode} ✓ 与
+     * {@code lostsoulfragments}（`SoulCrystal` ✓ 存在玩家持久数据里的"丢失水晶数" ✓，
+     * 每丢一块就给 `MAX_HEALTH` 挂一层 `Lost Soul` 减益 ✓ `SoulCrystal:146` ✓）都是同一套机制 ✓。
+     *
+     * <p>⭐⭐ <b>对治</b>：合格者的水晶**不让它落地** ✗ —— 拦截它生成 ✓ 并把**水晶物品本身**直接塞回他的背包 ✓
+     * （⚠ **绝不销毁** ✗ —— 水晶里装着死亡掉落的全部物品 ✓ 销毁就等于把玩家东西吞了 ✗✗）；
+     * 塞不进去就丢在**他脚下** ✓（照仓库 {@code CurseVaultInteractionHandler} 的"绝不凭空消失"口径 ✓）。
+     */
+    @SubscribeEvent
+    public static void onSoulCrystalJoin(net.minecraftforge.event.entity.EntityJoinLevelEvent event) {
+        try {
+            if (event.getLevel().isClientSide) {
+                return;
+            }
+            if (!(event.getEntity() instanceof net.minecraft.world.entity.item.ItemEntity item)) {
+                return;
+            }
+            if (item.getItem().isEmpty()) {
+                return;
+            }
+            String id = item.getItem().getItem().builtInRegistryHolder().key().location().toString();
+            if (!SOUL_CRYSTAL.equals(id)) {
+                return;
+            }
+            // ⚠ `ItemEntity#getOwner()` 返回的是 `Entity` ✗ 不是 UUID ✓（EL 那边是 setOwnerId(UUID) ✓
+            // ⇒ 服务端这里会被解析回玩家实体 ✓）；
+            // ⚠ `ItemStack` 本类没 import ✗ ⇒ 用全限定名 ✓（免得为一个类型改文件头 ✓）
+            net.minecraft.world.entity.Entity ownerEntity = item.getOwner();
+            if (!(ownerEntity instanceof net.minecraft.server.level.ServerPlayer player)) {
+                return;
+            }
+            if (!qualifies(player)) {
+                return;
+            }
+            // ⭐ 取消它落地 ✓ 把水晶直接还给他 ✓
+            event.setCanceled(true);
+            net.minecraft.world.item.ItemStack crystal = item.getItem().copy();
+            if (!player.getInventory().add(crystal)) {
+                player.drop(crystal, false);   // ⚠ 背包满 ⇒ 丢脚下 ✓ 不凭空消失 ✗
+            }
+        } catch (Throwable ignored) {
+            // 绝不吞玩家东西 ✓（出问题就让它照原样掉 ✓）
+        }
+    }
 }
