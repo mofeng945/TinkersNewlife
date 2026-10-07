@@ -73,6 +73,8 @@ public final class SevenCursesBoundHandler {
         if (!IntegrationLoader.isLoaded(IntegrationLoader.ENIGMATIC_LEGACY)) {
             return;
         }
+        // ⭐ 每个 tick 都要计数 ✓（⚠ 必须在 20 tick 的检查节流**之前** ✗ 否则只数到 1/20 ✓）
+        EnigmaticPlaytimeBridge.tick(player);
         if (player.tickCount % CHECK_INTERVAL != 0) {
             return;
         }
