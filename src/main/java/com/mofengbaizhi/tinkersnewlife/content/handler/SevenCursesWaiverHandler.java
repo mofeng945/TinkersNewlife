@@ -146,4 +146,64 @@ public final class SevenCursesWaiverHandler {
             // 同上 ✓
         }
     }
+
+    // ---------------------------------------------------------------- ⑧ 承受击退（配置里那条"没写进提示"的诅咒）
+
+    /** 承受击退倍率 ✓ 神秘遗物配置项 {@code CursedRingKnockbackDebuff} ✓（默认 **200%** ✓） */
+    private static final Map<Integer, Float> KNOCKBACK_SNAPSHOT = new ConcurrentHashMap<>();
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onKnockbackSnapshot(net.minecraftforge.event.entity.living.LivingKnockBackEvent event) {
+        try {
+            if (!(event.getEntity() instanceof Player player) || !qualifies(player)) {
+                return;
+            }
+            KNOCKBACK_SNAPSHOT.put(player.getId(), event.getStrength());
+        } catch (Throwable ignored) {
+            // 绝不干扰击退结算 ✓
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onKnockbackRestore(net.minecraftforge.event.entity.living.LivingKnockBackEvent event) {
+        try {
+            if (!(event.getEntity() instanceof Player player)) {
+                return;
+            }
+            Float snapshot = KNOCKBACK_SNAPSHOT.remove(player.getId());
+            if (snapshot != null) {
+                event.setStrength(snapshot);
+            }
+        } catch (Throwable ignored) {
+            // 同上 ✓
+        }
+    }
+
+    // ---------------------------------------------------------------- ⑦ 失眠
+
+    /**
+     * ⑦「你患有无法治愈的失眠症」✓ ⇒ 合格者**可以照常睡觉** ✓。
+     *
+     * <p>⚠ 做法说明 ✓：神秘遗物配置里有 {@code CursedRingdisableInsomnia} ✓
+     * （「Set to true to prevent curse of insomnia from actually doing anything」✓）——
+     * ⚠ 但那是**全局开关** ✗（一改对所有人生效 ✗，而且改玩家配置不是我该擅自做的事 ✗）
+     * ⇒ 所以这里走**逐人**的路子 ✓：在 `LOWEST`（最后跑 ✓）如果这床睡被拦下了 ✓ 且该玩家合格 ✓
+     * ⇒ 把结果**清空**（＝放行 ✓）。
+     */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onSleep(net.minecraftforge.event.entity.player.PlayerSleepInBedEvent event) {
+        try {
+            if (event.getResultStatus() == null) {
+                return;   // 本来就没被拦 ⇒ 不动 ✓
+            }
+            if (!qualifies(event.getEntity())) {
+                return;
+            }
+            // ⚠ 必须显式转型 ✗：`Event#setResult(Result)` 与 `PlayerSleepInBedEvent#setResult(BedSleepingProblem)`
+            // 同名 ⇒ 直接 `setResult(null)` 会"引用不明确"✗（这就是编译器告诉我的 ✓）
+            event.setResult((Player.BedSleepingProblem) null);   // ⚠ 置空 ⇒ 可睡 ✓
+        } catch (Throwable ignored) {
+            // 同上 ✓
+        }
+    }
 }
