@@ -88,8 +88,17 @@ public class WhipLashEntity extends Entity {
      */
     private static final int BOWSTRING_PART_INDEX = 2;
 
-    /** 左键：伤害窗口 = 起手段之后 10 tick ✓（照它的 {@code LEFT_DAMAGE_WINDOW_TICKS} ✓） */
-    private static final int LEFT_DAMAGE_WINDOW_TICKS = 14;
+    /**
+     * 左键：伤害窗口 ＝ **起手段之后多少 tick 还能命中** ✓。
+     *
+     * <p>⚠ §1118e <b>用户口径「手感很差」的**结构性原因**就在这里</b> ✗：
+     * 驱动段总长 ＝ {@link #WINDUP_TICKS}（3 ✓）＋ {@link #STROKE_TICKS}（4 ✓）＝ <b>7 tick</b> ✓，
+     * 而这里原来是 <b>14</b> ✗ ⇒ 鞭子**视觉上早收杆了**，判定却一路生效到第 <b>17</b> tick ✗
+     * ⇒ 手上就是「**抽完了还在命中／延迟判定**」✓（正是"手感差"最典型的来源 ✓）。
+     * <p>⇒ 改成 <b>8</b> ✓：覆盖抽击段（3~7 ✓）＋ 出鞭后**4 tick 的余势**（鞭梢那声"脆响"本来就在这之后 ✓）
+     * ⇒ 有鞭感、但不拖泥带水 ✓；再往后绳子自由飞（{@code LASH_FREE_FLIGHT_TICKS} ✓）纯粹是视觉 ✓。
+     */
+    private static final int LEFT_DAMAGE_WINDOW_TICKS = 8;
     /** 抽击驱动结束后，绳子还要自由飞这么多 tick ✓ 让波传完 ✓（照它实体活 32 tick 的量级 ✓） */
     private static final int LASH_FREE_FLIGHT_TICKS = 32;
     /** 砸地：松手后的钟摆段 tick 数 ✓（照它的 {@code RIGHT_SLAM_TICKS = 14} ✓） */

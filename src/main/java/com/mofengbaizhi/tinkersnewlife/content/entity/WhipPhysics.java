@@ -87,7 +87,7 @@ public final class WhipPhysics {
     private static final double MAX_SEGMENT_STRETCH = 1.003D;
     private static final double LENGTH_COMPLIANCE = 3.0E-8D;
     private static final double BEND_COMPLIANCE = 1.6E-7D;
-    private static final double TICK_VELOCITY_RETENTION = 0.989D;
+    private static final double TICK_VELOCITY_RETENTION = 0.984D;   // §1118e 0.989 ⇒ 0.984：少一点"飘"，抽完更快收住 ✓
     private static final double GRAVITY = -21.5D;
     private static final double SELF_COLLISION_DISTANCE = 0.055D;
     private static final double CONTACT_SKIN = 0.0125D;
@@ -98,18 +98,20 @@ public final class WhipPhysics {
     private static final double HANDLE_BEND_STIFFNESS_MULTIPLIER = 3.4D;
 
     // 导引（TrainerStylePrecisionGuide ✓）
-    private static final double FOLLOW_TOTAL_DELAY_SECONDS = 0.24D;
+    /** §1118e 用户口径「手感差 ⇒ 按**干脆利落**调一版」✓：0.24 ⇒ 0.15（手→梢延迟更小 ⇒ 更脆 ✓） */
+    private static final double FOLLOW_TOTAL_DELAY_SECONDS = 0.15D;
     // §1057 用户口径「加长攻击范围」✓：导引把各点往球面目标上拉得更狠 ⇒ 绳子展得更开、抽得更远 ✓
-    private static final double FOLLOW_POSITION_ACCEL = 820.0D;
+    private static final double FOLLOW_POSITION_ACCEL = 1150.0D;    // §1118e 820 ⇒ 1150：跟手更快 ✓
     private static final double FOLLOW_VELOCITY_ACCEL = 28.0D;
-    private static final double FOLLOW_RADIAL_ACCEL = 430.0D;
+    private static final double FOLLOW_RADIAL_ACCEL = 560.0D;       // §1118e 430 ⇒ 560：展绳更快 ✓
     private static final double FOLLOW_MAX_ACCEL = 4400.0D;
-    private static final double FOLLOW_TIP_GAIN = 1.25D;
+    private static final double FOLLOW_TIP_GAIN = 1.50D;            // §1118e 1.25 ⇒ 1.50：鞭梢更有劲 ✓
     private static final double CROSSHAIR_SOURCE_PROGRESS = 0.30D;
     private static final double CROSSHAIR_SWEEP_HALF_SPAN_PROGRESS = 0.34D;
     private static final double CROSSHAIR_SWEEP_HALF_ANGLE_RADIANS = Math.toRadians(68.0D);
     private static final double ATTACK_SECONDS = 0.50D;
-    private static final double CROSSHAIR_GATE_WIDTH_PROGRESS = 0.095D;
+    /** §1118e 0.095 ⇒ 0.13：命中"门"更宽一点 ⇒ 瞄着就更容**抽中** ✓（不改伤害，只改判定友好度 ✓） */
+    private static final double CROSSHAIR_GATE_WIDTH_PROGRESS = 0.13D;
     private static final double CROSSHAIR_GATE_ACCEL = 5200.0D;
     /** 参照里 {@code PRECISION_RELEASE_RAW}：导引从进度 0.30 起生效 ✓ */
     public static final double PRECISION_RELEASE_RAW = 0.30D;
@@ -346,7 +348,10 @@ public final class WhipPhysics {
 
     private static double maximumVerletStep(int particle, double substepSeconds) {
         double taper = particle / (double) (POINTS - 1);
-        return (82.0D + 108.0D * Math.pow(taper, 1.65D)) * substepSeconds;
+        // §1118e 用户口径「手感差 ⇒ 按**干脆利落**调一版」✓：82/108 ⇒ 105/150
+        // ⚠ 为什么必须一起提 ✗：这是**每个点的每子步位移上限**（CFL 限速 ✓）
+        //   ⇒ 手变快而这里不放宽 ⇒ 绳子被"限速"拉住 ⇒ 反而更软、更甩不出去 ✗（整包调参的关键配套 ✓）
+        return (105.0D + 150.0D * Math.pow(taper, 1.65D)) * substepSeconds;
     }
 
     // ==================== 左键：手臂弧锚点（照它的 precisionHandAnchor ✓） ====================
