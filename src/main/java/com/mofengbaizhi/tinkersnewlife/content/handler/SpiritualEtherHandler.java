@@ -24,6 +24,7 @@ import slimeknights.tconstruct.library.tools.stat.ToolStats;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import slimeknights.tconstruct.library.tools.definition.module.ToolHooks;
 
 /**
  * ⭐ §1118y <b>灵性以太</b>的运行时（用户口径 ✓）。
@@ -122,7 +123,8 @@ public final class SpiritualEtherHandler {
         // ⇒ 近战剑的"拉弓速度"也 > 0 ✗（⚠ 这就是用户报的"近战武器为什么加拉弓速度"✗）
         // ⇒ 只有**非采集型工具**（弓弩这类 MINING_SPEED ≤ 0 ✓）才把远程三项列为可成长
         // ⚠ 如实说明：这是**我定的判据** ✓ 不是匠魂官方接口 ✗（匠魂没有公开"这工具有没有该属性"的方法）
-        boolean rangedTool = tool.getStats().get(ToolStats.MINING_SPEED) <= 0F;
+        // ⭐ 判据改用**匠魂数据实证**的信号 ✓：`tconstruct:tool_actions` 模块的有无 ✓
+        boolean rangedTool = tool.getDefinition().getHook(ToolHooks.TOOL_ACTION) == null;
         if (tool.getStats().get(ToolStats.DURABILITY) > 0F && EtherSpiritTrait.canGrow(data, EtherSpiritTrait.KEYS[0])) {
             candidates.add(EtherSpiritTrait.KEYS[0]);
         }
