@@ -191,6 +191,8 @@ public final class FluidSearch {
         if (q.equals(query)) return;
         query = q;
         groups = parse(q);
+        // §1117o 每次查询变化都记一条 ✓（用户口径「过滤没任何效果」✗ ⇒ 必须看清"查询里到底进了什么"✓）
+        diag("查询变化 ⇒ '" + q + "'");
     }
 
     public static String getQuery() {
