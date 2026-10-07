@@ -58,6 +58,21 @@ public class Modifiers {
     public static final StaticModifier<EtherSpiritTrait> SPIRITUAL_ETHER =
             MODIFIERS.register("spiritual_ether", EtherSpiritTrait::new);
 
+    /**
+     * ⭐ §1118y <b>超越维度</b>（盔甲特性 ✓ 有等级 ✓）—— 材料「恶念星灵」护甲侧主特性 ✓。
+     * ⚠ 类名是 {@link BeyondDimensionTrait} ✓（同样因写文件工具限制 ✓）注册 id 仍是
+     * {@code transcendent_dimension} ✓。
+     * <p>用户口径 ✓：盔甲 耐久/护甲值/韧性 随击杀成长 ✓ 每级长幅与灵性以太同 ✓ 每项上限 **1000%** ✓；
+     * 另有**护甲减伤之后的**全类型减伤 ✓ 每级每次击杀 **+0.05%** ✓ 上限 **80%** ✓；
+     * 全身总等级 **≥4** ⇒ 免除七咒之戒全部诅咒 ＋ 提示划线追加粉色文本 ✓；
+     * 该盔甲 **死亡不掉落 / 不被岩浆仙人掌销毁 / 不可被其他生物穿戴** ✓。
+     * <p>实现 ✓：成长由 {@link BeyondDimensionTrait#addToolStats} 乘进统计 ✓；
+     * 击杀成长/减伤/三防在 {@code content.handler.TranscendentDimensionHandler} ✓；
+     * 免七咒与提示改写在 {@code content.handler.SevenCursesWaiverHandler} ✓。
+     */
+    public static final StaticModifier<BeyondDimensionTrait> TRANSCENDENT_DIMENSION =
+            MODIFIERS.register("transcendent_dimension", BeyondDimensionTrait::new);
+
     public static final StaticModifier<DragonsteelIceTrait> DRAGONSTEEL_ICE =
             MODIFIERS.register("dragonsteel_ice", DragonsteelIceTrait::new);
 
