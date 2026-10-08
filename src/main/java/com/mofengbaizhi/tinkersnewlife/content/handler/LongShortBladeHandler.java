@@ -304,6 +304,13 @@ public final class LongShortBladeHandler {
                 LongShortBladeItem.setFeverBoth(player,
                         LongShortBladeItem.readFeverBoth(player) + LongShortBladeItem.FEVER_PER_HIT);
 
+                // ⭐⭐ **交替的"挥动动作"**（⚠ 用户实测：「双刀交替攻击挥动动作没有做出来」✗
+                //   —— 我原先只做了交替的**伤害** ✗ 没做交替的**手臂动作** ✓ 所以看起来只有主手在挥 ✓）
+                //   ⇒ ⭐ 长刀那一击挥**主手** ✓ 短刀那一击挥**副手** ✓
+                //   ⚠ 主手那一挥原版本来就会放 ✓（这里再放一次是无害的 ✓ 但**让交替节奏明确** ✓）；
+                //   ⭐ 副手那一挥必须**显式广播**（`swing(hand, true)` ✓）否则客户端看不到 ✓。
+                player.swing(nextIsLong ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND, true);
+
                 // ⭐ 短刀那一次：额外一段"短刀伤害"（攻击力较低 ✓ 用户口径 ✓）
                 if (!nextIsLong) {
                     ToolStack tool = ToolHelper.getToolStack(weapon);
