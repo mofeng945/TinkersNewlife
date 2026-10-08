@@ -54,12 +54,12 @@ public abstract class HumanoidSpinPoseMixin {
     /** ⭐ 总时长（tick ✓）—— 与 {@link LongShortBladeItem#ULTIMATE_DURATION_TICKS} 保持一致 ✓＝100 ✓ */
     private static final int TOTAL = LongShortBladeItem.ULTIMATE_DURATION_TICKS;
 
-    /** ⭐ 每个玩家"这次光环已经走了多少 tick" ✓（客户端自己数 ✗ 不信 NBT 的滞后值 ✓） */
-    private static final java.util.Map<java.util.UUID, Integer> ELAPSED =
+    /** ⭐ 每个玩家"这次光环从哪个 age 开始" ✓（⚠ 用 {@code ageInTicks} 记 ✗ 不数调用次数 ✓） */
+    private static final java.util.Map<java.util.UUID, Float> START_AGE =
             new java.util.concurrent.ConcurrentHashMap<>();
 
-    /** ⭐ 上一帧信号还在的玩家 ✓（用来判断"信号刚消失 ⇒ 进渐出" ✓） */
-    private static final java.util.Map<java.util.UUID, Boolean> WAS_ON =
+    /** ⭐ 每个玩家"信号消失时的 age" ✓（用于渐出 ✓） */
+    private static final java.util.Map<java.util.UUID, Float> END_AGE =
             new java.util.concurrent.ConcurrentHashMap<>();
 
     @Inject(method = "m_6973_", at = @At("RETURN"), require = 1, remap = false)
@@ -69,7 +69,7 @@ public abstract class HumanoidSpinPoseMixin {
             if (!(entity instanceof Player player)) {
                 return;
             }
-            float t = spinFactor(player);
+            float t = spinFactor(player, ageInTicks);
             if (t <= 0.0F) {
                 return;
             }
@@ -93,35 +93,52 @@ public abstract class HumanoidSpinPoseMixin {
     }
 
     /**
-     * ⭐ 本帧该举多少（0 ＝ 不举 ✓ 1 ＝ 完全平举 ✓）——
-     * ⚠ 用**客户端自己数**的经过 tick ✗（物品 NBT 同步会滞后 ✓ 拿它当计时器会抖 ✓），
-     * 但"**该不该举**"仍看物品 NBT 的信号 ✓（那是唯一能跨端拿到的东西 ✓）。
+     * ⭐ 本帧该举多少（0 ＝ 不举 ✓ 1 ＝ 完全平举 ✓）。
+     *
+     * <h2>⚠⚠ 这里**绝对不能"数调用次数"**（我第一版就是那么错的 ✗）</h2>
+     * {@code setupAnim} 是**每帧、每个实体**都调一次 ✗ ⇒ 若"调一次 ＋1" ✓
+     * 计数器**每帧涨好几次** ⇒ ⭐ 一秒内就冲过 {@link #TOTAL} ⇒ 之后一直走渐出分支 ⇒ 返回 ~0 ✗
+     * ⇒ ⭐ **表现就是"胳膊一直没动"** ✗（用户实测报告 ✓ 那就是这个 ✓）。
+     * <p>⇒ ⭐ 改用 {@code ageInTicks}（**已含 partialTick** ✓）记"起点 age" ✓ ⇒ 每 tick 只涨 1 ✓。
      */
-    private static float spinFactor(Player player) {
+    private static float spinFactor(Player player, float ageInTicks) {
         java.util.UUID id = player.getUUID();
         boolean on = spinning(player);
+
         if (on) {
-            ELAPSED.merge(id, 1, Integer::sum);
-            WAS_ON.put(id, Boolean.TRUE);
-        } else if (Boolean.TRUE.equals(WAS_ON.remove(id))) {
-            // ⭐ 信号刚消失 ⇒ 继续走渐出 ✓ 走完就彻底停 ✓
-            int e = ELAPSED.merge(id, 1, Integer::sum);
-            if (e > RAMP) {
-                ELAPSED.remove(id);
-                return 0.0F;
+            Float start = START_AGE.get(id);
+            if (start == null) {
+                // ⭐ 信号刚出现 ⇒ 记起点 ✓ 并清掉上一次的渐出记录 ✓
+                START_AGE.put(id, ageInTicks);
+                END_AGE.remove(id);
+                start = ageInTicks;
             }
-            return 1.0F - (float) e / (float) RAMP;
-        } else {
-            return 0.0F;
+            float e = ageInTicks - start;
+            if (e <= RAMP) {
+                return e / (float) RAMP;                                   // ⭐ 渐入 ✓
+            }
+            if (e >= TOTAL - RAMP) {
+                return Math.max(0.0F, (TOTAL - e) / (float) RAMP);          // ⭐ 渐出 ✓
+            }
+            return 1.0F;
         }
-        int e = ELAPSED.getOrDefault(id, 0);
-        if (e <= RAMP) {
-            return (float) e / (float) RAMP;                 // ⭐ 渐入 ✓
+
+        Float start = START_AGE.get(id);
+        if (start == null) {
+            return 0.0F;                                                   // ⭐ 从没开过 ✓
         }
-        if (e >= TOTAL - RAMP) {
-            return Math.max(0.0F, (float) (TOTAL - e) / (float) RAMP);   // ⭐ 渐出 ✓
+        Float end = END_AGE.get(id);
+        if (end == null) {
+            end = ageInTicks;
+            END_AGE.put(id, end);
         }
-        return 1.0F;
+        float e = ageInTicks - end;
+        if (e >= RAMP) {
+            START_AGE.remove(id);
+            END_AGE.remove(id);
+            return 0.0F;                                                   // ⭐ 渐出走完 ⇒ 彻底复位 ✓
+        }
+        return 1.0F - e / (float) RAMP;
     }
 
     /** ⭐ 手里（主手或副手 ✓）有没有"光环进行中"的信号 ✓ —— 与渲染器同一判据 ✓ */
