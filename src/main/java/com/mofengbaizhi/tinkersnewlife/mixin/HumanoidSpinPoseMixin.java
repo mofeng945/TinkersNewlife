@@ -71,6 +71,18 @@ public abstract class HumanoidSpinPoseMixin {
             }
             float t = spinFactor(player, ageInTicks);
             if (t <= 0.0F) {
+                // ⭐⭐ **副手挥动**（⚠ 用户实测：「还是没左右挥动」✗ 的第二层原因 ✓）
+                //   ⭐ 原版 `HumanoidModel#setupAnim` 挥动时**只按 `getMainArm()` 挑手臂** ✗
+                //   ⇒ ⚠ 即使服务端把"副手挥动"的动画包（id 3 ✓）发出来了 ✗
+                //     原版**还是挥同一只手** ✗ ⇒ ⭐ 这里自己把**左臂**转起来 ✓
+                //   （⭐ 服务端在 `LongShortBladeHandler` 里已绕过 `swing()` 的闸门直接发包 ✓
+                //     所以客户端拿得到 `swingingArm == OFF_HAND` ✓）。
+                if (entity.swinging && entity.swingingArm == net.minecraft.world.InteractionHand.OFF_HAND) {
+                    float f = entity.getAttackAnim(0.0F);   // ⚠ 注入参数里没有 partialTick ✗ 用 0 略顿 ✓ 可接受 ✓
+                    float swing = net.minecraft.util.Mth.sin(net.minecraft.util.Mth.sqrt(f) * (float) Math.PI);
+                    this.f_102812_.xRot = -swing * 1.2F;    // ⭐ 左臂向前挥 ✓
+                    this.f_102812_.zRot = 0.0F;
+                }
                 return;
             }
             // ⭐ 双手平举：绕 Z 轴各 90° ✓ 右手 ＋、左手 − ✓（照用户参考实现 ✓）

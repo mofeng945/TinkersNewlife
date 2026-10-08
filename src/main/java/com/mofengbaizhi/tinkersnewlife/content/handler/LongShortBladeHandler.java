@@ -304,12 +304,24 @@ public final class LongShortBladeHandler {
                 LongShortBladeItem.setFeverBoth(player,
                         LongShortBladeItem.readFeverBoth(player) + LongShortBladeItem.FEVER_PER_HIT);
 
-                // ⭐⭐ **交替的"挥动动作"**（⚠ 用户实测：「双刀交替攻击挥动动作没有做出来」✗
-                //   —— 我原先只做了交替的**伤害** ✗ 没做交替的**手臂动作** ✓ 所以看起来只有主手在挥 ✓）
-                //   ⇒ ⭐ 长刀那一击挥**主手** ✓ 短刀那一击挥**副手** ✓
-                //   ⚠ 主手那一挥原版本来就会放 ✓（这里再放一次是无害的 ✓ 但**让交替节奏明确** ✓）；
-                //   ⭐ 副手那一挥必须**显式广播**（`swing(hand, true)` ✓）否则客户端看不到 ✓。
-                player.swing(nextIsLong ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND, true);
+                // ⭐⭐ **交替的"挥动动作"**（⚠ 用户实测两轮：「双刀交替攻击挥动动作没有做出来」✗／「还是没左右挥动」✗）
+                //   —— ⚠ 我第一版只做了交替的**伤害** ✗；第二版补 `player.swing(hand, true)` 也**没用** ✗
+                //   ⇒ ⭐ **两层原因**（都实测过 ✓）：
+                //     ① ⭐ 原版 `LivingEntity#swing(hand, updateSelf)` 有**闸门** ✗：
+                //        `if (!swinging || swingTime >= 挥动时长/2 || swingTime < 0) { …才真的挥… }`
+                //        ⇒ ⭐ 攻击时**主手已经在挥** ✗ ⇒ 副手那一次被**整段吞掉** ✗
+                //        ⇒ ⭐ 所以这里**直接自己发动画包** ✓（`ClientboundAnimatePacket`：主手 ＝ 0 ✓ 副手 ＝ 3 ✓）
+                //          绕过那个闸门 ✓（⚠ 副作用只有"重新起手"✓ 正是我们要的交替 ✓）；
+                //     ② ⭐ 原版 `HumanoidModel` 挥动时按 `getMainArm()` 挑手臂 ✗
+                //        ⇒ ⭐ 光发包**还是会挥同一只手** ✗ ⇒ 另一半在
+                //          {@code HumanoidSpinPoseMixin} 里**自己把左臂转起来** ✓（见那里 ✓）。
+                net.minecraft.world.InteractionHand swingHand =
+                        nextIsLong ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
+                if (player.level() instanceof ServerLevel swingLevel) {
+                    swingLevel.getChunkSource().broadcastAndSend(player,
+                            new net.minecraft.network.protocol.game.ClientboundAnimatePacket(
+                                    player, swingHand == InteractionHand.MAIN_HAND ? 0 : 3));
+                }
 
                 // ⭐ 短刀那一次：额外一段"短刀伤害"（攻击力较低 ✓ 用户口径 ✓）
                 if (!nextIsLong) {
