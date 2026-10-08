@@ -172,19 +172,61 @@ public class VariantGroupManagerPlugin implements IRecipeManagerPlugin {
      */
     public static synchronized void rebuildFrom(java.util.Collection<ItemStack> all) {
         try {
-            List<VariantGroupJeiCategory.VariantGroup> built = buildFrom(all);
+            // ⚠⚠ 实测（用户日志 ✓）：`IIngredientManager#getAllItemStacks()` **每个物品只给一个栈** ✗
+            //   （14327 个栈 ≈ 物品**种类数** ✓ 不是变体数 ✓）⇒ ⭐ **变体在【创造栏】里** ✓
+            //   ⇒ ⭐ 两个来源**必须合并** ✗（上一版先试物品表就 return ✓ 于是永远走不到创造栏那条 ✗
+            //      ⇒ 只整理出 5 组 ✗ —— 这就是"还是没有"的根因 ✓）。
+            List<ItemStack> merged = new ArrayList<>();
+            int fromJei = 0;
+            int fromTabs = 0;
+            // ① 创造栏展示物品（⭐ 变体在这儿 ✓ 此时创造栏已 build 完 ✓）
+            try {
+                for (var tab : BuiltInRegistries.CREATIVE_MODE_TAB) {
+                    try {
+                        for (ItemStack stack : tab.getDisplayItems()) {
+                            merged.add(stack);
+                            fromTabs++;
+                        }
+                    } catch (Throwable ignored) {
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
+            // ② JEI 物品表（⭐ 补"默认栈就带 NBT"的那些 ✓）
+            if (all != null) {
+                for (ItemStack stack : all) {
+                    merged.add(stack);
+                    fromJei++;
+                }
+            }
+            List<VariantGroupJeiCategory.VariantGroup> built = buildFrom(merged);
             Map<String, VariantGroupJeiCategory.VariantGroup> map = new LinkedHashMap<>();
             for (VariantGroupJeiCategory.VariantGroup g : built) {
                 map.put(keyOf(g.base()), g);
             }
             byKey = map;
             groups = built;
-            TinkersNewlife.LOGGER.info("[JEI] 同 id 变体：已按 JEI 物品表整理出 {} 组（每组 ≥2 只 ✓ 共看了 {} 个物品栈 ✓）",
-                    built.size(), all == null ? 0 : all.size());
+            TinkersNewlife.LOGGER.info(
+                    "[JEI] 同 id 变体：整理出 {} 组 ✓（来源：创造栏 {} 个栈 ＋ JEI 物品表 {} 个栈 ＝ {} ✓，其中带 NBT 的 {} 个 ✓）",
+                    built.size(), fromTabs, fromJei, merged.size(), nbtCount(merged));
         } catch (Throwable t) {
-            TinkersNewlife.LOGGER.warn("[JEI] 按 JEI 物品表建索引失败 ⇒ 退回创造栏那条 ✓：{}", t.toString());
+            TinkersNewlife.LOGGER.warn("[JEI] 建索引失败 ⇒ 退回创造栏那条 ✓：{}", t.toString());
             rebuild();
         }
+    }
+
+    /** 诊断用：这批栈里有几个带 NBT ✓ */
+    private static int nbtCount(java.util.Collection<ItemStack> list) {
+        int n = 0;
+        for (ItemStack s : list) {
+            try {
+                if (s != null && !s.isEmpty() && s.hasTag()) {
+                    n++;
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+        return n;
     }
 
     /** ⭐ 从一张物品栈表建组 ✓（{@link #build()} 与 {@link #rebuildFrom} 共用 ✓） */
