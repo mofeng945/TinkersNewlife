@@ -106,6 +106,13 @@ public class LongShortBladeItem extends ModifiableItem {
     public static final float EXECUTE_MULTIPLIER = 5.0F;
     /** 投掷爆炸半径（格 ✓ 用户口径 3 ✓） */
     public static final float THROW_EXPLOSION_RADIUS = 3.0F;
+    /**
+     * ⭐ 杀戮光环的伤害范围半径（格 ✓）。
+     * <p>⚠ 用户 2026-10-08 **明确改为 3 格** ✗ —— 最初口径是「**1 格**范围内所有敌人」✓
+     * ⇒ ⭐ 以新口径为准 ✓（同时 {@code LongShortBladeHandler} 里的粒子环半径也引用它 ✓
+     * 免得出现"看着打不到却打到了"✗）。
+     */
+    public static final double ULTIMATE_RADIUS = 3.0D;
     /** 光环每 tick 伤害的基础倍率（⚠ 按攻击力百分比算 ✓ 免得固定值太离谱 ✗） */
     public static final float ULTIMATE_DPS_RATIO = 0.35F;
 

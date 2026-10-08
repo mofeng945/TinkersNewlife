@@ -214,7 +214,8 @@ public final class LongShortBladeHandler {
         // ⭐ 期间无敌（用户口径 ✓ 每 tick 续 ✓）
         InvulnerabilityManager.applyInvulnerability(player, 6);
 
-        // ⭐ 1 格范围伤害（用户口径 ✓）；伤害 = 攻击力的 ULTIMATE_DPS_RATIO 每 tick ✓
+        // ⭐ **3 格**范围伤害（⚠ 用户 2026-10-08 明确改为 3 格 ✗ —— 最初口径是 1 格 ✓ 已按新口径改 ✓）；
+        //   伤害 = 攻击力的 ULTIMATE_DPS_RATIO 每 tick ✓
         float perTick = 2.0F;
         ItemStack weapon = player.getMainHandItem().getItem() instanceof LongShortBladeItem
                 ? player.getMainHandItem() : player.getOffhandItem();
@@ -225,18 +226,18 @@ public final class LongShortBladeHandler {
                         * LongShortBladeItem.ULTIMATE_DPS_RATIO);
             }
         }
-        AABB box = new AABB(player.getX() - 1.0, player.getY() - 0.5, player.getZ() - 1.0,
-                player.getX() + 1.0, player.getY() + player.getBbHeight() + 0.5, player.getZ() + 1.0);
+        final double r = LongShortBladeItem.ULTIMATE_RADIUS;
+        AABB box = new AABB(player.getX() - r, player.getY() - 0.5, player.getZ() - r,
+                player.getX() + r, player.getY() + player.getBbHeight() + 0.5, player.getZ() + r);
         List<LivingEntity> targets = sl.getEntitiesOfClass(LivingEntity.class, box,
                 e -> e != player && e.isAlive());
         for (LivingEntity target : targets) {
             target.invulnerableTime = 0;
             target.hurt(player.damageSources().playerAttack(player), perTick);
         }
-        // ⭐ 旋转视觉：绕自身撒一圈横扫粒子 ✓（客户端另有手臂动画 ✗ —— 见回信说明 ✓）
-        double r = 1.0D;
-        for (int i = 0; i < 4; i++) {
-            double a = (player.tickCount * 0.6D) + i * (Math.PI / 2.0D);
+        // ⭐ 旋转视觉：绕自身撒一圈横扫粒子 ✓（⚠ 半径跟着伤害范围走 ✗ 免得"看着打不到却打到了" ✓）
+        for (int i = 0; i < 6; i++) {
+            double a = (player.tickCount * 0.6D) + i * (Math.PI / 3.0D);
             sl.sendParticles(net.minecraft.core.particles.ParticleTypes.SWEEP_ATTACK,
                     player.getX() + Math.cos(a) * r, player.getY() + 1.0D, player.getZ() + Math.sin(a) * r,
                     1, 0, 0, 0, 0);
