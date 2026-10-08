@@ -147,6 +147,66 @@ public class VariantGroupManagerPlugin implements IRecipeManagerPlugin {
         return id + "#" + (mat == null ? "-" : mat);
     }
 
+    /**
+     * ⭐ <b>重建索引</b> ✓ —— ⚠ 必须由**插件在 {@code onRuntimeAvailable} 里调用** ✗：
+     * 实测（用户日志 ✓）在 JEI 调 {@code getRecipes} 时（14:16:40 ✓）**创造栏还没 build 完** ✗
+     * ⇒ 那时枚举 {@code CreativeModeTab#getDisplayItems()} 几乎拿不到东西 ✗
+     * ⇒ ⭐ 索引只有 5 组 ✗（本该几百组 ✓）。⚠ 所以要在**一切就绪之后**重建一次 ✓。
+     */
+    public static synchronized void rebuild() {
+        try {
+            groups = null;
+            byKey = null;
+            ensureBuilt();
+        } catch (Throwable t) {
+            TinkersNewlife.LOGGER.warn("[JEI] 变体索引重建失败（分类可能不显示内容）：{}", t.toString());
+        }
+    }
+
+    /**
+     * ⭐ <b>用 JEI 自己的完整物品表重建索引</b> ✓（推荐入口 ✓）——
+     * ⚠ 这比"枚举创造栏"硬得多 ✗：{@code IIngredientManager#getAllItemStacks()} 就是
+     * **JEI 列表里那些东西本身** ✓ ⇒ 与眼睛看到的**同源** ✓（创造栏那条只作兜底 ✓）。
+     *
+     * @param all JEI 的全部物品栈（⚠ 可能是极大一张表 ✓ 建一次就好 ✗）
+     */
+    public static synchronized void rebuildFrom(java.util.Collection<ItemStack> all) {
+        try {
+            List<VariantGroupJeiCategory.VariantGroup> built = buildFrom(all);
+            Map<String, VariantGroupJeiCategory.VariantGroup> map = new LinkedHashMap<>();
+            for (VariantGroupJeiCategory.VariantGroup g : built) {
+                map.put(keyOf(g.base()), g);
+            }
+            byKey = map;
+            groups = built;
+            TinkersNewlife.LOGGER.info("[JEI] 同 id 变体：已按 JEI 物品表整理出 {} 组（每组 ≥2 只 ✓ 共看了 {} 个物品栈 ✓）",
+                    built.size(), all == null ? 0 : all.size());
+        } catch (Throwable t) {
+            TinkersNewlife.LOGGER.warn("[JEI] 按 JEI 物品表建索引失败 ⇒ 退回创造栏那条 ✓：{}", t.toString());
+            rebuild();
+        }
+    }
+
+    /** ⭐ 从一张物品栈表建组 ✓（{@link #build()} 与 {@link #rebuildFrom} 共用 ✓） */
+    private static List<VariantGroupJeiCategory.VariantGroup> buildFrom(java.util.Collection<ItemStack> source) {
+        Map<String, List<ItemStack>> buckets = new LinkedHashMap<>();
+        if (source != null) {
+            for (ItemStack stack : source) {
+                try {
+                    if (stack == null || stack.isEmpty() || !stack.hasTag()) {
+                        continue;
+                    }
+                    if (!interesting(stack)) {
+                        continue;
+                    }
+                    buckets.computeIfAbsent(keyOf(stack), k -> new ArrayList<>()).add(stack.copy());
+                } catch (Throwable ignored) {
+                }
+            }
+        }
+        return toGroups(buckets);
+    }
+
     private static void ensureBuilt() {
         if (groups != null) {
             return;
@@ -166,7 +226,7 @@ public class VariantGroupManagerPlugin implements IRecipeManagerPlugin {
         }
     }
 
-    /** ⭐ 从创造栏展示物品建组 ✓（与 JEI 列表同源 ✓ 不用维护第二份清单 ✓） */
+    /** ⭐ 从创造栏展示物品建组 ✓（⚠ 兜底路径 ✗ —— 实测它在 JEI 早期调用时**几乎拿不到东西** ✗，优先用 {@link #rebuildFrom} ✓） */
     private static List<VariantGroupJeiCategory.VariantGroup> build() {
         // 组键 → 变体表（保持创造栏顺序 ✓）
         Map<String, List<ItemStack>> buckets = new LinkedHashMap<>();
@@ -188,6 +248,11 @@ public class VariantGroupManagerPlugin implements IRecipeManagerPlugin {
         } catch (Throwable t) {
             TinkersNewlife.LOGGER.warn("[JEI] 变体索引建立失败（JEI 里就没有「同 id 变体」分类了，但不崩）：{}", t.toString());
         }
+        return toGroups(buckets);
+    }
+
+    /** ⭐ 组桶 → 组表 ✓：只留 ≥2 只的 ✓，组内按 NBT 排序保持稳定 ✓，{@code base} 取第一只 ✓ */
+    private static List<VariantGroupJeiCategory.VariantGroup> toGroups(Map<String, List<ItemStack>> buckets) {
         List<VariantGroupJeiCategory.VariantGroup> out = new ArrayList<>();
         for (Map.Entry<String, List<ItemStack>> e : buckets.entrySet()) {
             List<ItemStack> variants = e.getValue();

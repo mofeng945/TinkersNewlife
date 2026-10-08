@@ -107,6 +107,28 @@ public class TinkersNewlifeJeiPlugin implements IModPlugin {
         }
     }
 
+    /**
+     * ⭐ §1122 <b>JEI 全部就绪后重建一次"同 id 变体"索引</b> ✓。
+     * <p>⚠ 实测（用户日志 ✓）：索引若在 JEI 调 {@code getRecipes} 时**懒建** ✗，那一刻
+     * **创造栏还没 build 完** ✗ ⇒ 枚举展示物品几乎为空 ⇒ **只整理出 5 组** ✗（本该几百组 ✓）。
+     * ⇒ ⭐ 在本回调里重建一次 ✓（此时 JEI 的物品列表与创造栏都已就绪 ✓）。
+     */
+    @Override
+    public void onRuntimeAvailable(mezz.jei.api.runtime.IJeiRuntime jeiRuntime) {
+        // ⭐ 优先用 **JEI 自己的完整物品表** ✓（与它列表里显示的东西同源 ✓ 最硬 ✓）；
+        //   ⚠ 拿不到就退回"枚举创造栏"那条兜底 ✓（见 VariantGroupManagerPlugin.rebuild ✓）。
+        try {
+            var manager = jeiRuntime.getIngredientManager();
+            if (manager != null) {
+                VariantGroupManagerPlugin.rebuildFrom(manager.getAllItemStacks());
+                return;
+            }
+        } catch (Throwable t) {
+            TinkersNewlife.LOGGER.warn("[JEI] 取 JEI 物品表失败 ⇒ 退回创造栏那条 ✓：{}", t.toString());
+        }
+        VariantGroupManagerPlugin.rebuild();
+    }
+
     @Override
     public void registerRecipes(IRecipeRegistration registration) {
         registerInfo(registration, ModItems.RLYEH_CALL.get(), "jei.tinkersnewlife.acquire.rlyeh_call");
