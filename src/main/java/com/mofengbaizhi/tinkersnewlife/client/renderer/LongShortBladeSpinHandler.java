@@ -79,6 +79,21 @@ public final class LongShortBladeSpinHandler {
                 return;
             }
             offhandSwingUntil = mc.player.tickCount + OFFHAND_SWING_TICKS;
+            // ⭐⭐ **关键一步**（反编译 `ItemInHandRenderer` 才看清 ✓）：
+            //   原版第一人称里**副手本来就会挥** ✓ —— 但它的判据是
+            //   `hand = player.swingingArm ?? MAIN_HAND` ⇒ ⭐ **只有 `swingingArm == OFF_HAND` 时**才给副手
+            //   传真实的挥动进度（否则传写死的 `0.0f` ✗）。⚠ 而我发的包原先**只设了自己的计时器** ✗
+            //   没动客户端这两个字段 ⇒ ⭐ 原版认定"这一刀是主手挥的" ⇒ 副手永远拿 0 ⇒ **不挥** ✗ ✓。
+            //   ⇒ ⭐ 直接把客户端的字段设成"副手在挥" ✓ ——
+            //     ⚠ **不能调 `player.swing(OFF_HAND)`** ✗（⭐ 客户端那道闸门会把它吞掉 ✓ 就是 §1133 的坑 ✓）
+            //     ⇒ ⭐ 直接写字段 ✓（`swinging`/`swingingArm` 公开可写 ✓ 已在 mixin 里验证过 ✓）。
+            //   ⭐ **一手治两处** ✓：第一人称的手（`ItemInHandRenderer` ✓）＋ 第三人称的模型
+            //     （`HumanoidModel` 那边仍由本类的 `offhandSwingProgress` 补 ✓ 因为模型只认 `getMainArm()` ✗）。
+            mc.player.swinging = true;
+            mc.player.swingingArm = net.minecraft.world.InteractionHand.OFF_HAND;
+            mc.player.swingTime = -1;      // ⚠ 让它**从头**开始挥 ✓（不等于 0 才能骗过原版的状态机 ✓）
+            mc.player.attackAnim = 0.0F;   // ⭐ 平滑值也归零 ⇒ 挥动从 0 起 ✓ 不会"半截开始"✓
+            mc.player.oAttackAnim = 0.0F;
             // ⚠ **临时探针**（⭐ 验证 S2C 包到底有没有到客户端 ✓ 定位完即删 ✗）
             TinkersNewlife.LOGGER.info("[长短刃·探针] 收到副手挥动包 ⇒ tick={} 播到 {}",
                     mc.player.tickCount, offhandSwingUntil);
