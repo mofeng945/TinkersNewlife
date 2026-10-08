@@ -217,8 +217,29 @@ public final class LongShortBladeHandler {
     //  ③ 命中：交替攻击 / fever / 处决
     // ============================================================
 
+    /**
+     * ⚠⚠ <b>自递归闸门</b>（⭐ §1118m 龙炎那次**同一个坑** ✗ 我又犯了一次 ✓ 已修 ✓）：
+     * 本方法在 {@code LivingHurtEvent} **里面**又调 {@code target.hurt(...)}（交替攻击 ＋ 处决两处 ✓）
+     * ⇒ ⭐ 那会**再次触发本方法自己** ✗ ⇒ 无限递归 ⇒ {@code StackOverflowError} ✗
+     * ⇒ Forge 去记录这个异常时撞上本包既有的 **log4j `LinkageError` 冲突** ⇒ ⭐ **服务端 tick 崩** ✗✗。
+     * <p>⭐ 实测崩溃报告（2026-10-08 22:38 ✓）：
+     * <pre>
+     * java.lang.LinkageError: loader constraint violation … MessageSupplier
+     *   at EventBus.handleException
+     *   at ForgeHooks.onLivingHurt
+     *   at MeleeHitToolHook.dealDamage → ModifiableItem.onLeftClickEntity
+     * </pre>
+     * ⇒ ⭐ 结算期间**忽略自身事件** ✓，并用 {@code try/finally} 保证一定复位 ✓；
+     * 且整个结算包 {@code try/catch(Throwable)} ✗ —— 异常绝不能逃出事件处理器 ✗。
+     */
+    private static final ThreadLocal<Boolean> SETTLING = ThreadLocal.withInitial(() -> Boolean.FALSE);
+
     @SubscribeEvent
     public static void onHurt(LivingHurtEvent event) {
+        // ⭐ 闸门：自己结算期间产生的事件一律忽略 ✗
+        if (Boolean.TRUE.equals(SETTLING.get())) {
+            return;
+        }
         // ⚠ 匠魂二次伤害（流血等）不算"攻击命中" ⇒ 不攒 fever（照战镰那套 ✓）
         if (ToolHelper.isTinkersSecondaryDamage(event.getSource())) {
             return;
@@ -242,37 +263,46 @@ public final class LongShortBladeHandler {
             return;
         }
 
-        boolean longForm = LongShortBladeItem.isLong(weapon);
-        if (longForm) {
-            // ⭐ 长刀：左右交替 —— 长刀优先（奇数次）＋ 短刀（偶数次）✓
-            boolean nextIsLong = NEXT_IS_LONG.getOrDefault(player.getUUID(), Boolean.TRUE);
-            NEXT_IS_LONG.put(player.getUUID(), !nextIsLong);
+        SETTLING.set(Boolean.TRUE);
+        try {
+            boolean longForm = LongShortBladeItem.isLong(weapon);
+            if (longForm) {
+                // ⭐ 长刀：左右交替 —— 长刀优先（奇数次）＋ 短刀（偶数次）✓
+                boolean nextIsLong = NEXT_IS_LONG.getOrDefault(player.getUUID(), Boolean.TRUE);
+                NEXT_IS_LONG.put(player.getUUID(), !nextIsLong);
+                LongShortBladeItem.setFeverBoth(player,
+                        LongShortBladeItem.readFeverBoth(player) + LongShortBladeItem.FEVER_PER_HIT);
+
+                // ⭐ 短刀那一次：额外一段"短刀伤害"（攻击力较低 ✓ 用户口径 ✓）
+                if (!nextIsLong) {
+                    ToolStack tool = ToolHelper.getToolStack(weapon);
+                    float base = tool == null ? 6.0F : Math.max(1.0F, tool.getStats().get(ToolStats.ATTACK_DAMAGE));
+                    float shortHit = base * 0.5F;
+                    target.invulnerableTime = 0;
+                    target.hurt(player.damageSources().playerAttack(player), shortHit);
+                }
+                return;
+            }
+
+            // ⭐ 短刀：只挥短刀 ✓ 但目标血量 < 20% ⇒ 长刀尝试斩杀处决（500% ✓）
             LongShortBladeItem.setFeverBoth(player,
                     LongShortBladeItem.readFeverBoth(player) + LongShortBladeItem.FEVER_PER_HIT);
-
-            // ⭐ 短刀那一次：额外一段"短刀伤害"（攻击力较低 ✓ 用户口径 ✓）
-            if (!nextIsLong) {
+            if (target.getHealth() <= target.getMaxHealth() * LongShortBladeItem.EXECUTE_HP_RATIO) {
                 ToolStack tool = ToolHelper.getToolStack(weapon);
-                float base = tool == null ? 6.0F : Math.max(1.0F, tool.getStats().get(ToolStats.ATTACK_DAMAGE));
-                float shortHit = base * 0.5F;
+                float base = tool == null ? 10.0F : Math.max(1.0F, tool.getStats().get(ToolStats.ATTACK_DAMAGE));
+                float execute = base * LongShortBladeItem.EXECUTE_MULTIPLIER;
                 target.invulnerableTime = 0;
-                target.hurt(player.damageSources().playerAttack(player), shortHit);
+                target.hurt(player.damageSources().playerAttack(player), execute);
+                if (player.level() instanceof ServerLevel sl) {
+                    sl.playSound(null, target.blockPosition(), SoundEvents.PLAYER_ATTACK_CRIT,
+                            SoundSource.PLAYERS, 1.2F, 0.6F);
+                }
             }
-            return;
-        }
-
-        // ⭐ 短刀：只挥短刀 ✓ 但目标血量 < 20% ⇒ 长刀尝试斩杀处决（500% ✓）
-        LongShortBladeItem.addFever(weapon, LongShortBladeItem.FEVER_PER_HIT);
-        if (target.getHealth() <= target.getMaxHealth() * LongShortBladeItem.EXECUTE_HP_RATIO) {
-            ToolStack tool = ToolHelper.getToolStack(weapon);
-            float base = tool == null ? 10.0F : Math.max(1.0F, tool.getStats().get(ToolStats.ATTACK_DAMAGE));
-            float execute = base * LongShortBladeItem.EXECUTE_MULTIPLIER;
-            target.invulnerableTime = 0;
-            target.hurt(player.damageSources().playerAttack(player), execute);
-            if (player.level() instanceof ServerLevel sl) {
-                sl.playSound(null, target.blockPosition(), SoundEvents.PLAYER_ATTACK_CRIT,
-                        SoundSource.PLAYERS, 1.2F, 0.6F);
-            }
+        } catch (Throwable t) {
+            // ⚠ 异常绝不能逃出事件处理器 ✗ —— 逃出去 Forge 会去记录 ⇒ 撞 log4j 冲突 ⇒ tick 崩 ✗✗
+            TinkersNewlife.LOGGER.warn("[长短刃] 命中结算异常（已吞掉，不影响游戏）：{}", t.toString());
+        } finally {
+            SETTLING.set(Boolean.FALSE);
         }
     }
 
