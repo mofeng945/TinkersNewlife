@@ -45,8 +45,8 @@ public final class LongShortBladeSpinHandler {
     private LongShortBladeSpinHandler() {
     }
 
-    /** ⭐ 每 tick 转 36° ⇒ 10 tick（0.5 秒）一圈 ✓ —— 用户口径「**快速**旋转」✓ */
-    private static final float DEG_PER_TICK = 36.0F;
+    /** ⭐ 每 tick 转 **90°** ⇒ 4 tick（0.2 秒）一圈 ✓ —— 用户给的参考实现就是这个值 ✓（我原先写 36 ✗ 太慢 ✓） */
+    private static final float DEG_PER_TICK = 90.0F;
 
     /** ⭐ 旋转轴心高度（格 ✓）：约等于玩家身高 1.8 的一半 ⇒ 以身体中心为轴 ✓ */
     private static final double PIVOT_Y = 0.9D;
@@ -64,7 +64,10 @@ public final class LongShortBladeSpinHandler {
             if (player == null || !spinning(player)) {
                 return;
             }
-            float angle = (player.tickCount * DEG_PER_TICK) % 360.0F;
+            // ⭐ 用 **partialTick** 插值 ✓ —— 只用 tickCount 的话每 tick 才跳 90° ⇒ 看起来一顿一顿的 ✗
+            //   （⚠ 用户给的参考实现也是 `(skillTimer + partialTick) * 90f` ✓）
+            float partialTick = event.getPartialTick();
+            float angle = ((player.tickCount + partialTick) * DEG_PER_TICK) % 360.0F;
             var pose = event.getPoseStack();
             pose.pushPose();
             pose.translate(0.0D, PIVOT_Y, 0.0D);

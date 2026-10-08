@@ -37,7 +37,8 @@
     "GuiSmelteryTankSearchMixin",
     "HeatingStructureScreenSearchMixin",
     "ScreenKeyInputMixin",
-    "KeyboardHandlerImeMixin"
+    "KeyboardHandlerImeMixin",
+    "HumanoidSpinPoseMixin"
   ],
   "injectors": {
     "defaultRequire": 0
