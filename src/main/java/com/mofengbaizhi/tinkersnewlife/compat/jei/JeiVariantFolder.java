@@ -92,6 +92,22 @@ public final class JeiVariantFolder implements IIngredientSubtypeInterpreter<Ite
      * 匠魂材料的折叠键 ✓ —— 取 {@code tic_materials} 列表逐项拼起来 ✓；没有该键就返回 {@code null}
      * （交给调用方走"按 NBT"那条 ✓）。
      */
+    /**
+     * ⭐ 对外暴露的"材料组合键" ✓（供 {@link VariantGroupManagerPlugin} 分组用 ✓
+     * —— ⚠ 两处必须**同一口径** ✗ 否则折叠与分类会对不上 ✓）。
+     *
+     * @return {@code tic_materials} 拼出来的键 ✓；没有该键（非匠魂物品 ✓）返回 {@code null} ✓
+     */
+    @Nullable
+    public static String materialsKeyOf(ItemStack stack) {
+        try {
+            CompoundTag tag = stack.getTag();
+            return tag == null ? null : materialsKey(tag);
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
     @Nullable
     private static String materialsKey(CompoundTag tag) {
         if (!tag.contains(KEY_MATERIALS, Tag.TAG_LIST)) {

@@ -47,33 +47,67 @@ public class TinkersNewlifeJeiPlugin implements IModPlugin {
                 // ⭐ 避雷针雷击转化（烈焰血 → 液态闪电，5:4）
                 new LightningRodConversionJeiCategory(registration.getJeiHelpers().getGuiHelper()),
                 // ⭐ 闪电苦力怕 → 液态闪电（匠魂实体熔炼分类只显示无参产出 ⇒ 那条看不见 ⇒ 单独展示）
-                new ChargedCreeperMeltingJeiCategory(registration.getJeiHelpers().getGuiHelper()));
+                new ChargedCreeperMeltingJeiCategory(registration.getJeiHelpers().getGuiHelper()),
+                // ⭐ §1122 「同 id 变体」：同 id 变体一页展开（用户要求的方案 B ✓）
+                new VariantGroupJeiCategory(registration.getJeiHelpers().getGuiHelper()));
     }
 
-    @Override
     /**
-     * ⭐ §1122 <b>把所有模组的同 id 变体折叠成 JEI 里的一个格子</b> ✓（用户口径 ✓）
+     * ⭐ §1122 <b>把"除匠魂可改造物品之外"的所有同 id 变体折叠成 JEI 里的一个格子</b> ✓（用户口径 ✓）
      * <p>给**全游戏每一个物品**注册同一个解释器 ✓ —— 具体折叠规则见 {@link JeiVariantFolder} ✓：
      * ⚠ **没有 NBT 的物品返回"无子类型"** ⇒ JEI 完全不折叠 ✓（全模组注册的保险 ✓）；
      * 匠魂工具/部件按 **{@code tic_materials} 材料组合**折叠 ✓（忽略耐久/强化/名字 ✓）；
      * 其它模组按整体 NBT 折叠 ✓。
-     * <p>⚠ 单个物品注册失败只跳过 ✗ —— 绝不能让"折叠"这个附加功能把 JEI 插件搞崩 ✓。
+     * <p>⚠⚠ <b>为什么要跳过匠魂可改造物品</b> ✗ —— 实测（用户日志 ✓）：**匠魂自己的 JEI 插件
+     * 早已给全部 {@code IModifiable} 物品注册过子类型** ✓，而 **JEI 15.48 对重复注册直接抛
+     * {@code IllegalArgumentException}** ✗（282 条 ERROR ✓ 名字正是
+     * {@code sword / rapier / spear / whip / small_blade / tool_handle / bow_limb …}）
+     * ⇒ ⭐ 那批物品改由 {@link VariantGroupJeiCategory}「同 id 变体」分类按 {@code R} 键**一页展开** ✓
+     * （两套互补 ✓ 不重复 ✓ 也不再刷 ERROR ✓）。
      */
+    @Override
     public void registerItemSubtypes(mezz.jei.api.registration.ISubtypeRegistration registration) {
         int n = 0;
+        int skipped = 0;
         for (Item item : ForgeRegistries.ITEMS) {
+            // ⚠ 匠魂已注册过 ⇒ 再注册必被 JEI 拒收并刷 ERROR ✗ ⇒ 直接跳过 ✓
+            try {
+                if (item instanceof slimeknights.tconstruct.library.tools.item.IModifiable) {
+                    skipped++;
+                    continue;
+                }
+            } catch (Throwable ignored) {
+                // 判不出来就照常注册 ✓
+            }
             try {
                 registration.registerSubtypeInterpreter(
                         mezz.jei.api.constants.VanillaTypes.ITEM_STACK, item, JeiVariantFolder.INSTANCE);
                 n++;
             } catch (Throwable ignored) {
-                // 该物品已被别的插件注册过等 ⇒ 跳过即可 ✓
+                // 别的插件已注册过等 ⇒ 跳过即可 ✓
             }
-
         }
-        TinkersNewlife.LOGGER.info("[JEI] 变体折叠：已为 {} 个物品注册子类型解释器 ✓（无 NBT 的物品不会被折叠 ✓）", n);
+        TinkersNewlife.LOGGER.info(
+                "[JEI] 变体折叠：已为 {} 个物品注册子类型解释器 ✓（跳过匠魂可改造物品 {} 个 ✗ —— 它们走「同 id 变体」分类 ✓）",
+                n, skipped);
     }
 
+    /**
+     * ⭐ §1122 <b>挂上"同 id 变体"的管理器插件</b> ✓（用户选的方案 B ✓）——
+     * 有了它，在 JEI 里按要求查看配方的键（默认 {@code R}）对着任意**工具/部件**时 ✓
+     * ⭐ 会直接翻到 {@link VariantGroupJeiCategory} 并把**该物品的全部材料变体一页铺开** ✓
+     * （⚠ JEI 原生那套只能"一格 + 滚轮切换" ✗ 达不到"展开" ✓）。
+     */
+    @Override
+    public void registerAdvanced(mezz.jei.api.registration.IAdvancedRegistration registration) {
+        try {
+            registration.addRecipeManagerPlugin(VariantGroupManagerPlugin.create());
+        } catch (Throwable t) {
+            TinkersNewlife.LOGGER.warn("[JEI] 「同 id 变体」管理器插件注册失败（该分类不会出现，但不崩）：{}", t.toString());
+        }
+    }
+
+    @Override
     public void registerRecipes(IRecipeRegistration registration) {
         registerInfo(registration, ModItems.RLYEH_CALL.get(), "jei.tinkersnewlife.acquire.rlyeh_call");
         registerInfo(registration, ModItems.NYARLATHOTEP_DESIRE.get(), "jei.tinkersnewlife.acquire.nyarlathotep_desire");
