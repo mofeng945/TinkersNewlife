@@ -45,7 +45,24 @@ public abstract class ScreenKeyInputMixin {
                     || keyCode == GLFW.GLFW_KEY_ESCAPE) {
                 FluidSearch.setFocused(false);      // 取消聚焦 ⇒ 之后按键全部放行 ✓（不 cancel ✗）
             }
-            // 其余按键一律放行 ✓（WASD 走路、E 关界面、匠魂快捷键都照旧 ✓ —— 用户口径「别禁用 wasd」✓）
+
+            // ⭐⭐ 「打开/关闭背包」键（默认 E ✓）：⭐ **聚焦时必须吃掉** ✗
+            //   —— ⚠ 用户实测：「匠魂炉子搜索框按 e 会退出界面」✗
+            //     ⇒ 根因就是这里原先把它放行 ✓ ⇒ 落到原版 `Screen#m_7933_` ⇒ 原版执行"开/关背包"⇒ **整个界面被关掉** ✗
+            //     ⇒ 想在搜索框里打 "e"（例如搜 "netherite"）就打不了 ✗ ✓。
+            //   ⭐ **吃掉它是安全的** ✓ —— 字符本身由 {@link KeyboardHandlerImeMixin}（`charTyped` ✓）负责收 ✓
+            //     ⚠ 反证在 §1117s：当年在**这里**翻译字符码导致"一个字进两次" ✗
+            //       ⇒ 说明 `keyPressed` 返回 true **并不会**阻止 `charTyped` ✓ ⇒ 这里只管吞键 ✗ 不管输字 ✓。
+            //   ⚠ 按本仓 §813 的规矩**不写死 E** ✗ —— 比对真实的 `key.inventory` 映射 ✓ 玩家改键也跟得上 ✓。
+            //   ⚠ 只在**聚焦时**生效 ✓（取消聚焦后 E 仍可关界面 ✓ 保留原版习惯 ✓）。
+            var options = net.minecraft.client.Minecraft.getInstance().options;
+            if (options != null && options.keyInventory != null
+                    && options.keyInventory.matches(keyCode, scanCode)) {
+                cir.setReturnValue(true);
+                return;
+            }
+
+            // 其余按键一律放行 ✓（WASD 走路、匠魂快捷键都照旧 ✓ —— 用户口径「别禁用 wasd」✓）
         } catch (Throwable ignored) {
         }
     }
