@@ -297,6 +297,14 @@ public final class LongShortBladeHandler {
         SETTLING.set(Boolean.TRUE);
         try {
             boolean longForm = LongShortBladeItem.isLong(weapon);
+            // ⚠⚠ **临时探针**（⭐ 用户报「左手极少挥动」✗ 但四轮修改都无效 ⇒ 不再猜 ✓ 用日志定位 ✓
+            //   ⭐ 探针一：`onHurt` 到底有没有被调用到？⭐ 若打三下日志里有三行 ⇒ 服务端没问题 ✓
+            //   问题在客户端动画 ✗；⭐ 若一行都没有 ⇒ 服务端闸门就把我们挡在外面了 ✗）。
+            TinkersNewlife.LOGGER.info("[长短刃·探针] 命中 form={} 挥={} fever={} 主手={} 副手={}",
+                    longForm ? "长刀" : "短刀", longForm ? "待定" : "仅主手",
+                    LongShortBladeItem.readFeverBoth(player),
+                    weapon.getItem().builtInRegistryHolder().key().location(),
+                    player.getOffhandItem().getItem().builtInRegistryHolder().key().location());
             if (longForm) {
                 // ⭐ 长刀：左右交替 —— 长刀优先（奇数次）＋ 短刀（偶数次）✓
                 boolean nextIsLong = NEXT_IS_LONG.getOrDefault(player.getUUID(), Boolean.TRUE);
