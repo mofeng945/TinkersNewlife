@@ -318,10 +318,13 @@ public final class LongShortBladeHandler {
                 //     ② 原版 `HumanoidModel` 挥动**只按 `getMainArm()` 挑手臂** ✗（发包也还是挥同一只手 ✓）；
                 //     ③ ⭐⭐ **客户端收到动画包后自己那道 `swing()` 闸门同样会吞** ✗
                 //        ⇒ ⚠ 这就是「左手**极少**挥动」的原因 ✓（偶尔正好 SwingTime 过半才漏进来一次 ✓）。
-                //   ⇒ ⭐ 正解：**彻底不走原版 `swing()`** ✗ ⇒ ⭐ **物品 NBT 计数器**当信号 ✓
-                //     （NBT 会同步给客户端 ✓）⇒ ⭐ 客户端渲染层自己播副手动画 ✓（见 `HumanoidSpinPoseMixin` ✓）。
-                //   ⚠ 主手那一挥**保持原版** ✓（它本来就正常 ✓）⇒ 这里只负责"通知副手该挥了"✓。
-                LongShortBladeItem.bumpSwing(player, !nextIsLong);
+                //   ⭐⭐ **实测定案（探针 ✓）**：⚠ 物品 NBT **大约每秒才同步一次** ✗
+                //     （服务端 `命中` 27 行而客户端 counter 只按秒跳 ✓）
+                //     ⇒ 副手每秒才播一次 ＝ 「左手极少挥动」✗
+                //   ⇒ ⭐ 改用 **S2C 包**（`PacketSwingOffhand` ✓ 只发给本人 ✓ 零延迟 ✓）。
+                if (!nextIsLong) {
+                    com.mofengbaizhi.tinkersnewlife.network.tools.PacketSwingOffhand.sendTo(player);
+                }
 
                 // ⭐ 短刀那一次：额外一段"短刀伤害"（攻击力较低 ✓ 用户口径 ✓）
                 if (!nextIsLong) {

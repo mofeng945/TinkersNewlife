@@ -54,6 +54,55 @@ public final class LongShortBladeSpinHandler {
     /** ⭐ 已经 push 过、还等着 pop 的玩家 ✓（⚠ 只有真 push 过的才 pop ✗ 免得多弹一层 ✓） */
     private static final Map<Player, Boolean> PUSHED = new WeakHashMap<>();
 
+    // ============================================================
+    //  ⭐ 交替挥动：副手那一挥（由 S2C 包驱动 ✓ 不走物品 NBT ✗）
+    // ============================================================
+
+    /** ⭐ 副手挥动的时长（tick ✓ 约等于原版挥动时长 ✓） */
+    public static final int OFFHAND_SWING_TICKS = 6;
+
+    /**
+     * ⭐ "副手这一挥要播到哪个客户端 tick 为止" ✓（0 ＝ 没在挥 ✓）。
+     * <p>⚠ 用**绝对 tick** 而不是"剩余次数" ✗ —— 渲染是**每帧**调 ✓
+     * （⚠ §1130 就是"按调用次数递减"导致一秒内跑完 ✗ 这次从设计上避开 ✓）。
+     */
+    private static volatile int offhandSwingUntil = 0;
+
+    /**
+     * ⭐ 客户端收到 {@code PacketSwingOffhand} 时调 ✓ —— ⭐ 从**下一个 tick** 起播 6 tick 的左臂前挥 ✓。
+     * <p>⚠ 必须在**主线程**上调 ✓（包的 `enqueueWork` 已经是主线程 ✓）。
+     */
+    public static void clientStartOffhandSwing() {
+        try {
+            var mc = net.minecraft.client.Minecraft.getInstance();
+            if (mc == null || mc.player == null) {
+                return;
+            }
+            offhandSwingUntil = mc.player.tickCount + OFFHAND_SWING_TICKS;
+            // ⚠ **临时探针**（⭐ 验证 S2C 包到底有没有到客户端 ✓ 定位完即删 ✗）
+            TinkersNewlife.LOGGER.info("[长短刃·探针] 收到副手挥动包 ⇒ tick={} 播到 {}",
+                    mc.player.tickCount, offhandSwingUntil);
+        } catch (Throwable ignored) {
+            // ⭐ 客户端动画失败绝不能崩 ✗
+        }
+    }
+
+    /**
+     * ⭐ 本帧左臂该挥多少 ✓（0 ＝ 不挥 ✓ 0~1 之间 ＝ 正在挥 ✓）。
+     *
+     * @param tickCount 实体当前的 {@code tickCount} ✓
+     */
+    public static float offhandSwingProgress(int tickCount) {
+        int until = offhandSwingUntil;
+        int left = until - tickCount;
+        if (left <= 0 || left > OFFHAND_SWING_TICKS) {
+            return 0.0F;
+        }
+        // ⭐ 0 → 1 的正弦挥动 ✓（与手臂角度相乘 ✓）
+        float f = 1.0F - (float) left / (float) OFFHAND_SWING_TICKS;
+        return (float) Math.sin(Math.sqrt(f) * Math.PI);
+    }
+
     @SubscribeEvent
     public static void onRenderPlayer(RenderPlayerEvent.Pre event) {
         try {

@@ -409,6 +409,12 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.portal.PacketOpenDimensionPassScreen::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.portal.PacketOpenDimensionPassScreen::new,
                 com.mofengbaizhi.tinkersnewlife.network.portal.PacketOpenDimensionPassScreen::handle);
+        // ⭐ §1135 长短刃「交替挥动 —— 副手那一挥」：⚠ 物品 NBT 大约每秒才同步一次 ✗
+        //   ⇒ 改用**只发给本人**的 S2C 空包 ✓（收包即播左臂 ✓ 零延迟 ✓）
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.tools.PacketSwingOffhand.class,
+                com.mofengbaizhi.tinkersnewlife.network.tools.PacketSwingOffhand::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.tools.PacketSwingOffhand::new,
+                com.mofengbaizhi.tinkersnewlife.network.tools.PacketSwingOffhand::handle);
 
         // 实体属性（式神等生物实体）
         modEventBus.addListener(TinkersNewlife::onRegisterEntityAttributes);

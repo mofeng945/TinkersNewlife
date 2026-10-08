@@ -80,44 +80,18 @@ public abstract class HumanoidSpinPoseMixin {
             if (!(entity instanceof Player player)) {
                 return;
             }
-            // ⭐⭐ **交替挥动：副手那一挥**（用户实测三轮 ✓ 最后一次是「左手极少挥动」✗）
-            //   ⚠ 为什么不能靠原版 ✗：⭐ 服务端 `swing()` 有闸门 ✓ ⭐ 原版模型只挥 `getMainArm()` 那只 ✓
-            //   ⭐⭐ 而且**客户端**收到动画包后自己那道闸门**同样会吞** ✗ ⇒ 所以「极少」挥 ✓
-            //   ⇒ ⭐ 彻底不走原版 ✗ ⇒ 读**物品 NBT 计数器**（会同步 ✓）⇒ 变了就**自己播** ✓。
-            //   ⚠ 计时必须用 **ageInTicks** ✗ —— `setupAnim` 是**每帧**调 ✓
-            //     若"调一次减一"就会像 §1130 那样一秒内跑完 ✓ 动画等于看不见 ✗。
-            java.util.UUID sid = entity.getUUID();
-            ItemStack held = player.getMainHandItem().getItem() instanceof LongShortBladeItem
-                    ? player.getMainHandItem() : player.getOffhandItem();
-            int swingCounter = LongShortBladeItem.swingCounter(held);
-            Integer lastCounter = SWING_LAST.get(sid);
-            // ⚠⚠ **临时探针二**（⭐ 每秒最多一条 ✓）：⭐ 客户端到底看不看得到 NBT 计数器？
-            //   ⭐ 探针一证明服务端有在写 ⇒ 若这里 counter 一直是 0 ⇒ **NBT 没同步到客户端** ✗；
-            //   ⭐ 若 counter 在变但手臂不动 ⇒ 是本 mixin 的注入没生效 ✗。
-            if (player.tickCount % 20 == 0) {
-                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
-                        "[长短刃·探针] 客户端 counter={} last={} offhand={} 主手={}",
-                        swingCounter, lastCounter, LongShortBladeItem.swingIsOffhand(held),
-                        player.getMainHandItem().getItem().builtInRegistryHolder().key().location());
-            }
-            if (lastCounter == null || swingCounter != lastCounter) {
-                SWING_LAST.put(sid, swingCounter);
-                // ⭐ 只有"该挥副手"那一次才播 ✓（主手那一挥由原版负责 ✓ 不去抢 ✓）
-                if (swingCounter > 0 && LongShortBladeItem.swingIsOffhand(held)) {
-                    SWING_START.put(sid, ageInTicks);
-                }
-            }
-            Float swingStart = SWING_START.get(sid);
-            if (swingStart != null) {
-                float se = ageInTicks - swingStart;
-                if (se >= SWING_TICKS) {
-                    SWING_START.remove(sid);
-                } else {
-                    float f = se / (float) SWING_TICKS;
-                    float swing = net.minecraft.util.Mth.sin(net.minecraft.util.Mth.sqrt(f) * (float) Math.PI);
-                    this.f_102812_.xRot = -swing * 1.3F;   // ⭐ 左臂向前挥 ✓
-                    this.f_102812_.zRot = 0.0F;
-                }
+            // ⭐⭐ **交替挥动：副手那一挥**（用户实测四轮 ✓ 最后定案 ✓）
+            //   ⚠⚠ 上一版用**物品 NBT** 当信号 ✗ ⇒ 探针实测：服务端每击都在写 ✓
+            //     但客户端 counter **大约每秒才跳一次** ✗（41→42→46→50→57…✓）
+            //     ⇒ 副手每秒才播一次 ＝ 用户说的「左手极少挥动」✗
+            //   ⇒ ⭐ 现已改为**服务端每击直接给本人发 S2C 包** ✓（`PacketSwingOffhand` ✓）
+            //     ⇒ 零延迟 ✓ 不依赖 NBT 推送时机 ✓
+            //   ⚠ 计时仍用**绝对 tick**✗ 不数调用次数 ✓（§1130 的教训 ✓）。
+            float offhandSwing = com.mofengbaizhi.tinkersnewlife.client.renderer
+                    .LongShortBladeSpinHandler.offhandSwingProgress(entity.tickCount);
+            if (offhandSwing > 0.0F) {
+                this.f_102812_.xRot = -offhandSwing * 1.3F;   // ⭐ 左臂向前挥 ✓
+                this.f_102812_.zRot = 0.0F;
             }
 
             float t = spinFactor(player, ageInTicks);
