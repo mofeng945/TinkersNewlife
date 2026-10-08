@@ -75,6 +75,57 @@ public class LongShortBladeItem extends ModifiableItem {
     public static final String TAG_ULTIMATE_END = "lnb_ult_end";
     /** ⭐ 副手那把"伙伴刀"的标记（⚠ 防止对它再做一次互换 ✗） */
     public static final String TAG_PAIR = "lnb_pair";
+    /**
+     * ⭐⭐ <b>交替挥动的同步计数器</b>（值 ＝ 命中次数 ＋1 ✓ 正负号表"这次该挥哪只手"✗）。
+     * <p>⚠ 为什么要这个 ✗：⭐ 原版 `LivingEntity#swing()` 有闸门 ✗ ⇒
+     * 「攻击时主手已在挥」会把副手那次**吞掉** ✓；⭐ 而且**客户端**收到动画包时
+     * **自己的那道闸门同样会吞** ✗（⚠ 我上一版只绕过了服务端 ✓ 所以「左手极少挥动」✗）。
+     * ⇒ ⭐ 改用**物品 NBT**（会同步给客户端 ✓）当信号 ✓ ⇒ 客户端渲染层**自己播放**副手挥动 ✓，
+     * **完全不经过原版 `swing()`** ✗ ⇒ 谁也吞不掉 ✓。
+     */
+    public static final String TAG_SWING = "lnb_swing";
+
+    /**
+     * ⭐ 记一次"该挥哪只手" ✓ —— 值 ＝ 计数器 ×2 ＋ (副手 ? 1 : 0) ✓
+     * （⭐ 用**奇偶**区分手 ✓ 用**大小**区分"第几次"✗ ⇒ 客户端只要发现值变了就播一次 ✓，
+     * ⚠ 即使 NBT 同步有滞后 ✓ 也不会漏掉"变过"这个事实 ✓）。
+     */
+    public static void bumpSwing(Player player, boolean offhand) {
+        if (player == null) {
+            return;
+        }
+        try {
+            for (ItemStack s : new ItemStack[]{player.getMainHandItem(), player.getOffhandItem()}) {
+                if (s.getItem() instanceof LongShortBladeItem) {
+                    int cur = s.getOrCreateTag().getInt(TAG_SWING);
+                    int count = cur / 2;
+                    s.getOrCreateTag().putInt(TAG_SWING, count * 2 + 2 + (offhand ? 1 : 0));
+                }
+            }
+        } catch (Throwable ignored) {
+            // ⭐ 写信号失败绝不能连累玩法 ✗（大不了那一挥没播 ✓）
+        }
+    }
+
+    /** ⭐ 客户端读"这一挥是挥副手吗" ✓（值的最低位 ✓） */
+    public static boolean swingIsOffhand(ItemStack stack) {
+        try {
+            CompoundTag tag = stack == null ? null : stack.getTag();
+            return tag != null && (tag.getInt(TAG_SWING) & 1) == 1;
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    /** ⭐ 客户端读"挥动信号值" ✓（变大就代表又挥了一次 ✓ 用来看"变没变"✗ 不用管具体数 ✓） */
+    public static int swingCounter(ItemStack stack) {
+        try {
+            CompoundTag tag = stack == null ? null : stack.getTag();
+            return tag == null ? 0 : tag.getInt(TAG_SWING);
+        } catch (Throwable ignored) {
+            return 0;
+        }
+    }
 
     public static final int FORM_LONG = 0;
     public static final int FORM_SHORT = 1;

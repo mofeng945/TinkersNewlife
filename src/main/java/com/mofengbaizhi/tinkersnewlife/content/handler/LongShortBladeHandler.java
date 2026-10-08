@@ -304,24 +304,16 @@ public final class LongShortBladeHandler {
                 LongShortBladeItem.setFeverBoth(player,
                         LongShortBladeItem.readFeverBoth(player) + LongShortBladeItem.FEVER_PER_HIT);
 
-                // ⭐⭐ **交替的"挥动动作"**（⚠ 用户实测两轮：「双刀交替攻击挥动动作没有做出来」✗／「还是没左右挥动」✗）
-                //   —— ⚠ 我第一版只做了交替的**伤害** ✗；第二版补 `player.swing(hand, true)` 也**没用** ✗
-                //   ⇒ ⭐ **两层原因**（都实测过 ✓）：
-                //     ① ⭐ 原版 `LivingEntity#swing(hand, updateSelf)` 有**闸门** ✗：
-                //        `if (!swinging || swingTime >= 挥动时长/2 || swingTime < 0) { …才真的挥… }`
-                //        ⇒ ⭐ 攻击时**主手已经在挥** ✗ ⇒ 副手那一次被**整段吞掉** ✗
-                //        ⇒ ⭐ 所以这里**直接自己发动画包** ✓（`ClientboundAnimatePacket`：主手 ＝ 0 ✓ 副手 ＝ 3 ✓）
-                //          绕过那个闸门 ✓（⚠ 副作用只有"重新起手"✓ 正是我们要的交替 ✓）；
-                //     ② ⭐ 原版 `HumanoidModel` 挥动时按 `getMainArm()` 挑手臂 ✗
-                //        ⇒ ⭐ 光发包**还是会挥同一只手** ✗ ⇒ 另一半在
-                //          {@code HumanoidSpinPoseMixin} 里**自己把左臂转起来** ✓（见那里 ✓）。
-                net.minecraft.world.InteractionHand swingHand =
-                        nextIsLong ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
-                if (player.level() instanceof ServerLevel swingLevel) {
-                    swingLevel.getChunkSource().broadcastAndSend(player,
-                            new net.minecraft.network.protocol.game.ClientboundAnimatePacket(
-                                    player, swingHand == InteractionHand.MAIN_HAND ? 0 : 3));
-                }
+                // ⭐⭐ **交替的"挥动动作"**（用户实测三轮：「挥动动作没有做出来」✗ →「还是没左右挥动」✗ →「**左手极少挥动**」✗）
+                //   ⇒ ⭐ **两层原版闸门 ＋ 一条客户端闸门**（都在反编译里确认过 ✓）：
+                //     ① 服务端 `LivingEntity#swing()` 有闸门 ✗（主手已在挥 ⇒ 副手那次被吞 ✓）；
+                //     ② 原版 `HumanoidModel` 挥动**只按 `getMainArm()` 挑手臂** ✗（发包也还是挥同一只手 ✓）；
+                //     ③ ⭐⭐ **客户端收到动画包后自己那道 `swing()` 闸门同样会吞** ✗
+                //        ⇒ ⚠ 这就是「左手**极少**挥动」的原因 ✓（偶尔正好 SwingTime 过半才漏进来一次 ✓）。
+                //   ⇒ ⭐ 正解：**彻底不走原版 `swing()`** ✗ ⇒ ⭐ **物品 NBT 计数器**当信号 ✓
+                //     （NBT 会同步给客户端 ✓）⇒ ⭐ 客户端渲染层自己播副手动画 ✓（见 `HumanoidSpinPoseMixin` ✓）。
+                //   ⚠ 主手那一挥**保持原版** ✓（它本来就正常 ✓）⇒ 这里只负责"通知副手该挥了"✓。
+                LongShortBladeItem.bumpSwing(player, !nextIsLong);
 
                 // ⭐ 短刀那一次：额外一段"短刀伤害"（攻击力较低 ✓ 用户口径 ✓）
                 if (!nextIsLong) {

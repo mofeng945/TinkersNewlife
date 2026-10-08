@@ -62,6 +62,17 @@ public abstract class HumanoidSpinPoseMixin {
     private static final java.util.Map<java.util.UUID, Float> END_AGE =
             new java.util.concurrent.ConcurrentHashMap<>();
 
+    /** ⭐ 交替挥动：上次看到的 NBT 计数器 ✓（变了 ⇒ 又挥了一刀 ✓） */
+    private static final java.util.Map<java.util.UUID, Integer> SWING_LAST =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** ⭐ 交替挥动：副手那一挥从哪个 age 开始 ✓（同样用 age 计时 ✗ 不数帧 ✓） */
+    private static final java.util.Map<java.util.UUID, Float> SWING_START =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** ⭐ 副手一挥的时长（tick ✓ 约等于原版挥动时长 ✓） */
+    private static final float SWING_TICKS = 6.0F;
+
     @Inject(method = "m_6973_", at = @At("RETURN"), require = 1, remap = false)
     private void tnl$spinPose(LivingEntity entity, float limbSwing, float limbSwingAmount,
                               float ageInTicks, float netHeadYaw, float headPitch, CallbackInfo ci) {
@@ -69,6 +80,37 @@ public abstract class HumanoidSpinPoseMixin {
             if (!(entity instanceof Player player)) {
                 return;
             }
+            // ⭐⭐ **交替挥动：副手那一挥**（用户实测三轮 ✓ 最后一次是「左手极少挥动」✗）
+            //   ⚠ 为什么不能靠原版 ✗：⭐ 服务端 `swing()` 有闸门 ✓ ⭐ 原版模型只挥 `getMainArm()` 那只 ✓
+            //   ⭐⭐ 而且**客户端**收到动画包后自己那道闸门**同样会吞** ✗ ⇒ 所以「极少」挥 ✓
+            //   ⇒ ⭐ 彻底不走原版 ✗ ⇒ 读**物品 NBT 计数器**（会同步 ✓）⇒ 变了就**自己播** ✓。
+            //   ⚠ 计时必须用 **ageInTicks** ✗ —— `setupAnim` 是**每帧**调 ✓
+            //     若"调一次减一"就会像 §1130 那样一秒内跑完 ✓ 动画等于看不见 ✗。
+            java.util.UUID sid = entity.getUUID();
+            ItemStack held = player.getMainHandItem().getItem() instanceof LongShortBladeItem
+                    ? player.getMainHandItem() : player.getOffhandItem();
+            int swingCounter = LongShortBladeItem.swingCounter(held);
+            Integer lastCounter = SWING_LAST.get(sid);
+            if (lastCounter == null || swingCounter != lastCounter) {
+                SWING_LAST.put(sid, swingCounter);
+                // ⭐ 只有"该挥副手"那一次才播 ✓（主手那一挥由原版负责 ✓ 不去抢 ✓）
+                if (swingCounter > 0 && LongShortBladeItem.swingIsOffhand(held)) {
+                    SWING_START.put(sid, ageInTicks);
+                }
+            }
+            Float swingStart = SWING_START.get(sid);
+            if (swingStart != null) {
+                float se = ageInTicks - swingStart;
+                if (se >= SWING_TICKS) {
+                    SWING_START.remove(sid);
+                } else {
+                    float f = se / (float) SWING_TICKS;
+                    float swing = net.minecraft.util.Mth.sin(net.minecraft.util.Mth.sqrt(f) * (float) Math.PI);
+                    this.f_102812_.xRot = -swing * 1.3F;   // ⭐ 左臂向前挥 ✓
+                    this.f_102812_.zRot = 0.0F;
+                }
+            }
+
             float t = spinFactor(player, ageInTicks);
             if (t <= 0.0F) {
                 // ⭐⭐ **副手挥动**（⚠ 用户实测：「还是没左右挥动」✗ 的第二层原因 ✓）
