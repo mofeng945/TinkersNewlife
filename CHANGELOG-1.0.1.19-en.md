@@ -70,15 +70,6 @@ The soul-shattering curse no longer spawns crystals; items follow the normal dea
 
 ---
 
-### JEI variant folding
-
-* **Multiple NBT variants of the same item are folded into one JEI slot** (the slot shows `1/N`;
-  hover it and scroll to cycle through the variants).
-* Covers **all mods**: one interpreter is registered for every item in the game, but items
-  **without NBT are never folded** (it returns JEI's "no subtype"), so ordinary items are unaffected.
-* Granularity: **Tinkers tools and parts fold by material combination** (`tic_materials`), so damage,
-  installed modifiers and custom names do not create extra entries; other mods fold by whole NBT.
-
 ## Fixed
 
 * **Server crash from self-recursive dragonsteel explosions**: the fire effect dealt manual `hurt`
