@@ -200,9 +200,13 @@ public final class LongShortBladeHandler {
         int left = LongShortBladeItem.ultimateTicksLeft(id) - 1;
         if (left <= 0 || !player.isAlive()) {
             LongShortBladeItem.stopUltimate(id);
+            // ⭐ 同时清掉"客户端可见的旋转信号" ✗ —— 否则客户端会一直转下去 ✓
+            LongShortBladeItem.setUltimateVisualBoth(player, 0);
             return;
         }
         LongShortBladeItem.setUltimateTicks(id, left);
+        // ⭐ 每 tick 刷新旋转信号（⚠ 客户端 NBT 同步会滞后 ✓ 所以客户端只看"是否 > 0"✗ 不看精确值 ✓）
+        LongShortBladeItem.setUltimateVisualBoth(player, left);
 
         if (!(player.level() instanceof ServerLevel sl)) {
             return;
@@ -311,8 +315,11 @@ public final class LongShortBladeHandler {
             }
 
             // ⭐ 短刀：只挥短刀 ✓ 但目标血量 < 20% ⇒ 长刀尝试斩杀处决（500% ✓）
-            LongShortBladeItem.setFeverBoth(player,
-                    LongShortBladeItem.readFeverBoth(player) + LongShortBladeItem.FEVER_PER_HIT);
+            // ⚠⚠ **短刀形态不积攒 fever** ✗ —— 用户口径（2026-10-08 ✓）：
+            //   「**不要让短刀模式也积攒fever啊**」✓
+            //   ⭐ 回看用户最初的规格也确实如此：「**左右交替攻击时**，每次攻击会积攒1点fever」✓
+            //   ⇒ ⭐ 攒 fever 是**长刀形态交替攻击**专属 ✓（突刺/光环仍是两种形态都能放 ✓
+            //     只是"攒"只在长刀 ✓）✓。
             if (target.getHealth() <= target.getMaxHealth() * LongShortBladeItem.EXECUTE_HP_RATIO) {
                 ToolStack tool = ToolHelper.getToolStack(weapon);
                 float base = tool == null ? 10.0F : Math.max(1.0F, tool.getStats().get(ToolStats.ATTACK_DAMAGE));

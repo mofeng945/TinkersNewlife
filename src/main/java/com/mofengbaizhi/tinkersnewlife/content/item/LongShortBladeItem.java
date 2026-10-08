@@ -208,6 +208,50 @@ public class LongShortBladeItem extends ModifiableItem {
         return v;
     }
 
+    /**
+     * ⭐⭐ <b>写"旋转还剩多少 tick"的**客户端可见**信号</b> ✓（= 物品 NBT {@link #TAG_ULTIMATE_END} ✓）。
+     * <p>⚠ 为什么不用服务端的静态集合 ✗：⭐ **客户端看不到它** ✗（hud-side 审查时专门提醒过 ✓）
+     * —— ⭐ 而**手持物品的 NBT 会同步给客户端** ✓ ⇒ 客户端渲染器读它就知道"该转起来了" ✓，
+     * 因此**不需要网络包** ✓。
+     */
+    public static void setUltimateVisualBoth(Player player, int ticks) {
+        if (player == null) {
+            return;
+        }
+        try {
+            for (ItemStack s : new ItemStack[]{player.getMainHandItem(), player.getOffhandItem()}) {
+                if (s.getItem() instanceof LongShortBladeItem) {
+                    if (ticks <= 0) {
+                        if (s.getTag() != null) {
+                            s.getTag().remove(TAG_ULTIMATE_END);
+                        }
+                    } else {
+                        s.getOrCreateTag().putInt(TAG_ULTIMATE_END, ticks);
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+            // 写信号失败绝不能连累玩法 ✗（只是不转而已 ✓）
+        }
+    }
+
+    /**
+     * ⭐ <b>客户端读"该不该旋转"</b> ✓ —— 只要 {@link #TAG_ULTIMATE_END} **大于 0** 就转 ✓。
+     * <p>⚠ 刻意**不看精确剩余值** ✗（物品 NBT 的同步不是每 tick ✓ 会滞后 ✓）⇒ 只看"是否 > 0" ✓。
+     * <p>⚠ 客户端与服务端**共用**这个方法 ✓ —— 两端都只读物品栈 ✓ 没有任何跨端状态 ✓。
+     */
+    public static boolean isUltimateVisual(ItemStack stack) {
+        try {
+            if (stack == null || stack.isEmpty() || !(stack.getItem() instanceof LongShortBladeItem)) {
+                return false;
+            }
+            CompoundTag tag = stack.getTag();
+            return tag != null && tag.getInt(TAG_ULTIMATE_END) > 0;
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
     /** 正在放光环吗 ✓ */
     public static boolean isUltimateActive(UUID id) {
         return id != null && ULTIMATE_ACTIVE.contains(id);
@@ -402,6 +446,12 @@ public class LongShortBladeItem extends ModifiableItem {
      */
     public static void startUltimate(Level level, Player player, ItemStack stack) {
         setFeverBoth(player, getFever(stack) - FEVER_COST_ULTIMATE);
+        // ⭐⭐ **旋转用的同步信号**：把"还剩多少 tick"写进**物品 NBT** ✓
+        //   —— ⚠ 客户端**看不到**服务端的静态集合（hud-side 专门提醒过 ✗）⇒
+        //   ⭐ 而**手持物品的 NBT 是同步给客户端的** ✓ ⇒ 客户端渲染器只需读它就能知道"该转了" ✓
+        //   （⭐ 这也是 {@link #TAG_ULTIMATE_END} 当初声明却一直没用的原因 —— 现在用上了 ✓）。
+        //   ⚠ 判断只依赖"**是否 > 0**" ✗ 不依赖精确剩余值 ✓（物品 NBT 的同步不是每 tick ✓ 会滞后 ✓）。
+        setUltimateVisualBoth(player, ULTIMATE_DURATION_TICKS);
         UUID id = player.getUUID();
         ULTIMATE_ACTIVE.add(id);
         ULTIMATE_TICKS.put(id, ULTIMATE_DURATION_TICKS);
