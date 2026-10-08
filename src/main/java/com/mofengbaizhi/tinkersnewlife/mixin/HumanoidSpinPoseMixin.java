@@ -92,6 +92,14 @@ public abstract class HumanoidSpinPoseMixin {
             if (offhandSwing > 0.0F) {
                 this.f_102812_.xRot = -offhandSwing * 1.3F;   // ⭐ 左臂向前挥 ✓
                 this.f_102812_.zRot = 0.0F;
+                // ⚠ **临时探针三**（⭐ 铁证：证明这段**真的执行了** ✓ 定位完即删 ✗）——
+                //   ⭐ 若这行有而你看不到 ⇒ ⭐ **是你的视角看不到自己的模型** ✗（第一人称 ✗）
+                //   ⭐ 若这行没有 ⇒ 注入/mixin 没生效 ✗。
+                if (entity.tickCount % 20 == 0) {
+                    com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
+                            "[长短刃·探针] 左臂挥动已应用 swing={} tick={}",
+                            String.format(java.util.Locale.ROOT, "%.2f", offhandSwing), entity.tickCount);
+                }
             }
 
             float t = spinFactor(player, ageInTicks);
