@@ -51,6 +51,29 @@ public class TinkersNewlifeJeiPlugin implements IModPlugin {
     }
 
     @Override
+    /**
+     * ⭐ §1122 <b>把所有模组的同 id 变体折叠成 JEI 里的一个格子</b> ✓（用户口径 ✓）
+     * <p>给**全游戏每一个物品**注册同一个解释器 ✓ —— 具体折叠规则见 {@link JeiVariantFolder} ✓：
+     * ⚠ **没有 NBT 的物品返回"无子类型"** ⇒ JEI 完全不折叠 ✓（全模组注册的保险 ✓）；
+     * 匠魂工具/部件按 **{@code tic_materials} 材料组合**折叠 ✓（忽略耐久/强化/名字 ✓）；
+     * 其它模组按整体 NBT 折叠 ✓。
+     * <p>⚠ 单个物品注册失败只跳过 ✗ —— 绝不能让"折叠"这个附加功能把 JEI 插件搞崩 ✓。
+     */
+    public void registerItemSubtypes(mezz.jei.api.registration.ISubtypeRegistration registration) {
+        int n = 0;
+        for (Item item : ForgeRegistries.ITEMS) {
+            try {
+                registration.registerSubtypeInterpreter(
+                        mezz.jei.api.constants.VanillaTypes.ITEM_STACK, item, JeiVariantFolder.INSTANCE);
+                n++;
+            } catch (Throwable ignored) {
+                // 该物品已被别的插件注册过等 ⇒ 跳过即可 ✓
+            }
+
+        }
+        TinkersNewlife.LOGGER.info("[JEI] 变体折叠：已为 {} 个物品注册子类型解释器 ✓（无 NBT 的物品不会被折叠 ✓）", n);
+    }
+
     public void registerRecipes(IRecipeRegistration registration) {
         registerInfo(registration, ModItems.RLYEH_CALL.get(), "jei.tinkersnewlife.acquire.rlyeh_call");
         registerInfo(registration, ModItems.NYARLATHOTEP_DESIRE.get(), "jei.tinkersnewlife.acquire.nyarlathotep_desire");
