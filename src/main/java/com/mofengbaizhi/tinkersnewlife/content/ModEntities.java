@@ -55,6 +55,25 @@ public class ModEntities {
                             .build(TinkersNewlife.MOD_ID + ":stone_shot")
             );
 
+    /**
+     * ⭐ §1124 <b>长短刃 · 短刀投掷的投射物</b>（用户口径 ✓）——
+     * 由 {@code LongShortBladeHandler#throwShortBlade} 在"短刀形态长按右键松手"时创建 ✓。
+     * <p>⚠ 投出去的是**投射物实体**（只拿物品栈的**副本** ✓）⇒ 玩家手里那把刀**不离开玩家** ✓（用户口径 ✓）。
+     * <p>⭐ 渲染复用原版 {@code ThrownItemRenderer}（把手里那把武器画出来 ✓ 见 {@code ClientEventHandler} ✓），
+     * 与弹弓石弹 {@code StoneShotEntity} 同一套做法 ✓。
+     */
+    public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.ShortBladeThrowEntity>> SHORT_BLADE_THROW =
+            ENTITIES.register("short_blade_throw",
+                    () -> EntityType.Builder
+                            .<com.mofengbaizhi.tinkersnewlife.content.entity.ShortBladeThrowEntity>of(
+                                    com.mofengbaizhi.tinkersnewlife.content.entity.ShortBladeThrowEntity::new,
+                                    MobCategory.MISC)
+                            .sized(0.4f, 0.4f)
+                            .clientTrackingRange(64)
+                            .updateInterval(1)
+                            .build(TinkersNewlife.MOD_ID + ":short_blade_throw")
+            );
+
 
 
 

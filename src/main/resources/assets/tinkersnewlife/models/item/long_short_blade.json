@@ -1,0 +1,25 @@
+{
+  "_comment": "长短刃·物品模型（§1124）。parts 的 index 严格对应 tool_definitions/long_short_blade.json 的部件顺序：0=宽刃(broad_blade) 1=坚韧套环(tough_binding) 2=坚韧手柄(tough_handle) 3=小型剑刃(small_blade) 4=弓臂(bow_limb) —— ⚠ 下标错一格整把武器的部件贴图都会错位。⚠ 当前五张是【程序化占位图】（tools/gen_long_short_blade_placeholders.ps1 生成），用户以后手绘替换时只改 textures 那五行即可 ✓。⚠ 两处与任务书不同、已按实证修正：①parent 写 tconstruct:item/base/tall 而非 tconstruct:item/base/default —— 反编译匠魂 jar 确认 item/base 下只有 axe/battlesign/bow/crossbow/flat_blocking/large_tool/rod/shield*/staff*/tall/tall_axe/tool_blocking，**没有 default** ✗，而本仓刀剑类（rapier/spear/war_scythe）与匠魂 cleaver/sledge_hammer 都用 tall ✓；②补了 overrides 里的 tconstruct:broken 谓词 —— 匠魂本体每个工具模型（sword/pickaxe/cleaver/sledge_hammer）都显式写了它 ✓，本仓 slingshot/whip 也有 ✓，而 war_scythe/rapier/spear 漏了 ✗（那三把的破损模型其实一直没被用到 ✗）；不写这条的话破损态根本不显示 ✓。",
+  "loader": "tconstruct:tool",
+  "parent": "tconstruct:item/base/tall",
+  "textures": {
+    "head": "tinkersnewlife:item/tool/long_short_blade/head",
+    "binding": "tinkersnewlife:item/tool/long_short_blade/binding",
+    "handle": "tinkersnewlife:item/tool/long_short_blade/handle",
+    "blade": "tinkersnewlife:item/tool/long_short_blade/blade",
+    "limb": "tinkersnewlife:item/tool/long_short_blade/limb"
+  },
+  "parts": [
+    { "name": "head",    "index": 0 },
+    { "name": "binding", "index": 1 },
+    { "name": "handle",  "index": 2 },
+    { "name": "blade",   "index": 3 },
+    { "name": "limb",    "index": 4 }
+  ],
+  "overrides": [
+    {
+      "predicate": { "tconstruct:broken": 1 },
+      "model": "tinkersnewlife:item/tool/long_short_blade/broken"
+    }
+  ]
+}

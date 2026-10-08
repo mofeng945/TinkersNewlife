@@ -1,0 +1,17 @@
+{
+    "name":  "长短刃",
+    "category":  "tinkersnewlife:tools",
+    "icon":  "tinkersnewlife:long_short_blade",
+    "sortnum":  11,
+    "pages":  [
+                  {
+                      "type":  "patchouli:spotlight",
+                      "item":  "tinkersnewlife:long_short_blade",
+                      "text":  "$(bold)长短刃$()$(br2)获取：通过$(bold)匠魂工匠站$()打造——宽刃 + 小型剑刃 + 坚韧手柄 + 坚韧套环 + 弓臂组合。$(br2)特点：一把$(bold)双持互换$()的武器——$(bold)主手长刀、副手短刀$()，两手各持一刃，招式在长短之间自由切换。"
+                  },
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)双刃互换$()：$(li)按 $(bold)F$() 键在$(bold)主手长刀$()与$(bold)副手短刀$()之间互换$(li)$(bold)长刀$()：攻击范围更大，主打$(bold)突刺$()$(li)$(bold)短刀$()：出手更快，可$(bold)蓄力投掷$()出去$(br2)$(bold)狂热（Fever）$()：攻击积攒 Fever，攻击速度随 Fever 提升。$(br2)$(bold)杀戮光环$()：身边的敌人会持续受到伤害。$(br2)当前 Fever 与光环状态显示在工具提示中。"
+                  }
+              ]
+}

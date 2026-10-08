@@ -1,0 +1,19 @@
+{
+  "_comment": "长短刃·破损态模型（§1124）。⚠ 路径必须是 models/item/tool/long_short_blade/broken.json —— 本仓踩过把破损模型错放到 models/item/long_short_blade_broken.json 的坑 ✗，那样匠魂的 tool loader 找不到它 ✓。内容 ＝ 物品模型的拷贝，仅把五张贴图名统一加 _broken ✓（结构与下标与物品模型严格一致 ⇒ 破损态不会错位 ✓），并且**不带 overrides**（破损模型自身再指向自己就成了死循环 ✓，本仓 war_scythe/slingshot 的 broken.json 也都不带 ✓）。_broken 那五张是 tools/gen_long_short_blade_placeholders.ps1 生成的占位破损版（压暗 60% ＋ 裂纹 ＋ 缺口，且只改原图已存在的像素、绝不新增轮廓外的点 ✓）；材质变体（head_tconstruct_iron_broken 之类）由用户在游戏内跑 /tconstruct generate_part_textures 与 tools\\GenBrokenTextures.ps1 -Filter long_short_blade 生成 ✓。",
+  "loader": "tconstruct:tool",
+  "parent": "tconstruct:item/base/tall",
+  "textures": {
+    "head": "tinkersnewlife:item/tool/long_short_blade/head_broken",
+    "binding": "tinkersnewlife:item/tool/long_short_blade/binding_broken",
+    "handle": "tinkersnewlife:item/tool/long_short_blade/handle_broken",
+    "blade": "tinkersnewlife:item/tool/long_short_blade/blade_broken",
+    "limb": "tinkersnewlife:item/tool/long_short_blade/limb_broken"
+  },
+  "parts": [
+    { "name": "head",    "index": 0 },
+    { "name": "binding", "index": 1 },
+    { "name": "handle",  "index": 2 },
+    { "name": "blade",   "index": 3 },
+    { "name": "limb",    "index": 4 }
+  ]
+}

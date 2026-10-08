@@ -1,0 +1,55 @@
+{
+  "translation_key": "item_group.tinkersnewlife.long_short_blade",
+  "sortIndex": 9,
+  "icon": {
+    "item": "tinkersnewlife:long_short_blade",
+    "nbt": "{Damage:0,tic_broken:0b,tic_display:1b,tic_materials:[\"tconstruct:ui_render#head\",\"tconstruct:ui_render#extra\",\"tconstruct:ui_render#handle\",\"tconstruct:ui_render#head\",\"tconstruct:ui_render#large\"]}"
+  },
+  "input_slots": [
+    {
+      "translation_key": "slot.tinkersnewlife.long_short_blade.broad_blade",
+      "icon": "tconstruct:broad_blade",
+      "filter": {
+        "item": "tconstruct:broad_blade"
+      },
+      "x": 35,
+      "y": 19
+    },
+    {
+      "translation_key": "slot.tinkersnewlife.long_short_blade.tough_binding",
+      "icon": "tconstruct:tough_binding",
+      "filter": {
+        "item": "tconstruct:tough_binding"
+      },
+      "x": 47,
+      "y": 43
+    },
+    {
+      "translation_key": "slot.tinkersnewlife.long_short_blade.tough_handle",
+      "icon": "tconstruct:tough_handle",
+      "filter": {
+        "item": "tconstruct:tough_handle"
+      },
+      "x": 30,
+      "y": 45
+    },
+    {
+      "translation_key": "slot.tinkersnewlife.long_short_blade.small_blade",
+      "icon": "tconstruct:small_blade",
+      "filter": {
+        "item": "tconstruct:small_blade"
+      },
+      "x": 55,
+      "y": 27
+    },
+    {
+      "translation_key": "slot.tinkersnewlife.long_short_blade.bow_limb",
+      "icon": "tconstruct:bow_limb",
+      "filter": {
+        "item": "tconstruct:bow_limb"
+      },
+      "x": 13,
+      "y": 60
+    }
+  ]
+}

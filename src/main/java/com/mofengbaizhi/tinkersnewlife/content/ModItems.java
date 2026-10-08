@@ -363,6 +363,12 @@ public class ModItems {
                         .rarity(Rarity.EPIC)
                 ));
 
+        /** ⭐ §1124 长短刃（一件工具 ✓ 手持时主副手各一把 ✓ 按原版 F 交换主副手即可切换形态 ✓） */
+        public static final RegistryObject<com.mofengbaizhi.tinkersnewlife.content.item.LongShortBladeItem> LONG_SHORT_BLADE =
+        ITEMS.register("long_short_blade",
+                () -> new com.mofengbaizhi.tinkersnewlife.content.item.LongShortBladeItem(
+                        new Item.Properties().stacksTo(1)));
+
     /** 悠悠球 */
     public static final RegistryObject<YoYoItem> YO_YO =
         ITEMS.register("yo_yo",

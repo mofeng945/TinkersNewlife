@@ -1574,5 +1574,13 @@
   "screen.tinkersnewlife.compendium.footer": "右键一本帕秋莉书即可收录（书不会消失）",
   "message.tinkersnewlife.compendium.goety_research": "已从《黑暗秘典》习得禁忌知识：诡厄的灵魂能量能力已解锁",
   "message.tinkersnewlife.compendium.cursed_only": "承受七咒之人，才能收录这本书",
-  "message.tinkersnewlife.compendium.effect_entry": "这件是「效果型知识」：潜行右键手持百宝书即可唤醒它的效果"
+  "message.tinkersnewlife.compendium.effect_entry": "这件是「效果型知识」：潜行右键手持百宝书即可唤醒它的效果",
+  "item.tinkersnewlife.long_short_blade": "长短刃",
+  "item.tinkersnewlife.long_short_blade.description": "双形态近战武器，主副手各握一把：长刀形态攻速较低、可用突刺前冲，短刀形态攻速高、可蓄力投掷；每次命中积攒 fever，Shift＋右键消耗 fever 发动杀戮光环",
+  "item_group.tinkersnewlife.long_short_blade": "长短刃",
+  "slot.tinkersnewlife.long_short_blade.broad_blade": "宽刃",
+  "slot.tinkersnewlife.long_short_blade.tough_binding": "坚韧套环",
+  "slot.tinkersnewlife.long_short_blade.tough_handle": "坚韧手柄",
+  "slot.tinkersnewlife.long_short_blade.small_blade": "小型剑刃",
+  "slot.tinkersnewlife.long_short_blade.bow_limb": "弓臂"
 }

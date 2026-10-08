@@ -1,0 +1,17 @@
+{
+    "name":  "Long-Short Blade",
+    "category":  "tinkersnewlife:tools",
+    "icon":  "tinkersnewlife:long_short_blade",
+    "sortnum":  11,
+    "pages":  [
+                  {
+                      "type":  "patchouli:spotlight",
+                      "item":  "tinkersnewlife:long_short_blade",
+                      "text":  "$(bold)Long-Short Blade$()$(br2)Obtaining: craft it at the $(bold)Tinker Station$() — combining a Broad Blade + a Small Blade + a Tough Handle + a Tough Ring + a Bow Limb.$(br2)Features: a $(bold)dual-wield, swappable$() weapon — a $(bold)long blade in the main hand and a short blade in the off hand$(), so you fight with a blade in each hand and switch freely between their styles."
+                  },
+                  {
+                      "type":  "patchouli:text",
+                      "text":  "$(bold)Swapping the two blades$():$(li)press $(bold)F$() to swap the $(bold)long blade in your main hand$() with the $(bold)short blade in your off hand$()$(li)$(bold)Long blade$(): longer reach, built around the $(bold)thrust$()$(li)$(bold)Short blade$(): faster swings, and it can be $(bold)charged and thrown$()$(br2)$(bold)Fever$(): attacks build up Fever, and attack speed rises with it.$(br2)$(bold)Killing aura$(): nearby enemies keep taking damage.$(br2)Your current Fever and aura state are shown on the tooltip."
+                  }
+              ]
+}

@@ -218,6 +218,10 @@ public class ModCreativeTabs {
                                 }
                                 addAllToolVariants(output, SILENT_GLOVE_DEFINITION, ModItems.SILENT_GLOVE.get());
                                 addAllToolVariants(output, WarScytheItem.WAR_SCYTHE_DEFINITION, ModItems.WAR_SCYTHE.get());
+                                // ⭐ §1124 长短刃（一件工具两形态 ✓ 手持时主副手各一把 ✓ 原版 F 交换 ✓）
+                                addAllToolVariants(output,
+                                        com.mofengbaizhi.tinkersnewlife.content.item.LongShortBladeItem.LONG_SHORT_BLADE_DEFINITION,
+                                        ModItems.LONG_SHORT_BLADE.get());
                                 addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.TangHengDaoItem.TANG_HENG_DAO_DEFINITION, com.mofengbaizhi.tinkersnewlife.content.ModItems.TANG_HENG_DAO.get());   // §808 唐横刀
                                 addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.SpearItem.SPEAR_DEFINITION, com.mofengbaizhi.tinkersnewlife.content.ModItems.SPEAR.get());   // §835 长矛
                                 addAllToolVariants(output, com.mofengbaizhi.tinkersnewlife.content.item.RapierItem.RAPIER_DEFINITION, com.mofengbaizhi.tinkersnewlife.content.ModItems.RAPIER.get());   // §943 西洋剑

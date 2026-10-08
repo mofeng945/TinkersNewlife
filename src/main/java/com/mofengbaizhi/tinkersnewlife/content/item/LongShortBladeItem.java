@@ -1,0 +1,493 @@
+package com.mofengbaizhi.tinkersnewlife.content.item;
+
+import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import com.mofengbaizhi.tinkersnewlife.content.handler.LongShortBladeHandler;
+import com.mofengbaizhi.tinkersnewlife.content.modifier.util.InvulnerabilityManager;
+import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import slimeknights.tconstruct.library.tools.definition.ToolDefinition;
+import slimeknights.tconstruct.library.tools.item.ModifiableItem;
+import slimeknights.tconstruct.library.tools.nbt.ToolStack;
+import slimeknights.tconstruct.library.tools.stat.ToolStats;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * ⭐ §1124 <b>长短刃</b>（用户口径 ✓）—— 一件匠魂工具，手持时**主副手各拿一把** ✓。
+ *
+ * <h2>形态（NBT {@code lnb_form}）</h2>
+ * <ul>
+ *   <li>{@link #FORM_LONG} ＝ <b>长刀</b>：主手长刀、副手反握短刀 ✓ —— 攻击**攻速低** ✓
+ *       但**左右交替攻击**（长刀优先 ✓）、每次命中 ＋1 fever ✓；**右键＝突刺** ✓（消耗 20 fever ✓、
+ *       前送 ＋ 向前冲刺 3 格 ✓ 沿途所有生物吃突刺伤害 ✓ 过程无敌 ✓ 冷却 5 秒 ✓）；</li>
+ *   <li>{@link #FORM_SHORT} ＝ <b>短刀</b>：主手短刀、副手反握长刀 ✓ —— 攻击**攻速高、攻击力低** ✓
+ *       只在目标血量 &lt; 20% 时由**长刀尝试斩杀处决**（伤害 500% ✓）；
+ *       **右键长按＝蓄力** ✓ 松手把短刀**投掷**出去 ✓ 命中处**半径 3 格非破坏爆炸** ✓ 冷却 5 秒 ✓。</li>
+ * </ul>
+ * ⭐ 两种形态都能用：**Shift ＋ 右键＝杀戮光环** ✓（消耗 50 fever ✓ 双手平举、快速旋转 ✓
+ * 对 **1 格**范围内所有敌人造成伤害 ✓ 期间玩家无敌 ✓ 持续 **5 秒** ✓）。
+ *
+ * <h2>⚠ 已知冲突（如实记录 ✗）</h2>
+ * 用户要求的 **F 键左右手互换**与仓库既有的「术式反转」（{@code KeyBindings.REVERSE_TECHNIQUE} 默认也是 F ✓）
+ * **撞键** ✗ —— 本模组无法吞掉别的功能的按键 ✓ ⇒ 同时手持术式核心与长短刃时两个都会触发 ✓
+ * （⚠ 一般不会同时手持 ✓ 故先这样 ✓ 已在回信中说明 ✓）。
+ *
+ * <h2>⚠ 实现说明（为什么这么多静态成员）</h2>
+ * 形态与 fever 都存在**物品自己的 NBT** 上 ✓（与战镰 {@code chaos_fever} 同一套思路 ✓），
+ * 只有"正在放光环的玩家"这种**瞬时状态**才放在按玩家隔离的静态集合里 ✓
+ * （⚠ 战镰原先是静态 boolean ✓ 会导致多玩家互相干扰 ✓ 这里从设计上避开 ✗）。
+ */
+public class LongShortBladeItem extends ModifiableItem {
+
+    /** 工具定义（名字必须与 {@code tool_definitions/long_short_blade.json} 一致 ✓） */
+    public static final ToolDefinition LONG_SHORT_BLADE_DEFINITION =
+            ToolDefinition.create(new ResourceLocation(TinkersNewlife.MOD_ID, "long_short_blade"));
+
+    // ============================================================
+    //  NBT 键（⚠ 与数据侧/客户端的口径钉死 ✗）
+    // ============================================================
+
+    /** 形态：0 ＝ 长刀 ✓ 1 ＝ 短刀 ✓ */
+    public static final String TAG_FORM = "lnb_form";
+    /** 大招条（0~100 ✓） */
+    public static final String TAG_FEVER = "lnb_fever";
+    /** 突刺冷却（tick ✓ 用物品自己的冷却够了 ✗ —— 这里只用它做 HUD 显示 ✓） */
+    public static final String TAG_ULTIMATE_END = "lnb_ult_end";
+    /** ⭐ 副手那把"伙伴刀"的标记（⚠ 防止对它再做一次互换 ✗） */
+    public static final String TAG_PAIR = "lnb_pair";
+
+    public static final int FORM_LONG = 0;
+    public static final int FORM_SHORT = 1;
+
+    /** fever 上限 ✓ */
+    public static final int FEVER_MAX = 100;
+    /** ⭐ 每次交替攻击积攒 1 点 ✓（用户口径 ✓） */
+    public static final int FEVER_PER_HIT = 1;
+    /** ⭐ 突刺消耗 20 ✓ */
+    public static final int FEVER_COST_THRUST = 20;
+    /** ⭐ 杀戮光环消耗 50 ✓ */
+    public static final int FEVER_COST_ULTIMATE = 50;
+
+    /** 突刺冲刺距离（格 ✓ 用户口径 3 ✓） */
+    public static final double THRUST_DISTANCE = 3.0D;
+    /** 突刺冷却（tick ✓ 5 秒 ✓） */
+    public static final int THRUST_COOLDOWN_TICKS = 100;
+    /** 投掷冷却（tick ✓ 5 秒 ✓） */
+    public static final int THROW_COOLDOWN_TICKS = 100;
+    /** 蓄力所需最短时间（tick ✓ 松手才投掷 ✓） */
+    public static final int CHARGE_TICKS_MIN = 10;
+    /** 蓄力满（tick ✓） */
+    public static final int CHARGE_TICKS_MAX = 25;
+    /** 光环持续（tick ✓ 5 秒 ✓ 用户口径 ✓） */
+    public static final int ULTIMATE_DURATION_TICKS = 100;
+    /** ⭐ 处决阈值（目标血量低于 20% ✓ 用户口径 ✓） */
+    public static final float EXECUTE_HP_RATIO = 0.20F;
+    /** ⭐ 处决倍率（500% ✓ 用户口径 ✓） */
+    public static final float EXECUTE_MULTIPLIER = 5.0F;
+    /** 投掷爆炸半径（格 ✓ 用户口径 3 ✓） */
+    public static final float THROW_EXPLOSION_RADIUS = 3.0F;
+    /** 光环每 tick 伤害的基础倍率（⚠ 按攻击力百分比算 ✓ 免得固定值太离谱 ✗） */
+    public static final float ULTIMATE_DPS_RATIO = 0.35F;
+
+    /** ⭐ 正在放杀戮光环的玩家（按 UUID 隔离 ✓） */
+    private static final Set<UUID> ULTIMATE_ACTIVE = ConcurrentHashMap.newKeySet();
+    /** ⭐ 光环剩余 tick（⚠ 用 tick 递减而不是线程定时器 ✗ —— 战镰那套用了线程池 ✓ 但这里要"持续 5 秒"的连续判定 ✓） */
+    private static final Map<UUID, Integer> ULTIMATE_TICKS = new ConcurrentHashMap<>();
+
+    public LongShortBladeItem(Properties properties) {
+        super(properties, LONG_SHORT_BLADE_DEFINITION);
+    }
+
+    // ============================================================
+    //  形态与 fever（静态读写 ✓ 供 handler/HUD/客户端共用 ✓）
+    // ============================================================
+
+    public static int getForm(ItemStack stack) {
+        CompoundTag tag = stack.getTag();
+        return tag == null ? FORM_LONG : tag.getInt(TAG_FORM);
+    }
+
+    public static boolean isLong(ItemStack stack) {
+        return getForm(stack) != FORM_SHORT;
+    }
+
+    public static void setForm(ItemStack stack, int form) {
+        stack.getOrCreateTag().putInt(TAG_FORM, form == FORM_SHORT ? FORM_SHORT : FORM_LONG);
+    }
+
+    /** 切到另一形态 ✓ */
+    public static void toggleForm(ItemStack stack) {
+        setForm(stack, isLong(stack) ? FORM_SHORT : FORM_LONG);
+    }
+
+    public static boolean isPair(ItemStack stack) {
+        CompoundTag tag = stack.getTag();
+        return tag != null && tag.getBoolean(TAG_PAIR);
+    }
+
+    public static void markPair(ItemStack stack, boolean pair) {
+        if (pair) {
+            stack.getOrCreateTag().putBoolean(TAG_PAIR, true);
+        } else if (stack.getTag() != null) {
+            stack.getTag().remove(TAG_PAIR);
+        }
+    }
+
+    public static int getFever(ItemStack stack) {
+        CompoundTag tag = stack.getTag();
+        return tag == null ? 0 : Math.max(0, Math.min(FEVER_MAX, tag.getInt(TAG_FEVER)));
+    }
+
+    public static void setFever(ItemStack stack, int fever) {
+        stack.getOrCreateTag().putInt(TAG_FEVER, Math.max(0, Math.min(FEVER_MAX, fever)));
+    }
+
+    public static void addFever(ItemStack stack, int delta) {
+        setFever(stack, getFever(stack) + delta);
+    }
+
+    /**
+     * ⭐⭐ <b>把 fever 同时写进玩家两手的长短刃</b> ✓ —— ⚠ 这是修一个实测隐患 ✗：
+     * 副手"伙伴刀"是 {@code main.copy()} 出来的 ✓ 它会**冻结**复制那一刻的 fever ✗，
+     * 而 fever 原先**只写主手那把** ✗ ⇒ 玩家按 **F（原版交换主副手）** 之后
+     * 新主手拿到的是**陈旧值** ✗ ⇒ ⭐ **fever 会突然跳变/回退** ✗（hud-side 审查时揪出来的 ✓）。
+     * <p>⇒ ⭐ 从此**所有增减都必须走这个方法** ✓（加 fever、花 fever、以及创建伙伴刀时同步 ✓）。
+     */
+    public static void setFeverBoth(Player player, int fever) {
+        if (player == null) {
+            return;
+        }
+        try {
+            ItemStack main = player.getMainHandItem();
+            if (main.getItem() instanceof LongShortBladeItem) {
+                setFever(main, fever);
+            }
+            ItemStack off = player.getOffhandItem();
+            if (off.getItem() instanceof LongShortBladeItem) {
+                setFever(off, fever);
+            }
+        } catch (Throwable ignored) {
+            // 写 fever 失败绝不能连累玩法 ✗
+        }
+    }
+
+    /** ⭐ 以主手（或副手）那把为准，读出当前 fever ✓（两手不一致时取**较大**值 ✓ 只用于同步 ✓） */
+    public static int readFeverBoth(Player player) {
+        int v = 0;
+        try {
+            ItemStack main = player.getMainHandItem();
+            if (main.getItem() instanceof LongShortBladeItem) {
+                v = Math.max(v, getFever(main));
+            }
+            ItemStack off = player.getOffhandItem();
+            if (off.getItem() instanceof LongShortBladeItem) {
+                v = Math.max(v, getFever(off));
+            }
+        } catch (Throwable ignored) {
+        }
+        return v;
+    }
+
+    /** 正在放光环吗 ✓ */
+    public static boolean isUltimateActive(UUID id) {
+        return id != null && ULTIMATE_ACTIVE.contains(id);
+    }
+
+    /** 光环剩余 tick（没在放返回 0 ✓） */
+    public static int ultimateTicksLeft(UUID id) {
+        Integer v = ULTIMATE_TICKS.get(id);
+        return v == null ? 0 : v;
+    }
+
+    /**
+     * ⭐ 写光环剩余 tick ✓（供 {@code LongShortBladeHandler.tickUltimate} 逐 tick 递减 ✓
+     * —— ⚠ 映射本身是私有的 ✗ 只有经由这个方法才改得到 ✓ 免得别处乱写 ✗）。
+     */
+    public static void setUltimateTicks(UUID id, int ticks) {
+        if (id == null) {
+            return;
+        }
+        if (ticks <= 0) {
+            ULTIMATE_TICKS.remove(id);
+        } else {
+            ULTIMATE_TICKS.put(id, ticks);
+        }
+    }
+
+    // ============================================================
+    //  右键
+    // ============================================================
+
+    /**
+     * 右键分派 ✓：
+     * <ul>
+     *   <li>⭐ <b>Shift ＋ 右键</b> ⇒ 杀戮光环（fever ≥ 50 ✓）；</li>
+     *   <li>⭐ <b>长刀形态</b> ⇒ 突刺（fever ≥ 20 ✓ 且不在冷却 ✓）；</li>
+     *   <li>⭐ <b>短刀形态</b> ⇒ 开始蓄力（松手投掷 ✓ 见 {@code releaseUsing} ✓）。</li>
+     * </ul>
+     */
+    @Override
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (level.isClientSide) {
+            return InteractionResultHolder.success(stack);
+        }
+
+        // ⭐ Shift ＋ 右键 ⇒ 杀戮光环（用户口径 ✓）
+        if (player.isShiftKeyDown()) {
+            if (getFever(stack) >= FEVER_COST_ULTIMATE && !isUltimateActive(player.getUUID())) {
+                startUltimate(level, player, stack);
+                return InteractionResultHolder.success(stack);
+            }
+            return InteractionResultHolder.fail(stack);
+        }
+
+        if (isLong(stack)) {
+            // ⭐ 长刀：突刺（前送 ＋ 冲刺 3 格 ✓ 沿途伤害 ✓ 无敌 ✓ 冷却 5s ✓）
+            if (getFever(stack) < FEVER_COST_THRUST) {
+                return InteractionResultHolder.fail(stack);
+            }
+            if (player.getCooldowns().isOnCooldown(this)) {
+                return InteractionResultHolder.fail(stack);
+            }
+            setFeverBoth(player, getFever(stack) - FEVER_COST_THRUST);
+            thrust(level, player, stack);
+            player.getCooldowns().addCooldown(this, THRUST_COOLDOWN_TICKS);
+            return InteractionResultHolder.success(stack);
+        }
+
+        // ⭐ 短刀：长按蓄力 ⇒ 松手投掷
+        player.startUsingItem(hand);
+        return InteractionResultHolder.consume(stack);
+    }
+
+    /** 蓄力用的"使用时长"上限（松手才会走 {@link #releaseUsing} ✓） */
+    @Override
+    public int getUseDuration(ItemStack stack) {
+        return 72000;
+    }
+
+    @Override
+    public UseAnim getUseAnimation(ItemStack stack) {
+        // 短刀蓄力：用"弓"的拉弦姿势最接近"蓄力"的手感 ✓（本仓战镰用的是别的姿势 ✗）
+        return UseAnim.BOW;
+    }
+
+    /**
+     * ⭐ 松手 ⇒ 把短刀投掷出去 ✓（用户口径 ✓）——
+     * 蓄力不足（&lt; {@link #CHARGE_TICKS_MIN}）直接取消 ✓ 免得点一下就扔 ✗。
+     */
+    @Override
+    public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
+        if (level.isClientSide || !(entity instanceof Player player)) {
+            return;
+        }
+        int charged = getUseDuration(stack) - timeLeft;
+        if (charged < CHARGE_TICKS_MIN || isLong(stack)) {
+            return;
+        }
+        if (player.getCooldowns().isOnCooldown(this)) {
+            return;
+        }
+        float power = Math.min(1.0F, (float) charged / (float) CHARGE_TICKS_MAX);
+        player.getCooldowns().addCooldown(this, THROW_COOLDOWN_TICKS);
+        LongShortBladeHandler.throwShortBlade(player, stack, power);
+    }
+
+    // ============================================================
+    //  突刺
+    // ============================================================
+
+    /**
+     * ⭐ <b>突刺</b>：长刀前送 ＋ 向面朝方向冲刺 {@link #THRUST_DISTANCE} 格 ✓
+     * 沿途**所有生物**受到突刺伤害 ✓ 过程**无敌** ✓。
+     * <p>⚠ 位移照战镰那套"逐段试探安全落点"的做法 ✓（{@code FeverHandler} 已实证可用 ✓）——
+     * 撞墙就停在最后的安全点 ✓ 而不是穿墙 ✗。
+     */
+    public static void thrust(Level level, Player player, ItemStack stack) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        Vec3 look = player.getLookAngle();
+        Vec3 dir = new Vec3(look.x, 0, look.z).normalize();
+        if (dir.lengthSqr() < 0.01D) {
+            dir = new Vec3(0, 0, 1);
+        }
+
+        ToolStack tool = ToolHelper.getToolStack(stack);
+        float base = tool == null ? 10.0F : Math.max(1.0F, tool.getStats().get(ToolStats.ATTACK_DAMAGE));
+        float thrustDamage = base * 1.6F;   // ⭐ 突刺一击比普通挥砍重 ✓
+
+        // ⭐ 沿途伤害：先按"路径上的所有生物"扫一遍再位移 ✓（⚠ 位移后再扫会漏掉起手位置 ✓）
+        Vec3 start = player.position();
+        Vec3 end = start.add(dir.scale(THRUST_DISTANCE));
+        AABB sweep = new AABB(start, end).inflate(1.2D);
+        List<LivingEntity> hit = serverLevel.getEntitiesOfClass(LivingEntity.class, sweep,
+                e -> e != player && e.isAlive());
+        for (LivingEntity target : hit) {
+            target.invulnerableTime = 0;
+            target.hurt(player.damageSources().playerAttack(player), thrustDamage);
+            serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK,
+                    target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(),
+                    1, 0, 0, 0, 0);
+        }
+
+        // ⭐ 位移（逐段试探 ✓ 不穿墙 ✗）
+        Vec3 safe = safeStep(player, dir, THRUST_DISTANCE);
+        if (safe != null) {
+            player.teleportTo(safe.x, safe.y, safe.z);
+            player.fallDistance = 0;
+        }
+        // ⭐ 突刺过程无敌（用户口径 ✓）
+        InvulnerabilityManager.applyInvulnerability(player, 12);
+        serverLevel.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
+                SoundSource.PLAYERS, 1.0F, 1.2F);
+    }
+
+    /** 逐 0.5 格试探 ✓ 撞到实心方块就停在最后安全点 ✓（照 {@code FeverHandler} 那套 ✓） */
+    private static Vec3 safeStep(Player player, Vec3 dir, double distance) {
+        double step = 0.5D;
+        double lastX = player.getX();
+        double lastZ = player.getZ();
+        boolean moved = false;
+        for (double d = step; d <= distance + 1.0E-6; d += step) {
+            double x = player.getX() + dir.x * d;
+            double z = player.getZ() + dir.z * d;
+            if (!isSafe(player, x, z, player.getY())) {
+                break;
+            }
+            lastX = x;
+            lastZ = z;
+            moved = true;
+        }
+        return moved ? new Vec3(lastX, player.getY(), lastZ) : null;
+    }
+
+    private static boolean isSafe(Player player, double x, double z, double y) {
+        var level = player.level();
+        net.minecraft.core.BlockPos foot = new net.minecraft.core.BlockPos(
+                net.minecraft.util.Mth.floor(x), net.minecraft.util.Mth.floor(y), net.minecraft.util.Mth.floor(z));
+        return !level.getBlockState(foot).isSolid() && !level.getBlockState(foot.above()).isSolid();
+    }
+
+    // ============================================================
+    //  杀戮光环
+    // ============================================================
+
+    /**
+     * ⭐ <b>杀戮光环</b>（Shift ＋ 右键 ✓ 消耗 50 fever ✓）：
+     * 双手平举、刀刃持平、快速旋转 ✓ 对 **1 格**范围内所有敌人持续伤害 ✓ 期间**玩家无敌** ✓ 持续 **5 秒** ✓。
+     * <p>⚠ 逐 tick 结算（见 {@code LongShortBladeHandler.tickUltimate} ✓）——
+     * 这样"持续 5 秒"是真实时长 ✓ 且能随玩家移动 ✓（⚠ 用线程定时器那套做不到 ✗）。
+     */
+    public static void startUltimate(Level level, Player player, ItemStack stack) {
+        setFeverBoth(player, getFever(stack) - FEVER_COST_ULTIMATE);
+        UUID id = player.getUUID();
+        ULTIMATE_ACTIVE.add(id);
+        ULTIMATE_TICKS.put(id, ULTIMATE_DURATION_TICKS);
+        if (level instanceof ServerLevel sl) {
+            sl.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
+                    SoundSource.PLAYERS, 1.4F, 0.7F);
+        }
+    }
+
+    /** 结束光环 ✓ */
+    public static void stopUltimate(UUID id) {
+        ULTIMATE_ACTIVE.remove(id);
+        ULTIMATE_TICKS.remove(id);
+    }
+
+    /** 长刀：攻速降低（用户口径「此时攻击速度较低」✓） */
+    private static final UUID LONG_SPEED_UUID = UUID.fromString("7a1c9e30-1111-4a01-9c01-1a2b3c4d5e01");
+    /** 长刀：实体交互距离加成（图鉴那句「长刀：攻击范围更大」✓ 与本类的"攻速低"并不矛盾 ✓ 两者都成立 ✓） */
+    private static final UUID LONG_REACH_UUID = UUID.fromString("7a1c9e30-2222-4a02-9c02-1a2b3c4d5e02");
+    /** 短刀：攻速提高（用户口径「攻击速度较高」✓） */
+    private static final UUID SHORT_SPEED_UUID = UUID.fromString("7a1c9e30-3333-4a03-9c03-1a2b3c4d5e03");
+    /** 短刀：攻击力降低（用户口径「但攻击力较低」✓） */
+    private static final UUID SHORT_DAMAGE_UUID = UUID.fromString("7a1c9e30-4444-4a04-9c04-1a2b3c4d5e04");
+
+    /** 长刀攻速修正（负值 ＝ 更慢 ✓） */
+    public static final double LONG_ATTACK_SPEED_DELTA = -0.6D;
+    /** 长刀触及距离加成（格 ✓） */
+    public static final double LONG_ENTITY_REACH_BONUS = 1.0D;
+    /** 短刀攻速修正（正值 ＝ 更快 ✓） */
+    public static final double SHORT_ATTACK_SPEED_DELTA = 0.8D;
+    /** 短刀攻击力修正（负值 ＝ 更低 ✓） */
+    public static final double SHORT_ATTACK_DAMAGE_DELTA = -2.0D;
+
+    /**
+     * ⭐ <b>按形态给属性</b> ✓（用户口径 ✓）：
+     * <ul>
+     *   <li><b>长刀</b> ⇒ 攻击速度**降低** {@link #LONG_ATTACK_SPEED_DELTA} ✓ 且**实体交互距离 ＋1 格** ✓；</li>
+     *   <li><b>短刀</b> ⇒ 攻击速度**提高** {@link #SHORT_ATTACK_SPEED_DELTA} ✓ 且**攻击力降低** {@link #SHORT_ATTACK_DAMAGE_DELTA} ✓。</li>
+     * </ul>
+     * ⚠ 两种形态用**不同的 UUID** ✗ —— 免得原版把上一次算出来的修饰符缓存住 ✓（换形态后属性不刷新 ✗）。
+     * <p>⚠ 实测提醒（本仓 §807 的教训 ✓）：⭐ Forge 1.20.1 里"触及距离"的正确属性名是
+     * {@code forge:entity_reach} ✗ **不是** {@code forge:reach_distance} ✓（后者不存在 ⇒ 静默不生效 ✗）。
+     */
+    @Override
+    public com.google.common.collect.Multimap<net.minecraft.world.entity.ai.attributes.Attribute,
+            net.minecraft.world.entity.ai.attributes.AttributeModifier> getAttributeModifiers(
+            net.minecraft.world.entity.EquipmentSlot slot, ItemStack stack) {
+        var map = com.google.common.collect.ArrayListMultimap
+                .<net.minecraft.world.entity.ai.attributes.Attribute,
+                        net.minecraft.world.entity.ai.attributes.AttributeModifier>create(
+                        super.getAttributeModifiers(slot, stack));
+        if (slot != net.minecraft.world.entity.EquipmentSlot.MAINHAND) {
+            return map;
+        }
+        try {
+            if (isLong(stack)) {
+                map.put(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_SPEED,
+                        new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+                                LONG_SPEED_UUID, "Long Blade Speed",
+                                LONG_ATTACK_SPEED_DELTA,
+                                net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADDITION));
+                map.put(net.minecraftforge.common.ForgeMod.ENTITY_REACH.get(),
+                        new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+                                LONG_REACH_UUID, "Long Blade Reach",
+                                LONG_ENTITY_REACH_BONUS,
+                                net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADDITION));
+            } else {
+                map.put(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_SPEED,
+                        new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+                                SHORT_SPEED_UUID, "Short Blade Speed",
+                                SHORT_ATTACK_SPEED_DELTA,
+                                net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADDITION));
+                map.put(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE,
+                        new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+                                SHORT_DAMAGE_UUID, "Short Blade Damage",
+                                SHORT_ATTACK_DAMAGE_DELTA,
+                                net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADDITION));
+            }
+        } catch (Throwable ignored) {
+            // ⚠ 属性加成失败绝不能连累物品能用 ✗
+        }
+        return map;
+    }
+
+    // ============================================================
+    //  提示（⚠ 用户硬规矩：没说就不加 tooltip ✗ ⇒ 这里**不加** appendHoverText ✓）
+    //   ⚠ fever 走 HUD 显示（用户点名 ✓ 见 LongShortBladeHud ✓）。
+    // ============================================================
+}

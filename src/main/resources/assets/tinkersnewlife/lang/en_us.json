@@ -1571,5 +1571,13 @@
   "screen.tinkersnewlife.compendium.footer": "Right-click a Patchouli book to record it (the book stays)",
   "message.tinkersnewlife.compendium.goety_research": "Forbidden knowledge learned from The Black Book: Goety soul energy unlocked",
   "message.tinkersnewlife.compendium.cursed_only": "Only those who bear the Seven Curses may record this book",
-  "message.tinkersnewlife.compendium.effect_entry": "Effect-only entry: sneak + right-click the compendium to wake it"
+  "message.tinkersnewlife.compendium.effect_entry": "Effect-only entry: sneak + right-click the compendium to wake it",
+  "item.tinkersnewlife.long_short_blade": "Long-Short Blades",
+  "item.tinkersnewlife.long_short_blade.description": "A dual-form pair of blades, one in each hand: the long form strikes slower but can thrust forward, the short form is faster and can be charged and thrown. Hits build Fever, and Shift + right-click spends it on a killing aura",
+  "item_group.tinkersnewlife.long_short_blade": "Long-Short Blades",
+  "slot.tinkersnewlife.long_short_blade.broad_blade": "Broad Blade",
+  "slot.tinkersnewlife.long_short_blade.tough_binding": "Tough Binding",
+  "slot.tinkersnewlife.long_short_blade.tough_handle": "Tough Handle",
+  "slot.tinkersnewlife.long_short_blade.small_blade": "Small Blade",
+  "slot.tinkersnewlife.long_short_blade.bow_limb": "Bow Limb"
 }
