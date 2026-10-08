@@ -128,14 +128,24 @@ public final class LongShortBladeHandler {
         boolean mainIsBlade = main.getItem() instanceof LongShortBladeItem;
         boolean offIsBlade = off.getItem() instanceof LongShortBladeItem;
 
-        if (!mainIsBlade && !offIsBlade) {
+        // ⭐⭐ 主手**不是**长短刃 ⇒ ⭐ **伙伴刀必须消失** ✗
+        //   ⚠ 用户实测（2026-10-08 ✓）：「第一次拿在手里时确实可以在副手填充另一把刀，
+        //     但是**切换物品栏时另一把刀不会消失**」✗ —— 根因就是我原先写的是
+        //     "主手空但副手是刀 ⇒ 只把 `lnb_pair` 标记摘掉 ✗ **不删**" ✓
+        //     （⚠ 当时怕误删玩家自己的刀 ✗）⇒ 结果伙伴刀**永远留在副手** ✗。
+        //   ⇒ ⭐ 正确规则：**伙伴刀只在"手持期间"存在** ✓ —— 但**只清带 `lnb_pair` 标记的那把** ✓
+        //     ⚠ **玩家自己放进去的刀（无标记）绝不碰** ✗（这是当时那个顾虑的正确解法 ✓）。
+        //   ⭐ 并且顺手扫一遍**背包 36 格** ✗ —— 万一伙伴刀被玩家挪进背包（或换手时挤进去 ✓），
+        //     也不能让它变成"白送的第二把" ✗。
+        if (!mainIsBlade) {
+            removePairs(player, off);
             return;
         }
 
         // ⭐⭐ 两手都是刀 ⇒ 这是**玩家按 F（原版交换主副手）之后的常态** ✓
         //   ⇒ ⭐ 只**同步形态** ✓ **绝不新建伙伴刀** ✗（⚠ 早先写成"副手不是伙伴刀就补一把" ✗
         //      ⇒ 按一次 F 就会多出一把 ✓ **刷物品** ✗✗ —— 用户点出 F 是原版键位时一并修掉 ✓）。
-        if (mainIsBlade && offIsBlade) {
+        if (offIsBlade) {
             int wantOff = LongShortBladeItem.isLong(main)
                     ? LongShortBladeItem.FORM_SHORT : LongShortBladeItem.FORM_LONG;
             if (LongShortBladeItem.getForm(off) != wantOff) {
@@ -145,21 +155,37 @@ public final class LongShortBladeHandler {
         }
 
         // ⭐ 主手是刀、副手空 ⇒ 补一把伙伴刀（形态相反 ✓）
-        if (mainIsBlade) {
-            if (!off.isEmpty()) {
-                return;   // 副手有别的东西 ⇒ 不动它 ✗（玩家自己放的东西优先 ✓）
-            }
+        if (off.isEmpty()) {
             ItemStack pair = main.copy();
             pair.setCount(1);
             LongShortBladeItem.markPair(pair, true);
             LongShortBladeItem.setForm(pair, LongShortBladeItem.isLong(main)
                     ? LongShortBladeItem.FORM_SHORT : LongShortBladeItem.FORM_LONG);
             player.setItemInHand(InteractionHand.OFF_HAND, pair);
-            return;
         }
+        // ⚠ 副手有别的东西 ⇒ 不动它 ✗（玩家自己放的东西优先 ✓）
+    }
 
-        // ⭐ 主手空、副手是刀 ⇒ 把标记摘掉 ✓（此时它是玩家自己的那把 ✓ 避免以后误清 ✗）
-        LongShortBladeItem.markPair(off, false);
+    /**
+     * ⭐ 清掉**所有带 {@code lnb_pair} 标记**的伙伴刀 ✓（副手 ＋ 背包 36 格 ✓）。
+     * <p>⚠ 只清**带标记**的 ✗ —— 玩家自己拿的/放在别处的真刀**一把都不动** ✓。
+     */
+    private static void removePairs(ServerPlayer player, ItemStack off) {
+        try {
+            if (off.getItem() instanceof LongShortBladeItem && LongShortBladeItem.isPair(off)) {
+                player.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
+            }
+            var inv = player.getInventory();
+            for (int i = 0; i < inv.getContainerSize(); i++) {
+                ItemStack s = inv.getItem(i);
+                if (s.getItem() instanceof LongShortBladeItem && LongShortBladeItem.isPair(s)) {
+                    inv.setItem(i, ItemStack.EMPTY);
+                }
+            }
+            inv.setChanged();
+        } catch (Throwable ignored) {
+            // 清理失败绝不能连累玩法 ✗
+        }
     }
 
     /**
