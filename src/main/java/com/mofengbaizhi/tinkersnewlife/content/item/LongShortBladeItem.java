@@ -357,6 +357,8 @@ public class LongShortBladeItem extends ModifiableItem {
         // ⭐ Shift ＋ 右键 ⇒ 杀戮光环（用户口径 ✓）
         if (player.isShiftKeyDown()) {
             if (getFever(stack) >= FEVER_COST_ULTIMATE && !isUltimateActive(player.getUUID())) {
+                // ⭐ 耐久消耗（用户口径 ✓）：⭐ 光环扣 {@link #DURABILITY_ULTIMATE} 点 ✓
+                spendDurability(stack, DURABILITY_ULTIMATE, player);
                 startUltimate(level, player, stack);
                 return InteractionResultHolder.success(stack);
             }
@@ -372,6 +374,8 @@ public class LongShortBladeItem extends ModifiableItem {
                 return InteractionResultHolder.fail(stack);
             }
             setFeverBoth(player, getFever(stack) - FEVER_COST_THRUST);
+            // ⭐ 耐久消耗（用户口径 ✓）：⭐ 突刺扣 {@link #DURABILITY_THRUST} 点 ✓
+            spendDurability(stack, DURABILITY_THRUST, player);
             thrust(level, player, stack);
             player.getCooldowns().addCooldown(this, THRUST_COOLDOWN_TICKS);
             return InteractionResultHolder.success(stack);
@@ -380,6 +384,50 @@ public class LongShortBladeItem extends ModifiableItem {
         // ⭐ 短刀：长按蓄力 ⇒ 松手投掷
         player.startUsingItem(hand);
         return InteractionResultHolder.consume(stack);
+    }
+
+    // ============================================================
+    //  ⭐ 技能耐久消耗（用户口径 ✓ 2026-10-09：「给我的几个技能效果都补上耐久消耗」✓）
+    // ============================================================
+
+    /** ⭐ 突刺：扣 2 点 ✓ */
+    public static final int DURABILITY_THRUST = 2;
+    /** ⭐ 杀戮光环：扣 10 点 ✓（⭐ 一次性 ✓ 100 tick 内持续输出 ✓） */
+    public static final int DURABILITY_ULTIMATE = 10;
+    /** ⭐ 斩杀处决：扣 3 点 ✓ */
+    public static final int DURABILITY_EXECUTE = 3;
+    /** ⭐ 短刀投掷：扣 2 点 ✓ */
+    public static final int DURABILITY_THROW = 2;
+
+    /**
+     * ⭐⭐ <b>扣工具耐久</b>（用户口径 ✓ 2026-10-09：「**给我的几个技能效果都补上耐久消耗**」✓）。
+     *
+     * <h2>⚠ 必须走匠魂自己的 API ✗ 不能自己减 NBT ✓</h2>
+     * ⭐ `ToolDamageUtil.damage(tool, n, holder, stack)` ✓ 会自动尊重
+     * 「**不毁**」强化／`isUnbreakable`／**已损坏**状态 ✓ 并正确处理**工具损坏那一刻**的逻辑
+     * （⭐ 本仓 `FlyingSwordCuriosHandler`、`YoYoEntity` 都是这么扣的 ✓ —— 照现成的来 ✓）；
+     * ⚠ 自己写 `tag.putInt("Damage", …)` 会**绕过**这些 ⇒ 强化失效 ✗ 甚至把工具扣坏 ✗。
+     *
+     * <p>⚠ 任何异常都**不能**抛出去 ✗（本类的调用点在技能入口 ✓ 抛出去会连累整个使用流程 ✓）。
+     *
+     * @param stack  工具栈 ✓（⭐ 不是手里的那把也没关系 ✓ 只要能从它取到 `ToolStack` ✓）
+     * @param amount 扣几点耐久 ✓
+     * @param holder 持有者 ✓（⭐ 可空 ✓ 用于部分强化的触发 ✓）
+     */
+    public static void spendDurability(ItemStack stack, int amount,
+                                      @javax.annotation.Nullable net.minecraft.world.entity.LivingEntity holder) {
+        if (stack == null || stack.isEmpty() || amount <= 0) {
+            return;
+        }
+        try {
+            ToolStack tool = ToolHelper.getToolStack(stack);
+            if (tool == null || tool.isBroken()) {
+                return;
+            }
+            slimeknights.tconstruct.library.tools.helper.ToolDamageUtil.damage(tool, amount, holder, stack);
+        } catch (Throwable ignored) {
+            // ⭐ 扣耐久失败绝不能连累技能 ✗
+        }
     }
 
     /** 蓄力用的"使用时长"上限（松手才会走 {@link #releaseUsing} ✓） */
@@ -412,6 +460,8 @@ public class LongShortBladeItem extends ModifiableItem {
         }
         float power = Math.min(1.0F, (float) charged / (float) CHARGE_TICKS_MAX);
         player.getCooldowns().addCooldown(this, THROW_COOLDOWN_TICKS);
+        // ⭐ 耐久消耗（用户口径 ✓）：⭐ 投掷扣 {@link #DURABILITY_THROW} 点 ✓
+        spendDurability(stack, DURABILITY_THROW, player);
         LongShortBladeHandler.throwShortBlade(player, stack, power);
     }
 

@@ -349,6 +349,15 @@ public final class LongShortBladeHandler {
                 float execute = base * LongShortBladeItem.EXECUTE_MULTIPLIER;
                 target.invulnerableTime = 0;
                 target.hurt(player.damageSources().playerAttack(player), execute);
+                // ⭐ 耐久消耗（用户口径 ✓ 2026-10-09：「给我的几个技能效果都补上耐久消耗」✓）
+                //   ⇒ ⭐ 处决扣 {@link LongShortBladeItem#DURABILITY_EXECUTE} 点 ✓
+                //   ⚠ 必须走匠魂的 `ToolDamageUtil` ✗（见 `LongShortBladeItem#spendDurability` ✓）。
+                LongShortBladeItem.spendDurability(weapon, LongShortBladeItem.DURABILITY_EXECUTE, player);
+                // ⭐⭐ **处决时挥动左臂的长刀**（用户口径 ✓ 2026-10-09：
+                //   「**然后让触发处决时挥动左臂的长刀**」✓）
+                //   ⭐ 处决发生在**短刀形态**下 ✓ ⇒ ⭐ 这次"长刀出手"应该**用左臂挥** ✓
+                //     （⭐ 复用交替挥动那条 S2C 通路 ✓ —— 它本来就画左臂 ✓ 见 §1136 ✓）。
+                com.mofengbaizhi.tinkersnewlife.network.tools.PacketSwingOffhand.sendTo(player);
                 // ⭐⭐ **处决斩击粒子**（用户口径 ✓「样式为**内黑外红**的**横向斩击**，用于在**处决**时应用」✓）
                 //   ⚠ **横向**怎么来 ✗：⭐ 不是靠旋转粒子 ✓（粒子的 `roll` 是绕视线轴转 ✗ 控不出"横在世界上"✓）
                 //   ⇒ ⭐ 而是**沿"视线的水平垂线"排开一排** ✓ —— 那正好横在玩家面前 ✓；
