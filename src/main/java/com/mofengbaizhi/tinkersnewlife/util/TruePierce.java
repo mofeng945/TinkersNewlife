@@ -682,7 +682,26 @@ public final class TruePierce {
      * ⭐ 不认实体类型 ✓ ⭐ 不认模组 ✓ ⭐ 而且 ⭐ **有期限**（{@value #LOCK_TICKS} tick ✓）
      * ⭐ 到 0 或到期就**自动解锁** ✓ ⇒ ⭐ 不是永久枷锁 ✓。
      */
-    private static final int LOCK_TICKS = 200;
+    private static final int LOCK_TICKS = 5;
+
+    /**
+     * ⭐⭐ §1205 <b>还原被压的血量上限</b> ✗ —— ⭐ 锁到期时必须调 ✓
+     * （⭐ 用户实测 2026-10-10：「**怎么还是锁住了**」✓）。
+     *
+     * <h2>⚠ 为什么必须还原</h2>
+     * ⚠ ⭐ §1203 的 `clampMaxHealth` 给 `MAX_HEALTH` 加了个**永久**修饰符 ✗ ⭐ 而**从不移除** ✓
+     * ⇒ ⭐ 即使锁过期 ✗ ⭐ 它的上限**还是低的** ✓ ⇒ ⭐ **回不满** ✓ ⇒ ⭐ 看起来"还锁着" ✓ ✓
+     * ⇒ ⭐ 所以到期第一件事就是 ⭐ **移除那个修饰符** ✓ ✓。
+     */
+    private static void releaseClamp(LivingEntity target) {
+        try {
+            var attr = target.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+            if (attr != null) {
+                attr.removeModifier(CLAMP_ID);
+            }
+        } catch (Throwable ignored) {
+        }
+    }
 
     private record Pending(java.util.UUID id, float value, int left) {
     }
@@ -781,6 +800,8 @@ public final class TruePierce {
             suppressRegen(living);
             int left = pd.left() - 1;
             if (left <= 0) {
+                // ⭐⭐ §1205 **到期必须还原上限** ✗（⭐ 否则"永远回不满"＝看着还锁着 ✓）
+                releaseClamp(living);
                 TinkersNewlife.LOGGER.info(
                         "[真伤] 血量锁定到期（{} tick）：{} 当前={} 锁定值={}",
                         LOCK_TICKS, living.getName().getString(),
