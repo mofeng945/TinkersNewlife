@@ -817,6 +817,74 @@ public final class TruePierce {
         }
     }
 
+    /**
+     * ⭐⭐ §1206 <b>在 {@code ServerLevel#tick} 的 TAIL 里应用血量锁</b> ✗
+     * （⭐ 用户口径 ✓ 2026-10-10：「**加校验，写mixin**」✓）。
+     *
+     * <h2>⭐⭐ 为什么这个时机"包赢"</h2>
+     * ⭐ `ServerLevel#tick` ⭐ **内部 tick 掉这个世界所有实体** ✗
+     * ⭐ 而本方法由 ⭐ `ServerLevelTickTailMixin` 在 ⭐ **同一个方法的 `TAIL`** 调用 ✓
+     * ⇒ ⭐ **所有实体都已经 tick 完（⭐ 回血/锁血都跑过了 ✓）** ✓
+     * ⇒ ⭐ **我们写的就是最后一下** ✓ ✓（⭐ 比原来的 `ServerTickEvent.END` 更确定 ✓）。
+     *
+     * <h2>⭐ 顺便做"事后校验"（⭐ 用户要的 ✓）</h2>
+     * ⚠ ⭐ 如果连"最晚写"都还是被改 ✗ ⇒ ⭐ **一定有人在更晚的地方／别的线程改血** ✓
+     * ⇒ ⭐ 打一条日志把 ⭐ **当前值 ／ 我们的值 ／ 目标名** 报出来 ✓ ⭐ 便于一次定位 ✓。
+     *
+     * <p>⚠ 只处理**这个世界**的实体 ✓ ⭐ 用 `level.getEntity(uuid)` 查 ✓
+     * ⇒ ⭐ 跨维度不会白跑 ✓ ⭐ 实体不在/死了 ⇒ ⭐ 出队 ✓。
+     */
+    public static void applyHealthLocks(net.minecraft.server.level.ServerLevel level) {
+        if (PENDING.isEmpty()) {
+            return;
+        }
+        var it = PENDING.entrySet().iterator();
+        while (it.hasNext()) {
+            var e = it.next();
+            Pending pd = e.getValue();
+            net.minecraft.world.entity.Entity ent = level.getEntity(pd.id());
+            if (ent == null) {
+                continue;   // ⚠ 可能它在别的维度 ⇒ ⭐ 留给那个维度处理 ✓
+            }
+            if (!(ent instanceof LivingEntity living) || living.isRemoved() || !living.isAlive()) {
+                it.remove();
+                continue;
+            }
+            float target = pd.value();
+            // ⭐ 死线以下 ⇒ ⭐ 走死亡流程 ✓
+            if (target <= 0.0F) {
+                try {
+                    rawSetHealth(living, 0.0F);
+                    if (!living.isRemoved()) living.die(living.damageSources().genericKill());
+                } catch (Throwable ignored) {
+                }
+                it.remove();
+                continue;
+            }
+            // ⭐ 压上限 ＋ 写血 ✓
+            clampMaxHealth(living, target);
+            rawSetHealth(living, target);
+            // ⭐⭐ **事后校验** ✗ —— ⭐ 读回来若不是我们的值 ⇒ ⭐ 说明有人"更晚"改 ✓
+            float now = rawHealth(living);
+            if (now > target + 0.01F) {
+                TinkersNewlife.LOGGER.info(
+                        "[真伤·校验] 最晚写入后仍被改：{}（{}）我们的值={} 当前={} ⇒ 有人在更晚处改血 ✓",
+                        living.getName().getString(),
+                        net.minecraft.world.entity.EntityType.getKey(living.getType()).toString(),
+                        String.format(java.util.Locale.ROOT, "%.2f", target),
+                        String.format(java.util.Locale.ROOT, "%.2f", now));
+            }
+            suppressRegen(living);
+            int left = pd.left() - 1;
+            if (left <= 0) {
+                releaseClamp(living);
+                it.remove();
+            } else {
+                e.setValue(new Pending(pd.id(), target, left));
+            }
+        }
+    }
+
     private static void writeAndVerify(LivingEntity target, float value) {
         for (int i = 0; i < WRITE_RETRIES; i++) {
             rawSetHealth(target, value);

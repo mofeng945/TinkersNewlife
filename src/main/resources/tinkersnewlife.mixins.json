@@ -18,7 +18,8 @@
     "GoetyCastSpeedMixin",
     "GoetyVoidSoulMixin",
     "EnigmaticNightVisionMixin",
-    "TwilightMazeRandomMixin"
+    "TwilightMazeRandomMixin",
+    "ServerLevelTickTailMixin"
   ],
   "client": [
     "EntityRenderDispatcherMixin",
