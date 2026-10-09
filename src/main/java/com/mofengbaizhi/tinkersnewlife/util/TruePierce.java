@@ -110,7 +110,7 @@ public final class TruePierce {
     /** ⭐ 0 ＝ 还没找过 ✓ ⭐ 1 ＝ 找到了 ✓ ⭐ -1 ＝ 找不到（⭐ 永远退回 `setHealth` ✓） */
     private static volatile int HEALTH_FIELD_STATE = 0;
 
-    /** ⭐ 找血量字段 ✗（⭐ 只找一次 ✓ 两个名字都试 ✓） */
+    /** ⭐ 找血量字段 ✗（⭐ 只找一次 ✓）—— ⭐⭐ §1201 **改成"按值反查"** ✗ */
     private static java.lang.reflect.Field healthField() {
         if (HEALTH_FIELD_STATE != 0) {
             return HEALTH_FIELD;
@@ -119,42 +119,119 @@ public final class TruePierce {
             if (HEALTH_FIELD_STATE != 0) {
                 return HEALTH_FIELD;
             }
-            for (String name : new String[]{"health", "f_20920_"}) {
-                try {
-                    java.lang.reflect.Field f = net.minecraft.world.entity.LivingEntity.class
-                            .getDeclaredField(name);
-                    f.setAccessible(true);
-                    HEALTH_FIELD = f;
-                    HEALTH_FIELD_STATE = 1;
-                    return f;
-                } catch (Throwable ignored) {
-                    // ⭐ 换下一个名字 ✓
+            // ⭐⭐⚠⚠ **不能再按名字猜** ✗✗（⭐ 探针实证 ✓ 2026-10-10 ✓）
+            //   日志：⭐ `写=436.50 弹回=447.00 | getHealth=447.00 字段=436.50` ✗
+            //   ⇒ ⭐ 我抓到的那个 `health` 字段 ⭐ **和 `getHealth()` 不是同一个东西** ✓
+            //   ⇒ ⭐ 生产环境的真名是 ⭐ `f_20920_` ✗ ⭐ 而某个 mod/mixin 可能**又加了个 `health`** ✓
+            //     ⭐ 于是"按名字猜"就会**抓到假的那个** ✓ ✓
+            //   ⇒ ⭐ 正解：⭐ **按值反查** ✗ —— ⭐ 遍历 `LivingEntity` 的**所有 `float` 字段** ✓
+            //     ⭐ 挑 **值等于 `getHealth()`** 的那个 ✓ ✓（⭐ 拿一个实例来对 ✓）
+            try {
+                java.lang.reflect.Field best = null;
+                for (java.lang.reflect.Field f : new java.lang.reflect.Field[]{
+                        fieldOrNull("f_20920_"), fieldOrNull("health")}) {
+                    if (f != null) {
+                        f.setAccessible(true);
+                        best = f;
+                        break;
+                    }
                 }
+                HEALTH_FIELD = best;
+                HEALTH_FIELD_STATE = best != null ? 1 : -1;
+                return best;
+            } catch (Throwable ignored) {
+                HEALTH_FIELD_STATE = -1;
+                return null;
             }
-            HEALTH_FIELD_STATE = -1;
+        }
+    }
+
+    /** ⭐ 按名字取字段 ✗ 取不到返回 null ✓ */
+    private static java.lang.reflect.Field fieldOrNull(String name) {
+        try {
+            return net.minecraft.world.entity.LivingEntity.class.getDeclaredField(name);
+        } catch (Throwable ignored) {
             return null;
         }
+    }
+
+    /**
+     * ⭐⭐ §1201 <b>按值校验／反查血量字段</b> ✗ —— ⭐ 拿实体实测一次 ✓
+     * （⭐ 探针发现"字段 ≠ `getHealth()`" ⇒ ⭐ 名字不可信 ✓）。
+     *
+     * @return ⭐ 找到的字段（⭐ 已 `setAccessible` ✓）⭐ 或 null ✓
+     */
+    private static java.lang.reflect.Field detectHealthField(LivingEntity sample) {
+        float api = sample.getHealth();
+        // ⭐ 先试约定名（⭐ SRG 优先 ✗ ⭐ 它才是生产环境的真名 ✓）
+        for (String name : new String[]{"f_20920_", "health"}) {
+            java.lang.reflect.Field f = fieldOrNull(name);
+            if (f == null) continue;
+            try {
+                f.setAccessible(true);
+                if (Math.abs(f.getFloat(sample) - api) < 0.01F) {
+                    return f;    // ⭐ 值对上了 ✓
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+        // ⚠ 都对不上 ⇒ ⭐ 遍历所有 float 字段 ✗ ⭐ 挑值等于 `getHealth()` 的那个 ✓
+        for (java.lang.reflect.Field f : net.minecraft.world.entity.LivingEntity.class.getDeclaredFields()) {
+            if (f.getType() != float.class) continue;
+            try {
+                f.setAccessible(true);
+                if (Math.abs(f.getFloat(sample) - api) < 0.01F) {
+                    return f;
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+        return null;
     }
 
     /** ⭐ **逆向读血**：⭐ 直读字段 ✓（⭐ 拿不到就退回 `getHealth()` ✓） */
     public static float rawHealth(LivingEntity target) {
         float viaApi = target.getHealth();
-        java.lang.reflect.Field f = healthField();
+        // ⭐⭐ §1201 **字段按值反查**（⭐ 只做一次 ✓ 用**这个**实体当样本 ✓）
+        java.lang.reflect.Field f = healthFieldFor(target);
         if (f != null) {
             try {
                 float viaField = f.getFloat(target);
                 // ⭐⭐⚠⚠ **两个通道取大的** ✗✗（⭐ 用户实测 2026-10-10 ✓ 探针实证 ✓）：
                 //   ⭐ 日志显示 ⭐ `[真伤] want=30.50 startHp=0.00 … 目标存活=true` ✗
                 //   ⇒ ⭐ 字段读出 **0** ✗ ⭐ 而 ⭐ 它还**活着** ✓ ⇒ ⭐ **矛盾** ✓
-                //   ⇒ ⭐ 说明 ⭐ **有些 Boss（⭐ Goety 的使徒那类 ✓）的血不在这个字段里** ✗
-                //     （⭐ 它覆写了 `getHealth()`／⭐ 有自己的头衔血量机制 ✓）
-                //   ⇒ ⭐ 只读字段会得到 **0** ✗ ⭐ 只读 `getHealth()` 又可能被"锁血"骗 ✓
+                //   ⇒ ⭐ 说明 ⭐ **有些 Boss 的血不在那个字段里** ✗
                 //   ⇒ ⭐ **两个都读、取较大的那个** ✓ ✓ —— ⭐ 谁都不能骗过这一条 ✓。
                 return Math.max(viaField, viaApi);
             } catch (Throwable ignored) {
             }
         }
         return viaApi;
+    }
+
+    /**
+     * ⭐⭐ §1201 <b>取"这个实体"的血量字段</b> ✗ —— ⭐ 按值反查 ＋ 缓存 ✓。
+     * <p>⚠ 为什么要**按实体**查 ✗：⭐ 不同实体类的真身字段**可能不同** ✗
+     * （⭐ 有的 mod 会加自己的 `health` 遮蔽父类的 ✓ ⭐ 探针就抓到过一个假的 ✓）
+     * ⇒ ⭐ 用"**值等于 `getHealth()`**"来认，最稳 ✓。
+     */
+    private static final java.util.Map<Class<?>, java.lang.reflect.Field> FIELD_CACHE =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+    private static java.lang.reflect.Field healthFieldFor(LivingEntity target) {
+        Class<?> cls = target.getClass();
+        java.lang.reflect.Field cached = FIELD_CACHE.get(cls);
+        if (cached != null) {
+            return cached;
+        }
+        java.lang.reflect.Field found = detectHealthField(target);
+        if (found == null) {
+            found = healthField();   // ⚠ 兜底：⭐ 用类级那个 ✓
+        }
+        if (found != null) {
+            FIELD_CACHE.put(cls, found);
+        }
+        return found;
     }
 
     /**
@@ -166,7 +243,8 @@ public final class TruePierce {
         if (target == null || target.level().isClientSide) {
             return false;
         }
-        java.lang.reflect.Field f = healthField();
+        // ⭐⭐ §1201 **用"这个实体"的字段**（⭐ 按值反查过 ✓ 不是按名字猜的 ✓）
+        java.lang.reflect.Field f = healthFieldFor(target);
         boolean raw = false;
         if (f != null) {
             try {
@@ -177,11 +255,9 @@ public final class TruePierce {
             }
         }
         // ⭐⭐⚠⚠ **两个通道都要写** ✗✗（⭐ 探针实证 ✓ 见 {@link #rawHealth} 的说明 ✓）：
-        //   ⭐ 有些 Boss 的血 ⭐ **不在字段里** ✗（⭐ 使徒那类 ✓）
+        //   ⭐ 有些 Boss 的血 ⭐ **不在字段里** ✗
         //   ⇒ ⭐ 只写字段 ⇒ ⭐ **写进了一个"没人读的地方"** ✗ ⭐ 等于没改 ✓
         //   ⇒ ⭐ 所以 ⭐ **再走一次 `setHealth`** ✗ ⭐ 两条路都覆盖 ✓ ✓
-        //   ⚠ 代价：⭐ 若目标覆写了 `setHealth` 做"锁血" ✗ ⭐ 那一路仍会被挡 ✓
-        //     ⭐ **但字段那一路写进去了** ✓ ⇒ ⭐ 至少有一路生效 ✓（⭐ 比只写一路强 ✓）。
         try {
             if (Math.abs(target.getHealth() - value) > 1.0E-4F) {
                 target.setHealth(value);
