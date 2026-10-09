@@ -160,10 +160,14 @@ public class ClientEventHandler {
         // 弹弓的石弹（§983）：复用原版「投掷物画成物品」渲染器
         event.registerEntityRenderer(ModEntities.STONE_SHOT.get(),
                 context -> new net.minecraft.client.renderer.entity.ThrownItemRenderer<com.mofengbaizhi.tinkersnewlife.content.entity.StoneShotEntity>(context, 1.0F, false));
-        // ⭐ §1124 长短刃 · 短刀投掷：同样复用原版「投掷物画成物品」渲染器
-        //   ⇒ 显示的就是**手里那把武器**的贴图 ✓（⚠ 该实体实现了 ItemSupplier ✓ 才满足 ThrownItemRenderer 的泛型要求 ✓）
+        // ⭐ §1124／§1164 长短刃 · 短刀投掷
+        //   ⚠ 原来复用原版「投掷物画成物品」渲染器（ThrownItemRenderer ✓）✗
+        //   ⇒ ⭐ 它把投射物画成**面朝摄像机的平面** ✗ ＝ 用户说的「**横向面对着我飞的，很怪**」✓
+        //   ⇒ ⭐ 已换成专用渲染器 ✓ —— ⭐ 照搬 `FlyingSwordRenderer` 的做法：
+        //     ⭐ `new Quaternionf().rotateTo(刀尖轴, 速度方向)` ✓ ⇒ ⭐ 短刀**顺着飞行方向躺着飞** ✓
+        //     （⭐ 用户口径 ✓ 2026-10-09：「看我追踪飞剑的角度是怎么写的，仿照那个写短刀发射出去的角度」✓）
         event.registerEntityRenderer(ModEntities.SHORT_BLADE_THROW.get(),
-                context -> new net.minecraft.client.renderer.entity.ThrownItemRenderer<com.mofengbaizhi.tinkersnewlife.content.entity.ShortBladeThrowEntity>(context, 1.0F, false));
+                com.mofengbaizhi.tinkersnewlife.client.renderer.ShortBladeThrowRenderer::new);
         event.registerEntityRenderer(ModEntities.DOMAIN_VISUAL.get(), DomainVisualRenderer::new);
         // 咒力核心仪式·信标光柱（原版 BeaconRenderer 画真正的信标光束）
         event.registerEntityRenderer(ModEntities.RITUAL_BEAM.get(),
