@@ -393,6 +393,46 @@ public class GourdJailEntity extends Entity {
             living.setHealth(0.0F);
         } catch (Throwable ignored) {
         }
+        // ⭐⭐ ⑧ **栈尾最终校验**（⭐ 用户口径 ✓ 2026-10-10：「**能不能再栈尾再检测一次清除实体**」✓）
+        //   ⭐ 逻辑：⭐ 走到这里若 ⭐ **实体还在** ✗ ⇒ ⭐ **再摘一次** ✓ ＋ ⭐ **反射兜 `setRemoved`** ✓
+        //   ⚠ 反射是因为 ⭐ `Entity#setRemoved(RemovalReason)` 的可见性跨版本不稳 ✗
+        //     ⭐ 反射能拿到就调 ✓ ⭐ 拿不到就跳过 ✓（⭐ 反正前面 ②④⑥ 已经调过两次 `remove` ✓）
+        //   ⚠ 若**做完这一切它还在** ✗ ⇒ ⭐ 说明被某个模组**死死护住** ✓
+        //     ⇒ ⭐ **记一条日志** ✗ ⭐ 便于实机直接定位是哪个实体/模组 ✓（⭐ 不刷屏：⭐ 每个实体只报一次 ✓）。
+        try {
+            if (!living.isRemoved()) {
+                living.remove(net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
+            }
+            if (!living.isRemoved()) {
+                // ⭐ 反射兜底：⭐ 直接调 `setRemoved`（⭐ 绕开可能被覆写的 `remove` ✓）
+                try {
+                    java.lang.reflect.Method m = net.minecraft.world.entity.Entity.class
+                            .getDeclaredMethod("setRemoved",
+                                    net.minecraft.world.entity.Entity.RemovalReason.class);
+                    m.setAccessible(true);
+                    m.invoke(living, net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
+                } catch (Throwable ignored) {
+                    // ⭐ 拿不到就跳过 ✓（⭐ 前面已经试过三次 `remove` ✓）
+                }
+            }
+            if (!living.isRemoved()) {
+                try {
+                    living.setHealth(0.0F);
+                } catch (Throwable ignored) {
+                }
+                // ⚠ **只报一次** ✗（⭐ 用持久标记去重 ✓ 免得每 tick 刷屏 ✓）
+                if (!living.getPersistentData().getBoolean("tnl_purge_failed_logged")) {
+                    living.getPersistentData().putBoolean("tnl_purge_failed_logged", true);
+                    com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                            "[狱门疆] 清除链走完仍未移除实体：{}（{}）UUID={} ⇒ 疑似被某个模组的防清除逻辑护住 ✓",
+                            living.getName().getString(),
+                            net.minecraft.world.entity.EntityType.getKey(living.getType()).toString(),
+                            living.getUUID());
+                }
+            }
+        } catch (Throwable ignored) {
+            // ⭐ 校验本身出错也不能连累玩法 ✗
+        }
     }
 
     /** 反射调用：按候选方法名在 target 上找方法并调用（无参或带单参数），失败返回 null */
