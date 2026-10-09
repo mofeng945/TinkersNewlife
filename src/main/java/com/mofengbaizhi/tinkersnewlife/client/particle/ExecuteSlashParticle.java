@@ -28,24 +28,35 @@ public class ExecuteSlashParticle extends TextureSheetParticle {
 
     private final float baseSize;
 
+    /** ⭐ 本片在刀路上的**序号**（0 ＝ 起点 ＝ **最小** ✓ 越大越靠终点且越大 ✓） */
+    private final int index;
+
+    /** ⭐ 延迟出现几 tick ✓（⭐ 靠它做出"一刀划过去"的时间差 ✓） */
+    private final int delay;
+
     protected ExecuteSlashParticle(ClientLevel level, double x, double y, double z,
                                    double vx, double vy, double vz, SpriteSet sprites) {
         super(level, x, y, z, vx, vy, vz);
         // ⭐ 贴图帧（⚠ 贴图为单帧 ✓ 这里仍按本仓惯例取一次精灵 ✓）
         this.pickSprite(sprites);
         // ⚠ 惯性要**很小** ✗ —— 斩击应该"钉在原地一瞬"✓ 而不是飘走 ✓
-        //   ⚠⚠ 而且速度的三个分量**同时被当作"倾斜角"的载体** ✗（⭐ 见下 ✓）——
-        //   ⭐ 因为 {@code SimpleParticleType} 没有数据载荷 ❌ 传不了角度 ✓
-        //   ⭐ 而本粒子惯性只留 15% ✓ 几乎不动 ✓ ⇒ 借用速度当载体**零副作用** ✓。
+        //   ⚠⚠ 而速度的三个分量**全被借去当"载荷"了** ✗：
+        //     `(vx,vy)` ＝ 角度 ✓（见下 ✓）；⭐ `vz` ＝ **序号** ✓（决定延迟与尺寸 ✓）
+        //   ⭐ 因为 {@code SimpleParticleType} **没有数据载荷** ✗ 传不了参数 ✓
+        //   ⭐ 本粒子惯性只留 15% ✓ 几乎不动 ✓ ⇒ 借用速度**零副作用** ✓
+        //   ⚠⚠ 但这也意味着：⭐ **谁把惯性调大，斩击就会"斜着飘"** ✗（两处注释都写明了这个耦合 ✓）。
+        this.index = (int) Math.round(Math.abs(vz));
         this.xd = vx * 0.15D;
         this.yd = vy * 0.15D;
-        this.zd = vz * 0.15D;
-        this.lifetime = 6;
-        // ⭐ 尺寸**恒定**（⚠ 用户实测反馈 ✗：「**为什么斩击是从中心放大的**」✓
-        //   —— ⭐ 我第一版在 `tick()` 里让尺寸"先涨后收"✗ 那正是"从中心放大"✓ 已删 ✓）
-        //   ⭐ 贴图里那道斩痕是**对角线** ✓ 所以实际长度 ≈ `quadSize × √2` ✓
-        //   ⇒ 取 1.05 ⇒ 斩痕约 **1.5 格** ✓（⚠ 第一版取到 1.6 且乘 9 片 ⇒ **满屏横条** ✗）
-        this.quadSize = 1.05F;
+        this.zd = 0.0D;   // ⚠ `vz` 是载荷 ✗ **不能**当速度用 ✓ 否则会沿 z 乱飘 ✓
+        // ⚠ 延迟出现：序号越大越晚亮 ✓（⭐ 一刀划过去的"时间差"就靠它 ✓）
+        this.delay = this.index;
+        this.lifetime = 6 + this.index;   // ⚠ 后出现的多活一会儿 ✓ 免得"尾端刚亮就没了" ✗
+
+        // ⭐⭐ **挥砍轨迹**（用户口径 ✓：「**能不能做成如果从左上开始斩，就在左上出现最小，
+        //   然后一直往右下拉动尺寸**」✓）
+        //   ⭐ 起点那一片**最小** ✓ 沿刀路越远**越大** ✓ ⇒ 看起来像一刀**划过去** ✓。
+        this.quadSize = 0.30F + this.index * 0.19F;   // ⭐ 0.30 → 1.25 ✓
         this.baseSize = this.quadSize;
         this.gravity = 0.0F;
         this.hasPhysics = false;
@@ -75,10 +86,17 @@ public class ExecuteSlashParticle extends TextureSheetParticle {
             this.remove();
             return;
         }
+        // ⭐⭐ **延迟出现**（用户口径 ✓：起点最小 ✓ 一路"拉"到终点 ✓ ⇒ 一刀划过去 ✓）
+        //   ⚠ 没轮到自己的片子 **完全不显示** ✗（`alpha = 0` ✓）⇒ 于是看起来是**逐片亮起** ✓。
+        if (this.age <= this.delay) {
+            this.alpha = 0.0F;
+            return;
+        }
         // ⭐ **只淡出，不改尺寸** ✓（⚠ 第一版这里"前 1/3 张开后收细"✗
-        //   用户实测反馈：「**为什么斩击是从中心放大的**」✓ ⇒ ⭐ 已彻底删掉尺寸动画 ✓）
-        float t = (float) this.age / (float) this.lifetime;
-        this.alpha = Math.max(0.0F, 0.95F * (1.0F - t * t));
+        //   用户实测反馈：「**为什么斩击是从中心放大的**」✓ ⇒ ⭐ 尺寸动画已整段删除 ✓
+        //   ⭐ 现在的"变大"是**沿刀路逐片更大** ✓ 不是单片的从中心放大 ✗）。
+        float life = (float) (this.age - this.delay) / (float) Math.max(1, this.lifetime - this.delay);
+        this.alpha = Math.max(0.0F, 0.95F * (1.0F - life * life));
         this.move(this.xd, this.yd, this.zd);
     }
 

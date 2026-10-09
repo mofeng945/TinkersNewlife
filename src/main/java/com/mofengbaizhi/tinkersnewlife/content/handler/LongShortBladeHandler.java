@@ -355,27 +355,46 @@ public final class LongShortBladeHandler {
                 //   ⭐ "内黑外红"由**贴图本身**承担 ✓（`textures/particle/execute_slash.png` ✓ 程序化占位 ✓
                 //     用户以后手绘替换只换 png ✓ 代码不用动 ✓）。
                 if (target.level() instanceof ServerLevel slashLevel) {
-                    // ⭐⭐ **一道就是一片**（⚠ 用户实测反馈 ✗ 2026-10-09：
-                    //   「**斩击是一次画这么多干什么**」＋「**太丑了**」＋「**斜向呢**」＋
-                    //   「**为什么斩击是从中心放大的**」✓ —— ⭐ 四条全是我第一版的设计错误 ✗）
-                    //   ⚠ 原设计：用 **9 片** 16×16 小贴图沿斜线排开 ✗
-                    //     ⇒ ① 每片被放大到 1 格多 ⇒ **满屏横条** ✗
-                    //        ② 9 片互相糊住 ⇒ 排列的"斜线"**根本看不出来** ✗
-                    //   ⇒ ⭐ 现在：⭐ **只生成 1 片** ✓ 而 ⭐ **斜线画在贴图里** ✓
-                    //     （`textures/particle/execute_slash.png` 32×32 ✓ 左上→右下 ✓ 内黑外红 ✓）；
-                    //   ⭐ `roll` 只用来在 **↙ / ↘ 两种斜向**之间随机选一个 ✓（⭐ 不必再管排列 ✓）。
-                    //   ⚠ 角度仍借"速度三元组"传给客户端 ✗（⭐ `SimpleParticleType` 没数据载荷 ✓
-                    //     见 `ExecuteSlashParticle` ✓ 那里用 `atan2(vy,vx)` 反解 ✓）。
-                    boolean mirror = player.getRandom().nextBoolean();
-                    double cs = mirror ? -1.0D : 1.0D;
-                    slashLevel.sendParticles(
-                            com.mofengbaizhi.tinkersnewlife.content.ModParticles.EXECUTE_SLASH.get(),
-                            target.getX(),
-                            target.getY() + target.getBbHeight() * 0.55D,
-                            target.getZ(),
-                            1,
-                            // ⭐ (vx,vy) 当角度载体：±(0.707,0.707) ⇒ ↙ 或 ↘ ✓
-                            cs * 0.7071D, 0.7071D, 0.0D, 0.0D);
+                    // ⭐⭐ **挥砍轨迹**（用户口径 ✓ 2026-10-09：「**能不能做成如果从左上开始斩，
+                    //   就在左上出现最小，然后一直往右下拉动尺寸**」✓）
+                    //   ⇒ ⭐ 不是"一片静态贴图" ✗ 而是 ⭐ **一串沿刀路排开、越远越大的斩痕** ✓
+                    //     ＋ ⭐ **按序号延迟出现** ✓ ＝ 看起来像**一刀划过去** ✓。
+                    //   ⚠ `sendParticles` 一次发不出"时间差" ✗ ⇒ ⭐ 把**序号**塞进速度的第三个分量
+                    //     （⭐ `vz` ✓ 本粒子零位移 ✓ 借用无副作用 ✓）⇒ ⭐ 粒子自己按序号决定
+                    //     ① **延迟几 tick 才出现** ✓ ② **尺寸多大** ✓（见 `ExecuteSlashParticle` ✓）。
+                    //   ⚠ 角度仍由 `(vx,vy)` 承载 ✓（⭐ `(cosθ, sinθ)` ✓ 粒子 `atan2` 反解 ✓）。
+                    net.minecraft.world.phys.Vec3 look2 = player.getLookAngle();
+                    net.minecraft.world.phys.Vec3 right2 =
+                            new net.minecraft.world.phys.Vec3(-look2.z, 0.0D, look2.x);
+                    if (right2.lengthSqr() < 1.0E-4D) {
+                        right2 = new net.minecraft.world.phys.Vec3(1.0D, 0.0D, 0.0D);
+                    }
+                    right2 = right2.normalize();
+                    // ⭐ 刀路方向：水平垂线 ＋ 世界上方按 45° 合成 ✓
+                    //   ⭐ 上方分量取正取负 ⇒ 得到"左上→右下"或"左下→右上"两种斜向 ✓
+                    double upSign = player.getRandom().nextBoolean() ? 1.0D : -1.0D;
+                    double dirX = right2.x * 0.7071D;
+                    double dirY = 0.7071D * upSign;
+                    double dirZ = right2.z * 0.7071D;
+                    double cy2 = target.getY() + target.getBbHeight() * 0.55D;
+                    double halfLen = 0.75D;          // ⭐ 半长 ✓ 总长约 1.5 格 ✓
+                    int pieces = 6;                  // ⭐ ⭐ 6 片沿刀路 ✓（⭐ 不是 9 片糊一堆 ✗）
+                    for (int i = 0; i < pieces; i++) {
+                        // ⭐ 从"起点端"往"终点端"排 ✓：`t` 由 -1 走到 +1 ✓
+                        double t = -1.0D + 2.0D * i / (pieces - 1.0D);
+                        slashLevel.sendParticles(
+                                com.mofengbaizhi.tinkersnewlife.content.ModParticles.EXECUTE_SLASH.get(),
+                                target.getX() + dirX * halfLen * t,
+                                cy2 + dirY * halfLen * t,
+                                target.getZ() + dirZ * halfLen * t,
+                                1,
+                                // ⭐ (vx,vy) ＝ 角度载体 ✓：⭐ `(1,0)` ⇒ ↘ ✓ ／ `(0,-1)` ⇒ ↙（镜像 ✓）
+                                //   ⭐ (vz) ＝ **序号 i** ✓（延迟与尺寸都由它算 ✓ 见 `ExecuteSlashParticle` ✓）
+                                upSign > 0 ? 1.0D : 0.0D,
+                                upSign > 0 ? 0.0D : -1.0D,
+                                i,
+                                0.0D);
+                    }
                 }
                 if (player.level() instanceof ServerLevel sl) {
                     sl.playSound(null, target.blockPosition(), SoundEvents.PLAYER_ATTACK_CRIT,
