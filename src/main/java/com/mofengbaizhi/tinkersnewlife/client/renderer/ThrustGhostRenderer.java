@@ -82,6 +82,15 @@ public final class ThrustGhostRenderer {
                 if (progress >= 1.0F) {
                     continue;
                 }
+                // ⭐⭐ **第一人称不画"自己的"残影**（用户口径 ✓ 2026-10-09：
+                //   「**能不能让第一人称的突进者看不见**」✓）
+                //   ⭐ 判据＝ ⭐ **相机是第一人称** ✗ **且** ⭐ 这条残影就是**本地玩家自己** ✓
+                //   ⇒ ⭐ 第一人称下**自己的**残影不画 ✓；⚠ **别人的**残影照画 ✓（⭐ 那才合理 ✓）
+                //     ⭐ 第三人称下**连自己的**也照画 ✓（⭐ 用户要的就是"在第三人称能看见虚影" ✓）。
+                if (mc.options.getCameraType().isFirstPerson()
+                        && mc.player != null && ghost.entityId == mc.player.getId()) {
+                    continue;
+                }
                 // ⭐ 按存活进度淡出 ✓（⭐ 线性 ✓ 越老越淡 ✓）
                 float alpha = MAX_ALPHA * (1.0F - progress);
                 if (alpha <= 0.01F) {
