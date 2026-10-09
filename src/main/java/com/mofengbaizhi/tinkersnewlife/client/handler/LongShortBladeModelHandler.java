@@ -143,7 +143,7 @@ public final class LongShortBladeModelHandler {
                     continue;
                 }
                 models.put(key, new LongShortBladeModel(e.getValue(),
-                        invLong, invLong, invShort, heldLong, heldShort));
+                        invLong, invShort, heldLong, heldShort));
                 wrapped++;
             }
 

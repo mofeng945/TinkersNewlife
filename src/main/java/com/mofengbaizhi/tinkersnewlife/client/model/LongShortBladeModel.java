@@ -12,60 +12,60 @@ import net.minecraftforge.client.model.BakedModelWrapper;
 import javax.annotation.Nullable;
 
 /**
- * ⭐ §1146 <b>长短刃：按「场景 × 形态」切模型</b>（用户口径 ✓ 2026-10-09：
- * 「我接下来要画几个贴图，分别用于：物品栏未手持时展示模型，物品栏手持时展示模型（2个），
- * 手持模型（两个），能先搭建好环境吗」✓）。
+ * ⭐ §1146／§1154 <b>长短刃：按「形态 × 场景」切模型</b>（用户口径 ✓）。
  *
- * <h2>⭐⭐ 两个轴怎么分工（这是本类唯一的关键设计 ✓）</h2>
- * ⚠ 原版/Forge 给模型的两个钩子拿到的信息**不一样** ✗ ⇒ ⭐ 必须分开用 ✓：
- * <table border="1">
- *   <tr><th>轴</th><th>用哪个钩子</th><th>为什么</th></tr>
- *   <tr><td>⭐ <b>场景</b>（物品栏／手持）</td>
- *       <td>{@link #applyTransform}</td>
- *       <td>⭐ 它拿得到 {@code ItemDisplayContext} ✓（GUI／FIRST_PERSON_*／THIRD_PERSON_* ✓）</td></tr>
- *   <tr><td>⭐ <b>形态</b>（长刀／短刀）</td>
- *       <td>{@link #getOverrides}</td>
- *       <td>⚠ {@code applyTransform} **拿不到物品栈** ✗ ⇒ ⭐ 形态只能在这一层判 ✓
- *           （{@code resolve(model, stack, …)} 有 `stack` ✓ 读 NBT {@code lnb_form} ✓）</td></tr>
- * </table>
+ * <h2>⭐⭐⭐ 两个钩子的**调用顺序**决定了分工（⚠ 我第一版搞反了 ✗）</h2>
+ * ⭐ 原版 {@code ItemRenderer} 的顺序是：
+ * <pre>
+ *   model = shaper.getItemModel(stack);                                  // ① 顶层模型
+ *   model = model.getOverrides().resolve(model, stack, level, entity, s); // ② ⭐ **先** resolve（有 stack ✓）
+ *   model = model.applyTransform(ctx, pose, leftHand);                    // ③ ⭐ **后** transform（有场景 ✓）
+ *   … 用 ③ 返回的模型渲染 …
+ * </pre>
+ * ⇒ ⚠⚠ **`applyTransform` 拿不到物品栈** ✗（⭐ ③ 已经离 ② 很远了 ✓）
+ * ⇒ ⭐ **形态（长／短）必须在 ② `resolve` 里定** ✓
+ * ⇒ ⭐ **场景（物品栏／手持）必须在 ③ `applyTransform` 里定** ✓
+ * <p>⚠ 我第一版**反了** ✗：⭐ 在 `applyTransform` 里挑形态 ✗ ⇒ ⭐ 它拿不到 stack ✗
+ * ⇒ ⭐ 只能固定用长刀那一侧 ⇒ ⭐ **长短刀都会显示长刀那套** ✗ ✓（⭐ 已重写 ✓）。
  *
- * <h2>⭐ 所以是两级包装</h2>
+ * <h2>⭐ 于是分两级（级别含义与第一版相反 ✓）</h2>
  * <ol>
- *   <li>⭐ 第 1 级（本类 ✓）：持有 **{@code gui} 一对 ＋ {@code held} 一对** ✓
- *       ⇒ {@code applyTransform} 按场景挑出"一对"✓ 并返回第 2 级 ✓；</li>
- *   <li>⭐ 第 2 级（{@link FormPickModel} ✓）：持有那一对里的**长／短**两张 ✓
- *       ⇒ {@code getOverrides().resolve(stack…)} 读 {@code lnb_form} 决定用哪张 ✓。</li>
+ *   <li>⭐ 第 1 级（本类 ✓）：⭐ 唯一入口 ✓ ⇒ {@link #getOverrides()} 的 `resolve` **读 stack 定形态** ✗
+ *       ⇒ ⭐ 返回第 2 级 ✓；</li>
+ *   <li>⭐ 第 2 级（{@link ContextPickModel} ✓）：⭐ **已经知道形态** ✓ ⇒ 只剩"物品栏／手持"两选一 ✓
+ *       ⇒ 它的 `overrides` 返回**空的**（⭐ 别让原版再解析一轮 ✗ 否则会循环 ✓）。</li>
  * </ol>
  *
- * <h2>⚠ 为什么要额外包 {@code getOverrides}（照 {@code ContextModel} 的教训 ✓）</h2>
- * ⭐ 匠魂工具是**按物品栈用 overrides 解析**出模型的 ✗ ⇒ 只在最外层包一层会被
- * **解析出来的新模型绕过去** ✗ ⇒ ⭐ 必须把解析结果**重新包回来** ✓。
+ * <h2>⚠ 为什么第 2 级的 overrides 要给一个空实现</h2>
+ * ⭐ 原版拿 ③ 的返回值后**还会再调一次** `getOverrides().resolve(...)` ✓（⭐ `ItemRenderer` 内部 ✓）
+ * ⇒ ⚠ 若第 2 级的 `resolve` 又返回"需要形态判断"的模型 ✗ ⇒ ⭐ **形态信息已经丢了** ✗
+ * ⇒ ⭐ 会给错 ✓（⭐ 甚至无限套娃 ✓）⇒ ⭐ 返回**默认实现**（⭐ 原样返回传入的模型 ✓）✓。
  */
 public class LongShortBladeModel extends BakedModelWrapper<BakedModel> {
 
-    /** ⭐ 物品栏那一对（⭐ 未手持 ✓ 与 已装配 ✓） */
-    private final BakedModel guiIdle;
+    /** ⭐ 物品栏·长刀 ✓ */
     private final BakedModel guiLong;
+    /** ⭐ 物品栏·短刀 ✓ */
     private final BakedModel guiShort;
-    /** ⭐ 手持那一对（⭐ 第一人称／第三人称 ✓） */
+    /** ⭐ 手持·长刀 ✓ */
     private final BakedModel heldLong;
+    /** ⭐ 手持·短刀 ✓ */
     private final BakedModel heldShort;
 
     public LongShortBladeModel(BakedModel fallback,
-                               BakedModel guiIdle, BakedModel guiLong, BakedModel guiShort,
+                               BakedModel guiLong, BakedModel guiShort,
                                BakedModel heldLong, BakedModel heldShort) {
         super(fallback);
-        // ⚠ 缺哪个就回退到哪一个 ✗ —— ⭐ 用户**可以只画一部分** ✓（⭐ 没画的场景沿用默认 ✓ 不崩 ✓）
+        // ⚠ 缺哪个就回退到哪一个 ✗ —— ⭐ 用户可以只画一部分 ✓（⭐ 没画的沿用默认 ✓ 不崩 ✓）
         BakedModel def = fallback;
-        this.guiIdle = guiIdle != null ? guiIdle : def;
-        this.guiLong = guiLong != null ? guiLong : this.guiIdle;
-        this.guiShort = guiShort != null ? guiShort : this.guiIdle;
+        this.guiLong = guiLong != null ? guiLong : def;
+        this.guiShort = guiShort != null ? guiShort : this.guiLong;
         this.heldLong = heldLong != null ? heldLong : this.guiLong;
         this.heldShort = heldShort != null ? heldShort : this.guiShort;
     }
 
     /** ⭐ 这四个"拿在手里"的场景才用 held ✓ 其它（GUI／展示框／掉落／头顶…）一律用 gui ✓ */
-    private static boolean heldContext(ItemDisplayContext ctx) {
+    static boolean heldContext(ItemDisplayContext ctx) {
         return ctx == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
                 || ctx == ItemDisplayContext.FIRST_PERSON_LEFT_HAND
                 || ctx == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND
@@ -73,87 +73,71 @@ public class LongShortBladeModel extends BakedModelWrapper<BakedModel> {
     }
 
     @Override
-    public BakedModel applyTransform(ItemDisplayContext ctx, PoseStack pose, boolean leftHand) {
-        BakedModel longSide = heldContext(ctx) ? this.heldLong : this.guiLong;
-        BakedModel shortSide = heldContext(ctx) ? this.heldShort : this.guiShort;
-        // ⭐ 交给第 2 级去按 `lnb_form` 选 ✓（⚠ 这一层拿不到 stack ✗ 见类注释 ✓）
-        return new FormPickModel(longSide, shortSide, this.guiIdle);
-    }
-
-    @Override
     public ItemOverrides getOverrides() {
-        return new WrappedOverrides(this);
+        return new PickerOverrides(this);
     }
 
-    /**
-     * ⭐ 第 2 级：⭐ 只知道"长／短"两张 ✓ 靠 {@code getOverrides().resolve(stack…)} 里的 stack 判形态 ✓。
-     */
-    public static class FormPickModel extends BakedModelWrapper<BakedModel> {
-
-        private final BakedModel longSide;
-        private final BakedModel shortSide;
-        /** ⭐ 没有形态信息时（⚠ 理论上不会 ✗）用的默认 ✓ */
-        private final BakedModel idle;
-
-        FormPickModel(BakedModel longSide, BakedModel shortSide, BakedModel idle) {
-            super(longSide);
-            this.longSide = longSide;
-            this.shortSide = shortSide;
-            this.idle = idle;
-        }
-
-        @Override
-        public BakedModel applyTransform(ItemDisplayContext ctx, PoseStack pose, boolean leftHand) {
-            // ⭐ 已经不缺信息了 ⇒ 直接用长刀那侧的变换 ✓（形态在 overrides 层已经定死 ✓）
-            return this.longSide.applyTransform(ctx, pose, leftHand);
-        }
-
-        @Override
-        public ItemOverrides getOverrides() {
-            return new ItemOverrides() {
-                @Override
-                public BakedModel resolve(BakedModel model, ItemStack stack, @Nullable ClientLevel level,
-                                          @Nullable LivingEntity entity, int seed) {
-                    BakedModel pick = isLongForm(stack) ? FormPickModel.this.longSide : FormPickModel.this.shortSide;
-                    if (pick == null) {
-                        pick = FormPickModel.this.idle;
-                    }
-                    return pick;
-                }
-            };
-        }
-    }
-
-    /** ⭐ 读 {@code lnb_form} ✓（⚠ 常量复用物品类里的 ✓ 免得两边写两个字符串 ✗） */
+    /** ⭐ 读 {@code lnb_form} ✓（⚠ 复用物品类里的判断 ✓ 免得两边各写一个字符串 ✗） */
     private static boolean isLongForm(ItemStack stack) {
         try {
             return com.mofengbaizhi.tinkersnewlife.content.item.LongShortBladeItem.isLong(stack);
         } catch (Throwable ignored) {
+            // ⚠ 读不到就当长刀 ✓（⭐ 与 `LongShortBladeItem` 里的默认值一致 ✓）
             return true;
         }
     }
 
-    /** ⭐ 把匠魂按栈解析出来的结果**重新包回来** ✓（⚠ 不包会被绕过 ✗ 见类注释 ✓） */
-    private static final class WrappedOverrides extends ItemOverrides {
+    /** ⭐ 第 1 级：⭐ 这里**有 stack** ✓ ⇒ ⭐ **定形态** ✗ ⇒ 交给第 2 级去定场景 ✓ */
+    private static final class PickerOverrides extends ItemOverrides {
 
         private final LongShortBladeModel parent;
-        private final ItemOverrides wrapped;
 
-        WrappedOverrides(LongShortBladeModel parent) {
+        PickerOverrides(LongShortBladeModel parent) {
             this.parent = parent;
-            this.wrapped = parent.originalModel.getOverrides();
         }
 
         @Override
         public BakedModel resolve(BakedModel model, ItemStack stack, @Nullable ClientLevel level,
                                   @Nullable LivingEntity entity, int seed) {
-            BakedModel inner = this.wrapped == null
-                    ? this.parent.originalModel
-                    : this.wrapped.resolve(this.parent.originalModel, stack, level, entity, seed);
-            // ⭐ 用"解析后的基模型"重建一份包装 ✓（⭐ 材质替换过的模型仍按场景／形态切 ✓）
-            return new LongShortBladeModel(inner,
-                    this.parent.guiIdle, this.parent.guiLong, this.parent.guiShort,
-                    this.parent.heldLong, this.parent.heldShort);
+            boolean longForm = isLongForm(stack);
+            // ⭐ 把"该形态的 物品栏／手持 两张"一起交给第 2 级 ✓
+            return new ContextPickModel(
+                    longForm ? this.parent.guiLong : this.parent.guiShort,
+                    longForm ? this.parent.heldLong : this.parent.heldShort);
+        }
+    }
+
+    /**
+     * ⭐ 第 2 级：⭐ **形态已经定死** ✓ ⇒ 只剩"物品栏／手持"两选一 ✓。
+     * <p>⚠ 它的 {@code overrides} 必须是**空实现** ✗ —— ⭐ 否则原版拿到它之后又解析一轮 ✗
+     * 会把刚定好的形态丢掉 ✓（⭐ 见类注释 ✓）。
+     */
+    public static final class ContextPickModel extends BakedModelWrapper<BakedModel> {
+
+        private final BakedModel guiSide;
+        private final BakedModel heldSide;
+
+        ContextPickModel(BakedModel guiSide, BakedModel heldSide) {
+            super(guiSide != null ? guiSide : heldSide);
+            this.guiSide = guiSide;
+            this.heldSide = heldSide;
+        }
+
+        @Override
+        public BakedModel applyTransform(ItemDisplayContext ctx, PoseStack pose, boolean leftHand) {
+            BakedModel picked = heldContext(ctx) ? this.heldSide : this.guiSide;
+            if (picked == null) {
+                picked = this.guiSide != null ? this.guiSide : this.heldSide;
+            }
+            // ⭐ 交给被选中的那张自己走它的显示变换 ✓（⭐ 匠魂的 `tconstruct:tool` 模型也在这里做事 ✓）
+            return picked.applyTransform(ctx, pose, leftHand);
+        }
+
+        @Override
+        public ItemOverrides getOverrides() {
+            // ⚠ 空实现（⭐ 默认就是"原样返回传入的模型" ✓）—— ⚠ 绝不能返回会再判形态的东西 ✗
+            return new ItemOverrides() {
+            };
         }
     }
 }
