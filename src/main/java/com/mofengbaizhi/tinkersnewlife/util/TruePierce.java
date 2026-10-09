@@ -297,18 +297,15 @@ public final class TruePierce {
         // ② 禁疗（否则再生会把伤害吃回去）+ 清掉本模组自己的"伤害限幅"效果（它会取消多段伤害）
         suppressRegen(target);
         clearOwnDamageLimit(target);
-        // ⭐⭐ §1195 **破使徒的"受击无敌窗"** ✗（⭐ 用户实测 2026-10-10：「**免疫窗没破**」✓）
-        //   ⚠ 反编译实证：⭐ `Apostle.hurt()` 第一句就是
-        //   ⭐ `if (moddedInvul > 0 || obsidianInvul > 0) return false;` ✗
-        //   ⭐ 而 ⭐ `actuallyHurt` 每次受击后把 `moddedInvul` 置回 ⭐ `BossInvulnerabilityTime`（⭐ 默认 15 ✓）
-        //   ⇒ ⭐ 它**几乎永远 > 0** ⇒ ⭐ 普通 `hurt` **永远打不进去** ✓
-        //   ⇒ ⚠ 光靠逆向改血补差额血是掉了 ✗ ⭐ 但**免疫窗本身没破** ✓
-        //   ⇒ ⭐ 这里清零那两个字段 ✗ ⇒ ⭐ `hurt` 就能真的打进去 ✓ ✓
-        //     （⭐ 无需还原 ✓ 使徒自己会在下次受击后置回 ✓ 那正是免疫窗的语义 ✓）。
-        try {
-            GoetyBridge.clearApostleInvul(target);
-        } catch (Throwable ignored) {
-        }
+        // ⭐⭐ §1197 **删掉"破使徒的免疫窗"那一步** ✗（⭐ 用户口径 ✓ 2026-10-10：
+        //   「**moddedInvul清这个不就是针对了吗**」✓ —— ⭐ 用户说得对 ✓）
+        //   ⚠ 原来这里调 ⭐ `GoetyBridge.clearApostleInvul(target)` ✗
+        //   ⭐ 那个方法里有 ⭐ `isGoetyApostle` 门 ✗ ⭐ **只对诡厄的使徒生效** ✓
+        //   ⇒ ⭐ 那就是"**给某个 Boss 写特判**" ✓ ⭐ 与"一视同仁"冲突 ✓
+        //   ⚠ 而 ⭐ 反编译也证明 ⭐ **没有通用的破窗办法** ✗
+        //   （⭐ `BYPASSES_INVULNERABILITY` 只管 `ApostleDamageCap` ✗ ⭐ 管不了 `moddedInvul` ✓）
+        //   ⇒ ⭐ **"破窗"与"不针对"只能选一个** ✗ ⭐ 按用户口径 ⭐ **选不针对** ✓
+        //   ⇒ ⭐ 所以这里**什么都不做** ✗ ⭐ 通用流程只保证"**差额一律逆向补掉**" ✓ ✓。
 
         DamageSource withAttacker = source(target.level(), attacker);
         DamageSource anonymous = source(target.level(), null);
