@@ -71,6 +71,8 @@
     { "path": "tinkersnewlife:item/tool/long_short_blade/ctx_inv_short/handle", "stat_type": "tconstruct:handle" },
     { "path": "tinkersnewlife:item/tool/long_short_blade/ctx_held_long/head", "stat_type": "tconstruct:head" },
     { "path": "tinkersnewlife:item/tool/long_short_blade/ctx_held_long/binding", "stat_type": "tconstruct:binding" },
-    { "path": "tinkersnewlife:item/tool/long_short_blade/ctx_held_long/handle", "stat_type": "tconstruct:handle" }
+    { "path": "tinkersnewlife:item/tool/long_short_blade/ctx_held_long/handle", "stat_type": "tconstruct:handle" },
+    { "path": "tinkersnewlife:item/tool/long_short_blade/ctx_held_short/head", "stat_type": "tconstruct:head" },
+    { "path": "tinkersnewlife:item/tool/long_short_blade/ctx_held_short/handle", "stat_type": "tconstruct:handle" }
 ]
 }

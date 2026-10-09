@@ -70,6 +70,16 @@ public final class LongShortBladeModelHandler {
     public static final ResourceLocation CTX_HELD_LONG =
             ctx("ctx_held_long");
 
+    /**
+     * ⭐ <b>手持·短刀</b> ✓ —— ⚠⚠ 这一条是我**补上的** ✗：⭐ 用户画了 **10** 张切分图 ✓
+     * 而我第一版只用了 **8** 张 ✗（⭐ 漏了 {@code short_hand_blade} 与 {@code short_hand_handle} ✓）
+     * —— ⚠ 当时我按口径里那句「手持时短刀**物品栏模型和手持模型相同**」推断"短刀只建一个槽位"✗
+     * ⇒ ⭐ 用户指正「**我不是画了10个拆分图吗**」✓ ⇒ ⭐ 补齐这个槽位 ✓ 用那两张 ✓
+     * （⭐ 父模型同为 {@code tall} ✓ 短刀是普通剑那一路 ✓）。
+     */
+    public static final ResourceLocation CTX_HELD_SHORT =
+            ctx("ctx_held_short");
+
     private static ResourceLocation ctx(String name) {
         return new ResourceLocation(TinkersNewlife.MOD_ID, "item/tool/long_short_blade/" + name);
     }
@@ -77,13 +87,14 @@ public final class LongShortBladeModelHandler {
     private LongShortBladeModelHandler() {
     }
 
-    /** ⭐ 把三个槽位登记进烘焙队列 ✓（⭐ 否则没人引用 ⇒ 不会被烘焙 ✗） */
+    /** ⭐ 把四个槽位登记进烘焙队列 ✓（⭐ 否则没人引用 ⇒ 不会被烘焙 ✗） */
     @SubscribeEvent
     public static void onRegisterAdditional(ModelEvent.RegisterAdditional event) {
         try {
             event.register(CTX_INV_LONG);
             event.register(CTX_INV_SHORT);
             event.register(CTX_HELD_LONG);
+            event.register(CTX_HELD_SHORT);
         } catch (Throwable t) {
             LOG.warn("[长短刃] 登记场景模型失败（已忽略）：{}", t.toString());
         }
@@ -102,12 +113,12 @@ public final class LongShortBladeModelHandler {
             BakedModel invLong = models.get(CTX_INV_LONG);
             BakedModel invShort = models.get(CTX_INV_SHORT);
             BakedModel heldLong = models.get(CTX_HELD_LONG);
+            BakedModel heldShort = models.get(CTX_HELD_SHORT);
             // ⚠ 缺哪个就传 null ✗ ⇒ ⭐ 包装器自己回退 ✓（⭐ 只画一部分也不会崩 ✓）
-            // ⭐ 短刀：⭐ 物品栏与手持**共用** `invShort` ✓（⭐ 用户口径 ✓ 见常量注释 ✓）
             models.put(BASE, new LongShortBladeModel(base,
-                    invLong, invLong, invShort, heldLong, invShort));
-            LOG.info("[长短刃] 已接按场景×形态切模型：物品栏长={} 短={} 手持长={}（短刀两处共用物品栏那套 ✓）",
-                    invLong != null, invShort != null, heldLong != null);
+                    invLong, invLong, invShort, heldLong, heldShort));
+            LOG.info("[长短刃] 已接按场景×形态切模型：物品栏长={} 物品栏短={} 手持长={} 手持短={}",
+                    invLong != null, invShort != null, heldLong != null, heldShort != null);
         } catch (Throwable t) {
             LOG.warn("[长短刃] 接按场景切模型时出错（已忽略）：{}", t.toString());
         }
