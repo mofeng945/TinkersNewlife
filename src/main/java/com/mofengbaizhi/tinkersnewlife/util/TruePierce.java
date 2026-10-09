@@ -665,7 +665,24 @@ public final class TruePierce {
      * <p>⚠ 通用 ✗：⭐ 任何目标都会走这一遍 ✓ ⭐ 普通怪第一次就写住 ⇒ ⭐ 立刻出队 ✓
      * ⭐ 只有"锁血"的目标才会被连续按几 tick ✓ ✓。
      */
-    private static final int PENDING_TICKS = 6;
+    /**
+     * ⭐⭐ §1204 <b>"以锁制锁"：⭐ 每 tick 强制写回目标值</b>
+     * （⭐ 用户口径 ✓ 2026-10-10：「**他们能一直把血量压回目标线，我们能不能让血量始终锁在
+     * 我们的目标值，不让任何行为改动？**」✓）。
+     *
+     * <h2>⭐⭐ 为什么我们一定赢</h2>
+     * ⭐ 目标的"锁血／回血"是在 ⭐ **它自己的 `tick` 里**跑的 ✗
+     * ⭐ 而本处理挂在 ⭐ **`ServerTickEvent.END`** ✗
+     * ⇒ ⭐ **实体 tick 早已结束** ✓ ⇒ ⭐ **我们写的是最后一下** ✓ ✓
+     * ⇒ ⭐ 只要 ⭐ **每 tick 都写一次** ✗ ⭐ 对外表现就是 ⭐ **锁死在我们给的值上** ✓
+     * ⭐ **任何行为都改不动** ✓ ✓（⭐ 包括它的锁血、回血、头衔切换 ✓）。
+     *
+     * <h2>⚠ 通用边界（⭐ 不是"针对某个 Boss" ✓）</h2>
+     * ⭐ 触发条件只有一条 ✗：⭐ **"我们打过它、而且写不住"** ✓
+     * ⭐ 不认实体类型 ✓ ⭐ 不认模组 ✓ ⭐ 而且 ⭐ **有期限**（{@value #LOCK_TICKS} tick ✓）
+     * ⭐ 到 0 或到期就**自动解锁** ✓ ⇒ ⭐ 不是永久枷锁 ✓。
+     */
+    private static final int LOCK_TICKS = 200;
 
     private record Pending(java.util.UUID id, float value, int left) {
     }
@@ -675,7 +692,7 @@ public final class TruePierce {
 
     /** ⭐ 登记一个"跨 tick 待补"✗（⭐ 同目标覆盖 ✓ 取更低的那个值 ✓） */
     private static void enqueuePending(LivingEntity target, float value) {
-        PENDING.put(target.getUUID(), new Pending(target.getUUID(), value, PENDING_TICKS));
+        PENDING.put(target.getUUID(), new Pending(target.getUUID(), value, LOCK_TICKS));
     }
 
     /** ⭐ "压上限"用的固定修饰符 UUID ✗（⭐ 稳定 ⇒ 可反复覆盖与移除 ✓） */
@@ -756,24 +773,23 @@ public final class TruePierce {
             //     ⇒ ⭐ 它**怎么回满也回不到原上限** ✓ ✓（⭐ 通用 ✗ 任何目标都走 ✓ ⭐ 普通怪不会进这里 ✓）
             clampMaxHealth(living, target);
             rawSetHealth(living, target);
-                float now = rawHealth(living);
-                if (now <= target + 0.01F) {
-                    it.remove();       // ⭐ 写住了 ⇒ 收工 ✓
-                    continue;
-                }
-                // ⚠ 还没写住 ⇒ ⭐ 压一次再生 ＋ 扣一次剩余次数 ✓
-                suppressRegen(living);
-                int left = pd.left() - 1;
-                if (left <= 0) {
-                    TinkersNewlife.LOGGER.info(
-                            "[真伤] 跨 tick 压制 {} 次后仍未写住（{}）：当前={} 目标={} ⇒ 判定为持续锁血 ✓",
-                            PENDING_TICKS, living.getName().getString(),
-                            String.format(java.util.Locale.ROOT, "%.2f", now),
-                            String.format(java.util.Locale.ROOT, "%.2f", target));
-                    it.remove();
-                } else {
-                    e.setValue(new Pending(pd.id(), target, left));
-                }
+            float now = rawHealth(living);
+            // ⭐⭐ §1204 **写住了也继续锁** ✗（⭐ 用户口径：「**让血量始终锁在我们的目标值，
+            //   不让任何行为改动**」✓）—— ⭐ 直到 {@value #LOCK_TICKS} tick 到期 ✓
+            //   ⭐ 我们挂在 `ServerTickEvent.END` ✗ ⭐ 比实体 tick **晚** ✓
+            //   ⇒ ⭐ 每 tick 都写 ⇒ ⭐ **它改不动** ✓ ✓（⭐ 它以锁制锁 ✗ ⭐ 我们以锁制锁 ✓）
+            suppressRegen(living);
+            int left = pd.left() - 1;
+            if (left <= 0) {
+                TinkersNewlife.LOGGER.info(
+                        "[真伤] 血量锁定到期（{} tick）：{} 当前={} 锁定值={}",
+                        LOCK_TICKS, living.getName().getString(),
+                        String.format(java.util.Locale.ROOT, "%.2f", now),
+                        String.format(java.util.Locale.ROOT, "%.2f", target));
+                it.remove();
+            } else {
+                e.setValue(new Pending(pd.id(), target, left));
+            }
             }
         } catch (Throwable ignored) {
             // ⭐ 待补处理出错绝不能连累玩法 ✗
