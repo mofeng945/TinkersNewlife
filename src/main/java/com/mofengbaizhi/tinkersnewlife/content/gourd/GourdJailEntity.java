@@ -291,11 +291,29 @@ public class GourdJailEntity extends Entity {
             living.remove(Entity.RemovalReason.DISCARDED);
             return;
         }
-        // 其余 Boss：正常死亡结算（触发击败/重刷逻辑），但本次不掉战利品/经验——解除封印后打死再正常掉落
+        // ⭐⭐ §1184 **改成「从实体列表清除」，不再走死亡** ✗
+        //   （⭐ 用户口径 ✓ 2026-10-10：「**再把狱门疆，咒灵操术，式神相关的收回动作从 die() 改成
+        //     实体列表清除对应实体**」＋「**不是普通 remove，是列表清除**」✓）
+        //
+        //   ⚠ 原来这里是 ⭐ `living.hurt(genericKill(), Float.MAX_VALUE)` ✗
+        //   —— ⭐ 那是「**用伤害把它打死**」✗ ⇒ ⭐ 会触发死亡事件／掉落／死亡信息／击杀统计 ✓
+        //   ⭐ 现在改成 ⭐ **`remove(Entity.RemovalReason.DISCARDED)`** ✗
+        //   ⇒ ⭐ 实体从 ⭐ `PersistentEntitySectionManager`（⭐ 服务端的实体跟踪表 ✓）里**直接摘掉** ✓
+        //   ⇒ ⭐ **不发死亡事件、不掉落、不计击杀** ✓ ✓（⭐ 这就是「**列表清除**」的正规入口 ✓
+        //     ⚠ 1.20.1 里没有别的公开 API 能做到这件事 ✓）。
+        //
+        //   <h3>⚠ 代价（⭐ 如实 ✓ 用户已明确要这样 ✓）</h3>
+        //   ⚠ 原来用死亡是为了 ⭐ **通知 Boss 自己的状态机** ✗
+        //   （⭐ 原注释：「⭐ 避免"卡消失"后被判定战斗未结束而重刷一条 ✓」✓）
+        //   ⇒ ⭐ 现在直接摘除 ⇒ ⚠ ⭐ 这类 Boss 可能被它自己的重刷逻辑**再刷一条** ✗
+        //   ⭐ 但「**封印即击败**」的语义下这可接受 ✓ ⭐ 且用户明确要求 ✓。
+        //   ⚠ 末影龙那条**一直是单独处理**的（⭐ 反射调 `setDragonKilled` ✓）⇒ ⭐ 不受影响 ✓。
         living.getPersistentData().putBoolean(GourdJailHandler.KEY_SUPPRESS_LOOT, true);
         com.mofengbaizhi.tinkersnewlife.content.curse.CurseDeath.mark(living);
-        living.hurt(living.damageSources().genericKill(), Float.MAX_VALUE);
+        // ⭐ 从实体列表清除 ✓（⭐ 不发死亡事件／不掉落／不计击杀 ✓）
+        living.remove(Entity.RemovalReason.DISCARDED);
         if (living.isAlive()) {
+            // ⚠ 兜底：⭐ 万一没摘掉（⭐ 极罕见 ✓）⭐ 再强制摘一次 ✓
             living.remove(Entity.RemovalReason.DISCARDED);
         }
     }
