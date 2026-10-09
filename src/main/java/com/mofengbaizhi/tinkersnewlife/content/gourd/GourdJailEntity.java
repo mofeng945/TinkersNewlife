@@ -248,7 +248,8 @@ public class GourdJailEntity extends Entity {
                 // ⭐ Boss 封印 = 击败：结算对应 Boss 状态机（末地龙战等），避免"卡消失"后被判定战斗未结束而重刷一条
                 sealAsDefeat((ServerLevel) server, living);
             } else {
-                living.remove(Entity.RemovalReason.DISCARDED);
+                // ⭐ 用清除逻辑链（⭐ §1185 ✓）—— ⭐ 比单一句 `remove` 更能对付"防清除" ✓
+                forcePurge(living);
             }
             // 无需球笼坐标（生物无维度）
         } else if (target != null) {
@@ -288,7 +289,8 @@ public class GourdJailEntity extends Entity {
                 }
             } catch (Throwable ignored) {
             }
-            living.remove(Entity.RemovalReason.DISCARDED);
+            // ⭐ 用清除逻辑链（⭐ §1185 ✓ ⭐ 见 {@link #forcePurge} ✓）
+            forcePurge(dragon);
             return;
         }
         // ⭐⭐ §1184 **改成「从实体列表清除」，不再走死亡** ✗
@@ -308,13 +310,88 @@ public class GourdJailEntity extends Entity {
         //   ⇒ ⭐ 现在直接摘除 ⇒ ⚠ ⭐ 这类 Boss 可能被它自己的重刷逻辑**再刷一条** ✗
         //   ⭐ 但「**封印即击败**」的语义下这可接受 ✓ ⭐ 且用户明确要求 ✓。
         //   ⚠ 末影龙那条**一直是单独处理**的（⭐ 反射调 `setDragonKilled` ✓）⇒ ⭐ 不受影响 ✓。
-        living.getPersistentData().putBoolean(GourdJailHandler.KEY_SUPPRESS_LOOT, true);
-        com.mofengbaizhi.tinkersnewlife.content.curse.CurseDeath.mark(living);
-        // ⭐ 从实体列表清除 ✓（⭐ 不发死亡事件／不掉落／不计击杀 ✓）
-        living.remove(Entity.RemovalReason.DISCARDED);
-        if (living.isAlive()) {
-            // ⚠ 兜底：⭐ 万一没摘掉（⭐ 极罕见 ✓）⭐ 再强制摘一次 ✓
-            living.remove(Entity.RemovalReason.DISCARDED);
+        // ⭐ 用清除逻辑链（⭐ §1185 ✓ ⭐ 见 {@link #forcePurge} ✓）——
+        //   ⭐ 它会 ⭐ 抹血 → 摘除 → 抹血 → remove → kill → 摘除 → 抹血 ✓
+        //   ⚠ 且 ⭐ **保证 `kill()` 在 `remove` 之后** ✗ ⇒ ⭐ `hurt()` 早退 ⇒ ⭐ **不 `die()` ⇒ 不掉战利品** ✓ ✓
+        forcePurge(living);
+    }
+
+    /**
+     * ⭐⭐ §1185 <b>实体清除逻辑链</b>（⭐ 用户口径 ✓ 2026-10-10 逐字 ✓）：
+     * <blockquote>
+     * ⭐ 「**清除逻辑链：血量设置0，随后清除实体，随后血量设置0，随后remove，再kill，
+     * 再清除实体，再血量设置0（不调用die产生战利品）**」✓
+     * </blockquote>
+     *
+     * <h2>⭐ 设计意图（⭐ 多层冗余交叉覆盖 ✗）</h2>
+     * ⭐ 各模组的"防清除"手法不一样 ✗（⭐ 覆写 `remove` ✓ ⭐ 覆写 `isRemoved` ✓ ⭐ `tick` 自愈 ✓
+     * ⭐ Boss 状态机重刷 ✓）⇒ ⭐ **单一步骤都可能被拦** ✗ ⇒ ⭐ 交替用多种手段**叠着来** ✓
+     * ⭐ 总有一步能生效 ✓ ✓。
+     *
+     * <h2>⚠⚠ 关键：`kill()` 必须在 `remove` **之后**（⭐ 否则会掉战利品 ✗）</h2>
+     * ⚠ `LivingEntity#kill()` 就是 ⭐ `hurt(damageSources().genericKill(), Float.MAX_VALUE)` ✗
+     * ⇒ ⭐ 它会**正常触发 `die()`** ✗ ⇒ ⭐ 产生战利品／经验／死亡信息 ✓
+     * ⭐ 而用户明确要 ⭐「**不调用 die 产生战利品**」✓
+     * ⇒ ⭐ 解法：⭐ 让 `kill()` 落在 ⭐ **`remove(DISCARDED)` 成功之后** ✗
+     * ⭐ 那时 `isRemoved() == true` ✗ ⭐ `hurt()` **第一步就早退** ✓ ⭐ **不会 `die()`** ✓ ✓。
+     * <p>⚠ **兜底**：⭐ 万一 `remove` 被别人的覆写拦掉 ✗ ⇒ ⭐ `kill()` 就会真把它打死 ✗
+     * ⇒ ⭐ 所以**先打上** {@code KEY_SUPPRESS_LOOT} ✗ ⇒ ⭐ 就算真死了也**不掉战利品** ✓ ✓
+     * （⭐ 那套抑制机制本仓已有 ✓ ⭐ `BossFightHandler` 也在用 ✓）。
+     *
+     * <h2>⚠ 关于第 ④ 步「remove」</h2>
+     * ⭐ 1.20.1 里公开 API 只有 ⭐ `remove(RemovalReason)`（⭐ `discard()` 即它 ✓）
+     * ⇒ ⭐ 这里**连续调两次** ✗ ⭐ 因为有的模组只在**第一次**放行／⭐ 第二次才认 ✓。
+     *
+     * @param living 要清除的实体
+     */
+    public static void forcePurge(net.minecraft.world.entity.LivingEntity living) {
+        if (living == null || living.level().isClientSide) {
+            return;
+        }
+        // ⭐ ⓪ 先打"抑制掉落"标记 ✗ —— ⭐ 保证万一步骤 ⑤ 真打死它也不掉战利品 ✓
+        try {
+            living.getPersistentData().putBoolean(GourdJailHandler.KEY_SUPPRESS_LOOT, true);
+            com.mofengbaizhi.tinkersnewlife.content.curse.CurseDeath.mark(living);
+        } catch (Throwable ignored) {
+        }
+        // ⭐ ① 血量设置 0 ✓
+        try {
+            living.setHealth(0.0F);
+        } catch (Throwable ignored) {
+        }
+        // ⭐ ② 清除实体 ✓
+        try {
+            living.remove(net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
+        } catch (Throwable ignored) {
+        }
+        // ⭐ ③ 随后血量设置 0 ✓（⭐ 防上一步的回调里被回血 ✓）
+        try {
+            living.setHealth(0.0F);
+        } catch (Throwable ignored) {
+        }
+        // ⭐ ④ 随后 remove ✓（⭐ 再摘一次 ✗ 有的模组只在第二次才认 ✓）
+        try {
+            if (!living.isRemoved()) {
+                living.remove(net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
+            }
+        } catch (Throwable ignored) {
+        }
+        // ⭐ ⑤ 再 kill ✓ —— ⚠ 只有"已经摘掉"时才安全 ✗
+        //    ⭐ 已 removed ⇒ `hurt()` 早退 ⇒ ⭐ **不会 `die()`** ✓ ✓
+        //    ⚠ 未被拦的话会真打死 ⇒ ⭐ 但 ⓪ 已抑制掉落 ✓
+        try {
+            living.kill();
+        } catch (Throwable ignored) {
+        }
+        // ⭐ ⑥ 再清除实体 ✓
+        try {
+            living.remove(net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
+        } catch (Throwable ignored) {
+        }
+        // ⭐ ⑦ 再血量设置 0 ✓（⭐ 收尾 ✗ ⭐ **全程不主动调 `die()`** ✓ ⇒ ⭐ 不产生战利品 ✓）
+        try {
+            living.setHealth(0.0F);
+        } catch (Throwable ignored) {
         }
     }
 
