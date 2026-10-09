@@ -363,14 +363,31 @@ public final class LongShortBladeHandler {
                     }
                     right = right.normalize();
                     double cy = target.getY() + target.getBbHeight() * 0.55D;
-                    // ⭐ 9 片铺成一道约 2 格宽的横斩 ✓（间距 0.24 ✓ 两端略收 ⇒ 像刀锋 ✓）
+                    // ⭐⭐ **斜斩**（用户口径 ✓ 2026-10-09：「处决粒子应该有一定的**旋转角度**，
+                    //   比如右上到左下／左上到右下之类的」✓）
+                    //   ⚠ 两层都要斜 ✗ 只斜一层会像"阶梯"：
+                    //     ① ⭐ **排列方向**斜 ✓ —— 把水平垂线 `right` 与世界上方按 ±30° 合成 ✓；
+                    //     ② ⭐ **每片贴图自身**也要斜 ✓ —— 那由粒子的 `roll` 负责 ✓（⚠ `roll` 是**绕视线轴**
+                    //        转 ✗ 所以它转出来的正好是"屏幕上的倾斜" ✓ 正是我们要的 ✓）。
+                    //   ⚠ 补丁类型是 `SimpleParticleType` **没有数据载荷** ✗ ⇒ ⭐ 借**速度的三个分量**
+                    //     当角度载体 ✓（⭐ 本粒子惯性只留 15% ✓ 本来就几乎不动 ✓ 所以借用无副作用 ✓）。
+                    double ang = (player.getRandom().nextBoolean() ? 1.0D : -1.0D) * Math.toRadians(30.0D);
+                    double cs = Math.cos(ang);
+                    double sn = Math.sin(ang);
+                    // ⭐ 排列方向 = right·cos + up·sin（⭐ 得到"斜着的一道" ✓）
+                    double dx = right.x * cs;
+                    double dy = sn;
+                    double dz = right.z * cs;
                     for (int i = -4; i <= 4; i++) {
                         double off = i * 0.24D;
-                        double dy = (Math.abs(i) % 2 == 0) ? 0.015D : -0.015D;
+                        // ⭐ 两端错开一点点 ✓ 让刀锋看着不是一条直线 ✓
+                        double jitter = (i % 2 == 0) ? 0.012D : -0.012D;
                         slashLevel.sendParticles(
                                 com.mofengbaizhi.tinkersnewlife.content.ModParticles.EXECUTE_SLASH.get(),
-                                target.getX() + right.x * off, cy + dy, target.getZ() + right.z * off,
-                                1, 0.0D, 0.0D, 0.0D, 0.0D);
+                                target.getX() + dx * off, cy + dy * off + jitter, target.getZ() + dz * off,
+                                1,
+                                // ⭐ **速度即角度**：⭐ (cos, sin, 0) ⇒ 粒子据此把贴图滚到同一倾角 ✓
+                                cs, sn, 0.0D, 0.0D);
                     }
                 }
                 if (player.level() instanceof ServerLevel sl) {

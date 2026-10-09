@@ -34,6 +34,9 @@ public class ExecuteSlashParticle extends TextureSheetParticle {
         // ⭐ 贴图帧（⚠ 贴图为单帧 ✓ 这里仍按本仓惯例取一次精灵 ✓）
         this.pickSprite(sprites);
         // ⚠ 惯性要**很小** ✗ —— 斩击应该"钉在原地一瞬"✓ 而不是飘走 ✓
+        //   ⚠⚠ 而且速度的三个分量**同时被当作"倾斜角"的载体** ✗（⭐ 见下 ✓）——
+        //   ⭐ 因为 {@code SimpleParticleType} 没有数据载荷 ❌ 传不了角度 ✓
+        //   ⭐ 而本粒子惯性只留 15% ✓ 几乎不动 ✓ ⇒ 借用速度当载体**零副作用** ✓。
         this.xd = vx * 0.15D;
         this.yd = vy * 0.15D;
         this.zd = vz * 0.15D;
@@ -49,7 +52,13 @@ public class ExecuteSlashParticle extends TextureSheetParticle {
         this.alpha = 0.95F;
         // ⚠ 朝向：粒子**不随玩家朝向** ✗ ⇒ 由生成时给的随机 roll 制造"每一击角度略有不同"✓
         //   （⚠ 真正的"横"是靠贴图 ✓ 见类注释 ✓）
-        this.roll = this.random.nextFloat() * 0.6F - 0.3F;
+        // ⭐⭐ **倾斜角**（用户口径 ✓ 2026-10-09：「处决粒子应该有一定的旋转角度，
+        //   比如右上到左下／左上到右下之类的」✓）
+        //   ⭐ 角度由**生成方**经"速度三元组"传来 ✓（⭐ `(vx,vy)` 就是 `(cos,sin)` ✓ 见 `LongShortBladeHandler` ✓）
+        //   ⭐ 用 `roll` 把它落到屏幕上 ✓ —— ⚠ `roll` 是**绕视线轴**转 ✗
+        //     所以它转出来的正好是"屏幕上的倾斜" ✓ 正是斜斩要的效果 ✓。
+        double angle = Math.atan2(vy, vx);
+        this.roll = (float) (-angle);
         this.oRoll = this.roll;
     }
 
