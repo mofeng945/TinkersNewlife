@@ -49,6 +49,11 @@ public abstract class ApostleDistanceMixin {
 
     private static java.lang.reflect.Method TNL_TELEPORT_TOWARDS = null;
     private static java.lang.reflect.Method TNL_GET_TITLE = null;
+    private static java.lang.reflect.Method TNL_IS_SETTING_UP = null;
+    /** ⭐ §1213 ⭐ `public Vec3 toTeleportPos` ✓（⭐ 待瞬移的目标点 ✓） */
+    private static java.lang.reflect.Field TNL_TO_POS = null;
+    /** ⭐ §1213 ⭐ `public int toTeleportTime` ✓（⭐ 倒计时 ✓） */
+    private static java.lang.reflect.Field TNL_TO_TIME = null;
     private static boolean TNL_RESOLVED = false;
 
     private static void tnl$resolve(Object self) {
@@ -67,6 +72,53 @@ public abstract class ApostleDistanceMixin {
             TNL_GET_TITLE.setAccessible(true);
         } catch (Throwable ignored) {
             TNL_GET_TITLE = null;
+        }
+        try {
+            TNL_IS_SETTING_UP = self.getClass().getMethod("isSettingUpSecond");
+            TNL_IS_SETTING_UP.setAccessible(true);
+        } catch (Throwable ignored) {
+            TNL_IS_SETTING_UP = null;
+        }
+        try {
+            TNL_TO_POS = self.getClass().getField("toTeleportPos");
+            TNL_TO_POS.setAccessible(true);
+        } catch (Throwable ignored) {
+            TNL_TO_POS = null;
+        }
+        try {
+            TNL_TO_TIME = self.getClass().getField("toTeleportTime");
+            TNL_TO_TIME.setAccessible(true);
+        } catch (Throwable ignored) {
+            TNL_TO_TIME = null;
+        }
+    }
+
+    /** ⭐ 这个使徒此刻是否在"转阶段"✗（⭐ 拿不到 ⇒ false ✓ 保持原行为 ✓） */
+    private static boolean tnl$isSettingUpSecond(Object self) {
+        if (TNL_IS_SETTING_UP == null) {
+            return false;
+        }
+        try {
+            Object r = TNL_IS_SETTING_UP.invoke(self);
+            return r instanceof Boolean b && b;
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    /** ⭐⭐ §1213 **清掉"待瞬移"状态** ✗ ⇒ ⭐ `tick` 里那段 `moveTo` 不会执行 ✓ */
+    private static void tnl$clearPendingTeleport(Object self) {
+        try {
+            if (TNL_TO_POS != null) {
+                TNL_TO_POS.set(self, null);
+            }
+        } catch (Throwable ignored) {
+        }
+        try {
+            if (TNL_TO_TIME != null) {
+                TNL_TO_TIME.setInt(self, 0);
+            }
+        } catch (Throwable ignored) {
         }
     }
 
@@ -87,6 +139,28 @@ public abstract class ApostleDistanceMixin {
                 return;
             }
             tnl$resolve(self);
+            // ⭐⭐ §1213 **转阶段期间：清掉"待瞬移"状态** ✗✗
+            //   （⭐ 用户实测 2026-10-10：⭐「**转阶段还是在一直朝我瞬移**」✓）
+            //   ⚠ 根因 ✗：⭐ 真正的位移**不是** `teleport()` 做的 ✗ ⭐ 而是 `tick` 里这段 ✓：
+            //   <pre>
+            //     ++this.toTeleportTime;
+            //     int time = this.isSecondPhase() ? 20 : 40;
+            //     if (this.toTeleportTime &gt;= time) {
+            //         this.moveTo(this.toTeleportPos.x, y, z);   // ⚠ 真正的瞬移 ✗
+            //         this.teleportHits();
+            //         this.toTeleportPos = null;
+            //     }
+            //   </pre>
+            //   ⚠ ⭐ §1210 我只 cancel 了 `teleport()`／`teleportTowards()` ✗
+            //   ⚠ 而 ⭐ 只要 `toTeleportPos` **已经被设过** ✗（⭐ 可能在 cancel 之前 ✓
+            //     ⭐ 或由 ⭐ `escapeTeleport` 之类的路径 ✓）⭐ 那段**照样 `moveTo`** ✓ ✓
+            //   ⇒ ⭐ 修法：⭐ 转阶段时 ⭐ **把 `toTeleportPos` 清空 ＋ `toTeleportTime` 归零** ✗
+            //     ⇒ ⭐ `if (this.toTeleportPos != null)` 那段**整段不执行** ✓ ✓
+            //   ⭐ 两个字段都 ⭐ `public` ✓（⭐ 反编译实证 ✓）⇒ ⭐ 反射 ✓。
+            if (tnl$isSettingUpSecond(self)) {
+                tnl$clearPendingTeleport(self);
+                return;      // ⚠ 转阶段期间**不做**任何距离干预 ✓（⭐ 免得和阶段动画打架 ✓）
+            }
             // ⚠ 只认"活着的目标" ✗
             LivingEntity target = self.getTarget();
             if (target == null || !target.isAlive()) {
