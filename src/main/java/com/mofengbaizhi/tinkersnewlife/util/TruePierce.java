@@ -290,13 +290,28 @@ public final class TruePierce {
             return;
         }
 
-        // ④ 分块连打（带攻击者的源）
-        float startHp = target.getHealth();
-        float dealt = chunkedHurt(target, withAttacker, want);
-        // 带攻击者的源完全打不动 → 换无主源再打一遍
-        if (dealt <= 0.01F && target.isAlive() && !target.isRemoved()) {
-            dealt = chunkedHurt(target, anonymous, want);
-        }
+        // ④ ⭐⭐ §1189 **删掉分段**（⭐ 用户口径 ✓ 2026-10-10：「**删掉分段，然后调用受击效果和伤害音效**」✓）
+        //   ⚠ 原来是 ⭐ `chunkedHurt(带攻击者源)` ✗ ⭐ 打不动再 ⭐ `chunkedHurt(无主源)` ✓
+        //   —— ⭐ 那是"分 19 点一段连打"✗ ⭐ 目的是绕开单次限伤／免疫窗 ✓
+        //   ⚠ 但它有代价 ✗：⭐ 每一段都**触发一次别人的受击事件** ✓
+        //   （⭐ 反伤／吸血被触发 N 次 ✓ ⭐ 别的模组的增幅器逐段跑 ✓ —— `DamagePipeline` 只挡得住**自家的** ✓）
+        //   ⇒ ⭐ 既然 ⑤ 已经能 ⭐ **逆向改血**（⭐ 直写血量真身 ✓ 谁也拦不住 ✓）
+        //   ⇒ ⭐ **分段就没有必要了** ✗ ⭐ 直接全额逆向改血 ✓ 更干净、更可控 ✓。
+        //   ⚠ 代价（⭐ 如实 ✓）：⭐ 伤害**不再触发** `LivingHurtEvent` 等事件 ✓
+        //   ⇒ ⭐ 所以"受击红闪"与"伤害音效"由下面 ④.5 ⭐ **手动补上** ✓。
+        float dealt = 0.0F;
+        // ⚠ `startHp` 仍要给"处决兜底"用 ✗ ⇒ ⭐ 逆向读血 ✓（⭐ 原来是从 `chunkedHurt` 前的 `getHealth()` ✓）
+        float startHp = rawHealth(target);
+
+        // ④.5 ⭐⭐ **手动补"受击效果 ＋ 伤害音效"**（⭐ 用户口径 ✓「**然后调用受击效果和伤害音效**」✓）
+        //   ⭐ 原来这些是 ⭐ `hurt()` 顺带做的 ✗ ⭐ 现在不走 `hurt` ⇒ ⭐ 必须自己来 ✓：
+        //   ⭐ ① `hurtTime/hurtDuration = 10` ✗ ⇒ ⭐ **客户端红闪** ✓（⭐ 两个字段都是 `public` ✓）；
+        //   ⭐ ② ⭐ `broadcastEntityEvent(target, EntityEvent.HURT)` ✗
+        //     ⇒ ⭐ 客户端会走 ⭐ `LivingEntity#handleEntityEvent` ⭐ 自己调 ⭐ `getHurtSound(source)`
+        //     ⭐ **播受击音效 ＋ 摆受击姿态** ✓ ✓
+        //     ⚠ 这是**唯一**能"正确取到该实体自己的受伤音"的办法 ✗ ——
+        //     ⭐ `getHurtSound` 是 ⭐ **`protected`** ✗ ⭐ 外部**调不到** ✓。
+        playHurtFeedback(target, withAttacker);
 
 
         // ⑤ 差额直补 —— ⭐⭐ §1188 改成 ⭐ **逆向改血**（⭐ 用户口径 ✓ 2026-10-10 ✓）✗：
@@ -390,6 +405,46 @@ public final class TruePierce {
             com.mofengbaizhi.tinkersnewlife.util.DamagePipeline.exit();
         }
         return startHp - target.getHealth();
+    }
+
+    /**
+     * ⭐⭐ §1189 <b>手动补"受击效果 ＋ 伤害音效"</b>
+     * （⭐ 用户口径 ✓ 2026-10-10：「**删掉分段，然后调用受击效果和伤害音效**」✓）。
+     *
+     * <h2>⚠ 为什么必须手动做（⭐ 因为 §1189 删了分段 ✗ 不再走 `hurt()` ✓）</h2>
+     * ⭐ `LivingEntity#hurt` 顺带做这些事 ✗：
+     * <ul>
+     *   <li>⭐ `hurtTime ＝ hurtDuration ＝ 10` ✗ ⇒ ⭐ **客户端红闪** ✓；</li>
+     *   <li>⭐ `level.broadcastEntityEvent(this, EntityEvent.HURT)` ✗
+     *       ⇒ ⭐ 客户端 ⭐ `handleEntityEvent` ⭐ 自己调 ⭐ `getHurtSound(source)`
+     *       ⭐ **播受击音效 ＋ 摆受击姿态** ✓。</li>
+     * </ul>
+     * ⚠ 不走 `hurt` 之后这些就**全都没有** ✗ ⇒ ⭐ 打上去像"凭空掉血" ✓ ⇒ ⭐ 这里补回来 ✓。
+     *
+     * <h2>⚠ 为什么用 `broadcastEntityEvent` 而不是自己播声音 ✗</h2>
+     * ⭐ `LivingEntity#getHurtSound(DamageSource)` 是 ⭐ **`protected`** ✗ ⭐ **外部调不到** ✓
+     * ⇒ ⭐ 自己播就得**猜**一个通用音效 ✗（⭐ 那会"僵尸发出玩家的声音" ✓）
+     * ⇒ ⭐ `broadcastEntityEvent(EntityEvent.HURT)` 让 ⭐ **每个实体用它自己的音** ✓ ✓ ——
+     * ⭐ 这是**唯一**正确取音的办法 ✓。
+     *
+     * <p>⚠ 两个字段（⭐ `hurtTime`／`hurtDuration` ✓）在 1.20.1 都是 ⭐ **`public int`** ✓ ⇒ ⭐ 可直接写 ✓。
+     */
+    private static void playHurtFeedback(LivingEntity target, DamageSource src) {
+        try {
+            // ⭐ ① 受击红闪（⭐ 客户端读这两个字段决定闪不闪、闪多久 ✓）
+            target.hurtTime = 10;
+            target.hurtDuration = 10;
+        } catch (Throwable ignored) {
+        }
+        try {
+            // ⭐ ② 受击事件广播 ⇒ ⭐ 客户端播"该实体自己的"受伤音 ＋ 摆受击姿态 ✓
+            //   ⚠ 1.20.1 里 ⭐ `EntityEvent` **没有 `HURT` 这个常量** ✗（⭐ 编译实测 ✓）
+            //     ⇒ ⭐ 直接用**字面值 `(byte) 2`** ✓ —— ⭐ 它就是"受击"那个事件号 ✓
+            //       （⭐ `LivingEntity#handleEntityEvent` 的 `case 2` ⭐ ⇒ ⭐ 播 `getHurtSound` ✓）。
+            target.level().broadcastEntityEvent(target, (byte) 2);
+        } catch (Throwable ignored) {
+            // ⭐ 广播失败也不影响掉血 ✓
+        }
     }
 
     /** 不经 hurt() 的直伤（下界亚波伦）：⭐ **逆向改血** 扣血 ＋ 打空后主动 die()，让击败状态机正常结算 */
