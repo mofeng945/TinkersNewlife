@@ -96,6 +96,15 @@ public final class AutoPartTexturesHandler {
 
     /** ⭐ 真正干活 ✓（⭐ 每一段都各自 try ✗ 一处失败不影响后面的 ✓） */
     private static void run() {
+        Path dir = Minecraft.getInstance().gameDirectory.toPath().resolve(PACK_NAME);
+
+        // ⓪ ⭐⭐ **生成前先数一遍已有贴图**（用户口径 ✓ 2026-10-09：
+        //    「**加一条：如果生成条目为0就不做任何处理**」✓）
+        //    ⚠ `generateTextures` **返回 void** ✗ ⭐ 不给条数 ✓ ⇒ ⭐ 只能自己数 ✓
+        //    ⚠⚠ **不能只看"目录里有没有文件"** ✗ —— ⭐ 上次跑过的那些**还在** ✓
+        //    ⇒ ⭐ 必须 ⭐ **前后对比差值** ✗ ⇒ ⭐ 差为 0 才是"这次一条都没生成" ✓ ✓。
+        int before = countTextures(dir);
+
         // ① ⭐ 跑生成器（⭐ 只补缺失的 ✓ 用户第 1 条 ✓）
         try {
             slimeknights.tconstruct.shared.client.ClientGeneratePartTexturesCommand.generateTextures(
@@ -109,11 +118,42 @@ public final class AutoPartTexturesHandler {
                     t.toString());
         }
 
+        // ①.5 ⭐⭐ **生成了 0 条 ⇒ 什么都不做**（用户口径 ✓）
+        int after = countTextures(dir);
+        int delta = after - before;
+        if (delta <= 0) {
+            TinkersNewlife.LOGGER.info(
+                    "[自动材质] 这次生成 {} 条 ⇒ **不做任何处理**（不碰资源包 ✓）现有总数 {}",
+                    Math.max(0, delta), after);
+            return;
+        }
+        TinkersNewlife.LOGGER.info("[自动材质] 这次生成 {} 条 ⇒ 继续启用资源包 ✓（现有总数 {}）", delta, after);
+
         // ② ⭐ 强制启用生成的资源包（⭐ 用户第 2 条 ✓「强制启用」✓）
         try {
             forceEnablePack();
         } catch (Throwable t) {
             TinkersNewlife.LOGGER.warn("[自动材质] 启用资源包失败：{}", t.toString());
+        }
+    }
+
+    /**
+     * ⭐ 数一数生成目录下有多少张 png ✓（⭐ 递归 ✓ —— 匠魂是分目录写的 ✓）。
+     * <p>⚠ 目录不存在（⭐ 还没生成过 ✓）⇒ ⭐ 返回 0 ✓（⭐ 不抛异常 ✓）。
+     */
+    private static int countTextures(Path dir) {
+        try {
+            if (!Files.isDirectory(dir)) {
+                return 0;
+            }
+            try (var stream = Files.walk(dir)) {
+                return (int) stream.filter(p -> p.getFileName().toString().toLowerCase(java.util.Locale.ROOT)
+                        .endsWith(".png")).count();
+            }
+        } catch (Throwable t) {
+            // ⚠ 数不出来 ⇒ ⭐ 返回 -1 ✓ ⇒ ⭐ 后面 `delta = after - before` 会 ≤ 0
+            //   ⇒ ⭐ **按"没生成"处理** ✓（⭐ 宁可不动资源包 ✓）
+            return -1;
         }
     }
 
