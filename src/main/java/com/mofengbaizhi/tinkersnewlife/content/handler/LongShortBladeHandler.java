@@ -178,15 +178,19 @@ public final class LongShortBladeHandler {
         //     ⇒ ⭐ 拿一把补一把 ⇒ **无限刷** ✓。
         //   ⇒ ⭐ 修法：⭐ 补之前先看**主手那把**有没有 {@link LongShortBladeItem#TAG_PAIRED_ONCE} 标记 ✗
         //     ⭐ 补完立刻打上 ✓ ⇒ ⭐ 以后副手再空也**不补** ✓（⭐ 想再配就自己放 ✓ 那不算刷 ✓）。
-        if (off.isEmpty() && !LongShortBladeItem.isPairedOnce(main)) {
+        if (off.isEmpty()) {
             ItemStack pair = main.copy();
             pair.setCount(1);
             LongShortBladeItem.markPair(pair, true);
             LongShortBladeItem.setForm(pair, LongShortBladeItem.isLong(main)
                     ? LongShortBladeItem.FORM_SHORT : LongShortBladeItem.FORM_LONG);
             player.setItemInHand(InteractionHand.OFF_HAND, pair);
-            // ⭐ 打标记（⭐ 写在**主手那把**上 ✗ ⇒ ⭐ 重登也有效 ✓ 见 §1168 ✓）
-            LongShortBladeItem.markPairedOnce(main);
+            // ⚠⚠ **刻意不打 `TAG_PAIRED_ONCE` 标记**（用户口径 ✓ 2026-10-09：
+            //   「**你直接改成短刀没手持消失，然后可以补不就行了**」✓）
+            //   ⭐ 用户的方案更对 ✗：⭐ **"离开副手就销毁" ＋ "空了就补"** ✓
+            //   ⇒ ⭐ 拿走的那把**立刻没了** ✗ ⭐ 补的是**唯一**一把 ✓ ⇒ ⭐ **总量不变 ⇒ 不会刷** ✓
+            //   ⚠ 而我上一版加的"只补一次"标记 ✗ ⭐ 会让玩家**再也补不出来** ✓（⭐ 那是另一个极端 ✓）
+            //   ⇒ ⭐ 已**取消**那个标记 ✓（⭐ 常量保留但**不再使用** ✓ 见 §1169 ✓）。
         }
         // ⚠ 副手有别的东西 ⇒ 不动它 ✗（玩家自己放的东西优先 ✓）
     }
@@ -208,8 +212,14 @@ public final class LongShortBladeHandler {
             boolean changed = false;
             for (int i = 0; i < inv.getContainerSize(); i++) {
                 ItemStack s = inv.getItem(i);
-                // ⚠ 副手不在 `Inventory` 里 ✗（⭐ 它是独立的 `Inventory` 索引 40 ✓）
-                //   ⇒ ⭐ 这里只看背包/快捷栏 ✓ ⭐ 副手那把**不动** ✓
+                // ⚠⚠ **必须跳过副手那一格** ✗✗（⭐ 我在 §1168 漏了这一步 ✓ 后果很严重 ✓）：
+                //   ⭐ `Inventory#getContainerSize()` ＝ **41** ✗（⭐ 36 主背包 ＋ 4 盔甲 ＋ **1 副手** ✓）
+                //   ⇒ ⭐ 副手就是**索引 40** ✗ ⇒ ⚠ 不跳过的话 ⭐ **每 tick 都把副手那把伙伴刀也清掉** ✗
+                //   ⇒ ⭐ 伙伴刀**根本留不住** ✓（⭐ 用户实测就是这个现象 ✓）。
+                //   ⭐ 两种跳过方式都写 ✗：⭐ 索引 40 ✓ ＋ ⭐ 与 `off` 同一实例 ✓（⭐ 双保险 ✓）。
+                if (i == 40 || s == off) {
+                    continue;
+                }
                 if (s.getItem() instanceof LongShortBladeItem && LongShortBladeItem.isPair(s)) {
                     inv.setItem(i, ItemStack.EMPTY);
                     changed = true;
