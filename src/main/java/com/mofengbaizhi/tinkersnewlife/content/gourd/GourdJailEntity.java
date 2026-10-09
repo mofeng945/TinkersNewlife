@@ -251,6 +251,55 @@ public class GourdJailEntity extends Entity {
                 // ⭐ 用清除逻辑链（⭐ §1185 ✓）—— ⭐ 比单一句 `remove` 更能对付"防清除" ✓
                 forcePurge(living);
             }
+            // ⭐⭐ §1187 **清除失败 ⇒ 视为封印失败，一切恢复原样** ✗
+            //   （⭐ 用户口径 ✓ 2026-10-10：「**如果还在就视为清除失败，切断归属，
+            //     狱门疆封印失败恢复原样**」✓）
+            //
+            //   ⚠ 判据：⭐ 清除链（⭐ 含栈尾校验 ✓）走完 ⭐ `isRemoved()` **仍为 false** ✗
+            //   ⇒ ⭐ 说明被某个模组**死死护住** ✗ ⭐ 那**不能假装封印成功** ✓
+            //     （⭐ 否则会出"实体还在场、狱门疆却显示已封印"的鬼状态 ✓）。
+            //
+            //   ⭐ 恢复原样的四件事 ✓：
+            //   ① ⭐ **切断归属** ✗：⭐ 撤掉击杀归属记忆 ＋ ⭐ 摘掉"抑制掉落"标记 ＋ 撤销咒死标记 ✓
+            //      （⭐ 它**没被清掉** ✗ ⭐ 就不该带着我们的标记活着 ✓）；
+            //   ② ⭐ **撤销封印记录** ✗：`prisonerNbt／prisonerId／prisonerName` 清空 ✓
+            //      （⭐ 否则解除封印时会去重建一个"其实没被关起来"的实体 ✓）；
+            //   ③ ⭐ **狱门疆回到未封印态** ✗：`setSealed(false)` ＋ ⭐ `state = 0` ＋ `setAnim(0)` ✓；
+            //   ④ ⭐ **恢复目标的重力** ✗：封印动画期间我们把它设成 `noGravity` 并传送到笼位 ✓
+            //      ⇒ ⭐ 失败就得放它走 ✓（⭐ 否则它会**浮在空中** ✓）。
+            if (!living.isRemoved()) {
+                try {
+                    // ① 切断归属
+                    com.mofengbaizhi.tinkersnewlife.content.curse.KillAttribution.forget(living);
+                    living.getPersistentData().remove(GourdJailHandler.KEY_SUPPRESS_LOOT);
+                    // ⚠ `CurseDeath` **只有 `mark` ✗ 没有 `unmark`** ✓（⭐ 查过 ✓）
+                    //   ⇒ ⭐ 撤不掉那个"咒死"标记 ✓ ⚠ 影响很小：⭐ 只是它下次真死时
+                    //     死亡信息会显示成"被诅咒致死" ✓ ⭐ 不影响数值 ✓（⭐ 不硬造 API ✗）。
+                    living.getPersistentData().remove("tnl_purge_failed_logged");
+                } catch (Throwable ignored) {
+                }
+                // ② 撤销封印记录
+                prisonerNbt = null;
+                prisonerId = null;
+                prisonerName = null;
+                // ③ 狱门疆回到未封印态
+                setSealed(false);
+                state = 0;
+                setAnim(0);
+                // ④ 放它走（恢复重力）
+                try {
+                    living.setNoGravity(false);
+                    living.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+                    living.hasImpulse = true;
+                } catch (Throwable ignored) {
+                }
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                        "[狱门疆] 清除失败 ⇒ **封印判定失败并恢复原样** ✗：{}（{}）UUID={}",
+                        living.getName().getString(),
+                        net.minecraft.world.entity.EntityType.getKey(living.getType()).toString(),
+                        living.getUUID());
+                return;
+            }
             // 无需球笼坐标（生物无维度）
         } else if (target != null) {
             // 其他实体：清除（无恢复）
