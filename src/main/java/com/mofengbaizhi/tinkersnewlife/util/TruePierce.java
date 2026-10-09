@@ -219,12 +219,43 @@ public final class TruePierce {
         float startHp = target.getHealth();
         float remaining = want;
         int guard = 0;
-        while (remaining > 0.0F && target.isAlive() && !target.isRemoved() && guard++ < MAX_CHUNKS) {
-            float part = Math.min(remaining, CHUNK);
-            target.invulnerableTime = 0;
-            markIntent(target, part);
-            target.hurt(src, part);
-            remaining -= part;
+        // ⭐⭐⚠⚠ **分段期间必须打上 `DamagePipeline` 的"嵌套"标记** ✗✗
+        //   （⭐ 用户实测 2026-10-10 ✓：「**穿透处理分割伤害后，黑闪按单段计算增幅，
+        //     导致总伤害远低于预期**」✓）
+        //
+        //   <h3>⚠ 为什么（⭐ 这是**系统性**问题 ✗ 不止黑闪一个 ✓）</h3>
+        //   ⭐ 玩家那一击 ⭐ **已经在外层被我们的各种增幅器作用过一次** ✓
+        //   ⭐ 而 ⭐ 分段只是为了绕开 Boss 的限伤／免疫窗 ✗ ⭐ **不该再放大一遍** ✓
+        //   ⚠ 但 ⭐ 原来这里**没有开标记** ✗ ⇒ ⭐ 目录下这些自家增幅器
+        //   ⭐ **在每一段里都各跑一次** ✓：
+        //     `BlackFlashHandler`（⭐ `^2.5` ✓ 就是用户报的那个 ✓）、
+        //     `ChildOfTheStarsHandler`、`CorruptionHandler`、`FormlessIceHandler`、
+        //     `PyriumHandler`、`IronSpellsArcaneHandler`、`LightningManipulationTechnique`、
+        //     `DragonStaffHandler`、`WizardArmorSetHandler`、`ModularStaffModifier`、
+        //     `ExecutionDomain` ✓ —— ⭐ 它们**都已经**写了 `skipNested()` 早退 ✓
+        //     ⭐ 只差**这里把标记打开** ✓。
+        //
+        //   <h3>⭐ 打开之后的效果</h3>
+        //   ⭐ 分段期间 ⭐ 自家增幅器**全部早退** ✓ ⇒ ⭐ 剩下的只有
+        //   ⭐ **外层那一次放大** ✓ ⇒ ⭐ 数值正好落在"整次攻击"的语义上 ✓ ✓
+        //   ⚠ 而 ⭐ **别的模组**的增幅器**看不到这个标记** ✗（⭐ 别的 classloader ✓
+        //     见 `DamagePipeline` 的注释 ✓）⇒ ⭐ 那些仍会逐段跑 ✓ ⭐ 我们管不了 ✓。
+        //
+        //   ⚠⚠ **不要**在这里处理"命灯"（`LifeLampRingHandler` ✓）——
+        //   ⭐ 用户口径（2026-10-10 ✓）：「**我故意穿透可以破命灯的保护**」✓
+        //   ⇒ ⭐ 那是有意设计 ✗ ⭐ 别顺手"修"掉 ✓。
+        com.mofengbaizhi.tinkersnewlife.util.DamagePipeline.enter();
+        try {
+            while (remaining > 0.0F && target.isAlive() && !target.isRemoved() && guard++ < MAX_CHUNKS) {
+                float part = Math.min(remaining, CHUNK);
+                target.invulnerableTime = 0;
+                markIntent(target, part);
+                target.hurt(src, part);
+                remaining -= part;
+            }
+        } finally {
+            // ⭐ 无论如何都要还原 ✓（⭐ 否则后面所有伤害都进不了自家增幅器 ✗）
+            com.mofengbaizhi.tinkersnewlife.util.DamagePipeline.exit();
         }
         return startHp - target.getHealth();
     }
