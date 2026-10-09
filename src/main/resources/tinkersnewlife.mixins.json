@@ -38,7 +38,8 @@
     "HeatingStructureScreenSearchMixin",
     "ScreenKeyInputMixin",
     "KeyboardHandlerImeMixin",
-    "HumanoidSpinPoseMixin"
+    "HumanoidSpinPoseMixin",
+    "PlayerSpinDispatcherMixin"
   ],
   "injectors": {
     "defaultRequire": 0

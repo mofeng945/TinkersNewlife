@@ -118,41 +118,25 @@ public final class LongShortBladeSpinHandler {
         return (float) Math.sin(Math.sqrt(f) * Math.PI);
     }
 
+    /**
+     * ⚠⚠ <b>这里的旋转已搬到 {@code PlayerSpinDispatcherMixin}</b>（⭐ 2026-10-09 ✓）
+     * —— ⭐ 因为 ⭐ **YSM 会整条接管玩家渲染** ✗ ⭐ 挂在 `RenderPlayerEvent`（⭐ 在 `PlayerRenderer` 里 ✓）
+     * ⭐ **YSM 开启时根本走不到** ✓ ⇒ ⭐ 现在改挂在 ⭐ `EntityRenderDispatcher#render` 的 `HEAD` ✗
+     * ⭐ 那一层 ⭐ **YSM 也要经过** ✓ ⇒ ⭐ 原版与 YSM **都能转** ✓。
+     * <p>⚠ 所以本方法**刻意留空** ✗ —— ⭐ 若这里再转一次 ⭐ 原版路径会 ⭐ **转两次** ✓。
+     */
     @SubscribeEvent
     public static void onRenderPlayer(RenderPlayerEvent.Pre event) {
-        try {
-            // ⚠ RenderPlayerEvent#getEntity() 的返回类型**就是 Player** ✗
-            //   ⇒ 不能写 `instanceof Player player`（"表达式类型的子类型"⇒ 非法 ✗）
-            //   ⚠ 这已经是**第二次**踩同一个坑 ✓（第一次是 projectile-side 替我编译时揪出来的 ✓）
-            Player player = event.getEntity();
-            if (player == null || !spinning(player)) {
-                return;
-            }
-            // ⭐ 用 **partialTick** 插值 ✓ —— 只用 tickCount 的话每 tick 才跳 90° ⇒ 看起来一顿一顿的 ✗
-            //   （⚠ 用户给的参考实现也是 `(skillTimer + partialTick) * 90f` ✓）
-            float partialTick = event.getPartialTick();
-            float angle = ((player.tickCount + partialTick) * DEG_PER_TICK) % 360.0F;
-            var pose = event.getPoseStack();
-            pose.pushPose();
-            pose.translate(0.0D, PIVOT_Y, 0.0D);
-            pose.mulPose(Axis.YP.rotationDegrees(angle));
-            pose.translate(0.0D, -PIVOT_Y, 0.0D);
-            PUSHED.put(player, Boolean.TRUE);
-        } catch (Throwable ignored) {
-            // ⭐ 渲染出错绝不能崩客户端 ✗
-        }
+        // ⚠ 空实现：旋转已搬到 PlayerSpinDispatcherMixin（⭐ 见上 ✓）
     }
 
+    /**
+     * ⚠ 同理留空 ✗ —— ⭐ 对应的 `popPose` 也一起搬走了 ✓
+     * （⭐ 那边用 `@At("RETURN")` 成对还原 ✓）。
+     */
     @SubscribeEvent
     public static void onRenderPlayerPost(RenderPlayerEvent.Post event) {
-        try {
-            Player player = event.getEntity();
-            if (player != null && Boolean.TRUE.equals(PUSHED.remove(player))) {
-                event.getPoseStack().popPose();
-            }
-        } catch (Throwable ignored) {
-            // ⭐ 同理 ✗
-        }
+        // ⚠ 空实现：见 onRenderPlayer 的说明 ✓
     }
 
     /**
