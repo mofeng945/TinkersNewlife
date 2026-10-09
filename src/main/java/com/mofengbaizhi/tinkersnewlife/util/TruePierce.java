@@ -344,6 +344,16 @@ public final class TruePierce {
         //   ③ ⭐ 读差值 ⇒ ⭐ **实际打掉了多少** ✗；
         //   ④ ⭐ 没打满 ⇒ ⭐ **只补差额**，且 ⭐ **补之前先手动补受击反馈** ✗
         //      （⭐ 因为被拦时 `hurt` 往往连音效都没播 ✓）。
+        // ⭐⭐ §1196 **攻击时"无视免疫窗"：⭐ 进 `hurt` 之前先清一次拦截字段** ✗
+        //   （⭐ 用户口径 ✓ 2026-10-10：「**攻击时无视免疫窗解除受击直接改血**」✓）
+        //   ⚠ 为什么还要在**打完再清一次** ✗：⭐ `Apostle.actuallyHurt` 每次受击后会把
+        //   ⭐ `moddedInvul` **置回 `BossInvulnerabilityTime`（⭐ 默认 15 ✓）** ✗
+        //   ⇒ ⭐ 只清开头那一次 ⇒ ⭐ **下一发又被拦** ✓
+        //   ⭐ 两头都清 ⇒ ⭐ **每发都能真的打进去** ✓ ✓（⭐ 这才叫"无视免疫窗" ✓）。
+        try {
+            GoetyBridge.clearApostleInvul(target);
+        } catch (Throwable ignored) {
+        }
         float startHp = rawHealth(target);
         float dealt = 0.0F;
         try {
@@ -371,6 +381,12 @@ public final class TruePierce {
         } catch (Throwable t) {
             // ⚠ 伤害调用被外部异常打断（⭐ §1118l 那类 ✓）⇒ ⭐ 当作"没打动" ✓ 后面逆向补 ✓
             TinkersNewlife.LOGGER.debug("[真伤] hurt 阶段被外部异常打断（转逆向改血）：{}", t.toString());
+        }
+        // ⭐⭐ §1196 **打完再清一次**（⭐ 见上面那段说明 ✓）——
+        //   ⚠ `hurt` 里 `actuallyHurt` 会把它置回 15 ✗ ⇒ ⭐ 不清的话**下一发又被拦** ✓
+        try {
+            GoetyBridge.clearApostleInvul(target);
+        } catch (Throwable ignored) {
         }
         // ⚠⚠ 探针用 **INFO** ✗ 不用 `debug` ✗ ——
         //   （⭐ 用户实测 2026-10-10 ✓：⭐ 我原来写的是 `debug` ＋ `isDebugEnabled` ✓
