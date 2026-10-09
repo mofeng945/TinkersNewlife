@@ -110,7 +110,19 @@ public class LongShortBladeModel extends BakedModelWrapper<BakedModel> {
             //   ⚠⚠ 我前面一直**直接返回裸模型** ✗ ⇒ ⭐ 它自己的 overrides **从没被调用** ✗
             //   ⇒ ⭐ 于是永远停在烘焙时那套 `tconstruct:unknown`（⭐ 没有材质颜色 ⇒ 灰白 ✓）
             //   —— ⭐ **这就是"没上色"的真正原因** ✓。
-            if (!isHeldByLocalPlayer(stack)) {
+            // ⭐⭐⚠⚠ **判据：优先用 `resolve` 自带的 `entity`** ✗✗
+            //   （⭐ 用户实测 2026-10-09 ✓：「**其他玩家看我手持双刀时双手都拿着未手持的物品栏模型**」✓）
+            //   ⚠ 根因：⭐ 我原来只看 ⭐ **本地玩家**（`Minecraft.getInstance().player` ✓）
+            //   ⇒ ⭐ 在**别人的客户端**上，"本地玩家"是**他自己** ✗ ⇒ ⭐ 他那把刀永远
+            //     `isHeldByLocalPlayer == false` ⇒ ⭐ **回退到 `ctx_idle`（未手持那套）** ✓
+            //   ⇒ ⭐ 别人看你双手都是"物品栏未手持"模型 ✓ ✓（⭐ 与现象完全一致 ✓）。
+            //   ⭐ 修法：⭐ `resolve(...)` **本来就带 `entity`** ✓ ⇒
+            //     ⭐ 直接看 ⭐ **"这把栈是不是 `entity` 的主手/副手"** ✗
+            //     ⭐ 这样 ⭐ **看别人 / 别人看你 / 自己看自己** 三种情况都对 ✓。
+            //   ⚠⚠ `entity` 为 null 的场景（⭐ 物品栏渲染 / GUI / 掉落物 ✓）⇒ ⭐ 回落原来的本地玩家判断 ✓
+            //     （⭐ 那时"物品栏 vs 手持"本来就是靠本地玩家区分的 ✓）。
+            boolean held = isHeldBy(stack, entity);
+            if (!held) {
                 BakedModel idleM = resolveMaterial(this.parent.idle, stack, level, entity, seed);
                 return new ContextPickModel(idleM, idleM);
             }
@@ -148,6 +160,36 @@ public class LongShortBladeModel extends BakedModelWrapper<BakedModel> {
         } catch (Throwable ignored) {
             return model;
         }
+    }
+
+    /**
+     * ⭐⭐ 这一把此刻是否 ⭐ **正拿在手里** ✗ —— ⭐ **优先看传入的 `entity`** ✓（⭐ 修"别人看你"的 bug ✓）。
+     *
+     * <h2>⚠ 为什么必须要 `entity`（⭐ 用户实测 ✓ 2026-10-09）</h2>
+     * ⭐ 原实现在这里看 ⭐ **本地玩家** ✗ ⇒ ⚠ 在**别人的客户端**上"本地玩家"是**他自己** ✗
+     * ⇒ ⭐ 你那把刀被判成"没拿在手里" ⇒ ⭐ **回退到物品栏未手持那套模型** ✓
+     * —— ⭐ 正是「**其他玩家看我手持双刀时双手都拿着未手持的物品栏模型**」✓。
+     * <p>⭐ `resolve(model, stack, level, entity, seed)` 里的 `entity` **就是"正在渲染谁"** ✓ ⇒
+     * ⭐ 直接问它 ⭐ **"这把栈是不是你的主手或副手"** ✗ ⭐ 三种视角就都对了 ✓：
+     * ⭐ 你看自己 ✓ ⭐ 你被别人看 ✓ ⭐ 你看别人 ✓。
+     *
+     * <p>⚠ `entity == null` 时（⭐ 物品栏 / GUI / 掉落物渲染 ✓）⇒ ⭐ **回落到"本地玩家"判断** ✓
+     * （⭐ 那时"物品栏 vs 手持"本来也只能靠本地玩家区分 ✓）。
+     */
+    private static boolean isHeldBy(ItemStack stack, @Nullable LivingEntity entity) {
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
+        // ① ⭐ 有实体 ⇒ 以**那个实体**为准 ✓（⭐ 关键 ✓）
+        if (entity != null) {
+            try {
+                return entity.getMainHandItem() == stack || entity.getOffhandItem() == stack;
+            } catch (Throwable ignored) {
+                // 掉到下面用本地玩家兜底 ✓
+            }
+        }
+        // ② ⭐ 没有实体 ⇒ 回落到本地玩家 ✓
+        return isHeldByLocalPlayer(stack);
     }
 
     /**
