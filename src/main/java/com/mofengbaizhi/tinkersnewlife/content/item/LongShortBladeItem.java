@@ -75,6 +75,37 @@ public class LongShortBladeItem extends ModifiableItem {
     public static final String TAG_ULTIMATE_END = "lnb_ult_end";
     /** ⭐ 副手那把"伙伴刀"的标记（⚠ 防止对它再做一次互换 ✗） */
     public static final String TAG_PAIR = "lnb_pair";
+
+    /**
+     * ⭐⭐ <b>「这一把已经补过伙伴刀了」标记</b>（⚠ 修 dupe 用 ✗ 用户实测 2026-10-09 ✓）。
+     *
+     * <h2>⚠ 为什么必须有它（⭐ 没有它＝印钞机 ✗）</h2>
+     * ⭐ 原逻辑：⭐「主手有刀 ＋ 副手空 ⇒ **补一把**」✗ ⇒ ⚠ 玩家**把副手那把拿走** ✗
+     * ⇒ ⭐ 副手又空了 ✗ ⇒ ⭐ **下一 tick 又补一把** ✓ ⇒ ⭐ 拿一把补一把 ⇒ **无限刷物品** ✗✗
+     * （⭐ 用户实测原话：「**我拿出来的短刀变成了一把新的长短刀，刷了物品**」✓）。
+     * <p>⇒ ⭐ 修法：⭐ **一把武器只补一次** ✗ —— ⭐ 补完就在**主手那把**上打这个标记 ✓
+     * ⇒ ⭐ 以后副手再空也**不再补** ✓（⭐ 玩家想再配就自己放一把 ✓ ⭐ 那不算刷 ✓）。
+     * <p>⚠ 标记写在 ⭐ **主手栈自己的 NBT** 上 ✗（⭐ 不是内存里的集合 ✓）⇒ ⭐ **重登/换维度都还在** ✓
+     * （⭐ 用内存集合的话 ⭐ 重进游戏就能再刷一次 ✓）。
+     */
+    public static final String TAG_PAIRED_ONCE = "lnb_paired";
+
+    /** ⭐ 这一把**是否已经补过**伙伴刀 ✓（⭐ 补过就不再补 ✗ 见 {@link #TAG_PAIRED_ONCE} ✓） */
+    public static boolean isPairedOnce(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
+        net.minecraft.nbt.CompoundTag tag = stack.getTag();
+        return tag != null && tag.getBoolean(TAG_PAIRED_ONCE);
+    }
+
+    /** ⭐ 打上"已补过"标记 ✓ */
+    public static void markPairedOnce(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return;
+        }
+        stack.getOrCreateTag().putBoolean(TAG_PAIRED_ONCE, true);
+    }
     /**
      * ⭐⭐ <b>交替挥动的同步计数器</b>（值 ＝ 命中次数 ＋1 ✓ 正负号表"这次该挥哪只手"✗）。
      * <p>⚠ 为什么要这个 ✗：⭐ 原版 `LivingEntity#swing()` 有闸门 ✗ ⇒

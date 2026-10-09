@@ -136,6 +136,15 @@ public final class LongShortBladeHandler {
         boolean mainIsBlade = main.getItem() instanceof LongShortBladeItem;
         boolean offIsBlade = off.getItem() instanceof LongShortBladeItem;
 
+        // ⭐⭐⚠⚠ **先清"跑到别处的伙伴刀"**（用户建议 ✓ 2026-10-09：
+        //   「**我的建议是短刀不要做真物品或者干脆无法被移动**」✓）
+        //   ⭐ 采用"**无法被移动**"这一半 ✗（⭐ 不做成"非真物品"因为那要重写副手攻击逻辑 ✓ 风险太高 ✓）：
+        //   ⇒ ⭐ 伙伴刀（带 `lnb_pair` 标记 ✓）**只允许待在副手** ✗
+        //     ⭐ 一旦被挪进背包/快捷栏/丢出去 ⇒ ⭐ **下一 tick 立刻清掉** ✓
+        //   ⇒ ⭐ 玩家视角就是"**拿不走**" ✓ ✓（⭐ 也彻底断了"拿一把补一把"的路 ✓）。
+        //   ⚠ **必须在最前面** ✗ —— ⭐ 否则下面那些分支会先 return ✗ 就漏掉了 ✓。
+        purgeStrayPairs(player, off);
+
         // ⭐⭐ 主手**不是**长短刃 ⇒ ⭐ **伙伴刀必须消失** ✗
         //   ⚠ 用户实测（2026-10-08 ✓）：「第一次拿在手里时确实可以在副手填充另一把刀，
         //     但是**切换物品栏时另一把刀不会消失**」✗ —— 根因就是我原先写的是
@@ -162,16 +171,56 @@ public final class LongShortBladeHandler {
             return;
         }
 
-        // ⭐ 主手是刀、副手空 ⇒ 补一把伙伴刀（形态相反 ✓）
-        if (off.isEmpty()) {
+        // ⭐⭐ 主手是刀、副手空 ⇒ 补一把伙伴刀（形态相反 ✓）—— ⚠⚠ **但一把只补一次** ✗✗
+        //   ⚠ 用户实测 dupe（2026-10-09 ✓）：「**当我在背包中试图拿走副手的短刀时，
+        //     新的短刀被填充进副手，我拿出来的短刀变成了一把新的长短刀，刷了物品**」✓
+        //   ⇒ ⭐ 根因就是**这里不加限制** ✗：⭐ 把副手那把拿走 ⇒ ⭐ 副手空 ⇒ ⭐ 下一 tick **又补一把** ✓
+        //     ⇒ ⭐ 拿一把补一把 ⇒ **无限刷** ✓。
+        //   ⇒ ⭐ 修法：⭐ 补之前先看**主手那把**有没有 {@link LongShortBladeItem#TAG_PAIRED_ONCE} 标记 ✗
+        //     ⭐ 补完立刻打上 ✓ ⇒ ⭐ 以后副手再空也**不补** ✓（⭐ 想再配就自己放 ✓ 那不算刷 ✓）。
+        if (off.isEmpty() && !LongShortBladeItem.isPairedOnce(main)) {
             ItemStack pair = main.copy();
             pair.setCount(1);
             LongShortBladeItem.markPair(pair, true);
             LongShortBladeItem.setForm(pair, LongShortBladeItem.isLong(main)
                     ? LongShortBladeItem.FORM_SHORT : LongShortBladeItem.FORM_LONG);
             player.setItemInHand(InteractionHand.OFF_HAND, pair);
+            // ⭐ 打标记（⭐ 写在**主手那把**上 ✗ ⇒ ⭐ 重登也有效 ✓ 见 §1168 ✓）
+            LongShortBladeItem.markPairedOnce(main);
         }
         // ⚠ 副手有别的东西 ⇒ 不动它 ✗（玩家自己放的东西优先 ✓）
+    }
+
+    /**
+     * ⭐⭐ <b>清掉"跑到副手以外"的伙伴刀</b>（用户建议 ✓「**干脆无法被移动**」✓）——
+     * ⭐ 伙伴刀（带 {@code lnb_pair} 标记 ✓）**只允许待在副手** ✗：
+     * ⭐ 背包 36 格（⭐ 含快捷栏 ✓）里凡是带标记的 ⇒ ⭐ **一律清掉** ✓。
+     *
+     * <h2>⚠ 为什么这能代替"做成非真物品"</h2>
+     * ⭐ 玩家想"拿走"伙伴刀 ⇒ ⭐ 它必然会进背包/被丢出 ✗ ⇒ ⭐ **下一 tick 就没了** ✓
+     * ⇒ ⭐ 手感上就是 ⭐ **拿不走** ✓ ✓（⚠ 而且它**不会被复制** ✗ ⭐ 因为复制品也带标记 ⇒ ⭐ 也一起清 ✓）。
+     *
+     * <p>⚠ **只清带标记的** ✗ —— ⭐ 玩家自己配的真刀（无标记 ✓）**一把都不动** ✓。
+     */
+    private static void purgeStrayPairs(ServerPlayer player, ItemStack off) {
+        try {
+            var inv = player.getInventory();
+            boolean changed = false;
+            for (int i = 0; i < inv.getContainerSize(); i++) {
+                ItemStack s = inv.getItem(i);
+                // ⚠ 副手不在 `Inventory` 里 ✗（⭐ 它是独立的 `Inventory` 索引 40 ✓）
+                //   ⇒ ⭐ 这里只看背包/快捷栏 ✓ ⭐ 副手那把**不动** ✓
+                if (s.getItem() instanceof LongShortBladeItem && LongShortBladeItem.isPair(s)) {
+                    inv.setItem(i, ItemStack.EMPTY);
+                    changed = true;
+                }
+            }
+            if (changed) {
+                inv.setChanged();
+            }
+        } catch (Throwable ignored) {
+            // ⭐ 清理失败绝不能连累玩法 ✗
+        }
     }
 
     /**
