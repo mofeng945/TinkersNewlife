@@ -92,10 +92,21 @@ public class PacketThrustGhost {
             return;
         }
         try {
+            // ⭐⭐⚠⚠ **必须是 `TRACKING_ENTITY_AND_SELF`** ✗ —— 这是本次"看不到残影"的**根因** ✓：
+            //   ⭐ 原版里 ⭐ **玩家不"追踪"自己** ✗（⭐ `ChunkMap.TrackedEntity#seenBy` 不含本人 ✓）
+            //   ⇒ ⭐ `TRACKING_ENTITY` 在**单人游戏**下**一个接收者都没有** ✗
+            //   ⇒ ⭐ 残影缓存**永远是空的** ⇒ ⭐ 什么都不画 ✓ ✓（⭐ 实测：渲染探针 0 行 ✓）
+            //   ⭐ Forge 那个 `_AND_SELF` 变体**正好**补上"也发给自己" ✓。
             TinkersNewlife.CHANNEL.send(
-                    net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY.with(() -> entity),
+                    net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> entity),
                     new PacketThrustGhost(entity.getId(), entity.getX(), entity.getY(), entity.getZ(),
                             entity.getYRot(), entity.getXRot()));
+            // ⚠ **临时探针**（⭐ 定位完删 ✗）：⭐ 确认"服务端到底有没有在广播" ✓
+            TinkersNewlife.LOGGER.info("[突刺残影·探针] 服务端广播 位置=({},{},{}) yaw={}",
+                    String.format(java.util.Locale.ROOT, "%.1f", entity.getX()),
+                    String.format(java.util.Locale.ROOT, "%.1f", entity.getY()),
+                    String.format(java.util.Locale.ROOT, "%.1f", entity.getZ()),
+                    String.format(java.util.Locale.ROOT, "%.1f", entity.getYRot()));
         } catch (Throwable ignored) {
             // ⭐ 发不出去只是少一个残影 ✓ 绝不能连累玩法 ✗
         }
