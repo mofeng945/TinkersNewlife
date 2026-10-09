@@ -126,7 +126,17 @@ public final class LongShortBladeModelHandler {
                     continue;
                 }
                 // ⭐ 只认"这个物品模型自己"的键 ✓（⭐ 别把 `ctx_*` 自己也包进去 ✗ 会自己套自己 ✓）
-                if (!BASE.getPath().equals(key.getPath())) {
+                //   ⚠⚠ **path 有两种形态** ✗（⭐ 又差点漏掉 ✓）：
+                //     · ⭐ `ModelResourceLocation`（物品：`tinkersnewlife:long_short_blade#inventory` ✓）
+                //       ⇒ ⭐ 它的 `getPath()` 是 ⭐ **`long_short_blade`** ✗（⭐ 没有 `item/` 前缀 ✓）；
+                //     · ⭐ 裸 `ResourceLocation`（⭐ 我 `RegisterAdditional` 的那几个 ✓）
+                //       ⇒ ⭐ `getPath()` 是 ⭐ `item/tool/long_short_blade/ctx_*` ✓。
+                //   ⇒ ⭐ 所以按 **"路径以 `long_short_blade` 结尾"** 来匹配 ✓ 且 ⭐ 排除含 `ctx_` 的 ✓。
+                String path = key.getPath();
+                if (!path.endsWith("long_short_blade")) {
+                    continue;
+                }
+                if (path.contains("ctx_")) {
                     continue;
                 }
                 if (!TinkersNewlife.MOD_ID.equals(key.getNamespace())) {
