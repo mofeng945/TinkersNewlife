@@ -526,6 +526,15 @@ public class LongShortBladeItem extends ModifiableItem {
     /** ⭐ 冲刺持续几 tick ✓（5 tick ＝ 0.25 秒 ✓ 够看出"冲过去"又不拖沓 ✓） */
     public static final int THRUST_TICKS = 5;
 
+    /**
+     * ⭐ 冲刺**每 tick 的水平速度**（格/tick ✓ 用户口径 ✓「做成给玩家**向前的推力**」✓）。
+     * <p>⚠ 不是"总距离 ÷ tick 数"那种**硬移** ✗ —— ⭐ 给速度之后玩家会**自己滑一段** ✗
+     * （⭐ 原版有地面摩擦 ✓ 而且速度每 tick 被重设 ⇒ ⭐ 实测位移 ≈ `速度 × tick 数` ✓）
+     * ⇒ ⭐ 取 ⭐ **0.75** ⇒ ⭐ 5 tick 约 **3.7 格** ✓ 与 {@link #THRUST_DISTANCE} 那 3 格相符 ✓。
+     * ⚠ 觉得冲太远/太近 ⇒ ⭐ 只改这一个数 ✓。
+     */
+    public static final double THRUST_SPEED = 0.75D;
+
     /** ⭐ 正在冲刺的玩家 ⇒ 方向 ✓ */
     private static final java.util.Map<java.util.UUID, Vec3> DASH_DIR =
             new java.util.concurrent.ConcurrentHashMap<>();
@@ -560,23 +569,38 @@ public class LongShortBladeItem extends ModifiableItem {
         stepThrust(player.serverLevel(), player);
     }
 
-    /** ⭐ 真正迈一步 ✓（⭐ 步长 ＝ 总距离 ÷ 总 tick 数 ✓） */
+    /**
+     * ⭐ 每 tick 推进一步（⭐ **给速度，不硬移** ✓ —— 用户口径 ✓ 2026-10-09：
+     * 「**把突刺做成给玩家向前的推力，而不是瞬移**」✓）。
+     *
+     * <h2>⚠ 为什么改成"给速度"（⭐ 而且必须在这里给 ✗）</h2>
+     * ⚠ 原实现是 ⭐ `player.teleportTo(...)` 硬移 ✗ ⇒ ⭐ 即使分 5 tick，位移也是**一帧一跳** ✗
+     * ⇒ 客户端插值出来仍偏"瞬移"✓ ⇒ ⭐ 改成 ⭐ **`setDeltaMovement(向前速度)`** ✓
+     * ⭐ 让引擎自己带着玩家走 ✓（⭐ 碰撞/台阶/流体都由原版处理 ✓ 更自然 ✓）。
+     * <p>⚠⚠ **时机很重要** ✗：⭐ 玩家的输入会在 ⭐ `Player#travel()` 里**重设速度** ✗
+     * ⇒ ⭐ 必须在那**之后**给速度才不会被覆盖 ✓ —— ⭐ 本方法由
+     * `LongShortBladeHandler#onPlayerTick` 在 ⭐ **`TickEvent.Phase.END`** 调用 ✓ ⇒ ⭐ 正好在移动之后 ✓
+     * ⇒ ⭐ 速度会在**下一 tick** 生效 ✓（⭐ 手感是"持续加速"而非"弹射" ✓）。
+     * <p>⚠ 还要 ⭐ `hurtMarked = true` ✗ ⇒ ⭐ 否则服务端改了速度**不告诉客户端** ✗
+     * ⭐ 客户端就会位置回弹 ✓（⭐ 经典坑 ✓）。
+     */
     private static void stepThrust(ServerLevel level, Player player) {
         Vec3 dir = DASH_DIR.get(player.getUUID());
         if (dir == null) {
             return;
         }
-        double step = THRUST_DISTANCE / (double) THRUST_TICKS;
-        // ⚠ 用**当前位置**重新试探 ✓（⭐ 冲刺途中地形可能变 ✓ 也可能撞墙 ✓）
-        Vec3 safe = safeStep(player, dir, step);
-        if (safe != null) {
-            player.teleportTo(safe.x, safe.y, safe.z);
-            player.fallDistance = 0.0F;
-        } else {
-            // ⭐ 前方已不安全 ⇒ ⭐ 提前结束冲刺 ✓（⭐ 撞墙就停 ✓ 不硬顶 ✓）
+        // ⚠ 前方不安全 ⇒ ⭐ 提前结束冲刺 ✓（⭐ 撞墙就停 ✓ 不硬顶 ✓）
+        if (!isSafe(player, player.getX() + dir.x * 0.7D, player.getZ() + dir.z * 0.7D, player.getY())) {
             DASH_LEFT.remove(player.getUUID());
             DASH_DIR.remove(player.getUUID());
+            return;
         }
+        // ⭐ 给向前的速度 ✓（⭐ Y 用**原本的** ✗ 免得把下落/跳跃顶掉 ✓）
+        Vec3 motion = player.getDeltaMovement();
+        player.setDeltaMovement(dir.x * THRUST_SPEED, motion.y, dir.z * THRUST_SPEED);
+        // ⭐ 让客户端也接受这个速度 ✓（⭐ 不写这句客户端会回弹 ✗）
+        player.hurtMarked = true;
+        player.fallDistance = 0.0F;
     }
 
     /** 逐 0.5 格试探 ✓ 撞到实心方块就停在最后安全点 ✓（照 {@code FeverHandler} 那套 ✓） */
