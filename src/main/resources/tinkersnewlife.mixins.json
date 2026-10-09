@@ -21,7 +21,8 @@
     "TwilightMazeRandomMixin",
     "ServerLevelTickTailMixin",
     "LivingEntityGetHealthMixin",
-    "ApostlePhaseTeleportMixin"
+    "ApostlePhaseTeleportMixin",
+    "ApostleDistanceMixin"
   ],
   "client": [
     "EntityRenderDispatcherMixin",
