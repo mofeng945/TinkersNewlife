@@ -138,14 +138,23 @@ public final class TruePierce {
 
     /** ⭐ **逆向读血**：⭐ 直读字段 ✓（⭐ 拿不到就退回 `getHealth()` ✓） */
     public static float rawHealth(LivingEntity target) {
+        float viaApi = target.getHealth();
         java.lang.reflect.Field f = healthField();
         if (f != null) {
             try {
-                return f.getFloat(target);
+                float viaField = f.getFloat(target);
+                // ⭐⭐⚠⚠ **两个通道取大的** ✗✗（⭐ 用户实测 2026-10-10 ✓ 探针实证 ✓）：
+                //   ⭐ 日志显示 ⭐ `[真伤] want=30.50 startHp=0.00 … 目标存活=true` ✗
+                //   ⇒ ⭐ 字段读出 **0** ✗ ⭐ 而 ⭐ 它还**活着** ✓ ⇒ ⭐ **矛盾** ✓
+                //   ⇒ ⭐ 说明 ⭐ **有些 Boss（⭐ Goety 的使徒那类 ✓）的血不在这个字段里** ✗
+                //     （⭐ 它覆写了 `getHealth()`／⭐ 有自己的头衔血量机制 ✓）
+                //   ⇒ ⭐ 只读字段会得到 **0** ✗ ⭐ 只读 `getHealth()` 又可能被"锁血"骗 ✓
+                //   ⇒ ⭐ **两个都读、取较大的那个** ✓ ✓ —— ⭐ 谁都不能骗过这一条 ✓。
+                return Math.max(viaField, viaApi);
             } catch (Throwable ignored) {
             }
         }
-        return target.getHealth();
+        return viaApi;
     }
 
     /**
@@ -167,9 +176,17 @@ public final class TruePierce {
                 raw = false;
             }
         }
-        if (!raw) {
-            // ⭐ 兜底：⭐ 拿不到字段就还是走 `setHealth` ✓（⭐ 至少能生效 ✓）
-            target.setHealth(value);
+        // ⭐⭐⚠⚠ **两个通道都要写** ✗✗（⭐ 探针实证 ✓ 见 {@link #rawHealth} 的说明 ✓）：
+        //   ⭐ 有些 Boss 的血 ⭐ **不在字段里** ✗（⭐ 使徒那类 ✓）
+        //   ⇒ ⭐ 只写字段 ⇒ ⭐ **写进了一个"没人读的地方"** ✗ ⭐ 等于没改 ✓
+        //   ⇒ ⭐ 所以 ⭐ **再走一次 `setHealth`** ✗ ⭐ 两条路都覆盖 ✓ ✓
+        //   ⚠ 代价：⭐ 若目标覆写了 `setHealth` 做"锁血" ✗ ⭐ 那一路仍会被挡 ✓
+        //     ⭐ **但字段那一路写进去了** ✓ ⇒ ⭐ 至少有一路生效 ✓（⭐ 比只写一路强 ✓）。
+        try {
+            if (Math.abs(target.getHealth() - value) > 1.0E-4F) {
+                target.setHealth(value);
+            }
+        } catch (Throwable ignored) {
         }
         // ⚠⚠ **必须标脏** ✗ —— ⭐ 否则客户端血条不同步 ✓
         try {
