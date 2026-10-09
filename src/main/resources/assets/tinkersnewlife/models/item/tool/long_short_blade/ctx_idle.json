@@ -1,0 +1,27 @@
+{
+  "_comment": "长短刃·物品栏·未手持（§1158）。⚠ 贴图来自用户桌面切分图的 short_inv_blade 与 short_inv_handle ✓（short_inv_blade → 部件0 head，short_inv_handle → 部件2 handle ✓）。⭐ 语义：还没配成一对时的样子 ✓（用户 2026-10-09 给的成品图「物品栏-未手持」✓）。⚠ 部件下标必须与 tool_definitions/long_short_blade.json 一致 ✗。⚠ 没画的部件用全透明占位 ✓。",
+  "loader": "tconstruct:tool",
+  "parent": "tconstruct:item/base/tall",
+  "textures": {
+    "head": "tinkersnewlife:item/tool/long_short_blade/ctx_idle/head",
+    "binding": "tinkersnewlife:item/tool/long_short_blade/ctx_idle/binding",
+    "handle": "tinkersnewlife:item/tool/long_short_blade/ctx_idle/handle",
+    "blade": "tinkersnewlife:item/tool/long_short_blade/ctx_idle/blade",
+    "limb": "tinkersnewlife:item/tool/long_short_blade/ctx_idle/limb"
+  },
+  "parts": [
+    { "name": "head",    "index": 0 },
+    { "name": "binding", "index": 1 },
+    { "name": "handle",  "index": 2 },
+    { "name": "blade",   "index": 3 },
+    { "name": "limb",    "index": 4 }
+  ],
+  "display": {
+    "gui":    { "rotation": [0, 0, 0], "translation": [0, 0, 0], "scale": [1, 1, 1] },
+    "ground": { "rotation": [0, 0, 0], "translation": [0, 2, 0], "scale": [0.5, 0.5, 0.5] },
+    "fixed":  { "rotation": [0, 180, 0], "translation": [0, 0, 0], "scale": [1, 1, 1] }
+  },
+  "overrides": [
+    { "predicate": { "tconstruct:broken": 1 }, "model": "tinkersnewlife:item/tool/long_short_blade/broken" }
+  ]
+}

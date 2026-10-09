@@ -49,6 +49,14 @@ public final class LongShortBladeModelHandler {
     // ============================================================
 
     /**
+     * ⭐ <b>物品栏·未手持</b> ✓ —— ⭐ 用户口径（2026-10-09）给了成品图「**物品栏-未手持**」✓
+     * 用 ⭐ `short_inv_blade` ＋ `short_inv_handle` ✓ ⇒ ⭐ 语义 ＝ **还没配成一对时**那一把的样子 ✓
+     * （⚠ 判定用 `lnb_pair` ✓ 见 `LongShortBladeModel` ✓）。
+     */
+    public static final ResourceLocation CTX_IDLE =
+            ctx("ctx_idle");
+
+    /**
      * ⭐ <b>物品栏·长刀</b> ✓ —— ⭐ 用户口径：「手持时长刀**物品栏模型**（**和普通剑同一匠魂父模型**）」✓
      * ⇒ ⭐ 所以它**同时**承担"未手持的长刀图标"与"手持时长刀在物品栏里的图标"✓
      * （⚠ 系统分不出"玩家有没有拿在手上" ✗ 见 §1146 的交代 ✓）。
@@ -93,6 +101,7 @@ public final class LongShortBladeModelHandler {
     @SubscribeEvent
     public static void onRegisterAdditional(ModelEvent.RegisterAdditional event) {
         try {
+            event.register(CTX_IDLE);
             event.register(CTX_INV_LONG);
             event.register(CTX_HELD_LONG);
             event.register(CTX_HELD_SHORT);
@@ -106,6 +115,7 @@ public final class LongShortBladeModelHandler {
     public static void onModifyBakingResult(ModelEvent.ModifyBakingResult event) {
         try {
             Map<ResourceLocation, BakedModel> models = event.getModels();
+            BakedModel idle = models.get(CTX_IDLE);
             BakedModel invLong = models.get(CTX_INV_LONG);
             BakedModel heldLong = models.get(CTX_HELD_LONG);
             BakedModel heldShort = models.get(CTX_HELD_SHORT);
@@ -148,7 +158,7 @@ public final class LongShortBladeModelHandler {
                     continue;
                 }
                 models.put(key, new LongShortBladeModel(e.getValue(),
-                        invLong, shortSide, heldLong, shortSide));
+                        idle, invLong, shortSide, heldLong));
                 wrapped++;
             }
 

@@ -45,23 +45,23 @@ public class LongShortBladeModel extends BakedModelWrapper<BakedModel> {
 
     /** ⭐ 物品栏·长刀 ✓ */
     private final BakedModel guiLong;
-    /** ⭐ 物品栏·短刀 ✓ */
-    private final BakedModel guiShort;
     /** ⭐ 手持·长刀 ✓ */
     private final BakedModel heldLong;
-    /** ⭐ 手持·短刀 ✓ */
-    private final BakedModel heldShort;
+    /** ⭐ 短刀（物品栏与手持**共用** ✓ 用户口径 ✓） */
+    private final BakedModel shortSide;
+    /** ⭐ 物品栏·**未手持**（⭐ 还没配成一对时 ✓ 用户成品图「物品栏-未手持」✓） */
+    private final BakedModel idle;
 
     public LongShortBladeModel(BakedModel fallback,
-                               BakedModel guiLong, BakedModel guiShort,
-                               BakedModel heldLong, BakedModel heldShort) {
+                               BakedModel idle,
+                               BakedModel guiLong, BakedModel shortSide, BakedModel heldLong) {
         super(fallback);
         // ⚠ 缺哪个就回退到哪一个 ✗ —— ⭐ 用户可以只画一部分 ✓（⭐ 没画的沿用默认 ✓ 不崩 ✓）
         BakedModel def = fallback;
-        this.guiLong = guiLong != null ? guiLong : def;
-        this.guiShort = guiShort != null ? guiShort : this.guiLong;
+        this.idle = idle != null ? idle : def;
+        this.guiLong = guiLong != null ? guiLong : this.idle;
         this.heldLong = heldLong != null ? heldLong : this.guiLong;
-        this.heldShort = heldShort != null ? heldShort : this.guiShort;
+        this.shortSide = shortSide != null ? shortSide : this.guiLong;
     }
 
     /** ⭐ 这四个"拿在手里"的场景才用 held ✓ 其它（GUI／展示框／掉落／头顶…）一律用 gui ✓ */
@@ -99,11 +99,39 @@ public class LongShortBladeModel extends BakedModelWrapper<BakedModel> {
         @Override
         public BakedModel resolve(BakedModel model, ItemStack stack, @Nullable ClientLevel level,
                                   @Nullable LivingEntity entity, int seed) {
+            // ⭐⭐ **未手持 ⇒ 物品栏·未手持那一套**（⭐ 用户口径 2026-10-09：
+            //   「**没配对指的是没有拿在手里吧**」✓ —— ⚠ 我上一版按 `lnb_pair`（配成对）理解**错了** ✗）
+            //   ⇒ ⭐ 判据改为 ⭐ **客户端玩家的主手/副手是不是"这一把栈"** ✗
+            //     （⭐ 同一个实例比较 ✓ 不用 `matches` ✓ 免得被 NBT 差异骗到 ✓）
+            //   ⚠ 只能在**客户端**用 `Minecraft` ✗ —— 本类在 `client/model/` 下 ✓ 安全 ✓。
+            if (!isHeldByLocalPlayer(stack)) {
+                return new ContextPickModel(this.parent.idle, this.parent.idle);
+            }
+            // ⭐ 拿在手里 ⇒ ⭐ 按形态分 ✗ ⇒ ⭐ 长／短各自一套 ✓
+            //   （⭐ 短刀的**物品栏与手持同图** ✓ 用户口径 ✓）
             boolean longForm = isLongForm(stack);
-            // ⭐ 把"该形态的 物品栏／手持 两张"一起交给第 2 级 ✓
             return new ContextPickModel(
-                    longForm ? this.parent.guiLong : this.parent.guiShort,
-                    longForm ? this.parent.heldLong : this.parent.heldShort);
+                    longForm ? this.parent.guiLong : this.parent.shortSide,
+                    longForm ? this.parent.heldLong : this.parent.shortSide);
+        }
+    }
+
+    /**
+     * ⭐ 这一把此刻是否 ⭐ **正拿在（本地玩家的）手里** ✗ ——
+     * ⚠ 用**栈实例**比较 ✗（⭐ 同一把工具在物品栏与手上是**同一份 `ItemStack` 实例** ✓）
+     * 而不是 `ItemStack.matches` ✗（⭐ 后者会把"另一把同 NBT 的"也算成拿着 ✓ 会误判 ✓）。
+     */
+    private static boolean isHeldByLocalPlayer(ItemStack stack) {
+        try {
+            net.minecraft.client.player.LocalPlayer p =
+                    net.minecraft.client.Minecraft.getInstance().player;
+            if (p == null || stack == null || stack.isEmpty()) {
+                return false;
+            }
+            return p.getMainHandItem() == stack || p.getOffhandItem() == stack;
+        } catch (Throwable ignored) {
+            // ⚠ 拿不到上下文就当作"拿在手里" ✓（⭐ 宁可显示正形 ✓ 不要满背包都是"未手持" ✓）
+            return true;
         }
     }
 
