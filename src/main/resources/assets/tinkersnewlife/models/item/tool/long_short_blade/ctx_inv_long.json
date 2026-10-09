@@ -1,5 +1,5 @@
 {
-  "_comment": "长短刃·物品栏·长刀（未手持 / 已装配长刀）（§1147）。⚠ 贴图就是你桌面切分图里那几张 ✓ 已拷到 textures/item/tool/long_short_blade/ctx_inv_long/ ✓。⚠ 部件下标必须与 tool_definitions/long_short_blade.json 一致：0=head（你的 *_blade ✓）1=binding 2=handle 3=blade 4=limb —— 错一格整把武器都会错位 ✗。⚠ 你没画 binding 或不用的部件 ⇒ 用了【全透明占位】✓（不是缺失贴图 ✓）。⚠ 你说"手持时长刀物品栏模型与普通剑同一父模型" ⇒ 用 tall ✓",
+  "_comment": "长短刃·物品栏·长刀（§1147）。⚠ 贴图来自用户桌面切分图 ✓ 已拷到 textures/item/tool/long_short_blade/ctx_inv_long/ ✓。⚠ 部件下标必须与 tool_definitions/long_short_blade.json 一致：0=head（用户的 *_blade ✓）1=binding 2=handle 3=blade 4=limb —— 错一格整把武器都会错位 ✗。⚠ 用户没画 binding 或不用的部件 ⇒ 用【全透明占位】✓ 不是缺失贴图 ✓。⚠ 用户口径「手持时长刀物品栏模型与普通剑同一父模型」⇒ 用 tall ✓",
   "loader": "tconstruct:tool",
   "parent": "tconstruct:item/base/tall",
   "textures": {
