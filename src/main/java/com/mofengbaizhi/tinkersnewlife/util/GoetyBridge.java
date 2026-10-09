@@ -245,6 +245,37 @@ public final class GoetyBridge {
         }
     }
 
+    /** ⭐⭐ §1200 **诊断用**（⭐ 用户口径 ✓ 2026-10-10：「**加个探针，附带检测血量**」✓）：
+     *  读使徒的"禁疗"计时 ✗ —— ⭐ `antiRegen > 0` ⇒ ⭐ `isSmited()` 为真 ⇒ ⭐ 它的 `heal` 被整体禁用 ✓
+     *  ⚠ 回弹探针靠它判断"**禁疗到底生效没有**" ✓。 */
+    public static int readAntiRegen(LivingEntity e) {
+        resolveReflection();
+        if (!isGoetyApostle(e)) return -1;
+        try {
+            if (antiRegenField == null) {
+                antiRegenField = fieldOf(apostleClass, "antiRegen");
+            }
+            return antiRegenField == null ? -1 : antiRegenField.getInt(e);
+        } catch (Throwable ignored) {
+            return -1;
+        }
+    }
+
+    /** ⭐⭐ §1200 **诊断用**：⭐ 反射调 ⭐ `Apostle#isSmited()` ✗（⭐ `antiRegen > 0` 时它应为真 ✓） */
+    public static boolean readIsSmited(LivingEntity e) {
+        resolveReflection();
+        if (!isGoetyApostle(e)) return false;
+        try {
+            java.lang.reflect.Method m = apostleClass.getMethod("isSmited");
+            m.setAccessible(true);
+            Object r = m.invoke(e);
+            return r instanceof Boolean b && b;
+        } catch (Throwable ignored) {
+            // ⚠ 拿不到（⭐ 名字变了 ✓）⇒ ⭐ 直接看 `antiRegen > 0` 兜底 ✓
+            return readAntiRegen(e) > 0;
+        }
+    }
+
     /** 读使徒 moddedInvul 当前值（诊断用） */
     public static int readModdedInvul(LivingEntity e) {
         resolveReflection();

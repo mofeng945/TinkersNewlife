@@ -577,6 +577,25 @@ public final class TruePierce {
             if (back <= value + 0.01F) {
                 return;   // ⭐ 写住了 ✓
             }
+            // ⚠⚠ **回弹探针**（⭐ 用户口径 ✓ 2026-10-10：「**加个探针，附带检测血量**」✓）
+            //   ⭐ 打出：⭐ 第几次 / ⭐ 目标 / ⭐ 写入值 / ⭐ 弹回值 / ⭐ `getHealth` 与字段两条通道
+            //   ＋ ⭐ 诡厄的禁疗状态（`antiRegen` ＋ `isSmited` ＋ `moddedInvul` ✓）
+            //   ⇒ ⭐ 一眼看出是"**禁疗失效**"还是"**换阶段直接回满**" ✓。
+            try {
+                TinkersNewlife.LOGGER.info(
+                        "[真伤·回弹] 第{}次 {}（{}）写={} 弹回={} | getHealth={} 字段={} | antiRegen={} isSmited={} moddedInvul={}",
+                        (i + 1),
+                        target.getName().getString(),
+                        net.minecraft.world.entity.EntityType.getKey(target.getType()).toString(),
+                        String.format(java.util.Locale.ROOT, "%.2f", value),
+                        String.format(java.util.Locale.ROOT, "%.2f", back),
+                        String.format(java.util.Locale.ROOT, "%.2f", target.getHealth()),
+                        String.format(java.util.Locale.ROOT, "%.2f", fieldHealth(target)),
+                        GoetyBridge.readAntiRegen(target),
+                        GoetyBridge.readIsSmited(target),
+                        GoetyBridge.readModdedInvul(target));
+            } catch (Throwable ignored) {
+            }
             // ⚠ 被弹回 ⇒ ⭐ 再压一次它的再生（⭐ 通用调用 ✓ 非诡厄目标内部会 no-op ✓）
             suppressRegen(target);
         }
@@ -588,6 +607,18 @@ public final class TruePierce {
                     String.format(java.util.Locale.ROOT, "%.2f", rawHealth(target)),
                     String.format(java.util.Locale.ROOT, "%.2f", value));
         }
+    }
+
+    /** ⭐ 只读**字段**那条通道 ✗（⭐ 与 `getHealth()` 对比 ⇒ ⭐ 看两条通道是否一致 ✓） */
+    private static float fieldHealth(LivingEntity target) {
+        java.lang.reflect.Field f = healthField();
+        if (f != null) {
+            try {
+                return f.getFloat(target);
+            } catch (Throwable ignored) {
+            }
+        }
+        return -1.0F;
     }
 
     private static void suppressRegen(LivingEntity target) {
