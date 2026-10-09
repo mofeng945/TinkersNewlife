@@ -310,6 +310,13 @@ public final class ApostlePatch {
                 mult = 1.5D;
             }
             if (isFromApostle(src)) {
+                // ⭐⭐ §1209 **亚波伦（Apollyon）不吃我们的加强** ✗
+                //   （⭐ 用户口径 ✓ 2026-10-10：「**让我的使徒加强别对亚波伦生效**」✓）
+                //   ⚠ 用**权威字段**判 ✗（⭐ `ApollyonAbilityHelper#isApollyon()` ✓
+                //     ⭐ 而不是"自定义名是否以头衔结尾"那个**间接**判据 ✓）。
+                if (com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isApollyon(apostleOf(src))) {
+                    return;
+                }
                 // §1073 双头衔使徒：在**配置倍率之上**再 ×1.5 ✓
                 //   （用户口径：「伤害在我加强的 1.5 倍基础上再 ×1.5」✓ ⇒ 配置默认 1.5 时合计 **2.25** ✓；
                 //    若你把配置改成别的值 ✓ 它就始终是"配置值 ×1.5" ✓ 不会写死 ✗）
@@ -548,6 +555,13 @@ public final class ApostlePatch {
         if (!enabled()) return;
         if (event.getLevel().isClientSide()) return;
         if (!(event.getEntity() instanceof Apostle apostle)) return;
+        // ⭐⭐ §1209 **亚波伦（Apollyon）不走我们的加强** ✗
+        //   （⭐ 用户口径 ✓ 2026-10-10：「**让我的使徒加强别对亚波伦生效**」✓）
+        //   ⚠ 用**权威字段**判 ✗（⭐ 反射 ⭐ `allTitlesApostle_1_20_1$isApollyon()` ✓）
+        //     ⭐ 而不是下面那个"名字以头衔结尾"的**间接**判据 ✓。
+        if (com.mofengbaizhi.tinkersnewlife.util.GoetyBridge.isApollyon(apostle)) {
+            return;
+        }
         net.minecraft.nbt.CompoundTag data = apostle.getPersistentData();
         // §1073 已经是双头衔的（**含读档进来的** ✓）⇒ 先把血量翻倍补齐 ✓（幂等 ✓ 有标记 ✓）就返回 ✓ 不重掷 ✓
         if (data.contains(KEY_SECOND_TITLE)) {

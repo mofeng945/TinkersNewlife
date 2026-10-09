@@ -633,6 +633,35 @@ public final class GoetyBridge {
         }
     }
 
+    /**
+     * ⭐⭐ §1209 <b>这只使徒是不是"亚波伦（Apollyon）"</b> ✗
+     * （⭐ 用户口径 ✓ 2026-10-10：「**让我的使徒加强别对亚波伦生效**」✓）。
+     *
+     * <h2>⚠ 为什么不用名字判</h2>
+     * ⚠ ⭐ 原来的判定是 ⭐「**自定义名是否以头衔文本结尾**」✗ ⭐ 那是**间接**的 ✓
+     * （⭐ 玩家改名／⭐ 别的模组改名／⭐ 语言不同都会失灵 ✓）
+     * ⭐ 而启示录 **自己暴露了权威字段** ✗：
+     * ⭐ `ApollyonAbilityHelper#allTitlesApostle_1_20_1$isApollyon()` ✓
+     * ⭐ 本类的 ⭐ {@code isApollyonMethod} ⭐ **早就反射拿到了它** ✓ ⇒ ⭐ 直接问 ✓ ✓。
+     *
+     * @return ⭐ true ＝ 它是亚波伦 ✓（⭐ 那么**我们的使徒加强一律不生效** ✓）
+     */
+    public static boolean isApollyon(LivingEntity e) {
+        resolveReflection();
+        if (e == null || isApollyonMethod == null || apollyonHelperIface == null) {
+            return false;
+        }
+        try {
+            if (!apollyonHelperIface.isInstance(e)) {
+                return false;
+            }
+            Object r = isApollyonMethod.invoke(e);
+            return r instanceof Boolean b && b;
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
     /** 清零启示录下界 Apollyon 的受击冷却（30tick 免疫窗），使多段伤害能连续命中 */
     public static void clearApollyonHitCooldown(LivingEntity e) {
         resolveReflection();
