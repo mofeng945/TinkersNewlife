@@ -1,31 +1,69 @@
 {
-  "_comment": "长短刃·手持·短刀（§1150）。⚠ 贴图来自用户桌面切分图 short_hand_blade 与 short_hand_handle ✓ 已拷到 textures/item/tool/long_short_blade/ctx_held_short/ ✓（short_hand_blade → 部件0 head，short_hand_handle → 部件2 handle ✓）。⚠ 部件下标必须与 tool_definitions/long_short_blade.json 一致：0=head 1=binding 2=handle 3=blade 4=limb —— 错一格整把武器都会错位 ✗。⚠ 短刀没有 binding 且部件 3/4 未画 ⇒ 全透明占位 ✓ 不是缺失贴图 ✓。",
-  "loader": "tconstruct:tool",
-  "parent": "tconstruct:item/base/tall",
-  "textures": {
-    "head": "tinkersnewlife:item/tool/long_short_blade/ctx_held_short/head",
-    "binding": "tinkersnewlife:item/tool/long_short_blade/ctx_held_short/binding",
-    "handle": "tinkersnewlife:item/tool/long_short_blade/ctx_held_short/handle",
-    "blade": "tinkersnewlife:item/tool/long_short_blade/ctx_held_short/blade",
-    "limb": "tinkersnewlife:item/tool/long_short_blade/ctx_held_short/limb"
-  },
-  "parts": [
-    { "name": "head",    "index": 0 },
-    { "name": "binding", "index": 1 },
-    { "name": "handle",  "index": 2 },
-    { "name": "blade",   "index": 3 },
-    { "name": "limb",    "index": 4 }
-  ],
-    "display": {
-    "gui":    { "rotation": [0, 0, 0], "translation": [0, 0, 0], "scale": [1, 1, 1] },
-    "ground": { "rotation": [0, 0, 90], "translation": [0, 2, 0], "scale": [0.5, 0.5, 0.5] },
-    "fixed":  { "rotation": [0, 180, 0], "translation": [0, 0, 0], "scale": [1, 1, 1] },
-    "thirdperson_righthand": { "rotation": [-167.91, -72.06, -164.12], "translation": [0, 4.0, 5.0], "scale": [1, 1.66016, 1] },
-    "thirdperson_lefthand":  { "rotation": [-161.06, 87.34, 165.1],  "translation": [0, 5.5, 6.25], "scale": [0.96875, 1.63281, 1.06641] },
-    "firstperson_righthand": { "rotation": [0, -90, 0], "translation": [0.0, -3.0, 2.5], "scale": [1.05, 1.05, 1.05] },
-    "firstperson_lefthand":  { "rotation": [0, 90, 0],  "translation": [0.0, -3.0, 2.5], "scale": [1.05, 1.05, 1.05] }
-  },
-  "overrides": [
-    { "predicate": { "tconstruct:broken": 1 }, "model": "tinkersnewlife:item/tool/long_short_blade/broken" }
-  ]
+	"format_version": "26.3",
+	"credit": "Made with Blockbench",
+	"parent": "tconstruct:item/base/tall",
+	"textures": {
+		"head": "tinkersnewlife:item/tool/long_short_blade/ctx_held_short/head",
+		"binding": "tinkersnewlife:item/tool/long_short_blade/ctx_held_short/binding",
+		"handle": "tinkersnewlife:item/tool/long_short_blade/ctx_held_short/handle",
+		"blade": "tinkersnewlife:item/tool/long_short_blade/ctx_held_short/blade",
+		"limb": "tinkersnewlife:item/tool/long_short_blade/ctx_held_short/limb"
+	},
+	"overrides": [
+		{"predicate": {"tconstruct:broken": 1}, "model": "tinkersnewlife:item/tool/long_short_blade/broken"}
+	],
+	"display": {
+		"thirdperson_righthand": {
+			"rotation": [-167.91, -72.06, -164.12],
+			"translation": [0, 1.75, 0],
+			"scale": [1, 1.66016, 1]
+		},
+		"thirdperson_lefthand": {
+			"rotation": [-161.06, 87.34, 165.1],
+			"translation": [0, 5.5, 6.25],
+			"scale": [0.96875, 1.63281, 1.06641]
+		},
+		"firstperson_righthand": {
+			"rotation": [0, -90, 0],
+			"translation": [0, -3, 2.5],
+			"scale": [1.05, 1.05, 1.05]
+		},
+		"firstperson_lefthand": {
+			"rotation": [0, 90, 0],
+			"translation": [0, -3, 2.5],
+			"scale": [1.05, 1.05, 1.05]
+		},
+		"ground": {
+			"rotation": [0, 0, 90],
+			"translation": [0, 2, 0],
+			"scale": [0.5, 0.5, 0.5]
+		},
+		"fixed": {
+			"rotation": [0, -180, 0]
+		}
+	},
+	"_comment": "长短刃·手持·短刀（§1150）。⚠ 贴图来自用户桌面切分图 short_hand_blade 与 short_hand_handle ✓ 已拷到 textures/item/tool/long_short_blade/ctx_held_short/ ✓（short_hand_blade → 部件0 head，short_hand_handle → 部件2 handle ✓）。⚠ 部件下标必须与 tool_definitions/long_short_blade.json 一致：0=head 1=binding 2=handle 3=blade 4=limb —— 错一格整把武器都会错位 ✗。⚠ 短刀没有 binding 且部件 3/4 未画 ⇒ 全透明占位 ✓ 不是缺失贴图 ✓。",
+	"loader": "tconstruct:tool",
+	"parts": [
+		{
+			"name": "head",
+			"index": 0
+		},
+		{
+			"name": "binding",
+			"index": 1
+		},
+		{
+			"name": "handle",
+			"index": 2
+		},
+		{
+			"name": "blade",
+			"index": 3
+		},
+		{
+			"name": "limb",
+			"index": 4
+		}
+	]
 }
