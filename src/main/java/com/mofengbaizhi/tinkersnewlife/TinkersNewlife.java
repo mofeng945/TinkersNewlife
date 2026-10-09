@@ -152,6 +152,8 @@ public class TinkersNewlife {
         com.mofengbaizhi.tinkersnewlife.content.ModSounds.SOUNDS.register(modEventBus);
 
         Modifiers.MODIFIERS.register(modEventBus);
+        // ⭐ §1137 粒子（⚠ 漏挂这一步不会编译报错 ✗ 只会在运行时取到 null ✗）
+        com.mofengbaizhi.tinkersnewlife.content.ModParticles.PARTICLES.register(modEventBus);
 
         // §1030 拔刀剑（照 TiCEX 1:1）：把三个自定义修饰符钩子注册进匠魂的钩子注册器 ✓ ——
         //   **必须早于修饰符被反序列化**（否则修饰符构造时 getHook(...) 拿到 null ✗）

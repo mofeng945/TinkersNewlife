@@ -349,6 +349,30 @@ public final class LongShortBladeHandler {
                 float execute = base * LongShortBladeItem.EXECUTE_MULTIPLIER;
                 target.invulnerableTime = 0;
                 target.hurt(player.damageSources().playerAttack(player), execute);
+                // ⭐⭐ **处决斩击粒子**（用户口径 ✓「样式为**内黑外红**的**横向斩击**，用于在**处决**时应用」✓）
+                //   ⚠ **横向**怎么来 ✗：⭐ 不是靠旋转粒子 ✓（粒子的 `roll` 是绕视线轴转 ✗ 控不出"横在世界上"✓）
+                //   ⇒ ⭐ 而是**沿"视线的水平垂线"排开一排** ✓ —— 那正好横在玩家面前 ✓；
+                //   ⭐ "内黑外红"由**贴图本身**承担 ✓（`textures/particle/execute_slash.png` ✓ 程序化占位 ✓
+                //     用户以后手绘替换只换 png ✓ 代码不用动 ✓）。
+                if (target.level() instanceof ServerLevel slashLevel) {
+                    net.minecraft.world.phys.Vec3 look = player.getLookAngle();
+                    net.minecraft.world.phys.Vec3 right =
+                            new net.minecraft.world.phys.Vec3(-look.z, 0.0D, look.x);
+                    if (right.lengthSqr() < 1.0E-4D) {
+                        right = new net.minecraft.world.phys.Vec3(1.0D, 0.0D, 0.0D);
+                    }
+                    right = right.normalize();
+                    double cy = target.getY() + target.getBbHeight() * 0.55D;
+                    // ⭐ 9 片铺成一道约 2 格宽的横斩 ✓（间距 0.24 ✓ 两端略收 ⇒ 像刀锋 ✓）
+                    for (int i = -4; i <= 4; i++) {
+                        double off = i * 0.24D;
+                        double dy = (Math.abs(i) % 2 == 0) ? 0.015D : -0.015D;
+                        slashLevel.sendParticles(
+                                com.mofengbaizhi.tinkersnewlife.content.ModParticles.EXECUTE_SLASH.get(),
+                                target.getX() + right.x * off, cy + dy, target.getZ() + right.z * off,
+                                1, 0.0D, 0.0D, 0.0D, 0.0D);
+                    }
+                }
                 if (player.level() instanceof ServerLevel sl) {
                     sl.playSound(null, target.blockPosition(), SoundEvents.PLAYER_ATTACK_CRIT,
                             SoundSource.PLAYERS, 1.2F, 0.6F);

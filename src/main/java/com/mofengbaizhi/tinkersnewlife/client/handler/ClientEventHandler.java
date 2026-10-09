@@ -98,6 +98,27 @@ public class ClientEventHandler {
         });
     }
 
+    /**
+     * ⭐ §1137 <b>注册自定义粒子的客户端工厂</b>（⚠ 本仓此前**没有任何自定义粒子** ✗ 这是第一个 ✓）。
+     *
+     * <p>⚠ 必须挂在 **MOD 总线**（本类的 {@code @Mod.EventBusSubscriber} 已声明 {@code bus = Bus.MOD} ✓）✗ ——
+     * 挂错总线会**静默不生效** ✓ 粒子显示成缺失贴图 ✗。
+     *
+     * <p>⚠ 注册类型必须与 {@code content/ModParticles} 的声明一致（{@code SimpleParticleType} ✓）；
+     * ⭐ 工厂用 {@code ExecuteSlashParticle.Provider} ✓（它负责取贴图精灵 ✓）。
+     */
+    @SubscribeEvent
+    public static void registerParticleProviders(
+            net.minecraftforge.client.event.RegisterParticleProvidersEvent event) {
+        try {
+            event.registerSpriteSet(
+                    com.mofengbaizhi.tinkersnewlife.content.ModParticles.EXECUTE_SLASH.get(),
+                    com.mofengbaizhi.tinkersnewlife.client.particle.ExecuteSlashParticle.Provider::new);
+        } catch (Throwable t) {
+            TinkersNewlife.LOGGER.warn("[长短刃] 处决斩击粒子注册失败（粒子不会显示，但不崩）：{}", t.toString());
+        }
+    }
+
     /** 注册咒力 HUD 覆盖层 + 傀儡血条 HUD + 构筑拟造进度条 + 咒言咏唱读条 */
     @SubscribeEvent
     public static void registerOverlays(RegisterGuiOverlaysEvent event) {
