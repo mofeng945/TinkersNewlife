@@ -678,6 +678,40 @@ public final class TruePierce {
         PENDING.put(target.getUUID(), new Pending(target.getUUID(), value, PENDING_TICKS));
     }
 
+    /** ⭐ "压上限"用的固定修饰符 UUID ✗（⭐ 稳定 ⇒ 可反复覆盖与移除 ✓） */
+    private static final java.util.UUID CLAMP_ID =
+            java.util.UUID.nameUUIDFromBytes("tinkersnewlife:pierce_health_clamp".getBytes());
+
+    /**
+     * ⭐⭐ §1203 <b>把 `MAX_HEALTH` 压到目标值</b> ✗ —— ⭐ 对付"禁疗开着也回血"的目标 ✓。
+     *
+     * <h2>⚠ 为什么需要它（⭐ 探针实证 ✓）</h2>
+     * ⭐ 回弹量 ⭐ **恒 ≈ 当前血量的 2.5%** ✗ ⇒ ⭐ 目标的回血**不走 `Apostle.heal`** ✓
+     *（⭐ 启示录自己的重定向／⭐ 头衔切换回满／⭐ 再生效果 ✓）⇒ ⭐ 禁疗再狠也拦不住 ✓
+     * ⇒ ⭐ 那就 ⭐ **压它的上限** ✗ ⇒ ⭐ 它**回满也只能回到我们给的值** ✓ ✓。
+     *
+     * <p>⚠ 副作用（⭐ 如实 ✓）：⭐ 它的血条上限会**变小** ✓（⭐ 对 Boss 来说这本来就是"被打残"的表现 ✓）。
+     * ⭐ 用 ⭐ **固定 UUID 的 `AttributeModifier`** ✗ ⇒ ⭐ 不叠加 ✓ ⭐ 且可被移除 ✓。
+     */
+    private static void clampMaxHealth(LivingEntity target, float value) {
+        try {
+            var attr = target.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+            if (attr == null) return;
+            float want = Math.max(1.0F, value);
+            // ⭐ 先移除旧的（⭐ 同 UUID ✓）再按当前基础值算差额 ✓
+            attr.removeModifier(CLAMP_ID);
+            double base = attr.getBaseValue();
+            double delta = want - base;
+            if (delta < -0.01D) {
+                attr.addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+                        CLAMP_ID, "tinkersnewlife:pierce_health_clamp", delta,
+                        net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADDITION));
+            }
+        } catch (Throwable ignored) {
+            // ⭐ 压上限失败不影响写血 ✓
+        }
+    }
+
     /**
      * ⭐ 每 tick 处理待补队列 ✗ —— ⭐ 对"锁血"目标反复顶 ✗ ⭐ 直到写住或次数用完 ✓。
      */
@@ -714,7 +748,14 @@ public final class TruePierce {
                     it.remove();
                     continue;
                 }
-                rawSetHealth(living, target);
+                // ⭐⭐ §1203 **压上限**（⭐ 用户实测 2026-10-10：「**仍然效果不佳**」✓）
+            //   ⭐ 探针实证：⭐ 弹回量**恒定 ≈ 当前血量的 2.5%** ✗
+            //   （⭐ `459.17→469.17` ✓ ⭐ `331.67→343.17` ✓）⭐ 而 ⭐ `antiRegen=200` ＋ ⭐ `isSmited=true`
+            //   ⇒ ⭐ **禁疗开着但它照样回血** ✓ ⇒ ⭐ 它走的是 `Apostle.heal` **之外**的路 ✓
+            //   ⇒ ⭐ 那就 ⭐ **把 `MAX_HEALTH` 属性也压到目标值** ✗
+            //     ⇒ ⭐ 它**怎么回满也回不到原上限** ✓ ✓（⭐ 通用 ✗ 任何目标都走 ✓ ⭐ 普通怪不会进这里 ✓）
+            clampMaxHealth(living, target);
+            rawSetHealth(living, target);
                 float now = rawHealth(living);
                 if (now <= target + 0.01F) {
                     it.remove();       // ⭐ 写住了 ⇒ 收工 ✓
