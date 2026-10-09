@@ -646,6 +646,99 @@ public final class TruePierce {
      */
     private static final int WRITE_RETRIES = 3;
 
+    /**
+     * ⭐⭐ §1202 <b>"锁血"对策：⭐ 跨 tick 连续压制</b>
+     * （⭐ 用户实测 ✓ 2026-10-10：「**好像还是没显著效果**」✓）。
+     *
+     * <h2>⚠ 探针实证的现象</h2>
+     * ⭐ 血**确实在掉** ✗（⭐ WARN 序列 `406 → 386 → 366 → … → 276` ✓ ⭐ 每发约 20 ✓）
+     * ⚠ **但每次都被拉回一个"档位下界"** ✗（⭐ 探针里 `写=56.50 弹回=87.00` ✓）
+     * ⇒ ⭐ 那是 ⭐ **"锁血"** ✗ ⭐ 不是"回血" ✓ ——
+     * ⭐ 反编译的 ⭐ `titleNumber(health)` ⭐ 把血量分 **14 档** ✗ ⭐ 每档有下界 ✓
+     * ⇒ ⭐ 我们的写入**被夹回档位下界** ✓ ⇒ ⭐ 每发**只能推进一档** ✓ ⇒ ⭐ 看起来"没效果" ✓。
+     *
+     * <h2>⭐ 对策</h2>
+     * ⭐ **同一个 tick 里写多少次都没用** ✗（⭐ 它在**后面**才拉回 ✓）
+     * ⇒ ⭐ 只能用 ⭐ **跨 tick 的待补队列** ✗ ⭐ 在接下来 {@value #PENDING_TICKS} 个 tick 里
+     * ⭐ **每 tick 再写一次** ✓ ⇒ ⭐ 把档位一次次顶穿 ✓ ✓。
+     *
+     * <p>⚠ 通用 ✗：⭐ 任何目标都会走这一遍 ✓ ⭐ 普通怪第一次就写住 ⇒ ⭐ 立刻出队 ✓
+     * ⭐ 只有"锁血"的目标才会被连续按几 tick ✓ ✓。
+     */
+    private static final int PENDING_TICKS = 6;
+
+    private record Pending(java.util.UUID id, float value, int left) {
+    }
+
+    private static final java.util.Map<java.util.UUID, Pending> PENDING =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** ⭐ 登记一个"跨 tick 待补"✗（⭐ 同目标覆盖 ✓ 取更低的那个值 ✓） */
+    private static void enqueuePending(LivingEntity target, float value) {
+        PENDING.put(target.getUUID(), new Pending(target.getUUID(), value, PENDING_TICKS));
+    }
+
+    /**
+     * ⭐ 每 tick 处理待补队列 ✗ —— ⭐ 对"锁血"目标反复顶 ✗ ⭐ 直到写住或次数用完 ✓。
+     */
+    @SubscribeEvent
+    public static void onServerTickPending(net.minecraftforge.event.TickEvent.ServerTickEvent event) {
+        if (event.phase != net.minecraftforge.event.TickEvent.Phase.END || PENDING.isEmpty()) {
+            return;
+        }
+        try {
+            var server = event.getServer();
+            if (server == null) return;
+            var it = PENDING.entrySet().iterator();
+            while (it.hasNext()) {
+                var e = it.next();
+                Pending pd = e.getValue();
+                var level = server.overworld();
+                net.minecraft.world.entity.Entity ent = null;
+                for (var lvl : server.getAllLevels()) {
+                    ent = lvl.getEntity(pd.id());
+                    if (ent != null) break;
+                }
+                if (!(ent instanceof LivingEntity living) || living.isRemoved() || !living.isAlive()) {
+                    it.remove();
+                    continue;
+                }
+                float target = pd.value();
+                // ⭐ 死线以下 ⇒ 直接走死亡流程 ✓（⭐ 不再纠缠锁血 ✓）
+                if (target <= 0.0F) {
+                    try {
+                        rawSetHealth(living, 0.0F);
+                        if (!living.isRemoved()) living.die(living.damageSources().genericKill());
+                    } catch (Throwable ignored) {
+                    }
+                    it.remove();
+                    continue;
+                }
+                rawSetHealth(living, target);
+                float now = rawHealth(living);
+                if (now <= target + 0.01F) {
+                    it.remove();       // ⭐ 写住了 ⇒ 收工 ✓
+                    continue;
+                }
+                // ⚠ 还没写住 ⇒ ⭐ 压一次再生 ＋ 扣一次剩余次数 ✓
+                suppressRegen(living);
+                int left = pd.left() - 1;
+                if (left <= 0) {
+                    TinkersNewlife.LOGGER.info(
+                            "[真伤] 跨 tick 压制 {} 次后仍未写住（{}）：当前={} 目标={} ⇒ 判定为持续锁血 ✓",
+                            PENDING_TICKS, living.getName().getString(),
+                            String.format(java.util.Locale.ROOT, "%.2f", now),
+                            String.format(java.util.Locale.ROOT, "%.2f", target));
+                    it.remove();
+                } else {
+                    e.setValue(new Pending(pd.id(), target, left));
+                }
+            }
+        } catch (Throwable ignored) {
+            // ⭐ 待补处理出错绝不能连累玩法 ✗
+        }
+    }
+
     private static void writeAndVerify(LivingEntity target, float value) {
         for (int i = 0; i < WRITE_RETRIES; i++) {
             rawSetHealth(target, value);
@@ -682,6 +775,9 @@ public final class TruePierce {
                     net.minecraft.world.entity.EntityType.getKey(target.getType()).toString(),
                     String.format(java.util.Locale.ROOT, "%.2f", rawHealth(target)),
                     String.format(java.util.Locale.ROOT, "%.2f", value));
+            // ⭐⭐ §1202 **同一 tick 写不住 ⇒ 登记"跨 tick 待补"** ✗
+            //   （⭐ 那是"锁血"：⭐ 它在后面把血夹回档位下界 ✓ ⭐ 只能跨 tick 一直顶 ✓）
+            enqueuePending(target, value);
         }
     }
 
