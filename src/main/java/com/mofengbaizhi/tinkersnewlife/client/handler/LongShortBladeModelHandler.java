@@ -57,11 +57,13 @@ public final class LongShortBladeModelHandler {
             ctx("ctx_inv_long");
 
     /**
-     * ⭐ <b>短刀（物品栏＋手持共用）</b> ✓ —— ⭐ 用户口径：
-     * 「手持时短刀**物品栏模型和手持模型相同**」✓ ⇒ ⭐ 短刀只要**这一个**模型 ✓。
+     * ⚠⚠ <b>短刀的槽位已**合并**</b> ✗ —— ⭐ 用户口径（2026-10-09）：
+     * 「**短刀的物品栏模型和它的手持模型都走hand**」✓
+     * ⇒ ⭐ 所以短刀**只有** {@link #CTX_HELD_SHORT} 一个模型 ✓，
+     * ⭐ 物品栏与手持**共用**它 ✓。
+     * <p>⚠ 原来这里还有一个 {@code CTX_INV_SHORT}（⭐ 走 `short_inv_*` 那两张 ✓）⇒ ⭐ 已**弃用并删除** ✓
+     * （⭐ 模型 JSON 与贴图目录都清了 ✓ 生成器登记也去了那两条 ✓）。
      */
-    public static final ResourceLocation CTX_INV_SHORT =
-            ctx("ctx_inv_short");
 
     /**
      * ⭐ <b>手持·长刀</b> ✓ —— ⭐ 用户口径：「手持时长刀手持模型（**大型工具**匠魂父模型）」✓
@@ -87,12 +89,11 @@ public final class LongShortBladeModelHandler {
     private LongShortBladeModelHandler() {
     }
 
-    /** ⭐ 把四个槽位登记进烘焙队列 ✓（⭐ 否则没人引用 ⇒ 不会被烘焙 ✗） */
+    /** ⭐ 把**三个**槽位登记进烘焙队列 ✓（⭐ 否则没人引用 ⇒ 不会被烘焙 ✗） */
     @SubscribeEvent
     public static void onRegisterAdditional(ModelEvent.RegisterAdditional event) {
         try {
             event.register(CTX_INV_LONG);
-            event.register(CTX_INV_SHORT);
             event.register(CTX_HELD_LONG);
             event.register(CTX_HELD_SHORT);
         } catch (Throwable t) {
@@ -106,9 +107,13 @@ public final class LongShortBladeModelHandler {
         try {
             Map<ResourceLocation, BakedModel> models = event.getModels();
             BakedModel invLong = models.get(CTX_INV_LONG);
-            BakedModel invShort = models.get(CTX_INV_SHORT);
             BakedModel heldLong = models.get(CTX_HELD_LONG);
             BakedModel heldShort = models.get(CTX_HELD_SHORT);
+            // ⭐⭐ **短刀：物品栏与手持**都走 `hand`**（用户口径 ✓ 2026-10-09：
+            //   「**短刀的物品栏模型和它的手持模型都走hand**」✓）
+            //   ⇒ ⭐ 所以 `ctx_inv_short`（`short_inv_*` 那两张）**不再使用** ✓ 已随本轮清理删除 ✓
+            //   ⇒ ⭐ 短刀两个场景**共用同一份** `ctx_held_short` ✓。
+            BakedModel shortSide = heldShort;
 
             // ⚠⚠ **不能只查裸键** ✗ —— ⭐ 实测日志（用户 2026-10-09「还是」那一局 ✓）：
             //   `[长短刃] 没找到基础模型 tinkersnewlife:item/long_short_blade` ✗
@@ -143,17 +148,16 @@ public final class LongShortBladeModelHandler {
                     continue;
                 }
                 models.put(key, new LongShortBladeModel(e.getValue(),
-                        invLong, invShort, heldLong, heldShort));
+                        invLong, shortSide, heldLong, shortSide));
                 wrapped++;
             }
 
             if (wrapped == 0) {
-                LOG.warn("[长短刃] 表里没有任何路径为 {} 的键 ⇒ 按场景切模型没接上（⭐ 这就是显示成占位的原因 ✓）",
-                        BASE.getPath());
+                LOG.warn("[长短刃] 表里没有任何路径以 long_short_blade 结尾的键 ⇒ 按场景切模型没接上（⭐ 这就是显示成占位的原因 ✓）");
                 return;
             }
-            LOG.info("[长短刃] 已接按场景×形态切模型（包了 {} 个键 ✓）：物品栏长={} 物品栏短={} 手持长={} 手持短={}",
-                    wrapped, invLong != null, invShort != null, heldLong != null, heldShort != null);
+            LOG.info("[长短刃] 已接按场景×形态切模型（包了 {} 个键 ✓）：物品栏长={} 手持长={} 短刀(两处共用hand)={}",
+                    wrapped, invLong != null, heldLong != null, shortSide != null);
         } catch (Throwable t) {
             LOG.warn("[长短刃] 接按场景切模型时出错（已忽略）：{}", t.toString());
         }
