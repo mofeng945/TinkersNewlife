@@ -39,6 +39,13 @@ public final class ModConfig {
     // ==================== 咒力核心 ====================
     public static final ConfigValue<Boolean> CURSE_CORE_ENABLED;
 
+    /**
+     * ⭐ §1173 启动到主菜单时自动跑一次匠魂材质生成器（⭐ 只补缺失的 ✓）并强制启用生成的资源包 ✓。
+     * <p>⭐ 用户口径 ✓：「**这个功能添加到配置文件中可以自由开关，默认开启**」✓
+     * （⭐ 配置键 ⭐ {@code auto_part_textures.enable_auto_part_textures} ✓ 默认 `true` ✓）。
+     */
+    public static final ConfigValue<Boolean> AUTO_PART_TEXTURES;
+
     // ==================== 拔刀剑物品栏渲染优化（§871） ====================
     /** 总开关：拔刀剑物品栏渲染优化（用户口径 C：缓存 ＋ 拥挤时跳发光层 ✓ 默认开 ✓） */
     public static final ConfigValue<Boolean> SLASHBLADE_RENDER_OPT;
@@ -435,6 +442,14 @@ public final class ModConfig {
         // 咒力核心
         b.push("curse_core").comment("Curse Core: allow crafting (ritual) and using (equipping/techniques). Default on.");
         CURSE_CORE_ENABLED = b.define("allow_curse_core_craft_and_use", true);
+        b.pop();
+
+        // ⭐ §1173 自动跑匠魂材质生成器（用户口径 ✓ 默认开启 ✓ 可关 ✓）
+        b.push("auto_part_textures").comment(
+                "Auto-run the Tinkers part texture generator when the game reaches the main menu.",
+                "It generates MISSING material part textures, then force-enables the generated resource pack.",
+                "Default on. Set to false to disable entirely.");
+        AUTO_PART_TEXTURES = b.define("enable_auto_part_textures", true);
         b.pop();
 
         // 古老者水晶 · 魔力台座（§545 起：五条来源并行叠加，其中默认开四条 · 亮度默认降到 0.5）
