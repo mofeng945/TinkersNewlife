@@ -181,6 +181,19 @@ public final class TruePierce {
         if (!target.isAlive() || target.isRemoved()) return;
         float hp = target.getHealth() - shortfall;
         if (hp <= 0.0F) {
+            // ⭐⭐⚠⚠ **补击杀归属**（用户实测 ✓ 2026-10-09：
+            //   「**很奇怪，不知道为什么杀了两遍末影龙都没有判定是我杀的**」✓）
+            //   ⚠ 根因：⭐ `KillAttribution` 补 {@code lastHurtByPlayer} 的动作**只在
+            //   `LivingHurtEvent` 里做** ✗ ⭐ 而**这一条收尾路径**是
+            //   ⭐ **`setHealth(0)` ＋ `die()`** ✗ ⇒ ⭐ **根本不经过那个事件** ✓
+            //   ⇒ ⭐ 记忆（`remember` ✓）写了却**从没被应用** ✓
+            //   ⇒ ⭐ 末影龙死时 ⭐ `EnderDragon#getKillCredit()`（＝ `lastHurtByPlayer` ✓）**是 null**
+            //     ⇒ ⭐ `DragonFight` **不判定玩家击杀** ✗（⭐ 成就/掉落/经验都拿不到 ✓）
+            //   ⇒ ⭐ 修法：⭐ 在 `die()` **之前**显式调 {@code KillAttribution.credit} ✗
+            //     ⭐ 它会立刻把 {@code lastHurtByPlayer/Mob} 补到目标身上 ✓
+            //     ⚠ 这样 `die()` 之后的一切死亡结算（⭐ 龙战 ✓ 战利品 `killed_by_player` ✓
+            //       成就 `player_killed_entity` ✓）都能认出玩家 ✓。
+            com.mofengbaizhi.tinkersnewlife.content.curse.KillAttribution.credit(target, attacker);
             target.setHealth(0.0F);
             if (!target.isRemoved()) target.die(withAttacker);   // ⚠ setHealth(0) 之后 isAlive() 恒为 false ⇒ 原来 die() 永远不执行 ✗（怪停在 0 血：不掉落、不给经验、无死亡事件 ✗）
         } else {
@@ -190,6 +203,8 @@ public final class TruePierce {
         if (GoetyBridge.isGoetyApostle(target) && target.isAlive() && !target.isRemoved()
                 && target.getHealth() <= target.getMaxHealth() * 0.18F
                 && (startHp - target.getHealth()) < 5.0F) {
+            // ⭐ 同上：⭐ 处决兜底这条也绕过了 `LivingHurtEvent` ✗ ⇒ ⭐ 一样要补归属 ✓
+            com.mofengbaizhi.tinkersnewlife.content.curse.KillAttribution.credit(target, attacker);
             target.setHealth(0.0F);
             if (!target.isRemoved()) target.die(withAttacker);
         }
