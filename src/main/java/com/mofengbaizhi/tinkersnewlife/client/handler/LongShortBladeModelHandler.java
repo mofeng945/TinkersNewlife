@@ -105,20 +105,45 @@ public final class LongShortBladeModelHandler {
     public static void onModifyBakingResult(ModelEvent.ModifyBakingResult event) {
         try {
             Map<ResourceLocation, BakedModel> models = event.getModels();
-            BakedModel base = models.get(BASE);
-            if (base == null) {
-                LOG.warn("[长短刃] 没找到基础模型 {} ⇒ 按场景切模型没接上", BASE);
-                return;
-            }
             BakedModel invLong = models.get(CTX_INV_LONG);
             BakedModel invShort = models.get(CTX_INV_SHORT);
             BakedModel heldLong = models.get(CTX_HELD_LONG);
             BakedModel heldShort = models.get(CTX_HELD_SHORT);
-            // ⚠ 缺哪个就传 null ✗ ⇒ ⭐ 包装器自己回退 ✓（⭐ 只画一部分也不会崩 ✓）
-            models.put(BASE, new LongShortBladeModel(base,
-                    invLong, invLong, invShort, heldLong, heldShort));
-            LOG.info("[长短刃] 已接按场景×形态切模型：物品栏长={} 物品栏短={} 手持长={} 手持短={}",
-                    invLong != null, invShort != null, heldLong != null, heldShort != null);
+
+            // ⚠⚠ **不能只查裸键** ✗ —— ⭐ 实测日志（用户 2026-10-09「还是」那一局 ✓）：
+            //   `[长短刃] 没找到基础模型 tinkersnewlife:item/long_short_blade` ✗
+            //   ⚠ 而同一条日志上方写着 `Missing textures in model
+            //   tinkersnewlife:long_short_blade#inventory` ✓
+            //   ⇒ ⭐ **物品模型的键是 `ModelResourceLocation`**（形如 `<路径>#inventory` ✓）
+            //     而不是裸 `ResourceLocation` ✗ ⇒ ⭐ 原来的 `models.get(BASE)` 恒为 null ✗
+            //     ⇒ ⭐ **整套"按场景切模型"从来没接上过** ✗ ✓ 这就是"还是占位"的真正原因 ✓。
+            //   ⇒ ⭐ 改成 ⭐ **扫全表、按"路径"匹配** ✓ ——
+            //     ⭐ 这样 `#inventory`／任何变体键都能被包上 ✓（⭐ 将来别的变体也不会漏 ✓）。
+            int wrapped = 0;
+            for (Map.Entry<ResourceLocation, BakedModel> e : new java.util.ArrayList<>(models.entrySet())) {
+                ResourceLocation key = e.getKey();
+                if (key == null || e.getValue() == null) {
+                    continue;
+                }
+                // ⭐ 只认"这个物品模型自己"的键 ✓（⭐ 别把 `ctx_*` 自己也包进去 ✗ 会自己套自己 ✓）
+                if (!BASE.getPath().equals(key.getPath())) {
+                    continue;
+                }
+                if (!TinkersNewlife.MOD_ID.equals(key.getNamespace())) {
+                    continue;
+                }
+                models.put(key, new LongShortBladeModel(e.getValue(),
+                        invLong, invLong, invShort, heldLong, heldShort));
+                wrapped++;
+            }
+
+            if (wrapped == 0) {
+                LOG.warn("[长短刃] 表里没有任何路径为 {} 的键 ⇒ 按场景切模型没接上（⭐ 这就是显示成占位的原因 ✓）",
+                        BASE.getPath());
+                return;
+            }
+            LOG.info("[长短刃] 已接按场景×形态切模型（包了 {} 个键 ✓）：物品栏长={} 物品栏短={} 手持长={} 手持短={}",
+                    wrapped, invLong != null, invShort != null, heldLong != null, heldShort != null);
         } catch (Throwable t) {
             LOG.warn("[长短刃] 接按场景切模型时出错（已忽略）：{}", t.toString());
         }
