@@ -78,8 +78,7 @@ public class LongShortBladeModel extends BakedModelWrapper<BakedModel> {
     }
 
     /** ⭐ 读 {@code lnb_form} ✓（⚠ 复用物品类里的判断 ✓ 免得两边各写一个字符串 ✗） */
-    private static boolean isLongForm(ItemStack stack) {
-        try {
+    private static boolean isLongForm(ItemStack stack) {        try {
             return com.mofengbaizhi.tinkersnewlife.content.item.LongShortBladeItem.isLong(stack);
         } catch (Throwable ignored) {
             // ⚠ 读不到就当长刀 ✓（⭐ 与 `LongShortBladeItem` 里的默认值一致 ✓）
@@ -104,15 +103,50 @@ public class LongShortBladeModel extends BakedModelWrapper<BakedModel> {
             //   ⇒ ⭐ 判据改为 ⭐ **客户端玩家的主手/副手是不是"这一把栈"** ✗
             //     （⭐ 同一个实例比较 ✓ 不用 `matches` ✓ 免得被 NBT 差异骗到 ✓）
             //   ⚠ 只能在**客户端**用 `Minecraft` ✗ —— 本类在 `client/model/` 下 ✓ 安全 ✓。
+            // ⭐⭐ **关键一步：把选中的模型再过一遍"它自己的 overrides"** ✗
+            //   ⭐ 匠魂的按材料上色**不是**烘焙时定死的 ✗ —— ⭐ 它是那张模型的
+            //   `getOverrides()`（`MaterialOverrideHandler` ✓）在**拿到物品栈之后**才换上
+            //   `<部件>_<真实材料>` 那套贴图 ✓（⭐ 也就是"同一个模型 → 按材料换图" ✓）。
+            //   ⚠⚠ 我前面一直**直接返回裸模型** ✗ ⇒ ⭐ 它自己的 overrides **从没被调用** ✗
+            //   ⇒ ⭐ 于是永远停在烘焙时那套 `tconstruct:unknown`（⭐ 没有材质颜色 ⇒ 灰白 ✓）
+            //   —— ⭐ **这就是"没上色"的真正原因** ✓。
             if (!isHeldByLocalPlayer(stack)) {
-                return new ContextPickModel(this.parent.idle, this.parent.idle);
+                BakedModel idleM = resolveMaterial(this.parent.idle, stack, level, entity, seed);
+                return new ContextPickModel(idleM, idleM);
             }
             // ⭐ 拿在手里 ⇒ ⭐ 按形态分 ✗ ⇒ ⭐ 长／短各自一套 ✓
             //   （⭐ 短刀的**物品栏与手持同图** ✓ 用户口径 ✓）
             boolean longForm = isLongForm(stack);
-            return new ContextPickModel(
-                    longForm ? this.parent.guiLong : this.parent.shortSide,
-                    longForm ? this.parent.heldLong : this.parent.shortSide);
+            BakedModel guiM = resolveMaterial(
+                    longForm ? this.parent.guiLong : this.parent.shortSide, stack, level, entity, seed);
+            BakedModel heldM = resolveMaterial(
+                    longForm ? this.parent.heldLong : this.parent.shortSide, stack, level, entity, seed);
+            return new ContextPickModel(guiM, heldM);
+        }
+    }
+
+    /**
+     * ⭐ 让**被选中的那张模型**再走一遍它自己的 `getOverrides().resolve(...)` ✓ ——
+     * ⭐ 匠魂的 `MaterialOverrideHandler` 就在这里把 ⭐ `<部件>_<材料>` 换成真实材料那套 ✓
+     * （⭐ 所以这是"按材料上色"能不能生效的**唯一开关** ✓）。
+     *
+     * <p>⚠ 任何异常都回退到原模型 ✗ —— ⭐ 上色失败最多是灰白 ✓ 不能连累渲染 ✓。
+     */
+    private static BakedModel resolveMaterial(BakedModel model, ItemStack stack,
+                                              @Nullable ClientLevel level,
+                                              @Nullable LivingEntity entity, int seed) {
+        if (model == null) {
+            return null;
+        }
+        try {
+            ItemOverrides ov = model.getOverrides();
+            if (ov == null) {
+                return model;
+            }
+            BakedModel out = ov.resolve(model, stack, level, entity, seed);
+            return out != null ? out : model;
+        } catch (Throwable ignored) {
+            return model;
         }
     }
 
