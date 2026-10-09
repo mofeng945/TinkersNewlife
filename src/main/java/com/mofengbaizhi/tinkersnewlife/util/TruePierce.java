@@ -343,12 +343,14 @@ public final class TruePierce {
             // ⚠ 伤害调用被外部异常打断（⭐ §1118l 那类 ✓）⇒ ⭐ 当作"没打动" ✓ 后面逆向补 ✓
             TinkersNewlife.LOGGER.debug("[真伤] hurt 阶段被外部异常打断（转逆向改血）：{}", t.toString());
         }
-        if (TinkersNewlife.LOGGER.isDebugEnabled()) {
-            TinkersNewlife.LOGGER.debug("[真伤] want={} startHp={} dealt={}",
-                    String.format(java.util.Locale.ROOT, "%.2f", want),
-                    String.format(java.util.Locale.ROOT, "%.2f", startHp),
-                    String.format(java.util.Locale.ROOT, "%.2f", dealt));
-        }
+        // ⚠⚠ 探针用 **INFO** ✗ 不用 `debug` ✗ ——
+        //   （⭐ 用户实测 2026-10-10 ✓：⭐ 我原来写的是 `debug` ＋ `isDebugEnabled` ✓
+        //    ⇒ ⭐ **默认级别根本不输出** ✗ ⇒ ⭐ "0 行"被我**误读成"没被调用"** ✓ ⭐ 差点查偏 ✓）
+        TinkersNewlife.LOGGER.info("[真伤] want={} startHp={} dealt={} 字段可用={}",
+                String.format(java.util.Locale.ROOT, "%.2f", want),
+                String.format(java.util.Locale.ROOT, "%.2f", startHp),
+                String.format(java.util.Locale.ROOT, "%.2f", dealt),
+                HEALTH_FIELD_STATE == 1);
 
 
         // ⑤ 差额直补 —— ⭐⭐ §1188 改成 ⭐ **逆向改血**（⭐ 用户口径 ✓ 2026-10-10 ✓）✗：
@@ -357,6 +359,10 @@ public final class TruePierce {
         //   ⭐ 现在改成 ⭐ **反射直写血量真身字段** ✗ ＋ ⭐ 标脏同步 ✓
         //   ⇒ ⭐ 它的保护逻辑 ⭐ **读不到"有人在改血"** ✓ ✓（⭐ 这就是"逆向改血" ✓）。
         float shortfall = want - Math.max(dealt, 0.0F);
+        // ⭐ 探针（⭐ INFO ✓ 一定可见 ✓）：⭐ 决定"补不补、补多少" ✗
+        TinkersNewlife.LOGGER.info("[真伤] shortfall={} 目标存活={} 已移除={}",
+                String.format(java.util.Locale.ROOT, "%.2f", shortfall),
+                target.isAlive(), target.isRemoved());
         if (shortfall <= 0.01F) return;
         if (!target.isAlive() || target.isRemoved()) return;
         // ⭐⭐ §1191 走**逆向改血**之前 ⭐ **先手动补受击反馈** ✗
