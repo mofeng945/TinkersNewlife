@@ -256,6 +256,37 @@ public final class GoetyBridge {
         }
     }
 
+    /**
+     * ⭐⭐ §1195 <b>把使徒的"受击无敌窗"清零 ⇒ 真正破免疫窗</b>
+     * （⭐ 用户实测 ✓ 2026-10-10：「**免疫窗没破**」✓）。
+     *
+     * <h2>⚠ 为什么必须清零（⭐ 反编译实证 ✓）</h2>
+     * ⭐ `Apostle.hurt()` **第一句**就是 ✗：
+     * <pre>
+     *   if (this.moddedInvul &gt; 0 || this.obsidianInvul &gt; 0) return false;   // ⭐ 直接免伤 ✓
+     * </pre>
+     * ⭐ 而 ⭐ `actuallyHurt()` 里 ⭐ 每次受击后会把 ⭐ `moddedInvul` 置回
+     * ⭐ {@code BossInvulnerabilityTime}（⭐ 默认 **15** ✓）✗
+     * ⇒ ⭐ **它几乎永远是 > 0** ✗ ⇒ ⭐ 普通 `hurt` **永远打不进去** ✓
+     * ⇒ ⚠ 光靠"逆向改血补差额"血是掉了 ✗ ⭐ 但 ⭐ **免疫窗本身没破** ✓（⭐ 事件/反伤/音效都不触发 ✓）
+     * ⇒ ⭐ 这里 ⭐ **直接清零** ✗ ⇒ ⭐ `hurt` 就能真的打进去 ✓ ✓。
+     *
+     * <p>⚠ 无需还原 ✗ —— ⭐ 使徒自己会在下次受击后重新置回 ✓
+     *（⭐ 那正是"免疫窗"的语义 ✓ ⭐ 我们只是**这次**穿过去 ✓）。
+     */
+    public static void clearApostleInvul(LivingEntity e) {
+        resolveReflection();
+        if (!isGoetyApostle(e)) return;
+        try {
+            if (moddedInvulField != null) moddedInvulField.setInt(e, 0);
+        } catch (Throwable ignored) {
+        }
+        try {
+            if (obsidianInvulField != null) obsidianInvulField.setInt(e, 0);
+        } catch (Throwable ignored) {
+        }
+    }
+
     // =====================================================================
     //  使徒禁疗（antiRegen）：使徒在部分称号阶段高速再生（heal 每次 2.5% 最大生命），
     //  正常打法是"亡灵杀手"附魔触发 antiRegen；我们的穿透不走普通攻击，需手动挂上

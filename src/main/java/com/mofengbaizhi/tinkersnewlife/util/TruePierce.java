@@ -297,6 +297,18 @@ public final class TruePierce {
         // ② 禁疗（否则再生会把伤害吃回去）+ 清掉本模组自己的"伤害限幅"效果（它会取消多段伤害）
         suppressRegen(target);
         clearOwnDamageLimit(target);
+        // ⭐⭐ §1195 **破使徒的"受击无敌窗"** ✗（⭐ 用户实测 2026-10-10：「**免疫窗没破**」✓）
+        //   ⚠ 反编译实证：⭐ `Apostle.hurt()` 第一句就是
+        //   ⭐ `if (moddedInvul > 0 || obsidianInvul > 0) return false;` ✗
+        //   ⭐ 而 ⭐ `actuallyHurt` 每次受击后把 `moddedInvul` 置回 ⭐ `BossInvulnerabilityTime`（⭐ 默认 15 ✓）
+        //   ⇒ ⭐ 它**几乎永远 > 0** ⇒ ⭐ 普通 `hurt` **永远打不进去** ✓
+        //   ⇒ ⚠ 光靠逆向改血补差额血是掉了 ✗ ⭐ 但**免疫窗本身没破** ✓
+        //   ⇒ ⭐ 这里清零那两个字段 ✗ ⇒ ⭐ `hurt` 就能真的打进去 ✓ ✓
+        //     （⭐ 无需还原 ✓ 使徒自己会在下次受击后置回 ✓ 那正是免疫窗的语义 ✓）。
+        try {
+            GoetyBridge.clearApostleInvul(target);
+        } catch (Throwable ignored) {
+        }
 
         DamageSource withAttacker = source(target.level(), attacker);
         DamageSource anonymous = source(target.level(), null);
