@@ -208,6 +208,23 @@ public final class BossFightHandler {
 
     @SubscribeEvent
     public static void onHurt(LivingHurtEvent event) {
+        // ⚠⚠ **临时探针：末影龙每一次受击**（⭐ 定位完删 ✗）
+        //   ⭐ 目的：⭐ 看"最后几刀是谁打的、伤害源长什么样" ✓ ——
+        //   ⚠ 若**一次都没打出来** ✗ ⇒ ⭐ 说明龙根本没被正常伤害打死 ✓（⭐ 那问题就不在归属上 ✓）；
+        //   ⭐ 若最后几刀的 `entity` 是 null ✗ ⇒ ⭐ 原版就不会写 `lastHurtByPlayer` ⇒ ⭐ 不算玩家击杀 ✓。
+        try {
+            if (event.getEntity() instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon) {
+                var s = event.getSource();
+                TinkersNewlife.LOGGER.info(
+                        "[末影龙·探针] 受击 {} 点：source={} entity={} direct={}",
+                        String.format(java.util.Locale.ROOT, "%.1f", event.getAmount()),
+                        s == null ? "null" : s.getMsgId(),
+                        s == null || s.getEntity() == null ? "null" : s.getEntity().getName().getString(),
+                        s == null || s.getDirectEntity() == null ? "null" : s.getDirectEntity().getName().getString());
+            }
+        } catch (Throwable ignored) {
+        }
+
         if (!ModConfig.bossFightEnabled()) return;
         if (event.getAmount() <= 0.0F) return;
         LivingEntity victim = event.getEntity();
@@ -267,6 +284,30 @@ public final class BossFightHandler {
      */
     @SubscribeEvent
     public static void onDeath(LivingDeathEvent event) {
+        // ⚠⚠ **临时探针**（⭐ 查"末影龙不算我杀的"✓ 用户 2026-10-09 ✓ 定位完删 ✗）
+        //   ⭐ 它**放在最前面、且不受任何开关/参与者判断影响** ✗ ——
+        //   ⚠ 因为我们要看的是"**龙死那一刻，原版归属到底是什么**" ✓
+        //   （⭐ 下面的正式逻辑有 `fight == null` 等早退 ✓ ⭐ 但探针必须无论如何都打 ✓）。
+        try {
+            LivingEntity probe = event.getEntity();
+            if (probe instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon dragon) {
+                var src = event.getSource();
+                var credit = dragon.getKillCredit();
+                var lastMob = dragon.getLastHurtByMob();
+                var attr = com.mofengbaizhi.tinkersnewlife.content.curse.KillAttribution.find(dragon);
+                TinkersNewlife.LOGGER.info(
+                        "[末影龙·探针] 死亡：source={} entity={} direct={} | getKillCredit(即lastHurtByPlayer)={} lastHurtByMob={} | KillAttribution={}",
+                        src == null ? "null" : src.getMsgId(),
+                        src == null || src.getEntity() == null ? "null" : src.getEntity().getName().getString(),
+                        src == null || src.getDirectEntity() == null ? "null" : src.getDirectEntity().getName().getString(),
+                        credit == null ? "null" : credit.getName().getString(),
+                        lastMob == null ? "null" : lastMob.getName().getString(),
+                        attr == null ? "null" : attr.getName().getString());
+            }
+        } catch (Throwable t) {
+            TinkersNewlife.LOGGER.warn("[末影龙·探针] 打日志本身出错：{}", t.toString());
+        }
+
         if (!ModConfig.bossFightEnabled()) return;
         LivingEntity boss = event.getEntity();
         if (!isBoss(boss)) return;
