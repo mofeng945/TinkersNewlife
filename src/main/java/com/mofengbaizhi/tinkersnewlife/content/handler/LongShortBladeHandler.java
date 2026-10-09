@@ -375,13 +375,27 @@ public final class LongShortBladeHandler {
                     double dirX = right2.x * 0.7071D;
                     double dirY = 0.7071D * upSign;
                     double dirZ = right2.z * 0.7071D;
-                    // ⭐ 从**起点端**出生 ✓（⭐ 刀路半长 1.1 格 ⇒ 起点在中心往回 1.1 格 ✓）
-                    double halfLen = 1.10D;
-                    double speed = 0.30D;   // ⭐ 每 tick 走 0.3 格 ⇒ 约 7 tick 滑完 2.2 格 ✓
+                    // ⭐ 从**起点端**出生 ✓
+                    //   ⚠⚠ 实测第四版仍被指出两点 ✗（用户 2026-10-09：
+                    //     「**看着还像是在左上方放大没有滑动**」＋「**右下方放大导致沉在地里看不见了**」✓）
+                    //     ⇒ ⭐ 两个都是**数值失衡** ✗：
+                    //       ① ⭐ **位移被生长压过** ✗ —— 生长从 0.30 涨到 **3.0 格**
+                    //          而位移只有约 2 格 ⇒ 眼睛只看到"变大"✓
+                    //          ⇒ ⭐ **位移拉长（总 2.4 格）＋ 加速（0.45/tick）** ✓
+                    //            且 ⭐ **终点尺寸压到 1.6 格** ✓ ⇒ ⭐ 让"滑"占主导 ✓；
+                    //       ② ⭐ **沉进地里** ✗ —— `quadSize` 是**以中心向四周**涨 ✗
+                    //          ⇒ 涨到 1.6 格时下半 **0.8 格**扎进地面 ✓
+                    //          ⇒ ⭐ **出生高度抬到身体 1.0 倍** ✓ ⇒ ⭐ 留出下半的空间 ✓。
+                    double halfLen = 1.20D;   // ⭐ 起点在中心往回 1.2 格 ✓
+                    // ⚠ 速度不能按"每 tick 走多远"直算 ✗ —— ⭐ `Particle#move` 每 tick 还会乘
+                    //   **0.98 的摩擦** ✓ ⇒ ⭐ 实际总位移 ≈ `速度 × 0.85 / 0.02` ✗
+                    //   （⭐ 0.45 会滑出 **4.7 格** ✗ 太远 ✓）⇒ ⭐ 0.28 ⇒ 约 **2.9 格** ✓ 与刀路相称 ✓。
+                    double speed = 0.28D;
                     slashLevel.sendParticles(
                             com.mofengbaizhi.tinkersnewlife.content.ModParticles.EXECUTE_SLASH.get(),
                             target.getX() - dirX * halfLen,
-                            target.getY() + target.getBbHeight() * 0.55D - dirY * halfLen,
+                            // ⚠ 抬高：`bbHeight * 1.0` ✓（⭐ 免得长大后的下半扎进地面 ✓）
+                            target.getY() + target.getBbHeight() * 1.0D - dirY * halfLen,
                             target.getZ() - dirZ * halfLen,
                             1,
                             // ⭐ 速度 ＝ ⭐ **真实的滑动方向** ✓（⭐ 粒子靠它移动 ✓ 并据 `vy` 的正负决定

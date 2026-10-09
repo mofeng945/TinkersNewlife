@@ -64,9 +64,14 @@ public class ExecuteSlashParticle extends TextureSheetParticle {
         this.roll = vy > 0.0D ? (float) (Math.PI * 0.5D) : 0.0F;
         this.oRoll = this.roll;
 
-        // ⭐ 尺寸：⭐ 出生很小 ✓ 一路长大 ✓（⭐ `quadSize` 单位是**格** ✗ 见 §1141 ✓）
-        this.baseSize = 3.0F;
-        this.quadSize = 0.30F;
+        // ⭐ 尺寸：⭐ 出生较小 ✓ 滑的过程中长大 ✓
+        //   ⚠⚠ 实测第四版被指出「**右下方放大导致沉在地里看不见了**」✗
+        //     ⇒ ⭐ 根因：⭐ `quadSize` 是**以中心向四周**涨 ✗（⭐ 不是从某一点单向展开 ✓）
+        //       ⇒ ⚠ 涨到 3.0 格时下半 1.5 格**扎进地面** ✗
+        //     ⇒ ⭐ 修法：① **终点尺寸压到 1.6 格** ✓（⭐ 半边才 0.8 ✓）
+        //              ② **出生高度由生成方抬到身体 1.0 倍** ✓（见 `LongShortBladeHandler` ✓）。
+        this.baseSize = 1.6F;
+        this.quadSize = 0.50F;
         this.gravity = 0.0F;
         this.hasPhysics = false;
         // ⭐ 不额外染色（颜色都在贴图里 ✓ 染了会把"内黑"毁掉 ✗）
@@ -90,9 +95,11 @@ public class ExecuteSlashParticle extends TextureSheetParticle {
         //   ⚠ 用**缓出**曲线（`1-(1-g)²` ✓）⇒ 前段快、后段慢 ⇒ ⭐ 像刀光"铺开"而不是"弹开" ✓。
         float t = (float) this.age / (float) this.lifetime;
         if (this.age <= GROW_TICKS) {
+            // ⚠⚠ **线性生长**（⭐ 不用缓出 ✗）—— ⚠ 缓出会让"前几 tick 就长到接近最大" ✗
+            //   ⇒ ⭐ 视觉上变成"原地放大"✗（用户实测第四版正是这么说的 ✓）
+            //   ⇒ ⭐ 线性 ⇒ 前段**又小又在走** ✓ ⇒ ⭐ "滑动"才显眼 ✓。
             float g = (float) this.age / (float) GROW_TICKS;
-            float eased = 1.0F - (1.0F - g) * (1.0F - g);
-            this.quadSize = 0.30F + (this.baseSize - 0.30F) * eased;
+            this.quadSize = 0.50F + (this.baseSize - 0.50F) * g;
             this.alpha = 0.95F;
         } else {
             float f = (float) (this.age - GROW_TICKS)
