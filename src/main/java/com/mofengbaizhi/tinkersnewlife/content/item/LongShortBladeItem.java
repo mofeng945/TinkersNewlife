@@ -601,6 +601,14 @@ public class LongShortBladeItem extends ModifiableItem {
         // ⭐ 让客户端也接受这个速度 ✓（⭐ 不写这句客户端会回弹 ✗）
         player.hurtMarked = true;
         player.fallDistance = 0.0F;
+
+        // ⭐⭐ **突刺残影**（用户口径 ✓ 2026-10-09）：
+        //   「**服务端在突进过程中每2tick向周围能看到该实体的玩家广播一次当前的位置和朝向**」✓
+        //   ⭐ 用 `broadcastAndSend` ✗ —— 它的语义正好是"**追踪该实体的玩家**" ✓
+        //     （⭐ 也就是"能看到它的" ✓ ⭐ 不用自己算距离/视锥 ✓）。
+        if (player.tickCount % 2 == 0) {
+            com.mofengbaizhi.tinkersnewlife.network.tools.PacketThrustGhost.broadcast(level, player);
+        }
     }
 
     /** 逐 0.5 格试探 ✓ 撞到实心方块就停在最后安全点 ✓（照 {@code FeverHandler} 那套 ✓） */

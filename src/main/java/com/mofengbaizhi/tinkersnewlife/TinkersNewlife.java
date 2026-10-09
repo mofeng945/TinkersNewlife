@@ -417,6 +417,11 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.tools.PacketSwingOffhand::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.tools.PacketSwingOffhand::new,
                 com.mofengbaizhi.tinkersnewlife.network.tools.PacketSwingOffhand::handle);
+        // ⭐ §1166 突刺残影：服务端每 2 tick 广播位置＋朝向（位置＋朝向 ✗ 客户端据此画残影 ✓）
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.tools.PacketThrustGhost.class,
+                com.mofengbaizhi.tinkersnewlife.network.tools.PacketThrustGhost::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.tools.PacketThrustGhost::new,
+                com.mofengbaizhi.tinkersnewlife.network.tools.PacketThrustGhost::handle);
 
         // 实体属性（式神等生物实体）
         modEventBus.addListener(TinkersNewlife::onRegisterEntityAttributes);
