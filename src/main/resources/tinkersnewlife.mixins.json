@@ -20,7 +20,8 @@
     "EnigmaticNightVisionMixin",
     "TwilightMazeRandomMixin",
     "ServerLevelTickTailMixin",
-    "LivingEntityGetHealthMixin"
+    "LivingEntityGetHealthMixin",
+    "ApostlePhaseTeleportMixin"
   ],
   "client": [
     "EntityRenderDispatcherMixin",
