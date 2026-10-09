@@ -319,20 +319,35 @@ public final class TruePierce {
         float dealt = 0.0F;
         try {
             target.invulnerableTime = 0;
-            markIntent(target, want);
+            // ⚠⚠ **绝对不要在这里 `markIntent`** ✗✗（⭐ 用户实测 2026-10-10 ✓
+            //   「**好像没成功，连使徒限伤都破不了了**」✓）
+            //   ⭐ `markIntent` ＋ ⭐ 事件层那个 `force(...)` 的用途是
+            //   ⭐ **"把被别人改小的数值强行放回 `want`"** ✗ —— ⭐ 那是给**分块穿透**设计的 ✓
+            //   ⚠ 现在流程换成了"先 `hurt` 再看有没有突破" ✗
+            //   ⇒ ⭐ `markIntent` 会 ⭐ **替我们把保护顶开** ✗ ⇒ ⭐ `hurt` 打满 ✗
+            //     ⇒ ⭐ `dealt ＝ want` ⇒ ⭐ `shortfall ＝ 0` ⇒ ⭐ **直接 return ✗ 根本不逆向补** ✓
+            //     ⚠ 而那个"打满"如果其实**没真落地**（⭐ 被别人回血／取消 ✓）✗
+            //     ⇒ ⭐ 我们就 ⭐ **白白不补** ✓ ✓ —— ⭐ 正是用户遇到的现象 ✓。
+            //   ⇒ ⭐ 删掉它 ✗ ⇒ ⭐ `hurt` 才会体现 ⭐ **保护之后的真实结果** ✓
+            //     ⇒ ⭐ `dealt` 才准 ✓ ⭐ 差额才会真的被逆向补上 ✓。
             target.hurt(withAttacker, want);
             dealt = Math.max(0.0F, startHp - rawHealth(target));
             // ⭐ 一点都没打动 ⇒ ⭐ 换无主源再试一次 ✓（⭐ 保留原来的意图 ✓）
             if (dealt <= 0.01F && target.isAlive() && !target.isRemoved()) {
                 float before2 = rawHealth(target);
                 target.invulnerableTime = 0;
-                markIntent(target, want);
                 target.hurt(anonymous, want);
                 dealt = Math.max(0.0F, before2 - rawHealth(target));
             }
         } catch (Throwable t) {
             // ⚠ 伤害调用被外部异常打断（⭐ §1118l 那类 ✓）⇒ ⭐ 当作"没打动" ✓ 后面逆向补 ✓
             TinkersNewlife.LOGGER.debug("[真伤] hurt 阶段被外部异常打断（转逆向改血）：{}", t.toString());
+        }
+        if (TinkersNewlife.LOGGER.isDebugEnabled()) {
+            TinkersNewlife.LOGGER.debug("[真伤] want={} startHp={} dealt={}",
+                    String.format(java.util.Locale.ROOT, "%.2f", want),
+                    String.format(java.util.Locale.ROOT, "%.2f", startHp),
+                    String.format(java.util.Locale.ROOT, "%.2f", dealt));
         }
 
 
