@@ -839,6 +839,25 @@ public final class TruePierce {
         }
     }
 
+    /**
+     * ⭐⭐ §1208 <b>锁定期内 {@code getHealth()} 该返回的值</b> ✗ —— ⭐ 供 mixin 调用 ✓。
+     *
+     * @return ⭐ **≥ 0** ＝ 这个实体被锁着，返回锁定值 ✓ ⭐ **-1** ＝ 没锁（⭐ 正常走原版 ✓）
+     */
+    public static float lockedHealthFor(LivingEntity entity) {
+        // ⚠⚠ **第一句必须是空判** ✗ —— ⭐ `getHealth()` 是热点方法 ✓
+        //   ⭐ 绝大多数实体都没被锁 ⇒ ⭐ 一次 `isEmpty()` 就返回 ⇒ **零开销** ✓ ✓
+        if (PENDING.isEmpty() || entity == null) {
+            return -1.0F;
+        }
+        try {
+            Pending pd = PENDING.get(entity.getUUID());
+            return pd == null ? -1.0F : pd.value();
+        } catch (Throwable ignored) {
+            return -1.0F;
+        }
+    }
+
     private static void writeAndVerify(LivingEntity target, float value) {
         for (int i = 0; i < WRITE_RETRIES; i++) {
             rawSetHealth(target, value);

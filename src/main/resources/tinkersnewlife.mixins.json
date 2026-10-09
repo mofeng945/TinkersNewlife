@@ -19,7 +19,8 @@
     "GoetyVoidSoulMixin",
     "EnigmaticNightVisionMixin",
     "TwilightMazeRandomMixin",
-    "ServerLevelTickTailMixin"
+    "ServerLevelTickTailMixin",
+    "LivingEntityGetHealthMixin"
   ],
   "client": [
     "EntityRenderDispatcherMixin",
