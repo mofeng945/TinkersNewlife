@@ -759,58 +759,12 @@ public final class TruePierce {
         try {
             var server = event.getServer();
             if (server == null) return;
-            var it = PENDING.entrySet().iterator();
-            while (it.hasNext()) {
-                var e = it.next();
-                Pending pd = e.getValue();
-                var level = server.overworld();
-                net.minecraft.world.entity.Entity ent = null;
-                for (var lvl : server.getAllLevels()) {
-                    ent = lvl.getEntity(pd.id());
-                    if (ent != null) break;
-                }
-                if (!(ent instanceof LivingEntity living) || living.isRemoved() || !living.isAlive()) {
-                    it.remove();
-                    continue;
-                }
-                float target = pd.value();
-                // ⭐ 死线以下 ⇒ 直接走死亡流程 ✓（⭐ 不再纠缠锁血 ✓）
-                if (target <= 0.0F) {
-                    try {
-                        rawSetHealth(living, 0.0F);
-                        if (!living.isRemoved()) living.die(living.damageSources().genericKill());
-                    } catch (Throwable ignored) {
-                    }
-                    it.remove();
-                    continue;
-                }
-                // ⭐⭐ §1203 **压上限**（⭐ 用户实测 2026-10-10：「**仍然效果不佳**」✓）
-            //   ⭐ 探针实证：⭐ 弹回量**恒定 ≈ 当前血量的 2.5%** ✗
-            //   （⭐ `459.17→469.17` ✓ ⭐ `331.67→343.17` ✓）⭐ 而 ⭐ `antiRegen=200` ＋ ⭐ `isSmited=true`
-            //   ⇒ ⭐ **禁疗开着但它照样回血** ✓ ⇒ ⭐ 它走的是 `Apostle.heal` **之外**的路 ✓
-            //   ⇒ ⭐ 那就 ⭐ **把 `MAX_HEALTH` 属性也压到目标值** ✗
-            //     ⇒ ⭐ 它**怎么回满也回不到原上限** ✓ ✓（⭐ 通用 ✗ 任何目标都走 ✓ ⭐ 普通怪不会进这里 ✓）
-            clampMaxHealth(living, target);
-            rawSetHealth(living, target);
-            float now = rawHealth(living);
-            // ⭐⭐ §1204 **写住了也继续锁** ✗（⭐ 用户口径：「**让血量始终锁在我们的目标值，
-            //   不让任何行为改动**」✓）—— ⭐ 直到 {@value #LOCK_TICKS} tick 到期 ✓
-            //   ⭐ 我们挂在 `ServerTickEvent.END` ✗ ⭐ 比实体 tick **晚** ✓
-            //   ⇒ ⭐ 每 tick 都写 ⇒ ⭐ **它改不动** ✓ ✓（⭐ 它以锁制锁 ✗ ⭐ 我们以锁制锁 ✓）
-            suppressRegen(living);
-            int left = pd.left() - 1;
-            if (left <= 0) {
-                // ⭐⭐ §1205 **到期必须还原上限** ✗（⭐ 否则"永远回不满"＝看着还锁着 ✓）
-                releaseClamp(living);
-                TinkersNewlife.LOGGER.info(
-                        "[真伤] 血量锁定到期（{} tick）：{} 当前={} 锁定值={}",
-                        LOCK_TICKS, living.getName().getString(),
-                        String.format(java.util.Locale.ROOT, "%.2f", now),
-                        String.format(java.util.Locale.ROOT, "%.2f", target));
-                it.remove();
-            } else {
-                e.setValue(new Pending(pd.id(), target, left));
-            }
+            // ⭐⭐ §1207 **两个时机都写** ✗（⭐ 用户实测 2026-10-10：⭐ 连 `ServerLevel#tick`
+            //   的 TAIL 都被改回去了 ✓ ⇒ ⭐ 说明"哪个更晚"取决于 Forge 调度 ✓
+            //   ⇒ ⭐ **两边都挂** ✗ ⭐ 总有一个在它后面 ✓ ⭐ 且 priority 提到 3000 ✓）
+            //   ⭐ 本处保留原来的逐维度查找逻辑 ✓（⭐ 作为 `ServerTickEvent.END` 那一侧的兜底 ✓）
+            for (var lvl : server.getAllLevels()) {
+                applyHealthLocks(lvl);
             }
         } catch (Throwable ignored) {
             // ⭐ 待补处理出错绝不能连累玩法 ✗

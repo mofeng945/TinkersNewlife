@@ -26,7 +26,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * <p>⚠ 两道注入 ✗（⭐ 照 {@code EntityRenderDispatcherMixin} 的先例 ✓）：
  * ⭐ 方法名 ⭐ `tick` ✗ ⭐ 与 ⭐ 直连 SRG ⭐ `m_8793_` ✗（⭐ `remap = false` ✓ ⭐ 兜底 ✓）。
  */
-@Mixin(value = ServerLevel.class, priority = 1400)
+@Mixin(value = ServerLevel.class, priority = 3000)
 public class ServerLevelTickTailMixin {
 
     @Inject(method = "tick", at = @At("TAIL"))
