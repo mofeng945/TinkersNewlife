@@ -44,17 +44,31 @@ public final class LongShortBladeModelHandler {
     public static final ResourceLocation BASE =
             new ResourceLocation(TinkersNewlife.MOD_ID, "item/long_short_blade");
 
-    /** ⭐ 五个场景槽位（⭐ 用户以后照着这些路径放图 ✓） */
-    public static final ResourceLocation CTX_GUI_IDLE =
-            ctx("ctx_gui_idle");
-    public static final ResourceLocation CTX_GUI_LONG =
-            ctx("ctx_gui_long");
-    public static final ResourceLocation CTX_GUI_SHORT =
-            ctx("ctx_gui_short");
+    // ============================================================
+    //  ⭐⭐ 三个槽位（⚠ 用户 2026-10-09 给了精确口径 ✗ 由 5 个收敛成 3 个 ✓）
+    // ============================================================
+
+    /**
+     * ⭐ <b>物品栏·长刀</b> ✓ —— ⭐ 用户口径：「手持时长刀**物品栏模型**（**和普通剑同一匠魂父模型**）」✓
+     * ⇒ ⭐ 所以它**同时**承担"未手持的长刀图标"与"手持时长刀在物品栏里的图标"✓
+     * （⚠ 系统分不出"玩家有没有拿在手上" ✗ 见 §1146 的交代 ✓）。
+     */
+    public static final ResourceLocation CTX_INV_LONG =
+            ctx("ctx_inv_long");
+
+    /**
+     * ⭐ <b>短刀（物品栏＋手持共用）</b> ✓ —— ⭐ 用户口径：
+     * 「手持时短刀**物品栏模型和手持模型相同**」✓ ⇒ ⭐ 短刀只要**这一个**模型 ✓。
+     */
+    public static final ResourceLocation CTX_INV_SHORT =
+            ctx("ctx_inv_short");
+
+    /**
+     * ⭐ <b>手持·长刀</b> ✓ —— ⭐ 用户口径：「手持时长刀手持模型（**大型工具**匠魂父模型）」✓
+     * ⇒ ⭐ 父模型用 {@code tconstruct:item/base/large_tool} ✓（⭐ 普通剑那套是 {@code tall} ✓）。
+     */
     public static final ResourceLocation CTX_HELD_LONG =
             ctx("ctx_held_long");
-    public static final ResourceLocation CTX_HELD_SHORT =
-            ctx("ctx_held_short");
 
     private static ResourceLocation ctx(String name) {
         return new ResourceLocation(TinkersNewlife.MOD_ID, "item/tool/long_short_blade/" + name);
@@ -63,15 +77,13 @@ public final class LongShortBladeModelHandler {
     private LongShortBladeModelHandler() {
     }
 
-    /** ⭐ 把五个槽位登记进烘焙队列 ✓（⭐ 否则没人引用 ⇒ 不会被烘焙 ✗） */
+    /** ⭐ 把三个槽位登记进烘焙队列 ✓（⭐ 否则没人引用 ⇒ 不会被烘焙 ✗） */
     @SubscribeEvent
     public static void onRegisterAdditional(ModelEvent.RegisterAdditional event) {
         try {
-            event.register(CTX_GUI_IDLE);
-            event.register(CTX_GUI_LONG);
-            event.register(CTX_GUI_SHORT);
+            event.register(CTX_INV_LONG);
+            event.register(CTX_INV_SHORT);
             event.register(CTX_HELD_LONG);
-            event.register(CTX_HELD_SHORT);
         } catch (Throwable t) {
             LOG.warn("[长短刃] 登记场景模型失败（已忽略）：{}", t.toString());
         }
@@ -87,16 +99,15 @@ public final class LongShortBladeModelHandler {
                 LOG.warn("[长短刃] 没找到基础模型 {} ⇒ 按场景切模型没接上", BASE);
                 return;
             }
-            BakedModel guiIdle = models.get(CTX_GUI_IDLE);
-            BakedModel guiLong = models.get(CTX_GUI_LONG);
-            BakedModel guiShort = models.get(CTX_GUI_SHORT);
+            BakedModel invLong = models.get(CTX_INV_LONG);
+            BakedModel invShort = models.get(CTX_INV_SHORT);
             BakedModel heldLong = models.get(CTX_HELD_LONG);
-            BakedModel heldShort = models.get(CTX_HELD_SHORT);
-            // ⚠ 缺哪个就传 null ✗ ⇒ ⭐ 包装器自己会回退 ✓（⭐ 用户只画一部分也不会崩 ✓）
+            // ⚠ 缺哪个就传 null ✗ ⇒ ⭐ 包装器自己回退 ✓（⭐ 只画一部分也不会崩 ✓）
+            // ⭐ 短刀：⭐ 物品栏与手持**共用** `invShort` ✓（⭐ 用户口径 ✓ 见常量注释 ✓）
             models.put(BASE, new LongShortBladeModel(base,
-                    guiIdle, guiLong, guiShort, heldLong, heldShort));
-            LOG.info("[长短刃] 已接按场景×形态切模型：物品栏未手持={} 物品栏长={} 物品栏短={} 手持长={} 手持短={}",
-                    guiIdle != null, guiLong != null, guiShort != null, heldLong != null, heldShort != null);
+                    invLong, invLong, invShort, heldLong, invShort));
+            LOG.info("[长短刃] 已接按场景×形态切模型：物品栏长={} 短={} 手持长={}（短刀两处共用物品栏那套 ✓）",
+                    invLong != null, invShort != null, heldLong != null);
         } catch (Throwable t) {
             LOG.warn("[长短刃] 接按场景切模型时出错（已忽略）：{}", t.toString());
         }
