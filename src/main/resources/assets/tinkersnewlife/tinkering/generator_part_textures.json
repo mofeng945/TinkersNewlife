@@ -63,6 +63,14 @@
     { "path": "tinkersnewlife:item/tool/long_short_blade/binding", "stat_type": "tconstruct:binding" },
     { "path": "tinkersnewlife:item/tool/long_short_blade/handle", "stat_type": "tconstruct:handle" },
     { "path": "tinkersnewlife:item/tool/long_short_blade/blade", "stat_type": "tconstruct:head" },
-    { "path": "tinkersnewlife:item/tool/long_short_blade/limb", "stat_type": "tconstruct:limb" }
+    { "path": "tinkersnewlife:item/tool/long_short_blade/limb", "stat_type": "tconstruct:limb" },
+    { "path": "tinkersnewlife:item/tool/long_short_blade/ctx_inv_long/head", "stat_type": "tconstruct:head" },
+    { "path": "tinkersnewlife:item/tool/long_short_blade/ctx_inv_long/binding", "stat_type": "tconstruct:binding" },
+    { "path": "tinkersnewlife:item/tool/long_short_blade/ctx_inv_long/handle", "stat_type": "tconstruct:handle" },
+    { "path": "tinkersnewlife:item/tool/long_short_blade/ctx_inv_short/head", "stat_type": "tconstruct:head" },
+    { "path": "tinkersnewlife:item/tool/long_short_blade/ctx_inv_short/handle", "stat_type": "tconstruct:handle" },
+    { "path": "tinkersnewlife:item/tool/long_short_blade/ctx_held_long/head", "stat_type": "tconstruct:head" },
+    { "path": "tinkersnewlife:item/tool/long_short_blade/ctx_held_long/binding", "stat_type": "tconstruct:binding" },
+    { "path": "tinkersnewlife:item/tool/long_short_blade/ctx_held_long/handle", "stat_type": "tconstruct:handle" }
 ]
 }
