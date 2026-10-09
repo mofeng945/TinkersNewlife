@@ -20,8 +20,18 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(AbstractArrow.class)
 public class AbstractArrowSeaKingsMixin {
 
-    /** 标记键（写在弹射物的持久数据里 ✓ Forge 的 getPersistentData ✓） */
-    public static final String TNL_SEA_KINGS = "tnl_sea_kings";
+    /**
+     * 标记键（写在弹射物的持久数据里 ✓ Forge 的 getPersistentData ✓）。
+     *
+     * <p>⚠⚠ <b>必须是 {@code private}</b> ✗ —— ⭐ Mixin 的硬规则：**mixin 类里的 static 字段一律得是 private** ✗
+     * （官方校验 {@code MixinPreProcessorStandard.validateField} ✓）⇒ ⚠ 写成 `public static final` 会让
+     * **整个 mixin 被拒绝应用** ✗（⭐ 实测日志：`Mixin apply failed … contains non-private static field
+     * TNL_SEA_KINGS:Ljava/lang/String;` ✓）—— ⭐ 也就是说"海王之力：水中不减速"**从写下那天起就没生效过** ✗ ✓
+     * （用户 2026-10-09 报的正是这条 ✓）。
+     * <p>⭐ 改 {@code private} 即可 ✓ —— 已核对**没有任何外部引用** ✗
+     * （`SeaKingsPowerModifier` 是直接写字符串 `"tnl_sea_kings"` ✓ 不经过本常量 ✓）。
+     */
+    private static final String TNL_SEA_KINGS = "tnl_sea_kings";
 
     @Inject(method = "getWaterInertia()F", at = @At("HEAD"), cancellable = true)
     private void tinkersnewlife$waterInertia(CallbackInfoReturnable<Float> cir) {
