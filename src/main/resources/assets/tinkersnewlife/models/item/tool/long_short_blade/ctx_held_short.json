@@ -16,10 +16,14 @@
     { "name": "blade",   "index": 3 },
     { "name": "limb",    "index": 4 }
   ],
-  "display": {
+    "display": {
     "gui":    { "rotation": [0, 0, 0], "translation": [0, 0, 0], "scale": [1, 1, 1] },
-    "ground": { "rotation": [0, 0, 0], "translation": [0, 2, 0], "scale": [0.5, 0.5, 0.5] },
-    "fixed":  { "rotation": [0, 180, 0], "translation": [0, 0, 0], "scale": [1, 1, 1] }
+    "ground": { "rotation": [0, 0, 90], "translation": [0, 2, 0], "scale": [0.5, 0.5, 0.5] },
+    "fixed":  { "rotation": [0, 180, 0], "translation": [0, 0, 0], "scale": [1, 1, 1] },
+    "thirdperson_righthand": { "rotation": [-167.91, -72.06, -164.12], "translation": [0, 4.0, 5.0], "scale": [1, 1.66016, 1] },
+    "thirdperson_lefthand":  { "rotation": [-161.06, 87.34, 165.1],  "translation": [0, 5.5, 6.25], "scale": [0.96875, 1.63281, 1.06641] },
+    "firstperson_righthand": { "rotation": [0, -90, 0], "translation": [0.0, -3.0, 2.5], "scale": [1.05, 1.05, 1.05] },
+    "firstperson_lefthand":  { "rotation": [0, 90, 0],  "translation": [0.0, -3.0, 2.5], "scale": [1.05, 1.05, 1.05] }
   },
   "overrides": [
     { "predicate": { "tconstruct:broken": 1 }, "model": "tinkersnewlife:item/tool/long_short_blade/broken" }
