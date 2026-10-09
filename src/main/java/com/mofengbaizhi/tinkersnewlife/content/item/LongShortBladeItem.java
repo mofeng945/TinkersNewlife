@@ -503,16 +503,80 @@ public class LongShortBladeItem extends ModifiableItem {
                     1, 0, 0, 0, 0);
         }
 
-        // ⭐ 位移（逐段试探 ✓ 不穿墙 ✗）
-        Vec3 safe = safeStep(player, dir, THRUST_DISTANCE);
-        if (safe != null) {
-            player.teleportTo(safe.x, safe.y, safe.z);
-            player.fallDistance = 0;
-        }
-        // ⭐ 突刺过程无敌（用户口径 ✓）
-        InvulnerabilityManager.applyInvulnerability(player, 12);
+        // ⭐⭐ **位移改成"分几 tick 冲"**（用户口径 ✓ 2026-10-09：「**现在突刺看上去是瞬移**」✓）
+        //   ⚠ 原来是 ⭐ 一次 `teleportTo` 硬移 3 格 ✗ ⇒ ⭐ 一帧到位 ⇒ **看着就是瞬移** ✗
+        //   ⇒ ⭐ 现在只**登记冲刺**（方向 ＋ 剩余 tick ✓）✓
+        //     由 {@code LongShortBladeHandler#onPlayerTick} 每 tick 调 {@link #tickThrust} ✓
+        //     ⭐ 每 tick 走 `THRUST_DISTANCE / THRUST_TICKS` 格 ⇒ ⭐ 5 tick（0.25 秒）冲完 ✓
+        //     同时 ⭐ 每 tick 仍用 {@link #safeStep 逐段试探} ✓ ⇒ ⭐ 照样不穿墙 ✓。
+        DASH_DIR.put(player.getUUID(), dir);
+        DASH_LEFT.put(player.getUUID(), THRUST_TICKS);
+        // ⭐ 起手就先走一小步 ✓（⭐ 不然要等一 tick 才动 ⇒ 手感发滞 ✗）
+        stepThrust(serverLevel, player);
+        // ⭐ 突刺过程无敌（用户口径 ✓）—— ⚠ 覆盖整个冲刺过程 ＋ 一点余量 ✓
+        InvulnerabilityManager.applyInvulnerability(player, THRUST_TICKS + 8);
         serverLevel.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
                 SoundSource.PLAYERS, 1.0F, 1.2F);
+    }
+
+    // ============================================================
+    //  ⭐ 突刺冲刺（分 tick 位移 ✓ 见 {@link #thrust} ✓）
+    // ============================================================
+
+    /** ⭐ 冲刺持续几 tick ✓（5 tick ＝ 0.25 秒 ✓ 够看出"冲过去"又不拖沓 ✓） */
+    public static final int THRUST_TICKS = 5;
+
+    /** ⭐ 正在冲刺的玩家 ⇒ 方向 ✓ */
+    private static final java.util.Map<java.util.UUID, Vec3> DASH_DIR =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** ⭐ 正在冲刺的玩家 ⇒ 还剩几 tick ✓ */
+    private static final java.util.Map<java.util.UUID, Integer> DASH_LEFT =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** ⭐ 正在突刺冲刺吗 ✓（⭐ 供处理器/HUD 判定 ✓） */
+    public static boolean isDashing(Player player) {
+        return player != null && DASH_LEFT.getOrDefault(player.getUUID(), 0) > 0;
+    }
+
+    /**
+     * ⭐ 每 tick 推进一步 ✓ —— 由 {@code LongShortBladeHandler#onPlayerTick} 调 ✓。
+     * <p>⚠ 全程都过 {@link #safeStep} ✗ —— ⭐ 冲刺**不能**变成穿墙 ✓。
+     */
+    public static void tickThrust(net.minecraft.server.level.ServerPlayer player) {
+        if (player == null) {
+            return;
+        }
+        int left = DASH_LEFT.getOrDefault(player.getUUID(), 0);
+        if (left <= 0) {
+            return;
+        }
+        if (left - 1 <= 0) {
+            DASH_LEFT.remove(player.getUUID());
+            DASH_DIR.remove(player.getUUID());
+        } else {
+            DASH_LEFT.put(player.getUUID(), left - 1);
+        }
+        stepThrust(player.serverLevel(), player);
+    }
+
+    /** ⭐ 真正迈一步 ✓（⭐ 步长 ＝ 总距离 ÷ 总 tick 数 ✓） */
+    private static void stepThrust(ServerLevel level, Player player) {
+        Vec3 dir = DASH_DIR.get(player.getUUID());
+        if (dir == null) {
+            return;
+        }
+        double step = THRUST_DISTANCE / (double) THRUST_TICKS;
+        // ⚠ 用**当前位置**重新试探 ✓（⭐ 冲刺途中地形可能变 ✓ 也可能撞墙 ✓）
+        Vec3 safe = safeStep(player, dir, step);
+        if (safe != null) {
+            player.teleportTo(safe.x, safe.y, safe.z);
+            player.fallDistance = 0.0F;
+        } else {
+            // ⭐ 前方已不安全 ⇒ ⭐ 提前结束冲刺 ✓（⭐ 撞墙就停 ✓ 不硬顶 ✓）
+            DASH_LEFT.remove(player.getUUID());
+            DASH_DIR.remove(player.getUUID());
+        }
     }
 
     /** 逐 0.5 格试探 ✓ 撞到实心方块就停在最后安全点 ✓（照 {@code FeverHandler} 那套 ✓） */

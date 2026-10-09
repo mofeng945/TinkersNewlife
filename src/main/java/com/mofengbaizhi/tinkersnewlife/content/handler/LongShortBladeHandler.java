@@ -102,6 +102,14 @@ public final class LongShortBladeHandler {
 
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
+        // ⭐ 突刺冲刺：分 tick 位移（⚠ 用户口径 ✗「**现在突刺看上去是瞬移**」✓ ⇒ 改成每 tick 走一步 ✓）
+        if (event.phase == TickEvent.Phase.END && event.player instanceof ServerPlayer dashPlayer) {
+            LongShortBladeItem.tickThrust(dashPlayer);
+        }
+        onPlayerTick0(event);
+    }
+
+    private static void onPlayerTick0(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) {
             return;
         }
