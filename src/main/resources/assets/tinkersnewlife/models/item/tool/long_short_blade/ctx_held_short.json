@@ -1,0 +1,28 @@
+{
+  "_comment": "长短刃·场景模型【手持·短刀】（§1146 搭建 ✓）。⚠ 这是【程序化占位】✓ 你手绘时**只改 textures 那五行**即可 ✓（把 tinkersnewlife:item/tool/long_short_blade/ctx_held_short/<部件> 指向你自己画的 png ✓）。⚠ 部件顺序必须与 tool_definitions/long_short_blade.json 一致：0=head 宽刃 1=binding 坚韧套环 2=handle 坚韧手柄 3=blade 小型剑刃 4=limb 弓臂 —— 下标错一格整把武器都会错位 ✗。⚠ 本文件由代码接线（client/handler/LongShortBladeModelHandler ✓），不要在物品模型里写 overrides ✗。",
+  "loader": "tconstruct:tool",
+  "parent": "tconstruct:item/base/tall",
+  "textures": {
+      "head": "tinkersnewlife:item/tool/long_short_blade/ctx_held_short/head",
+      "binding": "tinkersnewlife:item/tool/long_short_blade/ctx_held_short/binding",
+      "handle": "tinkersnewlife:item/tool/long_short_blade/ctx_held_short/handle",
+      "blade": "tinkersnewlife:item/tool/long_short_blade/ctx_held_short/blade",
+      "limb": "tinkersnewlife:item/tool/long_short_blade/ctx_held_short/limb"
+  },
+  "parts": [
+      { "name": "head", "index": 0 },
+      { "name": "binding", "index": 1 },
+      { "name": "handle", "index": 2 },
+      { "name": "blade", "index": 3 },
+      { "name": "limb", "index": 4 }
+  ],
+    "display": {
+      "thirdperson_righthand": { "rotation": [-167.91, -72.06, -164.12], "translation": [0, 6, 3.25], "scale": [1, 1.66016, 1] },
+      "thirdperson_lefthand":  { "rotation": [-161.06, 87.34, 165.1],  "translation": [0, 7.5, 4.5], "scale": [0.96875, 1.63281, 1.06641] },
+      "firstperson_righthand": { "rotation": [0, -90, 0] },
+      "firstperson_lefthand":  { "rotation": [0, 90, 0] }
+    },
+  "overrides": [
+    { "predicate": { "tconstruct:broken": 1 }, "model": "tinkersnewlife:item/tool/long_short_blade/broken" }
+  ]
+}
