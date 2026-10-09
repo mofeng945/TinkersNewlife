@@ -22,7 +22,8 @@
     "ServerLevelTickTailMixin",
     "LivingEntityGetHealthMixin",
     "ApostlePhaseTeleportMixin",
-    "ApostleDistanceMixin"
+    "ApostleDistanceMixin",
+    "ApostleCastThrottleMixin"
   ],
   "client": [
     "EntityRenderDispatcherMixin",
