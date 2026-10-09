@@ -546,7 +546,47 @@ public final class TruePierce {
             rawSetHealth(target, 0.0F);
             if (!target.isRemoved()) target.die(src);           // 同上 ✗
         } else {
-            rawSetHealth(target, hp);
+            // ⭐⭐ §1199 **写入后复查** ✗（⭐ 用户实测 2026-10-10：
+            //   「**主世界亚波伦也破了，但是下界亚波伦好像有血量回弹？**」✓）
+            //   ⚠ 原因：⭐ 有些 Boss（⭐ 下界亚波伦那类 ✓）**在同一个 tick 里靠自己回血**
+            //   （⭐ 启示录的头衔系统 ⭐ 每 tick `heal(maxHealth × 2.5%)` ✓
+            //     ⭐ 或 ⭐ 换阶段直接回满 ✓）⇒ ⭐ 我们写完它**又弹回去** ✓
+            //   ⇒ ⭐ 通用做法：⭐ **写完立刻复查** ✗ ⭐ 若被弹回 ⇒
+            //     ⭐ **再压一次回血** ＋ ⭐ **再写一次** ＋ ⭐ 再复查 ✓
+            //     ⚠ 全程**不判断目标类型** ✓（⭐ 谁都会走这一遍 ✓ 普通怪一次就过 ✓）。
+            writeAndVerify(target, hp);
+        }
+    }
+
+    /**
+     * ⭐⭐ §1199 <b>写入血量 ＋ 复查 ＋ 必要时重试</b>（⭐ 通用：⭐ 任何目标都走这一遍 ✓）。
+     *
+     * <p>⚠ 为什么要复查 ✗：⭐ 逆向改血走的是 ⭐ **绕过 `hurt` 的直写** ✗ ⇒
+     * ⭐ 目标那些"**每 tick 自己回血**"的逻辑 ⭐ **不会被我们的伤害事件打断** ✓
+     * ⇒ ⭐ 写完可能**立刻被弹回去** ✓（⭐ 用户实测：⭐ 下界亚波伦"血量回弹" ✓）
+     * ⇒ ⭐ 所以 ⭐ 写 → 读 → 被弹就 ⭐ **压回血 ＋ 重写** ✓。
+     *
+     * <p>⭐ 最多试 {@value #WRITE_RETRIES} 次 ✓ ⭐ 都失败就记一条日志 ✓（⭐ 便于定位 ✓）。
+     */
+    private static final int WRITE_RETRIES = 3;
+
+    private static void writeAndVerify(LivingEntity target, float value) {
+        for (int i = 0; i < WRITE_RETRIES; i++) {
+            rawSetHealth(target, value);
+            float back = rawHealth(target);
+            if (back <= value + 0.01F) {
+                return;   // ⭐ 写住了 ✓
+            }
+            // ⚠ 被弹回 ⇒ ⭐ 再压一次它的再生（⭐ 通用调用 ✓ 非诡厄目标内部会 no-op ✓）
+            suppressRegen(target);
+        }
+        if (rawHealth(target) > value + 0.01F) {
+            TinkersNewlife.LOGGER.warn(
+                    "[真伤] 逆向改血被回弹 {} 次仍未写住：{}（{}）当前={} 目标={}",
+                    WRITE_RETRIES, target.getName().getString(),
+                    net.minecraft.world.entity.EntityType.getKey(target.getType()).toString(),
+                    String.format(java.util.Locale.ROOT, "%.2f", rawHealth(target)),
+                    String.format(java.util.Locale.ROOT, "%.2f", value));
         }
     }
 
