@@ -47,6 +47,9 @@ public final class ThrustGhostRenderer {
     private ThrustGhostRenderer() {
     }
 
+    /** ⚠ **临时探针**：已经报过"画出一条"的那些残影 ✓（⭐ 按 bornTick 去重 ✗ 免得每帧刷屏 ✓） */
+    private static final java.util.Set<Integer> PROBED = new java.util.HashSet<>();
+
     /** ⭐ 残影最高不透明度 ✓（⭐ 不能跟本体一样实 ✗ 那样看着像两个玩家 ✓） */
     private static final float MAX_ALPHA = 0.45F;
 
@@ -91,11 +94,12 @@ public final class ThrustGhostRenderer {
 
                 poseStack.pushPose();
                 try {
-                    // ⭐ 用"世界坐标 − 相机坐标"定位 ✓（⭐ AFTER_ENTITIES 的姿态栈原点在相机 ✓）
+                    // ⚠⚠ **不要再自己 translate** ✗ —— ⭐ `EntityRenderDispatcher#render` 的
+                    //   `x/y/z` 参数**就是"相机相对坐标"** ✗（⭐ 它内部自己会 `translate` ✓）
+                    //   ⚠ 我第一版既 `translate` 又传 `(0,0,0)` ✗ ⇒ ⭐ **双重偏移** ✓
+                    //   ⇒ ⭐ 现在改成 ⭐ **不 translate ＋ 直接传"残影位置 − 相机位置"** ✓
+                    //     （⭐ 与 {@code LevelRenderer} 调用渲染器的写法完全一致 ✓）。
                     var cam = event.getCamera().getPosition();
-                    poseStack.translate(ghost.x - cam.x, ghost.y - cam.y, ghost.z - cam.z);
-                    // ⭐ 朝向照广播值还原 ✓
-                    poseStack.mulPose(Axis.YP.rotationDegrees(-ghost.yaw));
 
                     int light = LevelRenderer.getLightColor(mc.level,
                             net.minecraft.core.BlockPos.containing(ghost.x, ghost.y, ghost.z));
@@ -105,16 +109,31 @@ public final class ThrustGhostRenderer {
                     RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
                     try {
                         // ⭐⭐ **用同一套模型再画一遍**（用户口径 ✓）✗
-                        //   ⚠ `render(...)` 传的 yaw 用 0 ✗ —— ⭐ 朝向已经由上面的 `mulPose` 转了 ✓
-                        //     （⭐ 再传 yaw 会转两次 ✓）
-                        dispatcher.render(player, 0.0D, 0.0D, 0.0D, 0.0F, partialTick,
-                                poseStack, ghostBuffer, light);
+                        //   ⭐ yaw 仍传广播来的值 ✓ —— ⚠ 上一版我传 0 是因为自己转了 ✗ 现在不转了 ✓
+                        dispatcher.render(player,
+                                ghost.x - cam.x, ghost.y - cam.y, ghost.z - cam.z,
+                                ghost.yaw, partialTick, poseStack, ghostBuffer, light);
                     } finally {
                         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
                         RenderSystem.disableBlend();
                     }
                 } finally {
                     poseStack.popPose();
+                }
+                // ⚠ **临时探针**（⭐ 定位完删 ✗）：⭐ 每个残影最多记一次 ✓ 免得刷屏 ✓
+                if (com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.isDebugEnabled()
+                        || !PROBED.contains(ghost.bornTick)) {
+                    PROBED.add(ghost.bornTick);
+                    if (PROBED.size() > 64) {
+                        PROBED.clear();
+                    }
+                    com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
+                            "[突刺残影·探针] 画出一条 进度={} alpha={} 位置=({},{},{})",
+                            String.format(java.util.Locale.ROOT, "%.2f", progress),
+                            String.format(java.util.Locale.ROOT, "%.2f", alpha),
+                            String.format(java.util.Locale.ROOT, "%.1f", ghost.x),
+                            String.format(java.util.Locale.ROOT, "%.1f", ghost.y),
+                            String.format(java.util.Locale.ROOT, "%.1f", ghost.z));
                 }
             }
             // ⭐ 残影用的 buffer 收个尾 ✓（⭐ 不然半透明批次可能不落地 ✓）
