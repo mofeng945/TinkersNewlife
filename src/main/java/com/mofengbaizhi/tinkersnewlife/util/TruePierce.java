@@ -299,19 +299,41 @@ public final class TruePierce {
         //   ⇒ ⭐ **分段就没有必要了** ✗ ⭐ 直接全额逆向改血 ✓ 更干净、更可控 ✓。
         //   ⚠ 代价（⭐ 如实 ✓）：⭐ 伤害**不再触发** `LivingHurtEvent` 等事件 ✓
         //   ⇒ ⭐ 所以"受击红闪"与"伤害音效"由下面 ④.5 ⭐ **手动补上** ✓。
-        float dealt = 0.0F;
-        // ⚠ `startHp` 仍要给"处决兜底"用 ✗ ⇒ ⭐ 逆向读血 ✓（⭐ 原来是从 `chunkedHurt` 前的 `getHealth()` ✓）
+        // ⭐⭐ §1191 **先试一次正常的 `hurt`，看它有没有真的突破保护** ✗
+        //   （⭐ 用户口径 ✓ 2026-10-10：「**在此前先做hurt判断，如果伤害额未突破保护就改为逆向改血，
+        //     直接改血可能会导致一些问题**」✓）
+        //
+        //   ⚠ 为什么不能一上来就逆向改血 ✗（⭐ 用户的顾虑是对的 ✓）：
+        //   ⭐ 直写字段会 ⭐ **完全绕过伤害管线** ✗ ⇒
+        //   ⭐ 反伤／吸血／受击音效／受击动画／⭐ **Boss 阶段推进** 全都不触发 ✓
+        //   ⇒ ⭐ 正常情况（⭐ 打得动 ✓）应该 ⭐ **走正常 `hurt`** ✓ ⭐ 只有被拦时才逆向 ✓。
+        //
+        //   ⭐ 流程 ✓：
+        //   ① ⭐ 记下 `hurt` 前的血量 ✗；
+        //   ② ⭐ 先 ⭐ `hurt(带攻击者源)` ✗ ⭐ 如果一点没打动 ⭐ 再 ⭐ `hurt(无主源)` ✓
+        //      （⭐ 后者的用途照旧：⭐ 有些目标"有攻击者才免疫" ✓）；
+        //   ③ ⭐ 读差值 ⇒ ⭐ **实际打掉了多少** ✗；
+        //   ④ ⭐ 没打满 ⇒ ⭐ **只补差额**，且 ⭐ **补之前先手动补受击反馈** ✗
+        //      （⭐ 因为被拦时 `hurt` 往往连音效都没播 ✓）。
         float startHp = rawHealth(target);
-
-        // ④.5 ⭐⭐ **手动补"受击效果 ＋ 伤害音效"**（⭐ 用户口径 ✓「**然后调用受击效果和伤害音效**」✓）
-        //   ⭐ 原来这些是 ⭐ `hurt()` 顺带做的 ✗ ⭐ 现在不走 `hurt` ⇒ ⭐ 必须自己来 ✓：
-        //   ⭐ ① `hurtTime/hurtDuration = 10` ✗ ⇒ ⭐ **客户端红闪** ✓（⭐ 两个字段都是 `public` ✓）；
-        //   ⭐ ② ⭐ `broadcastEntityEvent(target, EntityEvent.HURT)` ✗
-        //     ⇒ ⭐ 客户端会走 ⭐ `LivingEntity#handleEntityEvent` ⭐ 自己调 ⭐ `getHurtSound(source)`
-        //     ⭐ **播受击音效 ＋ 摆受击姿态** ✓ ✓
-        //     ⚠ 这是**唯一**能"正确取到该实体自己的受伤音"的办法 ✗ ——
-        //     ⭐ `getHurtSound` 是 ⭐ **`protected`** ✗ ⭐ 外部**调不到** ✓。
-        playHurtFeedback(target, withAttacker);
+        float dealt = 0.0F;
+        try {
+            target.invulnerableTime = 0;
+            markIntent(target, want);
+            target.hurt(withAttacker, want);
+            dealt = Math.max(0.0F, startHp - rawHealth(target));
+            // ⭐ 一点都没打动 ⇒ ⭐ 换无主源再试一次 ✓（⭐ 保留原来的意图 ✓）
+            if (dealt <= 0.01F && target.isAlive() && !target.isRemoved()) {
+                float before2 = rawHealth(target);
+                target.invulnerableTime = 0;
+                markIntent(target, want);
+                target.hurt(anonymous, want);
+                dealt = Math.max(0.0F, before2 - rawHealth(target));
+            }
+        } catch (Throwable t) {
+            // ⚠ 伤害调用被外部异常打断（⭐ §1118l 那类 ✓）⇒ ⭐ 当作"没打动" ✓ 后面逆向补 ✓
+            TinkersNewlife.LOGGER.debug("[真伤] hurt 阶段被外部异常打断（转逆向改血）：{}", t.toString());
+        }
 
 
         // ⑤ 差额直补 —— ⭐⭐ §1188 改成 ⭐ **逆向改血**（⭐ 用户口径 ✓ 2026-10-10 ✓）✗：
@@ -322,6 +344,13 @@ public final class TruePierce {
         float shortfall = want - Math.max(dealt, 0.0F);
         if (shortfall <= 0.01F) return;
         if (!target.isAlive() || target.isRemoved()) return;
+        // ⭐⭐ §1191 走**逆向改血**之前 ⭐ **先手动补受击反馈** ✗
+        //   （⭐ 用户口径 ✓「**然后调用受击效果和伤害音效**」✓）
+        //   ⚠ 为什么补在这里 ✗：⭐ 能走到这说明 ⭐ **`hurt` 没打满** ✗
+        //   ⇒ ⭐ 被保护拦住时 ⭐ `hurt` 往往**连受击音效都没播** ✓
+        //   ⇒ ⭐ 这一下"补的伤害"如果不补反馈 ⭐ 看上去就像**凭空掉血** ✓。
+        //   ⚠ 反之 ⭐ 如果 `hurt` 打满了 ✗ ⭐ 上面就 `return` 了 ✓ ⭐ **不会多播一次** ✓（⭐ 不会重复音效 ✓）。
+        playHurtFeedback(target, withAttacker);
         // ⭐ 逆向**读**血 ✗（⭐ 不用 `getHealth()` ✓ ⭐ 它也可能被覆写 ✓）
         float hp = rawHealth(target) - shortfall;
         if (hp <= 0.0F) {
