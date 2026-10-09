@@ -77,6 +77,130 @@ public final class TruePierce {
     private static final Map<UUID, Intent> INTENT = new ConcurrentHashMap<>();
 
     // ============================================================
+    //  ⭐⭐ 逆向改血（⭐ 用户口径 ✓ 2026-10-10 ✓）
+    // ============================================================
+
+    /**
+     * ⭐⭐ <b>逆向改血</b>：⭐ 绕过 {@code setHealth}，**直接改血量的真身字段** ✗。
+     *
+     * <h2>⭐ 为什么需要它（⭐ 用户口径 ✓）</h2>
+     * ⭐ 用户定义 ✓：⭐「**逆向改血通常指对抗或绕过目标自身的"锁血"或"防清除"机制。
+     * 它的目标不是造成伤害，而是强制修改目标的血量，使其保护逻辑失效**」✓
+     * <p>⚠ 原理 ✓：⭐ 血量真身是 ⭐ `LivingEntity#health`（⭐ **`private float`** ✓）
+     * ⭐ 而 ⭐ `setHealth(float)` ⭐ **不是 `final`** ✗ ⇒ ⭐ 别人可以**覆写它**做"锁血" ✓
+     * （⭐ 或者在 `LivingHurtEvent` 里把数值改回来 ✓ ⭐ 或者"单次限伤" ✓）
+     * ⇒ ⭐ **只要还在用 `setHealth`，就永远可能被拦** ✗
+     * ⇒ ⭐ 那就 ⭐ **反射直写那个字段** ✗ ⭐ 让它的保护逻辑**读不到"你是在改血"** ✓ ✓。
+     *
+     * <h2>⚠⚠ 三个必须处理的细节</h2>
+     * <ol>
+     *   <li>⭐ **SRG 名** ✗：⭐ 生产环境字段名是 ⭐ `f_20920_` ✗ ⭐ 开发环境是 `health` ✓
+     *       ⇒ ⭐ **两个名字都要试** ✓（⭐ 都找不到 ⇒ ⭐ 退回 `setHealth` ✓）；</li>
+     *   <li>⭐ **必须 `hurtMarked = true`** ✗✗ —— ⭐ 直写字段**不会同步客户端** ✗
+     *       ⭐ 不写这句 ⭐ 服务端血没了但**客户端血条不动** ✓（⭐ 看着像没伤害 ✓）；</li>
+     *   <li>⭐ **缓存 `Field`** ✗ —— ⭐ 反射查找很贵 ✓ ⭐ 只找一次 ✓ ⭐ 之后直接 `set` ✓。</li>
+     * </ol>
+     *
+     * <h2>⚠ 局限（⭐ 如实 ✓）</h2>
+     * ⚠ ⭐ 反射写字段 ⭐ **跨版本必挂** ✗（⭐ 字段映射一变就失效 ✓ ⭐ 那时自动退回 `setHealth` ✓）；
+     * ⚠ ⭐ 若目标有 ⭐ **"血量为 0 也不死"** 的保护 ✗ ⭐ 写字段**也没辙** ✓
+     * （⭐ 那种只能靠"实体清除链" ✓ ⭐ 见 §1185／§1187 ✓）。
+     */
+    private static java.lang.reflect.Field HEALTH_FIELD = null;
+    /** ⭐ 0 ＝ 还没找过 ✓ ⭐ 1 ＝ 找到了 ✓ ⭐ -1 ＝ 找不到（⭐ 永远退回 `setHealth` ✓） */
+    private static volatile int HEALTH_FIELD_STATE = 0;
+
+    /** ⭐ 找血量字段 ✗（⭐ 只找一次 ✓ 两个名字都试 ✓） */
+    private static java.lang.reflect.Field healthField() {
+        if (HEALTH_FIELD_STATE != 0) {
+            return HEALTH_FIELD;
+        }
+        synchronized (TruePierce.class) {
+            if (HEALTH_FIELD_STATE != 0) {
+                return HEALTH_FIELD;
+            }
+            for (String name : new String[]{"health", "f_20920_"}) {
+                try {
+                    java.lang.reflect.Field f = net.minecraft.world.entity.LivingEntity.class
+                            .getDeclaredField(name);
+                    f.setAccessible(true);
+                    HEALTH_FIELD = f;
+                    HEALTH_FIELD_STATE = 1;
+                    return f;
+                } catch (Throwable ignored) {
+                    // ⭐ 换下一个名字 ✓
+                }
+            }
+            HEALTH_FIELD_STATE = -1;
+            return null;
+        }
+    }
+
+    /** ⭐ **逆向读血**：⭐ 直读字段 ✓（⭐ 拿不到就退回 `getHealth()` ✓） */
+    public static float rawHealth(LivingEntity target) {
+        java.lang.reflect.Field f = healthField();
+        if (f != null) {
+            try {
+                return f.getFloat(target);
+            } catch (Throwable ignored) {
+            }
+        }
+        return target.getHealth();
+    }
+
+    /**
+     * ⭐⭐ **逆向改血**：⭐ 直写字段 ＋ ⭐ 强制同步 ✓。
+     *
+     * @return ⭐ true ＝ 真的**绕过 `setHealth`** 写进去了 ✓ ⭐ false ＝ 退回 `setHealth` ✓
+     */
+    public static boolean rawSetHealth(LivingEntity target, float value) {
+        if (target == null || target.level().isClientSide) {
+            return false;
+        }
+        java.lang.reflect.Field f = healthField();
+        boolean raw = false;
+        if (f != null) {
+            try {
+                f.setFloat(target, value);
+                raw = true;
+            } catch (Throwable ignored) {
+                raw = false;
+            }
+        }
+        if (!raw) {
+            // ⭐ 兜底：⭐ 拿不到字段就还是走 `setHealth` ✓（⭐ 至少能生效 ✓）
+            target.setHealth(value);
+        }
+        // ⚠⚠ **必须标脏** ✗ —— ⭐ 否则客户端血条不同步 ✓
+        try {
+            target.hurtMarked = true;
+        } catch (Throwable ignored) {
+        }
+        return raw;
+    }
+
+    /**
+     * ⭐⭐ <b>逆向改血：⭐ 扣血（⭐ 用户口径的"真伤穿透"用这个 ✓）</b>
+     * —— ⭐ 目标血量 ⭐ 直接减 {@code amount} ✗ ⭐ 夹到 ⭐ `[0, maxHealth]` ✓。
+     *
+     * @return ⭐ 实际扣掉的血量 ✓（⭐ 已经 ≤ 0 的目标返回 0 ✓）
+     */
+    public static float reverseDrain(LivingEntity target, float amount) {
+        if (target == null || amount <= 0.0F) {
+            return 0.0F;
+        }
+        float now = rawHealth(target);
+        if (now <= 0.0F) {
+            return 0.0F;
+        }
+        float capped = Math.min(amount, target.getMaxHealth());
+        float after = Math.max(0.0F, now - capped);
+        float dealt = now - after;
+        rawSetHealth(target, after);
+        return dealt;
+    }
+
+    // ============================================================
     //  对外入口
     // ============================================================
 
@@ -175,11 +299,16 @@ public final class TruePierce {
         }
 
 
-        // ⑤ 差额直补
+        // ⑤ 差额直补 —— ⭐⭐ §1188 改成 ⭐ **逆向改血**（⭐ 用户口径 ✓ 2026-10-10 ✓）✗：
+        //   ⚠ 原来用 `getHealth()` ／ `setHealth()` ✗ —— ⭐ 两个都**可以被别人覆写** ✓
+        //   （⭐ "锁血"就是这么做的：⭐ 覆写 `setHealth` ✗ 或 ⭐ 在事件里把数值改回来 ✓）
+        //   ⭐ 现在改成 ⭐ **反射直写血量真身字段** ✗ ＋ ⭐ 标脏同步 ✓
+        //   ⇒ ⭐ 它的保护逻辑 ⭐ **读不到"有人在改血"** ✓ ✓（⭐ 这就是"逆向改血" ✓）。
         float shortfall = want - Math.max(dealt, 0.0F);
         if (shortfall <= 0.01F) return;
         if (!target.isAlive() || target.isRemoved()) return;
-        float hp = target.getHealth() - shortfall;
+        // ⭐ 逆向**读**血 ✗（⭐ 不用 `getHealth()` ✓ ⭐ 它也可能被覆写 ✓）
+        float hp = rawHealth(target) - shortfall;
         if (hp <= 0.0F) {
             // ⭐⭐⚠⚠ **补击杀归属**（用户实测 ✓ 2026-10-09：
             //   「**很奇怪，不知道为什么杀了两遍末影龙都没有判定是我杀的**」✓）
@@ -194,18 +323,21 @@ public final class TruePierce {
             //     ⚠ 这样 `die()` 之后的一切死亡结算（⭐ 龙战 ✓ 战利品 `killed_by_player` ✓
             //       成就 `player_killed_entity` ✓）都能认出玩家 ✓。
             com.mofengbaizhi.tinkersnewlife.content.curse.KillAttribution.credit(target, attacker);
-            target.setHealth(0.0F);
-            if (!target.isRemoved()) target.die(withAttacker);   // ⚠ setHealth(0) 之后 isAlive() 恒为 false ⇒ 原来 die() 永远不执行 ✗（怪停在 0 血：不掉落、不给经验、无死亡事件 ✗）
+            // ⭐⭐ **逆向改血到 0**（⭐ §1188 ✓）—— ⭐ 先直写字段 ✓ ⭐ 再 `die()` 走死亡结算 ✓
+            rawSetHealth(target, 0.0F);
+            if (!target.isRemoved()) target.die(withAttacker);
         } else {
-            target.setHealth(hp);
+            // ⭐⭐ **逆向改血**：⭐ 直写血量真身字段 ✗ ⭐ **不走 `setHealth`** ✓（⭐ §1188 ✓）
+            rawSetHealth(target, hp);
         }
         // 顺带：低血阶段的"受击全额回血"免伤（启示录使徒那类），若差额直补也吃不动 → 走处决兜底
         if (GoetyBridge.isGoetyApostle(target) && target.isAlive() && !target.isRemoved()
-                && target.getHealth() <= target.getMaxHealth() * 0.18F
-                && (startHp - target.getHealth()) < 5.0F) {
+                && rawHealth(target) <= target.getMaxHealth() * 0.18F
+                && (startHp - rawHealth(target)) < 5.0F) {
             // ⭐ 同上：⭐ 处决兜底这条也绕过了 `LivingHurtEvent` ✗ ⇒ ⭐ 一样要补归属 ✓
             com.mofengbaizhi.tinkersnewlife.content.curse.KillAttribution.credit(target, attacker);
-            target.setHealth(0.0F);
+            // ⭐ 逆向改血 ✓（⭐ §1188 ✓）
+            rawSetHealth(target, 0.0F);
             if (!target.isRemoved()) target.die(withAttacker);
         }
     }
@@ -260,14 +392,15 @@ public final class TruePierce {
         return startHp - target.getHealth();
     }
 
-    /** 不经 hurt() 的直伤（下界亚波伦）：扣血 + 打空后主动 die()，让击败状态机正常结算 */
+    /** 不经 hurt() 的直伤（下界亚波伦）：⭐ **逆向改血** 扣血 ＋ 打空后主动 die()，让击败状态机正常结算 */
     private static void directDamage(LivingEntity target, float dmg, DamageSource src) {
-        float hp = target.getHealth() - dmg;
+        // ⭐ §1188：⭐ 读写都走"逆向改血" ✗（⭐ 绕过可能被覆写的 `getHealth`／`setHealth` ✓）
+        float hp = rawHealth(target) - dmg;
         if (hp <= 0.0F) {
-            target.setHealth(0.0F);
+            rawSetHealth(target, 0.0F);
             if (!target.isRemoved()) target.die(src);           // 同上 ✗
         } else {
-            target.setHealth(hp);
+            rawSetHealth(target, hp);
         }
     }
 
