@@ -812,6 +812,47 @@ public class TinkersNewlife {
         @SubscribeEvent
         public static void onLivingAttack(net.minecraftforge.event.entity.living.LivingAttackEvent event) {
             var src = event.getSource();
+            // ⭐⭐ §1183 **无下限：在"最外层"也格挡一次** ✗
+            //   （⭐ 用户实测 ✓ 2026-10-10：「**？取消受击了为什么我还能被击退**」✓）
+            //
+            //   <h3>⚠ 为什么必须在 `LivingAttackEvent` 挡（⭐ 这才是关键 ✓）</h3>
+            //   ⭐ 击退（knockback）是 ⭐ `LivingEntity#hurt` 里**独立的一步** ✗
+            //   ⭐ 而且 ⭐ 有些模组的击退 ⭐ **根本不经过 `hurt()`** ✗（⭐ 自己 `attack()` 里直接 `knockback()` ✓）
+            //   ⚠ 我原来只挡在 ⭐ `LivingHurtEvent`（⭐ 里层 ✓）＋ ⭐ `LivingDamageEvent`（⭐ **更晚** ✓）
+            //   ⇒ ⭐ 击退已经先发生了 ✓。
+            //   ⭐ `LivingAttackEvent` 是 ⭐ **最外层那道闸门** ✗ ⇒ ⭐ 取消它 ⭐ 原版 `hurt()` **直接 `return false`**
+            //   ⇒ ⭐ **不扣血 ⇒ 不击退 ⇒ 不触发受击动画** ✓ ✓ 一步全挡住 ✓。
+            if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer victim
+                    && com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangWuxianTechnique.isActive(victim)) {
+                boolean bypass = false;
+                if (src != null && src.getDirectEntity() instanceof net.minecraft.world.entity.player.Player p
+                        && com.mofengbaizhi.tinkersnewlife.content.item.CursedToolItem.isHolding(p)) {
+                    ItemStack held = p.getMainHandItem();
+                    if (held.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.CursedToolItem ct
+                            && ct.ignoresInfinity()) {
+                        bypass = true;
+                    }
+                }
+                // ⚠ `ignoresInfinity` 的咒具（天逆鉾那类）⭐ 继续放行 ✓（⭐ 与原来同一口径 ✓）
+                if (!bypass) {
+                    float after = com.mofengbaizhi.tinkersnewlife.content.curse.technique.WuliangWuxianTechnique
+                            .onPlayerDamaged(victim, event.getAmount());
+                    if (after <= 0.0F) {
+                        event.setCanceled(true);
+                        // ⭐ ① 也记一次"格挡 ＋ 血量存底" ✓ ⇒ ⭐ 后面 `LivingHurtEvent` 里那句也会记 ✓
+                        //   （⭐ 但这条拦住后 `LivingHurtEvent` **根本不会触发** ✗ ⭐ 所以必须在这里也记 ✓）
+                        try {
+                            var server = victim.serverLevel().getServer();
+                            long nowTick = server == null ? 0L : server.getTickCount();
+                            INFINITY_BLOCKED.put(victim.getUUID(), nowTick);
+                            INFINITY_HEALTH.put(victim.getUUID(), victim.getHealth());
+                        } catch (Throwable ignored) {
+                            // ⭐ 记账失败不影响格挡本身 ✓
+                        }
+                        return;
+                    }
+                }
+            }
             if (src != null && src.getEntity() instanceof net.minecraft.server.level.ServerPlayer attacker
                     && com.mofengbaizhi.tinkersnewlife.content.curse.technique.ProjectionTechnique.isStunned(attacker)) {
                 event.setCanceled(true);
