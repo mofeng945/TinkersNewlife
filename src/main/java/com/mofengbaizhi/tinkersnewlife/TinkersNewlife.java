@@ -488,6 +488,22 @@ public class TinkersNewlife {
         private static final java.util.Map<java.util.UUID, Long> INFINITY_BLOCKED =
                 new java.util.concurrent.ConcurrentHashMap<>();
 
+        /**
+         * ⭐⭐ §1182 <b>无下限成功格挡那一刻的"血量存底"</b>（UUID → 当时血量 ✓）。
+         *
+         * <h2>⭐ 用户口径（2026-10-10 ✓ 逐字 ✓）</h2>
+         * > ⭐ 「**把无下限成功防御的逻辑改成：先将hurt设置为0，然后取消hurt事件，然后取消受击事件，
+         * > 然后再检测玩家血量是否降低，如果降低就回弹**」✓
+         * <p>⭐ 即 ⭐ **四步** ✗：⭐ ① `LivingHurtEvent.amount = 0` ✓ ⭐ ② 取消 `LivingHurtEvent` ✓
+         * ⭐ ③ 取消 `LivingDamageEvent`（"受击事件"＝护甲之后那一关 ✓）⭐ ④ **事后查血、掉了就回弹** ✓。
+         * <p>⚠ 前①②③**本来就有** ✗ ⭐ 缺的是 ④ ✓ ⇒ ⭐ 那些**绕过事件的伤害**
+         * （⭐ 直接 `setHealth` 扣血 ✓ 例如本模组 `TruePierce` 的差额直补 ✓
+         * 别的模组的直接扣血 ✓）⭐ 光靠"取消事件"是**挡不住**的 ✓
+         * ⇒ ⭐ 必须**存底 ＋ 事后回弹** ✓（⭐ 这正是用户要的兜底 ✓）。
+         */
+        private static final java.util.Map<java.util.UUID, Float> INFINITY_HEALTH =
+                new java.util.concurrent.ConcurrentHashMap<>();
+
         @SubscribeEvent
         public static void onServerStarting(ServerStartingEvent event) {
             Path worldSaveDir = event.getServer().getWorldPath(LevelResource.ROOT);
@@ -644,9 +660,13 @@ public class TinkersNewlife {
                      *   而事件被取消同样会让这一下不落地 ✓ —— 双保险 ✓。
                      */
                     if (after <= 0.0F) {
+                        // ⭐ ② 取消 hurt 事件 ✓（⭐ ① 是上面那句 `setAmount(after)` ✗ ⭐ after ＝ 0 ✓）
                         event.setCanceled(true);
-                        INFINITY_BLOCKED.put(victim.getUUID(),
-                                (long) victim.serverLevel().getServer().getTickCount());
+                        long nowTick = (long) victim.serverLevel().getServer().getTickCount();
+                        INFINITY_BLOCKED.put(victim.getUUID(), nowTick);
+                        // ⭐⭐ ④ 的**前半步**：⭐ 存下"格挡那一刻的血量"✗ ⇒ ⭐ 供本 tick 结束时对账 ✓
+                        //   （⭐ 用户口径 ✓「**然后再检测玩家血量是否降低，如果降低就回弹**」✓）
+                        INFINITY_HEALTH.put(victim.getUUID(), victim.getHealth());
                     }
                     // §701：诊断已收工 ⇒ 降为 debug ✓（默认级别看不到，需要时调级别即可恢复 ✓）
                     TinkersNewlife.LOGGER.debug("[无下限] {} 受击（{}）：{} → {}（阈值 {}，已取消={}）",
@@ -735,6 +755,60 @@ public class TinkersNewlife {
     }
 
     /** 投射咒法：罚站期间无法攻击 */
+        /**
+         * ⭐⭐ §1182 <b>无下限成功格挡的第四步：事后对账 ＋ 回弹</b>
+         * （⭐ 用户口径 ✓ 2026-10-10：「**然后再检测玩家血量是否降低，如果降低就回弹**」✓）。
+         *
+         * <h2>⚠ 为什么必须"事后"检测（⭐ 光取消事件不够 ✗）</h2>
+         * ⭐ 前两步（`amount = 0` ＋ ⭐ 取消 `LivingHurtEvent` ✓）⭐ 只能挡住
+         * ⭐ **走事件管线**的伤害 ✓ ⚠ 而 ⭐ 这些**绕过事件**的直接扣血挡不住 ✓：
+         * <ul>
+         *   <li>⭐ 本模组自己的 `util/TruePierce` ✗ ⭐ 差额直补 `setHealth` ＋ `die()` ✓；</li>
+         *   <li>⭐ 别的模组直接 `setHealth` / ⭐ 改血量上限 ✓。</li>
+         * </ul>
+         * ⇒ ⭐ 所以在 ⭐ **本 tick 结束**时 ✗ ⭐ 拿格挡前存的血量**对一次账** ✓：
+         * ⭐ 掉了就 ⭐ **`setHealth(存底)`** 回弹 ✓ ✓。
+         *
+         * <h2>⚠ 三个安全边界（⭐ 别误回弹真伤害 ✗）</h2>
+         * <ol>
+         *   <li>⭐ 只认 ⭐ **本 tick（或上一 tick）刚宣布格挡**的玩家 ✓
+         *       （⭐ 更早的记录一律清掉 ✓ 不当场回弹 ✓）;</li>
+         *   <li>⭐ 只**抬高**血量 ✗ ⭐ **绝不压低** ✓ —— ⭐ 免得把治疗也顶回去 ✓;</li>
+         *   <li>⭐ 玩家已死 / ⭐ 已移除 ⇒ ⭐ 什么都不做 ✓。</li>
+         * </ol>
+         */
+        @SubscribeEvent
+        public static void onPlayerTickInfinityRollback(
+                net.minecraftforge.event.TickEvent.PlayerTickEvent event) {
+            if (event.phase != net.minecraftforge.event.TickEvent.Phase.END) return;
+            if (!(event.player instanceof net.minecraft.server.level.ServerPlayer p)) return;
+            Long blockedAt = INFINITY_BLOCKED.get(p.getUUID());
+            if (blockedAt == null) {
+                INFINITY_HEALTH.remove(p.getUUID());
+                return;
+            }
+            var server = p.serverLevel().getServer();
+            long now = server == null ? 0L : server.getTickCount();
+            // ⚠ 只在刚刚这一两 tick 内对账 ✗ —— ⭐ 更早的记录不是这一次格挡 ✓ 清掉 ✓
+            if (now - blockedAt > 1L) {
+                INFINITY_BLOCKED.remove(p.getUUID());
+                INFINITY_HEALTH.remove(p.getUUID());
+                return;
+            }
+            Float before = INFINITY_HEALTH.remove(p.getUUID());
+            if (before == null) return;
+            if (!p.isAlive() || p.isRemoved()) return;
+            // ⭐ ④ **对账**：⭐ 血掉了 ⇒ ⭐ 回弹 ✓
+            if (p.getHealth() < before - 1.0E-4F) {
+                float dropped = before - p.getHealth();
+                p.setHealth(before);
+                TinkersNewlife.LOGGER.debug("[无下限] {} 事件已格挡但血仍掉了 {} ⇒ 已回弹到 {}（绕过事件的直接扣血 ✓）",
+                        p.getName().getString(),
+                        String.format(java.util.Locale.ROOT, "%.2f", dropped),
+                        String.format(java.util.Locale.ROOT, "%.2f", before));
+            }
+        }
+
         @SubscribeEvent
         public static void onLivingAttack(net.minecraftforge.event.entity.living.LivingAttackEvent event) {
             var src = event.getSource();
