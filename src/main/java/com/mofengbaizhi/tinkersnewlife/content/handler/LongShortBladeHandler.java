@@ -209,15 +209,19 @@ public final class LongShortBladeHandler {
     private static void purgeStrayPairs(ServerPlayer player, ItemStack off) {
         try {
             var inv = player.getInventory();
+            // ⚠⚠ **手上那两把绝不能清** ✗✗ —— ⭐ 我 §1169 只跳过了副手 ✗
+            //   ⇒ ⚠ 用户实测（2026-10-09 ✓）：「**左右手交换时短刀在主手会消失**」✓
+            //   ⇒ ⭐ 根因：⭐ 按 F 之后伙伴刀到了**主手** ✗ ⭐ 而主手就是
+            //     ⭐ **快捷栏的当前选中格**（`Inventory` 索引 0–8 ✓）
+            //     ⇒ ⭐ 它是**在 `Inventory` 里的** ✗ ⇒ ⭐ 被这个循环当"跑到别处"清掉了 ✓ ✓。
+            //   ⇒ ⭐ 现在把 ⭐ **两手都排除** ✗：⭐ 副手（索引 40／同一实例 ✓）
+            //     ＋ ⭐ 主手（当前选中格／同一实例 ✓）—— ⭐ 四重保险 ✓ 以后换实现也不会漏 ✓。
+            ItemStack main = player.getMainHandItem();
+            int selected = inv.selected;
             boolean changed = false;
             for (int i = 0; i < inv.getContainerSize(); i++) {
                 ItemStack s = inv.getItem(i);
-                // ⚠⚠ **必须跳过副手那一格** ✗✗（⭐ 我在 §1168 漏了这一步 ✓ 后果很严重 ✓）：
-                //   ⭐ `Inventory#getContainerSize()` ＝ **41** ✗（⭐ 36 主背包 ＋ 4 盔甲 ＋ **1 副手** ✓）
-                //   ⇒ ⭐ 副手就是**索引 40** ✗ ⇒ ⚠ 不跳过的话 ⭐ **每 tick 都把副手那把伙伴刀也清掉** ✗
-                //   ⇒ ⭐ 伙伴刀**根本留不住** ✓（⭐ 用户实测就是这个现象 ✓）。
-                //   ⭐ 两种跳过方式都写 ✗：⭐ 索引 40 ✓ ＋ ⭐ 与 `off` 同一实例 ✓（⭐ 双保险 ✓）。
-                if (i == 40 || s == off) {
+                if (i == 40 || i == selected || s == off || s == main) {
                     continue;
                 }
                 if (s.getItem() instanceof LongShortBladeItem && LongShortBladeItem.isPair(s)) {
