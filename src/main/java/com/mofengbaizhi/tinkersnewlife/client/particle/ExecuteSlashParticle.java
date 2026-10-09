@@ -41,8 +41,12 @@ public class ExecuteSlashParticle extends TextureSheetParticle {
         this.yd = vy * 0.15D;
         this.zd = vz * 0.15D;
         this.lifetime = 6;
-        this.baseSize = 0.75F + this.random.nextFloat() * 0.35F;
-        this.quadSize = this.baseSize * 0.55F;
+        // ⭐ 尺寸**恒定**（⚠ 用户实测反馈 ✗：「**为什么斩击是从中心放大的**」✓
+        //   —— ⭐ 我第一版在 `tick()` 里让尺寸"先涨后收"✗ 那正是"从中心放大"✓ 已删 ✓）
+        //   ⭐ 贴图里那道斩痕是**对角线** ✓ 所以实际长度 ≈ `quadSize × √2` ✓
+        //   ⇒ 取 1.05 ⇒ 斩痕约 **1.5 格** ✓（⚠ 第一版取到 1.6 且乘 9 片 ⇒ **满屏横条** ✗）
+        this.quadSize = 1.05F;
+        this.baseSize = this.quadSize;
         this.gravity = 0.0F;
         this.hasPhysics = false;
         // ⭐ 不额外染色（颜色都在贴图里 ✓ 染了会把"内黑"毁掉 ✗）
@@ -71,14 +75,9 @@ public class ExecuteSlashParticle extends TextureSheetParticle {
             this.remove();
             return;
         }
-        // ⭐ 前 2 tick 迅速张开（斩击"刷"地一下 ✓）之后开始收细 ✓
+        // ⭐ **只淡出，不改尺寸** ✓（⚠ 第一版这里"前 1/3 张开后收细"✗
+        //   用户实测反馈：「**为什么斩击是从中心放大的**」✓ ⇒ ⭐ 已彻底删掉尺寸动画 ✓）
         float t = (float) this.age / (float) this.lifetime;
-        if (t < 0.34F) {
-            this.quadSize = this.baseSize * (0.55F + t * 1.35F);
-        } else {
-            this.quadSize = this.baseSize * (1.45F - (t - 0.34F) * 1.1F);
-        }
-        // ⭐ 同时淡出 ✓（末段更明显 ✓）
         this.alpha = Math.max(0.0F, 0.95F * (1.0F - t * t));
         this.move(this.xd, this.yd, this.zd);
     }

@@ -355,40 +355,27 @@ public final class LongShortBladeHandler {
                 //   ⭐ "内黑外红"由**贴图本身**承担 ✓（`textures/particle/execute_slash.png` ✓ 程序化占位 ✓
                 //     用户以后手绘替换只换 png ✓ 代码不用动 ✓）。
                 if (target.level() instanceof ServerLevel slashLevel) {
-                    net.minecraft.world.phys.Vec3 look = player.getLookAngle();
-                    net.minecraft.world.phys.Vec3 right =
-                            new net.minecraft.world.phys.Vec3(-look.z, 0.0D, look.x);
-                    if (right.lengthSqr() < 1.0E-4D) {
-                        right = new net.minecraft.world.phys.Vec3(1.0D, 0.0D, 0.0D);
-                    }
-                    right = right.normalize();
-                    double cy = target.getY() + target.getBbHeight() * 0.55D;
-                    // ⭐⭐ **斜斩**（用户口径 ✓ 2026-10-09：「处决粒子应该有一定的**旋转角度**，
-                    //   比如右上到左下／左上到右下之类的」✓）
-                    //   ⚠ 两层都要斜 ✗ 只斜一层会像"阶梯"：
-                    //     ① ⭐ **排列方向**斜 ✓ —— 把水平垂线 `right` 与世界上方按 ±30° 合成 ✓；
-                    //     ② ⭐ **每片贴图自身**也要斜 ✓ —— 那由粒子的 `roll` 负责 ✓（⚠ `roll` 是**绕视线轴**
-                    //        转 ✗ 所以它转出来的正好是"屏幕上的倾斜" ✓ 正是我们要的 ✓）。
-                    //   ⚠ 补丁类型是 `SimpleParticleType` **没有数据载荷** ✗ ⇒ ⭐ 借**速度的三个分量**
-                    //     当角度载体 ✓（⭐ 本粒子惯性只留 15% ✓ 本来就几乎不动 ✓ 所以借用无副作用 ✓）。
-                    double ang = (player.getRandom().nextBoolean() ? 1.0D : -1.0D) * Math.toRadians(30.0D);
-                    double cs = Math.cos(ang);
-                    double sn = Math.sin(ang);
-                    // ⭐ 排列方向 = right·cos + up·sin（⭐ 得到"斜着的一道" ✓）
-                    double dx = right.x * cs;
-                    double dy = sn;
-                    double dz = right.z * cs;
-                    for (int i = -4; i <= 4; i++) {
-                        double off = i * 0.24D;
-                        // ⭐ 两端错开一点点 ✓ 让刀锋看着不是一条直线 ✓
-                        double jitter = (i % 2 == 0) ? 0.012D : -0.012D;
-                        slashLevel.sendParticles(
-                                com.mofengbaizhi.tinkersnewlife.content.ModParticles.EXECUTE_SLASH.get(),
-                                target.getX() + dx * off, cy + dy * off + jitter, target.getZ() + dz * off,
-                                1,
-                                // ⭐ **速度即角度**：⭐ (cos, sin, 0) ⇒ 粒子据此把贴图滚到同一倾角 ✓
-                                cs, sn, 0.0D, 0.0D);
-                    }
+                    // ⭐⭐ **一道就是一片**（⚠ 用户实测反馈 ✗ 2026-10-09：
+                    //   「**斩击是一次画这么多干什么**」＋「**太丑了**」＋「**斜向呢**」＋
+                    //   「**为什么斩击是从中心放大的**」✓ —— ⭐ 四条全是我第一版的设计错误 ✗）
+                    //   ⚠ 原设计：用 **9 片** 16×16 小贴图沿斜线排开 ✗
+                    //     ⇒ ① 每片被放大到 1 格多 ⇒ **满屏横条** ✗
+                    //        ② 9 片互相糊住 ⇒ 排列的"斜线"**根本看不出来** ✗
+                    //   ⇒ ⭐ 现在：⭐ **只生成 1 片** ✓ 而 ⭐ **斜线画在贴图里** ✓
+                    //     （`textures/particle/execute_slash.png` 32×32 ✓ 左上→右下 ✓ 内黑外红 ✓）；
+                    //   ⭐ `roll` 只用来在 **↙ / ↘ 两种斜向**之间随机选一个 ✓（⭐ 不必再管排列 ✓）。
+                    //   ⚠ 角度仍借"速度三元组"传给客户端 ✗（⭐ `SimpleParticleType` 没数据载荷 ✓
+                    //     见 `ExecuteSlashParticle` ✓ 那里用 `atan2(vy,vx)` 反解 ✓）。
+                    boolean mirror = player.getRandom().nextBoolean();
+                    double cs = mirror ? -1.0D : 1.0D;
+                    slashLevel.sendParticles(
+                            com.mofengbaizhi.tinkersnewlife.content.ModParticles.EXECUTE_SLASH.get(),
+                            target.getX(),
+                            target.getY() + target.getBbHeight() * 0.55D,
+                            target.getZ(),
+                            1,
+                            // ⭐ (vx,vy) 当角度载体：±(0.707,0.707) ⇒ ↙ 或 ↘ ✓
+                            cs * 0.7071D, 0.7071D, 0.0D, 0.0D);
                 }
                 if (player.level() instanceof ServerLevel sl) {
                     sl.playSound(null, target.blockPosition(), SoundEvents.PLAYER_ATTACK_CRIT,
