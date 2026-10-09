@@ -31,8 +31,11 @@ public class ExecuteSlashParticle extends TextureSheetParticle {
     /** ⭐ 本片在刀路上的**序号**（0 ＝ 起点 ＝ **最小** ✓ 越大越靠终点且越大 ✓） */
     private final int index;
 
-    /** ⭐ 延迟出现几 tick ✓（⭐ 靠它做出"一刀划过去"的时间差 ✓） */
+    /** ⭐ 延迟出现几 tick ✓（⭐ 目前恒为 0 ✓ 保留字段以备将来做"逐片"效果 ✓） */
     private final int delay;
+
+    /** ⭐ 长大用多少 tick ✓（⭐ 前 `GROW_TICKS` 长大 ✓ 之后淡出 ✓） */
+    private static final int GROW_TICKS = 8;
 
     protected ExecuteSlashParticle(ClientLevel level, double x, double y, double z,
                                    double vx, double vy, double vz, SpriteSet sprites) {
@@ -46,23 +49,24 @@ public class ExecuteSlashParticle extends TextureSheetParticle {
         //   ⭐ 本粒子惯性只留 15% ✓ 几乎不动 ✓ ⇒ 借用速度**零副作用** ✓
         //   ⚠⚠ 但这也意味着：⭐ **谁把惯性调大，斩击就会"斜着飘"** ✗（两处注释都写明了这个耦合 ✓）。
         this.index = (int) Math.round(Math.abs(vz));
-        this.xd = vx * 0.15D;
-        this.yd = vy * 0.15D;
-        this.zd = 0.0D;   // ⚠ `vz` 是载荷 ✗ **不能**当速度用 ✓ 否则会沿 z 乱飘 ✓
-        // ⚠⚠ **延迟 2 tick / 片**（用户实测第二版反馈 ✗：「**看不出来出现过程**」✓
-        //   —— ⭐ 第一版延迟只有 0~5 tick ＝ **0.25 秒** ✗ 快到看不见 ✓）
-        //   ⇒ ⭐ 改成每片 2 tick ⇒ 6 片全过程 **0.5 秒** ✓ 看得清"一刀划过去" ✓。
-        this.delay = this.index * 2;
-        this.lifetime = 8 + this.delay;   // ⚠ 后出现的多活一会儿 ✓ 免得"尾端刚亮就没了" ✗
+        // ⭐⭐ **真的会走**（用户口径 ✓：「**就不能从左上往右下滑动吗，类似原版横扫特性？**」✓）
+        //   ⚠ 前三版我都把这些分量只当"载荷" ✗ 粒子**钉在原地** ✓ ⇒ ⚠ 用户看到的就只是"闪一下" ✗
+        //   ⇒ ⭐ 现在 `(vx,vy,vz)` 是 ⭐ **真实的滑动速度** ✓（⭐ 由生成方指向"终点" ✓）
+        //     ⭐ 只留很轻的阻尼 ✓ ⇒ ⭐ 滑过去、微微减速 ✓（`move()` 自己还会再加一点摩擦 ✓）。
+        this.xd = vx * 0.85D;
+        this.yd = vy * 0.85D;
+        this.zd = vz * 0.85D;
+        this.delay = 0;
+        this.lifetime = 14;   // ⭐ 前 8 tick 长大 ✓ 后 6 tick 淡出 ✓（⭐ 全程 0.7 秒 ✓）
 
-        // ⭐⭐ **挥砍轨迹**（用户口径 ✓：「**从左上开始斩，就在左上出现最小，然后一直往右下拉动尺寸**」✓）
-        //   ⚠⚠ 实测第二版仍被否 ✗（「**还是多道，而且很小**」✓）——
-        //   ⭐ 关键是 `quadSize` 的单位是**格** ✓ 而我起点只给 `0.30`
-        //   ⇒ 视觉尺寸才约 0.2 格 ✗ 而片距 0.3 格 ⇒ ⭐ **片与片没搭上** ⇒ 看着"好几道" ✗。
-        //   ⇒ ⭐ 现在 **1.0 → 3.5 格** ✓ ⇒ 相邻两片**大幅重叠** ✓
-        //     ⇒ ⭐ 合成为**一道**由细到粗的刀光 ✓（⭐ 而不是"多道" ✓）。
-        this.quadSize = 1.0F + this.index * 0.5F;   // ⭐ 1.0 → 3.5 ✓
-        this.baseSize = this.quadSize;
+        // ⭐⭐ **贴着滑动方向倾斜**（⭐ 处理"↙ / ↘"两向 ✓）
+        //   ⭐ 贴图里画的是 **↘** ✓ ⇒ ⚠ 若这一刀是**往上**滑（`vy > 0` ✓）就得**镜像 90°** ✓。
+        this.roll = vy > 0.0D ? (float) (Math.PI * 0.5D) : 0.0F;
+        this.oRoll = this.roll;
+
+        // ⭐ 尺寸：⭐ 出生很小 ✓ 一路长大 ✓（⭐ `quadSize` 单位是**格** ✗ 见 §1141 ✓）
+        this.baseSize = 3.0F;
+        this.quadSize = 0.30F;
         this.gravity = 0.0F;
         this.hasPhysics = false;
         // ⭐ 不额外染色（颜色都在贴图里 ✓ 染了会把"内黑"毁掉 ✗）
@@ -70,16 +74,6 @@ public class ExecuteSlashParticle extends TextureSheetParticle {
         this.gCol = 1.0F;
         this.bCol = 1.0F;
         this.alpha = 0.95F;
-        // ⚠ 朝向：粒子**不随玩家朝向** ✗ ⇒ 由生成时给的随机 roll 制造"每一击角度略有不同"✓
-        //   （⚠ 真正的"横"是靠贴图 ✓ 见类注释 ✓）
-        // ⭐⭐ **倾斜角**（用户口径 ✓ 2026-10-09：「处决粒子应该有一定的旋转角度，
-        //   比如右上到左下／左上到右下之类的」✓）
-        //   ⭐ 角度由**生成方**经"速度三元组"传来 ✓（⭐ `(vx,vy)` 就是 `(cos,sin)` ✓ 见 `LongShortBladeHandler` ✓）
-        //   ⭐ 用 `roll` 把它落到屏幕上 ✓ —— ⚠ `roll` 是**绕视线轴**转 ✗
-        //     所以它转出来的正好是"屏幕上的倾斜" ✓ 正是斜斩要的效果 ✓。
-        double angle = Math.atan2(vy, vx);
-        this.roll = (float) (-angle);
-        this.oRoll = this.roll;
     }
 
     @Override
@@ -91,17 +85,20 @@ public class ExecuteSlashParticle extends TextureSheetParticle {
             this.remove();
             return;
         }
-        // ⭐⭐ **延迟出现**（用户口径 ✓：起点最小 ✓ 一路"拉"到终点 ✓ ⇒ 一刀划过去 ✓）
-        //   ⚠ 没轮到自己的片子 **完全不显示** ✗（`alpha = 0` ✓）⇒ 于是看起来是**逐片亮起** ✓。
-        if (this.age <= this.delay) {
-            this.alpha = 0.0F;
-            return;
+        // ⭐⭐ **慢慢出现**（用户口径 ✓：「**就不能只用一道刀光慢慢出现吗**」✓）
+        //   ⭐ 前 8 tick **长大** ✓ 后 6 tick **淡出** ✓（⭐ 全程 0.7 秒 ✓ 看得清 ✓）
+        //   ⚠ 用**缓出**曲线（`1-(1-g)²` ✓）⇒ 前段快、后段慢 ⇒ ⭐ 像刀光"铺开"而不是"弹开" ✓。
+        float t = (float) this.age / (float) this.lifetime;
+        if (this.age <= GROW_TICKS) {
+            float g = (float) this.age / (float) GROW_TICKS;
+            float eased = 1.0F - (1.0F - g) * (1.0F - g);
+            this.quadSize = 0.30F + (this.baseSize - 0.30F) * eased;
+            this.alpha = 0.95F;
+        } else {
+            float f = (float) (this.age - GROW_TICKS)
+                    / (float) Math.max(1, this.lifetime - GROW_TICKS);
+            this.alpha = Math.max(0.0F, 0.95F * (1.0F - f));
         }
-        // ⭐ **只淡出，不改尺寸** ✓（⚠ 第一版这里"前 1/3 张开后收细"✗
-        //   用户实测反馈：「**为什么斩击是从中心放大的**」✓ ⇒ ⭐ 尺寸动画已整段删除 ✓
-        //   ⭐ 现在的"变大"是**沿刀路逐片更大** ✓ 不是单片的从中心放大 ✗）。
-        float life = (float) (this.age - this.delay) / (float) Math.max(1, this.lifetime - this.delay);
-        this.alpha = Math.max(0.0F, 0.95F * (1.0F - life * life));
         this.move(this.xd, this.yd, this.zd);
     }
 

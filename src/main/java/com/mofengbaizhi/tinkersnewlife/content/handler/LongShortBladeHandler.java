@@ -355,14 +355,13 @@ public final class LongShortBladeHandler {
                 //   ⭐ "内黑外红"由**贴图本身**承担 ✓（`textures/particle/execute_slash.png` ✓ 程序化占位 ✓
                 //     用户以后手绘替换只换 png ✓ 代码不用动 ✓）。
                 if (target.level() instanceof ServerLevel slashLevel) {
-                    // ⭐⭐ **挥砍轨迹**（用户口径 ✓ 2026-10-09：「**能不能做成如果从左上开始斩，
-                    //   就在左上出现最小，然后一直往右下拉动尺寸**」✓）
-                    //   ⇒ ⭐ 不是"一片静态贴图" ✗ 而是 ⭐ **一串沿刀路排开、越远越大的斩痕** ✓
-                    //     ＋ ⭐ **按序号延迟出现** ✓ ＝ 看起来像**一刀划过去** ✓。
-                    //   ⚠ `sendParticles` 一次发不出"时间差" ✗ ⇒ ⭐ 把**序号**塞进速度的第三个分量
-                    //     （⭐ `vz` ✓ 本粒子零位移 ✓ 借用无副作用 ✓）⇒ ⭐ 粒子自己按序号决定
-                    //     ① **延迟几 tick 才出现** ✓ ② **尺寸多大** ✓（见 `ExecuteSlashParticle` ✓）。
-                    //   ⚠ 角度仍由 `(vx,vy)` 承载 ✓（⭐ `(cosθ, sinθ)` ✓ 粒子 `atan2` 反解 ✓）。
+                    // ⭐⭐ **一道刀光，从左上往右下滑过去**（用户口径 ✓ 2026-10-09：
+                    //   「**就不能从左上往右下滑动吗，类似原版横扫特性？**」✓）
+                    //   ⚠⚠ 我前三轮全在做"原地出现／原地长大" ✗ —— ⭐ 而用户要的是**滑动** ✓：
+                    //     ⭐ 出生在**起点** ✓ ⭐ 带一个指向**终点**的**真实速度** ✓ ⭐ 同时从小长到大 ✓
+                    //     ⇒ ⭐ 看起来就是一刀**划过去** ✓。
+                    //   ⚠ 与原版横扫的差别 ✗：⭐ 原版那个 `SweepAttackParticle` 是**固定不动**的一片 ✗
+                    //     （所以"横扫"看起来只是"闪一下"✓）—— ⭐ 我们这片**真的会走** ✓。
                     net.minecraft.world.phys.Vec3 look2 = player.getLookAngle();
                     net.minecraft.world.phys.Vec3 right2 =
                             new net.minecraft.world.phys.Vec3(-look2.z, 0.0D, look2.x);
@@ -371,39 +370,26 @@ public final class LongShortBladeHandler {
                     }
                     right2 = right2.normalize();
                     // ⭐ 刀路方向：水平垂线 ＋ 世界上方按 45° 合成 ✓
-                    //   ⭐ 上方分量取正取负 ⇒ 得到"左上→右下"或"左下→右上"两种斜向 ✓
+                    //   ⭐ 上方分量随机取正负 ⇒ "左上→右下" 或 "左下→右上" ✓
                     double upSign = player.getRandom().nextBoolean() ? 1.0D : -1.0D;
                     double dirX = right2.x * 0.7071D;
                     double dirY = 0.7071D * upSign;
                     double dirZ = right2.z * 0.7071D;
-                    double cy2 = target.getY() + target.getBbHeight() * 0.55D;
-                    // ⚠⚠ 实测第二版仍被否 ✗（用户 2026-10-09：「**还是多道，而且很小，
-                    //   并且看不出来出现过程**」✓）⇒ ⭐ 三条**全是数值问题** ✗：
-                    //     ① **多道** ✗ —— ⚠ `quadSize` 的单位是**格** ✓ 而我把起点设成 `0.30`
-                    //        ⇒ 视觉尺寸才约 0.2 格 ✗ ⇒ 而片距 0.3 格 ⇒ ⭐ **片与片根本没搭上** ✗
-                    //        ⇒ ⭐ 看起来是"好几道" ✗；⭐ 修法＝**放大 ＋ 收紧间距** ✓
-                    //        让相邻两片**重叠** ⇒ ⭐ 合成为**一道越来越粗的刀光** ✓；
-                    //     ② **很小** ✗ ⇒ ⭐ 尺寸改成 1.0 → 3.5 格 ✓；
-                    //     ③ **看不出出现过程** ✗ ⇒ ⚠ 延迟只有 0~5 tick ＝ 0.25 秒 ✗ 太快 ✓
-                    //        ⇒ ⭐ 改成每片 **2 tick** ⇒ 全过程 **0.5 秒** ✓ 看得清 ✓。
-                    double halfLen = 1.10D;          // ⭐ 半长 ✓ 总长约 2.2 格 ✓
-                    int pieces = 6;                  // ⭐ 仍 6 片 ✓ 但**互相重叠** ⇒ 一道 ✓
-                    for (int i = 0; i < pieces; i++) {
-                        // ⭐ 从"起点端"往"终点端"排 ✓：`t` 由 -1 走到 +1 ✓
-                        double t = -1.0D + 2.0D * i / (pieces - 1.0D);
-                        slashLevel.sendParticles(
-                                com.mofengbaizhi.tinkersnewlife.content.ModParticles.EXECUTE_SLASH.get(),
-                                target.getX() + dirX * halfLen * t,
-                                cy2 + dirY * halfLen * t,
-                                target.getZ() + dirZ * halfLen * t,
-                                1,
-                                // ⭐ (vx,vy) ＝ 角度载体 ✓：⭐ `(1,0)` ⇒ ↘ ✓ ／ `(0,-1)` ⇒ ↙（镜像 ✓）
-                                //   ⭐ (vz) ＝ **序号 i** ✓（延迟与尺寸都由它算 ✓ 见 `ExecuteSlashParticle` ✓）
-                                upSign > 0 ? 1.0D : 0.0D,
-                                upSign > 0 ? 0.0D : -1.0D,
-                                i,
-                                0.0D);
-                    }
+                    // ⭐ 从**起点端**出生 ✓（⭐ 刀路半长 1.1 格 ⇒ 起点在中心往回 1.1 格 ✓）
+                    double halfLen = 1.10D;
+                    double speed = 0.30D;   // ⭐ 每 tick 走 0.3 格 ⇒ 约 7 tick 滑完 2.2 格 ✓
+                    slashLevel.sendParticles(
+                            com.mofengbaizhi.tinkersnewlife.content.ModParticles.EXECUTE_SLASH.get(),
+                            target.getX() - dirX * halfLen,
+                            target.getY() + target.getBbHeight() * 0.55D - dirY * halfLen,
+                            target.getZ() - dirZ * halfLen,
+                            1,
+                            // ⭐ 速度 ＝ ⭐ **真实的滑动方向** ✓（⭐ 粒子靠它移动 ✓ 并据 `vy` 的正负决定
+                            //   贴图要不要镜像 ✓ 见 `ExecuteSlashParticle` ✓）
+                            dirX * speed,
+                            dirY * speed,
+                            dirZ * speed,
+                            0.0D);
                 }
                 if (player.level() instanceof ServerLevel sl) {
                     sl.playSound(null, target.blockPosition(), SoundEvents.PLAYER_ATTACK_CRIT,
