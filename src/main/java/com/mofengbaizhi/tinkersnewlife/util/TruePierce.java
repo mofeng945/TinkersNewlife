@@ -157,6 +157,18 @@ public final class TruePierce {
         } catch (Throwable ignored) {
             apollyonIface = null;
         }
+        // ⚠⚠ **一次性探针**（⭐ 用户实测 2026-10-10：「**还是没破**」✓ 定位完删 ✗）：
+        //   ⭐ 打出来才知道是 ⭐ "类找不到" ✗ 还是 ⭐ "方法名不对" ✓ 还是 ⭐ "isInstance 为假" ✓
+        try {
+            TinkersNewlife.LOGGER.info(
+                    "[真伤·通道] Apollyon2Interface 类={} getHealth={} setHealth={} setHitCooldown={} 加载器={}",
+                    apollyonIface != null,
+                    apollyonGetHealth != null,
+                    apollyonSetHealth != null,
+                    apollyonSetHitCooldown != null,
+                    apollyonIface != null ? String.valueOf(apollyonIface.getClassLoader()) : "n/a");
+        } catch (Throwable ignored) {
+        }
     }
 
     /** ⭐ 这个实体有没有"额外血量通道"✗（⭐ 没有 ⇒ -1 ✓） */
@@ -177,11 +189,24 @@ public final class TruePierce {
     private static boolean apollyonSetHealth(LivingEntity e, float value) {
         resolveApollyon();
         if (apollyonIface == null || apollyonSetHealth == null || !apollyonIface.isInstance(e)) {
+            // ⚠ **一次性探针**：⭐ 前几次失败时打出"为什么没走通道" ✓（⭐ 定位完删 ✗）
+            if (apollyonIface != null && APOLLYON_MISS_LOGGED.compareAndSet(false, true)) {
+                TinkersNewlife.LOGGER.info(
+                        "[真伤·通道] 走不了：实体的类={} 接口={} isInstance={} 它实现的接口=[{}]",
+                        e.getClass().getName(),
+                        apollyonIface.getName(),
+                        apollyonIface.isInstance(e),
+                        String.join(" ", java.util.Arrays.stream(e.getClass().getInterfaces())
+                                .map(Class::getName).toArray(String[]::new)));
+            }
             return false;
         }
         try {
             apollyonSetHealth.invoke(e, value);
-        } catch (Throwable ignored) {
+        } catch (Throwable t) {
+            if (APOLLYON_MISS_LOGGED.compareAndSet(false, true)) {
+                TinkersNewlife.LOGGER.info("[真伤·通道] 调用 setApollyonHealth 失败：{}", t.toString());
+            }
             return false;
         }
         try {
@@ -192,6 +217,10 @@ public final class TruePierce {
         }
         return true;
     }
+
+    /** ⚠ 探针去重 ✗ */
+    private static final java.util.concurrent.atomic.AtomicBoolean APOLLYON_MISS_LOGGED =
+            new java.util.concurrent.atomic.AtomicBoolean(false);
 
     /** ⭐ 找血量字段 ✗（⭐ 只找一次 ✓）—— ⭐⭐ §1201 **改成"按值反查"** ✗ */
     private static java.lang.reflect.Field healthField() {
