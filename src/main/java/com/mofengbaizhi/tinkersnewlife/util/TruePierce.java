@@ -554,6 +554,16 @@ public final class TruePierce {
 
     /** ⭐ **逆向读血**：⭐ 直读字段 ✓（⭐ 拿不到就退回 `getHealth()` ✓） */
     public static float rawHealth(LivingEntity target) {
+        // ⭐⭐⭐⭐ §1220 **影子血最优先** ✗✗（⭐ dump 实证 ✓ 2026-10-10 ✓）：
+        //   ⭐ dump 显示 ⭐ `SD[AOGBOGBO…DOGQ]=666.0` ✗ ⭐ `SD[f_20961_]=320.0` ✗ ⭐ `F[f_20920_]=0.00` ✓
+        //   ⚠ ⭐ 而 ⭐ `getApollyonHealth()` 报 **93** ✗ ⭐ `EC.percent=0.14` ✓
+        //   ⇒ ⭐ **93 ＝ 0.14 × 666** ✗ ⭐ **真血是"算出来"的** ✓
+        //     ⇒ ⭐ **没有任何一个可以写的存储** ✓ ✓
+        //   ⇒ ⭐ 那就 ⭐ **我们自己记账** ✗（⭐ 建立"影子血" ✓ ⭐ 读也读它 ✓）。
+        float shadow = shadowHealthOf(target);
+        if (shadow >= 0.0F) {
+            return shadow;
+        }
         float viaApi = target.getHealth();
         // ⭐⭐⭐⭐ §1214 **先问"额外血量通道"** ✗ —— ⭐ 有就以它为准 ✓（⭐ 那才是真血 ✓）
         float viaExtra = apollyonHealthOf(target);
@@ -618,6 +628,25 @@ public final class TruePierce {
             try {
                 target.hurtMarked = true;
             } catch (Throwable ignored) {
+            }
+            return true;
+        }
+        // ⭐⭐⭐⭐ §1220 **影子血**（⭐ 真血写不进去 ⇒ ⭐ 我们自己记账 ✓）
+        //   ⚠ 触发条件 ✗：⭐ 这个实体**有那个接口**（⭐ = ⭐ 它的血"算出来的" ✓）
+        //     ⭐ 而 ⭐ setter／⭐ 访问器**都写不到** ✓ ⇒ ⭐ 只能记账 ✓ ✓
+        //   ⭐ 通用 ✗：⭐ 认**接口**不认类型名 ✓ —— ⭐ 任何模组实现同名接口都适用 ✓。
+        if (hasApollyonChannel(target)) {
+            SHADOW_HEALTH.put(target.getUUID(), value);
+            try {
+                target.hurtMarked = true;
+            } catch (Throwable ignored) {
+            }
+            if (SHADOW_LOGGED.compareAndSet(false, true)) {
+                TinkersNewlife.LOGGER.info(
+                        "[真伤·影子血] 真血无法写入 ⇒ 改为自行记账：{}（{}）首值={} ✓",
+                        target.getName().getString(),
+                        net.minecraft.world.entity.EntityType.getKey(target.getType()).toString(),
+                        String.format(java.util.Locale.ROOT, "%.2f", value));
             }
             return true;
         }
@@ -1223,9 +1252,24 @@ public final class TruePierce {
      * @return ⭐ **≥ 0** ＝ 这个实体被锁着，返回锁定值 ✓ ⭐ **-1** ＝ 没锁（⭐ 正常走原版 ✓）
      */
     public static float lockedHealthFor(LivingEntity entity) {
-        // ⚠⚠ **第一句必须是空判** ✗ —— ⭐ `getHealth()` 是热点方法 ✓
+        if (entity == null) {
+            return -1.0F;
+        }
+        // ⭐⭐ §1220 **影子血优先** ✗（⭐ 这类 Boss 的血由我们记账 ✓）
+        if (!SHADOW_HEALTH.isEmpty()) {
+            Float sh;
+            try {
+                sh = SHADOW_HEALTH.get(entity.getUUID());
+            } catch (Throwable ignored) {
+                sh = null;
+            }
+            if (sh != null) {
+                return sh;
+            }
+        }
+        // ⚠⚠ **空判先行** ✗ —— ⭐ `getHealth()` 是热点方法 ✓
         //   ⭐ 绝大多数实体都没被锁 ⇒ ⭐ 一次 `isEmpty()` 就返回 ⇒ **零开销** ✓ ✓
-        if (PENDING.isEmpty() || entity == null) {
+        if (PENDING.isEmpty()) {
             return -1.0F;
         }
         try {
@@ -1233,6 +1277,45 @@ public final class TruePierce {
             return pd == null ? -1.0F : pd.value();
         } catch (Throwable ignored) {
             return -1.0F;
+        }
+    }
+
+    /** ⭐⭐⭐⭐ §1220 **影子血**：⭐ 真血写不进去的 Boss（⭐ 亚波伦那类 ✓）由我们记账 ✓ */
+    private static final java.util.Map<java.util.UUID, Float> SHADOW_HEALTH =
+            new java.util.concurrent.ConcurrentHashMap<>();
+    private static final java.util.concurrent.atomic.AtomicBoolean SHADOW_LOGGED =
+            new java.util.concurrent.atomic.AtomicBoolean(false);
+
+    /** ⭐ 读影子血 ✗（⭐ 没有 ⇒ -1 ✓） */
+    private static float shadowHealthOf(LivingEntity e) {
+        if (SHADOW_HEALTH.isEmpty() || e == null) {
+            return -1.0F;
+        }
+        try {
+            Float v = SHADOW_HEALTH.get(e.getUUID());
+            return v == null ? -1.0F : v;
+        } catch (Throwable ignored) {
+            return -1.0F;
+        }
+    }
+
+    /** ⭐ 这个实体有没有"额外血量通道"✗（⭐ = ⭐ 它的血是算出来的 ✓ ⇒ ⭐ 只能记账 ✓） */
+    private static boolean hasApollyonChannel(LivingEntity e) {
+        resolveApollyon();
+        try {
+            return apollyonIface != null && apollyonIface.isInstance(e);
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    /** ⭐ 实体消失/死亡时清掉影子血 ✗（⭐ 免得 UUID 复用 ✓） */
+    public static void forgetShadow(LivingEntity e) {
+        try {
+            if (e != null) {
+                SHADOW_HEALTH.remove(e.getUUID());
+            }
+        } catch (Throwable ignored) {
         }
     }
 
