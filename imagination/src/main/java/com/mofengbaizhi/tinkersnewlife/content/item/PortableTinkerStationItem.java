@@ -88,14 +88,36 @@ public class PortableTinkerStationItem extends Item {
         if (level.isClientSide() || !(player instanceof ServerPlayer sp)) {
             return InteractionResultHolder.pass(stack);
         }
-        // §1282 用户口径：开 GUI 要延后（管理员诊断：客户端还没收到方块就开界面 ⇒ JEI 崩／卡死）
+        // §1286 证据驱动修复（探针 2026-10-11 00:06 抓到）：
+        //   Mantle 的 JEIPlugin$MultiModuleContainerHandler 会给 MultiModuleScreen（工匠站的父类）
+        //   返回一个 w=-2 的矩形（侧栏模块塌陷）⇒ JEI 的 ImmutableRect2i 直接崩 ✗
+        //   ⇒ 所以要把透明砧放在"六面皆空气"的位置：没有邻块 ⇒ detectStationParts 找不到侧栏库存
+        //     ⇒ 不会产生那个塌陷模块 ⇒ 矩形全为正 ⇒ 不崩 ✓
         BlockPos base = sp.blockPosition();
         BlockPos target = null;
-        BlockPos[] tries = { base, base.above(), base.below(), base.north(), base.south(), base.east(), base.west() };
-        for (BlockPos p : tries) {
-            if (level.getBlockState(p).isAir()) {
-                target = p;
-                break;
+        for (int dy = 1; dy <= 6 && target == null; dy++) {
+            BlockPos up = base.above(dy);
+            if (!level.getBlockState(up).isAir()) {
+                continue;
+            }
+            boolean clear = true;
+            for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
+                if (!level.getBlockState(up.relative(dir)).isAir()) {
+                    clear = false;
+                    break;
+                }
+            }
+            if (clear) {
+                target = up;
+            }
+        }
+        if (target == null) {
+            // 兜底：仍找一个自身是空气的格子（★宁可挂侧栏也不失败 ✓）
+            for (BlockPos p : new BlockPos[] { base, base.below(), base.north(), base.south(), base.east(), base.west() }) {
+                if (level.getBlockState(p).isAir()) {
+                    target = p;
+                    break;
+                }
             }
         }
         if (target == null) {
@@ -105,8 +127,6 @@ public class PortableTinkerStationItem extends Item {
         net.minecraft.world.level.block.state.BlockState st = com.mofengbaizhi.tinkersnewlife.content.block
                 .InvisibleStationRegistry.INVISIBLE_STATION.get().defaultBlockState();
         level.setBlockAndUpdate(spot, st);
-        // ★ §1283 关键：借用真工匠砧自己的放置逻辑，让方块实体拿到与真砧**完全一样**的
-        //   材质/贴图数据（屏幕布局与宽度就是按这些算的；空手 setBlock 会留下 AIR/UNKNOWN ⇒ 负宽度 ⇒ JEI 崩）
         try {
             com.mofengbaizhi.tinkersnewlife.content.block.InvisibleStationRegistry.INVISIBLE_STATION.get()
                     .setPlacedBy(level, spot, st, sp, new ItemStack(slimeknights.tconstruct.tables.TinkerTables
@@ -115,7 +135,6 @@ public class PortableTinkerStationItem extends Item {
         }
         if (level.getBlockEntity(spot) instanceof TinkerStationBlockEntity be) {
             loadInventory(stack, be);
-            // ★ 延后 10 tick：等客户端把这块方块收下去之后再开界面 ✓
             final net.minecraft.server.MinecraftServer server = sp.getServer();
             if (server != null) {
                 server.tell(new net.minecraft.server.TickTask(server.getTickCount() + 10, () -> {
