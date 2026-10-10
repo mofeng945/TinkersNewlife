@@ -1628,6 +1628,24 @@ public final class TruePierce {
             target.hurtMarked = true;
         } catch (Throwable ignored) {
         }
+        // ⭐⭐⭐⭐ §1237 **写完复查 ⇒ 没落进去就"循环改血"兜底** ✗✗
+        //   （⭐ 用户口径 ✓ 2026-10-10：「**使徒免疫窗怎么又破不了了，不是说直接改血吗**」✓）
+        //   ⚠ 背景 ✗：⭐ 免疫窗（⭐ `moddedInvul` ✓）会让 ⭐ `hurt()` **整个无效** ✓
+        //     ⇒ ⭐ 只能靠 ⭐ **差额改血** ✓ ⚠ 而 ⭐ "改血到底落没落进去" ✗ ⭐ 光看代码看不出来 ✓
+        //   ⇒ ⭐ 所以 ⭐ **写完立刻复查** ✗：
+        //     ⭐ 落进去了 ⇒ ⭐ 收工 ✓（⭐ 普通目标／⭐ 多数使徒 ✓）；
+        //     ⭐ 没落进去 ⇒ ⭐ **自动去找"能改血的那个通道"** ✓
+        //       （⭐ 就是用户点名要加进兜底链的 ⭐ §1221 循环改血 ✓
+        //        ⭐ 它靠 ⭐ **"写了看 `getHealth()` 变不变"** 认通道 ✗
+        //        ⭐ 完全不看名字／⭐ 类型 ✓ ⭐ 混淆与改名都拦不住 ✓）。
+        if (Math.abs(rawHealth(target) - value) > 0.05F && hasApollyonChannel(target)
+                && bruteForceWrite(target, value)) {
+            try {
+                target.hurtMarked = true;
+            } catch (Throwable ignored) {
+            }
+            return true;
+        }
         return raw;
     }
 
