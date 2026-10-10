@@ -186,3 +186,23 @@ tasks.named('jar', Jar).configure {
 tasks.named('compileJava').configure {
     dependsOn project(':common').tasks.named('classes')
 }
+
+// ⭐⭐⭐⭐ §1262 **共享源集** ✗ —— ⭐ 探针实测：⭐ 这是唯一能让 `:cursed` 编到 `:common` 的路 ✓
+//   ⚠ 试过并**全部失败**的三种写法 ✓（⭐ 见备忘录 §1261／§1262 ✓）：
+//     ① `compileOnly project(':common')` ⇒ ⭐ 拿到的是 `reobfJar` 后的 **SRG 名 jar** ✓
+//     ② `compileOnly files(project(':common').sourceSets.main.output.classesDirs)` ✓
+//     ③ `compileOnly files(rootProject.file('common/build/classes/java/main'))` ✓
+//     ⇒ ⭐ 三者都报 ⭐ `程序包 com.mofengbaizhi.tinkersnewlife 不存在` ✓
+//   ⭐ 说明 ⭐ ForgeGradle 的编译类路径**不认外挂目录／jar** ✗ ⭐ 只认**源集** ✓ ✓。
+//   ⚠ 代价（⭐ 如实 ✓）：⭐ 这样 `:cursed` 会**连 common 的源码一起编** ✗
+//     ⇒ ⭐ 它的 jar 里会有**重复类** ✓ ⇒ ⭐ **真拆时**必须二选一 ✓：
+//        ⭐ ① 把共享层做成**独立发布的 mod**（⭐ `implementation fg.deobf(...)` ✓）
+//        ⭐ ② 或者把各 mod 的内容挪进**各自的包**（⭐ 不再共用 `…tinkersnewlife.*` 前缀 ✓）。
+//   ⚠ 本轮**只把路打通 ✗ 不搬内容** ✓ —— ⭐ 因为搬走 9 个类会让 ⭐ `common` 的 jar
+//     ⭐ 少了那些类 ✗ ⭐ 而用户口径是**先只发一个包** ✓ ⇒ ⭐ 一搬就得同时发 `cursed` ✓
+//     ⇒ ⭐ 与你"先打在一个包里"冲突 ✓ ⭐ 所以搬迁留到"多包部署"时一次做完 ✓。
+sourceSets {
+    main {
+        java.srcDir rootProject.file('common/src/main/java')
+    }
+}
