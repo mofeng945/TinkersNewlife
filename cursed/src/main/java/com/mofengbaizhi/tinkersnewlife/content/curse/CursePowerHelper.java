@@ -160,7 +160,11 @@ public final class CursePowerHelper {
 
     /** 读取单件物品的咒力亲和（匠魂工具读持久数据，普通物品读原始标签） */
     public static int getCurseAffinity(ItemStack stack) {
-        if (stack.isEmpty()) return 0;
+        // §1298 桥接：新饰品把亲和写在 AttributeModifiers(Slot=curio) 里 ⇒ 统一走这里读 ✓
+        int viaAttribute = CurseAffinityAttribute.getItemAffinity(stack);
+        if (viaAttribute != 0) {
+            return viaAttribute;
+        }        if (stack.isEmpty()) return 0;
         ToolStack tool = ToolHelper.getToolStack(stack);
         if (tool != null) {
             return tool.getPersistentData().getInt(KEY_AFFINITY_TOOL);
