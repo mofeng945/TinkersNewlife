@@ -1588,5 +1588,7 @@
   "slot.tinkersnewlife.long_short_blade.bow_limb": "弓臂",
   "jei.tinkersnewlife.music_disc_doll_music": "获得方式：末地城的战利品箱里 20% 概率开出",
   "jei.tinkersnewlife.music_disc_tell_me": "获得方式：钓鱼时有 1% 概率获得",
-  "attribute.tinkersnewlife.curse_affinity": "咒力亲和"
+  "attribute.tinkersnewlife.curse_affinity": "咒力亲和",
+  "tooltip.tinkersnewlife.curse_affinity.slot": "作为饰品时：",
+  "tooltip.tinkersnewlife.curse_affinity.value": "+%s 咒力亲和"
 }

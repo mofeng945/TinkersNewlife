@@ -72,8 +72,12 @@ public class ModTooltips {
         // ⭐ 咒力亲和（战利品生成的饰品可能携带）
         int affinity = CursePowerHelper.getCurseAffinity(stack);
         if (affinity > 0) {
-            event.getToolTip().add(Component.translatable("tooltip.tinkersnewlife.curse_affinity", affinity)
-                    .withStyle(ChatFormatting.LIGHT_PURPLE));
+            // §1301 用户口径：饰品提示固定两行 —— 标题 + 数值（模仿原版属性提示的排版）
+            //   （Curios 5.14.1 只应用属性、不画这行提示，所以由我们自己写 ✓）
+            event.getToolTip().add(Component.translatable("tooltip.tinkersnewlife.curse_affinity.slot")
+                    .withStyle(ChatFormatting.GRAY));
+            event.getToolTip().add(Component.translatable("tooltip.tinkersnewlife.curse_affinity.value", affinity)
+                    .withStyle(ChatFormatting.BLUE));
         }
 
         ResourceLocation regName = ForgeRegistries.ITEMS.getKey(stack.getItem());
