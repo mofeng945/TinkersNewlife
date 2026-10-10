@@ -18,7 +18,15 @@
 $ErrorActionPreference = 'Stop'
 
 $root = Split-Path -Parent $PSScriptRoot
-$res  = Join-Path $root 'src\main\resources'
+# §1255 three-mod split: resources now live in four subprojects (common/cursed/
+# imagination/apostle). Scan all of them; a missing one is skipped silently.
+$resDirs = @('common', 'cursed', 'imagination', 'apostle') |
+    ForEach-Object { Join-Path $root ($_ + '\src\main\resources') } |
+    Where-Object { Test-Path -LiteralPath $_ }
+if ($resDirs.Count -eq 0) {
+    Write-Host 'ERROR: no subproject resources dir found (expected common/src/main/resources)'
+    exit 2
+}
 $js   = Join-Path $PSScriptRoot 'check-json-strict.js'
 
 $node = Get-Command node -ErrorAction SilentlyContinue
@@ -32,6 +40,7 @@ Write-Host '!! (illegal JSON may slip through, and the 3x3 recipe check will NOT
 Add-Type -AssemblyName System.Web.Extensions
 $bad = 0; $checked = 0; $skipped = 0
 $ser = New-Object System.Web.Script.Serialization.JavaScriptSerializer
+foreach ($res in $resDirs) {
 Get-ChildItem -Recurse -File -Path $res -Filter '*.json' | ForEach-Object {
     $rel = $_.FullName.Replace($res + '\', '')
     $raw = [System.IO.File]::ReadAllText($_.FullName, [System.Text.Encoding]::UTF8)
@@ -42,6 +51,7 @@ Get-ChildItem -Recurse -File -Path $res -Filter '*.json' | ForEach-Object {
         Write-Host ('  BAD  ' + $rel + '  ->  ' + $_.Exception.Message)
         $bad++
     }
+}
 }
 Write-Host ('checked ' + $checked + ', bad ' + $bad + ', skipped(empty-key blockstates) ' + $skipped)
 if ($bad -gt 0) { exit 1 }
