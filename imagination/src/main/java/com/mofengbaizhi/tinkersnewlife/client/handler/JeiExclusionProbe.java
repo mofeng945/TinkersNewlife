@@ -63,6 +63,7 @@ public final class JeiExclusionProbe {
                 TinkersNewlife.LOGGER.info("[JEI-PROBE] api call failed: {}", t.toString());
             }
             // 2) name the culprits: walk the registered handlers
+            dumpModules(screen);
             dumpHandlers(helper, "guiContainerHandlers", screen);
             dumpHandlers(helper, "globalGuiHandlers", screen);
         } catch (Throwable t) {
@@ -144,8 +145,10 @@ public final class JeiExclusionProbe {
 
     private static void report(Object handler, Screen screen, String group) {
         try {
-            Object res = handler.getClass().getMethod("getGuiExtraAreas",
-                    net.minecraft.client.gui.screens.inventory.AbstractContainerScreen.class).invoke(handler, screen);
+            java.lang.reflect.Method m = findMethod(handler.getClass(), "getGuiExtraAreas", net.minecraft.client.gui.screens.inventory.AbstractContainerScreen.class);
+            if (m == null) { TinkersNewlife.LOGGER.info("[JEI-PROBE] {}.{} has no getGuiExtraAreas", group, handler.getClass().getName()); return; }
+            m.setAccessible(true);
+            Object res = m.invoke(handler, screen);
             StringBuilder sb = new StringBuilder();
             if (res instanceof java.util.Collection<?> col) {
                 for (Object r : col) {
@@ -165,6 +168,66 @@ public final class JeiExclusionProbe {
         }
     }
 
+    private static java.lang.reflect.Method findMethod(Class<?> cls, String name, Class<?>... params) {
+        for (Class<?> c = cls; c != null; c = c.getSuperclass()) {
+            try {
+                return c.getDeclaredMethod(name, params);
+            } catch (NoSuchMethodException ignored) {
+            }
+        }
+        return null;
+    }
+
+    /** §1287 dump the Mantle module list: which module has a broken width, and how wide the screen is. */
+    /** §1287 dump the Mantle module list with pure reflection (1.20.1 widgets keep x/y/width protected). */
+    private static void dumpModules(Screen screen) {
+        try {
+            StringBuilder head = new StringBuilder();
+            for (String n : new String[] { "imageWidth", "imageHeight", "leftPos", "topPos", "xSize", "ySize" }) {
+                Object v = readField(screen, n);
+                if (v != null) {
+                    head.append(' ').append(n).append('=').append(v);
+                }
+            }
+            TinkersNewlife.LOGGER.info("[JEI-PROBE] screen {} ->{}", screen.getClass().getSimpleName(), head);
+            Field mf = findField(screen.getClass(), "modules");
+            if (mf == null) {
+                TinkersNewlife.LOGGER.info("[JEI-PROBE] no modules field on {}", screen.getClass().getName());
+                return;
+            }
+            mf.setAccessible(true);
+            Object mods = mf.get(screen);
+            if (!(mods instanceof List<?> list)) {
+                TinkersNewlife.LOGGER.info("[JEI-PROBE] modules not a List: {}", mods == null ? "null" : mods.getClass().getName());
+                return;
+            }
+            TinkersNewlife.LOGGER.info("[JEI-PROBE] modules size={}", list.size());
+            for (Object m : list) {
+                StringBuilder sb = new StringBuilder();
+                for (Field f : m.getClass().getDeclaredFields()) {
+                    try {
+                        f.setAccessible(true);
+                        Object v = f.get(m);
+                        if (v instanceof Integer || v instanceof Boolean || v instanceof String) {
+                            sb.append(' ').append(f.getName()).append('=').append(v);
+                        } else if (v != null) {
+                            sb.append(' ').append(f.getName()).append('<').append(v.getClass().getSimpleName()).append('>');
+                            for (String wn : new String[] { "x", "y", "width", "height", "leftPos", "topPos" }) {
+                                Object wv = readField(v, wn);
+                                if (wv != null) {
+                                    sb.append(' ').append(wn).append('=').append(wv);
+                                }
+                            }
+                        }
+                    } catch (Throwable ignored) {
+                    }
+                }
+                TinkersNewlife.LOGGER.info("[JEI-PROBE] module {} ->{}", m.getClass().getSimpleName(), sb);
+            }
+        } catch (Throwable t) {
+            TinkersNewlife.LOGGER.info("[JEI-PROBE] dumpModules failed: {}", t.toString());
+        }
+    }
     private static Field findField(Class<?> cls, String name) {
         for (Class<?> c = cls; c != null; c = c.getSuperclass()) {
             try {
