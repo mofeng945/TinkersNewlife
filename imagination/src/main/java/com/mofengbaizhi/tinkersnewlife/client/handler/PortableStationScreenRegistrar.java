@@ -7,7 +7,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import slimeknights.tconstruct.tables.client.inventory.TinkerStationScreen;
+
 
 /** §1278 client: bind our menu type to TiC's own TinkerStationScreen (no mixin). */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, value = Dist.CLIENT,
@@ -20,6 +20,6 @@ public final class PortableStationScreenRegistrar {
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> MenuScreens.register(
-                PortableStationMenus.PORTABLE_STATION.get(), TinkerStationScreen::new));
+                PortableStationMenus.PORTABLE_STATION.get(), com.mofengbaizhi.tinkersnewlife.client.handler.PortableStationScreen::new));
     }
 }
