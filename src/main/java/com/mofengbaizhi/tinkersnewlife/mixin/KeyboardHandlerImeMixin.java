@@ -32,7 +32,18 @@ public abstract class KeyboardHandlerImeMixin {
         try {
             if (!FluidSearch.isFocused()) return;
             if (!FluidSearch.isHeatingStructureScreen(Minecraft.getInstance().screen)) return;
-            if (codePoint < ' ') return;                       // 控制字符不管 ✓
+            // ⭐ §1250 **诊断**（⭐ 每次一个 codePoint 一行 ✗ ⭐ 只在炉子界面 ✓ 不刷屏 ✓）
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
+                    "[搜索输入] charTyped codePoint={}（'{}'）当前词=「{}」",
+                    codePoint, codePoint >= ' ' ? String.valueOf((char) codePoint) : "控制符", FluidSearch.getQuery());
+            // ⭐⭐ §1250 **退格也从这里收** ✗（⭐ 用户实测："能打字但退格没用" ✓
+            //   ⇒ ⭐ 打字走的是本方法 ✓ ⭐ 那么退格**很可能也只从这里来** ✓（⭐ 控制字符 8 ＝ 退格 ✗ 127 ＝ Delete ✓））
+            if (codePoint == 8 || codePoint == 127) {
+                FluidSearch.backspace();
+                ci.cancel();
+                return;
+            }
+            if (codePoint < ' ') return;                       // 其余控制字符不管 ✓
             String q = FluidSearch.getQuery();
             if (q.length() < 64) {
                 FluidSearch.setQuery(q + new String(Character.toChars(codePoint)));

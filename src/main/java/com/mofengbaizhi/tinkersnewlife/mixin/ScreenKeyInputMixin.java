@@ -69,9 +69,11 @@ public abstract class ScreenKeyInputMixin {
         try {
             if (!FluidSearch.isFocused() || !FluidSearch.isHeatingStructureScreen(this)) return;
 
+            // ⭐ §1250 **诊断**（⭐ 每次按键一行 ✗ ⭐ 只在炉子界面 ✓）：⭐ 看 `m_7933_` 到底有没有被调到 ✓
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
+                    "[搜索按键] keyPressed key={} 当前词=「{}」", keyCode, FluidSearch.getQuery());
             if (keyCode == GLFW.GLFW_KEY_BACKSPACE) {
-                String q = FluidSearch.getQuery();
-                if (!q.isEmpty()) FluidSearch.setQuery(q.substring(0, q.length() - 1));
+                FluidSearch.backspace();       // ⭐ §1250 抽成公共方法 ＋ 去重 ✓
                 cir.setReturnValue(true);
                 return;
             }

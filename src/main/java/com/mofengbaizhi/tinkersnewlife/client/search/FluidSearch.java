@@ -119,6 +119,28 @@ public final class FluidSearch {
 
     public static boolean isExpanded() { return expanded; }
 
+    /** ⭐ §1250 退格去重 ✗（⭐ `keyPressed` 与 ⭐ `charTyped` 两处都可能送来退格 ✓ ⭐ 只删一个 ✓） */
+    private static volatile long lastBackspaceMs = 0L;
+
+    /**
+     * ⭐⭐ §1250 **退格删一个字** ✗（⭐ 用户实测 ✓：「**backspace删不掉打出来的字**」✓）
+     * <p>⚠ 为什么单独抽出来 ✗：⭐ 退格有 ⭐ **两条可能的来路** ✓ ——
+     * ⭐ ① `Screen#keyPressed`（⭐ 本仓 `ScreenKeyInputMixin` ✓）
+     * ✗ ⭐ ② `KeyboardHandler#charTyped`（⭐ 输入法那条 ✓ ⭐ 用户"能打字"就说明它**通** ✓）。
+     * ⭐ 两处都调本方法 ✗ ⭐ 用 30ms 去重 ⇒ ⭐ 一次按键**只删一个字** ✓ ✓。
+     */
+    public static void backspace() {
+        long nowMs = System.currentTimeMillis();
+        if (nowMs - lastBackspaceMs < 30L) {
+            return;
+        }
+        lastBackspaceMs = nowMs;
+        String q = getQuery();
+        if (!q.isEmpty()) {
+            setQuery(q.substring(0, q.length() - 1));
+        }
+    }
+
     /** ⭐ 由渲染处每帧登记按钮矩形 ✓ */
     public static void setButtonRect(int x, int y, int w, int h, float tx, float ty) {
         btnX = x;
