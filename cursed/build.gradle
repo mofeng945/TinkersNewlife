@@ -214,7 +214,6 @@ sourceSets {
     shared {
         java.srcDir rootProject.file('common/src/main/java')
         resources.srcDirs = []                       // ⭐ 只要类 ✗ 不要资源 ✓
-        compileClasspath += sourceSets.main.compileClasspath
     }
     main {
         compileClasspath += sourceSets.shared.output  // ⭐ 编译期看得见公共层 ✓
@@ -223,11 +222,6 @@ sourceSets {
 }
 
 // ⭐ 让 `shared` 源集也拿到那套模组依赖（⭐ TConstruct／Curios／Goety… ✓）
-configurations {
-    sharedImplementation.extendsFrom implementation
-    sharedCompileOnly.extendsFrom compileOnly
-}
-
 tasks.named('compileJava').configure {
     dependsOn tasks.named('compileSharedJava')
     // ⚠ ⭐ **绝不能**让共享类进 jar ✗（⭐ 它们由 `common` 提供 ✓）
@@ -239,3 +233,28 @@ tasks.named('compileJava').configure {
 //     ⭐ **直接失效** ✓ ✓ —— ⭐ 教训：⭐ "双保险"式的 exclude ＋ 再 include **不可靠** ✓
 //   ⭐ 其实 ⭐ **不需要它** ✗：⭐ `shared` 源集只用于编译 ✗ ⭐ `main` 的 output 里
 //     ⭐ **本来就只有 `cursed` 自己的类** ✓（⭐ §1263 实测：⭐ 泄漏 0 ✓）✓。
+
+// ⭐⭐⭐⭐ §1266 **大爆炸拆分的"编译网格"** ✗✗
+//   ⭐ 关键发现 ✗：⭐ `common` **不能**依赖 `cursed` ✗ ⭐ 但 `common` 里（⭐ 主类／中枢／配置 ✓）
+//   ⭐ 又**必须**引用咒术那边的类 ✓ ⇒ ⭐ 两边**互相引用** ✗ ⭐ 单靠 `shared` 指一个方向不够 ✓。
+//   ⭐ 解法 ✗：⭐ **每个项目都编译"其它三个项目的源码"** ✓（⭐ 只为编译 ✗ ⭐ 不进 jar ✓）
+//     ⇒ ⭐ 编译期大家都在 ✓ ⭐ 同包关系也保持 ✓（⭐ 所以**一处 import 都不用改** ✓）
+//     ⇒ ⭐ 运行时各 jar 拼在同一个类路径上 ✓ ⭐ 引用自然解析 ✓ ✓
+//   ⚠ 与 §1263 的区别 ✗：⭐ 那时 `shared` 只指 `common/src` ✓ ⭐ 现在指**其它三个项目** ✓。
+def tnlSiblings = ['common', 'cursed', 'imagination', 'apostle']
+sourceSets {
+    shared {
+        java.srcDirs = tnlSiblings.collect { rootProject.file(it + '/src/main/java') }   // ⭐ 含自己 ✓ 解开交叉引用 ✓
+        resources.srcDirs = []
+    }
+    main {
+        compileClasspath += sourceSets.shared.output
+    }
+}
+configurations {
+    sharedImplementation.extendsFrom implementation
+    sharedCompileOnly.extendsFrom compileOnly
+}
+tasks.named('compileJava').configure {
+    dependsOn tasks.named('compileSharedJava')
+}

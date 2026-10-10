@@ -20,13 +20,134 @@ minecraft {
 }
 
 repositories {
-    maven { url = 'https://www.cursemaven.com' }
-    flatDir { dir rootProject.file('libs') }
+    // Put repositories for dependencies here
+    // ForgeGradle automatically adds the Forge maven and Maven Central for you
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+    }
+    maven {
+        url = "https://www.cursemaven.com"
+    }
+    // If you have mod jar dependencies in ./libs, you can declare them as a repository like so.
+    // See https://docs.gradle.org/current/userguide/declaring_repositories.html#sub:flat_dir_resolver
+    flatDir {
+        dir rootProject.file('libs')
+    }
 }
 
 dependencies {
+    // Specify the version of Minecraft to use.
+    // Any artifact can be supplied so long as it has a "userdev" classifier artifact and is a compatible patcher artifact.
+    // The "userdev" classifier will be requested and setup by ForgeGradle.
+    // If the group id is "net.minecraft" and the artifact id is one of ["client", "server", "joined"],
+    // then special handling is done to allow a setup of a vanilla dependency without the use of an external repository.
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
-    // ⭐ 公共层：⭐ 等第 2 段搬内容时再接 ✓
+
+    // ⚠️ 未使用 Mixin 注解处理器：它在当前 ForgeGradle 环境下缺少混淆映射数据，
+    // 会对 @Inject 目标报 "Unable to locate obfuscation mapping" 使编译失败。
+    // 故改为手写 refmap：src/main/resources/tinkersnewlife.refmap.json
+    // （内容取自 build/createSrgToMcp/output.srg：render -> m_114384_）
+
+    // Example mod dependency with JEI - using fg.deobf() ensures the dependency is remapped to your development mappings
+    // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
+    // compileOnly fg.deobf("mezz.jei:jei-${mc_version}-common-api:${jei_version}")
+    // compileOnly fg.deobf("mezz.jei:jei-${mc_version}-forge-api:${jei_version}")
+    // runtimeOnly fg.deobf("mezz.jei:jei-${mc_version}-forge:${jei_version}")
+
+    // Example mod dependency using a mod jar from ./libs with a flat dir repository
+    // This maps to ./libs/coolmod-${mc_version}-${coolmod_version}.jar
+    // The group id is ignored when searching -- in this case, it is "blank"
+    // implementation fg.deobf("blank:coolmod-${mc_version}:${coolmod_version}")
+    implementation fg.deobf("maven.modrinth:Cg6Uc79H:SOJzuYxC")
+    implementation fg.deobf("maven.modrinth:rxIIYO6c:kJ9LD194")
+    // ⭐ JEI：完整 jar 仅运行时（完整产物为混淆名，不能用于编译）；
+    // ⚠⚠ §712 教训：**编译期必须用"整合包实际在跑的那个版本"** ✗ ——
+    //   NL 包跑的是 **15.21.0.144**，而我们原先按 15.48 的 API 编译：15.48 在
+    //   `IRecipeSlotBuilder` 上对 `addFluidStack(Fluid, long)` 做了**协变覆写** ⇒
+    //   字节码里记的是"子接口 + 返回子接口"那个方法 ⇒ 在 15.21 上运行直接
+    //   `NoSuchMethodError: IRecipeSlotBuilder IRecipeSlotBuilder.addFluidStack(Fluid, long)` ✗
+    //   ⇒ 连带 `TinkersNewlifeJeiPlugin#registerRecipes` 抛异常、**我们所有 JEI 类别整批没注册上** ✗
+    //   （表现就是"JEI 里查不到液态闪电的配方" ✗）。
+    //   ⇒ 现在按 **15.21** 编译（libs/ 下放整合包里那份原 jar ✓：方法记在父接口
+    //     `IIngredientAcceptor` 上，低版本向上兼容 ✓）；测试包跑的 15.48 同样能跑 ✓。
+    runtimeOnly fg.deobf("maven.modrinth:u6dRKJwZ:4r3Kp7U7")
+    compileOnly fg.deobf("blank:jei-1.20.1-forge:15.21.0.144")
+    // ⭐ 帕秋莉：需要编译期引用 ItemModBook（自定义书物品），故 compileOnly + runtimeOnly
+    compileOnly fg.deobf("blank:Patchouli-1.20.1:85-FORGE")
+    runtimeOnly fg.deobf("blank:Patchouli-1.20.1:85-FORGE")
+    // ⭐ 诡厄巫法（Goety）：仅编译期引用其 API（IWand/DarkWand/SoulUsingItemHandler…）——
+    // libs/ 下为同映射（official 1.20.1）反混淆 jar，运行时由玩家自装诡厄本体，不构成硬依赖。
+    // 未装诡厄的环境里 GoetyStaffItem 类不会被加载（注册分支按 ModList 判定），全部代码走反射兜底。
+    compileOnly files(rootProject.file('libs/goety-2.5.54.5_mapped_official_1.20.1.jar'))
+    implementation fg.deobf("maven.modrinth:vvuO3ImH:IPQlZkz1")
+    // ⭐ 玉（Jade）：仅编译期引用其 API（IWailaPlugin/IBlockComponentProvider/IServerDataProvider…）。
+    // libs/ 下放安装用 jar（SRG 名，经 fg.deobf 转开发映射）；运行时由玩家自装玉本体。
+    // 玉的插件是**被玉扫描 @WailaPlugin 后加载**的，未装玉时 integration/jade/ 下的类根本不会被加载。
+    compileOnly fg.deobf("blank:Jade-1.20.1-Forge:11.13.3")
+    // ============================================================
+    //  §559 三家可选模组的 compileOnly（**只编译期** ✓ 绝不打进 jar ✗ 绝不 implementation ✗）
+    //  libs/ 下放的是**安装用的原版 jar**（文件名末尾是版本号 ⇒ flatDir 的 name:version 就能解析 ✓）
+    //  与上面 Jade / Patchouli 完全同一套写法 ✓ 来源 = 整合包 mods 目录里的原 jar ✓
+    //  ⚠ 运行时纪律（否则没装那家的玩家会 NoClassDefFoundError 崩游戏 ✗）：
+    //     ① 所有引用这些包的代码都在**独立类**里（integration/mekanism|ae2|create 下的 *Bridge/Kinetic* ✓）；
+    //     ② 主代码（方块实体等）**只在 ModList.isLoaded(...) 之后**才碰那些类 ✓
+    //        ⇒ 没装那家时那些类根本不会被 JVM 加载 ✓。
+    //  ⚠ libs/ 在 .gitignore 里（本仓库既有口径：本地开发 jar 不进仓库 ✓）
+    //     ⇒ 换机器要重新把这三个 jar 放回 libs/ 才能编译 ✓（备忘录 §559 写清了坐标与出处 ✓）。
+    // ============================================================
+    compileOnly fg.deobf("blank:Mekanism-1.20.1:10.4.16.80")
+    compileOnly fg.deobf("blank:appliedenergistics2-forge:15.4.10")
+    // ⚠ Create 的**两个前置**（Ponder / Flywheel）也必须编译期可见 ✗ ——
+    //   `KineticBlockEntity` 的继承链是
+    //   KineticBlockEntity → SmartBlockEntity → net.createmod.ponder.api.VirtualBlockEntity
+    //   ⇒ 少了 Ponder，javac 直接报"无法访问 VirtualBlockEntity / 找不到它的类文件" ✗
+    //   ✅ **用户提醒后核实到了：这两个前置根本不用单独下载** —— Create 6.0.8 的 jar 里
+    //      用 Forge 的 **jar-in-jar** 自带它们（`META-INF/jarjar/` 下）：
+    //        · `Ponder-Forge-1.20.1-1.0.91.jar`（783841 字节）
+    //        · `flywheel-forge-1.20.1-1.0.5.jar`（868892 字节）
+    //        · 另外还有 `Registrate-MC1.20-1.3.3.jar` / `mixinextras-forge-0.4.1.jar`
+    //      ⇒ 直接从 Create 的 jar 里**原样抽出来**放进 libs/ ✓
+    //        （等于"用 Create 自己认的那一份"，版本一定对 ✓）。
+    //   ⚠ 踩坑（已记在备忘录 §559）：我一开始试图从官方 maven（maven.createmod.net）拉，
+    //      结果 Create 的 pom 指向的 flywheel `1.0.0-beta-177` 在那边**已撤**（404）✗、
+    //      直接写 maven 坐标时 ForgeGradle 的"映射后"那一份也解析不出来 ✗
+    //      ⇒ 才改成现在这套 flatDir（与仓库既有的 Jade / Patchouli / Goety 同一套写法 ✓）。
+    //   ⚠ Create 本体也从 libs/ 走（flatDir **没有 pom** ⇒ 不存在传递依赖被拖进来 ✗）
+    //     所以这里**不需要**任何 exclude / resolutionStrategy ✓（试过、已删 ✓）。
+    compileOnly fg.deobf("blank:create-1.20.1:6.0.8")
+    compileOnly fg.deobf("blank:Ponder-Forge-1.20.1:1.0.91")
+    compileOnly fg.deobf("blank:flywheel-forge-1.20.1:1.0.5")
+    // ⚠ 运行时的 ponder / flywheel 由 Create 自己的 jar-in-jar 提供 ⇒ **不需要**单独装进实例 ✓
+    //   （所以这里**没有** runtimeOnly：Forge 会在加载 Create 时把它内嵌的那两个 jar 挂上 ✓）
+    // ⭐ 吸血鬼／血族传说（Vampirism）：仅编译期引用其 API（VampirismAPI / IFactionPlayerHandler /
+    //   IVampirePlayer / IBloodStats…）——「贵族餐饮」「硬化皮肤」两条联动的判定与加血都靠它 ✓。
+    //   libs/ 下放的是**整合包 mods 目录里的原 jar**（文件名末尾是版本号 ⇒ flatDir 的 name:version 能解析 ✓），
+    //   经 fg.deobf 转开发映射（与 Jade / Patchouli / Mekanism / AE2 同一套写法 ✓）。
+    //   ⚠ 运行时纪律：所有碰血族类的代码都在 integration/vampirism/ 下的**独立类**里，
+    //     事件处理器**先判 ModList.isLoaded("vampirism")** 才碰它 ⇒ 没装血族时那些类根本不会被加载 ✓。
+    //   ⚠ 血液值写入走 Mixin 的 @Invoker（BloodStats#addBlood 是包级私有 ✗，其公开 API 只有 getter）。
+    compileOnly fg.deobf("blank:Vampirism-1.20.1:1.10.16")
+
+    // §871 拔刀剑（重锋）：只为了给"物品栏渲染优化"写精确签名的 mixin @Redirect ✓
+    //   libs/ 下放安装用的原 jar（文件名末尾是版本号 ⇒ flatDir 的 name:version 可解析 ✓）；
+    //   同样在 .gitignore 里 ✓ 换机器要重新放回 libs/ 才能编译 ✓。
+    compileOnly fg.deobf("blank:SlashBladeResharped-1.20.1:1.9.65")
+
+    // §1020 拔刀剑整合（照抄 TiCEX）：它的 mixin 用了 **MixinExtras** 的
+    //   `@ModifyExpressionValue` / `@Local` / `@Share` ✓ —— 运行期 Forge **自带** MixinExtras ✓
+    //   （崩溃栈里能看到 `mixinextras$bridge$...` ✓），但**编译期**得有一份 API 才能编译 ✓
+    //   ⇒ 按本仓惯例（见上面 Create 那一段 ✓）从 ForgeGradle 的 mavenizer 缓存里取出
+    //     `mixinextras-forge-0.5.4.jar` 原样放进 libs/ ✓，这里只做 compileOnly ✓
+    //     （libs/*.jar 在 .gitignore 里 ✓ 换机器要重新放回 libs/ 才能编译 ✓）。
+    //   ⚠ 坑：`mixinextras-forge-*.jar` **本身只是 jar-in-jar 包装** ✗ ——
+    //     真正的类在它内部的 `META-INF/jars/MixinExtras-0.5.4.jar` ✓，
+    //     直接拿外层 jar 当依赖会报"程序包 com.llamalad7.mixinextras.injector 不存在" ✗
+    //     ⇒ 已把内层那份抽出来放到 libs/MixinExtras-0.5.4.jar ✓（89 个 injector/sugar 类 ✓）。
+    compileOnly files(rootProject.file("libs/MixinExtras-0.5.4.jar"))
+    // For more info:
+    // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
+    // http://www.gradle.org/docs/current/userguide/dependency_management.html
 }
 
 tasks.named('processResources', ProcessResources).configure {
@@ -55,4 +176,29 @@ tasks.named('jar', Jar).configure {
         ])
     }
     finalizedBy 'reobfJar'
+}
+
+// ⭐⭐⭐⭐ §1266 **大爆炸拆分的"编译网格"** ✗✗
+//   ⭐ 关键发现 ✗：⭐ `common` **不能**依赖 `cursed` ✗ ⭐ 但 `common` 里（⭐ 主类／中枢／配置 ✓）
+//   ⭐ 又**必须**引用咒术那边的类 ✓ ⇒ ⭐ 两边**互相引用** ✗ ⭐ 单靠 `shared` 指一个方向不够 ✓。
+//   ⭐ 解法 ✗：⭐ **每个项目都编译"其它三个项目的源码"** ✓（⭐ 只为编译 ✗ ⭐ 不进 jar ✓）
+//     ⇒ ⭐ 编译期大家都在 ✓ ⭐ 同包关系也保持 ✓（⭐ 所以**一处 import 都不用改** ✓）
+//     ⇒ ⭐ 运行时各 jar 拼在同一个类路径上 ✓ ⭐ 引用自然解析 ✓ ✓
+//   ⚠ 与 §1263 的区别 ✗：⭐ 那时 `shared` 只指 `common/src` ✓ ⭐ 现在指**其它三个项目** ✓。
+def tnlSiblings = ['common', 'cursed', 'imagination', 'apostle']
+sourceSets {
+    shared {
+        java.srcDirs = tnlSiblings.collect { rootProject.file(it + '/src/main/java') }   // ⭐ 含自己 ✓ 解开交叉引用 ✓
+        resources.srcDirs = []
+    }
+    main {
+        compileClasspath += sourceSets.shared.output
+    }
+}
+configurations {
+    sharedImplementation.extendsFrom implementation
+    sharedCompileOnly.extendsFrom compileOnly
+}
+tasks.named('compileJava').configure {
+    dependsOn tasks.named('compileSharedJava')
 }
