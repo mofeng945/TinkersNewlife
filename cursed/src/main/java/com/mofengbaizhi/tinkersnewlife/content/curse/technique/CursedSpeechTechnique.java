@@ -154,6 +154,10 @@ public final class CursedSpeechTechnique extends BaseTechnique {
         CursedSpeechRegistry.Word ex = CursedSpeechRegistry.get(chant[0]);
         double exMul = 1.5 - ex.rarity() * 0.1; // 雑鱼1.5 → 啊呀1.0
         int cost = Math.max(1, (int) Math.ceil(getCost(player) * exMul));
+            // §1275 从古代咒术残卷左键施法：咒力消耗 ×5（用户口径）
+            if (player.getPersistentData().getBoolean("tnl_scroll_cast")) {
+                cost = Math.max(1, cost * 5);
+            }
         if (!CursePowerHelper.isCurseInfinite(player)
                 && CursePowerHelper.payCurseWithSoulFallback(player, cost) < 0) {
             player.displayClientMessage(Component.translatable("message.tinkersnewlife.technique.no_curse"), true);

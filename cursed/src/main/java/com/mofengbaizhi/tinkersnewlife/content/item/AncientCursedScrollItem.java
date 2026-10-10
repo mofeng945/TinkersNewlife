@@ -138,4 +138,88 @@ public class AncientCursedScrollItem extends Item {
         }
         tooltip.add(Component.translatable("item.tinkersnewlife.cursed_scroll.hint"));
     }
-}
+
+    // ============================================================
+    //  §1275 左键直接吟唱（用户口径）
+    //  - 手持残卷左键攻击目标时触发 onLeftClickEntity（不用新建网络包）
+    //  - 缺槽 ⇒ 该槽"最低两级"里随机补一个词
+    //  - 咒力消耗 = 有咒言术时的 5 倍（由 CursedSpeechTechnique 读标记 tnl_scroll_cast）
+    //  - 释放后卷轴消失
+    // ============================================================
+    public static final String KEY_SCROLL_CAST = "tnl_scroll_cast";
+
+    @Override
+    public boolean onLeftClickEntity(ItemStack stack, Player player, net.minecraft.world.entity.Entity entity) {
+        if (player.level().isClientSide() || !(player instanceof ServerPlayer sp)) {
+            return false;
+        }
+        String[] chant = fillChant(stack, sp);
+        for (int i = 0; i < chant.length; i++) {
+            if (chant[i] != null && !chant[i].isEmpty()) {
+                CursedSpeechState.setChantPart(sp, i, chant[i]);
+            }
+        }
+        sp.getPersistentData().putBoolean(KEY_SCROLL_CAST, true);
+        try {
+            com.mofengbaizhi.tinkersnewlife.content.curse.TechniqueHandler.onKeyPress(sp);
+        } catch (Throwable ignored) {
+        } finally {
+            sp.getPersistentData().remove(KEY_SCROLL_CAST);
+        }
+        stack.shrink(1);              // ★ 释放后卷轴消失
+        return false;
+    }
+
+    /** 六个槽位：卷上有词就用词；否则用玩家已学的；再缺 ⇒ 该槽"最低两级"随机补一个 */
+    public static String[] fillChant(ItemStack stack, ServerPlayer player) {
+        CursedSpeechRegistry.Part[] parts = CursedSpeechRegistry.Part.values();
+        String[] out = new String[parts.length];
+        List<String> onScroll = wordsOn(stack);
+        List<String> learned = CursedSpeechState.learned(player);
+        for (int i = 0; i < parts.length; i++) {
+            CursedSpeechRegistry.Part part = parts[i];
+            String pick = firstOfPart(onScroll, part);
+            if (pick == null) {
+                pick = firstOfPart(learned, part);
+            }
+            if (pick == null) {
+                pick = lowestTwoRandom(part);
+            }
+            out[i] = pick;
+        }
+        return out;
+    }
+
+    private static String firstOfPart(List<String> ids, CursedSpeechRegistry.Part part) {
+        for (String id : ids) {
+            CursedSpeechRegistry.Word w = CursedSpeechRegistry.get(id);
+            if (w != null && w.part() == part) {
+                return id;
+            }
+        }
+        return null;
+    }
+
+    /** 该组成部分里"最低两个等级"的词里随机取一个 */
+    private static String lowestTwoRandom(CursedSpeechRegistry.Part part) {
+        List<CursedSpeechRegistry.Word> pool = CursedSpeechRegistry.of(part);
+        if (pool.isEmpty()) {
+            return "";
+        }
+        List<Integer> tiers = new ArrayList<>();
+        for (CursedSpeechRegistry.Word w : pool) {
+            if (!tiers.contains(w.rarity())) {
+                tiers.add(w.rarity());
+            }
+        }
+        java.util.Collections.sort(tiers);
+        int low = tiers.get(0);
+        int second = tiers.size() > 1 ? tiers.get(1) : low;
+        List<CursedSpeechRegistry.Word> cand = new ArrayList<>();
+        for (CursedSpeechRegistry.Word w : pool) {
+            if (w.rarity() == low || w.rarity() == second) {
+                cand.add(w);
+            }
+        }
+        return cand.get(new Random().nextInt(cand.size())).id();
+    }}
