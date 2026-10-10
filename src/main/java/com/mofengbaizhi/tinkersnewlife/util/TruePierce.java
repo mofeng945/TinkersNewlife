@@ -1787,10 +1787,20 @@ public final class TruePierce {
             //     ⇒ ⭐ 我们就 ⭐ **白白不补** ✓ ✓ —— ⭐ 正是用户遇到的现象 ✓。
             //   ⇒ ⭐ 删掉它 ✗ ⇒ ⭐ `hurt` 才会体现 ⭐ **保护之后的真实结果** ✓
             //     ⇒ ⭐ `dealt` 才准 ✓ ⭐ 差额才会真的被逆向补上 ✓。
-            target.hurt(withAttacker, want);
+            boolean accepted = target.hurt(withAttacker, want);
             dealt = Math.max(0.0F, startHp - rawHealth(target));
-            // ⭐ 一点都没打动 ⇒ ⭐ 换无主源再试一次 ✓（⭐ 保留原来的意图 ✓）
-            if (dealt <= 0.01F && target.isAlive() && !target.isRemoved()) {
+            // ⭐⭐⭐⭐⚠⚠ §1233 **只在"被真正拦下"时才换无主源重打** ✗✗
+            //   （⭐ 用户实测 ✓ 2026-10-10：「**我用天逆牟砍实验假人会弹3段伤害**」✓）
+            //   ⚠ 根因 ✗：⭐ 原来判据是 ⭐ `dealt ≤ 0.01` ✗
+            //     ⭐ 而 ⭐ **训练假人／记录型假人** 是"⭐ **挨打不掉血、只记伤害**"✓
+            //     ⇒ ⭐ `dealt` 恒为 0 ✗ ⭐ 于是**每次都触发第二次 `hurt`** ✓
+            //     ⇒ ⭐ 假人**记两次** ＋ ⭐ 我们"改血"的客户端同步**一次** = ⭐ **3 段数字** ✓ ✓
+            //   ⇒ ⭐ 改用 ⭐ **`hurt()` 的返回值** ✗：
+            //     ⭐ `true` ＝ ⭐ **伤害被接受了**（⭐ 只是血没动，比如假人 ✓）
+            //       ⇒ ⭐ **不该再打一次** ✓；
+            //     ⭐ `false` ＝ ⭐ **真被拦下**（⭐ 免疫窗／⭐ 无攻击者才生效的免疫 ✓）
+            //       ⇒ ⭐ 这才需要换无主源重试 ✓ ✓。
+            if (!accepted && dealt <= 0.01F && target.isAlive() && !target.isRemoved()) {
                 float before2 = rawHealth(target);
                 target.invulnerableTime = 0;
                 target.hurt(anonymous, want);
