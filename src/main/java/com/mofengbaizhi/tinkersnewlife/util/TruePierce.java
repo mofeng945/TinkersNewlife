@@ -1787,25 +1787,17 @@ public final class TruePierce {
             //     ⇒ ⭐ 我们就 ⭐ **白白不补** ✓ ✓ —— ⭐ 正是用户遇到的现象 ✓。
             //   ⇒ ⭐ 删掉它 ✗ ⇒ ⭐ `hurt` 才会体现 ⭐ **保护之后的真实结果** ✓
             //     ⇒ ⭐ `dealt` 才准 ✓ ⭐ 差额才会真的被逆向补上 ✓。
-            boolean accepted = target.hurt(withAttacker, want);
+            // ⭐⭐⭐⭐ §1235 **只打一次 `hurt`** ✗✗（⭐ 用户口径 ✓ 2026-10-10：
+            //   「**哪来的无主源，我不是说逆向改血吗**」✓）
+            //   ⭐ 用户说得对 ✗ —— ⭐ 本引擎的设计是 ⭐
+            //     ⭐ **一次 `hurt`**（⭐ 拿事件／⭐ 音效／⭐ 反伤 ✓）
+            //     ＋ ⭐ **差额一律"逆向改血"** ✓ ✓
+            //   ⚠ ⭐ **不该再有"无主源补第二下"** ✗：
+            //     ⭐ 那会让"一次挥击"变成 ⭐ **两次命中** ✓
+            //     ⇒ ⭐ 假人**记两次** ✗ ⭐ 显示也就**多段** ✓（⭐ 用户实测 ✓）。
+            target.hurt(withAttacker, want);
             dealt = Math.max(0.0F, startHp - rawHealth(target));
-            // ⭐⭐⭐⭐⚠⚠ §1233 **只在"被真正拦下"时才换无主源重打** ✗✗
-            //   （⭐ 用户实测 ✓ 2026-10-10：「**我用天逆牟砍实验假人会弹3段伤害**」✓）
-            //   ⚠ 根因 ✗：⭐ 原来判据是 ⭐ `dealt ≤ 0.01` ✗
-            //     ⭐ 而 ⭐ **训练假人／记录型假人** 是"⭐ **挨打不掉血、只记伤害**"✓
-            //     ⇒ ⭐ `dealt` 恒为 0 ✗ ⭐ 于是**每次都触发第二次 `hurt`** ✓
-            //     ⇒ ⭐ 假人**记两次** ＋ ⭐ 我们"改血"的客户端同步**一次** = ⭐ **3 段数字** ✓ ✓
-            //   ⇒ ⭐ 改用 ⭐ **`hurt()` 的返回值** ✗：
-            //     ⭐ `true` ＝ ⭐ **伤害被接受了**（⭐ 只是血没动，比如假人 ✓）
-            //       ⇒ ⭐ **不该再打一次** ✓；
-            //     ⭐ `false` ＝ ⭐ **真被拦下**（⭐ 免疫窗／⭐ 无攻击者才生效的免疫 ✓）
-            //       ⇒ ⭐ 这才需要换无主源重试 ✓ ✓。
-            if (!accepted && dealt <= 0.01F && target.isAlive() && !target.isRemoved()) {
-                float before2 = rawHealth(target);
-                target.invulnerableTime = 0;
-                target.hurt(anonymous, want);
-                dealt = Math.max(0.0F, before2 - rawHealth(target));
-            }
+            // ⚠⚠ §1235 **不再有"无主源重打"** ✗（⭐ 见上面 ⭐ 用户口径 ✓）
         } catch (Throwable t) {
             // ⚠ 伤害调用被外部异常打断（⭐ §1118l 那类 ✓）⇒ ⭐ 当作"没打动" ✓ 后面逆向补 ✓
             TinkersNewlife.LOGGER.debug("[真伤] hurt 阶段被外部异常打断（转逆向改血）：{}", t.toString());
@@ -1843,6 +1835,16 @@ public final class TruePierce {
         playHurtFeedback(target, withAttacker, shortfall);
         // ⭐ 逆向**读**血 ✗（⭐ 不用 `getHealth()` ✓ ⭐ 它也可能被覆写 ✓）
         float hp = rawHealth(target) - shortfall;
+        // ⭐⭐⭐⭐ §1234 **"接受了伤害但血没动"的目标 ⇒ 改血不要打扰客户端** ✗✗
+        //   （⭐ 用户实测 ✓ 2026-10-10：「**打假人还有两段伤害**」✓）
+        //   ⚠ 两段的来源 ✗：⭐ 假人**自己会显示一次**（⭐ 它记录伤害 ✓）
+        //     ＋ ⭐ 我们"改血"**又同步了一次**给客户端 ✓ ⇒ ⭐ **两段** ✓ ✓
+        //   ⇒ ⭐ 这种目标 ⭐ 改血**只压服务端** ✗ ⭐ **不同步** ✓ ⇒ ⭐ **只剩它自己那一段** ✓ ✓。
+        boolean quiet = dealt <= 0.01F;
+        if (quiet) {
+            SUPPRESS_CLIENT_SYNC = true;
+        }
+        try {
         if (hp <= 0.0F) {
             // ⭐⭐⚠⚠ **补击杀归属**（用户实测 ✓ 2026-10-09：
             //   「**很奇怪，不知道为什么杀了两遍末影龙都没有判定是我杀的**」✓）
@@ -1896,6 +1898,13 @@ public final class TruePierce {
             } catch (Throwable ignored) {
             }
         }
+        } finally {
+            if (quiet) {
+                SUPPRESS_CLIENT_SYNC = false;
+            }
+        }
+        // ⚠⚠ §1235 **"补一次无主源"也撤掉了** ✗（⭐ 用户口径 ✓：「**哪来的无主源**」✓）
+        //   ⭐ 现在只有一条路 ✗：⭐ **一次 `hurt` ＋ ⭐ 差额"逆向改血"** ✓ ✓
         // 顺带：低血阶段的"受击全额回血"免伤（启示录使徒那类），若差额直补也吃不动 → 走处决兜底
         if (GoetyBridge.isGoetyApostle(target) && target.isAlive() && !target.isRemoved()
                 && rawHealth(target) <= target.getMaxHealth() * 0.18F
