@@ -75,6 +75,55 @@ public final class FumoMoDanceHandler {
     private FumoMoDanceHandler() {
     }
 
+    /**
+     * ⭐⭐⭐⭐ §1246 <b>新唱片的音量在**代码侧**再压一档</b> ✗✗
+     *
+     * <p>⚠ 用户实测 ✓ 2026-10-10：
+     * 「**把tell me tell me唱片的音量调小到60%**」⇒ ⭐ 我改了 `sounds.json` 的 `volume: 0.6` ✓
+     * ⇒ ⭐ 用户回：「**还是很响**」✓ —— ⭐ 说明**流式音频那条路没吃那个乘数** ✗ ✓。
+     *
+     * <p>⭐ 用户又问 ✓：「**我调音频文件音量会有用吗**」✓
+     * ⇒ ⭐ **有用 ✗ 而且那是最可靠的一条** ✓（⭐ 波形本身就低 ⇒ ⭐ 任何播放路径都躲不开 ✓）。
+     * ⚠ 但本机**没有 ffmpeg** ✗（⭐ 用户机器上只有格式工厂 ✓）⇒ ⭐ 与其让你手动转一遍 ✗
+     * ⭐ 不如 ⭐ **我们自己在播放前把音量压下去** ✓ ✓。
+     *
+     * <h2>⚠ 为什么用 `PlaySoundEvent` 而不是 `PlayStreamingSourceEvent`</h2>
+     * ⭐ `PlaySoundEvent` 在 ⭐ **声音实例刚要送进引擎时**触发 ✗ ⭐ 且 ⭐ **允许替换实例**
+     * （{@code setSound} ✓）⇒ ⭐ 这时换成"同名、音量更小"的实例 ✓ ⭐ 后面照常播 ✓；
+     * ⚠ 而 `PlayStreamingSourceEvent` 是 ⭐ **已经开始播之后**才来 ✗ ⭐ 那时改不了音量 ✓
+     * （⭐ 我们用它只是为了"知道音乐在放" ✓ 两件事分开 ✓）。
+     *
+     * <p>⚠ ⭐ 只动 ⭐ **新唱片**（{@code music_tell_me} ✓）✗ ⭐ 旧唱片／⭐ 别家唱片一律不碰 ✓。
+     */
+    private static final float TELL_ME_VOLUME = 0.35F;
+
+    /** ⭐ §1246 把新唱片的实例音量乘上 {@link #TELL_ME_VOLUME} 再送去播 ✓ */
+    @SubscribeEvent
+    public static void onPlaySound(net.minecraftforge.client.event.sound.PlaySoundEvent event) {
+        try {
+            SoundInstance s = event.getSound();
+            if (s == null) return;
+            if (!com.mofengbaizhi.tinkersnewlife.content.ModSounds.MUSIC_TELL_ME_ID.equals(s.getLocation())) {
+                return;
+            }
+            event.setSound(new net.minecraft.client.resources.sounds.SimpleSoundInstance(
+                    s.getLocation(),
+                    s.getSource(),
+                    s.getVolume() * TELL_ME_VOLUME,     // ⭐ 只乘这一处 ✓
+                    s.getPitch(),
+                    net.minecraft.client.resources.sounds.SoundInstance.createUnseededRandom(),
+                    // ⚠ §1246 SoundInstance 在 1.20.1 **没有** getRandom() ✗（⭐ 编译实测 ✓）
+                    //   ⇒ ⭐ 用接口自己的静态工厂 ✓（⭐ 原版 orRecord 也是这么拿的 ✓）
+                    s.isLooping(),
+                    s.getDelay(),
+                    s.getAttenuation(),
+                    s.getX(), s.getY(), s.getZ(),
+                    s.isRelative()));
+        } catch (Throwable ignored) {
+            // fail-safe：⭐ 压音量失败最多是"原音量播" ✓ ⭐ 绝不影响播放本身 ✓
+        }
+    }
+
     @SubscribeEvent
     public static void onSoundSource(PlaySoundSourceEvent event) {
         mark(event.getSound());
