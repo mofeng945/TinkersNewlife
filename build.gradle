@@ -20,12 +20,19 @@ subprojects {
 //     `tinkersnewlife` and nothing about the installed mod changes.
 // ============================================================
 tasks.register('singleJar', Jar) {
+    // §1270 ONE-JAR MODE: the merged jar must declare ONLY modId `tinkersnewlife`,
+    // so the three separate @Mod entry classes have to be kept OUT of it.
+    // (Otherwise Forge says: "mods.toml missing metadata for modid
+    //  tinkersnewlife_cursed" + "has mods that were not found" and refuses to load.)
     dependsOn ':common:reobfJar', ':cursed:reobfJar', ':imagination:reobfJar', ':apostle:reobfJar'
     archiveBaseName = 'tinkersnewlife'
     archiveVersion = mod_version
     archiveClassifier = ''
     destinationDirectory = file("$rootDir/build/libs")
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    exclude 'com/mofengbaizhi/tinkersnewlife/cursed/TinkersNewlifeCursed*.class'
+    exclude 'com/mofengbaizhi/tinkersnewlife/imagination/TinkersNewlifeImagination*.class'
+    exclude 'com/mofengbaizhi/tinkersnewlife/apostle/TinkersNewlifeApostle*.class'
     manifest {
         attributes('MixinConfigs': 'tinkersnewlife.mixins.json')
     }
