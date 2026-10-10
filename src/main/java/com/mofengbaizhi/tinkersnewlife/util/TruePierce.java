@@ -567,6 +567,18 @@ public final class TruePierce {
     /** ⭐ `revelaionfix$apollyonEC()` ✗（⭐ dump 用 ✓） */
     private static java.lang.reflect.Method apollyonEcMethod = null;
 
+    /**
+     * ⭐⭐⭐⭐ §1232 <b>"锁期间关闭客户端同步"开关</b> ✗ —— ⭐ 用户实测逼出来的 ✓。
+     *
+     * <p>⚠ 用户口径 ✓ 2026-10-10：「**怎么打一次又弹了3段伤害？**」✓
+     * <p>⚠ 根因 ✗：⭐ 跨 tick 锁 ⭐ **每 tick 都写一次** ✓（⭐ 写 → 它回血 → 再写 ✓）
+     * ⭐ 而 ⭐ §1231 新加的客户端同步 ＋ ⭐ `rawSetHealthInner` 自带的 `setHealth`／`hurtMarked`
+     * ⇒ ⭐ 客户端**每 tick 都看到血量变一次** ⇒ ⭐ 伤害数字**连弹** ✓ ✓
+     * <p>⭐ 修法 ✗：⭐ 锁 ⭐ **只服务端压血** ✓ ✗ ⭐ **不同步** ✓
+     * （⭐ 那一发的同步交给 ⭐ **第一次 `writeAndVerify`** ✓ ⭐ 一次命中 ⇒ ⭐ 一个数字 ✓）。
+     */
+    private static volatile boolean SUPPRESS_CLIENT_SYNC = false;
+
     /** ⭐⭐⭐⭐ §1231 **"合成事件"标记** ✗ —— ⭐ 防递归 ＋ ⭐ 防伤害翻倍 ✓ */
     private static volatile boolean SYNTHETIC_HURT = false;
 
@@ -581,7 +593,7 @@ public final class TruePierce {
      * ⇒ ⭐ 若发现 ⭐ "伤害/效果翻倍" ✗ ⭐ 把这里改 `false` 即可 ✓ ✓
      * （⭐ **客户端血量同步不受影响** ✗ ⭐ 那才是两个伤害显示 mod 的主通道 ✓）。
      */
-    private static final boolean POST_SYNTHETIC_HURT_EVENT = true;
+    private static final boolean POST_SYNTHETIC_HURT_EVENT = false;
 
     /**
      * ⭐ 此刻是不是 ⭐ **我们自己 post 的合成 `LivingHurtEvent`** 回调 ✗。
@@ -1477,6 +1489,10 @@ public final class TruePierce {
 
     private static void syncHealthToClient(LivingEntity target) {
         try {
+            // ⭐⭐ §1232 **锁期间不同步** ✗（⭐ 否则每 tick 一变 ⇒ ⭐ 数字连弹 ✓）
+            if (SUPPRESS_CLIENT_SYNC) {
+                return;
+            }
             if (target == null || !(target.level() instanceof net.minecraft.server.level.ServerLevel)) {
                 return;
             }
@@ -1566,7 +1582,9 @@ public final class TruePierce {
         //   ⇒ ⭐ 只写字段 ⇒ ⭐ **写进了一个"没人读的地方"** ✗ ⭐ 等于没改 ✓
         //   ⇒ ⭐ 所以 ⭐ **再走一次 `setHealth`** ✗ ⭐ 两条路都覆盖 ✓ ✓
         try {
-            if (Math.abs(target.getHealth() - value) > 1.0E-4F) {
+            // ⚠⚠ §1232 **锁期间不标脏 ✗ 也不调 `setHealth`** ✓（⭐ 用户实测：
+            //   ⭐「**怎么打一次又弹了3段伤害？**」✓ ⭐ 就是这里每 tick 同步造成的 ✓）
+            if (!SUPPRESS_CLIENT_SYNC && Math.abs(target.getHealth() - value) > 1.0E-4F) {
                 target.setHealth(value);
             }
         } catch (Throwable ignored) {
@@ -2219,6 +2237,13 @@ public final class TruePierce {
             return;
         }
         var it = PENDING.entrySet().iterator();
+        // ⭐⭐⭐⭐ §1232 **锁期间关闭"客户端同步"** ✗✗（⭐ 用户实测 ✓ 2026-10-10：
+        //   「**怎么打一次又弹了3段伤害？**」✓）
+        //   ⚠ 根因：⭐ 锁是"每 tick 都写"✗（⭐ 写 → 它回血 → 再写 ✓）
+        //     ⭐ 而 ⭐ `rawSetHealthInner` **自己会调 `setHealth` ＋ 标脏** ✓
+        //     ⇒ ⭐ 客户端**每 tick 都看到血量变一次** ⇒ ⭐ 数字**连弹** ✓ ✓
+        //   ⇒ ⭐ 锁 ⭐ **只负责服务端压血** ✗ ⭐ 同步交给 ⭐ "第一次那一发"（`writeAndVerify` ✓）✓
+        SUPPRESS_CLIENT_SYNC = true;
         while (it.hasNext()) {
             var e = it.next();
             Pending pd = e.getValue();
@@ -2234,7 +2259,13 @@ public final class TruePierce {
             // ⭐ 死线以下 ⇒ ⭐ 走死亡流程 ✓
             if (target <= 0.0F) {
                 try {
-                    rawSetHealth(living, 0.0F);
+                    // ⚠⚠ §1232 **这里用"不触发客户端同步"的写法** ✗✗
+                    //   ⭐ 用户实测 ✓ 2026-10-10：「**怎么打一次又弹了3段伤害？**」✓
+                    //   ⚠ 根因：⭐ 锁是 ⭐ **每 tick 都写一次**（⭐ 写 → 它回血 → 再写 ✓）
+                    //     ⭐ 配上 ⭐ §1231 新加的客户端同步 ✗
+                    //     ⇒ ⭐ 客户端**每 tick 都看到血量变一次** ⇒ ⭐ 伤害数字**连弹** ✓ ✓
+                    //   ⇒ ⭐ 锁**只负责"服务端压血"** ✗ ⭐ 同步交给 ⭐ 第一次 `writeAndVerify` 那一次 ✓
+                    rawSetHealthInner(living, 0.0F);
                     if (!living.isRemoved()) living.die(living.damageSources().genericKill());
                 } catch (Throwable ignored) {
                 }
@@ -2243,7 +2274,8 @@ public final class TruePierce {
             }
             // ⭐ 压上限 ＋ 写血 ✓
             clampMaxHealth(living, target);
-            rawSetHealth(living, target);
+            // ⚠⚠ §1232 **同上：只压服务端 ✗ 不再每 tick 同步客户端** ✓（⭐ 免得伤害数字连弹 ✓）
+            rawSetHealthInner(living, target);
             // ⭐⭐ **事后校验** ✗ —— ⭐ 读回来若不是我们的值 ⇒ ⭐ 说明有人"更晚"改 ✓
             float now = rawHealth(living);
             if (now > target + 0.01F) {
@@ -2263,6 +2295,8 @@ public final class TruePierce {
                 e.setValue(new Pending(pd.id(), target, left));
             }
         }
+        // ⭐⭐ §1232 **锁跑完 ⇒ 恢复同步** ✗（⭐ 免得影响后面正常的改血 ✓）
+        SUPPRESS_CLIENT_SYNC = false;
     }
 
     /**
