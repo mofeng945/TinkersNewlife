@@ -17,7 +17,15 @@ public final class TitleSyncHandler {
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         try {
             if (event.getEntity() instanceof ServerPlayer sp) {
-                CurseTitles.sync(sp);
+                // §1306 延迟 40 tick 再发（★登录瞬间连接可能还没完全就绪 ✓）
+                var server = sp.getServer();
+                if (server != null) {
+                    server.tell(new net.minecraft.server.TickTask(server.getTickCount() + 40, () -> {
+                        if (!sp.isRemoved()) {
+                            CurseTitles.sync(sp);
+                        }
+                    }));
+                }
             }
         } catch (Throwable ignored) {
         }
