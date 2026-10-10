@@ -75,7 +75,8 @@
     "sounds": [
       {
         "name": "tinkersnewlife:music/tell_me_tell_me",
-        "stream": true
+        "stream": true,
+        "volume": 0.6
       }
     ]
   }
