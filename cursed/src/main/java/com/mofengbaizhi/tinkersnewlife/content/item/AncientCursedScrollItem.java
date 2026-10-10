@@ -156,17 +156,21 @@ public class AncientCursedScrollItem extends Item {
         String[] chant = fillChant(stack, sp);
         for (int i = 0; i < chant.length; i++) {
             if (chant[i] != null && !chant[i].isEmpty()) {
+                CursedSpeechState.learn(sp, chant[i]);   // ★ 必须先"学会"：咒言术会校验 knows()，否则判缺段直接 return
                 CursedSpeechState.setChantPart(sp, i, chant[i]);
             }
         }
         sp.getPersistentData().putBoolean(KEY_SCROLL_CAST, true);
         try {
-            com.mofengbaizhi.tinkersnewlife.content.curse.TechniqueHandler.onKeyPress(sp);
+            com.mofengbaizhi.tinkersnewlife.content.curse.technique.CursedSpeechTechnique.INSTANCE.onKeyPress(sp);
         } catch (Throwable ignored) {
         } finally {
             sp.getPersistentData().remove(KEY_SCROLL_CAST);
         }
-        stack.shrink(1);              // ★ 释放后卷轴消失
+        // ★ 只有真的进入"读条"才算释放成功 ⇒ 才消耗卷轴（否则不消耗，避免白吞）
+        if (com.mofengbaizhi.tinkersnewlife.content.cursespeech.CurseChant.isChanting(sp)) {
+            stack.shrink(1);
+        }
         return false;
     }
 
