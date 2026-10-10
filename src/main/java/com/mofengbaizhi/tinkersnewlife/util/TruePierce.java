@@ -143,6 +143,8 @@ public final class TruePierce {
     private static java.lang.reflect.Method apollyonSetHealth = null;
     private static java.lang.reflect.Method apollyonSetHitCooldown = null;
     private static volatile boolean apollyonResolved = false;
+    /** ⭐⭐ §1225 **被判定为"诱饵"的 setter ⇒ 永久拉黑** ✗（⭐ 用户实测那是蜜罐 ✓） */
+    private static volatile boolean apollyonSetterRejected = false;
 
     private static void resolveApollyon() {
         if (apollyonResolved) {
@@ -268,7 +270,7 @@ public final class TruePierce {
         //     ⭐ 而运行时那个**接口**里没有它 ✓（⭐ §1218 探针 ✓）
         //   ⇒ ⭐ **直接在实体类（⭐ 含父类 ＋ ⭐ 所有接口递归 ✓）里按名字找** ✓ ✓
         //     ⭐ 找到就能 ⭐ **写它真正的血** ✓ ⇒ ⭐ 不需要影子血 ✓。
-        if (apollyonSetHealth == null) {
+        if (apollyonSetHealth == null && !apollyonSetterRejected) {
             java.lang.reflect.Method m = findFloatSetter(e.getClass(), "revelaionfix$setApollyonHealth");
             if (m != null) {
                 apollyonSetHealth = m;
@@ -276,12 +278,35 @@ public final class TruePierce {
             }
         }
         if (apollyonSetHealth != null) {
+            // ⭐⭐⭐⭐⚠⚠ §1225 **必须验证 ✗ 否则会踩到"诱饵 setter"** ✓✓
+            //   ⭐ 用户实测 ✓ 2026-10-10：「**又打不动了**」✓ 日志 ✓：
+            //   `找到了真血 setter：…ApollyonHealthIdiot(float) ✓`
+            //   `写=39.20 弹回=87.00 | getHealth=87.00` ← ⚠ **调了它，血一点没变** ✓
+            //   ⇒ ⭐⭐ 它是 ⭐ **蜜罐（honeypot）** ✗：
+            //     ⭐ 作者故意把名字起成"给**傻子**用的 setter" ✓
+            //     ⭐ 专等外部 mod 去调 ✗ ⭐ 然后**什么都不做** ✓ ✓
+            //   ⇒ ⭐ 修法（⭐ 也正是"兜住恶趣味"的正解 ✓）：
+            //     ⭐ **写完必须读回验证** ✗ ⭐ 没生效 ⇒ ⭐ **永久拉黑这个通道** ✓
+            //     ⭐ 然后 ⭐ 落到 ⭐ 循环改血／⭐ 老路 ✓ ✓。
             try {
+                float before = e.getHealth();
                 apollyonSetHealth.invoke(e, value);
                 zeroApollyonHitCooldown(e);
-                return true;
+                float after = e.getHealth();
+                if (Math.abs(after - value) < 0.05F) {
+                    return true;   // ⭐ 真写进去了 ✓
+                }
+                // ⚠ 没生效 ⇒ ⭐ 判定为诱饵 ✗ ⭐ 永久拉黑 ✓
+                apollyonSetterRejected = true;
+                apollyonSetHealth = null;
+                TinkersNewlife.LOGGER.warn(
+                        "[真伤·通道] ⚠ 那个 setter 是**诱饵**（写 {} 之前 {} 之后 {}）⇒ 永久拉黑 ✓ 改走别路 ✓",
+                        String.format(java.util.Locale.ROOT, "%.2f", value),
+                        String.format(java.util.Locale.ROOT, "%.2f", before),
+                        String.format(java.util.Locale.ROOT, "%.2f", after));
             } catch (Throwable ignored) {
-                // ⚠ 走不通 ⇒ ⭐ 落到下面的方案 ✓
+                apollyonSetterRejected = true;
+                apollyonSetHealth = null;
             }
         }
         // ⭐⭐⭐⭐ §1217 **真血 = 那个同步数据 `EntityDataAccessor<Float>`** ✗✗
