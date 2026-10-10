@@ -415,7 +415,16 @@ public final class TruePierce {
             }
             Object acc = apollyonHealthAccessor.get(null);
             data.set((net.minecraft.network.syncher.EntityDataAccessor) acc, value);
-            return true;
+            // ⭐⭐⚠⚠ §1228 **写完必须验证** ✗✗（⭐ 实测踩坑 ✓）：
+            //   ⚠ 日志显示它把 ⭐ `SHOOT_INDICATOR_PROGRESS` **误认成真血** ✓
+            //     （⭐ 只因那一刻它的值恰好等于报的血 ✓）
+            //   ⇒ ⭐ 写它会 ⭐ **污染射击指示器** ✗ ⭐ 而血**一点不变** ✓
+            //   ⇒ ⭐ 所以 ⭐ **写一次读回验证** ✗ ⭐ 不灵 ⇒ ⭐ **作废这个访问器** ✓ ✓。
+            if (Math.abs(e.getHealth() - value) < 0.05F) {
+                return true;
+            }
+            apollyonHealthAccessor = null;
+            return false;
         } catch (Throwable ignored) {
             return false;
         }
@@ -544,6 +553,18 @@ public final class TruePierce {
 
     /** ⭐ `revelaionfix$apollyonEC()` ✗（⭐ dump 用 ✓） */
     private static java.lang.reflect.Method apollyonEcMethod = null;
+
+    /**
+     * ⭐⭐ §1228 <b>"累计未落地伤害"账</b> ✗ —— ⭐ 用于 ⭐ "免疫期处决" ✓。
+     *
+     * <p>⚠ 为什么需要它 ✗：⭐ §1221／⭐ §1226 已**穷举实证** ⭐ 那个 Boss 的血
+     * ⭐ **任何反射通道都写不动** ✓（⭐ 且 ⭐ 非隐藏类 ✓）
+     * ⇒ ⭐ 于是 ⭐ **不跟"它的血"较劲** ✗ ⭐ 改成 ⭐ **记"我们打掉了多少"** ✓
+     * ⭐ 打够（⭐ ≥ 它当前报的血 ✓）⇒ ⭐ **处决** ✓ ✓。
+     * <p>⭐ 普通 Boss ⭐ `dealt ≈ want` ⇒ ⭐ `deficit ≈ 0` ⇒ ⭐ **这个账永远是 0** ✓ ✓。
+     */
+    private static final java.util.Map<java.util.UUID, Float> DAMAGE_OWED =
+            new java.util.concurrent.ConcurrentHashMap<>();
 
     // ============================================================
     //  ⭐⭐⭐⭐ §1221 **循环改血**（⭐ 用户点名要 ✓）
@@ -1696,6 +1717,38 @@ public final class TruePierce {
         } else {
             // ⭐⭐ **逆向改血**：⭐ 直写血量真身字段 ✗ ⭐ **不走 `setHealth`** ✓（⭐ §1188 ✓）
             rawSetHealth(target, hp);
+            // ⭐⭐⭐⭐ §1228 **累计伤害处决**（⭐ 非 mixin ✓ 用户口径 ✓「真没有不mixin的办法了吗」✓）
+            //   ⚠ 动机 ✗：⭐ §1221／⭐ §1226 **穷举实证** —— ⭐ 这个 Boss 的血**任何反射通道都写不动** ✓
+            //     （⭐ 字段 ✗ 同步访问器 ✗ EC ✗ 方法 ✗ 静态字段 ✗ 属性 ✗ ⭐ 且 ⭐ 非隐藏类 ✓）
+            //   ⇒ ⭐ 那就 ⭐ **不再跟"它的血"较劲** ✗：
+            //     ⭐ 记 ⭐ **"我们打了多少"** ✗ ⭐ 其中**没落地的部分**（⭐ `deficit` ✓）
+            //     ⭐ 一旦 ⭐ **累计没落地的伤害 ≥ 它当前报的血** ✗
+            //       ⇒ ⭐ **判定它挨够了 ⇒ 处决** ✓ ✓
+            //   ⭐ 为什么这个规则**通用且安全** ✗：
+            //     ⭐ 普通 Boss ⭐ `dealt ≈ want` ⇒ ⭐ `deficit ≈ 0` ⇒ ⭐ **永不累计** ✓ ✓
+            //     ⭐ 只有 ⭐ "**伤害落不了地**"的目标（⭐ 免疫期／⭐ 锁血 ✓）才会积累 ✓
+            //     ⇒ ⭐ 效果就是 ⭐ **"它的无敌能挡伤害，但挡不住死亡"** ✓ ✓。
+            try {
+                float deficit = Math.max(0.0F, want - Math.max(dealt, 0.0F));
+                if (deficit > 0.01F) {
+                    float owed = DAMAGE_OWED.merge(target.getUUID(), deficit, Float::sum);
+                    float cur = rawHealth(target);
+                    if (owed >= cur) {
+                        DAMAGE_OWED.remove(target.getUUID());
+                        TinkersNewlife.LOGGER.info(
+                                "[真伤·累计处决] 累计未落地伤害 {} ≥ 当前报的血 {} ⇒ 处决 {} ✓",
+                                String.format(java.util.Locale.ROOT, "%.2f", owed),
+                                String.format(java.util.Locale.ROOT, "%.2f", cur),
+                                target.getName().getString());
+                        com.mofengbaizhi.tinkersnewlife.content.curse.KillAttribution.credit(target, attacker);
+                        rawSetHealth(target, 0.0F);
+                        if (!target.isRemoved()) {
+                            target.die(withAttacker);
+                        }
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
         }
         // 顺带：低血阶段的"受击全额回血"免伤（启示录使徒那类），若差额直补也吃不动 → 走处决兜底
         if (GoetyBridge.isGoetyApostle(target) && target.isAlive() && !target.isRemoved()
