@@ -31,8 +31,9 @@ $js   = Join-Path $PSScriptRoot 'check-json-strict.js'
 
 $node = Get-Command node -ErrorAction SilentlyContinue
 if ($node -and (Test-Path -LiteralPath $js)) {
-    & node $js $res
-    exit $LASTEXITCODE
+    $fail = 0
+    foreach ($d in $resDirs) { & node $js $d; if ($LASTEXITCODE -ne 0) { $fail = 1 } }
+    exit $fail
 }
 
 Write-Host '!! node.exe or tools\check-json-strict.js not found -- falling back to the lax parser.';
