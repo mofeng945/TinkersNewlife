@@ -1855,7 +1855,8 @@ public final class TruePierce {
     /** 不经 hurt() 的直伤（下界亚波伦）：⭐ **逆向改血** 扣血 ＋ 打空后主动 die()，让击败状态机正常结算 */
     private static void directDamage(LivingEntity target, float dmg, DamageSource src) {
         // ⭐ §1188：⭐ 读写都走"逆向改血" ✗（⭐ 绕过可能被覆写的 `getHealth`／`setHealth` ✓）
-        float hp = rawHealth(target) - dmg;
+        float before = rawHealth(target);
+        float hp = before - dmg;
         if (hp <= 0.0F) {
             rawSetHealth(target, 0.0F);
             if (!target.isRemoved()) target.die(src);           // 同上 ✗
@@ -1869,6 +1870,38 @@ public final class TruePierce {
             //     ⭐ **再压一次回血** ＋ ⭐ **再写一次** ＋ ⭐ 再复查 ✓
             //     ⚠ 全程**不判断目标类型** ✓（⭐ 谁都会走这一遍 ✓ 普通怪一次就过 ✓）。
             writeAndVerify(target, hp);
+            // ⭐⭐⭐⭐ §1229 **累计伤害处决 ⭐ 这条分支也必须做** ✗✗
+            //   ⚠ 用户实测 ✓ 2026-10-10：「**没用**」＋ 日志 ⭐ `[真伤·累计处决]` **0 行** ✓
+            //   ⇒ ⭐ 根因 ✗：⭐ §1228 我把累计逻辑**只加在 `applyInner` 的通用分支**里 ✓
+            //     ⚠ 而 ⭐ **下界亚波伦走的是这条 `directDamage`** ✗
+            //     ⇒ ⭐ **两条路只补了一条** ✓ ✓（⭐ 与 §1213 同一个毛病：⭐ 改了 A 忘了耦合的 B ✓）
+            //   ⭐ 规则同 §1228 ✓：⭐ 没落地的伤害累计 ≥ 它当前报的血 ⇒ ⭐ 处决 ✓。
+            try {
+                float after = rawHealth(target);
+                float dealt = Math.max(0.0F, before - after);
+                float deficit = Math.max(0.0F, dmg - dealt);
+                if (deficit > 0.01F) {
+                    float owed = DAMAGE_OWED.merge(target.getUUID(), deficit, Float::sum);
+                    if (owed >= after) {
+                        DAMAGE_OWED.remove(target.getUUID());
+                        TinkersNewlife.LOGGER.info(
+                                "[真伤·累计处决] 累计未落地伤害 {} ≥ 当前报的血 {} ⇒ 处决 {} ✓",
+                                String.format(java.util.Locale.ROOT, "%.2f", owed),
+                                String.format(java.util.Locale.ROOT, "%.2f", after),
+                                target.getName().getString());
+                        try {
+                            com.mofengbaizhi.tinkersnewlife.content.curse.KillAttribution.credit(
+                                    target, src.getEntity());
+                        } catch (Throwable ignored) {
+                        }
+                        rawSetHealth(target, 0.0F);
+                        if (!target.isRemoved()) {
+                            target.die(src);
+                        }
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
         }
     }
 
