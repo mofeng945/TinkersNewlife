@@ -8,14 +8,18 @@
   ⚠ 本文件含中文 ⇒ **必须 UTF-8 带 BOM 保存**（PS 5.1 否则按 ANSI 读会语法错）。
 #>
 param(
-    [switch]$IncludeNL
+    [switch]$IncludeNL,
+    # ⭐ §1258 用户口径 ✓：⭐ 三个新 mod **先不打成独立包** ✗ ⭐ 全部先合在一个包里 ✓
+    #   ⇒ ⭐ 默认只部署 :common 那一个 jar ✓；⭐ 将来要真拆时加 -AllJars ✓。
+    [switch]$AllJars
 )
 $ErrorActionPreference = 'Stop'
 
 $repo = Split-Path -Parent $PSScriptRoot
 
 # ⭐ §1255 四处产物（⭐ 顺序固定 ✗ ⭐ 便于日志核对 ✓）
-$modDirs = @('common', 'cursed', 'imagination', 'apostle')
+# ⭐ §1258 默认只收 :common（⭐ 用户口径：⭐ 切出来的先都打在一个包里 ✓）
+$modDirs = if ($AllJars) { @('common', 'cursed', 'imagination', 'apostle') } else { @('common') }
 $jars = @()
 foreach ($d in $modDirs) {
     $libs = Join-Path $repo ($d + '\build\libs')
