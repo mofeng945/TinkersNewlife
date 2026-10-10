@@ -64,11 +64,28 @@ public final class CurseAffinityAttribute {
 
     /* ------------------------------------------------------------------ 物品侧 */
 
-    /** 给物品加一条本属性修饰符（★UUID 固定 ⇒ 不会叠加 ✓ 重复调用会覆盖 ✓） */
+    /**
+     * §1295 用户口径：亲和**不**写进原版 `AttributeModifiers`（那样不写 Slot 会在
+     * "主手/副手/头盔/胸甲/护腿/靴子"六行里各刷一次），而是写我们自己的 NBT 键，
+     * 由 {@link CurseAffinityTooltip} 只显示**一行**；玩家的属性值由 20 tick 镜像承担。
+     * 顺手清掉老版本写进 AttributeModifiers 的条目（迁移）。
+     */
     public static void setItemAffinity(ItemStack stack, double amount) {
         try {
             CompoundTag root = stack.getOrCreateTag();
-            ListTag list = root.contains("AttributeModifiers", 9) ? root.getList("AttributeModifiers", 10) : new ListTag();
+            stripVanillaModifier(root);
+            root.putInt(LEGACY_KEY, (int) Math.round(amount));
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** 清掉老版本写进原版 AttributeModifiers 的"我们的"那一条 */
+    public static void stripVanillaModifier(CompoundTag root) {
+        try {
+            if (root == null || !root.contains("AttributeModifiers", 9)) {
+                return;
+            }
+            ListTag list = root.getList("AttributeModifiers", 10);
             ListTag out = new ListTag();
             for (int i = 0; i < list.size(); i++) {
                 CompoundTag e = list.getCompound(i);
@@ -76,18 +93,14 @@ public final class CurseAffinityAttribute {
                     out.add(e);
                 }
             }
-            if (amount != 0.0D) {
-                AttributeModifier mod = new AttributeModifier(ITEM_UUID,
-                        MOD_NAME, amount, AttributeModifier.Operation.ADDITION);
-                CompoundTag e = mod.save();
-                e.putString("AttributeName", ForgeRegistries.ATTRIBUTES.getKey(CURSE_AFFINITY.get()).toString());
-                out.add(e);
+            if (out.isEmpty()) {
+                root.remove("AttributeModifiers");
+            } else {
+                root.put("AttributeModifiers", out);
             }
-            root.put("AttributeModifiers", out);
         } catch (Throwable ignored) {
         }
     }
-
     /** 固定 UUID（★所有物品共用同一个 ✓ 因为每件物品只可能有一条本属性词条 ✓） */
     public static final UUID ITEM_UUID = UUID.fromString("6d1f7e30-9c4b-4a1e-9b6d-0f2a7c5e8b41");
 
@@ -104,8 +117,9 @@ public final class CurseAffinityAttribute {
             int legacy = tag.getInt(LEGACY_KEY);
             tag.remove(LEGACY_KEY);
             if (legacy != 0) {
-                setItemAffinity(stack, legacy);
+                stack.getOrCreateTag().putInt(LEGACY_KEY, legacy);
             }
+            stripVanillaModifier(tag);
         } catch (Throwable ignored) {
         }
     }
