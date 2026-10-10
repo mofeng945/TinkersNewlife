@@ -65,20 +65,31 @@ public final class CurseAffinityAttribute {
     /* ------------------------------------------------------------------ 物品侧 */
 
     /**
-     * §1295 用户口径：亲和**不**写进原版 `AttributeModifiers`（那样不写 Slot 会在
-     * "主手/副手/头盔/胸甲/护腿/靴子"六行里各刷一次），而是写我们自己的 NBT 键，
-     * 由 {@link CurseAffinityTooltip} 只显示**一行**；玩家的属性值由 20 tick 镜像承担。
-     * 顺手清掉老版本写进 AttributeModifiers 的条目（迁移）。
+     * §1297 用户口径：提示只显示"作为饰品时：+xx 咒力亲和"这两行。
+     * 这正是 **Curios 自己的**属性提示格式 ⇒ 所以把亲和写进物品的 `AttributeModifiers`，
+     * 并带上 `Slot = "curio"`：
+     *   · 原版找不到匹配的装备槽 ⇒ 不再刷"主手/副手/头/胸/腿/靴"六行；
+     *   · Curios 认这个伪槽位 ⇒ 按它自己的文案显示"作为饰品时：+xx 咒力亲和"。
      */
     public static void setItemAffinity(ItemStack stack, double amount) {
         try {
             CompoundTag root = stack.getOrCreateTag();
             stripVanillaModifier(root);
-            root.putInt(LEGACY_KEY, (int) Math.round(amount));
+            root.remove(LEGACY_KEY);
+            if (amount == 0.0D) {
+                return;
+            }
+            AttributeModifier mod = new AttributeModifier(ITEM_UUID, MOD_NAME, amount,
+                    AttributeModifier.Operation.ADDITION);
+            CompoundTag e = mod.save();
+            e.putString("AttributeName", ForgeRegistries.ATTRIBUTES.getKey(CURSE_AFFINITY.get()).toString());
+            e.putString("Slot", "curio");
+            ListTag list = root.contains("AttributeModifiers", 9) ? root.getList("AttributeModifiers", 10) : new ListTag();
+            list.add(e);
+            root.put("AttributeModifiers", list);
         } catch (Throwable ignored) {
         }
     }
-
     /** 清掉老版本写进原版 AttributeModifiers 的"我们的"那一条 */
     public static void stripVanillaModifier(CompoundTag root) {
         try {
@@ -89,8 +100,10 @@ public final class CurseAffinityAttribute {
             ListTag out = new ListTag();
             for (int i = 0; i < list.size(); i++) {
                 CompoundTag e = list.getCompound(i);
-                if (!MOD_NAME.equals(e.getString("Name"))) {
-                    out.add(e);
+                boolean ours = MOD_NAME.equals(e.getString("Name"));
+                boolean slotless = e.getString("Slot").isEmpty();
+                if (!(ours && slotless)) {
+                    out.add(e);   // ★保留 Slot=curio 那条 ✓ 只清老版本没写 Slot 的 ✓
                 }
             }
             if (out.isEmpty()) {
