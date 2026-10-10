@@ -35,7 +35,12 @@ import java.util.List;
 @JeiPlugin
 public class TinkersNewlifeJeiPlugin implements IModPlugin {
 
+    public static mezz.jei.api.runtime.IJeiRuntime RUNTIME;
+
     @Override
+    public void onRuntimeAvailable(mezz.jei.api.runtime.IJeiRuntime runtime) {
+        RUNTIME = runtime;
+    }
     public ResourceLocation getPluginUid() {
         return new ResourceLocation(TinkersNewlife.MOD_ID, "jei_plugin");
     }
