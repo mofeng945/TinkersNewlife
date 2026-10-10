@@ -136,8 +136,9 @@ public class CurseAffinityLootModifier extends LootModifier {
     @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
     public static class CurseAffinityEvents {
 
-        @SubscribeEvent
-        public static void onItemEntityJoin(EntityJoinLevelEvent event) {
+// §1293 用户口径（模仿神化）：亲和只在"生成时"（战利品表 doApply）掷骰；
+//   ★本方法已不再注册为事件 ⇒ "丢地上再捡起来就变异"的那条通道被停用 ✓
+                 public static void onItemEntityJoin(EntityJoinLevelEvent event) {
             if (event.getLevel().isClientSide) return;
             if (!(event.getEntity() instanceof ItemEntity itemEntity)) return;
             ItemStack stack = itemEntity.getItem();
