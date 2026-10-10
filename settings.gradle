@@ -11,3 +11,11 @@ pluginManagement {
 plugins {
     id 'org.gradle.toolchains.foojay-resolver-convention' version '0.7.0'
 }
+
+rootProject.name = 'tinkersnewlife'
+
+// ⭐ §1255 三模拆分（⭐ 用户口径 ✓「拆开吧」✓）
+include 'common'
+include 'cursed'
+include 'imagination'
+include 'apostle'

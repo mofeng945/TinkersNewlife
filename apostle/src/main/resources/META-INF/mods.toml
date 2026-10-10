@@ -1,0 +1,24 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="All Rights Reserved"
+issueTrackerURL=""
+
+[[mods]]
+modId="tinkersnewlife_apostle"
+version="${mod_version}"
+displayName="匠魂新生·使徒增强"
+description='''Tinker's Newlife: Apostle'''
+
+[[dependencies.tinkersnewlife_apostle]]
+    modId="forge"
+    mandatory=true
+    versionRange="[47,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.tinkersnewlife_apostle]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1,1.21)"
+    ordering="NONE"
+    side="BOTH"

@@ -1,0 +1,24 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="All Rights Reserved"
+issueTrackerURL=""
+
+[[mods]]
+modId="tinkersnewlife_imagination"
+version="${mod_version}"
+displayName="匠魂新生·奇想"
+description='''Tinker's Newlife: Imagination'''
+
+[[dependencies.tinkersnewlife_imagination]]
+    modId="forge"
+    mandatory=true
+    versionRange="[47,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.tinkersnewlife_imagination]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1,1.21)"
+    ordering="NONE"
+    side="BOTH"
