@@ -45,7 +45,14 @@ public abstract class ScreenKeyInputMixin {
             }
             if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER
                     || keyCode == GLFW.GLFW_KEY_ESCAPE) {
-                FluidSearch.setFocused(false);      // 取消聚焦 ⇒ 之后按键全部放行 ✓（不 cancel ✗）
+                // ⭐ §1253 **回车/Esc ＝ 收起搜索框** ✗（⭐ 用户口径 ✓：
+                //   「**关闭搜索框是回到键盘事件**」✓）
+                //   ⚠ 原来只 `setFocused(false)` ✗ —— ⭐ 而 `HeatingStructureScreenSearchMixin`
+                //   ⭐ 每 tick 都会 `setFocused(isExpanded())` ✗ ⇒ ⭐ 下一 tick 就被**抢回来** ✓
+                //   ⇒ ⭐ 必须**收起**才算真的退出输入 ✓ ✓。
+                FluidSearch.setExpanded(false);
+                cir.setReturnValue(true);
+                return;
             }
 
             // ⭐⭐ 「打开/关闭背包」键（默认 E ✓）：⭐ **聚焦时必须吃掉** ✗
