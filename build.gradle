@@ -11,3 +11,32 @@ subprojects {
         }
     }
 }
+
+// ============================================================
+//  §1269 **把四个子项目的产物合成一个 jar** (user: keep it ONE jar first)
+//  -- the source stays split into four Gradle projects (ready for the real
+//     split later), but the shipped artifact is a SINGLE jar again.
+//  -- mods.toml / pack.mcmeta come from :common only, so the mod id stays
+//     `tinkersnewlife` and nothing about the installed mod changes.
+// ============================================================
+tasks.register('singleJar', Jar) {
+    dependsOn ':common:reobfJar', ':cursed:reobfJar', ':imagination:reobfJar', ':apostle:reobfJar'
+    archiveBaseName = 'tinkersnewlife'
+    archiveVersion = mod_version
+    archiveClassifier = ''
+    destinationDirectory = file("$rootDir/build/libs")
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes('MixinConfigs': 'tinkersnewlife.mixins.json')
+    }
+    from({ zipTree(project(':common').tasks.named('jar').get().archiveFile.get().asFile) })
+    from({ zipTree(project(':cursed').tasks.named('jar').get().archiveFile.get().asFile) }) {
+        exclude 'META-INF/**'
+    }
+    from({ zipTree(project(':imagination').tasks.named('jar').get().archiveFile.get().asFile) }) {
+        exclude 'META-INF/**'
+    }
+    from({ zipTree(project(':apostle').tasks.named('jar').get().archiveFile.get().asFile) }) {
+        exclude 'META-INF/**'
+    }
+}
