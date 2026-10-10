@@ -5,6 +5,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
+import com.mofengbaizhi.tinkersnewlife.content.curse.CurseAffinityAttribute;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -73,7 +74,7 @@ public class CurseAffinityLootModifier extends LootModifier {
             if (context.getRandom().nextFloat() >= chance) continue;
             int affinity = context.getRandom().nextInt(MAX_AFFINITY + 1); // 0~50
             if (affinity > 0) {
-                CursePowerHelper.setCurseAffinity(stack, affinity);
+                CurseAffinityAttribute.setItemAffinity(stack, affinity);   // §1294 写成真正的属性词条
             }
         }
         return generatedLoot;
@@ -148,7 +149,7 @@ public class CurseAffinityLootModifier extends LootModifier {
             if (event.getLevel().getRandom().nextFloat() >= CHANCE) return;
             int affinity = event.getLevel().getRandom().nextInt(MAX_AFFINITY + 1);
             if (affinity > 0) {
-                CursePowerHelper.setCurseAffinity(stack, affinity);
+                CurseAffinityAttribute.setItemAffinity(stack, affinity);   // §1294 写成真正的属性词条
                 itemEntity.setItem(stack);
             }
         }

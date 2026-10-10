@@ -139,7 +139,16 @@ public final class CursePowerHelper {
                 }
             }
         }
-        return Math.max(0, sum + getTemporaryAffinity(player)
+        // §1294 属性面板里的那一份（★迁移后由属性承载 ✓ 未迁移的仍走 NBT ✓）
+        int fromAttribute = 0;
+        try {
+            var inst = player.getAttribute(CurseAffinityAttribute.CURSE_AFFINITY.get());
+            if (inst != null) {
+                fromAttribute = (int) Math.round(inst.getValue());
+            }
+        } catch (Throwable ignored) {
+        }
+        return Math.max(0, sum + fromAttribute + getTemporaryAffinity(player)
                 + com.mofengbaizhi.tinkersnewlife.content.curse.binding.BindingStateHandler.getAffinityBonus(player)
                 - (hasSeedParasite(player) ? 60 : 0));
     }
