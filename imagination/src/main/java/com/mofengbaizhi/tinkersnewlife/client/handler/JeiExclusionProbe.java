@@ -78,35 +78,68 @@ public final class JeiExclusionProbe {
                 return;
             }
             f.setAccessible(true);
-            Object holders = f.get(helper);
-            if (!(holders instanceof List<?> list)) {
-                TinkersNewlife.LOGGER.info("[JEI-PROBE] {} is not a List", fieldName);
+            Object managers = f.get(helper);
+            if (managers == null) {
+                TinkersNewlife.LOGGER.info("[JEI-PROBE] {} == null", fieldName);
                 return;
             }
-            TinkersNewlife.LOGGER.info("[JEI-PROBE] {} size={}", fieldName, list.size());
-            for (Object holder : list) {
-                Object handler = null;
-                Object target = null;
-                for (Field hf : holder.getClass().getDeclaredFields()) {
-                    hf.setAccessible(true);
-                    Object v = hf.get(holder);
-                    if (v instanceof List<?> hs && !hs.isEmpty() && handler == null) {
-                        target = holder;
-                    }
+            // GuiContainerHandlers (or the global list) -> entries
+            List<?> entries;
+            if (managers instanceof List<?> l) {
+                entries = l;
+            } else {
+                Field ef = findField(managers.getClass(), "entries");
+                if (ef == null) {
+                    TinkersNewlife.LOGGER.info("[JEI-PROBE] {} has no entries field ({})", fieldName, managers.getClass().getName());
+                    return;
                 }
-                for (Field hf : holder.getClass().getDeclaredFields()) {
-                    hf.setAccessible(true);
-                    Object v = hf.get(holder);
-                    if (v instanceof List<?> hs) {
-                        for (Object h : hs) {
-                            report(h, screen, fieldName);
-                        }
+                ef.setAccessible(true);
+                entries = (List<?>) ef.get(managers);
+            }
+            TinkersNewlife.LOGGER.info("[JEI-PROBE] {} entries={}", fieldName, entries == null ? "null" : entries.size());
+            if (entries == null) {
+                return;
+            }
+            for (Object entry : entries) {
+                Object cls = readField(entry, "containerClass");
+                List<?> handlers = readList(entry, "handlers");
+                boolean applies = cls instanceof Class<?> c
+                        ? (screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen
+                           && c.isInstance(screen))
+                        : fieldName.contains("global");
+                if (handlers == null) {
+                    continue;
+                }
+                for (Object h : handlers) {
+                    if (applies) {
+                        report(h, screen, fieldName + "[" + (cls instanceof Class<?> cc ? cc.getName() : "?") + "]");
+                    } else {
+                        TinkersNewlife.LOGGER.info("[JEI-PROBE] (skip) {} registered for {}",
+                                h.getClass().getName(), cls instanceof Class<?> cc ? cc.getName() : "?");
                     }
                 }
             }
         } catch (Throwable t) {
             TinkersNewlife.LOGGER.info("[JEI-PROBE] dump {} failed: {}", fieldName, t.toString());
         }
+    }
+
+    private static Object readField(Object holder, String name) {
+        try {
+            Field f = findField(holder.getClass(), name);
+            if (f == null) {
+                return null;
+            }
+            f.setAccessible(true);
+            return f.get(holder);
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    private static List<?> readList(Object holder, String name) {
+        Object v = readField(holder, name);
+        return v instanceof List<?> l ? l : null;
     }
 
     private static void report(Object handler, Screen screen, String group) {
