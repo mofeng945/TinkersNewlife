@@ -257,6 +257,7 @@ public class TinkersNewlife {
         registerPacket(PacketSwitchFlyingSwordMode.class, PacketSwitchFlyingSwordMode::toBytes, PacketSwitchFlyingSwordMode::new, PacketSwitchFlyingSwordMode::handle);
         registerPacket(PacketToggleDomain.class, PacketToggleDomain::toBytes, PacketToggleDomain::new, PacketToggleDomain::handle);
         registerPacket(PacketUseTechnique.class, PacketUseTechnique::toBytes, PacketUseTechnique::new, PacketUseTechnique::handle);
+        registerPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketScrollCast.class, com.mofengbaizhi.tinkersnewlife.network.curse.PacketScrollCast::toBytes, com.mofengbaizhi.tinkersnewlife.network.curse.PacketScrollCast::new, com.mofengbaizhi.tinkersnewlife.network.curse.PacketScrollCast::handle);
         // §744 工业开拓之证：客户端"刷新产率界面"的请求（每 5 秒一次；服务端会复核玩家是否真带着绑定该维度的饰品 ✓）
         registerPacket(com.mofengbaizhi.tinkersnewlife.network.rate.PacketRequestPioneerRates.class,
                 com.mofengbaizhi.tinkersnewlife.network.rate.PacketRequestPioneerRates::toBytes,

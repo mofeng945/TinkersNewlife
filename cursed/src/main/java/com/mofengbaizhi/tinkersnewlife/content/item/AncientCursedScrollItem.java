@@ -153,10 +153,19 @@ public class AncientCursedScrollItem extends Item {
         if (player.level().isClientSide() || !(player instanceof ServerPlayer sp)) {
             return false;
         }
+        castFromScroll(sp, stack);
+        return false;
+    }
+
+    /** §1277 残卷施法本体：左键命中与空挥共用 */
+    public static void castFromScroll(ServerPlayer sp, ItemStack stack) {
+        if (sp.level().isClientSide() || stack.isEmpty()) {
+            return;
+        }
         String[] chant = fillChant(stack, sp);
         for (int i = 0; i < chant.length; i++) {
             if (chant[i] != null && !chant[i].isEmpty()) {
-                CursedSpeechState.learn(sp, chant[i]);   // ★ 必须先"学会"：咒言术会校验 knows()，否则判缺段直接 return
+                CursedSpeechState.learn(sp, chant[i]);
                 CursedSpeechState.setChantPart(sp, i, chant[i]);
             }
         }
@@ -167,11 +176,9 @@ public class AncientCursedScrollItem extends Item {
         } finally {
             sp.getPersistentData().remove(KEY_SCROLL_CAST);
         }
-        // ★ 只有真的进入"读条"才算释放成功 ⇒ 才消耗卷轴（否则不消耗，避免白吞）
         if (com.mofengbaizhi.tinkersnewlife.content.cursespeech.CurseChant.isChanting(sp)) {
             stack.shrink(1);
         }
-        return false;
     }
 
     /** 六个槽位：卷上有词就用词；否则用玩家已学的；再缺 ⇒ 该槽"最低两级"随机补一个 */
