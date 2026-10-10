@@ -131,6 +131,11 @@ public class FumoMoBlockEntityRenderer implements BlockEntityRenderer<FumoMoBloc
                 pose.mulPose(Axis.YP.rotationDegrees(FumoMoBlockEntity.seqYaw(sec)));
                 pose.mulPose(Axis.XP.rotationDegrees(
                         FumoMoBlockEntity.seqLean(sec) + FumoMoBlockEntity.seqNod(sec)));
+                // ⭐⭐ §1243 **转身时的小弹跳** ✗（⭐ 用户口径 ✓「**转动时稍稍向上弹跳一点**」✓）
+                //   ⚠ 位置讲究 ✗：⭐ 放在**旋转之后** ⇒ ⭐ 弹跳是"整体往上平移" ✓
+                //     ⭐ 不会变成"绕某个点甩" ✓；
+                //   ⚠ 又在 ⭐ `WORLD_SCALE` **之前** ⇒ ⭐ 会被一起放大 ✓（⭐ 取 0.022 ⇒ 约 0.044 格 ✓）。
+                pose.translate(0.0D, FumoMoBlockEntity.seqBounce(sec), 0.0D);
             } else {
                 // ⭐ 老舞蹈 ✗：⭐ 朋友的酒那套"旋转＋挤压"（⭐ 公式照抄它 ✓ 不动 ✓）
                 pose.mulPose(Axis.YP.rotationDegrees(FumoMoBlockEntity.fwAngle(sec)));

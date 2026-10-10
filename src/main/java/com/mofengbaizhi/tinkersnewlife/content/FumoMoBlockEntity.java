@@ -533,30 +533,33 @@ public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.worl
         }
     }
     // ============================================================
-    //  §1242 新舞蹈（⭐ 第二版 ✗ ⭐ 用户实测「**模型在往上抽搐**」后重写 ✓）
-    //  （⭐ 用户口径 ✓：「**左转一下然后整体前倾点头，再原路回到初始正面，
-    //    再右转一下前倾点头**」✓ ⭐ 参考用户给的 gif ✓）
+    //  §1243 新舞蹈（⭐ 第三版 ✗ ⭐ 用户口径："**1s 一个循环 ✗ 别有停顿 ✗ 我要卡上节拍**"
+    //    ＋ "**玩偶转动时稍稍向上弹跳一点**" ✓）
     //
-    //  ⚠⚠ 第一版**错在两处** ✗（⭐ 如实 ✓）：
-    //    ① ⭐ **点头用了 8 Hz 正弦** ✗（⭐ 0.25 秒里摆两次 ✓）⇒ ⭐ 那**就是"抽搐"** ✓ ✓；
-    //    ② ⭐ **前倾符号反了** ✗ ⇒ ⭐ 看着像"**往上**"而不是"**往前趴**" ✓。
-    //  ⇒ ⭐ 第二版 ✗：⭐ **不要高频正弦** ✗ ⭐ 用"**前倾下去 ⭐ 再点回来**"
-    //    （⭐ 一次**慢点头** ≈ 0.8 秒 ✓）⭐ 这才是 gif 那个感觉 ✓；
-    //    ⭐ 符号抽成 ⭐ **一个常数** `ND_LEAN_SIGN` ✗ ⭐ 要反过来只改这一处 ✓ ✓。
+    //  ⚠ 版本史（⭐ 如实 ✓）：
+    //    §1241 第一版 ⭐ 点头用 8 Hz 正弦 ⇒ ⭐ 看着"抽搐" ✗；
+    //    §1242 第二版 ⭐ 改成"慢前倾再点回来"（⭐ 一次点头 0.8 秒 ✓）✗ ⭐ 周期 3.6 秒 ✗；
+    //    §1243 本版 ⭐ **周期压到 1.00 秒、去掉停顿** ✓（⭐ 左右各半秒 ✓ 卡节拍 ✓）
+    //      ＋ ⭐ **转身时一个小弹跳** ✓。
     // ============================================================
 
-    /** 总周期（秒 ✓）：⭐ 两个方向各一轮 ＋ ⭐ 中间停顿 ✓ */
-    private static final double ND_PERIOD = 3.60D;
+    /** 总周期（秒 ✓）—— ⭐ 用户口径 ✓ **1 秒一轮**（⭐ 卡节拍 ✓ ⭐ 中间**不留停顿** ✓） */
+    private static final double ND_PERIOD = 1.00D;
     /** 转向角度（度 ✓） */
     private static final float ND_TURN = 45.0F;
     /** 前倾角度（度 ✓） */
     private static final float ND_LEAN = 15.0F;
     /**
-     * ⭐⭐ **前倾/点头的方向符号** ✗（⭐ 第二版的"唯一开关" ✓）。
-     * <p>⚠ 用户实测第一版 ⭐「**模型在往上抽搐**」✓ ⇒ ⭐ 若现在看还是"往后仰" ✗
-     * ⭐ **把这里改成 `+1.0F`** 即可 ✓（⭐ 别的地方都不用动 ✓）。
+     * ⭐⭐ **前倾/点头的方向符号** ✗（⭐ 唯一开关 ✓）。
+     * <p>⚠ 若实机看着是"**往后仰**"✗ ⭐ **把这里改成 `+1.0F`** ✓ ⭐ 别处不动 ✓。
      */
     private static final float ND_LEAN_SIGN = -1.0F;
+    /**
+     * ⭐⭐ **转身时的向上弹跳高度** ✗（⭐ 单位：格 ✗ ⭐ 会被后面的 `WORLD_SCALE` 放大 ✓）。
+     * <p>⭐ 用户口径 ✓：「**玩偶转动时稍稍向上弹跳一点**」✓ ⇒ ⭐ 取 **0.022 格** ✗
+     * ⭐ 经 ×2 放大后 ≈ **0.044 格** ✓ —— ⭐ "稍稍"那个量 ✓。
+     */
+    private static final float ND_BOUNCE = 0.022F;
 
     /** ⭐ 平滑（⭐ smoothstep ✓）：⭐ 起停都不生硬 ✓ */
     private static double ndSmooth(double t) {
@@ -572,40 +575,49 @@ public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.worl
         return (t - a) / (b - a);
     }
 
-    /** ⭐ 新舞蹈·偏航 ✗：⭐ 左转 ⇒ ⭐ 保持 ✓ ⇒ ⭐ 原路回正 ✓ ⇒ ⭐ 右转 ✓ ⇒ ⭐ 保持 ✓ ⇒ ⭐ 回正 ✓ */
+    /**
+     * ⭐ 新舞蹈·偏航 ✗（⭐ 1 秒两轮 ✓ ⭐ 无缝衔接 ✓）：
+     * ⭐ 左转 → ⭐ 停左（⭐ 含点头 ✓）→ ⭐ 回正 → ⭐ 右转 → ⭐ 停右（⭐ 含点头 ✓）→ ⭐ 回正 ✓
+     */
     public static float seqYaw(double seconds) {
         double t = seconds % ND_PERIOD;
-        if (t < 0.45D) return -ND_TURN * (float) ndSmooth(ndSeg(t, 0.00D, 0.45D));   // 左转出去 ✓
-        if (t < 1.25D) return -ND_TURN;                                             // 停在左边（含点头 ✓）
-        if (t < 1.70D) return -ND_TURN * (float) (1.0D - ndSmooth(ndSeg(t, 1.25D, 1.70D)));  // 原路回正 ✓
-        if (t < 2.05D) return ND_TURN * (float) ndSmooth(ndSeg(t, 1.70D, 2.05D));   // 右转出去 ✓
-        if (t < 2.85D) return ND_TURN;                                              // 停在右边（含点头 ✓）
-        if (t < 3.30D) return ND_TURN * (float) (1.0D - ndSmooth(ndSeg(t, 2.85D, 3.30D)));   // 回正 ✓
-        return 0.0F;                                                                // 停顿 ✓
+        if (t < 0.10D) return -ND_TURN * (float) ndSmooth(ndSeg(t, 0.00D, 0.10D));          // 左转 ✓
+        if (t < 0.40D) return -ND_TURN;                                                     // 停在左边（点头 ✓）
+        if (t < 0.50D) return -ND_TURN * (float) (1.0D - ndSmooth(ndSeg(t, 0.40D, 0.50D)));  // 回正 ✓
+        if (t < 0.60D) return ND_TURN * (float) ndSmooth(ndSeg(t, 0.50D, 0.60D));            // 右转 ✓
+        if (t < 0.90D) return ND_TURN;                                                      // 停在右边（点头 ✓）
+        return ND_TURN * (float) (1.0D - ndSmooth(ndSeg(t, 0.90D, 1.00D)));                  // 回正 ⇒ 无缝接下一轮 ✓
     }
 
-    /**
-     * ⭐ 新舞蹈·前倾＋点头 ✗ —— ⭐ **一次"下去再回来"就是一次点头** ✓
-     * <p>⚠ ⭐ 不再叠加高频正弦 ✗（⭐ 那正是第一版"抽搐"的根因 ✓）。
-     */
+    /** ⭐ 新舞蹈·前倾＋点头 ✗（⭐ "下去再回来" ＝ ⭐ 一次点头 ✓ ⭐ 左右各一次 ✓） */
     public static float seqLean(double seconds) {
         double t = seconds % ND_PERIOD;
         float v = 0.0F;
-        if (t >= 0.45D && t < 1.25D) {
-            // 左转那次：⭐ 前倾下去（0.45~0.85）⇒ ⭐ 点回来（0.85~1.25）✓
-            v = (t < 0.85D)
-                    ? ND_LEAN * (float) ndSmooth(ndSeg(t, 0.45D, 0.85D))
-                    : ND_LEAN * (float) (1.0D - ndSmooth(ndSeg(t, 0.85D, 1.25D)));
-        } else if (t >= 2.05D && t < 2.85D) {
-            // 右转那次：⭐ 同上 ✓
-            v = (t < 2.45D)
-                    ? ND_LEAN * (float) ndSmooth(ndSeg(t, 2.05D, 2.45D))
-                    : ND_LEAN * (float) (1.0D - ndSmooth(ndSeg(t, 2.45D, 2.85D)));
+        if (t >= 0.10D && t < 0.40D) {
+            v = (t < 0.27D)
+                    ? ND_LEAN * (float) ndSmooth(ndSeg(t, 0.10D, 0.27D))
+                    : ND_LEAN * (float) (1.0D - ndSmooth(ndSeg(t, 0.27D, 0.40D)));
+        } else if (t >= 0.60D && t < 0.90D) {
+            v = (t < 0.77D)
+                    ? ND_LEAN * (float) ndSmooth(ndSeg(t, 0.60D, 0.77D))
+                    : ND_LEAN * (float) (1.0D - ndSmooth(ndSeg(t, 0.77D, 0.90D)));
         }
         return v * ND_LEAN_SIGN;
     }
 
-    /** ⭐ 兼容旧调用 ✗：⭐ 第二版**没有独立点头**了 ✓（⭐ 点头 ＝ 前倾下去再回来 ✓） */
+    /**
+     * ⭐⭐ 新舞蹈·**转身时的小弹跳** ✗（⭐ 用户口径 ✓「**转动时稍稍向上弹跳一点**」✓）
+     * <p>⭐ 只在**两段转身**里给一个"上去再下来"的半正弦 ✓ ⭐ 峰值在转身**正中间** ✓
+     * ⇒ ⭐ 看着像"**扭头的同时蹦一下**" ✓ ⭐ 与节拍合上 ✓。
+     */
+    public static float seqBounce(double seconds) {
+        double t = seconds % ND_PERIOD;
+        if (t < 0.10D) return ND_BOUNCE * (float) Math.sin(Math.PI * (t / 0.10D));
+        if (t >= 0.50D && t < 0.60D) return ND_BOUNCE * (float) Math.sin(Math.PI * ((t - 0.50D) / 0.10D));
+        return 0.0F;
+    }
+
+    /** ⭐ 兼容旧调用 ✗：⭐ 本版**没有独立点头** ✓（⭐ 点头 ＝ 前倾下去再回来 ✓） */
     public static float seqNod(double seconds) {
         return 0.0F;
     }}
