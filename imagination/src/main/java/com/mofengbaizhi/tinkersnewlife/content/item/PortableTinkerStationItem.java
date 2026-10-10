@@ -88,31 +88,35 @@ public class PortableTinkerStationItem extends Item {
         if (level.isClientSide() || !(player instanceof ServerPlayer sp)) {
             return InteractionResultHolder.pass(stack);
         }
-        // §1286 证据驱动修复（探针 2026-10-11 00:06 抓到）：
-        //   Mantle 的 JEIPlugin$MultiModuleContainerHandler 会给 MultiModuleScreen（工匠站的父类）
-        //   返回一个 w=-2 的矩形（侧栏模块塌陷）⇒ JEI 的 ImmutableRect2i 直接崩 ✗
-        //   ⇒ 所以要把透明砧放在"六面皆空气"的位置：没有邻块 ⇒ detectStationParts 找不到侧栏库存
-        //     ⇒ 不会产生那个塌陷模块 ⇒ 矩形全为正 ⇒ 不崩 ✓
+        // §1288 用户/群友的洞察：真砧在"空旷的另一个维度"里就不崩 ⇒ 本质是"周围什么都没有"，
+        //   匠魂的 detectStationParts 找不到邻块 ⇒ 不会挂侧栏模块 ⇒ 屏幕布局一出生就是最终态，
+        //   那个矩形宽度就不会在 26 与 -2 之间抖 ⇒ JEI 不会撞上负数。
+        //   ⚠ 但不能跨维度：客户端只能在自己所在的世界里按坐标找到方块实体。
+        //   ⇒ 所以我们留在同一维度，把透明砧放到"绝对空旷"的位置。
         BlockPos base = sp.blockPosition();
         BlockPos target = null;
-        for (int dy = 1; dy <= 6 && target == null; dy++) {
-            BlockPos up = base.above(dy);
-            if (!level.getBlockState(up).isAir()) {
-                continue;
+        for (int dy = 2; dy <= 16 && target == null; dy++) {
+            BlockPos p = base.above(dy);
+            if (level.isOutsideBuildHeight(p)) {
+                break;
             }
-            boolean clear = true;
-            for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
-                if (!level.getBlockState(up.relative(dir)).isAir()) {
-                    clear = false;
-                    break;
-                }
-            }
-            if (clear) {
-                target = up;
+            if (isClearAround(level, p, 2)) {
+                target = p;
             }
         }
         if (target == null) {
-            // 兜底：仍找一个自身是空气的格子（★宁可挂侧栏也不失败 ✓）
+            for (int dy : new int[] { 64, 96, 128 }) {
+                BlockPos p = base.above(dy);
+                if (level.isOutsideBuildHeight(p)) {
+                    continue;
+                }
+                if (isClearAround(level, p, 1)) {
+                    target = p;
+                    break;
+                }
+            }
+        }
+        if (target == null) {
             for (BlockPos p : new BlockPos[] { base, base.below(), base.north(), base.south(), base.east(), base.west() }) {
                 if (level.getBlockState(p).isAir()) {
                     target = p;
@@ -148,5 +152,19 @@ public class PortableTinkerStationItem extends Item {
             }
         }
         return InteractionResultHolder.success(stack);
+    }
+
+    /** 以 pos 为中心、半径 r 的立方体是否全是空气（★要比匠魂自己的邻块扫描更宽 ✓） */
+    private static boolean isClearAround(Level level, BlockPos pos, int r) {
+        for (int dx = -r; dx <= r; dx++) {
+            for (int dy = -r; dy <= r; dy++) {
+                for (int dz = -r; dz <= r; dz++) {
+                    if (!level.getBlockState(pos.offset(dx, dy, dz)).isAir()) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
     }
 }
