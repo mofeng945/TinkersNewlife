@@ -534,6 +534,12 @@ public class BindingRitualHandler {
     /** 仪式完成：解除黑暗、抽干池水、熄灭火焰、赋予对应束缚，生命恢复到新上限的 40% */
     private static void completeRitual(MinecraftServer server, ServerLevel level, RitualData data, ServerPlayer caster) {
         RITUALS.remove(data.anchor);
+        // §1303 仪式完成 ⇒ 天与暴君（肉体）／天与咒缚（咒力）✓
+        try {
+            com.mofengbaizhi.tinkersnewlife.content.curse.CurseTitles.grant(caster,
+                    data.variant == Variant.TYRANT ? "heaven_tyrant" : "heaven_binding");
+        } catch (Throwable ignored) {
+        }
         // 解除黑暗
         caster.removeEffect(MobEffects.DARKNESS);
         // 抽干池水（所有登记的水源）

@@ -159,6 +159,7 @@ public final class CurseCraftRitualHandler {
         ItemEntity product = findDisplay(level, lantern, ROLE_PRODUCT);
         if (product == null) product = findDisplay(level, lantern, ROLE_PRODUCT_B);   // 成对产物的第二枚
         if (product != null) {
+                                        com.mofengbaizhi.tinkersnewlife.content.curse.CurseTitles.grant(player, "tool_smith");   // §1303 咒具师 ✓
             giveOrDrop(player, product.getItem().copy());
             product.discard();
             return;

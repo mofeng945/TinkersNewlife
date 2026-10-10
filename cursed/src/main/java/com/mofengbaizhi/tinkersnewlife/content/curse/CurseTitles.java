@@ -160,6 +160,16 @@ public final class CurseTitles {
     /** 所有"当前生效"的头衔 id（★动态 ＋ 持有 ✓） */
     public static List<String> active(Player player) {
         List<String> out = new ArrayList<>(held(player));
+        // §1303 动态：装备的核心上带"傀儡操术" ⇒ 咒骸师 ✓
+        try {
+            var core = CursePowerHelper.findEquippedCurseCore(player);
+            if (!core.isEmpty() && CursePowerHelper.getModifierLevel(core,
+                    com.mofengbaizhi.tinkersnewlife.content.Modifiers.PUPPET.getId()) > 0
+                    && !out.contains("puppet_master")) {
+                out.add("puppet_master");
+            }
+        } catch (Throwable ignored) {
+        }
         String rank = rankId(player);
         if (rank != null && !out.contains(rank)) {
             out.add(rank);
@@ -184,6 +194,30 @@ public final class CurseTitles {
             return sb.toString();
         } catch (Throwable t) {
             return "";
+        }
+    }
+
+    /** §1303 扫已佩戴饰品：七咒之戒 ⇒ 举世皆敌（★id 由神秘遗物语言文件反查确认 ✓） */
+    public static void scanWorn(Player player) {
+        try {
+            var resolved = top.theillusivec4.curios.api.CuriosApi.getCuriosInventory(player).resolve();
+            if (resolved.isEmpty()) {
+                return;
+            }
+            for (var handler : resolved.get().getCurios().values()) {
+                var stacks = handler.getStacks();
+                for (int i = 0; i < stacks.getSlots(); i++) {
+                    var s = stacks.getStackInSlot(i);
+                    if (s.isEmpty()) {
+                        continue;
+                    }
+                    var id = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(s.getItem());
+                    if (id != null && "enigmaticlegacy:cursed_ring".equals(id.toString())) {
+                        grant(player, "enemy_of_all");
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
         }
     }
 
