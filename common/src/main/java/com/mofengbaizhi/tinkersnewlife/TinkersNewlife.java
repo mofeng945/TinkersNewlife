@@ -129,6 +129,7 @@ public class TinkersNewlife {
         FumoMoDoll.init();
         // 注册各类内容
         ModItems.ITEMS.register(modEventBus);
+        com.mofengbaizhi.tinkersnewlife.content.menu.PortableStationMenus.MENUS.register(modEventBus);
         // ⭐ §1118r 联动物品「邪灵辉锭」：**只在诡厄巫法 ＋ 神秘遗物同时在场时**才把条件表挂到总线 ✓
         //   ⚠ 不能塞进 ModItems.ITEMS ✗（那张表无条件挂 ⇒ 一定会注册 ✓ ⇒ 做不到"条件注册" ✗）
         //   ⚠ 必须在 Forge 发 RegisterEvent **之前**挂 ✓（这里正是 ✓）

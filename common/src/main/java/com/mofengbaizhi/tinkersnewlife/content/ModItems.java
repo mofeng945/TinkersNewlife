@@ -765,4 +765,8 @@ public class ModItems {
                             ModSounds.MUSIC_TELL_ME,
                             new Item.Properties().stacksTo(1).rarity(Rarity.RARE),
                             MUSIC_DISC_TELL_ME_LENGTH_TICKS));
-}
+    /** §1278 便携工匠站（★手持右键开匠魂工匠站 GUI ✗ 关闭自动回包 ✓） */
+    public static final RegistryObject<Item> PORTABLE_TINKER_STATION =
+            ITEMS.register("portable_tinker_station",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.PortableTinkerStationItem(
+                            new Item.Properties().stacksTo(1)));}
