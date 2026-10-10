@@ -212,8 +212,14 @@ public final class CurseTitles {
                         continue;
                     }
                     var id = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(s.getItem());
-                    if (id != null && "enigmaticlegacy:cursed_ring".equals(id.toString())) {
-                        grant(player, "enemy_of_all");
+                    String key = id == null ? "" : id.toString();
+                    // §1304 联动物品 ⇒ 头衔（★id 全部由各 mod 语言文件反查 ✓）
+                    if ("enigmaticlegacy:cursed_ring".equals(key)) {
+                        grant(player, "enemy_of_all");        // 七咒之戒（神秘遗物）
+                    } else if ("celestial_artifacts:catastrophe_scroll".equals(key)) {
+                        grant(player, "calamity_bearer");     // 灾厄之册（星月遗物）
+                    } else if ("flame_chase_artifacts:hatred_inundate".equals(key)) {
+                        grant(player, "iron_tomb_crisis");    // 流溢之恨（星穹饰品）
                     }
                 }
             }
