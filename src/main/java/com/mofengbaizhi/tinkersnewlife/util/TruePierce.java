@@ -579,6 +579,32 @@ public final class TruePierce {
      */
     private static volatile boolean SUPPRESS_CLIENT_SYNC = false;
 
+    /**
+     * ⭐⭐⭐⭐ §1236 <b>"额外血量通道"总开关</b> ✗ —— ⭐ **默认关闭** ✓（⭐ 用户口径 ✓）。
+     *
+     * <p>⚠ 用户口径 ✓ 2026-10-10：「**我说使徒直接改血啊，做下界亚波伦之前那样不是挺好的吗**」✓
+     *
+     * <h2>⚠⚠ 为什么必须关掉它（⭐ 日志实证 ✓）</h2>
+     * ⭐ 开启时 ⭐ `rawHealth` 会去问 ⭐ `revelaionfix$getApollyonHealth()` ✓
+     * ⚠ 而对 ⭐ **非"亚波伦状态"的使徒** ✗ ⭐ 它返回的是 ⭐ **`AOGBOGBO…` 那个访问器** ✓
+     * （⭐ 初始化成 ⭐ `ModConfig.APOLLYON_HEALTH` ＝ **666** ✓）⭐ **不是它的真实血量** ✓
+     * ⇒ ⭐ 日志就是 ⭐ `want=30.50 startHp=666.00 dealt=0.00` ✓ ✓
+     * ⇒ ⭐ 后果链 ✗：
+     *   ① ⭐ `startHp` 读到 **666** ✗（⭐ 真实血量比如 300 ✓）；
+     *   ② ⭐ `hurt` 打掉的真血 ⭐ **读不出来** ⇒ ⭐ `dealt ＝ 0` ✓；
+     *   ③ ⭐ `shortfall ＝ want` ✗ ⭐ 于是走 ⭐ **"额外通道"改血** ✓ ⭐ **而不写真身字段** ✓；
+     *   ④ ⇒ ⭐ **一点血都不掉** ✓ ✓ —— ⭐ 用户看到的"打使徒不掉血" ✓。
+     * <p>⇒ ⭐ 关掉之后 ⭐ 回到 ⭐ **"直接改血"** ✓：
+     * ⭐ `rawHealth` ⭐ 读 ⭐ **血量真身字段**（⭐ 与 `getHealth()` 取大 ✓）
+     * ⭐ `rawSetHealth` ⭐ **直写那个字段** ＋ ⭐ `setHealth` ＋ ⭐ 标脏 ✓ ✓
+     * ⭐ 这正是 ⭐ **"做下界亚波伦之前"** 的那套 ✓ ⭐ 用户实测那时 ⭐ **使徒是能打死的** ✓。
+     *
+     * <p>⚠ 代价（⭐ 如实 ✓）：⭐ 下界亚波伦的 ⭐ **"万众归一"** 头衔 ✗
+     * ⭐ 它的血 ⭐ **直写字段也进不去** ✓ ⇒ ⭐ 回到 ⭐ **"破不了就破不了"** ✓ ✓（⭐ 已同意 ✓）。
+     * <p>⚠ 代码保留 ✗ ⭐ 要做"额外通道"实验时把这里改 `true` 即可 ✓。
+     */
+    private static final boolean EXTRA_HEALTH_CHANNEL = false;
+
     /** ⭐⭐⭐⭐ §1231 **"合成事件"标记** ✗ —— ⭐ 防递归 ＋ ⭐ 防伤害翻倍 ✓ */
     private static volatile boolean SYNTHETIC_HURT = false;
 
@@ -1416,9 +1442,14 @@ public final class TruePierce {
         //   ⭐ 教训：⭐ **"记账代替真写"会让真身彻底不掉血** ✗ ⭐ 绝不能这么兜底 ✓。
         float viaApi = target.getHealth();
         // ⭐⭐⭐⭐ §1214 **先问"额外血量通道"** ✗ —— ⭐ 有就以它为准 ✓（⭐ 那才是真血 ✓）
-        float viaExtra = apollyonHealthOf(target);
-        if (viaExtra >= 0.0F) {
-            return viaExtra;
+        //   ⚠⚠ §1236 **已按用户口径关闭** ✗（⭐ 见 {@link #EXTRA_HEALTH_CHANNEL} ✓）：
+        //   ⭐ 它对"非亚波伦状态的使徒"会返回 ⭐ **666**（⭐ 那个访问器的初值 ✓）✗
+        //     ⭐ 不是它的真实血量 ⇒ ⭐ `startHp` 错 ✗ ⭐ `dealt` 恒 0 ✗ ⭐ **一点血都不掉** ✓ ✓。
+        if (EXTRA_HEALTH_CHANNEL) {
+            float viaExtra = apollyonHealthOf(target);
+            if (viaExtra >= 0.0F) {
+                return viaExtra;
+            }
         }
         // ⭐⭐ §1201 **字段按值反查**（⭐ 只做一次 ✓ 用**这个**实体当样本 ✓）
         java.lang.reflect.Field f = healthFieldFor(target);
@@ -1541,7 +1572,10 @@ public final class TruePierce {
         // ⭐⭐⭐⭐ §1214 **有"额外血量通道"就只走它** ✗
         //   ⚠ 不要把 `health` 字段也写一份 ✗ —— ⭐ 那个字段对这类 Boss **没有意义** ✓
         //     ⭐ 而且写了会让 ⭐ `getHealth()` 与真血**更乱** ✓（⭐ §1201 的怪现象就是这么来的 ✓）
-        if (apollyonSetHealth(target, value)) {
+        // ⚠⚠ §1236 **已按用户口径关闭** ✗（⭐ 见 {@link #EXTRA_HEALTH_CHANNEL} ✓）
+        //   ⭐ 开着它会 ⭐ **改血写到"额外通道"而不写真身字段** ✓
+        //   ⇒ ⭐ 非亚波伦状态的使徒 ⭐ **一点血都不掉** ✓ ✓（⭐ 用户实测 ✓）
+        if (EXTRA_HEALTH_CHANNEL && apollyonSetHealth(target, value)) {
             try {
                 target.hurtMarked = true;
             } catch (Throwable ignored) {
@@ -1552,7 +1586,7 @@ public final class TruePierce {
         //   「**这个循环改血的逻辑不错，可以加到我真伤兜底链条里面**」✓）
         //   ⭐ 位置 ✗：⭐ 排在 ⭐ "已知 setter／⭐ 访问器"**之后** ✗ ⭐ "影子血"**之前** ✓
         //   ⭐ 即 ⭐ **真血写不进去时，先暴力找一个能改血的通道** ✗ ⭐ 实在没有才自行记账 ✓。
-        if (hasApollyonChannel(target) && bruteForceWrite(target, value)) {
+        if (EXTRA_HEALTH_CHANNEL && hasApollyonChannel(target) && bruteForceWrite(target, value)) {
             try {
                 target.hurtMarked = true;
             } catch (Throwable ignored) {
