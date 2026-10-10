@@ -106,20 +106,48 @@ public final class FluidSearch {
     private static volatile int btnY = Integer.MIN_VALUE;
     private static volatile int btnW = 14;
     private static volatile int btnH = 14;
+    /**
+     * ⭐⭐ §1249 画按钮那一刻的**姿态平移** ✗（⭐ 就是 GUI 左上角 ✓ 由 `GuiGraphics.pose().last().pose()` 的 m30/m31 取 ✓）。
+     * <p>⚠ 为什么要有它 ✗：⭐ 用户实测「**点搜索按键没反应**」✓ —— ⭐ 十有八九是 ⭐
+     * **"画出来的坐标"与"鼠标的坐标"不在一个空间里** ✗（⭐ 本仓 §1117 那三次"点框聚焦"失败就是同一个坑 ✓）
+     * ⇒ ⭐ 判定**两种解释都接受** ✓ ⭐ 哪一个对都能点中 ✓。
+     */
+    private static volatile float btnTx = 0F;
+    private static volatile float btnTy = 0F;
+    /** ⭐ §1249 去重 ✗：⭐ 两个挂点（⭐ `Screen` ＋ ⭐ `AbstractContainerScreen` ✓）都命中时只算**一次** ✓ */
+    private static volatile long lastToggleMs = 0L;
 
     public static boolean isExpanded() { return expanded; }
 
     /** ⭐ 由渲染处每帧登记按钮矩形 ✓ */
-    public static void setButtonRect(int x, int y, int w, int h) {
+    public static void setButtonRect(int x, int y, int w, int h, float tx, float ty) {
         btnX = x;
         btnY = y;
         btnW = w;
         btnH = h;
+        btnTx = tx;
+        btnTy = ty;
     }
+
+    public static int buttonX() { return btnX; }
+
+    public static int buttonY() { return btnY; }
+
+    public static int buttonW() { return btnW; }
+
+    public static int buttonH() { return btnH; }
 
     /** ⭐ 鼠标是不是点在"搜索按钮"上 ✗（⭐ 收起／展开都能点 ✓ ⭐ 那是同一个开关 ✓） */
     public static boolean hitButton(double mouseX, double mouseY) {
-        return mouseX >= btnX && mouseX < btnX + btnW && mouseY >= btnY && mouseY < btnY + btnH;
+        // ⭐ §1249 **两种坐标解释都接受** ✗（⭐ ① 原样 ✓ ② 加绘制姿态平移 ✓）
+        //   ⚠ 两种都判 ⇒ ⭐ 不管"模块坐标是绝对的还是相对的"都能点中 ✓（⭐ 这就是不猜的办法 ✓）
+        return inside(mouseX, mouseY, btnX, btnY)
+                || inside(mouseX, mouseY, btnX + Math.round(btnTx), btnY + Math.round(btnTy));
+    }
+
+    /** ⭐ 点是否落在某个矩形里 ✓ */
+    private static boolean inside(double mouseX, double mouseY, int x, int y) {
+        return mouseX >= x && mouseX < x + btnW && mouseY >= y && mouseY < y + btnH;
     }
 
     /** ⭐ 展开／收起 ✗（⭐ 收起时把一切"输入相关的状态"都复位 ✓） */
@@ -133,6 +161,11 @@ public final class FluidSearch {
 
     /** ⭐ 点一下按钮：⭐ 开着就收起 ✗ ⭐ 关着就展开并聚焦 ✓ */
     public static void toggleExpanded() {
+        long nowMs = System.currentTimeMillis();
+        if (nowMs - lastToggleMs < 120L) {
+            return;            // ⭐ §1249 两个挂点同时命中 ⇒ ⭐ 只算一次 ✓
+        }
+        lastToggleMs = nowMs;
         boolean next = !expanded;
         expanded = next;
         if (next) {

@@ -76,7 +76,17 @@ public abstract class GuiSmelteryTankSearchMixin {
             int btnW = 14;
             int fullW = Math.max(60, this.width);
             int btnX = this.x + fullW - btnW;                        // ⭐ 贴在这一列的**右上角** ✓
-            FluidSearch.setButtonRect(btnX, by, btnW, bh);
+            // ⭐ §1249 把"画这一刻的姿态平移"也交给 `FluidSearch` ✗
+            //   ⇒ ⭐ 命中判定可以**两种解释都试** ✓（⭐ 模块坐标到底绝对于否 ✗ 不用猜 ✓）
+            float ptx = 0F;
+            float pty = 0F;
+            try {
+                org.joml.Matrix4f mat = graphics.pose().last().pose();
+                ptx = mat.m30();
+                pty = mat.m31();
+            } catch (Throwable ignored) {
+            }
+            FluidSearch.setButtonRect(btnX, by, btnW, bh, ptx, pty);
             int btnBg = FluidSearch.isExpanded() ? 0xFF2A3F55 : 0xC0101010;
             int btnBr = FluidSearch.isExpanded() ? 0xFF7FD4FF : 0xFF606060;
             graphics.fill(btnX, by, btnX + btnW, by + bh, btnBg);
@@ -99,7 +109,7 @@ public abstract class GuiSmelteryTankSearchMixin {
             } else {
                 int bx = this.x;
                 int bw = fullW - btnW - 2;                           // ⭐ 给右边按钮让位 ✓
-                FluidSearch.setBoxRect(bx, by, bw, bh, 0F, 0F);
+                FluidSearch.setBoxRect(bx, by, bw, bh, ptx, pty);
                 graphics.fill(bx, by, bx + bw, by + bh, 0xC0101010);
                 int border = 0xFF7FD4FF;                             // ⭐ 展开即聚焦 ⇒ ⭐ 亮蓝 ✓
                 graphics.fill(bx, by, bx + bw, by + 1, border);
