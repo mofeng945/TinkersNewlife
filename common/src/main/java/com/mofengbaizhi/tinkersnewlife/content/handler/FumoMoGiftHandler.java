@@ -1,4 +1,5 @@
 package com.mofengbaizhi.tinkersnewlife.content.handler;
+import com.mofengbaizhi.tinkersnewlife.content.handler.MomoFavor;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.FumoMoDoll;

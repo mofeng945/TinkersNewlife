@@ -1,4 +1,5 @@
 package com.mofengbaizhi.tinkersnewlife.content.handler;
+import com.mofengbaizhi.tinkersnewlife.content.handler.MomoFavor;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;

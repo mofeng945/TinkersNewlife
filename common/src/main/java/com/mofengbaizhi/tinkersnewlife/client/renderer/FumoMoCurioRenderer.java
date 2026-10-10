@@ -1,4 +1,6 @@
 package com.mofengbaizhi.tinkersnewlife.client.renderer;
+import com.mofengbaizhi.tinkersnewlife.client.renderer.FumoMoBlockEntityRenderer;
+import com.mofengbaizhi.tinkersnewlife.client.renderer.FumoMoHeadRender;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.EntityModel;

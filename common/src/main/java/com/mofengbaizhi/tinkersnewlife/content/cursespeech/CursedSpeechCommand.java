@@ -1,4 +1,6 @@
 package com.mofengbaizhi.tinkersnewlife.content.cursespeech;
+import com.mofengbaizhi.tinkersnewlife.content.cursespeech.CursedSpeechRegistry;
+import com.mofengbaizhi.tinkersnewlife.content.cursespeech.CursedSpeechState;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;

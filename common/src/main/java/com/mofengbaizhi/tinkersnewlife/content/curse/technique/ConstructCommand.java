@@ -1,4 +1,6 @@
 package com.mofengbaizhi.tinkersnewlife.content.curse.technique;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.BlueprintCompat;
+import com.mofengbaizhi.tinkersnewlife.content.curse.technique.ConstructLootIndex;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;

@@ -1,4 +1,5 @@
 package com.mofengbaizhi.tinkersnewlife.client.renderer;
+import com.mofengbaizhi.tinkersnewlife.client.renderer.FumoMoHeadRender;
 
 import com.mofengbaizhi.tinkersnewlife.content.FumoMoDoll;
 import com.mojang.blaze3d.vertex.PoseStack;
