@@ -567,6 +567,31 @@ public final class TruePierce {
     /** ⭐ `revelaionfix$apollyonEC()` ✗（⭐ dump 用 ✓） */
     private static java.lang.reflect.Method apollyonEcMethod = null;
 
+    /** ⭐⭐⭐⭐ §1231 **"合成事件"标记** ✗ —— ⭐ 防递归 ＋ ⭐ 防伤害翻倍 ✓ */
+    private static volatile boolean SYNTHETIC_HURT = false;
+
+    /**
+     * ⭐⭐ §1231 <b>要不要 Post 合成 `LivingHurtEvent`</b> ✗ —— ⭐ 默认开 ✓ ⚠ 出问题可关 ✓。
+     *
+     * <p>⭐ 用户口径 ✓ 2026-10-10：「**记得改血后补上受击事件和效果并返回对应伤害**」✓
+     * <p>⚠ <b>如实风险</b> ✗：⭐ 仓库里**有几十个** `LivingHurtEvent` 处理器 ✓
+     * ⭐ 我们 post 的这一发 ⭐ **会把它们全叫一遍** ✗
+     * （⭐ 大多数自家增幅器 ⭐ 会因 `DamagePipeline.skipNested()` **早退** ✓
+     *  ⚠ 但**个别**没写早退的 ✗ ⭐ 可能在合成事件上**再补一次效果** ✓）
+     * ⇒ ⭐ 若发现 ⭐ "伤害/效果翻倍" ✗ ⭐ 把这里改 `false` 即可 ✓ ✓
+     * （⭐ **客户端血量同步不受影响** ✗ ⭐ 那才是两个伤害显示 mod 的主通道 ✓）。
+     */
+    private static final boolean POST_SYNTHETIC_HURT_EVENT = true;
+
+    /**
+     * ⭐ 此刻是不是 ⭐ **我们自己 post 的合成 `LivingHurtEvent`** 回调 ✗。
+     * <p>⭐ `apply` 内部已经挡了一道 ✓ ✗ ⭐ 别的自家 `LivingHurtEvent` 处理器
+     * ⭐ 也可以加这一句 ⭐ **早退** ✓（⭐ 免得在合成事件上重复生效 ✓）。
+     */
+    public static boolean isSyntheticHurt() {
+        return SYNTHETIC_HURT;
+    }
+
     /**
      * ⭐⭐ §1228 <b>"累计未落地伤害"账</b> ✗ —— ⭐ 用于 ⭐ "免疫期处决" ✓。
      *
@@ -1431,6 +1456,69 @@ public final class TruePierce {
      * @return ⭐ true ＝ 真的**绕过 `setHealth`** 写进去了 ✓ ⭐ false ＝ 退回 `setHealth` ✓
      */
     public static boolean rawSetHealth(LivingEntity target, float value) {
+        boolean ok = rawSetHealthInner(target, value);
+        // ⭐⭐⭐⭐ §1231 **每次改血后都把血量同步给客户端** ✗✗（⭐ 关键 ✓）
+        //   ⚠ 用户口径 ✓：「**我想让我两个包的两种伤害显示都兼容**」✓
+        //   ⭐ 两包各有一个显示 mod ✗ ⭐ 而 ⭐ **两个都是靠"客户端血量变化"** ✓：
+        //     ⭐ 测试包 ⭐ `[伤害引擎]` ✗ ⭐ `ClientHealthMonitor`／⭐ `ClientHealthTracker`
+        //       ＋ ⭐ `RenderLevelStageEvent` ✓（⭐ 服务端那份听 `LivingHurtEvent` ✓ 已补 ✓）
+        //     ⭐ NL 包 ⭐ `damagenumbers` ✗ ⭐ `MixinLivingEntity#tick` ⭐ **每 tick 比 `previousHealth`** ✓
+        //   ⚠ 而我们"逆向改血"是 ⭐ **直写字段** ✗ ⭐ 客户端**根本收不到** ✓ ⇒ ⭐ **数字看不见** ✓
+        //   ⇒ ⭐ 所以 ⭐ 每次写完都 ⭐ **显式同步** ✗：
+        //     ⭐ `setHealth`（⭐ 走原版口径 ✓）＋ ⭐ **直写 `DATA_HEALTH_ID` 同步访问器** ✓
+        //     ＋ ⭐ `hurtMarked = true` ✓。
+        syncHealthToClient(target);
+        return ok;
+    }
+
+    /** ⭐ §1231 **客户端血量同步** ✗ —— ⭐ 两个伤害显示 mod 都靠它 ✓ */
+    private static volatile java.lang.reflect.Field DATA_HEALTH_FIELD = null;
+    private static volatile boolean DATA_HEALTH_RESOLVED = false;
+
+    private static void syncHealthToClient(LivingEntity target) {
+        try {
+            if (target == null || !(target.level() instanceof net.minecraft.server.level.ServerLevel)) {
+                return;
+            }
+            float value = rawHealth(target);
+            // ⭐ ① 走原版 `setHealth` ✓（⭐ 普通实体：同时更新字段（＋ 可能的同步数据）✓）
+            try {
+                if (Math.abs(target.getHealth() - value) > 1.0E-4F) {
+                    target.setHealth(value);
+                }
+            } catch (Throwable ignored) {
+            }
+            // ⭐ ② **直写同步访问器 `DATA_HEALTH_ID`** ✗ ⇒ ⭐ 客户端**一定收到** ✓
+            if (!DATA_HEALTH_RESOLVED) {
+                DATA_HEALTH_RESOLVED = true;
+                for (String n : new String[]{"f_20961_", "DATA_HEALTH_ID"}) {
+                    try {
+                        java.lang.reflect.Field f = net.minecraft.world.entity.LivingEntity.class
+                                .getDeclaredField(n);
+                        f.setAccessible(true);
+                        DATA_HEALTH_FIELD = f;
+                        break;
+                    } catch (Throwable ignored) {
+                    }
+                }
+            }
+            if (DATA_HEALTH_FIELD != null) {
+                Object acc = DATA_HEALTH_FIELD.get(null);
+                if (acc != null) {
+                    float max = Math.max(1.0F, target.getMaxHealth());
+                    float clamped = net.minecraft.util.Mth.clamp(value, 0.0F, max);
+                    target.getEntityData().set(
+                            (net.minecraft.network.syncher.EntityDataAccessor) acc, clamped);
+                }
+            }
+            // ⭐ ③ 标脏 ✓
+            target.hurtMarked = true;
+        } catch (Throwable ignored) {
+            // ⭐ 同步失败不影响服务端血量 ✓
+        }
+    }
+
+    private static boolean rawSetHealthInner(LivingEntity target, float value) {
         if (target == null || target.level().isClientSide) {
             return false;
         }
@@ -1523,12 +1611,21 @@ public final class TruePierce {
      * @param target   受击者
      * @param damage   期望造成的伤害（会被逐段结算 + 差额补齐）
      */
-    public static void apply(@Nullable LivingEntity attacker, LivingEntity target, float damage) {
-        if (target == null || damage <= 0.0F) return;
-        if (target.level().isClientSide || target.isRemoved()) return;
+    public static float apply(@Nullable LivingEntity attacker, LivingEntity target, float damage) {
+        // ⭐⭐⭐⭐ §1231 **"合成事件"的回调 ⇒ 直接忽略** ✗✗（⭐ 防递归 ＋ ⭐ 防翻倍 ✓）
+        //   ⚠ 我们在下面会 ⭐ **手动 post 一个 `LivingHurtEvent`** ✗（⭐ 用户口径：
+        //     「**记得改血后补上受击事件和效果**」✓）
+        //   ⚠ 而 ⭐ `TianNiHuoPierceHandler`／⭐ `ExPierceHandler` 这些
+        //     ⭐ **自己就是 `LivingHurtEvent` 处理器** ✗ ⭐ 收到后会**再调 `apply`** ✓
+        //   ⇒ ⭐ 没有这道门 ⭐ **无限递归 ＋ 伤害翻倍** ✓ ✓。
+        if (SYNTHETIC_HURT) {
+            return 0.0F;
+        }
+        if (target == null || damage <= 0.0F) return 0.0F;
+        if (target.level().isClientSide || target.isRemoved()) return 0.0F;
         // ⭐ 同心戒：互为同伴的两名玩家互相免疫术式与领域效果 —— 穿透（真伤）也不例外。
         //    必须挡在这里：本方法是"差额直接 setHealth 补齐"的，事件层（LivingAttackEvent）拦不住它 ✗
-        if (com.mofengbaizhi.tinkersnewlife.content.curse.TwinRingLink.arePaired(attacker, target)) return;
+        if (com.mofengbaizhi.tinkersnewlife.content.curse.TwinRingLink.arePaired(attacker, target)) return 0.0F;
         // ⭐ 咒力伤害记账（死亡信息统一成"被诅咒致死"）：穿透走的是"差额 setHealth 补齐"，
         //    死亡可能不在 hurt() 里发生，但标记在 hurt() 之前打上就够 ——
         //    见 CurseDeath 的说明（天逆鉾/游云/领域/术式的穿透都路过这里 ✓）
@@ -1554,6 +1651,8 @@ public final class TruePierce {
         boolean transcend = AbsoluteDefense.begin(attacker);
         AbsoluteDefense.noteSunblockTarget(target);
         float hpBefore = target.getHealth();
+        // ⭐⭐ §1231 **穿透前记一次"真身血"** ✗ —— ⭐ 用来算"这一击实际打掉多少" ✓
+        float rawBefore = rawHealth(target);
         try {
             applyInner(attacker, target, damage);
         } finally {
@@ -1573,6 +1672,11 @@ public final class TruePierce {
                 // 告知失败不影响伤害结算 ✓
             }
         }
+        // ⭐⭐ §1231 **返回"这一击实际打掉的血"** ✗（⭐ 用户口径 ✓：
+        //   「**记得改血后补上受击事件和效果并返回对应伤害**」✓）
+        //   ⚠ 用 ⭐ `rawHealth` 的**前后差** ✗ ⭐ 而不是 ⭐ `want` ✓ ——
+        //     ⭐ 被免疫/被拦时它能 ⭐ **如实反映"其实没打掉"** ✓ ✓。
+        return Math.max(0.0F, rawBefore - rawHealth(target));
     }
 
     /**
@@ -1708,7 +1812,7 @@ public final class TruePierce {
         //   ⇒ ⭐ 被保护拦住时 ⭐ `hurt` 往往**连受击音效都没播** ✓
         //   ⇒ ⭐ 这一下"补的伤害"如果不补反馈 ⭐ 看上去就像**凭空掉血** ✓。
         //   ⚠ 反之 ⭐ 如果 `hurt` 打满了 ✗ ⭐ 上面就 `return` 了 ✓ ⭐ **不会多播一次** ✓（⭐ 不会重复音效 ✓）。
-        playHurtFeedback(target, withAttacker);
+        playHurtFeedback(target, withAttacker, shortfall);
         // ⭐ 逆向**读**血 ✗（⭐ 不用 `getHealth()` ✓ ⭐ 它也可能被覆写 ✓）
         float hp = rawHealth(target) - shortfall;
         if (hp <= 0.0F) {
@@ -1848,7 +1952,7 @@ public final class TruePierce {
      *
      * <p>⚠ 两个字段（⭐ `hurtTime`／`hurtDuration` ✓）在 1.20.1 都是 ⭐ **`public int`** ✓ ⇒ ⭐ 可直接写 ✓。
      */
-    private static void playHurtFeedback(LivingEntity target, DamageSource src) {
+    private static void playHurtFeedback(LivingEntity target, DamageSource src, float amount) {
         try {
             // ⭐ ① 受击红闪（⭐ 客户端读这两个字段决定闪不闪、闪多久 ✓）
             target.hurtTime = 10;
@@ -1863,6 +1967,43 @@ public final class TruePierce {
             target.level().broadcastEntityEvent(target, (byte) 2);
         } catch (Throwable ignored) {
             // ⭐ 广播失败也不影响掉血 ✓
+        }
+        // ⭐⭐ §1231 **补"最后攻击者"** ✗ —— ⭐ 一是判定玩家击杀 ✗ ⭐ 二是别的 mod 记账要用 ✓
+        try {
+            if (src != null && src.getEntity() instanceof net.minecraft.world.entity.player.Player p) {
+                target.setLastHurtByPlayer(p);
+                target.setLastHurtByMob(p);
+            } else if (src != null && src.getEntity() instanceof LivingEntity le) {
+                target.setLastHurtByMob(le);
+            }
+        } catch (Throwable ignored) {
+        }
+        // ⭐⭐ §1231 **补一次战斗记录** ✗ —— ⭐ 死亡消息／⭐ 战斗追踪／⭐ 某些 mod 的统计要用 ✓
+        try {
+            target.getCombatTracker().recordDamage(src, amount);
+        } catch (Throwable ignored) {
+        }
+        // ⭐⭐⭐⭐ §1231 **手动补一次 `LivingHurtEvent`** ✗✗（⭐ 用户口径 ✓「**补上受击事件**」✓）
+        //   ⚠ 为什么必须补 ✗：⭐ 我们是 ⭐ **"逆向改血"** ✗ ⭐ **压根不经过 `hurt()`** ✓
+        //     ⇒ ⭐ 听 `LivingHurtEvent` 的 mod ⭐ **完全看不见这一下** ✓
+        //     （⭐ 测试包 ⭐ `[伤害引擎]` 的 ⭐ `DamageEngine` ⭐ **就是听它的** ✓
+        //       ⭐ NL 包 ⭐ `damagenumbers` ⭐ 则是 ⭐ **纯看客户端血量变化** ✓）
+        //   ⭐ 两道防护 ✗：
+        //     ⭐ ① ⭐ `SYNTHETIC_HURT` 门 ✗ ⭐ 我们自己的处理器收到后**直接忽略** ✓（⭐ 防递归 ✓）；
+        //     ⭐ ② ⭐ `DamagePipeline.enter/exit` ✗ ⭐ 自家那些"增幅器"靠 `skipNested()` **自动早退** ✓
+        //       （⭐ 否则这一下会被**再增幅一遍** ✓ ⭐ 与 §1189 的教训一致 ✓）。
+        if (amount > 0.01F && !SYNTHETIC_HURT && POST_SYNTHETIC_HURT_EVENT) {
+            SYNTHETIC_HURT = true;
+            com.mofengbaizhi.tinkersnewlife.util.DamagePipeline.enter();
+            try {
+                net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(
+                        new net.minecraftforge.event.entity.living.LivingHurtEvent(target, src, amount));
+            } catch (Throwable ignored) {
+                // ⭐ 事件层出错不影响我们已经改好的血 ✓
+            } finally {
+                com.mofengbaizhi.tinkersnewlife.util.DamagePipeline.exit();
+                SYNTHETIC_HURT = false;
+            }
         }
     }
 
