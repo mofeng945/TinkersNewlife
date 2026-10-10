@@ -630,6 +630,10 @@ public final class TruePierce {
         return SYNTHETIC_HURT;
     }
 
+    /** ⭐⭐ §1238 **"上一发开始时它报的血"** ✗ —— ⭐ 用来分辨"血会不会自己弹回去" ✓ */
+    private static final java.util.Map<java.util.UUID, Float> LAST_START_HP =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
     /**
      * ⭐⭐ §1228 <b>"累计未落地伤害"账</b> ✗ —— ⭐ 用于 ⭐ "免疫期处决" ✓。
      *
@@ -1825,6 +1829,20 @@ public final class TruePierce {
         //   ⭐ **它的"免疫窗"确实没被破** ✗ ⭐ 只是血被我们从侧面扣掉了 ✓ ✓
         //     —— ⭐ 这正是用户要的语义 ✓（⭐ "无视免疫窗直接改血" ✓）。
         float startHp = rawHealth(target);
+        // ⭐⭐⭐⭐ §1238 **记住"这一发开始时它报的血"** ✗✗
+        //   （⭐ 用户口径 ✓ 2026-10-10：「**一定要无主源才能破吗**」✓ ⇒ ⭐ **答案是"不一定"** ✓）
+        //   ⚠ 发现 ✗：⭐ §1234 的 `quiet` 判据是 ⭐ `dealt ≤ 0.01` ✓
+        //     ⭐ 而 ⭐ **免疫窗那一击** ⭐ `hurt` 被拦 ⇒ ⭐ `dealt ＝ 0` ✓
+        //     ⇒ ⭐ `quiet ＝ true` ✗ ⇒ ⭐ **客户端同步被掐掉** ✓
+        //     ⇒ ⭐ **服务端血其实掉了 ✗ 客户端收不到** ✓ ⇒ ⭐ 看起来"**免疫窗破不了**" ✓ ✓
+        //   ⇒ ⭐ 正确判据 ✗：⭐ **"它的血会不会自己弹回去"** ✓
+        //     ⭐ 会弹回去（⭐ 假人每发都回满 ✓ 日志 `startHp=666` 每发都一样 ✓）
+        //       ⇒ ⭐ 我们那笔写了也白搭 ⇒ ⭐ **别打扰客户端** ✓；
+        //     ⭐ 不回弹（⭐ 免疫窗的使徒／⭐ 普通怪 ✓）⇒ ⭐ **同步出去** ✓ ⇒ ⭐ 玩家看得见掉血 ✓ ✓。
+        final Float prevStartHp = LAST_START_HP.put(target.getUUID(), startHp);
+        if (LAST_START_HP.size() > 512) {
+            LAST_START_HP.clear();
+        }
         float dealt = 0.0F;
         try {
             target.invulnerableTime = 0;
@@ -1892,7 +1910,13 @@ public final class TruePierce {
         //   ⚠ 两段的来源 ✗：⭐ 假人**自己会显示一次**（⭐ 它记录伤害 ✓）
         //     ＋ ⭐ 我们"改血"**又同步了一次**给客户端 ✓ ⇒ ⭐ **两段** ✓ ✓
         //   ⇒ ⭐ 这种目标 ⭐ 改血**只压服务端** ✗ ⭐ **不同步** ✓ ⇒ ⭐ **只剩它自己那一段** ✓ ✓。
-        boolean quiet = dealt <= 0.01F;
+        // ⚠⚠ §1238 **判据升级** ✗：⭐ 原来只看 `dealt ≤ 0.01` ✓
+        //   ⚠ 那会把 ⭐ **免疫窗那一击**（⭐ `dealt ＝ 0` ✓）也静默掉 ✓
+        //   ⇒ ⭐ 现在**再看"它的血会不会自己弹回去"** ✗：
+        //     ⭐ 上一发开始时是 X ✗ ⭐ 这一发开始时**还是 X** ✓ ⇒ ⭐ 会回弹（⭐ 假人 ✓）⇒ ⭐ 静默 ✓；
+        //     ⭐ 变了 ⇒ ⭐ 不回弹 ⇒ ⭐ **正常同步** ✓ ✓（⭐ 免疫窗的使徒就属于这一类 ✓）。
+        boolean quiet = dealt <= 0.01F && prevStartHp != null
+                && Math.abs(prevStartHp - startHp) < 0.01F;
         if (quiet) {
             SUPPRESS_CLIENT_SYNC = true;
         }
