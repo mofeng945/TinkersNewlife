@@ -288,9 +288,15 @@ public final class TruePierce {
                         if (!java.lang.reflect.Modifier.isStatic(f.getModifiers())) {
                             continue;
                         }
-                        if (f.getType() != net.minecraft.network.syncher.EntityDataAccessor.class) {
-                            continue;
-                        }
+                        // ⭐⭐⚠⚠ §1219 **不再比类型** ✗✗（⭐ dump 实证 ✓ 2026-10-10 ✓）：
+                        //   ⭐ dump 显示真血 ⭐ `SD[AOGBOGBO…DOGQ]=666.0(Float)` ✓
+                        //   ⚠ 而我上一版写了 ⭐ `f.getType() != EntityDataAccessor.class` ✗
+                        //     ⭐ 那是 ⭐ **jarjar 内嵌 mixin 里的 `EntityDataAccessor`** ✗
+                        //     ⭐ 与主 classpath 的**不是同一个 Class 对象** ✓
+                        //     ⇒ ⭐ **类型比较恒为真 ⇒ 全部被跳过** ✓ ✓（⭐ 这就是没命中的原因 ✓）
+                        //   ⇒ ⭐ 修法：⭐ **完全不看类型** ✗
+                        //     ⭐ 直接 ⭐ `data.get(field.get(null))` ✗
+                        //     ⭐ 它不是同步访问器 ⇒ ⭐ **抛异常** ⇒ ⭐ 自然过滤 ✓ ✓ 完美 ✓。
                         try {
                             f.setAccessible(true);
                         } catch (Throwable ignored) {
@@ -309,15 +315,16 @@ public final class TruePierce {
                         try {
                             cur = data.get((net.minecraft.network.syncher.EntityDataAccessor) acc);
                         } catch (Throwable ignored) {
-                            continue;
+                            continue;   // ⚠ 不是同步访问器 ⇒ 跳过 ✓
                         }
-                        if (cur instanceof Float fl && Math.abs(fl - reported) < 0.02F) {
+                        if (cur instanceof Float fl && Math.abs(fl - reported) < 0.05F) {
                             apollyonHealthAccessor = f;
                             TinkersNewlife.LOGGER.info(
-                                    "[真伤·通道] 认出真血访问器 = {}（当前 {} ≈ 接口报的 {}）✓",
+                                    "[真伤·通道] 认出真血访问器 = {}（当前 {} ≈ 接口报的 {}）✓ 类型={}",
                                     f.getName(),
                                     String.format(java.util.Locale.ROOT, "%.2f", fl),
-                                    String.format(java.util.Locale.ROOT, "%.2f", reported));
+                                    String.format(java.util.Locale.ROOT, "%.2f", reported),
+                                    f.getType().getName());
                             break;
                         }
                     }
