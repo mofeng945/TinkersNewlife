@@ -201,8 +201,41 @@ tasks.named('compileJava').configure {
 //   ⚠ 本轮**只把路打通 ✗ 不搬内容** ✓ —— ⭐ 因为搬走 9 个类会让 ⭐ `common` 的 jar
 //     ⭐ 少了那些类 ✗ ⭐ 而用户口径是**先只发一个包** ✓ ⇒ ⭐ 一搬就得同时发 `cursed` ✓
 //     ⇒ ⭐ 与你"先打在一个包里"冲突 ✓ ⭐ 所以搬迁留到"多包部署"时一次做完 ✓。
+// ⭐⭐⭐⭐ §1263 **只用于编译的 `shared` 源集** ✗✗ —— ⭐ 解掉"重复类"缺陷 ✓
+//   ⚠ §1262 直接把 common 源码挂到 `main` ✗ ⇒ ⭐ `cursed` 的 jar 里塞进了**全部 common 类** ✓
+//     ⇒ ⭐ 两个 jar 同时装 ⇒ ⭐ **重复类** ✓（⭐ 谁先加载谁生效 ✗ ⭐ 迟早出事 ✓）。
+//   ⭐ 现在 ✗：⭐ common 的源码进 ⭐ **`shared` 源集**（⭐ 只用来"编译时看得见" ✓）
+//     ✗ ⭐ 而 ⭐ `cursed` **自己的类**仍走 ⭐ `main` ✓ ⇒ ⭐ **打进 jar 的只有自己的类** ✓ ✓
+//   ⭐ 于是三个角色清清楚楚 ✓：
+//     ⭐ `common` ＝ ⭐ 共享层（⭐ 它的 jar 里就是那批公共类 ✓ ⭐ 运行时由它提供 ✓）
+//     ⭐ `shared` ＝ ⭐ 只读的"公共源码镜像"（⭐ 不打包 ✓ ⭐ 只补编译类路径 ✓）
+//     ⭐ `main`   ＝ ⭐ 这个 mod 自己的内容 ✓（⭐ 唯一被打包的部分 ✓）。
 sourceSets {
-    main {
+    shared {
         java.srcDir rootProject.file('common/src/main/java')
+        resources.srcDirs = []                       // ⭐ 只要类 ✗ 不要资源 ✓
+        compileClasspath += sourceSets.main.compileClasspath
+    }
+    main {
+        compileClasspath += sourceSets.shared.output  // ⭐ 编译期看得见公共层 ✓
+        runtimeClasspath += sourceSets.shared.output  // ⚠ 仅为跑 runClient 方便 ✓
     }
 }
+
+// ⭐ 让 `shared` 源集也拿到那套模组依赖（⭐ TConstruct／Curios／Goety… ✓）
+configurations {
+    sharedImplementation.extendsFrom implementation
+    sharedCompileOnly.extendsFrom compileOnly
+}
+
+tasks.named('compileJava').configure {
+    dependsOn tasks.named('compileSharedJava')
+    // ⚠ ⭐ **绝不能**让共享类进 jar ✗（⭐ 它们由 `common` 提供 ✓）
+}
+// ⚠⚠ §1264 **不要**再给 jar 加 `exclude 'com/mofengbaizhi/tinkersnewlife/**'` ✗✗
+//   ⭐ §1263 我加过一道"双保险" ✗ ⇒ ⭐ 它把 **`cursed` 自己的类也一并排掉** ✓
+//   ⇒ ⭐ 实测 ⭐ jar 只有 1039 字节 ✗ ⭐ 搬过去的 9 个类**一个都没进包** ✓
+//   ⇒ ⭐ 游戏里那批功能（⭐ 玩偶赠礼／⭐ 摸鱼命令／⭐ 咒言命令／⭐ 仪式／⭐ 玩偶渲染 ✓）
+//     ⭐ **直接失效** ✓ ✓ —— ⭐ 教训：⭐ "双保险"式的 exclude ＋ 再 include **不可靠** ✓
+//   ⭐ 其实 ⭐ **不需要它** ✗：⭐ `shared` 源集只用于编译 ✗ ⭐ `main` 的 output 里
+//     ⭐ **本来就只有 `cursed` 自己的类** ✓（⭐ §1263 实测：⭐ 泄漏 0 ✓）✓。
