@@ -1,12 +1,12 @@
 modLoader="javafml"
 loaderVersion="[47,)"
 license="All Rights Reserved"
-issueTrackerURL=""
 
 [[mods]]
 modId="tinkersnewlife_cursed"
 version="${mod_version}"
 displayName="匠魂新生·咒术"
+authors=""
 description='''Tinker's Newlife: Cursed'''
 
 [[dependencies.tinkersnewlife_cursed]]
