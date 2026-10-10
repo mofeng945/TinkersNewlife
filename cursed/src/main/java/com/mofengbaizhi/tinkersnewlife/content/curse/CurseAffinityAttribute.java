@@ -124,6 +124,20 @@ public final class CurseAffinityAttribute {
         }
     }
 
+    /** §1296 每 tick 清理：把老版本写进原版 AttributeModifiers 的那一条删掉（★六行就是这么来的 ✓） */
+    public static void stripNow(ItemStack stack) {
+        try {
+            if (stack.isEmpty()) {
+                return;
+            }
+            CompoundTag tag = stack.getTag();
+            if (tag == null || !tag.contains("AttributeModifiers", 9)) {
+                return;
+            }
+            stripVanillaModifier(tag);
+        } catch (Throwable ignored) {
+        }
+    }
     /** 读物品上的亲和（★从 AttributeModifiers 里读 ✓ 迁移前也能读旧键 ✓） */
     public static int getItemAffinity(ItemStack stack) {
         try {
@@ -163,13 +177,14 @@ public final class CurseAffinityAttribute {
                 return;
             }
             Player player = event.player;
-            if (!(player instanceof ServerPlayer sp) || sp.tickCount % 20 != 0) {
+            if (!(player instanceof ServerPlayer sp)) {
                 return;
             }
+            boolean deep = sp.tickCount % 20 == 0;   // §1296 属性同步每 20 tick；清理每 tick（★让老 NBT 立刻消失 ✓）
             try {
                 // ① 背包（含饰品栏）里的旧 NBT 一次性迁移
                 for (int i = 0; i < sp.getInventory().getContainerSize(); i++) {
-                    migrate(sp.getInventory().getItem(i));
+                    stripNow(sp.getInventory().getItem(i));   // ★每 tick 都清 ✓
                 }
                 // ② 收集"当前装备的饰品"上的亲和
                 int fromCurios = 0;
@@ -182,8 +197,10 @@ public final class CurseAffinityAttribute {
                             if (s.isEmpty()) {
                                 continue;
                             }
-                            migrate(s);
-                            fromCurios += getItemAffinity(s);
+                            stripNow(s);
+                            if (deep) {
+                                fromCurios += getItemAffinity(s);
+                            }
                         }
                     }
                 }
