@@ -1,6 +1,7 @@
 package com.mofengbaizhi.tinkersnewlife.content.item;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -87,11 +88,26 @@ public class PortableTinkerStationItem extends Item {
         if (level.isClientSide() || !(player instanceof ServerPlayer sp)) {
             return InteractionResultHolder.pass(stack);
         }
-        TinkerStationBlockEntity be = createDetached(level);
-        loadInventory(stack, be);   // ★ 打开时从物品 NBT 还原 ✓
-        NetworkHooks.openScreen(sp, new SimpleMenuProvider(
-                (id, inv, p) -> new com.mofengbaizhi.tinkersnewlife.content.menu.PortableStationMenu(id, inv, be),
-                Component.translatable("item.tinkersnewlife.portable_tinker_station")), POCKET_POS);
+        // §1280 用户思路：方块实体"真在世界里"（一块完全透明的工匠砧）⇒
+        // 客户端能按坐标找到它 ⇒ 100% 走匠魂自己的开界面管线（尺寸/布局都正常 ✓）
+        BlockPos base = sp.blockPosition();
+        BlockPos target = null;
+        BlockPos[] tries = { base, base.above(), base.below(), base.north(), base.south(), base.east(), base.west() };
+        for (BlockPos p : tries) {
+            if (level.getBlockState(p).isAir()) {
+                target = p;
+                break;
+            }
+        }
+        if (target == null) {
+            return InteractionResultHolder.fail(stack);
+        }
+        level.setBlockAndUpdate(target, com.mofengbaizhi.tinkersnewlife.content.block.InvisibleStationRegistry
+                .INVISIBLE_STATION.get().defaultBlockState());
+        if (level.getBlockEntity(target) instanceof TinkerStationBlockEntity be) {
+            loadInventory(stack, be);
+            NetworkHooks.openScreen(sp, be, target);
+        }
         return InteractionResultHolder.success(stack);
     }
 }

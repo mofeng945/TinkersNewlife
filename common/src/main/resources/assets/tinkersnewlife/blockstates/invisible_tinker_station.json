@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "tinkersnewlife:block/invisible_tinker_station" },
+    "facing=south": { "model": "tinkersnewlife:block/invisible_tinker_station" },
+    "facing=west":  { "model": "tinkersnewlife:block/invisible_tinker_station" },
+    "facing=east":  { "model": "tinkersnewlife:block/invisible_tinker_station" }
+  }
+}

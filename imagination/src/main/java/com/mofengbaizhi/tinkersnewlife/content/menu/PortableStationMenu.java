@@ -1,53 +1,67 @@
 package com.mofengbaizhi.tinkersnewlife.content.menu;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.SimpleContainer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Blocks;
 import slimeknights.tconstruct.tables.block.entity.table.TinkerStationBlockEntity;
 import slimeknights.tconstruct.tables.menu.TinkerStationContainerMenu;
 
-/** §1278 便携工匠站菜单：关闭时把里面的东西全还给玩家（用户口径）。 */
+/** §1280 便携工匠站菜单：方块实体真在世界里；关闭时把内容写回物品 NBT 并拆掉那块透明砧。 */
 public class PortableStationMenu extends TinkerStationContainerMenu {
 
-    private final TinkerStationBlockEntity detached;
+    private final TinkerStationBlockEntity station;
+    private final BlockPos stationPos;
 
     public PortableStationMenu(int id, Inventory inv, TinkerStationBlockEntity tile) {
         super(id, inv, tile);
-        this.detached = tile;
+        this.station = tile;
+        this.stationPos = tile == null ? null : tile.getBlockPos();
     }
 
-    /** 客户端构造：库存在 buf 里（当前为空 ⇒ 客户端用游离实例 ✓ 内容靠标准菜单同步 ✓） */
+    /** 客户端：buf 里只有坐标（NetworkHooks 写的）⇒ 去客户端世界把那个方块实体找出来。 */
     public PortableStationMenu(int id, Inventory inv, FriendlyByteBuf buf) {
-        this(id, inv, com.mofengbaizhi.tinkersnewlife.content.item.PortableTinkerStationItem
-                .createDetached(inv.player == null ? null : inv.player.level()));
+        this(id, inv, resolve(inv, buf.readBlockPos()));
+    }
+
+    private static TinkerStationBlockEntity resolve(Inventory inv, BlockPos pos) {
+        try {
+            net.minecraft.world.level.Level level = net.minecraft.client.Minecraft.getInstance().level;
+            if (level != null && level.getBlockEntity(pos) instanceof TinkerStationBlockEntity be) {
+                return be;
+            }
+        } catch (Throwable ignored) {
+        }
+        return null;
     }
 
     @Override
     public void removed(Player player) {
         super.removed(player);
-        if (detached == null || player.level().isClientSide()) {
+        if (station == null || player.level().isClientSide()) {
             return;
         }
-        // ★ 关闭时把内容写回物品 NBT（用户口径：能塞 NBT 就直接塞 NBT）
         ItemStack holder = com.mofengbaizhi.tinkersnewlife.content.item.PortableTinkerStationItem.findIn(player);
         if (!holder.isEmpty()) {
-            com.mofengbaizhi.tinkersnewlife.content.item.PortableTinkerStationItem.saveInventory(holder, detached);
-            for (int i = 0; i < detached.getContainerSize(); i++) {
-                detached.setItem(i, ItemStack.EMPTY);   // ★ 实体侧清空（真正的家在 NBT）
+            com.mofengbaizhi.tinkersnewlife.content.item.PortableTinkerStationItem.saveInventory(holder, station);
+        } else {
+            for (int i = 0; i < station.getContainerSize(); i++) {
+                ItemStack s = station.getItem(i);
+                if (!s.isEmpty()) {
+                    station.setItem(i, ItemStack.EMPTY);
+                    if (!player.getInventory().add(s)) {
+                        player.drop(s, false);
+                    }
+                }
             }
-            return;
         }
-        // ⚠ 兜底：物品不在包里了（被换走/丢弃）⇒ 东西还给玩家 ✗ 塞不下就掉脚下
-        for (int i = 0; i < detached.getContainerSize(); i++) {
-            ItemStack s = detached.getItem(i);
-            if (s.isEmpty()) {
-                continue;
-            }
-            detached.setItem(i, ItemStack.EMPTY);
-            if (!player.getInventory().add(s)) {
-                player.drop(s, false);
+        // 拆掉那块透明砧（东西已经进了 NBT）
+        if (stationPos != null && player.level() instanceof ServerLevel sl) {
+            if (sl.getBlockState(stationPos).getBlock() == com.mofengbaizhi.tinkersnewlife.content.block.InvisibleStationRegistry.INVISIBLE_STATION.get()) {
+                sl.setBlockAndUpdate(stationPos, Blocks.AIR.defaultBlockState());
             }
         }
     }
