@@ -181,7 +181,7 @@ public final class TruePierce {
                     }
                 }
             }
-            TinkersNewlife.LOGGER.info(
+            TinkersNewlife.LOGGER.debug(
                     "[真伤·通道] 类={} getHealth={} setHealth={} setHitCooldown={} | 接口方法名=[{}]",
                     apollyonIface != null,
                     apollyonGetHealth != null,
@@ -274,7 +274,7 @@ public final class TruePierce {
             java.lang.reflect.Method m = findFloatSetter(e.getClass(), "revelaionfix$setApollyonHealth");
             if (m != null) {
                 apollyonSetHealth = m;
-                TinkersNewlife.LOGGER.info("[真伤·通道] 在实体类上找到了真血 setter：{} ✓", m);
+                TinkersNewlife.LOGGER.debug("[真伤·通道] 在实体类上找到了真血 setter：{} ✓", m);
             }
         }
         if (apollyonSetHealth != null) {
@@ -299,7 +299,7 @@ public final class TruePierce {
                 // ⚠ 没生效 ⇒ ⭐ 判定为诱饵 ✗ ⭐ 永久拉黑 ✓
                 apollyonSetterRejected = true;
                 apollyonSetHealth = null;
-                TinkersNewlife.LOGGER.warn(
+                TinkersNewlife.LOGGER.debug(
                         "[真伤·通道] ⚠ 那个 setter 是**诱饵**（写 {} 之前 {} 之后 {}）⇒ 永久拉黑 ✓ 改走别路 ✓",
                         String.format(java.util.Locale.ROOT, "%.2f", value),
                         String.format(java.util.Locale.ROOT, "%.2f", before),
@@ -394,7 +394,7 @@ public final class TruePierce {
                         }
                         if (cur instanceof Float fl && Math.abs(fl - reported) < 0.05F) {
                             apollyonHealthAccessor = f;
-                            TinkersNewlife.LOGGER.info(
+                            TinkersNewlife.LOGGER.debug(
                                     "[真伤·通道] 认出真血访问器 = {}（当前 {} ≈ 接口报的 {}）✓ 类型={}",
                                     f.getName(),
                                     String.format(java.util.Locale.ROOT, "%.2f", fl),
@@ -544,10 +544,10 @@ public final class TruePierce {
                 }
             } catch (Throwable ignored) {
             }
-            TinkersNewlife.LOGGER.info("[真伤·通道·存储] 接口报的血={} ⇒ {}",
+            TinkersNewlife.LOGGER.debug("[真伤·通道·存储] 接口报的血={} ⇒ {}",
                     String.format(java.util.Locale.ROOT, "%.2f", reported), sb);
         } catch (Throwable t) {
-            TinkersNewlife.LOGGER.info("[真伤·通道·存储] dump 失败：{}", t.toString());
+            TinkersNewlife.LOGGER.debug("[真伤·通道·存储] dump 失败：{}", t.toString());
         }
     }
 
@@ -793,7 +793,7 @@ public final class TruePierce {
                     nominal = Class.forName(rc.getName());
                 } catch (Throwable ignored) {
                 }
-                TinkersNewlife.LOGGER.info(
+                TinkersNewlife.LOGGER.debug(
                         "[真伤·类信息] 实例类={} isHidden={} 同一性(forName==实例)={} 加载器={} 父类={} 字段数={} 方法数={} 接口数={}",
                         rc.getName(), hidden, (nominal == rc),
                         String.valueOf(rc.getClassLoader()),
@@ -912,7 +912,7 @@ public final class TruePierce {
                     if (Math.abs(gh1 - 7.5F) < 0.05F) {
                         BRUTE_ATTR = inst.getAttribute();
                         BRUTE_ATTR_AFFINE = false;
-                        TinkersNewlife.LOGGER.info("[真伤·循环改血] ★ 锁定属性 {}（等值通道 ✓）✓",
+                        TinkersNewlife.LOGGER.debug("[真伤·循环改血] ★ 锁定属性 {}（等值通道 ✓）✓",
                                 BRUTE_ATTR.getDescriptionId());
                         return;
                     }
@@ -922,7 +922,7 @@ public final class TruePierce {
                         solveAffine(gh1, 7.5F, gh2, 15.0F);
                         BRUTE_ATTR_K = BRUTE_K;
                         BRUTE_ATTR_B = BRUTE_B;
-                        TinkersNewlife.LOGGER.info("[真伤·循环改血] ★ 锁定属性 {}（仿射 ✓）✓",
+                        TinkersNewlife.LOGGER.debug("[真伤·循环改血] ★ 锁定属性 {}（仿射 ✓）✓",
                                 BRUTE_ATTR.getDescriptionId());
                         return;
                     }
@@ -980,14 +980,14 @@ public final class TruePierce {
                         data.set((net.minecraft.network.syncher.EntityDataAccessor) acc, cur);
                         if (Math.abs(gh1 - S1) < 0.05F) {
                             BRUTE_ACCESSOR = acc;
-                            TinkersNewlife.LOGGER.info(
+                            TinkersNewlife.LOGGER.debug(
                                     "[真伤·循环改血] ★ 锁定同步访问器 {}（等值通道）✓", f.getName());
                             return;
                         }
                         if (Math.abs(gh2 - gh0) > 0.05F || Math.abs(gh1 - gh0) > 0.05F) {
                             BRUTE_ACCESSOR = acc;
                             solveAffine(gh1, S1, gh2, S2);
-                            TinkersNewlife.LOGGER.info(
+                            TinkersNewlife.LOGGER.debug(
                                     "[真伤·循环改血] ★ 锁定同步访问器 {}（仿射 血={}×槽+{}）✓",
                                     f.getName(), BRUTE_K, BRUTE_B);
                             return;
@@ -1009,11 +1009,11 @@ public final class TruePierce {
                     }
                 }
             }
-            TinkersNewlife.LOGGER.info(
+            TinkersNewlife.LOGGER.debug(
                     "[真伤·循环改血] 三路候选全部试完，**没有任何一处能改变 getHealth()** ✗"
                             + " ⇒ 真血由实体之外的东西决定（世界存档／静态管理器）✓");
         } catch (Throwable t) {
-            TinkersNewlife.LOGGER.info("[真伤·循环改血] 扫描失败：{}", t.toString());
+            TinkersNewlife.LOGGER.debug("[真伤·循环改血] 扫描失败：{}", t.toString());
         }
     }
 
@@ -1030,7 +1030,7 @@ public final class TruePierce {
                 BRUTE_METHOD_PARAM = pt;
                 BRUTE_AFFINE = false;
                 m.invoke(e, pf ? (Object) gh0 : pd ? (Object) (double) gh0 : (Object) Math.round(gh0));
-                TinkersNewlife.LOGGER.info(
+                TinkersNewlife.LOGGER.debug(
                         "[真伤·循环改血] ★ 锁定方法 {}（等值通道，名字无关 ✓）✓", m.getName());
                 return true;
             }
@@ -1043,7 +1043,7 @@ public final class TruePierce {
                 BRUTE_METHOD_PARAM = pt;
                 BRUTE_AFFINE = true;
                 m.invoke(e, pf ? (Object) gh0 : pd ? (Object) (double) gh0 : (Object) Math.round(gh0));
-                TinkersNewlife.LOGGER.info(
+                TinkersNewlife.LOGGER.debug(
                         "[真伤·循环改血] ★ 锁定方法 {}（仿射 血={}×值+{}，名字无关 ✓）✓",
                         m.getName(), BRUTE_K, BRUTE_B);
                 return true;
@@ -1117,7 +1117,7 @@ public final class TruePierce {
                 BRUTE_SLOT = f;
                 BRUTE_OWNER = owner;
                 BRUTE_AFFINE = false;
-                TinkersNewlife.LOGGER.info("[真伤·循环改血] ★ 锁定字段 {}（{}，等值通道 ✓）✓",
+                TinkersNewlife.LOGGER.debug("[真伤·循环改血] ★ 锁定字段 {}（{}，等值通道 ✓）✓",
                         f.getName(), f.getType().getSimpleName());
                 return true;
             }
@@ -1126,7 +1126,7 @@ public final class TruePierce {
                 BRUTE_OWNER = owner;
                 BRUTE_AFFINE = true;
                 solveAffine(gh1, 7.5F, gh2, 15.0F);
-                TinkersNewlife.LOGGER.info("[真伤·循环改血] ★ 锁定字段 {}（{}，仿射 血={}×槽+{}）✓",
+                TinkersNewlife.LOGGER.debug("[真伤·循环改血] ★ 锁定字段 {}（{}，仿射 血={}×槽+{}）✓",
                         f.getName(), f.getType().getSimpleName(), BRUTE_K, BRUTE_B);
                 return true;
             }
@@ -1150,7 +1150,7 @@ public final class TruePierce {
                 BRUTE_SLOT = f;
                 BRUTE_OWNER = owner;
                 BRUTE_AFFINE = false;
-                TinkersNewlife.LOGGER.info("[真伤·循环改血] ★ 锁定字段 {}（等值通道）✓", f.getName());
+                TinkersNewlife.LOGGER.debug("[真伤·循环改血] ★ 锁定字段 {}（等值通道）✓", f.getName());
                 return true;
             }
             if (Math.abs(gh1 - gh0) > 0.05F || Math.abs(gh2 - gh0) > 0.05F) {
@@ -1158,7 +1158,7 @@ public final class TruePierce {
                 BRUTE_OWNER = owner;
                 BRUTE_AFFINE = true;
                 solveAffine(gh1, s1, gh2, s2);
-                TinkersNewlife.LOGGER.info("[真伤·循环改血] ★ 锁定字段 {}（仿射 血={}×槽+{}）✓",
+                TinkersNewlife.LOGGER.debug("[真伤·循环改血] ★ 锁定字段 {}（仿射 血={}×槽+{}）✓",
                         f.getName(), BRUTE_K, BRUTE_B);
                 return true;
             }
@@ -1213,7 +1213,7 @@ public final class TruePierce {
                 }
             } catch (Throwable ignored) {
             }
-            TinkersNewlife.LOGGER.info(
+            TinkersNewlife.LOGGER.debug(
                     "[真伤·通道·试] 初始 getHealth={} getApollyon={} getMax={} | 含 ealth 的方法=[{}]",
                     String.format(java.util.Locale.ROOT, "%.2f", gh0),
                     String.format(java.util.Locale.ROOT, "%.2f", apollyonHealthOf(e)),
@@ -1347,13 +1347,13 @@ public final class TruePierce {
                 tried.append("EC×done");
             }
 
-            TinkersNewlife.LOGGER.info("[真伤·通道·试] 结论：{}",
+            TinkersNewlife.LOGGER.debug("[真伤·通道·试] 结论：{}",
                     winner != null
                             ? ("★ 真血通道 = " + winner + " ✓✓")
                             : ("以上全部试完（" + tried + "），**没有任何一处能改变 getHealth()** ✗"
                                + " ⇒ 真血由实体之外的东西决定（世界存档／静态管理器）✓"));
         } catch (Throwable t) {
-            TinkersNewlife.LOGGER.info("[真伤·通道·试] 失败：{}", t.toString());
+            TinkersNewlife.LOGGER.debug("[真伤·通道·试] 失败：{}", t.toString());
         }
     }
 
@@ -1877,7 +1877,7 @@ public final class TruePierce {
         // ⚠⚠ 探针用 **INFO** ✗ 不用 `debug` ✗ ——
         //   （⭐ 用户实测 2026-10-10 ✓：⭐ 我原来写的是 `debug` ＋ `isDebugEnabled` ✓
         //    ⇒ ⭐ **默认级别根本不输出** ✗ ⇒ ⭐ "0 行"被我**误读成"没被调用"** ✓ ⭐ 差点查偏 ✓）
-        TinkersNewlife.LOGGER.info("[真伤] want={} startHp={} dealt={} 字段可用={}",
+        TinkersNewlife.LOGGER.debug("[真伤] want={} startHp={} dealt={} 字段可用={}",
                 String.format(java.util.Locale.ROOT, "%.2f", want),
                 String.format(java.util.Locale.ROOT, "%.2f", startHp),
                 String.format(java.util.Locale.ROOT, "%.2f", dealt),
@@ -1891,7 +1891,7 @@ public final class TruePierce {
         //   ⇒ ⭐ 它的保护逻辑 ⭐ **读不到"有人在改血"** ✓ ✓（⭐ 这就是"逆向改血" ✓）。
         float shortfall = want - Math.max(dealt, 0.0F);
         // ⭐ 探针（⭐ INFO ✓ 一定可见 ✓）：⭐ 决定"补不补、补多少" ✗
-        TinkersNewlife.LOGGER.info("[真伤] shortfall={} 目标存活={} 已移除={}",
+        TinkersNewlife.LOGGER.debug("[真伤] shortfall={} 目标存活={} 已移除={}",
                 String.format(java.util.Locale.ROOT, "%.2f", shortfall),
                 target.isAlive(), target.isRemoved());
         if (shortfall <= 0.01F) return;
@@ -1959,7 +1959,7 @@ public final class TruePierce {
                     float cur = rawHealth(target);
                     if (owed >= cur) {
                         DAMAGE_OWED.remove(target.getUUID());
-                        TinkersNewlife.LOGGER.info(
+                        TinkersNewlife.LOGGER.debug(
                                 "[真伤·累计处决] 累计未落地伤害 {} ≥ 当前报的血 {} ⇒ 处决 {} ✓",
                                 String.format(java.util.Locale.ROOT, "%.2f", owed),
                                 String.format(java.util.Locale.ROOT, "%.2f", cur),
@@ -2152,7 +2152,7 @@ public final class TruePierce {
                     float owed = DAMAGE_OWED.merge(target.getUUID(), deficit, Float::sum);
                     if (owed >= after) {
                         DAMAGE_OWED.remove(target.getUUID());
-                        TinkersNewlife.LOGGER.info(
+                        TinkersNewlife.LOGGER.debug(
                                 "[真伤·累计处决] 累计未落地伤害 {} ≥ 当前报的血 {} ⇒ 处决 {} ✓",
                                 String.format(java.util.Locale.ROOT, "%.2f", owed),
                                 String.format(java.util.Locale.ROOT, "%.2f", after),
@@ -2374,7 +2374,7 @@ public final class TruePierce {
             // ⭐⭐ **事后校验** ✗ —— ⭐ 读回来若不是我们的值 ⇒ ⭐ 说明有人"更晚"改 ✓
             float now = rawHealth(living);
             if (now > target + 0.01F) {
-                TinkersNewlife.LOGGER.info(
+                TinkersNewlife.LOGGER.debug(
                         "[真伤·校验] 最晚写入后仍被改：{}（{}）我们的值={} 当前={} ⇒ 有人在更晚处改血 ✓",
                         living.getName().getString(),
                         net.minecraft.world.entity.EntityType.getKey(living.getType()).toString(),
@@ -2468,7 +2468,7 @@ public final class TruePierce {
             //   ＋ ⭐ 诡厄的禁疗状态（`antiRegen` ＋ `isSmited` ＋ `moddedInvul` ✓）
             //   ⇒ ⭐ 一眼看出是"**禁疗失效**"还是"**换阶段直接回满**" ✓。
             try {
-                TinkersNewlife.LOGGER.info(
+                TinkersNewlife.LOGGER.debug(
                         "[真伤·回弹] 第{}次 {}（{}）写={} 弹回={} | getHealth={} 字段={} | antiRegen={} isSmited={} moddedInvul={}",
                         (i + 1),
                         target.getName().getString(),
@@ -2486,7 +2486,7 @@ public final class TruePierce {
             suppressRegen(target);
         }
         if (rawHealth(target) > value + 0.01F) {
-            TinkersNewlife.LOGGER.warn(
+            TinkersNewlife.LOGGER.debug(
                     "[真伤] 逆向改血被回弹 {} 次仍未写住：{}（{}）当前={} 目标={}",
                     WRITE_RETRIES, target.getName().getString(),
                     net.minecraft.world.entity.EntityType.getKey(target.getType()).toString(),
