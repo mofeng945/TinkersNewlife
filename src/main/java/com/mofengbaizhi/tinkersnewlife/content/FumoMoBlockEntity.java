@@ -195,6 +195,20 @@ public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.worl
     private volatile int danceTicks;
     /** §1086 舞蹈开始的世界时间 ✓（相位从"音乐开始"算 ✓ 才对得上它自己的 rotationStartTick ✓） */
     private long danceStart = -1L;
+    /**
+     * ⭐⭐⭐⭐ §1244 <b>这只玩偶**自己**跟的是哪张唱片</b> ✗✗
+     * <p>⚠ 用户实测 ✓ 2026-10-10：「**当两个音乐同时播放时，玩偶会选择一种音乐舞蹈进行跟随**」✓
+     * <p>⚠ 根因 ✗：⭐ 原来"唱片来源"是 ⭐ **一个全局单槽**（⭐ `discPos`／`discStyle`／`discLength` ✓
+     * ⭐ 全是 `static` ✓）⇒ ⭐ **后响的那张把前一张覆盖掉** ✗ ⭐ 且**它一停 ✗ 玩偶就停** ✓
+     * ⭐ 风格也是全局一个 ✗ ⇒ ⭐ 两台唱片机旁的两只玩偶会**互相打架** ✓。
+     * <p>⇒ ⭐ 现在 ⭐ **每只玩偶各自算"离我最近的那张"** ✗ ⭐ 把风格记在自己身上 ✓ ✓。
+     */
+    private int danceStyle = 0;
+
+    /** ⭐ §1244 这只玩偶当前跟的风格（⭐ 0 ＝ 老旋转 ✗ ⭐ 1 ＝ 新序列 ✓） */
+    public int danceStyle() {
+        return danceStyle;
+    }
 
     /**
      * §1096 <b>跳舞范围＝16 格</b>（用户口径：「周围16格范围内的所有fumo」✓）
@@ -304,6 +318,37 @@ public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.worl
     private static volatile int discStyle = 0;
     private static volatile int discLength = 1126;
 
+    // ============================================================
+    //  §1244 **多来源**：⭐ 每台在放自家唱片的唱片机各占一条 ✓
+    //  （⭐ 上面那几个 `static` 单槽**保留** ✗ ⭐ 只作兼容／诊断 ✓ ⭐ 真正判定走下面这张表 ✓）
+    // ============================================================
+
+    /** ⭐ 一条"正在播放的自家唱片"的来源记录 ✓ */
+    private static final class DiscSrc {
+        final BlockPos pos;
+        final ResourceKey<Level> dim;
+        final long startTick;
+        final int style;
+        final int length;
+
+        DiscSrc(BlockPos pos, ResourceKey<Level> dim, long startTick, int style, int length) {
+            this.pos = pos;
+            this.dim = dim;
+            this.startTick = startTick;
+            this.style = style;
+            this.length = length;
+        }
+    }
+
+    /** ⭐ 多来源登记表 ✗（⭐ 键 ＝ 维度＋坐标 ✓ ⭐ 两台唱片机各一条 ✓ ⭐ 声音线程会写 ⇒ 并发表 ✓） */
+    private static final java.util.Map<String, DiscSrc> DISC_SOURCES =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** ⭐ 一条来源的键 ✗（⭐ 维度 ＋ ⭐ 方块坐标 ✓ ⭐ 免得别的维度同坐标撞上 ✓） */
+    private static String discKey(ResourceKey<Level> dim, BlockPos p) {
+        return (dim == null ? "?" : dim.location().toString()) + "@" + p.asLong();
+    }
+
     /**
      * <b>曲长兜底</b>：我们的唱片本身有多长（tick ✓ 由 ogg 末页 granule 算出来 ✓
      * 见 {@code ModItems#MUSIC_DISC_DOLL_MUSIC_LENGTH_TICKS} ✓）。
@@ -330,6 +375,16 @@ public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.worl
         discStartTick = level.getGameTime();
         discStyle = style;
         discLength = Math.max(20, lengthTicks);
+        // ⭐ §1244 **同时登记到多来源表** ✗（⭐ 键＝维度＋坐标 ✓ ⭐ 同一格重放就刷新 ✓）
+        try {
+            BlockPos p = BlockPos.containing(x, y, z);
+            DISC_SOURCES.put(discKey(level.dimension(), p),
+                    new DiscSrc(p, level.dimension(), level.getGameTime(), style, Math.max(20, lengthTicks)));
+            if (DISC_SOURCES.size() > 64) {
+                DISC_SOURCES.clear();   // ⭐ 兜底：⭐ 太多了就整体清（⭐ 下一 tick 会被重新登记 ✓）
+            }
+        } catch (Throwable ignored) {
+        }
     }
 
     /** ⭐ §1241 当前跳舞风格（⭐ 0 ＝ 老旋转 ✗ ⭐ 1 ＝ 新序列 ✓） */
@@ -345,6 +400,12 @@ public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.worl
             discDim = null;
             discStartTick = Long.MIN_VALUE;
             discStyle = 0;
+            // ⭐ §1244 **只摘这一格那一条** ✗（⭐ 别的唱片机不受影响 ✓）
+            try {
+                String suffix = "@" + BlockPos.containing(x, y, z).asLong();
+                DISC_SOURCES.keySet().removeIf(k -> k.endsWith(suffix));
+            } catch (Throwable ignored) {
+            }
         }
     }
 
@@ -365,6 +426,57 @@ public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.worl
      *       它说"没在放"时**不能当停** ✗（客户端数据本来就不新鲜 ✗ 见 {@link #DISC_END_PAD_TICKS} 上面的说明 ✓）。</li>
      * </ol>
      */
+    /**
+     * ⭐⭐⭐⭐ §1244 <b>多来源判定：⭐ 返回"离这只玩偶最近的那张自家唱片"的风格</b> ✗✗
+     * <p>⚠ 用户实测 ✓：「**当两个音乐同时播放时，玩偶会选择一种音乐舞蹈进行跟随**」✓
+     * <p>⚠ 原来只有一个全局槽 ⇒ ⭐ 后响的覆盖先响的 ✗ ⭐ 那一张停了玩偶就停 ✗
+     * ⭐ 且风格全局一个 ⇒ ⭐ 两只玩偶会打架 ✓
+     * <p>⇒ ⭐ 现在 ✗：⭐ 遍历 {@link #DISC_SOURCES} ✓ ⭐ **顺手淘汰失效的**（⭐ 唱片被取走／机器没了／放完了 ✓）
+     * ⭐ 只在 **16 格**内挑 ✓ ⭐ **距离最近的赢** ✗ ⭐ 没有就返回 `-1` ✓。
+     */
+    private static int discStyleNear(Level level, FumoMoBlockEntity be, long now) {
+        if (DISC_SOURCES.isEmpty()) return -1;
+        int best = -1;
+        double bestD = Double.MAX_VALUE;
+        try {
+            var it = DISC_SOURCES.entrySet().iterator();
+            while (it.hasNext()) {
+                var en = it.next();
+                DiscSrc s = en.getValue();
+                try {
+                    if (s.dim != null && !s.dim.equals(level.dimension())) continue;          // 别的维度 ✓
+                    if (now - s.startTick > (long) s.length + DISC_END_PAD_TICKS) {           // 放完了 ✓
+                        it.remove();
+                        continue;
+                    }
+                    BlockState st = level.getBlockState(s.pos);
+                    if (!(st.getBlock() instanceof net.minecraft.world.level.block.JukeboxBlock)
+                            || !st.getValue(net.minecraft.world.level.block.JukeboxBlock.HAS_RECORD)) {
+                        it.remove();                                                         // 唱片/机器没了 ✓
+                        continue;
+                    }
+                    BlockEntity jb = level.getBlockEntity(s.pos);
+                    if (jb instanceof net.minecraft.world.level.block.entity.JukeboxBlockEntity jukebox
+                            && jukebox.isRecordPlaying()
+                            && !jukebox.getFirstItem().isEmpty()
+                            && !jukebox.getFirstItem().is(ModItems.MUSIC_DISC_DOLL_MUSIC.get())
+                            && !jukebox.getFirstItem().is(ModItems.MUSIC_DISC_TELL_ME.get())) {
+                        it.remove();                                                         // 被换成别家唱片 ✓
+                        continue;
+                    }
+                    double d = be.getBlockPos().distSqr(s.pos);
+                    if (d > DANCE_RANGE_SQR) continue;                                        // ⭐ 16 格口径 ✓
+                    if (d < bestD) { bestD = d; best = s.style; }
+                } catch (Throwable ignored) {
+                }
+            }
+        } catch (Throwable t) {
+            return -1;                                                                        // fail-safe ✓
+        }
+        return best;
+    }
+
+    /** ⚠ §1244 旧判定**保留** ✗ ⭐ 现在没人调它（⭐ 真正走 {@link #discStyleNear} ✓ ⭐ 留作参考／兼容 ✓） */
     private static boolean discPlayingNear(Level level, FumoMoBlockEntity be, long now) {
         try {
             BlockPos p = discPos;
@@ -486,8 +598,10 @@ public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.worl
         if (level == null || be == null || !level.isClientSide) return;
         long now = level.getGameTime();
         // ── §1096 ①原版唱片机 + 我们的唱片 ⇒ 跳舞 ✓（**不依赖朋友的酒** ✓ 16 格 ✓）
-        if (discPlayingNear(level, be, now)) {
+        int srcStyle = discStyleNear(level, be, now);
+        if (srcStyle >= 0) {
             if (be.danceTicks <= 0) be.danceStart = now;   // 起跳时刻 ⇒ 相位起点 ✓
+            be.danceStyle = srcStyle;                      // ⭐ §1244 **这只玩偶**跟的是哪张 ✓
             be.startDancing(20);
             return;
         }

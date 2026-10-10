@@ -123,7 +123,7 @@ public class FumoMoBlockEntityRenderer implements BlockEntityRenderer<FumoMoBloc
             double sec = FumoMoBlockEntity.danceSeconds(be.getLevel(), be, partialTick);
             // ⭐⭐ §1241 **按"听到的是哪张唱片"分派两种舞蹈** ✗（⭐ 用户口径 ✓：
             //   「**不是替换，是新舞蹈和新唱片**」✓）
-            if (FumoMoBlockEntity.discStyle() == 1) {
+            if (be.danceStyle() == 1) {
                 // ⭐ 新舞蹈 ✗：⭐ 左转＋前倾点头 ⇒ ⭐ 原路回正 ⇒ ⭐ 右转＋前倾点头 ✓
                 //   ⭐ 偏航绕 ⭐ **方块底面中心**（⭐ 此时 pose 还在 `translate(0.5,0,0.5)` 之后 ✓）
                 //     ⇒ ⭐ 像"坐在原地扭头" ✓；
