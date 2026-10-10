@@ -98,7 +98,17 @@ public class PortableTinkerStationItem extends Item {
         net.minecraft.world.level.block.state.BlockState old = level.getBlockState(spot);
         net.minecraft.world.level.block.state.BlockState anvil = slimeknights.tconstruct.tables.TinkerTables
                 .tinkersAnvil.get().defaultBlockState();
-        level.setBlockAndUpdate(spot, anvil);
+        // §1291 用户口径：像"从匠魂物品栏取一个工匠砧"那样正规放置 ⇒ 走 BlockItem 的 useOn，
+        //   这样方块状态（facing 等）与 setPlacedBy 的效果和玩家亲手放置完全一致。
+        ItemStack anvilItem = new ItemStack(slimeknights.tconstruct.tables.TinkerTables.tinkersAnvil.get().asItem());
+        try {
+            anvilItem.useOn(new net.minecraft.world.item.context.UseOnContext(sp, InteractionHand.MAIN_HAND,
+                    new net.minecraft.world.phys.BlockHitResult(
+                            net.minecraft.world.phys.Vec3.atCenterOf(spot.above()),
+                            net.minecraft.core.Direction.UP, spot, false)));
+        } catch (Throwable t) {
+            level.setBlockAndUpdate(spot, anvil);
+        }
         try {
             slimeknights.tconstruct.tables.TinkerTables.tinkersAnvil.get().setPlacedBy(level, spot, anvil, sp,
                     new ItemStack(slimeknights.tconstruct.tables.TinkerTables.tinkersAnvil.get().asItem()));
