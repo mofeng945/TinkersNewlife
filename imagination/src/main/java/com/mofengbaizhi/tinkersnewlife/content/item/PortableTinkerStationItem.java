@@ -102,8 +102,17 @@ public class PortableTinkerStationItem extends Item {
             return InteractionResultHolder.fail(stack);
         }
         final BlockPos spot = target;
-        level.setBlockAndUpdate(spot, com.mofengbaizhi.tinkersnewlife.content.block.InvisibleStationRegistry
-                .INVISIBLE_STATION.get().defaultBlockState());
+        net.minecraft.world.level.block.state.BlockState st = com.mofengbaizhi.tinkersnewlife.content.block
+                .InvisibleStationRegistry.INVISIBLE_STATION.get().defaultBlockState();
+        level.setBlockAndUpdate(spot, st);
+        // ★ §1283 关键：借用真工匠砧自己的放置逻辑，让方块实体拿到与真砧**完全一样**的
+        //   材质/贴图数据（屏幕布局与宽度就是按这些算的；空手 setBlock 会留下 AIR/UNKNOWN ⇒ 负宽度 ⇒ JEI 崩）
+        try {
+            com.mofengbaizhi.tinkersnewlife.content.block.InvisibleStationRegistry.INVISIBLE_STATION.get()
+                    .setPlacedBy(level, spot, st, sp, new ItemStack(slimeknights.tconstruct.tables.TinkerTables
+                            .tinkersAnvil.get().asItem()));
+        } catch (Throwable ignored) {
+        }
         if (level.getBlockEntity(spot) instanceof TinkerStationBlockEntity be) {
             loadInventory(stack, be);
             // ★ 延后 10 tick：等客户端把这块方块收下去之后再开界面 ✓

@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.content.block;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import slimeknights.tconstruct.tables.block.TinkersAnvilBlock;
 
