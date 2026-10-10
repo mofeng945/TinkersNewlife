@@ -102,10 +102,13 @@ public class PortableTinkerStationItem extends Item {
         //   这样方块状态（facing 等）与 setPlacedBy 的效果和玩家亲手放置完全一致。
         ItemStack anvilItem = new ItemStack(slimeknights.tconstruct.tables.TinkerTables.tinkersAnvil.get().asItem());
         try {
+            // ★按 BlockPlaceContext 的规则：落点 = 被点击方块 + 点击面 ⇒ 点 spot 下面那格的"上表面"
+            //   才会把砧放在 spot 本格（★之前写成 spot 的上表面 ⇒ 砧跑到 spot 上面 ⇒ 后续找不到方块实体 ✓）
+            net.minecraft.core.BlockPos below = spot.below();
             anvilItem.useOn(new net.minecraft.world.item.context.UseOnContext(sp, InteractionHand.MAIN_HAND,
                     new net.minecraft.world.phys.BlockHitResult(
-                            net.minecraft.world.phys.Vec3.atCenterOf(spot.above()),
-                            net.minecraft.core.Direction.UP, spot, false)));
+                            net.minecraft.world.phys.Vec3.atCenterOf(below),
+                            net.minecraft.core.Direction.UP, below, false)));
         } catch (Throwable t) {
             level.setBlockAndUpdate(spot, anvil);
         }
@@ -113,6 +116,17 @@ public class PortableTinkerStationItem extends Item {
             slimeknights.tconstruct.tables.TinkerTables.tinkersAnvil.get().setPlacedBy(level, spot, anvil, sp,
                     new ItemStack(slimeknights.tconstruct.tables.TinkerTables.tinkersAnvil.get().asItem()));
         } catch (Throwable ignored) {
+        }
+        if (!(level.getBlockEntity(spot) instanceof TinkerStationBlockEntity)) {
+            // ★兜底：useOn 没落在 spot（或失败）⇒ 直接放，保证行为一致 ✓
+            net.minecraft.world.level.block.state.BlockState fb = slimeknights.tconstruct.tables.TinkerTables
+                    .tinkersAnvil.get().defaultBlockState();
+            level.setBlockAndUpdate(spot, fb);
+            try {
+                slimeknights.tconstruct.tables.TinkerTables.tinkersAnvil.get().setPlacedBy(level, spot, fb, sp,
+                        new ItemStack(slimeknights.tconstruct.tables.TinkerTables.tinkersAnvil.get().asItem()));
+            } catch (Throwable ignored) {
+            }
         }
         if (level.getBlockEntity(spot) instanceof TinkerStationBlockEntity be) {
             loadInventory(stack, be);
