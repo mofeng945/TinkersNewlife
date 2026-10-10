@@ -251,7 +251,6 @@ public class SilentGloveItem extends ModifiableItem implements ICurioItem {
         int used = handler != null ? handler.getUsedSlots() : 0;
         int total = handler != null ? handler.getSlots() : 0;
         tooltip.add(Component.translatable("tooltip.tinkersnewlife.silent_glove.desc", used, total));
-        tooltip.add(Component.translatable("tooltip.tinkersnewlife.silent_glove.curios", extraRings));
         tooltip.add(Component.translatable("tooltip.tinkersnewlife.silent_glove.use"));
     }
 }
