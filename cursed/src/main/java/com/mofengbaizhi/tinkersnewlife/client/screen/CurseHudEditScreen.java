@@ -52,6 +52,11 @@ public class CurseHudEditScreen extends Screen {
                 })
                 .bounds(this.width / 2 - 110, 54, 220, 20)
                 .build());
+        // §1305 头衔设置入口
+        this.addRenderableWidget(net.minecraft.client.gui.components.Button
+                .builder(net.minecraft.network.chat.Component.translatable("screen.tinkersnewlife.titles"),
+                        b -> this.minecraft.setScreen(new com.mofengbaizhi.tinkersnewlife.client.hud.TitlesSelectScreen(this)))
+                .bounds(6, this.height - 26, 140, 20).build());
     }
 
     private Component conscienceLabel() {

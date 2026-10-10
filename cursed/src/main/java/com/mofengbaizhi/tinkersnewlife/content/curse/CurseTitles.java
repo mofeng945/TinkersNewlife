@@ -49,6 +49,54 @@ public final class CurseTitles {
 
     /** 玩家持久数据里的头衔 id 列表 */
     public static final String KEY_TITLES = "tnl_titles";
+    /** §1305 玩家"手动选中要展示"的头衔（★HUD 调整界面里选 ✓ 空 ⇒ 自动取前 3 ✓） */
+    public static final String KEY_SELECTED = "tnl_titles_selected";
+
+    public static java.util.List<String> selected(Player player) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        try {
+            var data = player.getPersistentData();
+            if (data.contains(KEY_SELECTED, 9)) {
+                var list = data.getList(KEY_SELECTED, 8);
+                for (int i = 0; i < list.size(); i++) {
+                    out.add(list.getString(i));
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return out;
+    }
+
+    /** 设置选中（★服务端 ✓ 存持久数据 ＋ 回发同步 ✓）；最多 3 枚 ✓ */
+    public static void setSelection(Player player, java.util.List<String> ids) {
+        try {
+            ListTag list = new ListTag();
+            int n = 0;
+            for (String id : ids) {
+                if (rarityOf(id) == 0 || !held(player).contains(id)) {
+                    continue;
+                }
+                list.add(StringTag.valueOf(id));
+                if (++n >= MAX_SHOWN) {
+                    break;
+                }
+            }
+            player.getPersistentData().put(KEY_SELECTED, list);
+            if (player instanceof net.minecraft.server.level.ServerPlayer sp) {
+                sync(sp);
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** 把"持有 ＋ 选中"同步给客户端（★选择界面要用 ✓） */
+    public static void sync(net.minecraft.server.level.ServerPlayer player) {
+        try {
+            TinkersNewlife.CHANNEL.send(net.minecraftforge.network.PacketDistributor.PLAYER.with(() -> player),
+                    new com.mofengbaizhi.tinkersnewlife.network.curse.PacketTitlesSync(held(player), selected(player)));
+        } catch (Throwable ignored) {
+        }
+    }
     /** 最多显示几枚 */
     public static final int MAX_SHOWN = 3;
 
@@ -180,7 +228,8 @@ public final class CurseTitles {
     /** {@code [头衔][头衔]…}；超过 3 枚取稀有度最高的 3 枚（★同稀有度按头衔表顺序 ✓） */
     public static String prefix(Player player) {
         try {
-            List<String> ids = active(player);
+            List<String> chosen = selected(player);
+            List<String> ids = chosen.isEmpty() ? active(player) : new ArrayList<>(chosen);
             ids.sort(Comparator.comparingInt(CurseTitles::rarityOf).reversed());
             StringBuilder sb = new StringBuilder();
             int shown = 0;
