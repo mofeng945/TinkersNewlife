@@ -635,9 +635,25 @@ public final class TruePierce {
                 float write = (BRUTE_AFFINE && Math.abs(BRUTE_K) > 1.0E-6F)
                         ? (value - BRUTE_B) / BRUTE_K
                         : value;
-                BRUTE_SLOT.setFloat(BRUTE_OWNER, write);
+                writeNum(BRUTE_SLOT, BRUTE_OWNER, write);
                 if (Math.abs(target.getHealth() - value) < 0.05F) {
                     return true;
+                }
+            }
+            // ⭐⭐ §1226 **属性通道**（⭐ 非 mixin ✓）：⭐ 若血由某个属性派生 ⇒ ⭐ 改属性 ✓
+            if (BRUTE_ATTR != null) {
+                try {
+                    var inst = target.getAttribute(BRUTE_ATTR);
+                    if (inst != null) {
+                        float write = (BRUTE_ATTR_AFFINE && Math.abs(BRUTE_ATTR_K) > 1.0E-6F)
+                                ? (value - BRUTE_ATTR_B) / BRUTE_ATTR_K
+                                : value;
+                        inst.setBaseValue(write);
+                        if (Math.abs(target.getHealth() - value) < 0.05F) {
+                            return true;
+                        }
+                    }
+                } catch (Throwable ignored) {
                 }
             }
             return false;
@@ -656,6 +672,36 @@ public final class TruePierce {
         final float S2 = 15.0F;
         try {
             float gh0 = e.getHealth();
+            // ⭐⭐⭐⭐ §1227 **"类身份"探针** ✗✗（⭐ 用户情报 ✓ 2026-10-10：
+            //   「**据说有可能是上了隐藏类**」✓）
+            //   ⚠ 它能解释**一堆怪现象** ✗：⭐ 接口方法表对不上（§1218 ✓）✗
+            //   ⭐ `Class.forName` 找到的那份与实例那份可能不同 ✓ ✗ ⭐ 真血任何字段都写不动（§1221 ✓）
+            //   ⇒ ⭐ 判据 ✗：⭐ **`Class.forName(实例类名)` 是否等于 `e.getClass()`** ✓
+            //     ⭐ **不等** ⇒ ⭐ 实例跑的是**另一个类定义**（⭐ 隐藏类／⭐ 重复定义 ✓）
+            //     ⭐ 那 ⭐ 我们反射扫描的**就是错的那个类** ✓ ✓。
+            try {
+                Class<?> rc = e.getClass();
+                boolean hidden = false;
+                try {
+                    Object h = Class.class.getMethod("isHidden").invoke(rc);
+                    hidden = h instanceof Boolean b && b;
+                } catch (Throwable ignored) {
+                }
+                Class<?> nominal = null;
+                try {
+                    nominal = Class.forName(rc.getName());
+                } catch (Throwable ignored) {
+                }
+                TinkersNewlife.LOGGER.info(
+                        "[真伤·类信息] 实例类={} isHidden={} 同一性(forName==实例)={} 加载器={} 父类={} 字段数={} 方法数={} 接口数={}",
+                        rc.getName(), hidden, (nominal == rc),
+                        String.valueOf(rc.getClassLoader()),
+                        String.valueOf(rc.getSuperclass() == null ? null : rc.getSuperclass().getName()),
+                        rc.getDeclaredFields().length,
+                        rc.getDeclaredMethods().length,
+                        rc.getInterfaces().length);
+            } catch (Throwable ignored) {
+            }
             Object ec = null;
             try {
                 if (apollyonEcMethod == null) {
@@ -710,7 +756,79 @@ public final class TruePierce {
                     }
                 }
             }
-            // ⭐ ② 实例 float/double 字段 ✓
+            // ⭐⭐⭐⭐ §1226 **数值字段（⭐ 所有数值类型 ✓）＋ ⭐ 静态数值字段 ＋ ⭐ 属性**
+            //   ⚠ 动机 ✗：⭐ 我原来 ⭐ **只试了 `float`／`double` 实例字段** ✗ ⇒ ⭐ 漏了两大类 ✓：
+            //     ⭐ ① ⭐ **`int`／`long`／`short`／`byte`／⭐ 装箱 `Number`**（⭐ 血可能是整数 87 ✓）
+            //     ⭐ ② ⭐ **静态数值字段**（⭐ 我只扫过"静态的 `EntityDataAccessor`" ✓）
+            //     ⭐ ③ ⭐ **属性值 `AttributeInstance`**（⭐ 若血由属性派生 ✓）
+            //   ⭐ 三路都 ⭐ **写哨兵 → 读血 → 立刻还原** ✓ ⭐ 变了就锁定 ✓。
+            for (Class<?> c = e.getClass(); c != null && c != Object.class; c = c.getSuperclass()) {
+                for (java.lang.reflect.Field f : c.getDeclaredFields()) {
+                    if (java.lang.reflect.Modifier.isStatic(f.getModifiers())) {
+                        continue;
+                    }
+                    if (!isNumericType(f.getType())) {
+                        continue;
+                    }
+                    if (probeNumberField(e, f, e, gh0)) {
+                        return;
+                    }
+                }
+            }
+            // ⭐ ②⑤ 静态数值字段（⭐ 跳过 final ✓ 它多半是常量 ✓）
+            for (Class<?> c = e.getClass(); c != null && c != Object.class; c = c.getSuperclass()) {
+                if (c.getName().startsWith("net.minecraft.")) {
+                    continue;   // ⭐ 原版静态字段不碰 ✓（⭐ 免得改坏全局 ✓）
+                }
+                for (java.lang.reflect.Field f : c.getDeclaredFields()) {
+                    if (!java.lang.reflect.Modifier.isStatic(f.getModifiers())) {
+                        continue;
+                    }
+                    if (java.lang.reflect.Modifier.isFinal(f.getModifiers())) {
+                        continue;
+                    }
+                    if (!isNumericType(f.getType())) {
+                        continue;
+                    }
+                    if (probeNumberField(e, f, null, gh0)) {
+                        return;
+                    }
+                }
+            }
+            // ⭐ ③ 属性值
+            try {
+                var map = e.getAttributes();
+                for (var inst : map.getSyncableAttributes()) {
+                    if (inst == null) {
+                        continue;
+                    }
+                    double old = inst.getBaseValue();
+                    inst.setBaseValue(7.5D);
+                    float gh1 = e.getHealth();
+                    inst.setBaseValue(15.0D);
+                    float gh2 = e.getHealth();
+                    inst.setBaseValue(old);
+                    if (Math.abs(gh1 - 7.5F) < 0.05F) {
+                        BRUTE_ATTR = inst.getAttribute();
+                        BRUTE_ATTR_AFFINE = false;
+                        TinkersNewlife.LOGGER.info("[真伤·循环改血] ★ 锁定属性 {}（等值通道 ✓）✓",
+                                BRUTE_ATTR.getDescriptionId());
+                        return;
+                    }
+                    if (Math.abs(gh1 - gh0) > 0.05F || Math.abs(gh2 - gh0) > 0.05F) {
+                        BRUTE_ATTR = inst.getAttribute();
+                        BRUTE_ATTR_AFFINE = true;
+                        solveAffine(gh1, 7.5F, gh2, 15.0F);
+                        BRUTE_ATTR_K = BRUTE_K;
+                        BRUTE_ATTR_B = BRUTE_B;
+                        TinkersNewlife.LOGGER.info("[真伤·循环改血] ★ 锁定属性 {}（仿射 ✓）✓",
+                                BRUTE_ATTR.getDescriptionId());
+                        return;
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
+            // ⭐ ② 实例 float/double 字段（⭐ 老路保留 ✓ 已在上面覆盖 ✓）
             for (Class<?> c = e.getClass(); c != null && c != Object.class; c = c.getSuperclass()) {
                 for (java.lang.reflect.Field f : c.getDeclaredFields()) {
                     if (java.lang.reflect.Modifier.isStatic(f.getModifiers())) {
@@ -831,6 +949,86 @@ public final class TruePierce {
             }
             // ⚠ 没影响 ⇒ ⭐ 还原成原来的血值 ✓
             m.invoke(e, pf ? (Object) gh0 : pd ? (Object) (double) gh0 : (Object) Math.round(gh0));
+        } catch (Throwable ignored) {
+        }
+        return false;
+    }
+
+    /** ⭐⭐ §1226 **属性通道**（⭐ 非 mixin ✓） */
+    private static volatile net.minecraft.world.entity.ai.attributes.Attribute BRUTE_ATTR = null;
+    private static volatile boolean BRUTE_ATTR_AFFINE = false;
+    private static volatile float BRUTE_ATTR_K = 1.0F;
+    private static volatile float BRUTE_ATTR_B = 0.0F;
+
+    /** ⭐ 是不是"能当数值改"的类型 ✗（⭐ 含装箱 `Number` ✓） */
+    private static boolean isNumericType(Class<?> t) {
+        return t == float.class || t == double.class || t == int.class || t == long.class
+                || t == short.class || t == byte.class
+                || t == Float.class || t == Double.class || t == Integer.class
+                || t == Long.class || t == Short.class || t == Byte.class;
+    }
+
+    /** ⭐ 按字段类型写一个数 ✗（⭐ 装箱／⭐ 基本类型都覆盖 ✓） */
+    private static void writeNum(java.lang.reflect.Field f, Object owner, float v) throws Throwable {
+        Class<?> t = f.getType();
+        if (t == float.class) {
+            f.setFloat(owner, v);
+        } else if (t == double.class) {
+            f.setDouble(owner, (double) v);
+        } else if (t == int.class) {
+            f.setInt(owner, Math.round(v));
+        } else if (t == long.class) {
+            f.setLong(owner, Math.round(v));
+        } else if (t == short.class) {
+            f.setShort(owner, (short) Math.round(v));
+        } else if (t == byte.class) {
+            f.setByte(owner, (byte) Math.round(v));
+        } else if (t == Float.class) {
+            f.set(owner, Float.valueOf(v));
+        } else if (t == Double.class) {
+            f.set(owner, Double.valueOf(v));
+        } else if (t == Integer.class) {
+            f.set(owner, Integer.valueOf(Math.round(v)));
+        } else if (t == Long.class) {
+            f.set(owner, Long.valueOf(Math.round(v)));
+        } else if (t == Short.class) {
+            f.set(owner, Short.valueOf((short) Math.round(v)));
+        } else if (t == Byte.class) {
+            f.set(owner, Byte.valueOf((byte) Math.round(v)));
+        }
+    }
+
+    /** ⭐ 试一个"数值字段"✗（⭐ 不限 `float`／`double` ✓ ⭐ 含静态 ✓） */
+    private static boolean probeNumberField(LivingEntity e, java.lang.reflect.Field f, Object owner, float gh0) {
+        try {
+            f.setAccessible(true);
+            Object oldV = f.get(owner);
+            if (!(oldV instanceof Number)) {
+                return false;
+            }
+            double old = ((Number) oldV).doubleValue();
+            writeNum(f, owner, 7.5F);
+            float gh1 = e.getHealth();
+            writeNum(f, owner, 15.0F);
+            float gh2 = e.getHealth();
+            writeNum(f, owner, (float) old);   // ⭐ 还原 ✓
+            if (Math.abs(gh1 - 7.5F) < 0.05F) {
+                BRUTE_SLOT = f;
+                BRUTE_OWNER = owner;
+                BRUTE_AFFINE = false;
+                TinkersNewlife.LOGGER.info("[真伤·循环改血] ★ 锁定字段 {}（{}，等值通道 ✓）✓",
+                        f.getName(), f.getType().getSimpleName());
+                return true;
+            }
+            if (Math.abs(gh1 - gh0) > 0.05F || Math.abs(gh2 - gh0) > 0.05F) {
+                BRUTE_SLOT = f;
+                BRUTE_OWNER = owner;
+                BRUTE_AFFINE = true;
+                solveAffine(gh1, 7.5F, gh2, 15.0F);
+                TinkersNewlife.LOGGER.info("[真伤·循环改血] ★ 锁定字段 {}（{}，仿射 血={}×槽+{}）✓",
+                        f.getName(), f.getType().getSimpleName(), BRUTE_K, BRUTE_B);
+                return true;
+            }
         } catch (Throwable ignored) {
         }
         return false;
