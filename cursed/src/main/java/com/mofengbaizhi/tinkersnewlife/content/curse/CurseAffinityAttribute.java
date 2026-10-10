@@ -137,6 +137,34 @@ public final class CurseAffinityAttribute {
         }
     }
 
+    /** §1299 "已掷过骰"标记：★同一件物品只掷一次 ⇒ 丢地上再捡不会变异 ✓ 而创造刷出来的也会掷 ✓ */
+    public static final String MARKER_ROLLED = "tnl_affinity_rolled";
+
+    /** 首次见到某件饰品时掷一次骰（40% ⇒ 0~50） */
+    public static void rollIfNew(net.minecraft.world.entity.player.Player player, ItemStack stack) {
+        try {
+            if (stack.isEmpty()) {
+                return;
+            }
+            CompoundTag tag = stack.getOrCreateTag();
+            if (tag.getBoolean(MARKER_ROLLED)) {
+                return;
+            }
+            if (!com.mofengbaizhi.tinkersnewlife.content.loot.CurseAffinityLootModifier
+                    .isCurioItem(stack, player.level())) {
+                return;
+            }
+            tag.putBoolean(MARKER_ROLLED, true);
+            if (player.level().getRandom().nextFloat() >= 0.4F) {
+                return;
+            }
+            int affinity = player.level().getRandom().nextInt(51);
+            if (affinity > 0) {
+                setItemAffinity(stack, affinity);
+            }
+        } catch (Throwable ignored) {
+        }
+    }
     /** §1296 每 tick 清理：把老版本写进原版 AttributeModifiers 的那一条删掉（★六行就是这么来的 ✓） */
     public static void stripNow(ItemStack stack) {
         try {
@@ -197,7 +225,8 @@ public final class CurseAffinityAttribute {
             try {
                 // ① 背包（含饰品栏）里的旧 NBT 一次性迁移
                 for (int i = 0; i < sp.getInventory().getContainerSize(); i++) {
-                    stripNow(sp.getInventory().getItem(i));   // ★每 tick 都清 ✓
+                    rollIfNew(sp, sp.getInventory().getItem(i));   // ★首次见到就掷一次 ✓
+                    stripNow(sp.getInventory().getItem(i));        // ★每 tick 清掉老的原版条目 ✓
                 }
                 // ② 收集"当前装备的饰品"上的亲和
                 int fromCurios = 0;
@@ -210,6 +239,7 @@ public final class CurseAffinityAttribute {
                             if (s.isEmpty()) {
                                 continue;
                             }
+                            rollIfNew(sp, s);
                             stripNow(s);
                             if (deep) {
                                 fromCurios += getItemAffinity(s);
