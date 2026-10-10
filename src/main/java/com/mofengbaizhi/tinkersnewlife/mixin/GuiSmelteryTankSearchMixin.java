@@ -68,22 +68,50 @@ public abstract class GuiSmelteryTankSearchMixin {
         try {
             // ── §1117n 搜索框：**回退成自绘** ✓（§1117m 的 EditBox 在匠魂界面里拿不到派发 ✗ ⇒ 空壳 ✗）──
             //   位置：贴在匠魂那条流体列**正上方** ✓（用户口径「应该偏上一点」✓ 由 -15 调到 -21 ✓）
-            int bx = this.x;
-            int by = this.y - 21;
-            int bw = Math.max(60, this.width);
+            // ⭐⭐ §1248 **右上角一个可点击的搜索按钮** ✗（⭐ 用户口径 ✓：
+            //   「**首先在右上角显示一个可点击的搜索按键，按下后搜索框展开，
+            //    否则不展开情况下不会开启输入**」✓）
+            int by = this.y - 21;                                    // ⭐ 与原来同一行（⭐ 用户认可的"偏上一点" ✓）
             int bh = 14;
-            FluidSearch.setBoxRect(bx, by, bw, bh, 0F, 0F);
-            graphics.fill(bx, by, bx + bw, by + bh, 0xC0101010);
-            int border = FluidSearch.isFocused() ? 0xFF7FD4FF : 0xFF505050;   // 聚焦时亮蓝 ✓
-            graphics.fill(bx, by, bx + bw, by + 1, border);
-            graphics.fill(bx, by + bh - 1, bx + bw, by + bh, border);
-            graphics.fill(bx, by, bx + 1, by + bh, border);
-            graphics.fill(bx + bw - 1, by, bx + bw, by + bh, border);
-            String q = FluidSearch.getQuery();
-            // §1117c 用户口径：「搜索提示只保留搜索两个字就好」✓ 空查询时只显示「搜索」✓
-            graphics.drawString(net.minecraft.client.Minecraft.getInstance().font,
-                    q.isEmpty() ? "搜索" : q,
-                    bx + 4, by + 3, q.isEmpty() ? 0xFF707070 : 0xFFFFFFFF, false);
+            int btnW = 14;
+            int fullW = Math.max(60, this.width);
+            int btnX = this.x + fullW - btnW;                        // ⭐ 贴在这一列的**右上角** ✓
+            FluidSearch.setButtonRect(btnX, by, btnW, bh);
+            int btnBg = FluidSearch.isExpanded() ? 0xFF2A3F55 : 0xC0101010;
+            int btnBr = FluidSearch.isExpanded() ? 0xFF7FD4FF : 0xFF606060;
+            graphics.fill(btnX, by, btnX + btnW, by + bh, btnBg);
+            graphics.fill(btnX, by, btnX + btnW, by + 1, btnBr);
+            graphics.fill(btnX, by + bh - 1, btnX + btnW, by + bh, btnBr);
+            graphics.fill(btnX, by, btnX + 1, by + bh, btnBr);
+            graphics.fill(btnX + btnW - 1, by, btnX + btnW, by + bh, btnBr);
+            // ⭐ 放大镜图标：⭐ 用方块画 ✗ ⭐ 不赌字体里有没有那个字形 ✓
+            int gx = btnX + 3;
+            int gy = by + 3;
+            graphics.fill(gx, gy, gx + 6, gy + 1, 0xFFE8E8E8);
+            graphics.fill(gx, gy + 5, gx + 6, gy + 6, 0xFFE8E8E8);
+            graphics.fill(gx, gy, gx + 1, gy + 6, 0xFFE8E8E8);
+            graphics.fill(gx + 5, gy, gx + 6, gy + 6, 0xFFE8E8E8);
+            graphics.fill(gx + 5, gy + 5, gx + 8, gy + 6, 0xFFE8E8E8);
+            graphics.fill(gx + 6, gy + 6, gx + 8, gy + 7, 0xFFE8E8E8);
+            if (!FluidSearch.isExpanded()) {
+                // ⭐ 收起 ⇒ ⭐ **框一个像素都不画** ✗ ⭐ 且把矩形丢到屏幕外 ⇒ ⭐ 点不到、也不可能聚焦 ✓
+                FluidSearch.setBoxRect(-100000, -100000, 0, 0, 0F, 0F);
+            } else {
+                int bx = this.x;
+                int bw = fullW - btnW - 2;                           // ⭐ 给右边按钮让位 ✓
+                FluidSearch.setBoxRect(bx, by, bw, bh, 0F, 0F);
+                graphics.fill(bx, by, bx + bw, by + bh, 0xC0101010);
+                int border = 0xFF7FD4FF;                             // ⭐ 展开即聚焦 ⇒ ⭐ 亮蓝 ✓
+                graphics.fill(bx, by, bx + bw, by + 1, border);
+                graphics.fill(bx, by + bh - 1, bx + bw, by + bh, border);
+                graphics.fill(bx, by, bx + 1, by + bh, border);
+                graphics.fill(bx + bw - 1, by, bx + bw, by + bh, border);
+                String q = FluidSearch.getQuery();
+                // §1117c 用户口径：「搜索提示只保留搜索两个字就好」✓ 空查询时只显示「搜索」✓
+                graphics.drawString(net.minecraft.client.Minecraft.getInstance().font,
+                        q.isEmpty() ? "搜索" : q,
+                        bx + 4, by + 3, q.isEmpty() ? 0xFF707070 : 0xFFFFFFFF, false);
+            }
             // ── 命中项描边 ──────────────────────────────────────────────────────────
             if (!FluidSearch.isActive()) return;
             int[] heights = this.liquidHeights;

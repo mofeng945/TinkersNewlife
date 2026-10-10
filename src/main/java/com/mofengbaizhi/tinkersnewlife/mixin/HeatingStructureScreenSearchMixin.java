@@ -29,7 +29,11 @@ public abstract class HeatingStructureScreenSearchMixin {
     @Inject(method = "m_181908_", at = @At("TAIL"), require = 1, remap = false)
     private void tnl$keepFocus(CallbackInfo ci) {
         try {
-            FluidSearch.setFocused(true);
+            // ⭐⭐ §1248 **只在"展开"时才保持聚焦** ✗（⭐ 用户口径 ✓：
+            //   「**否则不展开情况下不会开启输入**」✓）
+            //   ⚠ 原来这里是**无条件 `setFocused(true)`** ✗ ⇒ ⭐ 一打开炉子搜索框就抢键盘 ✓
+            //     ⭐ 用户要的是"先点右上角按钮才展开并开始输入" ✓ ✓。
+            FluidSearch.setFocused(FluidSearch.isExpanded());
         } catch (Throwable ignored) {
         }
     }

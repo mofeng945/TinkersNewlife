@@ -29,6 +29,7 @@
     "EntityRenderDispatcherMixin",
     "EntityRendererNameTagMixin",
     "ItemRendererMixin",
+    "ContainerClickSearchMixin",
     "HumanoidArmorLayerMixin",
     "XaeroRadarMixin",
     "JadeObjectNameMixin",

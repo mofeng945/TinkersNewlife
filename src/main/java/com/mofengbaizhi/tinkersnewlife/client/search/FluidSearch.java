@@ -89,6 +89,61 @@ public final class FluidSearch {
     public static int boxH() { return boxH; }
 
     // ============================================================
+    //  ⭐⭐ §1248 **展开／收起** ＋ ⭐ **右上角搜索按钮的矩形**
+    //  （⭐ 用户口径 ✓：「**首先在右上角显示一个可点击的搜索按键，按下后搜索框展开，
+    //   否则不展开情况下不会开启输入**」✓）
+    // ============================================================
+
+    /**
+     * ⭐ 搜索框是否**展开** ✗ —— ⭐ **默认收起** ✓（⭐ 用户要的就是"先有按钮 ✗ 点了才展开" ✓）。
+     * <p>⚠ ⭐ 收起时 ⭐ 三件事一起做 ✗：① {@link #isActive()} 恒 false（⭐ 不过滤 ✓）
+     * ✗ ② 聚焦取消（⭐ 按键／⭐ 输入法都不再被我们吃 ✓）✗ ③ 查询清空（⭐ 列表回到原样 ✓）。
+     */
+    private static volatile boolean expanded = false;
+
+    /** ⭐ 右上角"搜索按钮"的屏幕矩形 ✗（⭐ 由 {@code GuiSmelteryTankSearchMixin} 每帧写 ✓） */
+    private static volatile int btnX = Integer.MIN_VALUE;
+    private static volatile int btnY = Integer.MIN_VALUE;
+    private static volatile int btnW = 14;
+    private static volatile int btnH = 14;
+
+    public static boolean isExpanded() { return expanded; }
+
+    /** ⭐ 由渲染处每帧登记按钮矩形 ✓ */
+    public static void setButtonRect(int x, int y, int w, int h) {
+        btnX = x;
+        btnY = y;
+        btnW = w;
+        btnH = h;
+    }
+
+    /** ⭐ 鼠标是不是点在"搜索按钮"上 ✗（⭐ 收起／展开都能点 ✓ ⭐ 那是同一个开关 ✓） */
+    public static boolean hitButton(double mouseX, double mouseY) {
+        return mouseX >= btnX && mouseX < btnX + btnW && mouseY >= btnY && mouseY < btnY + btnH;
+    }
+
+    /** ⭐ 展开／收起 ✗（⭐ 收起时把一切"输入相关的状态"都复位 ✓） */
+    public static void setExpanded(boolean value) {
+        expanded = value;
+        if (!value) {
+            setFocused(false);
+            setQuery("");          // ⭐ 清词 ⇒ ⭐ 列表立刻回到未过滤 ✓
+        }
+    }
+
+    /** ⭐ 点一下按钮：⭐ 开着就收起 ✗ ⭐ 关着就展开并聚焦 ✓ */
+    public static void toggleExpanded() {
+        boolean next = !expanded;
+        expanded = next;
+        if (next) {
+            setFocused(true);      // ⭐ 展开即聚焦 ⇒ ⭐ 直接就能打字 ✓
+        } else {
+            setFocused(false);
+            setQuery("");
+        }
+    }
+
+    // ============================================================
     //  §1117c 搜索框聚焦状态（跨 mixin 共享 ✓）
     // ============================================================
     /**
@@ -146,9 +201,13 @@ public final class FluidSearch {
         return query;
     }
 
-    /** 搜索框里有没有内容 ✓（false ⇒ 界面按原样显示 ✓ 高度一个都不改 ✓） */
+    /**
+     * 搜索框里有没有内容 ✓（false ⇒ 界面按原样显示 ✓ 高度一个都不改 ✓）。
+     * <p>⚠ ⭐ §1248 **必须"展开"才算在搜索** ✗（⭐ 用户口径 ✓：「**否则不展开情况下不会开启输入**」✓）
+     * ⭐ ⇒ 收起状态 ⭐ **一个字都不输入 ✗ 也一根流体条都不筛** ✓。
+     */
     public static boolean isActive() {
-        return !query.isEmpty();
+        return expanded && !query.isEmpty();
     }
 
     // ============================================================
