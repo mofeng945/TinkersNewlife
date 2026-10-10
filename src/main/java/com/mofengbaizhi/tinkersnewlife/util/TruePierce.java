@@ -529,6 +529,11 @@ public final class TruePierce {
     private static volatile java.lang.reflect.Field BRUTE_SLOT = null;
     /** ⭐ 找到的是**同步访问器**时用它 ✗ */
     private static volatile Object BRUTE_ACCESSOR = null;
+    /** ⭐⭐ §1224 找到的是**方法**（⭐ setter ✓）时用它 ＋ ⭐ 它的参数类型 ✓ */
+    private static volatile java.lang.reflect.Method BRUTE_METHOD = null;
+    private static volatile Class<?> BRUTE_METHOD_PARAM = null;
+    /** ⭐⭐ §1224 允许"缓存作废后重扫"的下一次时刻 ✗（⭐ 防抖 ✓） */
+    private static volatile long BRUTE_RESCAN_AT = 0L;
     /** ⭐ 槽位与血是**仿射关系**（⭐ 血 ＝ k×槽 ＋ b ✓）时用这两个 ✓ */
     private static volatile boolean BRUTE_AFFINE = false;
     private static volatile float BRUTE_K = 1.0F;
@@ -561,8 +566,30 @@ public final class TruePierce {
      */
     public static boolean bruteForceWrite(LivingEntity target, float value) {
         try {
-            if (!BRUTE_DONE) {
+            // ⭐⭐ §1224 **缓存自愈** ✗：⭐ 若上次那个通道"写不灵"了 ✗
+            //   ⇒ ⭐ **作废缓存 ＋ 允许重扫** ✓（⭐ 防抖：⭐ 最早 `BRUTE_RESCAN_AT` 之后才能再扫 ✓）
+            //   ⇒ ⭐ 作者下次再改名／⭐ 加守卫 ✗ ⭐ 我们**自动换一个通道** ✓ ✓。
+            if (!BRUTE_DONE && target.level().getGameTime() >= BRUTE_RESCAN_AT) {
                 discoverBruteChannel(target);
+            }
+            // ⭐ ① 方法通道（⭐ 名字无关 ✓ 最抗改名 ✓）
+            if (BRUTE_METHOD != null) {
+                float w = (BRUTE_AFFINE && Math.abs(BRUTE_K) > 1.0E-6F) ? (value - BRUTE_B) / BRUTE_K : value;
+                Object arg = BRUTE_METHOD_PARAM == float.class ? (Object) w
+                        : BRUTE_METHOD_PARAM == double.class ? (Object) (double) w
+                        : (Object) Math.round(w);
+                try {
+                    BRUTE_METHOD.invoke(target, arg);
+                } catch (Throwable ignored) {
+                }
+                if (Math.abs(target.getHealth() - value) < 0.05F) {
+                    return true;
+                }
+                // ⚠ 这个方法不灵了 ⇒ ⭐ 作废 ＋ 稍后重扫 ✓
+                BRUTE_METHOD = null;
+                BRUTE_METHOD_PARAM = null;
+                BRUTE_DONE = false;
+                BRUTE_RESCAN_AT = target.level().getGameTime() + 100L;
             }
             if (BRUTE_ACCESSOR != null) {
                 var data = ((net.minecraft.world.entity.Entity) target).getEntityData();
@@ -614,7 +641,51 @@ public final class TruePierce {
                 }
             } catch (Throwable ignored) {
             }
-            // ⭐ ① 实例 float/double 字段 ✓
+            // ⭐⭐⭐⭐ §1224 **第一优先：⭐ 方法候选（⭐ 完全不看名字 ✓ 最抗"恶趣味改名" ✓）**
+            //   ⚠ 动机 ✗：⭐ 用户口径 2026-10-10：
+            //   「**启示录更新版本有可能还会恶趣味做这种事情，有办法兜住吗**」✓
+            //   ⭐ §1223 实证：⭐ 它把 setter 改名成 ⭐ `…HealthIdiot` ✗
+            //     ⇒ ⭐ 任何"按名字找"的写法**下次还会被耍** ✓
+            //   ⇒ ⭐ 那就 ⭐ **只按"行为"找** ✗：
+            //     ⭐ 遍历实体类（⭐ 含父类 ✓）上 ⭐ **由模组加的**（⭐ 声明类不是 `net.minecraft.*` ✓）
+            //     ⭐ 收**一个数值参数**、⭐ 返回 `void` 的方法 ✓ ⭐ **不管它叫什么** ✓
+            //     ⭐ 调用后 ⭐ **看 `getHealth()` 变不变** ✓ ✓
+            //     ⭐ 变了 ⇒ ⭐ **它就是改血入口** ✓ ✓（⭐ 且自动解出仿射关系 ✓）
+            //   ⚠ 安全网 ✗：⭐ 跳过 getter／⭐ 跳过含危险词的方法 ✓ ⭐ 且每个都**立刻还原** ✓。
+            for (Class<?> c = e.getClass(); c != null && c != Object.class; c = c.getSuperclass()) {
+                if (c.getName().startsWith("net.minecraft.")) {
+                    continue;   // ⭐ 原版方法一律不碰 ✓（⭐ 免得误调用 `setPos` 之类 ✓）
+                }
+                for (java.lang.reflect.Method m : c.getDeclaredMethods()) {
+                    if (java.lang.reflect.Modifier.isStatic(m.getModifiers())) {
+                        continue;
+                    }
+                    if (m.getParameterCount() != 1) {
+                        continue;
+                    }
+                    Class<?> pt = m.getParameterTypes()[0];
+                    boolean pf = pt == float.class;
+                    boolean pd = pt == double.class;
+                    boolean pi = pt == int.class;
+                    if (!pf && !pd && !pi) {
+                        continue;   // ⭐ 只要数值参数 ✓（⭐ 布尔／对象参数会误触 ✓）
+                    }
+                    if (m.getReturnType() != void.class) {
+                        continue;   // ⭐ 只要 void ✓（⭐ getter／查询类排除 ✓）
+                    }
+                    String mn = m.getName();
+                    if (mn.startsWith("get") || mn.startsWith("is") || mn.startsWith("has")
+                            || mn.contains("Damage") || mn.contains("Kill") || mn.contains("Die")
+                            || mn.contains("Remove") || mn.contains("Summon") || mn.contains("Spell")
+                            || mn.contains("Sound") || mn.contains("Cast") || mn.contains("Doom")) {
+                        continue;   // ⭐ 危险词一律跳过 ✓
+                    }
+                    if (probeMethod(e, m, pt, pf, pd, gh0)) {
+                        return;
+                    }
+                }
+            }
+            // ⭐ ② 实例 float/double 字段 ✓
             for (Class<?> c = e.getClass(); c != null && c != Object.class; c = c.getSuperclass()) {
                 for (java.lang.reflect.Field f : c.getDeclaredFields()) {
                     if (java.lang.reflect.Modifier.isStatic(f.getModifiers())) {
@@ -700,6 +771,44 @@ public final class TruePierce {
         } catch (Throwable t) {
             TinkersNewlife.LOGGER.info("[真伤·循环改血] 扫描失败：{}", t.toString());
         }
+    }
+
+    /** ⭐⭐ §1224 试一个"改血方法" ✗ ⭐ 名字无关 ✓ ⭐ 命中就锁定 ✓ */
+    private static boolean probeMethod(LivingEntity e, java.lang.reflect.Method m, Class<?> pt,
+                                       boolean pf, boolean pd, float gh0) {
+        try {
+            m.setAccessible(true);
+            // ⭐ 第一次采样：⭐ 写哨兵 ✓
+            m.invoke(e, pf ? (Object) 7.5F : pd ? (Object) 7.5D : (Object) 7);
+            float gh1 = e.getHealth();
+            if (Math.abs(gh1 - 7.5F) < 0.05F) {
+                BRUTE_METHOD = m;
+                BRUTE_METHOD_PARAM = pt;
+                BRUTE_AFFINE = false;
+                m.invoke(e, pf ? (Object) gh0 : pd ? (Object) (double) gh0 : (Object) Math.round(gh0));
+                TinkersNewlife.LOGGER.info(
+                        "[真伤·循环改血] ★ 锁定方法 {}（等值通道，名字无关 ✓）✓", m.getName());
+                return true;
+            }
+            if (Math.abs(gh1 - gh0) > 0.05F) {
+                // ⭐ 第二次采样解仿射 ✓
+                m.invoke(e, pf ? (Object) 15.0F : pd ? (Object) 15.0D : (Object) 15);
+                float gh2 = e.getHealth();
+                solveAffine(gh1, 7.5F, gh2, 15.0F);
+                BRUTE_METHOD = m;
+                BRUTE_METHOD_PARAM = pt;
+                BRUTE_AFFINE = true;
+                m.invoke(e, pf ? (Object) gh0 : pd ? (Object) (double) gh0 : (Object) Math.round(gh0));
+                TinkersNewlife.LOGGER.info(
+                        "[真伤·循环改血] ★ 锁定方法 {}（仿射 血={}×值+{}，名字无关 ✓）✓",
+                        m.getName(), BRUTE_K, BRUTE_B);
+                return true;
+            }
+            // ⚠ 没影响 ⇒ ⭐ 还原成原来的血值 ✓
+            m.invoke(e, pf ? (Object) gh0 : pd ? (Object) (double) gh0 : (Object) Math.round(gh0));
+        } catch (Throwable ignored) {
+        }
+        return false;
     }
 
     /** ⭐ 试一个 `float` 槽位 ✗ ⭐ 命中就锁定并返回 true ✓ */
