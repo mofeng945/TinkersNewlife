@@ -131,10 +131,20 @@ public class PortableTinkerStationItem extends Item {
 
     /** 从玩家脚下往下找一块基岩（★不破坏建筑 ✗ ⭐ 也天然没有邻接容器 ✓） */
     private static BlockPos findBedrock(Level level, BlockPos from) {
+        // §1290 用户口径：优先"基岩正上方那一格"（空气／石头都行，只要不是矿物）；
+        //         没有基岩时，取从下往上第一块"非基岩且非矿物"的方块。
         int min = level.getMinBuildHeight();
-        for (int y = from.getY(); y >= min; y--) {
+        int maxY = Math.min(from.getY() + 1, level.getMaxBuildHeight() - 1);
+        for (int y = min; y <= maxY; y++) {
             BlockPos p = new BlockPos(from.getX(), y, from.getZ());
             if (level.getBlockState(p).is(net.minecraft.world.level.block.Blocks.BEDROCK)) {
+                BlockPos up = p.above();
+                if (isTarget(level, up)) {
+                    return up;
+                }
+                continue;
+            }
+            if (isTarget(level, p)) {
                 return p;
             }
         }
@@ -183,4 +193,16 @@ public class PortableTinkerStationItem extends Item {
         }
         return true;
     }
-}
+
+    /** 不是基岩、也不是矿物（★空气／石头都算 ✓） */
+    private static boolean isTarget(Level level, BlockPos p) {
+        try {
+            net.minecraft.world.level.block.state.BlockState s = level.getBlockState(p);
+            if (s.is(net.minecraft.world.level.block.Blocks.BEDROCK)) {
+                return false;
+            }
+            return !s.is(net.minecraftforge.common.Tags.Blocks.ORES);
+        } catch (Throwable t) {
+            return false;
+        }
+    }}
