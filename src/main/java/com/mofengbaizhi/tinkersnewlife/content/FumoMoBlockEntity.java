@@ -291,6 +291,18 @@ public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.worl
     private static volatile ResourceKey<Level> discDim;
     /** 听到唱片开始的客户端 tick ✓（配曲长兜底判"放完了" ✓） */
     private static volatile long discStartTick = Long.MIN_VALUE;
+    /**
+     * ⭐⭐⭐⭐ §1241 <b>新舞蹈：⭐ "听到的是哪张唱片" ＋ ⭐ "那张唱片多长"</b> ✗✗
+     * （⭐ 用户口径 ✓ 2026-10-10：「**不是替换，是新舞蹈和新唱片**」✓）
+     * <ul>
+     *   <li>{@code discStyle ＝ 0} ⇒ ⭐ 老舞蹈（⭐ 朋友的酒那套"旋转＋挤压" ✓）；</li>
+     *   <li>{@code discStyle ＝ 1} ⇒ ⭐ **新舞蹈**（⭐ 左转＋前倾点头 ✗ ⭐ 原路回正 ✗ ⭐ 右转＋前倾点头 ✓）。</li>
+     * </ul>
+     * ⚠ ⭐ 曲长也一起记 ✗ —— ⭐ 两张唱片**长度不同** ✓（⭐ 581KB 那张 1126 tick ✗
+     * ⭐ 新的那张 1324 tick ✓）⇒ ⭐ `discPlayingNear` 的"放完了没"判定必须用**记下来的那张** ✓ ✓。
+     */
+    private static volatile int discStyle = 0;
+    private static volatile int discLength = 1126;
 
     /**
      * <b>曲长兜底</b>：我们的唱片本身有多长（tick ✓ 由 ogg 末页 granule 算出来 ✓
@@ -305,12 +317,24 @@ public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.worl
      */
     private static final int DISC_END_PAD_TICKS = 20;
 
-    /** §1096 声音事件告诉我们"我们的唱片从这儿放了" ✓ */
+    /** §1096 声音事件告诉我们"我们的唱片从这儿放了" ✓（⭐ 老签名保留 ✗ ⭐ 走 style 0 ✓） */
     public static void noteDiscSource(Level level, double x, double y, double z) {
+        noteDiscSource(level, x, y, z, 0, 1126);
+    }
+
+    /** ⭐ §1241 带"哪张唱片"的版本 ✗（⭐ style 1 ＝ 新舞蹈 ✓） */
+    public static void noteDiscSource(Level level, double x, double y, double z, int style, int lengthTicks) {
         if (level == null) return;
         discPos = BlockPos.containing(x, y, z);
         discDim = level.dimension();
         discStartTick = level.getGameTime();
+        discStyle = style;
+        discLength = Math.max(20, lengthTicks);
+    }
+
+    /** ⭐ §1241 当前跳舞风格（⭐ 0 ＝ 老旋转 ✗ ⭐ 1 ＝ 新序列 ✓） */
+    public static int discStyle() {
+        return discStyle;
     }
 
     /** §1096 同一格唱片机改放**别的**唱片 ⇒ 把"我们的唱片在放"立刻作废 ✓（否则会跟着别人的曲子跳 ✗） */
@@ -320,6 +344,7 @@ public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.worl
             discPos = null;
             discDim = null;
             discStartTick = Long.MIN_VALUE;
+            discStyle = 0;
         }
     }
 
@@ -352,7 +377,7 @@ public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.worl
                 clearDiscSourceAt(p.getX() + 0.5D, p.getY() + 0.5D, p.getZ() + 0.5D);
                 return false;                                                     // 唱片没了/机器没了 ⇒ 立刻停 ✓
             }
-            if (now - discStartTick > (long) ModItems.MUSIC_DISC_DOLL_MUSIC_LENGTH_TICKS + DISC_END_PAD_TICKS) {
+            if (now - discStartTick > (long) discLength + DISC_END_PAD_TICKS) {
                 return false;                                                     // 曲子放完了 ⇒ 停 ✓
             }
             // ⑤ 唱片机方块实体佐证 ✓（只采信"它明确在放别的唱片"⇒ 停 ✗ 见方法注释 ✓）
@@ -360,7 +385,8 @@ public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.worl
             if (jb instanceof net.minecraft.world.level.block.entity.JukeboxBlockEntity jukebox
                     && jukebox.isRecordPlaying()
                     && !jukebox.getFirstItem().isEmpty()
-                    && !jukebox.getFirstItem().is(ModItems.MUSIC_DISC_DOLL_MUSIC.get())) {
+                    && !jukebox.getFirstItem().is(ModItems.MUSIC_DISC_DOLL_MUSIC.get())
+                    && !jukebox.getFirstItem().is(ModItems.MUSIC_DISC_TELL_ME.get())) {
                 return false;
             }
             return true;
@@ -506,4 +532,61 @@ public class FumoMoBlockEntity extends BlockEntity implements net.minecraft.worl
             }
         }
     }
-}
+    // ============================================================
+    //  §1241 新舞蹈：⭐ 左转＋前倾点头 ⇒ ⭐ 原路回正 ⇒ ⭐ 右转＋前倾点头
+    //  （⭐ 用户口径 ✓：「**左转一下然后整体前倾点头，再原路回到初始正面，
+    //    再右转一下前倾点头**」✓ ⭐ 参考用户给的 gif ✓）
+    // ============================================================
+
+    /** 总周期（秒 ✓）：⭐ 两个方向各一轮 ＋ ⭐ 中间留一点停顿 ✓ */
+    private static final double ND_PERIOD = 2.30D;
+    /** 转向角度（度 ✓） */
+    private static final float ND_TURN = 50.0F;
+    /** 前倾角度（度 ✓） */
+    private static final float ND_LEAN = 20.0F;
+    /** 点头摆幅（度 ✓） */
+    private static final float ND_NOD = 9.0F;
+
+    /** ⭐ 平滑（⭐ smoothstep ✓）：⭐ 起停都不生硬 ✓ */
+    private static double ndSmooth(double t) {
+        if (t <= 0.0D) return 0.0D;
+        if (t >= 1.0D) return 1.0D;
+        return t * t * (3.0D - 2.0D * t);
+    }
+
+    /** ⭐ 段内进度 ✗（⭐ 落在 [0,1] ✓） */
+    private static double ndSeg(double t, double a, double b) {
+        if (t <= a) return 0.0D;
+        if (t >= b) return 1.0D;
+        return (t - a) / (b - a);
+    }
+
+    /** ⭐ 新舞蹈·偏航 ✗：⭐ 左转 → ⭐ 保持 ✓ → ⭐ 原路回正 ✓ → ⭐ 右转 ✓ → ⭐ 保持 ✓ → ⭐ 回正 ✓ */
+    public static float seqYaw(double seconds) {
+        double t = seconds % ND_PERIOD;
+        if (t < 0.35D) return -ND_TURN * (float) ndSmooth(ndSeg(t, 0.0D, 0.35D));
+        if (t < 0.60D) return -ND_TURN;
+        if (t < 0.95D) return -ND_TURN * (float) (1.0D - ndSmooth(ndSeg(t, 0.60D, 0.95D)));
+        if (t < 1.30D) return ND_TURN * (float) ndSmooth(ndSeg(t, 0.95D, 1.30D));
+        if (t < 1.55D) return ND_TURN;
+        if (t < 1.90D) return ND_TURN * (float) (1.0D - ndSmooth(ndSeg(t, 1.55D, 1.90D)));
+        return 0.0F;
+    }
+
+    /** ⭐ 新舞蹈·**前倾** ✗（⭐ 只在"点头"那两段有 ✓） */
+    public static float seqLean(double seconds) {
+        double t = seconds % ND_PERIOD;
+        if (t >= 0.35D && t < 0.60D) return ND_LEAN * (float) ndSmooth(ndSeg(t, 0.35D, 0.60D));
+        if (t >= 0.60D && t < 0.95D) return ND_LEAN * (float) (1.0D - ndSmooth(ndSeg(t, 0.60D, 0.95D)));
+        if (t >= 1.30D && t < 1.55D) return ND_LEAN * (float) ndSmooth(ndSeg(t, 1.30D, 1.55D));
+        if (t >= 1.55D && t < 1.90D) return ND_LEAN * (float) (1.0D - ndSmooth(ndSeg(t, 1.55D, 1.90D)));
+        return 0.0F;
+    }
+
+    /** ⭐ 新舞蹈·**点头**摆幅 ✗（⭐ 与前倾叠加 ⇒ ⭐ "点头"的感觉 ✓） */
+    public static float seqNod(double seconds) {
+        double t = seconds % ND_PERIOD;
+        if (t >= 0.35D && t < 0.60D) return ND_NOD * (float) Math.sin((t - 0.35D) / 0.25D * Math.PI * 4.0D);
+        if (t >= 1.30D && t < 1.55D) return ND_NOD * (float) Math.sin((t - 1.30D) / 0.25D * Math.PI * 4.0D);
+        return 0.0F;
+    }}

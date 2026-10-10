@@ -69,4 +69,14 @@
       }
     ]
   }
+,
+  "music_tell_me": {
+    "subtitle": "subtitles.tinkersnewlife.music_tell_me",
+    "sounds": [
+      {
+        "name": "tinkersnewlife:music/tell_me_tell_me",
+        "stream": true
+      }
+    ]
+  }
 }

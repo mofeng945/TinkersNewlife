@@ -143,6 +143,7 @@ public class ModCreativeTabs {
 
                                 // ----- §1096 唱片「墨封白织的唱片」（放进原版唱片机 ⇒ 16 格内的 fufu 一起跳舞 ✓）-----
                                 output.accept(ModItems.MUSIC_DISC_DOLL_MUSIC.get());
+            output.accept(ModItems.MUSIC_DISC_TELL_ME.get());
 
                                 // §1081：全部 fufu 已从这里**移出** ✓ ⇒ 本栏（匠魂新生）不再出现任何 fufu ✓，
                                 // 它们单独占一页创造栏（见下面的 FUMO_TAB ✓）。

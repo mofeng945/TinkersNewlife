@@ -95,8 +95,15 @@ public final class FumoMoDanceHandler {
             if (mc == null || mc.level == null) return;
             // ── §1096 ①我们自己的唱片（原版唱片机在放）⇒ 只记下"那台唱片机在哪" ✓
             //    这条路**完全不碰** friendswine ✓（没装它也照样跳 ✓）
+            // ⭐ §1241 **新唱片 ⇒ ⭐ 新舞蹈** ✗（⭐ 用户口径 ✓「不是替换，是新舞蹈和新唱片」✓）
+            if (com.mofengbaizhi.tinkersnewlife.content.ModSounds.MUSIC_TELL_ME_ID.equals(id)) {
+                FumoMoBlockEntity.noteDiscSource(mc.level, sound.getX(), sound.getY(), sound.getZ(),
+                        1, com.mofengbaizhi.tinkersnewlife.content.ModItems.MUSIC_DISC_TELL_ME_LENGTH_TICKS);
+                return;
+            }
             if (com.mofengbaizhi.tinkersnewlife.content.ModSounds.MUSIC_DOLL_ID.equals(id)) {
-                FumoMoBlockEntity.noteDiscSource(mc.level, sound.getX(), sound.getY(), sound.getZ());
+                FumoMoBlockEntity.noteDiscSource(mc.level, sound.getX(), sound.getY(), sound.getZ(),
+                        0, com.mofengbaizhi.tinkersnewlife.content.ModItems.MUSIC_DISC_DOLL_MUSIC_LENGTH_TICKS);
                 return;
             }
             // ── §1096 ②同一格唱片机改放**别的**唱片（原版唱片走的是 SoundSource.RECORDS ✓）⇒

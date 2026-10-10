@@ -748,4 +748,21 @@ public class ModItems {
                             ModSounds.MUSIC_DOLL,                     // Forge 版：Supplier<SoundEvent> ✓
                             new Item.Properties().stacksTo(1).rarity(Rarity.RARE),
                             MUSIC_DISC_DOLL_MUSIC_LENGTH_TICKS));
+    /** ⭐ §1241 新唱片音轨长度（tick ✓）—— 同款"解析 ogg 算出来" ✓：
+     *  末页 granule {@code 2918400} ÷ 采样率 {@code 44100 Hz} ＝ {@code 66.177 秒}
+     *  ⇒ {@code 66.177 × 20 ＝ 1323.5 ≈ 1324 tick} ✓（⭐ 立体声 ✓）。 */
+    public static final int MUSIC_DISC_TELL_ME_LENGTH_TICKS = 1324;
+
+    /** ⭐ §1241 <b>新唱片「Tell Me Tell Me」</b>（{@code tinkersnewlife:music_disc_tell_me}）✓
+     *  —— ⭐ 用户口径 ✓：「**不是替换，是新舞蹈和新唱片**」✓
+     *  ⭐ 音频 {@code assets/tinkersnewlife/sounds/music/tell_me_tell_me.ogg} ✓
+     *  ⭐ 声音事件 {@code tinkersnewlife:music_tell_me}（见 {@link ModSounds#MUSIC_TELL_ME} ✓）。
+     *  ⭐ 听到它 ⇒ ⭐ **玩偶换新舞蹈**（⭐ 左转＋前倾点头 ✗ ⭐ 原路回正 ✗ ⭐ 右转＋前倾点头 ✓）。 */
+    public static final RegistryObject<Item> MUSIC_DISC_TELL_ME =
+            ITEMS.register("music_disc_tell_me",
+                    () -> new net.minecraft.world.item.RecordItem(
+                            10,
+                            ModSounds.MUSIC_TELL_ME,
+                            new Item.Properties().stacksTo(1).rarity(Rarity.RARE),
+                            MUSIC_DISC_TELL_ME_LENGTH_TICKS));
 }

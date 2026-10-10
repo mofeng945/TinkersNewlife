@@ -121,11 +121,24 @@ public class FumoMoBlockEntityRenderer implements BlockEntityRenderer<FumoMoBloc
         FumoMoBlockEntity.trackRendered(be, be.getLevel());
         if (be.isDancing()) {
             double sec = FumoMoBlockEntity.danceSeconds(be.getLevel(), be, partialTick);
-            pose.mulPose(Axis.YP.rotationDegrees(FumoMoBlockEntity.fwAngle(sec)));
-            float sq = FumoMoBlockEntity.fwSquash(sec);
-            float w = 1.0F + 0.5F * sq;   // 它的 widthPercent 默认 50 ✓
-            float h = 1.0F - 0.5F * sq;   // 它的 compressionPercent 默认 50 ✓
-            pose.scale(w, h, w);
+            // ⭐⭐ §1241 **按"听到的是哪张唱片"分派两种舞蹈** ✗（⭐ 用户口径 ✓：
+            //   「**不是替换，是新舞蹈和新唱片**」✓）
+            if (FumoMoBlockEntity.discStyle() == 1) {
+                // ⭐ 新舞蹈 ✗：⭐ 左转＋前倾点头 ⇒ ⭐ 原路回正 ⇒ ⭐ 右转＋前倾点头 ✓
+                //   ⭐ 偏航绕 ⭐ **方块底面中心**（⭐ 此时 pose 还在 `translate(0.5,0,0.5)` 之后 ✓）
+                //     ⇒ ⭐ 像"坐在原地扭头" ✓；
+                //   ⭐ 前倾＋点头绕 `Axis.XP` ✗ ⭐ 支点同样在**脚底** ✓ ⇒ ⭐ 是"往前趴一下"而不是"翻滚" ✓。
+                pose.mulPose(Axis.YP.rotationDegrees(FumoMoBlockEntity.seqYaw(sec)));
+                pose.mulPose(Axis.XP.rotationDegrees(
+                        FumoMoBlockEntity.seqLean(sec) + FumoMoBlockEntity.seqNod(sec)));
+            } else {
+                // ⭐ 老舞蹈 ✗：⭐ 朋友的酒那套"旋转＋挤压"（⭐ 公式照抄它 ✓ 不动 ✓）
+                pose.mulPose(Axis.YP.rotationDegrees(FumoMoBlockEntity.fwAngle(sec)));
+                float sq = FumoMoBlockEntity.fwSquash(sec);
+                float w = 1.0F + 0.5F * sq;   // 它的 widthPercent 默认 50 ✓
+                float h = 1.0F - 0.5F * sq;   // 它的 compressionPercent 默认 50 ✓
+                pose.scale(w, h, w);
+            }
         }
         // §908 抚摸挤压：横向鼓 = sqrt(1 / yScale)（有体积感 ✓ 照诡厄玩偶的算法 ✓）
         //   在 translate(0.5,0,0.5) 之后 ⇒ 缩放是**以方块底面中心为原点**的 ✓
