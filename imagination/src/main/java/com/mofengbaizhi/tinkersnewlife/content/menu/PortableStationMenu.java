@@ -30,7 +30,16 @@ public class PortableStationMenu extends TinkerStationContainerMenu {
         if (detached == null || player.level().isClientSide()) {
             return;
         }
-        // ★ 关闭即清空：能塞进背包就塞 ✗ 塞不下掉在脚下 ✓
+        // ★ 关闭时把内容写回物品 NBT（用户口径：能塞 NBT 就直接塞 NBT）
+        ItemStack holder = com.mofengbaizhi.tinkersnewlife.content.item.PortableTinkerStationItem.findIn(player);
+        if (!holder.isEmpty()) {
+            com.mofengbaizhi.tinkersnewlife.content.item.PortableTinkerStationItem.saveInventory(holder, detached);
+            for (int i = 0; i < detached.getContainerSize(); i++) {
+                detached.setItem(i, ItemStack.EMPTY);   // ★ 实体侧清空（真正的家在 NBT）
+            }
+            return;
+        }
+        // ⚠ 兜底：物品不在包里了（被换走/丢弃）⇒ 东西还给玩家 ✗ 塞不下就掉脚下
         for (int i = 0; i < detached.getContainerSize(); i++) {
             ItemStack s = detached.getItem(i);
             if (s.isEmpty()) {
