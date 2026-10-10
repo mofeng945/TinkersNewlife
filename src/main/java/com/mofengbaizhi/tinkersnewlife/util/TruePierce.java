@@ -190,6 +190,38 @@ public final class TruePierce {
         }
     }
 
+    /** ⭐ 按名字在类（⭐ 含父类 ＋ ⭐ 所有接口递归 ✓）里找一个"收一个 `float`"的方法 ✗ */
+    private static java.lang.reflect.Method findFloatSetter(Class<?> cls, String name) {
+        try {
+            for (Class<?> c = cls; c != null && c != Object.class; c = c.getSuperclass()) {
+                for (java.lang.reflect.Method m : c.getDeclaredMethods()) {
+                    if (m.getName().equals(name) && m.getParameterCount() == 1
+                            && m.getParameterTypes()[0] == float.class) {
+                        try {
+                            m.setAccessible(true);
+                        } catch (Throwable ignored) {
+                        }
+                        return m;
+                    }
+                }
+                for (Class<?> itf : c.getInterfaces()) {
+                    java.lang.reflect.Method m = findFloatSetter(itf, name);
+                    if (m != null) {
+                        return m;
+                    }
+                }
+            }
+            for (Class<?> itf : cls.getInterfaces()) {
+                java.lang.reflect.Method m = findFloatSetter(itf, name);
+                if (m != null) {
+                    return m;
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return null;
+    }
+
     /** ⭐ 按**名字**在接口（含父接口）里找一个方法 ✗ ⭐ 不写死参数类型 ✓ */
     private static java.lang.reflect.Method findByName(Class<?> owner, String name) {
         try {
@@ -224,14 +256,25 @@ public final class TruePierce {
         if (apollyonIface == null || !apollyonIface.isInstance(e)) {
             return false;
         }
-        // ⭐⭐ §1217 **优先走 setter**（⭐ 若它存在 ✓）
+        // ⭐⭐⭐⭐ §1222 **"setter 可能在实体类上，而不是接口上"** ✗✗（⭐ 探针实证 ✓）
+        //   ⚠ `ApollyonMixin` 把 ⭐ `revelaionfix$setApollyonHealth` **加到了 Apostle 类上** ✓
+        //     ⭐ 而运行时那个**接口**里没有它 ✓（⭐ §1218 探针 ✓）
+        //   ⇒ ⭐ **直接在实体类（⭐ 含父类 ＋ ⭐ 所有接口递归 ✓）里按名字找** ✓ ✓
+        //     ⭐ 找到就能 ⭐ **写它真正的血** ✓ ⇒ ⭐ 不需要影子血 ✓。
+        if (apollyonSetHealth == null) {
+            java.lang.reflect.Method m = findFloatSetter(e.getClass(), "revelaionfix$setApollyonHealth");
+            if (m != null) {
+                apollyonSetHealth = m;
+                TinkersNewlife.LOGGER.info("[真伤·通道] 在实体类上找到了真血 setter：{} ✓", m);
+            }
+        }
         if (apollyonSetHealth != null) {
             try {
                 apollyonSetHealth.invoke(e, value);
                 zeroApollyonHitCooldown(e);
                 return true;
             } catch (Throwable ignored) {
-                // ⚠ 走不通 ⇒ ⭐ 落到下面的访问器方案 ✓
+                // ⚠ 走不通 ⇒ ⭐ 落到下面的方案 ✓
             }
         }
         // ⭐⭐⭐⭐ §1217 **真血 = 那个同步数据 `EntityDataAccessor<Float>`** ✗✗
@@ -959,16 +1002,8 @@ public final class TruePierce {
 
     /** ⭐ **逆向读血**：⭐ 直读字段 ✓（⭐ 拿不到就退回 `getHealth()` ✓） */
     public static float rawHealth(LivingEntity target) {
-        // ⭐⭐⭐⭐ §1220 **影子血最优先** ✗✗（⭐ dump 实证 ✓ 2026-10-10 ✓）：
-        //   ⭐ dump 显示 ⭐ `SD[AOGBOGBO…DOGQ]=666.0` ✗ ⭐ `SD[f_20961_]=320.0` ✗ ⭐ `F[f_20920_]=0.00` ✓
-        //   ⚠ ⭐ 而 ⭐ `getApollyonHealth()` 报 **93** ✗ ⭐ `EC.percent=0.14` ✓
-        //   ⇒ ⭐ **93 ＝ 0.14 × 666** ✗ ⭐ **真血是"算出来"的** ✓
-        //     ⇒ ⭐ **没有任何一个可以写的存储** ✓ ✓
-        //   ⇒ ⭐ 那就 ⭐ **我们自己记账** ✗（⭐ 建立"影子血" ✓ ⭐ 读也读它 ✓）。
-        float shadow = shadowHealthOf(target);
-        if (shadow >= 0.0F) {
-            return shadow;
-        }
+        // ⚠⚠ §1222 **影子血已回退** ✗（⭐ 用户实测「**不掉血了？？？**」✓）
+        //   ⭐ 教训：⭐ **"记账代替真写"会让真身彻底不掉血** ✗ ⭐ 绝不能这么兜底 ✓。
         float viaApi = target.getHealth();
         // ⭐⭐⭐⭐ §1214 **先问"额外血量通道"** ✗ —— ⭐ 有就以它为准 ✓（⭐ 那才是真血 ✓）
         float viaExtra = apollyonHealthOf(target);
@@ -1047,25 +1082,13 @@ public final class TruePierce {
             }
             return true;
         }
-        // ⭐⭐⭐⭐ §1220 **影子血**（⭐ 真血写不进去 ⇒ ⭐ 我们自己记账 ✓）
-        //   ⚠ 触发条件 ✗：⭐ 这个实体**有那个接口**（⭐ = ⭐ 它的血"算出来的" ✓）
-        //     ⭐ 而 ⭐ setter／⭐ 访问器**都写不到** ✓ ⇒ ⭐ 只能记账 ✓ ✓
-        //   ⭐ 通用 ✗：⭐ 认**接口**不认类型名 ✓ —— ⭐ 任何模组实现同名接口都适用 ✓。
-        if (hasApollyonChannel(target)) {
-            SHADOW_HEALTH.put(target.getUUID(), value);
-            try {
-                target.hurtMarked = true;
-            } catch (Throwable ignored) {
-            }
-            if (SHADOW_LOGGED.compareAndSet(false, true)) {
-                TinkersNewlife.LOGGER.info(
-                        "[真伤·影子血] 真血无法写入 ⇒ 改为自行记账：{}（{}）首值={} ✓",
-                        target.getName().getString(),
-                        net.minecraft.world.entity.EntityType.getKey(target.getType()).toString(),
-                        String.format(java.util.Locale.ROOT, "%.2f", value));
-            }
-            return true;
-        }
+        // ⭐⭐⭐⭐⚠⚠ §1222 **影子血已回退** ✗✗（⭐ 用户实测 2026-10-10：「**不掉血了？？？**」✓）
+        //   ⚠ 根因：⭐ 影子血让 `rawSetHealth` **直接 `return true`** ✗
+        //     ⇒ ⭐ **真身那一笔再也没写** ✓ ⇒ ⭐ 它真身的血**不再下降** ✓ ✓（⭐ 我把它搞坏了 ✓）
+        //   ⚠ 而且 ⭐ 我们的 `LivingEntityGetHealthMixin` **对使徒无效** ✗：
+        //     ⭐ 它自己 **覆写了 `getHealth()`**（⭐ `ApollyonMixin.m_21223_` ✓）
+        //     ⇒ ⭐ 虚分派**不会走父类那个注入点** ✓ ⇒ ⭐ 影子血**连界面都影响不到** ✓ ✓
+        //   ⇒ ⭐ 结论：⭐ **绝不能"记账代替真写"** ✗ ⭐ 只能**想办法真写** ✓。
         // ⭐⭐ §1201 **用"这个实体"的字段**（⭐ 按值反查过 ✓ 不是按名字猜的 ✓）
         java.lang.reflect.Field f = healthFieldFor(target);
         boolean raw = false;
@@ -1671,18 +1694,7 @@ public final class TruePierce {
         if (entity == null) {
             return -1.0F;
         }
-        // ⭐⭐ §1220 **影子血优先** ✗（⭐ 这类 Boss 的血由我们记账 ✓）
-        if (!SHADOW_HEALTH.isEmpty()) {
-            Float sh;
-            try {
-                sh = SHADOW_HEALTH.get(entity.getUUID());
-            } catch (Throwable ignored) {
-                sh = null;
-            }
-            if (sh != null) {
-                return sh;
-            }
-        }
+        // ⚠⚠ §1222 **影子血已回退** ✗（⭐ 见 `rawSetHealth` 的说明 ✓）
         // ⚠⚠ **空判先行** ✗ —— ⭐ `getHealth()` 是热点方法 ✓
         //   ⭐ 绝大多数实体都没被锁 ⇒ ⭐ 一次 `isEmpty()` 就返回 ⇒ **零开销** ✓ ✓
         if (PENDING.isEmpty()) {
