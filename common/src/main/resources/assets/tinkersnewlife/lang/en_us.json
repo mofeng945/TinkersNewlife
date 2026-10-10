@@ -1587,5 +1587,20 @@
   "jei.tinkersnewlife.music_disc_tell_me": "获得方式：钓鱼时有 1% 概率获得",
   "attribute.tinkersnewlife.curse_affinity": "Curse Affinity",
   "tooltip.tinkersnewlife.curse_affinity.slot": "When worn as a curio:",
-  "tooltip.tinkersnewlife.curse_affinity.value": "+%s Curse Affinity"
+  "tooltip.tinkersnewlife.curse_affinity.value": "+%s Curse Affinity",
+  "title.tinkersnewlife.ordinary": "Ordinary",
+  "title.tinkersnewlife.grade5": "Grade 5 Sorcerer",
+  "title.tinkersnewlife.grade4": "Grade 4 Sorcerer",
+  "title.tinkersnewlife.grade3": "Grade 3 Sorcerer",
+  "title.tinkersnewlife.grade2": "Grade 2 Sorcerer",
+  "title.tinkersnewlife.grade1": "Grade 1 Sorcerer",
+  "title.tinkersnewlife.special": "Special Grade Sorcerer",
+  "title.tinkersnewlife.heaven_tyrant": "Heavenly Tyrant",
+  "title.tinkersnewlife.heaven_binding": "Heavenly Restriction",
+  "title.tinkersnewlife.tool_smith": "Cursed Tool Smith",
+  "title.tinkersnewlife.puppet_master": "Corpse Puppeteer",
+  "title.tinkersnewlife.world_abandoned": "Abandoned by the World",
+  "title.tinkersnewlife.enemy_of_all": "Enemy of the World",
+  "title.tinkersnewlife.calamity_bearer": "Calamity Bearer",
+  "title.tinkersnewlife.iron_tomb_crisis": "Iron Tomb Crisis"
 }
