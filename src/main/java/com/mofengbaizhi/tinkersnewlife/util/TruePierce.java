@@ -551,6 +551,19 @@ public final class TruePierce {
         }
     }
 
+    /**
+     * ⭐⭐ §1230 <b>"累计未落地伤害 ⇒ 处决"总开关</b> ✗ —— ⭐ **已按用户口径关闭** ✓。
+     *
+     * <p>⚠ 用户口径 ✓ 2026-10-10：「**算了不针对下界亚波伦了，破不了就破不了吧**」✓
+     * <p>⚠ 为什么关掉而不是只撤"亚波伦特判" ✗：
+     * ⭐ 这个机制**不认识类型** ✗ —— ⭐ 它对 ⭐ **任何"我们打不动血的目标"** 都生效 ✓
+     * （⭐ 伤害上限 ✗ ⭐ 各种免疫窗 ✗ ⭐ 别的模组的锁血 ✓）
+     * ⇒ ⭐ 留着它 ⭐ **等于给所有这类 Boss 都开了"打够就死"** ✗
+     * ⭐ 那 ⭐ 与用户"**不针对**"的口径**冲突** ✓ ⇒ ⭐ **整体关掉** ✓ ✓。
+     * <p>⚠ 代码保留 ✗（⭐ 不删 ✓）—— ⭐ 以后要用 ⭐ 把这里改 `true` 即可 ✓。
+     */
+    private static final boolean CUMULATIVE_EXECUTE = false;
+
     /** ⭐ `revelaionfix$apollyonEC()` ✗（⭐ dump 用 ✓） */
     private static java.lang.reflect.Method apollyonEcMethod = null;
 
@@ -1592,11 +1605,12 @@ public final class TruePierce {
         DamageSource withAttacker = source(target.level(), attacker);
         DamageSource anonymous = source(target.level(), null);
 
-        // ③ 下界亚波伦：hurt() 管线被它的免疫窗整个取消 → 直接扣血
-        if (GoetyBridge.isNetherApollyon(target)) {
-            directDamage(target, want, withAttacker);
-            return;
-        }
+        // ③ ⭐⭐ §1230 **下界亚波伦的特判已撤掉** ✗✗（⭐ 用户口径 ✓ 2026-10-10：
+        //   「**算了不针对下界亚波伦了，破不了就破不了吧**」✓）
+        //   ⚠ 原来这里 ⭐ `if (isNetherApollyon(target)) { directDamage(...); return; }` ✓
+        //   ⇒ ⭐ 那是 ⭐ **给一个 Boss 写特判** ✗ ⭐ 与"一视同仁"冲突 ✓
+        //   ⭐ 现在 ⭐ **它和别的目标走完全一样的路** ✓：⭐ `hurt` ＋ ⭐ 差额逆向补 ✓
+        //   ⚠ 它能挡住 ⇒ ⭐ **就让它挡住** ✓ ⭐ 不再为它单开一条通道 ✓ ✓。
 
         // ④ ⭐⭐ §1189 **删掉分段**（⭐ 用户口径 ✓ 2026-10-10：「**删掉分段，然后调用受击效果和伤害音效**」✓）
         //   ⚠ 原来是 ⭐ `chunkedHurt(带攻击者源)` ✗ ⭐ 打不动再 ⭐ `chunkedHurt(无主源)` ✓
@@ -1729,7 +1743,7 @@ public final class TruePierce {
             //     ⭐ 只有 ⭐ "**伤害落不了地**"的目标（⭐ 免疫期／⭐ 锁血 ✓）才会积累 ✓
             //     ⇒ ⭐ 效果就是 ⭐ **"它的无敌能挡伤害，但挡不住死亡"** ✓ ✓。
             try {
-                float deficit = Math.max(0.0F, want - Math.max(dealt, 0.0F));
+                float deficit = CUMULATIVE_EXECUTE ? Math.max(0.0F, want - Math.max(dealt, 0.0F)) : 0.0F;
                 if (deficit > 0.01F) {
                     float owed = DAMAGE_OWED.merge(target.getUUID(), deficit, Float::sum);
                     float cur = rawHealth(target);
@@ -1879,7 +1893,7 @@ public final class TruePierce {
             try {
                 float after = rawHealth(target);
                 float dealt = Math.max(0.0F, before - after);
-                float deficit = Math.max(0.0F, dmg - dealt);
+                float deficit = CUMULATIVE_EXECUTE ? Math.max(0.0F, dmg - dealt) : 0.0F;
                 if (deficit > 0.01F) {
                     float owed = DAMAGE_OWED.merge(target.getUUID(), deficit, Float::sum);
                     if (owed >= after) {
