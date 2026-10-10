@@ -46,5 +46,13 @@ public class ServerLevelTickTailMixin {
         } catch (Throwable ignored) {
             // ⭐ 锁应用出错绝不能连累服务端 tick ✗
         }
+        try {
+            // ⭐⭐ §1240 **跨 tick 清除复查**（⭐ 狱门疆封印／⭐ 咒灵操术收回 ✓）
+            //   ⭐ 挂在这里的理由同血量锁 ✗：⭐ 这是 ⭐ **比所有实体 tick 都晚** 的时机 ✓
+            //   ⇒ ⭐ "tick 自愈型"防清除 ⭐ **这一 tick 自愈完 ⭐ 我们紧接着再摘** ✓ ✓。
+            com.mofengbaizhi.tinkersnewlife.content.gourd.GourdJailEntity.tickPurgeRecheck(level);
+        } catch (Throwable ignored) {
+            // ⭐ 复查出错绝不能连累服务端 tick ✗
+        }
     }
 }

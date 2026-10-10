@@ -57,7 +57,7 @@ public final class ShikigamiHandler {
 
     /** 收回全部式神，返回应返还的咒力（按召唤消耗的一半估算；同类型多只只算一次成本，
      *  如脱兔召唤 8 只只扣 1 次咒力，回收也只按 1 次返还） */
-    public static int recallAll(ServerPlayer player, List<net.minecraft.world.entity.Entity> entities) {
+    public static int estimatedRecallRefund(ServerPlayer player, List<net.minecraft.world.entity.Entity> entities) {
         java.util.Set<ShikigamiType> types = new java.util.HashSet<>();
         for (net.minecraft.world.entity.Entity e : entities) {
             if (e instanceof ShikigamiMob sm) {

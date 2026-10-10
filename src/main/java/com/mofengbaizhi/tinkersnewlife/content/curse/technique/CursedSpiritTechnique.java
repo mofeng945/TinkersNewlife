@@ -1209,7 +1209,7 @@ public final class CursedSpiritTechnique extends BaseTechnique {
             return;
         }
 
-        TinkersNewlife.LOGGER.info("[收回] 开始：{}（{}，血量={}/{}）",
+        TinkersNewlife.LOGGER.debug("[收回] 开始：{}（{}，血量={}/{}）",
                 mob.getName().getString(), net.minecraft.world.entity.EntityType.getKey(mob.getType()),
                 mob.getHealth(), mob.getMaxHealth());
         clearEntityBossBar(mob);
@@ -1226,7 +1226,26 @@ public final class CursedSpiritTechnique extends BaseTechnique {
         //    （为什么不再补刀：被收回的 Boss 会照常跑完它自己的死亡逻辑，
         //      "奥术源质、钥匙之类"就是这么掉出来的 ✗；见方法注释）
         mob.discard();
-        TinkersNewlife.LOGGER.info("[收回] 结束：{} 已静默移除（不走死亡链路 ⇒ 不掉落/不记形态 ✓）",
+        // ⭐⭐⭐⭐ §1240 **收回后也要"跨 tick 复查"＋ ⭐ 清记账** ✗（⭐ 用户口径 ✓ 六项全做 ✓）
+        //   ⚠ 为什么 ✗：⭐ `discard()` 就是 `remove(DISCARDED)` ✓
+        //     ⚠ 而 ⭐ 有些模组的 Boss ⭐ **覆写 `remove`／⭐ tick 自愈** ✗ ⇒ ⭐ 收回会"**幽灵化**" ✓
+        //     （⭐ 本类前面那段注释就记过"UI 说收回了 ✗ 场上还站着"那类 ✓）
+        //   ⇒ ⭐ 两点 ✓：
+        //     ① ⭐ 若 `discard()` **没生效** ⇒ ⭐ 登记 ⭐ 狱门疆那套**跨 tick 清除复查** ✓
+        //        （⭐ 20 tick 内每 tick 再摘一次 ✓ ⭐ 顶住"每 tick 自愈" ✓）；
+        //     ② ⭐ 无论如何 ⭐ **清掉真伤线的按 UUID 记账** ✓（⭐ 免得表越攒越大 ✓）。
+        try {
+            if (!mob.isRemoved()) {
+                com.mofengbaizhi.tinkersnewlife.content.gourd.GourdJailEntity
+                        .schedulePurgeRecheck(mob, 20);
+            }
+        } catch (Throwable ignored) {
+        }
+        try {
+            com.mofengbaizhi.tinkersnewlife.util.TruePierce.forgetEntity(mob);
+        } catch (Throwable ignored) {
+        }
+        TinkersNewlife.LOGGER.debug("[收回] 结束：{} 已静默移除（不走死亡链路 ⇒ 不掉落/不记形态 ✓）",
                 mob.getName().getString());
     }
 

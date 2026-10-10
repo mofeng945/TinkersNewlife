@@ -2446,12 +2446,42 @@ public final class TruePierce {
         }
     }
 
-    /** ⭐ 实体消失/死亡时清掉影子血 ✗（⭐ 免得 UUID 复用 ✓） */
-    public static void forgetShadow(LivingEntity e) {
+    /**
+     * ⭐⭐⭐⭐ §1240 <b>统一清理"按 UUID 的记账表"</b> ✗✗
+     * （⭐ 用户口径 ✓ 2026-10-10：「**检查一下收回和封印之类的逻辑有没有需要优化的地方**」✓ 六项全做 ✓）
+     *
+     * <h2>⚠ 为什么要统一 ✗</h2>
+     * ⭐ 真伤线现在有 ⭐ **四张按 UUID 记的表** ✗：
+     * ⭐ `LAST_START_HP`（⭐ 上一发的血 ✓）✗ ⭐ `DAMAGE_OWED`（⭐ 累计未落地伤害 ✓）✗
+     * ⭐ `SHADOW_HEALTH`（⭐ 影子血 ✗ 现已停用 ✓）✗ ⭐ `PENDING`（⭐ 跨 tick 锁 ✓）
+     * ⚠ ⭐ 而 ⭐ **实体死亡／⭐ 移除／⭐ 被收回／⭐ 被封印**时 ⭐ 没有任何一处**统一清它们** ✓
+     * ⇒ ⭐ 以前靠 ⭐ `size > 512` 就 `clear()` ✗ ⭐ 那是**粗暴地连别人一起抹** ✓
+     * ⭐ ⇒ 现在 ⭐ **按实体精确清** ✗ ⭐ 挂在 ⭐ **死亡事件** ＋ ⭐ **收回** ＋ ⭐ **封印** ✓ ✓。
+     */
+    public static void forgetEntity(LivingEntity e) {
+        if (e == null) {
+            return;
+        }
         try {
-            if (e != null) {
-                SHADOW_HEALTH.remove(e.getUUID());
-            }
+            java.util.UUID id = e.getUUID();
+            LAST_START_HP.remove(id);
+            DAMAGE_OWED.remove(id);
+            SHADOW_HEALTH.remove(id);
+            PENDING.remove(id);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** ⭐ 旧名保留 ✗（⭐ 现在统一走 {@link #forgetEntity} ✓） */
+    public static void forgetShadow(LivingEntity e) {
+        forgetEntity(e);
+    }
+
+    /** ⭐⭐ §1240 死亡 ⇒ ⭐ **精确清理这个实体的记账** ✓（⭐ 免得表越攒越大 ✓） */
+    @SubscribeEvent
+    public static void onLivingDeathCleanup(net.minecraftforge.event.entity.living.LivingDeathEvent event) {
+        try {
+            forgetEntity(event.getEntity());
         } catch (Throwable ignored) {
         }
     }

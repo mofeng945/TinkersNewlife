@@ -244,6 +244,10 @@ public class GourdJailEntity extends Entity {
             // saveWithoutId 不写 "id"，loadEntityRecursive 需要它才能识别类型
             prisonerNbt.putString("id", net.minecraft.world.entity.EntityType.getKey(living.getType()).toString());
             prisonerId = living.getUUID();
+            // ⭐⭐ §1240 **封印前记下它的原血量** ✗（⭐ 用户口径 ✓ 六项全做 ✓）
+            //   ⚠ 为什么 ✗：⭐ 清除链 ①③⑦ 会把它血设成 0 ✓ ⇒ ⭐ 若最后判定"清除失败" ✗
+            //     ⭐ 所谓"恢复原样" ⭐ **必须把血也还回去** ✓ ⭐ 否则它一挨打就死 ✓ ✓。
+            float hpBeforePurge = com.mofengbaizhi.tinkersnewlife.util.TruePierce.rawHealth(living);
             if (isBossLike(living)) {
                 // ⭐ Boss 封印 = 击败：结算对应 Boss 状态机（末地龙战等），避免"卡消失"后被判定战斗未结束而重刷一条
                 sealAsDefeat((ServerLevel) server, living);
@@ -291,6 +295,17 @@ public class GourdJailEntity extends Entity {
                     living.setNoGravity(false);
                     living.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
                     living.hasImpulse = true;
+                } catch (Throwable ignored) {
+                }
+                // ⑤ ⭐⭐ §1240 **把血量还回去** ✗（⭐ 否则"恢复原样"是假的 ✓ ⭐ 它一挨打就死 ✓）
+                try {
+                    com.mofengbaizhi.tinkersnewlife.util.TruePierce.rawSetHealth(living, hpBeforePurge);
+                } catch (Throwable ignored) {
+                }
+                // ⑥ ⭐⭐ §1240 **撤销"跨 tick 复查"** ✗
+                //   （⭐ 我们已经决定"封印失败、放它走" ✓ ⇒ ⭐ 不能再继续清它 ✓）
+                try {
+                    cancelPurgeRecheck(living);
                 } catch (Throwable ignored) {
                 }
                 com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
@@ -405,7 +420,7 @@ public class GourdJailEntity extends Entity {
         }
         // ⭐ ① 血量设置 0 ✓
         try {
-            living.setHealth(0.0F);
+            com.mofengbaizhi.tinkersnewlife.util.TruePierce.rawSetHealth(living, 0.0F);
         } catch (Throwable ignored) {
         }
         // ⭐ ② 清除实体 ✓
@@ -415,7 +430,7 @@ public class GourdJailEntity extends Entity {
         }
         // ⭐ ③ 随后血量设置 0 ✓（⭐ 防上一步的回调里被回血 ✓）
         try {
-            living.setHealth(0.0F);
+            com.mofengbaizhi.tinkersnewlife.util.TruePierce.rawSetHealth(living, 0.0F);
         } catch (Throwable ignored) {
         }
         // ⭐ ④ 随后 remove ✓（⭐ 再摘一次 ✗ 有的模组只在第二次才认 ✓）
@@ -439,7 +454,7 @@ public class GourdJailEntity extends Entity {
         }
         // ⭐ ⑦ 再血量设置 0 ✓（⭐ 收尾 ✗ ⭐ **全程不主动调 `die()`** ✓ ⇒ ⭐ 不产生战利品 ✓）
         try {
-            living.setHealth(0.0F);
+            com.mofengbaizhi.tinkersnewlife.util.TruePierce.rawSetHealth(living, 0.0F);
         } catch (Throwable ignored) {
         }
         // ⭐⭐ ⑧ **栈尾最终校验**（⭐ 用户口径 ✓ 2026-10-10：「**能不能再栈尾再检测一次清除实体**」✓）
@@ -466,7 +481,7 @@ public class GourdJailEntity extends Entity {
             }
             if (!living.isRemoved()) {
                 try {
-                    living.setHealth(0.0F);
+                    com.mofengbaizhi.tinkersnewlife.util.TruePierce.rawSetHealth(living, 0.0F);
                 } catch (Throwable ignored) {
                 }
                 // ⚠ **只报一次** ✗（⭐ 用持久标记去重 ✓ 免得每 tick 刷屏 ✓）
@@ -481,6 +496,111 @@ public class GourdJailEntity extends Entity {
             }
         } catch (Throwable ignored) {
             // ⭐ 校验本身出错也不能连累玩法 ✗
+        }
+        // ⭐⭐⭐⭐ §1240 **清除失败 ⇒ 登记"跨 tick 复查"** ✗✗（⭐ 用户口径 ✓ 六项全做 ✓）
+        //   ⚠ 为什么要复查 ✗：⭐ 有些模组是 ⭐ **"tick 自愈"** ✗
+        //     （⭐ 这一 tick 被摘掉 ✗ ⭐ 下一 tick 又把自己加回来 ✓ ⭐ 或覆写 `isRemoved` ✓）
+        //     ⇒ ⭐ 单次清除链**一定打不过它** ✓ ⭐ 而我们真伤线 ⭐
+        //       **已经做熟了**"`PENDING` ＋ ⭐ 跨 tick 复查"这套模式 ✓
+        //   ⇒ ⭐ 现在 ⭐ 登记它 ✗ ⭐ 由 ⭐ `tickPurgeRecheck` ⭐ 在
+        //     ⭐ `ServerLevel#tick` 的 TAIL（⭐ 最晚的时机 ✓）里 ⭐ **连续顶 20 tick** ✓
+        //     ⭐ 顶住了就出队 ✓ ⭐ 顶不住就 ⭐ **确认"被防清除"并报一条日志** ✓ ✓。
+        if (!living.isRemoved()) {
+            schedulePurgeRecheck(living, PURGE_RECHECK_TICKS);
+        }
+    }
+
+    // ============================================================
+    //  §1240 跨 tick 清除复查（⭐ 顶住"tick 自愈型"防清除 ✓）
+    // ============================================================
+
+    /** ⭐ 复查时长（⭐ tick ✓）：⭐ 20 tick ≈ 1 秒足够顶过"每 tick 自愈" ✓ */
+    private static final int PURGE_RECHECK_TICKS = 20;
+    private static final java.util.Map<java.util.UUID, Integer> PURGE_RECHECK =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** ⭐ 登记复查 ✗（⭐ 幂等：⭐ 已登记就不重设倒计时 ✓ 免得每次封印都刷新 ✓） */
+    public static void schedulePurgeRecheck(net.minecraft.world.entity.LivingEntity e, int ticks) {
+        try {
+            if (e == null || e.level().isClientSide) {
+                return;
+            }
+            PURGE_RECHECK.putIfAbsent(e.getUUID(), Math.max(1, ticks));
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** ⭐ 撤销复查 ✗（⭐ 封印失败放它走时必须调 ✓） */
+    public static void cancelPurgeRecheck(net.minecraft.world.entity.LivingEntity e) {
+        try {
+            if (e != null) {
+                PURGE_RECHECK.remove(e.getUUID());
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /**
+     * ⭐ 跨 tick 复查 ✗ —— ⭐ 由 {@code ServerLevelTickTailMixin} 的 TAIL 调用 ✓
+     * （⭐ 那个时机 ⭐ **比它自己的 tick 晚** ✓ ⇒ ⭐ 我们摘的是"最后一下" ✓）。
+     */
+    public static void tickPurgeRecheck(net.minecraft.server.level.ServerLevel level) {
+        if (PURGE_RECHECK.isEmpty() || level == null) {
+            return;
+        }
+        try {
+            var it = PURGE_RECHECK.entrySet().iterator();
+            while (it.hasNext()) {
+                var en = it.next();
+                Entity ent = level.getEntity(en.getKey());
+                if (!(ent instanceof net.minecraft.world.entity.LivingEntity living)) {
+                    continue;   // ⭐ 不在这个世界（⭐ 或已彻底没了 ✓）⇒ ⭐ 留给它自己的那个世界 ✓
+                }
+                if (living.isRemoved()) {
+                    com.mofengbaizhi.tinkersnewlife.util.TruePierce.forgetEntity(living);
+                    it.remove();
+                    continue;
+                }
+                // ⭐ 还在 ⇒ ⭐ **再摘一次**（⭐ 与 `forcePurge` 的栈尾同款 ✓）
+                try {
+                    living.remove(Entity.RemovalReason.DISCARDED);
+                } catch (Throwable ignored) {
+                }
+                if (!living.isRemoved()) {
+                    try {
+                        java.lang.reflect.Method m = Entity.class.getDeclaredMethod(
+                                "setRemoved", Entity.RemovalReason.class);
+                        m.setAccessible(true);
+                        m.invoke(living, Entity.RemovalReason.DISCARDED);
+                    } catch (Throwable ignored) {
+                    }
+                }
+                if (!living.isRemoved()) {
+                    try {
+                        com.mofengbaizhi.tinkersnewlife.util.TruePierce.rawSetHealth(living, 0.0F);
+                    } catch (Throwable ignored) {
+                    }
+                }
+                if (living.isRemoved()) {
+                    com.mofengbaizhi.tinkersnewlife.util.TruePierce.forgetEntity(living);
+                    it.remove();
+                    continue;
+                }
+                int left = en.getValue() - 1;
+                if (left <= 0) {
+                    it.remove();
+                    com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                            "[狱门疆] 跨 tick 复查 {} tick 后仍未移除：{}（{}）UUID={} ⇒ **确认被防清除** ✗",
+                            PURGE_RECHECK_TICKS,
+                            living.getName().getString(),
+                            net.minecraft.world.entity.EntityType.getKey(living.getType()).toString(),
+                            living.getUUID());
+                } else {
+                    en.setValue(left);
+                }
+            }
+        } catch (Throwable ignored) {
+            // ⭐ 复查出错绝不能连累服务端 tick ✗
         }
     }
 

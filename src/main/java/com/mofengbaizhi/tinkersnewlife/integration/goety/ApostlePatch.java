@@ -287,6 +287,11 @@ public final class ApostlePatch {
         }
         long now = server.getTickCount();
         TELEPORT_SHIELD.entrySet().removeIf(e -> e.getValue() < now - 200L);   // 顺带清理过期项 ✓
+        // ⭐⭐ §1240 **`TRAP_COOLDOWN` 也要清过期项** ✗（⭐ 用户口径 ✓ 六项全做 ✓）
+        //   ⚠ 原来只有 `TELEPORT_SHIELD` 清了 ✗ ⭐ 同一文件里两张表**只清一张** ✓
+        //     ⇒ ⭐ 使徒打得越多 ⭐ 这张表越大 ✓（⭐ 虽然量小 ✗ ⭐ 但没理由留着 ✓）
+        //   ⭐ 判据同款 ✓：⭐ 过期的记录 ⭐ **比"现在 200 tick 之前"还早** 就扔掉 ✓。
+        TRAP_COOLDOWN.entrySet().removeIf(e -> e.getValue() < now - 200L);
     }
 
     // ============================================================
