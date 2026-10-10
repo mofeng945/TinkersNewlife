@@ -71,7 +71,16 @@ public final class CurseAffinityAttribute {
      *   · 原版找不到匹配的装备槽 ⇒ 不再刷"主手/副手/头/胸/腿/靴"六行；
      *   · Curios 认这个伪槽位 ⇒ 按它自己的文案显示"作为饰品时：+xx 咒力亲和"。
      */
+    /**
+     * §1300 挂原版/Curios 的机制：亲和写成原版 `AttributeModifiers`，`Slot` 必须是
+     * **该物品真实的饰品槽 id**（necklace / ring …）。猜成 "curio" 这种伪槽位 Curios 不认，
+     * 所以之前什么都不显示；写对槽 id 后，提示由 Curios/原版自己渲染成"作为饰品时：+xx 咒力亲和"。
+     */
     public static void setItemAffinity(ItemStack stack, double amount) {
+        setItemAffinity(stack, amount, null);
+    }
+
+    public static void setItemAffinity(ItemStack stack, double amount, net.minecraft.world.level.Level level) {
         try {
             CompoundTag root = stack.getOrCreateTag();
             stripVanillaModifier(root);
@@ -79,16 +88,33 @@ public final class CurseAffinityAttribute {
             if (amount == 0.0D) {
                 return;
             }
-            AttributeModifier mod = new AttributeModifier(ITEM_UUID, MOD_NAME, amount,
-                    AttributeModifier.Operation.ADDITION);
+            java.util.List<String> slots = curioSlots(stack, level);
+            if (slots.isEmpty()) {
+                root.putInt(LEGACY_KEY, (int) Math.round(amount));
+                return;
+            }
+            ListTag list = root.contains("AttributeModifiers", 9) ? root.getList("AttributeModifiers", 10) : new ListTag();
+            AttributeModifier mod = new AttributeModifier(ITEM_UUID, MOD_NAME, amount, AttributeModifier.Operation.ADDITION);
             CompoundTag e = mod.save();
             e.putString("AttributeName", ForgeRegistries.ATTRIBUTES.getKey(CURSE_AFFINITY.get()).toString());
-            e.putString("Slot", "curio");
-            ListTag list = root.contains("AttributeModifiers", 9) ? root.getList("AttributeModifiers", 10) : new ListTag();
+            e.putString("Slot", slots.get(0));
             list.add(e);
             root.put("AttributeModifiers", list);
         } catch (Throwable ignored) {
         }
+    }
+
+    /** 问 Curios：这件物品能戴进哪些槽（★返回槽 id ✓） */
+    public static java.util.List<String> curioSlots(ItemStack stack, net.minecraft.world.level.Level level) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        try {
+            var slots = top.theillusivec4.curios.api.CuriosApi.getItemStackSlots(stack, level);
+            if (slots != null) {
+                out.addAll(slots.keySet());
+            }
+        } catch (Throwable ignored) {
+        }
+        return out;
     }
     /** 清掉老版本写进原版 AttributeModifiers 的"我们的"那一条 */
     public static void stripVanillaModifier(CompoundTag root) {
@@ -160,7 +186,7 @@ public final class CurseAffinityAttribute {
             }
             int affinity = player.level().getRandom().nextInt(51);
             if (affinity > 0) {
-                setItemAffinity(stack, affinity);
+                setItemAffinity(stack, affinity, player.level());
             }
         } catch (Throwable ignored) {
         }

@@ -74,7 +74,7 @@ public class CurseAffinityLootModifier extends LootModifier {
             if (context.getRandom().nextFloat() >= chance) { stack.getOrCreateTag().putBoolean(CurseAffinityAttribute.MARKER_ROLLED, true); continue; }   // §1299-miss 没中也标记 ✓
             int affinity = context.getRandom().nextInt(MAX_AFFINITY + 1); // 0~50
             if (affinity > 0) {
-                CurseAffinityAttribute.setItemAffinity(stack, affinity);   // §1294 写成真正的属性词条
+                CurseAffinityAttribute.setItemAffinity(stack, affinity, context.getLevel());   // §1294 写成真正的属性词条
                 stack.getOrCreateTag().putBoolean(CurseAffinityAttribute.MARKER_ROLLED, true);   // §1299 打标记 ⇒ 不再重掷 ✓
             }
         }
@@ -150,7 +150,7 @@ public class CurseAffinityLootModifier extends LootModifier {
             if (event.getLevel().getRandom().nextFloat() >= CHANCE) return;
             int affinity = event.getLevel().getRandom().nextInt(MAX_AFFINITY + 1);
             if (affinity > 0) {
-                CurseAffinityAttribute.setItemAffinity(stack, affinity);   // §1294 写成真正的属性词条
+                CurseAffinityAttribute.setItemAffinity(stack, affinity, event.getLevel());   // §1294 写成真正的属性词条
                 stack.getOrCreateTag().putBoolean(CurseAffinityAttribute.MARKER_ROLLED, true);   // §1299 打标记 ⇒ 不再重掷 ✓
                 itemEntity.setItem(stack);
             }
