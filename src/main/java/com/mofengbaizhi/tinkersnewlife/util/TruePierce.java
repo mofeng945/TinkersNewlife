@@ -190,12 +190,19 @@ public final class TruePierce {
         }
     }
 
-    /** ⭐ 按名字在类（⭐ 含父类 ＋ ⭐ 所有接口递归 ✓）里找一个"收一个 `float`"的方法 ✗ */
+    /**
+     * ⭐ 按名字在类（⭐ 含父类 ＋ ⭐ 所有接口递归 ✓）里找一个"收一个 `float`"的方法 ✗。
+     *
+     * <p>⭐⭐⚠⚠ §1223 **用"包含"而不是"等于"** ✗✗（⭐ 探针实证 ✓ 2026-10-10 ✓）：
+     * ⭐ 运行时它叫 ⭐ **`revelaionfix$setApollyonHealthIdiot`** ✓
+     * —— ⭐ 作者**故意加了 `Idiot` 后缀** ✗ ⭐ 专门让外部 mod 按标准名**找不到** ✓ ✓
+     * ⇒ ⭐ 只要 ⭐ **名字里含 `setApollyonHealth`** ✗ ⭐ 参数是一个 `float` ✓ ⇒ ⭐ 就是它 ✓。
+     */
     private static java.lang.reflect.Method findFloatSetter(Class<?> cls, String name) {
         try {
             for (Class<?> c = cls; c != null && c != Object.class; c = c.getSuperclass()) {
                 for (java.lang.reflect.Method m : c.getDeclaredMethods()) {
-                    if (m.getName().equals(name) && m.getParameterCount() == 1
+                    if (m.getName().contains(name) && m.getParameterCount() == 1
                             && m.getParameterTypes()[0] == float.class) {
                         try {
                             m.setAccessible(true);
