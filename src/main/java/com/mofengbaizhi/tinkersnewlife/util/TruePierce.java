@@ -327,6 +327,7 @@ public final class TruePierce {
                 }
             }
             if (apollyonHealthAccessor == null) {
+                dumpApollyonStorage(e);   // ⚠ **一次性**：⭐ 把"93 到底存在哪"全扫出来 ✓
                 return false;
             }
             Object acc = apollyonHealthAccessor.get(null);
@@ -336,6 +337,130 @@ public final class TruePierce {
             return false;
         }
     }
+
+    /** ⚠ **一次性 dump**（⭐ 定位"93 到底存在哪" ✗ ⭐ 定位完删 ✓） */
+    private static final java.util.concurrent.atomic.AtomicBoolean TNL_STORAGE_DUMPED =
+            new java.util.concurrent.atomic.AtomicBoolean(false);
+
+    /**
+     * ⭐⭐ §1218 <b>把"亚波伦真血"到底存在哪，四路全扫出来</b> ✗
+     * （⭐ 用户实测 2026-10-10：「**测了**」⇒ ⭐ 运行时接口**没有 setter** ✗
+     *  ⭐ 按值反查 `EntityDataAccessor` 也**没找到** ✓ ⇒ ⭐ 只能直接 dump ✓）。
+     *
+     * <p>⭐ 四路 ✓：
+     * <ol>
+     *   <li>⭐ **持久化 NBT**（⭐ `getPersistentData()` ✓）里所有数值键 ✓；</li>
+     *   <li>⭐ 实体类（⭐ 含父类 ✓）所有 ⭐ `float`／`double` 字段的名字与值 ✓；</li>
+     *   <li>⭐ 实体类所有 ⭐ `static EntityDataAccessor` ✗ ⭐ ＋ ⭐ 它的**同步值与其类型** ✓；</li>
+     *   <li>⭐ ⭐ `revelaionfix$apollyonEC()` 返回的那个**上下文对象**的所有字段 ✓。</li>
+     * </ol>
+     * ⭐ 报的血是一把"尺子" ✗ —— ⭐ **哪一路出现那个数，真血就在那里** ✓ ✓。
+     */
+    private static void dumpApollyonStorage(LivingEntity e) {
+        if (!TNL_STORAGE_DUMPED.compareAndSet(false, true)) {
+            return;
+        }
+        try {
+            float reported = apollyonHealthOf(e);
+            StringBuilder sb = new StringBuilder();
+            net.minecraft.world.entity.Entity ent = (net.minecraft.world.entity.Entity) e;
+            // ⭐ ① 持久化 NBT ✓
+            try {
+                var pdata = ent.getPersistentData();
+                for (String k : pdata.getAllKeys()) {
+                    var t = pdata.get(k);
+                    if (t instanceof net.minecraft.nbt.NumericTag nt) {
+                        sb.append("NBT[").append(k).append("]=")
+                          .append(String.format(java.util.Locale.ROOT, "%.2f", nt.getAsFloat())).append(' ');
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
+            // ⭐ ② float/double 字段 ✓
+            for (Class<?> c = e.getClass(); c != null && c != Object.class; c = c.getSuperclass()) {
+                for (java.lang.reflect.Field f : c.getDeclaredFields()) {
+                    if (f.getType() != float.class && f.getType() != double.class) {
+                        continue;
+                    }
+                    if (java.lang.reflect.Modifier.isStatic(f.getModifiers())) {
+                        continue;
+                    }
+                    try {
+                        f.setAccessible(true);
+                        Object v = f.get(e);
+                        if (v instanceof Number n) {
+                            sb.append("F[").append(f.getName()).append("]=")
+                              .append(String.format(java.util.Locale.ROOT, "%.2f", n.doubleValue())).append(' ');
+                        }
+                    } catch (Throwable ignored) {
+                    }
+                }
+            }
+            // ⭐ ③ static EntityDataAccessor ＋ 它的同步值与类型 ✓
+            try {
+                var data = ent.getEntityData();
+                for (Class<?> c = e.getClass(); c != null && c != Object.class; c = c.getSuperclass()) {
+                    for (java.lang.reflect.Field f : c.getDeclaredFields()) {
+                        if (!java.lang.reflect.Modifier.isStatic(f.getModifiers())) {
+                            continue;
+                        }
+                        if (f.getType() != net.minecraft.network.syncher.EntityDataAccessor.class) {
+                            continue;
+                        }
+                        try {
+                            f.setAccessible(true);
+                            Object acc = f.get(null);
+                            if (acc == null) {
+                                continue;
+                            }
+                            Object cur = data.get((net.minecraft.network.syncher.EntityDataAccessor) acc);
+                            sb.append("SD[").append(f.getName()).append("]=").append(cur)
+                              .append('(').append(cur == null ? "null" : cur.getClass().getSimpleName()).append(") ");
+                        } catch (Throwable ignored) {
+                        }
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
+            // ⭐ ④ apollyonEC() 上下文对象的所有字段 ✓
+            try {
+                if (apollyonEcMethod == null) {
+                    apollyonEcMethod = findByName(apollyonIface, "revelaionfix$apollyonEC");
+                }
+                if (apollyonEcMethod != null) {
+                    Object ec = apollyonEcMethod.invoke(e);
+                    if (ec != null) {
+                        sb.append("EC=").append(ec.getClass().getSimpleName()).append('{');
+                        for (Class<?> c = ec.getClass(); c != null && c != Object.class; c = c.getSuperclass()) {
+                            for (java.lang.reflect.Field f : c.getDeclaredFields()) {
+                                if (java.lang.reflect.Modifier.isStatic(f.getModifiers())) {
+                                    continue;
+                                }
+                                try {
+                                    f.setAccessible(true);
+                                    Object v = f.get(ec);
+                                    if (v instanceof Number n) {
+                                        sb.append(f.getName()).append('=')
+                                          .append(String.format(java.util.Locale.ROOT, "%.2f", n.doubleValue())).append(' ');
+                                    }
+                                } catch (Throwable ignored) {
+                                }
+                            }
+                        }
+                        sb.append('}');
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
+            TinkersNewlife.LOGGER.info("[真伤·通道·存储] 接口报的血={} ⇒ {}",
+                    String.format(java.util.Locale.ROOT, "%.2f", reported), sb);
+        } catch (Throwable t) {
+            TinkersNewlife.LOGGER.info("[真伤·通道·存储] dump 失败：{}", t.toString());
+        }
+    }
+
+    /** ⭐ `revelaionfix$apollyonEC()` ✗（⭐ dump 用 ✓） */
+    private static java.lang.reflect.Method apollyonEcMethod = null;
 
     /** ⚠ 探针去重 ✗ */
     private static final java.util.concurrent.atomic.AtomicBoolean APOLLYON_MISS_LOGGED =
