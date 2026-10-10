@@ -149,26 +149,53 @@ public final class TruePierce {
             return;
         }
         apollyonResolved = true;
+        // ⭐⭐⚠⚠ **每个方法各自找** ✗✗（⭐ 探针实证 ✓ 2026-10-10 ✓）：
+        //   日志：⭐ `类=false getHealth=true setHealth=false setHitCooldown=false` ✗
+        //   ⇒ ⭐ **矛盾**：⭐ 若 `Class.forName` 失败 ✗ ⭐ `getHealth` 不可能为 true ✓
+        //   ⇒ ⭐ 真因：⭐ **`Class.forName` 成功了** ✓ ⭐ `getHealth` 拿到了 ✓
+        //     ⚠ 但 ⭐ `getMethod("…$setApollyonHealth", **float.class**)` **抛了异常** ✓
+        //     ⇒ ⚠ 我原来的写法 ⭐ **一个 catch 把 `apollyonIface` 清成 null** ✗
+        //       ⇒ ⭐ **一个方法找不到 ⇒ 全部作废** ✓ ✓ **这是我写法的错** ✗。
+        //   ⇒ ⭐ 修法：⭐ ① **分别 try** ✗ ⭐ 失败**只影响它自己** ✓；
+        //              ⭐ ② ⭐ **按"名字"遍历 `getMethods()` 找** ✗
+        //                 （⭐ 不写死参数类型 ✓ ⭐ 反编译显示的 `float` 可能与运行时不一致 ✓）
         try {
             apollyonIface = Class.forName(APOLLYON_IFACE);
-            apollyonGetHealth = apollyonIface.getMethod("revelaionfix$getApollyonHealth");
-            apollyonSetHealth = apollyonIface.getMethod("revelaionfix$setApollyonHealth", float.class);
-            apollyonSetHitCooldown = apollyonIface.getMethod("revelaionfix$setHitCooldown", int.class);
         } catch (Throwable ignored) {
             apollyonIface = null;
         }
-        // ⚠⚠ **一次性探针**（⭐ 用户实测 2026-10-10：「**还是没破**」✓ 定位完删 ✗）：
-        //   ⭐ 打出来才知道是 ⭐ "类找不到" ✗ 还是 ⭐ "方法名不对" ✓ 还是 ⭐ "isInstance 为假" ✓
+        if (apollyonIface != null) {
+            apollyonGetHealth = findByName(apollyonIface, "revelaionfix$getApollyonHealth");
+            apollyonSetHealth = findByName(apollyonIface, "revelaionfix$setApollyonHealth");
+            apollyonSetHitCooldown = findByName(apollyonIface, "revelaionfix$setHitCooldown");
+        }
+        // ⚠⚠ **一次性探针**（⭐ 打"实际找到的方法签名" ✗ ⭐ 定位完删 ✓）
         try {
             TinkersNewlife.LOGGER.info(
-                    "[真伤·通道] Apollyon2Interface 类={} getHealth={} setHealth={} setHitCooldown={} 加载器={}",
+                    "[真伤·通道] 类={} getHealth={} setHealth={} setHitCooldown={} | 签名={} | {} | {}",
                     apollyonIface != null,
                     apollyonGetHealth != null,
                     apollyonSetHealth != null,
                     apollyonSetHitCooldown != null,
-                    apollyonIface != null ? String.valueOf(apollyonIface.getClassLoader()) : "n/a");
+                    apollyonGetHealth != null ? apollyonGetHealth.toString() : "n/a",
+                    apollyonSetHealth != null ? apollyonSetHealth.toString() : "n/a",
+                    apollyonSetHitCooldown != null ? apollyonSetHitCooldown.toString() : "n/a");
         } catch (Throwable ignored) {
         }
+    }
+
+    /** ⭐ 按**名字**在接口（含父接口）里找一个方法 ✗ ⭐ 不写死参数类型 ✓ */
+    private static java.lang.reflect.Method findByName(Class<?> owner, String name) {
+        try {
+            for (java.lang.reflect.Method m : owner.getMethods()) {
+                if (m.getName().equals(name)) {
+                    m.setAccessible(true);
+                    return m;
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return null;
     }
 
     /** ⭐ 这个实体有没有"额外血量通道"✗（⭐ 没有 ⇒ -1 ✓） */
