@@ -40,29 +40,36 @@ public class AncientCursedScrollItem extends Item {
         ListTag list = new ListTag();
         List<CursedSpeechRegistry.Word> pool = CursedSpeechRegistry.all();
         Random r = new Random();
-        int count = 1 + r.nextInt(3); // 1..3 段
-        for (int i = 0; i < count; i++) {
-            // 按稀有度加权：权重 = 5 - rarity（稀有度 0..5 → 权重 5..0，最低取 1）
+        // §1274 规范刷新：**按组成部分**（六个槽位）逐个掷，每部分**至多一个**词；
+        //   每中一个部分，下一部分的命中率**逐级衰减** ⇒ **词条越多越稀有** ✓
+        //   （原来是"扁平 1~3 个、按稀有度加权"，会出现同一部分两个词 ⇒ 与用户口径不符）
+        double partChance = 0.85D;
+        for (CursedSpeechRegistry.Part part : CursedSpeechRegistry.Part.values()) {
+            boolean hit = r.nextDouble() <= partChance;
+            partChance *= 0.62D;                // 无论中没中都衰减 ⇒ 越多越稀有
+            if (!hit) continue;
+            List<CursedSpeechRegistry.Word> partPool = CursedSpeechRegistry.of(part);
+            if (partPool.isEmpty()) continue;
             int total = 0;
-            int[] weights = new int[pool.size()];
-            for (int j = 0; j < pool.size(); j++) {
-                int w = Math.max(1, 5 - pool.get(j).rarity());
+            int[] weights = new int[partPool.size()];
+            for (int j = 0; j < partPool.size(); j++) {
+                int w = Math.max(1, 5 - partPool.get(j).rarity());
                 weights[j] = w;
                 total += w;
             }
             int roll = r.nextInt(total);
             int acc = 0;
-            String chosen = null;
-            for (int j = 0; j < pool.size(); j++) {
+            for (int j = 0; j < partPool.size(); j++) {
                 acc += weights[j];
                 if (roll < acc) {
-                    chosen = pool.get(j).id();
+                    list.add(StringTag.valueOf(partPool.get(j).id()));
                     break;
                 }
             }
-            if (chosen != null) {
-                list.add(StringTag.valueOf(chosen));
-            }
+        }
+        if (list.isEmpty()) {
+            List<CursedSpeechRegistry.Word> fallback = CursedSpeechRegistry.of(CursedSpeechRegistry.Part.EXCLAMATION);
+            if (!fallback.isEmpty()) list.add(StringTag.valueOf(fallback.get(0).id()));
         }
         stack.getOrCreateTag().put(KEY_WORDS, list);
         return stack;

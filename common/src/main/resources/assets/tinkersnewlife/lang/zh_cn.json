@@ -1585,5 +1585,7 @@
   "slot.tinkersnewlife.long_short_blade.tough_binding": "坚韧套环",
   "slot.tinkersnewlife.long_short_blade.tough_handle": "坚韧手柄",
   "slot.tinkersnewlife.long_short_blade.small_blade": "小型剑刃",
-  "slot.tinkersnewlife.long_short_blade.bow_limb": "弓臂"
+  "slot.tinkersnewlife.long_short_blade.bow_limb": "弓臂",
+  "jei.tinkersnewlife.music_disc_doll_music": "获得方式：末地城的战利品箱里 20% 概率开出",
+  "jei.tinkersnewlife.music_disc_tell_me": "获得方式：钓鱼时有 1% 概率获得"
 }

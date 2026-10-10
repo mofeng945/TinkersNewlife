@@ -52,6 +52,13 @@ public class TinkersNewlifeJeiPlugin implements IModPlugin {
 
     @Override
     public void registerRecipes(IRecipeRegistration registration) {
+        // §1273 两张唱片的「获得方式」（JEI 信息页，用户点名要）
+        registration.addIngredientInfo(new ItemStack(ModItems.MUSIC_DISC_DOLL_MUSIC.get()),
+                VanillaTypes.ITEM_STACK,
+                Component.translatable("jei.tinkersnewlife.music_disc_doll_music"));
+        registration.addIngredientInfo(new ItemStack(ModItems.MUSIC_DISC_TELL_ME.get()),
+                VanillaTypes.ITEM_STACK,
+                Component.translatable("jei.tinkersnewlife.music_disc_tell_me"));
         registerInfo(registration, ModItems.RLYEH_CALL.get(), "jei.tinkersnewlife.acquire.rlyeh_call");
         registerInfo(registration, ModItems.NYARLATHOTEP_DESIRE.get(), "jei.tinkersnewlife.acquire.nyarlathotep_desire");
         registerInfo(registration, ModItems.YELLOW_KING_REMNANT.get(), "jei.tinkersnewlife.acquire.yellow_king_remnant");
