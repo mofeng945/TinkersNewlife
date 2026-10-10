@@ -82,76 +82,92 @@ public class PortableTinkerStationItem extends Item {
         return ItemStack.EMPTY;
     }
 
-    @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         if (level.isClientSide() || !(player instanceof ServerPlayer sp)) {
             return InteractionResultHolder.pass(stack);
         }
-        // §1288 用户/群友的洞察：真砧在"空旷的另一个维度"里就不崩 ⇒ 本质是"周围什么都没有"，
-        //   匠魂的 detectStationParts 找不到邻块 ⇒ 不会挂侧栏模块 ⇒ 屏幕布局一出生就是最终态，
-        //   那个矩形宽度就不会在 26 与 -2 之间抖 ⇒ JEI 不会撞上负数。
-        //   ⚠ 但不能跨维度：客户端只能在自己所在的世界里按坐标找到方块实体。
-        //   ⇒ 所以我们留在同一维度，把透明砧放到"绝对空旷"的位置。
-        BlockPos base = sp.blockPosition();
-        BlockPos target = null;
-        for (int dy = 2; dy <= 16 && target == null; dy++) {
-            BlockPos p = base.above(dy);
-            if (level.isOutsideBuildHeight(p)) {
-                break;
-            }
-            if (isClearAround(level, p, 2)) {
-                target = p;
-            }
-        }
-        if (target == null) {
-            for (int dy : new int[] { 64, 96, 128 }) {
-                BlockPos p = base.above(dy);
-                if (level.isOutsideBuildHeight(p)) {
-                    continue;
-                }
-                if (isClearAround(level, p, 1)) {
-                    target = p;
-                    break;
-                }
-            }
-        }
-        if (target == null) {
-            for (BlockPos p : new BlockPos[] { base, base.below(), base.north(), base.south(), base.east(), base.west() }) {
-                if (level.getBlockState(p).isAir()) {
-                    target = p;
-                    break;
-                }
-            }
-        }
-        if (target == null) {
+        // §1289 用户口径：把透明砧放在"脚下的一块基岩"处（基岩周围没有容器 ⇒ 匠魂的
+        //   detectStationParts 扫不出侧栏模块 ⇒ 屏幕布局一出生就定型 ⇒ 矩形宽度不抖 ⇒ 不崩）；
+        //   关闭时把基岩原样还原；并保留恢复所需的信息，供"维护"用。
+        restoreStale(sp, stack);
+        BlockPos spot = findBedrock(level, sp.blockPosition());
+        if (spot == null) {
             return InteractionResultHolder.fail(stack);
         }
-        final BlockPos spot = target;
-        net.minecraft.world.level.block.state.BlockState st = com.mofengbaizhi.tinkersnewlife.content.block
-                .InvisibleStationRegistry.INVISIBLE_STATION.get().defaultBlockState();
-        level.setBlockAndUpdate(spot, st);
+        net.minecraft.world.level.block.state.BlockState old = level.getBlockState(spot);
+        net.minecraft.world.level.block.state.BlockState anvil = slimeknights.tconstruct.tables.TinkerTables
+                .tinkersAnvil.get().defaultBlockState();
+        level.setBlockAndUpdate(spot, anvil);
         try {
-            com.mofengbaizhi.tinkersnewlife.content.block.InvisibleStationRegistry.INVISIBLE_STATION.get()
-                    .setPlacedBy(level, spot, st, sp, new ItemStack(slimeknights.tconstruct.tables.TinkerTables
-                            .tinkersAnvil.get().asItem()));
+            slimeknights.tconstruct.tables.TinkerTables.tinkersAnvil.get().setPlacedBy(level, spot, anvil, sp,
+                    new ItemStack(slimeknights.tconstruct.tables.TinkerTables.tinkersAnvil.get().asItem()));
         } catch (Throwable ignored) {
         }
         if (level.getBlockEntity(spot) instanceof TinkerStationBlockEntity be) {
             loadInventory(stack, be);
+            CompoundTag tag = stack.getOrCreateTag();
+            tag.putLong(KEY_POS, spot.asLong());
+            tag.put(KEY_STATE, net.minecraft.nbt.NbtUtils.writeBlockState(old));
+            final BlockPos glued = spot;
             final net.minecraft.server.MinecraftServer server = sp.getServer();
             if (server != null) {
                 server.tell(new net.minecraft.server.TickTask(server.getTickCount() + 10, () -> {
                     if (sp.isRemoved()) {
                         return;
                     }
-                    if (sp.level().getBlockEntity(spot) instanceof TinkerStationBlockEntity ready) {
-                        NetworkHooks.openScreen(sp, ready, spot);
+                    if (sp.level().getBlockEntity(glued) instanceof TinkerStationBlockEntity ready) {
+                        NetworkHooks.openScreen(sp, ready, glued);
                     }
                 }));
             }
         }
         return InteractionResultHolder.success(stack);
+    }
+
+    /** 记录"这次借用"的位置与原方块（★供关闭／维护时还原 ✓） */
+    public static final String KEY_POS = "tnl_station_pos";
+    public static final String KEY_STATE = "tnl_station_state";
+
+    /** 从玩家脚下往下找一块基岩（★不破坏建筑 ✗ ⭐ 也天然没有邻接容器 ✓） */
+    private static BlockPos findBedrock(Level level, BlockPos from) {
+        int min = level.getMinBuildHeight();
+        for (int y = from.getY(); y >= min; y--) {
+            BlockPos p = new BlockPos(from.getX(), y, from.getZ());
+            if (level.getBlockState(p).is(net.minecraft.world.level.block.Blocks.BEDROCK)) {
+                return p;
+            }
+        }
+        return null;
+    }
+
+    /** 还原上一次遗留的那一格（★进世界／⭐ 再次使用／⭐ 关闭时都会调 ✓） */
+    public static void restoreStale(ServerPlayer sp, ItemStack stack) {
+        try {
+            CompoundTag tag = stack.getTag();
+            if (tag == null || !tag.contains(KEY_POS)) {
+                return;
+            }
+            BlockPos old = BlockPos.of(tag.getLong(KEY_POS));
+            if (!(sp.level().getBlockEntity(old) instanceof TinkerStationBlockEntity)) {
+                tag.remove(KEY_POS);
+                tag.remove(KEY_STATE);
+                return;
+            }
+            net.minecraft.world.level.block.state.BlockState st = net.minecraft.world.level.block.Blocks.BEDROCK
+                    .defaultBlockState();
+            if (tag.contains(KEY_STATE)) {
+                try {
+                    st = net.minecraft.nbt.NbtUtils.readBlockState(sp.level().holderLookup(
+                            net.minecraft.core.registries.Registries.BLOCK), tag.getCompound(KEY_STATE));
+                } catch (Throwable ignored) {
+                }
+            }
+            sp.level().setBlockAndUpdate(old, st);
+            tag.remove(KEY_POS);
+            tag.remove(KEY_STATE);
+        } catch (Throwable ignored) {
+        }
     }
 
     /** 以 pos 为中心、半径 r 的立方体是否全是空气（★要比匠魂自己的邻块扫描更宽 ✓） */

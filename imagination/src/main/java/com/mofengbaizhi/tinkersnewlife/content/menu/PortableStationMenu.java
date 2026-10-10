@@ -80,7 +80,21 @@ public class PortableStationMenu extends TinkerStationContainerMenu {
         // 拆掉那块透明砧（东西已经进了 NBT）
         if (stationPos != null && player.level() instanceof ServerLevel sl) {
             if (sl.getBlockState(stationPos).getBlock() == com.mofengbaizhi.tinkersnewlife.content.block.InvisibleStationRegistry.INVISIBLE_STATION.get()) {
-                sl.setBlockAndUpdate(stationPos, Blocks.AIR.defaultBlockState());
+                net.minecraft.nbt.CompoundTag tag = holder.getTag();
+                net.minecraft.world.level.block.state.BlockState back = Blocks.BEDROCK.defaultBlockState();
+                if (tag != null && tag.contains(com.mofengbaizhi.tinkersnewlife.content.item.PortableTinkerStationItem.KEY_STATE)) {
+                    try {
+                        back = net.minecraft.nbt.NbtUtils.readBlockState(sl.holderLookup(
+                                net.minecraft.core.registries.Registries.BLOCK),
+                                tag.getCompound(com.mofengbaizhi.tinkersnewlife.content.item.PortableTinkerStationItem.KEY_STATE));
+                    } catch (Throwable ignored) {
+                    }
+                }
+                sl.setBlockAndUpdate(stationPos, back);
+                if (tag != null) {
+                    tag.remove(com.mofengbaizhi.tinkersnewlife.content.item.PortableTinkerStationItem.KEY_POS);
+                    tag.remove(com.mofengbaizhi.tinkersnewlife.content.item.PortableTinkerStationItem.KEY_STATE);
+                }
             }
         }
     }
