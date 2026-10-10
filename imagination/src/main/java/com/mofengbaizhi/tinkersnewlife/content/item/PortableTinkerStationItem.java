@@ -88,8 +88,7 @@ public class PortableTinkerStationItem extends Item {
         if (level.isClientSide() || !(player instanceof ServerPlayer sp)) {
             return InteractionResultHolder.pass(stack);
         }
-        // §1280 用户思路：方块实体"真在世界里"（一块完全透明的工匠砧）⇒
-        // 客户端能按坐标找到它 ⇒ 100% 走匠魂自己的开界面管线（尺寸/布局都正常 ✓）
+        // §1282 用户口径：开 GUI 要延后（管理员诊断：客户端还没收到方块就开界面 ⇒ JEI 崩／卡死）
         BlockPos base = sp.blockPosition();
         BlockPos target = null;
         BlockPos[] tries = { base, base.above(), base.below(), base.north(), base.south(), base.east(), base.west() };
@@ -102,11 +101,23 @@ public class PortableTinkerStationItem extends Item {
         if (target == null) {
             return InteractionResultHolder.fail(stack);
         }
-        level.setBlockAndUpdate(target, com.mofengbaizhi.tinkersnewlife.content.block.InvisibleStationRegistry
+        final BlockPos spot = target;
+        level.setBlockAndUpdate(spot, com.mofengbaizhi.tinkersnewlife.content.block.InvisibleStationRegistry
                 .INVISIBLE_STATION.get().defaultBlockState());
-        if (level.getBlockEntity(target) instanceof TinkerStationBlockEntity be) {
+        if (level.getBlockEntity(spot) instanceof TinkerStationBlockEntity be) {
             loadInventory(stack, be);
-            NetworkHooks.openScreen(sp, be, target);
+            // ★ 延后 10 tick：等客户端把这块方块收下去之后再开界面 ✓
+            final net.minecraft.server.MinecraftServer server = sp.getServer();
+            if (server != null) {
+                server.tell(new net.minecraft.server.TickTask(server.getTickCount() + 10, () -> {
+                    if (sp.isRemoved()) {
+                        return;
+                    }
+                    if (sp.level().getBlockEntity(spot) instanceof TinkerStationBlockEntity ready) {
+                        NetworkHooks.openScreen(sp, ready, spot);
+                    }
+                }));
+            }
         }
         return InteractionResultHolder.success(stack);
     }
