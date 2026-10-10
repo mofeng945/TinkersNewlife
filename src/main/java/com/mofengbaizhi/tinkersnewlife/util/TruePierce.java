@@ -110,6 +110,89 @@ public final class TruePierce {
     /** ⭐ 0 ＝ 还没找过 ✓ ⭐ 1 ＝ 找到了 ✓ ⭐ -1 ＝ 找不到（⭐ 永远退回 `setHealth` ✓） */
     private static volatile int HEALTH_FIELD_STATE = 0;
 
+    // ============================================================
+    //  ⭐⭐⭐⭐ §1214 "额外血量通道"（⭐ 启示录亚波伦 ✗ 与它同类的东西 ✓）
+    // ============================================================
+
+    /**
+     * ⭐⭐⭐⭐ <b>有些 Boss 的血 ⭐ 不在 {@code LivingEntity#health} 里</b> ✗✗
+     * （⭐ 用户情报 ✓ 2026-10-10：「**启示录的大部分源码在jarjar里面**」✓ ⇒ ⭐ 挖进去查实 ✓）。
+     *
+     * <h2>⚠⚠ 真相（⭐ 反编译实证 ✓ 这是之前一切"没效果"的总根因 ✗）</h2>
+     * ⭐ 启示录的亚波伦实现了 ⭐
+     * ⭐ {@code com.mega.revelationfix.safe.entity.Apollyon2Interface} ✗：
+     * <pre>
+     *   void  revelaionfix$setApollyonHealth(float);   // ⭐ 真正的改血 ✓
+     *   float revelaionfix$getApollyonHealth();        // ⭐ 真正的读血 ✓
+     *   void  revelaionfix$setHitCooldown(int);        // ⭐ 动态减伤的冷却 ✓
+     * </pre>
+     * ⭐ 而它的 ⭐ `AttackDamageChangeHandler.redirectSetHealth` ✗
+     * ⭐ 会拿 ⭐ `revelaionfix$getApollyonHealth()` 当"原值" ✗
+     * ⭐ 把血**拉回那个值** ✓ ⇒ ⭐ **我们改 `health` 字段，它读的是另一个数** ✓ ✓
+     * ⭐ 这**同时解释**了 §1201 那次"字段与 `getHealth()` 不一致"的怪现象 ✓ ✓。
+     *
+     * <h2>⭐ 做法：⭐ 探测接口，有就走它的 getter/setter ✗</h2>
+     * ⚠ ⭐ **不是"按实体类型写特判"** ✗ —— ⭐ 是 ⭐ **"按它有没有这个血量通道的能力"** ✓ ✓
+     * （⭐ 任何模组实现同名接口都自动适用 ✓ ⭐ 与"不针对"的口径一致 ✓）。
+     * ⭐ 顺带 ⭐ `setHitCooldown(0)` ✗ —— ⭐ 那是它**动态减伤**用的冷却 ✓
+     * ⭐ 归零 ⇒ ⭐ `emptyTime` 拉满 ⇒ ⭐ **`amount *= emptyTime / limitTime` 不再削我们** ✓ ✓。
+     */
+    private static final String APOLLYON_IFACE = "com.mega.revelationfix.safe.entity.Apollyon2Interface";
+    private static Class<?> apollyonIface = null;
+    private static java.lang.reflect.Method apollyonGetHealth = null;
+    private static java.lang.reflect.Method apollyonSetHealth = null;
+    private static java.lang.reflect.Method apollyonSetHitCooldown = null;
+    private static volatile boolean apollyonResolved = false;
+
+    private static void resolveApollyon() {
+        if (apollyonResolved) {
+            return;
+        }
+        apollyonResolved = true;
+        try {
+            apollyonIface = Class.forName(APOLLYON_IFACE);
+            apollyonGetHealth = apollyonIface.getMethod("revelaionfix$getApollyonHealth");
+            apollyonSetHealth = apollyonIface.getMethod("revelaionfix$setApollyonHealth", float.class);
+            apollyonSetHitCooldown = apollyonIface.getMethod("revelaionfix$setHitCooldown", int.class);
+        } catch (Throwable ignored) {
+            apollyonIface = null;
+        }
+    }
+
+    /** ⭐ 这个实体有没有"额外血量通道"✗（⭐ 没有 ⇒ -1 ✓） */
+    private static float apollyonHealthOf(LivingEntity e) {
+        resolveApollyon();
+        if (apollyonIface == null || apollyonGetHealth == null || !apollyonIface.isInstance(e)) {
+            return -1.0F;
+        }
+        try {
+            Object r = apollyonGetHealth.invoke(e);
+            return r instanceof Float f ? f : -1.0F;
+        } catch (Throwable ignored) {
+            return -1.0F;
+        }
+    }
+
+    /** ⭐ 走"额外血量通道"改血 ✗（⭐ 顺带把动态减伤冷却归零 ✓） */
+    private static boolean apollyonSetHealth(LivingEntity e, float value) {
+        resolveApollyon();
+        if (apollyonIface == null || apollyonSetHealth == null || !apollyonIface.isInstance(e)) {
+            return false;
+        }
+        try {
+            apollyonSetHealth.invoke(e, value);
+        } catch (Throwable ignored) {
+            return false;
+        }
+        try {
+            if (apollyonSetHitCooldown != null) {
+                apollyonSetHitCooldown.invoke(e, 0);   // ⚠ 动态减伤失效 ✓
+            }
+        } catch (Throwable ignored) {
+        }
+        return true;
+    }
+
     /** ⭐ 找血量字段 ✗（⭐ 只找一次 ✓）—— ⭐⭐ §1201 **改成"按值反查"** ✗ */
     private static java.lang.reflect.Field healthField() {
         if (HEALTH_FIELD_STATE != 0) {
@@ -192,6 +275,11 @@ public final class TruePierce {
     /** ⭐ **逆向读血**：⭐ 直读字段 ✓（⭐ 拿不到就退回 `getHealth()` ✓） */
     public static float rawHealth(LivingEntity target) {
         float viaApi = target.getHealth();
+        // ⭐⭐⭐⭐ §1214 **先问"额外血量通道"** ✗ —— ⭐ 有就以它为准 ✓（⭐ 那才是真血 ✓）
+        float viaExtra = apollyonHealthOf(target);
+        if (viaExtra >= 0.0F) {
+            return viaExtra;
+        }
         // ⭐⭐ §1201 **字段按值反查**（⭐ 只做一次 ✓ 用**这个**实体当样本 ✓）
         java.lang.reflect.Field f = healthFieldFor(target);
         if (f != null) {
@@ -242,6 +330,16 @@ public final class TruePierce {
     public static boolean rawSetHealth(LivingEntity target, float value) {
         if (target == null || target.level().isClientSide) {
             return false;
+        }
+        // ⭐⭐⭐⭐ §1214 **有"额外血量通道"就只走它** ✗
+        //   ⚠ 不要把 `health` 字段也写一份 ✗ —— ⭐ 那个字段对这类 Boss **没有意义** ✓
+        //     ⭐ 而且写了会让 ⭐ `getHealth()` 与真血**更乱** ✓（⭐ §1201 的怪现象就是这么来的 ✓）
+        if (apollyonSetHealth(target, value)) {
+            try {
+                target.hurtMarked = true;
+            } catch (Throwable ignored) {
+            }
+            return true;
         }
         // ⭐⭐ §1201 **用"这个实体"的字段**（⭐ 按值反查过 ✓ 不是按名字猜的 ✓）
         java.lang.reflect.Field f = healthFieldFor(target);
