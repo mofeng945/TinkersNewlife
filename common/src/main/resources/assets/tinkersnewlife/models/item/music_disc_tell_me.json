@@ -1,6 +1,6 @@
 {
   "parent": "item/generated",
   "textures": {
-    "layer0": "tinkersnewlife:item/music_disc_doll_music"
+    "layer0": "tinkersnewlife:item/music_disc_tell_me"
   }
 }
