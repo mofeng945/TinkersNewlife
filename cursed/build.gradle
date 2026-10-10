@@ -3,6 +3,9 @@ plugins {
     id 'net.minecraftforge.gradle' version '6.0.54'
 }
 
+// ⭐ §1256 要在配置期读 :common 的 sourceSets ⇒ 先声明求值顺序 ✓
+evaluationDependsOn(':common')
+
 version = mod_version
 group = mod_group_id
 base { archivesName = 'tinkersnewlife_cursed' }
@@ -26,7 +29,10 @@ repositories {
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
-    // ⭐ 公共层：⭐ 等第 2 段搬内容时再接 ✓
+    // ⭐ §1256 公共层 ✗ —— ⭐ 直接吃 :common 的**类目录** ✓
+    //   ⚠ 不走 `project(':common')` 的 jar ✗：⭐ 那个 jar 被 `reobfJar` 换成了 **SRG 名** ✗
+    //     ⭐ 与开发映射对不上 ⇒ ⭐ 编译必炸 ✓ ⇒ 用 `sourceSets.main.output` ✓ ✓。
+    compileOnly project(':common').sourceSets.main.output
 }
 
 tasks.named('processResources', ProcessResources).configure {

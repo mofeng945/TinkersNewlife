@@ -22,3 +22,10 @@ description='''Tinker's Newlife: Cursed'''
     versionRange="[1.20.1,1.21)"
     ordering="NONE"
     side="BOTH"
+
+[[dependencies.tinkersnewlife_cursed]]
+    modId="tinkersnewlife"
+    mandatory=true
+    versionRange="[1.0.1,2.0.0)"
+    ordering="AFTER"
+    side="BOTH"
