@@ -335,6 +335,7 @@ public final class TruePierce {
             }
             if (apollyonHealthAccessor == null) {
                 dumpApollyonStorage(e);   // ⚠ **一次性**：⭐ 把"93 到底存在哪"全扫出来 ✓
+                probeApollyonChannels(e); // ⭐⭐ **一次性**：⭐ 暴力穷举"改哪能让 getHealth 变" ✓
                 return false;
             }
             Object acc = apollyonHealthAccessor.get(null);
@@ -468,6 +469,410 @@ public final class TruePierce {
 
     /** ⭐ `revelaionfix$apollyonEC()` ✗（⭐ dump 用 ✓） */
     private static java.lang.reflect.Method apollyonEcMethod = null;
+
+    // ============================================================
+    //  ⭐⭐⭐⭐ §1221 **循环改血**（⭐ 用户点名要 ✓）
+    // ============================================================
+
+    /** ⭐ 找到的"真能改血"的槽位 ✗（⭐ 字段 ＋ 它属于谁 ✓） */
+    private static volatile Object BRUTE_OWNER = null;
+    private static volatile java.lang.reflect.Field BRUTE_SLOT = null;
+    /** ⭐ 找到的是**同步访问器**时用它 ✗ */
+    private static volatile Object BRUTE_ACCESSOR = null;
+    /** ⭐ 槽位与血是**仿射关系**（⭐ 血 ＝ k×槽 ＋ b ✓）时用这两个 ✓ */
+    private static volatile boolean BRUTE_AFFINE = false;
+    private static volatile float BRUTE_K = 1.0F;
+    private static volatile float BRUTE_B = 0.0F;
+    private static volatile boolean BRUTE_DONE = false;
+
+    /**
+     * ⭐⭐⭐⭐ §1221 <b>循环改血：⭐ 把所有候选槽位逐个写成目标值 ✗ ⭐ 谁能真的改变
+     * {@code getHealth()} 就用谁</b> ✓（⭐ 用户口径 ✓：「**这个循环改血的逻辑不错，
+     * 可以加到我真伤兜底链条里面**」✓）。
+     *
+     * <h2>⭐⭐ 为什么这是"万能钥匙"</h2>
+     * ⭐ 我们不知道它是怎么算血的 ✗（⭐ `percent × 上限` 只是猜测 ✓）
+     * ⚠ ⭐ 但**因果关系不需要知道公式** ✗：
+     * ⭐ 我写一个值 ✗ ⭐ **读回 `getHealth()`** ✗
+     * ⭐ **变了 ⇒ 这个槽位就是"血的上游"** ✓ ✓ —— ⭐ 一次就锁定了 ✓。
+     *
+     * <h2>⭐ 三路候选（⭐ 逐个试 ✓ 试到就停 ✓）</h2>
+     * <ol>
+     *   <li>⭐ **实体（⭐ 含父类 ✓）所有实例 `float`／`double` 字段** ✓；</li>
+     *   <li>⭐ **所有 `static` 同步访问器**里当前值是 `Float` 的 ✓；</li>
+     *   <li>⭐ ⭐ `ApollyonExpandedContext` 的所有 `float` 字段（⭐ 含 `percent` ✓）。</li>
+     * </ol>
+     * ⭐ 每种都 ⭐ **写哨兵值 → 读血 → 立即还原** ✗（⭐ 绝不留痕 ✓）；
+     * ⭐ 若"写了血就变"但**不是等值**（⭐ 比如比例 ✓）⇒ ⭐ **再取第二个采样点解一次仿射** ✗
+     * ⭐ `血 ＝ k×槽 ＋ b` ⇒ ⭐ 之后 ⭐ `槽 ＝ (目标血 − b) / k` ✓ ✓ ——
+     * ⭐ 这样 ⭐ **连"算出来的血"也能精确写** ✓ ✓。
+     *
+     * <p>⚠ 找到后 ⭐ **缓存**（⭐ `BRUTE_SLOT`／⭐ `BRUTE_ACCESSOR` ✓）⇒ ⭐ 后续调用**零扫描开销** ✓。
+     */
+    public static boolean bruteForceWrite(LivingEntity target, float value) {
+        try {
+            if (!BRUTE_DONE) {
+                discoverBruteChannel(target);
+            }
+            if (BRUTE_ACCESSOR != null) {
+                var data = ((net.minecraft.world.entity.Entity) target).getEntityData();
+                Object cur;
+                try {
+                    cur = data.get((net.minecraft.network.syncher.EntityDataAccessor) BRUTE_ACCESSOR);
+                } catch (Throwable ignored) {
+                    cur = null;
+                }
+                if (cur instanceof Float) {
+                    data.set((net.minecraft.network.syncher.EntityDataAccessor) BRUTE_ACCESSOR, value);
+                    if (Math.abs(target.getHealth() - value) < 0.05F) {
+                        return true;
+                    }
+                }
+            }
+            if (BRUTE_SLOT != null && BRUTE_OWNER != null) {
+                float write = (BRUTE_AFFINE && Math.abs(BRUTE_K) > 1.0E-6F)
+                        ? (value - BRUTE_B) / BRUTE_K
+                        : value;
+                BRUTE_SLOT.setFloat(BRUTE_OWNER, write);
+                if (Math.abs(target.getHealth() - value) < 0.05F) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    /** ⭐ 扫描并锁定"真能改血"的槽位 ✗（⭐ 只做一次 ✓） */
+    private static synchronized void discoverBruteChannel(LivingEntity e) {
+        if (BRUTE_DONE) {
+            return;
+        }
+        BRUTE_DONE = true;
+        final float S1 = 7.5F;
+        final float S2 = 15.0F;
+        try {
+            float gh0 = e.getHealth();
+            Object ec = null;
+            try {
+                if (apollyonEcMethod == null) {
+                    apollyonEcMethod = findByName(apollyonIface, "revelaionfix$apollyonEC");
+                }
+                if (apollyonEcMethod != null) {
+                    ec = apollyonEcMethod.invoke(e);
+                }
+            } catch (Throwable ignored) {
+            }
+            // ⭐ ① 实例 float/double 字段 ✓
+            for (Class<?> c = e.getClass(); c != null && c != Object.class; c = c.getSuperclass()) {
+                for (java.lang.reflect.Field f : c.getDeclaredFields()) {
+                    if (java.lang.reflect.Modifier.isStatic(f.getModifiers())) {
+                        continue;
+                    }
+                    boolean isF = f.getType() == float.class;
+                    boolean isD = f.getType() == double.class;
+                    if (!isF && !isD) {
+                        continue;
+                    }
+                    if (probeSlot(e, f, e, isF, true, gh0, S1, S2)) {
+                        return;
+                    }
+                }
+            }
+            // ⭐ ② static 同步访问器（⭐ 当前值是 Float ✓）
+            try {
+                var data = ((net.minecraft.world.entity.Entity) e).getEntityData();
+                for (Class<?> c = e.getClass(); c != null && c != Object.class; c = c.getSuperclass()) {
+                    for (java.lang.reflect.Field f : c.getDeclaredFields()) {
+                        if (!java.lang.reflect.Modifier.isStatic(f.getModifiers())) {
+                            continue;
+                        }
+                        Object acc;
+                        try {
+                            f.setAccessible(true);
+                            acc = f.get(null);
+                        } catch (Throwable ignored) {
+                            continue;
+                        }
+                        if (acc == null) {
+                            continue;
+                        }
+                        Object cur;
+                        try {
+                            cur = data.get((net.minecraft.network.syncher.EntityDataAccessor) acc);
+                        } catch (Throwable ignored) {
+                            continue;
+                        }
+                        if (!(cur instanceof Float)) {
+                            continue;
+                        }
+                        // ⭐ 写哨兵 → 读血 → 还原 ✓
+                        data.set((net.minecraft.network.syncher.EntityDataAccessor) acc, S1);
+                        float gh1 = e.getHealth();
+                        data.set((net.minecraft.network.syncher.EntityDataAccessor) acc, S2);
+                        float gh2 = e.getHealth();
+                        data.set((net.minecraft.network.syncher.EntityDataAccessor) acc, cur);
+                        if (Math.abs(gh1 - S1) < 0.05F) {
+                            BRUTE_ACCESSOR = acc;
+                            TinkersNewlife.LOGGER.info(
+                                    "[真伤·循环改血] ★ 锁定同步访问器 {}（等值通道）✓", f.getName());
+                            return;
+                        }
+                        if (Math.abs(gh2 - gh0) > 0.05F || Math.abs(gh1 - gh0) > 0.05F) {
+                            BRUTE_ACCESSOR = acc;
+                            solveAffine(gh1, S1, gh2, S2);
+                            TinkersNewlife.LOGGER.info(
+                                    "[真伤·循环改血] ★ 锁定同步访问器 {}（仿射 血={}×槽+{}）✓",
+                                    f.getName(), BRUTE_K, BRUTE_B);
+                            return;
+                        }
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
+            // ⭐ ③ EC 的 float 字段（⭐ 含 percent ✓）
+            if (ec != null) {
+                for (Class<?> c = ec.getClass(); c != null && c != Object.class; c = c.getSuperclass()) {
+                    for (java.lang.reflect.Field f : c.getDeclaredFields()) {
+                        if (f.getType() != float.class) {
+                            continue;
+                        }
+                        if (probeSlot(e, f, ec, true, false, gh0, S1, S2)) {
+                            return;
+                        }
+                    }
+                }
+            }
+            TinkersNewlife.LOGGER.info(
+                    "[真伤·循环改血] 三路候选全部试完，**没有任何一处能改变 getHealth()** ✗"
+                            + " ⇒ 真血由实体之外的东西决定（世界存档／静态管理器）✓");
+        } catch (Throwable t) {
+            TinkersNewlife.LOGGER.info("[真伤·循环改血] 扫描失败：{}", t.toString());
+        }
+    }
+
+    /** ⭐ 试一个 `float` 槽位 ✗ ⭐ 命中就锁定并返回 true ✓ */
+    private static boolean probeSlot(LivingEntity e, java.lang.reflect.Field f, Object owner,
+                                     boolean isFloat, boolean restoreOnly, float gh0, float s1, float s2) {
+        try {
+            f.setAccessible(true);
+            float old = f.getFloat(owner);
+            f.setFloat(owner, s1);
+            float gh1 = e.getHealth();
+            f.setFloat(owner, s2);
+            float gh2 = e.getHealth();
+            f.setFloat(owner, old);
+            if (Math.abs(gh1 - s1) < 0.05F) {
+                BRUTE_SLOT = f;
+                BRUTE_OWNER = owner;
+                BRUTE_AFFINE = false;
+                TinkersNewlife.LOGGER.info("[真伤·循环改血] ★ 锁定字段 {}（等值通道）✓", f.getName());
+                return true;
+            }
+            if (Math.abs(gh1 - gh0) > 0.05F || Math.abs(gh2 - gh0) > 0.05F) {
+                BRUTE_SLOT = f;
+                BRUTE_OWNER = owner;
+                BRUTE_AFFINE = true;
+                solveAffine(gh1, s1, gh2, s2);
+                TinkersNewlife.LOGGER.info("[真伤·循环改血] ★ 锁定字段 {}（仿射 血={}×槽+{}）✓",
+                        f.getName(), BRUTE_K, BRUTE_B);
+                return true;
+            }
+        } catch (Throwable ignored) {
+        }
+        return false;
+    }
+
+    /** ⭐ 两点解一次仿射 ✗：⭐ 血 ＝ k×槽 ＋ b ✓ */
+    private static void solveAffine(float gh1, float w1, float gh2, float w2) {
+        float dw = w2 - w1;
+        if (Math.abs(dw) < 1.0E-6F) {
+            BRUTE_K = 1.0F;
+            BRUTE_B = gh1 - w1;
+            return;
+        }
+        BRUTE_K = (gh2 - gh1) / dw;
+        BRUTE_B = gh1 - BRUTE_K * w1;
+    }
+
+    /**
+     * ⭐⭐⭐⭐ §1221 <b>暴力穷举：⭐ 到底"改哪里"能让 {@code getHealth()} 变</b> ✗✗
+     * （⭐ 用户口径 ✓ 2026-10-10：「**全部查清**」✓）。
+     *
+     * <h2>⚠ 为什么这么做 ✗</h2>
+     * ⭐ 前面的 dump 证明 ⭐ **没有任何一处"存着" 93** ✗ ⇒ ⭐ 那它只能是**算出来的** ✓
+     * ⚠ 但"怎么算的"和"能不能反过来写" ⭐ **光看是看不出的** ✓
+     * ⇒ ⭐ 唯一可靠的办法 ✗：⭐ **一个个候选试着改掉** ✗
+     * ⭐ 然后 ⭐ **看 `getHealth()` 会不会跟着变** ✓ ✓ ——
+     * ⭐ **能改变它 ⇒ 那就是真血通道** ✓（⭐ 因果关系，不需要知道公式 ✓）。
+     *
+     * <h2>⭐ 试哪些候选（⭐ 三路 ✗ 全部 ✓）</h2>
+     * <ol>
+     *   <li>⭐ **所有实例 `float`／`double` 字段**（⭐ 实体类含父类 ✓）；</li>
+     *   <li>⭐ 所有 ⭐ **`static` 同步访问器**里当前值是 `Float` 的那些 ✓；</li>
+     *   <li>⭐ ⭐ `ApollyonExpandedContext` 的所有 `float` 字段（⭐ 含 `percent` ✓）。</li>
+     * </ol>
+     * ⭐ 每个都 ⭐ **写一个哨兵值** ✗ ⭐ 立刻读 `getHealth()` ✗ ⭐ **然后马上还原** ✓
+     * （⭐ 绝不留痕 ✓ ⭐ 位置/朝向字段被写也只是一瞬间 ✓）。
+     * ⭐ 一旦某个候选让 `getHealth()` 变了 ⇒ ⭐ **打出来 ＋ 立刻停止** ✓ ✓。
+     */
+    private static void probeApollyonChannels(LivingEntity e) {
+        try {
+            float gh0 = e.getHealth();
+            StringBuilder decl = new StringBuilder();
+            try {
+                for (java.lang.reflect.Method m : e.getClass().getMethods()) {
+                    if (m.getName().toLowerCase(java.util.Locale.ROOT).contains("ealth")) {
+                        decl.append(m.getDeclaringClass().getSimpleName()).append('#')
+                            .append(m.getName()).append(' ');
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
+            TinkersNewlife.LOGGER.info(
+                    "[真伤·通道·试] 初始 getHealth={} getApollyon={} getMax={} | 含 ealth 的方法=[{}]",
+                    String.format(java.util.Locale.ROOT, "%.2f", gh0),
+                    String.format(java.util.Locale.ROOT, "%.2f", apollyonHealthOf(e)),
+                    String.format(java.util.Locale.ROOT, "%.2f", e.getMaxHealth()),
+                    decl.toString());
+
+            final float SENTINEL = 7.5F;
+            String winner = null;
+            StringBuilder tried = new StringBuilder();
+
+            // ⭐ ① 实例 float/double 字段 ✓
+            for (Class<?> c = e.getClass(); c != null && c != Object.class && winner == null; c = c.getSuperclass()) {
+                for (java.lang.reflect.Field f : c.getDeclaredFields()) {
+                    if (java.lang.reflect.Modifier.isStatic(f.getModifiers())) {
+                        continue;
+                    }
+                    boolean isF = f.getType() == float.class;
+                    boolean isD = f.getType() == double.class;
+                    if (!isF && !isD) {
+                        continue;
+                    }
+                    try {
+                        f.setAccessible(true);
+                        Object oldV = f.get(e);
+                        double old = oldV instanceof Number n ? n.doubleValue() : 0.0D;
+                        if (isF) {
+                            f.setFloat(e, SENTINEL);
+                        } else {
+                            f.setDouble(e, SENTINEL);
+                        }
+                        float gh = e.getHealth();
+                        if (Math.abs(gh - gh0) > 0.05F) {
+                            winner = "实例字段 " + f.getName() + " ⇒ getHealth 变成 " + gh;
+                        }
+                        if (isF) {
+                            f.setFloat(e, (float) old);
+                        } else {
+                            f.setDouble(e, (double) old);
+                        }
+                    } catch (Throwable ignored) {
+                    }
+                    if (winner != null) {
+                        break;
+                    }
+                }
+            }
+            tried.append("实例字段×").append("done").append(' ');
+
+            // ⭐ ② static 同步访问器（⭐ 当前值是 Float 的 ✓）
+            if (winner == null) {
+                try {
+                    var data = ((net.minecraft.world.entity.Entity) e).getEntityData();
+                    for (Class<?> c = e.getClass(); c != null && c != Object.class && winner == null; c = c.getSuperclass()) {
+                        for (java.lang.reflect.Field f : c.getDeclaredFields()) {
+                            if (!java.lang.reflect.Modifier.isStatic(f.getModifiers())) {
+                                continue;
+                            }
+                            Object acc;
+                            try {
+                                f.setAccessible(true);
+                                acc = f.get(null);
+                            } catch (Throwable ignored) {
+                                continue;
+                            }
+                            if (acc == null) {
+                                continue;
+                            }
+                            Object cur;
+                            try {
+                                cur = data.get((net.minecraft.network.syncher.EntityDataAccessor) acc);
+                            } catch (Throwable ignored) {
+                                continue;
+                            }
+                            if (!(cur instanceof Float old)) {
+                                continue;
+                            }
+                            try {
+                                data.set((net.minecraft.network.syncher.EntityDataAccessor) acc, SENTINEL);
+                                float gh = e.getHealth();
+                                if (Math.abs(gh - gh0) > 0.05F) {
+                                    winner = "同步数据 " + f.getName() + " ⇒ getHealth 变成 " + gh;
+                                }
+                                data.set((net.minecraft.network.syncher.EntityDataAccessor) acc, old);
+                            } catch (Throwable ignored) {
+                            }
+                            if (winner != null) {
+                                break;
+                            }
+                        }
+                    }
+                } catch (Throwable ignored) {
+                }
+                tried.append("同步访问器×done ");
+            }
+
+            // ⭐ ③ EC 的 float 字段（⭐ 含 percent ✓）
+            if (winner == null) {
+                try {
+                    if (apollyonEcMethod == null) {
+                        apollyonEcMethod = findByName(apollyonIface, "revelaionfix$apollyonEC");
+                    }
+                    if (apollyonEcMethod != null) {
+                        Object ec = apollyonEcMethod.invoke(e);
+                        if (ec != null) {
+                            for (Class<?> c = ec.getClass(); c != null && c != Object.class && winner == null; c = c.getSuperclass()) {
+                                for (java.lang.reflect.Field f : c.getDeclaredFields()) {
+                                    if (f.getType() != float.class) {
+                                        continue;
+                                    }
+                                    try {
+                                        f.setAccessible(true);
+                                        float old = f.getFloat(ec);
+                                        f.setFloat(ec, 0.01F);
+                                        float gh = e.getHealth();
+                                        if (Math.abs(gh - gh0) > 0.05F) {
+                                            winner = "EC 字段 " + f.getName() + " ⇒ getHealth 变成 " + gh
+                                                    + "（写 0.01 时 ✓）";
+                                        }
+                                        f.setFloat(ec, old);
+                                    } catch (Throwable ignored) {
+                                    }
+                                    if (winner != null) {
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (Throwable ignored) {
+                }
+                tried.append("EC×done");
+            }
+
+            TinkersNewlife.LOGGER.info("[真伤·通道·试] 结论：{}",
+                    winner != null
+                            ? ("★ 真血通道 = " + winner + " ✓✓")
+                            : ("以上全部试完（" + tried + "），**没有任何一处能改变 getHealth()** ✗"
+                               + " ⇒ 真血由实体之外的东西决定（世界存档／静态管理器）✓"));
+        } catch (Throwable t) {
+            TinkersNewlife.LOGGER.info("[真伤·通道·试] 失败：{}", t.toString());
+        }
+    }
 
     /** ⚠ 探针去重 ✗ */
     private static final java.util.concurrent.atomic.AtomicBoolean APOLLYON_MISS_LOGGED =
@@ -625,6 +1030,17 @@ public final class TruePierce {
         //   ⚠ 不要把 `health` 字段也写一份 ✗ —— ⭐ 那个字段对这类 Boss **没有意义** ✓
         //     ⭐ 而且写了会让 ⭐ `getHealth()` 与真血**更乱** ✓（⭐ §1201 的怪现象就是这么来的 ✓）
         if (apollyonSetHealth(target, value)) {
+            try {
+                target.hurtMarked = true;
+            } catch (Throwable ignored) {
+            }
+            return true;
+        }
+        // ⭐⭐⭐⭐ §1221 **循环改血**（⭐ 用户口径 ✓ 2026-10-10：
+        //   「**这个循环改血的逻辑不错，可以加到我真伤兜底链条里面**」✓）
+        //   ⭐ 位置 ✗：⭐ 排在 ⭐ "已知 setter／⭐ 访问器"**之后** ✗ ⭐ "影子血"**之前** ✓
+        //   ⭐ 即 ⭐ **真血写不进去时，先暴力找一个能改血的通道** ✗ ⭐ 实在没有才自行记账 ✓。
+        if (hasApollyonChannel(target) && bruteForceWrite(target, value)) {
             try {
                 target.hurtMarked = true;
             } catch (Throwable ignored) {
