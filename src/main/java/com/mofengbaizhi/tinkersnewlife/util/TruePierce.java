@@ -169,17 +169,23 @@ public final class TruePierce {
             apollyonSetHealth = findByName(apollyonIface, "revelaionfix$setApollyonHealth");
             apollyonSetHitCooldown = findByName(apollyonIface, "revelaionfix$setHitCooldown");
         }
-        // ⚠⚠ **一次性探针**（⭐ 打"实际找到的方法签名" ✗ ⭐ 定位完删 ✓）
+        // ⚠⚠ **一次性探针**（⭐ 打"实际找到的签名 ＋ 接口里所有 `revelaionfix$` 方法名" ✗ 定位完删 ✓）
         try {
+            StringBuilder names = new StringBuilder();
+            if (apollyonIface != null) {
+                for (java.lang.reflect.Method m : apollyonIface.getMethods()) {
+                    if (m.getName().contains("revelaionfix$")) {
+                        names.append(m.getName()).append(' ');
+                    }
+                }
+            }
             TinkersNewlife.LOGGER.info(
-                    "[真伤·通道] 类={} getHealth={} setHealth={} setHitCooldown={} | 签名={} | {} | {}",
+                    "[真伤·通道] 类={} getHealth={} setHealth={} setHitCooldown={} | 接口方法名=[{}]",
                     apollyonIface != null,
                     apollyonGetHealth != null,
                     apollyonSetHealth != null,
                     apollyonSetHitCooldown != null,
-                    apollyonGetHealth != null ? apollyonGetHealth.toString() : "n/a",
-                    apollyonSetHealth != null ? apollyonSetHealth.toString() : "n/a",
-                    apollyonSetHitCooldown != null ? apollyonSetHitCooldown.toString() : "n/a");
+                    names.toString());
         } catch (Throwable ignored) {
         }
     }
@@ -215,34 +221,120 @@ public final class TruePierce {
     /** ⭐ 走"额外血量通道"改血 ✗（⭐ 顺带把动态减伤冷却归零 ✓） */
     private static boolean apollyonSetHealth(LivingEntity e, float value) {
         resolveApollyon();
-        if (apollyonIface == null || apollyonSetHealth == null || !apollyonIface.isInstance(e)) {
-            // ⚠ **一次性探针**：⭐ 前几次失败时打出"为什么没走通道" ✓（⭐ 定位完删 ✗）
-            if (apollyonIface != null && APOLLYON_MISS_LOGGED.compareAndSet(false, true)) {
-                TinkersNewlife.LOGGER.info(
-                        "[真伤·通道] 走不了：实体的类={} 接口={} isInstance={} 它实现的接口=[{}]",
-                        e.getClass().getName(),
-                        apollyonIface.getName(),
-                        apollyonIface.isInstance(e),
-                        String.join(" ", java.util.Arrays.stream(e.getClass().getInterfaces())
-                                .map(Class::getName).toArray(String[]::new)));
-            }
+        if (apollyonIface == null || !apollyonIface.isInstance(e)) {
             return false;
         }
-        try {
-            apollyonSetHealth.invoke(e, value);
-        } catch (Throwable t) {
-            if (APOLLYON_MISS_LOGGED.compareAndSet(false, true)) {
-                TinkersNewlife.LOGGER.info("[真伤·通道] 调用 setApollyonHealth 失败：{}", t.toString());
+        // ⭐⭐ §1217 **优先走 setter**（⭐ 若它存在 ✓）
+        if (apollyonSetHealth != null) {
+            try {
+                apollyonSetHealth.invoke(e, value);
+                zeroApollyonHitCooldown(e);
+                return true;
+            } catch (Throwable ignored) {
+                // ⚠ 走不通 ⇒ ⭐ 落到下面的访问器方案 ✓
             }
-            return false;
         }
+        // ⭐⭐⭐⭐ §1217 **真血 = 那个同步数据 `EntityDataAccessor<Float>`** ✗✗
+        //   ⚠ 探针实证 ✓ 2026-10-10：
+        //   `类=true getHealth=true setHealth=false setHitCooldown=true isInstance=true`
+        //   ⇒ ⭐ 接口**没有 setter** ✗ ⚠ 而 ⭐ `弹回=93`／⭐ `getHealth=93`／⭐ `字段=45.20` ✓
+        //   ⇒ ⭐⭐ 说明 ⭐ `getHealth()` **被它接管成了"亚波伦真血"** ✗
+        //     ⭐ 而真血就是 ⭐ `ApollyonMixin` 里那个 ⭐ `EntityDataAccessor<Float>` ✓
+        //     （⭐ 字段名被混淆成 ⭐ `AOGBOGBO…DOGQ` ✗ ⚠ **不可按名字找** ✓）
+        //   ⇒ ⭐ **按值反查** ✗：⭐ 拿 ⭐ `getApollyonHealth()` 的返回值 ✓
+        //     ⭐ 遍历实体类里所有 ⭐ `static EntityDataAccessor` ✗
+        //     ⭐ **谁的当前值等于它** ⇒ ⭐ **那个就是真血** ✓ ✓（⭐ 与 §1201 同一招 ✓）
+        if (writeApollyonAccessor(e, value)) {
+            zeroApollyonHitCooldown(e);
+            return true;
+        }
+        return false;
+    }
+
+    /** ⭐ 把动态减伤的冷却归零 ✗（⭐ 让 `amount *= empty/limit` 不再削我们 ✓） */
+    private static void zeroApollyonHitCooldown(LivingEntity e) {
         try {
             if (apollyonSetHitCooldown != null) {
-                apollyonSetHitCooldown.invoke(e, 0);   // ⚠ 动态减伤失效 ✓
+                apollyonSetHitCooldown.invoke(e, 0);
             }
         } catch (Throwable ignored) {
         }
-        return true;
+    }
+
+    /** ⭐⭐ §1217 **真血访问器**（⭐ 按值反查出来的那个 ✓） */
+    private static java.lang.reflect.Field apollyonHealthAccessor = null;
+
+    /**
+     * ⭐⭐⭐⭐ §1217 <b>直接写"亚波伦真血"那个同步数据</b> ✗
+     * —— ⭐ 接口没有 setter 时的**唯一可靠通道** ✓。
+     *
+     * <p>⚠ 怎么认出它 ✗：⭐ `EntityDataAccessor` 的字段名被**混淆**了 ✓
+     * ⭐ 所以**不能按名字找** ✗ ⇒ ⭐ **按值反查** ✗：
+     * ⭐ 拿 ⭐ `revelaionfix$getApollyonHealth()` 的值 ✓
+     * ⭐ 遍历实体类里所有 ⭐ `static EntityDataAccessor` 字段 ✓
+     * ⭐ **谁的同步值等于那个数** ⇒ ⭐ **它就是真血** ✓ ✓（⭐ 其余是 int/bool 访问器 ✓）。
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static boolean writeApollyonAccessor(LivingEntity e, float value) {
+        try {
+            var data = ((net.minecraft.world.entity.Entity) e).getEntityData();
+            if (apollyonHealthAccessor == null) {
+                float reported = apollyonHealthOf(e);
+                if (reported < 0.0F) {
+                    return false;
+                }
+                for (Class<?> c = e.getClass(); c != null && c != Object.class; c = c.getSuperclass()) {
+                    for (java.lang.reflect.Field f : c.getDeclaredFields()) {
+                        if (!java.lang.reflect.Modifier.isStatic(f.getModifiers())) {
+                            continue;
+                        }
+                        if (f.getType() != net.minecraft.network.syncher.EntityDataAccessor.class) {
+                            continue;
+                        }
+                        try {
+                            f.setAccessible(true);
+                        } catch (Throwable ignored) {
+                            continue;
+                        }
+                        Object acc;
+                        try {
+                            acc = f.get(null);
+                        } catch (Throwable ignored) {
+                            continue;
+                        }
+                        if (acc == null) {
+                            continue;
+                        }
+                        Object cur;
+                        try {
+                            cur = data.get((net.minecraft.network.syncher.EntityDataAccessor) acc);
+                        } catch (Throwable ignored) {
+                            continue;
+                        }
+                        if (cur instanceof Float fl && Math.abs(fl - reported) < 0.02F) {
+                            apollyonHealthAccessor = f;
+                            TinkersNewlife.LOGGER.info(
+                                    "[真伤·通道] 认出真血访问器 = {}（当前 {} ≈ 接口报的 {}）✓",
+                                    f.getName(),
+                                    String.format(java.util.Locale.ROOT, "%.2f", fl),
+                                    String.format(java.util.Locale.ROOT, "%.2f", reported));
+                            break;
+                        }
+                    }
+                    if (apollyonHealthAccessor != null) {
+                        break;
+                    }
+                }
+            }
+            if (apollyonHealthAccessor == null) {
+                return false;
+            }
+            Object acc = apollyonHealthAccessor.get(null);
+            data.set((net.minecraft.network.syncher.EntityDataAccessor) acc, value);
+            return true;
+        } catch (Throwable ignored) {
+            return false;
+        }
     }
 
     /** ⚠ 探针去重 ✗ */
