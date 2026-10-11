@@ -144,8 +144,7 @@ public class PortableTinkerStationItem extends Item {
                     com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备] 写入便携 buf：{} {} {}", PortableDeviceSupport.MAGIC, "tinker_station", "tconstruct:tinker_station");
                     buf.writeUtf(PortableDeviceSupport.MAGIC);   // §1329 标记串 ✓
                     buf.writeUtf("slimeknights.tconstruct.tables.block.entity.table.TinkerStationBlockEntity");
-                    buf.writeUtf("tconstruct:tinker_station");
-                    buf.writeNbt(data);                // §1313 之后跟库存 ⇒ 混入据此重建 ✓
+                    buf.writeUtf("tconstruct:tinker_station");                // §1313 之后跟库存 ⇒ 混入据此重建 ✓
                     buf.writeVarInt(0);   // §1337 侧栏数量（★非工具包恒为 0 ✗ ⭐ 保证 buf 格式统一 ✓）
                 });
         com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携站] use: 打开后 count={}（★服务端没动它 ✓）", stack.getCount());

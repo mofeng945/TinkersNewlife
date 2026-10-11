@@ -105,13 +105,11 @@ public class PortableCraftingStationItem extends Item {
                         buf.writeUtf(PortableDeviceSupport.MAGIC);
                         buf.writeUtf(kind.beClass);
                         buf.writeUtf(kind.blockId);
-                        buf.writeNbt(data);
                     buf.writeVarInt(0);   // §1337 侧栏数量（★非工具包恒为 0 ✗ ⭐ 保证 buf 格式统一 ✓）
                         buf.writeVarInt(sides.size());
                         for (int i = 0; i < sides.size(); i++) {
                             buf.writeUtf(PortableDeviceSupport.DEVICES[i][0]);
                             buf.writeUtf(PortableDeviceSupport.DEVICES[i][1]);
-                            buf.writeNbt(PortableDeviceSupport.export(sides.get(i)));
                         }
                     });
             return InteractionResultHolder.success(stack);
@@ -128,7 +126,6 @@ public class PortableCraftingStationItem extends Item {
                     buf.writeUtf(PortableDeviceSupport.MAGIC);
                     buf.writeUtf(kind.beClass);
                     buf.writeUtf(kind.blockId);
-                    buf.writeNbt(data);
                 });
         return InteractionResultHolder.success(stack);
     }

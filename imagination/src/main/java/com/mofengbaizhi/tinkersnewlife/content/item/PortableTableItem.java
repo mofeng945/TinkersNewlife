@@ -115,7 +115,6 @@ public class PortableTableItem extends Item {
                     buf.writeUtf(PortableDeviceSupport.MAGIC);   // §1329 标记串 ✓
                     buf.writeUtf(kind.beClass);
                     buf.writeUtf(kind.blockId);
-                    buf.writeNbt(data);
                     buf.writeVarInt(0);   // §1337 侧栏数量（★非工具包恒为 0 ✗ ⭐ 保证 buf 格式统一 ✓）
                 });
         return InteractionResultHolder.success(stack);

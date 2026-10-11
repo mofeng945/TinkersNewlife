@@ -53,8 +53,8 @@ public class GhostStationMenuMixin {
                 com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[步进] 类名=[{}] bytes={}", beClass, buf.readableBytes());
                 String blockId = buf.readableBytes() > 0 ? buf.readUtf(128) : "";
                 com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[步进] 方块=[{}] bytes={}", blockId, buf.readableBytes());
-                net.minecraft.nbt.CompoundTag nbt = buf.readableBytes() > 0 ? buf.readNbt() : null;
-                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[步进] NBT={} bytes={}", nbt == null ? "null" : nbt.size(), buf.readableBytes());
+                // §1340 库存**不在 buf 里传**（★槽位内容由原版同步 ✓ ⭐避开了读 NBT 的 EOF ✗）
+                net.minecraft.nbt.CompoundTag nbt = null;
 
                 net.minecraft.world.level.block.entity.BlockEntity ghost =
                         com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.makeGhost(beClass, blockId);
@@ -76,7 +76,7 @@ public class GhostStationMenuMixin {
                     for (int i = 0; i < sides && buf.readableBytes() > 0; i++) {
                         String sc = buf.readUtf(256);
                         String sb = buf.readUtf(128);
-                        net.minecraft.nbt.CompoundTag sn = buf.readableBytes() > 0 ? buf.readNbt() : null;
+                        net.minecraft.nbt.CompoundTag sn = null;   // §1340 侧栏也只传类型 ✓
                         net.minecraft.world.level.block.entity.BlockEntity g2 =
                                 com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.makeGhost(sc, sb);
                         if (g2 != null) {

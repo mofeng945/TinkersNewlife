@@ -129,7 +129,6 @@ public class PortableChestItem extends Item {
                     buf.writeUtf(kind.beClass);
                     buf.writeUtf(kind.blockId);
                     buf.writeUtf(kind.beClass);     // ★客户端据此反射造（★它要的是抽象类 ✓）
-                    buf.writeNbt(data);
                     buf.writeVarInt(0);   // §1337 侧栏数量（★非工具包恒为 0 ✗ ⭐ 保证 buf 格式统一 ✓）
                 });
         return InteractionResultHolder.success(stack);
