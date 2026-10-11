@@ -43,6 +43,20 @@ public class PortableStationMenu extends TinkerStationContainerMenu {
         return be;
     }
 
+    /**
+     * §1316 ★★ 关键修复 ★★
+     *
+     * <p>{@code ServerPlayer#doTick()} 每 tick 都会执行
+     * {@code if (!containerMenu.stillValid(this)) closeContainer();}
+     * 而匠魂/Mantle 的实现在算"玩家到方块实体的距离" ⇒ 幽灵在 (0,-1024,0)
+     * ⇒ 距离 1024 格 ⇒ 永远 false ⇒ **服务端把刚开的界面关掉**（用户看到的"只开一瞬间"）。
+     *
+     * <p>这里的服务端菜单就是本类，所以直接恒真即可 ✓（★客户端不跑这个校验 ✓）
+     */
+    @Override
+    public boolean stillValid(Player player) {
+        return true;
+    }
     @Override
     public void removed(Player player) {
         // §1315 抓"谁关的界面"：把调用栈打出来（★不再靠猜 ✓）
