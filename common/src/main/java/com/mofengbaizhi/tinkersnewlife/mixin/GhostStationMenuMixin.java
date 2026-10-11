@@ -54,7 +54,7 @@ public class GhostStationMenuMixin {
                 String blockId = buf.readableBytes() > 0 ? buf.readUtf(128) : "";
                 com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[步进] 方块=[{}] bytes={}", blockId, buf.readableBytes());
                 com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.CLIENT_TOOLKIT =
-                        buf.readableBytes() > 0 && buf.readVarInt() == 1;
+                        buf.readableBytes() > 0 && buf.readVarInt() > 0;   // §1344 工具包写的是侧栏数（6）✗ ⭐其它设备写 0 ✓
                 if (com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.CLIENT_TOOLKIT) {
                     // §1342 客户端也把 6 个幽灵贴到相邻坐标 ✓
                     com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.VIRTUAL.clear();
