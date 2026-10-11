@@ -1606,5 +1606,9 @@
   "title.tinkersnewlife.enemy_of_all": "举世皆敌",
   "title.tinkersnewlife.calamity_bearer": "灾厄加身",
   "title.tinkersnewlife.iron_tomb_crisis": "铁墓危机",
-  "item.tinkersnewlife.portable_tinker_station": "便携工匠站"
+  "item.tinkersnewlife.portable_tinker_station": "便携工匠站",
+  "item.tinkersnewlife.portable_part_builder": "便携部件制作台",
+  "item.tinkersnewlife.portable_modifier_worktable": "便携强化调配台",
+  "item.tinkersnewlife.portable_cast_chest": "便携铸造箱",
+  "item.tinkersnewlife.portable_part_chest": "便携部件箱"
 }
