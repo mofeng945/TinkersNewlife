@@ -45,9 +45,12 @@ public class ToolkitSideInventoryMixin {
                     com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.PENDING_SIDES;
             // §1360 ★只要虚拟表还在就填 ✓
             //   否则切到其它页（砧/台子/箱子的菜单）后顶栏就空了 ✗
-            if (com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.VIRTUAL.isEmpty()) {
+            // §1361 ★只有在“工具包会话”内才出顶栏 ✓
+            //（★否则用过一次工具包后 ✗ 开任何便携设备都会带上这排标签 ✗）
+            if (!com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.inToolkit()) {
                 return;
             }
+            com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.touchToolkit();   // ★切页时续期 ✓
             TabbedContainerMenu<?> self = (TabbedContainerMenu<?>) (Object) this;
             BlockPos base = com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.VIRTUAL_BASE;
             self.stationBlocks.clear();

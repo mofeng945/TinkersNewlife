@@ -98,6 +98,7 @@ public final class PortableDeviceSupport {
      */
     public static void openToolkitDevice(net.minecraft.server.level.ServerPlayer sp, int index) {
         try {
+            touchToolkit();   // ★续期（★切页也在会话内 ✓）
             String beClass;
             String blockId;
             String key;
@@ -175,6 +176,25 @@ public final class PortableDeviceSupport {
     }
 
     /** §1351 打一行总数（★在注册完之后调 ✓） */
+    /**
+     * §1361 工具包“会话”有效期（毫秒）。
+     *
+     * <p>★为什么要这个：顶栏要在**工具包会话内**才出现 ✗
+     * 否则用过一次工具包之后 ✗ 之后开任何便携设备都会带上那排标签 ✗
+     * ⭐而切页时也会刷新它 ✓ 所以切页过程中顶栏不会消失 ✓
+     */
+    public static long TOOLKIT_UNTIL = 0L;
+
+    /** 延长会话（★1 秒 ✓ 足够跨过切页的那几帧 ✓） */
+    public static void touchToolkit() {
+        TOOLKIT_UNTIL = System.currentTimeMillis() + 1000L;
+    }
+
+    /** 当前是否在工具包会话内 */
+    public static boolean inToolkit() {
+        return !VIRTUAL.isEmpty() && System.currentTimeMillis() < TOOLKIT_UNTIL;
+    }
+
     public static void dumpVirtual() {
         com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
                 "[便携设备] 虚拟表总数={} 基准={}", VIRTUAL.size(), VIRTUAL_BASE);
