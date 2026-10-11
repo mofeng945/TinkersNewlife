@@ -380,9 +380,9 @@ public final class CurseTitles {
         @SubscribeEvent
         public static void onNameFormat(PlayerEvent.NameFormat event) {
             try {
-                String pre = prefix(event.getEntity());
-                if (!pre.isEmpty()) {
-                    event.setDisplayname(Component.literal(pre).append(event.getDisplayname()));
+                net.minecraft.network.chat.Component pre = prefixComponent(event.getEntity());
+                if (!pre.getString().isEmpty()) {
+                    event.setDisplayname(pre.copy().append(event.getDisplayname()));
                 }
             } catch (Throwable ignored) {
             }
