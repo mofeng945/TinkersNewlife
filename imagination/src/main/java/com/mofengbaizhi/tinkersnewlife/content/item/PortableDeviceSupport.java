@@ -36,6 +36,19 @@ public final class PortableDeviceSupport {
      */
     public static final String MAGIC = "tnl:portable:v1";
 
+    /** §1335 工具包里的六件设备（★类名 ✗ ⭐ 方块 id ✗ ⭐ 存档键 ✓） */
+    public static final String[][] DEVICES = {
+            {"slimeknights.tconstruct.tables.block.entity.table.TinkerStationBlockEntity", "tconstruct:tinker_station", "tnl_portable_tinker_station_inv"},
+            {"slimeknights.tconstruct.tables.block.entity.table.TinkerStationBlockEntity", "tconstruct:tinkers_anvil", "tnl_portable_tinkers_anvil_inv"},
+            {"slimeknights.tconstruct.tables.block.entity.table.PartBuilderBlockEntity", "tconstruct:part_builder", "tnl_portable_part_builder_inv"},
+            {"slimeknights.tconstruct.tables.block.entity.table.ModifierWorktableBlockEntity", "tconstruct:modifier_worktable", "tnl_portable_modifier_worktable_inv"},
+            {"slimeknights.tconstruct.tables.block.entity.chest.CastChestBlockEntity", "tconstruct:cast_chest", "tnl_portable_cast_chest_inv"},
+            {"slimeknights.tconstruct.tables.block.entity.chest.PartChestBlockEntity", "tconstruct:part_chest", "tnl_portable_part_chest_inv"}
+    };
+
+    /** §1335 客户端暂存：混入解析出来的"侧栏幽灵"（★菜单客户端构造器要用 ✓） */
+    public static final java.util.List<BlockEntity> CLIENT_SIDES = new java.util.ArrayList<>();
+
     /** 幽灵实体的统一口袋坐标（★远离一切工作台 ⇒ 侧栏检测扫不到邻居 ✓） */
     public static final BlockPos POCKET_POS = new BlockPos(0, -1024, 0);
 

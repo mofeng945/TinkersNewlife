@@ -49,6 +49,26 @@ public class GhostStationMenuMixin {
             String blockId = buf.readUtf(128);
             CompoundTag nbt = buf.readNbt();
 
+            // §1335 工具包：坐标/类名/方块/NBT 之后还可以跟"若干侧栏幽灵"
+            com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.CLIENT_SIDES.clear();
+            try {
+                int sides = buf.readVarInt();
+                for (int i = 0; i < sides; i++) {
+                    String sc = buf.readUtf(256);
+                    String sb = buf.readUtf(128);
+                    CompoundTag sn = buf.readNbt();
+                    net.minecraft.world.level.block.entity.BlockEntity g2 =
+                            com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.makeGhost(sc, sb);
+                    if (g2 != null) {
+                        g2.setLevel(net.minecraft.client.Minecraft.getInstance().level);
+                        com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.importInto(g2, sn);
+                        com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.CLIENT_SIDES.add(g2);
+                    }
+                }
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备·菜单] 侧栏幽灵 {} 个", sides);
+            } catch (Throwable ignored) {
+            }
+
             net.minecraft.world.level.block.entity.BlockEntity ghost =
                     com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.makeGhost(beClass, blockId);
             if (ghost == null) {
