@@ -102,6 +102,7 @@ public class PortableCraftingStationItem extends Item {
             for (int i = 0; i < sides.size(); i++) {
                 PortableDeviceSupport.registerVirtual(i, sides.get(i));
             }
+            PortableDeviceSupport.dumpVirtual();   // §1351 ★注册完了才打总数 ✓
             PortableDeviceSupport.PENDING_INV = sp.getInventory();   // §1338 ✓
             NetworkHooks.openScreen(sp, new SimpleMenuProvider(
                     (id, inv, p) -> com.mofengbaizhi.tinkersnewlife.content.menu.PortableToolkitMenu.server(

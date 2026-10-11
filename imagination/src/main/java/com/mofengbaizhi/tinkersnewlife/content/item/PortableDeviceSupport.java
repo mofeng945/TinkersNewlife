@@ -80,8 +80,6 @@ public final class PortableDeviceSupport {
     public static void registerVirtualMain(BlockEntity be) {
         try {
             VIRTUAL.put(VIRTUAL_BASE, be);
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
-                    "[便携设备] 虚拟表：主实体@{}，侧栏 {} 个", VIRTUAL_BASE, VIRTUAL.size() - 1);
         } catch (Throwable ignored) {
         }
     }
@@ -94,11 +92,21 @@ public final class PortableDeviceSupport {
     }
 
     /** 良性查找（★空表时几乎零开销 ✓） */
+    /** §1351 打一行总数（★在注册完之后调 ✓） */
+    public static void dumpVirtual() {
+        com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
+                "[便携设备] 虚拟表总数={} 基准={}", VIRTUAL.size(), VIRTUAL_BASE);
+    }
+
     public static BlockEntity lookupVirtual(net.minecraft.core.BlockPos pos) {
         if (VIRTUAL.isEmpty() || pos == null) {
             return null;
         }
-        return VIRTUAL.get(pos);
+        BlockEntity hit = VIRTUAL.get(pos);
+        if (hit != null) {
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备] lookupVirtual 命中 {}", pos);
+        }
+        return hit;
     }
 
     /** §1341 用常量表造出六个幽灵侧栏（★不依赖服务端传数据 ✓） */
