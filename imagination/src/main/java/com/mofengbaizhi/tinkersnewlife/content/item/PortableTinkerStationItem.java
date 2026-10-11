@@ -128,6 +128,9 @@ public class PortableTinkerStationItem extends Item {
                 Component.translatable("item.tinkersnewlife.portable_tinker_station")),
                 buf -> {
                     buf.writeBlockPos(POCKET_POS);   // §1313 匠魂期望的坐标 ✓
+                    buf.writeUtf(com.mofengbaizhi.tinkersnewlife.mixin.GhostStationMenuMixin.MAGIC);   // §1329 标记串 ✓
+                    buf.writeUtf("slimeknights.tconstruct.tables.block.entity.table.TinkerStationBlockEntity");
+                    buf.writeUtf("tconstruct:tinker_station");
                     buf.writeNbt(data);                // §1313 之后跟库存 ⇒ 混入据此重建 ✓
                 });
         com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携站] use: 打开后 count={}（★服务端没动它 ✓）", stack.getCount());
