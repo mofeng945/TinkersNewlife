@@ -111,7 +111,7 @@ public class PortableCraftingStationItem extends Item {
                             sides),
                     net.minecraft.network.chat.Component.translatable(nameKey(kind))),
                     buf -> {
-                        buf.writeBlockPos(new BlockPos(0, -1024, 0));
+                    buf.writeBlockPos(com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.VIRTUAL_BASE);   // §1357 ★必须和顶栏用同一个基准 ✓
                         buf.writeUtf(PortableDeviceSupport.MAGIC);
                         buf.writeUtf(kind.beClass);
                         buf.writeUtf(kind.blockId);
