@@ -39,14 +39,27 @@ public class PortableTinkerStationItem extends Item {
     }
 
     /** 造一个游离的工匠站方块实体（★不入世界 ✓ ⭐ 但给它 level 与坐标 ✗ 屏幕要用 ✓） */
+    /**
+     * 造游离的工匠站实体（§1333 ★必须和客户端**同一条路** ✓）。
+     *
+     * <p>⚠ 之前这里自己 {@code new TinkerStationBlockEntity(pos, state)} ✗ ⭐ 用的是**默认槽位数** ✓
+     * 而客户端那条路（混入 ⇒ {@code PortableDeviceSupport.makeGhost}）是**让方块造** ✓
+     * ⇒ 两端槽位数不同 ⇒ {@code IndexOutOfBounds}（★日志实证：服务端 48 ✗ 客户端 4 ✓）
+     * ⇒ 现在统一走底座 ✓
+     */
     public static TinkerStationBlockEntity createDetached(Level level) {
-        // §1314 用子类（★stillValid 恒真 ⇒ 不因"距离太远"被秒关 ✓）
-        TinkerStationBlockEntity be = new com.mofengbaizhi.tinkersnewlife.content.block.GhostStationBlockEntity(POCKET_POS,
+        net.minecraft.world.level.block.entity.BlockEntity be = PortableDeviceSupport.makeGhost(
+                "slimeknights.tconstruct.tables.block.entity.table.TinkerStationBlockEntity",
+                "tconstruct:tinker_station");
+        if (be instanceof TinkerStationBlockEntity tse) {
+            tse.setLevel(level);
+            return tse;
+        }
+        TinkerStationBlockEntity fallback = new TinkerStationBlockEntity(POCKET_POS,
                 TinkerTables.tinkerStation.get().defaultBlockState());
-        be.setLevel(level);
-        return be;
+        fallback.setLevel(level);
+        return fallback;
     }
-
     /** NBT 键：背包内容（★每个槽一个物品 compound ✗ 空槽给空 compound ✓） */
     public static final String KEY_INV = "PortableStationInv";
 

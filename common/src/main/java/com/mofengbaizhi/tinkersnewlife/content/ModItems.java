@@ -795,4 +795,10 @@ public class ModItems {
             ITEMS.register("portable_modifier_worktable",
                     () -> new com.mofengbaizhi.tinkersnewlife.content.item.PortableTableItem(
                             new Item.Properties().stacksTo(1),
-                            com.mofengbaizhi.tinkersnewlife.content.item.PortableTableItem.Kind.MODIFIER_WORKTABLE));}
+                            com.mofengbaizhi.tinkersnewlife.content.item.PortableTableItem.Kind.MODIFIER_WORKTABLE));
+    /** §1332 便携工匠砧（★幽灵方块 ＋ ⭐ 打开的是"砧"的界面 ✓ 内容存玩家存档 ✓） */
+    public static final RegistryObject<Item> PORTABLE_TINKERS_ANVIL =
+            ITEMS.register("portable_tinkers_anvil",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.PortableTableItem(
+                            new Item.Properties().stacksTo(1),
+                            com.mofengbaizhi.tinkersnewlife.content.item.PortableTableItem.Kind.TINKERS_ANVIL));}

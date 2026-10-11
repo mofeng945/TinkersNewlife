@@ -33,7 +33,9 @@ public class PortableTableItem extends Item {
         PART_BUILDER("tconstruct:part_builder",
                 "slimeknights.tconstruct.tables.block.entity.table.PartBuilderBlockEntity"),
         MODIFIER_WORKTABLE("tconstruct:modifier_worktable",
-                "slimeknights.tconstruct.tables.block.entity.table.ModifierWorktableBlockEntity");
+                "slimeknights.tconstruct.tables.block.entity.table.ModifierWorktableBlockEntity"),
+        TINKERS_ANVIL("tconstruct:tinkers_anvil",
+                "slimeknights.tconstruct.tables.block.entity.table.TinkerStationBlockEntity");
 
         public final String blockId;
         public final String beClass;
@@ -123,6 +125,10 @@ public class PortableTableItem extends Item {
         if (kind == Kind.PART_BUILDER) {
             return new com.mofengbaizhi.tinkersnewlife.content.menu.PortablePartBuilderMenu(id, inv,
                     (slimeknights.tconstruct.tables.block.entity.table.PartBuilderBlockEntity) ghost);
+        }
+        if (kind == Kind.TINKERS_ANVIL) {
+            return new com.mofengbaizhi.tinkersnewlife.content.menu.PortableAnvilMenu(id, inv,
+                    (slimeknights.tconstruct.tables.block.entity.table.TinkerStationBlockEntity) ghost);
         }
         return new com.mofengbaizhi.tinkersnewlife.content.menu.PortableModifierWorktableMenu(id, inv,
                 (slimeknights.tconstruct.tables.block.entity.table.ModifierWorktableBlockEntity) ghost);

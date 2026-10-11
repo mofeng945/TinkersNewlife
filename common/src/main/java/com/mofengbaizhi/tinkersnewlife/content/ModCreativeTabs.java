@@ -144,6 +144,7 @@ public class ModCreativeTabs {
                                 // ----- §1096 唱片「墨封白织的唱片」（放进原版唱片机 ⇒ 16 格内的 fufu 一起跳舞 ✓）-----
                                 output.accept(ModItems.MUSIC_DISC_DOLL_MUSIC.get());
             output.accept(ModItems.MUSIC_DISC_TELL_ME.get());
+            output.accept(ModItems.PORTABLE_TINKERS_ANVIL.get());
             output.accept(ModItems.PORTABLE_TINKER_STATION.get());   // §1312 便携工匠站
             output.accept(ModItems.PORTABLE_CAST_CHEST.get());
             output.accept(ModItems.PORTABLE_PART_BUILDER.get());
