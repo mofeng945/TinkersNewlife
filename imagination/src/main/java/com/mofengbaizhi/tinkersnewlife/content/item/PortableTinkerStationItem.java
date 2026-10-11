@@ -72,7 +72,7 @@ public class PortableTinkerStationItem extends Item {
     }
     /** §1311 把方块实体的库存导成 NBT（★不用 BlockEntity#saveWithoutId ✗ ⭐ 只存槽位 ✓） */
     public static CompoundTag exportInventory(TinkerStationBlockEntity be) {
-        return PortableDeviceSupport.export(be, be.getContainerSize());
+        return PortableDeviceSupport.export(be);
     }
 
     /** §1311 把 NBT 里的库存灌回方块实体（★客户端重建 ✓） */

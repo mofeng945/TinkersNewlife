@@ -73,8 +73,8 @@ public class PortableTableItem extends Item {
         return PortableDeviceSupport.handlerOf(be);
     }
 
-    public static CompoundTag export(BlockEntity be, int size) {
-        return PortableDeviceSupport.export(be, size);
+    public static CompoundTag export(BlockEntity be) {
+        return PortableDeviceSupport.export(be);
     }
 
     public static void importInto(BlockEntity be, CompoundTag tag) {
@@ -86,7 +86,7 @@ public class PortableTableItem extends Item {
     }
 
     public static void storeToPlayer(Player player, BlockEntity be, Kind kind) {
-        PortableDeviceSupport.storeToPlayer(player, be, saveKey(kind), 6);
+        PortableDeviceSupport.storeToPlayer(player, be, saveKey(kind));
     }
 
     @Override
@@ -100,7 +100,7 @@ public class PortableTableItem extends Item {
             return InteractionResultHolder.fail(stack);
         }
         loadFromPlayer(sp, ghost, kind);
-        CompoundTag data = export(ghost, 6);
+        CompoundTag data = export(ghost);
         IItemHandler h = handlerOf(ghost);
         com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携台] 打开 {} slots={}",
                 kind.name(), h == null ? -1 : h.getSlots());

@@ -70,61 +70,67 @@ public final class PortableDeviceSupport {
     }
 
     /** 导出库存：{@code Size ＋ inv 列表}（★Size 必须写 ✗ ⭐ 箱子据此定槽位 ✓） */
-    public static CompoundTag export(BlockEntity be, int size) {
+    /**
+     * 导出库存（§1324 按查到的源码口径重写）。
+     *
+     * <p>★关键：**不写 Size** ✗ —— 箱子 handler 天生 256 槽（{@code ScalingChestItemHandler()} ⇒ {@code super(256)}），
+     * 写 Size 会被 {@code ItemStackHandler#deserializeNBT} 读进来 ⇒ 容量被砍 ✓
+     * <p>★只导出到"最后一个非空格" ⇒ 存档小 ✓ 且导入时按升序 {@code setStackInSlot} ⇒
+     * {@code visualSize} 才会被 {@code updateVisualSize} 正确算出来 ✓
+     */
+    public static CompoundTag export(BlockEntity be) {
         CompoundTag tag = new CompoundTag();
         ListTag list = new ListTag();
+        int last = -1;
         try {
             IItemHandler h = handlerOf(be);
-            for (int i = 0; i < size; i++) {
-                ItemStack s = (h == null || i >= h.getSlots()) ? ItemStack.EMPTY : h.getStackInSlot(i);
-                list.add(s.isEmpty() ? new CompoundTag() : s.save(new CompoundTag()));
+            if (h != null) {
+                for (int i = 0; i < h.getSlots(); i++) {
+                    if (!h.getStackInSlot(i).isEmpty()) {
+                        last = i;
+                    }
+                }
+                for (int i = 0; i <= last; i++) {
+                    ItemStack s = h.getStackInSlot(i);
+                    list.add(s.isEmpty() ? new CompoundTag() : s.save(new CompoundTag()));
+                }
             }
         } catch (Throwable ignored) {
         }
-        tag.putInt("size", size);
         tag.put("inv", list);
-        // ★箱子要的原始格式（ItemStackHandler#deserializeNBT 认 Size/Items ✓）
-        ListTag items = new ListTag();
-        for (int i = 0; i < size; i++) {
-            CompoundTag e = new CompoundTag();
-            e.putInt("Slot", i);
-            if (i < list.size() && !list.getCompound(i).isEmpty()) {
-                e.merge(list.getCompound(i));
-            }
-            items.add(e);
-        }
-        tag.putInt("Size", size);
-        tag.put("Items", items);
         return tag;
     }
-
     /** 导入库存（★两种格式都认 ✓：我们的 inv 列表 ✗ 或箱子的 Size/Items ✓） */
+    /**
+     * 导入库存（§1324）。
+     *
+     * <p>★必须走 {@code setStackInSlot} **升序**逐个灌 ✗ ——
+     * {@code ScalingChestItemHandler#setStackInSlot} 是**唯一**会调 {@code updateVisualSize} 的入口 ✓
+     * （{@code deserializeNBT} 直接改内部数组 ⇒ 不更新 ⇒ 界面显示格数停在 1 ⇒ 布局错位 ✓）
+     * ★绝不写 Size ✗ 保持 handler 原生槽位数 ✓
+     */
     public static void importInto(BlockEntity be, CompoundTag tag) {
         try {
-            if (tag == null) {
+            if (tag == null || !tag.contains("inv", 9)) {
                 return;
             }
             IItemHandler h = handlerOf(be);
             if (h == null) {
                 return;
             }
-            if (tag.contains("Items", 9)) {   // ★箱子格式 ⇒ 直接交给 handler ✓
-                if (h instanceof net.minecraftforge.items.ItemStackHandler ish) {
-                    ish.deserializeNBT(tag);
-                    return;
-                }
-            }
-            if (!tag.contains("inv", 9)) {
-                return;
-            }
             ListTag list = tag.getList("inv", 10);
-            for (int i = 0; i < h.getSlots() && i < list.size(); i++) {
-                h.insertItem(i, ItemStack.of(list.getCompound(i)), false);
+            int n = Math.min(list.size(), h.getSlots());
+            for (int i = 0; i < n; i++) {
+                CompoundTag e = list.getCompound(i);
+                ItemStack s = e.isEmpty() ? ItemStack.EMPTY : ItemStack.of(e);
+                try {
+                    h.insertItem(i, s, false);          // ★insertItem 也会更新 visualSize ✓
+                } catch (Throwable ignored) {
+                }
             }
         } catch (Throwable ignored) {
         }
     }
-
     public static void loadFromPlayer(Player player, BlockEntity be, String key) {
         try {
             importInto(be, player.getPersistentData().getCompound(key));
@@ -132,9 +138,9 @@ public final class PortableDeviceSupport {
         }
     }
 
-    public static void storeToPlayer(Player player, BlockEntity be, String key, int size) {
+    public static void storeToPlayer(Player player, BlockEntity be, String key) {
         try {
-            player.getPersistentData().put(key, export(be, size));
+            player.getPersistentData().put(key, export(be));
         } catch (Throwable ignored) {
         }
     }

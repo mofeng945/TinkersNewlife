@@ -83,8 +83,8 @@ public class PortableChestItem extends Item {
     }
 
     /** 导出：Size ＋ 每槽物品（★Size 必须写 ✗ ⭐ 否则侧栏槽位是 0 ✓） */
-    public static CompoundTag export(BlockEntity be, int size) {
-        return PortableDeviceSupport.export(be, size);
+    public static CompoundTag export(BlockEntity be) {
+        return PortableDeviceSupport.export(be);
     }
 
     /** 导入：直接把 {Size, Items} 灌进 handler（★ItemStackHandler#deserializeNBT 认这个格式 ✓） */
@@ -99,7 +99,7 @@ public class PortableChestItem extends Item {
 
     /** 关闭时：写回**玩家存档** */
     public static void storeToPlayer(Player player, BlockEntity be, Kind kind) {
-        PortableDeviceSupport.storeToPlayer(player, be, saveKey(kind), 9);
+        PortableDeviceSupport.storeToPlayer(player, be, saveKey(kind));
     }
 
     @Override
@@ -113,10 +113,11 @@ public class PortableChestItem extends Item {
             return InteractionResultHolder.fail(stack);
         }
         loadFromPlayer(sp, ghost, kind);
-        CompoundTag data = export(ghost, 9);
+        CompoundTag data = export(ghost);
         IItemHandler h = handlerOf(ghost);
-        com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携箱] 打开 {} slots={} 有handler={}",
-                kind.name(), h == null ? -1 : h.getSlots(), h != null);
+        com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携箱] 打开 {} slots={} 有handler={} visualSize={}",
+                kind.name(), h == null ? -1 : h.getSlots(), h != null,
+                (h instanceof slimeknights.tconstruct.tables.block.entity.inventory.IScalingContainer sc) ? sc.getVisualSize() : -1);
         NetworkHooks.openScreen(sp, new SimpleMenuProvider(
                 (id, inv, p) -> new com.mofengbaizhi.tinkersnewlife.content.menu.PortableChestMenu(id, inv,
                         (slimeknights.tconstruct.tables.block.entity.chest.AbstractChestBlockEntity) ghost, kind),
