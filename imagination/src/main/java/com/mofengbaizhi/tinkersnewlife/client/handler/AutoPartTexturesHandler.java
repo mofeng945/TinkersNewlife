@@ -96,6 +96,7 @@ public final class AutoPartTexturesHandler {
 
     /** ⭐ 真正干活 ✓（⭐ 每一段都各自 try ✗ 一处失败不影响后面的 ✓） */
     private static void run() {
+        long __t0 = System.nanoTime();
         Path dir = Minecraft.getInstance().gameDirectory.toPath().resolve(PACK_NAME);
 
         // ⓪ ⭐⭐ **生成前先数一遍已有贴图**（用户口径 ✓ 2026-10-09：
@@ -135,6 +136,7 @@ public final class AutoPartTexturesHandler {
         } catch (Throwable t) {
             TinkersNewlife.LOGGER.warn("[自动材质] 启用资源包失败：{}", t.toString());
         }
+        TinkersNewlife.LOGGER.info("[烘焙耗时] 部件贴图 took {} ms", (System.nanoTime() - __t0) / 1_000_000L);
     }
 
     /**

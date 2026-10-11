@@ -102,6 +102,7 @@ public final class BrokenToolModels {
     /** 给这些物品的已烘焙模型包一层"破损感知"的 overrides */
     @SubscribeEvent
     public static void onModifyBakingResult(ModelEvent.ModifyBakingResult event) {
+        long __t0 = System.nanoTime();
         Map<ResourceLocation, BakedModel> models = event.getModels();
         for (Map.Entry<ResourceLocation, ResourceLocation> entry : ITEM_TO_BROKEN.entrySet()) {
             BakedModel broken = models.get(entry.getValue());
@@ -118,6 +119,7 @@ public final class BrokenToolModels {
             }
             models.put(itemModel, new BrokenAwareModel(base, broken));
         }
+        TinkersNewlife.LOGGER.info("[烘焙耗时] 破损模型 took {} ms", (System.nanoTime() - __t0) / 1_000_000L);
     }
 
     /**

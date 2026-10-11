@@ -64,6 +64,7 @@ public final class FumoMoRenderers {
      */
     @SubscribeEvent
     public static void onModifyBakingResult(ModelEvent.ModifyBakingResult event) {
+        long __t0 = System.nanoTime();
         try {
             Map<ResourceLocation, BakedModel> models = event.getModels();
             ResourceLocation baseId = new ResourceLocation(TinkersNewlife.MOD_ID,
@@ -85,6 +86,7 @@ public final class FumoMoRenderers {
         } catch (Throwable t) {
             TinkersNewlife.LOGGER.warn("[fufu] 皮肤物品模型注入失败（皮肤物品可能显示异常，但不崩）：{}", t.toString());
         }
+        TinkersNewlife.LOGGER.info("[烘焙耗时] fufu皮肤 took {} ms", (System.nanoTime() - __t0) / 1_000_000L);
     }
 
     /**

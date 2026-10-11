@@ -41,6 +41,7 @@ public final class ContextModelHandler {
 
     @SubscribeEvent
     public static void onModifyBakingResult(ModelEvent.ModifyBakingResult event) {
+        long __t0 = System.nanoTime();
         try {
             Map<ResourceLocation, BakedModel> models = event.getModels();
             BakedModel base = models.get(SPEAR_BASE);
@@ -60,5 +61,6 @@ public final class ContextModelHandler {
         } catch (Throwable t) {
             LOG.warn("[模型] 接按场景切模型时出错（已忽略）：{}", t.toString());
         }
+        TinkersNewlife.LOGGER.info("[烘焙耗时] 按场景切模型 took {} ms", (System.nanoTime() - __t0) / 1_000_000L);
     }
 }

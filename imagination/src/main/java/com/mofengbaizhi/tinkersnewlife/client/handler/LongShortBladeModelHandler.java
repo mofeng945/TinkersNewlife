@@ -113,6 +113,7 @@ public final class LongShortBladeModelHandler {
     /** ⭐ 烘焙完成后给基础模型外面包一层 ✓（⭐ 按场景 × 形态切 ✓） */
     @SubscribeEvent
     public static void onModifyBakingResult(ModelEvent.ModifyBakingResult event) {
+        long __t0 = System.nanoTime();   // [烘焙耗时] 长短刃
         try {
             Map<ResourceLocation, BakedModel> models = event.getModels();
             BakedModel idle = models.get(CTX_IDLE);
@@ -189,6 +190,7 @@ public final class LongShortBladeModelHandler {
         } catch (Throwable t) {
             LOG.warn("[长短刃] 接按场景切模型时出错（已忽略）：{}", t.toString());
         }
+        TinkersNewlife.LOGGER.info("[烘焙耗时] 长短刃 耗时 {} ms", (System.nanoTime() - __t0) / 1_000_000L);
     }
 
     /**
