@@ -91,6 +91,9 @@ public class PortableCraftingStationItem extends Item {
                 }
             }
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备] 工具包侧栏 {} 个", sides.size());
+            PortableDeviceSupport.PENDING_SIDES.clear();
+            PortableDeviceSupport.PENDING_SIDES.addAll(sides);
+            PortableDeviceSupport.PENDING_INV = sp.getInventory();   // §1338 ✓
             NetworkHooks.openScreen(sp, new SimpleMenuProvider(
                     (id, inv, p) -> com.mofengbaizhi.tinkersnewlife.content.menu.PortableToolkitMenu.server(
                             id, inv,

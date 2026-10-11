@@ -26,6 +26,7 @@
     "ApostleCastThrottleMixin"
   ],
   "client": [
+    "ToolkitSideInventoryMixin",
     "GhostStationMenuMixin",
     "JeiExclusionClampMixin",
     "EntityRenderDispatcherMixin",

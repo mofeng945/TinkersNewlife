@@ -66,6 +66,9 @@ public class GhostStationMenuMixin {
                     }
                 }
                 com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备·菜单] 侧栏幽灵 {} 个", sides);
+                com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.PENDING_SIDES.clear();
+                com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.PENDING_SIDES
+                        .addAll(com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.CLIENT_SIDES);
             } catch (Throwable ignored) {
             }
 

@@ -49,6 +49,17 @@ public final class PortableDeviceSupport {
     /** §1335 客户端暂存：混入解析出来的"侧栏幽灵"（★菜单客户端构造器要用 ✓） */
     public static final java.util.List<BlockEntity> CLIENT_SIDES = new java.util.ArrayList<>();
 
+    /**
+     * §1338 待加入的侧栏（★必须在 {@code detectStationParts} 里、玩家背包槽加入**之前**加 ✓）。
+     *
+     * <p>日志实证：晚于 super() 再加会被 Mantle 拒绝 ——
+     * {@code IllegalStateException: BaseContainer: Player inventory has …} ✓
+     */
+    public static final java.util.List<BlockEntity> PENDING_SIDES = new java.util.ArrayList<>();
+
+    /** §1338 侧栏用的玩家背包（★服务端在 openScreen 前塞入 ✓ ⭐客户端从自己身上取 ✓） */
+    public static net.minecraft.world.entity.player.Inventory PENDING_INV = null;
+
     /** 幽灵实体的统一口袋坐标（★远离一切工作台 ⇒ 侧栏检测扫不到邻居 ✓） */
     public static final BlockPos POCKET_POS = new BlockPos(0, -1024, 0);
 
