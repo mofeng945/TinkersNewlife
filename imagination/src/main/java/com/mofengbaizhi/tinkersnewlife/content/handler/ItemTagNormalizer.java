@@ -139,8 +139,25 @@ public final class ItemTagNormalizer {
     private static boolean stripEmptyTag(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return false;
         CompoundTag tag = stack.getTag();
-        if (tag == null || !tag.isEmpty()) return false;
-        stack.setTag(null);
-        return true;
+        if (tag == null) return false;
+        /*
+         * §1366 ★追溯修复：旧版本给**每个战利品**写了
+         *   {@code {MARKER_ROLLED:1b}}（★连落空也写 ✗）
+         *   ⇒ `isSameItemSameTags` 把它与**无标签**的同款物品判为不同
+         *   ⇒ **同类物品永远合不到一起** ✗✗（用户实测）
+         * ★现在：只要该物品**没有真正的亲和值**，就把这个空标记剥掉 ✓
+         *   （★提取出来就能重新合一起 ✓ ⭐=旧存档也能自愈 ✓）
+         */
+        boolean hasAffinity = tag.contains(com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper.KEY_AFFINITY);
+        boolean changed = false;
+        if (!hasAffinity && tag.contains("tnl_affinity_rolled")) {
+            tag.remove("tnl_affinity_rolled");
+            changed = true;
+        }
+        if (tag.isEmpty()) {
+            stack.setTag(null);
+            return true;
+        }
+        return changed;   // ★只有真的改过才返回 true ✓（★避免每秒重复 setItem ✗）
     }
 }

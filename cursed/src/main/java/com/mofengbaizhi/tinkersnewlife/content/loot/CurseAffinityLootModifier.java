@@ -71,7 +71,13 @@ public class CurseAffinityLootModifier extends LootModifier {
             if (stack.isEmpty()) continue;
             if (stack.getTag() != null && stack.getTag().contains(CursePowerHelper.KEY_AFFINITY)) continue;
             if (!isCurioItem(stack, context.getLevel())) continue;
-            if (context.getRandom().nextFloat() >= chance) { stack.getOrCreateTag().putBoolean(CurseAffinityAttribute.MARKER_ROLLED, true); continue; }   // §1299-miss 没中也标记 ✓
+            if (context.getRandom().nextFloat() >= chance) {
+                // §1365 ★落空**不再写标记** ✗
+                //   ★写了就给战利品打上 {MARKER_ROLLED:1b} ✗
+                //   ⭐而合成/创造的同款物品**无标签** ⇒ isSameItemSameTags 不相等
+                //     ⇒ **同类物品永远合不到一起** ✗✗（用户实测）
+                continue;
+            }   // §1299-miss 没中也标记 ✓
             int affinity = context.getRandom().nextInt(MAX_AFFINITY + 1); // 0~50
             if (affinity > 0) {
                 CurseAffinityAttribute.setItemAffinity(stack, affinity, context.getLevel());   // §1294 写成真正的属性词条
