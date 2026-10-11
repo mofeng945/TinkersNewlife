@@ -38,7 +38,6 @@ public final class PortableDeviceSupport {
 
     /** §1335 工具包里的六件设备（★类名 ✗ ⭐ 方块 id ✗ ⭐ 存档键 ✓） */
     public static final String[][] DEVICES = {
-            {"slimeknights.tconstruct.tables.block.entity.table.TinkerStationBlockEntity", "tconstruct:tinker_station", "tnl_portable_tinker_station_inv"},
             {"slimeknights.tconstruct.tables.block.entity.table.TinkerStationBlockEntity", "tconstruct:tinkers_anvil", "tnl_portable_tinkers_anvil_inv"},
             {"slimeknights.tconstruct.tables.block.entity.table.PartBuilderBlockEntity", "tconstruct:part_builder", "tnl_portable_part_builder_inv"},
             {"slimeknights.tconstruct.tables.block.entity.table.ModifierWorktableBlockEntity", "tconstruct:modifier_worktable", "tnl_portable_modifier_worktable_inv"},

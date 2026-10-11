@@ -43,9 +43,9 @@ public class ToolkitSideInventoryMixin {
             var support = com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.class;
             java.util.List<net.minecraft.world.level.block.entity.BlockEntity> pending =
                     com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.PENDING_SIDES;
-            boolean toolkit = com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.CLIENT_TOOLKIT
-                    || !pending.isEmpty();
-            if (!toolkit) {
+            // §1360 ★只要虚拟表还在就填 ✓
+            //   否则切到其它页（砧/台子/箱子的菜单）后顶栏就空了 ✗
+            if (com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.VIRTUAL.isEmpty()) {
                 return;
             }
             TabbedContainerMenu<?> self = (TabbedContainerMenu<?>) (Object) this;
