@@ -124,8 +124,8 @@ public class PortableChestItem extends Item {
                 net.minecraft.network.chat.Component.translatable(nameKey(kind))),
                 buf -> {
                     buf.writeBlockPos(new BlockPos(0, -1024, 0));
-                    com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备] 写入便携 buf：{} {} {}", com.mofengbaizhi.tinkersnewlife.mixin.GhostStationMenuMixin.MAGIC, kind.beClass, kind.blockId);
-                    buf.writeUtf(com.mofengbaizhi.tinkersnewlife.mixin.GhostStationMenuMixin.MAGIC);   // §1329 标记串 ✓
+                    com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备] 写入便携 buf：{} {} {}", PortableDeviceSupport.MAGIC, kind.beClass, kind.blockId);
+                    buf.writeUtf(PortableDeviceSupport.MAGIC);   // §1329 标记串 ✓
                     buf.writeUtf(kind.beClass);
                     buf.writeUtf(kind.blockId);
                     buf.writeUtf(kind.beClass);     // ★客户端据此反射造（★它要的是抽象类 ✓）

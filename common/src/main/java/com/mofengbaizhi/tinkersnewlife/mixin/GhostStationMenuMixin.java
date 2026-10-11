@@ -22,8 +22,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(value = slimeknights.mantle.inventory.BaseContainerMenu.class, remap = false)
 public class GhostStationMenuMixin {
 
-    /** ★只有我们自己的菜单会写这个串 ✓ */
-    public static final String MAGIC = "tnl:portable:v1";
+
+
 
     @Inject(method = "getTileEntityFromBuf", at = @At("HEAD"), cancellable = true, remap = false)
     private static void tnl$ghostTile(FriendlyByteBuf buf, Class<?> clazz, CallbackInfoReturnable cir) {
@@ -40,7 +40,7 @@ public class GhostStationMenuMixin {
             String magic = buf.readUtf(64);
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备·菜单] 标记串校验 clazz={} 剩余字节={} 读到=[{}]",
                     clazz.getSimpleName(), before, magic);
-            if (!MAGIC.equals(magic)) {
+            if (!com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.MAGIC.equals(magic)) {
                 com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备·菜单] 不是我们的 buf ⇒ 原样放行 ✓");
                 buf.resetReaderIndex();
                 return;

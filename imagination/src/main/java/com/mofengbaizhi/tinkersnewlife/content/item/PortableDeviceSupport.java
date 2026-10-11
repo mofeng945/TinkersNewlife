@@ -28,6 +28,14 @@ import net.minecraftforge.registries.ForgeRegistries;
  */
 public final class PortableDeviceSupport {
 
+    /**
+     * §1330 便携菜单 buf 的标记串（★只有我们自己的菜单会写它 ✓）。
+     *
+     * <p>⚠ 必须放在**这个普通类**里 ✗ ⭐ **不能放在混入类里** ✓ ——
+     * Mixin 规范要求混入类只能有 private 字段 ✗ ⭐ 否则整个混入会被拒绝应用 ✓
+     */
+    public static final String MAGIC = "tnl:portable:v1";
+
     /** 幽灵实体的统一口袋坐标（★远离一切工作台 ⇒ 侧栏检测扫不到邻居 ✓） */
     public static final BlockPos POCKET_POS = new BlockPos(0, -1024, 0);
 
