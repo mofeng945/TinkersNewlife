@@ -46,6 +46,20 @@ public final class ChestScrollInjector {
         if (id == null || !id.getPath().startsWith("chests/")) {
             return;
         }
+        /*
+         * §1364 ★★关键修正：**只看路径不够** ✗
+         *   反例：星月遗物 Celestial Artifacts 有一张
+         *     `celestial_artifacts:chests/fishing_treasure`
+         *   并且用 loot modifier **把它加进了 `minecraft:gameplay/fishing`** ✗
+         *   ⇒ 路径以 `chests/` 开头 ⇒ 被我们注入残卷 ⇒
+         *     **钓鱼直接钓上残卷** ✗✗（用户实测）
+         *   ⇒ 凡是名字里带 `fishing` 的表一律跳过 ✓（★残卷不该从钓鱼出 ✓）
+         */
+        String full = id.toString();
+        if (full.contains("fishing") || id.getPath().contains("fishing")) {
+            TinkersNewlife.LOGGER.debug("[TinkersNewlife] 跳过钓鱼类表 {} ✗ 不注入残卷", id);
+            return;
+        }
         try {
             LootTable table = event.getTable();
             LootPool scrollPool = LootPool.lootPool()
