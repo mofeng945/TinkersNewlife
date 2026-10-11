@@ -28,6 +28,7 @@
     "ApostleCastThrottleMixin"
   ],
   "client": [
+    "TinkerTabsWidgetMixin",
     "ToolkitSideInventoryMixin",
     "GhostStationMenuMixin",
     "JeiExclusionClampMixin",
