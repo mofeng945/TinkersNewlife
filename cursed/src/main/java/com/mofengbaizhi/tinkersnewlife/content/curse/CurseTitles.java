@@ -142,6 +142,62 @@ public final class CurseTitles {
         return 0;
     }
 
+    /** §1328 稀有度 ⇒ 颜色（★5 传说金 ✗ ⭐ 4 史诗紫 ✗ ⭐ 3 稀有蓝 ✗ ⭐ 2 优秀绿 ✗ ⭐ 1 普通白 ✓） */
+    public static net.minecraft.ChatFormatting colorOf(String id) {
+        return switch (rarityOf(id)) {
+            case 5 -> net.minecraft.ChatFormatting.GOLD;
+            case 4 -> net.minecraft.ChatFormatting.LIGHT_PURPLE;
+            case 3 -> net.minecraft.ChatFormatting.AQUA;
+            case 2 -> net.minecraft.ChatFormatting.GREEN;
+            default -> net.minecraft.ChatFormatting.WHITE;
+        };
+    }
+
+    /** §1328 按稀有度上色的头衔组件（★名字前缀用 ✓ 每个头衔各自颜色 ✓） */
+    public static net.minecraft.network.chat.Component colored(String id) {
+        return Component.translatable("title.tinkersnewlife." + id).withStyle(colorOf(id));
+    }
+
+    /** §1328 上色的名字前缀（★[金][紫][蓝]玩家名 ✓） */
+    public static net.minecraft.network.chat.Component prefixComponent(Player player) {
+        try {
+            List<String> ids = shownByRarity(player);
+            net.minecraft.network.chat.MutableComponent out = Component.empty();
+            for (String id : ids) {
+                out.append(Component.literal("[").withStyle(net.minecraft.ChatFormatting.DARK_GRAY));
+                out.append(colored(id));
+                out.append(Component.literal("]").withStyle(net.minecraft.ChatFormatting.DARK_GRAY));
+            }
+            return out;
+        } catch (Throwable t) {
+            return Component.empty();
+        }
+    }
+
+    /** §1328 当前要显示的头衔（★选中优先 ✗ ⭐ 否则自动前 3 ✓）—— 顺序已按稀有度降序 ✓ */
+    public static List<String> shownByRarity(Player player) {
+        try {
+            List<String> chosen = selected(player);
+            List<String> nowActive = active(player);
+            List<String> ids = new ArrayList<>();
+            if (chosen.isEmpty()) {
+                ids.addAll(nowActive);
+            } else {
+                for (String id : chosen) {
+                    if (nowActive.contains(id)) {
+                        ids.add(id);
+                    }
+                }
+            }
+            ids.sort(Comparator.comparingInt(CurseTitles::rarityOf).reversed());
+            if (ids.size() > MAX_SHOWN) {
+                ids = new ArrayList<>(ids.subList(0, MAX_SHOWN));
+            }
+            return ids;
+        } catch (Throwable t) {
+            return new ArrayList<>();
+        }
+    }
     /* ------------------------------------------------------------ 持有（存） */
 
     public static List<String> held(Player player) {

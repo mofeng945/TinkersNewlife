@@ -94,7 +94,9 @@ public class TitlesSelectScreen extends Screen {
 
     private Component label(String id) {
         String mark = pick.contains(id) ? "\u2714 " : "  ";
-        return Component.literal(mark).append(Component.translatable("title.tinkersnewlife." + id));
+        // §1328 按稀有度上色（★稀有度表在通用类里 ✗ ⭐ 客户端直接读 ✓）
+        return Component.literal(mark).withStyle(net.minecraft.ChatFormatting.GRAY)
+                .append(com.mofengbaizhi.tinkersnewlife.content.curse.CurseTitles.colored(id));
     }
 
     @Override
