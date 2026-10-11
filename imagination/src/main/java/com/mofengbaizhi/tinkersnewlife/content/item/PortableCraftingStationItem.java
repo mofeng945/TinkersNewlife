@@ -64,7 +64,9 @@ public class PortableCraftingStationItem extends Item {
         if (level.isClientSide() || !(player instanceof ServerPlayer sp)) {
             return InteractionResultHolder.pass(stack);
         }
-        BlockEntity ghost = PortableDeviceSupport.makeGhost(kind.beClass, kind.blockId);
+        // §1347 主实体也放到基准点（★BFS 从它开始 ✓）
+        BlockEntity ghost = PortableDeviceSupport.makeGhostAt(kind.beClass, kind.blockId,
+                kind == Kind.TOOLKIT ? sp.blockPosition().above(3) : PortableDeviceSupport.POCKET_POS);
         if (ghost == null) {
             return InteractionResultHolder.fail(stack);
         }
@@ -93,7 +95,8 @@ public class PortableCraftingStationItem extends Item {
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备] 工具包侧栏 {} 个", sides.size());
             PortableDeviceSupport.PENDING_SIDES.clear();
             PortableDeviceSupport.PENDING_SIDES.addAll(sides);
-            // §1342 把 6 个幽灵贴在相邻坐标 ✓ 让匠魂自己扫到 ✓
+            // §1347 ★放在**玩家附近**（★区块已加载 ⇒ StationTabPacket 的 hasChunkAt 才能过 ✓）
+            PortableDeviceSupport.VIRTUAL_BASE = sp.blockPosition().above(3);
             PortableDeviceSupport.VIRTUAL.clear();
             for (int i = 0; i < sides.size(); i++) {
                 PortableDeviceSupport.registerVirtual(i, sides.get(i));

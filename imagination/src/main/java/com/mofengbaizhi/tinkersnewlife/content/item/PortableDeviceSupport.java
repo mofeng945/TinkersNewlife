@@ -73,9 +73,12 @@ public final class PortableDeviceSupport {
             new java.util.concurrent.ConcurrentHashMap<>();
 
     /** 把幽灵注册到相邻坐标（★两端各自注册自己的份 ✓） */
+    /** §1347 基准坐标（★玩家附近 ✓ ⭐区块已加载 ✓） */
+    public static net.minecraft.core.BlockPos VIRTUAL_BASE = new net.minecraft.core.BlockPos(0, -1024, 0);   // §1347 默认口袋坐标（★避开前向引用 ✓）
+
     public static void registerVirtual(int index, BlockEntity be) {
         try {
-            VIRTUAL.put(POCKET_POS.offset(index, 0, 0), be);
+            VIRTUAL.put(VIRTUAL_BASE.offset(index, 0, 0), be);
         } catch (Throwable ignored) {
         }
     }
@@ -127,6 +130,31 @@ public final class PortableDeviceSupport {
      *
      * <p>所以这里**优先让方块造**（{@code Block#newBlockEntity} ✓）✗ 失败才回退反射 ✓
      */
+    /** §1347 指定坐标的版本（★工具包要把幽灵放到**玩家附近已加载区块**✓） */
+    public static BlockEntity makeGhostAt(String beClass, String blockId,
+                                          net.minecraft.core.BlockPos pos) {
+        try {
+            net.minecraft.world.level.block.Block block =
+                    ForgeRegistries.BLOCKS.getValue(new ResourceLocation(blockId));
+            net.minecraft.world.level.block.state.BlockState state = (block == null)
+                    ? net.minecraft.world.level.block.Blocks.AIR.defaultBlockState()
+                    : block.defaultBlockState();
+            if (block instanceof net.minecraft.world.level.block.EntityBlock eb) {
+                net.minecraft.world.level.block.entity.BlockEntity be = eb.newBlockEntity(pos, state);
+                if (be != null) {
+                    return be;
+                }
+            }
+            return (net.minecraft.world.level.block.entity.BlockEntity) Class.forName(beClass)
+                    .getConstructor(net.minecraft.core.BlockPos.class,
+                            net.minecraft.world.level.block.state.BlockState.class)
+                    .newInstance(pos, state);
+        } catch (Throwable t) {
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("[便携设备] 造幽灵实体失败 {}: {}", beClass, t.toString());
+            return null;
+        }
+    }
+
     public static BlockEntity makeGhost(String beClass, String blockId) {
         try {
             Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(blockId));

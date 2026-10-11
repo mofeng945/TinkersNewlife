@@ -41,7 +41,8 @@ public class GhostStationMenuMixin {
                     buf.resetReaderIndex();
                     return;
                 }
-                buf.readBlockPos();
+                net.minecraft.core.BlockPos wantedPos = buf.readBlockPos();   // §1347 客户端用同一坐标 ✓
+                com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.VIRTUAL_BASE = wantedPos;
                 com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[步进] 读完坐标 bytes={}", buf.readableBytes());
                 String magic = buf.readableBytes() > 0 ? buf.readUtf(64) : "";
                 com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[步进] 读到标记=[{}] bytes={}", magic, buf.readableBytes());
@@ -68,7 +69,7 @@ public class GhostStationMenuMixin {
                 net.minecraft.nbt.CompoundTag nbt = null;
 
                 net.minecraft.world.level.block.entity.BlockEntity ghost =
-                        com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.makeGhost(beClass, blockId);
+                        com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.makeGhostAt(beClass, blockId, wantedPos);
                 if (ghost == null) {
                     buf.resetReaderIndex();
                     return;
@@ -89,7 +90,7 @@ public class GhostStationMenuMixin {
                         String sb = buf.readUtf(128);
                         net.minecraft.nbt.CompoundTag sn = null;   // §1340 侧栏也只传类型 ✓
                         net.minecraft.world.level.block.entity.BlockEntity g2 =
-                                com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.makeGhost(sc, sb);
+                                com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.makeGhostAt(sc, sb, wantedPos);
                         if (g2 != null) {
                             try {
                                 g2.setLevel(net.minecraft.client.Minecraft.getInstance().level);
