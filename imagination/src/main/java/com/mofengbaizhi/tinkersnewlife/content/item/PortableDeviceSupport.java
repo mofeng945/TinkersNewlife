@@ -92,6 +92,89 @@ public final class PortableDeviceSupport {
     }
 
     /** 良性查找（★空表时几乎零开销 ✓） */
+    /**
+     * §1355 点顶栏标签 ⇒ 打开对应设备的界面（★服务端 ✓）。
+     *
+     * <p>index：0 = 主界面（工匠台），1..6 = DEVICES 的顺序。
+     */
+    public static void openToolkitDevice(net.minecraft.server.level.ServerPlayer sp, int index) {
+        try {
+            String beClass;
+            String blockId;
+            String key;
+            if (index <= 0) {
+                beClass = "slimeknights.tconstruct.tables.block.entity.table.CraftingStationBlockEntity";
+                blockId = "tconstruct:crafting_station";
+                key = "tnl_portable_toolkit_inv";
+            } else {
+                String[] d = DEVICES[Math.min(index, DEVICES.length) - 1];
+                beClass = d[0];
+                blockId = d[1];
+                key = d[2];
+            }
+            net.minecraft.core.BlockPos pos = VIRTUAL_BASE.offset(Math.max(index, 0), 0, 0);
+            net.minecraft.world.level.block.entity.BlockEntity ghost = makeGhostAt(beClass, blockId, pos);
+            if (ghost == null) {
+                return;
+            }
+            try {
+                ghost.setLevel(sp.level());
+            } catch (Throwable ignored) {
+            }
+            loadFromPlayer(sp, ghost, key);
+            net.minecraft.nbt.CompoundTag data = export(ghost);
+            net.minecraft.world.SimpleMenuProvider provider = new net.minecraft.world.SimpleMenuProvider(
+                    (id, inv, pl) -> menuForIndex(index, id, inv, ghost),
+                    net.minecraft.network.chat.Component.translatable("item.tinkersnewlife.portable_toolkit"));
+            net.minecraftforge.network.NetworkHooks.openScreen(sp, provider, buf -> {
+                buf.writeBlockPos(pos);
+                buf.writeUtf(MAGIC);
+                buf.writeUtf(beClass);
+                buf.writeUtf(blockId);
+                buf.writeVarInt(0);
+            });
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备] 顶栏点击 ⇒ 打开 index={} {}", index, blockId);
+        } catch (Throwable t) {
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("[便携设备] 顶栏点击失败: {}", t.toString());
+        }
+    }
+
+    /** ★按 index 找到对应的菜单类（★都是现成的 ✓） */
+    private static net.minecraft.world.inventory.AbstractContainerMenu menuForIndex(int index, int id,
+            net.minecraft.world.entity.player.Inventory inv,
+            net.minecraft.world.level.block.entity.BlockEntity ghost) {
+        try {
+            if (index <= 0) {
+                return new com.mofengbaizhi.tinkersnewlife.content.menu.PortableCraftingStationMenu(id, inv,
+                        (slimeknights.tconstruct.tables.block.entity.table.CraftingStationBlockEntity) ghost,
+                        "tnl_portable_toolkit_inv");
+            }
+            String blockId = DEVICES[Math.min(index, DEVICES.length) - 1][1];
+            switch (blockId) {
+                case "tconstruct:tinker_station":
+                    return new com.mofengbaizhi.tinkersnewlife.content.menu.PortableAnvilMenu(id, inv,
+                            (slimeknights.tconstruct.tables.block.entity.table.TinkerStationBlockEntity) ghost);
+                case "tconstruct:tinkers_anvil":
+                    return new com.mofengbaizhi.tinkersnewlife.content.menu.PortableAnvilMenu(id, inv,
+                            (slimeknights.tconstruct.tables.block.entity.table.TinkerStationBlockEntity) ghost);
+                case "tconstruct:part_builder":
+                    return new com.mofengbaizhi.tinkersnewlife.content.menu.PortablePartBuilderMenu(id, inv,
+                            (slimeknights.tconstruct.tables.block.entity.table.PartBuilderBlockEntity) ghost);
+                case "tconstruct:modifier_worktable":
+                    return new com.mofengbaizhi.tinkersnewlife.content.menu.PortableModifierWorktableMenu(id, inv,
+                            (slimeknights.tconstruct.tables.block.entity.table.ModifierWorktableBlockEntity) ghost);
+                default:
+                    return new com.mofengbaizhi.tinkersnewlife.content.menu.PortableChestMenu(id, inv,
+                            (slimeknights.tconstruct.tables.block.entity.chest.AbstractChestBlockEntity) ghost,
+                            blockId.contains("cast")
+                                    ? com.mofengbaizhi.tinkersnewlife.content.item.PortableChestItem.Kind.CAST_CHEST
+                                    : com.mofengbaizhi.tinkersnewlife.content.item.PortableChestItem.Kind.PART_CHEST);
+            }
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
     /** §1351 打一行总数（★在注册完之后调 ✓） */
     public static void dumpVirtual() {
         com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
