@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "XXX",
+    "X#X",
+    "XXX"
+  ],
+  "key": {
+    "X": {
+      "item": "tconstruct:scorched_brick"
+    },
+    "#": {
+      "item": "tconstruct:cast_chest"
+    }
+  },
+  "result": {
+    "item": "tinkersnewlife:portable_cast_chest"
+  }
+}

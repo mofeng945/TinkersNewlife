@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "XXX",
+    "X#X",
+    "XXX"
+  ],
+  "key": {
+    "X": {
+      "item": "tconstruct:scorched_brick"
+    },
+    "#": {
+      "item": "tconstruct:crafting_station"
+    }
+  },
+  "result": {
+    "item": "tinkersnewlife:portable_crafting_station"
+  }
+}
