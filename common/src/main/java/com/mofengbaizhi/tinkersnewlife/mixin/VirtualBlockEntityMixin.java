@@ -33,7 +33,13 @@ public class VirtualBlockEntityMixin {
             }
             BlockEntity be = com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.lookupVirtual(pos);
             if (be != null) {
-                cir.setReturnValue(be.getBlockState());
+                // §1346 ★关键：匠魂扫描要求方块**实现 ITabbedBlock**，
+                //   而全匠魂只有 TabbedTableBlock 实现它（★反编译实证 ✓）
+                //   ⇒ 这里统一借出工匠台的方块状态（★样子不重要，关键是能过判定 ✓）
+                net.minecraft.world.level.block.Block tabbed =
+                        net.minecraftforge.registries.ForgeRegistries.BLOCKS
+                                .getValue(new net.minecraft.resources.ResourceLocation("tconstruct:crafting_station"));
+                cir.setReturnValue(tabbed == null ? be.getBlockState() : tabbed.defaultBlockState());
             }
         } catch (Throwable ignored) {
         }
