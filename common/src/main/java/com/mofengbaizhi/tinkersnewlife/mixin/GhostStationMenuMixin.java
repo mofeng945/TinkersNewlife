@@ -54,7 +54,16 @@ public class GhostStationMenuMixin {
                 String blockId = buf.readableBytes() > 0 ? buf.readUtf(128) : "";
                 com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[步进] 方块=[{}] bytes={}", blockId, buf.readableBytes());
                 com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.CLIENT_TOOLKIT =
-                        buf.readableBytes() > 0 && buf.readVarInt() == 1;   // §1341 工具包标记 ✓
+                        buf.readableBytes() > 0 && buf.readVarInt() == 1;
+                if (com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.CLIENT_TOOLKIT) {
+                    // §1342 客户端也把 6 个幽灵贴到相邻坐标 ✓
+                    com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.VIRTUAL.clear();
+                    java.util.List<net.minecraft.world.level.block.entity.BlockEntity> gs =
+                            com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.buildDeviceGhosts();
+                    for (int i = 0; i < gs.size(); i++) {
+                        com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.registerVirtual(i, gs.get(i));
+                    }
+                }   // §1341 工具包标记 ✓
                 // §1340 库存**不在 buf 里传**（★槽位内容由原版同步 ✓ ⭐避开了读 NBT 的 EOF ✗）
                 net.minecraft.nbt.CompoundTag nbt = null;
 

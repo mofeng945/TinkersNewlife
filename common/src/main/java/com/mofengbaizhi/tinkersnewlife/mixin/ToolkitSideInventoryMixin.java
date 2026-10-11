@@ -29,7 +29,14 @@ import slimeknights.tconstruct.tables.menu.module.SideInventoryContainer;
 public class ToolkitSideInventoryMixin {
 
     @Inject(method = "detectStationParts", at = @At("RETURN"), remap = false)
-    private void tnl$addPendingSides(Level world, BlockPos start, CallbackInfo ci) {
+    private void tnl$disabled(Level world, BlockPos start, CallbackInfo ci0) {
+        // §1342 已停用：侧栏改由匠魂自己扫到“贴在一起的幽灵”建立 ✓
+        //（★VirtualBlockEntityMixin 让 Level#getBlockEntity 能查到幽灵 ✓）
+    }
+
+    @Inject(method = "detectStationParts", at = @At("RETURN"), remap = false)
+    private void tnl$addPendingSidesDisabled(Level world, BlockPos start, CallbackInfo ci) {
+        if (true) { return; }   // §1342 停用
         try {
             // §1341 客户端：只要知道“这是工具包”就自己造 6 个幽灵 ✓
             java.util.List<BlockEntity> pending =

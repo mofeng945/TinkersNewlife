@@ -93,6 +93,11 @@ public class PortableCraftingStationItem extends Item {
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备] 工具包侧栏 {} 个", sides.size());
             PortableDeviceSupport.PENDING_SIDES.clear();
             PortableDeviceSupport.PENDING_SIDES.addAll(sides);
+            // §1342 把 6 个幽灵贴在相邻坐标 ✓ 让匠魂自己扫到 ✓
+            PortableDeviceSupport.VIRTUAL.clear();
+            for (int i = 0; i < sides.size(); i++) {
+                PortableDeviceSupport.registerVirtual(i, sides.get(i));
+            }
             PortableDeviceSupport.PENDING_INV = sp.getInventory();   // §1338 ✓
             NetworkHooks.openScreen(sp, new SimpleMenuProvider(
                     (id, inv, p) -> com.mofengbaizhi.tinkersnewlife.content.menu.PortableToolkitMenu.server(

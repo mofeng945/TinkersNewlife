@@ -63,6 +63,31 @@ public final class PortableDeviceSupport {
     /** §1341 客户端标记：当前打开的是不是工具包（★是就自己造 6 个侧栏 ✓） */
     public static boolean CLIENT_TOOLKIT = false;
 
+    /**
+     * §1342 “贴在一起的幽灵”：坐标 → 实体。
+     *
+     * <p>★用法：把 6 个幽灵放在**相邻坐标** ✓ 再靠 `Level#getBlockEntity` 的插桩让匠魂自己扫到 ✓
+     * ⇒ 侧栏由匠魂自己建 ✓ 且**两端自然一致** ✓（★用户的思路 ✓）
+     */
+    public static final java.util.Map<net.minecraft.core.BlockPos, BlockEntity> VIRTUAL =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** 把幽灵注册到相邻坐标（★两端各自注册自己的份 ✓） */
+    public static void registerVirtual(int index, BlockEntity be) {
+        try {
+            VIRTUAL.put(POCKET_POS.offset(index, 0, 0), be);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** 良性查找（★空表时几乎零开销 ✓） */
+    public static BlockEntity lookupVirtual(net.minecraft.core.BlockPos pos) {
+        if (VIRTUAL.isEmpty() || pos == null) {
+            return null;
+        }
+        return VIRTUAL.get(pos);
+    }
+
     /** §1341 用常量表造出六个幽灵侧栏（★不依赖服务端传数据 ✓） */
     public static java.util.List<BlockEntity> buildDeviceGhosts() {
         java.util.List<BlockEntity> out = new java.util.ArrayList<>();
