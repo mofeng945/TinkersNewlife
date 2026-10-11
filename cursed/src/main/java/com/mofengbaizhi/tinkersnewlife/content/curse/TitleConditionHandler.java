@@ -21,6 +21,8 @@ public final class TitleConditionHandler {
     public static void refreshIfChanged(ServerPlayer sp) {
         try {
             String now = CurseTitles.prefix(sp);
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[头衔] 生效={} 前缀={}",
+                    CurseTitles.active(sp), now);
             String before = LAST_PREFIX.get(sp.getUUID());
             if (now.equals(before)) {
                 return;

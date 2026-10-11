@@ -73,7 +73,7 @@ public final class CurseTitles {
             ListTag list = new ListTag();
             int n = 0;
             for (String id : ids) {
-                if (rarityOf(id) == 0 || !held(player).contains(id)) {
+                if (rarityOf(id) == 0 || !active(player).contains(id)) {
                     continue;
                 }
                 list.add(StringTag.valueOf(id));
@@ -107,6 +107,13 @@ public final class CurseTitles {
         return out;
     }
     /** §1325 持有列表按稀有度降序（★界面顺序更好看 ✗ ⭐ 同稀有度按表序 ✓） */
+    /** §1327 当前**生效**的全部头衔（★持有 ＋ ⭐ 动态：等级／普通人／咒骸师 ✓）按稀有度降序 ⇒ 选择界面列全 ✓ */
+    public static List<String> sortedActive(Player player) {
+        List<String> ids = active(player);
+        ids.sort(Comparator.comparingInt(CurseTitles::rarityOf).reversed());
+        return ids;
+    }
+
     public static List<String> sortedHeld(Player player) {
         List<String> ids = held(player);
         ids.sort(Comparator.comparingInt(CurseTitles::rarityOf).reversed());
@@ -116,7 +123,7 @@ public final class CurseTitles {
     public static void sync(net.minecraft.server.level.ServerPlayer player) {
         try {
             TinkersNewlife.CHANNEL.send(net.minecraftforge.network.PacketDistributor.PLAYER.with(() -> player),
-                    new com.mofengbaizhi.tinkersnewlife.network.curse.PacketTitlesSync(sortedHeld(player), shownIds(player)));   // §1325 持有列表按稀有度排 ✓
+                    new com.mofengbaizhi.tinkersnewlife.network.curse.PacketTitlesSync(sortedActive(player), shownIds(player)));   // §1327 送"当前生效的全部"（★含动态 ✓）
         } catch (Throwable ignored) {
         }
     }
@@ -252,7 +259,17 @@ public final class CurseTitles {
     public static String prefix(Player player) {
         try {
             List<String> chosen = selected(player);
-            List<String> ids = chosen.isEmpty() ? active(player) : new ArrayList<>(chosen);
+            List<String> nowActive = active(player);
+            List<String> ids = new ArrayList<>();
+            if (chosen.isEmpty()) {
+                ids.addAll(nowActive);
+            } else {
+                for (String id : chosen) {
+                    if (nowActive.contains(id)) {
+                        ids.add(id);
+                    }
+                }
+            }
             ids.sort(Comparator.comparingInt(CurseTitles::rarityOf).reversed());
             StringBuilder sb = new StringBuilder();
             int shown = 0;
