@@ -74,6 +74,14 @@ public class PortableStationMenu extends TinkerStationContainerMenu {
         if (ghost == null || player.level().isClientSide()) {
             return;
         }
+        // §1317 内容写回**玩家存档**（★与物品无关 ⇒ 没有刷物品风险 ✓）
+        com.mofengbaizhi.tinkersnewlife.content.item.PortableTinkerStationItem.saveToPlayer(player, ghost);
+        for (int i = 0; i < ghost.getContainerSize(); i++) {
+            ghost.setItem(i, ItemStack.EMPTY);
+        }
+        if (true) {
+            return;
+        }
         ItemStack holder = com.mofengbaizhi.tinkersnewlife.content.item.PortableTinkerStationItem.findIn(player);
         com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携站·关闭] 手里找到={} count={}",
                 !holder.isEmpty(), holder.isEmpty() ? 0 : holder.getCount());

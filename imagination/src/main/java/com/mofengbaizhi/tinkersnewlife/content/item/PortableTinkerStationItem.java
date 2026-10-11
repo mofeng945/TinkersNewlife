@@ -50,6 +50,26 @@ public class PortableTinkerStationItem extends Item {
     /** NBT 键：背包内容（★每个槽一个物品 compound ✗ 空槽给空 compound ✓） */
     public static final String KEY_INV = "PortableStationInv";
 
+    /** §1317 便携站内容存在**玩家持久数据**上（★不再存物品 NBT ✗ ⭐ 从根上消除刷物品风险 ✓） */
+    public static final String KEY_PLAYER_INV = "tnl_portable_station_inv";
+
+    /** 打开前：把玩家存档里的内容装进幽灵实体 */
+    public static void loadFromPlayer(net.minecraft.world.entity.player.Player player,
+                                      TinkerStationBlockEntity be) {
+        try {
+            importInventory(be, player.getPersistentData().getCompound(KEY_PLAYER_INV));
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** 关闭时：把幽灵实体的内容写回玩家存档（★服务端 ✓ 与物品无关 ✓） */
+    public static void saveToPlayer(net.minecraft.world.entity.player.Player player,
+                                    TinkerStationBlockEntity be) {
+        try {
+            player.getPersistentData().put(KEY_PLAYER_INV, exportInventory(be));
+        } catch (Throwable ignored) {
+        }
+    }
     /** §1311 把方块实体的库存导成 NBT（★不用 BlockEntity#saveWithoutId ✗ ⭐ 只存槽位 ✓） */
     public static CompoundTag exportInventory(TinkerStationBlockEntity be) {
         CompoundTag tag = new CompoundTag();
@@ -115,7 +135,7 @@ public class PortableTinkerStationItem extends Item {
         }
         // §1310 幽灵方块（★不放任何真方块 ✓ 数据走 buf 送客户端 ✓）
         TinkerStationBlockEntity ghost = createDetached(level);
-        loadInventory(stack, ghost);
+        loadFromPlayer(sp, ghost);   // §1317 内容来自玩家存档 ✓
         CompoundTag data = exportInventory(ghost);   // §1311 只传库存 ✓
         com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携站] use: 打开前 count={} nbt={}B",
                 stack.getCount(), data.sizeInBytes());
