@@ -34,6 +34,7 @@ public class PortableToolkitMenu extends CraftingStationContainerMenu {
     private final CraftingStationBlockEntity mainGhost;
     private final Inventory playerInv;
     private final List<BlockEntity> sides;
+    private boolean sidesAdded = false;
 
     public PortableToolkitMenu(int id, Inventory inv, CraftingStationBlockEntity main,
                                List<BlockEntity> sides) {
@@ -41,6 +42,7 @@ public class PortableToolkitMenu extends CraftingStationContainerMenu {
         this.mainGhost = main;
         this.playerInv = inv;
         this.sides = (sides == null) ? new ArrayList<>() : sides;
+        addSides();   // §1336 ★super() 里会调 detectStationParts（那时 sides 还是 null ✗）⇒ 在这里真正加 ✓
         com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备] 槽数（菜单）{} slots={} sides={}",
                 this.getClass().getSimpleName(), this.slots.size(), this.sides.size());
     }
@@ -62,6 +64,19 @@ public class PortableToolkitMenu extends CraftingStationContainerMenu {
     @Override
     public void detectStationParts(Level world, BlockPos start) {
         super.detectStationParts(world, start);   // ★保留原版行为 ✓
+        // §1336 ★父类构造器里就会调到这里 ✗ ⭐ 那时 sides 还没赋值 ⇒ 必须判空 ✓
+        if (this.sides == null || this.sidesAdded) {
+            return;
+        }
+        addSides();
+    }
+
+    /** §1336 真正把 6 个幽灵加为侧栏（★只加一次 ✓） */
+    private void addSides() {
+        if (this.sidesAdded) {
+            return;
+        }
+        this.sidesAdded = true;
         int columns = 9;
         int i = 0;
         for (BlockEntity be : this.sides) {
