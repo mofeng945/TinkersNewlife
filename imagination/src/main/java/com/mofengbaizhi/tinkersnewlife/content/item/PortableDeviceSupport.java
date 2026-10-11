@@ -43,20 +43,46 @@ public final class PortableDeviceSupport {
     }
 
     /** 造游离实体（★公开构造器 (BlockPos, BlockState) ＋ 按注册表 id 取方块状态 ✓） */
+    /**
+     * 造游离实体（§1331 ★照匠魂自己的做法 ✓）。
+     *
+     * <p>⚠ 关键（★反编译 {@code TinkerStationBlock} 得到 ✓）：
+     * <pre>
+     * private final int slotCount;                                   // 槽位数存在【方块】里
+     * public BlockEntity newBlockEntity(BlockPos, BlockState) {       // 由方块造实体 ⇒ 槽位数才对
+     *     return new TinkerStationBlockEntity(pos, state, this.getSlotCount());
+     * }
+     * </pre>
+     * 我原来直接 {@code new TinkerStationBlockEntity(pos, state)} ✗ ⭐ 用的是**默认槽位数** ⇒
+     * 与真实方块差一格 ⇒ 客户端/服务端槽位数不一致 ⇒ {@code IndexOutOfBounds} ✓
+     *
+     * <p>所以这里**优先让方块造**（{@code Block#newBlockEntity} ✓）✗ 失败才回退反射 ✓
+     */
     public static BlockEntity makeGhost(String beClass, String blockId) {
         try {
-            Class<?> c = Class.forName(beClass);
             Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(blockId));
             BlockState state = (block == null)
                     ? net.minecraft.world.level.block.Blocks.AIR.defaultBlockState()
                     : block.defaultBlockState();
+            if (block != null) {
+                try {
+                    // ★newBlockEntity 在 EntityBlock 接口上 ✗ ⭐ 不是 Block ✓
+                    BlockEntity be = (block instanceof net.minecraft.world.level.block.EntityBlock eb)
+                            ? eb.newBlockEntity(POCKET_POS, state)
+                            : null;
+                    if (be != null) {
+                        return be;
+                    }
+                } catch (Throwable ignored) {
+                }
+            }
+            Class<?> c = Class.forName(beClass);
             return (BlockEntity) c.getConstructor(BlockPos.class, BlockState.class).newInstance(POCKET_POS, state);
         } catch (Throwable t) {
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("[便携设备] 造幽灵实体失败 {}: {}", beClass, t.toString());
             return null;
         }
     }
-
     /** 统一槽位入口：Container 优先 ⇒ 否则走 Forge IItemHandler（★箱子只有 handler ✓） */
     public static IItemHandler handlerOf(BlockEntity be) {
         try {
