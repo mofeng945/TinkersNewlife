@@ -31,6 +31,12 @@ import slimeknights.tconstruct.tables.menu.TabbedContainerMenu;
 @Mixin(value = TabbedContainerMenu.class, remap = false)
 public class ToolkitSideInventoryMixin {
 
+    private static BlockState stateOf(String id) {
+        Block b = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(id));
+        return (b == null) ? net.minecraft.world.level.block.Blocks.AIR.defaultBlockState()
+                : b.defaultBlockState();
+    }
+
     @Inject(method = "detectStationParts", at = @At("RETURN"), remap = false)
     private void tnl$fillToolkitTabs(Level world, BlockPos start, CallbackInfo ci) {
         try {
@@ -43,16 +49,16 @@ public class ToolkitSideInventoryMixin {
                 return;
             }
             TabbedContainerMenu<?> self = (TabbedContainerMenu<?>) (Object) this;
-            Block tabbed = ForgeRegistries.BLOCKS.getValue(new ResourceLocation("tconstruct:crafting_station"));
-            if (tabbed == null) {
-                return;
-            }
-            BlockState state = tabbed.defaultBlockState();
             BlockPos base = com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.VIRTUAL_BASE;
             self.stationBlocks.clear();
-            for (int i = 0; i < 7; i++) {   // §1353 主实体 + 6 个设备
-                // §1353 ★用 commons 的 Pair（stationBlocks 的元素类型）
-                self.stationBlocks.add(org.apache.commons.lang3.tuple.Pair.of(base.offset(i, 0, 0), state));
+            // §1354 ★每个标签用**各自真实的方块状态** ✓
+            //（★我们是自己填 stationBlocks ✗ ⭐绕过了扫描的 ITabbedBlock 判定 ✓）
+            //  ⇒ 图标就是各自的方块（匠魂台/匠魂站/匠魂砧/部件台/强化台/铸造箱/部件箱）✓
+            self.stationBlocks.add(org.apache.commons.lang3.tuple.Pair.of(base,
+                    stateOf("tconstruct:crafting_station")));
+            for (int i = 0; i < com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.DEVICES.length; i++) {
+                self.stationBlocks.add(org.apache.commons.lang3.tuple.Pair.of(base.offset(i + 1, 0, 0),
+                        stateOf(com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.DEVICES[i][1])));
             }
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
                     "[便携设备] 顶栏：自己填了 {} 个工作站@{}（§1353 ✓）",
