@@ -121,7 +121,10 @@ public class PortableTinkerStationItem extends Item {
         NetworkHooks.openScreen(sp, new SimpleMenuProvider(
                 (id, inv, p) -> new com.mofengbaizhi.tinkersnewlife.content.menu.PortableStationMenu(id, inv, ghost),
                 Component.translatable("item.tinkersnewlife.portable_tinker_station")),
-                buf -> buf.writeNbt(data));
+                buf -> {
+                    buf.writeBlockPos(POCKET_POS);   // §1313 匠魂期望的坐标 ✓
+                    buf.writeNbt(data);                // §1313 之后跟库存 ⇒ 混入据此重建 ✓
+                });
         com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携站] use: 打开后 count={}（★服务端没动它 ✓）", stack.getCount());
         return InteractionResultHolder.success(stack);
     }
