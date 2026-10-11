@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.mixin;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -19,6 +20,24 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  */
 @Mixin(value = Level.class, remap = false)
 public class VirtualBlockEntityMixin {
+
+    /**
+     * §1343 扫描的**第一道判定**是 {@code world.getBlockState(pos).getBlock() instanceof ITabbedBlock} ✗
+     * 只插桩 getBlockEntity 不够（那里返回空气 ⇒ continue ✗）⇒ 这里也把幽灵的**方块状态**借出去 ✓
+     */
+    @Inject(method = "getBlockState", at = @At("HEAD"), cancellable = true, remap = false)
+    private void tnl$virtualBlockState(BlockPos pos, CallbackInfoReturnable<BlockState> cir) {
+        try {
+            if (com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.VIRTUAL.isEmpty()) {
+                return;
+            }
+            BlockEntity be = com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.lookupVirtual(pos);
+            if (be != null) {
+                cir.setReturnValue(be.getBlockState());
+            }
+        } catch (Throwable ignored) {
+        }
+    }
 
     @Inject(method = "getBlockEntity", at = @At("HEAD"), cancellable = true, remap = false)
     private void tnl$virtualBlockEntity(BlockPos pos, CallbackInfoReturnable<BlockEntity> cir) {
