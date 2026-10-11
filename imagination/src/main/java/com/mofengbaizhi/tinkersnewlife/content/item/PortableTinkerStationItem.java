@@ -40,7 +40,8 @@ public class PortableTinkerStationItem extends Item {
 
     /** 造一个游离的工匠站方块实体（★不入世界 ✓ ⭐ 但给它 level 与坐标 ✗ 屏幕要用 ✓） */
     public static TinkerStationBlockEntity createDetached(Level level) {
-        TinkerStationBlockEntity be = new TinkerStationBlockEntity(POCKET_POS,
+        // §1314 用子类（★stillValid 恒真 ⇒ 不因"距离太远"被秒关 ✓）
+        TinkerStationBlockEntity be = new com.mofengbaizhi.tinkersnewlife.content.block.GhostStationBlockEntity(POCKET_POS,
                 TinkerTables.tinkerStation.get().defaultBlockState());
         be.setLevel(level);
         return be;
