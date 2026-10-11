@@ -18,14 +18,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  *
  * <p>性能：表为空时几乎零开销（只一次 isEmpty 判断 ✓）。
  */
-@Mixin(value = Level.class, remap = false)
+@Mixin(value = Level.class)   // §1352 ★原版类必须走 refmap 重射（★不能 remap=false）
 public class VirtualBlockEntityMixin {
 
     /**
      * §1343 扫描的**第一道判定**是 {@code world.getBlockState(pos).getBlock() instanceof ITabbedBlock} ✗
      * 只插桩 getBlockEntity 不够（那里返回空气 ⇒ continue ✗）⇒ 这里也把幽灵的**方块状态**借出去 ✓
      */
-    @Inject(method = "getBlockState", at = @At("HEAD"), cancellable = true, remap = false)
+    @Inject(method = "getBlockState", at = @At("HEAD"), cancellable = true)
     private void tnl$virtualBlockState(BlockPos pos, CallbackInfoReturnable<BlockState> cir) {
         try {
             if (com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.VIRTUAL.isEmpty()) {
@@ -46,7 +46,7 @@ public class VirtualBlockEntityMixin {
         }
     }
 
-    @Inject(method = "getBlockEntity", at = @At("HEAD"), cancellable = true, remap = false)
+    @Inject(method = "getBlockEntity", at = @At("HEAD"), cancellable = true)
     private void tnl$virtualBlockEntity(BlockPos pos, CallbackInfoReturnable<BlockEntity> cir) {
         try {
             if (com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.VIRTUAL.isEmpty()) {
