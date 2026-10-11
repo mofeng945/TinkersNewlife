@@ -24,6 +24,7 @@ public class PortableStationMenu extends TinkerStationContainerMenu {
     }
 
     private static TinkerStationBlockEntity rebuild(FriendlyByteBuf buf) {
+        com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携站·菜单] 客户端重建开始");
         CompoundTag nbt = null;
         try {
             nbt = buf.readNbt();
@@ -37,6 +38,8 @@ public class PortableStationMenu extends TinkerStationContainerMenu {
         TinkerStationBlockEntity be = com.mofengbaizhi.tinkersnewlife.content.item.PortableTinkerStationItem
                 .createDetached(level);
         com.mofengbaizhi.tinkersnewlife.content.item.PortableTinkerStationItem.importInventory(be, nbt);   // §1311
+        com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携站·菜单] 客户端重建完成 slots={}",
+                be.getContainerSize());
         return be;
     }
 
@@ -47,6 +50,8 @@ public class PortableStationMenu extends TinkerStationContainerMenu {
             return;
         }
         ItemStack holder = com.mofengbaizhi.tinkersnewlife.content.item.PortableTinkerStationItem.findIn(player);
+        com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携站·关闭] 手里找到={} count={}",
+                !holder.isEmpty(), holder.isEmpty() ? 0 : holder.getCount());
         if (!holder.isEmpty()) {
             com.mofengbaizhi.tinkersnewlife.content.item.PortableTinkerStationItem.saveInventory(holder, ghost);
             for (int i = 0; i < ghost.getContainerSize(); i++) {

@@ -116,10 +116,13 @@ public class PortableTinkerStationItem extends Item {
         TinkerStationBlockEntity ghost = createDetached(level);
         loadInventory(stack, ghost);
         CompoundTag data = exportInventory(ghost);   // §1311 只传库存 ✓
+        com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携站] use: 打开前 count={} nbt={}B",
+                stack.getCount(), data.sizeInBytes());
         NetworkHooks.openScreen(sp, new SimpleMenuProvider(
                 (id, inv, p) -> new com.mofengbaizhi.tinkersnewlife.content.menu.PortableStationMenu(id, inv, ghost),
                 Component.translatable("item.tinkersnewlife.portable_tinker_station")),
                 buf -> buf.writeNbt(data));
+        com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携站] use: 打开后 count={}（★服务端没动它 ✓）", stack.getCount());
         return InteractionResultHolder.success(stack);
     }
 
