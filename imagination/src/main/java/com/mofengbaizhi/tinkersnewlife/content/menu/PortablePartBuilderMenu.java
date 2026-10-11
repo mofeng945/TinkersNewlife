@@ -14,7 +14,7 @@ public class PortablePartBuilderMenu extends slimeknights.tconstruct.tables.menu
 
     public PortablePartBuilderMenu(int id, Inventory inv, slimeknights.tconstruct.tables.block.entity.table.PartBuilderBlockEntity tile) {
         super(id, inv, tile);
-        this.ghost = tile;
+        com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备] 槽数（菜单）{} side={} slots={}", this.getClass().getSimpleName(), "?" + "", this.slots.size());        this.ghost = tile;
         this.kind = com.mofengbaizhi.tinkersnewlife.content.item.PortableTableItem.Kind.PART_BUILDER;
     }
 

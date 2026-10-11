@@ -16,7 +16,7 @@ public class PortableStationMenu extends TinkerStationContainerMenu {
 
     public PortableStationMenu(int id, Inventory inv, TinkerStationBlockEntity tile) {
         super(id, inv, tile);
-        this.ghost = tile;
+        com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备] 槽数（菜单）{} side={} slots={}", this.getClass().getSimpleName(), "?" + "", this.slots.size());        this.ghost = tile;
     }
 
     public PortableStationMenu(int id, Inventory inv, FriendlyByteBuf buf) {

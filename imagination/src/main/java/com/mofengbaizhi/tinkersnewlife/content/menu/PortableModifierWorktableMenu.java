@@ -14,7 +14,7 @@ public class PortableModifierWorktableMenu extends slimeknights.tconstruct.table
 
     public PortableModifierWorktableMenu(int id, Inventory inv, slimeknights.tconstruct.tables.block.entity.table.ModifierWorktableBlockEntity tile) {
         super(id, inv, tile);
-        this.ghost = tile;
+        com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备] 槽数（菜单）{} side={} slots={}", this.getClass().getSimpleName(), "?" + "", this.slots.size());        this.ghost = tile;
         this.kind = com.mofengbaizhi.tinkersnewlife.content.item.PortableTableItem.Kind.MODIFIER_WORKTABLE;
     }
 

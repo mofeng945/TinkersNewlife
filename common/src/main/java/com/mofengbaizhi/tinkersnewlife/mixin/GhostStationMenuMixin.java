@@ -59,7 +59,17 @@ public class GhostStationMenuMixin {
             } catch (Throwable ignored) {
             }
             com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.importInto(ghost, nbt);
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备·菜单] 幽灵实体 {} 已交给匠魂菜单", beClass);
+            int slots = -1;
+            try {
+                slots = (ghost instanceof net.minecraft.world.Container c) ? c.getContainerSize() : -1;
+                if (slots < 0) {
+                    var h = ghost.getCapability(net.minecraftforge.common.capabilities.ForgeCapabilities.ITEM_HANDLER).resolve().orElse(null);
+                    slots = (h == null) ? -1 : h.getSlots();
+                }
+            } catch (Throwable ignored) {
+            }
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
+                    "[便携设备·菜单] 幽灵实体 {} 方块={} 槽数={} 已交给匠魂菜单", beClass, blockId, slots);
             cir.setReturnValue(ghost);
         } catch (Throwable t) {
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("[便携设备·菜单] 校验抛异常 ⇒ 放行: {}", t.toString());

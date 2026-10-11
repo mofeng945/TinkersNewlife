@@ -15,7 +15,7 @@ public class PortableChestMenu extends TinkerChestContainerMenu {
     public PortableChestMenu(int id, Inventory inv, AbstractChestBlockEntity tile,
                              com.mofengbaizhi.tinkersnewlife.content.item.PortableChestItem.Kind kind) {
         super(id, inv, tile);
-        this.ghost = tile;
+        com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备] 槽数（菜单）{} side={} slots={}", this.getClass().getSimpleName(), "?" + "", this.slots.size());        this.ghost = tile;
         this.kind = kind;
     }
 
