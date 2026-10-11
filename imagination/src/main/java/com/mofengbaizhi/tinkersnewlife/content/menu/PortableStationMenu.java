@@ -45,6 +45,17 @@ public class PortableStationMenu extends TinkerStationContainerMenu {
 
     @Override
     public void removed(Player player) {
+        // §1315 抓"谁关的界面"：把调用栈打出来（★不再靠猜 ✓）
+        try {
+            StringBuilder sb = new StringBuilder();
+            StackTraceElement[] st = new Throwable().getStackTrace();
+            for (int i = 0; i < Math.min(9, st.length); i++) {
+                sb.append("\n    at ").append(st[i]);
+            }
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携站·关闭] 调用栈:{}{}",
+                    player.level().isClientSide() ? "(客户端)" : "(服务端)", sb);
+        } catch (Throwable ignored) {
+        }
         super.removed(player);
         if (ghost == null || player.level().isClientSide()) {
             return;
