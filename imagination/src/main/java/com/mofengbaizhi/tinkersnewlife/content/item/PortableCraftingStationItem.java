@@ -76,6 +76,43 @@ public class PortableCraftingStationItem extends Item {
         CompoundTag data = PortableDeviceSupport.export(ghost);
         com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备] 打开 {} slots={} key={}",
                 kind.name(), PortableDeviceSupport.slots(ghost), kind.saveKey);
+        // §1335 工具包：★把 6 个幽灵方块作为 6 个"侧栏"并排摆开 ✓
+        if (kind == Kind.TOOLKIT) {
+            java.util.List<BlockEntity> sides = new java.util.ArrayList<>();
+            for (String[] d : PortableDeviceSupport.DEVICES) {
+                BlockEntity g = PortableDeviceSupport.makeGhost(d[0], d[1]);
+                if (g != null) {
+                    try {
+                        g.setLevel(level);
+                    } catch (Throwable ignored) {
+                    }
+                    PortableDeviceSupport.loadFromPlayer(sp, g, d[2]);
+                    sides.add(g);
+                }
+            }
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备] 工具包侧栏 {} 个", sides.size());
+            NetworkHooks.openScreen(sp, new SimpleMenuProvider(
+                    (id, inv, p) -> com.mofengbaizhi.tinkersnewlife.content.menu.PortableToolkitMenu.server(
+                            id, inv,
+                            (slimeknights.tconstruct.tables.block.entity.table.CraftingStationBlockEntity) ghost,
+                            sides),
+                    net.minecraft.network.chat.Component.translatable(nameKey(kind))),
+                    buf -> {
+                        buf.writeBlockPos(new BlockPos(0, -1024, 0));
+                        buf.writeUtf(PortableDeviceSupport.MAGIC);
+                        buf.writeUtf(kind.beClass);
+                        buf.writeUtf(kind.blockId);
+                        buf.writeNbt(data);
+                        buf.writeVarInt(sides.size());
+                        for (int i = 0; i < sides.size(); i++) {
+                            buf.writeUtf(PortableDeviceSupport.DEVICES[i][0]);
+                            buf.writeUtf(PortableDeviceSupport.DEVICES[i][1]);
+                            buf.writeNbt(PortableDeviceSupport.export(sides.get(i)));
+                        }
+                    });
+            return InteractionResultHolder.success(stack);
+        }
+
         NetworkHooks.openScreen(sp, new SimpleMenuProvider(
                 (id, inv, p) -> new com.mofengbaizhi.tinkersnewlife.content.menu.PortableCraftingStationMenu(
                         id, inv,
