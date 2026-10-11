@@ -106,6 +106,11 @@ public class GhostStationMenuMixin {
                         "[便携设备·菜单] 幽灵实体 {} 方块={} 侧栏={} 已交给匠魂菜单",
                         beClass, blockId, com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.PENDING_SIDES.size());
 
+            // §1350 主实体也进虚拟表（★BFS 从它开始 ✓）
+            if (com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.CLIENT_TOOLKIT) {
+                com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.VIRTUAL_BASE = wantedPos;
+                com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.registerVirtualMain(ghost);
+            }
 cir.setReturnValue(ghost);
         } catch (Throwable t) {
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("[便携设备·菜单] 校验抛异常 ⇒ 放行: {}", t.toString());

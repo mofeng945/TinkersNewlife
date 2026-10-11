@@ -76,9 +76,19 @@ public final class PortableDeviceSupport {
     /** §1347 基准坐标（★玩家附近 ✓ ⭐区块已加载 ✓） */
     public static net.minecraft.core.BlockPos VIRTUAL_BASE = new net.minecraft.core.BlockPos(0, -1024, 0);   // §1347 默认口袋坐标（★避开前向引用 ✓）
 
+    /** §1350 主实体也要注册 ✗ ⭐BFS 就从它开始（不注册 ⇒ 第一步就 continue ⇒ 扫到 0 个 ✗） */
+    public static void registerVirtualMain(BlockEntity be) {
+        try {
+            VIRTUAL.put(VIRTUAL_BASE, be);
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
+                    "[便携设备] 虚拟表：主实体@{}，侧栏 {} 个", VIRTUAL_BASE, VIRTUAL.size() - 1);
+        } catch (Throwable ignored) {
+        }
+    }
+
     public static void registerVirtual(int index, BlockEntity be) {
         try {
-            VIRTUAL.put(VIRTUAL_BASE.offset(index, 0, 0), be);
+            VIRTUAL.put(VIRTUAL_BASE.offset(index + 1, 0, 0), be);   // §1350 侧栏顺移一格（★基准点留给主实体 ✓）
         } catch (Throwable ignored) {
         }
     }

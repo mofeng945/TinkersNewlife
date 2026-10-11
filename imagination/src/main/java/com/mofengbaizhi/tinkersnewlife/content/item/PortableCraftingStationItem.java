@@ -98,6 +98,7 @@ public class PortableCraftingStationItem extends Item {
             // §1347 ★放在**玩家附近**（★区块已加载 ⇒ StationTabPacket 的 hasChunkAt 才能过 ✓）
             PortableDeviceSupport.VIRTUAL_BASE = sp.blockPosition().above(3);
             PortableDeviceSupport.VIRTUAL.clear();
+            PortableDeviceSupport.registerVirtualMain(ghost);   // §1350 ★主实体（BFS 起点）
             for (int i = 0; i < sides.size(); i++) {
                 PortableDeviceSupport.registerVirtual(i, sides.get(i));
             }
