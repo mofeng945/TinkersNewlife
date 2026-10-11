@@ -89,11 +89,28 @@ public final class CurseTitles {
         }
     }
 
+    /** §1308 "当前实际显示"的头衔 id（★选中优先 ✗ 否则自动前 3 ✓）⇒ 界面据此预勾 ✓ */
+    public static List<String> shownIds(Player player) {
+        List<String> chosen = selected(player);
+        if (!chosen.isEmpty()) {
+            return chosen;
+        }
+        List<String> ids = active(player);
+        ids.sort(Comparator.comparingInt(CurseTitles::rarityOf).reversed());
+        List<String> out = new ArrayList<>();
+        for (String id : ids) {
+            if (out.size() >= MAX_SHOWN) {
+                break;
+            }
+            out.add(id);
+        }
+        return out;
+    }
     /** 把"持有 ＋ 选中"同步给客户端（★选择界面要用 ✓） */
     public static void sync(net.minecraft.server.level.ServerPlayer player) {
         try {
             TinkersNewlife.CHANNEL.send(net.minecraftforge.network.PacketDistributor.PLAYER.with(() -> player),
-                    new com.mofengbaizhi.tinkersnewlife.network.curse.PacketTitlesSync(held(player), selected(player)));
+                    new com.mofengbaizhi.tinkersnewlife.network.curse.PacketTitlesSync(held(player), shownIds(player)));   // §1308 发"实际显示"的那几枚 ✓
         } catch (Throwable ignored) {
         }
     }

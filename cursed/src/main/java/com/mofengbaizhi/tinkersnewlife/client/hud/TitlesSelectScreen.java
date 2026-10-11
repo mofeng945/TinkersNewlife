@@ -14,7 +14,7 @@ import java.util.List;
 public class TitlesSelectScreen extends Screen {
 
     private final Screen parent;
-    private final List<String> pick = new ArrayList<>(ClientTitles.selected);
+    private final List<String> pick = new ArrayList<>();
 
     public TitlesSelectScreen(Screen parent) {
         super(Component.translatable("screen.tinkersnewlife.titles"));
@@ -27,7 +27,7 @@ public class TitlesSelectScreen extends Screen {
         int row = 0;
         for (String id : ClientTitles.held) {
             final String titleId = id;
-            int x = this.width / 2 - 154 + col * 156;
+            int x = this.width / 2 - 75;
             int y = 40 + row * 24;
             this.addRenderableWidget(Button.builder(label(titleId), b -> {
                 if (pick.contains(titleId)) {
