@@ -34,66 +34,61 @@ public class GhostStationMenuMixin {
             return;   // ★坐标都放不下 ⇒ 不可能是我们的 ✓
         }
         buf.markReaderIndex();
-        try {
-            buf.readBlockPos();
-            int before = buf.readableBytes();
-            String magic = buf.readUtf(64);
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备·菜单] 标记串校验 clazz={} 剩余字节={} 读到=[{}]",
-                    clazz.getSimpleName(), before, magic);
-            if (!com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.MAGIC.equals(magic)) {
-                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备·菜单] 不是我们的 buf ⇒ 原样放行 ✓");
-                buf.resetReaderIndex();
-                return;
-            }
-            String beClass = buf.readUtf(256);
-            String blockId = buf.readUtf(128);
-            CompoundTag nbt = buf.readNbt();
-
-            // §1335 工具包：坐标/类名/方块/NBT 之后还可以跟"若干侧栏幽灵"
-            com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.CLIENT_SIDES.clear();
             try {
-                int sides = buf.readVarInt();
-                for (int i = 0; i < sides; i++) {
-                    String sc = buf.readUtf(256);
-                    String sb = buf.readUtf(128);
-                    CompoundTag sn = buf.readNbt();
-                    net.minecraft.world.level.block.entity.BlockEntity g2 =
-                            com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.makeGhost(sc, sb);
-                    if (g2 != null) {
-                        g2.setLevel(net.minecraft.client.Minecraft.getInstance().level);
-                        com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.importInto(g2, sn);
-                        com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.CLIENT_SIDES.add(g2);
-                    }
+                // §1339 安全读取：每一步都先看剩余字节（★彻底消除 EOF ✓）
+                if (buf.readableBytes() < 8) {
+                    buf.resetReaderIndex();
+                    return;
                 }
-                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备·菜单] 侧栏幽灵 {} 个", sides);
+                buf.readBlockPos();
+                String magic = buf.readableBytes() > 0 ? buf.readUtf(64) : "";
+                if (!com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.MAGIC.equals(magic)) {
+                    buf.resetReaderIndex();
+                    return;
+                }
+                String beClass = buf.readableBytes() > 0 ? buf.readUtf(256) : "";
+                String blockId = buf.readableBytes() > 0 ? buf.readUtf(128) : "";
+                net.minecraft.nbt.CompoundTag nbt = buf.readableBytes() > 0 ? buf.readNbt() : null;
+
+                net.minecraft.world.level.block.entity.BlockEntity ghost =
+                        com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.makeGhost(beClass, blockId);
+                if (ghost == null) {
+                    buf.resetReaderIndex();
+                    return;
+                }
+                try {
+                    ghost.setLevel(net.minecraft.client.Minecraft.getInstance().level);
+                } catch (Throwable ignored) {
+                }
+                com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.importInto(ghost, nbt);
+
+                // §1338 工具包侧栏（★有多少读多少 ✓）
+                com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.CLIENT_SIDES.clear();
                 com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.PENDING_SIDES.clear();
-                com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.PENDING_SIDES
-                        .addAll(com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.CLIENT_SIDES);
-            } catch (Throwable ignored) {
-            }
-
-            net.minecraft.world.level.block.entity.BlockEntity ghost =
-                    com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.makeGhost(beClass, blockId);
-            if (ghost == null) {
-                return;
-            }
-            try {
-                ghost.setLevel(net.minecraft.client.Minecraft.getInstance().level);
-            } catch (Throwable ignored) {
-            }
-            com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.importInto(ghost, nbt);
-            int slots = -1;
-            try {
-                slots = (ghost instanceof net.minecraft.world.Container c) ? c.getContainerSize() : -1;
-                if (slots < 0) {
-                    var h = ghost.getCapability(net.minecraftforge.common.capabilities.ForgeCapabilities.ITEM_HANDLER).resolve().orElse(null);
-                    slots = (h == null) ? -1 : h.getSlots();
+                try {
+                    int sides = buf.readableBytes() > 0 ? buf.readVarInt() : 0;
+                    for (int i = 0; i < sides && buf.readableBytes() > 0; i++) {
+                        String sc = buf.readUtf(256);
+                        String sb = buf.readUtf(128);
+                        net.minecraft.nbt.CompoundTag sn = buf.readableBytes() > 0 ? buf.readNbt() : null;
+                        net.minecraft.world.level.block.entity.BlockEntity g2 =
+                                com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.makeGhost(sc, sb);
+                        if (g2 != null) {
+                            try {
+                                g2.setLevel(net.minecraft.client.Minecraft.getInstance().level);
+                            } catch (Throwable ignored) {
+                            }
+                            com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.importInto(g2, sn);
+                            com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.PENDING_SIDES.add(g2);
+                        }
+                    }
+                } catch (Throwable ignored) {
                 }
-            } catch (Throwable ignored) {
-            }
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
-                    "[便携设备·菜单] 幽灵实体 {} 方块={} 槽数={} 已交给匠魂菜单", beClass, blockId, slots);
-            cir.setReturnValue(ghost);
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
+                        "[便携设备·菜单] 幽灵实体 {} 方块={} 侧栏={} 已交给匠魂菜单",
+                        beClass, blockId, com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.PENDING_SIDES.size());
+
+cir.setReturnValue(ghost);
         } catch (Throwable t) {
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("[便携设备·菜单] 校验抛异常 ⇒ 放行: {}", t.toString());
             buf.resetReaderIndex();

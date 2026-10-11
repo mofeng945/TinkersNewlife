@@ -4,9 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -29,10 +27,6 @@ import slimeknights.tconstruct.tables.menu.module.SideInventoryContainer;
  */
 @Mixin(value = TabbedContainerMenu.class, remap = false)
 public class ToolkitSideInventoryMixin {
-
-    @Shadow
-    @Final
-    public int containerId;
 
     @Inject(method = "detectStationParts", at = @At("RETURN"), remap = false)
     private void tnl$addPendingSides(Level world, BlockPos start, CallbackInfo ci) {
@@ -63,7 +57,7 @@ public class ToolkitSideInventoryMixin {
                     continue;
                 }
                 SideInventoryContainer<BlockEntity> side = new SideInventoryContainer<>(
-                        TinkerTables.craftingStationContainer.get(), this.containerId, inv, be,
+                        TinkerTables.craftingStationContainer.get(), ((net.minecraft.world.inventory.AbstractContainerMenu) (Object) this).containerId, inv, be,
                         -40 - i * 100, 18, 9);
                 self.addSubContainer(side, true);
                 i++;
