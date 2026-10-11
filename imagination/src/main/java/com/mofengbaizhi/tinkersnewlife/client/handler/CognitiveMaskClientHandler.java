@@ -96,7 +96,8 @@ public final class CognitiveMaskClientHandler {
             if (last != null && now - last < 5000L) return;
             LAST_LOG.put(player.getUUID(), now);
             boolean self = player == Minecraft.getInstance().player;
-            TinkersNewlife.LOGGER.info(
+            // §1369 ★降为 debug：这条在**名牌渲染热路径**上 ✗（★本局日志里刷了 1049 行 ✗ 拖帧 ✗）
+            TinkersNewlife.LOGGER.debug(
                     "[面具] 名牌事件：实体={}（自己={}）戴面具={} 我来之前的result={} ⇒ 我设={}",
                     player.getGameProfile().getName(), self, worn, before, worn ? "DENY" : "（不动）");
         } catch (Throwable ignored) {

@@ -134,7 +134,25 @@ public final class LongShortBladeModelHandler {
             //     ⇒ ⭐ **整套"按场景切模型"从来没接上过** ✗ ✓ 这就是"还是占位"的真正原因 ✓。
             //   ⇒ ⭐ 改成 ⭐ **扫全表、按"路径"匹配** ✓ ——
             //     ⭐ 这样 `#inventory`／任何变体键都能被包上 ✓（⭐ 将来别的变体也不会漏 ✓）。
+            /*
+             * §1368 ★性能：**先试显式键（O(1)）** ✓，都没命中才退化成扫全表 ✗
+             *   原写法每次都 `new ArrayList<>(models.entrySet())` ✗
+             *   —— ★在 380 模组包里这张表有**十万级**条目 ✗
+             *   （★ModernFix 实测：本模组在 ModifyBakingResult 里花了 **27.76 秒** ✗）
+             */
+            var candidates = new java.util.ArrayList<ResourceLocation>(4);
+            candidates.add(new net.minecraft.client.resources.model.ModelResourceLocation(
+                    new ResourceLocation(TinkersNewlife.MOD_ID, "long_short_blade"), "inventory"));
+            candidates.add(new ResourceLocation(TinkersNewlife.MOD_ID, "long_short_blade"));
+            candidates.add(new ResourceLocation(TinkersNewlife.MOD_ID, "item/long_short_blade"));
             int wrapped = 0;
+            for (ResourceLocation ck : candidates) {
+                BakedModel cur = models.get(ck);
+                if (cur == null) continue;
+                models.put(ck, new LongShortBladeModel(cur, idle, invLong, shortSide, heldLong));
+                wrapped++;
+            }
+            if (wrapped == 0)
             for (Map.Entry<ResourceLocation, BakedModel> e : new java.util.ArrayList<>(models.entrySet())) {
                 ResourceLocation key = e.getKey();
                 if (key == null || e.getValue() == null) {

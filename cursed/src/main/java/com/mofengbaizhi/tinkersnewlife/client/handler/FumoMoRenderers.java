@@ -37,7 +37,7 @@ public final class FumoMoRenderers {
                 try {
                     top.theillusivec4.curios.api.client.CuriosRendererRegistry.register(
                             item.get(), FumoMoCurioRenderer::new);
-                } catch (Throwable t) {
+        } catch (Throwable t) {
                     TinkersNewlife.LOGGER.warn("[fufu] Curios 头部渲染器注册失败（{}）：{}", item.getId(), t.toString());
                 }
             }
