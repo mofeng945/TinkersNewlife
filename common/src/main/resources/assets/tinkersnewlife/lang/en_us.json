@@ -1603,5 +1603,7 @@
   "title.tinkersnewlife.enemy_of_all": "Enemy of the World",
   "title.tinkersnewlife.calamity_bearer": "Calamity Bearer",
   "title.tinkersnewlife.iron_tomb_crisis": "Iron Tomb Crisis",
-  "item.tinkersnewlife.portable_tinker_station": "Portable Tinker Station"
+  "item.tinkersnewlife.portable_tinker_station": "Portable Tinker Station",
+  "item.tinkersnewlife.portable_cast_chest": "Portable Casting Chest",
+  "item.tinkersnewlife.portable_part_chest": "Portable Part Chest"
 }

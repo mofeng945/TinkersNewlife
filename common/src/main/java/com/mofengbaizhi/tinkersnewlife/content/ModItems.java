@@ -769,4 +769,17 @@ public class ModItems {
     public static final RegistryObject<Item> PORTABLE_TINKER_STATION =
             ITEMS.register("portable_tinker_station",
                     () -> new com.mofengbaizhi.tinkersnewlife.content.item.PortableTinkerStationItem(
-                            new Item.Properties().stacksTo(1)));}
+                            new Item.Properties().stacksTo(1)));
+    /** §1321 便携铸造箱（★幽灵实体 ＋ ⭐ 内容存玩家存档 ✓） */
+    public static final RegistryObject<Item> PORTABLE_CAST_CHEST =
+            ITEMS.register("portable_cast_chest",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.PortableChestItem(
+                            new Item.Properties().stacksTo(1),
+                            com.mofengbaizhi.tinkersnewlife.content.item.PortableChestItem.Kind.CAST_CHEST));
+
+    /** §1321 便携部件箱 */
+    public static final RegistryObject<Item> PORTABLE_PART_CHEST =
+            ITEMS.register("portable_part_chest",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.PortableChestItem(
+                            new Item.Properties().stacksTo(1),
+                            com.mofengbaizhi.tinkersnewlife.content.item.PortableChestItem.Kind.PART_CHEST));}
