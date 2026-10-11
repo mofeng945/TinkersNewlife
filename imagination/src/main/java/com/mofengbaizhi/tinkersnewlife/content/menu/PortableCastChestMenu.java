@@ -41,9 +41,5 @@ public class PortableCastChestMenu extends slimeknights.tconstruct.tables.menu.T
             return;
         }
         com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceItem.storeToPlayer(player, ghost);
-        net.minecraft.world.Container c = (net.minecraft.world.Container) ghost;
-        for (int i = 0; i < c.getContainerSize(); i++) {
-            c.setItem(i, net.minecraft.world.item.ItemStack.EMPTY);
-        }
     }
 }
