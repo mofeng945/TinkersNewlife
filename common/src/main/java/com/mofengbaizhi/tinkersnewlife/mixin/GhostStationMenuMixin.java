@@ -36,9 +36,13 @@ public class GhostStationMenuMixin {
         buf.markReaderIndex();
         try {
             buf.readBlockPos();
-            String magic = buf.readUtf(32);
+            int before = buf.readableBytes();
+            String magic = buf.readUtf(64);
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备·菜单] 标记串校验 clazz={} 剩余字节={} 读到=[{}]",
+                    clazz.getSimpleName(), before, magic);
             if (!MAGIC.equals(magic)) {
-                buf.resetReaderIndex();   // ★不是我们的 buf ⇒ 原样还给匠魂 ✓
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备·菜单] 不是我们的 buf ⇒ 原样放行 ✓");
+                buf.resetReaderIndex();
                 return;
             }
             String beClass = buf.readUtf(256);
@@ -58,7 +62,8 @@ public class GhostStationMenuMixin {
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备·菜单] 幽灵实体 {} 已交给匠魂菜单", beClass);
             cir.setReturnValue(ghost);
         } catch (Throwable t) {
-            buf.resetReaderIndex();   // ★任何意外都原样放行 ⇒ 绝不破坏原版 ✓
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("[便携设备·菜单] 校验抛异常 ⇒ 放行: {}", t.toString());
+            buf.resetReaderIndex();
         }
     }
 }
