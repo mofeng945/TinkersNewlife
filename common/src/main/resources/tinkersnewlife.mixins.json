@@ -26,7 +26,7 @@
     "ApostleCastThrottleMixin"
   ],
   "client": [
-    "mixin.JeiExclusionClampMixin",
+    "JeiExclusionClampMixin",
     "EntityRenderDispatcherMixin",
     "EntityRendererNameTagMixin",
     "ItemRendererMixin",
