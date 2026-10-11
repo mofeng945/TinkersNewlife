@@ -765,4 +765,8 @@ public class ModItems {
                             ModSounds.MUSIC_TELL_ME,
                             new Item.Properties().stacksTo(1).rarity(Rarity.RARE),
                             MUSIC_DISC_TELL_ME_LENGTH_TICKS));
-}
+    /** §1312 便携工匠站（★幽灵方块方案：不放任何真方块 ✓ 打开时把库存走 buf 送给客户端 ✓） */
+    public static final RegistryObject<Item> PORTABLE_TINKER_STATION =
+            ITEMS.register("portable_tinker_station",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.PortableTinkerStationItem(
+                            new Item.Properties().stacksTo(1)));}
