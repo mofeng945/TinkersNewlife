@@ -782,4 +782,17 @@ public class ModItems {
             ITEMS.register("portable_part_chest",
                     () -> new com.mofengbaizhi.tinkersnewlife.content.item.PortableChestItem(
                             new Item.Properties().stacksTo(1),
-                            com.mofengbaizhi.tinkersnewlife.content.item.PortableChestItem.Kind.PART_CHEST));}
+                            com.mofengbaizhi.tinkersnewlife.content.item.PortableChestItem.Kind.PART_CHEST));
+    /** §1322 便携部件制作台（★幽灵实体 ＋ ⭐ 内容存玩家存档 ✓） */
+    public static final RegistryObject<Item> PORTABLE_PART_BUILDER =
+            ITEMS.register("portable_part_builder",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.PortableTableItem(
+                            new Item.Properties().stacksTo(1),
+                            com.mofengbaizhi.tinkersnewlife.content.item.PortableTableItem.Kind.PART_BUILDER));
+
+    /** §1322 便携强化调配台 */
+    public static final RegistryObject<Item> PORTABLE_MODIFIER_WORKTABLE =
+            ITEMS.register("portable_modifier_worktable",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.PortableTableItem(
+                            new Item.Properties().stacksTo(1),
+                            com.mofengbaizhi.tinkersnewlife.content.item.PortableTableItem.Kind.MODIFIER_WORKTABLE));}

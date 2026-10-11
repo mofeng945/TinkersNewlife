@@ -26,6 +26,29 @@ public class GhostStationMenuMixin {
     private static void tnl$ghostTile(FriendlyByteBuf buf, Class<?> clazz, CallbackInfoReturnable cir) {
         try {
             // §1321 箱子分支：匠魂菜单要的是**抽象类** AbstractChestBlockEntity
+            // §1322 台子分支：部件制作台 / 强化调配台（★buf 与工匠站同格式：坐标 ＋ 库存 ✓）
+            if (clazz == slimeknights.tconstruct.tables.block.entity.table.PartBuilderBlockEntity.class
+                    || clazz == slimeknights.tconstruct.tables.block.entity.table.ModifierWorktableBlockEntity.class) {
+                buf.markReaderIndex();
+                buf.readBlockPos();
+                CompoundTag tableNbt = buf.readNbt();
+                boolean partBuilder = clazz == slimeknights.tconstruct.tables.block.entity.table.PartBuilderBlockEntity.class;
+                var which = partBuilder
+                        ? com.mofengbaizhi.tinkersnewlife.content.item.PortableTableItem.Kind.PART_BUILDER
+                        : com.mofengbaizhi.tinkersnewlife.content.item.PortableTableItem.Kind.MODIFIER_WORKTABLE;
+                net.minecraft.world.level.block.entity.BlockEntity tableGhost = com.mofengbaizhi.tinkersnewlife.content.item.PortableTableItem.makeGhost(which);
+                if (tableGhost != null) {
+                    try {
+                        tableGhost.setLevel(net.minecraft.client.Minecraft.getInstance().level);
+                    } catch (Throwable ignored) {
+                    }
+                    com.mofengbaizhi.tinkersnewlife.content.item.PortableTableItem.importInto(tableGhost, tableNbt);
+                    com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携台·菜单] 幽灵台子 {} 已交给匠魂菜单", which);
+                    cir.setReturnValue(tableGhost);
+                    return;
+                }
+            }
+
             if (clazz == slimeknights.tconstruct.tables.block.entity.chest.AbstractChestBlockEntity.class) {
                 buf.markReaderIndex();
                 buf.readBlockPos();
