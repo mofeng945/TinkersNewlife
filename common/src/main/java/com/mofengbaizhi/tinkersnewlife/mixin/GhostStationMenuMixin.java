@@ -36,19 +36,25 @@ public class GhostStationMenuMixin {
         buf.markReaderIndex();
             try {
                 // §1339 安全读取：每一步都先看剩余字节（★彻底消除 EOF ✓）
-                if (buf.readableBytes() < 8) {
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[步进] 入口 clazz={} bytes={}", clazz.getSimpleName(), buf.readableBytes());
+            if (buf.readableBytes() < 8) {
                     buf.resetReaderIndex();
                     return;
                 }
                 buf.readBlockPos();
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[步进] 读完坐标 bytes={}", buf.readableBytes());
                 String magic = buf.readableBytes() > 0 ? buf.readUtf(64) : "";
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[步进] 读到标记=[{}] bytes={}", magic, buf.readableBytes());
                 if (!com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.MAGIC.equals(magic)) {
                     buf.resetReaderIndex();
                     return;
                 }
                 String beClass = buf.readableBytes() > 0 ? buf.readUtf(256) : "";
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[步进] 类名=[{}] bytes={}", beClass, buf.readableBytes());
                 String blockId = buf.readableBytes() > 0 ? buf.readUtf(128) : "";
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[步进] 方块=[{}] bytes={}", blockId, buf.readableBytes());
                 net.minecraft.nbt.CompoundTag nbt = buf.readableBytes() > 0 ? buf.readNbt() : null;
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[步进] NBT={} bytes={}", nbt == null ? "null" : nbt.size(), buf.readableBytes());
 
                 net.minecraft.world.level.block.entity.BlockEntity ghost =
                         com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.makeGhost(beClass, blockId);
