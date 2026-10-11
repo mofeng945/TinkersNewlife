@@ -7,10 +7,10 @@
   ],
   "key": {
     "X": {
-      "item": "tconstruct:scorched_brick"
+      "tag": "tinkersnewlife:portable_prototype_scorched_brick"
     },
     "#": {
-      "item": "tconstruct:crafting_station"
+      "tag": "tinkersnewlife:portable_prototype_crafting_station"
     }
   },
   "result": {

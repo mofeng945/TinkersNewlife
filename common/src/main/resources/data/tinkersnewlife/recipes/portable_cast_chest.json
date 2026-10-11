@@ -7,10 +7,10 @@
   ],
   "key": {
     "X": {
-      "item": "tconstruct:scorched_brick"
+      "tag": "tinkersnewlife:portable_prototype_scorched_brick"
     },
     "#": {
-      "item": "tconstruct:cast_chest"
+      "tag": "tinkersnewlife:portable_prototype_cast_chest"
     }
   },
   "result": {
