@@ -53,6 +53,8 @@ public class GhostStationMenuMixin {
                 com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[步进] 类名=[{}] bytes={}", beClass, buf.readableBytes());
                 String blockId = buf.readableBytes() > 0 ? buf.readUtf(128) : "";
                 com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[步进] 方块=[{}] bytes={}", blockId, buf.readableBytes());
+                com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.CLIENT_TOOLKIT =
+                        buf.readableBytes() > 0 && buf.readVarInt() == 1;   // §1341 工具包标记 ✓
                 // §1340 库存**不在 buf 里传**（★槽位内容由原版同步 ✓ ⭐避开了读 NBT 的 EOF ✗）
                 net.minecraft.nbt.CompoundTag nbt = null;
 

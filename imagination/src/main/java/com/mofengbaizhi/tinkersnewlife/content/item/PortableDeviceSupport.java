@@ -60,6 +60,26 @@ public final class PortableDeviceSupport {
     /** §1338 侧栏用的玩家背包（★服务端在 openScreen 前塞入 ✓ ⭐客户端从自己身上取 ✓） */
     public static net.minecraft.world.entity.player.Inventory PENDING_INV = null;
 
+    /** §1341 客户端标记：当前打开的是不是工具包（★是就自己造 6 个侧栏 ✓） */
+    public static boolean CLIENT_TOOLKIT = false;
+
+    /** §1341 用常量表造出六个幽灵侧栏（★不依赖服务端传数据 ✓） */
+    public static java.util.List<BlockEntity> buildDeviceGhosts() {
+        java.util.List<BlockEntity> out = new java.util.ArrayList<>();
+        for (String[] d : DEVICES) {
+            try {
+                BlockEntity be = makeGhost(d[0], d[1]);
+                if (be != null) {
+                    be.setLevel(net.minecraft.client.Minecraft.getInstance().level);
+                    out.add(be);
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+        com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备] 客户端自己造侧栏幽灵 {} 个", out.size());
+        return out;
+    }
+
     /** 幽灵实体的统一口袋坐标（★远离一切工作台 ⇒ 侧栏检测扫不到邻居 ✓） */
     public static final BlockPos POCKET_POS = new BlockPos(0, -1024, 0);
 

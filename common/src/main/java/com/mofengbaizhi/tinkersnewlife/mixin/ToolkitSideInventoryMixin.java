@@ -31,8 +31,12 @@ public class ToolkitSideInventoryMixin {
     @Inject(method = "detectStationParts", at = @At("RETURN"), remap = false)
     private void tnl$addPendingSides(Level world, BlockPos start, CallbackInfo ci) {
         try {
+            // §1341 客户端：只要知道“这是工具包”就自己造 6 个幽灵 ✓
             java.util.List<BlockEntity> pending =
                     com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.PENDING_SIDES;
+            if (pending.isEmpty() && com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.CLIENT_TOOLKIT) {
+                pending = com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.buildDeviceGhosts();
+            }
             if (pending.isEmpty()) {
                 return;
             }
