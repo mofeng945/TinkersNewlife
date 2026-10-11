@@ -42,6 +42,7 @@ public class GhostStationMenuMixin {
                     return;
                 }
                 net.minecraft.core.BlockPos wantedPos = buf.readBlockPos();   // §1347 客户端用同一坐标 ✓
+                // §1356 ★读到就立刻设（★不能等到后面：顶栏填充要用它 ✓）
                 com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.VIRTUAL_BASE = wantedPos;
                 com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[步进] 读完坐标 bytes={}", buf.readableBytes());
                 String magic = buf.readableBytes() > 0 ? buf.readUtf(64) : "";
@@ -108,8 +109,9 @@ public class GhostStationMenuMixin {
 
             // §1350 主实体也进虚拟表（★BFS 从它开始 ✓）
             if (com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.CLIENT_TOOLKIT) {
-                com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.VIRTUAL_BASE = wantedPos;
                 com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.registerVirtualMain(ghost);
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
+                        "[便携设备] 客户端基准坐标={}（§1356 ✓）", wantedPos);
             }
 cir.setReturnValue(ghost);
         } catch (Throwable t) {
