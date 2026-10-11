@@ -43,7 +43,14 @@ public class TitlesSelectScreen extends Screen {
                 row++;
             }
         }
-        this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> {
+        // §1325 "恢复自动"：提交空选择 ⇒ 服务端回退成"稀有度前 3" ✓
+        this.addRenderableWidget(Button.builder(Component.translatable("screen.tinkersnewlife.titles.auto"), b -> {
+            TinkersNewlife.CHANNEL.sendToServer(
+                    new com.mofengbaizhi.tinkersnewlife.network.curse.PacketTitlesSelect(new ArrayList<>()));
+            if (this.minecraft != null) {
+                this.minecraft.setScreen(parent);
+            }
+        }).bounds(this.width / 2 + 56, this.height - 30, 120, 20).build());        this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> {
             TinkersNewlife.CHANNEL.sendToServer(
                     new com.mofengbaizhi.tinkersnewlife.network.curse.PacketTitlesSelect(pick));
             if (this.minecraft != null) {
@@ -61,7 +68,7 @@ public class TitlesSelectScreen extends Screen {
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(g);
         g.drawCenteredString(this.font, this.title, this.width / 2, 16, 0xFFFFFF);
-        g.drawCenteredString(this.font, Component.translatable("screen.tinkersnewlife.titles.hint"),
+        g.drawCenteredString(this.font, Component.translatable("screen.tinkersnewlife.titles.hint", pick.size()),
                 this.width / 2, 28, 0xA0A0A0);
         super.render(g, mouseX, mouseY, partialTick);
     }

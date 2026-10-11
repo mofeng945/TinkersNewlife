@@ -1610,5 +1610,8 @@
   "item.tinkersnewlife.portable_cast_chest": "便携铸造箱",
   "item.tinkersnewlife.portable_part_chest": "便携部件箱",
   "item.tinkersnewlife.portable_part_builder": "便携部件制作台",
-  "item.tinkersnewlife.portable_modifier_worktable": "便携强化调配台"
+  "item.tinkersnewlife.portable_modifier_worktable": "便携强化调配台",
+  "screen.tinkersnewlife.titles": "头衔设置",
+  "screen.tinkersnewlife.titles.hint": "点一下切换是否展示·已选 %s/3",
+  "screen.tinkersnewlife.titles.auto": "恢复自动（稀有度前 3）"
 }

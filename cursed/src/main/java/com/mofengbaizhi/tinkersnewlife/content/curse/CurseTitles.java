@@ -106,11 +106,17 @@ public final class CurseTitles {
         }
         return out;
     }
+    /** §1325 持有列表按稀有度降序（★界面顺序更好看 ✗ ⭐ 同稀有度按表序 ✓） */
+    public static List<String> sortedHeld(Player player) {
+        List<String> ids = held(player);
+        ids.sort(Comparator.comparingInt(CurseTitles::rarityOf).reversed());
+        return ids;
+    }
     /** 把"持有 ＋ 选中"同步给客户端（★选择界面要用 ✓） */
     public static void sync(net.minecraft.server.level.ServerPlayer player) {
         try {
             TinkersNewlife.CHANNEL.send(net.minecraftforge.network.PacketDistributor.PLAYER.with(() -> player),
-                    new com.mofengbaizhi.tinkersnewlife.network.curse.PacketTitlesSync(held(player), shownIds(player)));   // §1308 发"实际显示"的那几枚 ✓
+                    new com.mofengbaizhi.tinkersnewlife.network.curse.PacketTitlesSync(sortedHeld(player), shownIds(player)));   // §1325 持有列表按稀有度排 ✓
         } catch (Throwable ignored) {
         }
     }

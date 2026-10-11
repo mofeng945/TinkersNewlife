@@ -1607,5 +1607,8 @@
   "item.tinkersnewlife.portable_cast_chest": "Portable Casting Chest",
   "item.tinkersnewlife.portable_part_chest": "Portable Part Chest",
   "item.tinkersnewlife.portable_part_builder": "Portable Part Builder",
-  "item.tinkersnewlife.portable_modifier_worktable": "Portable Modifier Worktable"
+  "item.tinkersnewlife.portable_modifier_worktable": "Portable Modifier Worktable",
+  "screen.tinkersnewlife.titles": "Titles",
+  "screen.tinkersnewlife.titles.hint": "Click to toggle · picked %s/3",
+  "screen.tinkersnewlife.titles.auto": "Auto (top 3 by rarity)"
 }
