@@ -13,41 +13,37 @@ import slimeknights.tconstruct.tables.menu.TabbedContainerMenu;
 import slimeknights.tconstruct.tables.menu.module.SideInventoryContainer;
 
 /**
- * §1338 工具包的“六个幽灵侧栏”。
+ * §1345 工具包的六个侧栏。
  *
- * <p>★挂在 {@code TabbedContainerMenu#detectStationParts} 的**返回处** ✓（日志实证的时机）：
+ * <p>★为什么不能靠匠魂自己扫（反编译实证 ✓）：
  * <pre>
- * CraftingStationContainerMenu 构造器顺序：
- *     addChestSideInventory();   // ← 侧栏在这之前加（玩家背包槽还没加 ✓）
- *     addInventorySlots();       // ← 玩家背包槽在这里加
- * 晚了就会：IllegalStateException: BaseContainer: Player inventory has …
+ * TabbedContainerMenu#addChestSideInventory（工匠台真正用的那个）
+ *   for (Direction dir : Direction.Plane.HORIZONTAL)      // 只扫 4 个水平方向
+ *       if (已是工作站) continue;                    // 相邻的工作站会被跳过
+ *       if (hasItemHandler(te, null)) { inventoryTE = te; break; }   // 只加**一个**
+ *   isUsable 还要求实体类型在标签 tconstruct:side_inventories 里
+ *   ★而那个标签里**只有原版箱子/木桶/漏斗** ✗ 一个匠魂方块都没有
  * </pre>
- * 而 {@code detectStationParts} 正好在 {@code super(...)} 里、{@code addInventorySlots()} **之前**被调用 ✓
- * ⇒ 在这里把幽灵作为侧栏 {@code addSubContainer} ⇒ **两端都成立** ✓
+ * ⇒ 所以必须我们自己在 {@code detectStationParts} 的**返回处**把 6 个塞进去 ✓
+ * （★时机：它在 {@code super(...)} 里、玩家背包槽**之前**被调用 ✓ 晚了会 IllegalStateException）
  */
 @Mixin(value = TabbedContainerMenu.class, remap = false)
 public class ToolkitSideInventoryMixin {
 
     @Inject(method = "detectStationParts", at = @At("RETURN"), remap = false)
-    private void tnl$disabled(Level world, BlockPos start, CallbackInfo ci0) {
-        // §1342 已停用：侧栏改由匠魂自己扫到“贴在一起的幽灵”建立 ✓
-        //（★VirtualBlockEntityMixin 让 Level#getBlockEntity 能查到幽灵 ✓）
-    }
-
-    @Inject(method = "detectStationParts", at = @At("RETURN"), remap = false)
-    private void tnl$addPendingSidesDisabled(Level world, BlockPos start, CallbackInfo ci) {
-        if (true) { return; }   // §1342 停用
+    private void tnl$addToolkitSides(Level world, BlockPos start, CallbackInfo ci) {
         try {
-            // §1341 客户端：只要知道“这是工具包”就自己造 6 个幽灵 ✓
+            var support = com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.class;
             java.util.List<BlockEntity> pending =
                     com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.PENDING_SIDES;
-            if (pending.isEmpty() && com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.CLIENT_TOOLKIT) {
+            if (pending.isEmpty()
+                    && com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.CLIENT_TOOLKIT) {
+                // ★客户端：自己用常量表造（不等服务端数据 ✓）
                 pending = com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.buildDeviceGhosts();
             }
             if (pending.isEmpty()) {
                 return;
             }
-            // ★玩家背包：客户端从自己身上取 ✗ ⭐服务端用暂存（★不摸 Mantle 私有字段 ✓）
             Inventory inv = null;
             try {
                 inv = net.minecraft.client.Minecraft.getInstance().player.getInventory();
@@ -62,18 +58,18 @@ public class ToolkitSideInventoryMixin {
                 return;
             }
             TabbedContainerMenu<?> self = (TabbedContainerMenu<?>) (Object) this;
+            int id = ((net.minecraft.world.inventory.AbstractContainerMenu) (Object) this).containerId;
             int i = 0;
             for (BlockEntity be : new java.util.ArrayList<>(pending)) {
                 if (be == null) {
                     continue;
                 }
                 SideInventoryContainer<BlockEntity> side = new SideInventoryContainer<>(
-                        TinkerTables.craftingStationContainer.get(), ((net.minecraft.world.inventory.AbstractContainerMenu) (Object) this).containerId, inv, be,
-                        -40 - i * 100, 18, 9);
+                        TinkerTables.craftingStationContainer.get(), id, inv, be, -40 - i * 100, 18, 9);
                 self.addSubContainer(side, true);
                 i++;
             }
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备] 侧栏已加 {} 个（§1338 ✓）", i);
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备] 侧栏已加 {} 个（§1345 ✓）", i);
             pending.clear();
         } catch (Throwable t) {
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("[便携设备] 侧栏添加失败: {}", t.toString());
