@@ -5,7 +5,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import slimeknights.tconstruct.tables.client.inventory.widget.TinkerTabsWidget;
 
 /**
@@ -28,7 +28,7 @@ import slimeknights.tconstruct.tables.client.inventory.widget.TinkerTabsWidget;
 public class TinkerTabsWidgetMixin {
 
     @Inject(method = "onNewTabSelection", at = @At("HEAD"), cancellable = true, remap = false)
-    private void tnl$allowVirtualTab(BlockPos pos, CallbackInfoReturnable<Void> cir) {
+    private void tnl$allowVirtualTab(BlockPos pos, CallbackInfo ci) {   // §1359 ★目标方法返回 void ⇒ 必须用 CallbackInfo ✓
         try {
             if (com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.VIRTUAL.isEmpty()) {
                 return;
@@ -44,7 +44,7 @@ public class TinkerTabsWidgetMixin {
                     "[便携设备] 客户端点击标签 index={} ⇒ 自己发包（§1358 ✓）", dx);
             slimeknights.tconstruct.common.network.TinkerNetwork.getInstance()
                     .sendToServer(new slimeknights.tconstruct.tables.network.StationTabPacket(pos));
-            cir.cancel();
+            ci.cancel();
         } catch (Throwable t) {
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("[便携设备] 标签发包失败: {}", t.toString());
         }
