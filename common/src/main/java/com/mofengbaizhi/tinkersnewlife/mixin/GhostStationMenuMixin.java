@@ -31,8 +31,19 @@ public class GhostStationMenuMixin {
                 return;
             }
             buf.resetReaderIndex();
+            // §1319 buf：[坐标][类名][库存] ⇒ 按**类名**造（★客户端要的可能是抽象类 ✗ ⭐ 这样也能对上 ✓）
+            buf.readBlockPos();
+            String beName = buf.readUtf();
+            Class<?> real = null;
+            try {
+                real = Class.forName(beName);
+            } catch (Throwable ignored) {
+            }
+            if (real == null) {
+                real = clazz;
+            }
             Object ghost = com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceItem
-                    .buildGhost((Class) clazz, buf, "tconstruct:tinker_station");
+                    .buildGhost(real, buf, "tconstruct:tinker_station");
             if (ghost != null) {
                 cir.setReturnValue(ghost);
             }

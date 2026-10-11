@@ -119,18 +119,34 @@ public class PortableDeviceItem extends Item {
 
     /* ---------------------------------------------------------------- 库存 NBT */
 
+    /** 取"槽位数量"与"读写"的统一入口（★桌子是 Container ✗ ⭐ 箱子只有 IItemHandler ✓） */
+    private static net.minecraftforge.items.IItemHandler handlerOf(BlockEntity be) {
+        try {
+            if (be instanceof net.minecraft.world.Container c) {
+                return new net.minecraftforge.items.wrapper.InvWrapper(c);
+            }
+        } catch (Throwable ignored) {
+        }
+        try {
+            return be.getCapability(net.minecraftforge.common.capabilities.ForgeCapabilities.ITEM_HANDLER)
+                    .resolve().orElse(null);
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
     public static CompoundTag exportInventory(BlockEntity be) {
         CompoundTag tag = new CompoundTag();
         ListTag list = new ListTag();
-        int size;
         try {
-            size = ((net.minecraft.world.Container) be).getContainerSize();
-        } catch (Throwable t) {
-            size = 0;
-        }
-        for (int i = 0; i < size; i++) {
-            ItemStack s = ((net.minecraft.world.Container) be).getItem(i);
-            list.add(s.isEmpty() ? new CompoundTag() : s.save(new CompoundTag()));
+            var h = handlerOf(be);
+            int size = (h == null) ? 0 : h.getSlots();
+            for (int i = 0; i < size; i++) {
+                ItemStack s = h.getStackInSlot(i);
+                list.add(s.isEmpty() ? new CompoundTag() : s.save(new CompoundTag()));
+            }
+            tag.putInt("size", size);
+        } catch (Throwable ignored) {
         }
         tag.put("inv", list);
         return tag;
@@ -141,15 +157,17 @@ public class PortableDeviceItem extends Item {
             if (tag == null || !tag.contains("inv", 9)) {
                 return;
             }
+            var h = handlerOf(be);
+            if (h == null) {
+                return;
+            }
             ListTag list = tag.getList("inv", 10);
-            int size = ((net.minecraft.world.Container) be).getContainerSize();
-            for (int i = 0; i < size && i < list.size(); i++) {
-                ((net.minecraft.world.Container) be).setItem(i, ItemStack.of(list.getCompound(i)));
+            for (int i = 0; i < h.getSlots() && i < list.size(); i++) {
+                h.insertItem(i, ItemStack.of(list.getCompound(i)), false);
             }
         } catch (Throwable ignored) {
         }
     }
-
     /** 打开前：从**玩家存档**装内容 */
     public static void loadFromPlayer(Player player, BlockEntity be, Kind kind) {
         try {
@@ -189,6 +207,7 @@ public class PortableDeviceItem extends Item {
                 net.minecraft.network.chat.Component.translatable(nameKey(kind))),
                 buf -> {
                     buf.writeBlockPos(new BlockPos(0, -1024, 0));
+                    buf.writeUtf(kind.beClass);   // §1319 客户端据此反射造实体（★抽象类也能对上 ✓）
                     buf.writeNbt(data);
                 });
         return InteractionResultHolder.success(stack);
