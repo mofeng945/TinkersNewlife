@@ -103,6 +103,7 @@ public class PortableCraftingStationItem extends Item {
                         buf.writeUtf(kind.beClass);
                         buf.writeUtf(kind.blockId);
                         buf.writeNbt(data);
+                    buf.writeVarInt(0);   // §1337 侧栏数量（★非工具包恒为 0 ✗ ⭐ 保证 buf 格式统一 ✓）
                         buf.writeVarInt(sides.size());
                         for (int i = 0; i < sides.size(); i++) {
                             buf.writeUtf(PortableDeviceSupport.DEVICES[i][0]);

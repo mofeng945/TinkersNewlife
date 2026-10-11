@@ -77,6 +77,12 @@ public class PortableToolkitMenu extends CraftingStationContainerMenu {
             return;
         }
         this.sidesAdded = true;
+        // §1337 手写侧栏不可行（★Mantle addSubContainer 拒绝：BaseContainer: Player inventory has … ✓）
+        //   ⇒ 暂不加侧栏 ✗ ⭐ 工具包先当作"便携工匠台"用 ✓（★后续走"幽灵相邻让匠魂自己扫"那条路 ✓）
+        if (true) {
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备] 侧栏改为暂不添加（★避免崩溃 ✓）");
+            return;
+        }
         int columns = 9;
         int i = 0;
         for (BlockEntity be : this.sides) {

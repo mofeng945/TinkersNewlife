@@ -146,6 +146,7 @@ public class PortableTinkerStationItem extends Item {
                     buf.writeUtf("slimeknights.tconstruct.tables.block.entity.table.TinkerStationBlockEntity");
                     buf.writeUtf("tconstruct:tinker_station");
                     buf.writeNbt(data);                // §1313 之后跟库存 ⇒ 混入据此重建 ✓
+                    buf.writeVarInt(0);   // §1337 侧栏数量（★非工具包恒为 0 ✗ ⭐ 保证 buf 格式统一 ✓）
                 });
         com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携站] use: 打开后 count={}（★服务端没动它 ✓）", stack.getCount());
         return InteractionResultHolder.success(stack);
