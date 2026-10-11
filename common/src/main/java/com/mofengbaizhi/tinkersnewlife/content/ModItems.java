@@ -769,32 +769,4 @@ public class ModItems {
     public static final RegistryObject<Item> PORTABLE_TINKER_STATION =
             ITEMS.register("portable_tinker_station",
                     () -> new com.mofengbaizhi.tinkersnewlife.content.item.PortableTinkerStationItem(
-                            new Item.Properties().stacksTo(1)));
-    /** §1318 便携portable_part_builder（★幽灵设备 ✗ ⭐ 内容存玩家存档 ✓） */
-    public static final RegistryObject<Item> PORTABLE_PART_BUILDER =
-            ITEMS.register("portable_part_builder",
-                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceItem(
-                            new Item.Properties().stacksTo(1),
-                            com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceItem.Kind.PART_BUILDER));
-
-    /** §1318 便携portable_modifier_worktable（★幽灵设备 ✗ ⭐ 内容存玩家存档 ✓） */
-    public static final RegistryObject<Item> PORTABLE_MODIFIER_WORKTABLE =
-            ITEMS.register("portable_modifier_worktable",
-                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceItem(
-                            new Item.Properties().stacksTo(1),
-                            com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceItem.Kind.MODIFIER_WORKTABLE));
-
-    /** §1318 便携portable_cast_chest（★幽灵设备 ✗ ⭐ 内容存玩家存档 ✓） */
-    public static final RegistryObject<Item> PORTABLE_CAST_CHEST =
-            ITEMS.register("portable_cast_chest",
-                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceItem(
-                            new Item.Properties().stacksTo(1),
-                            com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceItem.Kind.CAST_CHEST));
-
-    /** §1318 便携portable_part_chest（★幽灵设备 ✗ ⭐ 内容存玩家存档 ✓） */
-    public static final RegistryObject<Item> PORTABLE_PART_CHEST =
-            ITEMS.register("portable_part_chest",
-                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceItem(
-                            new Item.Properties().stacksTo(1),
-                            com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceItem.Kind.PART_CHEST));
-}
+                            new Item.Properties().stacksTo(1)));}
