@@ -172,21 +172,29 @@ public final class CurseAffinityAttribute {
             if (stack.isEmpty()) {
                 return;
             }
-            CompoundTag tag = stack.getOrCreateTag();
-            if (tag.getBoolean(MARKER_ROLLED)) {
+            /*
+             * §1367 ★★★致命修正：**绝不能在门槛之前 getOrCreateTag()** ✗✗
+             *   原写法：`CompoundTag tag = stack.getOrCreateTag();` 写在「是不是饰品」判定**之前** ✗
+             *   ⇒ ★**背包里每一件物品（包括钓上来的鱼）都被写上一个空标签 `{}`** ✗✗
+             *   ⇒ 原版 `isSameItemSameTags` 比 `Objects.equals(tag, tag)` ⇒ `{}` ≠ `null`
+             *   ⇒ ★**同款物品永远合不到一起** ✗（用户实测：钓上来的鱼不堆叠 ✗）
+             *   ★现在：只用 `getTag()` **读** ✓；不是饰哈就**一个字节都不写** ✓；落空也不写 ✓
+             */
+            CompoundTag tag = stack.getTag();   // ★只读，不创建 ✓
+            if (tag != null && tag.getBoolean(MARKER_ROLLED)) {
                 return;
             }
             if (!com.mofengbaizhi.tinkersnewlife.content.loot.CurseAffinityLootModifier
                     .isCurioItem(stack, player.level())) {
-                return;
+                return;   // ★非饰品：到此为止，**不碰 NBT** ✓
             }
-            tag.putBoolean(MARKER_ROLLED, true);
             if (player.level().getRandom().nextFloat() >= 0.4F) {
-                return;
+                return;   // ★落空也不写标记 ✓（★与 §1365 同一口径 ✓）
             }
             int affinity = player.level().getRandom().nextInt(51);
             if (affinity > 0) {
                 setItemAffinity(stack, affinity, player.level());
+                stack.getOrCreateTag().putBoolean(MARKER_ROLLED, true);   // ★只有真中且 >0 才落标记 ✓
             }
         } catch (Throwable ignored) {
         }
