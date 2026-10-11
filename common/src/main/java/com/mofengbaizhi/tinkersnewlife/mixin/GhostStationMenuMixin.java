@@ -25,6 +25,24 @@ public class GhostStationMenuMixin {
     @Inject(method = "getTileEntityFromBuf", at = @At("HEAD"), cancellable = true, remap = false)
     private static void tnl$ghostTile(FriendlyByteBuf buf, Class<?> clazz, CallbackInfoReturnable cir) {
         try {
+            // §1321 箱子分支：匠魂菜单要的是**抽象类** AbstractChestBlockEntity
+            if (clazz == slimeknights.tconstruct.tables.block.entity.chest.AbstractChestBlockEntity.class) {
+                buf.markReaderIndex();
+                buf.readBlockPos();
+                String beName = buf.readUtf();
+                CompoundTag chestNbt = buf.readNbt();
+                var which = "slimeknights.tconstruct.tables.block.entity.chest.CastChestBlockEntity".equals(beName)
+                        ? com.mofengbaizhi.tinkersnewlife.content.item.PortableChestItem.Kind.CAST_CHEST
+                        : com.mofengbaizhi.tinkersnewlife.content.item.PortableChestItem.Kind.PART_CHEST;
+                var chestGhost = com.mofengbaizhi.tinkersnewlife.content.item.PortableChestItem.makeGhost(which);
+                if (chestGhost != null) {
+                    com.mofengbaizhi.tinkersnewlife.content.item.PortableChestItem.importInto(chestGhost, chestNbt);
+                    com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携箱·菜单] 幽灵箱子 {} 已交给匠魂菜单", beName);
+                    cir.setReturnValue(chestGhost);
+                    return;
+                }
+            }
+
             if (clazz != TinkerStationBlockEntity.class || buf == null || buf.readableBytes() < 8) {
                 return;
             }
