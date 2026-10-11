@@ -65,80 +65,28 @@ public class PortableTableItem extends Item {
 
     /** 造游离实体（★公开构造器 (BlockPos, BlockState) ✓） */
     public static BlockEntity makeGhost(Kind kind) {
-        try {
-            Class<?> c = Class.forName(kind.beClass);
-            Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(kind.blockId));
-            BlockState state = block == null
-                    ? net.minecraft.world.level.block.Blocks.AIR.defaultBlockState()
-                    : block.defaultBlockState();
-            return (BlockEntity) c.getConstructor(BlockPos.class, BlockState.class)
-                    .newInstance(new BlockPos(0, -1024, 0), state);
-        } catch (Throwable t) {
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("[便携台] 造实体失败: {}", t.toString());
-            return null;
-        }
+        return PortableDeviceSupport.makeGhost(kind.beClass, kind.blockId);
     }
 
     /** 统一槽位入口：Container 优先（★台子是 Container ✓）✗ ⭐ 兜底 IItemHandler ✓ */
     private static IItemHandler handlerOf(BlockEntity be) {
-        try {
-            if (be instanceof net.minecraft.world.Container c) {
-                return new InvWrapper(c);
-            }
-        } catch (Throwable ignored) {
-        }
-        try {
-            return be.getCapability(ForgeCapabilities.ITEM_HANDLER).resolve().orElse(null);
-        } catch (Throwable ignored) {
-            return null;
-        }
+        return PortableDeviceSupport.handlerOf(be);
     }
 
     public static CompoundTag export(BlockEntity be, int size) {
-        CompoundTag tag = new CompoundTag();
-        ListTag list = new ListTag();
-        try {
-            IItemHandler h = handlerOf(be);
-            for (int i = 0; i < size; i++) {
-                ItemStack s = (h == null || i >= h.getSlots()) ? ItemStack.EMPTY : h.getStackInSlot(i);
-                list.add(s.isEmpty() ? new CompoundTag() : s.save(new CompoundTag()));
-            }
-        } catch (Throwable ignored) {
-        }
-        tag.putInt("size", size);
-        tag.put("inv", list);
-        return tag;
+        return PortableDeviceSupport.export(be, size);
     }
 
     public static void importInto(BlockEntity be, CompoundTag tag) {
-        try {
-            if (tag == null || !tag.contains("inv", 9)) {
-                return;
-            }
-            IItemHandler h = handlerOf(be);
-            if (h == null) {
-                return;
-            }
-            ListTag list = tag.getList("inv", 10);
-            for (int i = 0; i < h.getSlots() && i < list.size(); i++) {
-                h.insertItem(i, ItemStack.of(list.getCompound(i)), false);
-            }
-        } catch (Throwable ignored) {
-        }
+        PortableDeviceSupport.importInto(be, tag);
     }
 
     public static void loadFromPlayer(Player player, BlockEntity be, Kind kind) {
-        try {
-            importInto(be, player.getPersistentData().getCompound(saveKey(kind)));
-        } catch (Throwable ignored) {
-        }
+        PortableDeviceSupport.loadFromPlayer(player, be, saveKey(kind));
     }
 
     public static void storeToPlayer(Player player, BlockEntity be, Kind kind) {
-        try {
-            player.getPersistentData().put(saveKey(kind), export(be, 6));
-        } catch (Throwable ignored) {
-        }
+        PortableDeviceSupport.storeToPlayer(player, be, saveKey(kind), 6);
     }
 
     @Override

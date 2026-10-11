@@ -72,28 +72,12 @@ public class PortableTinkerStationItem extends Item {
     }
     /** §1311 把方块实体的库存导成 NBT（★不用 BlockEntity#saveWithoutId ✗ ⭐ 只存槽位 ✓） */
     public static CompoundTag exportInventory(TinkerStationBlockEntity be) {
-        CompoundTag tag = new CompoundTag();
-        ListTag list = new ListTag();
-        for (int i = 0; i < be.getContainerSize(); i++) {
-            ItemStack s = be.getItem(i);
-            list.add(s.isEmpty() ? new CompoundTag() : s.save(new CompoundTag()));
-        }
-        tag.put(KEY_INV, list);
-        return tag;
+        return PortableDeviceSupport.export(be, be.getContainerSize());
     }
 
     /** §1311 把 NBT 里的库存灌回方块实体（★客户端重建 ✓） */
     public static void importInventory(TinkerStationBlockEntity be, CompoundTag tag) {
-        try {
-            if (tag == null || !tag.contains(KEY_INV, 9)) {
-                return;
-            }
-            ListTag list = tag.getList(KEY_INV, 10);
-            for (int i = 0; i < be.getContainerSize() && i < list.size(); i++) {
-                be.setItem(i, ItemStack.of(list.getCompound(i)));
-            }
-        } catch (Throwable ignored) {
-        }
+        PortableDeviceSupport.importInto(be, tag);
     }
     /** 从物品 NBT 把内容装进游离方块实体（★打开时 ✓） */
     public static void loadInventory(ItemStack stack, TinkerStationBlockEntity be) {

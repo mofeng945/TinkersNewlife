@@ -75,86 +75,31 @@ public class PortableChestItem extends Item {
 
     /** 造游离箱子实体（★公开构造器 (BlockPos, BlockState) ✓） */
     public static BlockEntity makeGhost(Kind kind) {
-        try {
-            Class<?> c = Class.forName(kind.beClass);
-            Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(kind.blockId));
-            return (BlockEntity) c.getConstructor(BlockPos.class, net.minecraft.world.level.block.state.BlockState.class)
-                    .newInstance(new BlockPos(0, -1024, 0),
-                            block == null ? net.minecraft.world.level.block.Blocks.AIR.defaultBlockState()
-                                    : block.defaultBlockState());
-        } catch (Throwable t) {
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("[便携箱] 造实体失败: {}", t.toString());
-            return null;
-        }
+        return PortableDeviceSupport.makeGhost(kind.beClass, kind.blockId);
     }
 
     private static IItemHandler handlerOf(BlockEntity be) {
-        try {
-            return be.getCapability(ForgeCapabilities.ITEM_HANDLER).resolve().orElse(null);
-        } catch (Throwable t) {
-            return null;
-        }
+        return PortableDeviceSupport.handlerOf(be);
     }
 
     /** 导出：Size ＋ 每槽物品（★Size 必须写 ✗ ⭐ 否则侧栏槽位是 0 ✓） */
     public static CompoundTag export(BlockEntity be, int size) {
-        CompoundTag tag = new CompoundTag();
-        ListTag items = new ListTag();
-        try {
-            IItemHandler h = handlerOf(be);
-            for (int i = 0; i < size; i++) {
-                ItemStack s = (h == null || i >= h.getSlots()) ? ItemStack.EMPTY : h.getStackInSlot(i);
-                CompoundTag e = new CompoundTag();
-                e.putInt("Slot", i);
-                if (!s.isEmpty()) {
-                    s.save(e);
-                }
-                items.add(e);
-            }
-        } catch (Throwable ignored) {
-        }
-        tag.putInt("Size", size);
-        tag.put("Items", items);
-        return tag;
+        return PortableDeviceSupport.export(be, size);
     }
 
     /** 导入：直接把 {Size, Items} 灌进 handler（★ItemStackHandler#deserializeNBT 认这个格式 ✓） */
     public static void importInto(BlockEntity be, CompoundTag tag) {
-        try {
-            if (tag == null) {
-                return;
-            }
-            IItemHandler h = handlerOf(be);
-            if (h instanceof ItemStackHandler ish) {
-                ish.deserializeNBT(tag);
-                return;
-            }
-            if (h == null) {
-                return;
-            }
-            ListTag items = tag.getList("Items", 10);
-            for (int i = 0; i < items.size() && i < h.getSlots(); i++) {
-                ItemStack s = ItemStack.of(items.getCompound(i));
-                h.insertItem(i, s, false);
-            }
-        } catch (Throwable ignored) {
-        }
+        PortableDeviceSupport.importInto(be, tag);
     }
 
     /** 打开前：内容来自**玩家存档** */
     public static void loadFromPlayer(Player player, BlockEntity be, Kind kind) {
-        try {
-            importInto(be, player.getPersistentData().getCompound(saveKey(kind)));
-        } catch (Throwable ignored) {
-        }
+        PortableDeviceSupport.loadFromPlayer(player, be, saveKey(kind));
     }
 
     /** 关闭时：写回**玩家存档** */
     public static void storeToPlayer(Player player, BlockEntity be, Kind kind) {
-        try {
-            player.getPersistentData().put(saveKey(kind), export(be, kind == Kind.CAST_CHEST ? 9 : 9));
-        } catch (Throwable ignored) {
-        }
+        PortableDeviceSupport.storeToPlayer(player, be, saveKey(kind), 9);
     }
 
     @Override
