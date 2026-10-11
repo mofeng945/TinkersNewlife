@@ -109,6 +109,9 @@ public class PortableTableItem extends Item {
                 net.minecraft.network.chat.Component.translatable(nameKey(kind))),
                 buf -> {
                     buf.writeBlockPos(new BlockPos(0, -1024, 0));
+                    buf.writeUtf(com.mofengbaizhi.tinkersnewlife.mixin.GhostStationMenuMixin.MAGIC);   // §1329 标记串 ✓
+                    buf.writeUtf(kind.beClass);
+                    buf.writeUtf(kind.blockId);
                     buf.writeNbt(data);
                 });
         return InteractionResultHolder.success(stack);

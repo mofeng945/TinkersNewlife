@@ -2,92 +2,63 @@ package com.mofengbaizhi.tinkersnewlife.mixin;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import slimeknights.tconstruct.tables.block.entity.table.TinkerStationBlockEntity;
 
 /**
- * §1313 便携工匠站（幽灵方块）：让匠魂菜单的客户端构造器"找得到方块实体"。
+ * §1329 便携设备（★唯一入口 ✗ ⭐ 只认我们自己的标记串 ✓）。
  *
- * <p>匠魂菜单客户端构造器调用 {@code getTileEntityFromBuf(buf, TinkerStationBlockEntity.class)}，
- * 它会**按 buf 里的坐标回世界查**方块实体 ⇒ 便携站不在世界里 ⇒ null
- * ⇒ Mantle 报 "Menu failed to find BlockEntity" ⇒ 客户端槽位数错 ⇒ IndexOutOfBounds ⇒ 界面被踢关。
+ * <p>【背景】{@code BaseContainerMenu#getTileEntityFromBuf(buf, type)} 会读 buf 里的坐标
+ * **回世界查**方块实体 ⇒ 便携设备不在世界里 ⇒ 返回 null ⇒ Mantle 报错 ⇒ 客户端槽位数错
+ * ⇒ {@code IndexOutOfBounds} ⇒ 界面被踢关 ✓
  *
- * <p>这里在方法入口截住：buf 里坐标之后**还有我们的库存 NBT** 时，
- * 就地重建游离实体并直接返回 ⇒ 客户端不回世界查 ⇒ 两端菜单一致 ✓
+ * <p>【格式】我们自己的菜单 buf 是：
+ * <pre>[坐标][标记串 "tnl:portable:v1"][实体类名][方块 id][库存 NBT]</pre>
+ * 读到标记 ⇒ 造游离实体返回 ✗ 读不到 ⇒ {@code resetReaderIndex()} **原样放行**
+ * （★匠魂自己的界面因此完全不受影响 ✓ —— §1329 修的正是"原版 GUI 打不开"那个回归 ✓）
  */
 @Mixin(value = slimeknights.mantle.inventory.BaseContainerMenu.class, remap = false)
 public class GhostStationMenuMixin {
 
+    /** ★只有我们自己的菜单会写这个串 ✓ */
+    public static final String MAGIC = "tnl:portable:v1";
+
     @Inject(method = "getTileEntityFromBuf", at = @At("HEAD"), cancellable = true, remap = false)
     private static void tnl$ghostTile(FriendlyByteBuf buf, Class<?> clazz, CallbackInfoReturnable cir) {
+        if (buf == null || clazz == null) {
+            return;
+        }
+        if (buf.readableBytes() < 16) {
+            return;   // ★坐标都放不下 ⇒ 不可能是我们的 ✓
+        }
+        buf.markReaderIndex();
         try {
-            // §1321 箱子分支：匠魂菜单要的是**抽象类** AbstractChestBlockEntity
-            // §1322 台子分支：部件制作台 / 强化调配台（★buf 与工匠站同格式：坐标 ＋ 库存 ✓）
-            if (clazz == slimeknights.tconstruct.tables.block.entity.table.PartBuilderBlockEntity.class
-                    || clazz == slimeknights.tconstruct.tables.block.entity.table.ModifierWorktableBlockEntity.class) {
-                buf.markReaderIndex();
-                buf.readBlockPos();
-                CompoundTag tableNbt = buf.readNbt();
-                boolean partBuilder = clazz == slimeknights.tconstruct.tables.block.entity.table.PartBuilderBlockEntity.class;
-                var which = partBuilder
-                        ? com.mofengbaizhi.tinkersnewlife.content.item.PortableTableItem.Kind.PART_BUILDER
-                        : com.mofengbaizhi.tinkersnewlife.content.item.PortableTableItem.Kind.MODIFIER_WORKTABLE;
-                net.minecraft.world.level.block.entity.BlockEntity tableGhost = com.mofengbaizhi.tinkersnewlife.content.item.PortableTableItem.makeGhost(which);
-                if (tableGhost != null) {
-                    try {
-                        tableGhost.setLevel(net.minecraft.client.Minecraft.getInstance().level);
-                    } catch (Throwable ignored) {
-                    }
-                    com.mofengbaizhi.tinkersnewlife.content.item.PortableTableItem.importInto(tableGhost, tableNbt);
-                    com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携台·菜单] 幽灵台子 {} 已交给匠魂菜单", which);
-                    cir.setReturnValue(tableGhost);
-                    return;
-                }
-            }
-
-            if (clazz == slimeknights.tconstruct.tables.block.entity.chest.AbstractChestBlockEntity.class) {
-                buf.markReaderIndex();
-                buf.readBlockPos();
-                String beName = buf.readUtf();
-                CompoundTag chestNbt = buf.readNbt();
-                var which = "slimeknights.tconstruct.tables.block.entity.chest.CastChestBlockEntity".equals(beName)
-                        ? com.mofengbaizhi.tinkersnewlife.content.item.PortableChestItem.Kind.CAST_CHEST
-                        : com.mofengbaizhi.tinkersnewlife.content.item.PortableChestItem.Kind.PART_CHEST;
-                var chestGhost = com.mofengbaizhi.tinkersnewlife.content.item.PortableChestItem.makeGhost(which);
-                if (chestGhost != null) {
-                    com.mofengbaizhi.tinkersnewlife.content.item.PortableChestItem.importInto(chestGhost, chestNbt);
-                    com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携箱·菜单] 幽灵箱子 {} 已交给匠魂菜单", beName);
-                    cir.setReturnValue(chestGhost);
-                    return;
-                }
-            }
-
-            if (clazz != TinkerStationBlockEntity.class || buf == null || buf.readableBytes() < 8) {
-                return;
-            }
-            buf.markReaderIndex();
             buf.readBlockPos();
-            if (buf.readableBytes() <= 0) {
-                buf.resetReaderIndex();
+            String magic = buf.readUtf(32);
+            if (!MAGIC.equals(magic)) {
+                buf.resetReaderIndex();   // ★不是我们的 buf ⇒ 原样还给匠魂 ✓
                 return;
             }
+            String beClass = buf.readUtf(256);
+            String blockId = buf.readUtf(128);
             CompoundTag nbt = buf.readNbt();
-            Level level = null;
+
+            net.minecraft.world.level.block.entity.BlockEntity ghost =
+                    com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.makeGhost(beClass, blockId);
+            if (ghost == null) {
+                return;
+            }
             try {
-                level = net.minecraft.client.Minecraft.getInstance().level;
+                ghost.setLevel(net.minecraft.client.Minecraft.getInstance().level);
             } catch (Throwable ignored) {
             }
-            TinkerStationBlockEntity be = com.mofengbaizhi.tinkersnewlife.content.item.PortableTinkerStationItem
-                    .createDetached(level);
-            com.mofengbaizhi.tinkersnewlife.content.item.PortableTinkerStationItem.importInventory(be, nbt);
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携站·菜单] 幽灵实体已交给匠魂菜单 slots={}",
-                    be.getContainerSize());
-            cir.setReturnValue(be);
-        } catch (Throwable ignored) {
+            com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.importInto(ghost, nbt);
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备·菜单] 幽灵实体 {} 已交给匠魂菜单", beClass);
+            cir.setReturnValue(ghost);
+        } catch (Throwable t) {
+            buf.resetReaderIndex();   // ★任何意外都原样放行 ⇒ 绝不破坏原版 ✓
         }
     }
 }
