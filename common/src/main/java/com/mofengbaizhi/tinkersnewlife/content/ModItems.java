@@ -796,4 +796,17 @@ public class ModItems {
             ITEMS.register("portable_tinkers_anvil",
                     () -> new com.mofengbaizhi.tinkersnewlife.content.item.PortableTableItem(
                             new Item.Properties().stacksTo(1),
-                            com.mofengbaizhi.tinkersnewlife.content.item.PortableTableItem.Kind.TINKERS_ANVIL));}
+                            com.mofengbaizhi.tinkersnewlife.content.item.PortableTableItem.Kind.TINKERS_ANVIL));
+    /** §1334 便携工匠台（★含工匠站/砧的工具切换 ✓） */
+    public static final RegistryObject<Item> PORTABLE_CRAFTING_STATION =
+            ITEMS.register("portable_crafting_station",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.PortableCraftingStationItem(
+                            new Item.Properties().stacksTo(1),
+                            com.mofengbaizhi.tinkersnewlife.content.item.PortableCraftingStationItem.Kind.CRAFTING_STATION));
+
+    /** §1334 便携工匠工具包（★由 6 件便携设备无序合成 ✓ 目前打开的是工匠台界面 ✓） */
+    public static final RegistryObject<Item> PORTABLE_TOOLKIT =
+            ITEMS.register("portable_toolkit",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.PortableCraftingStationItem(
+                            new Item.Properties().stacksTo(1),
+                            com.mofengbaizhi.tinkersnewlife.content.item.PortableCraftingStationItem.Kind.TOOLKIT));}

@@ -1613,5 +1613,7 @@
   "screen.tinkersnewlife.titles": "头衔设置",
   "screen.tinkersnewlife.titles.hint": "点一下切换是否展示·已选 %s/3",
   "screen.tinkersnewlife.titles.auto": "恢复自动（稀有度前 3）",
-  "item.tinkersnewlife.portable_tinkers_anvil": "便携工匠砧"
+  "item.tinkersnewlife.portable_tinkers_anvil": "便携工匠砧",
+  "item.tinkersnewlife.portable_crafting_station": "便携工匠工作台",
+  "item.tinkersnewlife.portable_toolkit": "便携工匠工具包"
 }

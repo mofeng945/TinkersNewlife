@@ -145,6 +145,8 @@ public class ModCreativeTabs {
                                 output.accept(ModItems.MUSIC_DISC_DOLL_MUSIC.get());
             output.accept(ModItems.MUSIC_DISC_TELL_ME.get());
             output.accept(ModItems.PORTABLE_TINKERS_ANVIL.get());
+            output.accept(ModItems.PORTABLE_CRAFTING_STATION.get());
+            output.accept(ModItems.PORTABLE_TOOLKIT.get());
             output.accept(ModItems.PORTABLE_CAST_CHEST.get());
             output.accept(ModItems.PORTABLE_PART_BUILDER.get());
             output.accept(ModItems.PORTABLE_MODIFIER_WORKTABLE.get());

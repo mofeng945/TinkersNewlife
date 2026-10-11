@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "tinkersnewlife:portable_tinkers_anvil"
+    },
+    {
+      "item": "tinkersnewlife:portable_part_builder"
+    },
+    {
+      "item": "tinkersnewlife:portable_modifier_worktable"
+    },
+    {
+      "item": "tinkersnewlife:portable_cast_chest"
+    },
+    {
+      "item": "tinkersnewlife:portable_part_chest"
+    },
+    {
+      "item": "tinkersnewlife:portable_crafting_station"
+    }
+  ],
+  "result": {
+    "item": "tinkersnewlife:portable_toolkit"
+  }
+}

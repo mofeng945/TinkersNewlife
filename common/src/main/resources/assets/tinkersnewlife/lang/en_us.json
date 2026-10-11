@@ -1610,5 +1610,7 @@
   "screen.tinkersnewlife.titles": "Titles",
   "screen.tinkersnewlife.titles.hint": "Click to toggle · picked %s/3",
   "screen.tinkersnewlife.titles.auto": "Auto (top 3 by rarity)",
-  "item.tinkersnewlife.portable_tinkers_anvil": "Portable Tinker's Anvil"
+  "item.tinkersnewlife.portable_tinkers_anvil": "Portable Tinker's Anvil",
+  "item.tinkersnewlife.portable_crafting_station": "Portable Crafting Station",
+  "item.tinkersnewlife.portable_toolkit": "Portable Tinker's Toolkit"
 }
