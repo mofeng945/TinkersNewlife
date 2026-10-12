@@ -114,6 +114,10 @@ public class PortableToolkitMenu extends CraftingStationContainerMenu {
         super.broadcastChanges();
         try {
             if (this.mainGhost != null) {
+                // §815 ★★先**强制算一次**：服务端只有被查询结果时才会算出 lastRecipe ✗
+                //   而结果槽是**客户端**画的 ⇒ 服务端可能从未算过 ⇒ syncRecipe 里判空直接 return ✗
+                //   ★★这正是“推了还是合不了”的原因 ✓（★calcResult 是 public ✓）
+                this.mainGhost.calcResult(this.playerInv.player);
                 this.mainGhost.syncRecipe(this.playerInv.player);
             }
         } catch (Throwable ignored) {
