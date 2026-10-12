@@ -62,22 +62,38 @@ public class MinersVisionClientHandler {
      * {@code RenderSystem.disableDepthTest()} **\u4f1a\u88ab\u8986\u76d6\u6389** \u2717 \u21d2 \u65e0\u6cd5\u900f\u5899 \u2717\u2717
      * \u2605\u6240\u4ee5\u5fc5\u987b\u81ea\u5df1\u9020\u4e00\u4e2a**\u6df1\u5ea6\u6d4b\u8bd5\u5173\u95ed**\u7684\u7c7b\u578b \u2713\u3002
      */
-    private static final RenderType ORE_GLOW = RenderType.create(
-            "tnl_ore_glow",
-            com.mojang.blaze3d.vertex.DefaultVertexFormat.NEW_ENTITY,
-            com.mojang.blaze3d.vertex.VertexFormat.Mode.QUADS,
-            256, false, true,
-            RenderType.CompositeState.builder()
-                    .setShaderState(new net.minecraft.client.renderer.RenderStateShard.ShaderStateShard(
-                            net.minecraft.client.renderer.GameRenderer::getRendertypeEntityTranslucentShader))
-                    .setTextureState(new net.minecraft.client.renderer.RenderStateShard.TextureStateShard(
-                            TextureAtlas.LOCATION_BLOCKS, false, false))
-                    .setTransparencyState(TnlState.TRANSLUCENT)
-                    .setDepthTestState(TnlState.NO_DEPTH)   // \u2605\u2605 \u900f\u5899\u5173\u952e \u2713
-                    .setCullState(TnlState.NO_CULL_)
-                    .setLightmapState(TnlState.LIGHTMAP_)
-                    .setOverlayState(TnlState.OVERLAY_)
-                    .createCompositeState(false));
+    private static RenderType glowTypeCache = null;
+    private static boolean glowTypeTried = false;
+
+    /** \u2605\u2605 \u61d2\u52a0\u8f7d\uff1a\u9759\u6001\u521d\u59cb\u5316\u4e00\u65e6\u629b\u5f02\u5e38 \u2717 \u6574\u4e2a\u7c7b\u90fd\u4f1a\u5931\u6548 \u21d2 \u4ec0\u4e48\u90fd\u4e0d\u753b \u2717 */
+    private static RenderType glowType() {
+        if (glowTypeTried) {
+            return glowTypeCache;
+        }
+        glowTypeTried = true;
+        try {
+            glowTypeCache = RenderType.create(
+                    "tnl_ore_glow",
+                    com.mojang.blaze3d.vertex.DefaultVertexFormat.NEW_ENTITY,
+                    com.mojang.blaze3d.vertex.VertexFormat.Mode.QUADS,
+                    256, false, true,
+                    RenderType.CompositeState.builder()
+                            .setShaderState(new net.minecraft.client.renderer.RenderStateShard.ShaderStateShard(
+                                    net.minecraft.client.renderer.GameRenderer::getRendertypeEntityTranslucentShader))
+                            .setTextureState(new net.minecraft.client.renderer.RenderStateShard.TextureStateShard(
+                                    TextureAtlas.LOCATION_BLOCKS, false, false))
+                            .setTransparencyState(TnlState.TRANSLUCENT)
+                            .setDepthTestState(TnlState.NO_DEPTH)
+                            .setCullState(TnlState.NO_CULL_)
+                            .setLightmapState(TnlState.LIGHTMAP_)
+                            .setOverlayState(TnlState.OVERLAY_)
+                            .createCompositeState(false));
+        } catch (Throwable tt) {
+            glowTypeCache = RenderType.entityTranslucentCull(TextureAtlas.LOCATION_BLOCKS);
+            TinkersNewlife.LOGGER.warn("TNL843 custom glow type failed, fallback used: {}", tt.toString());
+        }
+        return glowTypeCache;
+    }
 
     /**
      * \u2605\u2605 \u4e13\u7528\u72b6\u6001\u5b50\u7c7b\uff1a1.20.1 \u91cc {@code RenderStateShard} \u7684\u8fd9\u4e9b\u5e38\u91cf\u662f
@@ -109,7 +125,7 @@ public class MinersVisionClientHandler {
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent event) {
         try {
-            if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL) {
+            if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
                 return;
             }
             Minecraft mc = Minecraft.getInstance();
@@ -138,7 +154,7 @@ public class MinersVisionClientHandler {
             pose.pushPose();
             pose.translate(-cam.x, -cam.y, -cam.z);
             MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
-            VertexConsumer vc = buffers.getBuffer(ORE_GLOW);
+            VertexConsumer vc = buffers.getBuffer(glowType());
             PoseStack.Pose last = pose.last();
             int drawn = 0;
             for (Hit hit : CACHE) {
@@ -154,10 +170,10 @@ public class MinersVisionClientHandler {
             }
             if (now - lastLog >= 100) {
                 lastLog = now;
-                TinkersNewlife.LOGGER.warn("TNL842 miners vision: level={} cache={} drawn={} stage=AFTER_LEVEL",
+                TinkersNewlife.LOGGER.warn("TNL842 miners vision: level={} cache={} drawn={} stage=AFTER_TRANSLUCENT_BLOCKS",
                         level, CACHE.size(), drawn);
             }
-            buffers.endBatch(ORE_GLOW);
+            buffers.endBatch(glowType());
             pose.popPose();
         } catch (Throwable ignored) {
         }
