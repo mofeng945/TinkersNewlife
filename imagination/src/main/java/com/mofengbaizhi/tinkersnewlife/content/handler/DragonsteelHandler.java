@@ -4,6 +4,7 @@ import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.ModBlocks;
 import com.mofengbaizhi.tinkersnewlife.content.ModEffects;
 import com.mofengbaizhi.tinkersnewlife.content.modifier.DragonboneTrait;
+import com.mofengbaizhi.tinkersnewlife.integration.iceandfire.IceAndFireDamage;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -128,8 +129,36 @@ public class DragonsteelHandler {
             if (fireLevel > 0) applyFireEffect(level, attacker, target, fireLevel);
             if (iceLevel > 0) applyIceEffect(level, attacker, target, iceLevel);
             if (lightningLevel > 0) applyLightningEffect(level, attacker, target, lightningLevel);
+            // §803 ★混入对应属性的【龙息伤害】（★用户口径 ✓）
+            //   ★用冰火的自定义伤害类型（★反射取用 ✓）⇒ 对面的龙钢盔甲能正常抗它 ✓
+            if (fireLevel > 0) applyBreathDamage(level, attacker, target, IceAndFireDamage.FIRE, fireLevel);
+            if (iceLevel > 0) applyBreathDamage(level, attacker, target, IceAndFireDamage.ICE, iceLevel);
+            if (lightningLevel > 0) applyBreathDamage(level, attacker, target, IceAndFireDamage.LIGHTNING, lightningLevel);
         } finally {
             applyingDragonsteel = prevGuard;
+        }
+    }
+
+    /** §803 每级混入的龙息伤害（★"一些"→保守取值 ✓） */
+    private static final float BREATH_BASE_DAMAGE = 2.0F;
+
+    /**
+     * §803 ★混入一次对应属性的龙息伤害。
+     *
+     * <p>★冰火不在场时 {@link IceAndFireDamage#breath} 返回 null ⇒ **直接跳过** ✓（★零行为、零崩溃 ✓）。
+     * <p>★此时处于 {@code applyingDragonsteel} 闸门内 ✓ ⇒ 不会反过来触发自己的词条（★无递归 ✓）。
+     */
+    private static void applyBreathDamage(Level level, LivingEntity attacker, LivingEntity target,
+                                          int kind, int levelNum) {
+        try {
+            DamageSource src = IceAndFireDamage.breath(level, attacker, kind);
+            if (src == null || !target.isAlive()) {
+                return;
+            }
+            target.invulnerableTime = 0;   // ★同一 tick 内的第二次 hurt 会被无敌帧吾掉 ✗ ⭐清零它 ✓
+            target.hurt(src, BREATH_BASE_DAMAGE * levelNum);
+        } catch (Throwable ignored) {
+            // ★冰火反射失败/伤害失败 ⇒ 绝不影响原有词条 ✓
         }
     }
 
