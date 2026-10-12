@@ -3,7 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.content.entity;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerPlayer;
-import com.mofengbaizhi.tinkersnewlife.content.entity.ktulu.AstralVitalsKernel;
+import com.mofengbaizhi.tinkersnewlife.content.entity.ktulu.Vq;
 import com.mofengbaizhi.tinkersnewlife.content.entity.ktulu.MomoHealthBridge;
 import net.minecraft.world.BossEvent;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -118,15 +118,15 @@ public class KtuluMomo extends Monster {
         if (this.level().isClientSide) {
             return super.hurt(source, amount);
         }
-        AstralVitalsKernel.ensure(this);
-        float allowed = AstralVitalsKernel.requestDamage(this, amount, this.tickCount);
+        Vq.n(this);
+        float allowed = Vq.q(this, amount, this.tickCount);
         if (allowed <= 0.0F) {
             return false;   // \u2605\u65e0\u654c\u7a97\u53e3\u5185\uff1a\u4e00\u70b9\u4e0d\u5403 \u2713
         }
         boolean hurt = super.hurt(source, allowed);
         if (hurt) {
-            AstralVitalsKernel.apply(this, allowed);
-            this.invulnerableTime = AstralVitalsKernel.INVULN_TICKS;   // \u2605\u65e0\u4e0b\u9650\u540c\u6b3e\u7a97\u53e3 \u2713
+            Vq.p(this, allowed);
+            this.invulnerableTime = Vq.INV;   // \u2605\u65e0\u4e0b\u9650\u540c\u6b3e\u7a97\u53e3 \u2713
         }
         return hurt;
     }
@@ -142,8 +142,8 @@ public class KtuluMomo extends Monster {
         if (this.level().isClientSide) {
             return;
         }
-        AstralVitalsKernel.ensure(this);
-        float authoritative = AstralVitalsKernel.record(this, this.tickCount);
+        Vq.n(this);
+        float authoritative = Vq.c(this, this.tickCount);
         if (Math.abs(this.getHealth() - authoritative) > 0.001F) {
             this.setHealth(Math.max(0.0F, authoritative));   // \u2605\u56de\u5f39\u7ea0\u6b63 \u2713
         }
@@ -151,7 +151,7 @@ public class KtuluMomo extends Monster {
         // TNL851 \u2605\u9493\u9c7c\uff1a\u987a\u624b\u8c03\u4e00\u4e0b\u5047\u5165\u53e3\uff08\u2605\u7ed3\u679c\u4e0d\u7528 \u2713\uff09
         MomoHealthBridge.getMomoHealth(this);
         if (authoritative <= 0.0F) {
-            AstralVitalsKernel.release(this);
+            Vq.rel(this);
             this.setHealth(0.0F);
             this.kill();
         }
