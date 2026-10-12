@@ -31,7 +31,6 @@ public class VirtualBlockEntityMixin {
             if (com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.VIRTUAL.isEmpty()) {
                 return;
             }
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备] 插桩被调用 getBlockState {}", pos);
             BlockEntity be = com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.lookupVirtual(pos);
             if (be != null) {
                 // §1346 ★关键：匠魂扫描要求方块**实现 ITabbedBlock**，
@@ -52,7 +51,6 @@ public class VirtualBlockEntityMixin {
             if (com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.VIRTUAL.isEmpty()) {
                 return;
             }
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备] 插桩被调用 getBlockEntity {}", pos);
             BlockEntity be = com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.lookupVirtual(pos);
             if (be != null) {
                 cir.setReturnValue(be);
