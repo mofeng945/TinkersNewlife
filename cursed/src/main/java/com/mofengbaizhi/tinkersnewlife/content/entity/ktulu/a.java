@@ -569,9 +569,10 @@ public final class a {
 
     public static void qB(String tag, Object... args) {
         try {
-            if (HITS < 6) {
+            if (HITS < 40) {
                 HITS = HITS + 1;
-                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL867 [{}] {}", tag, java.util.Arrays.toString(args));
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                        "TNL870 [{}] #{} {}", tag, HITS, java.util.Arrays.toString(args));
             }
         } catch (Throwable ignored) {
         }
@@ -595,5 +596,12 @@ public final class a {
     //   \u2605\u7528\u6237\u65e5\u5fd7\u91cc\u5c31\u662f\u8fd9\u4e00\u884c \u2713
     static {
         N = y1();
+        // TNL869 \u2605\u2605 \u542f\u52a8\u6807\u8bb0\uff1a\u2605\u53ea\u8981\u672c\u7c7b\u88ab\u52a0\u8f7d\u5c31\u6253\u4e00\u884c \u2713
+        //   \u2605\u7528\u6765\u786e\u8ba4"\u73b0\u5728\u8dd1\u7684\u5230\u5e95\u662f\u54ea\u4e2a\u6784\u5efa" \u2713
+        try {
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                    "TNL869 VITALS BUILD zzA native={} cap={} ns={} sha={}", N, C0, NS, A0.substring(0, 8));
+        } catch (Throwable ignored) {
+        }
     }
 }
