@@ -26,7 +26,8 @@
     "LivingEntityGetHealthMixin",
     "ApostlePhaseTeleportMixin",
     "ApostleDistanceMixin",
-    "ApostleCastThrottleMixin"
+    "ApostleCastThrottleMixin",
+    "KtuluVitalsMixin"
   ],
   "client": [
     "TinkerTabsWidgetMixin",

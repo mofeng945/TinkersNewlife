@@ -616,8 +616,45 @@ public final class a {
         //   \u2605\u7528\u6765\u786e\u8ba4"\u73b0\u5728\u8dd1\u7684\u5230\u5e95\u662f\u54ea\u4e2a\u6784\u5efa" \u2713
         try {
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
-                    "TNL869 VITALS BUILD zzD native={} cap={} ns={} sha={} t={}", N, C0, NS, A0.substring(0, 8));
+                    "TNL869 VITALS BUILD zzE native={} cap={} ns={} sha={} t={}", N, C0, NS, A0.substring(0, 8));
         } catch (Throwable ignored) {
         }
     }
+
+    /**
+     * TNL874 \u2605\u2605 \u7a97\u5185\u5f3a\u5236\u5199\u6743\u5a01\u503c\uff08\u2605\u4ece**\u6e90\u5934**\u62e6\u76f4\u5199 \u2713\uff09
+     *
+     * <p>\u88ab {@code KtuluVitalsMixin} \u5728 {@code LivingEntity#setHealth} \u5165\u53e3\u8c03\u7528 \u2713\u3002
+     * \u2605\u7528\u6237\u53e3\u5f84\uff1a\u2605"\u6211\u4e0d\u662f\u5199 dll \u5c31\u662f\u4e3a\u4e86\u963b\u6b62\u8fd9\u79cd\u4e8b\u60c5\u5417" \u2713
+     * \u21d2 \u2605\u5149\u9760 DLL \u76d1\u63a7\u662f\u4e0b\u4e00 tick \u7684\u4e8b \u2717\uff1b\u2605\u6df7\u5165\u624d\u662f"\u5199\u7684\u90a3\u4e00\u77ac\u95f4"\u5c31\u62e6 \u2713\u2713
+     */
+    public static float qD(Mob mob, float value) {
+        try {
+            int s0 = k(mob);
+            if (V[s0] <= 0) {
+                return value;                     // \u2605\u7a97\u5916\u4e0d\u5e72\u9884 \u2713
+            }
+            long auth = N ? h(s0) : rA(s0);
+            if (auth < 0L) {
+                auth = b.get(s0);
+            }
+            if (auth == Long.MIN_VALUE) {
+                return value;
+            }
+            long want = m0(value);
+            if (want < auth) {                    // \u2605\u60f3\u5199\u66f4\u4f4e \u21d2 \u2605\u76f4\u63a5\u62d2\u7edd\uff0c\u6539\u5199\u6743\u5a01\u503c \u2713
+                if (LQ3 != s0) {
+                    LQ3 = s0;
+                    com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                            "TNL874 setHealth blocked in window: want={} -> auth={}", m1(want), m1(auth));
+                }
+                return m1(auth);
+            }
+            return value;
+        } catch (Throwable th) {
+            return value;
+        }
+    }
+
+    private static int LQ3 = -1;
 }
