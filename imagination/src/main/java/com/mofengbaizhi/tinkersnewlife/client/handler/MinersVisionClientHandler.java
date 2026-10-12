@@ -103,11 +103,13 @@ public class MinersVisionClientHandler {
     private static final List<Hit> CACHE = new ArrayList<>();
     private static int lastScan = -1000;
     private static int lastLevel = -1;
+    /** TNL842 \u2605\u63a2\u9488\u8282\u6d41 \u2713 */
+    private static int lastLog = -1000;
 
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent event) {
         try {
-            if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
+            if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL) {
                 return;
             }
             Minecraft mc = Minecraft.getInstance();
@@ -138,8 +140,22 @@ public class MinersVisionClientHandler {
             MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
             VertexConsumer vc = buffers.getBuffer(ORE_GLOW);
             PoseStack.Pose last = pose.last();
+            int drawn = 0;
             for (Hit hit : CACHE) {
-                tnl$cube(vc, last, hit.pos(), hit.sprite());
+                try {
+                    if (hit.sprite() == null) {
+                        continue;
+                    }
+                    tnl$cube(vc, last, hit.pos(), hit.sprite());
+                    drawn++;
+                } catch (Throwable ignoredOne) {
+                    // TNL842 ★单块异常不影响其它 ✓
+                }
+            }
+            if (now - lastLog >= 100) {
+                lastLog = now;
+                TinkersNewlife.LOGGER.warn("TNL842 miners vision: level={} cache={} drawn={} stage=AFTER_LEVEL",
+                        level, CACHE.size(), drawn);
             }
             buffers.endBatch(ORE_GLOW);
             pose.popPose();
@@ -213,8 +229,13 @@ public class MinersVisionClientHandler {
                         continue;
                     }
                     if (state.is(ORE_TAG) || state.is(ORE_TAG_ALT)) {
-                        TextureAtlasSprite sprite = spriteCache.computeIfAbsent(state.getBlock(),
-                                b -> shaper.getParticleIcon(b.defaultBlockState()));
+                        TextureAtlasSprite sprite;
+                        try {
+                            sprite = spriteCache.computeIfAbsent(state.getBlock(),
+                                    b -> shaper.getParticleIcon(b.defaultBlockState()));
+                        } catch (Throwable ignoredSprite) {
+                            sprite = null;   // TNL842 \u2605\u53d6\u4e0d\u5230\u8d34\u56fe\u5c31\u8bb0 null \u2717 \u4e0d\u5d29 \u2713
+                        }
                         CACHE.add(new Hit(pos.immutable(), sprite));
                     }
                 }
