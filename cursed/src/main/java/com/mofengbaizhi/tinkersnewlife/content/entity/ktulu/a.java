@@ -61,10 +61,6 @@ public final class a {
     private static final int HARD = 3;
     private static final Map<UUID, Integer> S = new ConcurrentHashMap<>();
 
-    static {
-        N = y1();
-    }
-
     private a() {
     }
 
@@ -202,25 +198,43 @@ public final class a {
     }
 
     /** TNL855 \u2605\u521d\u59cb\u5316\uff1a\u4e24\u4fa7\u955c\u50cf\u90fd\u5199\u6ee1\u8840 \u2713 */
+    /** TNL868 \u2605\u53ea\u521d\u59cb\u5316\u4e00\u6b21\uff08\u2605\u65e7\u5199\u6cd5\u6bcf tick \u90fd\u91cd\u7f6e \u2717\uff09 */
+    private static final boolean[] RDY = new boolean[NS];
+    private static final UUID[] OWN = new UUID[NS];
+
     public static void q0(Mob mob) {
         try {
+            int s0 = k(mob);
+            UUID u = mob.getUUID();
+            // TNL868 \u2605\u2605 \u4fee\u6b63\uff1a\u65e7\u5199\u6cd5\u6bcf tick \u90fd\u91cd\u7f6e V/RB \u2717
+            //   \u21d2 \u2605\u65e0\u654c\u7a97\u6c38\u8fdc\u5b58\u4e0d\u5230 1 tick \u2717 \u2605\u51fa\u751f\u5bbd\u9650\u6c38\u8fdc\u4e3a\u771f \u2717
+            if (RDY[s0] && u.equals(OWN[s0])) {
+                return;                       // \u2605\u5df2\u521d\u59cb\u5316\u8fc7 \u21d2 \u4ec0\u4e48\u90fd\u4e0d\u52a8 \u2713
+            }
+            if (RDY[s0] && !u.equals(OWN[s0]) && OWN[s0] != null) {
+                // \u2605\u69fd\u4f4d\u88ab\u65b0\u5b9e\u4f53\u5360\u7528 \u21d2 \u91cd\u65b0\u521d\u59cb\u5316 \u2713
+                int ns = (s0 + 1) % NS;
+                s0 = ns;
+            }
+            RDY[s0] = true;
+            OWN[s0] = u;
             long mx = m0(mob.getMaxHealth());
             long cp = m0(mob.getMaxHealth() * C0);
-            int s0 = k(mob);
             if (N) {
                 d(s0, mx, cp, V0);
             }
             MCAP[s0] = cp;
             V[s0] = 0;
-            wA(s0, mx);
-            b.put(s0, mx);
-            RB[s0] = mob.tickCount + 40;    // TNL863 \u2605\u51fa\u751f\u5bbd\u9650 40 tick \u2713
             SPENT[s0] = 0L;
             TCK[s0] = mob.tickCount;
+            RB[s0] = mob.tickCount + 40;      // \u2605\u51fa\u751f\u5bbd\u9650 40 tick\uff08\u2605\u53ea\u8bbe\u4e00\u6b21 \u2713\uff09
             BAD[s0] = 0;
+            wA(s0, mx);
+            b.put(s0, mx);
         } catch (Throwable ignored) {
         }
     }
+
 
     /**
      * TNL855 \u2605\u6bcf tick\uff1a\u56de\u5f39 \u002b \u955c\u50cf\u4e92\u68c0\uff08\u2605\u53ea\u6539\u4e00\u8fb9\u5c31\u88ab\u53e6\u4e00\u8fb9\u62c9\u56de \u2713\uff09
@@ -572,5 +586,14 @@ public final class a {
         } catch (Throwable th) {
             return "err";
         }
+    }
+
+    // TNL868 \u2605\u2605 \u9759\u6001\u521d\u59cb\u5316\u5fc5\u987b\u653e\u5728\u6240\u6709\u5b57\u6bb5\u4e4b\u540e \u2713
+    //   \u2605\u65e7\u5199\u6cd5\u628a static{}\u5199\u5728 ``char[] P0..P3`` **\u4e4b\u524d** \u2717
+    //   \u21d2 \u2605Java \u9759\u6001\u521d\u59cb\u5316\u6309**\u6587\u672c\u987a\u5e8f**\u6267\u884c \u21d2 P0 \u8fd8\u662f null \u2717
+    //   \u21d2 \u2605DLL \u6c38\u8fdc\u52a0\u8f7d\u5931\u8d25\uff08NPE: Cannot read the array length because "value" is null \u2713\uff09
+    //   \u2605\u7528\u6237\u65e5\u5fd7\u91cc\u5c31\u662f\u8fd9\u4e00\u884c \u2713
+    static {
+        N = y1();
     }
 }
