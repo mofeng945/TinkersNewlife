@@ -149,6 +149,7 @@ public class ClientEventHandler {
                 com.mofengbaizhi.tinkersnewlife.content.ModBlockEntities.ELDER_MANA_PEDESTAL.get(),
                 com.mofengbaizhi.tinkersnewlife.client.renderer.ElderManaPedestalRenderer::new);
         event.registerEntityRenderer(ModEntities.DREADSTEEL_SLASH.get(), DreadsteelSlashRenderer::new);
+        event.registerEntityRenderer(com.mofengbaizhi.tinkersnewlife.content.ModEntities.KTULU_MOMO.get(), com.mofengbaizhi.tinkersnewlife.client.renderer.KtuluMomoRenderer::new);   // TNL850 Boss 克图露·墨默
         // 「兵士佩刀」刀光（§810）：弧形面片 ＋ 弧光贴图（仿拔刀剑）✓ 不是横扫粒子 ✗
         event.registerEntityRenderer(ModEntities.WHIP_LASH.get(),
                 com.mofengbaizhi.tinkersnewlife.client.renderer.WhipLashRenderer::new);

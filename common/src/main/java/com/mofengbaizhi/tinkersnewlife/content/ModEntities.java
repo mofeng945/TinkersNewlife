@@ -335,6 +335,15 @@ public class ModEntities {
                         .sized(0.51f, 1.53f).clientTrackingRange(16).updateInterval(3)
                         .build(TinkersNewlife.MOD_ID + ":momo_merchant"));
 
+    /** TNL850 Boss\u300c\u514b\u56fe\u9732\u00b7\u58a8\u9ed8\u300d\uff08\u2605\u590d\u7528\u5546\u4eba\u58a8\u9ed8\u6a21\u578b \u2713 \u81ea\u5e26\u8840\u6761 \u2713\uff09 */
+    public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.KtuluMomo>> KTULU_MOMO =
+            ENTITIES.register("ktulu_momo",
+                    () -> EntityType.Builder.<com.mofengbaizhi.tinkersnewlife.content.entity.KtuluMomo>of(
+                                    com.mofengbaizhi.tinkersnewlife.content.entity.KtuluMomo::new, MobCategory.MONSTER)
+                            .sized(0.51f, 1.53f).clientTrackingRange(16).updateInterval(3)
+                            .fireImmune()
+                            .build(TinkersNewlife.MOD_ID + ":ktulu_momo"));
+
     /** 十划咒法·弱点实体（金色小球，跟随目标，可被施术者击打触发暴击） */
     public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.WeakPointEntity>> WEAK_POINT =
         ENTITIES.register("weak_point",
