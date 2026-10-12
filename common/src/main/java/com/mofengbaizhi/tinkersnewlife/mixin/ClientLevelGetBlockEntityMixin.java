@@ -32,7 +32,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(net.minecraft.client.multiplayer.ClientLevel.class)
 public class ClientLevelGetBlockEntityMixin {
 
-    @Inject(method = "getBlockEntity", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "m_7702_", at = @At("HEAD"), cancellable = true, remap = false)   // §819 ★SRG 名
     private void tnl$virtualBlockEntity(BlockPos pos, CallbackInfoReturnable<BlockEntity> cir) {
         try {
             if (pos == null || PortableDeviceSupport.VIRTUAL.isEmpty()) {

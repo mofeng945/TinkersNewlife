@@ -25,7 +25,7 @@ public class VirtualBlockEntityMixin {
      * §1343 扫描的**第一道判定**是 {@code world.getBlockState(pos).getBlock() instanceof ITabbedBlock} ✗
      * 只插桩 getBlockEntity 不够（那里返回空气 ⇒ continue ✗）⇒ 这里也把幽灵的**方块状态**借出去 ✓
      */
-    @Inject(method = "getBlockState", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "m_8055_", at = @At("HEAD"), cancellable = true, remap = false)   // §819 ★SRG 名：refmap 生不出来（★继承方法 ✗）
     private void tnl$virtualBlockState(BlockPos pos, CallbackInfoReturnable<BlockState> cir) {
         try {
             if (com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.VIRTUAL.isEmpty()) {
@@ -46,7 +46,7 @@ public class VirtualBlockEntityMixin {
         }
     }
 
-    @Inject(method = "getBlockEntity", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "m_7702_", at = @At("HEAD"), cancellable = true, remap = false)   // §819 ★同上
     private void tnl$virtualBlockEntity(BlockPos pos, CallbackInfoReturnable<BlockEntity> cir) {
         try {
             if (com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.VIRTUAL.isEmpty()) {
