@@ -10,9 +10,13 @@ import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.living.MobEffectEvent;
+import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -24,294 +28,183 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 缴械效果（Disarm Effect）
- * <p>
- * 使用持久化 NBT 存储被缴械的物品列表，玩家退出再进入也能找回。
- * <p>
- * 特性：
- * <ul>
- *   <li><b>多物品叠加</b>：缴械未结束时再次获得缴械（时长被刷新），若手中拿着新工具，
- *       不删除之前的物品记录，继续追加 —— 直到缴械结束一次性归还所有被缴械的物品。</li>
- *   <li><b>死亡掉落</b>：若携带缴械效果死亡（缴械未解除），直接掉落所有被缴械的物品。</li>
- * </ul>
+ * 缴械效果（Disarm）—— §813 改为**“立刻丢出 ✓ 期间不能捡”**模型。
+ *
+ * <h2>新口径（★用户口径 ✓）</h2>
+ * <pre>
+ *   非玩家：主手 + 副手的物品 ⇒ ★**自动丢到地上**；持续时间内 ★**无法再次捡起物品**
+ *   玩家  ：主手 + 副手的物品 ⇒ ★**丢进背包**（满了才丢地上✗）；
+ *             持续时间内★**无论主副手拿到什么都丢进背包**；★**无法捡起任何物品**
+ *   缴械丢出的地物 ⇒ ★**不会被 雷劈 / 爆炸 / 火焰 / 岩浆 / 仙人掌 销毁**（★见 DisarmDropProtectionMixin ✓）
+ * </pre>
+ *
+ * <p>⚠ 旧模型（★收缴进 NBT ⇒ 到期归还 ✗）已废弃；为不丢旧存档，
+ * 登录时仍会把**旧 NBT 里的物品如数归还**✓。
  */
 public class DisarmEffect extends MobEffect {
 
-    // 内存缓存：用于快速访问（效果生效期间的临时存储），持久化存储在 NBT 中
-    private static final Map<UUID, List<ItemStack>> DISARMED_ITEMS = new ConcurrentHashMap<>();
+    /** 旧版存储用的键（★仅用于登录时归还旧档 ✓） */
+    private static final String KEY_DISARM_DATA = "tinkersnewlife:disarm_data";
+    private static final String KEY_STORED_ITEMS = "stored_items";
+    private static final String KEY_LEGACY_STORED_ITEM = "stored_item";
 
     public DisarmEffect(MobEffectCategory category, int color) {
         super(category, color);
     }
 
-    // ==================== 持久化 NBT 操作 ====================
-
-    private static final String KEY_DISARM_DATA = "tinkersnewlife:disarm_data";
-    private static final String KEY_STORED_ITEMS = "stored_items";
-    /** 旧版单物品键（兼容旧存档） */
-    private static final String KEY_LEGACY_STORED_ITEM = "stored_item";
-
-    /**
-     * 从 NBT 读取被缴械的物品列表
-     */
-    private static List<ItemStack> getStoredItemsFromNBT(LivingEntity entity) {
+    /** 旧档读取（★仅登录归还用 ✓） */
+    private static List<ItemStack> legacyStoredItems(LivingEntity entity) {
         List<ItemStack> items = new ArrayList<>();
         CompoundTag persistent = entity.getPersistentData();
-        if (!persistent.contains(KEY_DISARM_DATA)) return items;
-
+        if (!persistent.contains(KEY_DISARM_DATA)) {
+            return items;
+        }
         CompoundTag data = persistent.getCompound(KEY_DISARM_DATA);
         if (data.contains(KEY_STORED_ITEMS, Tag.TAG_LIST)) {
             ListTag list = data.getList(KEY_STORED_ITEMS, Tag.TAG_COMPOUND);
             for (int i = 0; i < list.size(); i++) {
                 ItemStack stack = ItemStack.of(list.getCompound(i));
-                if (!stack.isEmpty()) items.add(stack);
+                if (!stack.isEmpty()) {
+                    items.add(stack);
+                }
             }
         } else if (data.contains(KEY_LEGACY_STORED_ITEM)) {
-            // ⭐ 旧版单物品存档兼容：读取后由调用方迁移到列表格式
             ItemStack stack = ItemStack.of(data.getCompound(KEY_LEGACY_STORED_ITEM));
-            if (!stack.isEmpty()) items.add(stack);
-        }
-        return items;
-    }
-
-    /**
-     * 将被缴械的物品列表写入 NBT
-     */
-    private static void setStoredItemsToNBT(LivingEntity entity, List<ItemStack> items) {
-        CompoundTag persistent = entity.getPersistentData();
-        CompoundTag data = persistent.getCompound(KEY_DISARM_DATA);
-        ListTag list = new ListTag();
-        for (ItemStack stack : items) {
             if (!stack.isEmpty()) {
-                list.add(stack.save(new CompoundTag()));
+                items.add(stack);
             }
         }
-        data.put(KEY_STORED_ITEMS, list);
-        data.remove(KEY_LEGACY_STORED_ITEM); // 迁移后移除旧键
-        persistent.put(KEY_DISARM_DATA, data);
-    }
-
-    /**
-     * 从 NBT 移除全部被缴械的物品
-     */
-    private static void removeStoredItemsFromNBT(LivingEntity entity) {
-        entity.getPersistentData().remove(KEY_DISARM_DATA);
-    }
-
-    /**
-     * 检查 NBT 中是否有被缴械的物品
-     */
-    private static boolean hasStoredItemsInNBT(LivingEntity entity) {
-        return !getStoredItemsFromNBT(entity).isEmpty();
-    }
-
-    /**
-     * 获取被缴械的物品列表（优先缓存，缓存没有则从 NBT 读取并载入缓存）
-     */
-    private static List<ItemStack> getStoredItems(LivingEntity entity) {
-        UUID uuid = entity.getUUID();
-        List<ItemStack> items = DISARMED_ITEMS.get(uuid);
-        if (items == null) {
-            items = getStoredItemsFromNBT(entity);
-            DISARMED_ITEMS.put(uuid, items);
-        }
         return items;
     }
 
-    /**
-     * 追加一件被缴械的物品（缓存 + NBT 同步）
-     */
-    private static void addStoredItem(LivingEntity entity, ItemStack stack) {
-        if (stack.isEmpty()) return;
-        List<ItemStack> items = getStoredItems(entity);
-        items.add(stack.copy());
-        setStoredItemsToNBT(entity, items);
-    }
-
-    /**
-     * 清空所有被缴械的物品（缓存 + NBT）
-     */
-    private static void clearStoredItems(LivingEntity entity) {
-        DISARMED_ITEMS.remove(entity.getUUID());
-        removeStoredItemsFromNBT(entity);
-    }
-
-    // ==================== 事件处理器 ====================
+    // ==================== 事件处理 ====================
 
     @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
     public static class DisarmEventHandler {
+
+        /** ★已被缴械丢出的地物标记（★供 DisarmDropProtectionMixin 认领 ✓） */
+        public static final String DROP_TAG = "tnl_disarm_drop";
 
         private static boolean isDisarmEffect(MobEffectInstance instance) {
             return instance != null && instance.getEffect().equals(ModEffects.DISARM.get());
         }
 
-        /**
-         * 尝试缴械当前主手物品（若主手非空则记录并清空）。
-         * <p>
-         * ⭐ 多物品叠加：无论之前是否已记录过物品，只要主手有工具就追加记录 ——
-         * 缴械未结束时再次获得缴械（Changed 事件）会继续收集新工具。
-         */
-        private static void tryDisarmHand(LivingEntity living) {
-            if (living.level().isClientSide) return;
-            ItemStack mainHand = living.getItemBySlot(EquipmentSlot.MAINHAND);
-            if (!mainHand.isEmpty()) {
-                addStoredItem(living, mainHand);
-                living.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
-            }
+        public static boolean isDisarm(Player player) {
+            return player != null && player.hasEffect(ModEffects.DISARM.get());
         }
 
         /**
-         * 缴械效果被施加/重新施加时。
-         * <p>
-         * ⭐ 已确认 Forge 1.20.1 语义：{@code MobEffectEvent.Added} 在 addEffect 的
-         * {@code map.get()} 之后无条件触发（构造参数含 prev 效果实例）—— 因此缴械未结束时
-         * 再次获得缴械（时长刷新）同样触发 Added。在此继续收集新工具，实现多物品叠加：
-         * 不删除之前的记录，主手有新工具则追加。
-         * <p>
-         * 注意：不要用 {@code MobEffectEvent.Applicable} —— 它属于 canBeAffected 判定事件，
-         * 在效果实际未施加时也可能触发，会造成误缴械。
+         * ★缴械一把手：玩家⇒**先塞背包**（满了才掉地上✗）；
+         * 非玩家⇒**直接丢到地上**✓ 并打上“不可销毁”标记 ✓
          */
-        @SubscribeEvent
-        public static void onEffectAdded(MobEffectEvent.Added event) {
-            if (!isDisarmEffect(event.getEffectInstance())) return;
-            tryDisarmHand(event.getEntity());
-        }
-
-        @SubscribeEvent
-        public static void onEffectRemoved(MobEffectEvent.Remove event) {
-            handleEffectEnd(event.getEntity(), event.getEffectInstance());
-        }
-
-        @SubscribeEvent
-        public static void onEffectExpired(MobEffectEvent.Expired event) {
-            handleEffectEnd(event.getEntity(), event.getEffectInstance());
-        }
-
-        /**
-         * 实体转化（闪电/诡厄巫法把骷髅→响骷、僵尸→焦尸、猪→僵尸猪灵等）时：
-         * 旧实体被新实体替换，若缴械状态留在旧实体上会丢失（弓不归还 / 新实体不没收）。
-         * 这里把【已缴械物品】与【剩余缴械效果】整体迁移到转化后的新实体。
-         */
-        @SubscribeEvent
-        public static void onLivingConversion(net.minecraftforge.event.entity.living.LivingConversionEvent.Post event) {
-            if (event.getEntity().level().isClientSide) return;
-            LivingEntity oldEntity = event.getEntity();
-            LivingEntity newEntity = event.getOutcome();
-            if (newEntity == oldEntity) return;
-
-            boolean migrated = false;
-            // 1) 已缴械物品迁到新实体（到期归还给新实体主手）
-            List<ItemStack> items = new ArrayList<>(getStoredItems(oldEntity));
-            if (!items.isEmpty()) {
-                for (ItemStack stack : items) {
-                    if (!stack.isEmpty()) {
-                        addStoredItem(newEntity, stack);
-                        migrated = true;
-                    }
-                }
-                clearStoredItems(oldEntity);
-            }
-            // 2) 缴械效果延续到新实体（新实体主手同样会被缴械没收，到期统一归还）。
-            //    时长保底 60 tick（3 秒），避免转化瞬间原效果已快到期、迁移后"感知不到"。
-            MobEffectInstance inst = oldEntity.getEffect(ModEffects.DISARM.get());
-            if (inst != null) {
-                migrated = true;
-            }
-            if (migrated) {
-                int keep = 60;
-                if (inst != null) {
-                    keep = Math.max(keep, inst.getDuration());
-                }
-                MobEffectInstance cur = newEntity.getEffect(ModEffects.DISARM.get());
-                if (cur != null) {
-                    keep = Math.max(keep, cur.getDuration());
-                }
-                newEntity.addEffect(new MobEffectInstance(ModEffects.DISARM.get(), keep, 0, false, true));
-                // 移除旧实体上的缴械，避免旧实体死亡时把已迁移物品再掉落一次
-                oldEntity.removeEffect(ModEffects.DISARM.get());
-            }
-        }
-
-        /**
-         * 实体死亡时：仅当死亡时身上仍带有缴械效果，才掉落被缴械的物品；
-         * 效果已解除（正常归还）则不重复掉落。
-         */
-        @SubscribeEvent
-        public static void onLivingDeath(LivingDeathEvent event) {
-            LivingEntity entity = event.getEntity();
-            if (entity.level().isClientSide) return;
-            // 只有缴械效果还在（未解除）时才掉落；已解除（效果消失）由 handleEffectEnd 归还
-            if (!entity.hasEffect(ModEffects.DISARM.get())) return;
-
-            List<ItemStack> items = new ArrayList<>(getStoredItems(entity));
-            if (items.isEmpty()) return;
-
-            for (ItemStack stack : items) {
-                if (!stack.isEmpty()) {
-                    entity.spawnAtLocation(stack, 0.5f);
-                }
-            }
-            clearStoredItems(entity);
-        }
-
-        /**
-         * 玩家登录时：检查是否有被缴械的物品未归还，有则全部归还
-         */
-        @SubscribeEvent
-        public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-            LivingEntity entity = event.getEntity();
-            if (!hasStoredItemsInNBT(entity)) return;
-
-            List<ItemStack> items = getStoredItemsFromNBT(entity);
-            for (ItemStack stack : items) {
-                if (!stack.isEmpty()) {
-                    returnItemToPlayer(entity, stack);
-                }
-            }
-            removeStoredItemsFromNBT(entity);
-            DISARMED_ITEMS.remove(entity.getUUID());
-        }
-
-        /**
-         * 玩家退出时：物品已持久化在 NBT，仅清理缓存
-         */
-        @SubscribeEvent
-        public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
-            DISARMED_ITEMS.remove(event.getEntity().getUUID());
-        }
-
-        /** 缴械结束：归还所有被缴械的物品 */
-        private static void handleEffectEnd(LivingEntity entity, MobEffectInstance effect) {
-            if (!isDisarmEffect(effect)) return;
-
-            List<ItemStack> items = new ArrayList<>(getStoredItems(entity));
-            if (items.isEmpty()) return;
-
-            for (ItemStack stack : items) {
-                if (!stack.isEmpty()) {
-                    returnItemToPlayer(entity, stack);
-                }
-            }
-            clearStoredItems(entity);
-        }
-
-        /**
-         * 将物品归还给实体（主手空则放主手；玩家优先放入物品栏，放不下再掉落）
-         */
-        private static void returnItemToPlayer(LivingEntity entity, ItemStack stack) {
-            if (stack.isEmpty()) return;
-            ItemStack current = entity.getItemBySlot(EquipmentSlot.MAINHAND);
-            if (current.isEmpty()) {
-                entity.setItemSlot(EquipmentSlot.MAINHAND, stack);
+        private static void disarmSlot(LivingEntity living, EquipmentSlot slot) {
+            if (living.level().isClientSide) {
                 return;
             }
-            // 玩家：优先放入物品栏，避免直接掉地上
-            if (entity instanceof net.minecraft.world.entity.player.Player player) {
+            ItemStack stack = living.getItemBySlot(slot);
+            if (stack.isEmpty()) {
+                return;
+            }
+            living.setItemSlot(slot, ItemStack.EMPTY);
+            if (living instanceof Player player) {
+                // ★玩家：丢进背包 ✓（★背包满了才掉地上 ✗）
                 if (player.getInventory().add(stack)) {
                     return;
                 }
             }
-            entity.spawnAtLocation(stack, 0.5f);
+            dropProtected(living, stack);
+        }
+
+        /** ★丢到地上，并打上“不会被销毁”标记 ✓ */
+        private static void dropProtected(LivingEntity living, ItemStack stack) {
+            ItemEntity drop = new ItemEntity(living.level(), living.getX(),
+                    living.getY() + living.getEyeHeight() * 0.6D, living.getZ(), stack);
+            drop.getPersistentData().putBoolean(DROP_TAG, true);
+            drop.setPickUpDelay(40);   // ★先给几秒不能捡（★避免刚丢出去就被自己踩回去 ✗）
+            living.level().addFreshEntity(drop);
+        }
+
+        /**
+         * ★每 tick 保持双手空着 ✓ —— “无论主副手拿到什么都丢进背包”靠这里 ✓
+         * （★旧模型只在 Added 时收一次 ✗ 所以后来拿到的东西不会被没收 ✗）
+         */
+        @SubscribeEvent
+        public static void onLivingTick(net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent event) {
+            LivingEntity living = event.getEntity();
+            if (living.level().isClientSide || !living.hasEffect(ModEffects.DISARM.get())) {
+                return;
+            }
+            disarmSlot(living, EquipmentSlot.MAINHAND);
+            disarmSlot(living, EquipmentSlot.OFFHAND);
+        }
+
+        /** 旧 NBT 存储的物品：登录时如数归还 ✓（★避免旧档丢物 ✗） */
+        @SubscribeEvent
+        public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+            LivingEntity entity = event.getEntity();
+            List<ItemStack> old = legacyStoredItems(entity);
+            if (old.isEmpty()) {
+                return;
+            }
+            for (ItemStack stack : old) {
+                if (stack.isEmpty()) {
+                    continue;
+                }
+                if (entity instanceof Player player && player.getInventory().add(stack)) {
+                    continue;
+                }
+                entity.spawnAtLocation(stack, 0.5F);
+            }
+            entity.getPersistentData().remove(KEY_DISARM_DATA);
+        }
+
+        /** ★缴械期间：玩家**无法捡起任何物品** ✓（★非玩家同理 ✓） */
+        @SubscribeEvent
+        public static void onItemPickup(EntityItemPickupEvent event) {
+            LivingEntity picker = event.getEntity();
+            if (picker.level().isClientSide || !picker.hasEffect(ModEffects.DISARM.get())) {
+                return;
+            }
+            event.setCanceled(true);   // ★鼠标/踏上去都捡不起来 ✓
+        }
+
+        /** ★被缴械丢出的地物被捡起后：摘掉保护标记 ✓（★回到正常行为 ✓） */
+        @SubscribeEvent
+        public static void onItemPickedUp(PlayerEvent.ItemPickupEvent event) {
+            ItemStack stack = event.getStack();
+            if (!stack.isEmpty() && stack.getTag() != null) {
+                stack.getTag().remove(DROP_TAG);
+            }
+        }
+
+        /** ★死亡时丢出双手物品（★标记保护 ✓）✗ 旧模型的“归还”已不存在 ✓ */
+        @SubscribeEvent
+        public static void onLivingDeath(LivingDeathEvent event) {
+            LivingEntity entity = event.getEntity();
+            if (entity.level().isClientSide || !entity.hasEffect(ModEffects.DISARM.get())) {
+                return;
+            }
+            disarmSlot(entity, EquipmentSlot.MAINHAND);
+            disarmSlot(entity, EquipmentSlot.OFFHAND);
+        }
+
+        /** ★转化（闪电把骷髅→响骷等）：缴械效果延续到新实体 ✓ */
+        @SubscribeEvent
+        public static void onLivingConversion(net.minecraftforge.event.entity.living.LivingConversionEvent.Post event) {
+            if (event.getEntity().level().isClientSide) {
+                return;
+            }
+            LivingEntity oldEntity = event.getEntity();
+            LivingEntity newEntity = event.getOutcome();
+            if (newEntity == oldEntity) {
+                return;
+            }
+            MobEffectInstance inst = oldEntity.getEffect(ModEffects.DISARM.get());
+            if (inst != null) {
+                newEntity.addEffect(new MobEffectInstance(ModEffects.DISARM.get(),
+                        Math.max(60, inst.getDuration()), 0, false, true));
+                oldEntity.removeEffect(ModEffects.DISARM.get());
+            }
         }
     }
 }
