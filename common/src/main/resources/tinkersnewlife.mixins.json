@@ -5,7 +5,7 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "tinkersnewlife.refmap.json",
   "mixins": [
-    "BlockEntityHelperGetMixin",
+    "ClientLevelGetBlockEntityMixin",
     "BlockEntityHelperLoadedMixin",
     "DisarmDropProtectionMixin",
     "ToolkitTabPacketMixin",
