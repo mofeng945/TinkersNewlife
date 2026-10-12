@@ -18,11 +18,13 @@ import slimeknights.tconstruct.tables.menu.CraftingStationContainerMenu;
  */
 public class PortableCraftingStationMenu extends CraftingStationContainerMenu {
 
-    private final CraftingStationBlockEntity ghost;
+        private net.minecraft.world.entity.player.Inventory playerInv;
+private final CraftingStationBlockEntity ghost;
     private final String saveKey;
 
-    public PortableCraftingStationMenu(int id, Inventory inv, CraftingStationBlockEntity tile, String saveKey) {
+        public PortableCraftingStationMenu(int id, Inventory inv, CraftingStationBlockEntity tile, String saveKey) {
         super(id, inv, tile);
+        this.playerInv = inv;
         this.ghost = tile;
         this.saveKey = saveKey;
         com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[便携设备] 槽数（菜单）{} slots={}",
@@ -34,6 +36,25 @@ public class PortableCraftingStationMenu extends CraftingStationContainerMenu {
                 .makeGhost("slimeknights.tconstruct.tables.block.entity.table.CraftingStationBlockEntity",
                         "tconstruct:crafting_station"),
                 "tnl_portable_crafting_station_inv");
+    }
+
+    /**
+     * §814 ★便携设备**无法合成**的修复（★服务端 ✓）：
+     * 匠魂的配方同步只发给“追踪该区块的玩家”✗ 而幽灵在口袋坐标（无区块）
+     * ⇒ 包从未发出 ⇒ 客户端拿不到配方 ⇒ 合不了 ✗✗。
+     * ★这里在 {@code super.broadcastChanges()}（★结果槽会在这里算出 lastRecipe ✓）
+     * 之后自己推一次 ✓。
+     */
+    @Override
+    public void broadcastChanges() {
+        super.broadcastChanges();
+        try {
+            if (this.ghost != null) {
+                this.ghost.syncRecipe(this.playerInv.player);
+            }
+        } catch (Throwable ignored) {
+            // ★不影响菜单 ✓
+        }
     }
 
     @Override
