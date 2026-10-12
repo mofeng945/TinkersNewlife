@@ -168,15 +168,6 @@ public class DisarmEffect extends MobEffect {
             event.setCanceled(true);   // ★鼠标/踏上去都捡不起来 ✓
         }
 
-        /** ★被缴械丢出的地物被捡起后：摘掉保护标记 ✓（★回到正常行为 ✓） */
-        @SubscribeEvent
-        public static void onItemPickedUp(PlayerEvent.ItemPickupEvent event) {
-            ItemStack stack = event.getStack();
-            if (!stack.isEmpty() && stack.getTag() != null) {
-                stack.getTag().remove(DROP_TAG);
-            }
-        }
-
         /** ★死亡时丢出双手物品（★标记保护 ✓）✗ 旧模型的“归还”已不存在 ✓ */
         @SubscribeEvent
         public static void onLivingDeath(LivingDeathEvent event) {
