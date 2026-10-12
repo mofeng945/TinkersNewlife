@@ -2,16 +2,20 @@
   "type": "tconstruct:modifier",
   "inputs": [
     {
-      "item": "minecraft:quartz"
+      "item": "minecraft:quartz",
+      "count": 20
     },
     {
-      "item": "minecraft:diamond"
+      "item": "minecraft:diamond",
+      "count": 20
     },
     {
-      "item": "minecraft:gold_ingot"
+      "item": "minecraft:gold_ingot",
+      "count": 20
     },
     {
-      "item": "minecraft:emerald"
+      "item": "minecraft:emerald",
+      "count": 20
     }
   ],
   "tools": [
@@ -19,10 +23,10 @@
       "tag": "tconstruct:modifiable/harvest"
     }
   ],
+  "result": "tinkersnewlife:miners_vision",
+  "level": 1,
+  "allow_crystal": true,
   "slots": {
     "abilities": 1
-  },
-  "allow_crystal": true,
-  "result": "tinkersnewlife:miners_vision",
-  "max_level": 5
+  }
 }
