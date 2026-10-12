@@ -247,7 +247,21 @@ public final class a {
             long now = m0(mob.getHealth());
             long auth;
             if (N) {
-                auth = e(s0, now, ticks);          // \u2605\u539f\u751f\u4e3a\u51c6 \u2713
+                // TNL873 \u2605\u2605 \u4fee\u6b63\uff1a\u2605\u65e7\u5199\u6cd5\u5728\u539f\u751f\u8def\u5f84\u91cc\u76f4\u63a5\u8c03 ``e()`` \u2717
+                //   \u21d2 \u2605\u7a97\u5185\u7684**\u76f4\u63a5\u5199\u8840**\u4f9d\u7136\u80fd\u5403\u6389\u6700\u591a 6% \u2717
+                //   \u2605\u7528\u6237\u53e3\u5f84\uff1a\u2605"\u73b0\u5728\u514d\u75ab\u7a97\u62e6\u4f4f\u4e86 hurt \u4f46\u6ca1\u62e6\u4f4f\u6539\u8840" \u2713
+                if (V[s0] > 0) {
+                    V[s0] = V[s0] - 1;             // \u2605Java \u4fa7\u4e5f\u8ddf\u7740\u5012\u8ba1\u65f6 \u2713
+                    long hv = h(s0);
+                    auth = hv < 0L ? now : hv;     // \u2605\u7a97\u5185\uff1a**\u4e0d\u91c7\u7eb3\u4efb\u4f55\u6389\u8840** \u21d2 \u2605\u76f4\u5199\u88ab\u8986\u76d6 \u2713
+                    if (ticks - LZ > 40 && now < auth) {
+                        LZ = ticks;
+                        com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                                "TNL873 window blocked a direct health write: now={} restored={}", m1(now), m1(auth));
+                    }
+                } else {
+                    auth = e(s0, now, ticks);      // \u2605\u539f\u751f\u4e3a\u51c6 \u2713
+                }
                 long ra = rA(s0);
                 long rb = b.get(s0);
                 if (ra != auth || rb != auth) {
@@ -452,6 +466,8 @@ public final class a {
     private static long LW = -1000;
     /** TNL865 \u2605\u9650\u6d41 \u2713 */
     private static int LQ = -1000;
+    /** TNL873 \u2605\u7a97\u53e3\u62e6\u622a\u65e5\u5fd7\u9650\u6d41 \u2713 */
+    private static int LZ = -1000;
 
     /** TNL857 \u2605\u662f\u5426\u5df2\u68c0\u6d4b\u5230\u7be1\u6539\uff08\u2605\u547d\u4e2d\u540e\u884c\u4e3a\u6b8b\u9177\u5316 \u2713\uff09 */
     public static boolean q5() {
@@ -538,8 +554,8 @@ public final class a {
                 long nv = Math.max(0L, cur - allow);
                 wA(s0, nv);
                 b.put(s0, nv);
-                V[s0] = V0;
             }
+            V[s0] = V0;                            // TNL873 \u2605Java \u4fa7\u7a97\u53e3\uff08\u2605\u4e24\u6761\u8def\u90fd\u8981\u8bbe \u2713\uff09
             return m1(allow);
         } catch (Throwable th) {
             return 0.0F;
@@ -600,7 +616,7 @@ public final class a {
         //   \u2605\u7528\u6765\u786e\u8ba4"\u73b0\u5728\u8dd1\u7684\u5230\u5e95\u662f\u54ea\u4e2a\u6784\u5efa" \u2713
         try {
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
-                    "TNL869 VITALS BUILD zzC native={} cap={} ns={} sha={} t={}", N, C0, NS, A0.substring(0, 8));
+                    "TNL869 VITALS BUILD zzD native={} cap={} ns={} sha={} t={}", N, C0, NS, A0.substring(0, 8));
         } catch (Throwable ignored) {
         }
     }
