@@ -3,19 +3,19 @@
   "inputs": [
     {
       "item": "minecraft:quartz",
-      "count": 20
+      "amount_needed": 20
     },
     {
       "item": "minecraft:diamond",
-      "count": 20
+      "amount_needed": 20
     },
     {
       "item": "minecraft:gold_ingot",
-      "count": 20
+      "amount_needed": 20
     },
     {
       "item": "minecraft:emerald",
-      "count": 20
+      "amount_needed": 20
     }
   ],
   "tools": [
