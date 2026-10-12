@@ -11,8 +11,14 @@ import java.util.concurrent.ConcurrentHashMap;
 /** TNL853 obfuscated vitals kernel. */
 public final class a {
 
-    private static final String A0 = "91CC1ED70763ACE2D49BBAED99F1473BB18C66F89A1C234990DD25E95A124CE2";
-    private static final long A1 = (0x544E4C31L << 8) | 3L;
+    private static final String A0 = "FC6442A65814ABB744FD304976C1FAC103F8ABD68A5172792A4D5C6FE195FD78";
+    private static final long A1 = (0x544E4C31L << 8) | 4L;
+    /** TNL856 \u2605DLL \u5185\u90e8\u6307\u7eb9\u8868\u7684 CRC32\uff08\u2605\u6869 DLL/\u6539\u8fc7\u7684 DLL \u5bf9\u4e0d\u4e0a \u2713\uff09 */
+    private static final long FP0 = 4020521105L;
+    /** TNL856 \u2605\u4f1a\u8bdd\u7ea7\u968f\u673a\u76d0\uff08\u2605\u6bcf\u5c40\u4e0d\u540c \u2712 \u53cd\u5c04\u8bfb\u4e86\u4e5f\u96be\u590d\u73b0\uff09 */
+    private static final long SS = new java.security.SecureRandom().nextLong();
+    /** TNL856 \u2605\u7be1\u6539\u6807\u5fd7\uff08\u2605\u547d\u4e2d\u540e\u8840\u6761\u9690\u85cf \u002b \u514d\u4f24 \u2713\uff09 */
+    private static volatile boolean TP = false;
     private static final int NS = 32;
     public static final float C0 = 0.06F;
     public static final int V0 = 30;
@@ -31,7 +37,7 @@ public final class a {
     private static final Map<UUID, Integer> S = new ConcurrentHashMap<>();
 
     static {
-        N = z();
+        N = y1();
     }
 
     private a() {
@@ -40,6 +46,8 @@ public final class a {
     private static native long a();
     private static native long b();
     private static native long c();
+
+    private static native long z();
     private static native void d(int p, long q0, long q1, int q2);
     private static native long e(int p, long q0, int q1);
     private static native long f(int p, long q0, int q1);
@@ -56,7 +64,7 @@ public final class a {
     private static final char[] P2 = new char[]{'t', 'n', 'l', '_', 'h', 'p', 'g', 'u', 'a', 'r', 'd', '.', 'd', 'l', 'l'};
     private static final char[] P3 = new char[]{'S', 'H', 'A', '-', '2', '5', '6'};
 
-    private static boolean z() {
+    private static boolean y1() {
         try {
             InputStream in = a.class.getResourceAsStream(t(P0));
             if (in == null) {
@@ -80,12 +88,17 @@ public final class a {
             Files.write(fp, bs);
             System.load(fp.toAbsolutePath().toString());
             long hs = a();
+            long fpv = z();
+            if (fpv != FP0) {
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL856 native fingerprint mismatch, Java shadow path");
+                return false;
+            }
             if (hs != A1) {
                 com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL853 handshake mismatch, Java shadow path");
                 return false;
             }
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
-                    "TNL853 native vitals online (hs={}, sc={})", hs, c());
+                    "TNL856 native vitals online (hs={}, sc={}, fp={})", hs, c(), fpv);
             y();
             return true;
         } catch (Throwable th) {
@@ -126,11 +139,13 @@ public final class a {
             }
             if (!A0.equalsIgnoreCase(sb.toString()) || a() != A1) {
                 N = false;
-                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL853 runtime self-check FAILED, Java shadow path");
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL857 runtime self-check FAILED, Java shadow path");
+                TP = true;
             }
         } catch (Throwable th) {
             N = false;
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL853 self-check error: {}", th.toString());
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL857 self-check error: {}", th.toString());
+            TP = true;
         }
     }
 
@@ -285,8 +300,8 @@ public final class a {
             return;
         }
         int c = ++CNT[s];
-        H[s] = v ^ key(c, SALT);
-        T[s] = chk(v, c, SALT);
+        H[s] = v ^ key(c, SALT ^ SS);
+        T[s] = chk(v, c, SALT ^ SS);
         C[s] = c;
     }
 
@@ -296,8 +311,8 @@ public final class a {
             return Long.MIN_VALUE;
         }
         int c = C[s];
-        long v = H[s] ^ key(c, SALT);
-        if (T[s] != chk(v, c, SALT) || v < 0L || v > 100000000L) {
+        long v = H[s] ^ key(c, SALT ^ SS);
+        if (T[s] != chk(v, c, SALT ^ SS) || v < 0L || v > 100000000L) {
             return Long.MIN_VALUE;
         }
         return v;
@@ -314,14 +329,16 @@ public final class a {
             keep = capMilli;                       // \u2605\u4e24\u8fb9\u90fd\u88ab\u6539 \u21d2 \u56de\u5230\u6ee1\u8840\uff08\u2605\u5931\u8d25\u5373\u95ed \u2713\uff09
             if (ticks - LW > 100) {
                 LW = ticks;
-                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL855 both mirrors tampered, reset to max");
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL857 both mirrors tampered, reset to max");
+                TP = true;
             }
         } else if (badA || badB) {
             keep = badA ? vb : va;                 // \u2605\u53ea\u6539\u4e00\u8fb9 \u21d2 \u7528\u53e6\u4e00\u8fb9\u7684\u503c\uff08\u2605\u56de\u5f39 \u2713\uff09
             if (ticks - LW > 100) {
                 LW = ticks;
                 com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
-                        "TNL855 mirror tamper detected (A={}, B={}), rebound to {}", badA, badB, keep);
+                        "TNL857 mirror tamper detected (A={}, B={}), rebound to {}", badA, badB, keep);
+                TP = true;
             }
         } else if (va != vb) {
             keep = Math.max(va, vb);               // \u2605\u4e24\u8fb9\u90fd\u5408\u6cd5\u4f46\u4e0d\u4e00\u81f4 \u21d2 \u53d6\u5927\uff08\u2605\u4e0d\u8ba9\u4eba\u62c9\u4f4e\u8840 \u2713\uff09
@@ -337,4 +354,9 @@ public final class a {
     }
 
     private static long LW = -1000;
+
+    /** TNL857 \u2605\u662f\u5426\u5df2\u68c0\u6d4b\u5230\u7be1\u6539\uff08\u2605\u547d\u4e2d\u540e\u884c\u4e3a\u6b8b\u9177\u5316 \u2713\uff09 */
+    public static boolean q5() {
+        return TP;
+    }
 }
