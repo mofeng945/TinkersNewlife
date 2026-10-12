@@ -125,7 +125,7 @@ public class MinersVisionClientHandler {
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent event) {
         try {
-            if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
+            if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL) {
                 return;
             }
             Minecraft mc = Minecraft.getInstance();
@@ -153,6 +153,10 @@ public class MinersVisionClientHandler {
             Vec3 cam = event.getCamera().getPosition();
             pose.pushPose();
             pose.translate(-cam.x, -cam.y, -cam.z);
+            // TNL844 \u2605\u2605 \u6700\u540e\u4e00\u62db\uff1a\u5e27\u672b\u6e32\u67d3 \u002b **\u5148\u6e05\u6df1\u5ea6\u7f13\u51b2** \u002b \u5173\u6df1\u5ea6\u6d4b\u8bd5 \u2713
+            //   \uff08\u2605\u4e4b\u524d drawn>0 \u4f46\u4ecd\u88ab\u906e \u21d2 \u8bf4\u660e\u5355\u9760 RenderType \u7684 NO_DEPTH \u6ca1\u771f\u6b63\u594f\u6548 \u2717\uff09
+            com.mojang.blaze3d.systems.RenderSystem.clear(org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT, false);
+            com.mojang.blaze3d.systems.RenderSystem.disableDepthTest();
             MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
             VertexConsumer vc = buffers.getBuffer(glowType());
             PoseStack.Pose last = pose.last();
@@ -170,7 +174,7 @@ public class MinersVisionClientHandler {
             }
             if (now - lastLog >= 100) {
                 lastLog = now;
-                TinkersNewlife.LOGGER.warn("TNL842 miners vision: level={} cache={} drawn={} stage=AFTER_TRANSLUCENT_BLOCKS",
+                TinkersNewlife.LOGGER.warn("TNL842 miners vision: level={} cache={} drawn={} stage=AFTER_LEVEL",
                         level, CACHE.size(), drawn);
             }
             buffers.endBatch(glowType());
