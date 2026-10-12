@@ -119,8 +119,6 @@ public class MinersVisionClientHandler {
     private static final List<Hit> CACHE = new ArrayList<>();
     private static int lastScan = -1000;
     private static int lastLevel = -1;
-    /** TNL842 \u2605\u63a2\u9488\u8282\u6d41 \u2713 */
-    private static int lastLog = -1000;
 
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent event) {
@@ -182,11 +180,6 @@ public class MinersVisionClientHandler {
                 } catch (Throwable ignoredOne) {
                     // TNL842 ★单块异常不影响其它 ✓
                 }
-            }
-            if (now - lastLog >= 100) {
-                lastLog = now;
-                TinkersNewlife.LOGGER.warn("TNL842 miners vision: level={} cache={} drawn={} stage=AFTER_TRANSLUCENT_BLOCKS",
-                        level, CACHE.size(), drawn);
             }
             com.mojang.blaze3d.vertex.BufferUploader.drawWithShader(bb.end());
             com.mojang.blaze3d.systems.RenderSystem.depthMask(true);
