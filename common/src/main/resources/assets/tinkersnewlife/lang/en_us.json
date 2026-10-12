@@ -1623,5 +1623,6 @@
   "modifier.tinkersnewlife.miners_vision.description": "Highlights all ores in range and shows them through walls, +5 range per level",
   "modifier.tinkersnewlife.miners_vision.flavor": "Barren veins raise no seasoned miners",
   "entity.tinkersnewlife.ktulu_momo": "Ktulu Momo",
-  "entity.tinkersnewlife.ktulu_momo.bossbar": "Momo Ktulu, Astral Priestess"
+  "entity.tinkersnewlife.ktulu_momo.bossbar": "Momo Ktulu, Astral Priestess",
+  "item.tinkersnewlife.ktulu_momo_spawn_egg": "Ktulu Momo Spawn Egg"
 }

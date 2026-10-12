@@ -535,6 +535,11 @@ public class ModItems {
             ITEMS.register("momo_spawn_egg", () -> new net.minecraftforge.common.ForgeSpawnEggItem(
                     ModEntities.MOMO_MERCHANT, 0x2F2A4A, 0xC9A6D9, new Item.Properties()));
 
+    /** TNL854 Boss\u300c\u514b\u56fe\u9732\u00b7\u58a8\u9ed8\u300d\u5237\u602a\u86cb\uff08\u2605\u9ed1\u767d\u914d\u8272 \u2713\uff09 */
+    public static final RegistryObject<Item> KTULU_MOMO_SPAWN_EGG =
+            ITEMS.register("ktulu_momo_spawn_egg", () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+                    ModEntities.KTULU_MOMO, 0x141414, 0xE8E8E8, new Item.Properties()));
+
     /** 古代咒术残卷：战利品箱随机开出，右击学习咒言词条（不消耗） */
     public static final RegistryObject<Item> ANCIENT_CURSED_SCROLL =
             ITEMS.register("ancient_cursed_scroll",
