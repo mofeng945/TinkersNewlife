@@ -1618,5 +1618,8 @@
   "item_group.tinkersnewlife.long_short_blade.description": "A dual-form pair of blades, one in each hand: the long form strikes slower but can thrust forward, the short form is faster and can be charged and thrown. Hits build Fever, and Shift + right-click spends it on a killing aura",
   "modifier.tinkersnewlife.dovahkiin": "Dovahkiin",
   "modifier.tinkersnewlife.dovahkiin.description": "Your dragon breath attacks deal true damage to dragons of other elements",
-  "modifier.tinkersnewlife.dovahkiin.flavor": "Kinsman or foe, the dragon awaits!"
+  "modifier.tinkersnewlife.dovahkiin.flavor": "Kinsman or foe, the dragon awaits!",
+  "modifier.tinkersnewlife.miners_vision": "Miner's Vision",
+  "modifier.tinkersnewlife.miners_vision.description": "Highlights all ores in range and shows them through walls, +5 range per level",
+  "modifier.tinkersnewlife.miners_vision.flavor": "Barren veins raise no seasoned miners"
 }
