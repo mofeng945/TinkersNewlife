@@ -20,9 +20,13 @@ public final class a {
     private static volatile boolean N = false;
     private static long L = -1;
 
-    private static final long[] H = new long[NS];
-    private static final long[] M = new long[NS];
-    private static final long[] C = new long[NS];
+    /* TNL855 \u2605\u955c\u50cf A\uff1a\u540c\u6837\u662f **MAC \u6807\u8bb0\u7684\u5f71\u5b50\u503c** \u2713 */
+    private static final long SALT = 0x9E3779B97F4A7C15L;
+    private static final long[] H = new long[NS];   // \u2605\u63a9\u7801\u8840\u91cf \u2713
+    private static final long[] T = new long[NS];   // \u2605MAC \u2713
+    private static final int[] C = new int[NS];     // \u2605\u8ba1\u6570\u5668 \u2713
+    private static final int[] CNT = new int[NS];
+    private static final long[] MCAP = new long[NS];  // \u2605\u4e0a\u9650\uff08\u4e0d\u654f\u611f\uff0c\u53ef\u76f4\u5b58 \u2713\uff09
     private static final int[] V = new int[NS];
     private static final Map<UUID, Integer> S = new ConcurrentHashMap<>();
 
@@ -146,57 +150,74 @@ public final class a {
         return v / 1000.0F;
     }
 
-    public static void q0(Mob m) {
+    /** TNL855 \u2605\u521d\u59cb\u5316\uff1a\u4e24\u4fa7\u955c\u50cf\u90fd\u5199\u6ee1\u8840 \u2713 */
+    public static void q0(Mob mob) {
         try {
-            long mx = m0(m.getMaxHealth());
-            long cp = m0(m.getMaxHealth() * C0);
-            int s0 = k(m);
+            long mx = m0(mob.getMaxHealth());
+            long cp = m0(mob.getMaxHealth() * C0);
+            int s0 = k(mob);
             if (N) {
                 d(s0, mx, cp, V0);
-            } else {
-                M[s0] = mx;
-                C[s0] = cp;
-                H[s0] = mx;
-                V[s0] = 0;
             }
+            MCAP[s0] = cp;
+            V[s0] = 0;
+            wA(s0, mx);
+            b.put(s0, mx);
         } catch (Throwable ignored) {
         }
     }
 
-    public static float q1(Mob m, int t0) {
+    /**
+     * TNL855 \u2605\u6bcf tick\uff1a\u56de\u5f39 \u002b \u955c\u50cf\u4e92\u68c0\uff08\u2605\u53ea\u6539\u4e00\u8fb9\u5c31\u88ab\u53e6\u4e00\u8fb9\u62c9\u56de \u2713\uff09
+     * \u002b \u786e\u4fdd\u6ca1\u6709\u7a81\u7834\u9650\u4f24\uff08\u2605\u8d85\u51fa\u5c31\u8865\u56de \u2713\uff09\u3002
+     */
+    public static float q1(Mob mob, int ticks) {
         try {
-            w(t0);
-            int s0 = k(m);
-            long now = m0(m.getHealth());
-            long fx;
+            w(ticks);
+            int s0 = k(mob);
+            long now = m0(mob.getHealth());
+            long auth;
             if (N) {
-                fx = e(s0, now, t0);
+                auth = e(s0, now, ticks);          // \u2605\u539f\u751f\u4e3a\u51c6 \u2713
+                long ra = rA(s0);
+                long rb = b.get(s0);
+                if (ra != auth || rb != auth) {
+                    wA(s0, auth);
+                    b.put(s0, auth);
+                }
             } else {
-                if (V[s0] > 0) {
-                    V[s0]--;
+                long keep = mirror(s0, MCAP[s0], ticks);
+                long cap = MCAP[s0];
+                long low = keep - cap;
+                if (low < 0) {
+                    low = 0;
                 }
-                long lo = H[s0] - C[s0];
-                if (lo < 0) {
-                    lo = 0;
+                if (now < low) {
+                    auth = low;                     // \u2605\u56de\u5f39\u8865\u56de \u2713
+                } else if (now > keep) {
+                    auth = keep;
+                } else {
+                    auth = now;
                 }
-                H[s0] = now < lo ? lo : now;
-                fx = H[s0];
+                wA(s0, auth);
+                b.put(s0, auth);
             }
-            return m1(fx);
+            return m1(auth);
         } catch (Throwable t2) {
             return 0.0F;
         }
     }
 
-    public static float q2(Mob m, float amt, int t0) {
+    /** TNL855 \u2605\u9650\u4f24\u67e5\u8be2\uff08\u2605\u65e0\u654c\u7a97\u53e3\u5185\u4e00\u70b9\u4e0d\u5403 \u2713\uff09 */
+    public static float q2(Mob mob, float amt, int ticks) {
         try {
-            int s0 = k(m);
+            int s0 = k(mob);
             long want = m0(amt);
             long gg;
             if (N) {
-                gg = f(s0, want, t0);
+                gg = f(s0, want, ticks);
             } else {
-                gg = V[s0] > 0 ? 0L : Math.min(want, C[s0]);
+                gg = V[s0] > 0 ? 0L : Math.min(want, MCAP[s0]);
             }
             return m1(gg);
         } catch (Throwable t2) {
@@ -204,24 +225,116 @@ public final class a {
         }
     }
 
-    public static void q3(Mob m, float amt) {
+    /** TNL855 \u2605\u8bb0\u8d26\uff1a\u4e24\u4fa7\u955c\u50cf\u540c\u6b65\u6263\u8840\uff08\u2605\u6b63\u89c4\u8def\u7ebf \u2713\uff09\u002b \u8fdb\u5165\u65e0\u654c \u2713 */
+    public static void q3(Mob mob, float amt) {
         try {
-            int s0 = k(m);
+            int s0 = k(mob);
             long x = m0(amt);
             if (N) {
                 g(s0, x, V0);
+                long cur = h(s0);
+                wA(s0, cur);
+                b.put(s0, cur);
             } else {
-                H[s0] = Math.max(0L, H[s0] - x);
-                V[s0] = V0;
+                long cur = rA(s0);
+                if (cur == Long.MIN_VALUE) {
+                    cur = b.get(s0);
+                }
+                if (cur == Long.MIN_VALUE) {
+                    cur = MCAP[s0];
+                }
+                cur = Math.max(0L, cur - x);
+                wA(s0, cur);
+                b.put(s0, cur);
             }
+            V[s0] = V0;
         } catch (Throwable ignored) {
         }
     }
 
-    public static void q4(Mob m) {
+    /** TNL855 \u2605\u6ce8\u9500 \u2713 */
+    public static void q4(Mob mob) {
         try {
-            S.remove(m.getUUID());
+            S.remove(mob.getUUID());
         } catch (Throwable ignored) {
         }
     }
+
+
+    // ==================== TNL855 \u2605\u955c\u50cf\u4e92\u4fdd\uff08MAC \u6807\u8bb0 \u2713\uff09 ====================
+
+    private static long key(int c, long salt) {
+        long x = salt + (long) c * 0x9E3779B97F4A7C15L;
+        x ^= x >>> 33;
+        x *= 0xFF51AFD7ED558CCDL;
+        x ^= x >>> 33;
+        return x;
+    }
+
+    private static long chk(long v, int c, long salt) {
+        long x = v + key(c, salt);
+        x ^= x >>> 27;
+        x *= 0x94D049BB133111EBL;
+        x ^= x >>> 31;
+        return x;
+    }
+
+    /** \u2605\u5199\u5165 A \u955c\u50cf\uff08\u2605\u5e26 MAC \u2713\uff09 */
+    private static void wA(int s, long v) {
+        if (s < 0 || s >= NS) {
+            return;
+        }
+        int c = ++CNT[s];
+        H[s] = v ^ key(c, SALT);
+        T[s] = chk(v, c, SALT);
+        C[s] = c;
+    }
+
+    /** \u2605\u8bfb A \u955c\u50cf\uff08\u2605MAC \u4e0d\u5bf9\u56de\u54e8\u5175 \u2713\uff09 */
+    private static long rA(int s) {
+        if (s < 0 || s >= NS) {
+            return Long.MIN_VALUE;
+        }
+        int c = C[s];
+        long v = H[s] ^ key(c, SALT);
+        if (T[s] != chk(v, c, SALT) || v < 0L || v > 100000000L) {
+            return Long.MIN_VALUE;
+        }
+        return v;
+    }
+
+    /** \u2605\u6bcf tick \u955c\u50cf\u4e92\u68c0\uff1a\u53ea\u6539\u4e00\u8fb9 \u21d2 **\u56de\u5f39** \u2713\uff08\u2605\u53d6\u4e24\u8fb9\u8f83\u5927\u503c \u2713\uff09 */
+    private static long mirror(int s, long capMilli, int ticks) {
+        long va = rA(s);
+        long vb = b.get(s);
+        boolean badA = va == Long.MIN_VALUE;
+        boolean badB = vb == Long.MIN_VALUE;
+        long keep;
+        if (badA && badB) {
+            keep = capMilli;                       // \u2605\u4e24\u8fb9\u90fd\u88ab\u6539 \u21d2 \u56de\u5230\u6ee1\u8840\uff08\u2605\u5931\u8d25\u5373\u95ed \u2713\uff09
+            if (ticks - LW > 100) {
+                LW = ticks;
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL855 both mirrors tampered, reset to max");
+            }
+        } else if (badA || badB) {
+            keep = badA ? vb : va;                 // \u2605\u53ea\u6539\u4e00\u8fb9 \u21d2 \u7528\u53e6\u4e00\u8fb9\u7684\u503c\uff08\u2605\u56de\u5f39 \u2713\uff09
+            if (ticks - LW > 100) {
+                LW = ticks;
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                        "TNL855 mirror tamper detected (A={}, B={}), rebound to {}", badA, badB, keep);
+            }
+        } else if (va != vb) {
+            keep = Math.max(va, vb);               // \u2605\u4e24\u8fb9\u90fd\u5408\u6cd5\u4f46\u4e0d\u4e00\u81f4 \u21d2 \u53d6\u5927\uff08\u2605\u4e0d\u8ba9\u4eba\u62c9\u4f4e\u8840 \u2713\uff09
+        } else {
+            keep = va;
+        }
+        if (keep > capMilli) {
+            keep = capMilli;
+        }
+        wA(s, keep);
+        b.put(s, keep);
+        return keep;
+    }
+
+    private static long LW = -1000;
 }
