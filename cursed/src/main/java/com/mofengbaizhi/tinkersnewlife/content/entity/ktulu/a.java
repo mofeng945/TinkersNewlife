@@ -583,7 +583,7 @@ public final class a {
         try {
             int s0 = k(mob);
             return "max=" + mob.getMaxHealth() + " cap=" + m1(MCAP[s0]) + " spent=" + m1(SPENT[s0])
-                    + " invuln=" + V[s0] + " native=" + N + " shadow=" + m1(rA(s0));
+                    + " jInv=" + V[s0] + " native=" + N + " shadow=" + m1(rA(s0));
         } catch (Throwable th) {
             return "err";
         }

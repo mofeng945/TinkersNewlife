@@ -120,6 +120,15 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             return super.hurt(source, amount);
         }
         a.q0(this);
+        // TNL871 \u2605\u2605 \u771f\u4f24\u8bc6\u522b\uff1a\u2605\u8fd9\u4e9b\u4f24\u5bb3\u7c7b\u578b\u4e0d\u4f1a\u901a\u77e5 onTruePierce \u2717
+        //   \u21d2 \u2605\u65e7\u5199\u6cd5\u4f1a\u628a\u5b83\u5f53\u666e\u901a\u4f24\u5bb3\u653e\u884c\uff08\u2605\u5b9e\u6d4b 25.5 \u2713\uff09
+        //   \u2605\u73b0\u5728\uff1a\u2605**\u6309\u4f24\u5bb3\u7c7b\u578b\u76f4\u63a5\u62e6** \u2713 \u2014\u2014 \u2605\u4e0d\u6389\u8840 \u2717 \u2605\u4e0d\u51fa\u4f24\u5bb3\u6570\u5b57 \u2717 \u2605\u4e0d\u5403\u60e9\u7f5a \u2717
+        String tnl$id = source.getMsgId();
+        if (tnl$id != null && (tnl$id.contains("truePierce") || tnl$id.contains("true_pierce"))) {
+            a.q6(this, amount, this.tickCount);   // \u2605\u5f00\u8c41\u514d\u7a97\uff08\u2605\u4e0d\u7f6e TP \u2717\uff09
+            a.qB("PIERCE", tnl$id, amount, a.qC(this));
+            return false;                          // \u2605\u771f\u4f24\u6539\u4e0d\u4e86\u8840 \u2713
+        }
         // TNL866 \u2605\u2605 hurt \u53ea\u5f53"\u95f8\u95e8"\uff1a\u65e0\u654c\u7a97\u5185/\u9884\u7b97\u7528\u5b8c\u5c31\u76f4\u63a5\u62e6 \u2713
         //   \u2605\u771f\u6b63\u7684\u9650\u4f24\u5728 LivingDamageEvent\uff08LOWEST\uff09\u91cc\u505a \u2713\uff08\u2605\u56e0\u4e3a\u4f24\u5bb3\u4f1a\u5728\u90a3\u4e4b\u524d\u88ab\u5404\u7279\u6027\u653e\u5927 \u2713\uff09
         float gate = a.q2(this, amount, this.tickCount);
