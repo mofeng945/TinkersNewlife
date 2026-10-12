@@ -148,7 +148,23 @@ public final class ItemTagNormalizer {
          * ★现在：只要该物品**没有真正的亲和值**，就把这个空标记剥掉 ✓
          *   （★提取出来就能重新合一起 ✓ ⭐=旧存档也能自愈 ✓）
          */
-        boolean hasAffinity = tag.contains(com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper.KEY_AFFINITY);
+        /*
+         * §809 ★★★致命修正：不能只看**旧键** `KEY_AFFINITY` ✗✗
+         *   ★自 §1294 起，亲和改存在物品的 `AttributeModifiers`（★带 Slot ✓），
+         *   而 `KEY_AFFINITY` 只是旧格式的退化项 ✗
+         *   ⇒ 只看它 ⇒ **带真亲和的物品也被判成“没亲和”** ✗
+         *     ⇒ 每秒删掉 `tnl_affinity_rolled` ⇒ 随后 `rollIfNew` 又重掷并写回
+         *     ⇒ ★★**标签数 9 ↔ 10 每秒来回跳** ✗✗（★用户实测 + 探针实证 ✓）
+         *   ★现在：用**真正的亲和读取**（旧键 ➕ AttributeModifiers 两种格式都认 ✓）
+         */
+        boolean hasAffinity;
+        try {
+            hasAffinity = com.mofengbaizhi.tinkersnewlife.content.curse.CurseAffinityAttribute
+                    .getItemAffinity(stack) > 0;
+        } catch (Throwable ignored) {
+            // ★读不到（冰火/奇责未在场等）⇒ ★退化成旧键判定 ✓（★宁可不删 ✗ 不能误删 ✓）
+            hasAffinity = tag.contains(com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper.KEY_AFFINITY);
+        }
         boolean changed = false;
         if (!hasAffinity && tag.contains("tnl_affinity_rolled")) {
             tag.remove("tnl_affinity_rolled");
