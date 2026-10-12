@@ -122,7 +122,9 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         a.q0(this);
         // TNL866 \u2605\u2605 hurt \u53ea\u5f53"\u95f8\u95e8"\uff1a\u65e0\u654c\u7a97\u5185/\u9884\u7b97\u7528\u5b8c\u5c31\u76f4\u63a5\u62e6 \u2713
         //   \u2605\u771f\u6b63\u7684\u9650\u4f24\u5728 LivingDamageEvent\uff08LOWEST\uff09\u91cc\u505a \u2713\uff08\u2605\u56e0\u4e3a\u4f24\u5bb3\u4f1a\u5728\u90a3\u4e4b\u524d\u88ab\u5404\u7279\u6027\u653e\u5927 \u2713\uff09
-        if (a.q2(this, amount, this.tickCount) <= 0.0F) {
+        float gate = a.q2(this, amount, this.tickCount);
+        a.qB("GATE", source.getMsgId(), amount, "gate=", gate, a.qC(this));
+        if (gate <= 0.0F) {
             return false;
         }
         return super.hurt(source, amount);

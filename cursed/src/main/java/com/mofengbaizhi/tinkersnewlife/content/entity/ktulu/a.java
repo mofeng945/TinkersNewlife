@@ -531,4 +531,46 @@ public final class a {
             return 0.0F;
         }
     }
+
+    /** TNL867 \u2605\u53ea\u622a\u4e0d\u8bb0\u8d26\uff08\u2605\u7ed9 LivingHurtEvent \u7528 \u2713\uff09 */
+    public static float qA(Mob mob, float amount) {
+        try {
+            int s0 = k(mob);
+            if (V[s0] > 0) {
+                return 0.0F;
+            }
+            long budget = MCAP[s0] - SPENT[s0];
+            if (budget <= 0L) {
+                return 0.0F;
+            }
+            long want = m0(amount);
+            return m1(Math.min(want, budget));
+        } catch (Throwable th) {
+            return 0.0F;
+        }
+    }
+
+    /** TNL867 \u2605\u65e5\u5fd7\u6a21\u5f0f\uff1a\u2605\u524d 6 \u5200\u5168\u91cf\u6253\uff08\u2605\u65b9\u4fbf\u7528\u6237\u4e00\u6b21\u590d\u73b0\u5c31\u80fd\u5b9a\u4f4d \u2713\uff09 */
+    private static volatile int HITS = 0;
+
+    public static void qB(String tag, Object... args) {
+        try {
+            if (HITS < 6) {
+                HITS = HITS + 1;
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL867 [{}] {}", tag, java.util.Arrays.toString(args));
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** TNL867 \u2605\u4e0a\u62a5\u5f53\u524d\u9884\u7b97\u72b6\u6001\uff08\u2605\u4f9b\u65e5\u5fd7 \u2713\uff09 */
+    public static String qC(Mob mob) {
+        try {
+            int s0 = k(mob);
+            return "max=" + mob.getMaxHealth() + " cap=" + m1(MCAP[s0]) + " spent=" + m1(SPENT[s0])
+                    + " invuln=" + V[s0] + " native=" + N + " shadow=" + m1(rA(s0));
+        } catch (Throwable th) {
+            return "err";
+        }
+    }
 }
