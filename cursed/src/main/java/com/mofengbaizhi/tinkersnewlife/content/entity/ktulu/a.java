@@ -11,10 +11,12 @@ import java.util.concurrent.ConcurrentHashMap;
 /** TNL853 obfuscated vitals kernel. */
 public final class a {
 
-    private static final String A0 = "FC6442A65814ABB744FD304976C1FAC103F8ABD68A5172792A4D5C6FE195FD78";
-    private static final long A1 = (0x544E4C31L << 8) | 4L;
+    private static final String A0 = "A17283699FC636FA6908EAD41FAF5CFF4DF22599FC262378ABB475A537B81565";
+    private static final long A1 = (0x544E4C31L << 8) | 5L;
     /** TNL856 \u2605DLL \u5185\u90e8\u6307\u7eb9\u8868\u7684 CRC32\uff08\u2605\u6869 DLL/\u6539\u8fc7\u7684 DLL \u5bf9\u4e0d\u4e0a \u2713\uff09 */
     private static final long FP0 = 4020521105L;
+    /** TNL861 \u2605DLL **\u4ee3\u7801\u6bb5(.text)** \u7684 CRC32\uff08\u2605\u6539\u4ee3\u7801\u6bb5\u5c31\u5bf9\u4e0d\u4e0a \u2713\uff09 */
+    private static final long TC0 = 2270635665L;
     /** TNL856 \u2605\u4f1a\u8bdd\u7ea7\u968f\u673a\u76d0\uff08\u2605\u6bcf\u5c40\u4e0d\u540c \u2712 \u53cd\u5c04\u8bfb\u4e86\u4e5f\u96be\u590d\u73b0\uff09 */
     private static final long SS = new java.security.SecureRandom().nextLong();
     /** TNL856 \u2605\u7be1\u6539\u6807\u5fd7\uff08\u2605\u547d\u4e2d\u540e\u8840\u6761\u9690\u85cf \u002b \u514d\u4f24 \u2713\uff09 */
@@ -50,6 +52,12 @@ public final class a {
     private static native long c();
 
     private static native long z();
+
+    /** TNL861 \u2605\u8fd4\u56de\u4ee3\u7801\u6bb5 CRC \u2713 */
+    private static native long y();
+
+    /** TNL861 \u2605\u4ee3\u7801\u6bb5\u81ea\u6821\u9a8c\u7ed3\u679c\uff081=\u5bf9\u5f97\u4e0a \u2713\uff09 */
+    private static native long x();
     private static native void d(int p, long q0, long q1, int q2);
     private static native long e(int p, long q0, int q1);
     private static native long f(int p, long q0, int q1);
@@ -95,13 +103,18 @@ public final class a {
                 com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL856 native fingerprint mismatch, Java shadow path");
                 return false;
             }
+            if (x() != 1L) {
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                        "TNL861 native code section self-check FAILED (crc={}, expected={}), Java shadow path", y(), TC0);
+                return false;
+            }
             if (hs != A1) {
                 com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL853 handshake mismatch, Java shadow path");
                 return false;
             }
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
-                    "TNL856 native vitals online (hs={}, sc={}, fp={})", hs, c(), fpv);
-            y();
+                    "TNL861 native vitals online (hs={}, sc={}, fp={}, text={})", hs, c(), fpv, y());
+            y2();
             return true;
         } catch (Throwable th) {
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
@@ -110,7 +123,7 @@ public final class a {
         }
     }
 
-    private static void y() {
+    private static void y2() {
         try {
             for (String x : java.lang.management.ManagementFactory.getRuntimeMXBean().getInputArguments()) {
                 String l = x == null ? "" : x.toLowerCase();
@@ -139,9 +152,9 @@ public final class a {
             for (byte x : dg) {
                 sb.append(String.format("%02X", x));
             }
-            if (!A0.equalsIgnoreCase(sb.toString()) || a() != A1) {
+            if (!A0.equalsIgnoreCase(sb.toString()) || a() != A1 || x() != 1L) {
                 N = false;
-                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL857 runtime self-check FAILED, Java shadow path");
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL861 runtime self-check FAILED (file/hello/text), Java shadow path");
                 TP = true;
             }
         } catch (Throwable th) {
