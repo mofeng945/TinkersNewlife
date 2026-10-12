@@ -214,4 +214,14 @@ public class PortableToolkitMenu extends CraftingStationContainerMenu {
                     "[便携设备] §821 客户端算配方失败：{}: {}", t.getClass().getSimpleName(), t.getMessage());
         }
     }
+
+    /** \u00a7823 \u2605\u7ed9\u5ba2\u6237\u7aef tick \u4e8b\u4ef6\u7528\u7684\u516c\u5f00\u5165\u53e3\uff08\u2605`broadcastChanges` \u5728\u5ba2\u6237\u7aef\u4e0d\u4f1a\u88ab\u8c03 \u2717\uff09 */
+    public void tnl$clientTick() {
+        try {
+            if (this.playerInv != null && this.playerInv.player.level().isClientSide) {
+                this.tnl$clientMatchRecipe();
+            }
+        } catch (Throwable ignored) {
+        }
+    }
 }
