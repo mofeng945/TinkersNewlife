@@ -221,4 +221,28 @@ private final CraftingStationBlockEntity ghost;
         }
         return null;
     }
+
+    /**
+     * TNL834 \u2605\u2605 \u5b9e\u65f6\u4fdd\u5b58\uff08\u2605\u7528\u6237\u53e3\u5f84\uff1a\u201c\u5f00\u7740\u754c\u9762\u5d29\u4e86\u4f1a\u4e22\u7269\u54c1\u201d \u2717\uff09
+     *
+     * <p>\u539f\u6765\u53ea\u5728 {@code removed()} \u5173\u754c\u9762\u65f6\u5199\u56de \u2717 \u21d2 \u5d29\u6e83/\u5f3a\u9000\u5c31\u4e22 \u2717
+     * \u2605\u73b0\u5728**\u6bcf\u6b21\u683c\u5b50\u53d8\u5316\u5c31\u5199** \u2713\uff08\u2605\u53ea\u670d\u52a1\u7aef \u2713 \u2605\u4e0d\u6e05\u7a7a\u5e7d\u7075 \u2713\uff09\u3002
+     */
+    @Override
+    public void slotsChanged(net.minecraft.world.Container container) {
+        super.slotsChanged(container);
+        tnl$storeNow();
+    }
+
+    /** TNL834 \u2605\u7acb\u5373\u5199\u56de\uff08\u2605\u4e0d\u52a8\u5e7d\u7075\u91cc\u7684\u4e1c\u897f \u2713\uff09 */
+    private void tnl$storeNow() {
+        try {
+            if (this.ghost == null || this.playerInv == null || this.playerInv.player.level().isClientSide()) {
+                return;
+            }
+            com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.storeToPlayer(
+                    this.playerInv.player, this.ghost, this.saveKey);
+        } catch (Throwable ignored) {
+        }
+    }
 }

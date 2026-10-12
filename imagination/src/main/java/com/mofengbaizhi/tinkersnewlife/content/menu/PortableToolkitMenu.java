@@ -289,4 +289,33 @@ public class PortableToolkitMenu extends CraftingStationContainerMenu {
         }
         return null;
     }
+
+    /**
+     * TNL834 \u2605\u2605 \u5b9e\u65f6\u4fdd\u5b58\uff08\u2605\u7528\u6237\u53e3\u5f84\uff1a\u5d29\u4e86\u4f1a\u4e22\u7269\u54c1 \u2717\uff09
+     *
+     * <p>\u2605\u539f\u6765\u53ea\u5728\u5173\u754c\u9762\u65f6\u5199\u56de \u2717 \u21d2 \u73b0\u5728\u6bcf\u6b21\u683c\u5b50\u53d8\u5316\u5c31\u628a**\u516d\u4efd\u5185\u5bb9\u5404\u5199\u4e00\u6b21** \u2713\u3002
+     */
+    @Override
+    public void slotsChanged(net.minecraft.world.Container container) {
+        super.slotsChanged(container);
+        tnl$storeNow();
+    }
+
+    private void tnl$storeNow() {
+        try {
+            if (this.sides == null || this.playerInv == null || this.playerInv.player.level().isClientSide()) {
+                return;
+            }
+            for (int i = 0; i < this.sides.size()
+                    && i < com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.DEVICES.length; i++) {
+                net.minecraft.world.level.block.entity.BlockEntity be = this.sides.get(i);
+                if (be != null) {
+                    com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.storeToPlayer(
+                            this.playerInv.player, be,
+                            com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.DEVICES[i][2]);
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+    }
 }
