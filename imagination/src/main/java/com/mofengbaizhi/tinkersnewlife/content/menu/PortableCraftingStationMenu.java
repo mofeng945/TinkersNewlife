@@ -31,11 +31,24 @@ private final CraftingStationBlockEntity ghost;
                 this.getClass().getSimpleName(), this.slots.size());
     }
 
+    /** TNL827 \u2605\u63a2\u9488\uff1a\u5ba2\u6237\u7aef\u5efa\u83dc\u5355\u65f6\u6253\u51fa\u5f53\u524d\u5c4f\u5e55\u7c7b\u540d \u2713\uff08\u2605\u4e0b\u4e00\u6b65\u9760\u5b83\u5224\u65ad\u7ed3\u679c\u69fd\u5230\u5e95\u6709\u6ca1\u6709\u88ab\u753b \u2713\uff09 */
+    private static void tnl$logScreen(String where) {
+        try {
+            net.minecraft.client.gui.screens.Screen s = net.minecraft.client.Minecraft.getInstance().screen;
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL827 menu built[{}] screen={} menu={}",
+                    where, s == null ? "null" : s.getClass().getName(),
+                    net.minecraft.client.Minecraft.getInstance().player == null ? "?" :
+                            net.minecraft.client.Minecraft.getInstance().player.containerMenu.getClass().getSimpleName());
+        } catch (Throwable ignored) {
+        }
+    }
+
     public PortableCraftingStationMenu(int id, Inventory inv, FriendlyByteBuf buf) {
         this(id, inv, (CraftingStationBlockEntity) com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport
                 .makeGhost("slimeknights.tconstruct.tables.block.entity.table.CraftingStationBlockEntity",
                         "tconstruct:crafting_station"),
                 "tnl_portable_crafting_station_inv");
+        tnl$logScreen("buf");
     }
 
     /**

@@ -38,6 +38,17 @@ import java.lang.reflect.Field;
 @Mixin(targets = "slimeknights.tconstruct.tables.block.entity.table.CraftingStationBlockEntity", remap = false)
 public class CraftingStationResultMixin {
 
+    /** TNL826 \u2605\u63a2\u9488\uff1a\u8bb0\u5f55\u8be5\u5e7d\u7075\u65b9\u5757\u5b9e\u4f53\u5728\u54ea\u4fa7\u88ab\u521b\u5efa \u2713\uff08\u2605ASCII \u6807\u7b7e \u2717 \u4e0d\u4f1a\u88ab\u65e5\u5fd7\u7f16\u7801\u5403\u6389 \u2713\uff09 */
+    @Inject(method = "<init>", at = @At("TAIL"), remap = false)
+    private void tnl$created(net.minecraft.core.BlockPos pos, net.minecraft.world.level.block.state.BlockState state, org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+        try {
+            net.minecraft.world.level.Level lv = ((net.minecraft.world.level.block.entity.BlockEntity) (Object) this).getLevel();
+            TinkersNewlife.LOGGER.warn("TNL826 crafting station ghost created pos={} level={} client={}", pos,
+                    lv == null ? "null" : lv.getClass().getSimpleName(), lv != null && lv.isClientSide);
+        } catch (Throwable ignored) {
+        }
+    }
+
     @Inject(method = "calcResult", at = @At("HEAD"), remap = false)
     private void tnl$supplyRecipe(Player player, CallbackInfoReturnable<ItemStack> cir) {
         try {
