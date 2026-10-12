@@ -39,6 +39,7 @@ public class PortableToolkitMenu extends CraftingStationContainerMenu {
     public PortableToolkitMenu(int id, Inventory inv, CraftingStationBlockEntity main,
                                List<BlockEntity> sides) {
         super(id, inv, main);
+        tnl$ensureGhostLevel();
         this.mainGhost = main;
         this.playerInv = inv;
         this.sides = (sides == null) ? new ArrayList<>() : sides;
