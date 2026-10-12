@@ -119,6 +119,25 @@ public class PortableToolkitMenu extends CraftingStationContainerMenu {
                     this.tnl$clientMatchRecipe();
                 } else {
                     this.mainGhost.calcResult(this.playerInv.player);
+                    // TNL832 \u2605\u2605 \u670d\u52a1\u7aef\u628a\u7b97\u51fa\u7684\u914d\u65b9**\u81ea\u5df1\u53d1\u7ed9\u73a9\u5bb6** \u2713
+                    //   \u2605\u4e0d\u8d70\u5320\u9b42\u90a3\u6761\uff08\u2605\u5b83\u6309\u4e16\u754c\u5750\u6807\u67e5\u65b9\u5757\u5b9e\u4f53 \u2717 \u53e3\u888b\u5750\u6807\u6c38\u8fdc\u67e5\u4e0d\u5230 \u2717\uff09
+                    try {
+                        Object recipe = tnl$readField(this.mainGhost, "lastRecipe");
+                        if (recipe instanceof net.minecraft.world.item.crafting.Recipe<?> r
+                                && this.playerInv.player instanceof net.minecraft.server.level.ServerPlayer sp) {
+                            String rid = r.getId().toString();
+                            if (!rid.equals(this.tnl$sentRecipeId)) {
+                                this.tnl$sentRecipeId = rid;
+                                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.CHANNEL.send(
+                                        net.minecraftforge.network.PacketDistributor.PLAYER.with(() -> sp),
+                                        new com.mofengbaizhi.tinkersnewlife.network.tools.PacketPortableRecipe(
+                                                this.mainGhost.getBlockPos(), r.getId()));
+                                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                                        "TNL832 server sent recipe {} to {}", rid, sp.getName().getString());
+                            }
+                        }
+                    } catch (Throwable ignored) {
+                    }
                 }
             }
         } catch (Throwable ignored) {
@@ -249,5 +268,25 @@ public class PortableToolkitMenu extends CraftingStationContainerMenu {
                     this.playerInv.player.level().isClientSide);
         } catch (Throwable ignored) {
         }
+    }
+
+    /** TNL832 \u2605\u5df2\u53d1\u9001\u7684\u914d\u65b9 id\uff08\u2605\u907f\u514d\u6bcf tick \u91cd\u53d1 \u2713\uff09 */
+    private String tnl$sentRecipeId = null;
+
+    /** TNL832 \u2605\u6cbf\u7c7b\u6b21\u8bfb\u79c1\u6709\u5b57\u6bb5 \u2713 */
+    private static Object tnl$readField(Object target, String name) {
+        Class<?> c = target.getClass();
+        while (c != null) {
+            try {
+                java.lang.reflect.Field f = c.getDeclaredField(name);
+                f.setAccessible(true);
+                return f.get(target);
+            } catch (NoSuchFieldException e) {
+                c = c.getSuperclass();
+            } catch (Throwable ignored) {
+                return null;
+            }
+        }
+        return null;
     }
 }

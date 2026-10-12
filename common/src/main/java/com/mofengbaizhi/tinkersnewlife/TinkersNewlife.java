@@ -426,6 +426,10 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.tools.PacketThrustGhost::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.tools.PacketThrustGhost::new,
                 com.mofengbaizhi.tinkersnewlife.network.tools.PacketThrustGhost::handle);
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.tools.PacketPortableRecipe.class,
+                com.mofengbaizhi.tinkersnewlife.network.tools.PacketPortableRecipe::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.tools.PacketPortableRecipe::new,
+                com.mofengbaizhi.tinkersnewlife.network.tools.PacketPortableRecipe::handle);   // TNL831
 
         // 实体属性（式神等生物实体）
         modEventBus.addListener(TinkersNewlife::onRegisterEntityAttributes);
