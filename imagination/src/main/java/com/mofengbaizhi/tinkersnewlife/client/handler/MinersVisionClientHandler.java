@@ -46,13 +46,56 @@ public class MinersVisionClientHandler {
 
     private static final int RANGE_PER_LEVEL = 5;
     private static final int SCAN_INTERVAL = 10;
-    /** \u2605\u9ad8\u4eae\u8272\u8c03\uff08\u2605\u9752\u7eff\u504f\u4eae \u2713\uff09 */
-    private static final float R = 0.55F, G = 1.0F, B = 0.9F, A = 0.75F;
+    /** \u2605\u7528\u6237\u53e3\u5f84\uff1a\u201c\u4e0d\u8981\u6539\u8272\u8c03\uff0c\u5c31\u7eaf\u7cb9\u628a\u4eae\u5ea6\u63d0\u9ad8\u201d \u2713 \u21d2 **\u7eaf\u767d \u002b \u5168\u4eae** \u2713 */
+    private static final float R = 1.0F, G = 1.0F, B = 1.0F, A = 0.92F;
 
     private static final TagKey<Block> ORE_TAG =
             TagKey.create(net.minecraft.core.registries.Registries.BLOCK, new ResourceLocation("forge", "ores"));
     private static final TagKey<Block> ORE_TAG_ALT =
             TagKey.create(net.minecraft.core.registries.Registries.BLOCK, new ResourceLocation("forge", "ore"));
+
+    /**
+     * \u2605\u2605\u2605 \u81ea\u5b9a\u4e49 RenderType\uff1a**\u81ea\u5e26 {@code NO_DEPTH_TEST}** \u2713
+     *
+     * <p>\u4e3a\u4ec0\u4e48\u4e4b\u524d\u900f\u5899\u5931\u6548\uff1a{@code RenderType} \u5728**\u771f\u6b63 draw \u7684\u65f6\u5019**\u4f1a\u91cd\u65b0
+     * \u8bbe\u7f6e\u81ea\u5df1\u7684\u6e32\u67d3\u72b6\u6001\uff08\u2605\u5305\u62ec\u6df1\u5ea6\u6d4b\u8bd5 \u2717\uff09\u21d2 \u5916\u9762\u8c03\u7684
+     * {@code RenderSystem.disableDepthTest()} **\u4f1a\u88ab\u8986\u76d6\u6389** \u2717 \u21d2 \u65e0\u6cd5\u900f\u5899 \u2717\u2717
+     * \u2605\u6240\u4ee5\u5fc5\u987b\u81ea\u5df1\u9020\u4e00\u4e2a**\u6df1\u5ea6\u6d4b\u8bd5\u5173\u95ed**\u7684\u7c7b\u578b \u2713\u3002
+     */
+    private static final RenderType ORE_GLOW = RenderType.create(
+            "tnl_ore_glow",
+            com.mojang.blaze3d.vertex.DefaultVertexFormat.NEW_ENTITY,
+            com.mojang.blaze3d.vertex.VertexFormat.Mode.QUADS,
+            256, false, true,
+            RenderType.CompositeState.builder()
+                    .setShaderState(new net.minecraft.client.renderer.RenderStateShard.ShaderStateShard(
+                            net.minecraft.client.renderer.GameRenderer::getRendertypeEntityTranslucentShader))
+                    .setTextureState(new net.minecraft.client.renderer.RenderStateShard.TextureStateShard(
+                            TextureAtlas.LOCATION_BLOCKS, false, false))
+                    .setTransparencyState(TnlState.TRANSLUCENT)
+                    .setDepthTestState(TnlState.NO_DEPTH)   // \u2605\u2605 \u900f\u5899\u5173\u952e \u2713
+                    .setCullState(TnlState.NO_CULL_)
+                    .setLightmapState(TnlState.LIGHTMAP_)
+                    .setOverlayState(TnlState.OVERLAY_)
+                    .createCompositeState(false));
+
+    /**
+     * \u2605\u2605 \u4e13\u7528\u72b6\u6001\u5b50\u7c7b\uff1a1.20.1 \u91cc {@code RenderStateShard} \u7684\u8fd9\u4e9b\u5e38\u91cf\u662f
+     * **protected** \u2717 \u5916\u90e8\u7c7b\u62ff\u4e0d\u5230 \u21d2 \u2605\u5728\u5b50\u7c7b\u91cc\u53d6\u51fa\u6765 \u2713\u3002
+     */
+    private static class TnlState extends net.minecraft.client.renderer.RenderStateShard {
+        private TnlState() {
+            super("tnl_state", () -> {
+            }, () -> {
+            });
+        }
+
+        static final DepthTestStateShard NO_DEPTH = NO_DEPTH_TEST;                  // \u2605\u2605 \u900f\u5899\u5173\u952e \u2713
+        static final TransparencyStateShard TRANSLUCENT = TRANSLUCENT_TRANSPARENCY;
+        static final CullStateShard NO_CULL_ = NO_CULL;
+        static final LightmapStateShard LIGHTMAP_ = LIGHTMAP;
+        static final OverlayStateShard OVERLAY_ = OVERLAY;
+    }
 
     private record Hit(BlockPos pos, TextureAtlasSprite sprite) {
     }
@@ -92,16 +135,13 @@ public class MinersVisionClientHandler {
             Vec3 cam = event.getCamera().getPosition();
             pose.pushPose();
             pose.translate(-cam.x, -cam.y, -cam.z);
-            com.mojang.blaze3d.systems.RenderSystem.disableDepthTest();   // \u2605\u2605 \u900f\u5899\u5173\u952e \u2713
-            com.mojang.blaze3d.systems.RenderSystem.setShader(net.minecraft.client.renderer.GameRenderer::getRendertypeEntityTranslucentCullShader);
             MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
-            VertexConsumer vc = buffers.getBuffer(RenderType.entityTranslucentCull(TextureAtlas.LOCATION_BLOCKS));
+            VertexConsumer vc = buffers.getBuffer(ORE_GLOW);
             PoseStack.Pose last = pose.last();
             for (Hit hit : CACHE) {
                 tnl$cube(vc, last, hit.pos(), hit.sprite());
             }
-            buffers.endBatch(RenderType.entityTranslucentCull(TextureAtlas.LOCATION_BLOCKS));
-            com.mojang.blaze3d.systems.RenderSystem.enableDepthTest();
+            buffers.endBatch(ORE_GLOW);
             pose.popPose();
         } catch (Throwable ignored) {
         }
