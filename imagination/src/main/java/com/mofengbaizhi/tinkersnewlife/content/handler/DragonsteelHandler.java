@@ -181,32 +181,29 @@ public class DragonsteelHandler {
     }
 
     /**
-     * §806 ☞ **无属性龙息**（★悸怖钢剑气用 ✓）。
+     * §806 ☞ **都瓦克因真伤判定**（★悸怖钢剑气用 ✓）。
      *
-     * <p>★用户口径：剑气伤害**也算作龙息伤害** ✓，
-     * 但它**没有属性** ✗ ⇒ ★不存在“同属性龙” ✓
-     * ⇒ 带都瓦克因时对**任何**龙类都是★**全额真实伤害**（★不打折 ✓）。
+     * <p>★用户口径：剑气**只有“都瓦克因真伤”这一段算龙息** ✓，
+     * 其余场合**照旧走 magic 伤害** ✓（⇒ ★不可被龙钢盔甲免疫/减半 ✓）。
      *
-     * <p>★伤害类型借用冰火的龙息类型 ✓ ⇒ 对面的【龙钢盔甲】能正常抗它 ✓。
+     * <p>★升级为真伤（★逆向改血 ✓）的条件：
+     * ① 持有者主手带【都瓦克因】✓；② 目标是【龙类】✓。
+     * ★无属性龙息 ⇒ **不存在同属性龙** ✓ ⇒ ★**一律全额真伤**（★不打折 ✓）。
+     *
+     * @return true 表示**已按真伤结算**（★调用方不要再走 magic ✗）；
+     *         false 表示★本次不适用 ✓（★调用方照旧 hurt ✓）。
      */
-    public static boolean applyElementlessBreath(Level level, LivingEntity attacker, LivingEntity target, float amount) {
+    public static boolean dovahkiinTrueStrike(Level level, LivingEntity attacker, LivingEntity target, float amount) {
         try {
             if (level == null || attacker == null || target == null || !target.isAlive() || amount <= 0.0F) {
                 return false;
             }
-            DamageSource src = IceAndFireDamage.breath(level, attacker, IceAndFireDamage.FIRE);
-            if (src == null) {
-                return false;   // ★冰火不在场 ⇒ 不改变行为 ✓
+            if (!hasDovahkiin(attacker) || dragonKindOf(target) < 0) {
+                return false;   // ★不是“都瓦克因 × 龙类” ⇒ ★交给调用方的普通伤害 ✓
             }
-            if (hasDovahkiin(attacker) && dragonKindOf(target) >= 0) {
-                float before = target.getHealth();
-                TruePierce.apply(attacker, target, amount);   // ★全额真伤 ✓（★无同属性折扣 ✓）
-                return target.getHealth() < before || target.isDeadOrDying();
-            }
-            target.invulnerableTime = 0;
-            return target.hurt(src, amount);
+            TruePierce.apply(attacker, target, amount);   // ★全额真伤 ✓
+            return true;
         } catch (Throwable ignored) {
-            // ★出任何问题都不影响剑气本身 ✓
             return false;
         }
     }
