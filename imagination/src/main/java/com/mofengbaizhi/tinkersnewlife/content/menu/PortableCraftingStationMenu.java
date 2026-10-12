@@ -50,15 +50,15 @@ private final CraftingStationBlockEntity ghost;
         super.broadcastChanges();
         try {
             if (this.ghost != null) {
-                // §815 ★★先**强制算一次**：服务端只有被查询结果时才会算出 lastRecipe ✗
-                //   而结果槽是**客户端**画的 ⇒ 服务端可能从未算过 ⇒ syncRecipe 里判空直接 return ✗
-                //   ★★这正是“推了还是合不了”的原因 ✓（★calcResult 是 public ✓）
-                this.ghost.calcResult(this.playerInv.player);
-                this.ghost.syncRecipe(this.playerInv.player);
+                if (this.playerInv.player.level().isClientSide) {
+                    this.tnl$clientMatchRecipe();
+                } else {
+                    this.ghost.calcResult(this.playerInv.player);
+                }
             }
         } catch (Throwable ignored) {
-            // ★不影响菜单 ✓
         }
+
     }
 
     @Override
@@ -78,6 +78,44 @@ private final CraftingStationBlockEntity ghost;
         com.mofengbaizhi.tinkersnewlife.content.item.PortableDeviceSupport.storeToPlayer(player, ghost, saveKey);
         for (int i = 0; i < ghost.getContainerSize(); i++) {
             ghost.setItem(i, ItemStack.EMPTY);
+        }
+    }
+
+    /** §821 ★客户端自己算配方（★完全不依赖混入/包/匠魂的同步 ✓） */
+    private String tnl$lastRecipeId = null;
+
+    private void tnl$clientMatchRecipe() {
+        try {
+            net.minecraft.world.level.Level level = this.playerInv.player.level();
+            // ★用反射构造临时 3x3（★读本菜单前 9 格 ✓），避免死写签名
+            Object grid = Class.forName("net.minecraft.world.inventory.TransientCraftingContainer")
+                    .getConstructor(net.minecraft.world.inventory.AbstractContainerMenu.class, int.class, int.class)
+                    .newInstance(this, 3, 3);
+            java.lang.reflect.Method m = net.minecraft.world.item.crafting.RecipeManager.class.getMethod(
+                    "getRecipeFor",
+                    net.minecraft.world.item.crafting.RecipeType.class,
+                    net.minecraft.world.Container.class,
+                    net.minecraft.world.level.Level.class);
+            Object opt = m.invoke(level.getRecipeManager(),
+                    net.minecraft.world.item.crafting.RecipeType.CRAFTING, grid, level);
+            if (!(opt instanceof java.util.Optional<?> o) || o.isEmpty()) {
+                return;
+            }
+            Object recipe = o.get();
+            String id = String.valueOf(recipe.getClass().getName()) + "#" + recipe.hashCode();
+            if (id.equals(this.tnl$lastRecipeId)) {
+                return;
+            }
+            this.tnl$lastRecipeId = id;
+            this.ghost.getClass()
+                    .getMethod("updateRecipe", Class.forName("net.minecraft.world.item.crafting.CraftingRecipe"))
+                    .invoke(this.ghost, recipe);
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
+                    "[便携设备] §821 客户端自算配方成功：{} ⇒ {}", recipe.getClass().getSimpleName(),
+                    this.ghost.getClass().getSimpleName());
+        } catch (Throwable t) {
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                    "[便携设备] §821 客户端算配方失败：{}: {}", t.getClass().getSimpleName(), t.getMessage());
         }
     }
 }
