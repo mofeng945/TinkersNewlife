@@ -132,6 +132,11 @@ public final class CurseAffinityAttribute {
                     out.add(e);   // ★保留 Slot=curio 那条 ✓ 只清老版本没写 Slot 的 ✓
                 }
             }
+            // §807 ★只在**真的删掉了条目**时才回写 ✓
+            //   ★否则“列表原本很干净 ⇒ 删整个键 ⇒ 又被加回”就会让标签数跳动 ✗
+            if (out.size() == list.size()) {
+                return;
+            }
             if (out.isEmpty()) {
                 root.remove("AttributeModifiers");
             } else {
@@ -154,9 +159,11 @@ public final class CurseAffinityAttribute {
                 return;
             }
             int legacy = tag.getInt(LEGACY_KEY);
+            // §807 ★修正旧写法（★原来“删了又原样加回”✗ 根本没迁移 ✓）：
+            //   ★真正做一次迁移 ⇒ 写成属性词条（★带 Slot ✓）并**删掉旧键** ✓
             tag.remove(LEGACY_KEY);
             if (legacy != 0) {
-                stack.getOrCreateTag().putInt(LEGACY_KEY, legacy);
+                setItemAffinity(stack, legacy, null);
             }
             stripVanillaModifier(tag);
         } catch (Throwable ignored) {
