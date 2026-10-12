@@ -42,7 +42,7 @@ import org.jetbrains.annotations.Nullable;
  *   <li>\u2605\u53d7\u4f24\u540e **1.5 \u79d2\u65e0\u654c**\uff08\u2605\u65e0\u4e0b\u9650\u540c\u6b3e\u7684\u65e0\u654c\u7a97\u53e3\uff1a{@code invulnerableTime = 30} \u2713\uff09\u3002</li>
  * </ul>
  */
-public class KtuluMomo extends Monster {
+public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlife.util.TruePierce.PierceAware {
 
     /** \u2605\u5355\u6b21\u4f24\u5bb3\u4e0a\u9650\uff1a\u6700\u5927\u751f\u547d\u7684 6% \u2713 */
     private static final float DAMAGE_CAP_RATIO = 0.06F;
@@ -167,5 +167,23 @@ public class KtuluMomo extends Monster {
     public void stopSeenByPlayer(ServerPlayer player) {
         super.stopSeenByPlayer(player);
         this.bossEvent.removePlayer(player);
+    }
+
+    /**
+     * TNL858 \u2605\u2605 \u771f\u4f24\u7a7f\u900f\u544a\u77e5\uff08\u2605\u5408\u6cd5\u901a\u9053 \u2713\uff09
+     *
+     * <p>\u2605\u6211\u4eec\u81ea\u5df1\u6a21\u7ec4\u7684\u771f\u4f24\uff08\u5929\u9006\u94ac/\u7a7f\u900fEX/\u6a21\u7ec4\u5185\u771f\u4f24 \u2713\uff09\u4f1a\u8d70\u8fd9\u91cc\u544a\u77e5 \u2713
+     * \u21d2 \u2605**\u4e0d\u4f1a**\u88ab\u5f53\u6210\u7be1\u6539\u53bb\u56de\u5f39 \u2717 \u4e5f\u4e0d\u4f1a\u89e6\u53d1 TP \u2717\uff0c
+     * \u4f46\u4ecd\u7136\u8981\u6b63\u5e38\u6263\u8840\uff08\u2605\u771f\u4f24\u8be5\u6709\u7684\u4f5c\u7528\u4fdd\u7559 \u2713\uff09\u3002
+     */
+    @Override
+    public void onTruePierce(float totalDamage, net.minecraft.world.damagesource.DamageSource source) {
+        try {
+            if (this.level().isClientSide || totalDamage <= 0.0F) {
+                return;
+            }
+            a.q6(this, totalDamage, this.tickCount);
+        } catch (Throwable ignored) {
+        }
     }
 }

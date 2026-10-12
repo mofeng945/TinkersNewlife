@@ -34,6 +34,8 @@ public final class a {
     private static final int[] CNT = new int[NS];
     private static final long[] MCAP = new long[NS];  // \u2605\u4e0a\u9650\uff08\u4e0d\u654f\u611f\uff0c\u53ef\u76f4\u5b58 \u2713\uff09
     private static final int[] V = new int[NS];
+    /** TNL858 \u2605\u5408\u6cd5\u771f\u4f24\u5bbd\u9650\u7a97\u53e3\uff08\u2605\u5230\u671f tick \u2713\uff09 */
+    private static final int[] GR = new int[NS];
     private static final Map<UUID, Integer> S = new ConcurrentHashMap<>();
 
     static {
@@ -203,12 +205,17 @@ public final class a {
             } else {
                 long keep = mirror(s0, MCAP[s0], ticks);
                 long cap = MCAP[s0];
+                boolean grace = ticks <= GR[s0];      // TNL858 \u2605\u5408\u6cd5\u771f\u4f24\u5bbd\u9650\u5185 \u2713
                 long low = keep - cap;
                 if (low < 0) {
                     low = 0;
                 }
-                if (now < low) {
-                    auth = low;                     // \u2605\u56de\u5f39\u8865\u56de \u2713
+                if (grace) {
+                    // TNL859 \u2605\u771f\u4f24\uff1a**\u6539\u4e0d\u4e86\u8840** \u2713\uff08\u2605\u5b8c\u5168\u6062\u590d \u2713\uff09
+                    //   \u2605\u4e14**\u4e0d\u7b97\u7be1\u6539** \u2717\uff08\u2605\u4e0d\u7f6e TP \u2717 \u4e0d\u544a\u8b66 \u2717\uff09\uff1a\u56e0\u4e3a\u8fd9\u662f\u6a21\u7ec4\u81ea\u5df1\u7684\u5408\u6cd5\u771f\u4f24\u8def\u5f84 \u2713
+                    auth = keep;
+                } else if (now < low) {
+                    auth = low;                       // \u2605\u56de\u5f39\u8865\u56de \u2713
                 } else if (now > keep) {
                     auth = keep;
                 } else {
@@ -359,4 +366,39 @@ public final class a {
     public static boolean q5() {
         return TP;
     }
+
+    /**
+     * TNL858 \u2605\u2605\u5408\u6cd5\u771f\u4f24\u5165\u53e3\uff08\u2605\u6211\u4eec\u81ea\u5df1\u7684\u771f\u4f24\u7a7f\u900f\u8d70\u8fd9\u91cc \u2713\uff09
+     *
+     * <p>\u2605\u4e0d\u5403 6% \u9650\u4f24 \u2717 \u2605\u4e0d\u56de\u5f39 \u2717 \u2605\u4e0d\u7f6e TP \u2717\uff1b
+     * \u53ea\u628a\u771f\u4f24\u5f53\u6210**\u5408\u6cd5\u6263\u8840**\uff0c\u5e76\u5f00\u4e00\u4e2a\u77ed\u5bbd\u9650\u7a97\u53e3 \u2713\u3002
+     * \uff08\u2605\u7528\u6237\u53e3\u5f84\uff1a\u2605\u522b\u8ba9\u81ea\u5df1\u6a21\u7ec4\u7684\u6539\u8840/\u771f\u4f24\u89e6\u53d1\u60e9\u7f5a \u2713\uff09
+     */
+    public static void q6(Mob mob, float delta, int ticks) {
+        try {
+            int s0 = k(mob);
+            // TNL859 \u2605\u2605 \u771f\u4f24\u5165\u53e3\uff1a**\u4e0d\u6263\u8840** \u2717 \u2605\u4e0d\u60e9\u7f5a \u2717
+            //   \u53ea\u5f00\u4e00\u4e2a\u77ed\u7a97\u53e3 \u2713 \u21d2 q1 \u5728\u8fd9\u4e2a\u7a97\u53e3\u5185\u4f1a\u628a\u8840**\u5b8c\u5168\u6062\u590d** \u2713
+            //   \u2605\u7528\u6237\u53e3\u5f84\uff1a\u2605\u201c\u771f\u4f24\u65e0\u6cd5\u6539\u8840\u91cf\u4f46\u4e5f\u522b\u5403\u60e9\u7f5a\u201d \u2713
+            long cur = rA(s0);
+            if (cur == Long.MIN_VALUE) {
+                cur = b.get(s0);
+            }
+            if (cur == Long.MIN_VALUE) {
+                cur = m0(mob.getMaxHealth());
+            }
+            wA(s0, cur);
+            b.put(s0, cur);
+            GR[s0] = ticks + 5;
+            if (N) {
+                // \u2605\u539f\u751f\u4fa7\u4e5f\u4e0d\u8ba9\u5b83\u52a8 \u2717\uff08\u2605\u7528 0 \u4f24\u5bb3\u8bb0\u8d26\u53ea\u4e3a\u540c\u6b65 \u2713\uff09
+                long hv = h(s0);
+                if (hv >= 0 && hv != cur) {
+                    g(s0, Math.max(0L, hv - cur), 0);
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
 }
