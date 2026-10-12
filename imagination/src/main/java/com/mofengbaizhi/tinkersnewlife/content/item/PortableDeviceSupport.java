@@ -431,10 +431,6 @@ public final class PortableDeviceSupport {
             boolean fresh = !VIRTUAL.containsKey(pos);
             VIRTUAL.put(pos, be);
             if (fresh) {
-                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
-                        "TNL833 ghost registered at {} -> {} (table={}) level={}", pos,
-                        be.getClass().getSimpleName(), VIRTUAL.size(),
-                        be.getLevel() == null ? "null" : be.getLevel().getClass().getSimpleName());
             }
         } catch (Throwable ignored) {
         }

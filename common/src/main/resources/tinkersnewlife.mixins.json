@@ -5,10 +5,6 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "tinkersnewlife.refmap.json",
   "mixins": [
-    "ScreenProbeMixin",
-    "CraftingStationResultMixin",
-    "LazyResultSlotRecipeMixin",
-    "BlockEntityHelperLoadedMixin",
     "DisarmDropProtectionMixin",
     "ToolkitTabPacketMixin",
     "VirtualBlockEntityMixin",

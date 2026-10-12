@@ -53,26 +53,20 @@ public class PacketPortableRecipe {
                 }
                 BlockEntity ghost = PortableDeviceSupport.lookupVirtual(packet.pos);
                 if (ghost == null) {
-                    TinkersNewlife.LOGGER.warn("TNL831 client has no virtual ghost at {}", packet.pos);
                     return;
                 }
                 Level level = ghost.getLevel();
                 if (level == null) {
-                    TinkersNewlife.LOGGER.warn("TNL831 ghost level is null");
                     return;
                 }
                 Optional<? extends Recipe<?>> opt = level.getRecipeManager().byKey(packet.recipeId);
                 if (opt.isEmpty()) {
-                    TinkersNewlife.LOGGER.warn("TNL831 recipe {} not found on client", packet.recipeId);
                     return;
                 }
                 Object recipe = opt.get();
                 ghost.getClass().getMethod("updateRecipe",
                         Class.forName("net.minecraft.world.item.crafting.CraftingRecipe")).invoke(ghost, recipe);
-                TinkersNewlife.LOGGER.warn("TNL831 client applied recipe {} to {}", packet.recipeId,
-                        ghost.getClass().getSimpleName());
             } catch (Throwable t) {
-                TinkersNewlife.LOGGER.warn("TNL831 failed: {}: {}", t.getClass().getSimpleName(), t.getMessage());
             }
         });
         ctx.get().setPacketHandled(true);
