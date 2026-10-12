@@ -1,6 +1,6 @@
 package com.mofengbaizhi.tinkersnewlife.content.modifier;
 
-import com.mofengbaizhi.tinkersnewlife.content.modifier.base.BaseCombatModifier;
+import slimeknights.tconstruct.library.modifiers.impl.NoLevelsModifier;
 
 /**
  * 都瓦克因（Dovahkiin）—— <b>无等级</b>标记特性。
@@ -20,6 +20,6 @@ import com.mofengbaizhi.tinkersnewlife.content.modifier.base.BaseCombatModifier;
  * <p>★套在三系**龙钢武器**上 ✓：见
  * {@code data/tinkersnewlife/tinkering/materials/traits/dragonsteel_*.json} 的 {@code default} 数组 ✓。
  */
-public class DovahkiinTrait extends BaseCombatModifier {
+public class DovahkiinTrait extends NoLevelsModifier {   // §805 ★直接继承匠魂的「无等级」基类 ✓
     // 只作为注册标记
 }

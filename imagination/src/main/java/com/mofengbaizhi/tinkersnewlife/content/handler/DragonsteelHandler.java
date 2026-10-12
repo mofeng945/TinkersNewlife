@@ -144,7 +144,7 @@ public class DragonsteelHandler {
     }
 
     /** §803 每级混入的龙息伤害（★"一些"→保守取值 ✓） */
-    private static final float BREATH_BASE_DAMAGE = 2.0F;
+    private static final float BREATH_BASE_DAMAGE = 5.0F;   // §805 ★用户口径：5 × 特性等级 ✓
 
     /**
      * §803 ★混入一次对应属性的龙息伤害。
