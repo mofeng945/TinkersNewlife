@@ -125,7 +125,7 @@ public class MinersVisionClientHandler {
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent event) {
         try {
-            if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL) {
+            if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
                 return;
             }
             Minecraft mc = Minecraft.getInstance();
@@ -155,10 +155,21 @@ public class MinersVisionClientHandler {
             pose.translate(-cam.x, -cam.y, -cam.z);
             // TNL844 \u2605\u2605 \u6700\u540e\u4e00\u62db\uff1a\u5e27\u672b\u6e32\u67d3 \u002b **\u5148\u6e05\u6df1\u5ea6\u7f13\u51b2** \u002b \u5173\u6df1\u5ea6\u6d4b\u8bd5 \u2713
             //   \uff08\u2605\u4e4b\u524d drawn>0 \u4f46\u4ecd\u88ab\u906e \u21d2 \u8bf4\u660e\u5355\u9760 RenderType \u7684 NO_DEPTH \u6ca1\u771f\u6b63\u594f\u6548 \u2717\uff09
-            com.mojang.blaze3d.systems.RenderSystem.clear(org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT, false);
+            // TNL845 \u2605\u2605 \u771f\u6b63\u7684\u900f\u5899\u505a\u6cd5\uff1a**\u7ed5\u5f00 RenderType** \u2713
+            //   \u2605RenderType \u5728 draw \u65f6\u4f1a\u91cd\u65b0\u8bbe\u7f6e\u6df1\u5ea6\u72b6\u6001 \u2717 \u21d2 \u6539\u6210\u76f4\u63a5\u7528 BufferBuilder \u624b\u7ed8 \u2713
+            //   \u2605\u6b64\u65f6\u53ea\u6709\u6211\u4eec\u81ea\u5df1\u8bbe\u7684 RenderSystem \u72b6\u6001\u751f\u6548 \u2713 \u21d2 disableDepthTest \u771f\u6b63\u751f\u6548 \u2713
             com.mojang.blaze3d.systems.RenderSystem.disableDepthTest();
-            MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
-            VertexConsumer vc = buffers.getBuffer(glowType());
+            com.mojang.blaze3d.systems.RenderSystem.depthMask(false);
+            com.mojang.blaze3d.systems.RenderSystem.enableBlend();
+            com.mojang.blaze3d.systems.RenderSystem.defaultBlendFunc();
+            com.mojang.blaze3d.systems.RenderSystem.setShader(
+                    net.minecraft.client.renderer.GameRenderer::getRendertypeEntityTranslucentShader);
+            com.mojang.blaze3d.systems.RenderSystem.setShaderTexture(0, TextureAtlas.LOCATION_BLOCKS);
+            com.mojang.blaze3d.vertex.BufferBuilder bb =
+                    com.mojang.blaze3d.vertex.Tesselator.getInstance().getBuilder();
+            bb.begin(com.mojang.blaze3d.vertex.VertexFormat.Mode.QUADS,
+                    com.mojang.blaze3d.vertex.DefaultVertexFormat.NEW_ENTITY);
+            VertexConsumer vc = bb;
             PoseStack.Pose last = pose.last();
             int drawn = 0;
             for (Hit hit : CACHE) {
@@ -174,10 +185,12 @@ public class MinersVisionClientHandler {
             }
             if (now - lastLog >= 100) {
                 lastLog = now;
-                TinkersNewlife.LOGGER.warn("TNL842 miners vision: level={} cache={} drawn={} stage=AFTER_LEVEL",
+                TinkersNewlife.LOGGER.warn("TNL842 miners vision: level={} cache={} drawn={} stage=AFTER_TRANSLUCENT_BLOCKS",
                         level, CACHE.size(), drawn);
             }
-            buffers.endBatch(glowType());
+            com.mojang.blaze3d.vertex.BufferUploader.drawWithShader(bb.end());
+            com.mojang.blaze3d.systems.RenderSystem.depthMask(true);
+            com.mojang.blaze3d.systems.RenderSystem.enableDepthTest();
             pose.popPose();
         } catch (Throwable ignored) {
         }
