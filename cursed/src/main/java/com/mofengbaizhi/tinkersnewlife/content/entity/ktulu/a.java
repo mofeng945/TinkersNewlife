@@ -45,6 +45,16 @@ public final class a {
     private static final int[] V = new int[NS];
     /** TNL858 \u2605\u5408\u6cd5\u771f\u4f24\u5bbd\u9650\u7a97\u53e3\uff08\u2605\u5230\u671f tick \u2713\uff09 */
     private static final int[] GR = new int[NS];
+    /** TNL863 \u2605\u51fa\u751f/\u6362\u7ef4\u5ea6\u5bbd\u9650\uff08\u2605\u671f\u95f4\u76f4\u63a5\u91c7\u7eb3\u5f53\u524d\u8840\uff0c\u4e0d\u5224\u4e5f\u4e0d\u56de\u5f39 \u2713\uff09 */
+    private static final int[] RB = new int[NS];
+    /** TNL863 \u2605\u8fde\u7eed\u786c\u8bc1\u636e\u8ba1\u6570\uff08\u2605MAC \u5931\u6548 \u2713\uff09 */
+    private static final int[] BAD = new int[NS];
+    /** TNL863 \u2605\u81ea\u68c0\u8fde\u7eed\u5931\u8d25\u6b21\u6570 \u2713 */
+    private static volatile int SELF_BAD = 0;
+    /** TNL863 \u2605\u8fde\u7eed\u6b63\u5e38\u6b21\u6570\uff08\u2605\u7528\u4e8e\u81ea\u52a8\u89e3\u9664 TP \u2713\uff09 */
+    private static volatile int OK_RUN = 0;
+    /** TNL863 \u2605\u786c\u8bc1\u636e\u9608\u503c\uff08\u2605\u8fde\u7eed 3 \u6b21\u624d\u7b97 \u2713\uff09 */
+    private static final int HARD = 3;
     private static final Map<UUID, Integer> S = new ConcurrentHashMap<>();
 
     static {
@@ -200,6 +210,8 @@ public final class a {
             V[s0] = 0;
             wA(s0, mx);
             b.put(s0, mx);
+            RB[s0] = mob.tickCount + 40;    // TNL863 \u2605\u51fa\u751f\u5bbd\u9650 40 tick \u2713
+            BAD[s0] = 0;
         } catch (Throwable ignored) {
         }
     }
@@ -225,12 +237,15 @@ public final class a {
             } else {
                 long keep = mirror(s0, MCAP[s0], ticks);
                 long cap = MCAP[s0];
+                boolean rebase = ticks <= RB[s0];     // TNL863 \u2605\u51fa\u751f\u5bbd\u9650\u671f\uff1a\u76f4\u63a5\u91c7\u7eb3 \u2713
                 boolean grace = ticks <= GR[s0];      // TNL858 \u2605\u5408\u6cd5\u771f\u4f24\u5bbd\u9650\u5185 \u2713
                 long low = keep - cap;
                 if (low < 0) {
                     low = 0;
                 }
-                if (grace) {
+                if (rebase) {
+                    auth = Math.max(0L, now);         // \u2605\u4e0d\u5224\u4e0d\u5f39\uff08\u2605\u514d\u8bef\u5224 \u2713\uff09
+                } else if (grace) {
                     // TNL859 \u2605\u771f\u4f24\uff1a**\u6539\u4e0d\u4e86\u8840** \u2713\uff08\u2605\u5b8c\u5168\u6062\u590d \u2713\uff09
                     //   \u2605\u4e14**\u4e0d\u7b97\u7be1\u6539** \u2717\uff08\u2605\u4e0d\u7f6e TP \u2717 \u4e0d\u544a\u8b66 \u2717\uff09\uff1a\u56e0\u4e3a\u8fd9\u662f\u6a21\u7ec4\u81ea\u5df1\u7684\u5408\u6cd5\u771f\u4f24\u8def\u5f84 \u2713
                     auth = keep;
@@ -353,24 +368,32 @@ public final class a {
         boolean badB = vb == Long.MIN_VALUE;
         long keep;
         if (badA && badB) {
-            keep = capMilli;                       // \u2605\u4e24\u8fb9\u90fd\u88ab\u6539 \u21d2 \u56de\u5230\u6ee1\u8840\uff08\u2605\u5931\u8d25\u5373\u95ed \u2713\uff09
-            if (ticks - LW > 100) {
-                LW = ticks;
-                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL857 both mirrors tampered, reset to max");
-                TP = true;
-            }
-        } else if (badA || badB) {
-            keep = badA ? vb : va;                 // \u2605\u53ea\u6539\u4e00\u8fb9 \u21d2 \u7528\u53e6\u4e00\u8fb9\u7684\u503c\uff08\u2605\u56de\u5f39 \u2713\uff09
-            if (ticks - LW > 100) {
+            keep = capMilli;                       // \u2605\u4e24\u8fb9\u90fd\u4e0d\u5408\u6cd5 \u21d2 \u56de\u5230\u6ee1\u8840 \u2713
+            BAD[s] = BAD[s] + 1;
+            if (BAD[s] >= HARD && ticks - LW > 100) {
                 LW = ticks;
                 com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
-                        "TNL857 mirror tamper detected (A={}, B={}), rebound to {}", badA, badB, keep);
+                        "TNL863 hard tamper evidence x{} on slot {}, Java shadow path", BAD[s], s);
+                TP = true;                          // \u2605\u8fde\u7eed\u786c\u8bc1\u636e\u624d\u60e9\u7f5a \u2713
+            }
+        } else if (badA || badB) {
+            keep = badA ? vb : va;                 // \u2605\u53ea\u6539\u4e00\u8fb9 \u21d2 \u56de\u5f39 \u2713
+            BAD[s] = BAD[s] + 1;
+            if (BAD[s] >= HARD && ticks - LW > 100) {
+                LW = ticks;
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                        "TNL863 hard tamper evidence x{} on slot {} (A={}, B={}), Java shadow path",
+                        BAD[s], s, badA, badB);
                 TP = true;
             }
         } else if (va != vb) {
+            BAD[s] = 0;                            // \u2605\u4e24\u8fb9\u90fd\u5408\u6cd5 \u21d2 \u4e0d\u7b97\u786c\u8bc1\u636e \u2713
             keep = Math.max(va, vb);               // \u2605\u4e24\u8fb9\u90fd\u5408\u6cd5\u4f46\u4e0d\u4e00\u81f4 \u21d2 \u53d6\u5927\uff08\u2605\u4e0d\u8ba9\u4eba\u62c9\u4f4e\u8840 \u2713\uff09
         } else {
             keep = va;
+        }
+        if (!badA && !badB) {
+            BAD[s] = 0;                            // TNL863 \u2605\u4e00\u65e6\u6062\u590d\u5408\u6cd5\u5c31\u6e05\u96f6 \u2713
         }
         if (keep > capMilli) {
             keep = capMilli;
