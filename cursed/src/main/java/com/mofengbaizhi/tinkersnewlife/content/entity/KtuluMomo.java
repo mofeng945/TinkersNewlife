@@ -120,16 +120,12 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             return super.hurt(source, amount);
         }
         a.q0(this);
-        float allowed = a.q2(this, amount, this.tickCount);
-        if (allowed <= 0.0F) {
-            return false;   // \u2605\u65e0\u654c\u7a97\u53e3\u5185\uff1a\u4e00\u70b9\u4e0d\u5403 \u2713
+        // TNL866 \u2605\u2605 hurt \u53ea\u5f53"\u95f8\u95e8"\uff1a\u65e0\u654c\u7a97\u5185/\u9884\u7b97\u7528\u5b8c\u5c31\u76f4\u63a5\u62e6 \u2713
+        //   \u2605\u771f\u6b63\u7684\u9650\u4f24\u5728 LivingDamageEvent\uff08LOWEST\uff09\u91cc\u505a \u2713\uff08\u2605\u56e0\u4e3a\u4f24\u5bb3\u4f1a\u5728\u90a3\u4e4b\u524d\u88ab\u5404\u7279\u6027\u653e\u5927 \u2713\uff09
+        if (a.q2(this, amount, this.tickCount) <= 0.0F) {
+            return false;
         }
-        boolean hurt = super.hurt(source, allowed);
-        if (hurt) {
-            a.q3(this, allowed);
-            this.invulnerableTime = a.V0;   // \u2605\u65e0\u4e0b\u9650\u540c\u6b3e\u7a97\u53e3 \u2713
-        }
-        return hurt;
+        return super.hurt(source, amount);
     }
 
     /** \u2605\u2605 \u6bcf tick \u8bb0\u5f55\u8840\u91cf \u21d2 \u4e00\u65e6\u7a81\u7834\u9650\u4f24\u5c31**\u56de\u5f39\u8865\u56de** \u2713 */

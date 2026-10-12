@@ -47,6 +47,10 @@ public final class a {
     private static final int[] GR = new int[NS];
     /** TNL863 \u2605\u51fa\u751f/\u6362\u7ef4\u5ea6\u5bbd\u9650\uff08\u2605\u671f\u95f4\u76f4\u63a5\u91c7\u7eb3\u5f53\u524d\u8840\uff0c\u4e0d\u5224\u4e5f\u4e0d\u56de\u5f39 \u2713\uff09 */
     private static final int[] RB = new int[NS];
+    /** TNL865 \u2605\u672c tick \u5df2\u7ecf\u5403\u6389\u7684\u4f24\u5bb3\uff08\u00d71000 \u2713\uff09 */
+    private static final long[] SPENT = new long[NS];
+    /** TNL865 \u2605\u4e0a\u6b21\u8bb0\u8d26\u7684 tick \u53f7\uff08\u2605\u7528\u4e8e\u6362 tick \u65f6\u6e05\u96f6\u9884\u7b97 \u2713\uff09 */
+    private static final int[] TCK = new int[NS];
     /** TNL863 \u2605\u8fde\u7eed\u786c\u8bc1\u636e\u8ba1\u6570\uff08\u2605MAC \u5931\u6548 \u2713\uff09 */
     private static final int[] BAD = new int[NS];
     /** TNL863 \u2605\u81ea\u68c0\u8fde\u7eed\u5931\u8d25\u6b21\u6570 \u2713 */
@@ -211,6 +215,8 @@ public final class a {
             wA(s0, mx);
             b.put(s0, mx);
             RB[s0] = mob.tickCount + 40;    // TNL863 \u2605\u51fa\u751f\u5bbd\u9650 40 tick \u2713
+            SPENT[s0] = 0L;
+            TCK[s0] = mob.tickCount;
             BAD[s0] = 0;
         } catch (Throwable ignored) {
         }
@@ -244,17 +250,21 @@ public final class a {
                     low = 0;
                 }
                 if (rebase) {
-                    auth = Math.max(0L, now);         // \u2605\u4e0d\u5224\u4e0d\u5f39\uff08\u2605\u514d\u8bef\u5224 \u2713\uff09
-                } else if (grace) {
-                    // TNL859 \u2605\u771f\u4f24\uff1a**\u6539\u4e0d\u4e86\u8840** \u2713\uff08\u2605\u5b8c\u5168\u6062\u590d \u2713\uff09
-                    //   \u2605\u4e14**\u4e0d\u7b97\u7be1\u6539** \u2717\uff08\u2605\u4e0d\u7f6e TP \u2717 \u4e0d\u544a\u8b66 \u2717\uff09\uff1a\u56e0\u4e3a\u8fd9\u662f\u6a21\u7ec4\u81ea\u5df1\u7684\u5408\u6cd5\u771f\u4f24\u8def\u5f84 \u2713
+                    auth = Math.max(0L, now);         // \u2605\u51fa\u751f\u5bbd\u9650\uff1a\u76f4\u63a5\u91c7\u7eb3 \u2713
+                } else if (grace || V[s0] > 0) {
+                    // TNL864 \u2605\u2605 \u771f\u4f24\u5bbd\u9650 **\u6216\u65e0\u654c\u7a97** \u21d2 \u2605**\u5b8c\u5168\u6062\u590d** \u2713
+                    //   \u2605\u4e0d\u7b97\u7be1\u6539 \u2717 \u2605\u4e0d\u7f6e TP \u2717 \u2605\u4e0d\u544a\u8b66 \u2717
                     auth = keep;
-                } else if (now < low) {
-                    auth = low;                       // \u2605\u56de\u5f39\u8865\u56de \u2713
-                } else if (now > keep) {
+                } else if (now != keep) {
+                    // TNL864 \u2605\u8d8a\u6743\u6389\u8840\uff08\u2605\u6ca1\u8d70\u6211\u4eec\u7684 hurt \u2717\uff09\u21d2 **\u5b8c\u5168\u6062\u590d** \u2713
+                    //   \u2605\u5bf9\u5916\u8bed\u4e49\uff1a\u2605"\u9650\u4f24\u4e3a 0"\uff08\u2605\u771f\u4f24/\u900f\u660e\u901a\u9053\u4e00\u5f8b\u65e0\u6548 \u2713\uff09
+                    //   \u2605\u6b63\u5e38\u4f24\u5bb3\u8d70 hurt \u21d2 \u4e24\u4fa7\u955c\u50cf\u5df2\u540c\u6b65 \u21d2 now == keep \u21d2 \u4e0d\u4f1a\u8fdb\u8fd9\u91cc \u2713
                     auth = keep;
                 } else {
                     auth = now;
+                }
+                if (V[s0] > 0) {
+                    V[s0] = V[s0] - 1;                // TNL864 \u2605Java \u56de\u9000\u8def\u5f84\u4e5f\u8981\u5012\u8ba1\u65f6 \u2713
                 }
                 wA(s0, auth);
                 b.put(s0, auth);
@@ -269,18 +279,38 @@ public final class a {
     public static float q2(Mob mob, float amt, int ticks) {
         try {
             int s0 = k(mob);
+            // TNL865 \u2605\u2605 \u6bcf tick \u603b\u91cf\u9884\u7b97\uff1a\u672c tick \u53ea\u80fd\u5403\u6700\u5927\u751f\u547d\u7684 6% \u2713
+            //   \u2605\u65e7\u5199\u6cd5\u53ea\u9650"\u6bcf\u6b21"\u2717 \u21d2 \u540c\u4e00 tick \u8fde\u6253 N \u6b21\u5c31 N\u00d76% \u2717\uff08\u2605\u7528\u6237\u5b9e\u6d4b\u7070\u767d\u4e4b\u58a8\u4e00\u6b21 117 \u2713\uff09
+            if (TCK[s0] != ticks) {
+                TCK[s0] = ticks;
+                SPENT[s0] = 0L;
+            }
+            long budget = MCAP[s0] - SPENT[s0];
+            if (budget < 0L) {
+                budget = 0L;
+            }
             long want = m0(amt);
+            if (want > budget) {
+                want = budget;                    // \u2605\u8d85\u51fa\u9884\u7b97\u5c31\u622a\u65ad \u2713
+                if (ticks - LQ > 40) {
+                    LQ = ticks;
+                    com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                            "TNL865 per tick damage budget clamped: want={} allowed={} spent={} cap={}",
+                            m1(m0(amt)), m1(want), m1(SPENT[s0]), m1(MCAP[s0]));
+                }
+            }
             long gg;
             if (N) {
                 gg = f(s0, want, ticks);
             } else {
-                gg = V[s0] > 0 ? 0L : Math.min(want, MCAP[s0]);
+                gg = V[s0] > 0 ? 0L : want;
             }
             return m1(gg);
         } catch (Throwable t2) {
             return 0.0F;
         }
     }
+
 
     /** TNL855 \u2605\u8bb0\u8d26\uff1a\u4e24\u4fa7\u955c\u50cf\u540c\u6b65\u6263\u8840\uff08\u2605\u6b63\u89c4\u8def\u7ebf \u2713\uff09\u002b \u8fdb\u5165\u65e0\u654c \u2713 */
     public static void q3(Mob mob, float amt) {
@@ -305,6 +335,8 @@ public final class a {
                 b.put(s0, cur);
             }
             V[s0] = V0;
+            long spent = SPENT[s0] + x;
+            SPENT[s0] = Math.min(MCAP[s0], spent);   // TNL865 \u2605\u8bb0\u8fdb\u672c tick \u9884\u7b97 \u2713
         } catch (Throwable ignored) {
         }
     }
@@ -404,6 +436,8 @@ public final class a {
     }
 
     private static long LW = -1000;
+    /** TNL865 \u2605\u9650\u6d41 \u2713 */
+    private static int LQ = -1000;
 
     /** TNL857 \u2605\u662f\u5426\u5df2\u68c0\u6d4b\u5230\u7be1\u6539\uff08\u2605\u547d\u4e2d\u540e\u884c\u4e3a\u6b8b\u9177\u5316 \u2713\uff09 */
     public static boolean q5() {
@@ -433,15 +467,68 @@ public final class a {
             wA(s0, cur);
             b.put(s0, cur);
             GR[s0] = ticks + 5;
-            if (N) {
-                // \u2605\u539f\u751f\u4fa7\u4e5f\u4e0d\u8ba9\u5b83\u52a8 \u2717\uff08\u2605\u7528 0 \u4f24\u5bb3\u8bb0\u8d26\u53ea\u4e3a\u540c\u6b65 \u2713\uff09
-                long hv = h(s0);
-                if (hv >= 0 && hv != cur) {
-                    g(s0, Math.max(0L, hv - cur), 0);
-                }
-            }
+            // TNL864 \u2605\u2605 \u4fee\u6b63\uff1a\u65e7\u5199\u6cd5\u8c03\u4e86 ``g(s0, d, 0)`` \u2717
+            //   \u2605\u7b2c\u4e09\u4e2a\u53c2\u6570\u662f**\u65e0\u654c tick \u6570** \u2717 \u21d2 \u2605\u6bcf\u6b21\u771f\u4f24\u90fd\u628a 1.5s \u7a97\u53e3**\u6e05\u96f6** \u2717\u2717
+            //   \u2605\u6240\u4ee5\u5929\u9006\u94ec\u6253\u4e00\u4e0b \u21d2 \u7a97\u53e3\u6ca1\u4e86 \u21d2 \u63a5\u4e0b\u6765\u7684\u666e\u901a\u4f24\u5bb3\u5168\u5403 \u2717
+            //   \u2605\u73b0\u5728\uff1a**\u771f\u4f24\u4e00\u5f8b\u4e0d\u78b0\u539f\u751f\u8840\u91cf\u4e0e\u65e0\u654c\u7a97** \u2713
         } catch (Throwable ignored) {
         }
     }
 
+
+    /**
+     * TNL866 \u2605\u2605\u6700\u7ec8\u4f24\u5bb3\u622a\u65ad\uff08\u2605\u653e\u5728\u3010\u6240\u6709\u52a0\u4f24\u7b97\u5b8c\u4e4b\u540e\u3011\u2713\uff09
+     *
+     * <p>\u65e7\u5199\u6cd5\u53ea\u5728 {@code hurt()} \u91cc\u622a \u2717 \u21d2
+     * \u2605\u81ea\u5bb6\u7279\u6027\uff08{@code ChildOfTheStarsHandler} \u7fa4\u661f\u4e4b\u5b50\uff1a
+     * \u5728 {@code LivingHurtEvent} \u91cc\u518d\u4e58 1.3^\u7ea7 \u2717\uff09**\u5728\u622a\u65ad\u4e4b\u540e\u53c8\u4e58\u4e00\u6b21** \u2717\u2717
+     * \u21d2 \u2605\u7528\u6237\u5b9e\u6d4b\uff1a\u7070\u767d\u4e4b\u58a8\u4e00\u51fb 117 \u2713\uff08\u260637.5 \u00d7 1.3^\u7ea7 \u2713\uff09
+     *
+     * <p>\u2605\u73b0\u5728\uff1a\u5728 {@code LivingDamageEvent}\uff08LOWEST \u4f18\u5148\u7ea7\uff09\u91cc\u8c03\u672c\u65b9\u6cd5 \u2713
+     * \u21d2 \u6309"\u672c tick \u5269\u4f59\u9884\u7b97"\u622a\u65ad \u002b \u8bb0\u8d26 \u002b \u8fdb\u5165\u65e0\u654c\u7a97 \u2713
+     *
+     * @return \u2605\u771f\u6b63\u5141\u8bb8\u7684\u4f24\u5bb3\uff08\u2605\u8c03\u7528\u65b9\u5fc5\u987b\u628a\u5b83\u5199\u56de\u4e8b\u4ef6 \u2713\uff09
+     */
+    public static float q9(Mob mob, float amount, int ticks) {
+        try {
+            int s0 = k(mob);
+            if (V[s0] > 0) {
+                return 0.0F;                       // \u2605\u65e0\u654c\u7a97\u5185\uff1a\u4e00\u70b9\u4e0d\u5403 \u2713
+            }
+            if (TCK[s0] != ticks) {
+                TCK[s0] = ticks;
+                SPENT[s0] = 0L;
+            }
+            long budget = MCAP[s0] - SPENT[s0];
+            if (budget <= 0L) {
+                return 0.0F;                       // \u2605\u672c tick \u9884\u7b97\u7528\u5b8c \u2713
+            }
+            long want = m0(amount);
+            long allow = Math.min(want, budget);
+            if (allow < want && ticks - LQ > 40) {
+                LQ = ticks;
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                        "TNL866 final clamp: want={} allow={} spent={} cap={}", m1(want), m1(allow), m1(SPENT[s0]), m1(MCAP[s0]));
+            }
+            SPENT[s0] = SPENT[s0] + allow;
+            if (N) {
+                g(s0, allow, V0);                  // \u2605\u539f\u751f\u8bb0\u8d26 \u002b \u65e0\u654c\u7a97 \u2713
+            } else {
+                long cur = rA(s0);
+                if (cur == Long.MIN_VALUE) {
+                    cur = b.get(s0);
+                }
+                if (cur == Long.MIN_VALUE) {
+                    cur = m0(mob.getMaxHealth());
+                }
+                long nv = Math.max(0L, cur - allow);
+                wA(s0, nv);
+                b.put(s0, nv);
+                V[s0] = V0;
+            }
+            return m1(allow);
+        } catch (Throwable th) {
+            return 0.0F;
+        }
+    }
 }
