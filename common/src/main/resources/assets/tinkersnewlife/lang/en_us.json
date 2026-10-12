@@ -1615,5 +1615,8 @@
   "item.tinkersnewlife.portable_crafting_station": "Portable Crafting Station",
   "item.tinkersnewlife.portable_toolkit": "Portable Tinker's Toolkit",
   "item_group.tinkersnewlife.curse_core.description": "Determines curse energy cap, regeneration and domain radius; socket techniques / domains / skills into it.",
-  "item_group.tinkersnewlife.long_short_blade.description": "A dual-form pair of blades, one in each hand: the long form strikes slower but can thrust forward, the short form is faster and can be charged and thrown. Hits build Fever, and Shift + right-click spends it on a killing aura"
+  "item_group.tinkersnewlife.long_short_blade.description": "A dual-form pair of blades, one in each hand: the long form strikes slower but can thrust forward, the short form is faster and can be charged and thrown. Hits build Fever, and Shift + right-click spends it on a killing aura",
+  "modifier.tinkersnewlife.dovahkiin": "Dovahkiin",
+  "modifier.tinkersnewlife.dovahkiin.description": "Your dragon breath attacks deal true damage to dragons of other elements",
+  "modifier.tinkersnewlife.dovahkiin.flavor": "Kinsman or foe, the dragon awaits!"
 }

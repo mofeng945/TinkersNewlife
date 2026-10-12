@@ -115,6 +115,10 @@ public class Modifiers {
     public static final StaticModifier<DreadsteelArmorTrait> DREADSTEEL_ARMOR =
             MODIFIERS.register("dreadsteel_armor", DreadsteelArmorTrait::new);
 
+    /** §804 都瓦克因（无等级：龙息对异属性龙类真实伤害，同属性半数） */
+    public static final StaticModifier<DovahkiinTrait> DOVAHKIIN =
+            MODIFIERS.register("dovahkiin", DovahkiinTrait::new);
+
     /** 堕落（诅咒金属材料自带词条：消耗灵魂增幅伤害/击退） */
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.CorruptionTrait> CORRUPTION =
             MODIFIERS.register("corruption",

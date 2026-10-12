@@ -5,6 +5,7 @@ import com.mofengbaizhi.tinkersnewlife.content.ModBlocks;
 import com.mofengbaizhi.tinkersnewlife.content.ModEffects;
 import com.mofengbaizhi.tinkersnewlife.content.modifier.DragonboneTrait;
 import com.mofengbaizhi.tinkersnewlife.integration.iceandfire.IceAndFireDamage;
+import com.mofengbaizhi.tinkersnewlife.util.TruePierce;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -51,6 +52,8 @@ public class DragonsteelHandler {
     private static final ModifierId DRAGONSTEEL_FIRE = new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "dragonsteel_fire"));
     private static final ModifierId DRAGONSTEEL_ICE = new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "dragonsteel_ice"));
     private static final ModifierId DRAGONSTEEL_LIGHTNING = new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "dragonsteel_lightning"));
+    /** §804 都瓦克因：龙息对龙类改成真实伤害 ✓ */
+    private static final ModifierId DOVAHKIIN = new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "dovahkiin"));
 
     private static final float FIRE_EXPLOSION_BASE = 1.5f;
     private static final int FIRE_DURATION_BASE = 60;
@@ -131,9 +134,10 @@ public class DragonsteelHandler {
             if (lightningLevel > 0) applyLightningEffect(level, attacker, target, lightningLevel);
             // §803 ★混入对应属性的【龙息伤害】（★用户口径 ✓）
             //   ★用冰火的自定义伤害类型（★反射取用 ✓）⇒ 对面的龙钢盔甲能正常抗它 ✓
-            if (fireLevel > 0) applyBreathDamage(level, attacker, target, IceAndFireDamage.FIRE, fireLevel);
-            if (iceLevel > 0) applyBreathDamage(level, attacker, target, IceAndFireDamage.ICE, iceLevel);
-            if (lightningLevel > 0) applyBreathDamage(level, attacker, target, IceAndFireDamage.LIGHTNING, lightningLevel);
+            boolean dovahkiin = ToolHelper.getActiveModifierLevel(tool, DOVAHKIIN) > 0;   // §804 ★无等级：>0 就算有 ✓
+            if (fireLevel > 0) applyBreathDamage(level, attacker, target, IceAndFireDamage.FIRE, fireLevel, dovahkiin);
+            if (iceLevel > 0) applyBreathDamage(level, attacker, target, IceAndFireDamage.ICE, iceLevel, dovahkiin);
+            if (lightningLevel > 0) applyBreathDamage(level, attacker, target, IceAndFireDamage.LIGHTNING, lightningLevel, dovahkiin);
         } finally {
             applyingDragonsteel = prevGuard;
         }
@@ -149,16 +153,48 @@ public class DragonsteelHandler {
      * <p>★此时处于 {@code applyingDragonsteel} 闸门内 ✓ ⇒ 不会反过来触发自己的词条（★无递归 ✓）。
      */
     private static void applyBreathDamage(Level level, LivingEntity attacker, LivingEntity target,
-                                          int kind, int levelNum) {
+                                          int kind, int levelNum, boolean dovahkiin) {
         try {
             DamageSource src = IceAndFireDamage.breath(level, attacker, kind);
             if (src == null || !target.isAlive()) {
                 return;
             }
+            float amount = BREATH_BASE_DAMAGE * levelNum;
+            /*
+             * §804 都瓦克因：★持有者的**任何龙息类攻击**对**龙类**改成真实伤害 ✓
+             *   · 异属性龙类 ⇒ ★全额真伤（★逆向改血 ✓）
+             *   · 同属性龙类 ⇒ ★半数真伤（★同族抗性 ✓）
+             *   · 非龙类       ⇒ ★不变，走原有的普通 hurt ✓
+             * ★真伤用 TruePierce.apply（★与魔法体系同一套逆向改血 ✓）
+             */
+            int dragonKind = dragonKindOf(target);
+            if (dovahkiin && dragonKind >= 0) {
+                float trueDamage = (dragonKind == kind) ? amount * 0.5F : amount;
+                TruePierce.apply(attacker, target, trueDamage);
+                return;
+            }
             target.invulnerableTime = 0;   // ★同一 tick 内的第二次 hurt 会被无敌帧吾掉 ✗ ⭐清零它 ✓
-            target.hurt(src, BREATH_BASE_DAMAGE * levelNum);
+            target.hurt(src, amount);
         } catch (Throwable ignored) {
             // ★冰火反射失败/伤害失败 ⇒ 绝不影响原有词条 ✓
+        }
+    }
+
+    /** §804 ★按**实体注册名**认龙类与属性：0=火 1=冰 2=雷 ✗ 不是龙则 -1 ✓（★免反射 ✓） */
+    private static int dragonKindOf(LivingEntity target) {
+        try {
+            ResourceLocation id = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(target.getType());
+            if (id == null || !"iceandfire".equals(id.getNamespace())) {
+                return -1;
+            }
+            return switch (id.getPath()) {
+                case "fire_dragon" -> 0;
+                case "ice_dragon" -> 1;
+                case "lightning_dragon" -> 2;
+                default -> -1;
+            };
+        } catch (Throwable ignored) {
+            return -1;
         }
     }
 
