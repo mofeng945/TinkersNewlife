@@ -59,6 +59,20 @@ public class BlockEntityHelperLoadedMixin {
             }
             if (PortableDeviceSupport.VIRTUAL.containsKey(pos)) {
                 cir.setReturnValue(Boolean.TRUE);   // \u2605\u53e3\u888b\u5750\u6807\u5f53\u201c\u5df2\u52a0\u8f7d\u201d \u2713
+                // \u00a7820 \u2605\u2605\u63a2\u9488\uff08\u2605\u8fd9\u4e2a\u6df7\u5165\u5df2\u8bc1\u660e\u80fd\u8dd1 \u2713\uff09\uff1a\u6253\u51fa world \u7684\u771f\u5b9e\u7c7b\u4e0e\u53d6\u5e7d\u7075\u7684\u7ed3\u679c \u2713
+                try {
+                    Object viaWorld = null;
+                    try {
+                        viaWorld = world.getClass().getMethod("getBlockEntity", net.minecraft.core.BlockPos.class).invoke(world, pos);
+                    } catch (Throwable t1) {
+                        viaWorld = "\u53cd\u5c04\u5931\u8d25:" + t1.getClass().getSimpleName();
+                    }
+                    com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                            "[\u4fbf\u643a\u8bbe\u5907] \u00a7820 world\u5b9e\u4f8b={} \u52a0\u8f7d\u5668={} \u53d6\u5e7d\u7075={} \u865a\u62df\u8868\u6709={}",
+                            world.getClass().getName(), world.getClass().getClassLoader(),
+                            viaWorld, PortableDeviceSupport.VIRTUAL.containsKey(pos));
+                } catch (Throwable ignored) {
+                }
             }
         } catch (Throwable ignored) {
         }
