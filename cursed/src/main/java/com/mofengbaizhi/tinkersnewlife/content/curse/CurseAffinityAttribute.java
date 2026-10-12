@@ -82,6 +82,11 @@ public final class CurseAffinityAttribute {
 
     public static void setItemAffinity(ItemStack stack, double amount, net.minecraft.world.level.Level level) {
         try {
+            // §807 ★幂等：值没变就【一个字节都不写】✓
+            //   ★否则每次都重建 AttributeModifiers ⇒ 标签数会跳（★用户实测 9→10 ✗）
+            if (Math.abs(getItemAffinity(stack) - amount) < 0.01D) {
+                return;
+            }
             CompoundTag root = stack.getOrCreateTag();
             stripVanillaModifier(root);
             root.remove(LEGACY_KEY);
