@@ -5,8 +5,8 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "tinkersnewlife.refmap.json",
   "mixins": [
+    "CraftingStationResultMixin",
     "LazyResultSlotRecipeMixin",
-    "ClientLevelGetBlockEntityMixin",
     "BlockEntityHelperLoadedMixin",
     "DisarmDropProtectionMixin",
     "ToolkitTabPacketMixin",
