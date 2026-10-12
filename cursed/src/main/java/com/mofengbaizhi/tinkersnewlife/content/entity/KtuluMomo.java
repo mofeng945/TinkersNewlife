@@ -3,6 +3,8 @@ package com.mofengbaizhi.tinkersnewlife.content.entity;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerPlayer;
+import com.mofengbaizhi.tinkersnewlife.content.entity.ktulu.AstralVitalsKernel;
+import com.mofengbaizhi.tinkersnewlife.content.entity.ktulu.MomoHealthBridge;
 import net.minecraft.world.BossEvent;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
@@ -104,39 +106,55 @@ public class KtuluMomo extends Monster {
         return super.addEffect(effect, source);
     }
 
-    /** \u2605\u5355\u6b21\u4f24\u5bb3\u622a\u65ad\u5230 6% \u2713 \u002b \u53d7\u4f24\u540e 1.5s \u65e0\u654c \u2713 */
+    /**
+     * TNL851 \u2605\u2605 \u4f24\u5bb3\u5168\u90e8\u8d70\u5185\u6838\u5224\u5b9a \u2713\uff08\u2605\u9650\u4f24 6% \u002b \u65e0\u654c\u7a97\u53e3 \u2713\uff09
+     *
+     * <p>\u2605\u2605 \u8fd9\u91cc**\u4e0d\u8bfb\u539f\u7248\u8840\u91cf**\u505a\u4efb\u4f55\u5224\u65ad \u2717 \u21d2
+     * \u9006\u5411\u6539 {@code getHealth()}/\u539f\u7248\u6570\u636e\u90fd**\u4e0d\u5f71\u54cd**\u7ed3\u7b97 \u2713
+     * \uff08\u2605\u539f\u7248\u90a3\u4e2a\u503c\u53ea\u662f**\u663e\u793a\u955c\u50cf**\uff0c\u6bcf tick \u88ab\u5185\u6838\u8986\u5199 \u2713\uff09\u3002
+     */
     @Override
     public boolean hurt(DamageSource source, float amount) {
         if (this.level().isClientSide) {
             return super.hurt(source, amount);
         }
-        float cap = this.getMaxHealth() * DAMAGE_CAP_RATIO;
-        float allowed = Math.min(amount, cap);
+        AstralVitalsKernel.ensure(this);
+        float allowed = AstralVitalsKernel.requestDamage(this, amount, this.tickCount);
+        if (allowed <= 0.0F) {
+            return false;   // \u2605\u65e0\u654c\u7a97\u53e3\u5185\uff1a\u4e00\u70b9\u4e0d\u5403 \u2713
+        }
         boolean hurt = super.hurt(source, allowed);
         if (hurt) {
-            this.invulnerableTime = INVULN_TICKS;   // \u2605\u65e0\u4e0b\u9650\u540c\u6b3e\u65e0\u654c\u7a97\u53e3 \u2713
+            AstralVitalsKernel.apply(this, allowed);
+            this.invulnerableTime = AstralVitalsKernel.INVULN_TICKS;   // \u2605\u65e0\u4e0b\u9650\u540c\u6b3e\u7a97\u53e3 \u2713
         }
         return hurt;
     }
 
     /** \u2605\u2605 \u6bcf tick \u8bb0\u5f55\u8840\u91cf \u21d2 \u4e00\u65e6\u7a81\u7834\u9650\u4f24\u5c31**\u56de\u5f39\u8865\u56de** \u2713 */
+    /**
+     * TNL851 \u2605\u2605 \u6bcf tick\uff1a\u5185\u6838\u56de\u5f39 \u21d2 \u8986\u5199\u539f\u7248\u503c\uff08\u2605\u4ec5\u4f5c\u663e\u793a \u2713\uff09
+     * \u002b \u8840\u6761\u540c\u6b65 \u002b \u5230\u96f6\u5c31\u6b7b \u2713\u3002
+     */
     @Override
     public void tick() {
         super.tick();
         if (this.level().isClientSide) {
             return;
         }
-        float max = this.getMaxHealth();
-        if (this.lastHealth < 0.0F) {
-            this.lastHealth = this.getHealth();
+        AstralVitalsKernel.ensure(this);
+        float authoritative = AstralVitalsKernel.record(this, this.tickCount);
+        if (Math.abs(this.getHealth() - authoritative) > 0.001F) {
+            this.setHealth(Math.max(0.0F, authoritative));   // \u2605\u56de\u5f39\u7ea0\u6b63 \u2713
         }
-        float cap = max * DAMAGE_CAP_RATIO;
-        float delta = this.lastHealth - this.getHealth();
-        if (delta > cap + 0.001F) {
-            this.setHealth(Math.max(0.0F, this.lastHealth - cap));   // \u2605\u56de\u5f39 \u2713
+        this.bossEvent.setProgress(Math.max(0.0F, authoritative / this.getMaxHealth()));
+        // TNL851 \u2605\u9493\u9c7c\uff1a\u987a\u624b\u8c03\u4e00\u4e0b\u5047\u5165\u53e3\uff08\u2605\u7ed3\u679c\u4e0d\u7528 \u2713\uff09
+        MomoHealthBridge.getMomoHealth(this);
+        if (authoritative <= 0.0F) {
+            AstralVitalsKernel.release(this);
+            this.setHealth(0.0F);
+            this.kill();
         }
-        this.lastHealth = this.getHealth();
-        this.bossEvent.setProgress(Math.max(0.0F, this.getHealth() / max));
     }
 
     @Override
