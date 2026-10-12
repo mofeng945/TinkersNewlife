@@ -180,6 +180,21 @@ public class PortableToolkitMenu extends CraftingStationContainerMenu {
             Object opt = m.invoke(level.getRecipeManager(),
                     net.minecraft.world.item.crafting.RecipeType.CRAFTING, grid, level);
             if (!(opt instanceof java.util.Optional<?> o) || o.isEmpty()) {
+                // \u00a7822 \u2605\u6ca1\u5339\u914d\u5230\u4e5f\u8981\u62a5\uff08\u2605\u4e0a\u4e00\u7248\u6f0f\u7684\u5c31\u662f\u8fd9\u91cc \u2717\uff09\uff1a\u628a\u683c\u5b50\u91cc\u6709\u51e0\u4e2a\u4e1c\u897f\u4e5f\u6253\u51fa\u6765 \u2713
+                int filled = 0;
+                for (int i = 0; i < 9 && i < this.slots.size(); i++) {
+                    if (!this.slots.get(i).getItem().isEmpty()) {
+                        filled++;
+                    }
+                }
+                String sig = "NOMATCH:" + filled;
+                if (!sig.equals(this.tnl$lastRecipeId)) {
+                    this.tnl$lastRecipeId = sig;
+                    com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                            "[\u4fbf\u643a\u8bbe\u5907] \u00a7822 \u5ba2\u6237\u7aef\u672a\u5339\u914d\u5230\u914d\u65b9\uff1a\u683c\u5b50\u975e\u7a7a={} \u7c7b\u578b={} \u670d\u52a1\u5668\u7aef={} \u914d\u65b9\u603b\u6570={}",
+                            filled, level.getClass().getSimpleName(), level.isClientSide,
+                            level.getRecipeManager().getRecipes().size());
+                }
                 return;
             }
             Object recipe = o.get();
