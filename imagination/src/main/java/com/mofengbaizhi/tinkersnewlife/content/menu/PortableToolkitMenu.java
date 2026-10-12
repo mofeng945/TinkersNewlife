@@ -224,4 +224,29 @@ public class PortableToolkitMenu extends CraftingStationContainerMenu {
         } catch (Throwable ignored) {
         }
     }
+
+    /**
+     * TNL828 \u2605\u2605\u2605 \u81f4\u547d\u4fee\u6b63\uff1a\u5e7d\u7075\u65b9\u5757\u5b9e\u4f53\u5fc5\u987b**\u6302\u4e0a\u4e00\u4e2a\u771f\u5b9e\u7684 level** \u2713
+     *
+     * <p>\u65e5\u5fd7\u8bc1\u636e\uff08\u2605TNL826 \u63a2\u9488 \u2713\uff09\uff1a
+     * {@code crafting station ghost created pos=\u2026 level=null client=false} \u2717\u2717
+     * \u800c\u5320\u9b42 {@code CraftingStationBlockEntity#calcResult} \u7b2c\u4e00\u53e5\u5c31\u662f
+     * {@code if (this.level == null || isEmpty()) return EMPTY;} \u2717
+     * \u21d2 \u2605\u4ece\u6765\u6ca1\u7b97\u8fc7\u914d\u65b9 \u21d2 \u754c\u9762\u6b63\u5e38\u3001\u80fd\u653e\u4e1c\u897f\uff0c**\u5c31\u662f\u5408\u4e0d\u4e86** \u2717\u2717
+     *
+     * <p>\u2605\u5728\u83dc\u5355\u6784\u9020\u65f6\u8865\u4e0a\uff08\u2605\u670d\u52a1\u7aef\u4e0e\u5ba2\u6237\u7aef\u90fd\u8d70\u8fd9\u91cc \u2713\uff09\u3002
+     */
+    private void tnl$ensureGhostLevel() {
+        try {
+            net.minecraft.world.level.block.entity.BlockEntity be = this.mainGhost;
+            if (be == null || be.getLevel() != null) {
+                return;
+            }
+            be.setLevel(this.playerInv.player.level());
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                    "TNL828 ghost level attached: {} client={}", be.getClass().getSimpleName(),
+                    this.playerInv.player.level().isClientSide);
+        } catch (Throwable ignored) {
+        }
+    }
 }
