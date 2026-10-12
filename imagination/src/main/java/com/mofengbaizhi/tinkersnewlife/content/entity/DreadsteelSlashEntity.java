@@ -215,7 +215,10 @@ public class DreadsteelSlashEntity extends Projectile {
         if (hitEntities.contains(targetUUID)) return;
         if (target instanceof LivingEntity living) {
             float damage = this.getDamage();
-            boolean hurt = living.hurt(this.damageSources().magic(), damage);
+            // §806 ★剑气伤害改走「无属性龙息」✓（★带都瓦克因时对龙类全额真伤 ✓）
+            boolean hurt = com.mofengbaizhi.tinkersnewlife.content.handler.DragonsteelHandler
+                    .applyElementlessBreath(this.level(), owner instanceof net.minecraft.world.entity.LivingEntity le ? le : null,
+                            living, damage);
             if (hurt) {
                 living.invulnerableTime = 0;
                 hitEntities.add(targetUUID);

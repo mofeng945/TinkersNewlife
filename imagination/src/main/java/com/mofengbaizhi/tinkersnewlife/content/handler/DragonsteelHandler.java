@@ -180,6 +180,52 @@ public class DragonsteelHandler {
         }
     }
 
+    /**
+     * §806 ☞ **无属性龙息**（★悸怖钢剑气用 ✓）。
+     *
+     * <p>★用户口径：剑气伤害**也算作龙息伤害** ✓，
+     * 但它**没有属性** ✗ ⇒ ★不存在“同属性龙” ✓
+     * ⇒ 带都瓦克因时对**任何**龙类都是★**全额真实伤害**（★不打折 ✓）。
+     *
+     * <p>★伤害类型借用冰火的龙息类型 ✓ ⇒ 对面的【龙钢盔甲】能正常抗它 ✓。
+     */
+    public static boolean applyElementlessBreath(Level level, LivingEntity attacker, LivingEntity target, float amount) {
+        try {
+            if (level == null || attacker == null || target == null || !target.isAlive() || amount <= 0.0F) {
+                return false;
+            }
+            DamageSource src = IceAndFireDamage.breath(level, attacker, IceAndFireDamage.FIRE);
+            if (src == null) {
+                return false;   // ★冰火不在场 ⇒ 不改变行为 ✓
+            }
+            if (hasDovahkiin(attacker) && dragonKindOf(target) >= 0) {
+                float before = target.getHealth();
+                TruePierce.apply(attacker, target, amount);   // ★全额真伤 ✓（★无同属性折扣 ✓）
+                return target.getHealth() < before || target.isDeadOrDying();
+            }
+            target.invulnerableTime = 0;
+            return target.hurt(src, amount);
+        } catch (Throwable ignored) {
+            // ★出任何问题都不影响剑气本身 ✓
+            return false;
+        }
+    }
+
+    /** §806 ★从**持有者主手**认都瓦克因（★剑气没有 ToolStack ✗ 只能这么取 ✓） */
+    private static boolean hasDovahkiin(LivingEntity attacker) {
+        try {
+            net.minecraft.world.item.ItemStack held = attacker.getMainHandItem();
+            if (held.isEmpty() || !(held.getItem() instanceof slimeknights.tconstruct.library.tools.item.IModifiable)) {
+                return false;
+            }
+            slimeknights.tconstruct.library.tools.nbt.ToolStack tool =
+                    slimeknights.tconstruct.library.tools.nbt.ToolStack.from(held);
+            return tool.getModifierLevel(com.mofengbaizhi.tinkersnewlife.content.Modifiers.DOVAHKIIN.getId()) > 0;
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
     /** §804 ★按**实体注册名**认龙类与属性：0=火 1=冰 2=雷 ✗ 不是龙则 -1 ✓（★免反射 ✓） */
     private static int dragonKindOf(LivingEntity target) {
         try {
