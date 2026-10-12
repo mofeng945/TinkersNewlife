@@ -37,6 +37,7 @@ public class GhostStationMenuMixin {
             try {
                 // §1339 安全读取：每一步都先看剩余字节（★彻底消除 EOF ✓）
                 com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[步进] 入口 clazz={} bytes={}", clazz.getSimpleName(), buf.readableBytes());
+            tnl$probeScreen();
             if (buf.readableBytes() < 8) {
                     buf.resetReaderIndex();
                     return;
@@ -117,6 +118,20 @@ cir.setReturnValue(ghost);
         } catch (Throwable t) {
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("[便携设备·菜单] 校验抛异常 ⇒ 放行: {}", t.toString());
             buf.resetReaderIndex();
+        }
+    }
+
+    /** TNL830 \u2605\u63a2\u9488\uff1a\u5728\u4e00\u4e2a**\u5df2\u8bc1\u660e\u80fd\u8dd1**\u7684\u5ba2\u6237\u7aef\u94a9\u5b50\u91cc\u6253\u51fa\u771f\u5b9e\u5c4f\u5e55\u7c7b\u540d \u2713 */
+    private static void tnl$probeScreen() {
+        try {
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            net.minecraft.client.gui.screens.Screen s = mc.screen;
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                    "TNL830 client screen={} menu={} slots={}",
+                    s == null ? "null" : s.getClass().getName(),
+                    mc.player == null ? "?" : mc.player.containerMenu.getClass().getName(),
+                    mc.player == null ? -1 : mc.player.containerMenu.slots.size());
+        } catch (Throwable ignored) {
         }
     }
 }
