@@ -36,10 +36,10 @@ $m = [regex]::Match((Get-Content -Raw -Encoding UTF8 -Path (Join-Path $repo 'gra
 if (-not $m.Success) { Write-Host '错误: gradle.properties 里找不到 mod_version' -ForegroundColor Red; exit 1 }
 $version = $m.Groups[1].Value.Trim()
 Write-Host ("当前版本: " + $version) -ForegroundColor Green
-$changelog = Join-Path $repo "CHANGELOG-$version-en.md"
+$changelog = Join-Path $repo "docs/changelogs/CHANGELOG-$version-en.md"   # §810 changelog 已归档到 docs/changelogs/
 # §995 兜底：也认 docs/ 下的同名文件（历史上 §867 起曾放在 docs/ ⇒ 那时上传的更新说明是空的 ✗）
 if (-not (Test-Path $changelog)) {
-    $alt = Join-Path $repo "docs/CHANGELOG-$version-en.md"
+    $alt = Join-Path $repo "CHANGELOG-$version-en.md"   # §810 旧位置兼容（若有人放回根目录）
     if (Test-Path $alt) { $changelog = $alt }
 }
 if (Test-Path $changelog) {

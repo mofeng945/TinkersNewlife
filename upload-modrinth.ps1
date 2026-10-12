@@ -114,8 +114,8 @@ if (-not $Jar -or -not (Test-Path $Jar)) {
 if ([string]::IsNullOrEmpty($Name)) { $Name = "Tinker's Newlife $Version" }
 $ChangelogText = ""
 if ([string]::IsNullOrEmpty($Changelog)) {
-    $a = Join-Path $repo "CHANGELOG-$Version-en.md"
-    $b = Join-Path $repo "CHANGELOG-$Version.md"
+    $a = Join-Path $repo "docs/changelogs/CHANGELOG-$Version-en.md"   # §810 已归档
+    $b = Join-Path $repo "docs/changelogs/CHANGELOG-$Version.md"
     if (Test-Path $a) { $Changelog = $a } elseif (Test-Path $b) { $Changelog = $b }
 }
 if ($Changelog -and (Test-Path $Changelog)) {
