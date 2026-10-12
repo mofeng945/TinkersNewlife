@@ -600,7 +600,7 @@ public final class a {
         //   \u2605\u7528\u6765\u786e\u8ba4"\u73b0\u5728\u8dd1\u7684\u5230\u5e95\u662f\u54ea\u4e2a\u6784\u5efa" \u2713
         try {
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
-                    "TNL869 VITALS BUILD zzB native={} cap={} ns={} sha={} t={}", N, C0, NS, A0.substring(0, 8));
+                    "TNL869 VITALS BUILD zzC native={} cap={} ns={} sha={} t={}", N, C0, NS, A0.substring(0, 8));
         } catch (Throwable ignored) {
         }
     }
