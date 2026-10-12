@@ -616,7 +616,7 @@ public final class a {
         //   \u2605\u7528\u6765\u786e\u8ba4"\u73b0\u5728\u8dd1\u7684\u5230\u5e95\u662f\u54ea\u4e2a\u6784\u5efa" \u2713
         try {
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
-                    "TNL869 VITALS BUILD zzE native={} cap={} ns={} sha={} t={}", N, C0, NS, A0.substring(0, 8));
+                    "TNL869 VITALS BUILD zzF native={} cap={} ns={} sha={} t={}", N, C0, NS, A0.substring(0, 8));
         } catch (Throwable ignored) {
         }
     }
@@ -657,4 +657,30 @@ public final class a {
     }
 
     private static int LQ3 = -1;
+
+    /**
+     * TNL875 \u2605\u2605 \u5bf9\u5916\u62a5\u544a\u6743\u5a01\u8840\u91cf\uff08\u2605\u5224\u5b9a\u7ea7\u5c4f\u853d \u2713\uff09
+     *
+     * <p>\u2605\u7528\u6237\u53cd\u9988\uff1a\u2605"\u8fd8\u662f\u6709\u6982\u7387\u6539" \u2713
+     * \u21d2 \u2605\u56e0\u4e3a\u6df7\u5165\u53ea\u80fd\u62e6**\u8d70 setHealth**\u7684\u5199 \u2717\uff0c
+     * \u2605\u800c**\u76f4\u63a5\u5199\u5b57\u6bb5**\uff08\u53cd\u5c04/Unsafe \u2717\uff09\u62e6\u4e0d\u4f4f \u2717\u3002
+     * \u2605\u73b0\u5728\uff1a\u2605\u8ba9 Boss \u7684 {@code getHealth()}\u76f4\u63a5\u8fd4\u56de**\u6743\u5a01\u503c** \u2713
+     * \u21d2 \u2605\u6b7b\u4ea1\u5224\u5b9a/\u53d7\u4f24\u8ba1\u7b97/\u6e32\u67d3\u5168\u90e8\u8d70\u8fd9\u4e2a\u503c \u2713
+     * \u21d2 \u2605\u5b57\u6bb5\u88ab\u6539\u4e5f**\u4e0d\u5f71\u54cd\u4efb\u4f55\u5224\u5b9a** \u2713\u2713
+     */
+    public static float qF(Mob mob) {
+        try {
+            int s0 = k(mob);
+            long v = N ? h(s0) : rA(s0);
+            if (v < 0L) {
+                v = b.get(s0);
+            }
+            if (v < 0L || v == Long.MIN_VALUE) {
+                return mob.getMaxHealth();
+            }
+            return m1(v);
+        } catch (Throwable th) {
+            return 0.0F;
+        }
+    }
 }

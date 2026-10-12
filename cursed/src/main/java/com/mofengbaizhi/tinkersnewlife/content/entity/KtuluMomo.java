@@ -155,8 +155,9 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         }
         a.q0(this);
         float authoritative = a.q1(this, this.tickCount);
-        if (Math.abs(this.getHealth() - authoritative) > 0.001F) {
-            this.setHealth(Math.max(0.0F, authoritative));   // \u2605\u56de\u5f39\u7ea0\u6b63 \u2713
+        // TNL875 \u2605\u5bf9\u9f50\u7684\u662f**\u771f\u5b9e\u5b57\u6bb5**\uff08super.getHealth \u2713\uff09\uff0c\u4e0d\u662f\u5bf9\u5916\u503c \u2713
+        if (Math.abs(super.getHealth() - authoritative) > 0.001F) {
+            this.setHealth(Math.max(0.0F, authoritative));
         }
         this.bossEvent.setProgress(Math.max(0.0F, authoritative / this.getMaxHealth()));
         // TNL851 \u2605\u9493\u9c7c\uff1a\u987a\u624b\u8c03\u4e00\u4e0b\u5047\u5165\u53e3\uff08\u2605\u7ed3\u679c\u4e0d\u7528 \u2713\uff09
@@ -195,6 +196,26 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             }
             a.q6(this, totalDamage, this.tickCount);
         } catch (Throwable ignored) {
+        }
+    }
+
+    /**
+     * TNL875 \u2605\u2605 \u5bf9\u5916\u59cb\u7ec8\u62a5\u544a**\u6743\u5a01\u8840\u91cf** \u2713
+     *
+     * <p>\u2605\u8fd9\u662f"\u963b\u6b62\u6539\u8840"\u6700\u786c\u7684\u4e00\u5c42 \u2713\uff1a
+     * \u2605\u5373\u4f7f\u6709\u4eba\u7528\u53cd\u5c04/Unsafe **\u76f4\u63a5\u628a\u5b57\u6bb5\u5199\u6210 0** \u2717\uff0c
+     * \u2605\u6b7b\u4ea1\u5224\u5b9a\uff08{@code isAlive}/{@code isDeadOrDying} \u2713\uff09\u3001\u53d7\u4f24\u8ba1\u7b97\u3001
+     * \u5ba2\u6237\u7aef\u6e32\u67d3\u5168\u90e8\u8bfb\u7684\u90fd\u662f\u8fd9\u91cc\u8fd4\u56de\u7684\u503c \u2713\u3002
+     */
+    @Override
+    public float getHealth() {
+        try {
+            if (this.level() == null || this.level().isClientSide) {
+                return super.getHealth();
+            }
+            return a.qF(this);
+        } catch (Throwable th) {
+            return super.getHealth();
         }
     }
 }
