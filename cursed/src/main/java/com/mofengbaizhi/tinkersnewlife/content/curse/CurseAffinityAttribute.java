@@ -35,9 +35,6 @@ import java.util.UUID;
 public final class CurseAffinityAttribute {
 
     public static final String NAME = "curse_affinity";
-    /** §808 探针用：上次的键集签名 ✗ 排查完删 ✓ */
-    private static final java.util.Map<java.util.UUID, Long> PROBE_LAST = new java.util.concurrent.ConcurrentHashMap<>();
-
     public static final String LEGACY_KEY = CursePowerHelper.KEY_AFFINITY; // tinkersnewlife.curse_affinity
 
     public static final DeferredRegister<Attribute> ATTRIBUTES =
@@ -271,26 +268,6 @@ public final class CurseAffinityAttribute {
                 return;
             }
             boolean deep = sp.tickCount % 20 == 0;   // §1296 属性同步每 20 tick；清理每 tick（★让老 NBT 立刻消失 ✓）
-            // §808 ★探针：持有物品的键集变化就打一行 ✗ 一眼看出是哪个键在跳 ✓（★排查完就撕 ✗）
-            try {
-                net.minecraft.world.item.ItemStack held = sp.getMainHandItem();
-                if (!held.isEmpty()) {
-                    net.minecraft.nbt.CompoundTag htag = held.getTag();
-                    java.util.TreeSet<String> keys = new java.util.TreeSet<>();
-                    if (htag != null) keys.addAll(htag.getAllKeys());
-                    String sig = held.getItem() + "|" + keys;
-                    Long prev = PROBE_LAST.get(sp.getUUID());
-                    if (prev == null) {
-                        PROBE_LAST.put(sp.getUUID(), (long) sig.hashCode());
-                    } else if (prev != (long) sig.hashCode()) {
-                        PROBE_LAST.put(sp.getUUID(), (long) sig.hashCode());
-                        com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
-                                "[探针·键集] 主手={} 标签数={} 键集={}",
-                                held.getItem(), keys.size(), keys);
-                    }
-                }
-            } catch (Throwable ignored) {
-            }
             try {
                 // ① 背包（含饰品栏）里的旧 NBT 一次性迁移
                 for (int i = 0; i < sp.getInventory().getContainerSize(); i++) {
