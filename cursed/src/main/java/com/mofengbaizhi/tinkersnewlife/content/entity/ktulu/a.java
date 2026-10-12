@@ -27,6 +27,13 @@ public final class a {
 
     private static volatile boolean N = false;
     private static long L = -1;
+    /** TNL862 \u2605\u540e\u53f0\u81ea\u68c0\uff1a**\u4e0d\u5728\u4e3b\u7ebf\u7a0b\u505a SHA-256/CRC** \u2713\uff08\u2605\u7528\u6237\u53cd\u9988\uff1a\u4f1a\u6389\u5e27 \u2717\uff09 */
+    private static final java.util.concurrent.atomic.AtomicBoolean BUSY =
+            new java.util.concurrent.atomic.AtomicBoolean(false);
+    private static volatile long LAST_MS = 0L;
+    /** \u2605\u62bd\u6837\u95f4\u9694\uff08ms\uff09\uff1a\u2605\u968f\u673a\u5316 \u2713\uff08\u2605\u4e0d\u7ed9\u5916\u6302\u6293\u8282\u594f \u2713\uff09 */
+    private static final long GAP_MIN = 20000L;
+    private static final long GAP_RANGE = 20000L;
 
     /* TNL855 \u2605\u955c\u50cf A\uff1a\u540c\u6837\u662f **MAC \u6807\u8bb0\u7684\u5f71\u5b50\u503c** \u2713 */
     private static final long SALT = 0x9E3779B97F4A7C15L;

@@ -4,6 +4,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerPlayer;
 import com.mofengbaizhi.tinkersnewlife.content.entity.ktulu.a;
+import com.mofengbaizhi.tinkersnewlife.content.entity.ktulu.c;
 import com.mofengbaizhi.tinkersnewlife.content.entity.ktulu.MomoHealthBridge;
 import net.minecraft.world.BossEvent;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -149,7 +150,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         }
         this.bossEvent.setProgress(Math.max(0.0F, authoritative / this.getMaxHealth()));
         // TNL851 \u2605\u9493\u9c7c\uff1a\u987a\u624b\u8c03\u4e00\u4e0b\u5047\u5165\u53e3\uff08\u2605\u7ed3\u679c\u4e0d\u7528 \u2713\uff09
-        MomoHealthBridge.getMomoHealth(this);
+        c.rotate(this);   // TNL862 \u2605\u591a\u5165\u53e3\u8f6e\u6362\u9493\u9c7c \u2713
         if (authoritative <= 0.0F) {
             a.q4(this);
             this.setHealth(0.0F);
