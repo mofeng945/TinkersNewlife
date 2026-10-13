@@ -141,9 +141,15 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
             @Override
             public BlockEntityWithoutLevelRenderer getCustomRenderer() {
                 long tnl$n = System.currentTimeMillis();
-                if (tnl$n - TNL$LOG2 > 1000L) {                       // TNL945 \u63a2\u9488 \u2713
+                if (tnl$n - TNL$LOG2 > 5000L) {                       // TNL946 \u2605\u6253\u8c03\u7528\u6808 \u2713
                     TNL$LOG2 = tnl$n;
-                    TinkersNewlife.LOGGER.warn("TNL945 getCustomRenderer asked");
+                    StackTraceElement[] tnl$st = new Throwable().getStackTrace();
+                    StringBuilder tnl$sb = new StringBuilder("TNL946 getCustomRenderer caller:");
+                    for (int tnl$i = 1; tnl$i < Math.min(tnl$st.length, 8); tnl$i++) {
+                        tnl$sb.append(" | ").append(tnl$st[tnl$i].getClassName()).append('.')
+                             .append(tnl$st[tnl$i].getMethodName()).append(':').append(tnl$st[tnl$i].getLineNumber());
+                    }
+                    TinkersNewlife.LOGGER.warn(tnl$sb.toString());
                 }
                 if (this.renderer == null) {
                     this.renderer = StarBodyClient.instance();
