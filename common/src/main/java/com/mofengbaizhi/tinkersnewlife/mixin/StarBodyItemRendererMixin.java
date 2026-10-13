@@ -113,8 +113,12 @@ public class StarBodyItemRendererMixin {
                 vc.vertex(m, Float.intBitsToFloat(v[o]), Float.intBitsToFloat(v[o + 1]),
                         Float.intBitsToFloat(v[o + 2]));
                 vc.color(255, 255, 255, 255);
-                vc.uv(Float.intBitsToFloat(v[o + 4]), Float.intBitsToFloat(v[o + 5]));   // TNL966 \u2605\u56fe\u96c6\u539f\u59cb UV \u2713
-                vc.overlayCoords(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY);
+                vc.uv(Float.intBitsToFloat(v[o + 4]), Float.intBitsToFloat(v[o + 5]));
+                float lu = (Float.intBitsToFloat(v[o + 4]) - u0) * su;   // TNL968
+                float lv = (Float.intBitsToFloat(v[o + 5]) - v0) * sv;   // TNL966 \u2605\u56fe\u96c6\u539f\u59cb UV \u2713
+                // TNL968 local normalised uv rides in UV1
+                vc.overlayCoords((int) (Math.max(0.0F, Math.min(1.0F, lu)) * 65535.0F),
+                                 (int) (Math.max(0.0F, Math.min(1.0F, lv)) * 65535.0F));
                 vc.uv2(light);
                 vc.normal(n, 0.0F, 1.0F, 0.0F);
                 vc.endVertex();
