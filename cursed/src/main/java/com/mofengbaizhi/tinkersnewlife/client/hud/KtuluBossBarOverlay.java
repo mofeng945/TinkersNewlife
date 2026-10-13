@@ -39,6 +39,13 @@ public class KtuluBossBarOverlay {
     private static String tnl$name = null;
 
     @SubscribeEvent
+    public static void onClientTick(net.minecraftforge.event.TickEvent.ClientTickEvent event) {
+        if (event.phase == net.minecraftforge.event.TickEvent.Phase.END) {
+            KtuluName.clientTick();      // TNL916 \u2605\u771f\u540d\u6982\u7387/\u4e71\u7801\u6eda\u52a8 \u2713
+        }
+    }
+
+    @SubscribeEvent
     public static void onBossBar(CustomizeGuiOverlayEvent.BossEventProgress event) {
         try {
             BossEvent be = event.getBossEvent();
@@ -52,7 +59,17 @@ public class KtuluBossBarOverlay {
                 return;
             }
             event.setCanceled(true);                 // \u2605\u5c4f\u853d\u539f\u7248\u6761 \u2713
-            draw(event.getGuiGraphics(), event.getX(), event.getY(), be.getProgress());
+            // TNL916 \u2605\u2605 \u7528\u6237\u53e3\u5f84\uff1a\u2605"\u628a\u8840\u6761\u6574\u4f53\u4e0b\u79fb\u4e00\u70b9\u7136\u540e\u5728\u4e0a\u65b9\u6e32\u67d3 boss \u7684\u540d\u5b57" \u2713
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            int screenW = mc.getWindow().getGuiScaledWidth();
+            int barY = event.getY() + 8;              // \u2605\u6574\u4f53\u4e0b\u79fb 8px \u2713
+            draw(event.getGuiGraphics(), event.getX(), barY, be.getProgress());
+            // \u2605\u540d\u5b57\uff08\u2605\u753b\u5728\u8840\u6761\u4e0a\u65b9 \u2713\uff09
+            net.minecraft.network.chat.Component name = KtuluName.build();
+            int nameW = mc.font.width(name);
+            event.getGuiGraphics().drawString(mc.font, name, screenW / 2 - nameW / 2,
+                    event.getY() - 6, 0xFFFFFF);
+            event.setIncrement(28);                   // \u2605\u544a\u8bc9\u539f\u7248"\u6211\u5360\u591a\u9ad8" \u2713
         } catch (Throwable ignored) {
         }
     }
