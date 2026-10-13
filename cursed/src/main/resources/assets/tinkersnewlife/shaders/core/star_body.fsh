@@ -17,7 +17,8 @@ uniform float CamPitch;
 in vec2 vUv;
 in vec4 vColor;
 in vec2 vLight;
-in vec3 vView;         // TNL965 \u2605\u89c6\u56fe\u7a7a\u95f4\u4f4d\u7f6e \u2713
+in vec3 vView;
+in vec2 vLocalUv;         // TNL965 \u2605\u89c6\u56fe\u7a7a\u95f4\u4f4d\u7f6e \u2713
 
 out vec4 fragColor;
 
@@ -75,7 +76,7 @@ void main() {
         sy * cp + vView.x * 0.8,
         -sp + vView.y * 0.8,
         cy * cp + 1.0e-3));
-    vec2 suv = dir.xy * 1.6 + vec2(0.5);
+    vec2 suv = vLocalUv + vec2(sy * cp, -sp) * 0.45;   // TNL968 local uv + camera pan
     vec4 tex = texture(Sampler0, uv);
     if (tex.a < 0.08) {
         discard;
