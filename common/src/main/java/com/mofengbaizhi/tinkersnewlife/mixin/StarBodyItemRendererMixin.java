@@ -60,23 +60,12 @@ public class StarBodyItemRendererMixin {
             pose.pushPose();
             BakedModel baked = ForgeHooksClient.handleCameraTransforms(pose, model, context, leftHand);
 
-            RenderType base = ItemBlockRenderTypes.getRenderType(stack, true);
-            if (source != null) {
-                source.endBatch();                                    // \u2605\u2460 \u5199\u524d\u5237 \u2713
-            }
-            List<BakedQuad> quads = emitAll(baked, pose, buffers.getBuffer(base), light);
-            if (source != null) {
-                source.endBatch(base);                                // \u2605\u2461 \u5199\u540e\u5237 \u2713
-            }
-            // TNL960 \u2605\u2605 \u628a sprite \u7684\u56fe\u96c6 UV \u8303\u56f4\u5582\u7ed9\u7740\u8272\u5668 \u2713
-            var spr = baked.getParticleIcon();
-            if (spr != null) {
-                com.mofengbaizhi.tinkersnewlife.client.render.StarBodyClient.setUvRemap(
-                        spr.getU0(), spr.getV0(),
-                        1.0F / Math.max(1.0E-4F, spr.getU1() - spr.getU0()),
-                        1.0F / Math.max(1.0E-4F, spr.getV1() - spr.getV0()));
-            }
-            emitAll(baked, pose, buffers.getBuffer(rt), light);
+            // TNL961 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u906e\u7f69\u4e0a\u53bb\u4e86\u4f46\u662f\u7269\u54c1\u98de\u4e86" \u2713
+            //   \u2605\u771f\u56e0 \u2717\uff1a\u2605\u6211\u628a**\u57fa\u7840\u5c42 \u002b \u661f\u7a7a\u5c42\u753b\u4e86\u4e24\u904d** \u2717
+            //     \u21d2 \u2605\u540c\u4e00\u51e0\u4f55\u4e24\u6b21\u5199\u5165 \u21d2 \u2605\u6df1\u5ea6/\u6279\u6b21\u9519\u4f4d \u21d2 \u2605\u770b\u8d77\u6765\u201c\u98de\u4e86\u201d \u2713
+            //   \u2605\u73b0\u5728\uff1a\u2605\u53ea\u753b**\u661f\u7a7a\u5c42** \u2713 \u2014\u2014
+            //     \u2605\u7740\u8272\u5668\u672c\u8eab\u4f1a\u628a\u975e\u906e\u7f69\u533a\u539f\u6837\u8f93\u51fa \u2713\uff08\u2605\u5f62\u72b6\u4e0d\u4e22 \u2713\uff09
+            List<BakedQuad> quads = emitAll(baked, pose, buffers.getBuffer(rt), light);
             if (source != null) {
                 source.endBatch(rt);                                  // \u2605\u2462 \u5199\u540e\u5237 \u2713
             }
