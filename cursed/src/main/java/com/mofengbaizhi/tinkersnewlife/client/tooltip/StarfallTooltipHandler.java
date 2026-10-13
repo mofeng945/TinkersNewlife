@@ -26,19 +26,6 @@ public class StarfallTooltipHandler {
         return stack != null && stack.getItem() instanceof StarfallLamentItem;
     }
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void onColor(RenderTooltipEvent.Color event) {
-        try {
-            if (!mine(event.getItemStack())) {
-                return;
-            }
-            event.setBackground(0x00000000);     // \u2605\u900f\u660e\u80cc\u666f \u2713
-            event.setBorderStart(0x00000000);
-            event.setBorderEnd(0x00000000);
-        } catch (Throwable ignored) {
-        }
-    }
-
     /**
      * TNL898 \u2605\u2605 \u53ea\u7f6e\u65d7\u6807 \u2713 \u2014\u2014 \u2605\u661f\u7a7a\u7531\u6df7\u5165\u7528**\u539f\u7248\u7b97\u597d\u7684\u6846**\u753b \u2713
      *

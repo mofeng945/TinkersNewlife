@@ -23,15 +23,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(TooltipRenderUtil.class)
 public class TooltipRenderMixin {
 
-    @Inject(method = "m_280205_", at = @At("HEAD"), remap = false)
+    @Inject(method = "m_280205_", at = @At("TAIL"), remap = false)
     private static void tinkersnewlife$starfield$std(GuiGraphics g, int x, int y, int width, int height,
                                                      int z, CallbackInfo ci) {
-        tinkersnewlife$starfield(g, x, y, width, height);
-    }
-
-    @Inject(method = "m_280115_", at = @At("HEAD"), remap = false)
-    private static void tinkersnewlife$starfield$colored(GuiGraphics g, int x, int y, int width, int height,
-                                                         int z, int bg, int bs, int be, CallbackInfo ci) {
         tinkersnewlife$starfield(g, x, y, width, height);
     }
 
