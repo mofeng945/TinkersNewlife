@@ -20,11 +20,19 @@ public final class StarfieldPainter {
 
     /** \u2605\u5728 (x,y,w,h) \u533a\u57df\u91cc\u753b\u661f\u7a7a\uff08\u2605\u6bcf\u5e27\u8c03\u7528 \u21d2 \u2605\u4f1a\u52a8 \u2713\uff09 */
     public static void draw(GuiGraphics g, int x, int y, int w, int h) {
+
+        // TNL925 \u2605\u2605 \u7528\u6237\u53e3\u5f84\uff1a\u2605"\u6211\u4e0d\u662f\u8ba9\u4f60\u628a\u7269\u54c1\u63d0\u793a\u6846\u80cc\u666f\u5f80\u4e0a\u62c9\uff0c
+        //   \u6211\u662f\u8ba9\u4f60\u628a**\u56fe\u5c42\u5f80\u4e0a\u63d0**\uff0c\u900f\u660e\u5ea6\u6539\u56de\u53bb" \u2713
+        //   \u2605\u505a\u6cd5 \u2713\uff1a\u2605\u5148\u94fa\u4e00\u5c42**\u4e0d\u900f\u660e**\u7684\u6df1\u7a7a\u5e95 \u2713
+        //     \u21d2 \u2605\u4e0b\u9762\u7684\u7269\u54c1\u683c\u88ab\u76d6\u4f4f \u2717
+        //   \u2605\u7136\u540e\u624d\u662f\u539f\u6765\u90a3\u5c42**\u534a\u900f\u660e**\u661f\u7a7a \u2713
+        //     \uff08\u2605\u661f\u4e91/\u661f\u70b9/\u8fb9\u6846\u5168\u4fdd\u7559 \u2713\uff09
+        g.fill(x, y, x + w, y + h, 0xFF06070E);
         if (w <= 0 || h <= 0) {
             return;
         }
         long t = System.currentTimeMillis();
-        g.fill(x, y, x + w, y + h, 0xFF080A12);            // \u2605\u6df1\u7a7a\u5e95 \u2713
+        g.fill(x, y, x + w, y + h, 0xF0080A12);            // \u2605\u6df1\u7a7a\u5e95 \u2713
         for (int i = 0; i < 3; i++) {                       // \u2605\u661f\u4e91\u5e26 \u2713
             int ny = y + (h * (i + 1)) / 4 + (int) (Math.sin(t / 3000.0 + i) * 2);
             g.fill(x + 2, ny, x + w - 2, ny + 1, 0x18283860);
