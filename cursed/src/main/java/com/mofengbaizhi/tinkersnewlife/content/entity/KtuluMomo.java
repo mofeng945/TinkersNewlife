@@ -197,7 +197,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             return;
         }
         long now = System.currentTimeMillis();
-        if (now - this.tnl$lastFlash < 250L) {
+        if (now - this.tnl$lastFlash < 60L) {
             return;
         }
         this.tnl$lastFlash = now;
