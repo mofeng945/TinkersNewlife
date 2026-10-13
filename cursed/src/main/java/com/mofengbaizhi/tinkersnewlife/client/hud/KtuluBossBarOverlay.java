@@ -59,17 +59,22 @@ public class KtuluBossBarOverlay {
 
     private static void draw(GuiGraphics g, int x, int y, float progress) {
         float p = Math.max(0.0F, Math.min(1.0F, progress));
-        // \u2605\u6846\u4f53\uff08\u2605\u6574\u5f20 256\u00d724 \u6309\u539f\u5c3a\u5bf8\u8d34 \u2713\uff09
-        g.blit(BAR, x - 28, y - 6, 0, 0, 256, 24);
-        // \u2605\u6b63\u8138\uff08\u2605\u76ae\u80a4\u8138\u90e8 8\u00d78 \u4f4d\u4e8e (8,8) \u2713\uff09
-        g.blit(SKIN, x - 24, y - 4, 20, 20, 8.0F, 8.0F, 8, 8, 64, 64);
 
-        int bx = x + 2;
-        int by = y + 4;
-        int bw = 176;
-        int bh = 8;
-        g.fill(bx - 1, by - 1, bx + bw + 1, by + bh + 1, 0xC0000000);      // \u2605\u69fd\u5e95 \u2713
-        int fillW = (int) (bw * p);
+        // TNL902 \u2605\u2605 \u5bf9\u9f50\u7528\u6237\u8d34\u56fe\uff08\u2605\u5df2\u7528\u811a\u672c\u91cf\u51fa\u69fd\u4f4d \u2713\uff09
+        //   \u2605\u8d34\u56fe 256\u00d724 \u7684\u5e03\u5c40\uff08\u2605\u5217\u5e73\u5747\u6d4b\u51fa \u2713\uff09\uff1a
+        //     \u2605x   0~ 31 \uff1a**\u58a8\u9ed8\u6b63\u8138**\uff08\u2605\u7528\u6237\u81ea\u5df2\u753b\u597d \u2713\uff09
+        //     \u2605x  34~207 \uff1a**\u8840\u6761\u69fd**\uff08\u2605\u5bbd 174 \u2713\uff09
+        //     \u2605x 208~255 \uff1a\u53f3\u7aef\u76d6 \u2713
+        //   \u2605\u884c\uff1a y1~4 \u4e0a\u8fb9\u6846 \u2713\uff0c y5~18 **\u69fd\u5185**\uff08\u2605\u9ad8 14 \u2713\uff09\uff0c y19~23 \u4e0b\u8fb9\u6846 \u2713
+        int tx = x - 30;      // \u2605\u8d34\u56fe\u5de6\u4e0a\u89d2 \u2713
+        int ty = y - 6;
+        g.blit(BAR, tx, ty, 0, 0, 256, 24);
+
+        int fx = tx + 34;     // \u2605\u69fd\u5de7\u5408\u8d34\u56fe\u5185\u90e8 \u2713
+        int fy = ty + 5;
+        int fw = 174;
+        int fh = 14;
+        int fillW = (int) (fw * p);
         if (fillW > 0) {
             // \u2605\u7070\u5ea6\u968f\u8840\u91cf\uff1a\u2605\u6ee1\u8840\u7eaf\u767d \u2192 \u2605\u6b8b\u8840\u6df1\u7070 \u2713
             int gray = (int) (255.0F * (0.35F + 0.65F * p));
@@ -77,29 +82,27 @@ public class KtuluBossBarOverlay {
                 gray = 255;
             }
             int col = 0xFF000000 | (gray << 16) | (gray << 8) | gray;
-            g.fill(bx, by, bx + fillW, by + bh, col);
+            g.fill(fx, fy, fx + fillW, fy + fh, col);
 
             long t = System.currentTimeMillis();
             // \u2605\u6d41\u52a8\u9ad8\u5149\u626b\u8fc7 \u2713
             int span = 56;
-            int off = (int) ((t / 10L) % (bw + span)) - span;
-            int gx0 = Math.max(bx, bx + off);
-            int gx1 = Math.min(bx + fillW, bx + off + span);
+            int off = (int) ((t / 10L) % (fw + span)) - span;
+            int gx0 = Math.max(fx, fx + off);
+            int gx1 = Math.min(fx + fillW, fx + off + span);
             if (gx1 > gx0) {
-                g.fill(gx0, by, gx1, by + bh, 0x50FFFFFF);
+                g.fill(gx0, fy, gx1, fy + fh, 0x50FFFFFF);
+                g.fill(gx0, fy, gx1, fy + 2, 0x30FFFFFF);
             }
             // \u2605\u661f\u70b9\u95ea\u70c1 \u2713
-            for (int i = 0; i < 26; i++) {
+            for (int i = 0; i < 30; i++) {
                 long seed = (i + 1) * 2654435761L;
-                int sx = bx + (int) Math.floorMod((seed >>> 9) % Math.max(1, fillW), Math.max(1, fillW));
-                int sy = by + (int) ((seed >>> 17) % bh);
+                int sx = fx + (int) Math.floorMod((seed >>> 9) % Math.max(1, fillW), Math.max(1, fillW));
+                int sy = fy + (int) ((seed >>> 17) % fh);
                 double tw = (Math.sin(t / 460.0 + i * 1.3) + 1.0) / 2.0;
-                int a = (int) (30 + 130 * tw);
+                int a = (int) (30 + 140 * tw);
                 g.fill(sx, sy, sx + 1, sy + 1, (a << 24) | 0xFFFFFF);
             }
         }
-        // \u2605\u4e0a\u4e0b\u767d\u7070\u7ec6\u8fb9 \u2713
-        g.fill(bx, by - 1, bx + bw, by, 0x60FFFFFF);
-        g.fill(bx, by + bh, bx + bw, by + bh + 1, 0x60FFFFFF);
     }
 }
