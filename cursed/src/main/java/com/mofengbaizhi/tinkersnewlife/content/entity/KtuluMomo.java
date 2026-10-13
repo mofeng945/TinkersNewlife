@@ -166,6 +166,15 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             return false;
         }
         boolean tnl$hurt = super.hurt(source, amount);
+        // TNL913 \u2605\u2605 \u63a2\u9488\uff1a\u2605\u95f8\u95e8\u653e\u884c\u4f46 super.hurt \u8fd4\u56de false \u2717
+        //   \u2605\u8bf4\u660e\u662f**\u539f\u7248 invulnerableTime**\u5728\u62e6 \u2717\uff08\u2605\u4e0d\u662f\u6211\u4eec\u7684\u7a97 \u2713\uff09
+        //   \u2605\u7528\u6237\u53e3\u5f84\uff1a\u2605"\u514d\u75ab\u7a97\u7591\u4f3c\u53d8\u4e3a 2 \u500d\uff0c\u540e 1.5s \u65e0\u6cd5\u63a5\u7ba1" \u2713
+        if (!tnl$hurt && System.currentTimeMillis() - tnl$lastVanillaLog > 800L) {
+            tnl$lastVanillaLog = System.currentTimeMillis();
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                    "TNL913 vanilla blocked: msgId={}, invulnerableTime={}, ourGate={}, state={}",
+                    source.getMsgId(), this.invulnerableTime, gate, a.qC(this));
+        }
         this.tnl$auth = a.qF(this);   // TNL876 \u2605\u53d7\u4f24\u540e\u5237\u65b0\u7f13\u5b58 \u2713
         if (this.tnl$auth <= 0.0F || this.isDeadOrDying()) {
             this.tnl$dead = true;     // TNL893 \u2605\u8fd9\u4e00\u51fb\u771f\u7684\u6253\u6b7b\u4e86 \u21d2 \u2605\u4e0d\u518d\u56de\u5f39 \u2713
@@ -191,6 +200,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
 
     /** TNL907 \u2605\u514d\u75ab\u7a97\u6321\u4e0b \u21d2 \u2605\u901a\u77e5\u5468\u56f4\u73a9\u5bb6\u8ba9\u8840\u6761\u95ea\u91d1 \u2713\uff08\u2605\u9650\u6d41 250ms \u2713\uff09 */
     private long tnl$lastFlash = 0L;
+    private long tnl$lastVanillaLog = 0L;
 
     public void tnl$shieldFlash() {
         if (this.level().isClientSide) {
