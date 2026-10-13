@@ -204,12 +204,16 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         if (this.level() instanceof net.minecraft.server.level.ServerLevel sl) {
             com.mofengbaizhi.tinkersnewlife.network.starfall.PacketKtuluShieldFlash pkt =
                     new com.mofengbaizhi.tinkersnewlife.network.starfall.PacketKtuluShieldFlash();
+            int sent = 0;
             for (net.minecraft.server.level.ServerPlayer sp : sl.players()) {
                 if (sp.distanceToSqr(this) < 64.0D * 64.0D) {
                     com.mofengbaizhi.tinkersnewlife.TinkersNewlife.CHANNEL.send(
                             net.minecraftforge.network.PacketDistributor.PLAYER.with(() -> sp), pkt);
+                    sent++;
                 }
             }
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                    "TNL908 server sent shield flash to {} players", sent);
         }
     }
 
