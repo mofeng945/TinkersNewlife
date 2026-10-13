@@ -336,6 +336,13 @@ public final class a {
             } else {
                 gg = V[s0] > 0 ? 0L : want;
             }
+            // TNL911 \u2605\u2605 \u5173\u952e\uff1a\u2605\u95f8\u95e8\u8fd4\u56de 0 \u4e14\u7a97\u8fd8\u5728 \u21d2 \u2605\u5c31\u662f"\u88ab\u6321\u4e0b" \u2713
+            //   \u2605\u7528\u6237\u65e5\u5fd7\u8bc1\u636e\uff1a\u2605[GATE] gate=0.0 jInv=12/16/19 \u2713
+            //   \u2605\u800c\u65e7\u5199\u6cd5\u628a\u7f6e\u4f4d\u9519\u63d2\u5728\u4e86 q9 \u91cc \u2717
+            //     \u21d2 \u2605\u7a97\u5185\u6321\u5200\uff08\u2605\u8d70 q2 \u2717\uff09\u65f6\u6807\u5fd7\u6c38\u8fdc\u4e0d\u4eae \u2717
+            if (gg <= 0L && V[s0] > 0) {
+                BLOCKED = true;
+            }
             return m1(gg);
         } catch (Throwable t2) {
             return 0.0F;
@@ -650,11 +657,11 @@ public final class a {
             if (mob instanceof com.mofengbaizhi.tinkersnewlife.content.entity.KtuluMomo km && km.tnl$isDead()) {
                 return value;
             }
-            BLOCKED = true;                        // TNL907 \u2605\u8d70\u5230 qD \u5c31\u662f\u88ab\u62e6\u4e86 \u2713
             int s0 = k(mob);
             if (V[s0] <= 0) {
                 return value;                     // \u2605\u7a97\u5916\u4e0d\u5e72\u9884 \u2713
             }
+            // TNL911 \u2605\u53ea\u6709**\u771f\u7684\u628a\u503c\u62e6\u4e0b\u6765**\u624d\u7f6e\u4f4d \u2713
             long auth = N ? h(s0) : rA(s0);
             if (auth < 0L) {
                 auth = b.get(s0);
@@ -669,6 +676,7 @@ public final class a {
                     com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
                             "TNL874 setHealth blocked in window: want={} -> auth={}", m1(want), m1(auth));
                 }
+                BLOCKED = true;                    // TNL911 \u2605\u771f\u7684\u62e6\u4e0b\u4e86 \u2713
                 return m1(auth);
             }
             return value;
