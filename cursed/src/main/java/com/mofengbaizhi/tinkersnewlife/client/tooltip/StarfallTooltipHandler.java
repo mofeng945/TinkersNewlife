@@ -59,7 +59,9 @@ public class StarfallTooltipHandler {
             }
             int x = event.getX();
             int y = event.getY();
-            StarfieldPainter.draw(event.getGraphics(), x - 3, y - 4, width + 6, height + 8);
+            // TNL924 \u2605\u7528\u6237\u53e3\u5f84\uff1a\u2605"\u628a y \u8c03\u9ad8\u4e00\u70b9\u522b\u8ba9\u7269\u54c1\u6e32\u67d3\u5728\u5de5\u5177\u63d0\u793a\u80cc\u666f\u4e0a" \u2713
+            //   \u2605\u4e0a\u8fb9\u518d\u63d0 2px \u2713\uff0c\u2605\u4e0b\u8fb9\u4e5f\u591a\u8865 2px \u2713\uff08\u2605\u4fdd\u8bc1\u4e0b\u884c\u6587\u5b57\u4ecd\u5728\u80cc\u666f\u5185 \u2713\uff09
+            StarfieldPainter.draw(event.getGraphics(), x - 3, y - 6, width + 6, height + 10);
         } catch (Throwable ignored) {
         }
     }

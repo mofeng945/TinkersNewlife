@@ -24,7 +24,7 @@ public final class StarfieldPainter {
             return;
         }
         long t = System.currentTimeMillis();
-        g.fill(x, y, x + w, y + h, 0xF0080A12);            // \u2605\u6df1\u7a7a\u5e95 \u2713
+        g.fill(x, y, x + w, y + h, 0xFF080A12);            // \u2605\u6df1\u7a7a\u5e95 \u2713
         for (int i = 0; i < 3; i++) {                       // \u2605\u661f\u4e91\u5e26 \u2713
             int ny = y + (h * (i + 1)) / 4 + (int) (Math.sin(t / 3000.0 + i) * 2);
             g.fill(x + 2, ny, x + w - 2, ny + 1, 0x18283860);
