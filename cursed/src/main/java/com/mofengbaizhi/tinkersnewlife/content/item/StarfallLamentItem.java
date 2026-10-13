@@ -183,6 +183,30 @@ public class StarfallLamentItem extends BowItem {
         tip.add(buildFlowGradient(net.minecraft.network.chat.Component.translatable(
                 "item.tinkersnewlife.starfall_lament.tooltip_author"))
                 .copy().withStyle(net.minecraft.ChatFormatting.ITALIC));
+        // TNL939 \u2605\u2605 \u7528\u6237\u53e3\u5f84\uff1a\u2605"\u53ea\u9700\u8981\u8010\u4e45\u548c\u9644\u9b54\u6309\u539f\u7248\u663e\u793a\uff0c\u5176\u4ed6\u4e0d\u7ba1" \u2713
+        //   \u2605\u8010\u4e45\uff1a\u2605\u7528**\u539f\u7248\u540c\u4e00\u4e2a\u7ffb\u8bd1\u952e** ``item.durability`` \u2713
+        //     \uff08\u2605\u6240\u4ee5\u6587\u6848/\u989c\u8272\u4e0e\u539f\u7248\u5de5\u5177**\u5b8c\u5168\u4e00\u81f4** \u2713\uff09
+        //   \u2605\u4e0d\u91cd\u590d\uff1a\u2605\u5148\u770b\u539f\u7248\u662f\u4e0d\u662f\u5df2\u7ecf\u52a0\u8fc7\u540c\u4e00\u952e \u2713
+        //     \uff08\u2605\u539f\u7248\u5728\u7269\u54c1\u53d7\u635f\u65f6\u4f1a\u81ea\u5e26\u4e00\u884c \u2713\uff09
+        //   \u2605\u9644\u9b54\uff1a\u2605\u539f\u7248\u81ea\u5e26\uff08\u2605``ItemStack#getTooltipLines`` \u91cc\u52a0 \u2713\uff09
+        //     \u21d2 \u2605\u4e0d\u9700\u8981\u6211\u4eec\u52a8 \u2717\uff0c\u2605\u4e5f\u4e0d\u80fd\u91cd\u590d\u52a0 \u2713\u3002
+        boolean tnl$hasDur = false;
+        for (net.minecraft.network.chat.Component tnl$c : tip) {
+            if (tnl$c.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents tnl$tc
+                    && "item.durability".equals(tnl$tc.getKey())) {
+                tnl$hasDur = true;
+                break;
+            }
+        }
+        if (!tnl$hasDur && stack.getMaxDamage() > 0) {
+            int tnl$left = stack.getMaxDamage() - stack.getDamageValue();
+            int tnl$max = stack.getMaxDamage();
+            net.minecraft.ChatFormatting tnl$col = tnl$left > tnl$max * 0.65 ? net.minecraft.ChatFormatting.GREEN
+                    : (tnl$left > tnl$max * 0.25 ? net.minecraft.ChatFormatting.YELLOW
+                    : net.minecraft.ChatFormatting.RED);
+            tip.add(net.minecraft.network.chat.Component.translatable("item.durability", tnl$left, tnl$max)
+                    .withStyle(tnl$col));
+        }
     }
 
     @Override
