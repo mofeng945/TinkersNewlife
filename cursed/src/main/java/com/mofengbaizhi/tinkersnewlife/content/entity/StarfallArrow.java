@@ -187,11 +187,29 @@ public class StarfallArrow extends AbstractArrow {
         super.remove(reason);
     }
 
+    /** TNL881 \u2605Boss \u5224\u5b9a\uff08\u2605\u6539\u6210\u6807\u7b7e\u5224\u5b9a \u2713\uff09
+     *
+     * <p>\u2605\u7528\u6237\u53cd\u9988\uff1a\u2605"\u4e3a\u4ec0\u4e48\u5047\u4eba\u4e5f\u7b97 boss \u751f\u7269" \u2713
+     * \u21d2 \u2605\u56e0\u4e3a\u65e7\u5199\u6cd5\u662f"\u751f\u547d\u4e0a\u9650 \u2265 200 \u5c31\u7b97 Boss" \u2717\uff08\u5047\u4eba/\u8bad\u7ec3\u6728\u4eba\u4e5f\u4f1a\u4e2d\u62db \u2717\uff09\u3002
+     *
+     * <p>\u2605\u73b0\u5728\uff1a\u2605\u539f\u7248 Boss \u7c7b \u002b \u2605\u6570\u636e\u6807\u7b7e
+     * {@code tinkersnewlife:bosses} \u2713\uff08\u2605\u8def\u5f84\uff1a
+     * {@code data/tinkersnewlife/tags/entity_types/bosses.json} \u2713
+     * \u21d2 \u2605\u4f60\u60f3\u52a0\u54ea\u4e2a Boss \u76f4\u63a5\u5f80\u91cc\u9762\u6dfb \u2713\uff09\u3002
+     */
+    private static final net.minecraft.tags.TagKey<net.minecraft.world.entity.EntityType<?>> TNL$BOSSES =
+            net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ENTITY_TYPE,
+                    new net.minecraft.resources.ResourceLocation("tinkersnewlife", "bosses"));
+
     public static boolean tnl$isBoss(Entity e) {
-        if (e instanceof EnderDragon || e instanceof WitherBoss || e instanceof Warden || e instanceof KtuluMomo) {
+        if (e instanceof EnderDragon || e instanceof WitherBoss || e instanceof KtuluMomo) {
             return true;
         }
-        return e instanceof LivingEntity le && le.getMaxHealth() >= 200.0F;
+        try {
+            return e.getType().is(TNL$BOSSES);
+        } catch (Throwable th) {
+            return false;
+        }
     }
 
     @Override
