@@ -272,7 +272,13 @@ public class StarfallArrow extends AbstractArrow {
             }
         }
         boolean enh = this.tnl$isEnhanced();
-        float dmg = tnl$isBoss(target) ? target.getMaxHealth() * 0.03F : 16.0F;   // TNL882 \u2605\u975e Boss 16 \u2713 \u2605Boss 3% \u2713
+        // TNL932 \u2605\u2605 \u7528\u6237\u53e3\u5f84\uff08\u4fee\u6539\u4f24\u5bb3\uff09\uff1a
+        //   \u2605Boss \u751f\u7269 \u21d2 \u2605\u6bcf\u7bad**\u56fa\u5b9a 3% \u4e0a\u9650\u771f\u4f24** \u2713
+        //   \u2605\u975e Boss \u21d2 \u2605\u6bcf\u7bad**\u56fa\u5b9a 10% \u751f\u547d\u4e0a\u9650\u771f\u4f24** \u2713
+        //     \u2605\u4f46**\u4e0d\u5f97\u4f4e\u4e8e 16** \u2713\uff08\u2605\u4f4e\u4e8e\u5c31\u76f4\u63a5\u7b97 16 \u2713\uff09
+        float dmg = tnl$isBoss(target)
+                ? target.getMaxHealth() * 0.03F
+                : Math.max(16.0F, target.getMaxHealth() * 0.10F);   // TNL882 \u2605\u975e Boss 16 \u2713 \u2605Boss 3% \u2713
         if (enh) {
             dmg *= 2.0F;
         }
