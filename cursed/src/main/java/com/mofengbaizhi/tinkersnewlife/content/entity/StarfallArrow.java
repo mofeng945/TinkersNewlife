@@ -291,6 +291,11 @@ public class StarfallArrow extends AbstractArrow {
             return;
         }
         this.tnl$hits.add(target);
+        // TNL935 \u2605\u2605 \u63a2\u9488\uff1a\u2605\u770b"\u7b2c\u4e8c\u6b21\u547d\u4e2d\u6709\u6ca1\u6709\u8fdb\u6765" \u2713
+        com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                "TNL935 hit #{} target={} pierceLeft={} inGround={} removed={}",
+                this.tnl$hits.size(), target.getName().getString(),
+                this.entityData.get(DATA_PIERCE), this.inGround, this.isRemoved());
         // TNL933 \u2605\u706b\u77e2\uff1a\u2605\u547d\u4e2d\u70b9\u706b 5 \u79d2 \u2713
         if (this.entityData.get(DATA_FLAME)) {
             target.setSecondsOnFire(5);
@@ -353,6 +358,10 @@ public class StarfallArrow extends AbstractArrow {
         int pierce = this.entityData.get(DATA_PIERCE);
         if (pierce > 0) {
             this.entityData.set(DATA_PIERCE, pierce - 1);
+            // TNL935 \u2605\u2605 \u4fee\u6b63\uff1a\u2605\u786e\u4fdd\u5b83**\u771f\u7684\u7ee7\u7eed\u98de** \u2713
+            this.inGround = false;
+            this.hasImpulse = true;
+            this.pickup = AbstractArrow.Pickup.DISALLOWED;
         } else {
             this.discard();
         }
