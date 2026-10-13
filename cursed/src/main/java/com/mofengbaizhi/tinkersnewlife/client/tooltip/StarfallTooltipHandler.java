@@ -40,56 +40,16 @@ public class StarfallTooltipHandler {
     }
 
     /**
-     * TNL896 \u2605\u2605 \u661f\u7a7a\u6846\u7684**\u4f4d\u7f6e\u4fee\u6b63** \u2713
+     * TNL898 \u2605\u2605 \u53ea\u7f6e\u65d7\u6807 \u2713 \u2014\u2014 \u2605\u661f\u7a7a\u7531\u6df7\u5165\u7528**\u539f\u7248\u7b97\u597d\u7684\u6846**\u753b \u2713
      *
-     * <p>\u2605\u7528\u6237\u622a\u56fe\u53cd\u9988\uff1a\u2605"\u661f\u7a7a\u5757\u8dd1\u5230\u9f20\u6807\u90a3\u8fb9\u53bb\u4e86" \u2713
-     * \u2605\u6839\u56e0 \u2717\uff1a{@code RenderTooltipEvent.Pre} \u7ed9\u7684 ``x/y`` \u662f**\u9f20\u6807\u5750\u6807** \u2717
-     * \uff08\u2605\u4e0d\u662f\u63d0\u793a\u6846\u5de6\u4e0a\u89d2 \u2717\uff09\u3002
-     *
-     * <p>\u2605\u73b0\u5728\uff1a\u2605\u7167**\u539f\u7248 ``renderTooltipInternal``**\u7684\u903b\u8f91\u81ea\u5df1\u7b97 \u2713\uff1a
-     * <pre>
-     *   x = mouseX + 12;  y = mouseY - 12;
-     *   if (x + w &gt; screenW) x -= 28 + w;              // \u2605\u9760\u53f3\u8fb9 \u21d2 \u7ffb\u5230\u9f20\u6807\u5de6\u4fa7 \u2713
-     *   if (y + h + 6 &gt; screenH) y = screenH - h - 6;   // \u2605\u9760\u4e0b\u8fb9 \u21d2 \u5411\u4e0a\u8d34 \u2713
-     * </pre>
-     * \u2605\u5bbd\u9ad8\u4e5f\u6539\u6210\u5148\u6309\u5c4f\u5bbd**\u6362\u884c**\u518d\u7b97 \u2713\uff08\u2605\u957f\u5f15\u6587\u4f1a\u6362\u884c \u2717\uff09\u3002
+     * <p>\u2605\u4e4b\u524d\u81ea\u5df1\u7b97\u884c\u6570/\u5b57\u5bbd\u7684\u5199\u6cd5\uff08\u2605\u53d7\u201c\u9ad8\u7ea7\u63d0\u793a\u201d\u5f00\u5173\u5f71\u54cd \u2717\uff09\u5df2\u5e9f\u5f03 \u2713\u3002
      */
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onPre(RenderTooltipEvent.Pre event) {
         try {
-            if (!mine(event.getItemStack())) {
-                return;
-            }
-            net.minecraft.client.gui.Font font = event.getFont();
-            // TNL897 \u2605\u2605 \u884c\u6570\u4fee\u6b63\uff1a\u2605\u5fc5\u987b\u8ddf\u539f\u7248\u4e00\u6837\u5224\u65ad"\u9ad8\u7ea7\u63d0\u793a" \u2713
-            //   \u2605\u7528\u6237\u622a\u56fe\uff1a\u2605\u661f\u7a7a\u6761**\u53ea\u76d6\u4f4f\u524d\u4e24\u884c** \u2717
-            //   \u2605\u56e0\u4e3a\u539f\u7248\u5f00\u4e86 F3+H \u540e\u4f1a\u591a\u51fa id/NBT \u884c \u2717
-            //   \u2605\u800c\u6211\u7528 NORMAL \u53d6\u884c \u21d2 \u2605\u5c11\u7b97\u4e86\u51e0\u884c \u2713
-            boolean tnl$adv = net.minecraft.client.Minecraft.getInstance().options.advancedItemTooltips;
-            net.minecraft.world.item.TooltipFlag tnl$flag = tnl$adv
-                    ? net.minecraft.world.item.TooltipFlag.Default.ADVANCED
-                    : net.minecraft.world.item.TooltipFlag.Default.NORMAL;
-            java.util.List<net.minecraft.network.chat.Component> lines = event.getItemStack().getTooltipLines(
-                    net.minecraft.client.Minecraft.getInstance().player, tnl$flag);
-            java.util.List<net.minecraft.util.FormattedCharSequence> wrapped = new java.util.ArrayList<>();
-            for (net.minecraft.network.chat.Component c : lines) {
-                wrapped.addAll(font.split(c, Math.max(60, event.getScreenWidth() - 60)));
-            }
-            int w = 0;
-            for (net.minecraft.util.FormattedCharSequence t : wrapped) {
-                w = Math.max(w, font.width(t));
-            }
-            int h = Math.max(10, wrapped.size() * 10);
-            int x = event.getX() + 12;
-            int y = event.getY() - 12;
-            if (x + w > event.getScreenWidth()) {
-                x -= 28 + w;
-            }
-            if (y + h + 6 > event.getScreenHeight()) {
-                y = event.getScreenHeight() - h - 6;
-            }
-            StarfieldPainter.draw(event.getGraphics(), x - 3, y - 3, w + 6, h + 6);
+            StarfieldState.active = mine(event.getItemStack());
         } catch (Throwable ignored) {
+            StarfieldState.active = false;
         }
     }
 }
