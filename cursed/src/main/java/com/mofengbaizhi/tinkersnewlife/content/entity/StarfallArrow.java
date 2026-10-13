@@ -42,6 +42,19 @@ public class StarfallArrow extends AbstractArrow {
 
     private static final EntityDataAccessor<Float> DATA_SCALE =
             SynchedEntityData.defineId(StarfallArrow.class, EntityDataSerializers.FLOAT);
+    /** TNL933 \u2605\u529b\u91cf\u7b49\u7ea7\uff08\u2605\u6bcf\u7ea7 +10% \u4f24\u5bb3 \u2713\uff09 */
+    /** TNL933 \u2605\u5df2\u547d\u4e2d\u8fc7\u7684\u76ee\u6807\uff08\u2605\u7a7f\u900f\u7528 \u2713\uff09 */
+    private final java.util.List<net.minecraft.world.entity.Entity> tnl$hits = new java.util.ArrayList<>();
+
+    private static final EntityDataAccessor<Integer> DATA_POWER =
+            SynchedEntityData.defineId(StarfallArrow.class, EntityDataSerializers.INT);
+    /** TNL933 \u2605\u7a7f\u900f\u7b49\u7ea7\uff08\u2605\u8fd8\u80fd\u518d\u51fb\u4e2d\u51e0\u4e2a\u76ee\u6807 \u2713\uff09 */
+    private static final EntityDataAccessor<Integer> DATA_PIERCE =
+            SynchedEntityData.defineId(StarfallArrow.class, EntityDataSerializers.INT);
+    /** TNL933 \u2605\u706b\u77e2 \u2713 */
+    private static final EntityDataAccessor<Boolean> DATA_FLAME =
+            SynchedEntityData.defineId(StarfallArrow.class, EntityDataSerializers.BOOLEAN);
+
     private static final EntityDataAccessor<Boolean> DATA_ENHANCED =
             SynchedEntityData.defineId(StarfallArrow.class, EntityDataSerializers.BOOLEAN);
 
@@ -80,6 +93,9 @@ public class StarfallArrow extends AbstractArrow {
         super.defineSynchedData();
         this.entityData.define(DATA_SCALE, 1.0F);
         this.entityData.define(DATA_ENHANCED, false);
+        this.entityData.define(DATA_POWER, 0);
+        this.entityData.define(DATA_PIERCE, 0);
+        this.entityData.define(DATA_FLAME, false);
     }
 
     public void setArrowScale(float sc) {
@@ -88,6 +104,19 @@ public class StarfallArrow extends AbstractArrow {
 
     public float getArrowScale() {
         return this.entityData.get(DATA_SCALE);
+    }
+
+    /** TNL933 \u2605\u5916\u90e8\u8bbe\u7f6e\u529b\u91cf/\u7a7f\u900f/\u706b\u77e2 \u2713 */
+    public void tnl$setPower(int v) {
+        this.entityData.set(DATA_POWER, v);
+    }
+
+    public void tnl$setPierce(int v) {
+        this.entityData.set(DATA_PIERCE, v);
+    }
+
+    public void tnl$setFlame(boolean v) {
+        this.entityData.set(DATA_FLAME, v);
     }
 
     public boolean tnl$isEnhanced() {
@@ -257,6 +286,15 @@ public class StarfallArrow extends AbstractArrow {
         if (this.level().isClientSide) {
             return;
         }
+        // TNL933 \u2605\u7a7f\u900f\uff1a\u2605\u540c\u4e00\u4e2a\u76ee\u6807\u53ea\u6253\u4e00\u6b21 \u2713
+        if (this.tnl$hits.contains(target)) {
+            return;
+        }
+        this.tnl$hits.add(target);
+        // TNL933 \u2605\u706b\u77e2\uff1a\u2605\u547d\u4e2d\u70b9\u706b 5 \u79d2 \u2713
+        if (this.entityData.get(DATA_FLAME)) {
+            target.setSecondsOnFire(5);
+        }
         // \u2605\u547d\u4e2d\u7279\u6548\u5e7f\u64ad\uff08\u2605\u7167\u642c\u53c2\u8003 StarHitPacket \u2713\uff09
         if (this.level() instanceof ServerLevel sl) {
             Vec3 pos = this.position();
@@ -278,7 +316,8 @@ public class StarfallArrow extends AbstractArrow {
         //     \u2605\u4f46**\u4e0d\u5f97\u4f4e\u4e8e 16** \u2713\uff08\u2605\u4f4e\u4e8e\u5c31\u76f4\u63a5\u7b97 16 \u2713\uff09
         float dmg = tnl$isBoss(target)
                 ? target.getMaxHealth() * 0.03F
-                : Math.max(16.0F, target.getMaxHealth() * 0.10F);   // TNL882 \u2605\u975e Boss 16 \u2713 \u2605Boss 3% \u2713
+                : Math.max(16.0F, target.getMaxHealth() * 0.10F);
+        dmg *= 1.0F + 0.10F * this.entityData.get(DATA_POWER);   // TNL933 \u2605\u529b\u91cf\uff1a\u2605\u6bcf\u7ea7 +10% \u2713   // TNL882 \u2605\u975e Boss 16 \u2713 \u2605Boss 3% \u2713
         if (enh) {
             dmg *= 2.0F;
         }
@@ -310,7 +349,13 @@ public class StarfallArrow extends AbstractArrow {
             this.tnl$pinned = target;
             this.tnl$pinTicks = 100;
         }
-        this.discard();
+        // TNL933 \u2605\u7a7f\u900f\uff1a\u2605\u8fd8\u6709\u4f59\u989d\u5c31\u4e0d\u6d88\u5931 \u2713
+        int pierce = this.entityData.get(DATA_PIERCE);
+        if (pierce > 0) {
+            this.entityData.set(DATA_PIERCE, pierce - 1);
+        } else {
+            this.discard();
+        }
     }
 
     @Override
