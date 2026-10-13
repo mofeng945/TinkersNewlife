@@ -209,25 +209,25 @@ public class StarfallLamentItem extends BowItem {
         }
     }
 
-    /** TNL942 \u2605\u2605 \u6302\u4e0a\u81ea\u5df1\u7684 BEWLR\uff08\u2605\u7167\u53c2\u8003\u5b9e\u73b0\u7684\u8def\u5f84 \u2713\uff09 */
-    @Override
-    public void initializeClient(java.util.function.Consumer<net.minecraftforge.client.extensions.common.IClientItemExtensions> consumer) {
-        consumer.accept(com.mofengbaizhi.tinkersnewlife.client.render.StarBodyClient.extensions());
-    }
-
     /**
-     * TNL943 \u2605\u2605 \u5173\u952e \u2713\uff1a\u2605Forge \u53d6\u7269\u54c1\u5ba2\u6237\u7aef\u6269\u5c55\u8d70\u7684\u662f
-     * **``Item#getRenderPropertiesInternal()``** \u2713 \u2014\u2014
-     * \u2605\u6211\u7528 ``javap -c`` \u770b\u4e86 ``IClientItemExtensions.of(Item)`` \u7684\u5b57\u8282\u7801 \u2713\uff1a
-     * \u2605\u5b83\u7b2c\u4e00\u6b65\u5c31\u662f ``invokevirtual Item.getRenderPropertiesInternal`` \u2713\u3002
-     * \u21d2 \u2605\u76f4\u63a5\u8986\u5199\u5b83\u6700\u7a33 \u2713\uff08\u2605\u4e0d\u518d\u6307\u671b ``initializeClient`` \u88ab\u8c03 \u2717\uff09\u3002
-     * \u26a0 \u2605\u53ea\u4f1a\u5728**\u5ba2\u6237\u7aef**\u88ab\u8c03\u7528 \u2713\uff0c\u2605\u6240\u4ee5\u5f15\u7528\u5ba2\u6237\u7aef\u7c7b\u662f\u5b89\u5168\u7684 \u2713\u3002
+     * TNL945 \u2605\u2605 **\u7167\u6284\u53c2\u8003\u5b9e\u73b0**\u7684\u6302\u6cd5 \u2713
+     *
+     * <p>\u2605\u6211\u53cd\u7f16\u8bd1\u4e86 ``goeticlegacy`` \u7684 ``AnomalyBlockItem`` \u2713\uff0c
+     * \u2605\u5b83\u7684\u539f\u6587\u5c31\u662f \u2713\uff1a
+     * <pre>
+     * public void initializeClient(Consumer&lt;IClientItemExtensions&gt; consumer) {
+     *     super.initializeClient(consumer);          // \u2605\u2605 \u5c31\u662f\u8fd9\u4e00\u884c \u2717\u2605\u6211\u6f0f\u4e86 \u2713
+     *     consumer.accept(new IClientItemExtensions() { ... });
+     * }
+     * </pre>
+     * \u2605\u800c\u6211\u4e4b\u524d**\u6ca1\u8c03 super** \u2717 \u21d2 \u2605Forge \u5185\u90e8\u7684\u767b\u8bb0\u6ca1\u53d1\u751f \u2717
+     * \u21d2 \u2605``getCustomRenderer()`` \u6c38\u8fdc\u6ca1\u4eba\u95ee \u2717 \u21d2 \u2605``renderByItem`` \u4e00\u6b21\u90fd\u4e0d\u8dd1 \u2713\u2713
+     *\uff08\u2605\u65e5\u5fd7\u91cc ``TNL942`` \u96f6\u884c\u5c31\u662f\u8fd9\u4e2a\u539f\u56e0 \u2713\uff09\u3002
      */
     @Override
-    public Object getRenderPropertiesInternal() {
-        // ★TNL944 \u63a2\u9488\uff1a\u2605\u770b Forge \u5230\u5e95\u6709\u6ca1\u6709\u6765\u95ee\u8fd9\u4e2a\u94a9\u5b50 \u2713
-        com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL944 getRenderPropertiesInternal asked");
-        return com.mofengbaizhi.tinkersnewlife.client.render.StarBodyClient.extensions();
+    public void initializeClient(java.util.function.Consumer<net.minecraftforge.client.extensions.common.IClientItemExtensions> consumer) {
+        super.initializeClient(consumer);                          // \u2605\u2605 \u5173\u952e\uff01\u2713
+        consumer.accept(com.mofengbaizhi.tinkersnewlife.client.render.StarBodyClient.extensions());
     }
 
     @Override

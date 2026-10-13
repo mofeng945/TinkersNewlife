@@ -135,9 +135,14 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
     /** \u2605\u7ed9\u7269\u54c1\u7528\u7684\u6269\u5c55\uff08\u2605\u5c31\u50cf\u53c2\u8003\u5b9e\u73b0\u90a3\u6837\u6302 BEWLR \u2713\uff09 */
     public static IClientItemExtensions extensions() {
         return new IClientItemExtensions() {
+            private BlockEntityWithoutLevelRenderer renderer;      // \u2605\u5ef6\u8fdf\u521b\u5efa\uff08\u2605\u540c\u53c2\u8003 \u2713\uff09
+
             @Override
             public BlockEntityWithoutLevelRenderer getCustomRenderer() {
-                return StarBodyClient.instance();
+                if (this.renderer == null) {
+                    this.renderer = StarBodyClient.instance();
+                }
+                return this.renderer;
             }
         };
     }
