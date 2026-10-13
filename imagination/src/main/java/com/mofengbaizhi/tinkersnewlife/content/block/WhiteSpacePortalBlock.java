@@ -1,6 +1,8 @@
 package com.mofengbaizhi.tinkersnewlife.content.block;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.phys.shapes.CollisionContext;
 import com.mofengbaizhi.tinkersnewlife.content.ModItems;
 import com.mofengbaizhi.tinkersnewlife.content.portal.WhiteSpaceDimensions;
 import com.mofengbaizhi.tinkersnewlife.content.portal.WhiteSpacePortalResync;
@@ -132,6 +134,30 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
                 .setValue(HALF, DoubleBlockHalf.LOWER)
                 .setValue(FACING, Direction.NORTH)
                 .setValue(DARK, false));
+    }
+
+    /**
+     * TNL923 \u2605\u2605 \u7528\u6237\u53e3\u5f84\uff1a\u2605"\u6211\u8bb0\u5f97\u5730\u72f1\u95e8\u5224\u5b9a\u4f20\u9001\u8303\u56f4\u662f\u4e2a\u7247\u800c\u4e0d\u662f\u4e2a\u5757"
+     * \uff0b\u2605"\u4f20\u9001\u4e0d\u4e86\u4e86\uff0c\u800c\u4e14\u4e4b\u524d\u4e5f\u7ecf\u5e38\u51fa\u73b0\u4f20\u9001\u5224\u5b9a\u4e0d\u4e0a\u7684\u60c5\u51b5\uff0c\u5730\u72f1\u95e8\u662f\u600e\u4e48\u5904\u7406\u7684\uff1f" \u2713
+     *
+     * <p>\u2605\u539f\u7248\u5730\u72f1\u95e8\u7684\u505a\u6cd5 \u2713\uff08\u2605\u6211\u8fd9\u6b21\u7167\u6284 \u2713\uff09\uff1a
+     * \u2605``NetherPortalBlock#getShape`` \u8fd4\u56de\u7684\u5c31\u662f**\u90a3\u4e00\u7247** \u2713
+     * \uff08\u2605\u53ea\u6709 4/16 \u539a \u2713\uff0c\u2605\u65b9\u5411\u7531\u8f74\u51b3\u5b9a \u2713\uff09\uff1b
+     * \u2605\u800c ``entityInside`` \u662f\u2605**\u5b9e\u4f53\u78b0\u649e\u7bb1\u771f\u7684\u4e0e\u8fd9\u4e2a\u5f62\u72b6\u76f8\u4ea4\u65f6**\u624d\u88ab\u8c03 \u2713\u3002
+     * \u21d2 \u2605\u201c\u7ad9\u5728\u95e8\u91cc\u201d\u7684\u5224\u5b9a**\u5b8c\u5168\u4ea4\u7ed9\u5f62\u72b6\u7cfb\u7edf** \u2713\uff0c
+     * \u2605\u4e0d\u9700\u8981\uff08\u4e5f\u4e0d\u5e94\u8be5\uff09\u81ea\u5df1\u7b97\u4e2d\u5fc3\u504f\u79fb \u2717
+     * \u2014\u2014 \u2605\u6211\u4e0a\u4e00\u7248\u5c31\u662f\u81ea\u5df1\u7b97\u4e86 0.25 \u504f\u79fb \u2717
+     * \u21d2 \u2605\u5b9e\u4f53\u4e2d\u5fc3\u6070\u597d\u8de8\u5728\u4e24\u683c\u4e4b\u95f4\u65f6\u5c31\u4e0d\u7b97\u6570 \u2717 \u21d2 \u2605\u4f20\u4e0d\u4e86 \u2713\u2713
+     *
+     * <p>\u2605\u540e\u679c \u2713\uff1a\u2605\u51c6\u661f\u62fe\u53d6/\u8f6e\u5ed3\u4e5f\u53d8\u6210\u8fd9\u7247\u8584\u9762 \u2713
+     * \uff08\u2605\u8ddf\u539f\u7248\u5730\u72f1\u95e8\u4e00\u81f4 \u2713 \u2014\u2014 \u2605\u539f\u7248\u4e5f\u662f\u8fd9\u4e48\u96be\u70b9\u7684 \u2713\uff09
+     * \uff1b\u2605\u6a21\u578b\u672c\u6765\u5c31\u662f\u8584\u7247 \u2713 \u21d2 \u2605\u770b\u8d77\u6765\u66f4\u4e00\u81f4 \u2713\u3002
+     */
+    @Override
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return state.getValue(FACING).getAxis() == Direction.Axis.X
+                ? Block.box(6.0D, 0.0D, 0.0D, 10.0D, 16.0D, 16.0D)     // \u2605\u6cd5\u7ebf X \u21d2 \u539a\u5728 X \u2713
+                : Block.box(0.0D, 0.0D, 6.0D, 16.0D, 16.0D, 10.0D);    // \u2605\u6cd5\u7ebf Z \u21d2 \u539a\u5728 Z \u2713
     }
 
     @Override
@@ -301,23 +327,6 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
          * 站着不动永远不会被弹回去 ✓；走出去再走进来照常能传（回程 ✓）。
          */
         if (wasInside) return;
-        /*
-         * TNL921 \u2605\u2605 \u7528\u6237\u53e3\u5f84\uff1a\u2605"\u6211\u8bb0\u5f97\u5730\u72f1\u95e8\u5224\u5b9a\u4f20\u9001\u8303\u56f4\u662f\u4e2a**\u7247**\u800c\u4e0d\u662f\u4e2a\u5757" \u2713
-         *
-         * <p>\u2605\u5bf9\uff1a\u2605\u539f\u7248 {@code NetherPortalBlock} \u7684 ``getShape`` \u8fd4\u56de\u7684\u662f
-         * \u2605**\u53ea\u6709 4/16 \u539a\u7684\u8584\u9762** \u2713\uff0c\u2605\u65b9\u5411\u7531\u8f74\u51b3\u5b9a \u2713
-         * \uff08\u2605``Z_AXIS_AABB`` / ``X_AXIS_AABB`` \u2713\uff09\uff0c\u2605\u6240\u4ee5\u201c\u7ad9\u5728\u95e8\u91cc\u201d\u7684\u5224\u5b9a\u5c31\u662f\u90a3\u4e00\u7247 \u2713\u3002
-         *
-         * <p>\u2605\u6211\u4eec\u6ca1\u52a8 ``getShape`` \u2717\uff08\u2605\u90a3\u4f1a\u8ba9\u5929\u9006\u94ec\u53f3\u952e\u96be\u6572\u4e2d \u2717\uff0c\u89c1\u7c7b\u6ce8\u91ca \u2713\uff09\uff0c
-         * \u2605\u800c\u662f\u5728\u4f20\u9001\u524d**\u81ea\u5df1\u7b97\u4e00\u6b21\u7247\u5224\u5b9a** \u2713\uff1a
-         * \u2605\u53d6 ``FACING`` \u7684\u8f74\uff08\u2605\u8fd9\u662f\u8fd9\u7247\u5e73\u9762\u7684**\u6cd5\u7ebf** \u2713\uff09\uff0c
-         * \u2605\u5b9e\u4f53\u4e2d\u5fc3\u5230\u65b9\u5757\u4e2d\u5fc3\u7684\u504f\u79fb**\u8d85\u8fc7 0.25 \u683c\u5c31\u4e0d\u7b97\u5728\u95e8\u91cc** \u2713
-         * \uff08\u2605\u7ea6\u7b49\u4e8e\u539f\u7248\u90a3 4/16 \u539a\u7684\u5e26\u5b50 \u002b \u5b9e\u4f53\u5bbd\u5ea6\u5bb9\u5fcd \u2713\uff09\u3002
-         */
-        net.minecraft.core.Direction.Axis tnl$axis = state.getValue(FACING).getAxis();
-        double tnl$center = tnl$axis == net.minecraft.core.Direction.Axis.X ? entity.getX() : entity.getZ();
-        double tnl$mid = (tnl$axis == net.minecraft.core.Direction.Axis.X ? pos.getX() : pos.getZ()) + 0.5D;
-        if (Math.abs(tnl$center - tnl$mid) > 0.25D) return;
         // TNL920 \u2605\u539f\u7248\u5730\u72f1\u95e8\u540c\u6b3e\u95e8\u69db\uff1a\u2605\u539f\u7248 ``portalCooldown`` \u8fd8\u5728\u5c31\u4e0d\u4f20 \u2713
         if (!(level.getBlockEntity(pos) instanceof WhiteSpacePortalBlockEntity portal)) return;
         if (!portal.hasDestination()) return;
