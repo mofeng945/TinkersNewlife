@@ -132,6 +132,24 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
         }
     }
 
+    /** TNL960 \u2605\u628a\u8d34\u56fe\u5728\u56fe\u96c6\u91cc\u7684 UV \u8303\u56f4\u544a\u8bc9\u7740\u8272\u5668 \u2713 */
+    public static void setUvRemap(float u0, float v0, float su, float sv) {
+        try {
+            if (shader == null) {
+                return;
+            }
+            var a = shader.safeGetUniform("UvOffset");
+            if (a != null) {
+                a.set(u0, v0);
+            }
+            var b = shader.safeGetUniform("UvScale");
+            if (b != null) {
+                b.set(su, sv);
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
     /** TNL950 \u2605\u4f9b\u6df7\u5165\u7528\uff1a\u2605\u6ca1\u597d\u5c31\u8fd4\u56de null\uff08\u2605\u9000\u56de\u539f\u7248\uff09\u2713 */
     public static RenderType starBodyOrNull() {
         try {

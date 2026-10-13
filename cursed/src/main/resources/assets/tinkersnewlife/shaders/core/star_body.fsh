@@ -9,6 +9,8 @@ uniform sampler2D Sampler0;
 uniform float EffectTime;
 uniform float MaskThreshold;
 uniform vec4 ColorModulator;
+uniform vec2 UvOffset;      // TNL960 \u2605\u56fe\u96c6 UV \u2192 \u8d34\u56fe\u672c\u5730 UV \u2713
+uniform vec2 UvScale;
 
 in vec2 vUv;
 in vec4 vColor;
@@ -43,7 +45,12 @@ float fbm(vec2 x) {
 }
 
 void main() {
-    vec4 tex = texture(Sampler0, vUv);
+    // TNL960 \u2605\u2605 \u5173\u952e\uff1a\u2605\u7269\u54c1\u56db\u8fb9\u5f62\u7684 UV \u662f**\u56fe\u96c6\u7a7a\u95f4** \u2713
+    //   \u2605\u76f4\u63a5\u62ff\u5b83\u53bb\u91c7\u6211\u4eec\u81ea\u5df1\u7684 16\u00d716 \u8d34\u56fe \u21d2 \u2605\u91c7\u5230\u4e71\u7801\u7eb9\u7d20 \u2717
+    //   \u21d2 \u2605\u6574\u5757\u90fd\u7b97"\u9ed1" \u21d2 \u2605\u6574\u5757\u661f\u7a7a \u2713\uff08\u2605\u7528\u6237\u5b9e\u6d4b\uff1a\u53c8\u53d8\u6210\u5757 \u2713\uff09
+    //   \u2605\u73b0\u5728\uff1a\u2605\u5148\u6362\u7b97\u6210\u8d34\u56fe\u672c\u5730 0~1 \u2713\uff08\u2605\u548c\u539f\u7248 sprite \u4e00\u6837 \u2713\uff09
+    vec2 uv = (vUv - UvOffset) * UvScale;
+    vec4 tex = texture(Sampler0, uv);
     if (tex.a < 0.08) {
         discard;
     }

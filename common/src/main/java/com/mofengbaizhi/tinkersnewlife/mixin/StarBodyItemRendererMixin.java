@@ -68,6 +68,14 @@ public class StarBodyItemRendererMixin {
             if (source != null) {
                 source.endBatch(base);                                // \u2605\u2461 \u5199\u540e\u5237 \u2713
             }
+            // TNL960 \u2605\u2605 \u628a sprite \u7684\u56fe\u96c6 UV \u8303\u56f4\u5582\u7ed9\u7740\u8272\u5668 \u2713
+            var spr = baked.getParticleIcon();
+            if (spr != null) {
+                com.mofengbaizhi.tinkersnewlife.client.render.StarBodyClient.setUvRemap(
+                        spr.getU0(), spr.getV0(),
+                        1.0F / Math.max(1.0E-4F, spr.getU1() - spr.getU0()),
+                        1.0F / Math.max(1.0E-4F, spr.getV1() - spr.getV0()));
+            }
             emitAll(baked, pose, buffers.getBuffer(rt), light);
             if (source != null) {
                 source.endBatch(rt);                                  // \u2605\u2462 \u5199\u540e\u5237 \u2713
