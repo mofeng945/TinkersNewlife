@@ -1624,5 +1624,7 @@
   "modifier.tinkersnewlife.miners_vision.flavor": "Barren veins raise no seasoned miners",
   "entity.tinkersnewlife.ktulu_momo": "Ktulu Momo",
   "entity.tinkersnewlife.ktulu_momo.bossbar": "Momo Ktulu, Astral Priestess",
-  "item.tinkersnewlife.ktulu_momo_spawn_egg": "Ktulu Momo Spawn Egg"
+  "item.tinkersnewlife.ktulu_momo_spawn_egg": "Ktulu Momo Spawn Egg",
+  "item.tinkersnewlife.starfall_lament": "Starfall Lament",
+  "entity.tinkersnewlife.starfall_arrow": "Starfall Arrow"
 }

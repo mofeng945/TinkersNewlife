@@ -353,4 +353,12 @@ public class ModEntities {
                         .noSummon()
                         .build(TinkersNewlife.MOD_ID + ":weak_point"));
 
+    /** TNL877 \u661f\u9668\u60b2\u53f9\u7684\u7bad\uff08\u2605\u5f31\u8ffd\u8e2a\uff0f\u771f\u5b9e\u4f24\u5bb3\uff0f\u5f3a\u5316\u7bad \u2713\uff09 */
+    public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.StarfallArrow>> STARFALL_ARROW =
+            ENTITIES.register("starfall_arrow",
+                    () -> EntityType.Builder.<com.mofengbaizhi.tinkersnewlife.content.entity.StarfallArrow>of(
+                                    com.mofengbaizhi.tinkersnewlife.content.entity.StarfallArrow::new, MobCategory.MISC)
+                            .sized(0.5f, 0.5f).clientTrackingRange(8).updateInterval(2)
+                            .build(TinkersNewlife.MOD_ID + ":starfall_arrow"));
+
 }

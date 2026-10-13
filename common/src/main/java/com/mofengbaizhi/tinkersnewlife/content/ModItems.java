@@ -531,6 +531,11 @@ public class ModItems {
                     new Item.Properties().stacksTo(1), true));
 
     /** 墨默（武器商人）刷怪蛋 */
+    /** TNL877 \u661f\u9668\u60b2\u53f9\uff08\u2605Boss \u6b66\u5668 \u2713\uff09 */
+    public static final RegistryObject<Item> STARFALL_LAMENT =
+            ITEMS.register("starfall_lament",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.item.StarfallLamentItem());
+
     public static final RegistryObject<Item> MOMO_SPAWN_EGG =
             ITEMS.register("momo_spawn_egg", () -> new net.minecraftforge.common.ForgeSpawnEggItem(
                     ModEntities.MOMO_MERCHANT, 0x2F2A4A, 0xC9A6D9, new Item.Properties()));

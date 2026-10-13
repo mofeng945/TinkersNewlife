@@ -1627,5 +1627,7 @@
   "modifier.tinkersnewlife.miners_vision.flavor": "贫瘠的矿脉培养不出老练的矿工",
   "entity.tinkersnewlife.ktulu_momo": "克图露·墨默",
   "entity.tinkersnewlife.ktulu_momo.bossbar": "星辰魔女·墨默·克图露",
-  "item.tinkersnewlife.ktulu_momo_spawn_egg": "克图露·墨默刷怪蛋"
+  "item.tinkersnewlife.ktulu_momo_spawn_egg": "克图露·墨默刷怪蛋",
+  "item.tinkersnewlife.starfall_lament": "\\u661f\\u9668\\u60b2\\u53f9",
+  "entity.tinkersnewlife.starfall_arrow": "\\u661f\\u9668\\u4e4b\\u7bad"
 }
