@@ -165,44 +165,33 @@ public class StarfallLamentItem extends BowItem {
         return 72000;
     }
 
+
+
+    /**
+     * TNL887 \u2605\u2605 \u56de\u5f52\u84c4\u529b\uff08\u2605\u7528\u6237\u53e3\u5f84\uff1a\u2605"\u6211\u4eec\u4e0d\u8981\u81ea\u52a8\u5c04\u51fb\u4e86\uff0c\u56de\u5f52\u84c4\u529b\u548c\u84c4\u529b\u52a8\u753b" \u2713\uff09
+     *
+     * <p>\u2605\u677e\u624b\u65f6\u6309**\u84c4\u529b\u7a0b\u5ea6**\u53d1\u5c04 \u2713\uff08\u2605\u4e0e\u539f\u7248\u5f13\u540c\u4e00\u5957 \u2713\uff09\uff1b
+     * \u2605\u84c4\u529b\u52a8\u753b\u7531\u6a21\u578b\u7684 ``pulling``/``pull`` \u8c13\u8bcd\u9a71\u52a8 \u2713
+     * \uff08\u2605\u4e0d\u518d\u6709 stop/start \u628a pull \u6253\u56de 0 \u2717\uff09\u3002
+     */
     @Override
-    public void onUseTick(Level level, LivingEntity entity, ItemStack stack, int remainingTicks) {
+    public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
         if (!(entity instanceof Player player)) {
             return;
         }
-        boolean autoFire = isAutoFire(stack);
-        if (autoFire) {
-            int useTime = this.getUseDuration(stack) - remainingTicks;
-            if (useTime >= 10) {
-                if (!level.isClientSide) {
-                    fireArrows(player, stack, level, 1.0F);
-                }
-                player.stopUsingItem();
-                player.startUsingItem(player.getUsedItemHand());
-            }
-        } else {
-            super.onUseTick(level, entity, stack, remainingTicks);
+        int useTime = this.getUseDuration(stack) - timeLeft;
+        float power = getPowerForTime(useTime);
+        if (power < 0.1F) {
+            return;
         }
-    }
-
-    @Override
-    public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
-        boolean autoFire = isAutoFire(stack);
-        if (!autoFire && entity instanceof Player player) {
-            int useTime = this.getUseDuration(stack) - timeLeft;
-            float power = getPowerForTime(useTime);
-            if (power < 0.1F) {
-                return;
-            }
-            if (!level.isClientSide) {
-                fireArrows(player, stack, level, power);
-            }
+        if (!level.isClientSide) {
+            fireArrows(player, stack, level, power);
         }
     }
 
     @Override
     public boolean useOnRelease(ItemStack stack) {
-        return !isAutoFire(stack);
+        return true;   // TNL887 \u2605\u677e\u624b\u624d\u53d1\u5c04 \u2713
     }
 
     /** \u2605\u5f00\u4e00\u7ec4\u7bad\uff08\u2605\u4e0e\u53c2\u8003\u4e00\u81f4\uff1a\u2605\u4e3b\u7bad \u002b Multishot \u5219\u4e09\u7bad \u2713\uff09 */
