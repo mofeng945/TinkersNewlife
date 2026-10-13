@@ -57,6 +57,8 @@ public class StarfallArrow extends AbstractArrow {
     private SwordGuidance tnl$guide = null;
     /** \u2605\u626b\u63cf\u534a\u5f84\uff083 \u683c \u2713\uff09 */
     private static final double TNL$SCAN = 3.0D;
+    /** TNL889 撞地重新起飞次数上限 */
+    private int tnl$bounce = 0;
     private Entity tnl$pinned = null;
     private int tnl$pinTicks = 0;
 
@@ -158,6 +160,11 @@ public class StarfallArrow extends AbstractArrow {
             if (this.tnl$target != null && this.tnl$target.isAlive()) {
                 if (this.tnl$guide == null) {
                     this.tnl$guide = new SwordGuidance();   // \u2605\u98de\u5251\u540c\u6b3e\u5236\u5bfc \u2713
+                }
+                this.setNoGravity(true);          // TNL889 追踪期间不吃重力
+                if (this.inGround && this.tnl$bounce < 20) {
+                    this.tnl$bounce++;            // TNL889 撞地不消失，继续追
+                    this.inGround = false;
                 }
                 Vec3 targetPos = this.tnl$target.position()
                         .add(0.0D, this.tnl$target.getBbHeight() * 0.5D, 0.0D);

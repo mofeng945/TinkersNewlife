@@ -125,6 +125,11 @@ public class StarfallLamentItem extends BowItem {
     public net.minecraft.world.InteractionResultHolder<ItemStack> use(Level level, Player player, net.minecraft.world.InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         player.startUsingItem(hand);          // \u2605\u76f4\u63a5\u8fdb\u5165"\u4f7f\u7528\u4e2d" \u2713
+        if (System.currentTimeMillis() - TNL$LAST_LOG > 2000L) {
+            TNL$LAST_LOG = System.currentTimeMillis();
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                    "TNL889 use() called side={} remaining={}", level.isClientSide, player.getUseItemRemainingTicks());
+        }
         return net.minecraft.world.InteractionResultHolder.consume(stack);
     }
 
@@ -174,6 +179,21 @@ public class StarfallLamentItem extends BowItem {
      * \u2605\u84c4\u529b\u52a8\u753b\u7531\u6a21\u578b\u7684 ``pulling``/``pull`` \u8c13\u8bcd\u9a71\u52a8 \u2713
      * \uff08\u2605\u4e0d\u518d\u6709 stop/start \u628a pull \u6253\u56de 0 \u2717\uff09\u3002
      */
+    /** TNL889 探针：只记录蓄力进度，不发射（用来定位动画问题） */
+    @Override
+    public void onUseTick(Level level, LivingEntity entity, ItemStack stack, int remainingTicks) {
+        super.onUseTick(level, entity, stack, remainingTicks);
+        try {
+            int useTime = this.getUseDuration(stack) - remainingTicks;
+            if (useTime % 10 == 0 && System.currentTimeMillis() - TNL$LAST_LOG > 1500L) {
+                TNL$LAST_LOG = System.currentTimeMillis();
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                        "TNL889 onUseTick side={} useTime={} remaining={}", level.isClientSide, useTime, remainingTicks);
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
     @Override
     public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
         if (!(entity instanceof Player player)) {
@@ -199,17 +219,17 @@ public class StarfallLamentItem extends BowItem {
         float velocity = power;
         boolean hasMultishot = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.MULTISHOT, stack) > 0;
         StarfallArrow main = new StarfallArrow(ModEntities.STARFALL_ARROW.get(), player, level);
-        main.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, velocity * 3.0F, 1.0F);
+        main.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, tnl$speed(power), 1.0F);
         main.pickup = AbstractArrow.Pickup.DISALLOWED;
         level.addFreshEntity(main);
         if (hasMultishot) {
             float off = 5.0F;
             StarfallArrow left = new StarfallArrow(ModEntities.STARFALL_ARROW.get(), player, level);
-            left.shootFromRotation(player, player.getXRot(), player.getYRot() + off, 0.0F, velocity * 3.0F, 1.0F);
+            left.shootFromRotation(player, player.getXRot(), player.getYRot() + off, 0.0F, tnl$speed(power), 1.0F);
             left.pickup = AbstractArrow.Pickup.DISALLOWED;
             level.addFreshEntity(left);
             StarfallArrow right = new StarfallArrow(ModEntities.STARFALL_ARROW.get(), player, level);
-            right.shootFromRotation(player, player.getXRot(), player.getYRot() - off, 0.0F, velocity * 3.0F, 1.0F);
+            right.shootFromRotation(player, player.getXRot(), player.getYRot() - off, 0.0F, tnl$speed(power), 1.0F);
             right.pickup = AbstractArrow.Pickup.DISALLOWED;
             level.addFreshEntity(right);
         }
@@ -219,6 +239,11 @@ public class StarfallLamentItem extends BowItem {
             TNL$LAST_LOG = System.currentTimeMillis();
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL883 starfall shot fired, power={}", power);
         }
+    }
+
+    /** TNL889 初速：原来 x3.0（太快 -> 来不及转弯撞方块）；现在 1.2 ~ 2.4（蓄力越满越快） */
+    private static float tnl$speed(float power) {
+        return 1.2F + power * 1.2F;
     }
 
     public static float getPowerForTime(int useTime) {
