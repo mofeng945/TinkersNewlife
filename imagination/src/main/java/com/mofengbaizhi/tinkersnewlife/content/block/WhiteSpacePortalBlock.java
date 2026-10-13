@@ -320,7 +320,7 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
         BlockPos landing = WhiteSpaceDimensions.resolveLanding(
                 target, portal.getDestinationPos(), level.dimension(), pos, entity.getDirection());
         if (landing == null) {
-            WhiteSpaceDimensions.armCooldown(entity, 20);
+            WhiteSpaceDimensions.armCooldown(entity, 40);   // TNL919 \u2605\u8de8\u7ef4\u5ea6\u540c\u4e00\u628a\u5c3a \u002b \u5230\u8fbe\u51b7\u5374 \u2713
             if (entity instanceof ServerPlayer player) {
                 player.displayClientMessage(
                         Component.translatable("message.tinkersnewlife.white_space.landing_blocked"), true);
@@ -376,7 +376,7 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
              * ② 顺手清掉"在门里"的标记：下一 tick 打卡又会把它写回当前刻 ⇒ 同样无效 ✗。
              * ⇒ 就让它**只提示一次**，想重试**走出去再走进来**即可（进入检测本来就是这么设计的 ✓）。
              */
-            WhiteSpaceDimensions.armCooldown(entity, 20);
+            WhiteSpaceDimensions.armCooldown(entity, 40);   // TNL919 \u2605\u8de8\u7ef4\u5ea6\u540c\u4e00\u628a\u5c3a \u002b \u5230\u8fbe\u51b7\u5374 \u2713
             if (entity instanceof ServerPlayer player) {
                 player.displayClientMessage(
                         Component.translatable("message.tinkersnewlife.white_space.travel_blocked"), true);

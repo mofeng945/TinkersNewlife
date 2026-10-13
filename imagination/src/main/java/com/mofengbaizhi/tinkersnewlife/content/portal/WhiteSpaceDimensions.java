@@ -106,7 +106,7 @@ public final class WhiteSpaceDimensions {
      * 真正的防线是 {@link #wasInsidePortalLastTick}（只在"从门外走进来"的那一刻传送），
      * 这里只留 1 秒防止同一 tick 内的重复触发 ✓。
      */
-    public static final int ARRIVE_COOLDOWN = 20;
+    public static final int ARRIVE_COOLDOWN = 40;   // TNL919 \u2605\u7528\u6237\u8981\u6c42\uff1a\u5230\u8fbe\u540e\u77ed\u51b7\u5374 20 -&gt; 40 tick \u2713
 
     /** 刚开完门的玩家冷却（tick）——5 秒，免得开完门站在原地被自己的门吸走 */
     public static final int CREATE_COOLDOWN = 100;
@@ -606,13 +606,47 @@ public final class WhiteSpaceDimensions {
         }
     }
 
+    /**
+     * TNL919 \u2605\u2605 \u8de8\u7ef4\u5ea6\u7edf\u4e00\u7684\u65f6\u949f \u2713
+     *
+     * <p>\u2605\u7528\u6237\u53cd\u9988\uff1a\u2605"\u6709\u751f\u7269\u8d70\u8fdb\u53bb\u4ee5\u540e\u73a9\u5bb6\u518d\u8fdb\u53bb\uff0c
+     * \u73a9\u5bb6\u4f20\u9001\u540e\u90a3\u8fb9\u7684\u751f\u7269\u7531\u4e8e\u4ecd\u7136\u5728\u4f20\u9001\u95e8\u91cc\u9762\u4f1a\u88ab\u7acb\u9a6c\u4f20\u8d70" \u2713
+     *
+     * <p>\u2605\u6839\u56e0 \u2717\uff1a\u2605\u65e7\u5199\u6cd5\u7528 ``entity.level().getGameTime()`` \u2713
+     * \u2014\u2014 \u2605\u90a3\u662f**\u5f53\u524d\u7ef4\u5ea6\u81ea\u5df1\u7684\u6e38\u620f\u523b** \u2717\uff0c
+     * \u2605\u5404\u7ef4\u5ea6\u5404\u81ea\u8ba1\u65f6 \u2717 \u21d2 \u2605\u4f20\u5230\u767d\u8272\u7a7a\u95f4\u540e\u90a3\u8fb9\u7684\u523b\u5ea6
+     * \u53ef\u80fd\u6bd4\u51fa\u53d1\u7ef4\u5ea6**\u5c0f** \u2717
+     * \u21d2 \u2605``now - last &lt;= 1`` \u6210\u7acb\u4e0d\u4e86\uff08\u2605\u8d1f\u6570\uff09\u21d2 \u2605\u88ab\u5224\u4e3a"\u6ca1\u8fdb\u8fc7\u95e8" \u2717
+     * \u21d2 \u2605\u4e00\u843d\u5730\u5c31\u88ab\u539f\u8def\u4f20\u56de \u2713\u2713\uff08\u2605\u7528\u6237\u62a5\u7684\u73b0\u8c61 \u2713\uff09
+     *
+     * <p>\u2605\u73b0\u5728\uff1a\u2605\u4e00\u5f8b\u53d6**\u4e3b\u4e16\u754c\u7684\u6e38\u620f\u523b** \u2713\uff08\u2605\u670d\u52a1\u7aef\u552f\u4e00\u65f6\u949f \u2713\uff09
+     * \u2014\u2014 \u2605\u8de8\u7ef4\u5ea6\u524d\u540e\u53ef\u6bd4 \u2713\u3002
+     */
+    private static long tnl$now(Entity entity) {
+        net.minecraft.server.MinecraftServer server = entity.getServer();
+        if (server != null) {
+            return server.overworld().getGameTime();
+        }
+        return entity.level().getGameTime();
+    }
+
     /** 让这个实体在接下来 {@code ticks} tick 内不被门传送 */
     public static void armCooldown(Entity entity, int ticks) {
-        entity.getPersistentData().putLong(COOLDOWN_KEY, entity.level().getGameTime() + ticks);
+        entity.getPersistentData().putLong(COOLDOWN_KEY, tnl$now(entity) + ticks);
+    }
+
+    /** TNL919 \u2605\u51b7\u5374\u5230\u671f\u5224\u5b9a\uff08\u2605\u540c\u4e00\u628a\u5c3a \u2713\uff09 */
+    public static void armCooldownTicks(Entity entity, int ticks) {
+        armCooldown(entity, ticks);
+    }
+
+    /** TNL919 \u2605\u8de8\u7ef4\u5ea6\u53ef\u6bd4\u7684\u51b7\u5374\u67e5\u8be2 \u2713 */
+    public static boolean isOnCooldownAnyDim(Entity entity) {
+        return tnl$now(entity) < entity.getPersistentData().getLong(COOLDOWN_KEY);
     }
 
     public static boolean isOnCooldown(Entity entity) {
-        return entity.level().getGameTime() < entity.getPersistentData().getLong(COOLDOWN_KEY);
+        return tnl$now(entity) < entity.getPersistentData().getLong(COOLDOWN_KEY);   // TNL919 \u2605\u8de8\u7ef4\u5ea6\u53ef\u6bd4 \u2713
     }
 
     // ============================================================
@@ -625,7 +659,7 @@ public final class WhiteSpaceDimensions {
      * {@code entityInside} ⇒ 这个值就停在那一刻 ⇒ 隔几 tick 再走进来会被判定为"新的一次进入" ✓。
      */
     public static void markInsidePortal(Entity entity) {
-        entity.getPersistentData().putLong(INSIDE_KEY, entity.level().getGameTime());
+        entity.getPersistentData().putLong(INSIDE_KEY, tnl$now(entity));   // TNL919 \u2605\u540c\u4e00\u628a\u5c3a \u2713
     }
 
     /**
@@ -658,8 +692,9 @@ public final class WhiteSpaceDimensions {
      * </ul>
      */
     public static boolean wasInsidePortalLastTick(Entity entity) {
-        long now = entity.level().getGameTime();
+        long now = tnl$now(entity);
         long last = entity.getPersistentData().getLong(INSIDE_KEY);
-        return last != 0L && now - last <= 1L;
+        // TNL919 \u2605\u5bb9\u5fcd\u7a97\u53e3 1 -&gt; 4 tick \u2713\uff08\u2605\u8de8\u7ef4\u5ea6\u843d\u5730\u90a3\u51e0 tick \u4e5f\u7b97"\u521a\u8fdb\u6765\u8fc7" \u2713\uff09
+        return last != 0L && now - last <= 4L;
     }
 }
