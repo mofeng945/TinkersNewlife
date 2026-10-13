@@ -25,12 +25,20 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(ItemBlockRenderTypes.class)
 public class StarBodyRenderTypeMixin {
 
+    private static long TNL$LAST = 0L;
+
     @Inject(method = "m_109279_", at = @At("HEAD"), cancellable = true, remap = false)
     private static void tinkersnewlife$starBody(ItemStack stack, boolean fabulous,
                                                 CallbackInfoReturnable<RenderType> cir) {
         try {
             if (stack != null && stack.getItem() instanceof StarfallLamentItem) {
                 RenderType rt = StarBodyClient.starBody();
+                long now = System.currentTimeMillis();
+                if (now - TNL$LAST > 2000L) {          // TNL941 \u2605\u9650\u6d41\u63a2\u9488 \u2713
+                    TNL$LAST = now;
+                    com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                            "TNL941 render hook hit for the bow, renderType={}", rt);
+                }
                 if (rt != null) {
                     cir.setReturnValue(rt);
                 }

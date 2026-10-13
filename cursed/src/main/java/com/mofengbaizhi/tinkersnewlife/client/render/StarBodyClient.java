@@ -53,9 +53,18 @@ public final class StarBodyClient {
 
     @SubscribeEvent
     public static void onRegisterShaders(RegisterShadersEvent event) throws IOException {
-        event.registerShader(
-                new ShaderInstance(event.getResourceProvider(), SHADER_ID, DefaultVertexFormat.NEW_ENTITY),
-                s -> shader = s);
+        // TNL941 \u2605\u2605 \u63a2\u9488\uff1a\u2605\u7740\u8272\u5668\u5230\u5e95\u6709\u6ca1\u6709\u6ce8\u518c\u4e0a \u2713
+        try {
+            event.registerShader(
+                    new ShaderInstance(event.getResourceProvider(), SHADER_ID, DefaultVertexFormat.NEW_ENTITY),
+                    s -> {
+                        shader = s;
+                        TinkersNewlife.LOGGER.warn("TNL941 star_body shader loaded ok");
+                    });
+            TinkersNewlife.LOGGER.warn("TNL941 star_body shader registered (waiting for compile)");
+        } catch (Throwable t) {
+            TinkersNewlife.LOGGER.warn("TNL941 star_body shader FAILED: {}", t.toString());
+        }
     }
 
     /** \u2605\u5f13\u7684\u6e32\u67d3\u7c7b\u578b\uff08\u2605\u6ca1\u597d\u5c31\u8fd4\u56de null \u21d2 \u2605\u9000\u56de\u539f\u7248 \u2713\uff09 */
