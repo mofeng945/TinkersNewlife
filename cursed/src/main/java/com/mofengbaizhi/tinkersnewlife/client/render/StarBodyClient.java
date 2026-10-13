@@ -67,6 +67,7 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
 
     private StarBodyClient() {
         super(Minecraft.getInstance().getBlockEntityRenderDispatcher(), Minecraft.getInstance().getEntityModels());
+        TinkersNewlife.LOGGER.warn("TNL944 BEWLR constructed");     // ★TNL944 \u63a2\u9488 \u2713
     }
 
     public static StarBodyClient instance() {
@@ -84,9 +85,17 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
 
         @SubscribeEvent
         public static void onRegisterShaders(RegisterShadersEvent event) throws IOException {
-            event.registerShader(
-                    new ShaderInstance(event.getResourceProvider(), SHADER_ID, DefaultVertexFormat.NEW_ENTITY),
-                    s -> shader = s);
+            TinkersNewlife.LOGGER.warn("TNL944 shader register called");       // ★TNL944 \u2713
+            try {
+                event.registerShader(
+                        new ShaderInstance(event.getResourceProvider(), SHADER_ID, DefaultVertexFormat.NEW_ENTITY),
+                        s -> {
+                            shader = s;
+                            TinkersNewlife.LOGGER.warn("TNL944 star_body shader compiled ok");
+                        });
+            } catch (Throwable t) {
+                TinkersNewlife.LOGGER.warn("TNL944 star_body shader FAILED: {}", t.toString());
+            }
         }
     }
 

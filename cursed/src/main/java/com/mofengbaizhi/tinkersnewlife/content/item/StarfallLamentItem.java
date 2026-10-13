@@ -225,6 +225,8 @@ public class StarfallLamentItem extends BowItem {
      */
     @Override
     public Object getRenderPropertiesInternal() {
+        // ★TNL944 \u63a2\u9488\uff1a\u2605\u770b Forge \u5230\u5e95\u6709\u6ca1\u6709\u6765\u95ee\u8fd9\u4e2a\u94a9\u5b50 \u2713
+        com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL944 getRenderPropertiesInternal asked");
         return com.mofengbaizhi.tinkersnewlife.client.render.StarBodyClient.extensions();
     }
 
