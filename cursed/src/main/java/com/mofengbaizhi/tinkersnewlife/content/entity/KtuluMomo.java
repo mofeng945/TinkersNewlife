@@ -58,6 +58,17 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     /** \u2605\u4e0a\u4e00 tick \u7684\u8840\u91cf\uff08\u2605\u7528\u6765\u67e5\u662f\u5426\u7a81\u7834\u9650\u4f24 \u2713\uff09 */
     private float lastHealth = -1.0F;
 
+    // ==================== TNL876 \u2605\u6027\u80fd\uff1a\u70ed\u70b9\u8def\u5f84\u7f13\u5b58 \u2713 ====================
+    /** \u2605\u6743\u5a01\u8840\u91cf\u7f13\u5b58\uff08\u2605\u907f\u514d getHealth \u6bcf\u6b21\u90fd\u67e5 map/\u8c03 JNI \u2713\uff09 */
+    private float tnl$auth = -1.0F;
+    /** \u2605\u4e0a\u6b21\u540c\u6b65\u7ed9\u8840\u6761\u7684\u8fdb\u5ea6\uff08\u2605\u6ca1\u53d8\u5c31\u4e0d\u53d1\u5305 \u2713\uff09 */
+    private float tnl$prog = -1.0F;
+
+    /** \u2605\u4f9b\u5185\u6838/\u6df7\u5165\u66f4\u65b0\u7f13\u5b58 \u2713 */
+    public void tnl$setAuth(float v) {
+        this.tnl$auth = v;
+    }
+
     public KtuluMomo(EntityType<? extends KtuluMomo> type, Level level) {
         super(type, level);
         this.xpReward = 500;
@@ -139,7 +150,9 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         if (gate <= 0.0F) {
             return false;
         }
-        return super.hurt(source, amount);
+        boolean tnl$hurt = super.hurt(source, amount);
+        this.tnl$auth = a.qF(this);   // TNL876 \u2605\u53d7\u4f24\u540e\u5237\u65b0\u7f13\u5b58 \u2713
+        return tnl$hurt;
     }
 
     /** \u2605\u2605 \u6bcf tick \u8bb0\u5f55\u8840\u91cf \u21d2 \u4e00\u65e6\u7a81\u7834\u9650\u4f24\u5c31**\u56de\u5f39\u8865\u56de** \u2713 */
@@ -155,11 +168,18 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         }
         a.q0(this);
         float authoritative = a.q1(this, this.tickCount);
-        // TNL875 \u2605\u5bf9\u9f50\u7684\u662f**\u771f\u5b9e\u5b57\u6bb5**\uff08super.getHealth \u2713\uff09\uff0c\u4e0d\u662f\u5bf9\u5916\u503c \u2713
-        if (Math.abs(super.getHealth() - authoritative) > 0.001F) {
+        // TNL876 \u2605\u2605 \u6027\u80fd\uff1a\u53ea\u5728"\u771f\u7684\u4e0d\u4e00\u6837"\u65f6\u624d\u5199 \u2713
+        //   \u2605setHealth \u4f1a\u6807\u810f\u5b9e\u4f53\u6570\u636e \u21d2 \u2605\u6bcf tick \u8c03\u5c31\u7b49\u4e8e\u6bcf tick \u53d1\u5305 \u2717
+        this.tnl$auth = authoritative;
+        if (Math.abs(super.getHealth() - authoritative) > 0.01F) {
             this.setHealth(Math.max(0.0F, authoritative));
         }
-        this.bossEvent.setProgress(Math.max(0.0F, authoritative / this.getMaxHealth()));
+        // TNL876 \u2605\u8840\u6761\u4e5f\u53ea\u5728\u53d8\u5316\u65f6\u540c\u6b65 \u2713\uff08\u2605\u907f\u514d\u6bcf tick \u53d1 BossEvent \u5305 \u2717\uff09
+        float tnl$p = Math.max(0.0F, authoritative / this.getMaxHealth());
+        if (Math.abs(tnl$p - this.tnl$prog) > 0.0005F) {
+            this.tnl$prog = tnl$p;
+            this.bossEvent.setProgress(tnl$p);
+        }
         // TNL851 \u2605\u9493\u9c7c\uff1a\u987a\u624b\u8c03\u4e00\u4e0b\u5047\u5165\u53e3\uff08\u2605\u7ed3\u679c\u4e0d\u7528 \u2713\uff09
         c.rotate(this);   // TNL862 \u2605\u591a\u5165\u53e3\u8f6e\u6362\u9493\u9c7c \u2713
         if (authoritative <= 0.0F) {
@@ -213,7 +233,13 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             if (this.level() == null || this.level().isClientSide) {
                 return super.getHealth();
             }
-            return a.qF(this);
+            // TNL876 \u2605\u5148\u8bfb\u7f13\u5b58\uff08\u2605getHealth \u662f\u8d85\u70ed\u70b9 \u2713\uff09
+            if (this.tnl$auth >= 0.0F) {
+                return this.tnl$auth;
+            }
+            float v = a.qF(this);
+            this.tnl$auth = v;
+            return v;
         } catch (Throwable th) {
             return super.getHealth();
         }
