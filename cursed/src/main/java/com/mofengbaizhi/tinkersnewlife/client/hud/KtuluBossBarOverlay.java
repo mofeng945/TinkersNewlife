@@ -90,8 +90,23 @@ public class KtuluBossBarOverlay {
             if (gray > 255) {
                 gray = 255;
             }
-            int col = 0xFF000000 | (gray << 16) | (gray << 8) | gray;
+            // TNL907 \u2605\u2605 \u514d\u75ab\u7a97\u6321\u4e0b\u65f6 \u21d2 \u2605\u8840\u6761\u5411**\u91d1\u8272**\u9ad8\u4eae\u95ea\u52a8 \u2713
+            float flash = KtuluBarFlash.strength();
+            int rr = gray;
+            int gg = gray;
+            int bb = gray;
+            if (flash > 0.0F) {
+                rr = Math.min(255, (int) (gray + (255 - gray) * flash));
+                gg = Math.min(255, (int) (gray + (205 - gray) * flash));
+                bb = Math.min(255, (int) (gray + (70 - gray) * flash));
+            }
+            int col = 0xFF000000 | (rr << 16) | (gg << 8) | bb;
             g.fill(fx, fy, fx + fillW, fy + fh, col);
+            if (flash > 0.0F) {
+                int glow = (int) (110 * flash);
+                g.fill(fx, fy, fx + fillW, fy + 2, (glow << 24) | 0xFFD24A);
+                g.fill(fx, fy + fh - 2, fx + fillW, fy + fh, (glow / 2 << 24) | 0xFFD24A);
+            }
             g.fill(fx, fy, fx + fillW, fy + 2, 0x30FFFFFF);      // \u2605\u4e0a\u9ad8\u5149 \u2713
             g.fill(fx, fy + fh - 2, fx + fillW, fy + fh, 0x30000000);  // \u2605\u4e0b\u6697\u8fb9 \u2713
         }

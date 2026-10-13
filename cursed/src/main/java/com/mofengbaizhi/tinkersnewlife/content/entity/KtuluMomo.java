@@ -160,6 +160,9 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         float gate = a.q2(this, amount, this.tickCount);
         a.qB("GATE", source.getMsgId(), amount, "gate=", gate, a.qC(this));
         if (gate <= 0.0F) {
+            if (a.qH()) {
+                this.tnl$shieldFlash();     // TNL907 \u2605\u7a97\u5185\u6321\u4e0b \u2713
+            }
             return false;
         }
         boolean tnl$hurt = super.hurt(source, amount);
@@ -186,6 +189,30 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         super.die(source);
     }
 
+    /** TNL907 \u2605\u514d\u75ab\u7a97\u6321\u4e0b \u21d2 \u2605\u901a\u77e5\u5468\u56f4\u73a9\u5bb6\u8ba9\u8840\u6761\u95ea\u91d1 \u2713\uff08\u2605\u9650\u6d41 250ms \u2713\uff09 */
+    private long tnl$lastFlash = 0L;
+
+    private void tnl$shieldFlash() {
+        if (this.level().isClientSide) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        if (now - this.tnl$lastFlash < 250L) {
+            return;
+        }
+        this.tnl$lastFlash = now;
+        if (this.level() instanceof net.minecraft.server.level.ServerLevel sl) {
+            com.mofengbaizhi.tinkersnewlife.network.starfall.PacketKtuluShieldFlash pkt =
+                    new com.mofengbaizhi.tinkersnewlife.network.starfall.PacketKtuluShieldFlash();
+            for (net.minecraft.server.level.ServerPlayer sp : sl.players()) {
+                if (sp.distanceToSqr(this) < 64.0D * 64.0D) {
+                    com.mofengbaizhi.tinkersnewlife.TinkersNewlife.CHANNEL.send(
+                            net.minecraftforge.network.PacketDistributor.PLAYER.with(() -> sp), pkt);
+                }
+            }
+        }
+    }
+
     private void Vq$release() {
         a.q4(this);
     }
@@ -198,6 +225,9 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         }
         a.q0(this);
         float authoritative = a.q1(this, this.tickCount);
+        if (a.qH()) {
+            this.tnl$shieldFlash();     // TNL907 \u2605\u6321\u4e0b\u4e86 \u21d2 \u2605\u95ea\u91d1 \u2713
+        }
         // TNL876 \u2605\u2605 \u6027\u80fd\uff1a\u53ea\u5728"\u771f\u7684\u4e0d\u4e00\u6837"\u65f6\u624d\u5199 \u2713
         //   \u2605setHealth \u4f1a\u6807\u810f\u5b9e\u4f53\u6570\u636e \u21d2 \u2605\u6bcf tick \u8c03\u5c31\u7b49\u4e8e\u6bcf tick \u53d1\u5305 \u2717
         this.tnl$auth = authoritative;

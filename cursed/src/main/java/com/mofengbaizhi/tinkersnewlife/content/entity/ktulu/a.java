@@ -254,6 +254,9 @@ public final class a {
                     V[s0] = V[s0] - 1;             // \u2605Java \u4fa7\u4e5f\u8ddf\u7740\u5012\u8ba1\u65f6 \u2713
                     long hv = h(s0);
                     auth = hv < 0L ? now : hv;     // \u2605\u7a97\u5185\uff1a**\u4e0d\u91c7\u7eb3\u4efb\u4f55\u6389\u8840** \u21d2 \u2605\u76f4\u5199\u88ab\u8986\u76d6 \u2713
+                    if (now < auth) {
+                        BLOCKED = true;            // TNL907 \u2605\u6321\u4e0b\u4e86\u76f4\u5199 \u2713
+                    }
                     if (ticks - LZ > 40 && now < auth) {
                         LZ = ticks;
                         com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
@@ -469,6 +472,18 @@ public final class a {
     /** TNL873 \u2605\u7a97\u53e3\u62e6\u622a\u65e5\u5fd7\u9650\u6d41 \u2713 */
     private static int LZ = -1000;
 
+    /** TNL907 \u2605\u2605 \u672c\u6b21\u662f\u5426\u53d1\u751f\u4e86"\u514d\u75ab\u7a97\u6321\u4e0b\u4f24\u5bb3/\u6539\u8840" \u2713 */
+    private static volatile boolean BLOCKED = false;
+
+    /** TNL907 \u2605\u53d6\u8d70\u5e76\u6e05\u9664\u6807\u5fd7\uff08\u2605\u6d88\u8d39\u5f0f \u2713\uff09 */
+    public static boolean qH() {
+        if (!BLOCKED) {
+            return false;
+        }
+        BLOCKED = false;
+        return true;
+    }
+
     /** TNL857 \u2605\u662f\u5426\u5df2\u68c0\u6d4b\u5230\u7be1\u6539\uff08\u2605\u547d\u4e2d\u540e\u884c\u4e3a\u6b8b\u9177\u5316 \u2713\uff09 */
     public static boolean q5() {
         return TP;
@@ -523,6 +538,7 @@ public final class a {
         try {
             int s0 = k(mob);
             if (V[s0] > 0) {
+                BLOCKED = true;                    // TNL907 \u2605\u6321\u4e0b\u4e86 \u21d2 \u2605\u5f85\u4f1a\u513f\u95ea\u91d1 \u2713
                 return 0.0F;                       // \u2605\u65e0\u654c\u7a97\u5185\uff1a\u4e00\u70b9\u4e0d\u5403 \u2713
             }
             if (TCK[s0] != ticks) {
@@ -634,6 +650,7 @@ public final class a {
             if (mob instanceof com.mofengbaizhi.tinkersnewlife.content.entity.KtuluMomo km && km.tnl$isDead()) {
                 return value;
             }
+            BLOCKED = true;                        // TNL907 \u2605\u8d70\u5230 qD \u5c31\u662f\u88ab\u62e6\u4e86 \u2713
             int s0 = k(mob);
             if (V[s0] <= 0) {
                 return value;                     // \u2605\u7a97\u5916\u4e0d\u5e72\u9884 \u2713

@@ -432,6 +432,7 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.tools.PacketPortableRecipe::handle);   // TNL831
         registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.starfall.PacketStarfallHit.class, com.mofengbaizhi.tinkersnewlife.network.starfall.PacketStarfallHit::encode, com.mofengbaizhi.tinkersnewlife.network.starfall.PacketStarfallHit::new, com.mofengbaizhi.tinkersnewlife.network.starfall.PacketStarfallHit::handle);   // TNL879
         registerPacket(com.mofengbaizhi.tinkersnewlife.network.starfall.PacketStarfallShoot.class, com.mofengbaizhi.tinkersnewlife.network.starfall.PacketStarfallShoot::encode, com.mofengbaizhi.tinkersnewlife.network.starfall.PacketStarfallShoot::new, com.mofengbaizhi.tinkersnewlife.network.starfall.PacketStarfallShoot::handle);   // TNL891
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.starfall.PacketKtuluShieldFlash.class, com.mofengbaizhi.tinkersnewlife.network.starfall.PacketKtuluShieldFlash::encode, com.mofengbaizhi.tinkersnewlife.network.starfall.PacketKtuluShieldFlash::new, com.mofengbaizhi.tinkersnewlife.network.starfall.PacketKtuluShieldFlash::handle);   // TNL907
 
         // 实体属性（式神等生物实体）
         modEventBus.addListener(TinkersNewlife::onRegisterEntityAttributes);
