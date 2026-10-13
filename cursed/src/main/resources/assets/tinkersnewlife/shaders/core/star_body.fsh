@@ -78,6 +78,13 @@ void main() {
         cy * cp + 1.0e-3));
     vec2 suv = vLocalUv + vec2(sy * cp, -sp) * 0.45;   // TNL968 local uv + camera pan
     vec4 tex = texture(Sampler0, uv);
+    // TNL969 \u2605\u2605 \u4e00\u884c\u8c03\u8bd5\uff1a\u2605\u76f4\u63a5\u628a\u4e24\u4e2a\u5173\u952e\u91cf\u5f53\u989c\u8272\u8f93\u51fa \u2713
+    //   \u2605R = vLocalUv.x ✗ G = vLocalUv.y ✗ B = luma(\u906e\u7f69\u4f9d\u636e) \u2713
+    //   \u2605\u8bfb\u6cd5\uff1a\u2605\u5f13\u9762\u4e0a R/G \u6709\u6e10\u53d8 \u21d2 \u2605UV1(\u5c40\u90e8 UV) \u6ca1\u95ee\u9898 \u2713
+    //     \u2605B \u5f88\u9ed1 \u21d2 \u2605\u906e\u7f69\u547d\u4e2d \u2713\uff1b\u2605B \u5168\u4eae \u21d2 \u2605\u906e\u7f69\u4ece\u4e0d\u547d\u4e2d \u2717
+    fragColor = vec4(vLocalUv, luma, 1.0);
+    return;
+    // \u2605\u4e0b\u9762\u4ee3\u7801\u6682\u65f6\u4e0d\u4f1a\u6267\u884c \u2713
     if (tex.a < 0.08) {
         discard;
     }
