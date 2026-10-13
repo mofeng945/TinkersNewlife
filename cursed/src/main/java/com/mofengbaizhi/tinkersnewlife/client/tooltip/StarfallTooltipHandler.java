@@ -61,9 +61,16 @@ public class StarfallTooltipHandler {
                 return;
             }
             net.minecraft.client.gui.Font font = event.getFont();
+            // TNL897 \u2605\u2605 \u884c\u6570\u4fee\u6b63\uff1a\u2605\u5fc5\u987b\u8ddf\u539f\u7248\u4e00\u6837\u5224\u65ad"\u9ad8\u7ea7\u63d0\u793a" \u2713
+            //   \u2605\u7528\u6237\u622a\u56fe\uff1a\u2605\u661f\u7a7a\u6761**\u53ea\u76d6\u4f4f\u524d\u4e24\u884c** \u2717
+            //   \u2605\u56e0\u4e3a\u539f\u7248\u5f00\u4e86 F3+H \u540e\u4f1a\u591a\u51fa id/NBT \u884c \u2717
+            //   \u2605\u800c\u6211\u7528 NORMAL \u53d6\u884c \u21d2 \u2605\u5c11\u7b97\u4e86\u51e0\u884c \u2713
+            boolean tnl$adv = net.minecraft.client.Minecraft.getInstance().options.advancedItemTooltips;
+            net.minecraft.world.item.TooltipFlag tnl$flag = tnl$adv
+                    ? net.minecraft.world.item.TooltipFlag.Default.ADVANCED
+                    : net.minecraft.world.item.TooltipFlag.Default.NORMAL;
             java.util.List<net.minecraft.network.chat.Component> lines = event.getItemStack().getTooltipLines(
-                    net.minecraft.client.Minecraft.getInstance().player,
-                    net.minecraft.world.item.TooltipFlag.Default.NORMAL);
+                    net.minecraft.client.Minecraft.getInstance().player, tnl$flag);
             java.util.List<net.minecraft.util.FormattedCharSequence> wrapped = new java.util.ArrayList<>();
             for (net.minecraft.network.chat.Component c : lines) {
                 wrapped.addAll(font.split(c, Math.max(60, event.getScreenWidth() - 60)));
