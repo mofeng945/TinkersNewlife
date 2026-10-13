@@ -61,6 +61,18 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     // ==================== TNL876 \u2605\u6027\u80fd\uff1a\u70ed\u70b9\u8def\u5f84\u7f13\u5b58 \u2713 ====================
     /** \u2605\u6743\u5a01\u8840\u91cf\u7f13\u5b58\uff08\u2605\u907f\u514d getHealth \u6bcf\u6b21\u90fd\u67e5 map/\u8c03 JNI \u2713\uff09 */
     private float tnl$auth = -1.0F;
+    /** TNL893 \u2605\u2605 \u771f\u6b7b\u6807\u5fd7\uff1a\u2605\u4e00\u65e6\u771f\u6b7b \u21d2 \u2605\u5f7b\u5e95\u505c\u6b62\u62a4\u8840/\u56de\u5f39/\u5bf9\u5916\u906e\u853d \u2713
+     *  \u2605\u7528\u6237\u53cd\u9988\uff1a\u2605"\u5982\u679c\u8fd9\u4e00\u51fb\u4f24\u5bb3\u4f7f\u4ed6\u6b7b\u4ea1\uff0c\u4ed6\u53c8\u56de\u5f39\u8840\u91cf\uff0c
+     *  \u4f1a\u8fdb\u5165\u659c\u5012\u62bd\u643a\u9636\u6bb5\uff0c\u867d\u7136\u80fd\u88ab\u6253\u6b7b\uff0c\u4f46\u6389\u843d\u7269\u548c\u6b7b\u4ea1\u5224\u5b9a\u5df2\u7ecf\u63d0\u524d\u4e86" \u2713
+     *  \u2605\u539f\u56e0 \u2717\uff1a\u2605\u539f\u7248\u5728\u8840\u91cf\u5230 0 \u65f6**\u7acb\u523b\u8d70\u6b7b\u4ea1\u6d41\u7a0b**\uff08\u2605\u6389\u6218\u5229\u54c1/\u5224\u5b9a/\u5012\u5730 \u2713\uff09\uff0c
+     *  \u2605\u800c\u6211\u7684\u56de\u5f39\u53c8\u628a\u5b83\u62c9\u56de 1 \u8840 \u2717 \u21d2 \u2605\u590d\u6d3b\u6210"\u5012\u5730\u62bd\u643a" \u2713\u3002
+     */
+    private boolean tnl$dead = false;
+
+    /** TNL893 \u2605\u662f\u5426\u5df2\u771f\u6b7b\uff08\u2605\u4f9b\u5185\u6838/\u6df7\u5165\u5224\u65ad \u2713\uff09 */
+    public boolean tnl$isDead() {
+        return this.tnl$dead;
+    }
     /** \u2605\u4e0a\u6b21\u540c\u6b65\u7ed9\u8840\u6761\u7684\u8fdb\u5ea6\uff08\u2605\u6ca1\u53d8\u5c31\u4e0d\u53d1\u5305 \u2713\uff09 */
     private float tnl$prog = -1.0F;
 
@@ -127,8 +139,8 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
      */
     @Override
     public boolean hurt(DamageSource source, float amount) {
-        if (this.level().isClientSide) {
-            return super.hurt(source, amount);
+        if (this.level().isClientSide || this.tnl$dead) {
+            return super.hurt(source, amount);   // TNL893 \u2605\u771f\u6b7b\u540e\u4e0d\u5e72\u9884 \u2713
         }
         a.q0(this);
         // TNL871 \u2605\u2605 \u771f\u4f24\u8bc6\u522b\uff1a\u2605\u8fd9\u4e9b\u4f24\u5bb3\u7c7b\u578b\u4e0d\u4f1a\u901a\u77e5 onTruePierce \u2717
@@ -152,6 +164,9 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         }
         boolean tnl$hurt = super.hurt(source, amount);
         this.tnl$auth = a.qF(this);   // TNL876 \u2605\u53d7\u4f24\u540e\u5237\u65b0\u7f13\u5b58 \u2713
+        if (this.tnl$auth <= 0.0F || this.isDeadOrDying()) {
+            this.tnl$dead = true;     // TNL893 \u2605\u8fd9\u4e00\u51fb\u771f\u7684\u6253\u6b7b\u4e86 \u21d2 \u2605\u4e0d\u518d\u56de\u5f39 \u2713
+        }
         return tnl$hurt;
     }
 
@@ -160,11 +175,26 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
      * TNL851 \u2605\u2605 \u6bcf tick\uff1a\u5185\u6838\u56de\u5f39 \u21d2 \u8986\u5199\u539f\u7248\u503c\uff08\u2605\u4ec5\u4f5c\u663e\u793a \u2713\uff09
      * \u002b \u8840\u6761\u540c\u6b65 \u002b \u5230\u96f6\u5c31\u6b7b \u2713\u3002
      */
+    /** TNL893 \u2605\u2605 \u771f\u6b7b\u94a9\u5b50\uff1a\u2605\u5148\u7f6e\u6807\u5fd7 \u002b \u6ce8\u9500\u5185\u6838 \u2717 \u21d2 \u2605\u4e4b\u540e\u4e0d\u518d\u56de\u5f39/\u4e0d\u518d\u62a4\u8840 \u2713\uff08\u2605\u6389\u843d\u7269\u4e0e\u6b7b\u4ea1\u5224\u5b9a\u53ea\u767d\u4e00\u6b21 \u2713\uff09 */
+    @Override
+    public void die(net.minecraft.world.damagesource.DamageSource source) {
+        this.tnl$dead = true;
+        try {
+            Vq$release();
+        } catch (Throwable ignored) {
+        }
+        super.die(source);
+    }
+
+    private void Vq$release() {
+        a.q4(this);
+    }
+
     @Override
     public void tick() {
         super.tick();
-        if (this.level().isClientSide) {
-            return;
+        if (this.level().isClientSide || this.tnl$dead) {
+            return;   // TNL893 \u2605\u771f\u6b7b\u540e\u4e0d\u518d\u62a4\u8840/\u56de\u5f39 \u2713
         }
         a.q0(this);
         float authoritative = a.q1(this, this.tickCount);
@@ -230,8 +260,8 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     @Override
     public float getHealth() {
         try {
-            if (this.level() == null || this.level().isClientSide) {
-                return super.getHealth();
+            if (this.level() == null || this.level().isClientSide || this.tnl$dead) {
+                return super.getHealth();   // TNL893 \u2605\u771f\u6b7b\u540e\u4e0d\u518d\u906e\u853d \u2713
             }
             // TNL876 \u2605\u5148\u8bfb\u7f13\u5b58\uff08\u2605getHealth \u662f\u8d85\u70ed\u70b9 \u2713\uff09
             if (this.tnl$auth >= 0.0F) {

@@ -630,6 +630,10 @@ public final class a {
      */
     public static float qD(Mob mob, float value) {
         try {
+            // TNL893 \u2605\u771f\u6b7b\u540e\u4e0d\u518d\u62e6\u4efb\u4f55\u5199\u5165 \u2713\uff08\u2605\u5426\u5219\u6b7b\u4e0d\u6389 \u2717\uff09
+            if (mob instanceof com.mofengbaizhi.tinkersnewlife.content.entity.KtuluMomo km && km.tnl$isDead()) {
+                return value;
+            }
             int s0 = k(mob);
             if (V[s0] <= 0) {
                 return value;                     // \u2605\u7a97\u5916\u4e0d\u5e72\u9884 \u2713
