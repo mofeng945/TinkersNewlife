@@ -43,23 +43,6 @@ public class StarfallLamentItem extends BowItem {
         super(new Properties().stacksTo(1).durability(384).rarity(Rarity.EPIC));
     }
 
-    /**
-     * TNL895 \u2605\u2605 \u5de5\u5177\u63d0\u793a\u91cc\u7684**\u53ef\u52a8\u661f\u7a7a\u80cc\u666f** \u2713
-     *
-     * <p>\u2605\u7528\u6237\u53e3\u5f84\uff1a\u2605"\u5728\u5de5\u5177\u63d0\u793a\u6846\u5185\u6e32\u67d3\u53ef\u52a8\u7684\u661f\u7a7a\u80cc\u666f" \u2713
-     * \u2605\u8d70\u539f\u7248 {@code Item#getTooltipImage} \u2713\uff08\u2605\u539f\u7248\u6bcf\u5e27\u90fd\u4f1a\u8c03\u5b83\u7684
-     * {@code renderImage} \u2713\uff09\u3002\u2605\u670d\u52a1\u7aef\u7528 {@code DistExecutor} \u8fd4\u56de\u7a7a \u2713
-     * \uff08\u2605\u4e13\u670d\u672c\u6765\u5c31\u4e0d\u4f1a\u8981\u6c42\u5de5\u5177\u63d0\u793a \u2717\uff09\u3002
-     */
-    @Override
-    public java.util.Optional<net.minecraft.world.inventory.tooltip.TooltipComponent> getTooltipImage(ItemStack stack) {
-        java.util.Optional<net.minecraft.world.inventory.tooltip.TooltipComponent> o =
-                net.minecraftforge.fml.DistExecutor.unsafeCallWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT,
-                        () -> () -> java.util.Optional.of(
-                                com.mofengbaizhi.tinkersnewlife.client.tooltip.StarfieldClientTooltip.of(150, 34)));
-        return o == null ? java.util.Optional.empty() : o;
-    }
-
     @Override
     public Component getName(ItemStack stack) {
         return buildFlowGradient(super.getName(stack));
