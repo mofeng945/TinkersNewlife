@@ -215,6 +215,19 @@ public class StarfallLamentItem extends BowItem {
         consumer.accept(com.mofengbaizhi.tinkersnewlife.client.render.StarBodyClient.extensions());
     }
 
+    /**
+     * TNL943 \u2605\u2605 \u5173\u952e \u2713\uff1a\u2605Forge \u53d6\u7269\u54c1\u5ba2\u6237\u7aef\u6269\u5c55\u8d70\u7684\u662f
+     * **``Item#getRenderPropertiesInternal()``** \u2713 \u2014\u2014
+     * \u2605\u6211\u7528 ``javap -c`` \u770b\u4e86 ``IClientItemExtensions.of(Item)`` \u7684\u5b57\u8282\u7801 \u2713\uff1a
+     * \u2605\u5b83\u7b2c\u4e00\u6b65\u5c31\u662f ``invokevirtual Item.getRenderPropertiesInternal`` \u2713\u3002
+     * \u21d2 \u2605\u76f4\u63a5\u8986\u5199\u5b83\u6700\u7a33 \u2713\uff08\u2605\u4e0d\u518d\u6307\u671b ``initializeClient`` \u88ab\u8c03 \u2717\uff09\u3002
+     * \u26a0 \u2605\u53ea\u4f1a\u5728**\u5ba2\u6237\u7aef**\u88ab\u8c03\u7528 \u2713\uff0c\u2605\u6240\u4ee5\u5f15\u7528\u5ba2\u6237\u7aef\u7c7b\u662f\u5b89\u5168\u7684 \u2713\u3002
+     */
+    @Override
+    public Object getRenderPropertiesInternal() {
+        return com.mofengbaizhi.tinkersnewlife.client.render.StarBodyClient.extensions();
+    }
+
     @Override
     public int getUseDuration(ItemStack stack) {
         return 72000;
