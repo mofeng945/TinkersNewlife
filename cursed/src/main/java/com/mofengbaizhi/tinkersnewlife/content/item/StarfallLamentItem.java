@@ -209,6 +209,12 @@ public class StarfallLamentItem extends BowItem {
         }
     }
 
+    /** TNL942 \u2605\u2605 \u6302\u4e0a\u81ea\u5df1\u7684 BEWLR\uff08\u2605\u7167\u53c2\u8003\u5b9e\u73b0\u7684\u8def\u5f84 \u2713\uff09 */
+    @Override
+    public void initializeClient(java.util.function.Consumer<net.minecraftforge.client.extensions.common.IClientItemExtensions> consumer) {
+        consumer.accept(com.mofengbaizhi.tinkersnewlife.client.render.StarBodyClient.extensions());
+    }
+
     @Override
     public int getUseDuration(ItemStack stack) {
         return 72000;
