@@ -288,6 +288,11 @@ public class StarfallArrow extends AbstractArrow {
         }
         // TNL933 \u2605\u7a7f\u900f\uff1a\u2605\u540c\u4e00\u4e2a\u76ee\u6807\u53ea\u6253\u4e00\u6b21 \u2713
         if (this.tnl$hits.contains(target)) {
+            // TNL936 \u2605\u2605 \u7528\u6237\u53cd\u9988\uff1a\u2605"\u7bad\u77e2\u7ee7\u7eed\u8ffd\u8e2a\u539f\u672c\u76ee\u6807\uff0c\u4f46\u662f\u4e00\u76f4\u5728\u4ed6\u8eab\u4e0a\u7ed5\u5708\uff0c\u6ca1\u6709\u4f24\u5bb3" \u2713
+            //   \u2605\u771f\u56e0 \u2717\uff1a\u2605\u5236\u5bfc\u9501**\u6ca1\u89e3** \u2717 \u21d2
+            //   \u2605\u5b83\u4e00\u76f4\u76ef\u7740\u5df2\u7ecf\u6253\u8fc7\u7684\u76ee\u6807\u8f6c\u5708 \u2717\uff08\u2605\u800c\u540c\u4e00\u76ee\u6807\u53c8\u4e0d\u91cd\u590d\u4f24\u5bb3 \u2713\uff09
+            //   \u2605\u73b0\u5728\uff1a\u2605\u7acb\u523b\u89e3\u9501 \u2713 \u21d2 \u2605\u76f4\u7ebf\u98de\u51fa\u53bb\u6253\u4e0b\u4e00\u4e2a \u2713
+            this.tnl$setHomingTarget(null);
             return;
         }
         this.tnl$hits.add(target);
@@ -362,6 +367,14 @@ public class StarfallArrow extends AbstractArrow {
             this.inGround = false;
             this.hasImpulse = true;
             this.pickup = AbstractArrow.Pickup.DISALLOWED;
+            this.tnl$setHomingTarget(null);                    // TNL936 \u2605\u7a7f\u900f\u540e\u4e5f\u89e3\u9501 \u2713
+            net.minecraft.world.phys.Vec3 tnl$mv = this.getDeltaMovement();
+            double tnl$sp = tnl$mv.length();
+            if (tnl$sp < 1.2D) {                               // \u2605\u4fdd\u5e95\u901f\u5ea6 \u2713
+                net.minecraft.world.phys.Vec3 tnl$dir = tnl$sp < 1.0E-4D
+                        ? this.getViewVector(1.0F) : tnl$mv.scale(1.0D / tnl$sp);
+                this.setDeltaMovement(tnl$dir.scale(1.2D));
+            }
         } else {
             this.discard();
         }
