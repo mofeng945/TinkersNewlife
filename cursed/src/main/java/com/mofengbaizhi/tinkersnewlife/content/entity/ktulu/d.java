@@ -48,4 +48,46 @@ public class d {
         } catch (Throwable ignored) {
         }
     }
+
+    /**
+     * TNL910 \u2605\u2605 \u4e8b\u4ef6\u7ea7\u68c0\u6d4b\uff08\u2605\u7528\u6237\u63d0\u793a\uff1a
+     * \u2605"\u4f60\u662f\u4e0d\u662f\u514d\u75ab\u7a97\u6709\u5199\u53d6\u6d88\u53d7\u51fb\u4e8b\u4ef6\u548c\u963b\u6b62\u6539\u8840\u7684\u903b\u8f91\uff0c\u68c0\u6d4b\u4e0d\u5230\u554a" \u2713\uff09
+     *
+     * <p>\u2605\u5bf9\uff1a\u2605\u82e5\u4e0a\u6e38\u628a {@code LivingAttackEvent} \u53d6\u6d88\u4e86 \u2717
+     * \uff08\u2605\u6bd4\u5982\u65e0\u4e0b\u9650/\u7edd\u5bf9\u9632\u5fa1\u90a3\u7c7b\u903b\u8f91 \u2717\uff09\uff0c
+     * \u2605{@code hurt()} **\u6839\u672c\u4e0d\u4f1a\u8dd1** \u2717 \u21d2 \u2605\u6211\u57cb\u5728 hurt/q2 \u91cc\u7684\u68c0\u6d4b
+     * \u2605\u6c38\u8fdc\u4e0d\u4f1a\u4eae \u2713\u3002
+     * \u2605\u73b0\u5728\uff1a\u2605\u76f4\u63a5\u542c\u4e8b\u4ef6 \u2713\uff08\u2605LOWEST \u4fdd\u8bc1\u770b\u5230\u6700\u7ec8\u7ed3\u679c \u2713\uff09
+     *   \u00b7 \u2605``LivingAttackEvent`` \u88ab\u53d6\u6d88 \u2713
+     *   \u00b7 \u2605``LivingHurtEvent`` \u91cf\u88ab\u538b\u5230 &lt;= 0 \u2713
+     * \u21d2 \u2605\u90fd\u7b97"\u88ab\u6321\u4e0b"\u2717 \u21d2 \u2605\u53d1\u95ea\u8272\u5305 \u2713
+     */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onAttack(net.minecraftforge.event.entity.living.LivingAttackEvent event) {
+        try {
+            if (!(event.getEntity() instanceof KtuluMomo boss) || boss.level().isClientSide) {
+                return;
+            }
+            if (event.isCanceled()) {
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                        "TNL910 attack cancelled upstream: {}", event.getSource().getMsgId());
+                boss.tnl$shieldFlash();
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onHurtZero(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
+        try {
+            if (!(event.getEntity() instanceof KtuluMomo boss) || boss.level().isClientSide) {
+                return;
+            }
+            if (event.getAmount() <= 0.0F) {
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL910 hurt zeroed upstream");
+                boss.tnl$shieldFlash();
+            }
+        } catch (Throwable ignored) {
+        }
+    }
 }

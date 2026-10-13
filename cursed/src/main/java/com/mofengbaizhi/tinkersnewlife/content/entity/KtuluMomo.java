@@ -192,7 +192,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     /** TNL907 \u2605\u514d\u75ab\u7a97\u6321\u4e0b \u21d2 \u2605\u901a\u77e5\u5468\u56f4\u73a9\u5bb6\u8ba9\u8840\u6761\u95ea\u91d1 \u2713\uff08\u2605\u9650\u6d41 250ms \u2713\uff09 */
     private long tnl$lastFlash = 0L;
 
-    private void tnl$shieldFlash() {
+    public void tnl$shieldFlash() {
         if (this.level().isClientSide) {
             return;
         }
