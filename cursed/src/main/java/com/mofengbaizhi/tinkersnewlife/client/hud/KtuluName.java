@@ -45,10 +45,21 @@ public final class KtuluName {
         }
     }
 
+    /**
+     * TNL917 \u2605\u2605 \u4fee\u6b63\uff1a\u2605\u4e71\u7801\u8981"\u770b\u7740\u5c31\u662f\u4e71\u7801" \u2713
+     *
+     * <p>\u2605\u7528\u6237\u53cd\u9988\uff1a\u2605"\u4f60\u4e71\u7801\u6ca1\u7801\u4f4f\u554a" \u2713
+     * \u2605\u539f\u56e0 \u2717\uff1a\u2605\u6211\u7684\u5b57\u7b26\u6c60\u91cc\u653e\u4e86\u2605**\u771f\u5b57** \u2717
+     * \uff08\u2605\u5757\u5b57\u7b26/\u65e5\u6587/\u6c49\u5b57 \u2713\uff09\u21d2 \u2605\u5373\u4f7f\u52a0\u4e86 OBFUSCATED
+     * \u4e5f\u80fd\u88ab\u770b\u51fa\u662f\u4ec0\u4e48\u5b57 \u2717\u3002
+     * \u2605\u73b0\u5728\uff1a\u2605\u53ea\u7528**\u82f1\u6587\u5b57\u6bcd \u002b \u6570\u5b57** \u2713
+     * \u21d2 \u2605\u6bcf\u5e27\u968f\u673a\u91cd\u6392 \u21d2 \u2605\u770b\u8d77\u6765\u5c31\u662f\u4e00\u4e32\u4e71\u7801 \u2713\u2713
+     */
     private static String randomGlitch() {
-        String pool = "\u00a7k\u2591\u2592\u2593\u25a0\u25a1\u30fb\u4e42\u4e43\u53c9";
+        String pool = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < 2 + RND.nextInt(2); i++) {
+        int len = 4 + RND.nextInt(3);
+        for (int i = 0; i < len; i++) {
             sb.append(pool.charAt(RND.nextInt(pool.length())));
         }
         return sb.toString();
