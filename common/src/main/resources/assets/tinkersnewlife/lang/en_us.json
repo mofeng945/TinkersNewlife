@@ -1628,5 +1628,7 @@
   "item.tinkersnewlife.starfall_lament": "Starfall Lament",
   "entity.tinkersnewlife.starfall_arrow": "Starfall Arrow",
   "item.tinkersnewlife.starfall_lament.tooltip": "I will never forget that scene, the sky itself torn apart, a fall that brought apocalyptic ruin upon mortals...",
-  "item.tinkersnewlife.starfall_lament.tooltip_author": "                                                                                                —In memory of a past long dead, by Momo"
+  "item.tinkersnewlife.starfall_lament.tooltip_author": "                                                                                                —In memory of a past long dead, by Momo",
+  "key.tinkersnewlife.pull_arrow": "Pull Out Arrow",
+  "key.categories.tinkersnewlife": "Tinker's Newlife"
 }

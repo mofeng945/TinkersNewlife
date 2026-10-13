@@ -281,6 +281,8 @@ public class StarfallArrow extends AbstractArrow {
             com.mofengbaizhi.tinkersnewlife.util.TruePierce.apply(attacker, target, dmg);
         } catch (Throwable th) {
             target.hurt(this.damageSources().magic(), dmg);
+                    // TNL927 \u2605\u5f3a\u5316\u7bad\u547d\u4e2d \u21d2 \u2605\u624e\u4e0a\u9ed1\u7bad \u2713\uff08\u2605\u58a8\u9ed8\u514d\u75ab \u2713 \u5728 manager \u91cc\u5224 \u2713\uff09
+                    com.mofengbaizhi.tinkersnewlife.content.entity.StuckArrowManager.apply(target);
         }
         if (enh) {
             Vec3 v = this.getDeltaMovement();
@@ -292,7 +294,7 @@ public class StarfallArrow extends AbstractArrow {
                 if (inst != null) {
                     inst.removeModifier(PIN_UUID);
                     inst.addTransientModifier(new AttributeModifier(
-                            PIN_UUID, "tinkersnewlife.starfall_pin", -1.0D, AttributeModifier.Operation.MULTIPLY_TOTAL));
+                            PIN_UUID, "tinkersnewlife.starfall_pin", 0.0D, AttributeModifier.Operation.MULTIPLY_TOTAL));
                 }
             } catch (Throwable ignored) {
             }
