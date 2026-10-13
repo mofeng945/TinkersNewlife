@@ -121,15 +121,21 @@ public class StarfallLamentItem extends BowItem {
      *
      * <p>\u2605\u73b0\u5728\uff1a\u2605\u81ea\u5df1\u91cd\u5199 {@code use} \u2713\uff0c\u2605**\u4e0d\u8981\u7bad\u4e5f\u80fd\u62c9\u5f13** \u2713\u3002
      */
+    /**
+     * TNL890 关键修正：★有箭就走**原版弓的通道**（动画/状态由引擎保证），没箭才手动进入使用状态。
+     *
+     * <p>日志证据（TNL889）：★``onUseTick useTime=30`` 之后又回到 ``useTime=10/0``
+     * ⇒ ★使用状态被反复重置 ⇒ ★pull 永远≈0 ⇒ ★蓄力动画起不来 ✓
+     * 原版 ``BowItem#use`` 的 ``startUsingItem`` 在引擎流程里，不会被这样打断 ✓
+     */
     @Override
     public net.minecraft.world.InteractionResultHolder<ItemStack> use(Level level, Player player, net.minecraft.world.InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        player.startUsingItem(hand);          // \u2605\u76f4\u63a5\u8fdb\u5165"\u4f7f\u7528\u4e2d" \u2713
-        if (System.currentTimeMillis() - TNL$LAST_LOG > 2000L) {
-            TNL$LAST_LOG = System.currentTimeMillis();
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
-                    "TNL889 use() called side={} remaining={}", level.isClientSide, player.getUseItemRemainingTicks());
+        boolean hasAmmo = !player.getProjectile(stack).isEmpty();
+        if (hasAmmo) {
+            return super.use(level, player, hand);            // ★原版通道 ⇒ 动画稳 ✓
         }
+        player.startUsingItem(hand);                          // ★没箭的兜底（动画可能不标准）
         return net.minecraft.world.InteractionResultHolder.consume(stack);
     }
 
