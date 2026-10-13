@@ -54,7 +54,7 @@
     "KeyboardHandlerImeMixin",
     "HumanoidSpinPoseMixin",
     "PlayerSpinDispatcherMixin",
-    "StarBodyRenderTypeMixin"
+    "StarBodyItemRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 0
