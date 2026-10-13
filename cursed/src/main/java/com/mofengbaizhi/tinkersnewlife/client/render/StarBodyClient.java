@@ -103,7 +103,7 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
             TinkersNewlife.LOGGER.warn("TNL944 shader register called");       // ★TNL944 \u2713
             try {
                 event.registerShader(
-                        new ShaderInstance(event.getResourceProvider(), SHADER_ID, DefaultVertexFormat.NEW_ENTITY),
+                        new ShaderInstance(event.getResourceProvider(), SHADER_ID, DefaultVertexFormat.BLOCK),
                         s -> {
                             shader = s;
                             TinkersNewlife.LOGGER.warn("TNL944 star_body shader compiled ok");
@@ -146,7 +146,7 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
             return null;
         }
         if (renderType == null) {
-            renderType = RenderType.create("tnl_star_body", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS,
+            renderType = RenderType.create("tnl_star_body", DefaultVertexFormat.BLOCK, VertexFormat.Mode.QUADS,
                     256, false, true,
                     RenderType.CompositeState.builder()
                             .setShaderState(new RenderStateShard.ShaderStateShard(() -> shader))

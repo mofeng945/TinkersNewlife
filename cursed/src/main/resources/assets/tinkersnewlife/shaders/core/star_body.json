@@ -5,7 +5,6 @@
     "Position",
     "Color",
     "UV0",
-    "UV1",
     "UV2",
     "Normal"
   ],
@@ -88,5 +87,10 @@
         0.26
       ]
     }
-  ]
+  ],
+  "blend": {
+    "func": "add",
+    "srcrgb": "srcalpha",
+    "dstrgb": "1-srcalpha"
+  }
 }

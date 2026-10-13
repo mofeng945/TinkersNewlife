@@ -3,7 +3,6 @@
 in vec3 Position;
 in vec4 Color;
 in vec2 UV0;
-in vec2 UV1;
 in vec2 UV2;
 in vec3 Normal;
 
@@ -18,5 +17,5 @@ void main() {
     gl_Position = ProjMat * ModelViewMat * vec4(Position, 1.0);
     vUv = UV0;
     vColor = Color;
-    vLight = UV1;
+    vLight = UV2;              // TNL951 \u2605BLOCK \u683c\u5f0f\u91cc\u5149\u7167\u5728 UV2 \u2713
 }
