@@ -187,26 +187,41 @@ public class StarfallArrow extends AbstractArrow {
         super.remove(reason);
     }
 
-    /** TNL881 \u2605Boss \u5224\u5b9a\uff08\u2605\u6539\u6210\u6807\u7b7e\u5224\u5b9a \u2713\uff09
+    /** TNL882 \u2605\u2605Boss \u5224\u5b9a\uff1a\u2605\u770b"\u6709\u6ca1\u6709 Boss \u8840\u6761\u4e8b\u4ef6" \u2713
      *
-     * <p>\u2605\u7528\u6237\u53cd\u9988\uff1a\u2605"\u4e3a\u4ec0\u4e48\u5047\u4eba\u4e5f\u7b97 boss \u751f\u7269" \u2713
-     * \u21d2 \u2605\u56e0\u4e3a\u65e7\u5199\u6cd5\u662f"\u751f\u547d\u4e0a\u9650 \u2265 200 \u5c31\u7b97 Boss" \u2717\uff08\u5047\u4eba/\u8bad\u7ec3\u6728\u4eba\u4e5f\u4f1a\u4e2d\u62db \u2717\uff09\u3002
-     *
-     * <p>\u2605\u73b0\u5728\uff1a\u2605\u539f\u7248 Boss \u7c7b \u002b \u2605\u6570\u636e\u6807\u7b7e
-     * {@code tinkersnewlife:bosses} \u2713\uff08\u2605\u8def\u5f84\uff1a
-     * {@code data/tinkersnewlife/tags/entity_types/bosses.json} \u2713
-     * \u21d2 \u2605\u4f60\u60f3\u52a0\u54ea\u4e2a Boss \u76f4\u63a5\u5f80\u91cc\u9762\u6dfb \u2713\uff09\u3002
+     * <p>\u2605\u7528\u6237\u53e3\u5f84\uff1a\u2605"boss\u68c0\u6d4b\u6309\u6709\u6ca1\u6709 boss \u4e8b\u4ef6\u5224\u65ad" \u2713
+     * \u21d2 \u2605\u53cd\u5c04\u626b\u63cf\u8be5\u5b9e\u4f53\u7c7b\uff08\u542b\u7236\u7c7b\uff09\u7684\u5b57\u6bb5 \u2713\uff1a
+     * \u53ea\u8981\u6709\u4efb\u4f55 {@link net.minecraft.world.BossEvent} \u7c7b\u578b\u7684\u5b57\u6bb5
+     * \uff08\u2605\u539f\u7248\u672b\u5f71\u9f99/\u51cb\u7075 \u2713 \u2605\u672c\u6a21\u7ec4 KtuluMomo \u2713 \u2605\u5176\u4ed6\u6a21\u7ec4\u6709\u8840\u6761\u7684 Boss \u2713\uff09
+     * \u21d2 \u2605\u5c31\u7b97 Boss \u2713\uff1b\u2605\u5047\u4eba/\u8bad\u7ec3\u6728\u4eba\u6ca1\u6709\u8fd9\u79cd\u5b57\u6bb5 \u2717 \u21d2 \u2605\u4e0d\u7b97 Boss \u2713\u3002
+     * \u2605\u7ed3\u679c\u6309**\u5b9e\u4f53\u7c7b\u578b\u7f13\u5b58** \u2713\uff08\u2605\u53cd\u5c04\u53ea\u505a\u4e00\u6b21 \u2713\uff09\u3002
      */
-    private static final net.minecraft.tags.TagKey<net.minecraft.world.entity.EntityType<?>> TNL$BOSSES =
-            net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ENTITY_TYPE,
-                    new net.minecraft.resources.ResourceLocation("tinkersnewlife", "bosses"));
+    private static final java.util.Map<net.minecraft.world.entity.EntityType<?>, Boolean> TNL$BOSS_CACHE =
+            new java.util.concurrent.ConcurrentHashMap<>();
 
     public static boolean tnl$isBoss(Entity e) {
-        if (e instanceof EnderDragon || e instanceof WitherBoss || e instanceof KtuluMomo) {
-            return true;
-        }
         try {
-            return e.getType().is(TNL$BOSSES);
+            net.minecraft.world.entity.EntityType<?> type = e.getType();
+            Boolean hit = TNL$BOSS_CACHE.get(type);
+            if (hit != null) {
+                return hit;
+            }
+            boolean boss = false;
+            Class<?> c = e.getClass();
+            while (c != null && c != Object.class) {
+                for (java.lang.reflect.Field f : c.getDeclaredFields()) {
+                    if (net.minecraft.world.BossEvent.class.isAssignableFrom(f.getType())) {
+                        boss = true;
+                        break;
+                    }
+                }
+                if (boss) {
+                    break;
+                }
+                c = c.getSuperclass();
+            }
+            TNL$BOSS_CACHE.put(type, boss);
+            return boss;
         } catch (Throwable th) {
             return false;
         }
@@ -236,7 +251,7 @@ public class StarfallArrow extends AbstractArrow {
             }
         }
         boolean enh = this.tnl$isEnhanced();
-        float dmg = tnl$isBoss(target) ? target.getMaxHealth() * 0.005F : 8.0F;
+        float dmg = tnl$isBoss(target) ? target.getMaxHealth() * 0.03F : 16.0F;   // TNL882 \u2605\u975e Boss 16 \u2713 \u2605Boss 3% \u2713
         if (enh) {
             dmg *= 2.0F;
         }

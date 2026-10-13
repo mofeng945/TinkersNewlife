@@ -107,6 +107,16 @@ public class StarfallLamentItem extends BowItem {
         return true;
     }
 
+    /** TNL882 \u2605\u2605\u81ea\u52a8\u5c04\u51fb**\u9ed8\u8ba4\u63a5\u4e0a** \u2713
+     *
+     * <p>\u2605\u7528\u6237\u53e3\u5f84\uff1a\u2605"\u628a\u81ea\u52a8\u5c04\u51fb\u63a5\u4e0a" \u2713
+     * \u21d2 \u2605\u6ca1\u6709 NBT \u65f6**\u9ed8\u8ba4\u5f00\u542f** \u2713\uff08\u2605\u53c2\u8003\u5b9e\u73b0\u662f\u9ed8\u8ba4\u5173 \u2717\uff09\uff1b
+     * \u2605\u60f3\u5173\u6389\uff1a\u2605\u7ed9\u5f13\u52a0 NBT ``AutoFire: 0b`` \u2713\u3002
+     */
+    public static boolean isAutoFire(ItemStack stack) {
+        return !stack.hasTag() || stack.getTag().getBoolean("AutoFire");
+    }
+
     @Override
     public int getUseDuration(ItemStack stack) {
         return 72000;
@@ -117,7 +127,7 @@ public class StarfallLamentItem extends BowItem {
         if (!(entity instanceof Player player)) {
             return;
         }
-        boolean autoFire = stack.hasTag() && stack.getTag().getBoolean("AutoFire");
+        boolean autoFire = isAutoFire(stack);
         if (autoFire) {
             int useTime = this.getUseDuration(stack) - remainingTicks;
             if (useTime >= 10) {
@@ -134,7 +144,7 @@ public class StarfallLamentItem extends BowItem {
 
     @Override
     public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
-        boolean autoFire = stack.hasTag() && stack.getTag().getBoolean("AutoFire");
+        boolean autoFire = isAutoFire(stack);
         if (!autoFire && entity instanceof Player player) {
             int useTime = this.getUseDuration(stack) - timeLeft;
             float power = getPowerForTime(useTime);
@@ -149,7 +159,7 @@ public class StarfallLamentItem extends BowItem {
 
     @Override
     public boolean useOnRelease(ItemStack stack) {
-        return !(stack.hasTag() && stack.getTag().getBoolean("AutoFire"));
+        return !isAutoFire(stack);
     }
 
     /** \u2605\u5f00\u4e00\u7ec4\u7bad\uff08\u2605\u4e0e\u53c2\u8003\u4e00\u81f4\uff1a\u2605\u4e3b\u7bad \u002b Multishot \u5219\u4e09\u7bad \u2713\uff09 */
