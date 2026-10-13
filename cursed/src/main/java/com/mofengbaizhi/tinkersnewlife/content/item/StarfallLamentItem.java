@@ -247,6 +247,36 @@ public class StarfallLamentItem extends BowItem {
         }
     }
 
+    /** TNL891 \u2605\u2605 \u670d\u52a1\u7aef\u53d1\u5c04\uff08\u2605\u7531 PacketStarfallShoot \u89e6\u53d1 \u2713\uff09
+     *  \u2605\u4e0d\u4f9d\u8d56\u539f\u7248\\u4f7f\u7528\u72b6\u6001 \u2713\uff08\u2605\u90a3\u4e2a\u72b6\u6001\u5728\u5b9e\u673a\u91cc\u88ab\u53cd\u590d\u91cd\u7f6e \u2717\uff09\u3002
+     */
+    public static void fireFromServer(net.minecraft.server.level.ServerPlayer player, int chargeTicks) {
+        try {
+            float power = getPowerForTime(chargeTicks);
+            if (power < 0.1F) {
+                return;
+            }
+            fireArrowsStatic(player, player.getMainHandItem(), player.level(), power);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** \u2605\u9759\u6001\u7248\u5f00\u4e00\u7ec4\u7bad\uff08\u2605\u4e0e\u5b9e\u4f8b\u7248\u540c\u903b\u8f91 \u2713\uff09 */
+    private static void fireArrowsStatic(Player player, ItemStack stack, Level level, float power) {
+        StarfallArrow main = new StarfallArrow(ModEntities.STARFALL_ARROW.get(), player, level);
+        main.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, tnl$speed(power), 1.0F);
+        main.pickup = AbstractArrow.Pickup.DISALLOWED;
+        level.addFreshEntity(main);
+        level.playSound(null, player.getX(), player.getY(), player.getZ(),
+                SoundEvents.ARROW_SHOOT, SoundSource.PLAYERS, 1.0F, 1.0F);
+        com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                "TNL891 starfall shot from packet, charge={} power={}", chargeTicksOf(power), power);
+    }
+
+    private static int chargeTicksOf(float power) {
+        return (int) (power * 20.0F);
+    }
+
     /** TNL889 初速：原来 x3.0（太快 -> 来不及转弯撞方块）；现在 1.2 ~ 2.4（蓄力越满越快） */
     private static float tnl$speed(float power) {
         return 1.2F + power * 1.2F;
