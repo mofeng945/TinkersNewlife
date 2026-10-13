@@ -301,7 +301,6 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
          * 站着不动永远不会被弹回去 ✓；走出去再走进来照常能传（回程 ✓）。
          */
         if (wasInside) return;
-        if (WhiteSpaceDimensions.isOnCooldown(entity)) return;
         /*
          * TNL921 \u2605\u2605 \u7528\u6237\u53e3\u5f84\uff1a\u2605"\u6211\u8bb0\u5f97\u5730\u72f1\u95e8\u5224\u5b9a\u4f20\u9001\u8303\u56f4\u662f\u4e2a**\u7247**\u800c\u4e0d\u662f\u4e2a\u5757" \u2713
          *
@@ -320,7 +319,6 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
         double tnl$mid = (tnl$axis == net.minecraft.core.Direction.Axis.X ? pos.getX() : pos.getZ()) + 0.5D;
         if (Math.abs(tnl$center - tnl$mid) > 0.25D) return;
         // TNL920 \u2605\u539f\u7248\u5730\u72f1\u95e8\u540c\u6b3e\u95e8\u69db\uff1a\u2605\u539f\u7248 ``portalCooldown`` \u8fd8\u5728\u5c31\u4e0d\u4f20 \u2713
-        if (entity.getPortalCooldown() > 0) return;
         if (!(level.getBlockEntity(pos) instanceof WhiteSpacePortalBlockEntity portal)) return;
         if (!portal.hasDestination()) return;
 
@@ -338,8 +336,23 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
          */
         BlockPos landing = WhiteSpaceDimensions.resolveLanding(
                 target, portal.getDestinationPos(), level.dimension(), pos, entity.getDirection());
+        /*
+         * TNL922 \u2605\u2605 \u7528\u6237\u53e3\u5f84\uff1a\u2605"\u751f\u7269\u4f20\u9001\u8fc7\u53bb\u751f\u6210\u5728\u79bb\u95e8 1 \u683c\u7684\u5730\u65b9\uff0c\u4e0d\u8981\u5728\u95e8\u91cc" \u2713
+         *   \u2605\u73b0\u5728\uff1a\u2605\u975e\u73a9\u5bb6\u5b9e\u4f53\uff08\u2605\u751f\u7269\u7b49 \u2713\uff09\u843d\u70b9\u5411**\u5b83\u6b63\u5728\u8d70\u7684\u65b9\u5411**
+         *   \u2605\u5916\u79fb 1 \u683c \u2713\uff0c\u2605\u5e76\u4e14\u90a3\u4e2a\u4f4d\u7f6e\u4e0e\u5b83\u4e0a\u65b9\u90fd\u8981\u662f\u7a7a\u7684 \u2713
+         *   \uff08\u2605\u5426\u5219\u4fdd\u6301\u539f\u843d\u70b9 \u2713 \u2014\u2014 \u2605\u5b81\u53ef\u5728\u95e8\u91cc\u4e5f\u4e0d\u585e\u8fdb\u77f3\u5934\u91cc \u2717\uff09\u3002
+         *   \u2605\u73a9\u5bb6**\u4e0d\u79fb** \u2713\uff08\u2605\u73a9\u5bb6\u843d\u5728\u95e8\u91cc\u624d\u80fd\u53cd\u5411\u8d70\u56de\u53bb \u2713\uff09\u3002
+         */
+        if (!(entity instanceof ServerPlayer)) {
+            net.minecraft.core.BlockPos out = landing.relative(entity.getDirection());
+            boolean clear = target.getBlockState(out).getCollisionShape(target, out).isEmpty()
+                    && target.getBlockState(out.above()).getCollisionShape(target, out.above()).isEmpty();
+            if (clear) {
+                landing = out;
+            }
+        }
         if (landing == null) {
-            WhiteSpaceDimensions.armCooldown(entity, 40);   // TNL919 \u2605\u8de8\u7ef4\u5ea6\u540c\u4e00\u628a\u5c3a \u002b \u5230\u8fbe\u51b7\u5374 \u2713
+            // TNL922 \u2605\u7528\u6237\u8981\u6c42\uff1a\u53bb\u6389\u4f20\u9001\u51b7\u5374 \u2713
             if (entity instanceof ServerPlayer player) {
                 player.displayClientMessage(
                         Component.translatable("message.tinkersnewlife.white_space.landing_blocked"), true);
@@ -375,7 +388,7 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
              * （Entity#restoreFrom → saveWithoutId / load）⇒ ForgeData 会被继承 ✓
              * ⇒ 冷却跟着新实体过去，落地就在对面那扇门里也不会被立刻弹回来 ✓。
              */
-            WhiteSpaceDimensions.armCooldown(member, WhiteSpaceDimensions.ARRIVE_COOLDOWN);
+            // TNL922 \u2605\u53bb\u6389\u51b7\u5374 \u2713
             boolean memberOk = WhiteSpaceDimensions.teleportEntity(member, target, landing);
             /*
              * ⚠ 玩家侧 ServerPlayer#teleportTo 恒返回 true（被 Forge 的 EntityTravelToDimensionEvent
@@ -395,7 +408,7 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
              * ② 顺手清掉"在门里"的标记：下一 tick 打卡又会把它写回当前刻 ⇒ 同样无效 ✗。
              * ⇒ 就让它**只提示一次**，想重试**走出去再走进来**即可（进入检测本来就是这么设计的 ✓）。
              */
-            WhiteSpaceDimensions.armCooldown(entity, 40);   // TNL919 \u2605\u8de8\u7ef4\u5ea6\u540c\u4e00\u628a\u5c3a \u002b \u5230\u8fbe\u51b7\u5374 \u2713
+            // TNL922 \u2605\u7528\u6237\u8981\u6c42\uff1a\u53bb\u6389\u4f20\u9001\u51b7\u5374 \u2713
             if (entity instanceof ServerPlayer player) {
                 player.displayClientMessage(
                         Component.translatable("message.tinkersnewlife.white_space.travel_blocked"), true);

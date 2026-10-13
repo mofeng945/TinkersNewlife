@@ -607,12 +607,11 @@ public final class WhiteSpaceDimensions {
             net.minecraft.world.level.ChunkPos cp = new net.minecraft.world.level.ChunkPos(landing);
             target.getChunkSource().addRegionTicket(net.minecraft.server.level.TicketType.PORTAL, cp, 3, landing);
             target.getChunkAt(landing);                       // \u2605\u786e\u4fdd\u5df2\u52a0\u8f7d \u2713
-            armCooldown(entity, ARRIVE_COOLDOWN);             // \u2605\u6211\u4eec\u81ea\u5df1\u7684\u51b7\u5374 \u2713
+            // TNL922 \u2605\u53bb\u6389\u51b7\u5374 \u2713
             boolean ok = entity.teleportTo(target,
                     landing.getX() + 0.5D, landing.getY(), landing.getZ() + 0.5D,
                     Set.of(), entity.getYRot(), entity.getXRot());
             if (ok) {
-                entity.setPortalCooldown();                   // \u2605\u539f\u7248\u90a3\u5957 300 tick \u2713
                 target.getChunkSource().addRegionTicket(
                         net.minecraft.server.level.TicketType.PORTAL, cp, 3, landing);
             }
