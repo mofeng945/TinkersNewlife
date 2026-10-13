@@ -179,40 +179,17 @@ public class StarfallLamentItem extends BowItem {
 
 
     /**
-     * TNL887 \u2605\u2605 \u56de\u5f52\u84c4\u529b\uff08\u2605\u7528\u6237\u53e3\u5f84\uff1a\u2605"\u6211\u4eec\u4e0d\u8981\u81ea\u52a8\u5c04\u51fb\u4e86\uff0c\u56de\u5f52\u84c4\u529b\u548c\u84c4\u529b\u52a8\u753b" \u2713\uff09
+     * TNL892 \u2605\u2605 \u4fdd\u7559\u7a7a\u5b9e\u73b0\uff08\u2605\u4e0d\u518d\u53d1\u5c04 \u2717\uff09
      *
-     * <p>\u2605\u677e\u624b\u65f6\u6309**\u84c4\u529b\u7a0b\u5ea6**\u53d1\u5c04 \u2713\uff08\u2605\u4e0e\u539f\u7248\u5f13\u540c\u4e00\u5957 \u2713\uff09\uff1b
-     * \u2605\u84c4\u529b\u52a8\u753b\u7531\u6a21\u578b\u7684 ``pulling``/``pull`` \u8c13\u8bcd\u9a71\u52a8 \u2713
-     * \uff08\u2605\u4e0d\u518d\u6709 stop/start \u628a pull \u6253\u56de 0 \u2717\uff09\u3002
+     * <p>\u2605\u7528\u6237\u53cd\u9988\uff1a\u2605"\u600e\u4e48\u53d8\u6210\u53cc\u53d1\u5f13\u4e86" \u2713
+     * \u21d2 \u2605\u56e0\u4e3a**\u4e24\u6761\u8def\u90fd\u5f00\u706b** \u2717\uff1a
+     * \u2605\u65b0\u5305\u8def\u5f84\uff08{@code PacketStarfallShoot} \u2713\uff09\u002b
+     * \u2605\u539f\u7248\u8def\u5f84\uff08\u672c\u65b9\u6cd5 \u2717\uff09\u3002
+     * \u2605\u73b0\u5728\uff1a\u2605**\u53ea\u6709\u5305\u8def\u5f84\u53d1\u5c04** \u2717 \u21d2 \u2605\u4e00\u6b21\u4e00\u7bad \u2713\u3002
      */
-    /** TNL889 探针：只记录蓄力进度，不发射（用来定位动画问题） */
-    @Override
-    public void onUseTick(Level level, LivingEntity entity, ItemStack stack, int remainingTicks) {
-        super.onUseTick(level, entity, stack, remainingTicks);
-        try {
-            int useTime = this.getUseDuration(stack) - remainingTicks;
-            if (useTime % 10 == 0 && System.currentTimeMillis() - TNL$LAST_LOG > 1500L) {
-                TNL$LAST_LOG = System.currentTimeMillis();
-                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
-                        "TNL889 onUseTick side={} useTime={} remaining={}", level.isClientSide, useTime, remainingTicks);
-            }
-        } catch (Throwable ignored) {
-        }
-    }
-
     @Override
     public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
-        if (!(entity instanceof Player player)) {
-            return;
-        }
-        int useTime = this.getUseDuration(stack) - timeLeft;
-        float power = getPowerForTime(useTime);
-        if (power < 0.1F) {
-            return;
-        }
-        if (!level.isClientSide) {
-            fireArrows(player, stack, level, power);
-        }
+        // \u2605\u4ec0\u4e48\u90fd\u4e0d\u505a \u2713\uff08\u2605\u53d1\u5c04\u7531\u5ba2\u6237\u7aef\u8ba1\u6570\u5305\u8d1f\u8d23 \u2713\uff09
     }
 
     @Override
