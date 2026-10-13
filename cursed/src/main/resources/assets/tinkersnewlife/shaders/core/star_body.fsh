@@ -53,11 +53,17 @@ void main() {
         // \u2605\u9ed1\u8272\u90e8\u5206 \u21d2 \u2605\u661f\u7a7a \u2713
         float neb = fbm(vUv * 22.0 + vec2(EffectTime * 0.035, -EffectTime * 0.022));
         float neb2 = fbm(vUv * 7.0 - vec2(EffectTime * 0.012, EffectTime * 0.02));
-        float stars = smoothstep(0.90, 1.0, noise(vUv * 120.0 + vec2(EffectTime * 0.55, 0.0)));
-        float bright = smoothstep(0.97, 1.0, noise(vUv.yx * 55.0 - vec2(0.0, EffectTime * 0.3)));
+        // TNL954 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u661f\u661f\u5bc6\u5ea6\u4e0d\u591f" \u2713
+        //   \u2605\u53c2\u8003\u65e0\u5c3d\u8d2a\u5a6a\uff1a\u2605\u5b83\u7528 ``cosmicoutof = 101``\uff08\u2605\u7ea6 1% \u7684\u50cf\u7d20\u624d\u662f\u661f \u2713\uff09
+        //     \u002b \u2605\u4ece 10 \u5e27\u661f\u7a7a\u8d34\u56fe\u91cc\u53d6\u6837 \u2713\u3002
+        //   \u2605\u6211\u4eec\u6ca1\u6709\u56fe\u96c6\u5e27 \u2717 \u21d2 \u2605\u628a\u9608\u503c\u538b\u4f4e\u002b\u9891\u7387\u63d0\u9ad8\u6765\u5bf9\u7b49 \u2713
+        //     \uff08\u2605\u4ece\u201c\u53ea\u6709\u6700\u4eae\u7684 10%\u201d\u6539\u6210\u201c\u7ea6 38%\u201d\uff0c\u2605\u5c3a\u5ea6\u4e5f\u52a0\u5bc6 \u2713\uff09
+        float stars = smoothstep(0.62, 1.0, noise(vUv * 150.0 + vec2(EffectTime * 0.55, 0.0)));
+        float stars2 = smoothstep(0.74, 1.0, noise(vUv.zx * 210.0 + vec2(0.0, EffectTime * 0.42)));
+        float bright = smoothstep(0.86, 1.0, noise(vUv.yx * 70.0 - vec2(0.0, EffectTime * 0.3)));
         vec3 deep = vec3(0.02, 0.025, 0.06);
         vec3 cloud = vec3(0.35, 0.42, 0.80) * neb * 0.55 + vec3(0.55, 0.35, 0.75) * neb2 * 0.35;
-        col = deep + cloud + vec3(1.0) * stars * 0.9 + vec3(0.75, 0.82, 1.0) * bright;
+        col = deep + cloud + vec3(1.0) * (stars * 0.95 + stars2 * 0.7) + vec3(0.9, 0.94, 1.0) * bright;   // TNL954 \u2605\u661f\u70b9\u52a0\u5bc6 \u2713
     } else {
         col = tex.rgb;
     }
