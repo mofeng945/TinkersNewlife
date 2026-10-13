@@ -37,6 +37,8 @@ public class StarfallLamentItem extends BowItem {
 
     public static final List<Enchantment> EXTRA_WHITELIST = new ArrayList<>();
 
+    private static long TNL$LAST_LOG = 0L;
+
     public StarfallLamentItem() {
         super(new Properties().stacksTo(1).durability(384).rarity(Rarity.EPIC));
     }
@@ -107,7 +109,31 @@ public class StarfallLamentItem extends BowItem {
         return true;
     }
 
-    /** TNL882 \u2605\u2605\u81ea\u52a8\u5c04\u51fb**\u9ed8\u8ba4\u63a5\u4e0a** \u2713
+    /**
+     * TNL883 \u2605\u2605 \u5173\u952e\uff1a**\u7ed5\u8fc7\u539f\u7248\u7684\u201c\u5fc5\u987b\u6709\u7bad\u201d\u68c0\u67e5** \u2713
+     *
+     * <p>\u2605\u7528\u6237\u53cd\u9988\uff1a\u2605"\u8fd8\u662f\u6ca1\u81ea\u52a8\u653e\u7bad\u554a" \u2713
+     * \u2605\u6839\u56e0 \u2717\uff1a\u2605\u539f\u7248 {@code BowItem#use}\u4f1a\u5148\u67e5\u5f39\u836f
+     * \uff08{@code player.getProjectile(stack)} \u2717\uff09\uff0c
+     * \u2605**\u80cc\u5305\u91cc\u6ca1\u7bad\u5c31\u76f4\u63a5 FAIL** \u2717 \u21d2 \u2605\u6839\u672c\u6ca1\u6709
+     * "\u5f00\u59cb\u4f7f\u7528"\u8fd9\u4e2a\u72b6\u6001 \u2717 \u21d2 \u2605{@code onUseTick} \u6c38\u8fdc\u4e0d\u4f1a\u8c03\u5230 \u2717
+     * \u21d2 \u2605\u81ea\u52a8\u5c04\u51fb\u81ea\u7136\u4e0d\u751f\u6548 \u2713\u3002
+     *
+     * <p>\u2605\u73b0\u5728\uff1a\u2605\u81ea\u5df1\u91cd\u5199 {@code use} \u2713\uff0c\u2605**\u4e0d\u8981\u7bad\u4e5f\u80fd\u62c9\u5f13** \u2713\u3002
+     */
+    @Override
+    public net.minecraft.world.InteractionResultHolder<ItemStack> use(Level level, Player player, net.minecraft.world.InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        player.startUsingItem(hand);          // \u2605\u76f4\u63a5\u8fdb\u5165"\u4f7f\u7528\u4e2d" \u2713
+        return net.minecraft.world.InteractionResultHolder.consume(stack);
+    }
+
+    @Override
+    public net.minecraft.world.item.UseAnim getUseAnimation(ItemStack stack) {
+        return net.minecraft.world.item.UseAnim.BOW;   // \u2605\u62c9\u5f13\u52a8\u753b\uff08\u2605\u6a21\u578b pulling \u4e5f\u9760\u5b83 \u2713\uff09
+    }
+
+    /** TNL883 \u2605\u2605\u81ea\u52a8\u5c04\u51fb**\u9ed8\u8ba4\u63a5\u4e0a** \u2713
      *
      * <p>\u2605\u7528\u6237\u53e3\u5f84\uff1a\u2605"\u628a\u81ea\u52a8\u5c04\u51fb\u63a5\u4e0a" \u2713
      * \u21d2 \u2605\u6ca1\u6709 NBT \u65f6**\u9ed8\u8ba4\u5f00\u542f** \u2713\uff08\u2605\u53c2\u8003\u5b9e\u73b0\u662f\u9ed8\u8ba4\u5173 \u2717\uff09\uff1b
@@ -183,6 +209,10 @@ public class StarfallLamentItem extends BowItem {
         }
         level.playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.ARROW_SHOOT, SoundSource.PLAYERS, 1.0F, 1.0F);
+        if (System.currentTimeMillis() - TNL$LAST_LOG > 2000L) {   // TNL883 \u2605\u9650\u6d41\u65e5\u5fd7 \u2713
+            TNL$LAST_LOG = System.currentTimeMillis();
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL883 starfall shot fired, power={}", power);
+        }
     }
 
     public static float getPowerForTime(int useTime) {
