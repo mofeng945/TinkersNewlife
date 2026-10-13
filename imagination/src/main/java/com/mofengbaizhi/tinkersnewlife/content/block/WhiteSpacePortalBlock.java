@@ -302,6 +302,8 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
          */
         if (wasInside) return;
         if (WhiteSpaceDimensions.isOnCooldown(entity)) return;
+        // TNL920 \u2605\u539f\u7248\u5730\u72f1\u95e8\u540c\u6b3e\u95e8\u69db\uff1a\u2605\u539f\u7248 ``portalCooldown`` \u8fd8\u5728\u5c31\u4e0d\u4f20 \u2713
+        if (entity.getPortalCooldown() > 0) return;
         if (!(level.getBlockEntity(pos) instanceof WhiteSpacePortalBlockEntity portal)) return;
         if (!portal.hasDestination()) return;
 

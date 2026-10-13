@@ -597,9 +597,26 @@ public final class WhiteSpaceDimensions {
      */
     public static boolean teleportEntity(Entity entity, ServerLevel target, BlockPos landing) {
         try {
-            return entity.teleportTo(target,
+            // TNL920 \u2605\u2605 \u7528\u6237\u53e3\u5f84\uff1a\u2605"\u80fd\u4e0d\u80fd\u6309\u5730\u72f1\u95e8\u7247\u7684\u4f20\u9001\u903b\u8f91\u505a\uff1f\u6211\u8bb0\u5f97\u662f\u4f1a\u8ba9\u533a\u5757\u52a0\u8f7d\u7684" \u2713
+            //   \u2605\u539f\u7248\u5730\u72f1\u95e8\u5c31\u662f\u8fd9\u4e48\u505a\u7684 \u2713\uff1a
+            //   \u2460 \u2605\u5148\u7ed9**\u843d\u70b9\u533a\u5757\u6253\u4e00\u5f20 ``TicketType.PORTAL`` \u533a\u5757\u7968**
+            //      \uff08\u2605\u534a\u5f84 3 \u2713 \u2014\u2014 \u2605PortalForcer \u540c\u6b3e\uff09\u21d2 \u2605\u76ee\u7684\u5730\u4f1a**\u88ab\u52a0\u8f7d**\u2713
+            //   \u2461 \u2605``getChunkAt`` \u786e\u4fdd\u533a\u5757\u771f\u7684\u5df2\u5728\u5185\u5b58\u91cc \u2713
+            //   \u2462 \u2605\u843d\u5730\u540e\u8c03**\u539f\u7248 ``entity.setPortalCooldown()``** \u2713
+            //      \uff08\u2605\u539f\u7248\u5c31\u662f\u7528\u8fd9\u4e2a 300 tick \u51b7\u5374\u9632\u5f39\u56de \u2713\uff09
+            net.minecraft.world.level.ChunkPos cp = new net.minecraft.world.level.ChunkPos(landing);
+            target.getChunkSource().addRegionTicket(net.minecraft.server.level.TicketType.PORTAL, cp, 3, landing);
+            target.getChunkAt(landing);                       // \u2605\u786e\u4fdd\u5df2\u52a0\u8f7d \u2713
+            armCooldown(entity, ARRIVE_COOLDOWN);             // \u2605\u6211\u4eec\u81ea\u5df1\u7684\u51b7\u5374 \u2713
+            boolean ok = entity.teleportTo(target,
                     landing.getX() + 0.5D, landing.getY(), landing.getZ() + 0.5D,
                     Set.of(), entity.getYRot(), entity.getXRot());
+            if (ok) {
+                entity.setPortalCooldown();                   // \u2605\u539f\u7248\u90a3\u5957 300 tick \u2713
+                target.getChunkSource().addRegionTicket(
+                        net.minecraft.server.level.TicketType.PORTAL, cp, 3, landing);
+            }
+            return ok;
         } catch (Throwable t) {
             TinkersNewlife.LOGGER.warn("[伟大白色空间] 跨维度传送异常：{}", t.toString());
             return false;
