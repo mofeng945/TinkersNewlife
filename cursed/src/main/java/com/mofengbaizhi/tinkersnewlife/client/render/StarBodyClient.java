@@ -71,6 +71,20 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
         TinkersNewlife.LOGGER.warn("TNL944 BEWLR constructed");     // ★TNL944 \u63a2\u9488 \u2713
     }
 
+    /** TNL947 \u2605\u4f9b\u6df7\u5165\u7528\uff1a\u2605\u53d6\u6e32\u67d3\u5668\uff08\u2605\u6ca1\u5efa\u5c31\u5efa\uff09\u2713 */
+    public static BlockEntityWithoutLevelRenderer rendererOrNull() {
+        try {
+            return instance();
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    /** TNL947 \u2605\u4f9b\u6df7\u5165\u7528\uff1a\u2605\u7740\u8272\u5668\u597d\u4e86\u6ca1 \u2713 */
+    public static boolean shaderReady() {
+        return shader != null;
+    }
+
     public static StarBodyClient instance() {
         if (INSTANCE == null) {
             INSTANCE = new StarBodyClient();

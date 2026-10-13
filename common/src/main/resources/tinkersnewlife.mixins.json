@@ -53,7 +53,8 @@
     "ScreenKeyInputMixin",
     "KeyboardHandlerImeMixin",
     "HumanoidSpinPoseMixin",
-    "PlayerSpinDispatcherMixin"
+    "PlayerSpinDispatcherMixin",
+    "StarBodyItemRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 0
