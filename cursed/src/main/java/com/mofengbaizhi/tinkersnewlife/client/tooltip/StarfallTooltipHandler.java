@@ -22,6 +22,8 @@ import net.minecraftforge.fml.common.Mod;
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class StarfallTooltipHandler {
 
+    private static long TNL$LAST = 0L;
+
     private static boolean mine(net.minecraft.world.item.ItemStack stack) {
         return stack != null && stack.getItem() instanceof StarfallLamentItem;
     }
@@ -34,7 +36,13 @@ public class StarfallTooltipHandler {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onPre(RenderTooltipEvent.Pre event) {
         try {
-            StarfieldState.active = mine(event.getItemStack());
+            boolean tnl$mine = mine(event.getItemStack());
+            StarfieldState.active = tnl$mine;
+            if (tnl$mine && System.currentTimeMillis() - TNL$LAST > 3000L) {
+                TNL$LAST = System.currentTimeMillis();
+                TinkersNewlife.LOGGER.warn("TNL899 pre flag set, pos={},{} screen={}x{}",
+                        event.getX(), event.getY(), event.getScreenWidth(), event.getScreenHeight());
+            }
         } catch (Throwable ignored) {
             StarfieldState.active = false;
         }
