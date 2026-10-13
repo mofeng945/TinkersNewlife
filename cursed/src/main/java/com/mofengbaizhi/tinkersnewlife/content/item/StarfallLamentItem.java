@@ -39,8 +39,13 @@ public class StarfallLamentItem extends BowItem {
 
     private static long TNL$LAST_LOG = 0L;
 
+    /** TNL934 \u2605\u5141\u8bb8\u7528**\u9644\u9b54\u4e66**\u6253\u4e0a\u53bb\u7684\u539f\u7248\u5f13\u9644\u9b54 \u2713 */
+    private static final java.util.Set<Enchantment> ALLOWED_BOOK = java.util.Set.of(
+            Enchantments.POWER_ARROWS, Enchantments.PUNCH_ARROWS, Enchantments.FLAMING_ARROWS,
+            Enchantments.INFINITY_ARROWS, Enchantments.UNBREAKING, Enchantments.MENDING);
+
     public StarfallLamentItem() {
-        super(new Properties().stacksTo(1).durability(384).rarity(Rarity.EPIC));
+        super(new Properties().stacksTo(1).durability(800).rarity(Rarity.EPIC));   // TNL934 \u2605\u7528\u6237\uff1a\u2605\u8010\u4e45 800 \u2713
     }
 
     @Override
@@ -95,14 +100,21 @@ public class StarfallLamentItem extends BowItem {
 
     @Override
     public boolean canApplyAtEnchantingTable(ItemStack stack, Enchantment enchantment) {
-        return enchantment == Enchantments.MULTISHOT || EXTRA_WHITELIST.contains(enchantment);
+        // TNL934 \u2605\u2605 \u7528\u6237\u53e3\u5f84\uff1a\u2605\u652f\u6301\u7a7f\u900f/\u591a\u91cd\u5c04\u51fb/\u65e0\u9650/\u706b\u77e2/\u65e0\u9650\u4fee\u8865\u7b49 \u2713
+        //   \u2605\u901a\u8fc7 ``super`` \u4fdd\u7559**\u539f\u7248\u5f13\u80fd\u9644\u7684\u5168\u90e8** \u2713
+        //   \uff08\u2605\u529b\u91cf/\u51b2\u51fb/\u706b\u77e2/\u65e0\u9650/\u8010\u4e45/\u7ecf\u9a8c\u4fee\u8865 \u2713\uff09\u002b \u2605\u53e6\u5916\u653e\u5f00**\u7a7f\u900f** \u2713
+        return enchantment == Enchantments.PIERCING
+                || enchantment == Enchantments.MULTISHOT
+                || EXTRA_WHITELIST.contains(enchantment)
+                || super.canApplyAtEnchantingTable(stack, enchantment);
     }
 
     @Override
     public boolean isBookEnchantable(ItemStack stack, ItemStack book) {
         var enchants = EnchantmentHelper.getEnchantments(book);
         for (Enchantment e : enchants.keySet()) {
-            if (e != Enchantments.MULTISHOT && !EXTRA_WHITELIST.contains(e)) {
+            if (e != Enchantments.MULTISHOT && e != Enchantments.PIERCING && !EXTRA_WHITELIST.contains(e)
+                    && !ALLOWED_BOOK.contains(e)) {
                 return false;
             }
         }
@@ -242,14 +254,51 @@ public class StarfallLamentItem extends BowItem {
 
     /** \u2605\u9759\u6001\u7248\u5f00\u4e00\u7ec4\u7bad\uff08\u2605\u4e0e\u5b9e\u4f8b\u7248\u540c\u903b\u8f91 \u2713\uff09 */
     private static void fireArrowsStatic(Player player, ItemStack stack, Level level, float power) {
-        StarfallArrow main = new StarfallArrow(ModEntities.STARFALL_ARROW.get(), player, level);
+        // TNL934 \u2605\u2605 \u9644\u9b54\uff1a\u2605\u529b\u91cf\uff08\u2605\u6bcf\u7ea7 +10% \u4f24\u5bb3 \u2713\uff09/\u2605\u7a7f\u900f/\u2605\u706b\u77e2/\u2605\u65e0\u9650/\u2605\u591a\u91cd\u5c04\u51fb \u2713
+        int ePower = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.POWER_ARROWS, stack);
+        int ePierce = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.PIERCING, stack);
+        int eFlame = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.FLAMING_ARROWS, stack);
+        int eInf = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.INFINITY_ARROWS, stack);
+        int eMulti = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.MULTISHOT, stack);
+        boolean creative = player.getAbilities().instabuild;
+
+        // \u2605\u6d88\u8017\u7bad\u77e2\uff1a\u2605\u6ca1\u7bad\u4e0d\u53d1 \u2713\uff1b\u2605\u65e0\u9650\u9644\u9b54\u4e0d\u6d88\u8017 \u2713
+        ItemStack ammo = player.getProjectile(stack);
+        if (ammo.isEmpty()) {
+            return;
+        }
+        if (!creative && eInf <= 0) {
+            ammo.shrink(1);
+        }
+        // \u2605\u8010\u4e45 -1 \u2713\uff08\u2605\u8010\u4e45\u9644\u9b54\u7531\u539f\u7248\u51cf\u514d \u2713\uff09
+        if (!creative) {
+            stack.hurtAndBreak(1, player, pl -> pl.broadcastBreakEvent(net.minecraft.world.InteractionHand.MAIN_HAND));
+        }
+
+        StarfallArrow main = tnl$enchant(new StarfallArrow(ModEntities.STARFALL_ARROW.get(), player, level),
+                ePower, ePierce, eFlame);
         main.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, tnl$speed(power), 1.0F);
         main.pickup = AbstractArrow.Pickup.DISALLOWED;
         level.addFreshEntity(main);
+        if (eMulti > 0) {                                  // \u2605\u591a\u91cd\u5c04\u51fb\uff1a\u2605\u518d\u8865\u4e24\u652f \u00b110\u00b0 \u2713
+            for (float off : new float[]{-10.0F, 10.0F}) {
+                StarfallArrow extra = tnl$enchant(new StarfallArrow(ModEntities.STARFALL_ARROW.get(), player, level),
+                        ePower, ePierce, eFlame);
+                extra.shootFromRotation(player, player.getXRot(), player.getYRot() + off, 0.0F, tnl$speed(power), 1.0F);
+                extra.pickup = AbstractArrow.Pickup.DISALLOWED;
+                level.addFreshEntity(extra);
+            }
+        }
         level.playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.ARROW_SHOOT, SoundSource.PLAYERS, 1.0F, 1.0F);
-        com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
-                "TNL891 starfall shot from packet, charge={} power={}", chargeTicksOf(power), power);
+    }
+
+    /** TNL934 \u2605\u628a\u529b\u91cf/\u7a7f\u900f/\u706b\u77e2\u4f20\u7ed9\u7bad\u77e2 \u2713 */
+    private static StarfallArrow tnl$enchant(StarfallArrow arrow, int power, int pierce, int flame) {
+        arrow.tnl$setPower(Math.max(0, power));
+        arrow.tnl$setPierce(Math.max(0, pierce));
+        arrow.tnl$setFlame(flame > 0);
+        return arrow;
     }
 
     private static int chargeTicksOf(float power) {
