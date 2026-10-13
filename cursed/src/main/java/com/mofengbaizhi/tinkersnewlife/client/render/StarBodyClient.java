@@ -192,6 +192,15 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
             return;
         }
         MultiBufferSource.BufferSource source = buffers instanceof MultiBufferSource.BufferSource bs ? bs : null;
+        // TNL948 \u2605\u2605 \u7528\u6237\u53cd\u9988\uff1a\u2605"\u5f13\u4e0d\u89c1\u4e86" \u2713
+        //   \u2605\u4fdd\u5e95 \u2713\uff1a\u2605**\u5148\u7528\u539f\u7248\u7c7b\u578b\u753b\u4e00\u904d** \u2713
+        //     \u21d2 \u2605\u54ea\u6015\u661f\u7a7a\u90a3\u4e00\u5c42\u51fa\u95ee\u9898\uff0c\u2605\u5f13\u4e5f\u4e0d\u4f1a\u6d88\u5931 \u2713
+        try {
+            renderModel(stack, pose, buffers, light, overlay,
+                    ItemBlockRenderTypes.getRenderType(stack, true));
+        } catch (Throwable t) {
+            TinkersNewlife.LOGGER.warn("TNL948 base layer FAILED: {}", t.toString());
+        }
         try {
             if (source != null) {
                 source.endBatch();
@@ -240,8 +249,7 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
                 vc.uv(Float.intBitsToFloat(v[o + 4]), Float.intBitsToFloat(v[o + 5]));
                 vc.overlayCoords(overlay);
                 vc.uv2(light);
-                vc.normal(n, Float.intBitsToFloat(v[o + 6]), Float.intBitsToFloat(v[o + 7]),
-                        Float.intBitsToFloat(v[o + 8]));
+                vc.normal(n, 0.0F, 1.0F, 0.0F);      // TNL948 \u2605\u4e0d\u518d\u4e71\u89e3\u6cd5\u7ebf \u2713
                 vc.endVertex();
             }
         }
