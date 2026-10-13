@@ -102,7 +102,7 @@ public class StarfallRenderHandler {
         StarfallHitCache.prune(gameTime);
         for (StarfallHitCache.Hit hit : StarfallHitCache.get()) {
             renderHitRing(buffer, matrix, camPos, hit, gameTime);
-            renderFiveStar(buffer, matrix, camPos, hit, gameTime);
+            renderSixStar(buffer, matrix, camPos, hit, gameTime);   // TNL885 \u2605\u516d\u8292\u661f \u2713
         }
     }
 
@@ -339,10 +339,18 @@ public class StarfallRenderHandler {
         buffer.endBatch(StarfallRenderTypes.ARROW_TRAIL);
     }
 
-    private static void renderFiveStar(MultiBufferSource.BufferSource buffer, Matrix4f matrix, Vec3 camPos,
-                                       StarfallHitCache.Hit hit, long gameTime) {
+    /**
+     * TNL885 \u2605\u2605 \u547d\u4e2d\u7279\u6548\uff1a**\u516d\u8292\u661f** \u2713\uff08\u2605\u7528\u6237\u53e3\u5f84 \u2713\uff09
+     *
+     * <p>\u2605\u65e7\u5199\u6cd5\u662f\u4e94\u8292\u661f\uff08\u2605\u5355\u7b14\u753b\u7684\u4e94\u89d2\u661f \u2717\uff09\uff1b
+     * \u2605\u516d\u8292\u661f = **\u4e24\u4e2a\u4ea4\u53e0\u7684\u7b49\u8fb9\u4e09\u89d2\u5f62** \u2713\uff1a
+     * \u2605\u4e09\u89d2\u5f62 A = \u9876\u70b9 0/2/4 \u2713 \u2605\u4e09\u89d2\u5f62 B = \u9876\u70b9 1/3/5 \u2713
+     * \uff08\u2605\u5171 6 \u4e2a\u9876\u70b9 \u00d7 60\u00b0 \u2713\uff09\u3002
+     */
+    private static void renderSixStar(MultiBufferSource.BufferSource buffer, Matrix4f matrix, Vec3 camPos,
+                                      StarfallHitCache.Hit hit, long gameTime) {
         long age = gameTime - hit.startTick;
-        final int LIFE = 8;
+        final int LIFE = 8;          // \u26050.4 \u79d2 \u2713
         if (age > LIFE) {
             return;
         }
@@ -359,24 +367,26 @@ public class StarfallRenderHandler {
         Vec3 ref = Math.abs(normal.y) < 0.9 ? new Vec3(0, 1, 0) : new Vec3(1, 0, 0);
         Vec3 u = normal.cross(ref).normalize();
         Vec3 v = normal.cross(u).normalize();
-        Vec3[] verts = new Vec3[5];
-        for (int i = 0; i < 5; i++) {
-            double ang = phase + i * 2 * Math.PI / 5;
+        Vec3[] verts = new Vec3[6];
+        for (int i = 0; i < 6; i++) {
+            double ang = phase + i * 2 * Math.PI / 6;      // \u2605\u6bcf 60\u00b0 \u4e00\u4e2a\u9876\u70b9 \u2713
             verts[i] = hit.pos.add(u.scale(Math.cos(ang) * R).add(v.scale(Math.sin(ang) * R)));
         }
-        int[] order = {0, 2, 4, 1, 3, 0};
-        int SUB = 16;
-        List<Vec3> path = new ArrayList<>(SUB * 5 + 1);
-        for (int k = 0; k < 5; k++) {
-            Vec3 a2 = verts[order[k]];
-            Vec3 b2 = verts[order[k + 1]];
-            for (int j = 0; j < SUB; j++) {
-                path.add(a2.lerp(b2, (float) j / SUB));
+        final int SUB = 16;
+        for (int tri = 0; tri < 2; tri++) {                // \u2605\u4e24\u4e2a\u4e09\u89d2\u5f62 \u2713
+            List<Vec3> path = new ArrayList<>();
+            for (int k = 0; k < 3; k++) {
+                Vec3 a = verts[(tri + k * 2) % 6];
+                Vec3 b = verts[(tri + (k + 1) * 2) % 6];
+                for (int j = 0; j < SUB; j++) {
+                    path.add(a.lerp(b, (float) j / SUB));
+                }
             }
+            path.add(verts[tri]);                          // \u2605\u95ed\u5408 \u2713
+            renderStarTube(buffer, matrix, camPos, path, 0.020F, alpha, colorT);
         }
-        path.add(verts[order[5]]);
-        renderStarTube(buffer, matrix, camPos, path, 0.020F, alpha, colorT);
     }
+
 
     private static void renderStarTube(MultiBufferSource.BufferSource buffer, Matrix4f matrix, Vec3 camPos,
                                        List<Vec3> path, float radius, float alpha, float colorT) {
