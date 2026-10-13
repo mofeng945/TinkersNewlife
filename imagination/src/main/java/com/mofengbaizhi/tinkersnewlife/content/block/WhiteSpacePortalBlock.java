@@ -302,6 +302,23 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
          */
         if (wasInside) return;
         if (WhiteSpaceDimensions.isOnCooldown(entity)) return;
+        /*
+         * TNL921 \u2605\u2605 \u7528\u6237\u53e3\u5f84\uff1a\u2605"\u6211\u8bb0\u5f97\u5730\u72f1\u95e8\u5224\u5b9a\u4f20\u9001\u8303\u56f4\u662f\u4e2a**\u7247**\u800c\u4e0d\u662f\u4e2a\u5757" \u2713
+         *
+         * <p>\u2605\u5bf9\uff1a\u2605\u539f\u7248 {@code NetherPortalBlock} \u7684 ``getShape`` \u8fd4\u56de\u7684\u662f
+         * \u2605**\u53ea\u6709 4/16 \u539a\u7684\u8584\u9762** \u2713\uff0c\u2605\u65b9\u5411\u7531\u8f74\u51b3\u5b9a \u2713
+         * \uff08\u2605``Z_AXIS_AABB`` / ``X_AXIS_AABB`` \u2713\uff09\uff0c\u2605\u6240\u4ee5\u201c\u7ad9\u5728\u95e8\u91cc\u201d\u7684\u5224\u5b9a\u5c31\u662f\u90a3\u4e00\u7247 \u2713\u3002
+         *
+         * <p>\u2605\u6211\u4eec\u6ca1\u52a8 ``getShape`` \u2717\uff08\u2605\u90a3\u4f1a\u8ba9\u5929\u9006\u94ec\u53f3\u952e\u96be\u6572\u4e2d \u2717\uff0c\u89c1\u7c7b\u6ce8\u91ca \u2713\uff09\uff0c
+         * \u2605\u800c\u662f\u5728\u4f20\u9001\u524d**\u81ea\u5df1\u7b97\u4e00\u6b21\u7247\u5224\u5b9a** \u2713\uff1a
+         * \u2605\u53d6 ``FACING`` \u7684\u8f74\uff08\u2605\u8fd9\u662f\u8fd9\u7247\u5e73\u9762\u7684**\u6cd5\u7ebf** \u2713\uff09\uff0c
+         * \u2605\u5b9e\u4f53\u4e2d\u5fc3\u5230\u65b9\u5757\u4e2d\u5fc3\u7684\u504f\u79fb**\u8d85\u8fc7 0.25 \u683c\u5c31\u4e0d\u7b97\u5728\u95e8\u91cc** \u2713
+         * \uff08\u2605\u7ea6\u7b49\u4e8e\u539f\u7248\u90a3 4/16 \u539a\u7684\u5e26\u5b50 \u002b \u5b9e\u4f53\u5bbd\u5ea6\u5bb9\u5fcd \u2713\uff09\u3002
+         */
+        net.minecraft.core.Direction.Axis tnl$axis = state.getValue(FACING).getAxis();
+        double tnl$center = tnl$axis == net.minecraft.core.Direction.Axis.X ? entity.getX() : entity.getZ();
+        double tnl$mid = (tnl$axis == net.minecraft.core.Direction.Axis.X ? pos.getX() : pos.getZ()) + 0.5D;
+        if (Math.abs(tnl$center - tnl$mid) > 0.25D) return;
         // TNL920 \u2605\u539f\u7248\u5730\u72f1\u95e8\u540c\u6b3e\u95e8\u69db\uff1a\u2605\u539f\u7248 ``portalCooldown`` \u8fd8\u5728\u5c31\u4e0d\u4f20 \u2713
         if (entity.getPortalCooldown() > 0) return;
         if (!(level.getBlockEntity(pos) instanceof WhiteSpacePortalBlockEntity portal)) return;
