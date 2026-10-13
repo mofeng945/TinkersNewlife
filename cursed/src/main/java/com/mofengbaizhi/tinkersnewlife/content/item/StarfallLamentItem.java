@@ -48,7 +48,7 @@ public class StarfallLamentItem extends BowItem {
         return buildFlowGradient(super.getName(stack));
     }
 
-    private static Component buildFlowGradient(Component base) {
+    public static Component buildFlowGradient(Component base) {
         String text = base.getString();
         if (text.isEmpty()) {
             return base;
@@ -163,12 +163,14 @@ public class StarfallLamentItem extends BowItem {
     @Override
     public void appendHoverText(ItemStack stack, Level level, java.util.List<net.minecraft.network.chat.Component> tip,
                                 net.minecraft.world.item.TooltipFlag flag) {
-        tip.add(net.minecraft.network.chat.Component.translatable("item.tinkersnewlife.starfall_lament.tooltip")
-                .withStyle(net.minecraft.ChatFormatting.GRAY)
-                .withStyle(net.minecraft.ChatFormatting.ITALIC));
-        tip.add(net.minecraft.network.chat.Component.translatable("item.tinkersnewlife.starfall_lament.tooltip_author")
-                .withStyle(net.minecraft.ChatFormatting.DARK_GRAY)
-                .withStyle(net.minecraft.ChatFormatting.ITALIC));
+        // TNL894 \u2605\u2605 \u7528\u6237\u53e3\u5f84\uff1a\u2605"\u60f3\u8ba9\u5f13\u7684\u5de5\u5177\u63d0\u793a\u4e5f\u5e94\u7528\u5b83\u540d\u5b57\u90a3\u6837\u7684\u6d41\u5149\u6548\u679c" \u2713
+        //   \u2605\u4e24\u884c\u90fd\u8d70\u540c\u4e00\u4e2a buildFlowGradient \u2717 \u2605\u5e76\u4fdd\u7559\u659c\u4f53 \u2713
+        tip.add(buildFlowGradient(net.minecraft.network.chat.Component.translatable(
+                "item.tinkersnewlife.starfall_lament.tooltip"))
+                .copy().withStyle(net.minecraft.ChatFormatting.ITALIC));
+        tip.add(buildFlowGradient(net.minecraft.network.chat.Component.translatable(
+                "item.tinkersnewlife.starfall_lament.tooltip_author"))
+                .copy().withStyle(net.minecraft.ChatFormatting.ITALIC));
     }
 
     @Override
