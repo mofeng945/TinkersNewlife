@@ -253,6 +253,14 @@ public final class a {
                 if (V[s0] > 0) {
                     V[s0] = V[s0] - 1;             // \u2605Java \u4fa7\u4e5f\u8ddf\u7740\u5012\u8ba1\u65f6 \u2713
                     long hv = h(s0);
+                    // TNL914 \u2605\u2605 \u4fee\u6b63"\u7a97\u53e3 2 \u500d" \u2713
+                    //   \u2605\u539f\u56e0 \u2717\uff1a\u2605\u539f\u751f\u7a97\u7684**\u5012\u8ba1\u65f6\u5199\u5728 ``e()`` \u91cc** \u2713
+                    //     \u2605\u800c\u7a97\u5185\u5206\u652f\u53ea\u8c03 ``h()`` \u8bfb\u503c \u2717 \u21d2 \u2605\u539f\u751f\u7a97\u4e00\u76f4\u505c\u5728 30 \u4e0d\u52a8 \u2717
+                    //     \u21d2 \u2605Java \u4fa7\u8d70\u5b8c 30 tick \u540e \u624d\u5f00\u59cb\u8d70\u539f\u751f\u90a3 30 tick \u2717
+                    //     \u21d2 \u2605\u5b9e\u6d4b\u843d\u5730\u95f4\u9694 **3.07s** \u2713\uff08\u2605= 2\u00d7 \u2713\uff09
+                    //   \u2605\u73b0\u5728\uff1a\u2605\u989d\u5916\u8c03\u4e00\u6b21 ``e()`` \u53ea\u4e3a**\u8ba9\u539f\u751f\u7a97\u5012\u8ba1\u65f6** \u2713
+                    //     \uff08\u2605\u503c\u4f20\u6743\u5a01\u503c \u2713 \u21d2 \u2605\u4e0d\u4f1a\u88ab\u62c9\u4f4e \u2717\uff09
+                    e(s0, hv < 0L ? now : hv, ticks);
                     auth = hv < 0L ? now : hv;     // \u2605\u7a97\u5185\uff1a**\u4e0d\u91c7\u7eb3\u4efb\u4f55\u6389\u8840** \u21d2 \u2605\u76f4\u5199\u88ab\u8986\u76d6 \u2713
                     if (now < auth) {
                         BLOCKED = true;            // TNL907 \u2605\u6321\u4e0b\u4e86\u76f4\u5199 \u2713
