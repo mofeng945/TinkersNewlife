@@ -66,29 +66,15 @@ public class StarBodyItemRendererMixin {
         try {
             pose.pushPose();
             BakedModel baked = ForgeHooksClient.handleCameraTransforms(pose, model, context, leftHand);
+            // TNL953 \u2605\u2605 \u5148\u7528**\u539f\u7248\u7c7b\u578b**\u753b\u4e00\u904d\uff08\u2605\u5f62\u72b6/\u900f\u660e\u5168\u5bf9 \u2713\uff09
+            RenderType base = net.minecraft.client.renderer.ItemBlockRenderTypes.getRenderType(stack, true);
+            VertexConsumer vcBase = buffers.getBuffer(base);
+            emitAll(baked, pose, vcBase, light);
             VertexConsumer vc = buffers.getBuffer(rt);
             Matrix4f m = pose.last().pose();
             Matrix3f n = pose.last().normal();
             RandomSource rnd = RandomSource.create(42L);
-            List<BakedQuad> quads = new java.util.ArrayList<>();
-            for (Direction dir : Direction.values()) {
-                quads.addAll(baked.getQuads(null, dir, rnd));
-            }
-            quads.addAll(baked.getQuads(null, null, rnd));
-            for (BakedQuad q : quads) {
-                int[] v = q.getVertices();
-                int stride = v.length / 4;
-                for (int i = 0; i < 4; i++) {
-                    int o = i * stride;
-                    vc.vertex(m, Float.intBitsToFloat(v[o]), Float.intBitsToFloat(v[o + 1]),
-                            Float.intBitsToFloat(v[o + 2]));
-                    vc.color(255, 255, 255, 255);
-                    vc.uv(Float.intBitsToFloat(v[o + 4]), Float.intBitsToFloat(v[o + 5]));
-                    vc.uv2(light);                       // \u2605BLOCK \u91cc\u5149\u7167\u5728 UV2 \u2713
-                    vc.normal(n, 0.0F, 1.0F, 0.0F);
-                    vc.endVertex();
-                }
-            }
+            List<BakedQuad> quads = emitAll(baked, pose, vc, light);
             pose.popPose();
             ci.cancel();                                 // \u2605\u771f\u753b\u5b8c\u4e86\u624d\u53d6\u6d88 \u2713
             if (System.currentTimeMillis() - TNL$LOG > 3000L) {
@@ -103,6 +89,33 @@ public class StarBodyItemRendererMixin {
             }
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL952 draw FAILED: {}", t.toString());
         }
+    }
+
+    /** TNL953 \u2605\u628a\u6a21\u578b\u56db\u8fb9\u5f62\u5199\u8fdb\u6307\u5b9a\u7684\u9876\u70b9\u6d88\u8d39\u8005 \u2713 */
+    private static List<BakedQuad> emitAll(BakedModel baked, PoseStack pose, VertexConsumer vc, int light) {
+        Matrix4f m = pose.last().pose();
+        Matrix3f n = pose.last().normal();
+        RandomSource rnd = RandomSource.create(42L);
+        List<BakedQuad> quads = new java.util.ArrayList<>();
+        for (Direction dir : Direction.values()) {
+            quads.addAll(baked.getQuads(null, dir, rnd));
+        }
+        quads.addAll(baked.getQuads(null, null, rnd));
+        for (BakedQuad q : quads) {
+            int[] v = q.getVertices();
+            int stride = v.length / 4;
+            for (int i = 0; i < 4; i++) {
+                int o = i * stride;
+                vc.vertex(m, Float.intBitsToFloat(v[o]), Float.intBitsToFloat(v[o + 1]),
+                        Float.intBitsToFloat(v[o + 2]));
+                vc.color(255, 255, 255, 255);
+                vc.uv(Float.intBitsToFloat(v[o + 4]), Float.intBitsToFloat(v[o + 5]));
+                vc.uv2(light);
+                vc.normal(n, 0.0F, 1.0F, 0.0F);
+                vc.endVertex();
+            }
+        }
+        return quads;
     }
 
     private static long TNL$LOG = 0L;
