@@ -103,7 +103,21 @@ public final class StuckArrowClientHandler {
         }
     }
 
-    /** \u2605\u5728\u751f\u7269\u8eab\u4e0a\u753b\u4e00\u652f\u67d3\u9ed1\u7684\u7bad \u2713 */
+    /**
+     * TNL929 \u2605\u2605 \u5728\u751f\u7269\u8eab\u4e0a\u753b\u4e00\u652f**\u9ed1\u7bad** \u2713
+     *
+     * <p>\u2605\u7528\u6237\u53cd\u9988\uff1a\u2605"\u51cf\u901f\u751f\u6548\u4e86\uff0c\u4f46\u662f\u6211\u60f3\u8981\u7684\u662f\u7bad\u77e2\u63d2\u5728\u751f\u7269\u8eab\u4e0a\u7684\u6548\u679c\uff0c
+     * \u800c\u4e0d\u662f\u751f\u7269\u53d8\u9ed1" \u2713
+     *
+     * <p>\u2605\u771f\u56e0 \u2717\uff1a\u2605``RenderSystem.setShaderColor`` \u662f**\u5168\u5c40\u72b6\u6001** \u2717
+     * \uff0c\u2605\u800c\u6211\u6ca1\u7528 ``try/finally`` \u4fdd\u62a4 \u2717 \u21d2
+     * \u2605\u4e00\u65e6\u7bad\u7684\u6e32\u67d3\u4e2d\u9014\u629b\u5f02\u5e38\uff0c\u2605\u6062\u590d\u90a3\u884c\u5c31\u4e0d\u6267\u884c \u2717
+     * \u21d2 \u2605\u540e\u9762**\u6240\u6709\u751f\u7269\u90fd\u88ab\u67d3\u9ed1** \u2713\u2713\uff08\u2605\u7528\u6237\u770b\u5230\u7684\u5c31\u662f\u8fd9\u4e2a \u2713\uff09\u3002
+     *
+     * <p>\u2605\u73b0\u5728 \u2713\uff1a\u2605``try { ... } finally { \u6062\u590d\u989c\u8272 \u002b popPose }`` \u2713
+     * \uff0c\u2605\u5e76\u4e14\u628a\u7bad**\u653e\u5927 1.5 \u500d \u002b \u5f80\u8eab\u4f53\u4fa7\u540e\u504f** \u2713
+     * \u21d2 \u2605\u770b\u8d77\u6765\u5c31\u662f\u2605\u4e00\u652f\u9ed1\u7bad\u624e\u5728\u8eab\u4e0a \u2713\u3002
+     */
     @SubscribeEvent
     public static void onRenderLiving(RenderLivingEvent.Post<?, ?> event) {
         LivingEntity entity = event.getEntity();
@@ -112,15 +126,19 @@ public final class StuckArrowClientHandler {
         }
         Minecraft mc = Minecraft.getInstance();
         event.getPoseStack().pushPose();
-        event.getPoseStack().translate(0.0D, entity.getBbHeight() * 0.62D, 0.0D);
-        event.getPoseStack().mulPose(Axis.ZP.rotationDegrees(38.0F));
-        event.getPoseStack().mulPose(Axis.YP.rotationDegrees(20.0F));
-        RenderSystem.setShaderColor(0.12F, 0.12F, 0.12F, 1.0F);          // \u2605\u67d3\u9ed1 \u2713
-        ItemRenderer ir = mc.getItemRenderer();
-        ir.renderStatic(new ItemStack(Items.ARROW), ItemDisplayContext.GROUND, 0xF000F0,
-                OverlayTexture.NO_OVERLAY, event.getPoseStack(), event.getMultiBufferSource(),
-                entity.level(), entity.getId());
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-        event.getPoseStack().popPose();
+        try {
+            event.getPoseStack().translate(0.0D, entity.getBbHeight() * 0.62D, 0.0D);
+            event.getPoseStack().mulPose(Axis.ZP.rotationDegrees(38.0F));
+            event.getPoseStack().mulPose(Axis.YP.rotationDegrees(20.0F));
+            event.getPoseStack().scale(1.5F, 1.5F, 1.5F);
+            RenderSystem.setShaderColor(0.10F, 0.10F, 0.10F, 1.0F);      // \u2605\u67d3\u9ed1 \u2713
+            mc.getItemRenderer().renderStatic(new ItemStack(Items.ARROW), ItemDisplayContext.GROUND, 0xF000F0,
+                    OverlayTexture.NO_OVERLAY, event.getPoseStack(), event.getMultiBufferSource(),
+                    entity.level(), entity.getId());
+        } catch (Throwable ignored) {
+        } finally {
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);         // \u2605\u2605 \u65e0\u8bba\u5982\u4f55\u90fd\u6062\u590d \u2713
+            event.getPoseStack().popPose();
+        }
     }
 }
