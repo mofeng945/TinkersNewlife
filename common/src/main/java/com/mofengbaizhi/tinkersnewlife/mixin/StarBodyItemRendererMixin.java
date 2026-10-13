@@ -86,6 +86,11 @@ public class StarBodyItemRendererMixin {
     }
 
     private static List<BakedQuad> emitAll(BakedModel baked, PoseStack pose, VertexConsumer vc, int light) {
+        var spr = baked.getParticleIcon();
+        float u0 = spr == null ? 0.0F : spr.getU0();
+        float v0 = spr == null ? 0.0F : spr.getV0();
+        float su = spr == null ? 1.0F : 1.0F / Math.max(1.0E-4F, spr.getU1() - spr.getU0());
+        float sv = spr == null ? 1.0F : 1.0F / Math.max(1.0E-4F, spr.getV1() - spr.getV0());
         Matrix4f m = pose.last().pose();
         Matrix3f n = pose.last().normal();
         RandomSource rnd = RandomSource.create(42L);
@@ -102,7 +107,7 @@ public class StarBodyItemRendererMixin {
                 vc.vertex(m, Float.intBitsToFloat(v[o]), Float.intBitsToFloat(v[o + 1]),
                         Float.intBitsToFloat(v[o + 2]));
                 vc.color(255, 255, 255, 255);
-                vc.uv(Float.intBitsToFloat(v[o + 4]), Float.intBitsToFloat(v[o + 5]));
+                vc.uv((Float.intBitsToFloat(v[o + 4]) - u0) * su, (Float.intBitsToFloat(v[o + 5]) - v0) * sv);
                 vc.overlayCoords(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY);
                 vc.uv2(light);
                 vc.normal(n, 0.0F, 1.0F, 0.0F);
