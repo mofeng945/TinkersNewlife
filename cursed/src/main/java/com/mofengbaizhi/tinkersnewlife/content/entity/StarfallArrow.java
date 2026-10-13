@@ -281,10 +281,13 @@ public class StarfallArrow extends AbstractArrow {
             com.mofengbaizhi.tinkersnewlife.util.TruePierce.apply(attacker, target, dmg);
         } catch (Throwable th) {
             target.hurt(this.damageSources().magic(), dmg);
-                    // TNL927 \u2605\u5f3a\u5316\u7bad\u547d\u4e2d \u21d2 \u2605\u624e\u4e0a\u9ed1\u7bad \u2713\uff08\u2605\u58a8\u9ed8\u514d\u75ab \u2713 \u5728 manager \u91cc\u5224 \u2713\uff09
-                    com.mofengbaizhi.tinkersnewlife.content.entity.StuckArrowManager.apply(target);
         }
         if (enh) {
+            // TNL928 \u2605\u2605 \u4fee\u6b63\uff1a\u2605\u4e0a\u4e00\u7248\u6211\u628a\u5b83\u9519\u63d2\u5728 **catch** \u91cc \u2717
+            //   \u2605\u800c\u771f\u4f24\u8d70\u7684\u662f ``TruePierce.apply`` \u90a3\u6761**\u6b63\u5e38\u8def\u5f84** \u2713
+            //   \u21d2 \u2605catch \u4ece\u4e0d\u6267\u884c \u21d2 \u2605\u9ed1\u7bad\u4ece\u6765\u6ca1\u624e\u4e0a \u2713\uff08\u2605\u7528\u6237\u5b9e\u6d4b\uff1a\u2605"\u9ed1\u7bad\u5b9e\u4f53\u6ca1\u51fa\u73b0\uff0c\u4e5f\u6ca1\u6210\u529f\u51cf\u901f\u4f7f\u5f92" \u2713\uff09
+            //   \u2605\u73b0\u5728\uff1a\u2605\u653e\u8fdb ``if (enh)`` \u91cc \u2713 \u21d2 \u2605\u53ea\u6709\u5f3a\u5316\u7bad\u624d\u624e \u2713
+            com.mofengbaizhi.tinkersnewlife.content.entity.StuckArrowManager.apply(target);
             Vec3 v = this.getDeltaMovement();
             Vec3 dir = v.lengthSqr() > 0.001D ? v.normalize() : this.position().subtract(target.position()).normalize();
             target.push(dir.x * 1.6D, 0.45D, dir.z * 1.6D);
