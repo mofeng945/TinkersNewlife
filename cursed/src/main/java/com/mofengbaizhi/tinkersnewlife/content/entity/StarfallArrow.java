@@ -50,8 +50,13 @@ public class StarfallArrow extends AbstractArrow {
     private int tickCount = 0;
     private boolean shouldRenderTail = true;
     private final LinkedList<Vec3> trailHistory = new LinkedList<>();
-    private Vec3 tnl$predicted = null;
-    private boolean tnl$homing = false;
+    // TNL888 \u2605\u2605 \u65b0\u8ffd\u8e2a\uff08\u2605\u7528\u6237\u53e3\u5f84 \u2713\uff09\uff1a
+    //   \u2605\u98de\u884c\u4e2d\u626b\u63cf**\u5468\u56f4 3 \u683c** \u2713 \u21d2 \u2605\u6709\u76ee\u6807\u5c31\u63a5\u4e0a
+    //   \u2605\u98de\u5251\u540c\u6b3e\u5236\u5bfc\uff08{@link SwordGuidance} \u2713\uff09\u5f00\u59cb\u8ffd\u8e2a \u2713
+    private LivingEntity tnl$target = null;
+    private SwordGuidance tnl$guide = null;
+    /** \u2605\u626b\u63cf\u534a\u5f84\uff083 \u683c \u2713\uff09 */
+    private static final double TNL$SCAN = 3.0D;
     private Entity tnl$pinned = null;
     private int tnl$pinTicks = 0;
 
@@ -107,16 +112,17 @@ public class StarfallArrow extends AbstractArrow {
         return this.getPersistentData().getLong(TAG_BATCH);
     }
 
-    /** \u2605\u5f31\u8ffd\u8e2a\uff1a\u2605**\u53ea\u9884\u6d4b\u4e00\u6b21** \u2713 */
+    /** TNL888 \u2605\u9501\u5b9a\u76ee\u6807\uff08\u2605\u4f9b\u4ee5\u540e Boss AI \u9884\u9501\u7528 \u2713\uff09\uff1a\u2605\u91cd\u7f6e\u5236\u5bfc\u72b6\u6001 \u2713 */
     public void tnl$setHomingTarget(LivingEntity target) {
         if (target == null) {
             return;
         }
-        double dist = this.position().distanceTo(target.position());
-        double travel = Math.max(0.2D, dist / 3.0D);
-        this.tnl$predicted = target.position().add(target.getDeltaMovement().scale(travel));
-        this.tnl$homing = true;
+        this.tnl$target = target;
+        if (this.tnl$guide != null) {
+            this.tnl$guide.reset();
+        }
     }
+
 
     @Override
     protected boolean canHitEntity(Entity target) {
@@ -141,18 +147,26 @@ public class StarfallArrow extends AbstractArrow {
                 this.trailHistory.removeFirst();
             }
         }
-        // \u2605\u4ec5\u524d 20 tick \u5fae\u8c03\u4e00\u6b21\u9884\u6d4b\u70b9\u65b9\u5411 \u2713
-        if (this.tnl$homing && this.tnl$predicted != null && this.tickCount < 20 && !this.level().isClientSide) {
-            Vec3 want = this.tnl$predicted.subtract(this.position());
-            if (want.lengthSqr() > 0.01D) {
-                Vec3 now = this.getDeltaMovement();
-                Vec3 dir = now.normalize().scale(0.85D).add(want.normalize().scale(0.15D)).normalize();
-                this.setDeltaMovement(dir.scale(now.length()));
+        // TNL888 \u2605\u2605 \u8ffd\u8e2a\uff1a\u2605\u5148\u626b 3 \u683c \u2713 \u21d2 \u2605\u627e\u5230\u5c31\u8d70\u98de\u5251\u5236\u5bfc \u2713
+        if (!this.level().isClientSide) {
+            if (this.tnl$target == null || !this.tnl$target.isAlive()) {
+                this.tnl$target = tnl$scanTarget();
+                if (this.tnl$target != null && this.tnl$guide != null) {
+                    this.tnl$guide.reset();
+                }
             }
-        }
-        // \u2605\u53ea\u5403 40% \u91cd\u529b\uff08\u2605\u7167\u642c\u53c2\u8003 \u2713\uff09
-        if (!this.isNoGravity() && !this.inGround && !this.isInWater()) {
-            this.setDeltaMovement(this.getDeltaMovement().add(0.0D, 0.03D, 0.0D));
+            if (this.tnl$target != null && this.tnl$target.isAlive()) {
+                if (this.tnl$guide == null) {
+                    this.tnl$guide = new SwordGuidance();   // \u2605\u98de\u5251\u540c\u6b3e\u5236\u5bfc \u2713
+                }
+                Vec3 targetPos = this.tnl$target.position()
+                        .add(0.0D, this.tnl$target.getBbHeight() * 0.5D, 0.0D);
+                Vec3 velocity = this.tnl$guide.guide(this.position(), this.getDeltaMovement(), targetPos);
+                this.setDeltaMovement(velocity);            // \u2605\u7167\u642c\u98de\u5251\u7684\u7528\u6cd5 \u2713
+            } else if (!this.isNoGravity() && !this.inGround && !this.isInWater()) {
+                // \u2605\u6ca1\u76ee\u6807\u65f6\u624d\u5403 40% \u91cd\u529b\uff08\u2605\u7167\u642c\u53c2\u8003 \u2713\uff09
+                this.setDeltaMovement(this.getDeltaMovement().add(0.0D, 0.03D, 0.0D));
+            }
         }
         // \u2605\u94c9\u4f4f\uff08\u2605\u7bad\u8fd8\u5728 \u21d2 \u76ee\u6807\u52a8\u4e0d\u4e86 \u2713\uff09
         if (!this.level().isClientSide && this.tnl$pinned != null) {
@@ -296,5 +310,31 @@ public class StarfallArrow extends AbstractArrow {
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         this.entityData.set(DATA_ENHANCED, tag.getBoolean("TnlEnhanced"));
+    }
+
+    /** TNL888 \u2605\u626b\u63cf**\u5468\u56f4 3 \u683c**\u5185\u7684\u53ef\u8ffd\u76ee\u6807\uff08\u2605\u6700\u8fd1\u4f18\u5148 \u2713\uff09 */
+    private LivingEntity tnl$scanTarget() {
+        try {
+            java.util.List<LivingEntity> found = this.level().getEntitiesOfClass(
+                    LivingEntity.class, this.getBoundingBox().inflate(TNL$SCAN));
+            LivingEntity best = null;
+            double bestDist = Double.MAX_VALUE;
+            for (LivingEntity le : found) {
+                if (le == this.getOwner() || !le.isAlive() || le.isSpectator()) {
+                    continue;
+                }
+                if (!this.canHitEntity(le)) {
+                    continue;
+                }
+                double d = le.distanceToSqr(this);
+                if (d < bestDist) {
+                    bestDist = d;
+                    best = le;
+                }
+            }
+            return best;
+        } catch (Throwable th) {
+            return null;
+        }
     }
 }
