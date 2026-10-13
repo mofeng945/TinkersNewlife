@@ -57,8 +57,13 @@ import java.util.List;
 public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
 
     private static final ResourceLocation SHADER_ID = new ResourceLocation(TinkersNewlife.MOD_ID, "star_body");
-    private static final ResourceLocation TEX =
-            new ResourceLocation(TinkersNewlife.MOD_ID, "textures/item/starfall_lament.png");
+    // TNL966 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u62c9\u5f13\u52a8\u753b\u7684\u7bad\u77e2\u53d8\u900f\u660e\u4e86" \u2713
+    //   \u2605\u771f\u56e0 \u2717\uff1a\u2605\u62c9\u5f13\u7528\u7684\u662f\u53e6\u5916\u4e09\u5f20\u8d34\u56fe \u2717
+    //     \u2605\u800c\u6211\u628a `Sampler0` \u56fa\u5b9a\u7ed1\u6210\u4e86**\u57fa\u7840\u8d34\u56fe** \u2717
+    //     \u21d2 \u2605\u6309\u62c9\u5f13 sprite \u7684 UV \u53bb\u91c7\u57fa\u7840\u8d34\u56fe \u21d2 \u2605\u843d\u5728\u900f\u660e\u533a \u21d2 \u2605\u6574\u628a\u900f\u660e \u2713
+    //   \u2605\u73b0\u5728\uff1a\u2605\u76f4\u63a5\u7ed1**\u6574\u5f20\u56fe\u96c6** \u2713 \u21d2 \u2605\u7528\u539f\u59cb\u56fe\u96c6 UV \u91c7\u6837 \u2713
+    //     \u21d2 \u2605\u57fa\u7840/\u62c9\u5f13/\u4efb\u610f\u53d8\u4f53\u90fd\u80fd\u53d6\u5230**\u81ea\u5df1\u90a3\u5f20** \u2713\u2713
+    private static final ResourceLocation TEX = net.minecraft.world.inventory.InventoryMenu.BLOCK_ATLAS;
 
     private static ShaderInstance shader;
     private static RenderType renderType;
