@@ -31,8 +31,8 @@ import java.util.List;
  */
 public class StarfallLamentItem extends BowItem {
 
-    private static final int NAME_COLOR_START = 0x66CCFF;
-    private static final int NAME_COLOR_END = 0xFFB9E8;
+    private static final int NAME_COLOR_START = 0xFFFFFF;   // TNL884 \u2605\u767d \u2713
+    private static final int NAME_COLOR_END = 0x3A3A3A;     // TNL884 \u2605\u6df1\u7070 \u2713
     private static final float FLOW_SPEED = 1.0F;
 
     public static final List<Enchantment> EXTRA_WHITELIST = new ArrayList<>();
@@ -141,6 +141,23 @@ public class StarfallLamentItem extends BowItem {
      */
     public static boolean isAutoFire(ItemStack stack) {
         return !stack.hasTag() || stack.getTag().getBoolean("AutoFire");
+    }
+
+    /**
+     * TNL884 \u2605\u2605 \u5de5\u5177\u63d0\u793a\uff08\u2605\u7528\u6237**\u70b9\u540d**\u8981\u6c42 \u2713\uff09
+     *
+     * <p>\u26a0 \u6309\u5907\u5fd8\u5f55 \u00a7812\uff1a\u2605\u7528\u6237\u6ca1\u70b9\u540d\u4e00\u5f8b\u4e0d\u52a0 tooltip \u2717\uff1b
+     * \u2605\u8fd9\u6b21\u662f\u7528\u6237\u660e\u786e\u8981\u6c42\u52a0 \u2713\uff08\u2605\u539f\u6587\u7167\u642c \u2713\uff09\u3002
+     */
+    @Override
+    public void appendHoverText(ItemStack stack, Level level, java.util.List<net.minecraft.network.chat.Component> tip,
+                                net.minecraft.world.item.TooltipFlag flag) {
+        tip.add(net.minecraft.network.chat.Component.translatable("item.tinkersnewlife.starfall_lament.tooltip")
+                .withStyle(net.minecraft.ChatFormatting.GRAY)
+                .withStyle(net.minecraft.ChatFormatting.ITALIC));
+        tip.add(net.minecraft.network.chat.Component.translatable("item.tinkersnewlife.starfall_lament.tooltip_author")
+                .withStyle(net.minecraft.ChatFormatting.DARK_GRAY)
+                .withStyle(net.minecraft.ChatFormatting.ITALIC));
     }
 
     @Override

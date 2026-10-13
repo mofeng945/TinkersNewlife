@@ -34,9 +34,9 @@ public class StarfallRenderHandler {
     private static final float ARROW_HALF_LEN = 0.50F;
     private static final float TIP_EXTEND = 0.10F;
     private static final float FEATHER_HALF = 0.10F;
-    private static final float[] COL_HEAD = {0.40F, 0.80F, 1.00F};
-    private static final float[] COL_MID = {1.00F, 0.78F, 0.10F};
-    private static final float[] COL_TAIL = {1.00F, 0.725F, 0.910F};
+    private static final float[] COL_HEAD = {1.00F, 1.00F, 1.00F};   // TNL884 \u2605\u767d \u2713
+    private static final float[] COL_MID = {0.62F, 0.62F, 0.62F};    // TNL884 \u2605\u4e2d\u7070 \u2713
+    private static final float[] COL_TAIL = {0.22F, 0.22F, 0.22F};  // TNL884 \u2605\u8fd1\u9ed1 \u2713
     private static final Map<UUID, FadeData> FADING = new HashMap<>();
 
     private static class FadeData {
@@ -294,8 +294,8 @@ public class StarfallRenderHandler {
         if (a <= 0.0F) {
             return;
         }
-        float r = 0.40F * a;
-        float g = 0.80F * a;
+        float r = 1.00F * a;   // TNL884 \u2605\u767d\u7070\u661f\u73af \u2713
+        float g = 1.00F * a;
         float b = 1.00F * a;
         Vec3 normal = hit.dir.lengthSqr() > 1e-6 ? hit.dir.normalize() : new Vec3(0, 1, 0);
         Vec3 ref = Math.abs(normal.y) < 0.9 ? new Vec3(0, 1, 0) : new Vec3(1, 0, 0);
@@ -433,8 +433,8 @@ public class StarfallRenderHandler {
             }
         }
         VertexConsumer vc = buffer.getBuffer(StarfallRenderTypes.ARROW_TRAIL);
-        float[] colBlue = {0.40F, 0.80F, 1.00F};
-        float[] colPink = {1.00F, 0.725F, 0.910F};
+        float[] colBlue = {1.00F, 1.00F, 1.00F};      // TNL884 \u2605\u767d \u2713
+        float[] colPink = {0.30F, 0.30F, 0.30F};      // TNL884 \u2605\u6df1\u7070 \u2713
         float[] col = {
                 colBlue[0] + (colPink[0] - colBlue[0]) * colorT,
                 colBlue[1] + (colPink[1] - colBlue[1]) * colorT,

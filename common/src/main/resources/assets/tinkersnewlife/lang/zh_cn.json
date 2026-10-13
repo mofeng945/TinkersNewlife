@@ -1629,5 +1629,7 @@
   "entity.tinkersnewlife.ktulu_momo.bossbar": "星辰魔女·墨默·克图露",
   "item.tinkersnewlife.ktulu_momo_spawn_egg": "克图露·墨默刷怪蛋",
   "item.tinkersnewlife.starfall_lament": "星陨悲叹",
-  "entity.tinkersnewlife.starfall_arrow": "星陨之箭"
+  "entity.tinkersnewlife.starfall_arrow": "星陨之箭",
+  "item.tinkersnewlife.starfall_lament.tooltip": "我永远都不会忘记那般场景，那般天崩地裂，带给凡人天启灾难一般的陨落……",
+  "item.tinkersnewlife.starfall_lament.tooltip_author": "                                                                                                ——以此纪念那已死的过往·墨默留"
 }
