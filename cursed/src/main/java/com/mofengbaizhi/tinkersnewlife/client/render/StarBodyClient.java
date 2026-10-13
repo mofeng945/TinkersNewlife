@@ -134,6 +134,32 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
             if (u != null) {
                 u.set((float) (System.currentTimeMillis() % 600000L) / 1000.0F);
             }
+            // TNL967 \u2605\u628a\u5f53\u524d\u76f8\u673a\u671d\u5411\u4e5f\u5582\u8fdb\u53bb \u2713
+            try {
+                var cam = net.minecraft.client.Minecraft.getInstance().gameRenderer.getMainCamera();
+                if (cam != null && cam.isInitialized()) {
+                    setCameraAngles(cam.getYRot(), cam.getXRot());
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+    }
+
+    /** TNL967 \u2605\u6bcf\u5e27\u628a\u76f8\u673a\u671d\u5411\u5582\u7ed9\u7740\u8272\u5668\uff08\u2605\u900f\u955c\u611f\u7684\u6839\u672c \u2713\uff09 */
+    public static void setCameraAngles(float yaw, float pitch) {
+        try {
+            if (shader == null) {
+                return;
+            }
+            var a = shader.safeGetUniform("CamYaw");
+            if (a != null) {
+                a.set(yaw);
+            }
+            var b = shader.safeGetUniform("CamPitch");
+            if (b != null) {
+                b.set(pitch);
+            }
+        } catch (Throwable ignored) {
         }
     }
 

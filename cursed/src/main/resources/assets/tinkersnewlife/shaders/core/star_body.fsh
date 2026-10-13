@@ -11,6 +11,8 @@ uniform float MaskThreshold;
 uniform vec4 ColorModulator;
 uniform vec2 UvOffset;      // TNL960 \u2605\u56fe\u96c6 UV \u2192 \u8d34\u56fe\u672c\u5730 UV \u2713
 uniform vec2 UvScale;
+uniform float CamYaw;      // TNL967 \u2605\u76f8\u673a\u671d\u5411 \u2713
+uniform float CamPitch;
 
 in vec2 vUv;
 in vec4 vColor;
@@ -59,8 +61,21 @@ void main() {
     //     \u21d2 \u2605\u8f6c\u5934\u3001\u8d70\u52a8\u90fd\u4f1a\u6709**\u89c6\u5dee** \u2713 \u2014\u2014 \u2605\u770b\u8d77\u6765\u5c31\u50cf"\u900f\u955c\u91cc\u770b\u5230\u53e6\u4e00\u7247\u661f\u7a7a" \u2713
     //   \u2605\u73b0\u5728\uff1a\u2605\u7528\u9876\u70b9\u7684\u89c6\u56fe\u7a7a\u95f4\u65b9\u5411\u7b97\u661f\u661f \u2713\uff08\u2605\u4e0d\u9700\u8981\u9006\u77e9\u9635 \u2713\uff09
     vec2 uv = vUv;                       // \u2605\u4ecd\u7528\u4e8e\u53d6\u906e\u7f69\uff08\u2605\u8d34\u56fe\u4eae\u5ea6\uff09\u2713
-    vec3 dir = normalize(vView + vec3(0.0, 0.0, -1.0e-3));   // \u2605\u89c6\u7ebf\u65b9\u5411 \u2713
-    vec2 suv = dir.xy * 1.6 + vec2(0.5);                     // \u2605\u900f\u955c\u5e73\u9762\u5750\u6807 \u2713
+    // TNL967 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u8fd8\u662f\u6ca1\u8ddf\u968f\u89c6\u89d2\u79fb\u52a8\uff0c\u53ea\u662f\u64ad\u653e\u52a8\u753b\u65f6\u6709\u900f\u955c\u6548\u679c" \u2713
+    //   \u2605\u771f\u56e0 \u2717\uff1a\u2605\u6211\u7528\u7684\u662f**\u9876\u70b9\u5728\u89c6\u56fe\u7a7a\u95f4\u7684\u4f4d\u7f6e** \u2717
+    //     \u2605\u800c\u7269\u54c1\u662f**\u8ddf\u7740\u76f8\u673a\u8d70**\u7684 \u2717 \u21d2 \u2605\u8f6c\u5934\u65f6 vView \u51e0\u4e4e\u4e0d\u53d8 \u2717
+    //     \u21d2 \u2605\u53ea\u6709\u62c9\u5f13\uff08\u2605\u59ff\u6001\u53d8\uff09\u65f6\u624d\u770b\u5f97\u5230\u52a8 \u2713
+    //   \u2605\u73b0\u5728\uff1a\u2605\u65b9\u5411\u5403**\u76f8\u673a\u81ea\u8eab\u7684 yaw/pitch** \u2713
+    //     \u002b \u2605\u9876\u70b9\u5c40\u90e8\u5750\u6807\u505a\u5fae\u8c03 \u2713 \u21d2 \u2605\u8f6c\u5934\u5c31\u4f1a\u6ed1 \u2713\uff08\u2605\u771f\u6b63\u7684\u900f\u955c\u611f \u2713\uff09
+    float cy = cos(radians(CamYaw));
+    float sy = sin(radians(CamYaw));
+    float cp = cos(radians(CamPitch));
+    float sp = sin(radians(CamPitch));
+    vec3 dir = normalize(vec3(
+        sy * cp + vView.x * 0.8,
+        -sp + vView.y * 0.8,
+        cy * cp + 1.0e-3));
+    vec2 suv = dir.xy * 1.6 + vec2(0.5);
     vec4 tex = texture(Sampler0, uv);
     if (tex.a < 0.08) {
         discard;
