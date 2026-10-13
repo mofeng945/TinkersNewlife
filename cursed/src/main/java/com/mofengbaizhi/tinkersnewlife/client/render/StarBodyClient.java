@@ -64,6 +64,7 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
     private static RenderType renderType;
     private static StarBodyClient INSTANCE;
     private static long TNL$LOG = 0L;
+    private static long TNL$LOG2 = 0L;
 
     private StarBodyClient() {
         super(Minecraft.getInstance().getBlockEntityRenderDispatcher(), Minecraft.getInstance().getEntityModels());
@@ -139,6 +140,11 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
 
             @Override
             public BlockEntityWithoutLevelRenderer getCustomRenderer() {
+                long tnl$n = System.currentTimeMillis();
+                if (tnl$n - TNL$LOG2 > 1000L) {                       // TNL945 \u63a2\u9488 \u2713
+                    TNL$LOG2 = tnl$n;
+                    TinkersNewlife.LOGGER.warn("TNL945 getCustomRenderer asked");
+                }
                 if (this.renderer == null) {
                     this.renderer = StarBodyClient.instance();
                 }
@@ -150,11 +156,11 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
     @Override
     public void renderByItem(ItemStack stack, net.minecraft.world.item.ItemDisplayContext context, PoseStack pose,
                              MultiBufferSource buffers, int light, int overlay) {
-        // TNL942 probe \u2605\u9650\u6d41\u63a2\u9488\uff1a\u2605\u770b renderByItem \u5230\u5e95\u6709\u6ca1\u6709\u88ab\u8c03 \u2713
+        // TNL945 \u2605\u2605 \u65e0\u6761\u4ef6\uff08\u2605\u9650\u6d41 1 \u79d2\uff09\u63a2\u9488 \u2713
         long tnl$now = System.currentTimeMillis();
-        if (tnl$now - TNL$LOG > 3000L) {
+        if (tnl$now - TNL$LOG > 1000L) {
             TNL$LOG = tnl$now;
-            TinkersNewlife.LOGGER.warn("TNL942 BEWLR renderByItem ctx={} shader={}",
+            TinkersNewlife.LOGGER.warn("TNL945 renderByItem ENTER ctx={} shader={}",
                     context, shader != null);
         }
         Minecraft mc = Minecraft.getInstance();
@@ -175,10 +181,14 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
                 u.set(0.26F);
             }
             renderModel(stack, pose, buffers, light, overlay, star);
-        } catch (Throwable ignored) {
+        } catch (Throwable t) {
+            TinkersNewlife.LOGGER.warn("TNL945 renderByItem FAILED: {}", t.toString());   // \u2605\u4e0d\u518d\u541e\u5f02\u5e38 \u2713
         } finally {
-            if (source != null) {
-                source.endBatch(star);
+            try {
+                if (source != null) {
+                    source.endBatch(star);
+                }
+            } catch (Throwable ignored) {
             }
         }
     }
