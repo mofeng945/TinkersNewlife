@@ -59,7 +59,7 @@ void main() {
         //   \u2605\u6211\u4eec\u6ca1\u6709\u56fe\u96c6\u5e27 \u2717 \u21d2 \u2605\u628a\u9608\u503c\u538b\u4f4e\u002b\u9891\u7387\u63d0\u9ad8\u6765\u5bf9\u7b49 \u2713
         //     \uff08\u2605\u4ece\u201c\u53ea\u6709\u6700\u4eae\u7684 10%\u201d\u6539\u6210\u201c\u7ea6 38%\u201d\uff0c\u2605\u5c3a\u5ea6\u4e5f\u52a0\u5bc6 \u2713\uff09
         float stars = smoothstep(0.62, 1.0, noise(vUv * 150.0 + vec2(EffectTime * 0.55, 0.0)));
-        float stars2 = smoothstep(0.74, 1.0, noise(vUv.zx * 210.0 + vec2(0.0, EffectTime * 0.42)));
+        float stars2 = smoothstep(0.74, 1.0, noise(vUv.yx * 210.0 + vec2(0.0, EffectTime * 0.42)));
         float bright = smoothstep(0.86, 1.0, noise(vUv.yx * 70.0 - vec2(0.0, EffectTime * 0.3)));
         vec3 deep = vec3(0.02, 0.025, 0.06);
         vec3 cloud = vec3(0.35, 0.42, 0.80) * neb * 0.55 + vec3(0.55, 0.35, 0.75) * neb2 * 0.35;
