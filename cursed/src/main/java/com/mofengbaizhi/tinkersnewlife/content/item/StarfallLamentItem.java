@@ -209,27 +209,6 @@ public class StarfallLamentItem extends BowItem {
         }
     }
 
-    /**
-     * TNL945 \u2605\u2605 **\u7167\u6284\u53c2\u8003\u5b9e\u73b0**\u7684\u6302\u6cd5 \u2713
-     *
-     * <p>\u2605\u6211\u53cd\u7f16\u8bd1\u4e86 ``goeticlegacy`` \u7684 ``AnomalyBlockItem`` \u2713\uff0c
-     * \u2605\u5b83\u7684\u539f\u6587\u5c31\u662f \u2713\uff1a
-     * <pre>
-     * public void initializeClient(Consumer&lt;IClientItemExtensions&gt; consumer) {
-     *     super.initializeClient(consumer);          // \u2605\u2605 \u5c31\u662f\u8fd9\u4e00\u884c \u2717\u2605\u6211\u6f0f\u4e86 \u2713
-     *     consumer.accept(new IClientItemExtensions() { ... });
-     * }
-     * </pre>
-     * \u2605\u800c\u6211\u4e4b\u524d**\u6ca1\u8c03 super** \u2717 \u21d2 \u2605Forge \u5185\u90e8\u7684\u767b\u8bb0\u6ca1\u53d1\u751f \u2717
-     * \u21d2 \u2605``getCustomRenderer()`` \u6c38\u8fdc\u6ca1\u4eba\u95ee \u2717 \u21d2 \u2605``renderByItem`` \u4e00\u6b21\u90fd\u4e0d\u8dd1 \u2713\u2713
-     *\uff08\u2605\u65e5\u5fd7\u91cc ``TNL942`` \u96f6\u884c\u5c31\u662f\u8fd9\u4e2a\u539f\u56e0 \u2713\uff09\u3002
-     */
-    @Override
-    public void initializeClient(java.util.function.Consumer<net.minecraftforge.client.extensions.common.IClientItemExtensions> consumer) {
-        super.initializeClient(consumer);                          // \u2605\u2605 \u5173\u952e\uff01\u2713
-        consumer.accept(com.mofengbaizhi.tinkersnewlife.client.render.StarBodyClient.extensions());
-    }
-
     @Override
     public int getUseDuration(ItemStack stack) {
         return 72000;
