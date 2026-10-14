@@ -119,11 +119,11 @@ public class AeonianOrderItem extends SwordItem {
     private static final List<Pull> PULLS = new ArrayList<>();
 
     /** TNL1057 user: launch an actual scythe that flies out, then pull the player to where it stopped */
-    private record Hook(java.util.UUID owner, java.util.UUID item, int ticks) {
+    private record Hook(java.util.UUID owner, java.util.UUID item, int ticks, Vec3 dir) {
     }
 
     private static final List<Hook> HOOKS = new ArrayList<>();
-    private static final int HOOK_TICKS = 12;
+    private static final int HOOK_TICKS = 14;   // TNL1059 2.6 blocks per tick, enough for 20
 
     /** TNL1050 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u53ef\u4ee5\u5c06\u9570\u5200\u5411\u89c6\u7ebf\u65b9\u5411\u7529\u51fa\u53bb\uff08\u65e0\u89c6\u91cd\u529b\uff09\uff0c
      *   \u9570\u5200\u4e0a\u4f1a\u8fde\u7740\u4e00\u6839\u9ed1\u8272\u7684\u7ebf\uff0c\u5982\u679c\u547d\u4e2d\u65b9\u5757\uff0c\u4f1a\u5c06\u73a9\u5bb6\u62c9\u5230\u90a3\u4e2a\u4f4d\u7f6e\uff0c
@@ -169,7 +169,7 @@ public class AeonianOrderItem extends SwordItem {
         thrown.setNeverPickUp();
         thrown.setDeltaMovement(look.scale(2.4D));
         player.level().addFreshEntity(thrown);
-        HOOKS.add(new Hook(player.getUUID(), thrown.getUUID(), hitBlock ? HOOK_TICKS : 6));
+        HOOKS.add(new Hook(player.getUUID(), thrown.getUUID(), HOOK_TICKS, look));
         // hide the held scythe while the hook is out (the effect duration is the lifetime)
         player.addEffect(new MobEffectInstance(
                 com.mofengbaizhi.tinkersnewlife.content.ModEffects.AEONIAN_HOOK.get(),
@@ -244,6 +244,8 @@ public class AeonianOrderItem extends SwordItem {
                         }
                         Vec3 hookEye = owner.getEyePosition();
                         Vec3 hookPos = scythe.position();
+                        // TNL1059 keep the speed constant so it reliably covers the full 20 blocks
+                        scythe.setDeltaMovement(hk.dir().scale(2.6D));
                         // black rope from the eyes to the flying scythe
                         if (owner.level() instanceof ServerLevel sl) {
                             var tnl$black = new net.minecraft.core.particles.DustParticleOptions(
@@ -265,15 +267,16 @@ public class AeonianOrderItem extends SwordItem {
                                 .getCollisionShape(owner.level(), bp).isEmpty();
                         boolean tooFar = hookEye.distanceTo(hookPos) > 20.5D;
                         if (hk.ticks() > 1 && !blocked && !tooFar) {
-                            left.add(new Hook(hk.owner(), hk.item(), hk.ticks() - 1));
+                            left.add(new Hook(hk.owner(), hk.item(), hk.ticks() - 1, hk.dir()));
                         } else {
                             // it hit a block (or ran out): stop there and pull the player over
                             Vec3 stop = hookPos;
                             scythe.discard();
                             if (owner instanceof Player p3) {
-                                PULLS.add(new Pull(p3.getUUID(), stop, 14));
+                                // TNL1059 user: pull the player even when it simply ran out of range in the air
+                                PULLS.add(new Pull(p3.getUUID(), stop, 16));
                                 TinkersNewlife.LOGGER.warn(
-                                        "TNL1058 scythe stopped at {} (blocked={} tooFar={}), pulling the player",
+                                        "TNL1059 scythe stopped at {} (blocked={} tooFar={}), pulling the player",
                                         stop, blocked, tooFar);
                             }
                         }
