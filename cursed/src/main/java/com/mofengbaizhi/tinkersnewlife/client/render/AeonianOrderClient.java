@@ -28,6 +28,16 @@ public final class AeonianOrderClient {
                     DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 256, false, true,
                     RenderType.CompositeState.builder()
                             .setShaderState(new RenderStateShard.ShaderStateShard(() -> shader))
+                            // TNL1035 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u5f13\u90fd\u5df2\u7ecf\u5b8c\u7f8e\u5b9e\u73b0\u8fc7\u4e00\u7248\u4e86" \u2713
+                            //   \u2605\u8bfb\u5b8c\u5f13\u7684 `StarBodyClient` \u5168\u6587\u540e\u53d1\u73b0 \u2713\uff1a
+                            //     \u2605\u5b83\u7684 RenderType **\u6709** ``setTextureState(new TextureStateShard(InventoryMenu.BLOCK_ATLAS, false, false))`` \u2713
+                            //     \u2605\u800c\u6211\u8fd9\u4e2a**\u53ea\u6709** setShaderState \u2717
+                            //   \u21d2 \u2605\u6240\u4ee5 `Sampler0` \u91c7\u7684\u662f"\u4e0a\u4e00\u6279\u6b8b\u7559\u7eb9\u7406" \u2717
+                            //     \u2605\u624b\u6301\u91cc\u8bfb\u5230\u65e0\u5173\u7eb9\u7d20 \u21d2 \u2605\u5168\u5224\u4e3a\u9ed1 \u21d2 \u2605\u6574\u7247\u9ed1\u96fe \u21d2 \u2605"\u4e00\u5757\u677f" \u2713\u2713
+                            //     \uff08\u2605GUI \u91cc\u78b0\u5de7\u4e0a\u4e00\u6279\u662f\u56fe\u96c6 \u21d2 \u2605\u770b\u7740\u6b63\u5e38 \u2713\uff09
+                            //   \u2605\u73b0\u5728 \u2713\uff1a\u2605\u7167\u5f13\u90a3\u6837**\u628a\u7269\u54c1\u56fe\u96c6\u5199\u8fdb RenderType** \u2713
+                            .setTextureState(new RenderStateShard.TextureStateShard(
+                                    net.minecraft.world.inventory.InventoryMenu.BLOCK_ATLAS, false, false))
                             .createCompositeState(true));
         }
         return type;
