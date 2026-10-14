@@ -88,16 +88,14 @@ public class UnnameableClientHandler {
             return 0.0F;
         }
         try {
-            var eff = net.minecraft.core.registries.BuiltInRegistries.MOB_EFFECT.get(
-                    new ResourceLocation(TinkersNewlife.MOD_ID, "aeonian_mark"));
-            if (eff == null) {
+            // TNL1070 read the hidden marker cooldown instead of a mob effect (effects were visible)
+            var marker = com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_MARKER.get();
+            var cds = player.getCooldowns();
+            if (!cds.isOnCooldown(marker)) {
                 return 0.0F;
             }
-            MobEffectInstance inst = player.getEffect(eff);
-            if (inst == null) {
-                return 0.0F;
-            }
-            return Math.max(0.0F, Math.min(1.0F, inst.getDuration() / 200.0F));
+            float left = 1.0F - cds.getCooldownPercent(marker, 0.0F);   // 1.0 right after stacking
+            return Math.max(0.0F, Math.min(1.0F, left / 200.0F));
         } catch (Throwable ignored) {
             return 0.0F;
         }

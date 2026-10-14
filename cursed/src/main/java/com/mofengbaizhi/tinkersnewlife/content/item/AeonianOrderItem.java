@@ -186,9 +186,9 @@ public class AeonianOrderItem extends SwordItem {
         player.level().addFreshEntity(thrown);
         HOOKS.add(new Hook(player.getUUID(), thrown.getUUID(), HOOK_TICKS, look));
         // hide the held scythe while the hook is out (the effect duration is the lifetime)
-        player.addEffect(new MobEffectInstance(
-                com.mofengbaizhi.tinkersnewlife.content.ModEffects.AEONIAN_HOOK.get(),
-                hitBlock ? HOOK_TICKS : 6, 0, false, false, false));
+        player.getCooldowns().addCooldown(
+                com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_MARKER.get(),
+                hitBlock ? HOOK_TICKS : 6);   // TNL1070 hidden marker instead of a visible effect
         TinkersNewlife.LOGGER.warn("TNL1057 threw the scythe ({}), hitBlock={}", thrown.getUUID(), hitBlock);
         level.playSound(null, player.blockPosition(), SoundEvents.TRIDENT_THROW,
                 SoundSource.PLAYERS, 1.2F, 0.8F);

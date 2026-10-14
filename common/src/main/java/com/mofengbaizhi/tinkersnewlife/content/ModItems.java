@@ -822,4 +822,14 @@ public class ModItems {
             ITEMS.register("portable_toolkit",
                     () -> new com.mofengbaizhi.tinkersnewlife.content.item.PortableCraftingStationItem(
                             new Item.Properties().stacksTo(1),
-                            com.mofengbaizhi.tinkersnewlife.content.item.PortableCraftingStationItem.Kind.TOOLKIT));}
+                            com.mofengbaizhi.tinkersnewlife.content.item.PortableCraftingStationItem.Kind.TOOLKIT));    /**
+     */
+    /**
+     * TNL1070 a hidden marker item. Its cooldown carries the tick count to the client: cooldowns
+     * are synced to their owner and never appear in any effect list, unlike the old aeonian_mark
+     * and aeonian_hook mob effects which Jade and similar mods printed on the target.
+     */
+    public static final RegistryObject<Item> AEONIAN_MARKER =
+            ITEMS.register("aeonian_marker", () -> new Item(new Item.Properties()));
+}
+

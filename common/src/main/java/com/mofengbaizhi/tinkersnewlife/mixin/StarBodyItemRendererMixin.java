@@ -75,13 +75,13 @@ public class StarBodyItemRendererMixin {
             return;
         }
         // TNL1056 user: hide the scythe in hand while the hook is out (the hook effect marks it)
-        if (order && net.minecraft.client.Minecraft.getInstance().player != null) {
+        if (order && net.minecraft.client.Minecraft.getInstance().player != null
+                && net.minecraft.client.Minecraft.getInstance().player.getMainHandItem().getItem()
+                        instanceof AeonianOrderItem orderItem) {
             try {
-                var hookEff = net.minecraft.core.registries.BuiltInRegistries.MOB_EFFECT.get(
-                        new net.minecraft.resources.ResourceLocation(
-                                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.MOD_ID, "aeonian_hook"));
-                if (hookEff != null
-                        && net.minecraft.client.Minecraft.getInstance().player.getEffect(hookEff) != null) {
+                var marker = com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_MARKER.get();
+                if (net.minecraft.client.Minecraft.getInstance().player.getCooldowns().isOnCooldown(marker)
+                        && net.minecraft.client.Minecraft.getInstance().player.getMainHandItem().getItem() == orderItem) {
                     ci.cancel();
                     return;
                 }

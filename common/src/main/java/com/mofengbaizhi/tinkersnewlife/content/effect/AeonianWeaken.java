@@ -56,8 +56,8 @@ public final class AeonianWeaken {
      * That works on both sides, so the client can drive the screen effect with it.
      */
     public static int ticks(LivingEntity e) {
-        var inst = e.getEffect(com.mofengbaizhi.tinkersnewlife.content.ModEffects.AEONIAN_MARK.get());
-        return inst == null ? 0 : inst.getDuration();
+        // TNL1070 plain persistent data again: no mob effect means nothing shows up in effect lists
+        return tag(e).getInt(TICKS);
     }
 
     public static int stun(LivingEntity e) {
@@ -70,10 +70,12 @@ public final class AeonianWeaken {
             return;
         }
         int v = Math.min(MAX, ticks(e) + amount);
-        // TNL1049 refresh the mark with the new tick count as its duration
-        e.addEffect(new MobEffectInstance(
-                com.mofengbaizhi.tinkersnewlife.content.ModEffects.AEONIAN_MARK.get(),
-                v, 0, false, false, false));
+        tag(e).putInt(TICKS, v);
+        // TNL1070 for players mirror the count into a hidden item cooldown, which the client can read
+        if (e instanceof net.minecraft.world.entity.player.Player pl) {
+            pl.getCooldowns().addCooldown(
+                    com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_MARKER.get(), Math.max(1, v));
+        }
         TinkersNewlife.LOGGER.warn("TNL1046 weaken stacked on {} -> {} ticks", e.getName().getString(), v);
     }
 
@@ -143,7 +145,11 @@ public final class AeonianWeaken {
                     le.hurt(le.damageSources().magic(), dmg);
                 }
                 tag(le).putInt(STUN, STUN_TICKS);
-                le.removeEffect(com.mofengbaizhi.tinkersnewlife.content.ModEffects.AEONIAN_MARK.get());
+                tag(le).putInt(TICKS, 0);
+                if (le instanceof net.minecraft.world.entity.player.Player pl2) {
+                    pl2.getCooldowns().removeCooldown(
+                            com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_MARKER.get());
+                }
                 if (le.level() instanceof ServerLevel sl) {
                     sl.sendParticles(net.minecraft.core.particles.ParticleTypes.SCULK_SOUL,
                             le.getX(), le.getY() + 1.0D, le.getZ(), 24, 0.4D, 0.6D, 0.4D, 0.02D);
