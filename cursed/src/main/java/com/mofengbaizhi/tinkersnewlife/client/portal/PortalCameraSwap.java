@@ -54,20 +54,13 @@ public final class PortalCameraSwap {
         if (mc.level == null || mc.getConnection() == null) {
             return false;
         }
-        // \u2605\u76ee\u6807\u7ef4\u5ea6\u7684\u5ba2\u6237\u7aef\u4e16\u754c\uff08\u2605\u6ca1\u52a0\u8f7d\u5c31\u6ca1\u5f97\u753b \u2713\uff09
-        ClientLevel dest = null;
-        try {
-            for (ClientLevel lvl : mc.level.getLevelData() == null
-                    ? java.util.Collections.<ClientLevel>emptyList()
-                    : java.util.Collections.<ClientLevel>emptyList()) {
-                dest = lvl;
-            }
-        } catch (Throwable ignored) {
-        }
+        // TNL995 \u2605\u2605 \u65e5\u5fd7\u8bc1\u636e\uff1a\u2605``TNL993 stage ok`` \u2713 \u4f46 ``TNL992`` \u002b ``TNL994`` **\u4e00\u884c\u90fd\u6ca1\u6709** \u2717
+        //   \u2605\u771f\u56e0 \u2717\uff1a\u2605\u6211\u7b2c \u2461 \u6b65\u9aa8\u67b6\u91cc\u7559\u4e86\u4e00\u4e2a**\u6c38\u8fdc\u53d6\u4e0d\u5230\u503c\u7684\u5360\u4f4d\u5faa\u73af** \u2717
+        //     \u21d2 \u2605``dest == null`` \u21d2 \u2605``return false`` \u21d2 \u2605\u540e\u9762\u5168\u90e8\u4e0d\u6267\u884c \u2713\u2713
+        //   \u2605\u73b0\u5728\uff1a\u2605\u4ece `PortalViewLevels` \u76f4\u63a5\u53d6\u76ee\u6807\u7ef4\u5ea6\u7684\u5ba2\u6237\u7aef\u4e16\u754c \u2713
+        ClientLevel dest = PortalViewLevels.get(destination);
         if (dest == null) {
-            // \u2605\u5ba2\u6237\u7aef API \u6ca1\u6709"\u6309\u7ef4\u5ea6\u53d6\u5ba2\u6237\u7aef\u4e16\u754c"\u7684\u516c\u5f00\u5165\u53e3 \u2717
-            // \u2605\u21d2 \u2605\u7b2c \u2462 \u6b65\u6211\u4eec\u7528**\u81ea\u5df1\u7f13\u5b58**\u7684\u65b9\u5f0f\uff08\u2605\u8fdb\u8fc7\u767d\u7a7a\u95f4\u5c31\u628a\u90a3\u4e2a ClientLevel \u8bb0\u4e0b\u6765 \u2713\uff09
-            return false;
+            return false;                    // \u2605\u6ca1\u8bb0\u4e0b\u8fc7\u5c31\u4e0d\u753b \u2713
         }
         savedLevel = mc.level;
         savedCamPos = mc.gameRenderer.getMainCamera().getPosition();
