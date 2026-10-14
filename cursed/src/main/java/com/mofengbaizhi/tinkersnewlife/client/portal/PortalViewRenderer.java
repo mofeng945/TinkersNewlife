@@ -112,8 +112,21 @@ public final class PortalViewRenderer {
             //     \u21d2 \u2605\u6309**\u53c2\u6570\u7c7b\u578b**\u627e\u5230\u90a3\u4e2a\u65b9\u6cd5 \u2713\uff08\u2605\u627e\u4e0d\u5230\u5c31\u4e0d\u753b \u2713\uff09\u3002
             boolean drew = false;
             net.minecraft.client.multiplayer.ClientLevel dest = null;
+            // TNL997 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u6d4b\u4e86" \u2192 \u2605``TNL996`` \u7ed9\u51fa\u94c1\u8bc1 \u2713\uff1a
+            //   `dest=null cache=[\u53ea\u6709 tinkersnewlife:great_white_space] beginOk=false` \u2713
+            //   \u2605\u21d2 \u2605\u5ba2\u6237\u7aef**\u540c\u65f6\u53ea\u4fdd\u6709\u4e00\u4efd\u5df2\u52a0\u8f7d\u4e16\u754c** \u2717
+            //     \u2605\u8fdb\u4e86\u767d\u7a7a\u95f4\u540e\uff0c\u65e7\u7ef4\u5ea6\u7684 ClientLevel \u4e0e\u5176\u533a\u5757**\u88ab\u5378\u8f7d** \u2717
+            //   \u2605\u73b0\u5728\uff1a\u2605\u4e0d\u518d\u5199\u6b7b overworld \u2717 \u6539\u6210"\u2605\u53d6\u8bb0\u5fc6\u91cc**\u4e0d\u662f\u5f53\u524d\u7ef4\u5ea6**\u7684\u90a3\u4e00\u4e2a" \u2713
+            //     \uff08\u2605\u540c\u7ef4\u5ea6\u4f20\u9001\u95e8\u80fd\u76f4\u63a5\u9a8c\u8bc1\u673a\u5236\u662f\u5426\u901a \u2713\uff09
             try {
-                dest = PortalViewLevels.get(DEST);
+                net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> cur =
+                        mc.level == null ? null : mc.level.dimension();
+                for (var k : PortalViewLevels.keys()) {
+                    if (!k.equals(cur)) {
+                        dest = PortalViewLevels.get(k);
+                        break;
+                    }
+                }
             } catch (Throwable ignored) {
             }
             // TNL996 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u6d4b\u4e86"\u4f46 ``TNL992/994`` **\u8fd8\u662f 0 \u884c** \u2717
