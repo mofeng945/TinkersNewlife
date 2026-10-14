@@ -259,15 +259,22 @@ public class AeonianOrderItem extends SwordItem {
                                         1, 0.0D, 0.0D, 0.0D, 0.0D);
                             }
                         }
-                        if (hk.ticks() > 1) {
+                        // TNL1058 user: "stop flying when it touches a block"
+                        net.minecraft.core.BlockPos bp = net.minecraft.core.BlockPos.containing(hookPos);
+                        boolean blocked = !owner.level().getBlockState(bp)
+                                .getCollisionShape(owner.level(), bp).isEmpty();
+                        boolean tooFar = hookEye.distanceTo(hookPos) > 20.5D;
+                        if (hk.ticks() > 1 && !blocked && !tooFar) {
                             left.add(new Hook(hk.owner(), hk.item(), hk.ticks() - 1));
                         } else {
-                            // it is done flying: pull the player to where it stopped, then take it back
-                            Vec3 stop = scythe.position();
+                            // it hit a block (or ran out): stop there and pull the player over
+                            Vec3 stop = hookPos;
                             scythe.discard();
                             if (owner instanceof Player p3) {
                                 PULLS.add(new Pull(p3.getUUID(), stop, 14));
-                                TinkersNewlife.LOGGER.warn("TNL1057 scythe stopped at {}, pulling the player", stop);
+                                TinkersNewlife.LOGGER.warn(
+                                        "TNL1058 scythe stopped at {} (blocked={} tooFar={}), pulling the player",
+                                        stop, blocked, tooFar);
                             }
                         }
                     }
