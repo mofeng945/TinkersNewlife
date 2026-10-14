@@ -313,9 +313,14 @@ public class StarfallArrow extends AbstractArrow {
                 }
             } catch (Throwable ignored) {
             }
-            lg.warn("TNL980 arrow hit {} ({}){}  boss(parent)={}",
-                    tnl$hit.getClass().getSimpleName(), tnl$hit.getType(),
-                    parentInfo, tnl$isBoss(tnl$hit));
+            // TNL983 \u2605\u2605 \u63a2\u9488\u6539\u6210\u6253"\u6362\u7b97\u540e"\u7684\u7ed3\u679c \u2713
+            net.minecraft.world.entity.Entity tnl$res =
+                    com.mofengbaizhi.tinkersnewlife.util.TruePierce.resolveVictim(tnl$hit);
+            lg.warn("TNL983 hit={} ({}){}  -> resolved={}  isLiving={}  boss={}",
+                    tnl$hit.getClass().getSimpleName(), tnl$hit.getType(), parentInfo,
+                    tnl$res.getClass().getSimpleName(),
+                    tnl$res instanceof net.minecraft.world.entity.LivingEntity,
+                    tnl$isBoss(tnl$res));
         }
         if (tnl$hit instanceof net.minecraftforge.entity.PartEntity<?> tnl$part) {
             tnl$hit = tnl$part.getParent();
