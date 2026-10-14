@@ -85,6 +85,8 @@ public final class ApostlePatch {
     public static final ForgeConfigSpec.BooleanValue WALL_TELEPORT;
     public static final ForgeConfigSpec.BooleanValue ARROW_RAIN;
     public static final ForgeConfigSpec.IntValue ARROW_RAIN_COOLDOWN_SECONDS;
+    /** TNL1076 \u7206\u71c3\u9677\u9631\u89e6\u53d1\u540e\u7684\u51b7\u5374\uff08\u79d2 \u2713 \u9ed8\u8ba4 5 \u2713\uff09 */
+    public static final ForgeConfigSpec.IntValue TRAP_COOLDOWN_SECONDS;
     public static final ForgeConfigSpec.BooleanValue RAID_WAVE;
 
     static {
@@ -138,6 +140,8 @@ public final class ApostlePatch {
                 .define("wall_teleport", false);   // TNL1075 \u2605\u9ed8\u8ba4\u5173\u6389\uff08\u2605\u8c03\u7528\u4e5f\u5df2\u79fb\u9664 \u2713\uff09
         ARROW_RAIN = b.comment("给使徒的法术组加上『箭雨』（诡厄箭雨聚晶的效果，默认 true）")
                 .define("arrow_rain", true);
+        TRAP_COOLDOWN_SECONDS = b.comment("fire blast trap cooldown in seconds, default 5")
+                .defineInRange("fire_blast_trap_cooldown_seconds", 5, 1, 600);
         ARROW_RAIN_COOLDOWN_SECONDS = b.comment("箭雨冷却（秒，默认 20）")
                 .defineInRange("arrow_rain_cooldown_seconds", 20, 1, 600);
         RAID_WAVE = b.comment("主世界 10% 血刷一波认使徒为主的袭击者（#12，默认 true）").define("raid_wave", true);
@@ -393,7 +397,15 @@ public final class ApostlePatch {
     private static final double CLOSE_RANGE = 2.0D;
     private static final int CLOSE_LIMIT_TICKS = 100;        // 5 秒
     private static final int ELYTRA_LOCK_TICKS = 100;        // 5 秒锁定
-    private static final int TRAP_COOLDOWN_TICKS = 300;      // 15 秒
+    /** TNL1076 \u2605\u9ed8\u8ba4\u6539\u6210\u8bfb\u914d\u7f6e\uff08\u2605\u9ed8\u8ba4 5 \u79d2 \u2713\uff09 */
+    private static int trapCooldownTicks() {
+        int seconds = 5;
+        try {
+            seconds = TRAP_COOLDOWN_SECONDS.get();
+        } catch (Throwable ignored) {
+        }
+        return Math.max(1, Math.min(600, seconds)) * 20;
+    }
     /** TNL1074 \u2605\u7528\u6237\uff1a\u2605"\u4f7f\u5f92\u8f6c\u9636\u6bb5\u65f6\u8fd8\u662f\u4f1a\u3010\u9891\u7e41\u5411\u6211\u77ac\u79fb\u3011" \u2713
      *  \u2605\u539f\u56e0 \u2717\uff1a\u2605`wallTeleportBehind` \u53ea\u53d7\u914d\u7f6e\u5f00\u5173\u63a7\u5236 \u2717
      *    \u2605**\u6ca1\u6709\u4efb\u4f55\u51b7\u5374**\u2717 \u002b \u2605\u80cc\u540e\u6ca1\u4f4d\u7f6e\u65f6\u4f1a
@@ -479,7 +491,7 @@ public final class ApostlePatch {
                 // ── #9：二阶段 5 格内随机爆燃陷阱（15 秒冷却）──
                 Long nextTrap = TRAP_COOLDOWN.get(apostle.getUUID());
                 if (flag(FIRE_BLAST_TRAP, true) && apostle.isSecondPhase() && (nextTrap == null || now >= nextTrap)) {
-                    TRAP_COOLDOWN.put(apostle.getUUID(), now + TRAP_COOLDOWN_TICKS);
+                    TRAP_COOLDOWN.put(apostle.getUUID(), now + trapCooldownTicks());   // TNL1076 5s by default
                     net.minecraft.core.BlockPos pos = apostle.blockPosition().offset(
                             apostle.getRandom().nextInt(11) - 5, 0, apostle.getRandom().nextInt(11) - 5);
                     com.Polarice3.Goety.common.entities.util.FireBlastTrap trap =
