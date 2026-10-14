@@ -66,3 +66,33 @@ for f in sorted(glob.glob("cursed/src/main/resources/assets/tinkersnewlife/shade
     print("  [%s] %s" % ("PASS" if not errs else "FAIL", os.path.basename(f)))
     for e in errs: print("        - " + e)
 print("  === 结论：bad %d ===" % bad)
+
+# TNL970 新增：GLSL 与 json 交叉对账（这类错以前只能等启动才知道）
+import glob as _g, io as _io, json as _json, os as _os, re as _re
+bad2 = 0
+for _j in sorted(_g.glob("cursed/src/main/resources/assets/tinkersnewlife/shaders/core/*.json")):
+    _d = _json.loads(_io.open(_j, encoding="utf-8").read())
+    _js = set(x["name"] for x in _d.get("uniforms", []))
+    _jattr = set(_d.get("attributes", []))
+    for _ext in (".vsh", ".fsh"):
+        _p = _j[:-5] + _ext
+        if not _os.path.exists(_p):
+            continue
+        _src = _io.open(_p, encoding="utf-8").read()
+        _in = set(_re.findall(r"^\s*in\s+\w+\s+(\w+)\s*;", _src, _re.M))
+        _out = set(_re.findall(r"^\s*out\s+\w+\s+(\w+)\s*;", _src, _re.M))
+        _uni = set(_re.findall(r"^\s*uniform\s+\w+\s+(\w+)\s*;", _src, _re.M)) - {"Sampler0"}
+        _errs = []
+        if _in and _in != _jattr:
+            _errs.append("in %s != json attributes %s" % (sorted(_in), sorted(_jattr)))
+        _miss = _uni - _js
+        if _miss:
+            _errs.append("GLSL 用了但 json 没声明的 uniform: %s" % sorted(_miss))
+        if _re.search(r"vec2\s+\w+\s*=\s*vUv\s*\.\s*[xyzw]*z", _src):
+            _errs.append("对 vec2 用了 .z/.w")
+        if _errs:
+            bad2 += 1
+            print("  [FAIL] %s" % _os.path.basename(_p))
+            for _e in _errs:
+                print("        - " + _e)
+print("  === GLSL 对账：bad %d ===" % bad2)
