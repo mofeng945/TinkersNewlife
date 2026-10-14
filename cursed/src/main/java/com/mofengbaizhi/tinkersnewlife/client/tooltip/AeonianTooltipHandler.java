@@ -121,6 +121,9 @@ public final class AeonianTooltipHandler {
                 int eh = Math.max(2, (int) (11 * open));
                 int ex = x - 2 + cx * 14;
                 int ey = y - 3 + cy * 14 + (11 - eh) / 2;
+                // TNL1066 user: "the eyes are gone" -- the dark base swallowed the dark eye art,
+                // so give every eye a slightly lighter cell behind it to make it readable again.
+                g.fill(ex - 1, ey - 1, ex + 12, ey + eh + 1, 0xFF1A2130);
                 g.blit(EYE, ex, ey, 0.0F, 0.0F, 11, eh, 16, 16);
             }
         }
