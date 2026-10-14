@@ -22,6 +22,15 @@ in vec3 vView;         // TNL965 \u2605\u89c6\u56fe\u7a7a\u95f4\u4f4d\u7f6e \u27
 
 out vec4 fragColor;
 
+// TNL1036 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u6d4b\u4e86" \u2192 \u2605``TNL1024 shader FAILED: 0(104) : error C1503: undefined variable "hash"`` \u2713
+//   \u2605\u771f\u56e0 \u2717\uff1a\u2605\u6211\u628a\u7740\u8272\u5668"\u7167\u642c\u5f13\u7684 fsh" \u2713
+//     \u2605\u4f46\u5f13\u90a3\u4efd**\u53ea\u5b9a\u4e49\u4e86 `noise`/`fbm`** \u2717 \u2014\u2014 \u2605\u6ca1\u6709 `hash` \u2713
+//     \u2605\u800c\u6211\u7684\u9ed1\u96fe/\u773c\u775b\u6bb5\u7528\u4e86 `hash` \u2717 \u21d2 \u2605\u7f16\u8bd1\u5931\u8d25 \u2713
+//   \u2605\u73b0\u5728 \u2713\uff1a\u2605\u628a `hash` \u8865\u4e0a \u2713\uff08\u2605\u4e0e\u5f13\u90a3\u5957\u5171\u7528\u540c\u4e00\u4e2a\u5b9a\u4e49\u98ce\u683c \u2713\uff09
+float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
 float hash2(vec2 p) {
     return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
 }
