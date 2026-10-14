@@ -61,6 +61,11 @@ public class AeonianOrderItem extends SwordItem {
     @Override
     public void appendHoverText(ItemStack stack, Level level, java.util.List<net.minecraft.network.chat.Component> tip,
                                 net.minecraft.world.item.TooltipFlag flag) {
+        // TNL1069 user: "the durability line never showed up". Vanilla only prints it once the item
+        // is damaged, and we override appendHoverText entirely, so print it here in plain white.
+        tip.add(net.minecraft.network.chat.Component.translatable(
+                        "item.durability", stack.getMaxDamage() - stack.getDamageValue(), stack.getMaxDamage())
+                .withStyle(net.minecraft.ChatFormatting.WHITE));
         // TNL1060 user: the two line declaration, colours are animated later by AeonianTooltipHandler
         tip.add(net.minecraft.network.chat.Component.literal(
                 "\u4eba\u7c7b\u82e5\u751f\u6765\u4fbf\u6ce8\u5b9a\u4f5c\u4e3a\u9ad8\u7ef4\u751f\u7269\u7684\u517b\u6599\uff0c\u4fbf\u662f\u6df7\u4e71\uff1b\u4eba\u7c7b\u82e5\u6b7b\u4e8e\u5e76\u975e\u81ea\u7136\u7684\u6df7\u6c8c\u4fb5\u67d3\uff0c\u4fbf\u662f\u90aa\u6076\u3002\u6211\u4e4b\u6240\u4e3a\uff0c\u7686\u4e3a\u79e9\u5e8f\u3002"));
