@@ -83,17 +83,27 @@ void main() {
         // \u2605\u9ed1\u8272\u90e8\u5206 \u21d2 \u2605\u661f\u7a7a \u2713
         float neb = fbm(suv * 22.0 + vec2(EffectTime * 0.035, -EffectTime * 0.022));
         float neb2 = fbm(suv * 7.0 - vec2(EffectTime * 0.012, EffectTime * 0.02));
-        // TNL954 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u661f\u661f\u5bc6\u5ea6\u4e0d\u591f" \u2713
-        //   \u2605\u53c2\u8003\u65e0\u5c3d\u8d2a\u5a6a\uff1a\u2605\u5b83\u7528 ``cosmicoutof = 101``\uff08\u2605\u7ea6 1% \u7684\u50cf\u7d20\u624d\u662f\u661f \u2713\uff09
-        //     \u002b \u2605\u4ece 10 \u5e27\u661f\u7a7a\u8d34\u56fe\u91cc\u53d6\u6837 \u2713\u3002
-        //   \u2605\u6211\u4eec\u6ca1\u6709\u56fe\u96c6\u5e27 \u2717 \u21d2 \u2605\u628a\u9608\u503c\u538b\u4f4e\u002b\u9891\u7387\u63d0\u9ad8\u6765\u5bf9\u7b49 \u2713
-        //     \uff08\u2605\u4ece\u201c\u53ea\u6709\u6700\u4eae\u7684 10%\u201d\u6539\u6210\u201c\u7ea6 38%\u201d\uff0c\u2605\u5c3a\u5ea6\u4e5f\u52a0\u5bc6 \u2713\uff09
-        float stars = smoothstep(0.62, 1.0, noise(suv * 150.0 + vec2(EffectTime * 0.55, 0.0)));
-        float stars2 = smoothstep(0.74, 1.0, noise(suv.yx * 210.0 + vec2(0.0, EffectTime * 0.42)));
-        float bright = smoothstep(0.86, 1.0, noise(suv.yx * 70.0 - vec2(0.0, EffectTime * 0.3)));
-        vec3 deep = vec3(0.02, 0.025, 0.06);
-        vec3 cloud = vec3(0.35, 0.42, 0.80) * neb * 0.55 + vec3(0.55, 0.35, 0.75) * neb2 * 0.35;
-        col = deep + cloud + vec3(1.0) * (stars * 0.95 + stars2 * 0.7) + vec3(0.9, 0.94, 1.0) * bright;   // TNL954 \u2605\u661f\u70b9\u52a0\u5bc6 \u2713
+        // TNL972 \u2605\u2605 \u7528\u6237\u9009\u65b9\u6848 1\uff1a\u2605\u7167\u65e0\u5c3d\u8d2a\u5a6a\u7684**\u683c\u70b9\u6cd5**\u51fa\u661f\u70b9 \u2713
+        //   \u2605\u539f\u578b\uff08\u2605cosmic.fsh \u2713\uff09\uff1a\u2605\u628a uv \u5207\u6210\u683c\u5b50 \u2713
+        //     \u2605``tu/tv = floor(uv*uvtiles)`` \u21d2 \u2605\u6574\u6570\u54c8\u5e0c \u21d2 \u2605``symbol = pos % 101`` \u2713
+        //     \u2605\u53ea\u6709 ``symbol < 10`` \u7684\u683c\u5b50\u624d\u753b\u661f \u2713\uff08\u2605\u2248 10% \u2713\uff09
+        //   \u2605\u4e4b\u524d\u6211\u7528\u8fde\u7eed\u566a\u58f0\u9608\u503c \u2717 \u21d2 \u2605\u6ca1\u6709"\u683c\u5b50"\u611f \u21d2 \u2605\u76f8\u673a\u4e00\u52a8\u5c31\u662f"\u4e00\u7247\u9ad8\u5149\u5728\u6ed1" \u2713\uff08\u2605\u7528\u6237\u5b9e\u6d4b \u2713\uff09
+        float gridN = 14.0;                                   // \u2605\u683c\u6570\uff08\u2605\u9762\u677f 16px \u21d2 14 \u683c \u2713\uff09
+        vec2 g = suv * gridN;
+        vec2 cell = floor(g);
+        vec2 ru = fract(g) - 0.5;
+        float pos = (1777541.0 * cell.x) + (7649689.0 * cell.y) + (361273.0 * 31.0) + 1723609.0;
+        float symbol = mod(pos, 101.0);                       // \u2605\u539f\u578b\u540c\u6b3e\u6982\u7387\u6876 \u2713
+        float starMask = 0.0;
+        if (symbol < 10.0) {                                  // \u2605\u2248 10% \u7684\u683c\u5b50\u6709\u661f \u2713
+            float d = length(ru);
+            float core = smoothstep(0.22, 0.0, d);            // \u2605\u661f\u6838 \u2713
+            float cross = max(smoothstep(0.05, 0.0, abs(ru.x)),
+                              smoothstep(0.05, 0.0, abs(ru.y))) * smoothstep(0.42, 0.0, d);
+            float tw = 0.65 + 0.35 * sin(EffectTime * 2.2 + (cell.x + cell.y) * 0.9);   // \u2605\u95ea\u70c1 \u2713
+            starMask = clamp(core + cross * 0.8, 0.0, 1.0) * tw;
+        }
+        col = deep + cloud + vec3(1.0, 1.0, 1.0) * starMask;
     } else {
         col = tex.rgb;
     }
