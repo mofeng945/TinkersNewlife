@@ -129,6 +129,7 @@ void main() {
             //     \u21d2 \u2605\u4eae\u50cf\u7d20\u7684 col **\u4ece\u672a\u8d4b\u503c** \u21d2 \u2605\u672a\u521d\u59cb\u5316 \u21d2 \u2605**\u6574\u4ef6\u53d8\u9ed1** \u2713\u2713
             //   \u2605\u73b0\u5728 \u2713\uff1a\u2605\u7167\u5f13\u90a3\u6837\u628a\u4eae\u50cf\u7d20\u539f\u6837\u8f93\u51fa \u2713
             col = tex.rgb;
+        }
     float light = max(max(vLight.x, vLight.y), 0.55);
     fragColor = vec4(col * light, tex.a) * vColor * ColorModulator;
 }
