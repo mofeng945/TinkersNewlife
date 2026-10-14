@@ -114,11 +114,19 @@ void main() {
         vec2 fc = fract(g) - vec2(0.5);
         float h1 = hash(cell);
         if (h1 > 0.42) {              // TNL1039 \u2605\u6709\u773c\u775b\u7684\u683c\u5b50\u6bd4\u4f8b\u63d0\u9ad8\uff08\u260538% \u2192 58% \u2713\uff09
-            vec2 eye = vec2((hash(cell + vec2(3.1, 7.7)) - 0.5) * 0.22,
-                            (hash(cell + vec2(9.3, 1.7)) - 0.5) * 0.22);
+            vec2 eye = vec2((hash(cell + vec2(3.1, 7.7)) - 0.5) * 0.36,
+                            (hash(cell + vec2(9.3, 1.7)) - 0.5) * 0.36);
             float blink = fract(EffectTime * 0.28 + hash(cell + vec2(1.1, 4.4)));
             float open = clamp(smoothstep(0.0, 0.12, blink) * smoothstep(0.30, 0.18, blink) + 0.15, 0.12, 1.0);
-            vec2 euv = (fc - eye) / max(EyeScale, 0.05);
+            // TNL1041 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u73b0\u5728\u6392\u5217\u6709\u70b9\u89c4\u5f8b\u4e86\uff0c\u53ef\u4ee5\u65cb\u8f6c\u4efb\u610f\u89d2\u5ea6" \u2713
+            //   \u2605\u6bcf\u4e2a\u683c\u5b50\u81ea\u5df1\u4e00\u4e2a**\u968f\u673a\u89d2\u5ea6** \u2713\uff08\u2605hash \u53d6\u503c \u2717 \u21d2 \u2605\u4e0d\u518d\u5bf9\u9f50 \u2713\uff09
+            //   \u2605\u987a\u5e26\uff1a\u2605\u6bcf\u4e2a\u683c\u5b50\u7684**\u5927\u5c0f\u4e5f\u968f\u673a** \u2713\uff08\u26050.75~1.25 \u500d \u2713\uff09
+            float rot = hash(cell + vec2(21.7, 5.3)) * 6.2831853;
+            float scl = EyeScale * (0.75 + 0.50 * hash(cell + vec2(13.1, 8.8)));
+            vec2 rel = fc - eye;
+            vec2 rrel = vec2(rel.x * cos(rot) - rel.y * sin(rot),
+                             rel.x * sin(rot) + rel.y * cos(rot));
+            vec2 euv = rrel / max(scl, 0.05);
             euv.y /= max(open, 0.12);
             euv += vec2(0.5);
             if (euv.x > 0.0 && euv.x < 1.0 && euv.y > 0.0 && euv.y < 1.0) {
