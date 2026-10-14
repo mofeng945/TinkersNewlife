@@ -39,7 +39,7 @@ public final class AeonianWeaken {
     public static final String TICKS = "tnl_ao_weaken";
     public static final String STUN = "tnl_ao_stun";
     /** \u2605\u4e00\u6b21\u547d\u4e2d\u52a0\u591a\u5c11 tick \u2713 */
-    public static final int PER_HIT = 10;
+    public static final int PER_HIT = 30;   // TNL1045 \u2605\u7528\u6237\uff1a\u2605\u547d\u4e2d\u4e00\u6b21\u53e0 30 tick \u2713
     public static final int MAX = 100;
     /** \u2605\u786c\u63a7\u65f6\u957f\uff08\u260510 \u79d2 \u2713\uff09 */
     public static final int STUN_TICKS = 200;

@@ -169,7 +169,7 @@ public class AeonianOrderItem extends SwordItem {
                     hits++;
                 }
                 // TNL1043 \u2605\u547d\u4e2d\u53e0 tick\uff08\u2605\u6bcf\u6b21 +10 \u2713\uff09
-                com.mofengbaizhi.tinkersnewlife.content.effect.AeonianWeaken.add(target, 10);
+                com.mofengbaizhi.tinkersnewlife.content.effect.AeonianWeaken.add(target, com.mofengbaizhi.tinkersnewlife.content.effect.AeonianWeaken.PER_HIT);
                 if (level instanceof ServerLevel sl) {
                     sl.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
                             target.getX(), target.getY() + 1.0D, target.getZ(), 12, 0.3D, 0.4D, 0.3D, 0.01D);
