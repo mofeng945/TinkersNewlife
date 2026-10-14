@@ -40,21 +40,22 @@ public final class AeonianTooltipHandler {
     }
 
     /** black -> grey -> red loop, position and line index shift the phase. */
+    /** TNL1063 user: white -> grey -> bright red now (black is gone and the red is lifted). */
     private static int flow(int index, int line, float t) {
         float u = (float) ((Math.sin(t * 1.7D + index * 0.22D + line * 0.55D) + 1.0D) * 0.5D);
         int r;
         int g;
         int b;
-        if (u < 0.5F) {
-            float k = u * 2.0F;                 // black -> grey
-            r = (int) (10 + 110 * k);
-            g = (int) (10 + 110 * k);
-            b = (int) (12 + 115 * k);
+        if (u < 0.55F) {
+            float k = u / 0.55F;                // white -> grey
+            r = (int) (252 - 120 * k);
+            g = (int) (252 - 120 * k);
+            b = (int) (255 - 122 * k);
         } else {
-            float k = (u - 0.5F) * 2.0F;        // grey -> red
-            r = (int) (120 + 135 * k);
-            g = (int) (120 - 100 * k);
-            b = (int) (127 - 100 * k);
+            float k = (u - 0.55F) / 0.45F;      // grey -> bright red
+            r = (int) (132 + 123 * k);
+            g = (int) (132 - 92 * k);
+            b = (int) (133 - 88 * k);
         }
         r = Math.max(0, Math.min(255, r));
         g = Math.max(0, Math.min(255, g));
@@ -67,7 +68,7 @@ public final class AeonianTooltipHandler {
         MutableComponent out = Component.empty();
         for (int i = 0; i < text.length(); i++) {
             out.append(Component.literal(String.valueOf(text.charAt(i)))
-                    .withStyle(Style.EMPTY.withColor(flow(i, line, t))));
+                    .withStyle(Style.EMPTY.withColor(flow(i, line, t)).withBold(true)));
         }
         return out;
     }
