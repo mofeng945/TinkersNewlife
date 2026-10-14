@@ -68,24 +68,18 @@ public final class AeonianWeaken {
         tag(e).putInt(TICKS, v);
     }
 
-    /** \u2605\u524a\u5f31\u7cfb\u6570\uff08\u26051.0 = \u4e0d\u524a \u2713\uff09\uff1a\u2605\u56db\u5c42\u9012\u589e \u2713 */
+    /**
+     * TNL1044 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u4e0d\u662f\u53e0\u5c42\uff0c\u662f\u76f4\u63a5\u6309 tick \u6570\u524a\u51cf\u653b\u51fb\u529b" \u2713
+     *
+     * <p>\u2605\u76f4\u63a5\u7ebf\u6027 \u2713\uff1a\u26051 tick = \u524a 1% \u2713 \u21d2
+     * \u2605100 tick = \u524a 100% \u2713\uff08\u2605\u4e0d\u518d\u6309 20 tick \u5206\u5c42\u52a0\u6743 \u2717\uff09\u3002
+     */
     public static float factor(LivingEntity e) {
         int t = ticks(e);
         if (t <= 0) {
             return 1.0F;
         }
-        int layer = Math.min(4, (t + 19) / 20);              // \u26051..4 \u5c42 \u2713
-        float reduce;
-        if (layer == 1) {
-            reduce = 0.10F;
-        } else if (layer == 2) {
-            reduce = 0.30F;
-        } else if (layer == 3) {
-            reduce = 0.60F;
-        } else {
-            reduce = 1.00F;
-        }
-        return 1.0F - reduce;
+        return 1.0F - Math.min(1.0F, t / (float) MAX);
     }
 
     /** TNL1043 \u2605\u6bcf tick\uff1a\u2605\u9012\u51cf 1 tick \u002b \u2605\u6ee1\u5c42\u7206\u53d1 \u002b \u2605\u786c\u63a7\u7ef4\u6301 \u2713 */
