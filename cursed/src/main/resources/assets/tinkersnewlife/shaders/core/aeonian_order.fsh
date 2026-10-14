@@ -107,11 +107,11 @@ void main() {
         float m2 = fbm(flow * 1.10 + vec2(-EffectTime * 0.25, EffectTime * 0.18));
         float mist = clamp(m1 * 0.8 + m2 * 0.4, 0.0, 1.0);
         col = mix(vec3(0.01, 0.01, 0.02), vec3(0.11, 0.10, 0.14), mist);
-        vec2 g = flow * 1.6;
+        vec2 g = flow * 2.6;              // TNL1039 \u2605\u5bc6\u5ea6\u63d0\u9ad8\uff08\u26051.6 \u2192 2.6 \u2713\uff09
         vec2 cell = floor(g);
         vec2 fc = fract(g) - vec2(0.5);
         float h1 = hash(cell);
-        if (h1 > 0.62) {
+        if (h1 > 0.42) {              // TNL1039 \u2605\u6709\u773c\u775b\u7684\u683c\u5b50\u6bd4\u4f8b\u63d0\u9ad8\uff08\u260538% \u2192 58% \u2713\uff09
             vec2 eye = vec2((hash(cell + vec2(3.1, 7.7)) - 0.5) * 0.22,
                             (hash(cell + vec2(9.3, 1.7)) - 0.5) * 0.22);
             float blink = fract(EffectTime * 0.28 + hash(cell + vec2(1.1, 4.4)));
