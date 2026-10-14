@@ -8,6 +8,7 @@ import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import com.mofengbaizhi.tinkersnewlife.client.portal.PortalViewBridge;
 
 /**
  * TNL993 \u2605\u2605 \u767d\u8272\u7a7a\u95f4\u4f20\u9001\u95e8\uff1a\u2605"\u76f4\u63a5\u6e32\u67d3\u5bf9\u9762\u4e16\u754c"\u7b2c \u2462 \u6b65 \u2713
@@ -158,6 +159,11 @@ public final class PortalViewRenderer {
                 } finally {
                     PortalCameraSwap.end();
                 }
+            }
+            // TNL999 \u2605\u2605 \u628a FBO \u6587\u7406 id \u53d1\u7ed9\u95e8\u9762\u6e32\u67d3\u5668 \u2713\uff08\u2605\u8de8\u6a21\u5757\u6865 \u2713\uff09
+            try {
+                PortalViewBridge.publish(PortalViewTarget.textureId(), true);
+            } catch (Throwable ignored) {
             }
             // \u2605\u2461 \u56de\u5230\u4e3b\u7f13\u51b2 \u2713
             mc.getMainRenderTarget().bindWrite(true);
