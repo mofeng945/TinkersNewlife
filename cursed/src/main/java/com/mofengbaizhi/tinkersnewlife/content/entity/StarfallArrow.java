@@ -412,14 +412,24 @@ public class StarfallArrow extends AbstractArrow {
         dmg *= 1.0F + 0.10F * this.entityData.get(DATA_POWER);   // TNL933 \u2605\u529b\u91cf\uff1a\u2605\u6bcf\u7ea7 +10% \u2713   // TNL882 \u2605\u975e Boss 16 \u2713 \u2605Boss 3% \u2713
         if (enh) {
             dmg *= 2.0F;
-            // TNL1019 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u547d\u4e2d\u540e\u64ad\u653e\u7d2b\u6c34\u6676\u97f3\u8c03\u97f3\u6548\uff0c\u97f3\u8c03\u968f\u673a" \u2713
-            //   \u2605\u7d2b\u6c34\u6676\u97f3\u8272\u7528\u539f\u7248 ``AMETHYST_BLOCK_CHIME`` \u2713
-            //   \u2605\u97f3\u8c03\uff1a\u2605\u539f\u7248\u7d2b\u6c34\u6676\u7684\u968f\u673a\u8303\u56f4\u662f 0.5~2.0 \u2713
-            if (!this.level().isClientSide) {
+        }
+        // TNL1020 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u58f0\u97f3\u7a0d\u5fae\u5927\u4e00\u70b9\uff0c\u7136\u540e\u8ba9\u666e\u901a\u7bad\u77e2\u5c04\u4e2d\u4e5f\u6709\u97f3\u4e50\u97f3\u6548\uff0c
+        //   \u53ea\u662f\u6ca1\u5f3a\u5316\u7bad\u77e2\u597d\u542c" \u2713
+        //   \u2605\u5f3a\u5316\u7bad \u2713\uff1a\u2605``AMETHYST_BLOCK_CHIME``\uff08\u2605\u6e05\u8106\u60a6\u8033\u7684"\u53ee" \u2713\uff09
+        //     \u2605\u97f3\u91cf 1.6 \u2713\uff08\u2605\u6bd4\u539f\u6765 1.0 \u66f4\u54cd \u2713\uff09\u002b \u2605\u97f3\u8c03 0.5~2.0 \u968f\u673a \u2713
+        //   \u2605\u666e\u901a\u7bad \u2713\uff1a\u2605``AMETHYST_BLOCK_HIT``\uff08\u2605\u95f7\u4e00\u70b9\u7684"\u6251" \u2713\uff09
+        //     \u2605\u97f3\u91cf 1.3 \u2713\u002b \u2605\u97f3\u8c03\u53ea\u5728 0.7~1.1 \u5c0f\u8303\u56f4\u6296 \u2713\uff08\u2605\u542c\u7740\u5c31\u6ca1\u90a3\u4e48\u597d\u542c \u2713\uff09
+        if (!this.level().isClientSide) {
+            if (enh) {
                 this.level().playSound(null, this.blockPosition(),
                         net.minecraft.sounds.SoundEvents.AMETHYST_BLOCK_CHIME,
                         net.minecraft.sounds.SoundSource.PLAYERS,
-                        1.0F, 0.5F + this.level().random.nextFloat() * 1.5F);
+                        1.6F, 0.5F + this.level().random.nextFloat() * 1.5F);
+            } else {
+                this.level().playSound(null, this.blockPosition(),
+                        net.minecraft.sounds.SoundEvents.AMETHYST_BLOCK_HIT,
+                        net.minecraft.sounds.SoundSource.PLAYERS,
+                        1.3F, 0.7F + this.level().random.nextFloat() * 0.4F);
             }
         }
         LivingEntity attacker = this.getOwner() instanceof LivingEntity le ? le : null;
