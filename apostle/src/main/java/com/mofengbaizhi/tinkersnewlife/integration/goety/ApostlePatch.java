@@ -394,6 +394,13 @@ public final class ApostlePatch {
     private static final int CLOSE_LIMIT_TICKS = 100;        // 5 秒
     private static final int ELYTRA_LOCK_TICKS = 100;        // 5 秒锁定
     private static final int TRAP_COOLDOWN_TICKS = 300;      // 15 秒
+    /** TNL1074 \u2605\u7528\u6237\uff1a\u2605"\u4f7f\u5f92\u8f6c\u9636\u6bb5\u65f6\u8fd8\u662f\u4f1a\u3010\u9891\u7e41\u5411\u6211\u77ac\u79fb\u3011" \u2713
+     *  \u2605\u539f\u56e0 \u2717\uff1a\u2605`wallTeleportBehind` \u53ea\u53d7\u914d\u7f6e\u5f00\u5173\u63a7\u5236 \u2717
+     *    \u2605**\u6ca1\u6709\u4efb\u4f55\u51b7\u5374**\u2717 \u002b \u2605\u80cc\u540e\u6ca1\u4f4d\u7f6e\u65f6\u4f1a
+     *    **\u76f4\u63a5\u77ac\u79fb\u5230\u73a9\u5bb6\u6240\u5728\u4f4d\u7f6e** \u2717 \u21d2 \u2605\u770b\u8d77\u6765\u5c31\u662f"\u8d34\u8138" \u2713
+     *  \u2605\u73b0\u5728 \u2713\uff1a\u2605\u52a0\u51b7\u5374 \u002b \u2605\u53d6\u6d88"\u8d34\u5230\u73a9\u5bb6\u8eab\u4e0a"\u7684\u515c\u5e95 \u2713\u3002 */
+    private static final Map<UUID, Long> WALL_TELEPORT_AT = new ConcurrentHashMap<>();
+    private static final int WALL_TELEPORT_COOLDOWN_TICKS = 160;   // 8 秒
     private static final double ELYTRA_DETECT_RANGE = 24.0D;
     private static final int RAID_WAVE_SIZE = 5;             // #12 一波 5 只（原版掠夺者）
 
@@ -1060,6 +1067,11 @@ public final class ApostlePatch {
      */
     private static void wallTeleportBehind(ServerLevel level, Apostle apostle, long now) {
         if (!flag(WALL_TELEPORT, true)) return;
+        // TNL1074 cooldown so it cannot chain teleports at us
+        Long next = WALL_TELEPORT_AT.get(apostle.getUUID());
+        if (next != null && now < next) {
+            return;
+        }
         LivingEntity target = apostle.getTarget();
         if (!(target instanceof net.minecraft.server.level.ServerPlayer player)) return;
         if (player.isCreative() || player.isSpectator()) return;
@@ -1071,7 +1083,12 @@ public final class ApostlePatch {
             return;
         }
         net.minecraft.world.phys.Vec3 behind = player.position().subtract(player.getLookAngle().scale(1.5D));
-        net.minecraft.world.phys.Vec3 dest = canStandAt(level, apostle, behind) ? behind : player.position();
+        // TNL1074 no more "just land on the player" fallback: if there is no spot behind, stay put
+        if (!canStandAt(level, apostle, behind)) {
+            return;
+        }
+        net.minecraft.world.phys.Vec3 dest = behind;
+        WALL_TELEPORT_AT.put(apostle.getUUID(), now + WALL_TELEPORT_COOLDOWN_TICKS);
         try {
             level.sendParticles(net.minecraft.core.particles.ParticleTypes.PORTAL,
                     apostle.getX(), apostle.getY() + 1.0D, apostle.getZ(), 30, 0.3D, 0.6D, 0.3D, 0.3D);
