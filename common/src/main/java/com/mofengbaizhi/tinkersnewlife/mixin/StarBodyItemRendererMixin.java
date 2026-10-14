@@ -72,10 +72,8 @@ public class StarBodyItemRendererMixin {
                 pose.popPose();
                 if (System.currentTimeMillis() - TNL$GLOW_LOG > 5000L) {
                     TNL$GLOW_LOG = System.currentTimeMillis();
-                    com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL1001 drew starfall glow behind the gui item");
                 }
             } catch (Throwable t) {
-                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL1001 glow FAILED: {}", t.toString());
                 try {
                     pose.popPose();
                 } catch (Throwable ignored) {
@@ -119,7 +117,6 @@ public class StarBodyItemRendererMixin {
                 pose.popPose();
             } catch (Throwable ignored) {
             }
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL959 draw FAILED: {}", t.toString());
         }
     }
 

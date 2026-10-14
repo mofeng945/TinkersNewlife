@@ -90,7 +90,6 @@ public class MinersVisionClientHandler {
                             .createCompositeState(false));
         } catch (Throwable tt) {
             glowTypeCache = RenderType.entityTranslucentCull(TextureAtlas.LOCATION_BLOCKS);
-            TinkersNewlife.LOGGER.warn("TNL843 custom glow type failed, fallback used: {}", tt.toString());
         }
         return glowTypeCache;
     }

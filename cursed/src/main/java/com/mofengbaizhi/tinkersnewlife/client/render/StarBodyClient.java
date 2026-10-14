@@ -111,10 +111,8 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
                         new ShaderInstance(event.getResourceProvider(), SHADER_ID, DefaultVertexFormat.NEW_ENTITY),
                         s -> {
                             shader = s;
-                            TinkersNewlife.LOGGER.warn("TNL944 star_body shader compiled ok");
                         });
             } catch (Throwable t) {
-                TinkersNewlife.LOGGER.warn("TNL944 star_body shader FAILED: {}", t.toString());
             }
         }
     }
@@ -271,7 +269,6 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
             renderModel(stack, pose, buffers, light, overlay,
                     ItemBlockRenderTypes.getRenderType(stack, true));
         } catch (Throwable t) {
-            TinkersNewlife.LOGGER.warn("TNL948 base layer FAILED: {}", t.toString());
         }
         try {
             if (source != null) {

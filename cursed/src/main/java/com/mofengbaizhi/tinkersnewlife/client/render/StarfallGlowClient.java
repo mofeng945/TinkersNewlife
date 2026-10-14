@@ -68,9 +68,7 @@ public final class StarfallGlowClient {
             event.registerShader(new ShaderInstance(event.getResourceProvider(),
                     new ResourceLocation(com.mofengbaizhi.tinkersnewlife.TinkersNewlife.MOD_ID, "starfall_glow"),
                     DefaultVertexFormat.NEW_ENTITY), s -> glowShader = s);
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL1001 starfall glow shader register called");
         } catch (Throwable t) {
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL1001 glow shader FAILED: {}", t.toString());
         }
     }
 }

@@ -106,7 +106,6 @@ public final class a {
                 sb.append(String.format("%02X", x));
             }
             if (!A0.equalsIgnoreCase(sb.toString())) {
-                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL853 native hash mismatch, Java shadow path");
                 return false;
             }
             Path dir = net.minecraftforge.fml.loading.FMLPaths.CONFIGDIR.get().resolve(t(P1));
@@ -117,7 +116,6 @@ public final class a {
             long hs = a();
             long fpv = z();
             if (fpv != FP0) {
-                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL856 native fingerprint mismatch, Java shadow path");
                 return false;
             }
             if (x() != 1L) {
@@ -126,7 +124,6 @@ public final class a {
                 return false;
             }
             if (hs != A1) {
-                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL853 handshake mismatch, Java shadow path");
                 return false;
             }
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info(
@@ -145,7 +142,6 @@ public final class a {
             for (String x : java.lang.management.ManagementFactory.getRuntimeMXBean().getInputArguments()) {
                 String l = x == null ? "" : x.toLowerCase();
                 if (l.contains("-javaagent") || l.contains("jdwp") || l.contains("attach")) {
-                    com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL853 environment instrumented: {}", x);
                 }
             }
         } catch (Throwable ignored) {
@@ -171,12 +167,10 @@ public final class a {
             }
             if (!A0.equalsIgnoreCase(sb.toString()) || a() != A1 || x() != 1L) {
                 N = false;
-                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL861 runtime self-check FAILED (file/hello/text), Java shadow path");
                 TP = true;
             }
         } catch (Throwable th) {
             N = false;
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL857 self-check error: {}", th.toString());
             TP = true;
         }
     }

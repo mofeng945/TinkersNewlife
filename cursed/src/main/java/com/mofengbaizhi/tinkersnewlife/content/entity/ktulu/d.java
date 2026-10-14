@@ -84,7 +84,6 @@ public class d {
                 return;
             }
             if (event.getAmount() <= 0.0F) {
-                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL910 hurt zeroed upstream");
                 boss.tnl$shieldFlash();
             }
         } catch (Throwable ignored) {

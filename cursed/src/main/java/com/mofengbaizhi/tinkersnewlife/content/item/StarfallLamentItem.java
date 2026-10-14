@@ -234,7 +234,6 @@ public class StarfallLamentItem extends BowItem {
                 SoundEvents.ARROW_SHOOT, SoundSource.PLAYERS, 1.0F, 1.0F);
         if (System.currentTimeMillis() - TNL$LAST_LOG > 2000L) {   // TNL883 \u2605\u9650\u6d41\u65e5\u5fd7 \u2713
             TNL$LAST_LOG = System.currentTimeMillis();
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL883 starfall shot fired, power={}", power);
         }
     }
 
