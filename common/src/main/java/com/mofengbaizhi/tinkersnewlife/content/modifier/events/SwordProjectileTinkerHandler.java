@@ -103,7 +103,7 @@ public class SwordProjectileTinkerHandler {
         Projectile projectile = event.getProjectile();
         if (!isGoetySword(projectile)) return;
         if (!(event.getRayTraceResult() instanceof EntityHitResult hit)) return;
-        if (!(hit.getEntity() instanceof LivingEntity target)) return;
+        if (!(com.mofengbaizhi.tinkersnewlife.util.TruePierce.resolveVictim(hit.getEntity()) instanceof LivingEntity target)) return;
 
         Entity owner = projectile.getOwner();
         if (!(owner instanceof Player player)) return;

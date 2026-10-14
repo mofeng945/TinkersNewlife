@@ -2617,4 +2617,30 @@ public final class TruePierce {
     public static boolean isTruePierce(DamageSource source) {
         return isPierceLike(source);
     }
+
+    /**
+     * TNL978 \u2605\u2605 \u628a"\u90e8\u4ef6"\u6362\u7b97\u56de\u672c\u4f53 \u2713
+     *
+     * <p>\u2605\u7528\u6237\uff1a\u2605"\u547d\u4e2d\u591a\u90e8\u4f4d\u5b9e\u4f53\u7684\u975e\u4e3b\u78b0\u649e\u7bb1\u65f6\uff0c\u6ca1\u6709\u9020\u6210\u4f24\u5bb3" \u2713
+     * \uff0b\u2605"\u662f\u4e0d\u662f\u53ea\u8981\u662f\u6211\u7684\u771f\u5b9e\u4f24\u5bb3\u90fd\u6709\u8fd9\u4e2a\u95ee\u9898" \u2713
+     *
+     * <p>\u2605\u771f\u56e0 \u2717\uff1a\u2605\u5de8\u9f99\u7c7b\u591a\u90e8\u4f4d\u5b9e\u4f53\u547d\u4e2d\u7684\u662f
+     * ``PartEntity`` \u2713\uff0c\u2605\u5b83**\u4e0d\u662f** ``LivingEntity`` \u2717
+     * \u21d2 \u2605\u6240\u6709"\u547d\u4e2d\u540e\u53d6\u76ee\u6807"\u7684\u5199\u6cd5\u90fd\u4f1a**\u9759\u9ed8\u8df3\u8fc7** \u2713\u3002
+     *
+     * <p>\u2605\u4e0d\u4f1a\u8e29\u7684 \u2713\uff1a\u2605\u4e8b\u4ef6\u578b\uff08\u2605``event.getSource().getEntity()`` \u2713\uff09
+     * \u2014\u2014\u2605\u90a3\u662f**\u653b\u51fb\u8005** \u2713 \u21d2 \u2605\u4e0e\u90e8\u4ef6\u65e0\u5173 \u2713\u3002
+     */
+    public static net.minecraft.world.entity.Entity resolveVictim(net.minecraft.world.entity.Entity e) {
+        // TNL978 \u2605\u2605 \u8fd4\u56de\u7c7b\u578b\u6545\u610f\u7528 **Entity** \u2713
+        //   \u2605\u5426\u5219 ``resolveVictim(x) instanceof LivingEntity y`` \u4f1a\u62a5
+        //   \u2605"\u6a21\u5f0f\u7c7b\u578b\u662f\u8868\u8fbe\u5f0f\u7c7b\u578b\u7684\u5b50\u7c7b" \u2717\uff08\u2605\u7f16\u8bd1\u5668\u5df2\u77e5\u5b83\u5c31\u662f LivingEntity \u2713\uff09
+        try {
+            if (e instanceof net.minecraftforge.entity.PartEntity<?> part) {
+                e = part.getParent();
+            }
+        } catch (Throwable ignored) {
+        }
+        return e;
+    }
 }

@@ -211,7 +211,7 @@ public final class CursedEnergyReleaseTechnique extends BaseTechnique {
                 e -> e instanceof LivingEntity le && le.isAlive() && !e.isSpectator()
                         && !PuppetUtil.isAllyOf(le, player),
                 range * range);
-        if (hit == null || !(hit.getEntity() instanceof LivingEntity target)) return;
+        if (hit == null || !(com.mofengbaizhi.tinkersnewlife.util.TruePierce.resolveVictim(hit.getEntity()) instanceof LivingEntity target)) return;
 
         int affinity = CursePowerHelper.getCurseAffinity(player);
         int output = CursePowerHelper.getCurseOutputLevel(player);

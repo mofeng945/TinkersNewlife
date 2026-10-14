@@ -1447,7 +1447,7 @@ public final class WuWeiHandler {
         var hit = net.minecraft.world.entity.projectile.ProjectileUtil.getEntityHitResult(
                 player, eye, end, box,
                 e -> !e.isSpectator() && e.isPickable() && (e instanceof LivingEntity), 16.0 * 16.0);
-        return hit != null && hit.getEntity() instanceof LivingEntity living ? living : null;
+        return hit != null && com.mofengbaizhi.tinkersnewlife.util.TruePierce.resolveVictim(hit.getEntity()) instanceof LivingEntity living ? living : null;
     }
 
     private static Component formDisplayName(String entityTypeId) {

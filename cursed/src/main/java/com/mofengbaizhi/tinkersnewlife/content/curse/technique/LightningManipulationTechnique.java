@@ -109,7 +109,7 @@ public final class LightningManipulationTechnique extends BaseTechnique {
                 e -> !e.isSpectator() && e.isPickable() && e instanceof LivingEntity le
                         && le.isAlive() && !PuppetUtil.isAllyOf(le, player),
                 REACH * REACH);
-        return hit != null && hit.getEntity() instanceof LivingEntity living ? living : null;
+        return hit != null && com.mofengbaizhi.tinkersnewlife.util.TruePierce.resolveVictim(hit.getEntity()) instanceof LivingEntity living ? living : null;
     }
 
     // ================= 反转：幻兽琥珀 =================

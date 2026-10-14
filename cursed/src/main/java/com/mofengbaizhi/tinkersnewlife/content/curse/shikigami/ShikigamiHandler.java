@@ -251,7 +251,7 @@ public final class ShikigamiHandler {
         AABB box = player.getBoundingBox().expandTowards(look.scale(16.0)).inflate(1.0);
         EntityHitResult hit = ProjectileUtil.getEntityHitResult(player, eye, end, box,
                 e -> !e.isSpectator() && e.isPickable() && (e instanceof LivingEntity), 16.0 * 16.0);
-        return hit != null && hit.getEntity() instanceof LivingEntity living ? living : null;
+        return hit != null && com.mofengbaizhi.tinkersnewlife.util.TruePierce.resolveVictim(hit.getEntity()) instanceof LivingEntity living ? living : null;
     }
 
     /** 玩家死亡：场上所有未回收的式神直接清除（不返还咒力；调伏进度在玩家持久数据，不受影响） */

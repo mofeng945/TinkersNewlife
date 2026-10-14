@@ -136,7 +136,7 @@ public abstract class BaseTechnique {
         AABB box = player.getBoundingBox().expandTowards(look.scale(REACH)).inflate(1.0);
         EntityHitResult hit = ProjectileUtil.getEntityHitResult(player, eye, end, box,
                 e -> !e.isSpectator() && e.isPickable() && (e instanceof LivingEntity), REACH * REACH);
-        return hit != null && hit.getEntity() instanceof LivingEntity living ? living : null;
+        return hit != null && com.mofengbaizhi.tinkersnewlife.util.TruePierce.resolveVictim(hit.getEntity()) instanceof LivingEntity living ? living : null;
     }
 
     /** 共享伤害基底：(1+(咒力输出等级+咒力亲和/10)/10) × (当前攻击伤害 + 咒力输出等级×5) */

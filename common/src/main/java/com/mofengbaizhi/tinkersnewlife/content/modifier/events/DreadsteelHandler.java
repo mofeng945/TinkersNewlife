@@ -46,7 +46,7 @@ public class DreadsteelHandler {
     @SubscribeEvent
     public static void onProjectileImpact(ProjectileImpactEvent event) {
         if (!(event.getRayTraceResult() instanceof EntityHitResult entityHit)) return;
-        if (!(entityHit.getEntity() instanceof LivingEntity target)) return;
+        if (!(com.mofengbaizhi.tinkersnewlife.util.TruePierce.resolveVictim(entityHit.getEntity()) instanceof LivingEntity target)) return;
         if (!(event.getProjectile().getOwner() instanceof LivingEntity attacker)) return;
         if (attacker.level().isClientSide) return;
 

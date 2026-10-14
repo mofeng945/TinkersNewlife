@@ -37,7 +37,7 @@ public final class GungnirHandler {
         ItemStack weapon = rangedWeapon(shooter);
         if (weapon.isEmpty() || !hasGungnir(weapon)) return;
         if (!(event.getRayTraceResult() instanceof EntityHitResult hit)) return;
-        if (!(hit.getEntity() instanceof LivingEntity target)) return;
+        if (!(com.mofengbaizhi.tinkersnewlife.util.TruePierce.resolveVictim(hit.getEntity()) instanceof LivingEntity target)) return;
 
         // 取消原命中，按冈格尼尔虚影结算：伤害 = 弹射物的 80%（真伤源），命中给原版"震撼(STUNNED)"+"狱火(BURN_HEX)" + 脚下生成狱火投射物
         event.setCanceled(true);
