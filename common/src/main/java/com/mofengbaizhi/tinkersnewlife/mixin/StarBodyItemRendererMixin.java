@@ -128,4 +128,5 @@ public class StarBodyItemRendererMixin {
     }
 
     private static long TNL$LOG = 0L;
+    private static long TNL$LOG2 = 0L;
 }

@@ -11,6 +11,9 @@ uniform float MaskThreshold;
 uniform vec4 ColorModulator;
 uniform vec2 UvOffset;      // TNL960 \u2605\u56fe\u96c6 UV \u2192 \u8d34\u56fe\u672c\u5730 UV \u2713
 uniform vec2 UvScale;
+uniform vec4 SpriteRect;   // TNL971 \u2605sprite \u5728\u56fe\u96c6\u91cc\u7684 UV \u77e9\u5f62 \u2713
+uniform float CamYaw;
+uniform float CamPitch;
 
 in vec2 vUv;
 in vec4 vColor;
@@ -58,9 +61,18 @@ void main() {
     //   \u2605\u539f\u7248\u672b\u5730\u4f20\u9001\u95e8\uff08\u2605rendertype_end_portal \u2713\uff09\u7684\u661f\u7a7a**\u951a\u5728\u4e16\u754c/\u89c6\u56fe\u7a7a\u95f4** \u2713
     //     \u21d2 \u2605\u8f6c\u5934\u3001\u8d70\u52a8\u90fd\u4f1a\u6709**\u89c6\u5dee** \u2713 \u2014\u2014 \u2605\u770b\u8d77\u6765\u5c31\u50cf"\u900f\u955c\u91cc\u770b\u5230\u53e6\u4e00\u7247\u661f\u7a7a" \u2713
     //   \u2605\u73b0\u5728\uff1a\u2605\u7528\u9876\u70b9\u7684\u89c6\u56fe\u7a7a\u95f4\u65b9\u5411\u7b97\u661f\u661f \u2713\uff08\u2605\u4e0d\u9700\u8981\u9006\u77e9\u9635 \u2713\uff09
-    vec2 uv = vUv;                       // \u2605\u4ecd\u7528\u4e8e\u53d6\u906e\u7f69\uff08\u2605\u8d34\u56fe\u4eae\u5ea6\uff09\u2713
-    vec3 dir = normalize(vView + vec3(0.0, 0.0, -1.0e-3));   // \u2605\u89c6\u7ebf\u65b9\u5411 \u2713
-    vec2 suv = dir.xy * 1.6 + vec2(0.5);                     // \u2605\u900f\u955c\u5e73\u9762\u5750\u6807 \u2713
+    // TNL971 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u76f4\u63a5\u5f80\u4e0b\u505a" \u2713
+    //   \u2605\u5f62\u72b6\u9760**\u5c40\u90e8 UV**\uff08\u2605\u4ece SpriteRect \u7b97\uff09\u2713
+    //   \u2605\u955c\u5934\u611f\u9760**\u76f8\u673a\u671d\u5411\u5e73\u79fb** \u2713 \u2014\u2014 \u2605\u4e24\u8005\u5206\u79bb \u2713
+    vec2 uv = vUv;
+    vec2 localUv = (SpriteRect.z > SpriteRect.x && SpriteRect.w > SpriteRect.y)
+            ? (uv - SpriteRect.xy) / (SpriteRect.zw - SpriteRect.xy)
+            : uv;
+    float cy = cos(radians(CamYaw));
+    float sy = sin(radians(CamYaw));
+    float cp = cos(radians(CamPitch));
+    float sp = sin(radians(CamPitch));                       // \u2605\u4ecd\u7528\u4e8e\u53d6\u906e\u7f69\uff08\u2605\u8d34\u56fe\u4eae\u5ea6\uff09\u2713
+    vec2 suv = localUv + vec2(sy * cp, -sp) * 0.45;   // TNL971 \u2605\u5c40\u90e8 UV \u002b \u76f8\u673a\u5e73\u79fb \u2713
     vec4 tex = texture(Sampler0, uv);
     if (tex.a < 0.08) {
         discard;

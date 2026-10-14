@@ -83,7 +83,7 @@ for _j in sorted(_g.glob("cursed/src/main/resources/assets/tinkersnewlife/shader
         _out = set(_re.findall(r"^\s*out\s+\w+\s+(\w+)\s*;", _src, _re.M))
         _uni = set(_re.findall(r"^\s*uniform\s+\w+\s+(\w+)\s*;", _src, _re.M)) - {"Sampler0"}
         _errs = []
-        if _in and _in != _jattr:
+        if _ext == ".vsh" and _in and _in != _jattr:
             _errs.append("in %s != json attributes %s" % (sorted(_in), sorted(_jattr)))
         _miss = _uni - _js
         if _miss:
