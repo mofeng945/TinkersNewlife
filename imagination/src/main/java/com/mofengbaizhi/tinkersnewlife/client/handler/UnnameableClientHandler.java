@@ -79,6 +79,35 @@ public class UnnameableClientHandler {
     private UnnameableClientHandler() {
     }
 
+    /** TNL1054 user: with ticks stacked on the player the screen drifts toward the unnameable look. */
+    private static float aeonian = 0.0F;
+
+    /** 0..1 driven by the aeonian_mark duration (the mark carries the tick count as its duration). */
+    private static float aeonianIntensity(LocalPlayer player) {
+        if (player == null) {
+            return 0.0F;
+        }
+        try {
+            var eff = net.minecraft.core.registries.BuiltInRegistries.MOB_EFFECT.get(
+                    new ResourceLocation(TinkersNewlife.MOD_ID, "aeonian_mark"));
+            if (eff == null) {
+                return 0.0F;
+            }
+            MobEffectInstance inst = player.getEffect(eff);
+            if (inst == null) {
+                return 0.0F;
+            }
+            return Math.max(0.0F, Math.min(1.0F, inst.getDuration() / 200.0F));
+        } catch (Throwable ignored) {
+            return 0.0F;
+        }
+    }
+
+    /** how strong the unnameable look is right now: full when the effect is on, otherwise the tick ratio. */
+    private static float strength(LocalPlayer player) {
+        return unnameable(player) != null ? 1.0F : aeonian;
+    }
+
     private static MobEffectInstance unnameable(LocalPlayer player) {
         return player == null ? null : player.getEffect(ModEffects.UNNAMEABLE.get());
     }
@@ -159,24 +188,31 @@ public class UnnameableClientHandler {
      * 失败重试有 1 秒冷却，避免"环境音=0 时每 tick 造一个新对象"。
      */
     private static void maintainWhisperSound(Minecraft mc, LocalPlayer player) {
-        if (unnameable(player) == null || !whisperSoundEnabled()) {
+        // TNL1054 with stacked ticks the whispers keep looping and get louder with the tick ratio
+        float k = strength(player);
+        if (!whisperSoundEnabled() || k <= 0.01F) {
             stopWhisperSound(mc);
             return;
         }
-        if (mc.getSoundManager() == null) return;
+        if (mc.getSoundManager() == null) {
+            return;
+        }
         if (whisperSound != null && !whisperSound.isStopped() && mc.getSoundManager().isActive(whisperSound)) {
             return;
         }
-        if (clientTicks < whisperRetryAt) return;
+        if (clientTicks < whisperRetryAt) {
+            return;
+        }
         whisperRetryAt = clientTicks + 20;
-        // 环境音滑条拉到 0 时通道根本不会建，isActive 永远是 false → 别每 tick 重造
-        if (mc.options.getSoundSourceVolume(SoundSource.AMBIENT) <= 0.0F) return;
-        whisperSound = new UnnameableWhisperSound(whisperSoundVolume(), 1.0F);
+        if (mc.options.getSoundSourceVolume(SoundSource.AMBIENT) <= 0.0F) {
+            return;
+        }
+        whisperSound = new UnnameableWhisperSound(
+                whisperSoundVolume() * (0.35F + 0.65F * k), 1.0F);
         mc.getSoundManager().play(whisperSound);
-        TinkersNewlife.LOGGER.info("[不可名状] 低语音频起播（循环，效果结束自动停）");
+        TinkersNewlife.LOGGER.info("[unnameable] whispers started, volume scaled by the tick ratio");
     }
 
-    /** 停掉并清空当前的低语音频 */
     private static void stopWhisperSound(Minecraft mc) {
         whisperRetryAt = 0;
         UnnameableWhisperSound sound = whisperSound;
@@ -222,6 +258,7 @@ public class UnnameableClientHandler {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         clientTicks++;
+        aeonian = aeonianIntensity(player);   // TNL1054 cache the tick ratio for the other handlers
 
         // 低语音频（起播/兜底）—— 必须放在下面那些 early return 之前，否则没效果时会漏掉"停"
         maintainWhisperSound(mc, player);
@@ -235,7 +272,8 @@ public class UnnameableClientHandler {
         //    曾经有个 TNL_DEBUG_POST_EFFECT 调试开关能让它无条件挂上（为了验证着色器编译），
         //    结果那个环境变量被 Gradle 守护进程记住、后续 runClient 全都继承了
         //    → 玩家"没获得效果也在反转颜色"。这类开关一律不许再进正式构建。
-        boolean want = unnameable(player) != null && postEffectEnabled();
+        float k = strength(player);
+        boolean want = postEffectEnabled() && k > 0.05F;   // TNL1054 fade the post effect in with the ticks
         if (!want) {
             removePost();
             nextPulseAt = 0;
@@ -292,13 +330,14 @@ public class UnnameableClientHandler {
     @SubscribeEvent
     public static void onComputeCameraAngles(ViewportEvent.ComputeCameraAngles event) {
         LocalPlayer player = Minecraft.getInstance().player;
-        if (unnameable(player) == null) return;
+        float k = strength(player);
+        if (k <= 0.01F) return;
 
         float ticks = player.tickCount + (float) event.getPartialTick();
 
-        float swayYaw = (float) Math.sin(ticks * 0.08f) * SWAY_AMOUNT * 2;
-        float swayPitch = (float) Math.cos(ticks * 0.07f) * SWAY_AMOUNT * 1.2f;
-        float swayRoll = (float) Math.sin(ticks * 0.05f) * SWAY_AMOUNT * 0.8f;
+        float swayYaw = (float) Math.sin(ticks * 0.08f) * SWAY_AMOUNT * 2 * k;
+        float swayPitch = (float) Math.cos(ticks * 0.07f) * SWAY_AMOUNT * 1.2f * k;
+        float swayRoll = (float) Math.sin(ticks * 0.05f) * SWAY_AMOUNT * 0.8f * k;
 
         event.setYaw(event.getYaw() + swayYaw);
         event.setPitch(event.getPitch() + swayPitch);
