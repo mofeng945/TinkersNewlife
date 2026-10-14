@@ -103,6 +103,13 @@ void main() {
             float tw = 0.65 + 0.35 * sin(EffectTime * 2.2 + (cell.x + cell.y) * 0.9);   // \u2605\u95ea\u70c1 \u2713
             starMask = clamp(core + cross * 0.8, 0.0, 1.0) * tw;
         }
+        // TNL973 \u2605\u2605 \u8865\u56de\u88ab\u6211\u8bef\u5220\u7684\u58f0\u660e \u2713
+        //   \u2605\u62a5\u9519\uff1a\u2605``0(106) : error C1503: undefined variable "deep"`` \u2713
+        //   \u2605\u539f\u56e0 \u2717\uff1a\u2605\u6211\u6362\u6389\u661f\u70b9\u90a3\u6bb5\u65f6\u628a\u5b83\u4eec\u7684**\u58f0\u660e\u4e00\u5e76\u5220\u4e86** \u2713
+        float neb = fbm(localUv * 22.0 + vec2(EffectTime * 0.035, -EffectTime * 0.022));
+        float neb2 = fbm(localUv * 7.0 - vec2(EffectTime * 0.012, EffectTime * 0.02));
+        vec3 deep = vec3(0.02, 0.025, 0.06);
+        vec3 cloud = vec3(0.35, 0.42, 0.80) * neb * 0.55 + vec3(0.55, 0.35, 0.75) * neb2 * 0.35;
         col = deep + cloud + vec3(1.0, 1.0, 1.0) * starMask;
     } else {
         col = tex.rgb;
