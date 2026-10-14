@@ -355,7 +355,18 @@ public class StarfallArrow extends AbstractArrow {
         if (tnl$hit instanceof net.minecraftforge.entity.PartEntity<?> tnl$part) {
             tnl$hit = tnl$part.getParent();
         }
-        if (!(tnl$hit instanceof LivingEntity target)) {
+        // TNL989 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u51b0\u4e0e\u706b\u6253\u90e8\u4ef6\u7684\u95ee\u9898\u8fd8\u6ca1\u4fee\u597d" \u2713
+        //   \u2605\u65e5\u5fd7 \u002b \u6e90\u7801\u4ea4\u53c9\u9a8c\u8bc1 \u2713\uff1a
+        //     \u00b7 \u2605``TNL983 ... hit=EntityDragonPart -> resolved=EntityLightningDragon isLiving=true`` \u2713
+        //       \u21d2 \u2605\u6362\u7b97**\u672c\u6765\u5c31\u6210\u529f** \u2713
+        //     \u00b7 \u2605\u4f46 ``TNL988`` **\u4e00\u884c\u90fd\u6ca1\u6709** \u2717 \u21d2 \u2605\u6839\u672c\u6ca1\u8d70\u5230\u4f24\u5bb3\u90a3\u4e00\u6b65 \u2713
+        //     \u00b7 \u2605\u539f\u56e0 \u2717\uff1a\u2605\u8fd9\u91cc\u6bd4\u7684\u662f**\u539f\u59cb\u547d\u4e2d\u5b9e\u4f53**\uff08\u2605\u90e8\u4ef6 \u2717\uff09
+        //       \u2605\u90e8\u4ef6\u4e0d\u662f ``LivingEntity`` \u21d2 \u2605**\u5728\u8fd9\u91cc\u5c31 return \u4e86** \u2713\u2713
+        //       \uff08\u2605\u6211\u4e0a\u4e00\u8f6e\u7684\u6362\u7b97\u53ea\u5582\u7ed9\u4e86\u63a2\u9488 \u2717 \u6ca1\u7528\u5728\u8fd9\u9053\u95e8\u4e0a \u2713\uff09
+        //   \u2605\u73b0\u5728\uff1a\u2605\u5148\u6362\u7b97\u6210\u672c\u4f53 \u2713 \u002b \u2605\u6362\u4e0d\u5230\u5c31\u9000\u56de\u539f\u7248 \u2713
+        net.minecraft.world.entity.Entity tnl$resolved =
+                com.mofengbaizhi.tinkersnewlife.util.TruePierce.resolveVictim(tnl$hit);
+        if (!(tnl$resolved instanceof LivingEntity target)) {
             super.onHitEntity(hitResult);
             return;
         }
