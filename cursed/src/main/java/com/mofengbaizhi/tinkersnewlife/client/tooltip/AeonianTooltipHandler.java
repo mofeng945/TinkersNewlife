@@ -97,6 +97,10 @@ public final class AeonianTooltipHandler {
         GuiGraphics g = event.getGraphics();
         int x = event.getX();
         int y = event.getY();
+        // TNL1061 user: raise z to 400 so the eye field sits above the item icons, like the bow tooltip
+        var pose = g.pose();
+        pose.pushPose();
+        pose.translate(0.0F, 0.0F, 400.0F);
         g.fill(x - 3, y - 4, x + width + 3, y + height + 4, 0xE6080A10);
         long time = System.currentTimeMillis();
         float t = (time % 60000L) / 1000.0F;
@@ -114,6 +118,7 @@ public final class AeonianTooltipHandler {
         }
         g.fill(x - 3, y - 4, x + width + 3, y - 3, 0x66C03030);
         g.fill(x - 3, y + height + 3, x + width + 3, y + height + 4, 0x66C03030);
+        pose.popPose();
     }
 
     /** repaint the name and the declaration with the flowing colour. */
