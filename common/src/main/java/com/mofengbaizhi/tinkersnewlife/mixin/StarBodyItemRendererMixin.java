@@ -74,6 +74,21 @@ public class StarBodyItemRendererMixin {
         if (!bow && !order) {
             return;
         }
+        // TNL1056 user: hide the scythe in hand while the hook is out (the hook effect marks it)
+        if (order && net.minecraft.client.Minecraft.getInstance().player != null) {
+            try {
+                var hookEff = net.minecraft.core.registries.BuiltInRegistries.MOB_EFFECT.get(
+                        new net.minecraft.resources.ResourceLocation(
+                                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.MOD_ID, "aeonian_hook"));
+                if (hookEff != null
+                        && net.minecraft.client.Minecraft.getInstance().player.getEffect(hookEff) != null) {
+                    ci.cancel();
+                    return;
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+
 
         // \u2605\u2460 \u5f13\u7684\u7269\u54c1\u680f\u5149\u6655\uff08\u2605\u6062\u590d \u2713\uff09\uff1a\u2605\u753b\u5b8c**\u4e0d\u53d6\u6d88** \u2713 \u21d2 \u2605\u539f\u7248\u7269\u54c1\u753b\u5728\u5b83\u4e0a\u9762 \u2713
         // TNL1042 user: give the scythe the same inventory glow as the bow

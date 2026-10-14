@@ -91,4 +91,12 @@ public class ModEffects {
     public static final RegistryObject<net.minecraft.world.effect.MobEffect> AEONIAN_MARK =
             EFFECTS.register("aeonian_mark",
                     () -> new com.mofengbaizhi.tinkersnewlife.content.effect.AeonianMarkEffect());
+    /**
+     * TNL1056 user: while the hook is out the held scythe must be hidden, and a scythe must fly out.
+     * Same trick as the weaken mark: duration is the synced hook lifetime, so the client knows.
+     */
+    public static final RegistryObject<net.minecraft.world.effect.MobEffect> AEONIAN_HOOK =
+            EFFECTS.register("aeonian_hook",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.effect.AeonianMarkEffect());
+
 }

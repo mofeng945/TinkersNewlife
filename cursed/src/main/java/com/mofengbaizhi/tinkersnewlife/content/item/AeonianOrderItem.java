@@ -10,6 +10,7 @@ import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Tier;
@@ -130,17 +131,12 @@ public class AeonianOrderItem extends SwordItem {
         Vec3 look = player.getLookAngle();
         double reach = 20.0D;   // TNL1055 \u2605\u7528\u6237\uff1a\u2605\u6700\u591a\u98de 20 \u683c \u2713
         Vec3 end = eye.add(look.scale(reach));
-        // \u2605\u5148\u770b\u5b9e\u4f53\uff08\u2605\u66f4\u8fd1\u5c31\u7b97\u547d\u4e2d \u2713\uff09
-        net.minecraft.world.phys.EntityHitResult ehit = net.minecraft.world.entity.projectile.ProjectileUtil
-                .getEntityHitResult(player, eye, end,
-                        player.getBoundingBox().expandTowards(look.scale(reach)).inflate(1.0D),
-                        en -> en instanceof LivingEntity && en != player && en.isAlive(), 0.3F);
+        // TNL1056 user: the "hook entities" behaviour is cancelled -- blocks only now
         net.minecraft.world.phys.BlockHitResult bhit = level.clip(new net.minecraft.world.level.ClipContext(
                 eye, end, net.minecraft.world.level.ClipContext.Block.OUTLINE,
                 net.minecraft.world.level.ClipContext.Fluid.NONE, player));
-        double ed = ehit == null ? Double.MAX_VALUE : ehit.getLocation().distanceToSqr(eye);
-        double bd = bhit == null ? Double.MAX_VALUE : bhit.getLocation().distanceToSqr(eye);
-        Vec3 hit = ed < bd ? ehit.getLocation() : (bhit == null ? end : bhit.getLocation());
+        Vec3 hit = bhit == null ? end : bhit.getLocation();
+        boolean hitBlock = bhit != null;
         // \u2605\u9ed1\u8272\u7c92\u5b50\u7ebf\uff08\u2605\u6682\u4ee3\u7ef3\u5b50 \u2713\uff09
         if (level instanceof ServerLevel sl) {
             // TNL1053 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u9570\u5200\u4e0a\u4f1a\u8fde\u7740\u4e00\u6839\u9ed1\u8272\u7684\u7ebf" \u2713
@@ -159,17 +155,15 @@ public class AeonianOrderItem extends SwordItem {
                         1, 0.0D, 0.0D, 0.0D, 0.0D);
             }
         }
-        if (ed < bd && ehit != null && ehit.getEntity() instanceof LivingEntity victim) {
-            // \u2605\u547d\u4e2d\u5b9e\u4f53 \u21d2 \u2605\u628a\u5b83\u52fe\u8fc7\u6765 \u2713
-            Vec3 dir = player.position().subtract(victim.position()).normalize().scale(1.9D);
-            victim.setDeltaMovement(dir.x, 0.35D, dir.z);
-            victim.hurtMarked = true;
-            PULLS.add(new Pull(player.getUUID(), hit, 12));   // TNL1055 also pull the player along
-            TinkersNewlife.LOGGER.warn("TNL1050 hook hit entity {}, pulled it in and pulled the player", victim.getName().getString());
-        } else {
-            // \u2605\u547d\u4e2d\u65b9\u5757 \u21d2 \u2605\u628a\u73a9\u5bb6\u62c9\u8fc7\u53bb \u2713
+        if (hitBlock) {
             PULLS.add(new Pull(player.getUUID(), hit, 12));
-            TinkersNewlife.LOGGER.warn("TNL1050 hook hit block at {}, pulling the player", hit);
+            // TNL1056 hide the held scythe while the hook is out: the effect duration is the lifetime
+            player.addEffect(new MobEffectInstance(
+                    com.mofengbaizhi.tinkersnewlife.content.ModEffects.AEONIAN_HOOK.get(),
+                    12, 0, false, false, false));
+            TinkersNewlife.LOGGER.warn("TNL1056 hook latched at {}, pulling the player", hit);
+        } else {
+            TinkersNewlife.LOGGER.warn("TNL1056 hook missed (nothing within 20 blocks)");
         }
         level.playSound(null, player.blockPosition(), SoundEvents.TRIDENT_THROW,
                 SoundSource.PLAYERS, 1.2F, 0.8F);
