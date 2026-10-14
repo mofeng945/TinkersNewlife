@@ -106,17 +106,12 @@ public class StarBodyItemRendererMixin {
         //   \u2605\u771f\u56e0 \u2717\uff1a\u2605\u624b\u6301\u63d0\u524d `return` \u4e86 \u2717 \u21d2 \u2605\u63a2\u9488\u6839\u672c\u6ca1\u8dd1\u5230 \u2713
         //   \u2605\u73b0\u5728 \u2713\uff1a\u2605\u624b\u6301\u65f6**\u53ea\u6253\u63a2\u9488\u4e0d\u753b** \u2713\uff08\u2605\u539f\u7248\u7167\u5e38\u753b \u2713 \u21d2 \u2605\u4e0d\u53d8\u677f \u2713\uff09
         //     \u2605\u62ff\u5230\u624b\u6301\u7684 diag/trans/quads \u540e\u6211\u5c31\u80fd\u7b97\u51fa\u4fee\u6b63\u91cf \u2713
-        if (order && context != ItemDisplayContext.GUI) {
-            if (System.currentTimeMillis() - TNL$POSE_LOG > 4000L) {
-                TNL$POSE_LOG = System.currentTimeMillis();
-                org.joml.Matrix4f hm = pose.last().pose();
-                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
-                        "TNL1030 held pose ctx={} diag=({},{},{}) trans=({},{},{}) quads={}",
-                        context, hm.m00(), hm.m11(), hm.m22(), hm.m30(), hm.m31(), hm.m32(),
-                        tnl$countQuads(model));
-            }
-            return;
-        }
+        // TNL1032 \u2605\u2605 \u63a2\u9488\u7ed3\u679c \u2713\uff1a\u2605\u6a21\u578b\u662f 0~1 \u8584\u7247 \u2713\uff08\u2605z\u22480.47~0.53 \u2713\uff09
+        //   \u2605\u59ff\u6001 1 \u500d \u2713 \u002b \u2605\u955c\u5934\u524d 0.72 \u2713 \u21d2 \u2605\u4e24\u8005\u90fd\u6b63\u5e38 \u2717
+        //   \u2605\u771f\u56e0 \u2717\uff1a\u2605GUI \u91cc\u4e0a\u4e00\u6279 `endBatch` \u521a\u597d\u7ed1\u7740**\u7269\u54c1\u56fe\u96c6** \u2713
+        //     \u2605\u800c\u624b\u6301\u91cc\u7ed1\u7684\u662f**\u522b\u7684\u7eb9\u7406** \u2717 \u21d2 \u2605\u906e\u7f69\u8bfb\u5230\u65e0\u5173\u7eb9\u7d20 \u2717
+        //     \u21d2 \u2605\u51e0\u4e4e\u5168\u5224\u4e3a\u9ed1 \u21d2 \u2605\u6574\u7247\u6d82\u9ed1\u96fe \u21d2 \u2605"\u4e00\u5757\u9ed1\u677f" \u2713\u2713
+        //   \u2605\u73b0\u5728 \u2713\uff1a\u2605\u753b\u4e4b\u524d**\u663e\u5f0f\u7ed1\u7269\u54c1\u56fe\u96c6** \u2713\uff08\u2605\u540c\u4f20\u9001\u95e8\u90a3\u6b21 \u2713\uff09
 
         RenderType rt = bow ? StarBodyClient.starBodyOrNull()
                 : (AeonianOrderClient.ready() ? AeonianOrderClient.orderType() : null);
