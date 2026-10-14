@@ -40,7 +40,7 @@ public final class AeonianWeaken {
     public static final String STUN = "tnl_ao_stun";
     /** \u2605\u4e00\u6b21\u547d\u4e2d\u52a0\u591a\u5c11 tick \u2713 */
     public static final int PER_HIT = 30;   // TNL1045 \u2605\u7528\u6237\uff1a\u2605\u547d\u4e2d\u4e00\u6b21\u53e0 30 tick \u2713
-    public static final int MAX = 100;
+    public static final int MAX = 200;   // TNL1047 user: tick cap raised to 200
     /** \u2605\u786c\u63a7\u65f6\u957f\uff08\u260510 \u79d2 \u2713\uff09 */
     public static final int STUN_TICKS = 200;
 
@@ -80,7 +80,7 @@ public final class AeonianWeaken {
         if (t <= 0) {
             return 1.0F;
         }
-        return 1.0F - Math.min(1.0F, t / (float) MAX);
+        return 1.0F - Math.min(1.0F, t / (float) MAX);   // TNL1047 1 tick = 0.5%, 200 ticks = 100%
     }
 
     /** TNL1043 \u2605\u6bcf tick\uff1a\u2605\u9012\u51cf 1 tick \u002b \u2605\u6ee1\u5c42\u7206\u53d1 \u002b \u2605\u786c\u63a7\u7ef4\u6301 \u2713 */
@@ -141,6 +141,24 @@ public final class AeonianWeaken {
                 continue;
             }
             tag(le).putInt(TICKS, t - 1);           // \u2605\u6bcf tick \u6d41\u901d 1 tick \u2713
+        }
+    }
+
+    /** TNL1047 user: "I want it to stick on any attack" -- holding the weapon and attacking stacks ticks */
+    @SubscribeEvent
+    public static void onAttackHurt(LivingHurtEvent event) {
+        if (event.getEntity().level().isClientSide) {
+            return;
+        }
+        if (!(event.getSource().getEntity() instanceof LivingEntity attacker)) {
+            return;
+        }
+        if (attacker == event.getEntity()) {
+            return;
+        }
+        if (attacker.getMainHandItem().getItem()
+                instanceof com.mofengbaizhi.tinkersnewlife.content.item.AeonianOrderItem) {
+            add(event.getEntity(), PER_HIT);
         }
     }
 
