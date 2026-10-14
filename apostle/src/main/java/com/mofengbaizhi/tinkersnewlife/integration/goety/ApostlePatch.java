@@ -135,7 +135,7 @@ public final class ApostlePatch {
         MONOLITH_LIFESPAN_HP_PER_SECOND = b.comment("柱子每秒流逝多少血量（默认 2 点／秒）")
                 .defineInRange("monolith_lifespan_hp_per_second", 2.0D, 0.0D, 1000.0D);
         WALL_TELEPORT = b.comment("使徒与玩家隔墙时瞬移到玩家身后；身后没位置就瞬移到玩家所在位置（§869，默认 true）")
-                .define("wall_teleport", true);
+                .define("wall_teleport", false);   // TNL1075 \u2605\u9ed8\u8ba4\u5173\u6389\uff08\u2605\u8c03\u7528\u4e5f\u5df2\u79fb\u9664 \u2713\uff09
         ARROW_RAIN = b.comment("给使徒的法术组加上『箭雨』（诡厄箭雨聚晶的效果，默认 true）")
                 .define("arrow_rain", true);
         ARROW_RAIN_COOLDOWN_SECONDS = b.comment("箭雨冷却（秒，默认 20）")
@@ -427,7 +427,9 @@ public final class ApostlePatch {
                     drainMonoliths(level, apostle);
                 }
                 if (now % 10L == 0L) {
-                    wallTeleportBehind(level, apostle, now);
+                    // TNL1075 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u628a\u9694\u5899\u77ac\u79fb\u53d6\u6d88\u5427\uff0c\u6ca1\u5fc5\u8981\u4e86" \u2713
+        //   \u2605\u6240\u4ee5\u8fd9\u91cc\u4e0d\u518d\u8c03\u7528 \u2713\uff08\u2605\u65b9\u6cd5\u4f53\u7559\u7740\u5907\u67e5 \u2717 \u2605\u4f46\u6c38\u8fdc\u4e0d\u4f1a\u8dd1 \u2713\uff09
+        // wallTeleportBehind(level, apostle, now);
                 }
                 if (now % 20L == 0L) {
                     castArrowRain(level, apostle, now);
