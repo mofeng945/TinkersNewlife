@@ -302,6 +302,16 @@ public class StarfallArrow extends AbstractArrow {
                 } catch (Throwable ignored) {
                 }
             }
+            // TNL987 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u628a\u4e4b\u524d\u7684\u8840\u6761\u53cd\u5c04\u4e8b\u4ef6\u515c\u5e95" \u2713
+            //   \u2605\u987a\u5e8f \u2713\uff1a\u2605\u5b57\u6bb5\u626b\u63cf\uff08\u2605\u51cb\u7075 \u2713\uff09\u2192 \u2605forge:bosses \u6807\u7b7e\uff08\u2605\u6570\u636e\u9a71\u52a8 \u2713\uff09
+            //     \u2192 \u2605\u8840\u6761\u6ce8\u518c\u8868\uff08\u2605\u670d\u52a1\u7aef\u521b\u5efa \u002b \u2605\u5ba2\u6237\u7aef\u6e32\u67d3 \u2713\uff09\u3002
+            //   \u2605\u8fd9\u6761\u5c31\u662f"\u6a21\u7ec4\u6ca1\u5199\u6807\u7b7e\u4f46\u6709\u8840\u6761"\u7684\u515c\u5e95 \u2713\u3002
+            if (!boss) {
+                try {
+                    boss = com.mofengbaizhi.tinkersnewlife.util.BossBarRegistry.isBoss(e.getUUID());
+                } catch (Throwable ignored) {
+                }
+            }
             if (!boss && e instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon) {
                 boss = true;
             }

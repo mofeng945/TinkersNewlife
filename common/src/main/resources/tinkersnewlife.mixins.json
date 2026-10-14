@@ -27,7 +27,8 @@
     "ApostlePhaseTeleportMixin",
     "ApostleDistanceMixin",
     "ApostleCastThrottleMixin",
-    "KtuluVitalsMixin"
+    "KtuluVitalsMixin",
+    "ServerBossEventMixin"
   ],
   "client": [
     "TinkerTabsWidgetMixin",
