@@ -103,6 +103,10 @@ public final class AeonianTooltipHandler {
         pose.pushPose();
         pose.translate(0.0F, 0.0F, 400.0F);
         g.fill(x - 3, y - 4, x + width + 3, y + height + 4, 0xE6080A10);   // TNL1067 back to the original translucent background
+        // TNL1068 user was right: the base was not "swallowing" the eyes, it was simply submitted
+        // AFTER them. fill and blit go through different GUI batches, so a flush between them is
+        // what actually keeps the eyes on top of the background.
+        g.flush();
         long time = System.currentTimeMillis();
         float t = (time % 60000L) / 1000.0F;
         int cols = Math.max(2, width / 14);
@@ -126,6 +130,7 @@ public final class AeonianTooltipHandler {
                 g.blit(EYE, ex, ey, 0.0F, 0.0F, 11, eh, 16, 16);
             }
         }
+        g.flush();   // TNL1068 submit the eyes before the border lines
         g.fill(x - 3, y - 4, x + width + 3, y - 3, 0x66C03030);
         g.fill(x - 3, y + height + 3, x + width + 3, y + height + 4, 0x66C03030);
         pose.popPose();
