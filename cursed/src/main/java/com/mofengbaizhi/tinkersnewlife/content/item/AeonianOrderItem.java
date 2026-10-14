@@ -64,11 +64,21 @@ public class AeonianOrderItem extends SwordItem {
         //   \u2605\u73b0\u8c61 \u2717\uff1a\u2605\u65e5\u5fd7\u91cc `TNL1023` \u4e0e `TNL1043` **\u4e00\u884c\u90fd\u6ca1\u6709** \u2713
         //     \u21d2 \u2605\u8bf4\u660e\u2605**\u53f3\u952e\u6839\u672c\u6ca1\u8fdb\u5230\u8fd9\u91cc** \u2717\uff08\u2605\u4e0d\u662f\u53e0 tick \u7684\u95ee\u9898 \u2713\uff09
         //   \u2605\u6240\u4ee5\u5148\u6253\u4e00\u884c**\u5165\u53e3**\u63a2\u9488 \u2713\uff08\u2605\u4e24\u4fa7\u90fd\u6253 \u2713\uff09
-        TinkersNewlife.LOGGER.warn("TNL1046 aeonian use() called side={} cooldown={}",
+        boolean tnl$shift = player.isShiftKeyDown();
+        TinkersNewlife.LOGGER.warn("TNL1046 aeonian use() called side={} cooldown={} shift={}",
                 player.level().isClientSide ? "client" : "server",
-                player.getCooldowns().isOnCooldown(this));
+                player.getCooldowns().isOnCooldown(this), tnl$shift);
         if (player.getCooldowns().isOnCooldown(this)) {
             return InteractionResultHolder.fail(stack);
+        }
+        // TNL1050 \u2605\u2605 \u7528\u6237\uff1a\u2605"shift \u53f3\u952e\u8fd8\u662f\u7a81\u523a\u6280\u80fd" \u2713 \u21d2 \u2605\u73b0\u5728\u5206\u5f00 \u2713
+        if (tnl$shift) {
+            if (!level.isClientSide) {
+                tnl$throwHook(level, player);
+                player.getCooldowns().addCooldown(this, 40);
+            }
+            player.swing(hand, true);
+            return InteractionResultHolder.success(stack);
         }
         if (!level.isClientSide) {
             // \u2605\u2460 \u5411\u524d\u63a8\u529b\uff08\u2605\u4e0d\u662f\u77ac\u79fb \u2713\uff09
@@ -97,6 +107,61 @@ public class AeonianOrderItem extends SwordItem {
     private record Pending(java.util.UUID owner, int ticks, Vec3 dir) {
     }
 
+    /** TNL1050 \u2605\u5f85\u6267\u884c\u7684"\u2605\u628a\u73a9\u5bb6\u62c9\u8fc7\u53bb" \u2713 */
+    private record Pull(java.util.UUID owner, Vec3 target, int ticks) {
+    }
+
+    private static final List<Pull> PULLS = new ArrayList<>();
+
+    /** TNL1050 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u53ef\u4ee5\u5c06\u9570\u5200\u5411\u89c6\u7ebf\u65b9\u5411\u7529\u51fa\u53bb\uff08\u65e0\u89c6\u91cd\u529b\uff09\uff0c
+     *   \u9570\u5200\u4e0a\u4f1a\u8fde\u7740\u4e00\u6839\u9ed1\u8272\u7684\u7ebf\uff0c\u5982\u679c\u547d\u4e2d\u65b9\u5757\uff0c\u4f1a\u5c06\u73a9\u5bb6\u62c9\u5230\u90a3\u4e2a\u4f4d\u7f6e\uff0c
+     *   \u5982\u679c\u547d\u4e2d\u5b9e\u4f53\uff0c\u5219\u4f1a\u5c06\u5b9e\u4f53\u52fe\u8fc7\u6765" \u2713
+     *
+     * <p>\u2605\u672c\u7248\u5148\u7528"\u2605\u65e0\u91cd\u529b\u7684\u76f4\u7ebf\u5c04\u7ebf"\u505a\u884c\u4e3a \u2713\uff08\u2605\u76f4\u7ebf\u672c\u8eab\u5c31\u4e0d\u53d7\u91cd\u529b \u2713\uff09
+     * \uff0c\u2605\u7ef3\u5b50\u5148\u7528\u9ed1\u8272\u7c92\u5b50\u7ebf\u8868\u793a \u2713\uff0c
+     * \u2605\u4e0b\u4e00\u8f6e\u518d\u7167 `FlyingSwordTrailRenderer` \u6362\u6210\u4e13\u7528\u5e26\u72b6\u7ed8\u5236 \u2713\u3002
+     */
+    private static void tnl$throwHook(Level level, Player player) {
+        Vec3 eye = player.getEyePosition();
+        Vec3 look = player.getLookAngle();
+        double reach = 24.0D;
+        Vec3 end = eye.add(look.scale(reach));
+        // \u2605\u5148\u770b\u5b9e\u4f53\uff08\u2605\u66f4\u8fd1\u5c31\u7b97\u547d\u4e2d \u2713\uff09
+        net.minecraft.world.phys.EntityHitResult ehit = net.minecraft.world.entity.projectile.ProjectileUtil
+                .getEntityHitResult(player, eye, end,
+                        player.getBoundingBox().expandTowards(look.scale(reach)).inflate(1.0D),
+                        en -> en instanceof LivingEntity && en != player && en.isAlive(), 0.3F);
+        net.minecraft.world.phys.BlockHitResult bhit = level.clip(new net.minecraft.world.level.ClipContext(
+                eye, end, net.minecraft.world.level.ClipContext.Block.OUTLINE,
+                net.minecraft.world.level.ClipContext.Fluid.NONE, player));
+        double ed = ehit == null ? Double.MAX_VALUE : ehit.getLocation().distanceToSqr(eye);
+        double bd = bhit == null ? Double.MAX_VALUE : bhit.getLocation().distanceToSqr(eye);
+        Vec3 hit = ed < bd ? ehit.getLocation() : (bhit == null ? end : bhit.getLocation());
+        // \u2605\u9ed1\u8272\u7c92\u5b50\u7ebf\uff08\u2605\u6682\u4ee3\u7ef3\u5b50 \u2713\uff09
+        if (level instanceof ServerLevel sl) {
+            int steps = (int) Math.min(64, Math.max(4, eye.distanceTo(hit) * 3.0D));
+            for (int i = 0; i <= steps; i++) {
+                double t = i / (double) steps;
+                sl.sendParticles(net.minecraft.core.particles.ParticleTypes.SQUID_INK,
+                        eye.x + (hit.x - eye.x) * t, eye.y + (hit.y - eye.y) * t, eye.z + (hit.z - eye.z) * t,
+                        1, 0.0D, 0.0D, 0.0D, 0.0D);
+            }
+        }
+        if (ed < bd && ehit != null && ehit.getEntity() instanceof LivingEntity victim) {
+            // \u2605\u547d\u4e2d\u5b9e\u4f53 \u21d2 \u2605\u628a\u5b83\u52fe\u8fc7\u6765 \u2713
+            Vec3 dir = player.position().subtract(victim.position()).normalize().scale(1.9D);
+            victim.setDeltaMovement(dir.x, 0.35D, dir.z);
+            victim.hurtMarked = true;
+            TinkersNewlife.LOGGER.warn("TNL1050 hook hit entity {}, pulled it in", victim.getName().getString());
+        } else {
+            // \u2605\u547d\u4e2d\u65b9\u5757 \u21d2 \u2605\u628a\u73a9\u5bb6\u62c9\u8fc7\u53bb \u2713
+            PULLS.add(new Pull(player.getUUID(), hit, 12));
+            TinkersNewlife.LOGGER.warn("TNL1050 hook hit block at {}, pulling the player", hit);
+        }
+        level.playSound(null, player.blockPosition(), SoundEvents.TRIDENT_THROW,
+                SoundSource.PLAYERS, 1.2F, 0.8F);
+    }
+
     /** TNL1023 \u2605\u5230\u70b9\u4e86\u5c31\u6a2a\u626b \u2713 */
     @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID)
     public static final class Ticker {
@@ -106,7 +171,42 @@ public class AeonianOrderItem extends SwordItem {
 
         @SubscribeEvent
         public static void onServerTick(TickEvent.ServerTickEvent event) {
-            if (event.phase != TickEvent.Phase.END || PENDING.isEmpty()) {
+            if (event.phase != TickEvent.Phase.END) {
+                return;
+            }
+            // TNL1050 \u2605\u2605 \u5904\u7406"\u2605\u628a\u73a9\u5bb6\u62c9\u5230\u547d\u4e2d\u70b9" \u2713
+            if (!PULLS.isEmpty()) {
+                var server = net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer();
+                if (server != null) {
+                    List<Pull> next = new ArrayList<>();
+                    for (Pull pl : PULLS) {
+                        if (pl.ticks() <= 0) {
+                            continue;
+                        }
+                        net.minecraft.world.entity.Entity owner = null;
+                        for (ServerLevel lvl : server.getAllLevels()) {
+                            net.minecraft.world.entity.Entity e2 = lvl.getEntity(pl.owner());
+                            if (e2 != null) {
+                                owner = e2;
+                                break;
+                            }
+                        }
+                        if (owner instanceof Player p2 && p2.isAlive()) {
+                            Vec3 want = pl.target().subtract(p2.position());
+                            if (want.lengthSqr() > 2.25D) {
+                                Vec3 v = want.normalize().scale(1.35D);
+                                p2.setDeltaMovement(v.x, Math.max(v.y, 0.22D), v.z);
+                                p2.hurtMarked = true;
+                                p2.fallDistance = 0.0F;
+                                next.add(new Pull(pl.owner(), pl.target(), pl.ticks() - 1));
+                            }
+                        }
+                    }
+                    PULLS.clear();
+                    PULLS.addAll(next);
+                }
+            }
+            if (PENDING.isEmpty()) {
                 return;
             }
             Iterator<Pending> it = PENDING.iterator();
