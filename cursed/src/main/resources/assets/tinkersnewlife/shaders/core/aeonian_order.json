@@ -12,6 +12,9 @@
   "samplers": [
     {
       "name": "Sampler0"
+    },
+    {
+      "name": "Sampler1"
     }
   ],
   "uniforms": [
@@ -131,6 +134,14 @@
       "count": 1,
       "values": [
         0.0
+      ]
+    },
+    {
+      "name": "EyeScale",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.62
       ]
     }
   ]

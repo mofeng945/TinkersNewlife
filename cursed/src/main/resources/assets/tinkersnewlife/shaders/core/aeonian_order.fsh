@@ -6,6 +6,8 @@
 //     \u2605\u5e76\u7528**\u8d34\u56fe\u4eae\u5ea6\u505a\u906e\u7f69** \u2713 \u2014\u2014
 //     \u2605\u53ea\u6709"\u9ed1\u8272\u90e8\u5206"\u4f1a\u53d8\u661f\u7a7a \u2713\uff0c\u5176\u4f59\u50cf\u7d20\u539f\u6837\u8f93\u51fa \u2713
 uniform sampler2D Sampler0;
+uniform sampler2D Sampler1;   // TNL1040 user drawn eye texture
+uniform float EyeScale;      // TNL1040 how much of the cell an eye takes
 uniform float EffectTime;
 uniform float MaskThreshold;
 uniform vec4 ColorModulator;
@@ -116,10 +118,13 @@ void main() {
                             (hash(cell + vec2(9.3, 1.7)) - 0.5) * 0.22);
             float blink = fract(EffectTime * 0.28 + hash(cell + vec2(1.1, 4.4)));
             float open = clamp(smoothstep(0.0, 0.12, blink) * smoothstep(0.30, 0.18, blink) + 0.15, 0.12, 1.0);
-            vec2 sq = (fc - eye) * vec2(1.0, 1.0 / open);
-            float iris = smoothstep(0.20, 0.02, length(sq));
-            float pupil = smoothstep(0.09, 0.0, length(sq));
-            col += (vec3(0.95, 0.93, 0.80) * iris - vec3(0.85) * pupil) * 1.25;
+            vec2 euv = (fc - eye) / max(EyeScale, 0.05);
+            euv.y /= max(open, 0.12);
+            euv += vec2(0.5);
+            if (euv.x > 0.0 && euv.x < 1.0 && euv.y > 0.0 && euv.y < 1.0) {
+                vec4 eyeTex = texture(Sampler1, euv);
+                col = mix(col, eyeTex.rgb, eyeTex.a);
+            }
         }
         col += vec3(0.06, 0.02, 0.10) * mist;
         } else {

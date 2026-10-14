@@ -47,7 +47,15 @@ public final class AeonianOrderClient {
         return shader != null;
     }
 
+    private static final net.minecraft.resources.ResourceLocation EYE =
+            new net.minecraft.resources.ResourceLocation(
+                    com.mofengbaizhi.tinkersnewlife.TinkersNewlife.MOD_ID, "textures/effect/aeonian_eye.png");
+
     public static void tick() {
+        try {
+            com.mojang.blaze3d.systems.RenderSystem.setShaderTexture(1, EYE);
+        } catch (Throwable ignored) {
+        }
         if (shader != null) {
             try {
                 var u = shader.safeGetUniform("EffectTime");
