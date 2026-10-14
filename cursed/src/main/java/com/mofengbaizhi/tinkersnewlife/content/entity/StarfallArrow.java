@@ -285,6 +285,15 @@ public class StarfallArrow extends AbstractArrow {
                 }
                 c = c.getSuperclass();
             }
+            // TNL984 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u672b\u5f71\u9f99\u6ca1\u6709\u88ab\u5224\u65ad\u4e3a boss" \u2713
+            //   \u2605\u67e5 jar \u5f97\u5230\uff08\u2605javap \u2713\uff09\uff1a
+            //     \u00b7 \u2605\u51cb\u7075 \u2713\uff1a\u2605\u81ea\u5df1\u58f0\u660e\u4e86 ``private final ServerBossEvent`` \u21d2 \u2605\u626b\u5f97\u5230 \u2713
+            //     \u00b7 \u2605\u672b\u5f71\u9f99 \u2717\uff1a\u2605**\u9f99\u5b9e\u4f53\u4e0a\u6ca1\u6709\u4efb\u4f55 BossEvent \u5b57\u6bb5** \u2713
+            //       \uff08\u2605\u5b83\u7684\u8840\u6761\u5728 ``EndDragonFight`` \u91cc \u2713\uff09\u21d2 \u2605\u6240\u4ee5\u6c38\u8fdc\u626b\u4e0d\u5230 \u2713
+            //   \u2605\u73b0\u5728\uff1a\u2605\u660e\u786e\u628a**\u672b\u5f71\u9f99\uff08\u53ca\u5176\u90e8\u4ef6\uff09\u5f53 boss** \u2713
+            if (!boss && e instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon) {
+                boss = true;
+            }
             if (boss) {
                 TNL$BOSS_CACHE_BY_CLASS.put(key, Boolean.TRUE);   // \u2605\u53ea\u7f13\u5b58"\u662f boss" \u2713
             }
