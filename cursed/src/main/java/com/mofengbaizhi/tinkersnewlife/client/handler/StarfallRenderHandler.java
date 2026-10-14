@@ -37,6 +37,11 @@ public class StarfallRenderHandler {
     private static final float[] COL_HEAD = {1.00F, 1.00F, 1.00F};   // TNL884 \u2605\u767d \u2713
     private static final float[] COL_MID = {0.62F, 0.62F, 0.62F};    // TNL884 \u2605\u4e2d\u7070 \u2713
     private static final float[] COL_TAIL = {0.22F, 0.22F, 0.22F};  // TNL884 \u2605\u8fd1\u9ed1 \u2713
+    // TNL1019 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u5f3a\u5316\u7bad\u77e2\u7684\u5c3e\u75d5\u989c\u8272\u6362\u6210\u7ea2\u8272" \u2713
+    private static final float[] COL_MID_RED = {0.95F, 0.18F, 0.16F};
+    private static final float[] COL_TAIL_RED = {0.45F, 0.04F, 0.04F};
+    /** \u2605\u672c\u6b21\u6e32\u67d3\u7684\u7bad\u662f\u4e0d\u662f"\u5f3a\u5316\u7bad"\uff08\u2605\u7528\u7ea2\u8272\u5c3e\u75d5 \u2713\uff09 */
+    private static boolean ENHANCED_ARROW;
     private static final Map<UUID, FadeData> FADING = new HashMap<>();
 
     private static class FadeData {
@@ -112,6 +117,8 @@ public class StarfallRenderHandler {
         if (hist.size() < 2) {
             return;
         }
+        // TNL1019 \u2605\u672c\u6b21\u662f\u4e0d\u662f\u5f3a\u5316\u7bad\uff08\u2605\u51b3\u5b9a\u5c3e\u75d5\u989c\u8272 \u2713\uff09
+        ENHANCED_ARROW = arrow.tnl$isEnhanced();
         float sc = arrow.getArrowScale();
         float halfLen = ARROW_HALF_LEN * sc;
         float tipExtend = TIP_EXTEND * sc;
@@ -257,6 +264,19 @@ public class StarfallRenderHandler {
 
     private static float[] colorAt(float p) {
         float[] out = new float[3];
+        if (ENHANCED_ARROW) {
+            // \u2605\u5f3a\u5316\u7bad\uff1a\u2605\u7ea2\u8272\u5c3e\u75d5 \u2713
+            if (p < 0.35F) {
+                lerp3(COL_HEAD, COL_TAIL_RED, p / 0.35F, out);
+            } else if (p < 0.60F) {
+                lerp3(COL_TAIL_RED, COL_MID_RED, (p - 0.35F) / 0.25F, out);
+            } else {
+                out[0] = COL_MID_RED[0];
+                out[1] = COL_MID_RED[1];
+                out[2] = COL_MID_RED[2];
+            }
+            return out;
+        }
         if (p < 0.35F) {
             lerp3(COL_HEAD, COL_TAIL, p / 0.35F, out);
         } else if (p < 0.60F) {

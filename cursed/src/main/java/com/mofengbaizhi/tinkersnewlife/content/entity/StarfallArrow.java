@@ -412,6 +412,15 @@ public class StarfallArrow extends AbstractArrow {
         dmg *= 1.0F + 0.10F * this.entityData.get(DATA_POWER);   // TNL933 \u2605\u529b\u91cf\uff1a\u2605\u6bcf\u7ea7 +10% \u2713   // TNL882 \u2605\u975e Boss 16 \u2713 \u2605Boss 3% \u2713
         if (enh) {
             dmg *= 2.0F;
+            // TNL1019 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u547d\u4e2d\u540e\u64ad\u653e\u7d2b\u6c34\u6676\u97f3\u8c03\u97f3\u6548\uff0c\u97f3\u8c03\u968f\u673a" \u2713
+            //   \u2605\u7d2b\u6c34\u6676\u97f3\u8272\u7528\u539f\u7248 ``AMETHYST_BLOCK_CHIME`` \u2713
+            //   \u2605\u97f3\u8c03\uff1a\u2605\u539f\u7248\u7d2b\u6c34\u6676\u7684\u968f\u673a\u8303\u56f4\u662f 0.5~2.0 \u2713
+            if (!this.level().isClientSide) {
+                this.level().playSound(null, this.blockPosition(),
+                        net.minecraft.sounds.SoundEvents.AMETHYST_BLOCK_CHIME,
+                        net.minecraft.sounds.SoundSource.PLAYERS,
+                        1.0F, 0.5F + this.level().random.nextFloat() * 1.5F);
+            }
         }
         LivingEntity attacker = this.getOwner() instanceof LivingEntity le ? le : null;
         try {
