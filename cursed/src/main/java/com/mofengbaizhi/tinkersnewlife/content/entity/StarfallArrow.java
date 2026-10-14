@@ -285,7 +285,17 @@ public class StarfallArrow extends AbstractArrow {
 
     @Override
     protected void onHitEntity(EntityHitResult hitResult) {
-        if (!(hitResult.getEntity() instanceof LivingEntity target)) {
+        // TNL977 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u547d\u4e2d\u591a\u90e8\u4f4d\u5b9e\u4f53\u7684\u975e\u4e3b\u78b0\u649e\u7bb1\u65f6\uff0c\u6ca1\u6709\u9020\u6210\u4f24\u5bb3" \u2713
+        //   \u2605\u771f\u56e0 \u2717\uff1a\u2605\u591a\u90e8\u4f4d\u5b9e\u4f53\uff08\u2605\u5de8\u9f99\u7c7b \u2713\uff09\u547d\u4e2d\u7684\u662f
+        //     \u2605``PartEntity``\uff08\u90e8\u4ef6 \u2713\uff09\uff0c\u2605\u5b83**\u4e0d\u662f ``LivingEntity``** \u2717
+        //     \u21d2 \u2605\u6211\u7b2c\u4e00\u53e5\u5c31 return \u21d2 \u2605\u6ca1\u6253\u5230\u672c\u4f53 \u2713\u2713
+        //   \u2605\u73b0\u5728\uff1a\u2605\u5148\u7528 ``PartEntity#getParent()`` \u6362\u7b97\u56de**\u672c\u4f53** \u2713
+        //     \uff08\u2605\u540c\u4e00\u5957\u771f\u4f24/\u7a7f\u900f/\u706b\u77e2/\u9ed1\u7bad\u903b\u8f91\u7167\u5e38\u751f\u6548 \u2713\uff09
+        net.minecraft.world.entity.Entity tnl$hit = hitResult.getEntity();
+        if (tnl$hit instanceof net.minecraftforge.entity.PartEntity<?> tnl$part) {
+            tnl$hit = tnl$part.getParent();
+        }
+        if (!(tnl$hit instanceof LivingEntity target)) {
             super.onHitEntity(hitResult);
             return;
         }
