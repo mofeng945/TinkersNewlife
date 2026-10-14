@@ -131,7 +131,7 @@ public final class ApostlePatch {
         MONOLITH_CAP_SIX = b.comment("黑曜石柱同屏上限从 4 提到 6（#10，默认 true）").define("monolith_cap_six", true);
         MONOLITH_TOPUP_SECONDS = b.comment("柱子补位间隔（秒）：每多少秒最多补一根柱子",
                         "§869 用户口径：召唤速度减慢一倍 ⇒ 默认 10 秒（原来是 5 秒）。")
-                .defineInRange("monolith_topup_seconds", 10, 1, 600);
+                .defineInRange("monolith_topup_seconds", 30, 1, 600);
         MONOLITH_LIFESPAN = b.comment("黑曜石柱有生命周期：血量随时间流逝（§869 用户口径，默认 true）")
                 .define("monolith_lifespan", true);
         MONOLITH_LIFESPAN_HP_PER_SECOND = b.comment("柱子每秒流逝多少血量（默认 2 点／秒）")
