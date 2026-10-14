@@ -44,6 +44,22 @@ import java.util.List;
 public class StarBodyItemRendererMixin {
 
     private static long TNL$LOG = 0L;
+    private static long TNL$POSE_LOG = 0L;
+
+    /** TNL1029 \u2605\u6a21\u578b\u6709\u51e0\u4e2a\u56db\u8fb9\u5f62\uff08\u2605\u770b\u5b83\u5230\u5e95\u662f\u4e0d\u662f\u4e00\u5f20\u5e73\u9762 \u2713\uff09 */
+    private static int tnl$countQuads(BakedModel model) {
+        try {
+            RandomSource rnd = RandomSource.create(42L);
+            int n = 0;
+            for (Direction dir : Direction.values()) {
+                n += model.getQuads(null, dir, rnd).size();
+            }
+            n += model.getQuads(null, null, rnd).size();
+            return n;
+        } catch (Throwable t) {
+            return -1;
+        }
+    }
 
     @Inject(method = "m_115143_", at = @At("HEAD"), cancellable = true, remap = false)
     private void tinkersnewlife$effectLayer(ItemStack stack, ItemDisplayContext context, boolean leftHand,
@@ -96,6 +112,17 @@ public class StarBodyItemRendererMixin {
         }
         if (rt == null) {
             return;
+        }
+        // TNL1029 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u9570\u5200\u62ff\u5728\u624b\u91cc\u8fd8\u662f\u4e00\u5757\u677f" \u2713
+        //   \u2605\u6211\u4e0d\u518d\u51ed\u611f\u89c9\u8c03 \u2717 \u2014\u2014 \u2605\u5148\u628a"\u59ff\u6001\u77e9\u9635"\u6253\u51fa\u6765 \u2713
+        //   \u2605\u770b\u4ec0\u4e48 \u2713\uff1a\u2605\u5bf9\u89d2\u9879\uff08\u2605\u7f29\u653e \u2713\uff09\u002b \u2605\u5e73\u79fb\u9879 \u2713 \u002b \u2605\u6a21\u578b\u81ea\u5e26\u7684 display \u53d8\u6362 \u2713
+        if (order && System.currentTimeMillis() - TNL$POSE_LOG > 4000L) {
+            TNL$POSE_LOG = System.currentTimeMillis();
+            org.joml.Matrix4f mm = pose.last().pose();
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                    "TNL1029 order pose ctx={} diag=({},{},{}) trans=({},{},{}) quads={}",
+                    context, mm.m00(), mm.m11(), mm.m22(), mm.m30(), mm.m31(), mm.m32(),
+                    tnl$countQuads(model));
         }
         tnl$renderEffectLayer(pose, buffers, light, model, context, leftHand, rt, order ? "order" : "bow", ci);
     }
