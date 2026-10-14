@@ -102,7 +102,7 @@ public final class AeonianTooltipHandler {
         var pose = g.pose();
         pose.pushPose();
         pose.translate(0.0F, 0.0F, 400.0F);
-        g.fill(x - 3, y - 4, x + width + 3, y + height + 4, 0xE6080A10);
+        g.fill(x - 3, y - 4, x + width + 3, y + height + 4, 0xFF080A10);   // TNL1064 user: opaque background, no transparency
         long time = System.currentTimeMillis();
         float t = (time % 60000L) / 1000.0F;
         int cols = Math.max(2, width / 14);
@@ -124,8 +124,8 @@ public final class AeonianTooltipHandler {
                 g.blit(EYE, ex, ey, 0.0F, 0.0F, 11, eh, 16, 16);
             }
         }
-        g.fill(x - 3, y - 4, x + width + 3, y - 3, 0x66C03030);
-        g.fill(x - 3, y + height + 3, x + width + 3, y + height + 4, 0x66C03030);
+        g.fill(x - 3, y - 4, x + width + 3, y - 3, 0xFFC03030);
+        g.fill(x - 3, y + height + 3, x + width + 3, y + height + 4, 0xFFC03030);
         pose.popPose();
     }
 
