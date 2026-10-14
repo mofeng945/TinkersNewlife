@@ -24,6 +24,8 @@ public final class PortalViewRenderer {
     private static long lastLog;
     private static long lastLog2;
     private static long lastLog3;
+    /** \u2605\u9694\u5e27\u5f00\u5173 \u2713 */
+    private static boolean frameParity;
     private static java.lang.reflect.Method renderLevelMethod;
     /** \u2605\u76ee\u6807\u7ef4\u5ea6\uff08\u2605\u767d\u7a7a\u95f4\u672c\u4f53\uff09\u2014\u2014 \u2605\u7b2c \u2463 \u6b65\u7531\u4f20\u9001\u95e8/\u767d\u7a7a\u95f4\u8bbe\u7f6e \u2713 */
     public static net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> DEST =
@@ -99,6 +101,14 @@ public final class PortalViewRenderer {
         }
         if (PortalCameraSwap.isActive()) {
             return;                       // \u2605\u9632\u9012\u5f52 \u2713
+        }
+        // TNL998 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u6709\u4e00\u70b9\u70b9\u5361" \u2713
+        //   \u2605\u539f\u56e0 \u2717\uff1a\u2605\u4ece\u7b2c \u2462 \u6b65\u8d77\u6211\u4eec**\u6bcf\u5e27\u591a\u6e32\u4e00\u6b21\u4e16\u754c** \u2717
+        //   \u2605\u73b0\u5728\uff1a\u2605\u5148\u7528\u6700\u7b80\u5355\u7684\u4e00\u5200 \u2713\uff1a\u2605**\u9694\u4e00\u5e27\u624d\u6e32\u4e00\u6b21** \u2713
+        //     \uff08\u2605\u76ee\u6807\u7ea7\u4f18\u5316\u662f"\u95e8\u5728\u89c6\u91ce\u91cc\u624d\u6e32" \u2713 \u2014\u2014 \u2605\u539f\u578b\u7684 `shouldRenderPortal` \u2713\uff09
+        frameParity = !frameParity;
+        if (!frameParity) {
+            return;
         }
         Minecraft mc = Minecraft.getInstance();
         try {
