@@ -35,8 +35,14 @@ void main() {
     float ang = atan(p.y, p.x) + EffectTime * 0.50;
     // \u2605\u683c\u5185\u5168\u5f3a \u2713\uff0c\u2605\u8d8a\u8fc7\u683c\u8fb9\u6de1\u51fa \u2713
     float fade = 1.0 - smoothstep(0.74, 1.00, r);
-    float arm = pow(abs(cos(ang * 2.0)), 9.0) * fade;           // TNL1015 \u2605 4 \u9053\u4e3b\u81c2\uff08\u2605\u6b21\u5e42 4\u21929 \u21d2 \u2605\u4e0d\u518d\u7c98\u8fde \u2713\uff09
-    float arm2 = pow(abs(cos(ang * 2.0 + 1.5707963)), 16.0) * fade * 0.55;   // \u2605\u56db\u9053\u526f\u81c2 \u2713
+    // TNL1016 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u4f60\u8ba9\u65cb\u81c2\u5e73\u5747\u6392\u5f00\uff0c\u6bcf\u4e2a\u65cb\u81c2\u5bbd\u5ea6\u548c\u5b54\u9699\u5bbd\u5ea6\u76f8\u540c" \u2713
+    //   \u2605\u5173\u952e \u2713\uff1a\u2605``|cos(2*ang)| > cos(45\u00b0) \u2248 0.707`` \u7684\u533a\u95f4
+    //     \u2605\u6b63\u597d\u662f\u6bcf\u4e2a\u534a\u5468\u671f\u7684**\u4e00\u534a** \u2713 \u21d2 \u2605**\u81c2\u5bbd = \u9699\u5bbd = 50%** \u2713\u2713
+    //     \uff08\u2605\u4e4b\u524d\u7528 ``pow(|cos|, n)`` \u2717 \u2014\u2014 \u2605\u5bbd\u5ea6\u968f\u6b21\u5e42\u6f02\u79fb\uff0c\u2605\u6c38\u8fdc\u7b97\u4e0d\u51c6 50% \u2713\uff09
+    float c1 = abs(cos(ang * 2.0));
+    float arm = smoothstep(0.68, 0.745, c1) * fade;              // \u2605\u2248 50% \u5360\u7a7a\u6bd4\uff0c\u2605\u8fb9\u7f18\u7565\u67d4 \u2713
+    float c2 = abs(cos(ang * 2.0 + 1.5707963));
+    float arm2 = smoothstep(0.70, 0.75, c2) * fade * 0.45;       // \u2605\u4e0e\u4e3b\u81c2\u9519\u5f00 45\u00b0 \u2713
 
     // \u2605\u9038\u6563\u5149\u70b9 \u2713
     float motes = 0.0;
