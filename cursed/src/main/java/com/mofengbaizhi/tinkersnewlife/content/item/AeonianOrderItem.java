@@ -55,7 +55,17 @@ public class AeonianOrderItem extends SwordItem {
     private static final List<Pending> PENDING = new ArrayList<>();
 
     public AeonianOrderItem() {
-        super(Tiers.NETHERITE, 8, -2.4F, new Item.Properties().stacksTo(1));
+        super(Tiers.NETHERITE, 8, -2.4F, new Item.Properties().stacksTo(1).durability(1000));   // TNL1060 tooltip shows xx/1000
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, Level level, java.util.List<net.minecraft.network.chat.Component> tip,
+                                net.minecraft.world.item.TooltipFlag flag) {
+        // TNL1060 user: the two line declaration, colours are animated later by AeonianTooltipHandler
+        tip.add(net.minecraft.network.chat.Component.literal(
+                "\u4eba\u7c7b\u82e5\u751f\u6765\u4fbf\u6ce8\u5b9a\u4f5c\u4e3a\u9ad8\u7ef4\u751f\u7269\u7684\u517b\u6599\uff0c\u4fbf\u662f\u6df7\u4e71\uff1b\u4eba\u7c7b\u82e5\u6b7b\u4e8e\u5e76\u975e\u81ea\u7136\u7684\u6df7\u6c8c\u4fb5\u67d3\uff0c\u4fbf\u662f\u90aa\u6076\u3002\u6211\u4e4b\u6240\u4e3a\uff0c\u7686\u4e3a\u79e9\u5e8f\u3002"));
+        tip.add(net.minecraft.network.chat.Component.literal(
+                "                  \u2014\u2014\u6d41\u5931\u5728\u672a\u77e5\u65f6\u95f4\u7ebf\u7684\u5ba3\u544a\u00b7\u58a8\u9ed8\u7559"));
     }
 
     @Override
