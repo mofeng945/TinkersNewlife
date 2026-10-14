@@ -413,7 +413,13 @@ public class StarfallArrow extends AbstractArrow {
             //     \u002b \u2605\u4e58\u4e0a\u90e8\u4f4d\u7cfb\u6570\uff08\u2605\u7fc5\u8180/\u5c3e\u5df4 \u2713\uff09\u3002\u2605\u539f\u7248 ``EnderDragonPart`` \u540c\u7406 \u2713
             //   \u2605\u6240\u4ee5\uff1a\u2605\u547d\u4e2d"\u90e8\u4ef6"\u65f6\u5e94**\u6253\u90e8\u4ef6** \u2713\uff08\u2605\u5b83\u4f1a\u8f6c\u53d1 \u2713\uff09
             //     \u2605\u800c\u4e0d\u662f\u76f4\u63a5\u6253\u672c\u4f53 \u2717\uff08\u2605\u90a3\u6837\u51b0\u706b\u8fd9\u8fb9\u4e0d\u8d70\u5b83\u7684\u8f6c\u53d1\u94fe \u2717\uff09
+            // TNL988 \u2605\u2605 \u63a2\u9488\uff1a\u2605\u76f4\u63a5\u770b"\u5230\u5e95\u8d70\u5230\u4f24\u5bb3\u90a3\u4e00\u6b65\u6ca1\u6709 \u002b \u6253\u4e86\u591a\u5c11" \u2713
+            org.slf4j.Logger lg2 = com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER;
             net.minecraft.world.entity.Entity tnl$victim = hitResult.getEntity();
+            lg2.warn("TNL988 damage site: hit={} victim={} target={} dmg={} aliveBefore={}",
+                    hitResult.getEntity().getClass().getSimpleName(),
+                    tnl$victim.getClass().getSimpleName(),
+                    target.getClass().getSimpleName(), dmg, target.getHealth());
             if (tnl$victim instanceof net.minecraft.world.entity.LivingEntity) {
                 tnl$victim = target;                       // \u2605\u672c\u4f53\u547d\u4e2d \u21d2 \u2605\u8d70\u539f\u6765\u7684\u771f\u4f24\u8def\u5f84 \u2713
             }
