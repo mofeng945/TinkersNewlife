@@ -101,7 +101,19 @@ public class StarBodyItemRendererMixin {
         }
 
         // \u2605\u2461 \u9570\u5200\uff1a\u2605\u5148\u53ea\u5728\u7269\u54c1\u680f\u8d70\u81ea\u5b9a\u4e49\u7740\u8272\u5668 \u2713
+        // TNL1030 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u6d4b\u4e86"\u4f46\u53ea\u6709 GUI \u90a3\u7ec4 \u2717
+        //   \u2605\u771f\u56e0 \u2717\uff1a\u2605\u624b\u6301\u63d0\u524d `return` \u4e86 \u2717 \u21d2 \u2605\u63a2\u9488\u6839\u672c\u6ca1\u8dd1\u5230 \u2713
+        //   \u2605\u73b0\u5728 \u2713\uff1a\u2605\u624b\u6301\u65f6**\u53ea\u6253\u63a2\u9488\u4e0d\u753b** \u2713\uff08\u2605\u539f\u7248\u7167\u5e38\u753b \u2713 \u21d2 \u2605\u4e0d\u53d8\u677f \u2713\uff09
+        //     \u2605\u62ff\u5230\u624b\u6301\u7684 diag/trans/quads \u540e\u6211\u5c31\u80fd\u7b97\u51fa\u4fee\u6b63\u91cf \u2713
         if (order && context != ItemDisplayContext.GUI) {
+            if (System.currentTimeMillis() - TNL$POSE_LOG > 4000L) {
+                TNL$POSE_LOG = System.currentTimeMillis();
+                org.joml.Matrix4f hm = pose.last().pose();
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                        "TNL1030 held pose ctx={} diag=({},{},{}) trans=({},{},{}) quads={}",
+                        context, hm.m00(), hm.m11(), hm.m22(), hm.m30(), hm.m31(), hm.m32(),
+                        tnl$countQuads(model));
+            }
             return;
         }
 
