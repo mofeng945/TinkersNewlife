@@ -51,8 +51,13 @@ public final class AeonianWeaken {
         return e.getPersistentData();
     }
 
+    /**
+     * TNL1049 reads the tick count from the hidden mark effect duration.
+     * That works on both sides, so the client can drive the screen effect with it.
+     */
     public static int ticks(LivingEntity e) {
-        return tag(e).getInt(TICKS);
+        var inst = e.getEffect(com.mofengbaizhi.tinkersnewlife.content.ModEffects.AEONIAN_MARK.get());
+        return inst == null ? 0 : inst.getDuration();
     }
 
     public static int stun(LivingEntity e) {
@@ -65,7 +70,10 @@ public final class AeonianWeaken {
             return;
         }
         int v = Math.min(MAX, ticks(e) + amount);
-        tag(e).putInt(TICKS, v);
+        // TNL1049 refresh the mark with the new tick count as its duration
+        e.addEffect(new MobEffectInstance(
+                com.mofengbaizhi.tinkersnewlife.content.ModEffects.AEONIAN_MARK.get(),
+                v, 0, false, false, false));
         TinkersNewlife.LOGGER.warn("TNL1046 weaken stacked on {} -> {} ticks", e.getName().getString(), v);
     }
 
@@ -135,7 +143,7 @@ public final class AeonianWeaken {
                     le.hurt(le.damageSources().magic(), dmg);
                 }
                 tag(le).putInt(STUN, STUN_TICKS);
-                tag(le).putInt(TICKS, 0);
+                le.removeEffect(com.mofengbaizhi.tinkersnewlife.content.ModEffects.AEONIAN_MARK.get());
                 if (le.level() instanceof ServerLevel sl) {
                     sl.sendParticles(net.minecraft.core.particles.ParticleTypes.SCULK_SOUL,
                             le.getX(), le.getY() + 1.0D, le.getZ(), 24, 0.4D, 0.6D, 0.4D, 0.02D);
@@ -147,7 +155,7 @@ public final class AeonianWeaken {
                         le.getName().getString(), dmg);
                 continue;
             }
-            tag(le).putInt(TICKS, t - 1);           // \u2605\u6bcf tick \u6d41\u901d 1 tick \u2713
+            // TNL1049 the mark effect decays by itself one tick at a time, nothing to do here
         }
     }
 

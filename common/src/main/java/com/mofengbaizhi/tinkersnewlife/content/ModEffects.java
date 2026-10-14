@@ -79,4 +79,16 @@ public class ModEffects {
         target.addEffect(new MobEffectInstance(
                 WHIP_WEAKEN.get(), WhipWeakenEffect.DURATION_TICKS, layer, false, false, true));
     }
+
+    /**
+     * TNL1049 user: when the player accumulates ticks the screen should drift toward the
+     * unnameable look and the whispers should get louder.
+     *
+     * Design: keep the tick count as the DURATION of this hidden effect.
+     *  - duration is synced server -> client for free, so the client can read it;
+     *  - duration also counts down by 1 every tick, which is exactly "each tick loses one".
+     */
+    public static final RegistryObject<net.minecraft.world.effect.MobEffect> AEONIAN_MARK =
+            EFFECTS.register("aeonian_mark",
+                    () -> new com.mofengbaizhi.tinkersnewlife.content.effect.AeonianMarkEffect());
 }
