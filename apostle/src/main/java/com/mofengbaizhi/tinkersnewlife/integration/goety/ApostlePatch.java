@@ -1083,19 +1083,16 @@ public final class ApostlePatch {
             return;
         }
         for (com.Polarice3.Goety.common.entities.neutral.AbstractObsidianMonolith monolith : list) {
-            // TNL1080 drain a percentage of the max health instead of flat health
+            // TNL1081 user: "I mean drain health by a percentage of the MAX health"
+            //   so the max stays as it is and each second removes pct% of it from the health.
             double max = Math.max(1.0D, monolith.getMaxHealth());
-            double left = max - max * (percentPerSecond / 100.0D);
-            if (left <= 0.5D) {
-                monolith.kill();                                  // 寿命到 ⇒ 柱子自行崩解 ✓
+            float left = (float) (monolith.getHealth() - max * (percentPerSecond / 100.0D));
+            if (left <= 0.0F) {
+                monolith.kill();                                  // drained to nothing, it collapses
                 level.sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE,
                         monolith.getX(), monolith.getY() + 1.0D, monolith.getZ(), 25, 0.4D, 0.6D, 0.4D, 0.02D);
             } else {
-                var inst = monolith.getAttribute(
-                        net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
-                if (inst != null) {
-                    inst.setBaseValue(left);
-                }
+                monolith.setHealth(left);
                 if (monolith.getHealth() > left) {
                     monolith.setHealth((float) left);
                 }
