@@ -79,7 +79,7 @@ public class AeonianOrderItem extends SwordItem {
                 //   \u2605\u6240\u4ee5\u628a\u4e0a\u4e00\u7248\u7684"\u2605\u751f\u6210 FlyingSwordEntity"**\u6574\u6bb5\u5220\u6389** \u2713
                 //     \uff08\u2605\u5b83\u5e26\u81ea\u52a8\u9501\u5b9a/\u5236\u5bfc\u8ffd\u8e2a \u2717 \u2014\u2014 \u2605\u6b63\u662f\u4f60\u4e0d\u8981\u7684 \u2713\uff09
                 //   \u2605\u73b0\u5728 \u2713\uff1a\u2605\u7eaf\u76f4\u7ebf\u3001\u65e0\u91cd\u529b\u3001\u6cbf\u89c6\u7ebf\u3001**\u6700\u591a 20 \u683c** \u2713
-                tnl$throwHook(level, player);
+                tnl$throwHook(level, player, stack);
                 player.getCooldowns().addCooldown(this, 40);
             }
             player.swing(hand, true);
@@ -118,6 +118,13 @@ public class AeonianOrderItem extends SwordItem {
 
     private static final List<Pull> PULLS = new ArrayList<>();
 
+    /** TNL1057 user: launch an actual scythe that flies out, then pull the player to where it stopped */
+    private record Hook(java.util.UUID owner, java.util.UUID item, int ticks) {
+    }
+
+    private static final List<Hook> HOOKS = new ArrayList<>();
+    private static final int HOOK_TICKS = 12;
+
     /** TNL1050 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u53ef\u4ee5\u5c06\u9570\u5200\u5411\u89c6\u7ebf\u65b9\u5411\u7529\u51fa\u53bb\uff08\u65e0\u89c6\u91cd\u529b\uff09\uff0c
      *   \u9570\u5200\u4e0a\u4f1a\u8fde\u7740\u4e00\u6839\u9ed1\u8272\u7684\u7ebf\uff0c\u5982\u679c\u547d\u4e2d\u65b9\u5757\uff0c\u4f1a\u5c06\u73a9\u5bb6\u62c9\u5230\u90a3\u4e2a\u4f4d\u7f6e\uff0c
      *   \u5982\u679c\u547d\u4e2d\u5b9e\u4f53\uff0c\u5219\u4f1a\u5c06\u5b9e\u4f53\u52fe\u8fc7\u6765" \u2713
@@ -126,7 +133,7 @@ public class AeonianOrderItem extends SwordItem {
      * \uff0c\u2605\u7ef3\u5b50\u5148\u7528\u9ed1\u8272\u7c92\u5b50\u7ebf\u8868\u793a \u2713\uff0c
      * \u2605\u4e0b\u4e00\u8f6e\u518d\u7167 `FlyingSwordTrailRenderer` \u6362\u6210\u4e13\u7528\u5e26\u72b6\u7ed8\u5236 \u2713\u3002
      */
-    private static void tnl$throwHook(Level level, Player player) {
+    private static void tnl$throwHook(Level level, Player player, ItemStack heldStack) {
         Vec3 eye = player.getEyePosition();
         Vec3 look = player.getLookAngle();
         double reach = 20.0D;   // TNL1055 \u2605\u7528\u6237\uff1a\u2605\u6700\u591a\u98de 20 \u683c \u2713
@@ -155,16 +162,19 @@ public class AeonianOrderItem extends SwordItem {
                         1, 0.0D, 0.0D, 0.0D, 0.0D);
             }
         }
-        if (hitBlock) {
-            PULLS.add(new Pull(player.getUUID(), hit, 12));
-            // TNL1056 hide the held scythe while the hook is out: the effect duration is the lifetime
-            player.addEffect(new MobEffectInstance(
-                    com.mofengbaizhi.tinkersnewlife.content.ModEffects.AEONIAN_HOOK.get(),
-                    12, 0, false, false, false));
-            TinkersNewlife.LOGGER.warn("TNL1056 hook latched at {}, pulling the player", hit);
-        } else {
-            TinkersNewlife.LOGGER.warn("TNL1056 hook missed (nothing within 20 blocks)");
-        }
+        // TNL1057 fly our own scythe out: a zero gravity item entity carrying a copy of the stack
+        var thrown = new net.minecraft.world.entity.item.ItemEntity(
+                player.level(), player.getX(), player.getEyeY() - 0.25D, player.getZ(), heldStack.copy());
+        thrown.setNoGravity(true);
+        thrown.setNeverPickUp();
+        thrown.setDeltaMovement(look.scale(2.4D));
+        player.level().addFreshEntity(thrown);
+        HOOKS.add(new Hook(player.getUUID(), thrown.getUUID(), hitBlock ? HOOK_TICKS : 6));
+        // hide the held scythe while the hook is out (the effect duration is the lifetime)
+        player.addEffect(new MobEffectInstance(
+                com.mofengbaizhi.tinkersnewlife.content.ModEffects.AEONIAN_HOOK.get(),
+                hitBlock ? HOOK_TICKS : 6, 0, false, false, false));
+        TinkersNewlife.LOGGER.warn("TNL1057 threw the scythe ({}), hitBlock={}", thrown.getUUID(), hitBlock);
         level.playSound(null, player.blockPosition(), SoundEvents.TRIDENT_THROW,
                 SoundSource.PLAYERS, 1.2F, 0.8F);
     }
@@ -211,6 +221,58 @@ public class AeonianOrderItem extends SwordItem {
                     }
                     PULLS.clear();
                     PULLS.addAll(next);
+                }
+            }
+            // TNL1057 the rope follows the flying scythe; when it expires we pull the player to it
+            if (!HOOKS.isEmpty()) {
+                var server2 = net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer();
+                if (server2 != null) {
+                    List<Hook> left = new ArrayList<>();
+                    for (Hook hk : HOOKS) {
+                        net.minecraft.world.entity.Entity owner = null;
+                        net.minecraft.world.entity.Entity scythe = null;
+                        for (ServerLevel lvl : server2.getAllLevels()) {
+                            if (owner == null) {
+                                owner = lvl.getEntity(hk.owner());
+                            }
+                            if (scythe == null) {
+                                scythe = lvl.getEntity(hk.item());
+                            }
+                        }
+                        if (owner == null || scythe == null) {
+                            continue;
+                        }
+                        Vec3 hookEye = owner.getEyePosition();
+                        Vec3 hookPos = scythe.position();
+                        // black rope from the eyes to the flying scythe
+                        if (owner.level() instanceof ServerLevel sl) {
+                            var tnl$black = new net.minecraft.core.particles.DustParticleOptions(
+                                    new org.joml.Vector3f(0.02F, 0.02F, 0.03F), 1.6F);
+                            int steps = (int) Math.min(96, Math.max(6, hookEye.distanceTo(hookPos) * 6.0D));
+                            long gt = owner.level().getGameTime();
+                            for (int i = 0; i <= steps; i++) {
+                                double t = i / (double) steps;
+                                sl.sendParticles(tnl$black,
+                                        hookEye.x + (hookPos.x - hookEye.x) * t + Math.sin(t * 24.0D + gt * 0.35D) * 0.045D,
+                                        hookEye.y + (hookPos.y - hookEye.y) * t,
+                                        hookEye.z + (hookPos.z - hookEye.z) * t,
+                                        1, 0.0D, 0.0D, 0.0D, 0.0D);
+                            }
+                        }
+                        if (hk.ticks() > 1) {
+                            left.add(new Hook(hk.owner(), hk.item(), hk.ticks() - 1));
+                        } else {
+                            // it is done flying: pull the player to where it stopped, then take it back
+                            Vec3 stop = scythe.position();
+                            scythe.discard();
+                            if (owner instanceof Player p3) {
+                                PULLS.add(new Pull(p3.getUUID(), stop, 14));
+                                TinkersNewlife.LOGGER.warn("TNL1057 scythe stopped at {}, pulling the player", stop);
+                            }
+                        }
+                    }
+                    HOOKS.clear();
+                    HOOKS.addAll(left);
                 }
             }
             if (PENDING.isEmpty()) {
