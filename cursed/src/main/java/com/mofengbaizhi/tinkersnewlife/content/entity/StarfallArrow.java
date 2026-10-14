@@ -252,13 +252,22 @@ public class StarfallArrow extends AbstractArrow {
      * \u21d2 \u2605\u5c31\u7b97 Boss \u2713\uff1b\u2605\u5047\u4eba/\u8bad\u7ec3\u6728\u4eba\u6ca1\u6709\u8fd9\u79cd\u5b57\u6bb5 \u2717 \u21d2 \u2605\u4e0d\u7b97 Boss \u2713\u3002
      * \u2605\u7ed3\u679c\u6309**\u5b9e\u4f53\u7c7b\u578b\u7f13\u5b58** \u2713\uff08\u2605\u53cd\u5c04\u53ea\u505a\u4e00\u6b21 \u2713\uff09\u3002
      */
+    private static final java.util.Map<Class<?>, Boolean> TNL$BOSS_CACHE_BY_CLASS = new java.util.concurrent.ConcurrentHashMap<>();
+
     private static final java.util.Map<net.minecraft.world.entity.EntityType<?>, Boolean> TNL$BOSS_CACHE =
             new java.util.concurrent.ConcurrentHashMap<>();
 
     public static boolean tnl$isBoss(Entity e) {
         try {
-            net.minecraft.world.entity.EntityType<?> type = e.getType();
-            Boolean hit = TNL$BOSS_CACHE.get(type);
+            // TNL982 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u672b\u5f71\u9f99\u6ca1\u6709\u88ab\u5224\u65ad\u4e3a boss \u751f\u7269\uff0c\u51cb\u7075\u5374\u88ab\u5224\u65ad\u4e3a boss \u751f\u7269" \u2713
+            //   \u2605\u65e5\u5fd7\u8bc1\u636e\uff1a\u2605\u9f99\u7684**\u90e8\u4ef6** type \u4e5f\u53eb ``entity.minecraft.ender_dragon`` \u2713
+            //     \u21d2 \u2605\u7b2c\u4e00\u6b21\u5224\u5b9a\u770b\u7684\u662f\u90e8\u4ef6\uff08\u2605\u6ca1 BossEvent \u2717\uff09\u21d2 \u2605\u628a false
+            //     **\u5199\u8fdb\u4e86\u6309 EntityType \u7684\u7f13\u5b58** \u2717 \u21d2 \u2605\u4e4b\u540e\u672c\u4f53\u4e5f\u8fd4\u56de false \u2713\u2713
+            //   \u2605\u73b0\u5728\uff1a\u2605\u5148\u628a\u90e8\u4ef6\u6362\u7b97\u6210\u672c\u4f53 \u2713 \u002b \u2605**\u6539\u6210\u6309 `getClass()` \u7f13\u5b58** \u2713
+            //     \uff08\u2605\u90e8\u4ef6\u7c7b\u4e0e\u672c\u4f53\u7c7b\u4e0d\u540c \u2713 \u21d2 \u2605\u4e0d\u4f1a\u4e92\u76f8\u6c61\u67d3 \u2713\uff09
+            e = com.mofengbaizhi.tinkersnewlife.util.TruePierce.resolveVictim(e);
+            Class<?> key = e.getClass();
+            Boolean hit = TNL$BOSS_CACHE_BY_CLASS.get(key);
             if (hit != null) {
                 return hit;
             }
@@ -276,7 +285,9 @@ public class StarfallArrow extends AbstractArrow {
                 }
                 c = c.getSuperclass();
             }
-            TNL$BOSS_CACHE.put(type, boss);
+            if (boss) {
+                TNL$BOSS_CACHE_BY_CLASS.put(key, Boolean.TRUE);   // \u2605\u53ea\u7f13\u5b58"\u662f boss" \u2713
+            }
             return boss;
         } catch (Throwable th) {
             return false;

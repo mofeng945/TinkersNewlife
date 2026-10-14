@@ -2642,14 +2642,42 @@ public final class TruePierce {
                 // TNL979 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u547d\u4e2d\u51b0\u706b\u4f20\u8bf4\u9f99\u7684\u7fc5\u8180\u65e0\u6cd5\u5bf9\u9f99\u9020\u6210\u4f24\u5bb3" \u2713
                 //   \u2605\u539f\u56e0 \u2717\uff1a\u2605\u51b0\u706b\uff08\u2605Citadel \u2713\uff09\u7684\u90e8\u4ef6**\u4e0d\u4e00\u5b9a\u7ee7\u627f Forge \u7684 ``PartEntity``** \u2717
                 //   \u2605\u73b0\u5728\uff1a\u2605\u53cd\u5c04\u627e\u5b83\u7684\u201c\u7236\u201d\uff08\u2605getParent / getOwner / getRoot \u2713\uff09
+                boolean done = false;
                 for (String m : new String[]{"getParent", "getOwner", "getRoot"}) {
                     try {
                         Object r = e.getClass().getMethod(m).invoke(e);
                         if (r instanceof net.minecraft.world.entity.Entity pe && pe != e) {
                             e = pe;
+                            done = true;
                             break;
                         }
                     } catch (Throwable ignored) {
+                    }
+                }
+                // TNL981 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u547d\u4e2d\u51b0\u706b\u4f20\u8bf4\u9f99\u7684\u7fc5\u8180\u65e0\u6cd5\u5bf9\u9f99\u9020\u6210\u4f24\u5bb3" \u2713
+                //   \u2605\u65e5\u5fd7\u8bc1\u636e\uff1a\u2605``EntityDragonPart (entity.iceandfire.dragon_multipart)`` \u2717
+                //     \u2605\u5b83**\u4e0d\u662f Forge \u7684 ``PartEntity``** \u2717 \u21d2 \u2605\u4e0a\u9762\u90a3\u51e0\u4e2a\u65b9\u6cd5\u4e5f\u6ca1\u547d\u4e2d \u2713
+                //   \u2605\u73b0\u5728\uff1a\u2605\u6700\u540e\u4e00\u62db \u2713\uff1a\u2605**\u626b\u5b83\u81ea\u5df1\u7684\u5b57\u6bb5** \u2713
+                //     \uff08\u2605\u627e\u7c7b\u578b\u662f Entity \u4e14\u503c\u662f LivingEntity \u7684\u5b57\u6bb5 \u2713\uff09
+                if (!done) {
+                    Class<?> c2 = e.getClass();
+                    while (c2 != null && c2 != Object.class && !done) {
+                        for (java.lang.reflect.Field f2 : c2.getDeclaredFields()) {
+                            if (!net.minecraft.world.entity.Entity.class.isAssignableFrom(f2.getType())) {
+                                continue;
+                            }
+                            try {
+                                f2.setAccessible(true);
+                                Object v = f2.get(e);
+                                if (v instanceof net.minecraft.world.entity.LivingEntity le2 && le2 != e) {
+                                    e = le2;
+                                    done = true;
+                                    break;
+                                }
+                            } catch (Throwable ignored) {
+                            }
+                        }
+                        c2 = c2.getSuperclass();
                     }
                 }
             }
