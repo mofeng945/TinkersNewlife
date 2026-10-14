@@ -65,9 +65,17 @@ void main() {
     //   \u2605\u5f62\u72b6\u9760**\u5c40\u90e8 UV**\uff08\u2605\u4ece SpriteRect \u7b97\uff09\u2713
     //   \u2605\u955c\u5934\u611f\u9760**\u76f8\u673a\u671d\u5411\u5e73\u79fb** \u2713 \u2014\u2014 \u2605\u4e24\u8005\u5206\u79bb \u2713
     vec2 uv = vUv;
+    // TNL974 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u8fd8\u662f\u6ca1\u6709" \u2713
+    //   \u2605\u65e5\u5fd7\u8bc1\u636e\uff1a\u2605``TNL971 sprite rect`` **\u4e00\u884c\u90fd\u6ca1\u6709** \u2717
+    //     \u21d2 \u2605SpriteRect \u4e00\u76f4\u662f\u9ed8\u8ba4 0 \u2717 \u21d2 \u2605\u8d70\u515c\u5e95 ``= uv``\uff08\u2605\u56fe\u96c6 UV \u2713\uff09
+    //     \u21d2 \u2605\u8303\u56f4\u53ea\u6709 16/2048 \u2248 0.008 \u2717 \u21d2 \u2605\u6574\u4e2a\u9762\u677f**\u53ea\u843d\u5728\u4e00\u4e2a\u683c\u5b50** \u2717
+    //     \u21d2 \u2605\u90a3\u4e00\u683c\u6ca1\u547d\u4e2d\u5c31\u662f"\u4e00\u9897\u661f\u90fd\u6ca1\u6709" \u2713\u2713
+    //   \u2605\u73b0\u5728\uff1a\u2605\u515c\u5e95\u6539\u6210**\u628a\u56fe\u96c6 UV \u653e\u5927 128 \u500d** \u2713
+    //     \uff08\u2605 16px/2048 \u00d7 128 \u2248 1.0 \u2713 \u21d2 \u2605\u4e00\u5f20\u8d34\u56fe\u6b63\u597d\u94fa\u6ee1 0~1 \u2713\uff09
+    //     \u21d2 \u2605\u4e0d\u4f9d\u8d56 uniform \u4e5f\u80fd\u51fa\u661f \u2713\uff08\u2605uniform \u6709\u5c31\u7528\u66f4\u51c6 \u2713\uff09
     vec2 localUv = (SpriteRect.z > SpriteRect.x && SpriteRect.w > SpriteRect.y)
             ? (uv - SpriteRect.xy) / (SpriteRect.zw - SpriteRect.xy)
-            : uv;
+            : fract(uv * 128.0);
     float cy = cos(radians(CamYaw));
     float sy = sin(radians(CamYaw));
     float cp = cos(radians(CamPitch));
