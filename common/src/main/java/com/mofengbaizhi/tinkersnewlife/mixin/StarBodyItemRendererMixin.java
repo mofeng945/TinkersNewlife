@@ -51,6 +51,38 @@ public class StarBodyItemRendererMixin {
         if (stack == null || !(stack.getItem() instanceof StarfallLamentItem)) {
             return;
         }
+        // TNL1001 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u6a21\u4eff\u65e0\u5c3d\u8d2a\u5a6a\u7684\u7269\u54c1\u680f\u80cc\u666f\u5149\u6548\u6e32\u67d3\uff0c\u7ed9\u661f\u9668\u60b2\u53f9\u505a\u7070\u767d\u8272\u80cc\u666f\u5149\u6548" \u2713
+        //   \u2605\u53ea\u5728**\u7269\u54c1\u680f**\uff08\u2605GUI \u2713\uff09\u91cc\u753b \u2713\uff0c\u2605\u800c\u4e14\u753b\u5b8c**\u4e0d\u53d6\u6d88** \u2713
+        //     \u21d2 \u2605\u539f\u7248\u7269\u54c1\u7167\u5e38\u753b\u5728\u8fd9\u5c42\u5149\u6655**\u4e0a\u9762** \u2713\uff08\u2605\u771f\u6b63\u7684"\u80cc\u666f" \u2713\uff09
+        if (context == ItemDisplayContext.GUI
+                && com.mofengbaizhi.tinkersnewlife.client.render.StarfallGlowClient.ready()) {
+            com.mofengbaizhi.tinkersnewlife.client.render.StarfallGlowClient.tick();   // \u2605\u5582 EffectTime \u2713
+            try {
+                pose.pushPose();
+                BakedModel glowModel = ForgeHooksClient.handleCameraTransforms(pose, model, context, leftHand);
+                pose.translate(-0.5D, -0.5D, -0.5D);
+                if (buffers instanceof MultiBufferSource.BufferSource bs2) {
+                    bs2.endBatch();
+                }
+                emitGlow(glowModel, pose, buffers.getBuffer(
+                        com.mofengbaizhi.tinkersnewlife.client.render.StarfallGlowClient.glowType()));
+                if (buffers instanceof MultiBufferSource.BufferSource bs3) {
+                    bs3.endBatch(com.mofengbaizhi.tinkersnewlife.client.render.StarfallGlowClient.glowType());
+                }
+                pose.popPose();
+                if (System.currentTimeMillis() - TNL$GLOW_LOG > 5000L) {
+                    TNL$GLOW_LOG = System.currentTimeMillis();
+                    com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL1001 drew starfall glow behind the gui item");
+                }
+            } catch (Throwable t) {
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL1001 glow FAILED: {}", t.toString());
+                try {
+                    pose.popPose();
+                } catch (Throwable ignored) {
+                }
+            }
+            return;                       // \u2605\u5149\u6655\u753b\u5b8c\u4ea4\u7ed9\u539f\u7248 \u2713
+        }
         RenderType rt = StarBodyClient.starBodyOrNull();
         if (rt == null) {
             return;
@@ -128,5 +160,30 @@ public class StarBodyItemRendererMixin {
     }
 
     private static long TNL$LOG = 0L;
+    private static long TNL$GLOW_LOG = 0L;
+
+    /** TNL1001 \u2605\u4e00\u4e2a\u94fa\u6ee1 UV 0~1 \u7684\u56db\u8fb9\u5f62\uff08\u2605\u4f9b\u5149\u6655\u7740\u8272\u5668\u7b97\u5f84\u5411\u6e10\u53d8 \u2713\uff09 */
+    private static void emitGlow(BakedModel baked, PoseStack pose, VertexConsumer vc) {
+        com.mojang.blaze3d.vertex.PoseStack.Pose pe = pose.last();
+        org.joml.Matrix4f m = pe.pose();
+        org.joml.Matrix3f n = pe.normal();
+        float s = 1.25F;
+        float o = (1.0F - s) * 0.5F;
+        float[][] corners = {
+                {o, o, 0.0F, 1.0F},
+                {o + s, o, 1.0F, 1.0F},
+                {o + s, o + s, 1.0F, 0.0F},
+                {o, o + s, 0.0F, 0.0F}
+        };
+        for (float[] c : corners) {
+            vc.vertex(m, c[0], c[1], 0.015F)
+                    .color(255, 255, 255, 255)
+                    .uv(c[2], c[3])
+                    .overlayCoords(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
+                    .uv2(0xF000F0)
+                    .normal(n, 0.0F, 0.0F, 1.0F)
+                    .endVertex();
+        }
+    }
     private static long TNL$LOG2 = 0L;
 }
