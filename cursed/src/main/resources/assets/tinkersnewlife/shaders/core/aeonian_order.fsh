@@ -106,7 +106,7 @@ void main() {
         float m1 = fbm(flow * 0.55);
         float m2 = fbm(flow * 1.10 + vec2(-EffectTime * 0.25, EffectTime * 0.18));
         float mist = clamp(m1 * 0.8 + m2 * 0.4, 0.0, 1.0);
-        vec3 col = mix(vec3(0.01, 0.01, 0.02), vec3(0.11, 0.10, 0.14), mist);
+        col = mix(vec3(0.01, 0.01, 0.02), vec3(0.11, 0.10, 0.14), mist);
         vec2 g = flow * 1.6;
         vec2 cell = floor(g);
         vec2 fc = fract(g) - vec2(0.5);
@@ -123,6 +123,13 @@ void main() {
         }
         col += vec3(0.06, 0.02, 0.10) * mist;
     }
+        } else {
+            // TNL1037 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u9570\u5200\u6574\u4e2a\u53d8\u9ed1\u4e86" \u2713
+            //   \u2605\u771f\u56e0 \u2717\uff1a\u2605\u628a\u5f13\u7684 `if` \u6574\u6bb5\u6362\u6389\u65f6 \u2717
+            //     \u2605**\u628a else \u5206\u652f\u4e00\u8d77\u541e\u4e86** \u2717 \u002b \u2605\u91cc\u9762\u53c8\u58f0\u660e\u4e86\u5f71\u5b50 `col` \u2717
+            //     \u21d2 \u2605\u4eae\u50cf\u7d20\u7684 col **\u4ece\u672a\u8d4b\u503c** \u21d2 \u2605\u672a\u521d\u59cb\u5316 \u21d2 \u2605**\u6574\u4ef6\u53d8\u9ed1** \u2713\u2713
+            //   \u2605\u73b0\u5728 \u2713\uff1a\u2605\u7167\u5f13\u90a3\u6837\u628a\u4eae\u50cf\u7d20\u539f\u6837\u8f93\u51fa \u2713
+            col = tex.rgb;
     float light = max(max(vLight.x, vLight.y), 0.55);
     fragColor = vec4(col * light, tex.a) * vColor * ColorModulator;
 }
