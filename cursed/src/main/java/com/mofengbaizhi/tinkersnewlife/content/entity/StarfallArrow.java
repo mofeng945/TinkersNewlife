@@ -394,9 +394,24 @@ public class StarfallArrow extends AbstractArrow {
         }
         LivingEntity attacker = this.getOwner() instanceof LivingEntity le ? le : null;
         try {
-            com.mofengbaizhi.tinkersnewlife.util.TruePierce.apply(attacker, target, dmg);
+            com.mofengbaizhi.tinkersnewlife.util.TruePierce.apply(attacker, target, dmg);   // ★见下方分支 ✓
         } catch (Throwable th) {
-            target.hurt(this.damageSources().magic(), dmg);
+            // TNL986 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u628a\u51b0\u4e0e\u706b\u9f99\u65e0\u6cd5\u771f\u4f24\u7684 bug \u4fee\u597d" \u2713
+            //   \u2605jar \u8bc1\u636e\uff08\u2605javap \u2713\uff09\uff1a
+            //     \u2605``EntityMutlipartPart``\uff08\u2605\u51b0\u706b\u90e8\u4ef6\u57fa\u7c7b \u2713\uff09\u81ea\u5df1\u5c31\u6709
+            //     \u2605``public boolean hurt(DamageSource, float)``\uff08\u2605m_6469_ \u2713\uff09\uff0c\u2605\u5b83**\u4f1a\u628a\u4f24\u5bb3\u8f6c\u4EA4\u7ed9\u672c\u4f53** \u2713
+            //     \u002b \u2605\u4e58\u4e0a\u90e8\u4f4d\u7cfb\u6570\uff08\u2605\u7fc5\u8180/\u5c3e\u5df4 \u2713\uff09\u3002\u2605\u539f\u7248 ``EnderDragonPart`` \u540c\u7406 \u2713
+            //   \u2605\u6240\u4ee5\uff1a\u2605\u547d\u4e2d"\u90e8\u4ef6"\u65f6\u5e94**\u6253\u90e8\u4ef6** \u2713\uff08\u2605\u5b83\u4f1a\u8f6c\u53d1 \u2713\uff09
+            //     \u2605\u800c\u4e0d\u662f\u76f4\u63a5\u6253\u672c\u4f53 \u2717\uff08\u2605\u90a3\u6837\u51b0\u706b\u8fd9\u8fb9\u4e0d\u8d70\u5b83\u7684\u8f6c\u53d1\u94fe \u2717\uff09
+            net.minecraft.world.entity.Entity tnl$victim = hitResult.getEntity();
+            if (tnl$victim instanceof net.minecraft.world.entity.LivingEntity) {
+                tnl$victim = target;                       // \u2605\u672c\u4f53\u547d\u4e2d \u21d2 \u2605\u8d70\u539f\u6765\u7684\u771f\u4f24\u8def\u5f84 \u2713
+            }
+            if (tnl$victim != target) {
+                tnl$victim.hurt(this.damageSources().magic(), dmg);   // \u2605\u90e8\u4ef6\u81ea\u5df1\u8f6c\u53d1\u7ed9\u672c\u4f53 \u2713
+            } else {
+                com.mofengbaizhi.tinkersnewlife.util.TruePierce.apply(attacker, target, dmg);
+            }
         }
         if (enh) {
             // TNL928 \u2605\u2605 \u4fee\u6b63\uff1a\u2605\u4e0a\u4e00\u7248\u6211\u628a\u5b83\u9519\u63d2\u5728 **catch** \u91cc \u2717
