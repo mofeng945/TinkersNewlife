@@ -55,5 +55,12 @@ void main() {
     vec3 col = vec3(0.82, 0.85, 0.91);
     col += vec3(1.0) * (star * 0.35 + star2 * 0.25 + motes * 0.30);
 
-    fragColor = vec4(col * vColor.rgb * ColorModulator.rgb, a * vColor.a * ColorModulator.a);
+    // TNL1006 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u5916\u9762\u80cc\u666f\u8fd9\u4e2a\u65b9\u5f62\u767d\u5e95\u7ed9\u6211\u5f04\u6389\u554a\uff0c\u4e00\u76f4\u5728\u5c31\u6ca1\u6d88\u5931\u8fc7" \u2713
+    //   \u2605\u65b0\u624b\u6bb5 \u2713\uff1a\u2605\u4e0d\u53ea\u628a alpha \u538b\u4f4e \u2717 \u2014\u2014 \u2605**\u4f4e\u4e8e\u9608\u503c\u76f4\u63a5 discard** \u2713
+    //     \u21d2 \u2605\u54ea\u6015\u56db\u8fb9\u5f62\u94fa\u6ee1\u683c\u5b50\uff0c\u2605\u4e5f**\u4e0d\u53ef\u80fd\u518d\u51fa\u73b0\u4e00\u5757\u767d\u677f** \u2713\u2713
+    float alpha = a * vColor.a * ColorModulator.a;
+    if (alpha < 0.035) {
+        discard;
+    }
+    fragColor = vec4(col * vColor.rgb * ColorModulator.rgb, alpha);
 }
