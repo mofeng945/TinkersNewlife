@@ -48,7 +48,11 @@ public class StarBodyItemRendererMixin {
     private void tinkersnewlife$starBow(ItemStack stack, ItemDisplayContext context, boolean leftHand,
                                         PoseStack pose, MultiBufferSource buffers, int light, int overlay,
                                         BakedModel model, CallbackInfo ci) {
-        if (stack == null || !(stack.getItem() instanceof StarfallLamentItem)) {
+        // TNL1024 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u6211\u6ca1\u770b\u5230\u660e\u663e\u6e32\u67d3\u554a" \u2713
+        //   \u2605\u6052\u6b63\u79e9\u5668\u4e5f\u8d70\u540c\u4e00\u5957\u6d41\u7a0b \u2713\uff08\u2605\u53ea\u662f\u6362\u4e00\u4e2a\u7740\u8272\u5668/RenderType \u2713\uff09
+        boolean tnl$aoe = stack != null
+                && stack.getItem() instanceof com.mofengbaizhi.tinkersnewlife.content.item.AeonianOrderItem;
+        if (stack == null || (!(stack.getItem() instanceof StarfallLamentItem) && !tnl$aoe)) {
             return;
         }
         // TNL1001 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u6a21\u4eff\u65e0\u5c3d\u8d2a\u5a6a\u7684\u7269\u54c1\u680f\u80cc\u666f\u5149\u6548\u6e32\u67d3\uff0c\u7ed9\u661f\u9668\u60b2\u53f9\u505a\u7070\u767d\u8272\u80cc\u666f\u5149\u6548" \u2713
@@ -81,7 +85,13 @@ public class StarBodyItemRendererMixin {
             }
             return;                       // \u2605\u5149\u6655\u753b\u5b8c\u4ea4\u7ed9\u539f\u7248 \u2713
         }
-        RenderType rt = StarBodyClient.starBodyOrNull();
+        RenderType rt = tnl$aoe
+                ? (com.mofengbaizhi.tinkersnewlife.client.render.AeonianOrderClient.ready()
+                        ? com.mofengbaizhi.tinkersnewlife.client.render.AeonianOrderClient.orderType() : null)
+                : StarBodyClient.starBodyOrNull();
+        if (tnl$aoe) {
+            com.mofengbaizhi.tinkersnewlife.client.render.AeonianOrderClient.tick();
+        }
         if (rt == null) {
             return;
         }
