@@ -71,9 +71,9 @@ public final class AeonianWeaken {
 
     /** \u2605\u4e00\u6b21\u547d\u4e2d\uff1a\u2605\u53e0 tick \u2713 */
     public static void add(LivingEntity e, int amount) {
-        if (stun(e) > 0) {
-            return;
-        }
+        // TNL1073 user: "while the unnameable state is on, a new burst seems not to trigger".
+        // Two gates were blocking it: this early return, and the ticker handling the stun before
+        // the cap. Both are gone now, so hits stack during the state and can burst again.
         int v = Math.min(MAX, ticks(e) + amount);
         TRACKED.add(e.getUUID());
         tag(e).putInt(TICKS, v);
@@ -137,25 +137,6 @@ public final class AeonianWeaken {
             }
         }
         for (LivingEntity le : touched) {
-            int st = stun(le);
-            if (st > 0) {
-                // TNL1048 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u4e0d\u662f\u6302\u4e0d\u53ef\u540d\u72b6\u5417\uff1f\u6211\u5199\u7684\u90a3\u4e2a\u6548\u679c" \u2713
-                //   \u2605\u771f\u76f8 \u2717\uff1a\u2605\u4f60\u5199\u7684\u662f `UnnameableEffect`\uff08\u2605id ``tinkersnewlife:unnameable`` \u2713\uff09
-                //     \u2605\u800c\u6211\u81ea\u5df1\u62fc\u4e86\u4e00\u5806**\u539f\u7248\u6548\u679c**\uff08\u2605\u8fdf\u7f13/\u865a\u5f31/\u53cd\u80c3 \u2717\uff09
-                //     \u2605\u6839\u672c\u6ca1\u7528\u4f60\u90a3\u4e2a \u2713\u2713\uff08\u2605\u597d\u5728\u53ea\u662f\u540e\u9762\u8fd9\u6bb5\uff0c\u2605现\u5728\u6362\u6389 \u2713\uff09
-                //   \u2605\u73b0\u5728 \u2713\uff1a\u2605\u53cd\u5c04\u53d6\u6ce8\u518c\u8868\u91cc\u7684 ``unnameable`` \u2713
-                //     \uff08\u2605\u2605 \u4e0d\u5f15\u5165\u8de8\u6a21\u5757\u7f16\u8bd1\u4f9d\u8d56 \u2713\uff1a\u2605`AeonianWeaken` \u5728 common \u2717
-                //      \u2605\u800c `UnnameableEffect` \u5728 imagination \u2713\uff09
-                var tnl$eff = net.minecraft.core.registries.BuiltInRegistries.MOB_EFFECT.get(
-                        new net.minecraft.resources.ResourceLocation("tinkersnewlife", "unnameable"));
-                if (tnl$eff != null) {
-                    le.addEffect(new MobEffectInstance(tnl$eff, STUN_TICKS, 0, false, false, false));
-                }
-                le.setDeltaMovement(Vec3.ZERO);
-                le.hurtMarked = true;
-                tag(le).putInt(STUN, st - 1);
-                continue;
-            }
             int t = ticks(le);
             if (t <= 0) {
                 continue;
@@ -186,6 +167,25 @@ public final class AeonianWeaken {
                 continue;
             }
             // TNL1049 the mark effect decays by itself one tick at a time, nothing to do here
+            int st = stun(le);
+            if (st > 0) {
+                // TNL1048 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u4e0d\u662f\u6302\u4e0d\u53ef\u540d\u72b6\u5417\uff1f\u6211\u5199\u7684\u90a3\u4e2a\u6548\u679c" \u2713
+                //   \u2605\u771f\u76f8 \u2717\uff1a\u2605\u4f60\u5199\u7684\u662f `UnnameableEffect`\uff08\u2605id ``tinkersnewlife:unnameable`` \u2713\uff09
+                //     \u2605\u800c\u6211\u81ea\u5df1\u62fc\u4e86\u4e00\u5806**\u539f\u7248\u6548\u679c**\uff08\u2605\u8fdf\u7f13/\u865a\u5f31/\u53cd\u80c3 \u2717\uff09
+                //     \u2605\u6839\u672c\u6ca1\u7528\u4f60\u90a3\u4e2a \u2713\u2713\uff08\u2605\u597d\u5728\u53ea\u662f\u540e\u9762\u8fd9\u6bb5\uff0c\u2605现\u5728\u6362\u6389 \u2713\uff09
+                //   \u2605\u73b0\u5728 \u2713\uff1a\u2605\u53cd\u5c04\u53d6\u6ce8\u518c\u8868\u91cc\u7684 ``unnameable`` \u2713
+                //     \uff08\u2605\u2605 \u4e0d\u5f15\u5165\u8de8\u6a21\u5757\u7f16\u8bd1\u4f9d\u8d56 \u2713\uff1a\u2605`AeonianWeaken` \u5728 common \u2717
+                //      \u2605\u800c `UnnameableEffect` \u5728 imagination \u2713\uff09
+                var tnl$eff = net.minecraft.core.registries.BuiltInRegistries.MOB_EFFECT.get(
+                        new net.minecraft.resources.ResourceLocation("tinkersnewlife", "unnameable"));
+                if (tnl$eff != null) {
+                    le.addEffect(new MobEffectInstance(tnl$eff, STUN_TICKS, 0, false, false, false));
+                }
+                le.setDeltaMovement(Vec3.ZERO);
+                le.hurtMarked = true;
+                tag(le).putInt(STUN, st - 1);
+                continue;
+            }
         }
     }
 
