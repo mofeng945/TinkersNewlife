@@ -115,7 +115,13 @@ void main() {
         //   \u2605\u62a5\u9519\uff1a\u2605``0(106) : error C1503: undefined variable "deep"`` \u2713
         //   \u2605\u539f\u56e0 \u2717\uff1a\u2605\u6211\u6362\u6389\u661f\u70b9\u90a3\u6bb5\u65f6\u628a\u5b83\u4eec\u7684**\u58f0\u660e\u4e00\u5e76\u5220\u4e86** \u2713
         vec3 deep = vec3(0.02, 0.025, 0.06);
-        vec3 cloud = vec3(0.35, 0.42, 0.80) * neb * 0.55 + vec3(0.55, 0.35, 0.75) * neb2 * 0.35;
+        // TNL976 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u5728\u661f\u7a7a\u5e55\u5e03\u4e0a\u753b\u4e00\u4e9b**\u6de1\u7d2b\u8272\u6216\u5176\u4ed6\u8272\u5f69\u7684\u96fe\u72b6\u661f\u4e91**" \u2713
+        //   \u2605\u4e09\u5c42\u4e0d\u540c\u8272\u76f8\u7684\u96fe \u2713\uff08\u2605\u6de1\u7d2b / \u2605\u51b7\u84dd / \u2605\u6de1\u7c89\u7d2b \u2713\uff09
+        //   \u2605\u5404\u81ea\u7528**\u4e0d\u540c\u9891\u7387 \u002b \u4e0d\u540c\u65f6\u95f4\u6d41\u901f** \u2713 \u21d2 \u2605\u96fe\u4f1a\u6162\u6162\u6d6e\u52a8 \u2713
+        float fog3 = fbm(localUv * 3.5 + vec2(EffectTime * 0.011, EffectTime * 0.007));
+        vec3 cloud = vec3(0.42, 0.24, 0.72) * neb * 0.75        // \u2605\u6de1\u7d2b \u2713
+                   + vec3(0.20, 0.45, 0.85) * neb2 * 0.45        // \u2605\u51b7\u84dd \u2713
+                   + vec3(0.72, 0.34, 0.58) * fog3 * 0.30;       // \u2605\u6de1\u7c89\u7d2b \u2713
         col = deep + cloud + vec3(1.0, 1.0, 1.0) * starMask;
     } else {
         col = tex.rgb;
