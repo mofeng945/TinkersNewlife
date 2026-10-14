@@ -131,3 +131,32 @@ for _f in sorted(_g2.glob("cursed/src/main/resources/assets/tinkersnewlife/shade
         for _e in errs:
             print("        - " + _e)
 print("  === 低级错误检查：bad %d ===" % bad3)
+
+# TNL1051 two hard checks that would have caught tonight's three GLSL accidents
+import glob as _g3, io as _io3, os as _os3, re as _re3
+bad4 = 0
+for _f in sorted(_g3.glob("cursed/src/main/resources/assets/tinkersnewlife/shaders/core/*.fsh")
+                 + _g3.glob("imagination/src/main/resources/assets/tinkersnewlife/shaders/core/*.fsh")
+                 + _g3.glob("cursed/src/main/resources/assets/tinkersnewlife/shaders/core/*.vsh")
+                 + _g3.glob("imagination/src/main/resources/assets/tinkersnewlife/shaders/core/*.vsh")):
+    _src = _io3.open(_f, encoding="utf-8").read()
+    _errs = []
+    if _src.count("{") != _src.count("}"):
+        _errs.append("brace mismatch: %d open vs %d close" % (_src.count("{"), _src.count("}")))
+    _defined = set(_re3.findall(r"^\s*(?:float|vec2|vec3|vec4|int|void|mat4)\s+(\w+)\s*\(", _src, _re3.M))
+    _defined |= {"main"}
+    _called = set(_re3.findall(r"\b(\w+)\s*\(", _src))
+    _builtin = {"if", "for", "while", "return", "switch", "texture", "length", "normalize", "dot",
+                "cross", "mix", "clamp", "smoothstep", "step", "fract", "floor", "ceil", "abs",
+                "sin", "cos", "tan", "atan", "asin", "acos", "pow", "sqrt", "exp", "log", "min",
+                "max", "mod", "radians", "degrees", "distance", "reflect", "refract", "vec2",
+                "vec3", "vec4", "mat2", "mat3", "mat4", "float", "int", "discard", "cosh", "sign"}
+    _missing = sorted(x for x in _called - _defined - _builtin if not x.startswith(("gl_", "Sampler")))
+    if _missing:
+        _errs.append("called but never defined: %s" % _missing)
+    if _errs:
+        bad4 += 1
+        print("  [FAIL] %s" % _os3.path.basename(_f))
+        for _e in _errs:
+            print("        - " + _e)
+print("  === hard GLSL checks: bad %d ===" % bad4)
