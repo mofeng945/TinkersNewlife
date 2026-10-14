@@ -44,6 +44,11 @@ public final class AeonianWeaken {
     /** \u2605\u786c\u63a7\u65f6\u957f\uff08\u260510 \u79d2 \u2713\uff09 */
     public static final int STUN_TICKS = 200;
 
+    /** TNL1072 user: "the timer keeps stalling" -- scanning every entity of every level each tick
+     * was the stutter, the effect class itself is fine (its isDurationEffectTick returns true and we
+     * no longer refresh anything). We now only look at entities that were actually marked. */
+    private static final java.util.Set<java.util.UUID> TRACKED = new java.util.HashSet<>();
+
     private AeonianWeaken() {
     }
 
@@ -70,6 +75,7 @@ public final class AeonianWeaken {
             return;
         }
         int v = Math.min(MAX, ticks(e) + amount);
+        TRACKED.add(e.getUUID());
         tag(e).putInt(TICKS, v);
         // TNL1070 for players mirror the count into a hidden item cooldown, which the client can read
         if (e instanceof net.minecraft.world.entity.player.Player pl) {
@@ -111,11 +117,22 @@ public final class AeonianWeaken {
             return;
         }
         List<LivingEntity> touched = new ArrayList<>();
-        for (ServerLevel level : server.getAllLevels()) {
-            for (var e : level.getAllEntities()) {
-                if (e instanceof LivingEntity le && !le.level().isClientSide
+        if (!TRACKED.isEmpty()) {
+            java.util.Iterator<java.util.UUID> it = TRACKED.iterator();
+            while (it.hasNext()) {
+                java.util.UUID id = it.next();
+                net.minecraft.world.entity.Entity found = null;
+                for (ServerLevel level : server.getAllLevels()) {
+                    found = level.getEntity(id);
+                    if (found != null) {
+                        break;
+                    }
+                }
+                if (found instanceof LivingEntity le && le.isAlive()
                         && (ticks(le) > 0 || stun(le) > 0)) {
                     touched.add(le);
+                } else {
+                    it.remove();                 // TNL1072 stop tracking it once it is done
                 }
             }
         }
