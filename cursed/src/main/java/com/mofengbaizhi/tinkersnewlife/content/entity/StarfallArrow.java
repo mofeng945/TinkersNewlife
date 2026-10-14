@@ -85,15 +85,12 @@ public class StarfallArrow extends AbstractArrow {
         super(type, shooter, level);
         this.setBaseDamage(0.0D);
         this.pickup = Pickup.DISALLOWED;
-        // TNL1021 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u5e78\u8fd0\u503c\u53ef\u4ee5\u5f71\u54cd\u5f3a\u5316\u7bad\u77e2\u5c04\u51fa\u7684\u6982\u7387" \u2713
-        //   \u2605\u57fa\u7840\u6982\u7387 10% \u2713\uff0c\u2605\u6bcf 1 \u70b9**\u5e78\u8fd0**\u518d +5% \u2713
-        //   \u2605\u5e78\u8fd0\u6765\u81ea\u2605``LivingEntity#getLuck()``\u2713\uff08\u2605\u5c5e\u6027 ``Attributes.LUCK`` \u2713\uff0c
-        //     \u2605\u836f\u6c34/\u88c5\u5907\u52a0\u6210\u90fd\u4f1a\u7b97\u8fdb\u53bb \u2713\uff09
-        //   \u2605\u4e0a\u9650 90% \u2713\uff08\u2605\u4e0d\u8ba9\u5b83\u5230 100% \u2713\uff09\uff0c\u2605\u4e0b\u9650 0% \u2713\uff08\u2605\u8d1f\u5e78\u8fd0\u4e5f\u80fd\u538b\u5230\u6ca1\u6709 \u2713\uff09
-        // TNL1021b \u2605``LivingEntity`` \u6ca1\u6709 ``getLuck()`` \u2717 \u21d2 \u2605\u76f4\u63a5\u8bfb\u5c5e\u6027 \u2713
-        float tnl$enhChance = 0.10F + (float) shooter.getAttributeValue(
-                net.minecraft.world.entity.ai.attributes.Attributes.LUCK) * 0.05F;
-        tnl$enhChance = Math.max(0.0F, Math.min(0.90F, tnl$enhChance));
+        // TNL1022 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u6700\u5927\u6982\u7387 5%" \u2713\uff08\u2605\u9009\u4e86"\u2605\u5f3a\u5316\u7bad\u603b\u6982\u7387\u5c01\u9876 5%" \u2713\uff09
+        //   \u2605\u57fa\u7840 2% \u2713 \u002b \u2605\u6bcf 1 \u70b9\u5e78\u8fd0 +1% \u2713 \u21d2 \u2605**\u4e0a\u9650 5%** \u2713\uff08\u2605\u5e78\u8fd0 +3 \u5c31\u5230\u9876 \u2713\uff09
+        //   \u2605\u8d1f\u5e78\u8fd0\u4e5f\u538b\u4e0d\u5230\u8d1f\u6570 \u2713\uff08\u2605\u4e0b\u9650 0 \u2713\uff09
+        float tnl$enhChance = 0.02F + (float) shooter.getAttributeValue(
+                net.minecraft.world.entity.ai.attributes.Attributes.LUCK) * 0.01F;
+        tnl$enhChance = Math.max(0.0F, Math.min(0.05F, tnl$enhChance));
         this.entityData.set(DATA_ENHANCED, level.random.nextFloat() < tnl$enhChance);
     }
 
