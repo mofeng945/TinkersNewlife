@@ -1,6 +1,8 @@
 package com.mofengbaizhi.tinkersnewlife.mixin;
 
+import com.mofengbaizhi.tinkersnewlife.client.render.AeonianOrderClient;
 import com.mofengbaizhi.tinkersnewlife.client.render.StarBodyClient;
+import com.mofengbaizhi.tinkersnewlife.client.render.StarfallGlowClient;
 import com.mofengbaizhi.tinkersnewlife.content.item.AeonianOrderItem;
 import com.mofengbaizhi.tinkersnewlife.content.item.StarfallLamentItem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -9,6 +11,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
@@ -26,23 +29,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * TNL1026 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u4f60\u80fd\u4e0d\u80fd\u628a\u5f13\u63d0\u53d6\u4e00\u4e9b\u5171\u7528\u7684\u65b9\u6cd5\uff0c\u7136\u540e\u4e24\u4e2a\u7269\u54c1\u90fd\u80fd\u8c03" \u2713
+ * TNL1028 \u2605\u2605 \u4e24\u628a\u6b66\u5668\u7684\u81ea\u7ed8\u5165\u53e3\uff08\u2605\u5171\u7528\u4e00\u6761\u6d41\u7a0b \u2713\uff09
  *
- * <p>\u2605\u73b0\u5728\u6574\u6761"\u81ea\u7ed8\u4e00\u5c42"\u7684\u6d41\u7a0b\u53ea\u6709**\u4e00\u4efd** \u2713\uff1a
- * {@link #tnl$renderEffectLayer} \u2713 \u2014\u2014 \u2605\u4e24\u628a\u6b66\u5668\u90fd\u8c03\u5b83 \u2713\uff0c
- * \u2605\u53ea\u662f\u4f20\u5165\u7684 {@link RenderType} \u4e0d\u540c \u2713\u3002
- *
- * <p>\u2605\u6d41\u7a0b\uff08\u2605\u4e00\u6b65\u90fd\u4e0d\u80fd\u5c11 \u2713\uff09\uff1a
- * <ol>
- *   <li>\u2605``pose.pushPose()`` \u2713\uff1b</li>
- *   <li>\u2605``ForgeHooksClient.handleCameraTransforms`` \u2713\uff08\u2605手持/物品栏的显示变换 \u2713\uff09\uff1b</li>
- *   <li>\u2605``translate(-0.5,-0.5,-0.5)`` \u2713\uff08\u2605baked model \u539f点在角\uff0c\u21d2 \u2605要归\u5230方块中\u5fc3 \u2713\uff09\uff1b</li>
- *   <li>\u2605``source.endBatch()`` \u2713 \u2192 \u2605写四边\u5f62 \u2713 \u2192 \u2605``source.endBatch(rt)`` \u2713\uff08\u2605成\u5bf9\uff0c\u2605否\u5219\u5d29 \u2713\uff09\uff1b</li>
- *   <li>\u2605``pose.popPose()`` \u2713 \u002b \u2605``ci.cancel()`` \u2713\u3002</li>
- * </ol>
+ * <p>\u2605\u7528\u6237\u53cd\u9988\u8fc7\u7684\u4e24\u4e2a\u5751 \u2713\uff1a
+ * <ul>
+ *   <li>\u2605"\u5171\u7528\u62bd\u53d6\u65f6\u628a\u5f13\u7684\u7269\u54c1\u680f\u5149\u6655\u5fd8\u4e86\u642c\u8fc7\u6765" \u2717
+ *       \u21d2 \u2605\u6240\u4ee5\u8fd9\u91cc**\u4e24\u6761\u5165\u53e3\u90fd\u5728** \u2713\uff1aGUI \u5149\u6655\uff08\u5f13 \u2713\uff09\u002b \u81ea\u7ed8\u4e00\u5c42\uff08\u4e24\u628a\u90fd\u884c \u2713\uff09\uff1b</li>
+ *   <li>\u2605"\u9570\u5200\u62ff\u5728\u624b\u91cc\u8fd8\u662f\u4e00\u5757\u677f" \u2717
+ *       \u21d2 \u2605\u624b\u6301\u59ff\u6001\u8981\u5355\u72ec\u7b97 \u2717 \u2014\u2014 \u2605\u6240\u4ee5\u9570\u5200**\u5148\u53ea\u5728 GUI** \u2713\uff0c
+ *       \u2605\u624b\u6301\u4ea4\u8fd8\u539f\u7248 \u2713\uff08\u2605\u4e0b\u4e00\u8f6e\u518d\u505a\u624b\u6301\u900f\u955c \u2713\uff09\u3002</li>
+ * </ul>
  */
 @Mixin(ItemRenderer.class)
 public class StarBodyItemRendererMixin {
+
+    private static long TNL$LOG = 0L;
 
     @Inject(method = "m_115143_", at = @At("HEAD"), cancellable = true, remap = false)
     private void tinkersnewlife$effectLayer(ItemStack stack, ItemDisplayContext context, boolean leftHand,
@@ -57,21 +58,41 @@ public class StarBodyItemRendererMixin {
             return;
         }
 
-        // \u2605\u6052\u6b63\u79e9\u5668\uff1a\u2605\u53ea\u5728\u7269\u54c1\u680f\u8d70\u81ea\u5b9a\u4e49\u7740\u8272\u5668 \u2713
-        //   \uff08\u2605\u624b\u6301\u7167\u62c4\u5f13\u90a3\u5957\u4f1a\u628a\u5b83\u644a\u6210\u4e00\u5757\u5927\u9ed1\u677f \u2717\uff09
-        // TNL1027 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u53cd\u6b63\u6211\u8981\u8ba9\u624b\u6301\u9570\u5200\u6a21\u578b\u6709\u900f\u955c\u6548\u679c\uff0c\u4f60\u770b\u7740\u529e" \u2713
-        //   \u2605\u4e0a\u4e00\u7248\u6211\u4ee5\u4e3a\u662f"\u5e73\u9762\u6a21\u578b\u6401\u4e0d\u5bf9\u59ff\u6001" \u2717 \u2014\u2014 \u2605\u5176\u5b9e\u662f\u7740\u8272\u5668\u7684 alpha \u5199\u6b7b\u4e86 \u2713
-        //   \u2605\u73b0\u5728 alpha \u5df2\u4fee\uff08\u2605\u8ddf\u8d34\u56fe\u8d70 \u2713\uff09\u21d2 \u2605\u624b\u6301\u91cd\u65b0\u8d70\u81ea\u5b9a\u4e49\u7740\u8272\u5668 \u2713
-        //   \u2605\u82e5\u624b\u6301\u8fd8\u662f\u4e0d\u5bf9 \u2717 \u21d2 \u2605\u6211\u518d\u5355\u72ec\u5904\u7406\u624b\u6301\u59ff\u6001 \u2713
+        // \u2605\u2460 \u5f13\u7684\u7269\u54c1\u680f\u5149\u6655\uff08\u2605\u6062\u590d \u2713\uff09\uff1a\u2605\u753b\u5b8c**\u4e0d\u53d6\u6d88** \u2713 \u21d2 \u2605\u539f\u7248\u7269\u54c1\u753b\u5728\u5b83\u4e0a\u9762 \u2713
+        if (bow && context == ItemDisplayContext.GUI && StarfallGlowClient.ready()) {
+            StarfallGlowClient.tick();
+            try {
+                pose.pushPose();
+                BakedModel glowModel = ForgeHooksClient.handleCameraTransforms(pose, model, context, leftHand);
+                pose.translate(-0.5D, -0.5D, -0.5D);
+                MultiBufferSource.BufferSource gsrc = buffers instanceof MultiBufferSource.BufferSource b2 ? b2 : null;
+                if (gsrc != null) {
+                    gsrc.endBatch();
+                }
+                tnl$emitGlow(pose, buffers.getBuffer(StarfallGlowClient.glowType()));
+                if (gsrc != null) {
+                    gsrc.endBatch(StarfallGlowClient.glowType());
+                }
+                pose.popPose();
+            } catch (Throwable t) {
+                try {
+                    pose.popPose();
+                } catch (Throwable ignored) {
+                }
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL1028 glow FAILED: {}", t.toString());
+            }
+            return;
+        }
 
-        // \u2605\u9009\u7740\u8272\u5668\uff08\u2605\u5f13 / \u6052\u6b63\u79e9\u5668 \u2713\uff09
-        RenderType rt;
+        // \u2605\u2461 \u9570\u5200\uff1a\u2605\u5148\u53ea\u5728\u7269\u54c1\u680f\u8d70\u81ea\u5b9a\u4e49\u7740\u8272\u5668 \u2713
+        if (order && context != ItemDisplayContext.GUI) {
+            return;
+        }
+
+        RenderType rt = bow ? StarBodyClient.starBodyOrNull()
+                : (AeonianOrderClient.ready() ? AeonianOrderClient.orderType() : null);
         if (order) {
-            com.mofengbaizhi.tinkersnewlife.client.render.AeonianOrderClient.tick();
-            rt = com.mofengbaizhi.tinkersnewlife.client.render.AeonianOrderClient.ready()
-                    ? com.mofengbaizhi.tinkersnewlife.client.render.AeonianOrderClient.orderType() : null;
-        } else {
-            rt = StarBodyClient.starBodyOrNull();
+            AeonianOrderClient.tick();
         }
         if (rt == null) {
             return;
@@ -79,12 +100,7 @@ public class StarBodyItemRendererMixin {
         tnl$renderEffectLayer(pose, buffers, light, model, context, leftHand, rt, order ? "order" : "bow", ci);
     }
 
-    /**
-     * \u2605\u2605 \u5171\u7528\u6d41\u7a0b \u2713\uff1a\u2605\u628a\u4f20\u5165\u7684 {@link RenderType} \u5728\u539f\u7248\u4e4b\u524d
-     * \u5148\u753b\u4e00\u5c42\uff08\u2605\u7136\u540e\u53d6\u6d88\u539f\u7248 \u2713\uff09\u3002
-     *
-     * @param tag \u2605\u4ec5\u7528\u4e8e\u65e5\u5fd7\u533a\u5206\u4e24\u628a\u6b66\u5668 \u2713
-     */
+    /** \u2605\u5171\u7528\uff1a\u2605\u5728\u539f\u7248\u4e4b\u524d\u5148\u753b\u4e00\u5c42\uff0c\u2605\u7136\u540e\u53d6\u6d88\u539f\u7248 \u2713 */
     private static void tnl$renderEffectLayer(PoseStack pose, MultiBufferSource buffers, int light,
                                               BakedModel model, ItemDisplayContext context, boolean leftHand,
                                               RenderType rt, String tag, CallbackInfo ci) {
@@ -105,19 +121,43 @@ public class StarBodyItemRendererMixin {
             if (System.currentTimeMillis() - TNL$LOG > 5000L) {
                 TNL$LOG = System.currentTimeMillis();
                 com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
-                        "TNL1026 drew {} quads through the {} effect layer (ctx={})", quads.size(), tag, context);
+                        "TNL1028 drew {} quads through the {} effect layer (ctx={})", quads.size(), tag, context);
             }
         } catch (Throwable t) {
             try {
                 pose.popPose();
             } catch (Throwable ignored) {
             }
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL1026 {} effect layer FAILED: {}",
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL1028 {} effect layer FAILED: {}",
                     tag, t.toString());
         }
     }
 
-    /** \u2605\u628a\u6a21\u578b\u7684\u56db\u8fb9\u5f62\u5199\u8fdb\u7ed9\u5b9a\u7f13\u51b2 \u2713\uff08\u2605\u683c\u5f0f\u5fc5\u987b\u4e0e RenderType \u4e00\u81f4 \u2713\uff09 */
+    /** \u2605\u5149\u6655\uff1a\u2605\u4e00\u4e2a\u94fa\u6ee1 UV 0~1 \u7684\u56db\u8fb9\u5f62 \u2713 */
+    private static void tnl$emitGlow(PoseStack pose, VertexConsumer vc) {
+        com.mojang.blaze3d.vertex.PoseStack.Pose pe = pose.last();
+        Matrix4f m = pe.pose();
+        Matrix3f n = pe.normal();
+        float s = 1.35F;
+        float o = (1.0F - s) * 0.5F;
+        float[][] corners = {
+                {o, o, 0.0F, 1.0F},
+                {o + s, o, 1.0F, 1.0F},
+                {o + s, o + s, 1.0F, 0.0F},
+                {o, o + s, 0.0F, 0.0F}
+        };
+        for (float[] c : corners) {
+            vc.vertex(m, c[0], c[1], 0.015F)
+                    .color(255, 255, 255, 255)
+                    .uv(c[2], c[3])
+                    .overlayCoords(OverlayTexture.NO_OVERLAY)
+                    .uv2(0xF000F0)
+                    .normal(n, 0.0F, 0.0F, 1.0F)
+                    .endVertex();
+        }
+    }
+
+    /** \u2605\u628a\u6a21\u578b\u56db\u8fb9\u5f62\u5199\u8fdb\u7ed9\u5b9a\u7f13\u51b2 \u2713 */
     private static List<BakedQuad> tnl$emit(BakedModel baked, PoseStack pose, VertexConsumer vc, int light) {
         Matrix4f m = pose.last().pose();
         Matrix3f n = pose.last().normal();
@@ -136,7 +176,7 @@ public class StarBodyItemRendererMixin {
                         Float.intBitsToFloat(v[o + 2]));
                 vc.color(255, 255, 255, 255);
                 vc.uv(Float.intBitsToFloat(v[o + 4]), Float.intBitsToFloat(v[o + 5]));
-                vc.overlayCoords(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY);
+                vc.overlayCoords(OverlayTexture.NO_OVERLAY);
                 vc.uv2(light);
                 vc.normal(n, 0.0F, 1.0F, 0.0F);
                 vc.endVertex();
@@ -144,6 +184,4 @@ public class StarBodyItemRendererMixin {
         }
         return quads;
     }
-
-    private static long TNL$LOG = 0L;
 }
