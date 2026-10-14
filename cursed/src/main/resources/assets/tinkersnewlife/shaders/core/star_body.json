@@ -105,22 +105,6 @@
         1.0,
         1.0
       ]
-    },
-    {
-      "name": "CamYaw",
-      "type": "float",
-      "count": 1,
-      "values": [
-        0.0
-      ]
-    },
-    {
-      "name": "CamPitch",
-      "type": "float",
-      "count": 1,
-      "values": [
-        0.0
-      ]
     }
   ]
 }
