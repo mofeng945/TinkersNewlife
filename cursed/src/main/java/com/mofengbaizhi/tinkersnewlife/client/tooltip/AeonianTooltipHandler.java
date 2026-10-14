@@ -106,8 +106,15 @@ public final class AeonianTooltipHandler {
         float t = (time % 60000L) / 1000.0F;
         int cols = Math.max(2, width / 14);
         int rows = Math.max(1, height / 14);
+        // TNL1062 user: keep every eye strictly inside the box (they used to spill past the border)
         for (int cx = 0; cx < cols; cx++) {
             for (int cy = 0; cy < rows; cy++) {
+                if (x - 2 + cx * 14 + 11 > x + width + 3) {
+                    continue;
+                }
+                if (y - 3 + cy * 14 + 11 > y + height + 3) {
+                    continue;
+                }
                 float phase = cx * 2.3F + cy * 3.7F;
                 float open = 0.25F + 0.75F * (float) Math.abs(Math.sin(t * 0.9D + phase));
                 int eh = Math.max(2, (int) (11 * open));
