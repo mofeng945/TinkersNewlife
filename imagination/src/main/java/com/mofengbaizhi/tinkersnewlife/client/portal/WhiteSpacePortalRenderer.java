@@ -45,8 +45,17 @@ public class WhiteSpacePortalRenderer implements BlockEntityRenderer<WhiteSpaceP
         float ax = facing.getStepZ();
         float az = facing.getStepX();
         Matrix4f m = pose.last().pose();
+        // TNL1000 \u2605\u2605 \u7528\u6237\u622a\u56fe\uff1a\u2605\u95e8\u9762\u662f**\u7d2b\u8272\u7f3a\u5931\u8d34\u56fe** \u2717
+        //   \u2605\u771f\u56e0 \u2717\uff1a\u2605\u6211\u4eec\u7684 RenderType **\u6ca1\u7ed9\u7740\u8272\u5668\u7ed1\u8d34\u56fe** \u2717
+        //     \u21d2 \u2605``Sampler0`` \u91c7\u5230\u7684\u662f\u522b\u4eba\u6b8b\u7559\u7684\u7f3a\u5931\u8d34\u56fe \u2713\u2713
+        //   \u2605\u73b0\u5728\uff1a\u2605\u753b\u4e4b\u524d\u628a FBO \u989c\u8272\u9644\u4ef6\u7ed1\u5230 0 \u53f7\u91c7\u6837\u5668 \u2713
+        //     \u002b \u2605\u5728 BER \u5185\u5c31\u628a\u6279\u5237\u51fa\uff08\u2605\u4fdd\u8bc1\u5237\u7684\u65f6\u5019\u7ed1\u7684\u662f\u5b83 \u2713\uff09
+        com.mojang.blaze3d.systems.RenderSystem.setShaderTexture(0, PortalViewBridge.textureId());
         VertexConsumer vc = buffers.getBuffer(PortalViewRenderType.get());
         quad(vc, m, ax, az, nx, nz, y0, y1, v0, v1);
+        if (buffers instanceof net.minecraft.client.renderer.MultiBufferSource.BufferSource bs) {
+            bs.endBatch(PortalViewRenderType.get());
+        }
         if (System.currentTimeMillis() - last > 4000L) {
             last = System.currentTimeMillis();
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
