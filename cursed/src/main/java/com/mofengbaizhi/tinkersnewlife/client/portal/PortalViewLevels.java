@@ -37,6 +37,11 @@ public final class PortalViewLevels {
         return dimension == null ? null : KNOWN.get(dimension);
     }
 
+    /** TNL996 \u2605\u8c03\u8bd5\u7528\uff1a\u2605\u5df2\u8bb0\u4e0b\u7684\u7ef4\u5ea6\u6e05\u5355 \u2713 */
+    public static java.util.Set<ResourceKey<Level>> keys() {
+        return KNOWN.keySet();
+    }
+
     /** \u2605\u6709\u6ca1\u6709\u8bb0\u4e0b\u8fc7\u8fd9\u4e2a\u7ef4\u5ea6 \u2713 */
     public static boolean has(ResourceKey<Level> dimension) {
         return get(dimension) != null;

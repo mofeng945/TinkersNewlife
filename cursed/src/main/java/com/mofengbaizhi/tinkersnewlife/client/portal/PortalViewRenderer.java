@@ -23,6 +23,7 @@ public final class PortalViewRenderer {
 
     private static long lastLog;
     private static long lastLog2;
+    private static long lastLog3;
     private static java.lang.reflect.Method renderLevelMethod;
     /** \u2605\u76ee\u6807\u7ef4\u5ea6\uff08\u2605\u767d\u7a7a\u95f4\u672c\u4f53\uff09\u2014\u2014 \u2605\u7b2c \u2463 \u6b65\u7531\u4f20\u9001\u95e8/\u767d\u7a7a\u95f4\u8bbe\u7f6e \u2713 */
     public static net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> DEST =
@@ -115,8 +116,20 @@ public final class PortalViewRenderer {
                 dest = PortalViewLevels.get(DEST);
             } catch (Throwable ignored) {
             }
-            if (dest != null && PortalCameraSwap.begin(dest.dimension(), event.getCamera().getPosition(),
-                    event.getCamera().getYRot(), event.getCamera().getXRot())) {
+            // TNL996 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u6d4b\u4e86"\u4f46 ``TNL992/994`` **\u8fd8\u662f 0 \u884c** \u2717
+            //   \u21d2 \u2605\u4e0d\u731c\uff1a\u2605\u76f4\u63a5\u628a"\u76ee\u6807\u7ef4\u5ea6 / \u7f13\u5b58\u5185\u5bb9 / begin \u7ed3\u679c"\u6253\u51fa\u6765 \u2713
+            boolean beginOk = false;
+            if (dest != null) {
+                beginOk = PortalCameraSwap.begin(dest.dimension(), event.getCamera().getPosition(),
+                        event.getCamera().getYRot(), event.getCamera().getXRot());
+            }
+            if (System.currentTimeMillis() - lastLog3 > 5000L) {
+                lastLog3 = System.currentTimeMillis();
+                TinkersNewlife.LOGGER.warn("TNL996 dest={} cache={} beginOk={}",
+                        dest == null ? "null" : dest.dimension().location(),
+                        PortalViewLevels.keys(), beginOk);
+            }
+            if (beginOk) {
                 try {
                     drew = PortalViewRenderer.invokeRenderLevel(mc, event, dest);
                 } finally {
