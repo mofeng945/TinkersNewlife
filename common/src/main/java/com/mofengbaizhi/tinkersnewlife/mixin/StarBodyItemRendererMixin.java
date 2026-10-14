@@ -45,6 +45,7 @@ public class StarBodyItemRendererMixin {
 
     private static long TNL$LOG = 0L;
     private static long TNL$POSE_LOG = 0L;
+    private static long TNL$BOUNDS_LOG = 0L;
 
     /** TNL1029 \u2605\u6a21\u578b\u6709\u51e0\u4e2a\u56db\u8fb9\u5f62\uff08\u2605\u770b\u5b83\u5230\u5e95\u662f\u4e0d\u662f\u4e00\u5f20\u5e73\u9762 \u2713\uff09 */
     private static int tnl$countQuads(BakedModel model) {
@@ -152,6 +153,30 @@ public class StarBodyItemRendererMixin {
                 source.endBatch();
             }
             List<BakedQuad> quads = tnl$emit(baked, pose, buffers.getBuffer(rt), light);
+            // TNL1031 \u2605\u2605 \u624b\u6301\u63a2\u9488\u7ed3\u679c\uff1a\u2605diag=(1,1,1) trans=(0.56,-0.52,-0.72) \u2713
+            //   \u21d2 \u2605\u59ff\u6001\u672c\u8eab**\u6b63\u5e38**\uff08\u2605\u7f29\u653e 1 \u2713 \u002b \u2605\u5728\u955c\u5934\u524d 0.7 \u2713\uff09\u2717
+            //   \u2605\u6240\u4ee5"\u53d8\u677f"\u4e0d\u662f\u59ff\u6001\u95ee\u9898 \u2717 \u21d2 \u2605\u5f97\u770b**\u51e0\u4f55\u672c\u8eab** \u2713
+            //   \u2605\u73b0\u5728\uff1a\u2605\u628a\u8fd9\u4e9b\u56db\u8fb9\u5f62\u7684**\u5305\u56f4\u76d2**\u6253\u51fa\u6765 \u2713
+            //     \uff08\u2605\u5e73\u9762\u7247 \u21d2 \u2605\u67d0\u4e00\u8f74\u51e0\u4e4e\u4e3a 0 \u2713\uff1b\u2605\u65b9\u5757 \u21d2 \u2605\u4e09\u8f74\u90fd\u63a5\u8fd1 1 \u2713\uff09
+            if (System.currentTimeMillis() - TNL$BOUNDS_LOG > 4000L) {
+                TNL$BOUNDS_LOG = System.currentTimeMillis();
+                float mnx = Float.MAX_VALUE, mny = Float.MAX_VALUE, mnz = Float.MAX_VALUE;
+                float mxx = -Float.MAX_VALUE, mxy = -Float.MAX_VALUE, mxz = -Float.MAX_VALUE;
+                for (BakedQuad q2 : quads) {
+                    int[] vv = q2.getVertices();
+                    int st = vv.length / 4;
+                    for (int i2 = 0; i2 < 4; i2++) {
+                        float px = Float.intBitsToFloat(vv[i2 * st]);
+                        float py = Float.intBitsToFloat(vv[i2 * st + 1]);
+                        float pz = Float.intBitsToFloat(vv[i2 * st + 2]);
+                        mnx = Math.min(mnx, px); mny = Math.min(mny, py); mnz = Math.min(mnz, pz);
+                        mxx = Math.max(mxx, px); mxy = Math.max(mxy, py); mxz = Math.max(mxz, pz);
+                    }
+                }
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                        "TNL1031 {} model bounds x=({},{}) y=({},{}) z=({},{}) quads={} ctx={}",
+                        tag, mnx, mxx, mny, mxy, mnz, mxz, quads.size(), context);
+            }
             if (source != null) {
                 source.endBatch(rt);
             }
