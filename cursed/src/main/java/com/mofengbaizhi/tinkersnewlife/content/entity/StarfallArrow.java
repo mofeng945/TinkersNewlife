@@ -291,6 +291,17 @@ public class StarfallArrow extends AbstractArrow {
             //     \u00b7 \u2605\u672b\u5f71\u9f99 \u2717\uff1a\u2605**\u9f99\u5b9e\u4f53\u4e0a\u6ca1\u6709\u4efb\u4f55 BossEvent \u5b57\u6bb5** \u2713
             //       \uff08\u2605\u5b83\u7684\u8840\u6761\u5728 ``EndDragonFight`` \u91cc \u2713\uff09\u21d2 \u2605\u6240\u4ee5\u6c38\u8fdc\u626b\u4e0d\u5230 \u2713
             //   \u2605\u73b0\u5728\uff1a\u2605\u660e\u786e\u628a**\u672b\u5f71\u9f99\uff08\u53ca\u5176\u90e8\u4ef6\uff09\u5f53 boss** \u2713
+            // TNL985 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u7fa4\u53cb\u8bf4 forge \u6709\u4e13\u95e8\u7684 boss \u6807\u7b7e" \u2713
+            //   \u2605\u5df2\u786e\u8bc1\uff08\u2605javap \u002b jar \u91cc\u7684\u8d44\u6e90 \u2713\uff09\uff1a
+            //     \u00b7 \u2605``net.minecraftforge.common.Tags$EntityTypes.BOSSES`` \u5b58\u5728 \u2713
+            //     \u00b7 \u2605``data/forge/tags/entity_types/bosses.json`` \u5b58\u5728 \u2713
+            //   \u2605\u8fd9\u662f"\u6570\u636e\u9a71\u52a8"\u7684\u5224\u636e \u2713 \u21d2 \u2605\u4efb\u4f55\u6574\u5408\u5305/\u6a21\u7ec4\u90fd\u53ef\u4ee5\u5f80\u91cc\u52a0 \u2713
+            if (!boss) {
+                try {
+                    boss = e.getType().is(net.minecraftforge.common.Tags.EntityTypes.BOSSES);
+                } catch (Throwable ignored) {
+                }
+            }
             if (!boss && e instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon) {
                 boss = true;
             }
