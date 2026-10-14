@@ -776,7 +776,18 @@ public final class ApostlePatch {
         if (tnlNext != null && tnlNow < tnlNext) {
             return;
         }
-        TRAP_COOLDOWN.put(apostle.getUUID(), tnlNow + trapCooldownTicks());      // §869 开关（#1 射箭顺带施法 ✓ 已实现 ✓）
+        TRAP_COOLDOWN.put(apostle.getUUID(), tnlNow + trapCooldownTicks());
+        // TNL1078 user: "no, it is a whole string of traps chasing me". Cooldowns alone cannot stop a
+        // trail, so also refuse to add another trap while one is still alive close to the target.
+        try {
+            var near = apostle.level().getEntitiesOfClass(
+                    com.Polarice3.Goety.common.entities.util.FireBlastTrap.class,
+                    apostle.getBoundingBox().inflate(8.0D));
+            if (!near.isEmpty()) {
+                return;
+            }
+        } catch (Throwable ignored) {
+        }      // §869 开关（#1 射箭顺带施法 ✓ 已实现 ✓）
         if (apostle.getRandom().nextDouble() >= ARROW_TRAP_CHANCE) return;
         LivingEntity target = apostle.getTarget();
         if (target == null) return;
