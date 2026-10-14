@@ -96,20 +96,20 @@ void main() {
         //     \u2605``tu/tv = floor(uv*uvtiles)`` \u21d2 \u2605\u6574\u6570\u54c8\u5e0c \u21d2 \u2605``symbol = pos % 101`` \u2713
         //     \u2605\u53ea\u6709 ``symbol < 10`` \u7684\u683c\u5b50\u624d\u753b\u661f \u2713\uff08\u2605\u2248 10% \u2713\uff09
         //   \u2605\u4e4b\u524d\u6211\u7528\u8fde\u7eed\u566a\u58f0\u9608\u503c \u2717 \u21d2 \u2605\u6ca1\u6709"\u683c\u5b50"\u611f \u21d2 \u2605\u76f8\u673a\u4e00\u52a8\u5c31\u662f"\u4e00\u7247\u9ad8\u5149\u5728\u6ed1" \u2713\uff08\u2605\u7528\u6237\u5b9e\u6d4b \u2713\uff09
-        float gridN = 14.0;                                   // \u2605\u683c\u6570\uff08\u2605\u9762\u677f 16px \u21d2 14 \u683c \u2713\uff09
+        float gridN = 34.0;                                   // \u2605\u683c\u6570\uff08\u2605\u9762\u677f 16px \u21d2 14 \u683c \u2713\uff09
         vec2 g = suv * gridN;
         vec2 cell = floor(g);
         vec2 ru = fract(g) - 0.5;
         float pos = (1777541.0 * cell.x) + (7649689.0 * cell.y) + (361273.0 * 31.0) + 1723609.0;
         float symbol = mod(pos, 101.0);                       // \u2605\u539f\u578b\u540c\u6b3e\u6982\u7387\u6876 \u2713
         float starMask = 0.0;
-        if (symbol < 10.0) {                                  // \u2605\u2248 10% \u7684\u683c\u5b50\u6709\u661f \u2713
+        if (symbol < 26.0) {                                  // \u2605\u2248 10% \u7684\u683c\u5b50\u6709\u661f \u2713
             float d = length(ru);
-            float core = smoothstep(0.22, 0.0, d);            // \u2605\u661f\u6838 \u2713
-            float cross = max(smoothstep(0.05, 0.0, abs(ru.x)),
-                              smoothstep(0.05, 0.0, abs(ru.y))) * smoothstep(0.42, 0.0, d);
+            float core = smoothstep(0.11, 0.0, d);            // \u2605\u661f\u6838 \u2713
+            float cross = max(smoothstep(0.030, 0.0, abs(ru.x)),
+                              smoothstep(0.030, 0.0, abs(ru.y))) * smoothstep(0.30, 0.0, d);
             float tw = 0.65 + 0.35 * sin(EffectTime * 2.2 + (cell.x + cell.y) * 0.9);   // \u2605\u95ea\u70c1 \u2713
-            starMask = clamp(core + cross * 0.8, 0.0, 1.0) * tw;
+            starMask = clamp(core + cross * 0.7, 0.0, 1.0) * tw;
         }
         // TNL973 \u2605\u2605 \u8865\u56de\u88ab\u6211\u8bef\u5220\u7684\u58f0\u660e \u2713
         //   \u2605\u62a5\u9519\uff1a\u2605``0(106) : error C1503: undefined variable "deep"`` \u2713

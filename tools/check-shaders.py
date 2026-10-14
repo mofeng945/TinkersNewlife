@@ -96,3 +96,38 @@ for _j in sorted(_g.glob("cursed/src/main/resources/assets/tinkersnewlife/shader
             for _e in _errs:
                 print("        - " + _e)
 print("  === GLSL 对账：bad %d ===" % bad2)
+
+# TNL975 新增：抓"用过但没声明"/"重复声明"这两类（今晚各翻过一次车）
+import glob as _g2, io as _io2, os as _os2, re as _re2
+bad3 = 0
+KEY = ["neb", "neb2", "deep", "cloud", "col", "starMask", "localUv", "uv", "suv", "g", "cell", "ru"]
+for _f in sorted(_g2.glob("cursed/src/main/resources/assets/tinkersnewlife/shaders/core/*.fsh")):
+    _lines = _io2.open(_f, encoding="utf-8").read().split("\n")
+    errs = []
+    for _v in KEY:
+        _decl = None
+        _use = None
+        for _i, _l in enumerate(_lines):
+            _s = _l.split("//")[0]
+            if _decl is None and _re2.search(r"\b(float|vec2|vec3|vec4|int)\s+" + _v + r"\s*(=|;)", _s):
+                _decl = _i
+            if _decl is None and _re2.search(r"\b" + _v + r"\b", _s):
+                _use = _i
+        if _decl is None and _use is not None:
+            errs.append("用了 %s 但从没声明（首见于第 %d 行）" % (_v, _use + 1))
+    _seen = {}
+    for _i, _l in enumerate(_lines):
+        _s = _l.split("//")[0]
+        _m = _re2.search(r"^\s*(float|vec2|vec3|vec4|int)\s+(\w+)\s*(=|;)", _s)
+        if _m:
+            _nm = _m.group(2)
+            _ind = len(_l) - len(_l.lstrip())
+            if _nm in _seen and _seen[_nm][0] == _ind:
+                errs.append("重复声明 %s（第 %d 行与第 %d 行同缩进）" % (_nm, _seen[_nm][1] + 1, _i + 1))
+            _seen[_nm] = (_ind, _i)
+    if errs:
+        bad3 += 1
+        print("  [FAIL] %s" % _os2.path.basename(_f))
+        for _e in errs:
+            print("        - " + _e)
+print("  === 低级错误检查：bad %d ===" % bad3)
