@@ -167,7 +167,7 @@ public class StarBodyItemRendererMixin {
         com.mojang.blaze3d.vertex.PoseStack.Pose pe = pose.last();
         org.joml.Matrix4f m = pe.pose();
         org.joml.Matrix3f n = pe.normal();
-        float s = 1.15F;   // TNL1004 \u2605\u6536\u4e00\u70b9\u8fb9 \u2713
+        float s = 1.0F;    // TNL1008 \u2605\u6b63\u597d\u4e00\u683c \u2713
         float o = (1.0F - s) * 0.5F;
         float[][] corners = {
                 {o, o, 0.0F, 1.0F},
