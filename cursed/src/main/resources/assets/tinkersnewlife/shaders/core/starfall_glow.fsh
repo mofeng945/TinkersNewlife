@@ -8,35 +8,38 @@ in vec4 vColor;
 
 out vec4 fragColor;
 
-// TNL1009 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u597d\u4e11\u554a\uff0c\u4e3a\u4ec0\u4e48\u5185\u5c42\u5149\u6548\u8001\u662f\u6709\u4e00\u4e2a\u767d\u8272\u7684\u5e95" \u2713
-//   \u2605\u771f\u56e0 \u2717\uff1a\u2605\u6211\u4e0a\u4e00\u7248\u7684"\u7ec6\u73af\u5e26"\u5b9e\u9645\u662f
-//     `smoothstep(0.30,0.52,r) * smoothstep(0.86,0.62,r)` \u2717 \u21d2 \u2605\u5b83\u662f**\u4e00\u4e2a 0.30~0.86 \u7684\u5bbd\u5e26** \u2713
-//     \u002b \u2605\u661f\u8292\u7684 `smoothstep(0.90,0.06,r)` \u628a\u534a\u5f84\u5185\u90fd\u4eae\u4e86 \u2717
-//     \u21d2 \u2605\u5408\u8d77\u6765\u5c31\u662f**\u4e00\u5f20\u767d\u76d8** \u2713\u2713
-//   \u2605\u73b0\u5728 \u2713\uff1a\u2605**\u5b8c\u5168\u6ca1\u6709"\u9762"** \u2713\u2717
-//     \u2605\u53ea\u6709 \u2713\uff1a\u2605\u7ec6\u661f\u8292\uff08\u2605\u66f4\u9ad8\u6b21\u5e42 \u21d2 \u2605\u66f4\u7ec6 \u2713\uff09\u002b \u2605\u4e00\u5708\u6781\u7a84\u7684\u8fb9 \u002b \u2605\u9038\u6563\u5149\u70b9 \u2713
-//     \u002b \u2605\u6781\u6de1\u7684\u6838\u5fc3\uff08\u2605alpha \u4e0a\u9650 0.10 \u2713\uff09\u002b \u2605\u547c\u5438\u7f29\u653e \u2713
+// TNL1011 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u661f\u8292\u624b\u81c2\u53ef\u4ee5\u4fdd\u7559\u5ef6\u4f38\u5230\u7269\u54c1\u680f\u8fb9\u6846\uff0c\u4f46\u662f\u5185\u5c42\u53d1\u5149
+//   \u5c31\u6b63\u5e38\u6838\u5fc3\u67d4\u5149\uff0c\u5e76\u4e14\u628a\u6211\u5185\u9ed1\u8fb9\u767d\u7684\u6e10\u53d8\u5f04\u56de\u6765" \u2713
+//   \u2605\u4e09\u5c42 \u2713\uff1a
+//     \u2460 \u2605\u6b63\u5e38\u6838\u5fc3\u67d4\u5149\uff08\u2605\u4e2d\u5fc3\u6700\u4eae\uff0c\u2605\u5c0f\u8303\u56f4 \u2713\uff09
+//     \u2461 \u2605**\u5185\u9ed1 \u2192 \u4e2d\u7070 \u2192 \u8fb9\u767d**\u7684\u534a\u5f84\u6e10\u53d8 \u2713
+//          \uff08\u2605\u53ef\u89c1\u5ea6\u9760\u5916\uff1a\u2605\u4e2d\u5fc3\u51e0\u4e4e\u4e0d\u53ef\u89c1 \u21d2 \u2605\u4e0d\u4f1a\u53d8\u6210\u9ed1\u76d8 \u2713\uff09
+//     \u2462 \u2605\u661f\u8292\u624b\u81c2\uff08\u2605\u4e00\u76f4\u5ef6\u5230\u683c\u5b50\u8fb9\u7f18 \u2713\uff09\u002b \u2605\u9038\u6563\u5149\u70b9 \u2713
+//     \u2605\u5168\u90e8\u968f\u547c\u5438\u7f29\u653e \u2713
 void main() {
     float wave = sin(EffectTime * 1.6);
-    float breath = 0.78 + 0.22 * wave;
-    float zoom = 1.0 + 0.12 * wave;                  // \u2605\u547c\u5438\u7f29\u653e \u2713
+    float breath = 0.80 + 0.20 * wave;
+    float zoom = 1.0 + 0.10 * wave;                 // \u2605\u547c\u5438\u7f29\u653e \u2713
 
     vec2 p = (vUv - vec2(0.5)) / zoom;
     float r = clamp(length(p) * 2.0, 0.0, 1.0);
 
-    // \u2605\u2460 \u6781\u6de1\u7684\u6838\u5fc3\uff08\u2605\u53ea\u5230 r=0.45\uff0c\u2605\u4e0a\u9650\u5f88\u4f4e \u2713\uff09
-    float core = smoothstep(0.45, 0.0, r);
-    core *= core * 0.10;
+    // \u2605\u2460 \u6b63\u5e38\u6838\u5fc3\u67d4\u5149\uff08\u2605\u53ea\u5230 r=0.40 \u2713\uff09
+    float core = smoothstep(0.40, 0.0, r);
+    core *= core;
 
-    // \u2605\u2461 \u7ec6\u661f\u8292\uff08\u2605\u6b21\u5e42\u63d0\u5230 14/26 \u21d2 \u2605\u7ebf\u6761\u66f4\u7ec6 \u2713\uff09
-    float ang = atan(p.y, p.x) + EffectTime * 0.55;
-    float star = pow(abs(cos(ang * 3.0)), 14.0) * smoothstep(0.98, 0.05, r);
-    float star2 = pow(abs(cos(ang * 3.0 + 1.5707963)), 26.0) * smoothstep(0.92, 0.04, r);
+    // \u2605\u2461 \u5185\u9ed1 \u2192 \u4e2d\u7070 \u2192 \u8fb9\u767d \u2713
+    vec3 grad = mix(vec3(0.03, 0.03, 0.05), vec3(0.52, 0.55, 0.61), smoothstep(0.0, 0.55, r));
+    grad = mix(grad, vec3(1.0), smoothstep(0.55, 1.0, r));
+    // \u2605\u53ef\u89c1\u5ea6\uff1a\u2605\u4e2d\u5fc3\u51e0\u4e4e 0 \u2713\uff0c\u2605\u5230\u8fb9\u7f18\u524d\u53c8\u6de1\u51fa \u2713
+    float rampA = smoothstep(0.12, 0.80, r) * smoothstep(1.0, 0.88, r);
 
-    // \u2605\u2462 \u53ea\u4fdd\u7559\u4e00\u5708**\u6781\u7a84**\u7684\u5916\u8fb9\uff08\u2605r\u22480.72 \u2713\uff09
-    float rim = smoothstep(0.64, 0.72, r) * smoothstep(0.82, 0.73, r);
+    // \u2605\u2462 \u661f\u8292\u624b\u81c2\uff08\u2605\u5ef6\u4f38\u5230\u683c\u5b50\u8fb9\u7f18 \u2713\uff09
+    float ang = atan(p.y, p.x) + EffectTime * 0.50;
+    float arms = pow(abs(cos(ang * 3.0)), 10.0) * smoothstep(1.0, 0.10, r);
+    float arms2 = pow(abs(cos(ang * 3.0 + 1.5707963)), 20.0) * smoothstep(0.95, 0.06, r);
 
-    // \u2605\u2463 \u968f\u673a\u9038\u6563\u7684\u5c0f\u5149\u70b9 \u2713
+    // \u2605\u2463 \u9038\u6563\u5149\u70b9 \u2713
     float motes = 0.0;
     for (int i = 0; i < 3; i++) {
         float fi = float(i);
@@ -48,16 +51,16 @@ void main() {
         float h2 = fract(sin(dot(cell, vec2(269.5, 183.3)) + fi * 3.1) * 43758.5453);
         vec2 dir = normalize(cell + vec2(0.5) + vec2(1.0e-4));
         float phase = fract(h1 + EffectTime * (0.12 + 0.20 * h2));
-        float dd = length(f - dir * (phase * 0.85));
-        motes += smoothstep(0.15, 0.0, dd) * (1.0 - phase);
+        float dd = length(f - dir * (phase * 0.8));
+        motes += smoothstep(0.13, 0.0, dd) * (1.0 - phase);
     }
 
-    float a = clamp(core * breath + (star * 0.70 + star2 * 0.45 + rim * 0.35) * breath + motes * 0.60, 0.0, 1.0);
-    a *= smoothstep(1.0, 0.85, r);
-    if (a < 0.08) {
-        discard;                                      // \u2605\u2605 \u6de1\u7684\u5730\u65b9**\u6839\u672c\u4e0d\u753b** \u2713
+    float a = clamp(core * 0.60 * breath + rampA * 0.30 * breath
+            + (arms * 0.55 + arms2 * 0.32) * breath + motes * 0.45, 0.0, 1.0);
+    if (a < 0.06) {
+        discard;                                    // \u2605\u2605 \u6de1\u7684\u5730\u65b9\u4e0d\u753b \u2713
     }
 
-    vec3 col = mix(vec3(0.78, 0.82, 0.90), vec3(1.0), clamp(star + star2, 0.0, 1.0));
+    vec3 col = mix(grad, vec3(1.0), clamp(core * 0.85 + arms + arms2, 0.0, 1.0));
     fragColor = vec4(col * vColor.rgb * ColorModulator.rgb, a * vColor.a * ColorModulator.a);
 }
