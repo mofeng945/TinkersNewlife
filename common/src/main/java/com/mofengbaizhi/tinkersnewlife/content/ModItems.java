@@ -535,6 +535,9 @@ public class ModItems {
     public static final RegistryObject<Item> STARFALL_LAMENT =
             ITEMS.register("starfall_lament",
                     () -> new com.mofengbaizhi.tinkersnewlife.content.item.StarfallLamentItem());
+    // TNL1023 \u2605\u2605 \u7528\u6237\uff1a\u2605\u6052\u6b63\u79e9\u5668 Aeonian Order \u2713
+    public static final RegistryObject<Item> AEONIAN_ORDER =
+            ITEMS.register("aeonian_order", () -> new com.mofengbaizhi.tinkersnewlife.content.item.AeonianOrderItem());
 
     public static final RegistryObject<Item> MOMO_SPAWN_EGG =
             ITEMS.register("momo_spawn_egg", () -> new net.minecraftforge.common.ForgeSpawnEggItem(
