@@ -76,7 +76,14 @@ public final class AeonianWeaken {
             pl.getCooldowns().addCooldown(
                     com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_MARKER.get(), Math.max(1, v));
         }
-        TinkersNewlife.LOGGER.warn("TNL1046 weaken stacked on {} -> {} ticks", e.getName().getString(), v);
+        TinkersNewlife.LOGGER.warn("TNL1046 weaken stacked on {} -> {} ticks (max {})",
+                e.getName().getString(), v, MAX);
+        if (v >= MAX) {
+            // TNL1071 user: "no matter how I hit it the burst never triggers" -- make the exact moment
+            // visible in the log so we can tell stacking apart from the burst gate.
+            TinkersNewlife.LOGGER.warn("TNL1071 {} reached the cap on the stack itself, burst should fire "
+                    + "on the next server tick pass", e.getName().getString());
+        }
     }
 
     /**
