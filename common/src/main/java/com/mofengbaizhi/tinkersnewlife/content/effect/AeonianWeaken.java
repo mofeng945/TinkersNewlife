@@ -66,6 +66,7 @@ public final class AeonianWeaken {
         }
         int v = Math.min(MAX, ticks(e) + amount);
         tag(e).putInt(TICKS, v);
+        TinkersNewlife.LOGGER.warn("TNL1046 weaken stacked on {} -> {} ticks", e.getName().getString(), v);
     }
 
     /**

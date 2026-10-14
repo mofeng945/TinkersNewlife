@@ -60,6 +60,13 @@ public class AeonianOrderItem extends SwordItem {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
+        // TNL1046 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u6ca1\u6302\u4e0a\u554a" \u2713
+        //   \u2605\u73b0\u8c61 \u2717\uff1a\u2605\u65e5\u5fd7\u91cc `TNL1023` \u4e0e `TNL1043` **\u4e00\u884c\u90fd\u6ca1\u6709** \u2713
+        //     \u21d2 \u2605\u8bf4\u660e\u2605**\u53f3\u952e\u6839\u672c\u6ca1\u8fdb\u5230\u8fd9\u91cc** \u2717\uff08\u2605\u4e0d\u662f\u53e0 tick \u7684\u95ee\u9898 \u2713\uff09
+        //   \u2605\u6240\u4ee5\u5148\u6253\u4e00\u884c**\u5165\u53e3**\u63a2\u9488 \u2713\uff08\u2605\u4e24\u4fa7\u90fd\u6253 \u2713\uff09
+        TinkersNewlife.LOGGER.warn("TNL1046 aeonian use() called side={} cooldown={}",
+                player.level().isClientSide ? "client" : "server",
+                player.getCooldowns().isOnCooldown(this));
         if (player.getCooldowns().isOnCooldown(this)) {
             return InteractionResultHolder.fail(stack);
         }
