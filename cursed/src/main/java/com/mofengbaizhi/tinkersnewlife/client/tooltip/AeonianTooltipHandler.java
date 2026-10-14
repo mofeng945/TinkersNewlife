@@ -102,7 +102,7 @@ public final class AeonianTooltipHandler {
         var pose = g.pose();
         pose.pushPose();
         pose.translate(0.0F, 0.0F, 400.0F);
-        g.fill(x - 3, y - 4, x + width + 3, y + height + 4, 0xFF080A10);   // TNL1064 user: opaque background, no transparency
+        g.fill(x - 3, y - 4, x + width + 3, y + height + 4, 0xE6080A10);   // TNL1067 back to the original translucent background
         long time = System.currentTimeMillis();
         float t = (time % 60000L) / 1000.0F;
         int cols = Math.max(2, width / 14);
@@ -121,14 +121,13 @@ public final class AeonianTooltipHandler {
                 int eh = Math.max(2, (int) (11 * open));
                 int ex = x - 2 + cx * 14;
                 int ey = y - 3 + cy * 14 + (11 - eh) / 2;
-                // TNL1066 user: "the eyes are gone" -- the dark base swallowed the dark eye art,
-                // so give every eye a slightly lighter cell behind it to make it readable again.
-                g.fill(ex - 1, ey - 1, ex + 12, ey + eh + 1, 0xFF1A2130);
+                // TNL1067 user: "forget it, put it back to the original translucent look" --
+                // the lighter cells read as blue grey tiles, so they are gone again.
                 g.blit(EYE, ex, ey, 0.0F, 0.0F, 11, eh, 16, 16);
             }
         }
-        g.fill(x - 3, y - 4, x + width + 3, y - 3, 0xFFC03030);
-        g.fill(x - 3, y + height + 3, x + width + 3, y + height + 4, 0xFFC03030);
+        g.fill(x - 3, y - 4, x + width + 3, y - 3, 0x66C03030);
+        g.fill(x - 3, y + height + 3, x + width + 3, y + height + 4, 0x66C03030);
         pose.popPose();
     }
 
