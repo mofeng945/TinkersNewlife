@@ -160,11 +160,19 @@ public class AeonianOrderItem extends SwordItem {
         Vec3 hit = ed < bd ? ehit.getLocation() : (bhit == null ? end : bhit.getLocation());
         // \u2605\u9ed1\u8272\u7c92\u5b50\u7ebf\uff08\u2605\u6682\u4ee3\u7ef3\u5b50 \u2713\uff09
         if (level instanceof ServerLevel sl) {
-            int steps = (int) Math.min(64, Math.max(4, eye.distanceTo(hit) * 3.0D));
+            // TNL1053 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u9570\u5200\u4e0a\u4f1a\u8fde\u7740\u4e00\u6839\u9ed1\u8272\u7684\u7ebf" \u2713
+            //   \u2605\u73b0\u5728\uff1a\u2605\u7528**\u7eaf\u9ed1 dust**\u5806\u6210\u4e00\u6761\u7c97\u7ebf \u2713\uff08\u2605\u6bd4 squid_ink \u66f4\u50cf\u7ef3\u5b50 \u2713\uff09
+            //     \u2605\u6bcf 1/6 \u683c\u4e00\u9897 \u2713 \u002b \u2605\u7ec6\u5fae\u6296\u52a8 \u2713 \u21d2 \u2605\u8fdc\u770b\u5c31\u662f\u4e00\u6761\u9ed1\u7ebf \u2713
+            var tnl$black = new net.minecraft.core.particles.DustParticleOptions(
+                    new org.joml.Vector3f(0.02F, 0.02F, 0.03F), 1.6F);
+            int steps = (int) Math.min(96, Math.max(6, eye.distanceTo(hit) * 6.0D));
             for (int i = 0; i <= steps; i++) {
                 double t = i / (double) steps;
-                sl.sendParticles(net.minecraft.core.particles.ParticleTypes.SQUID_INK,
-                        eye.x + (hit.x - eye.x) * t, eye.y + (hit.y - eye.y) * t, eye.z + (hit.z - eye.z) * t,
+                double wob = Math.sin(t * 24.0D + level.getGameTime() * 0.35D) * 0.045D;
+                sl.sendParticles(tnl$black,
+                        eye.x + (hit.x - eye.x) * t + wob,
+                        eye.y + (hit.y - eye.y) * t + wob * 0.6D,
+                        eye.z + (hit.z - eye.z) * t,
                         1, 0.0D, 0.0D, 0.0D, 0.0D);
             }
         }
