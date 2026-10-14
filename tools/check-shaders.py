@@ -139,7 +139,9 @@ for _f in sorted(_g3.glob("cursed/src/main/resources/assets/tinkersnewlife/shade
                  + _g3.glob("imagination/src/main/resources/assets/tinkersnewlife/shaders/core/*.fsh")
                  + _g3.glob("cursed/src/main/resources/assets/tinkersnewlife/shaders/core/*.vsh")
                  + _g3.glob("imagination/src/main/resources/assets/tinkersnewlife/shaders/core/*.vsh")):
-    _src = _io3.open(_f, encoding="utf-8").read()
+    _raw = _io3.open(_f, encoding="utf-8").read()
+    # strip comments first: the escaped Chinese in our comments used to look like calls
+    _src = "\n".join(l.split("//")[0] for l in _raw.split("\n"))
     _errs = []
     if _src.count("{") != _src.count("}"):
         _errs.append("brace mismatch: %d open vs %d close" % (_src.count("{"), _src.count("}")))
