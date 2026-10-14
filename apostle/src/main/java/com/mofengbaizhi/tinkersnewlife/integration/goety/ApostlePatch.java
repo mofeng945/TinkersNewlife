@@ -767,7 +767,16 @@ public final class ApostlePatch {
         if (event.getLevel().isClientSide()) return;
         if (!(event.getEntity() instanceof DeathArrow arrow)) return;
         if (!(arrow.getOwner() instanceof Apostle apostle) || !apostle.isSecondPhase()) return;
-        if (!flag(ARROW_FIRE_BLAST_TRAP, true)) return;      // §869 开关（#1 射箭顺带施法 ✓ 已实现 ✓）
+        if (!flag(ARROW_FIRE_BLAST_TRAP, true)) return;
+        // TNL1077 user: "the fire blast trap still spams at me non stop". Location #9 already honoured
+        // the cooldown, but this arrow path (#1) placed a trap at the target feet with no gate at all,
+        // and it runs on every arrow, so it shares the very same TRAP_COOLDOWN map now.
+        long tnlNow = apostle.level().getGameTime();
+        Long tnlNext = TRAP_COOLDOWN.get(apostle.getUUID());
+        if (tnlNext != null && tnlNow < tnlNext) {
+            return;
+        }
+        TRAP_COOLDOWN.put(apostle.getUUID(), tnlNow + trapCooldownTicks());      // §869 开关（#1 射箭顺带施法 ✓ 已实现 ✓）
         if (apostle.getRandom().nextDouble() >= ARROW_TRAP_CHANCE) return;
         LivingEntity target = apostle.getTarget();
         if (target == null) return;
