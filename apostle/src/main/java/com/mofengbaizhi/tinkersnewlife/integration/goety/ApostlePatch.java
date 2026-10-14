@@ -81,7 +81,7 @@ public final class ApostlePatch {
     public static final ForgeConfigSpec.BooleanValue MONOLITH_CAP_SIX;
     public static final ForgeConfigSpec.IntValue MONOLITH_TOPUP_SECONDS;
     public static final ForgeConfigSpec.BooleanValue MONOLITH_LIFESPAN;
-    public static final ForgeConfigSpec.DoubleValue MONOLITH_LIFESPAN_HP_PER_SECOND;
+    public static final ForgeConfigSpec.DoubleValue MONOLITH_LIFESPAN_PERCENT_PER_SECOND;
     public static final ForgeConfigSpec.BooleanValue WALL_TELEPORT;
     public static final ForgeConfigSpec.BooleanValue ARROW_RAIN;
     public static final ForgeConfigSpec.IntValue ARROW_RAIN_COOLDOWN_SECONDS;
@@ -134,8 +134,8 @@ public final class ApostlePatch {
                 .defineInRange("monolith_topup_seconds", 30, 1, 600);
         MONOLITH_LIFESPAN = b.comment("黑曜石柱有生命周期：血量随时间流逝（§869 用户口径，默认 true）")
                 .define("monolith_lifespan", true);
-        MONOLITH_LIFESPAN_HP_PER_SECOND = b.comment("柱子每秒流逝多少血量（默认 2 点／秒）")
-                .defineInRange("monolith_lifespan_hp_per_second", 2.0D, 0.0D, 1000.0D);
+        MONOLITH_LIFESPAN_PERCENT_PER_SECOND = b.comment("柱子每秒流逝多少血量（默认 2 点／秒）")
+                .defineInRange("monolith_lifespan_percent_per_second", 2.0D, 0.0D, 1000.0D);
         WALL_TELEPORT = b.comment("使徒与玩家隔墙时瞬移到玩家身后；身后没位置就瞬移到玩家所在位置（§869，默认 true）")
                 .define("wall_teleport", false);   // TNL1075 \u2605\u9ed8\u8ba4\u5173\u6389\uff08\u2605\u8c03\u7528\u4e5f\u5df2\u79fb\u9664 \u2713\uff09
         ARROW_RAIN = b.comment("给使徒的法术组加上『箭雨』（诡厄箭雨聚晶的效果，默认 true）")
@@ -1066,13 +1066,14 @@ public final class ApostlePatch {
      */
     private static void drainMonoliths(ServerLevel level, Apostle apostle) {
         if (!flag(MONOLITH_LIFESPAN, true)) return;
-        double perSecond;
+        // TNL1080 user: the lifespan drains a PERCENTAGE of the max health now, not a flat amount.
+        double percentPerSecond;
         try {
-            perSecond = MONOLITH_LIFESPAN_HP_PER_SECOND.get();
+            percentPerSecond = MONOLITH_LIFESPAN_PERCENT_PER_SECOND.get();
         } catch (Throwable ignored) {
-            perSecond = 2.0D;
+            percentPerSecond = 2.0D;
         }
-        if (perSecond <= 0.0D) return;
+        if (percentPerSecond <= 0.0D) return;
         java.util.List<com.Polarice3.Goety.common.entities.neutral.AbstractObsidianMonolith> list;
         try {
             list = level.getEntitiesOfClass(com.Polarice3.Goety.common.entities.neutral.AbstractObsidianMonolith.class,
@@ -1082,13 +1083,22 @@ public final class ApostlePatch {
             return;
         }
         for (com.Polarice3.Goety.common.entities.neutral.AbstractObsidianMonolith monolith : list) {
-            float left = monolith.getHealth() - (float) perSecond;
-            if (left <= 0.0F) {
+            // TNL1080 drain a percentage of the max health instead of flat health
+            double max = Math.max(1.0D, monolith.getMaxHealth());
+            double left = max - max * (percentPerSecond / 100.0D);
+            if (left <= 0.5D) {
                 monolith.kill();                                  // 寿命到 ⇒ 柱子自行崩解 ✓
                 level.sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE,
                         monolith.getX(), monolith.getY() + 1.0D, monolith.getZ(), 25, 0.4D, 0.6D, 0.4D, 0.02D);
             } else {
-                monolith.setHealth(left);
+                var inst = monolith.getAttribute(
+                        net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+                if (inst != null) {
+                    inst.setBaseValue(left);
+                }
+                if (monolith.getHealth() > left) {
+                    monolith.setHealth((float) left);
+                }
             }
         }
     }
