@@ -74,27 +74,10 @@ public class AeonianOrderItem extends SwordItem {
         // TNL1050 \u2605\u2605 \u7528\u6237\uff1a\u2605"shift \u53f3\u952e\u8fd8\u662f\u7a81\u523a\u6280\u80fd" \u2713 \u21d2 \u2605\u73b0\u5728\u5206\u5f00 \u2713
         if (tnl$shift) {
             if (!level.isClientSide) {
-                // TNL1052 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u76f4\u63a5\u505a\u5b8c" \u2713 \u2014\u2014 \u2605\u628a\u9570\u5200**\u771f\u7684\u7529\u51fa\u53bb** \u2713
-                //   \u2605\u53c2\u7167\u98de\u5251\uff08\u2605`FlyingSwordEntity` \u2713\uff09\uff1a
-                //     \u2605\u5b83**\u5df2\u7ecf\u5199\u597d\u4e86**\u6211\u4eec\u8981\u7684\u4e00\u5207 \u2713\uff1a
-                //       \u00b7 \u2605``FlyingSwordEntity(Level, Player, float damage, ItemStack stack)`` \u2713
-                //       \u00b7 \u2605``setLaunchDirection(Vec3)`` \u2713 \u002b \u2605``setChaseMode(false)`` \u2713
-                //       \u00b7 \u2605\u81ea\u5e26**\u65e0\u91cd\u529b\u98de\u884c \u002b \u98de\u5251\u5f0f\u5236\u5bfc \u002b \u62d6\u5c3e \u002b \u56de\u624b** \u2713\u2713
-                //   \u2605\u4e3a\u4ec0\u4e48\u7528\u53cd\u5c04 \u2717\uff1a\u2605\u5b83\u5728 **imagination** \u2717 \u800c\u672c\u6587\u4ef6\u5728 **cursed** \
-                //     \u2605\u53cd\u5c04\u53d6\u6784\u9020\u5668\u5c31\u4e0d\u4f1a\u5f15\u5165\u8de8\u6a21\u5757\u7f16\u8bd1\u4f9d\u8d56 \u2713
-                try {
-                    Class<?> k = Class.forName("com.mofengbaizhi.tinkersnewlife.content.entity.FlyingSwordEntity");
-                    var ctor = k.getConstructor(Level.class, Player.class, float.class, ItemStack.class);
-                    Object ent = ctor.newInstance(level, player, 0.0F, stack.copy());
-                    k.getMethod("setLaunchDirection", Vec3.class).invoke(ent, player.getLookAngle());
-                    k.getMethod("setChaseMode", boolean.class).invoke(ent, false);
-                    ((Entity) ent).setPos(player.getX(), player.getEyeY() - 0.2D, player.getZ());
-                    ((Entity) ent).setDeltaMovement(player.getLookAngle().scale(2.2D));
-                    level.addFreshEntity((Entity) ent);
-                    TinkersNewlife.LOGGER.warn("TNL1052 threw the scythe as a flying sword entity");
-                } catch (Throwable t) {
-                    TinkersNewlife.LOGGER.warn("TNL1052 throw FAILED: {}", t.toString());
-                }
+                // TNL1055 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u6293\u94a9\u6539\u6210\u671d\u89c6\u7ebf\u65b9\u5411\u98de\u7136\u540e\u62c9\u7740\u73a9\u5bb6\u8fc7\u53bb\uff0c\u6700\u591a\u98de20\u683c\u3002\u522b\u7528\u98de\u5251\u8ffd\u8e2a" \u2713
+                //   \u2605\u6240\u4ee5\u628a\u4e0a\u4e00\u7248\u7684"\u2605\u751f\u6210 FlyingSwordEntity"**\u6574\u6bb5\u5220\u6389** \u2713
+                //     \uff08\u2605\u5b83\u5e26\u81ea\u52a8\u9501\u5b9a/\u5236\u5bfc\u8ffd\u8e2a \u2717 \u2014\u2014 \u2605\u6b63\u662f\u4f60\u4e0d\u8981\u7684 \u2713\uff09
+                //   \u2605\u73b0\u5728 \u2713\uff1a\u2605\u7eaf\u76f4\u7ebf\u3001\u65e0\u91cd\u529b\u3001\u6cbf\u89c6\u7ebf\u3001**\u6700\u591a 20 \u683c** \u2713
                 tnl$throwHook(level, player);
                 player.getCooldowns().addCooldown(this, 40);
             }
@@ -145,7 +128,7 @@ public class AeonianOrderItem extends SwordItem {
     private static void tnl$throwHook(Level level, Player player) {
         Vec3 eye = player.getEyePosition();
         Vec3 look = player.getLookAngle();
-        double reach = 24.0D;
+        double reach = 20.0D;   // TNL1055 \u2605\u7528\u6237\uff1a\u2605\u6700\u591a\u98de 20 \u683c \u2713
         Vec3 end = eye.add(look.scale(reach));
         // \u2605\u5148\u770b\u5b9e\u4f53\uff08\u2605\u66f4\u8fd1\u5c31\u7b97\u547d\u4e2d \u2713\uff09
         net.minecraft.world.phys.EntityHitResult ehit = net.minecraft.world.entity.projectile.ProjectileUtil
@@ -181,7 +164,8 @@ public class AeonianOrderItem extends SwordItem {
             Vec3 dir = player.position().subtract(victim.position()).normalize().scale(1.9D);
             victim.setDeltaMovement(dir.x, 0.35D, dir.z);
             victim.hurtMarked = true;
-            TinkersNewlife.LOGGER.warn("TNL1050 hook hit entity {}, pulled it in", victim.getName().getString());
+            PULLS.add(new Pull(player.getUUID(), hit, 12));   // TNL1055 also pull the player along
+            TinkersNewlife.LOGGER.warn("TNL1050 hook hit entity {}, pulled it in and pulled the player", victim.getName().getString());
         } else {
             // \u2605\u547d\u4e2d\u65b9\u5757 \u21d2 \u2605\u628a\u73a9\u5bb6\u62c9\u8fc7\u53bb \u2713
             PULLS.add(new Pull(player.getUUID(), hit, 12));
