@@ -2638,6 +2638,20 @@ public final class TruePierce {
         try {
             if (e instanceof net.minecraftforge.entity.PartEntity<?> part) {
                 e = part.getParent();
+            } else if (!(e instanceof net.minecraft.world.entity.LivingEntity)) {
+                // TNL979 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u547d\u4e2d\u51b0\u706b\u4f20\u8bf4\u9f99\u7684\u7fc5\u8180\u65e0\u6cd5\u5bf9\u9f99\u9020\u6210\u4f24\u5bb3" \u2713
+                //   \u2605\u539f\u56e0 \u2717\uff1a\u2605\u51b0\u706b\uff08\u2605Citadel \u2713\uff09\u7684\u90e8\u4ef6**\u4e0d\u4e00\u5b9a\u7ee7\u627f Forge \u7684 ``PartEntity``** \u2717
+                //   \u2605\u73b0\u5728\uff1a\u2605\u53cd\u5c04\u627e\u5b83\u7684\u201c\u7236\u201d\uff08\u2605getParent / getOwner / getRoot \u2713\uff09
+                for (String m : new String[]{"getParent", "getOwner", "getRoot"}) {
+                    try {
+                        Object r = e.getClass().getMethod(m).invoke(e);
+                        if (r instanceof net.minecraft.world.entity.Entity pe && pe != e) {
+                            e = pe;
+                            break;
+                        }
+                    } catch (Throwable ignored) {
+                    }
+                }
             }
         } catch (Throwable ignored) {
         }

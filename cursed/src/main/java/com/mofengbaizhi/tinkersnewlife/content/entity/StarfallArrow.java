@@ -292,6 +292,20 @@ public class StarfallArrow extends AbstractArrow {
         //   \u2605\u73b0\u5728\uff1a\u2605\u5148\u7528 ``PartEntity#getParent()`` \u6362\u7b97\u56de**\u672c\u4f53** \u2713
         //     \uff08\u2605\u540c\u4e00\u5957\u771f\u4f24/\u7a7f\u900f/\u706b\u77e2/\u9ed1\u7bad\u903b\u8f91\u7167\u5e38\u751f\u6548 \u2713\uff09
         net.minecraft.world.entity.Entity tnl$hit = hitResult.getEntity();
+        // TNL980 \u2605\u2605 \u63a2\u9488\uff1a\u2605\u770b"\u547d\u4e2d\u4e86\u4ec0\u4e48/\u7b97\u4e0d\u7b97 boss" \u2713
+        {
+            org.slf4j.Logger lg = com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER;
+            Object parentInfo = "";
+            try {
+                if (tnl$hit instanceof net.minecraftforge.entity.PartEntity<?> p) {
+                    parentInfo = " part-of " + p.getParent().getClass().getSimpleName();
+                }
+            } catch (Throwable ignored) {
+            }
+            lg.warn("TNL980 arrow hit {} ({}){}  boss(parent)={}",
+                    tnl$hit.getClass().getSimpleName(), tnl$hit.getType(),
+                    parentInfo, tnl$isBoss(tnl$hit));
+        }
         if (tnl$hit instanceof net.minecraftforge.entity.PartEntity<?> tnl$part) {
             tnl$hit = tnl$part.getParent();
         }
