@@ -66,6 +66,8 @@ public final class BlinkHandler {
             if (line.sent >= GHOSTS) {
                 LINE.remove(id);
             } else if (now >= line.nextTick) {
+                // TNL1134 user: "the momo cannot keep up with its own ghosts" -- release four per tick
+                for (int k = 0; k < 4 && line.sent < GHOSTS; k++) {
                 double t = (double) line.sent / (GHOSTS - 1.0D);
                 double f = 1.0D - Math.pow(1.0D - t, 2.2D);      // denser toward the arrival point
                 Vec3 gp = line.origin.add(line.dest.subtract(line.origin).scale(f));
@@ -77,7 +79,8 @@ public final class BlinkHandler {
                                 momo.getId(), gp.x, gp.y, gp.z,
                                 (float) Math.toDegrees(Math.atan2(
                                         line.dest.z - line.origin.z, line.dest.x - line.origin.x)), 0.0F));
-                line.sent++;
+                    line.sent++;
+                }
                 line.nextTick = now + 1;
             }
         }
@@ -90,7 +93,14 @@ public final class BlinkHandler {
                 return;
             }
             AFTERCAST_UNTIL.remove(id);
+            // TNL1134 release the AI properly: unfreeze, drop the stale path and re-acquire the target
             momo.setNoAi(false);
+            if (momo.getNavigation() != null) {
+                momo.getNavigation().stop();
+            }
+            if (momo.getTarget() != null) {
+                momo.setTarget(momo.getTarget());
+            }
         }
 
         Long until = LOCK_UNTIL.get(id);
@@ -195,6 +205,13 @@ public final class BlinkHandler {
         momo.teleportTo(dest.x, dest.y, dest.z);
         momo.setDeltaMovement(Vec3.ZERO);
         momo.hurtMarked = true;
+        // TNL1134 user: "after blinking it gets stuck on its AI". Teleporting invalidates the old
+        // path, so clear it, re-target and only then freeze for the short recovery.
+        momo.setNoAi(false);
+        if (momo.getNavigation() != null) {
+            momo.getNavigation().stop();
+        }
+        momo.setTarget(target);
         momo.getLookControl().setLookAt(target, 30.0F, 30.0F);
         momo.setNoAi(true);      // TNL1121 half a second of recovery before it may act again
         TinkersNewlife.LOGGER.warn("TNL1120 Momo blinked behind {} to ({}, {}, {})",
