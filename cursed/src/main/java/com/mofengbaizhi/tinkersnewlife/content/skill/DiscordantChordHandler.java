@@ -172,6 +172,7 @@ public final class DiscordantChordHandler {
                 return;
             }
             CHARGE_UNTIL.put(id, now + CHARGE_TICKS);
+        MomoCastLock.anchor(id, momo.position());   // TNL1166 stay here
             MomoCastLock.begin(id, now, CHARGE_TICKS + 8);
             momo.tnl$setChordCasting(true);      // TNL1161 drives the chord pose on the client
             markChord(level, momo, CHARGE_TICKS + 10);

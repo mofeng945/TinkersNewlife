@@ -110,6 +110,37 @@ public final class KtuluDeathGuard {
         }
     }
 
+    /**
+     * TNL1166 user: "you said you zero the speed, why does it still run after me". Because the handler
+     * that zeroed it ran at the END of the server tick, after the entity had already moved. This runs
+     * at the START of the entity's own tick, so the movement code sees zero and cannot advance, and the
+     * anchor pull makes absolutely sure it stays where the cast started.
+     */
+    @SubscribeEvent
+    public static void onLivingTick(net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent event) {
+        try {
+            if (!(event.getEntity() instanceof KtuluMomo momo) || momo.level().isClientSide) {
+                return;
+            }
+            var id = momo.getUUID();
+            if (!com.mofengbaizhi.tinkersnewlife.content.skill.MomoCastLock
+                    .isCasting(id, momo.level().getGameTime())) {
+                return;
+            }
+            momo.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+            momo.hurtMarked = true;
+            if (momo.getNavigation() != null) {
+                momo.getNavigation().stop();
+            }
+            var anchor = com.mofengbaizhi.tinkersnewlife.content.skill.MomoCastLock.anchorOf(id);
+            if (anchor != null && momo.position().distanceToSqr(anchor) > 0.04D) {
+                momo.setPos(anchor.x, anchor.y, anchor.z);
+                momo.hurtMarked = true;
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onDeath(LivingDeathEvent event) {
         try {
