@@ -59,6 +59,9 @@ public final class DiscordantChordHandler {
     private static final Map<UUID, Integer> QUEUED = new ConcurrentHashMap<>();
     /** TNL1153 when the next wave is due */
     private static final Map<UUID, Long> QUEUE_AT = new ConcurrentHashMap<>();
+    /** TNL1157 when the hard control of this cast ends */
+    private static final Map<UUID, Long> RELEASE_AT = new ConcurrentHashMap<>();
+
     /** TNL1155 who currently carries the chord jump buff */
     private static final List<LivingEntity> JUMPED = new ArrayList<>();
 
@@ -110,6 +113,9 @@ public final class DiscordantChordHandler {
                 }
                 level.sendParticles(ParticleTypes.CLOUD,
                         momo.getX(), momo.getY() + 1.6D, momo.getZ(), 2, 0.4D, 0.4D, 0.4D, 0.01D);
+                // TNL1157 the charge phase must also carry the chord marker, otherwise the client has
+                // no way to know the chord (and not the resonance) is the one winding up.
+                markChord(level, momo, 8);
                 return;
             }
             CHARGE_UNTIL.remove(id);
@@ -165,6 +171,7 @@ public final class DiscordantChordHandler {
             }
             CHARGE_UNTIL.put(id, now + CHARGE_TICKS);
             MomoCastLock.begin(id, now, CHARGE_TICKS + 8);
+            markChord(level, momo, CHARGE_TICKS + 10);
             for (net.minecraft.world.entity.player.Player near : level.getEntitiesOfClass(
                     net.minecraft.world.entity.player.Player.class, momo.getBoundingBox().inflate(40.0D))) {
                 near.getCooldowns().addCooldown(
@@ -183,6 +190,25 @@ public final class DiscordantChordHandler {
 
         // TNL1156 keep the lock renewed while the cast is running, so it can never overstay
         MomoCastLock.begin(id, now, 60);
+        // TNL1157 two seconds after the last wave the boss may act again, rings or no rings
+        Long release = RELEASE_AT.get(id);
+        if (release != null && now >= release) {
+            RELEASE_AT.remove(id);
+            momo.setNoAi(false);
+            MomoCastLock.end(id, now, 0);
+            TinkersNewlife.LOGGER.warn("TNL1157 chord hard control released, waves may still travel");
+        }
+        // TNL1157 nobody around (player logged off mid cast) -- do not stay frozen for ever
+        if (momo.level().getNearestPlayer(momo, 80.0D) == null) {
+            RELEASE_AT.remove(id);
+            QUEUED.remove(id);
+            QUEUE_AT.remove(id);
+            RINGS_BY_MOMO.remove(id);
+            momo.setNoAi(false);
+            MomoCastLock.end(id, now, 0);
+            TinkersNewlife.LOGGER.warn("TNL1157 chord aborted, no players nearby");
+            return;
+        }
         int left = QUEUED.getOrDefault(id, 0);
         Long due = QUEUE_AT.get(id);
         if (left > 0 && due != null && now >= due) {
@@ -199,6 +225,11 @@ public final class DiscordantChordHandler {
                     SoundSource.HOSTILE, 1.8F, 1.0F);
             TinkersNewlife.LOGGER.warn("TNL1104 chord wave {} of {} at height {}, next in {} ticks",
                     WAVES - left + 1, WAVES, String.format("%.2f", baseY - momo.getY()), gap);
+            if (left - 1 <= 0) {
+                // TNL1157 last wave is out: hard control ends two seconds later, the waves may still
+                // be travelling and that is fine -- the boss may move again.
+                RELEASE_AT.put(id, now + 40);
+            }
         }
 
         momo.setNoAi(true);
@@ -237,6 +268,15 @@ public final class DiscordantChordHandler {
             }
             JUMPED.clear();
             TinkersNewlife.LOGGER.warn("TNL1104 Discordant Chord finished");
+        }
+    }
+
+    /** TNL1157 keep the chord marker alive on nearby players so the client can pick the chord pose. */
+    private static void markChord(ServerLevel level, KtuluMomo momo, int ticks) {
+        for (net.minecraft.world.entity.player.Player near : level.getEntitiesOfClass(
+                net.minecraft.world.entity.player.Player.class, momo.getBoundingBox().inflate(48.0D))) {
+            near.getCooldowns().addCooldown(
+                    com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_CHORD_MARKER.get(), ticks);
         }
     }
 

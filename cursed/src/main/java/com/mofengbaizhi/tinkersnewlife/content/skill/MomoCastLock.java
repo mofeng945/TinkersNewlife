@@ -33,13 +33,12 @@ public final class MomoCastLock {
         return true;
     }
 
-    /** true when nothing is casting and the cooldown of the last cast is over */
+    /**
+     * TNL1157 user: cooldowns and animations are independent per skill; the lock must only stop two
+     * skills casting at the same time. It no longer carries a cooldown of its own.
+     */
     public static boolean canStart(UUID id, long now) {
-        if (isCasting(id, now)) {
-            return false;
-        }
-        Long next = NEXT_CAST.get(id);
-        return next == null || now >= next;
+        return !isCasting(id, now);
     }
 
     /** claim the lock for this many ticks */
