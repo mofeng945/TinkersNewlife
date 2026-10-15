@@ -374,11 +374,20 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_CHARGING =
             net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class,
                     net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+    // TNL1161 user: "why is the cast marker on the player, it belongs on the momo -- casting and
+    // charging are the same thing". Right, and the entity data channel is the one that demonstrably
+    // reaches the client (the resonance uses it). The chord gets its own flag on the same channel.
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_CHORD =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class,
+                    net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+
 
     @Override
+
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(DATA_CHARGING, Boolean.FALSE);
+        this.entityData.define(DATA_CHORD, Boolean.FALSE);
     }
 
     public boolean tnl$isCharging() {
@@ -388,5 +397,14 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     public void tnl$setCharging(boolean charging) {
         this.entityData.set(DATA_CHARGING, charging);
     }
+    /** TNL1161 true while the Discordant Chord is casting; drives the chord pose on the client */
+    public boolean tnl$isChordCasting() {
+        return this.entityData.get(DATA_CHORD);
+    }
+
+    public void tnl$setChordCasting(boolean casting) {
+        this.entityData.set(DATA_CHORD, casting);
+    }
+
 
 }

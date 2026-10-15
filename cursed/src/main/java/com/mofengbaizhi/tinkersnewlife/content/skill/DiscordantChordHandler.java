@@ -171,6 +171,7 @@ public final class DiscordantChordHandler {
             }
             CHARGE_UNTIL.put(id, now + CHARGE_TICKS);
             MomoCastLock.begin(id, now, CHARGE_TICKS + 8);
+            momo.tnl$setChordCasting(true);      // TNL1161 drives the chord pose on the client
             markChord(level, momo, CHARGE_TICKS + 10);
             for (net.minecraft.world.entity.player.Player near : level.getEntitiesOfClass(
                     net.minecraft.world.entity.player.Player.class, momo.getBoundingBox().inflate(40.0D))) {
@@ -205,6 +206,7 @@ public final class DiscordantChordHandler {
             QUEUE_AT.remove(id);
             RINGS_BY_MOMO.remove(id);
             momo.setNoAi(false);
+            momo.tnl$setChordCasting(false);
             MomoCastLock.end(id, now, 0);
             TinkersNewlife.LOGGER.warn("TNL1157 chord aborted, no players nearby");
             return;
@@ -255,6 +257,7 @@ public final class DiscordantChordHandler {
             QUEUED.remove(id);
             QUEUE_AT.remove(id);
             momo.setNoAi(false);
+            momo.tnl$setChordCasting(false);     // TNL1161 the chord pose ends with the cast
             // TNL1154 cooldown only starts now, when the whole cast is over
             COOLDOWN_UNTIL.put(id, now + COOLDOWN_TICKS);
             MomoCastLock.end(id, now, COOLDOWN_TICKS);
