@@ -78,6 +78,7 @@ public final class AstralResonanceHandler {
             if (now < until) {
                 momo.setDeltaMovement(Vec3.ZERO);
                 momo.hurtMarked = true;
+                momo.setNoAi(true);   // TNL1113 no moving, no attacking while casting
                 if (momo.getNavigation() != null) {
                     momo.getNavigation().stop();
                 }
@@ -128,6 +129,7 @@ public final class AstralResonanceHandler {
     /** the shriek itself: Warden sonic boom feel, knock the target past ten blocks. */
     private static void shriek(ServerLevel level, KtuluMomo momo, long now) {
         COOLDOWN_UNTIL.put(momo.getUUID(), now + COOLDOWN_TICKS);
+        momo.setNoAi(false);      // TNL1113 the wind up is done
         LivingEntity target = momo.getTarget();
         Vec3 origin = momo.position().add(0.0D, 1.0D, 0.0D);
         level.playSound(null, momo.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM,

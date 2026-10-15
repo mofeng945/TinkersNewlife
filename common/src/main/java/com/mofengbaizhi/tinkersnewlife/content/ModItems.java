@@ -831,5 +831,12 @@ public class ModItems {
      */
     public static final RegistryObject<Item> AEONIAN_MARKER =
             ITEMS.register("aeonian_marker", () -> new Item(new Item.Properties()));
+    /**
+     * TNL1113 a second hidden marker. The boss skills must never touch the hook marker, otherwise
+     * Momo raising its arms hides the scythe in the player's hand (that was happening).
+     */
+    public static final RegistryObject<Item> AEONIAN_SKILL_MARKER =
+            ITEMS.register("aeonian_skill_marker", () -> new Item(new Item.Properties()));
+
 }
 

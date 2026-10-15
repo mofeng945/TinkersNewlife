@@ -94,6 +94,7 @@ public final class DiscordantChordHandler {
             if (now < until) {
                 momo.setDeltaMovement(Vec3.ZERO);
                 momo.hurtMarked = true;
+                momo.setNoAi(true);   // TNL1113 no moving, no attacking while casting
                 if (momo.getNavigation() != null) {
                     momo.getNavigation().stop();
                 }
@@ -103,6 +104,7 @@ public final class DiscordantChordHandler {
                 return;
             }
             CHARGE_UNTIL.remove(id);
+            momo.setNoAi(false);      // TNL1113 the charge is over, it may move again while chanting
             // release: five rings, the first at once and the rest every RING_GAP / SPEED ticks
             // TNL1107 every ring is born at Momo itself (radius 0), they are separated in TIME
             List<Double> queue = new ArrayList<>();
@@ -125,7 +127,7 @@ public final class DiscordantChordHandler {
             for (net.minecraft.world.entity.player.Player near : level.getEntitiesOfClass(
                     net.minecraft.world.entity.player.Player.class, momo.getBoundingBox().inflate(40.0D))) {
                 near.getCooldowns().addCooldown(
-                        com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_MARKER.get(), 10);
+                        com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_SKILL_MARKER.get(), 10);
             }
         }
         if (rings == null) {
@@ -142,7 +144,7 @@ public final class DiscordantChordHandler {
             for (net.minecraft.world.entity.player.Player near : level.getEntitiesOfClass(
                     net.minecraft.world.entity.player.Player.class, momo.getBoundingBox().inflate(40.0D))) {
                 near.getCooldowns().addCooldown(
-                        com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_MARKER.get(), 20);
+                        com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_SKILL_MARKER.get(), 20);
             }
             momo.setDeltaMovement(Vec3.ZERO);
             momo.hurtMarked = true;
@@ -182,6 +184,7 @@ public final class DiscordantChordHandler {
         if (rings.isEmpty() && queue.isEmpty()) {
             RINGS_BY_MOMO.remove(id);
             QUEUED.remove(id);
+            momo.setNoAi(false);      // TNL1113 cast over
             level.playSound(null, momo.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM,
                     SoundSource.HOSTILE, 2.4F, 0.9F);
             TinkersNewlife.LOGGER.warn("TNL1104 Discordant Chord finished");

@@ -41,11 +41,19 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
         boolean charging = entity.tnl$isCharging();
         if (!charging && mc.player != null) {
             charging = mc.player.getCooldowns().isOnCooldown(
-                    com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_MARKER.get());
+                    com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_SKILL_MARKER.get());
         }
         long now = mc.level != null ? mc.level.getGameTime() : 0L;
-        if (!charging) {
-            tnl$chargeStart = -1L;
+        boolean chordCast = charging
+                && com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.DISCORDANT_CHORD;
+        if (!charging && !chordCast) {
+            // TNL1113 for the chord the clock is held while the rings are still travelling, so a
+            // dropped sync frame cannot restart the animation and desync it from the hit detection
+            if (!(com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.DISCORDANT_CHORD
+                    && tnl$chargeStart >= 0L
+                    && (now - tnl$chargeStart) < 40L + 5L * 33L + 120L)) {
+                tnl$chargeStart = -1L;
+            }
         } else if (tnl$chargeStart < 0L) {
             tnl$chargeStart = now;
         }
