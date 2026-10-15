@@ -810,11 +810,15 @@ public final class ApostlePatch {
     private static final int MONOLITH_CAP = 6;
     /** 补位间隔（tick ✓ §869 用户口径：召唤速度**减慢一倍** ⇒ 默认 10 秒＝200 tick ✓ 可在配置里改 ✓） */
     private static int monolithTopUpTicks() {
+        int seconds = 30;
         try {
-            return Math.max(1, MONOLITH_TOPUP_SECONDS.get()) * 20;
+            seconds = MONOLITH_TOPUP_SECONDS.get();
         } catch (Throwable ignored) {
-            return 200;
         }
+        // TNL1118 user: "the interval change never took effect, still under 10 s". An existing config
+        // file keeps its own value and overrides the code default, so enforce a hard floor of 30 s.
+        seconds = Math.max(30, Math.min(600, seconds));
+        return seconds * 20;
     }
     /** 使徒 → 下次可补位的时刻 ✓ */
     private static final Map<UUID, Long> MONOLITH_TOPUP_AT = new ConcurrentHashMap<>();
