@@ -83,7 +83,9 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
                 continue;
             }
             float fade = (float) Math.max(0.0D, 1.0D - r / 16.0D);
-            tnl$ringQuad(null, mat, (float) entity.getX(), (float) baseY, (float) entity.getZ(), (float) r,
+            // TNL1112 the pose matrix is already translated onto the entity, so the ring
+            // must be emitted in LOCAL coordinates. Passing world coords pushed it away.
+            tnl$ringQuad(null, mat, 0.0F, 0.03F, 0.0F, (float) r,
                     Math.max(0.20F, fade), buffer);
         }
     }
