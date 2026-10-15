@@ -76,6 +76,16 @@ public final class FumoMoHeadRender {
         // ★ §898 关键：young 必须是 false，否则走幼年体分支（×0.75 ＋ 下移 16px）⇒ 被塞进躯干里 ✗
         doll.young = false;
 
+        // TNL1095 user: "the hat layer still does not follow the head". This call DOES read the parent
+        // model head, so log which model and which head rotation we actually get here.
+        if (System.currentTimeMillis() % 2000L < 60L) {
+            org.slf4j.LoggerFactory.getLogger("TinkersNewlife/FumoMo").info(
+                    "[fufu] head layer sees model={} headX={} headY={} headZ={}",
+                    headed.getClass().getSimpleName(),
+                    String.format("%.3f", headed.getHead().xRot),
+                    String.format("%.3f", headed.getHead().yRot),
+                    String.format("%.3f", headed.getHead().zRot));
+        }
         pose.pushPose();
         headed.getHead().translateAndRotate(pose);   // 到头部枢轴（带上头的朝向 ✓ 转头就跟着转 ✓）
         pose.translate(0.0D, HEAD_DROP, 0.0D);       // 落到头顶（注意：这一步在缩放之前 ⇒ 单位是"格" ✓）
