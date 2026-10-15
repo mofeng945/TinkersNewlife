@@ -29,6 +29,13 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
     public void setupAnim(KtuluMomo entity, float limbSwing, float limbSwingAmount, float ageInTicks,
                           float netHeadYaw, float headPitch) {
         super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
+        // TNL1101 the hair IS this hat part (hiding it during the charge made it vanish), and the old
+        // code set visible = !CHARGING *after* an early return, so the hat never came back. Restore it
+        // unconditionally before anything can return.
+        this.hat.visible = true;
+        this.hat.skipDraw = false;
+        this.hat.yRot = 0.0F;
+        this.hat.yScale = 1.0F;
         if (!CHARGING) {
             return;
         }
@@ -41,11 +48,6 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         // being drawn at all for this skin. Force it visible, mark it, and log its state once.
         this.hat.visible = true;
         this.hat.skipDraw = false;
-        // TNL1100 decisive test: hide the hat part entirely while charging.
-        //   hair disappears -> the hair IS this hat part (then the twist failing is a timing issue);
-        //   hair stays       -> the hair is drawn by some other model and we must find that one.
-        this.hat.visible = !CHARGING;
-        this.hat.yScale = CHARGING ? 1.35F : 1.0F;
         // TNL1098 unmistakable identity test: if the model we pose is the one drawn, the momo has to
         // visibly inflate while charging. The hat state probe says visible=true yRot=1.0 yet nothing
         // moves, so either this model is not what is rendered, or the outer hair is not this part.
@@ -68,9 +70,9 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         float backSwing = t < 0.75F ? 0.0F : (t - 0.75F) / 0.25F;
 
         // slight forward lean that deepens as it charges, then arches back on release
-        this.body.xRot = 0.16F * Math.min(1.0F, t * 1.6F) - 0.34F * backSwing + tremble * 0.4F;
+        this.body.xRot = 0.22F * Math.min(1.0F, t * 1.6F) - 0.40F * backSwing + tremble * 0.4F;   // TNL1101
         // head dips while guarding, then lifts for the shriek
-        this.head.xRot = 0.28F * up - 0.55F * backSwing + tremble;
+        this.head.xRot = 0.52F * up - 0.85F * backSwing + tremble;   // TNL1101 stronger, so the hair visibly follows
         this.head.yRot = netHeadYaw * 0.4F;
 
         // TNL1094 user: "the guard is reversed, the arms open forward instead of covering the face,
