@@ -23,12 +23,35 @@ public final class KtuluDeathGuard {
     private KtuluDeathGuard() {
     }
 
+    /** TNL1143 probe: show exactly what the momo health does around a hit. */
+    @SubscribeEvent
+    public static void onHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
+        try {
+            if (!(event.getEntity() instanceof KtuluMomo momo) || momo.level().isClientSide) {
+                return;
+            }
+            String src;
+            try {
+                src = event.getSource().typeHolder().unwrapKey()
+                        .map(k -> k.location().toString()).orElse("?");
+            } catch (Throwable t) {
+                src = String.valueOf(event.getSource().getMsgId());
+            }
+            TinkersNewlife.LOGGER.warn(
+                    "TNL1143 hit on momo src={} amount={} before={} auth={} max={}",
+                    src, event.getAmount(), momo.getHealth(), com.mofengbaizhi.tinkersnewlife.content.entity.ktulu.a.qF(momo), momo.getMaxHealth());
+        } catch (Throwable ignored) {
+        }
+    }
+
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onDeath(LivingDeathEvent event) {
         try {
             if (!(event.getEntity() instanceof KtuluMomo momo)) {
                 return;
             }
+            TinkersNewlife.LOGGER.warn("TNL1143 death of momo src={} health={} auth={}",
+                    event.getSource().getMsgId(), momo.getHealth(), com.mofengbaizhi.tinkersnewlife.content.entity.ktulu.a.qF(momo));
             if (momo.level().isClientSide) {
                 return;
             }
