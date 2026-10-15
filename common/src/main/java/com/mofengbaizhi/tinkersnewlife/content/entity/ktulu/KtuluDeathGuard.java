@@ -20,6 +20,9 @@ import net.minecraftforge.fml.common.Mod;
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID)
 public final class KtuluDeathGuard {
 
+    /** TNL1147 rate limit for the tamper probe */
+    private static long TNL_STAMP = 0L;
+
     private KtuluDeathGuard() {
     }
 
