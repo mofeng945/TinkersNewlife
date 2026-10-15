@@ -25,12 +25,16 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class BlinkHandler {
 
     private static final int LOCK_TICKS = 30;        // 1.5 s
-    private static final double BEHIND = 3.0D;       // three blocks behind the target
+    private static final double AROUND = 3.0D;       // TNL1121 a random spot within three blocks
+    private static final int AFTERCAST_TICKS = 10;   // 0.5 s of recovery, the afterimages show here
     private static final double RANGE = 16.0D;       // only when the target is this close
     private static final int COOLDOWN_TICKS = 400;   // 20 s
 
     private static final Map<UUID, Long> LOCK_UNTIL = new ConcurrentHashMap<>();
     private static final Map<UUID, Long> COOLDOWN_UNTIL = new ConcurrentHashMap<>();
+    /** TNL1121 recovery window after the teleport, used by the client for the afterimages */
+    public static final Map<UUID, Long> AFTERCAST_UNTIL = new ConcurrentHashMap<>();
+    public static final Map<UUID, net.minecraft.world.phys.Vec3> LAST_ORIGIN = new ConcurrentHashMap<>();
 
     private BlinkHandler() {
     }
@@ -56,6 +60,17 @@ public final class BlinkHandler {
 
     private static void tickOne(ServerLevel level, KtuluMomo momo, long now) {
         UUID id = momo.getUUID();
+
+        Long after = AFTERCAST_UNTIL.get(id);
+        if (after != null) {
+            if (now < after) {
+                momo.setDeltaMovement(Vec3.ZERO);
+                momo.hurtMarked = true;
+                return;
+            }
+            AFTERCAST_UNTIL.remove(id);
+            momo.setNoAi(false);
+        }
 
         Long until = LOCK_UNTIL.get(id);
         if (until != null) {
@@ -99,24 +114,69 @@ public final class BlinkHandler {
                 target.getName().getString());
     }
 
+    /** TNL1122 walk the segment and report true if any block collides with it. */
+    private static boolean tnl$lineBlocked(ServerLevel level, Vec3 from, Vec3 to) {
+        Vec3 delta = to.subtract(from);
+        double len = delta.length();
+        if (len < 1.0E-4D) {
+            return false;
+        }
+        int steps = (int) Math.ceil(len / 0.25D);
+        for (int i = 1; i < steps; i++) {
+            Vec3 p = from.add(delta.scale((double) i / steps));
+            BlockPos bp = BlockPos.containing(p);
+            if (!level.getBlockState(bp).getCollisionShape(level, bp).isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** appear three blocks behind the target, facing it, with no warning whatsoever. */
     private static void teleportBehind(ServerLevel level, KtuluMomo momo, LivingEntity target) {
-        Vec3 look = target.getLookAngle();
-        Vec3 flat = new Vec3(look.x, 0.0D, look.z);
-        if (flat.lengthSqr() < 1.0E-4D) {
-            flat = new Vec3(0.0D, 0.0D, 1.0D);
+        long now = level.getGameTime();
+        // TNL1121 a random spot inside three blocks of the target, anywhere around it
+        Vec3 origin = momo.position();
+        Vec3 dest = null;
+        for (int attempt = 0; attempt < 12 && dest == null; attempt++) {
+            double ang = level.random.nextDouble() * Math.PI * 2.0D;
+            double rad = 1.0D + level.random.nextDouble() * (AROUND - 1.0D);
+            Vec3 cand = target.position().add(Math.cos(ang) * rad, 0.0D, Math.sin(ang) * rad);
+            BlockPos bp = BlockPos.containing(cand);
+            if (level.getBlockState(bp).getCollisionShape(level, bp).isEmpty()
+                    && level.getBlockState(bp.above()).getCollisionShape(level, bp.above()).isEmpty()) {
+                dest = cand;
+            }
         }
-        flat = flat.normalize();
-        Vec3 dest = target.position().subtract(flat.scale(BEHIND));   // opposite of where it looks
-        BlockPos bp = BlockPos.containing(dest);
-        if (!level.getBlockState(bp).getCollisionShape(level, bp).isEmpty()) {
-            dest = target.position();                                // no room, land on the target
+        if (dest == null) {
+            dest = target.position();
         }
+        // TNL1122 user: if a block sits anywhere on the line between the start and the destination,
+        // the blink does not happen at all -- it stays put and simply loses the skill.
+        if (tnl$lineBlocked(level, origin.add(0.0D, 1.0D, 0.0D), dest.add(0.0D, 1.0D, 0.0D))) {
+            TinkersNewlife.LOGGER.warn("TNL1122 Blink aborted, the path to {} is blocked",
+                    target.getName().getString());
+            return;
+        }
+        LAST_ORIGIN.put(momo.getUUID(), origin);
+        // TNL1123 user: the afterimages must cover the whole line between the two points
+        int ghosts = 14;
+        for (int i = 0; i < ghosts; i++) {
+            double f = Math.pow((double) i / (ghosts - 1.0D), 1.6D);   // denser near the start
+            Vec3 p = origin.add(dest.subtract(origin).scale(f));
+            // send it exactly like PacketThrustGhost.broadcast does, but with our own coordinates
+            TinkersNewlife.CHANNEL.send(
+                    net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> momo),
+                    new com.mofengbaizhi.tinkersnewlife.network.tools.PacketThrustGhost(
+                            momo.getId(), p.x, p.y, p.z,
+                            (float) Math.toDegrees(Math.atan2(dest.z - origin.z, dest.x - origin.x)), 0.0F));
+        }
+        AFTERCAST_UNTIL.put(momo.getUUID(), now + AFTERCAST_TICKS);
         momo.teleportTo(dest.x, dest.y, dest.z);
         momo.setDeltaMovement(Vec3.ZERO);
         momo.hurtMarked = true;
         momo.getLookControl().setLookAt(target, 30.0F, 30.0F);
-        momo.setNoAi(false);
+        momo.setNoAi(true);      // TNL1121 half a second of recovery before it may act again
         TinkersNewlife.LOGGER.warn("TNL1120 Momo blinked behind {} to ({}, {}, {})",
                 target.getName().getString(),
                 String.format("%.1f", dest.x), String.format("%.1f", dest.y), String.format("%.1f", dest.z));
