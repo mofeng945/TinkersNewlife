@@ -36,7 +36,18 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         // In HumanoidModel the hat part is a CHILD of the head, so it should follow for free. This
         // forced twist is a decisive test: if the visible hat does not turn, then the skin we see is
         // not drawn by this model instance at all.
+        // TNL1097 The user confirmed it is the live boss (B) and that the body tremble IS visible, so
+        // this model really is the one drawn. The hat twist not showing then means the hat part is not
+        // being drawn at all for this skin. Force it visible, mark it, and log its state once.
+        this.hat.visible = true;
+        this.hat.skipDraw = false;
         this.hat.yRot = CHARGING ? 1.0F : 0.0F;
+        this.hat.yScale = CHARGING ? 1.35F : 1.0F;
+        if (CHARGING && entity.tickCount % 20 == 0) {
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                    "TNL1097 hat state visible={} skipDraw={} yRot={} headX={}",
+                    this.hat.visible, this.hat.skipDraw, this.hat.yRot, this.head.xRot);
+        }
         float t = Math.max(0.0F, Math.min(1.0F, PROGRESS));
         // TNL1092 user: "only the tremble shows, the skeletal animation is gone". The tremble rides on
         // body.xRot, so the hook does run. Log the numbers to see whether t is stuck at an endpoint.
