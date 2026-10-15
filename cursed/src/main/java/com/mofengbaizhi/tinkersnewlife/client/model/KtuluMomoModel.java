@@ -108,12 +108,14 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
             float wave2 = (float) Math.sin(ageInTicks * 0.55F + 1.1F);
             this.body.xRot = 0.06F;
             this.head.xRot = -0.18F + wave * 0.05F;      // chin up, chanting
-            this.rightArm.xRot = -2.75F + wave * 0.22F;  // arms straight up
-            this.rightArm.yRot = 0.22F + wave * 0.18F;
-            this.rightArm.zRot = 0.35F + wave2 * 0.20F;
-            this.leftArm.xRot = -2.75F + wave2 * 0.22F;
-            this.leftArm.yRot = -0.22F - wave2 * 0.18F;
-            this.leftArm.zRot = -0.35F - wave * 0.20F;
+            // TNL1109 user: "the arms are pointing the wrong way again". xRot is the front/back axis,
+            // which is why they went forwards. Raising the arms overhead is the zRot (frontal) axis.
+            this.rightArm.xRot = -0.25F;
+            this.rightArm.yRot = 0.10F;
+            this.rightArm.zRot = 2.55F + wave * 0.20F;   // up, waving
+            this.leftArm.xRot = -0.25F;
+            this.leftArm.yRot = -0.10F;
+            this.leftArm.zRot = -2.55F - wave2 * 0.20F;
             this.rightLeg.xRot = 0.0F;
             this.leftLeg.xRot = 0.0F;
             this.hat.xRot = this.head.xRot;

@@ -83,7 +83,7 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
                 continue;
             }
             float fade = (float) Math.max(0.0D, 1.0D - r / 16.0D);
-            tnl$ringBand(vc, mat, entity.getX(), entity.getZ(), baseY, r, 0.06D, 1.0F, 1.0F, 1.0F, 0.55F * fade + 0.2F);
+            tnl$ringBand(vc, mat, entity.getX(), entity.getZ(), baseY, r, 0.07D, 0.62F, 0.62F, 0.66F, 0.60F * fade + 0.25F);   // TNL1109 grey
         }
     }
 

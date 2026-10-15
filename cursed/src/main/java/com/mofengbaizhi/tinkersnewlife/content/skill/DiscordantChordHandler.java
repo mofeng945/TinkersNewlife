@@ -189,15 +189,9 @@ public final class DiscordantChordHandler {
     }
 
     /** a 0.5 block tall shell of white smoke at this radius */
+    /** TNL1109 user: the ring itself must be the grey geometry, so no white particle ring here. */
     private static void drawRing(ServerLevel level, KtuluMomo momo, double radius, double baseY) {
-        // TNL1106 denser sampling so the dots read as one continuous thin band
-        int points = Math.max(24, (int) (radius * 7.0D));   // TNL1108 halved
-        for (int i = 0; i < points; i++) {
-            double a = (Math.PI * 2.0D) * i / points;
-            double x = momo.getX() + Math.cos(a) * radius;
-            double z = momo.getZ() + Math.sin(a) * radius;
-            level.sendParticles(ParticleTypes.CLOUD, x, baseY + 0.25D, z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
-        }
+        // intentionally empty: the visual comes from the client renderer (grey band)
     }
 
     /** anything inside the shell and low enough is launched and left weak and slow */
