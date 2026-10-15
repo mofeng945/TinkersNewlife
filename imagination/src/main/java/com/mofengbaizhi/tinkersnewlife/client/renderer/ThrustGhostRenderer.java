@@ -75,10 +75,13 @@ public final class ThrustGhostRenderer {
             for (ThrustGhostCache.Ghost ghost : ghosts) {
                 Entity entity = mc.level.getEntity(ghost.entityId);
                 // ⚠ 实体已经不在客户端了 ⇒ ⭐ 这条残影没意义 ✓ 丢掉 ✓
-                if (!(entity instanceof AbstractClientPlayer player)) {
+                // TNL1130 the momo is not a player, so the old check silently skipped every ghost it
+                // broadcast. Accept our boss too and use the plain LivingEntity tick count.
+                if (!(entity instanceof net.minecraft.world.entity.LivingEntity living)) {
                     continue;
                 }
-                float progress = ghost.progress(player.tickCount);
+                boolean isMomo = entity instanceof com.mofengbaizhi.tinkersnewlife.content.entity.KtuluMomo;
+                float progress = ghost.progress(living.tickCount);
                 if (progress >= 1.0F) {
                     continue;
                 }
@@ -88,7 +91,7 @@ public final class ThrustGhostRenderer {
                 //   ⇒ ⭐ 第一人称下**自己的**残影不画 ✓；⚠ **别人的**残影照画 ✓（⭐ 那才合理 ✓）
                 //     ⭐ 第三人称下**连自己的**也照画 ✓（⭐ 用户要的就是"在第三人称能看见虚影" ✓）。
                 if (mc.options.getCameraType().isFirstPerson()
-                        && mc.player != null && ghost.entityId == mc.player.getId()) {
+                        && mc.player != null && ghost.entityId == mc.player.getId()) {   // skip own first person
                     continue;
                 }
                 // ⭐ 按存活进度淡出 ✓（⭐ 线性 ✓ 越老越淡 ✓）
@@ -98,7 +101,11 @@ public final class ThrustGhostRenderer {
                 }
 
                 // ⚠ 半透明实体类型 ⇒ ⭐ alpha 才会真的混合 ✓（见类注释 ✓）
-                RenderType ghostType = RenderType.entityTranslucent(player.getSkinTextureLocation());
+                RenderType ghostType = RenderType.entityTranslucent(
+                        entity instanceof AbstractClientPlayer acp
+                                ? acp.getSkinTextureLocation()
+                                : new net.minecraft.resources.ResourceLocation(
+                                        "tinkersnewlife", "textures/entity/ktulu_momo.png"));
                 MultiBufferSource ghostBuffer = type -> buffer.getBuffer(ghostType);
 
                 poseStack.pushPose();
@@ -119,7 +126,7 @@ public final class ThrustGhostRenderer {
                     try {
                         // ⭐⭐ **用同一套模型再画一遍**（用户口径 ✓）✗
                         //   ⭐ yaw 仍传广播来的值 ✓ —— ⚠ 上一版我传 0 是因为自己转了 ✗ 现在不转了 ✓
-                        dispatcher.render(player,
+                        dispatcher.render(entity,
                                 ghost.x - cam.x, ghost.y - cam.y, ghost.z - cam.z,
                                 ghost.yaw, partialTick, poseStack, ghostBuffer, light);
                     } finally {

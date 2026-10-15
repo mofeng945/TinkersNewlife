@@ -63,7 +63,8 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
         com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.PROGRESS = progress;
         // TNL1129 the prototype draws its effect inside the entity render chain, so do the same here.
         // Local coordinates: the pose matrix is already on the entity, so ghosts are the offset from it.
-        tnl$drawBlinkGhosts(entity, poseStack, buffer);
+        // TNL1130 the prototype ThrustGhostRenderer draws these now, no need to draw twice
+        // tnl$drawBlinkGhosts(entity, poseStack, buffer);
         super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
         // TNL1107 real ring geometry for the Discordant Chord, drawn from the entity like the model
         // TNL1114 user: "forget it, go back to the particle ring" -- the textured quad is off.
