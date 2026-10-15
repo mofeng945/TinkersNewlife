@@ -38,7 +38,7 @@ public final class DiscordantChordHandler {
     private static final int RINGS = 5;                // five rings per cast
     private static final double RING_GAP = 5.0D;       // five blocks between rings
     private static final double MAX_RADIUS = 16.0D;    // never spread further than this
-    private static final double SPEED = 0.5D;          // blocks per tick
+    private static final double SPEED = 0.15D;         // TNL1106 user: much slower spread
     private static final double HEIGHT = 0.5D;         // ring height
     private static final int COOLDOWN_TICKS = 600;     // TNL1105 user: 30 s cooldown between casts
     private static final int EFFECT_TICKS = 100;       // 5 s of weakness and slowness
@@ -169,13 +169,17 @@ public final class DiscordantChordHandler {
 
     /** a 0.5 block tall shell of white smoke at this radius */
     private static void drawRing(ServerLevel level, KtuluMomo momo, double radius, double baseY) {
-        int points = Math.max(16, (int) (radius * 6.0D));
+        // TNL1106 denser sampling so the dots read as one continuous thin band
+        int points = Math.max(48, (int) (radius * 16.0D));
         for (int i = 0; i < points; i++) {
             double a = (Math.PI * 2.0D) * i / points;
             double x = momo.getX() + Math.cos(a) * radius;
             double z = momo.getZ() + Math.sin(a) * radius;
-            level.sendParticles(ParticleTypes.CLOUD, x, baseY + 0.25D, z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
-            level.sendParticles(ParticleTypes.SMOKE, x, baseY + HEIGHT, z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+            level.sendParticles(ParticleTypes.CLOUD, x, baseY + 0.15D, z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+            level.sendParticles(ParticleTypes.CLOUD, x, baseY + 0.35D, z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+            if ((i & 1) == 0) {
+                level.sendParticles(ParticleTypes.SMOKE, x, baseY + HEIGHT, z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+            }
         }
     }
 
