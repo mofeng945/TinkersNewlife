@@ -31,7 +31,6 @@ public final class BlinkHandler {
     private static final int COOLDOWN_TICKS = 200;   // TNL1126 user: 10 s
 
     private static final Map<UUID, Long> LOCK_UNTIL = new ConcurrentHashMap<>();
-    private static final Map<UUID, Long> COOLDOWN_UNTIL = new ConcurrentHashMap<>();
     /** TNL1121 recovery window after the teleport, used by the client for the afterimages */
     public static final Map<UUID, Long> AFTERCAST_UNTIL = new ConcurrentHashMap<>();
     public static final Map<UUID, net.minecraft.world.phys.Vec3> LAST_ORIGIN = new ConcurrentHashMap<>();
@@ -164,8 +163,8 @@ public final class BlinkHandler {
             return;
         }
 
-        Long cd = COOLDOWN_UNTIL.get(id);
-        if (cd != null && now < cd) {
+        long cd = momo.tnl$blinkCoolUntil();
+        if (now < cd) {
             return;
         }
         LivingEntity target = momo.getTarget();
@@ -180,7 +179,7 @@ public final class BlinkHandler {
         momo.tnl$setSpell(1, LOCK_TICKS + AFTERCAST_TICKS);   // TNL1169 blink is spell 1
         MomoCastLock.begin(id, now, LOCK_TICKS + AFTERCAST_TICKS + 10);
         FREEZE_DEADLINE.put(id, now + MAX_FROZEN_TICKS);
-        COOLDOWN_UNTIL.put(id, now + LOCK_TICKS + COOLDOWN_TICKS);
+        momo.tnl$setBlinkCoolUntil(now + LOCK_TICKS + COOLDOWN_TICKS);   // TNL1172
         // TNL1164 user: never clear the AI for a wind up or a recovery -- it
         // sticks (teleporting high left the boss frozen two seconds). Rooting is done
         // by zeroing the movement every tick instead, which is already done above.

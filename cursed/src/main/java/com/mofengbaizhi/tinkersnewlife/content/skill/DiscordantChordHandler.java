@@ -54,7 +54,6 @@ public final class DiscordantChordHandler {
     private static final Map<UUID, Long> CHARGE_UNTIL = new ConcurrentHashMap<>();
     /** per momo: the live rings of the current cast */
     private static final Map<UUID, List<Ring>> RINGS_BY_MOMO = new ConcurrentHashMap<>();
-    private static final Map<UUID, Long> COOLDOWN_UNTIL = new ConcurrentHashMap<>();
     /** TNL1153 how many waves are still waiting to be released */
     private static final Map<UUID, Integer> QUEUED = new ConcurrentHashMap<>();
     /** TNL1153 when the next wave is due */
@@ -153,8 +152,8 @@ public final class DiscordantChordHandler {
             }
         }
         if (rings == null) {
-            Long cd = COOLDOWN_UNTIL.get(id);
-            if (cd != null && now < cd) {
+            long cd = momo.tnl$chordCoolUntil();
+            if (now < cd) {
                 return;
             }
             // TNL1154 no other skill may run at the same time
@@ -273,7 +272,7 @@ public final class DiscordantChordHandler {
             // by zeroing the movement every tick instead, which is already done above.
             momo.tnl$setChordCasting(false);     // TNL1161 the chord pose ends with the cast
             // TNL1154 cooldown only starts now, when the whole cast is over
-            COOLDOWN_UNTIL.put(id, now + COOLDOWN_TICKS);
+            momo.tnl$setChordCoolUntil(now + COOLDOWN_TICKS);   // TNL1172
             MomoCastLock.end(id, now, COOLDOWN_TICKS);
             level.playSound(null, momo.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM,
                     SoundSource.HOSTILE, 2.4F, 0.9F);

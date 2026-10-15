@@ -35,7 +35,6 @@ public final class AstralResonanceHandler {
 
     private static final Map<UUID, Integer> NEAR = new ConcurrentHashMap<>();
     private static final Map<UUID, Long> CHARGING_UNTIL = new ConcurrentHashMap<>();
-    private static final Map<UUID, Long> COOLDOWN_UNTIL = new ConcurrentHashMap<>();
 
     private AstralResonanceHandler() {
     }
@@ -88,8 +87,8 @@ public final class AstralResonanceHandler {
             return;
         }
 
-        Long cd = COOLDOWN_UNTIL.get(id);
-        if (cd != null && now < cd) {
+        long cd = momo.tnl$resonanceCoolUntil();
+        if (now < cd) {
             return;
         }
 
@@ -141,7 +140,7 @@ public final class AstralResonanceHandler {
 
     /** the shriek itself: Warden sonic boom feel, knock the target past ten blocks. */
     private static void shriek(ServerLevel level, KtuluMomo momo, long now) {
-        COOLDOWN_UNTIL.put(momo.getUUID(), now + COOLDOWN_TICKS);
+        momo.tnl$setResonanceCoolUntil(now + COOLDOWN_TICKS);   // TNL1172 on the entity
         // TNL1164 user: never clear the AI for a wind up or a recovery -- it
         // sticks (teleporting high left the boss frozen two seconds). Rooting is done
         // by zeroing the movement every tick instead, which is already done above.

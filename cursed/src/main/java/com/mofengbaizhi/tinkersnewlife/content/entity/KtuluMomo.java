@@ -420,6 +420,37 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         return this.tnl$spell() == 2;      // TNL1169 derived
     }
 
+    // TNL1172 the goety apostle keeps ONE cooldown field per spell (coolDown / tornadoCoolDown /
+    // infernoCoolDown / monolithCoolDown / damnedCoolDown). Same idea here, stored on the entity so it
+    // lives and dies with it instead of in a static map keyed by uuid.
+    private long tnl$blinkCoolUntil = 0L;
+    private long tnl$resonanceCoolUntil = 0L;
+    private long tnl$chordCoolUntil = 0L;
+
+    public long tnl$blinkCoolUntil() {
+        return this.tnl$blinkCoolUntil;
+    }
+
+    public void tnl$setBlinkCoolUntil(long until) {
+        this.tnl$blinkCoolUntil = until;
+    }
+
+    public long tnl$resonanceCoolUntil() {
+        return this.tnl$resonanceCoolUntil;
+    }
+
+    public void tnl$setResonanceCoolUntil(long until) {
+        this.tnl$resonanceCoolUntil = until;
+    }
+
+    public long tnl$chordCoolUntil() {
+        return this.tnl$chordCoolUntil;
+    }
+
+    public void tnl$setChordCoolUntil(long until) {
+        this.tnl$chordCoolUntil = until;
+    }
+
     /** 0 idle, 1 blink, 2 resonance, 3 chord */
     public int tnl$spell() {
         return this.entityData.get(DATA_SPELL);
