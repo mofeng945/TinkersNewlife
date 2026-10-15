@@ -75,7 +75,10 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
         }
         float progress = tnl$chargeStart < 0L ? 0.0F
                 : Math.max(0.0F, Math.min(1.0F, (now - tnl$chargeStart) / 40.0F));
-        com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.CHARGING = charging;
+        // TNL1163 ROOT CAUSE of the missing chord wind up: the model returns early on
+        // "if (!CHARGING) return;", and CHARGING was only true for the resonance. The chord sets its
+        // own flag, so CHARGING stayed false and the model bailed out before ever looking at CHORD.
+        com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.CHARGING = charging || chordCast;
         com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.PROGRESS = progress;
         // TNL1156 tell the model exactly which skill this frame belongs to
         com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.CHORD = chordCast;
