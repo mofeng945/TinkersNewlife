@@ -29,6 +29,9 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
      * TNL1091 feed the charge progress to the model before super.render runs (setupAnim happens
      * inside it). Progress is derived from the hidden marker cooldown, the channel we verified.
      */
+    /** TNL1158 rate limit for the pose probe */
+    private static long tnl$poseLog = 0L;
+
     /** TNL1093 the cooldown derived progress was always 0 (19 probe lines all t=0.0), so the
      *  animation runs on its own client clock: the moment charging is seen, start counting. */
     private static long tnl$chargeStart = -1L;
@@ -50,6 +53,16 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
                 com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_CHORD_MARKER.get());
         boolean chordCast = chordOnCooldown
                 && com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.DISCORDANT_CHORD;
+        // TNL1158 probe: the chord wind up still shows no pose, so log what the client actually sees
+        if (System.currentTimeMillis() - tnl$poseLog > 1000L) {
+            tnl$poseLog = System.currentTimeMillis();
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                    "TNL1158 pose charging={} skillCd={} chordCd={} chordCast={} entityCharging={}",
+                    charging,
+                    mc.player != null && mc.player.getCooldowns().isOnCooldown(
+                            com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_SKILL_MARKER.get()),
+                    chordOnCooldown, chordCast, entity.tnl$isCharging());
+        }
         if (!charging && !chordCast) {
             // TNL1113 for the chord the clock is held while the rings are still travelling, so a
             // dropped sync frame cannot restart the animation and desync it from the hit detection

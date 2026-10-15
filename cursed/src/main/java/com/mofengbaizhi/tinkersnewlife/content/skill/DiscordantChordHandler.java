@@ -228,7 +228,7 @@ public final class DiscordantChordHandler {
             if (left - 1 <= 0) {
                 // TNL1157 last wave is out: hard control ends two seconds later, the waves may still
                 // be travelling and that is fine -- the boss may move again.
-                RELEASE_AT.put(id, now + 40);
+                RELEASE_AT.put(id, now + 10);   // TNL1158 0.5 s after the last wave
             }
         }
 
