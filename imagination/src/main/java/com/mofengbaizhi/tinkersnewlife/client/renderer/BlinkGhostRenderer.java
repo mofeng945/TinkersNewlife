@@ -48,7 +48,11 @@ public final class BlinkGhostRenderer {
             return;
         }
         if (model == null) {
-            model = new HumanoidModel(mc.getEntityModels().bakeLayer(ModelLayers.PLAYER));
+            try {
+                model = new HumanoidModel(mc.getEntityModels().bakeLayer(ModelLayers.PLAYER));
+            } catch (Throwable t) {
+                return;
+            }
         }
         // TNL1127 user: "it lags after a blink". Cheap guards first: do not touch anything when every
         // ghost is far away, and never force a batch flush from inside a stage hook.
@@ -57,6 +61,7 @@ public final class BlinkGhostRenderer {
         double camY = camera.getPosition().y;
         double camZ = camera.getPosition().z;
         int near = 0;
+        net.minecraft.client.renderer.RenderType rt = RenderType.entityTranslucent(TEX);
         for (ThrustGhostCache.Ghost g : ghosts) {
             if (g.x * g.x + g.z * g.z > 0 && Math.abs(g.x - camX) < 40.0D && Math.abs(g.z - camZ) < 40.0D
                     && Math.abs(g.y - camY) < 32.0D) {
@@ -83,10 +88,13 @@ public final class BlinkGhostRenderer {
                     g.z - camera.getPosition().z);
             pose.mulPose(new Quaternionf().rotateY((float) Math.toRadians(-g.yaw)));
             pose.scale(-1.0F, -1.0F, 1.0F);
-            var vc = buffer.getBuffer(RenderType.entityTranslucent(TEX));
+            var vc = buffer.getBuffer(rt);
             model.renderToBuffer(pose, vc, 0xF000F0, OverlayTexture.NO_OVERLAY,
                     0.10F, 0.11F, 0.14F, 0.45F * fade);   // dark translucent ghost
             pose.popPose();
         }
+        // TNL1128 flush ONLY our own render type: a global endBatch() stalls the frame, but drawing
+        // into the entity buffer without flushing it at all made the ghosts invisible.
+        buffer.endBatch(rt);
     }
 }
