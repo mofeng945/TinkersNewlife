@@ -325,6 +325,9 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
      * sword calls die() even when the death is cancelled) and set tnl$dead. After that the whole
      * protection is skipped: no damage limit, no immunity window. This clears the latch.
      */
+    /** TNL1148 rate limit for the bar re-add log */
+    private long tnl$barStamp = 0L;
+
     public void tnl$unDead() {
         try {
             this.tnl$dead = false;
@@ -348,9 +351,12 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
                 }
                 this.bossEvent.setProgress(Math.max(0.0F,
                         this.getHealth() / Math.max(1.0F, this.getMaxHealth())));
-                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
-                        "TNL1148 boss bar re-added to {} nearby players",
-                        sl.players().size());
+                if (System.currentTimeMillis() - tnl$barStamp > 5000L) {
+                    tnl$barStamp = System.currentTimeMillis();
+                    com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                            "TNL1148 boss bar re-added to {} players nearby",
+                            sl.players().size());
+                }
             }
         } catch (Throwable ignored) {
         }

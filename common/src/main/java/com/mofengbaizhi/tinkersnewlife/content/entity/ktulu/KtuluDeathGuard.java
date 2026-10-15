@@ -64,6 +64,32 @@ public final class KtuluDeathGuard {
         }
     }
 
+    /**
+     * TNL1149 user: "the bar came back after relogging, but one hit removes it again and nothing
+     * puts it back". Rather than chase every place that drops it, keep it alive: once a second,
+     * re-attach the bar of every living momo through the same routine the death guard uses.
+     */
+    @SubscribeEvent
+    public static void onServerTick(net.minecraftforge.event.TickEvent.ServerTickEvent event) {
+        if (event.phase != net.minecraftforge.event.TickEvent.Phase.END) {
+            return;
+        }
+        try {
+            var server = net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer();
+            if (server == null || server.getTickCount() % 20 != 0) {
+                return;
+            }
+            for (net.minecraft.server.level.ServerLevel level : server.getAllLevels()) {
+                for (net.minecraft.world.entity.Entity e : level.getAllEntities()) {
+                    if (e instanceof KtuluMomo momo && !momo.isDeadOrDying()) {
+                        momo.tnl$unDead();
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onDeath(LivingDeathEvent event) {
         try {
