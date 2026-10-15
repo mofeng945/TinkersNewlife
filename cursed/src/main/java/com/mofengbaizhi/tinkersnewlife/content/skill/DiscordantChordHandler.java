@@ -80,24 +80,19 @@ public final class DiscordantChordHandler {
     private DiscordantChordHandler() {
     }
 
-    @SubscribeEvent
-    public static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !MomoSkills.DISCORDANT_CHORD) {
+    /**
+     * TNL1171 user: "make it self driven like the goety apostle". The skill is no longer a
+     * global scanner over every entity in every level; the momo itself calls this from its own
+     * tick, so the whole state dies with the entity (logging out cannot leave it stuck).
+     */
+    public static void tickMomo(net.minecraft.server.level.ServerLevel level, KtuluMomo momo, long now) {
+        if (!MomoSkills.DISCORDANT_CHORD) {
             return;
         }
-        var server = ServerLifecycleHooks.getCurrentServer();
-        if (server == null) {
-            return;
-        }
-        for (ServerLevel level : server.getAllLevels()) {
-            long now = level.getGameTime();
-            for (net.minecraft.world.entity.Entity e : level.getAllEntities()) {
-                if (e instanceof KtuluMomo momo && momo.isAlive()) {
-                    tickOne(level, momo, now);
-                }
-            }
-        }
+        tickOne(level, momo, now);
     }
+
+    /** kept only as a no-op marker: the entity drives this now */
 
     private static void tickOne(ServerLevel level, KtuluMomo momo, long now) {
         UUID id = momo.getUUID();

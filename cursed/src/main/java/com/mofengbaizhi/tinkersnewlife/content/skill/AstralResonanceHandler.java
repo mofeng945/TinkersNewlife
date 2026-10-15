@@ -40,25 +40,19 @@ public final class AstralResonanceHandler {
     private AstralResonanceHandler() {
     }
 
-    @SubscribeEvent
-    public static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !MomoSkills.ASTRAL_RESONANCE) {
-            return;   // TNL1104 one skill at a time
-        }
-        var server = ServerLifecycleHooks.getCurrentServer();
-        if (server == null) {
+    /**
+     * TNL1171 user: "make it self driven like the goety apostle". The skill is no longer a
+     * global scanner over every entity in every level; the momo itself calls this from its own
+     * tick, so the whole state dies with the entity (logging out cannot leave it stuck).
+     */
+    public static void tickMomo(net.minecraft.server.level.ServerLevel level, KtuluMomo momo, long now) {
+        if (!MomoSkills.ASTRAL_RESONANCE) {
             return;
         }
-        for (ServerLevel level : server.getAllLevels()) {
-            long now = level.getGameTime();
-            // TNL1085 there is no (Class, Predicate) overload on ServerLevel, so filter by hand
-            for (net.minecraft.world.entity.Entity e : level.getAllEntities()) {
-                if (e instanceof KtuluMomo momo && momo.isAlive()) {
-                    tickOne(level, momo, now);
-                }
-            }
-        }
+        tickOne(level, momo, now);
     }
+
+    /** kept only as a no-op marker: the entity drives this now */
 
     /** TNL1090 user: keep the boss melee at zero while the animation is being tested. */
     private static final boolean ATTACK_ZERO = true;
