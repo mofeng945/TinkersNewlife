@@ -201,7 +201,10 @@ public final class BlinkHandler {
         // TNL1133 user: 24 ghosts, released ONE PER TICK so the line grows from the start towards the
         // arrival point. The ones born first are the ones near the start, so they fade out first --
         // "the start point disappears fastest" comes for free from the staggered birth ticks.
-        LINE.put(momo.getUUID(), new Line(origin, dest, 0, now));
+        // TNL1135 user: "the blink is instant but the momo still flies over, and the ghosts outrun it".
+        // The client interpolates the position over a few ticks, so start the trail AFTER that has
+        // settled: then the ghosts are always behind the visible momo instead of ahead of it.
+        LINE.put(momo.getUUID(), new Line(origin, dest, 0, now + 4));
         momo.teleportTo(dest.x, dest.y, dest.z);
         momo.setDeltaMovement(Vec3.ZERO);
         momo.hurtMarked = true;
