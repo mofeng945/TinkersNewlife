@@ -114,22 +114,27 @@ public final class BlinkHandler {
                 target.getName().getString());
     }
 
-    /** TNL1122 walk the segment and report true if any block collides with it. */
-    private static boolean tnl$lineBlocked(ServerLevel level, Vec3 from, Vec3 to) {
+    /**
+     * TNL1124 walk the segment; if a block is in the way, return the last free point before it.
+     * Returns null when the whole line is clear.
+     */
+    private static Vec3 tnl$clipLine(ServerLevel level, Vec3 from, Vec3 to) {
         Vec3 delta = to.subtract(from);
         double len = delta.length();
         if (len < 1.0E-4D) {
-            return false;
+            return null;
         }
         int steps = (int) Math.ceil(len / 0.25D);
-        for (int i = 1; i < steps; i++) {
+        Vec3 lastFree = null;
+        for (int i = 1; i <= steps; i++) {
             Vec3 p = from.add(delta.scale((double) i / steps));
             BlockPos bp = BlockPos.containing(p);
             if (!level.getBlockState(bp).getCollisionShape(level, bp).isEmpty()) {
-                return true;
+                return lastFree;              // stop just before the wall
             }
+            lastFree = p;
         }
-        return false;
+        return null;
     }
 
     /** appear three blocks behind the target, facing it, with no warning whatsoever. */
@@ -151,12 +156,14 @@ public final class BlinkHandler {
         if (dest == null) {
             dest = target.position();
         }
-        // TNL1122 user: if a block sits anywhere on the line between the start and the destination,
-        // the blink does not happen at all -- it stays put and simply loses the skill.
-        if (tnl$lineBlocked(level, origin.add(0.0D, 1.0D, 0.0D), dest.add(0.0D, 1.0D, 0.0D))) {
-            TinkersNewlife.LOGGER.warn("TNL1122 Blink aborted, the path to {} is blocked",
-                    target.getName().getString());
-            return;
+        // TNL1124 user: instead of cancelling, stop just short of the wall the line runs into
+        Vec3 from = origin.add(0.0D, 1.0D, 0.0D);
+        Vec3 to = dest.add(0.0D, 1.0D, 0.0D);
+        Vec3 clipped = tnl$clipLine(level, from, to);
+        if (clipped != null) {
+            dest = clipped.subtract(0.0D, 1.0D, 0.0D);
+            TinkersNewlife.LOGGER.warn("TNL1124 Blink stopped short at ({}, {}, {})",
+                    String.format("%.1f", dest.x), String.format("%.1f", dest.y), String.format("%.1f", dest.z));
         }
         LAST_ORIGIN.put(momo.getUUID(), origin);
         // TNL1123 user: the afterimages must cover the whole line between the two points
