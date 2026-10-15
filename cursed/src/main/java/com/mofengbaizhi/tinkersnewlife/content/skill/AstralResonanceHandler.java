@@ -110,6 +110,7 @@ public final class AstralResonanceHandler {
         if (t >= NEAR_TICKS_REQUIRED) {
             NEAR.remove(id);
             CHARGING_UNTIL.put(id, now + CHARGE_TICKS);
+            MomoCastLock.begin(momo.getUUID(), now, CHARGE_TICKS + 20);   // TNL1154 one skill at a time
             // Warden style wind up: root in place, charge sound, soul particles
             momo.setDeltaMovement(Vec3.ZERO);
             momo.hurtMarked = true;
@@ -129,7 +130,8 @@ public final class AstralResonanceHandler {
     /** the shriek itself: Warden sonic boom feel, knock the target past ten blocks. */
     private static void shriek(ServerLevel level, KtuluMomo momo, long now) {
         COOLDOWN_UNTIL.put(momo.getUUID(), now + COOLDOWN_TICKS);
-        momo.setNoAi(false);      // TNL1113 the wind up is done
+        momo.setNoAi(false);
+            MomoCastLock.end(momo.getUUID(), now, 40);   // TNL1154 release the cast lock      // TNL1113 the wind up is done
         LivingEntity target = momo.getTarget();
         Vec3 origin = momo.position().add(0.0D, 1.0D, 0.0D);
         level.playSound(null, momo.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM,

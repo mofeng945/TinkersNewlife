@@ -123,6 +123,7 @@ public final class BlinkHandler {
                 return;
             }
             AFTERCAST_UNTIL.remove(id);
+            MomoCastLock.end(id, now, 0);       // TNL1154 cast is over, other skills may run again
             // TNL1134 release the AI properly: unfreeze, drop the stale path and re-acquire the target
             momo.setNoAi(false);
             if (momo.getNavigation() != null) {
@@ -167,7 +168,12 @@ public final class BlinkHandler {
         if (target == null || !target.isAlive() || momo.distanceTo(target) < RANGE) {   // TNL1126 farther than 20
             return;
         }
+        // TNL1154 no other skill may run at the same time
+        if (!MomoCastLock.canStart(id, now)) {
+            return;
+        }
         LOCK_UNTIL.put(id, now + LOCK_TICKS);
+        MomoCastLock.begin(id, now, LOCK_TICKS + AFTERCAST_TICKS + 10);
         FREEZE_DEADLINE.put(id, now + MAX_FROZEN_TICKS);
         COOLDOWN_UNTIL.put(id, now + LOCK_TICKS + COOLDOWN_TICKS);
         momo.setNoAi(true);

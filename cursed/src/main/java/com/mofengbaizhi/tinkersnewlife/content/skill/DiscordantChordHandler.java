@@ -46,7 +46,8 @@ public final class DiscordantChordHandler {
     private static final double HEIGHT_HIGH = 2.3D;
     /** vanilla warden sonic boom damage */
     private static final float SONIC_DAMAGE = 10.0F;
-    private static final int COOLDOWN_TICKS = 600;     // TNL1105 user: 30 s cooldown between casts
+    /** TNL1154 the cooldown starts when the cast ENDS, not when it starts */
+    private static final int COOLDOWN_TICKS = 200;     // 10 s after the last wave
     private static final int EFFECT_TICKS = 100;       // 5 s of weakness and slowness
 
     /** per momo: charge until this game time, -1 when idle */
@@ -109,10 +110,11 @@ public final class DiscordantChordHandler {
                 return;
             }
             CHARGE_UNTIL.remove(id);
+            // TNL1154 hold the lock for the whole cast (ten waves can take a while)
+            MomoCastLock.begin(id, now, 20 * 60 * 4);
             QUEUE_AT.put(id, now);
             QUEUED.put(id, WAVES);
             RINGS_BY_MOMO.put(id, new ArrayList<>());
-            COOLDOWN_UNTIL.put(id, now + COOLDOWN_TICKS);
             level.playSound(null, momo.blockPosition(), SoundEvents.WARDEN_SONIC_CHARGE,
                     SoundSource.HOSTILE, 2.0F, 0.6F);
             TinkersNewlife.LOGGER.warn("TNL1104 Momo starts the Discordant Chord, {} waves queued", WAVES);
@@ -131,12 +133,17 @@ public final class DiscordantChordHandler {
             if (cd != null && now < cd) {
                 return;
             }
+            // TNL1154 no other skill may run at the same time
+            if (!MomoCastLock.canStart(id, now)) {
+                return;
+            }
             LivingEntity target = momo.getTarget();
             // TNL1153 range is 30 blocks now
             if (target == null || !target.isAlive() || momo.distanceTo(target) > MAX_RADIUS) {
                 return;
             }
             CHARGE_UNTIL.put(id, now + CHARGE_TICKS);
+            MomoCastLock.begin(id, now, CHARGE_TICKS + 8);
             for (net.minecraft.world.entity.player.Player near : level.getEntitiesOfClass(
                     net.minecraft.world.entity.player.Player.class, momo.getBoundingBox().inflate(40.0D))) {
                 near.getCooldowns().addCooldown(
@@ -194,6 +201,9 @@ public final class DiscordantChordHandler {
             QUEUED.remove(id);
             QUEUE_AT.remove(id);
             momo.setNoAi(false);
+            // TNL1154 cooldown only starts now, when the whole cast is over
+            COOLDOWN_UNTIL.put(id, now + COOLDOWN_TICKS);
+            MomoCastLock.end(id, now, COOLDOWN_TICKS);
             level.playSound(null, momo.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM,
                     SoundSource.HOSTILE, 2.4F, 0.9F);
             TinkersNewlife.LOGGER.warn("TNL1104 Discordant Chord finished");
@@ -229,8 +239,14 @@ public final class DiscordantChordHandler {
             if (Math.abs(d - radius) > band) {
                 continue;
             }
-            double feet = le.getY() - baseY;
-            if (feet > 1.0D || feet < -2.5D) {
+            // TNL1154 precise hit test: the wave plane must cut through the entity's own box, with a
+            // small margin. Standing box is 0..1.8, crouching is 0..1.5, jumping lifts both. So the
+            // low wave (0.55) can be jumped over and the high one (2.3) can be crouched under.
+            double wave = baseY - momo.getY();
+            double boxLow = le.getY() - momo.getY();
+            double boxHigh = boxLow + le.getBbHeight();
+            double margin = 0.5D;
+            if (wave < boxLow - margin || wave > boxHigh + margin) {
                 continue;
             }
             le.hurt(level.damageSources().sonicBoom(momo), SONIC_DAMAGE);
