@@ -100,7 +100,7 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         // TNL1105 Discordant Chord: evoker style casting, both hands held high and waved.
         long nowMs = System.currentTimeMillis();
         if (CHARGING) {
-            CHORD_HOLD_UNTIL = nowMs + 6000L;      // hold six seconds past the last sync
+            CHORD_HOLD_UNTIL = nowMs + 20000L;     // TNL1115 hold long enough for the whole cast
         }
         if (com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.DISCORDANT_CHORD
                 && nowMs < CHORD_HOLD_UNTIL) {
