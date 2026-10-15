@@ -79,6 +79,7 @@ public final class AstralResonanceHandler {
             }
             CHARGING_UNTIL.remove(id);
             shriek(level, momo, now);
+            momo.tnl$setCharging(false);
             return;
         }
 
@@ -106,6 +107,7 @@ public final class AstralResonanceHandler {
             if (momo.getNavigation() != null) {
                 momo.getNavigation().stop();
             }
+            momo.tnl$setCharging(true);   // TNL1086 drives the charge animation on the client
             level.playSound(null, momo.blockPosition(), SoundEvents.WARDEN_SONIC_CHARGE,
                     SoundSource.HOSTILE, 2.0F, 1.0F);
             level.sendParticles(ParticleTypes.SCULK_SOUL,

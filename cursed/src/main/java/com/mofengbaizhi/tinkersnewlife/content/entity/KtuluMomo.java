@@ -318,4 +318,23 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             return super.getHealth();
         }
     }
+    /** TNL1086 Astral Resonance charge state, synced so the client can play the Warden style wind up. */
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_CHARGING =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class,
+                    net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+
+    @Override
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(DATA_CHARGING, Boolean.FALSE);
+    }
+
+    public boolean tnl$isCharging() {
+        return this.entityData.get(DATA_CHARGING);
+    }
+
+    public void tnl$setCharging(boolean charging) {
+        this.entityData.set(DATA_CHARGING, charging);
+    }
+
 }

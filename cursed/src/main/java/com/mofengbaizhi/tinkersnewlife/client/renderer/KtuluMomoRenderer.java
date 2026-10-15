@@ -27,6 +27,21 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
     @Override
     protected void scale(KtuluMomo entity, PoseStack poseStack, float partialTick) {
         poseStack.scale(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE);
+        // TNL1086 Warden style wind up for Astral Resonance. This hook runs after setupAnim and
+        // before the model is submitted, so posing the model here is what actually shows up.
+        if (!entity.tnl$isCharging()) {
+            return;
+        }
+        HumanoidModel<KtuluMomo> m = this.model;
+        float shake = (float) Math.sin((entity.tickCount + partialTick) * 1.7F) * 0.05F;
+        m.body.xRot = -0.38F + shake;
+        m.head.xRot = -0.45F + shake * 0.5F;
+        m.rightArm.xRot = -1.95F + shake;
+        m.rightArm.yRot = 0.55F;
+        m.leftArm.xRot = -1.95F - shake;
+        m.leftArm.yRot = -0.55F;
+        m.rightLeg.xRot = 0.28F;
+        m.leftLeg.xRot = -0.28F;
     }
 
     @Override
