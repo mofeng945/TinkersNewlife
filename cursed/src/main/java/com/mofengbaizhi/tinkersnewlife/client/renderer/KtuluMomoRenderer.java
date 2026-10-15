@@ -54,11 +54,76 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
         com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.CHARGING = charging;
         com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.PROGRESS = progress;
         super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
+        // TNL1107 real ring geometry for the Discordant Chord, drawn from the entity like the model
+        if (com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.DISCORDANT_CHORD
+                && tnl$chargeStart >= 0L) {
+            tnl$drawChordRings(entity, poseStack, buffer, now - tnl$chargeStart);
+        }
     }
 
     @Override
     public ResourceLocation getTextureLocation(KtuluMomo entity) {
         return TEXTURE;   // TNL1091 restored, my earlier slice had removed it
+    }
+
+    /** TNL1107 five thin rings, each born at Momo (radius 0) and spaced 33 ticks apart. */
+    private static void tnl$drawChordRings(KtuluMomo entity, PoseStack poseStack,
+                                          net.minecraft.client.renderer.MultiBufferSource buffer, long elapsed) {
+        double after = elapsed - 40.0D;                     // 40 ticks of charge first
+        if (after <= 0.0D) {
+            return;
+        }
+        com.mojang.blaze3d.vertex.VertexConsumer vc =
+                buffer.getBuffer(net.minecraft.client.renderer.RenderType.lightning());
+        org.joml.Matrix4f mat = poseStack.last().pose();
+        double baseY = entity.getY() + 0.02D;
+        for (int i = 0; i < 5; i++) {
+            double r = (after - i * 33.0D) * 0.15D;
+            if (r <= 0.05D || r > 16.0D) {
+                continue;
+            }
+            float fade = (float) Math.max(0.0D, 1.0D - r / 16.0D);
+            tnl$ringBand(vc, mat, entity.getX(), entity.getZ(), baseY, r, 0.06D, 1.0F, 1.0F, 1.0F, 0.55F * fade + 0.2F);
+        }
+    }
+
+    /** one ring drawn as a band of quads (inner radius r - w, outer r + w), 0.5 blocks tall. */
+    private static void tnl$ringBand(com.mojang.blaze3d.vertex.VertexConsumer vc,
+                                     org.joml.Matrix4f mat,
+                                     double cx, double cz, double baseY,
+                                     double r, double w, float red, float green, float blue, float alpha) {
+        int seg = Math.max(32, (int) (r * 10.0D));
+        double inner = Math.max(0.01D, r - w);
+        double outer = r + w;
+        for (int i = 0; i < seg; i++) {
+            double a0 = (Math.PI * 2.0D) * i / seg;
+            double a1 = (Math.PI * 2.0D) * (i + 1) / seg;
+            float x0i = (float) (cx + Math.cos(a0) * inner);
+            float z0i = (float) (cz + Math.sin(a0) * inner);
+            float x1i = (float) (cx + Math.cos(a1) * inner);
+            float z1i = (float) (cz + Math.sin(a1) * inner);
+            float x0o = (float) (cx + Math.cos(a0) * outer);
+            float z0o = (float) (cz + Math.sin(a0) * outer);
+            float x1o = (float) (cx + Math.cos(a1) * outer);
+            float z1o = (float) (cz + Math.sin(a1) * outer);
+            float yb = (float) baseY;
+            float yt = (float) (baseY + 0.5D);
+            // two vertical sides of the band
+            tnl$quad(vc, mat, x0i, yb, z0i, x0o, yb, z0o, x0o, yt, z0o, x0i, yt, z0i, red, green, blue, alpha);
+            tnl$quad(vc, mat, x0o, yb, z0o, x1o, yb, z1o, x1o, yt, z1o, x0o, yt, z0o, red, green, blue, alpha);
+            tnl$quad(vc, mat, x1o, yb, z1o, x1i, yb, z1i, x1i, yt, z1i, x1o, yt, z1o, red, green, blue, alpha);
+            tnl$quad(vc, mat, x0i, yt, z0i, x0o, yt, z0o, x1o, yt, z1o, x1i, yt, z1i, red, green, blue, alpha);
+        }
+    }
+
+    private static void tnl$quad(com.mojang.blaze3d.vertex.VertexConsumer vc, org.joml.Matrix4f mat,
+                                 float x1, float y1, float z1, float x2, float y2, float z2,
+                                 float x3, float y3, float z3, float x4, float y4, float z4,
+                                 float red, float green, float blue, float alpha) {
+        vc.vertex(mat, x1, y1, z1).color(red, green, blue, alpha).endVertex();
+        vc.vertex(mat, x2, y2, z2).color(red, green, blue, alpha).endVertex();
+        vc.vertex(mat, x3, y3, z3).color(red, green, blue, alpha).endVertex();
+        vc.vertex(mat, x4, y4, z4).color(red, green, blue, alpha).endVertex();
     }
 
     @Override

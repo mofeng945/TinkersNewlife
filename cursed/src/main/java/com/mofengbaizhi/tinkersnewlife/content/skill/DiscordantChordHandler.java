@@ -36,7 +36,8 @@ public final class DiscordantChordHandler {
 
     private static final int CHARGE_TICKS = 40;        // 2 s
     private static final int RINGS = 5;                // five rings per cast
-    private static final double RING_GAP = 5.0D;       // five blocks between rings
+    private static final int RING_DELAY = 33;          // TNL1107 user: all rings start at Momo, spaced in time
+    private static final int CAST_TICKS = 40 + 5 * RING_DELAY + (int) (16.0D / 0.15D);
     private static final double MAX_RADIUS = 16.0D;    // never spread further than this
     private static final double SPEED = 0.15D;         // TNL1106 user: much slower spread
     private static final double HEIGHT = 0.5D;         // ring height
@@ -50,6 +51,8 @@ public final class DiscordantChordHandler {
     private static final Map<UUID, Long> COOLDOWN_UNTIL = new ConcurrentHashMap<>();
     /** rings still waiting to be released, with the radius they start at */
     private static final Map<UUID, List<Double>> QUEUED = new ConcurrentHashMap<>();
+    /** TNL1107 when the last ring was released, so the next one waits RING_DELAY */
+    private static final Map<UUID, Long> QUEUE_AT = new ConcurrentHashMap<>();
 
     private static final class Ring {
         double radius;
@@ -100,10 +103,12 @@ public final class DiscordantChordHandler {
             }
             CHARGE_UNTIL.remove(id);
             // release: five rings, the first at once and the rest every RING_GAP / SPEED ticks
+            // TNL1107 every ring is born at Momo itself (radius 0), they are separated in TIME
             List<Double> queue = new ArrayList<>();
             for (int i = 0; i < RINGS; i++) {
-                queue.add(i * RING_GAP);
+                queue.add(0.0D);
             }
+            QUEUE_AT.put(id, now);
             QUEUED.put(id, queue);
             RINGS_BY_MOMO.put(id, new ArrayList<>());
             COOLDOWN_UNTIL.put(id, now + COOLDOWN_TICKS);
@@ -114,6 +119,14 @@ public final class DiscordantChordHandler {
 
         // are we in a cast right now?
         List<Ring> rings = RINGS_BY_MOMO.get(id);
+        if (rings != null || QUEUED.containsKey(id)) {
+            // TNL1107 keep the marker alive for the whole cast so the client knows it is still going
+            for (net.minecraft.world.entity.player.Player near : level.getEntitiesOfClass(
+                    net.minecraft.world.entity.player.Player.class, momo.getBoundingBox().inflate(40.0D))) {
+                near.getCooldowns().addCooldown(
+                        com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_MARKER.get(), 10);
+            }
+        }
         if (rings == null) {
             // idle: start a cast when a target is around and the cooldown allows
             Long cd = COOLDOWN_UNTIL.get(id);
@@ -125,6 +138,11 @@ public final class DiscordantChordHandler {
                 return;
             }
             CHARGE_UNTIL.put(id, now + CHARGE_TICKS);
+            for (net.minecraft.world.entity.player.Player near : level.getEntitiesOfClass(
+                    net.minecraft.world.entity.player.Player.class, momo.getBoundingBox().inflate(40.0D))) {
+                near.getCooldowns().addCooldown(
+                        com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_MARKER.get(), 20);
+            }
             momo.setDeltaMovement(Vec3.ZERO);
             momo.hurtMarked = true;
             if (momo.getNavigation() != null) {
@@ -137,10 +155,12 @@ public final class DiscordantChordHandler {
         }
 
         List<Double> queue = QUEUED.getOrDefault(id, new ArrayList<>());
-        if (!queue.isEmpty()) {
-            Double start = queue.remove(0);
+        Long lastAt = QUEUE_AT.get(id);
+        if (!queue.isEmpty() && lastAt != null && now - lastAt >= (queue.size() == RINGS ? 0L : RING_DELAY)) {
+            queue.remove(0);
+            QUEUE_AT.put(id, now);
             Ring r = new Ring(momo.getY());
-            r.radius = start == null ? 0.0D : start;
+            r.radius = 0.0D;
             rings.add(r);
         }
 
