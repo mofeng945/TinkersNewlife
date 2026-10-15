@@ -838,5 +838,10 @@ public class ModItems {
     public static final RegistryObject<Item> AEONIAN_SKILL_MARKER =
             ITEMS.register("aeonian_skill_marker", () -> new Item(new Item.Properties()));
 
+    // TNL1155 user: "why does the sonic boom wind up look like the chord". The pose was keyed on one
+    // shared marker, so any skill that was casting played the chord pose. The chord now has its own.
+    public static final RegistryObject<Item> AEONIAN_CHORD_MARKER =
+            ITEMS.register("aeonian_chord_marker", () -> new Item(new Item.Properties()));
+
 }
 

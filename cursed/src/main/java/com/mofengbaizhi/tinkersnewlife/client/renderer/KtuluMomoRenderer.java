@@ -44,7 +44,11 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
                     com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_SKILL_MARKER.get());
         }
         long now = mc.level != null ? mc.level.getGameTime() : 0L;
-        boolean chordCast = charging
+        // TNL1155 the chord pose must only play for the chord. The generic skill marker is set by every
+        // skill, so before this the sonic boom wind up looked exactly like the chord wind up.
+        boolean chordOnCooldown = mc.player != null && mc.player.getCooldowns().isOnCooldown(
+                com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_CHORD_MARKER.get());
+        boolean chordCast = chordOnCooldown
                 && com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.DISCORDANT_CHORD;
         if (!charging && !chordCast) {
             // TNL1113 for the chord the clock is held while the rings are still travelling, so a

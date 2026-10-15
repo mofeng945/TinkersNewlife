@@ -59,6 +59,9 @@ public final class DiscordantChordHandler {
     private static final Map<UUID, Integer> QUEUED = new ConcurrentHashMap<>();
     /** TNL1153 when the next wave is due */
     private static final Map<UUID, Long> QUEUE_AT = new ConcurrentHashMap<>();
+    /** TNL1155 who currently carries the chord jump buff */
+    private static final List<LivingEntity> JUMPED = new ArrayList<>();
+
     /** TNL1153 rng for the gaps and the heights */
     private static final java.util.Random RNG = new java.util.Random();
 
@@ -117,7 +120,25 @@ public final class DiscordantChordHandler {
             RINGS_BY_MOMO.put(id, new ArrayList<>());
             level.playSound(null, momo.blockPosition(), SoundEvents.WARDEN_SONIC_CHARGE,
                     SoundSource.HOSTILE, 2.0F, 0.6F);
-            TinkersNewlife.LOGGER.warn("TNL1104 Momo starts the Discordant Chord, {} waves queued", WAVES);
+            // TNL1155 user: while the chord plays, everything in range jumps 1.5x higher
+            JUMPED.clear();
+            var jumpMod = new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+                    java.util.UUID.nameUUIDFromBytes("tnl1155_chord_jump".getBytes()),
+                    "tnl1155_chord_jump", 0.5D,
+                    net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.MULTIPLY_TOTAL);
+            for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class,
+                    momo.getBoundingBox().inflate(MAX_RADIUS))) {
+                if (le == momo) {
+                    continue;
+                }
+                var attr = le.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.JUMP_STRENGTH);
+                if (attr != null && !attr.hasModifier(jumpMod)) {
+                    attr.addTransientModifier(jumpMod);
+                    JUMPED.add(le);
+                }
+            }
+            TinkersNewlife.LOGGER.warn("TNL1104 Momo starts the Discordant Chord, {} waves queued, {} got the jump buff",
+                    WAVES, JUMPED.size());
         }
 
         List<Ring> rings = RINGS_BY_MOMO.get(id);
@@ -125,7 +146,7 @@ public final class DiscordantChordHandler {
             for (net.minecraft.world.entity.player.Player near : level.getEntitiesOfClass(
                     net.minecraft.world.entity.player.Player.class, momo.getBoundingBox().inflate(40.0D))) {
                 near.getCooldowns().addCooldown(
-                        com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_SKILL_MARKER.get(), 10);
+                        com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_CHORD_MARKER.get(), 10);
             }
         }
         if (rings == null) {
@@ -147,7 +168,7 @@ public final class DiscordantChordHandler {
             for (net.minecraft.world.entity.player.Player near : level.getEntitiesOfClass(
                     net.minecraft.world.entity.player.Player.class, momo.getBoundingBox().inflate(40.0D))) {
                 near.getCooldowns().addCooldown(
-                        com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_SKILL_MARKER.get(), 20);
+                        com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_CHORD_MARKER.get(), 20);
             }
             momo.setDeltaMovement(Vec3.ZERO);
             momo.hurtMarked = true;
@@ -206,6 +227,13 @@ public final class DiscordantChordHandler {
             MomoCastLock.end(id, now, COOLDOWN_TICKS);
             level.playSound(null, momo.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM,
                     SoundSource.HOSTILE, 2.4F, 0.9F);
+            for (LivingEntity le : JUMPED) {
+                var attr = le.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.JUMP_STRENGTH);
+                if (attr != null) {
+                    attr.removeModifier(java.util.UUID.nameUUIDFromBytes("tnl1155_chord_jump".getBytes()));
+                }
+            }
+            JUMPED.clear();
             TinkersNewlife.LOGGER.warn("TNL1104 Discordant Chord finished");
         }
     }
