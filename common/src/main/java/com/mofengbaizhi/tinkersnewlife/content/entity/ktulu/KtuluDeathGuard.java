@@ -40,6 +40,23 @@ public final class KtuluDeathGuard {
             TinkersNewlife.LOGGER.warn(
                     "TNL1143 hit on momo src={} amount={} before={} auth={} max={}",
                     src, event.getAmount(), momo.getHealth(), com.mofengbaizhi.tinkersnewlife.content.entity.ktulu.a.qF(momo), momo.getMaxHealth());
+
+            // TNL1145 the log proved the real problem: the health FIELD sat at 28 while the mirror
+            // still said 1365, so an ordinary 43 damage hit finished it off and the bar looked empty.
+            // Resync the field to the mirror and never let a single hit exceed one tick of budget.
+            float tnl$auth = com.mofengbaizhi.tinkersnewlife.content.entity.ktulu.a.qF(momo);
+            if (tnl$auth > 0.0F) {
+                if (momo.getHealth() < tnl$auth - 0.5F) {
+                    momo.setHealth(tnl$auth);
+                    TinkersNewlife.LOGGER.warn("TNL1145 momo health resynced to {}",
+                            String.format(java.util.Locale.ROOT, "%.1f", tnl$auth));
+                }
+                float tnl$budget = Math.max(1.0F, momo.getMaxHealth()
+                        * com.mofengbaizhi.tinkersnewlife.content.entity.ktulu.a.C0);
+                if (event.getAmount() > tnl$budget) {
+                    event.setAmount(tnl$budget);
+                }
+            }
         } catch (Throwable ignored) {
         }
     }
