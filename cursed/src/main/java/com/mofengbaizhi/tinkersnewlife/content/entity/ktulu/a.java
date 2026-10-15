@@ -661,7 +661,26 @@ public final class a {
             }
             int s0 = k(mob);
             if (V[s0] <= 0) {
-                return value;                     // \u2605\u7a97\u5916\u4e0d\u5e72\u9884 \u2713
+                // TNL1140 the second sword hit landed outside the window and setHealth(0) went through.
+                // Outside the window we now also refuse to write a living momo to zero or below.
+                if (value > 0.0F) {
+                    return value;
+                }
+                long authOut = N ? h(s0) : rA(s0);
+                if (authOut < 0L) {
+                    authOut = b.get(s0);
+                }
+                if (authOut != Long.MIN_VALUE && authOut > 0L) {
+                    BLOCKED = true;
+                    if (LQ3 != s0) {
+                        LQ3 = s0;
+                        com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                                "TNL1140 setHealth blocked OUTSIDE window: want={} -> auth={}",
+                                m1(m0(value)), m1(authOut));
+                    }
+                    return m1(authOut);
+                }
+                return value;
             }
             // TNL911 \u2605\u53ea\u6709**\u771f\u7684\u628a\u503c\u62e6\u4e0b\u6765**\u624d\u7f6e\u4f4d \u2713
             long auth = N ? h(s0) : rA(s0);
