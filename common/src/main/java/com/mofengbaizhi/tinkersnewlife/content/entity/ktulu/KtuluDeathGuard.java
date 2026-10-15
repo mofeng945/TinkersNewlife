@@ -26,6 +26,26 @@ public final class KtuluDeathGuard {
     private KtuluDeathGuard() {
     }
 
+    /**
+     * TNL1165 user: "isn't it obvious that it cannot attack while casting". Right -- that belongs to
+     * the cast itself. We do NOT clear the AI (that sticks); instead every hit the momo lands while it
+     * is casting is simply cancelled, so it keeps its goals and loses nothing afterwards.
+     */
+    @SubscribeEvent
+    public static void onMomoAttack(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
+        try {
+            if (!(event.getSource().getEntity() instanceof KtuluMomo attacker)
+                    || attacker.level().isClientSide) {
+                return;
+            }
+            if (com.mofengbaizhi.tinkersnewlife.content.skill.MomoCastLock
+                    .isCasting(attacker.getUUID(), attacker.level().getGameTime())) {
+                event.setCanceled(true);
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
     /** TNL1143 probe: show exactly what the momo health does around a hit. */
     @SubscribeEvent
     public static void onHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
