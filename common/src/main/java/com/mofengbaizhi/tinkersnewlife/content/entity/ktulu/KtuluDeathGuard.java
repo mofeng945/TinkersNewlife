@@ -89,6 +89,7 @@ public final class KtuluDeathGuard {
                 momo.deathTime = 0;
                 momo.hurtTime = 0;
                 momo.setHealth(Math.max(1.0F, momo.getHealth()));
+                momo.tnl$unDead();       // TNL1146 undo the latch so the protection keeps working
                 TinkersNewlife.LOGGER.warn(
                         "TNL1139 death blocked for the momo, it still had {} health",
                         String.format(java.util.Locale.ROOT, "%.1f", momo.getHealth()));

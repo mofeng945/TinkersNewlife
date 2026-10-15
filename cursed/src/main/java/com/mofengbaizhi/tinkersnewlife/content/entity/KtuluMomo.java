@@ -176,7 +176,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
                     source.getMsgId(), this.invulnerableTime, gate, a.qC(this));
         }
         this.tnl$auth = a.qF(this);   // TNL876 \u2605\u53d7\u4f24\u540e\u5237\u65b0\u7f13\u5b58 \u2713
-        if (this.tnl$auth <= 0.0F || this.isDeadOrDying()) {
+        if (this.tnl$auth <= 0.0F) {   // TNL1146 only the mirror may declare it dead, the sword calls die() and isDeadOrDying() would latch the protection off
             this.tnl$dead = true;     // TNL893 \u2605\u8fd9\u4e00\u51fb\u771f\u7684\u6253\u6b7b\u4e86 \u21d2 \u2605\u4e0d\u518d\u56de\u5f39 \u2713
         }
         return tnl$hurt;
@@ -302,6 +302,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
      * \u5ba2\u6237\u7aef\u6e32\u67d3\u5168\u90e8\u8bfb\u7684\u90fd\u662f\u8fd9\u91cc\u8fd4\u56de\u7684\u503c \u2713\u3002
      */
     @Override
+
     public float getHealth() {
         try {
             if (this.level() == null || this.level().isClientSide || this.tnl$dead) {
@@ -318,6 +319,28 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             return super.getHealth();
         }
     }
+
+    /**
+     * TNL1146 one cheat hit used to latch the boss off, because hurt() saw isDeadOrDying() (the
+     * sword calls die() even when the death is cancelled) and set tnl$dead. After that the whole
+     * protection is skipped: no damage limit, no immunity window. This clears the latch.
+     */
+    public void tnl$unDead() {
+        try {
+            this.tnl$dead = false;
+            float auth = a.qF(this);
+            if (auth > 0.0F) {
+                this.tnl$auth = auth;
+                if (Math.abs(super.getHealth() - auth) > 0.01F) {
+                    this.setHealth(auth);
+                }
+                this.deathTime = 0;
+                this.hurtTime = 0;
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
     /** TNL1086 Astral Resonance charge state, synced so the client can play the Warden style wind up. */
     private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_CHARGING =
             net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class,
