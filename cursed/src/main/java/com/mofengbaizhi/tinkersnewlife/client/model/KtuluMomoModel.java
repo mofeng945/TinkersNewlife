@@ -32,6 +32,11 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         if (!CHARGING) {
             return;
         }
+        // TNL1096 user: "the hat layer of the momo_common skin is the one that does not follow".
+        // In HumanoidModel the hat part is a CHILD of the head, so it should follow for free. This
+        // forced twist is a decisive test: if the visible hat does not turn, then the skin we see is
+        // not drawn by this model instance at all.
+        this.hat.yRot = CHARGING ? 1.0F : 0.0F;
         float t = Math.max(0.0F, Math.min(1.0F, PROGRESS));
         // TNL1092 user: "only the tremble shows, the skeletal animation is gone". The tremble rides on
         // body.xRot, so the hook does run. Log the numbers to see whether t is stuck at an endpoint.
