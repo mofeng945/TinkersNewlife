@@ -61,6 +61,27 @@ public final class BlinkHandler {
     private static void tickOne(ServerLevel level, KtuluMomo momo, long now) {
         UUID id = momo.getUUID();
 
+        Line line = LINE.get(id);
+        if (line != null) {
+            if (line.sent >= GHOSTS) {
+                LINE.remove(id);
+            } else if (now >= line.nextTick) {
+                double t = (double) line.sent / (GHOSTS - 1.0D);
+                double f = 1.0D - Math.pow(1.0D - t, 2.2D);      // denser toward the arrival point
+                Vec3 gp = line.origin.add(line.dest.subtract(line.origin).scale(f));
+                level.sendParticles(net.minecraft.core.particles.ParticleTypes.CLOUD,
+                        gp.x, gp.y + 0.6D, gp.z, 1, 0.2D, 0.3D, 0.2D, 0.02D);
+                TinkersNewlife.CHANNEL.send(
+                        net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> momo),
+                        new com.mofengbaizhi.tinkersnewlife.network.tools.PacketThrustGhost(
+                                momo.getId(), gp.x, gp.y, gp.z,
+                                (float) Math.toDegrees(Math.atan2(
+                                        line.dest.z - line.origin.z, line.dest.x - line.origin.x)), 0.0F));
+                line.sent++;
+                line.nextTick = now + 1;
+            }
+        }
+
         Long after = AFTERCAST_UNTIL.get(id);
         if (after != null) {
             if (now < after) {
@@ -167,25 +188,10 @@ public final class BlinkHandler {
         }
         LAST_ORIGIN.put(momo.getUUID(), origin);
         // TNL1123 user: the afterimages must cover the whole line between the two points
-        int ghosts = 12;   // TNL1132 user: denser overall, still crowded at the arrival end
-        for (int i = 0; i < ghosts; i++) {
-            // TNL1125 user: denser the closer it gets to the ARRIVAL point
-            double t = (double) i / (ghosts - 1.0D);
-            double f = 1.0D - Math.pow(1.0D - t, 2.2D);   // TNL1132 stronger bias toward the end
-            Vec3 p = origin.add(dest.subtract(origin).scale(f));
-            // send it exactly like PacketThrustGhost.broadcast does, but with our own coordinates
-            // TNL1125 smoke along the path to sell the sheer speed
-            level.sendParticles(net.minecraft.core.particles.ParticleTypes.CLOUD,
-                    p.x, p.y + 0.6D, p.z, 2, 0.25D, 0.35D, 0.25D, 0.02D);
-            level.sendParticles(net.minecraft.core.particles.ParticleTypes.LARGE_SMOKE,
-                    p.x, p.y + 0.4D, p.z, 1, 0.2D, 0.3D, 0.2D, 0.01D);
-            TinkersNewlife.CHANNEL.send(
-                    net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> momo),
-                    new com.mofengbaizhi.tinkersnewlife.network.tools.PacketThrustGhost(
-                            momo.getId(), p.x, p.y, p.z,
-                            (float) Math.toDegrees(Math.atan2(dest.z - origin.z, dest.x - origin.x)), 0.0F));
-        }
-        AFTERCAST_UNTIL.put(momo.getUUID(), now + AFTERCAST_TICKS);
+        // TNL1133 user: 24 ghosts, released ONE PER TICK so the line grows from the start towards the
+        // arrival point. The ones born first are the ones near the start, so they fade out first --
+        // "the start point disappears fastest" comes for free from the staggered birth ticks.
+        LINE.put(momo.getUUID(), new Line(origin, dest, 0, now));
         momo.teleportTo(dest.x, dest.y, dest.z);
         momo.setDeltaMovement(Vec3.ZERO);
         momo.hurtMarked = true;
@@ -195,4 +201,22 @@ public final class BlinkHandler {
                 target.getName().getString(),
                 String.format("%.1f", dest.x), String.format("%.1f", dest.y), String.format("%.1f", dest.z));
     }
+    /** TNL1133 a blink trail still being released, one ghost per tick */
+    private static final class Line {
+        final Vec3 origin;
+        final Vec3 dest;
+        int sent;
+        long nextTick;
+
+        Line(Vec3 origin, Vec3 dest, int sent, long nextTick) {
+            this.origin = origin;
+            this.dest = dest;
+            this.sent = sent;
+            this.nextTick = nextTick;
+        }
+    }
+
+    private static final Map<UUID, Line> LINE = new ConcurrentHashMap<>();
+    private static final int GHOSTS = 24;
+
 }
