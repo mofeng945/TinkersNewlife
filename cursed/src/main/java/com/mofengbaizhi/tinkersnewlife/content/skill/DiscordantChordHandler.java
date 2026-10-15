@@ -192,9 +192,17 @@ public final class DiscordantChordHandler {
     }
 
     /** a 0.5 block tall shell of white smoke at this radius */
-    /** TNL1109 user: the ring itself must be the grey geometry, so no white particle ring here. */
+    /** TNL1114 user: back to the particle ring. Grey dust so it reads as a ring, not a white blob. */
     private static void drawRing(ServerLevel level, KtuluMomo momo, double radius, double baseY) {
-        // intentionally empty: the visual comes from the client renderer (grey band)
+        var grey = new net.minecraft.core.particles.DustParticleOptions(
+                new org.joml.Vector3f(0.58F, 0.58F, 0.62F), 1.0F);
+        int points = Math.max(32, (int) (radius * 8.0D));
+        for (int i = 0; i < points; i++) {
+            double a = (Math.PI * 2.0D) * i / points;
+            double x = momo.getX() + Math.cos(a) * radius;
+            double z = momo.getZ() + Math.sin(a) * radius;
+            level.sendParticles(grey, x, baseY + 0.25D, z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+        }
     }
 
     /** anything inside the shell and low enough is launched and left weak and slow */

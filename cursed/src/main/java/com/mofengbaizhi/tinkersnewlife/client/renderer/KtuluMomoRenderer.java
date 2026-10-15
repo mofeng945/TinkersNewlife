@@ -63,10 +63,11 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
         com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.PROGRESS = progress;
         super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
         // TNL1107 real ring geometry for the Discordant Chord, drawn from the entity like the model
-        if (com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.DISCORDANT_CHORD
-                && tnl$chargeStart >= 0L) {
-            tnl$drawChordRings(entity, poseStack, buffer, now - tnl$chargeStart);
-        }
+        // TNL1114 user: "forget it, go back to the particle ring" -- the textured quad is off.
+        // if (com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.DISCORDANT_CHORD
+        //         && tnl$chargeStart >= 0L) {
+        //     tnl$drawChordRings(entity, poseStack, buffer, now - tnl$chargeStart);
+        // }
     }
 
     @Override
