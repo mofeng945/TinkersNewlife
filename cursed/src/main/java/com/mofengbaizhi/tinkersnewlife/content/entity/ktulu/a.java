@@ -391,6 +391,36 @@ public final class a {
         }
     }
 
+    /**
+     * TNL1144 \u2605\u2605 \u6309\u672c\u7cfb\u7edf\u81ea\u5df1\u7684\u89c4\u77e9\u63a5\u4e00\u8bb0\u201c\u4f5c\u5f0a\u79d2\u6740\u201d\uff1a
+     *
+     * <p>\u2605\u5b87\u5b99\u5251\u4f1a `hurt(Float.MAX_VALUE)` \u21d2 \u2605\u6211\u4eec\u5148**\u628a\u5b83\u6309\u5355 tick \u9884\u7b97\u622a\u65ad**\uff0c
+     * \u5e76\u7528 `q3` \u8bb0\u4e00\u7b14\u8d26 \u2713 \u2014\u2014 \u2605`q3` \u4f1a\u628a `V[s0]` \u6253\u5f00 30 tick \u2713
+     * \u21d2 \u2605\u7d27\u63a5\u7740\u5b83\u90a3\u53e5 `setHealth(0)` \u5c31\u843d\u5728**\u7a97\u53e3\u5185**\u2713
+     * \u21d2 \u2605`qD` \u81ea\u7136\u4f1a\u628a\u5b83\u62e6\u6210\u6743\u5a01\u503c \u2713\uff08\u2605\u5b8c\u5168\u4e0d\u52a8\u5916\u56f4\u903b\u8f91 \u2713\uff09
+     *
+     * @return \u2605\u672c tick \u5141\u8bb8\u5403\u6389\u7684\u4f24\u5bb3\uff08\u2605\u5355 tick \u9884\u7b97 \u2713\uff09
+     */
+    public static float qI(Mob mob, float amount) {
+        try {
+            int s0 = k(mob);
+            long want = m0(amount);
+            if (TCK[s0] != mob.tickCount) {
+                TCK[s0] = mob.tickCount;
+                SPENT[s0] = 0L;
+            }
+            long budget = MCAP[s0] - SPENT[s0];
+            if (budget < 0L) {
+                budget = 0L;
+            }
+            long allowed = Math.min(want, budget);
+            q3(mob, m1(allowed));          // \u2605\u8bb0\u8d26 \u002b \u6253\u5f00 V \u7a97\u53e3 \u2713
+            return m1(allowed);
+        } catch (Throwable ignored) {
+            return 0.0F;
+        }
+    }
+
     /** TNL855 \u2605\u6ce8\u9500 \u2713 */
     public static void q4(Mob mob) {
         try {
