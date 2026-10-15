@@ -72,6 +72,25 @@ public final class BlinkHandler {
         } catch (Throwable ignored) {
         }
 
+        // TNL1137 user: "it looks like the recovery lasts forever". Whatever path froze it, this
+        // guarantees the AI comes back: if the deadline passed, unfreeze and re-acquire unconditionally.
+        Long deadline = FREEZE_DEADLINE.get(id);
+        if (deadline != null && now > deadline) {
+            FREEZE_DEADLINE.remove(id);
+            if (momo.isNoAi()) {
+                momo.setNoAi(false);
+            }
+            if (momo.getNavigation() != null) {
+                momo.getNavigation().stop();
+            }
+            net.minecraft.world.entity.player.Player nearest =
+                    momo.level().getNearestPlayer(momo, 64.0D);
+            if (nearest != null && momo.getTarget() == null) {
+                momo.setTarget(nearest);
+            }
+            TinkersNewlife.LOGGER.warn("TNL1137 freeze deadline passed, AI force released");
+        }
+
         Line line = LINE.get(id);
         if (line != null) {
             if (line.sent >= GHOSTS) {
@@ -123,6 +142,7 @@ public final class BlinkHandler {
             if (now < until && target != null && target.isAlive()) {
                 // stand still and keep the eyes on the target, nothing else
                 momo.setNoAi(true);
+                FREEZE_DEADLINE.put(id, now + MAX_FROZEN_TICKS);
                 momo.setDeltaMovement(Vec3.ZERO);
                 momo.hurtMarked = true;
                 if (momo.getNavigation() != null) {
@@ -148,6 +168,7 @@ public final class BlinkHandler {
             return;
         }
         LOCK_UNTIL.put(id, now + LOCK_TICKS);
+        FREEZE_DEADLINE.put(id, now + MAX_FROZEN_TICKS);
         COOLDOWN_UNTIL.put(id, now + LOCK_TICKS + COOLDOWN_TICKS);
         momo.setNoAi(true);
         momo.setDeltaMovement(Vec3.ZERO);
@@ -231,6 +252,7 @@ public final class BlinkHandler {
         momo.setTarget(target);
         momo.getLookControl().setLookAt(target, 30.0F, 30.0F);
         momo.setNoAi(true);      // TNL1121 half a second of recovery before it may act again
+        FREEZE_DEADLINE.put(momo.getUUID(), now + MAX_FROZEN_TICKS);
         TinkersNewlife.LOGGER.warn("TNL1120 Momo blinked behind {} to ({}, {}, {})",
                 target.getName().getString(),
                 String.format("%.1f", dest.x), String.format("%.1f", dest.y), String.format("%.1f", dest.z));
@@ -251,6 +273,10 @@ public final class BlinkHandler {
     }
 
     private static final Map<UUID, Line> LINE = new ConcurrentHashMap<>();
+
+    /** TNL1137 hard safety net: however we got frozen, never stay frozen longer than this. */
+    private static final Map<UUID, Long> FREEZE_DEADLINE = new ConcurrentHashMap<>();
+    private static final int MAX_FROZEN_TICKS = 60;
     private static final int GHOSTS = 24;
 
 }
