@@ -65,6 +65,8 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
                 : Math.max(0.0F, Math.min(1.0F, (now - tnl$chargeStart) / 40.0F));
         com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.CHARGING = charging;
         com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.PROGRESS = progress;
+        // TNL1156 tell the model exactly which skill this frame belongs to
+        com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.CHORD = chordCast;
         // TNL1129 the prototype draws its effect inside the entity render chain, so do the same here.
         // Local coordinates: the pose matrix is already on the entity, so ghosts are the offset from it.
         // TNL1130 the prototype ThrustGhostRenderer draws these now, no need to draw twice

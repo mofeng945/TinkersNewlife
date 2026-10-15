@@ -18,6 +18,9 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
 
     /** set by the renderer right before super.render, so setupAnim can read it */
     public static boolean CHARGING = false;
+
+    /** TNL1156 true only on the frames where the Discordant Chord is being cast */
+    public static boolean CHORD = false;
     /** 0 = just started, 1 = about to shriek */
     public static float PROGRESS = 0.0F;
     /** TNL1108 the chord keeps the hands up for a while after the sync flag drops, so the pose does

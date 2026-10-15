@@ -42,7 +42,7 @@ public final class DiscordantChordHandler {
     private static final double MAX_RADIUS = 30.0D;
     private static final double SPEED = 0.15D;         // TNL1106 user: much slower spread
     /** TNL1153 the two spawn heights above the ground */
-    private static final double HEIGHT_LOW = 0.55D;
+    private static final double HEIGHT_LOW = 0.15D;
     private static final double HEIGHT_HIGH = 2.3D;
     /** vanilla warden sonic boom damage */
     private static final float SONIC_DAMAGE = 10.0F;
@@ -114,7 +114,7 @@ public final class DiscordantChordHandler {
             }
             CHARGE_UNTIL.remove(id);
             // TNL1154 hold the lock for the whole cast (ten waves can take a while)
-            MomoCastLock.begin(id, now, 20 * 60 * 4);
+            MomoCastLock.begin(id, now, CHARGE_TICKS + WAVES * (GAP_MIN_TICKS + GAP_RANGE_TICKS) + 260);
             QUEUE_AT.put(id, now);
             QUEUED.put(id, WAVES);
             RINGS_BY_MOMO.put(id, new ArrayList<>());
@@ -181,6 +181,8 @@ public final class DiscordantChordHandler {
             return;
         }
 
+        // TNL1156 keep the lock renewed while the cast is running, so it can never overstay
+        MomoCastLock.begin(id, now, 60);
         int left = QUEUED.getOrDefault(id, 0);
         Long due = QUEUE_AT.get(id);
         if (left > 0 && due != null && now >= due) {
