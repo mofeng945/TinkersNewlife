@@ -102,11 +102,12 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         this.leftLeg.xRot = -0.10F * up;
         // TNL1105 Discordant Chord: evoker style casting, both hands held high and waved.
         long nowMs = System.currentTimeMillis();
-        if (CHARGING) {
-            CHORD_HOLD_UNTIL = nowMs + 20000L;     // TNL1115 hold long enough for the whole cast
-        }
-        if (com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.DISCORDANT_CHORD
-                && nowMs < CHORD_HOLD_UNTIL) {
+
+        // TNL1156 the pose is chosen per frame by the renderer: the chord pose only when
+        // the Discordant Chord is the skill that is casting. The old CHORD_HOLD_UNTIL
+        // check kept the chord pose alive for 20 s after ANY skill charged, so the
+        // sonic boom wind up looked like the chord and the chord itself lost its pose.
+        if (CHORD) {
             float wave = (float) Math.sin(ageInTicks * 0.55F);
             float wave2 = (float) Math.sin(ageInTicks * 0.55F + 1.1F);
             this.body.xRot = 0.06F;
