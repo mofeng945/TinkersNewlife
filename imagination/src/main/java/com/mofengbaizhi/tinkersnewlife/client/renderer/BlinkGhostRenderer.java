@@ -36,6 +36,9 @@ public final class BlinkGhostRenderer {
     @SuppressWarnings({"rawtypes", "unchecked"})
     @SubscribeEvent
     public static void onStage(RenderLevelStageEvent event) {
+        if (true) {
+            return;   // TNL1129 moved into KtuluMomoRenderer, the stage hook never flushed properly
+        }
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) {
             return;
         }

@@ -61,6 +61,9 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
                 : Math.max(0.0F, Math.min(1.0F, (now - tnl$chargeStart) / 40.0F));
         com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.CHARGING = charging;
         com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.PROGRESS = progress;
+        // TNL1129 the prototype draws its effect inside the entity render chain, so do the same here.
+        // Local coordinates: the pose matrix is already on the entity, so ghosts are the offset from it.
+        tnl$drawBlinkGhosts(entity, poseStack, buffer);
         super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
         // TNL1107 real ring geometry for the Discordant Chord, drawn from the entity like the model
         // TNL1114 user: "forget it, go back to the particle ring" -- the textured quad is off.
@@ -73,6 +76,49 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
     @Override
     public ResourceLocation getTextureLocation(KtuluMomo entity) {
         return TEXTURE;   // TNL1091 restored, my earlier slice had removed it
+    }
+
+    /** TNL1129 ghosts of the Blink, drawn as extra copies of the player model. */
+    private static HumanoidModel<?> tnl$ghostModel;
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void tnl$drawBlinkGhosts(KtuluMomo entity, PoseStack poseStack,
+                                            net.minecraft.client.renderer.MultiBufferSource buffer) {
+        var ghosts = com.mofengbaizhi.tinkersnewlife.client.renderer.ThrustGhostCache.alive();
+        if (ghosts.isEmpty()) {
+            return;
+        }
+        var mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.player == null) {
+            return;
+        }
+        if (tnl$ghostModel == null) {
+            try {
+                tnl$ghostModel = new HumanoidModel(mc.getEntityModels().bakeLayer(ModelLayers.PLAYER));
+            } catch (Throwable t) {
+                return;
+            }
+        }
+        // let the shared entity batch own the flush, exactly like the model itself does
+        var vc = buffer.getBuffer(net.minecraft.client.renderer.RenderType.entityTranslucent(TEXTURE));
+        int now = mc.player.tickCount;
+        double ox = entity.getX();
+        double oy = entity.getY();
+        double oz = entity.getZ();
+        for (com.mofengbaizhi.tinkersnewlife.client.renderer.ThrustGhostCache.Ghost g : ghosts) {
+            float fade = 1.0F - g.progress(now);
+            if (fade <= 0.15F) {
+                continue;
+            }
+            poseStack.pushPose();
+            poseStack.translate(g.x - ox, g.y - oy, g.z - oz);
+            poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(-g.yaw));
+            poseStack.scale(-1.0F, -1.0F, 1.0F);
+            tnl$ghostModel.renderToBuffer(poseStack, vc, 0xF000F0,
+                    net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY,
+                    0.08F, 0.09F, 0.12F, 0.55F * fade);
+            poseStack.popPose();
+        }
     }
 
     /** TNL1107 five thin rings, each born at Momo (radius 0) and spaced 33 ticks apart. */
