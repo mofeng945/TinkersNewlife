@@ -33,6 +33,13 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
             return;
         }
         float t = Math.max(0.0F, Math.min(1.0F, PROGRESS));
+        // TNL1092 user: "only the tremble shows, the skeletal animation is gone". The tremble rides on
+        // body.xRot, so the hook does run. Log the numbers to see whether t is stuck at an endpoint.
+        if (entity.tickCount % 10 == 0) {
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                    "TNL1092 pose t={} bodyX={} headX={} rightArmX={} leftArmX={}",
+                    t, this.body.xRot, this.head.xRot, this.rightArm.xRot, this.leftArm.xRot);
+        }
         float tremble = (float) Math.sin(ageInTicks * 2.2F) * 0.04F * Math.min(1.0F, t * 2.0F);
 
         // stage 1: guard up. stage 3: swing back. between them the arms stay over the face.
