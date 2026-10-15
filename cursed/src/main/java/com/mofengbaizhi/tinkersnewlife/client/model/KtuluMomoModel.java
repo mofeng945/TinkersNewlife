@@ -34,7 +34,6 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         // unconditionally before anything can return.
         this.hat.visible = true;
         this.hat.skipDraw = false;
-        this.hat.yRot = 0.0F;
         this.hat.yScale = 1.0F;
         if (!CHARGING) {
             return;
@@ -95,6 +94,13 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         // legs brace slightly while charging
         this.rightLeg.xRot = 0.12F * up;
         this.leftLeg.xRot = -0.10F * up;
+        // TNL1102 user: "you tied the hat to the body, I want it tied to the head". The hat is a root
+        // level part in this baked mesh, so copy the head rotation onto it explicitly. If it ends up
+        // doubled (because it also inherits from the head), halve these three lines.
+        this.hat.xRot = this.head.xRot;
+        this.hat.yRot = this.head.yRot;
+        this.hat.zRot = this.head.zRot;
+
         // TNL1099 probes now run AFTER the pose is applied, they used to log the rest values
         if (entity.tickCount % 10 == 0) {
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
