@@ -123,7 +123,8 @@ public final class KtuluDeathGuard {
                 return;
             }
             var id = momo.getUUID();
-            if (!com.mofengbaizhi.tinkersnewlife.content.skill.MomoCastLock
+            // TNL1170 one source of truth: the entity's own synced cast state
+            if (!momo.tnl$isBusy() && !com.mofengbaizhi.tinkersnewlife.content.skill.MomoCastLock
                     .isCasting(id, momo.level().getGameTime())) {
                 return;
             }

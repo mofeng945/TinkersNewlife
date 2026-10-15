@@ -237,6 +237,11 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         if (this.level().isClientSide || this.tnl$dead) {
             return;   // TNL893 \u2605\u771f\u6b7b\u540e\u4e0d\u518d\u62a4\u8840/\u56de\u5f39 \u2713
         }
+        // TNL1169 cast counter, same idea as SpellCastingCultist.m_8024_
+        int tnl$cast = this.tnl$castTicks();
+        if (tnl$cast > 0) {
+            this.entityData.set(DATA_CAST_TICKS, tnl$cast - 1);
+        }
         a.q0(this);
         float authoritative = a.q1(this, this.tickCount);
         if (a.qH()) {
@@ -381,6 +386,15 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class,
                     net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
 
+    // TNL1169 the Goety way (SpellCastingCultist): ONE synced byte says which spell is casting and one
+    // synced int counts it down. 0 = idle, 1 = blink, 2 = astral resonance, 3 = discordant chord.
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Byte> DATA_SPELL =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class,
+                    net.minecraft.network.syncher.EntityDataSerializers.BYTE);
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> DATA_CAST_TICKS =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class,
+                    net.minecraft.network.syncher.EntityDataSerializers.INT);
+
 
     @Override
 
@@ -388,22 +402,48 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         super.defineSynchedData();
         this.entityData.define(DATA_CHARGING, Boolean.FALSE);
         this.entityData.define(DATA_CHORD, Boolean.FALSE);
+        this.entityData.define(DATA_SPELL, (byte) 0);
+        this.entityData.define(DATA_CAST_TICKS, 0);
     }
 
     public boolean tnl$isCharging() {
-        return this.entityData.get(DATA_CHARGING);
+        return this.tnl$spell() == 2;      // TNL1169 derived
+    }
+
+    /** 0 idle, 1 blink, 2 resonance, 3 chord */
+    public int tnl$spell() {
+        return this.entityData.get(DATA_SPELL);
+    }
+
+    public int tnl$castTicks() {
+        return this.entityData.get(DATA_CAST_TICKS);
+    }
+
+    /** TNL1169 true while any spell of this momo is casting */
+    public boolean tnl$isBusy() {
+        return this.tnl$spell() != 0;
+    }
+
+    /** start (or refresh) a cast: id as above, ticks until it ends */
+    public void tnl$setSpell(int id, int ticks) {
+        this.entityData.set(DATA_SPELL, (byte) id);
+        this.entityData.set(DATA_CAST_TICKS, Math.max(0, ticks));
     }
 
     public void tnl$setCharging(boolean charging) {
         this.entityData.set(DATA_CHARGING, charging);
+        this.tnl$setSpell(charging ? 2 : 0, charging ? 40 : 0);
     }
     /** TNL1161 true while the Discordant Chord is casting; drives the chord pose on the client */
     public boolean tnl$isChordCasting() {
-        return this.entityData.get(DATA_CHORD);
+        return this.tnl$spell() == 3;      // TNL1169 derived
     }
 
     public void tnl$setChordCasting(boolean casting) {
         this.entityData.set(DATA_CHORD, casting);
+        if (!casting && this.tnl$spell() == 3) {
+            this.tnl$setSpell(0, 0);
+        }
     }
 
 

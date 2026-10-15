@@ -125,6 +125,7 @@ public final class BlinkHandler {
                 return;
             }
             AFTERCAST_UNTIL.remove(id);
+            momo.tnl$setSpell(0, 0);      // TNL1169 blink cast is over
             MomoCastLock.end(id, now, 0);       // TNL1154 cast is over, other skills may run again
             // TNL1134 release the AI properly: unfreeze, drop the stale path and re-acquire the target
             // TNL1164 user: never clear the AI for a wind up or a recovery -- it
@@ -181,6 +182,7 @@ public final class BlinkHandler {
             return;
         }
         LOCK_UNTIL.put(id, now + LOCK_TICKS);
+        momo.tnl$setSpell(1, LOCK_TICKS + AFTERCAST_TICKS);   // TNL1169 blink is spell 1
         MomoCastLock.begin(id, now, LOCK_TICKS + AFTERCAST_TICKS + 10);
         FREEZE_DEADLINE.put(id, now + MAX_FROZEN_TICKS);
         COOLDOWN_UNTIL.put(id, now + LOCK_TICKS + COOLDOWN_TICKS);

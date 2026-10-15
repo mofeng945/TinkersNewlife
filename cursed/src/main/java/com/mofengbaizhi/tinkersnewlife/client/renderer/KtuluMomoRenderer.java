@@ -50,6 +50,10 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
         // TNL1155 the chord pose must only play for the chord. The generic skill marker is set by every
         // skill, so before this the sonic boom wind up looked exactly like the chord wind up.
         // TNL1161 the chord state comes from the momo itself, exactly like the resonance charge.
+        // TNL1169 the pose now comes from the one synced spell channel
+        if (entity.tnl$spell() != 0) {
+            charging = true;
+        }
         boolean chordCast = entity.tnl$isChordCasting()
                 && com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.DISCORDANT_CHORD;
         // TNL1158 probe: the chord wind up still shows no pose, so log what the client actually sees
