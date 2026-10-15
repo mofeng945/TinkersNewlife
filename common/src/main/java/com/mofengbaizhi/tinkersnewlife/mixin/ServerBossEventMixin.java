@@ -15,27 +15,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ServerBossEvent.class)
 public class ServerBossEventMixin {
 
-    /** TNL1152 trace: who detaches players from the bar? Print the stack trace. */
-    @Inject(method = "removeAllPlayers", at = @At("HEAD"))
-    private void tinkersnewlife$traceRemoveAll(CallbackInfo ci) {
-        try {
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL1152 removeAllPlayers called");
-            new Throwable("TNL1152 removeAllPlayers").printStackTrace();
-        } catch (Throwable ignored) {
-        }
-    }
-
-    @Inject(method = "removePlayer", at = @At("HEAD"))
-    private void tinkersnewlife$traceRemove(net.minecraft.server.level.ServerPlayer player, CallbackInfo ci) {
-        try {
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
-                    "TNL1152 removePlayer {} from bar {}",
-                    player.getName().getString(),
-                    ((net.minecraft.world.BossEvent) (Object) this).getName().getString());
-        } catch (Throwable ignored) {
-        }
-    }
-
     @Inject(method = "<init>", at = @At("TAIL"))
     private void tinkersnewlife$registerBossBar(CallbackInfo ci) {
         try {
