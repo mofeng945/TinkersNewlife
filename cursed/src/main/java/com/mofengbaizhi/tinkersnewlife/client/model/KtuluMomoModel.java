@@ -20,6 +20,9 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
     public static boolean CHARGING = false;
     /** 0 = just started, 1 = about to shriek */
     public static float PROGRESS = 0.0F;
+    /** TNL1108 the chord keeps the hands up for a while after the sync flag drops, so the pose does
+     *  not snap down while the rings are still travelling outwards. */
+    public static long CHORD_HOLD_UNTIL = 0L;
 
     public KtuluMomoModel(ModelPart root) {
         super(root);
@@ -95,7 +98,12 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         this.rightLeg.xRot = 0.12F * up;
         this.leftLeg.xRot = -0.10F * up;
         // TNL1105 Discordant Chord: evoker style casting, both hands held high and waved.
-        if (com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.DISCORDANT_CHORD) {
+        long nowMs = System.currentTimeMillis();
+        if (CHARGING) {
+            CHORD_HOLD_UNTIL = nowMs + 6000L;      // hold six seconds past the last sync
+        }
+        if (com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.DISCORDANT_CHORD
+                && nowMs < CHORD_HOLD_UNTIL) {
             float wave = (float) Math.sin(ageInTicks * 0.55F);
             float wave2 = (float) Math.sin(ageInTicks * 0.55F + 1.1F);
             this.body.xRot = 0.06F;

@@ -97,8 +97,9 @@ public final class DiscordantChordHandler {
                 if (momo.getNavigation() != null) {
                     momo.getNavigation().stop();
                 }
+                // TNL1108 user: halve the particles, Momo has to stay visible
                 level.sendParticles(ParticleTypes.CLOUD,
-                        momo.getX(), momo.getY() + 1.6D, momo.getZ(), 4, 0.5D, 0.5D, 0.5D, 0.01D);
+                        momo.getX(), momo.getY() + 1.6D, momo.getZ(), 2, 0.4D, 0.4D, 0.4D, 0.01D);
                 return;
             }
             CHARGE_UNTIL.remove(id);
@@ -190,16 +191,12 @@ public final class DiscordantChordHandler {
     /** a 0.5 block tall shell of white smoke at this radius */
     private static void drawRing(ServerLevel level, KtuluMomo momo, double radius, double baseY) {
         // TNL1106 denser sampling so the dots read as one continuous thin band
-        int points = Math.max(48, (int) (radius * 16.0D));
+        int points = Math.max(24, (int) (radius * 7.0D));   // TNL1108 halved
         for (int i = 0; i < points; i++) {
             double a = (Math.PI * 2.0D) * i / points;
             double x = momo.getX() + Math.cos(a) * radius;
             double z = momo.getZ() + Math.sin(a) * radius;
-            level.sendParticles(ParticleTypes.CLOUD, x, baseY + 0.15D, z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
-            level.sendParticles(ParticleTypes.CLOUD, x, baseY + 0.35D, z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
-            if ((i & 1) == 0) {
-                level.sendParticles(ParticleTypes.SMOKE, x, baseY + HEIGHT, z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
-            }
+            level.sendParticles(ParticleTypes.CLOUD, x, baseY + 0.25D, z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
         }
     }
 

@@ -82,7 +82,7 @@ public final class AstralResonanceHandler {
                     momo.getNavigation().stop();
                 }
                 level.sendParticles(ParticleTypes.SCULK_SOUL,
-                        momo.getX(), momo.getY() + 1.2D, momo.getZ(), 3, 0.3D, 0.4D, 0.3D, 0.01D);
+                        momo.getX(), momo.getY() + 1.2D, momo.getZ(), 1, 0.3D, 0.4D, 0.3D, 0.01D);   // TNL1108 halved
                 return;
             }
             CHARGING_UNTIL.remove(id);
@@ -119,7 +119,7 @@ public final class AstralResonanceHandler {
             level.playSound(null, momo.blockPosition(), SoundEvents.WARDEN_SONIC_CHARGE,
                     SoundSource.HOSTILE, 2.0F, 1.0F);
             level.sendParticles(ParticleTypes.SCULK_SOUL,
-                    momo.getX(), momo.getY() + 1.2D, momo.getZ(), 40, 0.5D, 0.8D, 0.5D, 0.02D);
+                    momo.getX(), momo.getY() + 1.2D, momo.getZ(), 16, 0.5D, 0.8D, 0.5D, 0.02D);   // TNL1108 halved
             TinkersNewlife.LOGGER.warn("TNL1082 Momo begins Astral Resonance charge on {}",
                     target.getName().getString());
         }
@@ -148,7 +148,7 @@ public final class AstralResonanceHandler {
         // draw the boom lance, like the Warden projectile
         Vec3 end = origin.add(flat.scale(KNOCK_DISTANCE));
         for (int i = 0; i <= 30; i++) {
-            double f = i / 30.0D;
+            double f = i / 12.0D;
             level.sendParticles(ParticleTypes.SONIC_BOOM,
                     origin.x + (end.x - origin.x) * f,
                     origin.y + (end.y - origin.y) * f,
