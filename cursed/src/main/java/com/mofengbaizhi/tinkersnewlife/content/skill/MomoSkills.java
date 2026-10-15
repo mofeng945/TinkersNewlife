@@ -9,13 +9,13 @@ package com.mofengbaizhi.tinkersnewlife.content.skill;
 public final class MomoSkills {
 
     /** 星界共鸣：贴近 20 秒后蓄力推飞（已验收 ✓） */
-    public static final boolean ASTRAL_RESONANCE = false;
+    public static final boolean ASTRAL_RESONANCE = true;
 
     /** 混沌和弦：蓄力 2 秒后发出 5 道声波圈（本轮测试 ✓） */
     public static final boolean DISCORDANT_CHORD = true;
 
     /** 瞬身：锁定目标 1.5 秒后无声瞬移到其身后 3 格（本轮测试 ✓） */
-    public static final boolean BLINK = false;
+    public static final boolean BLINK = true;
 
     private MomoSkills() {
     }
