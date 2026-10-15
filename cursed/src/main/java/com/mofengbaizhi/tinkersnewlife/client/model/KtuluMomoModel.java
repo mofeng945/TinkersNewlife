@@ -41,7 +41,10 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         // being drawn at all for this skin. Force it visible, mark it, and log its state once.
         this.hat.visible = true;
         this.hat.skipDraw = false;
-        this.hat.yRot = CHARGING ? 1.0F : 0.0F;
+        // TNL1100 decisive test: hide the hat part entirely while charging.
+        //   hair disappears -> the hair IS this hat part (then the twist failing is a timing issue);
+        //   hair stays       -> the hair is drawn by some other model and we must find that one.
+        this.hat.visible = !CHARGING;
         this.hat.yScale = CHARGING ? 1.35F : 1.0F;
         // TNL1098 unmistakable identity test: if the model we pose is the one drawn, the momo has to
         // visibly inflate while charging. The hat state probe says visible=true yRot=1.0 yet nothing
