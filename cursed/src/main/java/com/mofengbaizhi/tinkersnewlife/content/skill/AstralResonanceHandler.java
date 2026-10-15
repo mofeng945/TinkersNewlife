@@ -107,14 +107,7 @@ public final class AstralResonanceHandler {
             if (momo.getNavigation() != null) {
                 momo.getNavigation().stop();
             }
-            momo.tnl$setCharging(true);   // TNL1086 (entity data turned out not to reach the client)
-            // TNL1088 the log proved the client never saw the synced flag, so mirror the charge into
-            // the hidden marker cooldown as well: that channel is known to reach the owning client.
-            for (net.minecraft.world.entity.player.Player near : level.getEntitiesOfClass(
-                    net.minecraft.world.entity.player.Player.class, momo.getBoundingBox().inflate(12.0D))) {
-                near.getCooldowns().addCooldown(
-                        com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_MARKER.get(), CHARGE_TICKS + 5);
-            }
+            momo.tnl$setCharging(true);   // TNL1086 drives the charge animation on the client
             level.playSound(null, momo.blockPosition(), SoundEvents.WARDEN_SONIC_CHARGE,
                     SoundSource.HOSTILE, 2.0F, 1.0F);
             level.sendParticles(ParticleTypes.SCULK_SOUL,
