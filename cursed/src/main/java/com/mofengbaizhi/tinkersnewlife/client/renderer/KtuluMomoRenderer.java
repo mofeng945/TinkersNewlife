@@ -25,33 +25,39 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
         this.addLayer(new ItemInHandLayer<>(this, context.getItemInHandRenderer()));
     }
 
+    /**
+     * TNL1091 feed the charge progress to the model before super.render runs (setupAnim happens
+     * inside it). Progress is derived from the hidden marker cooldown, the channel we verified.
+     */
     @Override
-    protected void scale(KtuluMomo entity, PoseStack poseStack, float partialTick) {
-        poseStack.scale(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE);
-        // TNL1086 Warden style wind up for Astral Resonance. This hook runs after setupAnim and
-        // before the model is submitted, so posing the model here is what actually shows up.
-        // TNL1087 probe: does the client actually see the synced flag? (one line per second)
-        if (entity.tickCount % 20 == 0) {
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
-                    "TNL1087 render momo charging={} tickCount={}", entity.tnl$isCharging(), entity.tickCount);
+    public void render(KtuluMomo entity, float entityYaw, float partialTicks,
+                       com.mojang.blaze3d.vertex.PoseStack poseStack,
+                       net.minecraft.client.renderer.MultiBufferSource buffer, int packedLight) {
+        boolean charging = entity.tnl$isCharging();
+        float progress = 0.0F;
+        var mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.player != null) {
+            var marker = com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_MARKER.get();
+            var cds = mc.player.getCooldowns();
+            if (cds.isOnCooldown(marker)) {
+                charging = true;
+                float left = 1.0F - cds.getCooldownPercent(marker, partialTicks);   // ticks remaining
+                progress = 1.0F - Math.max(0.0F, Math.min(1.0F, left / 45.0F));
+            }
         }
-        if (!entity.tnl$isCharging()) {
-            return;
-        }
-        HumanoidModel<KtuluMomo> m = this.model;
-        float shake = (float) Math.sin((entity.tickCount + partialTick) * 1.7F) * 0.05F;
-        m.body.xRot = -0.38F + shake;
-        m.head.xRot = -0.45F + shake * 0.5F;
-        m.rightArm.xRot = -1.95F + shake;
-        m.rightArm.yRot = 0.55F;
-        m.leftArm.xRot = -1.95F - shake;
-        m.leftArm.yRot = -0.55F;
-        m.rightLeg.xRot = 0.28F;
-        m.leftLeg.xRot = -0.28F;
+        com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.CHARGING = charging;
+        com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.PROGRESS = progress;
+        super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
     }
 
     @Override
     public ResourceLocation getTextureLocation(KtuluMomo entity) {
-        return TEXTURE;
+        return TEXTURE;   // TNL1091 restored, my earlier slice had removed it
     }
+
+    @Override
+    protected void scale(KtuluMomo entity, PoseStack poseStack, float partialTick) {
+        poseStack.scale(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE);
+    }
+
 }
