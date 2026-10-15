@@ -174,6 +174,15 @@ public final class DiscordantChordHandler {
             CHARGE_UNTIL.put(id, now + CHARGE_TICKS);
             MomoCastLock.begin(id, now, CHARGE_TICKS + 8);
             momo.tnl$setChordCasting(true);      // TNL1161 drives the chord pose on the client
+            // TNL1168 face the target once, then leave the head alone for the whole cast
+            if (target != null) {
+                double dx = target.getX() - momo.getX();
+                double dz = target.getZ() - momo.getZ();
+                float yaw = (float) (Math.toDegrees(Math.atan2(dz, dx)) - 90.0D);
+                momo.setYRot(yaw);
+                momo.setYHeadRot(yaw);
+                momo.setYBodyRot(yaw);
+            }
             markChord(level, momo, CHARGE_TICKS + 10);
             for (net.minecraft.world.entity.player.Player near : level.getEntitiesOfClass(
                     net.minecraft.world.entity.player.Player.class, momo.getBoundingBox().inflate(40.0D))) {

@@ -125,7 +125,17 @@ public final class AstralResonanceHandler {
             if (momo.getNavigation() != null) {
                 momo.getNavigation().stop();
             }
-            momo.tnl$setCharging(true);   // TNL1086 drives the charge animation on the client
+            momo.tnl$setCharging(true);
+            // TNL1168 face the target ONCE at the start. The old code called setLookAt every tick while
+            // charging, and the look control fighting the pose is what made the head swing around.
+            if (target != null) {
+                double dx = target.getX() - momo.getX();
+                double dz = target.getZ() - momo.getZ();
+                float yaw = (float) (Math.toDegrees(Math.atan2(dz, dx)) - 90.0D);
+                momo.setYRot(yaw);
+                momo.setYHeadRot(yaw);
+                momo.setYBodyRot(yaw);
+            }   // TNL1086 drives the charge animation on the client
             level.playSound(null, momo.blockPosition(), SoundEvents.WARDEN_SONIC_CHARGE,
                     SoundSource.HOSTILE, 2.0F, 1.0F);
             level.sendParticles(ParticleTypes.SCULK_SOUL,
