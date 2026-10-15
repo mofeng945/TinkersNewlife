@@ -106,7 +106,17 @@ public final class ThrustGhostRenderer {
                                 ? acp.getSkinTextureLocation()
                                 : new net.minecraft.resources.ResourceLocation(
                                         "tinkersnewlife", "textures/entity/ktulu_momo.png"));
-                MultiBufferSource ghostBuffer = type -> buffer.getBuffer(ghostType);
+                // TNL1131 the crash was "Not filled all elements of the vertex": forcing EVERY request
+                // onto one render type breaks anything that writes a different vertex layout (held
+                // items, glint, block atlas layers...). Only redirect requests whose format matches,
+                // pass everything else straight through to the real buffer.
+                final com.mojang.blaze3d.vertex.VertexFormat ghostFormat = ghostType.format();
+                MultiBufferSource ghostBuffer = type -> {
+                    if (type != null && type.format() == ghostFormat) {
+                        return buffer.getBuffer(ghostType);
+                    }
+                    return buffer.getBuffer(type);
+                };
 
                 poseStack.pushPose();
                 try {
