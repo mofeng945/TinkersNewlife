@@ -178,6 +178,16 @@ public final class a {
     private static int k(Mob m) {
         return S.computeIfAbsent(m.getUUID(), u -> {
             synchronized (S) {
+                // TNL1141 user: "if two momos are born too close together the health is inherited".
+                // The old formula was S.size() % NS, which hands a brand new momo the slot of an
+                // existing one as soon as the map is full or a slot was freed -- the newcomer then
+                // reads the other momo's masked health. Claim a slot nobody owns instead.
+                for (int i = 0; i < NS; i++) {
+                    int cand = (S.size() + i) % NS;
+                    if (!RDY[cand] || OWN[cand] == null || OWN[cand].equals(u)) {
+                        return cand;
+                    }
+                }
                 return S.size() % NS;
             }
         });
