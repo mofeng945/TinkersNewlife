@@ -78,7 +78,9 @@ public final class BlinkHandler {
         if (deadline != null && now > deadline) {
             FREEZE_DEADLINE.remove(id);
             if (momo.isNoAi()) {
-                momo.setNoAi(false);
+                // TNL1164 user: never clear the AI for a wind up or a recovery -- it
+                // sticks (teleporting high left the boss frozen two seconds). Rooting is done
+                // by zeroing the movement every tick instead, which is already done above.
             }
             if (momo.getNavigation() != null) {
                 momo.getNavigation().stop();
@@ -125,7 +127,9 @@ public final class BlinkHandler {
             AFTERCAST_UNTIL.remove(id);
             MomoCastLock.end(id, now, 0);       // TNL1154 cast is over, other skills may run again
             // TNL1134 release the AI properly: unfreeze, drop the stale path and re-acquire the target
-            momo.setNoAi(false);
+            // TNL1164 user: never clear the AI for a wind up or a recovery -- it
+            // sticks (teleporting high left the boss frozen two seconds). Rooting is done
+            // by zeroing the movement every tick instead, which is already done above.
             if (momo.getNavigation() != null) {
                 momo.getNavigation().stop();
             }
@@ -142,7 +146,9 @@ public final class BlinkHandler {
             LivingEntity target = momo.getTarget();
             if (now < until && target != null && target.isAlive()) {
                 // stand still and keep the eyes on the target, nothing else
-                momo.setNoAi(true);
+                // TNL1164 user: never clear the AI for a wind up or a recovery -- it
+                // sticks (teleporting high left the boss frozen two seconds). Rooting is done
+                // by zeroing the movement every tick instead, which is already done above.
                 FREEZE_DEADLINE.put(id, now + MAX_FROZEN_TICKS);
                 momo.setDeltaMovement(Vec3.ZERO);
                 momo.hurtMarked = true;
@@ -153,7 +159,9 @@ public final class BlinkHandler {
                 return;
             }
             LOCK_UNTIL.remove(id);
-            momo.setNoAi(false);
+            // TNL1164 user: never clear the AI for a wind up or a recovery -- it
+            // sticks (teleporting high left the boss frozen two seconds). Rooting is done
+            // by zeroing the movement every tick instead, which is already done above.
             if (target != null && target.isAlive()) {
                 teleportBehind(level, momo, target);
             }
@@ -176,7 +184,9 @@ public final class BlinkHandler {
         MomoCastLock.begin(id, now, LOCK_TICKS + AFTERCAST_TICKS + 10);
         FREEZE_DEADLINE.put(id, now + MAX_FROZEN_TICKS);
         COOLDOWN_UNTIL.put(id, now + LOCK_TICKS + COOLDOWN_TICKS);
-        momo.setNoAi(true);
+        // TNL1164 user: never clear the AI for a wind up or a recovery -- it
+        // sticks (teleporting high left the boss frozen two seconds). Rooting is done
+        // by zeroing the movement every tick instead, which is already done above.
         momo.setDeltaMovement(Vec3.ZERO);
         momo.hurtMarked = true;
         if (momo.getNavigation() != null) {
@@ -251,13 +261,17 @@ public final class BlinkHandler {
         momo.hurtMarked = true;
         // TNL1134 user: "after blinking it gets stuck on its AI". Teleporting invalidates the old
         // path, so clear it, re-target and only then freeze for the short recovery.
-        momo.setNoAi(false);
+        // TNL1164 user: never clear the AI for a wind up or a recovery -- it
+        // sticks (teleporting high left the boss frozen two seconds). Rooting is done
+        // by zeroing the movement every tick instead, which is already done above.
         if (momo.getNavigation() != null) {
             momo.getNavigation().stop();
         }
         momo.setTarget(target);
         momo.getLookControl().setLookAt(target, 30.0F, 30.0F);
-        momo.setNoAi(true);      // TNL1121 half a second of recovery before it may act again
+        // TNL1164 user: never clear the AI for a wind up or a recovery -- it
+        // sticks (teleporting high left the boss frozen two seconds). Rooting is done
+        // by zeroing the movement every tick instead, which is already done above.
         FREEZE_DEADLINE.put(momo.getUUID(), now + MAX_FROZEN_TICKS);
         TinkersNewlife.LOGGER.warn("TNL1120 Momo blinked behind {} to ({}, {}, {})",
                 target.getName().getString(),

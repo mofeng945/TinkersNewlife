@@ -107,7 +107,9 @@ public final class DiscordantChordHandler {
             if (now < until) {
                 momo.setDeltaMovement(Vec3.ZERO);
                 momo.hurtMarked = true;
-                momo.setNoAi(true);
+                // TNL1164 user: never clear the AI for a wind up or a recovery -- it
+                // sticks (teleporting high left the boss frozen two seconds). Rooting is done
+                // by zeroing the movement every tick instead, which is already done above.
                 if (momo.getNavigation() != null) {
                     momo.getNavigation().stop();
                 }
@@ -195,7 +197,9 @@ public final class DiscordantChordHandler {
         Long release = RELEASE_AT.get(id);
         if (release != null && now >= release) {
             RELEASE_AT.remove(id);
-            momo.setNoAi(false);
+            // TNL1164 user: never clear the AI for a wind up or a recovery -- it
+            // sticks (teleporting high left the boss frozen two seconds). Rooting is done
+            // by zeroing the movement every tick instead, which is already done above.
             MomoCastLock.end(id, now, 0);
             TinkersNewlife.LOGGER.warn("TNL1157 chord hard control released, waves may still travel");
         }
@@ -205,7 +209,9 @@ public final class DiscordantChordHandler {
             QUEUED.remove(id);
             QUEUE_AT.remove(id);
             RINGS_BY_MOMO.remove(id);
-            momo.setNoAi(false);
+            // TNL1164 user: never clear the AI for a wind up or a recovery -- it
+            // sticks (teleporting high left the boss frozen two seconds). Rooting is done
+            // by zeroing the movement every tick instead, which is already done above.
             momo.tnl$setChordCasting(false);
             MomoCastLock.end(id, now, 0);
             TinkersNewlife.LOGGER.warn("TNL1157 chord aborted, no players nearby");
@@ -238,7 +244,9 @@ public final class DiscordantChordHandler {
         // re-froze the boss, so the 0.5 s aftercast never happened until the rings were gone.
         // TNL1160 freeze only while the cast has not been released yet
         if (RINGS_BY_MOMO.containsKey(id) && RELEASE_AT.get(id) == null) {
-            momo.setNoAi(true);
+            // TNL1164 user: never clear the AI for a wind up or a recovery -- it
+            // sticks (teleporting high left the boss frozen two seconds). Rooting is done
+            // by zeroing the movement every tick instead, which is already done above.
         }
         List<Ring> dead = new ArrayList<>();
         for (Ring r : rings) {
@@ -256,7 +264,9 @@ public final class DiscordantChordHandler {
             RINGS_BY_MOMO.remove(id);
             QUEUED.remove(id);
             QUEUE_AT.remove(id);
-            momo.setNoAi(false);
+            // TNL1164 user: never clear the AI for a wind up or a recovery -- it
+            // sticks (teleporting high left the boss frozen two seconds). Rooting is done
+            // by zeroing the movement every tick instead, which is already done above.
             momo.tnl$setChordCasting(false);     // TNL1161 the chord pose ends with the cast
             // TNL1154 cooldown only starts now, when the whole cast is over
             COOLDOWN_UNTIL.put(id, now + COOLDOWN_TICKS);

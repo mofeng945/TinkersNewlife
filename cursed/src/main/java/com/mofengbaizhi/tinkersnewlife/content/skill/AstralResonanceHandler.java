@@ -78,7 +78,9 @@ public final class AstralResonanceHandler {
             if (now < until) {
                 momo.setDeltaMovement(Vec3.ZERO);
                 momo.hurtMarked = true;
-                momo.setNoAi(true);   // TNL1113 no moving, no attacking while casting
+                // TNL1164 user: never clear the AI for a wind up or a recovery -- it
+                // sticks (teleporting high left the boss frozen two seconds). Rooting is done
+                // by zeroing the movement every tick instead, which is already done above.
                 if (momo.getNavigation() != null) {
                     momo.getNavigation().stop();
                 }
@@ -136,7 +138,9 @@ public final class AstralResonanceHandler {
     /** the shriek itself: Warden sonic boom feel, knock the target past ten blocks. */
     private static void shriek(ServerLevel level, KtuluMomo momo, long now) {
         COOLDOWN_UNTIL.put(momo.getUUID(), now + COOLDOWN_TICKS);
-        momo.setNoAi(false);
+        // TNL1164 user: never clear the AI for a wind up or a recovery -- it
+        // sticks (teleporting high left the boss frozen two seconds). Rooting is done
+        // by zeroing the movement every tick instead, which is already done above.
             MomoCastLock.end(momo.getUUID(), now, 40);   // TNL1154 release the cast lock      // TNL1113 the wind up is done
         LivingEntity target = momo.getTarget();
         Vec3 origin = momo.position().add(0.0D, 1.0D, 0.0D);
