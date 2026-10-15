@@ -21,7 +21,11 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 @Mixin(LivingEntity.class)
 public class KtuluVitalsMixin {
 
-    @ModifyVariable(method = "m_5634_(F)V", at = @At("HEAD"), argsOnly = true, remap = false)
+    // TNL1138 真凶 ✓：原来注入的是 `m_5634_(F)V` ✗ 而 **`setHealth` 是 `m_21153_(F)V`** ✓
+    //   （用 javap 在 1.20.1 的 srg jar 上核对过：`m_21153_(float)` ＝ setHealth ✓
+    //     而 `m_5634_(float)` 是另一个方法 ✗）⇒ 所以这段保护**从来没跑过** ✓✓
+    //   寰宇支配剑正是走 `entity.setHealth(0)`（见其反编译 ✓）⇒ 必须拦在 `m_21153_` 上 ✓
+    @ModifyVariable(method = "m_21153_(F)V", at = @At("HEAD"), argsOnly = true, remap = false)
     private float tinkersnewlife$vitalsFloor(float value) {
         try {
             LivingEntity self = (LivingEntity) (Object) this;
