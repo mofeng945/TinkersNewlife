@@ -27,8 +27,8 @@ public final class BlinkHandler {
     private static final int LOCK_TICKS = 30;        // 1.5 s
     private static final double AROUND = 3.0D;       // TNL1121 a random spot within three blocks
     private static final int AFTERCAST_TICKS = 10;   // 0.5 s of recovery, the afterimages show here
-    private static final double RANGE = 16.0D;       // only when the target is this close
-    private static final int COOLDOWN_TICKS = 400;   // 20 s
+    private static final double RANGE = 20.0D;       // TNL1126 user: fires when the target is FARTHER than this
+    private static final int COOLDOWN_TICKS = 200;   // TNL1126 user: 10 s
 
     private static final Map<UUID, Long> LOCK_UNTIL = new ConcurrentHashMap<>();
     private static final Map<UUID, Long> COOLDOWN_UNTIL = new ConcurrentHashMap<>();
@@ -99,7 +99,7 @@ public final class BlinkHandler {
             return;
         }
         LivingEntity target = momo.getTarget();
-        if (target == null || !target.isAlive() || momo.distanceTo(target) > RANGE) {
+        if (target == null || !target.isAlive() || momo.distanceTo(target) < RANGE) {   // TNL1126 farther than 20
             return;
         }
         LOCK_UNTIL.put(id, now + LOCK_TICKS);
