@@ -15,8 +15,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class MomoCastLock {
 
     private static final Map<UUID, Long> BUSY_UNTIL = new ConcurrentHashMap<>();
-    /** TNL1166 where the boss stood when the cast began, used to pin it there */
-    private static final Map<UUID, net.minecraft.world.phys.Vec3> ANCHOR = new ConcurrentHashMap<>();
     private static final Map<UUID, Long> NEXT_CAST = new ConcurrentHashMap<>();
 
     private MomoCastLock() {
@@ -48,21 +46,10 @@ public final class MomoCastLock {
         BUSY_UNTIL.put(id, now + ticks);
     }
 
-    /** TNL1166 remember where it should stay during the cast */
-    public static void anchor(UUID id, net.minecraft.world.phys.Vec3 pos) {
-        if (pos != null) {
-            ANCHOR.putIfAbsent(id, pos);
-        }
-    }
-
-    public static net.minecraft.world.phys.Vec3 anchorOf(UUID id) {
-        return ANCHOR.get(id);
-    }
-
+    /** TNL1167 the anchor mechanism is gone: it kept a stale position from the previous cast */
     /** release the lock and start the cooldown */
     public static void end(UUID id, long now, int cooldownTicks) {
         BUSY_UNTIL.remove(id);
-        ANCHOR.remove(id);
         NEXT_CAST.put(id, now + cooldownTicks);
     }
 

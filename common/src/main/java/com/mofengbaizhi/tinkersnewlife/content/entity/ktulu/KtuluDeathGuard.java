@@ -132,11 +132,10 @@ public final class KtuluDeathGuard {
             if (momo.getNavigation() != null) {
                 momo.getNavigation().stop();
             }
-            var anchor = com.mofengbaizhi.tinkersnewlife.content.skill.MomoCastLock.anchorOf(id);
-            if (anchor != null && momo.position().distanceToSqr(anchor) > 0.04D) {
-                momo.setPos(anchor.x, anchor.y, anchor.z);
-                momo.hurtMarked = true;
-            }
+            // TNL1167 user: "why does it yank me back to where the last big cast happened".
+            // The anchor was kept with putIfAbsent and never refreshed, so a stale position from an
+            // earlier cast was still around. The anchor pull is gone; zeroing the velocity before the
+            // entity tick is enough and cannot teleport anything.
         } catch (Throwable ignored) {
         }
     }

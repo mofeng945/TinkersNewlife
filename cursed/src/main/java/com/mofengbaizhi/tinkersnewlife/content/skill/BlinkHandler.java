@@ -181,7 +181,6 @@ public final class BlinkHandler {
             return;
         }
         LOCK_UNTIL.put(id, now + LOCK_TICKS);
-        MomoCastLock.anchor(id, momo.position());   // TNL1166 stay here
         MomoCastLock.begin(id, now, LOCK_TICKS + AFTERCAST_TICKS + 10);
         FREEZE_DEADLINE.put(id, now + MAX_FROZEN_TICKS);
         COOLDOWN_UNTIL.put(id, now + LOCK_TICKS + COOLDOWN_TICKS);

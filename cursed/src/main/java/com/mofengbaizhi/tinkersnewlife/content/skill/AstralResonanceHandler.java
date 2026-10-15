@@ -118,7 +118,6 @@ public final class AstralResonanceHandler {
             }
             NEAR.remove(id);
             CHARGING_UNTIL.put(id, now + CHARGE_TICKS);
-        MomoCastLock.anchor(id, momo.position());   // TNL1166 stay here
             MomoCastLock.begin(momo.getUUID(), now, CHARGE_TICKS + 20);   // TNL1154 one skill at a time
             // Warden style wind up: root in place, charge sound, soul particles
             momo.setDeltaMovement(Vec3.ZERO);
