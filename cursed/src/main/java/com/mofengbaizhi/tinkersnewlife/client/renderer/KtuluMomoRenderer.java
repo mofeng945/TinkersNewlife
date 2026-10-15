@@ -83,47 +83,35 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
                 continue;
             }
             float fade = (float) Math.max(0.0D, 1.0D - r / 16.0D);
-            tnl$ringBand(vc, mat, entity.getX(), entity.getZ(), baseY, r, 0.07D, 0.62F, 0.62F, 0.66F, 0.60F * fade + 0.25F);   // TNL1109 grey
+            tnl$ringQuad(null, mat, (float) entity.getX(), (float) baseY, (float) entity.getZ(), (float) r,
+                    Math.max(0.20F, fade), buffer);
         }
     }
 
     /** one ring drawn as a band of quads (inner radius r - w, outer r + w), 0.5 blocks tall. */
-    private static void tnl$ringBand(com.mojang.blaze3d.vertex.VertexConsumer vc,
-                                     org.joml.Matrix4f mat,
-                                     double cx, double cz, double baseY,
-                                     double r, double w, float red, float green, float blue, float alpha) {
-        int seg = Math.max(32, (int) (r * 10.0D));
-        double inner = Math.max(0.01D, r - w);
-        double outer = r + w;
-        for (int i = 0; i < seg; i++) {
-            double a0 = (Math.PI * 2.0D) * i / seg;
-            double a1 = (Math.PI * 2.0D) * (i + 1) / seg;
-            float x0i = (float) (cx + Math.cos(a0) * inner);
-            float z0i = (float) (cz + Math.sin(a0) * inner);
-            float x1i = (float) (cx + Math.cos(a1) * inner);
-            float z1i = (float) (cz + Math.sin(a1) * inner);
-            float x0o = (float) (cx + Math.cos(a0) * outer);
-            float z0o = (float) (cz + Math.sin(a0) * outer);
-            float x1o = (float) (cx + Math.cos(a1) * outer);
-            float z1o = (float) (cz + Math.sin(a1) * outer);
-            float yb = (float) baseY;
-            float yt = (float) (baseY + 0.5D);
-            // two vertical sides of the band
-            tnl$quad(vc, mat, x0i, yb, z0i, x0o, yb, z0o, x0o, yt, z0o, x0i, yt, z0i, red, green, blue, alpha);
-            tnl$quad(vc, mat, x0o, yb, z0o, x1o, yb, z1o, x1o, yt, z1o, x0o, yt, z0o, red, green, blue, alpha);
-            tnl$quad(vc, mat, x1o, yb, z1o, x1i, yb, z1i, x1i, yt, z1i, x1o, yt, z1o, red, green, blue, alpha);
-            tnl$quad(vc, mat, x0i, yt, z0i, x0o, yt, z0o, x1o, yt, z1o, x1i, yt, z1i, red, green, blue, alpha);
-        }
-    }
+    /** TNL1110 the geometry band never rendered, so the ring is a grey ring TEXTURE on a flat quad
+     *  lying on the ground, growing from the centre outwards. */
+    private static final net.minecraft.resources.ResourceLocation RING_TEX =
+            new net.minecraft.resources.ResourceLocation("tinkersnewlife", "textures/effect/chord_ring.png");
 
-    private static void tnl$quad(com.mojang.blaze3d.vertex.VertexConsumer vc, org.joml.Matrix4f mat,
-                                 float x1, float y1, float z1, float x2, float y2, float z2,
-                                 float x3, float y3, float z3, float x4, float y4, float z4,
-                                 float red, float green, float blue, float alpha) {
-        vc.vertex(mat, x1, y1, z1).color(red, green, blue, alpha).endVertex();
-        vc.vertex(mat, x2, y2, z2).color(red, green, blue, alpha).endVertex();
-        vc.vertex(mat, x3, y3, z3).color(red, green, blue, alpha).endVertex();
-        vc.vertex(mat, x4, y4, z4).color(red, green, blue, alpha).endVertex();
+    private static void tnl$ringQuad(com.mojang.blaze3d.vertex.VertexConsumer ignored,
+                                     org.joml.Matrix4f mat, float cx, float y, float cz, float h, float alpha,
+                                     net.minecraft.client.renderer.MultiBufferSource buffer) {
+        com.mojang.blaze3d.vertex.VertexConsumer vc = buffer.getBuffer(
+                net.minecraft.client.renderer.RenderType.entityTranslucent(RING_TEX));
+        int light = 0xF000F0;
+        vc.vertex(mat, cx - h, y, cz - h).color(1.0F, 1.0F, 1.0F, alpha).uv(0.0F, 0.0F)
+                .overlayCoords(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
+                .uv2(light).normal(0.0F, 1.0F, 0.0F).endVertex();
+        vc.vertex(mat, cx + h, y, cz - h).color(1.0F, 1.0F, 1.0F, alpha).uv(1.0F, 0.0F)
+                .overlayCoords(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
+                .uv2(light).normal(0.0F, 1.0F, 0.0F).endVertex();
+        vc.vertex(mat, cx + h, y, cz + h).color(1.0F, 1.0F, 1.0F, alpha).uv(1.0F, 1.0F)
+                .overlayCoords(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
+                .uv2(light).normal(0.0F, 1.0F, 0.0F).endVertex();
+        vc.vertex(mat, cx - h, y, cz + h).color(1.0F, 1.0F, 1.0F, alpha).uv(0.0F, 1.0F)
+                .overlayCoords(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
+                .uv2(light).normal(0.0F, 1.0F, 0.0F).endVertex();
     }
 
     @Override
