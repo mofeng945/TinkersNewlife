@@ -815,10 +815,8 @@ public final class ApostlePatch {
             seconds = MONOLITH_TOPUP_SECONDS.get();
         } catch (Throwable ignored) {
         }
-        // TNL1118 user: "the interval change never took effect, still under 10 s". An existing config
-        // file keeps its own value and overrides the code default, so enforce a hard floor of 30 s.
-        seconds = Math.max(30, Math.min(600, seconds));
-        return seconds * 20;
+        // TNL1119 user: "do not hardcode it, just edit the config file" -- so the config rules again.
+        return Math.max(1, Math.min(600, seconds)) * 20;
     }
     /** 使徒 → 下次可补位的时刻 ✓ */
     private static final Map<UUID, Long> MONOLITH_TOPUP_AT = new ConcurrentHashMap<>();
