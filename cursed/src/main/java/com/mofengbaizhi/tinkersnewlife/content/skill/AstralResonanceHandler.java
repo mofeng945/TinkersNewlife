@@ -61,8 +61,17 @@ public final class AstralResonanceHandler {
         }
     }
 
+    /** TNL1090 user: keep the boss melee at zero while the animation is being tested. */
+    private static final boolean ATTACK_ZERO = true;
+
     private static void tickOne(ServerLevel level, KtuluMomo momo, long now) {
         UUID id = momo.getUUID();
+        if (ATTACK_ZERO) {
+            var inst = momo.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+            if (inst != null && inst.getBaseValue() != 0.0D) {
+                inst.setBaseValue(0.0D);
+            }
+        }
 
         // already charging: keep it rooted and shriek when the charge is done
         Long until = CHARGING_UNTIL.get(id);

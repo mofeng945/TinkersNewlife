@@ -20,7 +20,8 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
     private static final float MODEL_SCALE = 0.85F;
 
     public KtuluMomoRenderer(EntityRendererProvider.Context context) {
-        super(context, new HumanoidModel<>(context.bakeLayer(ModelLayers.PLAYER)), 0.43F);
+        super(context, new com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel(
+                context.bakeLayer(ModelLayers.PLAYER)), 0.43F);   // TNL1089
         this.addLayer(new ItemInHandLayer<>(this, context.getItemInHandRenderer()));
     }
 
