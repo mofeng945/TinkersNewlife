@@ -232,11 +232,11 @@ public final class DiscordantChordHandler {
             }
         }
 
-        momo.setNoAi(true);
-        momo.setDeltaMovement(Vec3.ZERO);
-        momo.hurtMarked = true;
-        if (momo.getNavigation() != null) {
-            momo.getNavigation().stop();
+        // TNL1160 the release above was undone immediately: this ran every tick and
+        // re-froze the boss, so the 0.5 s aftercast never happened until the rings were gone.
+        // TNL1160 freeze only while the cast has not been released yet
+        if (RINGS_BY_MOMO.containsKey(id) && RELEASE_AT.get(id) == null) {
+            momo.setNoAi(true);
         }
         List<Ring> dead = new ArrayList<>();
         for (Ring r : rings) {
