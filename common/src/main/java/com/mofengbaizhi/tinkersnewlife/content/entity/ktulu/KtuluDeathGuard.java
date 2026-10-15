@@ -32,8 +32,19 @@ public final class KtuluDeathGuard {
             if (momo.level().isClientSide) {
                 return;
             }
-            // "if it still has health, block the death"
-            if (momo.getHealth() > 0.0F) {
+            // TNL1142 user: "one punch and the boss bar event is gone, the second one kills from full".
+            // Cancelling EVERY death broke the normal flow (the bar is dropped and the entity is left
+            // half dead). Only block the cheat kill: the Avaritia Neo infinity damage source, which
+            // does hurt(MAX_VALUE) + setHealth(0) + die() in a row.
+            String id;
+            try {
+                id = event.getSource().typeHolder().unwrapKey()
+                        .map(k -> k.location().toString()).orElse("");
+            } catch (Throwable t) {
+                id = String.valueOf(event.getSource().getMsgId());
+            }
+            boolean cheatKill = id.contains("infinity");
+            if (cheatKill && momo.getHealth() > 0.0F) {
                 event.setCanceled(true);
                 momo.deathTime = 0;
                 momo.hurtTime = 0;
