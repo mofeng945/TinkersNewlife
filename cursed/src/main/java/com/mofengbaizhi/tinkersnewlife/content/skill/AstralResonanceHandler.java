@@ -108,6 +108,12 @@ public final class AstralResonanceHandler {
         }
         int t = NEAR.merge(id, 5, Integer::sum);
         if (t >= NEAR_TICKS_REQUIRED) {
+            // TNL1162 this handler never checked the cast lock. While the chord was casting it happily
+            // started its own charge, kept calling setNoAi(true) every tick, and that is why the chord
+            // felt like it had a huge aftercast -- the boss was frozen by this skill all along.
+            if (!MomoCastLock.canStart(id, now)) {
+                return;
+            }
             NEAR.remove(id);
             CHARGING_UNTIL.put(id, now + CHARGE_TICKS);
             MomoCastLock.begin(momo.getUUID(), now, CHARGE_TICKS + 20);   // TNL1154 one skill at a time
