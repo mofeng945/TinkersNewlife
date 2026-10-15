@@ -29,22 +29,28 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
      * TNL1091 feed the charge progress to the model before super.render runs (setupAnim happens
      * inside it). Progress is derived from the hidden marker cooldown, the channel we verified.
      */
+    /** TNL1093 the cooldown derived progress was always 0 (19 probe lines all t=0.0), so the
+     *  animation runs on its own client clock: the moment charging is seen, start counting. */
+    private static long tnl$chargeStart = -1L;
+
     @Override
     public void render(KtuluMomo entity, float entityYaw, float partialTicks,
                        com.mojang.blaze3d.vertex.PoseStack poseStack,
                        net.minecraft.client.renderer.MultiBufferSource buffer, int packedLight) {
-        boolean charging = entity.tnl$isCharging();
-        float progress = 0.0F;
         var mc = net.minecraft.client.Minecraft.getInstance();
-        if (mc.player != null) {
-            var marker = com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_MARKER.get();
-            var cds = mc.player.getCooldowns();
-            if (cds.isOnCooldown(marker)) {
-                charging = true;
-                float left = 1.0F - cds.getCooldownPercent(marker, partialTicks);   // ticks remaining
-                progress = 1.0F - Math.max(0.0F, Math.min(1.0F, left / 45.0F));
-            }
+        boolean charging = entity.tnl$isCharging();
+        if (!charging && mc.player != null) {
+            charging = mc.player.getCooldowns().isOnCooldown(
+                    com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_MARKER.get());
         }
+        long now = mc.level != null ? mc.level.getGameTime() : 0L;
+        if (!charging) {
+            tnl$chargeStart = -1L;
+        } else if (tnl$chargeStart < 0L) {
+            tnl$chargeStart = now;
+        }
+        float progress = tnl$chargeStart < 0L ? 0.0F
+                : Math.max(0.0F, Math.min(1.0F, (now - tnl$chargeStart) / 40.0F));
         com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.CHARGING = charging;
         com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.PROGRESS = progress;
         super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
