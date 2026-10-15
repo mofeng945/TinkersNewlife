@@ -169,9 +169,16 @@ public final class BlinkHandler {
         // TNL1123 user: the afterimages must cover the whole line between the two points
         int ghosts = 14;
         for (int i = 0; i < ghosts; i++) {
-            double f = Math.pow((double) i / (ghosts - 1.0D), 1.6D);   // denser near the start
+            // TNL1125 user: denser the closer it gets to the ARRIVAL point
+            double t = (double) i / (ghosts - 1.0D);
+            double f = 1.0D - Math.pow(1.0D - t, 1.6D);
             Vec3 p = origin.add(dest.subtract(origin).scale(f));
             // send it exactly like PacketThrustGhost.broadcast does, but with our own coordinates
+            // TNL1125 smoke along the path to sell the sheer speed
+            level.sendParticles(net.minecraft.core.particles.ParticleTypes.CLOUD,
+                    p.x, p.y + 0.6D, p.z, 2, 0.25D, 0.35D, 0.25D, 0.02D);
+            level.sendParticles(net.minecraft.core.particles.ParticleTypes.LARGE_SMOKE,
+                    p.x, p.y + 0.4D, p.z, 1, 0.2D, 0.3D, 0.2D, 0.01D);
             TinkersNewlife.CHANNEL.send(
                     net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> momo),
                     new com.mofengbaizhi.tinkersnewlife.network.tools.PacketThrustGhost(
