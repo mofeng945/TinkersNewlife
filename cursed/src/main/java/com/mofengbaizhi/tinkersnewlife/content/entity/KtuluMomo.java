@@ -337,6 +337,21 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
                 this.deathTime = 0;
                 this.hurtTime = 0;
             }
+            // TNL1148 the log showed the sword's die() DID run (the death event fired with 1545
+            // health) and the boss bar is dropped the moment that happens, even though the death is
+            // cancelled afterwards. Put every nearby player back on the bar.
+            if (this.level() instanceof net.minecraft.server.level.ServerLevel sl) {
+                for (net.minecraft.server.level.ServerPlayer sp : sl.players()) {
+                    if (sp.distanceTo(this) < 64.0F) {
+                        this.bossEvent.addPlayer(sp);
+                    }
+                }
+                this.bossEvent.setProgress(Math.max(0.0F,
+                        this.getHealth() / Math.max(1.0F, this.getMaxHealth())));
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                        "TNL1148 boss bar re-added to {} nearby players",
+                        sl.players().size());
+            }
         } catch (Throwable ignored) {
         }
     }
