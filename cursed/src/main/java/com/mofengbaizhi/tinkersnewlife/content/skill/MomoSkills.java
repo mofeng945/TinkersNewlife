@@ -12,7 +12,10 @@ public final class MomoSkills {
     public static final boolean ASTRAL_RESONANCE = false;
 
     /** 混沌和弦：蓄力 2 秒后发出 5 道声波圈（本轮测试 ✓） */
-    public static final boolean DISCORDANT_CHORD = true;
+    public static final boolean DISCORDANT_CHORD = false;
+
+    /** 瞬身：锁定目标 1.5 秒后无声瞬移到其身后 3 格（本轮测试 ✓） */
+    public static final boolean BLINK = true;
 
     private MomoSkills() {
     }
