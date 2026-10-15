@@ -42,8 +42,8 @@ public final class AstralResonanceHandler {
 
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
-            return;
+        if (event.phase != TickEvent.Phase.END || !MomoSkills.ASTRAL_RESONANCE) {
+            return;   // TNL1104 one skill at a time
         }
         var server = ServerLifecycleHooks.getCurrentServer();
         if (server == null) {
