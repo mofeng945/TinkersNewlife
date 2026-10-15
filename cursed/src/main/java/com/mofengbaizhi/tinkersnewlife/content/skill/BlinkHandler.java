@@ -167,7 +167,7 @@ public final class BlinkHandler {
         }
         LAST_ORIGIN.put(momo.getUUID(), origin);
         // TNL1123 user: the afterimages must cover the whole line between the two points
-        int ghosts = 14;
+        int ghosts = 9;    // TNL1127 fewer ghost models, the last build was heavy
         for (int i = 0; i < ghosts; i++) {
             // TNL1125 user: denser the closer it gets to the ARRIVAL point
             double t = (double) i / (ghosts - 1.0D);

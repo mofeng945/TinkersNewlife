@@ -50,13 +50,32 @@ public final class BlinkGhostRenderer {
         if (model == null) {
             model = new HumanoidModel(mc.getEntityModels().bakeLayer(ModelLayers.PLAYER));
         }
+        // TNL1127 user: "it lags after a blink". Cheap guards first: do not touch anything when every
+        // ghost is far away, and never force a batch flush from inside a stage hook.
         var camera = event.getCamera();
+        double camX = camera.getPosition().x;
+        double camY = camera.getPosition().y;
+        double camZ = camera.getPosition().z;
+        int near = 0;
+        for (ThrustGhostCache.Ghost g : ghosts) {
+            if (g.x * g.x + g.z * g.z > 0 && Math.abs(g.x - camX) < 40.0D && Math.abs(g.z - camZ) < 40.0D
+                    && Math.abs(g.y - camY) < 32.0D) {
+                near++;
+            }
+        }
+        if (near == 0) {
+            return;
+        }
         var pose = event.getPoseStack();
         MultiBufferSource.BufferSource buffer = mc.renderBuffers().bufferSource();
         int now = mc.player == null ? -1 : mc.player.tickCount;
         for (ThrustGhostCache.Ghost g : ghosts) {
             float fade = 1.0F - g.progress(now);
-            if (fade <= 0.05F) {
+            if (fade <= 0.12F) {
+                continue;                       // skip almost gone ghosts, they cost the same as full ones
+            }
+            if (Math.abs(g.x - camX) > 40.0D || Math.abs(g.z - camZ) > 40.0D
+                    || Math.abs(g.y - camY) > 32.0D) {
                 continue;
             }
             pose.pushPose();
@@ -66,9 +85,8 @@ public final class BlinkGhostRenderer {
             pose.scale(-1.0F, -1.0F, 1.0F);
             var vc = buffer.getBuffer(RenderType.entityTranslucent(TEX));
             model.renderToBuffer(pose, vc, 0xF000F0, OverlayTexture.NO_OVERLAY,
-                    0.10F, 0.11F, 0.14F, 0.55F * fade);   // dark translucent ghost
+                    0.10F, 0.11F, 0.14F, 0.45F * fade);   // dark translucent ghost
             pose.popPose();
         }
-        buffer.endBatch();
     }
 }
