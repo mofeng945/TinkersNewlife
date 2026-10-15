@@ -94,6 +94,26 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         // legs brace slightly while charging
         this.rightLeg.xRot = 0.12F * up;
         this.leftLeg.xRot = -0.10F * up;
+        // TNL1105 Discordant Chord: evoker style casting, both hands held high and waved.
+        if (com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.DISCORDANT_CHORD) {
+            float wave = (float) Math.sin(ageInTicks * 0.55F);
+            float wave2 = (float) Math.sin(ageInTicks * 0.55F + 1.1F);
+            this.body.xRot = 0.06F;
+            this.head.xRot = -0.18F + wave * 0.05F;      // chin up, chanting
+            this.rightArm.xRot = -2.75F + wave * 0.22F;  // arms straight up
+            this.rightArm.yRot = 0.22F + wave * 0.18F;
+            this.rightArm.zRot = 0.35F + wave2 * 0.20F;
+            this.leftArm.xRot = -2.75F + wave2 * 0.22F;
+            this.leftArm.yRot = -0.22F - wave2 * 0.18F;
+            this.leftArm.zRot = -0.35F - wave * 0.20F;
+            this.rightLeg.xRot = 0.0F;
+            this.leftLeg.xRot = 0.0F;
+            this.hat.xRot = this.head.xRot;
+            this.hat.yRot = this.head.yRot;
+            this.hat.zRot = this.head.zRot;
+            return;
+        }
+
         // TNL1102 user: "you tied the hat to the body, I want it tied to the head". The hat is a root
         // level part in this baked mesh, so copy the head rotation onto it explicitly. If it ends up
         // doubled (because it also inherits from the head), halve these three lines.

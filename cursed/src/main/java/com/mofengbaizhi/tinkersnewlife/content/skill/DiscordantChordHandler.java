@@ -40,7 +40,7 @@ public final class DiscordantChordHandler {
     private static final double MAX_RADIUS = 16.0D;    // never spread further than this
     private static final double SPEED = 0.5D;          // blocks per tick
     private static final double HEIGHT = 0.5D;         // ring height
-    private static final int COOLDOWN_TICKS = 300;     // 15 s between casts
+    private static final int COOLDOWN_TICKS = 600;     // TNL1105 user: 30 s cooldown between casts
     private static final int EFFECT_TICKS = 100;       // 5 s of weakness and slowness
 
     /** per momo: charge until this game time, -1 when idle */
@@ -121,7 +121,7 @@ public final class DiscordantChordHandler {
                 return;
             }
             LivingEntity target = momo.getTarget();
-            if (target == null || !target.isAlive() || momo.distanceTo(target) > 24.0D) {
+            if (target == null || !target.isAlive() || momo.distanceTo(target) > 16.0D) {   // TNL1105 within 16 blocks
                 return;
             }
             CHARGE_UNTIL.put(id, now + CHARGE_TICKS);
