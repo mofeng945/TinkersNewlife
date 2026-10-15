@@ -43,19 +43,14 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         this.hat.skipDraw = false;
         this.hat.yRot = CHARGING ? 1.0F : 0.0F;
         this.hat.yScale = CHARGING ? 1.35F : 1.0F;
-        if (CHARGING && entity.tickCount % 20 == 0) {
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
-                    "TNL1097 hat state visible={} skipDraw={} yRot={} headX={}",
-                    this.hat.visible, this.hat.skipDraw, this.hat.yRot, this.head.xRot);
-        }
+        // TNL1098 unmistakable identity test: if the model we pose is the one drawn, the momo has to
+        // visibly inflate while charging. The hat state probe says visible=true yRot=1.0 yet nothing
+        // moves, so either this model is not what is rendered, or the outer hair is not this part.
+        this.body.xScale = CHARGING ? 1.45F : 1.0F;
+        this.body.zScale = CHARGING ? 1.45F : 1.0F;
         float t = Math.max(0.0F, Math.min(1.0F, PROGRESS));
         // TNL1092 user: "only the tremble shows, the skeletal animation is gone". The tremble rides on
         // body.xRot, so the hook does run. Log the numbers to see whether t is stuck at an endpoint.
-        if (entity.tickCount % 10 == 0) {
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
-                    "TNL1092 pose t={} bodyX={} headX={} rightArmX={} leftArmX={}",
-                    t, this.body.xRot, this.head.xRot, this.rightArm.xRot, this.leftArm.xRot);
-        }
         float tremble = (float) Math.sin(ageInTicks * 2.2F) * 0.04F * Math.min(1.0F, t * 2.0F);
 
         // stage 1: guard up. stage 3: swing back. between them the arms stay over the face.
@@ -95,5 +90,12 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         // legs brace slightly while charging
         this.rightLeg.xRot = 0.12F * up;
         this.leftLeg.xRot = -0.10F * up;
+        // TNL1099 probes now run AFTER the pose is applied, they used to log the rest values
+        if (entity.tickCount % 10 == 0) {
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                    "TNL1099 applied t={} bodyX={} headX={} hatY={} rightArmX={}",
+                    t, this.body.xRot, this.head.xRot, this.hat.yRot, this.rightArm.xRot);
+        }
+
     }
 }
