@@ -346,6 +346,10 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             if (this.level() instanceof net.minecraft.server.level.ServerLevel sl) {
                 for (net.minecraft.server.level.ServerPlayer sp : sl.players()) {
                     if (sp.distanceTo(this) < 64.0F) {
+                        // TNL1150 addPlayer alone did nothing: the server side still had the player
+                        // in its own set, so no ADD packet was sent and the client bar stayed gone.
+                        // Remove first to force a fresh ADD packet, which is what the client needs.
+                        this.bossEvent.removePlayer(sp);
                         this.bossEvent.addPlayer(sp);
                     }
                 }
