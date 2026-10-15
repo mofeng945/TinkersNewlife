@@ -343,6 +343,10 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             // TNL1148 the log showed the sword's die() DID run (the death event fired with 1545
             // health) and the boss bar is dropped the moment that happens, even though the death is
             // cancelled afterwards. Put every nearby player back on the bar.
+            // TNL1151 the bar stayed gone even after remove+add: the client's bar also carries a
+            // "visible" flag, and something set it to false (CursedSpiritTechnique#clearEntityBossBar
+            // does exactly bar.setVisible(false)). addPlayer does not touch that flag, so turn it on.
+            this.bossEvent.setVisible(true);
             if (this.level() instanceof net.minecraft.server.level.ServerLevel sl) {
                 for (net.minecraft.server.level.ServerPlayer sp : sl.players()) {
                     if (sp.distanceTo(this) < 64.0F) {
