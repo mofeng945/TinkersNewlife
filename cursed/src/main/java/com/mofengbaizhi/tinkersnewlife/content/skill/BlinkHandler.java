@@ -60,6 +60,17 @@ public final class BlinkHandler {
 
     private static void tickOne(ServerLevel level, KtuluMomo momo, long now) {
         UUID id = momo.getUUID();
+        // TNL1136 user: "every teleport makes it lose its AI". It blinks from MORE than twenty blocks
+        // away, and a mob drops a target that is outside its follow range, so after landing it simply
+        // stands there. Keep the follow range comfortably above the trigger distance.
+        try {
+            var follow = momo.getAttribute(
+                    net.minecraft.world.entity.ai.attributes.Attributes.FOLLOW_RANGE);
+            if (follow != null && follow.getBaseValue() < 64.0D) {
+                follow.setBaseValue(64.0D);
+            }
+        } catch (Throwable ignored) {
+        }
 
         Line line = LINE.get(id);
         if (line != null) {
@@ -98,8 +109,11 @@ public final class BlinkHandler {
             if (momo.getNavigation() != null) {
                 momo.getNavigation().stop();
             }
-            if (momo.getTarget() != null) {
-                momo.setTarget(momo.getTarget());
+            // TNL1136 re-acquire: the blink left the old target behind, so take the nearest player
+            net.minecraft.world.entity.player.Player closest = momo.level().getNearestPlayer(momo, 64.0D);
+            if (closest != null) {
+                momo.setTarget(closest);
+                momo.setLastHurtByMob(closest);
             }
         }
 
