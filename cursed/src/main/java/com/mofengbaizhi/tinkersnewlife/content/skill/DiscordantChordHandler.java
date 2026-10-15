@@ -47,7 +47,7 @@ public final class DiscordantChordHandler {
     /** vanilla warden sonic boom damage */
     private static final float SONIC_DAMAGE = 10.0F;
     /** TNL1154 the cooldown starts when the cast ENDS, not when it starts */
-    private static final int COOLDOWN_TICKS = 200;     // 10 s after the last wave
+    private static final int COOLDOWN_TICKS = 2400;    // TNL1159 user: 120 s, measured from the end of the last wave
     private static final int EFFECT_TICKS = 100;       // 5 s of weakness and slowness
 
     /** per momo: charge until this game time, -1 when idle */
