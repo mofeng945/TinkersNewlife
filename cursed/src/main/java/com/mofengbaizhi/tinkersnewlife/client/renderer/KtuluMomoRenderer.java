@@ -29,6 +29,11 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
         poseStack.scale(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE);
         // TNL1086 Warden style wind up for Astral Resonance. This hook runs after setupAnim and
         // before the model is submitted, so posing the model here is what actually shows up.
+        // TNL1087 probe: does the client actually see the synced flag? (one line per second)
+        if (entity.tickCount % 20 == 0) {
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                    "TNL1087 render momo charging={} tickCount={}", entity.tnl$isCharging(), entity.tickCount);
+        }
         if (!entity.tnl$isCharging()) {
             return;
         }
