@@ -28,11 +28,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class AstralResonanceHandler {
 
     private static final double NEAR_RANGE = 2.0D;
-    private static final int NEAR_TICKS_REQUIRED = 600;    // 30 s at 20 tps
+    private static final int NEAR_TICKS_REQUIRED = 400;    // TNL1103 user: 20 s at 20 tps
     private static final int CHARGE_TICKS = 40;            // 2 s
     private static final int COOLDOWN_TICKS = 200;         // 10 s before it can build up again
     private static final double KNOCK_DISTANCE = 11.0D;
-    private static final float SHRIEK_DAMAGE = 10.0F;
 
     private static final Map<UUID, Integer> NEAR = new ConcurrentHashMap<>();
     private static final Map<UUID, Long> CHARGING_UNTIL = new ConcurrentHashMap<>();
@@ -143,9 +142,9 @@ public final class AstralResonanceHandler {
         }
         Vec3 flat = new Vec3(dir.x, 0.0D, dir.z).normalize();
         // enough horizontal speed to clear ten blocks even with drag
-        target.setDeltaMovement(flat.x * 4.2D, 0.45D, flat.z * 4.2D);
+        target.setDeltaMovement(flat.x * 4.6D, 0.50D, flat.z * 4.6D);   // TNL1103 push only, no damage
         target.hurtMarked = true;
-        target.hurt(momo.damageSources().mobAttack(momo), SHRIEK_DAMAGE);
+        // TNL1103 user: no sonic damage at all, the shriek only launches the target away.
         // draw the boom lance, like the Warden projectile
         Vec3 end = origin.add(flat.scale(KNOCK_DISTANCE));
         for (int i = 0; i <= 30; i++) {
