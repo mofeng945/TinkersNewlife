@@ -59,13 +59,22 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         this.head.xRot = 0.28F * up - 0.55F * backSwing + tremble;
         this.head.yRot = netHeadYaw * 0.4F;
 
-        // hands come up in front of the face: forward-up rotation plus an inward twist
-        this.rightArm.xRot = -2.35F * up + 0.75F * backSwing + tremble;
-        this.rightArm.yRot = 0.30F * up - 0.55F * backSwing;
-        this.rightArm.zRot = -0.85F * up + 0.35F * backSwing;
-        this.leftArm.xRot = -2.35F * up + 0.75F * backSwing - tremble;
-        this.leftArm.yRot = -0.30F * up + 0.55F * backSwing;
-        this.leftArm.zRot = 0.85F * up - 0.35F * backSwing;
+        // TNL1094 user: "the guard is reversed, the arms open forward instead of covering the face,
+        // and the throw back never happens". yRot and zRot are flipped so the hands converge inward
+        // onto the face, and the release now interpolates to a clearly swung back pose.
+        float guardX = -1.35F * up;                       // raise the hands forward and up
+        float guardY = -0.45F * up;                       // bring the right hand toward the centre
+        float guardZ = 0.90F * up;                        // adduct it in front of the face
+        float openX = 1.40F;                              // release: arms swung behind the body
+        float openY = 0.50F;
+        float openZ = -0.35F;
+
+        this.rightArm.xRot = guardX * (1.0F - backSwing) + openX * backSwing + tremble;
+        this.rightArm.yRot = guardY * (1.0F - backSwing) + openY * backSwing;
+        this.rightArm.zRot = guardZ * (1.0F - backSwing) + openZ * backSwing;
+        this.leftArm.xRot = guardX * (1.0F - backSwing) + openX * backSwing - tremble;
+        this.leftArm.yRot = -guardY * (1.0F - backSwing) - openY * backSwing;
+        this.leftArm.zRot = -guardZ * (1.0F - backSwing) - openZ * backSwing;
 
         // legs brace slightly while charging
         this.rightLeg.xRot = 0.12F * up;
