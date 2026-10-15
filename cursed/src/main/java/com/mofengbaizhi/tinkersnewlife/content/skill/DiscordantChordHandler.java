@@ -104,7 +104,8 @@ public final class DiscordantChordHandler {
                 return;
             }
             CHARGE_UNTIL.remove(id);
-            momo.setNoAi(false);      // TNL1113 the charge is over, it may move again while chanting
+            // TNL1117 user: the whole ring phase is still the casting phase, it must not walk
+            // while its own rings are travelling. No unfreeze here.
             // release: five rings, the first at once and the rest every RING_GAP / SPEED ticks
             // TNL1107 every ring is born at Momo itself (radius 0), they are separated in TIME
             List<Double> queue = new ArrayList<>();
@@ -168,6 +169,12 @@ public final class DiscordantChordHandler {
         }
 
         // expand the rings, draw them, and hit anything standing in the shell
+        momo.setNoAi(true);                    // TNL1117 stay rooted for the whole cast
+        momo.setDeltaMovement(Vec3.ZERO);
+        momo.hurtMarked = true;
+        if (momo.getNavigation() != null) {
+            momo.getNavigation().stop();
+        }
         List<Ring> dead = new ArrayList<>();
         double baseY = momo.getY();
         for (Ring r : rings) {
