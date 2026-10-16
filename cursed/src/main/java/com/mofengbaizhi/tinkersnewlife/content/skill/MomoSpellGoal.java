@@ -87,6 +87,7 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
 
     @Override
     public void start() {
+        this.runningTicks = 0;
         this.momo.tnl$setSpell(this.spellId, this.totalTicks);
         this.onStart();
     }
@@ -98,10 +99,23 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
 
     @Override
     public void tick() {
+        // TNL1203 user: "you are still rooting with a zeroed velocity and it is not cancelled".
+        // Whatever the phase logic does, a cast may never outlive its own length by more than two
+        // seconds: this watchdog ends it, which also ends any rooting it was doing.
+        this.runningTicks++;
+        if (this.runningTicks > this.totalTicks + 40) {
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                    "TNL1203 spell {} overran ({} ticks), forcing stop", this.spellId, this.runningTicks);
+            this.stop();
+            return;
+        }
         if (this.onTick()) {
             this.stop();
         }
     }
+
+    /** TNL1203 how long this cast has been running, for the watchdog */
+    private int runningTicks;
 
     @Override
     public void stop() {

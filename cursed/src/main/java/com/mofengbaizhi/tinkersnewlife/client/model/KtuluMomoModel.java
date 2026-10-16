@@ -45,13 +45,13 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         // would leak into every other pose.
         this.rightArm.x = 0.0F;
         this.leftArm.x = 0.0F;
-        // TNL1187 user: "thin arms". Scale the arm parts across their cross section only, so the arms
-        // get slimmer without getting shorter, and do it before any early return so every pose has it.
-        float tnl$thin = 0.62F;
-        this.rightArm.xScale = tnl$thin;
-        this.rightArm.zScale = tnl$thin;
-        this.leftArm.xScale = tnl$thin;
-        this.leftArm.zScale = tnl$thin;
+        // TNL1203 user: "the arms are hidden inside the body, it looks like a creeper at idle".
+        // The 0.62 cross section scaling from TNL1187 shrank the sleeves into the torso for this baked
+        // mesh, so the thin arms idea is withdrawn and the arm scale is reset to vanilla.
+        this.rightArm.xScale = 1.0F;
+        this.rightArm.zScale = 1.0F;
+        this.leftArm.xScale = 1.0F;
+        this.leftArm.zScale = 1.0F;
         this.hat.visible = true;
         this.hat.skipDraw = false;
         this.hat.yScale = 1.0F;
