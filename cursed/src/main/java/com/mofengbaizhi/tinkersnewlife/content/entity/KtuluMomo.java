@@ -559,18 +559,28 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
      * 技能起手时禁用、收尾时恢复（MomoSpellGoal / MomoHurtGoal 负责调用）。
      */
     public void tnl$setLookLocked(boolean locked) {
-        if (locked) {
-            this.goalSelector.disableControlFlag(net.minecraft.world.entity.ai.goal.Goal.Flag.LOOK);
-            // TNL1263 关键：`disableControlFlag` 只阻止 Goal **起手**，不会停掉**已经在跑**的
-            // 那一个（用户指出：LookAtPlayer/RandomLookAround 一旦起手，范围内有玩家就
-            // 一直 canContinueToUse ⇒ 禁旗对它们等于没禁，头照样转）。
-            // 所以这里把**正在跑且要求 LOOK** 的 Goal 用选择器 API 停掉
-            // （走 WrappedGoal.stop() ⇒ 它会正确地从运行集合里摘掉，不会像手调 stop() 那样卡住）。
-            this.goalSelector.getRunningGoals()
-                    .filter(g -> g.getFlags().contains(net.minecraft.world.entity.ai.goal.Goal.Flag.LOOK))
-                    .forEach(net.minecraft.world.entity.ai.goal.WrappedGoal::stop);
-        } else {
-            this.goalSelector.enableControlFlag(net.minecraft.world.entity.ai.goal.Goal.Flag.LOOK);
+        try {
+            if (locked) {
+                this.goalSelector.disableControlFlag(net.minecraft.world.entity.ai.goal.Goal.Flag.LOOK);
+                // TNL1263 禁旗只挡起手 ⇒ 正在跑的也要停掉。
+                // ⚠ TNL1264 必须**先收集再停**：直接 getRunningGoals().forEach(stop) 是
+                // 边遍历边改集合 ⇒ ConcurrentModificationException ⇒ 技能 start() 抛错 ⇒
+                // 动画全部不播。这里改成先拷一份出来，再逐个停，并且整段兜住异常。
+                java.util.List<net.minecraft.world.entity.ai.goal.WrappedGoal> tnl$stop =
+                        this.goalSelector.getRunningGoals()
+                                .filter(g -> g.getFlags().contains(
+                                        net.minecraft.world.entity.ai.goal.Goal.Flag.LOOK))
+                                .collect(java.util.stream.Collectors.toList());
+                for (net.minecraft.world.entity.ai.goal.WrappedGoal tnl$g : tnl$stop) {
+                    tnl$g.stop();
+                }
+            } else {
+                this.goalSelector.enableControlFlag(net.minecraft.world.entity.ai.goal.Goal.Flag.LOOK);
+            }
+        } catch (Throwable tnl$t) {
+            // 定身/朝向只是表现，绝不能因为它把技能本身搞崩
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                    "TNL1264 look lock failed: {}", tnl$t.toString());
         }
     }
 
