@@ -455,6 +455,45 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class,
                     net.minecraft.network.syncher.EntityDataSerializers.INT);
 
+    /**
+     * TNL1244 用户："把动画动作的调用打包在技能类里面，作为释放技能的一部分进行"。
+     *
+     * <p>所以动画不再由渲染器自己猜（以前它拿一个客户端时钟近似蓄力进度），
+     * 而是技能在自己的施法过程中**主动上报**：摆哪种姿势、播到几分。
+     * 渲染器只做搬运 —— 读到什么就写进模型的两个静态字段。
+     *
+     * <p>纯表现通道：不进 NBT，也不参与任何逻辑判断。
+     */
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Byte> DATA_ANIM_POSE =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class,
+                    net.minecraft.network.syncher.EntityDataSerializers.BYTE);
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Byte> DATA_ANIM_PROGRESS =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class,
+                    net.minecraft.network.syncher.EntityDataSerializers.BYTE);
+
+    /** TNL1244 技能调用：本帧摆哪种姿势、播到几分（0~1） */
+    public void tnl$setAnim(int poseId, float progress01) {
+        this.entityData.set(DATA_ANIM_POSE, (byte) poseId);
+        this.entityData.set(DATA_ANIM_PROGRESS,
+                (byte) Math.max(0, Math.min(100, Math.round(progress01 * 100.0F))));
+    }
+
+    /** TNL1244 技能收尾时清掉动画 */
+    public void tnl$clearAnim() {
+        this.entityData.set(DATA_ANIM_POSE, (byte) 0);
+        this.entityData.set(DATA_ANIM_PROGRESS, (byte) 0);
+    }
+
+    /** TNL1244 客户端读：姿势类别（MomoPose.ordinal） */
+    public int tnl$animPose() {
+        return this.entityData.get(DATA_ANIM_POSE);
+    }
+
+    /** TNL1244 客户端读：动画进度 0~1 */
+    public float tnl$animProgress() {
+        return this.entityData.get(DATA_ANIM_PROGRESS) / 100.0F;
+    }
+
 
     @Override
 
@@ -464,6 +503,8 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         this.entityData.define(DATA_CHORD, Boolean.FALSE);
         this.entityData.define(DATA_SPELL, (byte) 0);
         this.entityData.define(DATA_CAST_TICKS, 0);
+        this.entityData.define(DATA_ANIM_POSE, (byte) 0);
+        this.entityData.define(DATA_ANIM_PROGRESS, (byte) 0);
     }
 
     /**

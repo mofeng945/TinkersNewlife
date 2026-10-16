@@ -99,7 +99,18 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
         this.runningTicks = 0;
         this.tnl$done = false;
         this.momo.tnl$setSpell(this.spellId, this.totalTicks);
+        // TNL1244 技能自己上报动画（用户："把动画动作的调用打包在技能类里面"）。
+        // 每个技能可以重写 animProgress() 决定自己的节奏。
+        this.momo.tnl$setAnim(this.poseKind().ordinal(), this.animProgress());
         this.onStart();
+    }
+
+    /**
+     * TNL1244 本技能此刻的动画进度 0~1。默认用"剩余 tick"换算，
+     * 子类想自己控制（比如和弦只在蓄力段推）就重写它。
+     */
+    protected float animProgress() {
+        return this.progress();
     }
 
     @Override
@@ -127,6 +138,8 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
         if (this.onTick()) {
             this.tnl$done = true;                 // TNL1236 同上：不在这里调 stop()
         }
+        // TNL1244 每 tick 把动画进度上报给客户端（技能驱动，渲染器只搬运）
+        this.momo.tnl$setAnim(this.poseKind().ordinal(), this.animProgress());
     }
 
     /** TNL1236 本技能是否已经该结束（由 GoalSelector 读它并调 stop()） */
@@ -147,6 +160,8 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
             // ⇒ mayCastAgainSoon 永远为 false ⇒ "放一次之后再不放"。
             this.momo.tnl$markSpellCast(this.spellId);
         }   // TNL1178 remember it for the rotation
+        // TNL1244 收尾清掉动画通道，免得姿势留在最后一帧
+        this.momo.tnl$clearAnim();
         this.onStop();
     }
 
