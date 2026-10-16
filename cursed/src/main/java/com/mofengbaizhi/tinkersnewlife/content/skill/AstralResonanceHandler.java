@@ -27,7 +27,6 @@ public final class AstralResonanceHandler {
     private static final int COOLDOWN_TICKS = 200;         // 10 s before it can build up again
     private static final double KNOCK_DISTANCE = 11.0D;
 
-    private static final Map<UUID, Integer> NEAR = new ConcurrentHashMap<>();
 
     private AstralResonanceHandler() {
     }

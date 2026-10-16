@@ -24,7 +24,6 @@ public final class BlinkHandler {
     private static final double AROUND = 3.0D;       // TNL1121 a random spot within three blocks
 
     /** TNL1121 recovery window after the teleport, used by the client for the afterimages */
-    public static final Map<UUID, net.minecraft.world.phys.Vec3> LAST_ORIGIN = new ConcurrentHashMap<>();
 
     private BlinkHandler() {
     }
@@ -113,7 +112,6 @@ public final class BlinkHandler {
             TinkersNewlife.LOGGER.warn("TNL1124 Blink stopped short at ({}, {}, {})",
                     String.format("%.1f", dest.x), String.format("%.1f", dest.y), String.format("%.1f", dest.z));
         }
-        LAST_ORIGIN.put(momo.getUUID(), origin);
         // TNL1123 user: the afterimages must cover the whole line between the two points
         // TNL1133 user: 24 ghosts, released ONE PER TICK so the line grows from the start towards the
         // arrival point. The ones born first are the ones near the start, so they fade out first --
@@ -138,7 +136,6 @@ public final class BlinkHandler {
         // TNL1164 user: never clear the AI for a wind up or a recovery -- it
         // sticks (teleporting high left the boss frozen two seconds). Rooting is done
         // by zeroing the movement every tick instead, which is already done above.
-        FREEZE_DEADLINE.put(momo.getUUID(), now + MAX_FROZEN_TICKS);
         TinkersNewlife.LOGGER.warn("TNL1120 Momo blinked behind {} to ({}, {}, {})",
                 target.getName().getString(),
                 String.format("%.1f", dest.x), String.format("%.1f", dest.y), String.format("%.1f", dest.z));
@@ -161,8 +158,6 @@ public final class BlinkHandler {
     private static final Map<UUID, Line> LINE = new ConcurrentHashMap<>();
 
     /** TNL1137 hard safety net: however we got frozen, never stay frozen longer than this. */
-    private static final Map<UUID, Long> FREEZE_DEADLINE = new ConcurrentHashMap<>();
-    private static final int MAX_FROZEN_TICKS = 60;
     private static final int GHOSTS = 24;
 
 }
