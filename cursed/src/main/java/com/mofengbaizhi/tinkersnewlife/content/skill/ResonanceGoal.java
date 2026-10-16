@@ -73,18 +73,27 @@ public final class ResonanceGoal extends MomoSpellGoal {
         // TNL1192 常量写的是"20 秒 400 tick"，但老代码每 tick 加 5 ⇒ 实际 4 秒就放。
         // 现在改成每 tick 加 1，才是文档说的 20 秒。
         this.nearTicks += 1;
+        if (this.nearTicks % 20 == 0) {        // TNL1238 探针：每秒报一次攒了多少
+            TinkersNewlife.LOGGER.warn("TNL1238 resonance charge={}/{} dist={} busy={} cd={}",
+                    this.nearTicks, NEAR_TICKS_REQUIRED,
+                    String.format(java.util.Locale.ROOT, "%.1f", this.momo.distanceTo(target)),
+                    this.momo.tnl$isBusy(), this.cooldownLeft());
+        }
         if (this.nearTicks < NEAR_TICKS_REQUIRED) {
             return false;
         }
         if (!this.ready()) {
             return false;
         }
-        this.nearTicks = 0;
+        // TNL1238 以前这里就 `nearTicks = 0` 了 —— 但 canUse() 只是"询问"，
+        // 选择器这一 tick 完全可能不真的 start（被更高优先级的 Goal 挡、或者在跑别的技能），
+        // 计数就被白白抹掉 ⇒ 贴身再久也攒不满。清零改到 onStart() 里做。
         return true;
     }
 
     @Override
     protected void onStart() {
+        this.nearTicks = 0;                    // TNL1238 真正起手时才清计数
         this.stun.begin();                     // TNL1232 共鸣全程定身
         ServerLevel level = (ServerLevel) this.momo.level();
         LivingEntity target = this.stun.target();
