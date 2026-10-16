@@ -38,6 +38,13 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         // TNL1101 the hair IS this hat part (hiding it during the charge made it vanish), and the old
         // code set visible = !CHARGING *after* an early return, so the hat never came back. Restore it
         // unconditionally before anything can return.
+        // TNL1187 user: "thin arms". Scale the arm parts across their cross section only, so the arms
+        // get slimmer without getting shorter, and do it before any early return so every pose has it.
+        float tnl$thin = 0.62F;
+        this.rightArm.xScale = tnl$thin;
+        this.rightArm.zScale = tnl$thin;
+        this.leftArm.xScale = tnl$thin;
+        this.leftArm.zScale = tnl$thin;
         this.hat.visible = true;
         this.hat.skipDraw = false;
         this.hat.yScale = 1.0F;
