@@ -66,12 +66,8 @@ public final class ResonanceGoal extends MomoSpellGoal {
         if (NEAR_RANGE > 0.0D && this.momo.tnl$nearCharge() < NEAR_TICKS_REQUIRED) {
             return false;                       // TNL1240 计数由实体维护
         }
-        // TNL1192 常量写的是"20 秒 400 tick"，但老代码每 tick 加 5 ⇒ 实际 4 秒就放。
-        // 现在改成每 tick 加 1，才是文档说的 20 秒。
-        // TNL1240 计数不在这里数了（见 KtuluMomo 的 tnl$nearCharge）
-        if (this.nearTicks < NEAR_TICKS_REQUIRED) {
-            return false;
-        }
+        // TNL1241 这里原来是 `if (nearTicks < REQUIRED) return false;`，但计数已经搬到实体侧
+        // （tnl$nearCharge），nearTicks 再也不会增加 ⇒ 永远返回 false。删掉这个死判断。
         if (!this.ready()) {
             return false;
         }
