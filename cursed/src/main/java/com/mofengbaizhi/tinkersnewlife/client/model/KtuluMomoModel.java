@@ -45,8 +45,10 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         // TNL1222 用户："正常情况下手臂还是在身体里"。根因就是这里：原来把 x 归 0，
         // 等于把骨架自带的肩部偏移（±5）也清了 ⇒ 两条手臂被吸进躯干、看着像苦力怕。
         // x 必须回到网格的默认肩宽，只有旋转/缩放由姿势负责。
-        this.rightArm.x = 5.0F;
-        this.leftArm.x = -5.0F;
+        // TNL1225 用户："两个手臂是反的"。原版 HumanoidModel 里右臂在 x=-5、左臂在 x=+5，
+        // 之前照诡厄抄成了 +5/-5 ⇒ 左右镜像了。这里两处都改回原版符号。
+        this.rightArm.x = -5.0F;
+        this.leftArm.x = 5.0F;
         // TNL1203 用户："手臂藏进身体里了，常态下像个苦力怕"。
         // TNL1187 那个 0.62 横截面缩放，在这套烘焙网格上把袖子缩进了躯干，
         // 所以"细手臂"方案撤销，手臂缩放恢复原版。
@@ -139,8 +141,8 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
             // 肩部 x 偏 ±5 把两臂分开，免得双手在中线重叠。
             float wave = (float) Math.cos(ageInTicks * 0.6662F) * 0.25F;
             float wave2 = (float) Math.cos(ageInTicks * 0.6662F + 0.6F) * 0.25F;
-            this.rightArm.x = 5.0F;
-            this.leftArm.x = -5.0F;
+            this.rightArm.x = -5.0F;
+            this.leftArm.x = 5.0F;
             this.body.xRot = 0.06F;
             this.head.xRot = -0.18F + wave * 0.05F;      // chin up, chanting
             // TNL1109 用户："手臂又指反了"。xRot 是前后轴，
