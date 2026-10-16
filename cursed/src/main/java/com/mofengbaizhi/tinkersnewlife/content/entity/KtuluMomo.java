@@ -269,6 +269,19 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             }
         }
 
+        // TNL1231 定身只清寻路、不清索敌；但目标一旦丢了（死了/跑远/被清过），
+        // 这个 Boss 没有索敌 Goal ⇒ 它会一直站着。这里补一个轻量兜底：
+        // 空闲时若没有可用目标，就重新锁定 64 格内最近的玩家。
+        if (!this.tnl$isBusy()) {
+            net.minecraft.world.entity.LivingEntity tnl$tgt = this.getTarget();
+            if (tnl$tgt == null || !tnl$tgt.isAlive()) {
+                net.minecraft.world.entity.player.Player tnl$near = this.level().getNearestPlayer(this, 64.0D);
+                if (tnl$near != null && tnl$near.isAlive() && !tnl$near.isCreative()) {
+                    this.setTarget(tnl$near);
+                }
+            }
+        }
+
         // TNL1171 墨默自己驱动技能，就像诡厄使徒自己驱动它的 Goal。
         // 没有全服扫描，也没有能比实体活得久的技能表。
 

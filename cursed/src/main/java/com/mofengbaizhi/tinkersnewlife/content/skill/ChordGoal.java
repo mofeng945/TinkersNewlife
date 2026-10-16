@@ -82,16 +82,13 @@ public final class ChordGoal extends MomoSpellGoal {
 
     @Override
     protected void onStart() {
+        this.stun.begin();                     // TNL1232 和弦：蓄力到硬控结束之间定身
         ServerLevel level = (ServerLevel) this.momo.level();
         this.wavesLeft = WAVES;
         this.released = false;
         this.rings.clear();
         this.nextWaveAt = 0L;
         this.momo.setDeltaMovement(Vec3.ZERO);
-        this.momo.hurtMarked = true;
-        if (this.momo.getNavigation() != null) {
-            this.momo.getNavigation().stop();
-        }
         LivingEntity target = this.stun.target();
         if (target != null) {
             double dx = target.getX() - this.momo.getX();
@@ -118,7 +115,6 @@ public final class ChordGoal extends MomoSpellGoal {
             level.sendParticles(net.minecraft.core.particles.ParticleTypes.CLOUD,
                     this.momo.getX(), this.momo.getY() + 1.6D, this.momo.getZ(), 2, 0.4D, 0.4D, 0.4D, 0.01D);
             this.momo.setDeltaMovement(Vec3.ZERO);
-            this.momo.hurtMarked = true;
             return false;
         }
 
@@ -153,16 +149,13 @@ public final class ChordGoal extends MomoSpellGoal {
 
         if (!this.released) {
             this.momo.setDeltaMovement(Vec3.ZERO);
-            this.momo.hurtMarked = true;
-            if (this.momo.getNavigation() != null) {
-                this.momo.getNavigation().stop();
-            }
         }
         if (!this.released && this.releaseAt > 0L && now >= this.releaseAt) {
             // TNL1200 硬控在最后一波后 0.5 秒结束；但技能继续跑，好让波
             // 把剩下的路飞完，而 Boss 已经自由（不再定身、不再摆和弦姿势）。
             this.releaseAt = 0L;
             this.released = true;
+            this.stun.end();                   // TNL1232 硬控一结束就放手（波继续飞）
             this.momo.tnl$setChordCasting(false);
             TinkersNewlife.LOGGER.warn("TNL1200 chord control released, waves still flying");
         }
@@ -178,6 +171,7 @@ public final class ChordGoal extends MomoSpellGoal {
 
     @Override
     protected void onStop() {
+        this.stun.end();
         long now = this.momo.level().getGameTime();
         DiscordantChordHandler.clearJumpBuff();
         this.momo.tnl$setChordCoolUntil(now + COOLDOWN_TICKS);

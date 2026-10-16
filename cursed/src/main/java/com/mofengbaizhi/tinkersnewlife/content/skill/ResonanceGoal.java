@@ -80,13 +80,9 @@ public final class ResonanceGoal extends MomoSpellGoal {
 
     @Override
     protected void onStart() {
+        this.stun.begin();                     // TNL1232 共鸣全程定身
         ServerLevel level = (ServerLevel) this.momo.level();
         LivingEntity target = this.stun.target();
-        this.momo.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
-        this.momo.hurtMarked = true;
-        if (this.momo.getNavigation() != null) {
-            this.momo.getNavigation().stop();
-        }
         // TNL1168 起手时朝目标一次，不再每 tick 调转头控制（那会让头来回摆）
         if (target != null) {
             double dx = target.getX() - this.momo.getX();
@@ -106,16 +102,12 @@ public final class ResonanceGoal extends MomoSpellGoal {
 
     @Override
     protected boolean onTick() {
+        this.stun.keep();
         ServerLevel level = (ServerLevel) this.momo.level();
         if (this.momo.tnl$castTicks() <= 10) {
             // wind up is over: the shriek happens once, then the goal ends
             this.shriek(level, level.getGameTime());   // TNL1207 the skill owns its own effect
             return true;
-        }
-        this.momo.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
-        this.momo.hurtMarked = true;
-        if (this.momo.getNavigation() != null) {
-            this.momo.getNavigation().stop();
         }
         level.sendParticles(ParticleTypes.SCULK_SOUL,
                 this.momo.getX(), this.momo.getY() + 1.2D, this.momo.getZ(), 1, 0.3D, 0.4D, 0.3D, 0.01D);
@@ -124,9 +116,9 @@ public final class ResonanceGoal extends MomoSpellGoal {
 
     @Override
     protected void onStop() {
+        this.stun.end();
         long now = this.momo.level().getGameTime();
         this.momo.tnl$setResonanceCoolUntil(now + COOLDOWN_TICKS);
-        this.momo.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
     }
     private void shriek(ServerLevel level, long now) {
         this.momo.tnl$setResonanceCoolUntil(now + COOLDOWN_TICKS);   // TNL1172 on the entity

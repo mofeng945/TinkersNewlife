@@ -67,9 +67,7 @@ public final class MomoStun {
         if (this.momo.getNavigation() != null) {
             this.momo.getNavigation().stop();                 // 清寻路
         }
-        // TNL1230 只停寻路还不够：移动控制里可能还留着上一 tick 的"想去哪"，
-        // 直接把它钉在原地，确保这一 tick 不会自己走出去。
-        this.momo.getMoveControl().setWantedPosition(
-                this.momo.getX(), this.momo.getY(), this.momo.getZ(), 0.0D);
+        // TNL1231 不要用 setWantedPosition(自己, 0)：那是"一次设定、长期生效"的移动指令，
+        // 技能结束后还留在移动控制里 ⇒ 正是"瞬身完还不动"的原因之一。停寻路就够了。
     }
 }

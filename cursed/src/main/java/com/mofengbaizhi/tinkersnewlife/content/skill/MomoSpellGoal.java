@@ -26,7 +26,7 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
 
     protected final KtuluMomo momo;
 
-    /** TNL1229 统一的定身：清寻路 ＋ 清索敌，结束时还回去 */
+    /** TNL1229 统一的定身：清寻路（★什么时候定、什么时候放开由各技能自己决定 ✓）*/
     protected final MomoStun stun;
 
     /** 1 瞬身、2 幻音共鸣、3 混沌和弦 */
@@ -98,7 +98,6 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
     public void start() {
         this.runningTicks = 0;
         this.momo.tnl$setSpell(this.spellId, this.totalTicks);
-        this.stun.begin();
         this.onStart();
     }
 
@@ -119,7 +118,6 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
             this.stop();
             return;
         }
-        this.stun.keep();
         if (this.onTick()) {
             this.stop();
         }
@@ -133,7 +131,6 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
         if (this.momo.tnl$spell() == this.spellId) {
             this.momo.tnl$setSpell(0, 0);
         }
-        this.stun.end();                      // TNL1229 先把身体和目标还回去，再跑技能自己的收尾
         this.momo.tnl$markSpellCast(this.spellId);   // TNL1178 remember it for the rotation
         this.onStop();
     }

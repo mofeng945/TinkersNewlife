@@ -58,6 +58,8 @@ public final class BlinkGoal extends MomoSpellGoal {
     protected void onStart() {
         ServerLevel level = (ServerLevel) this.momo.level();
         this.jumped = false;
+        this.stun.begin();                     // TNL1232 定身由技能自己开
+
         LivingEntity target = this.stun.target();
         if (target != null) {
             this.momo.getLookControl().setLookAt(target, 30.0F, 30.0F);
@@ -77,23 +79,18 @@ public final class BlinkGoal extends MomoSpellGoal {
             }
         }
         BlinkHandler.tickGhostLine(level, this.momo, level.getGameTime());   // TNL1211 技能自己驱动残影
-        this.momo.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
-        this.momo.hurtMarked = true;
         boolean tnl$trailDone = !BlinkHandler.hasTrail(this.momo.getUUID());
         return this.momo.tnl$castTicks() <= 0 && tnl$trailDone;
     }
 
     @Override
     protected void onStop() {
+        this.stun.end();                       // TNL1232 收尾一定放手（幂等）
         long now = this.momo.level().getGameTime();
         this.momo.tnl$setBlinkCoolUntil(now + COOLDOWN_TICKS);
         // TNL1227 用户："瞬身后后摇状态标志没有取消"。收尾时把本技能的残影队列也清掉，
         // 免得它成为"状态残留"：技能已经结束，队列不该还挂着这个实体。
         BlinkHandler.clearTrail(this.momo.getUUID());
-        this.momo.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
-        if (this.momo.getNavigation() != null) {
-            this.momo.getNavigation().stop();
-        }
     }
     // ===== TNL1211 瞬身的实现整体收进技能类（★原 BlinkHandler 原样成为内部类 ✓）=====
 static final class BlinkHandler {   // TNL1211 收编自原 BlinkHandler.java
