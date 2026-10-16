@@ -515,6 +515,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         super.addAdditionalSaveData(tag);
         tag.putByte("TNLSpell", (byte) this.tnl$spell());
         tag.putInt("TNLSpellTicks", this.tnl$castTicks());
+        tag.putBoolean("TNLRequiemUsed", this.tnl$requiemUsed);      // TNL1253 一局只放一次，要跨存档
     }
 
     @Override
@@ -523,6 +524,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         if (tag.contains("TNLSpell")) {
             this.tnl$setSpell(tag.getByte("TNLSpell"), tag.getInt("TNLSpellTicks"));
         }
+        this.tnl$requiemUsed = tag.getBoolean("TNLRequiemUsed");      // TNL1253 读回"是否已放过"
         this.tnl$staleSpellTicks = 0;      // 读档后不要立刻被看门狗清掉
     }
 

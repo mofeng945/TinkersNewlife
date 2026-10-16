@@ -81,6 +81,8 @@ public final class KtuluDeathGuard {
                 }
                 // TNL1251 受击机制交给新类（MomoHurtGoal）：半窗打断、满窗播受击动画 + 1 秒硬直
                 momo.tnl$onHit(event.getAmount(), tnl$budget);
+                // TNL1253 生息绝响：领域"持续 10 秒**或直到墨默被攻击**" ⇒ 任何一击都请求收尾
+                momo.tnl$requestRequiemClose();
             }
         } catch (Throwable ignored) {
         }

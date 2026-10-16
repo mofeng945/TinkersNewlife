@@ -152,6 +152,31 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
             return;
         }
 
+        // TNL1254 生息绝响：双手合十举到脸前，修女祈祷状（用户口径）。
+        // 只在 RequiemGoal 施法时上报 ⇒ 其它技能的 stun 不会走到这里。
+        if (POSE == com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.REQUIEM) {
+            float tnl$pray = Math.max(0.0F, Math.min(1.0F, PROGRESS));
+            float tnl$breath = (float) Math.sin(ageInTicks * 0.9F) * 0.03F;
+            this.body.xRot = 0.10F + tnl$breath * 0.5F;                 // 微微前倾，随呼吸起伏
+            this.head.xRot = 0.28F;                                     // 低头祈祷
+            this.head.yRot = netHeadYaw * 0.25F;
+            // 双手合十：两臂抬到脸前并在中线并拢（xRot 抬起，yRot/zRot 收向中心）
+            this.rightArm.x = -5.0F;
+            this.leftArm.x = 5.0F;
+            this.rightArm.xRot = -1.45F + tnl$breath;
+            this.rightArm.yRot = -0.55F;
+            this.rightArm.zRot = -0.30F;
+            this.leftArm.xRot = -1.45F + tnl$breath;
+            this.leftArm.yRot = 0.55F;
+            this.leftArm.zRot = 0.30F;
+            this.rightLeg.xRot = 0.0F;
+            this.leftLeg.xRot = 0.0F;
+            this.hat.xRot = this.head.xRot;
+            this.hat.yRot = this.head.yRot;
+            this.hat.zRot = this.head.zRot;
+            return;
+        }
+
         // TNL1156 姿势由渲染器逐帧决定：只有当正在施法的是混沌和弦时，
         // 才用和弦姿势。老的 CHORD_HOLD_UNTIL 判定会让
         // **任何**技能蓄力后和弦姿势挂 20 秒，于是音波起手
