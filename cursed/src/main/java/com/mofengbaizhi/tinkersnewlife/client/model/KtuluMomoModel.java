@@ -70,8 +70,12 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         // TNL1098 unmistakable identity test: if the model we pose is the one drawn, the momo has to
         // visibly inflate while charging. The hat state probe says visible=true yRot=1.0 yet nothing
         // moves, so either this model is not what is rendered, or the outer hair is not this part.
-        this.body.xScale = CHARGING ? 1.45F : 1.0F;
-        this.body.zScale = CHARGING ? 1.45F : 1.0F;
+        // TNL1205 user: "the arms are buried inside the body, what scaling did you do?". Two of them:
+        // the 0.62 arm cross section (withdrawn in TNL1203) and this 1.45 body inflation, which was a
+        // leftover "unmistakable identity test" from TNL1098. Both are gone, so nothing shrinks or
+        // swells the body any more and the arms sit where the mesh puts them.
+        this.body.xScale = 1.0F;
+        this.body.zScale = 1.0F;
         float t = Math.max(0.0F, Math.min(1.0F, PROGRESS));
         // TNL1092 user: "only the tremble shows, the skeletal animation is gone". The tremble rides on
         // body.xRot, so the hook does run. Log the numbers to see whether t is stuck at an endpoint.
