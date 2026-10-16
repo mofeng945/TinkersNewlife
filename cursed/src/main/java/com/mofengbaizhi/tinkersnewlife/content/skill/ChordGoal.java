@@ -31,7 +31,7 @@ public final class ChordGoal extends MomoSpellGoal {
     private static final int AFTER_LAST_TICKS = 10;
 
     /** longest possible cast: the charge plus ten waves at the slowest rhythm, plus slack */
-    private static final int TOTAL_TICKS = CHARGE_TICKS + WAVES * (GAP_MIN_TICKS + GAP_RANGE_TICKS) + 60;
+    private static final int TOTAL_TICKS = CHARGE_TICKS + WAVES * (GAP_MIN_TICKS + GAP_RANGE_TICKS) + 260;   // TNL1200 rings must finish flying
 
     private static final Random RNG = new Random();
 
@@ -131,15 +131,22 @@ public final class ChordGoal extends MomoSpellGoal {
             DiscordantChordHandler.hitRing(level, this.momo, ring[0], ring[1]);
         }
 
-        this.momo.setDeltaMovement(Vec3.ZERO);
-        this.momo.hurtMarked = true;
-        if (this.momo.getNavigation() != null) {
-            this.momo.getNavigation().stop();
+        if (!this.released) {
+            this.momo.setDeltaMovement(Vec3.ZERO);
+            this.momo.hurtMarked = true;
+            if (this.momo.getNavigation() != null) {
+                this.momo.getNavigation().stop();
+            }
         }
-        if (this.releaseAt > 0L && now >= this.releaseAt) {
+        if (!this.released && this.releaseAt > 0L && now >= this.releaseAt) {
+            // TNL1200 control ends half a second after the last wave; the goal keeps running so the
+            // rings finish travelling, but the boss is free (no more rooting, no more chord pose).
             this.releaseAt = 0L;
             this.released = true;
-            TinkersNewlife.LOGGER.warn("TNL1176 chord hard control released, waves may still travel");
+            this.momo.tnl$setChordCasting(false);
+            TinkersNewlife.LOGGER.warn("TNL1200 chord control released, waves still flying");
+        }
+        if (this.released && this.rings.isEmpty()) {
             return true;
         }
         return this.momo.tnl$castTicks() <= 0;
