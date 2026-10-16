@@ -15,7 +15,10 @@ public enum MomoPose {
     /** 幻音共鸣：护脸蓄力 */
     RESONANCE,
     /** 混沌和弦：双手举起吟唱 */
-    CHORD;
+    CHORD,
+    /** TNL1251 受击硬直：身体前倾、手臂惯性前摆、双腿一前一后。
+     *  只有 {@code MomoHurtGoal} 会用它 —— 技能施法的 stun **不播**这个。 */
+    HURT;
 
     /** 由同步的法术编号得到姿势类别：1 瞬身、2 共鸣、3 和弦 */
     public static MomoPose of(int spellId) {

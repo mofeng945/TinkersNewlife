@@ -128,7 +128,8 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
         // 说明 tick() 里直接 stop() 之后 GoalSelector 仍然把这个 Goal 留在"运行中"，
         // 于是它每 tick 都停一次 ⇒ spell 标志一直不清 ⇒ isBusy() 永真 ⇒
         // 所有技能都再也触发不了，onStop() 也每 tick 跑一次（和弦"连发"就是这么来的）。
-        return !this.tnl$done && this.momo.isAlive();
+        // TNL1251 被打断（半窗及以上的伤害）⇒ 立刻结束，让选择器正常调 stop()
+        return !this.tnl$done && this.momo.isAlive() && !this.momo.tnl$consumeInterrupt();
     }
 
     @Override

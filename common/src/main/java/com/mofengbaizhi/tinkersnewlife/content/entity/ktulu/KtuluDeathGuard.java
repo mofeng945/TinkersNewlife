@@ -79,6 +79,8 @@ public final class KtuluDeathGuard {
                 if (event.getAmount() > tnl$budget) {
                     event.setAmount(tnl$budget);
                 }
+                // TNL1251 受击机制交给新类（MomoHurtGoal）：半窗打断、满窗播受击动画 + 1 秒硬直
+                momo.tnl$onHit(event.getAmount(), tnl$budget);
             }
         } catch (Throwable ignored) {
         }

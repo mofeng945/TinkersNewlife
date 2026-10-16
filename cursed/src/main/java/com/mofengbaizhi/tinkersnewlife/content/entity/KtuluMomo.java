@@ -100,6 +100,8 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
+        // TNL1251 受击硬直：优先级 0（最高）并占 MOVE|LOOK ⇒ 会挤掉近战/游走，实现"站住 1 秒"
+        this.goalSelector.addGoal(0, new com.mofengbaizhi.tinkersnewlife.content.skill.MomoHurtGoal(this));
         this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.0D, true));
         this.goalSelector.addGoal(2, new WaterAvoidingRandomStrollGoal(this, 0.8D));
         // TNL1174 技能现在都是 Goal，和诡厄使徒注册法术的方式一样
@@ -543,6 +545,58 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     /** TNL1250 现在是否被定身/硬直（守卫据此取消它的攻击） */
     public boolean tnl$isStunned() {
         return this.tnl$stunnedFlag || this.level().getGameTime() < this.tnl$stunUntil;
+    }
+
+    // TNL1251 受击硬直：由伤害路径（KtuluDeathGuard.onHurt）判定后置上，MomoHurtGoal 接手。
+    // 阈值按用户口径：夹后伤害 >= 半窗 ⇒ 打断技能；>= 满窗 ⇒ 打断 + 受击动画 + 1 秒硬直。
+    private int tnl$hurtStaggerTicks = 0;
+    private boolean tnl$interrupted = false;
+
+    /**
+     * TNL1251 一次命中：damage 是**夹后**的实际伤害，budget 是这一 tick 的限伤窗
+     * （{@code maxHealth * a.C0}）。
+     */
+    public void tnl$onHit(float damage, float budget) {
+        if (budget <= 0.0F) {
+            return;
+        }
+        if (damage >= budget * 0.999F) {
+            // 满窗：打断 + 受击动画 + 1 秒硬直（20 tick）
+            this.tnl$hurtStaggerTicks = Math.max(this.tnl$hurtStaggerTicks, 20);
+            this.tnl$interrupted = true;
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                    "TNL1251 momo staggered by a full window hit ({} / {})",
+                    String.format(java.util.Locale.ROOT, "%.1f", damage),
+                    String.format(java.util.Locale.ROOT, "%.1f", budget));
+        } else if (damage >= budget * 0.5F) {
+            // 半窗：只打断技能，不播受击动画
+            this.tnl$interrupted = true;
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                    "TNL1251 momo cast interrupted by a half window hit ({} / {})",
+                    String.format(java.util.Locale.ROOT, "%.1f", damage),
+                    String.format(java.util.Locale.ROOT, "%.1f", budget));
+        }
+    }
+
+    /** TNL1251 还有几 tick 硬直（MomoHurtGoal.canUse 读它） */
+    public int tnl$hurtStaggerTicks() {
+        return this.tnl$hurtStaggerTicks;
+    }
+
+    /** TNL1251 MomoHurtGoal 取走硬直时长（取走即清零，开始播动画） */
+    public int takeHurtStagger() {
+        int t = this.tnl$hurtStaggerTicks;
+        this.tnl$hurtStaggerTicks = 0;
+        return t;
+    }
+
+    /** TNL1251 技能是否被打断过（MomoSpellGoal.canContinueToUse 读它） */
+    public boolean tnl$consumeInterrupt() {
+        if (!this.tnl$interrupted) {
+            return false;
+        }
+        this.tnl$interrupted = false;
+        return true;
     }
 
     // TNL1172 诡厄使徒每个法术一个冷却字段（coolDown / tornadoCoolDown /
