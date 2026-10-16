@@ -559,29 +559,10 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
      * 技能起手时禁用、收尾时恢复（MomoSpellGoal / MomoHurtGoal 负责调用）。
      */
     public void tnl$setLookLocked(boolean locked) {
-        try {
-            if (locked) {
-                this.goalSelector.disableControlFlag(net.minecraft.world.entity.ai.goal.Goal.Flag.LOOK);
-                // TNL1263 禁旗只挡起手 ⇒ 正在跑的也要停掉。
-                // ⚠ TNL1264 必须**先收集再停**：直接 getRunningGoals().forEach(stop) 是
-                // 边遍历边改集合 ⇒ ConcurrentModificationException ⇒ 技能 start() 抛错 ⇒
-                // 动画全部不播。这里改成先拷一份出来，再逐个停，并且整段兜住异常。
-                java.util.List<net.minecraft.world.entity.ai.goal.WrappedGoal> tnl$stop =
-                        this.goalSelector.getRunningGoals()
-                                .filter(g -> g.getFlags().contains(
-                                        net.minecraft.world.entity.ai.goal.Goal.Flag.LOOK))
-                                .collect(java.util.stream.Collectors.toList());
-                for (net.minecraft.world.entity.ai.goal.WrappedGoal tnl$g : tnl$stop) {
-                    tnl$g.stop();
-                }
-            } else {
-                this.goalSelector.enableControlFlag(net.minecraft.world.entity.ai.goal.Goal.Flag.LOOK);
-            }
-        } catch (Throwable tnl$t) {
-            // 定身/朝向只是表现，绝不能因为它把技能本身搞崩
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
-                    "TNL1264 look lock failed: {}", tnl$t.toString());
-        }
+        // TNL1265 撤回：禁用 LOOK 旗 + 停运行中的 look Goal 这条路把动画搞崩了
+        // （用户实测：受击硬直与共鸣的动画都没了，头也照样转）。
+        // 选择器层面的干预太危险 ⇒ 这里改成**空操作**，回到已知可用的状态。
+        // 头的问题改用"技能每 tick 直接写 yaw"（纯状态写入，不碰 Goal）来做。
     }
 
     /** TNL1250 现在是否被定身/硬直（守卫据此取消它的攻击） */
