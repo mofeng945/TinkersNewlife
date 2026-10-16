@@ -71,6 +71,7 @@ public final class BlinkGoal extends MomoSpellGoal {
                 BlinkHandler.teleportBehind(level, this.momo, target);
             }
         }
+        BlinkHandler.tickGhostLine(level, this.momo, level.getGameTime());   // TNL1184 afterimages
         this.momo.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
         this.momo.hurtMarked = true;
         return this.momo.tnl$castTicks() <= 0;

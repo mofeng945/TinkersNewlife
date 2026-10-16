@@ -87,29 +87,6 @@ public final class BlinkHandler {
             TinkersNewlife.LOGGER.warn("TNL1137 freeze deadline passed, AI force released");
         }
 
-        Line line = LINE.get(id);
-        if (line != null) {
-            if (line.sent >= GHOSTS) {
-                LINE.remove(id);
-            } else if (now >= line.nextTick) {
-                // TNL1134 user: "the momo cannot keep up with its own ghosts" -- release four per tick
-                for (int k = 0; k < 4 && line.sent < GHOSTS; k++) {
-                double t = (double) line.sent / (GHOSTS - 1.0D);
-                double f = 1.0D - Math.pow(1.0D - t, 2.2D);      // denser toward the arrival point
-                Vec3 gp = line.origin.add(line.dest.subtract(line.origin).scale(f));
-                level.sendParticles(net.minecraft.core.particles.ParticleTypes.CLOUD,
-                        gp.x, gp.y + 0.6D, gp.z, 1, 0.2D, 0.3D, 0.2D, 0.02D);
-                TinkersNewlife.CHANNEL.send(
-                        net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> momo),
-                        new com.mofengbaizhi.tinkersnewlife.network.tools.PacketThrustGhost(
-                                momo.getId(), gp.x, gp.y, gp.z,
-                                (float) Math.toDegrees(Math.atan2(
-                                        line.dest.z - line.origin.z, line.dest.x - line.origin.x)), 0.0F));
-                    line.sent++;
-                }
-                line.nextTick = now + 1;
-            }
-        }
 
         Long after = AFTERCAST_UNTIL.get(id);
         if (after != null) {
@@ -190,6 +167,37 @@ public final class BlinkHandler {
         }
         TinkersNewlife.LOGGER.warn("TNL1120 Momo locks onto {} and starts the Blink wind up",
                 target.getName().getString());
+    }
+
+    /**
+     * TNL1184 the afterimage trail of a blink: four ghosts per server tick. Moved out of the old
+     * global scanner; BlinkGoal drives it now.
+     */
+    public static void tickGhostLine(ServerLevel level, KtuluMomo momo, long now) {
+        UUID id = momo.getUUID();
+        Line line = LINE.get(id);
+        if (line != null) {
+            if (line.sent >= GHOSTS) {
+                LINE.remove(id);
+            } else if (now >= line.nextTick) {
+                // TNL1134 user: "the momo cannot keep up with its own ghosts" -- release four per tick
+                for (int k = 0; k < 4 && line.sent < GHOSTS; k++) {
+                double t = (double) line.sent / (GHOSTS - 1.0D);
+                double f = 1.0D - Math.pow(1.0D - t, 2.2D);      // denser toward the arrival point
+                Vec3 gp = line.origin.add(line.dest.subtract(line.origin).scale(f));
+                level.sendParticles(net.minecraft.core.particles.ParticleTypes.CLOUD,
+                        gp.x, gp.y + 0.6D, gp.z, 1, 0.2D, 0.3D, 0.2D, 0.02D);
+                TinkersNewlife.CHANNEL.send(
+                        net.minecraftforge.network.PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> momo),
+                        new com.mofengbaizhi.tinkersnewlife.network.tools.PacketThrustGhost(
+                                momo.getId(), gp.x, gp.y, gp.z,
+                                (float) Math.toDegrees(Math.atan2(
+                                        line.dest.z - line.origin.z, line.dest.x - line.origin.x)), 0.0F));
+                    line.sent++;
+                }
+                line.nextTick = now + 1;
+            }
+        }
     }
 
     /**
