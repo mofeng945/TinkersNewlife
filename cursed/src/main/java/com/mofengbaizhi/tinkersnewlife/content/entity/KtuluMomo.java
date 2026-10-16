@@ -566,19 +566,13 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         if (budget <= 0.0F) {
             return;
         }
+        // TNL1256 用户："把硬直打断技能的判定伤害也改到满额" ⇒ 只有**满窗**才打断 + 播受击动画，
+        // 半窗那一档取消了。生息绝响也沿用这一条（它不是"被打一下就断"，而是被打断机制收掉）。
         if (damage >= budget * 0.999F) {
-            // 满窗：打断 + 受击动画 + 1 秒硬直（20 tick）
             this.tnl$hurtStaggerTicks = Math.max(this.tnl$hurtStaggerTicks, 20);
             this.tnl$interrupted = true;
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
                     "TNL1251 momo staggered by a full window hit ({} / {})",
-                    String.format(java.util.Locale.ROOT, "%.1f", damage),
-                    String.format(java.util.Locale.ROOT, "%.1f", budget));
-        } else if (damage >= budget * 0.5F) {
-            // 半窗：只打断技能，不播受击动画
-            this.tnl$interrupted = true;
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
-                    "TNL1251 momo cast interrupted by a half window hit ({} / {})",
                     String.format(java.util.Locale.ROOT, "%.1f", damage),
                     String.format(java.util.Locale.ROOT, "%.1f", budget));
         }

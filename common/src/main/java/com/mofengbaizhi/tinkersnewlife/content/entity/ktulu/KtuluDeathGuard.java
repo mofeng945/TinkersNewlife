@@ -79,10 +79,10 @@ public final class KtuluDeathGuard {
                 if (event.getAmount() > tnl$budget) {
                     event.setAmount(tnl$budget);
                 }
-                // TNL1251 受击机制交给新类（MomoHurtGoal）：半窗打断、满窗播受击动画 + 1 秒硬直
+                // TNL1251 受击机制交给新类（MomoHurtGoal）：满窗才打断 + 播受击动画 + 1 秒硬直
                 momo.tnl$onHit(event.getAmount(), tnl$budget);
-                // TNL1253 生息绝响：领域"持续 10 秒**或直到墨默被攻击**" ⇒ 任何一击都请求收尾
-                momo.tnl$requestRequiemClose();
+                // TNL1256 用户："死生领域的打断判定不用受击就打断，直接沿用硬直打断的那个机制"
+                // ⇒ 这里不再额外请求关闭领域；满窗打断会通过 consumeInterrupt 把正在施法的技能收掉。
             }
         } catch (Throwable ignored) {
         }
