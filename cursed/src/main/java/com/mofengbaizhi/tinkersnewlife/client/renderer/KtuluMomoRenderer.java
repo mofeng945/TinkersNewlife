@@ -54,8 +54,13 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
         if (entity.tnl$spell() != 0) {
             charging = true;
         }
-        boolean chordCast = entity.tnl$isChordCasting()
+        // TNL1216 姿势的唯一来源：技能通道的法术编号 → 姿势枚举
+        com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose tnl$pose =
+                com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.of(entity.tnl$spell());
+        boolean chordCast = tnl$pose == com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.CHORD
                 && com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.DISCORDANT_CHORD;
+        boolean tnl$blinkPose = tnl$pose == com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.BLINK;
+        boolean tnl$resonancePose = tnl$pose == com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.RESONANCE;
         // TNL1158 probe: the chord wind up still shows no pose, so log what the client actually sees
         if (System.currentTimeMillis() - tnl$poseLog > 1000L) {
             tnl$poseLog = System.currentTimeMillis();
@@ -82,11 +87,12 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
         // TNL1163 ROOT CAUSE of the missing chord wind up: the model returns early on
         // "if (!CHARGING) return;", and CHARGING was only true for the resonance. The chord sets its
         // own flag, so CHARGING stayed false and the model bailed out before ever looking at CHORD.
-        com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.CHARGING = charging || chordCast;
+        com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.CHARGING =
+                charging || chordCast || tnl$blinkPose || tnl$resonancePose;
         com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.PROGRESS = progress;
         // TNL1156 tell the model exactly which skill this frame belongs to
         com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.CHORD = chordCast;
-        com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.BLINK = entity.tnl$spell() == 1;
+        com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.BLINK = tnl$blinkPose;
         // TNL1129 the prototype draws its effect inside the entity render chain, so do the same here.
         // Local coordinates: the pose matrix is already on the entity, so ghosts are the offset from it.
         // TNL1130 the prototype ThrustGhostRenderer draws these now, no need to draw twice

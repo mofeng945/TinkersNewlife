@@ -46,6 +46,11 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
         // （这里故意不调 setFlags）
     }
 
+    /** TNL1216 本技能摆哪种姿势（技能自己声明，客户端只照它画）*/
+    public MomoPose poseKind() {
+        return MomoPose.of(this.spellId);
+    }
+
     /** 施法进度 0..1（由同步的剩余 tick 换算）*/
     protected float progress() {
         int left = this.momo.tnl$castTicks();
