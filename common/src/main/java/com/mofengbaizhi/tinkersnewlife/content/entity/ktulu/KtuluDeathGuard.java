@@ -83,43 +83,10 @@ public final class KtuluDeathGuard {
         }
     }
 
-    /**
-     * TNL1149 user: "the bar came back after relogging, but one hit removes it again and nothing
-     * puts it back". Rather than chase every place that drops it, keep it alive: once a second,
-     * re-attach the bar of every living momo through the same routine the death guard uses.
-     */
-    @SubscribeEvent
-    public static void onServerTick(net.minecraftforge.event.TickEvent.ServerTickEvent event) {
-        if (event.phase != net.minecraftforge.event.TickEvent.Phase.END) {
-            return;
-        }
-        try {
-            var server = net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer();
-            if (server == null || server.getTickCount() % 20 != 0) {
-                return;
-            }
-            for (net.minecraft.server.level.ServerLevel level : server.getAllLevels()) {
-                for (net.minecraft.world.entity.Entity e : level.getAllEntities()) {
-                    if (e instanceof KtuluMomo momo && !momo.isDeadOrDying()) {
-                        momo.tnl$unDead();
-                    }
-                }
-            }
-        } catch (Throwable ignored) {
-        }
-    }
+    // TNL1180 the once a second boss bar watchdog is gone: KtuluMomo.tick() maintains the bar every
+    // tick now (progress from the authoritative health, forced remove+add once a second), so this
+    // whole handler had become a second source of truth for the same thing.
 
-    /**
-     * TNL1166 user: "you said you zero the speed, why does it still run after me". Because the handler
-     * that zeroed it ran at the END of the server tick, after the entity had already moved. This runs
-     * at the START of the entity's own tick, so the movement code sees zero and cannot advance, and the
-     * anchor pull makes absolutely sure it stays where the cast started.
-     */
-    /**
-     * TNL1177 user: rooting is the Goal system's job now (MomoSpellGoal sets Flag.MOVE|LOOK and every
-     * skill checks isBusy()), so the old "zero the velocity before the tick" hack and the anchor pull
-     * are both gone. Nothing teleports the boss and nothing clears its AI any more.
-     */
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onDeath(LivingDeathEvent event) {
         try {
