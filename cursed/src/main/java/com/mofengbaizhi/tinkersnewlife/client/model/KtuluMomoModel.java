@@ -128,6 +128,30 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         // TNL1105 混沌和弦：唤魔者式施法，双手高举并摆动。
         long nowMs = System.currentTimeMillis();
 
+        // TNL1252 受击硬直（用户："身体前倾，手臂惯性向前摆动，双腿一前一后，这样颤动一下，硬直为 1s"）。
+        // 只有 MomoHurtGoal 会上报 HURT ⇒ 技能施法的定身**不会**走到这里。
+        if (POSE == com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.HURT) {
+            float tnl$hurt = Math.max(0.0F, Math.min(1.0F, PROGRESS));
+            float tnl$shake = (float) Math.sin(ageInTicks * 3.5F) * (1.0F - tnl$hurt);   // 开头最抖，1 秒内平息
+            this.rightArm.x = -5.0F;
+            this.leftArm.x = 5.0F;
+            this.body.xRot = 0.35F - 0.25F * tnl$hurt + tnl$shake * 0.06F;   // 前倾，随后收回
+            this.head.xRot = 0.30F + tnl$shake * 0.05F;
+            this.head.yRot = netHeadYaw * 0.3F;
+            this.rightArm.xRot = -0.90F + tnl$shake * 0.10F;                 // 惯性向前甩
+            this.rightArm.yRot = 0.10F;
+            this.rightArm.zRot = -0.10F;
+            this.leftArm.xRot = -0.90F - tnl$shake * 0.10F;
+            this.leftArm.yRot = -0.10F;
+            this.leftArm.zRot = 0.10F;
+            this.rightLeg.xRot = 0.35F;                                      // 双腿一前一后
+            this.leftLeg.xRot = -0.35F;
+            this.hat.xRot = this.head.xRot;
+            this.hat.yRot = this.head.yRot;
+            this.hat.zRot = this.head.zRot;
+            return;
+        }
+
         // TNL1156 姿势由渲染器逐帧决定：只有当正在施法的是混沌和弦时，
         // 才用和弦姿势。老的 CHORD_HOLD_UNTIL 判定会让
         // **任何**技能蓄力后和弦姿势挂 20 秒，于是音波起手
@@ -162,20 +186,6 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         // 头锁正前方。插在共鸣分支**之前**，这样瞬身不会
         // 借用监守者的护脸姿势。
         if (POSE == com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.BLINK) {
-            this.body.xRot = 0.0F;
-            this.head.xRot = 0.0F;
-            this.head.yRot = netHeadYaw * 0.25F;
-            this.rightArm.xRot = 0.0F;
-            this.rightArm.yRot = 0.0F;
-            this.rightArm.zRot = -0.35F;
-            this.leftArm.xRot = 0.0F;
-            this.leftArm.yRot = 0.0F;
-            this.leftArm.zRot = 0.35F;
-            this.rightLeg.xRot = 0.0F;
-            this.leftLeg.xRot = 0.0F;
-            this.hat.xRot = this.head.xRot;
-            this.hat.yRot = this.head.yRot;
-            this.hat.zRot = this.head.zRot;
             return;
         }
 
