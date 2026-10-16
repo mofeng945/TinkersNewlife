@@ -59,7 +59,9 @@ public final class ResonanceGoal extends MomoSpellGoal {
             this.nearTicks = 0;
             return false;
         }
-        this.nearTicks += 5;
+        // TNL1192 the constant says "20 s at 20 tps" (400 ticks) but the old code added 5 per tick, so
+        // it actually fired after 4 seconds. One tick per tick now, which is what the doc meant.
+        this.nearTicks += 1;
         if (this.nearTicks < NEAR_TICKS_REQUIRED) {
             return false;
         }
