@@ -27,7 +27,7 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
     protected final KtuluMomo momo;
 
     /** 1 blink, 2 astral resonance, 3 discordant chord */
-    private final int spellId;
+    protected final int spellId;
     /** own cooldown, in ticks, counted from the moment the cast ends */
     private final int cooldownTicks;
     /** ticks from the start of the wind up to the end of the recovery */
@@ -52,7 +52,10 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
 
     /** true when this momo may start this spell right now */
     protected boolean ready() {
-        return !this.momo.tnl$isBusy() && this.cooldownLeft() <= 0 && this.momo.isAlive();
+        return !this.momo.tnl$isBusy()
+                && this.cooldownLeft() <= 0
+                && this.momo.isAlive()
+                && this.momo.tnl$mayCastAgainSoon(this.spellId);   // TNL1178 rotation
     }
 
     /** ticks of cooldown still to go; each skill keeps its own field on the entity */
@@ -94,6 +97,7 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
         if (this.momo.tnl$spell() == this.spellId) {
             this.momo.tnl$setSpell(0, 0);
         }
+        this.momo.tnl$markSpellCast(this.spellId);   // TNL1178 remember it for the rotation
         this.onStop();
     }
 

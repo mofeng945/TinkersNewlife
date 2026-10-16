@@ -431,6 +431,28 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     private long tnl$resonanceCoolUntil = 0L;
     private long tnl$chordCoolUntil = 0L;
 
+    // TNL1178 like the apostle's spellCycle: remember which spell just went off so the boss rotates
+    // through its skills instead of spamming whichever wakes up first. A timeout keeps it from idling
+    // forever when only one skill happens to be usable.
+    private int tnl$lastSpell = 0;
+    private long tnl$lastSpellAt = 0L;
+
+    public int tnl$lastSpell() {
+        return this.tnl$lastSpell;
+    }
+
+    public boolean tnl$mayCastAgainSoon(int spellId) {
+        if (this.tnl$lastSpell != spellId) {
+            return true;
+        }
+        return this.level().getGameTime() - this.tnl$lastSpellAt > 300L;
+    }
+
+    public void tnl$markSpellCast(int spellId) {
+        this.tnl$lastSpell = spellId;
+        this.tnl$lastSpellAt = this.level().getGameTime();
+    }
+
     public long tnl$blinkCoolUntil() {
         return this.tnl$blinkCoolUntil;
     }
