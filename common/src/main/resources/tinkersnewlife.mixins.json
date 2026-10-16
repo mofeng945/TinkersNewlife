@@ -48,7 +48,6 @@
     "SpearThirdPersonItemMixin",
     "EnchantmentHelperSeaKingsMixin",
     "AbstractArrowSeaKingsMixin",
-    "SlashBladeRenderOptMixin",
     "GuiSmelteryTankSearchMixin",
     "HeatingStructureScreenSearchMixin",
     "ScreenKeyInputMixin",
