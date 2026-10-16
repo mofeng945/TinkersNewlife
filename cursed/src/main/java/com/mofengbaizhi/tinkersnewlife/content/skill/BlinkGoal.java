@@ -91,6 +91,9 @@ public final class BlinkGoal extends MomoSpellGoal {
     protected void onStop() {
         long now = this.momo.level().getGameTime();
         this.momo.tnl$setBlinkCoolUntil(now + COOLDOWN_TICKS);
+        // TNL1227 用户："瞬身后后摇状态标志没有取消"。收尾时把本技能的残影队列也清掉，
+        // 免得它成为"状态残留"：技能已经结束，队列不该还挂着这个实体。
+        BlinkHandler.clearTrail(this.momo.getUUID());
         this.momo.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
         if (this.momo.getNavigation() != null) {
             this.momo.getNavigation().stop();
@@ -241,6 +244,11 @@ static final class BlinkHandler {   // TNL1211 收编自原 BlinkHandler.java
     private static final Map<UUID, Line> LINE = new ConcurrentHashMap<>();
 
         /** TNL1212 残影队列里还有没有这个实体（★技能靠它判断残影放完没有 ✓）*/
+        /** TNL1227 收尾时清掉该实体的残影队列 */
+        static void clearTrail(UUID id) {
+            LINE.remove(id);
+        }
+
         static boolean hasTrail(UUID id) {
             return LINE.containsKey(id);
         }
