@@ -65,14 +65,19 @@ public final class MomoStun {
         return this.active;
     }
 
-    /** 清寻路 ＋ 清速度 ＋ 压住移动控制 */
+    /** 清寻路 ＋ 清速度 ＋ 清移动输入 ＋ 阻止攻击 */
     private void hold() {
         this.momo.setDeltaMovement(Vec3.ZERO);
         this.momo.hurtMarked = true;
         if (this.momo.getNavigation() != null) {
             this.momo.getNavigation().stop();                 // 清寻路
         }
-        // TNL1231 不要用 setWantedPosition(自己, 0)：那是"一次设定、长期生效"的移动指令，
-        // 技能结束后还留在移动控制里 ⇒ 正是"瞬身完还不动"的原因之一。停寻路就够了。
+        // TNL1262 用户："吟唱时还是在试图寻路，微弱移动，但是动一下就停止"。
+        // 只清 deltaMovement 是不够的：近战 Goal 每 tick 还在给实体喂移动输入
+        // （xxa/zza/speed），travel() 会据此把它推出去一小步，下一 tick 又被我们停住。
+        // 所以把移动输入也清零，这才是"站住"。
+        this.momo.setXxa(0.0F);
+        this.momo.setZza(0.0F);
+        this.momo.setSpeed(0.0F);
     }
 }
