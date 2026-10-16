@@ -9,27 +9,26 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 /**
- * TNL1139 user: "add protection, block die while it still has health".
+ * TNL1139 用户口径："加保护，还有血就拦住死亡"。
  *
- * The Avaritia Neo sword does THREE things in a row: hurt(Float.MAX_VALUE), setHealth(0) and then
- * die(source). The vitals mixin already floors setHealth, so the health no longer reaches zero -- but
- * die() ignores health entirely and kills anyway. This cancels that death and, because a cancelled
- * death still leaves the entity in a death-ish state, it also restores the health and clears the
- * death timers so the boss keeps fighting.
+ * 无尽贪婪的寰宇支配剑是**三连**：hurt(Float.MAX_VALUE) ⇒ setHealth(0) ⇒ 紧接着
+ * die(source)。血量 mixin 已经把 setHealth 顶在下限上，所以血量不会归零 —— 但
+ * die() 完全不看血量，照样判死。这里取消那次死亡，并且因为"取消后的死亡"仍会留下
+ * 半死状态，所以同时补回血量、清零死亡计时，让 Boss 继续打。
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID)
 public final class KtuluDeathGuard {
 
-    /** TNL1147 rate limit for the tamper probe */
+    /** TNL1147 篡改探针的限流时间戳 */
     private static long TNL_STAMP = 0L;
 
     private KtuluDeathGuard() {
     }
 
     /**
-     * TNL1165 user: "isn't it obvious that it cannot attack while casting". Right -- that belongs to
-     * the cast itself. We do NOT clear the AI (that sticks); instead every hit the momo lands while it
-     * is casting is simply cancelled, so it keeps its goals and loses nothing afterwards.
+     * TNL1165 用户："施法动作时不是本来就不能攻击吗"。对 —— 这是施法自带的属性。
+     * 我们**不清 AI**（清 AI 会粘住），而是把墨默在施法中打出的伤害**一律取消**，
+     * 这样它的 goal 一个不动、事后也不会留下任何后遗症。
      */
     @SubscribeEvent
     public static void onMomoAttack(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
@@ -45,7 +44,7 @@ public final class KtuluDeathGuard {
         }
     }
 
-    /** TNL1143 probe: show exactly what the momo health does around a hit. */
+    /** TNL1143 探针：打印一次命中前后墨默的血量变化 */
     @SubscribeEvent
     public static void onHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
         try {
@@ -63,9 +62,9 @@ public final class KtuluDeathGuard {
                     "TNL1143 hit on momo src={} amount={} before={} auth={} max={}",
                     src, event.getAmount(), momo.getHealth(), com.mofengbaizhi.tinkersnewlife.content.entity.ktulu.a.qF(momo), momo.getMaxHealth());
 
-            // TNL1145 the log proved the real problem: the health FIELD sat at 28 while the mirror
-            // still said 1365, so an ordinary 43 damage hit finished it off and the bar looked empty.
-            // Resync the field to the mirror and never let a single hit exceed one tick of budget.
+            // TNL1145 日志证实了真正的问题：字段血量只有 28，而镜像权威值是 1365，
+            // 于是一发 43 点普通伤害就把它打死了，血条看着也是空的。
+            // 现在把字段同步回镜像，并让单次伤害不超过"一个 tick 的预算"。
             float tnl$auth = com.mofengbaizhi.tinkersnewlife.content.entity.ktulu.a.qF(momo);
             if (tnl$auth > 0.0F) {
                 if (momo.getHealth() < tnl$auth - 0.5F) {
@@ -98,10 +97,10 @@ public final class KtuluDeathGuard {
             if (momo.level().isClientSide) {
                 return;
             }
-            // TNL1142 user: "one punch and the boss bar event is gone, the second one kills from full".
-            // Cancelling EVERY death broke the normal flow (the bar is dropped and the entity is left
-            // half dead). Only block the cheat kill: the Avaritia Neo infinity damage source, which
-            // does hurt(MAX_VALUE) + setHealth(0) + die() in a row.
+            // TNL1142 用户："一剑就把血条事件清了，第二剑满血直接秒"。
+            // 取消**所有**死亡会破坏正常流程（血条被摘、实体留在半死状态）。
+            // 现在只拦"作弊秒杀"：寰宇支配剑那条 infinity 伤害源，它的动作是
+            // hurt(最大浮点) ＋ setHealth(0) ＋ die() 三连。
             String id;
             try {
                 id = event.getSource().typeHolder().unwrapKey()

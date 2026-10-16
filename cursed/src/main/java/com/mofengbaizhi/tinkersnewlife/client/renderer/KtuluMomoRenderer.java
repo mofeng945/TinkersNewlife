@@ -26,14 +26,14 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
     }
 
     /**
-     * TNL1091 feed the charge progress to the model before super.render runs (setupAnim happens
-     * inside it). Progress is derived from the hidden marker cooldown, the channel we verified.
+     * TNL1091 在 super.render 之前把蓄力进度喂给模型（setupAnim 就在它里面跑）。
+     * 进度来自隐藏标记的冷却 —— 那是我们验证过能到客户端的通道。
      */
-    /** TNL1158 rate limit for the pose probe */
+    /** TNL1158 姿势探针的限流 */
     private static long tnl$poseLog = 0L;
 
-    /** TNL1093 the cooldown derived progress was always 0 (19 probe lines all t=0.0), so the
-     *  animation runs on its own client clock: the moment charging is seen, start counting. */
+    /** TNL1093 由冷却算出的进度永远是 0（19 行探针全 t=0.0），所以动画改成
+     *  客户端自己的时钟：一看到蓄力就开始计时。*/
     private static long tnl$chargeStart = -1L;
 
     @Override
@@ -47,10 +47,10 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
                     com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_SKILL_MARKER.get());
         }
         long now = mc.level != null ? mc.level.getGameTime() : 0L;
-        // TNL1155 the chord pose must only play for the chord. The generic skill marker is set by every
-        // skill, so before this the sonic boom wind up looked exactly like the chord wind up.
-        // TNL1161 the chord state comes from the momo itself, exactly like the resonance charge.
-        // TNL1169 the pose now comes from the one synced spell channel
+        // TNL1155 和弦姿势只能给和弦用。通用技能标记是每个技能都会写的，
+        // 所以在此之前音波的前摇看起来和和弦一模一样。
+        // TNL1161 和弦状态来自墨默实体本身，和共鸣蓄力同一条路。
+        // TNL1169 姿势现在统一来自同步的法术通道
         if (entity.tnl$spell() != 0) {
             charging = true;
         }
@@ -61,7 +61,7 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
                 && com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.DISCORDANT_CHORD;
         boolean tnl$blinkPose = tnl$pose == com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.BLINK;
         boolean tnl$resonancePose = tnl$pose == com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.RESONANCE;
-        // TNL1158 probe: the chord wind up still shows no pose, so log what the client actually sees
+        // TNL1158 探针：和弦前摇仍然没姿势，所以把客户端实际看到的状态打出来
         if (System.currentTimeMillis() - tnl$poseLog > 1000L) {
             tnl$poseLog = System.currentTimeMillis();
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
@@ -84,22 +84,22 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
         }
         float progress = tnl$chargeStart < 0L ? 0.0F
                 : Math.max(0.0F, Math.min(1.0F, (now - tnl$chargeStart) / 40.0F));
-        // TNL1163 ROOT CAUSE of the missing chord wind up: the model returns early on
-        // "if (!CHARGING) return;", and CHARGING was only true for the resonance. The chord sets its
-        // own flag, so CHARGING stayed false and the model bailed out before ever looking at CHORD.
+        // TNL1163 和弦抬手消失的**根因**：模型里有一句早退
+        // `if (!CHARGING) return;`，而 CHARGING 只有共鸣会为真。和弦走的是
+        // 自己的标志，所以 CHARGING 一直是 false，模型根本没走到 CHORD 分支就返回了。
         com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.CHARGING =
                 charging || chordCast || tnl$blinkPose || tnl$resonancePose;
         com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.PROGRESS = progress;
-        // TNL1156 tell the model exactly which skill this frame belongs to
+        // TNL1156 明确告诉模型这一帧属于哪个技能
         com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.CHORD = chordCast;
         com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.BLINK = tnl$blinkPose;
-        // TNL1129 the prototype draws its effect inside the entity render chain, so do the same here.
-        // Local coordinates: the pose matrix is already on the entity, so ghosts are the offset from it.
-        // TNL1130 the prototype ThrustGhostRenderer draws these now, no need to draw twice
+        // TNL1129 原型（§1166 那套）是在实体渲染链里画的，这里照做。
+        // 用局部坐标：姿态矩阵已经落在实体上，残影就填相对它的偏移。
+        // TNL1130 现在由原型 ThrustGhostRenderer 画，不必再画一遍
         // tnl$drawBlinkGhosts(entity, poseStack, buffer);
         super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
-        // TNL1107 real ring geometry for the Discordant Chord, drawn from the entity like the model
-        // TNL1114 user: "forget it, go back to the particle ring" -- the textured quad is off.
+        // TNL1107 和弦的实体圆环几何，和模型一样从实体上画
+        // TNL1114 用户："算了，恢复粒子环" —— 贴图四边形方案关闭。
         // if (com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.DISCORDANT_CHORD
         //         && tnl$chargeStart >= 0L) {
         //     tnl$drawChordRings(entity, poseStack, buffer, now - tnl$chargeStart);
@@ -111,7 +111,7 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
         return TEXTURE;   // TNL1091 restored, my earlier slice had removed it
     }
 
-    /** TNL1129 ghosts of the Blink, drawn as extra copies of the player model. */
+    /** TNL1129 瞬身残影：把玩家模型多画几份 */
     private static HumanoidModel<?> tnl$ghostModel;
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -132,7 +132,7 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
                 return;
             }
         }
-        // let the shared entity batch own the flush, exactly like the model itself does
+        // 交给共用的实体批处理去 flush，和模型本身一样
         var vc = buffer.getBuffer(net.minecraft.client.renderer.RenderType.entityTranslucent(TEXTURE));
         int now = mc.player.tickCount;
         double ox = entity.getX();
@@ -154,7 +154,7 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
         }
     }
 
-    /** TNL1107 five thin rings, each born at Momo (radius 0) and spaced 33 ticks apart. */
+    /** TNL1107 五道细环：每道都从墨默脚下（半径 0）开始，彼此间隔 33 tick */
     private static void tnl$drawChordRings(KtuluMomo entity, PoseStack poseStack,
                                           net.minecraft.client.renderer.MultiBufferSource buffer, long elapsed) {
         double after = elapsed - 40.0D;                     // 40 ticks of charge first
@@ -171,16 +171,16 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
                 continue;
             }
             float fade = (float) Math.max(0.0D, 1.0D - r / 16.0D);
-            // TNL1112 the pose matrix is already translated onto the entity, so the ring
-            // must be emitted in LOCAL coordinates. Passing world coords pushed it away.
+            // TNL1112 姿态矩阵已经平移到实体上，所以环必须用
+            // **局部坐标**发出；传世界坐标会把它推走。
             tnl$ringQuad(null, mat, 0.0F, 0.03F, 0.0F, (float) r,
                     Math.max(0.20F, fade), buffer);
         }
     }
 
-    /** one ring drawn as a band of quads (inner radius r - w, outer r + w), 0.5 blocks tall. */
-    /** TNL1110 the geometry band never rendered, so the ring is a grey ring TEXTURE on a flat quad
-     *  lying on the ground, growing from the centre outwards. */
+    /** 一道环用一圈四边形画出来（内径 r-w、外径 r+w），高 0.5 格 */
+    /** TNL1110 几何带一直画不出来，所以改成"躺在地上的平面四边形 ＋ 灰色圆环贴图"，
+     *  从中往外生长。*/
     private static final net.minecraft.resources.ResourceLocation RING_TEX =
             new net.minecraft.resources.ResourceLocation("tinkersnewlife", "textures/effect/chord_ring.png");
 
