@@ -102,9 +102,9 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.0D, true));
         this.goalSelector.addGoal(2, new WaterAvoidingRandomStrollGoal(this, 0.8D));
-        // TNL1174 skills are goals now, exactly like the goety apostle registers its spells
-        // TNL1202 the guideline says the "enabled" flags belong in the registration, not scattered in
-        // the skills: register only what is switched on. Handy for testing a single skill at a time.
+        // TNL1174 技能现在都是 Goal，和诡厄使徒注册法术的方式一样
+        // TNL1202 准则规定："开关"应该体现在注册处，而不是散落在
+        // 技能内部：只注册打开的技能。方便一次单测一个技能。
         if (com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.BLINK) {
             this.goalSelector.addGoal(3, new com.mofengbaizhi.tinkersnewlife.content.skill.BlinkGoal(this));
         }
@@ -249,10 +249,10 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         if (this.level().isClientSide || this.tnl$dead) {
             return;   // TNL893 ★真死后不再护血/回弹 ✓
         }
-        // TNL1179 the boss bar is maintained every tick, the way ModServerBossInfo does it in Goety:
-        // progress straight from the authoritative health, and nearby players re-attached regularly.
-        // addPlayer alone is a no-op when the server still has the player, so every second we force a
-        // remove+add, which is what actually re-sends the bar to a client that lost it.
+        // TNL1179 血条每 tick 维护，照诡厄 ModServerBossInfo 的做法：
+        // 进度直接取权威血量，并定期把附近玩家重新挂上。
+        // 服务端集合里还有该玩家时 addPlayer 是空操作，所以每秒强制
+        // 摘掉再挂上 —— 这才是真正能把血条重发给掉条客户端的操作。
         if (this.level() instanceof net.minecraft.server.level.ServerLevel tnl$sl) {
             this.bossEvent.setProgress(Math.max(0.0F, Math.min(1.0F,
                     this.getHealth() / Math.max(1.0F, this.getMaxHealth()))));
@@ -269,10 +269,10 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             }
         }
 
-        // TNL1171 the momo drives its own skills, like the goety apostle drives its own goals.
-        // No global scanner, no per-skill map that can outlive the entity.
+        // TNL1171 墨默自己驱动技能，就像诡厄使徒自己驱动它的 Goal。
+        // 没有全服扫描，也没有能比实体活得久的技能表。
 
-        // TNL1169 cast counter, same idea as SpellCastingCultist.m_8024_
+        // TNL1169 吟唱计数，同 SpellCastingCultist.m_8024_ 的思路
         int tnl$cast = this.tnl$castTicks();
         if (tnl$cast > 0) {
             this.entityData.set(DATA_CAST_TICKS, tnl$cast - 1);
@@ -361,11 +361,11 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     }
 
     /**
-     * TNL1146 one cheat hit used to latch the boss off, because hurt() saw isDeadOrDying() (the
-     * sword calls die() even when the death is cancelled) and set tnl$dead. After that the whole
-     * protection is skipped: no damage limit, no immunity window. This clears the latch.
+     * TNL1146 以前一发作弊伤害就能把 Boss 锁死：hurt() 看到 isDeadOrDying()（那把剑即使
+     * 死亡被取消也照样调 die()）就把 tnl$dead 置上了。之后整套保护
+     * 都被跳过：没有限伤、没有无敌窗。这里把这个闩锁清掉。
      */
-    /** TNL1148 rate limit for the bar re-add log */
+    /** TNL1148 血条重挂日志的限流 */
     private long tnl$barStamp = 0L;
 
     public void tnl$unDead() {
@@ -380,19 +380,19 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
                 this.deathTime = 0;
                 this.hurtTime = 0;
             }
-            // TNL1148 the log showed the sword's die() DID run (the death event fired with 1545
-            // health) and the boss bar is dropped the moment that happens, even though the death is
-            // cancelled afterwards. Put every nearby player back on the bar.
-            // TNL1151 the bar stayed gone even after remove+add: the client's bar also carries a
-            // "visible" flag, and something set it to false (CursedSpiritTechnique#clearEntityBossBar
-            // does exactly bar.setVisible(false)). addPlayer does not touch that flag, so turn it on.
+            // TNL1148 日志显示那把剑的 die() **确实跑了**（死亡事件在 1545 血时就触发），
+            // 而血条在那一刻就被摘掉，哪怕随后死亡被取消。
+            // 所以把附近玩家重新挂回血条上。
+            // TNL1151 摘掉再挂之后血条依旧不见：客户端那条血条还带一个
+            // "visible" 标志，有东西把它设成了 false（CursedSpiritTechnique#clearEntityBossBar
+            // 就是 bar.setVisible(false)）。addPlayer 不动这个标志，所以要主动打开。
             this.bossEvent.setVisible(true);
             if (this.level() instanceof net.minecraft.server.level.ServerLevel sl) {
                 for (net.minecraft.server.level.ServerPlayer sp : sl.players()) {
                     if (sp.distanceTo(this) < 64.0F) {
-                        // TNL1150 addPlayer alone did nothing: the server side still had the player
-                        // in its own set, so no ADD packet was sent and the client bar stayed gone.
-                        // Remove first to force a fresh ADD packet, which is what the client needs.
+                        // TNL1150 只调 addPlayer 没用：服务端集合里还有该玩家，
+                        // 于是不发 ADD 包，客户端血条继续不见。
+                        // 改成先摘再挂，逼出一个新的 ADD 包 —— 客户端要的就是它。
                         this.bossEvent.removePlayer(sp);
                         this.bossEvent.addPlayer(sp);
                     }
@@ -410,19 +410,19 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         }
     }
 
-    /** TNL1086 Astral Resonance charge state, synced so the client can play the Warden style wind up. */
+    /** TNL1086 幻音共鸣蓄力状态，同步给客户端好播监守者式起手。*/
     private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_CHARGING =
             net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class,
                     net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
-    // TNL1161 user: "why is the cast marker on the player, it belongs on the momo -- casting and
-    // charging are the same thing". Right, and the entity data channel is the one that demonstrably
-    // reaches the client (the resonance uses it). The chord gets its own flag on the same channel.
+    // TNL1161 用户："施法标记为什么在玩家身上，应该挂在墨默身上 —— 施法和
+    // 蓄力本来就是一回事"。对，而且实体数据通道是**已被证明**能到客户端的
+    // 那条（共鸣就在用）。和弦也在同一条通道上拿了自己的标志。
     private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_CHORD =
             net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class,
                     net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
 
-    // TNL1169 the Goety way (SpellCastingCultist): ONE synced byte says which spell is casting and one
-    // synced int counts it down. 0 = idle, 1 = blink, 2 = astral resonance, 3 = discordant chord.
+    // TNL1169 诡厄的做法（SpellCastingCultist）：一个同步 byte 说明在放哪个法术，
+    // 一个同步 int 倒数计时。0 空闲、1 瞬身、2 幻音共鸣、3 混沌和弦。
     private static final net.minecraft.network.syncher.EntityDataAccessor<Byte> DATA_SPELL =
             net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class,
                     net.minecraft.network.syncher.EntityDataSerializers.BYTE);
@@ -445,16 +445,16 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         return this.tnl$spell() == 2;      // TNL1169 derived
     }
 
-    // TNL1172 the goety apostle keeps ONE cooldown field per spell (coolDown / tornadoCoolDown /
-    // infernoCoolDown / monolithCoolDown / damnedCoolDown). Same idea here, stored on the entity so it
-    // lives and dies with it instead of in a static map keyed by uuid.
+    // TNL1172 诡厄使徒每个法术一个冷却字段（coolDown / tornadoCoolDown /
+    // infernoCoolDown / monolithCoolDown / damnedCoolDown）。这里同理，存在实体上，
+    // 跟它一起生灭，而不是放在按 uuid 索引的静态表里。
     private long tnl$blinkCoolUntil = 0L;
     private long tnl$resonanceCoolUntil = 0L;
     private long tnl$chordCoolUntil = 0L;
 
-    // TNL1178 like the apostle's spellCycle: remember which spell just went off so the boss rotates
-    // through its skills instead of spamming whichever wakes up first. A timeout keeps it from idling
-    // forever when only one skill happens to be usable.
+    // TNL1178 类似使徒的 spellCycle：记住刚放的是哪个法术，让 Boss 轮着来，
+    // 而不是逮着哪个先就刷哪个。加一个超时，免得只剩一个技能可用时干等。
+    
     private int tnl$lastSpell = 0;
     private long tnl$lastSpellAt = 0L;
 
@@ -498,7 +498,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         this.tnl$chordCoolUntil = until;
     }
 
-    /** 0 idle, 1 blink, 2 resonance, 3 chord */
+    /** 0 空闲、1 瞬身、2 共鸣、3 和弦 */
     public int tnl$spell() {
         return this.entityData.get(DATA_SPELL);
     }
@@ -507,12 +507,12 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         return this.entityData.get(DATA_CAST_TICKS);
     }
 
-    /** TNL1169 true while any spell of this momo is casting */
+    /** TNL1169 本墨默有技能在施法时为 true */
     public boolean tnl$isBusy() {
         return this.tnl$spell() != 0;
     }
 
-    /** start (or refresh) a cast: id as above, ticks until it ends */
+    /** 开始（或刷新）一次施法：id 同上，ticks 是总时长 */
     public void tnl$setSpell(int id, int ticks) {
         this.entityData.set(DATA_SPELL, (byte) id);
         this.entityData.set(DATA_CAST_TICKS, Math.max(0, ticks));
@@ -522,7 +522,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         this.entityData.set(DATA_CHARGING, charging);
         this.tnl$setSpell(charging ? 2 : 0, charging ? 40 : 0);
     }
-    /** TNL1161 true while the Discordant Chord is casting; drives the chord pose on the client */
+    /** TNL1161 正在施放混沌和弦时为 true；客户端据此摆和弦姿势 */
     public boolean tnl$isChordCasting() {
         return this.tnl$spell() == 3;      // TNL1169 derived
     }
