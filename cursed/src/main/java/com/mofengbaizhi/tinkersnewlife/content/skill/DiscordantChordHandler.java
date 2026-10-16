@@ -88,7 +88,7 @@ public final class DiscordantChordHandler {
         if (!MomoSkills.DISCORDANT_CHORD) {
             return;
         }
-        tickOne(level, momo, now);
+        // TNL1176 the chord is a Goal now; the old handler must not drive it too
     }
 
     /** kept only as a no-op marker: the entity drives this now */
@@ -287,8 +287,48 @@ public final class DiscordantChordHandler {
         }
     }
 
+    /** TNL1176 entry used by ChordGoal: the wind up sound and smoke */
+    public static void startChargeFx(ServerLevel level, KtuluMomo momo) {
+        level.playSound(null, momo.blockPosition(), SoundEvents.WARDEN_SONIC_CHARGE,
+                SoundSource.HOSTILE, 2.0F, 0.6F);
+        level.sendParticles(ParticleTypes.CLOUD,
+                momo.getX(), momo.getY() + 1.6D, momo.getZ(), 6, 0.4D, 0.4D, 0.4D, 0.02D);
+    }
+
+    /** TNL1176 entry used by ChordGoal: everything in range jumps 1.5x while the chord plays */
+    public static void applyJumpBuff(ServerLevel level, KtuluMomo momo) {
+        JUMPED.clear();
+        var jumpMod = new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+                java.util.UUID.nameUUIDFromBytes("tnl1155_chord_jump".getBytes()),
+                "tnl1155_chord_jump", 0.5D,
+                net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.MULTIPLY_TOTAL);
+        for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class,
+                momo.getBoundingBox().inflate(MAX_RADIUS))) {
+            if (le == momo) {
+                continue;
+            }
+            var attr = le.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.JUMP_STRENGTH);
+            if (attr != null && !attr.hasModifier(jumpMod)) {
+                attr.addTransientModifier(jumpMod);
+                JUMPED.add(le);
+            }
+        }
+        TinkersNewlife.LOGGER.warn("TNL1176 chord jump buff on {} creatures", JUMPED.size());
+    }
+
+    /** TNL1176 entry used by ChordGoal: take the jump buff back */
+    public static void clearJumpBuff() {
+        for (LivingEntity le : JUMPED) {
+            var attr = le.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.JUMP_STRENGTH);
+            if (attr != null) {
+                attr.removeModifier(java.util.UUID.nameUUIDFromBytes("tnl1155_chord_jump".getBytes()));
+            }
+        }
+        JUMPED.clear();
+    }
+
     /** TNL1157 keep the chord marker alive on nearby players so the client can pick the chord pose. */
-    private static void markChord(ServerLevel level, KtuluMomo momo, int ticks) {
+    public static void markChord(ServerLevel level, KtuluMomo momo, int ticks) {
         for (net.minecraft.world.entity.player.Player near : level.getEntitiesOfClass(
                 net.minecraft.world.entity.player.Player.class, momo.getBoundingBox().inflate(48.0D))) {
             near.getCooldowns().addCooldown(
@@ -297,7 +337,7 @@ public final class DiscordantChordHandler {
     }
 
     /** TNL1114 grey dust so it reads as a ring, not a white blob. */
-    private static void drawRing(ServerLevel level, KtuluMomo momo, double radius, double baseY) {
+    public static void drawRing(ServerLevel level, KtuluMomo momo, double radius, double baseY) {
         var grey = new net.minecraft.core.particles.DustParticleOptions(
                 new org.joml.Vector3f(0.10F, 0.10F, 0.12F), 1.6F);
         int points = Math.max(32, (int) (radius * 8.0D));
@@ -313,7 +353,7 @@ public final class DiscordantChordHandler {
      * TNL1153 anything the wave touches takes the warden sonic boom damage and is launched, then left
      * weak and slow. Each wave sits at its own height, so the low one can be jumped over.
      */
-    private static void hitRing(ServerLevel level, KtuluMomo momo, double radius, double baseY) {
+    public static void hitRing(ServerLevel level, KtuluMomo momo, double radius, double baseY) {
         double band = 0.9D;
         for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class,
                 momo.getBoundingBox().inflate(MAX_RADIUS + 2.0D))) {
