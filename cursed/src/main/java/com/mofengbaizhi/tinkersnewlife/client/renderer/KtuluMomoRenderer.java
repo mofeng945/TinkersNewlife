@@ -189,10 +189,8 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
                 float z1 = (float) Math.sin(a1) * radius;
                 float x2 = (float) Math.cos(a2) * radius;
                 float z2 = (float) Math.sin(a2) * radius;
-                vc.vertex(mat, x1, y, z1).color(0.35F, 0.95F, 0.75F, alpha)
-                        .normal(0.0F, 1.0F, 0.0F).endVertex();
-                vc.vertex(mat, x2, y, z2).color(0.35F, 0.95F, 0.75F, alpha)
-                        .normal(0.0F, 1.0F, 0.0F).endVertex();
+                vc.vertex(mat, x1, y, z1).color(0.35F, 0.95F, 0.75F, alpha).endVertex();
+                vc.vertex(mat, x2, y, z2).color(0.35F, 0.95F, 0.75F, alpha).endVertex();
             }
         }
         // 外圈（36 段折线接地成一个圆）
@@ -202,9 +200,9 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
             double a1 = Math.toRadians(spin * 0.5D + i * (360.0D / seg));
             double a2 = Math.toRadians(spin * 0.5D + (i + 1) * (360.0D / seg));
             vc.vertex(mat, (float) Math.cos(a1) * outer, y, (float) Math.sin(a1) * outer)
-                    .color(0.25F, 0.75F, 0.60F, alpha * 0.7F).normal(0.0F, 1.0F, 0.0F).endVertex();
+                    .color(0.25F, 0.75F, 0.60F, alpha * 0.7F).endVertex();
             vc.vertex(mat, (float) Math.cos(a2) * outer, y, (float) Math.sin(a2) * outer)
-                    .color(0.25F, 0.75F, 0.60F, alpha * 0.7F).normal(0.0F, 1.0F, 0.0F).endVertex();
+                    .color(0.25F, 0.75F, 0.60F, alpha * 0.7F).endVertex();
         }
     }
 
