@@ -561,6 +561,14 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     public void tnl$setLookLocked(boolean locked) {
         if (locked) {
             this.goalSelector.disableControlFlag(net.minecraft.world.entity.ai.goal.Goal.Flag.LOOK);
+            // TNL1263 关键：`disableControlFlag` 只阻止 Goal **起手**，不会停掉**已经在跑**的
+            // 那一个（用户指出：LookAtPlayer/RandomLookAround 一旦起手，范围内有玩家就
+            // 一直 canContinueToUse ⇒ 禁旗对它们等于没禁，头照样转）。
+            // 所以这里把**正在跑且要求 LOOK** 的 Goal 用选择器 API 停掉
+            // （走 WrappedGoal.stop() ⇒ 它会正确地从运行集合里摘掉，不会像手调 stop() 那样卡住）。
+            this.goalSelector.getRunningGoals()
+                    .filter(g -> g.getFlags().contains(net.minecraft.world.entity.ai.goal.Goal.Flag.LOOK))
+                    .forEach(net.minecraft.world.entity.ai.goal.WrappedGoal::stop);
         } else {
             this.goalSelector.enableControlFlag(net.minecraft.world.entity.ai.goal.Goal.Flag.LOOK);
         }
