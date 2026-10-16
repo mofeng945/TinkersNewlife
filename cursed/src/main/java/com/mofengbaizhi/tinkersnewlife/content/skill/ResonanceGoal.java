@@ -3,6 +3,8 @@ package com.mofengbaizhi.tinkersnewlife.content.skill;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.LivingEntity;
 
@@ -26,6 +28,9 @@ public final class ResonanceGoal extends MomoSpellGoal {
 
     /** TNL1090 user: keep the boss melee at zero while the animation is being tested. */
     private static final boolean ATTACK_ZERO = true;
+
+    /** 击退距离（原本在 AstralResonanceHandler 里）*/
+    private static final double KNOCK_DISTANCE = 11.0D;
 
     private int nearTicks;
 
@@ -103,7 +108,7 @@ public final class ResonanceGoal extends MomoSpellGoal {
         ServerLevel level = (ServerLevel) this.momo.level();
         if (this.momo.tnl$castTicks() <= 10) {
             // wind up is over: the shriek happens once, then the goal ends
-            AstralResonanceHandler.shriek(level, this.momo, level.getGameTime());
+            this.shriek(level, level.getGameTime());   // TNL1207 the skill owns its own effect
             return true;
         }
         this.momo.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
@@ -122,4 +127,39 @@ public final class ResonanceGoal extends MomoSpellGoal {
         this.momo.tnl$setResonanceCoolUntil(now + COOLDOWN_TICKS);
         this.momo.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
     }
+    private void shriek(ServerLevel level, long now) {
+        this.momo.tnl$setResonanceCoolUntil(now + COOLDOWN_TICKS);   // TNL1172 on the entity
+        // TNL1164 user: never clear the AI for a wind up or a recovery -- it
+        // sticks (teleporting high left the boss frozen two seconds). Rooting is done
+        // by zeroing the movement every tick instead, which is already done above.
+        LivingEntity target = this.momo.getTarget();
+        Vec3 origin = this.momo.position().add(0.0D, 1.0D, 0.0D);
+        level.playSound(null, this.momo.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM,
+                SoundSource.HOSTILE, 3.0F, 1.0F);
+        if (target == null || !target.isAlive()) {
+            TinkersNewlife.LOGGER.warn("TNL1083 Momo shrieked but had no target");
+            return;
+        }
+        Vec3 dir = target.position().subtract(this.momo.position());
+        if (dir.lengthSqr() < 1.0E-4D) {
+            dir = new Vec3(1.0D, 0.0D, 0.0D);
+        }
+        Vec3 flat = new Vec3(dir.x, 0.0D, dir.z).normalize();
+        // enough horizontal speed to clear ten blocks even with drag
+        target.setDeltaMovement(flat.x * 4.6D, 0.50D, flat.z * 4.6D);   // TNL1103 push only, no damage
+        target.hurtMarked = true;
+        // TNL1103 user: no sonic damage at all, the shriek only launches the target away.
+        // draw the boom lance, like the Warden projectile
+        Vec3 end = origin.add(flat.scale(KNOCK_DISTANCE));
+        for (int i = 0; i <= 30; i++) {
+            double f = i / 12.0D;
+            level.sendParticles(ParticleTypes.SONIC_BOOM,
+                    origin.x + (end.x - origin.x) * f,
+                    origin.y + (end.y - origin.y) * f,
+                    origin.z + (end.z - origin.z) * f, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+        }
+        TinkersNewlife.LOGGER.warn("TNL1084 Momo shrieked, knocked {} away along {}",
+                target.getName().getString(), flat);
+    }
+
 }
