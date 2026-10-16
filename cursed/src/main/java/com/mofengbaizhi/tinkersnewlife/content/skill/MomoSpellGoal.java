@@ -38,7 +38,12 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
         this.spellId = spellId;
         this.cooldownTicks = cooldownTicks;
         this.totalTicks = totalTicks;
-        this.setFlags(java.util.EnumSet.of(Flag.MOVE, Flag.LOOK));
+        // TNL1198 CRITICAL: do NOT claim MOVE/LOOK. The melee goal (priority 1) always runs while the
+        // boss has a target and it owns both flags, so a spell that also claimed them could never
+        // start -- the boss would look like it never casts. Goety's apostle does not take flags either;
+        // it roots itself through the casting state. We root the same way: the goal zeroes the
+        // movement and stops the navigation every tick, and the hurt guard cancels its attacks.
+        // (no setFlags here on purpose)
     }
 
     /** how far the cast has progressed, 0..1, from the synced counter */
