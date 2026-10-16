@@ -86,7 +86,6 @@ public final class RequiemGoal extends MomoSpellGoal {
         long now = level.getGameTime();
         this.stun.keep();                                // 每 tick 压住（近战 Goal 会想重新寻路）
 
-        drawHexagram(level);                             // 贴地六芒星（缓慢转动）
 
         // 每秒结算一次
         if (this.momo.tnl$castTicks() % 20 == 0) {
@@ -122,37 +121,8 @@ public final class RequiemGoal extends MomoSpellGoal {
         this.momo.addEffect(new MobEffectInstance(MobEffects.REGENERATION, EFFECT_REFRESH, 1, false, true, true));
     }
 
-    /**
-     * TNL1253 贴地六芒星：两圈等边三角形（共 6 个顶点），用尘埃粒子连线，角度随时间缓慢转动。
-     * 纯服务端粒子 ⇒ 不需要新贴图（贴图版以后可以换）。
-     */
-    private void drawHexagram(ServerLevel level) {
-        this.spin += 0.01D;
-        double baseY = this.momo.getY() + 0.03D;
-        DustParticleOptions dust = new DustParticleOptions(
-                new org.joml.Vector3f(0.35F, 0.95F, 0.75F), 1.2F);
-        double r = RADIUS * 0.75D;
-        for (int ring = 0; ring < 2; ring++) {
-            double off = this.spin + ring * Math.PI / 3.0D;      // 两个三角形错开 60°
-            double[] px = new double[3];
-            double[] pz = new double[3];
-            for (int i = 0; i < 3; i++) {
-                double a = off + i * (Math.PI * 2.0D / 3.0D);
-                px[i] = this.momo.getX() + Math.cos(a) * r;
-                pz[i] = this.momo.getZ() + Math.sin(a) * r;
-            }
-            for (int i = 0; i < 3; i++) {
-                int j = (i + 1) % 3;
-                int steps = 18;
-                for (int s = 0; s <= steps; s++) {
-                    double t = (double) s / steps;
-                    double x = px[i] + (px[j] - px[i]) * t;
-                    double z = pz[i] + (pz[j] - pz[i]) * t;
-                    level.sendParticles(dust, x, baseY, z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
-                }
-            }
-        }
-    }
+    // TNL1255 六芒星已改为客户端真渲染（KtuluMomoRenderer.tnl$drawRequiemHexagram），
+    // 原来的粒子版删掉了；这里只保留每秒的效果结算与收尾粒子。
 
     @Override
     protected void onStop() {

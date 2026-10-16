@@ -148,7 +148,64 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
                         ? tnl$values[tnl$poseId]
                         : com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.NONE;
         com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.PROGRESS = entity.tnl$animProgress();
+        // TNL1255 生息绝响：领域改用**真渲染**（贴地六芒星，几何线，不要贴图）。
+        if (com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.POSE
+                == com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.REQUIEM) {
+            tnl$drawRequiemHexagram(entity, poseStack, buffer);
+        }
         super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
+    }
+
+    /**
+     * TNL1255 生息绝响的领域：**贴地六芒星**（两个等边三角形错开 60°）＋ 一个外圈，
+     * 随时间缓慢转动，随动画进度淡入淡出。
+     *
+     * <p>用几何线画（{@code RenderType.lightning()}，不动任何贴图素材）——
+     * 粒子版只是过渡，这里是真渲染。局部坐标：姿态矩阵已经落在实体上，
+     * 所以线必须用**相对实体**的偏移发出。
+     */
+    private static void tnl$drawRequiemHexagram(KtuluMomo entity,
+                                                com.mojang.blaze3d.vertex.PoseStack poseStack,
+                                                net.minecraft.client.renderer.MultiBufferSource buffer) {
+        float tnl$p = Math.max(0.0F, Math.min(1.0F,
+                com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.PROGRESS));
+        // 淡入 0~0.1，淡出 0.85~1
+        float alpha = tnl$p < 0.1F ? tnl$p / 0.1F
+                : (tnl$p > 0.85F ? (1.0F - tnl$p) / 0.15F : 1.0F);
+        alpha = Math.max(0.05F, Math.min(1.0F, alpha));
+        float radius = 6.0F;
+        float spin = (entity.tickCount % 1200) * 0.3F;      // 缓慢转动
+        com.mojang.blaze3d.vertex.VertexConsumer vc =
+                buffer.getBuffer(net.minecraft.client.renderer.RenderType.lightning());
+        org.joml.Matrix4f mat = poseStack.last().pose();
+        float y = 0.03F;
+        // 两个等边三角形
+        for (int tri = 0; tri < 2; tri++) {
+            float off = spin + tri * 60.0F;
+            for (int i = 0; i < 3; i++) {
+                double a1 = Math.toRadians(off + i * 120.0F);
+                double a2 = Math.toRadians(off + ((i + 1) % 3) * 120.0F);
+                float x1 = (float) Math.cos(a1) * radius;
+                float z1 = (float) Math.sin(a1) * radius;
+                float x2 = (float) Math.cos(a2) * radius;
+                float z2 = (float) Math.sin(a2) * radius;
+                vc.vertex(mat, x1, y, z1).color(0.35F, 0.95F, 0.75F, alpha)
+                        .normal(0.0F, 1.0F, 0.0F).endVertex();
+                vc.vertex(mat, x2, y, z2).color(0.35F, 0.95F, 0.75F, alpha)
+                        .normal(0.0F, 1.0F, 0.0F).endVertex();
+            }
+        }
+        // 外圈（36 段折线接地成一个圆）
+        int seg = 48;
+        float outer = radius * 1.18F;
+        for (int i = 0; i < seg; i++) {
+            double a1 = Math.toRadians(spin * 0.5D + i * (360.0D / seg));
+            double a2 = Math.toRadians(spin * 0.5D + (i + 1) * (360.0D / seg));
+            vc.vertex(mat, (float) Math.cos(a1) * outer, y, (float) Math.sin(a1) * outer)
+                    .color(0.25F, 0.75F, 0.60F, alpha * 0.7F).normal(0.0F, 1.0F, 0.0F).endVertex();
+            vc.vertex(mat, (float) Math.cos(a2) * outer, y, (float) Math.sin(a2) * outer)
+                    .color(0.25F, 0.75F, 0.60F, alpha * 0.7F).normal(0.0F, 1.0F, 0.0F).endVertex();
+        }
     }
 
     @Override
