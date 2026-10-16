@@ -48,7 +48,7 @@ public final class AstralResonanceHandler {
         if (!MomoSkills.ASTRAL_RESONANCE) {
             return;
         }
-        tickOne(level, momo, now);
+        // TNL1174 the resonance is a Goal now; the old handler must not drive it as well
     }
 
     /** kept only as a no-op marker: the entity drives this now */
@@ -139,7 +139,7 @@ public final class AstralResonanceHandler {
     }
 
     /** the shriek itself: Warden sonic boom feel, knock the target past ten blocks. */
-    private static void shriek(ServerLevel level, KtuluMomo momo, long now) {
+    public static void shriek(ServerLevel level, KtuluMomo momo, long now) {   // TNL1174 called by ResonanceGoal
         momo.tnl$setResonanceCoolUntil(now + COOLDOWN_TICKS);   // TNL1172 on the entity
         // TNL1164 user: never clear the AI for a wind up or a recovery -- it
         // sticks (teleporting high left the boss frozen two seconds). Rooting is done
