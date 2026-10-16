@@ -150,6 +150,7 @@ public final class ChordGoal extends MomoSpellGoal {
         }
 
         if (!this.released) {
+            this.stun.keep();                  // TNL1237 keep 定身：否则近战 Goal 会拖着 Boss 追人
             this.momo.setDeltaMovement(Vec3.ZERO);
         }
         if (!this.released && this.releaseAt > 0L && now >= this.releaseAt) {
@@ -286,29 +287,30 @@ static final class DiscordantChordHandler {   // TNL1213 收编自原 Discordant
      * 虚弱又迟缓。每道波在自己的高度上，所以矮的那道可以跳过去。
      */
     public static void hitRing(ServerLevel level, KtuluMomo momo, double ox, double oy, double oz, double radius, double baseY) {   // TNL1235 圆心由调用方给
-        double band = 0.9D;
+        double band = 0.9D;   // TNL1237 判定也必须用锚定圆心（用户："锚定了粒子但是没锚定判定"）
+        // TNL1237 以**波心**搜实体：Boss 走开了也要能找到波上的目标
         for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class,
-                momo.getBoundingBox().inflate(MAX_RADIUS + 2.0D))) {
+                new net.minecraft.world.phys.AABB(ox - MAX_RADIUS - 2.0D, oy - 4.0D, oz - MAX_RADIUS - 2.0D, ox + MAX_RADIUS + 2.0D, oy + 4.0D, oz + MAX_RADIUS + 2.0D))) {
             if (le == momo || !le.isAlive()) {
                 continue;
             }
-            double d = Math.sqrt(Math.pow(le.getX() - momo.getX(), 2.0D)
-                    + Math.pow(le.getZ() - momo.getZ(), 2.0D));
+            double d = Math.sqrt(Math.pow(le.getX() - ox, 2.0D)
+                    + Math.pow(le.getZ() - oz, 2.0D));
             if (Math.abs(d - radius) > band) {
                 continue;
             }
             // TNL1154 精准判定：波面必须切过实体自己的碰撞箱，留一点点余量。
             // 站立箱 0~1.8、下蹲 0~1.5、跳跃会把两者一起抬高。所以
             // 矮波（0.15）跳得过去，高波（2.3）蹲得下去。
-            double wave = baseY - momo.getY();
-            double boxLow = le.getY() - momo.getY();
+            double wave = baseY - oy;
+            double boxLow = le.getY() - oy;
             double boxHigh = boxLow + le.getBbHeight();
             double margin = 0.5D;
             if (wave < boxLow - margin || wave > boxHigh + margin) {
                 continue;
             }
             le.hurt(level.damageSources().sonicBoom(momo), SONIC_DAMAGE);
-            Vec3 out = new Vec3(le.getX() - momo.getX(), 0.0D, le.getZ() - momo.getZ());
+            Vec3 out = new Vec3(le.getX() - ox, 0.0D, le.getZ() - oz);
             if (out.lengthSqr() < 1.0E-4D) {
                 out = new Vec3(1.0D, 0.0D, 0.0D);
             }
