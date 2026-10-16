@@ -548,6 +548,22 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         this.tnl$stunUntil = Math.max(this.tnl$stunUntil, this.level().getGameTime() + Math.max(0, ticks));
     }
 
+    /**
+     * TNL1258 用户："禁用 look 标志不就行了，用 disablecontrolflag"。
+     *
+     * <p>禁掉 {@code LOOK} 旗之后，任何**要求 LOOK** 的 Goal（LookAtPlayerGoal、
+     * RandomLookAroundGoal、MeleeAttackGoal）都无法起手 ⇒ 头不再乱转；
+     * 而我们的技能 Goal 本来就不占旗，照常运行。
+     * 技能起手时禁用、收尾时恢复（MomoSpellGoal / MomoHurtGoal 负责调用）。
+     */
+    public void tnl$setLookLocked(boolean locked) {
+        if (locked) {
+            this.goalSelector.disableControlFlag(net.minecraft.world.entity.ai.goal.Goal.Flag.LOOK);
+        } else {
+            this.goalSelector.enableControlFlag(net.minecraft.world.entity.ai.goal.Goal.Flag.LOOK);
+        }
+    }
+
     /** TNL1250 现在是否被定身/硬直（守卫据此取消它的攻击） */
     public boolean tnl$isStunned() {
         return this.tnl$stunnedFlag || this.level().getGameTime() < this.tnl$stunUntil;

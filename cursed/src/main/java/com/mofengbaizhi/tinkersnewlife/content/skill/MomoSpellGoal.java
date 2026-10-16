@@ -99,6 +99,10 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
         this.runningTicks = 0;
         this.tnl$done = false;
         this.momo.tnl$setSpell(this.spellId, this.totalTicks);
+        // TNL1258 用户："禁用 look 标志不就行了，用 disablecontrolflag"。
+        // 施法期间禁掉 LOOK 旗 ⇒ LookAtPlayer/RandomLookAround/MeleeAttack 都进不来，
+        // 头不会乱转；我们的技能不占旗，照常运行。收尾时在 stop() 恢复。
+        this.momo.tnl$setLookLocked(true);
         // TNL1244 技能自己上报动画（用户："把动画动作的调用打包在技能类里面"）。
         // 每个技能可以重写 animProgress() 决定自己的节奏。
         this.momo.tnl$setAnim(this.animPose().ordinal(), this.animProgress());
@@ -171,6 +175,7 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
         }   // TNL1178 remember it for the rotation
         // TNL1244 收尾清掉动画通道，免得姿势留在最后一帧
         this.momo.tnl$clearAnim();
+        this.momo.tnl$setLookLocked(false);          // TNL1258 恢复 LOOK 旗
         this.onStop();
     }
 

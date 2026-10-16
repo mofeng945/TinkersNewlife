@@ -48,6 +48,7 @@ public final class MomoHurtGoal extends Goal {
         this.total = Math.max(1, this.momo.takeHurtStagger());
         this.left = this.total;
         this.momo.tnl$setStunned(true);        // 用 stun 的手段：清寻路 + 不许攻击
+        this.momo.tnl$setLookLocked(true);     // TNL1258 硬直期间也禁掉 LOOK 旗，头不乱转
     }
 
     @Override
@@ -62,6 +63,7 @@ public final class MomoHurtGoal extends Goal {
     @Override
     public void stop() {
         this.momo.tnl$setStunned(false);
+        this.momo.tnl$setLookLocked(false);    // TNL1258 恢复 LOOK 旗
         this.momo.tnl$clearAnim();
         this.left = 0;
     }
