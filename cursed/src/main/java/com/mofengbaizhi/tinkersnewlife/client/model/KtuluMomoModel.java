@@ -21,6 +21,9 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
 
     /** TNL1156 true only on the frames where the Discordant Chord is being cast */
     public static boolean CHORD = false;
+
+    /** TNL1189 true only on the frames where the Blink is being cast */
+    public static boolean BLINK = false;
     /** 0 = just started, 1 = about to shriek */
     public static float PROGRESS = 0.0F;
     /** TNL1108 the chord keeps the hands up for a while after the sync flag drops, so the pose does
@@ -136,6 +139,27 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
             this.leftArm.xRot = 0.0F;
             this.leftArm.yRot = wave2;
             this.leftArm.zRot = -2.3561945F - wave2;
+            this.rightLeg.xRot = 0.0F;
+            this.leftLeg.xRot = 0.0F;
+            this.hat.xRot = this.head.xRot;
+            this.hat.yRot = this.head.yRot;
+            this.hat.zRot = this.head.zRot;
+            return;
+        }
+
+        // TNL1189 blink: rooted, arms hanging with a slight inward cross (Goety's CROSSED idea),
+        // head locked straight ahead. Inserted before the resonance branch so the blink never
+        // borrows the warden guard pose.
+        if (BLINK) {
+            this.body.xRot = 0.0F;
+            this.head.xRot = 0.0F;
+            this.head.yRot = netHeadYaw * 0.25F;
+            this.rightArm.xRot = 0.0F;
+            this.rightArm.yRot = 0.0F;
+            this.rightArm.zRot = -0.35F;
+            this.leftArm.xRot = 0.0F;
+            this.leftArm.yRot = 0.0F;
+            this.leftArm.zRot = 0.35F;
             this.rightLeg.xRot = 0.0F;
             this.leftLeg.xRot = 0.0F;
             this.hat.xRot = this.head.xRot;
