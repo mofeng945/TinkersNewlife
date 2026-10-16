@@ -95,6 +95,7 @@ public class AeonianOrderItem extends SwordItem {
                 //     \uff08\u2605\u5b83\u5e26\u81ea\u52a8\u9501\u5b9a/\u5236\u5bfc\u8ffd\u8e2a \u2717 \u2014\u2014 \u2605\u6b63\u662f\u4f60\u4e0d\u8981\u7684 \u2713\uff09
                 //   \u2605\u73b0\u5728 \u2713\uff1a\u2605\u7eaf\u76f4\u7ebf\u3001\u65e0\u91cd\u529b\u3001\u6cbf\u89c6\u7ebf\u3001**\u6700\u591a 20 \u683c** \u2713
                 tnl$throwHook(level, player, stack);
+                tnl$spend(stack, player, hand, 2);      // TNL1191 the hook wears the weapon
                 player.getCooldowns().addCooldown(this, 40);
             }
             player.swing(hand, true);
@@ -114,6 +115,7 @@ public class AeonianOrderItem extends SwordItem {
             player.fallDistance = 0.0F;
             // \u2605\u2461 \u9884\u7ea6\u6a2a\u626b \u2713
             PENDING.add(new Pending(player.getUUID(), SWEEP_DELAY, flat));
+            tnl$spend(stack, player, hand, 2);          // TNL1191 the thrust wears the weapon
             player.getCooldowns().addCooldown(this, COOLDOWN);
             level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
                     SoundSource.PLAYERS, 1.4F, 0.9F);
@@ -124,6 +126,21 @@ public class AeonianOrderItem extends SwordItem {
     }
 
     /** \u2605\u5f85\u6267\u884c\u7684\u6a2a\u626b \u2713 */
+    /**
+     * TNL1191 user: "durability last". The weapon now wears out as its ability is used: two points per
+     * activation, skipped in creative. Called from the server side only, so the client stays in sync
+     * through the normal item damage packet.
+     */
+    private static void tnl$spend(ItemStack stack, Player player, InteractionHand hand, int amount) {
+        try {
+            if (player.getAbilities().instabuild) {
+                return;
+            }
+            stack.hurtAndBreak(amount, player, p -> p.broadcastBreakEvent(hand));
+        } catch (Throwable ignored) {
+        }
+    }
+
     private record Pending(java.util.UUID owner, int ticks, Vec3 dir) {
     }
 
