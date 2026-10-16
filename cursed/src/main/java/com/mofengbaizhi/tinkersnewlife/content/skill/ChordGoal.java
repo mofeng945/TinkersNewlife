@@ -30,12 +30,12 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * TNL1176 Discordant Chord as a Goal (spell id 3), the last skill on the new system.
+ * TNL1176 混沌和弦（法术编号 3），新体系里最后一个迁过来的技能。
  *
- * <p>Ten waves per cast. The gap between two waves is a random 1.5 to 3 seconds, each wave fires from
- * a random one of two heights (0.15 or 2.3 blocks above the ground), the range is 30 blocks, the damage
- * is the warden sonic boom, and everything in range jumps 1.5x while the chord plays. Hard control ends
- * half a second after the last wave -- the waves may still be travelling.
+ * <p>每次施法共 10 波。两波间隔随机 1.5~3 秒，每波从
+ * 两种高度（离地 0.15 或 2.3 格）里随机挑一个，范围 30 格，伤害为
+ * 监守者音波伤害，范围内所有生物跳跃 ×1.5。硬控在最后一波之后
+ * 0.5 秒结束 —— 那时波可能还在飞。
  */
 public final class ChordGoal extends MomoSpellGoal {
 
@@ -50,7 +50,7 @@ public final class ChordGoal extends MomoSpellGoal {
     private static final int COOLDOWN_TICKS = 2400;
     private static final int AFTER_LAST_TICKS = 10;
 
-    /** longest possible cast: the charge plus ten waves at the slowest rhythm, plus slack */
+    /** 最长可能的施法总时长：蓄力 ＋ 10 波按最慢节奏 ＋ 余量 */
     private static final int TOTAL_TICKS = CHARGE_TICKS + WAVES * (GAP_MIN_TICKS + GAP_RANGE_TICKS) + 260;   // TNL1200 rings must finish flying
 
     private static final Random RNG = new Random();
@@ -114,7 +114,7 @@ public final class ChordGoal extends MomoSpellGoal {
         DiscordantChordHandler.markChord(level, this.momo, 8);
 
         if (this.momo.tnl$castTicks() > TOTAL_TICKS - CHARGE_TICKS) {
-            // still winding up
+            // 还在蓄力
             level.sendParticles(net.minecraft.core.particles.ParticleTypes.CLOUD,
                     this.momo.getX(), this.momo.getY() + 1.6D, this.momo.getZ(), 2, 0.4D, 0.4D, 0.4D, 0.01D);
             this.momo.setDeltaMovement(Vec3.ZERO);
@@ -138,7 +138,7 @@ public final class ChordGoal extends MomoSpellGoal {
             }
         }
 
-        // several waves travel at once: the gap is shorter than the time a wave needs to cross 30 blocks
+        // 同时有多道波在飞：间隔比一道波飞完 30 格所需的时间还短
         java.util.Iterator<double[]> it = this.rings.iterator();
         while (it.hasNext()) {
             double[] ring = it.next();
@@ -159,8 +159,8 @@ public final class ChordGoal extends MomoSpellGoal {
             }
         }
         if (!this.released && this.releaseAt > 0L && now >= this.releaseAt) {
-            // TNL1200 control ends half a second after the last wave; the goal keeps running so the
-            // rings finish travelling, but the boss is free (no more rooting, no more chord pose).
+            // TNL1200 硬控在最后一波后 0.5 秒结束；但技能继续跑，好让波
+            // 把剩下的路飞完，而 Boss 已经自由（不再定身、不再摆和弦姿势）。
             this.releaseAt = 0L;
             this.released = true;
             this.momo.tnl$setChordCasting(false);
@@ -172,7 +172,7 @@ public final class ChordGoal extends MomoSpellGoal {
         return this.momo.tnl$castTicks() <= 0;
     }
 
-    /** live waves: [0] = radius, [1] = base y */
+    /** 在飞的波：[0] 半径，[1] 基准高度 */
     private final java.util.List<double[]> rings = new java.util.ArrayList<>();
     private long releaseAt;
 
@@ -188,26 +188,26 @@ public final class ChordGoal extends MomoSpellGoal {
     // ===== TNL1213 和弦的实现整体收进技能类（★原 DiscordantChordHandler 原样成为内部类 ✓）=====
 static final class DiscordantChordHandler {   // TNL1213 收编自原 DiscordantChordHandler.java
 
-    /** TNL1153 ten waves per cast */
-    /** TNL1153 random gap between waves: 1.5 s to 3 s */
-    /** TNL1153 range is 30 blocks now */
+    /** TNL1153 每次施法 10 波 */
+    /** TNL1153 波间隔随机 1.5~3 秒 */
+    /** TNL1153 范围改成 30 格 */
     private static final double MAX_RADIUS = 30.0D;
-    /** TNL1153 the two spawn heights above the ground */
-    /** vanilla warden sonic boom damage */
+    /** TNL1153 离地的两种发射高度 */
+    /** 原版监守者音波伤害 */
     private static final float SONIC_DAMAGE = 10.0F;
-    /** TNL1154 the cooldown starts when the cast ENDS, not when it starts */
+    /** TNL1154 冷却从**施法结束**起算，不是从起手算 */
     private static final int EFFECT_TICKS = 100;       // 5 s of weakness and slowness
 
-    /** per momo: charge until this game time, -1 when idle */
-    /** per momo: the live rings of the current cast */
-    /** TNL1153 how many waves are still waiting to be released */
-    /** TNL1153 when the next wave is due */
-    /** TNL1157 when the hard control of this cast ends */
+    /** 每个墨默：蓄力到这个世界时间，空闲时不用 */
+    /** 每个墨默：本次施法在飞的环 */
+    /** TNL1153 还有多少波没放 */
+    /** TNL1153 下一波到点的时间 */
+    /** TNL1157 本次施法硬控结束的时间 */
 
-    /** TNL1155 who currently carries the chord jump buff */
+    /** TNL1155 当前带着和弦跳跃加成的人 */
     private static final List<LivingEntity> JUMPED = new ArrayList<>();
 
-    /** TNL1153 rng for the gaps and the heights */
+    /** TNL1153 间隔与高度的随机源 */
 
     private static final class Ring {
         double radius;
@@ -223,7 +223,7 @@ static final class DiscordantChordHandler {   // TNL1213 收编自原 Discordant
 
 
 
-    /** TNL1176 entry used by ChordGoal: the wind up sound and smoke */
+    /** TNL1176 给技能调用的入口：起手音效与烟雾 */
     public static void startChargeFx(ServerLevel level, KtuluMomo momo) {
         level.playSound(null, momo.blockPosition(), SoundEvents.WARDEN_SONIC_CHARGE,
                 SoundSource.HOSTILE, 2.0F, 0.6F);
@@ -231,7 +231,7 @@ static final class DiscordantChordHandler {   // TNL1213 收编自原 Discordant
                 momo.getX(), momo.getY() + 1.6D, momo.getZ(), 6, 0.4D, 0.4D, 0.4D, 0.02D);
     }
 
-    /** TNL1176 entry used by ChordGoal: everything in range jumps 1.5x while the chord plays */
+    /** TNL1176 给技能调用的入口：施法期间范围内跳跃 ×1.5 */
     public static void applyJumpBuff(ServerLevel level, KtuluMomo momo) {
         JUMPED.clear();
         var jumpMod = new net.minecraft.world.entity.ai.attributes.AttributeModifier(
@@ -252,7 +252,7 @@ static final class DiscordantChordHandler {   // TNL1213 收编自原 Discordant
         TinkersNewlife.LOGGER.warn("TNL1176 chord jump buff on {} creatures", JUMPED.size());
     }
 
-    /** TNL1176 entry used by ChordGoal: take the jump buff back */
+    /** TNL1176 给技能调用的入口：收回跳跃加成 */
     public static void clearJumpBuff() {
         for (LivingEntity le : JUMPED) {
             var attr = le.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.JUMP_STRENGTH);
@@ -263,7 +263,7 @@ static final class DiscordantChordHandler {   // TNL1213 收编自原 Discordant
         JUMPED.clear();
     }
 
-    /** TNL1157 keep the chord marker alive on nearby players so the client can pick the chord pose. */
+    /** TNL1157 给附近玩家保持和弦标记，客户端据此选和弦姿势。*/
     public static void markChord(ServerLevel level, KtuluMomo momo, int ticks) {
         for (net.minecraft.world.entity.player.Player near : level.getEntitiesOfClass(
                 net.minecraft.world.entity.player.Player.class, momo.getBoundingBox().inflate(48.0D))) {
@@ -272,7 +272,7 @@ static final class DiscordantChordHandler {   // TNL1213 收编自原 Discordant
         }
     }
 
-    /** TNL1114 grey dust so it reads as a ring, not a white blob. */
+    /** TNL1114 深灰尘埃，看着像圆环而不是一团白。*/
     public static void drawRing(ServerLevel level, KtuluMomo momo, double radius, double baseY) {
         var grey = new net.minecraft.core.particles.DustParticleOptions(
                 new org.joml.Vector3f(0.10F, 0.10F, 0.12F), 1.6F);
@@ -286,8 +286,8 @@ static final class DiscordantChordHandler {   // TNL1213 收编自原 Discordant
     }
 
     /**
-     * TNL1153 anything the wave touches takes the warden sonic boom damage and is launched, then left
-     * weak and slow. Each wave sits at its own height, so the low one can be jumped over.
+     * TNL1153 被波扫到的东西吃监守者音波伤害并被掀飞，随后
+     * 虚弱又迟缓。每道波在自己的高度上，所以矮的那道可以跳过去。
      */
     public static void hitRing(ServerLevel level, KtuluMomo momo, double radius, double baseY) {
         double band = 0.9D;
@@ -301,9 +301,9 @@ static final class DiscordantChordHandler {   // TNL1213 收编自原 Discordant
             if (Math.abs(d - radius) > band) {
                 continue;
             }
-            // TNL1154 precise hit test: the wave plane must cut through the entity's own box, with a
-            // small margin. Standing box is 0..1.8, crouching is 0..1.5, jumping lifts both. So the
-            // low wave (0.55) can be jumped over and the high one (2.3) can be crouched under.
+            // TNL1154 精准判定：波面必须切过实体自己的碰撞箱，留一点点余量。
+            // 站立箱 0~1.8、下蹲 0~1.5、跳跃会把两者一起抬高。所以
+            // 矮波（0.15）跳得过去，高波（2.3）蹲得下去。
             double wave = baseY - momo.getY();
             double boxLow = le.getY() - momo.getY();
             double boxHigh = boxLow + le.getBbHeight();
