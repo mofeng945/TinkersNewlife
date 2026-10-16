@@ -3,34 +3,34 @@ package com.mofengbaizhi.tinkersnewlife.content.skill;
 import com.mofengbaizhi.tinkersnewlife.content.entity.KtuluMomo;
 
 /**
- * TNL1173 the base of the skill system, modelled on the Goety apostle.
+ * TNL1173 技能体系基类，照诡厄使徒的做法。
  *
- * <p>What the apostle does (decompiled, {@code Apostle} 2388 lines):
+ * <p>使徒是怎么做的（反编译 {@code Apostle} 2388 行）：
  * <ul>
- *   <li>every spell is its own {@code Goal} registered with
- *       {@code goalSelector.addGoal(3, new XxxSpellGoal(this))};</li>
- *   <li>every spell owns a cooldown FIELD ({@code coolDown}, {@code tornadoCoolDown},
- *       {@code infernoCoolDown}, {@code monolithCoolDown}, {@code damnedCoolDown}) decremented in
- *       {@code customServerAiStep};</li>
- *   <li>casting state lives on the entity as a synced spell id plus a tick counter
- *       ({@code SpellCastingCultist.SPELL} + {@code spellTicks});</li>
- *   <li>a phase transition is itself a goal ({@code SecondPhaseIndicator}) whose only job is to set a
- *       flag that every other goal checks -- that is how it stands still WITHOUT clearing the AI.</li>
+ *   <li>每个技能都是自己的 {@code Goal}，用
+ *       {@code goalSelector.addGoal(3, new XxxSpellGoal(this))} 注册；</li>
+ *   <li>每个技能有自己的冷却字段（{@code coolDown}、{@code tornadoCoolDown}、
+ *       {@code infernoCoolDown}、{@code monolithCoolDown}、{@code damnedCoolDown}），在
+ *       {@code customServerAiStep} 里递减；</li>
+ *   <li>施法状态放在实体上：同步的法术编号 ＋ 一个 tick 计数器
+ *       （{@code SpellCastingCultist.SPELL} ＋ {@code spellTicks}）；</li>
+ *   <li>转阶段本身也是一个 Goal（{@code SecondPhaseIndicator}），它只做一件事：
+ *       置一个标志，其它所有 Goal 都判它 —— 这就是"不清 AI 也能站定"的做法。</li>
  * </ul>
  *
- * <p>So a skill here is: <b>cooldown on the entity + isBusy gate + pose from the synced spell channel</b>.
- * Never {@code setNoAi}, never clearing velocity from a server tick event, never a marker cooldown on
- * players. See {@code docs/墨默技能开发准则.md}.
+ * <p>所以这里的技能＝<b>实体上的冷却 ＋ isBusy 闸门 ＋ 由同步法术通道决定的姿势</b>。
+ * 不许用 {@code setNoAi}，不许在服务端 tick 事件里清零速度，不许把冷却挂在玩家身上。
+ * 详见 {@code docs/墨默技能开发准则.md}。
  */
 public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.Goal {
 
     protected final KtuluMomo momo;
 
-    /** 1 blink, 2 astral resonance, 3 discordant chord */
+    /** 1 瞬身、2 幻音共鸣、3 混沌和弦 */
     protected final int spellId;
-    /** own cooldown, in ticks, counted from the moment the cast ends */
+    /** 本技能自己的冷却（tick），从**施法结束**那一刻起算 */
     private final int cooldownTicks;
-    /** ticks from the start of the wind up to the end of the recovery */
+    /** 从起手前摇到后摇结束的总 tick 数 */
     private final int totalTicks;
 
     protected MomoSpellGoal(KtuluMomo momo, int spellId, int cooldownTicks, int totalTicks) {
@@ -38,15 +38,15 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
         this.spellId = spellId;
         this.cooldownTicks = cooldownTicks;
         this.totalTicks = totalTicks;
-        // TNL1198 CRITICAL: do NOT claim MOVE/LOOK. The melee goal (priority 1) always runs while the
-        // boss has a target and it owns both flags, so a spell that also claimed them could never
-        // start -- the boss would look like it never casts. Goety's apostle does not take flags either;
-        // it roots itself through the casting state. We root the same way: the goal zeroes the
-        // movement and stops the navigation every tick, and the hurt guard cancels its attacks.
-        // (no setFlags here on purpose)
+        // TNL1198 关键：**绝不占用 MOVE/LOOK**。近战 Goal（优先级 1）只要 Boss 有目标就一直在跑，
+        // 而它同时占着这两个 flag，技能若也占就**永远抢不到**，表现就是"技能根本不放"。
+        // 诡厄的使徒也不占 flag：
+        // 它靠施法状态定身。我们同样处理：技能每 tick 清零速度、
+        // 停下寻路，攻击由守卫按 isBusy() 取消。
+        // （这里故意不调 setFlags）
     }
 
-    /** how far the cast has progressed, 0..1, from the synced counter */
+    /** 施法进度 0..1（由同步的剩余 tick 换算）*/
     protected float progress() {
         int left = this.momo.tnl$castTicks();
         if (this.totalTicks <= 0) {
@@ -55,11 +55,11 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
         return Math.max(0.0F, Math.min(1.0F, 1.0F - (float) left / (float) this.totalTicks));
     }
 
-    /** true when this momo may start this spell right now */
+    /** 现在能不能起手 */
     protected boolean ready() {
-        // TNL1196 GoalSelector runs on the CLIENT as well (Mob.aiStep), and every skill casts the level
-        // to ServerLevel and spawns particles on it. Without this guard the whole thing would throw a
-        // ClassCastException on every client tick. Vanilla's own casting goal checks the same thing.
+        // TNL1196 GoalSelector 在**客户端也会跑**（Mob.aiStep），而每个技能都会把 level
+        // 强转成 ServerLevel 并在上面发粒子。没有这道闸门就会在客户端每 tick 抛
+        // ClassCastException。原版自己的施法 Goal 也是这么判的。
         if (this.momo.level().isClientSide) {
             return false;
         }
@@ -72,16 +72,16 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
     /** ticks of cooldown still to go; each skill keeps its own field on the entity */
     protected abstract int cooldownLeft();
 
-    /** called once when the wind up begins */
+    /** 起手时调一次 */
     protected abstract void onStart();
 
-    /** called every tick of the cast; return true to end it */
+    /** 施法中每 tick 调；返回 true 表示结束 */
     protected abstract boolean onTick();
 
-    /** called once when the cast ends for any reason */
+    /** 无论怎么结束都调一次 */
     protected abstract void onStop();
 
-    /** subclasses decide their own trigger conditions */
+    /** 触发条件由子类自己定 */
     @Override
     public abstract boolean canUse();
 
@@ -99,9 +99,9 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
 
     @Override
     public void tick() {
-        // TNL1203 user: "you are still rooting with a zeroed velocity and it is not cancelled".
-        // Whatever the phase logic does, a cast may never outlive its own length by more than two
-        // seconds: this watchdog ends it, which also ends any rooting it was doing.
+        // TNL1203 用户："你还在用清零速度定身，而且没取消"。
+        // 不管相位逻辑怎么写，一次施法**最多**比自身长度多活两秒：
+        // 这个看门狗会强制结束它，顺便结束它做的任何定身。
         this.runningTicks++;
         if (this.runningTicks > this.totalTicks + 40) {
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
@@ -114,7 +114,7 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
         }
     }
 
-    /** TNL1203 how long this cast has been running, for the watchdog */
+    /** TNL1203 本次施法已经跑了多久，给看门狗用 */
     private int runningTicks;
 
     @Override
@@ -126,7 +126,7 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
         this.onStop();
     }
 
-    /** the cooldown to apply when the cast ends */
+    /** 施法结束时写入的冷却 */
     protected int cooldownTicks() {
         return this.cooldownTicks;
     }
