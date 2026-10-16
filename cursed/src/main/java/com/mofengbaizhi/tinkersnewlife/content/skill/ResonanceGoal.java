@@ -20,8 +20,10 @@ import net.minecraft.world.entity.LivingEntity;
  */
 public final class ResonanceGoal extends MomoSpellGoal {
 
-    private static final double NEAR_RANGE = 2.0D;
-    private static final int NEAR_TICKS_REQUIRED = 400;
+    private static final double NEAR_RANGE = 4.0D;        // TNL1234 2 格太苛刻：挪一步就清零
+    /** TNL1234 离开范围时不是清零，而是每 tick 回退这么多（容忍短暂走位）*/
+    private static final int NEAR_DECAY = 20;
+    private static final int NEAR_TICKS_REQUIRED = 200;    // TNL1234 10 秒，原 400(20 秒) 几乎不可能满足
     private static final int CHARGE_TICKS = 40;
     private static final int COOLDOWN_TICKS = 200;
     private static final int TOTAL_TICKS = CHARGE_TICKS + 10;
@@ -62,7 +64,10 @@ public final class ResonanceGoal extends MomoSpellGoal {
             return false;
         }
         if (this.momo.distanceTo(target) > NEAR_RANGE) {
-            this.nearTicks = 0;
+            // TNL1234 用户："达到条件了也不触发"。原来是**一步走开就清零**，
+            // 而 Boss 一直在追人 ⇒ 400 tick 连续贴身根本凑不满。现在改成回退 20，
+            // 短暂走位不会把进度抹平，但只要它一直贴着你，10 秒就能攒够。
+            this.nearTicks = Math.max(0, this.nearTicks - NEAR_DECAY);
             return false;
         }
         // TNL1192 常量写的是"20 秒 400 tick"，但老代码每 tick 加 5 ⇒ 实际 4 秒就放。
