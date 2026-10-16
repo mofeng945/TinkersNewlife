@@ -103,6 +103,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.0D, true));
         this.goalSelector.addGoal(2, new WaterAvoidingRandomStrollGoal(this, 0.8D));
         // TNL1174 skills are goals now, exactly like the goety apostle registers its spells
+        this.goalSelector.addGoal(3, new com.mofengbaizhi.tinkersnewlife.content.skill.BlinkGoal(this));
         this.goalSelector.addGoal(3, new com.mofengbaizhi.tinkersnewlife.content.skill.ResonanceGoal(this));
         this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 16.0F));
         this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));

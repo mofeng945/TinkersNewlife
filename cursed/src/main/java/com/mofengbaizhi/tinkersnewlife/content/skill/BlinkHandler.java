@@ -47,7 +47,7 @@ public final class BlinkHandler {
         if (!MomoSkills.BLINK) {
             return;
         }
-        tickOne(level, momo, now);
+        // TNL1175 blink is a Goal now; the old handler must not drive it too
     }
 
     /** kept only as a no-op marker: the entity drives this now */
@@ -216,7 +216,7 @@ public final class BlinkHandler {
     }
 
     /** appear three blocks behind the target, facing it, with no warning whatsoever. */
-    private static void teleportBehind(ServerLevel level, KtuluMomo momo, LivingEntity target) {
+    public static void teleportBehind(ServerLevel level, KtuluMomo momo, LivingEntity target) {
         long now = level.getGameTime();
         // TNL1121 a random spot inside three blocks of the target, anywhere around it
         Vec3 origin = momo.position();
