@@ -26,9 +26,6 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
 
     /** 0 = 刚开始，1 = 马上要尖啸 */
     public static float PROGRESS = 0.0F;
-    /** TNL1108 同步标志掉了之后和弦还要保持举手一会儿，
-     *  免得环还在往外飞的时候姿势突然放下。*/
-    public static long CHORD_HOLD_UNTIL = 0L;
 
     public KtuluMomoModel(ModelPart root) {
         super(root);
