@@ -524,6 +524,27 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         return this.tnl$spell() == 2;      // TNL1169 derived
     }
 
+    // TNL1250 定身/硬直状态：用户要求"在 stun 方法里加上阻止实体攻击"，
+    // 所以状态放在实体上，守卫（onMomoAttack）和受击 Goal 都能读。
+    // 两个来源取并集：技能调用 stun.begin()（布尔）与硬直倒计时（时间戳）。
+    private boolean tnl$stunnedFlag = false;
+    private long tnl$stunUntil = 0L;
+
+    /** TNL1250 技能定身开/关（MomoStun 调用） */
+    public void tnl$setStunned(boolean stunned) {
+        this.tnl$stunnedFlag = stunned;
+    }
+
+    /** TNL1250 硬直：定身一段时间（受击用，单位 tick） */
+    public void tnl$stunFor(int ticks) {
+        this.tnl$stunUntil = Math.max(this.tnl$stunUntil, this.level().getGameTime() + Math.max(0, ticks));
+    }
+
+    /** TNL1250 现在是否被定身/硬直（守卫据此取消它的攻击） */
+    public boolean tnl$isStunned() {
+        return this.tnl$stunnedFlag || this.level().getGameTime() < this.tnl$stunUntil;
+    }
+
     // TNL1172 诡厄使徒每个法术一个冷却字段（coolDown / tornadoCoolDown /
     // infernoCoolDown / monolithCoolDown / damnedCoolDown）。这里同理，存在实体上，
     // 跟它一起生灭，而不是放在按 uuid 索引的静态表里。

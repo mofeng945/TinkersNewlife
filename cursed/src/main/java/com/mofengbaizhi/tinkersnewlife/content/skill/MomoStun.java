@@ -26,12 +26,16 @@ public final class MomoStun {
         this.momo = momo;
     }
 
-    /** 起手：清寻路 ＋ 清零速度（**不碰目标**） */
+    /** 起手：清寻路 ＋ 清零速度 ＋ 置"被定身"状态（**不碰目标**） */
     public void begin() {
         if (this.active) {
             return;
         }
         this.active = true;
+        // TNL1250 用户："在 stun 方法里加上阻止实体攻击"。
+        // 状态放到实体上：守卫（KtuluDeathGuard.onMomoAttack）与受击 Goal 都能读到，
+        // 于是"被打断/硬直期间它打不出伤害"不用各写一份。
+        this.momo.tnl$setStunned(true);
         this.hold();
     }
 
@@ -42,12 +46,13 @@ public final class MomoStun {
         }
     }
 
-    /** 收尾：放开定身，身体交还 AI */
+    /** 收尾：放开定身，身体与攻击权都交还 AI */
     public void end() {
         if (!this.active) {
             return;
         }
         this.active = false;
+        this.momo.tnl$setStunned(false);      // TNL1250 攻击权还回去
         this.momo.hurtMarked = true;
     }
 

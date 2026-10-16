@@ -37,7 +37,9 @@ public final class KtuluDeathGuard {
                     || attacker.level().isClientSide) {
                 return;
             }
-            if (attacker.tnl$isBusy()) {
+            if (attacker.tnl$isBusy() || attacker.tnl$isStunned()) {
+                // TNL1250 用户："在 stun 方法里加上阻止实体攻击"。
+                // 施法中、以及被定身/硬直期间，墨默打出的伤害一律取消。
                 event.setCanceled(true);
             }
         } catch (Throwable ignored) {
