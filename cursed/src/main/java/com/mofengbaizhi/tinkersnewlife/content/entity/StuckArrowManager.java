@@ -12,22 +12,22 @@ import net.minecraftforge.network.PacketDistributor;
 import java.util.UUID;
 
 /**
- * TNL927 \u2605\u2605 \u5f3a\u5316\u7bad\u547d\u4e2d\u540e**\u624e\u5728\u8eab\u4e0a\u7684\u9ed1\u7bad** \u2713
+ * TNL927 ★★ 强化箭命中后**扎在身上的黑箭** ✓
  *
- * <p>\u2605\u7528\u6237\u53e3\u5f84 \u2713\uff1a
+ * <p>★用户口径 ✓：
  * <ul>
- *   <li>\u2605\u751f\u6210\u5728\u751f\u7269\u8eab\u4e0a\u65f6\u6709 **20 \u6ef4\u8840** \u2713\uff08\u2605\u6211\u4eec\u7528\u201c\u5341\u5206\u4e4b\u4e00\u70b9\u201d\u8ba1\u6570 \u2713\uff1a200 \u4efd \u2713\uff09\uff1b</li>
- *   <li>\u2605\u5168\u7a0b**\u65e0\u654c \u002b \u514d\u75ab\u53d7\u51fb\u4e8b\u4ef6** \u2713\uff08\u2605\u5b83\u4e0d\u662f\u5b9e\u4f53 \u2717 \u2014\u2014
- *       \u2605\u800c\u662f\u751f\u7269\u8eab\u4e0a\u7684\u72b6\u6001 \u2713\uff0c\u2605\u6240\u4ee5\u6839\u672c\u65e0\u4ece\u6253\u5b83 \u2713\uff09\uff1b</li>
- *   <li>\u2605\u6bcf tick \u81ea\u52a8\u6d41\u5931 **0.1 \u8840** \u2713 \u21d2 \u2605200 tick\uff08\u260510 \u79d2\uff09\u81ea\u7136\u6d88\u5931 \u2713\uff1b</li>
- *   <li>\u2605\u624e\u7740\u65f6\u79fb\u52a8\u901f\u5ea6 **-80%** \u2713\uff08\u2605\u5c5e\u6027\u4e58\u7b97 0.2 \u2713\uff09\uff1b</li>
- *   <li>\u2605\u73a9\u5bb6\u53ef\u957f\u6309 G 2 \u79d2\u62d4\u9664 \u2713\uff08\u2605\u677e\u624b\u5931\u8d25 \u2713 \u21d2 \u2605\u91cd\u6765 \u2713\uff09\uff1b</li>
- *   <li>\u2605**\u751f\u7269\u4e0d\u4f1a\u62d4** \u2713\uff1b\u2605**\u58a8\u9ed8\u514d\u75ab\u6b64\u7bad** \u2713\u3002</li>
+ *   <li>★生成在生物身上时有 **20 滴血** ✓（★我们用“十分之一点”计数 ✓：200 份 ✓）；</li>
+ *   <li>★全程**无敌 + 免疫受击事件** ✓（★它不是实体 ✗ ——
+ *       ★而是生物身上的状态 ✓，★所以根本无从打它 ✓）；</li>
+ *   <li>★每 tick 自动流失 **0.1 血** ✓ ⇒ ★200 tick（★10 秒）自然消失 ✓；</li>
+ *   <li>★扎着时移动速度 **-80%** ✓（★属性乘算 0.2 ✓）；</li>
+ *   <li>★玩家可长按 G 2 秒拔除 ✓（★松手失败 ✓ ⇒ ★重来 ✓）；</li>
+ *   <li>★**生物不会拔** ✓；★**墨默免疫此箭** ✓。</li>
  * </ul>
  */
 public final class StuckArrowManager {
 
-    /** \u2605\u5168\u8840 = 20.0 \u21d2 \u2605\u4ee5 0.1 \u4e3a\u5355\u4f4d = 200 \u4efd \u2713 */
+    /** ★全血 = 20.0 ⇒ ★以 0.1 为单位 = 200 份 ✓ */
     public static final int FULL = 200;
 
     private static final String KEY = "tinkersnewlife:stuck_arrow";
@@ -40,20 +40,20 @@ public final class StuckArrowManager {
         return e.getPersistentData().getInt(KEY) > 0;
     }
 
-    /** \u2605\u88ab\u5f3a\u5316\u7bad\u547d\u4e2d \u21d2 \u2605\u624e\u4e0a\u4e00\u652f \u2713 */
+    /** ★被强化箭命中 ⇒ ★扎上一支 ✓ */
     public static void apply(LivingEntity e) {
         if (e.level().isClientSide) {
             return;
         }
         if (e instanceof KtuluMomo) {
-            return;                          // \u2605\u58a8\u9ed8\u514d\u75ab \u2713
+            return;                          // ★墨默免疫 ✓
         }
         e.getPersistentData().putInt(KEY, FULL);
         applySlow(e);
         notify(e, true);
     }
 
-    /** \u2605\u6bcf tick\uff08\u2605\u7531 LivingTickEvent \u9a71\u52a8 \u2713\uff09 */
+    /** ★每 tick（★由 LivingTickEvent 驱动 ✓） */
     public static void tick(LivingEntity e) {
         if (e.level().isClientSide) {
             return;
@@ -62,7 +62,7 @@ public final class StuckArrowManager {
         if (hp <= 0) {
             return;
         }
-        hp -= 1;                             // \u2605 0.1 \u8840 / tick \u2713
+        hp -= 1;                             // ★ 0.1 血 / tick ✓
         e.getPersistentData().putInt(KEY, hp);
         if (hp <= 0) {
             clear(e);
@@ -71,7 +71,7 @@ public final class StuckArrowManager {
         }
     }
 
-    /** \u2605\u62d4\u9664\uff08\u2605\u957f\u6309\u6210\u529f / \u2605\u8840\u91cf\u8017\u5c3d \u2713\uff09 */
+    /** ★拔除（★长按成功 / ★血量耗尽 ✓） */
     public static void clear(LivingEntity e) {
         e.getPersistentData().putInt(KEY, 0);
         removeSlow(e);

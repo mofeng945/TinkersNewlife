@@ -6,15 +6,15 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * TNL878 \u661f\u9668\u4e4b\u7bad\u6e32\u67d3\u5668 \u2713
+ * TNL878 星陨之箭渲染器 ✓
  *
- * <p>\u2605\u7528\u6237\u53cd\u9988\u5ba2\u6237\u7aef\u5d29\u6e83\uff1a{@code EntityRenderDispatcher}
- * \u629b \u2605{@code NullPointerException: Cannot invoke "EntityRenderer.shouldRender"}\uff0c
- * \u2605\u5373"\u67d0\u4e2a\u5b9e\u4f53**\u6ca1\u6709\u6e32\u67d3\u5668**" \u2713 \u3002
+ * <p>★用户反馈客户端崩溃：{@code EntityRenderDispatcher}
+ * 抛 ★{@code NullPointerException: Cannot invoke "EntityRenderer.shouldRender"}，
+ * ★即"某个实体**没有渲染器**" ✓ 。
  *
- * <p>\u2605\u65e7\u5199\u6cd5\u76f4\u63a5\u7528 {@code ArrowRenderer::new} \u5f53\u65b9\u6cd5\u5f15\u7528 \u2717\uff0c
- * \u2605\u53c2\u8003\u5b9e\u73b0\uff08\u7528\u6237\u63d0\u4f9b\u7684\u300c\u661f\u843d\u7ec7\u5f71\u300d\uff09\u5219\u662f
- * **\u81ea\u5df1\u7ee7\u627f\u4e00\u4e2a\u5177\u4f53\u5b50\u7c7b** \u2713\uff0c\u2605\u73b0\u5728\u7167\u540c\u2713\u3002
+ * <p>★旧写法直接用 {@code ArrowRenderer::new} 当方法引用 ✗，
+ * ★参考实现（用户提供的「星落织影」）则是
+ * **自己继承一个具体子类** ✓，★现在照同✓。
  */
 public class StarfallArrowRenderer extends ArrowRenderer<StarfallArrow> {
 

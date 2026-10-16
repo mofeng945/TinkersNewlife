@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-/** TNL880 \u661f\u9668\u5c3e\u8ff9\uff08\u2605\u7167\u642c\u53c2\u8003 ClientRenderHandler \u2713\uff09 */
+/** TNL880 星陨尾迹（★照搬参考 ClientRenderHandler ✓） */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class StarfallRenderHandler {
 
@@ -34,13 +34,13 @@ public class StarfallRenderHandler {
     private static final float ARROW_HALF_LEN = 0.50F;
     private static final float TIP_EXTEND = 0.10F;
     private static final float FEATHER_HALF = 0.10F;
-    private static final float[] COL_HEAD = {1.00F, 1.00F, 1.00F};   // TNL884 \u2605\u767d \u2713
-    private static final float[] COL_MID = {0.62F, 0.62F, 0.62F};    // TNL884 \u2605\u4e2d\u7070 \u2713
-    private static final float[] COL_TAIL = {0.22F, 0.22F, 0.22F};  // TNL884 \u2605\u8fd1\u9ed1 \u2713
-    // TNL1019 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u5f3a\u5316\u7bad\u77e2\u7684\u5c3e\u75d5\u989c\u8272\u6362\u6210\u7ea2\u8272" \u2713
+    private static final float[] COL_HEAD = {1.00F, 1.00F, 1.00F};   // TNL884 ★白 ✓
+    private static final float[] COL_MID = {0.62F, 0.62F, 0.62F};    // TNL884 ★中灰 ✓
+    private static final float[] COL_TAIL = {0.22F, 0.22F, 0.22F};  // TNL884 ★近黑 ✓
+    // TNL1019 ★★ 用户：★"强化箭矢的尾痕颜色换成红色" ✓
     private static final float[] COL_MID_RED = {0.95F, 0.18F, 0.16F};
     private static final float[] COL_TAIL_RED = {0.45F, 0.04F, 0.04F};
-    /** \u2605\u672c\u6b21\u6e32\u67d3\u7684\u7bad\u662f\u4e0d\u662f"\u5f3a\u5316\u7bad"\uff08\u2605\u7528\u7ea2\u8272\u5c3e\u75d5 \u2713\uff09 */
+    /** ★本次渲染的箭是不是"强化箭"（★用红色尾痕 ✓） */
     private static boolean ENHANCED_ARROW;
     private static final Map<UUID, FadeData> FADING = new HashMap<>();
 
@@ -107,7 +107,7 @@ public class StarfallRenderHandler {
         StarfallHitCache.prune(gameTime);
         for (StarfallHitCache.Hit hit : StarfallHitCache.get()) {
             renderHitRing(buffer, matrix, camPos, hit, gameTime);
-            renderSixStar(buffer, matrix, camPos, hit, gameTime);   // TNL885 \u2605\u516d\u8292\u661f \u2713
+            renderSixStar(buffer, matrix, camPos, hit, gameTime);   // TNL885 ★六芒星 ✓
         }
     }
 
@@ -117,7 +117,7 @@ public class StarfallRenderHandler {
         if (hist.size() < 2) {
             return;
         }
-        // TNL1019 \u2605\u672c\u6b21\u662f\u4e0d\u662f\u5f3a\u5316\u7bad\uff08\u2605\u51b3\u5b9a\u5c3e\u75d5\u989c\u8272 \u2713\uff09
+        // TNL1019 ★本次是不是强化箭（★决定尾痕颜色 ✓）
         ENHANCED_ARROW = arrow.tnl$isEnhanced();
         float sc = arrow.getArrowScale();
         float halfLen = ARROW_HALF_LEN * sc;
@@ -265,7 +265,7 @@ public class StarfallRenderHandler {
     private static float[] colorAt(float p) {
         float[] out = new float[3];
         if (ENHANCED_ARROW) {
-            // \u2605\u5f3a\u5316\u7bad\uff1a\u2605\u7ea2\u8272\u5c3e\u75d5 \u2713
+            // ★强化箭：★红色尾痕 ✓
             if (p < 0.35F) {
                 lerp3(COL_HEAD, COL_TAIL_RED, p / 0.35F, out);
             } else if (p < 0.60F) {
@@ -314,7 +314,7 @@ public class StarfallRenderHandler {
         if (a <= 0.0F) {
             return;
         }
-        float r = 1.00F * a;   // TNL884 \u2605\u767d\u7070\u661f\u73af \u2713
+        float r = 1.00F * a;   // TNL884 ★白灰星环 ✓
         float g = 1.00F * a;
         float b = 1.00F * a;
         Vec3 normal = hit.dir.lengthSqr() > 1e-6 ? hit.dir.normalize() : new Vec3(0, 1, 0);
@@ -360,17 +360,17 @@ public class StarfallRenderHandler {
     }
 
     /**
-     * TNL885 \u2605\u2605 \u547d\u4e2d\u7279\u6548\uff1a**\u516d\u8292\u661f** \u2713\uff08\u2605\u7528\u6237\u53e3\u5f84 \u2713\uff09
+     * TNL885 ★★ 命中特效：**六芒星** ✓（★用户口径 ✓）
      *
-     * <p>\u2605\u65e7\u5199\u6cd5\u662f\u4e94\u8292\u661f\uff08\u2605\u5355\u7b14\u753b\u7684\u4e94\u89d2\u661f \u2717\uff09\uff1b
-     * \u2605\u516d\u8292\u661f = **\u4e24\u4e2a\u4ea4\u53e0\u7684\u7b49\u8fb9\u4e09\u89d2\u5f62** \u2713\uff1a
-     * \u2605\u4e09\u89d2\u5f62 A = \u9876\u70b9 0/2/4 \u2713 \u2605\u4e09\u89d2\u5f62 B = \u9876\u70b9 1/3/5 \u2713
-     * \uff08\u2605\u5171 6 \u4e2a\u9876\u70b9 \u00d7 60\u00b0 \u2713\uff09\u3002
+     * <p>★旧写法是五芒星（★单笔画的五角星 ✗）；
+     * ★六芒星 = **两个交叠的等边三角形** ✓：
+     * ★三角形 A = 顶点 0/2/4 ✓ ★三角形 B = 顶点 1/3/5 ✓
+     * （★共 6 个顶点 × 60° ✓）。
      */
     private static void renderSixStar(MultiBufferSource.BufferSource buffer, Matrix4f matrix, Vec3 camPos,
                                       StarfallHitCache.Hit hit, long gameTime) {
         long age = gameTime - hit.startTick;
-        final int LIFE = 8;          // \u26050.4 \u79d2 \u2713
+        final int LIFE = 8;          // ★0.4 秒 ✓
         if (age > LIFE) {
             return;
         }
@@ -389,11 +389,11 @@ public class StarfallRenderHandler {
         Vec3 v = normal.cross(u).normalize();
         Vec3[] verts = new Vec3[6];
         for (int i = 0; i < 6; i++) {
-            double ang = phase + i * 2 * Math.PI / 6;      // \u2605\u6bcf 60\u00b0 \u4e00\u4e2a\u9876\u70b9 \u2713
+            double ang = phase + i * 2 * Math.PI / 6;      // ★每 60° 一个顶点 ✓
             verts[i] = hit.pos.add(u.scale(Math.cos(ang) * R).add(v.scale(Math.sin(ang) * R)));
         }
         final int SUB = 16;
-        for (int tri = 0; tri < 2; tri++) {                // \u2605\u4e24\u4e2a\u4e09\u89d2\u5f62 \u2713
+        for (int tri = 0; tri < 2; tri++) {                // ★两个三角形 ✓
             List<Vec3> path = new ArrayList<>();
             for (int k = 0; k < 3; k++) {
                 Vec3 a = verts[(tri + k * 2) % 6];
@@ -402,7 +402,7 @@ public class StarfallRenderHandler {
                     path.add(a.lerp(b, (float) j / SUB));
                 }
             }
-            path.add(verts[tri]);                          // \u2605\u95ed\u5408 \u2713
+            path.add(verts[tri]);                          // ★闭合 ✓
             renderStarTube(buffer, matrix, camPos, path, 0.020F, alpha, colorT);
         }
     }
@@ -463,8 +463,8 @@ public class StarfallRenderHandler {
             }
         }
         VertexConsumer vc = buffer.getBuffer(StarfallRenderTypes.ARROW_TRAIL);
-        float[] colBlue = {1.00F, 1.00F, 1.00F};      // TNL884 \u2605\u767d \u2713
-        float[] colPink = {0.30F, 0.30F, 0.30F};      // TNL884 \u2605\u6df1\u7070 \u2713
+        float[] colBlue = {1.00F, 1.00F, 1.00F};      // TNL884 ★白 ✓
+        float[] colPink = {0.30F, 0.30F, 0.30F};      // TNL884 ★深灰 ✓
         float[] col = {
                 colBlue[0] + (colPink[0] - colBlue[0]) * colorT,
                 colBlue[1] + (colPink[1] - colBlue[1]) * colorT,

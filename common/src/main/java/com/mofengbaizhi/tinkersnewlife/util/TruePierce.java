@@ -2619,29 +2619,29 @@ public final class TruePierce {
     }
 
     /**
-     * TNL978 \u2605\u2605 \u628a"\u90e8\u4ef6"\u6362\u7b97\u56de\u672c\u4f53 \u2713
+     * TNL978 ★★ 把"部件"换算回本体 ✓
      *
-     * <p>\u2605\u7528\u6237\uff1a\u2605"\u547d\u4e2d\u591a\u90e8\u4f4d\u5b9e\u4f53\u7684\u975e\u4e3b\u78b0\u649e\u7bb1\u65f6\uff0c\u6ca1\u6709\u9020\u6210\u4f24\u5bb3" \u2713
-     * \uff0b\u2605"\u662f\u4e0d\u662f\u53ea\u8981\u662f\u6211\u7684\u771f\u5b9e\u4f24\u5bb3\u90fd\u6709\u8fd9\u4e2a\u95ee\u9898" \u2713
+     * <p>★用户：★"命中多部位实体的非主碰撞箱时，没有造成伤害" ✓
+     * ＋★"是不是只要是我的真实伤害都有这个问题" ✓
      *
-     * <p>\u2605\u771f\u56e0 \u2717\uff1a\u2605\u5de8\u9f99\u7c7b\u591a\u90e8\u4f4d\u5b9e\u4f53\u547d\u4e2d\u7684\u662f
-     * ``PartEntity`` \u2713\uff0c\u2605\u5b83**\u4e0d\u662f** ``LivingEntity`` \u2717
-     * \u21d2 \u2605\u6240\u6709"\u547d\u4e2d\u540e\u53d6\u76ee\u6807"\u7684\u5199\u6cd5\u90fd\u4f1a**\u9759\u9ed8\u8df3\u8fc7** \u2713\u3002
+     * <p>★真因 ✗：★巨龙类多部位实体命中的是
+     * ``PartEntity`` ✓，★它**不是** ``LivingEntity`` ✗
+     * ⇒ ★所有"命中后取目标"的写法都会**静默跳过** ✓。
      *
-     * <p>\u2605\u4e0d\u4f1a\u8e29\u7684 \u2713\uff1a\u2605\u4e8b\u4ef6\u578b\uff08\u2605``event.getSource().getEntity()`` \u2713\uff09
-     * \u2014\u2014\u2605\u90a3\u662f**\u653b\u51fb\u8005** \u2713 \u21d2 \u2605\u4e0e\u90e8\u4ef6\u65e0\u5173 \u2713\u3002
+     * <p>★不会踩的 ✓：★事件型（★``event.getSource().getEntity()`` ✓）
+     * ——★那是**攻击者** ✓ ⇒ ★与部件无关 ✓。
      */
     public static net.minecraft.world.entity.Entity resolveVictim(net.minecraft.world.entity.Entity e) {
-        // TNL978 \u2605\u2605 \u8fd4\u56de\u7c7b\u578b\u6545\u610f\u7528 **Entity** \u2713
-        //   \u2605\u5426\u5219 ``resolveVictim(x) instanceof LivingEntity y`` \u4f1a\u62a5
-        //   \u2605"\u6a21\u5f0f\u7c7b\u578b\u662f\u8868\u8fbe\u5f0f\u7c7b\u578b\u7684\u5b50\u7c7b" \u2717\uff08\u2605\u7f16\u8bd1\u5668\u5df2\u77e5\u5b83\u5c31\u662f LivingEntity \u2713\uff09
+        // TNL978 ★★ 返回类型故意用 **Entity** ✓
+        //   ★否则 ``resolveVictim(x) instanceof LivingEntity y`` 会报
+        //   ★"模式类型是表达式类型的子类" ✗（★编译器已知它就是 LivingEntity ✓）
         try {
             if (e instanceof net.minecraftforge.entity.PartEntity<?> part) {
                 e = part.getParent();
             } else if (!(e instanceof net.minecraft.world.entity.LivingEntity)) {
-                // TNL979 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u547d\u4e2d\u51b0\u706b\u4f20\u8bf4\u9f99\u7684\u7fc5\u8180\u65e0\u6cd5\u5bf9\u9f99\u9020\u6210\u4f24\u5bb3" \u2713
-                //   \u2605\u539f\u56e0 \u2717\uff1a\u2605\u51b0\u706b\uff08\u2605Citadel \u2713\uff09\u7684\u90e8\u4ef6**\u4e0d\u4e00\u5b9a\u7ee7\u627f Forge \u7684 ``PartEntity``** \u2717
-                //   \u2605\u73b0\u5728\uff1a\u2605\u53cd\u5c04\u627e\u5b83\u7684\u201c\u7236\u201d\uff08\u2605getParent / getOwner / getRoot \u2713\uff09
+                // TNL979 ★★ 用户：★"命中冰火传说龙的翅膀无法对龙造成伤害" ✓
+                //   ★原因 ✗：★冰火（★Citadel ✓）的部件**不一定继承 Forge 的 ``PartEntity``** ✗
+                //   ★现在：★反射找它的“父”（★getParent / getOwner / getRoot ✓）
                 boolean done = false;
                 for (String m : new String[]{"getParent", "getOwner", "getRoot"}) {
                     try {
@@ -2654,11 +2654,11 @@ public final class TruePierce {
                     } catch (Throwable ignored) {
                     }
                 }
-                // TNL981 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u547d\u4e2d\u51b0\u706b\u4f20\u8bf4\u9f99\u7684\u7fc5\u8180\u65e0\u6cd5\u5bf9\u9f99\u9020\u6210\u4f24\u5bb3" \u2713
-                //   \u2605\u65e5\u5fd7\u8bc1\u636e\uff1a\u2605``EntityDragonPart (entity.iceandfire.dragon_multipart)`` \u2717
-                //     \u2605\u5b83**\u4e0d\u662f Forge \u7684 ``PartEntity``** \u2717 \u21d2 \u2605\u4e0a\u9762\u90a3\u51e0\u4e2a\u65b9\u6cd5\u4e5f\u6ca1\u547d\u4e2d \u2713
-                //   \u2605\u73b0\u5728\uff1a\u2605\u6700\u540e\u4e00\u62db \u2713\uff1a\u2605**\u626b\u5b83\u81ea\u5df1\u7684\u5b57\u6bb5** \u2713
-                //     \uff08\u2605\u627e\u7c7b\u578b\u662f Entity \u4e14\u503c\u662f LivingEntity \u7684\u5b57\u6bb5 \u2713\uff09
+                // TNL981 ★★ 用户：★"命中冰火传说龙的翅膀无法对龙造成伤害" ✓
+                //   ★日志证据：★``EntityDragonPart (entity.iceandfire.dragon_multipart)`` ✗
+                //     ★它**不是 Forge 的 ``PartEntity``** ✗ ⇒ ★上面那几个方法也没命中 ✓
+                //   ★现在：★最后一招 ✓：★**扫它自己的字段** ✓
+                //     （★找类型是 Entity 且值是 LivingEntity 的字段 ✓）
                 if (!done) {
                     Class<?> c2 = e.getClass();
                     while (c2 != null && c2 != Object.class && !done) {

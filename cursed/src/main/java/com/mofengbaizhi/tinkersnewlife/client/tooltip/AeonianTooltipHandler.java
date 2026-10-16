@@ -152,7 +152,7 @@ g.fill(x - 3, y - 4, x + width + 3, y + height + 4, 0xE6080A10);   // TNL1067 ba
             net.minecraft.network.chat.FormattedText ft = el.left().get();
             String text = ft.getString();
             boolean isName = text.equals(event.getItemStack().getHoverName().getString());
-            boolean isQuote = text.startsWith("\u4eba\u7c7b\u82e5\u751f\u6765") || text.trim().startsWith("\u2014\u2014");
+            boolean isQuote = text.startsWith("人类若生来") || text.trim().startsWith("——");
             if (isName || isQuote) {
                 MutableComponent painted = paint(text, isName ? 0 : ++quoteLine);
                 rebuilt.add(com.mojang.datafixers.util.Either.left(painted));

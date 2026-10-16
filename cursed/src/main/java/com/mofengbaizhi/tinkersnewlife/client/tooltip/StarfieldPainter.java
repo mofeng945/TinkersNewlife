@@ -3,13 +3,13 @@ package com.mofengbaizhi.tinkersnewlife.client.tooltip;
 import net.minecraft.client.gui.GuiGraphics;
 
 /**
- * TNL896 \u2605\u2605 \u661f\u7a7a\u7ed8\u5236\uff08\u2605\u7eaf\u9759\u6001\u5de5\u5177 \u2713\uff09
+ * TNL896 ★★ 星空绘制（★纯静态工具 ✓）
  *
- * <p>\u2605\u7528\u6237\u53e3\u5f84\uff1a\u2605"\u5728\u5de5\u5177\u63d0\u793a\u6846\u5185\u6e32\u67d3\u53ef\u52a8\u7684\u661f\u7a7a\u80cc\u666f" \u2713
- * \u2605\u65e7\u65b9\u6848\uff08{@code Item#getTooltipImage} \u2717\uff09\u5d29\u6e83\uff1a
- * \u2605{@code IllegalArgumentException: Unknown TooltipComponent} \u2717
- * \uff08\u2605\u539f\u7248 {@code ClientTooltipComponent.create} \u6ca1\u8ba4\u6211\u4eec\u7684\u5bf9\u8c61 \u2713\uff09\u3002
- * \u2605\u73b0\u5728\u6539\u8d70**\u5de5\u5177\u63d0\u793a\u4e8b\u4ef6** \u2713\uff08\u2605\u4e0d\u78b0\u7ec4\u4ef6\u63a5\u53e3 \u2717\uff09\u3002
+ * <p>★用户口径：★"在工具提示框内渲染可动的星空背景" ✓
+ * ★旧方案（{@code Item#getTooltipImage} ✗）崩溃：
+ * ★{@code IllegalArgumentException: Unknown TooltipComponent} ✗
+ * （★原版 {@code ClientTooltipComponent.create} 没认我们的对象 ✓）。
+ * ★现在改走**工具提示事件** ✓（★不碰组件接口 ✗）。
  */
 public final class StarfieldPainter {
 
@@ -18,22 +18,22 @@ public final class StarfieldPainter {
     private StarfieldPainter() {
     }
 
-    /** \u2605\u5728 (x,y,w,h) \u533a\u57df\u91cc\u753b\u661f\u7a7a\uff08\u2605\u6bcf\u5e27\u8c03\u7528 \u21d2 \u2605\u4f1a\u52a8 \u2713\uff09 */
+    /** ★在 (x,y,w,h) 区域里画星空（★每帧调用 ⇒ ★会动 ✓） */
     public static void draw(GuiGraphics g, int x, int y, int w, int h) {
 
-        // TNL925 \u2605\u2605 \u7528\u6237\u53e3\u5f84\uff1a\u2605"\u6211\u4e0d\u662f\u8ba9\u4f60\u628a\u7269\u54c1\u63d0\u793a\u6846\u80cc\u666f\u5f80\u4e0a\u62c9\uff0c
-        //   \u6211\u662f\u8ba9\u4f60\u628a**\u56fe\u5c42\u5f80\u4e0a\u63d0**\uff0c\u900f\u660e\u5ea6\u6539\u56de\u53bb" \u2713
-        //   \u2605\u505a\u6cd5 \u2713\uff1a\u2605\u5148\u94fa\u4e00\u5c42**\u4e0d\u900f\u660e**\u7684\u6df1\u7a7a\u5e95 \u2713
-        //     \u21d2 \u2605\u4e0b\u9762\u7684\u7269\u54c1\u683c\u88ab\u76d6\u4f4f \u2717
-        //   \u2605\u7136\u540e\u624d\u662f\u539f\u6765\u90a3\u5c42**\u534a\u900f\u660e**\u661f\u7a7a \u2713
-        //     \uff08\u2605\u661f\u4e91/\u661f\u70b9/\u8fb9\u6846\u5168\u4fdd\u7559 \u2713\uff09
+        // TNL925 ★★ 用户口径：★"我不是让你把物品提示框背景往上拉，
+        //   我是让你把**图层往上提**，透明度改回去" ✓
+        //   ★做法 ✓：★先铺一层**不透明**的深空底 ✓
+        //     ⇒ ★下面的物品格被盖住 ✗
+        //   ★然后才是原来那层**半透明**星空 ✓
+        //     （★星云/星点/边框全保留 ✓）
         g.fill(x, y, x + w, y + h, 0xFF06070E);
         if (w <= 0 || h <= 0) {
             return;
         }
         long t = System.currentTimeMillis();
-        g.fill(x, y, x + w, y + h, 0xF0080A12);            // \u2605\u6df1\u7a7a\u5e95 \u2713
-        for (int i = 0; i < 3; i++) {                       // \u2605\u661f\u4e91\u5e26 \u2713
+        g.fill(x, y, x + w, y + h, 0xF0080A12);            // ★深空底 ✓
+        for (int i = 0; i < 3; i++) {                       // ★星云带 ✓
             int ny = y + (h * (i + 1)) / 4 + (int) (Math.sin(t / 3000.0 + i) * 2);
             g.fill(x + 2, ny, x + w - 2, ny + 1, 0x18283860);
         }
@@ -53,7 +53,7 @@ public final class StarfieldPainter {
                 g.fill(px + 1, y + sy, px + 2, y + sy + 1, ((a / 3) << 24) | c);
             }
         }
-        g.fill(x, y, x + w, y + 1, 0x40FFFFFF);             // \u2605\u767d\u7070\u7ec6\u8fb9 \u2713
+        g.fill(x, y, x + w, y + 1, 0x40FFFFFF);             // ★白灰细边 ✓
         g.fill(x, y + h - 1, x + w, y + h, 0x40FFFFFF);
         g.fill(x, y, x + 1, y + h, 0x30FFFFFF);
         g.fill(x + w - 1, y, x + w, y + h, 0x30FFFFFF);

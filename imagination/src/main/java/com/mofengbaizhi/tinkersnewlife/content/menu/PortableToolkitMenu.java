@@ -117,8 +117,8 @@ public class PortableToolkitMenu extends CraftingStationContainerMenu {
             if (this.mainGhost != null) {
                 if (!this.playerInv.player.level().isClientSide) {
                     this.mainGhost.calcResult(this.playerInv.player);
-                    // TNL832 \u2605\u2605 \u670d\u52a1\u7aef\u628a\u7b97\u51fa\u7684\u914d\u65b9**\u81ea\u5df1\u53d1\u7ed9\u73a9\u5bb6** \u2713
-                    //   \u2605\u4e0d\u8d70\u5320\u9b42\u90a3\u6761\uff08\u2605\u5b83\u6309\u4e16\u754c\u5750\u6807\u67e5\u65b9\u5757\u5b9e\u4f53 \u2717 \u53e3\u888b\u5750\u6807\u6c38\u8fdc\u67e5\u4e0d\u5230 \u2717\uff09
+                    // TNL832 ★★ 服务端把算出的配方**自己发给玩家** ✓
+                    //   ★不走匠魂那条（★它按世界坐标查方块实体 ✗ 口袋坐标永远查不到 ✗）
                     try {
                         Object recipe = tnl$readField(this.mainGhost, "lastRecipe");
                         if (recipe instanceof net.minecraft.world.item.crafting.Recipe<?> r
@@ -184,15 +184,15 @@ public class PortableToolkitMenu extends CraftingStationContainerMenu {
 
 
     /**
-     * TNL828 \u2605\u2605\u2605 \u81f4\u547d\u4fee\u6b63\uff1a\u5e7d\u7075\u65b9\u5757\u5b9e\u4f53\u5fc5\u987b**\u6302\u4e0a\u4e00\u4e2a\u771f\u5b9e\u7684 level** \u2713
+     * TNL828 ★★★ 致命修正：幽灵方块实体必须**挂上一个真实的 level** ✓
      *
-     * <p>\u65e5\u5fd7\u8bc1\u636e\uff08\u2605TNL826 \u63a2\u9488 \u2713\uff09\uff1a
-     * {@code crafting station ghost created pos=\u2026 level=null client=false} \u2717\u2717
-     * \u800c\u5320\u9b42 {@code CraftingStationBlockEntity#calcResult} \u7b2c\u4e00\u53e5\u5c31\u662f
-     * {@code if (this.level == null || isEmpty()) return EMPTY;} \u2717
-     * \u21d2 \u2605\u4ece\u6765\u6ca1\u7b97\u8fc7\u914d\u65b9 \u21d2 \u754c\u9762\u6b63\u5e38\u3001\u80fd\u653e\u4e1c\u897f\uff0c**\u5c31\u662f\u5408\u4e0d\u4e86** \u2717\u2717
+     * <p>日志证据（★TNL826 探针 ✓）：
+     * {@code crafting station ghost created pos=… level=null client=false} ✗✗
+     * 而匠魂 {@code CraftingStationBlockEntity#calcResult} 第一句就是
+     * {@code if (this.level == null || isEmpty()) return EMPTY;} ✗
+     * ⇒ ★从来没算过配方 ⇒ 界面正常、能放东西，**就是合不了** ✗✗
      *
-     * <p>\u2605\u5728\u83dc\u5355\u6784\u9020\u65f6\u8865\u4e0a\uff08\u2605\u670d\u52a1\u7aef\u4e0e\u5ba2\u6237\u7aef\u90fd\u8d70\u8fd9\u91cc \u2713\uff09\u3002
+     * <p>★在菜单构造时补上（★服务端与客户端都走这里 ✓）。
      */
     private void tnl$ensureGhostLevel() {
         try {
@@ -205,10 +205,10 @@ public class PortableToolkitMenu extends CraftingStationContainerMenu {
         }
     }
 
-    /** TNL832 \u2605\u5df2\u53d1\u9001\u7684\u914d\u65b9 id\uff08\u2605\u907f\u514d\u6bcf tick \u91cd\u53d1 \u2713\uff09 */
+    /** TNL832 ★已发送的配方 id（★避免每 tick 重发 ✓） */
     private String tnl$sentRecipeId = null;
 
-    /** TNL832 \u2605\u6cbf\u7c7b\u6b21\u8bfb\u79c1\u6709\u5b57\u6bb5 \u2713 */
+    /** TNL832 ★沿类次读私有字段 ✓ */
     private static Object tnl$readField(Object target, String name) {
         Class<?> c = target.getClass();
         while (c != null) {
@@ -226,9 +226,9 @@ public class PortableToolkitMenu extends CraftingStationContainerMenu {
     }
 
     /**
-     * TNL834 \u2605\u2605 \u5b9e\u65f6\u4fdd\u5b58\uff08\u2605\u7528\u6237\u53e3\u5f84\uff1a\u5d29\u4e86\u4f1a\u4e22\u7269\u54c1 \u2717\uff09
+     * TNL834 ★★ 实时保存（★用户口径：崩了会丢物品 ✗）
      *
-     * <p>\u2605\u539f\u6765\u53ea\u5728\u5173\u754c\u9762\u65f6\u5199\u56de \u2717 \u21d2 \u73b0\u5728\u6bcf\u6b21\u683c\u5b50\u53d8\u5316\u5c31\u628a**\u516d\u4efd\u5185\u5bb9\u5404\u5199\u4e00\u6b21** \u2713\u3002
+     * <p>★原来只在关界面时写回 ✗ ⇒ 现在每次格子变化就把**六份内容各写一次** ✓。
      */
     @Override
     public void slotsChanged(net.minecraft.world.Container container) {

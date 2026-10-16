@@ -28,11 +28,11 @@ import java.util.LinkedList;
 import java.util.UUID;
 
 /**
- * TNL879 \u661f\u9668\u4e4b\u7bad\uff08\u2605\u7167\u642c\u53c2\u8003\u5b9e\u73b0 HomingArrow \u2713\uff09
+ * TNL879 星陨之箭（★照搬参考实现 HomingArrow ✓）
  *
- * <p>\u2605\u53c2\u8003\u5b9e\u73b0\u91cc\u7bad\u5934\u4f53**\u6ca1\u6709\u8ffd\u8e2a\u903b\u8f91** \u2717 \u2014\u2014
- * \u2605"\u8ffd\u8e2a"\u7684\u89c2\u611f\u6765\u81ea**\u7ba1\u72b6\u6d41\u5149\u5c3e\u8ff9** \u002b **\u547d\u4e2d\u661f\u73af\u002f\u4e94\u661f** \u2713\uff08\u89c1 StarfallRenderHandler \u2713\uff09\u3002
- * \u2605\u672c\u7c7b\u53e6\u5916\u4fdd\u7559\u7528\u6237\u53e3\u5f84\uff1a\u2605\u5f31\u8ffd\u8e2a\uff08\u4ec5\u9884\u6d4b\u4e00\u6b21 \u2713\uff09\u002b \u2605\u771f\u5b9e\u4f24\u5bb3\uff08\u975e Boss 8 \u70b9\uff0fBoss \u4e0a\u9650 0.5%\uff09\u002b \u2605 10% \u5f3a\u5316\u7bad\u3002
+ * <p>★参考实现里箭头体**没有追踪逻辑** ✗ ——
+ * ★"追踪"的观感来自**管状流光尾迹** + **命中星环/五星** ✓（见 StarfallRenderHandler ✓）。
+ * ★本类另外保留用户口径：★弱追踪（仅预测一次 ✓）+ ★真实伤害（非 Boss 8 点／Boss 上限 0.5%）+ ★ 10% 强化箭。
  */
 public class StarfallArrow extends AbstractArrow {
 
@@ -42,16 +42,16 @@ public class StarfallArrow extends AbstractArrow {
 
     private static final EntityDataAccessor<Float> DATA_SCALE =
             SynchedEntityData.defineId(StarfallArrow.class, EntityDataSerializers.FLOAT);
-    /** TNL933 \u2605\u529b\u91cf\u7b49\u7ea7\uff08\u2605\u6bcf\u7ea7 +10% \u4f24\u5bb3 \u2713\uff09 */
-    /** TNL933 \u2605\u5df2\u547d\u4e2d\u8fc7\u7684\u76ee\u6807\uff08\u2605\u7a7f\u900f\u7528 \u2713\uff09 */
+    /** TNL933 ★力量等级（★每级 +10% 伤害 ✓） */
+    /** TNL933 ★已命中过的目标（★穿透用 ✓） */
     private final java.util.List<net.minecraft.world.entity.Entity> tnl$hits = new java.util.ArrayList<>();
 
     private static final EntityDataAccessor<Integer> DATA_POWER =
             SynchedEntityData.defineId(StarfallArrow.class, EntityDataSerializers.INT);
-    /** TNL933 \u2605\u7a7f\u900f\u7b49\u7ea7\uff08\u2605\u8fd8\u80fd\u518d\u51fb\u4e2d\u51e0\u4e2a\u76ee\u6807 \u2713\uff09 */
+    /** TNL933 ★穿透等级（★还能再击中几个目标 ✓） */
     private static final EntityDataAccessor<Integer> DATA_PIERCE =
             SynchedEntityData.defineId(StarfallArrow.class, EntityDataSerializers.INT);
-    /** TNL933 \u2605\u706b\u77e2 \u2713 */
+    /** TNL933 ★火矢 ✓ */
     private static final EntityDataAccessor<Boolean> DATA_FLAME =
             SynchedEntityData.defineId(StarfallArrow.class, EntityDataSerializers.BOOLEAN);
 
@@ -63,12 +63,12 @@ public class StarfallArrow extends AbstractArrow {
     private int tickCount = 0;
     private boolean shouldRenderTail = true;
     private final LinkedList<Vec3> trailHistory = new LinkedList<>();
-    // TNL888 \u2605\u2605 \u65b0\u8ffd\u8e2a\uff08\u2605\u7528\u6237\u53e3\u5f84 \u2713\uff09\uff1a
-    //   \u2605\u98de\u884c\u4e2d\u626b\u63cf**\u5468\u56f4 3 \u683c** \u2713 \u21d2 \u2605\u6709\u76ee\u6807\u5c31\u63a5\u4e0a
-    //   \u2605\u98de\u5251\u540c\u6b3e\u5236\u5bfc\uff08{@link SwordGuidance} \u2713\uff09\u5f00\u59cb\u8ffd\u8e2a \u2713
+    // TNL888 ★★ 新追踪（★用户口径 ✓）：
+    //   ★飞行中扫描**周围 3 格** ✓ ⇒ ★有目标就接上
+    //   ★飞剑同款制导（{@link SwordGuidance} ✓）开始追踪 ✓
     private LivingEntity tnl$target = null;
     private SwordGuidance tnl$guide = null;
-    /** \u2605\u626b\u63cf\u534a\u5f84\uff083 \u683c \u2713\uff09 */
+    /** ★扫描半径（3 格 ✓） */
     private static final double TNL$SCAN = 3.0D;
     /** TNL889 撞地重新起飞次数上限 */
     private int tnl$bounce = 0;
@@ -85,9 +85,9 @@ public class StarfallArrow extends AbstractArrow {
         super(type, shooter, level);
         this.setBaseDamage(0.0D);
         this.pickup = Pickup.DISALLOWED;
-        // TNL1022 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u6700\u5927\u6982\u7387 5%" \u2713\uff08\u2605\u9009\u4e86"\u2605\u5f3a\u5316\u7bad\u603b\u6982\u7387\u5c01\u9876 5%" \u2713\uff09
-        //   \u2605\u57fa\u7840 2% \u2713 \u002b \u2605\u6bcf 1 \u70b9\u5e78\u8fd0 +1% \u2713 \u21d2 \u2605**\u4e0a\u9650 5%** \u2713\uff08\u2605\u5e78\u8fd0 +3 \u5c31\u5230\u9876 \u2713\uff09
-        //   \u2605\u8d1f\u5e78\u8fd0\u4e5f\u538b\u4e0d\u5230\u8d1f\u6570 \u2713\uff08\u2605\u4e0b\u9650 0 \u2713\uff09
+        // TNL1022 ★★ 用户：★"最大概率 5%" ✓（★选了"★强化箭总概率封顶 5%" ✓）
+        //   ★基础 2% ✓ + ★每 1 点幸运 +1% ✓ ⇒ ★**上限 5%** ✓（★幸运 +3 就到顶 ✓）
+        //   ★负幸运也压不到负数 ✓（★下限 0 ✓）
         float tnl$enhChance = 0.02F + (float) shooter.getAttributeValue(
                 net.minecraft.world.entity.ai.attributes.Attributes.LUCK) * 0.01F;
         tnl$enhChance = Math.max(0.0F, Math.min(0.05F, tnl$enhChance));
@@ -112,7 +112,7 @@ public class StarfallArrow extends AbstractArrow {
         return this.entityData.get(DATA_SCALE);
     }
 
-    /** TNL933 \u2605\u5916\u90e8\u8bbe\u7f6e\u529b\u91cf/\u7a7f\u900f/\u706b\u77e2 \u2713 */
+    /** TNL933 ★外部设置力量/穿透/火矢 ✓ */
     public void tnl$setPower(int v) {
         this.entityData.set(DATA_POWER, v);
     }
@@ -149,14 +149,14 @@ public class StarfallArrow extends AbstractArrow {
         return this.getPersistentData().getLong(TAG_BATCH);
     }
 
-    /** TNL888 \u2605\u9501\u5b9a\u76ee\u6807\uff08\u2605\u4f9b\u4ee5\u540e Boss AI \u9884\u9501\u7528 \u2713\uff09\uff1a\u2605\u91cd\u7f6e\u5236\u5bfc\u72b6\u6001 \u2713 */
+    /** TNL888 ★锁定目标（★供以后 Boss AI 预锁用 ✓）：★重置制导状态 ✓ */
     public void tnl$setHomingTarget(LivingEntity target) {
-        // TNL937 \u2605\u2605 \u7528\u6237\u53cd\u9988\uff1a\u2605"\u4e3a\u4ec0\u4e48\u7bad\u77e2\u9501\u4ed6\u4f1a\u4e00\u76f4\u7a7f\u8fc7\u4e0d\u9020\u6210\u4f24\u5bb3" \u2713
-        //   \u2605\u771f\u56e0 \u2717\uff1a\u2605\u6211\u5728\u547d\u4e2d\u540e\u867d\u7136\u89e3\u4e86\u9501 \u2713\uff0c
-        //   \u2605\u4f46**\u5236\u5bfc\u6bcf tick \u4f1a\u91cd\u65b0\u626b\u63cf\u5e76\u91cd\u65b0\u9501\u5b9a** \u2717 \u21d2
-        //   \u2605\u53c8\u9501\u56de\u540c\u4e00\u53ea \u2717 \u21d2 \u2605\u4e8e\u662f\u4e00\u76f4\u7a7f\u8fc7\u53bb\uff08\u2605\u800c\u5df2\u547d\u4e2d\u8fc7\u7684\u76ee\u6807\u4e0d\u91cd\u590d\u4f24\u5bb3 \u2713\uff09\u3002
-        //   \u2605\u73b0\u5728\uff1a\u2605\u5728**\u9501\u7684\u5165\u53e3\u5c31\u62d2\u7edd**\u5df2\u547d\u4e2d\u8fc7\u7684\u76ee\u6807 \u2713
-        //   \u21d2 \u2605\u5b83\u53ea\u80fd\u53bb\u9501\u522b\u7684\u76ee\u6807 \u002b \u2605\u6216\u8005\u76f4\u7ebf\u98de \u2713\u2713
+        // TNL937 ★★ 用户反馈：★"为什么箭矢锁他会一直穿过不造成伤害" ✓
+        //   ★真因 ✗：★我在命中后虽然解了锁 ✓，
+        //   ★但**制导每 tick 会重新扫描并重新锁定** ✗ ⇒
+        //   ★又锁回同一只 ✗ ⇒ ★于是一直穿过去（★而已命中过的目标不重复伤害 ✓）。
+        //   ★现在：★在**锁的入口就拒绝**已命中过的目标 ✓
+        //   ⇒ ★它只能去锁别的目标 + ★或者直线飞 ✓✓
         if (target == null) {
             return;
         }
@@ -190,7 +190,7 @@ public class StarfallArrow extends AbstractArrow {
                 this.trailHistory.removeFirst();
             }
         }
-        // TNL888 \u2605\u2605 \u8ffd\u8e2a\uff1a\u2605\u5148\u626b 3 \u683c \u2713 \u21d2 \u2605\u627e\u5230\u5c31\u8d70\u98de\u5251\u5236\u5bfc \u2713
+        // TNL888 ★★ 追踪：★先扫 3 格 ✓ ⇒ ★找到就走飞剑制导 ✓
         if (!this.level().isClientSide) {
             if (this.tnl$target == null || !this.tnl$target.isAlive()) {
                 this.tnl$target = tnl$scanTarget();
@@ -200,7 +200,7 @@ public class StarfallArrow extends AbstractArrow {
             }
             if (this.tnl$target != null && this.tnl$target.isAlive()) {
                 if (this.tnl$guide == null) {
-                    this.tnl$guide = new SwordGuidance();   // \u2605\u98de\u5251\u540c\u6b3e\u5236\u5bfc \u2713
+                    this.tnl$guide = new SwordGuidance();   // ★飞剑同款制导 ✓
                 }
                 this.setNoGravity(true);          // TNL889 追踪期间不吃重力
                 if (this.inGround && this.tnl$bounce < 20) {
@@ -210,13 +210,13 @@ public class StarfallArrow extends AbstractArrow {
                 Vec3 targetPos = this.tnl$target.position()
                         .add(0.0D, this.tnl$target.getBbHeight() * 0.5D, 0.0D);
                 Vec3 velocity = this.tnl$guide.guide(this.position(), this.getDeltaMovement(), targetPos);
-                this.setDeltaMovement(velocity);            // \u2605\u7167\u642c\u98de\u5251\u7684\u7528\u6cd5 \u2713
+                this.setDeltaMovement(velocity);            // ★照搬飞剑的用法 ✓
             } else if (!this.isNoGravity() && !this.inGround && !this.isInWater()) {
-                // \u2605\u6ca1\u76ee\u6807\u65f6\u624d\u5403 40% \u91cd\u529b\uff08\u2605\u7167\u642c\u53c2\u8003 \u2713\uff09
+                // ★没目标时才吃 40% 重力（★照搬参考 ✓）
                 this.setDeltaMovement(this.getDeltaMovement().add(0.0D, 0.03D, 0.0D));
             }
         }
-        // \u2605\u94c9\u4f4f\uff08\u2605\u7bad\u8fd8\u5728 \u21d2 \u76ee\u6807\u52a8\u4e0d\u4e86 \u2713\uff09
+        // ★铉住（★箭还在 ⇒ 目标动不了 ✓）
         if (!this.level().isClientSide && this.tnl$pinned != null) {
             this.tnl$pinTicks--;
             if (this.tnl$pinTicks <= 0 || !this.tnl$pinned.isAlive()) {
@@ -249,14 +249,14 @@ public class StarfallArrow extends AbstractArrow {
         super.remove(reason);
     }
 
-    /** TNL882 \u2605\u2605Boss \u5224\u5b9a\uff1a\u2605\u770b"\u6709\u6ca1\u6709 Boss \u8840\u6761\u4e8b\u4ef6" \u2713
+    /** TNL882 ★★Boss 判定：★看"有没有 Boss 血条事件" ✓
      *
-     * <p>\u2605\u7528\u6237\u53e3\u5f84\uff1a\u2605"boss\u68c0\u6d4b\u6309\u6709\u6ca1\u6709 boss \u4e8b\u4ef6\u5224\u65ad" \u2713
-     * \u21d2 \u2605\u53cd\u5c04\u626b\u63cf\u8be5\u5b9e\u4f53\u7c7b\uff08\u542b\u7236\u7c7b\uff09\u7684\u5b57\u6bb5 \u2713\uff1a
-     * \u53ea\u8981\u6709\u4efb\u4f55 {@link net.minecraft.world.BossEvent} \u7c7b\u578b\u7684\u5b57\u6bb5
-     * \uff08\u2605\u539f\u7248\u672b\u5f71\u9f99/\u51cb\u7075 \u2713 \u2605\u672c\u6a21\u7ec4 KtuluMomo \u2713 \u2605\u5176\u4ed6\u6a21\u7ec4\u6709\u8840\u6761\u7684 Boss \u2713\uff09
-     * \u21d2 \u2605\u5c31\u7b97 Boss \u2713\uff1b\u2605\u5047\u4eba/\u8bad\u7ec3\u6728\u4eba\u6ca1\u6709\u8fd9\u79cd\u5b57\u6bb5 \u2717 \u21d2 \u2605\u4e0d\u7b97 Boss \u2713\u3002
-     * \u2605\u7ed3\u679c\u6309**\u5b9e\u4f53\u7c7b\u578b\u7f13\u5b58** \u2713\uff08\u2605\u53cd\u5c04\u53ea\u505a\u4e00\u6b21 \u2713\uff09\u3002
+     * <p>★用户口径：★"boss检测按有没有 boss 事件判断" ✓
+     * ⇒ ★反射扫描该实体类（含父类）的字段 ✓：
+     * 只要有任何 {@link net.minecraft.world.BossEvent} 类型的字段
+     * （★原版末影龙/凋灵 ✓ ★本模组 KtuluMomo ✓ ★其他模组有血条的 Boss ✓）
+     * ⇒ ★就算 Boss ✓；★假人/训练木人没有这种字段 ✗ ⇒ ★不算 Boss ✓。
+     * ★结果按**实体类型缓存** ✓（★反射只做一次 ✓）。
      */
     private static final java.util.Map<Class<?>, Boolean> TNL$BOSS_CACHE_BY_CLASS = new java.util.concurrent.ConcurrentHashMap<>();
 
@@ -265,12 +265,12 @@ public class StarfallArrow extends AbstractArrow {
 
     public static boolean tnl$isBoss(Entity e) {
         try {
-            // TNL982 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u672b\u5f71\u9f99\u6ca1\u6709\u88ab\u5224\u65ad\u4e3a boss \u751f\u7269\uff0c\u51cb\u7075\u5374\u88ab\u5224\u65ad\u4e3a boss \u751f\u7269" \u2713
-            //   \u2605\u65e5\u5fd7\u8bc1\u636e\uff1a\u2605\u9f99\u7684**\u90e8\u4ef6** type \u4e5f\u53eb ``entity.minecraft.ender_dragon`` \u2713
-            //     \u21d2 \u2605\u7b2c\u4e00\u6b21\u5224\u5b9a\u770b\u7684\u662f\u90e8\u4ef6\uff08\u2605\u6ca1 BossEvent \u2717\uff09\u21d2 \u2605\u628a false
-            //     **\u5199\u8fdb\u4e86\u6309 EntityType \u7684\u7f13\u5b58** \u2717 \u21d2 \u2605\u4e4b\u540e\u672c\u4f53\u4e5f\u8fd4\u56de false \u2713\u2713
-            //   \u2605\u73b0\u5728\uff1a\u2605\u5148\u628a\u90e8\u4ef6\u6362\u7b97\u6210\u672c\u4f53 \u2713 \u002b \u2605**\u6539\u6210\u6309 `getClass()` \u7f13\u5b58** \u2713
-            //     \uff08\u2605\u90e8\u4ef6\u7c7b\u4e0e\u672c\u4f53\u7c7b\u4e0d\u540c \u2713 \u21d2 \u2605\u4e0d\u4f1a\u4e92\u76f8\u6c61\u67d3 \u2713\uff09
+            // TNL982 ★★ 用户：★"末影龙没有被判断为 boss 生物，凋灵却被判断为 boss 生物" ✓
+            //   ★日志证据：★龙的**部件** type 也叫 ``entity.minecraft.ender_dragon`` ✓
+            //     ⇒ ★第一次判定看的是部件（★没 BossEvent ✗）⇒ ★把 false
+            //     **写进了按 EntityType 的缓存** ✗ ⇒ ★之后本体也返回 false ✓✓
+            //   ★现在：★先把部件换算成本体 ✓ + ★**改成按 `getClass()` 缓存** ✓
+            //     （★部件类与本体类不同 ✓ ⇒ ★不会互相污染 ✓）
             e = com.mofengbaizhi.tinkersnewlife.util.TruePierce.resolveVictim(e);
             Class<?> key = e.getClass();
             Boolean hit = TNL$BOSS_CACHE_BY_CLASS.get(key);
@@ -291,27 +291,27 @@ public class StarfallArrow extends AbstractArrow {
                 }
                 c = c.getSuperclass();
             }
-            // TNL984 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u672b\u5f71\u9f99\u6ca1\u6709\u88ab\u5224\u65ad\u4e3a boss" \u2713
-            //   \u2605\u67e5 jar \u5f97\u5230\uff08\u2605javap \u2713\uff09\uff1a
-            //     \u00b7 \u2605\u51cb\u7075 \u2713\uff1a\u2605\u81ea\u5df1\u58f0\u660e\u4e86 ``private final ServerBossEvent`` \u21d2 \u2605\u626b\u5f97\u5230 \u2713
-            //     \u00b7 \u2605\u672b\u5f71\u9f99 \u2717\uff1a\u2605**\u9f99\u5b9e\u4f53\u4e0a\u6ca1\u6709\u4efb\u4f55 BossEvent \u5b57\u6bb5** \u2713
-            //       \uff08\u2605\u5b83\u7684\u8840\u6761\u5728 ``EndDragonFight`` \u91cc \u2713\uff09\u21d2 \u2605\u6240\u4ee5\u6c38\u8fdc\u626b\u4e0d\u5230 \u2713
-            //   \u2605\u73b0\u5728\uff1a\u2605\u660e\u786e\u628a**\u672b\u5f71\u9f99\uff08\u53ca\u5176\u90e8\u4ef6\uff09\u5f53 boss** \u2713
-            // TNL985 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u7fa4\u53cb\u8bf4 forge \u6709\u4e13\u95e8\u7684 boss \u6807\u7b7e" \u2713
-            //   \u2605\u5df2\u786e\u8bc1\uff08\u2605javap \u002b jar \u91cc\u7684\u8d44\u6e90 \u2713\uff09\uff1a
-            //     \u00b7 \u2605``net.minecraftforge.common.Tags$EntityTypes.BOSSES`` \u5b58\u5728 \u2713
-            //     \u00b7 \u2605``data/forge/tags/entity_types/bosses.json`` \u5b58\u5728 \u2713
-            //   \u2605\u8fd9\u662f"\u6570\u636e\u9a71\u52a8"\u7684\u5224\u636e \u2713 \u21d2 \u2605\u4efb\u4f55\u6574\u5408\u5305/\u6a21\u7ec4\u90fd\u53ef\u4ee5\u5f80\u91cc\u52a0 \u2713
+            // TNL984 ★★ 用户：★"末影龙没有被判断为 boss" ✓
+            //   ★查 jar 得到（★javap ✓）：
+            //     · ★凋灵 ✓：★自己声明了 ``private final ServerBossEvent`` ⇒ ★扫得到 ✓
+            //     · ★末影龙 ✗：★**龙实体上没有任何 BossEvent 字段** ✓
+            //       （★它的血条在 ``EndDragonFight`` 里 ✓）⇒ ★所以永远扫不到 ✓
+            //   ★现在：★明确把**末影龙（及其部件）当 boss** ✓
+            // TNL985 ★★ 用户：★"群友说 forge 有专门的 boss 标签" ✓
+            //   ★已确证（★javap + jar 里的资源 ✓）：
+            //     · ★``net.minecraftforge.common.Tags$EntityTypes.BOSSES`` 存在 ✓
+            //     · ★``data/forge/tags/entity_types/bosses.json`` 存在 ✓
+            //   ★这是"数据驱动"的判据 ✓ ⇒ ★任何整合包/模组都可以往里加 ✓
             if (!boss) {
                 try {
                     boss = e.getType().is(net.minecraftforge.common.Tags.EntityTypes.BOSSES);
                 } catch (Throwable ignored) {
                 }
             }
-            // TNL987 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u628a\u4e4b\u524d\u7684\u8840\u6761\u53cd\u5c04\u4e8b\u4ef6\u515c\u5e95" \u2713
-            //   \u2605\u987a\u5e8f \u2713\uff1a\u2605\u5b57\u6bb5\u626b\u63cf\uff08\u2605\u51cb\u7075 \u2713\uff09\u2192 \u2605forge:bosses \u6807\u7b7e\uff08\u2605\u6570\u636e\u9a71\u52a8 \u2713\uff09
-            //     \u2192 \u2605\u8840\u6761\u6ce8\u518c\u8868\uff08\u2605\u670d\u52a1\u7aef\u521b\u5efa \u002b \u2605\u5ba2\u6237\u7aef\u6e32\u67d3 \u2713\uff09\u3002
-            //   \u2605\u8fd9\u6761\u5c31\u662f"\u6a21\u7ec4\u6ca1\u5199\u6807\u7b7e\u4f46\u6709\u8840\u6761"\u7684\u515c\u5e95 \u2713\u3002
+            // TNL987 ★★ 用户：★"把之前的血条反射事件兜底" ✓
+            //   ★顺序 ✓：★字段扫描（★凋灵 ✓）→ ★forge:bosses 标签（★数据驱动 ✓）
+            //     → ★血条注册表（★服务端创建 + ★客户端渲染 ✓）。
+            //   ★这条就是"模组没写标签但有血条"的兜底 ✓。
             if (!boss) {
                 try {
                     boss = com.mofengbaizhi.tinkersnewlife.util.BossBarRegistry.isBoss(e.getUUID());
@@ -322,7 +322,7 @@ public class StarfallArrow extends AbstractArrow {
                 boss = true;
             }
             if (boss) {
-                TNL$BOSS_CACHE_BY_CLASS.put(key, Boolean.TRUE);   // \u2605\u53ea\u7f13\u5b58"\u662f boss" \u2713
+                TNL$BOSS_CACHE_BY_CLASS.put(key, Boolean.TRUE);   // ★只缓存"是 boss" ✓
             }
             return boss;
         } catch (Throwable th) {
@@ -332,14 +332,14 @@ public class StarfallArrow extends AbstractArrow {
 
     @Override
     protected void onHitEntity(EntityHitResult hitResult) {
-        // TNL977 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u547d\u4e2d\u591a\u90e8\u4f4d\u5b9e\u4f53\u7684\u975e\u4e3b\u78b0\u649e\u7bb1\u65f6\uff0c\u6ca1\u6709\u9020\u6210\u4f24\u5bb3" \u2713
-        //   \u2605\u771f\u56e0 \u2717\uff1a\u2605\u591a\u90e8\u4f4d\u5b9e\u4f53\uff08\u2605\u5de8\u9f99\u7c7b \u2713\uff09\u547d\u4e2d\u7684\u662f
-        //     \u2605``PartEntity``\uff08\u90e8\u4ef6 \u2713\uff09\uff0c\u2605\u5b83**\u4e0d\u662f ``LivingEntity``** \u2717
-        //     \u21d2 \u2605\u6211\u7b2c\u4e00\u53e5\u5c31 return \u21d2 \u2605\u6ca1\u6253\u5230\u672c\u4f53 \u2713\u2713
-        //   \u2605\u73b0\u5728\uff1a\u2605\u5148\u7528 ``PartEntity#getParent()`` \u6362\u7b97\u56de**\u672c\u4f53** \u2713
-        //     \uff08\u2605\u540c\u4e00\u5957\u771f\u4f24/\u7a7f\u900f/\u706b\u77e2/\u9ed1\u7bad\u903b\u8f91\u7167\u5e38\u751f\u6548 \u2713\uff09
+        // TNL977 ★★ 用户：★"命中多部位实体的非主碰撞箱时，没有造成伤害" ✓
+        //   ★真因 ✗：★多部位实体（★巨龙类 ✓）命中的是
+        //     ★``PartEntity``（部件 ✓），★它**不是 ``LivingEntity``** ✗
+        //     ⇒ ★我第一句就 return ⇒ ★没打到本体 ✓✓
+        //   ★现在：★先用 ``PartEntity#getParent()`` 换算回**本体** ✓
+        //     （★同一套真伤/穿透/火矢/黑箭逻辑照常生效 ✓）
         net.minecraft.world.entity.Entity tnl$hit = hitResult.getEntity();
-        // TNL980 \u2605\u2605 \u63a2\u9488\uff1a\u2605\u770b"\u547d\u4e2d\u4e86\u4ec0\u4e48/\u7b97\u4e0d\u7b97 boss" \u2713
+        // TNL980 ★★ 探针：★看"命中了什么/算不算 boss" ✓
         {
             org.slf4j.Logger lg = com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER;
             Object parentInfo = "";
@@ -349,7 +349,7 @@ public class StarfallArrow extends AbstractArrow {
                 }
             } catch (Throwable ignored) {
             }
-            // TNL983 \u2605\u2605 \u63a2\u9488\u6539\u6210\u6253"\u6362\u7b97\u540e"\u7684\u7ed3\u679c \u2713
+            // TNL983 ★★ 探针改成打"换算后"的结果 ✓
             net.minecraft.world.entity.Entity tnl$res =
                     com.mofengbaizhi.tinkersnewlife.util.TruePierce.resolveVictim(tnl$hit);
             lg.warn("TNL983 hit={} ({}){}  -> resolved={}  isLiving={}  boss={}",
@@ -361,15 +361,15 @@ public class StarfallArrow extends AbstractArrow {
         if (tnl$hit instanceof net.minecraftforge.entity.PartEntity<?> tnl$part) {
             tnl$hit = tnl$part.getParent();
         }
-        // TNL989 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u51b0\u4e0e\u706b\u6253\u90e8\u4ef6\u7684\u95ee\u9898\u8fd8\u6ca1\u4fee\u597d" \u2713
-        //   \u2605\u65e5\u5fd7 \u002b \u6e90\u7801\u4ea4\u53c9\u9a8c\u8bc1 \u2713\uff1a
-        //     \u00b7 \u2605``TNL983 ... hit=EntityDragonPart -> resolved=EntityLightningDragon isLiving=true`` \u2713
-        //       \u21d2 \u2605\u6362\u7b97**\u672c\u6765\u5c31\u6210\u529f** \u2713
-        //     \u00b7 \u2605\u4f46 ``TNL988`` **\u4e00\u884c\u90fd\u6ca1\u6709** \u2717 \u21d2 \u2605\u6839\u672c\u6ca1\u8d70\u5230\u4f24\u5bb3\u90a3\u4e00\u6b65 \u2713
-        //     \u00b7 \u2605\u539f\u56e0 \u2717\uff1a\u2605\u8fd9\u91cc\u6bd4\u7684\u662f**\u539f\u59cb\u547d\u4e2d\u5b9e\u4f53**\uff08\u2605\u90e8\u4ef6 \u2717\uff09
-        //       \u2605\u90e8\u4ef6\u4e0d\u662f ``LivingEntity`` \u21d2 \u2605**\u5728\u8fd9\u91cc\u5c31 return \u4e86** \u2713\u2713
-        //       \uff08\u2605\u6211\u4e0a\u4e00\u8f6e\u7684\u6362\u7b97\u53ea\u5582\u7ed9\u4e86\u63a2\u9488 \u2717 \u6ca1\u7528\u5728\u8fd9\u9053\u95e8\u4e0a \u2713\uff09
-        //   \u2605\u73b0\u5728\uff1a\u2605\u5148\u6362\u7b97\u6210\u672c\u4f53 \u2713 \u002b \u2605\u6362\u4e0d\u5230\u5c31\u9000\u56de\u539f\u7248 \u2713
+        // TNL989 ★★ 用户：★"冰与火打部件的问题还没修好" ✓
+        //   ★日志 + 源码交叉验证 ✓：
+        //     · ★``TNL983 ... hit=EntityDragonPart -> resolved=EntityLightningDragon isLiving=true`` ✓
+        //       ⇒ ★换算**本来就成功** ✓
+        //     · ★但 ``TNL988`` **一行都没有** ✗ ⇒ ★根本没走到伤害那一步 ✓
+        //     · ★原因 ✗：★这里比的是**原始命中实体**（★部件 ✗）
+        //       ★部件不是 ``LivingEntity`` ⇒ ★**在这里就 return 了** ✓✓
+        //       （★我上一轮的换算只喂给了探针 ✗ 没用在这道门上 ✓）
+        //   ★现在：★先换算成本体 ✓ + ★换不到就退回原版 ✓
         net.minecraft.world.entity.Entity tnl$resolved =
                 com.mofengbaizhi.tinkersnewlife.util.TruePierce.resolveVictim(tnl$hit);
         if (!(tnl$resolved instanceof LivingEntity target)) {
@@ -379,21 +379,21 @@ public class StarfallArrow extends AbstractArrow {
         if (this.level().isClientSide) {
             return;
         }
-        // TNL938 \u2605\u2605 \u7528\u6237\u53e3\u5f84\uff1a\u2605"\u6211\u662f\u8bf4\u8ba9\u5b83\u53ef\u4ee5\u7ee7\u7eed\u9501\uff0c\u4f46\u662f\u522b\u9501\u7740\u4e0d\u9020\u6210\u4f24\u5bb3" \u2713
-        //   \u2605\u21d2 \u2605\u64a4\u6389"\u540c\u4e00\u76ee\u6807\u4e0d\u91cd\u590d\u4f24\u5bb3"\u8fd9\u6761\u9650\u5236 \u2713
-        //   \u2605\u6bcf\u6b21\u63a5\u89e6\u90fd\u7ed3\u7b97\u4f24\u5bb3 \u2713\uff0c\u2605\u7a7f\u900f\u6b21\u6570\u7167\u65e7\u6bcf\u6b21 -1 \u2713
-        //   \uff08\u2605\u6240\u4ee5\u2605\u9501\u7740\u4e5f\u80fd\u4e00\u76f4\u6253 \u2713\uff0c\u2605\u6253\u6ee1\u7a7f\u900f\u6b21\u6570\u5c31\u6d88\u5931 \u2713\uff09
+        // TNL938 ★★ 用户口径：★"我是说让它可以继续锁，但是别锁着不造成伤害" ✓
+        //   ★⇒ ★撤掉"同一目标不重复伤害"这条限制 ✓
+        //   ★每次接触都结算伤害 ✓，★穿透次数照旧每次 -1 ✓
+        //   （★所以★锁着也能一直打 ✓，★打满穿透次数就消失 ✓）
         this.tnl$hits.add(target);
-        // TNL935 \u2605\u2605 \u63a2\u9488\uff1a\u2605\u770b"\u7b2c\u4e8c\u6b21\u547d\u4e2d\u6709\u6ca1\u6709\u8fdb\u6765" \u2713
+        // TNL935 ★★ 探针：★看"第二次命中有没有进来" ✓
         com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
                 "TNL935 hit #{} target={} pierceLeft={} inGround={} removed={}",
                 this.tnl$hits.size(), target.getName().getString(),
                 this.entityData.get(DATA_PIERCE), this.inGround, this.isRemoved());
-        // TNL933 \u2605\u706b\u77e2\uff1a\u2605\u547d\u4e2d\u70b9\u706b 5 \u79d2 \u2713
+        // TNL933 ★火矢：★命中点火 5 秒 ✓
         if (this.entityData.get(DATA_FLAME)) {
             target.setSecondsOnFire(5);
         }
-        // \u2605\u547d\u4e2d\u7279\u6548\u5e7f\u64ad\uff08\u2605\u7167\u642c\u53c2\u8003 StarHitPacket \u2713\uff09
+        // ★命中特效广播（★照搬参考 StarHitPacket ✓）
         if (this.level() instanceof ServerLevel sl) {
             Vec3 pos = this.position();
             Vec3 dir = this.getDeltaMovement();
@@ -408,23 +408,23 @@ public class StarfallArrow extends AbstractArrow {
             }
         }
         boolean enh = this.tnl$isEnhanced();
-        // TNL932 \u2605\u2605 \u7528\u6237\u53e3\u5f84\uff08\u4fee\u6539\u4f24\u5bb3\uff09\uff1a
-        //   \u2605Boss \u751f\u7269 \u21d2 \u2605\u6bcf\u7bad**\u56fa\u5b9a 3% \u4e0a\u9650\u771f\u4f24** \u2713
-        //   \u2605\u975e Boss \u21d2 \u2605\u6bcf\u7bad**\u56fa\u5b9a 10% \u751f\u547d\u4e0a\u9650\u771f\u4f24** \u2713
-        //     \u2605\u4f46**\u4e0d\u5f97\u4f4e\u4e8e 16** \u2713\uff08\u2605\u4f4e\u4e8e\u5c31\u76f4\u63a5\u7b97 16 \u2713\uff09
+        // TNL932 ★★ 用户口径（修改伤害）：
+        //   ★Boss 生物 ⇒ ★每箭**固定 3% 上限真伤** ✓
+        //   ★非 Boss ⇒ ★每箭**固定 10% 生命上限真伤** ✓
+        //     ★但**不得低于 16** ✓（★低于就直接算 16 ✓）
         float dmg = tnl$isBoss(target)
                 ? target.getMaxHealth() * 0.03F
                 : Math.max(16.0F, target.getMaxHealth() * 0.10F);
-        dmg *= 1.0F + 0.10F * this.entityData.get(DATA_POWER);   // TNL933 \u2605\u529b\u91cf\uff1a\u2605\u6bcf\u7ea7 +10% \u2713   // TNL882 \u2605\u975e Boss 16 \u2713 \u2605Boss 3% \u2713
+        dmg *= 1.0F + 0.10F * this.entityData.get(DATA_POWER);   // TNL933 ★力量：★每级 +10% ✓   // TNL882 ★非 Boss 16 ✓ ★Boss 3% ✓
         if (enh) {
             dmg *= 2.0F;
         }
-        // TNL1020 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u58f0\u97f3\u7a0d\u5fae\u5927\u4e00\u70b9\uff0c\u7136\u540e\u8ba9\u666e\u901a\u7bad\u77e2\u5c04\u4e2d\u4e5f\u6709\u97f3\u4e50\u97f3\u6548\uff0c
-        //   \u53ea\u662f\u6ca1\u5f3a\u5316\u7bad\u77e2\u597d\u542c" \u2713
-        //   \u2605\u5f3a\u5316\u7bad \u2713\uff1a\u2605``AMETHYST_BLOCK_CHIME``\uff08\u2605\u6e05\u8106\u60a6\u8033\u7684"\u53ee" \u2713\uff09
-        //     \u2605\u97f3\u91cf 1.6 \u2713\uff08\u2605\u6bd4\u539f\u6765 1.0 \u66f4\u54cd \u2713\uff09\u002b \u2605\u97f3\u8c03 0.5~2.0 \u968f\u673a \u2713
-        //   \u2605\u666e\u901a\u7bad \u2713\uff1a\u2605``AMETHYST_BLOCK_HIT``\uff08\u2605\u95f7\u4e00\u70b9\u7684"\u6251" \u2713\uff09
-        //     \u2605\u97f3\u91cf 1.3 \u2713\u002b \u2605\u97f3\u8c03\u53ea\u5728 0.7~1.1 \u5c0f\u8303\u56f4\u6296 \u2713\uff08\u2605\u542c\u7740\u5c31\u6ca1\u90a3\u4e48\u597d\u542c \u2713\uff09
+        // TNL1020 ★★ 用户：★"声音稍微大一点，然后让普通箭矢射中也有音乐音效，
+        //   只是没强化箭矢好听" ✓
+        //   ★强化箭 ✓：★``AMETHYST_BLOCK_CHIME``（★清脆悦耳的"叮" ✓）
+        //     ★音量 1.6 ✓（★比原来 1.0 更响 ✓）+ ★音调 0.5~2.0 随机 ✓
+        //   ★普通箭 ✓：★``AMETHYST_BLOCK_HIT``（★闷一点的"扑" ✓）
+        //     ★音量 1.3 ✓+ ★音调只在 0.7~1.1 小范围抖 ✓（★听着就没那么好听 ✓）
         if (!this.level().isClientSide) {
             if (enh) {
                 this.level().playSound(null, this.blockPosition(),
@@ -442,14 +442,14 @@ public class StarfallArrow extends AbstractArrow {
         try {
             com.mofengbaizhi.tinkersnewlife.util.TruePierce.apply(attacker, target, dmg);   // ★见下方分支 ✓
         } catch (Throwable th) {
-            // TNL986 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u628a\u51b0\u4e0e\u706b\u9f99\u65e0\u6cd5\u771f\u4f24\u7684 bug \u4fee\u597d" \u2713
-            //   \u2605jar \u8bc1\u636e\uff08\u2605javap \u2713\uff09\uff1a
-            //     \u2605``EntityMutlipartPart``\uff08\u2605\u51b0\u706b\u90e8\u4ef6\u57fa\u7c7b \u2713\uff09\u81ea\u5df1\u5c31\u6709
-            //     \u2605``public boolean hurt(DamageSource, float)``\uff08\u2605m_6469_ \u2713\uff09\uff0c\u2605\u5b83**\u4f1a\u628a\u4f24\u5bb3\u8f6c\u4EA4\u7ed9\u672c\u4f53** \u2713
-            //     \u002b \u2605\u4e58\u4e0a\u90e8\u4f4d\u7cfb\u6570\uff08\u2605\u7fc5\u8180/\u5c3e\u5df4 \u2713\uff09\u3002\u2605\u539f\u7248 ``EnderDragonPart`` \u540c\u7406 \u2713
-            //   \u2605\u6240\u4ee5\uff1a\u2605\u547d\u4e2d"\u90e8\u4ef6"\u65f6\u5e94**\u6253\u90e8\u4ef6** \u2713\uff08\u2605\u5b83\u4f1a\u8f6c\u53d1 \u2713\uff09
-            //     \u2605\u800c\u4e0d\u662f\u76f4\u63a5\u6253\u672c\u4f53 \u2717\uff08\u2605\u90a3\u6837\u51b0\u706b\u8fd9\u8fb9\u4e0d\u8d70\u5b83\u7684\u8f6c\u53d1\u94fe \u2717\uff09
-            // TNL988 \u2605\u2605 \u63a2\u9488\uff1a\u2605\u76f4\u63a5\u770b"\u5230\u5e95\u8d70\u5230\u4f24\u5bb3\u90a3\u4e00\u6b65\u6ca1\u6709 \u002b \u6253\u4e86\u591a\u5c11" \u2713
+            // TNL986 ★★ 用户：★"把冰与火龙无法真伤的 bug 修好" ✓
+            //   ★jar 证据（★javap ✓）：
+            //     ★``EntityMutlipartPart``（★冰火部件基类 ✓）自己就有
+            //     ★``public boolean hurt(DamageSource, float)``（★m_6469_ ✓），★它**会把伤害转交给本体** ✓
+            //     + ★乘上部位系数（★翅膀/尾巴 ✓）。★原版 ``EnderDragonPart`` 同理 ✓
+            //   ★所以：★命中"部件"时应**打部件** ✓（★它会转发 ✓）
+            //     ★而不是直接打本体 ✗（★那样冰火这边不走它的转发链 ✗）
+            // TNL988 ★★ 探针：★直接看"到底走到伤害那一步没有 + 打了多少" ✓
             org.slf4j.Logger lg2 = com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER;
             net.minecraft.world.entity.Entity tnl$victim = hitResult.getEntity();
             lg2.warn("TNL988 damage site: hit={} victim={} target={} dmg={} aliveBefore={}",
@@ -457,19 +457,19 @@ public class StarfallArrow extends AbstractArrow {
                     tnl$victim.getClass().getSimpleName(),
                     target.getClass().getSimpleName(), dmg, target.getHealth());
             if (tnl$victim instanceof net.minecraft.world.entity.LivingEntity) {
-                tnl$victim = target;                       // \u2605\u672c\u4f53\u547d\u4e2d \u21d2 \u2605\u8d70\u539f\u6765\u7684\u771f\u4f24\u8def\u5f84 \u2713
+                tnl$victim = target;                       // ★本体命中 ⇒ ★走原来的真伤路径 ✓
             }
             if (tnl$victim != target) {
-                tnl$victim.hurt(this.damageSources().magic(), dmg);   // \u2605\u90e8\u4ef6\u81ea\u5df1\u8f6c\u53d1\u7ed9\u672c\u4f53 \u2713
+                tnl$victim.hurt(this.damageSources().magic(), dmg);   // ★部件自己转发给本体 ✓
             } else {
                 com.mofengbaizhi.tinkersnewlife.util.TruePierce.apply(attacker, target, dmg);
             }
         }
         if (enh) {
-            // TNL928 \u2605\u2605 \u4fee\u6b63\uff1a\u2605\u4e0a\u4e00\u7248\u6211\u628a\u5b83\u9519\u63d2\u5728 **catch** \u91cc \u2717
-            //   \u2605\u800c\u771f\u4f24\u8d70\u7684\u662f ``TruePierce.apply`` \u90a3\u6761**\u6b63\u5e38\u8def\u5f84** \u2713
-            //   \u21d2 \u2605catch \u4ece\u4e0d\u6267\u884c \u21d2 \u2605\u9ed1\u7bad\u4ece\u6765\u6ca1\u624e\u4e0a \u2713\uff08\u2605\u7528\u6237\u5b9e\u6d4b\uff1a\u2605"\u9ed1\u7bad\u5b9e\u4f53\u6ca1\u51fa\u73b0\uff0c\u4e5f\u6ca1\u6210\u529f\u51cf\u901f\u4f7f\u5f92" \u2713\uff09
-            //   \u2605\u73b0\u5728\uff1a\u2605\u653e\u8fdb ``if (enh)`` \u91cc \u2713 \u21d2 \u2605\u53ea\u6709\u5f3a\u5316\u7bad\u624d\u624e \u2713
+            // TNL928 ★★ 修正：★上一版我把它错插在 **catch** 里 ✗
+            //   ★而真伤走的是 ``TruePierce.apply`` 那条**正常路径** ✓
+            //   ⇒ ★catch 从不执行 ⇒ ★黑箭从来没扎上 ✓（★用户实测：★"黑箭实体没出现，也没成功减速使徒" ✓）
+            //   ★现在：★放进 ``if (enh)`` 里 ✓ ⇒ ★只有强化箭才扎 ✓
             com.mofengbaizhi.tinkersnewlife.content.entity.StuckArrowManager.apply(target);
             Vec3 v = this.getDeltaMovement();
             Vec3 dir = v.lengthSqr() > 0.001D ? v.normalize() : this.position().subtract(target.position()).normalize();
@@ -487,18 +487,18 @@ public class StarfallArrow extends AbstractArrow {
             this.tnl$pinned = target;
             this.tnl$pinTicks = 100;
         }
-        // TNL933 \u2605\u7a7f\u900f\uff1a\u2605\u8fd8\u6709\u4f59\u989d\u5c31\u4e0d\u6d88\u5931 \u2713
+        // TNL933 ★穿透：★还有余额就不消失 ✓
         int pierce = this.entityData.get(DATA_PIERCE);
         if (pierce > 0) {
             this.entityData.set(DATA_PIERCE, pierce - 1);
-            // TNL935 \u2605\u2605 \u4fee\u6b63\uff1a\u2605\u786e\u4fdd\u5b83**\u771f\u7684\u7ee7\u7eed\u98de** \u2713
+            // TNL935 ★★ 修正：★确保它**真的继续飞** ✓
             this.inGround = false;
             this.hasImpulse = true;
             this.pickup = AbstractArrow.Pickup.DISALLOWED;
-            this.tnl$setHomingTarget(null);                    // TNL936 \u2605\u7a7f\u900f\u540e\u4e5f\u89e3\u9501 \u2713
+            this.tnl$setHomingTarget(null);                    // TNL936 ★穿透后也解锁 ✓
             net.minecraft.world.phys.Vec3 tnl$mv = this.getDeltaMovement();
             double tnl$sp = tnl$mv.length();
-            if (tnl$sp < 1.2D) {                               // \u2605\u4fdd\u5e95\u901f\u5ea6 \u2713
+            if (tnl$sp < 1.2D) {                               // ★保底速度 ✓
                 net.minecraft.world.phys.Vec3 tnl$dir = tnl$sp < 1.0E-4D
                         ? this.getViewVector(1.0F) : tnl$mv.scale(1.0D / tnl$sp);
                 this.setDeltaMovement(tnl$dir.scale(1.2D));
@@ -525,7 +525,7 @@ public class StarfallArrow extends AbstractArrow {
         this.entityData.set(DATA_ENHANCED, tag.getBoolean("TnlEnhanced"));
     }
 
-    /** TNL888 \u2605\u626b\u63cf**\u5468\u56f4 3 \u683c**\u5185\u7684\u53ef\u8ffd\u76ee\u6807\uff08\u2605\u6700\u8fd1\u4f18\u5148 \u2713\uff09 */
+    /** TNL888 ★扫描**周围 3 格**内的可追目标（★最近优先 ✓） */
     private LivingEntity tnl$scanTarget() {
         try {
             java.util.List<LivingEntity> found = this.level().getEntitiesOfClass(

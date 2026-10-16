@@ -8,7 +8,7 @@ import net.minecraftforge.network.NetworkEvent;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-/** TNL927 \u2605\u670d\u52a1\u7aef \u2192 \u5ba2\u6237\u7aef\uff1a\u2605\u67d0\u4e2a\u751f\u7269\u8eab\u4e0a\u662f\u5426\u6709\u9ed1\u7bad \u2713 */
+/** TNL927 ★服务端 → 客户端：★某个生物身上是否有黑箭 ✓ */
 public class PacketStuckArrow {
 
     private final UUID id;

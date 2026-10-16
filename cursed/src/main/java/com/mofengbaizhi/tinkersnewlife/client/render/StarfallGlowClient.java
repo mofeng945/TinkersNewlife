@@ -12,10 +12,10 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 /**
- * TNL1001 \u2605\u2605 \u661f\u9668\u60b2\u53f9\uff1a\u2605\u7269\u54c1\u680f\u80cc\u666f\u7070\u767d\u5149\u6548 \u2713
+ * TNL1001 ★★ 星陨悲叹：★物品栏背景灰白光效 ✓
  *
- * <p>\u2605\u53c2\u7167\u65e0\u5c3d\u8d2a\u5a6a \u2713\uff1a\u2605\u661f\u7a7a\u7269\u54c1\u5728\u7269\u54c1\u680f\u91cc\u80cc\u540e\u6709\u4e00\u5c42
- * \u4f1a\u547c\u5438\u7684\u5149\u6655 \u2713\uff08\u2605\u7528\u5b83\u81ea\u5df1\u7684 ``COSMIC_RENDER_TYPE`` \u2713\uff09\u3002
+ * <p>★参照无尽贪婪 ✓：★星空物品在物品栏里背后有一层
+ * 会呼吸的光晕 ✓（★用它自己的 ``COSMIC_RENDER_TYPE`` ✓）。
  */
 @Mod.EventBusSubscriber(modid = com.mofengbaizhi.tinkersnewlife.TinkersNewlife.MOD_ID,
         value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
@@ -39,12 +39,12 @@ public final class StarfallGlowClient {
     }
 
     /**
-     * TNL1007 \u2605\u2605 \u5f00\u5173\u5b9e\u9a8c\uff1a\u2605\u7528\u6237\u53cd\u590d\u8bf4"\u65b9\u5f62\u767d\u5e95\u6ca1\u6d88\u5931" \u2713
-     * \u2605\u65e5\u5fd7\u5df2\u8bc1\u660e\u8fd9\u5c42**\u786e\u5b9e\u5728\u753b** \u2713 \u21d2 \u2605\u73b0\u5728\u628a\u5b83**\u5173\u6389** \u2713
-     * \u2605\u770b\u767d\u5e95\u8fd8\u5728\u4e0d\u5728 \u2713\uff1a\u2605\u4e0d\u5728 \u21d2 \u2605\u5c31\u662f\u6211\u4eec\u7684\u5149\u6655\uff08\u2605\u6211\u7ee7\u7eed\u6539\u5b83 \u2713\uff09\uff1b
-     * \u2605\u8fd8\u5728 \u21d2 \u2605\u8bf4\u660e\u6839\u672c\u4e0d\u662f\u8fd9\u91cc \u2713\uff08\u2605\u6211\u53bb\u67e5\u522b\u7684\u6a21\u7ec4/\u539f\u7248\u6e32\u67d3 \u2713\uff09\u3002
+     * TNL1007 ★★ 开关实验：★用户反复说"方形白底没消失" ✓
+     * ★日志已证明这层**确实在画** ✓ ⇒ ★现在把它**关掉** ✓
+     * ★看白底还在不在 ✓：★不在 ⇒ ★就是我们的光晕（★我继续改它 ✓）；
+     * ★还在 ⇒ ★说明根本不是这里 ✓（★我去查别的模组/原版渲染 ✓）。
      */
-    public static final boolean ENABLED = true;   // TNL1008 \u2605\u7ecf\u5bf9\u7167\u5b9e\u9a8c\u786e\u8ba4\u65b9\u5757\u5c31\u662f\u5b83 \u2713 \u21d2 \u91cd\u5f00 \u002b \u6539\u6210\u7ec6\u73af\u5e26 \u2713
+    public static final boolean ENABLED = true;   // TNL1008 ★经对照实验确认方块就是它 ✓ ⇒ 重开 + 改成细环带 ✓
 
     public static boolean ready() {
         return ENABLED && glowShader != null;

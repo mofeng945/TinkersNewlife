@@ -22,30 +22,30 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * TNL879 \u661f\u9668\u60b2\u53f9 Starfall Lament\uff08\u2605\u7167\u642c\u53c2\u8003\u5b9e\u73b0 HomingBowItem \u2713\uff09
+ * TNL879 星陨悲叹 Starfall Lament（★照搬参考实现 HomingBowItem ✓）
  *
- * <p>\u2605\u7528\u6237\u53e3\u5f84\uff1a\u2605"\u5b8c\u5168\u6a21\u4eff\u53c2\u8003\u5b9e\u73b0\u505a\u5f13\uff0c\u53ea\u662f\u628a\u4ed6\u90a3\u4e2a\u5929\u964d\u7684\u7bad\u6362\u6210\u4ece\u5f13\u5c04\u51fa\u53bb" \u2713
- * \u21d2 \u2605\u672c\u7c7b\u5b8c\u5168\u7167\u642c\u53c2\u8003\uff1a\u2605\u84c4\u529b\u5f13 \u2713\u3001\u2605``AutoFire`` NBT \u6807\u7b7e\u81ea\u52a8\u8fde\u53d1 \u2713\u3001
- * \u2605Multishot \u4e09\u7bad \u2713\u3001\u2605**\u6d41\u52a8\u6e10\u53d8\u540d\u5b57** \u2713\u3002
- * \u2605\u4e0e\u53c2\u8003\u7684\u5dee\u522b\u53ea\u6709\uff1a\u2605\u7bad\u662f**\u4ece\u5f13\u5c04\u51fa**\uff08\u53c2\u8003\u91cc\u53e6\u6709\u4e00\u5957\u5929\u964d\u903b\u8f91 \u2717 \u6211\u4eec\u4e0d\u505a \u2713\uff09\u3002
+ * <p>★用户口径：★"完全模仿参考实现做弓，只是把他那个天降的箭换成从弓射出去" ✓
+ * ⇒ ★本类完全照搬参考：★蓄力弓 ✓、★``AutoFire`` NBT 标签自动连发 ✓、
+ * ★Multishot 三箭 ✓、★**流动渐变名字** ✓。
+ * ★与参考的差别只有：★箭是**从弓射出**（参考里另有一套天降逻辑 ✗ 我们不做 ✓）。
  */
 public class StarfallLamentItem extends BowItem {
 
-    private static final int NAME_COLOR_START = 0xFFFFFF;   // TNL884 \u2605\u767d \u2713
-    private static final int NAME_COLOR_END = 0x3A3A3A;     // TNL884 \u2605\u6df1\u7070 \u2713
+    private static final int NAME_COLOR_START = 0xFFFFFF;   // TNL884 ★白 ✓
+    private static final int NAME_COLOR_END = 0x3A3A3A;     // TNL884 ★深灰 ✓
     private static final float FLOW_SPEED = 1.0F;
 
     public static final List<Enchantment> EXTRA_WHITELIST = new ArrayList<>();
 
     private static long TNL$LAST_LOG = 0L;
 
-    /** TNL934 \u2605\u5141\u8bb8\u7528**\u9644\u9b54\u4e66**\u6253\u4e0a\u53bb\u7684\u539f\u7248\u5f13\u9644\u9b54 \u2713 */
+    /** TNL934 ★允许用**附魔书**打上去的原版弓附魔 ✓ */
     private static final java.util.Set<Enchantment> ALLOWED_BOOK = java.util.Set.of(
             Enchantments.POWER_ARROWS, Enchantments.PUNCH_ARROWS, Enchantments.FLAMING_ARROWS,
             Enchantments.INFINITY_ARROWS, Enchantments.UNBREAKING, Enchantments.MENDING);
 
     public StarfallLamentItem() {
-        super(new Properties().stacksTo(1).durability(800).rarity(Rarity.EPIC));   // TNL934 \u2605\u7528\u6237\uff1a\u2605\u8010\u4e45 800 \u2713
+        super(new Properties().stacksTo(1).durability(800).rarity(Rarity.EPIC));   // TNL934 ★用户：★耐久 800 ✓
     }
 
     @Override
@@ -100,9 +100,9 @@ public class StarfallLamentItem extends BowItem {
 
     @Override
     public boolean canApplyAtEnchantingTable(ItemStack stack, Enchantment enchantment) {
-        // TNL934 \u2605\u2605 \u7528\u6237\u53e3\u5f84\uff1a\u2605\u652f\u6301\u7a7f\u900f/\u591a\u91cd\u5c04\u51fb/\u65e0\u9650/\u706b\u77e2/\u65e0\u9650\u4fee\u8865\u7b49 \u2713
-        //   \u2605\u901a\u8fc7 ``super`` \u4fdd\u7559**\u539f\u7248\u5f13\u80fd\u9644\u7684\u5168\u90e8** \u2713
-        //   \uff08\u2605\u529b\u91cf/\u51b2\u51fb/\u706b\u77e2/\u65e0\u9650/\u8010\u4e45/\u7ecf\u9a8c\u4fee\u8865 \u2713\uff09\u002b \u2605\u53e6\u5916\u653e\u5f00**\u7a7f\u900f** \u2713
+        // TNL934 ★★ 用户口径：★支持穿透/多重射击/无限/火矢/无限修补等 ✓
+        //   ★通过 ``super`` 保留**原版弓能附的全部** ✓
+        //   （★力量/冲击/火矢/无限/耐久/经验修补 ✓）+ ★另外放开**穿透** ✓
         return enchantment == Enchantments.PIERCING
                 || enchantment == Enchantments.MULTISHOT
                 || EXTRA_WHITELIST.contains(enchantment)
@@ -122,16 +122,16 @@ public class StarfallLamentItem extends BowItem {
     }
 
     /**
-     * TNL883 \u2605\u2605 \u5173\u952e\uff1a**\u7ed5\u8fc7\u539f\u7248\u7684\u201c\u5fc5\u987b\u6709\u7bad\u201d\u68c0\u67e5** \u2713
+     * TNL883 ★★ 关键：**绕过原版的“必须有箭”检查** ✓
      *
-     * <p>\u2605\u7528\u6237\u53cd\u9988\uff1a\u2605"\u8fd8\u662f\u6ca1\u81ea\u52a8\u653e\u7bad\u554a" \u2713
-     * \u2605\u6839\u56e0 \u2717\uff1a\u2605\u539f\u7248 {@code BowItem#use}\u4f1a\u5148\u67e5\u5f39\u836f
-     * \uff08{@code player.getProjectile(stack)} \u2717\uff09\uff0c
-     * \u2605**\u80cc\u5305\u91cc\u6ca1\u7bad\u5c31\u76f4\u63a5 FAIL** \u2717 \u21d2 \u2605\u6839\u672c\u6ca1\u6709
-     * "\u5f00\u59cb\u4f7f\u7528"\u8fd9\u4e2a\u72b6\u6001 \u2717 \u21d2 \u2605{@code onUseTick} \u6c38\u8fdc\u4e0d\u4f1a\u8c03\u5230 \u2717
-     * \u21d2 \u2605\u81ea\u52a8\u5c04\u51fb\u81ea\u7136\u4e0d\u751f\u6548 \u2713\u3002
+     * <p>★用户反馈：★"还是没自动放箭啊" ✓
+     * ★根因 ✗：★原版 {@code BowItem#use}会先查弹药
+     * （{@code player.getProjectile(stack)} ✗），
+     * ★**背包里没箭就直接 FAIL** ✗ ⇒ ★根本没有
+     * "开始使用"这个状态 ✗ ⇒ ★{@code onUseTick} 永远不会调到 ✗
+     * ⇒ ★自动射击自然不生效 ✓。
      *
-     * <p>\u2605\u73b0\u5728\uff1a\u2605\u81ea\u5df1\u91cd\u5199 {@code use} \u2713\uff0c\u2605**\u4e0d\u8981\u7bad\u4e5f\u80fd\u62c9\u5f13** \u2713\u3002
+     * <p>★现在：★自己重写 {@code use} ✓，★**不要箭也能拉弓** ✓。
      */
     /**
      * TNL890 关键修正：★有箭就走**原版弓的通道**（动画/状态由引擎保证），没箭才手动进入使用状态。
@@ -153,35 +153,35 @@ public class StarfallLamentItem extends BowItem {
 
     @Override
     public net.minecraft.world.item.UseAnim getUseAnimation(ItemStack stack) {
-        return net.minecraft.world.item.UseAnim.BOW;   // \u2605\u62c9\u5f13\u52a8\u753b\uff08\u2605\u6a21\u578b pulling \u4e5f\u9760\u5b83 \u2713\uff09
+        return net.minecraft.world.item.UseAnim.BOW;   // ★拉弓动画（★模型 pulling 也靠它 ✓）
     }
 
-    /** TNL883 \u2605\u2605\u81ea\u52a8\u5c04\u51fb**\u9ed8\u8ba4\u63a5\u4e0a** \u2713
+    /** TNL883 ★★自动射击**默认接上** ✓
      *
-     * <p>\u2605\u7528\u6237\u53e3\u5f84\uff1a\u2605"\u628a\u81ea\u52a8\u5c04\u51fb\u63a5\u4e0a" \u2713
-     * \u21d2 \u2605\u6ca1\u6709 NBT \u65f6**\u9ed8\u8ba4\u5f00\u542f** \u2713\uff08\u2605\u53c2\u8003\u5b9e\u73b0\u662f\u9ed8\u8ba4\u5173 \u2717\uff09\uff1b
-     * \u2605\u60f3\u5173\u6389\uff1a\u2605\u7ed9\u5f13\u52a0 NBT ``AutoFire: 0b`` \u2713\u3002
+     * <p>★用户口径：★"把自动射击接上" ✓
+     * ⇒ ★没有 NBT 时**默认开启** ✓（★参考实现是默认关 ✗）；
+     * ★想关掉：★给弓加 NBT ``AutoFire: 0b`` ✓。
      */
     public static boolean isAutoFire(ItemStack stack) {
         return !stack.hasTag() || stack.getTag().getBoolean("AutoFire");
     }
 
     /**
-     * TNL884 \u2605\u2605 \u5de5\u5177\u63d0\u793a\uff08\u2605\u7528\u6237**\u70b9\u540d**\u8981\u6c42 \u2713\uff09
+     * TNL884 ★★ 工具提示（★用户**点名**要求 ✓）
      *
-     * <p>\u26a0 \u6309\u5907\u5fd8\u5f55 \u00a7812\uff1a\u2605\u7528\u6237\u6ca1\u70b9\u540d\u4e00\u5f8b\u4e0d\u52a0 tooltip \u2717\uff1b
-     * \u2605\u8fd9\u6b21\u662f\u7528\u6237\u660e\u786e\u8981\u6c42\u52a0 \u2713\uff08\u2605\u539f\u6587\u7167\u642c \u2713\uff09\u3002
+     * <p>⚠ 按备忘录 §812：★用户没点名一律不加 tooltip ✗；
+     * ★这次是用户明确要求加 ✓（★原文照搬 ✓）。
      */
     @Override
     public void appendHoverText(ItemStack stack, Level level, java.util.List<net.minecraft.network.chat.Component> tip,
                                 net.minecraft.world.item.TooltipFlag flag) {
-        // TNL894 \u2605\u2605 \u7528\u6237\u53e3\u5f84\uff1a\u2605"\u60f3\u8ba9\u5f13\u7684\u5de5\u5177\u63d0\u793a\u4e5f\u5e94\u7528\u5b83\u540d\u5b57\u90a3\u6837\u7684\u6d41\u5149\u6548\u679c" \u2713
-        //   \u2605\u4e24\u884c\u90fd\u8d70\u540c\u4e00\u4e2a buildFlowGradient \u2717 \u2605\u5e76\u4fdd\u7559\u659c\u4f53 \u2713
+        // TNL894 ★★ 用户口径：★"想让弓的工具提示也应用它名字那样的流光效果" ✓
+        //   ★两行都走同一个 buildFlowGradient ✗ ★并保留斜体 ✓
         // TNL1065 user: "give the bow the category too" and "the position must match"
         // The Aeonian Order shows its category as the line right under the name, so the bow gets the
         // same line in the same slot (the item name is added by vanilla before this method runs).
         tip.add(net.minecraft.network.chat.Component.literal(
-                "\u5320\u9b42\u65b0\u751f\u00b7\u5176\u4ed6\u7269\u54c1")
+                "匠魂新生·其他物品")
                 .withStyle(net.minecraft.ChatFormatting.BLUE));
         tip.add(buildFlowGradient(net.minecraft.network.chat.Component.translatable(
                 "item.tinkersnewlife.starfall_lament.tooltip"))
@@ -199,25 +199,25 @@ public class StarfallLamentItem extends BowItem {
 
 
     /**
-     * TNL892 \u2605\u2605 \u4fdd\u7559\u7a7a\u5b9e\u73b0\uff08\u2605\u4e0d\u518d\u53d1\u5c04 \u2717\uff09
+     * TNL892 ★★ 保留空实现（★不再发射 ✗）
      *
-     * <p>\u2605\u7528\u6237\u53cd\u9988\uff1a\u2605"\u600e\u4e48\u53d8\u6210\u53cc\u53d1\u5f13\u4e86" \u2713
-     * \u21d2 \u2605\u56e0\u4e3a**\u4e24\u6761\u8def\u90fd\u5f00\u706b** \u2717\uff1a
-     * \u2605\u65b0\u5305\u8def\u5f84\uff08{@code PacketStarfallShoot} \u2713\uff09\u002b
-     * \u2605\u539f\u7248\u8def\u5f84\uff08\u672c\u65b9\u6cd5 \u2717\uff09\u3002
-     * \u2605\u73b0\u5728\uff1a\u2605**\u53ea\u6709\u5305\u8def\u5f84\u53d1\u5c04** \u2717 \u21d2 \u2605\u4e00\u6b21\u4e00\u7bad \u2713\u3002
+     * <p>★用户反馈：★"怎么变成双发弓了" ✓
+     * ⇒ ★因为**两条路都开火** ✗：
+     * ★新包路径（{@code PacketStarfallShoot} ✓）+
+     * ★原版路径（本方法 ✗）。
+     * ★现在：★**只有包路径发射** ✗ ⇒ ★一次一箭 ✓。
      */
     @Override
     public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
-        // \u2605\u4ec0\u4e48\u90fd\u4e0d\u505a \u2713\uff08\u2605\u53d1\u5c04\u7531\u5ba2\u6237\u7aef\u8ba1\u6570\u5305\u8d1f\u8d23 \u2713\uff09
+        // ★什么都不做 ✓（★发射由客户端计数包负责 ✓）
     }
 
     @Override
     public boolean useOnRelease(ItemStack stack) {
-        return true;   // TNL887 \u2605\u677e\u624b\u624d\u53d1\u5c04 \u2713
+        return true;   // TNL887 ★松手才发射 ✓
     }
 
-    /** \u2605\u5f00\u4e00\u7ec4\u7bad\uff08\u2605\u4e0e\u53c2\u8003\u4e00\u81f4\uff1a\u2605\u4e3b\u7bad \u002b Multishot \u5219\u4e09\u7bad \u2713\uff09 */
+    /** ★开一组箭（★与参考一致：★主箭 + Multishot 则三箭 ✓） */
     private void fireArrows(Player player, ItemStack stack, Level level, float power) {
         float velocity = power;
         boolean hasMultishot = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.MULTISHOT, stack) > 0;
@@ -238,13 +238,13 @@ public class StarfallLamentItem extends BowItem {
         }
         level.playSound(null, player.getX(), player.getY(), player.getZ(),
                 SoundEvents.ARROW_SHOOT, SoundSource.PLAYERS, 1.0F, 1.0F);
-        if (System.currentTimeMillis() - TNL$LAST_LOG > 2000L) {   // TNL883 \u2605\u9650\u6d41\u65e5\u5fd7 \u2713
+        if (System.currentTimeMillis() - TNL$LAST_LOG > 2000L) {   // TNL883 ★限流日志 ✓
             TNL$LAST_LOG = System.currentTimeMillis();
         }
     }
 
-    /** TNL891 \u2605\u2605 \u670d\u52a1\u7aef\u53d1\u5c04\uff08\u2605\u7531 PacketStarfallShoot \u89e6\u53d1 \u2713\uff09
-     *  \u2605\u4e0d\u4f9d\u8d56\u539f\u7248\\u4f7f\u7528\u72b6\u6001 \u2713\uff08\u2605\u90a3\u4e2a\u72b6\u6001\u5728\u5b9e\u673a\u91cc\u88ab\u53cd\u590d\u91cd\u7f6e \u2717\uff09\u3002
+    /** TNL891 ★★ 服务端发射（★由 PacketStarfallShoot 触发 ✓）
+     *  ★不依赖原版\使用状态 ✓（★那个状态在实机里被反复重置 ✗）。
      */
     public static void fireFromServer(net.minecraft.server.level.ServerPlayer player, int chargeTicks) {
         try {
@@ -257,9 +257,9 @@ public class StarfallLamentItem extends BowItem {
         }
     }
 
-    /** \u2605\u9759\u6001\u7248\u5f00\u4e00\u7ec4\u7bad\uff08\u2605\u4e0e\u5b9e\u4f8b\u7248\u540c\u903b\u8f91 \u2713\uff09 */
+    /** ★静态版开一组箭（★与实例版同逻辑 ✓） */
     private static void fireArrowsStatic(Player player, ItemStack stack, Level level, float power) {
-        // TNL934 \u2605\u2605 \u9644\u9b54\uff1a\u2605\u529b\u91cf\uff08\u2605\u6bcf\u7ea7 +10% \u4f24\u5bb3 \u2713\uff09/\u2605\u7a7f\u900f/\u2605\u706b\u77e2/\u2605\u65e0\u9650/\u2605\u591a\u91cd\u5c04\u51fb \u2713
+        // TNL934 ★★ 附魔：★力量（★每级 +10% 伤害 ✓）/★穿透/★火矢/★无限/★多重射击 ✓
         int ePower = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.POWER_ARROWS, stack);
         int ePierce = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.PIERCING, stack);
         int eFlame = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.FLAMING_ARROWS, stack);
@@ -267,7 +267,7 @@ public class StarfallLamentItem extends BowItem {
         int eMulti = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.MULTISHOT, stack);
         boolean creative = player.getAbilities().instabuild;
 
-        // \u2605\u6d88\u8017\u7bad\u77e2\uff1a\u2605\u6ca1\u7bad\u4e0d\u53d1 \u2713\uff1b\u2605\u65e0\u9650\u9644\u9b54\u4e0d\u6d88\u8017 \u2713
+        // ★消耗箭矢：★没箭不发 ✓；★无限附魔不消耗 ✓
         ItemStack ammo = player.getProjectile(stack);
         if (ammo.isEmpty()) {
             return;
@@ -275,7 +275,7 @@ public class StarfallLamentItem extends BowItem {
         if (!creative && eInf <= 0) {
             ammo.shrink(1);
         }
-        // \u2605\u8010\u4e45 -1 \u2713\uff08\u2605\u8010\u4e45\u9644\u9b54\u7531\u539f\u7248\u51cf\u514d \u2713\uff09
+        // ★耐久 -1 ✓（★耐久附魔由原版减免 ✓）
         if (!creative) {
             stack.hurtAndBreak(1, player, pl -> pl.broadcastBreakEvent(net.minecraft.world.InteractionHand.MAIN_HAND));
         }
@@ -285,7 +285,7 @@ public class StarfallLamentItem extends BowItem {
         main.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, tnl$speed(power), 1.0F);
         main.pickup = AbstractArrow.Pickup.DISALLOWED;
         level.addFreshEntity(main);
-        if (eMulti > 0) {                                  // \u2605\u591a\u91cd\u5c04\u51fb\uff1a\u2605\u518d\u8865\u4e24\u652f \u00b110\u00b0 \u2713
+        if (eMulti > 0) {                                  // ★多重射击：★再补两支 ±10° ✓
             for (float off : new float[]{-10.0F, 10.0F}) {
                 StarfallArrow extra = tnl$enchant(new StarfallArrow(ModEntities.STARFALL_ARROW.get(), player, level),
                         ePower, ePierce, eFlame);
@@ -298,7 +298,7 @@ public class StarfallLamentItem extends BowItem {
                 SoundEvents.ARROW_SHOOT, SoundSource.PLAYERS, 1.0F, 1.0F);
     }
 
-    /** TNL934 \u2605\u628a\u529b\u91cf/\u7a7f\u900f/\u706b\u77e2\u4f20\u7ed9\u7bad\u77e2 \u2713 */
+    /** TNL934 ★把力量/穿透/火矢传给箭矢 ✓ */
     private static StarfallArrow tnl$enchant(StarfallArrow arrow, int power, int pierce, int flame) {
         arrow.tnl$setPower(Math.max(0, power));
         arrow.tnl$setPierce(Math.max(0, pierce));
@@ -324,7 +324,7 @@ public class StarfallLamentItem extends BowItem {
         return f;
     }
 
-    /** \u2605\u4f9b\u4ee5\u540e\u5199 Boss AI \u7528\uff08\u2605\u73b0\u5728\u6ca1\u7528\u4e0a \u2717\uff09 */
+    /** ★供以后写 Boss AI 用（★现在没用上 ✗） */
     public static StarfallArrow fireAt(Level level, LivingEntity shooter, LivingEntity target) {
         StarfallArrow arrow = new StarfallArrow(ModEntities.STARFALL_ARROW.get(), shooter, level);
         net.minecraft.world.phys.Vec3 eye = shooter.getEyePosition();

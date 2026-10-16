@@ -28,28 +28,28 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * TNL1023 \u2605\u2605 \u6052\u6b63\u79e9\u5668 Aeonian Order \u2713
+ * TNL1023 ★★ 恒正秩器 Aeonian Order ✓
  *
- * <p>\u2605\u7528\u6237\u53e3\u5f84\uff1a
+ * <p>★用户口径：
  * <ul>
- *   <li>\u2605\u53f3\u952e\u6325\u51fb\uff1a\u2605**\u5411\u524d\u63a8\u529b\u7a81\u8fdb**\uff08\u2605\u4e0d\u662f\u77ac\u79fb \u2713\uff09\uff0c\u2605\u8fd1\u4f3c **5 \u683c** \u2713\uff1b</li>
- *   <li>\u2605\u968f\u540e\u5bf9\u9762\u524d\u4e00\u7247 **2 \u5bbd \u00d7 5 \u957f** \u7684\u533a\u57df\u505a\u4e00\u6b21\u6a2a\u626b \u2713\uff1b</li>
- *   <li>\u2605\u4f24\u5bb3\uff1a\u2605\u7269\u7406 **12** \u2713 \u002b \u2605\u5176\u4e2d **50%** \u7684**\u9b54\u6cd5**\u4f24\u5bb3\uff08\u2605**\u4e0d\u662f\u771f\u4f24** \u2717\uff09\uff1b</li>
- *   <li>\u2605\u4f24\u5bb3\u4ee5 **2:1** \u6cbb\u6108\u81ea\u8eab\uff08\u2605\u6cbb\u7597 = \u4f24\u5bb3 / 2 \u2713\uff09\uff1b</li>
- *   <li>\u2605\u51b7\u5374\uff1a\u2605\u8d70\u539f\u7248 ``ItemCooldowns``\uff0c\u2605**10 \u79d2** \u2713\uff08\u2605\u8010\u4e45\u7528\u6237\u8bf4\u6700\u540e\u518d\u505a \u2713\uff09\u3002</li>
+ *   <li>★右键挥击：★**向前推力突进**（★不是瞬移 ✓），★近似 **5 格** ✓；</li>
+ *   <li>★随后对面前一片 **2 宽 × 5 长** 的区域做一次横扫 ✓；</li>
+ *   <li>★伤害：★物理 **12** ✓ + ★其中 **50%** 的**魔法**伤害（★**不是真伤** ✗）；</li>
+ *   <li>★伤害以 **2:1** 治愈自身（★治疗 = 伤害 / 2 ✓）；</li>
+ *   <li>★冷却：★走原版 ``ItemCooldowns``，★**10 秒** ✓（★耐久用户说最后再做 ✓）。</li>
  * </ul>
  */
 public class AeonianOrderItem extends SwordItem {
 
-    /** \u2605\u7a81\u8fdb\u521d\u901f\u5ea6\uff08\u2605\u914d\u5408\u6469\u64e6\u7ea6\u8dd1 5 \u683c \u2713\uff09 */
+    /** ★突进初速度（★配合摩擦约跑 5 格 ✓） */
     private static final double THRUST = 1.55D;
-    /** \u2605\u6a2a\u626b\u5ef6\u8fdf\uff08\u2605tick \u2713\uff09 */
+    /** ★横扫延迟（★tick ✓） */
     private static final int SWEEP_DELAY = 8;
-    /** \u2605\u51b7\u5374 10 \u79d2 \u2713 */
+    /** ★冷却 10 秒 ✓ */
     private static final int COOLDOWN = 200;
-    /** \u2605\u7269\u7406\u4f24\u5bb3 12 \u2713 */
+    /** ★物理伤害 12 ✓ */
     private static final float PHYS = 12.0F;
-    /** \u2605\u9b54\u6cd5\u4f24\u5bb3 = \u7269\u7406 \u00d7 50% \u2713 */
+    /** ★魔法伤害 = 物理 × 50% ✓ */
     private static final float MAGIC = PHYS * 0.5F;
 
     private static final List<Pending> PENDING = new ArrayList<>();
@@ -68,18 +68,18 @@ public class AeonianOrderItem extends SwordItem {
                 .withStyle(net.minecraft.ChatFormatting.WHITE));
         // TNL1060 user: the two line declaration, colours are animated later by AeonianTooltipHandler
         tip.add(net.minecraft.network.chat.Component.literal(
-                "\u4eba\u7c7b\u82e5\u751f\u6765\u4fbf\u6ce8\u5b9a\u4f5c\u4e3a\u9ad8\u7ef4\u751f\u7269\u7684\u517b\u6599\uff0c\u4fbf\u662f\u6df7\u4e71\uff1b\u4eba\u7c7b\u82e5\u6b7b\u4e8e\u5e76\u975e\u81ea\u7136\u7684\u6df7\u6c8c\u4fb5\u67d3\uff0c\u4fbf\u662f\u90aa\u6076\u3002\u6211\u4e4b\u6240\u4e3a\uff0c\u7686\u4e3a\u79e9\u5e8f\u3002"));
+                "人类若生来便注定作为高维生物的养料，便是混乱；人类若死于并非自然的混沌侵染，便是邪恶。我之所为，皆为秩序。"));
         tip.add(net.minecraft.network.chat.Component.literal(
-                "                  \u2014\u2014\u6d41\u5931\u5728\u672a\u77e5\u65f6\u95f4\u7ebf\u7684\u5ba3\u544a\u00b7\u58a8\u9ed8\u7559"));
+                "                  ——流失在未知时间线的宣告·墨默留"));
     }
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        // TNL1046 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u6ca1\u6302\u4e0a\u554a" \u2713
-        //   \u2605\u73b0\u8c61 \u2717\uff1a\u2605\u65e5\u5fd7\u91cc `TNL1023` \u4e0e `TNL1043` **\u4e00\u884c\u90fd\u6ca1\u6709** \u2713
-        //     \u21d2 \u2605\u8bf4\u660e\u2605**\u53f3\u952e\u6839\u672c\u6ca1\u8fdb\u5230\u8fd9\u91cc** \u2717\uff08\u2605\u4e0d\u662f\u53e0 tick \u7684\u95ee\u9898 \u2713\uff09
-        //   \u2605\u6240\u4ee5\u5148\u6253\u4e00\u884c**\u5165\u53e3**\u63a2\u9488 \u2713\uff08\u2605\u4e24\u4fa7\u90fd\u6253 \u2713\uff09
+        // TNL1046 ★★ 用户：★"没挂上啊" ✓
+        //   ★现象 ✗：★日志里 `TNL1023` 与 `TNL1043` **一行都没有** ✓
+        //     ⇒ ★说明★**右键根本没进到这里** ✗（★不是叠 tick 的问题 ✓）
+        //   ★所以先打一行**入口**探针 ✓（★两侧都打 ✓）
         boolean tnl$shift = player.isShiftKeyDown();
         TinkersNewlife.LOGGER.warn("TNL1046 aeonian use() called side={} cooldown={} shift={}",
                 player.level().isClientSide ? "client" : "server",
@@ -87,13 +87,13 @@ public class AeonianOrderItem extends SwordItem {
         if (player.getCooldowns().isOnCooldown(this)) {
             return InteractionResultHolder.fail(stack);
         }
-        // TNL1050 \u2605\u2605 \u7528\u6237\uff1a\u2605"shift \u53f3\u952e\u8fd8\u662f\u7a81\u523a\u6280\u80fd" \u2713 \u21d2 \u2605\u73b0\u5728\u5206\u5f00 \u2713
+        // TNL1050 ★★ 用户：★"shift 右键还是突刺技能" ✓ ⇒ ★现在分开 ✓
         if (tnl$shift) {
             if (!level.isClientSide) {
-                // TNL1055 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u6293\u94a9\u6539\u6210\u671d\u89c6\u7ebf\u65b9\u5411\u98de\u7136\u540e\u62c9\u7740\u73a9\u5bb6\u8fc7\u53bb\uff0c\u6700\u591a\u98de20\u683c\u3002\u522b\u7528\u98de\u5251\u8ffd\u8e2a" \u2713
-                //   \u2605\u6240\u4ee5\u628a\u4e0a\u4e00\u7248\u7684"\u2605\u751f\u6210 FlyingSwordEntity"**\u6574\u6bb5\u5220\u6389** \u2713
-                //     \uff08\u2605\u5b83\u5e26\u81ea\u52a8\u9501\u5b9a/\u5236\u5bfc\u8ffd\u8e2a \u2717 \u2014\u2014 \u2605\u6b63\u662f\u4f60\u4e0d\u8981\u7684 \u2713\uff09
-                //   \u2605\u73b0\u5728 \u2713\uff1a\u2605\u7eaf\u76f4\u7ebf\u3001\u65e0\u91cd\u529b\u3001\u6cbf\u89c6\u7ebf\u3001**\u6700\u591a 20 \u683c** \u2713
+                // TNL1055 ★★ 用户：★"抓钩改成朝视线方向飞然后拉着玩家过去，最多飞20格。别用飞剑追踪" ✓
+                //   ★所以把上一版的"★生成 FlyingSwordEntity"**整段删掉** ✓
+                //     （★它带自动锁定/制导追踪 ✗ —— ★正是你不要的 ✓）
+                //   ★现在 ✓：★纯直线、无重力、沿视线、**最多 20 格** ✓
                 tnl$throwHook(level, player, stack);
                 tnl$spend(stack, player, hand, 2);      // TNL1191 the hook wears the weapon
                 player.getCooldowns().addCooldown(this, 40);
@@ -102,7 +102,7 @@ public class AeonianOrderItem extends SwordItem {
             return InteractionResultHolder.success(stack);
         }
         if (!level.isClientSide) {
-            // \u2605\u2460 \u5411\u524d\u63a8\u529b\uff08\u2605\u4e0d\u662f\u77ac\u79fb \u2713\uff09
+            // ★① 向前推力（★不是瞬移 ✓）
             Vec3 look = player.getLookAngle();
             Vec3 flat = new Vec3(look.x, 0.0D, look.z);
             if (flat.lengthSqr() < 1.0E-6D) {
@@ -110,10 +110,10 @@ public class AeonianOrderItem extends SwordItem {
             }
             flat = flat.normalize();
             player.setDeltaMovement(flat.x * THRUST, 0.16D, flat.z * THRUST);
-            player.hurtMarked = true;                 // \u2605\u540c\u6b65\u7ed9\u5ba2\u6237\u7aef \u2713
+            player.hurtMarked = true;                 // ★同步给客户端 ✓
             player.hasImpulse = true;
             player.fallDistance = 0.0F;
-            // \u2605\u2461 \u9884\u7ea6\u6a2a\u626b \u2713
+            // ★② 预约横扫 ✓
             PENDING.add(new Pending(player.getUUID(), SWEEP_DELAY, flat));
             tnl$spend(stack, player, hand, 2);          // TNL1191 the thrust wears the weapon
             player.getCooldowns().addCooldown(this, COOLDOWN);
@@ -125,7 +125,7 @@ public class AeonianOrderItem extends SwordItem {
         return InteractionResultHolder.success(stack);
     }
 
-    /** \u2605\u5f85\u6267\u884c\u7684\u6a2a\u626b \u2713 */
+    /** ★待执行的横扫 ✓ */
     /**
      * TNL1191 user: "durability last". The weapon now wears out as its ability is used: two points per
      * activation, skipped in creative. Called from the server side only, so the client stays in sync
@@ -144,7 +144,7 @@ public class AeonianOrderItem extends SwordItem {
     private record Pending(java.util.UUID owner, int ticks, Vec3 dir) {
     }
 
-    /** TNL1050 \u2605\u5f85\u6267\u884c\u7684"\u2605\u628a\u73a9\u5bb6\u62c9\u8fc7\u53bb" \u2713 */
+    /** TNL1050 ★待执行的"★把玩家拉过去" ✓ */
     private record Pull(java.util.UUID owner, Vec3 target, int ticks) {
     }
 
@@ -157,18 +157,18 @@ public class AeonianOrderItem extends SwordItem {
     private static final List<Hook> HOOKS = new ArrayList<>();
     private static final int HOOK_TICKS = 14;   // TNL1059 2.6 blocks per tick, enough for 20
 
-    /** TNL1050 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u53ef\u4ee5\u5c06\u9570\u5200\u5411\u89c6\u7ebf\u65b9\u5411\u7529\u51fa\u53bb\uff08\u65e0\u89c6\u91cd\u529b\uff09\uff0c
-     *   \u9570\u5200\u4e0a\u4f1a\u8fde\u7740\u4e00\u6839\u9ed1\u8272\u7684\u7ebf\uff0c\u5982\u679c\u547d\u4e2d\u65b9\u5757\uff0c\u4f1a\u5c06\u73a9\u5bb6\u62c9\u5230\u90a3\u4e2a\u4f4d\u7f6e\uff0c
-     *   \u5982\u679c\u547d\u4e2d\u5b9e\u4f53\uff0c\u5219\u4f1a\u5c06\u5b9e\u4f53\u52fe\u8fc7\u6765" \u2713
+    /** TNL1050 ★★ 用户：★"可以将镰刀向视线方向甩出去（无视重力），
+     *   镰刀上会连着一根黑色的线，如果命中方块，会将玩家拉到那个位置，
+     *   如果命中实体，则会将实体勾过来" ✓
      *
-     * <p>\u2605\u672c\u7248\u5148\u7528"\u2605\u65e0\u91cd\u529b\u7684\u76f4\u7ebf\u5c04\u7ebf"\u505a\u884c\u4e3a \u2713\uff08\u2605\u76f4\u7ebf\u672c\u8eab\u5c31\u4e0d\u53d7\u91cd\u529b \u2713\uff09
-     * \uff0c\u2605\u7ef3\u5b50\u5148\u7528\u9ed1\u8272\u7c92\u5b50\u7ebf\u8868\u793a \u2713\uff0c
-     * \u2605\u4e0b\u4e00\u8f6e\u518d\u7167 `FlyingSwordTrailRenderer` \u6362\u6210\u4e13\u7528\u5e26\u72b6\u7ed8\u5236 \u2713\u3002
+     * <p>★本版先用"★无重力的直线射线"做行为 ✓（★直线本身就不受重力 ✓）
+     * ，★绳子先用黑色粒子线表示 ✓，
+     * ★下一轮再照 `FlyingSwordTrailRenderer` 换成专用带状绘制 ✓。
      */
     private static void tnl$throwHook(Level level, Player player, ItemStack heldStack) {
         Vec3 eye = player.getEyePosition();
         Vec3 look = player.getLookAngle();
-        double reach = 20.0D;   // TNL1055 \u2605\u7528\u6237\uff1a\u2605\u6700\u591a\u98de 20 \u683c \u2713
+        double reach = 20.0D;   // TNL1055 ★用户：★最多飞 20 格 ✓
         Vec3 end = eye.add(look.scale(reach));
         // TNL1056 user: the "hook entities" behaviour is cancelled -- blocks only now
         net.minecraft.world.phys.BlockHitResult bhit = level.clip(new net.minecraft.world.level.ClipContext(
@@ -176,11 +176,11 @@ public class AeonianOrderItem extends SwordItem {
                 net.minecraft.world.level.ClipContext.Fluid.NONE, player));
         Vec3 hit = bhit == null ? end : bhit.getLocation();
         boolean hitBlock = bhit != null;
-        // \u2605\u9ed1\u8272\u7c92\u5b50\u7ebf\uff08\u2605\u6682\u4ee3\u7ef3\u5b50 \u2713\uff09
+        // ★黑色粒子线（★暂代绳子 ✓）
         if (level instanceof ServerLevel sl) {
-            // TNL1053 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u9570\u5200\u4e0a\u4f1a\u8fde\u7740\u4e00\u6839\u9ed1\u8272\u7684\u7ebf" \u2713
-            //   \u2605\u73b0\u5728\uff1a\u2605\u7528**\u7eaf\u9ed1 dust**\u5806\u6210\u4e00\u6761\u7c97\u7ebf \u2713\uff08\u2605\u6bd4 squid_ink \u66f4\u50cf\u7ef3\u5b50 \u2713\uff09
-            //     \u2605\u6bcf 1/6 \u683c\u4e00\u9897 \u2713 \u002b \u2605\u7ec6\u5fae\u6296\u52a8 \u2713 \u21d2 \u2605\u8fdc\u770b\u5c31\u662f\u4e00\u6761\u9ed1\u7ebf \u2713
+            // TNL1053 ★★ 用户：★"镰刀上会连着一根黑色的线" ✓
+            //   ★现在：★用**纯黑 dust**堆成一条粗线 ✓（★比 squid_ink 更像绳子 ✓）
+            //     ★每 1/6 格一颗 ✓ + ★细微抖动 ✓ ⇒ ★远看就是一条黑线 ✓
             var tnl$black = new net.minecraft.core.particles.DustParticleOptions(
                     new org.joml.Vector3f(0.02F, 0.02F, 0.03F), 1.6F);
             int steps = (int) Math.min(96, Math.max(6, eye.distanceTo(hit) * 6.0D));
@@ -211,7 +211,7 @@ public class AeonianOrderItem extends SwordItem {
                 SoundSource.PLAYERS, 1.2F, 0.8F);
     }
 
-    /** TNL1023 \u2605\u5230\u70b9\u4e86\u5c31\u6a2a\u626b \u2713 */
+    /** TNL1023 ★到点了就横扫 ✓ */
     @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID)
     public static final class Ticker {
 
@@ -223,7 +223,7 @@ public class AeonianOrderItem extends SwordItem {
             if (event.phase != TickEvent.Phase.END) {
                 return;
             }
-            // TNL1050 \u2605\u2605 \u5904\u7406"\u2605\u628a\u73a9\u5bb6\u62c9\u5230\u547d\u4e2d\u70b9" \u2713
+            // TNL1050 ★★ 处理"★把玩家拉到命中点" ✓
             if (!PULLS.isEmpty()) {
                 var server = net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer();
                 if (server != null) {
@@ -331,7 +331,7 @@ public class AeonianOrderItem extends SwordItem {
                     ready.add(null);
                 }
             }
-            // \u2605\u628a\u5269\u4f59\u7684\u5012\u8ba1\u65f6\u51cf\u4e00 \u2713
+            // ★把剩余的倒计时减一 ✓
             List<Pending> next = new ArrayList<>();
             for (int i = 0; i < ready.size(); i++) {
                 Pending p = ready.get(i);
@@ -368,8 +368,8 @@ public class AeonianOrderItem extends SwordItem {
             }
             Level level = player.level();
             Vec3 dir = p.dir().normalize();
-            Vec3 side = new Vec3(-dir.z, 0.0D, dir.x);          // \u2605\u5782\u76f4\u65b9\u5411 \u2713
-            Vec3 mid = player.position().add(dir.scale(2.75D)); // \u26050.25~5.25 \u683c \u2713
+            Vec3 side = new Vec3(-dir.z, 0.0D, dir.x);          // ★垂直方向 ✓
+            Vec3 mid = player.position().add(dir.scale(2.75D)); // ★0.25~5.25 格 ✓
             AABB box = new AABB(mid.x - 1.0D, player.getY() - 1.0D, mid.z - 1.0D,
                     mid.x + 1.0D, player.getY() + 2.0D, mid.z + 1.0D);
             float dealt = 0.0F;
@@ -386,7 +386,7 @@ public class AeonianOrderItem extends SwordItem {
                     dealt += MAGIC;
                     hits++;
                 }
-                // TNL1043 \u2605\u547d\u4e2d\u53e0 tick\uff08\u2605\u6bcf\u6b21 +10 \u2713\uff09
+                // TNL1043 ★命中叠 tick（★每次 +10 ✓）
                 com.mofengbaizhi.tinkersnewlife.content.effect.AeonianWeaken.add(target, com.mofengbaizhi.tinkersnewlife.content.effect.AeonianWeaken.PER_HIT);
                 if (level instanceof ServerLevel sl) {
                     sl.sendParticles(ParticleTypes.SOUL_FIRE_FLAME,
@@ -394,7 +394,7 @@ public class AeonianOrderItem extends SwordItem {
                 }
             }
             if (dealt > 0.0F) {
-                player.heal(dealt * 0.5F);                      // \u2605\u26052:1 \u6cbb\u6108 \u2713
+                player.heal(dealt * 0.5F);                      // ★★2:1 治愈 ✓
             }
             if (level instanceof ServerLevel sl) {
                 Vec3 c = player.position().add(dir.scale(2.5D));

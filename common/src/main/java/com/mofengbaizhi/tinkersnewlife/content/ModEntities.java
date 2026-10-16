@@ -335,7 +335,7 @@ public class ModEntities {
                         .sized(0.51f, 1.53f).clientTrackingRange(16).updateInterval(3)
                         .build(TinkersNewlife.MOD_ID + ":momo_merchant"));
 
-    /** TNL850 Boss\u300c\u514b\u56fe\u9732\u00b7\u58a8\u9ed8\u300d\uff08\u2605\u590d\u7528\u5546\u4eba\u58a8\u9ed8\u6a21\u578b \u2713 \u81ea\u5e26\u8840\u6761 \u2713\uff09 */
+    /** TNL850 Boss「克图露·墨默」（★复用商人墨默模型 ✓ 自带血条 ✓） */
     public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.KtuluMomo>> KTULU_MOMO =
             ENTITIES.register("ktulu_momo",
                     () -> EntityType.Builder.<com.mofengbaizhi.tinkersnewlife.content.entity.KtuluMomo>of(
@@ -353,7 +353,7 @@ public class ModEntities {
                         .noSummon()
                         .build(TinkersNewlife.MOD_ID + ":weak_point"));
 
-    /** TNL877 \u661f\u9668\u60b2\u53f9\u7684\u7bad\uff08\u2605\u5f31\u8ffd\u8e2a\uff0f\u771f\u5b9e\u4f24\u5bb3\uff0f\u5f3a\u5316\u7bad \u2713\uff09 */
+    /** TNL877 星陨悲叹的箭（★弱追踪／真实伤害／强化箭 ✓） */
     public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.StarfallArrow>> STARFALL_ARROW =
             ENTITIES.register("starfall_arrow",
                     () -> EntityType.Builder.<com.mofengbaizhi.tinkersnewlife.content.entity.StarfallArrow>of(

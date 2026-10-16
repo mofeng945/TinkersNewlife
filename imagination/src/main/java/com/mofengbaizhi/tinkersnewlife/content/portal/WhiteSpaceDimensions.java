@@ -106,7 +106,7 @@ public final class WhiteSpaceDimensions {
      * 真正的防线是 {@link #wasInsidePortalLastTick}（只在"从门外走进来"的那一刻传送），
      * 这里只留 1 秒防止同一 tick 内的重复触发 ✓。
      */
-    public static final int ARRIVE_COOLDOWN = 40;   // TNL919 \u2605\u7528\u6237\u8981\u6c42\uff1a\u5230\u8fbe\u540e\u77ed\u51b7\u5374 20 -&gt; 40 tick \u2713
+    public static final int ARRIVE_COOLDOWN = 40;   // TNL919 ★用户要求：到达后短冷却 20 -&gt; 40 tick ✓
 
     /** 刚开完门的玩家冷却（tick）——5 秒，免得开完门站在原地被自己的门吸走 */
     public static final int CREATE_COOLDOWN = 100;
@@ -597,17 +597,17 @@ public final class WhiteSpaceDimensions {
      */
     public static boolean teleportEntity(Entity entity, ServerLevel target, BlockPos landing) {
         try {
-            // TNL920 \u2605\u2605 \u7528\u6237\u53e3\u5f84\uff1a\u2605"\u80fd\u4e0d\u80fd\u6309\u5730\u72f1\u95e8\u7247\u7684\u4f20\u9001\u903b\u8f91\u505a\uff1f\u6211\u8bb0\u5f97\u662f\u4f1a\u8ba9\u533a\u5757\u52a0\u8f7d\u7684" \u2713
-            //   \u2605\u539f\u7248\u5730\u72f1\u95e8\u5c31\u662f\u8fd9\u4e48\u505a\u7684 \u2713\uff1a
-            //   \u2460 \u2605\u5148\u7ed9**\u843d\u70b9\u533a\u5757\u6253\u4e00\u5f20 ``TicketType.PORTAL`` \u533a\u5757\u7968**
-            //      \uff08\u2605\u534a\u5f84 3 \u2713 \u2014\u2014 \u2605PortalForcer \u540c\u6b3e\uff09\u21d2 \u2605\u76ee\u7684\u5730\u4f1a**\u88ab\u52a0\u8f7d**\u2713
-            //   \u2461 \u2605``getChunkAt`` \u786e\u4fdd\u533a\u5757\u771f\u7684\u5df2\u5728\u5185\u5b58\u91cc \u2713
-            //   \u2462 \u2605\u843d\u5730\u540e\u8c03**\u539f\u7248 ``entity.setPortalCooldown()``** \u2713
-            //      \uff08\u2605\u539f\u7248\u5c31\u662f\u7528\u8fd9\u4e2a 300 tick \u51b7\u5374\u9632\u5f39\u56de \u2713\uff09
+            // TNL920 ★★ 用户口径：★"能不能按地狱门片的传送逻辑做？我记得是会让区块加载的" ✓
+            //   ★原版地狱门就是这么做的 ✓：
+            //   ① ★先给**落点区块打一张 ``TicketType.PORTAL`` 区块票**
+            //      （★半径 3 ✓ —— ★PortalForcer 同款）⇒ ★目的地会**被加载**✓
+            //   ② ★``getChunkAt`` 确保区块真的已在内存里 ✓
+            //   ③ ★落地后调**原版 ``entity.setPortalCooldown()``** ✓
+            //      （★原版就是用这个 300 tick 冷却防弹回 ✓）
             net.minecraft.world.level.ChunkPos cp = new net.minecraft.world.level.ChunkPos(landing);
             target.getChunkSource().addRegionTicket(net.minecraft.server.level.TicketType.PORTAL, cp, 3, landing);
-            target.getChunkAt(landing);                       // \u2605\u786e\u4fdd\u5df2\u52a0\u8f7d \u2713
-            // TNL922 \u2605\u53bb\u6389\u51b7\u5374 \u2713
+            target.getChunkAt(landing);                       // ★确保已加载 ✓
+            // TNL922 ★去掉冷却 ✓
             boolean ok = entity.teleportTo(target,
                     landing.getX() + 0.5D, landing.getY(), landing.getZ() + 0.5D,
                     Set.of(), entity.getYRot(), entity.getXRot());
@@ -623,20 +623,20 @@ public final class WhiteSpaceDimensions {
     }
 
     /**
-     * TNL919 \u2605\u2605 \u8de8\u7ef4\u5ea6\u7edf\u4e00\u7684\u65f6\u949f \u2713
+     * TNL919 ★★ 跨维度统一的时钟 ✓
      *
-     * <p>\u2605\u7528\u6237\u53cd\u9988\uff1a\u2605"\u6709\u751f\u7269\u8d70\u8fdb\u53bb\u4ee5\u540e\u73a9\u5bb6\u518d\u8fdb\u53bb\uff0c
-     * \u73a9\u5bb6\u4f20\u9001\u540e\u90a3\u8fb9\u7684\u751f\u7269\u7531\u4e8e\u4ecd\u7136\u5728\u4f20\u9001\u95e8\u91cc\u9762\u4f1a\u88ab\u7acb\u9a6c\u4f20\u8d70" \u2713
+     * <p>★用户反馈：★"有生物走进去以后玩家再进去，
+     * 玩家传送后那边的生物由于仍然在传送门里面会被立马传走" ✓
      *
-     * <p>\u2605\u6839\u56e0 \u2717\uff1a\u2605\u65e7\u5199\u6cd5\u7528 ``entity.level().getGameTime()`` \u2713
-     * \u2014\u2014 \u2605\u90a3\u662f**\u5f53\u524d\u7ef4\u5ea6\u81ea\u5df1\u7684\u6e38\u620f\u523b** \u2717\uff0c
-     * \u2605\u5404\u7ef4\u5ea6\u5404\u81ea\u8ba1\u65f6 \u2717 \u21d2 \u2605\u4f20\u5230\u767d\u8272\u7a7a\u95f4\u540e\u90a3\u8fb9\u7684\u523b\u5ea6
-     * \u53ef\u80fd\u6bd4\u51fa\u53d1\u7ef4\u5ea6**\u5c0f** \u2717
-     * \u21d2 \u2605``now - last &lt;= 1`` \u6210\u7acb\u4e0d\u4e86\uff08\u2605\u8d1f\u6570\uff09\u21d2 \u2605\u88ab\u5224\u4e3a"\u6ca1\u8fdb\u8fc7\u95e8" \u2717
-     * \u21d2 \u2605\u4e00\u843d\u5730\u5c31\u88ab\u539f\u8def\u4f20\u56de \u2713\u2713\uff08\u2605\u7528\u6237\u62a5\u7684\u73b0\u8c61 \u2713\uff09
+     * <p>★根因 ✗：★旧写法用 ``entity.level().getGameTime()`` ✓
+     * —— ★那是**当前维度自己的游戏刻** ✗，
+     * ★各维度各自计时 ✗ ⇒ ★传到白色空间后那边的刻度
+     * 可能比出发维度**小** ✗
+     * ⇒ ★``now - last &lt;= 1`` 成立不了（★负数）⇒ ★被判为"没进过门" ✗
+     * ⇒ ★一落地就被原路传回 ✓✓（★用户报的现象 ✓）
      *
-     * <p>\u2605\u73b0\u5728\uff1a\u2605\u4e00\u5f8b\u53d6**\u4e3b\u4e16\u754c\u7684\u6e38\u620f\u523b** \u2713\uff08\u2605\u670d\u52a1\u7aef\u552f\u4e00\u65f6\u949f \u2713\uff09
-     * \u2014\u2014 \u2605\u8de8\u7ef4\u5ea6\u524d\u540e\u53ef\u6bd4 \u2713\u3002
+     * <p>★现在：★一律取**主世界的游戏刻** ✓（★服务端唯一时钟 ✓）
+     * —— ★跨维度前后可比 ✓。
      */
     private static long tnl$now(Entity entity) {
         net.minecraft.server.MinecraftServer server = entity.getServer();
@@ -651,18 +651,18 @@ public final class WhiteSpaceDimensions {
         entity.getPersistentData().putLong(COOLDOWN_KEY, tnl$now(entity) + ticks);
     }
 
-    /** TNL919 \u2605\u51b7\u5374\u5230\u671f\u5224\u5b9a\uff08\u2605\u540c\u4e00\u628a\u5c3a \u2713\uff09 */
+    /** TNL919 ★冷却到期判定（★同一把尺 ✓） */
     public static void armCooldownTicks(Entity entity, int ticks) {
         armCooldown(entity, ticks);
     }
 
-    /** TNL919 \u2605\u8de8\u7ef4\u5ea6\u53ef\u6bd4\u7684\u51b7\u5374\u67e5\u8be2 \u2713 */
+    /** TNL919 ★跨维度可比的冷却查询 ✓ */
     public static boolean isOnCooldownAnyDim(Entity entity) {
         return tnl$now(entity) < entity.getPersistentData().getLong(COOLDOWN_KEY);
     }
 
     public static boolean isOnCooldown(Entity entity) {
-        return tnl$now(entity) < entity.getPersistentData().getLong(COOLDOWN_KEY);   // TNL919 \u2605\u8de8\u7ef4\u5ea6\u53ef\u6bd4 \u2713
+        return tnl$now(entity) < entity.getPersistentData().getLong(COOLDOWN_KEY);   // TNL919 ★跨维度可比 ✓
     }
 
     // ============================================================
@@ -675,7 +675,7 @@ public final class WhiteSpaceDimensions {
      * {@code entityInside} ⇒ 这个值就停在那一刻 ⇒ 隔几 tick 再走进来会被判定为"新的一次进入" ✓。
      */
     public static void markInsidePortal(Entity entity) {
-        entity.getPersistentData().putLong(INSIDE_KEY, tnl$now(entity));   // TNL919 \u2605\u540c\u4e00\u628a\u5c3a \u2713
+        entity.getPersistentData().putLong(INSIDE_KEY, tnl$now(entity));   // TNL919 ★同一把尺 ✓
     }
 
     /**
@@ -710,7 +710,7 @@ public final class WhiteSpaceDimensions {
     public static boolean wasInsidePortalLastTick(Entity entity) {
         long now = tnl$now(entity);
         long last = entity.getPersistentData().getLong(INSIDE_KEY);
-        // TNL919 \u2605\u5bb9\u5fcd\u7a97\u53e3 1 -&gt; 4 tick \u2713\uff08\u2605\u8de8\u7ef4\u5ea6\u843d\u5730\u90a3\u51e0 tick \u4e5f\u7b97"\u521a\u8fdb\u6765\u8fc7" \u2713\uff09
+        // TNL919 ★容忍窗口 1 -&gt; 4 tick ✓（★跨维度落地那几 tick 也算"刚进来过" ✓）
         return last != 0L && now - last <= 4L;
     }
 }

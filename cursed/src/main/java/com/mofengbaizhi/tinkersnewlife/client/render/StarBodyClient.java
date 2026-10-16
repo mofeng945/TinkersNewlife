@@ -32,37 +32,37 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * TNL942 \u2605\u2605 \u661f\u9668\u60b2\u53f9\u7684**\u9ed1\u5f13\u8eab\u661f\u7a7a** \u2713
+ * TNL942 ★★ 星陨悲叹的**黑弓身星空** ✓
  *
- * <p>\u2605\u7528\u6237\u53e3\u5f84\uff1a\u2605"\u516b\u8363\u516b\u803b\u8bb0\u4f4f\u4e86\u5417\uff1f\u6709\u73b0\u6210\u6210\u529f\u6848\u4f8b\u4e3a\u4ec0\u4e48\u4e0d\u67e5\u6e05\u695a\u518d\u505a" \u2713
+ * <p>★用户口径：★"八荣八耻记住了吗？有现成成功案例为什么不查清楚再做" ✓
  *
- * <p>\u2605\u6240\u4ee5\u8fd9\u6b21**\u628a\u53c2\u8003\u5b9e\u73b0\u8bfb\u5b8c\u4e86** \u2713\uff1a
- * ``goeticlegacy`` \u7684 ``client/render/AnomalyItemRenderer`` \u2713 \u2014\u2014
- * \u2605\u5b83\u7684\u8def\u5f84\u662f \u2713\uff1a
+ * <p>★所以这次**把参考实现读完了** ✓：
+ * ``goeticlegacy`` 的 ``client/render/AnomalyItemRenderer`` ✓ ——
+ * ★它的路径是 ✓：
  * <ol>
- *   <li>\u2605``extends BlockEntityWithoutLevelRenderer`` \u2713\uff08\u2605**\u4e0d\u662f**\u6df7\u5165
- *       ``ItemBlockRenderTypes`` \u2717 \u2014\u2014 \u2605\u6211\u4e0a\u4e00\u7248\u5c31\u9519\u5728\u8fd9 \u2717\uff09\uff1b</li>
- *   <li>\u2605``IClientItemExtensions#getCustomRenderer`` \u6302\u4e0a\u5b83 \u2713\uff1b</li>
- *   <li>\u2605``renderByItem`` \u91cc\uff1a\u2605\u53d6\u81ea\u5df1\u7684 ``ShaderInstance`` \u2713
- *       \u2014\u2014\u2605**null \u5c31\u753b\u515c\u5e95\u8d34\u56fe\u5e76 return** \u2713\uff1b</li>
- *   <li>\u2605\u7136\u540e ``endBatch()`` \u21d2 \u2605\u5582 uniform \u21d2 \u2605\u7528\u81ea\u5df1\u7684
- *       ``RenderType`` \u753b\u51e0\u4f55 \u21d2 \u2605``endBatch(type)`` \u2713\u3002</li>
+ *   <li>★``extends BlockEntityWithoutLevelRenderer`` ✓（★**不是**混入
+ *       ``ItemBlockRenderTypes`` ✗ —— ★我上一版就错在这 ✗）；</li>
+ *   <li>★``IClientItemExtensions#getCustomRenderer`` 挂上它 ✓；</li>
+ *   <li>★``renderByItem`` 里：★取自己的 ``ShaderInstance`` ✓
+ *       ——★**null 就画兜底贴图并 return** ✓；</li>
+ *   <li>★然后 ``endBatch()`` ⇒ ★喂 uniform ⇒ ★用自己的
+ *       ``RenderType`` 画几何 ⇒ ★``endBatch(type)`` ✓。</li>
  * </ol>
  *
- * <p>\u2605\u6211\u4eec\u4e0e\u5b83\u7684\u5dee\u522b \u2713\uff1a\u2605\u5b83\u753b\u7684\u662f\u4e00\u4e2a**\u65b9\u5757** \u2713\uff0c
- * \u2605\u6211\u4eec\u753b\u7684\u662f**\u5f13\u7684 baked model \u56db\u8fb9\u5f62** \u2713\uff0c
- * \u2605\u5e76\u4e14\u7740\u8272\u5668\u91cc**\u7528\u8d34\u56fe\u4eae\u5ea6\u505a\u906e\u7f69** \u2713
- * \u21d2 \u2605\u53ea\u6709\u9ed1\u8272\u90e8\u5206\u53d8\u661f\u7a7a \u2713\uff0c\u5176\u4f59\u539f\u6837 \u2713\u3002
+ * <p>★我们与它的差别 ✓：★它画的是一个**方块** ✓，
+ * ★我们画的是**弓的 baked model 四边形** ✓，
+ * ★并且着色器里**用贴图亮度做遮罩** ✓
+ * ⇒ ★只有黑色部分变星空 ✓，其余原样 ✓。
  */
 public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
 
     private static final ResourceLocation SHADER_ID = new ResourceLocation(TinkersNewlife.MOD_ID, "star_body");
-    // TNL966 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u62c9\u5f13\u52a8\u753b\u7684\u7bad\u77e2\u53d8\u900f\u660e\u4e86" \u2713
-    //   \u2605\u771f\u56e0 \u2717\uff1a\u2605\u62c9\u5f13\u7528\u7684\u662f\u53e6\u5916\u4e09\u5f20\u8d34\u56fe \u2717
-    //     \u2605\u800c\u6211\u628a `Sampler0` \u56fa\u5b9a\u7ed1\u6210\u4e86**\u57fa\u7840\u8d34\u56fe** \u2717
-    //     \u21d2 \u2605\u6309\u62c9\u5f13 sprite \u7684 UV \u53bb\u91c7\u57fa\u7840\u8d34\u56fe \u21d2 \u2605\u843d\u5728\u900f\u660e\u533a \u21d2 \u2605\u6574\u628a\u900f\u660e \u2713
-    //   \u2605\u73b0\u5728\uff1a\u2605\u76f4\u63a5\u7ed1**\u6574\u5f20\u56fe\u96c6** \u2713 \u21d2 \u2605\u7528\u539f\u59cb\u56fe\u96c6 UV \u91c7\u6837 \u2713
-    //     \u21d2 \u2605\u57fa\u7840/\u62c9\u5f13/\u4efb\u610f\u53d8\u4f53\u90fd\u80fd\u53d6\u5230**\u81ea\u5df1\u90a3\u5f20** \u2713\u2713
+    // TNL966 ★★ 用户：★"拉弓动画的箭矢变透明了" ✓
+    //   ★真因 ✗：★拉弓用的是另外三张贴图 ✗
+    //     ★而我把 `Sampler0` 固定绑成了**基础贴图** ✗
+    //     ⇒ ★按拉弓 sprite 的 UV 去采基础贴图 ⇒ ★落在透明区 ⇒ ★整把透明 ✓
+    //   ★现在：★直接绑**整张图集** ✓ ⇒ ★用原始图集 UV 采样 ✓
+    //     ⇒ ★基础/拉弓/任意变体都能取到**自己那张** ✓✓
     private static final ResourceLocation TEX = net.minecraft.world.inventory.InventoryMenu.BLOCK_ATLAS;
 
     private static ShaderInstance shader;
@@ -73,10 +73,10 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
 
     private StarBodyClient() {
         super(Minecraft.getInstance().getBlockEntityRenderDispatcher(), Minecraft.getInstance().getEntityModels());
-        TinkersNewlife.LOGGER.warn("TNL944 BEWLR constructed");     // ★TNL944 \u63a2\u9488 \u2713
+        TinkersNewlife.LOGGER.warn("TNL944 BEWLR constructed");     // ★TNL944 探针 ✓
     }
 
-    /** TNL947 \u2605\u4f9b\u6df7\u5165\u7528\uff1a\u2605\u53d6\u6e32\u67d3\u5668\uff08\u2605\u6ca1\u5efa\u5c31\u5efa\uff09\u2713 */
+    /** TNL947 ★供混入用：★取渲染器（★没建就建）✓ */
     public static BlockEntityWithoutLevelRenderer rendererOrNull() {
         try {
             return instance();
@@ -85,7 +85,7 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
         }
     }
 
-    /** TNL947 \u2605\u4f9b\u6df7\u5165\u7528\uff1a\u2605\u7740\u8272\u5668\u597d\u4e86\u6ca1 \u2713 */
+    /** TNL947 ★供混入用：★着色器好了没 ✓ */
     public static boolean shaderReady() {
         return shader != null;
     }
@@ -97,7 +97,7 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
         return INSTANCE;
     }
 
-    /** \u2605\u6ce8\u518c\u7740\u8272\u5668 \u2713 */
+    /** ★注册着色器 ✓ */
     @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
     public static final class Shaders {
         private Shaders() {
@@ -105,7 +105,7 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
 
         @SubscribeEvent
         public static void onRegisterShaders(RegisterShadersEvent event) throws IOException {
-            TinkersNewlife.LOGGER.warn("TNL944 shader register called");       // ★TNL944 \u2713
+            TinkersNewlife.LOGGER.warn("TNL944 shader register called");       // ★TNL944 ✓
             try {
                 event.registerShader(
                         new ShaderInstance(event.getResourceProvider(), SHADER_ID, DefaultVertexFormat.NEW_ENTITY),
@@ -117,7 +117,7 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
         }
     }
 
-    /** \u2605\u6bcf\u5e27\u5582 ``EffectTime`` \u2713 */
+    /** ★每帧喂 ``EffectTime`` ✓ */
     @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
     public static final class Ticker {
         private Ticker() {
@@ -132,7 +132,7 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
             if (u != null) {
                 u.set((float) (System.currentTimeMillis() % 600000L) / 1000.0F);
             }
-            // TNL967 \u2605\u628a\u5f53\u524d\u76f8\u673a\u671d\u5411\u4e5f\u5582\u8fdb\u53bb \u2713
+            // TNL967 ★把当前相机朝向也喂进去 ✓
             try {
                 var cam = net.minecraft.client.Minecraft.getInstance().gameRenderer.getMainCamera();
                 if (cam != null && cam.isInitialized()) {
@@ -143,7 +143,7 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
         }
     }
 
-    /** TNL967 \u2605\u6bcf\u5e27\u628a\u76f8\u673a\u671d\u5411\u5582\u7ed9\u7740\u8272\u5668\uff08\u2605\u900f\u955c\u611f\u7684\u6839\u672c \u2713\uff09 */
+    /** TNL967 ★每帧把相机朝向喂给着色器（★透镜感的根本 ✓） */
     public static void setCameraAngles(float yaw, float pitch) {
         try {
             if (shader == null) {
@@ -161,7 +161,7 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
         }
     }
 
-    /** TNL971 \u2605\u628a sprite \u5728\u56fe\u96c6\u91cc\u7684 UV \u77e9\u5f62\u5582\u7ed9\u7740\u8272\u5668 \u2713 */
+    /** TNL971 ★把 sprite 在图集里的 UV 矩形喂给着色器 ✓ */
     public static void setSpriteRect(float u0, float v0, float u1, float v1) {
         try {
             if (shader == null) {
@@ -175,7 +175,7 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
         }
     }
 
-    /** TNL960 \u2605\u628a\u8d34\u56fe\u5728\u56fe\u96c6\u91cc\u7684 UV \u8303\u56f4\u544a\u8bc9\u7740\u8272\u5668 \u2713 */
+    /** TNL960 ★把贴图在图集里的 UV 范围告诉着色器 ✓ */
     public static void setUvRemap(float u0, float v0, float su, float sv) {
         try {
             if (shader == null) {
@@ -193,7 +193,7 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
         }
     }
 
-    /** TNL950 \u2605\u4f9b\u6df7\u5165\u7528\uff1a\u2605\u6ca1\u597d\u5c31\u8fd4\u56de null\uff08\u2605\u9000\u56de\u539f\u7248\uff09\u2713 */
+    /** TNL950 ★供混入用：★没好就返回 null（★退回原版）✓ */
     public static RenderType starBodyOrNull() {
         try {
             return starBody();
@@ -217,15 +217,15 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
         return renderType;
     }
 
-    /** \u2605\u7ed9\u7269\u54c1\u7528\u7684\u6269\u5c55\uff08\u2605\u5c31\u50cf\u53c2\u8003\u5b9e\u73b0\u90a3\u6837\u6302 BEWLR \u2713\uff09 */
+    /** ★给物品用的扩展（★就像参考实现那样挂 BEWLR ✓） */
     public static IClientItemExtensions extensions() {
         return new IClientItemExtensions() {
-            private BlockEntityWithoutLevelRenderer renderer;      // \u2605\u5ef6\u8fdf\u521b\u5efa\uff08\u2605\u540c\u53c2\u8003 \u2713\uff09
+            private BlockEntityWithoutLevelRenderer renderer;      // ★延迟创建（★同参考 ✓）
 
             @Override
             public BlockEntityWithoutLevelRenderer getCustomRenderer() {
                 long tnl$n = System.currentTimeMillis();
-                if (tnl$n - TNL$LOG2 > 5000L) {                       // TNL946 \u2605\u6253\u8c03\u7528\u6808 \u2713
+                if (tnl$n - TNL$LOG2 > 5000L) {                       // TNL946 ★打调用栈 ✓
                     TNL$LOG2 = tnl$n;
                     StackTraceElement[] tnl$st = new Throwable().getStackTrace();
                     StringBuilder tnl$sb = new StringBuilder("TNL946 getCustomRenderer caller:");
@@ -246,7 +246,7 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
     @Override
     public void renderByItem(ItemStack stack, net.minecraft.world.item.ItemDisplayContext context, PoseStack pose,
                              MultiBufferSource buffers, int light, int overlay) {
-        // TNL945 \u2605\u2605 \u65e0\u6761\u4ef6\uff08\u2605\u9650\u6d41 1 \u79d2\uff09\u63a2\u9488 \u2713
+        // TNL945 ★★ 无条件（★限流 1 秒）探针 ✓
         long tnl$now = System.currentTimeMillis();
         if (tnl$now - TNL$LOG > 1000L) {
             TNL$LOG = tnl$now;
@@ -256,15 +256,15 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
         Minecraft mc = Minecraft.getInstance();
         RenderType star = starBody();
         if (star == null) {
-            // \u2605\u515c\u5e95\uff1a\u2605\u7740\u8272\u5668\u6ca1\u597d \u21d2 \u2605\u7528\u539f\u7248\u7c7b\u578b\u753b \u2713\uff08\u2605\u4e0d\u4f1a\u53d8\u7a7a \u2717\uff09
+            // ★兜底：★着色器没好 ⇒ ★用原版类型画 ✓（★不会变空 ✗）
             renderModel(stack, pose, buffers, light, overlay,
                     ItemBlockRenderTypes.getRenderType(stack, true));
             return;
         }
         MultiBufferSource.BufferSource source = buffers instanceof MultiBufferSource.BufferSource bs ? bs : null;
-        // TNL948 \u2605\u2605 \u7528\u6237\u53cd\u9988\uff1a\u2605"\u5f13\u4e0d\u89c1\u4e86" \u2713
-        //   \u2605\u4fdd\u5e95 \u2713\uff1a\u2605**\u5148\u7528\u539f\u7248\u7c7b\u578b\u753b\u4e00\u904d** \u2713
-        //     \u21d2 \u2605\u54ea\u6015\u661f\u7a7a\u90a3\u4e00\u5c42\u51fa\u95ee\u9898\uff0c\u2605\u5f13\u4e5f\u4e0d\u4f1a\u6d88\u5931 \u2713
+        // TNL948 ★★ 用户反馈：★"弓不见了" ✓
+        //   ★保底 ✓：★**先用原版类型画一遍** ✓
+        //     ⇒ ★哪怕星空那一层出问题，★弓也不会消失 ✓
         try {
             renderModel(stack, pose, buffers, light, overlay,
                     ItemBlockRenderTypes.getRenderType(stack, true));
@@ -280,7 +280,7 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
             }
             renderModel(stack, pose, buffers, light, overlay, star);
         } catch (Throwable t) {
-            TinkersNewlife.LOGGER.warn("TNL945 renderByItem FAILED: {}", t.toString());   // \u2605\u4e0d\u518d\u541e\u5f02\u5e38 \u2713
+            TinkersNewlife.LOGGER.warn("TNL945 renderByItem FAILED: {}", t.toString());   // ★不再吞异常 ✓
         } finally {
             try {
                 if (source != null) {
@@ -291,7 +291,7 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
         }
     }
 
-    /** \u2605\u628a\u5f13\u7684 baked model \u56db\u8fb9\u5f62\u5199\u5230\u6307\u5b9a\u7c7b\u578b\u91cc \u2713 */
+    /** ★把弓的 baked model 四边形写到指定类型里 ✓ */
     private static void renderModel(ItemStack stack, PoseStack pose, MultiBufferSource buffers, int light, int overlay,
                                     RenderType type) {
         Minecraft mc = Minecraft.getInstance();
@@ -318,7 +318,7 @@ public final class StarBodyClient extends BlockEntityWithoutLevelRenderer {
                 vc.uv(Float.intBitsToFloat(v[o + 4]), Float.intBitsToFloat(v[o + 5]));
                 vc.overlayCoords(overlay);
                 vc.uv2(light);
-                vc.normal(n, 0.0F, 1.0F, 0.0F);      // TNL948 \u2605\u4e0d\u518d\u4e71\u89e3\u6cd5\u7ebf \u2713
+                vc.normal(n, 0.0F, 1.0F, 0.0F);      // TNL948 ★不再乱解法线 ✓
                 vc.endVertex();
             }
         }

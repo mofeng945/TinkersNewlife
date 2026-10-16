@@ -6,7 +6,7 @@ import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-/** TNL927 \u2605\u9ed1\u7bad\u7684\u6bcf tick \u6d41\u5931 \u2713 */
+/** TNL927 ★黑箭的每 tick 流失 ✓ */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class StuckArrowEvents {
 

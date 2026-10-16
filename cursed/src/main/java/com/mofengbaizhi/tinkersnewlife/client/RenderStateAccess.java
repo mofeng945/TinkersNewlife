@@ -2,7 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.client;
 
 import net.minecraft.client.renderer.RenderStateShard;
 
-/** TNL879 \u2605\u53d6\u51fa RenderStateShard \u7684 protected \u5e38\u91cf\uff08\u2605\u7167\u642c\u53c2\u8003\u5b9e\u73b0 AccessUtils \u2713\uff09 */
+/** TNL879 ★取出 RenderStateShard 的 protected 常量（★照搬参考实现 AccessUtils ✓） */
 public final class RenderStateAccess {
 
     public static final RenderStateShard.ShaderStateShard POSITION_COLOR_SHADER = Shard.POSITION_COLOR_SHADER;

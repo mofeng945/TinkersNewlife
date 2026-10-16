@@ -8,9 +8,9 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 /**
- * TNL987 \u2605\u8840\u6761\u515c\u5e95\uff08\u2605\u5ba2\u6237\u7aef\u4fa7 \u2713\uff09\uff1a
- * \u2605\u53ea\u8981\u5ba2\u6237\u7aef\u771f\u7684\u753b\u4e86\u4e00\u6761\u8840\u6761 \u2713
- * \u2605\u5c31\u8bb0\u4e0b\u5b83\u7684 UUID \u2713\uff08\u2605\u4e0e\u670d\u52a1\u7aef\u90a3\u6761\u4e92\u4e3a\u53cc\u4fdd\u9669 \u2713\uff09\u3002
+ * TNL987 ★血条兜底（★客户端侧 ✓）：
+ * ★只要客户端真的画了一条血条 ✓
+ * ★就记下它的 UUID ✓（★与服务端那条互为双保险 ✓）。
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, value = Dist.CLIENT)
 public final class BossBarFallback {

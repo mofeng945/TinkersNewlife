@@ -11,21 +11,21 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 /**
- * TNL901 \u2605\u2605 \u514b\u56fe\u9732\u00b7\u58a8\u9ed8\u7684**\u81ea\u7ed8 Boss \u8840\u6761** \u2713
+ * TNL901 ★★ 克图露·墨默的**自绘 Boss 血条** ✓
  *
- * <p>\u2605\u7528\u6237\u53e3\u5f84\uff1a\u2605"\u8840\u6761\u6750\u8d28\u653e\u684c\u9762\u4e86\uff0c\u4f60\u518d\u6700\u5de6\u4fa7\u52a0\u4e00\u4e2a\u58a8\u9ed8\u7684\u6b63\u8138\u62fc\u6210\u4e00\u4e2a boss \u6761\uff0c
- *  \u7136\u540e\u5728\u91cc\u9762\u7528\u9ed1\u767d\u7070\u8272\u5e26\u4ee3\u8868\u8840\u6761\uff1a\u8840\u6761\u7070\u5ea6\u968f\u7740\u8840\u91cf\u4e0b\u964d\u9010\u6e10\u53d8\u5316\u7531\u767d\u8272\u53d8\u4e3a\u7070\u8272\uff0c
- *  \u540c\u65f6\u7ed9\u8840\u6761\u8272\u5e26\u52a0\u4e00\u4e9b\u6d41\u52a8\u6548\u679c" \u2713
+ * <p>★用户口径：★"血条材质放桌面了，你再最左侧加一个墨默的正脸拼成一个 boss 条，
+ *  然后在里面用黑白灰色带代表血条：血条灰度随着血量下降逐渐变化由白色变为灰色，
+ *  同时给血条色带加一些流动效果" ✓
  *
  * <ul>
- *   <li>\u2605\u7528 {@code CustomizeGuiOverlayEvent.BossEventProgress}\uff1a\u2605\u53d6\u6d88\u539f\u7248\u6761 \u002b \u81ea\u5df1\u753b \u2713\uff1b</li>
- *   <li>\u2605\u6846\u4f53\uff1a\u2605\u684c\u9762\u90a3\u5f20 ``\u8840\u6761.png``\uff08256\u00d724\uff09\u2713
- *       \u2014\u2014\u2605\u62f7\u6210\u65b0\u6587\u4ef6 ``textures/gui/ktulu_bar.png`` \u2713\uff08\u2605\u672a\u8986\u76d6\u4efb\u4f55\u65e7\u8d44\u6e90 \u2713\uff09\uff1b</li>
- *   <li>\u2605\u6b63\u8138\uff1a\u2605\u76f4\u63a5\u4ece ``textures/entity/momo_common.png``\uff08\u260564\u00d764 \u76ae\u80a4 \u2713\uff09
- *       \u91cc**\u88c1\u8138\u90e8 8\u00d78** \u2713\uff08\u2605\u5750\u6807 8,8 \u2713\uff09\u21d2 \u2605\u4e0d\u9700\u8981\u989d\u5916\u753b\u8138 \u2713\uff1b</li>
- *   <li>\u2605\u8840\u5e26\uff1a\u2605\u9ed1\u767d\u7070 \u2713\uff1b\u2605\u7070\u5ea6 = 0.35 + 0.65 \u00d7 \u8840\u91cf\u6bd4 \u2713
- *       \uff08\u2605\u6ee1\u8840\u7eaf\u767d \u2192 \u2605\u6b8b\u8840\u6df1\u7070 \u2713\uff09\uff1b</li>
- *   <li>\u2605\u6d41\u52a8\uff1a\u2605\u4e00\u9053\u6a2a\u5411\u9ad8\u5149\u4e0d\u65ad\u626b\u8fc7 \u002b \u2605\u661f\u70b9\u95ea\u70c1 \u2713\u3002</li>
+ *   <li>★用 {@code CustomizeGuiOverlayEvent.BossEventProgress}：★取消原版条 + 自己画 ✓；</li>
+ *   <li>★框体：★桌面那张 ``血条.png``（256×24）✓
+ *       ——★拷成新文件 ``textures/gui/ktulu_bar.png`` ✓（★未覆盖任何旧资源 ✓）；</li>
+ *   <li>★正脸：★直接从 ``textures/entity/momo_common.png``（★64×64 皮肤 ✓）
+ *       里**裁脸部 8×8** ✓（★坐标 8,8 ✓）⇒ ★不需要额外画脸 ✓；</li>
+ *   <li>★血带：★黑白灰 ✓；★灰度 = 0.35 + 0.65 × 血量比 ✓
+ *       （★满血纯白 → ★残血深灰 ✓）；</li>
+ *   <li>★流动：★一道横向高光不断扫过 + ★星点闪烁 ✓。</li>
  * </ul>
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -41,7 +41,7 @@ public class KtuluBossBarOverlay {
     @SubscribeEvent
     public static void onClientTick(net.minecraftforge.event.TickEvent.ClientTickEvent event) {
         if (event.phase == net.minecraftforge.event.TickEvent.Phase.END) {
-            KtuluName.clientTick();      // TNL916 \u2605\u771f\u540d\u6982\u7387/\u4e71\u7801\u6eda\u52a8 \u2713
+            KtuluName.clientTick();      // TNL916 ★真名概率/乱码滚动 ✓
         }
     }
 
@@ -58,18 +58,18 @@ public class KtuluBossBarOverlay {
             if (!tnl$name.equals(be.getName().getString())) {
                 return;
             }
-            event.setCanceled(true);                 // \u2605\u5c4f\u853d\u539f\u7248\u6761 \u2713
-            // TNL916 \u2605\u2605 \u7528\u6237\u53e3\u5f84\uff1a\u2605"\u628a\u8840\u6761\u6574\u4f53\u4e0b\u79fb\u4e00\u70b9\u7136\u540e\u5728\u4e0a\u65b9\u6e32\u67d3 boss \u7684\u540d\u5b57" \u2713
+            event.setCanceled(true);                 // ★屏蔽原版条 ✓
+            // TNL916 ★★ 用户口径：★"把血条整体下移一点然后在上方渲染 boss 的名字" ✓
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
             int screenW = mc.getWindow().getGuiScaledWidth();
-            int barY = event.getY() + 8;              // \u2605\u6574\u4f53\u4e0b\u79fb 8px \u2713
+            int barY = event.getY() + 8;              // ★整体下移 8px ✓
             draw(event.getGuiGraphics(), event.getX(), barY, be.getProgress());
-            // \u2605\u540d\u5b57\uff08\u2605\u753b\u5728\u8840\u6761\u4e0a\u65b9 \u2713\uff09
+            // ★名字（★画在血条上方 ✓）
             net.minecraft.network.chat.Component name = KtuluName.build();
             int nameW = mc.font.width(name);
             event.getGuiGraphics().drawString(mc.font, name, screenW / 2 - nameW / 2,
                     event.getY() - 6, 0xFFFFFF);
-            event.setIncrement(28);                   // \u2605\u544a\u8bc9\u539f\u7248"\u6211\u5360\u591a\u9ad8" \u2713
+            event.setIncrement(28);                   // ★告诉原版"我占多高" ✓
         } catch (Throwable ignored) {
         }
     }
@@ -77,37 +77,37 @@ public class KtuluBossBarOverlay {
     private static void draw(GuiGraphics g, int x, int y, float progress) {
         float p = Math.max(0.0F, Math.min(1.0F, progress));
 
-        // TNL904 \u2605\u2605 \u5c42\u5e8f\u6309\u7528\u6237\u53e3\u5f84\uff1a
-        //   \u2605\u7528\u6237\u539f\u8bdd\uff1a\u2605"\u8840\u6761\u94fa\u5728\u5e95\uff0c\u7136\u540e\u4e0a\u9762\u7f69\u4f4f\u6211\u7684\u8840\u6761\u69fd\uff0c
-        //                \u7136\u540e\u5728\u6211\u7684\u69fd\u4f4d\u5de6\u4fa7\u753b\u4e00\u5f20\u5e26\u7740\u58a8\u9ed8\u5934\u53d1\u7684\u6b63\u8138" \u2713
-        //   \u21d2 \u2605\u5c42\u5e8f\uff1a\u2460 \u8840\u6761\u94fa\u5e95 \u2713 \u2461 \u4f60\u7684\u8d34\u56fe\u7f69\u4e0a\u53bb \u2713
-        //             \u2462 \u69fd\u5de6\u4fa7\u753b\u6b63\u8138\uff08\u2605\u8138 + \u5934\u53d1\u5c42 \u2713\uff09
-        //   \u2605\u524d\u63d0\uff1a\u4f60\u8d34\u56fe\u7684\u69fd\u533a\u662f**\u900f\u660e**\u7684 \u2713
-        //     \uff08\u2605\u6211\u91cf\u8fc7\uff1a\u69fd\u5185\u90a3\u51e0\u884c\u786e\u5b9e\u662f\u7a7a\u767d \u2713\uff09\u21d2 \u6240\u4ee5\u7f69\u4e0a\u53bb\u80fd\u900f\u51fa\u5e95\u4e0b\u7684\u8840\u6761 \u2713\u2713
+        // TNL904 ★★ 层序按用户口径：
+        //   ★用户原话：★"血条铺在底，然后上面罩住我的血条槽，
+        //                然后在我的槽位左侧画一张带着墨默头发的正脸" ✓
+        //   ⇒ ★层序：① 血条铺底 ✓ ② 你的贴图罩上去 ✓
+        //             ③ 槽左侧画正脸（★脸 + 头发层 ✓）
+        //   ★前提：你贴图的槽区是**透明**的 ✓
+        //     （★我量过：槽内那几行确实是空白 ✓）⇒ 所以罩上去能透出底下的血条 ✓✓
         int tx = x - 30;
         int ty = y - 6;
 
-        int fx = tx + 34;      // \u2605\u69fd\u533a\uff08\u2605\u5b9e\u6d4b \u2713\uff09
+        int fx = tx + 34;      // ★槽区（★实测 ✓）
         int fy = ty + 5;
         int fw = 174;
         int fh = 14;
         int fillW = (int) (fw * p);
 
-        // \u2460-A TNL905 \u2605\u2605 \u69fd\u5e95\u5148\u94fa\u4e00\u5c42**\u4e0d\u900f\u660e\u6df1\u5e95** \u2713
-        //   \u2605\u7528\u6237\u53cd\u9988\uff1a\u2605"\u6211\u7ed9\u4f60\u622a\u56fe\u6211\u8fd9\u4e48\u7ec6\u81f4\u7684\u8840\u6761\u69fd\u600e\u4e48\u53d8\u6210\u6761\u5f62\u7801\u4e86" \u2713
-        //   \u2605\u771f\u56e0 \u2717\uff1a\u2605\u4f60\u8d34\u56fe\u7684\u69fd\u533a\u662f**\u5b8c\u5168\u900f\u660e**\u7684 \u2713
-        //     \uff08\u2605\u5b9e\u6d4b\uff1ax34~207 / y5~18 / \u900f\u660e\u7387 100% \u2713\uff09
-        //     \u21d2 \u2605**\u6ca1\u6709\u8840\u7684\u90a3\u4e00\u534a**\u4f1a\u900f\u51fa\u80cc\u540e\u7684\u80cc\u5305\u683c\u5b50\u7ebf \u2717
-        //     \u21d2 \u2605\u770b\u8d77\u6765\u5c31\u50cf"\u6761\u5f62\u7801" \u2713\uff08\u2605\u5176\u5b9e\u662f GUI \u80cc\u666f \u2717\uff09
+        // ①-A TNL905 ★★ 槽底先铺一层**不透明深底** ✓
+        //   ★用户反馈：★"我给你截图我这么细致的血条槽怎么变成条形码了" ✓
+        //   ★真因 ✗：★你贴图的槽区是**完全透明**的 ✓
+        //     （★实测：x34~207 / y5~18 / 透明率 100% ✓）
+        //     ⇒ ★**没有血的那一半**会透出背后的背包格子线 ✗
+        //     ⇒ ★看起来就像"条形码" ✓（★其实是 GUI 背景 ✗）
         g.fill(fx, fy, fx + fw, fy + fh, 0xF00A0A12);
 
-        // \u2460 \u2605\u8840\u6761\u94fa\u5e95 \u2713\uff08\u2605\u7070\u5ea6\u968f\u8840\u91cf\uff1a\u6ee1\u8840\u767d \u2192 \u6b8b\u8840\u6df1\u7070 \u2713\uff09
+        // ① ★血条铺底 ✓（★灰度随血量：满血白 → 残血深灰 ✓）
         if (fillW > 0) {
             int gray = (int) (255.0F * (0.35F + 0.65F * p));
             if (gray > 255) {
                 gray = 255;
             }
-            // TNL907 \u2605\u2605 \u514d\u75ab\u7a97\u6321\u4e0b\u65f6 \u21d2 \u2605\u8840\u6761\u5411**\u91d1\u8272**\u9ad8\u4eae\u95ea\u52a8 \u2713
+            // TNL907 ★★ 免疫窗挡下时 ⇒ ★血条向**金色**高亮闪动 ✓
             float flash = KtuluBarFlash.strength();
             int rr = gray;
             int gg = gray;
@@ -124,29 +124,29 @@ public class KtuluBossBarOverlay {
                 g.fill(fx, fy, fx + fillW, fy + 2, (glow << 24) | 0xFFD24A);
                 g.fill(fx, fy + fh - 2, fx + fillW, fy + fh, (glow / 2 << 24) | 0xFFD24A);
             }
-            g.fill(fx, fy, fx + fillW, fy + 2, 0x30FFFFFF);      // \u2605\u4e0a\u9ad8\u5149 \u2713
-            g.fill(fx, fy + fh - 2, fx + fillW, fy + fh, 0x30000000);  // \u2605\u4e0b\u6697\u8fb9 \u2713
+            g.fill(fx, fy, fx + fillW, fy + 2, 0x30FFFFFF);      // ★上高光 ✓
+            g.fill(fx, fy + fh - 2, fx + fillW, fy + fh, 0x30000000);  // ★下暗边 ✓
         }
 
-        // \u2461 \u2605\u7f69\u4e0a\u4f60\u7684\u8d34\u56fe\uff08\u2605\u6846 + \u69fd\u900f\u660e \u2713\uff09
-        // TNL906 \u2605\u2605 \u5173\u952e\u4fee\u6b63\uff1a\u2605\u4e0d\u80fd\u7528 7 \u53c2 blit \u2717
-        //   \u2605\u7528\u6237\u53cd\u9988\uff1a\u2605"\u538b\u6839\u6ca1\u6709\u8fb9\u6846\u7684\u7ea2\u8272\u5341\u5b57\u7eb9\u8def\u548c\u89e6\u624b" \u2713
-        //   \u2605\u771f\u56e0 \u2717\uff1a``blit(atlas, x, y, u, v, uWidth, vHeight)`` \u5047\u5b9a**\u6574\u5f20\u8d34\u56fe\u662f 256\u00d7256** \u2717
-        //     \u21d2 \u2605\u53ea\u4ece\u4f60\u7684\u56fe\u91cc\u53d6\u6700\u4e0a\u9762 24/256 \uff08\u2605\u5373 2 \u884c\uff09\u518d\u62c9\u4f38 \u2717
-        //     \u21d2 \u2605\u90a3\u4e24\u884c\u70b9\u9635\u88ab\u7ad6\u7740\u62c9\u957f = **\u6761\u5f62\u7801** \u2713
-        //     \u21d2 \u2605\u5341\u5b57\uff08y5~18\uff09\u4e0e\u89e6\u624b\u6839\u672c\u6ca1\u88ab\u53d6\u5230 \u2717
-        //   \u2605\u73b0\u5728\uff1a\u2605\u7528 11 \u53c2\u91cd\u8f7d**\u663e\u5f0f\u58f0\u660e\u8d34\u56fe\u5c3a\u5bf8 256\u00d724** \u2713
+        // ② ★罩上你的贴图（★框 + 槽透明 ✓）
+        // TNL906 ★★ 关键修正：★不能用 7 参 blit ✗
+        //   ★用户反馈：★"压根没有边框的红色十字纹路和触手" ✓
+        //   ★真因 ✗：``blit(atlas, x, y, u, v, uWidth, vHeight)`` 假定**整张贴图是 256×256** ✗
+        //     ⇒ ★只从你的图里取最上面 24/256 （★即 2 行）再拉伸 ✗
+        //     ⇒ ★那两行点阵被竖着拉长 = **条形码** ✓
+        //     ⇒ ★十字（y5~18）与触手根本没被取到 ✗
+        //   ★现在：★用 11 参重载**显式声明贴图尺寸 256×24** ✓
         g.blit(BAR, tx, ty, 256, 24, 0.0F, 0.0F, 256, 24, 256, 24);
 
-        // \u2462 \u2605\u69fd\u5de6\u4fa7\uff1a\u5e26\u5934\u53d1\u7684\u58a8\u9ed8\u6b63\u8138 \u2713
-        //   \u2605\u8138 = \u76ae\u80a4\u5934\u90e8\u6b63\u9762 8\u00d78 @(8,8) \u2713
-        //   \u2605\u5934\u53d1 = \u5934\u90e8\u8d34\u56fe\u5c42 8\u00d78 @(40,8) \u2713\uff08\u2605\u6807\u51c6\u76ae\u80a4\u7684 hat \u5c42\u5c31\u662f\u5934\u53d1/\u88c5\u9970 \u2713\uff09
+        // ③ ★槽左侧：带头发的墨默正脸 ✓
+        //   ★脸 = 皮肤头部正面 8×8 @(8,8) ✓
+        //   ★头发 = 头部贴图层 8×8 @(40,8) ✓（★标准皮肤的 hat 层就是头发/装饰 ✓）
         int faceX = fx - 24;
         int faceY = ty + 2;
         g.blit(SKIN, faceX, faceY, 20, 20, 8.0F, 8.0F, 8, 8, 64, 64);
         g.blit(SKIN, faceX, faceY, 20, 20, 40.0F, 8.0F, 8, 8, 64, 64);
 
-        // \u2605\u6d41\u52a8\uff1a\u9ad8\u5149\u626b\u8fc7 + \u661f\u70b9\u95ea\u70c1 \u2713\uff08\u2605\u753b\u5728\u6700\u4e0a\u5c42\uff0c\u4ec5\u9650\u69fd\u5185 \u2713\uff09
+        // ★流动：高光扫过 + 星点闪烁 ✓（★画在最上层，仅限槽内 ✓）
         if (fillW > 0) {
             long t = System.currentTimeMillis();
             int span = 56;

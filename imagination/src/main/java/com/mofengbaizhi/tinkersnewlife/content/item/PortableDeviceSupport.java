@@ -404,11 +404,11 @@ public final class PortableDeviceSupport {
     }
 
     /**
-     * TNL833 \u2605\u2605\u2605 \u9020\u51fa\u5e7d\u7075\u65f6**\u5c31\u628a\u5b83\u767b\u8bb0\u8fdb\u865a\u62df\u8868** \u2713\uff0c\u5e76\u8865\u4e0a\u5ba2\u6237\u7aef\u7684 level \u2713\u3002
+     * TNL833 ★★★ 造出幽灵时**就把它登记进虚拟表** ✓，并补上客户端的 level ✓。
      *
-     * <p>\u65e5\u5fd7\u8bc1\u636e\uff1a{@code TNL831 client has no virtual ghost at BlockPos{x=0, y=-1024, z=0}} \u2717
-     * \u21d2 \u2605\u5ba2\u6237\u7aef\u865a\u62df\u8868\u91cc**\u6ca1\u6709**\u8fd9\u4e2a\u5750\u6807 \u2717 \u6240\u4ee5\u914d\u65b9\u5305\u5230\u4e86\u4e5f\u5e94\u7528\u4e0d\u4e86 \u2717
-     * \u2605\u5728\u8fd9\u91cc\u767b\u8bb0\uff08\u2605\u4e24\u4fa7\u90fd\u8d70\u8fd9\u91cc \u2713\uff09\u21d2 \u540e\u7eed\u4e00\u5207\u6309\u5750\u6807\u53d6\u5e7d\u7075\u7684\u8def\u90fd\u80fd\u901a \u2713\u2713
+     * <p>日志证据：{@code TNL831 client has no virtual ghost at BlockPos{x=0, y=-1024, z=0}} ✗
+     * ⇒ ★客户端虚拟表里**没有**这个坐标 ✗ 所以配方包到了也应用不了 ✗
+     * ★在这里登记（★两侧都走这里 ✓）⇒ 后续一切按坐标取幽灵的路都能通 ✓✓
      */
     private static void tnl$registerGhost(net.minecraft.world.level.block.entity.BlockEntity be,
                                          net.minecraft.core.BlockPos pos) {
@@ -417,7 +417,7 @@ public final class PortableDeviceSupport {
                 return;
             }
             if (be.getLevel() == null) {
-                // \u2605\u5ba2\u6237\u7aef\uff1a\u7528\u53cd\u5c04\u8865\u4e0a ClientLevel\uff08\u2605\u907f\u514d\u4e13\u670d\u5f15\u7528\u5ba2\u6237\u7aef\u7c7b \u2713\uff09
+                // ★客户端：用反射补上 ClientLevel（★避免专服引用客户端类 ✓）
                 try {
                     Class<?> mc = Class.forName("net.minecraft.client.Minecraft");
                     Object inst = mc.getMethod("getInstance").invoke(null);

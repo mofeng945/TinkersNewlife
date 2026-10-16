@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-/** TNL879 \u547d\u4e2d\u7279\u6548\u7f13\u5b58\uff08\u2605\u7167\u642c\u53c2\u8003\u5b9e\u73b0 ClientStarHitCache \u2713\uff09 */
+/** TNL879 命中特效缓存（★照搬参考实现 ClientStarHitCache ✓） */
 public class StarfallHitCache {
 
     public static class Hit {

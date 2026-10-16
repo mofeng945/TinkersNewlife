@@ -9,7 +9,7 @@ import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
-/** TNL879 \u547d\u4e2d\u7279\u6548\u5305\uff08\u2605\u7167\u642c\u53c2\u8003\u5b9e\u73b0 StarHitPacket \u2713\uff09 */
+/** TNL879 命中特效包（★照搬参考实现 StarHitPacket ✓） */
 public class PacketStarfallHit {
 
     private final double x;

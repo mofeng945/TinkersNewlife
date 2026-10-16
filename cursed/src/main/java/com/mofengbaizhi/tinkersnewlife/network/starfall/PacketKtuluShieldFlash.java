@@ -7,7 +7,7 @@ import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
-/** TNL907 \u2605\u514d\u75ab\u7a97\u6321\u4e0b \u2192 \u901a\u77e5\u5ba2\u6237\u7aef\u95ea\u91d1 \u2713 */
+/** TNL907 ★免疫窗挡下 → 通知客户端闪金 ✓ */
 public class PacketKtuluShieldFlash {
 
     private static long TNL$LOG = 0L;
@@ -24,7 +24,7 @@ public class PacketKtuluShieldFlash {
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
             com.mofengbaizhi.tinkersnewlife.client.hud.KtuluBarFlash.trigger();
-            if (System.currentTimeMillis() - TNL$LOG > 1500L) {      // TNL908 \u2605\u9650\u6d41\u63a2\u9488 \u2713
+            if (System.currentTimeMillis() - TNL$LOG > 1500L) {      // TNL908 ★限流探针 ✓
                 TNL$LOG = System.currentTimeMillis();
                 com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
                         "TNL908 client received shield flash, strength={}",

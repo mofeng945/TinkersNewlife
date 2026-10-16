@@ -93,7 +93,7 @@ public class TitlesSelectScreen extends Screen {
     }
 
     private Component label(String id) {
-        String mark = pick.contains(id) ? "\u2714 " : "  ";
+        String mark = pick.contains(id) ? "✔ " : "  ";
         // §1328 按稀有度上色（★稀有度表在通用类里 ✗ ⭐ 客户端直接读 ✓）
         return Component.literal(mark).withStyle(net.minecraft.ChatFormatting.GRAY)
                 .append(com.mofengbaizhi.tinkersnewlife.content.curse.CurseTitles.colored(id));
@@ -110,7 +110,7 @@ public class TitlesSelectScreen extends Screen {
         if (total > rows) {
             int from = firstVisible + 1;
             int to = Math.min(total, firstVisible + rows);
-            g.drawCenteredString(this.font, Component.literal("\u25b2 " + from + "-" + to + " / " + total + " \u25bc"),
+            g.drawCenteredString(this.font, Component.literal("▲ " + from + "-" + to + " / " + total + " ▼"),
                     this.width / 2, this.height - 44, 0x8080FF);
         }
         super.render(g, mouseX, mouseY, partialTick);

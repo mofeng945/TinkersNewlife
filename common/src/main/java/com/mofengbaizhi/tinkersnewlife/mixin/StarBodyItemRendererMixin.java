@@ -29,15 +29,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * TNL1028 \u2605\u2605 \u4e24\u628a\u6b66\u5668\u7684\u81ea\u7ed8\u5165\u53e3\uff08\u2605\u5171\u7528\u4e00\u6761\u6d41\u7a0b \u2713\uff09
+ * TNL1028 ★★ 两把武器的自绘入口（★共用一条流程 ✓）
  *
- * <p>\u2605\u7528\u6237\u53cd\u9988\u8fc7\u7684\u4e24\u4e2a\u5751 \u2713\uff1a
+ * <p>★用户反馈过的两个坑 ✓：
  * <ul>
- *   <li>\u2605"\u5171\u7528\u62bd\u53d6\u65f6\u628a\u5f13\u7684\u7269\u54c1\u680f\u5149\u6655\u5fd8\u4e86\u642c\u8fc7\u6765" \u2717
- *       \u21d2 \u2605\u6240\u4ee5\u8fd9\u91cc**\u4e24\u6761\u5165\u53e3\u90fd\u5728** \u2713\uff1aGUI \u5149\u6655\uff08\u5f13 \u2713\uff09\u002b \u81ea\u7ed8\u4e00\u5c42\uff08\u4e24\u628a\u90fd\u884c \u2713\uff09\uff1b</li>
- *   <li>\u2605"\u9570\u5200\u62ff\u5728\u624b\u91cc\u8fd8\u662f\u4e00\u5757\u677f" \u2717
- *       \u21d2 \u2605\u624b\u6301\u59ff\u6001\u8981\u5355\u72ec\u7b97 \u2717 \u2014\u2014 \u2605\u6240\u4ee5\u9570\u5200**\u5148\u53ea\u5728 GUI** \u2713\uff0c
- *       \u2605\u624b\u6301\u4ea4\u8fd8\u539f\u7248 \u2713\uff08\u2605\u4e0b\u4e00\u8f6e\u518d\u505a\u624b\u6301\u900f\u955c \u2713\uff09\u3002</li>
+ *   <li>★"共用抽取时把弓的物品栏光晕忘了搬过来" ✗
+ *       ⇒ ★所以这里**两条入口都在** ✓：GUI 光晕（弓 ✓）+ 自绘一层（两把都行 ✓）；</li>
+ *   <li>★"镰刀拿在手里还是一块板" ✗
+ *       ⇒ ★手持姿态要单独算 ✗ —— ★所以镰刀**先只在 GUI** ✓，
+ *       ★手持交还原版 ✓（★下一轮再做手持透镜 ✓）。</li>
  * </ul>
  */
 @Mixin(ItemRenderer.class)
@@ -47,7 +47,7 @@ public class StarBodyItemRendererMixin {
     private static long TNL$POSE_LOG = 0L;
     private static long TNL$BOUNDS_LOG = 0L;
 
-    /** TNL1029 \u2605\u6a21\u578b\u6709\u51e0\u4e2a\u56db\u8fb9\u5f62\uff08\u2605\u770b\u5b83\u5230\u5e95\u662f\u4e0d\u662f\u4e00\u5f20\u5e73\u9762 \u2713\uff09 */
+    /** TNL1029 ★模型有几个四边形（★看它到底是不是一张平面 ✓） */
     private static int tnl$countQuads(BakedModel model) {
         try {
             RandomSource rnd = RandomSource.create(42L);
@@ -90,7 +90,7 @@ public class StarBodyItemRendererMixin {
         }
 
 
-        // \u2605\u2460 \u5f13\u7684\u7269\u54c1\u680f\u5149\u6655\uff08\u2605\u6062\u590d \u2713\uff09\uff1a\u2605\u753b\u5b8c**\u4e0d\u53d6\u6d88** \u2713 \u21d2 \u2605\u539f\u7248\u7269\u54c1\u753b\u5728\u5b83\u4e0a\u9762 \u2713
+        // ★① 弓的物品栏光晕（★恢复 ✓）：★画完**不取消** ✓ ⇒ ★原版物品画在它上面 ✓
         // TNL1042 user: give the scythe the same inventory glow as the bow
         if ((bow || order) && context == ItemDisplayContext.GUI && StarfallGlowClient.ready()) {
             StarfallGlowClient.tick();
@@ -119,16 +119,16 @@ public class StarBodyItemRendererMixin {
             // Now order is: glow (background) -> effect layer (the item) -> cancel vanilla.
         }
 
-        // \u2605\u2461 \u9570\u5200\uff1a\u2605\u5148\u53ea\u5728\u7269\u54c1\u680f\u8d70\u81ea\u5b9a\u4e49\u7740\u8272\u5668 \u2713
-        // TNL1030 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u6d4b\u4e86"\u4f46\u53ea\u6709 GUI \u90a3\u7ec4 \u2717
-        //   \u2605\u771f\u56e0 \u2717\uff1a\u2605\u624b\u6301\u63d0\u524d `return` \u4e86 \u2717 \u21d2 \u2605\u63a2\u9488\u6839\u672c\u6ca1\u8dd1\u5230 \u2713
-        //   \u2605\u73b0\u5728 \u2713\uff1a\u2605\u624b\u6301\u65f6**\u53ea\u6253\u63a2\u9488\u4e0d\u753b** \u2713\uff08\u2605\u539f\u7248\u7167\u5e38\u753b \u2713 \u21d2 \u2605\u4e0d\u53d8\u677f \u2713\uff09
-        //     \u2605\u62ff\u5230\u624b\u6301\u7684 diag/trans/quads \u540e\u6211\u5c31\u80fd\u7b97\u51fa\u4fee\u6b63\u91cf \u2713
-        // TNL1034 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u5f13\u90fd\u5df2\u7ecf\u5b8c\u7f8e\u5b9e\u73b0\u8fc7\u4e00\u7248\u4e86\u4f60\u600e\u4e48\u8fd8\u53cd\u590d\u8d70\u4e4b\u524d\u8bd5\u9519\u8fc7\u7684\u8def" \u2713
-        //   \u2605\u6211\u9519\u5728\u54ea \u2717\uff1a\u2605\u5f13\u7684"\u624b\u6301\u900f\u955c"**\u4e00\u76f4\u662f\u597d\u7684** \u2713
-        //     \u2605\u800c\u6211\u53cd\u590d\u53bb\u6539**\u59ff\u6001/\u5c5e\u6027/\u7ed1\u56fe** \u2717 \u2014\u2014 \u2605\u90a3\u4e9b\u5f13\u90fd\u6ca1\u6539\u8fc7 \u2713
-        //   \u2605\u73b0\u5728 \u2713\uff1a\u2605\u628a\u9570\u5200\u7684 fsh **\u7167\u642c\u5f13\u7684** \u2713\uff08\u2605\u906e\u7f69/\u8f93\u51fa/alpha/\u5750\u6807\u5168\u4e00\u81f4 \u2713\uff09
-        //     \u21d2 \u2605\u624b\u6301\u91cd\u65b0\u6253\u5f00 \u2713\uff08\u2605\u73b0\u5728\u5b83\u4e0e\u5f13\u662f\u540c\u4e00\u6761\u8def \u2713\uff09
+        // ★② 镰刀：★先只在物品栏走自定义着色器 ✓
+        // TNL1030 ★★ 用户：★"测了"但只有 GUI 那组 ✗
+        //   ★真因 ✗：★手持提前 `return` 了 ✗ ⇒ ★探针根本没跑到 ✓
+        //   ★现在 ✓：★手持时**只打探针不画** ✓（★原版照常画 ✓ ⇒ ★不变板 ✓）
+        //     ★拿到手持的 diag/trans/quads 后我就能算出修正量 ✓
+        // TNL1034 ★★ 用户：★"弓都已经完美实现过一版了你怎么还反复走之前试错过的路" ✓
+        //   ★我错在哪 ✗：★弓的"手持透镜"**一直是好的** ✓
+        //     ★而我反复去改**姿态/属性/绑图** ✗ —— ★那些弓都没改过 ✓
+        //   ★现在 ✓：★把镰刀的 fsh **照搬弓的** ✓（★遮罩/输出/alpha/坐标全一致 ✓）
+        //     ⇒ ★手持重新打开 ✓（★现在它与弓是同一条路 ✓）
         RenderType rt = bow ? StarBodyClient.starBodyOrNull()
                 : (AeonianOrderClient.ready() ? AeonianOrderClient.orderType() : null);
         if (order) {
@@ -137,9 +137,9 @@ public class StarBodyItemRendererMixin {
         if (rt == null) {
             return;
         }
-        // TNL1029 \u2605\u2605 \u7528\u6237\uff1a\u2605"\u9570\u5200\u62ff\u5728\u624b\u91cc\u8fd8\u662f\u4e00\u5757\u677f" \u2713
-        //   \u2605\u6211\u4e0d\u518d\u51ed\u611f\u89c9\u8c03 \u2717 \u2014\u2014 \u2605\u5148\u628a"\u59ff\u6001\u77e9\u9635"\u6253\u51fa\u6765 \u2713
-        //   \u2605\u770b\u4ec0\u4e48 \u2713\uff1a\u2605\u5bf9\u89d2\u9879\uff08\u2605\u7f29\u653e \u2713\uff09\u002b \u2605\u5e73\u79fb\u9879 \u2713 \u002b \u2605\u6a21\u578b\u81ea\u5e26\u7684 display \u53d8\u6362 \u2713
+        // TNL1029 ★★ 用户：★"镰刀拿在手里还是一块板" ✓
+        //   ★我不再凭感觉调 ✗ —— ★先把"姿态矩阵"打出来 ✓
+        //   ★看什么 ✓：★对角项（★缩放 ✓）+ ★平移项 ✓ + ★模型自带的 display 变换 ✓
         if (order && System.currentTimeMillis() - TNL$POSE_LOG > 4000L) {
             TNL$POSE_LOG = System.currentTimeMillis();
             org.joml.Matrix4f mm = pose.last().pose();
@@ -151,7 +151,7 @@ public class StarBodyItemRendererMixin {
         tnl$renderEffectLayer(pose, buffers, light, model, context, leftHand, rt, order ? "order" : "bow", ci);
     }
 
-    /** \u2605\u5171\u7528\uff1a\u2605\u5728\u539f\u7248\u4e4b\u524d\u5148\u753b\u4e00\u5c42\uff0c\u2605\u7136\u540e\u53d6\u6d88\u539f\u7248 \u2713 */
+    /** ★共用：★在原版之前先画一层，★然后取消原版 ✓ */
     private static void tnl$renderEffectLayer(PoseStack pose, MultiBufferSource buffers, int light,
                                               BakedModel model, ItemDisplayContext context, boolean leftHand,
                                               RenderType rt, String tag, CallbackInfo ci) {
@@ -164,11 +164,11 @@ public class StarBodyItemRendererMixin {
                 source.endBatch();
             }
             List<BakedQuad> quads = tnl$emit(baked, pose, buffers.getBuffer(rt), light);
-            // TNL1031 \u2605\u2605 \u624b\u6301\u63a2\u9488\u7ed3\u679c\uff1a\u2605diag=(1,1,1) trans=(0.56,-0.52,-0.72) \u2713
-            //   \u21d2 \u2605\u59ff\u6001\u672c\u8eab**\u6b63\u5e38**\uff08\u2605\u7f29\u653e 1 \u2713 \u002b \u2605\u5728\u955c\u5934\u524d 0.7 \u2713\uff09\u2717
-            //   \u2605\u6240\u4ee5"\u53d8\u677f"\u4e0d\u662f\u59ff\u6001\u95ee\u9898 \u2717 \u21d2 \u2605\u5f97\u770b**\u51e0\u4f55\u672c\u8eab** \u2713
-            //   \u2605\u73b0\u5728\uff1a\u2605\u628a\u8fd9\u4e9b\u56db\u8fb9\u5f62\u7684**\u5305\u56f4\u76d2**\u6253\u51fa\u6765 \u2713
-            //     \uff08\u2605\u5e73\u9762\u7247 \u21d2 \u2605\u67d0\u4e00\u8f74\u51e0\u4e4e\u4e3a 0 \u2713\uff1b\u2605\u65b9\u5757 \u21d2 \u2605\u4e09\u8f74\u90fd\u63a5\u8fd1 1 \u2713\uff09
+            // TNL1031 ★★ 手持探针结果：★diag=(1,1,1) trans=(0.56,-0.52,-0.72) ✓
+            //   ⇒ ★姿态本身**正常**（★缩放 1 ✓ + ★在镜头前 0.7 ✓）✗
+            //   ★所以"变板"不是姿态问题 ✗ ⇒ ★得看**几何本身** ✓
+            //   ★现在：★把这些四边形的**包围盒**打出来 ✓
+            //     （★平面片 ⇒ ★某一轴几乎为 0 ✓；★方块 ⇒ ★三轴都接近 1 ✓）
             if (System.currentTimeMillis() - TNL$BOUNDS_LOG > 4000L) {
                 TNL$BOUNDS_LOG = System.currentTimeMillis();
                 float mnx = Float.MAX_VALUE, mny = Float.MAX_VALUE, mnz = Float.MAX_VALUE;
@@ -208,7 +208,7 @@ public class StarBodyItemRendererMixin {
         }
     }
 
-    /** \u2605\u5149\u6655\uff1a\u2605\u4e00\u4e2a\u94fa\u6ee1 UV 0~1 \u7684\u56db\u8fb9\u5f62 \u2713 */
+    /** ★光晕：★一个铺满 UV 0~1 的四边形 ✓ */
     private static void tnl$emitGlow(PoseStack pose, VertexConsumer vc) {
         com.mojang.blaze3d.vertex.PoseStack.Pose pe = pose.last();
         Matrix4f m = pe.pose();
@@ -232,7 +232,7 @@ public class StarBodyItemRendererMixin {
         }
     }
 
-    /** \u2605\u628a\u6a21\u578b\u56db\u8fb9\u5f62\u5199\u8fdb\u7ed9\u5b9a\u7f13\u51b2 \u2713 */
+    /** ★把模型四边形写进给定缓冲 ✓ */
     private static List<BakedQuad> tnl$emit(BakedModel baked, PoseStack pose, VertexConsumer vc, int light) {
         Matrix4f m = pose.last().pose();
         Matrix3f n = pose.last().normal();

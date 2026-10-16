@@ -6,7 +6,7 @@ import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
-/** TNL891 \u2605\u2605 \u84c4\u529b\u53d1\u5c04\u5305\uff08\u2605\u5ba2\u6237\u7aef\u677e\u624b \u21d2 \u670d\u52a1\u7aef\u53d1\u5c04 \u2713\uff09 */
+/** TNL891 ★★ 蓄力发射包（★客户端松手 ⇒ 服务端发射 ✓） */
 public class PacketStarfallShoot {
 
     private final int charge;

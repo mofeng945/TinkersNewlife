@@ -3,18 +3,18 @@ package com.mofengbaizhi.tinkersnewlife.content.modifier;
 import slimeknights.tconstruct.library.modifiers.Modifier;
 
 /**
- * \u77ff\u5de5\u89c6\u91ce\uff08Miner's Vision\uff09\u2014\u2014 \u2605\u9632\u6b62\u900f\u89c6\u5343\u91cc\u773c\u7684\u77ff\u77f3\u9ad8\u4eae \u2713
+ * 矿工视野（Miner's Vision）—— ★防止透视千里眼的矿石高亮 ✓
  *
  * <pre>
- *   flavor      \uff1a\u8d2b\u7620\u7684\u77ff\u8109\u57f9\u517b\u4e0d\u51fa\u8001\u7ec3\u7684\u77ff\u5de5
- *   description \uff1a\u7ba1\u7406\u5458\u6211\u6ca1\u6709\u5f00\u900f\uff01
- *   \u6548\u679c        \uff1a\u8303\u56f4\u5185\u6240\u6709 {@code forge:ores} \u77ff\u77f3 **\u9ad8\u4eae \u2713 \u900f\u5899\u53ef\u89c1** \u2713
- *   \u7b49\u7ea7        \uff1a1~5 \u7ea7\uff0c\u6bcf\u7ea7\u8303\u56f4 +5 \u683c\uff08\u2605\u6ee1\u7ea7 25 \u683c \u2713\uff09
+ *   flavor      ：贫瘠的矿脉培养不出老练的矿工
+ *   description ：管理员我没有开透！
+ *   效果        ：范围内所有 {@code forge:ores} 矿石 **高亮 ✓ 透墙可见** ✓
+ *   等级        ：1~5 级，每级范围 +5 格（★满级 25 格 ✓）
  * </pre>
  *
- * <p>\u2605\u6e32\u67d3\u5168\u5728**\u5ba2\u6237\u7aef**\uff08\u2605\u53ea\u6709\u81ea\u5df1\u770b\u5f97\u5230 \u2713\uff09\uff0c\u89c1
- * {@code client/handler/MinersVisionClientHandler} \u2713\u3002\u672c\u7c7b\u53ea\u4f5c\u6ce8\u518c\u4e0e\u7b49\u7ea7\u8bb0\u5f55 \u2713\u3002
+ * <p>★渲染全在**客户端**（★只有自己看得到 ✓），见
+ * {@code client/handler/MinersVisionClientHandler} ✓。本类只作注册与等级记录 ✓。
  */
 public class MinersVisionTrait extends Modifier {
-    // \u53ea\u4f5c\u6ce8\u518c\u6807\u8bb0
+    // 只作注册标记
 }

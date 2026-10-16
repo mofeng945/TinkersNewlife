@@ -13,13 +13,13 @@ public final class a {
 
     private static final String A0 = "A17283699FC636FA6908EAD41FAF5CFF4DF22599FC262378ABB475A537B81565";
     private static final long A1 = (0x544E4C31L << 8) | 5L;
-    /** TNL856 \u2605DLL \u5185\u90e8\u6307\u7eb9\u8868\u7684 CRC32\uff08\u2605\u6869 DLL/\u6539\u8fc7\u7684 DLL \u5bf9\u4e0d\u4e0a \u2713\uff09 */
+    /** TNL856 ★DLL 内部指纹表的 CRC32（★桩 DLL/改过的 DLL 对不上 ✓） */
     private static final long FP0 = 4020521105L;
-    /** TNL861 \u2605DLL **\u4ee3\u7801\u6bb5(.text)** \u7684 CRC32\uff08\u2605\u6539\u4ee3\u7801\u6bb5\u5c31\u5bf9\u4e0d\u4e0a \u2713\uff09 */
+    /** TNL861 ★DLL **代码段(.text)** 的 CRC32（★改代码段就对不上 ✓） */
     private static final long TC0 = 2270635665L;
-    /** TNL856 \u2605\u4f1a\u8bdd\u7ea7\u968f\u673a\u76d0\uff08\u2605\u6bcf\u5c40\u4e0d\u540c \u2712 \u53cd\u5c04\u8bfb\u4e86\u4e5f\u96be\u590d\u73b0\uff09 */
+    /** TNL856 ★会话级随机盐（★每局不同 ✒ 反射读了也难复现） */
     private static final long SS = new java.security.SecureRandom().nextLong();
-    /** TNL856 \u2605\u7be1\u6539\u6807\u5fd7\uff08\u2605\u547d\u4e2d\u540e\u8840\u6761\u9690\u85cf \u002b \u514d\u4f24 \u2713\uff09 */
+    /** TNL856 ★篡改标志（★命中后血条隐藏 + 免伤 ✓） */
     private static volatile boolean TP = false;
     private static final int NS = 32;
     public static final float C0 = 0.06F;
@@ -27,37 +27,37 @@ public final class a {
 
     private static volatile boolean N = false;
     private static long L = -1;
-    /** TNL862 \u2605\u540e\u53f0\u81ea\u68c0\uff1a**\u4e0d\u5728\u4e3b\u7ebf\u7a0b\u505a SHA-256/CRC** \u2713\uff08\u2605\u7528\u6237\u53cd\u9988\uff1a\u4f1a\u6389\u5e27 \u2717\uff09 */
+    /** TNL862 ★后台自检：**不在主线程做 SHA-256/CRC** ✓（★用户反馈：会掉帧 ✗） */
     private static final java.util.concurrent.atomic.AtomicBoolean BUSY =
             new java.util.concurrent.atomic.AtomicBoolean(false);
     private static volatile long LAST_MS = 0L;
-    /** \u2605\u62bd\u6837\u95f4\u9694\uff08ms\uff09\uff1a\u2605\u968f\u673a\u5316 \u2713\uff08\u2605\u4e0d\u7ed9\u5916\u6302\u6293\u8282\u594f \u2713\uff09 */
+    /** ★抽样间隔（ms）：★随机化 ✓（★不给外挂抓节奏 ✓） */
     private static final long GAP_MIN = 20000L;
     private static final long GAP_RANGE = 20000L;
 
-    /* TNL855 \u2605\u955c\u50cf A\uff1a\u540c\u6837\u662f **MAC \u6807\u8bb0\u7684\u5f71\u5b50\u503c** \u2713 */
+    /* TNL855 ★镜像 A：同样是 **MAC 标记的影子值** ✓ */
     private static final long SALT = 0x9E3779B97F4A7C15L;
-    private static final long[] H = new long[NS];   // \u2605\u63a9\u7801\u8840\u91cf \u2713
-    private static final long[] T = new long[NS];   // \u2605MAC \u2713
-    private static final int[] C = new int[NS];     // \u2605\u8ba1\u6570\u5668 \u2713
+    private static final long[] H = new long[NS];   // ★掩码血量 ✓
+    private static final long[] T = new long[NS];   // ★MAC ✓
+    private static final int[] C = new int[NS];     // ★计数器 ✓
     private static final int[] CNT = new int[NS];
-    private static final long[] MCAP = new long[NS];  // \u2605\u4e0a\u9650\uff08\u4e0d\u654f\u611f\uff0c\u53ef\u76f4\u5b58 \u2713\uff09
+    private static final long[] MCAP = new long[NS];  // ★上限（不敏感，可直存 ✓）
     private static final int[] V = new int[NS];
-    /** TNL858 \u2605\u5408\u6cd5\u771f\u4f24\u5bbd\u9650\u7a97\u53e3\uff08\u2605\u5230\u671f tick \u2713\uff09 */
+    /** TNL858 ★合法真伤宽限窗口（★到期 tick ✓） */
     private static final int[] GR = new int[NS];
-    /** TNL863 \u2605\u51fa\u751f/\u6362\u7ef4\u5ea6\u5bbd\u9650\uff08\u2605\u671f\u95f4\u76f4\u63a5\u91c7\u7eb3\u5f53\u524d\u8840\uff0c\u4e0d\u5224\u4e5f\u4e0d\u56de\u5f39 \u2713\uff09 */
+    /** TNL863 ★出生/换维度宽限（★期间直接采纳当前血，不判也不回弹 ✓） */
     private static final int[] RB = new int[NS];
-    /** TNL865 \u2605\u672c tick \u5df2\u7ecf\u5403\u6389\u7684\u4f24\u5bb3\uff08\u00d71000 \u2713\uff09 */
+    /** TNL865 ★本 tick 已经吃掉的伤害（×1000 ✓） */
     private static final long[] SPENT = new long[NS];
-    /** TNL865 \u2605\u4e0a\u6b21\u8bb0\u8d26\u7684 tick \u53f7\uff08\u2605\u7528\u4e8e\u6362 tick \u65f6\u6e05\u96f6\u9884\u7b97 \u2713\uff09 */
+    /** TNL865 ★上次记账的 tick 号（★用于换 tick 时清零预算 ✓） */
     private static final int[] TCK = new int[NS];
-    /** TNL863 \u2605\u8fde\u7eed\u786c\u8bc1\u636e\u8ba1\u6570\uff08\u2605MAC \u5931\u6548 \u2713\uff09 */
+    /** TNL863 ★连续硬证据计数（★MAC 失效 ✓） */
     private static final int[] BAD = new int[NS];
-    /** TNL863 \u2605\u81ea\u68c0\u8fde\u7eed\u5931\u8d25\u6b21\u6570 \u2713 */
+    /** TNL863 ★自检连续失败次数 ✓ */
     private static volatile int SELF_BAD = 0;
-    /** TNL863 \u2605\u8fde\u7eed\u6b63\u5e38\u6b21\u6570\uff08\u2605\u7528\u4e8e\u81ea\u52a8\u89e3\u9664 TP \u2713\uff09 */
+    /** TNL863 ★连续正常次数（★用于自动解除 TP ✓） */
     private static volatile int OK_RUN = 0;
-    /** TNL863 \u2605\u786c\u8bc1\u636e\u9608\u503c\uff08\u2605\u8fde\u7eed 3 \u6b21\u624d\u7b97 \u2713\uff09 */
+    /** TNL863 ★硬证据阈值（★连续 3 次才算 ✓） */
     private static final int HARD = 3;
     private static final Map<UUID, Integer> S = new ConcurrentHashMap<>();
 
@@ -70,10 +70,10 @@ public final class a {
 
     private static native long z();
 
-    /** TNL861 \u2605\u8fd4\u56de\u4ee3\u7801\u6bb5 CRC \u2713 */
+    /** TNL861 ★返回代码段 CRC ✓ */
     private static native long y();
 
-    /** TNL861 \u2605\u4ee3\u7801\u6bb5\u81ea\u6821\u9a8c\u7ed3\u679c\uff081=\u5bf9\u5f97\u4e0a \u2713\uff09 */
+    /** TNL861 ★代码段自校验结果（1=对得上 ✓） */
     private static native long x();
     private static native void d(int p, long q0, long q1, int q2);
     private static native long e(int p, long q0, int q1);
@@ -81,7 +81,7 @@ public final class a {
     private static native void g(int p, long q0, int q1);
     private static native long h(int p);
 
-    /** \u2605\u654f\u611f\u5b57\u4e32\u7528 char[] \u73b0\u62fc \u2713\uff08\u2605\u9632\u6b62 strings \u626b\u5230 \u2713\uff09 */
+    /** ★敏感字串用 char[] 现拼 ✓（★防止 strings 扫到 ✓） */
     private static String t(char[] cs) {
         return new String(cs);
     }
@@ -201,8 +201,8 @@ public final class a {
         return v / 1000.0F;
     }
 
-    /** TNL855 \u2605\u521d\u59cb\u5316\uff1a\u4e24\u4fa7\u955c\u50cf\u90fd\u5199\u6ee1\u8840 \u2713 */
-    /** TNL868 \u2605\u53ea\u521d\u59cb\u5316\u4e00\u6b21\uff08\u2605\u65e7\u5199\u6cd5\u6bcf tick \u90fd\u91cd\u7f6e \u2717\uff09 */
+    /** TNL855 ★初始化：两侧镜像都写满血 ✓ */
+    /** TNL868 ★只初始化一次（★旧写法每 tick 都重置 ✗） */
     private static final boolean[] RDY = new boolean[NS];
     private static final UUID[] OWN = new UUID[NS];
 
@@ -210,13 +210,13 @@ public final class a {
         try {
             int s0 = k(mob);
             UUID u = mob.getUUID();
-            // TNL868 \u2605\u2605 \u4fee\u6b63\uff1a\u65e7\u5199\u6cd5\u6bcf tick \u90fd\u91cd\u7f6e V/RB \u2717
-            //   \u21d2 \u2605\u65e0\u654c\u7a97\u6c38\u8fdc\u5b58\u4e0d\u5230 1 tick \u2717 \u2605\u51fa\u751f\u5bbd\u9650\u6c38\u8fdc\u4e3a\u771f \u2717
+            // TNL868 ★★ 修正：旧写法每 tick 都重置 V/RB ✗
+            //   ⇒ ★无敌窗永远存不到 1 tick ✗ ★出生宽限永远为真 ✗
             if (RDY[s0] && u.equals(OWN[s0])) {
-                return;                       // \u2605\u5df2\u521d\u59cb\u5316\u8fc7 \u21d2 \u4ec0\u4e48\u90fd\u4e0d\u52a8 \u2713
+                return;                       // ★已初始化过 ⇒ 什么都不动 ✓
             }
             if (RDY[s0] && !u.equals(OWN[s0]) && OWN[s0] != null) {
-                // \u2605\u69fd\u4f4d\u88ab\u65b0\u5b9e\u4f53\u5360\u7528 \u21d2 \u91cd\u65b0\u521d\u59cb\u5316 \u2713
+                // ★槽位被新实体占用 ⇒ 重新初始化 ✓
                 int ns = (s0 + 1) % NS;
                 s0 = ns;
             }
@@ -231,7 +231,7 @@ public final class a {
             V[s0] = 0;
             SPENT[s0] = 0L;
             TCK[s0] = mob.tickCount;
-            RB[s0] = mob.tickCount + 40;      // \u2605\u51fa\u751f\u5bbd\u9650 40 tick\uff08\u2605\u53ea\u8bbe\u4e00\u6b21 \u2713\uff09
+            RB[s0] = mob.tickCount + 40;      // ★出生宽限 40 tick（★只设一次 ✓）
             BAD[s0] = 0;
             wA(s0, mx);
             b.put(s0, mx);
@@ -241,8 +241,8 @@ public final class a {
 
 
     /**
-     * TNL855 \u2605\u6bcf tick\uff1a\u56de\u5f39 \u002b \u955c\u50cf\u4e92\u68c0\uff08\u2605\u53ea\u6539\u4e00\u8fb9\u5c31\u88ab\u53e6\u4e00\u8fb9\u62c9\u56de \u2713\uff09
-     * \u002b \u786e\u4fdd\u6ca1\u6709\u7a81\u7834\u9650\u4f24\uff08\u2605\u8d85\u51fa\u5c31\u8865\u56de \u2713\uff09\u3002
+     * TNL855 ★每 tick：回弹 + 镜像互检（★只改一边就被另一边拉回 ✓）
+     * + 确保没有突破限伤（★超出就补回 ✓）。
      */
     public static float q1(Mob mob, int ticks) {
         try {
@@ -251,23 +251,23 @@ public final class a {
             long now = m0(mob.getHealth());
             long auth;
             if (N) {
-                // TNL873 \u2605\u2605 \u4fee\u6b63\uff1a\u2605\u65e7\u5199\u6cd5\u5728\u539f\u751f\u8def\u5f84\u91cc\u76f4\u63a5\u8c03 ``e()`` \u2717
-                //   \u21d2 \u2605\u7a97\u5185\u7684**\u76f4\u63a5\u5199\u8840**\u4f9d\u7136\u80fd\u5403\u6389\u6700\u591a 6% \u2717
-                //   \u2605\u7528\u6237\u53e3\u5f84\uff1a\u2605"\u73b0\u5728\u514d\u75ab\u7a97\u62e6\u4f4f\u4e86 hurt \u4f46\u6ca1\u62e6\u4f4f\u6539\u8840" \u2713
+                // TNL873 ★★ 修正：★旧写法在原生路径里直接调 ``e()`` ✗
+                //   ⇒ ★窗内的**直接写血**依然能吃掉最多 6% ✗
+                //   ★用户口径：★"现在免疫窗拦住了 hurt 但没拦住改血" ✓
                 if (V[s0] > 0) {
-                    V[s0] = V[s0] - 1;             // \u2605Java \u4fa7\u4e5f\u8ddf\u7740\u5012\u8ba1\u65f6 \u2713
+                    V[s0] = V[s0] - 1;             // ★Java 侧也跟着倒计时 ✓
                     long hv = h(s0);
-                    // TNL914 \u2605\u2605 \u4fee\u6b63"\u7a97\u53e3 2 \u500d" \u2713
-                    //   \u2605\u539f\u56e0 \u2717\uff1a\u2605\u539f\u751f\u7a97\u7684**\u5012\u8ba1\u65f6\u5199\u5728 ``e()`` \u91cc** \u2713
-                    //     \u2605\u800c\u7a97\u5185\u5206\u652f\u53ea\u8c03 ``h()`` \u8bfb\u503c \u2717 \u21d2 \u2605\u539f\u751f\u7a97\u4e00\u76f4\u505c\u5728 30 \u4e0d\u52a8 \u2717
-                    //     \u21d2 \u2605Java \u4fa7\u8d70\u5b8c 30 tick \u540e \u624d\u5f00\u59cb\u8d70\u539f\u751f\u90a3 30 tick \u2717
-                    //     \u21d2 \u2605\u5b9e\u6d4b\u843d\u5730\u95f4\u9694 **3.07s** \u2713\uff08\u2605= 2\u00d7 \u2713\uff09
-                    //   \u2605\u73b0\u5728\uff1a\u2605\u989d\u5916\u8c03\u4e00\u6b21 ``e()`` \u53ea\u4e3a**\u8ba9\u539f\u751f\u7a97\u5012\u8ba1\u65f6** \u2713
-                    //     \uff08\u2605\u503c\u4f20\u6743\u5a01\u503c \u2713 \u21d2 \u2605\u4e0d\u4f1a\u88ab\u62c9\u4f4e \u2717\uff09
+                    // TNL914 ★★ 修正"窗口 2 倍" ✓
+                    //   ★原因 ✗：★原生窗的**倒计时写在 ``e()`` 里** ✓
+                    //     ★而窗内分支只调 ``h()`` 读值 ✗ ⇒ ★原生窗一直停在 30 不动 ✗
+                    //     ⇒ ★Java 侧走完 30 tick 后 才开始走原生那 30 tick ✗
+                    //     ⇒ ★实测落地间隔 **3.07s** ✓（★= 2× ✓）
+                    //   ★现在：★额外调一次 ``e()`` 只为**让原生窗倒计时** ✓
+                    //     （★值传权威值 ✓ ⇒ ★不会被拉低 ✗）
                     e(s0, hv < 0L ? now : hv, ticks);
-                    auth = hv < 0L ? now : hv;     // \u2605\u7a97\u5185\uff1a**\u4e0d\u91c7\u7eb3\u4efb\u4f55\u6389\u8840** \u21d2 \u2605\u76f4\u5199\u88ab\u8986\u76d6 \u2713
+                    auth = hv < 0L ? now : hv;     // ★窗内：**不采纳任何掉血** ⇒ ★直写被覆盖 ✓
                     if (now < auth) {
-                        BLOCKED = true;            // TNL907 \u2605\u6321\u4e0b\u4e86\u76f4\u5199 \u2713
+                        BLOCKED = true;            // TNL907 ★挡下了直写 ✓
                     }
                     if (ticks - LZ > 40 && now < auth) {
                         LZ = ticks;
@@ -275,7 +275,7 @@ public final class a {
                                 "TNL873 window blocked a direct health write: now={} restored={}", m1(now), m1(auth));
                     }
                 } else {
-                    auth = e(s0, now, ticks);      // \u2605\u539f\u751f\u4e3a\u51c6 \u2713
+                    auth = e(s0, now, ticks);      // ★原生为准 ✓
                 }
                 long ra = rA(s0);
                 long rb = b.get(s0);
@@ -286,28 +286,28 @@ public final class a {
             } else {
                 long keep = mirror(s0, MCAP[s0], ticks);
                 long cap = MCAP[s0];
-                boolean rebase = ticks <= RB[s0];     // TNL863 \u2605\u51fa\u751f\u5bbd\u9650\u671f\uff1a\u76f4\u63a5\u91c7\u7eb3 \u2713
-                boolean grace = ticks <= GR[s0];      // TNL858 \u2605\u5408\u6cd5\u771f\u4f24\u5bbd\u9650\u5185 \u2713
+                boolean rebase = ticks <= RB[s0];     // TNL863 ★出生宽限期：直接采纳 ✓
+                boolean grace = ticks <= GR[s0];      // TNL858 ★合法真伤宽限内 ✓
                 long low = keep - cap;
                 if (low < 0) {
                     low = 0;
                 }
                 if (rebase) {
-                    auth = Math.max(0L, now);         // \u2605\u51fa\u751f\u5bbd\u9650\uff1a\u76f4\u63a5\u91c7\u7eb3 \u2713
+                    auth = Math.max(0L, now);         // ★出生宽限：直接采纳 ✓
                 } else if (grace || V[s0] > 0) {
-                    // TNL864 \u2605\u2605 \u771f\u4f24\u5bbd\u9650 **\u6216\u65e0\u654c\u7a97** \u21d2 \u2605**\u5b8c\u5168\u6062\u590d** \u2713
-                    //   \u2605\u4e0d\u7b97\u7be1\u6539 \u2717 \u2605\u4e0d\u7f6e TP \u2717 \u2605\u4e0d\u544a\u8b66 \u2717
+                    // TNL864 ★★ 真伤宽限 **或无敌窗** ⇒ ★**完全恢复** ✓
+                    //   ★不算篡改 ✗ ★不置 TP ✗ ★不告警 ✗
                     auth = keep;
                 } else if (now != keep) {
-                    // TNL864 \u2605\u8d8a\u6743\u6389\u8840\uff08\u2605\u6ca1\u8d70\u6211\u4eec\u7684 hurt \u2717\uff09\u21d2 **\u5b8c\u5168\u6062\u590d** \u2713
-                    //   \u2605\u5bf9\u5916\u8bed\u4e49\uff1a\u2605"\u9650\u4f24\u4e3a 0"\uff08\u2605\u771f\u4f24/\u900f\u660e\u901a\u9053\u4e00\u5f8b\u65e0\u6548 \u2713\uff09
-                    //   \u2605\u6b63\u5e38\u4f24\u5bb3\u8d70 hurt \u21d2 \u4e24\u4fa7\u955c\u50cf\u5df2\u540c\u6b65 \u21d2 now == keep \u21d2 \u4e0d\u4f1a\u8fdb\u8fd9\u91cc \u2713
+                    // TNL864 ★越权掉血（★没走我们的 hurt ✗）⇒ **完全恢复** ✓
+                    //   ★对外语义：★"限伤为 0"（★真伤/透明通道一律无效 ✓）
+                    //   ★正常伤害走 hurt ⇒ 两侧镜像已同步 ⇒ now == keep ⇒ 不会进这里 ✓
                     auth = keep;
                 } else {
                     auth = now;
                 }
                 if (V[s0] > 0) {
-                    V[s0] = V[s0] - 1;                // TNL864 \u2605Java \u56de\u9000\u8def\u5f84\u4e5f\u8981\u5012\u8ba1\u65f6 \u2713
+                    V[s0] = V[s0] - 1;                // TNL864 ★Java 回退路径也要倒计时 ✓
                 }
                 wA(s0, auth);
                 b.put(s0, auth);
@@ -318,12 +318,12 @@ public final class a {
         }
     }
 
-    /** TNL855 \u2605\u9650\u4f24\u67e5\u8be2\uff08\u2605\u65e0\u654c\u7a97\u53e3\u5185\u4e00\u70b9\u4e0d\u5403 \u2713\uff09 */
+    /** TNL855 ★限伤查询（★无敌窗口内一点不吃 ✓） */
     public static float q2(Mob mob, float amt, int ticks) {
         try {
             int s0 = k(mob);
-            // TNL865 \u2605\u2605 \u6bcf tick \u603b\u91cf\u9884\u7b97\uff1a\u672c tick \u53ea\u80fd\u5403\u6700\u5927\u751f\u547d\u7684 6% \u2713
-            //   \u2605\u65e7\u5199\u6cd5\u53ea\u9650"\u6bcf\u6b21"\u2717 \u21d2 \u540c\u4e00 tick \u8fde\u6253 N \u6b21\u5c31 N\u00d76% \u2717\uff08\u2605\u7528\u6237\u5b9e\u6d4b\u7070\u767d\u4e4b\u58a8\u4e00\u6b21 117 \u2713\uff09
+            // TNL865 ★★ 每 tick 总量预算：本 tick 只能吃最大生命的 6% ✓
+            //   ★旧写法只限"每次"✗ ⇒ 同一 tick 连打 N 次就 N×6% ✗（★用户实测灰白之墨一次 117 ✓）
             if (TCK[s0] != ticks) {
                 TCK[s0] = ticks;
                 SPENT[s0] = 0L;
@@ -334,7 +334,7 @@ public final class a {
             }
             long want = m0(amt);
             if (want > budget) {
-                want = budget;                    // \u2605\u8d85\u51fa\u9884\u7b97\u5c31\u622a\u65ad \u2713
+                want = budget;                    // ★超出预算就截断 ✓
                 if (ticks - LQ > 40) {
                     LQ = ticks;
                     com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
@@ -348,10 +348,10 @@ public final class a {
             } else {
                 gg = V[s0] > 0 ? 0L : want;
             }
-            // TNL911 \u2605\u2605 \u5173\u952e\uff1a\u2605\u95f8\u95e8\u8fd4\u56de 0 \u4e14\u7a97\u8fd8\u5728 \u21d2 \u2605\u5c31\u662f"\u88ab\u6321\u4e0b" \u2713
-            //   \u2605\u7528\u6237\u65e5\u5fd7\u8bc1\u636e\uff1a\u2605[GATE] gate=0.0 jInv=12/16/19 \u2713
-            //   \u2605\u800c\u65e7\u5199\u6cd5\u628a\u7f6e\u4f4d\u9519\u63d2\u5728\u4e86 q9 \u91cc \u2717
-            //     \u21d2 \u2605\u7a97\u5185\u6321\u5200\uff08\u2605\u8d70 q2 \u2717\uff09\u65f6\u6807\u5fd7\u6c38\u8fdc\u4e0d\u4eae \u2717
+            // TNL911 ★★ 关键：★闸门返回 0 且窗还在 ⇒ ★就是"被挡下" ✓
+            //   ★用户日志证据：★[GATE] gate=0.0 jInv=12/16/19 ✓
+            //   ★而旧写法把置位错插在了 q9 里 ✗
+            //     ⇒ ★窗内挡刀（★走 q2 ✗）时标志永远不亮 ✗
             if (gg <= 0L && V[s0] > 0) {
                 BLOCKED = true;
             }
@@ -362,7 +362,7 @@ public final class a {
     }
 
 
-    /** TNL855 \u2605\u8bb0\u8d26\uff1a\u4e24\u4fa7\u955c\u50cf\u540c\u6b65\u6263\u8840\uff08\u2605\u6b63\u89c4\u8def\u7ebf \u2713\uff09\u002b \u8fdb\u5165\u65e0\u654c \u2713 */
+    /** TNL855 ★记账：两侧镜像同步扣血（★正规路线 ✓）+ 进入无敌 ✓ */
     public static void q3(Mob mob, float amt) {
         try {
             int s0 = k(mob);
@@ -386,20 +386,20 @@ public final class a {
             }
             V[s0] = V0;
             long spent = SPENT[s0] + x;
-            SPENT[s0] = Math.min(MCAP[s0], spent);   // TNL865 \u2605\u8bb0\u8fdb\u672c tick \u9884\u7b97 \u2713
+            SPENT[s0] = Math.min(MCAP[s0], spent);   // TNL865 ★记进本 tick 预算 ✓
         } catch (Throwable ignored) {
         }
     }
 
     /**
-     * TNL1144 \u2605\u2605 \u6309\u672c\u7cfb\u7edf\u81ea\u5df1\u7684\u89c4\u77e9\u63a5\u4e00\u8bb0\u201c\u4f5c\u5f0a\u79d2\u6740\u201d\uff1a
+     * TNL1144 ★★ 按本系统自己的规矩接一记“作弊秒杀”：
      *
-     * <p>\u2605\u5b87\u5b99\u5251\u4f1a `hurt(Float.MAX_VALUE)` \u21d2 \u2605\u6211\u4eec\u5148**\u628a\u5b83\u6309\u5355 tick \u9884\u7b97\u622a\u65ad**\uff0c
-     * \u5e76\u7528 `q3` \u8bb0\u4e00\u7b14\u8d26 \u2713 \u2014\u2014 \u2605`q3` \u4f1a\u628a `V[s0]` \u6253\u5f00 30 tick \u2713
-     * \u21d2 \u2605\u7d27\u63a5\u7740\u5b83\u90a3\u53e5 `setHealth(0)` \u5c31\u843d\u5728**\u7a97\u53e3\u5185**\u2713
-     * \u21d2 \u2605`qD` \u81ea\u7136\u4f1a\u628a\u5b83\u62e6\u6210\u6743\u5a01\u503c \u2713\uff08\u2605\u5b8c\u5168\u4e0d\u52a8\u5916\u56f4\u903b\u8f91 \u2713\uff09
+     * <p>★宇宙剑会 `hurt(Float.MAX_VALUE)` ⇒ ★我们先**把它按单 tick 预算截断**，
+     * 并用 `q3` 记一笔账 ✓ —— ★`q3` 会把 `V[s0]` 打开 30 tick ✓
+     * ⇒ ★紧接着它那句 `setHealth(0)` 就落在**窗口内**✓
+     * ⇒ ★`qD` 自然会把它拦成权威值 ✓（★完全不动外围逻辑 ✓）
      *
-     * @return \u2605\u672c tick \u5141\u8bb8\u5403\u6389\u7684\u4f24\u5bb3\uff08\u2605\u5355 tick \u9884\u7b97 \u2713\uff09
+     * @return ★本 tick 允许吃掉的伤害（★单 tick 预算 ✓）
      */
     public static float qI(Mob mob, float amount) {
         try {
@@ -414,14 +414,14 @@ public final class a {
                 budget = 0L;
             }
             long allowed = Math.min(want, budget);
-            q3(mob, m1(allowed));          // \u2605\u8bb0\u8d26 \u002b \u6253\u5f00 V \u7a97\u53e3 \u2713
+            q3(mob, m1(allowed));          // ★记账 + 打开 V 窗口 ✓
             return m1(allowed);
         } catch (Throwable ignored) {
             return 0.0F;
         }
     }
 
-    /** TNL855 \u2605\u6ce8\u9500 \u2713 */
+    /** TNL855 ★注销 ✓ */
     public static void q4(Mob mob) {
         try {
             S.remove(mob.getUUID());
@@ -430,7 +430,7 @@ public final class a {
     }
 
 
-    // ==================== TNL855 \u2605\u955c\u50cf\u4e92\u4fdd\uff08MAC \u6807\u8bb0 \u2713\uff09 ====================
+    // ==================== TNL855 ★镜像互保（MAC 标记 ✓） ====================
 
     private static long key(int c, long salt) {
         long x = salt + (long) c * 0x9E3779B97F4A7C15L;
@@ -448,7 +448,7 @@ public final class a {
         return x;
     }
 
-    /** \u2605\u5199\u5165 A \u955c\u50cf\uff08\u2605\u5e26 MAC \u2713\uff09 */
+    /** ★写入 A 镜像（★带 MAC ✓） */
     private static void wA(int s, long v) {
         if (s < 0 || s >= NS) {
             return;
@@ -459,7 +459,7 @@ public final class a {
         C[s] = c;
     }
 
-    /** \u2605\u8bfb A \u955c\u50cf\uff08\u2605MAC \u4e0d\u5bf9\u56de\u54e8\u5175 \u2713\uff09 */
+    /** ★读 A 镜像（★MAC 不对回哨兵 ✓） */
     private static long rA(int s) {
         if (s < 0 || s >= NS) {
             return Long.MIN_VALUE;
@@ -472,7 +472,7 @@ public final class a {
         return v;
     }
 
-    /** \u2605\u6bcf tick \u955c\u50cf\u4e92\u68c0\uff1a\u53ea\u6539\u4e00\u8fb9 \u21d2 **\u56de\u5f39** \u2713\uff08\u2605\u53d6\u4e24\u8fb9\u8f83\u5927\u503c \u2713\uff09 */
+    /** ★每 tick 镜像互检：只改一边 ⇒ **回弹** ✓（★取两边较大值 ✓） */
     private static long mirror(int s, long capMilli, int ticks) {
         long va = rA(s);
         long vb = b.get(s);
@@ -480,16 +480,16 @@ public final class a {
         boolean badB = vb == Long.MIN_VALUE;
         long keep;
         if (badA && badB) {
-            keep = capMilli;                       // \u2605\u4e24\u8fb9\u90fd\u4e0d\u5408\u6cd5 \u21d2 \u56de\u5230\u6ee1\u8840 \u2713
+            keep = capMilli;                       // ★两边都不合法 ⇒ 回到满血 ✓
             BAD[s] = BAD[s] + 1;
             if (BAD[s] >= HARD && ticks - LW > 100) {
                 LW = ticks;
                 com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
                         "TNL863 hard tamper evidence x{} on slot {}, Java shadow path", BAD[s], s);
-                TP = true;                          // \u2605\u8fde\u7eed\u786c\u8bc1\u636e\u624d\u60e9\u7f5a \u2713
+                TP = true;                          // ★连续硬证据才惩罚 ✓
             }
         } else if (badA || badB) {
-            keep = badA ? vb : va;                 // \u2605\u53ea\u6539\u4e00\u8fb9 \u21d2 \u56de\u5f39 \u2713
+            keep = badA ? vb : va;                 // ★只改一边 ⇒ 回弹 ✓
             BAD[s] = BAD[s] + 1;
             if (BAD[s] >= HARD && ticks - LW > 100) {
                 LW = ticks;
@@ -499,13 +499,13 @@ public final class a {
                 TP = true;
             }
         } else if (va != vb) {
-            BAD[s] = 0;                            // \u2605\u4e24\u8fb9\u90fd\u5408\u6cd5 \u21d2 \u4e0d\u7b97\u786c\u8bc1\u636e \u2713
-            keep = Math.max(va, vb);               // \u2605\u4e24\u8fb9\u90fd\u5408\u6cd5\u4f46\u4e0d\u4e00\u81f4 \u21d2 \u53d6\u5927\uff08\u2605\u4e0d\u8ba9\u4eba\u62c9\u4f4e\u8840 \u2713\uff09
+            BAD[s] = 0;                            // ★两边都合法 ⇒ 不算硬证据 ✓
+            keep = Math.max(va, vb);               // ★两边都合法但不一致 ⇒ 取大（★不让人拉低血 ✓）
         } else {
             keep = va;
         }
         if (!badA && !badB) {
-            BAD[s] = 0;                            // TNL863 \u2605\u4e00\u65e6\u6062\u590d\u5408\u6cd5\u5c31\u6e05\u96f6 \u2713
+            BAD[s] = 0;                            // TNL863 ★一旦恢复合法就清零 ✓
         }
         if (keep > capMilli) {
             keep = capMilli;
@@ -516,15 +516,15 @@ public final class a {
     }
 
     private static long LW = -1000;
-    /** TNL865 \u2605\u9650\u6d41 \u2713 */
+    /** TNL865 ★限流 ✓ */
     private static int LQ = -1000;
-    /** TNL873 \u2605\u7a97\u53e3\u62e6\u622a\u65e5\u5fd7\u9650\u6d41 \u2713 */
+    /** TNL873 ★窗口拦截日志限流 ✓ */
     private static int LZ = -1000;
 
-    /** TNL907 \u2605\u2605 \u672c\u6b21\u662f\u5426\u53d1\u751f\u4e86"\u514d\u75ab\u7a97\u6321\u4e0b\u4f24\u5bb3/\u6539\u8840" \u2713 */
+    /** TNL907 ★★ 本次是否发生了"免疫窗挡下伤害/改血" ✓ */
     private static volatile boolean BLOCKED = false;
 
-    /** TNL907 \u2605\u53d6\u8d70\u5e76\u6e05\u9664\u6807\u5fd7\uff08\u2605\u6d88\u8d39\u5f0f \u2713\uff09 */
+    /** TNL907 ★取走并清除标志（★消费式 ✓） */
     public static boolean qH() {
         if (!BLOCKED) {
             return false;
@@ -533,24 +533,24 @@ public final class a {
         return true;
     }
 
-    /** TNL857 \u2605\u662f\u5426\u5df2\u68c0\u6d4b\u5230\u7be1\u6539\uff08\u2605\u547d\u4e2d\u540e\u884c\u4e3a\u6b8b\u9177\u5316 \u2713\uff09 */
+    /** TNL857 ★是否已检测到篡改（★命中后行为残酷化 ✓） */
     public static boolean q5() {
         return TP;
     }
 
     /**
-     * TNL858 \u2605\u2605\u5408\u6cd5\u771f\u4f24\u5165\u53e3\uff08\u2605\u6211\u4eec\u81ea\u5df1\u7684\u771f\u4f24\u7a7f\u900f\u8d70\u8fd9\u91cc \u2713\uff09
+     * TNL858 ★★合法真伤入口（★我们自己的真伤穿透走这里 ✓）
      *
-     * <p>\u2605\u4e0d\u5403 6% \u9650\u4f24 \u2717 \u2605\u4e0d\u56de\u5f39 \u2717 \u2605\u4e0d\u7f6e TP \u2717\uff1b
-     * \u53ea\u628a\u771f\u4f24\u5f53\u6210**\u5408\u6cd5\u6263\u8840**\uff0c\u5e76\u5f00\u4e00\u4e2a\u77ed\u5bbd\u9650\u7a97\u53e3 \u2713\u3002
-     * \uff08\u2605\u7528\u6237\u53e3\u5f84\uff1a\u2605\u522b\u8ba9\u81ea\u5df1\u6a21\u7ec4\u7684\u6539\u8840/\u771f\u4f24\u89e6\u53d1\u60e9\u7f5a \u2713\uff09
+     * <p>★不吃 6% 限伤 ✗ ★不回弹 ✗ ★不置 TP ✗；
+     * 只把真伤当成**合法扣血**，并开一个短宽限窗口 ✓。
+     * （★用户口径：★别让自己模组的改血/真伤触发惩罚 ✓）
      */
     public static void q6(Mob mob, float delta, int ticks) {
         try {
             int s0 = k(mob);
-            // TNL859 \u2605\u2605 \u771f\u4f24\u5165\u53e3\uff1a**\u4e0d\u6263\u8840** \u2717 \u2605\u4e0d\u60e9\u7f5a \u2717
-            //   \u53ea\u5f00\u4e00\u4e2a\u77ed\u7a97\u53e3 \u2713 \u21d2 q1 \u5728\u8fd9\u4e2a\u7a97\u53e3\u5185\u4f1a\u628a\u8840**\u5b8c\u5168\u6062\u590d** \u2713
-            //   \u2605\u7528\u6237\u53e3\u5f84\uff1a\u2605\u201c\u771f\u4f24\u65e0\u6cd5\u6539\u8840\u91cf\u4f46\u4e5f\u522b\u5403\u60e9\u7f5a\u201d \u2713
+            // TNL859 ★★ 真伤入口：**不扣血** ✗ ★不惩罚 ✗
+            //   只开一个短窗口 ✓ ⇒ q1 在这个窗口内会把血**完全恢复** ✓
+            //   ★用户口径：★“真伤无法改血量但也别吃惩罚” ✓
             long cur = rA(s0);
             if (cur == Long.MIN_VALUE) {
                 cur = b.get(s0);
@@ -561,34 +561,34 @@ public final class a {
             wA(s0, cur);
             b.put(s0, cur);
             GR[s0] = ticks + 5;
-            // TNL864 \u2605\u2605 \u4fee\u6b63\uff1a\u65e7\u5199\u6cd5\u8c03\u4e86 ``g(s0, d, 0)`` \u2717
-            //   \u2605\u7b2c\u4e09\u4e2a\u53c2\u6570\u662f**\u65e0\u654c tick \u6570** \u2717 \u21d2 \u2605\u6bcf\u6b21\u771f\u4f24\u90fd\u628a 1.5s \u7a97\u53e3**\u6e05\u96f6** \u2717\u2717
-            //   \u2605\u6240\u4ee5\u5929\u9006\u94ec\u6253\u4e00\u4e0b \u21d2 \u7a97\u53e3\u6ca1\u4e86 \u21d2 \u63a5\u4e0b\u6765\u7684\u666e\u901a\u4f24\u5bb3\u5168\u5403 \u2717
-            //   \u2605\u73b0\u5728\uff1a**\u771f\u4f24\u4e00\u5f8b\u4e0d\u78b0\u539f\u751f\u8840\u91cf\u4e0e\u65e0\u654c\u7a97** \u2713
+            // TNL864 ★★ 修正：旧写法调了 ``g(s0, d, 0)`` ✗
+            //   ★第三个参数是**无敌 tick 数** ✗ ⇒ ★每次真伤都把 1.5s 窗口**清零** ✗✗
+            //   ★所以天逆铬打一下 ⇒ 窗口没了 ⇒ 接下来的普通伤害全吃 ✗
+            //   ★现在：**真伤一律不碰原生血量与无敌窗** ✓
         } catch (Throwable ignored) {
         }
     }
 
 
     /**
-     * TNL866 \u2605\u2605\u6700\u7ec8\u4f24\u5bb3\u622a\u65ad\uff08\u2605\u653e\u5728\u3010\u6240\u6709\u52a0\u4f24\u7b97\u5b8c\u4e4b\u540e\u3011\u2713\uff09
+     * TNL866 ★★最终伤害截断（★放在【所有加伤算完之后】✓）
      *
-     * <p>\u65e7\u5199\u6cd5\u53ea\u5728 {@code hurt()} \u91cc\u622a \u2717 \u21d2
-     * \u2605\u81ea\u5bb6\u7279\u6027\uff08{@code ChildOfTheStarsHandler} \u7fa4\u661f\u4e4b\u5b50\uff1a
-     * \u5728 {@code LivingHurtEvent} \u91cc\u518d\u4e58 1.3^\u7ea7 \u2717\uff09**\u5728\u622a\u65ad\u4e4b\u540e\u53c8\u4e58\u4e00\u6b21** \u2717\u2717
-     * \u21d2 \u2605\u7528\u6237\u5b9e\u6d4b\uff1a\u7070\u767d\u4e4b\u58a8\u4e00\u51fb 117 \u2713\uff08\u260637.5 \u00d7 1.3^\u7ea7 \u2713\uff09
+     * <p>旧写法只在 {@code hurt()} 里截 ✗ ⇒
+     * ★自家特性（{@code ChildOfTheStarsHandler} 群星之子：
+     * 在 {@code LivingHurtEvent} 里再乘 1.3^级 ✗）**在截断之后又乘一次** ✗✗
+     * ⇒ ★用户实测：灰白之墨一击 117 ✓（☆37.5 × 1.3^级 ✓）
      *
-     * <p>\u2605\u73b0\u5728\uff1a\u5728 {@code LivingDamageEvent}\uff08LOWEST \u4f18\u5148\u7ea7\uff09\u91cc\u8c03\u672c\u65b9\u6cd5 \u2713
-     * \u21d2 \u6309"\u672c tick \u5269\u4f59\u9884\u7b97"\u622a\u65ad \u002b \u8bb0\u8d26 \u002b \u8fdb\u5165\u65e0\u654c\u7a97 \u2713
+     * <p>★现在：在 {@code LivingDamageEvent}（LOWEST 优先级）里调本方法 ✓
+     * ⇒ 按"本 tick 剩余预算"截断 + 记账 + 进入无敌窗 ✓
      *
-     * @return \u2605\u771f\u6b63\u5141\u8bb8\u7684\u4f24\u5bb3\uff08\u2605\u8c03\u7528\u65b9\u5fc5\u987b\u628a\u5b83\u5199\u56de\u4e8b\u4ef6 \u2713\uff09
+     * @return ★真正允许的伤害（★调用方必须把它写回事件 ✓）
      */
     public static float q9(Mob mob, float amount, int ticks) {
         try {
             int s0 = k(mob);
             if (V[s0] > 0) {
-                BLOCKED = true;                    // TNL907 \u2605\u6321\u4e0b\u4e86 \u21d2 \u2605\u5f85\u4f1a\u513f\u95ea\u91d1 \u2713
-                return 0.0F;                       // \u2605\u65e0\u654c\u7a97\u5185\uff1a\u4e00\u70b9\u4e0d\u5403 \u2713
+                BLOCKED = true;                    // TNL907 ★挡下了 ⇒ ★待会儿闪金 ✓
+                return 0.0F;                       // ★无敌窗内：一点不吃 ✓
             }
             if (TCK[s0] != ticks) {
                 TCK[s0] = ticks;
@@ -596,7 +596,7 @@ public final class a {
             }
             long budget = MCAP[s0] - SPENT[s0];
             if (budget <= 0L) {
-                return 0.0F;                       // \u2605\u672c tick \u9884\u7b97\u7528\u5b8c \u2713
+                return 0.0F;                       // ★本 tick 预算用完 ✓
             }
             long want = m0(amount);
             long allow = Math.min(want, budget);
@@ -607,7 +607,7 @@ public final class a {
             }
             SPENT[s0] = SPENT[s0] + allow;
             if (N) {
-                g(s0, allow, V0);                  // \u2605\u539f\u751f\u8bb0\u8d26 \u002b \u65e0\u654c\u7a97 \u2713
+                g(s0, allow, V0);                  // ★原生记账 + 无敌窗 ✓
             } else {
                 long cur = rA(s0);
                 if (cur == Long.MIN_VALUE) {
@@ -620,14 +620,14 @@ public final class a {
                 wA(s0, nv);
                 b.put(s0, nv);
             }
-            V[s0] = V0;                            // TNL873 \u2605Java \u4fa7\u7a97\u53e3\uff08\u2605\u4e24\u6761\u8def\u90fd\u8981\u8bbe \u2713\uff09
+            V[s0] = V0;                            // TNL873 ★Java 侧窗口（★两条路都要设 ✓）
             return m1(allow);
         } catch (Throwable th) {
             return 0.0F;
         }
     }
 
-    /** TNL867 \u2605\u53ea\u622a\u4e0d\u8bb0\u8d26\uff08\u2605\u7ed9 LivingHurtEvent \u7528 \u2713\uff09 */
+    /** TNL867 ★只截不记账（★给 LivingHurtEvent 用 ✓） */
     public static float qA(Mob mob, float amount) {
         try {
             int s0 = k(mob);
@@ -645,7 +645,7 @@ public final class a {
         }
     }
 
-    /** TNL867 \u2605\u65e5\u5fd7\u6a21\u5f0f\uff1a\u2605\u524d 6 \u5200\u5168\u91cf\u6253\uff08\u2605\u65b9\u4fbf\u7528\u6237\u4e00\u6b21\u590d\u73b0\u5c31\u80fd\u5b9a\u4f4d \u2713\uff09 */
+    /** TNL867 ★日志模式：★前 6 刀全量打（★方便用户一次复现就能定位 ✓） */
     private static volatile int HITS = 0;
 
     public static void qB(String tag, Object... args) {
@@ -659,7 +659,7 @@ public final class a {
         }
     }
 
-    /** TNL867 \u2605\u4e0a\u62a5\u5f53\u524d\u9884\u7b97\u72b6\u6001\uff08\u2605\u4f9b\u65e5\u5fd7 \u2713\uff09 */
+    /** TNL867 ★上报当前预算状态（★供日志 ✓） */
     public static String qC(Mob mob) {
         try {
             int s0 = k(mob);
@@ -670,15 +670,15 @@ public final class a {
         }
     }
 
-    // TNL868 \u2605\u2605 \u9759\u6001\u521d\u59cb\u5316\u5fc5\u987b\u653e\u5728\u6240\u6709\u5b57\u6bb5\u4e4b\u540e \u2713
-    //   \u2605\u65e7\u5199\u6cd5\u628a static{}\u5199\u5728 ``char[] P0..P3`` **\u4e4b\u524d** \u2717
-    //   \u21d2 \u2605Java \u9759\u6001\u521d\u59cb\u5316\u6309**\u6587\u672c\u987a\u5e8f**\u6267\u884c \u21d2 P0 \u8fd8\u662f null \u2717
-    //   \u21d2 \u2605DLL \u6c38\u8fdc\u52a0\u8f7d\u5931\u8d25\uff08NPE: Cannot read the array length because "value" is null \u2713\uff09
-    //   \u2605\u7528\u6237\u65e5\u5fd7\u91cc\u5c31\u662f\u8fd9\u4e00\u884c \u2713
+    // TNL868 ★★ 静态初始化必须放在所有字段之后 ✓
+    //   ★旧写法把 static{}写在 ``char[] P0..P3`` **之前** ✗
+    //   ⇒ ★Java 静态初始化按**文本顺序**执行 ⇒ P0 还是 null ✗
+    //   ⇒ ★DLL 永远加载失败（NPE: Cannot read the array length because "value" is null ✓）
+    //   ★用户日志里就是这一行 ✓
     static {
         N = y1();
-        // TNL869 \u2605\u2605 \u542f\u52a8\u6807\u8bb0\uff1a\u2605\u53ea\u8981\u672c\u7c7b\u88ab\u52a0\u8f7d\u5c31\u6253\u4e00\u884c \u2713
-        //   \u2605\u7528\u6765\u786e\u8ba4"\u73b0\u5728\u8dd1\u7684\u5230\u5e95\u662f\u54ea\u4e2a\u6784\u5efa" \u2713
+        // TNL869 ★★ 启动标记：★只要本类被加载就打一行 ✓
+        //   ★用来确认"现在跑的到底是哪个构建" ✓
         try {
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
                     "TNL869 VITALS BUILD zzF native={} cap={} ns={} sha={} t={}", N, C0, NS, A0.substring(0, 8));
@@ -687,15 +687,15 @@ public final class a {
     }
 
     /**
-     * TNL874 \u2605\u2605 \u7a97\u5185\u5f3a\u5236\u5199\u6743\u5a01\u503c\uff08\u2605\u4ece**\u6e90\u5934**\u62e6\u76f4\u5199 \u2713\uff09
+     * TNL874 ★★ 窗内强制写权威值（★从**源头**拦直写 ✓）
      *
-     * <p>\u88ab {@code KtuluVitalsMixin} \u5728 {@code LivingEntity#setHealth} \u5165\u53e3\u8c03\u7528 \u2713\u3002
-     * \u2605\u7528\u6237\u53e3\u5f84\uff1a\u2605"\u6211\u4e0d\u662f\u5199 dll \u5c31\u662f\u4e3a\u4e86\u963b\u6b62\u8fd9\u79cd\u4e8b\u60c5\u5417" \u2713
-     * \u21d2 \u2605\u5149\u9760 DLL \u76d1\u63a7\u662f\u4e0b\u4e00 tick \u7684\u4e8b \u2717\uff1b\u2605\u6df7\u5165\u624d\u662f"\u5199\u7684\u90a3\u4e00\u77ac\u95f4"\u5c31\u62e6 \u2713\u2713
+     * <p>被 {@code KtuluVitalsMixin} 在 {@code LivingEntity#setHealth} 入口调用 ✓。
+     * ★用户口径：★"我不是写 dll 就是为了阻止这种事情吗" ✓
+     * ⇒ ★光靠 DLL 监控是下一 tick 的事 ✗；★混入才是"写的那一瞬间"就拦 ✓✓
      */
     public static float qD(Mob mob, float value) {
         try {
-            // TNL893 \u2605\u771f\u6b7b\u540e\u4e0d\u518d\u62e6\u4efb\u4f55\u5199\u5165 \u2713\uff08\u2605\u5426\u5219\u6b7b\u4e0d\u6389 \u2717\uff09
+            // TNL893 ★真死后不再拦任何写入 ✓（★否则死不掉 ✗）
             if (mob instanceof com.mofengbaizhi.tinkersnewlife.content.entity.KtuluMomo km && km.tnl$isDead()) {
                 return value;
             }
@@ -703,7 +703,7 @@ public final class a {
             if (V[s0] <= 0) {
                 return value;                     // TNL1140-reverted: window only, never outside
             }
-            // TNL911 \u2605\u53ea\u6709**\u771f\u7684\u628a\u503c\u62e6\u4e0b\u6765**\u624d\u7f6e\u4f4d \u2713
+            // TNL911 ★只有**真的把值拦下来**才置位 ✓
             long auth = N ? h(s0) : rA(s0);
             if (auth < 0L) {
                 auth = b.get(s0);
@@ -712,13 +712,13 @@ public final class a {
                 return value;
             }
             long want = m0(value);
-            if (want < auth) {                    // \u2605\u60f3\u5199\u66f4\u4f4e \u21d2 \u2605\u76f4\u63a5\u62d2\u7edd\uff0c\u6539\u5199\u6743\u5a01\u503c \u2713
+            if (want < auth) {                    // ★想写更低 ⇒ ★直接拒绝，改写权威值 ✓
                 if (LQ3 != s0) {
                     LQ3 = s0;
                     com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
                             "TNL874 setHealth blocked in window: want={} -> auth={}", m1(want), m1(auth));
                 }
-                BLOCKED = true;                    // TNL911 \u2605\u771f\u7684\u62e6\u4e0b\u4e86 \u2713
+                BLOCKED = true;                    // TNL911 ★真的拦下了 ✓
                 return m1(auth);
             }
             return value;
@@ -730,14 +730,14 @@ public final class a {
     private static int LQ3 = -1;
 
     /**
-     * TNL875 \u2605\u2605 \u5bf9\u5916\u62a5\u544a\u6743\u5a01\u8840\u91cf\uff08\u2605\u5224\u5b9a\u7ea7\u5c4f\u853d \u2713\uff09
+     * TNL875 ★★ 对外报告权威血量（★判定级屏蔽 ✓）
      *
-     * <p>\u2605\u7528\u6237\u53cd\u9988\uff1a\u2605"\u8fd8\u662f\u6709\u6982\u7387\u6539" \u2713
-     * \u21d2 \u2605\u56e0\u4e3a\u6df7\u5165\u53ea\u80fd\u62e6**\u8d70 setHealth**\u7684\u5199 \u2717\uff0c
-     * \u2605\u800c**\u76f4\u63a5\u5199\u5b57\u6bb5**\uff08\u53cd\u5c04/Unsafe \u2717\uff09\u62e6\u4e0d\u4f4f \u2717\u3002
-     * \u2605\u73b0\u5728\uff1a\u2605\u8ba9 Boss \u7684 {@code getHealth()}\u76f4\u63a5\u8fd4\u56de**\u6743\u5a01\u503c** \u2713
-     * \u21d2 \u2605\u6b7b\u4ea1\u5224\u5b9a/\u53d7\u4f24\u8ba1\u7b97/\u6e32\u67d3\u5168\u90e8\u8d70\u8fd9\u4e2a\u503c \u2713
-     * \u21d2 \u2605\u5b57\u6bb5\u88ab\u6539\u4e5f**\u4e0d\u5f71\u54cd\u4efb\u4f55\u5224\u5b9a** \u2713\u2713
+     * <p>★用户反馈：★"还是有概率改" ✓
+     * ⇒ ★因为混入只能拦**走 setHealth**的写 ✗，
+     * ★而**直接写字段**（反射/Unsafe ✗）拦不住 ✗。
+     * ★现在：★让 Boss 的 {@code getHealth()}直接返回**权威值** ✓
+     * ⇒ ★死亡判定/受伤计算/渲染全部走这个值 ✓
+     * ⇒ ★字段被改也**不影响任何判定** ✓✓
      */
     public static float qF(Mob mob) {
         try {

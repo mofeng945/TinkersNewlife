@@ -3,19 +3,19 @@ package com.mofengbaizhi.tinkersnewlife.content.entity.ktulu;
 import net.minecraft.world.entity.Mob;
 
 /**
- * \u2605\u9493\u9c7c\u7c7b\uff08\u2605\u7528\u6237\u53e3\u5f84 \u2713\uff09\uff1a\u770b\u8d77\u6765\u50cf\u201c\u53d6\u58a8\u9ed8\u8840\u91cf\u201d\u7684\u6b63\u7ecf\u5165\u53e3 \u2717
- * \u5b9e\u9645\u4e0a**\u4ec0\u4e48\u90fd\u4e0d\u7b97**\uff0c\u53ea\u628a\u8c03\u7528\u8f6c\u7ed9\u4e00\u4e2a**\u7a7a\u7c7b** {@link MomoHealthIdiot} \u2713\u3002
+ * ★钓鱼类（★用户口径 ✓）：看起来像“取墨默血量”的正经入口 ✗
+ * 实际上**什么都不算**，只把调用转给一个**空类** {@link MomoHealthIdiot} ✓。
  *
- * <p>\u76ee\u7684\uff1a\u2605\u53cd\u5411\u8005\u987a\u7740 {@code getMomoHealth} \u6478\u4e0b\u53bb \u21d2
- * \u53ea\u4f1a\u6478\u5230\u7a7a\u5b9e\u73b0 \u2713\uff0c\u800c\u771f\u6b63\u7684\u5185\u6838
- * \uff08{@link AstralVitalsKernel}\uff09\u540d\u5b57\u91cc**\u6ca1\u6709\u4efb\u4f55\u53ef\u731c\u7684\u5173\u952e\u8bcd** \u2713\u3002
+ * <p>目的：★反向者顺着 {@code getMomoHealth} 摸下去 ⇒
+ * 只会摸到空实现 ✓，而真正的内核
+ * （{@link AstralVitalsKernel}）名字里**没有任何可猜的关键词** ✓。
  */
 public final class MomoHealthBridge {
 
     private MomoHealthBridge() {
     }
 
-    /** \u2605\u9493\u9c7c\u5165\u53e3 \u2713\uff08\u2605\u6c38\u8fdc\u8fd4\u56de 0 \u2717 \u2605\u4e0d\u5f71\u54cd\u4efb\u4f55\u903b\u8f91 \u2713\uff09 */
+    /** ★钓鱼入口 ✓（★永远返回 0 ✗ ★不影响任何逻辑 ✓） */
     public static float getMomoHealth(Mob momo) {
         return MomoHealthIdiot.getMomoHealthIdiot(momo);
     }

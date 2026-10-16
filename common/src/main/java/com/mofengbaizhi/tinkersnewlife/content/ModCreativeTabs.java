@@ -80,7 +80,7 @@ public class ModCreativeTabs {
                                 // ----- 墨默刷怪蛋（位于所有旧日材料之后、匠魂部件之前） -----
                                 output.accept(ModItems.MOMO_SPAWN_EGG.get());
         output.accept(ModItems.STARFALL_LAMENT.get());   // TNL877
-        output.accept(ModItems.AEONIAN_ORDER.get());       // TNL1023 \u2605\u6052\u6b63\u79e9\u5668 \u2713
+        output.accept(ModItems.AEONIAN_ORDER.get());       // TNL1023 ★恒正秩器 ✓
         output.accept(ModItems.KTULU_MOMO_SPAWN_EGG.get());   // TNL854
 
                                 // ----- ⭐ §1118v 所有流体桶已**移入独立标签页**「流体桶」✓（见 BUCKETS_TAB ✓）-----

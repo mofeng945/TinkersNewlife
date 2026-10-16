@@ -14,16 +14,16 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
- * TNL831 \u2605\u2605\u2605 \u81ea\u5efa\u914d\u65b9\u6295\u9012\uff08\u2605\u7528\u6237\u9009\u7684 B \u65b9\u6848 \u2713\uff09\u3002
+ * TNL831 ★★★ 自建配方投递（★用户选的 B 方案 ✓）。
  *
- * <h2>\u4e3a\u4f55\u4e0d\u7528\u5320\u9b42\u81ea\u5e26\u7684\u6295\u9012</h2>
- * \u5320\u9b42\u7528 {@code UpdateCraftingRecipePacket(\u4e16\u754c\u5750\u6807, \u914d\u65b9)} \u53d1\uff0c\u5ba2\u6237\u7aef\u6536\u5305\u540e\u8981
- * {@code level.getBlockEntity(pos)} \u53d6\u65b9\u5757\u5b9e\u4f53 \u2717 \u800c\u6211\u4eec\u7684\u5e7d\u7075\u5728**\u53e3\u888b\u5750\u6807**
- * \uff08\u2605\u6ca1\u6709\u533a\u5757 \u2717\uff09\u21d2 \u6c38\u8fdc\u62ff\u4e0d\u5230 \u2717\uff08\u2605\u65e5\u5fd7\u91cc\u90a3\u4e00\u5806
- * {@code No block entity at BlockPos{x=0, y=-1024, z=0}} \u5c31\u662f\u5b83 \u2713\uff09\u3002
+ * <h2>为何不用匠魂自带的投递</h2>
+ * 匠魂用 {@code UpdateCraftingRecipePacket(世界坐标, 配方)} 发，客户端收包后要
+ * {@code level.getBlockEntity(pos)} 取方块实体 ✗ 而我们的幽灵在**口袋坐标**
+ * （★没有区块 ✗）⇒ 永远拿不到 ✗（★日志里那一堆
+ * {@code No block entity at BlockPos{x=0, y=-1024, z=0}} 就是它 ✓）。
  *
- * <p>\u2605\u6539\u6210\u6211\u4eec\u81ea\u5df1\u53d1**\u914d\u65b9 id** \u2713\uff0c\u5ba2\u6237\u7aef\u6536\u5230\u540e\u76f4\u63a5\u5728\u865a\u62df\u8868\u91cc\u627e\u5230\u5e7d\u7075 \u2713
- * \u5e76\u8c03\u5320\u9b42**\u81ea\u5df1\u7684** {@code updateRecipe}\uff08\u2605public \u2713\uff09\u21d2 \u7ed3\u679c\u69fd\u5c31\u80fd\u7b97\u51fa\u4ea7\u7269 \u2713\u2713
+ * <p>★改成我们自己发**配方 id** ✓，客户端收到后直接在虚拟表里找到幽灵 ✓
+ * 并调匠魂**自己的** {@code updateRecipe}（★public ✓）⇒ 结果槽就能算出产物 ✓✓
  */
 public class PacketPortableRecipe {
 
@@ -49,7 +49,7 @@ public class PacketPortableRecipe {
         ctx.get().enqueueWork(() -> {
             try {
                 if (ctx.get().getSender() != null) {
-                    return;   // \u2605\u8fd9\u662f\u670d\u52a1\u7aef \u21d2 \u4e0d\u5904\u7406 \u2713
+                    return;   // ★这是服务端 ⇒ 不处理 ✓
                 }
                 BlockEntity ghost = PortableDeviceSupport.lookupVirtual(packet.pos);
                 if (ghost == null) {

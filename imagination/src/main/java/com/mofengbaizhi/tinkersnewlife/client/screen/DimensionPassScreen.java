@@ -145,7 +145,7 @@ public class DimensionPassScreen extends Screen {
         String name = selected >= 0 && selected < dimensions.size()
                 ? displayName(dimensions.get(selected))
                 : Component.translatable("screen.tinkersnewlife.dimension_pass.none").getString();
-        dropdownButton.setMessage(Component.literal(name + " \u25BC"));
+        dropdownButton.setMessage(Component.literal(name + " ▼"));
     }
 
     // ============================================================

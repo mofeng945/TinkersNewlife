@@ -137,27 +137,27 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
     }
 
     /**
-     * TNL923 \u2605\u2605 \u7528\u6237\u53e3\u5f84\uff1a\u2605"\u6211\u8bb0\u5f97\u5730\u72f1\u95e8\u5224\u5b9a\u4f20\u9001\u8303\u56f4\u662f\u4e2a\u7247\u800c\u4e0d\u662f\u4e2a\u5757"
-     * \uff0b\u2605"\u4f20\u9001\u4e0d\u4e86\u4e86\uff0c\u800c\u4e14\u4e4b\u524d\u4e5f\u7ecf\u5e38\u51fa\u73b0\u4f20\u9001\u5224\u5b9a\u4e0d\u4e0a\u7684\u60c5\u51b5\uff0c\u5730\u72f1\u95e8\u662f\u600e\u4e48\u5904\u7406\u7684\uff1f" \u2713
+     * TNL923 ★★ 用户口径：★"我记得地狱门判定传送范围是个片而不是个块"
+     * ＋★"传送不了了，而且之前也经常出现传送判定不上的情况，地狱门是怎么处理的？" ✓
      *
-     * <p>\u2605\u539f\u7248\u5730\u72f1\u95e8\u7684\u505a\u6cd5 \u2713\uff08\u2605\u6211\u8fd9\u6b21\u7167\u6284 \u2713\uff09\uff1a
-     * \u2605``NetherPortalBlock#getShape`` \u8fd4\u56de\u7684\u5c31\u662f**\u90a3\u4e00\u7247** \u2713
-     * \uff08\u2605\u53ea\u6709 4/16 \u539a \u2713\uff0c\u2605\u65b9\u5411\u7531\u8f74\u51b3\u5b9a \u2713\uff09\uff1b
-     * \u2605\u800c ``entityInside`` \u662f\u2605**\u5b9e\u4f53\u78b0\u649e\u7bb1\u771f\u7684\u4e0e\u8fd9\u4e2a\u5f62\u72b6\u76f8\u4ea4\u65f6**\u624d\u88ab\u8c03 \u2713\u3002
-     * \u21d2 \u2605\u201c\u7ad9\u5728\u95e8\u91cc\u201d\u7684\u5224\u5b9a**\u5b8c\u5168\u4ea4\u7ed9\u5f62\u72b6\u7cfb\u7edf** \u2713\uff0c
-     * \u2605\u4e0d\u9700\u8981\uff08\u4e5f\u4e0d\u5e94\u8be5\uff09\u81ea\u5df1\u7b97\u4e2d\u5fc3\u504f\u79fb \u2717
-     * \u2014\u2014 \u2605\u6211\u4e0a\u4e00\u7248\u5c31\u662f\u81ea\u5df1\u7b97\u4e86 0.25 \u504f\u79fb \u2717
-     * \u21d2 \u2605\u5b9e\u4f53\u4e2d\u5fc3\u6070\u597d\u8de8\u5728\u4e24\u683c\u4e4b\u95f4\u65f6\u5c31\u4e0d\u7b97\u6570 \u2717 \u21d2 \u2605\u4f20\u4e0d\u4e86 \u2713\u2713
+     * <p>★原版地狱门的做法 ✓（★我这次照抄 ✓）：
+     * ★``NetherPortalBlock#getShape`` 返回的就是**那一片** ✓
+     * （★只有 4/16 厚 ✓，★方向由轴决定 ✓）；
+     * ★而 ``entityInside`` 是★**实体碰撞箱真的与这个形状相交时**才被调 ✓。
+     * ⇒ ★“站在门里”的判定**完全交给形状系统** ✓，
+     * ★不需要（也不应该）自己算中心偏移 ✗
+     * —— ★我上一版就是自己算了 0.25 偏移 ✗
+     * ⇒ ★实体中心恰好跨在两格之间时就不算数 ✗ ⇒ ★传不了 ✓✓
      *
-     * <p>\u2605\u540e\u679c \u2713\uff1a\u2605\u51c6\u661f\u62fe\u53d6/\u8f6e\u5ed3\u4e5f\u53d8\u6210\u8fd9\u7247\u8584\u9762 \u2713
-     * \uff08\u2605\u8ddf\u539f\u7248\u5730\u72f1\u95e8\u4e00\u81f4 \u2713 \u2014\u2014 \u2605\u539f\u7248\u4e5f\u662f\u8fd9\u4e48\u96be\u70b9\u7684 \u2713\uff09
-     * \uff1b\u2605\u6a21\u578b\u672c\u6765\u5c31\u662f\u8584\u7247 \u2713 \u21d2 \u2605\u770b\u8d77\u6765\u66f4\u4e00\u81f4 \u2713\u3002
+     * <p>★后果 ✓：★准星拾取/轮廓也变成这片薄面 ✓
+     * （★跟原版地狱门一致 ✓ —— ★原版也是这么难点的 ✓）
+     * ；★模型本来就是薄片 ✓ ⇒ ★看起来更一致 ✓。
      */
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return state.getValue(FACING).getAxis() == Direction.Axis.X
-                ? Block.box(6.0D, 0.0D, 0.0D, 10.0D, 16.0D, 16.0D)     // \u2605\u6cd5\u7ebf X \u21d2 \u539a\u5728 X \u2713
-                : Block.box(0.0D, 0.0D, 6.0D, 16.0D, 16.0D, 10.0D);    // \u2605\u6cd5\u7ebf Z \u21d2 \u539a\u5728 Z \u2713
+                ? Block.box(6.0D, 0.0D, 0.0D, 10.0D, 16.0D, 16.0D)     // ★法线 X ⇒ 厚在 X ✓
+                : Block.box(0.0D, 0.0D, 6.0D, 16.0D, 16.0D, 10.0D);    // ★法线 Z ⇒ 厚在 Z ✓
     }
 
     @Override
@@ -327,7 +327,7 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
          * 站着不动永远不会被弹回去 ✓；走出去再走进来照常能传（回程 ✓）。
          */
         if (wasInside) return;
-        // TNL920 \u2605\u539f\u7248\u5730\u72f1\u95e8\u540c\u6b3e\u95e8\u69db\uff1a\u2605\u539f\u7248 ``portalCooldown`` \u8fd8\u5728\u5c31\u4e0d\u4f20 \u2713
+        // TNL920 ★原版地狱门同款门槛：★原版 ``portalCooldown`` 还在就不传 ✓
         if (!(level.getBlockEntity(pos) instanceof WhiteSpacePortalBlockEntity portal)) return;
         if (!portal.hasDestination()) return;
 
@@ -346,11 +346,11 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
         BlockPos landing = WhiteSpaceDimensions.resolveLanding(
                 target, portal.getDestinationPos(), level.dimension(), pos, entity.getDirection());
         /*
-         * TNL922 \u2605\u2605 \u7528\u6237\u53e3\u5f84\uff1a\u2605"\u751f\u7269\u4f20\u9001\u8fc7\u53bb\u751f\u6210\u5728\u79bb\u95e8 1 \u683c\u7684\u5730\u65b9\uff0c\u4e0d\u8981\u5728\u95e8\u91cc" \u2713
-         *   \u2605\u73b0\u5728\uff1a\u2605\u975e\u73a9\u5bb6\u5b9e\u4f53\uff08\u2605\u751f\u7269\u7b49 \u2713\uff09\u843d\u70b9\u5411**\u5b83\u6b63\u5728\u8d70\u7684\u65b9\u5411**
-         *   \u2605\u5916\u79fb 1 \u683c \u2713\uff0c\u2605\u5e76\u4e14\u90a3\u4e2a\u4f4d\u7f6e\u4e0e\u5b83\u4e0a\u65b9\u90fd\u8981\u662f\u7a7a\u7684 \u2713
-         *   \uff08\u2605\u5426\u5219\u4fdd\u6301\u539f\u843d\u70b9 \u2713 \u2014\u2014 \u2605\u5b81\u53ef\u5728\u95e8\u91cc\u4e5f\u4e0d\u585e\u8fdb\u77f3\u5934\u91cc \u2717\uff09\u3002
-         *   \u2605\u73a9\u5bb6**\u4e0d\u79fb** \u2713\uff08\u2605\u73a9\u5bb6\u843d\u5728\u95e8\u91cc\u624d\u80fd\u53cd\u5411\u8d70\u56de\u53bb \u2713\uff09\u3002
+         * TNL922 ★★ 用户口径：★"生物传送过去生成在离门 1 格的地方，不要在门里" ✓
+         *   ★现在：★非玩家实体（★生物等 ✓）落点向**它正在走的方向**
+         *   ★外移 1 格 ✓，★并且那个位置与它上方都要是空的 ✓
+         *   （★否则保持原落点 ✓ —— ★宁可在门里也不塞进石头里 ✗）。
+         *   ★玩家**不移** ✓（★玩家落在门里才能反向走回去 ✓）。
          */
         if (!(entity instanceof ServerPlayer)) {
             net.minecraft.core.BlockPos out = landing.relative(entity.getDirection());
@@ -361,7 +361,7 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
             }
         }
         if (landing == null) {
-            // TNL922 \u2605\u7528\u6237\u8981\u6c42\uff1a\u53bb\u6389\u4f20\u9001\u51b7\u5374 \u2713
+            // TNL922 ★用户要求：去掉传送冷却 ✓
             if (entity instanceof ServerPlayer player) {
                 player.displayClientMessage(
                         Component.translatable("message.tinkersnewlife.white_space.landing_blocked"), true);
@@ -397,7 +397,7 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
              * （Entity#restoreFrom → saveWithoutId / load）⇒ ForgeData 会被继承 ✓
              * ⇒ 冷却跟着新实体过去，落地就在对面那扇门里也不会被立刻弹回来 ✓。
              */
-            // TNL922 \u2605\u53bb\u6389\u51b7\u5374 \u2713
+            // TNL922 ★去掉冷却 ✓
             boolean memberOk = WhiteSpaceDimensions.teleportEntity(member, target, landing);
             /*
              * ⚠ 玩家侧 ServerPlayer#teleportTo 恒返回 true（被 Forge 的 EntityTravelToDimensionEvent
@@ -417,7 +417,7 @@ public class WhiteSpacePortalBlock extends Block implements EntityBlock {
              * ② 顺手清掉"在门里"的标记：下一 tick 打卡又会把它写回当前刻 ⇒ 同样无效 ✗。
              * ⇒ 就让它**只提示一次**，想重试**走出去再走进来**即可（进入检测本来就是这么设计的 ✓）。
              */
-            // TNL922 \u2605\u7528\u6237\u8981\u6c42\uff1a\u53bb\u6389\u4f20\u9001\u51b7\u5374 \u2713
+            // TNL922 ★用户要求：去掉传送冷却 ✓
             if (entity instanceof ServerPlayer player) {
                 player.displayClientMessage(
                         Component.translatable("message.tinkersnewlife.white_space.travel_blocked"), true);

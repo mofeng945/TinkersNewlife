@@ -26,19 +26,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * TNL841 \u77ff\u5de5\u89c6\u91ce\uff1a\u2605\u77ff\u77f3**\u8d34\u56fe\u9ad8\u4eae**\uff08\u2605\u900f\u5899 \u2713 \u4ec5\u672c\u4eba\u53ef\u89c1 \u2713\uff09
+ * TNL841 矿工视野：★矿石**贴图高亮**（★透墙 ✓ 仅本人可见 ✓）
  *
- * <h2>\u4e3a\u4f55\u4e0d\u662f\u7ebf\u6846\uff08\u2605\u7528\u6237\u53e3\u5f84 \u2713\uff09</h2>
- * \u7528\u6237\uff1a\u201c**\u4e0d\u662f\u7ebf\u6846\uff0c\u6211\u8981\u7eb9\u7406\u9ad8\u4eae**\u201d \u2717
- * \u21d2 \u2605\u53d6\u6bcf\u4e2a\u77ff\u77f3\u65b9\u5757\u7684**\u7c92\u5b50\u8d34\u56fe**\uff08\u2605\u5373\u5b83\u81ea\u5df1\u7684\u8d34\u56fe \u2713\uff09\uff0c
- * \u628a\u5b83\u5f53\u4f5c**\u53d1\u5149\u65b9\u5757**\u91cd\u753b\u4e00\u904d \u2713 \u5e76\u5173\u6389\u6df1\u5ea6\u6d4b\u8bd5 \u21d2 **\u900f\u5899\u770b\u5230\u77ff\u77f3\u8d34\u56fe** \u2713\u2713
+ * <h2>为何不是线框（★用户口径 ✓）</h2>
+ * 用户：“**不是线框，我要纹理高亮**” ✗
+ * ⇒ ★取每个矿石方块的**粒子贴图**（★即它自己的贴图 ✓），
+ * 把它当作**发光方块**重画一遍 ✓ 并关掉深度测试 ⇒ **透墙看到矿石贴图** ✓✓
  *
- * <h2>\u5b9e\u73b0\u8981\u70b9</h2>
+ * <h2>实现要点</h2>
  * <ul>
- *   <li>\u2605\u6bcf 10 tick \u626b\u4e00\u6b21\u5e76\u7f13\u5b58\u547d\u4e2d\u7684\u77ff\u77f3\u5750\u6807 \u2713\uff08\u2605\u4e0d\u6bcf\u5e27\u626b \u2717\uff09\uff1b</li>
- *   <li>\u2605\u8d34\u56fe\u53d6 {@code BlockModelShaper#getParticleIcon} \u2713 \u7f13\u5b58\u5230\u65b9\u5757\u72b6\u6001 \u2713\uff1b</li>
- *   <li>\u2605\u5168\u4eae\uff08{@code 0xF000F0} \u2713\uff09\u002b \u534a\u900f\u660e \u2713 \u002b \u5173\u6df1\u5ea6\u6d4b\u8bd5 \u2713 \u21d2 \u900f\u5899\u53ef\u89c1 \u2713\uff1b</li>
- *   <li>\u2605\u5168\u5728**\u5ba2\u6237\u7aef** \u2713 \u21d2 \u53ea\u6709\u81ea\u5df1\u770b\u5f97\u5230 \u2713 \u670d\u52a1\u5668\u4e0d\u53c2\u4e0e \u2713\u3002</li>
+ *   <li>★每 10 tick 扫一次并缓存命中的矿石坐标 ✓（★不每帧扫 ✗）；</li>
+ *   <li>★贴图取 {@code BlockModelShaper#getParticleIcon} ✓ 缓存到方块状态 ✓；</li>
+ *   <li>★全亮（{@code 0xF000F0} ✓）+ 半透明 ✓ + 关深度测试 ✓ ⇒ 透墙可见 ✓；</li>
+ *   <li>★全在**客户端** ✓ ⇒ 只有自己看得到 ✓ 服务器不参与 ✓。</li>
  * </ul>
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -46,7 +46,7 @@ public class MinersVisionClientHandler {
 
     private static final int RANGE_PER_LEVEL = 5;
     private static final int SCAN_INTERVAL = 10;
-    /** \u2605\u7528\u6237\u53e3\u5f84\uff1a\u201c\u4e0d\u8981\u6539\u8272\u8c03\uff0c\u5c31\u7eaf\u7cb9\u628a\u4eae\u5ea6\u63d0\u9ad8\u201d \u2713 \u21d2 **\u7eaf\u767d \u002b \u5168\u4eae** \u2713 */
+    /** ★用户口径：“不要改色调，就纯粹把亮度提高” ✓ ⇒ **纯白 + 全亮** ✓ */
     private static final float R = 1.0F, G = 1.0F, B = 1.0F, A = 0.92F;
 
     private static final TagKey<Block> ORE_TAG =
@@ -55,17 +55,17 @@ public class MinersVisionClientHandler {
             TagKey.create(net.minecraft.core.registries.Registries.BLOCK, new ResourceLocation("forge", "ore"));
 
     /**
-     * \u2605\u2605\u2605 \u81ea\u5b9a\u4e49 RenderType\uff1a**\u81ea\u5e26 {@code NO_DEPTH_TEST}** \u2713
+     * ★★★ 自定义 RenderType：**自带 {@code NO_DEPTH_TEST}** ✓
      *
-     * <p>\u4e3a\u4ec0\u4e48\u4e4b\u524d\u900f\u5899\u5931\u6548\uff1a{@code RenderType} \u5728**\u771f\u6b63 draw \u7684\u65f6\u5019**\u4f1a\u91cd\u65b0
-     * \u8bbe\u7f6e\u81ea\u5df1\u7684\u6e32\u67d3\u72b6\u6001\uff08\u2605\u5305\u62ec\u6df1\u5ea6\u6d4b\u8bd5 \u2717\uff09\u21d2 \u5916\u9762\u8c03\u7684
-     * {@code RenderSystem.disableDepthTest()} **\u4f1a\u88ab\u8986\u76d6\u6389** \u2717 \u21d2 \u65e0\u6cd5\u900f\u5899 \u2717\u2717
-     * \u2605\u6240\u4ee5\u5fc5\u987b\u81ea\u5df1\u9020\u4e00\u4e2a**\u6df1\u5ea6\u6d4b\u8bd5\u5173\u95ed**\u7684\u7c7b\u578b \u2713\u3002
+     * <p>为什么之前透墙失效：{@code RenderType} 在**真正 draw 的时候**会重新
+     * 设置自己的渲染状态（★包括深度测试 ✗）⇒ 外面调的
+     * {@code RenderSystem.disableDepthTest()} **会被覆盖掉** ✗ ⇒ 无法透墙 ✗✗
+     * ★所以必须自己造一个**深度测试关闭**的类型 ✓。
      */
     private static RenderType glowTypeCache = null;
     private static boolean glowTypeTried = false;
 
-    /** \u2605\u2605 \u61d2\u52a0\u8f7d\uff1a\u9759\u6001\u521d\u59cb\u5316\u4e00\u65e6\u629b\u5f02\u5e38 \u2717 \u6574\u4e2a\u7c7b\u90fd\u4f1a\u5931\u6548 \u21d2 \u4ec0\u4e48\u90fd\u4e0d\u753b \u2717 */
+    /** ★★ 懒加载：静态初始化一旦抛异常 ✗ 整个类都会失效 ⇒ 什么都不画 ✗ */
     private static RenderType glowType() {
         if (glowTypeTried) {
             return glowTypeCache;
@@ -95,8 +95,8 @@ public class MinersVisionClientHandler {
     }
 
     /**
-     * \u2605\u2605 \u4e13\u7528\u72b6\u6001\u5b50\u7c7b\uff1a1.20.1 \u91cc {@code RenderStateShard} \u7684\u8fd9\u4e9b\u5e38\u91cf\u662f
-     * **protected** \u2717 \u5916\u90e8\u7c7b\u62ff\u4e0d\u5230 \u21d2 \u2605\u5728\u5b50\u7c7b\u91cc\u53d6\u51fa\u6765 \u2713\u3002
+     * ★★ 专用状态子类：1.20.1 里 {@code RenderStateShard} 的这些常量是
+     * **protected** ✗ 外部类拿不到 ⇒ ★在子类里取出来 ✓。
      */
     private static class TnlState extends net.minecraft.client.renderer.RenderStateShard {
         private TnlState() {
@@ -105,7 +105,7 @@ public class MinersVisionClientHandler {
             });
         }
 
-        static final DepthTestStateShard NO_DEPTH = NO_DEPTH_TEST;                  // \u2605\u2605 \u900f\u5899\u5173\u952e \u2713
+        static final DepthTestStateShard NO_DEPTH = NO_DEPTH_TEST;                  // ★★ 透墙关键 ✓
         static final TransparencyStateShard TRANSLUCENT = TRANSLUCENT_TRANSPARENCY;
         static final CullStateShard NO_CULL_ = NO_CULL;
         static final LightmapStateShard LIGHTMAP_ = LIGHTMAP;
@@ -150,11 +150,11 @@ public class MinersVisionClientHandler {
             Vec3 cam = event.getCamera().getPosition();
             pose.pushPose();
             pose.translate(-cam.x, -cam.y, -cam.z);
-            // TNL844 \u2605\u2605 \u6700\u540e\u4e00\u62db\uff1a\u5e27\u672b\u6e32\u67d3 \u002b **\u5148\u6e05\u6df1\u5ea6\u7f13\u51b2** \u002b \u5173\u6df1\u5ea6\u6d4b\u8bd5 \u2713
-            //   \uff08\u2605\u4e4b\u524d drawn>0 \u4f46\u4ecd\u88ab\u906e \u21d2 \u8bf4\u660e\u5355\u9760 RenderType \u7684 NO_DEPTH \u6ca1\u771f\u6b63\u594f\u6548 \u2717\uff09
-            // TNL845 \u2605\u2605 \u771f\u6b63\u7684\u900f\u5899\u505a\u6cd5\uff1a**\u7ed5\u5f00 RenderType** \u2713
-            //   \u2605RenderType \u5728 draw \u65f6\u4f1a\u91cd\u65b0\u8bbe\u7f6e\u6df1\u5ea6\u72b6\u6001 \u2717 \u21d2 \u6539\u6210\u76f4\u63a5\u7528 BufferBuilder \u624b\u7ed8 \u2713
-            //   \u2605\u6b64\u65f6\u53ea\u6709\u6211\u4eec\u81ea\u5df1\u8bbe\u7684 RenderSystem \u72b6\u6001\u751f\u6548 \u2713 \u21d2 disableDepthTest \u771f\u6b63\u751f\u6548 \u2713
+            // TNL844 ★★ 最后一招：帧末渲染 + **先清深度缓冲** + 关深度测试 ✓
+            //   （★之前 drawn>0 但仍被遮 ⇒ 说明单靠 RenderType 的 NO_DEPTH 没真正奏效 ✗）
+            // TNL845 ★★ 真正的透墙做法：**绕开 RenderType** ✓
+            //   ★RenderType 在 draw 时会重新设置深度状态 ✗ ⇒ 改成直接用 BufferBuilder 手绘 ✓
+            //   ★此时只有我们自己设的 RenderSystem 状态生效 ✓ ⇒ disableDepthTest 真正生效 ✓
             com.mojang.blaze3d.systems.RenderSystem.disableDepthTest();
             com.mojang.blaze3d.systems.RenderSystem.depthMask(false);
             com.mojang.blaze3d.systems.RenderSystem.enableBlend();
@@ -188,23 +188,23 @@ public class MinersVisionClientHandler {
         }
     }
 
-    /** \u2605\u628a\u4e00\u4e2a\u5750\u6807\u753b\u6210\u7528\u8be5\u8d34\u56fe\u7684\u53d1\u5149\u65b9\u5757 \u2713\uff08\u2605\u516d\u9762\u540c\u8d34\u56fe \u2713\uff09 */
+    /** ★把一个坐标画成用该贴图的发光方块 ✓（★六面同贴图 ✓） */
     private static void tnl$cube(VertexConsumer vc, PoseStack.Pose pose, BlockPos pos, TextureAtlasSprite s) {
         float x0 = pos.getX() - 0.002F, y0 = pos.getY() - 0.002F, z0 = pos.getZ() - 0.002F;
         float x1 = pos.getX() + 1.002F, y1 = pos.getY() + 1.002F, z1 = pos.getZ() + 1.002F;
         float u0 = s.getU0(), u1 = s.getU1(), v0 = s.getV0(), v1 = s.getV1();
-        int light = 0xF000F0;   // \u2605\u5168\u4eae \u2713
-        // \u2605-\u5317 z0
+        int light = 0xF000F0;   // ★全亮 ✓
+        // ★-北 z0
         tnl$quad(vc, pose, x0, y1, z0, x1, y1, z0, x1, y0, z0, x0, y0, z0, u0, u1, v0, v1, light, 0, 0, -1);
-        // \u2605+\u5357 z1
+        // ★+南 z1
         tnl$quad(vc, pose, x1, y1, z1, x0, y1, z1, x0, y0, z1, x1, y0, z1, u0, u1, v0, v1, light, 0, 0, 1);
-        // \u2605-\u897f x0
+        // ★-西 x0
         tnl$quad(vc, pose, x0, y1, z1, x0, y1, z0, x0, y0, z0, x0, y0, z1, u0, u1, v0, v1, light, -1, 0, 0);
-        // \u2605+\u4e1c x1
+        // ★+东 x1
         tnl$quad(vc, pose, x1, y1, z0, x1, y1, z1, x1, y0, z1, x1, y0, z0, u0, u1, v0, v1, light, 1, 0, 0);
-        // \u2605\u4e0a y1
+        // ★上 y1
         tnl$quad(vc, pose, x0, y1, z0, x0, y1, z1, x1, y1, z1, x1, y1, z0, u0, u1, v0, v1, light, 0, 1, 0);
-        // \u2605\u4e0b y0
+        // ★下 y0
         tnl$quad(vc, pose, x0, y0, z1, x0, y0, z0, x1, y0, z0, x1, y0, z1, u0, u1, v0, v1, light, 0, -1, 0);
     }
 
@@ -259,7 +259,7 @@ public class MinersVisionClientHandler {
                             sprite = spriteCache.computeIfAbsent(state.getBlock(),
                                     b -> shaper.getParticleIcon(b.defaultBlockState()));
                         } catch (Throwable ignoredSprite) {
-                            sprite = null;   // TNL842 \u2605\u53d6\u4e0d\u5230\u8d34\u56fe\u5c31\u8bb0 null \u2717 \u4e0d\u5d29 \u2713
+                            sprite = null;   // TNL842 ★取不到贴图就记 null ✗ 不崩 ✓
                         }
                         CACHE.add(new Hit(pos.immutable(), sprite));
                     }

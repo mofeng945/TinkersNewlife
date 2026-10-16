@@ -531,11 +531,11 @@ public class ModItems {
                     new Item.Properties().stacksTo(1), true));
 
     /** 墨默（武器商人）刷怪蛋 */
-    /** TNL877 \u661f\u9668\u60b2\u53f9\uff08\u2605Boss \u6b66\u5668 \u2713\uff09 */
+    /** TNL877 星陨悲叹（★Boss 武器 ✓） */
     public static final RegistryObject<Item> STARFALL_LAMENT =
             ITEMS.register("starfall_lament",
                     () -> new com.mofengbaizhi.tinkersnewlife.content.item.StarfallLamentItem());
-    // TNL1023 \u2605\u2605 \u7528\u6237\uff1a\u2605\u6052\u6b63\u79e9\u5668 Aeonian Order \u2713
+    // TNL1023 ★★ 用户：★恒正秩器 Aeonian Order ✓
     public static final RegistryObject<Item> AEONIAN_ORDER =
             ITEMS.register("aeonian_order", () -> new com.mofengbaizhi.tinkersnewlife.content.item.AeonianOrderItem());
 
@@ -543,7 +543,7 @@ public class ModItems {
             ITEMS.register("momo_spawn_egg", () -> new net.minecraftforge.common.ForgeSpawnEggItem(
                     ModEntities.MOMO_MERCHANT, 0x2F2A4A, 0xC9A6D9, new Item.Properties()));
 
-    /** TNL854 Boss\u300c\u514b\u56fe\u9732\u00b7\u58a8\u9ed8\u300d\u5237\u602a\u86cb\uff08\u2605\u9ed1\u767d\u914d\u8272 \u2713\uff09 */
+    /** TNL854 Boss「克图露·墨默」刷怪蛋（★黑白配色 ✓） */
     public static final RegistryObject<Item> KTULU_MOMO_SPAWN_EGG =
             ITEMS.register("ktulu_momo_spawn_egg", () -> new net.minecraftforge.common.ForgeSpawnEggItem(
                     ModEntities.KTULU_MOMO, 0x141414, 0xE8E8E8, new Item.Properties()));

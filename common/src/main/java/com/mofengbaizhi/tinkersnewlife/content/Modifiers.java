@@ -119,7 +119,7 @@ public class Modifiers {
     public static final StaticModifier<DovahkiinTrait> DOVAHKIIN =
             MODIFIERS.register("dovahkiin", DovahkiinTrait::new);
 
-    /** TNL840 \u77ff\u5de5\u89c6\u91ce\uff081~5 \u7ea7\uff0c\u6bcf\u7ea7\u8303\u56f4 +5 \u683c\uff0c\u77ff\u77f3\u900f\u5899\u9ad8\u4eae\uff09 */
+    /** TNL840 矿工视野（1~5 级，每级范围 +5 格，矿石透墙高亮） */
     public static final StaticModifier<MinersVisionTrait> MINERS_VISION =
             MODIFIERS.register("miners_vision", MinersVisionTrait::new);
 

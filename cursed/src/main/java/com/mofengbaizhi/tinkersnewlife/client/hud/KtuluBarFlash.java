@@ -1,39 +1,39 @@
 package com.mofengbaizhi.tinkersnewlife.client.hud;
 
 /**
- * TNL912 \u2605\u514d\u75ab\u7a97\u6321\u4e0b\u65f6\u7684**\u91d1\u8272\u95ea\u70c1**\uff08\u2605\u5ba2\u6237\u7aef \u2713\uff09
+ * TNL912 ★免疫窗挡下时的**金色闪烁**（★客户端 ✓）
  *
- * <p>\u2605\u7528\u6237\u53e3\u5f84\uff1a\u2605"\u4f60\u8fd9\u600e\u4e48\u5355\u6b21\u514d\u75ab\u7a97\u5185\u53ea\u4eae\u4e00\u6b21\u554a\uff0c
- * \u628a\u4eae\u7684\u65f6\u95f4\u53d8\u77ed\u7136\u540e\u8ba9\u6bcf\u6b21\u62e6\u622a\u90fd\u4eae" \u2713
+ * <p>★用户口径：★"你这怎么单次免疫窗内只亮一次啊，
+ * 把亮的时间变短然后让每次拦截都亮" ✓
  *
- * <p>\u2605\u65e7\u5199\u6cd5 \u2717\uff1a``until = now + 600`` \u2713 \u21d2 \u2605\u6bcf\u6b21\u62e6\u622a\u90fd\u628a\u5c3e\u5df4**\u5f80\u540e\u63a8** \u2717
- * \u21d2 \u2605\u6574\u4e2a\u7a97\u53e3\u8fde\u6210\u4e00\u7247 \u21d2 \u2605\u770b\u8d77\u6765\u53ea\u4eae\u4e00\u6b21 \u2713\u3002
+ * <p>★旧写法 ✗：``until = now + 600`` ✓ ⇒ ★每次拦截都把尾巴**往后推** ✗
+ * ⇒ ★整个窗口连成一片 ⇒ ★看起来只亮一次 ✓。
  *
- * <p>\u2605\u73b0\u5728 \u2713\uff1a\u2605\u4fdd\u5b58**\u672c\u6b21\u8109\u51b2\u7684\u8d77\u70b9** \u2713
- * \u21d2 \u2605\u6bcf\u6b21\u62e6\u622a\u90fd**\u91cd\u65b0\u8d77\u4e00\u6b21\u77ed\u8109\u51b2** \u2713\uff0c
- * \u2605\u65f6\u957f\u77ed\uff08\u2605200ms \u2713\uff09\uff0c\u2605\u4e00\u6b21\u62e6\u622a = \u4e00\u6b21\u4eae \u2713\u3002
+ * <p>★现在 ✓：★保存**本次脉冲的起点** ✓
+ * ⇒ ★每次拦截都**重新起一次短脉冲** ✓，
+ * ★时长短（★200ms ✓），★一次拦截 = 一次亮 ✓。
  */
 public final class KtuluBarFlash {
 
-    /** \u2605\u5355\u6b21\u8109\u51b2\u65f6\u957f\uff08ms\uff09\u2713\uff08\u2605\u7528\u6237\u8981\u6c42\u53d8\u77ed \u2713\uff09 */
+    /** ★单次脉冲时长（ms）✓（★用户要求变短 ✓） */
     private static final long DURATION = 200L;
     private static volatile long start = -10000L;
 
     private KtuluBarFlash() {
     }
 
-    /** \u2605\u6bcf\u6b21\u62e6\u622a\u90fd\u8c03\u8fd9\u91cc \u21d2 \u2605\u91cd\u65b0\u8d77\u4e00\u6b21\u8109\u51b2 \u2713 */
+    /** ★每次拦截都调这里 ⇒ ★重新起一次脉冲 ✓ */
     public static void trigger() {
         start = System.currentTimeMillis();
     }
 
-    /** \u2605\u5f53\u524d\u91d1\u8272\u5f3a\u5ea6 0~1 \u2713\uff08\u2605\u5feb\u901f\u8870\u51cf \u2713\uff09 */
+    /** ★当前金色强度 0~1 ✓（★快速衰减 ✓） */
     public static float strength() {
         long el = System.currentTimeMillis() - start;
         if (el < 0L || el >= DURATION) {
             return 0.0F;
         }
         float t = 1.0F - el / (float) DURATION;
-        return t * t;                     // \u2605\u524d\u6bb5\u6700\u4eae ✗ \u540e\u6bb5\u5feb\u901f\u6697\u4e0b\u53bb \u2713
+        return t * t;                     // ★前段最亮 ✗ 后段快速暗下去 ✓
     }
 }

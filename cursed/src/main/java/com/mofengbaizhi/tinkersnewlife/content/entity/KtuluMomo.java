@@ -29,25 +29,25 @@ import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * \u514b\u56fe\u9732\u00b7\u58a8\u9ed8\uff08Ktulu Momo\uff09\u2014\u2014 \u661f\u8fb0\u9b54\u5973\u00b7\u58a8\u9ed8\u00b7\u514b\u56fe\u9732 \u2713
+ * 克图露·墨默（Ktulu Momo）—— 星辰魔女·墨默·克图露 ✓
  *
- * <h2>\u2605\u672c\u6b21\u6539\u52a8\uff08\u2605\u7528\u6237\u53e3\u5f84 \u2713\uff09</h2>
+ * <h2>★本次改动（★用户口径 ✓）</h2>
  * <ul>
- *   <li>\u2605**\u4e0d\u518d\u7ee7\u627f\u5546\u4eba\u58a8\u9ed8\u7684 AI** \u2717 \u21d2 \u76f4\u63a5\u7ee7\u627f {@link Monster} \u2713
- *       \u53ea\u7559\u4e00\u5957\u6807\u51c6\u654c\u5bf9 AI\uff08\u2605\u8fd1\u6218/\u6f02\u6d6e/\u6e38\u8361/\u770b\u4eba\u2713\uff09\uff1b</li>
- *   <li>\u5c5e\u6027\uff1a\u2605626 \u8840 \u2713 20 \u62a4\u7532 \u2713 15 \u97e7\u6027 \u2713 13 \u653b\u51fb \u2713 0.4 \u901f\u5ea6 \u2713
- *       \u2605\u5b8c\u5168\u6297\u51fb\u9000 \u2713 \u2605\u514d\u75ab\u706b\u7130 \u2713\uff1b</li>
- *   <li>\u2605**\u4e0d\u4f1a\u88ab\u52a8\u6302\u4efb\u4f55\u8d1f\u9762\u6548\u679c** \u2713\uff08\u2605{@code addEffect} \u91cc\u62d2\u6536\u975e\u6b63\u9762 \u2713\uff09\uff1b</li>
- *   <li>\u2605**\u5355\u6b21\u4f24\u5bb3\u4e0a\u9650 = \u6700\u5927\u751f\u547d\u7684 6%** \u2713\uff1b</li>
- *   <li>\u2605**\u6bcf tick \u8bb0\u5f55\u8840\u91cf** \u2713 \u4e00\u65e6\u53d1\u73b0\u8d85\u8fc7\u9650\u4f24 \u21d2 **\u56de\u5f39\u8865\u56de** \u2713\uff1b</li>
- *   <li>\u2605\u53d7\u4f24\u540e **1.5 \u79d2\u65e0\u654c**\uff08\u2605\u65e0\u4e0b\u9650\u540c\u6b3e\u7684\u65e0\u654c\u7a97\u53e3\uff1a{@code invulnerableTime = 30} \u2713\uff09\u3002</li>
+ *   <li>★**不再继承商人墨默的 AI** ✗ ⇒ 直接继承 {@link Monster} ✓
+ *       只留一套标准敌对 AI（★近战/漂浮/游荡/看人✓）；</li>
+ *   <li>属性：★626 血 ✓ 20 护甲 ✓ 15 韧性 ✓ 13 攻击 ✓ 0.4 速度 ✓
+ *       ★完全抗击退 ✓ ★免疫火焰 ✓；</li>
+ *   <li>★**不会被动挂任何负面效果** ✓（★{@code addEffect} 里拒收非正面 ✓）；</li>
+ *   <li>★**单次伤害上限 = 最大生命的 6%** ✓；</li>
+ *   <li>★**每 tick 记录血量** ✓ 一旦发现超过限伤 ⇒ **回弹补回** ✓；</li>
+ *   <li>★受伤后 **1.5 秒无敌**（★无下限同款的无敌窗口：{@code invulnerableTime = 30} ✓）。</li>
  * </ul>
  */
 public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlife.util.TruePierce.PierceAware {
 
-    /** \u2605\u5355\u6b21\u4f24\u5bb3\u4e0a\u9650\uff1a\u6700\u5927\u751f\u547d\u7684 6% \u2713 */
+    /** ★单次伤害上限：最大生命的 6% ✓ */
     private static final float DAMAGE_CAP_RATIO = 0.06F;
-    /** \u2605\u53d7\u4f24\u540e\u65e0\u654c\uff1a1.5 \u79d2 = 30 tick \u2713 */
+    /** ★受伤后无敌：1.5 秒 = 30 tick ✓ */
     private static final int INVULN_TICKS = 30;
 
     private final ServerBossEvent bossEvent = new ServerBossEvent(
@@ -55,28 +55,28 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             BossEvent.BossBarColor.WHITE,
             BossEvent.BossBarOverlay.PROGRESS);
 
-    /** \u2605\u4e0a\u4e00 tick \u7684\u8840\u91cf\uff08\u2605\u7528\u6765\u67e5\u662f\u5426\u7a81\u7834\u9650\u4f24 \u2713\uff09 */
+    /** ★上一 tick 的血量（★用来查是否突破限伤 ✓） */
     private float lastHealth = -1.0F;
 
-    // ==================== TNL876 \u2605\u6027\u80fd\uff1a\u70ed\u70b9\u8def\u5f84\u7f13\u5b58 \u2713 ====================
-    /** \u2605\u6743\u5a01\u8840\u91cf\u7f13\u5b58\uff08\u2605\u907f\u514d getHealth \u6bcf\u6b21\u90fd\u67e5 map/\u8c03 JNI \u2713\uff09 */
+    // ==================== TNL876 ★性能：热点路径缓存 ✓ ====================
+    /** ★权威血量缓存（★避免 getHealth 每次都查 map/调 JNI ✓） */
     private float tnl$auth = -1.0F;
-    /** TNL893 \u2605\u2605 \u771f\u6b7b\u6807\u5fd7\uff1a\u2605\u4e00\u65e6\u771f\u6b7b \u21d2 \u2605\u5f7b\u5e95\u505c\u6b62\u62a4\u8840/\u56de\u5f39/\u5bf9\u5916\u906e\u853d \u2713
-     *  \u2605\u7528\u6237\u53cd\u9988\uff1a\u2605"\u5982\u679c\u8fd9\u4e00\u51fb\u4f24\u5bb3\u4f7f\u4ed6\u6b7b\u4ea1\uff0c\u4ed6\u53c8\u56de\u5f39\u8840\u91cf\uff0c
-     *  \u4f1a\u8fdb\u5165\u659c\u5012\u62bd\u643a\u9636\u6bb5\uff0c\u867d\u7136\u80fd\u88ab\u6253\u6b7b\uff0c\u4f46\u6389\u843d\u7269\u548c\u6b7b\u4ea1\u5224\u5b9a\u5df2\u7ecf\u63d0\u524d\u4e86" \u2713
-     *  \u2605\u539f\u56e0 \u2717\uff1a\u2605\u539f\u7248\u5728\u8840\u91cf\u5230 0 \u65f6**\u7acb\u523b\u8d70\u6b7b\u4ea1\u6d41\u7a0b**\uff08\u2605\u6389\u6218\u5229\u54c1/\u5224\u5b9a/\u5012\u5730 \u2713\uff09\uff0c
-     *  \u2605\u800c\u6211\u7684\u56de\u5f39\u53c8\u628a\u5b83\u62c9\u56de 1 \u8840 \u2717 \u21d2 \u2605\u590d\u6d3b\u6210"\u5012\u5730\u62bd\u643a" \u2713\u3002
+    /** TNL893 ★★ 真死标志：★一旦真死 ⇒ ★彻底停止护血/回弹/对外遮蔽 ✓
+     *  ★用户反馈：★"如果这一击伤害使他死亡，他又回弹血量，
+     *  会进入斜倒抽携阶段，虽然能被打死，但掉落物和死亡判定已经提前了" ✓
+     *  ★原因 ✗：★原版在血量到 0 时**立刻走死亡流程**（★掉战利品/判定/倒地 ✓），
+     *  ★而我的回弹又把它拉回 1 血 ✗ ⇒ ★复活成"倒地抽携" ✓。
      */
     private boolean tnl$dead = false;
 
-    /** TNL893 \u2605\u662f\u5426\u5df2\u771f\u6b7b\uff08\u2605\u4f9b\u5185\u6838/\u6df7\u5165\u5224\u65ad \u2713\uff09 */
+    /** TNL893 ★是否已真死（★供内核/混入判断 ✓） */
     public boolean tnl$isDead() {
         return this.tnl$dead;
     }
-    /** \u2605\u4e0a\u6b21\u540c\u6b65\u7ed9\u8840\u6761\u7684\u8fdb\u5ea6\uff08\u2605\u6ca1\u53d8\u5c31\u4e0d\u53d1\u5305 \u2713\uff09 */
+    /** ★上次同步给血条的进度（★没变就不发包 ✓） */
     private float tnl$prog = -1.0F;
 
-    /** \u2605\u4f9b\u5185\u6838/\u6df7\u5165\u66f4\u65b0\u7f13\u5b58 \u2713 */
+    /** ★供内核/混入更新缓存 ✓ */
     public void tnl$setAuth(float v) {
         this.tnl$auth = v;
     }
@@ -122,7 +122,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
 
     @Override
     public boolean fireImmune() {
-        return true;   // \u2605\u514d\u75ab\u706b\u7130 \u2713
+        return true;   // ★免疫火焰 ✓
     }
 
     @Override
@@ -130,7 +130,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         return false;
     }
 
-    /** \u2605\u2605 \u4e0d\u63a5\u53d7\u4efb\u4f55\u975e\u6b63\u9762\u6548\u679c \u2713\uff08\u2605\u88ab\u52a8\u6302\u4e0d\u4e0a \u2713\uff09 */
+    /** ★★ 不接受任何非正面效果 ✓（★被动挂不上 ✓） */
     @Override
     public boolean addEffect(MobEffectInstance effect, @Nullable Entity source) {
         try {
@@ -143,63 +143,63 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     }
 
     /**
-     * TNL851 \u2605\u2605 \u4f24\u5bb3\u5168\u90e8\u8d70\u5185\u6838\u5224\u5b9a \u2713\uff08\u2605\u9650\u4f24 6% \u002b \u65e0\u654c\u7a97\u53e3 \u2713\uff09
+     * TNL851 ★★ 伤害全部走内核判定 ✓（★限伤 6% + 无敌窗口 ✓）
      *
-     * <p>\u2605\u2605 \u8fd9\u91cc**\u4e0d\u8bfb\u539f\u7248\u8840\u91cf**\u505a\u4efb\u4f55\u5224\u65ad \u2717 \u21d2
-     * \u9006\u5411\u6539 {@code getHealth()}/\u539f\u7248\u6570\u636e\u90fd**\u4e0d\u5f71\u54cd**\u7ed3\u7b97 \u2713
-     * \uff08\u2605\u539f\u7248\u90a3\u4e2a\u503c\u53ea\u662f**\u663e\u793a\u955c\u50cf**\uff0c\u6bcf tick \u88ab\u5185\u6838\u8986\u5199 \u2713\uff09\u3002
+     * <p>★★ 这里**不读原版血量**做任何判断 ✗ ⇒
+     * 逆向改 {@code getHealth()}/原版数据都**不影响**结算 ✓
+     * （★原版那个值只是**显示镜像**，每 tick 被内核覆写 ✓）。
      */
     @Override
     public boolean hurt(DamageSource source, float amount) {
         if (this.level().isClientSide || this.tnl$dead) {
-            return super.hurt(source, amount);   // TNL893 \u2605\u771f\u6b7b\u540e\u4e0d\u5e72\u9884 \u2713
+            return super.hurt(source, amount);   // TNL893 ★真死后不干预 ✓
         }
         a.q0(this);
-        // TNL871 \u2605\u2605 \u771f\u4f24\u8bc6\u522b\uff1a\u2605\u8fd9\u4e9b\u4f24\u5bb3\u7c7b\u578b\u4e0d\u4f1a\u901a\u77e5 onTruePierce \u2717
-        //   \u21d2 \u2605\u65e7\u5199\u6cd5\u4f1a\u628a\u5b83\u5f53\u666e\u901a\u4f24\u5bb3\u653e\u884c\uff08\u2605\u5b9e\u6d4b 25.5 \u2713\uff09
-        //   \u2605\u73b0\u5728\uff1a\u2605**\u6309\u4f24\u5bb3\u7c7b\u578b\u76f4\u63a5\u62e6** \u2713 \u2014\u2014 \u2605\u4e0d\u6389\u8840 \u2717 \u2605\u4e0d\u51fa\u4f24\u5bb3\u6570\u5b57 \u2717 \u2605\u4e0d\u5403\u60e9\u7f5a \u2717
+        // TNL871 ★★ 真伤识别：★这些伤害类型不会通知 onTruePierce ✗
+        //   ⇒ ★旧写法会把它当普通伤害放行（★实测 25.5 ✓）
+        //   ★现在：★**按伤害类型直接拦** ✓ —— ★不掉血 ✗ ★不出伤害数字 ✗ ★不吃惩罚 ✗
         String tnl$id = source.getMsgId();
         if (tnl$id != null && (tnl$id.contains("truePierce") || tnl$id.contains("true_pierce"))) {
-            // TNL872 \u2605\u2605 \u7528\u6237\u53e3\u5f84\uff08\u2605\u6700\u7ec8\u7248 \u2713\uff09\uff1a
-            //   \u2605\u771f\u4f24**\u7167\u5e38\u6253\u4f24\u5bb3** \u2713 \u2014\u2014 \u2605\u4e0d\u518d\u4e00\u5f8b\u62e6\u6389 \u2717
-            //   \u2605\u4f46\u5fc5\u987b**\u5403\u514d\u75ab\u7a97\u7684\u7ea6\u675f** \u2713\uff08\u2605\u7a97\u5185\u6253\u4e0d\u52a8 \u2717 \u2605\u4e5f\u4e0d\u80fd\u628a\u7a97\u6e05\u6389 \u2717\uff09
-            //   \u2605\u6240\u4ee5\u8fd9\u91cc**\u53ea\u8bb0\u5f55\u4e0d\u62e6**\u2717 \u21d2 \u2605\u4e0b\u9762\u8d70\u540c\u4e00\u5957\u95f8\u95e8
-            //   \uff08q2\uff1a\u65e0\u654c\u7a97\u5185\u8fd4\u56de 0 \u2713\uff09\u002b \u9650\u4f24\uff08LivingHurt/LivingDamage LOWEST \u2713\uff09\u3002
+            // TNL872 ★★ 用户口径（★最终版 ✓）：
+            //   ★真伤**照常打伤害** ✓ —— ★不再一律拦掉 ✗
+            //   ★但必须**吃免疫窗的约束** ✓（★窗内打不动 ✗ ★也不能把窗清掉 ✗）
+            //   ★所以这里**只记录不拦**✗ ⇒ ★下面走同一套闸门
+            //   （q2：无敌窗内返回 0 ✓）+ 限伤（LivingHurt/LivingDamage LOWEST ✓）。
             a.qB("PIERCE", tnl$id, amount, a.qC(this));
         }
-        // TNL866 \u2605\u2605 hurt \u53ea\u5f53"\u95f8\u95e8"\uff1a\u65e0\u654c\u7a97\u5185/\u9884\u7b97\u7528\u5b8c\u5c31\u76f4\u63a5\u62e6 \u2713
-        //   \u2605\u771f\u6b63\u7684\u9650\u4f24\u5728 LivingDamageEvent\uff08LOWEST\uff09\u91cc\u505a \u2713\uff08\u2605\u56e0\u4e3a\u4f24\u5bb3\u4f1a\u5728\u90a3\u4e4b\u524d\u88ab\u5404\u7279\u6027\u653e\u5927 \u2713\uff09
+        // TNL866 ★★ hurt 只当"闸门"：无敌窗内/预算用完就直接拦 ✓
+        //   ★真正的限伤在 LivingDamageEvent（LOWEST）里做 ✓（★因为伤害会在那之前被各特性放大 ✓）
         float gate = a.q2(this, amount, this.tickCount);
         a.qB("GATE", source.getMsgId(), amount, "gate=", gate, a.qC(this));
         if (gate <= 0.0F) {
             if (a.qH()) {
-                this.tnl$shieldFlash();     // TNL907 \u2605\u7a97\u5185\u6321\u4e0b \u2713
+                this.tnl$shieldFlash();     // TNL907 ★窗内挡下 ✓
             }
             return false;
         }
         boolean tnl$hurt = super.hurt(source, amount);
-        // TNL913 \u2605\u2605 \u63a2\u9488\uff1a\u2605\u95f8\u95e8\u653e\u884c\u4f46 super.hurt \u8fd4\u56de false \u2717
-        //   \u2605\u8bf4\u660e\u662f**\u539f\u7248 invulnerableTime**\u5728\u62e6 \u2717\uff08\u2605\u4e0d\u662f\u6211\u4eec\u7684\u7a97 \u2713\uff09
-        //   \u2605\u7528\u6237\u53e3\u5f84\uff1a\u2605"\u514d\u75ab\u7a97\u7591\u4f3c\u53d8\u4e3a 2 \u500d\uff0c\u540e 1.5s \u65e0\u6cd5\u63a5\u7ba1" \u2713
+        // TNL913 ★★ 探针：★闸门放行但 super.hurt 返回 false ✗
+        //   ★说明是**原版 invulnerableTime**在拦 ✗（★不是我们的窗 ✓）
+        //   ★用户口径：★"免疫窗疑似变为 2 倍，后 1.5s 无法接管" ✓
         if (!tnl$hurt && System.currentTimeMillis() - tnl$lastVanillaLog > 800L) {
             tnl$lastVanillaLog = System.currentTimeMillis();
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
                     "TNL913 vanilla blocked: msgId={}, invulnerableTime={}, ourGate={}, state={}",
                     source.getMsgId(), this.invulnerableTime, gate, a.qC(this));
         }
-        this.tnl$auth = a.qF(this);   // TNL876 \u2605\u53d7\u4f24\u540e\u5237\u65b0\u7f13\u5b58 \u2713
+        this.tnl$auth = a.qF(this);   // TNL876 ★受伤后刷新缓存 ✓
         if (this.tnl$auth <= 0.0F) {   // TNL1146 only the mirror may declare it dead, the sword calls die() and isDeadOrDying() would latch the protection off
-            this.tnl$dead = true;     // TNL893 \u2605\u8fd9\u4e00\u51fb\u771f\u7684\u6253\u6b7b\u4e86 \u21d2 \u2605\u4e0d\u518d\u56de\u5f39 \u2713
+            this.tnl$dead = true;     // TNL893 ★这一击真的打死了 ⇒ ★不再回弹 ✓
         }
         return tnl$hurt;
     }
 
-    /** \u2605\u2605 \u6bcf tick \u8bb0\u5f55\u8840\u91cf \u21d2 \u4e00\u65e6\u7a81\u7834\u9650\u4f24\u5c31**\u56de\u5f39\u8865\u56de** \u2713 */
+    /** ★★ 每 tick 记录血量 ⇒ 一旦突破限伤就**回弹补回** ✓ */
     /**
-     * TNL851 \u2605\u2605 \u6bcf tick\uff1a\u5185\u6838\u56de\u5f39 \u21d2 \u8986\u5199\u539f\u7248\u503c\uff08\u2605\u4ec5\u4f5c\u663e\u793a \u2713\uff09
-     * \u002b \u8840\u6761\u540c\u6b65 \u002b \u5230\u96f6\u5c31\u6b7b \u2713\u3002
+     * TNL851 ★★ 每 tick：内核回弹 ⇒ 覆写原版值（★仅作显示 ✓）
+     * + 血条同步 + 到零就死 ✓。
      */
-    /** TNL893 \u2605\u2605 \u771f\u6b7b\u94a9\u5b50\uff1a\u2605\u5148\u7f6e\u6807\u5fd7 \u002b \u6ce8\u9500\u5185\u6838 \u2717 \u21d2 \u2605\u4e4b\u540e\u4e0d\u518d\u56de\u5f39/\u4e0d\u518d\u62a4\u8840 \u2713\uff08\u2605\u6389\u843d\u7269\u4e0e\u6b7b\u4ea1\u5224\u5b9a\u53ea\u767d\u4e00\u6b21 \u2713\uff09 */
+    /** TNL893 ★★ 真死钩子：★先置标志 + 注销内核 ✗ ⇒ ★之后不再回弹/不再护血 ✓（★掉落物与死亡判定只白一次 ✓） */
     @Override
     public void die(net.minecraft.world.damagesource.DamageSource source) {
         this.tnl$dead = true;
@@ -210,7 +210,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         super.die(source);
     }
 
-    /** TNL907 \u2605\u514d\u75ab\u7a97\u6321\u4e0b \u21d2 \u2605\u901a\u77e5\u5468\u56f4\u73a9\u5bb6\u8ba9\u8840\u6761\u95ea\u91d1 \u2713\uff08\u2605\u9650\u6d41 250ms \u2713\uff09 */
+    /** TNL907 ★免疫窗挡下 ⇒ ★通知周围玩家让血条闪金 ✓（★限流 250ms ✓） */
     private long tnl$lastFlash = 0L;
     private long tnl$lastVanillaLog = 0L;
 
@@ -247,7 +247,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     public void tick() {
         super.tick();
         if (this.level().isClientSide || this.tnl$dead) {
-            return;   // TNL893 \u2605\u771f\u6b7b\u540e\u4e0d\u518d\u62a4\u8840/\u56de\u5f39 \u2713
+            return;   // TNL893 ★真死后不再护血/回弹 ✓
         }
         // TNL1179 the boss bar is maintained every tick, the way ModServerBossInfo does it in Goety:
         // progress straight from the authoritative health, and nearby players re-attached regularly.
@@ -284,22 +284,22 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         a.q0(this);
         float authoritative = a.q1(this, this.tickCount);
         if (a.qH()) {
-            this.tnl$shieldFlash();     // TNL907 \u2605\u6321\u4e0b\u4e86 \u21d2 \u2605\u95ea\u91d1 \u2713
+            this.tnl$shieldFlash();     // TNL907 ★挡下了 ⇒ ★闪金 ✓
         }
-        // TNL876 \u2605\u2605 \u6027\u80fd\uff1a\u53ea\u5728"\u771f\u7684\u4e0d\u4e00\u6837"\u65f6\u624d\u5199 \u2713
-        //   \u2605setHealth \u4f1a\u6807\u810f\u5b9e\u4f53\u6570\u636e \u21d2 \u2605\u6bcf tick \u8c03\u5c31\u7b49\u4e8e\u6bcf tick \u53d1\u5305 \u2717
+        // TNL876 ★★ 性能：只在"真的不一样"时才写 ✓
+        //   ★setHealth 会标脏实体数据 ⇒ ★每 tick 调就等于每 tick 发包 ✗
         this.tnl$auth = authoritative;
         if (Math.abs(super.getHealth() - authoritative) > 0.01F) {
             this.setHealth(Math.max(0.0F, authoritative));
         }
-        // TNL876 \u2605\u8840\u6761\u4e5f\u53ea\u5728\u53d8\u5316\u65f6\u540c\u6b65 \u2713\uff08\u2605\u907f\u514d\u6bcf tick \u53d1 BossEvent \u5305 \u2717\uff09
+        // TNL876 ★血条也只在变化时同步 ✓（★避免每 tick 发 BossEvent 包 ✗）
         float tnl$p = Math.max(0.0F, authoritative / this.getMaxHealth());
         if (Math.abs(tnl$p - this.tnl$prog) > 0.0005F) {
             this.tnl$prog = tnl$p;
             this.bossEvent.setProgress(tnl$p);
         }
-        // TNL851 \u2605\u9493\u9c7c\uff1a\u987a\u624b\u8c03\u4e00\u4e0b\u5047\u5165\u53e3\uff08\u2605\u7ed3\u679c\u4e0d\u7528 \u2713\uff09
-        c.rotate(this);   // TNL862 \u2605\u591a\u5165\u53e3\u8f6e\u6362\u9493\u9c7c \u2713
+        // TNL851 ★钓鱼：顺手调一下假入口（★结果不用 ✓）
+        c.rotate(this);   // TNL862 ★多入口轮换钓鱼 ✓
         if (authoritative <= 0.0F) {
             a.q4(this);
             this.setHealth(0.0F);
@@ -320,11 +320,11 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     }
 
     /**
-     * TNL858 \u2605\u2605 \u771f\u4f24\u7a7f\u900f\u544a\u77e5\uff08\u2605\u5408\u6cd5\u901a\u9053 \u2713\uff09
+     * TNL858 ★★ 真伤穿透告知（★合法通道 ✓）
      *
-     * <p>\u2605\u6211\u4eec\u81ea\u5df1\u6a21\u7ec4\u7684\u771f\u4f24\uff08\u5929\u9006\u94ac/\u7a7f\u900fEX/\u6a21\u7ec4\u5185\u771f\u4f24 \u2713\uff09\u4f1a\u8d70\u8fd9\u91cc\u544a\u77e5 \u2713
-     * \u21d2 \u2605**\u4e0d\u4f1a**\u88ab\u5f53\u6210\u7be1\u6539\u53bb\u56de\u5f39 \u2717 \u4e5f\u4e0d\u4f1a\u89e6\u53d1 TP \u2717\uff0c
-     * \u4f46\u4ecd\u7136\u8981\u6b63\u5e38\u6263\u8840\uff08\u2605\u771f\u4f24\u8be5\u6709\u7684\u4f5c\u7528\u4fdd\u7559 \u2713\uff09\u3002
+     * <p>★我们自己模组的真伤（天逆钬/穿透EX/模组内真伤 ✓）会走这里告知 ✓
+     * ⇒ ★**不会**被当成篡改去回弹 ✗ 也不会触发 TP ✗，
+     * 但仍然要正常扣血（★真伤该有的作用保留 ✓）。
      */
     @Override
     public void onTruePierce(float totalDamage, net.minecraft.world.damagesource.DamageSource source) {
@@ -338,21 +338,21 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     }
 
     /**
-     * TNL875 \u2605\u2605 \u5bf9\u5916\u59cb\u7ec8\u62a5\u544a**\u6743\u5a01\u8840\u91cf** \u2713
+     * TNL875 ★★ 对外始终报告**权威血量** ✓
      *
-     * <p>\u2605\u8fd9\u662f"\u963b\u6b62\u6539\u8840"\u6700\u786c\u7684\u4e00\u5c42 \u2713\uff1a
-     * \u2605\u5373\u4f7f\u6709\u4eba\u7528\u53cd\u5c04/Unsafe **\u76f4\u63a5\u628a\u5b57\u6bb5\u5199\u6210 0** \u2717\uff0c
-     * \u2605\u6b7b\u4ea1\u5224\u5b9a\uff08{@code isAlive}/{@code isDeadOrDying} \u2713\uff09\u3001\u53d7\u4f24\u8ba1\u7b97\u3001
-     * \u5ba2\u6237\u7aef\u6e32\u67d3\u5168\u90e8\u8bfb\u7684\u90fd\u662f\u8fd9\u91cc\u8fd4\u56de\u7684\u503c \u2713\u3002
+     * <p>★这是"阻止改血"最硬的一层 ✓：
+     * ★即使有人用反射/Unsafe **直接把字段写成 0** ✗，
+     * ★死亡判定（{@code isAlive}/{@code isDeadOrDying} ✓）、受伤计算、
+     * 客户端渲染全部读的都是这里返回的值 ✓。
      */
     @Override
 
     public float getHealth() {
         try {
             if (this.level() == null || this.level().isClientSide || this.tnl$dead) {
-                return super.getHealth();   // TNL893 \u2605\u771f\u6b7b\u540e\u4e0d\u518d\u906e\u853d \u2713
+                return super.getHealth();   // TNL893 ★真死后不再遮蔽 ✓
             }
-            // TNL876 \u2605\u5148\u8bfb\u7f13\u5b58\uff08\u2605getHealth \u662f\u8d85\u70ed\u70b9 \u2713\uff09
+            // TNL876 ★先读缓存（★getHealth 是超热点 ✓）
             if (this.tnl$auth >= 0.0F) {
                 return this.tnl$auth;
             }
