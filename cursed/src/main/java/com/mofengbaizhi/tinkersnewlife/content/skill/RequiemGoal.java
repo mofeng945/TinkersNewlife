@@ -49,13 +49,24 @@ public final class RequiemGoal extends MomoSpellGoal {
 
     @Override
     public boolean canUse() {
+        // TNL1259 用户："没有释放死生领域"。加一条只在**血量已低**时输出的探针，
+        // 直接看是哪个条件没满足（血量没掉下来 / 已用过 / 冷却 / busy）。
+        boolean tnl$lowHp = this.momo.getHealth() <= this.momo.getMaxHealth() * 0.8F;
+        if (this.momo.level().getGameTime() % 20L == 0L) {
+            TinkersNewlife.LOGGER.warn(
+                    "TNL1259 requiem check hp={}/{} low={} used={} cd={} busy={} flag={}",
+                    String.format(java.util.Locale.ROOT, "%.0f", this.momo.getHealth()),
+                    String.format(java.util.Locale.ROOT, "%.0f", this.momo.getMaxHealth()),
+                    tnl$lowHp, this.momo.tnl$requiemUsed(), this.cooldownLeft(),
+                    this.momo.tnl$isBusy(), MomoSkills.BREATH_REQUIEM);
+        }
         if (!MomoSkills.BREATH_REQUIEM) {
             return false;
         }
         if (this.momo.tnl$requiemUsed()) {
             return false;                                // 一局只放一次
         }
-        if (this.momo.getHealth() > this.momo.getMaxHealth() * 0.8F) {
+        if (!tnl$lowHp) {
             return false;                                // 只在血量 < 80% 时主动放
         }
         return this.ready();
