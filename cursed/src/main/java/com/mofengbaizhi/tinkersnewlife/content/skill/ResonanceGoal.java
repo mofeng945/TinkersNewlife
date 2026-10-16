@@ -20,9 +20,10 @@ import net.minecraft.world.entity.LivingEntity;
  */
 public final class ResonanceGoal extends MomoSpellGoal {
 
-    private static final double NEAR_RANGE = 4.0D;        // TNL1234 2 格太苛刻：挪一步就清零
-    /** TNL1234 离开范围时不是清零，而是每 tick 回退这么多（容忍短暂走位）*/
-    private static final int NEAR_DECAY = 20;
+    private static final double NEAR_RANGE = 6.0D;        // TNL1249 4 格在近战被击退时也会超：放宽到 6
+    /** TNL1234/1249 离开范围时不是清零，而是每 tick 回退这么多。
+     *  原来是 20 —— 增长只有 +1/tick ⇒ 回退是增长的 20 倍，近战那点走位就把进度抹平。 */
+    private static final int NEAR_DECAY = 2;
     private static final int NEAR_TICKS_REQUIRED = 200;    // TNL1234 10 秒，原 400(20 秒) 几乎不可能满足
     private static final int CHARGE_TICKS = 40;
     private static final int COOLDOWN_TICKS = 200;
