@@ -76,17 +76,6 @@ public final class DiscordantChordHandler {
     private DiscordantChordHandler() {
     }
 
-    /**
-     * TNL1171 user: "make it self driven like the goety apostle". The skill is no longer a
-     * global scanner over every entity in every level; the momo itself calls this from its own
-     * tick, so the whole state dies with the entity (logging out cannot leave it stuck).
-     */
-    public static void tickMomo(net.minecraft.server.level.ServerLevel level, KtuluMomo momo, long now) {
-        if (!MomoSkills.DISCORDANT_CHORD) {
-            return;
-        }
-        // TNL1176 the chord is a Goal now; the old handler must not drive it too
-    }
 
 
     /** TNL1176 entry used by ChordGoal: the wind up sound and smoke */

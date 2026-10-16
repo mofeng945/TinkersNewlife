@@ -264,13 +264,6 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         // TNL1171 the momo drives its own skills, like the goety apostle drives its own goals.
         // No global scanner, no per-skill map that can outlive the entity.
         long tnl$now = this.level().getGameTime();
-        com.mofengbaizhi.tinkersnewlife.content.skill.BlinkHandler.tickMomo(
-                (net.minecraft.server.level.ServerLevel) this.level(), this, tnl$now);
-        com.mofengbaizhi.tinkersnewlife.content.skill.AstralResonanceHandler.tickMomo(
-                (net.minecraft.server.level.ServerLevel) this.level(), this, tnl$now);
-        com.mofengbaizhi.tinkersnewlife.content.skill.DiscordantChordHandler.tickMomo(
-                (net.minecraft.server.level.ServerLevel) this.level(), this, tnl$now);
-
         // TNL1169 cast counter, same idea as SpellCastingCultist.m_8024_
         int tnl$cast = this.tnl$castTicks();
         if (tnl$cast > 0) {
