@@ -9,14 +9,14 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.LivingEntity;
 
 /**
- * TNL1174 Astral Resonance as a real Goal, the first skill migrated to the Goety style.
+ * TNL1174 幻音共鸣：第一个按诡厄那套迁过来的技能（真正做成 Goal）。
  *
- * <p>Trigger: the target stays within two blocks for twenty seconds. Then the boss roots itself and
- * charges for two seconds, shrieks, and knocks the target past ten blocks.
+ * <p>触发：目标在两格内**持续 20 秒**。随后 Boss 定身蓄力 2 秒，
+ * 发出尖啸，把目标击退到十格以外。
  *
- * <p>Everything is now local to this instance: the near-tick counter is a plain field (one goal per
- * momo), the cooldown lives on the entity, the cast state goes through the synced spell channel, and
- * rooting is the goal flags plus the busy gate -- no global scanner, no uuid map, no {@code setNoAi}.
+ * <p>所有状态都在本实例里：贴身计时是普通字段（一个 Boss 一个 Goal）、
+ * 冷却在实体上、施法状态走同步的法术通道、
+ * 定身靠 isBusy 闸门 ＋ 每 tick 清零速度 —— 没有全服扫描、没有 UUID 表、不用 {@code setNoAi}。
  */
 public final class ResonanceGoal extends MomoSpellGoal {
 
@@ -26,7 +26,7 @@ public final class ResonanceGoal extends MomoSpellGoal {
     private static final int COOLDOWN_TICKS = 200;
     private static final int TOTAL_TICKS = CHARGE_TICKS + 10;
 
-    /** TNL1090 user: keep the boss melee at zero while the animation is being tested. */
+    /** TNL1090 用户口径：测动画期间把 Boss 近战基础伤害压成 0 */
     private static final boolean ATTACK_ZERO = true;
 
     /** 击退距离（原本在 AstralResonanceHandler 里）*/
@@ -64,8 +64,8 @@ public final class ResonanceGoal extends MomoSpellGoal {
             this.nearTicks = 0;
             return false;
         }
-        // TNL1192 the constant says "20 s at 20 tps" (400 ticks) but the old code added 5 per tick, so
-        // it actually fired after 4 seconds. One tick per tick now, which is what the doc meant.
+        // TNL1192 常量写的是"20 秒 400 tick"，但老代码每 tick 加 5 ⇒ 实际 4 秒就放。
+        // 现在改成每 tick 加 1，才是文档说的 20 秒。
         this.nearTicks += 1;
         if (this.nearTicks < NEAR_TICKS_REQUIRED) {
             return false;
@@ -86,7 +86,7 @@ public final class ResonanceGoal extends MomoSpellGoal {
         if (this.momo.getNavigation() != null) {
             this.momo.getNavigation().stop();
         }
-        // TNL1168 face the target once instead of calling the look control every tick
+        // TNL1168 起手时朝目标一次，不再每 tick 调转头控制（那会让头来回摆）
         if (target != null) {
             double dx = target.getX() - this.momo.getX();
             double dz = target.getZ() - this.momo.getZ();
@@ -145,11 +145,11 @@ public final class ResonanceGoal extends MomoSpellGoal {
             dir = new Vec3(1.0D, 0.0D, 0.0D);
         }
         Vec3 flat = new Vec3(dir.x, 0.0D, dir.z).normalize();
-        // enough horizontal speed to clear ten blocks even with drag
+        // 水平速度要够（带阻力也能飞出十格）
         target.setDeltaMovement(flat.x * 4.6D, 0.50D, flat.z * 4.6D);   // TNL1103 push only, no damage
         target.hurtMarked = true;
-        // TNL1103 user: no sonic damage at all, the shriek only launches the target away.
-        // draw the boom lance, like the Warden projectile
+        // TNL1103 用户口径：尖啸**不造成伤害**，只把目标掀飞。
+        // 画出音波光柱，像监守者的弹道那样
         Vec3 end = origin.add(flat.scale(KNOCK_DISTANCE));
         for (int i = 0; i <= 30; i++) {
             double f = i / 12.0D;
