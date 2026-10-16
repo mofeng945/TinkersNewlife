@@ -38,8 +38,7 @@ public final class KtuluDeathGuard {
                     || attacker.level().isClientSide) {
                 return;
             }
-            if (com.mofengbaizhi.tinkersnewlife.content.skill.MomoCastLock
-                    .isCasting(attacker.getUUID(), attacker.level().getGameTime())) {
+            if (attacker.tnl$isBusy()) {
                 event.setCanceled(true);
             }
         } catch (Throwable ignored) {
@@ -116,31 +115,11 @@ public final class KtuluDeathGuard {
      * at the START of the entity's own tick, so the movement code sees zero and cannot advance, and the
      * anchor pull makes absolutely sure it stays where the cast started.
      */
-    @SubscribeEvent
-    public static void onLivingTick(net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent event) {
-        try {
-            if (!(event.getEntity() instanceof KtuluMomo momo) || momo.level().isClientSide) {
-                return;
-            }
-            var id = momo.getUUID();
-            // TNL1170 one source of truth: the entity's own synced cast state
-            if (!momo.tnl$isBusy() && !com.mofengbaizhi.tinkersnewlife.content.skill.MomoCastLock
-                    .isCasting(id, momo.level().getGameTime())) {
-                return;
-            }
-            momo.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
-            momo.hurtMarked = true;
-            if (momo.getNavigation() != null) {
-                momo.getNavigation().stop();
-            }
-            // TNL1167 user: "why does it yank me back to where the last big cast happened".
-            // The anchor was kept with putIfAbsent and never refreshed, so a stale position from an
-            // earlier cast was still around. The anchor pull is gone; zeroing the velocity before the
-            // entity tick is enough and cannot teleport anything.
-        } catch (Throwable ignored) {
-        }
-    }
-
+    /**
+     * TNL1177 user: rooting is the Goal system's job now (MomoSpellGoal sets Flag.MOVE|LOOK and every
+     * skill checks isBusy()), so the old "zero the velocity before the tick" hack and the anchor pull
+     * are both gone. Nothing teleports the boss and nothing clears its AI any more.
+     */
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onDeath(LivingDeathEvent event) {
         try {

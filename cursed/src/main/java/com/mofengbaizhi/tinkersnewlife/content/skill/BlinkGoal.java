@@ -48,7 +48,6 @@ public final class BlinkGoal extends MomoSpellGoal {
     protected void onStart() {
         ServerLevel level = (ServerLevel) this.momo.level();
         this.jumped = false;
-        MomoCastLock.begin(this.momo.getUUID(), level.getGameTime(), TOTAL_TICKS + 10);
         this.momo.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
         this.momo.hurtMarked = true;
         if (this.momo.getNavigation() != null) {
@@ -81,7 +80,6 @@ public final class BlinkGoal extends MomoSpellGoal {
     protected void onStop() {
         long now = this.momo.level().getGameTime();
         this.momo.tnl$setBlinkCoolUntil(now + COOLDOWN_TICKS);
-        MomoCastLock.end(this.momo.getUUID(), now, 0);
         this.momo.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
         if (this.momo.getNavigation() != null) {
             this.momo.getNavigation().stop();

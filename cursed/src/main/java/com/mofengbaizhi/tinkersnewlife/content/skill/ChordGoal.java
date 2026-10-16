@@ -67,7 +67,6 @@ public final class ChordGoal extends MomoSpellGoal {
         this.released = false;
         this.rings.clear();
         this.nextWaveAt = 0L;
-        MomoCastLock.begin(this.momo.getUUID(), level.getGameTime(), TOTAL_TICKS + 20);
         this.momo.setDeltaMovement(Vec3.ZERO);
         this.momo.hurtMarked = true;
         if (this.momo.getNavigation() != null) {
@@ -155,7 +154,6 @@ public final class ChordGoal extends MomoSpellGoal {
         long now = this.momo.level().getGameTime();
         DiscordantChordHandler.clearJumpBuff();
         this.momo.tnl$setChordCoolUntil(now + COOLDOWN_TICKS);
-        MomoCastLock.end(this.momo.getUUID(), now, 0);
         this.rings.clear();
         this.releaseAt = 0L;
         TinkersNewlife.LOGGER.warn("TNL1176 Discordant Chord finished");
