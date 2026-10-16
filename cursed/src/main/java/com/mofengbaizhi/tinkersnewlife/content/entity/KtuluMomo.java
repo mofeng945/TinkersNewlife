@@ -116,6 +116,10 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         if (com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.DISCORDANT_CHORD) {
             this.goalSelector.addGoal(3, new com.mofengbaizhi.tinkersnewlife.content.skill.ChordGoal(this));
         }
+        // TNL1253 生息绝响：血量 < 80% 时主动放一次（10 秒领域 / 120 秒冷却）
+        if (com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.BREATH_REQUIEM) {
+            this.goalSelector.addGoal(3, new com.mofengbaizhi.tinkersnewlife.content.skill.RequiemGoal(this));
+        }
         this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 16.0F));
         this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
@@ -609,6 +613,51 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     private long tnl$blinkCoolUntil = 0L;
     private long tnl$resonanceCoolUntil = 0L;
     private long tnl$chordCoolUntil = 0L;
+    private long tnl$requiemCoolUntil = 0L;
+
+    // TNL1253 生息绝响（Breath's Requiem）：
+    //  - 只在血量 < 80% 时主动放一次（tnl$requiemUsed ⇒ **进 NBT**，一局只一次）
+    //  - 领域 8 格 / 10 秒，或被攻击时立刻结束（tnl$requiemCloseRequested）
+    private boolean tnl$requiemUsed = false;
+    private boolean tnl$requiemClose = false;
+
+    /** TNL1253 仆从标准：**标记**。后面的召唤技能给实体打这个 tag 即可（简单起见先这样）。 */
+    public static final String TNL_MINION_TAG = "tnl_momo_minion";
+
+    /** TNL1253 某实体是不是墨默的仆从（领域强化用的判定） */
+    public static boolean tnl$isMomoMinion(net.minecraft.world.entity.Entity e) {
+        return e != null && e.getTags().contains(TNL_MINION_TAG);
+    }
+
+    public long tnl$requiemCoolUntil() {
+        return this.tnl$requiemCoolUntil;
+    }
+
+    public void tnl$setRequiemCoolUntil(long until) {
+        this.tnl$requiemCoolUntil = until;
+    }
+
+    public boolean tnl$requiemUsed() {
+        return this.tnl$requiemUsed;
+    }
+
+    public void tnl$markRequiemUsed() {
+        this.tnl$requiemUsed = true;
+    }
+
+    /** TNL1253 领域被打破：任何一次受击都会调它，技能读到就收尾 */
+    public void tnl$requestRequiemClose() {
+        this.tnl$requiemClose = true;
+    }
+
+    public boolean tnl$requiemCloseRequested() {
+        return this.tnl$requiemClose;
+    }
+
+    public void tnl$clearRequiemClose() {
+        this.tnl$requiemClose = false;
+    }
+
 
     // TNL1178 类似使徒的 spellCycle：记住刚放的是哪个法术，让 Boss 轮着来，
     // 而不是逮着哪个先就刷哪个。加一个超时，免得只剩一个技能可用时干等。

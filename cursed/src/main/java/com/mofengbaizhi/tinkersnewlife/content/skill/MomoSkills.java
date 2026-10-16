@@ -17,6 +17,9 @@ public final class MomoSkills {
     /** 瞬身：锁定目标 1.5 秒后无声瞬移到其身后 3 格（本轮测试 ✓） */
     public static final boolean BLINK = true;
 
+    /** TNL1253 生息绝响：血量 < 80% 时展开 8 格死生领域 10 秒（一局一次） */
+    public static final boolean BREATH_REQUIEM = true;
+
     private MomoSkills() {
     }
 }

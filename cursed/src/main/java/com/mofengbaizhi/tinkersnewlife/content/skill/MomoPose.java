@@ -18,7 +18,9 @@ public enum MomoPose {
     CHORD,
     /** TNL1251 受击硬直：身体前倾、手臂惯性前摆、双腿一前一后。
      *  只有 {@code MomoHurtGoal} 会用它 —— 技能施法的 stun **不播**这个。 */
-    HURT;
+    HURT,
+    /** TNL1253 生息绝响：展开死生领域时的姿势（双手上举展开）。 */
+    REQUIEM;
 
     /** 由同步的法术编号得到姿势类别：1 瞬身、2 共鸣、3 和弦 */
     public static MomoPose of(int spellId) {
