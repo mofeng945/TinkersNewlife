@@ -269,6 +269,20 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             }
         }
 
+        // TNL1240 共鸣的"贴身计时"搬到实体侧：日志证明近战 Goal 在跑时
+        // ResonanceGoal.canUse() 并不保证每 tick 被调用 ⇒ 计数在近战状态下不涨。
+        // 放在这里就与 Goal 调度无关了。
+        {
+            net.minecraft.world.entity.LivingEntity tnl$t = this.getTarget();
+            if (tnl$t != null && tnl$t.isAlive() && this.distanceTo(tnl$t) <= TNL_NEAR_RANGE) {
+                if (this.tnl$nearCharge < 4000) {
+                    this.tnl$nearCharge++;
+                }
+            } else if (this.tnl$nearCharge > 0) {
+                this.tnl$nearCharge = Math.max(0, this.tnl$nearCharge - 20);
+            }
+        }
+
         // TNL1231 定身只清寻路、不清索敌；但目标一旦丢了（死了/跑远/被清过），
         // 这个 Boss 没有索敌 Goal ⇒ 它会一直站着。这里补一个轻量兜底：
         // 空闲时若没有可用目标，就重新锁定 64 格内最近的玩家。
@@ -473,6 +487,18 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     // TNL1172 诡厄使徒每个法术一个冷却字段（coolDown / tornadoCoolDown /
     // infernoCoolDown / monolithCoolDown / damnedCoolDown）。这里同理，存在实体上，
     // 跟它一起生灭，而不是放在按 uuid 索引的静态表里。
+    /** TNL1240 共鸣的贴身计时（实体侧维护，单位 tick）*/
+    public static final double TNL_NEAR_RANGE = 4.0D;
+    private int tnl$nearCharge = 0;
+
+    public int tnl$nearCharge() {
+        return this.tnl$nearCharge;
+    }
+
+    public void tnl$setNearCharge(int v) {
+        this.tnl$nearCharge = Math.max(0, v);
+    }
+
     /** TNL1235 castTicks 归零却还 busy 的连续 tick 数 */
     private int tnl$staleSpellTicks = 0;
 

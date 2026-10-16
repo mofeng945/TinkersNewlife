@@ -63,22 +63,12 @@ public final class ResonanceGoal extends MomoSpellGoal {
             this.nearTicks = 0;
             return false;
         }
-        if (this.momo.distanceTo(target) > NEAR_RANGE) {
-            // TNL1234 用户："达到条件了也不触发"。原来是**一步走开就清零**，
-            // 而 Boss 一直在追人 ⇒ 400 tick 连续贴身根本凑不满。现在改成回退 20，
-            // 短暂走位不会把进度抹平，但只要它一直贴着你，10 秒就能攒够。
-            this.nearTicks = Math.max(0, this.nearTicks - NEAR_DECAY);
-            return false;
+        if (NEAR_RANGE > 0.0D && this.momo.tnl$nearCharge() < NEAR_TICKS_REQUIRED) {
+            return false;                       // TNL1240 计数由实体维护
         }
         // TNL1192 常量写的是"20 秒 400 tick"，但老代码每 tick 加 5 ⇒ 实际 4 秒就放。
         // 现在改成每 tick 加 1，才是文档说的 20 秒。
-        this.nearTicks += 1;
-        if (this.nearTicks % 20 == 0) {        // TNL1238 探针：每秒报一次攒了多少
-            TinkersNewlife.LOGGER.warn("TNL1238 resonance charge={}/{} dist={} busy={} cd={}",
-                    this.nearTicks, NEAR_TICKS_REQUIRED,
-                    String.format(java.util.Locale.ROOT, "%.1f", this.momo.distanceTo(target)),
-                    this.momo.tnl$isBusy(), this.cooldownLeft());
-        }
+        // TNL1240 计数不在这里数了（见 KtuluMomo 的 tnl$nearCharge）
         if (this.nearTicks < NEAR_TICKS_REQUIRED) {
             return false;
         }
@@ -94,6 +84,7 @@ public final class ResonanceGoal extends MomoSpellGoal {
     @Override
     protected void onStart() {
         this.nearTicks = 0;                    // TNL1238 真正起手时才清计数
+        this.momo.tnl$setNearCharge(0);        // TNL1240 实体侧计数也清
         this.stun.begin();                     // TNL1232 共鸣全程定身
         ServerLevel level = (ServerLevel) this.momo.level();
         LivingEntity target = this.stun.target();
