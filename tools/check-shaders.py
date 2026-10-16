@@ -81,7 +81,10 @@ for _j in sorted(_g.glob("cursed/src/main/resources/assets/tinkersnewlife/shader
         _src = _io.open(_p, encoding="utf-8").read()
         _in = set(_re.findall(r"^\s*in\s+\w+\s+(\w+)\s*;", _src, _re.M))
         _out = set(_re.findall(r"^\s*out\s+\w+\s+(\w+)\s*;", _src, _re.M))
-        _uni = set(_re.findall(r"^\s*uniform\s+\w+\s+(\w+)\s*;", _src, _re.M)) - {"Sampler0"}
+        _uni = {x for x in _re.findall(r"^\s*uniform\s+\w+\s+(\w+)\s*;", _src, _re.M)
+                if not x.startswith("Sampler")}   # TNL1190 Sampler0/1/2 are declared by the
+        # engine itself; the json lists them under "samplers", not "uniforms", so the old
+        # "- {Sampler0}" exemption flagged a perfectly valid Sampler1 as missing.
         _errs = []
         if _ext == ".vsh" and _in and _in != _jattr:
             _errs.append("in %s != json attributes %s" % (sorted(_in), sorted(_jattr)))
