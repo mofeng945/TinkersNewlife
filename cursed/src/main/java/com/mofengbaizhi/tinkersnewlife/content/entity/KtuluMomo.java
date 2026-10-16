@@ -435,10 +435,8 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         }
     }
 
-    /** TNL1086 幻音共鸣蓄力状态，同步给客户端好播监守者式起手。*/
-    private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_CHARGING =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class,
-                    net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+    // TNL1246 旧的 DATA_CHARGING 已删除：没有任何地方写它，读它的也只有渲染器那一处，
+    // 而渲染器现在改成读技能上报的动画通道（TNL1244）。留着只会误导人。
     // TNL1161 用户："施法标记为什么在玩家身上，应该挂在墨默身上 —— 施法和
     // 蓄力本来就是一回事"。对，而且实体数据通道是**已被证明**能到客户端的
     // 那条（共鸣就在用）。和弦也在同一条通道上拿了自己的标志。
@@ -499,7 +497,6 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
 
     protected void defineSynchedData() {
         super.defineSynchedData();
-        this.entityData.define(DATA_CHARGING, Boolean.FALSE);
         this.entityData.define(DATA_CHORD, Boolean.FALSE);
         this.entityData.define(DATA_SPELL, (byte) 0);
         this.entityData.define(DATA_CAST_TICKS, 0);
@@ -609,10 +606,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         this.entityData.set(DATA_CAST_TICKS, Math.max(0, ticks));
     }
 
-    public void tnl$setCharging(boolean charging) {
-        this.entityData.set(DATA_CHARGING, charging);
-        this.tnl$setSpell(charging ? 2 : 0, charging ? 40 : 0);
-    }
+    /** TNL1246 旧的 tnl$setCharging 已删除（它只写 DATA_CHARGING；起手统一走 setSpell）。*/
     /** TNL1161 正在施放混沌和弦时为 true；客户端据此摆和弦姿势 */
     public boolean tnl$isChordCasting() {
         return this.tnl$spell() == 3;      // TNL1169 derived
