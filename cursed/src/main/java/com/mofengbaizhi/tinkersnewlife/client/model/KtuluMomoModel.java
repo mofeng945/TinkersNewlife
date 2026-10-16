@@ -16,17 +16,14 @@ import net.minecraft.client.model.geom.ModelPart;
  */
 public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
 
-    /** 渲染器在 super.render 之前写入，setupAnim 就读它 */
-    public static boolean CHARGING = false;
+    /**
+     * TNL1224 姿势的唯一输入：渲染器每帧写一次，模型只照它分支。
+     * 以前这里是四个布尔（CHARGING/CHORD/BLINK/RESONANCE），其中 CHARGING 名字还停在
+     * "只有共鸣会蓄力"那会儿，实际却是"有技能在施法"的总闸，很容易看错。
+     */
+    public static com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose POSE =
+            com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.NONE;
 
-    /** TNL1156 只有正在施放混沌和弦的帧才为 true */
-    public static boolean CHORD = false;
-
-    /** TNL1223 只有正在施放幻音共鸣的帧才为 true */
-    public static boolean RESONANCE = false;
-
-    /** TNL1189 只有正在施放瞬身的帧才为 true */
-    public static boolean BLINK = false;
     /** 0 = 刚开始，1 = 马上要尖啸 */
     public static float PROGRESS = 0.0F;
     /** TNL1108 同步标志掉了之后和弦还要保持举手一会儿，
@@ -60,7 +57,8 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         this.hat.visible = true;
         this.hat.skipDraw = false;
         this.hat.yScale = 1.0F;
-        if (!CHARGING) {
+        // TNL1224 没在施法 ⇒ 原版姿势
+        if (POSE == com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.NONE) {
             return;
         }
         // TNL1096 用户："momo_common 皮肤里不跟着转的就是帽子那层"。
@@ -83,7 +81,7 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         this.body.zScale = 1.0F;
         // TNL1223 用户："幻音共鸣没同级别统一写法？"。原来共鸣是"没被上面拦住的都算我"，
         // 新增技能会**默默借用它的姿势**。现在三分支同级，兜底留给原版姿势。
-        if (RESONANCE) {
+        if (POSE == com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.RESONANCE) {
             float t = Math.max(0.0F, Math.min(1.0F, PROGRESS));
             // TNL1092 用户："只有发抖，骨骼动画没了"。发抖是挂在
             // body.xRot 上的，说明钩子确实在跑。打数值看 t 是不是卡在端点上。
@@ -135,7 +133,7 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         // 才用和弦姿势。老的 CHORD_HOLD_UNTIL 判定会让
         // **任何**技能蓄力后和弦姿势挂 20 秒，于是音波起手
         // 看起来和弦一样，而和弦自己反而丢了姿势。
-        if (CHORD) {
+        if (POSE == com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.CHORD) {
             // TNL1188 直接照搬诡厄 CultistModel 的 SPELLCASTING 分支（已验证观感）：
             // zRot ±135 度把手抬起来，0.6662 的 cos 波给吟唱带来摆动，
             // 肩部 x 偏 ±5 把两臂分开，免得双手在中线重叠。
@@ -164,7 +162,7 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         // TNL1189 瞬身：站定，双臂垂下略内收（学诡厄 CROSSED 的意图），
         // 头锁正前方。插在共鸣分支**之前**，这样瞬身不会
         // 借用监守者的护脸姿势。
-        if (BLINK) {
+        if (POSE == com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.BLINK) {
             this.body.xRot = 0.0F;
             this.head.xRot = 0.0F;
             this.head.yRot = netHeadYaw * 0.25F;

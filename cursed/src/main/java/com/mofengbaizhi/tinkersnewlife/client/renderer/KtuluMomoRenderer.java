@@ -59,6 +59,7 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
                 com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.of(entity.tnl$spell());
         boolean chordCast = tnl$pose == com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.CHORD
                 && com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.DISCORDANT_CHORD;
+        com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.POSE = tnl$pose;   // TNL1224 唯一入口
         boolean tnl$blinkPose = tnl$pose == com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.BLINK;
         boolean tnl$resonancePose = tnl$pose == com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.RESONANCE;
         // TNL1158 探针：和弦前摇仍然没姿势，所以把客户端实际看到的状态打出来
@@ -87,13 +88,8 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
         // TNL1163 和弦抬手消失的**根因**：模型里有一句早退
         // `if (!CHARGING) return;`，而 CHARGING 只有共鸣会为真。和弦走的是
         // 自己的标志，所以 CHARGING 一直是 false，模型根本没走到 CHORD 分支就返回了。
-        com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.CHARGING =
-                charging || chordCast || tnl$blinkPose || tnl$resonancePose;
         com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.PROGRESS = progress;
         // TNL1156 明确告诉模型这一帧属于哪个技能
-        com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.CHORD = chordCast;
-        com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.BLINK = tnl$blinkPose;
-        com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.RESONANCE = tnl$resonancePose;
         // TNL1129 原型（§1166 那套）是在实体渲染链里画的，这里照做。
         // 用局部坐标：姿态矩阵已经落在实体上，残影就填相对它的偏移。
         // TNL1130 现在由原型 ThrustGhostRenderer 画，不必再画一遍
