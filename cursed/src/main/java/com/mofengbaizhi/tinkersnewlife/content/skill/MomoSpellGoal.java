@@ -52,6 +52,12 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
 
     /** true when this momo may start this spell right now */
     protected boolean ready() {
+        // TNL1196 GoalSelector runs on the CLIENT as well (Mob.aiStep), and every skill casts the level
+        // to ServerLevel and spawns particles on it. Without this guard the whole thing would throw a
+        // ClassCastException on every client tick. Vanilla's own casting goal checks the same thing.
+        if (this.momo.level().isClientSide) {
+            return false;
+        }
         return !this.momo.tnl$isBusy()
                 && this.cooldownLeft() <= 0
                 && this.momo.isAlive()
