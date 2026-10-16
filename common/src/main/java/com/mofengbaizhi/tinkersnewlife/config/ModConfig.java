@@ -850,6 +850,7 @@ public final class ModConfig {
                         "@l2weaponry", "@l2hostility", "@l2complements",
                         "@farmersdelight", "@apotheosis",
                         "@artifacts", "@relics", "@enigmaticlegacy", "@celestial_artifacts",
+            "@vampirism", "@aquaculture", "@dummmmmmy",
                         "@simplyswords", "@curseofpandora",
                         // 原版物品不做限制：引擎级判定（护盾格挡/工具动作/鞘翅/护甲槽…）已全部转发到位
                         // 想放开某个模组：删掉对应条目即可（或整体 blueprint_risky_legacy=false）
