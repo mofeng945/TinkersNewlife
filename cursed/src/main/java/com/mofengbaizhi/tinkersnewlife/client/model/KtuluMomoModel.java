@@ -38,6 +38,10 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         // TNL1101 the hair IS this hat part (hiding it during the charge made it vanish), and the old
         // code set visible = !CHARGING *after* an early return, so the hat never came back. Restore it
         // unconditionally before anything can return.
+        // TNL1188 reset the arm offsets every frame; the chord pose shifts them and a stale shift
+        // would leak into every other pose.
+        this.rightArm.x = 0.0F;
+        this.leftArm.x = 0.0F;
         // TNL1187 user: "thin arms". Scale the arm parts across their cross section only, so the arms
         // get slimmer without getting shorter, and do it before any early return so every pose has it.
         float tnl$thin = 0.62F;
@@ -115,18 +119,23 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         // check kept the chord pose alive for 20 s after ANY skill charged, so the
         // sonic boom wind up looked like the chord and the chord itself lost its pose.
         if (CHORD) {
-            float wave = (float) Math.sin(ageInTicks * 0.55F);
-            float wave2 = (float) Math.sin(ageInTicks * 0.55F + 1.1F);
+            // TNL1188 taken straight from Goety's CultistModel SPELLCASTING case (verified look):
+            // zRot +/-135 degrees raises the hands, a cos wave at 0.6662 gives the chant its swaying,
+            // and the shoulder x of +/-5 spreads the arms so the hands do not overlap at the centre.
+            float wave = (float) Math.cos(ageInTicks * 0.6662F) * 0.25F;
+            float wave2 = (float) Math.cos(ageInTicks * 0.6662F + 0.6F) * 0.25F;
+            this.rightArm.x = 5.0F;
+            this.leftArm.x = -5.0F;
             this.body.xRot = 0.06F;
             this.head.xRot = -0.18F + wave * 0.05F;      // chin up, chanting
             // TNL1109 user: "the arms are pointing the wrong way again". xRot is the front/back axis,
             // which is why they went forwards. Raising the arms overhead is the zRot (frontal) axis.
-            this.rightArm.xRot = -0.25F;
-            this.rightArm.yRot = 0.10F;
-            this.rightArm.zRot = 2.55F + wave * 0.20F;   // up, waving
-            this.leftArm.xRot = -0.25F;
-            this.leftArm.yRot = -0.10F;
-            this.leftArm.zRot = -2.55F - wave2 * 0.20F;
+            this.rightArm.xRot = 0.0F;
+            this.rightArm.yRot = wave;
+            this.rightArm.zRot = 2.3561945F + wave;      // 135 degrees, Goety SPELLCASTING
+            this.leftArm.xRot = 0.0F;
+            this.leftArm.yRot = wave2;
+            this.leftArm.zRot = -2.3561945F - wave2;
             this.rightLeg.xRot = 0.0F;
             this.leftLeg.xRot = 0.0F;
             this.hat.xRot = this.head.xRot;
