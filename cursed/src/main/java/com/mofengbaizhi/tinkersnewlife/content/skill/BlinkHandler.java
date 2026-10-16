@@ -35,6 +35,11 @@ public final class BlinkHandler {
      * global scanner; BlinkGoal drives it now.
      */
     public static void tickGhostLine(ServerLevel level, KtuluMomo momo, long now) {
+        // TNL1201 the queue is static, so cap it: if a momo is removed mid trail its entry would
+        // otherwise sit there for ever.
+        if (LINE.size() > 8) {
+            LINE.clear();
+        }
         UUID id = momo.getUUID();
         Line line = LINE.get(id);
         if (line != null) {
