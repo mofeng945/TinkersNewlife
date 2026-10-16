@@ -263,6 +263,11 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
 
         // TNL1171 the momo drives its own skills, like the goety apostle drives its own goals.
         // No global scanner, no per-skill map that can outlive the entity.
+        // TNL1199 the afterimage trail must outlive the cast: the blink goal ends four ticks after the
+        // teleport but the line needs six ticks to release all 24 ghosts, so the entity drives it.
+        com.mofengbaizhi.tinkersnewlife.content.skill.BlinkHandler.tickGhostLine(
+                (net.minecraft.server.level.ServerLevel) this.level(), this, this.level().getGameTime());
+
         // TNL1169 cast counter, same idea as SpellCastingCultist.m_8024_
         int tnl$cast = this.tnl$castTicks();
         if (tnl$cast > 0) {
