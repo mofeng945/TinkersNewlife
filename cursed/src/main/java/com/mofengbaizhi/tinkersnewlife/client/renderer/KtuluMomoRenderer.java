@@ -128,6 +128,29 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
                 .uv2(light).normal(0.0F, 1.0F, 0.0F).endVertex();
     }
 
+    /**
+     * TNL1245 动画的唯一入口：**技能**通过同步通道上报（摆什么姿势、播到几分），
+     * 渲染器只做搬运。
+     *
+     * <p>⚠ 之前这段在一次回滚里被误删，结果 `KtuluMomoModel.POSE` 永远是 NONE，
+     * 模型一进来就 `if (POSE == NONE) return;` ⇒ **所有姿势/动画全部不播**。
+     * 现在恢复，并且不再自己算进度（旧的客户端时钟那套已不需要）。
+     */
+    @Override
+    public void render(KtuluMomo entity, float entityYaw, float partialTicks,
+                       com.mojang.blaze3d.vertex.PoseStack poseStack,
+                       net.minecraft.client.renderer.MultiBufferSource buffer, int packedLight) {
+        int tnl$poseId = entity.tnl$animPose();
+        com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose[] tnl$values =
+                com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.values();
+        com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.POSE =
+                tnl$poseId > 0 && tnl$poseId < tnl$values.length
+                        ? tnl$values[tnl$poseId]
+                        : com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.NONE;
+        com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.PROGRESS = entity.tnl$animProgress();
+        super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
+    }
+
     @Override
     protected void scale(KtuluMomo entity, PoseStack poseStack, float partialTick) {
         poseStack.scale(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE);
