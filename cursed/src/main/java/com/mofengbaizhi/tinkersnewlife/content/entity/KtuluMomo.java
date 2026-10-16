@@ -102,7 +102,9 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         this.goalSelector.addGoal(0, new FloatGoal(this));
         // TNL1251 受击硬直：优先级 0（最高）并占 MOVE|LOOK ⇒ 会挤掉近战/游走，实现"站住 1 秒"
         this.goalSelector.addGoal(0, new com.mofengbaizhi.tinkersnewlife.content.skill.MomoHurtGoal(this));
-        this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.0D, true));
+        // TNL1261 换成只占 MOVE 的近战 Goal：配合技能禁用 LOOK 旗，
+        // 施法期间它连起手都做不到 ⇒ 不再一边施法一边往玩家身上寻路。
+        this.goalSelector.addGoal(1, new com.mofengbaizhi.tinkersnewlife.content.skill.MomoMeleeGoal(this));
         this.goalSelector.addGoal(2, new WaterAvoidingRandomStrollGoal(this, 0.8D));
         // TNL1174 技能现在都是 Goal，和诡厄使徒注册法术的方式一样
         // TNL1202 准则规定："开关"应该体现在注册处，而不是散落在
