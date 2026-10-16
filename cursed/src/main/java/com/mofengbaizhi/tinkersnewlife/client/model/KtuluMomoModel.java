@@ -22,6 +22,9 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
     /** TNL1156 只有正在施放混沌和弦的帧才为 true */
     public static boolean CHORD = false;
 
+    /** TNL1223 只有正在施放幻音共鸣的帧才为 true */
+    public static boolean RESONANCE = false;
+
     /** TNL1189 只有正在施放瞬身的帧才为 true */
     public static boolean BLINK = false;
     /** 0 = 刚开始，1 = 马上要尖啸 */
@@ -78,48 +81,53 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         // 身体不再缩胀，手臂就在网格原本的位置上。
         this.body.xScale = 1.0F;
         this.body.zScale = 1.0F;
-        float t = Math.max(0.0F, Math.min(1.0F, PROGRESS));
-        // TNL1092 用户："只有发抖，骨骼动画没了"。发抖是挂在
-        // body.xRot 上的，说明钩子确实在跑。打数值看 t 是不是卡在端点上。
-        float tremble = (float) Math.sin(ageInTicks * 2.2F) * 0.04F * Math.min(1.0F, t * 2.0F);
+        // TNL1223 用户："幻音共鸣没同级别统一写法？"。原来共鸣是"没被上面拦住的都算我"，
+        // 新增技能会**默默借用它的姿势**。现在三分支同级，兜底留给原版姿势。
+        if (RESONANCE) {
+            float t = Math.max(0.0F, Math.min(1.0F, PROGRESS));
+            // TNL1092 用户："只有发抖，骨骼动画没了"。发抖是挂在
+            // body.xRot 上的，说明钩子确实在跑。打数值看 t 是不是卡在端点上。
+            float tremble = (float) Math.sin(ageInTicks * 2.2F) * 0.04F * Math.min(1.0F, t * 2.0F);
 
-        // 阶段 1：抬手护脸。阶段 3：向后张开。中间保持护脸。
-        float up;
-        if (t < 0.45F) {
-            up = t / 0.45F;                       // 0 -> 1 raising the hands
-        } else if (t < 0.75F) {
-            up = 1.0F;                            // holding
-        } else {
-            up = 1.0F - (t - 0.75F) / 0.25F;      // 1 -> 0 swinging the hands back down and behind
+            // 阶段 1：抬手护脸。阶段 3：向后张开。中间保持护脸。
+            float up;
+            if (t < 0.45F) {
+                up = t / 0.45F;                       // 0 -> 1 raising the hands
+            } else if (t < 0.75F) {
+                up = 1.0F;                            // holding
+            } else {
+                up = 1.0F - (t - 0.75F) / 0.25F;      // 1 -> 0 swinging the hands back down and behind
+            }
+            float backSwing = t < 0.75F ? 0.0F : (t - 0.75F) / 0.25F;
+
+            // 轻微前倾，蓄力越深越明显，释放时向后仰
+            this.body.xRot = 0.22F * Math.min(1.0F, t * 1.6F) - 0.40F * backSwing + tremble * 0.4F;   // TNL1101
+            // 护脸时低头，尖啸时抬头
+            this.head.xRot = 0.52F * up - 0.85F * backSwing + tremble;   // TNL1101 stronger, so the hair visibly follows
+            this.head.yRot = netHeadYaw * 0.4F;
+
+            // TNL1094 用户："护脸反了，手臂往前张开而不是挡住脸，
+            // 而且从来没向后甩"。yRot 与 zRot 反过来，让双手向内收拢
+            // 贴到脸上，释放则插值到一个明确的向后张开姿势。
+            float guardX = -1.35F * up;                       // raise the hands forward and up
+            float guardY = -0.45F * up;                       // bring the right hand toward the centre
+            float guardZ = 0.90F * up;                        // adduct it in front of the face
+            float openX = 1.40F;                              // release: arms swung behind the body
+            float openY = 0.50F;
+            float openZ = -0.35F;
+
+            this.rightArm.xRot = guardX * (1.0F - backSwing) + openX * backSwing + tremble;
+            this.rightArm.yRot = guardY * (1.0F - backSwing) + openY * backSwing;
+            this.rightArm.zRot = guardZ * (1.0F - backSwing) + openZ * backSwing;
+            this.leftArm.xRot = guardX * (1.0F - backSwing) + openX * backSwing - tremble;
+            this.leftArm.yRot = -guardY * (1.0F - backSwing) - openY * backSwing;
+            this.leftArm.zRot = -guardZ * (1.0F - backSwing) - openZ * backSwing;
+
+            // 蓄力时双腿微微撑住
+            this.rightLeg.xRot = 0.12F * up;
+            this.leftLeg.xRot = -0.10F * up;
         }
-        float backSwing = t < 0.75F ? 0.0F : (t - 0.75F) / 0.25F;
 
-        // 轻微前倾，蓄力越深越明显，释放时向后仰
-        this.body.xRot = 0.22F * Math.min(1.0F, t * 1.6F) - 0.40F * backSwing + tremble * 0.4F;   // TNL1101
-        // 护脸时低头，尖啸时抬头
-        this.head.xRot = 0.52F * up - 0.85F * backSwing + tremble;   // TNL1101 stronger, so the hair visibly follows
-        this.head.yRot = netHeadYaw * 0.4F;
-
-        // TNL1094 用户："护脸反了，手臂往前张开而不是挡住脸，
-        // 而且从来没向后甩"。yRot 与 zRot 反过来，让双手向内收拢
-        // 贴到脸上，释放则插值到一个明确的向后张开姿势。
-        float guardX = -1.35F * up;                       // raise the hands forward and up
-        float guardY = -0.45F * up;                       // bring the right hand toward the centre
-        float guardZ = 0.90F * up;                        // adduct it in front of the face
-        float openX = 1.40F;                              // release: arms swung behind the body
-        float openY = 0.50F;
-        float openZ = -0.35F;
-
-        this.rightArm.xRot = guardX * (1.0F - backSwing) + openX * backSwing + tremble;
-        this.rightArm.yRot = guardY * (1.0F - backSwing) + openY * backSwing;
-        this.rightArm.zRot = guardZ * (1.0F - backSwing) + openZ * backSwing;
-        this.leftArm.xRot = guardX * (1.0F - backSwing) + openX * backSwing - tremble;
-        this.leftArm.yRot = -guardY * (1.0F - backSwing) - openY * backSwing;
-        this.leftArm.zRot = -guardZ * (1.0F - backSwing) - openZ * backSwing;
-
-        // 蓄力时双腿微微撑住
-        this.rightLeg.xRot = 0.12F * up;
-        this.leftLeg.xRot = -0.10F * up;
         // TNL1105 混沌和弦：唤魔者式施法，双手高举并摆动。
         long nowMs = System.currentTimeMillis();
 
@@ -181,12 +189,6 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         this.hat.yRot = this.head.yRot;
         this.hat.zRot = this.head.zRot;
 
-        // TNL1099 探针改到"姿势应用之后"再跑，以前打的是静止值
-        if (entity.tickCount % 10 == 0) {
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
-                    "TNL1099 applied t={} bodyX={} headX={} hatY={} rightArmX={}",
-                    t, this.body.xRot, this.head.xRot, this.hat.yRot, this.rightArm.xRot);
-        }
 
     }
 }

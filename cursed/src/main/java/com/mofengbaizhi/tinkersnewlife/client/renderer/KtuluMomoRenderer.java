@@ -93,6 +93,7 @@ public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidMo
         // TNL1156 明确告诉模型这一帧属于哪个技能
         com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.CHORD = chordCast;
         com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.BLINK = tnl$blinkPose;
+        com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.RESONANCE = tnl$resonancePose;
         // TNL1129 原型（§1166 那套）是在实体渲染链里画的，这里照做。
         // 用局部坐标：姿态矩阵已经落在实体上，残影就填相对它的偏移。
         // TNL1130 现在由原型 ThrustGhostRenderer 画，不必再画一遍
