@@ -437,12 +437,8 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
 
     // TNL1246 旧的 DATA_CHARGING 已删除：没有任何地方写它，读它的也只有渲染器那一处，
     // 而渲染器现在改成读技能上报的动画通道（TNL1244）。留着只会误导人。
-    // TNL1161 用户："施法标记为什么在玩家身上，应该挂在墨默身上 —— 施法和
-    // 蓄力本来就是一回事"。对，而且实体数据通道是**已被证明**能到客户端的
-    // 那条（共鸣就在用）。和弦也在同一条通道上拿了自己的标志。
-    private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_CHORD =
-            net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class,
-                    net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+    // TNL1248 旧的 DATA_CHORD 标志也删掉了：姿势现在由技能通过动画通道自己上报／自己收
+    // （见 MomoSpellGoal.animPose 与 ChordGoal 的重写），实体上不再留这类"施法布尔"。
 
     // TNL1169 诡厄的做法（SpellCastingCultist）：一个同步 byte 说明在放哪个法术，
     // 一个同步 int 倒数计时。0 空闲、1 瞬身、2 幻音共鸣、3 混沌和弦。
@@ -497,7 +493,6 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
 
     protected void defineSynchedData() {
         super.defineSynchedData();
-        this.entityData.define(DATA_CHORD, Boolean.FALSE);
         this.entityData.define(DATA_SPELL, (byte) 0);
         this.entityData.define(DATA_CAST_TICKS, 0);
         this.entityData.define(DATA_ANIM_POSE, (byte) 0);
@@ -612,12 +607,8 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         return this.tnl$spell() == 3;      // TNL1169 derived
     }
 
-    public void tnl$setChordCasting(boolean casting) {
-        this.entityData.set(DATA_CHORD, casting);
-        if (!casting && this.tnl$spell() == 3) {
-            this.tnl$setSpell(0, 0);
-        }
-    }
+    /** TNL1248 旧的 setChordCasting 已删除（它只写 DATA_CHORD；姿势改由技能上报）。*/
+    /** TNL1108 保持和弦姿势一段时间的那对方法也已随旧标志一起清理 */
 
 
 }
