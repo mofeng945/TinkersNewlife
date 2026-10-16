@@ -56,87 +56,6 @@ public final class AstralResonanceHandler {
     /** TNL1090 user: keep the boss melee at zero while the animation is being tested. */
     private static final boolean ATTACK_ZERO = true;
 
-    private static void tickOne(ServerLevel level, KtuluMomo momo, long now) {
-        UUID id = momo.getUUID();
-        if (ATTACK_ZERO) {
-            var inst = momo.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
-            if (inst != null && inst.getBaseValue() != 0.0D) {
-                inst.setBaseValue(0.0D);
-            }
-        }
-
-        // already charging: keep it rooted and shriek when the charge is done
-        Long until = CHARGING_UNTIL.get(id);
-        if (until != null) {
-            if (now < until) {
-                momo.setDeltaMovement(Vec3.ZERO);
-                momo.hurtMarked = true;
-                // TNL1164 user: never clear the AI for a wind up or a recovery -- it
-                // sticks (teleporting high left the boss frozen two seconds). Rooting is done
-                // by zeroing the movement every tick instead, which is already done above.
-                if (momo.getNavigation() != null) {
-                    momo.getNavigation().stop();
-                }
-                level.sendParticles(ParticleTypes.SCULK_SOUL,
-                        momo.getX(), momo.getY() + 1.2D, momo.getZ(), 1, 0.3D, 0.4D, 0.3D, 0.01D);   // TNL1108 halved
-                return;
-            }
-            CHARGING_UNTIL.remove(id);
-            shriek(level, momo, now);
-            momo.tnl$setCharging(false);
-            return;
-        }
-
-        long cd = momo.tnl$resonanceCoolUntil();
-        if (now < cd) {
-            return;
-        }
-
-        LivingEntity target = momo.getTarget();
-        if (target == null || !target.isAlive()) {
-            NEAR.remove(id);
-            return;
-        }
-        if (momo.distanceTo(target) > NEAR_RANGE) {
-            NEAR.remove(id);
-            return;
-        }
-        int t = NEAR.merge(id, 5, Integer::sum);
-        if (t >= NEAR_TICKS_REQUIRED) {
-            // TNL1162 this handler never checked the cast lock. While the chord was casting it happily
-            // started its own charge, kept calling setNoAi(true) every tick, and that is why the chord
-            // felt like it had a huge aftercast -- the boss was frozen by this skill all along.
-            if (!MomoCastLock.canStart(id, now)) {
-                return;
-            }
-            NEAR.remove(id);
-            CHARGING_UNTIL.put(id, now + CHARGE_TICKS);
-            MomoCastLock.begin(momo.getUUID(), now, CHARGE_TICKS + 20);   // TNL1154 one skill at a time
-            // Warden style wind up: root in place, charge sound, soul particles
-            momo.setDeltaMovement(Vec3.ZERO);
-            momo.hurtMarked = true;
-            if (momo.getNavigation() != null) {
-                momo.getNavigation().stop();
-            }
-            momo.tnl$setCharging(true);
-            // TNL1168 face the target ONCE at the start. The old code called setLookAt every tick while
-            // charging, and the look control fighting the pose is what made the head swing around.
-            if (target != null) {
-                double dx = target.getX() - momo.getX();
-                double dz = target.getZ() - momo.getZ();
-                float yaw = (float) (Math.toDegrees(Math.atan2(dz, dx)) - 90.0D);
-                momo.setYRot(yaw);
-                momo.setYHeadRot(yaw);
-                momo.setYBodyRot(yaw);
-            }   // TNL1086 drives the charge animation on the client
-            level.playSound(null, momo.blockPosition(), SoundEvents.WARDEN_SONIC_CHARGE,
-                    SoundSource.HOSTILE, 2.0F, 1.0F);
-            level.sendParticles(ParticleTypes.SCULK_SOUL,
-                    momo.getX(), momo.getY() + 1.2D, momo.getZ(), 16, 0.5D, 0.8D, 0.5D, 0.02D);   // TNL1108 halved
-            TinkersNewlife.LOGGER.warn("TNL1082 Momo begins Astral Resonance charge on {}",
-                    target.getName().getString());
-        }
-    }
 
     /** the shriek itself: Warden sonic boom feel, knock the target past ten blocks. */
     public static void shriek(ServerLevel level, KtuluMomo momo, long now) {   // TNL1174 called by ResonanceGoal
@@ -144,7 +63,6 @@ public final class AstralResonanceHandler {
         // TNL1164 user: never clear the AI for a wind up or a recovery -- it
         // sticks (teleporting high left the boss frozen two seconds). Rooting is done
         // by zeroing the movement every tick instead, which is already done above.
-            MomoCastLock.end(momo.getUUID(), now, 40);   // TNL1154 release the cast lock      // TNL1113 the wind up is done
         LivingEntity target = momo.getTarget();
         Vec3 origin = momo.position().add(0.0D, 1.0D, 0.0D);
         level.playSound(null, momo.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM,
