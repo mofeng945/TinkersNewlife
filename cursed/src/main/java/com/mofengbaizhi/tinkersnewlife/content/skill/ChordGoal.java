@@ -123,7 +123,9 @@ public final class ChordGoal extends MomoSpellGoal {
             int gap = GAP_MIN_TICKS + RNG.nextInt(GAP_RANGE_TICKS + 1);
             this.nextWaveAt = now + gap;
             double baseY = this.momo.getY() + (RNG.nextBoolean() ? HEIGHT_LOW : HEIGHT_HIGH);
-            this.rings.add(new double[] {0.0D, baseY});
+            // TNL1235 用户："墨默释放着和弦开始移动，于是带着波跑"。
+            // 每道波必须记住**自己出生时的圆心**，不能再实时读 momo 坐标。
+            this.rings.add(new double[] {0.0D, baseY, this.momo.getX(), this.momo.getY(), this.momo.getZ()});
             level.playSound(null, this.momo.blockPosition(), net.minecraft.sounds.SoundEvents.WARDEN_SONIC_BOOM,
                     net.minecraft.sounds.SoundSource.HOSTILE, 1.8F, 1.0F);
             TinkersNewlife.LOGGER.warn("TNL1176 chord wave {} of {} at height {}, next in {} ticks",
@@ -143,8 +145,8 @@ public final class ChordGoal extends MomoSpellGoal {
                 it.remove();
                 continue;
             }
-            DiscordantChordHandler.drawRing(level, this.momo, ring[0], ring[1]);
-            DiscordantChordHandler.hitRing(level, this.momo, ring[0], ring[1]);
+            DiscordantChordHandler.drawRing(level, this.momo, ring[2], ring[3], ring[4], ring[0], ring[1]);
+            DiscordantChordHandler.hitRing(level, this.momo, ring[2], ring[3], ring[4], ring[0], ring[1]);
         }
 
         if (!this.released) {
@@ -165,7 +167,7 @@ public final class ChordGoal extends MomoSpellGoal {
         return this.momo.tnl$castTicks() <= 0;
     }
 
-    /** 在飞的波：[0] 半径，[1] 基准高度 */
+    /** 在飞的波：[0] 半径，[1] 基准高度，[2..4] 出生时的圆心 x/y/z */
     private final java.util.List<double[]> rings = new java.util.ArrayList<>();
     private long releaseAt;
 
@@ -267,14 +269,14 @@ static final class DiscordantChordHandler {   // TNL1213 收编自原 Discordant
     }
 
     /** TNL1114 深灰尘埃，看着像圆环而不是一团白。*/
-    public static void drawRing(ServerLevel level, KtuluMomo momo, double radius, double baseY) {
+    public static void drawRing(ServerLevel level, KtuluMomo momo, double ox, double oy, double oz, double radius, double baseY) {   // TNL1235 圆心由调用方给
         var grey = new net.minecraft.core.particles.DustParticleOptions(
                 new org.joml.Vector3f(0.10F, 0.10F, 0.12F), 1.6F);
         int points = Math.max(32, (int) (radius * 8.0D));
         for (int i = 0; i < points; i++) {
             double a = (Math.PI * 2.0D) * i / points;
-            double x = momo.getX() + Math.cos(a) * radius;
-            double z = momo.getZ() + Math.sin(a) * radius;
+            double x = ox + Math.cos(a) * radius;
+            double z = oz + Math.sin(a) * radius;
             level.sendParticles(grey, x, baseY + 0.25D, z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
         }
     }
@@ -283,7 +285,7 @@ static final class DiscordantChordHandler {   // TNL1213 收编自原 Discordant
      * TNL1153 被波扫到的东西吃监守者音波伤害并被掀飞，随后
      * 虚弱又迟缓。每道波在自己的高度上，所以矮的那道可以跳过去。
      */
-    public static void hitRing(ServerLevel level, KtuluMomo momo, double radius, double baseY) {
+    public static void hitRing(ServerLevel level, KtuluMomo momo, double ox, double oy, double oz, double radius, double baseY) {   // TNL1235 圆心由调用方给
         double band = 0.9D;
         for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class,
                 momo.getBoundingBox().inflate(MAX_RADIUS + 2.0D))) {

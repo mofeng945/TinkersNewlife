@@ -282,6 +282,18 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             }
         }
 
+        // TNL1235 状态看门狗：castTicks 已经归零却还写着"在施法" ⇒ 一定是哪个 Goal 没收尾。
+        // 这会永久堵住 ready()（用户："瞬身触发一次之后就不触发"），所以在这里强制清掉。
+        if (this.tnl$spell() != 0 && this.tnl$castTicks() <= 0) {
+            if (++this.tnl$staleSpellTicks > 5) {
+                this.tnl$staleSpellTicks = 0;
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL1235 stale spell {} cleared", this.tnl$spell());
+                this.tnl$setSpell(0, 0);
+            }
+        } else {
+            this.tnl$staleSpellTicks = 0;
+        }
+
         // TNL1171 墨默自己驱动技能，就像诡厄使徒自己驱动它的 Goal。
         // 没有全服扫描，也没有能比实体活得久的技能表。
 
@@ -461,6 +473,9 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     // TNL1172 诡厄使徒每个法术一个冷却字段（coolDown / tornadoCoolDown /
     // infernoCoolDown / monolithCoolDown / damnedCoolDown）。这里同理，存在实体上，
     // 跟它一起生灭，而不是放在按 uuid 索引的静态表里。
+    /** TNL1235 castTicks 归零却还 busy 的连续 tick 数 */
+    private int tnl$staleSpellTicks = 0;
+
     private long tnl$blinkCoolUntil = 0L;
     private long tnl$resonanceCoolUntil = 0L;
     private long tnl$chordCoolUntil = 0L;
