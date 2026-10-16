@@ -24,14 +24,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID)
 public final class AstralResonanceHandler {
 
-    private static final double NEAR_RANGE = 2.0D;
-    private static final int NEAR_TICKS_REQUIRED = 400;    // TNL1103 user: 20 s at 20 tps
-    private static final int CHARGE_TICKS = 40;            // 2 s
     private static final int COOLDOWN_TICKS = 200;         // 10 s before it can build up again
     private static final double KNOCK_DISTANCE = 11.0D;
 
     private static final Map<UUID, Integer> NEAR = new ConcurrentHashMap<>();
-    private static final Map<UUID, Long> CHARGING_UNTIL = new ConcurrentHashMap<>();
 
     private AstralResonanceHandler() {
     }
@@ -40,7 +36,6 @@ public final class AstralResonanceHandler {
     /** kept only as a no-op marker: the entity drives this now */
 
     /** TNL1090 user: keep the boss melee at zero while the animation is being tested. */
-    private static final boolean ATTACK_ZERO = true;
 
 
     /** the shriek itself: Warden sonic boom feel, knock the target past ten blocks. */

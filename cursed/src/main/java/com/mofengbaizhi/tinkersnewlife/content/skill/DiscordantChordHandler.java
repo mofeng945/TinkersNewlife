@@ -29,40 +29,26 @@ import java.util.concurrent.ConcurrentHashMap;
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID)
 public final class DiscordantChordHandler {
 
-    private static final int CHARGE_TICKS = 40;        // 2 s
     /** TNL1153 ten waves per cast */
-    private static final int WAVES = 10;
     /** TNL1153 random gap between waves: 1.5 s to 3 s */
-    private static final int GAP_MIN_TICKS = 30;
-    private static final int GAP_RANGE_TICKS = 30;
     /** TNL1153 range is 30 blocks now */
     private static final double MAX_RADIUS = 30.0D;
-    private static final double SPEED = 0.15D;         // TNL1106 user: much slower spread
     /** TNL1153 the two spawn heights above the ground */
-    private static final double HEIGHT_LOW = 0.15D;
-    private static final double HEIGHT_HIGH = 2.3D;
     /** vanilla warden sonic boom damage */
     private static final float SONIC_DAMAGE = 10.0F;
     /** TNL1154 the cooldown starts when the cast ENDS, not when it starts */
-    private static final int COOLDOWN_TICKS = 2400;    // TNL1159 user: 120 s, measured from the end of the last wave
     private static final int EFFECT_TICKS = 100;       // 5 s of weakness and slowness
 
     /** per momo: charge until this game time, -1 when idle */
-    private static final Map<UUID, Long> CHARGE_UNTIL = new ConcurrentHashMap<>();
     /** per momo: the live rings of the current cast */
-    private static final Map<UUID, List<Ring>> RINGS_BY_MOMO = new ConcurrentHashMap<>();
     /** TNL1153 how many waves are still waiting to be released */
-    private static final Map<UUID, Integer> QUEUED = new ConcurrentHashMap<>();
     /** TNL1153 when the next wave is due */
-    private static final Map<UUID, Long> QUEUE_AT = new ConcurrentHashMap<>();
     /** TNL1157 when the hard control of this cast ends */
-    private static final Map<UUID, Long> RELEASE_AT = new ConcurrentHashMap<>();
 
     /** TNL1155 who currently carries the chord jump buff */
     private static final List<LivingEntity> JUMPED = new ArrayList<>();
 
     /** TNL1153 rng for the gaps and the heights */
-    private static final java.util.Random RNG = new java.util.Random();
 
     private static final class Ring {
         double radius;
