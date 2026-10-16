@@ -159,13 +159,23 @@ public final class ChordGoal extends MomoSpellGoal {
             this.releaseAt = 0L;
             this.released = true;
             this.stun.end();                   // TNL1232 硬控一结束就放手（波继续飞）
-            this.momo.tnl$setChordCasting(false);
             TinkersNewlife.LOGGER.warn("TNL1200 chord control released, waves still flying");
         }
         if (this.released && this.rings.isEmpty()) {
             return true;
         }
         return this.momo.tnl$castTicks() <= 0;
+    }
+
+    /**
+     * TNL1247 技能自己决定姿势什么时候收：硬控结束（released）后就不再摆和弦姿势，
+     * 由这里返回 NONE —— 取代了旧的 `tnl$setChordCasting(false)` 那条同步标志。
+     */
+    @Override
+    protected com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose animPose() {
+        return this.released
+                ? com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.NONE
+                : com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.CHORD;
     }
 
     /** 在飞的波：[0] 半径，[1] 基准高度，[2..4] 出生时的圆心 x/y/z */

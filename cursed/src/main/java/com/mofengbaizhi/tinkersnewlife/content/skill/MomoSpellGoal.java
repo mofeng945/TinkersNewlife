@@ -101,8 +101,16 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
         this.momo.tnl$setSpell(this.spellId, this.totalTicks);
         // TNL1244 技能自己上报动画（用户："把动画动作的调用打包在技能类里面"）。
         // 每个技能可以重写 animProgress() 决定自己的节奏。
-        this.momo.tnl$setAnim(this.poseKind().ordinal(), this.animProgress());
+        this.momo.tnl$setAnim(this.animPose().ordinal(), this.animProgress());
         this.onStart();
+    }
+
+    /**
+     * TNL1244 本技能此刻该摆的姿势。默认就是自己的 {@link #poseKind()}；
+     * 子类想"中途收姿势"（例如和弦在硬控结束后就要放下双手）就重写它。
+     */
+    protected com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose animPose() {
+        return this.poseKind();
     }
 
     /**
@@ -139,7 +147,7 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
             this.tnl$done = true;                 // TNL1236 同上：不在这里调 stop()
         }
         // TNL1244 每 tick 把动画进度上报给客户端（技能驱动，渲染器只搬运）
-        this.momo.tnl$setAnim(this.poseKind().ordinal(), this.animProgress());
+        this.momo.tnl$setAnim(this.animPose().ordinal(), this.animProgress());
     }
 
     /** TNL1236 本技能是否已经该结束（由 GoalSelector 读它并调 stop()） */
