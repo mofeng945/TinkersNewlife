@@ -45,6 +45,7 @@ public final class ResonanceGoal extends MomoSpellGoal {
 
     @Override
     public boolean canUse() {
+        // 触发判断发生在定身之前 ⇒ 这里读实体自己的目标
         if (!MomoSkills.ASTRAL_RESONANCE) {
             return false;
         }
@@ -55,7 +56,7 @@ public final class ResonanceGoal extends MomoSpellGoal {
                 inst.setBaseValue(0.0D);
             }
         }
-        LivingEntity target = this.momo.getTarget();
+        LivingEntity target = this.stun.target();
         if (target == null || !target.isAlive()) {
             this.nearTicks = 0;
             return false;
@@ -80,7 +81,7 @@ public final class ResonanceGoal extends MomoSpellGoal {
     @Override
     protected void onStart() {
         ServerLevel level = (ServerLevel) this.momo.level();
-        LivingEntity target = this.momo.getTarget();
+        LivingEntity target = this.stun.target();
         this.momo.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
         this.momo.hurtMarked = true;
         if (this.momo.getNavigation() != null) {
@@ -132,7 +133,7 @@ public final class ResonanceGoal extends MomoSpellGoal {
         // TNL1164 user: never clear the AI for a wind up or a recovery -- it
         // sticks (teleporting high left the boss frozen two seconds). Rooting is done
         // by zeroing the movement every tick instead, which is already done above.
-        LivingEntity target = this.momo.getTarget();
+        LivingEntity target = this.stun.target();
         Vec3 origin = this.momo.position().add(0.0D, 1.0D, 0.0D);
         level.playSound(null, this.momo.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM,
                 SoundSource.HOSTILE, 3.0F, 1.0F);

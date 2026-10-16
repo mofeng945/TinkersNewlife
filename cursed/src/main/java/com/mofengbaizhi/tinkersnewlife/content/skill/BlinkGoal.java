@@ -43,6 +43,7 @@ public final class BlinkGoal extends MomoSpellGoal {
 
     @Override
     public boolean canUse() {
+        // 触发判断发生在定身之前 ⇒ 这里读实体自己的目标
         if (!MomoSkills.BLINK) {
             return false;
         }
@@ -57,12 +58,7 @@ public final class BlinkGoal extends MomoSpellGoal {
     protected void onStart() {
         ServerLevel level = (ServerLevel) this.momo.level();
         this.jumped = false;
-        this.momo.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
-        this.momo.hurtMarked = true;
-        if (this.momo.getNavigation() != null) {
-            this.momo.getNavigation().stop();
-        }
-        LivingEntity target = this.momo.getTarget();
+        LivingEntity target = this.stun.target();
         if (target != null) {
             this.momo.getLookControl().setLookAt(target, 30.0F, 30.0F);
         }
@@ -73,7 +69,7 @@ public final class BlinkGoal extends MomoSpellGoal {
     @Override
     protected boolean onTick() {
         ServerLevel level = (ServerLevel) this.momo.level();
-        LivingEntity target = this.momo.getTarget();
+        LivingEntity target = this.stun.target();
         if (!this.jumped && this.momo.tnl$castTicks() <= AFTERCAST_TICKS) {
             this.jumped = true;
             if (target != null && target.isAlive()) {

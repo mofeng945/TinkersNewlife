@@ -73,7 +73,7 @@ public final class ChordGoal extends MomoSpellGoal {
         if (!MomoSkills.DISCORDANT_CHORD) {
             return false;
         }
-        LivingEntity target = this.momo.getTarget();
+        LivingEntity target = this.stun.target();
         if (target == null || !target.isAlive() || this.momo.distanceTo(target) > MAX_RADIUS) {
             return false;
         }
@@ -92,7 +92,7 @@ public final class ChordGoal extends MomoSpellGoal {
         if (this.momo.getNavigation() != null) {
             this.momo.getNavigation().stop();
         }
-        LivingEntity target = this.momo.getTarget();
+        LivingEntity target = this.stun.target();
         if (target != null) {
             double dx = target.getX() - this.momo.getX();
             double dz = target.getZ() - this.momo.getZ();
