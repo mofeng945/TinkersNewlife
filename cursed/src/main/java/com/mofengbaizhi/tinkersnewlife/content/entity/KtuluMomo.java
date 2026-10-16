@@ -241,6 +241,26 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         if (this.level().isClientSide || this.tnl$dead) {
             return;   // TNL893 \u2605\u771f\u6b7b\u540e\u4e0d\u518d\u62a4\u8840/\u56de\u5f39 \u2713
         }
+        // TNL1179 the boss bar is maintained every tick, the way ModServerBossInfo does it in Goety:
+        // progress straight from the authoritative health, and nearby players re-attached regularly.
+        // addPlayer alone is a no-op when the server still has the player, so every second we force a
+        // remove+add, which is what actually re-sends the bar to a client that lost it.
+        if (this.level() instanceof net.minecraft.server.level.ServerLevel tnl$sl) {
+            this.bossEvent.setProgress(Math.max(0.0F, Math.min(1.0F,
+                    this.getHealth() / Math.max(1.0F, this.getMaxHealth()))));
+            this.bossEvent.setVisible(true);
+            boolean tnl$force = tnl$sl.getGameTime() % 20L == 0L;
+            for (net.minecraft.server.level.ServerPlayer tnl$sp : tnl$sl.players()) {
+                if (tnl$sp.distanceTo(this) > 64.0F) {
+                    continue;
+                }
+                if (tnl$force) {
+                    this.bossEvent.removePlayer(tnl$sp);
+                }
+                this.bossEvent.addPlayer(tnl$sp);
+            }
+        }
+
         // TNL1171 the momo drives its own skills, like the goety apostle drives its own goals.
         // No global scanner, no per-skill map that can outlive the entity.
         long tnl$now = this.level().getGameTime();
