@@ -5,75 +5,71 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * TNL1229 定身（用户口径：「专门写一个类或方法叫 stun，调用时清理寻路和索敌，结束时再还回去」）。
+ * TNL1229 定身（用户口径：「专门写一个类或方法叫 stun，调用时清理寻路，结束时再还回去」）。
  *
- * <p>以前定身是散在每个技能里的三行（清速度 ＋ 停寻路），各自写法还不一样，
- * 于是出现"技能结束了身体还动不了"这种残留。现在统一成一个小对象：
+ * <p>TNL1230 用户修正：「算了不清索敌，只是排斥掉寻路」—— 所以这里**不动目标**，
+ * 只做三件事：清零速度、停掉寻路、每个 tick 压住移动控制。目标一直留在实体上，
+ * 技能该看目标还看得到，近战 Goal 也不会因为丢目标而乱掉。
  *
  * <pre>
- * this.stun.begin();        // 起手：清寻路、清索敌（记住原目标）、清零速度
- * this.stun.keep();         // 施法中每 tick：保持不动
- * this.stun.end();          // 收尾：把目标还回去，身体立刻交还 AI
+ * this.stun.begin();        // 起手：清寻路 ＋ 清零速度
+ * this.stun.keep();         // 施法中每 tick：继续压住（近战 Goal 会想重新寻路）
+ * this.stun.end();          // 收尾：放开，身体立刻交还 AI
  * </pre>
- *
- * <p>被定身期间 {@link #target()} 返回**被记住的那个目标**，技能要打目标就用它，
- * 不要再用 {@code momo.getTarget()}（那时已经是 null）。
  */
 public final class MomoStun {
 
     private final KtuluMomo momo;
-    private LivingEntity savedTarget;
     private boolean active;
 
     public MomoStun(KtuluMomo momo) {
         this.momo = momo;
     }
 
-    /** 起手：清寻路 ＋ 清索敌（原目标存起来）＋ 清零速度 */
+    /** 起手：清寻路 ＋ 清零速度（**不碰目标**） */
     public void begin() {
         if (this.active) {
             return;
         }
         this.active = true;
-        this.savedTarget = this.momo.getTarget();
-        this.momo.setTarget(null);                 // 清索敌：被定身时不再挂目标
-        this.freeze();
+        this.hold();
     }
 
-    /** 施法中每 tick 调：保持不动 */
+    /** 施法中每 tick 调：近战 Goal 每 tick 都会想重新寻路，这里把它压回去 */
     public void keep() {
         if (this.active) {
-            this.freeze();
+            this.hold();
         }
     }
 
-    /** 收尾：把索敌还回去，身体交还 AI（**不再**清零速度） */
+    /** 收尾：放开定身，身体交还 AI */
     public void end() {
         if (!this.active) {
             return;
         }
         this.active = false;
-        if (this.savedTarget != null && this.savedTarget.isAlive()) {
-            this.momo.setTarget(this.savedTarget);
-        }
-        this.savedTarget = null;
         this.momo.hurtMarked = true;
     }
 
-    /** 被定身时技能该用的目标（就是被记住的那个） */
+    /** 定身期间技能该用的目标：就是实体自己的目标（本类不动它） */
     public LivingEntity target() {
-        return this.savedTarget;
+        return this.momo.getTarget();
     }
 
     public boolean active() {
         return this.active;
     }
 
-    private void freeze() {
+    /** 清寻路 ＋ 清速度 ＋ 压住移动控制 */
+    private void hold() {
         this.momo.setDeltaMovement(Vec3.ZERO);
         this.momo.hurtMarked = true;
         if (this.momo.getNavigation() != null) {
-            this.momo.getNavigation().stop();      // 清寻路
+            this.momo.getNavigation().stop();                 // 清寻路
         }
+        // TNL1230 只停寻路还不够：移动控制里可能还留着上一 tick 的"想去哪"，
+        // 直接把它钉在原地，确保这一 tick 不会自己走出去。
+        this.momo.getMoveControl().setWantedPosition(
+                this.momo.getX(), this.momo.getY(), this.momo.getZ(), 0.0D);
     }
 }
