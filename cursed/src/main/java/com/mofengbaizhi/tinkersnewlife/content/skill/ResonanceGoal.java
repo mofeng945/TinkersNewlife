@@ -63,8 +63,13 @@ public final class ResonanceGoal extends MomoSpellGoal {
             this.nearTicks = 0;
             return false;
         }
-        if (NEAR_RANGE > 0.0D && this.momo.tnl$nearCharge() < NEAR_TICKS_REQUIRED) {
-            return false;                       // TNL1240 计数由实体维护
+        if (this.momo.distanceTo(target) > NEAR_RANGE) {
+            this.nearTicks = Math.max(0, this.nearTicks - NEAR_DECAY);
+            return false;
+        }
+        this.nearTicks += 1;
+        if (this.nearTicks < NEAR_TICKS_REQUIRED) {
+            return false;
         }
         // TNL1241 这里原来是 `if (nearTicks < REQUIRED) return false;`，但计数已经搬到实体侧
         // （tnl$nearCharge），nearTicks 再也不会增加 ⇒ 永远返回 false。删掉这个死判断。
@@ -80,7 +85,6 @@ public final class ResonanceGoal extends MomoSpellGoal {
     @Override
     protected void onStart() {
         this.nearTicks = 0;                    // TNL1238 真正起手时才清计数
-        this.momo.tnl$setNearCharge(0);        // TNL1240 实体侧计数也清
         this.stun.begin();                     // TNL1232 共鸣全程定身
         ServerLevel level = (ServerLevel) this.momo.level();
         LivingEntity target = this.stun.target();
