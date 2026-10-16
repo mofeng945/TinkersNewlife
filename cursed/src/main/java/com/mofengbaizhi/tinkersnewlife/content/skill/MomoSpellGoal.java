@@ -97,13 +97,19 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
     @Override
     public void start() {
         this.runningTicks = 0;
+        this.tnl$done = false;
         this.momo.tnl$setSpell(this.spellId, this.totalTicks);
         this.onStart();
     }
 
     @Override
     public boolean canContinueToUse() {
-        return this.momo.isAlive();
+        // TNL1236 **关键修复**：结束必须走这里，不能在 tick() 里自己调 stop()。
+        // 日志实测：`TNL1203 spell 1 overran (259 ticks) … (277 ticks)` 每 tick 刷一次，
+        // 说明 tick() 里直接 stop() 之后 GoalSelector 仍然把这个 Goal 留在"运行中"，
+        // 于是它每 tick 都停一次 ⇒ spell 标志一直不清 ⇒ isBusy() 永真 ⇒
+        // 所有技能都再也触发不了，onStop() 也每 tick 跑一次（和弦"连发"就是这么来的）。
+        return !this.tnl$done && this.momo.isAlive();
     }
 
     @Override
@@ -114,14 +120,17 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
         this.runningTicks++;
         if (this.runningTicks > this.totalTicks + 40) {
             com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
-                    "TNL1203 spell {} overran ({} ticks), forcing stop", this.spellId, this.runningTicks);
-            this.stop();
+                    "TNL1203 spell {} overran ({} ticks), ending", this.spellId, this.runningTicks);
+            this.tnl$done = true;                 // TNL1236 交给 canContinueToUse() 收尾
             return;
         }
         if (this.onTick()) {
-            this.stop();
+            this.tnl$done = true;                 // TNL1236 同上：不在这里调 stop()
         }
     }
+
+    /** TNL1236 本技能是否已经该结束（由 GoalSelector 读它并调 stop()） */
+    private boolean tnl$done;
 
     /** TNL1203 本次施法已经跑了多久，给看门狗用 */
     private int runningTicks;
