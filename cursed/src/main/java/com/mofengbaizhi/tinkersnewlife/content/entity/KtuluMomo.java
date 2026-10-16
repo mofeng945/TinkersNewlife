@@ -103,9 +103,17 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.0D, true));
         this.goalSelector.addGoal(2, new WaterAvoidingRandomStrollGoal(this, 0.8D));
         // TNL1174 skills are goals now, exactly like the goety apostle registers its spells
-        this.goalSelector.addGoal(3, new com.mofengbaizhi.tinkersnewlife.content.skill.BlinkGoal(this));
-        this.goalSelector.addGoal(3, new com.mofengbaizhi.tinkersnewlife.content.skill.ResonanceGoal(this));
-        this.goalSelector.addGoal(3, new com.mofengbaizhi.tinkersnewlife.content.skill.ChordGoal(this));
+        // TNL1202 the guideline says the "enabled" flags belong in the registration, not scattered in
+        // the skills: register only what is switched on. Handy for testing a single skill at a time.
+        if (com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.BLINK) {
+            this.goalSelector.addGoal(3, new com.mofengbaizhi.tinkersnewlife.content.skill.BlinkGoal(this));
+        }
+        if (com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.ASTRAL_RESONANCE) {
+            this.goalSelector.addGoal(3, new com.mofengbaizhi.tinkersnewlife.content.skill.ResonanceGoal(this));
+        }
+        if (com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.DISCORDANT_CHORD) {
+            this.goalSelector.addGoal(3, new com.mofengbaizhi.tinkersnewlife.content.skill.ChordGoal(this));
+        }
         this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 16.0F));
         this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
