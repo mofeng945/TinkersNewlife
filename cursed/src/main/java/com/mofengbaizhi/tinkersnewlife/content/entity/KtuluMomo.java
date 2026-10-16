@@ -479,7 +479,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         if (this.tnl$lastSpell != spellId) {
             return true;
         }
-        return this.level().getGameTime() - this.tnl$lastSpellAt > 300L;
+        return this.level().getGameTime() - this.tnl$lastSpellAt > 120L;   // TNL1233 6 秒就允许再放
     }
 
     public void tnl$markSpellCast(int spellId) {

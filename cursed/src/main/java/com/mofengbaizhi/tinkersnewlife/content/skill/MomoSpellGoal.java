@@ -128,10 +128,16 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
 
     @Override
     public void stop() {
-        if (this.momo.tnl$spell() == this.spellId) {
+        boolean tnl$ours = this.momo.tnl$spell() == this.spellId;   // TNL1233 先判断再清
+        if (tnl$ours) {
             this.momo.tnl$setSpell(0, 0);
         }
-        this.momo.tnl$markSpellCast(this.spellId);   // TNL1178 remember it for the rotation
+        if (tnl$ours) {
+            // TNL1233 只有**真的放过本技能**才刷新轮转时间戳。以前无条件刷，
+            // 一旦 stop() 被反复调用（被别的 Goal 挤掉/看门狗），时间戳就一直在刷新
+            // ⇒ mayCastAgainSoon 永远为 false ⇒ "放一次之后再不放"。
+            this.momo.tnl$markSpellCast(this.spellId);
+        }   // TNL1178 remember it for the rotation
         this.onStop();
     }
 
