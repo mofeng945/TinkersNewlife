@@ -275,6 +275,10 @@ public final class CurseAffinityAttribute {
                     stripNow(sp.getInventory().getItem(i));        // ★每 tick 清掉老的原版条目 ✓
                 }
                 // ② 收集"当前装备的饰品"上的亲和
+                // TNL1269 用户反证："不是短时间清零，相反，是短时间正常"
+                //   ⇒ 确认就是"20 tick 里只有 1 tick 对不对"的问题。
+                //   即使上一版的"删＋加"已经成对，也不该让数值每 20 tick 才刷新一次：
+                //   现在**每 tick 都算**（饰品就几件，开销可忽略），彻底去掉这个门槛。
                 int fromCurios = 0;
                 var resolved = top.theillusivec4.curios.api.CuriosApi.getCuriosInventory(sp).resolve();
                 if (resolved.isPresent()) {
@@ -287,9 +291,7 @@ public final class CurseAffinityAttribute {
                             }
                             rollIfNew(sp, s);
                             stripNow(s);
-                            if (deep) {
-                                fromCurios += getItemAffinity(s);
-                            }
+                            fromCurios += getItemAffinity(s);   // ★每 tick 都算，不再看 deep
                         }
                     }
                 }
@@ -299,7 +301,7 @@ public final class CurseAffinityAttribute {
                 //   ⇒ 结果：19/20 的 tick 里修饰符被删掉却没有被加回来 ⇒ 数值 1 tick 有、19 tick 是 0。
                 //   现在整段只在 `deep` 那一 tick 做。
                 AttributeInstance inst = sp.getAttribute(CURSE_AFFINITY.get());
-                if (deep && inst != null) {
+                if (inst != null) {
                     for (AttributeModifier m : new java.util.ArrayList<>(inst.getModifiers())) {
                         if (MOD_NAME.equals(m.getName())) {
                             inst.removeModifier(m);
