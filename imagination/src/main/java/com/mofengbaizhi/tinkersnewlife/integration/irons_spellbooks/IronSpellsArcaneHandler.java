@@ -58,8 +58,17 @@ public final class IronSpellsArcaneHandler {
             TinkersNewlife.LOGGER.warn("[联动] 超位魔法：SpellOnCastEvent 挂载失败（范围/持续补偿不生效）", t);
         }
           // ⭐ 用户口径（2026-09-20）：魔导只保留「全类型法术/巫术/咒术伤害 +5%/级」✓
-          //   ⇒ 「强化物品内刻印法术等级」那条效果已移除 ✗ ⇒ ModifySpellLevelEvent 监听器不再注册 ✓
-          //   （onModifySpellLevel 方法保留以便回退 ✓ 只是不会被调用 ✓）
+          //   ⇒ 「强化物品内刻印法术等级」那条效果已移除 ✗
+          // ⚠ TNL1267 但注意：删魔导时把 **ModifySpellLevelEvent 的注册**一起删掉了 ✗，
+          //   结果 superTierMagic（超位魔法）和 originMagic（奥术始源）**也全都不生效**了 ✗。
+          //   onModifySpellLevel 里魔导那项已经是 0（只留 debug 日志用）⇒ 重新注册是安全的 ✓。
+        try {
+            Class<?> levelEvent = Class.forName("io.redspace.ironsspellbooks.api.events.ModifySpellLevelEvent");
+            bus.addListener(EventPriority.LOW, false, (Class) levelEvent,
+                    (Consumer) (Object e) -> onModifySpellLevel(e));
+        } catch (Throwable t) {
+            TinkersNewlife.LOGGER.warn("[联动] ModifySpellLevelEvent 挂载失败（超位魔法/奥术始源不生效）", t);
+        }
         try {
             Class<?> dmgEvent = Class.forName("io.redspace.ironsspellbooks.api.events.SpellDamageEvent");
             bus.addListener(EventPriority.LOW, false, (Class) dmgEvent,
