@@ -294,8 +294,12 @@ public final class CurseAffinityAttribute {
                     }
                 }
                 // ③ 同步到属性：先清掉我们自己加的那些，再加当前这一份
+                // ⚠ TNL1268 致命 bug（用户："常态咒力亲和出现然后又归零"）：
+                //   这段原来**每 tick 都跑**，但 `fromCurios` 只在 `deep`（每 20 tick）那一 tick 才累加
+                //   ⇒ 结果：19/20 的 tick 里修饰符被删掉却没有被加回来 ⇒ 数值 1 tick 有、19 tick 是 0。
+                //   现在整段只在 `deep` 那一 tick 做。
                 AttributeInstance inst = sp.getAttribute(CURSE_AFFINITY.get());
-                if (inst != null) {
+                if (deep && inst != null) {
                     for (AttributeModifier m : new java.util.ArrayList<>(inst.getModifiers())) {
                         if (MOD_NAME.equals(m.getName())) {
                             inst.removeModifier(m);
