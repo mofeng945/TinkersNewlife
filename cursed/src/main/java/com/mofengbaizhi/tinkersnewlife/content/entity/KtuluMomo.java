@@ -1019,7 +1019,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             case 6 -> "kick";
             case 7 -> "chord_wave";
             case 8 -> "walk";
-            default -> null;
+            default -> "walk";      // TNL1297 用户：NONE 也映射到 walk（平时别像滑行）
         };
         if (name == null) {
             return software.bernie.geckolib.core.object.PlayState.STOP;
