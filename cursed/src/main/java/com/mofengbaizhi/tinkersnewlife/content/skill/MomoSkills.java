@@ -20,6 +20,9 @@ public final class MomoSkills {
     /** TNL1253 生息绝响：血量 < 80% 时展开 8 格死生领域 10 秒（一局一次） */
     public static final boolean BREATH_REQUIEM = true;
 
+    /** TNL1282 拉莱耶之影：血量 <= 50% 时自动召唤 3 个分身（无前摇 / 不可打断 / 一局一次） */
+    public static final boolean RLYEH_SHADOW = true;
+
     private MomoSkills() {
     }
 }

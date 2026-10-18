@@ -122,6 +122,10 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         if (com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.BREATH_REQUIEM) {
             this.goalSelector.addGoal(3, new com.mofengbaizhi.tinkersnewlife.content.skill.RequiemGoal(this));
         }
+        // TNL1282 拉莱耶之影：血量 <= 50% 时自动召唤 3 个分身（无前摇、不可打断）
+        if (com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.RLYEH_SHADOW) {
+            this.goalSelector.addGoal(3, new com.mofengbaizhi.tinkersnewlife.content.skill.RlyehShadowGoal(this));
+        }
         this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 16.0F));
         this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
@@ -159,10 +163,18 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
      */
     @Override
     public boolean hurt(DamageSource source, float amount) {
+        // TNL1282 分身不是 Boss 本体：不吃血量内核（限伤/无敌窗/回弹都没有），走原版受伤
+        if (!this.tnl$bossForm()) {
+            return super.hurt(source, amount);
+        }
         if (this.level().isClientSide || this.tnl$dead) {
             return super.hurt(source, amount);   // TNL893 ★真死后不干预 ✓
         }
         a.q0(this);
+        // TNL1282 拉莱耶之影：**分身还活着 ⇒ 本体免疫**（用户口径："不击杀分身无法对墨默造成伤害"）
+        if (this.tnl$shadowShieldActive()) {
+            return false;
+        }
         // TNL871 ★★ 真伤识别：★这些伤害类型不会通知 onTruePierce ✗
         //   ⇒ ★旧写法会把它当普通伤害放行（★实测 25.5 ✓）
         //   ★现在：★**按伤害类型直接拦** ✓ —— ★不掉血 ✗ ★不出伤害数字 ✗ ★不吃惩罚 ✗
@@ -246,9 +258,21 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         }
     }
 
+    /**
+     * TNL1282 是否是**Boss 本体**：分身（{@link com.mofengbaizhi.tinkersnewlife.content.entity.MomoShadow}）
+     * 覆写成 {@code false} ⇒ 不接管血量内核、不挂血条、不吃限伤/保护。
+     */
+    protected boolean tnl$bossForm() {
+        return true;
+    }
+
     /** TNL893 ★★ 真死钩子：★先置标志 + 注销内核 ✗ ⇒ ★之后不再回弹/不再护血 ✓（★掉落物与死亡判定只白一次 ✓） */
     @Override
     public void die(net.minecraft.world.damagesource.DamageSource source) {
+        if (!this.tnl$bossForm()) {
+            super.die(source);
+            return;
+        }
         this.tnl$dead = true;
         try {
             Vq$release();
@@ -293,6 +317,10 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     @Override
     public void tick() {
         super.tick();
+        // TNL1282 分身不跑 Boss 逻辑：血条维持 / 血量内核 / 索敌兜底 / 技能看门狗全都不需要
+        if (!this.tnl$bossForm()) {
+            return;
+        }
         if (this.level().isClientSide || this.tnl$dead) {
             return;   // TNL893 ★真死后不再护血/回弹 ✓
         }
@@ -388,13 +416,17 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     @Override
     public void startSeenByPlayer(ServerPlayer player) {
         super.startSeenByPlayer(player);
-        this.bossEvent.addPlayer(player);
+        if (this.tnl$bossForm()) {
+            this.bossEvent.addPlayer(player);
+        }
     }
 
     @Override
     public void stopSeenByPlayer(ServerPlayer player) {
         super.stopSeenByPlayer(player);
-        this.bossEvent.removePlayer(player);
+        if (this.tnl$bossForm()) {
+            this.bossEvent.removePlayer(player);
+        }
     }
 
     /**
@@ -427,6 +459,10 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
 
     public float getHealth() {
         try {
+            // TNL1282 分身不走内核：直接读原版血量
+            if (!this.tnl$bossForm()) {
+                return super.getHealth();
+            }
             if (this.level() == null || this.level().isClientSide || this.tnl$dead) {
                 return super.getHealth();   // TNL893 ★真死后不再遮蔽 ✓
             }
@@ -567,6 +603,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         tag.putByte("TNLSpell", (byte) this.tnl$spell());
         tag.putInt("TNLSpellTicks", this.tnl$castTicks());
         tag.putBoolean("TNLRequiemUsed", this.tnl$requiemUsed);      // TNL1253 一局只放一次，要跨存档
+        tag.putBoolean("TNLRlyehUsed", this.tnl$rlyehUsed);          // TNL1282 拉莱耶之影也只放一次
     }
 
     @Override
@@ -576,6 +613,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             this.tnl$setSpell(tag.getByte("TNLSpell"), tag.getInt("TNLSpellTicks"));
         }
         this.tnl$requiemUsed = tag.getBoolean("TNLRequiemUsed");      // TNL1253 读回"是否已放过"
+        this.tnl$rlyehUsed = tag.getBoolean("TNLRlyehUsed");          // TNL1282 读回
         this.tnl$staleSpellTicks = 0;      // 读档后不要立刻被看门狗清掉
     }
 
@@ -755,6 +793,40 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
 
     public void tnl$clearRequiemClose() {
         this.tnl$requiemClose = false;
+    }
+
+    // ==================== TNL1282 拉莱耶之影（R'lyeh's Shadow） ✓ ====================
+
+    /** 一局只放一次（进 NBT） */
+    private boolean tnl$rlyehUsed = false;
+
+    public boolean tnl$rlyehUsed() {
+        return this.tnl$rlyehUsed;
+    }
+
+    public void tnl$markRlyehUsed() {
+        this.tnl$rlyehUsed = true;
+    }
+
+    /**
+     * TNL1282 用户口径："**不击杀分身无法对墨默造成伤害**"。
+     *
+     * <p>判据：场上还有**属于这只墨默**且活着的 {@link MomoShadow} ⇒ 本体免疫。
+     * 归属靠分身上的 {@code ownerId}（生成时写入），不靠距离不靠 tag，
+     * 多只墨默同场也不会互相串。
+     */
+    public boolean tnl$shadowShieldActive() {
+        try {
+            if (this.level().isClientSide) {
+                return false;
+            }
+            java.util.UUID me = this.getUUID();
+            return !this.level().getEntitiesOfClass(MomoShadow.class,
+                    this.getBoundingBox().inflate(96.0D),
+                    s -> s.isAlive() && me.equals(s.tnl$ownerId())).isEmpty();
+        } catch (Throwable ignored) {
+            return false;
+        }
     }
 
 

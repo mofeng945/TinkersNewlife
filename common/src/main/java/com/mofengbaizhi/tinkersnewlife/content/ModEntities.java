@@ -344,8 +344,16 @@ public class ModEntities {
                             .fireImmune()
                             .build(TinkersNewlife.MOD_ID + ":ktulu_momo"));
 
-    /** 十划咒法·弱点实体（金色小球，跟随目标，可被施术者击打触发暴击） */
-    public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.WeakPointEntity>> WEAK_POINT =
+    /** TNL1282 拉莱耶之影：墨默的分身仆从（★不走 Boss 逻辑 ⇒ 见 MomoShadow） */
+    public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.MomoShadow>> MOMO_SHADOW =
+            ENTITIES.register("ktulu_momo_shadow",
+                    () -> EntityType.Builder.<com.mofengbaizhi.tinkersnewlife.content.entity.MomoShadow>of(
+                                    com.mofengbaizhi.tinkersnewlife.content.entity.MomoShadow::new, MobCategory.MONSTER)
+                            .sized(0.51f, 1.53f).clientTrackingRange(16).updateInterval(3)
+                            .fireImmune()
+                            .build(TinkersNewlife.MOD_ID + ":ktulu_momo_shadow"));
+
+    /** 十划咒法·弱点实体（金色小球，跟随目标，可被施术者击打触发暴击） */    public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.WeakPointEntity>> WEAK_POINT =
         ENTITIES.register("weak_point",
                 () -> EntityType.Builder.<com.mofengbaizhi.tinkersnewlife.content.entity.WeakPointEntity>of(
                                 com.mofengbaizhi.tinkersnewlife.content.entity.WeakPointEntity::new, MobCategory.MISC)

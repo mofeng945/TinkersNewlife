@@ -133,6 +133,14 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
         return this.progress();
     }
 
+    /**
+     * TNL1282 用户口径：拉莱耶之影"**无前摇、无法打断**" ⇒ 子类把它覆写成 {@code false}，
+     * 受击就不再收尾这个技能（★别把它当成"所有技能都不可打断" ✓ 默认仍是可打断 ✓）。
+     */
+    protected boolean interruptible() {
+        return true;
+    }
+
     @Override
     public boolean canContinueToUse() {
         // TNL1236 **关键修复**：结束必须走这里，不能在 tick() 里自己调 stop()。
@@ -141,7 +149,8 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
         // 于是它每 tick 都停一次 ⇒ spell 标志一直不清 ⇒ isBusy() 永真 ⇒
         // 所有技能都再也触发不了，onStop() 也每 tick 跑一次（和弦"连发"就是这么来的）。
         // TNL1251 被打断（半窗及以上的伤害）⇒ 立刻结束，让选择器正常调 stop()
-        return !this.tnl$done && this.momo.isAlive() && !this.momo.tnl$consumeInterrupt();
+        return !this.tnl$done && this.momo.isAlive()
+                && (!this.interruptible() || !this.momo.tnl$consumeInterrupt());
     }
 
     @Override

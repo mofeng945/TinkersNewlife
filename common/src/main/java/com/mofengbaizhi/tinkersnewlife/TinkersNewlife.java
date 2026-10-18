@@ -487,6 +487,7 @@ public class TinkersNewlife {
         event.put(ModEntities.PROJECTION_PHANTOM.get(), com.mofengbaizhi.tinkersnewlife.content.entity.ProjectionPhantomEntity.createAttributes().build());
         event.put(ModEntities.MOMO_MERCHANT.get(), com.mofengbaizhi.tinkersnewlife.content.entity.MomoMerchant.createAttributes().build());
         event.put(ModEntities.KTULU_MOMO.get(), com.mofengbaizhi.tinkersnewlife.content.entity.KtuluMomo.createAttributes().build());   // TNL850
+        event.put(ModEntities.MOMO_SHADOW.get(), com.mofengbaizhi.tinkersnewlife.content.entity.MomoShadow.createAttributes().build());   // TNL1282 拉莱耶之影分身
         event.put(ModEntities.WEAK_POINT.get(), com.mofengbaizhi.tinkersnewlife.content.entity.WeakPointEntity.createAttributes().build());
     }
 
