@@ -739,6 +739,42 @@ public final class a {
      * ⇒ ★死亡判定/受伤计算/渲染全部走这个值 ✓
      * ⇒ ★字段被改也**不影响任何判定** ✓✓
      */
+    /**
+     * TNL1272 ★合法加血入口（用户："回血效果也没成功，疑似因为血量结构复杂"）。
+     *
+     * <p>为什么 `mob.heal()` 无效：这套 Boss 的血量由内核接管，`setHealth` 会被
+     * {@link #qD} / {@link #q1} 的镜像比对夹住或回弹。
+     *
+     * <p>所以加血必须**同时**抬三处：Java 权威镜像（`wA`）、兼容镜像（`b`）、原生字段
+     * （`mob.setHealth`）。不加无敌窗、不设真伤宽限 ⇒ 不会被当成"受击"，也不会触发篡改检测。
+     */
+    public static void qG(Mob mob, float amount) {
+        try {
+            if (mob == null || amount <= 0.0F) {
+                return;
+            }
+            int s0 = k(mob);
+            if (s0 < 0) {
+                return;
+            }
+            long auth = m0(qF(mob));          // ★qF 返回 float，这里是定点的 long
+            if (auth < 0L) {
+                auth = m0(mob.getHealth());
+            }
+            long max = m0(mob.getMaxHealth());
+            long next = Math.min(max, auth + m0(amount));
+            if (next <= auth) {
+                return;                      // 已经满血
+            }
+            wA(s0, next);                    // ① Java 权威镜像
+            b.put(s0, next);                 // ② 兼容镜像
+            mob.setHealth(m1(next));         // ③ 原生字段（血条显示用）
+            wA(s0, next);                    //    setHealth 可能被 qD 改，写完再兜一次
+            b.put(s0, next);
+        } catch (Throwable ignored) {
+        }
+    }
+
     public static float qF(Mob mob) {
         try {
             int s0 = k(mob);

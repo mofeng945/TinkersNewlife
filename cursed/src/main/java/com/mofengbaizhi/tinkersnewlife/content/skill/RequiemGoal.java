@@ -128,10 +128,10 @@ public final class RequiemGoal extends MomoSpellGoal {
                 le.hurt(level.damageSources().magic(), Math.max(1.0F, le.getMaxHealth() * PCT_DAMAGE));
             }
         }
-        // TNL1256 墨默本人：生命恢复效果对它**不生效**（它的血量由血量内核接管）⇒
-        // 改成直接按**百分比**回血：领域期间每秒恢复 1% 生命上限。
+        // TNL1272 墨默本人：生命恢复药水对它无效，`heal()` 也会被血量内核夹住
+        // ⇒ 改走内核的**合法加血入口** `a.qG`（同时抬镜像与原生字段），每秒 1% 上限。
         float tnl$heal = this.momo.getMaxHealth() * 0.01F;
-        this.momo.heal(tnl$heal);
+        com.mofengbaizhi.tinkersnewlife.content.entity.ktulu.a.qG(this.momo, tnl$heal);
     }
 
     // TNL1255 六芒星已改为客户端真渲染（KtuluMomoRenderer.tnl$drawRequiemHexagram），
