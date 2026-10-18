@@ -207,26 +207,51 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
             return;
         }
 
-        // TNL1287 飞踢：斜身滞空、右腿前踢、左腿后收，双臂前后平衡。
-        //   进度 t 走 0→1，用 sin(tπ) 让"抬腿→踢出→收回"自然起落。
+        // TNL1288 飞踢：照用户给的三格参考图
+        //   图122 起手护脸 → 图123 抬膝（大腿抬到水平，身体微前倾、双手护脸）
+        //   → 图124 蹬出（身体强烈前倾、踢腿向后上方伸到水平，手臂一前一后展开）
+        //   进度由 MomoKickGoal#animProgress() 驱动：
+        //   冲刺段 0.05→0.35（抬膝），踢出瞬间 0.35→0.55（蹬出），之后收回到 0.30。
         if (POSE == com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.KICK) {
             float t = Math.max(0.0F, Math.min(1.0F, PROGRESS));
-            float swing = (float) Math.sin(t * Math.PI);
-            this.body.xRot = -0.30F * swing;                 // 身体后仰（斜向踢）
-            this.head.xRot = 0.22F * swing;
-            this.head.yRot = netHeadYaw * 0.2F;
-            this.rightLeg.xRot = -1.50F * swing;             // 前踢的腿
-            this.rightLeg.yRot = 0.0F;
-            this.rightLeg.zRot = 0.0F;
-            this.leftLeg.xRot = 0.55F * swing;               // 后收的支撑腿
+            float chamber;      // 0→1 抬膝
+            float extend;       // 0→1 蹬出
+            if (t < 0.30F) {
+                chamber = t / 0.30F;
+                extend = 0.0F;
+            } else if (t < 0.50F) {
+                chamber = 1.0F;
+                extend = (t - 0.30F) / 0.20F;
+            } else if (t < 0.62F) {
+                chamber = 1.0F;
+                extend = 1.0F;
+            } else {
+                float r = Math.min(1.0F, (t - 0.62F) / 0.38F);
+                chamber = 1.0F - r;
+                extend = 1.0F - r;
+            }
+            // 抬膝：右腿前抬到水平（-1.35）；蹬出：向后上方摆到水平（+1.55）
+            this.rightLeg.xRot = -1.35F * chamber + 1.55F * extend;
+            this.rightLeg.yRot = 0.12F * extend;
+            this.rightLeg.zRot = 0.10F * extend;
+            // 支撑腿：抬膝时站稳，蹬出时略后蹬
+            this.leftLeg.xRot = 0.18F * chamber - 0.18F * extend;
             this.leftLeg.yRot = 0.0F;
             this.leftLeg.zRot = 0.0F;
-            this.rightArm.xRot = -0.85F * swing;
-            this.rightArm.yRot = 0.0F;
-            this.rightArm.zRot = 0.30F * swing;
-            this.leftArm.xRot = 0.80F * swing;
-            this.leftArm.yRot = 0.0F;
-            this.leftArm.zRot = -0.30F * swing;
+            // 躯干：抬膝时几乎直立，蹬出时像图124那样强烈前倾
+            this.body.xRot = 0.06F * chamber + 0.92F * extend;
+            this.head.xRot = 0.06F * chamber + 0.30F * extend;
+            this.head.yRot = netHeadYaw * 0.2F;
+            // 手臂：抬膝时护脸（借共鸣的护脸数值），蹬出时一前一后展开（图124）
+            float guardX = -1.05F;
+            float guardY = -0.30F;
+            float guardZ = 0.70F;
+            this.rightArm.xRot = guardX * chamber - 0.45F * extend;
+            this.rightArm.yRot = guardY * chamber + 0.15F * extend;
+            this.rightArm.zRot = guardZ * chamber - 0.35F * extend;
+            this.leftArm.xRot = guardX * chamber + 0.55F * extend;
+            this.leftArm.yRot = -guardY * chamber - 0.15F * extend;
+            this.leftArm.zRot = -guardZ * chamber + 0.35F * extend;
             this.hat.xRot = this.head.xRot;
             this.hat.yRot = this.head.yRot;
             this.hat.zRot = this.head.zRot;

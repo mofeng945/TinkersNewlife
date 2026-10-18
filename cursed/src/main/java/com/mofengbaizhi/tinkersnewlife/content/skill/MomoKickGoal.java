@@ -40,8 +40,10 @@ public final class MomoKickGoal extends MomoSpellGoal {
     private static final int DASH_TIMEOUT = 30;
     /** 整个技能 3.5 秒（够冲刺 ＋ 踢击 ＋ 钝伤窗口） */
     private static final int TOTAL_TICKS = 70;
-    /** 2 倍速度 ⇒ moveTo 的速度倍率 */
+    /** 2 倍速度 ⇒ 冲刺时每 tick 直接给的水平速度（格/tick） */
     private static final float DASH_SPEED = 2.0F;
+    /** 冲刺速度（格/tick）：正常走路约 0.2，这里约 2 倍多，看着是"冲" */
+    private static final float CHARGE_SPEED = 0.55F;
     /** 进入踢击的距离 */
     private static final float KICK_RANGE = 3.2F;
     /** 踢击伤害系数（用户口径：20% 攻击力） */
@@ -126,8 +128,19 @@ public final class MomoKickGoal extends MomoSpellGoal {
             this.doKick(target);
             return false;
         }
-        this.momo.getLookControl().setLookAt(target, 30.0F, 30.0F);
-        this.momo.getNavigation().moveTo(target, DASH_SPEED);
+        this.momo.getLookControl().setLookAt(target, 40.0F, 40.0F);
+        // TNL1288 直线冲刺：直接给速度（约 2 倍移速 ≈ 0.55 格/tick），不走寻路 ⇒ 不会绕障碍
+        double dx = target.getX() - this.momo.getX();
+        double dz = target.getZ() - this.momo.getZ();
+        double len = Math.sqrt(dx * dx + dz * dz);
+        if (len < 1.0E-4D) {
+            dx = 0.0D;
+            dz = 1.0D;
+            len = 1.0D;
+        }
+        this.momo.setDeltaMovement(dx / len * CHARGE_SPEED,
+                this.momo.getDeltaMovement().y, dz / len * CHARGE_SPEED);
+        this.momo.hurtMarked = true;
         return false;
     }
 
@@ -218,8 +231,22 @@ public final class MomoKickGoal extends MomoSpellGoal {
         return MomoPose.KICK;
     }
 
+    /**
+     * TNL1288 三段动画（照用户的三格参考图）：
+     * <ul>
+     *   <li>冲刺段：0.05 → 0.35，模型里对应"抬膝"（图123）；</li>
+     *   <li>踢出瞬间：0.35 → 0.55，对应"蹬出"（图124）；</li>
+     *   <li>钝伤窗口里再慢慢收回 0.55 → 0.30。</li>
+     * </ul>
+     */
     @Override
     protected float animProgress() {
-        return this.progress();
+        if (!this.kicked) {
+            return 0.05F + 0.30F * Math.min(1.0F, this.dashTicks / (float) DASH_TIMEOUT);
+        }
+        float k = 1.0F - Math.max(0.0F, Math.min(1.0F, this.bluntTicks / (float) BLUNT_WINDOW));
+        float out = Math.min(1.0F, k * 10.0F);                                  // 蹬出很快
+        float back = Math.max(0.0F, Math.min(1.0F, (k - 0.55F) / 0.45F));       // 后半段收回
+        return 0.35F + 0.20F * out - 0.25F * back;
     }
 }
