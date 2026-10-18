@@ -173,9 +173,17 @@ public final class ChordGoal extends MomoSpellGoal {
      */
     @Override
     protected com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose animPose() {
-        return this.released
-                ? com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.NONE
-                : com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.CHORD;
+        // TNL1294 用户："现在的 chord 是不是应该拆成两个？一个是举起手的动画，
+        // 一个是持续挥动时的动画" —— 对 ✓ 所以按阶段上报两个不同的姿势：
+        //   蓄力段（前 CHARGE_TICKS=2 秒）⇒ CHORD（抬手）
+        //   挥动段（开始发波 ⇒ 硬控结束）⇒ CHORD_WAVE（循环挥动）
+        if (this.released) {
+            return com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.NONE;
+        }
+        boolean charging = this.momo.tnl$castTicks() > TOTAL_TICKS - CHARGE_TICKS;
+        return charging
+                ? com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.CHORD
+                : com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.CHORD_WAVE;
     }
 
     /** 在飞的波：[0] 半径，[1] 基准高度，[2..4] 出生时的圆心 x/y/z */

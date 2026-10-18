@@ -22,7 +22,9 @@ public enum MomoPose {
     /** TNL1253 生息绝响：展开死生领域时的姿势（双手上举展开）。 */
     REQUIEM,
     /** TNL1287 飞踢：斜身、右腿前踢、左腿后收。 */
-    KICK;
+    KICK,
+    /** TNL1294 和弦·挥动段：抬手完成之后，持续挥手发波的那一段。 */
+    CHORD_WAVE;
 
     /** 由同步的法术编号得到姿势类别：1 瞬身、2 共鸣、3 和弦、4 绝响、6 飞踢 */
     public static MomoPose of(int spellId) {
