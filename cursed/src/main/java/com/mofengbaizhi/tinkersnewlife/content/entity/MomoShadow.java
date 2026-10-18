@@ -8,6 +8,7 @@ import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import org.jetbrains.annotations.Nullable;
@@ -27,13 +28,16 @@ import java.util.UUID;
  *   <li>近战/远程 AI **用户后续自己写**，本轮只把**游走**做出来 ✓。</li>
  * </ul>
  *
- * <h3>⚠ 为什么继承 {@link KtuluMomo} 而不是另起一个 Monster</h3>
- * ★这样**直接复用**本体的模型/渲染器/贴图 ✓（否则要再写一个模型 ✓），
- * 同时用 {@link #tnl$bossForm()} 返回 {@code false} 把"Boss 专属逻辑"全部关掉：
- * 血量内核（限伤/无敌窗/回弹）、Boss 血条、索敌兜底、技能看门狗、真死钩子。
- * ⚠ 本类的 {@code registerGoals()} **是空的** ⇒ 不会继承本体的任何技能/近战/游走 Goal ✓。
+ * <h3>⚠⚠ TNL1284 为什么**不能**继承 {@link KtuluMomo}</h3>
+ * 上一版是 `extends KtuluMomo`（为了复用模型），结果**分身和本体的血量内核串了**：
+ * 本体随即出现"一击掉血、一击回满、只有寰宇剑能杀"的假死状态
+ * （日志：`TNL1145 momo health resynced to 1677.7` 每次命中刷一次，
+ * 而 `a.qF` 的权威值不再下降）。
+ * ⇒ 现在分身是**普通的 {@link Monster}**，**完全不碰**本体那套血量内核/限伤/保护/死亡守卫 ✓，
+ * 模型改用**原版玩家模型**（本体的渲染器本来就写着"复用商人墨默的模型（玩家模型）"，
+ * 所以外形一致）✓。
  */
-public class MomoShadow extends KtuluMomo {
+public class MomoShadow extends Monster {
 
     /** 分身的角色：两个近战、一个游走＋远程 */
     public enum Role {
@@ -51,29 +55,24 @@ public class MomoShadow extends KtuluMomo {
         this.xpReward = 20;          // 分身不是 Boss ⇒ 别给 500
     }
 
-    /** ★星之眷属的分身：不是 Boss 本体 ✓ */
-    @Override
-    protected boolean tnl$bossForm() {
-        return false;
+    public static AttributeSupplier.Builder createAttributes() {
+        return Monster.createMonsterAttributes()
+                .add(Attributes.MAX_HEALTH, 100.0D)          // 真正数值由 tnl$bindTo 设成"本体一半"
+                .add(Attributes.ATTACK_DAMAGE, 13.0D)
+                .add(Attributes.MOVEMENT_SPEED, 0.4D)
+                .add(Attributes.FOLLOW_RANGE, 48.0D)
+                .add(Attributes.KNOCKBACK_RESISTANCE, 0.6D);
     }
 
-    /** ★不继承本体的任何 Goal ✓（近战/远程 AI 由用户后续补，游走由技能生成后挂） */
+    /** ★不继承任何 Boss Goal（★近战/远程 AI 由用户后续补，游走由技能生成后挂） */
     @Override
     protected void registerGoals() {
-    }
-
-    public static AttributeSupplier.Builder createAttributes() {
-        return KtuluMomo.createAttributes();
     }
 
     // ==================== 角色 / 归属 ====================
 
     public Role tnl$role() {
         return this.role;
-    }
-
-    public void tnl$setRole(Role role) {
-        this.role = role == null ? Role.MELEE : role;
     }
 
     public boolean tnl$isWander() {
@@ -133,7 +132,7 @@ public class MomoShadow extends KtuluMomo {
         }
     }
 
-    /** ★读档后把游走 AI 补回来（Goal 不存档） */
+    /** ★读档/刷怪后把游走 AI 补回来（Goal 不存档） */
     @Override
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty,
                                         MobSpawnType reason, @Nullable SpawnGroupData spawnData,

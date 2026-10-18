@@ -136,7 +136,10 @@ public final class KtuluDeathGuard {
                 id = String.valueOf(event.getSource().getMsgId());
             }
             boolean cheatKill = id.contains("infinity");
-            if (cheatKill && momo.getHealth() > 0.0F) {
+            // TNL1285 判据补上"内核权威血量"：我们自己的 die() 会先把 tnl$dead 置上 ✗
+            //   ⇒ 这里的 `momo.getHealth()` 读到的往往是 0（字段）✗ 于是这一道从来没生效 ✓
+            if (cheatKill && (momo.getHealth() > 0.0F
+                    || com.mofengbaizhi.tinkersnewlife.content.entity.ktulu.a.qF(momo) > 0.0F)) {
                 event.setCanceled(true);
                 momo.deathTime = 0;
                 momo.hurtTime = 0;

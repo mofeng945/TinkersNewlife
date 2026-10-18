@@ -284,22 +284,27 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             super.die(source);
             return;
         }
-        // TNL1283 用户："墨默处于分身保护状态下被寰宇剑可以秒掉，血量保护保不住"。
-        //   寰宇剑路径是 hurt(最大浮点) ⇒ setHealth(0) ⇒ **die()**：die 不看血量，
-        //   所以光在 hurt 里挡不够 ⇒ 这里在**分身还在**时直接取消死亡并补回权威血量。
-        if (this.tnl$shadowShieldActive()) {
+        // TNL1283/1285 判据改成"**血量内核是否还说它活着**"：
+        //   · 分身护盾期间（用户："不击杀分身无法对墨默造成伤害"）
+        //   · 寰宇剑 hurt(最大浮点) ⇒ setHealth(0) ⇒ **die()** 三连（die 不看血量）
+        //   · 被外部改血/外部 kill 造成的"假死"
+        //   ⇒ 只要 `a.qF > 0` 就一律判成**假死**：撤销全部死亡痕迹 ＋ 把权威血量写回 ✓
+        //   ⚠ 真死（内核被 q2/q6 打到 0）时 `a.qF <= 0` ⇒ 正常走下面 ✓
+        float tnl$authNow = a.qF(this);
+        if (tnl$authNow > 0.0F) {
             this.deathTime = 0;
             this.hurtTime = 0;
             this.tnl$dead = false;
-            float auth = a.qF(this);
-            if (auth > 0.0F) {
-                this.tnl$auth = auth;
-                this.setHealth(auth);
+            this.dead = false;
+            this.tnl$auth = tnl$authNow;
+            if (Math.abs(super.getHealth() - tnl$authNow) > 0.01F) {
+                this.setHealth(tnl$authNow);
             }
             if (System.currentTimeMillis() - this.tnl$lastVanillaLog > 800L) {
                 this.tnl$lastVanillaLog = System.currentTimeMillis();
                 com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
-                        "TNL1283 die() ignored: R'lyeh's Shadow still alive");
+                        "TNL1283 die() ignored: kernel still says alive (auth={}, shield={})",
+                        tnl$authNow, this.tnl$shadowShieldActive());
             }
             return;
         }
@@ -350,6 +355,31 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         // TNL1282 分身不跑 Boss 逻辑：血条维持 / 血量内核 / 索敌兜底 / 技能看门狗全都不需要
         if (!this.tnl$bossForm()) {
             return;
+        }
+        // TNL1285 用户："死亡之后进入假死状态，一击掉血一击回满，除非用寰宇剑打否则死不掉"。
+        //   真因 ✗：某次死亡被**外部**取消（我们 die() 里已经把 tnl$dead / dead 置上了），
+        //   之后每 tick 都走"已死"分支 ⇒ `hurt()` 直接绕过血量内核 ✗
+        //   ⇒ 伤害只落在**显示字段**上 ✗ 而 KtuluDeathGuard 下一次命中又把显示值刷回内核值 ✓
+        //   ⇒ 表现就是"打一下掉血、打一下回满"✓ 只有绕过 hurt 的寰宇剑能真正 kill ✓
+        //   这里做**自愈**：只要内核还说它活着（auth > 0），就把所有死亡痕迹撤掉 ✓
+        if (!this.level().isClientSide) {
+            float tnl$authNow = a.qF(this);
+            if (tnl$authNow > 0.0F
+                    && (this.tnl$dead || this.dead || this.deathTime > 0 || super.getHealth() <= 0.0F)) {
+                this.tnl$dead = false;
+                this.dead = false;
+                this.deathTime = 0;
+                this.hurtTime = 0;
+                this.tnl$auth = tnl$authNow;
+                if (Math.abs(super.getHealth() - tnl$authNow) > 0.01F) {
+                    this.setHealth(tnl$authNow);
+                }
+                if (System.currentTimeMillis() - this.tnl$lastVanillaLog > 1000L) {
+                    this.tnl$lastVanillaLog = System.currentTimeMillis();
+                    com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                            "TNL1285 fake-death cleared, kernel auth={}", tnl$authNow);
+                }
+            }
         }
         if (this.level().isClientSide || this.tnl$dead) {
             return;   // TNL893 ★真死后不再护血/回弹 ✓
@@ -523,6 +553,9 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     public void tnl$unDead() {
         try {
             this.tnl$dead = false;
+            // TNL1285 `LivingEntity.dead` 这个原版标志也要一起清 ✗
+            //   ★否则 isDeadOrDying() 永远为真 ⇒ tick/hurt 一直走"已死"分支 ✓
+            this.dead = false;
             float auth = a.qF(this);
             if (auth > 0.0F) {
                 this.tnl$auth = auth;
@@ -857,7 +890,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             java.util.UUID me = this.getUUID();
             return !this.level().getEntitiesOfClass(MomoShadow.class,
                     this.getBoundingBox().inflate(96.0D),
-                    s -> s.isAlive() && me.equals(s.tnl$ownerId())).isEmpty();
+                    s -> s.isAlive() && s.getHealth() > 0.0F && me.equals(s.tnl$ownerId())).isEmpty();
         } catch (Throwable ignored) {
             return false;
         }

@@ -150,8 +150,9 @@ public class ClientEventHandler {
                 com.mofengbaizhi.tinkersnewlife.client.renderer.ElderManaPedestalRenderer::new);
         event.registerEntityRenderer(ModEntities.DREADSTEEL_SLASH.get(), DreadsteelSlashRenderer::new);
         event.registerEntityRenderer(com.mofengbaizhi.tinkersnewlife.content.ModEntities.KTULU_MOMO.get(), com.mofengbaizhi.tinkersnewlife.client.renderer.KtuluMomoRenderer::new);   // TNL850 Boss 克图露·墨默
-        // TNL1282 拉莱耶之影：分身走同一个模型，但**偏黑 + 半透明**
-        event.registerEntityRenderer((net.minecraft.world.entity.EntityType<? extends com.mofengbaizhi.tinkersnewlife.content.entity.KtuluMomo>) com.mofengbaizhi.tinkersnewlife.content.ModEntities.MOMO_SHADOW.get(), com.mofengbaizhi.tinkersnewlife.client.renderer.MomoShadowRenderer::new);
+        // TNL1282 拉莱耶之影：分身是独立 Monster（★不复用本体模型 ✗ 见 MomoShadow 注释），
+        // 走原版玩家模型 + 同一张贴图，偏黑 + 半透明由渲染器做
+        event.registerEntityRenderer(com.mofengbaizhi.tinkersnewlife.content.ModEntities.MOMO_SHADOW.get(), com.mofengbaizhi.tinkersnewlife.client.renderer.MomoShadowRenderer::new);
         event.registerEntityRenderer(com.mofengbaizhi.tinkersnewlife.content.ModEntities.STARFALL_ARROW.get(), com.mofengbaizhi.tinkersnewlife.client.renderer.StarfallArrowRenderer::new);   // TNL878
         // 「兵士佩刀」刀光（§810）：弧形面片 ＋ 弧光贴图（仿拔刀剑）✓ 不是横扫粒子 ✗
         event.registerEntityRenderer(ModEntities.WHIP_LASH.get(),
