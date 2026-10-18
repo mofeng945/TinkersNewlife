@@ -619,6 +619,43 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         return this.tnl$stunnedFlag || this.level().getGameTime() < this.tnl$stunUntil;
     }
 
+    /**
+     * TNL1281 ★★合法加血（★生息绝响每秒回血走这里 ✓）
+     *
+     * <p>★用户反馈：★"回血仍然是**受击后**才会回血，疑似被什么拦住了" ✓
+     *
+     * <p>★真因 ✗：{@code a.qG} 把内核/镜像/原生字段都写高了 ✓
+     * ★但 {@link #getHealth()} 返回的是**缓存字段** {@code tnl$auth} ✗
+     * ★而 {@code a.q1} 下一 tick 用 {@code mob.getHealth()}（= 旧缓存）当权威值 ✓
+     * ⇒ ★加上的血**又被拉回去** ✓
+     * ★被打一下之所以会"回血"✗：⭐受伤路径会**刷新** {@code tnl$auth} ✓
+     * ⇒ ⭐缓存才跟上 ✓（★所以看着像"受击后才回血" ✓）。
+     *
+     * <p>★所以加血之后必须**立刻刷新权威缓存**（并同步原生字段），
+     * 下一 tick 的 q1 才会拿"加过血的值"当权威 ✓。
+     */
+    public void tnl$heal(float amount) {
+        if (this.level().isClientSide || amount <= 0.0F) {
+            return;
+        }
+        try {
+            a.qG(this, amount);
+            float now = a.qF(this);
+            if (now > this.tnl$auth) {
+                this.tnl$auth = now;                 // ★关键：缓存立刻跟上
+            }
+            float shown = Math.max(this.tnl$auth, now);
+            if (Math.abs(super.getHealth() - shown) > 0.01F) {
+                this.setHealth(shown);
+            }
+            if (this.bossEvent != null) {
+                this.bossEvent.setProgress(Math.max(0.0F, Math.min(1.0F,
+                        shown / Math.max(1.0F, this.getMaxHealth()))));
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
     // TNL1251 受击硬直：由伤害路径（KtuluDeathGuard.onHurt）判定后置上，MomoHurtGoal 接手。
     // 阈值按用户口径：夹后伤害 >= 半窗 ⇒ 打断技能；>= 满窗 ⇒ 打断 + 受击动画 + 1 秒硬直。
     private int tnl$hurtStaggerTicks = 0;

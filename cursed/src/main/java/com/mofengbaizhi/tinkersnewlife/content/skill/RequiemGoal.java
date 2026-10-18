@@ -140,7 +140,9 @@ public final class RequiemGoal extends MomoSpellGoal {
         if (tnl$missing > 0.5F) {
             int tnl$leftSec = Math.max(1, (this.momo.tnl$castTicks() + 19) / 20);
             float tnl$heal = Math.max(tnl$maxHp * 0.01F, tnl$missing / tnl$leftSec);
-            com.mofengbaizhi.tinkersnewlife.content.entity.ktulu.a.qG(this.momo, tnl$heal);
+            // TNL1281 用户："回血仍然是受击后才会回血" ⇒ 必须走 `tnl$heal`：
+            // 它除了写内核，还会**立刻刷新权威血量缓存**（否则下一 tick 的 q1 用旧缓存把血拉回去）。
+            this.momo.tnl$heal(tnl$heal);
         }
     }
 

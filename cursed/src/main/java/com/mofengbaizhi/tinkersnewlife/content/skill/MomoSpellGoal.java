@@ -72,6 +72,14 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
         if (this.momo.level().isClientSide) {
             return false;
         }
+        // TNL1281 用户口径：「硬直状态期间如果技能条件满足，将不会释放失败，而是将启动延后到
+        // 硬直结束；只有在受击机制启动时**正在释放**的法术会被打断」。
+        // 所以这里在**起手前**直接拦住：硬直/定身期间不 start()（⇒ 不写冷却、不记 lastSpell、
+        // 不浪费一次机会），等硬直一结束，GoalSelector 下一 tick 就会自然再问一次 canUse()。
+        // 真正"打断正在放的法术"仍然只走 canContinueToUse() 里的 tnl$consumeInterrupt()。
+        if (this.momo.tnl$isStunned() || this.momo.tnl$hurtStaggerTicks() > 0) {
+            return false;
+        }
         return !this.momo.tnl$isBusy()
                 && this.cooldownLeft() <= 0
                 && this.momo.isAlive()
