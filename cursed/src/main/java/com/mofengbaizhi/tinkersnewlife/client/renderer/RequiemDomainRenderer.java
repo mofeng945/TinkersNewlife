@@ -32,11 +32,45 @@ public final class RequiemDomainRenderer {
 
     private static final float RADIUS = 6.0F;
 
+    /** TNL1271 探针限流 */
+    private static long LAST_PROBE = 0L;
+
     private RequiemDomainRenderer() {
     }
 
     @SubscribeEvent
     public static void onStage(RenderLevelStageEvent event) {
+        // TNL1271 探针：用户要求"放心加"。每秒打一行，定位法阵为何不可见。
+        // 看什么：stage 是否 AFTER_ENTITIES / 找到几只墨默 / 其中几只在 REQUIEM / 第一只的 animPose。
+        try {
+            Minecraft mcP = Minecraft.getInstance();
+            long nowP = System.currentTimeMillis();
+            if (mcP.level != null && nowP - LAST_PROBE > 1000L) {
+                LAST_PROBE = nowP;
+                int tnl$momo = 0;
+                int tnl$req = 0;
+                int tnl$sample = -1;
+                for (net.minecraft.world.entity.Entity e : mcP.level.entitiesForRendering()) {
+                    if (e instanceof KtuluMomo m) {
+                        if (tnl$momo == 0) {
+                            tnl$sample = m.tnl$animPose();
+                        }
+                        tnl$momo++;
+                        if (m.tnl$animPose() == MomoPose.REQUIEM.ordinal()) {
+                            tnl$req++;
+                        }
+                    }
+                }
+                TinkersNewlife.LOGGER.warn(
+                        "TNL1271 domain stage={} momo={} requiem={} animPoseSample={} cam=({},{},{})",
+                        event.getStage(), tnl$momo, tnl$req, tnl$sample,
+                        (int) event.getCamera().getPosition().x,
+                        (int) event.getCamera().getPosition().y,
+                        (int) event.getCamera().getPosition().z);
+            }
+        } catch (Throwable t) {
+            TinkersNewlife.LOGGER.warn("TNL1271 probe failed: {}", t.toString());
+        }
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) {
             return;
         }
