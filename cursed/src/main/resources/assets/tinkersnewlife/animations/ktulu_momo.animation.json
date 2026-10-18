@@ -19,6 +19,7 @@
 			}
 		},
 		"resonance": {
+			"loop": "hold_on_last_frame",
 			"animation_length": 1.2083,
 			"bones": {
 				"body": {
@@ -107,32 +108,6 @@
 						"1.625": [0, 0, -142.5],
 						"1.875": [0, 0, -125],
 						"2.0": [0, 0, -137.5]
-					}
-				}
-			}
-		},
-		"requiem": {
-			"loop": true,
-			"animation_length": 1,
-			"bones": {
-				"body": {
-					"rotation": {
-						"0.0": [0, 0, 0]
-					}
-				},
-				"head": {
-					"rotation": {
-						"0.0": [-0.17, 0, 0]
-					}
-				},
-				"rightArm": {
-					"rotation": {
-						"0.0": [1.45, -0.56, 0.3]
-					}
-				},
-				"leftArm": {
-					"rotation": {
-						"0.0": [1.45, 0.56, -0.3]
 					}
 				}
 			}
