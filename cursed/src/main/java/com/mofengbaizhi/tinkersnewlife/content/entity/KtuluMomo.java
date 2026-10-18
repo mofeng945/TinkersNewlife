@@ -1021,7 +1021,9 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             case 6 -> "kick";
             case 7 -> "chord_wave";
             case 8 -> "walk";
-            default -> "walk";      // TNL1297 用户：NONE 也映射到 walk（平时别像滑行）
+            // TNL1300 用户："帮我改进" —— 待机就站着不动：
+            // 有速度 ⇒ walk（走路循环）；几乎不动 ⇒ 不播动画（静止站姿）
+            default -> this.getDeltaMovement().horizontalDistanceSqr() > 0.0025D ? "walk" : null;
         };
         if (name == null) {
             return software.bernie.geckolib.core.object.PlayState.STOP;

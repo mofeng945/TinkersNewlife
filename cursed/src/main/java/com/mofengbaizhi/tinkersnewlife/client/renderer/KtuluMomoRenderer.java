@@ -2,59 +2,69 @@ package com.mofengbaizhi.tinkersnewlife.client.renderer;
 
 import com.mofengbaizhi.tinkersnewlife.client.model.MomoGeoModel;
 import com.mofengbaizhi.tinkersnewlife.content.entity.KtuluMomo;
+import com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.Vec3;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
- * TNL1293/TNL1297 克图露·墨默渲染器 —— GeckoLib ＋ **冲刺残影**
+ * TNL1293/TNL1297/TNL1300 克图露·墨默渲染器 —— GeckoLib ＋ **残影**
  *
- * <p>TNL1293：模型/动画全部改读文件（`geo/ktulu_momo.geo.json`、
- * `animations/ktulu_momo.animation.json`），美术在 BB 里改完导出即可。
+ * <p>模型/动画全部读文件（`geo/ktulu_momo.geo.json`、`animations/ktulu_momo.animation.json`）。
  *
- * <p>TNL1297 用户口径：「冲刺……身后渲染残影（模仿瞬身残影）」⇒
- * 冲刺段（{@code MomoPose.DASH}）每 2 tick 采一个位置样本，
- * 用**同一个 geo 模型**以半透明重画（最多 6 个、每个活 8 tick、越老越淡）。
- * ⚠ 关键点：必须先让 {@link MomoGeoModel#GHOST_PASS} 为 true ⇒
- * 渲染类型换成 `entityTranslucent` ✗ 否则 `entityCutoutNoCull` **不做混合** ✓
- * `setShaderColor` 的 alpha 根本没用 ✓
+ * <h3>残影两种来源</h3>
+ * <ul>
+ *   <li>**冲刺**（{@code MomoPose.DASH}）：每 2 tick 采一个位置样本，最多 6 个、每个活 8 tick；</li>
+ *   <li>**瞬身**（{@code MomoPose.BLINK}）：位移一帧跳 > 2 格 ⇒ 在"旧位置 → 新位置"之间
+ *       补 6 个残影（越靠旧位置越淡），做出"拉出一条影子"的效果。</li>
+ * </ul>
+ *
+ * ⚠ 关键：必须先让 {@link MomoGeoModel#GHOST_PASS} 为 true ⇒ 渲染类型换成
+ * `entityTranslucent` ✗ 否则 `entityCutoutNoCull` **不做混合** ✓ `setShaderColor` 的 alpha 无效 ✓
  */
 public class KtuluMomoRenderer extends GeoEntityRenderer<KtuluMomo> {
 
     private static final ResourceLocation TEXTURE =
             new ResourceLocation("tinkersnewlife", "textures/entity/ktulu_momo.png");
 
-    /** 与旧版一致的模型缩放 / 影子大小 */
     private static final float MODEL_SCALE = 0.85F;
 
-    /** 残影：最长活 8 tick、最多 6 个、单帧最大不透明度 */
+    /** 残影：最长活 8 tick、最多 8 个、单帧最大不透明度 */
     private static final int GHOST_LIFE = 8;
-    private static final int GHOST_MAX = 6;
+    private static final int GHOST_MAX = 8;
     private static final float GHOST_ALPHA = 0.38F;
+    /** 瞬身残影数量 */
+    private static final int BLINK_GHOSTS = 6;
 
-    /** 一个采样点 */
     private static final class Ghost {
         final double x, y, z;
         final float yaw;
         final int born;
+        final float strength;
 
-        Ghost(double x, double y, double z, float yaw, int born) {
+        Ghost(double x, double y, double z, float yaw, int born, float strength) {
             this.x = x;
             this.y = y;
             this.z = z;
             this.yaw = yaw;
             this.born = born;
+            this.strength = strength;
         }
     }
 
-    /** 按实体 id 保存残影样本（客户端渲染线程独占，无需同步） */
-    private static final java.util.Map<Integer, List<Ghost>> GHOSTS = new java.util.HashMap<>();
+    /** 按实体 id 保存残影样本（客户端渲染线程独占） */
+    private static final Map<Integer, List<Ghost>> GHOSTS = new HashMap<>();
+    /** 上一帧的位置（用来发现瞬身那一帧的跳跃） */
+    private static final Map<Integer, Vec3> LAST_POS = new HashMap<>();
 
     public KtuluMomoRenderer(EntityRendererProvider.Context context) {
         super(context, new MomoGeoModel());
@@ -71,42 +81,59 @@ public class KtuluMomoRenderer extends GeoEntityRenderer<KtuluMomo> {
     @Override
     public void render(KtuluMomo entity, float entityYaw, float partialTick, PoseStack poseStack,
                        MultiBufferSource buffer, int packedLight) {
-        // ① 本体先正常画一遍
+        // ① 本体
         super.render(entity, entityYaw, partialTick, poseStack, buffer, packedLight);
 
-        // ② 只有冲刺段才留残影（MomoPose.DASH）
-        boolean dashing = entity.tnl$animPose()
-                == com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.DASH.ordinal();
         int id = entity.getId();
-        List<Ghost> ghosts = GHOSTS.computeIfAbsent(id, k -> new ArrayList<>());
         int now = entity.tickCount;
-        // 清掉过期的
+        int pose = entity.tnl$animPose();
+        boolean dashing = pose == MomoPose.DASH.ordinal();
+        boolean blinking = pose == MomoPose.BLINK.ordinal();
+
+        Vec3 cur = new Vec3(entity.getX(), entity.getY(), entity.getZ());
+        Vec3 last = LAST_POS.put(id, cur);
+        List<Ghost> ghosts = GHOSTS.computeIfAbsent(id, k -> new ArrayList<>());
         ghosts.removeIf(g -> now - g.born > GHOST_LIFE);
-        if (!dashing) {
-            if (ghosts.isEmpty()) {
-                GHOSTS.remove(id);
+
+        // ② 瞬身：一帧位移很大 ⇒ 沿路径补影子
+        if (blinking && last != null && cur.distanceToSqr(last) > 4.0D) {
+            for (int i = 1; i <= BLINK_GHOSTS; i++) {
+                double f = i / (double) (BLINK_GHOSTS + 1);
+                ghosts.add(new Ghost(
+                        last.x + (cur.x - last.x) * f,
+                        last.y + (cur.y - last.y) * f,
+                        last.z + (cur.z - last.z) * f,
+                        entity.getYRot(), now - i, 1.0F - 0.10F * i));
             }
-            return;
-        }
-        double speedSqr = entity.getDeltaMovement().horizontalDistanceSqr();
-        if (speedSqr > 0.02D && now % 2 == 0) {
-            ghosts.add(new Ghost(entity.getX(), entity.getY(), entity.getZ(),
-                    entity.getYRot(), now));
             while (ghosts.size() > GHOST_MAX) {
                 ghosts.remove(0);
             }
         }
+
+        // ③ 冲刺：每 2 tick 采一个样本
+        if (dashing && entity.getDeltaMovement().horizontalDistanceSqr() > 0.02D && now % 2 == 0) {
+            ghosts.add(new Ghost(entity.getX(), entity.getY(), entity.getZ(),
+                    entity.getYRot(), now, 1.0F));
+            while (ghosts.size() > GHOST_MAX) {
+                ghosts.remove(0);
+            }
+        }
+
         if (ghosts.isEmpty()) {
+            GHOSTS.remove(id);
+            LAST_POS.remove(id);
             return;
         }
-        // ③ 半透明重画同一套模型
+
+        // ④ 半透明重画同一套模型
         MomoGeoModel.GHOST_PASS = true;
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         try {
             for (Ghost g : ghosts) {
-                float t = (now - g.born) / (float) GHOST_LIFE;      // 0 新 → 1 最老
-                float alpha = GHOST_ALPHA * (1.0F - Math.max(0.0F, Math.min(1.0F, t)));
+                float t = (now - g.born) / (float) GHOST_LIFE;
+                float alpha = GHOST_ALPHA * g.strength
+                        * (1.0F - Math.max(0.0F, Math.min(1.0F, t)));
                 if (alpha <= 0.02F) {
                     continue;
                 }
