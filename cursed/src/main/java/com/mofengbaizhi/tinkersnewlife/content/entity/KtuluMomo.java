@@ -207,6 +207,19 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
      * TNL851 ★★ 每 tick：内核回弹 ⇒ 覆写原版值（★仅作显示 ✓）
      * + 血条同步 + 到零就死 ✓。
      */
+    /**
+     * TNL1273 用户："boss 跑到另一个维度时会新建一个血条，旧血条不消失"。
+     *
+     * <p>原因：实体被移除（跨维度转移 / 区块卸载 / 被替换）时，没有任何地方去把
+     * {@link ServerBossEvent} 上的玩家摘掉 ⇒ 客户端一直显示旧血条。
+     * 这里在移除时一次性清空；新维度里的新实例会自己重新挂上。
+     */
+    @Override
+    public void remove(net.minecraft.world.entity.Entity.RemovalReason reason) {
+        super.remove(reason);
+        this.bossEvent.removeAllPlayers();
+    }
+
     /** TNL893 ★★ 真死钩子：★先置标志 + 注销内核 ✗ ⇒ ★之后不再回弹/不再护血 ✓（★掉落物与死亡判定只白一次 ✓） */
     @Override
     public void die(net.minecraft.world.damagesource.DamageSource source) {
