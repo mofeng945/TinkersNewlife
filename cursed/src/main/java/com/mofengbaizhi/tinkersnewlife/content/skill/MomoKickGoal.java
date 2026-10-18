@@ -63,6 +63,8 @@ public final class MomoKickGoal extends MomoSpellGoal {
     private float prevSpeed = 0.0F;
     private int bluntTicks = 0;
     private boolean bluntDone = false;
+    /** 踢出之后过了几 tick（TNL1292 用来按时收尾） */
+    private int kickedTicks = 0;
 
     public MomoKickGoal(KtuluMomo momo) {
         super(momo, 6, 200, TOTAL_TICKS);   // 冷却 10 秒（用户没要求，先给个短冷却防连踢）
@@ -92,6 +94,7 @@ public final class MomoKickGoal extends MomoSpellGoal {
     protected void onStart() {
         this.dashTicks = 0;
         this.kicked = false;
+        this.kickedTicks = 0;
         this.bluntTicks = 0;
         this.bluntDone = false;
         this.prevSpeed = 0.0F;
@@ -114,6 +117,14 @@ public final class MomoKickGoal extends MomoSpellGoal {
             return this.tickDash();
         }
         this.tickBlunt();
+        this.kickedTicks++;
+        // TNL1292 用户："结束时会停在这个动作上"。
+        //   根因 ✗：★`onTick()` 踢完一直返回 false ✗ ⇒ ★只有看门狗（totalTicks+40）才收尾 ✓
+        //   ⇒ ★姿势要挂 5 秒多 ✗ 而且进度回落到 0.30 正好是"抬膝"那一段 ✓
+        //   ★现在 ✗：★钝伤窗口一结束（或窗口用完 / 踢完 1.5 秒）就 `true` ⇒ ★立刻收尾 ✓
+        if (this.kickedTicks > BLUNT_WINDOW || this.bluntTicks <= 0) {
+            return true;
+        }
         return false;
     }
 
