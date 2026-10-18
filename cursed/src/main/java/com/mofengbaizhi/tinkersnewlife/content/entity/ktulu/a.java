@@ -769,7 +769,14 @@ public final class a {
             wA(s0, next);                    // ① Java 权威镜像
             b.put(s0, next);                 // ② 兼容镜像
             mob.setHealth(m1(next));         // ③ 原生字段（血条显示用）
-            wA(s0, next);                    //    setHealth 可能被 qD 改，写完再兜一次
+            // TNL1274 ★关键：`q1` 每 tick 都用**原生**那一路（`e(s0, now, ticks)`）当权威值
+            //   ⇒ 只写 Java 镜像和原生字段还不够 ⇒ 下一 tick 又会被原生旧值覆盖回去
+            //   （用户实测："血量还是没加"）。所以原生镜像也要写。
+            try {
+                e(s0, next, mob.tickCount);
+            } catch (Throwable ignored) {
+            }
+            wA(s0, next);                    //    setHealth / e() 可能被改写，写完再兜一次
             b.put(s0, next);
         } catch (Throwable ignored) {
         }
