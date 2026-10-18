@@ -76,6 +76,22 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
         this.body.x = 0.0F;
         this.body.y = 0.0F;
         this.body.z = 0.0F;
+        // TNL1291 用户："姿势不但没复位，还残留了上次的姿势"。
+        //   根因 ✗：`HumanoidModel.setupAnim` **只复位一部分** ✗
+        //   （head.x/yRot、body.yRot、手臂 xRot/zRot/x/z、腿 xRot —— 它复位的就这些 ✓）
+        //   ⇒ ⭐躯干 xRot/zRot ✗ ⭐帽子全部 ✗ ⭐头 zRot ✗ ⭐手臂 yRot ✗ ⭐腿 zRot 都会**残留** ✓
+        //   所以这里把"super 不管的那些"全部手动清零 ✓
+        this.body.xRot = 0.0F;
+        this.body.yRot = 0.0F;
+        this.body.zRot = 0.0F;
+        this.hat.xRot = 0.0F;
+        this.hat.yRot = 0.0F;
+        this.hat.zRot = 0.0F;
+        this.head.zRot = 0.0F;
+        this.rightArm.yRot = 0.0F;
+        this.leftArm.yRot = 0.0F;
+        this.rightLeg.zRot = 0.0F;
+        this.leftLeg.zRot = 0.0F;
         // TNL1203 用户："手臂藏进身体里了，常态下像个苦力怕"。
         // TNL1187 那个 0.62 横截面缩放，在这套烘焙网格上把袖子缩进了躯干，
         // 所以"细手臂"方案撤销，手臂缩放恢复原版。
@@ -263,41 +279,57 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
                 extend = 1.0F - r;
             }
             float k = extend;
-            // ——— 躯干（美术摆的：前压 53.6°、转体 -28.5°、侧倾 32.9°，并向下 6 格位移）———
+            // ——— 躯干（美术摆的：前压 53.6°、转体 -28.5°、侧倾 32.9°）＋ 位移 ———
             this.body.xRot = tnl$lerp(0.06F * chamber, tnl$deg(-53.60F), k);
             this.body.yRot = tnl$lerp(0.0F, tnl$deg(-28.54F), k);
             this.body.zRot = tnl$lerp(0.0F, tnl$deg(32.94F), k);
-            this.body.y = tnl$lerp(0.0F, 6.0F, k);
-            // ——— 头（帽子是根级部件，一起写）———
-            this.head.xRot = tnl$lerp(0.06F * chamber, tnl$deg(-12.00F), k);
-            this.head.yRot = tnl$lerp(netHeadYaw * 0.2F, tnl$deg(-33.00F), k);
+            this.body.x = tnl$lerp(0.0F, -0.281F, k);
+            this.body.y = tnl$lerp(0.0F, -4.241F, k);
+            this.body.z = tnl$lerp(0.0F, -11.204F, k);
+            // ——— 头 / 帽子（帽子是根级部件，必须写同一份数值）———
+            float headRX = tnl$lerp(0.06F * chamber, tnl$deg(-12.00F), k);
+            float headRY = tnl$lerp(netHeadYaw * 0.2F, tnl$deg(-33.00F), k);
+            this.head.xRot = headRX;
+            this.head.yRot = headRY;
             this.head.zRot = 0.0F;
-            this.hat.xRot = this.head.xRot;
-            this.hat.yRot = this.head.yRot;
-            this.hat.zRot = this.head.zRot;
-            // ——— 手臂：抬膝时护脸，蹬出时用美术摆的位置 ———
+            this.head.x = tnl$lerp(0.0F, 3.786F, k);
+            this.head.y = tnl$lerp(0.0F, 1.738F, k);
+            this.head.z = tnl$lerp(0.0F, 1.447F, k);
+            this.hat.xRot = headRX;
+            this.hat.yRot = headRY;
+            this.hat.zRot = 0.0F;
+            this.hat.x = tnl$lerp(0.0F, 3.843F, k);
+            this.hat.y = tnl$lerp(0.0F, 2.227F, k);
+            this.hat.z = tnl$lerp(0.0F, 1.359F, k);
+            // ——— 手臂 ———
             float guardX = -1.05F;
             float guardY = -0.30F;
             float guardZ = 0.70F;
             this.rightArm.xRot = tnl$lerp(guardX * chamber, tnl$deg(0.00F), k);
             this.rightArm.yRot = tnl$lerp(guardY * chamber, tnl$deg(-35.00F), k);
             this.rightArm.zRot = tnl$lerp(guardZ * chamber, tnl$deg(0.00F), k);
-            this.rightArm.x = -5.0F + tnl$lerp(0.0F, -1.00F, k);
-            this.rightArm.y = 2.0F + tnl$lerp(0.0F, 6.25F, k);
-            this.rightArm.z = 0.0F + tnl$lerp(0.0F, 4.50F, k);
+            this.rightArm.x = -5.0F + tnl$lerp(0.0F, 1.288F, k);
+            this.rightArm.y = 2.0F + tnl$lerp(0.0F, 1.281F, k);
+            this.rightArm.z = 0.0F + tnl$lerp(0.0F, 5.074F, k);
             this.leftArm.xRot = tnl$lerp(guardX * chamber, tnl$deg(-118.38F), k);
             this.leftArm.yRot = tnl$lerp(-guardY * chamber, tnl$deg(-25.07F), k);
             this.leftArm.zRot = tnl$lerp(-guardZ * chamber, tnl$deg(-86.11F), k);
-            this.leftArm.x = 5.0F + tnl$lerp(0.0F, -1.23F, k);
-            this.leftArm.y = 2.0F + tnl$lerp(0.0F, 3.47F, k);
-            this.leftArm.z = 0.0F + tnl$lerp(0.0F, 2.61F, k);
-            // ——— 腿：抬膝 → 美术摆的高踢 ———
+            this.leftArm.x = 5.0F + tnl$lerp(0.0F, -10.273F, k);
+            this.leftArm.y = 2.0F + tnl$lerp(0.0F, -27.708F, k);
+            this.leftArm.z = 0.0F + tnl$lerp(0.0F, -13.757F, k);
+            // ——— 腿 ———
             this.rightLeg.xRot = tnl$lerp(-1.35F * chamber, tnl$deg(-110.00F), k);
             this.rightLeg.yRot = 0.0F;
             this.rightLeg.zRot = 0.0F;
+            this.rightLeg.x = -1.9F + tnl$lerp(0.0F, 0.0F, k);
+            this.rightLeg.y = 12.0F + tnl$lerp(0.0F, -35.091F, k);
+            this.rightLeg.z = 0.0F + tnl$lerp(0.0F, -23.924F, k);
             this.leftLeg.xRot = tnl$lerp(0.18F * chamber, tnl$deg(10.00F), k);
             this.leftLeg.yRot = 0.0F;
             this.leftLeg.zRot = 0.0F;
+            this.leftLeg.x = 1.9F + tnl$lerp(0.0F, 0.0F, k);
+            this.leftLeg.y = 12.0F + tnl$lerp(0.0F, -0.365F, k);
+            this.leftLeg.z = 0.0F + tnl$lerp(0.0F, 4.168F, k);
             return;
         }
 
