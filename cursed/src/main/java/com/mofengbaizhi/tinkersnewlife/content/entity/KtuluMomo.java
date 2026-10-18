@@ -1016,8 +1016,9 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             case 3 -> "chord";
             case 4 -> "hurt";
             case 5 -> "requiem";
-            case 6 -> "kick";
+            case 6 -> "kick_dash";
             case 7 -> "chord_wave";
+            case 8 -> "kick_strike";
             default -> null;
         };
         if (name == null) {

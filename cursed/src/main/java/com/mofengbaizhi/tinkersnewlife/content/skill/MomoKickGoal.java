@@ -65,6 +65,8 @@ public final class MomoKickGoal extends MomoSpellGoal {
     private boolean bluntDone = false;
     /** 踢出之后过了几 tick（TNL1292 用来按时收尾） */
     private int kickedTicks = 0;
+    /** TNL1295 命中姿势还要播几 tick（从**踢中那一刻**开始算） */
+    private int strikeTicks = 0;
 
     public MomoKickGoal(KtuluMomo momo) {
         super(momo, 6, 200, TOTAL_TICKS);   // 冷却 10 秒（用户没要求，先给个短冷却防连踢）
@@ -95,6 +97,7 @@ public final class MomoKickGoal extends MomoSpellGoal {
         this.dashTicks = 0;
         this.kicked = false;
         this.kickedTicks = 0;
+        this.strikeTicks = 0;
         this.bluntTicks = 0;
         this.bluntDone = false;
         this.prevSpeed = 0.0F;
@@ -118,6 +121,9 @@ public final class MomoKickGoal extends MomoSpellGoal {
         }
         this.tickBlunt();
         this.kickedTicks++;
+        if (this.strikeTicks > 0) {
+            this.strikeTicks--;
+        }
         // TNL1292 用户："结束时会停在这个动作上"。
         //   根因 ✗：★`onTick()` 踢完一直返回 false ✗ ⇒ ★只有看门狗（totalTicks+40）才收尾 ✓
         //   ⇒ ★姿势要挂 5 秒多 ✗ 而且进度回落到 0.30 正好是"抬膝"那一段 ✓
@@ -158,6 +164,7 @@ public final class MomoKickGoal extends MomoSpellGoal {
     /** 踢击：斜向击飞 ＋ 20% 攻击力物理伤害 */
     private void doKick(LivingEntity target) {
         this.kicked = true;
+        this.strikeTicks = 16;              // 0.8 秒命中姿势
         this.bluntTicks = BLUNT_WINDOW;
         this.prevSpeed = 0.0F;
         try {
@@ -237,9 +244,22 @@ public final class MomoKickGoal extends MomoSpellGoal {
         this.momo.tnl$setKickCoolUntil(this.momo.level().getGameTime() + 200L);
     }
 
+    /**
+     * TNL1295 用户问「kick 在第几秒踢出」—— 关键点是：**命中不固定**。
+     * 冲刺段最长 30 tick（1.5 秒），一旦进到 3.2 格就立刻命中。
+     * 所以姿势拆成两段，**命中段从踢中那一刻才开始播**，这样动画和判定一定对齐：
+     * <ul>
+     *   <li>冲刺中（没踢中）⇒ {@link MomoPose#KICK}（动画 `kick_dash`，循环）</li>
+     *   <li>踢中后 16 tick（0.8 秒）⇒ {@link MomoPose#KICK_STRIKE}（动画 `kick_strike`）</li>
+     *   <li>之后 ⇒ NONE（钝伤窗口还在后台跑，但不再摆姿势）</li>
+     * </ul>
+     */
     @Override
     protected MomoPose animPose() {
-        return MomoPose.KICK;
+        if (!this.kicked) {
+            return MomoPose.KICK;
+        }
+        return this.strikeTicks > 0 ? MomoPose.KICK_STRIKE : MomoPose.NONE;
     }
 
     /**
