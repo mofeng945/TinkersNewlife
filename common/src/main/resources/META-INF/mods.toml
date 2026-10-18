@@ -136,3 +136,12 @@ description='''一个匠魂附属，适用于Newlifestyle整合包''' #mandatory
 # stop your mod loading on the server for example.
 #[features.${mod_id}]
 #openGLVersion="[3.2,)"
+
+# TNL1293 GeckoLib: the momo model/animation are loaded from geo/animation json files,
+# so the entity class implements GeoAnimatable -> GeckoLib must be present and load first.
+[[dependencies.tinkersnewlife]]
+    modId="geckolib"
+    mandatory=true
+    versionRange="[4.8.0,)"
+    ordering="AFTER"
+    side="BOTH"

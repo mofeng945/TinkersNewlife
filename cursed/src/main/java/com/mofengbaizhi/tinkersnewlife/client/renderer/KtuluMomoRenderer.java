@@ -1,164 +1,47 @@
 package com.mofengbaizhi.tinkersnewlife.client.renderer;
 
+import com.mofengbaizhi.tinkersnewlife.client.model.MomoGeoModel;
 import com.mofengbaizhi.tinkersnewlife.content.entity.KtuluMomo;
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.client.renderer.entity.HumanoidMobRenderer;
-import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
 import net.minecraft.resources.ResourceLocation;
+import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
 /**
- * 克图露·墨默渲染器 —— ★复用商人墨默的模型（玩家模型 ✓）
- * 只把贴图换成**黑白灰度版** ✓（★用户口径：“染色为黑白” ✓）。
+ * TNL1293 克图露·墨默渲染器 —— **改用 GeckoLib**
+ *
+ * <p>用户口径：「干脆把玩家实体模型复制出来我去 bb 里面写动画」＋选 GeckoLib 路线 ✓
+ *
+ * <h3>和旧版（`HumanoidMobRenderer` ＋ `KtuluMomoModel`）的区别</h3>
+ * <ul>
+ *   <li>旧版：姿势/动画**全写在 Java** 里（`setupAnim` 一堆 if）✗ 美术改一次我就要抄一次 ✓；</li>
+ *   <li>现在：**几何读 `geo/ktulu_momo.geo.json`、动画读 `animations/ktulu_momo.animation.json`**
+ *       ⇒ 美术在 BB（GeckoLib 插件）里改完导出覆盖即可 ✓（见 `MomoGeoModel` ✓）。</li>
+ * </ul>
+ *
+ * <p>姿势仍然由实体上报的**同步字节**决定（`KtuluMomo#tnl$animPose()`），
+ * 对应关系在 `KtuluMomo#tnl$pickPoseAnimation`：1 blink / 2 resonance / 3 chord /
+ * 4 hurt / 5 requiem / 6 kick。
+ *
+ * <p>⚠ 旧的"瞬身残影/和弦环"绘制随这次迁移**移除**（它们挂在旧的人类模型上）；
+ * 若需要，之后用 GeckoLib 的渲染层重做。
  */
-public class KtuluMomoRenderer extends HumanoidMobRenderer<KtuluMomo, HumanoidModel<KtuluMomo>> {
+public class KtuluMomoRenderer extends GeoEntityRenderer<KtuluMomo> {
 
     private static final ResourceLocation TEXTURE =
             new ResourceLocation("tinkersnewlife", "textures/entity/ktulu_momo.png");
+
+    /** 与旧版一致的模型缩放 / 影子大小 */
     private static final float MODEL_SCALE = 0.85F;
 
     public KtuluMomoRenderer(EntityRendererProvider.Context context) {
-        super(context, new com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel(
-                context.bakeLayer(ModelLayers.PLAYER)), 0.43F);   // TNL1089
-        this.addLayer(new ItemInHandLayer<>(this, context.getItemInHandRenderer()));
+        super(context, new MomoGeoModel());
+        this.shadowRadius = 0.43F;
+        this.scaleWidth = MODEL_SCALE;
+        this.scaleHeight = MODEL_SCALE;
     }
-
-    /**
-     * TNL1091 在 super.render 之前把蓄力进度喂给模型（setupAnim 就在它里面跑）。
-     * 进度来自隐藏标记的冷却 —— 那是我们验证过能到客户端的通道。
-     */
 
     @Override
     public ResourceLocation getTextureLocation(KtuluMomo entity) {
-        return TEXTURE;   // TNL1091 restored, my earlier slice had removed it
+        return TEXTURE;
     }
-
-    /** TNL1129 瞬身残影：把玩家模型多画几份 */
-    private static HumanoidModel<?> tnl$ghostModel;
-
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private static void tnl$drawBlinkGhosts(KtuluMomo entity, PoseStack poseStack,
-                                            net.minecraft.client.renderer.MultiBufferSource buffer) {
-        var ghosts = com.mofengbaizhi.tinkersnewlife.client.renderer.ThrustGhostCache.alive();
-        if (ghosts.isEmpty()) {
-            return;
-        }
-        var mc = net.minecraft.client.Minecraft.getInstance();
-        if (mc.player == null) {
-            return;
-        }
-        if (tnl$ghostModel == null) {
-            try {
-                tnl$ghostModel = new HumanoidModel(mc.getEntityModels().bakeLayer(ModelLayers.PLAYER));
-            } catch (Throwable t) {
-                return;
-            }
-        }
-        // 交给共用的实体批处理去 flush，和模型本身一样
-        var vc = buffer.getBuffer(net.minecraft.client.renderer.RenderType.entityTranslucent(TEXTURE));
-        int now = mc.player.tickCount;
-        double ox = entity.getX();
-        double oy = entity.getY();
-        double oz = entity.getZ();
-        for (com.mofengbaizhi.tinkersnewlife.client.renderer.ThrustGhostCache.Ghost g : ghosts) {
-            float fade = 1.0F - g.progress(now);
-            if (fade <= 0.15F) {
-                continue;
-            }
-            poseStack.pushPose();
-            poseStack.translate(g.x - ox, g.y - oy, g.z - oz);
-            poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(-g.yaw));
-            poseStack.scale(-1.0F, -1.0F, 1.0F);
-            tnl$ghostModel.renderToBuffer(poseStack, vc, 0xF000F0,
-                    net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY,
-                    0.08F, 0.09F, 0.12F, 0.55F * fade);
-            poseStack.popPose();
-        }
-    }
-
-    /** TNL1107 五道细环：每道都从墨默脚下（半径 0）开始，彼此间隔 33 tick */
-    private static void tnl$drawChordRings(KtuluMomo entity, PoseStack poseStack,
-                                          net.minecraft.client.renderer.MultiBufferSource buffer, long elapsed) {
-        double after = elapsed - 40.0D;                     // 40 ticks of charge first
-        if (after <= 0.0D) {
-            return;
-        }
-        com.mojang.blaze3d.vertex.VertexConsumer vc =
-                buffer.getBuffer(net.minecraft.client.renderer.RenderType.lightning());
-        org.joml.Matrix4f mat = poseStack.last().pose();
-        double baseY = entity.getY() + 0.02D;
-        for (int i = 0; i < 5; i++) {
-            double r = (after - i * 33.0D) * 0.15D;
-            if (r <= 0.05D || r > 16.0D) {
-                continue;
-            }
-            float fade = (float) Math.max(0.0D, 1.0D - r / 16.0D);
-            // TNL1112 姿态矩阵已经平移到实体上，所以环必须用
-            // **局部坐标**发出；传世界坐标会把它推走。
-            tnl$ringQuad(null, mat, 0.0F, 0.03F, 0.0F, (float) r,
-                    Math.max(0.20F, fade), buffer);
-        }
-    }
-
-    /** 一道环用一圈四边形画出来（内径 r-w、外径 r+w），高 0.5 格 */
-    /** TNL1110 几何带一直画不出来，所以改成"躺在地上的平面四边形 ＋ 灰色圆环贴图"，
-     *  从中往外生长。*/
-    private static final net.minecraft.resources.ResourceLocation RING_TEX =
-            new net.minecraft.resources.ResourceLocation("tinkersnewlife", "textures/effect/chord_ring.png");
-
-    private static void tnl$ringQuad(com.mojang.blaze3d.vertex.VertexConsumer ignored,
-                                     org.joml.Matrix4f mat, float cx, float y, float cz, float h, float alpha,
-                                     net.minecraft.client.renderer.MultiBufferSource buffer) {
-        com.mojang.blaze3d.vertex.VertexConsumer vc = buffer.getBuffer(
-                net.minecraft.client.renderer.RenderType.entityTranslucent(RING_TEX));
-        int light = 0xF000F0;
-        vc.vertex(mat, cx - h, y, cz - h).color(1.0F, 1.0F, 1.0F, alpha).uv(0.0F, 0.0F)
-                .overlayCoords(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
-                .uv2(light).normal(0.0F, 1.0F, 0.0F).endVertex();
-        vc.vertex(mat, cx + h, y, cz - h).color(1.0F, 1.0F, 1.0F, alpha).uv(1.0F, 0.0F)
-                .overlayCoords(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
-                .uv2(light).normal(0.0F, 1.0F, 0.0F).endVertex();
-        vc.vertex(mat, cx + h, y, cz + h).color(1.0F, 1.0F, 1.0F, alpha).uv(1.0F, 1.0F)
-                .overlayCoords(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
-                .uv2(light).normal(0.0F, 1.0F, 0.0F).endVertex();
-        vc.vertex(mat, cx - h, y, cz + h).color(1.0F, 1.0F, 1.0F, alpha).uv(0.0F, 1.0F)
-                .overlayCoords(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
-                .uv2(light).normal(0.0F, 1.0F, 0.0F).endVertex();
-    }
-
-    /**
-     * TNL1245 动画的唯一入口：**技能**通过同步通道上报（摆什么姿势、播到几分），
-     * 渲染器只做搬运。
-     *
-     * <p>⚠ 之前这段在一次回滚里被误删，结果 `KtuluMomoModel.POSE` 永远是 NONE，
-     * 模型一进来就 `if (POSE == NONE) return;` ⇒ **所有姿势/动画全部不播**。
-     * 现在恢复，并且不再自己算进度（旧的客户端时钟那套已不需要）。
-     */
-    @Override
-    public void render(KtuluMomo entity, float entityYaw, float partialTicks,
-                       com.mojang.blaze3d.vertex.PoseStack poseStack,
-                       net.minecraft.client.renderer.MultiBufferSource buffer, int packedLight) {
-        int tnl$poseId = entity.tnl$animPose();
-        com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose[] tnl$values =
-                com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.values();
-        com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.POSE =
-                tnl$poseId > 0 && tnl$poseId < tnl$values.length
-                        ? tnl$values[tnl$poseId]
-                        : com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.NONE;
-        com.mofengbaizhi.tinkersnewlife.client.model.KtuluMomoModel.PROGRESS = entity.tnl$animProgress();
-        // TNL1255 生息绝响：领域改用**真渲染**（贴地六芒星，几何线，不要贴图）。
-        // TNL1266 六芒星改到 RequiemDomainRenderer（RenderLevelStageEvent）里画：
-        // 在 render() 里姿态矩阵还在相机空间，用"相对实体"的偏移会画到别处（看不到）。
-        super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
-    }
-
-    
-
-    @Override
-    protected void scale(KtuluMomo entity, PoseStack poseStack, float partialTick) {
-        poseStack.scale(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE);
-    }
-
 }

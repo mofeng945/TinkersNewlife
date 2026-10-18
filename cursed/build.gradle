@@ -258,3 +258,11 @@ configurations {
 tasks.named('compileJava').configure {
     dependsOn tasks.named('compileSharedJava')
 }
+
+// TNL1293 GeckoLib: the momo model/animation are now loaded from files (geo + animation),
+// so the artist writes animations in BlockBench with the GeckoLib plugin.
+// The jar lives in libs/ (same flatDir pattern as Jade/Goety/Create; libs/ is gitignored)
+// and is provided at runtime by the modpack (Goety already depends on GeckoLib).
+dependencies {
+    compileOnly fg.deobf("blank:geckolib-forge-1.20.1:4.8.4")
+}

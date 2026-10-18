@@ -43,7 +43,8 @@ import org.jetbrains.annotations.Nullable;
  *   <li>★受伤后 **1.5 秒无敌**（★无下限同款的无敌窗口：{@code invulnerableTime = 30} ✓）。</li>
  * </ul>
  */
-public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlife.util.TruePierce.PierceAware {
+public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlife.util.TruePierce.PierceAware,
+        software.bernie.geckolib.core.animatable.GeoAnimatable {
 
     /** ★单次伤害上限：最大生命的 6% ✓ */
     private static final float DAMAGE_CAP_RATIO = 0.06F;
@@ -988,4 +989,50 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     /** TNL1108 保持和弦姿势一段时间的那对方法也已随旧标志一起清理 */
 
 
+
+
+    
+
+    // ==================== TNL1293 GeckoLib 动画（模型/动画全部读文件） ====================
+    // 渲染换成 GeoEntityRenderer 之后，姿势不再写在 Java 里，而是：
+    // 实体上报"当前姿势字节" -> 这里按字节挑一个动画名 -> GeckoLib 读
+    // assets/tinkersnewlife/animations/ktulu_momo.animation.json 播放。
+    private final software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache tnl$animCache =
+            software.bernie.geckolib.util.GeckoLibUtil.createInstanceCache(this);
+
+    @Override
+    public void registerControllers(
+            software.bernie.geckolib.core.animation.AnimatableManager.ControllerRegistrar controllers) {
+        controllers.add(new software.bernie.geckolib.core.animation.AnimationController<>(
+                this, "pose", 2, this::tnl$pickPoseAnimation));
+    }
+
+    /** 姿势字节 -> 动画名（顺序与 MomoPose 枚举一致） */
+    private software.bernie.geckolib.core.object.PlayState tnl$pickPoseAnimation(
+            software.bernie.geckolib.core.animation.AnimationState<KtuluMomo> state) {
+        String name = switch (this.tnl$animPose()) {
+            case 1 -> "blink";
+            case 2 -> "resonance";
+            case 3 -> "chord";
+            case 4 -> "hurt";
+            case 5 -> "requiem";
+            case 6 -> "kick";
+            default -> null;
+        };
+        if (name == null) {
+            return software.bernie.geckolib.core.object.PlayState.STOP;
+        }
+        return state.setAndContinue(
+                software.bernie.geckolib.core.animation.RawAnimation.begin().thenPlay(name));
+    }
+
+    @Override
+    public software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache getAnimatableInstanceCache() {
+        return this.tnl$animCache;
+    }
+
+    @Override
+    public double getTick(Object entity) {
+        return this.tickCount;
+    }
 }
