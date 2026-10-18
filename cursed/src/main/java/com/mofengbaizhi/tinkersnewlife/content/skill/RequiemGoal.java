@@ -129,9 +129,19 @@ public final class RequiemGoal extends MomoSpellGoal {
             }
         }
         // TNL1272 墨默本人：生命恢复药水对它无效，`heal()` 也会被血量内核夹住
-        // ⇒ 改走内核的**合法加血入口** `a.qG`（同时抬镜像与原生字段），每秒 1% 上限。
-        float tnl$heal = this.momo.getMaxHealth() * 0.01F;
-        com.mofengbaizhi.tinkersnewlife.content.entity.ktulu.a.qG(this.momo, tnl$heal);
+        // ⇒ 改走内核的**合法加血入口** `a.qG`（同时抬镜像与原生字段）。
+        // TNL1277 用户："回血机制不要回到 80% 血就不往上回了，是一直往上回血的"。
+        //   原来固定 1%/秒 × 10 秒 = 最多 +10% ⇒ 从 70% 起刚好停在 80%，
+        //   看起来就像"有 80% 上限"。现在改成**按剩余缺口均摊到剩余秒数**：
+        //   每秒补 max(1% 上限, 缺口 / 剩余秒数) ⇒ 领域结束时**一定补到满**，
+        //   中途任何血量都是**一路往上**（缺得多就补得快），不再有 80% 这道坎。
+        float tnl$maxHp = this.momo.getMaxHealth();
+        float tnl$missing = tnl$maxHp - this.momo.getHealth();
+        if (tnl$missing > 0.5F) {
+            int tnl$leftSec = Math.max(1, (this.momo.tnl$castTicks() + 19) / 20);
+            float tnl$heal = Math.max(tnl$maxHp * 0.01F, tnl$missing / tnl$leftSec);
+            com.mofengbaizhi.tinkersnewlife.content.entity.ktulu.a.qG(this.momo, tnl$heal);
+        }
     }
 
     // TNL1255 六芒星已改为客户端真渲染（KtuluMomoRenderer.tnl$drawRequiemHexagram），

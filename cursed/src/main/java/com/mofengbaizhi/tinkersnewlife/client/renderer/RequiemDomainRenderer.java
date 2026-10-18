@@ -47,8 +47,8 @@ public final class RequiemDomainRenderer {
     /** ★六芒星外接半径（★与 RequiemGoal.RADIUS 一致 ✓ 用户口径 8 格领域 → 视觉略收 ✓） */
     private static final float RADIUS = 6.0F;
 
-    /** ★线宽（★半宽 ✓ 单位格 ✓） */
-    private static final float LINE_W = 0.085F;
+    /** ★线宽（★半宽 ✓ 单位格 ✓）—— TNL1277 用户："太细了" ⇒ 0.085 → 0.22 ✓ */
+    private static final float LINE_W = 0.22F;
 
     /** ★离地高度（★太高会悬空、太低会 z-fighting ✓） */
     private static final float LIFT = 0.04F;
@@ -81,8 +81,10 @@ public final class RequiemDomainRenderer {
                     continue;
                 }
                 float p = Math.max(0.0F, Math.min(1.0F, momo.tnl$animProgress() / 100.0F));
-                float alpha = p < 0.1F ? p / 0.1F : (p > 0.85F ? (1.0F - p) / 0.15F : 1.0F);
-                alpha = Math.max(0.05F, Math.min(1.0F, alpha));
+                // TNL1277 用户："透明度太高"（= 太淡）。原来最低能掉到 0.05 ⇒ 几乎看不见。
+                //   现在只保留首尾很窄的淡入淡出，**中段不透明度 0.55~1.0**。
+                float fade = p < 0.08F ? p / 0.08F : (p > 0.92F ? (1.0F - p) / 0.08F : 1.0F);
+                float alpha = 0.55F + 0.45F * Math.max(0.0F, Math.min(1.0F, fade));
                 draw(momo, poseStack, buffer, cam, alpha);
                 drew = true;
                 // TNL1271 探针：只在**真的要画**的时候每秒报一行（不画就不刷屏）
@@ -113,21 +115,22 @@ public final class RequiemDomainRenderer {
             Matrix4f mat = poseStack.last().pose();
             float spin = (momo.tickCount % 1200) * 0.3F;
             // ① 两个等边三角形叠成六芒星（每个三角形 = 3 条边）
+            // TNL1277 用户："透明度太高而且太细了" ⇒ 线更宽、颜色更亮更实（见 LINE_W / alpha）
             for (int tri = 0; tri < 2; tri++) {
                 float off = spin + tri * 60.0F;
                 for (int i = 0; i < 3; i++) {
                     float a1 = (float) Math.toRadians(off + i * 120.0F);
                     float a2 = (float) Math.toRadians(off + ((i + 1) % 3) * 120.0F);
-                    line(vc, mat, a1, a2, RADIUS, LINE_W, 0.42F, 0.98F, 0.80F, alpha);
+                    line(vc, mat, a1, a2, RADIUS, LINE_W, 0.55F, 1.00F, 0.82F, alpha);
                 }
             }
-            // ② 外圈（同心圆，反向慢转）
+            // ② 外圈（同心圆，反向慢转）—— TNL1277 也加粗一档
             int seg = 48;
             float outer = RADIUS * 1.18F;
             for (int i = 0; i < seg; i++) {
                 float a1 = (float) Math.toRadians(spin * 0.5F + i * (360.0F / seg));
                 float a2 = (float) Math.toRadians(spin * 0.5F + (i + 1) * (360.0F / seg));
-                line(vc, mat, a1, a2, outer, LINE_W * 0.6F, 0.28F, 0.80F, 0.62F, alpha * 0.75F);
+                line(vc, mat, a1, a2, outer, LINE_W * 0.75F, 0.38F, 0.92F, 0.72F, alpha * 0.9F);
             }
         } finally {
             poseStack.popPose();
