@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "tinkersnewlife:momo_merchant"
+    "tinkersnewlife:momo_merchant",
+    "tinkersnewlife:ktulu_momo_shadow"
   ]
 }

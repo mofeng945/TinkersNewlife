@@ -49,6 +49,8 @@ public class MomoShadow extends Monster {
     /** 召唤它的墨默 UUID（"不杀分身不能打本体"靠这个判归属） */
     @Nullable
     private UUID ownerId = null;
+    /** 目标血上限 = 本体的一半（TNL1286：每 tick 用它把外来加成抹掉） */
+    private float tnl$halfHp = -1.0F;
 
     public MomoShadow(EntityType<? extends MomoShadow> type, Level level) {
         super(type, level);
@@ -97,6 +99,7 @@ public class MomoShadow extends Monster {
             } catch (Throwable ignored) {
             }
             this.setHealth(half);
+            this.tnl$halfHp = half;
         }
         if (!this.getTags().contains(KtuluMomo.TNL_MINION_TAG)) {
             this.addTag(KtuluMomo.TNL_MINION_TAG);
@@ -108,12 +111,63 @@ public class MomoShadow extends Monster {
         this.goalSelector.addGoal(2, new WaterAvoidingRandomStrollGoal(this, 1.0D));
     }
 
+    // ==================== TNL1286 分身**不吃**莱特兰（L2Hostility）的等级/词条加成 ====================
+
+    /**
+     * ★用户口径：★"分身不允许吃莱特兰的等级和词条加成" ✓
+     *
+     * <h3>两道</h3>
+     * <ol>
+     *   <li>★主路 ✗：★数据包标签 {@code data/l2hostility/tags/entity_types/blacklist.json}
+     *       ⭐把 {@code tinkersnewlife:ktulu_momo_shadow} 列进去 ✓
+     *       ⭐⇒ ⭐L2Hostility **从一开始就不会给它生成等级/词条** ✓（模组没装也只是个无人读的标签 ✓）；</li>
+     *   <li>★兜底（本方法）✗：⭐万一还是被加了（旧存档 / 别的加等级模组 / 词条走属性修饰符 ✓）
+     *       ⭐每秒清一次：⭐外来**属性修饰符全删** ✗ ⭐血上限 base 改回"本体一半" ✗
+     *       ⭐并把超出上限的血量夹回来 ✓。</li>
+     * </ol>
+     */
+    private void tnl$stripForeignBonuses() {
+        try {
+            if (this.tnl$halfHp > 0.0F && this.getAttribute(Attributes.MAX_HEALTH) != null) {
+                var hp = this.getAttribute(Attributes.MAX_HEALTH);
+                if (Math.abs(hp.getBaseValue() - this.tnl$halfHp) > 0.01D) {
+                    hp.setBaseValue(this.tnl$halfHp);
+                }
+                if (this.getHealth() > this.tnl$halfHp) {
+                    this.setHealth(this.tnl$halfHp);
+                }
+            }
+            // 等级/词条的加成基本都是 AttributeModifier ⇒ 一律清掉（分身的数值只由本体一半决定）
+            for (var inst : this.getAttributes().getSyncableAttributes()) {
+                if (inst.getModifiers().isEmpty()) {
+                    continue;
+                }
+                for (var mod : java.util.List.copyOf(inst.getModifiers())) {
+                    inst.removeModifier(mod.getId());
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (this.level().isClientSide) {
+            return;
+        }
+        if (this.tickCount % 20 == 0) {
+            this.tnl$stripForeignBonuses();
+        }
+    }
+
     // ==================== 存档 ====================
 
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putString("TNLShadowRole", this.role.name());
+        tag.putFloat("TNLShadowHalfHp", this.tnl$halfHp);
         if (this.ownerId != null) {
             tag.putUUID("TNLShadowOwner", this.ownerId);
         }
@@ -129,6 +183,9 @@ public class MomoShadow extends Monster {
         }
         if (tag.hasUUID("TNLShadowOwner")) {
             this.ownerId = tag.getUUID("TNLShadowOwner");
+        }
+        if (tag.contains("TNLShadowHalfHp")) {
+            this.tnl$halfHp = tag.getFloat("TNLShadowHalfHp");
         }
     }
 
