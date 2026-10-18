@@ -295,23 +295,12 @@ public final class CurseAffinityAttribute {
                         }
                     }
                 }
-                // ③ 同步到属性：先清掉我们自己加的那些，再加当前这一份
-                // ⚠ TNL1268 致命 bug（用户："常态咒力亲和出现然后又归零"）：
-                //   这段原来**每 tick 都跑**，但 `fromCurios` 只在 `deep`（每 20 tick）那一 tick 才累加
-                //   ⇒ 结果：19/20 的 tick 里修饰符被删掉却没有被加回来 ⇒ 数值 1 tick 有、19 tick 是 0。
-                //   现在整段只在 `deep` 那一 tick 做。
-                AttributeInstance inst = sp.getAttribute(CURSE_AFFINITY.get());
-                if (inst != null) {
-                    for (AttributeModifier m : new java.util.ArrayList<>(inst.getModifiers())) {
-                        if (MOD_NAME.equals(m.getName())) {
-                            inst.removeModifier(m);
-                        }
-                    }
-                    if (fromCurios != 0) {
-                        inst.addTransientModifier(new AttributeModifier(ITEM_UUID, MOD_NAME, fromCurios,
-                                AttributeModifier.Operation.ADDITION));
-                    }
-                }
+                // ③ TNL1270 用户选了方案 A："自动查看槽位属性" ⇒ **删掉手动同步**。
+                //   亲和已经写成物品的 `AttributeModifiers`，并且 `Slot` 写的是**真实饰品槽 id**
+                //   ⇒ 由 Curios 在装备/卸下时自己套用到玩家身上 ✓。
+                //   原来那段"每 N tick 先删后加"就是闪烁的来源（19/20 tick 删了没加回去）✗，
+                //   而且如果 Curios 已经自动套用，那段还会**加两遍** ✗。现在整段移除。
+                //   （`fromCurios` 保留只为下面那句 debug 日志留余地，实际没有消费者了。）
             } catch (Throwable ignored) {
             }
         }
