@@ -29,7 +29,13 @@ public class KtuluVitalsMixin {
     private float tinkersnewlife$vitalsFloor(float value) {
         try {
             LivingEntity self = (LivingEntity) (Object) this;
-            if (!(self instanceof KtuluMomo)) {
+            if (!(self instanceof KtuluMomo momo)) {
+                return value;
+            }
+            // TNL1283 分身（拉莱耶之影）**不是 Boss**：血量内核没有它的槽位 ✗
+            //   ⇒ 让它走 `a.qD` 会把每次 setHealth 都顶成内核值（= 满血）✗
+            //   ⇒ 表现就是"分身掉血但血量永远满" ✓ 所以这里必须跳过 ✓
+            if (!momo.tnl$isBossForm()) {
                 return value;
             }
             if (self.level().isClientSide) {

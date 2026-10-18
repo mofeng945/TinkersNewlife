@@ -53,6 +53,11 @@ public final class KtuluDeathGuard {
             if (!(event.getEntity() instanceof KtuluMomo momo) || momo.level().isClientSide) {
                 return;
             }
+            // TNL1283 分身不是 Boss：不吃限伤、不刷"权威血量"（内核里没有分身的槽位，
+            // 一刷就会把分身顶回满血 —— 用户实测"分身血量永远是满的"就是这么来的）。
+            if (!momo.tnl$isBossForm()) {
+                return;
+            }
             String src;
             try {
                 src = event.getSource().typeHolder().unwrapKey()
@@ -101,6 +106,22 @@ public final class KtuluDeathGuard {
             TinkersNewlife.LOGGER.warn("TNL1143 death of momo src={} health={} auth={}",
                     event.getSource().getMsgId(), momo.getHealth(), com.mofengbaizhi.tinkersnewlife.content.entity.ktulu.a.qF(momo));
             if (momo.level().isClientSide) {
+                return;
+            }
+            // TNL1283 分身不是 Boss：它们该死就死（别被下面"拦作弊秒杀"的逻辑接管）
+            if (!momo.tnl$isBossForm()) {
+                return;
+            }
+            // TNL1283 用户："墨默处于分身保护状态下被寰宇剑可以秒掉"。
+            //   寰宇剑是三连：hurt(最大浮点) ⇒ setHealth(0) ⇒ die()。
+            //   hurt 已经被分身护盾挡下 ✓，setHealth 被血量 mixin 顶住 ✓，
+            //   但 die() 根本不看血量 ⇒ 必须在这里再拦一道 ✓
+            if (momo.tnl$shadowShieldActive()) {
+                event.setCanceled(true);
+                momo.deathTime = 0;
+                momo.hurtTime = 0;
+                momo.tnl$unDead();
+                TinkersNewlife.LOGGER.warn("TNL1283 death blocked: R'lyeh's Shadow is still alive");
                 return;
             }
             // TNL1142 用户："一剑就把血条事件清了，第二剑满血直接秒"。

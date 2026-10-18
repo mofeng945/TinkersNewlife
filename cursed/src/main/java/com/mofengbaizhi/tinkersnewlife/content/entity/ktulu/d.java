@@ -24,6 +24,10 @@ public class d {
             if (!(event.getEntity() instanceof KtuluMomo boss) || boss.level().isClientSide) {
                 return;
             }
+            // TNL1283 分身（拉莱耶之影）不是 Boss：**没有限伤、没有保护** ⇒ 这些闸门全部跳过
+            if (!boss.tnl$isBossForm()) {
+                return;
+            }
             float in = event.getAmount();
             float out = a.qA(boss, in);
             a.qB("HURT", event.getSource().getMsgId(), in, "->", out, a.qC(boss));
@@ -36,6 +40,10 @@ public class d {
     public static void onDamage(LivingDamageEvent event) {
         try {
             if (!(event.getEntity() instanceof KtuluMomo boss) || boss.level().isClientSide) {
+                return;
+            }
+            // TNL1283 分身（拉莱耶之影）不是 Boss：**没有限伤、没有保护** ⇒ 这些闸门全部跳过
+            if (!boss.tnl$isBossForm()) {
                 return;
             }
             float in = event.getAmount();
@@ -68,6 +76,10 @@ public class d {
             if (!(event.getEntity() instanceof KtuluMomo boss) || boss.level().isClientSide) {
                 return;
             }
+            // TNL1283 分身（拉莱耶之影）不是 Boss：**没有限伤、没有保护** ⇒ 这些闸门全部跳过
+            if (!boss.tnl$isBossForm()) {
+                return;
+            }
             if (event.isCanceled()) {
                 com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
                         "TNL910 attack cancelled upstream: {}", event.getSource().getMsgId());
@@ -81,6 +93,10 @@ public class d {
     public static void onHurtZero(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
         try {
             if (!(event.getEntity() instanceof KtuluMomo boss) || boss.level().isClientSide) {
+                return;
+            }
+            // TNL1283 分身（拉莱耶之影）不是 Boss：**没有限伤、没有保护** ⇒ 这些闸门全部跳过
+            if (!boss.tnl$isBossForm()) {
                 return;
             }
             if (event.getAmount() <= 0.0F) {

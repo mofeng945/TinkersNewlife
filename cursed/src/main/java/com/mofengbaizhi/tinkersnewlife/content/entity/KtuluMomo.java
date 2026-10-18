@@ -266,11 +266,41 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         return true;
     }
 
+    /**
+     * TNL1283 给**外部**（血量 mixin / 死亡守卫 / 真伤通道）用的公开版本。
+     *
+     * <p>分身（{@link MomoShadow}）不是 Boss ⇒ 这些 Boss 专属保护必须**整个跳过**，
+     * 否则会出现：{@code setHealth} 被 {@code a.qD} 顶回内核值（分身内核没初始化 ⇒ 永远是满血）、
+     * 单次伤害被夹成 6%、死亡被"作弊秒杀"逻辑接管等问题。
+     */
+    public boolean tnl$isBossForm() {
+        return this.tnl$bossForm();
+    }
+
     /** TNL893 ★★ 真死钩子：★先置标志 + 注销内核 ✗ ⇒ ★之后不再回弹/不再护血 ✓（★掉落物与死亡判定只白一次 ✓） */
     @Override
     public void die(net.minecraft.world.damagesource.DamageSource source) {
         if (!this.tnl$bossForm()) {
             super.die(source);
+            return;
+        }
+        // TNL1283 用户："墨默处于分身保护状态下被寰宇剑可以秒掉，血量保护保不住"。
+        //   寰宇剑路径是 hurt(最大浮点) ⇒ setHealth(0) ⇒ **die()**：die 不看血量，
+        //   所以光在 hurt 里挡不够 ⇒ 这里在**分身还在**时直接取消死亡并补回权威血量。
+        if (this.tnl$shadowShieldActive()) {
+            this.deathTime = 0;
+            this.hurtTime = 0;
+            this.tnl$dead = false;
+            float auth = a.qF(this);
+            if (auth > 0.0F) {
+                this.tnl$auth = auth;
+                this.setHealth(auth);
+            }
+            if (System.currentTimeMillis() - this.tnl$lastVanillaLog > 800L) {
+                this.tnl$lastVanillaLog = System.currentTimeMillis();
+                com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
+                        "TNL1283 die() ignored: R'lyeh's Shadow still alive");
+            }
             return;
         }
         this.tnl$dead = true;
@@ -440,6 +470,10 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     public void onTruePierce(float totalDamage, net.minecraft.world.damagesource.DamageSource source) {
         try {
             if (this.level().isClientSide || totalDamage <= 0.0F) {
+                return;
+            }
+            // TNL1283 分身不走内核（内核里没有它的槽位）⇒ 真伤通道一律跳过
+            if (!this.tnl$bossForm()) {
                 return;
             }
             a.q6(this, totalDamage, this.tickCount);
