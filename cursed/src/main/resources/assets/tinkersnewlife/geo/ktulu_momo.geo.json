@@ -1,204 +1,67 @@
 {
- "format_version": "1.12.0",
- "minecraft:geometry": [
-  {
-   "description": {
-    "identifier": "geometry.ktulu_momo",
-    "texture_width": 64,
-    "texture_height": 64,
-    "visible_bounds_width": 2,
-    "visible_bounds_height": 3,
-    "visible_bounds_offset": [
-     0,
-     1,
-     0
-    ]
-   },
-   "bones": [
-    {
-     "name": "body",
-     "pivot": [
-      0.0,
-      24.0,
-      0.0
-     ],
-     "cubes": [
-      {
-       "origin": [
-        -4.0,
-        12.0,
-        -2.0
-       ],
-       "size": [
-        8,
-        12,
-        4
-       ],
-       "uv": [
-        16,
-        16
-       ]
-      }
-     ]
-    },
-    {
-     "name": "head",
-     "pivot": [
-      0.0,
-      24.0,
-      0.0
-     ],
-     "cubes": [
-      {
-       "origin": [
-        -4.0,
-        24.0,
-        -4.0
-       ],
-       "size": [
-        8,
-        8,
-        8
-       ],
-       "uv": [
-        0,
-        0
-       ]
-      }
-     ]
-    },
-    {
-     "name": "hat",
-     "pivot": [
-      0.0,
-      24.0,
-      0.0
-     ],
-     "cubes": [
-      {
-       "origin": [
-        -4.5,
-        23.5,
-        -4.5
-       ],
-       "size": [
-        9,
-        9,
-        9
-       ],
-       "uv": [
-        32,
-        0
-       ]
-      }
-     ],
-     "parent": "head"
-    },
-    {
-     "name": "rightArm",
-     "pivot": [
-      -5.0,
-      22.0,
-      0.0
-     ],
-     "cubes": [
-      {
-       "origin": [
-        -8.0,
-        12.0,
-        -2.0
-       ],
-       "size": [
-        4,
-        12,
-        4
-       ],
-       "uv": [
-        40,
-        16
-       ]
-      }
-     ]
-    },
-    {
-     "name": "leftArm",
-     "pivot": [
-      5.0,
-      22.0,
-      0.0
-     ],
-     "cubes": [
-      {
-       "origin": [
-        4.0,
-        12.0,
-        -2.0
-       ],
-       "size": [
-        4,
-        12,
-        4
-       ],
-       "uv": [
-        32,
-        48
-       ]
-      }
-     ]
-    },
-    {
-     "name": "rightLeg",
-     "pivot": [
-      -1.9,
-      12.0,
-      0.0
-     ],
-     "cubes": [
-      {
-       "origin": [
-        -3.9,
-        0.0,
-        -2.0
-       ],
-       "size": [
-        4,
-        12,
-        4
-       ],
-       "uv": [
-        0,
-        16
-       ]
-      }
-     ]
-    },
-    {
-     "name": "leftLeg",
-     "pivot": [
-      1.9,
-      12.0,
-      0.0
-     ],
-     "cubes": [
-      {
-       "origin": [
-        -0.10000000000000009,
-        0.0,
-        -2.0
-       ],
-       "size": [
-        4,
-        12,
-        4
-       ],
-       "uv": [
-        16,
-        48
-       ]
-      }
-     ]
-    }
-   ]
-  }
- ]
+	"format_version": "1.12.0",
+	"minecraft:geometry": [
+		{
+			"description": {
+				"identifier": "geometry.ktulu_momo",
+				"texture_width": 64,
+				"texture_height": 64,
+				"visible_bounds_width": 3,
+				"visible_bounds_height": 3.5,
+				"visible_bounds_offset": [0, 1.25, 0]
+			},
+			"bones": [
+				{
+					"name": "body",
+					"pivot": [0, 24, 0],
+					"cubes": [
+						{"origin": [-4, 12.00001, -1.99633], "size": [8, 12, 4], "uv": [16, 16]}
+					]
+				},
+				{
+					"name": "head",
+					"pivot": [0, 24, 0],
+					"cubes": [
+						{"origin": [-4, 24, -4], "size": [8, 8, 8], "uv": [0, 0]}
+					]
+				},
+				{
+					"name": "hat",
+					"parent": "head",
+					"pivot": [0, 24, 0],
+					"cubes": [
+						{"origin": [-4.5, 23.5, -4.5], "size": [9, 9, 9], "uv": [32, 0]}
+					]
+				},
+				{
+					"name": "rightArm",
+					"pivot": [-5, 22, 0],
+					"cubes": [
+						{"origin": [-8, 12, -2], "size": [4, 12, 4], "uv": [40, 16]}
+					]
+				},
+				{
+					"name": "leftArm",
+					"pivot": [5, 22, 0],
+					"cubes": [
+						{"origin": [4, 12, -2], "size": [4, 12, 4], "uv": [32, 48]}
+					]
+				},
+				{
+					"name": "rightLeg",
+					"pivot": [-1.9, 12, 0],
+					"cubes": [
+						{"origin": [-3.9, 0, -2], "size": [4, 12, 4], "uv": [0, 16]}
+					]
+				},
+				{
+					"name": "leftLeg",
+					"pivot": [1.9, 12, 0],
+					"cubes": [
+						{"origin": [-0.1, 0, -2], "size": [4, 12, 4], "uv": [16, 48]}
+					]
+				}
+			]
+		}
+	]
 }

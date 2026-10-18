@@ -164,8 +164,20 @@ public final class RequiemGoal extends MomoSpellGoal {
                 this.momo.level().getGameTime() + COOLDOWN_TICKS);
     }
 
+    /**
+     * TNL1298 美术把绝响拆成了三段动画（`requiem_enter` / `requiem_loop` / `requiem_exit`），
+     * 这里按剩余施法 tick 上报对应姿势：
+     * 前 20 tick（1 秒）起手，最后 25 tick（1.25 秒）收手，中间循环。
+     */
     @Override
     protected com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose animPose() {
+        int left = this.momo.tnl$castTicks();
+        if (left > TOTAL_TICKS - 20) {
+            return MomoPose.REQUIEM_ENTER;
+        }
+        if (left <= 25) {
+            return MomoPose.REQUIEM_EXIT;
+        }
         return MomoPose.REQUIEM;
     }
 

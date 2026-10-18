@@ -164,7 +164,7 @@ public final class MomoKickGoal extends MomoSpellGoal {
     /** 踢击：斜向击飞 ＋ 20% 攻击力物理伤害 */
     private void doKick(LivingEntity target) {
         this.kicked = true;
-        this.strikeTicks = 16;              // 0.8 秒命中姿势
+        this.strikeTicks = 19;              // TNL1298 美术的 kick 动画是 0.9167 秒 ≈ 19 tick
         this.bluntTicks = BLUNT_WINDOW;
         this.prevSpeed = 0.0F;
         try {

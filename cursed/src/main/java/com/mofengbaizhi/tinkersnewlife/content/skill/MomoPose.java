@@ -26,7 +26,11 @@ public enum MomoPose {
     /** TNL1294 和弦·挥动段：抬手完成之后，持续挥手发波的那一段。 */
     CHORD_WAVE,
     /** TNL1296 飞踢·冲刺段：用普通行走动画（走路循环），只是速度很快。 */
-    DASH;
+    DASH,
+    /** TNL1298 生息绝响·起手：合十抬手那一段（对应动画 `requiem_enter`）。 */
+    REQUIEM_ENTER,
+    /** TNL1298 生息绝响·收手（对应动画 `requiem_exit`）。 */
+    REQUIEM_EXIT;
 
     /** 由同步的法术编号得到姿势类别：1 瞬身、2 共鸣、3 和弦、4 绝响、6 飞踢 */
     public static MomoPose of(int spellId) {

@@ -1015,7 +1015,9 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             case 2 -> "resonance";
             case 3 -> "chord";
             case 4 -> "hurt";
-            case 5 -> "requiem";
+            case 5 -> "requiem_loop";      // TNL1298 美术把绝响拆成 enter/loop/exit
+            case 9 -> "requiem_enter";
+            case 10 -> "requiem_exit";
             case 6 -> "kick";
             case 7 -> "chord_wave";
             case 8 -> "walk";
