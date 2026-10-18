@@ -209,15 +209,41 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
      */
     /**
      * TNL1273 用户："boss 跑到另一个维度时会新建一个血条，旧血条不消失"。
-     *
-     * <p>原因：实体被移除（跨维度转移 / 区块卸载 / 被替换）时，没有任何地方去把
-     * {@link ServerBossEvent} 上的玩家摘掉 ⇒ 客户端一直显示旧血条。
-     * 这里在移除时一次性清空；新维度里的新实例会自己重新挂上。
+     * TNL1276 纠正两处 ✗：
+     * <ol>
+     *   <li>上一版覆写的是 {@code remove(RemovalReason)} ✗ —— <b>跨维度不走那条路</b> ✓
+     *       （{@code Entity#changeDimension} 里直接调 {@code setRemoved(CHANGED_DIMENSION)}），
+     *       而 {@code setRemoved} 是 <b>{@code public final}</b> ⇒ **覆写不了** ✗
+     *       ⇒ 上一版的清理从来没被调到 ✓；</li>
+     *   <li>现在分两处钩：{@link #changeDimension}（跨维度，**转移前**先摘玩家 ✓）
+     *       ＋ 本方法（击杀 / 区块卸载 / 被替换 ✓）。</li>
+     * </ol>
      */
     @Override
     public void remove(net.minecraft.world.entity.Entity.RemovalReason reason) {
         super.remove(reason);
-        this.bossEvent.removeAllPlayers();
+        this.tnl$dropBossBar();
+    }
+
+    /** ★跨维度转移：**先**把玩家从这条血条上摘掉，新维度里的新实例再自己挂上 ✓ */
+    @Override
+    public net.minecraft.world.entity.Entity changeDimension(
+            net.minecraft.server.level.ServerLevel level,
+            net.minecraftforge.common.util.ITeleporter teleporter) {
+        this.tnl$dropBossBar();
+        return super.changeDimension(level, teleporter);
+    }
+
+    /** ★清空血条订阅 ✓（★关服/断线时连接可能已在拆 ⇒ 绝不能让这里把移除流程带崩 ✓） */
+    private void tnl$dropBossBar() {
+        try {
+            if (this.bossEvent.getPlayers().isEmpty()) {
+                return;
+            }
+            this.bossEvent.removeAllPlayers();
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn("TNL1276 momo dropped its old boss bar");
+        } catch (Throwable ignored) {
+        }
     }
 
     /** TNL893 ★★ 真死钩子：★先置标志 + 注销内核 ✗ ⇒ ★之后不再回弹/不再护血 ✓（★掉落物与死亡判定只白一次 ✓） */
@@ -278,6 +304,16 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             this.bossEvent.setProgress(Math.max(0.0F, Math.min(1.0F,
                     this.getHealth() / Math.max(1.0F, this.getMaxHealth()))));
             this.bossEvent.setVisible(true);
+            // TNL1276 血条**会漏**：老代码对"跑远了/换维度了"的玩家只是 `continue` ✗，
+            // 从来不把人从 ServerBossEvent 里摘掉 ⇒ 玩家走远或换维度后，那条血条
+            // 会一直挂在屏幕上（用户："换维度后变成两条，一条是幽灵血条"）。
+            // 这里每 tick 把"不在本维度 / 超过 64 格"的玩家摘掉，回来时会被下面的循环重新挂上。
+            for (net.minecraft.server.level.ServerPlayer tnl$leaver
+                    : java.util.List.copyOf(this.bossEvent.getPlayers())) {
+                if (tnl$leaver.level() != this.level() || tnl$leaver.distanceTo(this) > 64.0F) {
+                    this.bossEvent.removePlayer(tnl$leaver);
+                }
+            }
             boolean tnl$force = tnl$sl.getGameTime() % 20L == 0L;
             for (net.minecraft.server.level.ServerPlayer tnl$sp : tnl$sl.players()) {
                 if (tnl$sp.distanceTo(this) > 64.0F) {
