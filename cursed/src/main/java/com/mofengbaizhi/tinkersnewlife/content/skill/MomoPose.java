@@ -20,14 +20,17 @@ public enum MomoPose {
      *  只有 {@code MomoHurtGoal} 会用它 —— 技能施法的 stun **不播**这个。 */
     HURT,
     /** TNL1253 生息绝响：展开死生领域时的姿势（双手上举展开）。 */
-    REQUIEM;
+    REQUIEM,
+    /** TNL1287 飞踢：斜身、右腿前踢、左腿后收。 */
+    KICK;
 
-    /** 由同步的法术编号得到姿势类别：1 瞬身、2 共鸣、3 和弦 */
+    /** 由同步的法术编号得到姿势类别：1 瞬身、2 共鸣、3 和弦、4 绝响、6 飞踢 */
     public static MomoPose of(int spellId) {
         return switch (spellId) {
             case 1 -> BLINK;
             case 2 -> RESONANCE;
             case 3 -> CHORD;
+            case 6 -> KICK;
             default -> NONE;
         };
     }

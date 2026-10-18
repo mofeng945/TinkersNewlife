@@ -23,6 +23,9 @@ public final class MomoSkills {
     /** TNL1282 拉莱耶之影：血量 <= 50% 时自动召唤 3 个分身（无前摇 / 不可打断 / 一局一次） */
     public static final boolean RLYEH_SHADOW = true;
 
+    /** TNL1287 飞踢：2 倍速度冲刺 → 斜向踢击 → 击飞 ＋ 撞墙钝伤 */
+    public static final boolean COMET_KICK = true;
+
     private MomoSkills() {
     }
 }

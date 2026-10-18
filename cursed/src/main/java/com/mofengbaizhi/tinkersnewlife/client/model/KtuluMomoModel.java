@@ -207,6 +207,32 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
             return;
         }
 
+        // TNL1287 飞踢：斜身滞空、右腿前踢、左腿后收，双臂前后平衡。
+        //   进度 t 走 0→1，用 sin(tπ) 让"抬腿→踢出→收回"自然起落。
+        if (POSE == com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.KICK) {
+            float t = Math.max(0.0F, Math.min(1.0F, PROGRESS));
+            float swing = (float) Math.sin(t * Math.PI);
+            this.body.xRot = -0.30F * swing;                 // 身体后仰（斜向踢）
+            this.head.xRot = 0.22F * swing;
+            this.head.yRot = netHeadYaw * 0.2F;
+            this.rightLeg.xRot = -1.50F * swing;             // 前踢的腿
+            this.rightLeg.yRot = 0.0F;
+            this.rightLeg.zRot = 0.0F;
+            this.leftLeg.xRot = 0.55F * swing;               // 后收的支撑腿
+            this.leftLeg.yRot = 0.0F;
+            this.leftLeg.zRot = 0.0F;
+            this.rightArm.xRot = -0.85F * swing;
+            this.rightArm.yRot = 0.0F;
+            this.rightArm.zRot = 0.30F * swing;
+            this.leftArm.xRot = 0.80F * swing;
+            this.leftArm.yRot = 0.0F;
+            this.leftArm.zRot = -0.30F * swing;
+            this.hat.xRot = this.head.xRot;
+            this.hat.yRot = this.head.yRot;
+            this.hat.zRot = this.head.zRot;
+            return;
+        }
+
         // TNL1189 瞬身：站定，双臂垂下略内收（学诡厄 CROSSED 的意图），
         // 头锁正前方。插在共鸣分支**之前**，这样瞬身不会
         // 借用监守者的护脸姿势。

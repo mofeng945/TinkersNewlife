@@ -126,6 +126,10 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         if (com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.RLYEH_SHADOW) {
             this.goalSelector.addGoal(3, new com.mofengbaizhi.tinkersnewlife.content.skill.RlyehShadowGoal(this));
         }
+        // TNL1287 飞踢：2 倍速度冲刺 → 斜向踢击 → 击飞 ＋ 撞墙钝伤
+        if (com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.COMET_KICK) {
+            this.goalSelector.addGoal(3, new com.mofengbaizhi.tinkersnewlife.content.skill.MomoKickGoal(this));
+        }
         this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 16.0F));
         this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
@@ -862,8 +866,19 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         this.tnl$requiemClose = false;
     }
 
-    // ==================== TNL1282 拉莱耶之影（R'lyeh's Shadow） ✓ ====================
+    // ==================== TNL1287 飞踢冷却 ✓ ====================
 
+    private long tnl$kickCoolUntil = 0L;
+
+    public long tnl$kickCoolUntil() {
+        return this.tnl$kickCoolUntil;
+    }
+
+    public void tnl$setKickCoolUntil(long until) {
+        this.tnl$kickCoolUntil = until;
+    }
+
+    // ==================== TNL1282 拉莱耶之影（R'lyeh's Shadow） ✓ ====================
     /** 一局只放一次（进 NBT） */
     private boolean tnl$rlyehUsed = false;
 
