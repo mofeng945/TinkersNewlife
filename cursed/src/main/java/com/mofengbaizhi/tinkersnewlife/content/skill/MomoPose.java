@@ -25,8 +25,8 @@ public enum MomoPose {
     KICK,
     /** TNL1294 和弦·挥动段：抬手完成之后，持续挥手发波的那一段。 */
     CHORD_WAVE,
-    /** TNL1295 飞踢·命中段：从**踢中那一刻**开始播（冲刺段用 KICK）。 */
-    KICK_STRIKE;
+    /** TNL1296 飞踢·冲刺段：用普通行走动画（走路循环），只是速度很快。 */
+    DASH;
 
     /** 由同步的法术编号得到姿势类别：1 瞬身、2 共鸣、3 和弦、4 绝响、6 飞踢 */
     public static MomoPose of(int spellId) {

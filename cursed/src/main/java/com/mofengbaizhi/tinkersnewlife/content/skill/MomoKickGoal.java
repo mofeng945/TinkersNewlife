@@ -245,21 +245,22 @@ public final class MomoKickGoal extends MomoSpellGoal {
     }
 
     /**
-     * TNL1295 用户问「kick 在第几秒踢出」—— 关键点是：**命中不固定**。
-     * 冲刺段最长 30 tick（1.5 秒），一旦进到 3.2 格就立刻命中。
-     * 所以姿势拆成两段，**命中段从踢中那一刻才开始播**，这样动画和判定一定对齐：
+     * TNL1296 用户口径：「冲刺就用正常行走姿势，只不过速度较快且身后渲染残影；
+     * 我只做一个 kick 0.8 秒、第 0.15 秒踢出」⇒
      * <ul>
-     *   <li>冲刺中（没踢中）⇒ {@link MomoPose#KICK}（动画 `kick_dash`，循环）</li>
-     *   <li>踢中后 16 tick（0.8 秒）⇒ {@link MomoPose#KICK_STRIKE}（动画 `kick_strike`）</li>
-     *   <li>之后 ⇒ NONE（钝伤窗口还在后台跑，但不再摆姿势）</li>
+     *   <li>冲刺中 ⇒ {@link MomoPose#DASH}（播放普通行走动画 `walk`，循环）</li>
+     *   <li>从**踢中那一刻**起 16 tick（0.8 秒）⇒ {@link MomoPose#KICK}（动画 `kick`，
+     *       第 0.15 秒就是踢出去那一帧）</li>
+     *   <li>之后 ⇒ NONE（钝伤窗口还在后台跑）</li>
      * </ul>
+     * ⚠ 残影（模仿瞬身）还没做：GeckoLib 下要另写一层"重画模型"的渲染，单独一轮补。
      */
     @Override
     protected MomoPose animPose() {
         if (!this.kicked) {
-            return MomoPose.KICK;
+            return MomoPose.DASH;
         }
-        return this.strikeTicks > 0 ? MomoPose.KICK_STRIKE : MomoPose.NONE;
+        return this.strikeTicks > 0 ? MomoPose.KICK : MomoPose.NONE;
     }
 
     /**
