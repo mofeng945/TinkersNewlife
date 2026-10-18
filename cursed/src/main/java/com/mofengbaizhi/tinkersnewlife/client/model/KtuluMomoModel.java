@@ -207,9 +207,9 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
             return;
         }
 
-        // TNL1288 飞踢：照用户给的三格参考图
-        //   图122 起手护脸 → 图123 抬膝（大腿抬到水平，身体微前倾、双手护脸）
-        //   → 图124 蹬出（身体强烈前倾、踢腿向后上方伸到水平，手臂一前一后展开）
+        // TNL1288/1289 飞踢：照用户给的三格参考图（★TNL1289 纠正：图124 是**侧踢**）
+        //   图122 起手护脸 → 图123 抬膝（大腿抬到水平、双手护脸）
+        //   → 图124 **侧向转体（yaw）＋ 向下压（pitch）**，踢腿向侧上方伸平
         //   进度由 MomoKickGoal#animProgress() 驱动：
         //   冲刺段 0.05→0.35（抬膝），踢出瞬间 0.35→0.55（蹬出），之后收回到 0.30。
         if (POSE == com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.KICK) {
@@ -230,28 +230,37 @@ public class KtuluMomoModel extends HumanoidModel<KtuluMomo> {
                 chamber = 1.0F - r;
                 extend = 1.0F - r;
             }
-            // 抬膝：右腿前抬到水平（-1.35）；蹬出：向后上方摆到水平（+1.55）
-            this.rightLeg.xRot = -1.35F * chamber + 1.55F * extend;
-            this.rightLeg.yRot = 0.12F * extend;
-            this.rightLeg.zRot = 0.10F * extend;
-            // 支撑腿：抬膝时站稳，蹬出时略后蹬
-            this.leftLeg.xRot = 0.18F * chamber - 0.18F * extend;
-            this.leftLeg.yRot = 0.0F;
-            this.leftLeg.zRot = 0.0F;
-            // 躯干：抬膝时几乎直立，蹬出时像图124那样强烈前倾
-            this.body.xRot = 0.06F * chamber + 0.92F * extend;
-            this.head.xRot = 0.06F * chamber + 0.30F * extend;
-            this.head.yRot = netHeadYaw * 0.2F;
-            // 手臂：抬膝时护脸（借共鸣的护脸数值），蹬出时一前一后展开（图124）
+            // TNL1289 用户："为什么身体是前倾，不应该是侧向转过一个角度然后向下倾吗"。
+            //   对 ✗：图124 是**侧踢/后踢** ✗ 躯干先**横向转体**（yaw）再**向下压**（pitch），
+            //   腿是**向侧面**抬出去的（zRot），不是往后蹬（xRot）✓
+            float turn = 0.35F * chamber + 0.65F * extend;      // 转体量 0→1
+            // ① 转体：躯干绕 y 轴转过 ~60°，让侧面朝目标
+            this.body.yRot = -1.05F * turn;
+            // ② 向下倾：不是纯前倾，是"转过去以后往下压"
+            this.body.xRot = 0.06F * chamber + 0.52F * extend;
+            this.body.zRot = -0.22F * turn;
+            // 头：转体之后仍要看目标 ⇒ 反着补回 yaw，略抬头
+            this.head.yRot = netHeadYaw * 0.2F + 0.75F * turn;
+            this.head.xRot = 0.06F * chamber - 0.15F * extend;
+            this.head.zRot = 0.20F * turn;
+            // ③ 踢腿：抬膝段向前抬；蹬出段**向侧上方**甩出去（zRot 主导，xRot 只留一点）
+            this.rightLeg.xRot = -1.35F * chamber + 0.25F * extend;
+            this.rightLeg.yRot = -0.35F * extend;
+            this.rightLeg.zRot = 1.45F * extend;                // ← 侧踢：绕正面轴向外抬
+            // 支撑腿：转体后略屈、脚尖撑地
+            this.leftLeg.xRot = 0.18F * chamber - 0.10F * extend;
+            this.leftLeg.yRot = 0.10F * extend;
+            this.leftLeg.zRot = -0.12F * chamber;
+            // 手臂：抬膝时护脸；蹬出时一上一下张开保持平衡
             float guardX = -1.05F;
             float guardY = -0.30F;
             float guardZ = 0.70F;
-            this.rightArm.xRot = guardX * chamber - 0.45F * extend;
-            this.rightArm.yRot = guardY * chamber + 0.15F * extend;
-            this.rightArm.zRot = guardZ * chamber - 0.35F * extend;
-            this.leftArm.xRot = guardX * chamber + 0.55F * extend;
-            this.leftArm.yRot = -guardY * chamber - 0.15F * extend;
-            this.leftArm.zRot = -guardZ * chamber + 0.35F * extend;
+            this.rightArm.xRot = guardX * chamber - 0.35F * extend;
+            this.rightArm.yRot = guardY * chamber + 0.20F * extend;
+            this.rightArm.zRot = guardZ * chamber + 0.55F * extend;
+            this.leftArm.xRot = guardX * chamber + 0.60F * extend;
+            this.leftArm.yRot = -guardY * chamber - 0.20F * extend;
+            this.leftArm.zRot = -guardZ * chamber - 0.45F * extend;
             this.hat.xRot = this.head.xRot;
             this.hat.yRot = this.head.yRot;
             this.hat.zRot = this.head.zRot;
