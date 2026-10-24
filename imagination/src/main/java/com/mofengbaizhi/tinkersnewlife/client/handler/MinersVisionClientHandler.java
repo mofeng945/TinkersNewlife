@@ -229,6 +229,10 @@ public class MinersVisionClientHandler {
             if (held.isEmpty()) {
                 return 0;
             }
+            // TNL1305 没有 NBT 的匠魂栈不要 from()（会刷 tconstruct 的 non-modifiable 警告）
+            if (!ToolStack.isInitialized(held)) {
+                return 0;
+            }
             ToolStack tool = ToolStack.from(held);
             if (tool == null) {
                 return 0;

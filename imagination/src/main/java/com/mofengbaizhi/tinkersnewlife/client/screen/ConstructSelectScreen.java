@@ -402,13 +402,13 @@ public class ConstructSelectScreen extends Screen {
                 hoveredIndex = i;
                 graphics.fill(cx, cy, cx + CELL, cy + CELL, 0x60FFFFFF);
             }
-            graphics.renderItem(new ItemStack(shown.get(i).item()), cx + 1, cy + 1);
+            graphics.renderItem(tnl$displayStack(shown.get(i).item()), cx + 1, cy + 1);
         }
 
         // 悬停物品的完整提示框（原版 tooltip + 一行拟造费用）
         if (hoveredIndex >= 0 && hoveredIndex < shown.size()) {
             Item item = shown.get(hoveredIndex).item();
-            ItemStack stack = new ItemStack(item);
+            ItemStack stack = tnl$displayStack(item);
             List<Component> lines = new ArrayList<>(
                     stack.getTooltipLines(Minecraft.getInstance().player, TooltipFlag.Default.NORMAL));
             lines.add(costLine(item));
@@ -480,5 +480,33 @@ public class ConstructSelectScreen extends Screen {
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    /**
+     * TNL1305 列表里画物品用的栈：**匠魂工具必须先初始化**。
+     * 直接 {@code new ItemStack(匠魂工具)} 渲染时，TConstruct 的模型会内部
+     * {@code ToolStack.from(空栈)} ⇒ 每帧刷一条 "Tool stack constructed using
+     * non-modifiable tool" 警告（玩家反馈的日志刷屏就是它，实测约 120 条/秒，
+     * 正好是本界面开着的时候）。
+     * ⇒ 这里用 {@code createTool(空材料)} 初始化一次并缓存：渲染更快，也不再刷警告。
+     */
+    private static final java.util.Map<Item, ItemStack> TNL$DISPLAY_STACKS = new java.util.HashMap<>();
+
+    private static ItemStack tnl$displayStack(Item item) {
+        return TNL$DISPLAY_STACKS.computeIfAbsent(item, it -> {
+            ItemStack stack = new ItemStack(it);
+            try {
+                if (it instanceof slimeknights.tconstruct.library.tools.item.IModifiable modifiable) {
+                    slimeknights.tconstruct.library.tools.nbt.ToolStack tool =
+                            slimeknights.tconstruct.library.tools.nbt.ToolStack.createTool(
+                                    it, modifiable.getToolDefinition(),
+                                    slimeknights.tconstruct.library.tools.nbt.MaterialNBT.EMPTY);
+                    tool.updateStack(stack);
+                }
+            } catch (Throwable ignored) {
+                // 初始化失败就退回原栈（最多还是警告，不影响功能）
+            }
+            return stack;
+        });
     }
 }

@@ -705,8 +705,18 @@ public final class ConstructTechnique extends BaseTechnique {
     private static ItemStack buildTinkerBullet(Item ammo) {
         ItemStack stack = new ItemStack(ammo);
         try {
-            slimeknights.tconstruct.library.tools.nbt.ToolStack tool =
-                    slimeknights.tconstruct.library.tools.nbt.ToolStack.from(stack);
+            // TNL1305 新建的空栈没有 NBT ✗ `ToolStack.from()` 会触发 TConstruct 的
+            // "Tool stack constructed using non-modifiable tool" 警告（玩家反馈刷屏）✓
+            // ⇒ 匠魂物品改用 `createTool` 正规初始化 ✓ 非匠魂物品才走 from() ✓
+            slimeknights.tconstruct.library.tools.nbt.ToolStack tool;
+            if (ammo instanceof slimeknights.tconstruct.library.tools.item.IModifiable mod
+                    && !slimeknights.tconstruct.library.tools.nbt.ToolStack.isInitialized(stack)) {
+                tool = slimeknights.tconstruct.library.tools.nbt.ToolStack.createTool(
+                        ammo, mod.getToolDefinition(),
+                        slimeknights.tconstruct.library.tools.nbt.MaterialNBT.EMPTY);
+            } else {
+                tool = slimeknights.tconstruct.library.tools.nbt.ToolStack.from(stack);
+            }
             if (tool != null) {
                 java.util.List<slimeknights.tconstruct.library.materials.definition.IMaterial> mats =
                         new java.util.ArrayList<>();
@@ -1990,7 +2000,9 @@ public final class ConstructTechnique extends BaseTechnique {
         try {
             if (!(bare.getItem() instanceof slimeknights.tconstruct.library.tools.item.IModifiable modifiable)) return null;
             // 自带材料数据（例如配方产物本来就带）→ 不动它
-            if (!slimeknights.tconstruct.library.tools.nbt.ToolStack.from(bare).getMaterials().isEmpty()) return null;
+            // TNL1305 空栈（没有 NBT）⇒ 材料必然为空 ✓ 不要 from()（会刷警告）✓
+            if (slimeknights.tconstruct.library.tools.nbt.ToolStack.isInitialized(bare)
+                    && !slimeknights.tconstruct.library.tools.nbt.ToolStack.from(bare).getMaterials().isEmpty()) return null;
             slimeknights.tconstruct.library.tools.nbt.MaterialNBT same = sameItemMaterials(player, bare.getItem());
             if (same != null && !same.isEmpty()) {
                 return slimeknights.tconstruct.library.tools.helper.ToolBuildHandler
@@ -2025,6 +2037,8 @@ public final class ConstructTechnique extends BaseTechnique {
     @javax.annotation.Nullable
     private static slimeknights.tconstruct.library.tools.nbt.MaterialNBT materialsOf(ItemStack stack, Item item) {
         if (stack == null || stack.isEmpty() || stack.getItem() != item || isTemp(stack)) return null;
+        // TNL1305 没有 NBT 的匠魂栈 ⇒ 材料为空 ✓ 不调 from()（避免 tconstruct 刷警告）
+        if (!slimeknights.tconstruct.library.tools.nbt.ToolStack.isInitialized(stack)) return null;
         try {
             slimeknights.tconstruct.library.tools.nbt.MaterialNBT m =
                     slimeknights.tconstruct.library.tools.nbt.ToolStack.from(stack).getMaterials();
