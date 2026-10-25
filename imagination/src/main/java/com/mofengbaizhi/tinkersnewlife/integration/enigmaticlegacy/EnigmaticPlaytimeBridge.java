@@ -120,9 +120,8 @@ public final class EnigmaticPlaytimeBridge {
 
     /** 原版统计读一个数 ✓ 读不到返回 -1 ✓（⚠ 必须先注册 ✓ 见 {@link #onRegister}） */
     private static long readStat(ServerPlayer player, ResourceLocation id) {
-        if (!statsRegistered) {
-            return -1L;
-        }
+        // TNL1318 不再要求"我们自己注册成功"：神秘遗物本来就会把这两条统计注册进 CUSTOM_STAT ✓
+        //   （我们注册会撞车 ⇒ statsRegistered 一直是 false ⇒ 以前永远走自计回退 ✗）
         try {
             return player.getStats().getValue(Stats.CUSTOM.get(id));
         } catch (Throwable ignored) {
@@ -148,6 +147,11 @@ public final class EnigmaticPlaytimeBridge {
 
     /** 「受七咒时间 ÷ 在世界上时间」✓ 0.0~1.0 ✓ */
     public static double curseRatio(ServerPlayer player) {
+        // TNL1318 优先用神秘遗物自己算的比例（它从世界创建开始记账 ✓）
+        Double el = elSufferingFraction(player);
+        if (el != null) {
+            return el;
+        }
         long with = withCurses(player);
         long without = withoutCurses(player);
         long total = with + without;
@@ -160,7 +164,68 @@ public final class EnigmaticPlaytimeBridge {
      * <p>⚠ 宽限 ✓：两条数据都还没有（total=0 ✓ 全新/刚升级 ✓）⇒ **戴着就先算合格** ✓
      * （否则所有人的计数器都从 0 起 ✗ ⇒ 会被误判成不合格而**误收装备** ✗✗）。
      */
+    // ============================================================
+    //  TNL1318 神秘遗物自身的判定（权威 ✓）：能拿到就用它的，拿不到才用本模组回退 ✓
+    // ============================================================
+    private static boolean elResolved;
+    private static java.lang.reflect.Method elWorthyMethod;
+    private static java.lang.reflect.Method elSufferingMethod;
+
+    private static void resolveEl() {
+        if (elResolved) {
+            return;
+        }
+        elResolved = true;
+        try {
+            Class<?> c = Class.forName("com.aizistral.enigmaticlegacy.handlers.SuperpositionHandler");
+            elWorthyMethod = c.getMethod("isTheWorthyOne", net.minecraft.world.entity.player.Player.class);
+            elSufferingMethod = c.getMethod("getSufferingFraction", net.minecraft.world.entity.player.Player.class);
+        } catch (Throwable ignored) {
+            elWorthyMethod = null;
+            elSufferingMethod = null;
+        }
+    }
+
+    /** 神秘遗物自己认为"你够格吗"（null = 拿不到它的 API ⇒ 调用方回退） */
+    @javax.annotation.Nullable
+    public static Boolean elWorthy(ServerPlayer player) {
+        resolveEl();
+        if (elWorthyMethod == null || player == null) {
+            return null;
+        }
+        try {
+            Object v = elWorthyMethod.invoke(null, player);
+            return v instanceof Boolean b ? b : null;
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    /** 神秘遗物自己算的"受咒比例"（null = 拿不到 ⇒ 调用方回退） */
+    @javax.annotation.Nullable
+    public static Double elSufferingFraction(ServerPlayer player) {
+        resolveEl();
+        if (elSufferingMethod == null || player == null) {
+            return null;
+        }
+        try {
+            Object v = elSufferingMethod.invoke(null, player);
+            return v instanceof Double d ? d : null;
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
     public static boolean meetsRatio(ServerPlayer player, int percent) {
+        // TNL1318 用户反馈：「我的恶念星灵在时间满足条件情况下又拿不起来了」
+        //   根因：以前从不问神秘遗物自己的判定，只用本模组"自计"的比例
+        //   （本模组装好后才开始计数 ✗ 而且读原版统计还要求"我们自己注册成功"⇒ 撞车后永远读不到 ✗）
+        //   ⇒ 神秘遗物认为你够格，我们却判不合格、每 20 tick 收一次装备 ✗
+        //   现在：先问 `SuperpositionHandler.isTheWorthyOne`（权威 ✓）；拿不到它的 API 才回退 ✓
+        Boolean el = elWorthy(player);
+        if (el != null) {
+            return el;
+        }
         if (!isWearingRing(player)) {
             return false;
         }

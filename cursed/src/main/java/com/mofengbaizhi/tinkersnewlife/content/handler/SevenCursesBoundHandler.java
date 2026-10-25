@@ -82,6 +82,16 @@ public final class SevenCursesBoundHandler {
             if (EnigmaticPlaytimeBridge.meetsRatio(player, RATIO_PERCENT)) {
                 return;
             }
+            if (player.tickCount % 200 == 0) {
+                // TNL1318 诊断（每 10 秒最多一条）：下次再"拿不起来"能直接从日志看出判定依据 ✓
+                TinkersNewlife.LOGGER.info(
+                        "[七咒] 判定不合格，收装备: 受咒tick={} 未受咒tick={} 比例={} 戴着戒指={} 神秘遗物判定={}",
+                        EnigmaticPlaytimeBridge.withCurses(player),
+                        EnigmaticPlaytimeBridge.withoutCurses(player),
+                        EnigmaticPlaytimeBridge.curseRatio(player),
+                        EnigmaticPlaytimeBridge.isWearingRing(player),
+                        EnigmaticPlaytimeBridge.elWorthy(player));
+            }
             ejectBoundItems(player);
         } catch (Throwable ignored) {
             // 任何意外都不该把玩家 tick 打崩 ✓
