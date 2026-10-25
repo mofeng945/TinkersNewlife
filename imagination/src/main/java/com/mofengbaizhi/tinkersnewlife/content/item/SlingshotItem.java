@@ -148,7 +148,7 @@ public class SlingshotItem extends ModifiableBowItem {
                 shot.setCritArrow(true);
             }
 
-            // 把工具上的改装全部转给弹射物 ＋ 跑远程钩子（海王之力/喜热这类"弹射物"效果就挂在这里 ✓）
+            // 把工具上的改装全部转给弹射物 ＋ 跑远程钩子（"弹射物"类效果就挂在这里 ✓）
             ModifierNBT modifiers = tool.getModifiers();
             EntityModifierCapability.getCapability(shot).addModifiers(modifiers);
             ModDataNBT shotData = PersistentDataCapability.getOrWarn(shot);

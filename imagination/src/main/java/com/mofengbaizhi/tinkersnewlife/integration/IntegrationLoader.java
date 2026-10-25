@@ -34,10 +34,6 @@ public final class IntegrationLoader {
     public static final String GOETY_LADDER = "goety_ladder";
     /** 冰火传说 */
     public static final String ICEANDFIRE = "iceandfire";
-    /** 水产养殖2（Aquaculture 2）—— §978 起「熔融海王金属」流体组随它同生共死 */
-    public static final String AQUACULTURE = "aquaculture";
-    /** 熔岩钓鱼（Lava Fishing）—— §980 起「熔融钷」流体组随它同生共死 */
-    public static final String LAVAFISHING = "lavafishing";
     /** 铁魔法（Iron's Spells 'n Spellbooks）——⚠ modid 是 <b>带下划线</b>的 {@code irons_spellbooks}
      *  （Java 包名 {@code io.redspace.ironsspellbooks} 没有下划线，极易写错；写错的后果是联动判定恒为 false、
      *  模块化魔杖的法术功能被静默停用） */
@@ -78,7 +74,7 @@ public final class IntegrationLoader {
 
     /** 环境探测日志用的关注清单（顺序即日志顺序） */
     private static final String[] WATCHED = {
-            GOETY, GOETY_REVELATION, GOETY_LADDER, ICEANDFIRE, AQUACULTURE, LAVAFISHING, IRON_SPELLBOOKS, TACZ, JEI, PATCHOULI, JADE, AE2,
+            GOETY, GOETY_REVELATION, GOETY_LADDER, ICEANDFIRE, IRON_SPELLBOOKS, TACZ, JEI, PATCHOULI, JADE, AE2,
             ENIGMATIC_LEGACY
     };
 
@@ -229,25 +225,6 @@ public final class IntegrationLoader {
             }
         }
 
-        // 水产养殖2（§978）：流体组走标准联动注册 —— 熔融海王金属（FluidType/静止/流动/方块/桶同生共死 ✓）；
-        // 材料「海王金属」的定义/数值/特性/配方全部走 forge:mod_loaded aquaculture ✓
-        if (shouldRegisterLinked(AQUACULTURE)) {
-            try {
-                new com.mofengbaizhi.tinkersnewlife.integration.aquaculture.AquacultureIntegration().register(bus);
-            } catch (Throwable t) {
-                LOGGER.error("[联动] 水产养殖2模块初始化失败", t);
-            }
-        }
-        // 熔岩钓鱼（§980）：流体组走标准联动注册 —— 熔融钷（FluidType/静止/流动/方块/桶同生共死 ✓）；
-        // 材料「钷」/特性「喜热」/熔炼回流配方全部走 forge:mod_loaded lavafishing ✓；
-        // 「岩浆行走」直接挂它自己的 lavafishing:lava_walker 效果（按注册名取 ✓ 不引它的类 ✓）
-        if (shouldRegisterLinked(LAVAFISHING)) {
-            try {
-                new com.mofengbaizhi.tinkersnewlife.integration.lavafishing.LavafishingIntegration().register(bus);
-            } catch (Throwable t) {
-                LOGGER.error("[联动] 熔岩钓鱼模块初始化失败", t);
-            }
-        }
         // 拔刀剑（§997）：当前只装"探针" —— 给西洋剑挂上它的刀状态能力，验证深度挂接(B)可行性 ✓
         if (shouldRegisterLinked(IRON_SPELLBOOKS)) {
             try {

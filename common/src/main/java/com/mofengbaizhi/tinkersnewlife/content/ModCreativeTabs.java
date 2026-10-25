@@ -298,15 +298,13 @@ public class ModCreativeTabs {
                                 acceptItemIfPresent(output, "lightning_blood_bucket");
                                 acceptItemIfPresent(output, "molten_dread_bucket");
                                 acceptItemIfPresent(output, "molten_dreadsteel_bucket");
-                                // ----- 诡厄巫法组 / 启示录组 / 阶梯组 / 水产组 / 熔岩钓鱼组 -----
+                                // ----- 诡厄巫法组 / 启示录组 / 阶梯组 -----
                                 acceptItemIfPresent(output, "molten_cursed_metal_bucket");
                                 acceptItemIfPresent(output, "molten_dark_metal_bucket");
                                 acceptItemIfPresent(output, "unholy_blood_bucket");
                                 acceptItemIfPresent(output, "everburning_holy_fire_bucket");
                                 acceptItemIfPresent(output, "molten_broken_ring_bucket");
                                 acceptItemIfPresent(output, "molten_void_metal_bucket");
-                                acceptItemIfPresent(output, "molten_neptunium_bucket");
-                                acceptItemIfPresent(output, "molten_promethium_bucket");
                                 // ----- 铁魔法联动 -----
                                 acceptItemIfPresent(output, "primordial_fire_soul_bucket");
                                 acceptItemIfPresent(output, "molten_arcane_ingot_bucket");

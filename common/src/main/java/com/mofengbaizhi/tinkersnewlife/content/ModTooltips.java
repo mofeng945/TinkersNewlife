@@ -43,6 +43,14 @@ public class ModTooltips {
         //    （用户口径：改了快捷键，提示也跟着变 ✓）
         applyKeyHints(event.getToolTip());
 
+        // ============================================================
+        //  TNL1307 用户口径：「之前删工具提示的时候不小心把龙血储罐的提示也删了，补回来」
+        //  ⇒ 匠魂钩子（DragonBloodTankTrait#addTooltip）现在**还在**，但为防"钩子没挂上/被别的
+        //    模组的工具提示流程吞掉"这类情况，这里再做一层**保底补画**：
+        //    只有"工具上真有龙血储罐、且提示里还没有那一行"时才补 ⇒ 正常情况下**不会重复** ✓
+        // ============================================================
+        tnl$ensureDragonBloodTankTooltip(event);
+
         // ⭐ 咒力核心：只额外提示当前总咒力亲和与咒力值（其余机制见帕秋莉手册/JEI）
         if (stack.getItem() instanceof CurseCoreItem) {
             Player player = event.getEntity();
@@ -169,5 +177,80 @@ public class ModTooltips {
         }
         String live = com.mofengbaizhi.tinkersnewlife.util.KeyHintHelper.display(keyId);
         return (live == null || live.isEmpty()) ? text : text.replace(word, live);
+    }
+
+    /**
+     * TNL1307 龙血储罐提示保底：匠魂的 {@code TooltipModifierHook} 正常时**已经有这一行**，
+     * 这里按"提示里是否已存在同一个翻译键"去重，只在缺失时补 ✓
+     */
+    private static void tnl$ensureDragonBloodTankTooltip(
+            net.minecraftforge.event.entity.player.ItemTooltipEvent event) {
+        try {
+            ItemStack stack = event.getItemStack();
+            if (stack == null || stack.isEmpty()) {
+                return;
+            }
+            ToolStack tool = ToolHelper.getToolStack(stack);
+            if (tool == null) {
+                return;
+            }
+            int level = tool.getModifierLevel(
+                    com.mofengbaizhi.tinkersnewlife.content.modifier.DragonBloodTankTrait.MODIFIER_ID);
+            if (level <= 0) {
+                return;
+            }
+            // 去重：匠魂钩子已经加过 ⇒ 什么都不做
+            if (tnl$hasTranslatableKey(event.getToolTip(),
+                    "modifier.tinkersnewlife.dragon_blood_tank.capacity")) {
+                return;
+            }
+            int capacity = level
+                    * com.mofengbaizhi.tinkersnewlife.content.modifier.DragonBloodTankTrait.CAPACITY_PER_LEVEL;
+            com.mofengbaizhi.tinkersnewlife.content.modifier.DragonBloodTankTrait.DragonBloodTankData data =
+                    com.mofengbaizhi.tinkersnewlife.content.modifier.DragonBloodTankTrait.getTankData(tool, capacity);
+            if (data == null) {
+                data = new com.mofengbaizhi.tinkersnewlife.content.modifier.DragonBloodTankTrait
+                        .DragonBloodTankData(capacity);
+            }
+            event.getToolTip().add(Component.translatable(
+                    "modifier.tinkersnewlife.dragon_blood_tank.capacity",
+                    data.getTotalFilled(), capacity));
+            boolean shift = net.minecraft.client.gui.screens.Screen.hasShiftDown();
+            if (shift) {
+                if (data.getFireAmount() > 0) {
+                    event.getToolTip().add(Component.translatable(
+                            "modifier.tinkersnewlife.dragon_blood_tank.fire", data.getFireAmount()));
+                }
+                if (data.getIceAmount() > 0) {
+                    event.getToolTip().add(Component.translatable(
+                            "modifier.tinkersnewlife.dragon_blood_tank.ice", data.getIceAmount()));
+                }
+                if (data.getLightningAmount() > 0) {
+                    event.getToolTip().add(Component.translatable(
+                            "modifier.tinkersnewlife.dragon_blood_tank.lightning", data.getLightningAmount()));
+                }
+                int remaining = capacity - data.getTotalFilled();
+                if (remaining > 0) {
+                    event.getToolTip().add(Component.translatable(
+                            "modifier.tinkersnewlife.dragon_blood_tank.remaining", remaining));
+                }
+            } else if (data.getTotalFilled() > 0) {
+                event.getToolTip().add(Component.translatable(
+                        "modifier.tinkersnewlife.dragon_blood_tank.shift_hint"));
+            }
+        } catch (Throwable ignored) {
+            // 工具提示出错绝不崩客户端
+        }
+    }
+
+    /** 提示里是否已经有某个翻译键（★只认最外层的 TranslatableContents ★） */
+    private static boolean tnl$hasTranslatableKey(java.util.List<Component> tooltip, String key) {
+        for (Component line : tooltip) {
+            if (line.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents tc
+                    && key.equals(tc.getKey())) {
+                return true;
+            }
+        }
+        return false;
     }
 }

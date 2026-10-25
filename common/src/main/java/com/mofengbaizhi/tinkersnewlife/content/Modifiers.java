@@ -371,16 +371,6 @@ public class Modifiers {
         MODIFIERS.register("rapier_armor_piercing",
                 com.mofengbaizhi.tinkersnewlife.content.modifier.RapierArmorPiercingModifier::new);
 
-    /** 词条·海王之力（无等级·海王金属自带：水中/雨中强化工具与盔甲、钓鱼竿附魔、弹射物无视水阻，见 §960） */
-    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.SeaKingsPowerModifier> SEA_KINGS_POWER =
-        MODIFIERS.register("sea_kings_power",
-                com.mofengbaizhi.tinkersnewlife.content.modifier.SeaKingsPowerModifier::new);
-
-    /** 词条·喜热（无等级·钷自带：盔甲 1:1 照熔岩钓鱼原模组 —— 每件 25% 火伤减免/熔岩下视野/炎热回血/炎热加速/岩浆行走；工具与远程面我方设计，见 §980） */
-    public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.HeatLoverModifier> HEAT_LOVER =
-        MODIFIERS.register("heat_lover",
-                com.mofengbaizhi.tinkersnewlife.content.modifier.HeatLoverModifier::new);
-
     /** 强化·噬魂（1 级占 1 升级槽，2/3 级无槽；§1070 起按<b>诡厄本体噬魂附魔</b>口径：<b>击杀时灵魂获取 ×(等级+1)</b>，最高 3 级 ⇒ ×4） */
     public static final StaticModifier<com.mofengbaizhi.tinkersnewlife.content.modifier.SoulEaterModifier> SOUL_EATER =
         MODIFIERS.register("soul_eater",

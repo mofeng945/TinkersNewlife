@@ -16,7 +16,7 @@ import net.minecraftforge.registries.DeferredRegister;
  * 它们按"联动注册标准写法"放在 {@code integration/<modid>/} 里，与对应模组同生共死
  * （模组不在场 → 流体/FluidType/液体方块/桶整组不注册）。见
  * {@code integration.iceandfire.IceAndFireFluids} / {@code integration.goety.GoetyFluids} /
- * {@code integration.goety_revelation.GoetyRevelationFluids} / {@code integration.aquaculture.AquacultureFluids}。
+ * {@code integration.goety_revelation.GoetyRevelationFluids}。
  */
 public class ModFluids {
 

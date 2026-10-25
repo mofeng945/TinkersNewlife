@@ -46,8 +46,6 @@
     "SpearChargeSlowdownMixin",
     "SpearThirdPersonPoseMixin",
     "SpearThirdPersonItemMixin",
-    "EnchantmentHelperSeaKingsMixin",
-    "AbstractArrowSeaKingsMixin",
     "GuiSmelteryTankSearchMixin",
     "HeatingStructureScreenSearchMixin",
     "ScreenKeyInputMixin",
