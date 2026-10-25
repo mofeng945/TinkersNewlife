@@ -5,6 +5,7 @@ import com.mofengbaizhi.tinkersnewlife.content.ModBlocks;
 import com.mofengbaizhi.tinkersnewlife.content.ModEffects;
 import com.mofengbaizhi.tinkersnewlife.content.modifier.DragonboneTrait;
 import com.mofengbaizhi.tinkersnewlife.integration.iceandfire.IceAndFireDamage;
+import com.mofengbaizhi.tinkersnewlife.integration.iceandfire.IceAndFireFrozen;
 import com.mofengbaizhi.tinkersnewlife.util.TruePierce;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
 import net.minecraft.core.BlockPos;
@@ -292,6 +293,17 @@ public class DragonsteelHandler {
 
     private static void applyIceEffect(Level level, LivingEntity attacker, LivingEntity target, int levelNum) {
         int duration = ICE_DURATION_BASE * levelNum;
+
+        // TNL1312 用户口径：「把龙霜钢击中目标后的效果改成被冰龙龙息喷中后的相似效果，被冻上那样？
+        // 我现在这个冰冻太粗糙了」⇒ 冰火在场时**直接用冰火自己的冻结状态**
+        // （FrozenData#setFrozen，与冰龙龙息同一个机制：目标动不了/不能攻击，客户端渲染成冰雕 ✓）；
+        // 这条不再铺那圈霜冻冰块（用户嫌粗糙 ✓）。
+        if (IceAndFireFrozen.freeze(target, duration)) {
+            tnl$frozenFeedback(level, target);
+            return;
+        }
+
+        // ⚠ 冰火不在场（或反射失败）⇒ 退回旧效果（自定义霜冻 + 少量霜冻冰块），功能不丢 ✓
         if (ModEffects.FROST.get() != null) {
             target.addEffect(new MobEffectInstance(ModEffects.FROST.get(), duration, levelNum - 1));
         }
@@ -311,6 +323,20 @@ public class DragonsteelHandler {
                     serverLevel.scheduleTick(icePos, ModBlocks.FROST_ICE.get(), ICE_LIFETIME);
                 }
             }
+        }
+    }
+
+    /**
+     * TNL1312 冻住时的一点声光反馈（★不加伤害、不改状态，纯表现 ✓）。
+     */
+    private static void tnl$frozenFeedback(Level level, LivingEntity target) {
+        if (level instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(ParticleTypes.SNOWFLAKE,
+                    target.getX(), target.getY() + target.getBbHeight() * 0.5D, target.getZ(),
+                    24, target.getBbWidth() * 0.6D, target.getBbHeight() * 0.4D, target.getBbWidth() * 0.6D,
+                    0.02D);
+            serverLevel.playSound(null, target.blockPosition(), SoundEvents.PLAYER_HURT_FREEZE,
+                    SoundSource.HOSTILE, 0.9F, 1.2F);
         }
     }
 
