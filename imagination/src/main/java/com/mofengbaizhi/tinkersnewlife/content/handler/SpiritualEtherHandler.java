@@ -169,35 +169,34 @@ public final class SpiritualEtherHandler {
             return false;
         }
         // 只挑"这件工具真正拥有"的属性 ✓（近战不会长到精准度上 ✗）
+        // TNL1319 用户截图：恶念星灵**长弓**只有「耐久/近战伤害/近战速度」在长，
+        //   「拉弓速度/初速度/精确度」全是 +0.0% ✗
+        //   根因：匠魂的 FloatToolStat 都有**默认值**（MINING_SPEED 默认 1.0 ✗ ⇒ 弓也 "> 0" ✗），
+        //   所以用 `> 0F`（和"有没有挖掘速度"）判断"这工具是不是远程"**根本判不出来** ✗
+        //   ⇒ 改用匠魂自己的**已含属性表** `getStats().getContainedStats()`：
+        //     只有**真正带这一项**的工具才会把它列为可成长 ✓
+        //     （弓/弩带 DRAW_SPEED / VELOCITY / ACCURACY ✓；剑不带 ⇒ 剑不会长拉弓速度 ✓）
+        var contained = tool.getStats().getContainedStats();
         List<String> candidates = new ArrayList<>(7);
-        // ⚠⚠ 远程三项**不能只看 > 0** ✗ —— 匠魂给所有工具都填了默认值 ✓
-        // ⇒ 近战剑的"拉弓速度"也 > 0 ✗（⚠ 这就是用户报的"近战武器为什么加拉弓速度"✗）
-        // ⇒ 只有**非采集型工具**（弓弩这类 MINING_SPEED ≤ 0 ✓）才把远程三项列为可成长
-        // ⚠ 如实说明：这是**我定的判据** ✓ 不是匠魂官方接口 ✗（匠魂没有公开"这工具有没有该属性"的方法）
-        // ⭐ 判据改用**匠魂数据实证**的信号 ✓：`tconstruct:tool_actions` 模块的有无 ✓
-        // TNL1319 判定补一条：**没有挖掘速度**（弓/弩这类）也算远程工具 ⇒
-        //   否则它们的"精准/初速/拉弓速度"三项永远进不了成长候选 ✗
-        boolean rangedTool = tool.getDefinition().getHook(ToolHooks.TOOL_ACTION) == null
-                || tool.getStats().get(ToolStats.MINING_SPEED) <= 0F;
-        if (tool.getStats().get(ToolStats.DURABILITY) > 0F && EtherSpiritTrait.canGrow(data, EtherSpiritTrait.KEYS[0])) {
+        if (contained.contains(ToolStats.DURABILITY) && EtherSpiritTrait.canGrow(data, EtherSpiritTrait.KEYS[0])) {
             candidates.add(EtherSpiritTrait.KEYS[0]);
         }
-        if (tool.getStats().get(ToolStats.ATTACK_DAMAGE) > 0F && EtherSpiritTrait.canGrow(data, EtherSpiritTrait.KEYS[1])) {
+        if (contained.contains(ToolStats.ATTACK_DAMAGE) && EtherSpiritTrait.canGrow(data, EtherSpiritTrait.KEYS[1])) {
             candidates.add(EtherSpiritTrait.KEYS[1]);
         }
-        if (tool.getStats().get(ToolStats.ATTACK_SPEED) > 0F && EtherSpiritTrait.canGrow(data, EtherSpiritTrait.KEYS[2])) {
+        if (contained.contains(ToolStats.ATTACK_SPEED) && EtherSpiritTrait.canGrow(data, EtherSpiritTrait.KEYS[2])) {
             candidates.add(EtherSpiritTrait.KEYS[2]);
         }
-        if (tool.getStats().get(ToolStats.MINING_SPEED) > 0F && EtherSpiritTrait.canGrow(data, EtherSpiritTrait.KEYS[3])) {
+        if (contained.contains(ToolStats.MINING_SPEED) && EtherSpiritTrait.canGrow(data, EtherSpiritTrait.KEYS[3])) {
             candidates.add(EtherSpiritTrait.KEYS[3]);
         }
-        if (rangedTool && tool.getStats().get(ToolStats.ACCURACY) > 0F && EtherSpiritTrait.canGrow(data, EtherSpiritTrait.KEYS[4])) {
+        if (contained.contains(ToolStats.ACCURACY) && EtherSpiritTrait.canGrow(data, EtherSpiritTrait.KEYS[4])) {
             candidates.add(EtherSpiritTrait.KEYS[4]);
         }
-        if (rangedTool && tool.getStats().get(ToolStats.VELOCITY) > 0F && EtherSpiritTrait.canGrow(data, EtherSpiritTrait.KEYS[5])) {
+        if (contained.contains(ToolStats.VELOCITY) && EtherSpiritTrait.canGrow(data, EtherSpiritTrait.KEYS[5])) {
             candidates.add(EtherSpiritTrait.KEYS[5]);
         }
-        if (rangedTool && tool.getStats().get(ToolStats.DRAW_SPEED) > 0F && EtherSpiritTrait.canGrow(data, EtherSpiritTrait.KEYS[6])) {
+        if (contained.contains(ToolStats.DRAW_SPEED) && EtherSpiritTrait.canGrow(data, EtherSpiritTrait.KEYS[6])) {
             candidates.add(EtherSpiritTrait.KEYS[6]);
         }
         if (candidates.isEmpty()) {
