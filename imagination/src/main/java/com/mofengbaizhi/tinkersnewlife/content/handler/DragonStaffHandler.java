@@ -47,7 +47,6 @@ public class DragonStaffHandler {
     // NBT 键
     private static final ResourceLocation KEY_MODE = new ResourceLocation(TinkersNewlife.MOD_ID, "dragon_staff_mode");
     private static final ResourceLocation KEY_SLOTS = new ResourceLocation(TinkersNewlife.MOD_ID, "dragon_staff_slots");
-    private static final ResourceLocation KEY_LAST_INTERACT_TIME = new ResourceLocation(TinkersNewlife.MOD_ID, "last_interact_time");
     private static final ResourceLocation KEY_OWNER = new ResourceLocation(TinkersNewlife.MOD_ID, "staff_owner");
 
     // 常量
@@ -119,21 +118,22 @@ public class DragonStaffHandler {
         return tool;
     }
 
-    // ---------- 冷却检查 ----------
-    private static boolean checkCooldown(IToolStackView tool, Player player) {
-        int lastTime = tool.getPersistentData().getInt(KEY_LAST_INTERACT_TIME);
-        int currentTime = (int) (player.level().getGameTime());
-        int elapsed = currentTime - lastTime;
-        if (elapsed < 0 || elapsed >= INTERACT_COOLDOWN_TICKS) {
-            tool.getPersistentData().putInt(KEY_LAST_INTERACT_TIME, currentTime);
-            return true;
-        } else {
-            int remaining = INTERACT_COOLDOWN_TICKS - elapsed;
-            player.displayClientMessage(Component.translatable("modifier.tinkersnewlife.dragon_staff.cooldown", remaining), true);
+    /**
+     * TNL1310 用户口径：「把驯龙杖的冷却走正常工具的 cooldown」。
+     *
+     * <p>以前是**自己记 NBT 时间戳**（`last_interact_time`）＋ 冷却中往物品栏上方刷一句
+     * "技能冷却中，还需 %d tick" ✗；现在改成**原版物品冷却**：
+     * {@link Player#getCooldowns()}{@code .addCooldown(item, ticks)} ⇒ 热键栏那格自带扫光 ✓
+     * （和普通工具有冷却时的表现完全一致 ✓ 服务端会自己同步给客户端 ✓）
+     * ⇒ 冷却中**不再发聊天提示**（原版冷却本身就是可见的 ✓）。
+     */
+    private static boolean checkCooldown(ItemStack stack, Player player) {
+        if (player.getCooldowns().isOnCooldown(stack.getItem())) {
             return false;
         }
+        player.getCooldowns().addCooldown(stack.getItem(), INTERACT_COOLDOWN_TICKS);
+        return true;
     }
-
     // ---------- 事件处理 ----------
     @SubscribeEvent
     public static void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
@@ -164,7 +164,7 @@ public class DragonStaffHandler {
             return;
         }
         if (getMode(tool) == 0) {
-            if (!checkCooldown(tool, player)) return;
+            if (!checkCooldown(player.getMainHandItem(), player)) return;
             tryRecycle(player, tool, event.getTarget());
             event.setCanceled(true);
         }
@@ -182,7 +182,7 @@ public class DragonStaffHandler {
         }
         int mode = getMode(tool);
         if (mode == 1) {
-            if (!checkCooldown(tool, player)) return;
+            if (!checkCooldown(player.getMainHandItem(), player)) return;
             tryRelease(player, tool);
             event.setCanceled(true);
         } else {
