@@ -76,7 +76,7 @@ public final class ConscienceHandler {
      */
     public static boolean isEnabled() {
         try {
-            return com.mofengbaizhi.tinkersnewlife.config.ModConfig.CONSCIENCE_ENABLED.get();
+            return com.mofengbaizhi.tinkersnewlife.content.conscience.ConscienceState.isEnabled();
         } catch (Throwable t) {
             return true;
         }

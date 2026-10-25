@@ -214,6 +214,8 @@
   "fluid_type.tinkersnewlife.primordial_fire_soul": "原初受火遗魂",
   "fluid_type.tinkersnewlife.scorching_ice": "灼热之冰",
   "fluid_type.tinkersnewlife.unholy_blood": "不洁之血",
+  "gamerule.doConscienceHeart": "「心」系统（善恶值 / 自动佩戴心）",
+  "gamerule.doConscienceHeart.description": "开启时自动佩戴「心」，善恶值与相关规则生效；关闭时不佩戴「心」（已有的会被收掉），善恶按 0 处理。",
   "gui.tinkersnewlife.converter_hud.flow": "§7变化  %s §7FE/秒",
   "gui.tinkersnewlife.converter_hud.pool": "§fFE 池  §e%s §7/ %s",
   "gui.tinkersnewlife.ee_extractor.cache": "缓存 EE：%s / %s",

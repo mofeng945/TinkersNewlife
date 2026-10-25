@@ -214,6 +214,8 @@
   "fluid_type.tinkersnewlife.primordial_fire_soul": "Primordial Scorched Soul",
   "fluid_type.tinkersnewlife.scorching_ice": "Scorching Ice",
   "fluid_type.tinkersnewlife.unholy_blood": "Unholy Blood",
+  "gamerule.doConscienceHeart": "Conscience (Heart) system",
+  "gamerule.doConscienceHeart.description": "When true, the Heart is auto-equipped and alignment rules apply; when false, no Heart is equipped (an existing one is removed) and alignment is treated as 0.",
   "gui.tinkersnewlife.converter_hud.flow": "§7Change  %s §7FE/s",
   "gui.tinkersnewlife.converter_hud.pool": "§fFE pool  §e%s §7/ %s",
   "gui.tinkersnewlife.ee_extractor.cache": "Cached EE: %s / %s",

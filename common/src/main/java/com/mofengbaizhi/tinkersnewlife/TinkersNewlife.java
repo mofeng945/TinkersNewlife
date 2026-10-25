@@ -116,6 +116,15 @@ public class TinkersNewlife {
                 (net.minecraftforge.fml.event.config.ModConfigEvent event) ->
                         com.mofengbaizhi.tinkersnewlife.content.energy.AmbientEnergySources.onConfigReload());
         LOGGER.info("初始化 TinkersNewlife 模组...");
+
+        // TNL1311 「心」总开关改走自定义 gamerule（/gamerule doConscienceHeart true|false）
+        // ⚠ 必须在这里注册：GameRules 实例是构造时把静态注册表整表拷一份，
+        //   晚于任何世界创建再注册，那个世界就没有这条规则。
+        try {
+            com.mofengbaizhi.tinkersnewlife.content.conscience.ConscienceState.init();
+        } catch (Throwable t) {
+            LOGGER.warn("[心] 自定义游戏规则注册失败，开关按默认（开启）处理: {}", t.toString());
+        }
         // 注册自定义槽位类型：领域槽（domain）与术式槽（technique），供咒力核心等装备使用
         slimeknights.tconstruct.library.tools.SlotType.init();
         slimeknights.tconstruct.library.tools.SlotType.getOrCreate("domain");
