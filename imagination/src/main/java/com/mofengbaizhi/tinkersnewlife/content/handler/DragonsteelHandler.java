@@ -113,6 +113,13 @@ public class DragonsteelHandler {
 
     /** 根据工具上的龙钢三系特性等级施加效果（近战/弹射共用） */
     private static void applyDragonsteelEffects(Level level, LivingEntity attacker, LivingEntity target, ToolStack tool) {
+        // TNL1314 用户口径：「卸掉冰火难道不应该是这个材料直接消失吗」
+        //   ⇒ 对 ✓ 龙钢三系（火/霜/雷）本来就是冰火联动材料：
+        //     材料定义 `tinkering/materials/definition/*.json`、配方、流体全都有 `forge:mod_loaded iceandfire` 门控 ✓
+        //   ⇒ 没有冰火时**这一整套东西不存在** ⇒ 这里也整条跳过，不再留任何"没冰火就退化"的效果 ✓
+        if (!com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader.isIceAndFire()) {
+            return;
+        }
         int baseFireLevel = ToolHelper.getActiveModifierLevel(tool, DRAGONSTEEL_FIRE);
         int baseIceLevel = ToolHelper.getActiveModifierLevel(tool, DRAGONSTEEL_ICE);
         int baseLightningLevel = ToolHelper.getActiveModifierLevel(tool, DRAGONSTEEL_LIGHTNING);
@@ -301,12 +308,9 @@ public class DragonsteelHandler {
             return;
         }
 
-        // TNL1313 用户口径：「把我这个自制的冒冰块清理掉吧，没用了」
-        //   ⇒ 删掉整段"随机铺霜冻冰块"的回退；冰火不在场时只保留自定义【霜冻】药水
-        //     （药水本身仍被「寒霜刺骨」等特性使用 ✓ 不删 ✓）。
-        if (ModEffects.FROST.get() != null) {
-            target.addEffect(new MobEffectInstance(ModEffects.FROST.get(), duration, levelNum - 1));
-        }
+        // TNL1314 冰火不在场时**不退化、不兜底**（材料本身不存在 ⇒ 没什么可兜的 ✓）；
+        // 冰火在场但冻结没成功（例如目标不吃 IAF 冻结）⇒ 也只放一点声光反馈，不再用别的东西代替 ✓
+        tnl$frozenFeedback(level, target);
     }
 
     /**
