@@ -91,7 +91,8 @@ public final class MomoFavor {
     /** 交易成功一次 ✓ +1（封顶 ✓）；§510 **戴面具时她认不出你 ⇒ 不会记住这次交易 ⇒ 不加好感** ✓（用户口径） */
     public static void onTrade(Player player) {
         if (masking(player)) return;
-        add(player, +1);
+        // TNL1315 用户口径：「购买一次商品增加 5 点好感度」（原来 +1）
+        add(player, +5);
     }
 
     /**

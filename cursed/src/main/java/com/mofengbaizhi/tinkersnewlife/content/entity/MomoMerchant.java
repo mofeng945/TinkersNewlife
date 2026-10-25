@@ -305,6 +305,13 @@ public class MomoMerchant extends PathfinderMob
     /** 近期攻击过她的实体（反击/大招只打这些人，不伤及无辜） */
     private final Set<UUID> aggroSet = new HashSet<>();
 
+    /**
+     * TNL1315 用户口径：「被攻击时无论创造生存必然还手，但仇恨会随着时间推移衰减」
+     * ⇒ 仇恨到期时间表（gameTime）：每次记仇刷新；到期就放掉 ✓ 时长 30 秒（600 tick）。
+     */
+    private static final int AGGRO_DECAY_TICKS = 600;
+    private final java.util.Map<UUID, Long> aggroUntil = new java.util.HashMap<>();
+
     private ItemStack scytheStack = ItemStack.EMPTY;
 
     /** 鍞崠妲戒綅锛? 涓紝璺ㄥ瓨妗ｆ寔涔呭寲鍦ㄥ疄浣?NBT锛?*/
@@ -839,11 +846,35 @@ public class MomoMerchant extends PathfinderMob
     }
 
     /** 璇ュ疄浣撴槸鍚︿负澧ㄩ粯鐨?鏁屽鐩爣"锛堝彧鏀诲嚮浼ゅ杩囧ス鐨勫疄浣撲笌鍏跺綋鍓嶇洰鏍囷級 */
+    /** TNL1315 记一次仇（并刷新衰减计时）；创造/生存一视同仁 ✓ */
+    private void tnl$anger(LivingEntity e) {
+        if (e == null || e == this) {
+            return;
+        }
+        this.aggroSet.add(e.getUUID());
+        this.aggroUntil.put(e.getUUID(), this.level().getGameTime() + AGGRO_DECAY_TICKS);
+    }
+
+    /** TNL1315 这条仇恨是否还在有效期内（到期即视为不记仇 ✓） */
+    private boolean tnl$isAngry(@javax.annotation.Nullable Entity e) {
+        if (e == null || !this.aggroSet.contains(e.getUUID())) {
+            return false;
+        }
+        Long until = this.aggroUntil.get(e.getUUID());
+        return until != null && this.level().getGameTime() < until;
+    }
+
+    /** TNL1315 清空全部仇恨（低血重置/逃跑结束等既有逻辑复用） */
+    private void tnl$clearAggro() {
+        this.aggroSet.clear();
+        this.aggroUntil.clear();
+    }
+
     private boolean isAggroTarget(LivingEntity e) {
         if (e == this || e.isSpectator()) return false;
         if (e == this.getTarget()) return true;
         if (this.getLastHurtByMob() == e) return true;
-        return aggroSet.contains(e.getUUID());
+        return tnl$isAngry(e);
     }
 
     /** 面前扇形内的敌人 */
@@ -975,13 +1006,24 @@ public class MomoMerchant extends PathfinderMob
         tickWaterSwim();
 
         // 浠囨仺娓呯悊
-        if (++aggroPruneTick >= 100) {
+        if (++aggroPruneTick >= 20) {
             aggroPruneTick = 0;
             if (!aggroSet.isEmpty()) {
+                long now = this.level().getGameTime();
                 aggroSet.removeIf(uuid -> {
                     Entity e = ((ServerLevel) this.level()).getEntity(uuid);
-                    return e == null || !e.isAlive();
+                    Long until = aggroUntil.get(uuid);
+                    if (e == null || !e.isAlive() || until == null || now >= until) {
+                        aggroUntil.remove(uuid);
+                        return true;
+                    }
+                    return false;
                 });
+                // TNL1315 当前目标是玩家、且已经"不记仇"了 ⇒ 放掉（消气，不再追着打 ✓）
+                LivingEntity currentTarget = this.getTarget();
+                if (currentTarget instanceof Player && !tnl$isAngry(currentTarget)) {
+                    this.setTarget(null);
+                }
             }
         }
 
@@ -1112,7 +1154,7 @@ public class MomoMerchant extends PathfinderMob
         if (this.getHealth() >= this.getMaxHealth() * 0.15f) {
             fleeTriggered = false;
             leapUsed = false;
-            aggroSet.clear();
+            tnl$clearAggro();
         }
     }
 
@@ -2093,9 +2135,9 @@ public class MomoMerchant extends PathfinderMob
     private boolean isMomoCombatTarget(LivingEntity e) {
         if (e == this || !e.isAlive() || e.isSpectator()) return false;
         if (e == getEmployer()) return false;
-        if (e instanceof Player p && !aggroSet.contains(p.getUUID())) return false;
+        if (e instanceof Player p && !tnl$isAngry(p)) return false;
         if (e == this.getTarget()) return true;
-        if (aggroSet.contains(e.getUUID())) return true;
+        if (e instanceof Player && tnl$isAngry(e)) return true;
         if (e instanceof Mob m) {
             net.minecraft.world.entity.MobType mt = m.getMobType();
             return mt == net.minecraft.world.entity.MobType.UNDEAD
@@ -2800,9 +2842,12 @@ public class MomoMerchant extends PathfinderMob
                 living = le2;
             }
             if (living != null) {
-                aggroSet.add(living.getUUID());
+                tnl$anger(living);
                 lastBlockedBy = living;
-                if (this.getTarget() == null) this.setTarget(living);
+                // TNL1315「必然还手」：不管当前有没有目标，只要不是雇主/同类就锁他 ✓
+                if (living != getEmployer() && !(living instanceof MomoMerchant)) {
+                    this.setTarget(living);
+                }
                 if (this.distanceToSqr(living) <= 5.0 * 5.0) {
                     // 杩戣韩鏍兼尅鎴愬姛锛氳繛鏂╁弽鍑?
                     blockWindowUntil = -1;
@@ -2835,8 +2880,9 @@ public class MomoMerchant extends PathfinderMob
         // 姝ｅ父鍙楀嚮锛氳褰曚粐鎭?+ 寮€鍚?1s 鏍兼尅绐楀彛
         Entity attacker = source.getEntity();
         if (attacker instanceof LivingEntity living && attacker != this) {
-            aggroSet.add(attacker.getUUID());
-            if (this.getTarget() == null && !(living instanceof MomoMerchant)) {
+            tnl$anger(living);
+            // TNL1315「被攻击时无论创造生存必然还手」⇒ 直接锁攻击者（雇主/同类除外 ✓）
+            if (living != getEmployer() && !(living instanceof MomoMerchant)) {
                 this.setTarget(living);
             }
         }
