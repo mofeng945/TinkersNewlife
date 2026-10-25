@@ -30,8 +30,8 @@ public class OriginMagicModifier extends Modifier {
     public static final ModifierId ID =
             new ModifierId(new ResourceLocation(TinkersNewlife.MOD_ID, "origin_magic"));
 
-    /** 最高 3 级 */
-    private static final int MAX_LEVEL = 3;
+    /** TNL1320 上限只是防溢出（不是 3 级）：用户 8 级盾应当按 8 级算 ✓ */
+    private static final int MAX_LEVEL = 64;
 
     /** 每级给所有法术加的等级 */
     public static final int SPELL_LEVEL_PER_LEVEL = 2;
@@ -56,13 +56,28 @@ public class OriginMagicModifier extends Modifier {
         return clampLevel(ToolHelper.getActiveModifierLevel(tool, ID));
     }
 
-    /** 身上（主手/副手/护甲）带此特性的物品 */
+    /** TNL1320 身上带此特性的物品：**主手/副手/护甲/饰品（curios）** ✓ */
     public static List<ItemStack> itemsWith(LivingEntity entity) {
-        List<ItemStack> out = new ArrayList<>(6);
+        List<ItemStack> out = new ArrayList<>(12);
         if (entity == null) return out;
         addIf(out, entity.getMainHandItem());
         addIf(out, entity.getOffhandItem());
         for (ItemStack armor : entity.getArmorSlots()) addIf(out, armor);
+        // TNL1320 用户口径：「手套飞剑…敲了奥术始源，但饰品上的奥术始源不生效」
+        //   ⇒ 以前只扫 主手/副手/护甲 ✗ 饰品槽（手套/飞剑等）完全没算 ✓ 这里补上 ✓
+        try {
+            var resolved = top.theillusivec4.curios.api.CuriosApi.getCuriosInventory(entity).resolve();
+            if (resolved.isPresent()) {
+                for (var handler : resolved.get().getCurios().values()) {
+                    var stacks = handler.getStacks();
+                    for (int i = 0; i < stacks.getSlots(); i++) {
+                        addIf(out, stacks.getStackInSlot(i));
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+            // Curios 不可用 ⇒ 只按原三处算，不影响游戏
+        }
         return out;
     }
 
