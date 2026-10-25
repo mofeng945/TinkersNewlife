@@ -76,6 +76,8 @@ public class PacketMomoMenuAction {
                     // 雇佣：打开**独立的雇佣界面**（用户口径：两个界面分开 ✓ 天数 + 五种等价物在那边 ✓）
                     player.closeContainer();
                     PacketMomoMenuOpen.sendHire(player, momo.getId());
+                    // TNL1317 顺带同步"已雇佣/剩余天数"，让雇佣界面直接显示续雇状态 ✓
+                    PacketMomoHireState.sendTo(player, momo);
                 }
                 case 4 -> {
                     // §497 **回菜单**（用户口径：三个子界面回退应当回上一级菜单，而不是直接关 GUI ✗）

@@ -236,7 +236,8 @@ public class MomoMerchant extends PathfinderMob
     private boolean hired = false;        // 鏄惁澶勪簬闆囦剑鏈?
     private UUID employerId = null;
     private long hireUntilTick = -1;      // 闆囦剑鍒版湡鏃跺埢锛坓ameTime锛夛紝= 闆囦剑鏃?+ 24000
-    private long offerDay = -1;           // 鍟嗗搧鎵规瀵瑰簲鐨?dayCount锛堟瘡澶╁埛鏂颁竴鎵癸級
+    private long offerDay = -1;
+    private int offerDayCheckTick = 0;   // TNL1317 商品日刷新检查计时（每 20 tick）           // 鍟嗗搧鎵规瀵瑰簲鐨?dayCount锛堟瘡澶╁埛鏂颁竴鎵癸級
     /** 闆囦剑鍒版湡杩斿洖闆囦富鍚庣殑缁泧瀹介檺鍊掕鏃讹紙鑷劧鍒锋柊鐗堬細鎷掔粷缁泧鍒欏埌鐐归殢澶╀寒娑堝け锛?*/
     private int returnGraceTicks = 0;
     private boolean singing = false;
@@ -648,7 +649,17 @@ public class MomoMerchant extends PathfinderMob
         if (buyer.distanceToSqr(this) > 8.0 * 8.0) return HireResult.TOO_FAR;
         if (hired) {
             if (employerId != null && !employerId.equals(buyer.getUUID())) return HireResult.HIRED_BY_OTHER;
-            return HireResult.ALREADY_HIRED;
+            // TNL1317 用户口径：「续雇很不明显」⇒ 已经雇过她的人再付钱就是**续雇**（在到期时间上叠加 ✓）
+            if (!payHireCost(buyer, days)) return HireResult.NO_ITEM;
+            long now = this.level().getGameTime();
+            this.hireUntilTick = Math.max(now, this.hireUntilTick) + (long) days * HIRE_DURATION_TICKS;
+            this.hired = true;
+            this.returnGraceTicks = 0;
+            if (this.level() instanceof ServerLevel sl) {
+                sl.sendParticles(ParticleTypes.HEART, this.getX(), this.getY() + 1.6, this.getZ(),
+                        6, 0.3, 0.3, 0.3, 0.02);
+            }
+            return HireResult.RENEWED;
         }
         if (!payHireCost(buyer, days)) return HireResult.NO_ITEM;
         employerId = buyer.getUUID();
@@ -698,7 +709,7 @@ public class MomoMerchant extends PathfinderMob
         return true;
     }
 
-    public enum HireResult { HIRED, ALREADY_HIRED, HIRED_BY_OTHER, NO_ITEM, TOO_FAR, DEAD }
+    public enum HireResult { HIRED, RENEWED, ALREADY_HIRED, HIRED_BY_OTHER, NO_ITEM, TOO_FAR, DEAD }
 
     /** 鐜╁鐐瑰嚮闆囦剑锛氭敮浠?1 涓媺鑾辫€剁殑鍛煎敜锛岄泧浣ｄ竴澶┿€傞泧浣ｆ湡闂村啀娆＄偣鍑讳笉鎵ｈ垂銆佺洿鎺ユ嫆缁濓紝闃叉閲嶅涓婁氦 */
     public HireResult hireFrom(ServerPlayer buyer) {
@@ -1039,6 +1050,14 @@ public class MomoMerchant extends PathfinderMob
         }
 
         // 涓嬬晫浜氭尝浼?姝讳骸绠洦"鏍兼尅锛欰pollyon 蹇€熻繛灏勬湡闂磋嚜鍔ㄤ妇鐩撅紙绠煝琚牸鎸?鈫?鏁存绠洦鍏ㄥ厤锛?
+        // TNL1317 用户口径：「每天刷新商品只是补货而不是重 roll 商品列表」
+        //   ⇒ 每 20 tick 检查一次日期；日期一变就让 ensureOffers() 重 roll 整张列表
+        //     （以前只在她打开界面/被加载时才检查，容易给人"只补货"的错觉 ✓）
+        if (++offerDayCheckTick >= 20) {
+            offerDayCheckTick = 0;
+            ensureOffers();
+        }
+
         tickBarrageGuard();
 
         // 低血量逃跑
@@ -1621,6 +1640,15 @@ public class MomoMerchant extends PathfinderMob
 
     public boolean isHired() {
         return hired;
+    }
+
+    /** TNL1317 剩余雇佣天数（向上取整；未雇佣/已过期 = 0 ✓） */
+    public int hiredDaysLeft() {
+        if (!hired) {
+            return 0;
+        }
+        long left = this.hireUntilTick - this.level().getGameTime();
+        return left <= 0 ? 0 : (int) ((left + HIRE_DURATION_TICKS - 1) / HIRE_DURATION_TICKS);
     }
 
     /** 闆囦富鏀诲嚮鐩爣閫氱煡锛堟湇鍔″櫒渚э紝鏀诲嚮浜嬩欢/绌块€忕粨绠楁椂璋冪敤锛夛細鍗忓姪闆嗙伀 4 绉掞紝鎸佺画鏀诲嚮浼氬埛鏂?*/

@@ -732,6 +732,8 @@
   "message.tinkersnewlife.momo.hired_by_other": "§c墨默已被他人雇佣",
   "message.tinkersnewlife.momo.insufficient": "§c货币不足：需要更多格赫罗斯残骸/矿石",
   "message.tinkersnewlife.momo.need_rlyeh": "§c需要交付 1 个拉莱耶的呼唤",
+  "message.tinkersnewlife.momo.hired_days": "已雇佣：剩余 %d 天",
+  "message.tinkersnewlife.momo.renewed": "续雇成功：剩余 %d 天",
   "message.tinkersnewlife.momo.returned": "§d墨默回来找你了——如需继续雇佣，再交付一个拉莱耶的呼唤",
   "message.tinkersnewlife.momo.sold_out": "§e这件商品今天已经卖完了，明天再来吧。",
   "message.tinkersnewlife.momo.too_far": "§c墨默离你太远了",

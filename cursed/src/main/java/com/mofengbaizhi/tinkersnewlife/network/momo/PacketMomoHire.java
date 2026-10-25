@@ -43,9 +43,17 @@ public class PacketMomoHire {
             }
             MomoMerchant.HireResult result = momo.hireFrom(player, packet.days);   // 用户口径：雇 N 天 ✓
             switch (result) {
+                case RENEWED -> {
+                    // TNL1317 续雇：明确告诉玩家"续上了"以及还剩几天 ✓
+                    momo.playTradeSuccessSound();
+                    player.displayClientMessage(Component.translatable(
+                            "message.tinkersnewlife.momo.renewed", momo.hiredDaysLeft()), true);
+                    com.mofengbaizhi.tinkersnewlife.network.momo.PacketMomoHireState.sendTo(player, momo);
+                }
                 case HIRED -> {
                     momo.playTradeSuccessSound();
-                    player.displayClientMessage(Component.translatable("message.tinkersnewlife.momo.hired"), true);
+                    player.displayClientMessage(Component.translatable(
+                            "message.tinkersnewlife.momo.hired_days", momo.hiredDaysLeft()), true);
                     // ⭐ 成就「雇佣契约」（§626）：首次雇佣成功即发放（幂等 ✓）
                     com.mofengbaizhi.tinkersnewlife.content.curse.AchievementHandler.onMomoHired(player);
                     // 实时刷新雇佣状态，防止重复上交

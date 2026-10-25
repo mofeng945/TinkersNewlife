@@ -30,6 +30,8 @@ public class MomoTradeScreen extends Screen {
     private int[] sold;   // 会被 PacketMomoSoldState 就地刷新 ✓
     public boolean hired;
     public String employer;
+    /** TNL1317 剩余雇佣天数（0 = 未雇佣） */
+    public int hireDaysLeft;
     private final List<Row> rows = new ArrayList<>();
 
     /**
@@ -89,9 +91,10 @@ public class MomoTradeScreen extends Screen {
     }
 
     /** 兼容旧调用（PacketMomoHireState 会调 ✓） */
-    public void updateHireState(boolean hired, String employer) {
+    public void updateHireState(boolean hired, String employer, int remainingDays) {
         this.hired = hired;
         this.employer = employer == null ? "" : employer;
+        this.hireDaysLeft = remainingDays;
     }
 
     private boolean hovering(int x, int y, int w, int h, double mx, double my) {

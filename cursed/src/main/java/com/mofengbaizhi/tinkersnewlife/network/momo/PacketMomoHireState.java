@@ -21,28 +21,34 @@ public class PacketMomoHireState {
     private final int momoId;
     private final boolean hired;
     private final String employer;
+    /** TNL1317 剩余雇佣天数（0 = 未雇佣/已过期 ✓） */
+    private final int remainingDays;
 
-    public PacketMomoHireState(int momoId, boolean hired, String employer) {
+    public PacketMomoHireState(int momoId, boolean hired, String employer, int remainingDays) {
         this.momoId = momoId;
         this.hired = hired;
         this.employer = employer == null ? "" : employer;
+        this.remainingDays = remainingDays;
     }
 
     public PacketMomoHireState(FriendlyByteBuf buf) {
         this.momoId = buf.readInt();
         this.hired = buf.readBoolean();
         this.employer = buf.readUtf();
+        this.remainingDays = buf.readInt();
     }
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeInt(momoId);
         buf.writeBoolean(hired);
         buf.writeUtf(employer);
+        buf.writeInt(remainingDays);
     }
 
     public static void sendTo(ServerPlayer player, MomoMerchant momo) {
         TinkersNewlife.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
-                new PacketMomoHireState(momo.getId(), momo.isHired(), momo.employerDisplayName()));
+                new PacketMomoHireState(momo.getId(), momo.isHired(), momo.employerDisplayName(),
+                        momo.hiredDaysLeft()));
     }
 
     public static void handle(PacketMomoHireState packet, Supplier<NetworkEvent.Context> ctx) {
@@ -50,7 +56,12 @@ public class PacketMomoHireState {
                 () -> () -> {
                     if (Minecraft.getInstance().screen instanceof MomoTradeScreen screen
                             && screen.matches(packet.momoId)) {
-                        screen.updateHireState(packet.hired, packet.employer);
+                        screen.updateHireState(packet.hired, packet.employer, packet.remainingDays);
+                    } else if (Minecraft.getInstance().screen
+                            instanceof com.mofengbaizhi.tinkersnewlife.client.screen.MomoHireScreen hireScreen
+                            && hireScreen.matches(packet.momoId)) {
+                        // TNL1317 雇佣界面也要能收到"已雇佣/剩余天数"⇒ 续雇才看得出来 ✓
+                        hireScreen.updateHireState(packet.hired, packet.employer, packet.remainingDays);
                     }
                 }));
         ctx.get().setPacketHandled(true);

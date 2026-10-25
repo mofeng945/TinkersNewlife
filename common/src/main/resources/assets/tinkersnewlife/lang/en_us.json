@@ -731,6 +731,8 @@
   "message.tinkersnewlife.momo.hired_by_other": "§cMo Mo has been hired by someone else",
   "message.tinkersnewlife.momo.insufficient": "§cNot enough currency: you need more Gheloth remains / ore",
   "message.tinkersnewlife.momo.need_rlyeh": "§cYou must hand over 1 The Call of R'lyeh",
+  "message.tinkersnewlife.momo.hired_days": "Hired: %d day(s) remaining",
+  "message.tinkersnewlife.momo.renewed": "Hire extended: %d day(s) remaining",
   "message.tinkersnewlife.momo.returned": "§dMo Mo has come back for you - hand over another The Call of R'lyeh to hire her again",
   "message.tinkersnewlife.momo.sold_out": "§eSold out for today - come back tomorrow.",
   "message.tinkersnewlife.momo.too_far": "§cMo Mo is too far away",

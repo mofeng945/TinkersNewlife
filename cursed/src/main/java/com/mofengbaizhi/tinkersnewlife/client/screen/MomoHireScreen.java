@@ -30,6 +30,23 @@ public class MomoHireScreen extends Screen {
     private final int favor;
     private int days = 1;
 
+    // TNL1317 用户口径：「续雇很不明显」⇒ 雇佣界面直接显示当前雇佣剩余天数，按钮也变成"续雇" ✓
+    private boolean hiredByMe;
+    private int hireDaysLeft;
+
+    /** 服务端同步过来时用（PacketMomoHireState → 本界面 ✓） */
+    public void updateHireState(boolean hired, String employer, int remainingDays) {
+        String me = net.minecraft.client.Minecraft.getInstance().player == null ? ""
+                : net.minecraft.client.Minecraft.getInstance().player.getGameProfile().getName();
+        this.hiredByMe = hired && employer != null && employer.equals(me);
+        this.hireDaysLeft = remainingDays;
+    }
+
+    /** 供 PacketMomoHireState 判断"这个包是发给本界面的吗" */
+    public boolean matches(int momoId) {
+        return this.momoId == momoId;
+    }
+
     public MomoHireScreen(int momoId, int favor) {
         super(Component.translatable("screen.tinkersnewlife.momo.hire_title"));
         this.momoId = momoId;
@@ -102,6 +119,10 @@ public class MomoHireScreen extends Screen {
         MomoArt.nine(graphics, MomoArt.BUBBLE, x, y, PANEL_W, PANEL_H);      // 面板 = 同一套九宫格 ✓
         MomoArt.text(graphics, this.font, "雇佣墨默", x + 14, y + 10, MomoArt.TEXT_DARK);
         MomoArt.text(graphics, this.font, "好感度 " + favor, x + 14, y + 10 + MomoArt.LINE_H + 2, 0x505050);
+        // TNL1317 当前雇佣状态（明显化 ✓）
+        String status = hiredByMe ? ("当前：已雇佣（剩余 " + hireDaysLeft + " 天）") : "当前：未雇佣";
+        MomoArt.text(graphics, this.font, status, x + 14, y + 10 + MomoArt.LINE_H * 2 + 4,
+                hiredByMe ? 0x2A6A2A : 0x505050);
         graphics.fill(x + 12, y + 44, x + PANEL_W - 12, y + 45, 0x558C7F63);
 
         // 天数选择：面板内独立一行（§500 ✓ 在分隔线下面、五种等价物上面 ✓）
@@ -134,7 +155,7 @@ public class MomoHireScreen extends Screen {
         MomoArt.nine(graphics, MomoArt.OPTION, backX(), backY(), 56, BTN_H);
         if (hireHov && canHire) graphics.fill(hireX() + 2, hireY() + 2, hireX() + 80, hireY() + BTN_H - 2, MomoArt.HOVER_TINT);
         if (backHov) graphics.fill(backX() + 2, backY() + 2, backX() + 54, backY() + BTN_H - 2, MomoArt.HOVER_TINT);
-        String h = "雇佣 " + days + " 天";
+        String h = (hiredByMe ? "续雇 " : "雇佣 ") + days + " 天";
         MomoArt.text(graphics, this.font, h, hireX() + 41 - MomoArt.textWidth(this.font, h) / 2, hireY() + 4,
                 canHire ? MomoArt.TEXT_DARK : MomoArt.DISABLED_TEXT);
         MomoArt.text(graphics, this.font, "回退", backX() + 28 - MomoArt.textWidth(this.font, "回退") / 2, backY() + 4,
