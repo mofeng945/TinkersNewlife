@@ -1,7 +1,6 @@
 package com.mofengbaizhi.tinkersnewlife.content.handler;
 
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
-import com.mofengbaizhi.tinkersnewlife.content.ModBlocks;
 import com.mofengbaizhi.tinkersnewlife.content.ModEffects;
 import com.mofengbaizhi.tinkersnewlife.content.modifier.DragonboneTrait;
 import com.mofengbaizhi.tinkersnewlife.integration.iceandfire.IceAndFireDamage;
@@ -60,7 +59,6 @@ public class DragonsteelHandler {
     private static final int FIRE_DURATION_BASE = 60;
     private static final int ICE_DURATION_BASE = 200;
     private static final int LIGHTNING_DISARM_BASE = 60;
-    private static final int ICE_LIFETIME = 100;
 
     /**
      * ⭐ §1118m <b>递归闸门</b> ✓ —— 用户实测：「**我锁定问题是龙炎特性，以前也出这样的问题**」✓
@@ -303,26 +301,11 @@ public class DragonsteelHandler {
             return;
         }
 
-        // ⚠ 冰火不在场（或反射失败）⇒ 退回旧效果（自定义霜冻 + 少量霜冻冰块），功能不丢 ✓
+        // TNL1313 用户口径：「把我这个自制的冒冰块清理掉吧，没用了」
+        //   ⇒ 删掉整段"随机铺霜冻冰块"的回退；冰火不在场时只保留自定义【霜冻】药水
+        //     （药水本身仍被「寒霜刺骨」等特性使用 ✓ 不删 ✓）。
         if (ModEffects.FROST.get() != null) {
             target.addEffect(new MobEffectInstance(ModEffects.FROST.get(), duration, levelNum - 1));
-        }
-
-        BlockPos center = target.blockPosition();
-        int count = 8 + levelNum * 2;
-
-        for (int i = 0; i < count; i++) {
-            int dx = level.random.nextInt(3) - 1;
-            int dz = level.random.nextInt(3) - 1;
-            int dy = level.random.nextInt(2);
-            BlockPos icePos = center.offset(dx, dy, dz);
-
-            if (level.isEmptyBlock(icePos) || level.getBlockState(icePos).canBeReplaced()) {
-                level.setBlockAndUpdate(icePos, ModBlocks.FROST_ICE.get().defaultBlockState());
-                if (level instanceof ServerLevel serverLevel) {
-                    serverLevel.scheduleTick(icePos, ModBlocks.FROST_ICE.get(), ICE_LIFETIME);
-                }
-            }
         }
     }
 
