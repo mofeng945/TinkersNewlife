@@ -1663,6 +1663,22 @@ public class MomoMerchant extends PathfinderMob
         return sl.getServer().getPlayerList().getPlayer(employerId);
     }
 
+    /**
+     * TNL1316 用户口径：「新增免疫雇主伤害，要不然战斗中误伤反而来打雇主了」。
+     * <p>按 **UUID** 判断（雇主的实体没加载/下线也认得 ✓），覆盖：
+     * 雇主本人近战、雇主射出的弹射物（箭/投掷物）、以及以雇主为 source 的伤害 ✓。
+     */
+    private boolean tnl$isEmployerSource(DamageSource source) {
+        if (employerId == null || source == null) {
+            return false;
+        }
+        return tnl$isEmployerEntity(source.getEntity()) || tnl$isEmployerEntity(source.getDirectEntity());
+    }
+
+    private boolean tnl$isEmployerEntity(@javax.annotation.Nullable net.minecraft.world.entity.Entity e) {
+        return e != null && employerId != null && employerId.equals(e.getUUID());
+    }
+
     /** 闆囦富褰撳墠濞佽儊锛氭敾鍑婚泧涓荤殑瀹炰綋锛屾垨闆囦富姝ｅ湪鏀诲嚮鐨勯潪鐜╁鐢熺墿锛?4 鏍煎唴锛?*/
     @Nullable
     private LivingEntity threatOfEmployer(ServerPlayer boss) {
@@ -2825,6 +2841,11 @@ public class MomoMerchant extends PathfinderMob
     @Override
     public boolean hurt(DamageSource source, float amount) {
         if (level().isClientSide || this.isDeadOrDying()) return false;
+
+        // TNL1316 免疫雇主伤害：不掉血、不记仇、不还手（防止战斗中误伤她反而来打雇主 ✓）
+        if (tnl$isEmployerSource(source)) {
+            return false;
+        }
         // 姝屽敱琚敾鍑绘墦鏂?
         stopSinging();
         // 鏍兼尅绐楀彛鍐咃細鍏嶇柅浼ゅ銆傝繎韬紙鈮?鏍硷級鏍兼尅鎴愬姛 鈫?杩炴柀鍙嶅嚮骞舵敹璧锋牸鎸★紱
