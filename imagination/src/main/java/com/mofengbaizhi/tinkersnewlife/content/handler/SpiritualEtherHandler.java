@@ -69,30 +69,42 @@ public final class SpiritualEtherHandler {
             if (event.getEntity().level().isClientSide) {
                 return;
             }
-            if (!(event.getSource().getEntity() instanceof ServerPlayer player)) {
+            // TNL1319 用户口径：「恶念星灵的远程武器击杀吃不到成长」
+            //   旧实现只认 `source.getEntity() instanceof ServerPlayer`，并且要求
+            //   `ToolHelper.getCombatTool(...)` 认得出武器 ✗ —— 远程击杀很容易两者都不成立：
+            //     · 自定弹射物的伤害源 `getEntity()` 是弹射物（或 null），不是玩家 ✗
+            //     · 箭飞出去以后手上可能拿的是别的东西 ⇒ getCombatTool 解析到的是"此刻主手" ✗
+            //   ⇒ 改成：**多路解析击杀者**（玩家 / 弹射物主人 / 可拥有实体主人 / 击杀凭据 / 最后伤害者）
+            //      ＋ **直接扫手槽**里带「灵性以太」的匠魂工具，成长写回**那个 ItemStack** ✓
+            ServerPlayer player = tnl$killCredit(event);
+            if (player == null) {
                 return;
             }
-            ToolStack tool = ToolHelper.getCombatTool(event.getSource(), player);
-            if (tool == null) {
-                return;
+            // 优先用 getCombatTool（近战/我们记录过发射武器的弹射物能精确指到"那把武器" ✓）
+            ToolStack combat = null;
+            int combatLevel = 0;
+            try {
+                combat = ToolHelper.getCombatTool(event.getSource(), player);
+                if (combat != null) {
+                    combatLevel = ToolHelper.getActiveModifierLevel(combat, ID);
+                }
+            } catch (Throwable ignored) {
+                combat = null;
             }
-            int level = ToolHelper.getActiveModifierLevel(tool, ID);
-            if (level <= 0) {
-                return;
-            }
-            // ⚠ 回写必须写回"**真正装了这把工具**的那个 ItemStack" ✗ —— 不能想当然用主手：
-            // 远程击杀时 {@code getCombatTool} 给的可能是副手/别的格 ✓（主手写错 ⇒ 成长白写 ✗）。
+            // 远程击杀时 getCombatTool 可能是 null / 或没这把特性 ⇒ 退化为扫手槽 ✓
             for (ItemStack stack : player.getHandSlots()) {
                 if (stack.isEmpty()) {
                     continue;
                 }
                 try {
                     ToolStack held = ToolStack.from(stack);
-                    if (ToolHelper.getActiveModifierLevel(held, ID) <= 0) {
+                    int level = ToolHelper.getActiveModifierLevel(held, ID);
+                    if (level <= 0) {
                         continue;
                     }
-                    if (growOne(held, level, player.getRandom())) {
-                        // ⚠ 必须回写 ✗ 只 putFloat 不算数 ✓（ToolStack 是栈上的视图 ✓）
+                    // 如果 combat 就是这一件，用 combat 的 level（等价 ✓）；否则用这件自己的 level ✓
+                    if (growOne(held, combat == held ? combatLevel : level, player.getRandom())) {
+                        // ⚠ 必须回写 ✓ 只 putFloat 不算数 ✓（ToolStack 是栈上的视图 ✓）
                         held.updateStack(stack);
                     }
                     return;
@@ -101,8 +113,47 @@ public final class SpiritualEtherHandler {
                 }
             }
         } catch (Throwable ignored) {
-            // 任何意外都不该把击杀流程打崩 ✓
+            // 任何意外都不该把击杀流程打穿 ✓
         }
+    }
+
+    /**
+     * TNL1319 多路解析"这一下是谁杀的"（远程击杀尤其需要）：
+     * 直接来源玩家 → 弹射物持有者 → 可拥有实体主人 → 原版击杀凭据 → 最后被谁打。
+     */
+    @javax.annotation.Nullable
+    private static ServerPlayer tnl$killCredit(LivingDeathEvent event) {
+        var source = event.getSource();
+        ServerPlayer player = asPlayer(source.getEntity());
+        if (player == null) {
+            player = asPlayer(source.getDirectEntity());
+        }
+        if (player == null) {
+            player = asPlayer(event.getEntity().getKillCredit());
+        }
+        if (player == null && event.getEntity() != null) {
+            net.minecraft.world.entity.LivingEntity last = event.getEntity().getLastHurtByMob();
+            if (last instanceof ServerPlayer sp) {
+                player = sp;
+            }
+        }
+        return player;
+    }
+
+    @javax.annotation.Nullable
+    private static ServerPlayer asPlayer(@javax.annotation.Nullable net.minecraft.world.entity.Entity entity) {
+        if (entity instanceof ServerPlayer sp) {
+            return sp;
+        }
+        if (entity instanceof net.minecraft.world.entity.projectile.Projectile projectile
+                && projectile.getOwner() instanceof ServerPlayer owner) {
+            return owner;
+        }
+        if (entity instanceof net.minecraft.world.entity.OwnableEntity ownable
+                && ownable.getOwner() instanceof ServerPlayer owner) {
+            return owner;
+        }
+        return null;
     }
 
     /**
@@ -124,7 +175,10 @@ public final class SpiritualEtherHandler {
         // ⇒ 只有**非采集型工具**（弓弩这类 MINING_SPEED ≤ 0 ✓）才把远程三项列为可成长
         // ⚠ 如实说明：这是**我定的判据** ✓ 不是匠魂官方接口 ✗（匠魂没有公开"这工具有没有该属性"的方法）
         // ⭐ 判据改用**匠魂数据实证**的信号 ✓：`tconstruct:tool_actions` 模块的有无 ✓
-        boolean rangedTool = tool.getDefinition().getHook(ToolHooks.TOOL_ACTION) == null;
+        // TNL1319 判定补一条：**没有挖掘速度**（弓/弩这类）也算远程工具 ⇒
+        //   否则它们的"精准/初速/拉弓速度"三项永远进不了成长候选 ✗
+        boolean rangedTool = tool.getDefinition().getHook(ToolHooks.TOOL_ACTION) == null
+                || tool.getStats().get(ToolStats.MINING_SPEED) <= 0F;
         if (tool.getStats().get(ToolStats.DURABILITY) > 0F && EtherSpiritTrait.canGrow(data, EtherSpiritTrait.KEYS[0])) {
             candidates.add(EtherSpiritTrait.KEYS[0]);
         }
