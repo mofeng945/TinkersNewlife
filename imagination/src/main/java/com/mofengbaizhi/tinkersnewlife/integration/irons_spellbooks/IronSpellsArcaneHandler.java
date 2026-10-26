@@ -38,6 +38,10 @@ import java.util.function.Consumer;
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class IronSpellsArcaneHandler {
 
+    /** TNL1321 法术等级加成的诊断节流（每 10 秒最多一条/玩家） */
+    private static final java.util.Map<java.util.UUID, Long> TNL_LAST_BOOST_LOG =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
     private IronSpellsArcaneHandler() {
     }
 
@@ -120,6 +124,19 @@ public final class IronSpellsArcaneHandler {
             // ⚠ 魔导那一项已按用户口径删除（不再提升刻印法术等级 ✗）⇒ 只剩超位魔法与奥术始源 ✓
               final int boost = Math.max(superBoost, originBoost);
             if (boost <= 0) return;
+            // TNL1321 用户反馈：「超位魔法还是没有显示法术等级增加」⇒ 打一条限频日志，
+            //   能直接看出 ModifySpellLevelEvent 有没有触发、超位/奥术各贡献多少 ✓
+            try {
+                long now = caster.level().getGameTime();
+                Long last = TNL_LAST_BOOST_LOG.get(caster.getUUID());
+                if (last == null || now - last > 200L) {
+                    TNL_LAST_BOOST_LOG.put(caster.getUUID(), now);
+                    TinkersNewlife.LOGGER.info(
+                            "[法术等级] {} 施放 {} ⇒ +{} 级（超位={} 奥术={}）",
+                            caster.getName().getString(), spellId, boost, superBoost, originBoost);
+                }
+            } catch (Throwable ignored) {
+            }
             if (best > 0) {
                 TinkersNewlife.LOGGER.debug("[魔导] {} 在刻印列表里命中（魔导 {} 级）→ 法术等级 +{}",
                         spellId, best, boost);

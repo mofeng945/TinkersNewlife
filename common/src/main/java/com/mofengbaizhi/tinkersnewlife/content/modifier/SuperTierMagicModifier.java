@@ -106,11 +106,26 @@ public class SuperTierMagicModifier extends Modifier implements InventoryTickMod
 
     /** 身上的超位魔法物品（主手/副手/护甲） */
     public static List<ItemStack> itemsWith(LivingEntity entity) {
-        List<ItemStack> out = new ArrayList<>(6);
+        List<ItemStack> out = new ArrayList<>(12);
         if (entity == null) return out;
         addIf(out, entity.getMainHandItem());
         addIf(out, entity.getOffhandItem());
         for (ItemStack armor : entity.getArmorSlots()) addIf(out, armor);
+        // TNL1321 用户反馈：「超位魔法还是没有显示法术等级增加」
+        //   和 §1381 奥术始源同一个根因：这里也只扫 主手/副手/护甲 ✗ 饰品（手套/飞剑等）完全没算 ✓
+        //   ⇒ 补上 Curios 全饰品槽扫描 ✓
+        try {
+            var resolved = top.theillusivec4.curios.api.CuriosApi.getCuriosInventory(entity).resolve();
+            if (resolved.isPresent()) {
+                for (var handler : resolved.get().getCurios().values()) {
+                    var stacks = handler.getStacks();
+                    for (int i = 0; i < stacks.getSlots(); i++) {
+                        addIf(out, stacks.getStackInSlot(i));
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+        }
         return out;
     }
 

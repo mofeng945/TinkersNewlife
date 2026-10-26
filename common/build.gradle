@@ -18,6 +18,50 @@ base {
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
+def tnlSiblings = ['common', 'cursed', 'imagination', 'apostle']
+sourceSets {
+    shared {
+        java.srcDirs = tnlSiblings.collect { rootProject.file(it + '/src/main/java') }   // ⭐ 含自己 ✓ 解开交叉引用 ✓
+        resources.srcDirs = []
+    }
+    main {
+        compileClasspath += sourceSets.shared.output
+    }
+}
+configurations {
+    sharedImplementation.extendsFrom implementation
+    sharedCompileOnly.extendsFrom compileOnly
+}
+tasks.named('compileJava').configure {
+    dependsOn tasks.named('compileSharedJava')
+}
+
+// TNL1321 开发运行（runData / runClient / runServer）只加载 `main` 源集 ⇒
+//   兄弟模块的类（cursed / imagination / apostle）不在 FML 的 mod 类加载器里，
+//   启动到 CONSTRUCT 就 NoClassDefFoundError: .../technique/BaseTechnique ✗
+//   ⇒ 把 `shared` 输出（含全部四个模块的类）同步到一个目录，再作为**同一个 mod 的额外源**给 runs ✓
+//   （只放类、不放资源 ⇒ 不会和 main 的 META-INF/mods.toml 冲突 ✓）
+// TNL1321 开发运行（runData 等）只加载 `main` 源集 ⇒ 兄弟模块的类不在 FML 类加载器里 ✗
+//   ⇒ 编译完把 `shared`（含四个模块全部类）并进 `main` 的 classes 目录，让 dev 运行能看到 ✓
+//   （只并类、不并资源：避免和 main 的 META-INF/mods.toml 重复 ✓）
+def prepareMergedMod = tasks.register('prepareClassesMerge', Sync) {
+    dependsOn tasks.named('compileSharedJava')
+    from sourceSets.shared.output
+    // ⚠ 兄弟模块的入口类也是 @Mod ⇒ 不排掉会被 FML 当成 3 个"没有 mods.toml 的 mod"✗
+    //   （与 singleJar 的 exclude 完全一致 ✓）
+    exclude 'com/mofengbaizhi/tinkersnewlife/cursed/TinkersNewlifeCursed*.class'
+    exclude 'com/mofengbaizhi/tinkersnewlife/imagination/TinkersNewlifeImagination*.class'
+    exclude 'com/mofengbaizhi/tinkersnewlife/apostle/TinkersNewlifeApostle*.class'
+    into layout.buildDirectory.dir('classes/java/main')
+}
+tasks.matching { it.name in ['runData', 'runClient', 'runServer', 'runGameTestServer'] }.configureEach {
+    dependsOn prepareMergedMod
+}
+
+
+
+
+
 minecraft {
     // The mappings can be changed at any time and must be in the following format.
     // Channel:   Version:
@@ -113,6 +157,12 @@ minecraft {
         }
 
         data {
+            // TNL1321 runData (datagen) also has to remap dependency mixin refmaps, otherwise
+            // third-party mixins (e.g. Curios' @Accessor on Entity) fail with
+            // "No candidates were found matching f_19803_:Z" and datagen never starts.
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${buildDir}/createSrgToMcp/output.srg"
+
             // example of overriding the workingDirectory set in configureEach above
             workingDirectory project.file('run-data')
 
@@ -330,23 +380,7 @@ tasks.withType(JavaCompile).configureEach {
 //     ⇒ ⭐ 编译期大家都在 ✓ ⭐ 同包关系也保持 ✓（⭐ 所以**一处 import 都不用改** ✓）
 //     ⇒ ⭐ 运行时各 jar 拼在同一个类路径上 ✓ ⭐ 引用自然解析 ✓ ✓
 //   ⚠ 与 §1263 的区别 ✗：⭐ 那时 `shared` 只指 `common/src` ✓ ⭐ 现在指**其它三个项目** ✓。
-def tnlSiblings = ['common', 'cursed', 'imagination', 'apostle']
-sourceSets {
-    shared {
-        java.srcDirs = tnlSiblings.collect { rootProject.file(it + '/src/main/java') }   // ⭐ 含自己 ✓ 解开交叉引用 ✓
-        resources.srcDirs = []
-    }
-    main {
-        compileClasspath += sourceSets.shared.output
-    }
-}
-configurations {
-    sharedImplementation.extendsFrom implementation
-    sharedCompileOnly.extendsFrom compileOnly
-}
-tasks.named('compileJava').configure {
-    dependsOn tasks.named('compileSharedJava')
-}
+
 
 // TNL1293 GeckoLib: the momo model/animation are now loaded from files (geo + animation),
 // so the artist writes animations in BlockBench with the GeckoLib plugin.
@@ -354,4 +388,10 @@ tasks.named('compileJava').configure {
 // and is provided at runtime by the modpack (Goety already depends on GeckoLib).
 dependencies {
     compileOnly fg.deobf("blank:geckolib-forge-1.20.1:4.8.4")
+}
+
+// TNL1321 GeckoLib also needs to be on the DEV runtime classpath: runData (and runClient) load the mod
+// with its mandatory geckolib dependency; compileOnly alone makes datagen fail with <missingdependency>.
+dependencies {
+    runtimeOnly fg.deobf("blank:geckolib-forge-1.20.1:4.8.4")
 }
