@@ -1,5 +1,5 @@
 {
-  "type": "tconstruct:modifier",
+  "type": "tinkersnewlife:leveled_modifier",
   "inputs": [
     {
       "item": "minecraft:quartz",
@@ -28,5 +28,7 @@
   "allow_crystal": true,
   "slots": {
     "abilities": 1
-  }
+  },
+  "min_current_level": 0,
+  "max_current_level": 0
 }

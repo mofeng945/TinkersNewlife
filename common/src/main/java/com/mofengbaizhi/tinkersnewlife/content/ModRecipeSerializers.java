@@ -4,6 +4,7 @@ import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.AutoMaterialMeltingRecipe;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.ChargedCreeperMeltingRecipe;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.CrystalModifierRecipe;
+import com.mofengbaizhi.tinkersnewlife.content.recipe.LeveledModifierRecipe;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.GenericToolMeltingRecipe;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.TagModifierSalvage;
 import com.mofengbaizhi.tinkersnewlife.content.recipe.CurseCraftRecipe;
@@ -44,6 +45,11 @@ public class ModRecipeSerializers {
             RECIPE_SERIALIZERS.register("curse_craft", CurseCraftRecipe.Serializer::new);
 
     /** 仅水晶添加的修饰符配方（术式/领域专用，见 CrystalModifierRecipe） */
+    /** TNL1322 带「当前等级区间」的匠魂改造配方（矿工视野 1 级 / 升级 2~5 级互不抢先） */
+    public static final RegistryObject<RecipeSerializer<LeveledModifierRecipe>> LEVELED_MODIFIER =
+            RECIPE_SERIALIZERS.register("leveled_modifier",
+                    () -> LoadableRecipeSerializer.of(LeveledModifierRecipe.LOADER));
+
     public static final RegistryObject<RecipeSerializer<CrystalModifierRecipe>> CRYSTAL_MODIFIER =
             RECIPE_SERIALIZERS.register("crystal_modifier",
                     () -> LoadableRecipeSerializer.of(CrystalModifierRecipe.LOADER));
