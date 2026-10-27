@@ -112,7 +112,12 @@ public final class IronSpellsArcaneHandler {
                         .SuperTierMagicModifier.FALLBACK_LEVEL)
                         * com.mofengbaizhi.tinkersnewlife.content.modifier
                         .SuperTierMagicModifier.LEVEL_MULTIPLIER;
-                superBoost = Math.max(0, target - currentLevel(event));
+                // TNL1323 用户口径：「检查超位魔法等级放大逻辑是否会顶掉其他等级放大」
+            //   ✗ 旧写法 `target - currentLevel(event)`：currentLevel 是**已经加上别人加成之后**的等级 ⇒
+            //      再补到 target ⇒ 最终恒等于 target，别的模组/来源加的等级被一起抹掉 ✗
+            //   ✓ 改成以 `getBaseLevel()`（施法者自身等级，不含其它放大）为基准算**增量** ⇒
+            //      最终 = 别人的加成 + (满级×2 − 基础等级) ⇒ 谁都不会被顶掉 ✓
+            superBoost = Math.max(0, target - baseLevel(event));
             }
 
             // （魔导的"刻印等级强化"已按用户口径移除 ✗ —— 本方法现在只服务超位魔法与奥术始源 ✓）
@@ -217,6 +222,24 @@ public final class IronSpellsArcaneHandler {
     }
 
     /** 事件里"当前法术等级"（读不到按 1 算） */
+    /**
+     * 事件的「基础等级」＝施法者自身等级（**不含**其他 mod / 其他来源在事件里加过的等级）✓
+     * 读不到 {@code getBaseLevel()}（老版本铁魔法）才回退 {@link #currentLevel}。
+     */
+    private static int baseLevel(Object event) {
+        try {
+            Method get = find(event.getClass(), "getBaseLevel");
+            if (get != null) {
+                Object v = get.invoke(event);
+                if (v instanceof Number num) {
+                    return num.intValue();
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return currentLevel(event);
+    }
+
     private static int currentLevel(Object event) {
         try {
             Method get = find(event.getClass(), "getLevel");
