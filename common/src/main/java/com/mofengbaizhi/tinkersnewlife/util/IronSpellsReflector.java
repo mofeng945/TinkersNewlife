@@ -228,6 +228,67 @@ public class IronSpellsReflector {
     }
 
     /** 给物品栈注入预设法术容器（火墙术Lv5 / 天使之翼Lv5 / 治愈之环Lv10）；铁魔法未装则无事发生 */
+    // =====================================================================
+    //  TNL1323 法术容器查询（用户反馈：「法杖右键无法释放身上穿戴的法术容器里的法术」）
+    //    铁魔法 canBeCastedBy 里有一道 requiresLearning() / isLearned() 的硬门槛 ✗
+    //    ⇒ 只"刻进容器"而没"学会"的法术会被拒 ⇒ 这里提供查询，给 mixin 用 ✓
+    // =====================================================================
+    private static Method ISPELL_CONTAINER_GET;
+    private static Method ISPELL_CONTAINER_GET_INDEX_FOR_SPELL;
+
+    /** 这件物品的法术容器里有没有这个法术（没有容器/反射失败 = false） */
+    public static boolean containerHasSpell(ItemStack stack, Object spell) {
+        if (!ironSpellsPresent || stack == null || stack.isEmpty() || spell == null) {
+            return false;
+        }
+        initDivine();
+        try {
+            if (ISPELL_CONTAINER_GET == null) {
+                ISPELL_CONTAINER_GET = ISPELL_CONTAINER_CLASS.getMethod("get", ItemStack.class);
+                ISPELL_CONTAINER_GET_INDEX_FOR_SPELL = ISPELL_CONTAINER_CLASS.getMethod(
+                        "getIndexForSpell", Class.forName("io.redspace.ironsspellbooks.api.spells.AbstractSpell"));
+            }
+            if (!(Boolean) ISPELL_CONTAINER_IS_CONTAINER.invoke(null, stack)) {
+                return false;
+            }
+            Object container = ISPELL_CONTAINER_GET.invoke(null, stack);
+            if (container == null) {
+                return false;
+            }
+            Object index = ISPELL_CONTAINER_GET_INDEX_FOR_SPELL.invoke(container, spell);
+            return index instanceof Integer i && i >= 0;
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    /** 玩家身上（主手/副手/护甲/饰品）任意法术容器里是否刻着这个法术 */
+    public static boolean inscribedOnPlayer(net.minecraft.world.entity.player.Player player, Object spell) {
+        if (player == null || spell == null) {
+            return false;
+        }
+        try {
+            for (ItemStack stack : player.getHandSlots()) {
+                if (containerHasSpell(stack, spell)) return true;
+            }
+            for (ItemStack stack : player.getArmorSlots()) {
+                if (containerHasSpell(stack, spell)) return true;
+            }
+            var resolved = top.theillusivec4.curios.api.CuriosApi.getCuriosInventory(player).resolve();
+            if (resolved.isPresent()) {
+                for (var handler : resolved.get().getCurios().values()) {
+                    var stacks = handler.getStacks();
+                    for (int i = 0; i < stacks.getSlots(); i++) {
+                        if (containerHasSpell(stacks.getStackInSlot(i), spell)) return true;
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+            // 任何异常都不该影响游戏 ✓
+        }
+        return false;
+    }
+
     public static void initSpellContainer(ItemStack stack) {
         if (!ironSpellsPresent || stack == null || stack.isEmpty()) return;
         initDivine();

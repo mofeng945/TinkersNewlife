@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.mixin;
 
 import com.mofengbaizhi.tinkersnewlife.content.modifier.OriginMagicModifier;
 import com.mofengbaizhi.tinkersnewlife.integration.irons_spellbooks.IronSpellsSpellAccess;
+import com.mofengbaizhi.tinkersnewlife.util.IronSpellsReflector;
 import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -26,6 +27,14 @@ public class EldritchLearningMixin {
     private void tinkersnewlife$originMagicAllowsEldritch(Player player, CallbackInfoReturnable<Boolean> cir) {
         try {
             if (player == null) return;
+            // TNL1323 用户反馈：「法杖右键无法释放身上穿戴的法术容器里的法术」
+            //   铁魔法 canBeCastedBy 会查 requiresLearning()/isLearned() ✗
+            //   只"刻进法术容器"（奥术铁砧/超位魔法/魔导…）而没"学会"的法术会被这道门拦死 ✗
+            //   ⇒ 只要这个法术**刻在玩家手持/穿戴/饰品的任意法术容器里**，就视为已学会 ✓
+            if (IronSpellsReflector.inscribedOnPlayer(player, this)) {
+                cir.setReturnValue(true);
+                return;
+            }
             if (!OriginMagicModifier.wornBy(player)) return;
             if (IronSpellsSpellAccess.isEldritch(this)) {
                 cir.setReturnValue(true);
