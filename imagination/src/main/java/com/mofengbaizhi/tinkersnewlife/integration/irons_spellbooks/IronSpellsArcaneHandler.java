@@ -58,6 +58,10 @@ public final class IronSpellsArcaneHandler {
             Class<?> castEvent = Class.forName("io.redspace.ironsspellbooks.api.events.SpellOnCastEvent");
             bus.addListener(EventPriority.NORMAL, false, (Class) castEvent,
                     (Consumer) (Object e) -> onSpellOnCast(e));
+            // TNL1324 等级下限守卫：挂在**最后一个**优先级 ⇒ 即使前面有人把等级 setLevel 掉了，
+            //   这里也只把"超位魔法承诺的 满级×2"补回来（**只抬高、不降低别人** ✓）
+            bus.addListener(EventPriority.LOWEST, false, (Class) castEvent,
+                    (Consumer) (Object e) -> onSpellOnCastFloor(e));
         } catch (Throwable t) {
             TinkersNewlife.LOGGER.warn("[联动] 超位魔法：SpellOnCastEvent 挂载失败（范围/持续补偿不生效）", t);
         }
@@ -68,7 +72,10 @@ public final class IronSpellsArcaneHandler {
           //   onModifySpellLevel 里魔导那项已经是 0（只留 debug 日志用）⇒ 重新注册是安全的 ✓。
         try {
             Class<?> levelEvent = Class.forName("io.redspace.ironsspellbooks.api.events.ModifySpellLevelEvent");
-            bus.addListener(EventPriority.LOW, false, (Class) levelEvent,
+            // TNL1324 用户口径：「现在的逻辑有没有可能被其他加成顶掉」
+            //   我们只做 addLevels（增量）✓ 但若别的模组在**我们之后**用 setLevel 写绝对值，仍会盖掉 ✗
+            //   ⇒ 尽量挂到**最后**（LOWEST），把"被别人后置覆盖"的窗口压到最小 ✓
+            bus.addListener(EventPriority.LOWEST, false, (Class) levelEvent,
                     (Consumer) (Object e) -> onModifySpellLevel(e));
         } catch (Throwable t) {
             TinkersNewlife.LOGGER.warn("[联动] ModifySpellLevelEvent 挂载失败（超位魔法/奥术始源不生效）", t);
@@ -380,4 +387,52 @@ public final class IronSpellsArcaneHandler {
         } catch (Throwable ignored) {
         }
     }
+
+    // ============================================================
+    //  TNL1324 施法等级下限守卫（EventPriority.LOWEST）
+    //    ⚠ 只做"抬高到超位魔法的承诺值"，**绝不降低**别处给的更高等级 ✓
+    // ============================================================
+    private static void onSpellOnCastFloor(Object event) {
+        try {
+            Object playerObj = invoke(event, "getEntity");
+            if (!(playerObj instanceof net.minecraft.world.entity.LivingEntity caster)) return;
+            Object idObj = invoke(event, "getSpellId");
+            if (!(idObj instanceof String spellId) || spellId.isEmpty()) return;
+            if (!com.mofengbaizhi.tinkersnewlife.content.modifier.SuperTierMagicModifier
+                    .inscribedFor(caster, spellId)) {
+                return;
+            }
+            Object levelObj = invoke(event, "getSpellLevel");
+            if (!(levelObj instanceof Number levelNum)) return;
+            int current = levelNum.intValue();
+
+            Object spell = com.mofengbaizhi.tinkersnewlife.integration.irons_spellbooks
+                    .IronSpellsSpellAccess.spellById(spellId);
+            if (spell == null) return;
+            int cap = com.mofengbaizhi.tinkersnewlife.integration.irons_spellbooks
+                    .IronSpellsSpellAccess.maxLevel(spell);
+            if (cap <= 0) return;
+            int floor = cap * com.mofengbaizhi.tinkersnewlife.content.modifier
+                    .SuperTierMagicModifier.LEVEL_MULTIPLIER;
+            if (current >= floor) {
+                return;   // 别人给得更高 ⇒ 不动 ✓
+            }
+            Method set = find(event.getClass(), "setSpellLevel", int.class);
+            if (set == null) return;
+            set.invoke(event, floor);
+            long now = caster.level().getGameTime();
+            Long last = TNL_LAST_FLOOR_LOG.get(caster.getUUID());
+            if (last == null || now - last > 200L) {
+                TNL_LAST_FLOOR_LOG.put(caster.getUUID(), now);
+                TinkersNewlife.LOGGER.info(
+                        "[法术等级] 超位魔法下限守卫：{} 的 {} 被压到 {}，已抬回 {}",
+                        caster.getName().getString(), spellId, current, floor);
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** 下限守卫的日志节流 */
+    private static final java.util.Map<java.util.UUID, Long> TNL_LAST_FLOOR_LOG =
+            new java.util.concurrent.ConcurrentHashMap<>();
 }
