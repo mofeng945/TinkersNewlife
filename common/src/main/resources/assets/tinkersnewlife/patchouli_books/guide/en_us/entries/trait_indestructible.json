@@ -1,0 +1,12 @@
+{
+  "name": "Indestructible",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:durandal_shard",
+  "sortnum": 11,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)Indestructible$() (tinkersnewlife:indestructible, Durandal default trait)$(br2)Effect: the tool $(bold)never loses durability$() and never breaks.$(br2)⚠ Unlike vanilla Tinkers' $(italic)Unbreakable$(): $(bold)it has no prerequisites$() (Unbreakable normally requires Reinforced V + Netherite before it can be modified), so tools with this trait can be upgraded normally."
+    }
+  ]
+}

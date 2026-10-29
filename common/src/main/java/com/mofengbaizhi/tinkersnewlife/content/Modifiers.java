@@ -19,6 +19,15 @@ public class Modifiers {
     public static final StaticModifier<SupervisorModifier> SUPERVISOR =
             MODIFIERS.register("supervisor", SupervisorModifier::new);
 
+    /**
+     * TNL1388 百折不断（杜兰达尔材料特性）：**替代匠魂本体的 unbreakable** ✓
+     * 本体「不毁」带 {@code ModifierRequirementsModule}（下界合金 1 + 加固 V），
+     * 当材料特性白给时会让 {@code tool.tryValidate()} 永远失败 ⇒ 工具无法强化 ✗
+     * 本特性只挂 {@code TOOL_DAMAGE} 把耐久损耗归零，没有任何前置 ✓
+     */
+    public static final StaticModifier<IndestructibleModifier> INDESTRUCTIBLE =
+            MODIFIERS.register("indestructible", IndestructibleModifier::new);
+
     public static final StaticModifier<CosmicOrderVoiceTrait> COSMIC_ORDER_VOICE =
             MODIFIERS.register("cosmic_order_voice", CosmicOrderVoiceTrait::new);
 

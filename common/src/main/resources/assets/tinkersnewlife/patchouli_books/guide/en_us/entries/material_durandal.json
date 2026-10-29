@@ -11,7 +11,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)Innate traits$():$(li)$(l:trait_unbreakable)Unbreakable$() (tconstruct:unbreakable): the tool can never be damaged$(br2)Durandal can also be forged straight into a $(l:tool_durandal_sword)Durandal Sword$() - a legendary weapon that never breaks."
+      "text": "$(bold)Innate traits$():$(li)$(l:trait_indestructible)Indestructible$() (tinkersnewlife:indestructible): the tool can never be damaged$(br2)Durandal can also be forged straight into a $(l:tool_durandal_sword)Durandal Sword$() - a legendary weapon that never breaks."
     }
   ]
 }

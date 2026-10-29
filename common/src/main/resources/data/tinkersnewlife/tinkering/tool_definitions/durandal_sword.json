@@ -8,10 +8,13 @@
       ]
     },
     {
-    "type": "tconstruct:default_materials",
-    "materials": [
-            { "type": "tconstruct:random", "tier": 99 }
-        ]
+      "type": "tconstruct:default_materials",
+      "materials": [
+        {
+          "type": "tconstruct:random",
+          "tier": 99
+        }
+      ]
     },
     {
       "type": "tconstruct:base_stats",
@@ -42,7 +45,7 @@
       "traits": [
         {
           "level": 1,
-          "name": "tconstruct:unbreakable"
+          "name": "tinkersnewlife:indestructible"
         }
       ]
     }

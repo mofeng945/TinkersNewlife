@@ -1,0 +1,12 @@
+{
+  "name": "百折不断",
+  "category": "tinkersnewlife:traits",
+  "icon": "tinkersnewlife:durandal_shard",
+  "sortnum": 11,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "$(bold)百折不断$()（tinkersnewlife:indestructible，杜兰达尔的默认特性）$(br2)效果：工具$(bold)永不消耗耐久$()，也永远不会损坏。$(br2)⚠ 与匠魂本体的「不毁」不同：$(bold)没有任何前置要求$()（不毁原本要求「加固 V + 下界合金」才允许强化），所以带这个特性的工具可以正常强化、改造 ✓"
+    }
+  ]
+}

@@ -11,7 +11,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "$(bold)自带特性$()：$(li)$(l:trait_unbreakable)不毁$()（tconstruct:unbreakable）：工具永不被损坏$(br2)杜兰达尔还可直接打造为$(l:tool_durandal_sword)杜兰达尔之剑$()——传奇武器，永不损坏。"
+      "text": "$(bold)自带特性$()：$(li)$(l:trait_indestructible)百折不断$()（tinkersnewlife:indestructible）：工具永不被损坏$(br2)杜兰达尔还可直接打造为$(l:tool_durandal_sword)杜兰达尔之剑$()——传奇武器，永不损坏。"
     }
   ]
 }
