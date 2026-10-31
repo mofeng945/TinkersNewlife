@@ -848,7 +848,7 @@
   "modifier.tinkersnewlife.arcane_conduction.description": "Flowing arcana empowers the spells you cast - use it to deal far greater spell damage.",
   "modifier.tinkersnewlife.arcane_conduction.flavor": "Arcane affinity, released with a magician's mastery.",
   "modifier.tinkersnewlife.arcane_domination": "Arcane Domination",
-  "modifier.tinkersnewlife.arcane_domination.description": "All schools gain 100% spell power.",
+  "modifier.tinkersnewlife.arcane_domination.description": "Each worn piece grants +100% spell power to all schools (stacks per piece).",
   "modifier.tinkersnewlife.arcane_domination.flavor": "Not borrowed power - commanded.",
   "modifier.tinkersnewlife.aristocratic_dining": "Aristocratic Dining",
   "modifier.tinkersnewlife.aristocratic_dining.description": "No-levels modifier: armor only, uses 1 ability slot. Vampires of level 5 or higher gain blood equal to a food's nutrition value when they eat normal food (blood bottles and potions have no food properties and do not count).",

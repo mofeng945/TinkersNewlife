@@ -849,7 +849,7 @@
   "modifier.tinkersnewlife.arcane_conduction.description": "流动的奥术让你释放的法术得到了强化，使用它来打出更高的法术伤害",
   "modifier.tinkersnewlife.arcane_conduction.flavor": "魔术级的亲和释放",
   "modifier.tinkersnewlife.arcane_domination": "奥法支配",
-  "modifier.tinkersnewlife.arcane_domination.description": "全学派法术强度提升 100%。",
+  "modifier.tinkersnewlife.arcane_domination.description": "每穿戴一件提升 100% 全学派法术强度（按件叠加）。",
   "modifier.tinkersnewlife.arcane_domination.flavor": "不是借力，是号令。",
   "modifier.tinkersnewlife.aristocratic_dining": "贵族餐饮",
   "modifier.tinkersnewlife.aristocratic_dining.description": "占 1 个能力槽，只能装在护甲上。5 级以上的血族进食普通食物时，除了照常回复饱食度，还会按食物的营养值获得等量血液值（血瓶／血药这类没有食物属性的东西不算）。",

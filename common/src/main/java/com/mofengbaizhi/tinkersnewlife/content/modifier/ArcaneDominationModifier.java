@@ -77,4 +77,32 @@ public class ArcaneDominationModifier extends Modifier {
         }
         return false;
     }
+
+    /**
+     * TNL1393 用户反馈（MC_kitten）：「三件魔金部件的法袍实际只加了 100 法强」。
+     * ⇒ 奥法支配改成**按件叠加**：返回身上带此特性的**件数**（主手/副手/护甲/饰品）✓
+     * （每件 +100% ⇒ 三件 +300%），与材料说明「1 级 +100 法强」的玩家的理解一致 ✓
+     */
+    public static int wornPieces(LivingEntity entity) {
+        if (entity == null) return 0;
+        int n = 0;
+        if (has(entity.getMainHandItem())) n++;
+        if (has(entity.getOffhandItem())) n++;
+        for (ItemStack armor : entity.getArmorSlots()) {
+            if (has(armor)) n++;
+        }
+        try {
+            var resolved = top.theillusivec4.curios.api.CuriosApi.getCuriosInventory(entity).resolve();
+            if (resolved.isPresent()) {
+                for (var handler : resolved.get().getCurios().values()) {
+                    var stacks = handler.getStacks();
+                    for (int i = 0; i < stacks.getSlots(); i++) {
+                        if (has(stacks.getStackInSlot(i))) n++;
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return n;
+    }
 }

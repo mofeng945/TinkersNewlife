@@ -71,8 +71,10 @@ public final class MagicGoldHandler {
                 unity > 0 ? AllSpellsUnityModifier.MANA_PER_LEVEL * unity : 0.0D);
 
         // 奥法支配：全学派法术强度 +200%
+        // TNL1393 奥法支配：每件 +100%（按件叠加 ⇒ 三件 +300%）
+        int dominationPieces = ArcaneDominationModifier.wornPieces(player);
         applyAttribute(player, "SPELL_POWER", POWER_MODIFIER_ID, "arcane_domination_power",
-                ArcaneDominationModifier.wornBy(player) ? ArcaneDominationModifier.POWER_BONUS : 0.0D);
+                dominationPieces * ArcaneDominationModifier.POWER_BONUS);
 
         tryShroud(player, player.level().getGameTime());
     }
