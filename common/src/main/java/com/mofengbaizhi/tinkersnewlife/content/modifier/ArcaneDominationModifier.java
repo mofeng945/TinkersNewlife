@@ -63,6 +63,18 @@ public class ArcaneDominationModifier extends Modifier {
         for (ItemStack armor : entity.getArmorSlots()) {
             if (has(armor)) return true;
         }
+        try {
+            var resolved = top.theillusivec4.curios.api.CuriosApi.getCuriosInventory(entity).resolve();
+            if (resolved.isPresent()) {
+                for (var handler : resolved.get().getCurios().values()) {
+                    var stacks = handler.getStacks();
+                    for (int i = 0; i < stacks.getSlots(); i++) {
+                        if (has(stacks.getStackInSlot(i))) return true;
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+        }
         return false;
     }
 }

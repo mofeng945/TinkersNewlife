@@ -79,6 +79,18 @@ public class AllSpellsUnityModifier extends Modifier {
         addIf(out, entity.getMainHandItem());
         addIf(out, entity.getOffhandItem());
         for (ItemStack armor : entity.getArmorSlots()) addIf(out, armor);
+        try {
+            var resolved = top.theillusivec4.curios.api.CuriosApi.getCuriosInventory(entity).resolve();
+            if (resolved.isPresent()) {
+                for (var handler : resolved.get().getCurios().values()) {
+                    var stacks = handler.getStacks();
+                    for (int i = 0; i < stacks.getSlots(); i++) {
+                        addIf(out, stacks.getStackInSlot(i));
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+        }
         return out;
     }
 

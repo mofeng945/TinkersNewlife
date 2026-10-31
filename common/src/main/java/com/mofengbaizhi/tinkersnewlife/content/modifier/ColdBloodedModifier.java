@@ -72,6 +72,28 @@ public class ColdBloodedModifier extends Modifier {
             if (levelOf(s) > 0) out.add(s);
         }
         for (ItemStack s : entity.getArmorSlots()) if (levelOf(s) > 0) out.add(s);
+        try {
+            var resolved = top.theillusivec4.curios.api.CuriosApi.getCuriosInventory(entity).resolve();
+            if (resolved.isPresent()) {
+                for (var handler : resolved.get().getCurios().values()) {
+                    var stacks = handler.getStacks();
+                    for (int i = 0; i < stacks.getSlots(); i++) {
+                        ItemStack curio = stacks.getStackInSlot(i);
+                        if (levelOf(curio) > 0) out.add(curio);
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+        }
         return out;
+    }
+
+    /** TNL1392 身上所有"冷酷"物品的**等级总和**（按件叠加 ✓ 含首饰） */
+    public static int totalLevel(LivingEntity entity) {
+        int sum = 0;
+        for (ItemStack stack : itemsWith(entity)) {
+            sum += levelOf(stack);
+        }
+        return sum;
     }
 }

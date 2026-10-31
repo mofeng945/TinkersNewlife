@@ -134,7 +134,9 @@ public final class IronSpellsArcaneHandler {
                     .SPELL_LEVEL_PER_LEVEL
                     * com.mofengbaizhi.tinkersnewlife.content.modifier.OriginMagicModifier.bestLevel(caster);
             // ⚠ 魔导那一项已按用户口径删除（不再提升刻印法术等级 ✗）⇒ 只剩超位魔法与奥术始源 ✓
-              final int boost = Math.max(superBoost, originBoost);
+              // TNL1392 用户口径：「铁魔法联动特性互相覆盖」——超位魔法与奥术始源**改为叠加** ✓
+            //   （旧实现 Math.max ⇒ 两者只生效一个 ✗）
+            final int boost = superBoost + originBoost;
             if (boost <= 0) return;
             // TNL1321 用户反馈：「超位魔法还是没有显示法术等级增加」⇒ 打一条限频日志，
             //   能直接看出 ModifySpellLevelEvent 有没有触发、超位/奥术各贡献多少 ✓
@@ -191,7 +193,7 @@ public final class IronSpellsArcaneHandler {
             float amount = n.floatValue();
 
             // ① 魔导：施法增伤
-            int level = ArcaneConductionModifier.bestLevel(caster);
+            int level = ArcaneConductionModifier.totalLevel(caster);
             if (level > 0) {
                 amount = (float) (amount * (1.0 + ArcaneConductionModifier.DAMAGE_BONUS_PER_LEVEL * level));
             }
@@ -273,7 +275,7 @@ public final class IronSpellsArcaneHandler {
         DamageSource source = event.getSource();
         if (!(source.getEntity() instanceof LivingEntity attacker) || attacker.level().isClientSide) return;
         if (!looksLikeForeignSpell(source)) return;
-        int level = ArcaneConductionModifier.bestLevel(attacker);
+        int level = ArcaneConductionModifier.totalLevel(attacker);
         if (level <= 0) return;
         event.setAmount((float) (event.getAmount()
                 * (1.0 + ArcaneConductionModifier.DAMAGE_BONUS_PER_LEVEL * level)));

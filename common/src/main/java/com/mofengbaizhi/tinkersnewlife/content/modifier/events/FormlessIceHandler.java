@@ -80,7 +80,7 @@ public final class FormlessIceHandler {
         DamageSource source = event.getSource();
         if (!(source.getEntity() instanceof Player attacker)) return;
         if (APPLYING.contains(target.getUUID())) return;         // 是我们自己追加的伤害 → 不再累加
-        int level = ColdBloodedModifier.bestLevel(attacker);
+        int level = ColdBloodedModifier.totalLevel(attacker);
         if (level <= 0) return;
         float dealt = event.getAmount();
         if (dealt <= 0.0F) return;

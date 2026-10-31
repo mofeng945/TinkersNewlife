@@ -89,7 +89,28 @@ public class ArcaneConductionModifier extends Modifier implements InventoryTickM
         addIf(out, entity.getMainHandItem());
         addIf(out, entity.getOffhandItem());
         for (ItemStack armor : entity.getArmorSlots()) addIf(out, armor);
+        try {
+            var resolved = top.theillusivec4.curios.api.CuriosApi.getCuriosInventory(entity).resolve();
+            if (resolved.isPresent()) {
+                for (var handler : resolved.get().getCurios().values()) {
+                    var stacks = handler.getStacks();
+                    for (int i = 0; i < stacks.getSlots(); i++) {
+                        addIf(out, stacks.getStackInSlot(i));
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+        }
         return out;
+    }
+
+    /** TNL1392 身上所有"魔导"物品的**等级总和**（按件叠加 ✓ 含主手/副手/护甲/饰品） */
+    public static int totalLevel(LivingEntity entity) {
+        int sum = 0;
+        for (ItemStack stack : itemsWith(entity)) {
+            sum += levelOf(stack);
+        }
+        return sum;
     }
 
     /** 玩家身上最高的魔导等级（0 = 没有） */

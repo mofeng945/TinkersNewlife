@@ -56,4 +56,24 @@ public class BlazingModifier extends Modifier {
         for (ItemStack armor : entity.getArmorSlots()) best = Math.max(best, levelOf(armor));
         return best;
     }
+
+    /** TNL1392 身上所有"炽热"物品的**等级总和**（按件叠加 ✓ 含首饰） */
+    public static int totalLevel(LivingEntity entity) {
+        if (entity == null) return 0;
+        int sum = levelOf(entity.getMainHandItem()) + levelOf(entity.getOffhandItem());
+        for (ItemStack armor : entity.getArmorSlots()) sum += levelOf(armor);
+        try {
+            var resolved = top.theillusivec4.curios.api.CuriosApi.getCuriosInventory(entity).resolve();
+            if (resolved.isPresent()) {
+                for (var handler : resolved.get().getCurios().values()) {
+                    var stacks = handler.getStacks();
+                    for (int i = 0; i < stacks.getSlots(); i++) {
+                        sum += levelOf(stacks.getStackInSlot(i));
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return sum;
+    }
 }

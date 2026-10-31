@@ -67,6 +67,10 @@ public final class IronSpellsSpellAccess {
     private static Method mContainerCreate; // static create(int,boolean,boolean)
     private static Method mContainerAdd;    // addSpell(AbstractSpell,int,boolean,ItemStack)
     private static Method mContainerSave;   // save(ItemStack)
+    private static Method mContainerMutableCopy; // mutableCopy() -> ISpellContainerMutable
+    private static Method mContainerMaxCount;    // getMaxSpellCount() -> int
+    private static Method mContainerActiveCount; // getActiveSpellCount() -> int
+    private static Method mContainerIndexFor;    // getIndexForSpell(AbstractSpell) -> int
     private static Object defaultCastSource;
     private static Object iceSpellPower;    // Attribute：铁魔法 ICE_SPELL_POWER
     private static final java.util.Map<String, Object> SPELL_POWERS = new java.util.concurrent.ConcurrentHashMap<>();
@@ -179,6 +183,10 @@ public final class IronSpellsSpellAccess {
             mContainerCreate = find(cContainer, "create", int.class, boolean.class, boolean.class);
             mContainerAdd = find(cContainer, "addSpell", cSpell, int.class, boolean.class, ItemStack.class);
             mContainerSave = find(cContainer, "save", ItemStack.class);
+        mContainerMutableCopy = find(cContainer, "mutableCopy");
+        mContainerMaxCount = find(cContainer, "getMaxSpellCount");
+        mContainerActiveCount = find(cContainer, "getActiveSpellCount");
+        mContainerIndexFor = find(cContainer, "getIndexForSpell", cSpell);
             mCastComplete = find(cSpell, "onServerCastComplete",
                     Level.class, int.class, LivingEntity.class, cMagicData, boolean.class);
             for (Method m : cMagicData.getMethods()) {
@@ -558,6 +566,63 @@ public final class IronSpellsSpellAccess {
      * 确保物品里刻印了指定法术（<b>仅当该物品还没有法术容器时</b>写入 ✗ 免得跟奥术铁砧的编辑打架）。
      * <p>用途：材料「秘银」的「破法」特性 —— 工具自带 1 级「法术反制」。
      */
+    // ---- TNL1392 容器追加小工具（全部反射兜底）----
+    private static Object mutableCopy(Object container) {
+        try {
+            if (mContainerMutableCopy == null) return container;
+            Object copy = mContainerMutableCopy.invoke(container);
+            return copy != null ? copy : container;
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    private static int maxCount(Object container) {
+        try {
+            if (mContainerMaxCount == null) return 0;
+            Object v = mContainerMaxCount.invoke(container);
+            return v instanceof Number n ? n.intValue() : 0;
+        } catch (Throwable ignored) {
+            return 0;
+        }
+    }
+
+    private static int activeCount(Object container) {
+        try {
+            if (mContainerActiveCount == null) return 0;
+            Object v = mContainerActiveCount.invoke(container);
+            return v instanceof Number n ? n.intValue() : 0;
+        } catch (Throwable ignored) {
+            return 0;
+        }
+    }
+
+    private static int indexOfSpell(Object container, Object spell) {
+        try {
+            if (mContainerIndexFor == null) return -1;
+            Object v = mContainerIndexFor.invoke(container, spell);
+            return v instanceof Number n ? n.intValue() : -1;
+        } catch (Throwable ignored) {
+            return 0;
+        }
+    }
+
+    /** 往已有容器里追加一个法术（去重、查容量）；返回是否"已经有它" */
+    private static boolean appendSpell(Object container, Object spell, int level, ItemStack stack) {
+        try {
+            if (spell == null) return false;
+            if (indexOfSpell(container, spell) >= 0) return true;
+            if (activeCount(container) >= maxCount(container)) return false;
+            Object mutable = mutableCopy(container);
+            if (mutable == null) return false;
+            mContainerAdd.invoke(mutable, spell, level, true, stack);
+            mContainerSave.invoke(mutable, stack);
+            return true;
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
     public static boolean ensureInscribed(ItemStack stack, String spellId, int level, int slots) {
         init();
         if (!ready || stack == null || stack.isEmpty()) return false;
@@ -567,7 +632,15 @@ public final class IronSpellsSpellAccess {
             return false;
         }
         try {
-            if (mContainerGet.invoke(null, stack) != null) return true;   // 已是容器（可能已被铁砧编辑过）→ 不动
+            // TNL1392 用户口径：「所有铁魔法联动特性互相覆盖」——
+            //   旧逻辑"已经是容器 ⇒ 直接 return true"⇒ 同一件物品上**后到的特性永远刻不进去** ✗
+            //   现在：已有容器时，能塞就塞（去重 / 容量检查），塞不下才放弃 ✓
+            Object existing = mContainerGet.invoke(null, stack);
+            if (existing != null) {
+                Object spellOfExisting = spellById(spellId);
+                if (spellOfExisting == null) return false;
+                return appendSpell(existing, spellOfExisting, level, stack);
+            }
             Object spell = spellById(spellId);
             if (spell == null) return false;
             Object container = mContainerCreate.invoke(null, Math.max(1, slots), true, false);
@@ -598,7 +671,24 @@ public final class IronSpellsSpellAccess {
             return false;
         }
         try {
-            if (mContainerGet.invoke(null, stack) != null) return true;   // 已是容器（可能已被铁砧编辑过）→ 不动
+            // TNL1392 同上：已有容器时追加（两个法术都要塞得下，去重 ✓）
+            Object existing = mContainerGet.invoke(null, stack);
+            if (existing != null) {
+                int need = 0;
+                Object spellAProbe = spellById(spellIdA);
+                Object spellBProbe = spellById(spellIdB);
+                if (spellAProbe == null || spellBProbe == null) return false;
+                if (indexOfSpell(existing, spellAProbe) < 0) need++;
+                if (indexOfSpell(existing, spellBProbe) < 0) need++;
+                if (need == 0) return true;
+                if (activeCount(existing) + need > maxCount(existing)) return false;
+                Object mutable = mutableCopy(existing);
+                if (mutable == null) return false;
+                if (indexOfSpell(mutable, spellAProbe) < 0) mContainerAdd.invoke(mutable, spellAProbe, level, true, stack);
+                if (indexOfSpell(mutable, spellBProbe) < 0) mContainerAdd.invoke(mutable, spellBProbe, level, true, stack);
+                mContainerSave.invoke(mutable, stack);
+                return true;
+            }
             Object spellA = spellById(spellIdA);
             Object spellB = spellById(spellIdB);
             if (spellA == null || spellB == null) {

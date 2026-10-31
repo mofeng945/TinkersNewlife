@@ -75,7 +75,7 @@ public final class PyriumHandler {
         DamageSource source = event.getSource();
         if (!(source.getEntity() instanceof Player attacker)) return;
         if (APPLYING.contains(target.getUUID())) return;              // 我们自己的追加伤害 → 不再触发
-        int level = BlazingModifier.bestLevel(attacker);
+        int level = BlazingModifier.totalLevel(attacker);
         if (level <= 0) return;
 
         // 点燃：5% × 等级
