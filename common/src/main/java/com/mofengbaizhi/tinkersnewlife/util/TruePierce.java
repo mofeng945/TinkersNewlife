@@ -1362,39 +1362,18 @@ public final class TruePierce {
             new java.util.concurrent.atomic.AtomicBoolean(false);
 
     /** ⭐ 找血量字段 ✗（⭐ 只找一次 ✓）—— ⭐⭐ §1201 **改成"按值反查"** ✗ */
+    /**
+     * TNL1402 <b>不要再按名字猜血量字段</b> ✗
+     *
+     * <p>⚠ 实测（2026-10-31，Mowzie 钢铁守护者）：生产环境 `f_20920_` **不是 health** ✗
+     * —— 用官方映射核对过：`oAttackAnim` → obf `aO` → SRG **`f_20920_`** ✓
+     * ⇒ 原来"按名字写 `f_20920_`"等于往**攻击动画字段**里写血 ✗ ⇒ 血一点不掉 ✓
+     *
+     * <p>⇒ 现在**只认按值探测出来的字段**（{@link #detectHealthField}），这里返回 {@code null} ✓
+     * ⇒ 调用方会回落到 {@code getHealth()/setHealth()} ✓（正常实体照样能改血 ✓）
+     */
     private static java.lang.reflect.Field healthField() {
-        if (HEALTH_FIELD_STATE != 0) {
-            return HEALTH_FIELD;
-        }
-        synchronized (TruePierce.class) {
-            if (HEALTH_FIELD_STATE != 0) {
-                return HEALTH_FIELD;
-            }
-            // ⭐⭐⚠⚠ **不能再按名字猜** ✗✗（⭐ 探针实证 ✓ 2026-10-10 ✓）
-            //   日志：⭐ `写=436.50 弹回=447.00 | getHealth=447.00 字段=436.50` ✗
-            //   ⇒ ⭐ 我抓到的那个 `health` 字段 ⭐ **和 `getHealth()` 不是同一个东西** ✓
-            //   ⇒ ⭐ 生产环境的真名是 ⭐ `f_20920_` ✗ ⭐ 而某个 mod/mixin 可能**又加了个 `health`** ✓
-            //     ⭐ 于是"按名字猜"就会**抓到假的那个** ✓ ✓
-            //   ⇒ ⭐ 正解：⭐ **按值反查** ✗ —— ⭐ 遍历 `LivingEntity` 的**所有 `float` 字段** ✓
-            //     ⭐ 挑 **值等于 `getHealth()`** 的那个 ✓ ✓（⭐ 拿一个实例来对 ✓）
-            try {
-                java.lang.reflect.Field best = null;
-                for (java.lang.reflect.Field f : new java.lang.reflect.Field[]{
-                        fieldOrNull("f_20920_"), fieldOrNull("health")}) {
-                    if (f != null) {
-                        f.setAccessible(true);
-                        best = f;
-                        break;
-                    }
-                }
-                HEALTH_FIELD = best;
-                HEALTH_FIELD_STATE = best != null ? 1 : -1;
-                return best;
-            } catch (Throwable ignored) {
-                HEALTH_FIELD_STATE = -1;
-                return null;
-            }
-        }
+        return HEALTH_FIELD_STATE == 1 ? HEALTH_FIELD : null;
     }
 
     /** ⭐ 按名字取字段 ✗ 取不到返回 null ✓ */
@@ -1413,28 +1392,32 @@ public final class TruePierce {
      * @return ⭐ 找到的字段（⭐ 已 `setAccessible` ✓）⭐ 或 null ✓
      */
     private static java.lang.reflect.Field detectHealthField(LivingEntity sample) {
-        float api = sample.getHealth();
-        // ⭐ 先试约定名（⭐ SRG 优先 ✗ ⭐ 它才是生产环境的真名 ✓）
-        for (String name : new String[]{"f_20920_", "health"}) {
-            java.lang.reflect.Field f = fieldOrNull(name);
-            if (f == null) continue;
-            try {
-                f.setAccessible(true);
-                if (Math.abs(f.getFloat(sample) - api) < 0.01F) {
-                    return f;    // ⭐ 值对上了 ✓
+        // TNL1402 按值探测不可靠（多个字段可能同时等于血量）✗ ⇒ 改成**写入探测** ✓：
+        //   逐个 float 字段临时写 `原值 + 1`，看 `getHealth()` 变不变；变了就是它 ✓（写完全部还原 ✓）
+        for (Class<?> cls = sample.getClass(); cls != null && cls != Object.class; cls = cls.getSuperclass()) {
+            for (java.lang.reflect.Field f : cls.getDeclaredFields()) {
+                if (f.getType() != float.class) continue;
+                if (java.lang.reflect.Modifier.isStatic(f.getModifiers())) continue;
+                try {
+                    f.setAccessible(true);
+                    float orig = f.getFloat(sample);
+                    try {
+                        f.setFloat(sample, orig + 1.0F);
+                        if (Math.abs(sample.getHealth() - (orig + 1.0F)) < 0.01F) {
+                            f.setFloat(sample, orig);
+                            TinkersNewlife.LOGGER.debug(
+                                    "[真伤·字段探测] {} 的血量字段 = {}（{}）✓",
+                                    sample.getName().getString(), f.getName(), f.getDeclaringClass().getSimpleName());
+                            return f;
+                        }
+                    } finally {
+                        try {
+                            f.setFloat(sample, orig);
+                        } catch (Throwable ignored) {
+                        }
+                    }
+                } catch (Throwable ignored) {
                 }
-            } catch (Throwable ignored) {
-            }
-        }
-        // ⚠ 都对不上 ⇒ ⭐ 遍历所有 float 字段 ✗ ⭐ 挑值等于 `getHealth()` 的那个 ✓
-        for (java.lang.reflect.Field f : net.minecraft.world.entity.LivingEntity.class.getDeclaredFields()) {
-            if (f.getType() != float.class) continue;
-            try {
-                f.setAccessible(true);
-                if (Math.abs(f.getFloat(sample) - api) < 0.01F) {
-                    return f;
-                }
-            } catch (Throwable ignored) {
             }
         }
         return null;
@@ -1481,7 +1464,25 @@ public final class TruePierce {
     private static final java.util.Map<Class<?>, java.lang.reflect.Field> FIELD_CACHE =
             new java.util.concurrent.ConcurrentHashMap<>();
 
+    /**
+     * TNL1403 <b>1.20.1 没有 `health` 字段</b> ✗
+     *
+     * <p>⚠ 实测（2026-10-31，Mowzie 钢铁守护者）：
+     * 1.20.1 的 `LivingEntity` **没有** `float health` 字段 ✗ ——
+     * `getHealth()` 读的是 `entityData.get(DATA_HEALTH_ID)` ✓；
+     * `setHealth()` 写 `entityData.set(DATA_HEALTH_ID, clamp(...))` ✓。
+     * （我用 SRG jar `javap` 核对过：`LivingEntity` 的全部 float 字段里根本没有 `health` ✓）
+     *
+     * <p>⇒ 以前代码里"`f_20920_` 就是 health"是**旧版本残留的错映射** ✗
+     *（`f_20920_` 实际是 `oAttackAnim` ✗ 往那里写血 = 血一点不掉 ✓）；
+     * ⇒ 1.20.1 只能走 `setHealth`／`entityData` ✓ —— 直接返回 {@code null} 让调用方回落 ✓
+     */
     private static java.lang.reflect.Field healthFieldFor(LivingEntity target) {
+        return null;
+    }
+
+    /** 旧实现保留（已不再被调用）：按值/写入探测血字段 */
+    private static java.lang.reflect.Field healthFieldForLegacy(LivingEntity target) {
         Class<?> cls = target.getClass();
         java.lang.reflect.Field cached = FIELD_CACHE.get(cls);
         if (cached != null) {
@@ -1504,6 +1505,39 @@ public final class TruePierce {
      */
     public static boolean rawSetHealth(LivingEntity target, float value) {
         boolean ok = rawSetHealthInner(target, value);
+        // TNL1401 诊断：写完读回不一致 ⇒ 打一条 INFO 把每条通道的值都列出来
+        try {
+            float back = rawHealth(target);
+            if (Math.abs(back - value) > 0.05F) {
+                long nowMs = System.currentTimeMillis();
+                Long last = TNL_LAST_WRITE_FAIL.get(target.getUUID());
+                if (last == null || nowMs - last > 1000L) {
+                    TNL_LAST_WRITE_FAIL.put(target.getUUID(), nowMs);
+                    java.lang.reflect.Field f = healthFieldFor(target);
+                    float fieldVal = Float.NaN;
+                    if (f != null) {
+                        try {
+                            fieldVal = f.getFloat(target);
+                        } catch (Throwable ignored) {
+                        }
+                    }
+                    Pending pd = PENDING.get(target.getUUID());
+                    TinkersNewlife.LOGGER.info(
+                            "[真伤·写不进] 目标={}（{}）写入={} 读回={} getHealth={} 字段={}:{} ok={} 锁={} 抑制同步={}",
+                            target.getName().getString(),
+                            net.minecraft.world.entity.EntityType.getKey(target.getType()),
+                            String.format(java.util.Locale.ROOT, "%.2f", value),
+                            String.format(java.util.Locale.ROOT, "%.2f", back),
+                            String.format(java.util.Locale.ROOT, "%.2f", target.getHealth()),
+                            f == null ? "null" : f.getName(),
+                            String.format(java.util.Locale.ROOT, "%.2f", fieldVal),
+                            ok,
+                            pd == null ? "none" : String.format(java.util.Locale.ROOT, "%.2f", pd.value()),
+                            SUPPRESS_CLIENT_SYNC);
+                }
+            }
+        } catch (Throwable ignored) {
+        }
         // ⭐⭐⭐⭐ §1231 **每次改血后都把血量同步给客户端** ✗✗（⭐ 关键 ✓）
         //   ⚠ 用户口径 ✓：「**我想让我两个包的两种伤害显示都兼容**」✓
         //   ⭐ 两包各有一个显示 mod ✗ ⭐ 而 ⭐ **两个都是靠"客户端血量变化"** ✓：
@@ -1606,6 +1640,16 @@ public final class TruePierce {
         //   ⇒ ⭐ 结论：⭐ **绝不能"记账代替真写"** ✗ ⭐ 只能**想办法真写** ✓。
         // ⭐⭐ §1201 **用"这个实体"的字段**（⭐ 按值反查过 ✓ 不是按名字猜的 ✓）
         java.lang.reflect.Field f = healthFieldFor(target);
+        // TNL1403 1.20.1：血量在 SynchedEntityData 里 ⇒ 没有可写字段 ⇒ 直接 setHealth ✓
+        //   ⚠ 而且**不能被 SUPPRESS_CLIENT_SYNC 挡住** ✗（那会让真伤彻底不掉血 ✓）
+        if (f == null) {
+            try {
+                target.setHealth(value);
+                target.hurtMarked = true;
+            } catch (Throwable ignored) {
+            }
+            return false;
+        }
         boolean raw = false;
         if (f != null) {
             try {
@@ -1622,7 +1666,10 @@ public final class TruePierce {
         try {
             // ⚠⚠ §1232 **锁期间不标脏 ✗ 也不调 `setHealth`** ✓（⭐ 用户实测：
             //   ⭐「**怎么打一次又弹了3段伤害？**」✓ ⭐ 就是这里每 tick 同步造成的 ✓）
-            if (!SUPPRESS_CLIENT_SYNC && Math.abs(target.getHealth() - value) > 1.0E-4F) {
+            // TNL1402：字段没写成功（或压根没字段）⇒ **必须**回落 setHealth ✓
+            //   ⚠ 不能再被 SUPPRESS_CLIENT_SYNC 挡住门 ✗ —— 那会让真伤彻底不掉血 ✓
+            boolean fieldWorked = f != null && Math.abs(rawHealth(target) - value) <= 0.05F;
+            if (Math.abs(target.getHealth() - value) > 1.0E-4F && (!fieldWorked || !SUPPRESS_CLIENT_SYNC)) {
                 target.setHealth(value);
             }
         } catch (Throwable ignored) {
@@ -2288,6 +2335,10 @@ public final class TruePierce {
     private static final java.util.Map<java.util.UUID, Long> TNL_LAST_NO_LAND =
             new java.util.concurrent.ConcurrentHashMap<>();
 
+    /** TNL1401 写不进诊断限频 */
+    private static final java.util.Map<java.util.UUID, Long> TNL_LAST_WRITE_FAIL =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
     private static final java.util.Map<java.util.UUID, Pending> PENDING =
             new java.util.concurrent.ConcurrentHashMap<>();
 
@@ -2382,6 +2433,8 @@ public final class TruePierce {
         //     ⇒ ⭐ 客户端**每 tick 都看到血量变一次** ⇒ ⭐ 数字**连弹** ✓ ✓
         //   ⇒ ⭐ 锁 ⭐ **只负责服务端压血** ✗ ⭐ 同步交给 ⭐ "第一次那一发"（`writeAndVerify` ✓）✓
         SUPPRESS_CLIENT_SYNC = true;
+        boolean tnlSuppressReset = false;
+        try {
         while (it.hasNext()) {
             var e = it.next();
             Pending pd = e.getValue();
@@ -2452,8 +2505,15 @@ public final class TruePierce {
                 e.setValue(new Pending(pd.id(), target, left, spent));
             }
         }
-        // ⭐⭐ §1232 **锁跑完 ⇒ 恢复同步** ✗（⭐ 免得影响后面正常的改血 ✓）
-        SUPPRESS_CLIENT_SYNC = false;
+        } finally {
+            // ⭐⭐ §1232 **锁跑完 ⇒ 恢复同步** ✗ ＋ TNL1402 **异常也必须复位** ✓
+            //   （⚠ 原来复位语句在循环后：循环里一抛异常就永远卡在 true ⇒ 后面所有真伤都不同步 ✗）
+            SUPPRESS_CLIENT_SYNC = false;
+            tnlSuppressReset = true;
+        }
+        if (!tnlSuppressReset) {
+            SUPPRESS_CLIENT_SYNC = false;
+        }
     }
 
     /**
