@@ -2224,6 +2224,24 @@ public final class TruePierce {
     private static final int LOCK_TICKS = 5;
 
     /**
+     * ★ TNL1399 <b>回血压制延长</b>（用户口径：真伤就是掉血，不能被回血吃回去）
+     *
+     * <p>⚠ 现象（Mowzie 钢铁守护者那类 Boss 实证 ✓）：
+     * 它 `active == false`（脱战）时**每 tick 自己 `heal(0.3)`（= 6 血/秒）**✗
+     * 而它的 `active` 只会在"有目标 **且距离 ≤ 4.5 格**"时才切 true ✓
+     * ⇒ 远程/无源真伤把血写下去后，5 tick 锁一到期就被它**每 tick 回 0.3** 慢慢填满 ✗
+     * ⇒ 看起来"真伤破不了它的无敌" ✓。
+     *
+     * <p>⭐ 通用规则（不认实体、不认模组 ✓）：**锁期间发现"上一 tick 我们自己写下去的血
+     * 又被它回上来了" ⇒ 自动续锁** ✓（最多续到 {@link #MAX_LOCK_TICKS} = 10 秒 ✓）。
+     * 它只要还在回血 ⇒ 我们每 tick 把血再压回去 ✓ ⇒ 真伤落地可见 ✓。
+     */
+    private static final int EXTEND_TICKS = 40;
+
+    /** 续锁总上限（从第一次 enqueue 起算，10 秒；防止永久禁疗 ✓） */
+    private static final int MAX_LOCK_TICKS = 200;
+
+    /**
      * ⭐⭐ §1205 <b>还原被压的血量上限</b> ✗ —— ⭐ 锁到期时必须调 ✓
      * （⭐ 用户实测 2026-10-10：「**怎么还是锁住了**」✓）。
      *
@@ -2242,7 +2260,7 @@ public final class TruePierce {
         }
     }
 
-    private record Pending(java.util.UUID id, float value, int left) {
+    private record Pending(java.util.UUID id, float value, int left, int spent) {
     }
 
     private static final java.util.Map<java.util.UUID, Pending> PENDING =
@@ -2250,7 +2268,7 @@ public final class TruePierce {
 
     /** ⭐ 登记一个"跨 tick 待补"✗（⭐ 同目标覆盖 ✓ 取更低的那个值 ✓） */
     private static void enqueuePending(LivingEntity target, float value) {
-        PENDING.put(target.getUUID(), new Pending(target.getUUID(), value, LOCK_TICKS));
+        PENDING.put(target.getUUID(), new Pending(target.getUUID(), value, LOCK_TICKS, 0));
     }
 
     /** ⭐ "压上限"用的固定修饰符 UUID ✗（⭐ 稳定 ⇒ 可反复覆盖与移除 ✓） */
@@ -2351,6 +2369,8 @@ public final class TruePierce {
                 continue;
             }
             float target = pd.value();
+            // ★ TNL1399 写入前先读一次：若比我们上次写的值高 ⇒ 它刚自己回过血 ⇒ 待会儿续锁 ✓
+            float beforeWrite = rawHealth(living);
             // ⭐ 死线以下 ⇒ ⭐ 走死亡流程 ✓
             if (target <= 0.0F) {
                 try {
@@ -2368,7 +2388,11 @@ public final class TruePierce {
                 continue;
             }
             // ⭐ 压上限 ＋ 写血 ✓
-            clampMaxHealth(living, target);
+            // TNL1399: clamp MAX_HEALTH only on the first lock tick, otherwise the
+            // client health bar shows "max = locked value" and looks full.
+            if (pd.spent() == 0) {
+                clampMaxHealth(living, target);
+            }
             // ⚠⚠ §1232 **同上：只压服务端 ✗ 不再每 tick 同步客户端** ✓（⭐ 免得伤害数字连弹 ✓）
             rawSetHealthInner(living, target);
             // ⭐⭐ **事后校验** ✗ —— ⭐ 读回来若不是我们的值 ⇒ ⭐ 说明有人"更晚"改 ✓
@@ -2383,11 +2407,24 @@ public final class TruePierce {
             }
             suppressRegen(living);
             int left = pd.left() - 1;
+            int spent = pd.spent() + 1;
+            // ★ TNL1399 它在我们上次写入后又回血了 ⇒ 续锁（最多 MAX_LOCK_TICKS）✓
+            if (beforeWrite > target + 0.05F && spent < MAX_LOCK_TICKS) {
+                left = Math.max(left, EXTEND_TICKS);
+                if (spent == 1 || spent % 40 == 0) {
+                    TinkersNewlife.LOGGER.debug(
+                            "[真伤·续锁] {} 在回血（{} > {}）⇒ 续锁 {} tick（已 {}）✓",
+                            living.getName().getString(),
+                            String.format(java.util.Locale.ROOT, "%.2f", beforeWrite),
+                            String.format(java.util.Locale.ROOT, "%.2f", target),
+                            left, spent);
+                }
+            }
             if (left <= 0) {
                 releaseClamp(living);
                 it.remove();
             } else {
-                e.setValue(new Pending(pd.id(), target, left));
+                e.setValue(new Pending(pd.id(), target, left, spent));
             }
         }
         // ⭐⭐ §1232 **锁跑完 ⇒ 恢复同步** ✗（⭐ 免得影响后面正常的改血 ✓）
