@@ -84,9 +84,6 @@ public final class IronSpellsArcaneHandler {
             Class<?> dmgEvent = Class.forName("io.redspace.ironsspellbooks.api.events.SpellDamageEvent");
             bus.addListener(EventPriority.LOW, false, (Class) dmgEvent,
                     (Consumer) (Object e) -> onSpellDamage(e));
-            // TNL1396 最终数值诊断（LOWEST：所有模组都处理完之后）
-            bus.addListener(EventPriority.LOWEST, false, (Class) dmgEvent,
-                    (Consumer) (Object e) -> tnl$diagnoseFinalDamage(e));
         } catch (Throwable t) {
             TinkersNewlife.LOGGER.warn("[联动] 魔导：SpellDamageEvent 挂载失败（法术增伤不生效）", t);
         }
@@ -163,14 +160,12 @@ public final class IronSpellsArcaneHandler {
             Method add = find(event.getClass(), "addLevels", int.class);
             if (add != null) {
                 add.invoke(event, boost);
-                tnl$markLevelBoosted(caster, spellId, boost);
                 return;
             }
             Method get = find(event.getClass(), "getLevel");
             Method set = find(event.getClass(), "setLevel", int.class);
             if (get != null && set != null) {
                 set.invoke(event, ((Number) get.invoke(event)).intValue() + boost);
-                tnl$markLevelBoosted(caster, spellId, boost);
             }
         } catch (Throwable ignored) {
         }
@@ -191,17 +186,11 @@ public final class IronSpellsArcaneHandler {
         try {
             Object src = invoke(event, "getSpellDamageSource");
             LivingEntity caster = casterOf(src);
-            // TNL1394 用户反馈（魂樱工匠法典放魔法飞弹只吃基础 20）：先尽量把"施法者"解析出来
-            //   ⚠ 若 Sakura 的法术伤害源不带 entity，我们的百分比/属性补偿全都会静默跳过 ✗
-            if (caster == null) {
-                caster = resolveCasterFallback(src, event);
-            }
             Object amountObj = invoke(event, "getAmount");
             if (!(amountObj instanceof Number n)) return;
             Method set = find(event.getClass(), "setAmount", float.class);
             if (set == null) return;
             float amount = n.floatValue();
-            tnl$diagnoseSpellDamage(event, src, caster, amount);
 
             // ① 魔导：施法增伤
             int level = ArcaneConductionModifier.totalLevel(caster);
@@ -209,116 +198,13 @@ public final class IronSpellsArcaneHandler {
                 amount = (float) (amount * (1.0 + ArcaneConductionModifier.DAMAGE_BONUS_PER_LEVEL * level));
             }
 
-            // ② TNL1397 魂樱工匠法典兼容：它的 SpellBookHandler 用 `(dmg + 平A) * percentBonus`
-            //   本该是 `* (1 + percentBonus)` ✗ —— percentBonus 是"加成"（0.18 = +18%），
-            //   直接乘会把伤害缩小到 18%（实测 88.2 → 16.23 ✓ 比值 0.184）
-            //   ⇒ 这里按 (1 + p) / p 补回来；只对"魂樱法典 + ArcaneTinkering + 0 < p < 1"生效 ✓
-            amount = tnl$sakuraPercentFix(caster, amount);
-
-            // ③ 超位魔法：把 getSpellPower 的 ×5 除回去
+            // ② 超位魔法：把 getSpellPower 的 ×5 除回去
             if (isSuperTierHit(caster, src)) {
                 amount /= com.mofengbaizhi.tinkersnewlife.content.modifier.SuperTierMagicModifier
                         .RANGE_MULTIPLIER;
             }
 
             if (amount != n.floatValue()) set.invoke(event, amount);
-        } catch (Throwable ignored) {
-        }
-    }
-
-    // ============================================================
-    //  TNL1394 链路诊断（临时：用户实测"魂樱法典只吃基础伤害"时用）
-    // ============================================================
-    private static final java.util.Map<java.util.UUID, Long> TNL_DIAG_LAST =
-            new java.util.concurrent.ConcurrentHashMap<>();
-
-    /** 兜底解析施法者：directEntity（弹射物主人）/ 原版击杀凭据 */
-    private static LivingEntity resolveCasterFallback(Object src, Object event) {
-        try {
-            if (src instanceof net.minecraft.world.damagesource.DamageSource ds) {
-                net.minecraft.world.entity.Entity de = ds.getDirectEntity();
-                if (de instanceof net.minecraft.world.entity.projectile.Projectile p
-                        && p.getOwner() instanceof LivingEntity owner) {
-                    return owner;
-                }
-                if (de instanceof LivingEntity le) {
-                    return le;
-                }
-            }
-        } catch (Throwable ignored) {
-        }
-        try {
-            Object victimObj = invoke(event, "getEntity");
-            if (victimObj instanceof net.minecraft.world.entity.LivingEntity victim) {
-                net.minecraft.world.entity.Entity credit = victim.getKillCredit();
-                if (credit instanceof LivingEntity le) {
-                    return le;
-                }
-            }
-        } catch (Throwable ignored) {
-        }
-        return null;
-    }
-
-    /**
-     * 打一条限频诊断：法术 id / 伤害 / 伤害源 owner / 直接实体 / 解析出的施法者 /
-     * 施法者的 SPELL_POWER 属性 / 暴击前的施法等级。用来确认"魂樱法典"这条链在哪一步丢加成。
-     */
-    private static void tnl$diagnoseSpellDamage(Object event, Object src, LivingEntity caster, float amount) {
-        try {
-            if (caster == null || caster.level().isClientSide) {
-                return;
-            }
-            long now = System.currentTimeMillis();
-            Long last = TNL_DIAG_LAST.get(caster.getUUID());
-            if (last != null && now - last < 1000L) {
-                return;
-            }
-            TNL_DIAG_LAST.put(caster.getUUID(), now);
-
-            String spellId = "";
-            Object spell = null;
-            try {
-                Method sp = find(src.getClass(), "spell");
-                if (sp != null) {
-                    spell = sp.invoke(src);
-                    spellId = IronSpellsSpellAccess.spellId(spell);
-                }
-            } catch (Throwable ignored) {
-            }
-
-            String srcOwner = "null";
-            String direct = "null";
-            try {
-                if (src instanceof net.minecraft.world.damagesource.DamageSource ds) {
-                    net.minecraft.world.entity.Entity e = ds.getEntity();
-                    srcOwner = e == null ? "null" : e.getClass().getSimpleName()
-                            + (e instanceof LivingEntity le ? "(" + le.getName().getString() + ")" : "");
-                    net.minecraft.world.entity.Entity d = ds.getDirectEntity();
-                    direct = d == null ? "null" : d.getClass().getSimpleName();
-                }
-            } catch (Throwable ignored) {
-            }
-
-            double spellPower = -1.0D;
-            try {
-                net.minecraft.world.entity.ai.attributes.Attribute attr =
-                        IronSpellsSpellAccess.attribute("SPELL_POWER");
-                if (attr != null) {
-                    var inst = caster.getAttribute(attr);
-                    if (inst != null) {
-                        spellPower = inst.getValue();
-                    }
-                }
-            } catch (Throwable ignored) {
-            }
-
-            String hand = caster.getMainHandItem().isEmpty() ? "empty"
-                    : caster.getMainHandItem().getItem().builtInRegistryHolder().key().location().toString();
-
-            TinkersNewlife.LOGGER.info(
-                    "[法术链路诊断] spell={} amount={} srcOwner={} direct={} caster={} SPELL_POWER={} mainHand={}",
-                    spellId, amount, srcOwner, direct, caster.getName().getString(), spellPower, hand);
         } catch (Throwable ignored) {
         }
     }
@@ -490,7 +376,6 @@ public final class IronSpellsArcaneHandler {
             Object idObj = invoke(event, "getSpellId");
             if (!(idObj instanceof String spellId) || spellId.isEmpty()) return;
             com.mofengbaizhi.tinkersnewlife.content.modifier.SuperTierMagicModifier.markCast(caster, spellId);
-            tnl$diagnoseCast(caster, spellId, event);
             // ⭐ 属性方案：施法瞬间给 SPELL_POWER +2.0（×3）——
             //    getRadius()/getDuration() 都经由 getSpellPower → 读这个属性 ✓，
             //    所以范围/持续会立刻变大 ✓（不再依赖 mixin ✗）
@@ -515,44 +400,13 @@ public final class IronSpellsArcaneHandler {
             if (!(playerObj instanceof net.minecraft.world.entity.LivingEntity caster)) return;
             Object idObj = invoke(event, "getSpellId");
             if (!(idObj instanceof String spellId) || spellId.isEmpty()) return;
-            Object levelObj = invoke(event, "getSpellLevel");
-            if (!(levelObj instanceof Number levelNum)) return;
-            int current = levelNum.intValue();
-            Method setLevel = find(event.getClass(), "setSpellLevel", int.class);
-
-            // ★ TNL1395 魂樱工匠等「绕过 ModifySpellLevelEvent」的施法路径：
-            //   实测日志：铁魔法法典施法有 [法术等级] 日志，魂樱法典施法**没有** ⇒ 它的 cast 不经过 getLevelFor
-            //   ⇒ 奥术始源的 +2×等级 会整个丢掉（伤害停在基础值）✗
-            //   这里在 SpellOnCastEvent（**每次施法必过**）做兜底：
-            //     · 若同一次施法已经由 ModifySpellLevelEvent 加过（标记新鲜）⇒ 不重复加 ✓
-            //     · 否则按奥术始源补上 +2×等级 ✓
-            boolean alreadyBoosted = tnl$consumeLevelBoostMark(caster, spellId);
-            // 只对"玩家正在用某本法术书施放它自己刻着的法术"兜底 ✓
-            //   万法归一赠送的回响打击/深渊庇佑是免费施法，不该被再抬 8 级 ✗
-            if (!alreadyBoosted && setLevel != null && tnl$castFromSpellbook(caster, spellId)) {
-                int originExtra = com.mofengbaizhi.tinkersnewlife.content.modifier.OriginMagicModifier
-                        .SPELL_LEVEL_PER_LEVEL
-                        * com.mofengbaizhi.tinkersnewlife.content.modifier.OriginMagicModifier
-                        .bestLevel(caster);
-                if (originExtra > 0) {
-                    int before = current;
-                    current += originExtra;
-                    setLevel.invoke(event, current);
-                    long now = caster.level().getGameTime();
-                    Long last = TNL_LAST_ORIGIN_FALLBACK_LOG.get(caster.getUUID());
-                    if (last == null || now - last > 200L) {
-                        TNL_LAST_ORIGIN_FALLBACK_LOG.put(caster.getUUID(), now);
-                        TinkersNewlife.LOGGER.info(
-                                "[法术等级] 绕路兜底：{} 施放 {} 未经等级事件（{} → {}，奥术 +{}）",
-                                caster.getName().getString(), spellId, before, current, originExtra);
-                    }
-                }
-            }
-
             if (!com.mofengbaizhi.tinkersnewlife.content.modifier.SuperTierMagicModifier
                     .inscribedFor(caster, spellId)) {
                 return;
             }
+            Object levelObj = invoke(event, "getSpellLevel");
+            if (!(levelObj instanceof Number levelNum)) return;
+            int current = levelNum.intValue();
 
             Object spell = com.mofengbaizhi.tinkersnewlife.integration.irons_spellbooks
                     .IronSpellsSpellAccess.spellById(spellId);
@@ -565,8 +419,9 @@ public final class IronSpellsArcaneHandler {
             if (current >= floor) {
                 return;   // 别人给得更高 ⇒ 不动 ✓
             }
-            if (setLevel == null) return;
-            setLevel.invoke(event, floor);
+            Method set = find(event.getClass(), "setSpellLevel", int.class);
+            if (set == null) return;
+            set.invoke(event, floor);
             long now = caster.level().getGameTime();
             Long last = TNL_LAST_FLOOR_LOG.get(caster.getUUID());
             if (last == null || now - last > 200L) {
@@ -582,219 +437,4 @@ public final class IronSpellsArcaneHandler {
     /** 下限守卫的日志节流 */
     private static final java.util.Map<java.util.UUID, Long> TNL_LAST_FLOOR_LOG =
             new java.util.concurrent.ConcurrentHashMap<>();
-
-    // ============================================================
-    //  TNL1395 等级事件标记（判断"这次施法是否已经吃到了 ModifySpellLevelEvent"）
-    // ============================================================
-    private record LevelBoostMark(String spellId, long tick) {
-    }
-
-    private static final java.util.Map<java.util.UUID, LevelBoostMark> TNL_LEVEL_BOOSTED =
-            new java.util.concurrent.ConcurrentHashMap<>();
-    private static final java.util.Map<java.util.UUID, Long> TNL_LAST_ORIGIN_FALLBACK_LOG =
-            new java.util.concurrent.ConcurrentHashMap<>();
-
-    /** ModifySpellLevelEvent 应用增益后记一笔（有效期 5 tick，足够覆盖同一次施法） */
-    private static void tnl$markLevelBoosted(net.minecraft.world.entity.LivingEntity caster, String spellId,
-                                             int boost) {
-        try {
-            if (caster == null || spellId == null || spellId.isEmpty() || boost <= 0) {
-                return;
-            }
-            long now = caster.level().getGameTime();
-            TNL_LEVEL_BOOSTED.put(caster.getUUID(), new LevelBoostMark(spellId, now));
-        } catch (Throwable ignored) {
-        }
-    }
-
-    /** 这次施法是否已经由 ModifySpellLevelEvent 加过等级（消费标记，避免重复加） */
-    private static boolean tnl$consumeLevelBoostMark(net.minecraft.world.entity.LivingEntity caster,
-                                                     String spellId) {
-        try {
-            if (caster == null || spellId == null || spellId.isEmpty()) {
-                return false;
-            }
-            LevelBoostMark mark = TNL_LEVEL_BOOSTED.remove(caster.getUUID());
-            if (mark == null || !spellId.equals(mark.spellId())) {
-                return false;
-            }
-            long now = caster.level().getGameTime();
-            return now - mark.tick() <= 5L;
-        } catch (Throwable ignored) {
-            return false;
-        }
-    }
-
-
-    /** 施法诊断：法术 id / 原始等级 / 当前等级 / 法术书物品类（判断是不是走铁魔法标准路径） */
-    private static void tnl$diagnoseCast(net.minecraft.world.entity.LivingEntity caster, String spellId,
-                                         Object event) {
-        try {
-            long now = System.currentTimeMillis();
-            Long last = TNL_LAST_CAST_DIAG.get(caster.getUUID());
-            if (last != null && now - last < 1000L) {
-                return;
-            }
-            TNL_LAST_CAST_DIAG.put(caster.getUUID(), now);
-            int original = -1;
-            int current = -1;
-            Object o = invoke(event, "getOriginalSpellLevel");
-            if (o instanceof Number n) original = n.intValue();
-            Object c = invoke(event, "getSpellLevel");
-            if (c instanceof Number n) current = n.intValue();
-            String book = "none";
-            try {
-                Class<?> utils = Class.forName("io.redspace.ironsspellbooks.api.util.Utils");
-                java.lang.reflect.Method m = utils.getMethod("getPlayerSpellbookStack",
-                        net.minecraft.world.entity.player.Player.class);
-                if (caster instanceof net.minecraft.world.entity.player.Player p) {
-                    Object stack = m.invoke(null, p);
-                    if (stack instanceof net.minecraft.world.item.ItemStack is && !is.isEmpty()) {
-                        book = is.getItem().getClass().getSimpleName();
-                    }
-                }
-            } catch (Throwable ignored) {
-            }
-            String hand = caster.getMainHandItem().isEmpty() ? "empty"
-                    : caster.getMainHandItem().getItem().builtInRegistryHolder().key().location().toString();
-            TinkersNewlife.LOGGER.info("[施法诊断] spell={} original={} current={} caster={} hand={} spellbook={}",
-                    spellId, original, current, caster.getName().getString(), hand, book);
-        } catch (Throwable ignored) {
-        }
-    }
-
-    private static final java.util.Map<java.util.UUID, Long> TNL_LAST_CAST_DIAG =
-            new java.util.concurrent.ConcurrentHashMap<>();
-
-
-    /** 这次施法是不是"玩家用某本法术书/法典施放它自己刻着的法术"（用来限制等级兜底的范围） */
-    private static boolean tnl$castFromSpellbook(net.minecraft.world.entity.LivingEntity caster, String spellId) {
-        try {
-            if (!(caster instanceof net.minecraft.world.entity.player.Player player)) {
-                return false;
-            }
-            Class<?> utils = Class.forName("io.redspace.ironsspellbooks.api.util.Utils");
-            java.lang.reflect.Method m = utils.getMethod("getPlayerSpellbookStack",
-                    net.minecraft.world.entity.player.Player.class);
-            Object obj = m.invoke(null, player);
-            if (!(obj instanceof net.minecraft.world.item.ItemStack book) || book.isEmpty()) {
-                return false;
-            }
-            return IronSpellsSpellAccess.inscribedSpellIds(book).contains(spellId);
-        } catch (Throwable ignored) {
-            return false;
-        }
-    }
-
-
-    /** TNL1396 最终伤害诊断（仅服务端、每玩家 500ms 一条）：看所有 handler 跑完后的数值 */
-    private static void tnl$diagnoseFinalDamage(Object event) {
-        try {
-            Object src = invoke(event, "getSpellDamageSource");
-            LivingEntity caster = casterOf(src);
-            if (caster == null || caster.level().isClientSide) {
-                return;
-            }
-            long now = System.currentTimeMillis();
-            Long last = TNL_LAST_FINAL_DIAG.get(caster.getUUID());
-            if (last != null && now - last < 500L) {
-                return;
-            }
-            TNL_LAST_FINAL_DIAG.put(caster.getUUID(), now);
-            float amount = -1.0F;
-            Object a = invoke(event, "getAmount");
-            if (a instanceof Number n) {
-                amount = n.floatValue();
-            }
-            boolean canceled = false;
-            Object c = invoke(event, "isCanceled");
-            if (c instanceof Boolean b) {
-                canceled = b;
-            }
-            String spellId = "?";
-            try {
-                java.lang.reflect.Method sp = find(src.getClass(), "spell");
-                if (sp != null) {
-                    spellId = IronSpellsSpellAccess.spellId(sp.invoke(src));
-                }
-            } catch (Throwable ignored) {
-            }
-            TinkersNewlife.LOGGER.info("[伤害终值] spell={} amount={} canceled={} caster={}",
-                    spellId, amount, canceled, caster.getName().getString());
-        } catch (Throwable ignored) {
-        }
-    }
-
-    private static final java.util.Map<java.util.UUID, Long> TNL_LAST_FINAL_DIAG =
-            new java.util.concurrent.ConcurrentHashMap<>();
-
-
-    // ============================================================
-    //  TNL1397 魂樱工匠（Sakura Tinker）法典伤害兼容
-    //   反编译实证：SpellBookHandler#onSpellDamage 里
-    //     float damage = (baseDamage + spellDamage) * percentBonus;   ← percentBonus 默认 0（"加成"语义）
-    //   若法典带 ArcaneTinkering ⇒ 伤害被乘成 p 倍（p≈0.18）✗ 本方法把它还原成 (1+p) 倍 ✓
-    // ============================================================
-    private static float tnl$sakuraPercentFix(LivingEntity caster, float amount) {
-        try {
-            if (!(caster instanceof net.minecraft.world.entity.player.Player player) || amount <= 0.0F) {
-                return amount;
-            }
-            Class<?> utilClass = Class.forName("io.redspace.ironsspellbooks.api.util.Utils");
-            java.lang.reflect.Method bookGetter = utilClass.getMethod("getPlayerSpellbookStack",
-                    net.minecraft.world.entity.player.Player.class);
-            Object bookObj = bookGetter.invoke(null, player);
-            if (!(bookObj instanceof net.minecraft.world.item.ItemStack book) || book.isEmpty()) {
-                return amount;
-            }
-            String itemClass = book.getItem().getClass().getName();
-            if (!itemClass.startsWith("com.ssakura49.")) {
-                return amount;
-            }
-            slimeknights.tconstruct.library.tools.nbt.ToolStack tool =
-                    slimeknights.tconstruct.library.tools.nbt.ToolStack.from(book);
-            if (tool == null) {
-                return amount;
-            }
-            // 是否有 ArcaneTinkering
-            Class<?> issModifier = Class.forName(
-                    "com.ssakura49.sakuratinker_tools.compat.irons_spellbooks.init.ISSModifier");
-            Object arcaneHolder = issModifier.getField("ArcaneTinkering").get(null);
-            Object arcane = arcaneHolder.getClass().getMethod("get").invoke(arcaneHolder);
-            if (!(arcane instanceof slimeknights.tconstruct.library.modifiers.Modifier modifier)) {
-                return amount;
-            }
-            if (tool.getModifierLevel(modifier) <= 0) {
-                return amount;
-            }
-            // 读 PERCENT_BONUS 工具属性
-            Class<?> statsClass = Class.forName(
-                    "com.ssakura49.sakuratinker_tools.compat.irons_spellbooks.library.tool.stat.ISSToolStats");
-            Object percentStat = statsClass.getField("PERCENT_BONUS").get(null);
-            Object raw = tool.getStats().get((slimeknights.tconstruct.library.tools.stat.IToolStat<?>) percentStat);
-            if (!(raw instanceof Number n)) {
-                return amount;
-            }
-            float p = n.floatValue();
-            if (p <= 0.0F || p >= 1.0F) {
-                return amount;   // 已经是 (1+p) 语义/没加成 ⇒ 不动 ✓
-            }
-            float fixed = amount * (1.0F + p) / p;
-            long now = System.currentTimeMillis();
-            Long last = TNL_LAST_SAKURA_FIX_LOG.get(caster.getUUID());
-            if (last == null || now - last > 1000L) {
-                TNL_LAST_SAKURA_FIX_LOG.put(caster.getUUID(), now);
-                TinkersNewlife.LOGGER.info(
-                        "[魂樱兼容] 法典 percentBonus={} ⇒ 伤害 {} → {}（按 (1+p) 还原）",
-                        p, amount, fixed);
-            }
-            return fixed;
-        } catch (Throwable ignored) {
-            return amount;
-        }
-    }
-
-    private static final java.util.Map<java.util.UUID, Long> TNL_LAST_SAKURA_FIX_LOG =
-            new java.util.concurrent.ConcurrentHashMap<>();
-
 }
