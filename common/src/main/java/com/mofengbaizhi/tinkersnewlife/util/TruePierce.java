@@ -1750,7 +1750,28 @@ public final class TruePierce {
         //   「**记得改血后补上受击事件和效果并返回对应伤害**」✓）
         //   ⚠ 用 ⭐ `rawHealth` 的**前后差** ✗ ⭐ 而不是 ⭐ `want` ✓ ——
         //     ⭐ 被免疫/被拦时它能 ⭐ **如实反映"其实没打掉"** ✓ ✓。
-        return Math.max(0.0F, rawBefore - rawHealth(target));
+        float tnlDealt = Math.max(0.0F, rawBefore - rawHealth(target));
+        // TNL1400 诊断：真伤一点都没落地 ⇒ 打一条 INFO（每目标 1 秒最多一条）
+        //   若这行**完全没出现** ⇒ 说明真伤引擎根本没被调用（不是这个 Boss 免疫的事）
+        if (tnlDealt < 0.05F) {
+            try {
+                long nowMs = System.currentTimeMillis();
+                Long last = TNL_LAST_NO_LAND.get(target.getUUID());
+                if (last == null || nowMs - last > 1000L) {
+                    TNL_LAST_NO_LAND.put(target.getUUID(), nowMs);
+                    TinkersNewlife.LOGGER.info(
+                            "[真伤·未落地] 目标={}（{}）want={} 血前={} 血后={} 字段通道={}",
+                            target.getName().getString(),
+                            net.minecraft.world.entity.EntityType.getKey(target.getType()),
+                            String.format(java.util.Locale.ROOT, "%.2f", damage),
+                            String.format(java.util.Locale.ROOT, "%.2f", rawBefore),
+                            String.format(java.util.Locale.ROOT, "%.2f", rawHealth(target)),
+                            HEALTH_FIELD_STATE);
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+        return tnlDealt;
     }
 
     /**
@@ -2262,6 +2283,10 @@ public final class TruePierce {
 
     private record Pending(java.util.UUID id, float value, int left, int spent) {
     }
+
+    /** TNL1400 真伤"一点没落地"诊断限频（每目标 1 秒一条） */
+    private static final java.util.Map<java.util.UUID, Long> TNL_LAST_NO_LAND =
+            new java.util.concurrent.ConcurrentHashMap<>();
 
     private static final java.util.Map<java.util.UUID, Pending> PENDING =
             new java.util.concurrent.ConcurrentHashMap<>();
