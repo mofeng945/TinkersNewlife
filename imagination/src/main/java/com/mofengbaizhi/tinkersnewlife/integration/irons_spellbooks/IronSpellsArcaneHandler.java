@@ -209,7 +209,13 @@ public final class IronSpellsArcaneHandler {
                 amount = (float) (amount * (1.0 + ArcaneConductionModifier.DAMAGE_BONUS_PER_LEVEL * level));
             }
 
-            // ② 超位魔法：把 getSpellPower 的 ×5 除回去
+            // ② TNL1397 魂樱工匠法典兼容：它的 SpellBookHandler 用 `(dmg + 平A) * percentBonus`
+            //   本该是 `* (1 + percentBonus)` ✗ —— percentBonus 是"加成"（0.18 = +18%），
+            //   直接乘会把伤害缩小到 18%（实测 88.2 → 16.23 ✓ 比值 0.184）
+            //   ⇒ 这里按 (1 + p) / p 补回来；只对"魂樱法典 + ArcaneTinkering + 0 < p < 1"生效 ✓
+            amount = tnl$sakuraPercentFix(caster, amount);
+
+            // ③ 超位魔法：把 getSpellPower 的 ×5 除回去
             if (isSuperTierHit(caster, src)) {
                 amount /= com.mofengbaizhi.tinkersnewlife.content.modifier.SuperTierMagicModifier
                         .RANGE_MULTIPLIER;
@@ -720,6 +726,75 @@ public final class IronSpellsArcaneHandler {
     }
 
     private static final java.util.Map<java.util.UUID, Long> TNL_LAST_FINAL_DIAG =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+
+    // ============================================================
+    //  TNL1397 魂樱工匠（Sakura Tinker）法典伤害兼容
+    //   反编译实证：SpellBookHandler#onSpellDamage 里
+    //     float damage = (baseDamage + spellDamage) * percentBonus;   ← percentBonus 默认 0（"加成"语义）
+    //   若法典带 ArcaneTinkering ⇒ 伤害被乘成 p 倍（p≈0.18）✗ 本方法把它还原成 (1+p) 倍 ✓
+    // ============================================================
+    private static float tnl$sakuraPercentFix(LivingEntity caster, float amount) {
+        try {
+            if (!(caster instanceof net.minecraft.world.entity.player.Player player) || amount <= 0.0F) {
+                return amount;
+            }
+            Class<?> utilClass = Class.forName("io.redspace.ironsspellbooks.api.util.Utils");
+            java.lang.reflect.Method bookGetter = utilClass.getMethod("getPlayerSpellbookStack",
+                    net.minecraft.world.entity.player.Player.class);
+            Object bookObj = bookGetter.invoke(null, player);
+            if (!(bookObj instanceof net.minecraft.world.item.ItemStack book) || book.isEmpty()) {
+                return amount;
+            }
+            String itemClass = book.getItem().getClass().getName();
+            if (!itemClass.startsWith("com.ssakura49.")) {
+                return amount;
+            }
+            slimeknights.tconstruct.library.tools.nbt.ToolStack tool =
+                    slimeknights.tconstruct.library.tools.nbt.ToolStack.from(book);
+            if (tool == null) {
+                return amount;
+            }
+            // 是否有 ArcaneTinkering
+            Class<?> issModifier = Class.forName(
+                    "com.ssakura49.sakuratinker_tools.compat.irons_spellbooks.init.ISSModifier");
+            Object arcaneHolder = issModifier.getField("ArcaneTinkering").get(null);
+            Object arcane = arcaneHolder.getClass().getMethod("get").invoke(arcaneHolder);
+            if (!(arcane instanceof slimeknights.tconstruct.library.modifiers.Modifier modifier)) {
+                return amount;
+            }
+            if (tool.getModifierLevel(modifier) <= 0) {
+                return amount;
+            }
+            // 读 PERCENT_BONUS 工具属性
+            Class<?> statsClass = Class.forName(
+                    "com.ssakura49.sakuratinker_tools.compat.irons_spellbooks.library.tool.stat.ISSToolStats");
+            Object percentStat = statsClass.getField("PERCENT_BONUS").get(null);
+            Object raw = tool.getStats().get((slimeknights.tconstruct.library.tools.stat.IToolStat<?>) percentStat);
+            if (!(raw instanceof Number n)) {
+                return amount;
+            }
+            float p = n.floatValue();
+            if (p <= 0.0F || p >= 1.0F) {
+                return amount;   // 已经是 (1+p) 语义/没加成 ⇒ 不动 ✓
+            }
+            float fixed = amount * (1.0F + p) / p;
+            long now = System.currentTimeMillis();
+            Long last = TNL_LAST_SAKURA_FIX_LOG.get(caster.getUUID());
+            if (last == null || now - last > 1000L) {
+                TNL_LAST_SAKURA_FIX_LOG.put(caster.getUUID(), now);
+                TinkersNewlife.LOGGER.info(
+                        "[魂樱兼容] 法典 percentBonus={} ⇒ 伤害 {} → {}（按 (1+p) 还原）",
+                        p, amount, fixed);
+            }
+            return fixed;
+        } catch (Throwable ignored) {
+            return amount;
+        }
+    }
+
+    private static final java.util.Map<java.util.UUID, Long> TNL_LAST_SAKURA_FIX_LOG =
             new java.util.concurrent.ConcurrentHashMap<>();
 
 }
