@@ -186,11 +186,17 @@ public final class IronSpellsArcaneHandler {
         try {
             Object src = invoke(event, "getSpellDamageSource");
             LivingEntity caster = casterOf(src);
+            // TNL1394 用户反馈（魂樱工匠法典放魔法飞弹只吃基础 20）：先尽量把"施法者"解析出来
+            //   ⚠ 若 Sakura 的法术伤害源不带 entity，我们的百分比/属性补偿全都会静默跳过 ✗
+            if (caster == null) {
+                caster = resolveCasterFallback(src, event);
+            }
             Object amountObj = invoke(event, "getAmount");
             if (!(amountObj instanceof Number n)) return;
             Method set = find(event.getClass(), "setAmount", float.class);
             if (set == null) return;
             float amount = n.floatValue();
+            tnl$diagnoseSpellDamage(event, src, caster, amount);
 
             // ① 魔导：施法增伤
             int level = ArcaneConductionModifier.totalLevel(caster);
@@ -205,6 +211,103 @@ public final class IronSpellsArcaneHandler {
             }
 
             if (amount != n.floatValue()) set.invoke(event, amount);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    // ============================================================
+    //  TNL1394 链路诊断（临时：用户实测"魂樱法典只吃基础伤害"时用）
+    // ============================================================
+    private static final java.util.Map<java.util.UUID, Long> TNL_DIAG_LAST =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** 兜底解析施法者：directEntity（弹射物主人）/ 原版击杀凭据 */
+    private static LivingEntity resolveCasterFallback(Object src, Object event) {
+        try {
+            if (src instanceof net.minecraft.world.damagesource.DamageSource ds) {
+                net.minecraft.world.entity.Entity de = ds.getDirectEntity();
+                if (de instanceof net.minecraft.world.entity.projectile.Projectile p
+                        && p.getOwner() instanceof LivingEntity owner) {
+                    return owner;
+                }
+                if (de instanceof LivingEntity le) {
+                    return le;
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        try {
+            Object victimObj = invoke(event, "getEntity");
+            if (victimObj instanceof net.minecraft.world.entity.LivingEntity victim) {
+                net.minecraft.world.entity.Entity credit = victim.getKillCredit();
+                if (credit instanceof LivingEntity le) {
+                    return le;
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return null;
+    }
+
+    /**
+     * 打一条限频诊断：法术 id / 伤害 / 伤害源 owner / 直接实体 / 解析出的施法者 /
+     * 施法者的 SPELL_POWER 属性 / 暴击前的施法等级。用来确认"魂樱法典"这条链在哪一步丢加成。
+     */
+    private static void tnl$diagnoseSpellDamage(Object event, Object src, LivingEntity caster, float amount) {
+        try {
+            if (caster == null) {
+                return;
+            }
+            long now = System.currentTimeMillis();
+            Long last = TNL_DIAG_LAST.get(caster.getUUID());
+            if (last != null && now - last < 1000L) {
+                return;
+            }
+            TNL_DIAG_LAST.put(caster.getUUID(), now);
+
+            String spellId = "";
+            Object spell = null;
+            try {
+                Method sp = find(src.getClass(), "spell");
+                if (sp != null) {
+                    spell = sp.invoke(src);
+                    spellId = IronSpellsSpellAccess.spellId(spell);
+                }
+            } catch (Throwable ignored) {
+            }
+
+            String srcOwner = "null";
+            String direct = "null";
+            try {
+                if (src instanceof net.minecraft.world.damagesource.DamageSource ds) {
+                    net.minecraft.world.entity.Entity e = ds.getEntity();
+                    srcOwner = e == null ? "null" : e.getClass().getSimpleName()
+                            + (e instanceof LivingEntity le ? "(" + le.getName().getString() + ")" : "");
+                    net.minecraft.world.entity.Entity d = ds.getDirectEntity();
+                    direct = d == null ? "null" : d.getClass().getSimpleName();
+                }
+            } catch (Throwable ignored) {
+            }
+
+            double spellPower = -1.0D;
+            try {
+                net.minecraft.world.entity.ai.attributes.Attribute attr =
+                        IronSpellsSpellAccess.attribute("SPELL_POWER");
+                if (attr != null) {
+                    var inst = caster.getAttribute(attr);
+                    if (inst != null) {
+                        spellPower = inst.getValue();
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
+
+            String hand = caster.getMainHandItem().isEmpty() ? "empty"
+                    : caster.getMainHandItem().getItem().builtInRegistryHolder().key().location().toString();
+
+            TinkersNewlife.LOGGER.info(
+                    "[法术链路诊断] spell={} amount={} srcOwner={} direct={} caster={} SPELL_POWER={} mainHand={}",
+                    spellId, amount, srcOwner, direct, caster.getName().getString(), spellPower, hand);
         } catch (Throwable ignored) {
         }
     }
