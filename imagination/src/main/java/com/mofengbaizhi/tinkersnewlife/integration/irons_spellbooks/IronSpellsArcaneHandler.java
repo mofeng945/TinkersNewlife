@@ -84,6 +84,9 @@ public final class IronSpellsArcaneHandler {
             Class<?> dmgEvent = Class.forName("io.redspace.ironsspellbooks.api.events.SpellDamageEvent");
             bus.addListener(EventPriority.LOW, false, (Class) dmgEvent,
                     (Consumer) (Object e) -> onSpellDamage(e));
+            // TNL1396 最终数值诊断（LOWEST：所有模组都处理完之后）
+            bus.addListener(EventPriority.LOWEST, false, (Class) dmgEvent,
+                    (Consumer) (Object e) -> tnl$diagnoseFinalDamage(e));
         } catch (Throwable t) {
             TinkersNewlife.LOGGER.warn("[联动] 魔导：SpellDamageEvent 挂载失败（法术增伤不生效）", t);
         }
@@ -257,7 +260,7 @@ public final class IronSpellsArcaneHandler {
      */
     private static void tnl$diagnoseSpellDamage(Object event, Object src, LivingEntity caster, float amount) {
         try {
-            if (caster == null) {
+            if (caster == null || caster.level().isClientSide) {
                 return;
             }
             long now = System.currentTimeMillis();
@@ -676,5 +679,47 @@ public final class IronSpellsArcaneHandler {
             return false;
         }
     }
+
+
+    /** TNL1396 最终伤害诊断（仅服务端、每玩家 500ms 一条）：看所有 handler 跑完后的数值 */
+    private static void tnl$diagnoseFinalDamage(Object event) {
+        try {
+            Object src = invoke(event, "getSpellDamageSource");
+            LivingEntity caster = casterOf(src);
+            if (caster == null || caster.level().isClientSide) {
+                return;
+            }
+            long now = System.currentTimeMillis();
+            Long last = TNL_LAST_FINAL_DIAG.get(caster.getUUID());
+            if (last != null && now - last < 500L) {
+                return;
+            }
+            TNL_LAST_FINAL_DIAG.put(caster.getUUID(), now);
+            float amount = -1.0F;
+            Object a = invoke(event, "getAmount");
+            if (a instanceof Number n) {
+                amount = n.floatValue();
+            }
+            boolean canceled = false;
+            Object c = invoke(event, "isCanceled");
+            if (c instanceof Boolean b) {
+                canceled = b;
+            }
+            String spellId = "?";
+            try {
+                java.lang.reflect.Method sp = find(src.getClass(), "spell");
+                if (sp != null) {
+                    spellId = IronSpellsSpellAccess.spellId(sp.invoke(src));
+                }
+            } catch (Throwable ignored) {
+            }
+            TinkersNewlife.LOGGER.info("[伤害终值] spell={} amount={} canceled={} caster={}",
+                    spellId, amount, canceled, caster.getName().getString());
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private static final java.util.Map<java.util.UUID, Long> TNL_LAST_FINAL_DIAG =
+            new java.util.concurrent.ConcurrentHashMap<>();
 
 }
