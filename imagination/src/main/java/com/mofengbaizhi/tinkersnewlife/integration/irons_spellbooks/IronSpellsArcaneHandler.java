@@ -160,12 +160,14 @@ public final class IronSpellsArcaneHandler {
             Method add = find(event.getClass(), "addLevels", int.class);
             if (add != null) {
                 add.invoke(event, boost);
+                tnl$markLevelBoosted(caster, spellId, boost);
                 return;
             }
             Method get = find(event.getClass(), "getLevel");
             Method set = find(event.getClass(), "setLevel", int.class);
             if (get != null && set != null) {
                 set.invoke(event, ((Number) get.invoke(event)).intValue() + boost);
+                tnl$markLevelBoosted(caster, spellId, boost);
             }
         } catch (Throwable ignored) {
         }
@@ -479,6 +481,7 @@ public final class IronSpellsArcaneHandler {
             Object idObj = invoke(event, "getSpellId");
             if (!(idObj instanceof String spellId) || spellId.isEmpty()) return;
             com.mofengbaizhi.tinkersnewlife.content.modifier.SuperTierMagicModifier.markCast(caster, spellId);
+            tnl$diagnoseCast(caster, spellId, event);
             // ⭐ 属性方案：施法瞬间给 SPELL_POWER +2.0（×3）——
             //    getRadius()/getDuration() 都经由 getSpellPower → 读这个属性 ✓，
             //    所以范围/持续会立刻变大 ✓（不再依赖 mixin ✗）
@@ -503,13 +506,44 @@ public final class IronSpellsArcaneHandler {
             if (!(playerObj instanceof net.minecraft.world.entity.LivingEntity caster)) return;
             Object idObj = invoke(event, "getSpellId");
             if (!(idObj instanceof String spellId) || spellId.isEmpty()) return;
+            Object levelObj = invoke(event, "getSpellLevel");
+            if (!(levelObj instanceof Number levelNum)) return;
+            int current = levelNum.intValue();
+            Method setLevel = find(event.getClass(), "setSpellLevel", int.class);
+
+            // ★ TNL1395 魂樱工匠等「绕过 ModifySpellLevelEvent」的施法路径：
+            //   实测日志：铁魔法法典施法有 [法术等级] 日志，魂樱法典施法**没有** ⇒ 它的 cast 不经过 getLevelFor
+            //   ⇒ 奥术始源的 +2×等级 会整个丢掉（伤害停在基础值）✗
+            //   这里在 SpellOnCastEvent（**每次施法必过**）做兜底：
+            //     · 若同一次施法已经由 ModifySpellLevelEvent 加过（标记新鲜）⇒ 不重复加 ✓
+            //     · 否则按奥术始源补上 +2×等级 ✓
+            boolean alreadyBoosted = tnl$consumeLevelBoostMark(caster, spellId);
+            // 只对"玩家正在用某本法术书施放它自己刻着的法术"兜底 ✓
+            //   万法归一赠送的回响打击/深渊庇佑是免费施法，不该被再抬 8 级 ✗
+            if (!alreadyBoosted && setLevel != null && tnl$castFromSpellbook(caster, spellId)) {
+                int originExtra = com.mofengbaizhi.tinkersnewlife.content.modifier.OriginMagicModifier
+                        .SPELL_LEVEL_PER_LEVEL
+                        * com.mofengbaizhi.tinkersnewlife.content.modifier.OriginMagicModifier
+                        .bestLevel(caster);
+                if (originExtra > 0) {
+                    int before = current;
+                    current += originExtra;
+                    setLevel.invoke(event, current);
+                    long now = caster.level().getGameTime();
+                    Long last = TNL_LAST_ORIGIN_FALLBACK_LOG.get(caster.getUUID());
+                    if (last == null || now - last > 200L) {
+                        TNL_LAST_ORIGIN_FALLBACK_LOG.put(caster.getUUID(), now);
+                        TinkersNewlife.LOGGER.info(
+                                "[法术等级] 绕路兜底：{} 施放 {} 未经等级事件（{} → {}，奥术 +{}）",
+                                caster.getName().getString(), spellId, before, current, originExtra);
+                    }
+                }
+            }
+
             if (!com.mofengbaizhi.tinkersnewlife.content.modifier.SuperTierMagicModifier
                     .inscribedFor(caster, spellId)) {
                 return;
             }
-            Object levelObj = invoke(event, "getSpellLevel");
-            if (!(levelObj instanceof Number levelNum)) return;
-            int current = levelNum.intValue();
 
             Object spell = com.mofengbaizhi.tinkersnewlife.integration.irons_spellbooks
                     .IronSpellsSpellAccess.spellById(spellId);
@@ -522,9 +556,8 @@ public final class IronSpellsArcaneHandler {
             if (current >= floor) {
                 return;   // 别人给得更高 ⇒ 不动 ✓
             }
-            Method set = find(event.getClass(), "setSpellLevel", int.class);
-            if (set == null) return;
-            set.invoke(event, floor);
+            if (setLevel == null) return;
+            setLevel.invoke(event, floor);
             long now = caster.level().getGameTime();
             Long last = TNL_LAST_FLOOR_LOG.get(caster.getUUID());
             if (last == null || now - last > 200L) {
@@ -540,4 +573,108 @@ public final class IronSpellsArcaneHandler {
     /** 下限守卫的日志节流 */
     private static final java.util.Map<java.util.UUID, Long> TNL_LAST_FLOOR_LOG =
             new java.util.concurrent.ConcurrentHashMap<>();
+
+    // ============================================================
+    //  TNL1395 等级事件标记（判断"这次施法是否已经吃到了 ModifySpellLevelEvent"）
+    // ============================================================
+    private record LevelBoostMark(String spellId, long tick) {
+    }
+
+    private static final java.util.Map<java.util.UUID, LevelBoostMark> TNL_LEVEL_BOOSTED =
+            new java.util.concurrent.ConcurrentHashMap<>();
+    private static final java.util.Map<java.util.UUID, Long> TNL_LAST_ORIGIN_FALLBACK_LOG =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** ModifySpellLevelEvent 应用增益后记一笔（有效期 5 tick，足够覆盖同一次施法） */
+    private static void tnl$markLevelBoosted(net.minecraft.world.entity.LivingEntity caster, String spellId,
+                                             int boost) {
+        try {
+            if (caster == null || spellId == null || spellId.isEmpty() || boost <= 0) {
+                return;
+            }
+            long now = caster.level().getGameTime();
+            TNL_LEVEL_BOOSTED.put(caster.getUUID(), new LevelBoostMark(spellId, now));
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** 这次施法是否已经由 ModifySpellLevelEvent 加过等级（消费标记，避免重复加） */
+    private static boolean tnl$consumeLevelBoostMark(net.minecraft.world.entity.LivingEntity caster,
+                                                     String spellId) {
+        try {
+            if (caster == null || spellId == null || spellId.isEmpty()) {
+                return false;
+            }
+            LevelBoostMark mark = TNL_LEVEL_BOOSTED.remove(caster.getUUID());
+            if (mark == null || !spellId.equals(mark.spellId())) {
+                return false;
+            }
+            long now = caster.level().getGameTime();
+            return now - mark.tick() <= 5L;
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+
+    /** 施法诊断：法术 id / 原始等级 / 当前等级 / 法术书物品类（判断是不是走铁魔法标准路径） */
+    private static void tnl$diagnoseCast(net.minecraft.world.entity.LivingEntity caster, String spellId,
+                                         Object event) {
+        try {
+            long now = System.currentTimeMillis();
+            Long last = TNL_LAST_CAST_DIAG.get(caster.getUUID());
+            if (last != null && now - last < 1000L) {
+                return;
+            }
+            TNL_LAST_CAST_DIAG.put(caster.getUUID(), now);
+            int original = -1;
+            int current = -1;
+            Object o = invoke(event, "getOriginalSpellLevel");
+            if (o instanceof Number n) original = n.intValue();
+            Object c = invoke(event, "getSpellLevel");
+            if (c instanceof Number n) current = n.intValue();
+            String book = "none";
+            try {
+                Class<?> utils = Class.forName("io.redspace.ironsspellbooks.api.util.Utils");
+                java.lang.reflect.Method m = utils.getMethod("getPlayerSpellbookStack",
+                        net.minecraft.world.entity.player.Player.class);
+                if (caster instanceof net.minecraft.world.entity.player.Player p) {
+                    Object stack = m.invoke(null, p);
+                    if (stack instanceof net.minecraft.world.item.ItemStack is && !is.isEmpty()) {
+                        book = is.getItem().getClass().getSimpleName();
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
+            String hand = caster.getMainHandItem().isEmpty() ? "empty"
+                    : caster.getMainHandItem().getItem().builtInRegistryHolder().key().location().toString();
+            TinkersNewlife.LOGGER.info("[施法诊断] spell={} original={} current={} caster={} hand={} spellbook={}",
+                    spellId, original, current, caster.getName().getString(), hand, book);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private static final java.util.Map<java.util.UUID, Long> TNL_LAST_CAST_DIAG =
+            new java.util.concurrent.ConcurrentHashMap<>();
+
+
+    /** 这次施法是不是"玩家用某本法术书/法典施放它自己刻着的法术"（用来限制等级兜底的范围） */
+    private static boolean tnl$castFromSpellbook(net.minecraft.world.entity.LivingEntity caster, String spellId) {
+        try {
+            if (!(caster instanceof net.minecraft.world.entity.player.Player player)) {
+                return false;
+            }
+            Class<?> utils = Class.forName("io.redspace.ironsspellbooks.api.util.Utils");
+            java.lang.reflect.Method m = utils.getMethod("getPlayerSpellbookStack",
+                    net.minecraft.world.entity.player.Player.class);
+            Object obj = m.invoke(null, player);
+            if (!(obj instanceof net.minecraft.world.item.ItemStack book) || book.isEmpty()) {
+                return false;
+            }
+            return IronSpellsSpellAccess.inscribedSpellIds(book).contains(spellId);
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
 }
