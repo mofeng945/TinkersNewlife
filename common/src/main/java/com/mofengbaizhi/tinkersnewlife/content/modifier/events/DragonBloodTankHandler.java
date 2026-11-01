@@ -15,7 +15,11 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fluids.FluidStack;
@@ -128,6 +132,113 @@ public class DragonBloodTankHandler {
                 LOGGER.debug("🐉 从 {} 采集了 {} mB 的 {}",
                         dragonType.displayName, filled, dragonType.bloodType.name);
             }
+        }
+    }
+
+    // ============================================================
+    //  TNL1412 ★玻璃瓶 / 冰火龙血瓶 ↔ 储罐（我们自己的三种龙血）
+    //
+    //  ⚠ 为什么必须自己接 ✗：
+    //   矿泉 SakuraTinker 也往 `mantle:fluid_transfer` 里塞了**同名物品**的
+    //   `fill_item`/`empty_item`（`iceandfire:*_dragon_blood` + `minecraft:glass_bottle`）✗
+    //   但它的 `fluid` 用的是 **`forge:molten_fire_dragon_blood` 这套标签** ✗
+    //   而包里**没有任何模组给这些标签填值** ⇒ 解析出来是 EMPTY ✗
+    //   ⇒ Mantle 取"第一个匹配的 transfer"（命名空间排序 sakuratinker_* < tinkersnewlife ✗）
+    //   ⇒ 先命中它 ⇒ 它算出来 0 mB ⇒ 返回 null ✗
+    //   ⇒ 但 `interactWithContainer` 仍报 "has container" ⇒ 储罐 `use` 返回 SUCCESS
+    //   ⇒ ⭐表现就是"右击完全没反应" ✓ ✓
+    //   ⇒ ⭐我们抢在储罐 `use` 之前自己处理 ✓（只认我们三种龙血 ✓ 不动别人的熔融血 ✓）
+    // ============================================================
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onBottleTankHigh(PlayerInteractEvent.RightClickBlock event) {
+        Player player = event.getEntity();
+        net.minecraft.world.level.Level level = player.level();
+        if (level.isClientSide) return;
+        ItemStack stack = event.getItemStack();
+        if (stack.isEmpty()) return;
+        // 匠魂工具走下面那套（龙血储罐特性），这里只处理"瓶子"
+        if (stack.getItem() instanceof IModifiable) return;
+        net.minecraft.world.level.block.entity.BlockEntity be = level.getBlockEntity(event.getPos());
+        if (be == null) return;
+        IFluidHandler handler;
+        try {
+            var cap = be.getCapability(ForgeCapabilities.FLUID_HANDLER, event.getFace());
+            if (!cap.isPresent()) return;
+            handler = cap.orElse(null);
+        } catch (Throwable ignored) {
+            return;
+        }
+        if (handler == null) return;
+
+        InteractionHand hand = event.getHand();
+
+        // ===== ① 龙血瓶 → 储罐（倒出）=====
+        DragonBloodTankTrait.DragonBloodType bottleType = bottleType(stack);
+        if (bottleType != null) {
+            ResourceLocation fluidId = DragonBloodTankTrait.getFluidId(bottleType);
+            var fluid = com.mofengbaizhi.tinkersnewlife.util.SafeRegistry.fluid(fluidId);
+            if (fluid == null) return;
+            FluidStack toFill = new FluidStack(fluid, 250);
+            if (handler.fill(toFill, IFluidHandler.FluidAction.SIMULATE) < 250) return;
+            handler.fill(toFill, IFluidHandler.FluidAction.EXECUTE);
+            giveResult(player, stack, hand, new ItemStack(Items.GLASS_BOTTLE));
+            level.playSound(null, event.getPos(), net.minecraft.sounds.SoundEvents.BOTTLE_EMPTY,
+                    net.minecraft.sounds.SoundSource.BLOCKS, 1.0F, 1.0F);
+            event.setCanceled(true);
+            return;
+        }
+
+        // ===== ② 玻璃瓶 → 从储罐装（灌）=====
+        if (stack.is(Items.GLASS_BOTTLE)) {
+            FluidStack sim = handler.drain(250, IFluidHandler.FluidAction.SIMULATE);
+            if (sim.getAmount() < 250 || !DragonBloodTankTrait.isDragonBlood(sim)) return;
+            DragonBloodTankTrait.DragonBloodType type = DragonBloodTankTrait.getDragonBloodType(sim);
+            if (type == null) return;
+            Item blood = bloodItem(type);
+            if (blood == null) return;
+            FluidStack got = handler.drain(250, IFluidHandler.FluidAction.EXECUTE);
+            if (got.getAmount() < 250) return;
+            giveResult(player, stack, hand, new ItemStack(blood));
+            level.playSound(null, event.getPos(), net.minecraft.sounds.SoundEvents.BOTTLE_FILL,
+                    net.minecraft.sounds.SoundSource.BLOCKS, 1.0F, 1.0F);
+            event.setCanceled(true);
+        }
+    }
+
+    /** 冰火三种龙血瓶 → 类型（不是龙血瓶返回 null） */
+    @Nullable
+    private static DragonBloodTankTrait.DragonBloodType bottleType(ItemStack stack) {
+        ResourceLocation id = ForgeRegistries.ITEMS.getKey(stack.getItem());
+        if (id == null || !"iceandfire".equals(id.getNamespace())) return null;
+        return switch (id.getPath()) {
+            case "fire_dragon_blood" -> DragonBloodTankTrait.DragonBloodType.FIRE;
+            case "ice_dragon_blood" -> DragonBloodTankTrait.DragonBloodType.ICE;
+            case "lightning_dragon_blood" -> DragonBloodTankTrait.DragonBloodType.LIGHTNING;
+            default -> null;
+        };
+    }
+
+    @Nullable
+    private static Item bloodItem(DragonBloodTankTrait.DragonBloodType type) {
+        return switch (type) {
+            case FIRE -> com.mofengbaizhi.tinkersnewlife.util.SafeRegistry.item("iceandfire", "fire_dragon_blood");
+            case ICE -> com.mofengbaizhi.tinkersnewlife.util.SafeRegistry.item("iceandfire", "ice_dragon_blood");
+            case LIGHTNING -> com.mofengbaizhi.tinkersnewlife.util.SafeRegistry.item(
+                    "iceandfire", "lightning_dragon_blood");
+        };
+    }
+
+    /** 消耗 1 个手上的瓶子并把结果塞回去（创造模式不消耗 ✓） */
+    private static void giveResult(Player player, ItemStack held, InteractionHand hand, ItemStack result) {
+        if (!player.getAbilities().instabuild) {
+            held.shrink(1);
+        }
+        if (held.isEmpty()) {
+            player.setItemInHand(hand, result);
+            return;
+        }
+        if (!player.getInventory().add(result)) {
+            player.drop(result, false);
         }
     }
 
