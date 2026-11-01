@@ -202,7 +202,13 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             }
             return false;
         }
-        boolean tnl$hurt = super.hurt(source, amount);
+        boolean tnl$hurt;
+        a.qE(true);   // TNL1407 ★super.hurt 内部会调 setHealth ✗ 别让它再吃一次外部预算 ✓
+        try {
+            tnl$hurt = super.hurt(source, amount);
+        } finally {
+            a.qE(false);
+        }
         // TNL913 ★★ 探针：★闸门放行但 super.hurt 返回 false ✗
         //   ★说明是**原版 invulnerableTime**在拦 ✗（★不是我们的窗 ✓）
         //   ★用户口径：★"免疫窗疑似变为 2 倍，后 1.5s 无法接管" ✓
@@ -282,6 +288,24 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         return this.tnl$bossForm();
     }
 
+    /**
+     * TNL1407 ★我们自己的改血（tick 镜像 / 治疗 / 真死 / 写回权威值）✗
+     * 必须打上"内部写"标记 ⇒ 否则会被 `a.qD` 当成外部伤害再去吃一次预算 ✓。
+     */
+    public void tnl$setHealthInternal(float value) {
+        a.qE(true);
+        try {
+            super.setHealth(value);
+        } finally {
+            a.qE(false);
+        }
+    }
+
+    /** TNL1407 ★读真实同步血量（★不走 getHealth ⇒ 免疫外部 getHealth 包装 ✓）。 */
+    public float tnl$rawHealth() {
+        return a.qR(this);
+    }
+
     /** TNL893 ★★ 真死钩子：★先置标志 + 注销内核 ✗ ⇒ ★之后不再回弹/不再护血 ✓（★掉落物与死亡判定只白一次 ✓） */
     @Override
     public void die(net.minecraft.world.damagesource.DamageSource source) {
@@ -302,8 +326,8 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             this.tnl$dead = false;
             this.dead = false;
             this.tnl$auth = tnl$authNow;
-            if (Math.abs(super.getHealth() - tnl$authNow) > 0.01F) {
-                this.setHealth(tnl$authNow);
+            if (Math.abs(a.qR(this) - tnl$authNow) > 0.01F) {
+                this.tnl$setHealthInternal(tnl$authNow);
             }
             if (System.currentTimeMillis() - this.tnl$lastVanillaLog > 800L) {
                 this.tnl$lastVanillaLog = System.currentTimeMillis();
@@ -370,14 +394,14 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         if (!this.level().isClientSide) {
             float tnl$authNow = a.qF(this);
             if (tnl$authNow > 0.0F
-                    && (this.tnl$dead || this.dead || this.deathTime > 0 || super.getHealth() <= 0.0F)) {
+                    && (this.tnl$dead || this.dead || this.deathTime > 0 || a.qR(this) <= 0.0F)) {
                 this.tnl$dead = false;
                 this.dead = false;
                 this.deathTime = 0;
                 this.hurtTime = 0;
                 this.tnl$auth = tnl$authNow;
-                if (Math.abs(super.getHealth() - tnl$authNow) > 0.01F) {
-                    this.setHealth(tnl$authNow);
+                if (Math.abs(a.qR(this) - tnl$authNow) > 0.01F) {
+                    this.tnl$setHealthInternal(tnl$authNow);
                 }
                 if (System.currentTimeMillis() - this.tnl$lastVanillaLog > 1000L) {
                     this.tnl$lastVanillaLog = System.currentTimeMillis();
@@ -460,8 +484,8 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         // TNL876 ★★ 性能：只在"真的不一样"时才写 ✓
         //   ★setHealth 会标脏实体数据 ⇒ ★每 tick 调就等于每 tick 发包 ✗
         this.tnl$auth = authoritative;
-        if (Math.abs(super.getHealth() - authoritative) > 0.01F) {
-            this.setHealth(Math.max(0.0F, authoritative));
+        if (Math.abs(a.qR(this) - authoritative) > 0.01F) {
+            this.tnl$setHealthInternal(Math.max(0.0F, authoritative));
         }
         // TNL876 ★血条也只在变化时同步 ✓（★避免每 tick 发 BossEvent 包 ✗）
         float tnl$p = Math.max(0.0F, authoritative / this.getMaxHealth());
@@ -473,7 +497,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         c.rotate(this);   // TNL862 ★多入口轮换钓鱼 ✓
         if (authoritative <= 0.0F) {
             a.q4(this);
-            this.setHealth(0.0F);
+            this.tnl$setHealthInternal(0.0F);
             this.kill();
         }
     }
@@ -564,8 +588,8 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             float auth = a.qF(this);
             if (auth > 0.0F) {
                 this.tnl$auth = auth;
-                if (Math.abs(super.getHealth() - auth) > 0.01F) {
-                    this.setHealth(auth);
+                if (Math.abs(a.qR(this) - auth) > 0.01F) {
+                    this.tnl$setHealthInternal(auth);
                 }
                 this.deathTime = 0;
                 this.hurtTime = 0;
@@ -755,8 +779,8 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
                 this.tnl$auth = now;                 // ★关键：缓存立刻跟上
             }
             float shown = Math.max(this.tnl$auth, now);
-            if (Math.abs(super.getHealth() - shown) > 0.01F) {
-                this.setHealth(shown);
+            if (Math.abs(a.qR(this) - shown) > 0.01F) {
+                this.tnl$setHealthInternal(shown);
             }
             if (this.bossEvent != null) {
                 this.bossEvent.setProgress(Math.max(0.0F, Math.min(1.0F,

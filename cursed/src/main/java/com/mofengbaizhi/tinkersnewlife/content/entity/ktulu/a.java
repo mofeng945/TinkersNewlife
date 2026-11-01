@@ -61,6 +61,68 @@ public final class a {
     private static final int HARD = 3;
     private static final Map<UUID, Integer> S = new ConcurrentHashMap<>();
 
+    // ============================================================
+    //  TNL1407 ★★ 内核加强：不信任外部 getHealth / setHealth
+    // ============================================================
+
+    /** 我们自己的写血标记（★只有我们的写可以绕过外部预算夹取 ✓） */
+    private static volatile boolean INT_WRITE = false;
+
+    /** 标记"接下来这次 setHealth 是我们自己写的" */
+    public static void qE(boolean internal) {
+        INT_WRITE = internal;
+    }
+
+    private static volatile Object RAW_ACC = null;
+    private static volatile boolean RAW_ACC_TRIED = false;
+    private static volatile java.lang.reflect.Field RAW_ACC_FIELD = null;
+
+    /**
+     * ★读"真实同步血量"：直接读 `DATA_HEALTH_ID` ✗
+     *
+     * <p>⚠ 为什么不走 `getHealth()` ✗：
+     * 有的模组会**改写 / 包装 `LivingEntity#getHealth`**（★例如"生命妨害值"那类 ✗
+     * 让 `getHealth()` 返回 `min(真血, maxHealth + 自定义delta)` ✓）
+     * ⇒ ⭐内核若用它当"当前血量" ⇒ ⭐**权威值被外部牵着走** ✓
+     * ⇒ ⭐统一改成读**同步数据本体** ✓（★客户端血条看的就是它 ✓）
+     */
+    public static float qR(Mob mob) {
+        try {
+            Object acc = rawAcc();
+            if (acc != null) {
+                Object v = mob.getEntityData().get(
+                        (net.minecraft.network.syncher.EntityDataAccessor<Float>) acc);
+                if (v instanceof Float f) {
+                    return f;
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        try {
+            return mob.getHealth();
+        } catch (Throwable ignored) {
+            return 0.0F;
+        }
+    }
+
+    private static Object rawAcc() {
+        if (RAW_ACC_TRIED) {
+            return RAW_ACC;
+        }
+        RAW_ACC_TRIED = true;
+        for (String n : new String[]{"f_20961_", "DATA_HEALTH_ID"}) {
+            try {
+                java.lang.reflect.Field f = net.minecraft.world.entity.LivingEntity.class.getDeclaredField(n);
+                f.setAccessible(true);
+                RAW_ACC_FIELD = f;
+                RAW_ACC = f.get(null);
+                break;
+            } catch (Throwable ignored) {
+            }
+        }
+        return RAW_ACC;
+    }
+
     private a() {
     }
 
@@ -248,7 +310,7 @@ public final class a {
         try {
             w(ticks);
             int s0 = k(mob);
-            long now = m0(mob.getHealth());
+            long now = m0(qR(mob));   // TNL1407 ★读真实同步值 ✗ 不信 getHealth 包装 ✓
             long auth;
             if (N) {
                 // TNL873 ★★ 修正：★旧写法在原生路径里直接调 ``e()`` ✗
@@ -699,11 +761,11 @@ public final class a {
             if (mob instanceof com.mofengbaizhi.tinkersnewlife.content.entity.KtuluMomo km && km.tnl$isDead()) {
                 return value;
             }
-            int s0 = k(mob);
-            if (V[s0] <= 0) {
-                return value;                     // TNL1140-reverted: window only, never outside
+            // TNL1407 ★我们自己的写（★tick 镜像 / 治疗 / 真死 / super.hurt 内部）直接放行 ✓
+            if (INT_WRITE) {
+                return value;
             }
-            // TNL911 ★只有**真的把值拦下来**才置位 ✓
+            int s0 = k(mob);
             long auth = N ? h(s0) : rA(s0);
             if (auth < 0L) {
                 auth = b.get(s0);
@@ -712,16 +774,39 @@ public final class a {
                 return value;
             }
             long want = m0(value);
-            if (want < auth) {                    // ★想写更低 ⇒ ★直接拒绝，改写权威值 ✓
+            if (want >= auth) {
+                return value;                      // ★加血/不变 ⇒ 放行 ✓
+            }
+            // ⭐ TNL1407 ★★ 外部掉血 ⇒ 与 q2 同规则：★先看无敌窗，★再吃每 tick 6% 预算 ✓
+            //   ⚠ 意义 ✗：★以前只在"窗内"拦 ✗ ⇒ ⭐任何"绕开 hurt() 直接 setHealth 的模组"
+            //     （★如梦幻终焉那类直接调 actuallyHurt 的 ✓）⭐可以完全不吃限伤 ✓
+            //   ⭐现在：⭐不管从哪条路写 ✓ ⭐都要吃同一套窗 + 预算 ✓
+            if (V[s0] > 0) {
+                BLOCKED = true;
                 if (LQ3 != s0) {
                     LQ3 = s0;
                     com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
-                            "TNL874 setHealth blocked in window: want={} -> auth={}", m1(want), m1(auth));
+                            "TNL1407 external setHealth blocked in window: want={} -> auth={}", m1(want), m1(auth));
                 }
-                BLOCKED = true;                    // TNL911 ★真的拦下了 ✓
                 return m1(auth);
             }
-            return value;
+            if (TCK[s0] != mob.tickCount) {
+                TCK[s0] = mob.tickCount;
+                SPENT[s0] = 0L;
+            }
+            long budget = MCAP[s0] - SPENT[s0];
+            if (budget < 0L) {
+                budget = 0L;
+            }
+            long drop = auth - want;
+            long allow = Math.min(drop, budget);
+            if (allow <= 0L) {
+                BLOCKED = true;
+                return m1(auth);
+            }
+            SPENT[s0] = Math.min(MCAP[s0], SPENT[s0] + allow);
+            V[s0] = V0;                            // ★打开无敌窗 ✓
+            return m1(auth - allow);
         } catch (Throwable th) {
             return value;
         }
