@@ -141,6 +141,109 @@ public final class a {
         }
     }
 
+    // ============================================================
+    //  TNL1411 ★中和"血量妨害值"一类的外挂 delta（通用 ✓ 按行为识别，不认模组）
+    // ============================================================
+
+    private static volatile java.lang.reflect.Field SD_ITEMS = null;
+    private static volatile boolean SD_ITEMS_TRIED = false;
+    private static volatile java.lang.reflect.Method DI_ACC = null;
+    private static volatile java.lang.reflect.Method DI_VAL = null;
+
+    private static Object sdItems(Object sd) {
+        if (!SD_ITEMS_TRIED) {
+            SD_ITEMS_TRIED = true;
+            for (String n : new String[]{"f_135345_", "itemsById"}) {
+                try {
+                    java.lang.reflect.Field f = net.minecraft.network.syncher.SynchedEntityData.class
+                            .getDeclaredField(n);
+                    f.setAccessible(true);
+                    SD_ITEMS = f;
+                    break;
+                } catch (Throwable ignored) {
+                }
+            }
+            try {
+                DI_ACC = net.minecraft.network.syncher.SynchedEntityData.DataItem.class
+                        .getMethod("m_135396_");
+            } catch (Throwable ignored) {
+            }
+            try {
+                DI_VAL = net.minecraft.network.syncher.SynchedEntityData.DataItem.class
+                        .getMethod("m_135403_");
+            } catch (Throwable ignored) {
+            }
+        }
+        if (SD_ITEMS == null) {
+            return null;
+        }
+        try {
+            return SD_ITEMS.get(sd);
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    /**
+     * TNL1411 ★中和"显示血量被压低"的外挂 delta ✓
+     *
+     * <p>⚠ 现象（实测日志 ✓）：⭐`DATA_HEALTH_ID` 与权威值都是 1501.82 ✓
+     * 而 `getHealth()` 一路往下走：312 → 25 → -10 → -189 → … → -1610 ✓
+     * ⇒ ⭐有模组在 `getHealth` 外面套了 ⭐`min(真血, maxHealth + delta)` ✓
+     * ⇒ ⭐delta 存在**另一个 float 同步数据**里 ✓（⭐它的"生命妨害值" ✓）
+     *
+     * <p>⭐ 通用识别（不认模组名 ✓）：⭐遍历实体的全部 float 同步数据 ✗
+     * ⭐若 `maxHealth + 某个 float` 恰好等于 `getHealth()` ✗ ⭐那就是那个 delta ✓
+     * ⇒ ⭐把它清零 ✓ ⇒ `getHealth()` 立刻回到真血 ✓。
+     */
+    public static boolean qT(Mob mob) {
+        try {
+            float auth = qF(mob);
+            float shown = mob.getHealth();
+            if (!(shown < auth - 0.5F)) {
+                return false;
+            }
+            float max = mob.getMaxHealth();
+            Object items = sdItems(mob.getEntityData());
+            if (!(items instanceof java.util.Map<?, ?> map)) {
+                return false;
+            }
+            Object healthAcc = rawAcc();
+            boolean fixed = false;
+            for (Object di : map.values()) {
+                if (di == null || DI_ACC == null || DI_VAL == null) {
+                    continue;
+                }
+                Object acc;
+                Object val;
+                try {
+                    acc = DI_ACC.invoke(di);
+                    val = DI_VAL.invoke(di);
+                } catch (Throwable ignored) {
+                    continue;
+                }
+                if (!(val instanceof Float f)) {
+                    continue;
+                }
+                if (acc == healthAcc) {
+                    continue;
+                }
+                if (Math.abs((max + f) - shown) <= Math.max(1.0F, Math.abs(shown) * 0.05F)) {
+                    try {
+                        mob.getEntityData().set(
+                                (net.minecraft.network.syncher.EntityDataAccessor<Float>) acc, 0.0F);
+                        mob.hurtMarked = true;
+                        fixed = true;
+                    } catch (Throwable ignored) {
+                    }
+                }
+            }
+            return fixed;
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
     private static Object rawAcc() {
         if (RAW_ACC_TRIED) {
             return RAW_ACC;

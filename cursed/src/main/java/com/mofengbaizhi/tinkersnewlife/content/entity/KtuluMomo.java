@@ -305,6 +305,11 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     public static final java.util.Map<java.util.UUID, KtuluMomo> TNL_ACTIVE =
             new java.util.concurrent.ConcurrentHashMap<>();
 
+    /** TNL1410 诊断用：读当前权威缓存（不触发内核调用） */
+    public float tnl$authCache() {
+        return this.tnl$auth;
+    }
+
     /** TNL1407 ★读真实同步血量（★不走 getHealth ⇒ 免疫外部 getHealth 包装 ✓）。 */
     public float tnl$rawHealth() {
         return a.qR(this);

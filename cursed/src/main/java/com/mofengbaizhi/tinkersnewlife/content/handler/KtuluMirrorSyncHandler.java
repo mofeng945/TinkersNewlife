@@ -24,7 +24,10 @@ public final class KtuluMirrorSyncHandler {
     private KtuluMirrorSyncHandler() {
     }
 
-    @SubscribeEvent
+    private static long TNL_LAST_LOG = 0L;
+    private static long TNL_LAST_DELTA_LOG = 0L;
+
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
     public static void onServerTickEnd(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || KtuluMomo.TNL_ACTIVE.isEmpty()) {
             return;
@@ -33,17 +36,43 @@ public final class KtuluMirrorSyncHandler {
             var it = KtuluMomo.TNL_ACTIVE.entrySet().iterator();
             while (it.hasNext()) {
                 KtuluMomo momo = it.next().getValue();
-                if (momo == null || momo.isRemoved() || !momo.isAlive()
-                        || !(momo.level() instanceof ServerLevel) || momo.tnl$isDead()) {
+                // TNL1410 ★只在"已移除 / 真死 / 不是 Boss"时出表 ✗
+                //   ⚠ 旧写法还看 `isAlive()` ✗ —— 而某些模组把血写成负数后
+                //     `isAlive()` 会变 false ⇒ ⭐我们直接把 Boss 移出表 ⇒ ⭐**再也不回写** ✓ ✓
+                if (momo == null || momo.isRemoved() || momo.tnl$isDead()
+                        || !(momo.level() instanceof ServerLevel) || !momo.tnl$isBossForm()) {
                     it.remove();
                     continue;
                 }
-                if (!momo.tnl$isBossForm()) {
-                    it.remove();
-                    continue;
+                float auth = a.qF(momo);
+                if (!Float.isFinite(auth) || auth < 0.0F) {
+                    auth = 0.0F;
                 }
                 // ★直接写同步数据：★谁也改写不了 ✓
-                a.qS(momo, a.qF(momo));
+                a.qS(momo, auth);
+                // TNL1411 ★中和"显示血量 delta"（★getHealth 被套了 min(真血, max+delta) ✓）
+                boolean tnlFixed = a.qT(momo);
+                if (tnlFixed && System.currentTimeMillis() - TNL_LAST_DELTA_LOG > 2000L) {
+                    TNL_LAST_DELTA_LOG = System.currentTimeMillis();
+                    TinkersNewlife.LOGGER.warn(
+                            "TNL1411 health-delta neutralized: auth={} getHealth={}",
+                            String.format(java.util.Locale.ROOT, "%.2f", auth),
+                            String.format(java.util.Locale.ROOT, "%.2f", momo.getHealth()));
+                }
+                // TNL1410 诊断：三路血量分叉就报一行（每 2 秒最多一次）
+                float shown = momo.getHealth();
+                float raw = a.qR(momo);
+                if ((Math.abs(shown - auth) > 0.5F || Math.abs(raw - auth) > 0.5F)
+                        && System.currentTimeMillis() - TNL_LAST_LOG > 2000L) {
+                    TNL_LAST_LOG = System.currentTimeMillis();
+                    TinkersNewlife.LOGGER.warn(
+                            "TNL1410 health divergence: getHealth={} DATA={} auth={} cache={} dead={} alive={}",
+                            String.format(java.util.Locale.ROOT, "%.2f", shown),
+                            String.format(java.util.Locale.ROOT, "%.2f", raw),
+                            String.format(java.util.Locale.ROOT, "%.2f", auth),
+                            String.format(java.util.Locale.ROOT, "%.2f", momo.tnl$authCache()),
+                            momo.tnl$isDead(), momo.isAlive());
+                }
             }
         } catch (Throwable ignored) {
             // ★同步失败绝不能连累服务器 tick ✓
