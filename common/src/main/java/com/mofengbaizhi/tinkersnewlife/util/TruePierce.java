@@ -1576,6 +1576,28 @@ public final class TruePierce {
      * <p>⭐ 只动**模组自己的类**里的 float 字段 ✓（跳过 `net.minecraft.*` ✓），
      * 且只改「值 == 旧血量」的那些 ⇒ 不会乱改别的字段 ✓
      */
+    /**
+     * TNL1406 <b>目标是否自己覆写了 `setHealth`</b> ✗
+     *
+     * <p>⭐ 用来识别"有自己的血量语义"的实体 ✓（如试验假人：无限血量时只记伤害不扣血 ✓）。
+     * ⭐ 只看**模组自己的类**（跳过 `net.minecraft.*` ✓），匹配 SRG/名字两种写法 ✓。
+     */
+    private static boolean tnl$hasSetHealthOverride(LivingEntity target) {
+        for (Class<?> cls = target.getClass(); cls != null && cls != Object.class; cls = cls.getSuperclass()) {
+            if (cls.getName().startsWith("net.minecraft.")) {
+                continue;
+            }
+            for (java.lang.reflect.Method m : cls.getDeclaredMethods()) {
+                if (m.getParameterCount() != 1 || m.getParameterTypes()[0] != float.class) continue;
+                String n = m.getName();
+                if (n.equals("m_21153_") || n.equals("setHealth")) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     private static void mirrorHealthCaches(LivingEntity target, float before, float after) {
         if (Math.abs(before - after) < 0.01F) {
             return;
@@ -1877,7 +1899,7 @@ public final class TruePierce {
         float tnlDealt = Math.max(0.0F, rawBefore - rawHealth(target));
         // TNL1400 诊断：真伤一点都没落地 ⇒ 打一条 INFO（每目标 1 秒最多一条）
         //   若这行**完全没出现** ⇒ 说明真伤引擎根本没被调用（不是这个 Boss 免疫的事）
-        if (tnlDealt < 0.05F) {
+        if (tnlDealt < 0.05F && !tnl$hasSetHealthOverride(target)) {
             try {
                 long nowMs = System.currentTimeMillis();
                 Long last = TNL_LAST_NO_LAND.get(target.getUUID());
@@ -2010,8 +2032,15 @@ public final class TruePierce {
             //   ⚠ ⭐ **不该再有"无主源补第二下"** ✗：
             //     ⭐ 那会让"一次挥击"变成 ⭐ **两次命中** ✓
             //     ⇒ ⭐ 假人**记两次** ✗ ⭐ 显示也就**多段** ✓（⭐ 用户实测 ✓）。
-            target.hurt(withAttacker, want);
+            boolean hurtAccepted = target.hurt(withAttacker, want);
             dealt = Math.max(0.0F, startHp - rawHealth(target));
+            // ⭐ TNL1406 目标自己覆写了 `setHealth`（如试验假人 `TargetDummyEntity`）✗
+            //   ⇒ ⭐它有自己的"记账/无限血量"语义 ✓（假人无限血量时**故意不扣血** ✓ 只弹数字 ✓）
+            //   ⇒ ⭐我们已经让 `hurt` 走完了 ⇒ **不要再改它的血** ✓
+            //     否则：① 会把无限血量假人打死 ✗ ② 它下一 tick 还会把差额当"真伤"再弹红字 ✗
+            if (hurtAccepted && tnl$hasSetHealthOverride(target)) {
+                return;
+            }
             // ⚠⚠ §1235 **不再有"无主源重打"** ✗（⭐ 见上面 ⭐ 用户口径 ✓）
         } catch (Throwable t) {
             // ⚠ 伤害调用被外部异常打断（⭐ §1118l 那类 ✓）⇒ ⭐ 当作"没打动" ✓ 后面逆向补 ✓
