@@ -1559,6 +1559,45 @@ public final class TruePierce {
     /** TNL1404 取 `LivingEntity.DATA_HEALTH_ID` 同步访问器（1.20.1 的血量就存在它里面 ✓） */
     private static volatile Object DATA_HEALTH_ACCESSOR = null;
 
+    /**
+     * TNL1405 <b>同步"实体自己缓存的血量"</b> ✗
+     *
+     * <p>⚠ 为什么：我们直写 `DATA_HEALTH_ID` 绕过 `setHealth` ✓，
+     * 而有的实体（⭐试验假人 `TargetDummyEntity`）在 `setHealth`/自身 tick 里维护
+     * 一份 `lastHealth` 缓存 ✗；它 `tick` 里用 `lastHealth - getHealth()` 判定"**真伤**"：
+     * ```java
+     * if (lastTickActuallyDamaged + 1 == tickCount) {
+     *     float trueDamage = lastHealth - getHealth();
+     *     if (trueDamage > 0) onActuallyDamagedOrTrueDamageDetected(trueDamage, null); // ← 再弹一个红色值
+     * }
+     * ```
+     * ⇒ ⭐把缓存一起改掉 ⇒ 它看不到"差" ⇒ ⭐不会再弹第二个值 ✓
+     *
+     * <p>⭐ 只动**模组自己的类**里的 float 字段 ✓（跳过 `net.minecraft.*` ✓），
+     * 且只改「值 == 旧血量」的那些 ⇒ 不会乱改别的字段 ✓
+     */
+    private static void mirrorHealthCaches(LivingEntity target, float before, float after) {
+        if (Math.abs(before - after) < 0.01F) {
+            return;
+        }
+        for (Class<?> cls = target.getClass(); cls != null && cls != Object.class; cls = cls.getSuperclass()) {
+            if (cls.getName().startsWith("net.minecraft.")) {
+                continue;   // ⭐ 原版字段不动 ✓
+            }
+            for (java.lang.reflect.Field f : cls.getDeclaredFields()) {
+                if (f.getType() != float.class) continue;
+                if (java.lang.reflect.Modifier.isStatic(f.getModifiers())) continue;
+                try {
+                    f.setAccessible(true);
+                    if (Math.abs(f.getFloat(target) - before) < 0.01F) {
+                        f.setFloat(target, after);
+                    }
+                } catch (Throwable ignored) {
+                }
+            }
+        }
+    }
+
     private static Object healthAccessor() {
         if (!DATA_HEALTH_RESOLVED) {
             DATA_HEALTH_RESOLVED = true;
@@ -1664,10 +1703,17 @@ public final class TruePierce {
             Object acc = healthAccessor();
             if (acc != null) {
                 try {
+                    float before = target.getHealth();
                     float clamped = net.minecraft.util.Mth.clamp(value, 0.0F,
                             Math.max(1.0F, target.getMaxHealth()));
                     target.getEntityData().set(
                             (net.minecraft.network.syncher.EntityDataAccessor) acc, clamped);
+                    // ⭐ TNL1405 直写同步数据不经过 `setHealth` ✗
+                    //   ⇒ ⭐有些实体会**自己缓存一份血量**（⭐试验假人的 `lastHealth` ✓）
+                    //     ⭐它的 `tick` 用 `lastHealth - getHealth()` 当"真伤"检测 ✗
+                    //     ⇒ ⭐我们不更新缓存 ⇒ 它下一 tick 以为挨了一记真伤 ⇒ **再弹一个红色数值** ✓
+                    //   ⇒ ⭐写完之后，把"模组自己声明、值还等于旧血量"的 float 字段一起改掉 ✓
+                    mirrorHealthCaches(target, before, clamped);
                     target.hurtMarked = true;
                     return true;
                 } catch (Throwable ignored) {
