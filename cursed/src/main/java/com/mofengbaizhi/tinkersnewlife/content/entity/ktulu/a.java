@@ -105,6 +105,42 @@ public final class a {
         }
     }
 
+    /**
+     * TNL1409 ★★ 直接把血量写进 `DATA_HEALTH_ID` ✗
+     *
+     * <p>⚠ 为什么不用 `setHealth` ✗：
+     * 有的模组会 **改写/包装 `LivingEntity#setHealth`**（★例如把它重定向到自己的"真血"通道 ✓），
+     * 于是 ⭐我们调 `setHealth(auth)` **并不会真的写同步数据** ✓
+     * ⇒ ⭐客户端血条还是低的 ✗ ⭐权威值却不变 ⇒ ⭐看着"血是负的但永远不死" ✓ ✓。
+     * ⇒ ⭐内部写血一律走**同步数据本体** ✓（★客户端血条看的就是它 ✓）。
+     */
+    public static void qS(Mob mob, float value) {
+        float v = value;
+        if (!Float.isFinite(v) || v < 0.0F) {
+            v = 0.0F;
+        }
+        try {
+            v = Math.min(v, mob.getMaxHealth());
+        } catch (Throwable ignored) {
+        }
+        try {
+            Object acc = rawAcc();
+            if (acc != null) {
+                mob.getEntityData().set(
+                        (net.minecraft.network.syncher.EntityDataAccessor<Float>) acc, v);
+                mob.hurtMarked = true;
+                return;
+            }
+        } catch (Throwable ignored) {
+        }
+        // 实在拿不到同步访问器 ⇒ 只能退回原版 setHealth ✓
+        try {
+            mob.setHealth(v);
+            mob.hurtMarked = true;
+        } catch (Throwable ignored) {
+        }
+    }
+
     private static Object rawAcc() {
         if (RAW_ACC_TRIED) {
             return RAW_ACC;

@@ -293,13 +293,17 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
      * 必须打上"内部写"标记 ⇒ 否则会被 `a.qD` 当成外部伤害再去吃一次预算 ✓。
      */
     public void tnl$setHealthInternal(float value) {
-        a.qE(true);
-        try {
-            super.setHealth(value);
-        } finally {
-            a.qE(false);
-        }
+        // TNL1409 ★直写同步数据 ✗ 不再经过 `setHealth` ⇒ 谁也改写不了我们的镜像 ✓
+        a.qS(this, value);
     }
+
+    /**
+     * TNL1409 ★活跃 Boss 表（★供"每 tick 最后一步"把镜像同步回权威值 ✓）
+     * ⚠ 为什么需要 ✗：⭐有的模组在**实体 tick 之后 / 关卡 tail** 才写血量 ✗
+     * ⇒ ⭐我们 tick 里写的镜像会被它再覆盖 ✓ ⇒ ⭐必须再在**全服 tick 的 END** 补一次 ✓。
+     */
+    public static final java.util.Map<java.util.UUID, KtuluMomo> TNL_ACTIVE =
+            new java.util.concurrent.ConcurrentHashMap<>();
 
     /** TNL1407 ★读真实同步血量（★不走 getHealth ⇒ 免疫外部 getHealth 包装 ✓）。 */
     public float tnl$rawHealth() {
@@ -338,6 +342,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             return;
         }
         this.tnl$dead = true;
+        TNL_ACTIVE.remove(this.getUUID());   // TNL1409 ★真死 ⇒ 出表 ✓
         try {
             Vq$release();
         } catch (Throwable ignored) {
@@ -489,6 +494,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         // TNL876 ★★ 性能：只在"真的不一样"时才写 ✓
         //   ★setHealth 会标脏实体数据 ⇒ ★每 tick 调就等于每 tick 发包 ✗
         this.tnl$auth = authoritative;
+        TNL_ACTIVE.put(this.getUUID(), this);   // TNL1409 ★登记，供 ServerTick END 补同步 ✓
         if (Math.abs(a.qR(this) - authoritative) > 0.01F) {
             this.tnl$setHealthInternal(Math.max(0.0F, authoritative));
         }
