@@ -1556,6 +1556,33 @@ public final class TruePierce {
     private static volatile java.lang.reflect.Field DATA_HEALTH_FIELD = null;
     private static volatile boolean DATA_HEALTH_RESOLVED = false;
 
+    /** TNL1404 取 `LivingEntity.DATA_HEALTH_ID` 同步访问器（1.20.1 的血量就存在它里面 ✓） */
+    private static volatile Object DATA_HEALTH_ACCESSOR = null;
+
+    private static Object healthAccessor() {
+        if (!DATA_HEALTH_RESOLVED) {
+            DATA_HEALTH_RESOLVED = true;
+            for (String n : new String[]{"f_20961_", "DATA_HEALTH_ID"}) {
+                try {
+                    java.lang.reflect.Field f = net.minecraft.world.entity.LivingEntity.class
+                            .getDeclaredField(n);
+                    f.setAccessible(true);
+                    DATA_HEALTH_FIELD = f;
+                    DATA_HEALTH_ACCESSOR = f.get(null);
+                    break;
+                } catch (Throwable ignored) {
+                }
+            }
+        }
+        if (DATA_HEALTH_ACCESSOR == null && DATA_HEALTH_FIELD != null) {
+            try {
+                DATA_HEALTH_ACCESSOR = DATA_HEALTH_FIELD.get(null);
+            } catch (Throwable ignored) {
+            }
+        }
+        return DATA_HEALTH_ACCESSOR;
+    }
+
     private static void syncHealthToClient(LivingEntity target) {
         try {
             // ⭐⭐ §1232 **锁期间不同步** ✗（⭐ 否则每 tick 一变 ⇒ ⭐ 数字连弹 ✓）
@@ -1574,21 +1601,8 @@ public final class TruePierce {
             } catch (Throwable ignored) {
             }
             // ⭐ ② **直写同步访问器 `DATA_HEALTH_ID`** ✗ ⇒ ⭐ 客户端**一定收到** ✓
-            if (!DATA_HEALTH_RESOLVED) {
-                DATA_HEALTH_RESOLVED = true;
-                for (String n : new String[]{"f_20961_", "DATA_HEALTH_ID"}) {
-                    try {
-                        java.lang.reflect.Field f = net.minecraft.world.entity.LivingEntity.class
-                                .getDeclaredField(n);
-                        f.setAccessible(true);
-                        DATA_HEALTH_FIELD = f;
-                        break;
-                    } catch (Throwable ignored) {
-                    }
-                }
-            }
-            if (DATA_HEALTH_FIELD != null) {
-                Object acc = DATA_HEALTH_FIELD.get(null);
+            Object acc = healthAccessor();
+            if (acc != null) {
                 if (acc != null) {
                     float max = Math.max(1.0F, target.getMaxHealth());
                     float clamped = net.minecraft.util.Mth.clamp(value, 0.0F, max);
@@ -1640,9 +1654,26 @@ public final class TruePierce {
         //   ⇒ ⭐ 结论：⭐ **绝不能"记账代替真写"** ✗ ⭐ 只能**想办法真写** ✓。
         // ⭐⭐ §1201 **用"这个实体"的字段**（⭐ 按值反查过 ✓ 不是按名字猜的 ✓）
         java.lang.reflect.Field f = healthFieldFor(target);
-        // TNL1403 1.20.1：血量在 SynchedEntityData 里 ⇒ 没有可写字段 ⇒ 直接 setHealth ✓
-        //   ⚠ 而且**不能被 SUPPRESS_CLIENT_SYNC 挡住** ✗（那会让真伤彻底不掉血 ✓）
+        // ⭐ TNL1404 1.20.1：血量 = `DATA_HEALTH_ID` 同步数据 ✗
+        //   ⚠ 不能直接调 `setHealth(value)` ✗ —— 有的实体**覆写了 `setHealth`** ✓
+        //     ⭐例如试验假人 `TargetDummyEntity#m_21153_`：会把"我们改血"当成**一次新的真伤** ✗
+        //     ⇒ ⭐它自己先记一次（`hurt`）＋我们把血一写又记一次 ⇒ **两段伤害** ✓
+        //   ⇒ ⭐正解：**直接写同步数据** ✗（只改血，不惊动任何 `setHealth` 覆写 ✓）
+        //     ⭐`getHealth()` 读的就是它 ✓ ⭐客户端也会同步 ✓ ⭐视觉上就掉一次 ✓
         if (f == null) {
+            Object acc = healthAccessor();
+            if (acc != null) {
+                try {
+                    float clamped = net.minecraft.util.Mth.clamp(value, 0.0F,
+                            Math.max(1.0F, target.getMaxHealth()));
+                    target.getEntityData().set(
+                            (net.minecraft.network.syncher.EntityDataAccessor) acc, clamped);
+                    target.hurtMarked = true;
+                    return true;
+                } catch (Throwable ignored) {
+                }
+            }
+            // 拿不到同步访问器 ⇒ 只能退回 setHealth ✓（可能会被覆写方重复记账，但至少能改血 ✓）
             try {
                 target.setHealth(value);
                 target.hurtMarked = true;
