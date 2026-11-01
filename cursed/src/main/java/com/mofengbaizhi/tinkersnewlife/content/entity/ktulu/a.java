@@ -339,6 +339,9 @@ public final class a {
                 } else {
                     auth = e(s0, now, ticks);      // ★原生为准 ✓
                 }
+                if (auth < 0L) {
+                    auth = 0L;                     // TNL1408 ★权威血量永不为负 ✓
+                }
                 long ra = rA(s0);
                 long rb = b.get(s0);
                 if (ra != auth || rb != auth) {
@@ -367,6 +370,9 @@ public final class a {
                     auth = keep;
                 } else {
                     auth = now;
+                }
+                if (auth < 0L) {
+                    auth = 0L;                        // TNL1408 ★权威血量永不为负 ✓
                 }
                 if (V[s0] > 0) {
                     V[s0] = V[s0] - 1;                // TNL864 ★Java 回退路径也要倒计时 ✓
@@ -764,6 +770,17 @@ public final class a {
             // TNL1407 ★我们自己的写（★tick 镜像 / 治疗 / 真死 / super.hurt 内部）直接放行 ✓
             if (INT_WRITE) {
                 return value;
+            }
+            // TNL1408 ★净化荒谬值 ✗：NaN / ±∞ 一律不可信 ✓
+            //   ⚠ 梦幻终焉那类会把 amount 设成 ±∞（`setHealth(Float.NEGATIVE_INFINITY)` ✓）
+            //     ⇒ ⭐以前会让内核数字变成 NaN / 负数 ⇒ ⭐血条显示 -853 ✓ ✓
+            if (Float.isNaN(value)) {
+                return 0.0F;
+            }
+            if (value == Float.NEGATIVE_INFINITY) {
+                value = 0.0F;                      // ★交给下面的窗/预算夹取 ✓
+            } else if (value == Float.POSITIVE_INFINITY) {
+                value = mob.getMaxHealth();
             }
             int s0 = k(mob);
             long auth = N ? h(s0) : rA(s0);

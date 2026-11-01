@@ -478,6 +478,11 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         }
         a.q0(this);
         float authoritative = a.q1(this, this.tickCount);
+        // TNL1408 ★权威值净化：NaN / ∞ / 负数都按 0 处理 ✗ 否则血条会显示 -853 ✓
+        if (!Float.isFinite(authoritative)) {
+            authoritative = 0.0F;
+        }
+        authoritative = Math.max(0.0F, Math.min(authoritative, this.getMaxHealth()));
         if (a.qH()) {
             this.tnl$shieldFlash();     // TNL907 ★挡下了 ⇒ ★闪金 ✓
         }
@@ -496,9 +501,21 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         // TNL851 ★钓鱼：顺手调一下假入口（★结果不用 ✓）
         c.rotate(this);   // TNL862 ★多入口轮换钓鱼 ✓
         if (authoritative <= 0.0F) {
+            // TNL1408 ★别用 `kill()` ✗ —— 它内部是 `hurt(genericKill, MAX)` ✗
+            //   会被我们自己的 hurt 闸门（无敌窗/预算 ⇒ 返回 false）挡下 ⇒ **永远死不了** ✓
+            //   正规死法：直接走 `super.die(...)` ＋ 兜底 remove ✓
             a.q4(this);
             this.tnl$setHealthInternal(0.0F);
-            this.kill();
+            this.tnl$dead = true;
+            this.deathTime = 0;
+            this.hurtTime = 0;
+            try {
+                super.die(this.damageSources().genericKill());
+            } catch (Throwable ignored) {
+            }
+            if (!this.isRemoved()) {
+                this.remove(RemovalReason.KILLED);
+            }
         }
     }
 
@@ -564,6 +581,9 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
                 return this.tnl$auth;
             }
             float v = a.qF(this);
+            if (!Float.isFinite(v) || v < 0.0F) {
+                v = 0.0F;                       // TNL1408 ★绝不对外报负数/NaN ✓
+            }
             this.tnl$auth = v;
             return v;
         } catch (Throwable th) {
