@@ -1000,7 +1000,7 @@ public final class a {
             }
             long auth = m0(qF(mob));          // ★qF 返回 float，这里是定点的 long
             if (auth < 0L) {
-                auth = m0(mob.getHealth());
+                auth = m0(qR(mob));
             }
             long max = m0(mob.getMaxHealth());
             long next = Math.min(max, auth + m0(amount));

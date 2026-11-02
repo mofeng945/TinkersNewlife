@@ -74,7 +74,7 @@ public final class KtuluDeathGuard {
             // 现在把字段同步回镜像，并让单次伤害不超过"一个 tick 的预算"。
             float tnl$auth = com.mofengbaizhi.tinkersnewlife.content.entity.ktulu.a.qF(momo);
             if (tnl$auth > 0.0F) {
-                if (momo.getHealth() < tnl$auth - 0.5F) {
+                if (com.mofengbaizhi.tinkersnewlife.content.entity.ktulu.a.qF(momo) < tnl$auth - 0.5F) {
                     momo.tnl$setHealthInternal(tnl$auth);
                     TinkersNewlife.LOGGER.warn("TNL1145 momo health resynced to {}",
                             String.format(java.util.Locale.ROOT, "%.1f", tnl$auth));
@@ -143,7 +143,7 @@ public final class KtuluDeathGuard {
                 event.setCanceled(true);
                 momo.deathTime = 0;
                 momo.hurtTime = 0;
-                momo.tnl$setHealthInternal(Math.max(1.0F, momo.getHealth()));
+                momo.tnl$setHealthInternal(Math.max(1.0F, com.mofengbaizhi.tinkersnewlife.content.entity.ktulu.a.qF(momo)));
                 momo.tnl$unDead();       // TNL1146 undo the latch so the protection keeps working
                 TinkersNewlife.LOGGER.warn(
                         "TNL1139 death blocked for the momo, it still had {} health",

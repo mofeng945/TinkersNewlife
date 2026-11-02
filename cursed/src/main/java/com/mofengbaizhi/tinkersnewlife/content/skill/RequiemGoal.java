@@ -51,11 +51,11 @@ public final class RequiemGoal extends MomoSpellGoal {
     public boolean canUse() {
         // TNL1259 用户："没有释放死生领域"。加一条只在**血量已低**时输出的探针，
         // 直接看是哪个条件没满足（血量没掉下来 / 已用过 / 冷却 / busy）。
-        boolean tnl$lowHp = this.momo.getHealth() <= this.momo.getMaxHealth() * 0.8F;
+        boolean tnl$lowHp = this.momo.tnl$authority() <= this.momo.getMaxHealth() * 0.8F;
         if (this.momo.level().getGameTime() % 20L == 0L) {
             TinkersNewlife.LOGGER.warn(
                     "TNL1259 requiem check hp={}/{} low={} used={} cd={} busy={} flag={}",
-                    String.format(java.util.Locale.ROOT, "%.0f", this.momo.getHealth()),
+                    String.format(java.util.Locale.ROOT, "%.0f", this.momo.tnl$authority()),
                     String.format(java.util.Locale.ROOT, "%.0f", this.momo.getMaxHealth()),
                     tnl$lowHp, this.momo.tnl$requiemUsed(), this.cooldownLeft(),
                     this.momo.tnl$isBusy(), MomoSkills.BREATH_REQUIEM);
@@ -136,7 +136,7 @@ public final class RequiemGoal extends MomoSpellGoal {
         //   每秒补 max(1% 上限, 缺口 / 剩余秒数) ⇒ 领域结束时**一定补到满**，
         //   中途任何血量都是**一路往上**（缺得多就补得快），不再有 80% 这道坎。
         float tnl$maxHp = this.momo.getMaxHealth();
-        float tnl$missing = tnl$maxHp - this.momo.getHealth();
+        float tnl$missing = tnl$maxHp - this.momo.tnl$authority();
         if (tnl$missing > 0.5F) {
             int tnl$leftSec = Math.max(1, (this.momo.tnl$castTicks() + 19) / 20);
             float tnl$heal = Math.max(tnl$maxHp * 0.01F, tnl$missing / tnl$leftSec);

@@ -56,7 +56,7 @@ public final class RlyehShadowGoal extends MomoSpellGoal {
         if (this.momo.tnl$rlyehUsed()) {
             return false;                                   // 一局一次
         }
-        if (this.momo.getHealth() > this.momo.getMaxHealth() * 0.5F) {
+        if (this.momo.tnl$authority() > this.momo.getMaxHealth() * 0.5F) {
             return false;                                   // ★测试期口径：50% 血自动触发
         }
         return this.ready();
@@ -81,7 +81,7 @@ public final class RlyehShadowGoal extends MomoSpellGoal {
         }
         TinkersNewlife.LOGGER.warn("TNL1282 R'lyeh's Shadow: spawned {} shadows at hp={}/{}",
                 spawned,
-                String.format(java.util.Locale.ROOT, "%.0f", this.momo.getHealth()),
+                String.format(java.util.Locale.ROOT, "%.0f", this.momo.tnl$authority()),
                 String.format(java.util.Locale.ROOT, "%.0f", this.momo.getMaxHealth()));
     }
 

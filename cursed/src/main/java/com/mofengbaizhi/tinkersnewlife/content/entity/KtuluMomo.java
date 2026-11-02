@@ -310,6 +310,11 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         return this.tnl$auth;
     }
 
+    /** TNL1413 ★读权威血量（★我们自己的镜像真身 ⇒ 不经过任何 `getHealth` 包装 ✓） */
+    public float tnl$authority() {
+        return a.qF(this);
+    }
+
     /** TNL1407 ★读真实同步血量（★不走 getHealth ⇒ 免疫外部 getHealth 包装 ✓）。 */
     public float tnl$rawHealth() {
         return a.qR(this);
@@ -429,7 +434,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         // 摘掉再挂上 —— 这才是真正能把血条重发给掉条客户端的操作。
         if (this.level() instanceof net.minecraft.server.level.ServerLevel tnl$sl) {
             this.bossEvent.setProgress(Math.max(0.0F, Math.min(1.0F,
-                    this.getHealth() / Math.max(1.0F, this.getMaxHealth()))));
+                    this.tnl$authority() / Math.max(1.0F, this.getMaxHealth()))));
             this.bossEvent.setVisible(true);
             // TNL1276 血条**会漏**：老代码对"跑远了/换维度了"的玩家只是 `continue` ✗，
             // 从来不把人从 ServerBossEvent 里摘掉 ⇒ 玩家走远或换维度后，那条血条
@@ -643,7 +648,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
                     }
                 }
                 this.bossEvent.setProgress(Math.max(0.0F,
-                        this.getHealth() / Math.max(1.0F, this.getMaxHealth())));
+                        this.tnl$authority() / Math.max(1.0F, this.getMaxHealth())));
                 if (System.currentTimeMillis() - tnl$barStamp > 5000L) {
                     tnl$barStamp = System.currentTimeMillis();
                     com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.warn(
