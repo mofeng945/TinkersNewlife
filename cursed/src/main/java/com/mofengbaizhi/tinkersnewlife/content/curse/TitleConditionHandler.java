@@ -21,13 +21,15 @@ public final class TitleConditionHandler {
     public static void refreshIfChanged(ServerPlayer sp) {
         try {
             String now = CurseTitles.prefix(sp);
-            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.info("[头衔] 生效={} 前缀={}",
-                    CurseTitles.active(sp), now);
             String before = LAST_PREFIX.get(sp.getUUID());
             if (now.equals(before)) {
                 return;
             }
             LAST_PREFIX.put(sp.getUUID(), now);
+            // TNL1415 ★只在"前缀真的变了"时打，而且降级到 DEBUG ✗
+            // （以前每 20 tick 每人一条 INFO ⇒ 日志 61 MB 白刷 ✓ 用户口径：降级 debug ✓）
+            com.mofengbaizhi.tinkersnewlife.TinkersNewlife.LOGGER.debug("[头衔] 生效={} 前缀={}",
+                    CurseTitles.active(sp), now);
             sp.refreshDisplayName();     // ★Forge：重算 displayName（聊天/玩家列表立刻变 ✓）
             CurseTitles.sync(sp);        // ★客户端镜像同步（选择界面 ✓）
         } catch (Throwable ignored) {
