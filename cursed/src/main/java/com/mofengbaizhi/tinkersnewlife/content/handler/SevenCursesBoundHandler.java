@@ -104,7 +104,12 @@ public final class SevenCursesBoundHandler {
             return false;
         }
         try {
-            return ToolHelper.getModifierLevelIgnoringBroken(ToolStack.from(stack), TRAIT_ID) > 0;
+            // TNL1416 ★先确认是匠魂工具 ✗ 否则背包/饰品里的普通物品会刷 TConstruct 警告 ✓
+            ToolStack tool = com.mofengbaizhi.tinkersnewlife.util.ToolHelper.getToolStack(stack);
+            if (tool == null) {
+                return false;
+            }
+            return ToolHelper.getModifierLevelIgnoringBroken(tool, TRAIT_ID) > 0;
         } catch (Throwable ignored) {
             return false;
         }

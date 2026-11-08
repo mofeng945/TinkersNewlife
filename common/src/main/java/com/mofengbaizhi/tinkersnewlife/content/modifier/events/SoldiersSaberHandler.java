@@ -198,7 +198,12 @@ public final class SoldiersSaberHandler {
     /** 每段伤害 = 工具攻击面板 × 50% ✓（拿不到工具数据就当作 0 ✓ 绝不抛错 ✗） */
     private static float damagePerStage(ItemStack stack) {
         try {
-            float panel = ToolStack.from(stack).getStats().get(ToolStats.ATTACK_DAMAGE);
+            // TNL1416 ★非匠魂工具 ⇒ 直接 0 ✓ 不构造空 ToolStack ✓
+            ToolStack tool = com.mofengbaizhi.tinkersnewlife.util.ToolHelper.getToolStack(stack);
+            if (tool == null) {
+                return 0.0F;
+            }
+            float panel = tool.getStats().get(ToolStats.ATTACK_DAMAGE);
             return panel * DAMAGE_PER_STAGE_RATIO;
         } catch (Throwable t) {
             return 0.0F;
@@ -208,7 +213,8 @@ public final class SoldiersSaberHandler {
     /** 手上这把工具带不带「兵士佩刀」✓（拿不到工具数据就当作不带 ✓ 绝不抛错 ✗） */
     private static boolean hasSaber(ItemStack stack) {
         try {
-            return ToolStack.from(stack).getModifiers().getLevel(SABER) > 0;
+            ToolStack tool = com.mofengbaizhi.tinkersnewlife.util.ToolHelper.getToolStack(stack);
+            return tool != null && tool.getModifiers().getLevel(SABER) > 0;
         } catch (Throwable t) {
             return false;
         }

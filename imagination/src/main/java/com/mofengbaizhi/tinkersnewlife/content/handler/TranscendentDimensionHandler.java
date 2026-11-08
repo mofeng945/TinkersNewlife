@@ -65,7 +65,10 @@ public final class TranscendentDimensionHandler {
                     continue;
                 }
                 try {
-                    ToolStack tool = ToolStack.from(stack);
+                    ToolStack tool = ToolHelper.getToolStack(stack);   // TNL1416 ★普通盔甲不造 ToolStack ✓
+                    if (tool == null) {
+                        continue;
+                    }
                     int level = ToolHelper.getActiveModifierLevel(tool, ID);
                     if (level <= 0) {
                         continue;
@@ -152,7 +155,7 @@ public final class TranscendentDimensionHandler {
                 continue;
             }
             try {
-                ToolStack tool = ToolStack.from(stack);
+                ToolStack tool = ToolHelper.getToolStack(stack);
                 if (ToolHelper.getActiveModifierLevel(tool, ID) <= 0) {
                     continue;
                 }
@@ -172,7 +175,7 @@ public final class TranscendentDimensionHandler {
                 continue;
             }
             try {
-                total += ToolHelper.getActiveModifierLevel(ToolStack.from(stack), ID);
+                total += ToolHelper.getActiveModifierLevel(ToolHelper.getToolStack(stack), ID);
             } catch (Throwable ignored) {
                 // 跳过 ✓
             }
@@ -188,7 +191,7 @@ public final class TranscendentDimensionHandler {
             return false;
         }
         try {
-            return ToolHelper.getActiveModifierLevel(ToolStack.from(stack), ID) > 0;
+            return ToolHelper.getActiveModifierLevel(ToolHelper.getToolStack(stack), ID) > 0;
         } catch (Throwable ignored) {
             return false;
         }

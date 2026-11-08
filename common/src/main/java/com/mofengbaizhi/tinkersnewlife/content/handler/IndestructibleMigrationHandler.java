@@ -55,6 +55,12 @@ public final class IndestructibleMigrationHandler {
             if (stack.isEmpty()) {
                 continue;
             }
+            // TNL1416 ★不是匠魂工具就直接跳过 ✗
+            // （以前对背包里**每个**无 NBT 的普通物品都 `ToolStack.from` ⇒
+            //   TConstruct 每秒刷 ~13 条 "non-modifiable tool" 警告 ✗ 日志 24 MB ✓）
+            if (!(stack.getItem() instanceof slimeknights.tconstruct.library.tools.item.IModifiable)) {
+                continue;
+            }
             try {
                 ToolStack tool = ToolStack.from(stack);
                 if (tool.getStats().getContainedStats().isEmpty()) {
