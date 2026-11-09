@@ -42,6 +42,8 @@ public class MomoShadow extends Monster {
     /** 分身的角色：两个近战、一个游走＋远程 */
     public enum Role {
         MELEE,
+        ARCHER,
+        CASTER,
         WANDER
     }
 
@@ -69,6 +71,17 @@ public class MomoShadow extends Monster {
     /** ★不继承任何 Boss Goal（★近战/远程 AI 由用户后续补，游走由技能生成后挂） */
     @Override
     protected void registerGoals() {
+        this.goalSelector.addGoal(0, new net.minecraft.world.entity.ai.goal.FloatGoal(this));
+        this.goalSelector.addGoal(1, new com.mofengbaizhi.tinkersnewlife.content.skill.MomoShadowCombatGoal(this));
+        this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8));
+        this.targetSelector.addGoal(2, new net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal<>(
+                this, net.minecraft.world.entity.player.Player.class, true));
+    }
+
+    @Override
+    public boolean doHurtTarget(net.minecraft.world.entity.Entity target) {
+        if (target instanceof KtuluMomo || KtuluMomo.tnl$isMomoMinion(target)) return false;
+        return super.doHurtTarget(target);
     }
 
     // ==================== 角色 / 归属 ====================
@@ -108,7 +121,7 @@ public class MomoShadow extends Monster {
 
     /** ★用户后续写"远程 AI"时替换这里 ✓（现在只做游走：倾向随机漫步） */
     public void tnl$addWanderAi() {
-        this.goalSelector.addGoal(2, new WaterAvoidingRandomStrollGoal(this, 1.0D));
+        // Combat goal already provides ranged movement; no duplicate goal on reload.
     }
 
     // ==================== TNL1286 分身**不吃**莱特兰（L2Hostility）的等级/词条加成 ====================
@@ -158,6 +171,12 @@ public class MomoShadow extends Monster {
         }
         if (this.tickCount % 20 == 0) {
             this.tnl$stripForeignBonuses();
+            if (this.ownerId != null && this.level() instanceof net.minecraft.server.level.ServerLevel sl
+                    && sl.getEntity(this.ownerId) instanceof KtuluMomo owner) {
+                var target = owner.getTarget();
+                if (target != null && target.isAlive() && !KtuluMomo.tnl$isMomoMinion(target))
+                    this.setTarget(target);
+            }
         }
     }
 

@@ -169,7 +169,7 @@ public final class AeonianWeaken {
                 TinkersNewlife.LOGGER.warn("TNL1043 aeonian burst on {} for {} true damage, stunned 10s",
                         le.getName().getString(), dmg);
                 var effect = com.mofengbaizhi.tinkersnewlife.content.ModEffects.UNNAMEABLE.get();
-                le.addEffect(new MobEffectInstance(effect, STUN_TICKS, 0, false, true, true));
+                applyVisibleUnnameable(le, STUN_TICKS, true);
                 if (le instanceof net.minecraft.server.level.ServerPlayer sp) {
                     TinkersNewlife.CHANNEL.send(net.minecraftforge.network.PacketDistributor.PLAYER.with(() -> sp),
                             new com.mofengbaizhi.tinkersnewlife.network.tools.PacketAeonianTicks(0));
@@ -179,24 +179,29 @@ public final class AeonianWeaken {
             if (ticks(le) > 0) tag(le).putInt(TICKS, ticks(le) - 1);
             int st = stun(le);
             if (st > 0) {
-                // TNL1048 ★★ 用户：★"不是挂不可名状吗？我写的那个效果" ✓
-                //   ★真相 ✗：★你写的是 `UnnameableEffect`（★id ``tinkersnewlife:unnameable`` ✓）
-                //     ★而我自己拼了一堆**原版效果**（★迟缓/虚弱/反胃 ✗）
-                //     ★根本没用你那个 ✓✓（★好在只是后面这段，★现在换掉 ✓）
-                //   ★现在 ✓：★反射取注册表里的 ``unnameable`` ✓
-                //     （★★ 不引入跨模块编译依赖 ✓：★`AeonianWeaken` 在 common ✗
-                //      ★而 `UnnameableEffect` 在 imagination ✓）
-                var tnl$eff = net.minecraft.core.registries.BuiltInRegistries.MOB_EFFECT.get(
-                        new net.minecraft.resources.ResourceLocation("tinkersnewlife", "unnameable"));
-                if (tnl$eff != null) {
-                    le.addEffect(new MobEffectInstance(tnl$eff, Math.max(1, st), 0, false, true, true));
-                }
+                // Use the registered effect directly. Only sync effects that actually exist server-side.
+                if (st % 20 == 0) applyVisibleUnnameable(le, st, false);
                 le.setDeltaMovement(Vec3.ZERO);
                 le.hurtMarked = true;
                 tag(le).putInt(STUN, st - 1);
                 continue;
             }
         }
+    }
+
+    private static void applyVisibleUnnameable(LivingEntity entity, int duration, boolean diagnostic) {
+        var type = com.mofengbaizhi.tinkersnewlife.content.ModEffects.UNNAMEABLE.get();
+        entity.addEffect(new MobEffectInstance(type, Math.max(1, duration), 0, false, true, true));
+        MobEffectInstance active = entity.getEffect(type);
+        if (active != null && entity instanceof net.minecraft.server.level.ServerPlayer sp) {
+            // Re-emit the vanilla effect packet with explicit HUD visibility. This also repairs a
+            // client's stale hidden instance without inventing an effect the server rejected.
+            var visible = new MobEffectInstance(type, active.getDuration(), active.getAmplifier(), false, true, true);
+            sp.connection.send(new net.minecraft.network.protocol.game.ClientboundUpdateMobEffectPacket(entity.getId(), visible));
+        }
+        if (diagnostic) TinkersNewlife.LOGGER.info("[Pollution] unnameable target={} active={} duration={} icon={}",
+                entity.getName().getString(), active != null, active == null ? 0 : active.getDuration(),
+                active != null && active.showIcon());
     }
 
     /** TNL1047 user: "I want it to stick on any attack" -- holding the weapon and attacking stacks ticks */

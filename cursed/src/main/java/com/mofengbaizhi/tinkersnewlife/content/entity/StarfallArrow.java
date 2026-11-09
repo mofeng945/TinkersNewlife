@@ -380,7 +380,8 @@ public class StarfallArrow extends AbstractArrow {
         if (this.level().isClientSide) {
             return;
         }
-        if (this.getOwner() instanceof KtuluMomo && KtuluMomo.tnl$isMomoMinion(target)) return;
+        if ((this.getOwner() instanceof KtuluMomo || this.getOwner() instanceof MomoShadow)
+                && (target instanceof KtuluMomo || KtuluMomo.tnl$isMomoMinion(target))) return;
         // TNL938 ★★ 用户口径：★"我是说让它可以继续锁，但是别锁着不造成伤害" ✓
         //   ★⇒ ★撤掉"同一目标不重复伤害"这条限制 ✓
         //   ★每次接触都结算伤害 ✓，★穿透次数照旧每次 -1 ✓

@@ -239,7 +239,7 @@ static final class DiscordantChordHandler {   // TNL1213 收编自原 Discordant
 
 
     /** TNL1176 给技能调用的入口：起手音效与烟雾 */
-    public static void startChargeFx(ServerLevel level, KtuluMomo momo) {
+    public static void startChargeFx(ServerLevel level, LivingEntity momo) {
         level.playSound(null, momo.blockPosition(), SoundEvents.WARDEN_SONIC_CHARGE,
                 SoundSource.HOSTILE, 2.0F, 0.6F);
         level.sendParticles(ParticleTypes.CLOUD,
@@ -288,7 +288,7 @@ static final class DiscordantChordHandler {   // TNL1213 收编自原 Discordant
     }
 
     /** TNL1114 深灰尘埃，看着像圆环而不是一团白。*/
-    public static void drawRing(ServerLevel level, KtuluMomo momo, double ox, double oy, double oz, double radius, double baseY) {   // TNL1235 圆心由调用方给
+    public static void drawRing(ServerLevel level, LivingEntity momo, double ox, double oy, double oz, double radius, double baseY) {   // TNL1235 圆心由调用方给
         var grey = new net.minecraft.core.particles.DustParticleOptions(
                 new org.joml.Vector3f(0.10F, 0.10F, 0.12F), 1.6F);
         int points = Math.max(32, (int) (radius * 8.0D));
@@ -304,12 +304,12 @@ static final class DiscordantChordHandler {   // TNL1213 收编自原 Discordant
      * TNL1153 被波扫到的东西吃监守者音波伤害并被掀飞，随后
      * 虚弱又迟缓。每道波在自己的高度上，所以矮的那道可以跳过去。
      */
-    public static void hitRing(ServerLevel level, KtuluMomo momo, double ox, double oy, double oz, double radius, double baseY) {   // TNL1235 圆心由调用方给
+    public static void hitRing(ServerLevel level, LivingEntity momo, double ox, double oy, double oz, double radius, double baseY) {   // TNL1235 圆心由调用方给
         double band = 0.9D;   // TNL1237 判定也必须用锚定圆心（用户："锚定了粒子但是没锚定判定"）
         // TNL1237 以**波心**搜实体：Boss 走开了也要能找到波上的目标
         for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class,
                 new net.minecraft.world.phys.AABB(ox - MAX_RADIUS - 2.0D, oy - 4.0D, oz - MAX_RADIUS - 2.0D, ox + MAX_RADIUS + 2.0D, oy + 4.0D, oz + MAX_RADIUS + 2.0D))) {
-            if (le == momo || !le.isAlive() || KtuluMomo.tnl$isMomoMinion(le)) {
+            if (le == momo || le instanceof KtuluMomo || !le.isAlive() || KtuluMomo.tnl$isMomoMinion(le)) {
                 continue;
             }
             double d = Math.sqrt(Math.pow(le.getX() - ox, 2.0D)

@@ -127,8 +127,8 @@ public final class RlyehShadowGoal extends MomoSpellGoal {
                 double z = this.momo.getZ() + Math.sin(angle) * SPAWN_RADIUS;
                 shadow.moveTo(x, this.momo.getY(), z, this.momo.getYRot(), 0.0F);
                 // ★最后一个是"游走＋远程"的那只
-                MomoShadow.Role role = (i == SHADOW_COUNT - 1)
-                        ? MomoShadow.Role.WANDER : MomoShadow.Role.MELEE;
+                MomoShadow.Role role = i == 0 ? MomoShadow.Role.MELEE
+                        : i == 1 ? MomoShadow.Role.ARCHER : MomoShadow.Role.CASTER;
                 shadow.tnl$bindTo(this.momo, role);       // 归属 / 仆从标记 / 半血
                 if (role == MomoShadow.Role.WANDER) {
                     shadow.tnl$addWanderAi();             // 本轮只做游走
