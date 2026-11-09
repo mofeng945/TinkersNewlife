@@ -379,6 +379,7 @@ public class StarfallArrow extends AbstractArrow {
         if (this.level().isClientSide) {
             return;
         }
+        if (this.getOwner() instanceof KtuluMomo && KtuluMomo.tnl$isMomoMinion(target)) return;
         // TNL938 ★★ 用户口径：★"我是说让它可以继续锁，但是别锁着不造成伤害" ✓
         //   ★⇒ ★撤掉"同一目标不重复伤害"这条限制 ✓
         //   ★每次接触都结算伤害 ✓，★穿透次数照旧每次 -1 ✓
@@ -415,6 +416,9 @@ public class StarfallArrow extends AbstractArrow {
         float dmg = tnl$isBoss(target)
                 ? target.getMaxHealth() * 0.03F
                 : Math.max(16.0F, target.getMaxHealth() * 0.10F);
+        if (this.getOwner() instanceof KtuluMomo boss && boss.tnl$isBossForm()) {
+            dmg = target.getMaxHealth() * boss.tnl$combat().arrowFraction();
+        }
         dmg *= 1.0F + 0.10F * this.entityData.get(DATA_POWER);   // TNL933 ★力量：★每级 +10% ✓   // TNL882 ★非 Boss 16 ✓ ★Boss 3% ✓
         if (enh) {
             dmg *= 2.0F;

@@ -80,6 +80,12 @@ public abstract class MomoSpellGoal extends net.minecraft.world.entity.ai.goal.G
         if (this.momo.tnl$isStunned() || this.momo.tnl$hurtStaggerTicks() > 0) {
             return false;
         }
+        if (this.momo.tnl$isBossForm()) {
+            var combat = this.momo.tnl$combat();
+            if (combat.flightEntryRunning() || (combat.flightEntryPending() && !combat.entryDomainPending())) return false;
+            if (combat.entryDomainPending() && this.spellId != 4) return false;
+            if (combat.phase() == 1 && this.spellId != 1 && this.spellId != 2) return false;
+        }
         return !this.momo.tnl$isBusy()
                 && this.cooldownLeft() <= 0
                 && this.momo.isAlive()

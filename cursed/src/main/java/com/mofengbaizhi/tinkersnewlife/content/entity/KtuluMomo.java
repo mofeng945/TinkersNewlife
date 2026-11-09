@@ -87,6 +87,44 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         this.xpReward = 500;
     }
 
+    private final com.mofengbaizhi.tinkersnewlife.content.skill.MomoCombatState tnl$combat =
+            new com.mofengbaizhi.tinkersnewlife.content.skill.MomoCombatState();
+
+    public com.mofengbaizhi.tinkersnewlife.content.skill.MomoCombatState tnl$combat() { return tnl$combat; }
+
+    @Override
+    public boolean doHurtTarget(net.minecraft.world.entity.Entity target) {
+        if (tnl$isMomoMinion(target)) return false;
+        boolean hit = super.doHurtTarget(target);
+        if (hit && this.tnl$bossForm() && this.tnl$combat.phase() == 2) {
+            this.tnl$heal(this.getMaxHealth() * 0.005F);
+        }
+        return hit;
+    }
+
+    private boolean tnl$tryCombatDodge(DamageSource source) {
+        if (!this.tnl$combat.canDodge(this.tickCount) || this.tnl$combat.phase() < 2
+                || this.tnl$isStunned() || this.tnl$isBusy()) return false;
+        boolean projectile = source.getDirectEntity() instanceof net.minecraft.world.entity.projectile.Projectile;
+        if (this.tnl$combat.phase() == 2 && !projectile) return false;
+        float chance = this.tnl$combat.phase() == 3
+                ? com.mofengbaizhi.tinkersnewlife.content.skill.MomoCombatState.FINAL_DODGE_CHANCE
+                : com.mofengbaizhi.tinkersnewlife.content.skill.MomoCombatState.PROJECTILE_DODGE_CHANCE;
+        if (this.getRandom().nextFloat() >= chance) return false;
+        double angle = this.getRandom().nextDouble() * Math.PI * 2;
+        if (!this.randomTeleport(this.getX() + Math.cos(angle) * 3, this.getY(),
+                this.getZ() + Math.sin(angle) * 3, true)) return false;
+        this.tnl$combat.didDodge(this.tickCount);
+        if (source.getEntity() instanceof net.minecraft.world.entity.LivingEntity attacker
+                && attacker.distanceTo(this) <= 5 && !tnl$isMomoMinion(attacker)) {
+            attacker.knockback(1.5, this.getX() - attacker.getX(), this.getZ() - attacker.getZ());
+            com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.apply(attacker,
+                    com.mofengbaizhi.tinkersnewlife.content.skill.MomoCombatState.STAGGER_TICKS,
+                    com.mofengbaizhi.tinkersnewlife.content.curse.StunHandler.Mode.FULL);
+        }
+        return true;
+    }
+
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 626.0D)
@@ -100,12 +138,13 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
 
     @Override
     protected void registerGoals() {
+        this.goalSelector.addGoal(0, new com.mofengbaizhi.tinkersnewlife.content.skill.MomoFlightEntryGoal(this));
         this.goalSelector.addGoal(0, new FloatGoal(this));
         // TNL1251 受击硬直：优先级 0（最高）并占 MOVE|LOOK ⇒ 会挤掉近战/游走，实现"站住 1 秒"
         this.goalSelector.addGoal(0, new com.mofengbaizhi.tinkersnewlife.content.skill.MomoHurtGoal(this));
         // TNL1261 换成只占 MOVE 的近战 Goal：配合技能禁用 LOOK 旗，
         // 施法期间它连起手都做不到 ⇒ 不再一边施法一边往玩家身上寻路。
-        this.goalSelector.addGoal(1, new com.mofengbaizhi.tinkersnewlife.content.skill.MomoMeleeGoal(this));
+        this.goalSelector.addGoal(1, new com.mofengbaizhi.tinkersnewlife.content.skill.MomoCombatGoal(this));
         this.goalSelector.addGoal(2, new WaterAvoidingRandomStrollGoal(this, 0.8D));
         // TNL1174 技能现在都是 Goal，和诡厄使徒注册法术的方式一样
         // TNL1202 准则规定："开关"应该体现在注册处，而不是散落在
@@ -176,6 +215,8 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             return super.hurt(source, amount);   // TNL893 ★真死后不干预 ✓
         }
         a.q0(this);
+        this.tnl$combat.tick(this);
+        if (this.tnl$tryCombatDodge(source)) return false;
         // TNL1282 拉莱耶之影：**分身还活着 ⇒ 本体免疫**（用户口径："不击杀分身无法对墨默造成伤害"）
         if (this.tnl$shadowShieldActive()) {
             return false;
@@ -360,6 +401,26 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         super.die(source);
     }
 
+    @Override
+    protected void tickDeath() {
+        if (!this.tnl$bossForm()) { super.tickDeath(); return; }
+        // Actual kernel death only; external fake-death is handled by the existing guard.
+        if (!this.level().isClientSide && a.qF(this) > 0) return;
+        ++this.deathTime;
+        this.getNavigation().stop();
+        this.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+        if (!this.level().isClientSide) {
+            if (this.deathTime % 20 == 0) for (net.minecraft.world.entity.LivingEntity victim : this.level().getEntitiesOfClass(
+                    net.minecraft.world.entity.LivingEntity.class, this.getBoundingBox().inflate(16))) {
+                if (victim == this || !victim.isAlive() || tnl$isMomoMinion(victim)
+                        || victim.distanceToSqr(this) > 256) continue;
+                // Provisional +40 each second: net +20 after natural decay, without per-tick packets.
+                com.mofengbaizhi.tinkersnewlife.content.effect.AeonianWeaken.add(victim, 40);
+            }
+            if (this.deathTime >= 200) this.remove(RemovalReason.KILLED);
+        }
+    }
+
     /** TNL907 ★免疫窗挡下 ⇒ ★通知周围玩家让血条闪金 ✓（★限流 250ms ✓） */
     private long tnl$lastFlash = 0L;
     private long tnl$lastVanillaLog = 0L;
@@ -504,6 +565,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         // TNL876 ★★ 性能：只在"真的不一样"时才写 ✓
         //   ★setHealth 会标脏实体数据 ⇒ ★每 tick 调就等于每 tick 发包 ✗
         this.tnl$auth = authoritative;
+        this.tnl$combat.tick(this);
         TNL_ACTIVE.put(this.getUUID(), this);   // TNL1409 ★登记，供 ServerTick END 补同步 ✓
         if (Math.abs(a.qR(this) - authoritative) > 0.01F) {
             this.tnl$setHealthInternal(Math.max(0.0F, authoritative));
@@ -529,9 +591,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
                 super.die(this.damageSources().genericKill());
             } catch (Throwable ignored) {
             }
-            if (!this.isRemoved()) {
-                this.remove(RemovalReason.KILLED);
-            }
+            // tickDeath owns the 200-tick death field and final removal.
         }
     }
 
@@ -732,6 +792,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     @Override
     public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
         super.addAdditionalSaveData(tag);
+        this.tnl$combat.save(tag);
         tag.putByte("TNLSpell", (byte) this.tnl$spell());
         tag.putInt("TNLSpellTicks", this.tnl$castTicks());
         tag.putBoolean("TNLRequiemUsed", this.tnl$requiemUsed);      // TNL1253 一局只放一次，要跨存档
@@ -741,6 +802,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     @Override
     public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        this.tnl$combat.load(tag);
         if (tag.contains("TNLSpell")) {
             this.tnl$setSpell(tag.getByte("TNLSpell"), tag.getInt("TNLSpellTicks"));
         }
@@ -836,6 +898,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
      * （{@code maxHealth * a.C0}）。
      */
     public void tnl$onHit(float damage, float budget) {
+        if (this.tnl$combat.phase() == 3 && this.tnl$spell() != 4) return;
         if (budget <= 0.0F) {
             return;
         }

@@ -36,6 +36,7 @@ public final class RequiemGoal extends MomoSpellGoal {
 
     /** 六芒星：旋转用的角度累积（客户端只是看粒子，这里在服务端算） */
     private double spin;
+    private final MomoDomainPets domainPets = new MomoDomainPets();
 
     public RequiemGoal(KtuluMomo momo) {
         super(momo, 4, COOLDOWN_TICKS, TOTAL_TICKS);
@@ -51,7 +52,9 @@ public final class RequiemGoal extends MomoSpellGoal {
     public boolean canUse() {
         // TNL1259 用户："没有释放死生领域"。加一条只在**血量已低**时输出的探针，
         // 直接看是哪个条件没满足（血量没掉下来 / 已用过 / 冷却 / busy）。
-        boolean tnl$lowHp = this.momo.tnl$authority() <= this.momo.getMaxHealth() * 0.8F;
+        boolean entry = this.momo.tnl$combat().entryDomainPending();
+        boolean tnl$lowHp = entry || (this.momo.tnl$combat().phase() == 3
+                && this.momo.getTarget() != null && this.momo.distanceTo(this.momo.getTarget()) > 16);
         if (this.momo.level().getGameTime() % 20L == 0L) {
             TinkersNewlife.LOGGER.warn(
                     "TNL1259 requiem check hp={}/{} low={} used={} cd={} busy={} flag={}",
@@ -63,7 +66,7 @@ public final class RequiemGoal extends MomoSpellGoal {
         if (!MomoSkills.BREATH_REQUIEM) {
             return false;
         }
-        if (this.momo.tnl$requiemUsed()) {
+        if (this.momo.tnl$requiemUsed() && this.momo.tnl$combat().phase() != 3 && !entry) {
             return false;                                // 一局只放一次
         }
         if (!tnl$lowHp) {
@@ -74,7 +77,9 @@ public final class RequiemGoal extends MomoSpellGoal {
 
     @Override
     protected void onStart() {
+        this.momo.tnl$combat().consumeEntryDomain();
         this.spin = 0.0D;
+        this.domainPets.spawn(this.momo);
         this.momo.tnl$clearRequiemClose();
         this.momo.tnl$markRequiemUsed();
         this.momo.tnl$setAnim(MomoPose.REQUIEM.ordinal(), 0.0F);
@@ -95,6 +100,7 @@ public final class RequiemGoal extends MomoSpellGoal {
     protected boolean onTick() {
         ServerLevel level = (ServerLevel) this.momo.level();
         long now = level.getGameTime();
+        this.domainPets.tick(this.momo);
         this.stun.keep();                                // 每 tick 压住（近战 Goal 会想重新寻路）
 
 
@@ -151,6 +157,7 @@ public final class RequiemGoal extends MomoSpellGoal {
 
     @Override
     protected void onStop() {
+        this.domainPets.clear();
         this.stun.end();
         this.momo.tnl$clearRequiemClose();
         this.momo.tnl$clearAnim();

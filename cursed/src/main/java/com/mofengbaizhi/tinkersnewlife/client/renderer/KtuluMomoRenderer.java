@@ -71,6 +71,7 @@ public class KtuluMomoRenderer extends GeoEntityRenderer<KtuluMomo> {
         this.shadowRadius = 0.43F;
         this.scaleWidth = MODEL_SCALE;
         this.scaleHeight = MODEL_SCALE;
+        this.addRenderLayer(new MomoHeldItemLayer(this));
     }
 
     @Override

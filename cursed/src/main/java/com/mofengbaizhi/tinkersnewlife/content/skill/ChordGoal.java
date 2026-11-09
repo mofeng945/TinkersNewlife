@@ -309,7 +309,7 @@ static final class DiscordantChordHandler {   // TNL1213 收编自原 Discordant
         // TNL1237 以**波心**搜实体：Boss 走开了也要能找到波上的目标
         for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class,
                 new net.minecraft.world.phys.AABB(ox - MAX_RADIUS - 2.0D, oy - 4.0D, oz - MAX_RADIUS - 2.0D, ox + MAX_RADIUS + 2.0D, oy + 4.0D, oz + MAX_RADIUS + 2.0D))) {
-            if (le == momo || !le.isAlive()) {
+            if (le == momo || !le.isAlive() || KtuluMomo.tnl$isMomoMinion(le)) {
                 continue;
             }
             double d = Math.sqrt(Math.pow(le.getX() - ox, 2.0D)
