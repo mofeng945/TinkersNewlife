@@ -407,7 +407,11 @@ public final class ConscienceThresholdHandler {
         try {
             if (!(sp.containerMenu instanceof MerchantMenu menu)) return;
             if (CognitiveMaskItem.isWorn(sp)) a = 0;
-            if (applyPriceMod(sp, menu, a)) {
+            boolean changed = applyPriceMod(sp, menu, a);
+            // TNL1418 ★只要折扣/加价处于生效状态，就**每秒重发一次报价包** ✗
+            // （只发本次有变化不够：打开界面时我们已经改过了 ⇒ 之后每秒都是无变化 ⇒
+            //   永远不再发包 ⇒ 客户端一直显示打开那一刻的旧价 ✗ 用户实测：消耗按一折算，显示原价 ✓）
+            if (changed || sp.getPersistentData().getBoolean(KEY_PRICE_MOD)) {
                 resyncOffers(sp, menu);
             }
         } catch (Throwable ignored) {
