@@ -74,8 +74,7 @@ public class MomoShadow extends Monster {
         this.goalSelector.addGoal(0, new net.minecraft.world.entity.ai.goal.FloatGoal(this));
         this.goalSelector.addGoal(1, new com.mofengbaizhi.tinkersnewlife.content.skill.MomoShadowCombatGoal(this));
         this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8));
-        this.targetSelector.addGoal(2, new net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal<>(
-                this, net.minecraft.world.entity.player.Player.class, true));
+        this.targetSelector.addGoal(0, new com.mofengbaizhi.tinkersnewlife.content.skill.MomoNearestPlayerGoal(this));
     }
 
     @Override
@@ -171,12 +170,7 @@ public class MomoShadow extends Monster {
         }
         if (this.tickCount % 20 == 0) {
             this.tnl$stripForeignBonuses();
-            if (this.ownerId != null && this.level() instanceof net.minecraft.server.level.ServerLevel sl
-                    && sl.getEntity(this.ownerId) instanceof KtuluMomo owner) {
-                var target = owner.getTarget();
-                if (target != null && target.isAlive() && !KtuluMomo.tnl$isMomoMinion(target))
-                    this.setTarget(target);
-            }
+            // Each shadow independently chooses its nearest player; never overwrite with owner's target.
         }
     }
 

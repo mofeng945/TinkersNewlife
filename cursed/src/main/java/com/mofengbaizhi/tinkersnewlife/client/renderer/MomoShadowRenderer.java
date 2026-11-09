@@ -66,7 +66,9 @@ public class MomoShadowRenderer extends HumanoidMobRenderer<MomoShadow, Humanoid
                        MultiBufferSource buffer, int packedLight) {
         RenderType translucent = RenderType.entityTranslucent(TEXTURE);
         final VertexFormat format = translucent.format();
-        MultiBufferSource wrapped = type -> (type != null && type.format() == format)
+        // Only replace the entity skin pass, not item-atlas buffers with the same vertex format.
+        MultiBufferSource wrapped = type -> (type == RenderType.entityCutoutNoCull(TEXTURE)
+                || type == RenderType.entityCutout(TEXTURE) || type == RenderType.entitySolid(TEXTURE))
                 ? buffer.getBuffer(translucent)
                 : buffer.getBuffer(type);
         RenderSystem.setShaderColor(TINT_R, TINT_G, TINT_B, TINT_A);

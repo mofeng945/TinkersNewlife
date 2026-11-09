@@ -172,8 +172,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         }
         this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 16.0F));
         this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
-        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
-        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
+        this.targetSelector.addGoal(0, new com.mofengbaizhi.tinkersnewlife.content.skill.MomoNearestPlayerGoal(this));
     }
 
     @Override
@@ -401,6 +400,60 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         super.die(source);
     }
 
+    private net.minecraft.world.damagesource.DamageSource tnl$pendingLootSource;
+    private net.minecraft.world.entity.player.Player tnl$pendingLootPlayer;
+    private int tnl$pendingLootPlayerTime;
+    private boolean tnl$deathLootReleased;
+
+    /** Queue vanilla death loot until the death field finishes; preserve kill credit. */
+    @Override
+    protected void dropAllDeathLoot(net.minecraft.world.damagesource.DamageSource source) {
+        if (!this.tnl$bossForm()) { super.dropAllDeathLoot(source); return; }
+        if (this.tnl$pendingLootSource == null && !this.tnl$deathLootReleased) {
+            this.tnl$pendingLootSource = source;
+            this.tnl$pendingLootPlayer = this.lastHurtByPlayer;
+            this.tnl$pendingLootPlayerTime = this.lastHurtByPlayerTime;
+        }
+    }
+
+    @Override
+    protected void dropEquipment() {
+        // Combat equipment is cosmetic; never duplicate the two guaranteed pristine weapons.
+        if (!this.tnl$bossForm()) super.dropEquipment();
+    }
+
+    @Override
+    protected void dropCustomDeathLoot(net.minecraft.world.damagesource.DamageSource source, int looting, boolean playerHit) {
+        super.dropCustomDeathLoot(source, looting, playerHit);
+        if (!this.tnl$bossForm()) return;
+        this.spawnAtLocation(new net.minecraft.world.item.ItemStack(
+                com.mofengbaizhi.tinkersnewlife.content.ModItems.STARFALL_LAMENT.get()));
+        this.spawnAtLocation(new net.minecraft.world.item.ItemStack(
+                com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_ORDER.get()));
+        // TConstruct selects a compatible material for each actual part requirement.
+        net.minecraft.world.item.ItemStack scythe = slimeknights.tconstruct.library.tools.helper.ToolBuildHandler
+                .buildItemRandomMaterials(com.mofengbaizhi.tinkersnewlife.content.ModItems.WAR_SCYTHE.get(), this.getRandom());
+        this.spawnAtLocation(scythe);
+    }
+
+    private void tnl$finishDeathLoot() {
+        if (this.tnl$deathLootReleased) return;
+        this.tnl$deathLootReleased = true;
+        if (this.level() instanceof net.minecraft.server.level.ServerLevel sl) {
+            sl.sendParticles(net.minecraft.core.particles.ParticleTypes.EXPLOSION_EMITTER,
+                    this.getX(), this.getY() + 1, this.getZ(), 1, 0, 0, 0, 0);
+            sl.playSound(null, this.blockPosition(), net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE,
+                    net.minecraft.sounds.SoundSource.HOSTILE, 2, 1);
+        }
+        var source = this.tnl$pendingLootSource;
+        if (source != null) {
+            this.lastHurtByPlayer = this.tnl$pendingLootPlayer;
+            this.lastHurtByPlayerTime = this.tnl$pendingLootPlayerTime;
+            super.dropAllDeathLoot(source);
+            this.tnl$pendingLootSource = null;
+        }
+    }
+
     @Override
     protected void tickDeath() {
         if (!this.tnl$bossForm()) { super.tickDeath(); return; }
@@ -417,7 +470,10 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
                 // Provisional +40 each second: net +20 after natural decay, without per-tick packets.
                 com.mofengbaizhi.tinkersnewlife.content.effect.AeonianWeaken.add(victim, 40);
             }
-            if (this.deathTime >= 200) this.remove(RemovalReason.KILLED);
+            if (this.deathTime >= 200) {
+                this.tnl$finishDeathLoot();
+                this.remove(RemovalReason.KILLED);
+            }
         }
     }
 

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:entity",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [{"type": "minecraft:item", "name": "tinkersnewlife:durandal_shard", "functions": [{"function": "minecraft:set_count", "count": {"type": "minecraft:uniform", "min": 1, "max": 5}}]}]
+    },
+    {
+      "rolls": 1,
+      "entries": [{"type": "minecraft:item", "name": "tinkersnewlife:gheloth_remains", "functions": [{"function": "minecraft:set_count", "count": {"type": "minecraft:uniform", "min": 5, "max": 10}}]}]
+    },
+    {
+      "rolls": 1,
+      "entries": [{"type": "minecraft:item", "name": "tinkersnewlife:gheloth_ore", "functions": [{"function": "minecraft:set_count", "count": {"type": "minecraft:uniform", "min": 5, "max": 10}}]}]
+    }
+  ]
+}
