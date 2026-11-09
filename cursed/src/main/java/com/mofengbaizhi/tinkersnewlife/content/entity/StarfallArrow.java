@@ -88,8 +88,9 @@ public class StarfallArrow extends AbstractArrow {
         // TNL1022 ★★ 用户：★"最大概率 5%" ✓（★选了"★强化箭总概率封顶 5%" ✓）
         //   ★基础 2% ✓ + ★每 1 点幸运 +1% ✓ ⇒ ★**上限 5%** ✓（★幸运 +3 就到顶 ✓）
         //   ★负幸运也压不到负数 ✓（★下限 0 ✓）
-        float tnl$enhChance = 0.02F + (float) shooter.getAttributeValue(
-                net.minecraft.world.entity.ai.attributes.Attributes.LUCK) * 0.01F;
+        // Most mobs do not register LUCK; querying its value directly throws.
+        var luck = shooter.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.LUCK);
+        float tnl$enhChance = 0.02F + (luck == null ? 0.0F : (float) luck.getValue()) * 0.01F;
         tnl$enhChance = Math.max(0.0F, Math.min(0.05F, tnl$enhChance));
         this.entityData.set(DATA_ENHANCED, level.random.nextFloat() < tnl$enhChance);
     }
