@@ -26,6 +26,7 @@ import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.player.PlayerContainerEvent;
 import net.minecraftforge.event.entity.living.LivingChangeTargetEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.level.BlockEvent;
@@ -390,45 +391,88 @@ public final class ConscienceThresholdHandler {
 
     private static final String KEY_PRICE_MOD = "tn_price_mod_on";
 
-    /** 每秒修正一次（只在村民界面开着时 ✓）：把实际价格压到 10% / 抬到 190% ✓；掉出阈值就恢复原价 ✓ */
+    /**
+     * TNL1417 ★村民定价每秒自纠 ✗ **改完必须重新同步给客户端** ✗
+     *
+     * <h3>为什么以前是 bug（用户反馈 2026-11-07，XWcWCQA）</h3>
+     * 以前只改服务端的 {@code MerchantOffer.specialPriceDiff} ✗
+     * 但客户端手里的报价是**打开界面那一刻**收到的 `ClientboundMerchantOffersPacket` 的副本 ✗
+     * ⇒ ⭐界面显示的价格 ≠ 服务端实际价格 ⇒ ⭐**取不出物品**（★点了没反应 / 数量对不上 ✓）✓
+     *
+     * <h3>现在</h3>
+     * ① 每秒修正（界面开着时）✓ ② **一有改动就 `sendMerchantOffers` 重新同步** ✓
+     * ③ 打开界面那一刻也立刻修正并同步 ✓（不用等下一秒 ✓）
+     */
     private static void tickVillagerDiscount(ServerPlayer sp, int a) {
         try {
             if (!(sp.containerMenu instanceof MerchantMenu menu)) return;
-            /*
-             * §674 修：**村民定价也属于"第三方怎么看你"** ⇒ 按 §508 的口径，
-             * 戴着「双向认知阻碍面具」时对村民一律视为**中立** ✓
-             * （面具 javadoc 的原话就是「佩戴者的善恶值……都将对外视为 0（自己看不是 0）」✓）。
-             *
-             * <p>改之前这里读的是真值 ⇒ 戴面具的恶人照样被村民加价 ✗ ——
-             * 而仓库里 Momo 那边**早就**按面具算了（{@code MomoFavor.masking} ✓）
-             * ⇒ 两处口径不一致，本轮统一 ✓。
-             *
-             * <p>⚠ 为什么不调 {@code alignmentAsSeenBy(sp, 观察者)}：{@code MerchantMenu}
-             * **没有公开的 trader getter**（我核过它的 public 方法表：只有 getOffers / getTraderXp /
-             * getTraderLevel … ✓）⇒ 这里直接查面具，结果与 seen-by **完全一致**
-             * （戴面具 ⇒ 0、不戴 ⇒ 真值 ✓）。
-             */
             if (CognitiveMaskItem.isWorn(sp)) a = 0;
-            MerchantOffers offers = menu.getOffers();
+            if (applyPriceMod(sp, menu, a)) {
+                resyncOffers(sp, menu);
+            }
+        } catch (Throwable ignored) {
+        }
+    }
 
-            double factor = a >= DISCOUNT_AT ? PRICE_DOWN : (a <= MARKUP_AT ? PRICE_UP : 1.0D);
-            if (factor == 1.0D) {
-                // 掉出阈值 ⇒ 只复原一次 ✓（用持久标记防每秒乱重置 ✓ 免得把原版"需求涨价"也一直清掉 ✗）
-                if (sp.getPersistentData().getBoolean(KEY_PRICE_MOD)) {
-                    for (MerchantOffer offer : offers) offer.resetSpecialPriceDiff();
-                    sp.getPersistentData().putBoolean(KEY_PRICE_MOD, false);
-                }
-                return;
+    /**
+     * 打开村民界面：**只改服务端报价**，不发包 ✗
+     *
+     * <p>⚠ 顺序问题（已核 vanilla ✗）：{@code Merchant.openTradingScreen} 里是
+     * {@code openMenu(...)}（★本事件就在这里面触发 ✓）**然后**才
+     * {@code sendMerchantOffers(getOffers(), …)} ✓
+     * ⇒ ⭐在这里改完，vanilla 随后发出去的就是**改好的价格** ✓
+     * ⇒ ⚠ 反过来在这里自己发包反而会被 vanilla 那条**覆盖掉** ✗ 所以这里**不发包** ✓
+     */
+    @SubscribeEvent
+    public static void onContainerOpen(PlayerContainerEvent.Open event) {
+        try {
+            if (!(event.getEntity() instanceof ServerPlayer sp)) return;
+            if (!(event.getContainer() instanceof MerchantMenu menu)) return;
+            int a = ConscienceHandler.getAlignment(sp);
+            if (CognitiveMaskItem.isWorn(sp)) a = 0;
+            applyPriceMod(sp, menu, a);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /**
+     * 把实际价格压到 10% / 抬到 190% ✓；掉出阈值就恢复原价 ✓
+     *
+     * @return 是否真的改过（★改过才需要重新同步 ✓ 没改就别发包 ✓）
+     */
+    private static boolean applyPriceMod(ServerPlayer sp, MerchantMenu menu, int a) {
+        MerchantOffers offers = menu.getOffers();
+        double factor = a >= DISCOUNT_AT ? PRICE_DOWN : (a <= MARKUP_AT ? PRICE_UP : 1.0D);
+        if (factor == 1.0D) {
+            // 掉出阈值 ⇒ 只复原一次 ✓（用持久标记防每秒乱重置 ✓ 免得把原版"需求涨价"也一直清掉 ✗）
+            if (sp.getPersistentData().getBoolean(KEY_PRICE_MOD)) {
+                for (MerchantOffer offer : offers) offer.resetSpecialPriceDiff();
+                sp.getPersistentData().putBoolean(KEY_PRICE_MOD, false);
+                return true;
             }
-            sp.getPersistentData().putBoolean(KEY_PRICE_MOD, true);
-            for (MerchantOffer offer : offers) {
-                int base = offer.getBaseCostA().getCount();
-                // ⚠ 上限必须跟原版一样夹在 maxStackSize ✓ 否则被原版夹住后"当前 ≠ 目标"⇒ 每秒无限累加差值 ✗
-                int cap = Math.max(1, offer.getBaseCostA().getMaxStackSize());
-                int desired = Math.max(1, Math.min(cap, (int) Math.round(base * factor)));
-                int current = offer.getCostA().getCount();
-                if (current != desired) offer.addToSpecialPriceDiff(desired - current);
+            return false;
+        }
+        sp.getPersistentData().putBoolean(KEY_PRICE_MOD, true);
+        boolean changed = false;
+        for (MerchantOffer offer : offers) {
+            int base = offer.getBaseCostA().getCount();
+            // ⚠ 上限必须跟原版一样夹在 maxStackSize ✓ 否则被原版夹住后"当前 ≠ 目标"⇒ 每秒无限累加差值 ✗
+            int cap = Math.max(1, offer.getBaseCostA().getMaxStackSize());
+            int desired = Math.max(1, Math.min(cap, (int) Math.round(base * factor)));
+            int current = offer.getCostA().getCount();
+            if (current != desired) {
+                offer.addToSpecialPriceDiff(desired - current);
+                changed = true;
             }
+        }
+        return changed;
+    }
+
+    /** ★把当前报价重新发给客户端（★价格显示与"能否取物"都以这个为准 ✓） */
+    private static void resyncOffers(ServerPlayer sp, MerchantMenu menu) {
+        try {
+            sp.sendMerchantOffers(menu.containerId, menu.getOffers(), menu.getTraderLevel(),
+                    menu.getTraderXp(), menu.showProgressBar(), menu.canRestock());
         } catch (Throwable ignored) {
         }
     }
