@@ -36,7 +36,6 @@ tasks.register('singleJar', Jar) {
     manifest {
         attributes('MixinConfigs': 'tinkersnewlife.mixins.json')
     }
-    from({ zipTree(project(':common').tasks.named('jar').get().archiveFile.get().asFile) })
     from({ zipTree(project(':cursed').tasks.named('jar').get().archiveFile.get().asFile) }) {
         exclude 'META-INF/**'
     }
@@ -46,4 +45,8 @@ tasks.register('singleJar', Jar) {
     from({ zipTree(project(':apostle').tasks.named('jar').get().archiveFile.get().asFile) }) {
         exclude 'META-INF/**'
     }
+    // TNL1420 ★common 必须放**最后** ✗ 否则 common/build 里残留的旧 .class 会通过
+    // duplicatesStrategy.EXCLUDE **抢先**占位，把 cursed/imagination 里的新类盖掉 ✗
+    // （2026-11-09 实锤：imagination 的村民折扣修复连续两版没进包 ✓）
+    from({ zipTree(project(':common').tasks.named('jar').get().archiveFile.get().asFile) })
 }

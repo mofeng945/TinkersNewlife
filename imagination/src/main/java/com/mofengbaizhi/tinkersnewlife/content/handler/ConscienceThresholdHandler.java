@@ -16,6 +16,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.npc.AbstractVillager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.MerchantMenu;
 import net.minecraft.world.item.ItemStack;
@@ -26,6 +27,7 @@ import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.entity.player.PlayerContainerEvent;
 import net.minecraftforge.event.entity.living.LivingChangeTargetEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
@@ -76,6 +78,9 @@ import java.util.UUID;
  */
 @Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class ConscienceThresholdHandler {
+
+    private static final org.slf4j.Logger LOG =
+            org.slf4j.LoggerFactory.getLogger("tinkersnewlife/title-price");
 
     private ConscienceThresholdHandler() {}
 
@@ -407,7 +412,7 @@ public final class ConscienceThresholdHandler {
         try {
             if (!(sp.containerMenu instanceof MerchantMenu menu)) return;
             if (CognitiveMaskItem.isWorn(sp)) a = 0;
-            boolean changed = applyPriceMod(sp, menu, a);
+            boolean changed = applyPriceModToOffers(sp, menu.getOffers(), a);
             // TNL1418 ★只要折扣/加价处于生效状态，就**每秒重发一次报价包** ✗
             // （只发本次有变化不够：打开界面时我们已经改过了 ⇒ 之后每秒都是无变化 ⇒
             //   永远不再发包 ⇒ 客户端一直显示打开那一刻的旧价 ✗ 用户实测：消耗按一折算，显示原价 ✓）
@@ -416,6 +421,49 @@ public final class ConscienceThresholdHandler {
             }
         } catch (Throwable ignored) {
         }
+    }
+
+    /**
+     * TNL1419 ★走**原版同一条时间线**：右击村民时（`mobInteract` → `Villager.startTrading`
+     * → `updateSpecialPrices` → `openTradingScreen` → 发报价包）✗
+     *
+     * <p>我们在 `PlayerInteractEvent.EntityInteract`（★比 `mobInteract` 更早 ✓）里
+     * 先把报价改好 ⇒ ⭐之后 vanilla 发出去的 `ClientboundMerchantOffersPacket`
+     * 带的就是**改后价格** ⇒ ⭐显示与消耗天然一致 ✓
+     *
+     * <p>⚠ 为什么不直接用「原版打折接口」：原版只有
+     * {@code Villager#updateSpecialPrices}（**private**）+ {@code GossipContainer}
+     * （`getGossips()` 公开 ✓ 但每级折扣被 `GossipType` 上限夹死 ✗ 最多几颗绿宝石 ✗
+     * 做不到 1 折 ✗）⇒ 所以保留"直接改报价"✓ 但**把时机放到原版发包之前** ✓
+     */
+    @SubscribeEvent
+    public static void onInteractVillager(PlayerInteractEvent.EntityInteract event) {
+        applyBeforeVillagerOpen(event.getEntity(), event.getTarget());
+    }
+
+    @SubscribeEvent
+    public static void onInteractVillagerSpecific(PlayerInteractEvent.EntityInteractSpecific event) {
+        applyBeforeVillagerOpen(event.getEntity(), event.getTarget());
+    }
+
+    private static void applyBeforeVillagerOpen(Player player, Entity target) {
+        try {
+            if (!(player instanceof ServerPlayer sp)) return;
+            if (!(target instanceof AbstractVillager villager)) return;
+            int a = ConscienceHandler.getAlignment(sp);
+            if (CognitiveMaskItem.isWorn(sp)) a = 0;
+            if (applyPriceModToOffers(sp, villager.getOffers(), a)) {
+                LOG.info("[TNL1419] 村民报价已在打开前改好 a={} factor={} offers={}（首条 {}→{}）",
+                        a, priceFactor(a), villager.getOffers().size(),
+                        villager.getOffers().isEmpty() ? -1 : villager.getOffers().get(0).getBaseCostA().getCount(),
+                        villager.getOffers().isEmpty() ? -1 : villager.getOffers().get(0).getCostA().getCount());
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private static double priceFactor(int a) {
+        return a >= DISCOUNT_AT ? PRICE_DOWN : (a <= MARKUP_AT ? PRICE_UP : 1.0D);
     }
 
     /**
@@ -434,7 +482,7 @@ public final class ConscienceThresholdHandler {
             if (!(event.getContainer() instanceof MerchantMenu menu)) return;
             int a = ConscienceHandler.getAlignment(sp);
             if (CognitiveMaskItem.isWorn(sp)) a = 0;
-            applyPriceMod(sp, menu, a);
+            applyPriceModToOffers(sp, menu.getOffers(), a);
         } catch (Throwable ignored) {
         }
     }
@@ -444,8 +492,7 @@ public final class ConscienceThresholdHandler {
      *
      * @return 是否真的改过（★改过才需要重新同步 ✓ 没改就别发包 ✓）
      */
-    private static boolean applyPriceMod(ServerPlayer sp, MerchantMenu menu, int a) {
-        MerchantOffers offers = menu.getOffers();
+    private static boolean applyPriceModToOffers(ServerPlayer sp, MerchantOffers offers, int a) {
         double factor = a >= DISCOUNT_AT ? PRICE_DOWN : (a <= MARKUP_AT ? PRICE_UP : 1.0D);
         if (factor == 1.0D) {
             // 掉出阈值 ⇒ 只复原一次 ✓（用持久标记防每秒乱重置 ✓ 免得把原版"需求涨价"也一直清掉 ✗）
