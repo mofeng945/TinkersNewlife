@@ -254,6 +254,10 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.network.tools.PacketVaultSync::toBytes,
                 com.mofengbaizhi.tinkersnewlife.network.tools.PacketVaultSync::new,
                 com.mofengbaizhi.tinkersnewlife.network.tools.PacketVaultSync::handle);
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.network.tools.PacketAeonianTicks.class,
+                com.mofengbaizhi.tinkersnewlife.network.tools.PacketAeonianTicks::toBytes,
+                com.mofengbaizhi.tinkersnewlife.network.tools.PacketAeonianTicks::new,
+                com.mofengbaizhi.tinkersnewlife.network.tools.PacketAeonianTicks::handle);
         // 呪蔵存量查询（C2S）与回包（S2C）：准星对准时显示
         registerPacket(com.mofengbaizhi.tinkersnewlife.network.curse.PacketQueryCurseVault.class,
                 com.mofengbaizhi.tinkersnewlife.network.curse.PacketQueryCurseVault::toBytes,

@@ -88,14 +88,9 @@ public class UnnameableClientHandler {
             return 0.0F;
         }
         try {
-            // TNL1070 read the hidden marker cooldown instead of a mob effect (effects were visible)
-            var marker = com.mofengbaizhi.tinkersnewlife.content.ModItems.AEONIAN_MARKER.get();
-            var cds = player.getCooldowns();
-            if (!cds.isOnCooldown(marker)) {
-                return 0.0F;
-            }
-            float left = 1.0F - cds.getCooldownPercent(marker, 0.0F);   // 1.0 right after stacking
-            return Math.max(0.0F, Math.min(1.0F, left / 200.0F));
+            long until = player.getPersistentData().getLong("tnl_ao_client_until");
+            float remaining = Math.max(0L, until - player.level().getGameTime());
+            return Math.min(1.0F, remaining / 200.0F);
         } catch (Throwable ignored) {
             return 0.0F;
         }

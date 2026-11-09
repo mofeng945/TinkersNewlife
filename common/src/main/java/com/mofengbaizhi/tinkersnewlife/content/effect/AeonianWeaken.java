@@ -77,6 +77,10 @@ public final class AeonianWeaken {
         int v = Math.min(MAX, ticks(e) + amount);
         TRACKED.add(e.getUUID());
         tag(e).putInt(TICKS, v);
+        if (e instanceof net.minecraft.server.level.ServerPlayer sp) {
+            TinkersNewlife.CHANNEL.send(net.minecraftforge.network.PacketDistributor.PLAYER.with(() -> sp),
+                    new com.mofengbaizhi.tinkersnewlife.network.tools.PacketAeonianTicks(v));
+        }
         // TNL1070 for players mirror the count into a hidden item cooldown, which the client can read
         if (e instanceof net.minecraft.world.entity.player.Player pl) {
             pl.getCooldowns().addCooldown(
@@ -138,7 +142,7 @@ public final class AeonianWeaken {
         }
         for (LivingEntity le : touched) {
             int t = ticks(le);
-            if (t <= 0) {
+            if (t <= 0 && stun(le) <= 0) {
                 continue;
             }
             if (t >= MAX) {
@@ -164,9 +168,15 @@ public final class AeonianWeaken {
                         net.minecraft.sounds.SoundSource.HOSTILE, 1.2F, 0.7F);
                 TinkersNewlife.LOGGER.warn("TNL1043 aeonian burst on {} for {} true damage, stunned 10s",
                         le.getName().getString(), dmg);
-                continue;
+                var effect = com.mofengbaizhi.tinkersnewlife.content.ModEffects.UNNAMEABLE.get();
+                le.addEffect(new MobEffectInstance(effect, STUN_TICKS, 0, false, true, true));
+                if (le instanceof net.minecraft.server.level.ServerPlayer sp) {
+                    TinkersNewlife.CHANNEL.send(net.minecraftforge.network.PacketDistributor.PLAYER.with(() -> sp),
+                            new com.mofengbaizhi.tinkersnewlife.network.tools.PacketAeonianTicks(0));
+                }
             }
-            // TNL1049 the mark effect decays by itself one tick at a time, nothing to do here
+            // Persistent counters do not decay automatically.
+            if (ticks(le) > 0) tag(le).putInt(TICKS, ticks(le) - 1);
             int st = stun(le);
             if (st > 0) {
                 // TNL1048 ★★ 用户：★"不是挂不可名状吗？我写的那个效果" ✓
@@ -179,7 +189,7 @@ public final class AeonianWeaken {
                 var tnl$eff = net.minecraft.core.registries.BuiltInRegistries.MOB_EFFECT.get(
                         new net.minecraft.resources.ResourceLocation("tinkersnewlife", "unnameable"));
                 if (tnl$eff != null) {
-                    le.addEffect(new MobEffectInstance(tnl$eff, STUN_TICKS, 0, false, false, false));
+                    le.addEffect(new MobEffectInstance(tnl$eff, Math.max(1, st), 0, false, true, true));
                 }
                 le.setDeltaMovement(Vec3.ZERO);
                 le.hurtMarked = true;
