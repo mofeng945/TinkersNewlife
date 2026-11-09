@@ -82,8 +82,10 @@ public class MomoGeoModel extends GeoModel<KtuluMomo> {
         headYaw = Mth.clamp(headYaw, -animatable.getMaxHeadYRot(), animatable.getMaxHeadYRot());
         headPitch = Mth.clamp(headPitch, -animatable.getMaxHeadXRot(), animatable.getMaxHeadXRot());
         final float deg = (float) Math.PI / 180.0F;
-        head.setRotY(head.getRotY() + headYaw * deg);
-        head.setRotX(head.getRotX() + headPitch * deg);
+        // Absolute pose: GeckoLib can retain last frame's rotation when no animation
+        // writes this bone. Adding to getRot*() accumulates a new turn every frame.
+        head.setRotY(head.getInitialSnapshot().getRotY() + headYaw * deg);
+        head.setRotX(head.getInitialSnapshot().getRotX() + headPitch * deg);
     }
 
     @Override
