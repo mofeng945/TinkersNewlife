@@ -14,7 +14,7 @@ public final class MomoNearestPlayerGoal extends Goal {
     @Override public boolean canContinueToUse() { return canUse(); }
     @Override public boolean requiresUpdateEveryTick() { return true; }
     @Override public void start() { update(); }
-    @Override public void tick() { if (mob.tickCount % 10 == 0) update(); }
+    @Override public void tick() { update(); }
     private void update() {
         double range = mob.getAttributeValue(Attributes.FOLLOW_RANGE);
         double nearest = range * range;

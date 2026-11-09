@@ -213,6 +213,10 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         if (this.level().isClientSide || this.tnl$dead) {
             return super.hurt(source, amount);   // TNL893 ★真死后不干预 ✓
         }
+        if (source.getEntity() instanceof net.minecraft.world.entity.player.Player player) {
+            this.tnl$pendingLootPlayer = player;
+            this.tnl$pendingLootPlayerTime = 100;
+        }
         a.q0(this);
         this.tnl$combat.tick(this);
         if (this.tnl$tryCombatDodge(source)) return false;
@@ -445,13 +449,13 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             sl.playSound(null, this.blockPosition(), net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE,
                     net.minecraft.sounds.SoundSource.HOSTILE, 2, 1);
         }
-        var source = this.tnl$pendingLootSource;
-        if (source != null) {
-            this.lastHurtByPlayer = this.tnl$pendingLootPlayer;
-            this.lastHurtByPlayerTime = this.tnl$pendingLootPlayerTime;
-            super.dropAllDeathLoot(source);
-            this.tnl$pendingLootSource = null;
-        }
+        // Kernel death can skip vanilla die() (or an event can cancel it), so the
+        // deferred dropAllDeathLoot callback is not guaranteed to have run.
+        var source = this.tnl$pendingLootSource != null ? this.tnl$pendingLootSource : this.damageSources().genericKill();
+        if (this.tnl$pendingLootPlayer != null) this.lastHurtByPlayer = this.tnl$pendingLootPlayer;
+        this.lastHurtByPlayerTime = Math.max(this.lastHurtByPlayerTime, this.tnl$pendingLootPlayerTime);
+        super.dropAllDeathLoot(source);
+        this.tnl$pendingLootSource = null;
     }
 
     @Override
