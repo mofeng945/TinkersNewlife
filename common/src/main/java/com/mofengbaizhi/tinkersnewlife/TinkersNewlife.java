@@ -172,6 +172,7 @@ public class TinkersNewlife {
         ModCreativeTabs.CREATIVE_MODE_TABS.register(modEventBus);
 
         ModEntities.ENTITIES.register(modEventBus);
+        com.mofengbaizhi.tinkersnewlife.worldgen.SleepwakeChurchRegistry.register(modEventBus);
 
         ModMenus.MENUS.register(modEventBus);
 

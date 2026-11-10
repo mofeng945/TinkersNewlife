@@ -24,7 +24,7 @@ public final class SleepwakeChurchPiece extends TemplateStructurePiece {
     public static final ResourceLocation TEMPLATE = new ResourceLocation("tinkersnewlife", "sleepwake_church");
     public static final int WIDTH = 51, HEIGHT = 82, DEPTH = 73;
     private static StructurePlaceSettings settings() {
-        return new StructurePlaceSettings().setIgnoreEntities(true)
+        return new StructurePlaceSettings().setIgnoreEntities(true).setKnownShape(false)
                 .addProcessor(BlockIgnoreProcessor.STRUCTURE_BLOCK);
     }
     public SleepwakeChurchPiece(StructurePieceType type, StructureTemplateManager manager, BlockPos origin) {
@@ -51,5 +51,20 @@ public final class SleepwakeChurchPiece extends TemplateStructurePiece {
             }
         }
         super.postProcess(level, structures, generator, random, chunkBounds, chunk, pivot);
+        BlockPos altar = templatePosition.offset(25, 5, 58);
+        // Only the altar chunk creates the resident. The deterministic UUID also guards retries.
+        if (chunkBounds.isInside(altar)) {
+            java.util.UUID id = java.util.UUID.nameUUIDFromBytes(("sleepwake:" + templatePosition.asLong())
+                    .getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            if (level.getLevel().getEntity(id) == null) {
+                var merchant = com.mofengbaizhi.tinkersnewlife.content.ModEntities.MOMO_MERCHANT.get().create(level.getLevel());
+                if (merchant != null) {
+                    merchant.setUUID(id);
+                    merchant.moveTo(altar.getX()+0.5, altar.getY(), altar.getZ()+0.5, 180, 0);
+                    merchant.setChurchResident();
+                    level.addFreshEntity(merchant);
+                }
+            }
+        }
     }
 }

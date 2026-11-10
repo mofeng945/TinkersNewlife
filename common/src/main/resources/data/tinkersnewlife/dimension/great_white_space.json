@@ -16,7 +16,9 @@
           "height": 1
         }
       ],
-      "structure_overrides": []
+      "structure_overrides": [
+        "tinkersnewlife:sleepwake_church_white_space"
+      ]
     }
   }
 }

@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "tinkersnewlife:sleepwake_church_white_space",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 160,
+    "separation": 80,
+    "salt": 17531602
+  }
+}

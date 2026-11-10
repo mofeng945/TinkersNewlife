@@ -1,0 +1,8 @@
+{
+  "type": "tinkersnewlife:sleepwake_church",
+  "white_space": true,
+  "biomes": "minecraft:the_void",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "none"
+}

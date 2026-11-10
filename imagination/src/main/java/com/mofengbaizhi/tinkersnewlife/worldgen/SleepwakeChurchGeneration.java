@@ -19,7 +19,7 @@ import net.minecraftforge.fml.common.Mod;
 import java.util.ArrayDeque;
 
 /** Placement is queued from actual loaded starts, never recursively searches worldgen. */
-@Mod.EventBusSubscriber(modid = TinkersNewlife.MOD_ID)
+// Legacy event placement disabled: native StructureStart generation owns new churches.
 public final class SleepwakeChurchGeneration {
     private record Job(ServerLevel level, BlockPos origin) {}
     private static final ArrayDeque<Job> QUEUE = new ArrayDeque<>();
