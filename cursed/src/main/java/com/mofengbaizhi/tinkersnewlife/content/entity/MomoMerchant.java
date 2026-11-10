@@ -369,6 +369,15 @@ public class MomoMerchant extends PathfinderMob
         this.naturalSpawn = natural;
     }
 
+    /** Church residents keep their initial stock and never use natural-spawn departure. */
+    public void setChurchResident() {
+        this.getPersistentData().putBoolean("SleepwakeChurchResident", true);
+        this.naturalSpawn = false;
+        this.setPersistenceRequired();
+        this.homePos = this.blockPosition();
+        this.restrictTo(this.homePos, 5);
+    }
+
     public boolean isNaturalSpawn() {
         return naturalSpawn;
     }
@@ -521,7 +530,7 @@ public class MomoMerchant extends PathfinderMob
     public void ensureOffers() {
         if (level().isClientSide) return;
         long day = currentDay();
-        if (!offers.isEmpty() && offerDay == day) return;
+        if (!offers.isEmpty() && (offerDay == day || this.getPersistentData().getBoolean("SleepwakeChurchResident"))) return;
         offers.clear();
         offerDay = day;
         RandomSource random = this.getRandom();

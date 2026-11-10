@@ -1,0 +1,279 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": {
+        "type": "minecraft:uniform",
+        "min": 1,
+        "max": 2
+      },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "tinkersnewlife:gheloth_remains"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tinkersnewlife:nicholas_blessing"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tinkersnewlife:yellow_king_remnant"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tinkersnewlife:rlyeh_call"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tinkersnewlife:echo_of_the_void"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tinkersnewlife:astral_anchor"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tinkersnewlife:nexus_of_spacetime"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tinkersnewlife:yog_sothoth_gate_key"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "tinkersnewlife:nyarlathotep_desire"
+        }
+      ]
+    },
+    {
+      "rolls": {
+        "type": "minecraft:uniform",
+        "min": 3,
+        "max": 6
+      },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:bamboo"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:bamboo_planks"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:black_wool"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:blue_ice"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:blue_wool"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:brown_wool"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:cactus"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:calcite"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:clay"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:clay_ball"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:crimson_planks"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:cyan_wool"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:end_rod"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:exposed_copper"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:feather"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:fermented_spider_eye"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:flint"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:glowstone"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:goat_horn"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:gray_wool"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:green_wool"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:honey_block"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:honey_bottle"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:ice"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:light_blue_wool"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:light_gray_wool"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:lime_wool"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:magenta_wool"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:magma_cream"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:nautilus_shell"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:obsidian"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:orange_wool"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:oxidized_copper"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:packed_ice"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:paper"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:phantom_membrane"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:pink_wool"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:popped_chorus_fruit"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:purple_wool"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:rabbit_hide"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:red_wool"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:scute"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:shulker_shell"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:spider_eye"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:twisting_vines"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:vine"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:warped_planks"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:waxed_copper_block"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:waxed_exposed_copper"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:waxed_oxidized_copper"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:waxed_weathered_copper"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:weathered_copper"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:weeping_vines"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:white_wool"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:yellow_wool"
+        }
+      ]
+    }
+  ]
+}
