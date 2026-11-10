@@ -13,6 +13,18 @@ public final class SleepwakeChurchStructure extends Structure {
     private final boolean whiteSpace;
     public SleepwakeChurchStructure(StructureSettings settings, boolean whiteSpace) { super(settings); this.whiteSpace = whiteSpace; }
     @Override protected Optional<GenerationStub> findGenerationPoint(GenerationContext context) {
+        // GenerationContext carries no dimension key. Match the actual server generator
+        // by identity (read only); never load a chunk or query structure starts here.
+        var server = net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer();
+        if (server == null) return Optional.empty();
+        boolean allowed = false;
+        for (var level : server.getAllLevels()) {
+            if (level.getChunkSource().getGenerator() != context.chunkGenerator()) continue;
+            var expected = whiteSpace ? new net.minecraft.resources.ResourceLocation("tinkersnewlife", "great_white_space")
+                    : net.minecraft.world.level.Level.OVERWORLD.location();
+            if (level.dimension().location().equals(expected)) allowed = true;
+        }
+        if (!allowed) return Optional.empty();
         int x = context.chunkPos().getMinBlockX();
         int z = context.chunkPos().getMinBlockZ();
         if (!whiteSpace && !SleepwakeVillageProbe.nearVillage(context, x, z)) return Optional.empty();
