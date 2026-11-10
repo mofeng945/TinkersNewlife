@@ -530,7 +530,7 @@ public class MomoMerchant extends PathfinderMob
     public void ensureOffers() {
         if (level().isClientSide) return;
         long day = currentDay();
-        if (!offers.isEmpty() && (offerDay == day || this.getPersistentData().getBoolean("SleepwakeChurchResident"))) return;
+        if (!offers.isEmpty() && offerDay == day) return;
         offers.clear();
         offerDay = day;
         RandomSource random = this.getRandom();
