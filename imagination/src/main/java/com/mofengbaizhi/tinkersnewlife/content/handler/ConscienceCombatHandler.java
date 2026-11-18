@@ -128,7 +128,8 @@ public final class ConscienceCombatHandler {
 
     private static boolean crystalBroken = false;
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onCrystalGone(net.minecraftforge.event.entity.EntityLeaveLevelEvent event) {
         try {
             // ⚠ 末影水晶**不是** LivingEntity ✗ 收不到 LivingDeathEvent ✗ ⇒ 用"离开世界"（被打碎/被移除 ✓）判定 ✓
@@ -149,7 +150,8 @@ public final class ConscienceCombatHandler {
 
     private static final Map<UUID, LastHit> LAST_HIT = new HashMap<>();
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onLivingDamage(LivingDamageEvent event) {
         try {
             LivingEntity e = event.getEntity();
@@ -167,7 +169,8 @@ public final class ConscienceCombatHandler {
     private static final Map<UUID, Long> LAST_ATTACK_TICK = new HashMap<>();
     private static final Map<String, Integer> HIT_STREAK = new HashMap<>();     // 玩家|攻击者 -> 连击数
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onHurt(LivingHurtEvent event) {
         try {
             // ⭐§833 匠魂二次伤害（流血/中毒那类持续跳伤）不算"被打了多少次" ✗
@@ -199,7 +202,8 @@ public final class ConscienceCombatHandler {
     //  E12：村民被感染成僵尸村民
     // ============================================================
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onConversion(LivingConversionEvent.Post event) {
         try {
             if (!(event.getEntity() instanceof Villager)) return;
@@ -215,7 +219,8 @@ public final class ConscienceCombatHandler {
     //  E13：让生物掉落武器/盔甲
     // ============================================================
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onDrops(net.minecraftforge.event.entity.living.LivingDropsEvent event) {
         try {
             LivingEntity dead = event.getEntity();
@@ -244,7 +249,8 @@ public final class ConscienceCombatHandler {
 
     private static final Set<UUID> CHARM_PINGED = new HashSet<>();
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onDeath(LivingDeathEvent event) {
         try {
             LivingEntity dead = event.getEntity();
@@ -341,7 +347,8 @@ public final class ConscienceCombatHandler {
     //  E11：魅惑超过 10s（每秒扫附近 ✓ 每只只扣一次 ✓）
     // ============================================================
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         try {
             if (event.phase != TickEvent.Phase.END) return;
@@ -364,7 +371,8 @@ public final class ConscienceCombatHandler {
 
     private static final Set<UUID> SERVANT_EQUIPPED = new HashSet<>();
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onInteractEntity(PlayerInteractEvent.EntityInteract event) {
         try {
             if (!(event.getEntity() instanceof ServerPlayer sp)) return;

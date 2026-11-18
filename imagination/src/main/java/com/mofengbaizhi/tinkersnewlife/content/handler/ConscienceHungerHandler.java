@@ -65,7 +65,8 @@ public final class ConscienceHungerHandler {
     private static final Map<UUID, Boolean> FOOD_ATE = new HashMap<>();
     private static final Map<UUID, Integer> FOOD_LAST = new HashMap<>();
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         try {
             if (event.phase != TickEvent.Phase.END) return;
@@ -127,7 +128,8 @@ public final class ConscienceHungerHandler {
     //  E16：满饥饿度还吃/喝
     // ============================================================
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onUseFinish(LivingEntityUseItemEvent.Finish event) {
         try {
             if (!(event.getEntity() instanceof ServerPlayer sp)) return;
@@ -152,7 +154,8 @@ public final class ConscienceHungerHandler {
 
     private static final Map<String, Long> CAKE_START = new HashMap<>();
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onCake(PlayerInteractEvent.RightClickBlock event) {
         try {
             if (!(event.getEntity() instanceof ServerPlayer sp)) return;
@@ -178,7 +181,8 @@ public final class ConscienceHungerHandler {
     //  E20：黑暗里连续挖方块 / E22 木锄 / E23 木斧
     // ============================================================
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onBlockBreak(BlockEvent.BreakEvent event) {
         try {
             if (!(event.getPlayer() instanceof ServerPlayer sp)) return;
@@ -210,7 +214,8 @@ public final class ConscienceHungerHandler {
     }
 
     /** E22：木锄头锄地（右键泥土/草方块 ✓ 近似"锄地"✓ 未落地判定 ✓） */
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onHoe(PlayerInteractEvent.RightClickBlock event) {
         try {
             if (!(event.getEntity() instanceof ServerPlayer sp)) return;
@@ -232,7 +237,8 @@ public final class ConscienceHungerHandler {
     private static final Map<UUID, Long> LAST_SLEEP_DAY = new HashMap<>();
     private static final Map<UUID, Integer> SLEEP_STREAK = new HashMap<>();
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onSleep(PlayerSleepInBedEvent event) {
         try {
             if (!(event.getEntity() instanceof ServerPlayer sp)) return;
@@ -243,7 +249,8 @@ public final class ConscienceHungerHandler {
         }
     }
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onWakeUp(PlayerWakeUpEvent event) {
         try {
             if (!(event.getEntity() instanceof ServerPlayer sp)) return;
@@ -265,7 +272,8 @@ public final class ConscienceHungerHandler {
     //  清内存（防长跑泄漏 ✓）
     // ============================================================
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onCleanup(TickEvent.PlayerTickEvent event) {
         try {
             if (event.phase != TickEvent.Phase.END) return;

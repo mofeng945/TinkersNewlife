@@ -9,6 +9,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.StructureTags;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.animal.IronGolem;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.monster.Witch;
+import net.minecraft.world.entity.monster.EnderMan;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.inventory.MerchantMenu;
 import net.minecraft.world.item.AxeItem;
@@ -93,7 +98,8 @@ public final class ConscienceDeedHandler {
     //  G8 亲手制作物品
     // ============================================================
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onCrafted(PlayerEvent.ItemCraftedEvent event) {
         try {
             if (event.getEntity() instanceof ServerPlayer sp) bump(sp, K_CRAFT, 20, +1);
@@ -105,7 +111,8 @@ public final class ConscienceDeedHandler {
     //  G10 骨粉
     // ============================================================
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onBonemeal(BonemealEvent event) {
         try {
             if (!(event.getEntity() instanceof ServerPlayer sp)) return;
@@ -121,7 +128,8 @@ public final class ConscienceDeedHandler {
     //  G12 剥树皮 / G3 种植（都走右键 ✓ 种植用放置事件更准 ✓ 见下）
     // ============================================================
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onRightClickBlock(net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickBlock event) {
         try {
             if (!(event.getEntity() instanceof ServerPlayer sp)) return;
@@ -139,7 +147,8 @@ public final class ConscienceDeedHandler {
     }
 
     /** G3 种植：放置下来的方块是作物 / 下界疣 ⇒ 亲手种 ✓（比"右键了一下"准 ✓） */
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onPlace(BlockEvent.EntityPlaceEvent event) {
         try {
             if (!(event.getEntity() instanceof ServerPlayer sp)) return;
@@ -160,7 +169,8 @@ public final class ConscienceDeedHandler {
     //  G3 收获 / E3 结构内挖方块
     // ============================================================
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onBlockBreak(BlockEvent.BreakEvent event) {
         try {
             if (!(event.getPlayer() instanceof ServerPlayer sp)) return;
@@ -203,7 +213,8 @@ public final class ConscienceDeedHandler {
     private static final Map<UUID, Long> PLACED_AT = new HashMap<>();          // 玩家 -> 上次放置方块的 tick
     private static final Map<UUID, Long> GOLEM_DONE = new LinkedHashMap<>();   // 已结算的铁傀儡（防重复 ✓ 有上限 ✓）
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onEntityJoin(EntityJoinLevelEvent event) {
         try {
             if (event.getLevel().isClientSide()) return;
@@ -242,7 +253,8 @@ public final class ConscienceDeedHandler {
     private static final int CHEST_WINDOW_TICKS = 5 * 60 * 20;
     private static final int CHEST_LIMIT = 20;
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onOpenLootChest(net.minecraftforge.event.entity.player.PlayerInteractEvent.RightClickBlock event) {
         try {
             if (!(event.getEntity() instanceof ServerPlayer sp)) return;
@@ -273,7 +285,8 @@ public final class ConscienceDeedHandler {
     private static final Map<String, Long> VILLAGER_FIRST_TRADE = new HashMap<>(); // 玩家+村民 -> 首次交易 tick
     private static final int EMERALD_WINDOW_TICKS = 10 * 20;
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onTrade(TradeWithVillagerEvent event) {
         try {
             if (!(event.getEntity() instanceof ServerPlayer sp)) return;
@@ -323,7 +336,8 @@ public final class ConscienceDeedHandler {
     //  收尾：清理内存里的窗口数据（防长跑泄漏 ✓）
     // ============================================================
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         try {
             if (event.phase != TickEvent.Phase.END) return;

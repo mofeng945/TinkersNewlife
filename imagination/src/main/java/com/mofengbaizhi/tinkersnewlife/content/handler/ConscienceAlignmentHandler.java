@@ -127,7 +127,8 @@ public final class ConscienceAlignmentHandler {
     //  ① ② ③ ⑩ ⑪ ⑫：生物死亡
     // ============================================================
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用
+    // @SubscribeEvent
     public static void onLivingDeath(LivingDeathEvent event) {
         LivingEntity dead = event.getEntity();
         if (!(dead.level() instanceof ServerLevel level)) return;
@@ -197,7 +198,8 @@ public final class ConscienceAlignmentHandler {
     //  ④ 踩踏农田
     // ============================================================
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用
+    // @SubscribeEvent
     public static void onFarmlandTrample(BlockEvent.FarmlandTrampleEvent event) {
         if (event.getEntity() instanceof ServerPlayer p) {
             ConscienceHandler.addAlignment(p, FARMLAND_TRAMPLE);
@@ -208,7 +210,8 @@ public final class ConscienceAlignmentHandler {
     //  ⑤ 破坏村庄方块
     // ============================================================
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用
+    // @SubscribeEvent
     public static void onBlockBreak(BlockEvent.BreakEvent event) {
         if (!(event.getPlayer() instanceof ServerPlayer p)) return;
         if (!(event.getLevel() instanceof ServerLevel level)) return;
@@ -221,7 +224,8 @@ public final class ConscienceAlignmentHandler {
     //  ⑥ 打开村庄战利品箱
     // ============================================================
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用
+    // @SubscribeEvent
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
         if (!(event.getEntity() instanceof ServerPlayer p)) return;
         if (event.getHand() != net.minecraft.world.InteractionHand.MAIN_HAND) return;   // 副手那次不算 ✓
@@ -276,7 +280,8 @@ public final class ConscienceAlignmentHandler {
     //  ⑦ 驯服
     // ============================================================
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用
+    // @SubscribeEvent
     public static void onAnimalTame(AnimalTameEvent event) {
         if (event.getTamer() instanceof ServerPlayer p) {
             ConscienceHandler.addAlignment(p, ANIMAL_TAME);
@@ -287,7 +292,8 @@ public final class ConscienceAlignmentHandler {
     //  ⑧ 繁殖
     // ============================================================
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用
+    // @SubscribeEvent
     public static void onBabySpawn(BabyEntitySpawnEvent event) {
         Player player = event.getCausedByPlayer();
         if (player != null) {
@@ -299,7 +305,8 @@ public final class ConscienceAlignmentHandler {
     //  ⑨ 村庄英雄
     // ============================================================
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用
+    // @SubscribeEvent
     public static void onEffectAdded(MobEffectEvent.Added event) {
         if (!(event.getEntity() instanceof ServerPlayer p)) return;
         if (!MobEffects.HERO_OF_THE_VILLAGE.equals(event.getEffectInstance().getEffect())) return;

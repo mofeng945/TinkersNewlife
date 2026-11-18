@@ -79,7 +79,8 @@ public final class ConscienceTradeHandler {
         }
     }
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onPickup(EntityItemPickupEvent event) {
         try {
             if (event.getEntity() instanceof ServerPlayer sp) recordGain(sp, event.getItem().getItem());
@@ -87,7 +88,8 @@ public final class ConscienceTradeHandler {
         }
     }
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onCrafted(PlayerEvent.ItemCraftedEvent event) {
         try {
             if (event.getEntity() instanceof ServerPlayer sp) recordGain(sp, event.getCrafting());
@@ -102,7 +104,8 @@ public final class ConscienceTradeHandler {
     private static final Map<UUID, List<Long>> BREED_WINDOW = new HashMap<>();
     private static final int BREED_WINDOW_TICKS = 20 * 20;
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onBaby(BabyEntitySpawnEvent event) {
         try {
             Entity child = event.getChild();
@@ -141,7 +144,8 @@ public final class ConscienceTradeHandler {
     private static final int FISH_TARGET = 5 * 60 * 20;
     private static final int FISH_CONTINUE_TICKS = 10 * 20;
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onBobberJoin(EntityJoinLevelEvent event) {
         try {
             if (event.getLevel().isClientSide()) return;
@@ -161,7 +165,8 @@ public final class ConscienceTradeHandler {
         }
     }
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onBobberLeave(EntityLeaveLevelEvent event) {
         try {
             if (event.getLevel().isClientSide()) return;
@@ -205,7 +210,8 @@ public final class ConscienceTradeHandler {
         return player + "|" + trader;
     }
 
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onTraderJoin(EntityJoinLevelEvent event) {
         try {
             if (event.getLevel().isClientSide()) return;
@@ -222,7 +228,8 @@ public final class ConscienceTradeHandler {
     }
 
     /** 结算：离开世界（死亡/消失/卸载 ✓）或超时 ⇒ 没看过商品 −1% ✓ 交易 ≥2 次 +1% ✓ */
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onTraderLeave(EntityLeaveLevelEvent event) {
         try {
             if (event.getLevel().isClientSide()) return;
@@ -251,7 +258,8 @@ public final class ConscienceTradeHandler {
     }
 
     /** 每秒：开着交易界面且商人在 8 格内 ⇒ 标记"看过商品" ✓；顺带清理超时会话 ✓ */
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         try {
             if (event.phase != TickEvent.Phase.END) return;
@@ -291,7 +299,8 @@ public final class ConscienceTradeHandler {
     }
 
     /** 交易：给对应商人会话 +1 次 ✓ */
-    @SubscribeEvent
+    // TNL1433 旧规则事件停用：新规则由 ConscienceRulebook 接管
+    // @SubscribeEvent
     public static void onTrade(TradeWithVillagerEvent event) {
         try {
             if (!(event.getEntity() instanceof ServerPlayer sp)) return;
