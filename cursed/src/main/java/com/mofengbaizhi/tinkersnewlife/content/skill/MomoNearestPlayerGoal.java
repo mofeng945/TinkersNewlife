@@ -2,6 +2,7 @@ package com.mofengbaizhi.tinkersnewlife.content.skill;
 
 import com.mofengbaizhi.tinkersnewlife.content.entity.KtuluMomo;
 import com.mofengbaizhi.tinkersnewlife.content.entity.MomoShadow;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -45,6 +46,16 @@ public final class MomoNearestPlayerGoal extends Goal {
     }
 
     private void update() {
+        if (mob instanceof MomoShadow shadow && shadow.tnl$ownerId() != null
+                && shadow.level() instanceof ServerLevel level
+                && level.getEntity(shadow.tnl$ownerId()) instanceof KtuluMomo owner && owner.isAlive()) {
+            LivingEntity ownerTarget = owner.getTarget();
+            if (isValidTarget(mob, ownerTarget)) {
+                if (mob.getTarget() != ownerTarget) mob.setTarget(ownerTarget);
+                if (mob.getTarget() == ownerTarget) return;
+            }
+        }
+
         LivingEntity current = mob.getTarget();
         if (isValidTarget(mob, current)) return;
 

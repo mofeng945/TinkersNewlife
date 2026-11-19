@@ -4,6 +4,7 @@ import com.mofengbaizhi.tinkersnewlife.content.entity.KtuluMomo;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.Squid;
 import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ final class MomoDomainPets {
         clear();
         if (!(owner.level() instanceof ServerLevel level)) return;
         center = owner.position();
+        double healthCap = Math.max(1.0D, owner.getMaxHealth() / 4.0D);
         for (int i = 0; i < 3; i++) {
             Squid pet = EntityType.SQUID.create(level);
             if (pet == null) continue;
@@ -25,6 +27,13 @@ final class MomoDomainPets {
             pet.addTag(KtuluMomo.TNL_MINION_TAG);
             pet.setNoAi(true);
             pet.setNoGravity(true);
+            var health = pet.getAttribute(Attributes.MAX_HEALTH);
+            if (health != null) {
+                health.setBaseValue(healthCap);
+                pet.setHealth((float) health.getValue());
+            }
+            var armor = pet.getAttribute(Attributes.ARMOR);
+            if (armor != null) armor.setBaseValue(3.0D);
             pet.setAirSupply(300);
             if (level.addFreshEntity(pet)) pets.add(pet);
         }

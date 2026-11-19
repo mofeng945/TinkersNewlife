@@ -49,6 +49,8 @@ public class MomoShadow extends Monster {
         WANDER
     }
 
+    private static final double BASE_ARMOR = 6.0D;
+
     private Role role = Role.MELEE;
     /** 召唤它的墨默 UUID（"不杀分身不能打本体"靠这个判归属） */
     @Nullable
@@ -65,6 +67,7 @@ public class MomoShadow extends Monster {
         return Monster.createMonsterAttributes()
                 .add(Attributes.MAX_HEALTH, 100.0D)          // 真正数值由 tnl$bindTo 设成"本体一半"
                 .add(Attributes.ATTACK_DAMAGE, 13.0D)
+                .add(Attributes.ARMOR, BASE_ARMOR)
                 .add(Attributes.MOVEMENT_SPEED, 0.4D)
                 .add(Attributes.FOLLOW_RANGE, 48.0D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.6D);
@@ -178,7 +181,6 @@ public class MomoShadow extends Monster {
         }
         if (this.tickCount % 20 == 0) {
             this.tnl$stripForeignBonuses();
-            // Each shadow independently chooses its nearest player; never overwrite with owner's target.
         }
     }
 
@@ -197,6 +199,7 @@ public class MomoShadow extends Monster {
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        this.getAttribute(Attributes.ARMOR).setBaseValue(BASE_ARMOR);
         try {
             this.role = Role.valueOf(tag.getString("TNLShadowRole"));
         } catch (Throwable ignored) {

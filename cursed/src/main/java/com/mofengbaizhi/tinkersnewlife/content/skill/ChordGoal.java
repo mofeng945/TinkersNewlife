@@ -32,7 +32,7 @@ import java.util.Random;
 /**
  * TNL1176 混沌和弦（法术编号 3），新体系里最后一个迁过来的技能。
  *
- * <p>每次施法共 10 波。两波间隔随机 1.5~3 秒，每波从
+ * <p>每次施法共 5 波。两波间隔随机 2.25~4.5 秒，每波从
  * 两种高度（离地 0.15 或 2.3 格）里随机挑一个，范围 30 格，伤害为
  * 监守者音波伤害，范围内所有生物跳跃 ×1.5。硬控在最后一波之后
  * 0.5 秒结束 —— 那时波可能还在飞。
@@ -40,9 +40,9 @@ import java.util.Random;
 public final class ChordGoal extends MomoSpellGoal {
 
     private static final int CHARGE_TICKS = 40;
-    private static final int WAVES = 10;
-    private static final int GAP_MIN_TICKS = 30;
-    private static final int GAP_RANGE_TICKS = 30;
+    private static final int WAVES = 5;
+    private static final int GAP_MIN_TICKS = 45;
+    private static final int GAP_RANGE_TICKS = 45;
     private static final double MAX_RADIUS = 30.0D;
     private static final double SPEED = 0.15D;
     private static final double HEIGHT_LOW = 0.15D;
@@ -50,7 +50,7 @@ public final class ChordGoal extends MomoSpellGoal {
     private static final int COOLDOWN_TICKS = 2400;
     private static final int AFTER_LAST_TICKS = 10;
 
-    /** 最长可能的施法总时长：蓄力 ＋ 10 波按最慢节奏 ＋ 余量 */
+    /** 最长可能的施法总时长：蓄力 ＋ 5 波按最慢节奏 ＋ 最后一波飞完的余量 */
     private static final int TOTAL_TICKS = CHARGE_TICKS + WAVES * (GAP_MIN_TICKS + GAP_RANGE_TICKS) + 260;   // TNL1200 rings must finish flying
 
     private static final Random RNG = new Random();
@@ -203,8 +203,8 @@ public final class ChordGoal extends MomoSpellGoal {
     // ===== TNL1213 和弦的实现整体收进技能类（★原 DiscordantChordHandler 原样成为内部类 ✓）=====
 static final class DiscordantChordHandler {   // TNL1213 收编自原 DiscordantChordHandler.java
 
-    /** TNL1153 每次施法 10 波 */
-    /** TNL1153 波间隔随机 1.5~3 秒 */
+    /** 每次施法 5 波 */
+    /** 波间隔随机 2.25~4.5 秒 */
     /** TNL1153 范围改成 30 格 */
     private static final double MAX_RADIUS = 30.0D;
     /** TNL1153 离地的两种发射高度 */
