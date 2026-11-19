@@ -407,102 +407,70 @@ public final class ModConfig {
     public static final ConfigValue<List<? extends String>> CURSE_AFFINITY_BLACKLIST;
     public static final ConfigValue<Boolean> CONSCIENCE_ENABLED;
 
+    // Forge 的 defineInRange 会通过 comment(String) 自动添加英文前缀；只翻译前缀，不改范围验证。
+    private static final class ChineseConfigBuilder extends ForgeConfigSpec.Builder {
+        @Override
+        public ForgeConfigSpec.Builder comment(String comment) {
+            return super.comment(comment.startsWith("Range: ") ? "范围：" + comment.substring("Range: ".length()) : comment);
+        }
+    }
+
     public static final ForgeConfigSpec SPEC;
     static {
-        ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
+        ForgeConfigSpec.Builder b = new ChineseConfigBuilder();
 
         // 古神事件
         b.push("elder_events").comment(
-                "Each toggle controls whether the corresponding \"god item\" event handler runs.\n",
-                "Turning one off stops that god's item acquisition/use event from triggering.");
-        YOG_SOTHOTH_KEY = b.comment("Yog-Sothoth Gate Key events").define("enable_yog_sothoth_key", true);
-        YELLOW_KING = b.comment("Yellow King Remnant events").define("enable_yellow_king", true);
-        RLYEH_CALL = b.comment("R'lyeh Call events").define("enable_rlyeh_call", true);
-        NYARLATHOTEP_DESIRE = b.comment("Nyarlathotep's Desire events").define("enable_nyarlathotep_desire", true);
+                "每项开关控制对应古神道具的获取和使用事件；关闭后不再触发这些事件。");
+        YOG_SOTHOTH_KEY = b.comment("犹格·索托斯之门钥匙事件。").define("enable_yog_sothoth_key", true);
+        YELLOW_KING = b.comment("黄衣之王遗物事件。").define("enable_yellow_king", true);
+        RLYEH_CALL = b.comment("拉莱耶的呼唤事件。").define("enable_rlyeh_call", true);
+        NYARLATHOTEP_DESIRE = b.comment("奈亚拉托提普的欲望事件。").define("enable_nyarlathotep_desire", true);
         b.pop();
 
         // 咒力核心
-        b.push("curse_core").comment("Curse Core: allow crafting (ritual) and using (equipping/techniques). Default on.");
+        b.push("curse_core").comment("允许制作（仪式）和使用（装备、施术）咒力核心，默认开启。");
         CURSE_CORE_ENABLED = b.define("allow_curse_core_craft_and_use", true);
         b.pop();
 
         b.push("curse_affinity");
         CURSE_AFFINITY_BLACKLIST = b.comment(
-                "Items excluded from automatic Curse Affinity rolls. Existing affinity is kept.",
-                "Examples: @curios (mod ID, matched as a registry namespace), curios or curios:* (namespace),",
-                "curios:ring (exact item ID), *:*_ring or example:charm_? (wildcards).",
-                "* matches zero or more characters; ? matches one. Wildcards match each side of ':' separately.")
+                "命中黑名单的物品不会自动抽取咒力亲和，已有亲和保留。",
+                "写法示例：@curios（模组 ID，按注册命名空间匹配）、curios 或 curios:*（命名空间）、curios:ring（完整物品 ID）。",
+                "通配符示例：*:*_ring、example:charm_?。* 匹配零个或多个字符，? 匹配一个字符，冒号两侧分别匹配。")
                 .defineListAllowEmpty("blacklist", List.<String>of(), entry -> entry instanceof String);
         b.pop();
 
         b.push("conscience");
-        CONSCIENCE_ENABLED = b.comment("Master switch for Heart. Both this setting and doConscienceHeart must be true.")
+        CONSCIENCE_ENABLED = b.comment("「心」的总开关；本项和游戏规则 doConscienceHeart 必须同时为 true 才会启用。")
                 .define("enabled", true);
         b.pop();
 
         // ⭐ §1173 自动跑匠魂材质生成器（用户口径 ✓ 默认开启 ✓ 可关 ✓）
         b.push("auto_part_textures").comment(
-                "Auto-run the Tinkers part texture generator when the game reaches the main menu.",
-                "It generates MISSING material part textures, then force-enables the generated resource pack.",
-                "Default on. Set to false to disable entirely.");
+                "进入主菜单时自动运行匠魂部件材质生成器，只生成缺失材质，并自动启用生成的资源包。",
+                "默认开启；改为 false 可完全禁用。");
         AUTO_PART_TEXTURES = b.define("enable_auto_part_textures", true);
         b.pop();
 
         // 古老者水晶 · 魔力台座（§545 起：五条来源并行叠加，其中默认开四条 · 亮度默认降到 0.5）
         b.push("elder_crystal").comment(
-                "Elder Crystal - the Mana Pedestal, the (only) way to charge a crystal.",
-                "",
-                "FIVE AMBIENT SOURCES, ALL ADDING UP IN PARALLEL. There is NO global cap:",
-                "whatever the sources give per second is what you get, and every enabled source is",
-                "simply summed. Each source has its own on/off switch and its own numbers.",
-                "",
-                "  light_level    (default on)  THE DARKER, THE FASTER:",
-                "      rate = pedestal_charge_max_per_second * (pedestal_light_cap - light) / pedestal_light_cap",
-                "      light = level.getMaxLocalRawBrightness(the block ABOVE the pedestal), 0..15 = combined",
-                "              block light + sky light, exactly the value vanilla uses for mob spawning.",
-                "              There is deliberately NO 'must be night' and NO 'must see the sky' check.",
-                "      light 0 -> full speed; light >= pedestal_light_cap -> 0",
-                "  plant          (default on)  sphere r=5; +1 wither point per plant per second, 1 point =",
-                "      plant_ee_per_point EE (0.5) => 0.5 EE/s per plant. Cap: grass 5, flower 20, sapling 30",
-                "      points, and a plant that reaches its cap VANISHES. Crops count as flowers, wither",
-                "      roses are excluded. Wither points are in-memory only (lost on restart).",
-                "  tcon_fuel      (default on)  sphere r=5; every Tinker fluid container is simulated once",
-                "      per second using Tinker's OWN fuel registry (MeltingFuelLookup): the burn rate is",
-                "      temperature/4 mB per tick, and the fuel burned yields",
-                "      (burned/amount) * (duration/fuel_ticks_per_item) item-equivalents at",
-                "      fuel_ee_per_item EE each. Lava: 25 EE/s per tank. Solid fuel (coal in a heater)",
-                "      is NOT supported.",
-                "  soul_death     (default on)  sphere r=5; ANY death (players included) banks",
-                "      soul_ee_per_hp * maxHealth EE (0.025 => 20 HP = 0.5 EE) and the pedestal pays the",
-                "      bank out on its next one-second settle.",
-                "  demigod_player (default on)  sphere r=5; every player inside gives player_ee_per_second",
-                "      EE (no cost at all, players stack).",
-                "",
-                "pedestal_source = comma-separated list of source ids to enable, or \"*\" (default) for ALL of",
-                "      them. Unknown ids are ignored with a single warning. OLD CONFIGS: a single id such as",
-                "      \"light_level\" now means 'enable only that source', which is exactly what it used to do.",
-                "      Available ids: light_level, plant, tcon_fuel, soul_death, demigod_player.",
-                "pedestal_charge_max_per_second = light-level source: EE per second at light 0",
-                "      (default 0.5 = 30 EE per minute, so a full 1000 EE crystal takes about 33 minutes).",
-                "pedestal_light_cap = light level at which the light-level source stops (default 15 = the",
-                "      vanilla maximum; raise it above 15 for a slow trickle in bright light - e.g. 16 leaves",
-                "      ~0.031 EE/s at light 15).",
-                "light_enabled / plant_enabled / fuel_enabled / soul_enabled / player_enabled = per-source",
-                "      master switches (the source must ALSO be listed in pedestal_source).",
-                "plant_radius / fuel_radius / soul_radius / player_radius = sphere radius in blocks",
-                "      (all default 5).",
-                "plant_ee_per_point = EE per wither point (0.5).",
-                "fuel_ee_per_item = EE per item-equivalent (0.5); fuel_ticks_per_item = how many ticks one",
-                "      item-equivalent is assumed to take (10; Tinker's melting recipes use 9-10 ticks at the",
-                "      low end, so this is the 'cheap recipe' baseline - raise it to slow fuel charging down).",
-                "soul_ee_per_hp = EE per point of max health (0.025 => maxHealth/40).",
-                "player_ee_per_second = EE per player per second (0.5).",
-                "pedestal_particles / pedestal_sound = cold particles / a soft amethyst chime while it",
-                "      actually charges (particle density scales with the total rate).",
-                "",
-                "Caps are per target: a crystal item holds 1000 EE, a crystal block 4000 EE. When everything",
-                "in reach is full the pedestal simply stops: no source is queried, so no fuel is burned and no",
-                "plant is withered while there is nothing to fill.");
+                "古老者水晶的充能台座。下列五种来源并行叠加，没有总速率上限，每种来源都有独立开关和参数。",
+                "light_level（亮度）：台座上方方块越暗越快。速率 = pedestal_charge_max_per_second × (pedestal_light_cap - 亮度) / pedestal_light_cap。",
+                "亮度取原版刷怪亮度（0～15，综合天空光和方块光）；不要求夜晚或能看见天空。亮度为 0 时最快，达到上限时停止。",
+                "亮度来源默认最快 0.5 EE/秒（30 EE/分钟），充满 1000 EE 约需 33 分钟。亮度上限默认 15；设为 16 时，亮度 15 下仍约有 0.031 EE/秒。",
+                "plant（植物）：球形范围内每株植物每秒积 1 点凋灵度，默认每点 0.5 EE。草 5 点、花 20 点、树苗 30 点时消失；作物按花算，排除凋灵玫瑰。重启不保留凋灵度。",
+                "tcon_fuel（匠魂燃料）：每秒按匠魂燃料注册表模拟范围内的流体容器，燃烧速度为温度 / 4 mB/刻。",
+                "燃尽流体贡献的等效物品数 =（消耗量 / 燃料量）×（燃烧时长 / fuel_ticks_per_item），再乘 fuel_ee_per_item 得到 EE。熔岩每罐约 25 EE/秒，不支持固体燃料。",
+                "soul_death（灵魂）：范围内生物死亡（含玩家）按最大生命值 × soul_ee_per_hp 累积 EE，下一次每秒结算时充入。默认 20 点生命值贡献 0.5 EE。",
+                "demigod_player（半神之力）：范围内每名玩家贡献 player_ee_per_second，默认每人每秒 0.5 EE，无消耗，可叠加。",
+                "pedestal_source 接受逗号分隔的来源 ID：light_level、plant、tcon_fuel、soul_death、demigod_player；默认 * 表示全部。单个 ID 表示只启用该来源；未知 ID 会被忽略并警告一次。",
+                "light_enabled / plant_enabled / fuel_enabled / soul_enabled / player_enabled 是独立开关，来源仍须列在 pedestal_source 中。",
+                "plant_radius / fuel_radius / soul_radius / player_radius 是球形半径，默认均为 5 格。",
+                "plant_ee_per_point 是每点凋灵度提供的 EE（默认 0.5）；fuel_ee_per_item 是每等效物品提供的 EE（默认 0.5）。",
+                "fuel_ticks_per_item 默认 10 刻，约等于匠魂最廉价熔化配方的 9～10 刻；增大可减慢充能。",
+                "pedestal_particles / pedestal_sound 分别控制充能粒子和紫水晶铃音；粒子密度随总速率变化。",
+                "水晶物品容量为 1000 EE，水晶方块为 4000 EE。范围内目标都充满后停止查询来源，不再消耗燃料或使植物凋零。");
         PEDESTAL_CHARGE_MAX_PER_SECOND = b.defineInRange("pedestal_charge_max_per_second",
                 PEDESTAL_DEFAULT_CHARGE_MAX_PER_SECOND, 0.0D, 10000.0D);
         PEDESTAL_LIGHT_CAP = b.defineInRange("pedestal_light_cap", PEDESTAL_DEFAULT_LIGHT_CAP, 1, 30);
@@ -542,48 +510,21 @@ public final class ModConfig {
 
         // §557 EE 网络：EE 抽取方块 + 万用能量转化器
         b.push("ee_network").comment(
-                "EE network: the EE Extractor and the Universal Energy Converter.",
-                "",
-                "ALL EXTERNAL ENERGY RATES ARE THE USER'S, HARD-CODED AND FIXED:",
-                "    1 EE = 1000 FE         (so 1 FE = 0.001 EE)   // §589",
-                "    1 EU = 4 FE            (IC2)",
-                "    1 AE = 2 FE            (AE2)",
-                "    10 J = 4 FE            (Mekanism; 1 J = 0.4 FE)",
-                "    FE/t = (45 * RPM) / 64 (Create; 1 RPM = 0.703125 FE/t)",
-                "    RF = Tesla = uI = FF = FE  -- they are all aliases of FE at 1:1, so they need no",
-                "    adapter at all: anything exposing ForgeCapabilities.ENERGY goes down the FE path.",
-                "",
-                "EE EXTRACTOR (tinkersnewlife:ee_extractor): right-click it to open a GUI with ONE slot.",
-                "  Put a CHARGED Elder Crystal or Elder Crystal Block in that slot: every tick the block pulls",
-                "  EE out of that item into its own cache, and PUSHES the cache to the EE containers next to it.",
-                "  Direction order is fixed: up, down, north, south, west, east.",
-                "  extractor_pull_ee_per_tick  (default 256) EE pulled from THE ITEM IN THE SLOT each tick.",
-                "  extractor_push_ee_per_tick  (default 256) EE pushed to neighbours each tick.",
-                "  extractor_buffer_ee         (default 4000 = one crystal block) internal cache. When the cache",
-                "      is full the extractor simply stops pulling, so the EE in the item is never destroyed.",
-                "",
-                "UNIVERSAL ENERGY CONVERTER (tinkersnewlife:energy_converter): ONE-WAY, everything -> FE.",
-                "  Input A: EE pushed in by neighbours (the same EeStorage interface) - converted at 1 EE = 1000 FE.",
-                "  Input B: Forge Energy pulled from neighbours (ForgeCapabilities.ENERGY) - 1:1.",
-                "  Input C: the three optional mods, each through its OWN real mechanism (memo S598):",
-                "      Mekanism  -> STRICT_ENERGY capability (its cables push J in) + HEAT_HANDLER on the",
-                "                  RIGHT face (its heat conduits push heat in; 1 heat = converter_fe_per_heat FE).",
-                "      AE2       -> the grid node takes AE out of the network (LEFT face; rate follows AE2's own",
-                "                  PowerUnits.FE.conversionRatio, official default 1 AE = 2 FE).",
-                "      Create    -> this block IS a kinetic block, so a shaft on the FRONT face drives it",
-                "                  (FE/t = 45 * RPM / 64) and it eats converter_stress_impact SU of stress.",
-                "      There are no per-family on/off switches any more: a family works exactly when that mod",
-                "      is installed (memo S598 explains why those four switches were deleted).",
-                "  Output: FE pushed to neighbours via IEnergyStorage#receiveEnergy (never extracted back).",
-                "  converter_output_fe_per_tick (default 64) THE HARD THROUGHPUT GATE: no matter how many input",
-                "      paths are connected, this block never moves more than 64 FE per tick in total.",
-                "  converter_input_fe_per_tick (default 64) cap on the direct Forge Energy path.",
-                "  converter_input_ee_per_tick (default 512) cap on the EE path; since 1 EE = 1000 FE the FE gates are the real limit.",
-                "  converter_buffer_fe          (default 32000) FE pool inside the converter.",
-                "  converter_fe_per_heat        (default 0.4) FE per unit of Mekanism heat; 0 = take no heat at all.",
-                "  converter_stress_impact      (default 4) SU of Create stress this block applies; 0 = free power.",
-                "  converter_heat_sink_capacity (default 64) Mekanism heat capacity (J/K) of our heat sink.",
-                "      NOTE: we never STORE heat - handleHeat only accepts what it can turn into FE this tick,");
+                "EE 网络：EE 抽取方块与万用能量转化器。",
+                "固定换算：1 EE = 1000 FE，1 EU = 4 FE（工业时代 2），1 AE = 2 FE（应用能源 2），10 J = 4 FE（通用机械）。",
+                "机械动力换算：FE/t = 45 × RPM / 64；RF、Tesla、uI、FF 按 1:1 走 ForgeCapabilities.ENERGY，无需适配器。",
+                "EE 抽取方块（tinkersnewlife:ee_extractor）：右键打开单槽界面，放入已充能的古老者水晶物品或方块。",
+                "每刻从槽中抽取到缓存，再按上、下、北、南、西、东顺序向相邻 EE 容器输出。缓存满时停止抽取，不会损失物品中的 EE。",
+                "extractor_pull_ee_per_tick / extractor_push_ee_per_tick 分别是每刻抽取、输出的 EE（默认均为 256）；extractor_buffer_ee 是缓存（默认 4000 EE）。",
+                "万用能量转化器（tinkersnewlife:energy_converter）单向转为 FE，并通过 IEnergyStorage#receiveEnergy 向相邻方块推送；不会从输出端反抽。",
+                "相邻 EE 容器可主动输入（1 EE = 1000 FE）；也可从相邻方块主动抽取 Forge 能量（1:1）。",
+                "通用机械：能量线通过 STRICT_ENERGY 输入 J，导热管从右侧通过 HEAT_HANDLER 输入热量。",
+                "应用能源 2：从左侧网络节点取 AE，使用 PowerUnits.FE.conversionRatio（官方默认 1 AE = 2 FE）。",
+                "机械动力：前侧转轴驱动，按转速换算 FE，并施加 converter_stress_impact（默认 4 SU，设为 0 则无应力消耗）。",
+                "上述可选通路随模组安装自动可用，没有单独开关。",
+                "converter_output_fe_per_tick 限制总吞吐（默认 64 FE/刻）；converter_input_fe_per_tick 限制直接输入（默认 64 FE/刻）；converter_input_ee_per_tick 限制 EE 输入（默认 512 EE/刻）。",
+                "converter_buffer_fe 是内部 FE 缓存（默认 32000）；converter_fe_per_heat 是每单位热量转换的 FE（默认 0.4，0 表示不接收热量）。",
+                "converter_heat_sink_capacity 是热容量（默认 64 J/K）；转化器不存热，只接收当刻能转为 FE 的热量。");
 
         EE_EXTRACTOR_PULL_PER_TICK = b.defineInRange("extractor_pull_ee_per_tick",
                 EE_NET_DEFAULT_EXTRACTOR_PULL, 0, 1_000_000);
@@ -613,35 +554,18 @@ public final class ModConfig {
 
         // 双向认知阻碍面具（头饰）
         b.push("cognitive_mask").comment(
-                "Two-way Cognitive Obstruction Mask (head curio).",
-                "",
-                "Wearing it always: other players cannot see your name tag, and mobs cannot lock onto you",
-                "(both newly attempted locks and locks that already existed before you put it on).",
-                "EXCEPT mobs you hit yourself: they are allowed to fight back (see allow_retaliation).",
-                "It also makes you treat EVERY living entity except players as UNDEAD: cursed tool",
-                "undead bonus, reverse cursed technique (damage instead of heal on undead), Jacob's Ladder",
-                "and the Cursed Spirit Technique capture check all take the undead branch.",
-                "",
-                "allow_retaliation = a mob you hurt may target you back (default true).",
-                "Uses vanilla's own getLastHurtByMob(), which vanilla clears after 100 ticks (5 s) and",
-                "refreshes on every hit, so it is exactly a 'recently attacked' window.",
-                "Set false to go back to the old behaviour: nothing can ever lock onto you.",
-                "",
-                "hide_from_radar = also hide the wearer from the Xaero's minimap radar (default true).",
-                "Implemented by a targeted mixin (XaeroRadarMixin) that filters the radar's entity",
-                "iteration - NO state is put on the player, so the body stays visible in vanilla AND",
-                "in mods that take over player rendering (YSM / Yes Steve Model) - which is exactly why",
-                "the earlier invisibility-flag approach was dropped.",
-                "Set false to stay on radars: the name tag and mob targeting are still blocked.");
+                "双向认知阻碍面具（头饰）：隐藏玩家头顶名牌，让生物无法锁定佩戴者，并解除已有锁定。",
+                "除玩家外的活体均按亡灵处理，包括咒具亡灵加成、反转术式（伤害而非治疗）、雅各布天梯及咒灵操术的捕捉判定。",
+                "allow_retaliation：允许被佩戴者攻击的生物还击（默认 true）。使用原版 getLastHurtByMob()，每次攻击刷新，100 刻（5 秒）后清除；设为 false 时不会被锁定。",
+                "hide_from_radar：是否从 Xaero 小地图雷达隐藏佩戴者（默认 true）。只过滤雷达实体，不影响原版或 YSM 的角色渲染；设为 false 时只恢复雷达显示。");
         COGNITIVE_MASK_HIDE_FROM_RADAR = b.define("hide_from_radar", true);
         COGNITIVE_MASK_ALLOW_RETALIATION = b.define("allow_retaliation", true);
         b.pop();
 
         // 无为转变·伪装渲染替换（客户端）
         b.push("wuwei_disguise").comment(
-                "Client side: render a transformed (Wu Wei) player as the target creature instead of the player model.",
-                "Set enable_disguise_render=false if another mod that takes over player rendering",
-                "(e.g. YSM / Yes Steve Model) conflicts with the disguise.");
+                "客户端：将使用无为转变伪装的玩家渲染为目标生物，而非玩家模型。",
+                "若与接管玩家渲染的其他模组（例如 YSM）冲突，可设 enable_disguise_render=false。");
         WUWEI_DISGUISE_RENDER = b.define("enable_disguise_render", true);
         WUWEI_SPEED_SCALE = b.defineInRange("speed_scale", 0.5D, 0.05D, 4.0D);
         WUWEI_EQUIPMENT_RENDER = b.define("render_equipment", true);
@@ -649,44 +573,22 @@ public final class ModConfig {
 
         // 混沌之流：每次攻击随机二选一（物理 / 某一学派的法术），只结算一次（源钻合金 origin_alloy）
         b.push("chaos_flow").comment(
-                "Chaos Flow (the Origin Alloy material trait): every attack randomly rolls ONE of two outcomes",
-                "and then lands a SINGLE damage instance (the total amount is unchanged):",
-                "",
-                "  - physical: the original hit is left completely untouched (same damage source, same amount);",
-                "  - spell:    the original hit is cancelled and re-sent ONCE as a random spell school's damage",
-                "              type (taken from Iron's Spells' school registry, so addon schools count too).",
-                "",
-                "The hit is NOT split up any more - so there is no per-segment re-amplification",
-                "(black flash ^2.5, Child of the Stars x2^level, wizard set, staff spell power, ...)",
-                "and no 'segment count x amplification' inflation.",
-                "",
-                "enabled=false disables the roll entirely (every hit lands normally as physical damage).");
+                "源钻合金特性「混沌之流」：每次攻击随机二选一，只结算一次，原始伤害量不变。",
+                "物理：原样保留原伤害来源和伤害量。法术：取消原伤害，改为随机学派的法术伤害；学派来自铁魔法注册表，含附属模组学派。",
+                "不再分段，避免黑闪（^2.5）、星辰之子（×2^等级）、巫师套装和法杖法强等效果按段重复增幅。",
+                "enabled=false 时不再抽取，攻击照常结算物理伤害。");
         CHAOS_FLOW_ENABLED = b.define("enabled", true);
         b.pop();
 
         // 不可名状效果：客户端观感（撑开视野 + 后处理 + 信号干扰花屏）
         b.push("unnameable").comment(
-                "The Unnameable effect: client-side visuals.",
-                "",
-                "fov_multiplier = field of view multiplier while affected (1.4 = +40%).",
-                "",
-                "post_effect = post-processing shader while affected:",
-                "sharpen (unsharp mask) + higher contrast + higher saturation + INVERTED COLORS.",
-                "Set false if another shader mod conflicts, or if you dislike inverted colours.",
-                "",
-                "post_effect_pulse = keep the colour effect INTERMITTENT instead of always-on:",
-                "roughly 2-5 seconds on, then 0.5-1.5 seconds off, randomly (default true).",
-                "Set false to hold the effect continuously for the whole duration.",
-                "(Either way it is ALWAYS removed the moment the effect ends / you die / leave the world.)",
-                "",
-                "glitch = whole-screen signal interference overlay",
-                "(tearing bands + static + a rolling interference bar + occasional flashes);",
-                "glitch_intensity scales it: 1.0 = default, 2.0 = much messier, 0 = off.",
-                "",
-                "whispers = whispered WORDS flickering across the screen (translatable: whisper.tinkersnewlife.*);",
-                "whisper_sound = the whispered VOICE AUDIO, looped while the effect lasts and stopped the moment",
-                "it ends (sound event tinkersnewlife:effect.whispers, played on the AMBIENT sound channel);",
-                "whisper_sound_volume = extra volume multiplier for that audio (0 = silent, 1.0 = default).");
+                "不可名状效果的客户端表现。",
+                "fov_multiplier：视野倍率（1.4 表示扩大 40%）。",
+                "post_effect：锐化、提高对比度和饱和度，并反转颜色；遇到着色器冲突或不想反色时可关闭。",
+                "post_effect_pulse：默认随机间歇显示（约开 2～5 秒、关 0.5～1.5 秒），设为 false 时持续显示；效果结束、死亡或离开世界时立即清除。",
+                "glitch：全屏信号干扰，含撕裂、雪花、滚动干扰条和闪光；glitch_intensity 控制强度（1.0 默认、2.0 更强、0 关闭）。",
+                "whispers：闪烁低语文字，翻译键为 whisper.tinkersnewlife.*。",
+                "whisper_sound：在环境音轨循环播放低语（tinkersnewlife:effect.whispers），效果结束立即停止；whisper_sound_volume 控制音量（0 静音、1.0 默认）。");
         UNNAMEABLE_FOV_MULTIPLIER = b.defineInRange("fov_multiplier", 1.4D, 1.0D, 2.5D);
         UNNAMEABLE_POST_EFFECT = b.define("post_effect", true);
         UNNAMEABLE_POST_EFFECT_PULSE = b.define("post_effect_pulse", true);
@@ -700,73 +602,23 @@ public final class ModConfig {
 
         // 构筑术式（拟造）：费用倍率 + 黑名单
         b.push("construct").comment(
-                "Construct technique (Wu Wei 'construct' / fabricate items from recipes).",
-                "",
-                "cost_multiplier = final curse cost multiplier. 1.0 = original formula, 10.0 = 10x cost (default).",
-                "",
-                "use_default_blacklist = built-in list: all ores / raw materials / ingots / nuggets / dusts / gems / shards,",
-                "                        plus all fluid containers (buckets / potions / fluid bottles).",
-                "                          (#forge:ores, #forge:raw_materials, #forge:ingots, #forge:nuggets,",
-                "                           #forge:dusts, #forge:gems, #c:* equivalents, and *:*_shard / *:*_dust / *:*_nugget globs;",
-                "                           buckets: #forge:buckets / *:*_bucket / *:bucket_*;",
-                "                           potions: minecraft:potion|splash_potion|lingering_potion / *:*_potion;",
-                "                           fluid bottles: *:*_bottle / *:bottle_*).",
-                "",
-                "magic_item_bonus = extra value score for high-function magic items (spell scrolls, focuses, spellbooks,",
-                "                   runes, wands...). They have no attack/armor/durability so the normal formula prices them",
-                "                   like dirt. 0 disables the check. Detected by tags (#curios:scroll, #curios:spellbook,",
-                "                   #curios:spellstone, #irons_spellbooks:school_focus, #irons_spellbooks:inscribed_rune)",
-                "                   or by class/interface name keywords (scroll/focus/spellbook/rune/charm/wand/staff/...).",
-                "magic_extra_keywords / magic_extra_tags = your own additions.",
-                "",
-                "tier_bonus = value score by quality keyword found in the item id. Built-in: uncommon=6 rare=14",
-                "             epic=30 legendary=60 mythic=90 divine=90 supreme=120 ultimate=120.",
-                "             This is how tiered inks/essences get priced (they are plain common items otherwise),",
-                "             and the score propagates into their products through the ingredient term.",
-                "value_overrides = hard-set an item value, replaces the computed score. Formats:",
-                "             irons_spellbooks:legendary_ink=200   (exact item)",
-                "             *_ink=120                            (glob)",
-                "             #forge:gems=25                       (item tag)",
-                "",
-                "--- value of items that have NO recipe (mining / gathering / drops) ---",
-                "tag_values  = additive score per item tag. Built-in: #forge:ores=12 #forge:raw_materials=8",
-                "              #forge:ingots=10 #forge:gems=25 #forge:dusts=6 #forge:nuggets=2",
-                "              #forge:storage_blocks=20 #minecraft:coals=5  (sum is capped by tag_value_cap)",
-                "unique_item_bonus = bonus for non-stackable items (stack size 1: elytra, totem, trident...)",
-                "hardness_cap      = cap for the block-hardness proxy (obsidian 50 -> 25, ancient debris 30 -> 15)",
-                "tag_value_cap     = cap of the summed tag values for one item",
-                "",
-                "--- loot / structure source scan (evidence only, does NOT lead pricing) ---",
-                "Run:  /tinkersnewlife construct lootsuggest     (scans entity drops + chest loot)",
-                "It writes config/mofengbaizhi/construct/loot_index.json  (cache)",
-                "      and config/mofengbaizhi/construct/loot_suggestions.toml (paste into value_overrides).",
-                "loot_source_enabled = allow the scan / the auto-apply lookup",
-                "loot_source_auto_apply = false (default) keep it suggestions-only. When true it only affects",
-                "                        items with NO recipe, NOT a block, stackable, not covered by",
-                "                        value_overrides/tag_values and not in loot_source_blacklist.",
-                "loot_source_cap = upper bound of the loot term",
-                "loot_source_blacklist = farmable junk (rotten flesh, bone, string...) excluded from auto-apply",
-                "entity_value_overrides / structure_value_overrides = difficulty base overrides",
-                "",
-                "--- fluid value layer (bucket proxy + fluid tags + soft-dependency adapters) ---",
-                "Fluids carry a lot of value in some mod chains (e.g. Iron's Spells inks are brewed as fluids).",
-                "fluid_value_enabled = count fluid inputs of a recipe. Value per mB comes from, in order:",
-                "                      bucket item value / 1000, fluid_tag_values, then the recipe that produces it",
-                "                      (reflectively read: MaterialFluidRecipe, Create getFluidIngredients/Results,",
-                "                       and a generic FluidStack/FluidIngredient field+method scan).",
-                "fluid_tag_values = [#forge:inks=15]  -> a bucket of that fluid is worth 15 points",
-                "fluid_value_cap  = worth cap of one bucket (mB value = this / 1000)",
-                "The item/fluid values are solved by a 4-pass fixed-point iteration (handles cycles like planks<->logs).",
-                "",
-                "blacklist = extra entries that must NOT appear in the construct menu. Supported formats:",
-                "  goety                 -> whole mod          (bare modid)",
-                "  iceandfire:*          -> whole mod          (modid:*)",
-                "  minecraft:bedrock     -> single item        (modid:item)",
-                "  #forge:ingots         -> item tag           (#modid:tag)",
-                "  *:*_shard             -> wildcard glob        (* matches anything)",
-                "  recipe:minecraft:smelting -> every item that can be produced by that recipe type",
-                "                               (also accepts: type:minecraft:smelting)",
-                "Lines starting with // are ignored. Matching is case-insensitive for ids.");
+                "构筑术式：通过配方拟造物品。",
+                "cost_multiplier：最终咒力消耗倍率（1.0 为原公式，默认 10.0）。",
+                "use_default_blacklist：内置黑名单包含矿石、粗矿、锭、粒、粉、宝石、碎片及流体容器（桶、药水、流体瓶）。",
+                "矿物通过 #forge:ores、#forge:raw_materials、#forge:ingots、#forge:nuggets、#forge:dusts、#forge:gems、对应的 #c:* 标签及 *:*_shard / *:*_dust / *:*_nugget 匹配。",
+                "容器通过 #forge:buckets、*:*_bucket、*:bucket_*、原版三种药水、*:*_potion、*:*_bottle、*:bottle_* 匹配。",
+                "magic_item_bonus：为卷轴、法术书、符文、法杖等缺少常规属性的魔法物品增加估值（0 禁用），按饰品／铁魔法标签或类与接口名中的关键词识别；magic_extra_keywords / magic_extra_tags 可补充识别规则。",
+                "tier_bonus：按物品 ID 的品质词加分。内置 uncommon=6、rare=14、epic=30、legendary=60、mythic=90、divine=90、supreme=120、ultimate=120；原料加分也会传到产物。",
+                "value_overrides：直接覆盖估值。例如 irons_spellbooks:legendary_ink=200（完整物品 ID）、*_ink=120（通配符）、#forge:gems=25（物品标签）。",
+                "无配方物品（采矿、采集、掉落）：tag_values 按标签叠加估值，内置 #forge:ores=12、#forge:raw_materials=8、#forge:ingots=10、#forge:gems=25、#forge:dusts=6、#forge:nuggets=2、#forge:storage_blocks=20、#minecraft:coals=5。",
+                "tag_value_cap 限制单物品标签加分；unique_item_bonus 是不可堆叠物品加分；hardness_cap 限制硬度估值（如黑曜石 50 → 25、远古残骸 30 → 15）。",
+                "运行 /tinkersnewlife construct lootsuggest 扫描实体掉落与箱子战利品；缓存写入 config/mofengbaizhi/construct/loot_index.json，建议写入同目录 loot_suggestions.toml，可复制进 value_overrides。",
+                "loot_source_enabled 允许扫描和自动查表。loot_source_auto_apply 默认关闭；开启后只影响无配方、非方块、可堆叠、没有估值覆盖或标签估值且不在黑名单内的物品。",
+                "loot_source_cap 限制战利品估值；loot_source_blacklist 排除可大量刷取的杂物；entity_value_overrides / structure_value_overrides 覆盖难度基础值。",
+                "fluid_value_enabled：计入配方的流体原料，每毫桶依次尝试按桶物品价值 / 1000、fluid_tag_values、产出配方估值；兼容匠魂、机械动力和通用流体配方字段及方法。",
+                "fluid_tag_values 例：#forge:inks=15 表示每桶 15 点；fluid_value_cap 限制每桶价值。物品和流体通过四轮迭代估值，以处理木板与原木一类循环。",
+                "blacklist：额外排除的拟造物品。示例：goety 或 iceandfire:*（整个命名空间）、minecraft:bedrock（单个物品）、#forge:ingots（标签）、*:*_shard（通配符）。",
+                "recipe:minecraft:smelting 或 type:minecraft:smelting 排除该配方类型能产出的所有物品。以 // 开头的条目忽略，ID 匹配不区分大小写。");
         CONSTRUCT_COST_MULTIPLIER = b.defineInRange("cost_multiplier", 10.0D, 0.0D, 10000.0D);
         CONSTRUCT_INGREDIENT_WEIGHT = b.defineInRange("ingredient_weight", 0.75D, 0.0D, 100.0D);
         CONSTRUCT_USE_DEFAULT_BLACKLIST = b.define("use_default_blacklist", true);
@@ -865,25 +717,24 @@ public final class ModConfig {
 
         // 飞剑流光拖尾（客户端）
         b.push("flying_sword").comment(
-                "Client side: dynamic ribbon trail with a custom flowing-light shader for flying swords.",
-                "Set enable_trail=false to disable the ribbon (the old dust particles stay).");
+                "客户端：使用自定义流光着色器渲染飞剑的动态带状拖尾。设 enable_trail=false 可关闭带状拖尾，保留原有粒子。");
         FLYING_SWORD_TRAIL = b.define("enable_trail", true);
         b.pop();
 
         // 术式系数：每术式 damage / cost 缩放（1.0 = 原生）
-        b.push("techniques").comment("Per-technique formula scale multipliers (1.0 = vanilla values).");
+        b.push("techniques").comment("各术式公式的缩放倍率（1.0 表示模组原值）。");
         String[][] techniques = {
-                {"yuchuzi", "Yu Chu Zi"}, {"blood_manipulation", "Blood Manipulation"},
-                {"ten_shadows", "Ten Shadows"}, {"black_bird", "Black Bird Manipulation"},
-                {"puppet", "Puppet Manipulation"}, {"plant_manipulation", "Plant Manipulation"},
-                {"flame_manipulation", "Flame Manipulation"}, {"cursed_spirit", "Cursed Spirit Manipulation"},
-                {"lightning_manipulation", "Lightning Manipulation"}, {"sky_manipulation", "Sky Manipulation"},
-                {"projection", "Projection Sorcery"}, {"wuliang_wuxian", "Limitless: Infinity"},
-                {"wuliang_cang", "Limitless: Blue"}, {"jacobs_ladder", "Jacob's Ladder"},
-                {"reverse_cursed", "Reverse Cursed Technique"}, {"wu_wei", "Idle Transfiguration"},
-                {"cursed_energy_release", "Cursed Energy Discharge"}, {"construct", "Construction Technique"},
-                {"cursed_speech", "Cursed Speech"}, {"anti_gravity", "Anti-Gravity Mechanism"},
-                {"ten_divide", "Ratio Technique"}
+                {"yuchuzi", "御厨子"}, {"blood_manipulation", "赤血操术"},
+                {"ten_shadows", "十种影法术"}, {"black_bird", "黑鸟操术"},
+                {"puppet", "傀儡操术"}, {"plant_manipulation", "植物操术"},
+                {"flame_manipulation", "火焰操术"}, {"cursed_spirit", "咒灵操术"},
+                {"lightning_manipulation", "雷电操术"}, {"sky_manipulation", "天空操术"},
+                {"projection", "投射咒法"}, {"wuliang_wuxian", "无下限·无限"},
+                {"wuliang_cang", "无下限·苍"}, {"jacobs_ladder", "雅各布天梯"},
+                {"reverse_cursed", "反转术式"}, {"wu_wei", "无为转变"},
+                {"cursed_energy_release", "咒力放出"}, {"construct", "构筑术式"},
+                {"cursed_speech", "咒言"}, {"anti_gravity", "反重力机构"},
+                {"ten_divide", "十划咒法"}
         };
         for (String[] t : techniques) {
             b.push(t[0]).comment(t[1]);
@@ -899,19 +750,16 @@ public final class ModConfig {
 
         // 领域系数：每领域 radius / damage / cost 缩放
         b.push("domains").comment(
-                "Domain formula scale multipliers (1.0 = vanilla values).",
-                "",
-                "fragment_drop_denominator = when a domain is DESTROYED, each boundary block has a 1/N chance",
-                "to drop a Boundary Fragment. Default 1000 (= 0.1%, ten times rarer than the old 1/100).",
-                "Set 1 to make every block drop one (for testing / generous packs).");
+                "各领域公式的缩放倍率（1.0 表示模组原值）。",
+                "fragment_drop_denominator：领域被破坏时，每个边界方块以 1/N 的概率掉落边界碎片。默认 1000（0.1%，比旧版 1/100 低十倍）；设为 1 可使每个方块都掉落。");
         DOMAIN_FRAGMENT_DROP_DENOMINATOR = b.defineInRange("fragment_drop_denominator", 1000, 1, 1000000);
         String[][] domains = {
-                {"zuosha_botu", "Self-Embodiment of Perfection"}, {"wuliang_kongchu", "Unlimited Void"},
-                {"fumo_yuchuzi", "Malevolent Shrine"}, {"fuzhu_cisi", "Execution by Verdict"},
-                {"taizang_bianye", "Taizang Field"}, {"zhenyan_xiangai", "Authentic Mutual Love"},
-                {"qianhe_yingyi", "Embedded Shadow Court"}, {"tie_guan_gai_wei_shan", "Iron Coffin Mountain"},
-                {"zi_bi_yuan_dun_guo", "Self-Enclosed Sphere"}, {"dang_yun_ping_xian", "Horizon of Oscillating Veils"},
-                {"shi_bao_yue_gong_dian", "Time Cell Moon Palace"}, {"san_chong_ji_ku", "Triple Suffering"}
+                {"zuosha_botu", "坐杀博徒"}, {"wuliang_kongchu", "无量空处"},
+                {"fumo_yuchuzi", "伏魔御厨子"}, {"fuzhu_cisi", "伏诛赐死"},
+                {"taizang_bianye", "胎藏遍野"}, {"zhenyan_xiangai", "真赝相爱"},
+                {"qianhe_yingyi", "嵌合暗翳庭"}, {"tie_guan_gai_wei_shan", "铁棺盖围山"},
+                {"zi_bi_yuan_dun_guo", "自闭圆顿裹"}, {"dang_yun_ping_xian", "荡蕴平线"},
+                {"shi_bao_yue_gong_dian", "时胞月宫殿"}, {"san_chong_ji_ku", "三重疾苦"}
         };
         for (String[] d : domains) {
             b.push(d[0]).comment(d[1]);
@@ -933,70 +781,41 @@ public final class ModConfig {
         //    ⇒ 整个模组加载失败（NL 包 crash-2026-09-28_17.36.52-fml.txt ✓）。
         //    上面那个 `b.pop();` 已经是"pop 掉 domains 外层"✓，本节只需 push 一次、pop 一次 ✓。
         b.push("item_tag_normalize").comment(
-                "Strip EMPTY item tags ({}), i.e. restore the tag-less state vanilla gives a brand new item.",
-                "",
-                "Why: some mods call ItemStack#getOrCreateTag() just to READ a tag, which leaves an empty {}",
-                "behind on the item. Vanilla compares the RAW tag with Objects.equals, so {} and \"no tag\" are NOT",
-                "equal and the two stacks can never merge (AE2 also keys items by item+NBT+caps, so it stores them",
-                "as two separate entries as well). Vanilla itself drops the tag (tag = null) whenever the compound",
-                "becomes empty (see ItemStack#removeTagKey / #resetHoverName), so null is the vanilla-canonical state.",
-                "",
-                "true  = strip empty {} tags (default, user request: 'follow vanilla, vanilla items carry no tag').",
-                "false = leave item NBT completely untouched.",
-                "",
-                "Scope: the player's own inventory (checked once per second), picked-up items and crafted items.",
-                "Non-empty tags, item capabilities, and stack merging are never touched.",
-                "Items already sitting inside AE2 storage keep their old key until they are taken out once.");
+                "移除空物品标签 {}，恢复原版新物品的无标签状态。",
+                "有的模组只想读取却调用 ItemStack#getOrCreateTag()，留下空标签。原版认为空标签和无标签不相等，不能堆叠；应用能源 2 也会把它们分开存储。",
+                "true（默认）移除空标签；false 不修改物品 NBT。仅处理玩家背包（每秒检查）、拾取和合成的物品，不修改非空标签、物品能力或堆叠逻辑。",
+                "应用能源 2 中已存放的物品需取出一次，才有机会清理原来的空标签。");
         NORMALIZE_ITEM_TAG = b.define("enabled", true);
         b.pop();
 
         // §769 神秘遗物饰品不要吃掉夜视（用户要求 ✓）
         b.push("enigmatic_curio_keeps_night_vision").comment(
-                "Enigmatic Legacy's Ocean Stone / Mining Charm removes low-level Night Vision on every curio tick,",
-                "which fights Vampirism's night vision (amplifier 0) and makes it flicker on and off.",
-                "",
-                "true  = cancel that removal, so night vision stays (default, user request).",
-                "false = keep Enigmatic Legacy's original behaviour.");
+                "神秘遗物的海洋之石或矿工护符会移除低等级夜视，与吸血鬼的夜视（等级索引 0）冲突，引发画面闪烁。",
+                "true（默认）阻止移除、保留夜视；false 保留神秘遗物的原行为。");
         ENIGMATIC_CURIO_KEEPS_NIGHT_VISION = b.define("enabled", true);
         b.pop();
 
         // §779 暮色森林迷宫（TFMaze）随机源线程安全 —— 修 C2ME 多线程世界生成下的竞态崩溃
         b.push("twilight_maze_thread_safe_random").comment(
-                "Wrap Twilight Forest's TFMaze random source in a synchronized wrapper.",
-                "",
-                "Why: C2ME's threaded world-gen can use the SAME TFMaze instance from several threads, while",
-                "TFMaze.rand is a plain (non thread-safe) LegacyRandomSource -> the vanilla ThreadingDetector",
-                "throws 'Accessing LegacyRandomSource from multiple threads' and crashes the game.",
-                "",
-                "true  = serialize access to that random source (RNG sequence unchanged, race removed; default).",
-                "false = leave Twilight Forest untouched (the C2ME crash can then happen again).");
+                "同步访问暮色森林迷宫 TFMaze 的随机源，避免 C2ME 多线程生成世界时因多个线程访问同一 LegacyRandomSource 而崩溃。",
+                "true（默认）串行访问，随机序列不变；false 不干预暮色森林，可能再次触发多线程崩溃。");
         TWILIGHT_MAZE_THREAD_SAFE_RANDOM = b.define("enabled", true);
         b.pop();
 
         // §864 Boss 战：参与者检测 → 每个参与者各 roll 一次奖励 + 击杀成就广播给所有参与者（用户口径 ✓）
         b.push("boss_fight").comment(
-                "Boss fight support (user request, 2026-09-30):",
-                "  * detect how many players took part in a boss fight;",
-                "  * at settlement, roll the boss loot table once per participant (total rolls == participants,",
-                "    the vanilla roll counts as one, so we add N-1 extra rolls; the extra loot drops on the ground);",
-                "  * the kill-the-boss advancement is also granted/broadcast to every participant.",
-                "",
-                "Bosses are detected with the 'forge:bosses' entity type tag (Goety, Cataclysm, Ice and Fire, ...",
-                "all register their bosses there; verified Goety does).",
-                "'Participated' = damaged the boss (pets/projectiles count for their owner) OR was damaged by the boss.");
+                "首领战：检测参战人数，结算时每位参与者抽一次首领战利品，并向全部参与者发放击杀进度。",
+                "原版抽取计一次，因此额外抽取 N-1 次；额外战利品掉在地上。以 forge:bosses 实体类型标签识别首领。",
+                "对首领造成伤害（宠物和投射物计入主人）或受到首领伤害，即算参战。");
         BOSS_FIGHT_ENABLED = b.define("enabled", true);
         BOSS_FIGHT_ROLLS_EQUAL_PARTICIPANTS = b.comment(
-                "true  = total loot rolls equal the number of participants (default, user request).",
-                "false = keep vanilla behaviour (one roll).")
+                "true（默认）：总抽取次数等于参战人数。false：保留原版行为，只抽一次。")
                 .define("rolls_equal_participants", true);
         BOSS_FIGHT_GRANT_ADVANCEMENTS = b.comment(
-                "true  = also fire the vanilla 'player_killed_entity' advancement trigger for every participant,",
-                "        so kill-the-boss advancements (Goety's kill_a_apostle, vanilla kill_dragon, ...) go to all of them.",
-                "false = only the actual killer gets them (vanilla behaviour).")
+                "true（默认）：为每位参战者触发 player_killed_entity 进度（例如击杀使徒或末影龙）。false：仅实际击杀者获得。")
                 .define("grant_advancements_to_all", true);
         BOSS_FIGHT_MAX_ROLLS = b.comment(
-                "Safety cap on the number of extra rolls for a single boss death (0 = unlimited, default).",
-                "Example: 6 if you never want more than 6 rolls from one boss.")
+                "单次首领死亡的额外抽取次数上限。0 表示不限（默认）；例如设为 6 则最多额外抽取 6 次。")
                 .define("max_extra_rolls", 0);
         b.pop();
 
