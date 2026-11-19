@@ -20,8 +20,7 @@ import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
-import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import com.mofengbaizhi.tinkersnewlife.content.skill.MomoNearestPlayerGoal;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.damagesource.DamageSource;
@@ -172,7 +171,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         }
         this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 16.0F));
         this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
-        this.targetSelector.addGoal(0, new com.mofengbaizhi.tinkersnewlife.content.skill.MomoNearestPlayerGoal(this));
+        this.targetSelector.addGoal(0, new MomoNearestPlayerGoal(this));
     }
 
     @Override
@@ -217,6 +216,8 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             this.tnl$pendingLootPlayer = player;
             this.tnl$pendingLootPlayerTime = 100;
         }
+        // Record aggression before the boss-specific dodge, shield and damage gates.
+        MomoNearestPlayerGoal.retaliate(this, source, amount);
         a.q0(this);
         this.tnl$combat.tick(this);
         if (this.tnl$tryCombatDodge(source)) return false;
@@ -579,19 +580,6 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             }
         }
 
-        // TNL1231 定身只清寻路、不清索敌；但目标一旦丢了（死了/跑远/被清过），
-        // 这个 Boss 没有索敌 Goal ⇒ 它会一直站着。这里补一个轻量兜底：
-        // 空闲时若没有可用目标，就重新锁定 64 格内最近的玩家。
-        if (!this.tnl$isBusy()) {
-            net.minecraft.world.entity.LivingEntity tnl$tgt = this.getTarget();
-            if (tnl$tgt == null || !tnl$tgt.isAlive()) {
-                net.minecraft.world.entity.player.Player tnl$near = this.level().getNearestPlayer(this, 64.0D);
-                if (tnl$near != null && tnl$near.isAlive() && !tnl$near.isCreative()) {
-                    this.setTarget(tnl$near);
-                }
-            }
-        }
-
         // TNL1235 状态看门狗：castTicks 已经归零却还写着"在施法" ⇒ 一定是哪个 Goal 没收尾。
         // 这会永久堵住 ready()（用户："瞬身触发一次之后就不触发"），所以在这里强制清掉。
         if (this.tnl$spell() != 0 && this.tnl$castTicks() <= 0) {
@@ -688,6 +676,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             if (!this.tnl$bossForm()) {
                 return;
             }
+            MomoNearestPlayerGoal.retaliate(this, source, totalDamage);
             a.q6(this, totalDamage, this.tickCount);
         } catch (Throwable ignored) {
         }

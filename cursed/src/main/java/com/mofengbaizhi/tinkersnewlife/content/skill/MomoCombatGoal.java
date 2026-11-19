@@ -42,6 +42,7 @@ public final class MomoCombatGoal extends Goal {
         int phase = state.phase();
         momo.getLookControl().setLookAt(target, 30F, 30F);
         double distance = momo.distanceTo(target);
+        boolean retaliating = momo.getLastHurtByMob() == target;
         boolean bow;
         if (phase == 1) {
             if (momo.tickCount >= nextDecision) {
@@ -57,7 +58,10 @@ public final class MomoCombatGoal extends Goal {
             bow = rareBow;
             if (bow) equip(true); else if (!momo.getMainHandItem().isEmpty())
                 momo.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
-            if (momo.tickCount >= approachUntil) {
+            // Retaliation stays actionable after hit stagger, even outside the random opening.
+            if (!bow && retaliating) {
+                momo.getNavigation().moveTo(target, 1);
+            } else if (momo.tickCount >= approachUntil) {
                 orbit += 0.045;
                 if (momo.tickCount % 10 == 0) momo.getNavigation().moveTo(
                         target.getX() + Math.cos(orbit) * MomoCombatState.ORBIT_RADIUS,
@@ -87,7 +91,7 @@ public final class MomoCombatGoal extends Goal {
             nextShot = momo.tickCount + MomoCombatState.BOW_INTERVAL;
             StarfallLamentItem.fireAt(momo.level(), momo, target);
         } else if (!bow && distance <= 3 && momo.tickCount >= nextAttack
-                && (phase > 1 || momo.tickCount < approachUntil) && momo.hasLineOfSight(target)) {
+                && (phase > 1 || retaliating || momo.tickCount < approachUntil) && momo.hasLineOfSight(target)) {
             nextAttack = momo.tickCount + 20;
             momo.doHurtTarget(target);
         }

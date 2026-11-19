@@ -1,6 +1,8 @@
 package com.mofengbaizhi.tinkersnewlife.content.entity;
 
+import com.mofengbaizhi.tinkersnewlife.content.skill.MomoNearestPlayerGoal;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobSpawnType;
@@ -74,7 +76,13 @@ public class MomoShadow extends Monster {
         this.goalSelector.addGoal(0, new net.minecraft.world.entity.ai.goal.FloatGoal(this));
         this.goalSelector.addGoal(1, new com.mofengbaizhi.tinkersnewlife.content.skill.MomoShadowCombatGoal(this));
         this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8));
-        this.targetSelector.addGoal(0, new com.mofengbaizhi.tinkersnewlife.content.skill.MomoNearestPlayerGoal(this));
+        this.targetSelector.addGoal(0, new MomoNearestPlayerGoal(this));
+    }
+
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        MomoNearestPlayerGoal.retaliate(this, source, amount);
+        return super.hurt(source, amount);
     }
 
     @Override
