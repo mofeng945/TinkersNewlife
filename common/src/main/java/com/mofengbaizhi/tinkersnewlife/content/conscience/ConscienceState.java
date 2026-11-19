@@ -1,16 +1,12 @@
 package com.mofengbaizhi.tinkersnewlife.content.conscience;
 
+import com.mofengbaizhi.tinkersnewlife.config.ModConfig;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.GameRules;
 import net.minecraftforge.server.ServerLifecycleHooks;
 
 /**
- * TNL1311 「心」（善恶系统）总开关 —— **写进游戏规则（gamerule）** ✓
- *
- * <h2>用户口径（改了两版，以最后为准）</h2>
- * 「把心的开关从配置文件里面剔除，改成指令控制」→ 之后改为
- * 「不单独写指令了，直接注册成游戏规则（gamerule）」✓
- * ⇒ 配置里的 {@code conscience.enabled} 已删除 ✗ 现在是自定义 gamerule：
+ * 「心」（善恶系统）仅在配置 {@code conscience.enabled} 与世界游戏规则都开启时生效。
  * <pre>
  *   /gamerule doConscienceHeart true     开启（默认）：自动佩戴「心」，善恶规则生效
  *   /gamerule doConscienceHeart false    关闭：不再佩戴「心」（已有的收掉），善恶按 0 处理
@@ -52,8 +48,11 @@ public final class ConscienceState {
         }
     }
 
-    /** 当前是否开启：实时读服务端 gamerule */
+    /** 全局配置为总闸；开启后再由各世界的游戏规则决定。 */
     public static boolean isEnabled() {
+        if (ModConfig.SPEC.isLoaded() && !ModConfig.CONSCIENCE_ENABLED.get()) {
+            return false;
+        }
         try {
             MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
             if (server == null || ruleKey == null) {

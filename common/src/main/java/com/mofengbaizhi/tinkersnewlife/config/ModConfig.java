@@ -404,6 +404,9 @@ public final class ModConfig {
      */
     public static final ConfigValue<Boolean> TWILIGHT_MAZE_THREAD_SAFE_RANDOM;
 
+    public static final ConfigValue<List<? extends String>> CURSE_AFFINITY_BLACKLIST;
+    public static final ConfigValue<Boolean> CONSCIENCE_ENABLED;
+
     public static final ForgeConfigSpec SPEC;
     static {
         ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -421,6 +424,20 @@ public final class ModConfig {
         // 咒力核心
         b.push("curse_core").comment("Curse Core: allow crafting (ritual) and using (equipping/techniques). Default on.");
         CURSE_CORE_ENABLED = b.define("allow_curse_core_craft_and_use", true);
+        b.pop();
+
+        b.push("curse_affinity");
+        CURSE_AFFINITY_BLACKLIST = b.comment(
+                "Items excluded from automatic Curse Affinity rolls. Existing affinity is kept.",
+                "Examples: @curios (mod ID, matched as a registry namespace), curios or curios:* (namespace),",
+                "curios:ring (exact item ID), *:*_ring or example:charm_? (wildcards).",
+                "* matches zero or more characters; ? matches one. Wildcards match each side of ':' separately.")
+                .defineListAllowEmpty("blacklist", List.<String>of(), entry -> entry instanceof String);
+        b.pop();
+
+        b.push("conscience");
+        CONSCIENCE_ENABLED = b.comment("Master switch for Heart. Both this setting and doConscienceHeart must be true.")
+                .define("enabled", true);
         b.pop();
 
         // ⭐ §1173 自动跑匠魂材质生成器（用户口径 ✓ 默认开启 ✓ 可关 ✓）

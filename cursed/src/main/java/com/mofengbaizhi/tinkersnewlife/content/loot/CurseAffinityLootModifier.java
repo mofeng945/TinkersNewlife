@@ -6,6 +6,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.mofengbaizhi.tinkersnewlife.TinkersNewlife;
 import com.mofengbaizhi.tinkersnewlife.content.curse.CursePowerHelper;
 import com.mofengbaizhi.tinkersnewlife.content.curse.CurseAffinityAttribute;
+import com.mofengbaizhi.tinkersnewlife.content.curse.CurseAffinityBlacklist;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -68,7 +69,7 @@ public class CurseAffinityLootModifier extends LootModifier {
     @Override
     protected @NotNull ObjectArrayList<ItemStack> doApply(ObjectArrayList<ItemStack> generatedLoot, LootContext context) {
         for (ItemStack stack : generatedLoot) {
-            if (stack.isEmpty()) continue;
+            if (stack.isEmpty() || CurseAffinityBlacklist.contains(stack)) continue;
             if (stack.getTag() != null && stack.getTag().contains(CursePowerHelper.KEY_AFFINITY)) continue;
             if (!isCurioItem(stack, context.getLevel())) continue;
             if (context.getRandom().nextFloat() >= chance) {
@@ -150,7 +151,7 @@ public class CurseAffinityLootModifier extends LootModifier {
             if (event.getLevel().isClientSide) return;
             if (!(event.getEntity() instanceof ItemEntity itemEntity)) return;
             ItemStack stack = itemEntity.getItem();
-            if (stack.isEmpty()) return;
+            if (stack.isEmpty() || CurseAffinityBlacklist.contains(stack)) return;
             if (stack.getTag() != null && stack.getTag().contains(CursePowerHelper.KEY_AFFINITY)) return;
             if (!isCurioItem(stack, event.getLevel())) return;
             if (event.getLevel().getRandom().nextFloat() >= CHANCE) return;

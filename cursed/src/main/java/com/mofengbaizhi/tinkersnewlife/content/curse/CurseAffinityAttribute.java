@@ -181,7 +181,7 @@ public final class CurseAffinityAttribute {
     /** 首次见到某件饰品时掷一次骰（40% ⇒ 0~50） */
     public static void rollIfNew(net.minecraft.world.entity.player.Player player, ItemStack stack) {
         try {
-            if (stack.isEmpty()) {
+            if (stack.isEmpty() || CurseAffinityBlacklist.contains(stack)) {
                 return;
             }
             /*
