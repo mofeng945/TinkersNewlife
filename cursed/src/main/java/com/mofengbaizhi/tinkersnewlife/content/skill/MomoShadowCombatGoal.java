@@ -17,6 +17,7 @@ public final class MomoShadowCombatGoal extends Goal {
     private final MomoShadow shadow;
     private int attackAt, castLeft;
     private Vec3 castOrigin;
+    private java.util.Set<java.util.UUID> castHits = new java.util.HashSet<>();
     private double orbit;
     public MomoShadowCombatGoal(MomoShadow shadow) {
         this.shadow = shadow;
@@ -56,7 +57,7 @@ public final class MomoShadowCombatGoal extends Goal {
                 ChordGoal.DiscordantChordHandler.drawRing(level, shadow, castOrigin.x, castOrigin.y,
                         castOrigin.z, radius, castOrigin.y + 0.8);
                 ChordGoal.DiscordantChordHandler.hitRing(level, shadow, castOrigin.x, castOrigin.y,
-                        castOrigin.z, radius, castOrigin.y + 0.8);
+                        castOrigin.z, radius, castOrigin.y + 0.8, castHits);
             }
             return;
         }
@@ -71,6 +72,7 @@ public final class MomoShadowCombatGoal extends Goal {
             attackAt = shadow.tickCount + 160;
             castLeft = 60; // 2-second charge followed by one expanding chord wave.
             castOrigin = shadow.position();
+            castHits.clear();
             shadow.getNavigation().stop();
             if (shadow.level() instanceof ServerLevel level)
                 ChordGoal.DiscordantChordHandler.startChargeFx(level, shadow);

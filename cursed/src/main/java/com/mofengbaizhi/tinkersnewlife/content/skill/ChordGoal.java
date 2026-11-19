@@ -27,7 +27,10 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
+import java.util.WeakHashMap;
 
 /**
  * TNL1176 混沌和弦（法术编号 3），新体系里最后一个迁过来的技能。
@@ -58,6 +61,10 @@ public final class ChordGoal extends MomoSpellGoal {
     private int wavesLeft;
     private long nextWaveAt;
     private boolean released;
+    private final List<net.minecraft.world.entity.ai.attributes.AttributeInstance> jumped = new ArrayList<>();
+    private static final UUID JUMP_ID = UUID.fromString("93d3b77d-d09a-448c-8d1c-77130a9f4870");
+    private static final Map<net.minecraft.world.entity.ai.attributes.AttributeInstance, Integer> JUMP_USERS =
+            new WeakHashMap<>();
 
     public ChordGoal(KtuluMomo momo) {
         super(momo, 3, COOLDOWN_TICKS, TOTAL_TICKS);
@@ -99,7 +106,7 @@ public final class ChordGoal extends MomoSpellGoal {
             this.momo.setYBodyRot(yaw);
         }
         DiscordantChordHandler.startChargeFx(level, this.momo);
-        DiscordantChordHandler.applyJumpBuff(level, this.momo);
+        DiscordantChordHandler.applyJumpBuff(level, this.momo, this.jumped);
         DiscordantChordHandler.markChord(level, this.momo, CHARGE_TICKS + 10);
         TinkersNewlife.LOGGER.warn("TNL1176 Momo starts the Discordant Chord, {} waves queued", WAVES);
     }
@@ -125,7 +132,7 @@ public final class ChordGoal extends MomoSpellGoal {
             double baseY = this.momo.getY() + (RNG.nextBoolean() ? HEIGHT_LOW : HEIGHT_HIGH);
             // TNL1235 用户："墨默释放着和弦开始移动，于是带着波跑"。
             // 每道波必须记住**自己出生时的圆心**，不能再实时读 momo 坐标。
-            this.rings.add(new double[] {0.0D, baseY, this.momo.getX(), this.momo.getY(), this.momo.getZ()});
+            this.rings.add(new Wave(this.momo.position(), baseY));
             level.playSound(null, this.momo.blockPosition(), net.minecraft.sounds.SoundEvents.WARDEN_SONIC_BOOM,
                     net.minecraft.sounds.SoundSource.HOSTILE, 1.8F, 1.0F);
             TinkersNewlife.LOGGER.warn("TNL1176 chord wave {} of {} at height {}, next in {} ticks",
@@ -137,16 +144,17 @@ public final class ChordGoal extends MomoSpellGoal {
         }
 
         // 同时有多道波在飞：间隔比一道波飞完 30 格所需的时间还短
-        java.util.Iterator<double[]> it = this.rings.iterator();
+        var it = this.rings.iterator();
         while (it.hasNext()) {
-            double[] ring = it.next();
-            ring[0] += SPEED;
-            if (ring[0] > MAX_RADIUS) {
+            Wave ring = it.next();
+            ring.radius += SPEED;
+            if (ring.radius > MAX_RADIUS) {
                 it.remove();
                 continue;
             }
-            DiscordantChordHandler.drawRing(level, this.momo, ring[2], ring[3], ring[4], ring[0], ring[1]);
-            DiscordantChordHandler.hitRing(level, this.momo, ring[2], ring[3], ring[4], ring[0], ring[1]);
+            Vec3 origin = ring.origin;
+            DiscordantChordHandler.drawRing(level, this.momo, origin.x, origin.y, origin.z, ring.radius, ring.height);
+            DiscordantChordHandler.hitRing(level, this.momo, origin.x, origin.y, origin.z, ring.radius, ring.height, ring.hit);
         }
 
         if (!this.released) {
@@ -164,7 +172,11 @@ public final class ChordGoal extends MomoSpellGoal {
         if (this.released && this.rings.isEmpty()) {
             return true;
         }
-        return this.momo.tnl$castTicks() <= 0;
+        if (this.momo.tnl$castTicks() <= 0) {
+            this.rings.clear();
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -186,15 +198,25 @@ public final class ChordGoal extends MomoSpellGoal {
                 : com.mofengbaizhi.tinkersnewlife.content.skill.MomoPose.CHORD_WAVE;
     }
 
-    /** 在飞的波：[0] 半径，[1] 基准高度，[2..4] 出生时的圆心 x/y/z */
-    private final java.util.List<double[]> rings = new java.util.ArrayList<>();
+    private static final class Wave {
+        final Vec3 origin;
+        final double height;
+        final java.util.Set<UUID> hit = new java.util.HashSet<>();
+        double radius;
+
+        Wave(Vec3 origin, double height) {
+            this.origin = origin;
+            this.height = height;
+        }
+    }
+    private final List<Wave> rings = new ArrayList<>();
     private long releaseAt;
 
     @Override
     protected void onStop() {
         this.stun.end();
         long now = this.momo.level().getGameTime();
-        DiscordantChordHandler.clearJumpBuff();
+        DiscordantChordHandler.clearJumpBuff(this.jumped);
         this.momo.tnl$setChordCoolUntil(now + COOLDOWN_TICKS);
         this.rings.clear();
         this.releaseAt = 0L;
@@ -219,9 +241,7 @@ static final class DiscordantChordHandler {   // TNL1213 收编自原 Discordant
     /** TNL1153 下一波到点的时间 */
     /** TNL1157 本次施法硬控结束的时间 */
 
-    /** TNL1155 当前带着和弦跳跃加成的人 */
-    private static final List<LivingEntity> JUMPED = new ArrayList<>();
-
+    private static final UUID JUMP_ID = UUID.fromString("93d3b77d-d09a-448c-8d1c-77130a9f4870");
     /** TNL1153 间隔与高度的随机源 */
 
     private static final class Ring {
@@ -247,11 +267,11 @@ static final class DiscordantChordHandler {   // TNL1213 收编自原 Discordant
     }
 
     /** TNL1176 给技能调用的入口：施法期间范围内跳跃 ×1.5 */
-    public static void applyJumpBuff(ServerLevel level, KtuluMomo momo) {
-        JUMPED.clear();
+    public static void applyJumpBuff(ServerLevel level, KtuluMomo momo,
+                                     List<net.minecraft.world.entity.ai.attributes.AttributeInstance> jumped) {
+        clearJumpBuff(jumped);
         var jumpMod = new net.minecraft.world.entity.ai.attributes.AttributeModifier(
-                java.util.UUID.nameUUIDFromBytes("tnl1155_chord_jump".getBytes()),
-                "tnl1155_chord_jump", 0.5D,
+                JUMP_ID, "tnl1155_chord_jump", 0.5D,
                 net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.MULTIPLY_TOTAL);
         for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class,
                 momo.getBoundingBox().inflate(MAX_RADIUS))) {
@@ -259,23 +279,26 @@ static final class DiscordantChordHandler {   // TNL1213 收编自原 Discordant
                 continue;
             }
             var attr = le.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.JUMP_STRENGTH);
-            if (attr != null && !attr.hasModifier(jumpMod)) {
-                attr.addTransientModifier(jumpMod);
-                JUMPED.add(le);
+            if (attr != null) {
+                if (!JUMP_USERS.containsKey(attr)) attr.addTransientModifier(jumpMod);
+                JUMP_USERS.merge(attr, 1, Integer::sum);
+                jumped.add(attr);
             }
         }
-        TinkersNewlife.LOGGER.warn("TNL1176 chord jump buff on {} creatures", JUMPED.size());
     }
 
     /** TNL1176 给技能调用的入口：收回跳跃加成 */
-    public static void clearJumpBuff() {
-        for (LivingEntity le : JUMPED) {
-            var attr = le.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.JUMP_STRENGTH);
-            if (attr != null) {
-                attr.removeModifier(java.util.UUID.nameUUIDFromBytes("tnl1155_chord_jump".getBytes()));
+    public static void clearJumpBuff(List<net.minecraft.world.entity.ai.attributes.AttributeInstance> jumped) {
+        for (var attr : jumped) {
+            Integer users = JUMP_USERS.get(attr);
+            if (users == null || users <= 1) {
+                JUMP_USERS.remove(attr);
+                attr.removeModifier(JUMP_ID);
+            } else {
+                JUMP_USERS.put(attr, users - 1);
             }
         }
-        JUMPED.clear();
+        jumped.clear();
     }
 
     /** TNL1157 给附近玩家保持和弦标记，客户端据此选和弦姿势。*/
@@ -304,7 +327,8 @@ static final class DiscordantChordHandler {   // TNL1213 收编自原 Discordant
      * TNL1153 被波扫到的东西吃监守者音波伤害并被掀飞，随后
      * 虚弱又迟缓。每道波在自己的高度上，所以矮的那道可以跳过去。
      */
-    public static void hitRing(ServerLevel level, LivingEntity momo, double ox, double oy, double oz, double radius, double baseY) {   // TNL1235 圆心由调用方给
+    public static void hitRing(ServerLevel level, LivingEntity momo, double ox, double oy, double oz,
+                               double radius, double baseY, java.util.Set<UUID> hit) {
         double band = 0.9D;   // TNL1237 判定也必须用锚定圆心（用户："锚定了粒子但是没锚定判定"）
         // TNL1237 以**波心**搜实体：Boss 走开了也要能找到波上的目标
         for (LivingEntity le : level.getEntitiesOfClass(LivingEntity.class,
@@ -327,7 +351,10 @@ static final class DiscordantChordHandler {   // TNL1213 收编自原 Discordant
             if (wave < boxLow - margin || wave > boxHigh + margin) {
                 continue;
             }
-            le.hurt(level.damageSources().sonicBoom(momo), SONIC_DAMAGE);
+            boolean firstHit = hit.add(le.getUUID());
+            boolean damaged = le.hurt(level.damageSources().sonicBoom(momo), SONIC_DAMAGE);
+            if (damaged) hit.add(le.getUUID());
+            if (!firstHit || !damaged) continue;
             Vec3 out = new Vec3(le.getX() - ox, 0.0D, le.getZ() - oz);
             if (out.lengthSqr() < 1.0E-4D) {
                 out = new Vec3(1.0D, 0.0D, 0.0D);

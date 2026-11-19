@@ -169,6 +169,9 @@ public class MomoShadow extends Monster {
                     inst.removeModifier(mod.getId());
                 }
             }
+            if (this.getHealth() > this.getMaxHealth()) {
+                this.setHealth(this.getMaxHealth());
+            }
         } catch (Throwable ignored) {
         }
     }

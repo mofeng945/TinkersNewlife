@@ -46,6 +46,12 @@ public final class MomoNearestPlayerGoal extends Goal {
     }
 
     private void update() {
+        LivingEntity recentAttacker = mob.getLastHurtByMob();
+        if (isValidTarget(mob, recentAttacker) && mob.getLastHurtByMobTimestamp() >= mob.tickCount - 100) {
+            if (mob.getTarget() != recentAttacker) mob.setTarget(recentAttacker);
+            if (mob.getTarget() == recentAttacker) return;
+        }
+
         if (mob instanceof MomoShadow shadow && shadow.tnl$ownerId() != null
                 && shadow.level() instanceof ServerLevel level
                 && level.getEntity(shadow.tnl$ownerId()) instanceof KtuluMomo owner && owner.isAlive()) {

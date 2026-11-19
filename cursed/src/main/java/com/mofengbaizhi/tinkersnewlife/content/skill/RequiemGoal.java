@@ -36,6 +36,7 @@ public final class RequiemGoal extends MomoSpellGoal {
 
     /** 六芒星：旋转用的角度累积（客户端只是看粒子，这里在服务端算） */
     private double spin;
+    private int effectTimer;
     private final MomoDomainPets domainPets = new MomoDomainPets();
 
     public RequiemGoal(KtuluMomo momo) {
@@ -79,6 +80,7 @@ public final class RequiemGoal extends MomoSpellGoal {
     protected void onStart() {
         this.momo.tnl$combat().consumeEntryDomain();
         this.spin = 0.0D;
+        this.effectTimer = 0;
         this.domainPets.spawn(this.momo);
         this.momo.tnl$clearRequiemClose();
         this.momo.tnl$markRequiemUsed();
@@ -104,8 +106,8 @@ public final class RequiemGoal extends MomoSpellGoal {
         this.stun.keep();                                // 每 tick 压住（近战 Goal 会想重新寻路）
 
 
-        // 每秒结算一次
-        if (this.momo.tnl$castTicks() % 20 == 0) {
+        if (++this.effectTimer >= 20) {
+            this.effectTimer = 0;
             tickEffects(level);
         }
 
@@ -157,6 +159,7 @@ public final class RequiemGoal extends MomoSpellGoal {
 
     @Override
     protected void onStop() {
+        this.effectTimer = 0;
         this.domainPets.clear();
         this.stun.end();
         this.momo.tnl$clearRequiemClose();
@@ -167,8 +170,8 @@ public final class RequiemGoal extends MomoSpellGoal {
                     this.momo.getX(), this.momo.getY() + 1.0D, this.momo.getZ(),
                     30, 1.5D, 0.4D, 1.5D, 0.01D);
         }
-        this.momo.tnl$setRequiemCoolUntil(
-                this.momo.level().getGameTime() + COOLDOWN_TICKS);
+        this.momo.tnl$setRequiemCoolUntil(Math.max(this.momo.tnl$requiemCoolUntil(),
+                this.momo.level().getGameTime() + COOLDOWN_TICKS));
     }
 
     /**
