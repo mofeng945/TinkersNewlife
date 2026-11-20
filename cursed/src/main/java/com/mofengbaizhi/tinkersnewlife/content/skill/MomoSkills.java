@@ -26,6 +26,9 @@ public final class MomoSkills {
     /** TNL1287 飞踢：2 倍速度冲刺 → 斜向踢击 → 击飞 ＋ 撞墙钝伤 */
     public static final boolean COMET_KICK = true;
 
+    /** 星梦一觉：10 秒黑洞吟唱后落下持续 5 秒的混合伤害激光。 */
+    public static final boolean STAR_DREAM = true;
+
     private MomoSkills() {
     }
 }

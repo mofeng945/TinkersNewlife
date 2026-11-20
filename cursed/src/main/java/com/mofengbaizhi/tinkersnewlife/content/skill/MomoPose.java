@@ -30,7 +30,9 @@ public enum MomoPose {
     /** TNL1298 生息绝响·起手：合十抬手那一段（对应动画 `requiem_enter`）。 */
     REQUIEM_ENTER,
     /** TNL1298 生息绝响·收手（对应动画 `requiem_exit`）。 */
-    REQUIEM_EXIT;
+    REQUIEM_EXIT,
+    /** 星梦一觉：原地持续吟唱。 */
+    STAR_DREAM;
 
     /** 由同步的法术编号得到姿势类别：1 瞬身、2 共鸣、3 和弦、4 绝响、6 飞踢 */
     public static MomoPose of(int spellId) {
@@ -39,6 +41,7 @@ public enum MomoPose {
             case 2 -> RESONANCE;
             case 3 -> CHORD;
             case 6 -> KICK;
+            case 7 -> STAR_DREAM;
             default -> NONE;
         };
     }

@@ -169,6 +169,9 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         if (com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.COMET_KICK) {
             this.goalSelector.addGoal(3, new com.mofengbaizhi.tinkersnewlife.content.skill.MomoKickGoal(this));
         }
+        if (com.mofengbaizhi.tinkersnewlife.content.skill.MomoSkills.STAR_DREAM) {
+            this.goalSelector.addGoal(0, new com.mofengbaizhi.tinkersnewlife.content.skill.StarDreamGoal(this));
+        }
         this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 16.0F));
         this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
         this.targetSelector.addGoal(0, new MomoNearestPlayerGoal(this));
@@ -782,6 +785,18 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> DATA_CAST_TICKS =
             net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class,
                     net.minecraft.network.syncher.EntityDataSerializers.INT);
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> DATA_STAR_DREAM =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class,
+                    net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Float> DATA_STAR_DREAM_X =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class,
+                    net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Float> DATA_STAR_DREAM_Y =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class,
+                    net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Float> DATA_STAR_DREAM_Z =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class,
+                    net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
 
     /**
      * TNL1244 用户："把动画动作的调用打包在技能类里面，作为释放技能的一部分进行"。
@@ -812,6 +827,19 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         this.entityData.set(DATA_ANIM_PROGRESS, (byte) 0);
     }
 
+    public void tnl$setStarDream(net.minecraft.world.phys.Vec3 center, boolean active) {
+        this.entityData.set(DATA_STAR_DREAM_X, (float) center.x);
+        this.entityData.set(DATA_STAR_DREAM_Y, (float) center.y);
+        this.entityData.set(DATA_STAR_DREAM_Z, (float) center.z);
+        this.entityData.set(DATA_STAR_DREAM, active);
+    }
+
+    public boolean tnl$isStarDreamActive() { return this.entityData.get(DATA_STAR_DREAM); }
+    public net.minecraft.world.phys.Vec3 tnl$starDreamCenter() {
+        return new net.minecraft.world.phys.Vec3(this.entityData.get(DATA_STAR_DREAM_X).doubleValue(),
+                this.entityData.get(DATA_STAR_DREAM_Y).doubleValue(), this.entityData.get(DATA_STAR_DREAM_Z).doubleValue());
+    }
+
     /** TNL1244 客户端读：姿势类别（MomoPose.ordinal） */
     public int tnl$animPose() {
         return this.entityData.get(DATA_ANIM_POSE);
@@ -829,6 +857,10 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         super.defineSynchedData();
         this.entityData.define(DATA_SPELL, (byte) 0);
         this.entityData.define(DATA_CAST_TICKS, 0);
+        this.entityData.define(DATA_STAR_DREAM, false);
+        this.entityData.define(DATA_STAR_DREAM_X, 0.0F);
+        this.entityData.define(DATA_STAR_DREAM_Y, 0.0F);
+        this.entityData.define(DATA_STAR_DREAM_Z, 0.0F);
         this.entityData.define(DATA_ANIM_POSE, (byte) 0);
         this.entityData.define(DATA_ANIM_PROGRESS, (byte) 0);
     }
@@ -846,6 +878,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         tag.putInt("TNLSpellTicks", this.tnl$castTicks());
         tag.putBoolean("TNLRequiemUsed", this.tnl$requiemUsed);      // TNL1253 一局只放一次，要跨存档
         tag.putBoolean("TNLRlyehUsed", this.tnl$rlyehUsed);          // TNL1282 拉莱耶之影也只放一次
+        tag.putLong("TNLStarDreamCoolUntil", this.tnl$starDreamCoolUntil);
     }
 
     @Override
@@ -857,6 +890,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         }
         this.tnl$requiemUsed = tag.getBoolean("TNLRequiemUsed");      // TNL1253 读回"是否已放过"
         this.tnl$rlyehUsed = tag.getBoolean("TNLRlyehUsed");          // TNL1282 读回
+        this.tnl$starDreamCoolUntil = tag.getLong("TNLStarDreamCoolUntil");
         this.tnl$staleSpellTicks = 0;      // 读档后不要立刻被看门狗清掉
     }
 
@@ -947,7 +981,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
      * （{@code maxHealth * a.C0}）。
      */
     public void tnl$onHit(float damage, float budget) {
-        if (this.tnl$combat.phase() == 3 && this.tnl$spell() != 4) return;
+        if (this.tnl$combat.phase() == 3 && this.tnl$spell() != 4 && this.tnl$spell() != 7) return;
         if (budget <= 0.0F) {
             return;
         }
@@ -1054,6 +1088,10 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     // ==================== TNL1282 拉莱耶之影（R'lyeh's Shadow） ✓ ====================
     /** 一局只放一次（进 NBT） */
     private boolean tnl$rlyehUsed = false;
+    private long tnl$starDreamCoolUntil;
+
+    public long tnl$starDreamCoolUntil() { return this.tnl$starDreamCoolUntil; }
+    public void tnl$setStarDreamCoolUntil(long value) { this.tnl$starDreamCoolUntil = value; }
 
     public boolean tnl$rlyehUsed() {
         return this.tnl$rlyehUsed;
@@ -1193,6 +1231,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             case 6 -> "kick";
             case 7 -> "chord_wave";
             case 8 -> "walk";
+            case 11 -> "star_dream";
             // TNL1300 用户："帮我改进" —— 待机就站着不动：
             // 有速度 ⇒ walk（走路循环）；几乎不动 ⇒ 不播动画（静止站姿）
             default -> this.getDeltaMovement().horizontalDistanceSqr() > 0.0025D ? "walk" : null;
