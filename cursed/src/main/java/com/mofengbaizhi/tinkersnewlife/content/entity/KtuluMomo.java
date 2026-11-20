@@ -877,7 +877,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         tag.putByte("TNLSpell", (byte) this.tnl$spell());
         tag.putInt("TNLSpellTicks", this.tnl$castTicks());
         tag.putBoolean("TNLRequiemUsed", this.tnl$requiemUsed);      // TNL1253 一局只放一次，要跨存档
-        tag.putBoolean("TNLRlyehUsed", this.tnl$rlyehUsed);          // TNL1282 拉莱耶之影也只放一次
+        tag.putLong("TNLRlyehCoolUntil", this.tnl$rlyehCoolUntil);
         tag.putLong("TNLStarDreamCoolUntil", this.tnl$starDreamCoolUntil);
     }
 
@@ -889,7 +889,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             this.tnl$setSpell(tag.getByte("TNLSpell"), tag.getInt("TNLSpellTicks"));
         }
         this.tnl$requiemUsed = tag.getBoolean("TNLRequiemUsed");      // TNL1253 读回"是否已放过"
-        this.tnl$rlyehUsed = tag.getBoolean("TNLRlyehUsed");          // TNL1282 读回
+        this.tnl$rlyehCoolUntil = tag.getLong("TNLRlyehCoolUntil");
         this.tnl$starDreamCoolUntil = tag.getLong("TNLStarDreamCoolUntil");
         this.tnl$staleSpellTicks = 0;      // 读档后不要立刻被看门狗清掉
     }
@@ -1086,20 +1086,15 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     }
 
     // ==================== TNL1282 拉莱耶之影（R'lyeh's Shadow） ✓ ====================
-    /** 一局只放一次（进 NBT） */
-    private boolean tnl$rlyehUsed = false;
+    private long tnl$rlyehCoolUntil;
     private long tnl$starDreamCoolUntil;
 
     public long tnl$starDreamCoolUntil() { return this.tnl$starDreamCoolUntil; }
     public void tnl$setStarDreamCoolUntil(long value) { this.tnl$starDreamCoolUntil = value; }
 
-    public boolean tnl$rlyehUsed() {
-        return this.tnl$rlyehUsed;
-    }
+    public long tnl$rlyehCoolUntil() { return this.tnl$rlyehCoolUntil; }
 
-    public void tnl$markRlyehUsed() {
-        this.tnl$rlyehUsed = true;
-    }
+    public void tnl$setRlyehCoolUntil(long until) { this.tnl$rlyehCoolUntil = until; }
 
     /**
      * TNL1282 用户口径："**不击杀分身无法对墨默造成伤害**"。

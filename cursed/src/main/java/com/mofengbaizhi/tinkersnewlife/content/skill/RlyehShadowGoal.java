@@ -27,25 +27,26 @@ import net.minecraft.sounds.SoundSource;
  * <p>"无法打断" = 覆写 {@link MomoSpellGoal#interruptible()} 返回 {@code false}，
  * 受击不会把这个技能收掉（⚠ 别的技能仍然可打断 ✓）。
  *
- * <p>一局只放一次：标志在实体上（{@code TNLRlyehUsed}，进 NBT）。
+ * <p>成功召唤后冷却 120 秒；护盾仍生效时不再召唤。
  */
 public final class RlyehShadowGoal extends MomoSpellGoal {
 
     /** 3 个分身 */
     private static final int SHADOW_COUNT = 3;
+    private static final int COOLDOWN_TICKS = 120 * 20;
     /** 生成半径（围着本体 3.5 格） */
     private static final double SPAWN_RADIUS = 3.5D;
     /** 这个 Goal 只活 6 tick（★无前摇 ✓） */
     private static final int TOTAL_TICKS = 6;
 
     public RlyehShadowGoal(KtuluMomo momo) {
-        super(momo, 5, 0, TOTAL_TICKS);
+        super(momo, 5, COOLDOWN_TICKS, TOTAL_TICKS);
     }
 
-    /** 不需要冷却：一局一次由 {@code tnl$rlyehUsed()} 保证 */
+
     @Override
     protected int cooldownLeft() {
-        return 0;
+        return (int) Math.min(Integer.MAX_VALUE, Math.max(0L, momo.tnl$rlyehCoolUntil() - momo.level().getGameTime()));
     }
 
     @Override
@@ -53,13 +54,10 @@ public final class RlyehShadowGoal extends MomoSpellGoal {
         if (!MomoSkills.RLYEH_SHADOW) {
             return false;
         }
-        if (this.momo.tnl$rlyehUsed()) {
-            return false;                                   // 一局一次
-        }
         if (this.momo.tnl$authority() > this.momo.getMaxHealth() * 0.5F) {
             return false;                                   // ★测试期口径：50% 血自动触发
         }
-        return this.ready();
+        return this.ready() && !momo.tnl$shadowShieldActive();
     }
 
     /** ★无前摇不可打断 ✓ */
@@ -70,8 +68,10 @@ public final class RlyehShadowGoal extends MomoSpellGoal {
 
     @Override
     protected void onStart() {
-        this.momo.tnl$markRlyehUsed();
+
         int spawned = spawnShadows();
+        momo.tnl$setRlyehCoolUntil(momo.level().getGameTime() + (spawned > 0 ? COOLDOWN_TICKS : 20));
+        if (spawned == 0) return;
         if (this.momo.level() instanceof ServerLevel level) {
             level.playSound(null, this.momo.blockPosition(),
                     SoundEvents.WARDEN_ROAR, SoundSource.HOSTILE, 2.0F, 0.55F);
@@ -135,8 +135,7 @@ public final class RlyehShadowGoal extends MomoSpellGoal {
                 }
                 // 近战那两只先跟随本体的目标（AI 用户后续补）
                 shadow.setTarget(this.momo.getTarget());
-                level.addFreshEntity(shadow);
-                spawned++;
+                if (level.addFreshEntity(shadow)) spawned++;
             } catch (Throwable t) {
                 TinkersNewlife.LOGGER.warn("TNL1282 shadow spawn failed: {}", t.toString());
             }
