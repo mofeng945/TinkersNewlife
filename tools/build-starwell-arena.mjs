@@ -67,17 +67,17 @@ for(let k=0;k<4;k++){
 // Monumental column order: fluted quartz shafts, dark bases, copper capitals, pointed flying buttresses.
 for(let n=0;n<24;n++){
  const a=n*Math.PI/12,[cx,cz]=radial(59,a), base=14;
- for(let u=-2;u<=2;u++)for(let v=-2;v<=2;v++){
-  const m=Math.abs(u)+Math.abs(v);if(m>3)continue;
-  fill(cx+u,base,cz+v,base+1,edge);put(cx+u,base+2,cz+v,m===3?'quartz_slab[type=bottom]':pale);
-  if(m<=1)fill(cx+u,base+3,cz+v,base+10,'quartz_pillar[axis=y]');
-  if(m<=2)put(cx+u,base+11,cz+v,'chiseled_quartz_block');
-  put(cx+u,base+12,cz+v,m===3?'dark_prismarine_slab[type=bottom]':prism);
+ for(let u=-3;u<=3;u++)for(let v=-3;v<=3;v++){
+  const m=Math.abs(u)+Math.abs(v);if(m>4)continue;
+  fill(cx+u,base,cz+v,base+1,edge);put(cx+u,base+2,cz+v,m===4?'quartz_slab[type=bottom]':pale);
+  if(m<=2)fill(cx+u,base+3,cz+v,base+15,'quartz_pillar[axis=y]');
+  if(m<=3)put(cx+u,base+16,cz+v,'chiseled_quartz_block');
+  put(cx+u,base+17,cz+v,m===4?'cut_copper_slab[type=bottom]':prism);
  }
- fill(cx,27,cz,29,'polished_blackstone_brick_wall');put(cx,30,cz,'lightning_rod[facing=up]');
+ fill(cx,32,cz,35,'polished_blackstone_brick_wall');put(cx,36,cz,'lightning_rod[facing=up]');
  // Arc from pillar to pillar: paired lancet ribs meet at a suspended keystone.
  for(let i=0;i<=32;i++){
-  const t=i/32,[x,z]=radial(59,a+t*Math.PI/12);const y=23+Math.round(6*(1-Math.abs(2*t-1))**.62);
+  const t=i/32,[x,z]=radial(59,a+t*Math.PI/12);const y=29+Math.round(6*(1-Math.abs(2*t-1))**.62);
   put(x,y,z,black);put(x,y+1,z,'deepslate_tile_slab[type=bottom]');
   if(i===16){put(x,y,z,'chiseled_polished_blackstone');put(x,y-1,z,'chain[axis=y]');put(x,y-2,z,'soul_lantern[hanging=true]')}
  }
@@ -92,6 +92,35 @@ for(let z=62;z<=79;z++)for(let x=-5;x<=5;x++){
  put(x,h,z,z<=63||z>=78?pale:stair('quartz','north'));
  if(Math.abs(x)===5){put(x,h+1,z,'polished_blackstone_brick_wall');if(z%5===0)put(x,h+2,z,'soul_lantern')}
 }
+// Recessed stone braziers midway between the portals, alternating two fire colours.
+const braziers=[];
+for(let n=0;n<12;n++){
+ const [x,z]=radial(50,(n+.5)*Math.PI/6); const soul=n%2===1;
+ for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++){
+  put(x+i,15,z+j,black);put(x+i,16,z+j,i||j?'polished_blackstone_brick_slab[type=bottom]':soul?'soul_sand':'netherrack');
+ }
+ put(x,17,z,soul?'soul_fire':'fire[age=0]');braziers.push([x,z,soul]);
+}
+// The astrolabe is open, not a roof. Connecting diagonal segments with corner blocks keeps its silhouette continuous.
+function trace(x0,z0,x1,z1,y,state){let px=Math.round(x0),pz=Math.round(z0);const count=Math.ceil(Math.hypot(x1-x0,z1-z0)*3);
+ for(let k=0;k<=count;k++){const t=k/count,x=Math.round(x0+(x1-x0)*t),z=Math.round(z0+(z1-z0)*t);if(px!==x&&pz!==z)put(x,y,pz,state);put(x,y,z,state);px=x;pz=z;}}
+for(const [r,y] of [[53,33],[38,42]]){
+ for(let i=0;i<120;i++){const a=i*Math.PI/60,c=(i+1)*Math.PI/60;trace(r*Math.cos(a),r*Math.sin(a),r*Math.cos(c),r*Math.sin(c),y,i%10===0?lamp:i%10===1?'waxed_cut_copper':'oxidized_cut_copper');}
+}
+for(let i=0;i<6;i++){
+ const a=i*Math.PI/3-Math.PI/2,c=a+2*Math.PI/3;trace(31*Math.cos(a),31*Math.sin(a),31*Math.cos(c),31*Math.sin(c),45,'waxed_cut_copper');
+ const [x,z]=radial(31,a);put(x,45,z,lamp);put(x,46,z,'amethyst_cluster[facing=up]');put(x,44,z,'chain[axis=y]');put(x,43,z,'soul_lantern[hanging=true]');
+}
+// Asymmetric, deterministic impact fragments with a tapering train of detached splinters.
+const meteors=[[-32,-23,51,4,1,-1],[31,-32,46,3,1,1],[39,18,52,3,-1,1],[-35,28,41,2,-1,-1],[-17,35,55,2,1,1]];
+for(const [cx,cz,cy,size,dx,dz] of meteors){
+ for(let x=-size-1;x<=size+1;x++)for(let y=-size;y<=size;y++)for(let z=-size;z<=size;z++){
+  const h=Math.abs(x*53+y*83+z*31+cx*11)%23;
+  if(((x+.25*y)/(size+.7))**2+(y/(size*.8))**2+(z/size)**2>1+(h-11)*.019)continue;
+  put(cx+x,cy+y,cz+z,h<=2?'magma_block':h===3?'budding_amethyst':h<10?'basalt[axis=y]':'blackstone');
+ }
+ for(const t of [size+2,size+5,size+9]){const x=cx+dx*t,z=cz+dz*Math.round(t*.55),y=cy+Math.round(t*.45);put(x,y,z,'blackstone');if(t<=size+5){put(x,y-1,z,'magma_block');put(x-dx,y,z,'basalt[axis=y]')}}
+}
 // Eight of nine base blocks: finish from the southern service aisle at (0,1,1).
 for(let x=-1;x<=1;x++)for(let z=-1;z<=1;z++)put(x,1,z,x===0&&z===1?'air':'iron_block');
 put(0,2,0,'beacon');for(let y=3;y<=F+4;y++)put(0,y,0,y===F+4?'glass':'air');
@@ -100,6 +129,7 @@ const name=path.join(dir,'starwell_arena.nbt');const bytes=serializeStructure(ir
 const round=parseStructureAuto(new Uint8Array(fs.readFileSync(name)),name),reg=round.regions[0];
 const cell=(x,y,z)=>reg.palette[reg.blocks[x+X+(z+Z)*reg.size.x+y*reg.size.x*reg.size.z]].name.split(':').pop();
 const check=(v,msg)=>{if(!v)throw Error(msg)};check(cell(0,2,0)==='beacon','beacon');for(let y=3;y<reg.size.y;y++)check(['air','glass'].includes(cell(0,y,0)),'beam');
+for(const [x,z,soul] of braziers){check(cell(x,17,z)===(soul?'soul_fire':'fire')&&cell(x,16,z)===(soul?'soul_sand':'netherrack'),'brazier')};for(const [x,z,y] of meteors)check(cell(x,y,z)!=='air','meteor');
 // Verify headroom and all neighbouring surface transitions in half-block units from re-imported blocks.
 const height=(x,z)=>{for(let y=F+6;y>=F;y--){const s=cell(x,y,z);if(s!=='air')return 2*(y+1)-(s.endsWith('_slab')?1:0)}throw Error('hole')};
 for(let x=-48;x<=48;x++)for(let z=-48;z<=48;z++){const r=Math.hypot(x,z);if(r>48)continue;
