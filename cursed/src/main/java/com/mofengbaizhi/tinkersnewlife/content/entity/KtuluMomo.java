@@ -1231,7 +1231,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             case 6 -> "kick";
             case 7 -> "chord_wave";
             case 8 -> "walk";
-            case 11 -> "star_dream";
+            case 11 -> null; // Procedural chant pose; no matching animation clip.
             // TNL1300 用户："帮我改进" —— 待机就站着不动：
             // 有速度 ⇒ walk（走路循环）；几乎不动 ⇒ 不播动画（静止站姿）
             default -> this.getDeltaMovement().horizontalDistanceSqr() > 0.0025D ? "walk" : null;

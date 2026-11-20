@@ -79,6 +79,7 @@ public final class MomoKickGoal extends MomoSpellGoal {
 
     @Override
     public boolean canUse() {
+        if (this.momo.tnl$combat().usingBow(this.momo)) return false;
         if (!MomoSkills.COMET_KICK) {
             return false;
         }

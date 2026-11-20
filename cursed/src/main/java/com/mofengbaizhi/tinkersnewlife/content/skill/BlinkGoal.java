@@ -43,6 +43,7 @@ public final class BlinkGoal extends MomoSpellGoal {
 
     @Override
     public boolean canUse() {
+        if (this.momo.tnl$combat().usingBow(this.momo)) return false;
         // 触发判断发生在定身之前 ⇒ 这里读实体自己的目标
         if (!MomoSkills.BLINK) {
             return false;

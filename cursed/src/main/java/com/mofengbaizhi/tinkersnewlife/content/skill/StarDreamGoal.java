@@ -63,7 +63,7 @@ public final class StarDreamGoal extends MomoSpellGoal {
         momo.getNavigation().stop();
         momo.setDeltaMovement(Vec3.ZERO);
         momo.setNoGravity(false);
-        momo.tnl$stunFor(CHANNEL_TICKS + LASER_TICKS + 5);
+        momo.tnl$stunFor(2);
         momo.tnl$setStunned(true);
         momo.tnl$setStarDream(center, true);
         momo.tnl$setSpell(7, CHANNEL_TICKS + LASER_TICKS);
@@ -82,9 +82,9 @@ public final class StarDreamGoal extends MomoSpellGoal {
         momo.setNoGravity(false);
         if (center == null || !(momo.level() instanceof ServerLevel level)) return;
 
-        momo.tnl$stunFor(CHANNEL_TICKS + LASER_TICKS + 5);
+        momo.tnl$stunFor(2);
         boolean laser = elapsed > CHANNEL_TICKS;
-        momo.tnl$setStarDream(center, laser);
+        // The active flag covers both phases; the renderer derives age from remaining ticks.
         float progress = laser ? (float) (elapsed - CHANNEL_TICKS) / LASER_TICKS
                 : (float) elapsed / CHANNEL_TICKS;
         momo.tnl$setAnim(MomoPose.STAR_DREAM.ordinal(), progress);

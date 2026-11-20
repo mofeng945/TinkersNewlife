@@ -35,19 +35,27 @@ public final class StarDreamRenderer {
         boolean drew = false;
         for (var entity : mc.level.entitiesForRendering()) {
             if (!(entity instanceof KtuluMomo momo) || !momo.tnl$isStarDreamActive()) continue;
-            float p = Mth.clamp(momo.tnl$animProgress(), 0.0F, 1.0F);
+            if (momo.tnl$spell() != 7 || !momo.isAlive()) continue;
+            float age = 300 - momo.tnl$castTicks() + event.getPartialTick();
             Vec3 center = momo.tnl$starDreamCenter();
             pose.pushPose();
-            pose.translate(center.x - camera.x, center.y - camera.y, center.z - camera.z);
-            Matrix4f matrix = pose.last().pose();
-            if (momo.tnl$spell() == 7 && momo.tnl$castTicks() > 0
-                    && momo.tnl$castTicks() >= com.mofengbaizhi.tinkersnewlife.content.skill.StarDreamGoal.LASER_TICKS) {
-                drawBlackHole(matrix, buffer, p, momo.tickCount);
-                drawMagicCircle(matrix, buffer, momo.tickCount);
-            } else {
-                drawLaser(matrix, buffer, p, momo.tickCount);
+            try {
+                pose.translate(center.x - camera.x, center.y - camera.y, center.z - camera.z);
+                Matrix4f matrix = pose.last().pose();
+                if (age < 200) {
+                    float p = Mth.clamp(age / 200, 0, 1);
+                    drawMagicCircle(matrix, buffer, momo.tickCount);
+                    buffer.endBatch(RenderType.debugQuads());
+                    pose.mulPose(event.getCamera().rotation());
+                    StarDreamLens.draw(pose.last().pose(), 5 * smooth(p));
+                    pose.mulPose(com.mojang.math.Axis.XP.rotationDegrees(90));
+                    drawBlackHole(pose.last().pose(), buffer, p, momo.tickCount);
+                } else {
+                    drawLaser(matrix, buffer, Mth.clamp((age - 200) / 100, 0, 1), momo.tickCount);
+                }
+            } finally {
+                pose.popPose();
             }
-            pose.popPose();
             drew = true;
         }
         if (drew) buffer.endBatch(RenderType.debugQuads());
@@ -65,7 +73,7 @@ public final class StarDreamRenderer {
                     0.10F, 0.78F * lens, tick * (i % 2 == 0 ? 0.8F : -0.55F) + i * 31.0F, i == 1);
         }
         // Black disk plus an asymmetric, bright accretion rim suggests a lens rather than a flat ring.
-        disc(vc, matrix, Math.max(0.02F, radius * 0.79F), 0.8F, 0.79F, 0.84F, 0.98F);
+        disc(vc, matrix, Math.max(0.02F, radius * 0.79F), 0.008F, 0.005F, 0.02F, 1.0F);
         for (int i = 0; i < 64; i++) {
             float a = (float) (Math.PI * 2.0 * i / 64.0) + tick * 0.025F;
             float r1 = radius * (0.84F + 0.025F * Mth.sin(a * 3.0F + tick * 0.05F));

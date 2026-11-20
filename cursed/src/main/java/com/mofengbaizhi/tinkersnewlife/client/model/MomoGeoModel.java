@@ -91,14 +91,14 @@ public class MomoGeoModel extends GeoModel<KtuluMomo> {
             CoreGeoBone leftArm = this.getAnimationProcessor().getBone("leftArm");
             float pulse = Mth.sin(animatable.tickCount * 0.08F) * 0.035F;
             if (rightArm != null) {
-                rightArm.setRotX(-1.05F + pulse);
+                rightArm.setRotX(1.05F + pulse);
                 rightArm.setRotY(-0.08F);
-                rightArm.setRotZ(-0.32F);
+                rightArm.setRotZ(0.32F);
             }
             if (leftArm != null) {
-                leftArm.setRotX(-1.05F - pulse);
+                leftArm.setRotX(1.05F - pulse);
                 leftArm.setRotY(0.08F);
-                leftArm.setRotZ(0.32F);
+                leftArm.setRotZ(-0.32F);
             }
         }
     }

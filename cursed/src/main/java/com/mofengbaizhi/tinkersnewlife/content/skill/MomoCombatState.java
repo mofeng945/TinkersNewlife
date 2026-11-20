@@ -16,6 +16,15 @@ public final class MomoCombatState {
     public static final double ORBIT_RADIUS = 8;
     private int phase = 1;
     private int dodgeAfter;
+    private java.util.UUID rangedTarget;
+    private int rangedUntil;
+    void rangedWindow(KtuluMomo boss, int duration) {
+        rangedTarget = boss.getTarget().getUUID();
+        rangedUntil = boss.tickCount + duration;
+    }
+    public boolean usingBow(KtuluMomo boss) {
+        return boss.getTarget() != null && boss.getTarget().getUUID().equals(rangedTarget) && boss.tickCount < rangedUntil;
+    }
     private boolean entryDomainPending;
     private boolean flightEntryPending;
     private boolean flightEntryRunning;
