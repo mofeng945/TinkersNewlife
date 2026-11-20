@@ -13,6 +13,8 @@ public final class SleepwakeChurchRegistry {
     public static final RegistryObject<StructureType<SleepwakeChurchStructure>> TYPE = TYPES.register("sleepwake_church", () -> () -> SleepwakeChurchStructure.CODEC);
     public static final RegistryObject<StructurePieceType> PIECE = PIECES.register("sleepwake_church", () ->
             (context, tag) -> new SleepwakeChurchPiece(SleepwakeChurchRegistry.PIECE.get(), context, tag));
+    public static final RegistryObject<StructureType<StarwellArenaStructure>> ARENA = TYPES.register("starwell_arena", () -> () -> StarwellArenaStructure.CODEC);
+    public static final RegistryObject<StructurePieceType> ARENA_PIECE = PIECES.register("starwell_arena", () -> StarwellArenaPiece::new);
     public static void register(IEventBus bus) { TYPES.register(bus); PIECES.register(bus); }
     private SleepwakeChurchRegistry() {}
 }

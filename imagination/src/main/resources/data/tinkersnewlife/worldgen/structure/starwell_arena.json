@@ -1,0 +1,7 @@
+{
+  "type": "tinkersnewlife:starwell_arena",
+  "biomes": ["minecraft:end_highlands", "minecraft:end_midlands", "minecraft:end_barrens"],
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "none"
+}
