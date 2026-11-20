@@ -124,6 +124,11 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         return true;
     }
 
+    @Override public void onAddedToWorld() {
+        super.onAddedToWorld();
+        if (level() instanceof net.minecraft.server.level.ServerLevel serverLevel) MomoBossPresence.remember(serverLevel, this);
+    }
+
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 626.0D)

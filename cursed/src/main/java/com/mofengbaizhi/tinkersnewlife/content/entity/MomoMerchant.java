@@ -1661,9 +1661,17 @@ public class MomoMerchant extends PathfinderMob
     }
 
     /** 闆囦富鏀诲嚮鐩爣閫氱煡锛堟湇鍔″櫒渚э紝鏀诲嚮浜嬩欢/绌块€忕粨绠楁椂璋冪敤锛夛細鍗忓姪闆嗙伀 4 绉掞紝鎸佺画鏀诲嚮浼氬埛鏂?*/
+    @Override public boolean canAttack(LivingEntity target) {
+        return !(target instanceof KtuluMomo) && super.canAttack(target);
+    }
+
+    @Override public void setTarget(@Nullable LivingEntity target) {
+        if (!(target instanceof KtuluMomo)) super.setTarget(target);
+    }
+
     public void notifyEmployerAttack(LivingEntity victim) {
         if (victim == null || victim.isRemoved() || !victim.isAlive()) return;
-        if (victim == this || victim == getEmployer() || victim instanceof MomoMerchant) return;
+        if (victim == this || victim == getEmployer() || victim instanceof MomoMerchant || victim instanceof KtuluMomo) return;
         this.assistTarget = victim;
         this.assistTargetExpireAt = this.level().getGameTime() + 80;
     }
@@ -1720,11 +1728,11 @@ public class MomoMerchant extends PathfinderMob
     @Nullable
     private LivingEntity threatOfEmployer(ServerPlayer boss) {
         LivingEntity threat = boss.getLastHurtByMob();
-        if (threat != null && threat.isAlive() && threat != this && boss.distanceToSqr(threat) <= 24.0 * 24.0) {
+        if (threat != null && !(threat instanceof KtuluMomo) && threat.isAlive() && threat != this && boss.distanceToSqr(threat) <= 24.0 * 24.0) {
             return threat;
         }
         LivingEntity bossTarget = boss.getLastHurtMob();
-        if (bossTarget != null && bossTarget.isAlive() && bossTarget != this
+        if (bossTarget != null && !(bossTarget instanceof KtuluMomo) && bossTarget.isAlive() && bossTarget != this
                 && !(bossTarget instanceof Player) && boss.distanceToSqr(bossTarget) <= 24.0 * 24.0) {
             return bossTarget;
         }
@@ -1772,13 +1780,13 @@ public class MomoMerchant extends PathfinderMob
         boolean bossThreatened = false;
         LivingEntity attacker = boss.getLastHurtByMob();
         LivingEntity fightTarget = boss.getLastHurtMob();
-        if (attacker != null && attacker.isAlive() && attacker != this
+        if (attacker != null && !(attacker instanceof KtuluMomo) && attacker.isAlive() && attacker != this
                 && boss.distanceToSqr(attacker) <= 24.0 * 24.0) {
             bossThreatened = true;
             if (this.getTarget() != attacker) {
                 this.setTarget(attacker);
             }
-        } else if (fightTarget != null && fightTarget.isAlive() && fightTarget != this
+        } else if (fightTarget != null && !(fightTarget instanceof KtuluMomo) && fightTarget.isAlive() && fightTarget != this
                 && !(fightTarget instanceof Player) && boss.distanceToSqr(fightTarget) <= 24.0 * 24.0) {
             bossThreatened = true;
             if (this.getTarget() == null) {
@@ -2186,7 +2194,7 @@ public class MomoMerchant extends PathfinderMob
 
     /** 璇ュ疄浣撴槸鍚︿负澧ㄩ粯鐨勫彲鏂╂潃鐩爣锛?0 鏍煎ぇ鏂╂潃鐢級 */
     private boolean isMomoCombatTarget(LivingEntity e) {
-        if (e == this || !e.isAlive() || e.isSpectator()) return false;
+        if (e instanceof KtuluMomo || e == this || !e.isAlive() || e.isSpectator()) return false;
         if (e == getEmployer()) return false;
         if (e instanceof Player p && !tnl$isAngry(p)) return false;
         if (e == this.getTarget()) return true;
@@ -2415,7 +2423,7 @@ public class MomoMerchant extends PathfinderMob
         LivingEntity target = this.getTarget();
         // 闆囦富琚敾鍑?鈫?浼樺厛绱㈡晫鏀诲嚮鑰?
         LivingEntity attacker = boss.getLastHurtByMob();
-        if (attacker != null && attacker.isAlive() && attacker != this
+        if (attacker != null && !(attacker instanceof KtuluMomo) && attacker.isAlive() && attacker != this
                 && boss.distanceToSqr(attacker) <= 24.0 * 24.0) {
             if (target != attacker) {
                 this.setTarget(attacker);
@@ -2903,7 +2911,7 @@ public class MomoMerchant extends PathfinderMob
                 tnl$anger(living);
                 lastBlockedBy = living;
                 // TNL1315「必然还手」：不管当前有没有目标，只要不是雇主/同类就锁他 ✓
-                if (living != getEmployer() && !(living instanceof MomoMerchant)) {
+                if (living != getEmployer() && !(living instanceof MomoMerchant) && !(living instanceof KtuluMomo)) {
                     this.setTarget(living);
                 }
                 if (this.distanceToSqr(living) <= 5.0 * 5.0) {
@@ -2940,7 +2948,7 @@ public class MomoMerchant extends PathfinderMob
         if (attacker instanceof LivingEntity living && attacker != this) {
             tnl$anger(living);
             // TNL1315「被攻击时无论创造生存必然还手」⇒ 直接锁攻击者（雇主/同类除外 ✓）
-            if (living != getEmployer() && !(living instanceof MomoMerchant)) {
+            if (living != getEmployer() && !(living instanceof MomoMerchant) && !(living instanceof KtuluMomo)) {
                 this.setTarget(living);
             }
         }
