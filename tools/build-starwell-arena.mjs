@@ -10,9 +10,9 @@ const vite=await createServer({root,configFile:false,logLevel:'silent',optimizeD
 try {
 const {createBuilder}=await vite.ssrLoadModule(path.join(root,'packages/core/src/index.ts'));
 const {serializeStructure,parseStructureAuto}=await vite.ssrLoadModule(path.join(root,'packages/formats/src/index.ts'));
-const X=65,Z=65,F=9, b=createBuilder('Starwell • the Sleepless Eye',{x:131,y:34,z:146},'1.20.1');
+const X=88,Z=88,F=9, b=createBuilder('Starwell • the Fractured Orbit',{x:177,y:34,z:177},'1.20.1');
 const put=(x,y,z,s)=>b.set(x+X,y,z+Z,s), at=(x,y,z)=>b.get(x+X,y,z+Z);
-const black='polished_blackstone_bricks', edge='polished_deepslate', stone='deepslate_tiles', pale='smooth_quartz', prism='dark_prismarine', lamp='sea_lantern',glass='cyan_stained_glass',gold='cut_copper';
+const black='polished_blackstone_bricks', edge='polished_deepslate', stone='deepslate_tiles', pale='smooth_quartz', prism='dark_prismarine', lamp='sea_lantern',glass='cyan_stained_glass',gold='smooth_quartz';
 const fill=(x,a,z,y,s)=>{for(let h=a;h<=y;h++)put(x,h,z,s)};
 const stair=(base,dir)=>`${base}_stairs[facing=${dir},half=bottom,shape=straight,waterlogged=false]`;
 const face=(x,z)=>Math.abs(x)>Math.abs(z)?(x>0?'east':'west'):(z>0?'south':'north');
@@ -34,12 +34,12 @@ for(let x=-63;x<=63;x++)for(let z=-63;z<=63;z++){
   const petal=Math.abs(r-(26+12*Math.pow(Math.abs(Math.cos(6*a)),.70)))<.62;
   const rings=[7,40,47].some(n=>Math.abs(r-n)<.5);
   const spoke=r>39&&Math.abs(Math.sin(6*a))*r<.6;
-  let tile=r<7?'polished_basalt[axis=y]':r<40?(Math.cos(12*a)>0?stone:black):prism;
+  let tile=r<7?'polished_basalt[axis=y]':r<40?(Math.cos(12*a)>0?stone:black):((Math.floor((a+Math.PI)*12/Math.PI)%2)?'gray_concrete':'black_concrete');
   if(eye||petal||rings||spoke){tile=eye||Math.abs(r-40)<.5?gold:glass;}
   const half=relief(r), h=F+Math.floor(half/2); fill(x,8,z,h-1,black);
   if(tile===glass)put(x,h-1,z,lamp);
   put(x,h,z,tile);
-  if(half%2)put(x,h+1,z,(tile===gold?'cut_copper':tile===glass||tile===prism?'dark_prismarine':'polished_blackstone_brick')+'_slab[type=bottom]');
+  if(half%2)put(x,h+1,z,(tile===gold?'quartz':tile===glass||tile===prism?'dark_prismarine':'polished_blackstone_brick')+'_slab[type=bottom]');
  }else if(r<51){
   fill(x,F,z,F+4,black);put(x,F+2,z,prism);put(x,F+5,z,'polished_blackstone_brick_slab[type=bottom]');
  }else{
@@ -72,7 +72,7 @@ for(let n=0;n<24;n++){
   fill(cx+u,base,cz+v,base+1,edge);put(cx+u,base+2,cz+v,m===4?'quartz_slab[type=bottom]':pale);
   if(m<=2)fill(cx+u,base+3,cz+v,base+15,'quartz_pillar[axis=y]');
   if(m<=3)put(cx+u,base+16,cz+v,'chiseled_quartz_block');
-  put(cx+u,base+17,cz+v,m===4?'cut_copper_slab[type=bottom]':prism);
+  put(cx+u,base+17,cz+v,m===4?'purpur_slab[type=bottom]':'end_stone_bricks');
  }
  fill(cx,32,cz,35,'polished_blackstone_brick_wall');put(cx,36,cz,'lightning_rod[facing=up]');
  // Arc from pillar to pillar: paired lancet ribs meet at a suspended keystone.
@@ -104,11 +104,18 @@ for(let n=0;n<12;n++){
 // The astrolabe is open, not a roof. Connecting diagonal segments with corner blocks keeps its silhouette continuous.
 function trace(x0,z0,x1,z1,y,state){let px=Math.round(x0),pz=Math.round(z0);const count=Math.ceil(Math.hypot(x1-x0,z1-z0)*3);
  for(let k=0;k<=count;k++){const t=k/count,x=Math.round(x0+(x1-x0)*t),z=Math.round(z0+(z1-z0)*t);if(px!==x&&pz!==z)put(x,y,pz,state);put(x,y,z,state);px=x;pz=z;}}
-for(const [r,y] of [[53,33],[38,42]]){
- for(let i=0;i<120;i++){const a=i*Math.PI/60,c=(i+1)*Math.PI/60;trace(r*Math.cos(a),r*Math.sin(a),r*Math.cos(c),r*Math.sin(c),y,i%10===0?lamp:i%10===1?'waxed_cut_copper':'oxidized_cut_copper');}
+// Detached arcs: separate rolls, eccentricities and offsets. Leave actual air between the glass fracture lips.
+const arcs=[[54,35,5,96,.08,1,-1],[52,38,108,153,-.19,3,0],[54,34,169,259,.07,0,1],[55,37,270,346,-.13,-2,-2],
+ [39,45,-24,49,-.15,1,2],[38,42,62,149,.1,-1,0],[40,47,169,212,-.23,3,-2],[37,44,235,319,.11,-2,1]];
+for(const [r,y,start,end,tilt,ox,oz] of arcs){
+ const point=d=>{const t=d*Math.PI/180;return [Math.round(ox+r*Math.cos(t)),Math.round(y+tilt*r*Math.sin(t-.6)),Math.round(oz+r*.95*Math.sin(t))]};
+ let prev=point(start);
+ for(let d=start;d<=end;d+=.5){const [x,h,z]=point(d),lip=Math.min(d-start,end-d);
+  const block=lip<2?'purple_stained_glass':lip<5?'magenta_stained_glass':Math.floor(d+360)%29<2?lamp:r>45?pale:'purpur_pillar[axis=y]';
+  trace(prev[0],prev[2],x,z,h,block);if(prev[1]!==h)fill(x,Math.min(h,prev[1]),z,Math.max(h,prev[1]),block);prev=[x,h,z];}
 }
 for(let i=0;i<6;i++){
- const a=i*Math.PI/3-Math.PI/2,c=a+2*Math.PI/3;trace(31*Math.cos(a),31*Math.sin(a),31*Math.cos(c),31*Math.sin(c),45,'waxed_cut_copper');
+ const a=i*Math.PI/3-Math.PI/2,c=a+2*Math.PI/3;trace(31*Math.cos(a),31*Math.sin(a),31*Math.cos(c),31*Math.sin(c),45,'purpur_block');
  const [x,z]=radial(31,a);put(x,45,z,lamp);put(x,46,z,'amethyst_cluster[facing=up]');put(x,44,z,'chain[axis=y]');put(x,43,z,'soul_lantern[hanging=true]');
 }
 // Asymmetric, deterministic impact fragments with a tapering train of detached splinters.
@@ -119,7 +126,22 @@ for(const [cx,cz,cy,size,dx,dz] of meteors){
   if(((x+.25*y)/(size+.7))**2+(y/(size*.8))**2+(z/size)**2>1+(h-11)*.019)continue;
   put(cx+x,cy+y,cz+z,h<=2?'magma_block':h===3?'budding_amethyst':h<10?'basalt[axis=y]':'blackstone');
  }
- for(const t of [size+2,size+5,size+9]){const x=cx+dx*t,z=cz+dz*Math.round(t*.55),y=cy+Math.round(t*.45);put(x,y,z,'blackstone');if(t<=size+5){put(x,y-1,z,'magma_block');put(x-dx,y,z,'basalt[axis=y]')}}
+ let seed=(cx*997+cz*199+cy*97)>>>0;const rnd=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/4294967296);
+ for(let n=0;n<9+size;n++){const t=size+2+rnd()*16,side=(rnd()-.5)*(2+t*.64);
+  const x=Math.round(cx+dx*t-dz*side),z=Math.round(cz+dz*t*.48+dx*side),y=Math.round(cy+(n%3===0?-.33:.4)*t+(rnd()-.5)*6);
+  put(x,y,z,['crying_obsidian','end_stone','blackstone','basalt'][n%4]);if(rnd()>.44)put(x-dx,y+1,z,n%2?'purple_stained_glass':'purpur_block');}
+}
+// Eight tapered foundation fins occupy the bays between the four axial entrances.
+const tips=[];
+for(let k=0;k<8;k++){
+ const a=(k+.5)*Math.PI/4,c=Math.cos(a),s=Math.sin(a),length=k%2?87:92;
+ for(let x=-87;x<=87;x++)for(let z=-87;z<=87;z++){
+  const u=x*c+z*s,v=Math.abs(-x*s+z*c);if(u<59||u>length||Math.hypot(x,z)<=63.4)continue;
+  const width=19*(length-u)/(length-59);if(v>width+.45)continue;
+  const h=Math.max(1,Math.round(9*(length-u)/(length-59)));fill(x,0,z,h-1,'end_stone_bricks');
+  put(x,h,z,width-v<1.1?pale:v<.85?'purple_stained_glass':v<2?'purpur_block':v>width*.67?'light_gray_concrete':'black_concrete');if(v<.85)put(x,h-1,z,lamp);
+ }
+ const [x,z]=radial(length-2,a);put(x,2,z,'chiseled_quartz_block');put(x,3,z,'end_rod[facing=up]');tips.push([x,z]);
 }
 // Eight of nine base blocks: finish from the southern service aisle at (0,1,1).
 for(let x=-1;x<=1;x++)for(let z=-1;z<=1;z++)put(x,1,z,x===0&&z===1?'air':'iron_block');
@@ -138,6 +160,7 @@ for(let x=-48;x<=48;x++)for(let z=-48;z<=48;z++){const r=Math.hypot(x,z);if(r>48
 // Validate closed enclosure around the floor: no unsupported gap in the wall belt at player height.
 for(let x=-51;x<=51;x++)for(let z=-51;z<=51;z++)if(Math.hypot(x,z)>=49&&Math.hypot(x,z)<51&&Math.min(Math.abs(x),Math.abs(z))>1)check(cell(x,F+1,z)!=='air','wall');
 for(let k=0;k<4;k++){const [x,z]=rot(0,49,k);check(cell(x,F+1,z)==='dark_oak_fence_gate','gate')}
+for(const [x,z] of tips){check(cell(x,3,z)==='end_rod' && cell(x,0,z)!=='air','star tip')}
 const walk=new Set(['0,2']);const queue=[[0,2]];for(let i=0;i<queue.length;i++){const [x,z]=queue[i];for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]){const u=x+dx,v=z+dz,key=u+','+v;if(Math.hypot(u,v)>61||walk.has(key)||cell(u,0,v)==='air'||cell(u,1,v)!=='air'||cell(u,2,v)!=='air')continue;walk.add(key);queue.push([u,v]);}}check(walk.has('-51,0')&&walk.has('0,-51')&&walk.has('26,0')&&walk.has('0,51'),'crypt disconnected');
 fs.mkdirSync('build/arena',{recursive:true});fs.writeFileSync('build/arena/starwell_arena.schem',serializeStructure(ir,'schem'));
 const top=[];for(let z=0;z<reg.size.z;z++)for(let x=0;x<reg.size.x;x++){for(let y=reg.size.y-1;y>=0;y--){const id=cell(x-X,y,z-Z);if(id!=='air'){top.push([x,y,z,id]);break}}}fs.mkdirSync('build/arena',{recursive:true});fs.writeFileSync('build/arena/top.json',JSON.stringify(top));console.log({name,bytes:bytes.length,size:reg.size,palette:reg.palette.length,cryptWalkable:walk.size});
