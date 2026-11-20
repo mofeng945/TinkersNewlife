@@ -16,6 +16,8 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.*;
 public final class StarwellArenaPiece extends TemplateStructurePiece {
     private static final ResourceLocation ID=new ResourceLocation("tinkersnewlife","starwell_arena");
     private static final BlockPos PIVOT=new BlockPos(88,0,88);
+    // Center glass is at local Y=13; stand on its top face. Rotation fixes this pivot.
+    BlockPos altarSurface() { return templatePosition.offset(88,14,88); }
     private static StructurePlaceSettings settings(Rotation rot){return new StructurePlaceSettings().setRotationPivot(PIVOT).setRotation(rot).setIgnoreEntities(true).addProcessor(BlockIgnoreProcessor.STRUCTURE_BLOCK);}
     StarwellArenaPiece(StructureTemplateManager manager,BlockPos origin,Rotation rotation){
         super(SleepwakeChurchRegistry.ARENA_PIECE.get(),0,manager,ID,ID.toString(),settings(rotation),origin);

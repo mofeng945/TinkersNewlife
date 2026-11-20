@@ -112,7 +112,15 @@ public class ModItems {
                             .effect(() -> new MobEffectInstance(MobEffects.ABSORPTION, 1200, 9), 1.0f)
                             .build()
                     )
-            ));
+            ) {
+                @Override public net.minecraft.world.item.ItemStack finishUsingItem(net.minecraft.world.item.ItemStack stack,
+                        net.minecraft.world.level.Level level, net.minecraft.world.entity.LivingEntity eater) {
+                    var result = super.finishUsingItem(stack, level, eater);
+                    if (eater instanceof net.minecraft.server.level.ServerPlayer player)
+                        com.mofengbaizhi.tinkersnewlife.worldgen.StarwellSummoning.afterEating(player);
+                    return result;
+                }
+            });
 
     // §503 用户口径：**古神部件不可堆叠**（堆叠上限 1 ✓）—— 这类东西本该是"一件一件"的 ✗ 不该一组 64
     public static final RegistryObject<Item> ECHO_OF_THE_VOID =
