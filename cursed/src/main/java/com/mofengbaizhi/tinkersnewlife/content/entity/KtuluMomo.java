@@ -457,6 +457,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
                     this.getX(), this.getY() + 1, this.getZ(), 1, 0, 0, 0, 0);
             sl.playSound(null, this.blockPosition(), net.minecraft.sounds.SoundEvents.GENERIC_EXPLODE,
                     net.minecraft.sounds.SoundSource.HOSTILE, 2, 1);
+            com.mofengbaizhi.tinkersnewlife.worldgen.StarwellRewards.afterExplosion(sl, this.blockPosition());
         }
         // Kernel death can skip vanilla die() (or an event can cancel it), so the
         // deferred dropAllDeathLoot callback is not guaranteed to have run.

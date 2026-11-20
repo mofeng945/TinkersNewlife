@@ -43,12 +43,16 @@ public final class MomoBossPresence extends SavedData {
         if (!(event.getEntity() instanceof KtuluMomo boss) || !(event.getLevel() instanceof ServerLevel level)) return;
         boss.setPersistenceRequired();
         if (event.loadedFromDisk()) return;
+        if (blocked(level, boss.position(), boss.getUUID())) event.setCanceled(true);
+    }
+    public static boolean blocked(ServerLevel level, Vec3 position, UUID except) {
         for (var entry : in(level).positions.entrySet()) {
-            if (entry.getKey().equals(boss.getUUID())) continue;
+            if (entry.getKey().equals(except)) continue;
             var live = level.getEntity(entry.getKey()); // UUID lookup only; does not load chunks.
             Vec3 other = live == null ? entry.getValue() : live.position();
-            if (boss.position().distanceToSqr(other) <= 256.0 * 256.0) { event.setCanceled(true); return; }
+            if (position.distanceToSqr(other) <= 256.0 * 256.0) return true;
         }
+        return false;
     }
     @SubscribeEvent public static void leaving(EntityLeaveLevelEvent event) {
         if (!(event.getEntity() instanceof KtuluMomo boss) || !(event.getLevel() instanceof ServerLevel level)) return;
