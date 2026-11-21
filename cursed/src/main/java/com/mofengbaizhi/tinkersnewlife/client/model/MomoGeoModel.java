@@ -25,6 +25,7 @@ public class MomoGeoModel extends GeoModel<KtuluMomo> {
 
     private static final ResourceLocation MODEL =
             new ResourceLocation("tinkersnewlife", "geo/ktulu_momo.geo.json");
+    private static final ResourceLocation MOVEMENT = new ResourceLocation("tinkersnewlife", "animations/ktulu_momo_movement.animation.json");
     private static final ResourceLocation ANIM =
             new ResourceLocation("tinkersnewlife", "animations/ktulu_momo.animation.json");
     private static final ResourceLocation TEXTURE =
@@ -50,7 +51,7 @@ public class MomoGeoModel extends GeoModel<KtuluMomo> {
 
     @Override
     public ResourceLocation getAnimationResource(KtuluMomo animatable) {
-        return ANIM;
+        return animatable.tnl$animPose() == 0 || animatable.tnl$animPose() == 8 ? MOVEMENT : ANIM;
     }
 
     /**

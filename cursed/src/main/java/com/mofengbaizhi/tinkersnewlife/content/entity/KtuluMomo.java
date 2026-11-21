@@ -793,6 +793,8 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
 
     // TNL1169 诡厄的做法（SpellCastingCultist）：一个同步 byte 说明在放哪个法术，
     // 一个同步 int 倒数计时。0 空闲、1 瞬身、2 幻音共鸣、3 混沌和弦。
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Long> LAST_BOW_SHOT = net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class,net.minecraft.network.syncher.EntityDataSerializers.LONG);
+    public void markBowShot() { entityData.set(LAST_BOW_SHOT,level().getGameTime()); }
     private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> DATA_VISUAL_PHASE = net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
     private static final net.minecraft.network.syncher.EntityDataAccessor<Long> DATA_PHASE_START = net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class, net.minecraft.network.syncher.EntityDataSerializers.LONG);
     public int visualPhase() { return entityData.get(DATA_VISUAL_PHASE); }
@@ -873,6 +875,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
 
     protected void defineSynchedData() {
         super.defineSynchedData();
+        this.entityData.define(LAST_BOW_SHOT, -1000L);
         this.entityData.define(DATA_VISUAL_PHASE, 1);
         this.entityData.define(DATA_PHASE_START, 0L);
         this.entityData.define(DATA_SPELL, (byte) 0);
@@ -1233,6 +1236,21 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             software.bernie.geckolib.core.animation.AnimatableManager.ControllerRegistrar controllers) {
         controllers.add(new software.bernie.geckolib.core.animation.AnimationController<>(
                 this, "pose", 2, this::tnl$pickPoseAnimation));
+        controllers.add(new software.bernie.geckolib.core.animation.AnimationController<KtuluMomo>(this,"bow_arms",1,state -> {
+            if (!bowPose()) return software.bernie.geckolib.core.object.PlayState.STOP;
+            long since = level().getGameTime()-entityData.get(LAST_BOW_SHOT);
+            if (since >= 0 && since < 5) return state.setAndContinue(software.bernie.geckolib.core.animation.RawAnimation.begin().thenPlay("bow_release"));
+            return state.setAndContinue(software.bernie.geckolib.core.animation.RawAnimation.begin().thenPlay("bow_draw").thenLoop("bow_aim"));
+        }));
+    }
+
+    private boolean bowPose() { return tnl$animPose()==0 && !tnl$isBusy() && !tnl$isDead() && getMainHandItem().is(com.mofengbaizhi.tinkersnewlife.content.ModItems.STARFALL_LAMENT.get()); }
+    private String movementClip() {
+        double dx=getX()-xo,dz=getZ()-zo;
+        if(dx*dx+dz*dz<.000025) return null;
+        if(!bowPose()) return "walk_refined";
+        double a=Math.toRadians(yBodyRot), forward=-dx*Math.sin(a)+dz*Math.cos(a),left=dx*Math.cos(a)+dz*Math.sin(a);
+        return forward < -Math.abs(left) ? "backstep" : left>=0 ? "strafe_left" : "strafe_right";
     }
 
     /** 姿势字节 -> 动画名（顺序与 MomoPose 枚举一致） */
@@ -1248,11 +1266,11 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
             case 10 -> "requiem_exit";
             case 6 -> "kick";
             case 7 -> "chord_wave";
-            case 8 -> "walk";
+            case 8 -> "walk_refined";
             case 11 -> null; // Procedural chant pose; no matching animation clip.
             // TNL1300 用户："帮我改进" —— 待机就站着不动：
             // 有速度 ⇒ walk（走路循环）；几乎不动 ⇒ 不播动画（静止站姿）
-            default -> this.getDeltaMovement().horizontalDistanceSqr() > 0.0025D ? "walk" : null;
+            default -> movementClip();
         };
         if (name == null) {
             return software.bernie.geckolib.core.object.PlayState.STOP;

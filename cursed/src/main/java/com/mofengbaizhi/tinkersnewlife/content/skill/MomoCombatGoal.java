@@ -118,6 +118,7 @@ public final class MomoCombatGoal extends Goal {
         if (bow && momo.tickCount >= nextShot && momo.hasLineOfSight(target)) {
             nextShot = momo.tickCount + MomoCombatState.BOW_INTERVAL;
             StarfallLamentItem.fireAt(momo.level(), momo, target);
+            momo.markBowShot();
         } else if (!bow && distance <= 3 && momo.tickCount >= nextAttack
                 && (phase > 1 || retaliating || momo.tickCount < approachUntil) && momo.hasLineOfSight(target)) {
             nextAttack = momo.tickCount + 20;
