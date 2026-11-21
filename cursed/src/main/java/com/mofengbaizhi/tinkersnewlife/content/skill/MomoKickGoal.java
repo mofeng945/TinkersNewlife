@@ -141,6 +141,7 @@ public final class MomoKickGoal extends MomoSpellGoal {
         if (target == null || !target.isAlive()) {
             return true;
         }
+        this.momo.faceCombatDirection(target.getBoundingBox().getCenter().subtract(this.momo.getEyePosition()));
         this.dashTicks++;
         if (this.momo.distanceTo(target) <= KICK_RANGE || this.dashTicks > DASH_TIMEOUT) {
             this.doKick(target);

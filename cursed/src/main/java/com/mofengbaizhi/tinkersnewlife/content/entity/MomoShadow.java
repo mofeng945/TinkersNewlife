@@ -63,6 +63,12 @@ public class MomoShadow extends Monster {
         this.xpReward = 20;          // 分身不是 Boss ⇒ 别给 500
     }
 
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> COMBAT_FACING =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(MomoShadow.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
+    private int requestedFacing = -1;
+    public void faceCombatDirection(net.minecraft.world.phys.Vec3 direction) {
+        requestedFacing = com.mofengbaizhi.tinkersnewlife.content.skill.MomoFacing.pack(direction, yBodyRot);
+    }
     public static AttributeSupplier.Builder createAttributes() {
         return Monster.createMonsterAttributes()
                 .add(Attributes.MAX_HEALTH, 100.0D)          // 真正数值由 tnl$bindTo 设成"本体一半"
@@ -75,7 +81,9 @@ public class MomoShadow extends Monster {
 
     /** ★不继承任何 Boss Goal（★近战/远程 AI 由用户后续补，游走由技能生成后挂） */
     @Override
-    protected void registerGoals() {
+    protected void defineSynchedData() { super.defineSynchedData(); entityData.define(COMBAT_FACING,-1); }
+
+    @Override protected void registerGoals() {
         this.goalSelector.addGoal(0, new net.minecraft.world.entity.ai.goal.FloatGoal(this));
         this.goalSelector.addGoal(1, new com.mofengbaizhi.tinkersnewlife.content.skill.MomoShadowCombatGoal(this));
         this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.8));
@@ -178,7 +186,10 @@ public class MomoShadow extends Monster {
 
     @Override
     public void tick() {
+        requestedFacing = -1;
         super.tick();
+        if (!level().isClientSide) entityData.set(COMBAT_FACING, requestedFacing);
+        com.mofengbaizhi.tinkersnewlife.content.skill.MomoFacing.apply(this,entityData.get(COMBAT_FACING));
         if (this.level().isClientSide) {
             return;
         }

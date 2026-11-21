@@ -94,6 +94,7 @@ public final class MomoCombatGoal extends Goal {
         momo.setRunGait(!bow && (phase > 1 || retaliating || momo.tickCount < approachUntil));
         if (bow != rangedLast) { momo.getNavigation().stop(); nextPath = 0; rangedLast = bow; }
         if (bow) {
+            momo.faceCombatDirection(target.getBoundingBox().getCenter().subtract(momo.getEyePosition()));
             equip(true);
             boolean flying = phase == 3 && distance > 10 && momo.tickCount % 240 < 160;
             momo.setNoGravity(flying);

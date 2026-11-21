@@ -130,6 +130,12 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         if (level() instanceof net.minecraft.server.level.ServerLevel serverLevel) MomoBossPresence.remember(serverLevel, this);
     }
 
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> COMBAT_FACING =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
+    private int requestedFacing = -1;
+    public void faceCombatDirection(net.minecraft.world.phys.Vec3 direction) {
+        requestedFacing = com.mofengbaizhi.tinkersnewlife.content.skill.MomoFacing.pack(direction, yBodyRot);
+    }
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 626.0D)
@@ -531,7 +537,10 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
 
     @Override
     public void tick() {
+        requestedFacing = -1;
         super.tick();
+        if (!level().isClientSide) entityData.set(COMBAT_FACING, requestedFacing);
+        com.mofengbaizhi.tinkersnewlife.content.skill.MomoFacing.apply(this,entityData.get(COMBAT_FACING));
         // TNL1282 分身不跑 Boss 逻辑：血条维持 / 血量内核 / 索敌兜底 / 技能看门狗全都不需要
         if (!this.tnl$bossForm()) {
             return;
@@ -888,6 +897,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         this.entityData.define(LAST_BOW_SHOT, -1000L);
         this.entityData.define(DATA_VISUAL_PHASE, 1);
         this.entityData.define(DATA_PHASE_START, 0L);
+        entityData.define(COMBAT_FACING,-1);
         this.entityData.define(DATA_SPELL, (byte) 0);
         this.entityData.define(DATA_CAST_TICKS, 0);
         this.entityData.define(DATA_STAR_DREAM, false);

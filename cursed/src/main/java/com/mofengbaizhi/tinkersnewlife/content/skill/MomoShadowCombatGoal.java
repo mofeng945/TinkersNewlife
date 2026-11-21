@@ -34,6 +34,7 @@ public final class MomoShadowCombatGoal extends Goal {
     @Override public void tick() {
         LivingEntity target = shadow.getTarget();
         if (target == null) return;
+        shadow.faceCombatDirection(target.getBoundingBox().getCenter().subtract(shadow.getEyePosition()));
         shadow.getLookControl().setLookAt(target, 30, 30);
         MomoShadow.Role role = shadow.tnl$role();
         if (role == MomoShadow.Role.MELEE) {

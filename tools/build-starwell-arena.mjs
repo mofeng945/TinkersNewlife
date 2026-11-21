@@ -60,13 +60,13 @@ for(let k=0;k<4;k++){
  // Lower portals into the crypt at three outer axial walls; southern one's behind grand stair, use others.
  if(k!==0)for(let v=53;v<=63;v++)for(let u=-2;u<=2;u++)for(let y=1;y<=4;y++)P(u,y,v,'air');
  // Walk down an internal stair from the outer concourse to the outer crypt ring.
- for(let i=0;i<=9;i++)for(let v=51;v<=53;v++){
-  const y=1+i;for(let h=y+1;h<=17;h++)P(i-4,h,v,'air');P(i-4,y,v,stair('deepslate_tile',['east','south','west','north'][k]));
+ for(let i=0;i<=10;i++)for(let v=51;v<=53;v++){
+  const y=1+i;for(let h=y+1;h<=17;h++)P(i+8,h,v,'air');P(i+8,y,v,stair('deepslate_tile',['east','south','west','north'][k]));
  }
 }
 // Monumental column order: fluted quartz shafts, dark bases, copper capitals, pointed flying buttresses.
 for(let n=0;n<24;n++){
- const a=n*Math.PI/12,[cx,cz]=radial(59,a), base=14;
+ const a=(n+.5)*Math.PI/12,[cx,cz]=radial(59,a), base=14;
  for(let u=-3;u<=3;u++)for(let v=-3;v<=3;v++){
   const m=Math.abs(u)+Math.abs(v);if(m>4)continue;
   fill(cx+u,base,cz+v,base+1,edge);put(cx+u,base+2,cz+v,m===4?'quartz_slab[type=bottom]':pale);
@@ -86,9 +86,16 @@ for(let n=0;n<24;n++){
   const [x,z]=radial(55-j*.55,a+.035*Math.sin(j*.6));fill(x,14+j,z,15+j,j<6?prism:'polished_blackstone_brick_wall');if(j===9)put(x,24,z,'amethyst_cluster[facing=up]');
  }
 }
+// Keep each portal axis as a continuous promenade. The crypt now descends from a side bay.
+for(let k=0;k<4;k++)for(let v=48;v<=62;v++)for(let u=-1;u<=1;u++){
+ const [x,z]=rot(u,v,k),h=F+Math.max(0,Math.min(5,Math.floor((v-51)/2)));
+ const rising=v>=53&&v<=61&&v%2===1;
+ put(x,h,z,rising?stair('quartz',['south','west','north','east'][k]):pale);
+ for(let y=h+1;y<=h+4;y++)if(!(v===49&&y===F+1))put(x,y,z,'air');
+}
 // Southern processional stair: from the exterior at grade to the high spectator promenade.
 for(let z=62;z<=79;z++)for(let x=-5;x<=5;x++){
- const h=Math.max(0,14-(z-63));fill(x,0,z,h,black);for(let y=h+1;y<=18;y++)put(x,y,z,'air');
+ const h=Math.max(0,Math.min(14,14-(z-63)));fill(x,0,z,h,black);for(let y=h+1;y<=18;y++)put(x,y,z,'air');
  put(x,h,z,z<=63||z>=78?pale:stair('quartz','north'));
  if(Math.abs(x)===5){put(x,h+1,z,'polished_blackstone_brick_wall');if(z%5===0)put(x,h+2,z,'soul_lantern')}
 }
@@ -161,6 +168,12 @@ for(let x=-48;x<=48;x++)for(let z=-48;z<=48;z++){const r=Math.hypot(x,z);if(r>48
 for(let x=-51;x<=51;x++)for(let z=-51;z<=51;z++)if(Math.hypot(x,z)>=49&&Math.hypot(x,z)<51&&Math.min(Math.abs(x),Math.abs(z))>1)check(cell(x,F+1,z)!=='air','wall');
 for(let k=0;k<4;k++){const [x,z]=rot(0,49,k);check(cell(x,F+1,z)==='dark_oak_fence_gate','gate')}
 for(const [x,z] of tips){check(cell(x,3,z)==='end_rod' && cell(x,0,z)!=='air','star tip')}
+for(let k=0;k<4;k++)for(let v=48;v<=(k===0?79:62);v++)for(let u=-1;u<=1;u++){
+ const [x,z]=rot(u,v,k),h=v>=62&&k===0?Math.max(0,Math.min(14,14-(v-63))):F+Math.max(0,Math.min(5,Math.floor((v-51)/2)));
+ // The southern exterior landing meets the interior promenade at the same elevation.
+ const y=h;
+ check(cell(x,y,z)!=='air','missing entrance floor');for(let dy=1;dy<=3;dy++)check(cell(x,y+dy,z)==='air'||(v===49&&dy===1),'blocked entrance '+[x,y+dy,z]);
+}
 const walk=new Set(['0,2']);const queue=[[0,2]];for(let i=0;i<queue.length;i++){const [x,z]=queue[i];for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]){const u=x+dx,v=z+dz,key=u+','+v;if(Math.hypot(u,v)>61||walk.has(key)||cell(u,0,v)==='air'||cell(u,1,v)!=='air'||cell(u,2,v)!=='air')continue;walk.add(key);queue.push([u,v]);}}check(walk.has('-51,0')&&walk.has('0,-51')&&walk.has('26,0')&&walk.has('0,51'),'crypt disconnected');
 fs.mkdirSync('build/arena',{recursive:true});fs.writeFileSync('build/arena/starwell_arena.schem',serializeStructure(ir,'schem'));
 const top=[];for(let z=0;z<reg.size.z;z++)for(let x=0;x<reg.size.x;x++){for(let y=reg.size.y-1;y>=0;y--){const id=cell(x-X,y,z-Z);if(id!=='air'){top.push([x,y,z,id]);break}}}fs.mkdirSync('build/arena',{recursive:true});fs.writeFileSync('build/arena/top.json',JSON.stringify(top));console.log({name,bytes:bytes.length,size:reg.size,palette:reg.palette.length,cryptWalkable:walk.size});

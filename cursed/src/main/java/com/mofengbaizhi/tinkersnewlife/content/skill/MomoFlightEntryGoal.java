@@ -76,6 +76,8 @@ public final class MomoFlightEntryGoal extends Goal {
                 }
             }
         }
+        if (ticks >= LAP_TICKS && (ticks-LAP_TICKS)%(WINDUP_TICKS+CHARGE_TICKS)>=WINDUP_TICKS) momo.faceCombatDirection(direction);
+        else if (target != null) momo.faceCombatDirection(target.getBoundingBox().getCenter().subtract(momo.getEyePosition()));
         ticks++;
     }
     @Override public void stop() {
