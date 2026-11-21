@@ -4,13 +4,15 @@ import com.mofengbaizhi.tinkersnewlife.content.modifier.events.SoulBodyProjectil
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyArgs;
-import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.Vec3;
 
 @Mixin(ProjectileUtil.class)
 public abstract class SoulBodyProjectileUtilMixin {
-    @ModifyArgs(method="getHitResult", at=@At(value="INVOKE",target="Lnet/minecraft/world/level/ClipContext;<init>(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/level/ClipContext$Block;Lnet/minecraft/world/level/ClipContext$Fluid;Lnet/minecraft/world/entity/Entity;)V"))
-    private static void tnl$clipSuffix(Args args) {
-        args.set(0,SoulBodyProjectileHandler.blockTraceStart(args.get(0), args.get(1), args.get(4)));
+    @ModifyArg(index=0, method="getHitResult", at=@At(value="INVOKE",target="Lnet/minecraft/world/level/ClipContext;<init>(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/level/ClipContext$Block;Lnet/minecraft/world/level/ClipContext$Fluid;Lnet/minecraft/world/entity/Entity;)V"))
+    private static Vec3 tnl$clipSuffix(Vec3 from, Vec3 to, ClipContext.Block block, ClipContext.Fluid fluid, Entity entity) {
+        return SoulBodyProjectileHandler.blockTraceStart(from, to, entity);
     }
 }
