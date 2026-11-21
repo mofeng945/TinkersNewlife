@@ -46,6 +46,11 @@ public class ModEntities {
                             .build(TinkersNewlife.MOD_ID + ":whip_lash")
             );
 
+    public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.astral.AstralBodyEntity>> ASTRAL_BODY =
+            ENTITIES.register("astral_body", () -> EntityType.Builder.<com.mofengbaizhi.tinkersnewlife.content.astral.AstralBodyEntity>of(
+                    com.mofengbaizhi.tinkersnewlife.content.astral.AstralBodyEntity::new, MobCategory.MISC)
+                    .sized(0.6F, 1.8F).clientTrackingRange(10).noSave().noSummon().build("tinkersnewlife:astral_body"));
+
     public static final RegistryObject<EntityType<com.mofengbaizhi.tinkersnewlife.content.entity.SoulToolEcho>> SOUL_TOOL_ECHO =
             ENTITIES.register("soul_tool_echo", () -> EntityType.Builder.<com.mofengbaizhi.tinkersnewlife.content.entity.SoulToolEcho>of(
                     com.mofengbaizhi.tinkersnewlife.content.entity.SoulToolEcho::new,MobCategory.MISC).sized(.25f,.25f).clientTrackingRange(6).updateInterval(1).noSave().build("tinkersnewlife:soul_tool_echo"));

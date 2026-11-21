@@ -22,6 +22,9 @@ public class ModEffects {
     public static final DeferredRegister<MobEffect> EFFECTS =
             DeferredRegister.create(ForgeRegistries.MOB_EFFECTS, TinkersNewlife.MOD_ID);
 
+    public static final RegistryObject<MobEffect> SOUL_PROJECTION = EFFECTS.register("soul_projection",
+            () -> new MobEffect(MobEffectCategory.NEUTRAL, 0xa5dfb7) {});
+
     public static final RegistryObject<DisarmEffect> DISARM =
             EFFECTS.register("disarm", () -> new DisarmEffect(MobEffectCategory.HARMFUL, 0xFFAA00));
 

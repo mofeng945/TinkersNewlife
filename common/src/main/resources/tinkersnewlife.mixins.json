@@ -5,6 +5,9 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "tinkersnewlife.refmap.json",
   "mixins": [
+    "AstralEntityMovementMixin",
+    "AstralMovePacketMixin",
+    "AstralArmorMixin",
     "DisarmDropProtectionMixin",
     "SoulBodyProjectileMixin",
     "SoulBodyProjectileUtilMixin",
@@ -35,6 +38,7 @@
     "ServerBossEventMixin"
   ],
   "client": [
+    "AstralLocalPlayerMixin",
     "TinkerTabsWidgetMixin",
     "ToolkitSideInventoryMixin",
     "GhostStationMenuMixin",

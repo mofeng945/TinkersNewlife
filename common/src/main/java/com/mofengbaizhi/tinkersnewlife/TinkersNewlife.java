@@ -458,6 +458,11 @@ public class TinkersNewlife {
                 com.mofengbaizhi.tinkersnewlife.content.modifier.SoulBodyModifier.Swing::new,
                 com.mofengbaizhi.tinkersnewlife.content.modifier.SoulBodyModifier.Swing::handle);
 
+        registerClientPacket(com.mofengbaizhi.tinkersnewlife.content.astral.AstralProjection.Sync.class,
+                com.mofengbaizhi.tinkersnewlife.content.astral.AstralProjection.Sync::encode,
+                com.mofengbaizhi.tinkersnewlife.content.astral.AstralProjection.Sync::new,
+                com.mofengbaizhi.tinkersnewlife.content.astral.AstralProjection.Sync::handle);
+
         // 实体属性（式神等生物实体）
         modEventBus.addListener(TinkersNewlife::onRegisterEntityAttributes);
 

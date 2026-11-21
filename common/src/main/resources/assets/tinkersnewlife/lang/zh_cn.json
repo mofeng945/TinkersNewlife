@@ -1,4 +1,9 @@
 {
+  "modifier.tinkersnewlife.soul_projection": "灵魂出窍",
+  "modifier.tinkersnewlife.soul_projection.flavor": "呱，是神识大能，大家快退口牙！",
+  "modifier.tinkersnewlife.soul_projection.description": "这超乎寻常的材料让身披盔甲的你获得了灵魂出窍的能力，你可以用灵体之躯穿墙飞行，或是窥伺一些秘藏……？但注意，没有盔甲的你，还是会受到伤害。",
+  "entity.tinkersnewlife.astral_body": "出窍者的本体",
+  "effect.tinkersnewlife.soul_projection": "灵魂出窍",
   "modifier.tinkersnewlife.soul_body": "魂体",
   "modifier.tinkersnewlife.soul_body.flavor": "死神之镰？死神之力！",
   "modifier.tinkersnewlife.soul_body.description": "这种虚幻的魂体材质虽然看上去并不坚固，但却有着出乎意料的效用：可以将灵魂脱手穿墙而出！",

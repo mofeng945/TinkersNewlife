@@ -34,6 +34,9 @@ import java.util.UUID;
 public final class FrostAffinityModifier extends Modifier implements ToolDamageModifierHook, ConditionalStatModifierHook, MeleeDamageModifierHook, MeleeHitModifierHook {
     private static final ModifierId ID = new ModifierId(new ResourceLocation("tinkersnewlife","frost_affinity"));
     private static final UUID TOUGH = UUID.fromString("02881055-69ab-47da-9d51-2e2d180b9e06"), KNOCK = UUID.fromString("5739527a-0229-4078-b7ac-60fa22e0c0ae");
+    @Override public net.minecraft.network.chat.Component getDisplayName(int level) {
+        return slimeknights.tconstruct.library.modifiers.util.ModifierLevelDisplay.NO_LEVELS.nameForLevel(this, level);
+    }
     private static boolean cold(LivingEntity e) {
         if(e==null || !IntegrationLoader.isIceAndFire())return false;
         var pos=e.blockPosition(); var biome=e.level().getBiome(pos);

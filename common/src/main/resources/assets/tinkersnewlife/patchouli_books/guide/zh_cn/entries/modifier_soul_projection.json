@@ -1,0 +1,21 @@
+{
+  "name": "灵魂出窍",
+  "category": "tinkersnewlife:traits",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:pixie_wings",
+  "sortnum": 44,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "冰火传说联动，仅胸甲可用。使用匠魂的胸甲交互键出窍；再按一次回到原处。每级持续 30 秒，最高 90 秒。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "灵体可自由飞行和穿墙，基岩除外。背包、攻击、放置、挖掘与容器交互均使用你自己的玩家身份。敌人仍会攻击你，灵体受击时不计算护甲与韧性。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "一级消耗 1 能力槽：精灵之翼、灵锭、魂质各 1。二级无槽：灵锭 2、魂质 3。三级无槽：灵锭 3、魂质 1、精灵尘 1。"
+    }
+  ]
+}

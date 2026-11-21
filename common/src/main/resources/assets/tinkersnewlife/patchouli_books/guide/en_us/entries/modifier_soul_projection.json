@@ -1,0 +1,21 @@
+{
+  "name": "Astral Projection",
+  "category": "tinkersnewlife:traits",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:pixie_wings",
+  "sortnum": 44,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Ice and Fire integration, chestplates only. Press the Tinkers chestplate interaction key to project; press again to return. Lasts 30 seconds per level, up to 90 seconds."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Fly through blocks other than bedrock. Interact, fight, mine and build with your own inventory and permissions. Hostiles can still target you; your armor and toughness do not reduce hits while projected."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Level I costs one ability slot: one pixie wing item, one ghost ingot and one ectoplasm. Level II: two ingots and three ectoplasm. Level III: three ingots, one ectoplasm and one pixie dust. Levels II and III cost no additional slots."
+    }
+  ]
+}

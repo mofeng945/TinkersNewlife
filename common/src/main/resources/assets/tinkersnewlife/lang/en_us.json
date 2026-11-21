@@ -1,4 +1,9 @@
 {
+  "modifier.tinkersnewlife.soul_projection": "Astral Projection",
+  "modifier.tinkersnewlife.soul_projection.flavor": "Croak! A master of the spirit arts! Everybody, back away!",
+  "modifier.tinkersnewlife.soul_projection.description": "This uncanny material lets your spirit fly through walls and uncover hidden treasures. Take care: your armor cannot protect your spirit.",
+  "entity.tinkersnewlife.astral_body": "Anchored Body",
+  "effect.tinkersnewlife.soul_projection": "Astral Projection",
   "modifier.tinkersnewlife.soul_body": "Soul Body",
   "modifier.tinkersnewlife.soul_body.flavor": "The Reaper's scythe? The Reaper's power!",
   "modifier.tinkersnewlife.soul_body.description": "This ghostly material looks fragile, yet it lets a spectral echo of your weapon slip through walls.",

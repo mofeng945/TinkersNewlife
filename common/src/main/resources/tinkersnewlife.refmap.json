@@ -1,5 +1,18 @@
 {
   "mappings": {
+    "com/mofengbaizhi/tinkersnewlife/mixin/AstralEntityMovementMixin": {
+      "collide(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;": "Lnet/minecraft/world/entity/Entity;m_20272_(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;",
+      "isInWall": "Lnet/minecraft/world/entity/Entity;m_5830_()Z"
+    },
+    "com/mofengbaizhi/tinkersnewlife/mixin/AstralMovePacketMixin": {
+      "isPlayerCollidingWithAnythingNew": "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;m_288208_(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/phys/AABB;DDD)Z"
+    },
+    "com/mofengbaizhi/tinkersnewlife/mixin/AstralLocalPlayerMixin": {
+      "moveTowardsClosestSpace(DD)V": "Lnet/minecraft/client/player/LocalPlayer;m_108704_(DD)V"
+    },
+    "com/mofengbaizhi/tinkersnewlife/mixin/AstralArmorMixin": {
+      "getDamageAfterArmorAbsorb": "Lnet/minecraft/world/entity/LivingEntity;m_21161_(Lnet/minecraft/world/damagesource/DamageSource;F)F"
+    },
     "com/mofengbaizhi/tinkersnewlife/mixin/SoulBodyProjectileMixin": {
       "tick": "Lnet/minecraft/world/entity/projectile/Projectile;m_8119_()V",
       "addAdditionalSaveData": "Lnet/minecraft/world/entity/projectile/Projectile;m_7380_(Lnet/minecraft/nbt/CompoundTag;)V",
@@ -32,6 +45,19 @@
   },
   "data": {
     "searge": {
+      "com/mofengbaizhi/tinkersnewlife/mixin/AstralEntityMovementMixin": {
+        "collide(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;": "Lnet/minecraft/world/entity/Entity;m_20272_(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;",
+        "isInWall": "Lnet/minecraft/world/entity/Entity;m_5830_()Z"
+      },
+      "com/mofengbaizhi/tinkersnewlife/mixin/AstralMovePacketMixin": {
+        "isPlayerCollidingWithAnythingNew": "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;m_288208_(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/phys/AABB;DDD)Z"
+      },
+      "com/mofengbaizhi/tinkersnewlife/mixin/AstralLocalPlayerMixin": {
+        "moveTowardsClosestSpace(DD)V": "Lnet/minecraft/client/player/LocalPlayer;m_108704_(DD)V"
+      },
+      "com/mofengbaizhi/tinkersnewlife/mixin/AstralArmorMixin": {
+        "getDamageAfterArmorAbsorb": "Lnet/minecraft/world/entity/LivingEntity;m_21161_(Lnet/minecraft/world/damagesource/DamageSource;F)F"
+      },
       "com/mofengbaizhi/tinkersnewlife/mixin/SoulBodyProjectileMixin": {
         "tick": "Lnet/minecraft/world/entity/projectile/Projectile;m_8119_()V",
         "addAdditionalSaveData": "Lnet/minecraft/world/entity/projectile/Projectile;m_7380_(Lnet/minecraft/nbt/CompoundTag;)V",
