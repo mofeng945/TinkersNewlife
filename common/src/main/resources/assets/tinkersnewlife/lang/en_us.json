@@ -1,4 +1,7 @@
 {
+  "modifier.tinkersnewlife.frost_affinity": "Frost Affinity",
+  "modifier.tinkersnewlife.frost_affinity.description": "Crystallized from mysterious forces of bitter cold, this gem makes your creations tougher and easier to use in freezing conditions.",
+  "modifier.tinkersnewlife.frost_affinity.flavor": "An excellent conductor of cold!",
   "action.tinkersnewlife.dark_silent.furioso": "Furioso",
   "advancements.tinkersnewlife.alignment_evil.description": "Drive your alignment down to -50% (the floor).",
   "advancements.tinkersnewlife.alignment_evil.title": "Wicked to the Bone",

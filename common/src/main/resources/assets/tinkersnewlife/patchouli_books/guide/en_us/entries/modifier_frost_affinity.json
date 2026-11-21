@@ -1,0 +1,20 @@
+{
+  "name": "Frost Affinity",
+  "category": "tinkersnewlife:traits",
+  "icon": "minecraft:powder_snow_bucket",
+  "sortnum": 43,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "General upgrade, maximum level 1. Place one sapphire in each of five ingredient slots. Costs one upgrade slot. In cold biomes or powder snow, each durability loss has a 70% chance to be prevented."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Melee and harvesting tools: +10% melee damage, 5 seconds of Frost on hit, +40% mining speed and at least iron harvest level for suitable blocks. Ranged tools and staffs: +0.05 accuracy."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Each equipped upgraded armor piece or held shield grants +0.10 knockback resistance and +2 armor toughness. When hurt, roll once for a 30% chance to inflict Frost on the attacker for 3 seconds. Bonuses stop outside the cold."
+    }
+  ]
+}

@@ -19,6 +19,9 @@ public class Modifiers {
     public static final StaticModifier<SupervisorModifier> SUPERVISOR =
             MODIFIERS.register("supervisor", SupervisorModifier::new);
 
+    public static final StaticModifier<FrostAffinityModifier> FROST_AFFINITY =
+            MODIFIERS.register("frost_affinity", FrostAffinityModifier::new);
+
     /**
      * TNL1388 百折不断（杜兰达尔材料特性）：**替代匠魂本体的 unbreakable** ✓
      * 本体「不毁」带 {@code ModifierRequirementsModule}（下界合金 1 + 加固 V），

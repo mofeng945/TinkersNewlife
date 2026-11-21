@@ -1,4 +1,7 @@
 {
+  "modifier.tinkersnewlife.frost_affinity": "霜亲和",
+  "modifier.tinkersnewlife.frost_affinity.description": "极寒的神秘力量凝结出的结晶，它对寒冷的耐受与亲和使你的造物在霜冻环境下更加坚固且好用了！",
+  "modifier.tinkersnewlife.frost_affinity.flavor": "极好的寒导体！",
   "action.tinkersnewlife.dark_silent.furioso": "Furioso！！！",
   "advancements.tinkersnewlife.alignment_evil.description": "善恶值降到 −50%（下限）。",
   "advancements.tinkersnewlife.alignment_evil.title": "恶贯满盈",
