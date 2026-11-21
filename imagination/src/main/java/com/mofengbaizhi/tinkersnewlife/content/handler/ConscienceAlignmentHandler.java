@@ -325,6 +325,7 @@ public final class ConscienceAlignmentHandler {
     @SubscribeEvent
     public static void onLivingDamage(LivingDamageEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer victim)) return;
+        if (com.mofengbaizhi.tinkersnewlife.util.MomoMercy.handle(event, victim)) return;
         double pct = ConscienceHandler.getAlignment(victim) * DMG_SCALE;   // ±0.5
         if (pct == 0.0D) return;
         float amount = event.getAmount();

@@ -133,7 +133,7 @@ public final class RequiemGoal extends MomoSpellGoal {
                 le.addEffect(new MobEffectInstance(MobEffects.REGENERATION, EFFECT_REFRESH, 1, false, true, true));
             } else {
                 // 非友方：每秒 3% 生命上限的魔法伤害（走 magic 源，能被抗性正常处理）
-                le.hurt(level.damageSources().magic(), Math.max(1.0F, le.getMaxHealth() * PCT_DAMAGE));
+                com.mofengbaizhi.tinkersnewlife.util.MomoMercy.hurt(momo, le, level.damageSources().magic(), Math.max(1.0F, le.getMaxHealth() * PCT_DAMAGE), false);
             }
         }
         // TNL1272 墨默本人：生命恢复药水对它无效，`heal()` 也会被血量内核夹住

@@ -613,6 +613,8 @@ public final class TruePierce {
         }
         if (target == null || damage <= 0.0F) return 0.0F;
         if (target.level().isClientSide || target.isRemoved()) return 0.0F;
+        if (target instanceof net.minecraft.server.level.ServerPlayer player && MomoMercy.boss(attacker))
+            damage *= MomoMercy.multiplier(player);
         // ⭐ 同心戒：互为同伴的两名玩家互相免疫术式与领域效果 —— 穿透（真伤）也不例外。
         //    必须挡在这里：本方法是"差额直接 setHealth 补齐"的，事件层（LivingAttackEvent）拦不住它 ✗
         if (com.mofengbaizhi.tinkersnewlife.content.curse.TwinRingLink.arePaired(attacker, target)) return 0.0F;
@@ -802,7 +804,7 @@ public final class TruePierce {
             //   ⚠ ⭐ **不该再有"无主源补第二下"** ✗：
             //     ⭐ 那会让"一次挥击"变成 ⭐ **两次命中** ✓
             //     ⇒ ⭐ 假人**记两次** ✗ ⭐ 显示也就**多段** ✓（⭐ 用户实测 ✓）。
-            boolean hurtAccepted = target.hurt(withAttacker, want);
+            boolean hurtAccepted = MomoMercy.hurt(attacker, target, withAttacker, want, true);
             dealt = Math.max(0.0F, startHp - rawHealth(target));
             // ⭐ TNL1406 目标自己覆写了 `setHealth`（如试验假人 `TargetDummyEntity`）✗
             //   ⇒ ⭐它有自己的"记账/无限血量"语义 ✓（假人无限血量时**故意不扣血** ✓ 只弹数字 ✓）

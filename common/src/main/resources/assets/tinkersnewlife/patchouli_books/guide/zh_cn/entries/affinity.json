@@ -6,7 +6,23 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "$(bold)咒力亲和$() 是玩家属性（初始 0）：$(li)装备的饰品可能随机携带 0~50 点亲和$(li)$(l:zuosha_botu)坐杀搏徒$() 特等奖提供 +100 临时亲和（33 秒）$(br2)亲和的作用：$(li)提高咒力上限与恢复$(li)降低术式消耗：× (1 - 亲和/100)$(li)提高术式与领域伤害系数$(li)缩短术式熔断时长"
+      "title": "亲和从哪来",
+      "text": "咒力亲和初始为 0。饰品可能随机携带 0～50 点，装备后生效。$(l:zuosha_botu)坐杀搏徒$()的特等奖临时增加 100 点，持续 33 秒。"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "亲和有何用",
+      "text": "提高咒力上限与恢复，缩短术式熔断，提高术式与领域伤害系数。术式消耗乘以 (1 − 亲和/100)。"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "自动抽取黑名单",
+      "text": "通用配置 [curse_affinity] blacklist 默认为空。列入的物品在战利品、背包及饰品栏都不会自动抽取亲和；已经抽到的亲和不会消失，旧数据仍可迁移。"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "如何匹配",
+      "text": "@curios、curios、curios:* 都匹配整个命名空间。example:gold_ring 只匹配该物品。* 表示任意长度，? 表示一个字符；冒号两侧分别匹配，如 *:*_ring 或 example:charm_?。"
     }
   ]
 }

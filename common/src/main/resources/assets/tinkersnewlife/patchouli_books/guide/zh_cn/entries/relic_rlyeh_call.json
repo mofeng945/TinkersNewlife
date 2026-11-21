@@ -1,13 +1,18 @@
 {
-    "name":  "拉莱耶的呼唤",
-    "category":  "tinkersnewlife:relics",
-    "icon":  "tinkersnewlife:rlyeh_call",
-    "sortnum":  1,
-    "pages":  [
-                  {
-                      "type":  "patchouli:spotlight",
-                      "item":  "tinkersnewlife:rlyeh_call",
-                      "text":  "$(bold)拉莱耶的呼唤$()$(br2)获取：在$(bold)夜晚 · 满月 · 水深 30+$() 的水域钓鱼，钓上鱼时有 $(bold)50%$() 概率获得（附不可名状 5 秒）。$(br2)用途：在冶炼炉中熔炼 → $(bold)1000 mB$() 灰白之墨液，是$(l:material_ashen_ink)灰白之墨$()材料的源头。"
-                  }
-              ]
+  "name": "拉莱耶的呼唤",
+  "category": "tinkersnewlife:relics",
+  "icon": "tinkersnewlife:rlyeh_call",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "tinkersnewlife:rlyeh_call",
+      "text": "满月的夜里，在水深至少 30 格处钓鱼。钓上鱼时有 50% 概率获得呼唤，附带 5 秒不可名状。"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "用作祭品",
+      "text": "在冶炼炉中熔炼它可得 1000 mB 灰白之墨液，用于制作$(l:material_ashen_ink)灰白之墨$()。$(br2)要挑战墨默，请留一份别熔炼；去末地$(l:starwell_arena)星井祭坛$()中心吃完它。"
+    }
+  ]
 }

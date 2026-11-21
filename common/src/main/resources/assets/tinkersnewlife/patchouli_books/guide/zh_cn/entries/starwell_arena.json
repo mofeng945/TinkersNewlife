@@ -1,0 +1,43 @@
+{
+  "name": "星井祭坛",
+  "category": "tinkersnewlife:relics",
+  "icon": "minecraft:beacon",
+  "sortnum": 21,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "title": "寻找星井",
+      "text": "在末地外岛的新区块寻找八芒基座和断裂星环。长阶面向岛腹，后方星尖伸向虚空。在末地可用 /locate structure tinkersnewlife:starwell_arena。"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "召唤墨默",
+      "text": "本存档至少击败过一次末影龙。进入自然生成的祭坛，走近战场中心地面 20 格内，吃完$(l:relic_rlyeh_call)拉莱耶的呼唤$()。只粘贴模板没有结构记录，不能召唤。"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "进场与防重复",
+      "text": "地下信标先补齐底座。约 4.5 秒后中央爆炸并向外推开玩家，约 5.5 秒时$(l:momo_battle)墨默$()现身。"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "无法重复召唤",
+      "text": "同一祭坛不能并发仪式。同维度 256 格内已有本体就不会再生成；已登记的本体卸载区块后仍占位。"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "死亡宝库",
+      "text": "让本体在祭坛内完成死亡爆炸，再从侧廊下楼。信标同层周围随机出现 3～5 个奖励箱，空位不够就少放。"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "再战之前",
+      "text": "下次击杀前取走奖品：上轮奖励箱连同内容都会被替换，玩家自放的容器不拆。"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "箱里有什么",
+      "text": "每箱独立抽取 5～15 次，可能有矿物、古神遗物、末地材料，或一把随机飞剑。每箱至多一把飞剑，全部部件的材料等级至少为 2。"
+    }
+  ]
+}

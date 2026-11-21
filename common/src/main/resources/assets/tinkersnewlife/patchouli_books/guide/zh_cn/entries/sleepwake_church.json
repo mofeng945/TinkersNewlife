@@ -1,0 +1,23 @@
+{
+  "name": "眠觉教堂",
+  "category": "tinkersnewlife:relics",
+  "icon": "minecraft:sea_lantern",
+  "sortnum": 20,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "title": "寻找教堂",
+      "text": "探索主世界村庄边缘 50 格内的新区块，或探索$(l:white_space_dimension)伟大白色空间$()。两地教堂都稀少，旧区块不会补生成。"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "结构定位",
+      "text": "在对应维度使用 /locate structure，参数为下列结构 ID。$(br2)主世界：tinkersnewlife:sleepwake_church$(br2)白色空间：tinkersnewlife:sleepwake_church_white_space"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "教堂里的收获",
+      "text": "寻找 4 个隐蔽箱，内有古神或匠魂材料；雕花与屋顶还藏有下界合金块和 7 格格赫罗斯矿石。祭坛商人墨默不会自然离开，每日换货。她不是$(l:momo_battle)祭坛 Boss$()，受雇也不会攻击本体。"
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "name": "Boss Momo",
+  "category": "tinkersnewlife:relics",
+  "icon": "tinkersnewlife:rlyeh_call",
+  "sortnum": 22,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "title": "Reading the fight",
+      "text": "Challenge the boss at the $(l:starwell_arena)Starwell Arena$(). At 75% health she takes the merchant's appearance and opens her domain. At half health a prismatic glow and counter-rotating seal herald flight. Phases do not reverse."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Range is not cover",
+      "text": "Momo retaliates. If she cannot reach you, you hover above her or her melee hits repeatedly fail, expect arrows from the flank. Her aerial charge tracks during windup but locks direction on release: leave room to sidestep."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Waves and shadows",
+      "text": "Discordant Chord sends five waves 2.25–4.5 seconds apart. Shadows fight with 6 base armor. At or below half health she can recall them once their shield is gone and the 120-second cooldown ends."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Domain squid",
+      "text": "Domain squid have 3 armor and one quarter of her max health."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Star Dream",
+      "text": "The cast locks your position at its start. Momo stands still for 10 seconds as a black hole pulls inward beneath a golden hexagram."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "The beam",
+      "text": "Move away: a radius-5 beam lasts 5 seconds and deals ten normal damage types per tick, base 3 each before defenses."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Boss damage to you",
+      "text": "Clamp your alignment and your actual $(l:sleepwake_church)merchant favor$() separately to 0–50. Each point removes 0.6 percentage points of incoming boss damage. Each source caps at 30%; together they cap at 60%. Masked display favor does not count."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "When it applies",
+      "text": "Only damage attributed to the boss herself against a player qualifies. This replaces the $(l:conscience)Heart$()'s normal incoming multiplier; it never stacks."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Exceptions",
+      "text": "With the Heart off, favor alone counts. Other sources, clones and unowned pollution bursts get no such reduction."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Example",
+      "text": "With +20 alignment and +50 real favor, the reduction is 12% + 30% = 42%. At this step, a 10-damage boss hit becomes 5.8. With the Heart disabled, favor alone reduces it to 7."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Leave the death ward",
+      "text": "Do not rush in when Momo falls. A violet membrane and golden hexagram mark her 16-block ward; it bursts after 10 seconds. Wait for it to finish before entering the $(l:starwell_arena)beacon vault$()."
+    }
+  ]
+}

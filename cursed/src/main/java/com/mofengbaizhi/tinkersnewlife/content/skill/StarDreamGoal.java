@@ -121,7 +121,7 @@ public final class StarDreamGoal extends MomoSpellGoal {
                 DamageSource source = sources.get((sourceCursor + i) % sources.size());
                 if (!entity.isAlive()) break;
                 entity.invulnerableTime = 0;
-                entity.hurt(source, 3.0F);
+                com.mofengbaizhi.tinkersnewlife.util.MomoMercy.hurt(momo, entity, source, 3.0F, false);
             }
             entity.invulnerableTime = 10;
             sourceCursor = (sourceCursor + 1) % sources.size();

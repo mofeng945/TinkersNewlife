@@ -1,0 +1,23 @@
+{
+  "name": "Sleepwake Church",
+  "category": "tinkersnewlife:relics",
+  "icon": "minecraft:sea_lantern",
+  "sortnum": 20,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "title": "Finding a church",
+      "text": "Search new terrain near Overworld villages (within 50 blocks of the village boundary), or explore the $(l:white_space_dimension)Great White Space$(). Churches are rare in both and do not appear retroactively."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Structure search",
+      "text": "Use /locate structure in the correct dimension, followed by its ID.$(br2)Overworld: tinkersnewlife:sleepwake_church$(br2)White Space: tinkersnewlife:sleepwake_church_white_space"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Inside the church",
+      "text": "Four hidden chests hold relic or Tinkers' materials. Look in the carvings and roof for a netherite block and seven Gheloth ore blocks. Resident Momo stays and refreshes stock daily. Even if hired, she will not attack $(l:momo_battle)Boss Momo$()."
+    }
+  ]
+}

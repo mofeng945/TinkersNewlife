@@ -1,0 +1,43 @@
+{
+  "name": "Starwell Arena",
+  "category": "tinkersnewlife:relics",
+  "icon": "minecraft:beacon",
+  "sortnum": 21,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "title": "Finding the altar",
+      "text": "Search new terrain on the outer End islands for broken rings above an eight-pointed base. The long stair faces inland; rear points face the void. In the End use /locate structure tinkersnewlife:starwell_arena."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Calling Momo",
+      "text": "The Ender Dragon must have been defeated at least once in this save. Stand within 20 blocks of the center of a naturally generated altar and finish eating $(l:relic_rlyeh_call)R'lyeh Call$(). A pasted template lacks the required structure record."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Entrance",
+      "text": "The underground beacon base completes. At about 4.5 seconds the center blasts players outward; $(l:momo_battle)Momo$() appears at about 5.5."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "No duplicate bosses",
+      "text": "Rituals cannot overlap at one altar. Another boss within 256 blocks in this dimension blocks spawning, even if registered but unloaded."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "The beacon vault",
+      "text": "Let the boss finish her death blast inside the altar. Descend the side passage to the beacon. Expect 3–5 reward chests, fewer if spaces are occupied."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Before another kill",
+      "text": "Empty them before the next kill: old reward chests and contents are replaced. Player-placed containers stay."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Vault contents",
+      "text": "Each chest rolls 5–15 times independently for minerals, relics, End materials and more. It can hold at most one random flying sword; all its parts use materials of tier 2 or higher."
+    }
+  ]
+}
