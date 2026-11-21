@@ -48,6 +48,7 @@ public final class MomoFlightEntryGoal extends Goal {
     @Override public void tick() {
         momo.getNavigation().stop();
         LivingEntity target = momo.getTarget();
+        momo.setFlightPose(ticks < LAP_TICKS ? 1 : (ticks-LAP_TICKS)%(WINDUP_TICKS+CHARGE_TICKS)<WINDUP_TICKS ? 2 : 3);
         if (ticks < LAP_TICKS) {
             double angle = ticks * Math.PI * 2 / LAP_TICKS;
             Vec3 next = center.add(Math.cos(angle) * LAP_RADIUS, HEIGHT, Math.sin(angle) * LAP_RADIUS);
@@ -78,6 +79,7 @@ public final class MomoFlightEntryGoal extends Goal {
         ticks++;
     }
     @Override public void stop() {
+        momo.setFlightPose(0);
         momo.setNoGravity(false);
         momo.setDeltaMovement(Vec3.ZERO);
         momo.tnl$combat().finishFlightEntry();

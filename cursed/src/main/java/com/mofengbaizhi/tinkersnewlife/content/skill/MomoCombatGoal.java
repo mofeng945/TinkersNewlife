@@ -50,6 +50,7 @@ public final class MomoCombatGoal extends Goal {
     @Override public boolean canContinueToUse() { return canUse(); }
     @Override public boolean requiresUpdateEveryTick() { return true; }
     @Override public void stop() {
+        momo.setRunGait(false);
         momo.getNavigation().stop();
         momo.setNoGravity(false);
     }
@@ -90,6 +91,7 @@ public final class MomoCombatGoal extends Goal {
             }
         }
         boolean bow = state.usingBow(momo);
+        momo.setRunGait(!bow && (phase > 1 || retaliating || momo.tickCount < approachUntil));
         if (bow != rangedLast) { momo.getNavigation().stop(); nextPath = 0; rangedLast = bow; }
         if (bow) {
             equip(true);

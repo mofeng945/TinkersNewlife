@@ -72,6 +72,7 @@ public final class RlyehShadowGoal extends MomoSpellGoal {
         int spawned = spawnShadows();
         momo.tnl$setRlyehCoolUntil(momo.level().getGameTime() + (spawned > 0 ? COOLDOWN_TICKS : 20));
         if (spawned == 0) return;
+        momo.markShadowSummon();
         if (this.momo.level() instanceof ServerLevel level) {
             level.playSound(null, this.momo.blockPosition(),
                     SoundEvents.WARDEN_ROAR, SoundSource.HOSTILE, 2.0F, 0.55F);
