@@ -485,17 +485,18 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         // Actual kernel death only; external fake-death is handled by the existing guard.
         if (!this.level().isClientSide && a.qF(this) > 0) return;
         ++this.deathTime;
+        if (!level().isClientSide) entityData.set(DEATH_FIELD_AGE, this.deathTime);
         this.getNavigation().stop();
         this.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
         if (!this.level().isClientSide) {
             if (this.deathTime % 20 == 0) for (net.minecraft.world.entity.LivingEntity victim : this.level().getEntitiesOfClass(
-                    net.minecraft.world.entity.LivingEntity.class, this.getBoundingBox().inflate(16))) {
+                    net.minecraft.world.entity.LivingEntity.class, this.getBoundingBox().inflate(DEATH_FIELD_RADIUS))) {
                 if (victim == this || !victim.isAlive() || tnl$isMomoMinion(victim)
-                        || victim.distanceToSqr(this) > 256) continue;
+                        || victim.distanceToSqr(this) > DEATH_FIELD_RADIUS * DEATH_FIELD_RADIUS) continue;
                 // Provisional +40 each second: net +20 after natural decay, without per-tick packets.
                 com.mofengbaizhi.tinkersnewlife.content.effect.AeonianWeaken.add(victim, 40);
             }
-            if (this.deathTime >= 200) {
+            if (this.deathTime >= DEATH_FIELD_TICKS) {
                 this.tnl$finishDeathLoot();
                 this.remove(RemovalReason.KILLED);
             }
@@ -812,6 +813,9 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     public void setFlightPose(int pose) { entityData.set(FLIGHT_POSE,pose); }
     public void setRunGait(boolean run) { entityData.set(RUN_GAIT,run); }
     public void markBowShot() { entityData.set(LAST_BOW_SHOT,level().getGameTime()); }
+    public static final int DEATH_FIELD_RADIUS = 16, DEATH_FIELD_TICKS = 200;
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> DEATH_FIELD_AGE = net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class,net.minecraft.network.syncher.EntityDataSerializers.INT);
+    public int deathFieldAge() { return entityData.get(DEATH_FIELD_AGE); }
     private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> DATA_VISUAL_PHASE = net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
     private static final net.minecraft.network.syncher.EntityDataAccessor<Long> DATA_PHASE_START = net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class, net.minecraft.network.syncher.EntityDataSerializers.LONG);
     public int visualPhase() { return entityData.get(DATA_VISUAL_PHASE); }
@@ -895,6 +899,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         entityData.define(MELEE_AT,-1000L); entityData.define(SUMMON_AT,-1000L);
         entityData.define(FLIGHT_POSE,0); entityData.define(RUN_GAIT,false);
         this.entityData.define(LAST_BOW_SHOT, -1000L);
+        this.entityData.define(DEATH_FIELD_AGE, 0);
         this.entityData.define(DATA_VISUAL_PHASE, 1);
         this.entityData.define(DATA_PHASE_START, 0L);
         entityData.define(COMBAT_FACING,-1);
@@ -1265,7 +1270,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     }
 
     private String actionClip() {
-        if (deathTime > 0 || isDeadOrDying()) return deathTime < 24 ? "death_enter" : "death_hold";
+        if (deathFieldAge() > 0 || deathTime > 0 || isDeadOrDying()) return Math.max(deathFieldAge(),deathTime) < 24 ? "death_enter" : "death_hold";
         if (visualPhase() >= 2 && phaseAge(0) < (visualPhase()==2 ? 20 : 33)) return visualPhase()==2 ? "phase2_awaken" : "phase3_awaken";
         if (tnl$spell()==7) { int left=tnl$castTicks(); return left>280 ? "star_dream_enter" : left>100 ? "star_dream_loop" : "star_dream_release"; }
         if (tnl$animPose()==4) return null;

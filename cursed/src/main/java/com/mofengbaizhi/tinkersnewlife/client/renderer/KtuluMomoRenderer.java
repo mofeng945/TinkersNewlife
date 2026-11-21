@@ -76,6 +76,11 @@ public class KtuluMomoRenderer extends GeoEntityRenderer<KtuluMomo> {
     }
 
     @Override
+    protected float getDeathMaxRotation(KtuluMomo entity) {
+        return entity.deathTime > 0 || entity.deathFieldAge() > 0 ? 0.0F : super.getDeathMaxRotation(entity);
+    }
+
+    @Override
     public ResourceLocation getTextureLocation(KtuluMomo entity) {
         return MomoGeoModel.skin(entity);
     }
