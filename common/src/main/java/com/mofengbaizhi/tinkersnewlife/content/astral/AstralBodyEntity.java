@@ -33,7 +33,7 @@ public final class AstralBodyEntity extends Entity implements IEntityAdditionalS
         super(type, level);
         noPhysics = true;
         setNoGravity(true);
-        setInvulnerable(true);
+
     }
 
     /** Call once, before addFreshEntity. No inventory is moved or given to the substitute. */
@@ -88,6 +88,16 @@ public final class AstralBodyEntity extends Entity implements IEntityAdditionalS
     @Override protected void defineSynchedData() {}
     @Override protected void addAdditionalSaveData(CompoundTag tag) {}
     @Override protected void readAdditionalSaveData(CompoundTag tag) {}
-    @Override public boolean isAttackable() { return false; }
+    @Override public boolean isAttackable() { return !isRemoved(); }
+    @Override public boolean isPickable() { return !isRemoved(); }
+    @Override public boolean hurt(net.minecraft.world.damagesource.DamageSource source,float amount) {
+        if (!(level() instanceof ServerLevel server) || isRemoved() || ownerId==null || !(amount>0)) return false;
+        // Environmental ticks at the anchor are not attacks. Unowned explosions and projectiles still count.
+        if(source.getEntity()==null && source.getDirectEntity()==null && !source.is(net.minecraft.tags.DamageTypeTags.IS_EXPLOSION)
+                && !source.is(net.minecraft.tags.DamageTypeTags.IS_PROJECTILE))return false;
+        var owner=server.getServer().getPlayerList().getPlayer(ownerId);if(owner==null || owner.level()!=server)return false;
+        if(source.getEntity() instanceof net.minecraft.world.entity.player.Player attacker && attacker!=owner && !attacker.canHarmPlayer(owner))return false;
+        return AstralProjection.bodyHit(owner,this);
+    }
     @Override public Packet<ClientGamePacketListener> getAddEntityPacket() { return NetworkHooks.getEntitySpawningPacket(this); }
 }

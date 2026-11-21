@@ -35,6 +35,7 @@ import java.util.function.Supplier;
 @Mod.EventBusSubscriber(modid="tinkersnewlife")
 public final class AstralProjection {
     private static final String SESSION="tnlAstralAnchor", CLIENT="tnlAstralVisible";
+    private static final String READY_AT="tnlAstralReadyAt";
     private static final ModifierId ID=new ModifierId(new ResourceLocation("tinkersnewlife","soul_projection"));
     private static final TicketType<UUID> BODY_TICKET=TicketType.create("tnl_astral_body",UUID::compareTo);
     private AstralProjection(){}
@@ -43,6 +44,8 @@ public final class AstralProjection {
     public static void toggle(ServerPlayer p){
         if(active(p)){finish(p);return;}
         int rank=rank(p);if(rank<1||!IntegrationLoader.isIceAndFire()||!p.isAlive()||p.isSpectator()||p.isSleeping()||p.isPassenger())return;
+        long left=p.getPersistentData().getLong(READY_AT)-p.server.overworld().getGameTime();
+        if(left>0){p.displayClientMessage(net.minecraft.network.chat.Component.translatable("message.tinkersnewlife.astral_cooldown",(left+19)/20),true);return;}
         var level=p.serverLevel();var a=new CompoundTag();var at=p.position();
         a.putDouble("X",at.x);a.putDouble("Y",at.y);a.putDouble("Z",at.z);a.putFloat("Yaw",p.getYRot());a.putFloat("Pitch",p.getXRot());
         a.putString("Dim",level.dimension().location().toString());a.putBoolean("MayFly",p.getAbilities().mayfly);a.putBoolean("Flying",p.getAbilities().flying);
@@ -51,11 +54,14 @@ public final class AstralProjection {
         a.putUUID("Body",body.getUUID());p.getPersistentData().put(SESSION,a);
         level.getChunkSource().addRegionTicket(BODY_TICKET,new ChunkPos(p.blockPosition()),2,p.getUUID());
         if(!p.addEffect(new MobEffectInstance(ModEffects.SOUL_PROJECTION.get(),600*rank,rank-1,false,true,true))){finish(p);return;}
+        a.putInt("Rank",rank);
         p.getAbilities().mayfly=true;p.getAbilities().flying=true;p.onUpdateAbilities();p.fallDistance=0;
         broadcast(p,true);
     }
     private static void finish(ServerPlayer p){
         var data=p.getPersistentData();if(!data.contains(SESSION))return;var a=data.getCompound(SESSION);data.remove(SESSION);
+        int usedRank=a.getInt("Rank");
+        if(usedRank>0)data.putLong(READY_AT,p.server.overworld().getGameTime()+2000L-300L*Math.min(3,usedRank));
         var level=p.server.getLevel(ResourceKey.create(Registries.DIMENSION,new ResourceLocation(a.getString("Dim"))));
         if(level!=null){
             var at=new Vec3(a.getDouble("X"),a.getDouble("Y"),a.getDouble("Z"));var chunk=new ChunkPos(BlockPos.containing(at));
@@ -69,6 +75,18 @@ public final class AstralProjection {
         p.removeEffect(ModEffects.SOUL_PROJECTION.get());p.setDeltaMovement(Vec3.ZERO);p.fallDistance=0;
         p.getAbilities().mayfly=p.isCreative()||p.isSpectator()||a.getBoolean("MayFly");
         p.getAbilities().flying=p.isSpectator()||p.getAbilities().mayfly&&a.getBoolean("Flying");p.onUpdateAbilities();broadcast(p,false);
+    }
+    static boolean bodyHit(ServerPlayer owner, AstralBodyEntity body){
+        var anchor=owner.getPersistentData().getCompound(SESSION);
+        if(!anchor.hasUUID("Body") || !anchor.getUUID("Body").equals(body.getUUID())) return false;
+        finish(owner);return true;
+    }
+    @SubscribeEvent public static void clone(PlayerEvent.Clone e){
+        long deadline=e.getOriginal().getPersistentData().getLong(READY_AT);
+        if(deadline>0)e.getEntity().getPersistentData().putLong(READY_AT,deadline);
+    }
+    @SubscribeEvent(priority=EventPriority.HIGHEST) public static void attack(net.minecraftforge.event.entity.living.LivingAttackEvent e){
+        if(e.getEntity() instanceof ServerPlayer player && active(player) && AstralDamage.physical(e.getSource()))e.setCanceled(true);
     }
     private static Vec3 returnPosition(ServerPlayer p,ServerLevel level,Vec3 at){
         var box=p.getDimensions(p.getPose()).makeBoundingBox(at);

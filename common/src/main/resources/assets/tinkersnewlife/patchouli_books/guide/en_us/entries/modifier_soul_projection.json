@@ -11,7 +11,7 @@
     },
     {
       "type": "patchouli:text",
-      "text": "Fly through blocks other than bedrock. Interact, fight, mine and build with your own inventory and permissions. Hostiles can still target you; your armor and toughness do not reduce hits while projected."
+      "text": "Fly through blocks other than bedrock. Interact, fight, mine and build with your own inventory and permissions. Physical melee and physical projectile damage are ignored by the spirit; magic, elemental and other damage types still apply directly without armor or toughness. A hit on the anchored body ends projection immediately. Manual or automatic return starts a cooldown: 85/70/55 seconds for levels I/II/III."
     },
     {
       "type": "patchouli:text",
