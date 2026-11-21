@@ -1,21 +1,22 @@
 {
   "type": "tconstruct:modifier",
+  "conditions": [{ "type": "forge:mod_loaded", "modid": "iceandfire" }],
   "allow_crystal": false,
   "inputs": [
     {
-      "tag": "forge:gems/sapphire"
+      "item": "iceandfire:sapphire_gem"
     },
     {
-      "tag": "forge:gems/sapphire"
+      "item": "iceandfire:sapphire_gem"
     },
     {
-      "tag": "forge:gems/sapphire"
+      "item": "iceandfire:sapphire_gem"
     },
     {
-      "tag": "forge:gems/sapphire"
+      "item": "iceandfire:sapphire_gem"
     },
     {
-      "tag": "forge:gems/sapphire"
+      "item": "iceandfire:sapphire_gem"
     }
   ],
   "level": 1,

@@ -3,6 +3,7 @@ package com.mofengbaizhi.tinkersnewlife.content.modifier;
 import com.mofengbaizhi.tinkersnewlife.content.ModEffects;
 import com.mofengbaizhi.tinkersnewlife.content.item.ModularStaffItem;
 import com.mofengbaizhi.tinkersnewlife.util.ToolHelper;
+import com.mofengbaizhi.tinkersnewlife.integration.IntegrationLoader;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -34,7 +35,7 @@ public final class FrostAffinityModifier extends Modifier implements ToolDamageM
     private static final ModifierId ID = new ModifierId(new ResourceLocation("tinkersnewlife","frost_affinity"));
     private static final UUID TOUGH = UUID.fromString("02881055-69ab-47da-9d51-2e2d180b9e06"), KNOCK = UUID.fromString("5739527a-0229-4078-b7ac-60fa22e0c0ae");
     private static boolean cold(LivingEntity e) {
-        if(e==null)return false;
+        if(e==null || !IntegrationLoader.isIceAndFire())return false;
         var pos=e.blockPosition(); var biome=e.level().getBiome(pos);
         return e.isInPowderSnow || biome.is(Tags.Biomes.IS_COLD) || biome.value().coldEnoughToSnow(pos);
     }
@@ -64,9 +65,9 @@ public final class FrostAffinityModifier extends Modifier implements ToolDamageM
         if(correct&&(stack.is(TinkerTags.Items.ARMOR)||stack.is(TinkerTags.Items.SHIELDS))&&active(stack))count++;
     }return count;}
     private static void sync(AttributeInstance attr,UUID id,double amount){if(attr==null)return;var old=attr.getModifier(id);if(old!=null&&old.getAmount()==amount)return;if(old!=null)attr.removeModifier(id);if(amount>0)attr.addTransientModifier(new AttributeModifier(id,"Frost affinity",amount,AttributeModifier.Operation.ADDITION));}
-    @SubscribeEvent public static void tick(LivingEvent.LivingTickEvent event){var e=event.getEntity();if(e.level().isClientSide)return;
+    @SubscribeEvent public static void tick(LivingEvent.LivingTickEvent event){var e=event.getEntity();if(e.level().isClientSide || !IntegrationLoader.isIceAndFire())return;
         int pieces=defensivePieces(e);if(pieces>0&&!cold(e))pieces=0;
         sync(e.getAttribute(Attributes.ARMOR_TOUGHNESS),TOUGH,2*pieces);sync(e.getAttribute(Attributes.KNOCKBACK_RESISTANCE),KNOCK,.1*pieces);
     }
-    @SubscribeEvent public static void retaliate(LivingHurtEvent event){var e=event.getEntity();if(!e.level().isClientSide&&event.getAmount()>0&&event.getSource().getEntity() instanceof LivingEntity attacker&&attacker!=e&&defensivePieces(e)>0&&cold(e)&&e.getRandom().nextFloat()<.30f)frost(attacker,60);}
+    @SubscribeEvent public static void retaliate(LivingHurtEvent event){var e=event.getEntity();if(IntegrationLoader.isIceAndFire()&&!e.level().isClientSide&&event.getAmount()>0&&event.getSource().getEntity() instanceof LivingEntity attacker&&attacker!=e&&defensivePieces(e)>0&&cold(e)&&e.getRandom().nextFloat()<.30f)frost(attacker,60);}
 }

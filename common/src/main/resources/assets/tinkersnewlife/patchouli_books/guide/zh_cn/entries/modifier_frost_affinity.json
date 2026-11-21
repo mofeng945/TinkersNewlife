@@ -1,12 +1,13 @@
 {
   "name": "霜亲和",
   "category": "tinkersnewlife:traits",
-  "icon": "minecraft:powder_snow_bucket",
+  "flag": "mod:iceandfire",
+  "icon": "iceandfire:sapphire_gem",
   "sortnum": 43,
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "通用强化，最高 1 级。五个材料格各放一颗蓝宝石，消耗 1 个升级槽。只有身处寒冷群系或细雪中才生效：每次耐久损耗有 70% 概率免除。"
+      "text": "冰火传说联动通用强化，最高 1 级。五个材料格各放一颗冰火传说的蓝宝石，消耗 1 个升级槽。只有身处寒冷群系或细雪中才生效：每次耐久损耗有 70% 概率免除。"
     },
     {
       "type": "patchouli:text",
