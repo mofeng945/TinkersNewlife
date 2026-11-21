@@ -24,7 +24,7 @@ import software.bernie.geckolib.model.GeoModel;
 public class MomoGeoModel extends GeoModel<KtuluMomo> {
 
     private static final ResourceLocation MODEL =
-            new ResourceLocation("tinkersnewlife", "geo/ktulu_momo.geo.json");
+            new ResourceLocation("tinkersnewlife", "geo/ktulu_momo_rigged.geo.json");
     private static final ResourceLocation MOVEMENT = new ResourceLocation("tinkersnewlife", "animations/ktulu_momo_movement.animation.json");
     private static final ResourceLocation ANIM =
             new ResourceLocation("tinkersnewlife", "animations/ktulu_momo.animation.json");
