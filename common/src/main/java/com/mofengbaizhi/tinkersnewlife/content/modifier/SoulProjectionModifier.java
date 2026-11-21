@@ -14,7 +14,7 @@ import slimeknights.tconstruct.library.tools.nbt.IToolStackView;
 public final class SoulProjectionModifier extends Modifier implements KeybindInteractModifierHook {
     @Override protected void registerHooks(ModuleHookMap.Builder builder){super.registerHooks(builder);builder.addHook(this,ModifierHooks.ARMOR_INTERACT);}
     @Override public boolean startInteract(IToolStackView tool, ModifierEntry modifier, Player player, EquipmentSlot slot, TooltipKey key){
-        if(slot!=EquipmentSlot.CHEST || !IntegrationLoader.isIceAndFire())return false;
+        if(slot!=EquipmentSlot.HEAD || !IntegrationLoader.isIceAndFire())return false;
         if(player instanceof ServerPlayer sp) AstralProjection.toggle(sp);
         return true;
     }

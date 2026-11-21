@@ -21,7 +21,7 @@
   "level": 1,
   "result": "tinkersnewlife:soul_projection",
   "tools": {
-    "tag": "tconstruct:modifiable/armor/chestplate"
+    "tag": "tconstruct:modifiable/armor/helmets"
   },
   "slots": {
     "abilities": 1

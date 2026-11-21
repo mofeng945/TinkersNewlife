@@ -7,7 +7,7 @@
   "pages": [
     {
       "type": "patchouli:text",
-      "text": "Ice and Fire integration, chestplates only. Press the Tinkers chestplate interaction key to project; press again to return. Lasts 30 seconds per level, up to 90 seconds."
+      "text": "Ice and Fire integration, helmets only. Press the Tinkers helmet interaction key to project; press again to return. Lasts 30 seconds per level, up to 90 seconds."
     },
     {
       "type": "patchouli:text",

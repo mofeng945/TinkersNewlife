@@ -39,7 +39,7 @@ public final class AstralProjection {
     private static final TicketType<UUID> BODY_TICKET=TicketType.create("tnl_astral_body",UUID::compareTo);
     private AstralProjection(){}
     public static boolean active(Player p){return p.level().isClientSide?p.getPersistentData().getBoolean(CLIENT):p.getPersistentData().contains(SESSION);}
-    private static int rank(ServerPlayer p){var tool=ToolHelper.getToolStack(p.getItemBySlot(EquipmentSlot.CHEST));return tool==null||tool.isBroken()?0:Math.min(3,ToolHelper.getActiveModifierLevel(tool,ID));}
+    private static int rank(ServerPlayer p){var tool=ToolHelper.getToolStack(p.getItemBySlot(EquipmentSlot.HEAD));return tool==null||tool.isBroken()?0:Math.min(3,ToolHelper.getActiveModifierLevel(tool,ID));}
     public static void toggle(ServerPlayer p){
         if(active(p)){finish(p);return;}
         int rank=rank(p);if(rank<1||!IntegrationLoader.isIceAndFire()||!p.isAlive()||p.isSpectator()||p.isSleeping()||p.isPassenger())return;
