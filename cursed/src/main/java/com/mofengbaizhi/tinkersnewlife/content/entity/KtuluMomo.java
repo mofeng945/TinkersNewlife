@@ -228,6 +228,10 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         MomoNearestPlayerGoal.retaliate(this, source, amount);
         a.q0(this);
         this.tnl$combat.tick(this);
+        if (visualPhase() != tnl$combat.phase()) {
+            entityData.set(DATA_PHASE_START, level().getGameTime());
+            entityData.set(DATA_VISUAL_PHASE, tnl$combat.phase());
+        }
         if (this.tnl$tryCombatDodge(source)) return false;
         // TNL1282 拉莱耶之影：**分身还活着 ⇒ 本体免疫**（用户口径："不击杀分身无法对墨默造成伤害"）
         if (this.tnl$shadowShieldActive()) {
@@ -623,6 +627,10 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
         //   ★setHealth 会标脏实体数据 ⇒ ★每 tick 调就等于每 tick 发包 ✗
         this.tnl$auth = authoritative;
         this.tnl$combat.tick(this);
+        if (visualPhase() != tnl$combat.phase()) {
+            entityData.set(DATA_PHASE_START, level().getGameTime());
+            entityData.set(DATA_VISUAL_PHASE, tnl$combat.phase());
+        }
         TNL_ACTIVE.put(this.getUUID(), this);   // TNL1409 ★登记，供 ServerTick END 补同步 ✓
         if (Math.abs(a.qR(this) - authoritative) > 0.01F) {
             this.tnl$setHealthInternal(Math.max(0.0F, authoritative));
@@ -785,6 +793,10 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
 
     // TNL1169 诡厄的做法（SpellCastingCultist）：一个同步 byte 说明在放哪个法术，
     // 一个同步 int 倒数计时。0 空闲、1 瞬身、2 幻音共鸣、3 混沌和弦。
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> DATA_VISUAL_PHASE = net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Long> DATA_PHASE_START = net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class, net.minecraft.network.syncher.EntityDataSerializers.LONG);
+    public int visualPhase() { return entityData.get(DATA_VISUAL_PHASE); }
+    public float phaseAge(float partial) { return Math.max(0L, level().getGameTime() - entityData.get(DATA_PHASE_START)) + partial; }
     private static final net.minecraft.network.syncher.EntityDataAccessor<Byte> DATA_SPELL =
             net.minecraft.network.syncher.SynchedEntityData.defineId(KtuluMomo.class,
                     net.minecraft.network.syncher.EntityDataSerializers.BYTE);
@@ -861,6 +873,8 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
 
     protected void defineSynchedData() {
         super.defineSynchedData();
+        this.entityData.define(DATA_VISUAL_PHASE, 1);
+        this.entityData.define(DATA_PHASE_START, 0L);
         this.entityData.define(DATA_SPELL, (byte) 0);
         this.entityData.define(DATA_CAST_TICKS, 0);
         this.entityData.define(DATA_STAR_DREAM, false);
@@ -880,6 +894,7 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         this.tnl$combat.save(tag);
+        tag.putLong("TNLVisualPhaseStart", entityData.get(DATA_PHASE_START));
         tag.putByte("TNLSpell", (byte) this.tnl$spell());
         tag.putInt("TNLSpellTicks", this.tnl$castTicks());
         tag.putBoolean("TNLRequiemUsed", this.tnl$requiemUsed);      // TNL1253 一局只放一次，要跨存档
@@ -891,6 +906,8 @@ public class KtuluMomo extends Monster implements com.mofengbaizhi.tinkersnewlif
     public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         this.tnl$combat.load(tag);
+        entityData.set(DATA_VISUAL_PHASE, tnl$combat.phase());
+        entityData.set(DATA_PHASE_START, tag.getLong("TNLVisualPhaseStart"));
         if (tag.contains("TNLSpell")) {
             this.tnl$setSpell(tag.getByte("TNLSpell"), tag.getInt("TNLSpellTicks"));
         }

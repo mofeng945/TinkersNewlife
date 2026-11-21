@@ -34,6 +34,8 @@ public class MomoGeoModel extends GeoModel<KtuluMomo> {
      * TNL1297 冲刺残影用：为 true 时把渲染类型换成**半透明**的 ✗
      * 不换的话 `entityCutoutNoCull` **不做混合** ✗ ⭐`setShaderColor` 的 alpha 根本无效 ✓
      */
+    public static final ResourceLocation MERCHANT_SKIN = new ResourceLocation("tinkersnewlife", "textures/entity/momo_common.png");
+    public static ResourceLocation skin(KtuluMomo boss) { return boss.visualPhase() >= 2 ? MERCHANT_SKIN : TEXTURE; }
     public static boolean GHOST_PASS = false;
 
     @Override
@@ -43,7 +45,7 @@ public class MomoGeoModel extends GeoModel<KtuluMomo> {
 
     @Override
     public ResourceLocation getTextureResource(KtuluMomo animatable) {
-        return TEXTURE;
+        return skin(animatable);
     }
 
     @Override

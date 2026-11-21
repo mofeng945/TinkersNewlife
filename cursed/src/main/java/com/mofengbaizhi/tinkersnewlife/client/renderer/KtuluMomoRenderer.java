@@ -71,17 +71,19 @@ public class KtuluMomoRenderer extends GeoEntityRenderer<KtuluMomo> {
         this.shadowRadius = 0.43F;
         this.scaleWidth = MODEL_SCALE;
         this.scaleHeight = MODEL_SCALE;
+        this.addRenderLayer(new MomoPhaseGlow(this));
         this.addRenderLayer(new MomoHeldItemLayer(this));
     }
 
     @Override
     public ResourceLocation getTextureLocation(KtuluMomo entity) {
-        return TEXTURE;
+        return MomoGeoModel.skin(entity);
     }
 
     @Override
     public void render(KtuluMomo entity, float entityYaw, float partialTick, PoseStack poseStack,
                        MultiBufferSource buffer, int packedLight) {
+        if (entity.visualPhase() >= 2 && entity.isAlive()) MomoPhaseGlow.drawSigil(entity, partialTick, poseStack, buffer);
         // ① 本体
         super.render(entity, entityYaw, partialTick, poseStack, buffer, packedLight);
 
